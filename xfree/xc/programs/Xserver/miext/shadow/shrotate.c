@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/programs/Xserver/miext/shadow/shrotate.c,v 1.3 2001/07/21 04:13:26 keithp Exp $
+ * $XFree86: xc/programs/Xserver/miext/shadow/shrotate.c,v 1.5 2002/10/09 17:00:11 tsi Exp $
  *
  * Copyright © 2001 Keith Packard, member of The XFree86 Project, Inc.
  *
@@ -35,6 +35,16 @@
 #include    "shadow.h"
 #include    "fb.h"
 
+/*
+ * These indicate which way the source (shadow) is scanned when
+ * walking the screen in a particular direction
+ */
+
+#define LEFT_TO_RIGHT	1
+#define RIGHT_TO_LEFT	-1
+#define TOP_TO_BOTTOM	2
+#define BOTTOM_TO_TOP	-2
+
 void
 shadowUpdateRotatePacked (ScreenPtr	pScreen,
 			  shadowBufPtr	pBuf)
@@ -48,18 +58,23 @@ shadowUpdateRotatePacked (ScreenPtr	pScreen,
     int		shaBpp;
     int		shaXoff, shaYoff;
     int		box_x1, box_x2, box_y1, box_y2;
-    int		sha_x1, sha_y1;
-    int		scr_x1, scr_x2, scr_y1, scr_y2, scr_w, scr_h;
+    int		sha_x1 = 0, sha_y1 = 0;
+    int		scr_x1 = 0, scr_x2 = 0, scr_y1 = 0, scr_y2 = 0, scr_w, scr_h;
     int		scr_x, scr_y;
     int		w;
     int		pixelsPerBits;
     int		pixelsMask;
-    FbStride	shaStepOverY, shaStepDownY, shaStepOverX, shaStepDownX;
+    FbStride	shaStepOverY = 0, shaStepDownY = 0;
+    FbStride	shaStepOverX = 0, shaStepDownX = 0;
     FbBits	*shaLine, *sha;
     int		shaHeight = pShadow->drawable.height;
     int		shaWidth = pShadow->drawable.width;
     FbBits	shaMask;
     int		shaFirstShift, shaShift;
+    int		o_x_dir;
+    int		o_y_dir;
+    int		x_dir;
+    int		y_dir;
 
     fbGetDrawable (&pShadow->drawable, shaBits, shaStride, shaBpp, shaXoff, shaYoff);
     pixelsPerBits = (sizeof (FbBits) * 8) / shaBpp;
@@ -68,33 +83,68 @@ shadowUpdateRotatePacked (ScreenPtr	pScreen,
     /*
      * Compute rotation related constants to walk the shadow
      */
-    switch (pBuf->rotate) {
-    case 0:
+    o_x_dir = LEFT_TO_RIGHT;
+    o_y_dir = TOP_TO_BOTTOM;
+    if (pBuf->randr & SHADOW_REFLECT_X)
+	o_x_dir = -o_x_dir;
+    if (pBuf->randr & SHADOW_REFLECT_Y)
+	o_y_dir = -o_y_dir;
+    switch (pBuf->randr & (SHADOW_ROTATE_ALL)) {
+    case SHADOW_ROTATE_0:	/* upper left shadow -> upper left screen */
     default:
+	x_dir = o_x_dir;
+	y_dir = o_y_dir;
+	break;
+    case SHADOW_ROTATE_90:    	/* upper right shadow -> upper left screen */
+	x_dir = o_y_dir;
+	y_dir = -o_x_dir;
+	break;
+    case SHADOW_ROTATE_180:	/* lower right shadow -> upper left screen */
+	x_dir = -o_x_dir;
+	y_dir = -o_y_dir;
+	break;
+    case SHADOW_ROTATE_270:	/* lower left shadow -> upper left screen */
+	x_dir = -o_y_dir;
+	y_dir = o_x_dir;
+	break;
+    }
+    switch (x_dir) {
+    case LEFT_TO_RIGHT:
 	shaStepOverX = shaBpp;
-	shaStepDownX = 0;
 	shaStepOverY = 0;
+	break;
+    case TOP_TO_BOTTOM:
+	shaStepOverX = 0;
+	shaStepOverY = shaStride;
+	break;
+    case RIGHT_TO_LEFT:
+	shaStepOverX = -shaBpp;
+	shaStepOverY = 0;
+	break;
+    case BOTTOM_TO_TOP:
+	shaStepOverX = 0;
+	shaStepOverY = -shaStride;
+	break;
+    }
+    switch (y_dir) {
+    case TOP_TO_BOTTOM:
+	shaStepDownX = 0;
 	shaStepDownY = shaStride;
 	break;
-    case 90:
-	shaStepOverX = 0;
+    case RIGHT_TO_LEFT:
 	shaStepDownX = -shaBpp;
-	shaStepOverY = shaStride;
 	shaStepDownY = 0;
 	break;
-    case 180:
-	shaStepOverX = -shaBpp;
+    case BOTTOM_TO_TOP:
 	shaStepDownX = 0;
-	shaStepOverY = 0;
 	shaStepDownY = -shaStride;
 	break;
-    case 270:
-	shaStepOverX = 0;
+    case LEFT_TO_RIGHT:
 	shaStepDownX = shaBpp;
-	shaStepOverY = -shaStride;
 	shaStepDownY = 0;
 	break;
     }
+    
     while (nbox--)
     {
         box_x1 = pbox->x1;
@@ -106,43 +156,56 @@ shadowUpdateRotatePacked (ScreenPtr	pScreen,
 	/*
 	 * Compute screen and shadow locations for this box
 	 */
-	switch (pBuf->rotate) {
-	case 0:
-	default:
+	switch (x_dir) {
+	case LEFT_TO_RIGHT:
 	    scr_x1 = box_x1 & pixelsMask;
 	    scr_x2 = (box_x2 + pixelsPerBits - 1) & pixelsMask;
-	    scr_y1 = box_y1;
-	    scr_y2 = box_y2;
 	    
-	    sha_x1 = box_x1;
-	    sha_y1 = box_y1;
+	    sha_x1 = scr_x1;
 	    break;
-	case 90:
+	case TOP_TO_BOTTOM:
 	    scr_x1 = box_y1 & pixelsMask;
 	    scr_x2 = (box_y2 + pixelsPerBits - 1) & pixelsMask;
+
+	    sha_y1 = scr_x1;
+	    break;
+	case RIGHT_TO_LEFT:
+	    scr_x1 = (shaWidth - box_x2) & pixelsMask;
+	    scr_x2 = (shaWidth - box_x1 + pixelsPerBits - 1) & pixelsMask;
+
+	    sha_x1 = (shaWidth - scr_x1 - 1);
+	    break;
+	case BOTTOM_TO_TOP:
+	    scr_x1 = (shaHeight - box_y2) & pixelsMask;
+	    scr_x2 = (shaHeight - box_y1 + pixelsPerBits - 1) & pixelsMask;
+	    
+	    sha_y1 = (shaHeight - scr_x1 - 1);
+	    break;
+	}
+	switch (y_dir) {
+	case TOP_TO_BOTTOM:
+	    scr_y1 = box_y1;
+	    scr_y2 = box_y2;
+
+	    sha_y1 = scr_y1;
+	    break;
+	case RIGHT_TO_LEFT:
 	    scr_y1 = (shaWidth - box_x2);
 	    scr_y2 = (shaWidth - box_x1);
 
 	    sha_x1 = box_x2 - 1;
-	    sha_y1 = scr_x1;
 	    break;
-	case 180:
-	    scr_x1 = (shaWidth - box_x2) & pixelsMask;
-	    scr_x2 = (shaWidth - box_x1 + pixelsPerBits - 1) & pixelsMask;
+	case BOTTOM_TO_TOP:
 	    scr_y1 = shaHeight - box_y2;
 	    scr_y2 = shaHeight - box_y1;
-
-	    sha_x1 = (shaWidth - scr_x1 - 1);
+	    
 	    sha_y1 = box_y2 - 1;
 	    break;
-	case 270:
-	    scr_x1 = (shaHeight - box_y2) & pixelsMask;
-	    scr_x2 = (shaHeight - box_y1 + pixelsPerBits - 1) & pixelsMask;
+	case LEFT_TO_RIGHT:
 	    scr_y1 = box_x1;
 	    scr_y2 = box_x2;
 
 	    sha_x1 = box_x1;
-	    sha_y1 = (shaHeight - scr_x1 - 1);
 	    break;
 	}
 	scr_w = ((scr_x2 - scr_x1) * shaBpp) >> FB_SHIFT;

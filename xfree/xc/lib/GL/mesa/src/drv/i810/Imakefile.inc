@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/lib/GL/mesa/src/drv/i810/Imakefile.inc,v 1.2 2001/05/02 15:06:03 dawes Exp $
+XCOMM $XFree86: xc/lib/GL/mesa/src/drv/i810/Imakefile.inc,v 1.3 2002/02/22 21:33:03 dawes Exp $
 
 #ifndef MesaDrvSrcDir
 #define MesaDrvSrcDir $(GLXLIBSRC)/mesa/src/drv
@@ -16,85 +16,95 @@ ALLOC_DEFINES = -DMALLOC_0_RETURNS_NULL
 #endif
 
 #if BuildXF86DRI
-  DRI_DEFINES = GlxDefines
- DRI_INCLUDES = -I$(GLXLIBSRC)/dri -I$(GLXLIBSRC)/glx \
-		-I$(INCLUDESRC) -I$(INCLUDESRC)/GL \
-		-I$(GLXLIBSRC)/mesa/dri \
+  DRI_DEFINES = GlxDefines -DX_BYTE_ORDER=ByteOrder
+ DRI_INCLUDES = -I$(GLXLIBSRC)/dri \
+		-I$(GLXLIBSRC)/glx \
+		-I$(INCLUDESRC) \
+		-I$(INCLUDESRC)/GL \
 		-I$(SERVERSRC)/GL/dri \
 		-I$(XF86OSSRC) \
 		-I$(XF86DRIVERSRC)/i810 \
-		-I$(GLXLIBSRC)/dri/drm
+		-I$(XF86COMSRC) \
+		-I$(GLXLIBSRC)/dri/drm \
+		-I$(GLXLIBSRC)/include
 #endif
 
-MESA_INCLUDES = -I$(MESASRCDIR)/src -I$(MESADRVSRCDIR)/common \
+MESA_INCLUDES = -I$(MESASRCDIR)/src \
+		-I$(MESADRVSRCDIR)/common \
 		-I$(MESADRVSRCDIR)/i810
    X_INCLUDES = -I$(XINCLUDESRC) -I$(EXTINCSRC)
 
-     I810SRCS = $(MESADRVI810BUILDDIR)i810_xmesa.c \
-		$(MESADRVI810BUILDDIR)i810dd.c \
-		$(MESADRVI810BUILDDIR)i810pipeline.c \
+     I810SRCS = $(MESADRVI810BUILDDIR)i810context.c \
+		$(MESADRVI810BUILDDIR)i810ioctl.c \
+		$(MESADRVI810BUILDDIR)i810render.c \
+		$(MESADRVI810BUILDDIR)i810screen.c \
 		$(MESADRVI810BUILDDIR)i810span.c \
 		$(MESADRVI810BUILDDIR)i810state.c \
 		$(MESADRVI810BUILDDIR)i810tex.c \
+		$(MESADRVI810BUILDDIR)i810texmem.c \
+		$(MESADRVI810BUILDDIR)i810texstate.c \
 		$(MESADRVI810BUILDDIR)i810tris.c \
-		$(MESADRVI810BUILDDIR)i810vb.c \
-		$(MESADRVI810BUILDDIR)i810fastpath.c \
-		$(MESADRVI810BUILDDIR)i810ioctl.c
+		$(MESADRVI810BUILDDIR)i810vb.c
 
-     I810OBJS = $(MESADRVI810BUILDDIR)i810_xmesa.o \
-		$(MESADRVI810BUILDDIR)i810dd.o \
-		$(MESADRVI810BUILDDIR)i810pipeline.o \
+     I810OBJS = $(MESADRVI810BUILDDIR)i810context.o \
+		$(MESADRVI810BUILDDIR)i810ioctl.o \
+		$(MESADRVI810BUILDDIR)i810render.o \
+		$(MESADRVI810BUILDDIR)i810screen.o \
 		$(MESADRVI810BUILDDIR)i810span.o \
 		$(MESADRVI810BUILDDIR)i810state.o \
 		$(MESADRVI810BUILDDIR)i810tex.o \
+		$(MESADRVI810BUILDDIR)i810texmem.o \
+		$(MESADRVI810BUILDDIR)i810texstate.o \
 		$(MESADRVI810BUILDDIR)i810tris.o \
-		$(MESADRVI810BUILDDIR)i810vb.o \
-		$(MESADRVI810BUILDDIR)i810fastpath.o \
-		$(MESADRVI810BUILDDIR)i810ioctl.o
+		$(MESADRVI810BUILDDIR)i810vb.o
 
-     I810UOBJS = $(MESADRVI810BUILDDIR)unshared/i810_xmesa.o \
-		$(MESADRVI810BUILDDIR)unshared/i810dd.o \
-		$(MESADRVI810BUILDDIR)unshared/i810pipeline.o \
+     I810UOBJS = $(MESADRVI810BUILDDIR)unshared/i810context.o \
+		$(MESADRVI810BUILDDIR)unshared/i810ioctl.o \
+		$(MESADRVI810BUILDDIR)unshared/i810render.o \
+		$(MESADRVI810BUILDDIR)unshared/i810screen.o \
 		$(MESADRVI810BUILDDIR)unshared/i810span.o \
 		$(MESADRVI810BUILDDIR)unshared/i810state.o \
 		$(MESADRVI810BUILDDIR)unshared/i810tex.o \
+		$(MESADRVI810BUILDDIR)unshared/i810texmem.o \
+		$(MESADRVI810BUILDDIR)unshared/i810texstate.o \
 		$(MESADRVI810BUILDDIR)unshared/i810tris.o \
-		$(MESADRVI810BUILDDIR)unshared/i810vb.o \
-		$(MESADRVI810BUILDDIR)unshared/i810fastpath.o \
-		$(MESADRVI810BUILDDIR)unshared/i810ioctl.o
+		$(MESADRVI810BUILDDIR)unshared/i810vb.o
 
-     I810DOBJS = $(MESADRVI810BUILDDIR)debugger/i810_xmesa.o \
-		$(MESADRVI810BUILDDIR)debugger/i810dd.o \
-		$(MESADRVI810BUILDDIR)debugger/i810pipeline.o \
+     I810DOBJS = $(MESADRVI810BUILDDIR)debugger/i810context.o \
+		$(MESADRVI810BUILDDIR)debugger/i810ioctl.o \
+		$(MESADRVI810BUILDDIR)debugger/i810render.o \
+		$(MESADRVI810BUILDDIR)debugger/i810screen.o \
 		$(MESADRVI810BUILDDIR)debugger/i810span.o \
 		$(MESADRVI810BUILDDIR)debugger/i810state.o \
 		$(MESADRVI810BUILDDIR)debugger/i810tex.o \
+		$(MESADRVI810BUILDDIR)debugger/i810texmem.o \
+		$(MESADRVI810BUILDDIR)debugger/i810texstate.o \
 		$(MESADRVI810BUILDDIR)debugger/i810tris.o \
-		$(MESADRVI810BUILDDIR)debugger/i810vb.o \
-		$(MESADRVI810BUILDDIR)debugger/i810fastpath.o \
-		$(MESADRVI810BUILDDIR)debugger/i810ioctl.o
+		$(MESADRVI810BUILDDIR)debugger/i810vb.o
 
-     I810POBJS = $(MESADRVI810BUILDDIR)profiled/i810_xmesa.o \
-		$(MESADRVI810BUILDDIR)profiled/i810dd.o \
-		$(MESADRVI810BUILDDIR)profiled/i810pipeline.o \
+     I810POBJS = $(MESADRVI810BUILDDIR)profiled/i810context.o \
+		$(MESADRVI810BUILDDIR)profiled/i810ioctl.o \
+		$(MESADRVI810BUILDDIR)profiled/i810render.o \
+		$(MESADRVI810BUILDDIR)profiled/i810screen.o \
 		$(MESADRVI810BUILDDIR)profiled/i810span.o \
 		$(MESADRVI810BUILDDIR)profiled/i810state.o \
 		$(MESADRVI810BUILDDIR)profiled/i810tex.o \
+		$(MESADRVI810BUILDDIR)profiled/i810texmem.o \
+		$(MESADRVI810BUILDDIR)profiled/i810texstate.o \
 		$(MESADRVI810BUILDDIR)profiled/i810tris.o \
-		$(MESADRVI810BUILDDIR)profiled/i810vb.o \
-		$(MESADRVI810BUILDDIR)profiled/i810fastpath.o \
-		$(MESADRVI810BUILDDIR)profiled/i810ioctl.o
+		$(MESADRVI810BUILDDIR)profiled/i810vb.o
 
 #ifdef NeedToLinkMesaSrc
-LinkSourceFile(i810_xmesa.c, $(MESADRVSRCDIR)/i810)
-LinkSourceFile(i810dd.c, $(MESADRVSRCDIR)/i810)
-LinkSourceFile(i810pipeline.c, $(MESADRVSRCDIR)/i810)
+LinkSourceFile(i810context.c, $(MESADRVSRCDIR)/i810)
+LinkSourceFile(i810ioctl.c, $(MESADRVSRCDIR)/i810)
+LinkSourceFile(i810render.c, $(MESADRVSRCDIR)/i810)
+LinkSourceFile(i810screen.c, $(MESADRVSRCDIR)/i810)
 LinkSourceFile(i810span.c, $(MESADRVSRCDIR)/i810)
 LinkSourceFile(i810state.c, $(MESADRVSRCDIR)/i810)
 LinkSourceFile(i810tex.c, $(MESADRVSRCDIR)/i810)
+LinkSourceFile(i810texmem.c, $(MESADRVSRCDIR)/i810)
+LinkSourceFile(i810texstate.c, $(MESADRVSRCDIR)/i810)
 LinkSourceFile(i810tris.c, $(MESADRVSRCDIR)/i810)
 LinkSourceFile(i810vb.c, $(MESADRVSRCDIR)/i810)
-LinkSourceFile(i810fastpath.c, $(MESADRVSRCDIR)/i810)
-LinkSourceFile(i810ioctl.c, $(MESADRVSRCDIR)/i810)
 #endif
 

@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/lib/GL/mesa/src/drv/mga/Imakefile.inc,v 1.2 2001/05/02 15:06:03 dawes Exp $
+XCOMM $XFree86: xc/lib/GL/mesa/src/drv/mga/Imakefile.inc,v 1.3 2002/02/22 21:33:05 dawes Exp $
 
 #ifndef MesaDrvSrcDir
 #define MesaDrvSrcDir $(GLXLIBSRC)/mesa/src/drv
@@ -16,16 +16,17 @@ ALLOC_DEFINES = -DMALLOC_0_RETURNS_NULL
 #endif
 
 #if BuildXF86DRI
-  DRI_DEFINES = GlxDefines
+  DRI_DEFINES = GlxDefines -DX_BYTE_ORDER=ByteOrder
  DRI_INCLUDES = -I$(GLXLIBSRC)/dri \
 		-I$(GLXLIBSRC)/glx \
 		-I$(INCLUDESRC) \
 		-I$(INCLUDESRC)/GL \
-		-I$(GLXLIBSRC)/mesa/dri \
 		-I$(SERVERSRC)/GL/dri \
 		-I$(XF86OSSRC) \
 		-I$(XF86DRIVERSRC)/mga \
-		-I$(GLXLIBSRC)/dri/drm
+		-I$(XF86COMSRC) \
+		-I$(GLXLIBSRC)/dri/drm \
+		-I$(GLXLIBSRC)/include
 #endif
 
 MESA_INCLUDES = -I$(MESASRCDIR)/src \
@@ -35,10 +36,9 @@ MESA_INCLUDES = -I$(MESASRCDIR)/src \
 
       MGASRCS = $(MESADRVMGABUILDDIR)mgabuffers.c \
 		$(MESADRVMGABUILDDIR)mgadd.c \
-		$(MESADRVMGABUILDDIR)mgaeltpath.c \
-		$(MESADRVMGABUILDDIR)mgafastpath.c \
+		$(MESADRVMGABUILDDIR)mgarender.c \
 		$(MESADRVMGABUILDDIR)mgaioctl.c \
-		$(MESADRVMGABUILDDIR)mgapipeline.c \
+		$(MESADRVMGABUILDDIR)mgapixel.c \
 		$(MESADRVMGABUILDDIR)mgaspan.c \
 		$(MESADRVMGABUILDDIR)mgastate.c \
 		$(MESADRVMGABUILDDIR)mgatex.c \
@@ -50,10 +50,9 @@ MESA_INCLUDES = -I$(MESASRCDIR)/src \
 
       MGAOBJS = $(MESADRVMGABUILDDIR)mgabuffers.o \
 		$(MESADRVMGABUILDDIR)mgadd.o \
-		$(MESADRVMGABUILDDIR)mgaeltpath.o \
-		$(MESADRVMGABUILDDIR)mgafastpath.o \
+		$(MESADRVMGABUILDDIR)mgarender.o \
 		$(MESADRVMGABUILDDIR)mgaioctl.o \
-		$(MESADRVMGABUILDDIR)mgapipeline.o \
+		$(MESADRVMGABUILDDIR)mgapixel.o \
 		$(MESADRVMGABUILDDIR)mgaspan.o \
 		$(MESADRVMGABUILDDIR)mgastate.o \
 		$(MESADRVMGABUILDDIR)mgatex.o \
@@ -65,10 +64,9 @@ MESA_INCLUDES = -I$(MESASRCDIR)/src \
 
       MGAUOBJS = $(MESADRVMGABUILDDIR)unshared/mgabuffers.o \
 		$(MESADRVMGABUILDDIR)unshared/mgadd.o \
-		$(MESADRVMGABUILDDIR)unshared/mgaeltpath.o \
-		$(MESADRVMGABUILDDIR)unshared/mgafastpath.o \
+		$(MESADRVMGABUILDDIR)unshared/mgarender.o \
 		$(MESADRVMGABUILDDIR)unshared/mgaioctl.o \
-		$(MESADRVMGABUILDDIR)unshared/mgapipeline.o \
+		$(MESADRVMGABUILDDIR)unshared/mgapixel.o \
 		$(MESADRVMGABUILDDIR)unshared/mgaspan.o \
 		$(MESADRVMGABUILDDIR)unshared/mgastate.o \
 		$(MESADRVMGABUILDDIR)unshared/mgatex.o \
@@ -80,10 +78,9 @@ MESA_INCLUDES = -I$(MESASRCDIR)/src \
 
       MGADOBJS = $(MESADRVMGABUILDDIR)debugger/mgabuffers.o \
 		$(MESADRVMGABUILDDIR)debugger/mgadd.o \
-		$(MESADRVMGABUILDDIR)debugger/mgaeltpath.o \
-		$(MESADRVMGABUILDDIR)debugger/mgafastpath.o \
+		$(MESADRVMGABUILDDIR)debugger/mgarender.o \
 		$(MESADRVMGABUILDDIR)debugger/mgaioctl.o \
-		$(MESADRVMGABUILDDIR)debugger/mgapipeline.o \
+		$(MESADRVMGABUILDDIR)debugger/mgapixel.o \
 		$(MESADRVMGABUILDDIR)debugger/mgaspan.o \
 		$(MESADRVMGABUILDDIR)debugger/mgastate.o \
 		$(MESADRVMGABUILDDIR)debugger/mgatex.o \
@@ -95,10 +92,9 @@ MESA_INCLUDES = -I$(MESASRCDIR)/src \
 
       MGAPOBJS = $(MESADRVMGABUILDDIR)profiled/mgabuffers.o \
 		$(MESADRVMGABUILDDIR)profiled/mgadd.o \
-		$(MESADRVMGABUILDDIR)profiled/mgaeltpath.o \
-		$(MESADRVMGABUILDDIR)profiled/mgafastpath.o \
+		$(MESADRVMGABUILDDIR)profiled/mgarender.o \
 		$(MESADRVMGABUILDDIR)profiled/mgaioctl.o \
-		$(MESADRVMGABUILDDIR)profiled/mgapipeline.o \
+		$(MESADRVMGABUILDDIR)profiled/mgapixel.o \
 		$(MESADRVMGABUILDDIR)profiled/mgaspan.o \
 		$(MESADRVMGABUILDDIR)profiled/mgastate.o \
 		$(MESADRVMGABUILDDIR)profiled/mgatex.o \
@@ -111,10 +107,9 @@ MESA_INCLUDES = -I$(MESASRCDIR)/src \
 #ifdef NeedToLinkMesaSrc
 LinkSourceFile(mgabuffers.c, $(MESADRVSRCDIR)/mga)
 LinkSourceFile(mgadd.c, $(MESADRVSRCDIR)/mga)
-LinkSourceFile(mgaeltpath.c, $(MESADRVSRCDIR)/mga)
-LinkSourceFile(mgafastpath.c, $(MESADRVSRCDIR)/mga)
+LinkSourceFile(mgarender.c, $(MESADRVSRCDIR)/mga)
 LinkSourceFile(mgaioctl.c, $(MESADRVSRCDIR)/mga)
-LinkSourceFile(mgapipeline.c, $(MESADRVSRCDIR)/mga)
+LinkSourceFile(mgapixel.c, $(MESADRVSRCDIR)/mga)
 LinkSourceFile(mgaspan.c, $(MESADRVSRCDIR)/mga)
 LinkSourceFile(mgastate.c, $(MESADRVSRCDIR)/mga)
 LinkSourceFile(mgatex.c, $(MESADRVSRCDIR)/mga)

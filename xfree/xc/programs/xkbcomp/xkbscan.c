@@ -24,7 +24,7 @@
  THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
  ********************************************************/
-/* $XFree86: xc/programs/xkbcomp/xkbscan.c,v 3.10 2001/01/17 23:45:45 dawes Exp $ */
+/* $XFree86: xc/programs/xkbcomp/xkbscan.c,v 3.11 2002/06/05 00:00:38 dawes Exp $ */
 
 #include <stdio.h>
 #include <ctype.h>
@@ -35,6 +35,7 @@
 #include "tokens.h"
 #define	DEBUG_VAR	scanDebug
 #include "utils.h"
+#include "parseutils.h"
 
 FILE	*yyin = NULL;
 
@@ -58,12 +59,7 @@ static	char	buf[BUFSIZE];
 extern	unsigned debugFlags;
 
 static char *
-#if NeedFunctionPrototypes
 tokText(int tok)
-#else
-tokText(tok)
-    int tok;
-#endif
 {
 static char buf[32];
 
@@ -148,13 +144,7 @@ static char buf[32];
 #endif
 
 int
-#if NeedFunctionPrototypes
 setScanState(char *file,int line)
-#else
-setScanState(file,line)
-    char *	file;
-    int 	line;
-#endif
 {
     if (file!=NULL)
 	strncpy(scanFile,file,1024);
@@ -163,12 +153,8 @@ setScanState(file,line)
     return 1;
 }
 
-int
-#if NeedFunctionPrototypes
+static int
 yyGetString(void)
-#else
-yyGetString()
-#endif
 {
 int ch;
 
@@ -229,12 +215,8 @@ int ch;
     return ERROR_TOK;
 }
 
-int
-#if NeedFunctionPrototypes
+static int
 yyGetKeyName(void)
-#else
-yyGetKeyName()
-#endif
 {
 int ch;
 
@@ -347,13 +329,8 @@ struct _Keyword {
 };
 int	numKeywords = sizeof(keywords)/sizeof(struct _Keyword);
 
-int
-#if NeedFunctionPrototypes
+static int
 yyGetIdent(int first)
-#else
-yyGetIdent(first)
-    int first;
-#endif
 {
 int ch,i,found;
 int	rtrn = IDENT;
@@ -388,13 +365,8 @@ int	rtrn = IDENT;
     return rtrn;
 }
 
-int
-#if NeedFunctionPrototypes
+static int
 yyGetNumber(int ch)
-#else
-yyGetNumber(ch)
-    int ch;
-#endif
 {
 int	isFloat= 0;
 
@@ -428,11 +400,7 @@ int	isFloat= 0;
 }
 
 int
-#if NeedFunctionPrototypes
 yylex(void)
-#else
-yylex()
-#endif
 {
 int	ch;
 int	rtrn;

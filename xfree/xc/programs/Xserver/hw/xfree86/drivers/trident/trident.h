@@ -21,7 +21,8 @@
  *
  * Authors:  Alan Hourihane, <alanh@fairlite.demon.co.uk>
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/trident/trident.h,v 1.51 2002/01/13 00:15:52 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/trident/trident.h,v 1.56 2002/09/16 18:06:02 eich Exp $ */
+/*#define VBE_INFO*/
 
 #ifndef _TRIDENT_H_
 #define _TRIDENT_H_
@@ -36,6 +37,8 @@
 #include "shadowfb.h"
 #include "shadow.h"
 #include "xf86xv.h"
+#include "xf86Pci.h"
+#include "vbe.h"
 
 typedef struct {
 	unsigned char tridentRegs3x4[0x100];
@@ -64,6 +67,7 @@ typedef struct {
     unsigned char *     IOBase;
     unsigned char *	FbBase;
     long		FbMapSize;
+    IOADDRESS		PIOBase;
     Bool		NoAccel;
     Bool		HWCursor;
     Bool		UsePCIRetry;
@@ -123,6 +127,10 @@ typedef struct {
     RamDacRecPtr	RamDacRec;
     xf86CursorInfoPtr	CursorInfoRec;
     xf86Int10InfoPtr	Int10;
+    vbeInfoPtr		pVbe;
+#ifdef VBE_INFO
+    vbeModeInfoPtr	vbeModes;
+#endif
     XAAInfoRecPtr	AccelInfoRec;
     CloseScreenProcPtr	CloseScreen;
     ScreenBlockHandlerProcPtr BlockHandler;
@@ -149,6 +157,12 @@ typedef struct {
     int                 OverrideRskew;
     OptionInfoPtr	Options;
     Bool		shadowNew;
+    int			displaySize;
+    int			dspOverride;
+    Bool		GammaBrightnessOn;
+    int			brightness;
+    double		gamma;
+    int			FPDelay;	/* just for debugging - will go away */
 } TRIDENTRec, *TRIDENTPtr;
 
 typedef struct {
@@ -167,6 +181,9 @@ typedef struct {
     int shadow_16;
     int shadow_HiOrd;
 } tridentLCD;
+
+#define LCD_ACTIVE 0x01
+#define CRT_ACTIVE 0x02
 
 extern tridentLCD LCD[];
 
@@ -200,6 +217,7 @@ void TridentRestore(ScrnInfoPtr pScrn, TRIDENTRegPtr tridentReg);
 void TridentSave(ScrnInfoPtr pScrn, TRIDENTRegPtr tridentReg);
 Bool TridentInit(ScrnInfoPtr pScrn, DisplayModePtr mode);
 Bool TridentAccelInit(ScreenPtr pScreen);
+Bool XPAccelInit(ScreenPtr pScreen);
 Bool ImageAccelInit(ScreenPtr pScreen);
 Bool BladeAccelInit(ScreenPtr pScreen);
 Bool TridentHWCursorInit(ScreenPtr pScreen);
@@ -275,8 +293,7 @@ typedef enum {
     CYBERBLADEAI1,
     CYBERBLADEAI1D,
     CYBERBLADEE4,
-    CYBERBLADEXPm8,
-    CYBERBLADEXPm16,
+    BLADEXP,
     CYBERBLADEXPAI1
 } TRIDENTType;
 
@@ -288,7 +305,9 @@ typedef enum {
 			 (xf86IsPrimaryIsa()))
 
 #define HAS_DST_TRANS	((pTrident->Chipset == PROVIDIA9682) || \
-			 (pTrident->Chipset == PROVIDIA9685))
+			 (pTrident->Chipset == PROVIDIA9685) || \
+			 (pTrident->Chipset == BLADEXP) || \
+			 (pTrident->Chipset == CYBERBLADEXPAI1))
 
 #define Is3Dchip	((pTrident->Chipset == CYBER9397) || \
 			 (pTrident->Chipset == CYBER9397DVD) || \
@@ -305,8 +324,7 @@ typedef enum {
 			 (pTrident->Chipset == CYBERBLADEAI1D)  || \
 			 (pTrident->Chipset == BLADE3D) || \
 			 (pTrident->Chipset == CYBERBLADEXPAI1) || \
-			 (pTrident->Chipset == CYBERBLADEXPm8) || \
-			 (pTrident->Chipset == CYBERBLADEXPm16))
+			 (pTrident->Chipset == BLADEXP))
 
 /*
  * Trident DAC's
@@ -322,6 +340,7 @@ typedef enum {
 #define VID_ZOOM_INV 0x1
 #define VID_ZOOM_MINI 0x2
 #define VID_OFF_SHIFT_4 0x4
-
+#define VID_ZOOM_NOMINI 0x8
+#define VID_DOUBLE_LINEBUFFER_FOR_WIDE_SRC 0x10
 #endif /* _TRIDENT_H_ */
 

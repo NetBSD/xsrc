@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/imstt/imstt_driver.c,v 1.18 2001/11/08 04:15:31 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/imstt/imstt_driver.c,v 1.20 2002/09/24 15:23:55 tsi Exp $ */
 
 /*
  *	Copyright 2000	Ani Joshi <ajoshi@unixbox.com>
@@ -254,7 +254,7 @@ static const OptionInfoRec * IMSTTAvailableOptions(int chipid, int busid)
 
 static void IMSTTIdentify(int flags)
 {
-	xf86PrintChipsets("IMSTT", "driver (version " DRIVER_VERSION " for IMS TwinTurbo chipsets ",
+	xf86PrintChipsets("IMSTT", "driver (version " DRIVER_VERSION ") for IMS TwinTurbo chipsets ",
 			  IMSTTChipsets);
 }
 
@@ -438,8 +438,8 @@ static Bool IMSTTPreInit(ScrnInfoPtr pScrn, int flags)
 
 	iptr->PciInfo = xf86GetPciInfoForEntity(pEnt->index);
 	xf86RegisterResources(pEnt->index, NULL, ResNone);
-	xf86SetOperatingState(RES_SHARED_VGA, pEnt->index, ResUnusedOpr);
-	xf86SetOperatingState(resVgaMemShared, pEnt->index, ResDisableOpr);
+	xf86SetOperatingState(resVgaIo, pEnt->index, ResUnusedOpr);
+	xf86SetOperatingState(resVgaMem, pEnt->index, ResDisableOpr);
 
 	if (pEnt->device->chipset && *pEnt->device->chipset) {
 		pScrn->chipset = pEnt->device->chipset;

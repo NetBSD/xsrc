@@ -23,7 +23,7 @@
  * OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-/* $XFree86: xc/lib/GL/mesa/src/drv/tdfx/tdfx_pixels.c,v 1.3 2001/08/18 02:51:06 dawes Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/tdfx/tdfx_pixels.c,v 1.4 2002/02/22 21:45:03 dawes Exp $ */
 
 /*
  * Original rewrite:
@@ -38,12 +38,55 @@
 
 #include "tdfx_context.h"
 #include "tdfx_dd.h"
+#include "tdfx_lock.h"
 #include "tdfx_vb.h"
-#include "tdfx_pipeline.h"
 #include "tdfx_pixels.h"
 #include "tdfx_render.h"
 
+#include "swrast/swrast.h"
+
 #include "image.h"
+
+
+#define FX_grLfbWriteRegion(fxMesa,dst_buffer,dst_x,dst_y,src_format,src_width,src_height,src_stride,src_data)		\
+  do {				\
+    LOCK_HARDWARE(fxMesa);		\
+    fxMesa->Glide.grLfbWriteRegion(dst_buffer,dst_x,dst_y,src_format,src_width,src_height,FXFALSE,src_stride,src_data);	\
+    UNLOCK_HARDWARE(fxMesa);		\
+  } while(0)
+
+
+#define FX_grLfbReadRegion(fxMesa,src_buffer,src_x,src_y,src_width,src_height,dst_stride,dst_data)			\
+  do {				\
+    LOCK_HARDWARE(fxMesa);		\
+    fxMesa->Glide.grLfbReadRegion(src_buffer,src_x,src_y,src_width,src_height,dst_stride,dst_data);				\
+    UNLOCK_HARDWARE(fxMesa);		\
+  } while (0);
+
+
+static FxBool
+FX_grLfbLock(tdfxContextPtr fxMesa, GrLock_t type, GrBuffer_t buffer,
+             GrLfbWriteMode_t writeMode, GrOriginLocation_t origin,
+             FxBool pixelPipeline, GrLfbInfo_t * info)
+{
+   FxBool result;
+
+   LOCK_HARDWARE(fxMesa);
+   result = fxMesa->Glide.grLfbLock(type, buffer, writeMode, origin, pixelPipeline, info);
+   UNLOCK_HARDWARE(fxMesa);
+   return result;
+}
+
+
+
+#define FX_grLfbUnlock(fxMesa, t, b)	\
+  do {					\
+    LOCK_HARDWARE(fxMesa);		\
+    fxMesa->Glide.grLfbUnlock(t, b);	\
+    UNLOCK_HARDWARE(fxMesa);		\
+  } while (0)
+
+
 
 #if 0
 /* test if window coord (px,py) is visible */
@@ -432,25 +475,26 @@ tdfx_bitmap_R8G8B8A8(GLcontext * ctx, GLint px, GLint py,
 }
 #endif
 
-GLboolean
+void
 tdfx_readpixels_R5G6B5(GLcontext * ctx, GLint x, GLint y,
 		       GLsizei width, GLsizei height,
 		       GLenum format, GLenum type,
 		       const struct gl_pixelstore_attrib *packing,
 		       GLvoid * dstImage)
 {
-   if (!(format == GL_RGB && type == GL_UNSIGNED_SHORT_5_6_5)) {
-      return GL_FALSE;        /* format/type not recognised */
-   }
-
-   if (ctx->Pixel.ScaleOrBiasRGBA || ctx->Pixel.MapColorFlag) {
-      return GL_FALSE;        /* can't do this */
+   if (format != GL_RGB ||
+       type != GL_UNSIGNED_SHORT_5_6_5 ||
+       (ctx->_ImageTransferState & (IMAGE_SCALE_BIAS_BIT|
+				    IMAGE_MAP_COLOR_BIT)))
+   {
+      _swrast_ReadPixels( ctx, x, y, width, height, format, type, packing,
+			  dstImage );
+      return;
    }
 
    {
       tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
       GrLfbInfo_t info;
-      GLboolean result = GL_FALSE;
 
       const GLint winX = fxMesa->x_offset;
       const GLint winY = fxMesa->y_offset + fxMesa->height - 1;
@@ -460,9 +504,9 @@ tdfx_readpixels_R5G6B5(GLcontext * ctx, GLint x, GLint y,
       LOCK_HARDWARE( fxMesa );
       info.size = sizeof(info);
       if (fxMesa->Glide.grLfbLock(GR_LFB_READ_ONLY,
-                                  fxMesa->ReadBuffer,
-                                  GR_LFBWRITEMODE_ANY,
-                                  GR_ORIGIN_UPPER_LEFT, FXFALSE, &info)) {
+		    fxMesa->ReadBuffer,
+		    GR_LFBWRITEMODE_ANY,
+		    GR_ORIGIN_UPPER_LEFT, FXFALSE, &info)) {
 	 const GLint srcStride = (fxMesa->glCtx->Color.DrawBuffer ==
 	     GL_FRONT) ? (fxMesa->screen_width) : (info.strideInBytes / 2);
 	 const GLushort *src = (const GLushort *) info.lfbPtr
@@ -472,45 +516,43 @@ tdfx_readpixels_R5G6B5(GLcontext * ctx, GLint x, GLint y,
 	 const GLint dstStride = _mesa_image_row_stride(packing,
             width, format, type);
 
-         if (format == GL_RGB && type == GL_UNSIGNED_SHORT_5_6_5) {
-	    /* directly memcpy 5R6G5B pixels into client's buffer */
-	    const GLint widthInBytes = width * 2;
-	    GLint row;
-	    for (row = 0; row < height; row++) {
-	       MEMCPY(dst, src, widthInBytes);
-	       dst += dstStride;
-	       src -= srcStride;
-	    }
-	    result = GL_TRUE;
+	 /* directly memcpy 5R6G5B pixels into client's buffer */
+	 const GLint widthInBytes = width * 2;
+	 GLint row;
+	 for (row = 0; row < height; row++) {
+	    MEMCPY(dst, src, widthInBytes);
+	    dst += dstStride;
+	    src -= srcStride;
 	 }
 
 	 fxMesa->Glide.grLfbUnlock(GR_LFB_READ_ONLY, fxMesa->ReadBuffer);
       }
       UNLOCK_HARDWARE( fxMesa );
-      return result;
+      return;
    }
 }
 
-GLboolean
+void
 tdfx_readpixels_R8G8B8A8(GLcontext * ctx, GLint x, GLint y,
                          GLsizei width, GLsizei height,
                          GLenum format, GLenum type,
                          const struct gl_pixelstore_attrib *packing,
                          GLvoid * dstImage)
 {
-   if (!(format == GL_BGRA && type == GL_UNSIGNED_INT_8_8_8_8) &&
-       !(format == GL_BGRA && type == GL_UNSIGNED_BYTE)) {
-      return GL_FALSE;        /* format/type not optimised */
+   if ((!(format == GL_BGRA && type == GL_UNSIGNED_INT_8_8_8_8) &&
+	!(format == GL_BGRA && type == GL_UNSIGNED_BYTE)) ||
+       (ctx->_ImageTransferState & (IMAGE_SCALE_BIAS_BIT|
+				    IMAGE_MAP_COLOR_BIT)))
+   {
+      _swrast_ReadPixels( ctx, x, y, width, height, format, type, packing,
+			  dstImage );
+      return;
    }
 
-   if (ctx->Pixel.ScaleOrBiasRGBA || ctx->Pixel.MapColorFlag) {
-      return GL_FALSE;        /* can't do this */
-   }
 
    {
       tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
       GrLfbInfo_t info;
-      GLboolean result = GL_FALSE;
 
       const GLint winX = fxMesa->x_offset;
       const GLint winY = fxMesa->y_offset + fxMesa->height - 1;
@@ -520,9 +562,9 @@ tdfx_readpixels_R8G8B8A8(GLcontext * ctx, GLint x, GLint y,
       LOCK_HARDWARE(fxMesa);
       info.size = sizeof(info);
       if (fxMesa->Glide.grLfbLock(GR_LFB_READ_ONLY,
-                                  fxMesa->ReadBuffer,
-                                  GR_LFBWRITEMODE_ANY,
-                                  GR_ORIGIN_UPPER_LEFT, FXFALSE, &info))
+                    fxMesa->ReadBuffer,
+                    GR_LFBWRITEMODE_ANY,
+                    GR_ORIGIN_UPPER_LEFT, FXFALSE, &info))
       {
          const GLint srcStride = (fxMesa->glCtx->Color.DrawBuffer == GL_FRONT)
             ? (fxMesa->screen_width) : (info.strideInBytes / 4);
@@ -534,46 +576,53 @@ tdfx_readpixels_R8G8B8A8(GLcontext * ctx, GLint x, GLint y,
             dstImage, width, height, format, type, 0, 0, 0);
          const GLint widthInBytes = width * 4;
 
-         if ((format == GL_BGRA && type == GL_UNSIGNED_INT_8_8_8_8) ||
-             (format == GL_BGRA && type == GL_UNSIGNED_BYTE)) {
+	 {
             GLint row;
             for (row = 0; row < height; row++) {
                MEMCPY(dst, src, widthInBytes);
                dst += dstStride;
                src -= srcStride;
             }
-            result = GL_TRUE;
          }
 
          fxMesa->Glide.grLfbUnlock(GR_LFB_READ_ONLY, fxMesa->ReadBuffer);
       }
       UNLOCK_HARDWARE(fxMesa);
-      return result;
    }
 }
 
-GLboolean
+void
 tdfx_drawpixels_R8G8B8A8(GLcontext * ctx, GLint x, GLint y,
                          GLsizei width, GLsizei height,
                          GLenum format, GLenum type,
                          const struct gl_pixelstore_attrib *unpack,
                          const GLvoid * pixels)
 {
-   if (!(format == GL_BGRA && type == GL_UNSIGNED_INT_8_8_8_8) &&
-       !(format == GL_BGRA && type == GL_UNSIGNED_BYTE)) {
-      return GL_FALSE;        /* format/type not optimised */
-   }
+   tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
 
-   if (ctx->Pixel.ZoomX!=1.0F || ctx->Pixel.ZoomY!=1.0F) {
-      return GL_FALSE;        /* can't scale pixels */
-   }
-
-   if (ctx->Pixel.ScaleOrBiasRGBA || ctx->Pixel.MapColorFlag) {
-      return GL_FALSE;        /* can't do this */
-   }
-
-   if (ctx->RasterMask & (~BLEND_BIT)) {
-      return GL_FALSE;        /* can't do any raster ops, except blend */
+   if ((!(format == GL_BGRA && type == GL_UNSIGNED_INT_8_8_8_8) &&
+	!(format == GL_BGRA && type == GL_UNSIGNED_BYTE)) ||
+       ctx->Pixel.ZoomX != 1.0F || 
+       ctx->Pixel.ZoomY != 1.0F ||
+       (ctx->_ImageTransferState & (IMAGE_SCALE_BIAS_BIT|
+				    IMAGE_MAP_COLOR_BIT)) ||
+       ctx->Color.AlphaEnabled ||
+       ctx->Depth.Test ||
+       ctx->Fog.Enabled ||
+       ctx->Scissor.Enabled ||
+       ctx->Stencil.Enabled ||
+       !ctx->Color.ColorMask[0] ||
+       !ctx->Color.ColorMask[1] ||
+       !ctx->Color.ColorMask[2] ||
+       !ctx->Color.ColorMask[3] ||
+       ctx->Color.ColorLogicOpEnabled ||
+       ctx->Texture._ReallyEnabled ||
+       ctx->Depth.OcclusionTest ||
+       fxMesa->Fallback)       
+   {
+      _swrast_DrawPixels( ctx, x, y, width, height, format, type, 
+			  unpack, pixels );
+      return; 
    }
 
    {
@@ -590,7 +639,7 @@ tdfx_drawpixels_R8G8B8A8(GLcontext * ctx, GLint x, GLint y,
       LOCK_HARDWARE(fxMesa);
 
       /* make sure hardware has latest blend funcs */
-      if (ctx->RasterMask & BLEND_BIT) {
+      if (ctx->Color.BlendEnabled) {
          fxMesa->dirty |= TDFX_UPLOAD_BLEND_FUNC;
          tdfxEmitHwStateLocked( fxMesa );
       }
@@ -599,15 +648,17 @@ tdfx_drawpixels_R8G8B8A8(GLcontext * ctx, GLint x, GLint y,
       if (fxMesa->glCtx->Color.DrawBuffer == GL_FRONT) {
          if (!inClipRects_Region(fxMesa, scrX, scrY, width, height)) {
             UNLOCK_HARDWARE(fxMesa);
-            return GL_FALSE;
+	    _swrast_DrawPixels( ctx, x, y, width, height, format, type, 
+				unpack, pixels );
+            return;
          }
       }
 
       info.size = sizeof(info);
       if (fxMesa->Glide.grLfbLock(GR_LFB_WRITE_ONLY,
-                                  fxMesa->DrawBuffer,
-                                  GR_LFBWRITEMODE_8888,
-                                  GR_ORIGIN_UPPER_LEFT, FXTRUE, &info))
+                    fxMesa->DrawBuffer,
+                    GR_LFBWRITEMODE_8888,
+                    GR_ORIGIN_UPPER_LEFT, FXTRUE, &info))
       {
          const GLint dstStride = (fxMesa->glCtx->Color.DrawBuffer == GL_FRONT)
             ? (fxMesa->screen_width * 4) : (info.strideInBytes);
@@ -633,6 +684,5 @@ tdfx_drawpixels_R8G8B8A8(GLcontext * ctx, GLint x, GLint y,
          fxMesa->Glide.grLfbUnlock(GR_LFB_WRITE_ONLY, fxMesa->DrawBuffer);
       }
       UNLOCK_HARDWARE(fxMesa);
-      return result;
    }
 }

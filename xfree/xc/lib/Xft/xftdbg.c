@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/lib/Xft/xftdbg.c,v 1.3 2001/03/31 01:57:20 keithp Exp $
+ * $XFree86: xc/lib/Xft/xftdbg.c,v 1.4 2002/02/15 07:36:10 keithp Exp $
  *
  * Copyright © 2000 Keith Packard, member of The XFree86 Project, Inc.
  *
@@ -22,209 +22,29 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "xftint.h"
+#include <stdlib.h>
 #include <stdio.h>
+#include "xftint.h"
 
-void
-XftValuePrint (XftValue v)
+int
+XftDebug (void)
 {
-    switch (v.type) {
-    case XftTypeVoid:
-	printf (" <void>");
-	break;
-    case XftTypeInteger:
-	printf (" %d", v.u.i);
-	break;
-    case XftTypeDouble:
-	printf (" %g", v.u.d);
-	break;
-    case XftTypeString:
-	printf (" \"%s\"", v.u.s);
-	break;
-    case XftTypeBool:
-	printf (" %s", v.u.b ? "True" : "False");
-	break;
-    case XftTypeMatrix:
-	printf (" (%f %f; %f %f)", v.u.m->xx, v.u.m->xy, v.u.m->yx, v.u.m->yy);
-	break;
-    }
-}
+    static int  initialized;
+    static int  debug;
 
-void
-XftValueListPrint (XftValueList *l)
-{
-    for (; l; l = l->next)
-	XftValuePrint (l->value);
-}
-
-void
-XftPatternPrint (XftPattern *p)
-{
-    int		    i;
-    XftPatternElt   *e;
-    
-    printf ("Pattern %d of %d\n", p->num, p->size);
-    for (i = 0; i < p->num; i++)
+    if (!initialized)
     {
-	e = &p->elts[i];
-	printf ("\t%s:", e->object);
-	XftValueListPrint (e->values);
-	printf ("\n");
-    }
-    printf ("\n");
-}
+	char    *e;
 
-void
-XftOpPrint (XftOp op)
-{
-    switch (op) {
-    case XftOpInteger: printf ("Integer"); break;
-    case XftOpDouble: printf ("Double"); break;
-    case XftOpString: printf ("String"); break;
-    case XftOpMatrix: printf ("Matrix"); break;
-    case XftOpBool: printf ("Bool"); break;
-    case XftOpField: printf ("Field"); break;
-    case XftOpAssign: printf ("Assign"); break;
-    case XftOpPrepend: printf ("Prepend"); break;
-    case XftOpAppend: printf ("Append"); break;
-    case XftOpQuest: printf ("Quest"); break;
-    case XftOpOr: printf ("Or"); break;
-    case XftOpAnd: printf ("And"); break;
-    case XftOpEqual: printf ("Equal"); break;
-    case XftOpNotEqual: printf ("NotEqual"); break;
-    case XftOpLess: printf ("Less"); break;
-    case XftOpLessEqual: printf ("LessEqual"); break;
-    case XftOpMore: printf ("More"); break;
-    case XftOpMoreEqual: printf ("MoreEqual"); break;
-    case XftOpPlus: printf ("Plus"); break;
-    case XftOpMinus: printf ("Minus"); break;
-    case XftOpTimes: printf ("Times"); break;
-    case XftOpDivide: printf ("Divide"); break;
-    case XftOpNot: printf ("Not"); break;
-    case XftOpNil: printf ("Nil"); break;
-    }
-}
-
-void
-XftTestPrint (XftTest *test)
-{
-    switch (test->qual) {
-    case XftQualAny:
-	printf ("any ");
-	break;
-    case XftQualAll:
-	printf ("all ");
-	break;
-    }
-    printf ("%s ", test->field);
-    XftOpPrint (test->op);
-    printf (" ");
-    XftValuePrint (test->value);
-    printf ("\n");
-}
-
-void
-XftExprPrint (XftExpr *expr)
-{
-    switch (expr->op) {
-    case XftOpInteger: printf ("%d", expr->u.ival); break;
-    case XftOpDouble: printf ("%g", expr->u.dval); break;
-    case XftOpString: printf ("\"%s\"", expr->u.sval); break;
-    case XftOpMatrix: printf ("[%g %g %g %g]",
-			      expr->u.mval->xx,
-			      expr->u.mval->xy,
-			      expr->u.mval->yx,
-			      expr->u.mval->yy);
-    case XftOpBool: printf ("%s", expr->u.bval ? "true" : "false"); break;
-    case XftOpField: printf ("%s", expr->u.field); break;
-    case XftOpQuest:
-	XftExprPrint (expr->u.tree.left);
-	printf (" quest ");
-	XftExprPrint (expr->u.tree.right->u.tree.left);
-	printf (" colon ");
-	XftExprPrint (expr->u.tree.right->u.tree.right);
-	break;
-    case XftOpOr:
-    case XftOpAnd:
-    case XftOpEqual:
-    case XftOpNotEqual:
-    case XftOpLess:
-    case XftOpLessEqual:
-    case XftOpMore:
-    case XftOpMoreEqual:
-    case XftOpPlus:
-    case XftOpMinus:
-    case XftOpTimes:
-    case XftOpDivide:
-	XftExprPrint (expr->u.tree.left);
-	printf (" ");
-	switch (expr->op) {
-	case XftOpOr: printf ("Or"); break;
-	case XftOpAnd: printf ("And"); break;
-	case XftOpEqual: printf ("Equal"); break;
-	case XftOpNotEqual: printf ("NotEqual"); break;
-	case XftOpLess: printf ("Less"); break;
-	case XftOpLessEqual: printf ("LessEqual"); break;
-	case XftOpMore: printf ("More"); break;
-	case XftOpMoreEqual: printf ("MoreEqual"); break;
-	case XftOpPlus: printf ("Plus"); break;
-	case XftOpMinus: printf ("Minus"); break;
-	case XftOpTimes: printf ("Times"); break;
-	case XftOpDivide: printf ("Divide"); break;
-	default: break;
+	initialized = 1;
+        e = getenv ("XFT_DEBUG");
+	if (e)
+	{
+	    printf ("XFT_DEBUG=%s\n", e);
+	    debug = atoi (e);
+	    if (debug <= 0)
+		debug = 1;
 	}
-	printf (" ");
-	XftExprPrint (expr->u.tree.right);
-	break;
-    case XftOpNot:
-	printf ("Not ");
-	XftExprPrint (expr->u.tree.left);
-	break;
-    default:
-	break;
     }
-}
-
-void
-XftEditPrint (XftEdit *edit)
-{
-    printf ("Edit %s ", edit->field);
-    XftOpPrint (edit->op);
-    printf (" ");
-    XftExprPrint (edit->expr);
-}
-
-void
-XftSubstPrint (XftSubst *subst)
-{
-    XftEdit	*e;
-    XftTest	*t;
-    
-    printf ("match\n");
-    for (t = subst->test; t; t = t->next)
-    {
-	printf ("\t");
-	XftTestPrint (t);
-    }
-    printf ("edit\n");
-    for (e = subst->edit; e; e = e->next)
-    {
-	printf ("\t");
-	XftEditPrint (e);
-	printf (";\n");
-    }
-    printf ("\n");
-}
-
-void
-XftFontSetPrint (XftFontSet *s)
-{
-    int	    i;
-
-    printf ("FontSet %d of %d\n", s->nfont, s->sfont);
-    for (i = 0; i < s->nfont; i++)
-    {
-	printf ("Font %d ", i);
-	XftPatternPrint (s->fonts[i]);
-    }
+    return debug;
 }

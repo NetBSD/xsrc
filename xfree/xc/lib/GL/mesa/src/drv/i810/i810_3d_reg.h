@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/i810/i810_3d_reg.h,v 1.6 2001/03/21 16:14:21 dawes Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/i810/i810_3d_reg.h,v 1.7 2002/02/22 21:33:03 dawes Exp $ */
 
 #ifndef I810_3D_REG_H
 #define I810_3D_REG_H
@@ -88,7 +88,7 @@
 #define DR4_YORG_MASK          (0x3ff<<16)
 #define DR4_XORG_MASK          (0x7ff<<0)
 
-   
+
 /* GFXRENDERSTATE_LINEWIDTH_CULL_SHADE_MODE, p140
  *
  * Format:
@@ -135,7 +135,7 @@
 #define LCS_UPDATE_INTERP (LCS_UPDATE_ALPHA_INTERP| 	\
 			   LCS_UPDATE_RGB_INTERP|	\
 			   LCS_UPDATE_SPEC_INTERP)
-          
+
 
 /* GFXRENDERSTATE_BOOLEAN_ENA_1, p142
  *
@@ -350,7 +350,7 @@
 #define MC_OP_SUBTRACT               (0x14)
 
 /* GFXRENDERSTATE_MAP_PALETTE_LOAD, p128
- * 
+ *
  * Format:
  *     0:  GFX_OP_MAP_PALETTE_LOAD
  *     1:  16bpp color[0]
@@ -534,20 +534,8 @@ typedef struct {
    float tu1;
    float tv1;
 } i810_full_vertex;
-      
 
-/* GFX_PRIMITIVE, p106
- */
-#define GFX_OP_PRIMITIVE     ((0x3<<29)|(0x1f<<24))
-#define PR_TRIANGLES         (0x0<<18)
-#define PR_TRISTRIP_0        (0x1<<18)
-#define PR_TRISTRIP_1        (0x2<<18)
-#define PR_TRIFAN            (0x3<<18)
-#define PR_POLYGON           (0x4<<18)
-#define PR_LINES             (0x5<<18)
-#define PR_LINESTRIP         (0x6<<18)
-#define PR_RECTS             (0x7<<18)
-#define PR_DWORD_COUNT_SHIFT 0
+
 
 /* GFXCMDPARSER_BATCH_BUFFER, p105
  *
@@ -609,7 +597,7 @@ typedef struct {
  *
  * Format:
  *     0:  GFX_OP_DESTBUFFER_VARS
- *     1:  DEST_* 
+ *     1:  DEST_*
  */
 #define GFX_OP_DESTBUFFER_VARS   ((0x3<<29)|(0x1d<<24)|(0x85<<16)|0x0)
 #define DV_HORG_BIAS_MASK      (0xf<<20)
@@ -644,29 +632,5 @@ typedef struct {
 #define ST1_MASK                 (0xffff)
 
 #define I810_SET_FIELD( var, mask, value ) (var &= ~(mask), var |= value)
-
-#define I810PACKCOLOR4444(r,g,b,a) \
-  ((((a) & 0xf0) << 8) | (((r) & 0xf0) << 4) | ((g) & 0xf0) | ((b) >> 4))
-
-#define I810PACKCOLOR1555(r,g,b,a) \
-  ((((r) & 0xf8) << 7) | (((g) & 0xf8) << 2) | (((b) & 0xf8) >> 3) | \
-    ((a) ? 0x8000 : 0))
-
-#define I810PACKCOLOR565(r,g,b) \
-  ((((r) & 0xf8) << 8) | (((g) & 0xfc) << 3) | (((b) & 0xf8) >> 3))
-
-
-#define I810_VFMT_T0 (GFX_OP_VERTEX_FMT |	\
-		      VF_TEXCOORD_COUNT_1 |	\
-		      VF_SPEC_FOG_ENABLE |	\
-		      VF_RGBA_ENABLE |		\
-		      VF_XYZW)
-
-#define I810_VFMT_T0T1 (GFX_OP_VERTEX_FMT |	\
-		        VF_TEXCOORD_COUNT_2 |	\
-		        VF_SPEC_FOG_ENABLE |	\
-		        VF_RGBA_ENABLE |	\
-		        VF_XYZW)
-
 
 #endif

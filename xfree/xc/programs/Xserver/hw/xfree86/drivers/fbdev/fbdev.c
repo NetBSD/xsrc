@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/fbdev/fbdev.c,v 1.38 2001/10/28 03:33:29 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/fbdev/fbdev.c,v 1.42 2002/10/10 01:35:20 dawes Exp $ */
 
 /*
  * Authors:  Alan Hourihane, <alanh@fairlite.demon.co.uk>
@@ -23,7 +23,6 @@
 #ifdef USE_AFB
 #include "afb.h"
 #endif
-#include "cfb24_32.h"
 
 #include "xf86Resources.h"
 #include "xf86RAC.h"
@@ -128,11 +127,6 @@ static const char *afbSymbols[] = {
 	NULL
 };
 
-static const char *cfbSymbols[] = {
-	"cfb24_32ScreenInit",
-	NULL
-};
-
 static const char *fbSymbols[] = {
 	"fbScreenInit",
 	"fbPictureInit",
@@ -140,9 +134,12 @@ static const char *fbSymbols[] = {
 };
 
 static const char *shadowSymbols[] = {
+	"shadowAdd",
 	"shadowAlloc",
 	"shadowInit",
+	"shadowSetup",
 	"shadowUpdatePacked",
+	"shadowUpdateRotatePacked",
 	NULL
 };
 
@@ -171,6 +168,8 @@ static const char *fbdevHWSymbols[] = {
 	"fbdevHWLeaveVT",
 	"fbdevHWModeInit",
 	"fbdevHWRestore",
+	"fbdevHWSave",
+	"fbdevHWSaveScreen",
 	"fbdevHWSwitchMode",
 	"fbdevHWValidMode",
 
@@ -207,8 +206,8 @@ FBDevSetup(pointer module, pointer opts, int *errmaj, int *errmin)
 	if (!setupDone) {
 		setupDone = TRUE;
 		xf86AddDriver(&FBDEV, module, 0);
-		LoaderRefSymLists(afbSymbols, cfbSymbols,
-				  fbSymbols, shadowSymbols, NULL);
+		LoaderRefSymLists(afbSymbols, fbSymbols,
+				  shadowSymbols, fbdevHWSymbols, NULL);
 		return (pointer)1;
 	} else {
 		if (errmaj) *errmaj = LDR_ONCEONLY;
@@ -521,10 +520,13 @@ FBDevPreInit(ScrnInfoPtr pScrn, int flags)
 
 	if (fPtr->shadowFB)
 		pScrn->displayWidth = pScrn->virtualX;	/* ShadowFB handles this correctly */
-	else
+	else {
+		int fbbpp;
 		/* FIXME: this doesn't work for all cases, e.g. when each scanline
 			has a padding which is independent from the depth (controlfb) */
-		pScrn->displayWidth = fbdevHWGetLineLength(pScrn)/(fbdevHWGetDepth(pScrn,NULL) >> 3);
+		fbdevHWGetDepth(pScrn,&fbbpp);
+		pScrn->displayWidth = fbdevHWGetLineLength(pScrn)/(fbbpp >> 3);
+	}
 
 	xf86PrintModes(pScrn);
 
@@ -543,21 +545,10 @@ FBDevPreInit(ScrnInfoPtr pScrn, int flags)
 		{
 		case 8:
 		case 16:
+		case 24:
 		case 32:
 			mod = "fb";
 			syms = fbSymbols;
-			break;
-		case 24:
-			if (pix24bpp == 32)
-			{
-				mod = "xf24_32bpp";
-				syms = cfbSymbols;
-			}
-			else 
-			{
-				mod = "fb";
-				syms = fbSymbols;
-			}
 			break;
 		default:
 			xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
@@ -908,6 +899,9 @@ FBDevWindowLinear(ScreenPtr pScreen, CARD32 row, CARD32 offset, int mode,
 {
     ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
     FBDevPtr fPtr = FBDEVPTR(pScrn);
+
+    if (!pScrn->vtSema)
+      return NULL;
 
     if (fPtr->lineLength)
       *size = fPtr->lineLength;

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/dix/cursor.c,v 3.5 2001/12/14 19:59:30 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/dix/cursor.c,v 3.8 2003/01/12 02:44:26 dawes Exp $ */
 /***********************************************************
 
 Copyright 1987, 1998  The Open Group
@@ -80,6 +80,9 @@ FreeCursorBits(bits)
 	return;
     xfree(bits->source);
     xfree(bits->mask);
+#ifdef ARGB_CURSOR
+    xfree(bits->argb);
+#endif
     if (bits->refcnt == 0)
     {
 	register GlyphSharePtr *prev, this;
@@ -138,6 +141,15 @@ CheckForEmptyMask(CursorBitsPtr bits)
     bits->emptyMask = FALSE;
     while(n--) 
 	if(*(msk++) != 0) return;
+#ifdef ARGB_CURSOR
+    if (bits->argb)
+    {
+	CARD32 *argb = bits->argb;
+	int n = bits->width * bits->height;
+	while (n--)
+	    if (*argb++ & 0xff000000) return;
+    }
+#endif
     bits->emptyMask = TRUE;
 }
 
@@ -146,10 +158,11 @@ CheckForEmptyMask(CursorBitsPtr bits)
  * does not copy the src and mask bits
  */
 CursorPtr 
-AllocCursor(psrcbits, pmaskbits, cm,
+AllocCursorARGB(psrcbits, pmaskbits, argb, cm,
 	    foreRed, foreGreen, foreBlue, backRed, backGreen, backBlue)
     unsigned char *	psrcbits;		/* server-defined padding */
     unsigned char *	pmaskbits;		/* server-defined padding */
+    CARD32 *		argb;			/* no padding */
     CursorMetricPtr	cm;
     unsigned		foreRed, foreGreen, foreBlue;
     unsigned		backRed, backGreen, backBlue;
@@ -169,6 +182,9 @@ AllocCursor(psrcbits, pmaskbits, cm,
     bits = (CursorBitsPtr)((char *)pCurs + sizeof(CursorRec));
     bits->source = psrcbits;
     bits->mask = pmaskbits;
+#ifdef ARGB_CURSOR
+    bits->argb = argb;
+#endif
     bits->width = cm->width;
     bits->height = cm->height;
     bits->xhot = cm->xhot;
@@ -206,6 +222,20 @@ AllocCursor(psrcbits, pmaskbits, cm,
 	}
     }
     return pCurs;
+}
+
+CursorPtr 
+AllocCursor(psrcbits, pmaskbits, cm,
+	    foreRed, foreGreen, foreBlue, backRed, backGreen, backBlue)
+    unsigned char *	psrcbits;		/* server-defined padding */
+    unsigned char *	pmaskbits;		/* server-defined padding */
+    CursorMetricPtr	cm;
+    unsigned		foreRed, foreGreen, foreBlue;
+    unsigned		backRed, backGreen, backBlue;
+{
+    return AllocCursorARGB (psrcbits, pmaskbits, (CARD32 *) 0, cm,
+			    foreRed, foreGreen, foreBlue,
+			    backRed, backGreen, backBlue);
 }
 
 int
@@ -324,6 +354,9 @@ AllocGlyphCursor(source, sourceChar, mask, maskChar,
 	}
 	bits->source = srcbits;
 	bits->mask = mskbits;
+#ifdef ARGB_CURSOR
+	bits->argb = 0;
+#endif
 	bits->width = cm.width;
 	bits->height = cm.height;
 	bits->xhot = cm.xhot;

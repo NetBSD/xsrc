@@ -18,7 +18,7 @@
 # The majority of entries are just a binding of a model name to a
 # chipset/server and untested.
 #
-# $XFree86: xc/programs/Xserver/hw/xfree86/xf86config/Cards,v 3.78 2001/06/23 01:55:12 paulo Exp $
+# $XFree86: xc/programs/Xserver/hw/xfree86/xf86config/Cards,v 3.80 2002/11/18 05:24:19 paulo Exp $
 
 # VGA
 
@@ -34,6 +34,212 @@ NAME * Unsupported VGA compatible
 SERVER VGA16
 DRIVER vga
 UNSUPPORTED
+
+
+#	  #
+# generic #
+#	  #
+
+NAME ** Alliance Pro Motion (generic)      [apm]
+#CHIPSET apm
+SERVER SVGA
+DRIVER apm
+LINE #Option "no_accel"
+
+NAME ** Ark Logic (generic)                [ark]
+#CHIPSET ark
+SERVER SVGA
+DRIVER ark
+
+NAME ** ATI (generic)                      [ati]
+#CHIPSET ati
+SERVER SVGA
+DRIVER ati
+
+NAME ** ATI Rage 128 based (generic)       [r128]
+#CHIPSET r128
+SERVER SVGA
+DRIVER r128
+
+NAME ** ATI Radeon (generic)               [radeon]
+#CHIPSET radeon
+SERVER SVGA
+DRIVER radeon
+
+NAME ** Chips and Technologies (generic)   [chips]
+#CHIPSET chips
+SERVER SVGA
+DRIVER chips
+LINE # Option "suspend_hack"
+LINE # Option "STN"
+LINE # Option "no_stretch"
+LINE # Option "no_center"
+LINE # Option "use_modeline"
+LINE # Option "fix_panel_size"
+LINE # videoram 512
+LINE # Option "noaccel"
+LINE # Option "no_bitblt"
+LINE # Option "xaa_no_color_exp"
+LINE # Option "xaa_benchmark"
+LINE # Option "hw_cursor"
+LINE # Option "nolinear"
+LINE # MemBase 0x03b00000
+LINE # Option "hw_clocks"
+LINE # Textclockfreq 25.175
+
+NAME ** Cirrus Logic (generic)             [cirrus]
+#CHIPSET cirrus
+SERVER SVGA
+DRIVER cirrus
+LINE # MemBase 0x00e00000		# ISA card that maps to 14Mb
+LINE # MemBase 0x04000000		# VLB card that maps to 64Mb
+LINE # MemBase 0x80000000		# VLB card that maps to 2048Mb
+LINE # MemBase 0x02000000		# VLB card that maps to 32Mb
+LINE # Option "linear"
+LINE # Option "fifo_conservative"
+
+NAME ** Cyrix MediaGX (generic)            [cyrix]
+#CHIPSET cyrix
+SERVER SVGA
+DRIVER cyrix
+
+NAME ** Linux framebuffer (generic)        [fbdev]
+#CHIPSET fbdev
+SERVER SVGA
+DRIVER fbdev
+
+NAME ** 3DLabs, TI (generic)               [glint]
+#CHIPSET glint
+SERVER SVGA
+DRIVER glint
+LINE #Option "no_accel"
+
+NAME ** Number Nine I128 (generic)         [i128]
+#CHIPSET i128
+SERVER SVGA
+DRIVER i128
+
+NAME ** Intel i740 (generic)               [i740]
+#CHIPSET i740
+SERVER SVGA
+DRIVER i740
+
+NAME ** Intel i810 (generic)               [i810]
+#CHIPSET i810
+SERVER SVGA
+DRIVER i810
+
+NAME ** Matrox Graphics (generic)          [mga]
+#CHIPSET mga
+SERVER SVGA
+DRIVER mga
+LINE # Option "mga_sdram"
+
+NAME ** NeoMagic (generic)                 [neomagic]
+#CHIPSET neomagic
+SERVER SVGA
+DRIVER neomagic
+LINE # Chipset    "NM2160"
+LINE # IOBase     0xfea00000
+LINE # MemBase    0xfd000000
+LINE # VideoRam   2048
+LINE # DacSpeed   90
+LINE # Option     "linear"
+LINE # Option     "nolinear"
+LINE # Option     "sw_cursor"
+LINE # Option     "hw_cursor"
+LINE # Option     "no_accel"
+LINE # Option     "intern_disp"
+LINE # Option     "extern_disp"
+LINE # Option     "mmio"
+LINE # Option     "no_mmio"
+LINE # Option     "lcd_center"
+LINE # Option     "no_stretch"
+
+NAME ** NVIDIA (generic)                   [nv]
+#CHIPSET nv
+SERVER SVGA
+DRIVER nv
+
+NAME ** Rendition (generic)                [rendition]
+#CHIPSET rendition
+SERVER SVGA
+DRIVER rendition
+LINE # Option "sw_cursor"
+
+NAME ** S3 (not ViRGE or Savage) (generic) [s3]
+#CHIPSET s3
+SERVER SVGA
+DRIVER s3
+
+NAME ** S3 ViRGE (generic)                 [s3virge]
+#CHIPSET s3virge
+SERVER SVGA
+DRIVER s3virge
+LINE # Option "xaa_benchmark"
+LINE # Option "fifo_moderate"
+LINE # Option "pci_burst_on"
+LINE # Option "pci_retry"
+LINE # Option "lcd_center"
+LINE # Set_LCDClk  <pixel_clock_for_LCD>
+
+NAME ** S3 Savage (generic)                [savage]
+#CHIPSET savage
+SERVER SVGA
+DRIVER savage
+
+NAME ** Silicon Motion (generic)           [siliconmotion]
+#CHIPSET siliconmotion
+SERVER SVGA
+DRIVER siliconmotion
+
+NAME ** SiS (generic)                      [sis]
+#CHIPSET sis
+SERVER SVGA
+DRIVER sis
+LINE # Option "no_accel"
+LINE # Option "fifo_moderate"
+LINE # Option "fifo_conserv"
+LINE # Option "fifo_aggressive"
+LINE # Option "no_BitBlt"
+LINE # Option "fast_vram"
+LINE # Option "pci_burst_on"
+LINE # Option "xaa_benchmark"
+LINE # Option "ext_eng_queue"
+
+NAME ** 3Dfx (generic)                     [tdfx]
+#CHIPSET tdfx
+SERVER SVGA
+DRIVER tdfx
+
+NAME ** DEC TGA (generic)                  [tga]
+#CHIPSET tga
+SERVER SVGA
+DRIVER tga
+
+NAME ** Trident (generic)                  [trident]
+#CHIPSET trident
+SERVER SVGA
+DRIVER trident
+
+NAME ** Tseng Labs (generic)               [tseng]
+#CHIPSET tseng
+SERVER SVGA
+DRIVER tseng
+LINE # Option "linear"
+LINE # Option "noaccel"
+LINE # Option "power_saver"
+LINE # Option "fast_dram"
+LINE # Option "pci_retry"
+LINE # Option "hibit_high"
+LINE # Option "hibit_low"
+LINE # MemBase 0x3C00000
+
+NAME ** VMWare guest OS (generic)          [vmware]
+#CHIPSET vmware
+SERVER SVGA
+DRIVER vmware
+
 
 #Chips & Technologies
 
@@ -2317,7 +2523,7 @@ DRIVER sis
 LINE     # Option "no_accel" # Use this if acceleration is causing problems
 LINE     # Option "fifo_moderate" 
 LINE     # Option "fifo_conserv" 
-LINE     # Option "fifo_aggresive" 
+LINE     # Option "fifo_aggressive" 
 NOCLOCKPROBE
 
 NAME SiS SG86C215
@@ -2329,7 +2535,7 @@ LINE     # Option "no_accel" # Use this if acceleration is causing problems
 LINE     # Option "no_BitBlt" # Use this if acceleration is causing problems
 LINE     # Option "fifo_moderate" 
 LINE     # Option "fifo_conserv" 
-LINE     # Option "fifo_aggresive" 
+LINE     # Option "fifo_aggressive" 
 NOCLOCKPROBE
 
 NAME SiS SG86C225
@@ -2339,7 +2545,7 @@ DRIVER sis
 LINE     # Option "no_accel" # Use this if acceleration is causing problems
 LINE     # Option "fifo_moderate" 
 LINE     # Option "fifo_conserv" 
-LINE     # Option "fifo_aggresive" 
+LINE     # Option "fifo_aggressive" 
 NOCLOCKPROBE
 
 NAME SiS 5597
@@ -2349,7 +2555,7 @@ DRIVER sis
 LINE     # Option "no_accel" # Use this if acceleration is causing problems
 LINE     # Option "fifo_moderate" 
 LINE     # Option "fifo_conserv" 
-LINE     # Option "fifo_aggresive" 
+LINE     # Option "fifo_aggressive" 
 LINE     # Option "fast_vram"
 LINE     # Option "pci_burst_on"
 LINE     # Option "xaa_benchmark" # DON'T use with "ext_eng_queue" !!!
@@ -2364,7 +2570,7 @@ DRIVER sis
 LINE     # Option "no_accel" # Use this if acceleration is causing problems
 LINE     # Option "fifo_moderate" 
 LINE     # Option "fifo_conserv" 
-LINE     # Option "fifo_aggresive" 
+LINE     # Option "fifo_aggressive" 
 LINE     # Option "fast_vram"
 LINE     # Option "pci_burst_on"
 LINE     # Option "xaa_benchmark" # DON'T use with "ext_eng_queue" !!!
@@ -2379,7 +2585,7 @@ DRIVER sis
 LINE     # Option "no_accel" # Use this if acceleration is causing problems
 LINE     # Option "fifo_moderate" 
 LINE     # Option "fifo_conserv" 
-LINE     # Option "fifo_aggresive" 
+LINE     # Option "fifo_aggressive" 
 LINE     # Option "fast_vram"
 LINE     # Option "pci_burst_on"
 LINE     # Option "xaa_benchmark" # DON'T use with "ext_eng_queue" !!!

@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/r128/r128_texobj.h,v 1.4 2001/01/08 01:07:24 martin Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/r128/r128_texobj.h,v 1.5 2002/02/22 21:44:58 dawes Exp $ */
 /**************************************************************************
 
 Copyright 1999, 2000 ATI Technologies Inc. and Precision Insight, Inc.,
@@ -72,12 +72,14 @@ struct r128_tex_obj {
 
    GLint totalSize;			/* Total size of the texture
 					   including all mipmap levels */
-   GLuint internFormat;			/* Internal GL format used to store
-					   texture on card */
    CARD32 textureFormat;		/* Actual hardware format */
-   GLint texelBytes;			/* Number of bytes per texel */
 
    r128_texture_regs_t setup;		/* Setup regs for texture */
+
+   /* texObj->Image[firstLevel] through texObj->Image[lastLevel] are the
+    * images to upload.
+    */
+   GLint firstLevel, lastLevel;
 };
 
 #endif /* _R128_TEXOBJ_H_ */

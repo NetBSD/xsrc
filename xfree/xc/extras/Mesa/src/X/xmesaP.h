@@ -1,20 +1,20 @@
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.3
- * 
- * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
- * 
+ * Version:  4.0.2
+ *
+ * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
@@ -32,27 +32,15 @@
 # include "GL/xf86glx.h"
 # include "xf86glx_util.h"
 #else
-# ifdef GLX_DIRECT_RENDERING
-#  include "dri_mesa.h"
-# endif
 # ifdef USE_XSHM
 #  include <X11/extensions/XShm.h>
 # endif
 #endif
 #include "GL/xmesa.h"
-#include "types.h"
-#if defined(FX) && !defined(GLX_DIRECT_RENDERING)
+#include "mtypes.h"
+#if defined(FX)
 #include "GL/fxmesa.h"
-#include "../FX/fxdrv.h"
-#endif
-
-
-#if defined(GLX_DIRECT_RENDERING) && !defined(XFree86Server)
-#  include "xdriP.h"
-#else
-#  define DRI_DRAWABLE_ARG
-#  define DRI_DRAWABLE_PARM
-#  define DRI_CTX_ARG
+#include "FX/fxdrv.h"
 #endif
 
 
@@ -74,10 +62,10 @@ typedef void (*clear_func)( GLcontext *ctx,
 
 
 /*
- * "Derived" from gl_visual.  Basically corresponds to an XVisualInfo.
+ * "Derived" from GLvisual.  Basically corresponds to an XVisualInfo.
  */
 struct xmesa_visual {
-   GLvisual *gl_visual;		/* Device independent visual parameters */
+   GLvisual mesa_visual;	/* Device independent visual parameters */
    XMesaDisplay *display;	/* The X11 display */
 #ifdef XFree86Server
    GLint screen_depth;		/* The depth of the screen */
@@ -126,7 +114,7 @@ struct xmesa_visual {
 
 
 /*
- * "Derived" from gl_context.  Basically corresponds to a GLXContext.
+ * "Derived" from __GLcontextRec.  Basically corresponds to a GLXContext.
  */
 struct xmesa_context {
    GLcontext *gl_ctx;		/* the core library context */
@@ -141,33 +129,23 @@ struct xmesa_context {
 
    GLuint pixelformat;		/* Current pixel format */
 
-   GLubyte red, green, blue, alpha;	/* current drawing color */
-   unsigned long pixel;			/* current drawing pixel value */
-
    GLubyte clearcolor[4];		/* current clearing color */
    unsigned long clearpixel;		/* current clearing pixel value */
-
-#if defined(GLX_DIRECT_RENDERING) && !defined(XFree86Server)
-  __DRIcontextPrivate *driContextPriv; /* back pointer to DRI context
-					* used for locking
-					*/
-  void *private;			/* device-specific private context */
-#endif
 };
 
 
 
 /*
- * "Derived" from gl_buffer.  Basically corresponds to a GLXDrawable.
+ * "Derived" from GLframebuffer.  Basically corresponds to a GLXDrawable.
  */
 struct xmesa_buffer {
+   GLframebuffer mesa_buffer;	/* depth, stencil, accum, etc buffers */
    GLboolean wasCurrent;	/* was ever the current buffer? */
-   GLframebuffer *gl_buffer;	/* depth, stencil, accum, etc buffers */
    XMesaVisual xm_visual;	/* the X/Mesa visual */
 
-   XMesaContext xm_context;     /* the context associated with this buffer */
    XMesaDisplay *display;
    GLboolean pixmap_flag;	/* is the buffer a Pixmap? */
+   GLboolean pbuffer_flag;	/* is the buffer a Pbuffer? */
    XMesaDrawable frontbuffer;	/* either a window or pixmap */
    XMesaPixmap backpixmap;	/* back buffer Pixmap */
    XMesaImage *backimage;	/* back buffer simulated XImage */
@@ -208,9 +186,9 @@ struct xmesa_buffer {
    XMesaPixmap stipple_pixmap;	/* For polygon stippling */
    XMesaGC stipple_gc;		/* For polygon stippling */
 
-   XMesaGC gc1;			/* GC for infrequent color changes */
-   XMesaGC gc2;			/* GC for frequent color changes */
+   XMesaGC gc;			/* scratch GC for span, line, tri drawing */
    XMesaGC cleargc;		/* GC for clearing the color buffer */
+   XMesaGC swapgc;		/* GC for swapping the color buffers */
 
    /* The following are here instead of in the XMesaVisual
     * because they depend on the window's colormap.
@@ -232,14 +210,7 @@ struct xmesa_buffer {
    unsigned long alloced_colors[256];
 #endif
 
-#if defined(GLX_DIRECT_RENDERING) && !defined(XFree86Server)
-  __DRIdrawablePrivate *driDrawPriv;	/* back pointer to DRI drawable
-					 * used for direct access to framebuffer
-					 */
-  void *private;			/* device-specific private drawable */
-#endif
-
-#if defined( FX ) && !defined(GLX_DIRECT_RENDERING)
+#if defined( FX )
    /* For 3Dfx Glide only */
    GLboolean FXisHackUsable;	/* Can we render into window? */
    GLboolean FXwindowHack;	/* Are we rendering into a window? */
@@ -445,15 +416,15 @@ static GLushort DitherValues[16];   /* array of (up to) 16-bit pixel values */
 static const short HPCR_DRGB[3][2][16] = {
 {
     { 16, -4,  1,-11, 14, -6,  3, -9, 15, -5,  2,-10, 13, -7,  4, -8},
-    {-15,  5,  0, 12,-13,  7, -2, 10,-14,  6, -1, 11,-12,  8, -3,  9} 
+    {-15,  5,  0, 12,-13,  7, -2, 10,-14,  6, -1, 11,-12,  8, -3,  9}
 },
 {
     {-11, 15, -7,  3, -8, 14, -4,  2,-10, 16, -6,  4, -9, 13, -5,  1},
-    { 12,-14,  8, -2,  9,-13,  5, -1, 11,-15,  7, -3, 10,-12,  6,  0} 
+    { 12,-14,  8, -2,  9,-13,  5, -1, 11,-15,  7, -3, 10,-12,  6,  0}
 },
 {
     {  6,-18, 26,-14,  2,-22, 30,-10,  8,-16, 28,-12,  4,-20, 32, -8},
-    { -4, 20,-24, 16,  0, 24,-28, 12, -6, 18,-26, 14, -2, 22,-30, 10} 
+    { -4, 20,-24, 16,  0, 24,-28, 12, -6, 18,-26, 14, -2, 22,-30, 10}
 }
 };
 
@@ -519,25 +490,33 @@ static int const kernel1[16] = {
  */
 
 extern unsigned long
-xmesa_color_to_pixel( XMesaContext xmesa, GLubyte r, GLubyte g, GLubyte b, GLubyte a,
+xmesa_color_to_pixel( XMesaContext xmesa,
+                      GLubyte r, GLubyte g, GLubyte b, GLubyte a,
                       GLuint pixelFormat );
 
 extern void xmesa_alloc_back_buffer( XMesaBuffer b );
 
-extern void xmesa_update_state( GLcontext *ctx );
+extern void xmesa_init_pointers( GLcontext *ctx );
+extern void xmesa_update_state( GLcontext *ctx, GLuint new_state );
 
-extern points_func xmesa_get_points_func( GLcontext *ctx );
+extern void xmesa_update_span_funcs( GLcontext *ctx );
 
-extern line_func xmesa_get_line_func( GLcontext *ctx );
+/* Plugged into the software rasterizer.  Try to use internal
+ * swrast-style point, line and triangle functions.
+ */
+extern void xmesa_choose_point( GLcontext *ctx );
+extern void xmesa_choose_line( GLcontext *ctx );
+extern void xmesa_choose_triangle( GLcontext *ctx );
 
-extern triangle_func xmesa_get_triangle_func( GLcontext *ctx );
+
+extern void xmesa_register_swrast_functions( GLcontext *ctx );
+
 
 
 /* XXX this is a hack to implement shared display lists with 3Dfx */
 extern XMesaBuffer XMesaCreateWindowBuffer2( XMesaVisual v,
 					     XMesaWindow w,
 					     XMesaContext c
-					     DRI_DRAWABLE_ARG
 					   );
 
 /*
@@ -548,5 +527,10 @@ extern void XMesaSetVisualDisplay( XMesaDisplay *dpy, XMesaVisual v );
 extern GLboolean XMesaForceCurrent(XMesaContext c);
 extern GLboolean XMesaLoseCurrent(XMesaContext c);
 extern void XMesaReset( void );
+
+extern void xmesa_set_read_buffer( GLcontext *ctx, 
+				   GLframebuffer *buffer, GLenum mode );
+
+extern void xmesa_resize_buffers( GLframebuffer *buffer );
 
 #endif

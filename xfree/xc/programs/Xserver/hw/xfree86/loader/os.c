@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/loader/os.c,v 1.1 1999/03/06 13:12:43 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/loader/os.c,v 1.2 2002/05/31 18:46:00 dawes Exp $ */
 
 #include "loaderProcs.h"
 
@@ -29,7 +29,7 @@
 #define OSNAME "solaris"
 #elif defined(SVR4)
 #define OSNAME "svr4"
-#elif defined(__EMX__)
+#elif defined(__UNIXOS2__)
 #define OSNAME "os2"
 #else
 #define OSNAME "unknown"

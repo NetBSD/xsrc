@@ -22,7 +22,7 @@ xkb_symbols "basic" {
     key <AE04> {	[         4,	dollar   	],
 			[ onequarter			]	};
     key <AE05> {	[         5,	percent  	],
-			[   onehalf			]	};
+			[ EuroSign			]	};
     key <AE06> {	[         6,	ampersand	],
 			[ threequarters			]	};
     key <AE07> {	[         7,	underscore	],

@@ -1,5 +1,5 @@
 XCOMM X-TrueType Server - TrueType rasterizer for X
-XCOMM $XFree86: xc/lib/font/X-TrueType/Imakefile,v 1.8 2001/08/27 17:40:58 dawes Exp $
+XCOMM $XFree86: xc/lib/font/X-TrueType/Imakefile,v 1.9 2002/02/13 21:32:48 dawes Exp $
 
 #define IHaveSubdirs
 #define PassCDebugFlags CDEBUGFLAGS="$(CDEBUGFLAGS)"
@@ -9,7 +9,7 @@ MODULE_SUBDIRS = module
 #endif
 
 INCLUDES = -I. -I$(FONTINCSRC) -I../include -I../fontcache \
-           -I$(XTOP)/include -I$(SERVERSRC)/include \
+           -I$(XINCLUDESRC) -I$(SERVERSRC)/include \
            -I$(FTSOURCEDIR)/lib -I$(FTSOURCEDIR)/lib/extend \
            -I$(FTSOURCEDIR)/lib/arch/unix -I$(FONTLIBSRC)/FreeType
 

@@ -140,8 +140,9 @@ static void TAG(WriteRGBAPixels)( const GLcontext *ctx,
 }
 
 
-static void TAG(WriteMonoRGBASpan)( const GLcontext *ctx,
-				    GLuint n, GLint x, GLint y,
+static void TAG(WriteMonoRGBASpan)( const GLcontext *ctx,	
+				    GLuint n, GLint x, GLint y, 
+				    const GLchan color[4],
 				    const GLubyte mask[] )
 {
    HW_WRITE_LOCK()
@@ -149,7 +150,7 @@ static void TAG(WriteMonoRGBASpan)( const GLcontext *ctx,
 	 GLint x1;
 	 GLint n1;
 	 LOCAL_VARS;
-	 INIT_MONO_PIXEL(p);
+	 INIT_MONO_PIXEL(p, color);
 
 	 y = Y_FLIP( y );
 
@@ -172,13 +173,14 @@ static void TAG(WriteMonoRGBASpan)( const GLcontext *ctx,
 static void TAG(WriteMonoRGBAPixels)( const GLcontext *ctx,
 				      GLuint n,
 				      const GLint x[], const GLint y[],
-				      const GLubyte mask[] )
+				      const GLchan color[],
+				      const GLubyte mask[] ) 
 {
    HW_WRITE_LOCK()
       {
 	 GLint i;
 	 LOCAL_VARS;
-	 INIT_MONO_PIXEL(p);
+	 INIT_MONO_PIXEL(p, color);
 
 	 if (DBG) fprintf(stderr, "WriteMonoRGBAPixels\n");
 

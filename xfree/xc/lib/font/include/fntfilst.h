@@ -25,7 +25,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/font/include/fntfilst.h,v 3.7 2001/12/14 19:56:54 dawes Exp $ */
+/* $XFree86: xc/lib/font/include/fntfilst.h,v 3.9 2002/12/10 22:23:52 tsi Exp $ */
 
 /*
  * Author:  Keith Packard, MIT X Consortium
@@ -164,7 +164,12 @@ typedef struct _FontRenderer {
 
 typedef struct _FontRenders {
     int		    number;
-    FontRendererPtr *renderers;
+    struct _FontRenderersElement {
+        /* In order to preserve backward compatibility, the
+           priority field is made invisible to renderers */
+        FontRendererPtr renderer;
+        int priority;
+    } *renderers;
 } FontRenderersRec, *FontRenderersPtr;
 
 typedef struct _BitmapInstance {

@@ -26,7 +26,7 @@
  *
  *	Id: fontcache.h,v 1.12 1999/01/09 06:24:30 akiyama Exp $
  */
-/* $XFree86: xc/lib/font/fontcache/fontcache.h,v 1.5 2001/08/01 00:44:43 tsi Exp $ */
+/* $XFree86: xc/lib/font/fontcache/fontcache.h,v 1.7 2003/01/26 03:02:19 dawes Exp $ */
 
 #ifndef _FONTCACHE_H_
 #define _FONTCACHE_H_
@@ -34,12 +34,13 @@
 #include "fontmisc.h"
 #include "fontstruct.h"
 #include "fcqueue.h"
+#define _FONTCACHE_SERVER_
 #include <X11/extensions/fontcacheP.h>
 
 /* constant declarations */
 
 #ifndef FC_DEFAULT_CACHE_SIZE
-#define FC_DEFAULT_CACHE_SIZE	1024	/* in KB */
+#define FC_DEFAULT_CACHE_SIZE	5120	/* in KB */
 #endif
 
 #define FC_CACHE_BALANCE	70	/* in percentage */

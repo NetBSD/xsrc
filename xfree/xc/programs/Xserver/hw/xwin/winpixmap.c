@@ -28,7 +28,7 @@
  * Authors:	drewry, september 1986
  *		Harold L Hunt II
  */
-/* $XFree86: xc/programs/Xserver/hw/xwin/winpixmap.c,v 1.9 2001/11/01 12:19:42 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xwin/winpixmap.c,v 1.10 2002/10/17 08:18:24 alanh Exp $ */
 
 #include "win.h"
 
@@ -138,12 +138,12 @@ winDestroyPixmapNativeGDI (PixmapPtr pPixmap)
   /* Free the bitmap info header memory */
   if (pPixmapPriv->pbmih != NULL)
     {
-      xfree (pPixmapPriv->pbmih);
+      free (pPixmapPriv->pbmih);
       pPixmapPriv->pbmih = NULL;
     }
 
   /* Free the pixmap memory */
-  xfree (pPixmap);
+  free (pPixmap);
   pPixmap = NULL;
 
   return TRUE;

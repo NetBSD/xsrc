@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/rendition/vtypes.h,v 1.8 2001/10/28 03:33:44 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/rendition/vtypes.h,v 1.10 2002/04/04 14:05:45 eich Exp $ */
 #ifndef _VTYPES_H_
 #define _VTYPES_H_
 
@@ -97,7 +97,23 @@ struct verite_modeinfo_t {
     vu16 stride1;
 };
 
-
+typedef struct _renditionRegs {
+    CARD8 mode;
+    CARD8 memendian;
+    CARD32 sclkpll;
+    CARD32 dramctl;
+    CARD8 plldev;
+    CARD32 pclkpll;
+    CARD8 daccmd0;
+    CARD8 daccmd1;
+    CARD8 daccmd2;
+    CARD8 daccmd3;
+    CARD32 crtch;
+    CARD32 crtcv;
+    CARD32 vbasea;
+    CARD32 crtcoff;
+    CARD32 crtcctl;
+} RenditionRegRec, *RenditionRegPtr;
 
 /* structure describing the Verite board and its functionality */
 struct verite_board_t {
@@ -105,7 +121,7 @@ struct verite_board_t {
     vu16  chip;
 
     /* */
-    vu16 io_base;
+    IOADDRESS io_base, vgaio_base;
     vu32 mmio_base;
     vu32 vmmio_base;
     vu32 mem_size;
@@ -168,6 +184,7 @@ typedef struct _renditionRec
     xf86CursorInfoPtr CursorInfoRec;    /* Cursor data */
     XAAInfoRecPtr AccelInfoRec;         /* Needed for XAA */
     OptionInfoPtr Options;
+    RenditionRegRec saveRegs;
 } renditionRec, *renditionPtr;
 
 #define RENDITIONPTR(p)     ((renditionPtr)((p)->driverPrivate))

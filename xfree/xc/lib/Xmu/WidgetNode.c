@@ -26,7 +26,7 @@ in this Software without prior written authorization from The Open Group.
 
 */
 
-/* $XFree86: xc/lib/Xmu/WidgetNode.c,v 1.10 2001/12/14 19:55:57 dawes Exp $ */
+/* $XFree86: xc/lib/Xmu/WidgetNode.c,v 1.13 2002/09/24 18:55:21 alanh Exp $ */
 
 /*
  * Author:  Jim Fulton, MIT X Consortium
@@ -236,9 +236,9 @@ XmuWnFetchResources(XmuWidgetNode *node, Widget toplevel,
 						  sizeof (XmuWidgetNode *));
 	if (!wn->resourcewn) {
 	    fprintf (stderr,
-		     "%s:  unable to calloc %d %d byte widget node ptrs\n",
-		     "XmuWnFetchResources",wn->nresources,
-		     sizeof (XmuWidgetNode *));
+		     "%s:  unable to calloc %d %ld byte widget node ptrs\n",
+		     "XmuWnFetchResources", wn->nresources,
+		     (unsigned long)sizeof (XmuWidgetNode *));
 	    exit (1);
 	}
 
@@ -252,9 +252,9 @@ XmuWnFetchResources(XmuWidgetNode *node, Widget toplevel,
 	  XtCalloc (wn->nconstraints, sizeof (XmuWidgetNode *));
 	if (!wn->constraintwn) {
 	    fprintf (stderr,
-		     "%s:  unable to calloc %d %d byte widget node ptrs\n",
+		     "%s:  unable to calloc %d %ld byte widget node ptrs\n",
 		     "XmuWnFetchResources", wn->nconstraints,
-		     sizeof (XmuWidgetNode *));
+		     (unsigned long)sizeof (XmuWidgetNode *));
 	    exit (1);
 	}
 

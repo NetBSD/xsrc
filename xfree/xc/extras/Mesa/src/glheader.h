@@ -1,9 +1,9 @@
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.4
+ * Version:  4.0.3
  *
- * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -22,6 +22,7 @@
  * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
+/* $XFree86: xc/extras/Mesa/src/glheader.h,v 1.20 2002/11/06 17:19:39 tsi Exp $ */
 
 
 #ifndef GLHEADER_H
@@ -45,7 +46,7 @@
 
 
 
-#ifdef XFree86LOADER
+#ifdef XFree86Module
 #include "xf86_ansic.h"
 #else
 #include <assert.h>
@@ -60,7 +61,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#if defined(__linux__) && defined(__i386__) 
+#if defined(__linux__) && defined(__i386__)
 #include <fpu_control.h>
 #endif
 #endif
@@ -75,6 +76,7 @@
 
 #if defined(_WIN32) && !defined(__WIN32__) && !defined(__CYGWIN__)
 #	define __WIN32__
+#	define finite _finite
 #endif
 
 #if !defined(OPENSTEP) && (defined(__WIN32__) && !defined(__CYGWIN__))
@@ -160,10 +162,46 @@ typedef struct tagPIXELFORMATDESCRIPTOR PIXELFORMATDESCRIPTOR, *PPIXELFORMATDESC
 #endif
 
 
+/*
+ * Either define MESA_BIG_ENDIAN or MESA_LITTLE_ENDIAN.
+ * Do not use them unless absolutely necessary!
+ * Try to use a runtime test instead.
+ * For now, only used by some DRI hardware drivers for color/texel packing.
+ */
+#if defined(BYTE_ORDER) && defined(BIG_ENDIAN) && BYTE_ORDER == BIG_ENDIAN
+#if defined(__linux__)
+#include <byteswap.h>
+#define CPU_TO_LE32( x )	bswap_32( x )
+#else /*__linux__*/
+#define CPU_TO_LE32( x )	( x )  /* fix me for non-Linux big-endian! */
+#endif /*__linux__*/
+#define MESA_BIG_ENDIAN 1
+#else
+#define CPU_TO_LE32( x )	( x )
+#define MESA_LITTLE_ENDIAN 1
+#endif
+#define LE32_TO_CPU( x )	CPU_TO_LE32( x )
+
+
+/* This is a macro on IRIX */
+#ifdef _P
+#undef _P
+#endif
+
 
 
 #include "GL/gl.h"
 #include "GL/glext.h"
+
+
+#ifndef CAPI
+#ifdef WIN32
+#define CAPI _cdecl
+#else
+#define CAPI
+#endif
+#endif
+#include <GL/internal/glcore.h>
 
 
 
@@ -204,5 +242,45 @@ typedef struct tagPIXELFORMATDESCRIPTOR PIXELFORMATDESCRIPTOR, *PPIXELFORMATDESC
 #endif
 
 
+/* Function inlining */
+#if defined(__GNUC__)
+#  define INLINE __inline__
+#elif defined(__MSC__)
+#  define INLINE __inline
+#elif defined(_MSC_VER)
+#  define INLINE __inline
+#elif defined(__ICL)
+#  define INLINE __inline
+#else
+#  define INLINE
+#endif
 
+
+/* Some compilers don't like some of Mesa's const usage */
+#ifdef NO_CONST
+#  define CONST
+#else
+#  define CONST const
+#endif
+
+
+#ifdef DEBUG
+#  define ASSERT(X)   assert(X)
+#else
+#  define ASSERT(X)
+#endif
+
+
+/*
+ * Sometimes we treat GLfloats as GLints.  On x86 systems, moving a float
+ * as a int (thereby using integer registers instead of fp registers) is
+ * a performance win.  Typically, this can be done with ordinary casts.
+ * But with gcc's -fstrict-aliasing flag (which defaults to on in gcc 3.0)
+ * these casts generate warnings.
+ * The following union typedef is used to solve that.
+ */
+typedef union { GLfloat f; GLint i; } fi_type;
+
+
+                                                       
 #endif /* GLHEADER_H */

@@ -76,7 +76,7 @@ not be used in advertising or otherwise to promote the sale, use or other
 dealings in this Software without prior written authorization from said
 copyright holders.
 */
-/* $XFree86: xc/programs/Xserver/Xprint/pcl/PclInit.c,v 1.11 2001/12/21 21:02:05 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/Xprint/pcl/PclInit.c,v 1.12 2002/10/16 21:13:32 dawes Exp $ */
 
 #include <stdio.h>
 #include <string.h>
@@ -292,7 +292,7 @@ InitializePclDriver(
 static void
 AllocatePclPrivates(ScreenPtr pScreen)
 {
-    static long PclGeneration = -1;
+    static unsigned long PclGeneration = 0;
 
     if((unsigned long) PclGeneration != serverGeneration)
     {

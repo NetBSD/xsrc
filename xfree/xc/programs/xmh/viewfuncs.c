@@ -24,17 +24,18 @@
  * used in advertising or publicity pertaining to distribution of the software
  * without specific, written prior permission.
  */
+/* $XFree86: xc/programs/xmh/viewfuncs.c,v 1.3 2002/07/01 02:26:05 tsi Exp $ */
 
 /* view.c -- action procedures to handle viewing of a message */
 
 #include "xmh.h"
-
+#include "actions.h"
 
 /*ARGSUSED*/
-void DoCloseView(widget, client_data, call_data)
-    Widget	widget;		/* unused */
-    XtPointer	client_data;
-    XtPointer	call_data;	/* unused */
+void DoCloseView(
+    Widget	widget,		/* unused */
+    XtPointer	client_data,
+    XtPointer	call_data)	/* unused */
 {
     Scrn scrn = (Scrn) client_data;
     XtCallbackRec	confirms[2];
@@ -52,21 +53,21 @@ void DoCloseView(widget, client_data, call_data)
     
 
 /*ARGSUSED*/
-void XmhCloseView(w, event, params, num_params)
-    Widget	w;
-    XEvent	*event;
-    String	*params;
-    Cardinal	*num_params;
+void XmhCloseView(
+    Widget	w,
+    XEvent	*event,
+    String	*params,
+    Cardinal	*num_params)
 {
     Scrn scrn = ScrnFromWidget(w);
     DoCloseView(w, (XtPointer) scrn, (XtPointer) NULL);
 }
 
 
-void DoViewReplyMsg(scrn, params, num_params)
-    Scrn	scrn;
-    String	*params;
-    Cardinal	num_params;
+static void DoViewReplyMsg(
+    Scrn	scrn,
+    String	*params,
+    Cardinal	num_params)
 {
     Msg		msg;
     Scrn	nscrn;
@@ -82,10 +83,10 @@ void DoViewReplyMsg(scrn, params, num_params)
 }
 
 /*ARGSUSED*/
-void DoViewReply(w, client_data, call_data)
-    Widget	w;
-    XtPointer	client_data;
-    XtPointer	call_data;
+void DoViewReply(
+    Widget	w,
+    XtPointer	client_data,
+    XtPointer	call_data)
 {
     DoViewReplyMsg((Scrn) client_data, (String *)NULL, (Cardinal)0);
 }
@@ -93,11 +94,11 @@ void DoViewReply(w, client_data, call_data)
 
 
 /*ARGSUSED*/
-void XmhViewReply(w, event, params, num_params)
-    Widget	w;
-    XEvent	*event;
-    String	*params;
-    Cardinal	*num_params;
+void XmhViewReply(
+    Widget	w,
+    XEvent	*event,
+    String	*params,
+    Cardinal	*num_params)
 {
     Scrn scrn = ScrnFromWidget(w);
     DoViewReplyMsg(scrn, params, *num_params);
@@ -105,10 +106,10 @@ void XmhViewReply(w, event, params, num_params)
 
 
 /*ARGSUSED*/
-void DoViewForwardMsg(scrn, params, num_params)
-    Scrn	scrn;
-    String	*params;
-    Cardinal	num_params;
+static void DoViewForwardMsg(
+    Scrn	scrn,
+    String	*params,
+    Cardinal	num_params)
 {
     MsgList	mlist;
 
@@ -119,30 +120,30 @@ void DoViewForwardMsg(scrn, params, num_params)
 }
 
 /*ARGSUSED*/
-void DoViewForward(w, client_data, call_data)
-    Widget	w;
-    XtPointer	client_data;
-    XtPointer	call_data;
+void DoViewForward(
+    Widget	w,
+    XtPointer	client_data,
+    XtPointer	call_data)
 {
     DoViewForwardMsg((Scrn) client_data, (String *)NULL, (Cardinal)0);
 }
 
 /*ARGSUSED*/
-void XmhViewForward(w, event, params, num_params)
-    Widget	w;
-    XEvent	*event;
-    String	*params;
-    Cardinal	*num_params;
+void XmhViewForward(
+    Widget	w,
+    XEvent	*event,
+    String	*params,
+    Cardinal	*num_params)
 {
     DoViewForwardMsg(ScrnFromWidget(w), params, *num_params);
 }
 
 
 /*ARGSUSED*/
-void DoViewUseAsComposition(w, client_data, call_data)
-    Widget	w;
-    XtPointer	client_data;
-    XtPointer	call_data;
+void DoViewUseAsComposition(
+    Widget	w,
+    XtPointer	client_data,
+    XtPointer	call_data)
 {
     Scrn	scrn = (Scrn) client_data;
     Msg		msg;
@@ -163,11 +164,11 @@ void DoViewUseAsComposition(w, client_data, call_data)
     
 
 /*ARGSUSED*/
-void XmhViewUseAsComposition(w, event, params, num_params)
-    Widget	w;
-    XEvent	*event;
-    String	*params;
-    Cardinal	*num_params;
+void XmhViewUseAsComposition(
+    Widget	w,
+    XEvent	*event,
+    String	*params,
+    Cardinal	*num_params)
 {
     Scrn	scrn = ScrnFromWidget(w);
     DoViewUseAsComposition(w, (XtPointer) scrn, (XtPointer) NULL);
@@ -175,10 +176,10 @@ void XmhViewUseAsComposition(w, event, params, num_params)
 
 
 /*ARGSUSED*/
-void DoEditView(w, client_data, call_data)
-    Widget	w;
-    XtPointer	client_data;
-    XtPointer	call_data;
+void DoEditView(
+    Widget	w,
+    XtPointer	client_data,
+    XtPointer	call_data)
 {
     Scrn	scrn = (Scrn) client_data;
     Arg		args[1];
@@ -192,11 +193,11 @@ void DoEditView(w, client_data, call_data)
 
 
 /*ARGSUSED*/
-void XmhEditView(w, event, params, num_params)
-    Widget	w;
-    XEvent	*event;
-    String	*params;
-    Cardinal	*num_params;
+void XmhEditView(
+    Widget	w,
+    XEvent	*event,
+    String	*params,
+    Cardinal	*num_params)
 {
     Scrn	scrn = ScrnFromWidget(w);
     if (scrn->msg != NULL && ! MsgGetEditable(scrn->msg))
@@ -205,10 +206,10 @@ void XmhEditView(w, event, params, num_params)
 
 
 /*ARGSUSED*/
-void DoSaveView(w, client_data, call_data)
-    Widget	w;
-    XtPointer	client_data;
-    XtPointer	call_data;
+void DoSaveView(
+    Widget	w,
+    XtPointer	client_data,
+    XtPointer	call_data)
 {
     Scrn	scrn = (Scrn) client_data;
     Arg		args[2];
@@ -223,11 +224,11 @@ void DoSaveView(w, client_data, call_data)
 
 
 /*ARGSUSED*/
-void XmhSaveView(w, event, params, num_params)
-    Widget	w;
-    XEvent	*event;
-    String	*params;
-    Cardinal	*num_params;
+void XmhSaveView(
+    Widget	w,
+    XEvent	*event,
+    String	*params,
+    Cardinal	*num_params)
 {
     Scrn	scrn = ScrnFromWidget(w);
     if (MsgChanged(scrn->msg) || MsgGetReapable(scrn->msg))
@@ -236,10 +237,10 @@ void XmhSaveView(w, event, params, num_params)
 
 
 /*ARGSUSED*/
-void DoPrintView(w, client_data, call_data)
-    Widget	w;
-    XtPointer	client_data;
-    XtPointer	call_data;
+void DoPrintView(
+    Widget	w,
+    XtPointer	client_data,
+    XtPointer	call_data)
 {
     Scrn	scrn = (Scrn) client_data;
     char	**argv;
@@ -259,11 +260,11 @@ void DoPrintView(w, client_data, call_data)
 
 
 /*ARGSUSED*/
-void XmhPrintView(w, event, params, num_params)
-    Widget	w;
-    XEvent	*event;
-    String	*params;
-    Cardinal	*num_params;
+void XmhPrintView(
+    Widget	w,
+    XEvent	*event,
+    String	*params,
+    Cardinal	*num_params)
 {
     Scrn scrn = ScrnFromWidget(w);
     DoPrintView(w, (XtPointer) scrn, (XtPointer) NULL);
@@ -271,11 +272,11 @@ void XmhPrintView(w, event, params, num_params)
 
 
 /*ARGSUSED*/
-void XmhViewMarkDelete(w, event, params, num_params)
-    Widget	w;
-    XEvent	*event;
-    String	*params;
-    Cardinal	*num_params;
+void XmhViewMarkDelete(
+    Widget	w,
+    XEvent	*event,
+    String	*params,
+    Cardinal	*num_params)
 {
     Scrn scrn = ScrnFromWidget(w);
     if (scrn->msg == NULL) return;

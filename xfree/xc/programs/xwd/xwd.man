@@ -23,7 +23,7 @@
 .\" other dealings in this Software without prior written authorization
 .\" from The Open Group.
 .\"
-.\" $XFree86: xc/programs/xwd/xwd.man,v 1.8 2001/12/14 20:02:34 dawes Exp $
+.\" $XFree86: xc/programs/xwd/xwd.man,v 1.9 2002/04/22 20:53:10 herrb Exp $
 .\"
 .TH XWD 1 __xorgversion__
 .SH NAME
@@ -126,7 +126,7 @@ To get default host and display number.
 .B XWDFile.h
 X Window Dump File format definition file.
 .SH SEE ALSO
-xwud(1), xpr(1), X(__miscmansuffix__)
+xwud(1), X(__miscmansuffix__)
 .SH AUTHORS
 Tony Della Fera, Digital Equipment Corp., MIT Project Athena
 .br

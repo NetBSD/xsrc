@@ -4,7 +4,7 @@
 /*                                                                         */
 /*    High-level SFNT driver interface (body).                             */
 /*                                                                         */
-/*  Copyright 1996-2001 by                                                 */
+/*  Copyright 1996-2001, 2002 by                                           */
 /*  David Turner, Robert Wilhelm, and Werner Lemberg.                      */
 /*                                                                         */
 /*  This file is part of the FreeType project, and may only be used,       */
@@ -33,8 +33,6 @@
 #include "ttpost.h"
 #endif
 
-#include <string.h>     /* for strcmp() */
-
 
   static void*
   get_sfnt_table( TT_Face      face,
@@ -58,7 +56,7 @@
       break;
 
     case ft_sfnt_os2:
-      table = face->os2.version == 0xFFFF ? 0 : &face->os2;
+      table = face->os2.version == 0xFFFFU ? 0 : &face->os2;
       break;
 
     case ft_sfnt_post:
@@ -97,13 +95,13 @@
     error = TT_Get_PS_Name( face, glyph_index, &gname );
     if ( !error && buffer_max > 0 )
     {
-      FT_UInt  len = (FT_UInt)( strlen( gname ) );
+      FT_UInt  len = (FT_UInt)( ft_strlen( gname ) );
 
 
       if ( len >= buffer_max )
         len = buffer_max - 1;
 
-      MEM_Copy( buffer, gname, len );
+      FT_MEM_COPY( buffer, gname, len );
       ((FT_Byte*)buffer)[len] = 0;
     }
 
@@ -114,49 +112,107 @@
   static const char*
   get_sfnt_postscript_name( TT_Face  face )
   {
-    FT_Int  n;
+    FT_Int       n, found_win, found_apple;
+    const char*  result = NULL;
 
 
     /* shouldn't happen, but just in case to avoid memory leaks */
     if ( face->root.internal->postscript_name )
       return face->root.internal->postscript_name;
 
-    /* scan the name table to see if we have a Postscript name here, either */
-    /* in Macintosh or Windows platform encodings..                         */
+    /* scan the name table to see whether we have a Postscript name here, */
+    /* either in Macintosh or Windows platform encodings                  */
+    found_win   = -1;
+    found_apple = -1;
+
     for ( n = 0; n < face->num_names; n++ )
     {
-      TT_NameRec*  name = face->name_table.names + n;
+      TT_NameEntryRec*  name = face->name_table.names + n;
 
 
-      if ( name->nameID == 6 )
+      if ( name->nameID == 6 && name->stringLength > 0 )
       {
-        if ( ( name->platformID == 3 &&
-               name->encodingID == 1 &&
-               name->languageID == 0x409 ) ||
+        if ( name->platformID == 3     &&
+             name->encodingID == 1     &&
+             name->languageID == 0x409 )
+          found_win = n;
 
-             ( name->platformID == 1 &&
-               name->encodingID == 0 &&
-               name->languageID == 0     ) )
-        {
-          FT_UInt     len = name->stringLength;
-          FT_Error    error;
-          FT_Memory   memory = face->root.memory;
-          FT_String*  result;
-
-
-          if ( !ALLOC( result, len + 1 ) )
-          {
-            memcpy( result, name->string, len );
-            result[len] = '\0';
-
-            face->root.internal->postscript_name = result;
-          }
-          return result;
-        }
+        if ( name->platformID == 1 &&
+             name->encodingID == 0 &&
+             name->languageID == 0 )
+          found_apple = n;
       }
     }
 
-    return NULL;
+    if ( found_win != -1 )
+    {
+      FT_Memory         memory = face->root.memory;
+      TT_NameEntryRec*  name   = face->name_table.names + found_win;
+      FT_UInt           len    = name->stringLength / 2;
+      FT_Error          error;
+
+
+      if ( !FT_ALLOC( result, name->stringLength + 1 ) )
+      {
+        FT_Stream   stream = face->name_table.stream;
+        FT_String*  r      = (FT_String*)result;
+        FT_Byte*    p      = (FT_Byte*)name->string;
+
+
+        if ( FT_STREAM_SEEK( name->stringOffset ) ||
+             FT_FRAME_ENTER( name->stringLength ) )
+        {
+          FT_FREE( result );
+          name->stringLength = 0;
+          name->stringOffset = 0;
+          FT_FREE( name->string );
+
+          goto Exit;
+        }
+
+        p = (FT_Byte*)stream->cursor;
+
+        for ( ; len > 0; len--, p += 2 )
+        {
+          if ( p[0] == 0 && p[1] >= 32 && p[1] < 128 )
+            *r++ = p[1];
+        }
+        *r = '\0';
+
+        FT_FRAME_EXIT();
+      }
+      goto Exit;
+    }
+
+    if ( found_apple != -1 )
+    {
+      FT_Memory         memory = face->root.memory;
+      TT_NameEntryRec*  name   = face->name_table.names + found_apple;
+      FT_UInt           len    = name->stringLength;
+      FT_Error          error;
+
+
+      if ( !FT_ALLOC( result, len + 1 ) )
+      {
+        FT_Stream  stream = face->name_table.stream;
+
+
+        if ( FT_STREAM_SEEK( name->stringOffset ) ||
+             FT_STREAM_READ( result, len )        )
+        {
+          name->stringOffset = 0;
+          name->stringLength = 0;
+          FT_FREE( name->string );
+          FT_FREE( result );
+          goto Exit;
+        }
+        ((char*)result)[len] = '\0';
+      }
+    }
+
+  Exit:
+    face->root.internal->postscript_name = result;
+    return result;
   }
 
 
@@ -165,19 +221,19 @@
 
   FT_CALLBACK_DEF( FT_Module_Interface )
   SFNT_Get_Interface( FT_Module    module,
-                      const char*  interface )
+                      const char*  module_interface )
   {
     FT_UNUSED( module );
 
-    if ( strcmp( interface, "get_sfnt" ) == 0 )
+    if ( ft_strcmp( module_interface, "get_sfnt" ) == 0 )
       return (FT_Module_Interface)get_sfnt_table;
 
 #ifdef TT_CONFIG_OPTION_POSTSCRIPT_NAMES
-    if ( strcmp( interface, "glyph_name" ) == 0 )
+    if ( ft_strcmp( module_interface, "glyph_name" ) == 0 )
       return (FT_Module_Interface)get_sfnt_glyph_name;
 #endif
 
-    if ( strcmp( interface, "postscript_name" ) == 0 )
+    if ( ft_strcmp( module_interface, "postscript_name" ) == 0 )
       return (FT_Module_Interface)get_sfnt_postscript_name;
 
     return 0;
@@ -195,7 +251,7 @@
     SFNT_Get_Interface,
 
     TT_Load_Any,
-    TT_Load_SFNT_Header,
+    TT_Load_SFNT_HeaderRec,
     TT_Load_Directory,
 
     TT_Load_Header,

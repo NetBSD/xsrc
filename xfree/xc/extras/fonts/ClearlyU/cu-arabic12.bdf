@@ -1,8 +1,8 @@
 STARTFONT 2.1
 COMMENT 
-COMMENT Id: cu-arabic12.bdf,v 1.6 2001/10/23 23:55:31 mleisher Exp $
+COMMENT Id: cu-arabic12.bdf,v 1.7 2002/11/22 22:46:24 mleisher Exp $
 COMMENT 
-COMMENT Copyright 2001 Computing Research Labs, New Mexico State University
+COMMENT Copyright 2002 Computing Research Labs, New Mexico State University
 COMMENT 
 COMMENT Permission is hereby granted, free of charge, to any person
 COMMENT obtaining a copy of this software and associated documentation
@@ -28,7 +28,7 @@ COMMENT
 COMMENT This font contains the contextual glyph forms that are not encoded
 COMMENT in Unicode.
 COMMENT 
-FONT -MUTT-ClearlyU Arabic Extra-Medium-R-Normal--17-120-100-100-P-103-FontSpecific-0
+FONT -MUTT-ClearlyU Arabic Extra-Medium-R-Normal--17-120-100-100-P-101-FontSpecific-0
 SIZE 12 100 100
 FONTBOUNDINGBOX 21 27 -1 -10
 STARTPROPERTIES 20
@@ -39,7 +39,7 @@ RESOLUTION_X 100
 RESOLUTION_Y 100
 FONT_ASCENT 17
 FONT_DESCENT 9
-AVERAGE_WIDTH 103
+AVERAGE_WIDTH 101
 SPACING "P"
 FOUNDRY "MUTT"
 FAMILY_NAME "ClearlyU Arabic Extra"

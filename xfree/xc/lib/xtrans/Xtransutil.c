@@ -26,7 +26,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/xtrans/Xtransutil.c,v 3.21 2001/12/14 19:57:07 dawes Exp $ */
+/* $XFree86: xc/lib/xtrans/Xtransutil.c,v 3.23 2003/02/12 15:01:38 alanh Exp $ */
 
 /* Copyright 1993, 1994 NCR Corporation - Dayton, Ohio, USA
  *
@@ -60,12 +60,6 @@ from The Open Group.
 
 #ifdef XTHREADS
 #include <X11/Xthreads.h>
-#endif
-
-#ifdef __CYGWIN__
-#include <sys/unistd.h>
-#define fchown chown
-#define fchmod chmod
 #endif
 
 #ifdef X11_t
@@ -503,12 +497,16 @@ trans_mkdir(char *path, int mode)
 	    if (updateOwner && !updatedOwner) {
 	  	PRMSG(1, "mkdir: Owner of %s should be set to root\n",
 		      path, 0, 0);
+#if !defined(__CYGWIN__)
 		sleep(5);
+#endif
 	    }
 	    if (updateMode && !updatedMode) {
 	  	PRMSG(1, "mkdir: Mode of %s should be set to %04o\n",
 		      path, mode, 0);
+#if !defined(__CYGWIN__)
 		sleep(5);
+#endif
 	    }
 	    return 0;
 	}

@@ -1,3 +1,4 @@
+/* $XFree86: xc/programs/Xserver/include/cursor.h,v 1.6 2002/09/17 01:15:14 dawes Exp $ */
 /***********************************************************
 
 Copyright 1987, 1998  The Open Group
@@ -54,6 +55,11 @@ SOFTWARE.
 
 #define NullCursor ((CursorPtr)NULL)
 
+/* Provide support for alpha composited cursors */
+#ifdef RENDER
+#define ARGB_CURSOR
+#endif
+
 typedef struct _Cursor *CursorPtr;
 typedef struct _CursorMetric *CursorMetricPtr;
 
@@ -75,6 +81,21 @@ extern CursorPtr AllocCursor(
 #if NeedFunctionPrototypes
     unsigned char* /*psrcbits*/,
     unsigned char* /*pmaskbits*/,
+    CursorMetricPtr /*cm*/,
+    unsigned /*foreRed*/,
+    unsigned /*foreGreen*/,
+    unsigned /*foreBlue*/,
+    unsigned /*backRed*/,
+    unsigned /*backGreen*/,
+    unsigned /*backBlue*/
+#endif
+);
+
+extern CursorPtr AllocCursorARGB(
+#if NeedFunctionPrototypes
+    unsigned char* /*psrcbits*/,
+    unsigned char* /*pmaskbits*/,
+    CARD32* /*argb*/,
     CursorMetricPtr /*cm*/,
     unsigned /*foreRed*/,
     unsigned /*foreGreen*/,
@@ -152,5 +173,13 @@ extern void GetSpritePosition(
     int * /*py*/
 #endif
 );
+
+#ifdef PANORAMIX
+extern int XineramaGetCursorScreen(
+#if NeedFunctionPrototypes
+    void
+#endif
+);
+#endif /* PANORAMIX */
 
 #endif /* CURSOR_H */

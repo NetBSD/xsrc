@@ -70,7 +70,7 @@ SOFTWARE.
 *                                                               *
 *****************************************************************/
 
-/* $XFree86: xc/programs/Xserver/dix/window.c,v 3.24 2001/12/14 19:59:34 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/dix/window.c,v 3.32 2003/01/12 02:44:26 dawes Exp $ */
 
 #include "misc.h"
 #include "scrnintstr.h"
@@ -100,8 +100,6 @@ SOFTWARE.
 #include "security.h"
 #endif
 
-extern Bool permitOldBugs;
-
 #if defined(NEED_SCREEN_REGIONS)
 #define REGION_PTR(pScreen,pWin) \
     register ScreenPtr pScreen = pWin->drawable.pScreen;
@@ -126,15 +124,12 @@ int screenIsSaved = SCREEN_SAVER_OFF;
 
 ScreenSaverStuffRec savedScreenInfo[MAXSCREENS];
 
-extern WindowPtr *WindowTable;
-
 #if 0
 extern void DeleteWindowFromAnyEvents();
 extern Mask EventMaskForClient();
 extern void WindowHasNewCursor();
 extern void RecalculateDeliverableEvents();
 #endif
-extern int rand();
 
 static Bool TileScreenSaver(
 #if NeedFunctionPrototypes
@@ -325,7 +320,7 @@ MakeRootTile(pWin)
     pWin->backgroundState = BackgroundPixmap;
     pGC = GetScratchGC(pScreen->rootDepth, pScreen);
     if (!pWin->background.pixmap || !pGC)
-	FatalError("cound not create root tile");
+	FatalError("could not create root tile");
 
     {
 	CARD32 attributes[2];
@@ -344,6 +339,9 @@ MakeRootTile(pWin)
    for (i = 4; i > 0; i--, from++)
 	for (j = len; j > 0; j--)
 	    *to++ = *from;
+
+   if (blackRoot)
+       bzero(back, sizeof(back));
 
    (*pGC->ops->PutImage)((DrawablePtr)pWin->background.pixmap, pGC, 1,
 		    0, 0, len, 4, 0, XYBitmap, (char *)back);
@@ -3327,15 +3325,19 @@ SendVisibilityNotify(pWin)
 
 		pWin2 = (WindowPtr)LookupIDByType(win->info[i].id, RT_WINDOW);
 
-		if(pWin2->visibility == VisibilityPartiallyObscured)
-		    return;
+		if (pWin2) {
+		    if(pWin2->visibility == VisibilityPartiallyObscured)
+		   	return;
 
-		if(!i) pWin = pWin2;
+		    if(!i) pWin = pWin2;
+		}
 	    }
 	    break;
 	case VisibilityPartiallyObscured:
-	    if(Scrnum)
-	       pWin = (WindowPtr)LookupIDByType(win->info[0].id, RT_WINDOW);
+	    if(Scrnum) {
+	        pWin2 = (WindowPtr)LookupIDByType(win->info[0].id, RT_WINDOW);
+		if (pWin2) pWin = pWin2;
+	    }
 	    break;
 	case VisibilityFullyObscured:
 	    for(i = 0; i < PanoramiXNumScreens; i++) {
@@ -3343,10 +3345,12 @@ SendVisibilityNotify(pWin)
 
 		pWin2 = (WindowPtr)LookupIDByType(win->info[i].id, RT_WINDOW);
 		
-		if(pWin2->visibility != VisibilityFullyObscured)
-		    return;
+		if (pWin2) {
+		    if(pWin2->visibility != VisibilityFullyObscured)
+		    	return;
 
-		if(!i) pWin = pWin2;
+		    if(!i) pWin = pWin2;
+		}
 	    }
 	    break;
 	}
@@ -3365,7 +3369,6 @@ SendVisibilityNotify(pWin)
 #define RANDOM_WIDTH 32
 
 #ifndef NOLOGOHACK
-extern int logoScreenSaver;
 static void DrawLogo(
 #if NeedFunctionPrototypes
     WindowPtr /*pWin*/

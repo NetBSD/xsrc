@@ -30,7 +30,7 @@
  *   by Andreas Stolcke <stolcke@icsi.berkeley.edu>
  */
 
-/* $XFree86: xc/programs/xdm/sessreg.c,v 3.18 2001/12/14 20:01:24 dawes Exp $ */
+/* $XFree86: xc/programs/xdm/sessreg.c,v 3.19 2002/12/07 20:31:04 herrb Exp $ */
 
 /*
  * sessreg
@@ -426,7 +426,8 @@ Xslot (char *ttys_file, char *servers_file, char *tty_line, char *host_name,
 	char	*pos;
 
 	/* remove screen number from the display name */
-	strcpy(disp_name, host_name ? host_name : tty_line);
+	memset(disp_name, 0, sizeof(disp_name));
+	strncpy(disp_name, host_name ? host_name : tty_line, sizeof(disp_name)-1);
 	pos = strrchr(disp_name, ':');
 	if (pos) {
 	    pos = strchr(pos, '.');

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/parser/write.c,v 1.15 2001/07/25 15:05:08 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/parser/write.c,v 1.17 2002/09/17 18:54:16 dawes Exp $ */
 /* 
  * 
  * Copyright (c) 1997  Metro Link Incorporated
@@ -44,14 +44,14 @@
 extern char *sys_errlist[];
 extern int sys_nerr;
 #define strerror(n) \
-    (((n) >= 0 && (n) < sys_nerr) ? sys_errlist[n] : "unknown error")
+	(((n) >= 0 && (n) < sys_nerr) ? sys_errlist[n] : "unknown error")
 #endif
 #endif
 
 #if defined(SVR4) || defined(__linux__) || defined(CSRG_BASED)
 #define HAS_SAVED_IDS_AND_SETEUID
 #endif
-#if defined(__EMX__) || defined(WIN32)
+#if defined(__UNIXOS2__) || defined(WIN32)
 #define HAS_NO_UIDS
 #endif
 

@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/programs/xfs/include/difsutils.h,v 1.4 2001/06/25 20:40:18 paulo Exp $
+ * $XFree86: xc/programs/xfs/include/difsutils.h,v 1.5 2002/10/15 01:45:03 dawes Exp $
  */
 
 /************************************************************
@@ -73,5 +73,6 @@ extern void RemoveBlockAndWakeupHandlers (BlockHandlerProcPtr blockHandler, Difs
 extern void SetDefaultPointSize (int ps);
 extern void WakeupHandler (int result, unsigned long * pReadmask);
 extern void Xfree (unsigned long *n);
+extern pointer Xcalloc (unsigned long n);
 
 #endif /* _DIFSUTILS_H */

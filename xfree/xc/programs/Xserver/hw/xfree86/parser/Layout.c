@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/parser/Layout.c,v 1.18 2001/08/06 20:51:14 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/parser/Layout.c,v 1.23 2003/01/04 20:20:23 paulo Exp $ */
 /* 
  * 
  * Copyright (c) 1997  Metro Link Incorporated
@@ -54,6 +54,7 @@ static xf86ConfigSymTabRec AdjTab[] =
 	{ABOVE, "above"},
 	{BELOW, "below"},
 	{RELATIVE, "relative"},
+	{ABSOLUTE, "absolute"},
 	{-1, ""},
 };
 
@@ -97,6 +98,7 @@ xf86parseLayoutSection (void)
 		case SCREEN:
 			{
 				XF86ConfAdjacencyPtr aptr;
+				int absKeyword = 0;
 
 				aptr = xf86confcalloc (1, sizeof (XF86ConfAdjacencyRec));
 				aptr->list.next = NULL;
@@ -132,6 +134,10 @@ xf86parseLayoutSection (void)
 				case RELATIVE:
 					aptr->adj_where = CONF_ADJ_RELATIVE;
 					break;
+				case ABSOLUTE:
+					aptr->adj_where = CONF_ADJ_ABSOLUTE;
+					absKeyword = 1;
+					break;
 				case EOF_TOKEN:
 					Error (UNEXPECTED_EOF_MSG, NULL);
 					break;
@@ -146,6 +152,8 @@ xf86parseLayoutSection (void)
 				switch (aptr->adj_where)
 				{
 				case CONF_ADJ_ABSOLUTE:
+					if (absKeyword) 
+						token = xf86getSubToken(&(ptr->lay_comment));
 					if (token == NUMBER)
 					{
 						aptr->adj_x = val.num;
@@ -153,8 +161,12 @@ xf86parseLayoutSection (void)
 						if (token != NUMBER)
 							Error(INVALID_SCR_MSG, NULL);
 						aptr->adj_y = val.num;
-					} else
-						xf86unGetToken (token);
+					} else {
+						if (absKeyword)
+							Error(INVALID_SCR_MSG, NULL);
+						else
+							xf86unGetToken (token);
+					}
 					break;
 				case CONF_ADJ_RIGHTOF:
 				case CONF_ADJ_LEFTOF:
@@ -459,12 +471,12 @@ xf86validateLayout (XF86ConfigPtr p)
 XF86ConfLayoutPtr
 xf86findLayout (const char *name, XF86ConfLayoutPtr list)
 {
-    while (list)
-    {
-        if (xf86nameCompare (list->lay_identifier, name) == 0)
-            return (list);
-        list = list->list.next;
-    }
-    return (NULL);
+	while (list)
+	{
+		if (xf86nameCompare (list->lay_identifier, name) == 0)
+			return (list);
+		list = list->list.next;
+	}
+	return (NULL);
 }
 

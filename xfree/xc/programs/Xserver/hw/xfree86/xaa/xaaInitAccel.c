@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xaaInitAccel.c,v 1.32 2001/06/03 19:47:59 mvojkovi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xaaInitAccel.c,v 1.36 2003/01/12 03:55:51 tsi Exp $ */
 
 #include "misc.h"
 #include "xf86.h"
@@ -13,7 +13,9 @@
 #include "xf86fbman.h"
 #include "servermd.h"
 
+#ifdef XFree86LOADER
 static const OptionInfoRec *XAAAvailableOptions(void *unused);
+#endif
 
 /*
  * XAA Config options
@@ -100,7 +102,7 @@ static XF86ModuleVersionInfo xaaVersRec =
 	MODINFOSTRING1,
 	MODINFOSTRING2,
 	XF86_VERSION_CURRENT,
-	1, 0, 0,
+	1, 1, 0,
 	ABI_CLASS_VIDEODRV,		/* requires the video driver ABI */
 	ABI_VIDEODRV_VERSION,
 	MOD_CLASS_NONE,
@@ -133,7 +135,6 @@ xaaSetup(pointer Module, pointer Options, int *ErrorMajor, int *ErrorMinor)
 
     return (pointer)TRUE;
 }
-#endif
 
 /*ARGSUSED*/
 static const OptionInfoRec *
@@ -141,6 +142,7 @@ XAAAvailableOptions(void *unused)
 {
     return (XAAOptions);
 }
+#endif
 
 Bool
 XAAInitAccel(ScreenPtr pScreen, XAAInfoRecPtr infoRec)
@@ -489,7 +491,7 @@ XAAInitAccel(ScreenPtr pScreen, XAAInfoRecPtr infoRec)
 
 #ifndef __i386__
    /* XAA makes some unaligned accesses when clipping is not available */
-   #define CLIP_FLAGS (LEFT_EDGE_CLIPPING | LEFT_EDGE_CLIPPING_NEGATIVE_X)
+#  define CLIP_FLAGS (LEFT_EDGE_CLIPPING | LEFT_EDGE_CLIPPING_NEGATIVE_X)
    if(HaveImageWriteRect &&
       ((infoRec->ImageWriteFlags & CLIP_FLAGS) != CLIP_FLAGS))
    {
@@ -886,7 +888,8 @@ XAAInitAccel(ScreenPtr pScreen, XAAInfoRecPtr infoRec)
 	}
 	infoRec->WriteBitmapFlags =
 		infoRec->ScanlineCPUToScreenColorExpandFillFlags;
-    }
+    } else
+	infoRec->WriteBitmap = NULL;
 
     /**** TE Glyphs ****/
 
@@ -993,7 +996,8 @@ XAAInitAccel(ScreenPtr pScreen, XAAInfoRecPtr infoRec)
     } else if(HaveScanlineImageWriteRect) {
 	infoRec->WritePixmap = XAAWritePixmapScanline;
 	infoRec->WritePixmapFlags = infoRec->ScanlineImageWriteFlags;
-    }
+    } else
+	infoRec->WritePixmap = NULL;
 
     /**** ReadPixmap ****/
 

@@ -23,7 +23,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/extras/freetype2/src/pcf/pcfutil.c,v 1.3 2001/12/16 18:01:54 keithp Exp $ */
+/* $XFree86: xc/extras/freetype2/src/pcf/pcfutil.c,v 1.4 2002/12/17 03:28:26 dawes Exp $ */
 
 /*
  * Author:  Keith Packard, MIT X Consortium
@@ -76,7 +76,7 @@ in this Software without prior written authorization from The Open Group.
    *  Invert bit order within each BYTE of an array.
    */
 
-  void
+  static void
   BitOrderInvert( unsigned char*  buf,
                   int             nbytes )
   {
@@ -92,7 +92,7 @@ in this Software without prior written authorization from The Open Group.
    *  Invert byte order within each 16-bits of an array.
    */
 
-  void
+  static void
   TwoByteSwap( unsigned char*  buf,
                int             nbytes )
   {
@@ -111,7 +111,7 @@ in this Software without prior written authorization from The Open Group.
    *  Invert byte order within each 32-bits of an array.
    */
 
-  void
+  static void
   FourByteSwap( unsigned char*  buf,
                 int             nbytes )
   {
@@ -135,7 +135,7 @@ in this Software without prior written authorization from The Open Group.
    *  Repad a bitmap.
    */
 
-  int
+  static int
   RepadBitmap( char*         pSrc,
                char*         pDst,
                unsigned int  srcPad,

@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/config/cf/lnxdoc.rules,v 3.26 2001/12/19 23:07:24 dawes Exp $
+XCOMM $XFree86: xc/config/cf/lnxdoc.rules,v 3.27 2003/01/15 03:17:29 dawes Exp $
 XCOMM
 XCOMM Rules for formatting Linuxdoc-SGML documentation
 XCOMM
@@ -80,33 +80,38 @@ clean::									@@\
  * source tree.  Use with care.
  */
 
-#ifndef UpdateFormattedDoc
-#define UpdateFormattedDoc(textfile,dstdir)				@@\
+#ifndef UpdateFormattedDocLong
+#define UpdateFormattedDocLong(textfile,dstdir,dstfile)			@@\
 update.docs:: textfile							@@\
-	-@if [ -f dstdir/textfile ]; then \				@@\
+	-@if [ -f dstdir/dstfile ]; then \				@@\
 	    if [ "$(FORCEUPDATE)" = yes ]; then set -x; \		@@\
 		if [ "$(FOLLOWLINK)" = no ]; then \			@@\
-			$(RM) dstdir/textfile; \			@@\
+			$(RM) dstdir/dstfile; \				@@\
 		fi; \							@@\
-		cp textfile dstdir/textfile; \				@@\
-		echo "" >> dstdir/textfile; \				@@\
-		echo "\$$XFree86\$$" >> dstdir/textfile; \		@@\
+		cp textfile dstdir/dstfile; \				@@\
+		echo "" >> dstdir/dstfile; \				@@\
+		echo "\$$XFree86\$$" >> dstdir/dstfile; \		@@\
 	    else \							@@\
 		$(RM) __tmp1__ __tmp2__; \				@@\
 		fgrep -v "\$$XFree86:" textfile > __tmp1__; \		@@\
-		fgrep -v "\$$XFree86:" dstdir/textfile > __tmp2__; \	@@\
+		fgrep -v "\$$XFree86:" dstdir/dstfile > __tmp2__; \	@@\
 		if diff -B __tmp1__ __tmp2__ > /dev/null 2>&1; then :; \	@@\
 		else set -x; \						@@\
 			if [ "$(FOLLOWLINK)" = no ]; then \		@@\
-				$(RM) dstdir/textfile; \		@@\
+				$(RM) dstdir/dstfile; \			@@\
 			fi; \						@@\
-			cp textfile dstdir/textfile ; \			@@\
-			echo "" >> dstdir/textfile; \			@@\
-			echo "\$$XFree86"": \$$" >> dstdir/textfile; \	@@\
+			cp textfile dstdir/dstfile ; \			@@\
+			echo "" >> dstdir/dstfile; \			@@\
+			echo "\$$XFree86"": \$$" >> dstdir/dstfile; \	@@\
 		fi; \							@@\
 	    fi; \							@@\
 	fi								@@\
 	@$(RM) __tmp1__ __tmp2__
+#endif
+
+#ifndef UpdateFormattedDoc
+#define UpdateFormattedDoc(textfile,dstdir)				@@\
+UpdateFormattedDocLong(textfile,dstdir,textfile)
 #endif
 
 /*

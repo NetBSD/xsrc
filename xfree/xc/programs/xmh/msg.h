@@ -23,37 +23,37 @@
  * or publicity pertaining to distribution of the software without specific,
  * written prior permission.
  */
+/* $XFree86: xc/programs/xmh/msg.h,v 1.3 2002/07/01 02:26:05 tsi Exp $ */
 
 #ifndef _msg_h
 #define _msg_h
 
-extern char *MsgFileName();
-extern int MsgSaveChanges();
-extern int MsgSetScrn();
-extern void MsgSetScrnForComp();
-extern void MsgSetScrnForce();
-extern void MsgSetFate();
-extern FateType MsgGetFate();
-extern void MsgSetTemporary();
-extern void MsgSetPermanent();
-extern int MsgGetId();
-extern char *MsgGetScanLine();
-extern Toc MsgGetToc();
-extern void MsgSetReapable();
-extern void MsgClearReapable();
-extern int MsgGetReapable();
-extern void MsgSetEditable();
-extern void MsgClearEditable();
-extern int MsgGetEditable();
-extern int MsgChanged();
-extern void MsgSetCallOnChange();
-extern void MsgClearCallOnChange();
-extern void MsgSend();
-extern void MsgLoadComposition();
-extern void MsgLoadReply();
-extern void MsgLoadForward();
-extern void MsgLoadCopy();
-extern void MsgCheckPoint();
-extern void MsgFree();
+extern char *MsgFileName(Msg);
+extern int MsgSaveChanges(Msg);
+extern int MsgSetScrn(Msg, Scrn, XtCallbackList, XtCallbackList);
+extern void MsgSetScrnForComp(Msg, Scrn);
+extern void MsgSetScrnForce(Msg, Scrn);
+extern void MsgSetFate(Msg, FateType, Toc);
+extern FateType MsgGetFate(Msg, Toc *);
+extern void MsgSetTemporary(Msg);
+extern void MsgSetPermanent(Msg);
+extern int MsgGetId(Msg);
+extern char *MsgGetScanLine(Msg);
+extern Toc MsgGetToc(Msg);
+extern void MsgSetReapable(Msg);
+extern void MsgClearReapable(Msg);
+extern int MsgGetReapable(Msg);
+extern void MsgSetEditable(Msg);
+extern void MsgClearEditable(Msg);
+extern int MsgGetEditable(Msg);
+extern int MsgChanged(Msg);
+extern void MsgSetCallOnChange(Msg, void (*)(XMH_CB_ARGS), XtPointer);
+extern void MsgSend(Msg);
+extern void MsgLoadComposition(Msg);
+extern void MsgLoadReply(Msg, Msg, String *, Cardinal);
+extern void MsgLoadForward(Scrn, Msg, MsgList, String *, Cardinal);
+extern void MsgLoadCopy(Msg, Msg);
+extern void MsgCheckPoint(Msg);
+extern void MsgFree(Msg);
 
 #endif /* _msg_h */

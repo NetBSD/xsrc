@@ -6,7 +6,7 @@
  *      (c) 1998 Gerd Knorr <kraxel@cs.tu-berlin.de>
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/i2c/xf86i2c.c,v 1.10 2001/12/20 21:35:40 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/i2c/xf86i2c.c,v 1.13 2002/09/16 18:06:07 eich Exp $ */
 
 #if 1
 #include "misc.h"
@@ -155,21 +155,8 @@ I2CRaiseSCL(I2CBusPtr b, int sda, int timeout)
 static Bool
 I2CStart(I2CBusPtr b, int timeout)
 {
-    int i, scl, sda;
-
-    b->I2CPutBits(b, 1, 1);
-    b->I2CUDelay(b, b->RiseFallTime);
-
-    for (i = timeout; i > 0; i -= b->RiseFallTime) {
-	b->I2CGetBits(b, &scl, &sda);
-	if (scl) break;
-	b->I2CUDelay(b, b->RiseFallTime);
-    }
-
-    if (i <= 0) { 
-	I2C_TIMEOUT(ErrorF("\ni2c: <[I2CStart(<%s>, %d) timeout]", b->BusName, timeout));
+    if (!I2CRaiseSCL(b, 1, timeout))
 	return FALSE;
-    }
 
     b->I2CPutBits(b, 1, 0);
     b->I2CUDelay(b, b->HoldTime);
@@ -660,13 +647,9 @@ xf86DestroyI2CDevRec(I2CDevPtr d, Bool unalloc)
 		break;
 	    }
 
-	if (d->pI2CBus->scrnIndex >= 0)
-	    xf86DrvMsg(d->pI2CBus->scrnIndex, X_INFO, 
-		       "I2C device \"%s:%s\" removed.\n",
-		       d->pI2CBus->BusName, d->DevName);
-	else
-	    xf86Msg(X_INFO, "I2C device \"%s:%s\" removed.\n",
-		    d->pI2CBus->BusName, d->DevName);
+	xf86DrvMsg(d->pI2CBus->scrnIndex, X_INFO,
+		   "I2C device \"%s:%s\" removed.\n",
+		   d->pI2CBus->BusName, d->DevName);
 
 	if (unalloc) xfree(d);
     }
@@ -704,12 +687,9 @@ xf86I2CDevInit(I2CDevPtr d)
     d->NextDev = b->FirstDev;
     b->FirstDev = d;
 
-    if(b->scrnIndex >= 0)
-	xf86DrvMsg(b->scrnIndex, X_INFO, "I2C device \"%s:%s\" registered.\n",
-		   b->BusName, d->DevName);
-    else
-	xf86Msg(X_INFO, "I2C device \"%s:%s\" registered.\n",
-		b->BusName, d->DevName);
+    xf86DrvMsg(b->scrnIndex, X_INFO,
+	       "I2C device \"%s:%s\" registered at address 0x%02X.\n",
+	       b->BusName, d->DevName, d->SlaveAddr);
 
     return TRUE;
 }
@@ -796,11 +776,8 @@ xf86DestroyI2CBusRec(I2CBusPtr b, Bool unalloc, Bool devs_too)
 	    }
 	}
 
-	if (b->scrnIndex >= 0)
-	    xf86DrvMsg(b->scrnIndex, X_INFO, "I2C bus \"%s\" removed.\n",
-		       b->BusName);
-	else
-	    xf86Msg(X_INFO, "I2C bus \"%s\" removed.\n", b->BusName);
+	xf86DrvMsg(b->scrnIndex, X_INFO, "I2C bus \"%s\" removed.\n",
+		   b->BusName);
 
 	if (unalloc) xfree(b);
     }
@@ -865,11 +842,8 @@ xf86I2CBusInit(I2CBusPtr b)
     b->NextBus = I2CBusList;
     I2CBusList = b;
 
-    if (b->scrnIndex >= 0)
-	xf86DrvMsg(b->scrnIndex, X_INFO, "I2C bus \"%s\" initialized.\n",
-		   b->BusName);
-    else
-	xf86Msg(X_INFO, "I2C bus \"%s\" initialized.\n", b->BusName);
+    xf86DrvMsg(b->scrnIndex, X_INFO, "I2C bus \"%s\" initialized.\n",
+	       b->BusName);
 
     return TRUE;
 }
@@ -881,9 +855,9 @@ xf86I2CFindBus(int scrnIndex, char *name)
 
     if (name != NULL)
 	for (p = I2CBusList; p != NULL; p = p->NextBus)
-	    if (scrnIndex < 0 || p->scrnIndex == scrnIndex) 
+	    if (scrnIndex < 0 || p->scrnIndex == scrnIndex)
 		if (!strcmp(p->BusName, name))
 		    return p;
-
+    
     return NULL;
 }

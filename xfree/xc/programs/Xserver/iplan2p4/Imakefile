@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/programs/Xserver/iplan2p4/Imakefile,v 3.4 1999/04/17 09:08:48 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/iplan2p4/Imakefile,v 3.5 2002/05/31 18:46:05 dawes Exp $
 XCOMM $XConsortium: Imakefile,v 5.41 93/09/06 18:37:23 rws Exp $
 #include <Server.tmpl>
 
@@ -116,6 +116,4 @@ ObjectFromSpecialSource(ipltile32G,ipltile32,-DMROP=0)
 ObjectFromSpecialSource(iplply1rctC,iplply1rct,-DRROP=GXcopy)
 ObjectFromSpecialSource(iplply1rctG,iplply1rct,-DRROP=GXset)
 
-#ifndef OS2Architecture
 DependTarget()
-#endif

@@ -1,13 +1,13 @@
-/* $XFree86: xc/lib/XvMC/XvMClibint.h,v 1.4 2001/07/25 15:04:54 dawes Exp $ */
+/* $XFree86: xc/lib/XvMC/XvMClibint.h,v 1.5 2002/10/16 00:37:33 dawes Exp $ */
 
 #ifndef _XVMCLIBINT_H
 #define _XVMCLIBINT_H
 #define NEED_REPLIES
 
-#include "Xlibint.h"
-#include "Xvproto.h"
-#include "XvMCproto.h"
-#include "XvMClib.h"
+#include <X11/Xlibint.h>
+#include <X11/extensions/Xvproto.h>
+#include <X11/extensions/XvMCproto.h>
+#include <X11/extensions/XvMClib.h>
 
 #define XvMCCheckExtension(dpy, i, val) \
   XextCheckExtension(dpy, i, xvmc_extension_name, val)

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/loader/dixsym.c,v 1.45 2001/11/17 16:05:59 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/loader/dixsym.c,v 1.53 2003/01/26 16:40:42 eich Exp $ */
 
 
 /*
@@ -56,6 +56,13 @@
 #ifdef RENDER
 #include "mipict.h"
 #endif
+#include "selection.h"
+#ifdef XKB
+#include <X11/extensions/XKBsrv.h>
+#endif
+
+extern Selection *CurrentSelections;
+extern int NumCurrentSelections;
 
 /* DIX things */
 
@@ -85,6 +92,8 @@ LOOKUP dixLookupTab[] = {
   SYMFUNC(InitPtrFeedbackClassDeviceStruct)
   SYMFUNC(InitValuatorClassDeviceStruct)
   SYMFUNC(InitKeyClassDeviceStruct)
+  SYMFUNC(InitKeyboardDeviceStruct)
+  SYMFUNC(SendMappingNotify)
   /* dispatch.c */
   SYMFUNC(SetInputCheck)
   SYMFUNC(SendErrorToClient)
@@ -95,6 +104,8 @@ LOOKUP dixLookupTab[] = {
   SYMVAR(isItTimeToYield)
   SYMVAR(ClientStateCallback)
   SYMVAR(ServerGrabCallback)
+  SYMVAR(CurrentSelections)
+  SYMVAR(NumCurrentSelections)
   /* dixfonts.c */
   SYMFUNC(CloseFont)
   SYMFUNC(FontToXError)
@@ -115,8 +126,10 @@ LOOKUP dixLookupTab[] = {
   SYMFUNC(QueueWorkProc)
   SYMFUNC(RegisterBlockAndWakeupHandlers)
   SYMFUNC(RemoveBlockAndWakeupHandlers)
+#ifdef XCSECURITY
   SYMFUNC(SecurityLookupDrawable)
   SYMFUNC(SecurityLookupWindow)
+#endif
   /* events.c */
   SYMFUNC(CheckCursorConfinement)
   SYMFUNC(DeliverEvents)
@@ -128,6 +141,9 @@ LOOKUP dixLookupTab[] = {
   SYMVAR(EventCallback)
   SYMVAR(inputInfo)
   SYMVAR(SetCriticalEvent)
+#ifdef PANORAMIX
+  SYMVAR(XineramaGetCursorScreen)
+#endif
   /* property.c */
   SYMFUNC(ChangeWindowProperty)
   /* extension.c */
@@ -210,8 +226,18 @@ LOOKUP dixLookupTab[] = {
   SYMFUNC(LookupIDByType)
   SYMFUNC(LookupIDByClass)
   SYMFUNC(LegalNewID)
+#ifdef XCSECURITY
   SYMFUNC(SecurityLookupIDByClass)
   SYMFUNC(SecurityLookupIDByType)
+#endif
+  SYMFUNC(FindClientResourcesByType)
+  SYMFUNC(FindAllClientResources)
+  SYMVAR(lastResourceType)
+  SYMVAR(TypeMask)
+#ifdef RES
+  SYMFUNC(RegisterResourceName)
+  SYMVAR(ResourceNames)
+#endif
   /* swaprep.c */
   SYMFUNC(CopySwap32Write)
   SYMFUNC(Swap32Write)
@@ -259,6 +285,7 @@ LOOKUP dixLookupTab[] = {
   SYMFUNC(ErrorF)
   SYMFUNC(FatalError)
   SYMFUNC(Xstrdup)
+  SYMFUNC(XNFstrdup)
   SYMVAR(Must_have_memory)
   /* xalloc.c */
   SYMFUNC(XNFalloc)
@@ -296,6 +323,14 @@ LOOKUP dixLookupTab[] = {
   SYMFUNC(InitPointerDeviceStruct)
   SYMFUNC(LookupKeyboardDevice)
   SYMFUNC(LookupPointerDevice)
+
+#ifdef XKB
+  /* xkb/xkbInit.c */
+  SYMFUNC(XkbInitKeyboardDeviceStruct)
+  SYMFUNC(XkbSetRulesDflts)
+  SYMVAR(noXkbExtension)
+#endif
+
 #ifdef XINPUT
   /* Xi */
   /* exevents.c */
@@ -317,7 +352,15 @@ LOOKUP dixLookupTab[] = {
   SYMFUNC(miGlyphs)
   SYMFUNC(miCompositeRects)
   SYMVAR(PictureScreenPrivateIndex)
+  SYMFUNC(PictureTransformPoint)
+  SYMFUNC(PictureAddFilter)
+  SYMFUNC(PictureSetFilterAlias)
+  SYMFUNC(PictureGetSubpixelOrder)
+  SYMFUNC(PictureSetSubpixelOrder)
 #endif
+
+  /* os/utils.c */
+  SYMFUNC(GiveUp)
 
   { 0, 0 },
 

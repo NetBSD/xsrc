@@ -5,7 +5,7 @@ XCOMM $XConsortium: Imakefile /main/10 1996/10/25 10:34:08 kaleb $
 
 
 
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/vgahw/Imakefile,v 1.9 1999/08/14 10:50:10 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/vgahw/Imakefile,v 1.11 2002/11/14 21:01:21 tsi Exp $
 
 #define IHaveModules
 #include <Server.tmpl>
@@ -27,11 +27,7 @@ OBJS =   vgaHW.o /*vgaCmap.o*/ $(MODOBJ)
    LINTLIBS = ../../../dix/llib-ldix.ln ../../../os/llib-los.ln \
 	     ../../mfb/llib-lmfb.ln ../../mi/llib-lmi.ln
 
-#if DirtyStartup
-STARTUPDEFINES = -DDIRTY_STARTUP
-#endif
-
-    DEFINES = $(STARTUPDEFINES)
+    DEFINES = 
 
 ModuleObjectRule()
 
@@ -41,9 +37,7 @@ NormalLintTarget($(SRCS))
 
 InstallLibraryModule(vgahw,$(MODULEDIR),.)
 
-#ifndef OS2Architecture
 DependTarget()
-#endif
 
 InstallDriverSDKLibraryModule(vgahw,$(DRIVERSDKMODULEDIR),.)
 

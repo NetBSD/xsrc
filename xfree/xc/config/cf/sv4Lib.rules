@@ -4,13 +4,16 @@ XCOMM $Xorg: sv4Lib.rules,v 1.3 2000/08/17 19:41:48 cpqbld Exp $
  * SVR4 shared library rules
  */
 
-XCOMM $XFree86: xc/config/cf/sv4Lib.rules,v 3.8 2001/05/28 02:42:25 tsi Exp $
+XCOMM $XFree86: xc/config/cf/sv4Lib.rules,v 3.9 2002/11/22 22:55:56 tsi Exp $
 
 #ifndef HasSharedLibraries
 # define HasSharedLibraries YES
 #endif
 #ifndef SharedDataSeparation
 # define SharedDataSeparation NO
+#endif
+#ifndef HasGcc2ForCplusplus
+# define HasGcc2ForCplusplus HasGcc2
 #endif
 #ifndef SharedCodeDef
 # define SharedCodeDef /**/
@@ -40,6 +43,9 @@ XCOMM $XFree86: xc/config/cf/sv4Lib.rules,v 3.8 2001/05/28 02:42:25 tsi Exp $
 #endif
 #ifndef UseExportLists
 # define UseExportLists NO
+#endif
+#ifndef StripInstalledPrograms
+# define StripInstalledPrograms NO
 #endif
 
 /*

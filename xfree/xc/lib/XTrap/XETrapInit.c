@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/XTrap/XETrapInit.c,v 1.2 2001/11/08 04:00:12 tsi Exp $ */
+/* $XFree86: xc/lib/XTrap/XETrapInit.c,v 1.3 2002/10/16 00:37:27 dawes Exp $ */
 /*****************************************************************************
 Copyright 1987, 1988, 1989, 1990, 1991, 1992 by Digital Equipment Corp., 
 Maynard, MA
@@ -27,7 +27,7 @@ SOFTWARE.
 #include <X11/extensions/xtraplib.h>
 #include <X11/extensions/xtraplibp.h>
 #include <X11/extensions/Xext.h>
-#include <extensions/extutil.h>
+#include <X11/extensions/extutil.h>
 
 #ifndef XETrapNumberErrors
 #define XETrapNumberErrors 0

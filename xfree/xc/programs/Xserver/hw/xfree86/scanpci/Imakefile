@@ -1,5 +1,5 @@
 
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/scanpci/Imakefile,v 1.8 2000/04/06 15:27:26 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/scanpci/Imakefile,v 1.11 2002/12/23 01:46:17 dawes Exp $
 
 #if DoLoadableServer
 #define IHaveSubdirs
@@ -23,6 +23,32 @@ NormalLibraryObjectRule()
 NormalLibraryTarget(scanpci,xf86ScanPci.o)
 
 NormalLibraryTarget(pcidata,xf86PciData.o)
+
+#if HasPerl5
+PCIIDSRCS = ../etc/pci.ids ../etc/extrapci.ids
+PCIIDS = pci.ids
+
+$(PCIIDS): $(PCIIDSRCS)
+	RemoveFile($@)
+	cat $(PCIIDSRCS) > $@
+
+includes:: xf86PciIds.h
+
+xf86PciIds.h: $(PCIIDS) pciid2c.pl ../common/xf86PciInfo.h
+	RemoveFile($@)
+	RunPerlScript(pciid2c.pl, ../common/xf86PciInfo.h < $(PCIIDS) > $@)
+
+clean::
+	RemoveFile($(PCIIDS))
+	RemoveFile(xf86PciIds.h)
+
+#else
+LinkFile(xf86PciIds.h,xf86PciStdIds.h)
+#endif
+
+LinkFile(xf86PciData.c,xf86ScanPci.c)
+
+SpecialCObjectRule(xf86PciData,NullParameter,-DPCIDATA)
 
 #if DoLoadableServer
 MakeSubdirs($(SUBDIRS))

@@ -24,7 +24,7 @@
 .\" from The Open Group.
 .\" 
 .\"
-.\" $XFree86: xc/programs/proxymngr/proxymngr.man,v 1.7 2001/12/14 20:01:02 dawes Exp $
+.\" $XFree86: xc/programs/proxymngr/proxymngr.man,v 1.8 2003/02/20 03:27:32 dawes Exp $
 .\"
 .TH PROXYMNGR 1 __xorgversion__
 .SH NAME
@@ -76,7 +76,9 @@ requests are received and proxies are started.
 .PP
 The proxy manager maintains a local configuration file describing the proxy
 services available.  This configuration file is installed
-in /usr/X11R6.4/lib/X11/proxymngr/pmconfig during the installation
+in
+.I __projectroot__/lib/X11/proxymngr/pmconfig
+during the installation
 of proxymngr.  The location of the configuration file can be overwritten using
 the \fB\-config\fP command line option.
 .PP
@@ -128,7 +130,7 @@ Here is a sample configuration file:
 !        or
 !    <serviceName> unmanaged <proxyAddress>
 !
-lbx managed /usr/X11R6.4/bin/lbxproxy
+lbx managed __projectroot__/bin/lbxproxy
 !
 ! substitute site-specific info
 xfwp unmanaged firewall:4444

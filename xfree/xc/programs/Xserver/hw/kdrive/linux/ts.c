@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/programs/Xserver/hw/kdrive/linux/ts.c,v 1.6 2001/12/07 02:19:04 keithp Exp $
+ * $XFree86: xc/programs/Xserver/hw/kdrive/linux/ts.c,v 1.10 2002/11/12 22:20:42 keithp Exp $
  *
  * Derived from ps2.c by Jim Gettys
  *
@@ -46,8 +46,6 @@ typedef struct {
 #endif
 
 static long lastx = 0, lasty = 0;
-int TsScreen;
-extern int TsFbdev;
 
 int
 TsReadBytes (int fd, char *buf, int len, int min)
@@ -103,7 +101,7 @@ TsRead (int tsPort, void *closure)
 	     * touch screen, if it is we send absolute coordinates. If not,
 	     * then we send delta's so that we can track the entire vga screen.
 	     */
-	    if (TsScreen == TsFbdev) {
+	    if (KdTsCurScreen == KdTsPhyScreen) {
 	    	flags = KD_BUTTON_1;
 	    	x = event.x;
 	    	y = event.y;
@@ -154,6 +152,8 @@ TsInit (void)
     for (mi = kdMouseInfo; mi; mi = next)
     {
 	next = mi->next;
+	if (mi->inputType)
+	    continue;
 	if (!mi->name)
 	{
 	    for (i = 0; i < NUM_TS_NAMES; i++)    
@@ -170,19 +170,37 @@ TsInit (void)
 	    fd = open (mi->name, 0);
 	if (fd >= 0)
 	{
-	    mi->driver = (void *) fd;
-	    if (KdRegisterFd (TsInputType, fd, TsRead, (void *) mi))
-		n++;
+	    struct h3600_ts_calibration cal;
+	    /*
+	     * Check to see if this is a touch screen
+	     */
+	    if (ioctl (fd, TS_GET_CAL, &cal) != -1)
+	    {
+		mi->driver = (void *) fd;
+		mi->inputType = TsInputType;
+		if (KdRegisterFd (TsInputType, fd, TsRead, (void *) mi))
+		    n++;
+	    }
+	    else
+		close (fd);
 	}
-	else
-	    KdMouseInfoDispose (mi);
     }
 }
 
 void
 TsFini (void)
 {
+    KdMouseInfo	*mi;
+
     KdUnregisterFds (TsInputType, TRUE);
+    for (mi = kdMouseInfo; mi; mi = mi->next)
+    {
+	if (mi->inputType == TsInputType)
+	{
+	    mi->driver = 0;
+	    mi->inputType = 0;
+	}
+    }
 }
 
 KdMouseFuncs TsFuncs = {

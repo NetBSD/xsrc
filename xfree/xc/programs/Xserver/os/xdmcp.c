@@ -13,7 +13,7 @@
  * without express or implied warranty.
  *
  */
-/* $XFree86: xc/programs/Xserver/os/xdmcp.c,v 3.20.4.1 2002/03/11 18:59:51 keithp Exp $ */
+/* $XFree86: xc/programs/Xserver/os/xdmcp.c,v 3.21 2002/03/11 16:22:28 keithp Exp $ */
 
 #ifdef WIN32
 /* avoid conflicting definitions */

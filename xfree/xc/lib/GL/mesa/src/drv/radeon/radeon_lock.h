@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/radeon/radeon_lock.h,v 1.1 2001/01/08 01:07:27 martin Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/radeon/radeon_lock.h,v 1.3 2002/10/30 12:51:55 alanh Exp $ */
 /**************************************************************************
 
 Copyright 2000, 2001 ATI Technologies Inc., Ontario, Canada, and
@@ -85,26 +85,27 @@ extern int prevLockLine;
  * do not do any drawing !!!
  */
 
+
 /* Lock the hardware and validate our state.
  */
-#define LOCK_HARDWARE( rmesa )						\
-   do {									\
-      char __ret = 0;							\
-      DEBUG_CHECK_LOCK();						\
-      DRM_CAS( rmesa->driHwLock, rmesa->hHWContext,			\
-	       (DRM_LOCK_HELD | rmesa->hHWContext), __ret );		\
-      if ( __ret )							\
-	 radeonGetLock( rmesa, 0 );					\
-      DEBUG_LOCK();							\
+#define LOCK_HARDWARE( rmesa )					\
+   do {								\
+      char __ret = 0;						\
+      DEBUG_CHECK_LOCK();					\
+      DRM_CAS( rmesa->dri.hwLock, rmesa->dri.hwContext,		\
+	       (DRM_LOCK_HELD | rmesa->dri.hwContext), __ret );	\
+      if ( __ret )						\
+	 radeonGetLock( rmesa, 0 );				\
+      DEBUG_LOCK();						\
    } while (0)
 
 /* Unlock the hardware.
  */
 #define UNLOCK_HARDWARE( rmesa )					\
    do {									\
-      DRM_UNLOCK( rmesa->driFd,						\
-		  rmesa->driHwLock,					\
-		  rmesa->hHWContext );					\
+      DRM_UNLOCK( rmesa->dri.fd,					\
+		  rmesa->dri.hwLock,					\
+		  rmesa->dri.hwContext );				\
       DEBUG_RESET();							\
    } while (0)
 

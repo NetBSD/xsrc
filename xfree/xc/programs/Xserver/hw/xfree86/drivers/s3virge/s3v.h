@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/s3virge/s3v.h,v 1.29 2001/11/21 22:43:00 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/s3virge/s3v.h,v 1.31 2003/02/04 02:20:49 dawes Exp $ */
 
 /*
 Copyright (C) 1994-1999 The XFree86 Project, Inc.  All Rights Reserved.
@@ -344,32 +344,32 @@ typedef struct tagS3VRec {
 /* #ifndef MetroLink */ 
 #if !defined (MetroLink) && !defined (VertDebug)
 #define VerticalRetraceWait() do { \
-   outb(vgaCRIndex, 0x17); \
-   if ( inb(vgaCRReg) & 0x80 ) { \
-       while ((inb(vgaIOBase + 0x0A) & 0x08) == 0x00) ; \
-       while ((inb(vgaIOBase + 0x0A) & 0x08) == 0x08) ; \
-       while ((inb(vgaIOBase + 0x0A) & 0x08) == 0x00) ; \
+   VGAOUT8(vgaCRIndex, 0x17); \
+   if ( VGAIN8(vgaCRReg) & 0x80 ) { \
+       while ((VGAIN8(vgaIOBase + 0x0A) & 0x08) == 0x00) ; \
+       while ((VGAIN8(vgaIOBase + 0x0A) & 0x08) == 0x08) ; \
+       while ((VGAIN8(vgaIOBase + 0x0A) & 0x08) == 0x00) ; \
        }\
 } while (0)
 
 #else
 #define SPIN_LIMIT 1000000
 #define VerticalRetraceWait() do { \
-   outb(vgaCRIndex, 0x17); \
-   if ( inb(vgaCRReg) & 0x80 ) { \
+   VGAOUT8(vgaCRIndex, 0x17); \
+   if ( VGAIN8(vgaCRReg) & 0x80 ) { \
 	volatile unsigned long _spin_me; \
 	for (_spin_me = 0; \
-	 ((inb(vgaIOBase + 0x0A) & 0x08) == 0x00) && _spin_me <= SPIN_LIMIT; \
+	 ((VGAIN8(vgaIOBase + 0x0A) & 0x08) == 0x00) && _spin_me <= SPIN_LIMIT; \
 	 _spin_me++) ; \
 	if (_spin_me > SPIN_LIMIT) \
 	    ErrorF("s3v: warning: VerticalRetraceWait timed out(1:3).\n"); \
 	for (_spin_me = 0; \
-	 ((inb(vgaIOBase + 0x0A) & 0x08) == 0x08) && _spin_me <= SPIN_LIMIT; \
+	 ((VGAIN8(vgaIOBase + 0x0A) & 0x08) == 0x08) && _spin_me <= SPIN_LIMIT; \
 	 _spin_me++) ; \
 	if (_spin_me > SPIN_LIMIT) \
 	    ErrorF("s3v: warning: VerticalRetraceWait timed out(2:3).\n"); \
 	for (_spin_me = 0; \
-	 ((inb(vgaIOBase + 0x0A) & 0x08) == 0x00) && _spin_me <= SPIN_LIMIT; \
+	 ((VGAIN8(vgaIOBase + 0x0A) & 0x08) == 0x00) && _spin_me <= SPIN_LIMIT; \
 	 _spin_me++) ; \
 	if (_spin_me > SPIN_LIMIT) \
 	    ErrorF("s3v: warning: VerticalRetraceWait timed out(3:3).\n"); \
@@ -391,7 +391,8 @@ typedef struct tagS3VRec {
 
 /* prototypes */
 /* s3v_dac.c */
-extern void S3VCommonCalcClock(long freq, int min_m, int min_n1, int max_n1,
+extern void S3VCommonCalcClock(ScrnInfoPtr pScrn, DisplayModePtr mode, 
+			long freq, int min_m, int min_n1, int max_n1,
 			int min_n2, int max_n2, long freq_min, long freq_max,
 			unsigned char * mdiv, unsigned char * ndiv);
 
@@ -424,7 +425,7 @@ void s3vRefreshArea32(ScrnInfoPtr pScrn, int num, BoxPtr pbox);
 
 /* s3v_xv.c  X Video Extension support */
 void S3VInitVideo(ScreenPtr pScreen);
-
+int S3VQueryXvCapable(ScrnInfoPtr);
 
 #endif  /*_S3V_H*/
 

@@ -1,5 +1,5 @@
 XCOMM X-TrueType Server - TrueType rasterizer for X
-XCOMM $XFree86: xc/lib/font/X-TrueType/module/Imakefile,v 1.7 2000/11/28 19:09:30 dawes Exp $
+XCOMM $XFree86: xc/lib/font/X-TrueType/module/Imakefile,v 1.8 2002/02/13 21:32:48 dawes Exp $
 
 #define IHaveModules
 #include <Server.tmpl>
@@ -12,7 +12,7 @@ FONTMODULEDEF = -DFONTMODULE
 */
 
 INCLUDES = -I.. -I$(FONTINCSRC) -I../../include -I../../fontcache \
-           -I$(TOP)/include -I$(SERVERSRC)/include \
+           -I$(XINCLUDESRC) -I$(SERVERSRC)/include \
            -I$(FTSOURCEDIR)/lib -I$(FTSOURCEDIR)/lib/extend \
            -I$(FTSOURCEDIR)/lib/arch/unix -I$(FONTLIBSRC)/FreeType
 

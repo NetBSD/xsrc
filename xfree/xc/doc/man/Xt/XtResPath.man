@@ -25,7 +25,7 @@
 .\" dealing in this Software without prior written authorization from the 
 .\" X Consortium.
 .\"
-.\" $XFree86: xc/doc/man/Xt/XtResPath.man,v 1.3 2001/02/09 03:47:52 tsi Exp $
+.\" $XFree86: xc/doc/man/Xt/XtResPath.man,v 1.4 2002/10/12 16:06:41 herrb Exp $
 .\"
 .ds tk X Toolkit
 .ds xT X Toolkit Intrinsics \- C Language Interface
@@ -247,22 +247,20 @@ Possible values might include ``.txt'', ``.dat'', and ``.bm''.
 .LP
 A suggested value for the default path on POSIX-based systems is
 .IP
-<XRoot>/lib/X11/%L/%T/%N%C%S:<XRoot>/lib/X11/%l/%T/%N%C%S:\\
+__projectroot__/lib/X11/%L/%T/%N%C%S:__projectroot__/lib/X11/%l/%T/%N%C%S:\\
 .br
-<XRoot>/lib/X11/%T/%N%C%S:<XRoot>/lib/X11/%L/%T/%N%S:\\
+__projectroot__/lib/X11/%T/%N%C%S:__projectroot__/lib/X11/%L/%T/%N%S:\\
 .br
-<XRoot>/lib/X11/%l/%T/%N%S:<XRoot>/lib/X11/%T/%N%S
-.LP
-where <XRoot> is replaced by the root of the X11 installation tree
-(/usr/X11R6, for example).
+__projectroot__/lib/X11/%l/%T/%N%S:__projectroot__/lib/X11/%T/%N%S
 .LP
 Using this example, if the user has specified a language, it will be
-used as a subdirectory of <XRoot>/lib/X11 that will be searched for other
-files.  If the desired file is not found there, the lookup will be
-tried again using just the language part of the specification.  If the
-file is not there, it will be looked for in <XRoot>/lib/X11.  The \fItype\fP
-parameter is used as a subdirectory of the language directory or of
-<XRoot>/lib/X11, and \fIsuffix\fP is appended to the file name.
+used as a subdirectory of __projectroot__/lib/X11 that will be searched
+for other files.  If the desired file is not found there, the lookup
+will be tried again using just the language part of the specification.
+If the file is not there, it will be looked for in
+__projectroot__/lib/X11.  The \fItype\fP parameter is used as a
+subdirectory of the language directory or of __projectroot__/lib/X11,
+and \fIsuffix\fP is appended to the file name.
 .LP
 The %D substitution allows the addition of path
 elements to the implementation-specific default path, typically to

@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/lib/GL/mesa/src/drv/tdfx/Imakefile.inc,v 1.3 2001/08/18 02:51:06 dawes Exp $
+XCOMM $XFree86: xc/lib/GL/mesa/src/drv/tdfx/Imakefile.inc,v 1.4 2002/02/22 21:45:03 dawes Exp $
 
 #ifndef MesaDrvSrcDir
 #define MesaDrvSrcDir $(GLXLIBSRC)/mesa/src/drv
@@ -16,26 +16,28 @@ ALLOC_DEFINES = -DMALLOC_0_RETURNS_NULL
 #endif
 
 #if BuildXF86DRI
-  DRI_DEFINES = GlxDefines
- DRI_INCLUDES = -I$(GLXLIBSRC)/dri -I$(GLXLIBSRC)/glx \
-		-I$(INCLUDESRC) -I$(INCLUDESRC)/GL \
-		-I$(GLXLIBSRC)/mesa/dri \
+  DRI_DEFINES = GlxDefines -DX_BYTE_ORDER=ByteOrder
+ DRI_INCLUDES = -I$(GLXLIBSRC)/dri \
+		-I$(GLXLIBSRC)/glx \
+		-I$(INCLUDESRC) \
+		-I$(INCLUDESRC)/GL \
 		-I$(SERVERSRC)/GL/dri \
 		-I$(XF86OSSRC) \
 		-I$(XF86DRIVERSRC)/tdfx \
-		-I$(GLXLIBSRC)/dri/drm
+		-I$(XF86COMSRC) \
+		-I$(GLXLIBSRC)/dri/drm \
+		-I$(GLXLIBSRC)/include
 #endif
 
-MESA_INCLUDES = -I$(MESASRCDIR)/src -I$(MESADRVSRCDIR)/common \
+MESA_INCLUDES = -I$(MESASRCDIR)/src \
+		-I$(MESADRVSRCDIR)/common \
 		-I$(MESADRVSRCDIR)/tdfx
    X_INCLUDES = -I$(XINCLUDESRC) -I$(EXTINCSRC)
 
      TDFXSRCS = $(MESADRVTDFXBUILDDIR)tdfx_context.c \
 		$(MESADRVTDFXBUILDDIR)tdfx_dd.c \
-		$(MESADRVTDFXBUILDDIR)tdfx_pixels.c \
-		$(MESADRVTDFXBUILDDIR)tdfx_fastpath.c \
 		$(MESADRVTDFXBUILDDIR)tdfx_lock.c \
-		$(MESADRVTDFXBUILDDIR)tdfx_pipeline.c \
+		$(MESADRVTDFXBUILDDIR)tdfx_pixels.c \
 		$(MESADRVTDFXBUILDDIR)tdfx_render.c \
 		$(MESADRVTDFXBUILDDIR)tdfx_screen.c \
 		$(MESADRVTDFXBUILDDIR)tdfx_span.c \
@@ -44,16 +46,12 @@ MESA_INCLUDES = -I$(MESASRCDIR)/src -I$(MESADRVSRCDIR)/common \
 		$(MESADRVTDFXBUILDDIR)tdfx_texman.c \
 		$(MESADRVTDFXBUILDDIR)tdfx_texstate.c \
 		$(MESADRVTDFXBUILDDIR)tdfx_tris.c \
-		$(MESADRVTDFXBUILDDIR)tdfx_vb.c \
-		$(MESADRVTDFXBUILDDIR)tdfx_wrapper.c \
-		$(MESADRVTDFXBUILDDIR)tdfx_xmesa.c
+		$(MESADRVTDFXBUILDDIR)tdfx_vb.c
 
      TDFXOBJS = $(MESADRVTDFXBUILDDIR)tdfx_context.o \
 		$(MESADRVTDFXBUILDDIR)tdfx_dd.o \
-		$(MESADRVTDFXBUILDDIR)tdfx_pixels.o \
-		$(MESADRVTDFXBUILDDIR)tdfx_fastpath.o \
 		$(MESADRVTDFXBUILDDIR)tdfx_lock.o \
-		$(MESADRVTDFXBUILDDIR)tdfx_pipeline.o \
+		$(MESADRVTDFXBUILDDIR)tdfx_pixels.o \
 		$(MESADRVTDFXBUILDDIR)tdfx_render.o \
 		$(MESADRVTDFXBUILDDIR)tdfx_screen.o \
 		$(MESADRVTDFXBUILDDIR)tdfx_span.o \
@@ -62,16 +60,12 @@ MESA_INCLUDES = -I$(MESASRCDIR)/src -I$(MESADRVSRCDIR)/common \
 		$(MESADRVTDFXBUILDDIR)tdfx_texman.o \
 		$(MESADRVTDFXBUILDDIR)tdfx_texstate.o \
 		$(MESADRVTDFXBUILDDIR)tdfx_tris.o \
-		$(MESADRVTDFXBUILDDIR)tdfx_vb.o \
-		$(MESADRVTDFXBUILDDIR)tdfx_wrapper.o \
-		$(MESADRVTDFXBUILDDIR)tdfx_xmesa.o
+		$(MESADRVTDFXBUILDDIR)tdfx_vb.o
 
      TDFXUOBJS = $(MESADRVTDFXBUILDDIR)unshared/tdfx_context.o \
 		$(MESADRVTDFXBUILDDIR)unshared/tdfx_dd.o \
-		$(MESADRVTDFXBUILDDIR)unshared/tdfx_pixels.o \
-		$(MESADRVTDFXBUILDDIR)unshared/tdfx_fastpath.o \
 		$(MESADRVTDFXBUILDDIR)unshared/tdfx_lock.o \
-		$(MESADRVTDFXBUILDDIR)unshared/tdfx_pipeline.o \
+		$(MESADRVTDFXBUILDDIR)unshared/tdfx_pixels.o \
 		$(MESADRVTDFXBUILDDIR)unshared/tdfx_render.o \
 		$(MESADRVTDFXBUILDDIR)unshared/tdfx_screen.o \
 		$(MESADRVTDFXBUILDDIR)unshared/tdfx_span.o \
@@ -80,16 +74,12 @@ MESA_INCLUDES = -I$(MESASRCDIR)/src -I$(MESADRVSRCDIR)/common \
 		$(MESADRVTDFXBUILDDIR)unshared/tdfx_texman.o \
 		$(MESADRVTDFXBUILDDIR)unshared/tdfx_texstate.o \
 		$(MESADRVTDFXBUILDDIR)unshared/tdfx_tris.o \
-		$(MESADRVTDFXBUILDDIR)unshared/tdfx_vb.o \
-		$(MESADRVTDFXBUILDDIR)unshared/tdfx_wrapper.o \
-		$(MESADRVTDFXBUILDDIR)unshared/tdfx_xmesa.o
+		$(MESADRVTDFXBUILDDIR)unshared/tdfx_vb.o
 
      TDFXDOBJS = $(MESADRVTDFXBUILDDIR)debugger/tdfx_context.o \
 		$(MESADRVTDFXBUILDDIR)debugger/tdfx_dd.o \
-		$(MESADRVTDFXBUILDDIR)debugger/tdfx_pixels.o \
-		$(MESADRVTDFXBUILDDIR)debugger/tdfx_fastpath.o \
 		$(MESADRVTDFXBUILDDIR)debugger/tdfx_lock.o \
-		$(MESADRVTDFXBUILDDIR)debugger/tdfx_pipeline.o \
+		$(MESADRVTDFXBUILDDIR)debugger/tdfx_pixels.o \
 		$(MESADRVTDFXBUILDDIR)debugger/tdfx_render.o \
 		$(MESADRVTDFXBUILDDIR)debugger/tdfx_screen.o \
 		$(MESADRVTDFXBUILDDIR)debugger/tdfx_span.o \
@@ -98,16 +88,12 @@ MESA_INCLUDES = -I$(MESASRCDIR)/src -I$(MESADRVSRCDIR)/common \
 		$(MESADRVTDFXBUILDDIR)debugger/tdfx_texman.o \
 		$(MESADRVTDFXBUILDDIR)debugger/tdfx_texstate.o \
 		$(MESADRVTDFXBUILDDIR)debugger/tdfx_tris.o \
-		$(MESADRVTDFXBUILDDIR)debugger/tdfx_vb.o \
-		$(MESADRVTDFXBUILDDIR)debugger/tdfx_wrapper.o \
-		$(MESADRVTDFXBUILDDIR)debugger/tdfx_xmesa.o
+		$(MESADRVTDFXBUILDDIR)debugger/tdfx_vb.o
 
      TDFXPOBJS = $(MESADRVTDFXBUILDDIR)profiled/tdfx_context.o \
 		$(MESADRVTDFXBUILDDIR)profiled/tdfx_dd.o \
-		$(MESADRVTDFXBUILDDIR)profiled/tdfx_pixels.o \
-		$(MESADRVTDFXBUILDDIR)profiled/tdfx_fastpath.o \
 		$(MESADRVTDFXBUILDDIR)profiled/tdfx_lock.o \
-		$(MESADRVTDFXBUILDDIR)profiled/tdfx_pipeline.o \
+		$(MESADRVTDFXBUILDDIR)profiled/tdfx_pixels.o \
 		$(MESADRVTDFXBUILDDIR)profiled/tdfx_render.o \
 		$(MESADRVTDFXBUILDDIR)profiled/tdfx_screen.o \
 		$(MESADRVTDFXBUILDDIR)profiled/tdfx_span.o \
@@ -116,17 +102,13 @@ MESA_INCLUDES = -I$(MESASRCDIR)/src -I$(MESADRVSRCDIR)/common \
 		$(MESADRVTDFXBUILDDIR)profiled/tdfx_texman.o \
 		$(MESADRVTDFXBUILDDIR)profiled/tdfx_texstate.o \
 		$(MESADRVTDFXBUILDDIR)profiled/tdfx_tris.o \
-		$(MESADRVTDFXBUILDDIR)profiled/tdfx_vb.o \
-		$(MESADRVTDFXBUILDDIR)profiled/tdfx_wrapper.o \
-		$(MESADRVTDFXBUILDDIR)profiled/tdfx_xmesa.o
+		$(MESADRVTDFXBUILDDIR)profiled/tdfx_vb.o
 
 #ifdef NeedToLinkMesaSrc
 LinkSourceFile(tdfx_context.c, $(MESADRVSRCDIR)/tdfx)
 LinkSourceFile(tdfx_dd.c, $(MESADRVSRCDIR)/tdfx)
-LinkSourceFile(tdfx_pixels.c, $(MESADRVSRCDIR)/tdfx)
-LinkSourceFile(tdfx_fastpath.c, $(MESADRVSRCDIR)/tdfx)
 LinkSourceFile(tdfx_lock.c, $(MESADRVSRCDIR)/tdfx)
-LinkSourceFile(tdfx_pipeline.c, $(MESADRVSRCDIR)/tdfx)
+LinkSourceFile(tdfx_pixels.c, $(MESADRVSRCDIR)/tdfx)
 LinkSourceFile(tdfx_render.c, $(MESADRVSRCDIR)/tdfx)
 LinkSourceFile(tdfx_screen.c, $(MESADRVSRCDIR)/tdfx)
 LinkSourceFile(tdfx_span.c, $(MESADRVSRCDIR)/tdfx)
@@ -136,7 +118,4 @@ LinkSourceFile(tdfx_texman.c, $(MESADRVSRCDIR)/tdfx)
 LinkSourceFile(tdfx_texstate.c, $(MESADRVSRCDIR)/tdfx)
 LinkSourceFile(tdfx_tris.c, $(MESADRVSRCDIR)/tdfx)
 LinkSourceFile(tdfx_vb.c, $(MESADRVSRCDIR)/tdfx)
-LinkSourceFile(tdfx_wrapper.c, $(MESADRVSRCDIR)/tdfx)
-LinkSourceFile(tdfx_xmesa.c, $(MESADRVSRCDIR)/tdfx)
 #endif
-

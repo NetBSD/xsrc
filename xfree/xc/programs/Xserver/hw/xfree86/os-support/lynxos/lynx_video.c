@@ -21,7 +21,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/lynxos/lynx_video.c,v 3.17 2000/10/28 01:42:27 mvojkovi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/lynxos/lynx_video.c,v 3.18 2002/12/14 04:41:14 dawes Exp $ */
 
 #include "X.h"
 #include "input.h"
@@ -33,9 +33,19 @@
 #include "xf86OSpriv.h"
 
 #if defined(__powerpc__)
-#include <machine/absolute.h>
+
+# if defined(USE_MACHINE_ABSOLUTE)
+#   include <machine/absolute.h>
+# else
+#   define __USER_SPACE_INCLUDE
+#   include <hw_absolute.h>
+# endif
 
 void ppcPciIoMap(int bus);
+#endif
+
+#if 0
+#define DEBUG	
 #endif
 
 #ifdef HAS_MTRR_SUPPORT
@@ -48,6 +58,53 @@ static Bool cleanMTRR(void);
 static int devMemFd = -1;
 #define MTRR_DEVICE	"/dev/mtrr"
 #endif
+
+
+#if !defined(NO_MMAP)
+#include <sys/mman.h>
+
+int smem_remove(char *name)
+{
+  return(0);
+}
+
+char *smem_create(char *name, char *arg_addr, long size, int mode)
+{
+  int fd;
+  void *addr = 0;
+  char *retval;
+  size_t len = size;
+  int prot = PROT_READ|PROT_WRITE|PROT_UNCACHE;
+  int flags = MAP_SHARED;
+  off_t off = (off_t)arg_addr;
+
+  if ((fd = open("/dev/mem" , O_RDWR)) < 0)
+  {
+    retval = (char *)-1;
+  }
+  else
+  {
+    if (mode == SM_DETACH)
+    {
+      munmap(arg_addr, len);
+      retval = 0;
+    }
+    else
+    {
+      if ((retval = mmap (addr, len, prot, flags, fd, off) ) == MAP_FAILED)
+      {
+        retval = (char *)-1;
+      }
+    }
+
+    close(fd);
+  }
+
+  return(retval);
+}
+
+#endif
+
 
 /***************************************************************************/
 /* Video Memory Mapping section                                            */
@@ -245,12 +302,17 @@ xf86EnableIO()
 {
 	if (IOEnabled++ == 0) {
 	    ioBase = (unsigned char *) smem_create("IOBASE",
-       			(char *)0x80000000, 64*1024, SM_READ|SM_WRITE);
+       			(char *)PHYS_ISA_IO_SPACE, 64*1024, SM_READ|SM_WRITE);
 	       	if (ioBase == MAP_FAILED) {
        			--IOEnabled;
 			FatalError("xf86EnableIO: Failed to map I/O\n");
-       		} else
+       		} else {
+#ifdef DEBUG
+			ErrorF("xf86EnableIO: mapped I/O at vaddr 0x%08x\n",
+				ioBase);
+#endif
 			atexit(removeIOSmem);
+		}
 	}        
 	return;
 }
@@ -284,10 +346,6 @@ ppcPciIoMap(int bus)
 
 #ifdef HAS_MTRR_SUPPORT
 /* memory range (MTRR) support for LynxOS (taken from BSD MTRR support) */
-
-#if 0
-#define DEBUG	
-#endif
 
 /*
  * This code is experimental.  Some parts may be overkill, and other parts

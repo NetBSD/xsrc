@@ -24,7 +24,7 @@
  * used in advertising or publicity pertaining to distribution of the software
  * without specific, written prior permission.
  */
-/* $XFree86: xc/programs/xmh/bbox.c,v 1.2 2001/10/28 03:34:38 tsi Exp $ */
+/* $XFree86: xc/programs/xmh/bbox.c,v 1.3 2002/04/05 21:06:28 dickey Exp $ */
 
 /* bbox.c -- management of buttons and buttonboxes. 
  *
@@ -38,7 +38,7 @@
 static XtTranslations	RadioButtonTranslations = NULL;
 
 
-void BBoxInit()
+void BBoxInit(void)
 {
     RadioButtonTranslations =
 	XtParseTranslationTable("<Btn1Down>,<Btn1Up>:set()\n");
@@ -50,9 +50,9 @@ void BBoxInit()
  * scrn's widget, and it will be added to the scrn's pane. 
  */
 
-ButtonBox BBoxCreate(scrn, name)
-    Scrn	scrn;
-    char	*name;	/* name of the buttonbox widgets */
+ButtonBox BBoxCreate(
+    Scrn	scrn,
+    char	*name)	/* name of the buttonbox widgets */
 {
     Cardinal	n;
     ButtonBox	buttonbox = XtNew(ButtonBoxRec);
@@ -75,9 +75,9 @@ ButtonBox BBoxCreate(scrn, name)
 }
 
 
-ButtonBox RadioBBoxCreate(scrn, name)
-    Scrn	scrn;
-    char	*name;	/* name of the buttonbox widgets */
+ButtonBox RadioBBoxCreate(
+    Scrn	scrn,
+    char	*name)	/* name of the buttonbox widgets */
 {
     return BBoxCreate(scrn, name);
 }
@@ -85,13 +85,12 @@ ButtonBox RadioBBoxCreate(scrn, name)
 
 /* Create a new button, and add it to a buttonbox. */
 
-static void bboxAddButton(buttonbox, name, kind, enabled, radio)
-
-    ButtonBox	buttonbox;
-    char	*name;
-    WidgetClass	kind;
-    Boolean	enabled;
-    Boolean	radio;
+static void bboxAddButton(
+    ButtonBox	buttonbox,
+    char	*name,
+    WidgetClass	kind,
+    Boolean	enabled,
+    Boolean	radio)
 {
     Button	button;
     Cardinal	i;
@@ -136,20 +135,20 @@ static void bboxAddButton(buttonbox, name, kind, enabled, radio)
 }
 
 
-void BBoxAddButton(buttonbox, name, kind, enabled)
-    ButtonBox	buttonbox;
-    char	*name;
-    WidgetClass	kind;
-    Boolean	enabled;
+void BBoxAddButton(
+    ButtonBox	buttonbox,
+    char	*name,
+    WidgetClass	kind,
+    Boolean	enabled)
 {
     bboxAddButton(buttonbox, name, kind, enabled, False);
 }    
 
 
-void RadioBBoxAddButton(buttonbox, name, enabled)
-    ButtonBox	buttonbox;
-    char	*name;
-    Boolean	enabled;
+void RadioBBoxAddButton(
+    ButtonBox	buttonbox,
+    char	*name,
+    Boolean	enabled)
 {
     bboxAddButton(buttonbox, name, toggleWidgetClass, enabled, True);
 }
@@ -157,8 +156,8 @@ void RadioBBoxAddButton(buttonbox, name, enabled)
 
 /* Set the current button in a radio buttonbox. */
 
-void RadioBBoxSet(button)
-    Button button;
+void RadioBBoxSet(
+    Button button)
 {
     XawToggleSetCurrent(button->widget, button->name);
 }
@@ -166,8 +165,8 @@ void RadioBBoxSet(button)
 
 /* Get the name of the current button in a radio buttonbox. */
 
-char *RadioBBoxGetCurrent(buttonbox)
-    ButtonBox buttonbox;
+char *RadioBBoxGetCurrent(
+    ButtonBox buttonbox)
 {
     return ((char *) XawToggleGetCurrent(buttonbox->button[0]->widget));
 }
@@ -179,8 +178,8 @@ char *RadioBBoxGetCurrent(buttonbox)
  * button in the box.
  */
 
-void BBoxDeleteButton(button)
-    Button	button;
+void BBoxDeleteButton(
+    Button	button)
 {
     ButtonBox	buttonbox;
     int		i, found;
@@ -209,8 +208,8 @@ void BBoxDeleteButton(button)
 }
 
 
-void RadioBBoxDeleteButton(button)
-    Button	button;
+void RadioBBoxDeleteButton(
+    Button	button)
 {
     ButtonBox	buttonbox;
     Boolean	reradio = False;
@@ -229,9 +228,9 @@ void RadioBBoxDeleteButton(button)
 
 /* Enable or disable the given button widget. */
 
-static void SendEnableMsg(widget, value)
-    Widget	widget;
-    int		value;	/* TRUE for enable, FALSE for disable. */
+static void SendEnableMsg(
+    Widget	widget,
+    int		value)	/* TRUE for enable, FALSE for disable. */
 {
     static Arg arglist[] = {{XtNsensitive, (XtArgVal)False}};
     arglist[0].value = (XtArgVal) value;
@@ -241,8 +240,8 @@ static void SendEnableMsg(widget, value)
 
 /* Enable the given button (if it's not already). */
 
-void BBoxEnable(button)
-Button button;
+void BBoxEnable(
+    Button button)
 {
     SendEnableMsg(button->widget, True);
 }
@@ -250,8 +249,8 @@ Button button;
 
 /* Disable the given button (if it's not already). */
 
-void BBoxDisable(button)
-    Button button;
+void BBoxDisable(
+    Button button)
 {
     SendEnableMsg(button->widget, False);
 }
@@ -260,9 +259,9 @@ void BBoxDisable(button)
 /* Given a buttonbox and a button name, find the button in the box with that
    name. */
 
-Button BBoxFindButtonNamed(buttonbox, name)
-    ButtonBox buttonbox;
-    char *name;
+Button BBoxFindButtonNamed(
+    ButtonBox buttonbox,
+    char *name)
 {
     register int i;
     for (i=0 ; i<buttonbox->numbuttons; i++)
@@ -274,9 +273,9 @@ Button BBoxFindButtonNamed(buttonbox, name)
 
 /* Given a buttonbox and a widget, find the button which is that widget. */
 
-Button BBoxFindButton(buttonbox, w)
-    ButtonBox	buttonbox;
-    Widget	w;
+Button BBoxFindButton(
+    ButtonBox	buttonbox,
+    Widget	w)
 {
     register int i;
     for (i=0; i < buttonbox->numbuttons; i++)
@@ -288,9 +287,9 @@ Button BBoxFindButton(buttonbox, w)
 
 /* Return the nth button in the given buttonbox. */
 
-Button BBoxButtonNumber(buttonbox, n)
-    ButtonBox buttonbox;
-    int n;
+Button BBoxButtonNumber(
+    ButtonBox buttonbox,
+    int n)
 {
     return buttonbox->button[n];
 }
@@ -298,8 +297,8 @@ Button BBoxButtonNumber(buttonbox, n)
 
 /* Return how many buttons are in a buttonbox. */
 
-int BBoxNumButtons(buttonbox)
-    ButtonBox buttonbox;
+int BBoxNumButtons(
+    ButtonBox buttonbox)
 {
     return buttonbox->numbuttons;
 }
@@ -307,8 +306,8 @@ int BBoxNumButtons(buttonbox)
 
 /* Given a button, return its name. */
 
-char *BBoxNameOfButton(button)
-    Button button;
+char *BBoxNameOfButton(
+    Button button)
 {
     return button->name;
 }
@@ -316,8 +315,8 @@ char *BBoxNameOfButton(button)
 
 /* Given a button, return its menu. */
 
-Widget	BBoxMenuOfButton(button)
-    Button button;
+Widget	BBoxMenuOfButton(
+    Button button)
 {
     return button->menu;
 }
@@ -328,8 +327,8 @@ Widget	BBoxMenuOfButton(button)
  * Allow the user to set the minimum size.
  */
 
-void BBoxLockSize(buttonbox)
-    ButtonBox buttonbox;
+void BBoxLockSize(
+    ButtonBox buttonbox)
 {
     Dimension	maxheight;
     Arg		args[1];
@@ -341,18 +340,18 @@ void BBoxLockSize(buttonbox)
 }
 
 
-Boolean BBoxIsGrandparent(buttonbox, widget)
-    ButtonBox	buttonbox;
-    Widget	widget;
+Boolean BBoxIsGrandparent(
+    ButtonBox	buttonbox,
+    Widget	widget)
 {
     return (XtParent(XtParent(widget)) == buttonbox->inner);
 }
 
 
-void BBoxMailFlag(buttonbox, name, up)
-    ButtonBox	buttonbox;
-    char*	name;
-    int		up;
+void BBoxMailFlag(
+    ButtonBox	buttonbox,
+    char*	name,
+    int		up)
 {
     Arg		args[1];
     Pixel	flag;

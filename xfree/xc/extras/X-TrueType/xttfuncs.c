@@ -31,7 +31,7 @@
 
 Notice===
 */
-/* $XFree86: xc/extras/X-TrueType/xttfuncs.c,v 1.11 2001/12/18 04:23:55 dawes Exp $ */
+/* $XFree86: xc/extras/X-TrueType/xttfuncs.c,v 1.17 2003/02/17 03:59:22 dawes Exp $ */
 
 #include "xttversion.h"
 
@@ -566,7 +566,7 @@ get_metrics(FreeTypeFont *ft, int c, struct xtt_char_width char_width)
     /*
      * Check invalid char index.
      */
-    if ( c <= 0 ) {
+    if ( c < 0 ) {
         charInfo = &nocharinfo;
         goto next;
     }
@@ -770,7 +770,7 @@ get_glyph(FreeTypeFont *ft, int c, int spacing)
     /*
      * Check invalid char index.
      */
-    if ( c <= 0 ) {
+    if ( c < 0 ) {
         charInfo = &nocharinfo;
         goto next;
     }
@@ -850,7 +850,7 @@ get_glyph(FreeTypeFont *ft, int c, int spacing)
 
         ft->map.rows  = height;
         bytes = (width + 7) / 8;
-        /* aligenment */
+        /* alignment */
         bytes = (bytes + (glyph) - 1) & -glyph;
         ft->map.cols  = bytes;
         ft->map.width = width;
@@ -862,6 +862,7 @@ get_glyph(FreeTypeFont *ft, int c, int spacing)
             goto next;
         }
         ft->map.bitmap = charInfo->bits;
+        if ( ft->map.bitmap == NULL ) goto next;
 
         /*
          * draw a sbit or an outline glyph
@@ -898,6 +899,7 @@ FreeTypeGetGlyphs (FontPtr pFont,
     CharInfoPtr *glyphsBase = glyphs;
 
     int spacing = 0;
+    int i,nullbits,ncmark;
 
     dprintf((stderr, "FreeTypeGetGlyphs: %p %d\n", pFont, count));
 
@@ -913,40 +915,101 @@ FreeTypeGetGlyphs (FontPtr pFont,
         break;
     }
 
-    switch (encoding) {
-    case Linear8Bit:
-    case TwoD8Bit:
-        while (count--) {
-            unsigned c = *chars++;
-            c = ft->codeConverterInfo.ptrCodeConverter(c);
-            dprintf((stderr, "%04x\n", c));
-            *glyphs++ = get_glyph(ft, TT_Char_Index(ft->charmap, c), spacing);
-        }
-        break;
-    case Linear16Bit:
-    case TwoD16Bit:
-        while (count--) {
-            unsigned c1, c2;
+    while (count--) {
+        unsigned int c1=0, c2;
+
+        *glyphs = &nocharinfo;
+        switch (encoding) {
+        case Linear8Bit:
+        case TwoD8Bit:
+            c1 = *chars++;
+            dprintf((stderr, "%04x\n", c1));
+            break;
+        case Linear16Bit:
+        case TwoD16Bit:
             c1 = *chars++;
             c2 = *chars++;
-            dprintf((stderr, "code: %02x%02x ->", c1,c2));
-            if (!(c1 >= pFont->info.firstRow &&
-                  c1 <= pFont->info.lastRow  &&
-                  c2 >= pFont->info.firstCol &&
-                  c2 <= pFont->info.lastCol)) {
-                *glyphs++ = &nocharinfo;
-                dprintf((stderr, "invalid code\n"));
+            dprintf((stderr, "code: %02x%02x", c1,c2));
+            if (c1 >= pFont->info.firstRow &&
+                c1 <= pFont->info.lastRow  &&
+                c2 >= pFont->info.firstCol &&
+                c2 <= pFont->info.lastCol) {
+                c1 = (c1<<8|c2);
             } else {
-                c1 = ft->codeConverterInfo.ptrCodeConverter(c1<<8|c2);
-                dprintf((stderr, "%04x\n", c1));
-                *glyphs++ = get_glyph(ft, TT_Char_Index(ft->charmap, c1),
-                                      spacing);
+                dprintf((stderr, ", out of range.  We use nocharinfo.\n"));
+                *glyphs = &nocharinfo;
+                goto next;
             }
+            break;
+        default:
+            goto next;
         }
-        break;
+
+        c1 = ft->codeConverterInfo.ptrCodeConverter(c1);
+        dprintf((stderr, " ->%04x\n ->", c1));
+        c1 = TT_Char_Index(ft->charmap, c1);
+        dprintf((stderr, "%d\n", c1));
+        *glyphs = get_glyph(ft, c1, spacing);
+
+    next:
+#if 1
+        /* fallback for XAA */
+        if ( *glyphs == &nocharinfo ) {
+            dprintf((stderr, "nocharinfo causes a server crash. Instead We use .notdef glyph.\n"));
+            *glyphs = get_glyph(ft, 0, spacing);
+        }
+#endif
+        glyphs++;
     }
 
     *pCount = glyphs - glyphsBase;
+
+    /*
+      (pci)->bits == NULL crashes the Server when gHeight is not zero.
+      So we must check each value of (pci)->bits.  Since operation of
+      cash intervenes,  this "for () loop"  *MUST*  be independent of
+      the upper "while () loop".
+                                        Dec.26,2002  Chisato Yamauchi
+     */
+    dprintf((stderr, "AddressCheckBegin *pCount=%d\n",*pCount));
+    nullbits=0;
+    ncmark=-1;
+    for ( i=0 ; i<*pCount ; i++ ) {
+      /* Marking nocharinfo */
+      if ( glyphsBase[i] == &nocharinfo ) {
+        if ( ncmark == -1 ) ncmark=i;
+      }
+      else {
+        dprintf((stderr,"[%d]:%x\n",i,glyphsBase[i]->bits));
+        if ( glyphsBase[i]->bits == NULL ) {
+            glyphsBase[i]->metrics.ascent=0;
+            glyphsBase[i]->metrics.descent=0;
+            nullbits++;
+        }
+        /*
+          The XFree86 sometimes allocates memory with the value of maxbounds.ascent
+          and maxbounds.descent. 
+          So (*glyphs)->ascent must not become larger than maxbounds.ascent.
+          This is the same also about descent.
+         */
+        if ( pFont->info.maxbounds.ascent < glyphsBase[i]->metrics.ascent ) {
+            dprintf((stderr, " Invalid ascent : maxbounds.ascent=%d metrics.ascent=%d [corrected]\n",
+                     pFont->info.maxbounds.ascent,glyphsBase[i]->metrics.ascent));
+            glyphsBase[i]->metrics.ascent = pFont->info.maxbounds.ascent;
+        }
+        if ( pFont->info.maxbounds.descent < glyphsBase[i]->metrics.descent ) {
+            dprintf((stderr, " Invalid descent : maxbounds.descent=%d metrics.descent=%d [corrected]\n",
+                     pFont->info.maxbounds.descent,glyphsBase[i]->metrics.descent));
+            glyphsBase[i]->metrics.descent = pFont->info.maxbounds.descent;
+        }
+      }
+    }
+#if 1
+    /* Never return an address outside cache(for XAA). */
+    if ( ncmark != -1 ) *pCount = ncmark;
+#endif
+    dprintf((stderr, "AddressCheckEnd i=%d nullbits=%d\n",i,nullbits));
+
     return Successful;
 }
 
@@ -960,7 +1023,8 @@ FreeTypeGetMetrics (FontPtr pFont,
 {
     FreeTypeFont *ft = (FreeTypeFont*) pFont->fontPrivate;
     xCharInfo **glyphsBase = glyphs;
-    unsigned int c;
+    unsigned int c=0,c2;
+    int i;
 
     /*dprintf((stderr, "FreeTypeGetMetrics: %d\n", count));*/
     if (ft->spacing == 'm' || ft->spacing == 'p') {
@@ -972,33 +1036,64 @@ FreeTypeGetMetrics (FontPtr pFont,
         } else
             char_width.pixel = char_width.raw = 0;
 
-        switch (encoding) {
-        case Linear8Bit:
-        case TwoD8Bit:
-            while (count--) {
+        while (count--) {
+            *glyphs = &(&nocharinfo)->metrics;
+            switch (encoding) {
+            case Linear8Bit:
+            case TwoD8Bit:
                 c = *chars++;
-/*              dprintf((stderr, "code: %04x ->", c));*/
-                c = ft->codeConverterInfo.ptrCodeConverter(c);
-/*              dprintf((stderr, "%04x\n", c));*/
-                *glyphs++ =
-                    get_metrics(ft, TT_Char_Index(ft->charmap, c),
-                                char_width);
+                break;
+            case Linear16Bit:
+            case TwoD16Bit:
+                c  = *chars++;
+                c2 = *chars++;
+                if (c  >= pFont->info.firstRow &&
+                    c  <= pFont->info.lastRow  &&
+                    c2 >= pFont->info.firstCol &&
+                    c2 <= pFont->info.lastCol) {
+                    c  = (c<<8|c2);
+                } else {
+                    *glyphs = &(&nocharinfo)->metrics;
+                    goto next;
+                }
+                break;
+            default:
+                goto next;
             }
-            break;
-        case Linear16Bit:
-        case TwoD16Bit:
-            while (count--) {
-                c = *chars++ << 8; c |= *chars++;
-/*              dprintf((stderr, "code: %04x ->", c));*/
-                c = ft->codeConverterInfo.ptrCodeConverter(c);
-/*              dprintf((stderr, "%04x\n", c));*/
-                *glyphs++ =
-                    get_metrics(ft, TT_Char_Index(ft->charmap, c),
-                                char_width);
+            /* dprintf((stderr, "code: %04x ->", c));*/
+            c = ft->codeConverterInfo.ptrCodeConverter(c);
+            /* dprintf((stderr, "%04x\n", c));*/
+            *glyphs = get_metrics(ft, TT_Char_Index(ft->charmap, c),
+                                  char_width);
+    next:
+#if 1
+            /* fallback */
+            if ( *glyphs == &(&nocharinfo)->metrics ) {
+                dprintf((stderr, "nocharinfo -> Instead We use .notdef glyph.\n"));
+                *glyphs = get_metrics(ft, 0, char_width);
             }
-            break;
+#endif
+            glyphs++;
         }
         *pCount = glyphs - glyphsBase;
+        /*
+          The XFree86 sometimes allocates memory with the value of maxbounds.ascent
+          and maxbounds.descent. 
+          So (*glyphs)->ascent must not become larger than maxbounds.ascent.
+          This is the same also about descent.
+         */
+        for ( i=0 ; i<*pCount ; i++ ) {
+            if ( pFont->info.maxbounds.ascent < glyphsBase[i]->ascent ) {
+                dprintf((stderr, " Invalid ascent : maxbounds.ascent=%d metrics.ascent=%d [corrected]\n",
+                         pFont->info.maxbounds.ascent,glyphsBase[i]->ascent));
+                glyphsBase[i]->ascent = pFont->info.maxbounds.ascent;
+            }
+            if ( pFont->info.maxbounds.descent < glyphsBase[i]->descent ) {
+                dprintf((stderr, " Invalid descent : maxbounds.descent=%d metrics.descent=%d [corrected]\n",
+                         pFont->info.maxbounds.descent,glyphsBase[i]->descent));
+                glyphsBase[i]->descent = pFont->info.maxbounds.descent;
+            }
+        }
     } else {                                    /* -c- */
         switch (encoding) {
         case Linear8Bit:
@@ -1100,7 +1195,7 @@ freetype_compute_bounds(FreeTypeFont *ft,
                                 char_width);
                 }
 
-            if (!tmpchar->characterWidth)
+            if (!tmpchar || !tmpchar->characterWidth)
                 continue;
 
                 adjust_min_max(&minchar, &maxchar, tmpchar);
@@ -2079,8 +2174,12 @@ XTrueTypeRegisterFontFileFunctions()
 
     /* reset */
     /* register */
-    for (i=0;i<sizeof(renderers)/sizeof(renderers[0]);i++)
-        FontFileRegisterRenderer(renderers + i);
+    for (i=0;i<sizeof(renderers)/sizeof(renderers[0]);i++) {
+        /* If the user has both the FreeType and the X-TT backends
+           linked in, he probably wants X-TT to be used for TrueType
+           fonts. */
+        FontFilePriorityRegisterRenderer(renderers + i, +10);
+    }
 
     return 0;
 }

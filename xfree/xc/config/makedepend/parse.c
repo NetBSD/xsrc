@@ -24,7 +24,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/config/makedepend/parse.c,v 1.11 2001/12/17 20:52:22 dawes Exp $ */
+/* $XFree86: xc/config/makedepend/parse.c,v 1.12 2002/02/26 05:09:10 tsi Exp $ */
 
 #include "def.h"
 
@@ -196,9 +196,16 @@ deftype (char *line, struct filepointer *filep,
 			(ret == INCLUDE) ? "" : "_next", p));
 
 		/* Support ANSI macro substitution */
-		{
-		    struct symtab **sym = isdefined(p, file_red, NULL);
-		    while (sym) {
+		while (1) {
+			struct symtab **sym;
+
+			if (!*p || *p == '"' || *p == '<')
+				break;
+
+		    	sym = isdefined(p, file_red, NULL);
+			if (!sym)
+				break;
+
 			p = (*sym)->s_value;
 			debug(3,("%s : #includes SYMBOL %s = %s\n",
 			       file->i_incstring,
@@ -206,8 +213,6 @@ deftype (char *line, struct filepointer *filep,
 			       (*sym) -> s_value));
 			/* mark file as having included a 'soft include' */
 			file->i_flags |= INCLUDED_SYM; 
-			sym = isdefined(p, file_red, NULL);
-		    }
 		}
 
 		/*
@@ -264,22 +269,20 @@ fdefined(char *symbol, struct inclist *file, struct inclist **srcfile)
 
 	if (file->i_flags & DEFCHECKED)
 		return(NULL);
+	debug(2,("Looking for %s in %s\n", symbol, file->i_file));
 	file->i_flags |= DEFCHECKED;
 	if ((val = slookup(symbol, file)))
 		debug(1,("%s defined in %s as %s\n",
 			 symbol, file->i_file, (*val)->s_value));
 	if (val == NULL && file->i_list)
-		{
+	{
 		for (ip = file->i_list, i=0; i < file->i_listlen; i++, ip++)
 			if (file->i_merged[i]==FALSE) {
 				val = fdefined(symbol, *ip, srcfile);
-				if ((*ip)->i_flags & FINISHED) {
-					merge2defines(file,*ip);
-					file->i_merged[i]=TRUE;
-				    }
+				file->i_merged[i]=merge2defines(file,*ip);
 				if (val!=NULL) break;
 			}
-		}
+	}
 	else if (val != NULL && srcfile != NULL) *srcfile = file;
 	recurse_lvl--;
 	file->i_flags &= ~DEFCHECKED;
@@ -379,6 +382,8 @@ define2(char *name, char *val, struct inclist *file)
        just replace its s_value */
     if (sp != NULL)
     {
+	debug(1,("redefining %s from %s to %s in file %s\n",
+		name, (*sp)->s_value, val, file->i_file));
 	free((*sp)->s_value);
 	(*sp)->s_value = copy(val);
 	return;
@@ -395,6 +400,7 @@ define2(char *name, char *val, struct inclist *file)
     if (stab == NULL)
 	fatalerr("malloc()/realloc() failure in insert_defn()\n");
 
+    debug(1,("defining %s to %s in file %s\n", name, val, file->i_file));
     stab->s_name = copy(name);
     stab->s_value = copy(val);
     *sp = stab;
@@ -461,8 +467,17 @@ slookup(char *symbol, struct inclist *file)
 static int 
 merge2defines(struct inclist *file1, struct inclist *file2)
 {
-	if ((file1!=NULL) && (file2!=NULL)) 
-        {
+	int i;
+
+	if ((file1==NULL) || (file2==NULL) ||
+	    !(file2->i_flags & FINISHED))
+		return 0;
+
+	for (i=0; i < file2->i_listlen; i++)
+		if (file2->i_merged[i]==FALSE)
+			return 0;
+
+	{
 		int first1 = 0;
 		int last1 = file1->i_ndefs - 1;
 
@@ -472,6 +487,9 @@ merge2defines(struct inclist *file1, struct inclist *file2)
                 int first=0;
                 struct symtab** i_defs = NULL;
 		int deflen=file1->i_ndefs+file2->i_ndefs;
+
+		debug(2,("merging %s into %s\n",
+			file2->i_file, file1->i_file));
 
                 if (deflen>0)
                 { 
@@ -512,7 +530,6 @@ merge2defines(struct inclist *file1, struct inclist *file2)
                 
 		return 1;
   	}
-	return 0;
 }
 
 void
@@ -627,6 +644,8 @@ find_includes(struct filepointer *filep, struct inclist *file,
 		case INCLUDENEXTDOT:
 			inclistp = inclistnext;
 			includedirsp = includedirsnext;
+			debug(2,("%s, reading %s, includes %s\n",
+				file_red->i_file, file->i_file, line));
 			add_include(filep, file, file_red, line, type, failOK);
 			inclistnext = inclistp;
 			includedirsnext = includedirsp;
@@ -662,5 +681,6 @@ find_includes(struct filepointer *filep, struct inclist *file,
 		}
 	}
 	file->i_flags |= FINISHED;
+	debug(2,("finished with %s\n", file->i_file));
 	return(-1);
 }

@@ -24,7 +24,7 @@
  THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
  ********************************************************/
-/* $XFree86: xc/lib/xkbfile/cout.c,v 3.7 2001/10/28 03:32:46 tsi Exp $ */
+ /* $XFree86: xc/lib/xkbfile/cout.c,v 3.8 2003/02/03 20:12:00 paulo Exp $ */
 
 #include <stdio.h>
 #include <ctype.h>
@@ -1208,7 +1208,7 @@ Bool			(*func)(
 	if (tmp==NULL)
 	     tmp= name;
 	else tmp++;
-	hdrdef= (char *)_XkbCalloc(strlen(tmp+1),sizeof(char));
+	hdrdef= (char *)_XkbCalloc(strlen(tmp)+1,sizeof(char));
 	if (hdrdef) {
 	    strcpy(hdrdef,tmp);
 	    tmp= hdrdef;

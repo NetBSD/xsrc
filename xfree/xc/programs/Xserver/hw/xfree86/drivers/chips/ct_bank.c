@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/chips/ct_bank.c,v 1.5 2000/04/04 19:25:05 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/chips/ct_bank.c,v 1.6 2002/01/25 21:55:58 tsi Exp $ */
 
 /*
  * Copyright 1997
@@ -63,7 +63,9 @@
 int
 CHIPSSetRead(ScreenPtr pScreen, int bank)
 { 
-    outw(0x3D6, ((((bank << 3) & 0xFF) << 8) | 0x10));
+    CHIPSPtr cPtr = CHIPSPTR(xf86Screens[pScreen->myNum]);
+
+    outw(cPtr->PIOBase + 0x3D6, ((((bank << 3) & 0xFF) << 8) | 0x10));
 
 #ifdef	__arm32__
     /* Must drain StrongARM write buffer on bank switch! */
@@ -80,7 +82,9 @@ CHIPSSetRead(ScreenPtr pScreen, int bank)
 int
 CHIPSSetWrite(ScreenPtr pScreen, int bank)
 {
-    outw(0x3D6, ((((bank << 3) & 0xFF) << 8) | 0x11));
+    CHIPSPtr cPtr = CHIPSPTR(xf86Screens[pScreen->myNum]);
+
+    outw(cPtr->PIOBase + 0x3D6, ((((bank << 3) & 0xFF) << 8) | 0x11));
 
 #ifdef	__arm32__
     /* Must drain StrongARM write buffer on bank switch! */
@@ -97,8 +101,10 @@ CHIPSSetWrite(ScreenPtr pScreen, int bank)
 int
 CHIPSSetReadWrite(ScreenPtr pScreen, int bank)
 {
-    outw(0x3D6, ((((bank << 3) & 0xFF) << 8) | 0x10));
-    outw(0x3D6, ((((bank << 3) & 0xFF) << 8) | 0x11));
+    CHIPSPtr cPtr = CHIPSPTR(xf86Screens[pScreen->myNum]);
+
+    outw(cPtr->PIOBase + 0x3D6, ((((bank << 3) & 0xFF) << 8) | 0x10));
+    outw(cPtr->PIOBase + 0x3D6, ((((bank << 3) & 0xFF) << 8) | 0x11));
 
 #ifdef	__arm32__
     /* Must drain StrongARM write buffer on bank switch! */
@@ -114,7 +120,9 @@ CHIPSSetReadWrite(ScreenPtr pScreen, int bank)
 int
 CHIPSSetReadPlanar(ScreenPtr pScreen, int bank)
 {
-    outw(0x3D6, ((((bank << 5) & 0xFF) << 8) | 0x10));
+    CHIPSPtr cPtr = CHIPSPTR(xf86Screens[pScreen->myNum]);
+
+    outw(cPtr->PIOBase + 0x3D6, ((((bank << 5) & 0xFF) << 8) | 0x10));
 
 #ifdef	__arm32__
     /* Must drain StrongARM write buffer on bank switch! */
@@ -130,7 +138,9 @@ CHIPSSetReadPlanar(ScreenPtr pScreen, int bank)
 int
 CHIPSSetWritePlanar(ScreenPtr pScreen, int bank)
 {
-    outw(0x3D6, ((((bank << 5) & 0xFF) << 8) | 0x11));
+    CHIPSPtr cPtr = CHIPSPTR(xf86Screens[pScreen->myNum]);
+
+    outw(cPtr->PIOBase + 0x3D6, ((((bank << 5) & 0xFF) << 8) | 0x11));
 
 #ifdef	__arm32__
     /* Must drain StrongARM write buffer on bank switch! */
@@ -146,8 +156,10 @@ CHIPSSetWritePlanar(ScreenPtr pScreen, int bank)
 int
 CHIPSSetReadWritePlanar(ScreenPtr pScreen, int bank)
 {
-    outw(0x3D6, ((((bank << 5) & 0xFF) << 8) | 0x10));
-    outw(0x3D6, ((((bank << 5) & 0xFF) << 8) | 0x11));
+    CHIPSPtr cPtr = CHIPSPTR(xf86Screens[pScreen->myNum]);
+
+    outw(cPtr->PIOBase + 0x3D6, ((((bank << 5) & 0xFF) << 8) | 0x10));
+    outw(cPtr->PIOBase + 0x3D6, ((((bank << 5) & 0xFF) << 8) | 0x11));
 
 #ifdef	__arm32__
     /* Must drain StrongARM write buffer on bank switch! */
@@ -163,12 +175,13 @@ CHIPSSetReadWritePlanar(ScreenPtr pScreen, int bank)
 int
 CHIPSWINSetRead(ScreenPtr pScreen, int bank)
 {
+    CHIPSPtr cPtr = CHIPSPTR(xf86Screens[pScreen->myNum]);
     register unsigned char tmp;
 
-    outw(0x3D6, ((((bank << 3) & 0xFF) << 8) | 0x10));
-    outb(0x3D6, 0x0C);
-    tmp = inb(0x3D7) & 0xEF;
-    outw(0x3D6, (((((bank >> 1) & 0x10) | tmp) << 8) | 0x0C));
+    outw(cPtr->PIOBase + 0x3D6, ((((bank << 3) & 0xFF) << 8) | 0x10));
+    outb(cPtr->PIOBase + 0x3D6, 0x0C);
+    tmp = inb(cPtr->PIOBase + 0x3D7) & 0xEF;
+    outw(cPtr->PIOBase + 0x3D6, (((((bank >> 1) & 0x10) | tmp) << 8) | 0x0C));
 
 #ifdef	__arm32__
     /* Must drain StrongARM write buffer on bank switch! */
@@ -185,12 +198,13 @@ CHIPSWINSetRead(ScreenPtr pScreen, int bank)
 int
 CHIPSWINSetWrite(ScreenPtr pScreen, int bank)
 {
+    CHIPSPtr cPtr = CHIPSPTR(xf86Screens[pScreen->myNum]);
     register unsigned char tmp;
 
-    outw(0x3D6, ((((bank << 3) & 0xFF) << 8) | 0x11));
-    outb(0x3D6, 0x0C);
-    tmp = inb(0x3D7) & 0xBF;
-    outw(0x3D6, (((((bank << 1) & 0x40) | tmp) << 8) | 0x0C));
+    outw(cPtr->PIOBase + 0x3D6, ((((bank << 3) & 0xFF) << 8) | 0x11));
+    outb(cPtr->PIOBase + 0x3D6, 0x0C);
+    tmp = inb(cPtr->PIOBase + 0x3D7) & 0xBF;
+    outw(cPtr->PIOBase + 0x3D6, (((((bank << 1) & 0x40) | tmp) << 8) | 0x0C));
 
 #ifdef	__arm32__
     /* Must drain StrongARM write buffer on bank switch! */
@@ -206,13 +220,15 @@ CHIPSWINSetWrite(ScreenPtr pScreen, int bank)
 int
 CHIPSWINSetReadWrite(ScreenPtr pScreen, int bank)
 {
+    CHIPSPtr cPtr = CHIPSPTR(xf86Screens[pScreen->myNum]);
     register unsigned char tmp;
 
-    outw(0x3D6, ((((bank << 3) & 0xFF) << 8) | 0x10));
-    outw(0x3D6, ((((bank << 3) & 0xFF) << 8) | 0x11));
-    outb(0x3D6, 0x0C);
-    tmp = inb(0x3D7) & 0xAF;
-    outw(0x3D6, (((((bank << 1) & 0x40) | ((bank >> 1) & 0x10) | tmp) << 8) | 0x0C));
+    outw(cPtr->PIOBase + 0x3D6, ((((bank << 3) & 0xFF) << 8) | 0x10));
+    outw(cPtr->PIOBase + 0x3D6, ((((bank << 3) & 0xFF) << 8) | 0x11));
+    outb(cPtr->PIOBase + 0x3D6, 0x0C);
+    tmp = inb(cPtr->PIOBase + 0x3D7) & 0xAF;
+    outw(cPtr->PIOBase + 0x3D6,
+	(((((bank << 1) & 0x40) | ((bank >> 1) & 0x10) | tmp) << 8) | 0x0C));
 
 #ifdef	__arm32__
     /* Must drain StrongARM write buffer on bank switch! */
@@ -228,12 +244,13 @@ CHIPSWINSetReadWrite(ScreenPtr pScreen, int bank)
 int
 CHIPSWINSetReadPlanar(ScreenPtr pScreen, int bank)
 {
+    CHIPSPtr cPtr = CHIPSPTR(xf86Screens[pScreen->myNum]);
     register unsigned char tmp;
 
-    outw(0x3D6, ((((bank << 5) & 0xFF) << 8) | 0x10));
-    outb(0x3D6, 0x0C);
-    tmp = inb(0x3D7) & 0xEF;
-    outw(0x3D6, (((((bank << 1) & 0x10) | tmp) << 8) | 0x0C));
+    outw(cPtr->PIOBase + 0x3D6, ((((bank << 5) & 0xFF) << 8) | 0x10));
+    outb(cPtr->PIOBase + 0x3D6, 0x0C);
+    tmp = inb(cPtr->PIOBase + 0x3D7) & 0xEF;
+    outw(cPtr->PIOBase + 0x3D6, (((((bank << 1) & 0x10) | tmp) << 8) | 0x0C));
 
 #ifdef	__arm32__
     /* Must drain StrongARM write buffer on bank switch! */
@@ -249,12 +266,13 @@ CHIPSWINSetReadPlanar(ScreenPtr pScreen, int bank)
 int
 CHIPSWINSetWritePlanar(ScreenPtr pScreen, int bank)
 {
+    CHIPSPtr cPtr = CHIPSPTR(xf86Screens[pScreen->myNum]);
     register unsigned char tmp;
 
-    outw(0x3D6, ((((bank << 5) & 0xFF) << 8) | 0x11));
-    outb(0x3D6, 0x0C);
-    tmp = inb(0x3D7) & 0xBF;
-    outw(0x3D6, (((((bank << 3) & 0x40) | tmp) << 8) | 0x0C));
+    outw(cPtr->PIOBase + 0x3D6, ((((bank << 5) & 0xFF) << 8) | 0x11));
+    outb(cPtr->PIOBase + 0x3D6, 0x0C);
+    tmp = inb(cPtr->PIOBase + 0x3D7) & 0xBF;
+    outw(cPtr->PIOBase + 0x3D6, (((((bank << 3) & 0x40) | tmp) << 8) | 0x0C));
 
 #ifdef	__arm32__
     /* Must drain StrongARM write buffer on bank switch! */
@@ -270,13 +288,15 @@ CHIPSWINSetWritePlanar(ScreenPtr pScreen, int bank)
 int
 CHIPSWINSetReadWritePlanar(ScreenPtr pScreen, int bank)
 {
+    CHIPSPtr cPtr = CHIPSPTR(xf86Screens[pScreen->myNum]);
     register unsigned char tmp;
 
-    outw(0x3D6, ((((bank << 5) & 0xFF) << 8) | 0x10));
-    outw(0x3D6, ((((bank << 5) & 0xFF) << 8) | 0x11));
-    outb(0x3D6, 0x0C);
-    tmp = inb(0x3D7) & 0xAF;
-    outw(0x3D6, (((((bank << 3) & 0x40) | ((bank << 1) & 0x10) | tmp) << 8) | 0x0C));
+    outw(cPtr->PIOBase + 0x3D6, ((((bank << 5) & 0xFF) << 8) | 0x10));
+    outw(cPtr->PIOBase + 0x3D6, ((((bank << 5) & 0xFF) << 8) | 0x11));
+    outb(cPtr->PIOBase + 0x3D6, 0x0C);
+    tmp = inb(cPtr->PIOBase + 0x3D7) & 0xAF;
+    outw(cPtr->PIOBase + 0x3D6,
+	(((((bank << 3) & 0x40) | ((bank << 1) & 0x10) | tmp) << 8) | 0x0C));
 
 #ifdef	__arm32__
     /* Must drain StrongARM write buffer on bank switch! */
@@ -292,7 +312,9 @@ CHIPSWINSetReadWritePlanar(ScreenPtr pScreen, int bank)
 int
 CHIPSHiQVSetReadWrite(ScreenPtr pScreen, int bank)
 {
-    outw(0x3D6, (((bank & 0x7F) << 8) | 0x0E));
+    CHIPSPtr cPtr = CHIPSPTR(xf86Screens[pScreen->myNum]);
+
+    outw(cPtr->PIOBase + 0x3D6, (((bank & 0x7F) << 8) | 0x0E));
 
 #ifdef	__arm32__
     /* Must drain StrongARM write buffer on bank switch! */
@@ -308,7 +330,9 @@ CHIPSHiQVSetReadWrite(ScreenPtr pScreen, int bank)
 int
 CHIPSHiQVSetReadWritePlanar(ScreenPtr pScreen, int bank)
 {
-    outw(0x3D6, ((((bank << 2) & 0x7F) << 8) | 0x0E));
+    CHIPSPtr cPtr = CHIPSPTR(xf86Screens[pScreen->myNum]);
+
+    outw(cPtr->PIOBase + 0x3D6, ((((bank << 2) & 0x7F) << 8) | 0x0E));
 
 #ifdef	__arm32__
     /* Must drain StrongARM write buffer on bank switch! */

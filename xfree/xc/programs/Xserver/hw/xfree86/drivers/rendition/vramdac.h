@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/rendition/vramdac.h,v 1.5 2000/03/31 20:13:28 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/rendition/vramdac.h,v 1.6 2002/04/04 14:05:45 eich Exp $ */
 /*
  * file vramdac.h
  *
@@ -36,6 +36,8 @@
  * function prototypes
  */
 
+void verite_savedac (ScrnInfoPtr pScreenInfo);
+void verite_restoredac (ScrnInfoPtr pScreenInfo, RenditionRegPtr reg);
 int verite_initdac(ScrnInfoPtr pScreenInfo, vu8 bpp, vu8 doubleclock);
 void verite_enablecursor(ScrnInfoPtr pScreenInfo, int type, int size);
 void verite_movecursor(ScrnInfoPtr pScreenInfo, vu16 x, vu16 y, vu8 xo, vu8 yo);

@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/lib/GLU/Imakefile,v 1.5 2001/06/05 23:03:20 dawes Exp $
+XCOMM $XFree86: xc/lib/GLU/Imakefile,v 1.6 2002/05/31 18:45:39 dawes Exp $
 
 XCOMM License Applicability. Except to the extent portions of this file are
 XCOMM made subject to an alternative license as permitted in the SGI Free
@@ -53,7 +53,7 @@ REQUIREDLIBS = SharedGLUReqs
 #ifndef SeparateSharedCompile
 #define SeparateSharedCompile YES
 #endif
-#if NormalLibFont && SharedLibFont && SeparateSharedCompile
+#if NormalLibGlu && SharedLibGlu && SeparateSharedCompile
 STATIC_OBJSDIR = unshared/
 #endif
 
@@ -117,15 +117,15 @@ SharedDepLibraryTarget($(LIBNAME),$(SOREV),$(SUBDIRS) $(DONES),$(SHARED_OBJS),.,
 InstallSharedLibrary($(LIBNAME),$(SOREV),$(SHLIBDIR))
 #endif
 
-#if DebugLibFont
+#if DebugLibGlu
 DebuggedDepLibraryTarget($(LIBNAME),$(SUBDIRS) $(DONES),$(DEBUG_OBJS))
 InstallLibrary($(LIBNAME)_d,$(USRLIBDIR))
-#endif /* DebugLibFont */
+#endif /* DebugLibGlu */
 
-#if ProfileLibFont
+#if ProfileLibGlu
 ProfiledDepLibraryTarget($(LIBNAME),$(SUBDIRS) $(DONES),$(PROFILE_OBJS))
 InstallLibrary($(LIBNAME)_p,$(USRLIBDIR))
-#endif /* ProfileLibFont */
+#endif /* ProfileLibGlu */
 
 
 ForceSubdirs($(SUBDIRS))

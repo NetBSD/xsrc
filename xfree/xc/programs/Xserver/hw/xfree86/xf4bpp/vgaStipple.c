@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xf4bpp/vgaStipple.c,v 1.4 2001/08/01 00:44:56 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xf4bpp/vgaStipple.c,v 1.5 2002/01/25 21:56:22 tsi Exp $ */
 /*
  * Copyright IBM Corporation 1987,1988,1989
  *
@@ -111,6 +111,8 @@ DoMonoSingle
 	int yshift
 )
 {
+IOADDRESS REGBASE =
+    xf86Screens[((DrawablePtr)pWin)->pScreen->myNum]->domainIOBase + 0x300;
 register volatile unsigned char *xDst ;
 register VideoAdapterObject tmp2 ;
 register int NeedValX ;
@@ -283,6 +285,8 @@ DoMonoMany
 	int yshift
 )
 {
+IOADDRESS REGBASE =
+    xf86Screens[((DrawablePtr)pWin)->pScreen->myNum]->domainIOBase + 0x300;
 register volatile unsigned char *xDst ;
 register VideoAdapterObject tmp2 ;
 register int NeedValX ;
@@ -477,10 +481,13 @@ return ;
 static void
 vgaSetMonoRegisters
 (
+	DrawablePtr pDrawable,
 	register unsigned long int plane_mask,
 	register unsigned long int desiredState
 )
 {
+IOADDRESS REGBASE =
+    xf86Screens[pDrawable->pScreen->myNum]->domainIOBase + 0x300;
 #ifndef	PC98_EGC
 /* Setup VGA Registers */
 /*
@@ -632,7 +639,7 @@ regState = vgaCalcMonoMode(alu, (char)fg);
 #endif
 
 
-vgaSetMonoRegisters( planes, regState ) ;
+vgaSetMonoRegisters( (DrawablePtr)pWin, planes, regState ) ;
 
 DoMonoSingle( pWin, w, x, y, (const unsigned char *) data, h,
 	      w, ( ( w + 31 ) & ~31 ) >> 3, h, 0, 0 ) ;
@@ -677,7 +684,7 @@ regState = vgaCalcMonoMode(alu, (char)fg);
 #endif
 
 
-vgaSetMonoRegisters( planes, regState ) ;
+vgaSetMonoRegisters( (DrawablePtr)pWin, planes, regState ) ;
 
 /* Figure Bit Offsets & Source Address */
 width = pStipple->drawable.width ;

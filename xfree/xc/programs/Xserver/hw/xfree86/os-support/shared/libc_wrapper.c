@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/shared/libc_wrapper.c,v 1.83 2002/01/14 18:34:34 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/shared/libc_wrapper.c,v 1.88 2003/02/22 06:00:39 dawes Exp $ */
 /*
  * Copyright 1997 by The XFree86 Project, Inc.
  *
@@ -50,7 +50,7 @@
 #include <errno.h>
 #include <stdio.h>
 #include <sys/ioctl.h>
-#ifdef __EMX__
+#ifdef __UNIXOS2__
 #define NO_MMAP
 #include <sys/param.h>
 #endif
@@ -117,7 +117,7 @@ void xf86WrapperInit(void);
 #endif
 typedef struct dirent DIRENTRY;
 
-#ifdef __EMX__
+#ifdef __UNIXOS2__
 #define _POSIX_SOURCE
 #endif
 #ifdef ISC202
@@ -164,6 +164,11 @@ typedef struct dirent DIRENTRY;
 #include <sys/shm.h>
 #endif
 #include <setjmp.h>
+
+#if defined(setjmp) && \
+    defined(__GLIBC__) && __GLIBC__ == 2 && __GLIBC_MINOR__ < 2
+#define HAS_GLIBC_SIGSETJMP 1
+#endif
 
 #if 0
 #define SETBUF_RETURNS_INT
@@ -475,6 +480,9 @@ xf86mmap(void *start, xf86size_t length, int prot,
     if (flags & XF86_MAP_FIXED)		f |= MAP_FIXED;
     if (flags & XF86_MAP_SHARED)	f |= MAP_SHARED;
     if (flags & XF86_MAP_PRIVATE)	f |= MAP_PRIVATE;
+#ifdef __x86_64__
+    if (flags & XF86_MAP_32BIT)	        f |= MAP_32BIT;
+#endif
     if (prot  & XF86_PROT_EXEC)		p |= PROT_EXEC;
     if (prot  & XF86_PROT_READ)		p |= PROT_READ;
     if (prot  & XF86_PROT_WRITE)	p |= PROT_WRITE;
@@ -889,7 +897,7 @@ xf86strerror(int n)
 		mapnum (ENOTDIR);
 		mapnum (EPIPE);
 		mapnum (EROFS);
-#ifndef __EMX__
+#ifndef __UNIXOS2__
 		mapnum (ETXTBSY);	/* not POSIX 1 */
 #endif
 		mapnum (ENOTTY);
@@ -1176,7 +1184,7 @@ xf86bsearch(const void *key, const void *base, xf86size_t nmemb,
 int
 xf86execl(const char *pathname, const char *arg, ...)
 {
-#ifndef __EMX__
+#ifndef __UNIXOS2__
     int i;
     pid_t pid;
     int exit_status;
@@ -1259,7 +1267,7 @@ xf86execl(const char *pathname, const char *arg, ...)
     }
 #else
     return(1);
-#endif /* __EMX__ Disable this crazy business for now */
+#endif /* __UNIXOS2__ Disable this crazy business for now */
 }
 
 void
@@ -1365,7 +1373,7 @@ xfToOsChmodMode(xf86mode_t xfmode)
 
     if (xfmode & XF86_S_ISUID) mode |= S_ISUID;
     if (xfmode & XF86_S_ISGID) mode |= S_ISGID;
-#ifndef __EMX__
+#ifndef __UNIXOS2__
     if (xfmode & XF86_S_ISVTX) mode |= S_ISVTX;
 #endif
     if (xfmode & XF86_S_IRUSR) mode |= S_IRUSR;
@@ -1394,7 +1402,7 @@ xf86chmod(const char *path, xf86mode_t xfmode)
 int
 xf86chown(const char *path, xf86uid_t owner, xf86gid_t group)
 {
-#ifndef __EMX__
+#ifndef __UNIXOS2__
     int rc = chown(path, owner, group);
 #else
     int rc = 0;
@@ -1428,7 +1436,7 @@ xfToOsMknodMode(xf86mode_t xfmode)
 
     if (xfmode & XF86_S_IFREG) mode |= S_IFREG;
     if (xfmode & XF86_S_IFCHR) mode |= S_IFCHR;
-#ifndef __EMX__
+#ifndef __UNIXOS2__
     if (xfmode & XF86_S_IFBLK) mode |= S_IFBLK;
 #endif
     if (xfmode & XF86_S_IFIFO) mode |= S_IFIFO;
@@ -1439,7 +1447,7 @@ xfToOsMknodMode(xf86mode_t xfmode)
 int xf86mknod(const char *pathname, xf86mode_t xfmode, xf86dev_t dev)
 {
     mode_t mode = xfToOsMknodMode(xfmode);
-#ifndef __EMX__
+#ifndef __UNIXOS2__
     int rc      = mknod(pathname, mode, dev);
 #else
     int rc = 0;
@@ -1833,7 +1841,7 @@ xf86GetErrno ()
 		mapnum (ENOTDIR);
 		mapnum (EPIPE);
 		mapnum (EROFS);
-#ifndef __EMX__
+#ifndef __UNIXOS2__
 		mapnum (ETXTBSY);	/* not POSIX 1 */
 #endif
 		mapnum (ENOTTY);
@@ -1876,10 +1884,16 @@ char *
 xf86shmat(int id, char *addr, int xf86shmflg)
 {
     int shmflg = 0;
-    
+
+#ifdef SHM_RDONLY
     if (xf86shmflg & XF86SHM_RDONLY) shmflg |= SHM_RDONLY;
-    if (xf86shmflg & XF86SHM_RND) shmflg    |= SHM_RND;
-    if (xf86shmflg & XF86SHM_REMAP) shmflg  |= SHM_REMAP;
+#endif
+#ifdef SHM_RND
+    if (xf86shmflg & XF86SHM_RND)    shmflg |= SHM_RND;
+#endif
+#ifdef SHM_REMAP
+    if (xf86shmflg & XF86SHM_REMAP)  shmflg |= SHM_REMAP;
+#endif
 
     return shmat(id,addr,shmflg);
 }
@@ -1937,14 +1951,39 @@ xf86shmdt(char *addr)
 #endif /* HAVE_SYSV_IPC */
 
 int
-xf86setjmp(xf86jmp_buf xf86env)
+xf86getjmptype()
 {
-    return setjmp((void *)xf86env);
+#ifdef HAS_GLIBC_SIGSETJMP
+    return 1;
+#else
+    return 0;
+#endif
 }
 
-void
-xf86longjmp(xf86jmp_buf xf86env, int val)
+#ifdef HAS_GLIBC_SIGSETJMP
+int
+xf86setjmp(xf86jmp_buf env)
 {
-    longjmp((void *)xf86env, val);
+    FatalError("setjmp: type 0 called instead of type %d\n", xf86getjmptype());
+}
+#else
+int
+xf86setjmp1(xf86jmp_buf env, int arg2)
+{
+    FatalError("setjmp: type 1 called instead of type %d\n", xf86getjmptype());
+}
+#endif
+
+int
+xf86setjmp1_arg2()
+{
+    return 0;
+}
+
+int
+xf86setjmperror(xf86jmp_buf env)
+{
+    FatalError("setjmp: don't know how to handle setjmp() type %d\n",
+	       xf86getjmptype());
 }
 

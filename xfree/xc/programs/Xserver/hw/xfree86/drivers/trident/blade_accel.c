@@ -23,7 +23,7 @@
  * 
  * Trident Blade3D accelerated options.
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/trident/blade_accel.c,v 1.17 2001/10/28 03:33:51 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/trident/blade_accel.c,v 1.18 2002/10/08 22:14:11 tsi Exp $ */
 
 #include "xf86.h"
 #include "xf86_OSproc.h"
@@ -67,12 +67,14 @@ static void BladeSetupForScreenToScreenCopy(ScrnInfoPtr pScrn,
 				int xdir, int ydir, int rop, 
                                 unsigned int planemask,
 				int transparency_color);
+#if 0
 static void BladeSetupForScreenToScreenColorExpand(ScrnInfoPtr pScrn,
     				int fg, int bg, int rop,
     				unsigned int planemask);
 static void BladeSubsequentScreenToScreenColorExpand(ScrnInfoPtr pScrn,
     				int x, int y, int w, int h, int srcx, int srcy,
 				int offset);
+#endif
 static void BladeSetupForCPUToScreenColorExpand(ScrnInfoPtr pScrn,
     				int fg, int bg, int rop,
     				unsigned int planemask);
@@ -498,6 +500,7 @@ BladeSubsequentFillRectSolid(ScrnInfoPtr pScrn, int x, int y, int w, int h)
     BLADE_OUT(0x210C, ((y+h-1)&0xfff)<<16 | ((x+w-1)&0xfff));
 }
 
+#if 0
 static void 
 BladeSetupForScreenToScreenColorExpand(ScrnInfoPtr pScrn,
     int fg, int bg, int rop,
@@ -533,6 +536,7 @@ BladeSubsequentScreenToScreenColorExpand(ScrnInfoPtr pScrn,
 
     IMAGE_OUT(0x24, 0x80000000 | 3<<22 | 1<<7 | pTrident->BltScanDirection | (pTrident->ROP == GXcopy ? 0 : 1<<10) | offset<<25);
 }
+#endif
 
 static void 
 BladeSetupForCPUToScreenColorExpand(ScrnInfoPtr pScrn,

@@ -1,4 +1,4 @@
-/* $XFree86: xc/include/extensions/xf86vmstr.h,v 3.27 2001/08/01 00:44:36 tsi Exp $ */
+/* $XFree86: xc/include/extensions/xf86vmstr.h,v 3.28 2002/12/22 00:46:50 dawes Exp $ */
 /*
 
 Copyright 1995  Kaleb S. KEITHLEY
@@ -40,7 +40,7 @@ from Kaleb S. KEITHLEY
 #define XF86VIDMODENAME "XFree86-VidModeExtension"
 
 #define XF86VIDMODE_MAJOR_VERSION	2	/* current version numbers */
-#define XF86VIDMODE_MINOR_VERSION	1
+#define XF86VIDMODE_MINOR_VERSION	2
 /*
  * major version 0 == uses parameter-to-wire functions in XFree86 libXxf86vm.
  * major version 1 == uses parameter-to-wire functions hard-coded in xvidtune
@@ -80,12 +80,14 @@ typedef struct _XF86VidModeGetModeLine {
   xXF86VidModeGetAllModeLinesReq,
   xXF86VidModeGetMonitorReq,
   xXF86VidModeGetViewPortReq,
-  xXF86VidModeGetDotClocksReq;
+  xXF86VidModeGetDotClocksReq,
+  xXF86VidModeGetPermissionsReq;
 #define sz_xXF86VidModeGetModeLineReq		8
 #define sz_xXF86VidModeGetAllModeLinesReq	8
 #define sz_xXF86VidModeGetMonitorReq		8
 #define sz_xXF86VidModeGetViewPortReq		8
 #define sz_xXF86VidModeGetDotClocksReq		8
+#define sz_xXF86VidModeGetPermissionsReq	8
 
 typedef struct {
     BYTE	type;			/* X_Reply */
@@ -540,6 +542,20 @@ typedef struct {
     CARD32      pad5 B32;
 } xXF86VidModeGetGammaRampSizeReply;
 #define sz_xXF86VidModeGetGammaRampSizeReply            32
+
+typedef struct {
+    BYTE        type;
+    BOOL        pad;
+    CARD16      sequenceNumber B16;
+    CARD32      length B32;
+    CARD32      permissions B32;
+    CARD32      pad1 B32;
+    CARD32      pad2 B32;
+    CARD32      pad3 B32;
+    CARD32      pad4 B32;
+    CARD32      pad5 B32;
+} xXF86VidModeGetPermissionsReply;
+#define sz_xXF86VidModeGetPermissionsReply            32
 
 
 #endif /* _XF86VIDMODESTR_H_ */

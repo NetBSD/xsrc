@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/linux/lnx_ev56.c,v 3.6 2001/02/15 11:03:56 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/linux/lnx_ev56.c,v 3.7 2002/11/25 14:05:04 eich Exp $ */
 
 #include "X.h"
 #include "input.h"
@@ -85,3 +85,63 @@ writeDense32(int Value, pointer Base, register unsigned long Offset)
     write_mem_barrier();
     *(volatile CARD32 *)((unsigned long)Base+(Offset)) = Value;
 }
+
+
+#ifndef INCLUDE_XF86_NO_DOMAIN
+
+void
+_dense_outb(char val, unsigned long port)
+{
+  if ((port & ~0xffff) == 0) return _outb(val, port);
+
+  write_mem_barrier();
+  *(volatile CARD8 *)port = val;
+}
+
+void
+_dense_outw(short val, unsigned long port)
+{
+  if ((port & ~0xffff) == 0) return _outw(val, port);
+
+  write_mem_barrier();
+  *(volatile CARD16 *)port = val;
+}
+
+void
+_dense_outl(int val, unsigned long port)
+{
+  if ((port & ~0xffff) == 0) return _outl(val, port);
+
+  write_mem_barrier();
+  *(volatile CARD32 *)port = val;
+}
+
+unsigned int
+_dense_inb(unsigned long port)
+{
+  if ((port & ~0xffff) == 0) return _inb(port);
+
+  mem_barrier();
+  return *(volatile CARD8 *)port;
+}
+
+unsigned int
+_dense_inw(unsigned long port)
+{
+  if ((port & ~0xffff) == 0) return _inw(port);
+
+  mem_barrier();
+  return *(volatile CARD16 *)port;
+}
+
+unsigned int
+_dense_inl(unsigned long port)
+{
+  if ((port & ~0xffff) == 0) return _inl(port);
+
+  mem_barrier();
+  return *(volatile CARD32 *)port;
+}
+
+#endif /* !INCLUDE_XF86_NO_DOMAIN */
+

@@ -1,9 +1,9 @@
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.4
+ * Version:  3.5
  *
- * Copyright (C) 1999  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -25,7 +25,7 @@
 
 /*
  * x86 CPUID feature information.  The raw data is returned by
- * gl_identify_x86_cpu_features() and interpreted with the cpu_has_*
+ * _mesa_identify_x86_cpu_features() and interpreted with the cpu_has_*
  * helper macros.
  *
  * Gareth Hughes <gareth@valinux.com>
@@ -62,15 +62,18 @@
 #define X86_FEATURE_MMX		0x00800000
 #define X86_FEATURE_FXSR	0x01000000
 #define X86_FEATURE_XMM		0x02000000
-#define X86_FEATURE_26		0x04000000
+#define X86_FEATURE_XMM2	0x04000000
 #define X86_FEATURE_27		0x08000000
 #define X86_FEATURE_28		0x10000000
 #define X86_FEATURE_29		0x20000000
 #define X86_FEATURE_3DNOWEXT	0x40000000
 #define X86_FEATURE_3DNOW	0x80000000
 
-#define cpu_has_mmx		(gl_x86_cpu_features & X86_FEATURE_MMX)
-#define cpu_has_xmm		(gl_x86_cpu_features & X86_FEATURE_XMM)
-#define cpu_has_3dnow		(gl_x86_cpu_features & X86_FEATURE_3DNOW)
+#define cpu_has_mmx		(_mesa_x86_cpu_features & X86_FEATURE_MMX)
+#define cpu_has_mmxext		(_mesa_x86_cpu_features & X86_FEATURE_MMXEXT)
+#define cpu_has_xmm		(_mesa_x86_cpu_features & X86_FEATURE_XMM)
+#define cpu_has_xmm2		(_mesa_x86_cpu_features & X86_FEATURE_XMM2)
+#define cpu_has_3dnow		(_mesa_x86_cpu_features & X86_FEATURE_3DNOW)
+#define cpu_has_3dnowext	(_mesa_x86_cpu_features & X86_FEATURE_3DNOWEXT)
 
 #endif

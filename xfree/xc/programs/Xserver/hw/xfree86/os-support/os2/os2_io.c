@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/os2/os2_io.c,v 3.14 2000/04/05 18:13:52 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/os2/os2_io.c,v 3.17 2003/02/17 15:11:58 dawes Exp $ */
 /*
  * (c) Copyright 1994,1999 by Holger Veit
  *			<Holger.Veit@gmd.de>
@@ -29,12 +29,12 @@
  */
 /* $XConsortium: os2_io.c /main/9 1996/05/13 16:38:07 kaleb $ */
 
+#define I_NEED_OS2_H
 #include "X.h"
 #include "Xpoll.h"
 #include "compiler.h"
 #include <time.h>
 
-#define I_NEED_OS2_H
 #define INCL_DOSPROCESS
 #define INCL_KBD
 #define INCL_MOU
@@ -220,3 +220,11 @@ Bool xf86SupportedMouseTypes[] =
 int xf86NumMouseTypes = sizeof(xf86SupportedMouseTypes) /
 			sizeof(xf86SupportedMouseTypes[0]);
 #endif
+
+#include "xf86OSKbd.h"
+
+Bool
+xf86OSKbdPreInit(InputInfoPtr pInfo)
+{
+    return FALSE;
+}

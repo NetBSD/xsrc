@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/r128_cursor.c,v 1.5 2001/03/03 22:26:09 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/r128_cursor.c,v 1.6 2003/02/13 20:28:40 tsi Exp $ */
 /*
  * Copyright 1999, 2000 ATI Technologies Inc., Markham, Ontario,
  *                      Precision Insight, Inc., Cedar Park, Texas, and
@@ -216,7 +216,8 @@ Bool R128CursorInit(ScreenPtr pScreen)
     cursor->MaxWidth          = 64;
     cursor->MaxHeight         = 64;
     cursor->Flags             = (HARDWARE_CURSOR_TRUECOLOR_AT_8BPP
-
+				 | HARDWARE_CURSOR_SHOW_TRANSPARENT
+				 | HARDWARE_CURSOR_UPDATE_UNHIDDEN
 #if X_BYTE_ORDER == X_LITTLE_ENDIAN
 				 | HARDWARE_CURSOR_BIT_ORDER_MSBFIRST
 #endif

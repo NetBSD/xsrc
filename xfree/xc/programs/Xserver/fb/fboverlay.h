@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/programs/Xserver/fb/fboverlay.h,v 1.3 2000/08/09 17:50:52 keithp Exp $
+ * $XFree86: xc/programs/Xserver/fb/fboverlay.h,v 1.5 2002/09/19 13:22:00 tsi Exp $
  *
  * Copyright © 2000 SuSE, Inc.
  *
@@ -57,9 +57,9 @@ typedef struct _fbOverlayScrPriv {
     FbOverlayLayer	    layer[FB_OVERLAY_MAX];
 } FbOverlayScrPrivRec, *FbOverlayScrPrivPtr;
 
-#define fbOverlayGetScrPriv(s)	((FbOverlayScrPrivPtr) \
-				 (s)->devPrivates[fbOverlayScreenPrivateIndex].ptr)
-
+#define fbOverlayGetScrPriv(s) \
+    ((fbOverlayScreenPrivateIndex != -1) ? \
+     (s)->devPrivates[fbOverlayScreenPrivateIndex].ptr : NULL)
 Bool
 fbOverlayCreateWindow(WindowPtr pWin);
 

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/tclxfconf.c,v 3.30 2001/07/25 15:05:05 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/tclxfconf.c,v 3.31 2002/05/31 18:45:57 dawes Exp $ */
 /*
  * Copyright 1996,1999 by Joseph V. Moss <joe@XFree86.Org>
  *
@@ -179,7 +179,7 @@ validate_font_path(path)
   next = path;
   while (next != NULL) {
     path_elem = get_path_elem(&next);
-#ifndef __EMX__
+#ifndef __UNIXOS2__
     if (*path_elem == '/') {
       dir_elem = (char *)XtCalloc(1, strlen(path_elem) + 1);
       if ((p1 = strchr(path_elem, ':')) != 0)
@@ -212,7 +212,7 @@ validate_font_path(path)
 	if (flag == 0)
 	  if (!CHECK_TYPE(stat_buf.st_mode, S_IFREG))
 	    flag = -1;
-#ifndef __EMX__
+#ifndef __UNIXOS2__
 	XtFree(p1);
 #endif
 	if (flag != 0) {

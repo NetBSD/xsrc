@@ -27,11 +27,11 @@
  *
  * Authors:	Harold L Hunt II
  */
-/* $XFree86: xc/programs/Xserver/hw/xwin/winlayer.c,v 1.6 2001/08/16 08:23:36 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xwin/winlayer.c,v 1.9 2002/10/31 23:04:39 alanh Exp $ */
 
 #include "win.h"
 
-
+#if WIN_LAYER_SUPPORT
 /*
  * Create initial layer.  Cygwin only needs one initial layer.
  */
@@ -44,8 +44,8 @@ winLayerCreate (ScreenPtr pScreen)
   PixmapPtr		pPixmap = NULL;
   DWORD			dwLayerKind;
 
-  ErrorF ("winLayerCreate () - dwDepth %d\n",
-	  pScreenInfo->dwDepth);
+  ErrorF ("winLayerCreate - dwDepth: %d dwBPP %d\n",
+	  pScreenInfo->dwDepth, pScreenInfo->dwBPP);
 
   /* We only need a single layer kind: shadow */
   dwLayerKind = LAYER_SHADOW;
@@ -53,7 +53,7 @@ winLayerCreate (ScreenPtr pScreen)
 
   return LayerCreate (pScreen,
 		      dwLayerKind,
-		      pScreenInfo->dwDepth,
+		      pScreenInfo->dwBPP,
 		      pPixmap,
 		      pScreenPriv->pwinShadowUpdate,
 		      NULL, /* No ShadowWindowProc */
@@ -61,7 +61,7 @@ winLayerCreate (ScreenPtr pScreen)
 		      0);
 }
 
-#ifdef RANDR
+
 /*
  * Used as a function parameter to WalkTree.
  */
@@ -98,7 +98,7 @@ winLayerRemove (WindowPtr pWindow, pointer value)
   return WT_WALKCHILDREN;
 }
 
-
+#ifdef RANDR
 /*
  * Answer queries about the RandR features supported.
  */
@@ -109,8 +109,6 @@ winRandRGetInfo (ScreenPtr pScreen, Rotation *pRotations)
   winScreenPriv(pScreen);
   winScreenInfo			*pScreenInfo = pScreenPriv->pScreenInfo;
   int				n;
-  RRVisualGroupPtr		pVisualGroup;
-  RRGroupOfVisualGroupPtr	pGroupOfVisualGroup = NULL;
   Rotation			rotateKind;
   RRScreenSizePtr		pSize;
 
@@ -119,51 +117,14 @@ winRandRGetInfo (ScreenPtr pScreen, Rotation *pRotations)
   /* Don't support rotations, yet */
   *pRotations = RR_Rotate_0; /* | RR_Rotate_90 | RR_Rotate_180 | ... */
   
+#if 0
   /* Check for something naughty.  Don't know what exactly... */
   for (n = 0; n < pScreen->numDepths; n++)
     if (pScreen->allowedDepths[n].numVids)
       break;
   if (n == pScreen->numDepths)
     return FALSE;
-  
-  /* Create an RandR visual group */
-  pVisualGroup = RRCreateVisualGroup (pScreen);
-  if (!pVisualGroup)
-    return FALSE;
-  
-
-  /* Not sure what this does */
-  if (!RRAddDepthToVisualGroup (pScreen,
-				pVisualGroup,
-				&pScreen->allowedDepths[n]))
-    {
-      RRDestroyVisualGroup (pScreen, pVisualGroup);
-      return FALSE;
-    }
-
-  /* Register the RandR visual group */
-  pVisualGroup = RRRegisterVisualGroup (pScreen, pVisualGroup);
-  if (!pVisualGroup)
-    return FALSE;
-  
-  pGroupOfVisualGroup = RRRegisterGroupOfVisualGroup (pScreen,
-						      pGroupOfVisualGroup);
-  
-  /* You have to be kidding */
-  if (!RRAddVisualGroupToGroupOfVisualGroup (pScreen,
-					     pGroupOfVisualGroup,
-					     pVisualGroup))
-    {
-      RRDestroyGroupOfVisualGroup (pScreen, pGroupOfVisualGroup);
-      /* pVisualGroup left until screen closed */
-      return FALSE;
-    }
-  
-  /* I can't afford a clue */
-  pGroupOfVisualGroup = RRRegisterGroupOfVisualGroup (pScreen, 
-						      pGroupOfVisualGroup);
-  if (!pGroupOfVisualGroup)
-    return FALSE;
+#endif
   
   /*
    * Register supported sizes.  This can be called many times, but
@@ -173,14 +134,13 @@ winRandRGetInfo (ScreenPtr pScreen, Rotation *pRotations)
 			  pScreenInfo->dwWidth,
 			  pScreenInfo->dwHeight,
 			  pScreenInfo->dwWidth_mm,
-			  pScreenInfo->dwHeight_mm,
-			  pGroupOfVisualGroup);
+			  pScreenInfo->dwHeight_mm);
   
   /* Only one allowed rotation for now */
   rotateKind = RR_Rotate_0;
-  
+
   /* Tell RandR what the current config is */
-  RRSetCurrentConfig (pScreen, rotateKind, pSize, pVisualGroup);
+  RRSetCurrentConfig (pScreen, rotateKind, pSize);
   
   return TRUE;
 }
@@ -193,8 +153,7 @@ winRandRGetInfo (ScreenPtr pScreen, Rotation *pRotations)
 Bool
 winRandRSetConfig (ScreenPtr		pScreen,
 		   Rotation		rotateKind,
-		   RRScreenSizePtr	pSize,
-		   RRVisualGroupPtr	pVisualGroup)
+		   RRScreenSizePtr	pSize)
 {
   ErrorF ("winRandRSetConfig ()\n");
 
@@ -233,4 +192,5 @@ winRandRInit (ScreenPtr pScreen)
 
   return TRUE;
 }
+#endif
 #endif

@@ -31,7 +31,7 @@
  * authorization  from Martin Kroeker or Daveg GmbH.
  *
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/input/calcomp/xf86Calcomp.c,v 1.5 2001/11/26 16:25:52 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/input/calcomp/xf86Calcomp.c,v 1.8 2003/01/15 03:43:58 dawes Exp $ */
 
 #define _CALCOMP_C_
 /*****************************************************************************
@@ -55,7 +55,7 @@
 /*****************************************************************************
  *	Variables without includable headers
  ****************************************************************************/
-                  #define DEBUG 1
+#define DEBUG 1
 /*****************************************************************************
  *	Local Variables
  ****************************************************************************/
@@ -631,6 +631,7 @@ CalcompPreInit(       InputDriverPtr drv,
 	if ((!local) || (!priv))
 		goto SetupProc_fail;
 
+	local->conf_idev = dev;
 
         xf86CollectInputOptions(local, default_options, NULL);
         
@@ -723,6 +724,7 @@ CalcompPreInit(       InputDriverPtr drv,
 	local->dev = NULL;
 	local->private = priv;
 	local->private_flags = 0;
+	local->conf_idev = dev;
 	local->history_size = xf86SetIntOption( local->options, "HistorySize", 0 );
 	        local->flags |= XI86_CONFIGURED;
 	                

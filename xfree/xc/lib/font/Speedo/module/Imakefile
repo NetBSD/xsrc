@@ -1,10 +1,10 @@
-XCOMM $XFree86: xc/lib/font/Speedo/module/Imakefile,v 1.5 1999/08/14 10:49:18 dawes Exp $
+XCOMM $XFree86: xc/lib/font/Speedo/module/Imakefile,v 1.6 2002/02/13 21:32:47 dawes Exp $
 
 #define IHaveModules
 #include <Server.tmpl>
 
         INCLUDES = -I$(FONTINCSRC) -I../../include -I$(SERVERSRC)/include \
-		   -I$(XTOP)/include -I../
+		   -I$(XINCLUDESRC) -I../
          HEADERS = 
          DEFINES = -DFONTMODULE
 

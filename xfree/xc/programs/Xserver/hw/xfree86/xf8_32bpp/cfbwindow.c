@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xf8_32bpp/cfbwindow.c,v 1.6 2000/02/29 00:17:16 mvojkovi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xf8_32bpp/cfbwindow.c,v 1.7 2003/02/17 16:08:30 dawes Exp $ */
 
 
 #include "X.h"
@@ -17,8 +17,6 @@
 
 /* We don't bother with cfb's fastBackground/Border so we don't
    need to use the Window privates */
-
-extern WindowPtr *WindowTable;
 
 
 Bool

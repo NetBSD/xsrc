@@ -32,7 +32,7 @@ THIS SOFTWARE.
 	                          frankyling@hgrd01.enet.dec.com
 
 ******************************************************************/
-/* $XFree86: xc/lib/X11/imLcIm.c,v 1.9 2001/01/17 19:41:52 dawes Exp $ */
+/* $XFree86: xc/lib/X11/imLcIm.c,v 1.10 2002/09/21 02:46:04 dawes Exp $ */
 
 #include <stdio.h>
 /*
@@ -167,6 +167,7 @@ _XimLocalCloseIM(xim)
     XIC		next;
 
     ic = im->core.ic_chain;
+    im->core.ic_chain = NULL;
     while (ic) {
 	(*ic->methods->destroy) (ic);
 	next = ic->core.next;

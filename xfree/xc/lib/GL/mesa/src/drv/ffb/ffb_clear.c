@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/ffb/ffb_clear.c,v 1.1 2000/06/20 05:08:37 dawes Exp $
+/* $XFree86: xc/lib/GL/mesa/src/drv/ffb/ffb_clear.c,v 1.2 2002/02/22 21:32:58 dawes Exp $
  *
  * GLX Hardware Device Driver for Sun Creator/Creator3D
  * Copyright (C) 2000 David S. Miller
@@ -25,8 +25,8 @@
  *    David S. Miller <davem@redhat.com>
  */
 
-#include "types.h"
-#include "vbrender.h"
+#include "mtypes.h"
+#include "extensions.h"
 
 #include "mm.h"
 #include "ffb_dd.h"
@@ -37,9 +37,8 @@
 #include "ffb_tris.h"
 #include "ffb_clear.h"
 #include "ffb_lock.h"
-#include "extensions.h"
-#include "vb.h"
-#include "dd.h"
+
+#undef CLEAR_TRACE
 
 #define BOX_AREA(__w, __h)	((int)(__w) * (int)(__h))
 
@@ -263,13 +262,18 @@ ffb_do_clear(ffbContextPtr fmesa, __DRIdrawablePrivate *dPriv,
 	}
 }
 
-GLbitfield ffbDDClear(GLcontext *ctx, GLbitfield mask, GLboolean all,
-		      GLint cx, GLint cy, GLint cwidth, GLint cheight)
+void ffbDDClear(GLcontext *ctx, GLbitfield mask, GLboolean all,
+		GLint cx, GLint cy, GLint cwidth, GLint cheight)
 {
 	ffbContextPtr fmesa = FFB_CONTEXT(ctx);
 	__DRIdrawablePrivate *dPriv = fmesa->driDrawable;
 	unsigned int stcmask = DD_STENCIL_BIT;
 
+#ifdef CLEAR_TRACE
+	fprintf(stderr, "ffbDDClear: mask(%08x) all(%d) "
+		"[x(%x)y(%x)w(%x)h(%x)]\n",
+		mask, (int) all, cx, cy, cwidth, cheight);
+#endif
 	if (!(fmesa->ffb_sarea->flags & FFB_DRI_FFB2PLUS))
 		stcmask = 0;
 
@@ -344,5 +348,7 @@ GLbitfield ffbDDClear(GLcontext *ctx, GLbitfield mask, GLboolean all,
 			  DD_DEPTH_BIT | stcmask);
 	}
 
-	return mask;
+	if (mask) 
+		_swrast_Clear(ctx, mask, all, cx, cy, cwidth, cheight);
 }
+

@@ -24,6 +24,7 @@
  THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
  ********************************************************/
+/* $XFree86: xc/programs/xkbcomp/alias.h,v 1.3 2002/07/01 02:26:01 tsi Exp $ */
 
 #ifndef ALIAS_H
 #define ALIAS_H 1
@@ -35,34 +36,26 @@ typedef struct _AliasInfo {
 } AliasInfo;
 
 extern int HandleAliasDef(
-#if NeedFunctionPrototypes
 	KeyAliasDef *		/* def   */,
 	unsigned		/* merge */,
 	unsigned		/* file_id */,
 	AliasInfo **		/* info  */
-#endif
 );
 
 extern void ClearAliases(
-#if NeedFunctionPrototypes
 	AliasInfo **		/* info */
-#endif
 );
 
 extern Bool MergeAliases(
-#if NeedFunctionPrototypes
 	AliasInfo **		/* into */,
 	AliasInfo **		/* merge */,
 	unsigned		/* how_merge */
-#endif
 );
 
 extern int ApplyAliases(
-#if NeedFunctionPrototypes
 	XkbDescPtr		/* xkb */,
 	Bool			/* toGeom */,
 	AliasInfo **		/* info */
-#endif
 );
 
 #endif /* ALIAS_H */

@@ -27,7 +27,7 @@ sale, use or other dealings in this Software without prior written
 authorization from the X Consortium and the XFree86 Project.
 
 */
-/* $XFree86: xc/lib/X11/Font.c,v 1.15 2001/12/14 19:54:00 dawes Exp $ */
+/* $XFree86: xc/lib/X11/Font.c,v 1.16 2002/12/14 01:55:57 dawes Exp $ */
 
 #define NEED_REPLIES
 #include "Xlibint.h"
@@ -720,7 +720,7 @@ int _XF86LoadQueryLocaleFont(dpy, name)
     }
     if (l - 2 - (p - charset) < 0)
 	return 0;
-    if (strncasecmp(name + l - 2 - (p - charset), charset, p - charset))
+    if (_XlcNCompareISOLatin1(name + l - 2 - (p - charset), charset, p - charset))
 	return 0;
     if (strlen(p + 1) + l - 1 >= sizeof(buf) - 1)
 	return 0;

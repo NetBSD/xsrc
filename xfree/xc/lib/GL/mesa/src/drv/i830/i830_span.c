@@ -25,50 +25,59 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 **************************************************************************/
 
-/* $XFree86: xc/lib/GL/mesa/src/drv/i830/i830_span.c,v 1.1 2001/10/04 18:28:21 alanh Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/i830/i830_span.c,v 1.4 2002/12/10 01:26:53 dawes Exp $ */
 
 /*
  * Author:
- *   Jeff Hartmann <jhartmann@valinux.com>
+ *   Jeff Hartmann <jhartmann@2d3d.com>
  *
  * Heavily based on the I810 driver, which was written by:
- *   Keith Whitwell <keithw@valinux.com>
+ *   Keith Whitwell <keith@tungstengraphics.com>
  */
 
-#include "types.h"
+#include "glheader.h"
+#include "macros.h"
+#include "mtypes.h"
 
-#include "i830_drv.h"
+#include "i830_screen.h"
+#include "i830_dri.h"
+
+#include "i830_span.h"
 #include "i830_ioctl.h"
+#include "swrast/swrast.h"
 
 
 #define DBG 0
 
-#define LOCAL_VARS					\
-   __DRIdrawablePrivate *dPriv = imesa->driDrawable;	\
-   i830ScreenPrivate *i830Screen = imesa->i830Screen;	\
+#define LOCAL_VARS						\
+   i830ContextPtr imesa = I830_CONTEXT(ctx);                    \
+   __DRIdrawablePrivate *dPriv = imesa->driDrawable;		\
+   i830ScreenPrivate *i830Screen = imesa->i830Screen;		\
    GLuint pitch = i830Screen->backPitch * i830Screen->cpp;	\
-   GLuint height = dPriv->h;				\
-   char *buf = (char *)(imesa->drawMap +		\
-			dPriv->x * i830Screen->cpp +			\
-			dPriv->y * pitch);		\
-   char *read_buf = (char *)(imesa->readMap +		\
-			     dPriv->x * i830Screen->cpp +		\
-			     dPriv->y * pitch); 	\
-   GLushort p = I830_CONTEXT( ctx )->MonoColor;         \
+   GLuint height = dPriv->h;					\
+   char *buf = (char *)(imesa->drawMap +			\
+			dPriv->x * i830Screen->cpp +		\
+			dPriv->y * pitch);			\
+   char *read_buf = (char *)(imesa->readMap +			\
+			     dPriv->x * i830Screen->cpp +	\
+			     dPriv->y * pitch); 		\
+   GLushort p;         						\
    (void) read_buf; (void) buf; (void) p
 
-#define LOCAL_DEPTH_VARS				\
-   __DRIdrawablePrivate *dPriv = imesa->driDrawable;	\
-   i830ScreenPrivate *i830Screen = imesa->i830Screen;	\
+#define LOCAL_DEPTH_VARS					\
+   i830ContextPtr imesa = I830_CONTEXT(ctx);                    \
+   __DRIdrawablePrivate *dPriv = imesa->driDrawable;		\
+   i830ScreenPrivate *i830Screen = imesa->i830Screen;		\
    GLuint pitch = i830Screen->backPitch * i830Screen->cpp;	\
-   GLuint height = dPriv->h;				\
-   char *buf = (char *)(i830Screen->depth.map +	\
-			dPriv->x * i830Screen->cpp +			\
+   GLuint height = dPriv->h;					\
+   char *buf = (char *)(i830Screen->depth.map +			\
+			dPriv->x * i830Screen->cpp +		\
 			dPriv->y * pitch)
 
 #define LOCAL_STENCIL_VARS LOCAL_DEPTH_VARS 
 
-#define INIT_MONO_PIXEL(p)
+#define INIT_MONO_PIXEL(p,color)\
+	 p = PACK_COLOR_565(color[0],color[1],color[2])
 
 #define CLIPPIXEL(_x,_y) (_x >= minx && _x < maxx && \
 			  _y >= miny && _y < maxy)
@@ -86,11 +95,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define Y_FLIP(_y) (height - _y - 1)
 
 
-#define HW_LOCK()					\
-   i830ContextPtr imesa = I830_CONTEXT(ctx);	\
-   FLUSH_BATCH(imesa);					\
-   i830DmaFinish(imesa);				\
-   LOCK_HARDWARE_QUIESCENT(imesa);
+#define HW_LOCK()
 
 #define HW_CLIPLOOP()						\
   do {								\
@@ -107,11 +112,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
     }						\
   } while (0)
 
-#define HW_UNLOCK()				\
-    UNLOCK_HARDWARE(imesa);
-
-
-
+#define HW_UNLOCK()
 
 /* 16 bit, 565 rgb color spanline and pixel functions
  */
@@ -167,7 +168,6 @@ do {								\
 #define READ_DEPTH( d, _x, _y )	\
    d = *(GLushort *)(buf + _x*2 + _y*pitch);	 
 
-/*     d = 0xffff; */
 
 #define TAG(x) i830##x##_16
 #include "depthtmp.h"
@@ -175,6 +175,7 @@ do {								\
 
 #undef LOCAL_VARS
 #define LOCAL_VARS					\
+   i830ContextPtr imesa = I830_CONTEXT(ctx);                    \
    __DRIdrawablePrivate *dPriv = imesa->driDrawable;	\
    i830ScreenPrivate *i830Screen = imesa->i830Screen;	\
    GLuint pitch = i830Screen->backPitch * i830Screen->cpp;	\
@@ -188,6 +189,9 @@ do {								\
    GLuint p = I830_CONTEXT( ctx )->MonoColor;         \
    (void) read_buf; (void) buf; (void) p
 
+#undef INIT_MONO_PIXEL
+#define INIT_MONO_PIXEL(p,color)\
+	 p = PACK_COLOR_888(color[0],color[1],color[2])
 
 /* 32 bit, 8888 argb color spanline and pixel functions
  */
@@ -258,76 +262,116 @@ do {								\
 #define TAG(x) i830##x##_24_8
 #include "stenciltmp.h"
 
+static void i830SetReadBuffer(GLcontext *ctx, GLframebuffer *colorBuffer,
+			      GLenum mode)
+{
+   i830ContextPtr imesa = I830_CONTEXT(ctx);
+   switch( mode ) {
+   case GL_FRONT_LEFT:
+      if ( imesa->sarea->pf_current_page == 1 ) 
+	 imesa->readMap = imesa->i830Screen->back.map;
+      else 
+	 imesa->readMap = (char*)imesa->driScreen->pFB;
+      break;
+   case GL_BACK_LEFT:
+      if ( imesa->sarea->pf_current_page == 1 ) 
+	 imesa->readMap = (char*)imesa->driScreen->pFB;
+      else
+	 imesa->readMap = imesa->i830Screen->back.map;
+      break;
+   default:
+      ASSERT(0);
+      break;
+   }
+}
+
+
+
+/* Move locking out to get reasonable span performance.
+ */
+void i830SpanRenderStart( GLcontext *ctx )
+{
+   i830ContextPtr imesa = I830_CONTEXT(ctx);
+   I830_FIREVERTICES(imesa);
+   LOCK_HARDWARE(imesa);
+   i830RegetLockQuiescent( imesa );
+}
+
+void i830SpanRenderFinish( GLcontext *ctx )
+{
+   i830ContextPtr imesa = I830_CONTEXT( ctx );
+   _swrast_flush( ctx );
+   UNLOCK_HARDWARE( imesa );
+}
 
 void i830DDInitSpanFuncs( GLcontext *ctx )
 {
    i830ContextPtr imesa = I830_CONTEXT(ctx);
    i830ScreenPrivate *i830Screen = imesa->i830Screen;
 
+   struct swrast_device_driver *swdd = _swrast_GetDeviceDriverReference(ctx);
+
+   swdd->SetReadBuffer = i830SetReadBuffer;
+
    switch (i830Screen->fbFormat) {
    case DV_PF_555:
-      ctx->Driver.WriteRGBASpan = i830WriteRGBASpan_555;
-      ctx->Driver.WriteRGBSpan = i830WriteRGBSpan_555;
-      ctx->Driver.WriteMonoRGBASpan = i830WriteMonoRGBASpan_555;
-      ctx->Driver.WriteRGBAPixels = i830WriteRGBAPixels_555;
-      ctx->Driver.WriteMonoRGBAPixels = i830WriteMonoRGBAPixels_555;
-      ctx->Driver.ReadRGBASpan = i830ReadRGBASpan_555;
-      ctx->Driver.ReadRGBAPixels = i830ReadRGBAPixels_555;
+      swdd->WriteRGBASpan = i830WriteRGBASpan_555;
+      swdd->WriteRGBSpan = i830WriteRGBSpan_555;
+      swdd->WriteMonoRGBASpan = i830WriteMonoRGBASpan_555;
+      swdd->WriteRGBAPixels = i830WriteRGBAPixels_555;
+      swdd->WriteMonoRGBAPixels = i830WriteMonoRGBAPixels_555;
+      swdd->ReadRGBASpan = i830ReadRGBASpan_555;
+      swdd->ReadRGBAPixels = i830ReadRGBAPixels_555;
 
-      ctx->Driver.ReadDepthSpan = i830ReadDepthSpan_16;
-      ctx->Driver.WriteDepthSpan = i830WriteDepthSpan_16;
-      ctx->Driver.ReadDepthPixels = i830ReadDepthPixels_16;
-      ctx->Driver.WriteDepthPixels = i830WriteDepthPixels_16;
+      swdd->ReadDepthSpan = i830ReadDepthSpan_16;
+      swdd->WriteDepthSpan = i830WriteDepthSpan_16;
+      swdd->ReadDepthPixels = i830ReadDepthPixels_16;
+      swdd->WriteDepthPixels = i830WriteDepthPixels_16;
       break;
 
    case DV_PF_565:
-      ctx->Driver.WriteRGBASpan = i830WriteRGBASpan_565;
-      ctx->Driver.WriteRGBSpan = i830WriteRGBSpan_565;
-      ctx->Driver.WriteMonoRGBASpan = i830WriteMonoRGBASpan_565;
-      ctx->Driver.WriteRGBAPixels = i830WriteRGBAPixels_565;
-      ctx->Driver.WriteMonoRGBAPixels = i830WriteMonoRGBAPixels_565; 
-      ctx->Driver.ReadRGBASpan = i830ReadRGBASpan_565;
-      ctx->Driver.ReadRGBAPixels = i830ReadRGBAPixels_565;
+      swdd->WriteRGBASpan = i830WriteRGBASpan_565;
+      swdd->WriteRGBSpan = i830WriteRGBSpan_565;
+      swdd->WriteMonoRGBASpan = i830WriteMonoRGBASpan_565;
+      swdd->WriteRGBAPixels = i830WriteRGBAPixels_565;
+      swdd->WriteMonoRGBAPixels = i830WriteMonoRGBAPixels_565; 
+      swdd->ReadRGBASpan = i830ReadRGBASpan_565;
+      swdd->ReadRGBAPixels = i830ReadRGBAPixels_565;
 
-      ctx->Driver.ReadDepthSpan = i830ReadDepthSpan_16;
-      ctx->Driver.WriteDepthSpan = i830WriteDepthSpan_16;
-      ctx->Driver.ReadDepthPixels = i830ReadDepthPixels_16;
-      ctx->Driver.WriteDepthPixels = i830WriteDepthPixels_16;
+      swdd->ReadDepthSpan = i830ReadDepthSpan_16;
+      swdd->WriteDepthSpan = i830WriteDepthSpan_16;
+      swdd->ReadDepthPixels = i830ReadDepthPixels_16;
+      swdd->WriteDepthPixels = i830WriteDepthPixels_16;
       break;
 
    case DV_PF_8888:
-      ctx->Driver.WriteRGBASpan = i830WriteRGBASpan_8888;
-      ctx->Driver.WriteRGBSpan = i830WriteRGBSpan_8888;
-      ctx->Driver.WriteMonoRGBASpan = i830WriteMonoRGBASpan_8888;
-      ctx->Driver.WriteRGBAPixels = i830WriteRGBAPixels_8888;
-      ctx->Driver.WriteMonoRGBAPixels = i830WriteMonoRGBAPixels_8888;
-      ctx->Driver.ReadRGBASpan = i830ReadRGBASpan_8888;
-      ctx->Driver.ReadRGBAPixels = i830ReadRGBAPixels_8888;
+      swdd->WriteRGBASpan = i830WriteRGBASpan_8888;
+      swdd->WriteRGBSpan = i830WriteRGBSpan_8888;
+      swdd->WriteMonoRGBASpan = i830WriteMonoRGBASpan_8888;
+      swdd->WriteRGBAPixels = i830WriteRGBAPixels_8888;
+      swdd->WriteMonoRGBAPixels = i830WriteMonoRGBAPixels_8888;
+      swdd->ReadRGBASpan = i830ReadRGBASpan_8888;
+      swdd->ReadRGBAPixels = i830ReadRGBAPixels_8888;
 
       if(imesa->hw_stencil) {
-	 ctx->Driver.ReadDepthSpan = i830ReadDepthSpan_24_8;
-	 ctx->Driver.WriteDepthSpan = i830WriteDepthSpan_24_8;
-	 ctx->Driver.ReadDepthPixels = i830ReadDepthPixels_24_8;
-	 ctx->Driver.WriteDepthPixels = i830WriteDepthPixels_24_8;
+	 swdd->ReadDepthSpan = i830ReadDepthSpan_24_8;
+	 swdd->WriteDepthSpan = i830WriteDepthSpan_24_8;
+	 swdd->ReadDepthPixels = i830ReadDepthPixels_24_8;
+	 swdd->WriteDepthPixels = i830WriteDepthPixels_24_8;
 
-	 ctx->Driver.WriteStencilSpan = i830WriteStencilSpan_24_8;
-	 ctx->Driver.ReadStencilSpan = i830ReadStencilSpan_24_8;
-	 ctx->Driver.WriteStencilPixels = i830WriteStencilPixels_24_8;
-	 ctx->Driver.ReadStencilPixels = i830ReadStencilPixels_24_8;
+	 swdd->WriteStencilSpan = i830WriteStencilSpan_24_8;
+	 swdd->ReadStencilSpan = i830ReadStencilSpan_24_8;
+	 swdd->WriteStencilPixels = i830WriteStencilPixels_24_8;
+	 swdd->ReadStencilPixels = i830ReadStencilPixels_24_8;
       } else {
-	 ctx->Driver.ReadDepthSpan = i830ReadDepthSpan_24;
-	 ctx->Driver.WriteDepthSpan = i830WriteDepthSpan_24;
-	 ctx->Driver.ReadDepthPixels = i830ReadDepthPixels_24;
-	 ctx->Driver.WriteDepthPixels = i830WriteDepthPixels_24;
+	 swdd->ReadDepthSpan = i830ReadDepthSpan_24;
+	 swdd->WriteDepthSpan = i830WriteDepthSpan_24;
+	 swdd->ReadDepthPixels = i830ReadDepthPixels_24;
+	 swdd->WriteDepthPixels = i830WriteDepthPixels_24;
       }
       break;
    }
 
-   ctx->Driver.WriteCI8Span        =NULL;
-   ctx->Driver.WriteCI32Span       =NULL;
-   ctx->Driver.WriteMonoCISpan     =NULL;
-   ctx->Driver.WriteCI32Pixels     =NULL;
-   ctx->Driver.WriteMonoCIPixels   =NULL;
-   ctx->Driver.ReadCI32Span        =NULL;
-   ctx->Driver.ReadCI32Pixels      =NULL;
+   swdd->SpanRenderStart = i830SpanRenderStart;
+   swdd->SpanRenderFinish = i830SpanRenderFinish; 
 }

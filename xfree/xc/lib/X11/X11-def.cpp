@@ -5,13 +5,14 @@ LIBRARY libX11
 #endif
 VERSION LIBRARY_VERSION
 EXPORTS
-#ifndef __CYGWIN__
+#if !defined(__CYGWIN__) && !defined(__UNIXOS2__)
  _Xdebug_p=_Xdebug CONSTANT
  _XCreateMutex_fn_p=_XCreateMutex_fn CONSTANT
  _XFreeMutex_fn_p=_XFreeMutex_fn CONSTANT
  _XLockMutex_fn_p=_XLockMutex_fn CONSTANT
  _XUnlockMutex_fn_p=_XUnlockMutex_fn CONSTANT
  _Xglobal_lock_p=_Xglobal_lock CONSTANT
+ _XFlushIt
  XActivateScreenSaver
  XAddConnectionWatch
  XAddExtension
@@ -604,7 +605,9 @@ EXPORTS
  _XDeqAsyncHandler
  _XEatData
  _XError
+#ifndef __UNIXOS2__
  _XFlushIt
+#endif
  _XFlushGCCache
  _XFreeTemp
  _XGetAsyncData
@@ -612,7 +615,7 @@ EXPORTS
  _XIOError
  _XInitImageFuncPtrs
  _XRead
- _XReadEvents
+;_XReadEvents
  _XReadPad
  _XRegisterFilterByMask
  _XRegisterFilterByType
@@ -624,8 +627,10 @@ EXPORTS
  _XUnregisterFilter
  _XUnregisterInternalConnection
  _XVIDtoVisual
+#ifndef __UNIXOS2__
  _Xthread_init
  _Xthread_waiter
+#endif
  XkbIgnoreExtension
  XkbOpenDisplay
  XkbQueryExtension
@@ -970,8 +975,6 @@ EXPORTS
 	XAddHosts   
 	XRemoveHosts   
 	XIfEvent   
-	_XGetScanlinePad   
-	_XGetBitsPerPixel   
 	XCreateImage   
 	_XSetImage   
 	_XInitImageFuncPtrs   
@@ -1460,7 +1463,6 @@ EXPORTS
 	_XRegisterFilterByMask   
 	_XRegisterFilterByType   
 	_XUnregisterFilter   
-	_Xsetlocale   
 	XDefaultString   
 	_XlcDefaultLoader   
 	_XrmInitParseInfo   
@@ -1993,7 +1995,15 @@ EXPORTS
 	_XUnlockMutex_fn DATA
 	_Xglobal_lock DATA
 #endif
+#ifdef __UNIXOS2__
+; OS/2 specific exports
+  __XOS2RedirRoot	
+  __XOS2RedirRoot1	
+  _XGetScanlinePad
+  _XGetBitsPerPixel
+  _Xsetlocale  
+#endif
 #endif
 
 /* $Xorg: X11-def.cpp,v 1.3 2000/08/17 19:44:59 cpqbld Exp $ */
-/* $XFree86: xc/lib/X11/X11-def.cpp,v 1.12 2001/09/19 15:47:00 alanh Exp $ */
+/* $XFree86: xc/lib/X11/X11-def.cpp,v 1.13 2002/05/31 18:45:41 dawes Exp $ */

@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/lib/Xrandr/Imakefile,v 1.1 2001/05/23 03:29:44 keithp Exp $
+XCOMM $XFree86: xc/lib/Xrandr/Imakefile,v 1.2 2002/10/02 16:55:41 keithp Exp $
 
 
 #define DoNormalLib NormalLibXrandr
@@ -29,5 +29,9 @@ ALLOC_DEFINES = -DMALLOC_0_RETURNS_NULL
 HEADERS = Xrandr.h
 
 #include <Library.tmpl>
+
+MANSUFFIX = $(LIBMANSUFFIX)
+
+InstallManPage(Xrandr,$(LIBMANDIR))
 
 DependTarget()

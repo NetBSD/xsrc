@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/glx/single2.c,v 1.3 2001/03/21 16:04:39 dawes Exp $ */
+/* $XFree86: xc/lib/GL/glx/single2.c,v 1.4 2002/02/22 21:32:54 dawes Exp $ */
 /*
 ** License Applicability. Except to the extent portions of this file are
 ** made subject to an alternative license as permitted in the SGI Free
@@ -38,6 +38,58 @@
 #include "glxclient.h"
 #include "packsingle.h"
 
+/* Used for GL_ARB_transpose_matrix */
+static void TransposeMatrixf(GLfloat m[16])
+{
+    int i, j;
+    for (i = 0; i < 4; i++) {
+        for (j = 0; j < i; j++) {
+            GLfloat tmp = m[i*4+j];
+            m[i*4+j] = m[j*4+i];
+            m[j*4+i] = tmp;
+        }
+    }
+}
+
+/* Used for GL_ARB_transpose_matrix */
+static void TransposeMatrixb(GLboolean m[16])
+{
+    int i, j;
+    for (i = 0; i < 4; i++) {
+        for (j = 0; j < i; j++) {
+            GLboolean tmp = m[i*4+j];
+            m[i*4+j] = m[j*4+i];
+            m[j*4+i] = tmp;
+        }
+    }
+}
+
+/* Used for GL_ARB_transpose_matrix */
+static void TransposeMatrixd(GLdouble m[16])
+{
+    int i, j;
+    for (i = 0; i < 4; i++) {
+        for (j = 0; j < i; j++) {
+            GLdouble tmp = m[i*4+j];
+            m[i*4+j] = m[j*4+i];
+            m[j*4+i] = tmp;
+        }
+    }
+}
+
+/* Used for GL_ARB_transpose_matrix */
+static void TransposeMatrixi(GLint m[16])
+{
+    int i, j;
+    for (i = 0; i < 4; i++) {
+        for (j = 0; j < i; j++) {
+            GLint tmp = m[i*4+j];
+            m[i*4+j] = m[j*4+i];
+            m[j*4+i] = tmp;
+        }
+    }
+}
+
 GLenum glGetError(void)
 {
     __GLX_SINGLE_DECLARE_VARIABLES();
@@ -76,8 +128,22 @@ void glGetClipPlane(GLenum plane, GLdouble *equation)
 
 void glGetBooleanv(GLenum val, GLboolean *b)
 {
+    const GLenum origVal = val;
     __GLX_SINGLE_DECLARE_VARIABLES();
     xGLXSingleReply reply;
+
+    if (val == GL_TRANSPOSE_MODELVIEW_MATRIX_ARB) {
+       val = GL_MODELVIEW_MATRIX;
+    }
+    else if (val == GL_TRANSPOSE_PROJECTION_MATRIX_ARB) {
+       val = GL_PROJECTION_MATRIX;
+    }
+    else if (val == GL_TRANSPOSE_TEXTURE_MATRIX_ARB) {
+       val = GL_TEXTURE_MATRIX;
+    }
+    else if (val == GL_TRANSPOSE_COLOR_MATRIX_ARB) {
+       val = GL_COLOR_MATRIX;
+    }
 
     __GLX_SINGLE_LOAD_VARIABLES();
     __GLX_SINGLE_BEGIN(X_GLsop_GetBooleanv,4);
@@ -226,6 +292,10 @@ void glGetBooleanv(GLenum val, GLboolean *b)
 		__GLX_SINGLE_GET_CHAR(b);
 	    } else {
 		__GLX_SINGLE_GET_CHAR_ARRAY(b,compsize);
+                if (val != origVal) {
+                   /* matrix transpose */
+                   TransposeMatrixb(b);
+                }
 	    }
 	}
     }
@@ -234,8 +304,22 @@ void glGetBooleanv(GLenum val, GLboolean *b)
 
 void glGetDoublev(GLenum val, GLdouble *d)
 {
+    const GLenum origVal = val;
     __GLX_SINGLE_DECLARE_VARIABLES();
     xGLXSingleReply reply;
+
+    if (val == GL_TRANSPOSE_MODELVIEW_MATRIX_ARB) {
+       val = GL_MODELVIEW_MATRIX;
+    }
+    else if (val == GL_TRANSPOSE_PROJECTION_MATRIX_ARB) {
+       val = GL_PROJECTION_MATRIX;
+    }
+    else if (val == GL_TRANSPOSE_TEXTURE_MATRIX_ARB) {
+       val = GL_TEXTURE_MATRIX;
+    }
+    else if (val == GL_TRANSPOSE_COLOR_MATRIX_ARB) {
+       val = GL_COLOR_MATRIX;
+    }
 
     __GLX_SINGLE_LOAD_VARIABLES();
     __GLX_SINGLE_BEGIN(X_GLsop_GetDoublev,4);
@@ -384,6 +468,10 @@ void glGetDoublev(GLenum val, GLdouble *d)
 		__GLX_SINGLE_GET_DOUBLE(d);
 	    } else {
 		__GLX_SINGLE_GET_DOUBLE_ARRAY(d,compsize);
+                if (val != origVal) {
+                   /* matrix transpose */
+                   TransposeMatrixd(d);
+                }
 	    }
 	}
     }
@@ -392,8 +480,22 @@ void glGetDoublev(GLenum val, GLdouble *d)
 
 void glGetFloatv(GLenum val, GLfloat *f)
 {
+    const GLenum origVal = val;
     __GLX_SINGLE_DECLARE_VARIABLES();
     xGLXSingleReply reply;
+
+    if (val == GL_TRANSPOSE_MODELVIEW_MATRIX_ARB) {
+       val = GL_MODELVIEW_MATRIX;
+    }
+    else if (val == GL_TRANSPOSE_PROJECTION_MATRIX_ARB) {
+       val = GL_PROJECTION_MATRIX;
+    }
+    else if (val == GL_TRANSPOSE_TEXTURE_MATRIX_ARB) {
+       val = GL_TEXTURE_MATRIX;
+    }
+    else if (val == GL_TRANSPOSE_COLOR_MATRIX_ARB) {
+       val = GL_COLOR_MATRIX;
+    }
 
     __GLX_SINGLE_LOAD_VARIABLES();
     __GLX_SINGLE_BEGIN(X_GLsop_GetFloatv,4);
@@ -542,6 +644,10 @@ void glGetFloatv(GLenum val, GLfloat *f)
 		__GLX_SINGLE_GET_FLOAT(f);
 	    } else {
 		__GLX_SINGLE_GET_FLOAT_ARRAY(f,compsize);
+                if (val != origVal) {
+                   /* matrix transpose */
+                   TransposeMatrixf(f);
+                }
 	    }
 	}
     }
@@ -550,8 +656,22 @@ void glGetFloatv(GLenum val, GLfloat *f)
 
 void glGetIntegerv(GLenum val, GLint *i)
 {
+    const GLenum origVal = val;
     __GLX_SINGLE_DECLARE_VARIABLES();
     xGLXSingleReply reply;
+
+    if (val == GL_TRANSPOSE_MODELVIEW_MATRIX_ARB) {
+       val = GL_MODELVIEW_MATRIX;
+    }
+    else if (val == GL_TRANSPOSE_PROJECTION_MATRIX_ARB) {
+       val = GL_PROJECTION_MATRIX;
+    }
+    else if (val == GL_TRANSPOSE_TEXTURE_MATRIX_ARB) {
+       val = GL_TEXTURE_MATRIX;
+    }
+    else if (val == GL_TRANSPOSE_COLOR_MATRIX_ARB) {
+       val = GL_COLOR_MATRIX;
+    }
 
     __GLX_SINGLE_LOAD_VARIABLES();
     __GLX_SINGLE_BEGIN(X_GLsop_GetIntegerv,4);
@@ -700,6 +820,10 @@ void glGetIntegerv(GLenum val, GLint *i)
 		__GLX_SINGLE_GET_LONG(i);
 	    } else {
 		__GLX_SINGLE_GET_LONG_ARRAY(i,compsize);
+                if (val != origVal) {
+                   /* matrix transpose */
+                   TransposeMatrixi(i);
+                }
 	    }
 	}
     }

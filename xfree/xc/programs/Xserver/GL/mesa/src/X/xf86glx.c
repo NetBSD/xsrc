@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/GL/mesa/src/X/xf86glx.c,v 1.11 2001/10/31 22:50:27 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/GL/mesa/src/X/xf86glx.c,v 1.18 2002/12/17 05:03:24 dawes Exp $ */
 /**************************************************************************
 
 Copyright 1998-1999 Precision Insight, Inc., Cedar Park, Texas.
@@ -47,8 +47,10 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include <glxext.h>
 #include <glxutil.h>
 #include "xf86glxint.h"
+#include "context.h"
 #include "xmesaP.h"
 #include <GL/xf86glx.h>
+#include "context.h"
 
 /*
  * This define is for the glcore.h header file.
@@ -122,25 +124,25 @@ static XMesaVisual find_mesa_visual(int screen, VisualID vid)
 
     for (i = 0; i < pMScr->num_vis; i++) {
 	if (pMScr->glx_vis[i].vid == vid) {
+	    xm_vis = pMScr->xm_vis[i];
 	    break;
 	}
     }
 
-    if (i < pMScr->num_vis) {
-	xm_vis = pMScr->xm_vis[i];
-    }
     return xm_vis;
 }
 
 
 /*
  * In the case the driver has no GLX visuals we'll use these.
- * [0] = RGB, double buffered
- * [1] = RGB, double buffered, stencil, accum
- * [2] = CI, double buffered
+ * One thing is funny here: the bufferSize field doesn't always include
+ * the alpha bits.  That is, bufferSize may be 24 when we have 8 bits
+ * of red, green, blue and alpha.  If set set bufferSize to 32 we may
+ * foul-up the visual matching code below (search for bufferSize).
  */
-#define NUM_FALLBACK_CONFIGS 3
+#define NUM_FALLBACK_CONFIGS 5
 static __GLXvisualConfig FallbackConfigs[NUM_FALLBACK_CONFIGS] = {
+  /* [0] = RGB, double buffered, Z */
   {
     -1,                 /* vid */
     -1,                 /* class */
@@ -160,6 +162,7 @@ static __GLXvisualConfig FallbackConfigs[NUM_FALLBACK_CONFIGS] = {
     0, 0, 0, 0,         /* transparent rgba color (floats scaled to ints) */
     0                   /* transparentIndex */
   },
+  /* [1] = RGB, double buffered, Z, stencil, accum */
   {
     -1,                 /* vid */
     -1,                 /* class */
@@ -179,10 +182,51 @@ static __GLXvisualConfig FallbackConfigs[NUM_FALLBACK_CONFIGS] = {
     0, 0, 0, 0,         /* transparent rgba color (floats scaled to ints) */
     0                   /* transparentIndex */
   },
+  /* [2] = RGB+Alpha, double buffered, Z, stencil, accum */
   {
     -1,                 /* vid */
     -1,                 /* class */
-    False,              /* color index */
+    True,               /* rgba */
+    -1, -1, -1, 8,      /* rgba sizes */
+    -1, -1, -1, -1,     /* rgba masks */
+    16, 16, 16, 16,     /* rgba accum sizes */
+    True,               /* doubleBuffer */
+    False,              /* stereo */
+    -1,                 /* bufferSize */
+    16,                 /* depthSize */
+    8,                  /* stencilSize */
+    0,                  /* auxBuffers */
+    0,                  /* level */
+    GLX_NONE_EXT,       /* visualRating */
+    0,                  /* transparentPixel */
+    0, 0, 0, 0,         /* transparent rgba color (floats scaled to ints) */
+    0                   /* transparentIndex */
+  },
+  /* [3] = RGB+Alpha, single buffered, Z, stencil, accum */
+  {
+    -1,                 /* vid */
+    -1,                 /* class */
+    True,               /* rgba */
+    -1, -1, -1, 8,      /* rgba sizes */
+    -1, -1, -1, -1,     /* rgba masks */
+    16, 16, 16, 16,     /* rgba accum sizes */
+    False,              /* doubleBuffer */
+    False,              /* stereo */
+    -1,                 /* bufferSize */
+    16,                 /* depthSize */
+    8,                  /* stencilSize */
+    0,                  /* auxBuffers */
+    0,                  /* level */
+    GLX_NONE_EXT,       /* visualRating */
+    0,                  /* transparentPixel */
+    0, 0, 0, 0,         /* transparent rgba color (floats scaled to ints) */
+    0                   /* transparentIndex */
+  },
+  /* [4] = CI, double buffered, Z */
+  {
+    -1,                 /* vid */
+    -1,                 /* class */
+    False,              /* rgba? (false = color index) */
     -1, -1, -1, 0,      /* rgba sizes */
     -1, -1, -1, 0,      /* rgba masks */
      0,  0,  0, 0,      /* rgba accum sizes */
@@ -256,7 +300,6 @@ static Bool init_visuals(int *nvisualp, VisualPtr *visualp,
             pNewVisualPriv[i] = visualPrivates[i];
         }
     }
-
 
     /* Count the number of RGB and CI visual configs */
     numRGBconfigs = 0;
@@ -589,6 +632,10 @@ extern void __MESA_resetExtension(void)
 	}
 	__glXFree(MESAScreens[i].glx_vis);
 	MESAScreens[i].glx_vis = NULL;
+	__glXFree(MESAScreens[i].private);
+	MESAScreens[i].private = NULL;
+	__glXFree(MESAScreens[i].xm_vis);
+	MESAScreens[i].xm_vis = NULL;
 	MESAScreens[i].num_vis = 0;
     }
     __glDDXScreenInfo.pGlxVisual = NULL;
@@ -635,13 +682,8 @@ GLboolean __MESA_resizeBuffers(__GLdrawableBuffer *buffer,
 {
     __MESA_buffer buf = (__MESA_buffer)glPriv->private;
 
-    if (buf->xm_buf && buf->xm_buf->xm_context) {
-	GLcontext *ctx = buf->xm_buf->xm_context->gl_ctx;
-	XMesaForceCurrent(buf->xm_buf->xm_context);
-	(*ctx->CurrentDispatch->ResizeBuffersMESA)();
-        if (MESA_CC)
-           XMesaForceCurrent(MESA_CC->xm_ctx);
-    }
+    if (buf->xm_buf)
+	XMesaResizeBuffers(buf->xm_buf);
 
     return (*buf->fbresize)(buffer, x, y, width, height, glPriv, bufferMask);
 }
@@ -680,67 +722,71 @@ __GLinterface *__MESA_createContext(__GLimports *imports,
 				    __GLcontextModes *modes,
 				    __GLinterface *shareGC)
 {
-    __GLcontext *gl_ctx;
-    XMesaContext m_share = NULL;
-    XMesaVisual xm_vis;
+    __GLcontext *gl_ctx = NULL;
+    __GLcontext *m_share = NULL;
     __GLXcontext *glxc = (__GLXcontext *)imports->other;
+    XMesaVisual xm_vis;
 
-    gl_ctx = (__GLcontext *)__glXMalloc(sizeof(__GLcontext));
-    if (!gl_ctx)
-	return NULL;
+    if (shareGC) 
+       m_share = (__GLcontext *)shareGC;
 
-    gl_ctx->iface.imports = *imports;
-
-    gl_ctx->iface.exports.destroyContext = __MESA_destroyContext;
-    gl_ctx->iface.exports.loseCurrent = __MESA_loseCurrent;
-    gl_ctx->iface.exports.makeCurrent = __MESA_makeCurrent;
-    gl_ctx->iface.exports.shareContext = __MESA_shareContext;
-    gl_ctx->iface.exports.copyContext = __MESA_copyContext;
-    gl_ctx->iface.exports.forceCurrent = __MESA_forceCurrent;
-    gl_ctx->iface.exports.notifyResize = __MESA_notifyResize;
-    gl_ctx->iface.exports.notifyDestroy = __MESA_notifyDestroy;
-    gl_ctx->iface.exports.notifySwapBuffers = __MESA_notifySwapBuffers;
-    gl_ctx->iface.exports.dispatchExec = __MESA_dispatchExec;
-    gl_ctx->iface.exports.beginDispatchOverride = __MESA_beginDispatchOverride;
-    gl_ctx->iface.exports.endDispatchOverride = __MESA_endDispatchOverride;
-
-    if (shareGC) m_share = ((__GLcontext *)shareGC)->xm_ctx;
     xm_vis = find_mesa_visual(glxc->pScreen->myNum, glxc->pGlxVisual->vid);
     if (xm_vis) {
-	gl_ctx->xm_ctx = XMesaCreateContext(xm_vis, m_share);
-    } else {
-	__glXFree(gl_ctx);
-	gl_ctx = NULL;
+       XMesaContext xmshare = m_share ? m_share->DriverCtx : 0;
+       XMesaContext xmctx = XMesaCreateContext(xm_vis, xmshare);
+       gl_ctx = xmctx ? xmctx->gl_ctx : 0;
     }
+
+    if (!gl_ctx)
+       return NULL;
+	
+    gl_ctx->imports = *imports;
+    gl_ctx->exports.destroyContext = __MESA_destroyContext;
+    gl_ctx->exports.loseCurrent = __MESA_loseCurrent;
+    gl_ctx->exports.makeCurrent = __MESA_makeCurrent;
+    gl_ctx->exports.shareContext = __MESA_shareContext;
+    gl_ctx->exports.copyContext = __MESA_copyContext;
+    gl_ctx->exports.forceCurrent = __MESA_forceCurrent;
+    gl_ctx->exports.notifyResize = __MESA_notifyResize;
+    gl_ctx->exports.notifyDestroy = __MESA_notifyDestroy;
+    gl_ctx->exports.notifySwapBuffers = __MESA_notifySwapBuffers;
+    gl_ctx->exports.dispatchExec = __MESA_dispatchExec;
+    gl_ctx->exports.beginDispatchOverride = __MESA_beginDispatchOverride;
+    gl_ctx->exports.endDispatchOverride = __MESA_endDispatchOverride;
 
     return (__GLinterface *)gl_ctx;
 }
 
 GLboolean __MESA_destroyContext(__GLcontext *gc)
 {
-    XMesaDestroyContext(gc->xm_ctx);
-    __glXFree(gc);
+    XMesaContext xmesa = (XMesaContext) gc->DriverCtx;
+    XMesaDestroyContext( xmesa );
     return GL_TRUE;
 }
 
 GLboolean __MESA_loseCurrent(__GLcontext *gc)
 {
+    XMesaContext xmesa = (XMesaContext) gc->DriverCtx;
     MESA_CC = NULL;
     __glXLastContext = NULL;
-    return XMesaLoseCurrent(gc->xm_ctx);
+    return XMesaLoseCurrent(xmesa);
 }
 
-GLboolean __MESA_makeCurrent(__GLcontext *gc, __GLdrawablePrivate *glPriv)
+GLboolean __MESA_makeCurrent(__GLcontext *gc, __GLdrawablePrivate *oldglPriv)
 {
+    /* We don't use oldglPriv - kept for backwards compatibility */
+    __GLdrawablePrivate *glPriv = gc->imports.getDrawablePrivate( gc );
     __MESA_buffer buf = (__MESA_buffer)glPriv->private;
+    XMesaContext xmesa = (XMesaContext) gc->DriverCtx;
 
     MESA_CC = gc;
-    return XMesaMakeCurrent(gc->xm_ctx, buf->xm_buf);
+    return XMesaMakeCurrent(xmesa, buf->xm_buf);
 }
 
 GLboolean __MESA_shareContext(__GLcontext *gc, __GLcontext *gcShare)
 {
     /* NOT_DONE */
+    /* XXX I don't see where/how this could ever be called */
     ErrorF("__MESA_shareContext\n");
     return GL_FALSE;
 }
@@ -748,15 +794,17 @@ GLboolean __MESA_shareContext(__GLcontext *gc, __GLcontext *gcShare)
 GLboolean __MESA_copyContext(__GLcontext *dst, const __GLcontext *src,
 			     GLuint mask)
 {
-    /* NOT_DONE */
-    ErrorF("__MESA_copyContext\n");
-    return GL_FALSE;
+    XMesaContext xm_dst = (XMesaContext) dst->DriverCtx;
+    const XMesaContext xm_src = (const XMesaContext) src->DriverCtx;
+    _mesa_copy_context(xm_src->gl_ctx, xm_dst->gl_ctx, mask);
+    return GL_TRUE;
 }
 
 GLboolean __MESA_forceCurrent(__GLcontext *gc)
 {
+    XMesaContext xmesa = (XMesaContext) gc->DriverCtx;
     MESA_CC = gc;
-    return XMesaForceCurrent(gc->xm_ctx);
+    return XMesaForceCurrent(xmesa);
 }
 
 GLboolean __MESA_notifyResize(__GLcontext *gc)

@@ -25,7 +25,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/font/fontfile/dirfile.c,v 3.14 2001/12/14 19:56:50 dawes Exp $ */
+/* $XFree86: xc/lib/font/fontfile/dirfile.c,v 3.15 2002/05/31 18:45:50 dawes Exp $ */
 
 /*
  * Author:  Keith Packard, MIT X Consortium
@@ -70,7 +70,7 @@ FontFileReadDirectory (char *directory, FontDirectoryPtr *pdir)
 
 #ifdef FONTDIRATTRIB
     /* Check for font directory attributes */
-#ifndef __EMX__
+#ifndef __UNIXOS2__
     if ((ptr = strchr(directory, ':'))) {
 #else
     /* OS/2 path might start with a drive letter, don't clip this */
@@ -107,7 +107,7 @@ FontFileReadDirectory (char *directory, FontDirectoryPtr *pdir)
 	    sprintf(format, "%%%ds %%%d[^\n]\n",
 		MAXFONTFILENAMELEN-1, MAXFONTNAMELEN-1);
 	while ((count = fscanf(file, format, file_name, font_name)) != EOF) {
-#ifdef __EMX__
+#ifdef __UNIXOS2__
 	    /* strip any existing trailing CR */
 	    for (i=0; i<strlen(font_name); i++) {
 		if (font_name[i]=='\r') font_name[i] = '\0';

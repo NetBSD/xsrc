@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/savage/savage_regs.h,v 1.10 2001/11/04 22:17:48 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/savage/savage_regs.h,v 1.12 2002/10/02 20:39:55 alanh Exp $ */
 
 #ifndef _SAVAGE_REGS_H
 #define _SAVAGE_REGS_H
@@ -21,6 +21,10 @@
 #define PCI_CHIP_SUPSAV_IX64DDR		0x8c2d
 #define PCI_CHIP_SUPSAV_IXCSDR		0x8c2e
 #define PCI_CHIP_SUPSAV_IXCDDR		0x8c2f
+#endif
+#ifndef PCI_CHIP_PROSAVAGE_DDR
+#define PCI_CHIP_PROSAVAGE_DDR	0x8d03
+#define PCI_CHIP_PROSAVAGE_DDRK	0x8d04
 #endif
 
 #define S3_SAVAGE3D_SERIES(chip)  ((chip>=S3_SAVAGE3D) && (chip<=S3_SAVAGE_MX))
@@ -164,9 +168,6 @@ enum S3CHIPTAGS {
 #define MONO_PAT_0			0xa4e8
 #define MONO_PAT_1			0xa4ec
 
-#define DDC_REG				0xff20
-
-
 /* Constants for CR69. */
 
 #define CRT_ACTIVE	0x01
@@ -192,14 +193,30 @@ enum S3CHIPTAGS {
  * If not present it will cause lockups on Savage4.
  * Ask S3, why.
  */
-#define VerticalRetraceWait() \
+#define VerticalRetraceWait(psav) \
 { \
-        VGAIN8(vgaCRIndex); \
-	VGAOUT8(vgaCRIndex, 0x17); \
-	if (VGAIN8(vgaCRReg) & 0x80) { \
-		while ((VGAIN8(vgaIOBase + 0x0a) & 0x08) == 0x08) ; \
-		while ((VGAIN8(vgaIOBase + 0x0a) & 0x08) == 0x00) ; \
+        VGAIN8(psav->vgaIOBase+4); \
+	VGAOUT8(psav->vgaIOBase+4, 0x17); \
+	if (VGAIN8(psav->vgaIOBase+5) & 0x80) { \
+		while ((VGAIN8(psav->vgaIOBase + 0x0a) & 0x08) == 0x08) ; \
+		while ((VGAIN8(psav->vgaIOBase + 0x0a) & 0x08) == 0x00) ; \
 	} \
 }
+
+#define	I2C_REG		0xa0
+#define InI2CREG(psav,a)	\
+{ \
+    VGAOUT8(psav->vgaIOBase + 4, I2C_REG);	\
+    a = VGAIN8(psav->vgaIOBase + 5);		\
+}
+
+#define OutI2CREG(psav,a)	\
+{ \
+    VGAOUT8(psav->vgaIOBase + 4, I2C_REG);	\
+    VGAOUT8(psav->vgaIOBase + 5, a);		\
+}
+ 
+#define HZEXP_FACTOR_IGA1	0x59
+#define VTEXP_FACTOR_IGA1	0x5b
 
 #endif /* _SAVAGE_REGS_H */

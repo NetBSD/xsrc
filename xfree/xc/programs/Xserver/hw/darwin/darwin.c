@@ -4,7 +4,32 @@
  * running with Quartz or the IOKit
  *
  **************************************************************/
-/* $XFree86: xc/programs/Xserver/hw/darwin/darwin.c,v 1.43 2002/01/09 18:01:58 torrey Exp $ */
+/*
+ * Copyright (c) 2001-2002 Torrey T. Lyons. All Rights Reserved.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+ * THE ABOVE LISTED COPYRIGHT HOLDER(S) BE LIABLE FOR ANY CLAIM, DAMAGES OR
+ * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+ * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
+ *
+ * Except as contained in this notice, the name(s) of the above copyright
+ * holders shall not be used in advertising or otherwise to promote the sale,
+ * use or other dealings in this Software without prior written authorization.
+ */
+/* $XFree86: xc/programs/Xserver/hw/darwin/darwin.c,v 1.50 2003/02/26 09:21:33 dawes Exp $ */
 
 #include "X.h"
 #include "Xproto.h"
@@ -19,6 +44,7 @@
 #include "site.h"
 #include "globals.h"
 #include "xf86Version.h"
+#include "xf86Date.h"
 #include "dix.h"
 
 #include <sys/types.h>
@@ -34,23 +60,15 @@
 
 #include "darwin.h"
 #include "darwinClut8.h"
-#include "bundle/quartz.h"
+#include "quartz/quartz.h"
 #include "xfIOKit.h"
-
-// Quit after this many seconds if no quartz event poster is found.
-// Leave undefined for no safety quit.
-#undef QUARTZ_SAFETY_DELAY
-
-/* Fake button press/release for scroll wheel move. */
-#define SCROLLWHEELUPFAKE	4
-#define SCROLLWHEELDOWNFAKE	5
 
 /*
  * X server shared global variables
  */
 int                     darwinScreensFound = 0;
 int                     darwinScreenIndex = 0;
-DarwinInputRec          hid;
+io_connect_t            darwinParamConnect = 0;
 int                     darwinEventFD = -1;
 Bool                    quartz = FALSE;
 int                     quartzMouseAccelChange = 1;
@@ -148,6 +166,7 @@ static Bool DarwinSaveScreen(ScreenPtr pScreen, int on)
     return TRUE;
 }
 
+
 /*
  * DarwinAddScreen
  *  This is a callback from dix during AddScreen() from InitOutput().
@@ -183,26 +202,25 @@ static Bool DarwinAddScreen(
     if (! ret)
         return FALSE;
 
-    bitsPerRGB = dfb->pixelInfo.bitsPerComponent;
+    bitsPerRGB = dfb->bitsPerComponent;
 
     // reset the visual list
     miClearVisualTypes();
 
     // setup a single visual appropriate for our pixel type
-    // Note: Darwin kIORGBDirectPixels = X TrueColor, not DirectColor
-    if (dfb->pixelInfo.pixelType == kIORGBDirectPixels) {
+    if (dfb->colorType == TrueColor) {
         if (!miSetVisualTypes( dfb->colorBitsPerPixel, TrueColorMask,
-                                bitsPerRGB, TrueColor )) {
+                               bitsPerRGB, TrueColor )) {
             return FALSE;
         }
-    } else if (dfb->pixelInfo.pixelType == kIOCLUTPixels) {
+    } else if (dfb->colorType == PseudoColor) {
         if (!miSetVisualTypes( dfb->colorBitsPerPixel, PseudoColorMask,
-                                bitsPerRGB, PseudoColor )) {
+                               bitsPerRGB, PseudoColor )) {
             return FALSE;
         }
-    } else if (dfb->pixelInfo.pixelType == kIOFixedCLUTPixels) {
+    } else if (dfb->colorType == StaticColor) {
         if (!miSetVisualTypes( dfb->colorBitsPerPixel, StaticColorMask,
-                                bitsPerRGB, StaticColor )) {
+                               bitsPerRGB, StaticColor )) {
             return FALSE;
         }
     } else {
@@ -237,15 +255,9 @@ static Bool DarwinAddScreen(
                 visual->offsetRed = bitsPerRGB * 2;
                 visual->offsetGreen = bitsPerRGB;
                 visual->offsetBlue = 0;
-#if TRUE
                 visual->redMask = ((1<<bitsPerRGB)-1) << visual->offsetRed;
                 visual->greenMask = ((1<<bitsPerRGB)-1) << visual->offsetGreen;
                 visual->blueMask = ((1<<bitsPerRGB)-1) << visual->offsetBlue;
-#else
-                visual->redMask = dfb->pixelInfo.componentMasks[0];
-                visual->greenMask = dfb->pixelInfo.componentMasks[1];
-                visual->blueMask = dfb->pixelInfo.componentMasks[2];
-#endif
             }
         }
     }
@@ -285,7 +297,7 @@ static Bool DarwinAddScreen(
      * to Darwin/x86 in 8-bit mode.
      */
     if( (dfb->colorBitsPerPixel == 8) &&
-                (dfb->pixelInfo.pixelType == kIOFixedCLUTPixels) )
+                (dfb->colorType == StaticColor) )
     {
         pmap = miInstalledMaps[pScreen->myNum];
         visual = pmap->pVisual;
@@ -329,7 +341,7 @@ static void DarwinChangePointerControl(
         return;
 
     acceleration = ctrl->num / ctrl->den;
-    kr = IOHIDSetMouseAcceleration( hid.paramConnect, acceleration );
+    kr = IOHIDSetMouseAcceleration( darwinParamConnect, acceleration );
     if (kr != KERN_SUCCESS)
         ErrorF( "Could not set mouse acceleration with kernel return = 0x%x.\n", kr );
 }
@@ -339,7 +351,6 @@ static void DarwinChangePointerControl(
  * DarwinMouseProc
  *  Handle the initialization, etc. of a mouse
  */
-
 static int DarwinMouseProc(
     DeviceIntPtr    pPointer,
     int             what )
@@ -379,6 +390,7 @@ static int DarwinMouseProc(
 
     return Success;
 }
+
 
 /*
  * DarwinKeybdProc
@@ -468,66 +480,6 @@ static char * DarwinFindLibraryFile(
     return NULL;
 }
 
-/*
- * DarwinPressKeycode
- *  Press or release the given key, specified by NX keycode.
- *  xe must already have event time and mouse location filled in.
- *  pressed is KeyPress or KeyRelease.
- *  keycode is NX keycode without MIN_KEYCODE adjustment.
- */
-#define DarwinPressKeycode(xe, pressed, keycode) \
-    xe.u.u.type = (pressed); \
-    xe.u.u.detail = (keycode) + MIN_KEYCODE; \
-    (darwinKeyboard->public.processInputProc)(&(xe), darwinKeyboard, 1);
-
-
-/*
- * DarwinPressModifierMask
- *  Press or release the given modifier key, specified by its mask.
- */
-static void DarwinPressModifierMask(
-    xEvent xe,      // must already have time and mouse location filled in
-    BYTE pressed,   // KeyPress or KeyRelease
-    int mask)       // one of NX_*MASK constants
-{
-    int key = DarwinModifierNXMaskToNXKey(mask);
-
-    if (key != -1) {
-        int keycode = DarwinModifierNXKeyToNXKeycode(key, 0);
-        if (keycode != 0) {
-            DarwinPressKeycode(xe, pressed, keycode);
-        }
-    }
-}
-
-/*
- * DarwinUpdateModifiers
- *  Send events to update the modifier state.
- */
-static void DarwinUpdateModifiers(
-    xEvent xe,          // event template with time and mouse position set
-    int pressed,        // KeyPress or KeyRelease
-    int flags )         // modifier flags that have changed
-{
-    if (flags & NX_ALPHASHIFTMASK) {
-        DarwinPressModifierMask(xe, pressed, NX_ALPHASHIFTMASK);
-    }
-    if (flags & NX_COMMANDMASK) {
-        DarwinPressModifierMask(xe, pressed, NX_COMMANDMASK);
-    }
-    if (flags & NX_CONTROLMASK) {
-        DarwinPressModifierMask(xe, pressed, NX_CONTROLMASK);
-    }
-    if (flags & NX_ALTERNATEMASK) {
-        DarwinPressModifierMask(xe, pressed, NX_ALTERNATEMASK);
-    }
-    if (flags & NX_SHIFTMASK) {
-        DarwinPressModifierMask(xe, pressed, NX_SHIFTMASK);
-    }
-    if (flags & NX_SECONDARYFNMASK) {
-        DarwinPressModifierMask(xe, pressed, NX_SECONDARYFNMASK);
-    }
-}
 
 /*
  * DarwinParseModifierList
@@ -558,359 +510,12 @@ static int DarwinParseModifierList(
 }
 
 /*
- * DarwinSimulateMouseClick
- *  Send a mouse click to X when multiple mouse buttons are simulated
- *  with modifier-clicks, such as command-click for button 2. The dix
- *  layer is told that the previously pressed modifier key(s) are
- *  released, the simulated click event is sent. After the mouse button
- *  is released, the modifier keys are reverted to their actual state,
- *  which may or may not be pressed at that point. This is usually
- *  closest to what the user wants. Ie. the user typically wants to
- *  simulate a button 2 press instead of Command-button 2.
- */
-static void DarwinSimulateMouseClick(
-    xEvent xe,          // event template with time and
-                        // mouse position filled in
-    int whichButton,    // mouse button to be pressed
-    int whichEvent,     // ButtonPress or ButtonRelease
-    int modifierMask)   // modifiers used for the fake click
-{
-    // first fool X into forgetting about the keys
-    DarwinUpdateModifiers(xe, KeyRelease, modifierMask);
-
-    // push the mouse button
-    xe.u.u.type = whichEvent;
-    xe.u.u.detail = whichButton;
-    (darwinPointer->public.processInputProc)
-        ( &xe, darwinPointer, 1 );
-}
-
-
-/*
 ===========================================================================
 
  Functions needed to link against device independent X
 
 ===========================================================================
 */
-
-/*
- * ProcessInputEvents
- *  Read and process events from the event pipe until it is empty.
- */
-void ProcessInputEvents(void)
-{
-    xEvent xe;
-    NXEvent ev;
-    int r;
-    struct timeval tv;
-    struct timezone tz;
-
-    // last known modifier state
-    static int old_state = 0;
-    // button number and modifier mask of currently pressed fake button
-    static int darwinFakeMouseButtonDown = 0;
-    static int darwinFakeMouseButtonMask = 0;
-
-#if defined(DARWIN_WITH_QUARTZ) && defined(QUARTZ_SAFETY_DELAY)
-    static Bool gotread = false;
-    static int startsec = 0;
-
-    // Quartz safety quit. Bail if we don't get any events from the event pipe.
-    // If the event writer fails to find us, we will have captured the screen
-    // but not be seeing any events and be unkillable from the console.
-    if (quartz  &&  ! gotread) {
-        gettimeofday(&tv, &tz);
-        if (startsec == 0) startsec = tv.tv_sec;
-        if (startsec + QUARTZ_SAFETY_DELAY< tv.tv_sec) {
-            QuartzGiveUp();
-            FatalError("%d second safety quit\n", QUARTZ_SAFETY_DELAY);
-        }
-    }
-#endif
-
-    while (TRUE) {
-
-        // try to read from our pipe
-        r = read( darwinEventFD, &ev, sizeof(ev));
-
-        if ((r == -1) && (errno == EAGAIN)) {
-            // no event available
-            break;
-        } else if (r == -1) {
-            // FIXME: FatalError here? Reading may be permanently broken.
-            ErrorF( "Event pipe read failed, errno=%d: %s\n",
-                    errno, strerror(errno) );
-            break;
-        } else if ( r == 0 ) {
-            FatalError("Darwin ProcessInputEvents: EOF on event pipe!\n");
-        } else if ( r != sizeof( ev ) ) {
-            ErrorF( "Only read %i bytes from event pipe!\n", r );
-            break;
-        }
-
-#if defined(DARWIN_WITH_QUARTZ) && defined(QUARTZ_SAFETY_DELAY)
-        gotread = true;
-#endif
-        gettimeofday(&tv, &tz);
-
-        // translate it to an X event and post it
-        memset(&xe, 0, sizeof(xe));
-
-        // Shift from global screen coordinates to coordinates relative to
-        // the origin of the current screen.
-        xe.u.keyButtonPointer.rootX = ev.location.x - darwinMainScreenX -
-                dixScreenOrigins[miPointerCurrentScreen()->myNum].x;
-        xe.u.keyButtonPointer.rootY = ev.location.y - darwinMainScreenY -
-                dixScreenOrigins[miPointerCurrentScreen()->myNum].y;
-        //xe.u.keyButtonPointer.time = ev.time;
-        xe.u.keyButtonPointer.time = tv.tv_sec * 1000 + tv.tv_usec / 1000;
-
-        /* A newer kernel generates multi-button events by NX_SYSDEFINED.
-        See iokit/Families/IOHIDSystem/IOHIDSystem.cpp version 1.1.1.7,
-        2000/08/10 00:23:37 or later. */
-
-        switch( ev.type ) {
-            case NX_MOUSEMOVED:
-                xe.u.u.type = MotionNotify;
-                (darwinPointer->public.processInputProc)
-                    ( &xe, darwinPointer, 1 );
-                break;
-
-#ifdef __i386__
-            // x86 drivers currently reverse mouse up and down
-            case NX_LMOUSEUP:
-#else
-            case NX_LMOUSEDOWN:
-#endif
-                // Mimic multi-button mouse with modifier-clicks
-                // If both sets of modifiers are pressed, button 2 is clicked.
-                if (darwinFakeButtons  &&
-                    (ev.flags & darwinFakeMouse2Mask) == darwinFakeMouse2Mask)
-                {
-                    DarwinSimulateMouseClick(xe, 2, ButtonPress,
-                                             darwinFakeMouse2Mask);
-                    darwinFakeMouseButtonDown = 2;
-                    darwinFakeMouseButtonMask = darwinFakeMouse2Mask;
-                }
-                else if (darwinFakeButtons  &&
-                    (ev.flags & darwinFakeMouse3Mask) == darwinFakeMouse3Mask)
-                {
-                    DarwinSimulateMouseClick(xe, 3, ButtonPress,
-                                             darwinFakeMouse3Mask);
-                    darwinFakeMouseButtonDown = 3;
-                    darwinFakeMouseButtonMask = darwinFakeMouse3Mask;
-                }
-                else {
-                    xe.u.u.detail = 1;
-                    xe.u.u.type = ButtonPress;
-                    (darwinPointer->public.processInputProc)
-                            ( &xe, darwinPointer, 1 );
-                }
-                break;
-
-#ifdef __i386__
-            case NX_LMOUSEDOWN:
-#else
-            case NX_LMOUSEUP:
-#endif
-                // If last mousedown was a fake click, don't check for
-                // mouse modifiers here. The user may have released the
-                // modifiers before the mouse button.
-                xe.u.u.type = ButtonRelease;
-                if (darwinFakeMouseButtonDown) {
-                    xe.u.u.detail = darwinFakeMouseButtonDown;
-                    darwinFakeMouseButtonDown = 0;
-                    (darwinPointer->public.processInputProc)
-                            ( &xe, darwinPointer, 1 );
-
-                    // Bring modifiers back up to date
-                    DarwinUpdateModifiers(xe, KeyPress,
-                            darwinFakeMouseButtonMask & old_state);
-                    darwinFakeMouseButtonMask = 0;
-                } else {
-                    xe.u.u.detail = 1;
-                    (darwinPointer->public.processInputProc)
-                            ( &xe, darwinPointer, 1 );
-                }
-                break;
-
-            // Button 2 isn't handled correctly by older kernels anyway.
-            // Just let NX_SYSDEFINED events handle these.
-            case NX_RMOUSEDOWN:
-#if 0
-                xe.u.u.detail = 2;
-                xe.u.u.type = ButtonPress;
-                (darwinPointer->public.processInputProc)
-                        ( &xe, darwinPointer, 1 );
-#endif
-                break;
-
-            case NX_RMOUSEUP:
-#if 0
-                xe.u.u.detail = 2;
-                xe.u.u.type = ButtonRelease;
-                (darwinPointer->public.processInputProc)
-                        ( &xe, darwinPointer, 1 );
-#endif
-                break;
-
-            case NX_KEYDOWN:
-                DarwinPressKeycode(xe, KeyPress, ev.data.key.keyCode);
-                break;
-
-            case NX_KEYUP:
-                DarwinPressKeycode(xe, KeyRelease, ev.data.key.keyCode);
-                break;
-
-            case NX_FLAGSCHANGED:
-            {
-                // Assumes only one flag has changed. In Quartz mode, this
-                // restriction must be enforced by the Quartz event feeder.
-                int new_on_flags = ~old_state & ev.flags;
-                int new_off_flags = old_state & ~ev.flags;
-                old_state = ev.flags;
-
-                // Alphalock is toggled rather than held on,
-                // so we have to press and release it every time.
-                if (new_on_flags  ||  new_off_flags & NX_ALPHASHIFTMASK) {
-                    DarwinPressKeycode(xe, KeyPress, ev.data.key.keyCode);
-                }
-                if (new_off_flags ||  new_on_flags & NX_ALPHASHIFTMASK) {
-                    DarwinPressKeycode(xe, KeyRelease, ev.data.key.keyCode);
-                }
-                break;
-            }
-
-            case NX_SYSDEFINED:
-                if (ev.data.compound.subType == 7) {
-                    long hwDelta = ev.data.compound.misc.L[0];
-                    long hwButtons = ev.data.compound.misc.L[1];
-                    int i;
-
-                    for (i = 1; i < 5; i++) {
-                        if (hwDelta & (1 << i)) {
-                            // IOKit and X have different numbering for the
-                            // middle and right mouse buttons.
-                            if (i == 1) {
-                                xe.u.u.detail = 3;
-                            } else if (i == 2) {
-                                xe.u.u.detail = 2;
-                            } else {
-                                xe.u.u.detail = i + 1;
-                            }
-                            if (hwButtons & (1 << i)) {
-#ifdef __i386__
-                                xe.u.u.type = ButtonRelease;
-                            } else {
-                                xe.u.u.type = ButtonPress;
-#else
-                                xe.u.u.type = ButtonPress;
-                            } else {
-                                xe.u.u.type = ButtonRelease;
-#endif
-                            }
-                            (darwinPointer->public.processInputProc)
-                                    ( &xe, darwinPointer, 1 );
-                        }
-                    }
-                }
-                break;
-
-            case NX_SCROLLWHEELMOVED:
-            {
-                short count = ev.data.scrollWheel.deltaAxis1;
-
-                if (count > 0) {
-                    xe.u.u.detail = SCROLLWHEELUPFAKE;
-                } else {
-                    xe.u.u.detail = SCROLLWHEELDOWNFAKE;
-                    count = -count;
-                }
-
-                for (; count; --count) {
-                    xe.u.u.type = ButtonPress;
-                    (darwinPointer->public.processInputProc)
-                            ( &xe, darwinPointer, 1 );
-                    xe.u.u.type = ButtonRelease;
-                    (darwinPointer->public.processInputProc)
-                            ( &xe, darwinPointer, 1 );
-                }
-                break;
-            }
-
-            // Special events for Quartz support
-            case NX_APPDEFINED:
-            if (quartz) {
-                switch (ev.data.compound.subType) {
-
-                // Update modifier state. As opposed to NX_FLAGSCHANGED,
-                // in this case any amount of modifiers may have changed.
-                case kXDarwinUpdateModifiers:
-                    DarwinUpdateModifiers(xe, KeyRelease,
-                                          old_state & ~ev.flags);
-                    DarwinUpdateModifiers(xe, KeyPress,
-                                          ~old_state & ev.flags);
-                    old_state = ev.flags;
-                    break;
-
-                case kXDarwinShow:
-                    QuartzShow(xe.u.keyButtonPointer.rootX,
-                               xe.u.keyButtonPointer.rootY);
-                    // The mouse location will have moved; track it.
-                    xe.u.u.type = MotionNotify;
-                    (darwinPointer->public.processInputProc)
-                            ( &xe, darwinPointer, 1 );
-                    break;
-
-                case kXDarwinHide:
-                    QuartzHide();
-                    break;
-
-                case kXDarwinQuit:
-                    GiveUp(0);
-                    break;
-
-                case kXDarwinReadPasteboard:
-                    QuartzReadPasteboard();
-                    break;
-
-                case kXDarwinWritePasteboard:
-                    QuartzWritePasteboard();
-                    break;
-
-                default:
-                    ErrorF("Unknown application defined event.\n");
-                } // switch (ev.data.compound.subType)
-            } // if (quartz)
-            break;
-
-            default:
-                ErrorF("Unknown event caught: %d\n", ev.type);
-                ErrorF("\tev.type = %d\n", ev.type);
-                ErrorF("\tev.location.x,y = %d,%d\n",
-                       ev.location.x, ev.location.y);
-                ErrorF("\tev.time = %ld\n", ev.time);
-                ErrorF("\tev.flags = 0x%x\n", ev.flags);
-                ErrorF("\tev.window = %d\n", ev.window);
-                ErrorF("\tev.data.key.origCharSet = %d\n",
-                       ev.data.key.origCharSet);
-                ErrorF("\tev.data.key.charSet = %d\n", ev.data.key.charSet);
-                ErrorF("\tev.data.key.charCode = %d\n", ev.data.key.charCode);
-                ErrorF("\tev.data.key.keyCode = %d\n", ev.data.key.keyCode);
-                ErrorF("\tev.data.key.origCharCode = %d\n",
-                       ev.data.key.origCharCode);
-                break;
-        }
-
-        miPointerAbsoluteCursor( xe.u.keyButtonPointer.rootX,
-                                 xe.u.keyButtonPointer.rootY,
-                                 xe.u.keyButtonPointer.time );
-    }
-
-    miPointerUpdate();
-
-}
 
 /*
  * InitInput
@@ -923,7 +528,16 @@ void InitInput( int argc, char **argv )
 
     darwinKeyboard = AddInputDevice(DarwinKeybdProc, TRUE);
     RegisterKeyboardDevice( darwinKeyboard );
+
+    DarwinEQInit( (DevicePtr)darwinKeyboard, (DevicePtr)darwinPointer );
+
+    if (quartz) {
+        QuartzInitInput(argc, argv);
+    } else {
+        XFIOKitInitInput(argc, argv);
+    }
 }
+
 
 /*
  * InitOutput
@@ -1011,6 +625,7 @@ void InitOutput( ScreenInfo *pScreenInfo, int argc, char **argv )
     }
 }
 
+
 /*
  * OsVendorFataError
  */
@@ -1018,6 +633,7 @@ void OsVendorFatalError( void )
 {
     ErrorF( "   OsVendorFatalError\n" );
 }
+
 
 /*
  * OsVendorInit
@@ -1041,6 +657,7 @@ void OsVendorInit(void)
         ErrorF("Reading keymapping from the kernel.\n");
     }
 }
+
 
 /*
  * ddxProcessArgument --
@@ -1164,8 +781,15 @@ int ddxProcessArgument( int argc, char *argv[], int i )
         exit(0);
     }
 
+    // XDarwinStartup uses this argument to indicate the IOKit X server
+    // should be started. Ignore it here.
+    if ( !strcmp( argv[i], "-iokit" ) ) {
+        return 1;
+    }
+
     return 0;
 }
+
 
 /*
  * ddxUseMsg --
@@ -1200,6 +824,7 @@ void ddxUseMsg( void )
     ErrorF("\n");
 }
 
+
 /*
  * ddxGiveUp --
  *      Device dependent cleanup. Called by dix before normal server death.
@@ -1214,6 +839,7 @@ void ddxGiveUp( void )
         XFIOKitGiveUp();
     }
 }
+
 
 /*
  * AbortDDX --
@@ -1230,6 +856,7 @@ void AbortDDX( void )
      */
     ddxGiveUp();
 }
+
 
 #ifdef DPMSExtension
 /*

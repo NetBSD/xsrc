@@ -19,7 +19,7 @@
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
-/* $XFree86: xc/programs/Xserver/hw/kdrive/mach64/mach64.c,v 1.8 2001/07/24 21:26:17 keithp Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/kdrive/mach64/mach64.c,v 1.11 2002/10/18 06:31:17 keithp Exp $ */
 
 #include "mach64.h"
 #include <sys/io.h>
@@ -123,14 +123,14 @@ mach64InitScreen (ScreenPtr pScreen)
 #ifdef RANDR
 mach64RandRSetConfig (ScreenPtr		pScreen,
 		      Rotation		rotation,
-		      RRScreenSizePtr	pSize,
-		      RRVisualGroupPtr	pVisualGroup)
+		      int		rate,
+		      RRScreenSizePtr	pSize)
 {
     KdScreenPriv(pScreen);
     
     KdCheckSync (pScreen);
 
-    if (!vesaRandRSetConfig (pScreen, rotation, pSize, pVisualGroup))
+    if (!vesaRandRSetConfig (pScreen, rotation, rate, pSize))
 	return FALSE;
     
     return TRUE;

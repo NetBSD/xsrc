@@ -25,7 +25,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
  *
  */
-/* $XFree86: xc/include/Xfuncs.h,v 3.9 2001/12/14 19:53:25 dawes Exp $ */
+/* $XFree86: xc/include/Xfuncs.h,v 3.10 2002/05/31 18:45:38 dawes Exp $ */
 
 #ifndef _XFUNCS_H_
 #define _XFUNCS_H_
@@ -45,10 +45,6 @@ int bcmp();
 void bcopy();
 #define bzero(b,len) memset(b, 0, len)
 #define bcmp(b1,b2,len) memcmp(b1, b2, len)
-#elif defined(__EMX__)
-#include <strings.h>
-/* bcopy, bcmp, bzero declared */
-#define _XFUNCS_H_INCLUDED_STRING_H
 #else
 #include <string.h>
 #define _XFUNCS_H_INCLUDED_STRING_H

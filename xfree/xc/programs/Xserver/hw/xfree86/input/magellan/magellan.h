@@ -24,7 +24,7 @@
  * in this Software without prior written authorization from Metro Link.
  *
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/input/magellan/magellan.h,v 1.3 1999/05/15 12:10:30 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/input/magellan/magellan.h,v 1.4 2002/06/07 21:03:27 alanh Exp $ */
 
 #ifndef	_MAGELLAN_H_
 #define _MAGELLAN_H_
@@ -42,28 +42,29 @@ programs use this range to perform operations of their own and the XInput
 extension expects these to be constant for a given device. Hence, I've picked
 values that are slightly higher than any reported by my test device in default
 (no multiplier) mode. The documentation says the range is roughly +/- 400 but
-I have seen numbers close to 500. Some programs (GLUT) get upset if the device
-reports a value greater than XInput reported it could.
+I have seen numbers close to 1800 using the "sensitivity" setting as set below.
+Some programs (GLUT) may get upset if the device reports a value greater than 
+XInput reported it could.
 */
-#define MAGELLAN_MIN            -500
-#define MAGELLAN_MAX            +500
+#define MAGELLAN_MIN            -1800
+#define MAGELLAN_MAX            +1800
 
 #define MagellanAttention "\r\r"		/* get device's attention */
 #define MagellanInitString "z\r"		/* switch in 3D mode */
 #define MagellanShortBeep "b9\r"		/* a short beep */
-#define MagellanMode "m3\r"				/* translation and rotation data ON */
+#define MagellanMode "m3\r"			/* translation and rotation data ON */
 #define MagellanPeriod "pAA\r"			/* transmit every 60 ms data */
 #define MagellanNullRadius "nH\r"		/* null radius to value 8 */
-#define MagellanZero "z\r"				/* detect zero position */
+#define MagellanZero "z\r"			/* detect zero position */
 #define MagellanSensitivity "q00\r"		/* no extra sensitivity */
 #define MagellanVersion "vQ\r"			/* get version string */
-
+#define MagellanModeOff "\r\rm0\r"
 
 typedef enum
 {
 	magellan_normal
 }
-MagellanState;
+MAGELLANState;
 
 #define MagellanNibble(Value)       (Value&0x0F)
 
@@ -75,16 +76,19 @@ typedef struct _MagellanPrivateRec
 	unsigned char packet_type;
 	char packet[MAGELLAN_PACKET_SIZE];	/* packet being/just read */
 	int packeti;				/* index into packet */
+        int expected_len;
+	MAGELLANState lex_mode;
 	int old_buttons;
-	MagellanState lex_mode;
 }
-MagellanPrivateRec, *MagellanPrivatePtr;
+MAGELLANPrivateRec, *MAGELLANPrivatePtr;
 
 /******************************************************************************
  *		Declarations
  *****************************************************************************/
-static MODULESETUPPROTO( SetupProc );
-static void TearDownProc (void *);
+#ifdef XFreeLOADER
+static MODULESETUPPROTO( MAGELLANSetupProc );
+static void TearDownProc (pointer p);
+#endif
 static Bool DeviceControl (DeviceIntPtr, int);
 static Bool DeviceOn (DeviceIntPtr);
 static Bool DeviceOff (DeviceIntPtr);
@@ -95,9 +99,13 @@ static int ControlProc (LocalDevicePtr, xDeviceCtl *);
 static void CloseProc (LocalDevicePtr);
 static int SwitchMode (ClientPtr, DeviceIntPtr, int);
 static Bool ConvertProc (LocalDevicePtr, int, int, int, int, int, int, int, int, int *, int *);
-static Bool QueryHardware (MagellanPrivatePtr, int *, int *);
-static void NewPacket (MagellanPrivatePtr priv);
-static Bool MagellanGetPacket (MagellanPrivatePtr priv);
+static Bool QueryHardware (MAGELLANPrivatePtr);
+static void NewPacket (MAGELLANPrivatePtr priv);
+static Bool MAGELLANGetPacket (MAGELLANPrivatePtr priv);
+
+static InputInfoPtr
+MagellanPreInit(InputDriverPtr drv, IDevPtr dev, int flags);
+
 #ifdef BELL_FEEDBACK_SUPPORT
 static void MagellanBellCtrl( DeviceIntPtr, BellCtrl *);
 static void MagellanBellSound(int percent, DeviceIntPtr dev, pointer ctrl, int
@@ -107,3 +115,5 @@ unknown);
  *    DO NOT PUT ANYTHING AFTER THIS ENDIF
  */
 #endif
+
+

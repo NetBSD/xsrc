@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/programs/Xserver/hw/kdrive/kdrive.c,v 1.22 2001/10/29 16:34:56 tsi Exp $ 
+ * $XFree86: xc/programs/Xserver/hw/kdrive/kdrive.c,v 1.29 2002/10/31 18:29:50 keithp Exp $ 
  *
  * Copyright © 1999 Keith Packard
  *
@@ -28,6 +28,9 @@
 #endif
 #include <mivalidate.h>
 #include <dixstruct.h>
+#ifdef RANDR
+#include <randrstr.h>
+#endif
 
 #ifdef XV
 #include "kxv.h"
@@ -49,6 +52,8 @@ unsigned long       kdVideoTestTime;
 Bool		    kdEmulateMiddleButton;
 Bool		    kdDisableZaphod;
 Bool		    kdEnabled;
+int		    kdSubpixelOrder;
+int		    kdVirtualTerminal = -1;
 Bool		    kdSwitchPending;
 DDXPointRec	    kdOrigin;
 
@@ -327,6 +332,19 @@ AbortDDX(void)
 void
 ddxUseMsg()
 {
+  ErrorF("\nTinyX Device Dependent Usage:\n");
+  ErrorF("-card pcmcia	Use PCMCIA card as additional screen\n");
+  ErrorF("-screen WIDTH[/WIDTHMM]xHEIGHT[/HEIGHTMM][@ROTATION][X][Y][xDEPTH/BPP{,DEPTH/BPP}[xFREQ]]	Specify screen characteristics\n");
+  ErrorF("-zaphod		Disable cursor screen switching\n");
+  ErrorF("-2button	Emulate 3 button mouse\n");
+  ErrorF("-3button	Disable 3 button mouse emulation\n");
+  ErrorF("-dumb 		Disable hardware acceleration\n");
+  ErrorF("-softCursor	Force software cursor\n");
+  ErrorF("-videoTest	Start the server, pause momentarily and exit\n");
+  ErrorF("-origin X,Y	Locates the next screen in the the virtual screen (Xinerama)\n");
+  ErrorF("-mouse path[,n]	Filename of mouse device, n is number of buttons\n");
+  ErrorF("vtxx		Use virtual terminal xx instead of the next available\n");
+  ErrorF("\n");
 }
 
 void
@@ -352,6 +370,28 @@ KdParseFindNext (char *cur, char *delim, char *save, char *last)
     return cur;
 }
 
+Rotation
+KdAddRotation (Rotation a, Rotation b)
+{
+    Rotation	rotate = (a & RR_Rotate_All) * (b & RR_Rotate_All);
+    Rotation	reflect = (a & RR_Reflect_All) ^ (b & RR_Reflect_All);
+
+    if (rotate > RR_Rotate_270)
+	rotate /= (RR_Rotate_270 * RR_Rotate_90);
+    return reflect | rotate;
+}
+
+Rotation
+KdSubRotation (Rotation a, Rotation b)
+{
+    Rotation	rotate = (a & RR_Rotate_All) * 16 / (b & RR_Rotate_All);
+    Rotation	reflect = (a & RR_Reflect_All) ^ (b & RR_Reflect_All);
+
+    if (rotate > RR_Rotate_270)
+	rotate /= (RR_Rotate_270 * RR_Rotate_90);
+    return reflect | rotate;
+}
+
 void
 KdParseScreen (KdScreenInfo *screen,
 	       char	    *arg)
@@ -366,11 +406,12 @@ KdParseScreen (KdScreenInfo *screen,
     screen->dumb = kdDumbDriver;
     screen->softCursor = kdSoftCursor;
     screen->origin = kdOrigin;
-    screen->rotation = 0;
+    screen->randr = RR_Rotate_0;
     screen->width = 0;
     screen->height = 0;
     screen->width_mm = 0;
     screen->height_mm = 0;
+    screen->subpixel_order = kdSubpixelOrder;
     screen->rate = 0;
     for (fb = 0; fb < KD_MAX_FB; fb++)
 	screen->fb[fb].depth = 0;
@@ -381,7 +422,7 @@ KdParseScreen (KdScreenInfo *screen,
     
     for (i = 0; i < 2; i++)
     {
-	arg = KdParseFindNext (arg, "x/@", save, &delim);
+	arg = KdParseFindNext (arg, "x/@XY", save, &delim);
 	if (!save[0])
 	    return;
 	
@@ -390,7 +431,7 @@ KdParseScreen (KdScreenInfo *screen,
 	
 	if (delim == '/')
 	{
-	    arg = KdParseFindNext (arg, "x@", save, &delim);
+	    arg = KdParseFindNext (arg, "x@XY", save, &delim);
 	    if (!save[0])
 		return;
 	    mm = atoi(save);
@@ -406,7 +447,7 @@ KdParseScreen (KdScreenInfo *screen,
 	    screen->height = pixels;
 	    screen->height_mm = mm;
 	}
-	if (delim != 'x' && delim != '@')
+	if (delim != 'x' && delim != '@' && delim != 'X' && delim != 'Y')
 	    return;
     }
 
@@ -414,24 +455,36 @@ KdParseScreen (KdScreenInfo *screen,
     kdOrigin.y = 0;
     kdDumbDriver = FALSE;
     kdSoftCursor = FALSE;
-    
+    kdSubpixelOrder = SubPixelUnknown;
+
     if (delim == '@')
     {
-	arg = KdParseFindNext (arg, "x", save, &delim);
+	arg = KdParseFindNext (arg, "xXY", save, &delim);
 	if (save[0])
 	{
-	    screen->rotation = atoi (save);
-	    if (screen->rotation < 45)
-		screen->rotation = 0;
-	    else if (screen->rotation < 135)
-		screen->rotation = 90;
-	    else if (screen->rotation < 225)
-		screen->rotation = 180;
-	    else if (screen->rotation < 315)
-		screen->rotation = 270;
+	    int	    rotate = atoi (save);
+	    if (rotate < 45)
+		screen->randr = RR_Rotate_0;
+	    else if (rotate < 135)
+		screen->randr = RR_Rotate_90;
+	    else if (rotate < 225)
+		screen->randr = RR_Rotate_180;
+	    else if (rotate < 315)
+		screen->randr = RR_Rotate_270;
 	    else
-		screen->rotation = 0;
+		screen->randr = RR_Rotate_0;
 	}
+    }
+    if (delim == 'X')
+    {
+	arg = KdParseFindNext (arg, "xY", save, &delim);
+	screen->randr |= RR_Reflect_X;
+    }
+
+    if (delim == 'Y')
+    {
+	arg = KdParseFindNext (arg, "xY", save, &delim);
+	screen->randr |= RR_Reflect_Y;
     }
     
     fb = 0;
@@ -571,6 +624,23 @@ KdParseMouse (char *arg)
     }
 }
 
+void
+KdParseRgba (char *rgba)
+{
+    if (!strcmp (rgba, "rgb"))
+	kdSubpixelOrder = SubPixelHorizontalRGB;
+    else if (!strcmp (rgba, "bgr"))
+	kdSubpixelOrder = SubPixelHorizontalBGR;
+    else if (!strcmp (rgba, "vrgb"))
+	kdSubpixelOrder = SubPixelVerticalRGB;
+    else if (!strcmp (rgba, "vbgr"))
+	kdSubpixelOrder = SubPixelVerticalBGR;
+    else if (!strcmp (rgba, "none"))
+	kdSubpixelOrder = SubPixelNone;
+    else
+	kdSubpixelOrder = SubPixelUnknown;
+}
+
 int
 KdProcessArgument (int argc, char **argv, int i)
 {
@@ -595,8 +665,11 @@ KdProcessArgument (int argc, char **argv, int i)
 		InitCard (0);
 		card = KdCardInfoLast ();
 	    }
-	    screen = KdScreenInfoAdd (card);
-	    KdParseScreen (screen, argv[i+1]);
+	    if (card) {
+		screen = KdScreenInfoAdd (card);
+		KdParseScreen (screen, argv[i+1]);
+	    } else
+		ErrorF("No matching card found!\n");
 	}
 	else
 	    UseMsg ();
@@ -632,8 +705,6 @@ KdProcessArgument (int argc, char **argv, int i)
 	kdVideoTest = TRUE;
 	return 1;
     }
-    if (!strcmp (argv[i], "-standalone"))
-	return 1;
     if (!strcmp (argv[i], "-origin"))
     {
 	if ((i+1) < argc)
@@ -660,6 +731,19 @@ KdProcessArgument (int argc, char **argv, int i)
 	else
 	    UseMsg ();
 	return 2;
+    }
+    if (!strcmp (argv[i], "-rgba"))
+    {
+	if ((i+1) < argc)
+	    KdParseRgba (argv[i+1]);
+	else
+	    UseMsg ();
+	return 2;
+    }
+    if (!strncmp (argv[i], "vt", 2) &&
+	sscanf (argv[i], "vt%2d", &kdVirtualTerminal) == 1)
+    {
+	return 1;
     }
 #ifdef PSEUDO8
     return p8ProcessArgument (argc, argv, i);
@@ -813,6 +897,63 @@ KdCreateWindow (WindowPtr pWin)
     }
 #endif
     return fbCreateWindow (pWin);
+}
+
+void
+KdSetSubpixelOrder (ScreenPtr pScreen, Rotation randr)
+{
+    KdScreenPriv(pScreen);
+    KdScreenInfo	*screen = pScreenPriv->screen;
+    int			subpixel_order = screen->subpixel_order;
+    Rotation		subpixel_dir;
+    int			i;
+    
+    static struct {
+	int	    subpixel_order;
+	Rotation    direction;
+    } orders[] = {
+	{ SubPixelHorizontalRGB, 	RR_Rotate_0 },
+	{ SubPixelHorizontalBGR,	RR_Rotate_180 },
+	{ SubPixelVerticalRGB,		RR_Rotate_270 },
+	{ SubPixelVerticalBGR,		RR_Rotate_90 },
+    };
+
+    static struct {
+	int	bit;
+	int	normal; 
+	int	reflect;
+    } reflects[] = {
+	{ RR_Reflect_X, SubPixelHorizontalRGB,	SubPixelHorizontalBGR },
+	{ RR_Reflect_X, SubPixelHorizontalBGR,	SubPixelHorizontalRGB },
+	{ RR_Reflect_Y, SubPixelVerticalRGB,	SubPixelVerticalBGR },
+	{ RR_Reflect_Y, SubPixelVerticalRGB,	SubPixelVerticalRGB },
+    };
+    
+    /* map subpixel to direction */
+    for (i = 0; i < 4; i++)
+	if (orders[i].subpixel_order == subpixel_order)
+	    break;
+    if (i < 4)
+    {
+	subpixel_dir = KdAddRotation (randr & RR_Rotate_All, orders[i].direction);
+	
+	/* map back to subpixel order */
+	for (i = 0; i < 4; i++)
+	    if (orders[i].direction & subpixel_dir)
+	    {
+		subpixel_order = orders[i].subpixel_order;
+		break;
+	    }
+	/* reflect */
+	for (i = 0; i < 4; i++)
+	    if ((randr & reflects[i].bit) &&
+		reflects[i].normal == subpixel_order)
+	    {
+		subpixel_order = reflects[i].reflect;
+		break;
+	    }
+    }
+    PictureSetSubpixelOrder (pScreen, subpixel_order);
 }
 
 /* Pass through AddScreen, which doesn't take any closure */
@@ -985,6 +1126,8 @@ KdScreenInit(int index, ScreenPtr pScreen, int argc, char **argv)
     {
 	return FALSE;
     }
+
+    KdSetSubpixelOrder (pScreen, screen->randr);
 
     /*
      * Enable the hardware
@@ -1159,7 +1302,8 @@ KdInitOutput (ScreenInfo    *pScreenInfo,
     if (!kdCardInfo)
     {
 	InitCard (0);
-	card = KdCardInfoLast ();
+	if (!(card = KdCardInfoLast ()))
+	    FatalError("No matching cards found!\n");
 	screen = KdScreenInfoAdd (card);
 	KdParseScreen (screen, 0);
     }

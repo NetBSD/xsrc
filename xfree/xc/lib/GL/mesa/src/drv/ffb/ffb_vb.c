@@ -1,7 +1,7 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/ffb/ffb_vb.c,v 1.3 2001/11/08 04:00:12 tsi Exp $
+/* $XFree86: xc/lib/GL/mesa/src/drv/ffb/ffb_vb.c,v 1.4 2002/02/22 21:32:59 dawes Exp $
  *
  * GLX Hardware Device Driver for Sun Creator/Creator3D
- * Copyright (C) 2000 David S. Miller
+ * Copyright (C) 2000, 2001 David S. Miller
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -29,292 +29,212 @@
 #include "ffb_context.h"
 #include "ffb_vb.h"
 #include "mem.h"
-#include "stages.h"
+#include "tnl/t_context.h"
+#include "swrast_setup/swrast_setup.h"
+#include "math/m_translate.h"
 
-#define COL {							\
-	GLubyte *col = &(VB->Color[0]->data[i][0]);		\
-	v->color[0].alpha = FFB_COLOR_FROM_UBYTE(col[3]);	\
-	v->color[0].red   = FFB_COLOR_FROM_UBYTE(col[0]);	\
-	v->color[0].green = FFB_COLOR_FROM_UBYTE(col[1]);	\
-	v->color[0].blue  = FFB_COLOR_FROM_UBYTE(col[2]);	\
-}
+#undef VB_DEBUG
 
-#define COL2 {							\
-	GLubyte *col = &(VB->Color[0]->data[i][0]);		\
-	v->color[0].alpha = FFB_COLOR_FROM_UBYTE(col[3]);	\
-	v->color[0].red   = FFB_COLOR_FROM_UBYTE(col[0]);	\
-	v->color[0].green = FFB_COLOR_FROM_UBYTE(col[1]);	\
-	v->color[0].blue  = FFB_COLOR_FROM_UBYTE(col[2]);	\
-								\
-	col = &(VB->Color[1]->data[i][0]);			\
-	v->color[1].alpha = FFB_COLOR_FROM_UBYTE(col[3]);	\
-	v->color[1].red   = FFB_COLOR_FROM_UBYTE(col[0]);	\
-	v->color[1].green = FFB_COLOR_FROM_UBYTE(col[1]);	\
-	v->color[1].blue  = FFB_COLOR_FROM_UBYTE(col[2]);	\
-}
-
-#define COORD {					\
-	GLfloat *win = VB->Win.data[i];		\
-	GLfloat tmp;				\
-	tmp = win[0] + ffbxoff;			\
-	v->x = FFB_COORD_FROM_FLOAT(tmp);	\
-	tmp  = - win[1] + ffbyoff;		\
-	v->y = FFB_COORD_FROM_FLOAT(tmp);	\
-	tmp = win[2] * (1.0f / 65536.0f);	\
-	v->z = FFB_Z_FROM_FLOAT(tmp);		\
-}	
-
-#define NOP
-
-#define SETUPFUNC(name,win,col)						\
-static void name(struct vertex_buffer *VB, GLuint start, GLuint end)	\
-{									\
-	ffbContextPtr fmesa = FFB_CONTEXT(VB->ctx);			\
-	__DRIdrawablePrivate *dPriv = fmesa->driDrawable;		\
-	ffb_vertex *v;							\
-	GLfloat ffbxoff = dPriv->x - 0.5;				\
-	GLfloat ffbyoff = dPriv->h - 0.5 + dPriv->y;			\
-	int i;								\
-	(void) fmesa; (void) ffbxoff; (void) ffbyoff;			\
-									\
-	if (0)								\
-		fprintf(stderr, #name ": VB(%p) start(%d) end(%d)\n",	\
-			VB, start, end);				\
-	/* Flush the vertex cache. */					\
-	fmesa->vtx_cache[0] = fmesa->vtx_cache[1] =			\
-		fmesa->vtx_cache[2] = fmesa->vtx_cache[3] = NULL;	\
-	gl_import_client_data(VB, VB->ctx->RenderFlags,			\
-			      (VB->ClipOrMask				\
-			       ? VEC_WRITABLE | VEC_GOOD_STRIDE		\
-			       : VEC_GOOD_STRIDE));			\
-									\
-	v = &(FFB_DRIVER_DATA(VB)->verts[start]);			\
-									\
-	if (VB->ClipOrMask == 0) {					\
-		for (i = start; i < end; i++, v++) {			\
-			win;						\
-			col;						\
-		}							\
-	} else {							\
-		for (i = start; i < end; i++, v++) {			\
-			if (VB->ClipMask[i] == 0) {			\
-				win;					\
-			}						\
-			col;						\
-		}							\
-	}								\
-}
-
-SETUPFUNC(rs_w,		COORD,NOP)
-SETUPFUNC(rs_g,		NOP,COL)
-SETUPFUNC(rs_g2,	NOP,COL2)
-SETUPFUNC(rs_wg,	COORD,COL)
-SETUPFUNC(rs_wg2,	COORD,COL2)
-
-static void rs_invalid(struct vertex_buffer *VB, GLuint start, GLuint end)
+static void ffb_copy_pv_oneside(GLcontext *ctx, GLuint edst, GLuint esrc)
 {
-	fprintf(stderr, "ffbRasterSetup(): invalid setup function\n");
+	ffbContextPtr fmesa = FFB_CONTEXT(ctx);
+	ffb_vertex *dst = &fmesa->verts[edst];
+	ffb_vertex *src = &fmesa->verts[esrc];
+
+#ifdef VB_DEBUG
+	fprintf(stderr, "ffb_copy_pv_oneside: edst(%d) esrc(%d)\n", edst, esrc);
+#endif
+	dst->color[0].alpha = src->color[0].alpha;
+	dst->color[0].red   = src->color[0].red;
+	dst->color[0].green = src->color[0].green;
+	dst->color[0].blue  = src->color[0].blue;
 }
 
-typedef void (*setupFunc)(struct vertex_buffer *, GLuint, GLuint);
-
-static setupFunc setup_func[8];
-
-void ffbDDSetupInit(void)
+static void ffb_copy_pv_twoside(GLcontext *ctx, GLuint edst, GLuint esrc)
 {
-	int i;
+	ffbContextPtr fmesa = FFB_CONTEXT(ctx);
+	ffb_vertex *dst = &fmesa->verts[edst];
+	ffb_vertex *src = &fmesa->verts[esrc];
 
-	for (i = 0; i < 4; i++)
-		setup_func[i] = rs_invalid;
-
-	setup_func[FFB_VB_WIN_BIT]					= rs_w;
-	setup_func[FFB_VB_RGBA_BIT]					= rs_g;
-	setup_func[FFB_VB_RGBA_BIT|FFB_VB_TWOSIDE_BIT]			= rs_g2;
-	setup_func[FFB_VB_WIN_BIT|FFB_VB_RGBA_BIT]			= rs_wg;
-	setup_func[FFB_VB_WIN_BIT|FFB_VB_RGBA_BIT|FFB_VB_TWOSIDE_BIT]	= rs_wg2;
+#ifdef VB_DEBUG
+	fprintf(stderr, "ffb_copy_pv_twoside: edst(%d) esrc(%d)\n", edst, esrc);
+#endif
+	dst->color[0].alpha = src->color[0].alpha;
+	dst->color[0].red   = src->color[0].red;
+	dst->color[0].green = src->color[0].green;
+	dst->color[0].blue  = src->color[0].blue;
+	dst->color[1].alpha = src->color[1].alpha;
+	dst->color[1].red   = src->color[1].red;
+	dst->color[1].green = src->color[1].green;
+	dst->color[1].blue  = src->color[1].blue;
 }
 
+#define FFB_VB_RGBA_BIT		0x01
+#define FFB_VB_XYZ_BIT		0x02
+#define FFB_VB_TWOSIDE_BIT	0x04
+#define FFB_VB_MAX		0x08
+
+typedef void (*emit_func)(GLcontext *, GLuint, GLuint);
+
+static struct {
+	emit_func	emit;
+	interp_func	interp;
+} setup_tab[FFB_VB_MAX];
+
+static void do_import(struct vertex_buffer *VB,
+		      struct gl_client_array *to,
+		      struct gl_client_array *from)
+{
+	GLuint count = VB->Count;
+
+	if (!to->Ptr) {
+		to->Ptr = ALIGN_MALLOC( VB->Size * 4 * sizeof(GLfloat), 32 );
+		to->Type = GL_FLOAT;
+	}
+
+	/* No need to transform the same value 3000 times. */
+	if (!from->StrideB) {
+		to->StrideB = 0;
+		count = 1;
+	} else
+		to->StrideB = 4 * sizeof(GLfloat);
+   
+	_math_trans_4f((GLfloat (*)[4]) to->Ptr,
+		       from->Ptr, from->StrideB,
+		       from->Type, from->Size,
+		       0, count);
+}
+
+static __inline__ void ffbImportColors(ffbContextPtr fmesa, GLcontext *ctx, int index)
+{
+	struct gl_client_array *to = &fmesa->FloatColor;
+	struct vertex_buffer *VB = &TNL_CONTEXT(ctx)->vb;
+	do_import(VB, to, VB->ColorPtr[index]);
+	VB->ColorPtr[index] = to;
+}
+
+#define IND	(FFB_VB_XYZ_BIT)
+#define TAG(x)	x##_w
+#include "ffb_vbtmp.h"
+
+#define IND	(FFB_VB_RGBA_BIT)
+#define TAG(x)	x##_g
+#include "ffb_vbtmp.h"
+
+#define IND	(FFB_VB_XYZ_BIT | FFB_VB_RGBA_BIT)
+#define TAG(x)	x##_wg
+#include "ffb_vbtmp.h"
+
+#define IND	(FFB_VB_TWOSIDE_BIT)
+#define TAG(x)	x##_t
+#include "ffb_vbtmp.h"
+
+#define IND	(FFB_VB_XYZ_BIT | FFB_VB_TWOSIDE_BIT)
+#define TAG(x)	x##_wt
+#include "ffb_vbtmp.h"
+
+#define IND	(FFB_VB_RGBA_BIT | FFB_VB_TWOSIDE_BIT)
+#define TAG(x)	x##_gt
+#include "ffb_vbtmp.h"
+
+#define IND	(FFB_VB_XYZ_BIT | FFB_VB_RGBA_BIT | FFB_VB_TWOSIDE_BIT)
+#define TAG(x)	x##_wgt
+#include "ffb_vbtmp.h"
+
+static void init_setup_tab( void )
+{
+	init_w();
+	init_g();
+	init_wg();
+	init_t();
+	init_wt();
+	init_gt();
+	init_wgt();
+}
+
+#ifdef VB_DEBUG
 static void ffbPrintSetupFlags(char *msg, GLuint flags)
 {
-	fprintf(stderr, "%s: %x %s%s%s\n",
-		msg, flags,
-		(flags & FFB_VB_WIN_BIT)	? " xyz,"  : "",
-		(flags & FFB_VB_TWOSIDE_BIT)	? " twoside,"  : "",
-		(flags & FFB_VB_RGBA_BIT)	? " rgba," : "");
+   fprintf(stderr, "%s(%x): %s%s%s\n",
+	   msg,
+	   (int)flags,
+	   (flags & FFB_VB_XYZ_BIT)     ? " xyz," : "", 
+	   (flags & FFB_VB_RGBA_BIT)    ? " rgba," : "",
+	   (flags & FFB_VB_TWOSIDE_BIT) ? " twoside," : "");
 }
-
-void ffbChooseRasterSetupFunc(GLcontext *ctx)
-{
-	ffbContextPtr fmesa = FFB_CONTEXT(ctx);
-	int funcindex;
-
-	/* Currently just one full vertex setup type. */
-	funcindex = FFB_VB_WIN_BIT | FFB_VB_RGBA_BIT;
-
-	if (ctx->TriangleCaps & DD_TRI_LIGHT_TWOSIDE)
-		funcindex |= FFB_VB_TWOSIDE_BIT;
-
-	if (MESA_VERBOSE)
-		ffbPrintSetupFlags("ffb: full setup function", funcindex);
-
-	fmesa->setupindex = funcindex;
-	ctx->Driver.RasterSetup = setup_func[funcindex];
-}
-
-void ffbDDCheckPartialRasterSetup(GLcontext *ctx, struct gl_pipeline_stage *d)
-{
-	ffbContextPtr fmesa = FFB_CONTEXT(ctx);
-	GLuint tmp = fmesa->setupdone;
-
-	d->type = 0;
-	fmesa->setupdone = 0;
-
-	if ((ctx->Array.Summary & VERT_OBJ_ANY) == 0)
-		return;
-
-	if (ctx->IndirectTriangles)
-		return;
-
-	fmesa->setupdone = tmp;
-}
-
-void ffbDDPartialRasterSetup(struct vertex_buffer *VB)
-{
-#if 0
-	ffbContextPtr fmesa = FFB_CONTEXT(VB->ctx);
-	GLuint new = VB->pipeline->new_outputs;
-	GLuint available = VB->pipeline->outputs;
 #endif
-	GLuint ind = 0;
 
-#if 1
-	ind = FFB_VB_WIN_BIT | FFB_VB_RGBA_BIT;
-	if (VB->ctx->TriangleCaps & DD_TRI_LIGHT_TWOSIDE)
+static void ffbDDBuildVertices(GLcontext *ctx, GLuint start, GLuint count, 
+			       GLuint newinputs)
+{
+	ffbContextPtr fmesa = FFB_CONTEXT(ctx);
+
+	newinputs |= fmesa->setupnewinputs;
+	fmesa->setupnewinputs = 0;
+
+	if (!newinputs)
+		return;
+
+	if (newinputs & VERT_CLIP) {
+		setup_tab[fmesa->setupindex].emit(ctx, start, count);
+	} else {
+		GLuint ind = 0;
+
+		if (newinputs & VERT_RGBA)
+			ind |= (FFB_VB_RGBA_BIT | FFB_VB_TWOSIDE_BIT);
+
+		ind &= fmesa->setupindex;
+
+		if (ind)
+			setup_tab[ind].emit(ctx, start, count);
+	}
+}
+
+void ffbChooseVertexState( GLcontext *ctx )
+{
+ 	TNLcontext *tnl = TNL_CONTEXT(ctx);
+	ffbContextPtr fmesa = FFB_CONTEXT(ctx);
+	int ind = FFB_VB_XYZ_BIT | FFB_VB_RGBA_BIT;
+
+	if (ctx->_TriangleCaps & DD_TRI_LIGHT_TWOSIDE)
 		ind |= FFB_VB_TWOSIDE_BIT;
-#else
-	if (new & VERT_WIN) {
-		new = available;
-		ind |= FFB_VB_WIN_BIT;
-	}
-	if (new & VERT_RGBA)
-		ind |= FFB_VB_RGBA_BIT;
+
+#ifdef VB_DEBUG
+	ffbPrintSetupFlags("ffb: full setup function", ind);
 #endif
 
-#if 0
-	fmesa->setupdone &= ~ind;
-	ind &= fmesa->setupindex;
-	fmesa->setupdone |= ind;
-#endif
+	fmesa->setupindex = ind;
 
-	if (MESA_VERBOSE)
-		ffbPrintSetupFlags("ffb: partial setup function", ind);
-
-	if (ind)
-		setup_func[ind](VB, VB->Start, VB->Count);
+	tnl->Driver.Render.BuildVertices = ffbDDBuildVertices;
+	tnl->Driver.Render.Interp = setup_tab[ind].interp;
+	if (ind & FFB_VB_TWOSIDE_BIT)
+		tnl->Driver.Render.CopyPV = ffb_copy_pv_twoside;
+	else
+		tnl->Driver.Render.CopyPV = ffb_copy_pv_oneside;
 }
 
-void ffbDDDoRasterSetup(struct vertex_buffer *VB)
+void ffbInitVB( GLcontext *ctx )
 {
-	GLcontext *ctx = VB->ctx;
+	ffbContextPtr fmesa = FFB_CONTEXT(ctx);
+	GLuint size = TNL_CONTEXT(ctx)->vb.Size;
 
-	if (VB->Type == VB_CVA_PRECALC)
-		ffbDDPartialRasterSetup(VB);
-	else if (ctx->Driver.RasterSetup)
-		ctx->Driver.RasterSetup(VB, VB->CopyStart, VB->Count);
-}
+	fmesa->verts = (ffb_vertex *)ALIGN_MALLOC(size * sizeof(ffb_vertex), 32);
 
-void ffbDDResizeVB(struct vertex_buffer *VB, GLuint size)
-{
-	FFBVertexBufferPtr mvb = FFB_DRIVER_DATA(VB);
-
-	while (mvb->size < size)
-		mvb->size *= 2;
-
-	free(mvb->verts);
-	mvb->verts = (ffb_vertex *)malloc(sizeof(ffb_vertex) * mvb->size);
-	if (!mvb->verts) {
-		fprintf(stderr, "ffb-glx: out of memory !\n");
-		exit(1);
-	}
-
-	gl_vector1ui_free(&mvb->clipped_elements);
-	gl_vector1ui_alloc(&mvb->clipped_elements, VEC_WRITABLE, mvb->size, 32);
-	if (!mvb->clipped_elements.start) {
-		fprintf(stderr, "ffb-glx: out of memory !\n");
-		exit(1);
-	}
-
-	ALIGN_FREE(VB->ClipMask);
-	VB->ClipMask = (GLubyte *) ALIGN_MALLOC(sizeof(GLubyte) * mvb->size, 4);
-	if (!VB->ClipMask) {
-		fprintf(stderr, "ffb-glx: out of memory !\n");
-		exit(1);
-	}
-
-	if (VB->Type == VB_IMMEDIATE) {
-		free(mvb->primitive);
-		free(mvb->next_primitive);
-		mvb->primitive = (GLuint *)malloc(sizeof(GLuint) * mvb->size);
-		mvb->next_primitive = (GLuint *)malloc(sizeof(GLuint) * mvb->size);
-		if (!mvb->primitive || !mvb->next_primitive) {
-			fprintf(stderr, "ffb-glx: out of memory !\n");
-			exit(1);
+	{
+		static int firsttime = 1;
+		if (firsttime) {
+			init_setup_tab();
+			firsttime = 0;
 		}
 	}
 }
 
-void ffbDDRegisterVB(struct vertex_buffer *VB)
+
+void ffbFreeVB( GLcontext *ctx )
 {
-	FFBVertexBufferPtr mvb;
-
-	mvb = (FFBVertexBufferPtr) calloc(1, sizeof(*mvb));
-	if (!mvb) {
-		fprintf(stderr, "ffb-glx: out of memory !\n");
-		exit(1);
-	}
-	mvb->size = VB->Size * 2;
-	mvb->verts = (ffb_vertex *) malloc(sizeof(ffb_vertex) * mvb->size);
-	if (!mvb->verts) {
-		fprintf(stderr, "ffb-glx: out of memory !\n");
-		exit(1);
-	}
-
-	gl_vector1ui_alloc(&mvb->clipped_elements, VEC_WRITABLE, mvb->size, 32);
-	if (!mvb->clipped_elements.start) {
-		fprintf(stderr, "ffb-glx: out of memory !\n");
-		exit(1);
-	}
-
-	ALIGN_FREE(VB->ClipMask);
-	VB->ClipMask = (GLubyte *) ALIGN_MALLOC(sizeof(GLubyte) * mvb->size, 4);
-	if (!VB->ClipMask) {
-		fprintf(stderr, "ffb-glx: out of memory !\n");
-		exit(1);
-	}
-
-	mvb->primitive = (GLuint *)malloc(sizeof(GLuint) * mvb->size);
-	mvb->next_primitive = (GLuint *)malloc(sizeof(GLuint) * mvb->size);
-	if (!mvb->primitive || !mvb->next_primitive) {
-		fprintf(stderr, "ffb-glx: out of memory !\n");
-		exit(1);
-	}
-
-	VB->driver_data = mvb;
-}
-
-void ffbDDUnregisterVB(struct vertex_buffer *VB)
-{
-	FFBVertexBufferPtr mvb = FFB_DRIVER_DATA(VB);
-
-	if (mvb) {
-		if (mvb->verts)
-			free(mvb->verts);
-		if (mvb->primitive)
-			free(mvb->primitive);
-		if (mvb->next_primitive)
-			free(mvb->next_primitive);
-		gl_vector1ui_free(&mvb->clipped_elements);
-		free(mvb);
-		VB->driver_data = 0;
+	ffbContextPtr fmesa = FFB_CONTEXT(ctx);
+	if (fmesa->verts) {
+		ALIGN_FREE(fmesa->verts);
+		fmesa->verts = 0;
 	}
 }

@@ -28,7 +28,7 @@ other dealings in this Software without prior written authorization
 from the X Consortium.
 
 */
-/* $XFree86: xc/programs/xman/vendor.h,v 1.9 2001/11/04 00:13:48 dawes Exp $ */
+/* $XFree86: xc/programs/xman/vendor.h,v 1.11 2002/09/21 02:38:25 dawes Exp $ */
 
 /* Vendor-specific definitions */
 
@@ -59,12 +59,6 @@ from the X Consortium.
 # define SEARCHOTHER CAT
 #endif
 
-#if defined(MANCONFIGSTYLE_FreeBSD)
-# define MANCONF "/etc/manpath.config"
-#elif defined(MANCONFIGSTYLE_Linux) || defined(MANCONFIGSTYLE_OpenBSD) || defined(MANCONFIGSTYLE_BSD)
-# define MANCONF "/etc/man.conf"
-#endif
-
 /*
  * The default manual page directory.
  *
@@ -77,7 +71,7 @@ from the X Consortium.
 #  define SYSMANPATH "/usr/catman/u_man:/usr/catman/a_man"
 #elif defined(__bsdi__)
 #  define SYSMANPATH "/usr/share/man:/usr/contrib/man:/usr/contrib/isode/man:/usr/local/man"
-#elif defined(__OpenBSD__)
+#elif defined(__OpenBSD__) || defined(__DARWIN__)
 #  define SYSMANPATH "/usr/share/man:/usr/local/man:/usr/X11R6/man"
 #elif defined(SVR4) || defined(__osf__) || (defined(BSD) && (BSD >= 199103))
 #  define SYSMANPATH "/usr/share/man"

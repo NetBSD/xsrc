@@ -338,4 +338,6 @@ EXPORTS
  XtWindow
  XtWindowOfObject
  XtWindowToWidget
+ _XtWaitForSomething
 /* $Xorg: Xt-def.cpp,v 1.3 2000/08/17 19:46:20 cpqbld Exp $ */
+/* $XFree86: xc/lib/Xt/Xt-def.cpp,v 1.2 2002/05/31 18:45:46 dawes Exp $ */

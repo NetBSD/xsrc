@@ -1,4 +1,4 @@
-#include "assyntax.h"
+#include "matypes.h"
 
    SEG_TEXT
 
@@ -10,7 +10,7 @@
 
 
 /*
- * void gl_v16_3dnow_general_xform( GLfloat *dest,
+ * void _mesa_v16_3dnow_general_xform( GLfloat *dest,
  *		        	    const GLfloat *m,
  *				    const GLfloat *src,
  *                                  GLuint src_stride,
@@ -19,8 +19,8 @@
  * These tranformation functions could disappear if the standard ones
  * took an output stride.
  */
-GLOBL GLNAME( gl_v16_3dnow_general_xform )
-GLNAME( gl_v16_3dnow_general_xform ):
+GLOBL GLNAME( _mesa_v16_3dnow_general_xform )
+GLNAME( _mesa_v16_3dnow_general_xform ):
 
     PUSH_L    ( EDI )
     PUSH_L    ( ESI )
@@ -80,7 +80,7 @@ LLBL( v16_3dnow_general_loop ):
 
 /* Do viewport map and perspective projection.  Args should look like:
  *
- * gl_3dnow_project_vertices( float *first_vertex,
+ * _mesa_3dnow_project_vertices( float *first_vertex,
  *                            const float *last_vertex,
  *                            float *matrix,
  *                            GLuint stride )
@@ -99,8 +99,8 @@ LLBL( v16_3dnow_general_loop ):
  * Holger.
  */
 
-GLOBL GLNAME( gl_3dnow_project_vertices )
-GLNAME( gl_3dnow_project_vertices ):
+GLOBL GLNAME( _mesa_3dnow_project_vertices )
+GLNAME( _mesa_3dnow_project_vertices ):
 
     PUSH_L    ( EBP )
     FEMMS
@@ -151,14 +151,14 @@ LLBL( v16_3dnow_pv_loop_start ):
 
 
 /*
- * gl_3dnow_project_clipped_vertices( float *first_vertex,
+ * _mesa_3dnow_project_clipped_vertices( float *first_vertex,
  *                                    const float *last_vertex,
  *                                    float *matrix,
  *                                    GLuint stride,
  *                                    const GLubyte *clip_mask )
  */
-GLOBL GLNAME( gl_3dnow_project_clipped_vertices )
-GLNAME( gl_3dnow_project_clipped_vertices ):
+GLOBL GLNAME( _mesa_3dnow_project_clipped_vertices )
+GLNAME( _mesa_3dnow_project_clipped_vertices ):
 
     PUSH_L    ( EBP )
     PUSH_L    ( ESI )

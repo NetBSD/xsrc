@@ -1,4 +1,4 @@
-.\" $XFree86: xc/programs/Xserver/hw/xfree86/XF86Config.man,v 1.6 2001/08/15 16:25:21 paulo Exp $
+.\" $XFree86: xc/programs/Xserver/hw/xfree86/XF86Config.man,v 1.14 2003/02/26 18:59:49 dawes Exp $
 .\" shorthand for double quote that works everywhere.
 .ds q \N'34'
 .TH XF86Config __filemansuffix__ __vendorversion__
@@ -13,19 +13,19 @@ following places when the server is started as a normal user:
 .PP
 .RS 4
 .nf
-.RI /etc/X11/ <cmdline>
-.RI __projectroot__/etc/X11/ <cmdline>
-.RB /etc/X11/ $XF86CONFIG
-.RB __projectroot__/etc/X11/ $XF86CONFIG
-/etc/X11/XF86Config-4
-/etc/X11/XF86Config
-/etc/XF86Config
-.RI __projectroot__/etc/X11/XF86Config. <hostname>
-__projectroot__/etc/X11/XF86Config-4
-__projectroot__/etc/X11/XF86Config
-.RI __projectroot__/lib/X11/XF86Config. <hostname>
-__projectroot__/lib/X11/XF86Config-4
-__projectroot__/lib/X11/XF86Config
+.IR /etc/X11/ <cmdline>
+.IR __projectroot__/etc/X11/ <cmdline>
+.IB /etc/X11/ $XF86CONFIG
+.IB __projectroot__/etc/X11/ $XF86CONFIG
+.I /etc/X11/XF86Config-4
+.I /etc/X11/XF86Config
+.I /etc/XF86Config
+.IR __projectroot__/etc/X11/XF86Config. <hostname>
+.I __projectroot__/etc/X11/XF86Config-4
+.I __projectroot__/etc/X11/XF86Config
+.IR __projectroot__/lib/X11/XF86Config. <hostname>
+.I __projectroot__/lib/X11/XF86Config-4
+.I __projectroot__/lib/X11/XF86Config
 .fi
 .RE
 .PP
@@ -38,29 +38,29 @@ command line option,
 is the relative path (with no ".." components) specified by that
 environment variable, and
 .I <hostname>
-is the machines hostname as reported by gethostname(3).
+is the machine's hostname as reported by gethostname(3).
 .PP
 When the X server is started by the "root" user, the config file search
 locations are as follows:
 .PP
 .RS 4
 .nf
-.I <cmdline>
-.RI /etc/X11/ <cmdline>
-.RI __projectroot__/etc/X11/ <cmdline>
+<cmdline>
+.IR /etc/X11/ <cmdline>
+.IR __projectroot__/etc/X11/ <cmdline>
 .B $XF86CONFIG
-.RB /etc/X11/ $XF86CONFIG
-.RB __projectroot__/etc/X11/ $XF86CONFIG
-.BR $HOME /XF86Config
-/etc/X11/XF86Config-4
-/etc/X11/XF86Config
-/etc/XF86Config
-.RI __projectroot__/etc/X11/XF86Config. <hostname>
-__projectroot__/etc/X11/XF86Config-4
-__projectroot__/etc/X11/XF86Config
-.RI __projectroot__/lib/X11/XF86Config. <hostname>
-__projectroot__/lib/X11/XF86Config-4
-__projectroot__/lib/X11/XF86Config
+.IB /etc/X11/ $XF86CONFIG
+.IB __projectroot__/etc/X11/ $XF86CONFIG
+.BI $HOME /XF86Config
+.I /etc/X11/XF86Config-4
+.I /etc/X11/XF86Config
+.I /etc/XF86Config
+.IR __projectroot__/etc/X11/XF86Config. <hostname>
+.I __projectroot__/etc/X11/XF86Config-4
+.I __projectroot__/etc/X11/XF86Config
+.IR __projectroot__/lib/X11/XF86Config. <hostname>
+.I __projectroot__/lib/X11/XF86Config-4
+.I __projectroot__/lib/X11/XF86Config
 .fi
 .RE
 .PP
@@ -76,7 +76,7 @@ environment variable (absolute or relative),
 is the path specified by that environment variable (usually the home
 directory), and
 .I <hostname>
-is the machines hostname as reported by gethostname(3).
+is the machine's hostname as reported by gethostname(3).
 .PP
 The
 .B XF86Config
@@ -86,8 +86,6 @@ the form:
 .PP
 .RS 4
 .nf
-.\" Some man macros don't handle quotes in .BI, etc very well
-.\" \fBSection "\fP\fISectionName\fP\fB"\fP
 .BI "Section  \*q" SectionName \*q
 .RI "    " SectionEntry
     ...
@@ -157,7 +155,7 @@ ignored.  Most strings (including
 names) are also case-insensitive, and insensitive to white space and
 "_" characters.
 .PP
-Each config file entry usually take up a single line in the file.
+Each config file entry usually takes up a single line in the file.
 They consist of a keyword, which is possibly followed by one or
 more arguments, with the number and types of the arguments depending
 on the keyword.  The argument types are:
@@ -296,12 +294,12 @@ font path elements:
 .PP
 .RS 4
 .nf
-__projectroot__/lib/X11/fonts/misc/
-__projectroot__/lib/X11/fonts/Speedo/
-__projectroot__/lib/X11/fonts/Type1/
-__projectroot__/lib/X11/fonts/CID/
-__projectroot__/lib/X11/fonts/75dpi/
-__projectroot__/lib/X11/fonts/100dpi/
+.I __projectroot__/lib/X11/fonts/misc/
+.I __projectroot__/lib/X11/fonts/Speedo/
+.I __projectroot__/lib/X11/fonts/Type1/
+.I __projectroot__/lib/X11/fonts/CID/
+.I __projectroot__/lib/X11/fonts/75dpi/
+.I __projectroot__/lib/X11/fonts/100dpi/
 .fi
 .RE
 .PP
@@ -309,15 +307,15 @@ The recommended font path contains the following font path elements:
 .PP
 .RS 4
 .nf
-__projectroot__/lib/X11/fonts/local/
-__projectroot__/lib/X11/fonts/misc/
-__projectroot__/lib/X11/fonts/75dpi/:unscaled
-__projectroot__/lib/X11/fonts/100dpi/:unscaled
-__projectroot__/lib/X11/fonts/Type1/
-__projectroot__/lib/X11/fonts/CID/
-__projectroot__/lib/X11/fonts/Speedo/
-__projectroot__/lib/X11/fonts/75dpi/
-__projectroot__/lib/X11/fonts/100dpi/
+.I __projectroot__/lib/X11/fonts/local/
+.I __projectroot__/lib/X11/fonts/misc/
+.I __projectroot__/lib/X11/fonts/75dpi/:unscaled
+.I __projectroot__/lib/X11/fonts/100dpi/:unscaled
+.I __projectroot__/lib/X11/fonts/Type1/
+.I __projectroot__/lib/X11/fonts/CID/
+.I __projectroot__/lib/X11/fonts/Speedo/
+.I __projectroot__/lib/X11/fonts/75dpi/
+.I __projectroot__/lib/X11/fonts/100dpi/
 .fi
 .RE
 .PP
@@ -331,8 +329,13 @@ When this entry is not specified in the config file, the server falls back
 to the compiled-in default RGB path, which is:
 .PP
 .RS 11
-__projectroot__/lib/X11/rgb
+.I __projectroot__/lib/X11/rgb
 .RE
+.PP
+Note that an implicit
+.I .txt
+is added to this path if the server was compiled to use text rather than
+binary format RGB color databases.
 .TP 7
 .BI "ModulePath \*q" path \*q
 sets the search path for loadable X server modules.  This path is a
@@ -367,7 +370,10 @@ still recognised.  Those old style entries are not documented here, and
 using them is discouraged.
 .PP
 .B Options
-specified in this section may be overridden by
+specified in this section (with the exception of the
+.B \*qDefaultServerLayout\*q
+.BR Option )
+may be overridden by
 .B Options
 specified in the active
 .B ServerLayout
@@ -375,13 +381,30 @@ section.  Options with command line equivalents are overridden when their
 command line equivalent is used.  The options recognised by this section
 are:
 .TP 7
+.BI "Option \*qDefaultServerLayout\*q  \*q" layout-id \*q
+This specifies the default
+.B ServerLayout
+section to use in the absence of the
+.B \-layout
+command line option.
+.TP 7
 .BI "Option \*qNoTrapSignals\*q  \*q" boolean \*q
 This prevents the X server from trapping a range of unexpected
 fatal signals and exiting cleanly.  Instead, the X server will die
 and drop core where the fault occurred.  The default behaviour is
-for the X server exit cleanly, but still drop a core file.  In
+for the X server to exit cleanly, but still drop a core file.  In
 general you never want to use this option unless you are debugging
 an X server problem and know how to deal with the consequences.
+.TP 7
+.BI "Option \*qDontVTSwitch\*q  \*q" boolean \*q
+This disallows the use of the
+.BI Ctrl+Alt+F n
+sequence (where
+.RI F n
+refers to one of the numbered function keys).  That sequence is normally
+used to switch to another \(oqvirtual terminal\)cq on operating systems
+that have this feature.  When this option is enabled, that key sequence has
+no special meaning and is passed to clients.  Default: off.
 .TP 7
 .BI "Option \*qDontZap\*q  \*q" boolean \*q
 This disallows the use of the
@@ -440,6 +463,10 @@ by a function key
 This prevents the X server trapping the
 keys used for the default VT switch sequence, which means that clients can
 access them.  Default: off.
+.TP 7
+.BI "Option \*qXkbDisable\*q \*q" boolean \*q
+disable/enable the XKEYBOARD extension.  The \-kb command line
+option overrides this config file option.  Default: XKB is enabled.
 .\" The following four options are "undocumented".
 .ig
 .TP 7
@@ -523,7 +550,7 @@ enable or disable XINERAMA extension. Default is disabled.
 .BI "Option \*qAllowDeactivateGrabs\*q \*q" boolean \*q
 This option enables the use of the
 .B Ctrl+Alt+Keypad-Divide
-key sequence to desactivate any active keyboard and mouse grabs.
+key sequence to deactivate any active keyboard and mouse grabs.
 Default: off.
 .TP 7
 .BI "Option \*qAllowClosedownGrabs\*q \*q" boolean \*q
@@ -531,7 +558,7 @@ This option enables the use of the
 .B Ctrl+Alt+Keypad-Multiply
 key sequence to kill clients with an active keyboard or mouse grab as well
 as killing any application that may have locked the server,
-normally using the XGrabServer(3) Xlib function.
+normally using the XGrabServer(__libmansuffix__) Xlib function.
 Default: off.
 .br
 Note that the options
@@ -541,6 +568,26 @@ and
 will allow users to remove the grab used by screen saver/locker programs.
 An API was written to such cases. If you enable this option, make sure your
 screen saver/locker is updated.
+.TP 7
+.BI "Option \*qHandleSpecialKeys\*q \*q" when \*q
+This option controls when the server uses the builtin handler
+to process special key combinations (such as
+.BR Ctrl+Alt+Backspace ).
+Normally the XKEYBOARD extension keymaps will provide mappings
+for each of the special key combinations, so the builtin handler
+is not needed unless the XKEYBOARD extension is disabled.
+The value of
+.I when
+can be
+.BR Always ,
+.BR Never ,
+or
+.BR WhenNeeded .
+Default: Use the builtin handler only if needed.  The server will
+scan the keymap for a mapping to the
+.B Terminate
+action and, if found, use XKEYBOARD for processing actions, otherwise
+the builtin handler will be used.
 .SH MODULE SECTION
 The
 .B Module
@@ -1236,6 +1283,7 @@ flags may be specified in the
 section.  Some are driver-specific and are described in the driver
 documentation.  Others are driver-independent, and will eventually be
 described here.
+.\" XXX These should really be in an xaa man page.
 .TP 7
 .BI "Option \*qAccel\*q"
 Enables XAA (X Acceleration Architecture), a mechanism that makes video
@@ -1245,6 +1293,12 @@ the driver.  There are many options to disable specific acclerated
 operations, listed below.  Note that disabling an operation will have no
 effect if the operation is not accelerated (whether due to lack of support
 in the hardware or in the driver).
+.TP 7
+.BI "Option \*qNoMTRR\*q"
+Disables MTRR (Memory Type Range Register) support, a feature of modern
+processors which can improve video performance by a factor of up to 2.5.
+Some hardware has buggy MTRR support, and some video drivers have been
+known to exhibit problems when MTRR's are used.
 .TP 7
 .BI "Option \*qXaaNoCPUToScreenColorExpandFill\*q"
 Disables accelerated rectangular expansion blits from source patterns
@@ -1474,6 +1528,7 @@ The visual type available for the depth 1 (monochrome) is
 .TP 7
 .BI "Black  " "red green blue"
 This optional entry allows the "black" colour to be specified.  This
+is only supported at depth 1.  The default is black.
 .TP 7
 .BI "White  " "red green blue"
 This optional entry allows the "white" colour to be specified.  This
@@ -1501,7 +1556,12 @@ it also specifies the relative layout of the heads.  A
 .B ServerLayout
 section is considered "active" if it is referenced by the
 .B \-layout
-command line option.  If that option is not used, the first
+command line option or by an
+.B "Option \*qDefaultServerLayout\*q"
+entry in the
+.B ServerFlags
+section (the former takes precedence over the latter).  If those options are
+not used, the first
 .B ServerLayout
 section found in the config file is considered the active one.  If no
 .B ServerLayout
@@ -1558,11 +1618,17 @@ field describes the way multiple screens are positioned.  There are
 a number of different ways that this information can be provided:
 .RS 7
 .TP 4
+.I  "x y"
+.TP 4
 .BI "Absolute  " "x y"
-This says that the upper left corner's coordinates are
+These both specify that the upper left corner's coordinates are
 .RI ( x , y ).
-If the coordinates are omitted or if no positioning information
-is given, (0,0) is assumed.
+The
+.B Absolute
+keyword is optional.  Some older versions of XFree86 (4.2 and earlier) don't
+recognise the
+.B Absolute
+keyword, so it's safest to just specificy the coorindates without it.
 .TP 4
 .BI "RightOf   \*q" screen-id \*q
 .TP 4
@@ -1573,7 +1639,14 @@ is given, (0,0) is assumed.
 .BI "Below     \*q" screen-id \*q
 .TP 4
 .BI "Relative  \*q" screen-id \*q " x y"
-These give the screen's location relative to another screen.
+These give the screen's location relative to another screen.  The first four
+position the screen immediately to the right, left, above or below the
+other screen.  When positioning to the right or left, the top edges are
+aligned.  When positioning above or below, the left edges are aligned.
+The
+.B Relative
+form specifies the offset of the screen's origin (upper left corner)
+relative to the origin of another screen.
 .RE
 .TP 7
 .BI "InputDevice  \*q" idev-id "\*q \*q" option \*q " ..."
@@ -1588,8 +1661,8 @@ section being referenced.  Multiple
 fields may be specified, each in double quotes.  The options permitted
 here are any that may also be given in the
 .B InputDevice
-sections.  Normally only session-specific input device options would
-be used here.  The most commonly used options are:
+sections.  Normally only session-specific input device options would be
+used here.  The most commonly used options are:
 .PP
 .RS 11
 .nf
@@ -1652,42 +1725,46 @@ For an example of an XF86Config file, see the file installed as
 __projectroot__/lib/X11/XF86Config.eg.
 .fi
 .SH "SEE ALSO"
-X(__miscmansuffix__), Xserver(1), XFree86(1),
-apm(__drivermansuffix__),
-ati(__drivermansuffix__),
-chips(__drivermansuffix__),
-cirrus(__drivermansuffix__),
-cyrix(__drivermansuffix__),
-fbdev(__drivermansuffix__),
-glide(__drivermansuffix__),
-glint(__drivermansuffix__),
-i128(__drivermansuffix__),
-i740(__drivermansuffix__),
-i810(__drivermansuffix__),
-imstt(__drivermansuffix__),
-mga(__drivermansuffix__),
-neomagic(__drivermansuffix__),
-nv(__drivermansuffix__),
-r128(__drivermansuffix__),
-rendition(__drivermansuffix__),
-s3virge(__drivermansuffix__),
-siliconmotion(__drivermansuffix__),
-sis(__drivermansuffix__),
-sunbw2(__drivermansuffix__),
-suncg14(__drivermansuffix__),
-suncg3(__drivermansuffix__),
-suncg6(__drivermansuffix__),
-sunffb(__drivermansuffix__),
-sunleo(__drivermansuffix__),
-suntcx(__drivermansuffix__),
-tdfx(__drivermansuffix__),
-tga(__drivermansuffix__),
-trident(__drivermansuffix__),
-tseng(__drivermansuffix__),
-v4l(__drivermansuffix__),
-vesa(__drivermansuffix__),
-vga(__drivermansuffix__),
-vmware(__drivermansuffix__),
+.IR X(__miscmansuffix__),
+.IR Xserver(1),
+.IR XFree86(1),
+.IR apm(__drivermansuffix__),
+.\" .IR ati(__drivermansuffix__),
+.IR chips(__drivermansuffix__),
+.IR cirrus(__drivermansuffix__),
+.IR cyrix(__drivermansuffix__),
+.IR fbdev(__drivermansuffix__),
+.IR glide(__drivermansuffix__),
+.IR glint(__drivermansuffix__),
+.IR i128(__drivermansuffix__),
+.IR i740(__drivermansuffix__),
+.IR i810(__drivermansuffix__),
+.IR imstt(__drivermansuffix__),
+.IR mga(__drivermansuffix__),
+.IR neomagic(__drivermansuffix__),
+.IR nv(__drivermansuffix__),
+.IR r128(__drivermansuffix__),
+.IR rendition(__drivermansuffix__),
+.IR savage(__drivermansuffix__),
+.IR s3virge(__drivermansuffix__),
+.\" .IR shadowfb(__drivermansuffix__),
+.IR siliconmotion(__drivermansuffix__),
+.IR sis(__drivermansuffix__),
+.IR sunbw2(__drivermansuffix__),
+.IR suncg14(__drivermansuffix__),
+.IR suncg3(__drivermansuffix__),
+.IR suncg6(__drivermansuffix__),
+.IR sunffb(__drivermansuffix__),
+.IR sunleo(__drivermansuffix__),
+.IR suntcx(__drivermansuffix__),
+.IR tdfx(__drivermansuffix__),
+.IR tga(__drivermansuffix__),
+.IR trident(__drivermansuffix__),
+.IR tseng(__drivermansuffix__),
+.IR v4l(__drivermansuffix__),
+.IR vesa(__drivermansuffix__),
+.IR vga(__drivermansuffix__),
+.IR vmware(__drivermansuffix__),
 .br
 README
 .IR <http://www.xfree86.org/current/README.html> ,

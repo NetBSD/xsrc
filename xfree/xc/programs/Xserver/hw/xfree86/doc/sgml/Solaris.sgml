@@ -6,13 +6,16 @@
 <author>David Holland, modified by Marc Aurele La France
 <date>2001 October 01
 
+<ident>
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/Solaris.sgml,v 1.4 2003/01/04 04:20:23 dawes Exp $
+</ident>
+
 <!-- Table of contents -->
 <toc>
 
 <!-- Begin the document -->
 <sect>What is XFree86<p>
-XFree86 is a port of X11R6.5.1 that supports several versions of Intel-based
-Unix.
+XFree86 is a port of X11R6.5.1 that supports several versions of Unix.
 It is derived from X386 1.2 which was the X server distributed with X11R5.
 This release consists of many new features and performance improvements as well
 as many bug fixes.
@@ -38,7 +41,7 @@ Therefore if you use virtual terminals, you do so at <bf>YOUR OWN RISK</bf>.<p>
 Virtual terminals are not available in Solaris SPARC, and their availability
 has been removed in Solaris8 x86.<p>
 When available, the virtual terminals of Solaris work basically the same way as
-most other Intel based SVR4 VT sub-systems.
+most other SVR4 VT sub-systems.
 However, there are a number of limitations documented below.<p>
 First, if you are running a Solaris 2.4 x86 system, and you want VT's, you will
 have to create the necessary devices first, so become root.<p>
@@ -209,10 +212,5 @@ reported!).
 It might even have broken some aspects of the x86 port.<p>
 </enum>
 <sect>Bug Notification<p>
-Bug reports should be sent to one of the <bf/XFree86@XFree86.org/,
-<bf>Xpert@XFree86.org</bf>, or <bf>Newbie@XFree86.org</bf> (depending on your
-level of comfort).
-<verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/Solaris.sgml,v 1.2 2001/11/15 17:22:55 dawes Exp $
-</verb>
+Bug reports should be sent to <email>XFree86@XFree86.org</email>.
 </article>

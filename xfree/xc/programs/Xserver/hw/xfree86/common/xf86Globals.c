@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Globals.c,v 1.36 2001/11/30 12:11:55 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Globals.c,v 1.40 2003/02/20 04:05:14 dawes Exp $ */
 
 /*
  * Copyright (c) 1997 by The XFree86 Project, Inc.
@@ -89,6 +89,8 @@ xf86InfoRec xf86Info = {
 	FALSE,		/* modeSwitchLock */
 	FALSE,		/* composeLock */
 	FALSE,		/* vtSysreq */
+	SKWhenNeeded,	/* ddxSpecialKeys */
+	FALSE,		/* ActionKeyBindingsSet */
 #if defined(SVR4) && defined(i386)
 	FALSE,		/* panix106 */
 #endif
@@ -102,6 +104,7 @@ xf86InfoRec xf86Info = {
 	-1,		/* lastEventTime */
 	FALSE,		/* vtRequestsPending */
 	FALSE,		/* inputPending */
+	FALSE,		/* dontVTSwitch */
 	FALSE,		/* dontZap */
 	FALSE,		/* dontZoom */
 	FALSE,		/* notrapSignals */
@@ -138,11 +141,14 @@ xf86InfoRec xf86Info = {
 	FALSE,		/* pc98 */
 #endif
 	TRUE,		/* pmFlag */
-	FALSE,          /* syncLog */
+	LogNone,	/* syncLog */
 	0,		/* estimateSizesAggressively */
-	FALSE           /* kbdCustomKeycodes */
+	FALSE,		/* kbdCustomKeycodes */
+	FALSE,		/* disableRandR */
+	X_DEFAULT	/* randRFrom */
 };
 const char *xf86ConfigFile = NULL;
+const char *xf86InputDeviceList = NULL;
 const char *xf86ModulePath = DEFAULT_MODULE_PATH;
 MessageType xf86ModPathFrom = X_DEFAULT;
 const char *xf86LogFile = DEFAULT_LOGPREFIX;
@@ -208,6 +214,7 @@ Bool xf86MiscModInDevDisabled = FALSE;
 Bool xf86MiscModInDevAllowNonLocal = FALSE;
 #endif
 PropertyPtr *xf86RegisteredPropertiesTable = NULL;
+Bool xf86inSuspend = FALSE;
 
 #ifdef DLOPEN_HACK
 /*

@@ -4,7 +4,7 @@
 /*                                                                         */
 /*    The FreeType glyph rasterizer (body).                                */
 /*                                                                         */
-/*  Copyright 1996-2001 by                                                 */
+/*  Copyright 1996-2001, 2002 by                                           */
 /*  David Turner, Robert Wilhelm, and Werner Lemberg.                      */
 /*                                                                         */
 /*  This file is part of the FreeType project, and may only be used,       */
@@ -186,8 +186,8 @@
 #endif /* _STANDALONE_ */
 
 
-#ifndef MEM_Set
-#define MEM_Set( d, s, c )  memset( d, s, c )
+#ifndef FT_MEM_SET
+#define FT_MEM_SET( d, s, c )  ft_memset( d, s, c )
 #endif
 
 
@@ -271,10 +271,10 @@
   /* States of each line, arc, and profile */
   typedef enum  TStates_
   {
-    Unknown,
-    Ascending,
-    Descending,
-    Flat
+    Unknown_State,
+    Ascending_State,
+    Descending_State,
+    Flat_State
 
   } TStates;
 
@@ -579,12 +579,12 @@
 
     switch ( aState )
     {
-    case Ascending:
+    case Ascending_State:
       ras.cProfile->flow = Flow_Up;
       FT_TRACE6(( "New ascending profile = %lx\n", (long)ras.cProfile ));
       break;
 
-    case Descending:
+    case Descending_State:
       ras.cProfile->flow = Flow_Down;
       FT_TRACE6(( "New descending profile = %lx\n", (long)ras.cProfile ));
       break;
@@ -1265,34 +1265,34 @@
 
     switch ( ras.state )
     {
-    case Unknown:
+    case Unknown_State:
       if ( y > ras.lastY )
       {
-        if ( New_Profile( RAS_VARS Ascending ) )
+        if ( New_Profile( RAS_VARS Ascending_State ) )
           return FAILURE;
       }
       else
       {
         if ( y < ras.lastY )
-          if ( New_Profile( RAS_VARS Descending ) )
+          if ( New_Profile( RAS_VARS Descending_State ) )
             return FAILURE;
       }
       break;
 
-    case Ascending:
+    case Ascending_State:
       if ( y < ras.lastY )
       {
-        if ( End_Profile( RAS_VAR )             ||
-             New_Profile( RAS_VARS Descending ) )
+        if ( End_Profile( RAS_VAR )                   ||
+             New_Profile( RAS_VARS Descending_State ) )
           return FAILURE;
       }
       break;
 
-    case Descending:
+    case Descending_State:
       if ( y > ras.lastY )
       {
-        if ( End_Profile( RAS_VAR )            ||
-             New_Profile( RAS_VARS Ascending ) )
+        if ( End_Profile( RAS_VAR )                  ||
+             New_Profile( RAS_VARS Ascending_State ) )
           return FAILURE;
       }
       break;
@@ -1305,13 +1305,13 @@
 
     switch ( ras.state )
     {
-    case Ascending:
+    case Ascending_State:
       if ( Line_Up( RAS_VARS ras.lastX, ras.lastY,
                     x, y, ras.minY, ras.maxY ) )
         return FAILURE;
       break;
 
-    case Descending:
+    case Descending_State:
       if ( Line_Down( RAS_VARS ras.lastX, ras.lastY,
                       x, y, ras.minY, ras.maxY ) )
         return FAILURE;
@@ -1402,11 +1402,11 @@
       {
         /* the arc is y-monotonous, either ascending or descending */
         /* detect a change of direction                            */
-        state_bez = y1 < y3 ? Ascending : Descending;
+        state_bez = y1 < y3 ? Ascending_State : Descending_State;
         if ( ras.state != state_bez )
         {
           /* finalize current profile if any */
-          if ( ras.state != Unknown   &&
+          if ( ras.state != Unknown_State   &&
                End_Profile( RAS_VAR ) )
             goto Fail;
 
@@ -1416,7 +1416,7 @@
         }
 
         /* now call the appropriate routine */
-        if ( state_bez == Ascending )
+        if ( state_bez == Ascending_State )
         {
           if ( Bezier_Up( RAS_VARS 2, Split_Conic, ras.minY, ras.maxY ) )
             goto Fail;
@@ -1529,12 +1529,12 @@
       }
       else
       {
-        state_bez = ( y1 <= y4 ) ? Ascending : Descending;
+        state_bez = ( y1 <= y4 ) ? Ascending_State : Descending_State;
 
         /* detect a change of direction */
         if ( ras.state != state_bez )
         {
-          if ( ras.state != Unknown   &&
+          if ( ras.state != Unknown_State   &&
                End_Profile( RAS_VAR ) )
             goto Fail;
 
@@ -1543,7 +1543,7 @@
         }
 
         /* compute intersections */
-        if ( state_bez == Ascending )
+        if ( state_bez == Ascending_State )
         {
           if ( Bezier_Up( RAS_VARS 3, Split_Cubic, ras.minY, ras.maxY ) )
             goto Fail;
@@ -1838,7 +1838,7 @@
 
     for ( i = 0; i < ras.outline.n_contours; i++ )
     {
-      ras.state    = Unknown;
+      ras.state    = Unknown_State;
       ras.gProfile = NULL;
 
       if ( Decompose_Curve( RAS_VARS (unsigned short)start,
@@ -2965,7 +2965,7 @@
   /* <Return>                                                              */
   /*    FreeType error code.  0 means success.                             */
   /*                                                                       */
-  FT_LOCAL_DEF FT_Error
+  FT_LOCAL_DEF( FT_Error )
   Render_Glyph( RAS_ARG )
   {
     FT_Error  error;
@@ -3028,7 +3028,7 @@
   /* <Return>                                                              */
   /*    FreeType error code.  0 means success.                             */
   /*                                                                       */
-  FT_LOCAL_DEF FT_Error
+  FT_LOCAL_DEF( FT_Error )
   Render_Gray_Glyph( RAS_ARG )
   {
     Long      pixel_width;
@@ -3086,17 +3086,17 @@
     return Raster_Err_Ok;
   }
 
-#else /* FT_RASTER_OPTION_ANTI_ALIASING */
+#else /* !FT_RASTER_OPTION_ANTI_ALIASING */
 
-  FT_LOCAL_DEF
-  FT_Error  Render_Gray_Glyph( RAS_ARG )
+  FT_LOCAL_DEF( FT_Error )
+  Render_Gray_Glyph( RAS_ARG )
   {
     FT_UNUSED_RASTER;
 
     return Raster_Err_Cannot_Render_Glyph;
   }
 
-#endif /* FT_RASTER_OPTION_ANTI_ALIASING */
+#endif /* !FT_RASTER_OPTION_ANTI_ALIASING */
 
 
   static void
@@ -3146,7 +3146,7 @@
 
 
      *araster = &the_raster;
-     MEM_Set( &the_raster, sizeof ( the_raster ), 0 );
+     FT_MEM_SET( &the_raster, sizeof ( the_raster ), 0 );
      ft_black_init( &the_raster );
 
      return 0;
@@ -3173,7 +3173,7 @@
 
 
     *araster = 0;
-    if ( !ALLOC( raster, sizeof ( *raster ) ) )
+    if ( !FT_NEW( raster ) )
     {
       raster->memory = memory;
       ft_black_init( raster );
@@ -3189,7 +3189,7 @@
   ft_black_done( TRaster_Instance*  raster )
   {
     FT_Memory  memory = (FT_Memory)raster->memory;
-    FREE( raster );
+    FT_FREE( raster );
   }
 
 
@@ -3211,9 +3211,9 @@
 
 
   static void
-  ft_black_set_mode( TRaster_Instance* raster,
-                     unsigned long     mode,
-                     const char*       palette )
+  ft_black_set_mode( TRaster_Instance*  raster,
+                     unsigned long      mode,
+                     const char*        palette )
   {
 #ifdef FT_RASTER_OPTION_ANTI_ALIASING
 

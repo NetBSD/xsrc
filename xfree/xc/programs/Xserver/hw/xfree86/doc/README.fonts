@@ -2,31 +2,188 @@
 
                     Juliusz Chroboczek, <jch@xfree86.org>
 
-                              26 November 2001
+                               17 January 2003
 
 1.  Introduction
 
-This document describes the support for fonts in XFree86.  Section Installing
-fonts (section 2., page 1) is aimed at the casual user wishing to install
-fonts in the X server; the rest of the document describes the font support in
-more detail.
-
-We only describe font support within the core X protocol.  Issues relating to
-fonts within the RENDER extension, the GLX (OpenGL) extension or the PEX
-extension are outside the scope of this document.
+This document describes the support for fonts in XFree86.  Installing fonts
+(section 2., page 1) is aimed at the casual user wishing to install fonts in
+XFree86; the rest of the document describes the font support in more detail.
 
 We assume some familiarity with digital fonts.  If anything is not clear to
-you, please consult Appendix Background (section 6., page 1) at the end of
+you, please consult Appendix: Background (section 5., page 1) at the end of
 this document for background information.
+
+1.1  Two font systems
+
+XFree86 includes two font systems: the core X11 fonts system, which is pre-
+sent in all implementations of X11, and the Xft fonts system, which is not
+currently distributed with implementations of X11 that are not based on
+XFree86 but will hopefully be included by them in the future
+
+The core X11 fonts system is directly derived from the fonts system included
+with X11R1 in 1987, which could only use monochrome bitmap fonts.  Over the
+years, it has been more or less happily coerced into dealing with scalable
+fonts and rotated glyphs.
+
+Xft was designed from the start to provide good support for scalable fonts,
+and do so efficiently.  Unlike the core fonts system, it supports features
+such as anti-aliasing and sub-pixel rasterisation.  Perhaps more importantly,
+it gives applications full control over the way glyphs are rendered, making
+fine typesetting and WYSIWIG display possible.  Finally, it allows applica-
+tions to use fonts that are not installed system-wide for displaying docu-
+ments with embedded fonts.
+
+Xft is not compatible with the core fonts system: usage of Xft requires mak-
+ing fairly extensive changes to toolkits (user-interface libraries).  While
+XFree86 will continue to maintain the core fonts system, toolkit authors are
+encouraged to switch to Xft as soon as possible.
 
 2.  Installing fonts
 
-Installing fonts in XFree86 is a two step process.  First, you need to create
-a font directory that contains all the relevant font files as well as some
-index files.  You then need to inform the X server of the existence of this
-new directory by including it in the font path.
+This section explains how to configure both Xft and the core fonts system to
+access newly-installed fonts.
 
-2.1  Installing bitmap fonts
+2.1  Configuring Xft
+
+Xft has no configuration mechanism itself, rather it relies upon the fontcon-
+fig library to configure and customize fonts.  That library is not specific
+to XFree86 or indeed on any particular font output mechanism.  This discus-
+sion describes how fontconfig, rather than Xft, works.
+
+2.1.1  Installing fonts in Xft
+
+Fontconfig looks for fonts in a set of well-known directories that include
+all of XFree86's standard font directories (`/usr/X11R6/lib/X11/lib/fonts/*')
+by default) as well as a directory called `.fonts/' in the user's home direc-
+tory.  Installing a font for use by Xft applications is as simple as copying
+a font file into one of these directories.
+
+     $ cp lucbr.ttf ~/.fonts/
+
+Fontconfig will notice the new font at the next opportunity and rebuild its
+list of fonts.  If you want to trigger this update from the command line (for
+example in order to globally update the system-wide Fontconfig information),
+you may run the command `fc-cache'.
+
+     $ fc-cache
+
+2.1.2  Fine-tuning Xft
+
+Fontconfig's behaviour is controlled by a set of configuration files: a sys-
+tem-wide configuration file, `/etc/fonts/fonts.conf', and a user-specific
+file called `.fonts.conf' in the user's home directory (this can be overrid-
+den with the `FONTCONFIG_FILE' environment variable).
+
+Every Fontconfig configuration file must start with the following boiler-
+plate:
+
+     <?xml version="1.0"?>
+     <!DOCTYPE fontconfig SYSTEM "fonts.dtd">
+     <fontconfig>
+
+In addition, every Fontconfig configuration file must end with the following
+line:
+
+     </fontconfig>
+
+The default Fontconfig configuration file includes the directory `~/.fonts/'
+in the list of directories searched for font files, and this is where user-
+specific font files should be installed.  In the unlikely case that a new
+font directory needs to be added, this can be done with the following syntax:
+
+     <dir>/usr/local/share/fonts/</dir>
+
+Another useful option is the ability to disable anti-aliasing (font smooth-
+ing) for selected fonts.  This can be done with the following syntax:
+
+     <match target="font">
+         <test qual="any" name="family">
+             <string>Lucida Console</string>
+         </test>
+         <edit name="antialias" mode="assign">
+             <bool>false</bool>
+         </edit>
+     </match>
+
+Anti-aliasing can be disabled for all fonts by the following incantation:
+
+     <match target="font">
+         <edit name="antialias" mode="assign">
+             <bool>false</bool>
+         </edit>
+     </match>
+
+Xft supports sub-pixel rasterisation on LCD displays.  XFree86 should auto-
+matically enable this feature on laptops and when using an LCD monitor con-
+nected with a DVI cable; you can check whether this was done by typing
+
+     $ xdpyinfo -ext RENDER | grep sub-pixel
+
+If this doesn't print anything, you will need to configure Render for your
+particular LCD hardware manually; this is done with the following syntax:
+
+     <match target="font">
+         <edit name="rgba" mode="assign">
+             <const>rgb</const>
+         </edit>
+     </match>
+
+The string `rgb' within the `<const>'...`</const>' specifies the order of
+pixel components on your display, and should be changed to match your hard-
+ware; it can be one of `rgb (normal LCD screen), `bgr' (backwards LCD
+screen), `vrgb' (LCD screen rotated clockwise) or `vbgr' (LCD screen rotated
+counterclockwise).
+
+2.1.3  Configuring applications
+
+Because most current applications use the core fonts system by default, it is
+necessary to explicitly configure them to use Xft.  How this is done depends
+on the application.
+
+XTerm can be set to use Xft by using the `-fa' command line option or by set-
+ting the `XTerm*faceName' resource:
+
+     XTerm*faceName: Courier
+
+or
+
+     $ xterm -fa "Courier"
+
+For applications based on GTK+ 2.0 (including GNOME 2 applications), the
+environment variable `GDK_USE_XFT' should be set to `1':
+
+     $ export GDK_USE_XFT=1
+
+GTK+ 2.2 uses Xft by default.
+
+For KDE applications, you should select ``Anti-alias fonts'' in the ``Fonts''
+panel of KDE's ``Control Center''.  Note that this option is misnamed: it
+switches KDE to using Xft but doesn't enable anti-aliasing in case it was
+disabled by your Xft configuration file.
+
+(What about Mozilla?)
+
+2.1.4  Troubleshooting
+
+If some Xft-based applications don't seem to notice the changes you are mak-
+ing to your configuration files, they may be linked against the XFree86 4.2
+version of Xft.  In order to fix the problem, you should relink them against
+a current version of Xft; on most systems, it is enough to install the cur-
+rent version of the Xft and Fontconfig libraries.
+
+If, for some reason, you cannot upgrade the shared libraries, please check
+the Xft(3) manual page included with XFree86 4.2 for the configuration mecha-
+nisms of the previous version of Xft.
+
+2.2  Configuring the core X11 fonts system
+
+Installing fonts in the core system is a two step process.  First, you need
+to create a font directory that contains all the relevant font files as well
+as some index files.  You then need to inform the X server of the existence
+of this new directory by including it in the font path.
+
+2.2.1  Installing bitmap fonts
 
 The XFree86 server can use bitmap fonts in both the cross-platform BDF format
 and the somewhat more efficient binary PCF format.  (XFree86 also supports
@@ -39,7 +196,7 @@ e.g.
 
      $ bdftopcf courier12.bdf
 
-You may then want to compress the resulting PCF font files:
+You will then want to compress the resulting PCF font files:
 
      $ gzip courier12.pcf
 
@@ -49,20 +206,19 @@ you wish to make available into a arbitrary directory, say
 `fonts.dir' by running the command `mkfontdir' (please see the mkfontdir(1)
 manual page for more information):
 
-     $ mkdir /usr/local/share/fonts/bitmap
-     $ cp *.pcf.gz /usr/local/share/fonts/bitmap
-     $ cd /usr/local/share/fonts/bitmap
-     $ mkfontdir
+     $ mkdir /usr/local/share/fonts/bitmap/
+     $ cp *.pcf.gz /usr/local/share/fonts/bitmap/
+     $ mkfontdir /usr/local/share/fonts/bitmap/
 
 All that remains is to tell the X server about the existence of the new font
-directory; see Section Setting the server font path (section 2.4, page 1).
+directory; see Setting the server font path (section 2.2.4, page 1) below.
 
-2.2  Installing scalable fonts
+2.2.2  Installing scalable fonts
 
 The XFree86 server supports scalable fonts in four formats: Type 1, Speedo,
 TrueType and CIDFont.  This section only applies to the former three; for
-information on CIDFonts, please see Section Installing CIDFonts (section 2.3,
-page 1) later in this document.
+information on CIDFonts, please see Installing CIDFonts (section 2.2.3, page
+1) later in this document.
 
 Installing scalable fonts is very similar to installing bitmap fonts: you
 create a directory with the font files, and run `mkfontdir' to create an
@@ -70,57 +226,22 @@ index file called `fonts.dir'.
 
 There is, however, a big difference: `mkfontdir' cannot automatically recog-
 nise scalable font files.  For that reason, you must first index all the font
-files in a file called `fonts.scale'.  This file has the same format as a
-`fonts.dir' file, and typically looks as follows:
+files in a file called `fonts.scale'.  While this can be done by hand, it is
+best done by using the `mkfontscale' utility.
 
-     4
-     cour.pfa -adobe-courier-medium-r-normal-0-0-0-0-p-0-iso8859-1
-     cour.pfa -adobe-courier-medium-r-normal-0-0-0-0-p-0-iso8859-2
-     couri.pfa -adobe-courier-medium-i-normal-0-0-0-0-p-0-iso8859-1
-     couri.pfa -adobe-courier-medium-i-normal-0-0-0-0-p-0-iso8859-2
+     $ mkfontscale /usr/local/share/fonts/Type1/
+     $ mkfontdir /usr/local/share/fonts/Type1/
 
-The first line indicates the number of entries in the file.  Each line after
-the first consists of two fields separated by a space; the first field is the
-name of the font file, and the second one is the name under which the font
-will appear to the server.  This name should obey the X Logical Font Descrip-
-tion conventions (see Section The X Logical Font Description (section 6.2,
-page 1)).  The format of this file is fully described in the mkfontdir(1)
-manual page.
+Under some circumstances, it may be necessary to modify the `fonts.scale'
+file generated by mkfontscale; for more information, please see the mkfont-
+dir(1) and mkfontscale(1) manual pages and Core fonts and internationalisa-
+tion (section 4.1, page 1) later in this document.
 
-Note that multiple lines may point at the same font file.  This is most com-
-monly done in order to make a single font available under multiple encodings;
-please see Section Fonts and internationalisation (section 4., page 1).
-
-While it is possible to create the `fonts.scale' file by hand, it is simpler
-and more convenient to have it generated automatically.  Utilities to perform
-this task are available, but are not currently included with XFree86. For
-Type 1 fonts, you may use a utility called `type1inst' which is available
-from standard Free Software repositories <URL:http://www.ibib-
-lio.org/pub/Linux/X11/xutils/> throughout the world.
-
-For TrueType fonts, you may use `ttmkfdir', available from Joerg Pommnitz's
-xfsft page <URL:http://www.joerg-pommnitz.de/TrueType/xfsft.html>.
-
-After the `fonts.scale' is created, you may run `mkfontdir' as above; this
-time, however, you need to create an index of encoding files called `encod-
-ings.dir' in addition to the `fonts.dir' file.  This is done by using
-`mkfontdir' with the `-e' flag:
-
-     $ cd /usr/local/share/fonts/Type1
-     $ mkfontdir -e /usr/X11R6/lib/font/encodings
-
-For more information, please see the mkfontdir(1) manual page and Section
-Fonts and internationalisation (section 4., page 1) later in this document.
-
-2.3  Installing CID-keyed fonts
+2.2.3  Installing CID-keyed fonts
 
 The CID-keyed font format was designed by Adobe Systems for fonts with large
 character sets.  A CID-keyed font, or CIDFont for short, contains a collec-
 tion of glyphs indexed by character ID (CID).
-
-Adobe make some sample CIDFonts and a complete set of CMaps available from
-O'Reilly's FTP site <URL:ftp://ftp.oreilly.com/pub/examples/nut-
-shell/cjkv/adobe/>.
 
 In order to map such glyphs to meaningful indices, Adobe provide a set of
 CMap files.  The PostScript name of a font generated from a CIDFont consists
@@ -130,8 +251,8 @@ CMap `UniKS-UCS2-H' is called
 
      Munhwa-Regular--UniKS-UCS2-H
 
-The CIDFont support in XFree86 requires a very rigid directory structure.
-The main directory must be called `CID' (its location defaults to
+The CIDFont code in XFree86 requires a very rigid directory structure.  The
+main directory must be called `CID' (its location defaults to
 `/usr/X11R6/lib/X11/fonts/CID' but it may be located anywhere), and it should
 contain a subdirectory for every CID collection.  Every subdirectory must
 contain subdirectories called CIDFont (containing the actual CIDFont files),
@@ -157,8 +278,8 @@ filenames:
      Adobe-Korea1/Munhwa-Regular--UniKS-UCS2-H.cid \
        -adobe-munhwa-medium-r-normal--0-0-0-0-p-0-iso10646-1
 
-(both names on the same line).  As above, running `mkfontdir' creates the
-`fonts.dir' file:
+(both names on the same line).  Running `mkfontdir' creates the `fonts.dir'
+file:
 
      $ cd /usr/local/share/fonts/CID
      $ mkfontdir
@@ -173,11 +294,11 @@ fonts but querying them will take a long time.  You should run `mkcfm' again
 whenever a change is made to any of the CID-keyed fonts, or when the CID-
 keyed fonts are copied to a machine with a different architecture.
 
-2.4  Setting the server's font path
+2.2.4  Setting the server's font path
 
 The list of directories where the server looks for fonts is known as the font
 path.  Informing the server of the existence of a new font directory consists
-in putting it on the font path.
+of putting it on the font path.
 
 The font path is an ordered list; if a client's request matches multiple
 fonts, the first one in the font path is the one that gets used.  When match-
@@ -195,7 +316,7 @@ You may check the font path of the running server by typing the command
 
      $ xset q
 
-2.4.1  Temporary modification of the font path
+2.2.4.1  Temporary modification of the font path
 
 The `xset' utility may be used to modify the font path for the current ses-
 sion.  The font path is set with the command xset fp; a new element is added
@@ -205,34 +326,36 @@ to the front with xset +fp, and added to the end with xset fp+.  For example,
      $ xset fp+ /usr/local/fonts/bitmap
 
 Conversely, an element may be removed from the front of the font path with
-`xset -fp', and removed from the end with `xset fp-'.
+`xset -fp', and removed from the end with `xset fp-'.  You may reset the font
+path to its default value with `xset fp default'.
 
 For more information, please consult the xset(1) manual page.
 
-2.4.2  Permanent modification of the font path
+2.2.4.2  Permanent modification of the font path
 
-The default font path (the one used just after server startup) is specified
-in the X server's `XF86Config' file.  It is computed by appending all the
-directories mentioned in the `FontPath' entries of the `Files' section in the
-order in which they appear.
+The default font path (the one used just after server startup or after `xset
+fp default') is specified in the X server's `XF86Config' file.  It is com-
+puted by appending all the directories mentioned in the `FontPath' entries of
+the `Files' section in the order in which they appear.
 
      FontPath "/usr/local/fonts/Type1"
      ...
      FontPath "/usr/local/fonts/bitmap"
 
-For more information, please consult the `XF86Config'(5) manual page.
+For more information, please consult the XF86Config(5) manual page.
 
-2.5  Troubleshooting
+2.2.5  Troubleshooting
 
 If you seem to be unable to use some of the fonts you have installed, the
 first thing to check is that the `fonts.dir' files are correct and that they
-are readable by the server.  If this doesn't help, it is quite possible that
+are readable by the server (the X server usually runs as root, beware of NFS-
+mounted font directories).  If this doesn't help, it is quite possible that
 you are trying to use a font in a format that is not supported by your
 server.
 
-XFree86 supports the BDF, PCF, SNF, Type 1, Speedo, TrueType and CIDFont font
-formats.  However, not all XFree86 servers come with all the font backends
-configured in.
+XFree86 supports the BDF, PCF, SNF, Type 1, Speedo, TrueType, OpenType and
+CIDFont font formats.  However, not all XFree86 servers come with all the
+font backends configured in.
 
 On most platforms, the XFree86 servers are modular: the font backends are
 included in modules that are loaded at runtime.  The modules to be loaded are
@@ -247,13 +370,15 @@ follows:
 
    o  "bitmap": bitmap fonts (`*.bdf', `*.pcf' and `*.snf');
 
-   o  "type1": Type 1 fonts (`*.pfa' and `*.pfb') and CIDFonts;
+   o  "freetype": TrueType fonts (`*.ttf' and `*.ttc'), OpenType fonts
+     (`*.otf' and `*.otc') and Type 1 fonts (`*.pfa' and `*.pfb');
 
-   o  "speedo": Bitstream Speedo fonts (`*.spd');
+   o  "type1": alternate Type 1 backend (`*.pfa' and `*.pfb') and CIDFont
+     backend;
 
-   o  "freetype": TrueType fonts (`*.ttf' and `*.ttc');
+   o  "xtt": alternate TrueType backend (`*.ttf' and `*.ttc');
 
-   o  "xtt": alternate TrueType backend (`*.ttf' and `*.ttc').
+   o  "speedo": Bitstream Speedo fonts (`*.spd').
 
 Please note that the argument of the `Load' directive is case-sensitive.
 
@@ -261,15 +386,15 @@ Please note that the argument of the `Load' directive is case-sensitive.
 
 3.1  Standard bitmap fonts
 
-The Sample Implementation of X11 comes with a large number of bitmap fonts,
-including the `fixed' family, and bitmap versions of Courier, Times and Hel-
-vetica.  In the SI, these fonts are provided in the ISO 8859-1 encoding (ISO
-Latin Western-European).
+The Sample Implementation of X11 (SI) comes with a large number of bitmap
+fonts, including the `fixed' family, and bitmap versions of Courier, Times,
+Helvetica and some members of the Lucida family.  In the SI, these fonts are
+provided in the ISO 8859-1 encoding (ISO Latin Western-European).
 
 In XFree86, a number of these fonts are provided in Unicode-encoded font
 files instead.  At build time, these fonts are split into font files encoded
-according to legacy encodings, a process which enables us to provide the
-standard fonts in a number of regional encodings with no duplication of work.
+according to legacy encodings, a process which allows us to provide the stan-
+dard fonts in a number of regional encodings with no duplication of work.
 
 For example, the font file
 
@@ -281,7 +406,7 @@ with XLFD
 
 is a Unicode-encoded version of the standard `fixed' font with added support
 for the Latin, Greek, Cyrillic, Georgian, Armenian, IPA and other scripts
-plus numerous technical symbols. It contains over 2800 glyphs, covering all
+plus numerous technical symbols.  It contains over 2800 glyphs, covering all
 characters of ISO 8859 parts 1-5, 7-10, 13-15, as well as all European IBM
 and Microsoft code pages, KOI8, WGL4, and the repertoires of many other char-
 acter sets.
@@ -290,39 +415,20 @@ This font is used at build time for generating the font files
 
      6x13-ISO8859-1.bdf
      6x13-ISO8859-2.bdf
-     6x13-ISO8859-3.bdf
-     6x13-ISO8859-4.bdf
-     6x13-ISO8859-5.bdf
-     6x13-ISO8859-7.bdf
-     6x13-ISO8859-8.bdf
-     6x13-ISO8859-9.bdf
-     6x13-ISO8859-10.bdf
-     6x13-ISO8859-13.bdf
+     ...
      6x13-ISO8859-15.bdf
      6x13-KOI8-R.bdf
 
 with respective XLFDs
 
      -misc-fixed-medium-r-normal--13-120-75-75-c-60-iso8859-1
-     -misc-fixed-medium-r-normal--13-120-75-75-c-60-iso8859-2
-     -misc-fixed-medium-r-normal--13-120-75-75-c-60-iso8859-3
-     -misc-fixed-medium-r-normal--13-120-75-75-c-60-iso8859-4
-     -misc-fixed-medium-r-normal--13-120-75-75-c-60-iso8859-5
-     -misc-fixed-medium-r-normal--13-120-75-75-c-60-iso8859-7
-     -misc-fixed-medium-r-normal--13-120-75-75-c-60-iso8859-8
-     -misc-fixed-medium-r-normal--13-120-75-75-c-60-iso8859-9
-     -misc-fixed-medium-r-normal--13-120-75-75-c-60-iso8859-10
-     -misc-fixed-medium-r-normal--13-120-75-75-c-60-iso8859-13
+     ...
      -misc-fixed-medium-r-normal--13-120-75-75-c-60-iso8859-15
      -misc-fixed-medium-r-normal--13-120-75-75-c-60-koi8-r
 
 The standard short name `fixed' is normally an alias for
 
      -misc-fixed-medium-r-normal--13-120-75-75-c-60-iso8859-1
-
-(The conversion of the standard fonts to Unicode was mainly performed by
-Markus Kuhn.  Markus is a man of taste, which makes his use of Perl in the
-conversion process somewhat surprising.)
 
 3.2  The ClearlyU Unicode font family
 
@@ -360,10 +466,6 @@ standard.
 
 The Ligature font contains ligatures for various scripts that may be useful
 for improved presentation of text.
-
-(The ClearlyU family was designed by Mark Leisher.  Mark's usage of the
-foundry name mutt predates the mailer of the same name, but he won't say
-more.)
 
 3.3  Standard scalable fonts
 
@@ -403,7 +505,7 @@ and reside in the font files
 
 XFree86 includes Speedo versions of the Bitstream Courier and Charter fonts.
 In order to use these fonts, you should ensure that your X server is loading
-the `Speedo' font backend; see Section Troubleshooting (section 2.5, page 1).
+the `Speedo' font backend; see Troubleshooting (section 2.2.5, page 1).
 
 These fonts cover all of ISO 8859-1 and almost all of ISO 8859-2.  They have
 XLFD name
@@ -435,12 +537,12 @@ TrueType version have glyphs covering the basic ASCII Unicode range, the
 Latin 1 range, as well as the Extended Latin range and some additional punc-
 tuation characters.  In particular, these fonts include all the glyphs needed
 for ISO 8859 parts 1, 2, 3, 4, 9, 13 and 15, as well as all the glyphs in the
-Adobe Standard encoding and the Windows 3.1  character set.
+Adobe Standard encoding and the Windows 3.1 character set.
 
 The glyph coverage of the Type 1 versions is somewhat reduced, and only cov-
 ers ISO 8859 parts 1, 2 and 15 as well as the Adobe Standard encoding.
 
-The Luxi fonts are original designs by Kris Holmes and Charles Bigelow. Luxi
+The Luxi fonts are original designs by Kris Holmes and Charles Bigelow.  Luxi
 fonts include seriffed, sans serif, and monospaced styles, in roman and
 oblique, and normal and bold weights. The fonts share stem weight, x-height,
 capital height, ascent and descent, for graphical harmony.
@@ -463,14 +565,18 @@ For more information, please contact <design@bigelowandholmes.com> or
 
 An earlier version of the Luxi fonts was made available under the name
 Lucidux.  This name should no longer be used due to trademark uncertainties,
-and all traces of the Lucidux name have been removed from this version of
-XFree86.
+and all traces of the Lucidux name have been removed from XFree86.
 
-4.  Fonts and internationalisation
+4.  More about core fonts
 
-The scalable font backends (Type 1, Speedo and TrueType) can now automati-
-cally re-encode fonts to the encoding specified in the XLFD in fonts.dir.
-For example, a fonts.dir file can contain entries for the Type 1 Courier font
+This section describes XFree86-specific enhancements to the core X11 fonts
+system.
+
+4.1  Core fonts and internationalisation
+
+The scalable font backends (Type 1, Speedo and TrueType) can automatically
+re-encode fonts to the encoding specified in the XLFD in `fonts.dir'.  For
+example, a `fonts.dir' file can contain entries for the Type 1 Courier font
 such as
 
      cour.pfa -adobe-courier-medium-r-normal--0-0-0-0-m-0-iso8859-1
@@ -479,7 +585,7 @@ such as
 which will lead to the font being recoded to ISO 8859-1 and ISO 8859-2
 respectively.
 
-4.1  The fontenc layer
+4.1.1  The fontenc layer
 
 Three of the scalable backends (Type 1, Speedo, and the FreeType TrueType
 backend) use a common fontenc layer for font re-encoding.  This allows these
@@ -488,10 +594,9 @@ locales independently of font type.
 
 Please note: the X-TrueType (X-TT) backend does not use the fontenc layer,
 but instead uses its own method for font reencoding.  If you are only inter-
-ested in X-TT you may want to skip to Section Using Symbol Fonts (section
-4.5, page 1), as the intervening information does not apply to X-TT.  X-TT
-itself is described in more detail in Section X-TrueType (section 5.2, page
-1).
+ested in X-TT you may want to skip to Using Symbol Fonts (section 4.1.5, page
+1), as the intervening information does not apply to X-TT.  X-TT itself is
+described in more detail in X-TrueType (section 4.2.3, page 1).
 
 In the fontenc layer, an encoding is defined by a name (such as iso8859-1),
 possibly a number of aliases (alternate names), and an ordered collection of
@@ -531,7 +636,7 @@ include:
 
    o  koi8-u: KOI8 Ukrainian (see RFC 2319);
 
-   o  koi8-ru: KOI8 Russian/Ukrainian
+   o  koi8-ru: KOI8 Russian/Ukrainian;
 
    o  koi8-uni: KOI8 ``Unified'' (Russian, Ukrainian, and Byelorussian);
 
@@ -547,60 +652,61 @@ directory with fonts.dir!) for a file named `encodings.dir'.  If found, this
 file is scanned for the requested encoding, and the relevant encoding defini-
 tion file is read in.  The `mkfontdir' utility, when invoked with the `-e'
 option followed by the name of a directory containing encoding files, can be
-used to automatically build `encodings.dir' files.  See the mkfontdir(1) man-
-ual page for more details.
+used to automatically build `encodings.dir' files.  Please see the mkfont-
+dir(1) manual page for more details.
 
 A number of encoding files for common encodings are included with XFree86.
-Information on writing new encoding files can be found in Section Format of
-encodings directory files (section 4.3, page 1) and Format of encoding files
-(section 4.4, page 1) later in this document.
+Information on writing new encoding files can be found in Format of encodings
+directory files (section 4.1.3, page 1) and Format of encoding files (section
+4.1.4, page 1) later in this document.
 
-4.2  Backend-specific notes about fontenc
+4.1.2  Backend-specific notes about fontenc
 
-4.2.1  Type 1
+4.1.2.1  The FreeType backend
 
-The Type 1 backend first searches for a mapping with a target of PostScript.
-If one is found, it is used.  Otherwise, the backend searches for a mapping
-with target Unicode, which is then composed with a built-in table mapping
-codes to glyph names.  Note that this table only covers part of the Unicode
-code points that have been assigned names by Adobe.
+For TrueType and OpenType fonts, the FreeType backend scans the mappings in
+order.  Mappings with a target of PostScript are ignored; mappings with a
+TrueType or Unicode target are checked against all the cmaps in the file.
+The first applicable mapping is used.
 
-If neither a PostScript or Unicode mapping is found, the backend defaults to
+For Type 1 fonts, the FreeType backend first searches for a mapping with a
+target of PostScript.  If one is found, it is used.  Otherwise, the backend
+searches for a mapping with target Unicode, which is then composed with a
+built-in table mapping codes to glyph names.  Note that this table only cov-
+ers part of the Unicode code points that have been assigned names by Adobe.
+
+Specifying an encoding value of adobe-fontspecific for a Type 1 font disables
+the encoding mechanism.  This is useful with symbol and incorrectly encoded
+fonts (see Incorrectly encoded fonts (section 4.1.6, page 1) below).
+
+If a suitable mapping is not found, the FreeType backend defaults to
 ISO 8859-1.
 
-Specifying an encoding value of adobe-fontspecific disables the encoding
-mechanism.  This is useful with symbol and incorrectly encoded fonts (see
-Section Incorrectly encoded fonts (section 4.6, page 1) below).
+4.1.2.2  Type 1
 
-The Type 1 backend currently limits all encodings to 8-bit codes.
+The Type 1 backend behaves similarly to the FreeType backend with Type 1
+fonts, except that it limits all encodings to 8-bit codes.
 
-4.2.2  Speedo
+4.1.2.3  Speedo
 
 The Speedo backend searches for a mapping with a target of Unicode, and uses
 it if found.  If none is found, the backend defaults to ISO 8859-1.
 
 The Speedo backend limits all encodings to 8-bit codes.
 
-4.2.3  The FreeType TrueType backend
-
-The TrueType backend scans the mappings in order.  Mappings with a target of
-PostScript are ignored; mappings with a TrueType or Unicode target are
-checked against all the cmaps in the file.  The first applicable mapping is
-used.
-
-If you are writing an encoding file to be used with the TrueType backend, you
-should ensure that mappings are mentioned in decreasing order of preference.
-
-4.3  Format of encoding directory files
+4.1.3  Format of encoding directory files
 
 In order to use a font in an encoding that the font backend does not know
-about, you need to have an `encodings.dir' file in the same directory as the
-font file used.  The `encodings.dir' file has a similar format to
-`fonts.dir'.  Its first line specifies the number of encodings, while every
-successive line has two columns, the name of the encoding, and the name of
-the encoding file; this can be relative to the current directory, or abso-
-lute.  Every encoding name should agree with the encoding name defined in the
-encoding file.  For example,
+about, you need to have an `encodings.dir' file either in the same directory
+as the font file used or in a system-wide location
+(`/usr/X11R6/lib/X11/fonts/encodings/' by default).
+
+The `encodings.dir' file has a similar format to `fonts.dir'.  Its first line
+specifies the number of encodings, while every successive line has two
+columns, the name of the encoding, and the name of the encoding file; this
+can be relative to the current directory, or absolute.  Every encoding name
+should agree with the encoding name defined in the encoding file.  For exam-
+ple,
 
      3
      mulearabic-0 /usr/X11R6/lib/X11/fonts/encodings/mulearabic-0.enc
@@ -616,7 +722,7 @@ pressed or gzipped.
 The `encoding.dir' files are best maintained by the `mkfontdir' utility.
 Please see the mkfontdir(1) manual page for more information.
 
-4.4  Format of encoding files
+4.1.4  Format of encoding files
 
 The encoding files are ``free form,'' i.e. any string of whitespace is equiv-
 alent to a single space.  Keywords are parsed in a non-case-sensitive manner,
@@ -635,7 +741,6 @@ possibly its alternate names (aliases):
 
      STARTENCODING mulearabic-0
      ALIAS arabic-0
-     ALIAS something-else
 
 The name of the encoding and its aliases should be suitable for use in an
 XLFD font name, and therefore contain exactly one dash `-'.
@@ -755,7 +860,7 @@ In order to make future extensions to the format possible, lines starting
 with an unknown keyword are silently ignored, as are mapping sections with an
 unknown target.
 
-4.5  Using symbol fonts
+4.1.5  Using symbol fonts
 
 Type 1 symbol fonts should be installed using the adobe-fontspecific encod-
 ing.
@@ -768,21 +873,21 @@ microsoft-cp1252, or, for older fonts, microsoft-win3.1.
 In order to guarantee consistent results (especially between Type 1 and True-
 Type versions of the same font), it is possible to define a special encoding
 for a given font. This has already been done for the ZapfDingbats font; see
-the file encodings/adobe-dingbats.enc.
+the file `encodings/adobe-dingbats.enc'.
 
-4.6  Hints about using badly encoded fonts
+4.1.6  Hints about using badly encoded fonts
 
 A number of text fonts are incorrectly encoded. Incorrect encoding is some-
 times done by design, in order to make a font for an exotic script appear
-like an ordinary Western text font.  It is often the result of the font
-designer's laziness or incompetence; for some reason, most people seem to
-find it easier to invent idiosyncratic glyph names rather than follow the
-Adobe glyph list.
+like an ordinary Western text font on systems which are not easily extended
+with new locale data.  It is often the result of the font designer's laziness
+or incompetence; for some reason, most people seem to find it easier to
+invent idiosyncratic glyph names rather than follow the Adobe glyph list.
 
 There are two ways of dealing with such fonts: using them with the encoding
 they were designed for, and creating an ad hoc encoding file.
 
-4.6.1  Using fonts with the designer's encoding
+4.1.6.1  Using fonts with the designer's encoding
 
 In the case of Type 1 fonts, the font designer can specify a default encod-
 ing; this encoding is requested by using the `adobe-fontspecific' encoding in
@@ -796,48 +901,42 @@ are designed with either Microsoft or Apple platforms in mind, so one of
 `microsoft-symbol', `microsoft-cp1252', `microsoft-win3.1', or `apple-roman'
 should yield reasonable results.
 
-4.6.2  Specifying an ad hoc encoding file
+4.1.6.2  Specifying an ad hoc encoding file
 
 It is always possible to define an encoding file to put the glyphs in a font
 in any desired order. Again, see the `encodings/adobe-dingbats.enc' file to
 see how this is done.
 
-4.6.3  Specifying font aliases
+4.1.6.3  Specifying font aliases
 
 By following the directions above, you will find yourself with a number of
 fonts with unusual names --- with encodings such as `adobe-fontspecific',
 `microsoft-win3.1' etc.  In order to use these fonts with standard applica-
 tions, it may be useful to remap them to their proper names.
 
-This is done by writing a `fonts.alias' file. The format of this file is sim-
-ilar to the format of the `fonts.dir' file, except that it maps XLFD names to
-XLFD names. A `fonts.alias' file might look as follows:
+This is done by writing a `fonts.alias' file. The format of this file is very
+simple: it consists of a series of lines each mapping an alias name to a font
+name.  A `fonts.alias' file might look as follows:
 
-     1
      "-ogonki-alamakota-medium-r-normal--0-0-0-0-p-0-iso8859-2" \
        "-ogonki-alamakota-medium-r-normal--0-0-0-0-p-0-adobe-fontspecific"
 
 (both XLFD names on a single line).  The syntax of the `fonts.alias' file is
-precisely described in the mkfontdir(1) manual page.
+more precisely described in the mkfontdir(1) manual page.
 
-5.  Additional notes about TrueType support
+4.2  Additional notes about scalable core fonts
 
-This version of XFree86 comes with two TrueType backends, FreeType (module
-`freetype', formerly known as xfsft) and X-TrueType (module `xtt').  These
-two backends are not compatible: only one of them can be used at any one
-time.
+The FreeType backend (module `freetype', formerly known as xfsft) is able to
+deal with both TrueType and Type 1 fonts.  This puts it in conflict with the
+X-TT and Type 1 backends respectively.
 
-In order to use the FreeType backend, please check that the `Module' section
-of your `XF86Config' file contains a line that reads
+If both the FreeType and the Type 1 backends are loaded, the FreeType backend
+will be used for Type 1 fonts.  If both the FreeType and X-TT backends are
+loaded, X-TT will be used for TrueType fonts.
 
-     Load "freetype"
+4.2.1  Delayed glyph rasterisation
 
-In order to use the X-TrueType backend, replace the line in your XF86Config
-file that loads the freetype module with a line that reads
-
-         Load "xtt"
-
-Both TrueType backends delay glyph rasterisation up to the time at which a
+Both FreeType and X-TT delay glyph rasterisation up to the time at which a
 glyph is first used.  For this reason, they only provide an approximate value
 for the ``average width'' font property.
 
@@ -852,13 +951,15 @@ font really to be a character-cell font.  You are encouraged to make use of
 this optimisation when useful, but be warned that not all monospaced fonts
 are character-cell fonts.
 
-5.1  The FreeType TrueType backend
+4.2.2  About the FreeType backend
 
-The FreeType backend (formerly xfsft) is a backend based on the FreeType
-library (see the FreeType web site <URL:http://www.freetype.org/>) and has
-support for the ``fontenc'' style of internationalisation (see Section The
-fontenc layer (section 4.1, page 1)).  This backend supports TrueType Font
-files (`*.ttf') and TrueType Collections (`*.ttc').
+The FreeType backend (formerly xfsft) is a backend based on version 2 of the
+FreeType library (see the FreeType web site <URL:http://www.freetype.org/>)
+and has support for the ``fontenc'' style of internationalisation (see The
+fontenc layer (section 4.1.1, page 1)).  This backend supports TrueType font
+files (`*.ttf'), OpenType font files (`*.otf'), TrueType Collections
+(`*.ttc'), OpenType Collections (`*.otc') and Type 1 font files (`*.pfa' and
+`*.pfb').
 
 In order to access the faces in a TrueType Collection file, the face number
 must be specified in the fonts.dir file before the filename within colons.
@@ -869,20 +970,18 @@ For example,
 refers to face 2 in the `mincho.ttc' TrueType Collection file.
 
 The FreeType backend uses the fontenc layer in order to support recoding of
-fonts; this was described in Section The fontenc layer (section 4.1, page 1)
-and especially Section FreeType-specific notes about fontenc (section 4.2.3,
-page 1) earlier in this document.
+fonts; this was described in The fontenc layer (section 4.1.1, page 1) and
+especially FreeType-specific notes about fontenc (section 4.1.2.1, page 1)
+earlier in this document.
 
-5.2  The X-TrueType TrueType backend
+4.2.3  About the X-TrueType TrueType backend
 
-The `X-TrueType' backend is another backend based on the FreeType library.
-X-TrueType doesn't use the `fontenc' layer for managing font encodings, but
-instead uses its own database of encodings.  However, X-TrueType includes a
-large number of encodings, and any encoding you need is likely to be present
-in X-TrueType.
+The `X-TrueType' backend is a backend based on version 1 of the FreeType
+library.  X-TrueType doesn't use the `fontenc' layer for managing font encod-
+ings, but instead uses its own database of encodings.
 
-X-TrueType extends the `fonts.dir' syntax with a number of options, known as
-`TTCap'.  A `TTCap' entry follows the general syntax
+X-TrueType extends the `fonts.dir' syntax with a number of options, collec-
+tively known as `TTCap'.  A `TTCap' entry follows the general syntax
 
      :option=value:
 
@@ -897,47 +996,48 @@ cho.ttc' is specified using:
 More information on the TTCap syntax, and on X-TrueType in general, may be
 found on the X-TrueType home page <URL:http://x-tt.dsl.gr.jp/>.
 
-6.  Appendix: background and terminology
+5.  Appendix: background and terminology
 
-6.1  Characters and glyphs
+5.1  Characters and glyphs
 
 A computer text-processing system inputs keystrokes and outputs glyphs, small
 pictures that are assembled on paper or on a computer screen.  Keystrokes and
 glyphs do not, in general, coincide: for example, if the system does generate
-ligatures, then to the two keystrokes <f><i> will typically correspond a sin-
-gle glyph.  Similarly, if the system shapes Arabic glyphs in a reasonable
-manner, then multiple different glyphs may correspond to a single keystroke.
+ligatures, then to the sequence of two keystrokes <f><i> will typically cor-
+respond a single glyph.  Similarly, if the system shapes Arabic glyphs in a
+vaguely reasonable manner, then multiple different glyphs may correspond to a
+single keystroke.
 
 The complex transformation rules from keystrokes to glyphs are usually fac-
-tored into two simpler transformations, going through the intermediary of
-characters.  You may want to think of characters as the basic unit of data
-that is stored e.g. in the buffer of your text editor.  While the definition
-of a character is intrinsically application-specific, a number of standard-
-ised collections of characters have been defined.
+tored into two simpler transformations, from keystrokes to characters and
+from characters to glyphs.  You may want to think of characters as the basic
+unit of text that is stored e.g. in the buffer of your text editor.  While
+the definition of a character is intrinsically application-specific, a number
+of standardised collections of characters have been defined.
 
 A coded character set is a set of characters together with a mapping from
 integer codes --- known as codepoints --- to characters.  Examples of coded
 character sets include US-ASCII, ISO 8859-1, KOI8-R, and JIS X 0208(1990).
 
-A coded character set need not use 8 bit integers to index characters. Many
-early mainframes used 6 bit character sets, while 16 bit (or more) character
+A coded character set need not use 8 bit integers to index characters.  Many
+early systems used 6 bit character sets, while 16 bit (or more) character
 sets are necessary for ideographic writing systems.
 
-6.2  Font files, fonts, and XLFD
+5.2  Font files, fonts, and XLFD
 
 Traditionally, typographers speak about typefaces and founts.  A typeface is
 a particular style or design, such as Times Italic, while a fount is a
 molten-lead incarnation of a given typeface at a given size.
 
-Digital fonts come in font files.  A font file contains all the information
-necessary for generating glyphs of a given typeface, and applications using
-font files may access glyph information in an arbitrary order.
+Digital fonts come in font files.  A font file contains the information nec-
+essary for generating glyphs of a given typeface, and applications using font
+files may access glyph information in an arbitrary order.
 
 Digital fonts may consist of bitmap data, in which case they are said to be
 bitmap fonts.  They may also consist of a mathematical description of glyph
 shapes, in which case they are said to be scalable fonts.  Common formats for
 scalable font files are Type 1 (sometimes incorrectly called ATM fonts or
-PostScript fonts), Speedo and TrueType.
+PostScript fonts), TrueType and Speedo.
 
 The glyph data in a digital font needs to be indexed somehow.  How this is
 done depends on the font file format.  In the case of Type 1 fonts, glyphs
@@ -945,33 +1045,38 @@ are identified by glyph names.  In the case of TrueType fonts, glyphs are
 indexed by integers corresponding to one of a number of indexing schemes
 (usually Unicode --- see below).
 
-The X11 system uses the data in font file to generate font instances, which
-are collections of glyphs at a given size indexed according to a given encod-
-ing.
+The X11 core fonts system uses the data in a font file to generate font
+instances, which are collections of glyphs at a given size indexed according
+to a given encoding.
 
-X11 font instances are usually specified using a notation known as the X Log-
-ical Font Description (XLFD).  An XLFD starts with a dash `-', and consists
-of fourteen fields separated by dashes, for example
+X11 core font instances are usually specified using a notation known as the X
+Logical Font Description (XLFD).  An XLFD starts with a dash `-', and con-
+sists of fourteen fields separated by dashes, for example:
 
-     -adobe-courier-medium-r-normal--0-0-0-0-m-0-iso8859-1
+     -adobe-courier-medium-r-normal--12-120-75-75-m-70-iso8859-1
 
 Or particular interest are the last two fields `iso8859-1', which specify the
 font instance's encoding.
 
+A scalable font is specified by an XLFD which contains zeroes instead of some
+fields:
+
+     -adobe-courier-medium-r-normal--0-0-0-0-m-0-iso8859-1
+
 X11 font instances may also be specified by short name.  Unlike an XLFD, a
 short name has no structure and is simply a conventional name for a font
-instance.  Two short names are of particular interest, as they are handled
-specially by the server, and the server will not start if font instances with
-these names cannot be opened.  These are `fixed', which specifies the fall-
-back font to use when the requested font cannot be opened, and `cursor',
-which specifies the set of glyphs to be used by the mouse pointer.
+instance.  Two short names are of particular interest, as the server will not
+start if font instances with these names cannot be opened.  These are
+`fixed', which specifies the fallback font to use when the requested font
+cannot be opened, and `cursor', which specifies the set of glyphs to be used
+by the mouse pointer.
 
-Short names are usually implemented as aliases to XLFDs; the `fixed' and
-`cursor' aliases are defined in
+Short names are usually implemented as aliases to XLFDs; the standard `fixed'
+and `cursor' aliases are defined in
 
      /usr/X11R6/lib/X11/font/misc/fonts.alias
 
-6.3  Unicode
+5.3  Unicode
 
 Unicode (<URL:http://www.unicode.org>) is a coded character set with the goal
 of uniquely identifying all characters for all scripts, current and histori-
@@ -980,34 +1085,46 @@ it is often possible to use it as such.
 
 Unicode is an open character set, meaning that codepoint assignments may be
 added to Unicode at any time (once specified, though, an assignment can never
-be changed).  For this reason, a Unicode font will be sparse, and only define
-glyphs for a subset of the character registry of Unicode.
+be changed).  For this reason, a Unicode font will be sparse, meaning that it
+only defines glyphs for a subset of the character registry of Unicode.
 
 The Unicode standard is defined in parallel with the international standard
-ISO 10646.  Assignments in the two standards are always equivalent, and this
-document uses the terms Unicode and ISO 10646 interchangeably.
+ISO 10646.  Assignments in the two standards are always equivalent, and we
+often use the terms Unicode and ISO 10646 interchangeably.
 
-When used in X11, Unicode-encoded fonts should have the last two fields of
-their XLFD set to `iso10646-1'.
+When used in the X11 core fonts system, Unicode-encoded fonts should have the
+last two fields of their XLFD set to `iso10646-1'.
 
-7.  References
+6.  References
 
 XFree86 comes with extensive documentation in the form of manual pages and
-typeset documents.  Before installing fonts, you really should read the
-mkfontdir(1) manual page; other manual pages of interest include X(1),
-Xserver(1), xset(1), xlsfonts(1) and showfont(1).  In addition, you may want
-to read the X Logical Font Description document, by Jim Flowers, which is
-provided in the file `xc/doc/xlfd.PS.Z'.
+typeset documents.  Before installing fonts, you really should read the font-
+config(3) and mkfontdir(1) manual pages; other manual pages of interest
+include X(7), Xserver(1), xset(1), Xft(3), xlsfonts(1) and showfont(1).  In
+addition, you may want to read the X Logical Font Description document, by
+Jim Flowers, which is provided in the file `xc/doc/xlfd.PS.Z'.
+
+The latest released version of the XFree86 documentation (including this doc-
+ument and all manual pages) is available as current XFree86 documentation
+<URL:http://www.xfree86.org/current/>.
 
 The comp.fonts FAQ <URL:http://www.netmeg.net/faq/computers/fonts/>, which is
 unfortunately no longer being maintained, contains a wealth of information
 about digital fonts.
 
+Xft and Fontconfig are described on Keith Packard's Fontconfig site
+<URL:http://www.fontconfig.org>.
+
 The xfsft home page <URL:http://www.dcs.ed.ac.uk/home/jec/programs/xfsft/>
 has been superseded by this document, and is now obsolete; you may however
-still find some of the information it contains useful.  Joerg Pommnitz' xfsft
-page <URL:http://www.joerg-pommnitz.de/TrueType/xfsft.html> is the canonical
-source for the `ttmkfdir' utility.
+still find some of the information that it contains useful.  Joerg Pommnitz'
+xfsft page <URL:http://www.joerg-pommnitz.de/TrueType/xfsft.html> is the
+canonical source for the `ttmkfdir' utility, which is the ancestor of
+mkfontscale.
+
+The author's software pages <URL:http://www.pps.jussieu.fr/~jch/software/>
+might or might not contain related scribbles and development versions of
+software.
 
 The documentation of X-TrueType is available from the X-TrueType home page
 <URL:http://x-tt.dsl.gr.jp/>.
@@ -1015,15 +1132,15 @@ The documentation of X-TrueType is available from the X-TrueType home page
 A number of East-Asian CIDFonts are available from O'Reilly's FTP site
 <URL:ftp://ftp.oreilly.com/pub/examples/nutshell/cjkv/adobe/>.
 
-The Unicode consortium site <URL:http://www.unicode.org> may be of interest.
-But you are more likely to find what you need on Markus Kuhn's UTF-8 and Uni-
-code FAQ <URL:http://www.cl.cam.ac.uk/~mgk25/unicode.html>.
+While the Unicode consortium site <URL:http://www.unicode.org> may be of
+interest,  you are more likely to find what you need in Markus Kuhn's UTF-8
+and Unicode FAQ <URL:http://www.cl.cam.ac.uk/~mgk25/unicode.html>.
 
 The IANA RFC documents, available from a number of sites throughout the
-world, often provide interesting information about character set issues; my
-favourite is RFC 373.
+world, often provide interesting information about character set issues; see
+for example RFC 373.
 
-     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/fonts.sgml,v 1.15 2001/12/17 19:25:36 dawes Exp $
+     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/fonts.sgml,v 1.20 2003/01/20 03:43:07 dawes Exp $
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.fonts,v 1.19 2001/12/20 00:15:41 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.fonts,v 1.22 2003/01/20 04:10:01 dawes Exp $

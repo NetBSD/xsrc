@@ -1,4 +1,4 @@
-/* $XFree86: xc/include/extensions/Xinerama.h,v 3.2 2000/03/01 01:04:20 dawes Exp $ */
+/* $XFree86: xc/include/extensions/Xinerama.h,v 3.3 2002/09/16 18:05:19 eich Exp $ */
 
 #ifndef _Xinerama_h
 #define _Xinerama_h
@@ -10,6 +10,8 @@ typedef struct {
    short width;
    short height;
 } XineramaScreenInfo;
+
+_XFUNCPROTOBEGIN
 
 Bool XineramaQueryExtension (
    Display *dpy,
@@ -39,6 +41,8 @@ XineramaQueryScreens(
    Display *dpy,
    int     *number
 );
+
+_XFUNCPROTOEND
 
 #endif /* _Xinerama_h */
 

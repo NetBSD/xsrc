@@ -26,7 +26,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/xdm/greeter/Login.h,v 3.6 2001/12/14 20:01:28 dawes Exp $ */
+/* $XFree86: xc/programs/xdm/greeter/Login.h,v 3.7 2002/10/06 20:42:16 herrb Exp $ */
 
 /*
  * xdm - display manager daemon
@@ -114,10 +114,17 @@ from The Open Group.
 
 /* notifyDone interface definition */
 
+#ifndef __OpenBSD__
 #define NAME_LEN	32
+#define PASSWORD_LEN	32
+#else
+#include <pwd.h>
+#define NAME_LEN	(_PW_NAME_LEN + 2)
+#define PASSWORD_LEN	(_PASSWORD_LEN + 2)
+#endif
 
 typedef struct _LoginData { 
-	char	name[NAME_LEN], passwd[NAME_LEN];
+	char	name[NAME_LEN], passwd[PASSWORD_LEN];
 } LoginData;
 
 # define NOTIFY_OK	0

@@ -1,4 +1,4 @@
-/* $XFree86: xc/extras/ogl-sample/main/gfx/lib/glu/libutil/project.c,v 1.2 2001/10/28 03:32:24 tsi Exp $ */
+/* $XFree86: xc/extras/ogl-sample/main/gfx/lib/glu/libutil/project.c,v 1.3 2002/02/22 21:32:49 dawes Exp $ */
 /*
 ** License Applicability. Except to the extent portions of this file are
 ** made subject to an alternative license as permitted in the SGI Free
@@ -32,8 +32,6 @@
 ** published by SGI, but has not been independently verified as being
 ** compliant with the OpenGL(R) version 1.2.1 Specification.
 **
-** $Date: 2002/01/19 15:27:25 $ $Revision: 1.1.1.2 $
-** $Header: /cvsroot/xsrc/xfree/xc/extras/ogl-sample/main/gfx/lib/glu/libutil/Attic/project.c,v 1.1.1.2 2002/01/19 15:27:25 tron Exp $
 */
 
 #include "gluos.h"

@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/r128/r128_context.h,v 1.9 2001/10/02 11:44:13 alanh Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/r128/r128_context.h,v 1.12 2002/12/16 16:18:52 dawes Exp $ */
 /**************************************************************************
 
 Copyright 1999, 2000 ATI Technologies Inc. and Precision Insight, Inc.,
@@ -40,13 +40,12 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include <X11/Xlibint.h>
 
-#include "dri_mesaint.h"
-#include "dri_tmm.h"
+#include "dri_util.h"
 
 #include "xf86drm.h"
-#include "xf86drmR128.h"
+#include "r128_common.h"
 
-#include "types.h"
+#include "mtypes.h"
 
 #include "r128_sarea.h"
 #include "r128_reg.h"
@@ -82,6 +81,16 @@ typedef struct r128_context *r128ContextPtr;
 #define R128_FALLBACK_RENDER_MODE	0x0010
 #define R128_FALLBACK_MULTIDRAW		0x0020
 #define R128_FALLBACK_LOGICOP		0x0040
+#define R128_FALLBACK_SEP_SPECULAR	0x0080
+#define R128_FALLBACK_BLEND_EQ		0x0100
+#define R128_FALLBACK_BLEND_FUNC	0x0200
+
+
+/* Use the templated vertex format:
+ */
+#define TAG(x) r128##x
+#include "tnl_dd/t_dd_vertex.h"
+#undef TAG
 
 /* Reasons why the GL_BLEND fallback mightn't work:
  */
@@ -93,32 +102,19 @@ typedef struct r128_context *r128ContextPtr;
 #define SUBPIXEL_X  (0.0F)
 #define SUBPIXEL_Y  (0.125F)
 
-/* Offset for points:
- */
-#define PNT_X_OFFSET  ( 0.125F)
-#define PNT_Y_OFFSET  (-0.125F)
 
+typedef void (*r128_tri_func)( r128ContextPtr, 
+				 r128Vertex *,
+				 r128Vertex *,
+				 r128Vertex * );
 
-typedef void (*r128_interp_func)( GLfloat t,
-				  GLfloat *result,
-				  const GLfloat *in,
-				  const GLfloat *out );
+typedef void (*r128_line_func)( r128ContextPtr, 
+				  r128Vertex *,
+				  r128Vertex * );
 
-struct r128_elt_tab {
-   void (*emit_unclipped_verts)( struct vertex_buffer *VB );
+typedef void (*r128_point_func)( r128ContextPtr,
+				   r128Vertex * );
 
-   void (*build_tri_verts)( r128ContextPtr rmesa,
-			    struct vertex_buffer *VB,
-			    GLfloat *O, GLuint *elt );
-
-   void (*interp)( GLfloat t, GLfloat *O,
-		   const GLfloat *I, const GLfloat *J );
-
-   void (*project_and_emit_verts)( r128ContextPtr rmesa,
-				   const GLfloat *verts,
-				   GLuint *elts,
-				   GLuint nr );
-};
 
 struct r128_context {
    GLcontext *glCtx;			/* Mesa context */
@@ -129,22 +125,32 @@ struct r128_context {
    GLuint dirty;			/* Hardware state to be updated */
    r128_context_regs_t setup;
 
-   GLuint vertsize;
-   GLuint vc_format;
-   GLfloat depth_scale;
+   /* Temporaries for translating away float colors:
+    */
+   struct gl_client_array UbyteColor;
+   struct gl_client_array UbyteSecondaryColor;
 
-   GLuint Color;			/* Current draw color */
-   GLuint ClearColor;			/* Color used to clear color buffer */
-   GLuint ClearDepth;			/* Value used to clear depth buffer */
-   GLuint ClearStencil;			/* Value used to clear stencil */
-   GLuint DepthMask;
-   GLuint StencilMask;
+   GLuint NewGLState;
+   GLuint Fallback;
+   GLuint SetupIndex;
+   GLuint SetupNewInputs;
+   GLuint RenderIndex;
+   GLfloat hw_viewport[16];
+   GLfloat depth_scale;
+   GLuint vertex_size;
+   GLuint vertex_stride_shift;
+   GLuint vertex_format;
+   GLuint num_verts;
+   char *verts;		
+
+   CARD32 ClearColor;			/* Color used to clear color buffer */
+   CARD32 ClearDepth;			/* Value used to clear depth buffer */
+   CARD32 ClearStencil;			/* Value used to clear stencil */
 
    /* Map GL texture units onto hardware
     */
    GLint multitex;
    GLint tmu_source[2];
-   GLint tex_dest[2];
    GLuint tex_combine[2];
    GLuint blend_flags;
    GLuint env_color;
@@ -157,41 +163,19 @@ struct r128_context {
    memHeap_t *texHeap[R128_NR_TEX_HEAPS];
    GLint lastTexAge[R128_NR_TEX_HEAPS];
    GLint lastTexHeap;
-
-   /* Current rendering state, fallbacks
+ 
+   /* Fallback rasterization functions 
     */
-   points_func   PointsFunc;
-   line_func     LineFunc;
-   triangle_func TriangleFunc;
-   quad_func     QuadFunc;
-
-   GLuint IndirectTriangles;
-   GLuint Fallback;
-
-   /* Fast path
-    */
-   GLuint SetupIndex;
-   GLuint SetupDone;
-   GLuint RenderIndex;
-   GLuint OnFastPath;
-   r128_interp_func interp;
-   GLfloat *tmp_matrix;
+   r128_point_func draw_point;
+   r128_line_func draw_line;
+   r128_tri_func draw_tri;
 
    /* Vertex buffers
     */
    drmBufPtr vert_buf;
-   GLuint num_verts;
 
-   /* Elt path
-    */
-   drmBufPtr elt_buf, retained_buf;
-   GLushort *first_elt, *next_elt;
-   GLfloat *next_vert, *vert_heap;
-   GLushort next_vert_index;
-   GLushort first_vert_index;
-   GLuint elt_vertsize;
-   struct r128_elt_tab *elt_tab;
-   GLfloat device_matrix[16];
+   GLuint hw_primitive;
+   GLenum render_primitive;
 
    /* Page flipping
     */
@@ -218,7 +202,7 @@ struct r128_context {
    __DRIscreenPrivate	*driScreen;	/* DRI screen */
    __DRIdrawablePrivate	*driDrawable;	/* DRI drawable bound to this ctx */
 
-   int lastStamp;		        /* mirror driDrawable->lastStamp */
+   unsigned int lastStamp;	        /* mirror driDrawable->lastStamp */
 
    drmContext hHWContext;
    drmLock *driHwLock;
@@ -236,6 +220,10 @@ struct r128_context {
    GLuint c_textureSwaps;
    GLuint c_textureBytes;
    GLuint c_vertexBuffers;
+
+   /* VBI
+    */
+   GLuint vbl_seq;
 };
 
 #define R128_CONTEXT(ctx)		((r128ContextPtr)(ctx->DriverCtx))
@@ -248,26 +236,18 @@ struct r128_context {
 		(rmesa->r128Screen->chipset == R128_CARD_TYPE_R128_MOBILITY)
 
 
-extern GLboolean r128CreateContext( Display *dpy, GLvisual *glVisual,
-				    __DRIcontextPrivate *driContextPriv );
-extern void r128DestroyContext( r128ContextPtr rmesa );
-extern r128ContextPtr r128MakeCurrent( r128ContextPtr oldCtx,
-				       r128ContextPtr newCtx,
-				       __DRIdrawablePrivate *dPriv );
+extern GLboolean r128CreateContext( Display *dpy,
+                                    const __GLcontextModes *glVisual,
+				    __DRIcontextPrivate *driContextPriv,
+                                    void *sharedContextPrivate );
 
-/* ================================================================
- * Byte ordering
- */
-#include "X11/Xarch.h"
+extern void r128DestroyContext( __DRIcontextPrivate * );
 
-#if X_BYTE_ORDER == X_LITTLE_ENDIAN
-#define LE32_OUT( x, y )	do { x = y; } while (0)
-#define LE32_OUT_FLOAT( x, y )	do { *(GLfloat *)&(x) = y; } while (0)
-#else
-#include <byteswap.h>
-#define LE32_OUT( x, y )	do { x = bswap_32( y ); } while (0)
-#define LE32_OUT_FLOAT( x, y )	do { x = bswap_32( *(unsigned int *)&y ); } while (0)
-#endif
+extern GLboolean r128MakeCurrent( __DRIcontextPrivate *driContextPriv,
+                                  __DRIdrawablePrivate *driDrawPriv,
+                                  __DRIdrawablePrivate *driReadPriv );
+
+extern GLboolean r128UnbindContext( __DRIcontextPrivate *driContextPriv );
 
 /* ================================================================
  * Debugging:

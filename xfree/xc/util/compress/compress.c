@@ -18,6 +18,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
+/* $XFree86: xc/util/compress/compress.c,v 3.3 2002/05/31 18:46:14 dawes Exp $ */
 
 #ifndef lint
 char copyright[] =
@@ -490,7 +491,7 @@ register int argc; char **argv;
 	zcat_flg = 1;
     }
 
-#if defined(BSD4_2) && !defined(__EMX__)
+#if defined(BSD4_2) && !defined(__UNIXOS2__)
     /* 4.2BSD dependent - take it out if not */
     setlinebuf( stderr );
 #endif /* BSD4_2 */
@@ -692,7 +693,7 @@ register int argc; char **argv;
 			fprintf(stderr, "%s: ", *fileptr);
 	    }
 
-#ifdef __EMX__
+#ifdef __UNIXOS2__
 	    /* force setting binary mode */
 	    _fsetmode(stdin,"b");
 	    _fsetmode(stdout,"b");
@@ -715,7 +716,7 @@ register int argc; char **argv;
 	    }
 	}
     } else {		/* Standard input */
-#ifdef __EMX__
+#ifdef __UNIXOS2__
 	/* force setting binary mode */
 	_fsetmode(stdin,"b");
 	_fsetmode(stdout,"b");
@@ -1373,13 +1374,13 @@ char *ifname, *ofname;
 	mode = statbuf.st_mode & 07777;
 	if (chmod(ofname, mode))		/* Copy modes */
 	    perror(ofname);
-#ifndef __EMX__
+#ifndef __UNIXOS2__
 	chown(ofname, statbuf.st_uid, statbuf.st_gid);	/* Copy ownership */
 #endif
 	timep[0] = statbuf.st_atime;
 	timep[1] = statbuf.st_mtime;
 	utime(ofname, timep);	/* Update last accessed and modified times */
-#ifdef __EMX__
+#ifdef __UNIXOS2__
 	fclose(stdin);
 #endif
 	if (unlink(ifname))	/* Remove input file */

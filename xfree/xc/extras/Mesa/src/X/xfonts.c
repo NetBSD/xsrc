@@ -1,7 +1,7 @@
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.4
+ * Version:  3.5
  *
  * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
  *
@@ -28,15 +28,13 @@
  * Copyright (C) 1995 Thorsten.Ohl @ Physik.TH-Darmstadt.de
  */
 
+#ifdef __VMS
+#include <GL/vms_x_fix.h>
+#endif
 
 #ifdef HAVE_CONFIG_H
 #include "conf.h"
 #endif
-
-#ifdef VMS
-#include <GL/vms_x_fix.h>
-#endif
-
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -181,10 +179,10 @@ fill_bitmap (Display *dpy, Window win, GC gc,
  * determine if a given glyph is valid and return the
  * corresponding XCharStruct.
  */
-static XCharStruct *isvalid(XFontStruct *fs, int which)
+static XCharStruct *isvalid(XFontStruct *fs, unsigned int which)
 {
   unsigned int  rows,pages;
-  int           byte1 = 0,byte2 = 0;
+  unsigned int byte1 = 0,byte2 = 0;
   int           i,valid = 1;
 
   rows = fs->max_byte1 - fs->min_byte1 + 1;
@@ -245,7 +243,7 @@ void Fake_glXUseXFont( Font font, int first, int count, int listbase )
 
   fs = XQueryFont (dpy, font);
   if (!fs) {
-      gl_error(NULL, GL_INVALID_VALUE,
+      _mesa_error(NULL, GL_INVALID_VALUE,
                "Couldn't get font structure information");
       return;
   }
@@ -260,7 +258,7 @@ void Fake_glXUseXFont( Font font, int first, int count, int listbase )
 (GLubyte));
   if (!bm) {
       XFreeFontInfo( NULL, fs, 1 );
-      gl_error(NULL, GL_OUT_OF_MEMORY,
+      _mesa_error(NULL, GL_OUT_OF_MEMORY,
                 "Couldn't allocate bitmap in glXUseXFont()");
       return;
   }

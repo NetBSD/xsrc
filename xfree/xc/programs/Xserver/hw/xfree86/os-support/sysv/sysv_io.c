@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/sysv/sysv_io.c,v 3.9 1999/09/04 13:04:49 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/sysv/sysv_io.c,v 3.11 2003/02/17 15:12:00 dawes Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany
  * Copyright 1993 by David Dawes <dawes@xfree86.org>
@@ -65,3 +65,10 @@ xf86SetKbdLeds(int leds)
 #endif
 }
 
+#include "xf86OSKbd.h"
+
+Bool
+xf86OSKbdPreInit(InputInfoPtr pInfo)
+{
+    return FALSE;
+}

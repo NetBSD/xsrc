@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/glx/renderpix.c,v 1.3 2001/03/21 16:04:39 dawes Exp $ */
+/* $XFree86: xc/lib/GL/glx/renderpix.c,v 1.4 2002/02/22 21:32:54 dawes Exp $ */
 /*
 ** License Applicability. Except to the extent portions of this file are
 ** made subject to an alternative license as permitted in the SGI Free
@@ -260,7 +260,8 @@ void glTexImage2D(GLenum target, GLint level, GLint components,
 {
     __GLX_DECLARE_VARIABLES();
 
-    if (target == GL_PROXY_TEXTURE_2D) {
+    if (target == GL_PROXY_TEXTURE_2D ||
+        target == GL_PROXY_TEXTURE_CUBE_MAP_ARB) {
 	compsize = 0;
     } else {
 	compsize = __glImageSize(width, height, 1, format, type);
@@ -478,6 +479,7 @@ void glColorTable(GLenum target, GLenum internalformat, GLsizei width,
 	case GL_PROXY_COLOR_TABLE:
 	case GL_PROXY_POST_CONVOLUTION_COLOR_TABLE:
 	case GL_PROXY_POST_COLOR_MATRIX_COLOR_TABLE:
+	case GL_PROXY_TEXTURE_CUBE_MAP_ARB:
 	    compsize = 0;
 	    break;
 	default:
@@ -741,7 +743,7 @@ void glSeparableFilter2D(GLenum target, GLenum internalformat,
     }
 }
 
-void glTexImage3D(GLenum target, GLint level, GLint internalformat,
+void glTexImage3D(GLenum target, GLint level, GLenum internalformat,
 		  GLsizei width, GLsizei height, GLsizei depth, GLint border,
 		  GLenum format, GLenum type, const GLvoid *image)
 {

@@ -26,7 +26,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/Xserver/os/xdmauth.c,v 1.6 2001/12/14 20:00:35 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/os/xdmauth.c,v 1.7 2002/11/05 05:50:34 keithp Exp $ */
 
 /*
  * XDM-AUTHENTICATION-1 (XDMCP authentication) and
@@ -349,6 +349,7 @@ XID	id;
     switch (data_length)
     {
     case 16:		    /* auth from files is 16 bytes long */
+#ifdef XDMCP
 	if (authFromXDMCP)
 	{
 	    /* R5 xdm sent bogus authorization data in the accept packet,
@@ -358,15 +359,18 @@ XID	id;
 	    key_bits[0] = '\0';
 	}
 	else
+#endif
 	{
 	    rho_bits = (unsigned char *) data;
 	    key_bits = (unsigned char *) (data + 8);
 	}
 	break;
+#ifdef XDMCP
     case 8:		    /* auth from XDMCP is 8 bytes long */
 	rho_bits = rho.data;
 	key_bits = (unsigned char *) data;
 	break;
+#endif
     default:
 	return 0;
     }
@@ -494,10 +498,12 @@ char	*data;
 	rho_bits = (XdmAuthKeyPtr) data;
 	key_bits = (XdmAuthKeyPtr) (data + 8);
 	break;
+#ifdef XDMCP
     case 8:
 	rho_bits = &rho;
 	key_bits = (XdmAuthKeyPtr) data;
 	break;
+#endif
     default:
 	return 0;
     }

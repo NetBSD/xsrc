@@ -1,6 +1,6 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Configure.c,v 3.68 2002/01/07 21:39:18 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Configure.c,v 3.78 2003/01/18 07:27:13 paulo Exp $ */
 /*
- * Copyright 2000 by Alan Hourihane, Sychdyn, North Wales.
+ * Copyright 2000-2002 by Alan Hourihane, Flint Mountain, North Wales.
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -39,7 +39,7 @@
 #include "xf86.h"
 #include "xf86Config.h"
 #include "xf86Priv.h"
-#include "xf86PciInfo.h"
+#include "xf86PciData.h"
 #define IN_XSERVER
 #include "xf86Parser.h"
 #include "xf86tokens.h"
@@ -68,7 +68,7 @@ xf86MonPtr ConfiguredMonitor;
 Bool xf86DoConfigurePass1 = TRUE;
 Bool foundMouse = FALSE;
 
-#if defined(__EMX__)
+#if defined(__UNIXOS2__)
 #define DFLT_MOUSE_DEV "mouse$"
 #define DFLT_MOUSE_PROTO "OS2Mouse"
 #elif defined(SCO)
@@ -79,45 +79,13 @@ static char *DFLT_MOUSE_DEV = "/dev/mouse";
 #elif defined(__QNXNTO__)
 static char *DFLT_MOUSE_PROTO = "OSMouse";
 static char *DFLT_MOUSE_DEV = "/dev/devi/mouse0";
+#elif defined(__FreeBSD__)
+static char *DFLT_MOUSE_DEV = "/dev/sysmouse";
+static char *DFLT_MOUSE_PROTO = "auto";
 #else
 static char *DFLT_MOUSE_DEV = "/dev/mouse";
 static char *DFLT_MOUSE_PROTO = "auto";
 #endif
-
-static void
-GetPciCard(int vendor, int chipType, int *vendor1, int *vendor2, int *card)
-{
-    int k, j;
-   
-    *vendor1 = 0;
-    *vendor2 = 0;
-    *card = 0;
-
-    k = 0;
-    while (xf86PCIVendorNameInfo[k].token) {
-	if (xf86PCIVendorNameInfo[k].token == vendor) {
-	    *vendor1 = k;
-	    break;
-	}
-	k++;
-    }
-    k = 0;
-    while(xf86PCIVendorInfo[k].VendorID) {
-    	if (xf86PCIVendorInfo[k].VendorID == vendor) {
-	    j = 0;
-	    while (xf86PCIVendorInfo[k].Device[j].DeviceName) {
-	        if (xf86PCIVendorInfo[k].Device[j].DeviceID == chipType) {
-		    *vendor2 = k;
-		    *card = j;
-		    break;
-	    	}
-	    	j++;
-	    }
-	    break;
-    	}
-	k++;
-    }
-}
 
 /*
  * This is called by the driver, either through xf86Match???Instances() or
@@ -158,7 +126,7 @@ xf86AddBusDeviceToConfigure(const char *driver, BusType bus, void *busData, int 
 	    if (!DevToConfig[i].pVideo)
 		return NULL;
 	break;
-#ifdef __sparc__
+#if defined(__sparc__) && !defined(__OpenBSD__)
     case BUS_SBUS:
 	for (i = 0;  i < nDevToConfig;  i++)
 	    if (DevToConfig[i].sVideo &&
@@ -195,35 +163,39 @@ xf86AddBusDeviceToConfigure(const char *driver, BusType bus, void *busData, int 
 
     switch (bus) {
     case BUS_PCI: {
-	int vendor1, vendor2, card;
+	const char *VendorName;
+	const char *CardName;
+	char busnum[8];
 
 	NewDevice.pVideo = pVideo;
-	GetPciCard(pVideo->vendor, pVideo->chipType,
-	    &vendor1, &vendor2, &card);
+	xf86FindPciNamesByDevice(pVideo->vendor, pVideo->chipType,
+				 NOVENDOR, NOSUBSYS,
+				 &VendorName, &CardName, NULL, NULL);
 
-	if (vendor1 == 0 || (vendor2 == 0 && card == 0)) {
-   	    FatalError("\nXFree86 has found a valid card configuration.\nUnfortunately the appropriate data has not been added to xf86PciInfo.h.\nPlease forward 'scanpci -v' output to XFree86 support team.");
+	if (!VendorName) {
+	    VendorName = xnfalloc(15);
+	    sprintf((char*)VendorName, "Unknown Vendor");
 	}
 
-#	define VendorName xf86PCIVendorNameInfo[vendor1].name
-#	define CardName   xf86PCIVendorInfo[vendor2].Device[card].DeviceName
+	if (!CardName) {
+	    CardName = xnfalloc(14);
+	    sprintf((char*)CardName, "Unknown Board");
+	}
 
 	NewDevice.GDev.identifier =
 	    xnfalloc(strlen(VendorName) + strlen(CardName) + 2);
 	sprintf(NewDevice.GDev.identifier, "%s %s", VendorName, CardName);
 
 	NewDevice.GDev.vendor = (char *)VendorName;
-	NewDevice.GDev.board = CardName;
+	NewDevice.GDev.board = (char *)CardName;
 
 	NewDevice.GDev.busID = xnfalloc(16);
-	sprintf(NewDevice.GDev.busID, "PCI:%d:%d:%d",
-	    pVideo->bus, pVideo->device, pVideo->func);
+	xf86FormatPciBusNumber(pVideo->bus, busnum);
+	sprintf(NewDevice.GDev.busID, "PCI:%s:%d:%d",
+	    busnum, pVideo->device, pVideo->func);
 
 	NewDevice.GDev.chipID = pVideo->chipType;
 	NewDevice.GDev.chipRev = pVideo->chipRev;
-
-#	undef VendorName
-#	undef CardName
 
 	if (chipset < 0)
 	    chipset = (pVideo->vendor << 16) | pVideo->chipType;
@@ -233,7 +205,7 @@ xf86AddBusDeviceToConfigure(const char *driver, BusType bus, void *busData, int 
 	NewDevice.GDev.identifier = "ISA Adapter";
 	NewDevice.GDev.busID = "ISA";
 	break;
-#ifdef __sparc__
+#if defined(__sparc__) && !defined(__OpenBSD__)
     case BUS_SBUS: {
 	char *promPath = NULL;
 	NewDevice.sVideo = (sbusDevicePtr) busData;
@@ -291,7 +263,8 @@ configureInputSection (void)
     /* Crude mechanism to auto-detect mouse (os dependent) */
     { 
 	int fd;
-#ifdef linux
+#if 0 && defined linux
+	/* Our autodetection code can do a better job */
 	int len;
 	char path[32];
 
@@ -302,9 +275,9 @@ configureInputSection (void)
 	}
 #endif
 #ifdef WSCONS_SUPPORT
-	fd = open("/dev/wsmouse0", 0);
+	fd = open("/dev/wsmouse", 0);
 	if (fd > 0) {
-	    DFLT_MOUSE_DEV = "/dev/wsmouse0";
+	    DFLT_MOUSE_DEV = "/dev/wsmouse";
 	    DFLT_MOUSE_PROTO = "wsmouse";
 	    close(fd);
 	}
@@ -657,6 +630,8 @@ configureModuleSection (void)
             /* Add only those font backends which are referenced by fontpath */
             /* 'strstr(dFP,"/dir")' is meant as 'dFP =~ m(/dir\W)' */
     	    if (defaultFontPath && (
+		(strcmp(*el, "xtt")  == 0 &&
+		 strstr(defaultFontPath, "/TrueType")) ||
     	        (strcmp(*el, "type1")  == 0 &&
 		 strstr(defaultFontPath, "/Type1")) ||
     	        (strcmp(*el, "speedo") == 0 &&
@@ -740,7 +715,8 @@ configureDDCMonitorSection (int screennum)
 	  len = 0;
 	}
 	if ((ptr->mon_comment =
-	     xrealloc(ptr->mon_comment, len+strlen(displaySize_string)))) {
+	     xf86confrealloc(ptr->mon_comment, 
+			     len+strlen(displaySize_string)))) {
 	  strcpy(ptr->mon_comment + len, displaySize_string);
 	}
       }
@@ -754,9 +730,11 @@ configureDDCMonitorSection (int screennum)
 	    case DS_WHITE_P:
 	      break;
 	    case DS_NAME:
-	      xfree(ptr->mon_modelname);
-	      ptr->mon_modelname = 
-		strdup((char*)(ConfiguredMonitor->det_mon[i].section.name));
+		ptr->mon_modelname  = xf86confrealloc(ptr->mon_modelname, 
+		  strlen((char*)(ConfiguredMonitor->det_mon[i].section.name))
+		    + 1);
+		strcpy(ptr->mon_modelname,
+		       (char*)(ConfiguredMonitor->det_mon[i].section.name));
 	      break;
 	    case DS_ASCII_STR:
 	    case DS_SERIAL:
@@ -859,7 +837,7 @@ DoConfigure()
     if (!(home = getenv("HOME")))
     	home = "/";
     {
-#ifdef __EMX__
+#ifdef __UNIXOS2__
 #define PATH_MAX 2048
 #endif
 #if defined(SCO) || defined(SCO325)
@@ -995,7 +973,7 @@ DoConfigure()
 	ErrorF("\nXFree86 is not able to detect your mouse.\n"
 		"Edit the file and correct the Device.\n");
     } else {
-#ifndef __EMX__  /* OS/2 definitely has a mouse */
+#ifndef __UNIXOS2__  /* OS/2 definitely has a mouse */
 	ErrorF("\nXFree86 detected your mouse at device %s.\n"
 		"Please check your config if the mouse is still not\n"
 		"operational, as by default XFree86 tries to autodetect\n"

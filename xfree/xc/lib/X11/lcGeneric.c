@@ -28,7 +28,7 @@
  *  This is source code modified by FUJITSU LIMITED under the Joint
  *  Development Agreement for the CDE/Motif PST.
  */
-/* $XFree86: xc/lib/X11/lcGeneric.c,v 3.16 2001/11/16 00:52:27 dawes Exp $ */
+/* $XFree86: xc/lib/X11/lcGeneric.c,v 3.17 2003/02/03 22:11:58 paulo Exp $ */
 
 #include <stdio.h>
 #include "Xlibint.h"
@@ -526,7 +526,7 @@ read_charset_define(
                 Xfree(charsetd->encoding_name);
             }
 */
-            tmp = (char *)Xmalloc(strlen(value[0]+1));
+            tmp = (char *)Xmalloc(strlen(value[0])+1);
             strcpy(tmp,value[0]);
             charsetd->encoding_name = tmp;
             charsetd->xrm_encoding_name = XrmStringToQuark(tmp);

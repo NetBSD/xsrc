@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xf4bpp/ppcArea.c,v 1.3 1999/06/06 08:48:57 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xf4bpp/ppcArea.c,v 1.4 2003/02/18 21:29:59 tsi Exp $ */
 /*
  * Copyright IBM Corporation 1987,1988,1989
  *
@@ -36,7 +36,7 @@
 #include "ibmTrace.h"
 
 void
-xf4bppAreaFill( pWin, nboxes, pBox, pGC )
+xf4bppFillArea( pWin, nboxes, pBox, pGC )
     register WindowPtr pWin ;
     register int nboxes ;
     register BoxPtr pBox ;
@@ -47,22 +47,22 @@ int alu ;
 unsigned long int fg, bg, pm ;
 int xSrc, ySrc ;
 PixmapPtr pPixmap ;
+ppcPrivGC *pPrivGC = pGC->devPrivates[mfbGCPrivateIndex].ptr;
 
-TRACE( ( "xf4bppAreaFill(0x%x,%d,0x%x,0x%x)\n", pWin, nboxes, pBox, pGC ) ) ;
+TRACE( ( "xf4bppFillArea(0x%x,%d,0x%x,0x%x)\n", pWin, nboxes, pBox, pGC ) ) ;
 
-if ( ( alu = ( (ppcPrivGC *) pGC->devPrivates[mfbGCPrivateIndex].ptr )->colorRrop.alu ) == GXnoop
-  || !nboxes )
+if ( ( alu = pPrivGC->colorRrop.alu ) == GXnoop || !nboxes )
 	return ;
 
 xSrc = pGC->patOrg.x + pWin->drawable.x ;
 ySrc = pGC->patOrg.y + pWin->drawable.y ;
 
-pm = ( (ppcPrivGC *) pGC->devPrivates[mfbGCPrivateIndex].ptr )->colorRrop.planemask ;
-fg = ( (ppcPrivGC *) pGC->devPrivates[mfbGCPrivateIndex].ptr )->colorRrop.fgPixel ;
-bg = ( (ppcPrivGC *) pGC->devPrivates[mfbGCPrivateIndex].ptr )->colorRrop.bgPixel ;
+pm = pPrivGC->colorRrop.planemask ;
+fg = pPrivGC->colorRrop.fgPixel ;
+bg = pPrivGC->colorRrop.bgPixel ;
 
 nboxes++ ;
-switch (  ( (ppcPrivGC *) pGC->devPrivates[mfbGCPrivateIndex].ptr )->colorRrop.fillStyle ) {
+switch ( pPrivGC->colorRrop.fillStyle ) {
 	case FillTiled:
 		for ( pPixmap = pGC->tile.pixmap ; --nboxes ; pBox++ )
 			if ( ( w = pBox->x2 - ( x = pBox->x1 ) )
@@ -92,5 +92,4 @@ switch (  ( (ppcPrivGC *) pGC->devPrivates[mfbGCPrivateIndex].ptr )->colorRrop.f
 		break ;
 }
 
-return ;
 }

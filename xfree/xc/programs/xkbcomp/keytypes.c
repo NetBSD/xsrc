@@ -24,7 +24,7 @@
  THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
  ********************************************************/
-/* $XFree86: xc/programs/xkbcomp/keytypes.c,v 1.4 2001/01/17 23:45:44 dawes Exp $ */
+/* $XFree86: xc/programs/xkbcomp/keytypes.c,v 1.5 2002/06/05 00:00:37 dawes Exp $ */
 
 #include "xkbcomp.h"
 #include "tokens.h"
@@ -91,39 +91,29 @@ Atom	tok_KEYPAD;
 
 /***====================================================================***/
 
-_XFUNCPROTOBEGIN
-
 extern Bool AddMapEntry(
-#if NeedFunctionPrototypes
     XkbDescPtr		/* xkb */,
     KeyTypeInfo *	/* type */,
     XkbKTMapEntryPtr	/* new */,
     Bool		/* clobber */,
     Bool		/* report */
-#endif
 );
 
 extern Bool AddPreserve(
-#if NeedFunctionPrototypes
     XkbDescPtr		/* xkb */,
     KeyTypeInfo *	/* type */,
     PreserveInfo *	/* new */,
     Bool		/* clobber */,
     Bool		/* report */
-#endif
 );
 
 extern Bool AddLevelName(
-#if NeedFunctionPrototypes
     KeyTypeInfo *	/* type */,
     unsigned		/* level */,
     Atom		/* name */,
     Bool		/* clobber */,
     Bool		/* report */
-#endif
 );
-
-_XFUNCPROTOEND
 
 #define	MapEntryTxt(t,x,e)	\
     XkbVModMaskText((t)->dpy,(x),(e)->mods.real_mods,(e)->mods.vmods,XkbMessage)
@@ -138,14 +128,7 @@ _XFUNCPROTOEND
 /***====================================================================***/
 
 static void
-#if NeedFunctionPrototypes
 InitKeyTypesInfo(KeyTypesInfo *info,XkbDescPtr xkb,KeyTypesInfo *from)
-#else
-InitKeyTypesInfo(info,xkb,from)
-    KeyTypesInfo *	info;
-    XkbDescPtr		xkb;
-    KeyTypesInfo *	from;
-#endif
 {
     tok_ONE_LEVEL= XkbInternAtom(NULL,"ONE_LEVEL",False);
     tok_TWO_LEVEL= XkbInternAtom(NULL,"TWO_LEVEL",False);
@@ -210,12 +193,7 @@ InitKeyTypesInfo(info,xkb,from)
 }
 
 static void
-#if NeedFunctionPrototypes
 FreeKeyTypeInfo(KeyTypeInfo *type)
-#else
-FreeKeyTypeInfo(type)
-    KeyTypeInfo *	type;
-#endif
 {
     if (type->entries!=NULL) {
 	uFree(type->entries);
@@ -233,12 +211,7 @@ FreeKeyTypeInfo(type)
 }
 
 static void
-#if NeedFunctionPrototypes
 FreeKeyTypesInfo(KeyTypesInfo *info)
-#else
-FreeKeyTypesInfo(info)
-    KeyTypesInfo *	info;
-#endif
 {
     info->dpy= NULL;
     if (info->name)
@@ -256,12 +229,7 @@ FreeKeyTypesInfo(info)
 }
 
 static KeyTypeInfo *
-#if NeedFunctionPrototypes
 NextKeyType(KeyTypesInfo *info)
-#else
-NextKeyType(info)
-    KeyTypesInfo *	info;
-#endif
 {
 KeyTypeInfo *		type;
 
@@ -278,13 +246,7 @@ KeyTypeInfo *		type;
 }
 
 static KeyTypeInfo *
-#if NeedFunctionPrototypes
 FindMatchingKeyType(KeyTypesInfo *info,KeyTypeInfo *new)
-#else
-FindMatchingKeyType(info,new)
-    KeyTypesInfo *	info;
-    KeyTypeInfo	*	new;
-#endif
 {
 KeyTypeInfo	*old;
 
@@ -296,14 +258,7 @@ KeyTypeInfo	*old;
 }
 
 static Bool
-#if NeedFunctionPrototypes
 ReportTypeBadWidth(char *type,int has,int needs)
-#else
-ReportTypeBadWidth(type,has,needs)
-    char *	type;
-    int		has;
-    int		needs;
-#endif
 {
     ERROR3("Key type \"%s\" has %d levels, must have %d\n",type,has,needs);
     ACTION("Illegal type definition ignored\n");
@@ -311,14 +266,7 @@ ReportTypeBadWidth(type,has,needs)
 }
 
 static Bool
-#if NeedFunctionPrototypes
 AddKeyType(XkbDescPtr xkb,KeyTypesInfo *info,KeyTypeInfo *new)
-#else
-AddKeyType(xkb,info,new)
-    XkbDescPtr		xkb;
-    KeyTypesInfo *	info;
-    KeyTypeInfo	*	new;
-#endif
 {
 KeyTypeInfo *		old;
    
@@ -394,18 +342,10 @@ KeyTypeInfo *		old;
 /***====================================================================***/
 
 static void
-#if NeedFunctionPrototypes
 MergeIncludedKeyTypes(	KeyTypesInfo *	into,
 			KeyTypesInfo *	from,
 			unsigned	merge,
 			XkbDescPtr	xkb)
-#else
-MergeIncludedKeyTypes(into,from,merge,xkb)
-    KeyTypesInfo	*into;
-    KeyTypesInfo	*from;
-    unsigned		 merge;
-    XkbDescPtr		 xkb;
-#endif
 {
 KeyTypeInfo *	type;
 
@@ -428,27 +368,17 @@ KeyTypeInfo *	type;
 }
 
 typedef void (*FileHandler)(
-#if NeedFunctionPrototypes
     XkbFile *		/* file */,
     XkbDescPtr		/* xkb */,
     unsigned		/* merge */,
     KeyTypesInfo *	/* included */
-#endif
 );
 
 static Bool
-#if NeedFunctionPrototypes
 HandleIncludeKeyTypes(	IncludeStmt *	stmt,
 			XkbDescPtr	xkb,
 			KeyTypesInfo *	info,
 			FileHandler	hndlr)
-#else
-HandleIncludeKeyTypes(stmt,xkb,info,hndlr)
-    IncludeStmt	*	stmt;
-    XkbDescPtr		xkb;
-    KeyTypesInfo *	info;
-    FileHandler		hndlr;
-#endif
 {
 unsigned	newMerge;
 XkbFile	*	rtrn;
@@ -515,14 +445,7 @@ Bool		haveSelf;
 /***====================================================================***/
 
 static XkbKTMapEntryPtr
-#if NeedFunctionPrototypes
 FindMatchingMapEntry(KeyTypeInfo *type,unsigned mask,unsigned vmask)
-#else
-FindMatchingMapEntry(type,mask,vmask)
-    KeyTypeInfo *	type;
-    unsigned		mask;
-    unsigned		vmask;
-#endif
 {
 register int 		i;
 XkbKTMapEntryPtr	entry;
@@ -535,12 +458,7 @@ XkbKTMapEntryPtr	entry;
 }
 
 static void
-#if NeedFunctionPrototypes
 DeleteLevel1MapEntries(KeyTypeInfo *type)
-#else
-DeleteLevel1MapEntries(type)
-    KeyTypeInfo *	type;
-#endif
 {
 register int i,n;
 
@@ -556,12 +474,7 @@ register int i,n;
 }
 
 static XkbKTMapEntryPtr
-#if NeedFunctionPrototypes
 NextMapEntry(KeyTypeInfo *type)
-#else
-NextMapEntry(type)
-    KeyTypeInfo *	type;
-#endif
 {
     if (type->entries==NULL) {
 	type->entries= uTypedCalloc(2,XkbKTMapEntryRec);
@@ -588,20 +501,11 @@ NextMapEntry(type)
 }
 
 Bool
-#if NeedFunctionPrototypes
 AddPreserve(	XkbDescPtr	xkb,
 		KeyTypeInfo *	type,
 		PreserveInfo *	new,
 		Bool		clobber,
 		Bool		report)
-#else
-AddPreserve(xkb,type,new,clobber,report)
-    XkbDescPtr		xkb;
-    KeyTypeInfo *	type;
-    PreserveInfo *	new;
-    Bool		clobber;
-    Bool		report;
-#endif
 {
 PreserveInfo	*old;
 
@@ -651,20 +555,11 @@ PreserveInfo	*old;
 }
 
 Bool
-#if NeedFunctionPrototypes
 AddMapEntry(	XkbDescPtr		xkb,
 		KeyTypeInfo *		type,
 		XkbKTMapEntryPtr	new,
 		Bool			clobber,
 		Bool			report)
-#else
-AddMapEntry(xkb,type,new,clobber,report)
-    XkbDescPtr		xkb;
-    KeyTypeInfo *	type;
-    XkbKTMapEntryPtr	new;
-    Bool		clobber;
-    Bool		report;
-#endif
 {
 XkbKTMapEntryPtr	old;
 
@@ -719,18 +614,10 @@ static LookupEntry lnames[] = {
 };
 
 static Bool
-#if NeedFunctionPrototypes
 SetMapEntry(	KeyTypeInfo *	type,
 		XkbDescPtr	xkb,
 		ExprDef *	arrayNdx,
 		ExprDef *	value)
-#else
-SetMapEntry(type,xkb,arrayNdx,value)
-    KeyTypeInfo *	type;
-    XkbDescPtr		xkb;
-    ExprDef *		arrayNdx;
-    ExprDef *		value;
-#endif
 {
 ExprResult		rtrn;
 XkbKTMapEntryRec	entry;
@@ -772,18 +659,10 @@ XkbKTMapEntryRec	entry;
 }
 
 static Bool
-#if NeedFunctionPrototypes
 SetPreserve(	KeyTypeInfo *	type,
 		XkbDescPtr	xkb,
 		ExprDef *	arrayNdx,
 		ExprDef *	value)
-#else
-SetPreserve(type,xkb,arrayNdx,value)
-    KeyTypeInfo *	type;
-    XkbDescPtr		xkb;
-    ExprDef *		arrayNdx;
-    ExprDef *		value;
-#endif
 {
 ExprResult	 rtrn;
 PreserveInfo 	 new;
@@ -835,20 +714,11 @@ PreserveInfo 	 new;
 /***====================================================================***/
 
 Bool
-#if NeedFunctionPrototypes
 AddLevelName(	KeyTypeInfo *	type,
 		unsigned 	level,
 		Atom 		name,
 		Bool 		clobber,
 		Bool 		report)
-#else
-AddLevelName(type,level,name,clobber,report)
-    KeyTypeInfo *	type;
-    unsigned		level;
-    Atom		name;
-    Bool		clobber;
-    Bool		report;
-#endif
 {
     if ((type->lvlNames==NULL)||(type->szNames<=level)) {
 	type->lvlNames= 
@@ -890,14 +760,7 @@ AddLevelName(type,level,name,clobber,report)
 }
 
 static Bool
-#if NeedFunctionPrototypes
 SetLevelName(KeyTypeInfo *type,ExprDef *arrayNdx,ExprDef *value)
-#else
-SetLevelName(type,arrayNdx,value)
-    KeyTypeInfo *	type;
-    ExprDef *		arrayNdx;
-    ExprDef *		value;
-#endif
 {
 ExprResult	rtrn;
 unsigned 	level;
@@ -928,22 +791,12 @@ unsigned 	level;
 /***====================================================================***/
 
 static Bool
-#if NeedFunctionPrototypes
 SetKeyTypeField(	KeyTypeInfo *	type,
 			XkbDescPtr	xkb,
 			char *		field,
 			ExprDef *	arrayNdx,
 			ExprDef *	value,
 			KeyTypesInfo *	info)
-#else
-SetKeyTypeField(type,xkb,field,arrayNdx,value,info)
-    KeyTypeInfo *	type;
-    XkbDescPtr		xkb;
-    char *		field;
-    ExprDef *		arrayNdx;
-    ExprDef *		value;
-    KeyTypesInfo *	info;
-#endif
 {
 ExprResult	tmp;
 
@@ -993,14 +846,7 @@ ExprResult	tmp;
 }
 
 static Bool
-#if NeedFunctionPrototypes
 HandleKeyTypeVar(VarDef *stmt,XkbDescPtr xkb,KeyTypesInfo *info)
-#else
-HandleKeyTypeVar(stmt,xkb,info)
-    VarDef *		stmt;
-    XkbDescPtr		xkb;
-    KeyTypesInfo *	info;
-#endif
 {
 ExprResult	elem,field;
 ExprDef *	arrayNdx;
@@ -1022,18 +868,10 @@ ExprDef *	arrayNdx;
 }
 
 static int
-#if NeedFunctionPrototypes
 HandleKeyTypeBody(	VarDef *	def,
 			XkbDescPtr	xkb,
 			KeyTypeInfo *	type,
 			KeyTypesInfo *	info)
-#else
-HandleKeyTypeBody(def,xkb,type,info)
-    VarDef *		def;
-    XkbDescPtr		xkb;
-    KeyTypeInfo *	type;
-    KeyTypesInfo *	info;
-#endif
 {
 int		ok= 1;
 ExprResult	tmp,field;
@@ -1052,18 +890,10 @@ ExprDef *	arrayNdx;
 }
 
 static int
-#if NeedFunctionPrototypes
 HandleKeyTypeDef(	KeyTypeDef *	def,
 			XkbDescPtr	xkb,
 			unsigned 	merge,
 			KeyTypesInfo *	info)
-#else
-HandleKeyTypeDef(def,xkb,merge,info)
-    KeyTypeDef *	def;
-    XkbDescPtr		xkb;
-    unsigned 		merge;
-    KeyTypesInfo *	info;
-#endif
 {
 register int		i;
 KeyTypeInfo 		type;
@@ -1125,18 +955,10 @@ KeyTypeInfo 		type;
 }
 
 static void
-#if NeedFunctionPrototypes
 HandleKeyTypesFile(	XkbFile	 *	file,
 			XkbDescPtr	xkb,
 			unsigned	merge,
 			KeyTypesInfo *	info)
-#else
-HandleKeyTypesFile(file,xkb,merge,info)
-    XkbFile		*file;
-    XkbDescPtr	 	 xkb;
-    unsigned		 merge;
-    KeyTypesInfo	*info;
-#endif
 {
 ParseCommon	*stmt;
 
@@ -1194,14 +1016,7 @@ ParseCommon	*stmt;
 }
 
 static Bool
-#if NeedFunctionPrototypes
 CopyDefToKeyType(XkbDescPtr xkb,XkbKeyTypePtr type,KeyTypeInfo *def)
-#else
-CopyDefToKeyType(xkb,type,def)
-    XkbDescPtr		xkb;
-    XkbKeyTypePtr	type;
-    KeyTypeInfo *	def;
-#endif
 {
 register int i;
 PreserveInfo *pre;
@@ -1263,14 +1078,7 @@ PreserveInfo *pre;
 }
 
 Bool
-#if NeedFunctionPrototypes
 CompileKeyTypes(XkbFile *file,XkbFileInfo *result,unsigned merge)
-#else
-CompileKeyTypes(file,result,merge)
-    XkbFile *		file;
-    XkbFileInfo *	result;
-    unsigned	 	merge;
-#endif
 {
 KeyTypesInfo	info;
 XkbDescPtr	xkb;

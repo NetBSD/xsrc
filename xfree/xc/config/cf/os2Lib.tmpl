@@ -2,57 +2,40 @@ XCOMM $Xorg: os2Lib.tmpl,v 1.3 2000/08/17 19:41:48 cpqbld Exp $
 
 
 
-XCOMM $XFree86: xc/config/cf/os2Lib.tmpl,v 3.11 2001/01/17 16:22:32 dawes Exp $
+XCOMM $XFree86: xc/config/cf/os2Lib.tmpl,v 3.12 2002/05/31 16:31:19 dawes Exp $
 
 /*
  * OS2/EMX shared library template
  */
-#ifndef __EMX__
+#ifndef __UNIXOS2__
 #error You must edit os2Lib.tmpl for your (non-EMX) OS/2 dev system
 #endif
 
-/* note these are special because of linking with link386 */
-#ifdef NOT_EMX
-#define SharedX11Libs $(LDPRELIB) $(SHM)
-#define SharedXtReqs $(LDPRELIB) $(XLIBONLY)
+#define SharedLibFont NO
+
+#define SharedX11Reqs $(LDPRELIB) -lshm
+#define SharedOldXReqs $(LDPRELIB) $(XLIBONLY)
+#define SharedXtReqs $(LDPRELIB) $(XLIBONLY) $(SMLIB) $(ICELIB)
 #define SharedXaw6Reqs $(LDPRELIB) $(XMULIB) $(XTOOLLIB) $(XLIB)
 #define SharedXawReqs $(LDPRELIB) $(XMULIB) $(XTOOLLIB) $(XPMLIB) $(XLIB)
 #define SharedXmuReqs $(LDPRELIB) $(XTOOLLIB) $(XLIB)
-#define SharedSMReqs $(LDPRELIB) $(ICELIB)
+#define SharedXmuuReqs $(LDPRELIB) $(XTOOLLIB) $(XLIB)
 #define SharedXextReqs $(LDPRELIB) $(XLIBONLY)
 #define SharedXiReqs $(LDPRELIB) $(XLIB)
-#define SharedXieReqs $(LDPRELIB) $(XLIB)
-#define SharedXtstReqs $(LDPRELIB) $(XLIB)
-#define SharedOldXReqs $(LDPRELIB) $(XLIBONLY)
+#define SharedXrenderReqs $(LDPRELIB) $(EXTENSIONLIB) $(XLIB)
 #define SharedPexReqs $(LDPRELIB) $(XLIBONLY) MathLibrary
-#define SharedXpReqs $(LDPRELIBS) $(XLIB)
-#define SharedXvReqs $(LDPRELIBS) $(XLIB)
-#define SharedGLReqs $(LDPRELIBS) $(XLIB)
-#define SharedXfontReqs $(LDPRELIBS) $(XLIB)
-#define SharedXpmReqs $(LDPRELIBS) $(XLIB)
-#define SharedDPSReqs $(LDPRELIBS) $(XMULIB) $(XTOOLLIB) $(XLIB)
-#define SharedDPSTKReqs $(LDPRELIBS) $(DPSLIB) $(XMULIB) $(XTOOLLIB) $(XLIB)
-#else
-#define SharedX11Reqs shm
-#define SharedXtReqs ..\\..\\exports\\lib\\ ICE SM X11
-#define SharedXawReqs ..\\..\\exports\\lib\\ Xmu Xt Xpm X11 Xext
-#define SharedXaw6Reqs ..\\..\\exports\\lib\\ Xmu Xt Xpm X11 Xext
-#define SharedXmuReqs ..\\..\\exports\\lib\\ Xt X11 Xext
-#define SharedSMReqs ..\\..\\exports\\lib\\ ICE
-#define SharedXextReqs ..\\..\\exports\\lib\\ X11
-#define SharedXiReqs ..\\..\\exports\\lib\\ X11 Xext
-#define SharedXieReqs ..\\..\\exports\\lib\\ X11 Xext
-#define SharedXtstReqs ..\\..\\exports\\lib\\ X11 Xext
-#define SharedOldXReqs ..\\..\\exports\\lib\\ X11 Xext
-#define SharedPexReqs ..\\..\\exports\\lib\\ X11 m
-#define SharedXpReqs ..\\..\\exports\\lib\\ X11 Xext
-#define SharedXvReqs ..\\..\\exports\\lib\\ X11 Xext
-#define SharedGLReqs ..\\..\\exports\\lib\\ X11 Xext
-#define SharedXfontReqs ..\\..\\exports\\lib\\ X11
-#define SharedXpmReqs ..\\..\\exports\\lib\\ X11
-#define SharedDPSReqs ..\\..\\exports\\lib\\ Xmu Xt X11
-#define SharedDPSTKReqs ..\\..\\exports\\lib\\ DPS Xmu Xt X11
-#endif
+#define SharedXtstReqs $(LDPRELIB) $(XLIB)
+#define SharedSMReqs $(LDPRELIB) $(ICELIB) 
+#define SharedXieReqs $(LDPRELIB) $(XLIB)
+#define SharedXpReqs $(LDPRELIB) $(XLIB)
+#define SharedXvReqs $(LDPRELIB) $(XLIB)
+#define SharedGLReqs $(LDPRELIB) $(XLIB)
+#define SharedXfontReqs $(LDPRELIB) $(XLIB)
+#define SharedXpmReqs $(LDPRELIB) $(XLIB)
+#define SharedDPSReqs $(LDPRELIB) $(XMULIB) $(XTOOLLIB) $(XLIB)
+#define SharedDPSTKReqs $(LDPRELIB) $(DPSLIB) $(XMULIB) $(XTOOLLIB) $(XLIB)
+#define SharedGLUReqs $(LDPRELIB) $(XLIB) $(GLXLIB)
+#define SharedXrandrReqs $(LDPRELIB) $(XLIB)
 
 /* library revisions, these are typically empty! */
 #define SharedX11Rev /**/
@@ -73,6 +56,7 @@ XCOMM $XFree86: xc/config/cf/os2Lib.tmpl,v 3.11 2001/01/17 16:22:32 dawes Exp $
 #define SharedXauRev /**/
 #define SharedXdmcpRev /**/
 #define SharedXmuRev /**/
+#define SharedXmuuRev /**/
 #define SharedOldXRev /**/
 #define SharedXpRev /**/
 #define SharedXtRev /**/
@@ -90,6 +74,12 @@ XCOMM $XFree86: xc/config/cf/os2Lib.tmpl,v 3.11 2001/01/17 16:22:32 dawes Exp $
 #define SharedFSRev /**/
 #define SharedFontRev /**/
 #define SharedXpmRev /**/
+#define SharedGluRev /**/
+#define SharedXrenderRev /**/
+#define SharedXrandrRev /**/
+#define SharedXftRev /**/
+#define SharedFreetype2Rev /**/
+#define SharedXTrapRev /**/
 
 /*
  * By setting this in your Imakefile, you can force using static libraries
@@ -200,3 +190,4 @@ XCOMM $XFree86: xc/config/cf/os2Lib.tmpl,v 3.11 2001/01/17 16:22:32 dawes Exp $
     DEPDPSTKLIB = 
        DPSTKLIB = _Use(SDlibDPSTK,-L$(EXTENSIONSRC)/lib SDlibDPSTK)
 #endif
+

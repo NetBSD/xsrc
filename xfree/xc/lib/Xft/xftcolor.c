@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/lib/Xft/xftcolor.c,v 1.2 2001/05/16 17:20:06 keithp Exp $
+ * $XFree86: xc/lib/Xft/xftcolor.c,v 1.3 2002/10/11 17:53:02 keithp Exp $
  *
  * Copyright © 2000 Keith Packard, member of The XFree86 Project, Inc.
  *
@@ -26,9 +26,9 @@
 
 Bool
 XftColorAllocName (Display  *dpy,
-		   Visual   *visual,
+		   _Xconst Visual   *visual,
 		   Colormap cmap,
-		   char	    *name,
+		   _Xconst char	    *name,
 		   XftColor *result)
 {
     XColor  screen, exact;
@@ -77,7 +77,7 @@ Bool
 XftColorAllocValue (Display	    *dpy,
 		    Visual	    *visual,
 		    Colormap	    cmap,
-		    XRenderColor    *color,
+		    _Xconst XRenderColor    *color,
 		    XftColor	    *result)
 {
     if (visual->class == TrueColor)

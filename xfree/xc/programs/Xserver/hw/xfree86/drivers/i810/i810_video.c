@@ -23,7 +23,7 @@ OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
 THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 **************************************************************************/
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/i810/i810_video.c,v 1.21 2001/12/04 21:17:56 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/i810/i810_video.c,v 1.22 2002/09/11 00:29:32 dawes Exp $ */
 
 /*
  * i810_video.c: i810 Xv driver. Based on the mga Xv driver by Mark Vojkovich.
@@ -188,6 +188,7 @@ void I810InitVideo(ScreenPtr pScreen)
 	xfree(newAdaptors);
 }
 
+/* *INDENT-OFF* */
 /* client libraries expect an encoding */
 static XF86VideoEncodingRec DummyEncoding[1] =
 {
@@ -219,11 +220,12 @@ static XF86AttributeRec Attributes[NUM_ATTRIBUTES] =
 
 static XF86ImageRec Images[NUM_IMAGES] =
 {
-	XVIMAGE_YUY2,
-	XVIMAGE_YV12,
-	XVIMAGE_I420,
-	XVIMAGE_UYVY
+   XVIMAGE_YUY2,
+   XVIMAGE_YV12,
+   XVIMAGE_I420,
+   XVIMAGE_UYVY
 };
+/* *INDENT-ON* */
 
 typedef struct {
     CARD32 OBUF_0Y;

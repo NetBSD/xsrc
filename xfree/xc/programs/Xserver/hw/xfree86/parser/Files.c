@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/parser/Files.c,v 1.12 2001/08/06 20:51:13 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/parser/Files.c,v 1.15 2003/01/04 20:20:22 paulo Exp $ */
 /* 
  * 
  * Copyright (c) 1997  Metro Link Incorporated
@@ -42,6 +42,7 @@ static xf86ConfigSymTabRec FilesTab[] =
 	{FONTPATH, "fontpath"},
 	{RGBPATH, "rgbpath"},
 	{MODULEPATH, "modulepath"},
+	{INPUTDEVICES, "inputdevices"},
 	{LOGFILEPATH, "logfile"},
 	{-1, ""},
 };
@@ -135,6 +136,33 @@ xf86parseFilesSection (void)
 			strcat (ptr->file_modulepath, str);
 			xf86conffree (val.str);
 			break;
+		case INPUTDEVICES:
+			if (xf86getSubToken (&(ptr->file_comment)) != STRING)
+				Error (QUOTE_MSG, "InputDevices");
+			l = FALSE;
+			str = prependRoot (val.str);
+			if (ptr->file_inputdevs == NULL)
+			{
+				ptr->file_inputdevs = xf86confmalloc (1);
+				ptr->file_inputdevs[0] = '\0';
+				k = strlen (str) + 1;
+			}
+			else
+			{
+				k = strlen (ptr->file_inputdevs) + strlen (str) + 1;
+				if (ptr->file_inputdevs[strlen (ptr->file_inputdevs) - 1] != ',')
+				{
+					k++;
+					l = TRUE;
+				}
+			}
+			ptr->file_inputdevs = xf86confrealloc (ptr->file_inputdevs, k);
+			if (l)
+				strcat (ptr->file_inputdevs, ",");
+
+			strcat (ptr->file_inputdevs, str);
+			xf86conffree (val.str);
+			break;
 		case LOGFILEPATH:
 			if (xf86getSubToken (&(ptr->file_comment)) != STRING)
 				Error (QUOTE_MSG, "LogFile");
@@ -187,6 +215,21 @@ xf86printFileSection (FILE * cf, XF86ConfFilesPtr ptr)
 		}
 		fprintf (cf, "\tModulePath   \"%s\"\n", s);
 	}
+	if (ptr->file_inputdevs)
+	{
+		s = ptr->file_inputdevs;
+		p = index (s, ',');
+		while (p)
+		{
+			*p = '\000';
+			fprintf (cf, "\tInputDevices   \"%s\"\n", s);
+			*p = ',';
+			s = p;
+			s++;
+			p = index (s, ',');
+		}
+		fprintf (cf, "\tInputdevs   \"%s\"\n", s);
+	}
 	if (ptr->file_fontpath)
 	{
 		s = ptr->file_fontpath;
@@ -213,6 +256,7 @@ xf86freeFiles (XF86ConfFilesPtr p)
 	TestFree (p->file_logfile);
 	TestFree (p->file_rgbpath);
 	TestFree (p->file_modulepath);
+	TestFree (p->file_inputdevs);
 	TestFree (p->file_fontpath);
 	TestFree (p->file_comment);
 

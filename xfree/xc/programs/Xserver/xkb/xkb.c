@@ -24,7 +24,7 @@ OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
 THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ********************************************************/
-/* $XFree86: xc/programs/Xserver/xkb/xkb.c,v 3.15 2001/08/23 14:33:25 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/xkb/xkb.c,v 3.18 2002/12/20 20:18:35 paulo Exp $ */
 
 #include <stdio.h>
 #include "X.h"
@@ -4225,7 +4225,7 @@ ProcXkbSetNames(client)
 	names->phys_symbols= *tmp++;
     if (stuff->which&XkbTypesNameMask)
 	names->types= *tmp++;
-    if (stuff->which&XkbCompatNameMask)
+    if (stuff->which&XkbCompatNameMask) 
 	names->compat= *tmp++;
     if ((stuff->which&XkbKeyTypeNamesMask)&&(stuff->nTypes>0)) {
 	register unsigned i;
@@ -5598,7 +5598,7 @@ ProcXkbPerClientFlags(client)
 /* all latin-1 alphanumerics, plus parens, minus, underscore, slash */
 /* and wildcards */
 static unsigned char componentSpecLegal[] = {
-        0x00, 0x00, 0x00, 0x00, 0x00, 0xa7, 0xff, 0x83,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0xa7, 0xff, 0x87,
         0xfe, 0xff, 0xff, 0x87, 0xfe, 0xff, 0xff, 0x07,
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
         0xff, 0xff, 0x7f, 0xff, 0xff, 0xff, 0x7f, 0xff
@@ -5606,7 +5606,7 @@ static unsigned char componentSpecLegal[] = {
 
 /* same as above but accepts percent, plus and bar too */
 static unsigned char componentExprLegal[] = {
-        0x00, 0x00, 0x00, 0x00, 0x20, 0xaf, 0xff, 0x83,
+        0x00, 0x00, 0x00, 0x00, 0x20, 0xaf, 0xff, 0x87,
         0xfe, 0xff, 0xff, 0x87, 0xfe, 0xff, 0xff, 0x17,
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
         0xff, 0xff, 0x7f, 0xff, 0xff, 0xff, 0x7f, 0xff
@@ -6019,10 +6019,6 @@ ProcXkbGetKbdByName(client)
 	dev->key->xkbInfo->desc= xkb;
 	finfo.xkb= old_xkb; /* so it'll get freed automatically */
 
-	if (dev->kbdfeed && dev->kbdfeed->xkb_sli) {
-	    XkbFreeSrvLedInfo(dev->kbdfeed->xkb_sli);
-	    dev->kbdfeed->xkb_sli= NULL;
-	}
 	*xkb->ctrls= *old_xkb->ctrls;
 	for (nG=nTG=0,i=xkb->min_key_code;i<=xkb->max_key_code;i++) {
 	    nG= XkbKeyNumGroups(xkb,i);
@@ -6038,6 +6034,20 @@ ProcXkbGetKbdByName(client)
 
 	memcpy(dev->key->modifierMap,xkb->map->modmap,xkb->max_key_code+1);
 	XkbUpdateCoreDescription(dev,True);
+
+	if (dev->kbdfeed && dev->kbdfeed->xkb_sli) {
+            XkbSrvLedInfoPtr	old_sli;
+            XkbSrvLedInfoPtr	sli;
+            old_sli = dev->kbdfeed->xkb_sli;
+            dev->kbdfeed->xkb_sli = NULL;
+	    sli = XkbAllocSrvLedInfo(dev,dev->kbdfeed,NULL,0);
+            if (sli) {
+               sli->explicitState = old_sli->explicitState;
+               sli->effectiveState = old_sli->effectiveState;
+            }
+            dev->kbdfeed->xkb_sli = sli;
+	    XkbFreeSrvLedInfo(old_sli);
+	}
 
 	nkn.deviceID= nkn.oldDeviceID= dev->id;
 	nkn.minKeyCode= finfo.xkb->min_key_code;

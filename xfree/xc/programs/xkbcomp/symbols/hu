@@ -1,6 +1,6 @@
 // Hungarian keyboard symbols for XKB and PC keyboard
 //
-// (C) 2001 Peter Soos <sp@osb.hu>
+// (C) 2002 Peter Soos <sp@osb.hu>
 //
 // Permission is granted to anyone to use, distribute and modify
 // this file in any way, provided that the above copyright notice
@@ -13,7 +13,7 @@
 // layout and some widely used Hungarian keyboard layouts.
 // Tested on Linux with XFree86 3.3.6
 //
-// $XFree86: xc/programs/xkbcomp/symbols/hu,v 1.5 2001/04/26 16:23:13 dawes Exp $
+// $XFree86: xc/programs/xkbcomp/symbols/hu,v 1.7 2002/12/13 04:18:03 dawes Exp $
 
 
 // Default layout
@@ -260,6 +260,8 @@ xkb_symbols "uni_102_qwerty_dot" {
 hidden partial alphanumeric_keys
 xkb_symbols "def_uni" {
 
+    key <AD07> {        [                u, U                ],
+                        [         EuroSign                   ]       };
     key <AC02> {        [                s, S                ],
                         [          dstroke                   ]       };
     key <AC03> {        [                d, D                ],
@@ -305,8 +307,6 @@ hidden partial alphanumeric_keys
 xkb_symbols "def_102" {
     key <TLDE> {        [                0, section          ],
                         [          notsign                   ]       };
-    key <AB07> {        [                m, M                ]       };
-    key <AB09> {        [           period, colon            ]       };
 };
 
 // def_101:
@@ -316,10 +316,6 @@ hidden partial alphanumeric_keys
 xkb_symbols "def_101" {
     key <TLDE> {        [           iacute, Iacute           ],
                         [                0, section          ]       };
-    key <AB07> {        [                m, M                ],
-                        [             less                   ]       };
-    key <AB09> {        [           period, colon            ],
-                        [          greater                   ]       };
 };
 
 // def_qwertz:
@@ -420,9 +416,12 @@ xkb_symbols "def_common" {
                         [        braceleft                   ]       };
     key <AB06> {        [                n, N                ],
                         [       braceright                   ]       };
+    key <AB07> {        [                m, M                ],
+                        [             less                   ]       };
     key <AB08> {        [            comma, question         ],
                         [        semicolon                   ]       };
-    key <AB09> {        [           period, colon            ]       };
+    key <AB09> {        [           period, colon            ],
+                        [          greater                   ]       };
     key <AB10> {        [            minus, underscore       ],
                         [         asterisk                   ]       };
     key <RALT> {        [      Mode_switch, Multi_key        ]       };

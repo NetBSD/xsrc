@@ -26,7 +26,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/xdm/util.c,v 3.19 2001/12/14 20:01:24 dawes Exp $ */
+/* $XFree86: xc/programs/xdm/util.c,v 3.20 2002/05/31 18:46:10 dawes Exp $ */
 
 /*
  * xdm - display manager daemon
@@ -278,7 +278,7 @@ localHostname (void)
 
 SIGVAL (*Signal (int sig, SIGFUNC handler))(int)
 {
-#if !defined(X_NOT_POSIX) && !defined(__EMX__)
+#if !defined(X_NOT_POSIX) && !defined(__UNIXOS2__)
     struct sigaction sigact, osigact;
     sigact.sa_handler = handler;
     sigemptyset(&sigact.sa_mask);

@@ -1,10 +1,10 @@
 /*
- * $XFree86: xc/programs/xterm/xtermcfg.hin,v 3.39 2001/10/08 01:08:11 dickey Exp $
+ * $XFree86: xc/programs/xterm/xtermcfg.hin,v 3.42 2002/12/08 22:31:50 dickey Exp $
  */
 
 /************************************************************
 
-Copyright 1997-2000 by Thomas E. Dickey
+Copyright 1997-2001,2002 by Thomas E. Dickey
 
                         All Rights Reserved
 
@@ -39,12 +39,17 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #undef DFT_COLORMODE		/* AC_ARG_WITH(default-color-mode) */
 #undef DFT_DECID		/* AC_ARG_WITH(default-terminal-id) */
 #undef DFT_TERMTYPE		/* AC_ARG_WITH(default-term-type) */
+#undef HAVE_GETHOSTNAME		/* AC_CHECK_FUNCS(gethostname) */
 #undef HAVE_GETLOGIN		/* AC_CHECK_FUNCS(getlogin) */
 #undef HAVE_LASTLOG_H		/* CF_LASTLOG */
+#undef HAVE_LIB_NEXTAW		/* CF_X_ATHENA(--with-neXtaw) */
+#undef HAVE_LIB_XAW		/* CF_X_ATHENA */
+#undef HAVE_LIB_XAW3D		/* CF_X_ATHENA(--with-Xaw3d) */
 #undef HAVE_NCURSES_TERM_H	/* AC_CHECK_HEADERS(ncurses/term.h) */
 #undef HAVE_PATHS_H		/* CF_LASTLOG */
 #undef HAVE_STDLIB_H		/* AC_CHECK_HEADERS(stdlib.h) */
 #undef HAVE_STRERROR		/* AC_CHECK_FUNCS(strerror) */
+#undef HAVE_STRFTIME		/* AC_CHECK_FUNCS(strftime) */
 #undef HAVE_SYS_TIME_H		/* AC_HEADER_TIME */
 #undef HAVE_SYS_WAIT_H		/* AC_HEADER_SYS_WAIT */
 #undef HAVE_TCGETATTR		/* AC_CHECK_FUNCS(tcgetattr) */
@@ -77,6 +82,7 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #undef OPT_INITIAL_ERASE	/* CF_ARG_DISABLE(initial-erase) */
 #undef OPT_INPUT_METHOD		/* CF_ARG_DISABLE(input-method) */
 #undef OPT_ISO_COLORS		/* CF_ARG_DISABLE(ansi-color) */
+#undef OPT_LUIT_PROG		/* CF_ARG_ENABLE(luit) */
 #undef OPT_MAXIMIZE		/* CF_ARG_DISABLE(maximize) */
 #undef OPT_NUM_LOCK		/* CF_ARG_DISABLE(num-lock) */
 #undef OPT_PC_COLORS		/* CF_ARG_DISABLE(pc-color) */
@@ -87,7 +93,7 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #undef OPT_TOOLBAR		/* CF_ARG_ENABLE(toolbar) */
 #undef OPT_TRACE		/* CF_ARG_ENABLE(trace) */
 #undef OPT_VT52_MODE		/* CF_ARG_DISABLE(vt52) */
-#undef OPT_WIDE_CHARS		/* CF_ARG_ENABLE(wide-chars) */
+#undef OPT_WIDE_CHARS		/* CF_ARG_OPTION(wide-chars) */
 #undef OPT_XMC_GLITCH		/* CF_ARG_ENABLE(xmc-glitch) */
 #undef OPT_ZICONBEEP		/* CF_ARG_DISABLE(ziconbeep) */
 #undef OWN_TERMINFO_DIR		/* AC_ARG_WITH(own-terminfo) */

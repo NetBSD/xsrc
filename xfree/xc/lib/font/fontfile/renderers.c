@@ -25,33 +25,71 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/font/fontfile/renderers.c,v 1.4 2001/12/14 19:56:52 dawes Exp $ */
+/* $XFree86: xc/lib/font/fontfile/renderers.c,v 1.7 2002/12/09 17:30:00 dawes Exp $ */
 
 /*
  * Author:  Keith Packard, MIT X Consortium
  */
 
 #include "fntfilst.h"
+extern void ErrorF(const char *f, ...);
 
 static FontRenderersRec	renderers;
+
+/*
+ * XXX Maybe should allow unregistering renders. For now, just clear the
+ * list at each new generation.
+ */
+extern unsigned long serverGeneration;
+static unsigned long rendererGeneration = 0;
 
 Bool
 FontFileRegisterRenderer (FontRendererPtr renderer)
 {
-    int		    i;
-    FontRendererPtr *new;
+    return FontFilePriorityRegisterRenderer(renderer, 0);
+}
 
-    for (i = 0; i < renderers.number; i++)
-	if (!strcmp (renderers.renderers[i]->fileSuffix, renderer->fileSuffix))
-	    return TRUE;
-    i = renderers.number + 1;
-    new = (FontRendererPtr *) xrealloc (renderers.renderers, sizeof *new * i);
-    if (!new)
-	return FALSE;
-    renderer->number = i - 1;
-    renderers.renderers = new;
-    renderers.renderers[i - 1] = renderer;
-    renderers.number = i;
+Bool
+FontFilePriorityRegisterRenderer (FontRendererPtr renderer, int priority)
+{
+    int		    i;
+    struct _FontRenderersElement *new;
+
+    if (rendererGeneration != serverGeneration) {
+	rendererGeneration = serverGeneration;
+	renderers.number = 0;
+	if (!renderers.renderers)
+	   xfree(renderers.renderers);
+	renderers.renderers = NULL;
+    }
+
+    for (i = 0; i < renderers.number; i++) {
+	if (!strcmp (renderers.renderers[i].renderer->fileSuffix, 
+                     renderer->fileSuffix)) {
+            if(renderers.renderers[i].priority >= priority) {
+                if(renderers.renderers[i].priority == priority) {
+                    if (rendererGeneration == 1)
+                        ErrorF("Warning: font renderer for \"%s\" "
+                               "already registered at priority %d\n",
+                               renderer->fileSuffix, priority);
+                }
+                return TRUE;
+            } else {
+                break;
+            }
+        }
+    }
+
+    if(i >= renderers.number) {
+        new = xrealloc (renderers.renderers, sizeof(*new) * (i + 1));
+        if (!new)
+            return FALSE;
+        renderers.renderers = new;
+        renderers.number = i + 1;
+    }
+    renderer->number = i;
+    renderers.renderers[i].renderer = renderer;
+    renderers.renderers[i].priority = priority;
     return TRUE;
 }
 
@@ -65,7 +103,7 @@ FontFileMatchRenderer (char *fileName)
     fileLen = strlen (fileName);
     for (i = 0; i < renderers.number; i++)
     {
-	r = renderers.renderers[i];
+	r = renderers.renderers[i].renderer;
 	if (fileLen >= r->fileSuffixLen &&
 	    !strcmp (fileName + fileLen - r->fileSuffixLen, r->fileSuffix))
 	{

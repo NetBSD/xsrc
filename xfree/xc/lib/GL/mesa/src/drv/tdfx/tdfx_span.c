@@ -23,7 +23,7 @@
  * OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-/* $XFree86: xc/lib/GL/mesa/src/drv/tdfx/tdfx_span.c,v 1.3 2001/08/18 02:51:07 dawes Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/tdfx/tdfx_span.c,v 1.7 2002/10/30 12:52:00 alanh Exp $ */
 
 /*
  * Original rewrite:
@@ -32,13 +32,15 @@
  * Authors:
  *	Gareth Hughes <gareth@valinux.com>
  *	Brian Paul <brianp@valinux.com>
- *	Keith Whitwell <keithw@valinux.com>
+ *	Keith Whitwell <keith@tungstengraphics.com>
  *
  */
 
 #include "tdfx_context.h"
+#include "tdfx_lock.h"
 #include "tdfx_span.h"
 #include "tdfx_render.h"
+#include "swrast/swrast.h"
 
 
 #define DBG 0
@@ -57,8 +59,6 @@
    GLuint p;								\
    (void) buf; (void) p;
 
-
-#define INIT_MONO_PIXEL( p )	p = fxMesa->Color.MonoColor;
 
 #define CLIPPIXEL( _x, _y )	( _x >= minx && _x < maxx &&		\
 				  _y >= miny && _y < maxy )
@@ -83,8 +83,9 @@
    UNLOCK_HARDWARE( fxMesa );						\
    LOCK_HARDWARE( fxMesa );						\
    info.size = sizeof(GrLfbInfo_t);					\
-   if ( fxMesa->Glide.grLfbLock( GR_LFB_WRITE_ONLY, fxMesa->DrawBuffer,	\
-         LFB_MODE, GR_ORIGIN_UPPER_LEFT, FXFALSE, &info ) )		\
+   if ( fxMesa->Glide.grLfbLock( GR_LFB_WRITE_ONLY,			\
+                   fxMesa->DrawBuffer, LFB_MODE,			\
+		   GR_ORIGIN_UPPER_LEFT, FXFALSE, &info ) )		\
    {
 
 #define HW_WRITE_UNLOCK()						\
@@ -100,7 +101,7 @@
    LOCK_HARDWARE( fxMesa );						\
    info.size = sizeof(GrLfbInfo_t);					\
    if ( fxMesa->Glide.grLfbLock( GR_LFB_READ_ONLY, fxMesa->ReadBuffer,	\
-	 LFB_MODE, GR_ORIGIN_UPPER_LEFT, FXFALSE, &info ) )		\
+                   LFB_MODE, GR_ORIGIN_UPPER_LEFT, FXFALSE, &info ) )	\
    {
 
 #define HW_READ_UNLOCK()						\
@@ -139,6 +140,11 @@
 
 
 /* 16 bit, RGB565 color spanline and pixel functions */			\
+
+#undef INIT_MONO_PIXEL
+#define INIT_MONO_PIXEL(p, color) \
+  p = TDFXPACKCOLOR565( color[0], color[1], color[2] )
+
 
 #define WRITE_RGBA( _x, _y, r, g, b, a )				\
    *(GLushort *)(buf + _x*2 + _y*pitch) = ((((int)r & 0xf8) << 8) |	\
@@ -195,6 +201,10 @@
 
 
 /* 24 bit, RGB888 color spanline and pixel functions */
+#undef INIT_MONO_PIXEL
+#define INIT_MONO_PIXEL(p, color) \
+  p = TDFXPACKCOLOR888( color[0], color[1], color[2] )
+
 #define WRITE_RGBA( _x, _y, r, g, b, a )				\
    *(GLuint *)(buf + _x*3 + _y*pitch) = ((b << 0) |			\
 					 (g << 8) |			\
@@ -223,6 +233,10 @@ do {									\
 
 
 /* 32 bit, ARGB8888 color spanline and pixel functions */
+#undef INIT_MONO_PIXEL
+#define INIT_MONO_PIXEL(p, color) \
+  p = TDFXPACKCOLOR8888( color[0], color[1], color[2], color[3] )
+
 #define WRITE_RGBA( _x, _y, r, g, b, a )				\
    *(GLuint *)(buf + _x*4 + _y*pitch) = ((b <<  0) |			\
 					 (g <<  8) |			\
@@ -557,10 +571,6 @@ GetFbParams(tdfxContextPtr fxMesa,
  * it's better in the macro or in the call.
  *
  * Recall that x and y are screen coordinates.
- *
- * Note: ANSI C doesn't allow conditional expressions or cast expressions
- * as lvalues.  Some of these macros violate that.
- *
  */
 #define GET_FB_DATA(ReadParamsp, type, x, y)                        \
    (((x) < (ReadParamsp)->firstWrappedX)                            \
@@ -592,8 +602,8 @@ tdfxDDWriteDepthSpan(GLcontext * ctx,
 {
    tdfxContextPtr fxMesa = (tdfxContextPtr) ctx->DriverCtx;
    GLint bottom = fxMesa->y_offset + fxMesa->height - 1;
-   GLuint depth_size = fxMesa->glVis->DepthBits;
-   GLuint stencil_size = fxMesa->glVis->StencilBits;
+   GLuint depth_size = fxMesa->glCtx->Visual.depthBits;
+   GLuint stencil_size = fxMesa->glCtx->Visual.stencilBits;
    GrLfbInfo_t info;
    GLubyte visMask[MAX_WIDTH];
 
@@ -828,7 +838,7 @@ tdfxDDReadDepthSpan(GLcontext * ctx,
    tdfxContextPtr fxMesa = (tdfxContextPtr) ctx->DriverCtx;
    GLint bottom = fxMesa->height + fxMesa->y_offset - 1;
    GLuint i;
-   GLuint depth_size = fxMesa->glVis->DepthBits;
+   GLuint depth_size = fxMesa->glCtx->Visual.depthBits;
    GrLfbInfo_t info;
 
    if (MESA_VERBOSE & VERBOSE_DRIVER) {
@@ -883,7 +893,7 @@ tdfxDDReadDepthSpan(GLcontext * ctx,
       LFBParameters ReadParams;
       GrLfbInfo_t backBufferInfo;
       int wrappedPartStart;
-      GLuint stencil_size = fxMesa->glVis->StencilBits;
+      GLuint stencil_size = fxMesa->glCtx->Visual.stencilBits;
       GetBackBufferInfo(fxMesa, &backBufferInfo);
       /*
        * Note that the _LOCK macro adds a curly brace,
@@ -934,8 +944,8 @@ tdfxDDWriteDepthPixels(GLcontext * ctx,
    GLuint i;
    GLushort d16;
    GLuint d32;
-   GLuint depth_size = fxMesa->glVis->DepthBits;
-   GLuint stencil_size = fxMesa->glVis->StencilBits;
+   GLuint depth_size = fxMesa->glCtx->Visual.depthBits;
+   GLuint stencil_size = fxMesa->glCtx->Visual.stencilBits;
    GrLfbInfo_t info;
    int xpos;
    int ypos;
@@ -1013,7 +1023,7 @@ tdfxDDReadDepthPixels(GLcontext * ctx, GLuint n,
    tdfxContextPtr fxMesa = (tdfxContextPtr) ctx->DriverCtx;
    GLint bottom = fxMesa->height + fxMesa->y_offset - 1;
    GLuint i;
-   GLuint depth_size = fxMesa->glVis->DepthBits;
+   GLuint depth_size = fxMesa->glCtx->Visual.depthBits;
    GLushort d16;
    int xpos;
    int ypos;
@@ -1058,7 +1068,7 @@ tdfxDDReadDepthPixels(GLcontext * ctx, GLuint n,
        * and the UNLOCK macro removes it.
        */
       READ_FB_SPAN_LOCK(fxMesa, info, GR_BUFFER_AUXBUFFER);
-      stencil_size = fxMesa->glVis->StencilBits;
+      stencil_size = fxMesa->glCtx->Visual.stencilBits;
       {
 	 LFBParameters ReadParams;
 	 GetFbParams(fxMesa, &info, &backBufferInfo,
@@ -1270,47 +1280,96 @@ read_stencil_pixels(GLcontext * ctx, GLuint n, const GLint x[],
 }
 
 #define VISUAL_EQUALS_RGBA(vis, r, g, b, a)        \
-   ((vis->RedBits == r) &&                         \
-    (vis->GreenBits == g) &&                       \
-    (vis->BlueBits == b) &&                        \
-    (vis->AlphaBits == a))
+   ((vis.redBits == r) &&                         \
+    (vis.greenBits == g) &&                       \
+    (vis.blueBits == b) &&                        \
+    (vis.alphaBits == a))
+
+
+
+
+/**********************************************************************/
+/*                    Locking for swrast                              */
+/**********************************************************************/
+
+
+static void tdfxSpanRenderStart( GLcontext *ctx )
+{
+   tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
+   LOCK_HARDWARE(fxMesa);
+}
+
+static void tdfxSpanRenderFinish( GLcontext *ctx )
+{
+   tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
+   _swrast_flush( ctx );
+   UNLOCK_HARDWARE(fxMesa);
+}
+
+/* Set the buffer used for reading */
+static void tdfxDDSetReadBuffer( GLcontext *ctx,
+				 GLframebuffer *buffer, GLenum mode )
+{
+   tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
+   (void) buffer;
+
+   switch ( mode ) {
+   case GL_FRONT_LEFT:
+      fxMesa->ReadBuffer = GR_BUFFER_FRONTBUFFER;
+      break;
+
+   case GL_BACK_LEFT:
+      fxMesa->ReadBuffer = GR_BUFFER_BACKBUFFER;
+      break;
+
+   default:
+      break;
+   }
+}
+
+/**********************************************************************/
+/*                    Initialize swrast device driver                 */
+/**********************************************************************/
 
 void tdfxDDInitSpanFuncs( GLcontext *ctx )
 {
    tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
+   struct swrast_device_driver *swdd = _swrast_GetDeviceDriverReference( ctx );
+
+   swdd->SetReadBuffer = tdfxDDSetReadBuffer;
 
    if ( VISUAL_EQUALS_RGBA(ctx->Visual, 5, 6, 5, 0) )
    {
       /* 16bpp mode */
-      ctx->Driver.WriteRGBASpan		= tdfxWriteRGBASpan_RGB565;
-      ctx->Driver.WriteRGBSpan		= tdfxWriteRGBSpan_RGB565;
-      ctx->Driver.WriteMonoRGBASpan	= tdfxWriteMonoRGBASpan_RGB565;
-      ctx->Driver.WriteRGBAPixels	= tdfxWriteRGBAPixels_RGB565;
-      ctx->Driver.WriteMonoRGBAPixels	= tdfxWriteMonoRGBAPixels_RGB565;
-      ctx->Driver.ReadRGBASpan		= tdfxReadRGBASpan_RGB565;
-      ctx->Driver.ReadRGBAPixels	= tdfxReadRGBAPixels_RGB565;
+      swdd->WriteRGBASpan	= tdfxWriteRGBASpan_RGB565;
+      swdd->WriteRGBSpan	= tdfxWriteRGBSpan_RGB565;
+      swdd->WriteMonoRGBASpan	= tdfxWriteMonoRGBASpan_RGB565;
+      swdd->WriteRGBAPixels	= tdfxWriteRGBAPixels_RGB565;
+      swdd->WriteMonoRGBAPixels	= tdfxWriteMonoRGBAPixels_RGB565;
+      swdd->ReadRGBASpan	= tdfxReadRGBASpan_RGB565;
+      swdd->ReadRGBAPixels	= tdfxReadRGBAPixels_RGB565;
    }
    else if ( VISUAL_EQUALS_RGBA(ctx->Visual, 8, 8, 8, 0) )
    {
       /* 24bpp mode */
-      ctx->Driver.WriteRGBASpan		= tdfxWriteRGBASpan_RGB888;
-      ctx->Driver.WriteRGBSpan		= tdfxWriteRGBSpan_RGB888;
-      ctx->Driver.WriteMonoRGBASpan	= tdfxWriteMonoRGBASpan_RGB888;
-      ctx->Driver.WriteRGBAPixels	= tdfxWriteRGBAPixels_RGB888;
-      ctx->Driver.WriteMonoRGBAPixels	= tdfxWriteMonoRGBAPixels_RGB888;
-      ctx->Driver.ReadRGBASpan		= tdfxReadRGBASpan_RGB888;
-      ctx->Driver.ReadRGBAPixels	= tdfxReadRGBAPixels_RGB888;
+      swdd->WriteRGBASpan	= tdfxWriteRGBASpan_RGB888;
+      swdd->WriteRGBSpan	= tdfxWriteRGBSpan_RGB888;
+      swdd->WriteMonoRGBASpan	= tdfxWriteMonoRGBASpan_RGB888;
+      swdd->WriteRGBAPixels	= tdfxWriteRGBAPixels_RGB888;
+      swdd->WriteMonoRGBAPixels	= tdfxWriteMonoRGBAPixels_RGB888;
+      swdd->ReadRGBASpan	= tdfxReadRGBASpan_RGB888;
+      swdd->ReadRGBAPixels	= tdfxReadRGBAPixels_RGB888;
    }
    else if ( VISUAL_EQUALS_RGBA(ctx->Visual, 8, 8, 8, 8) )
    {
       /* 32bpp mode */
-      ctx->Driver.WriteRGBASpan		= tdfxWriteRGBASpan_ARGB8888;
-      ctx->Driver.WriteRGBSpan		= tdfxWriteRGBSpan_ARGB8888;
-      ctx->Driver.WriteMonoRGBASpan	= tdfxWriteMonoRGBASpan_ARGB8888;
-      ctx->Driver.WriteRGBAPixels	= tdfxWriteRGBAPixels_ARGB8888;
-      ctx->Driver.WriteMonoRGBAPixels	= tdfxWriteMonoRGBAPixels_ARGB8888;
-      ctx->Driver.ReadRGBAPixels        = tdfxReadRGBAPixels_ARGB8888;
-      ctx->Driver.ReadRGBASpan		= tdfxReadRGBASpan_ARGB8888;
+      swdd->WriteRGBASpan	= tdfxWriteRGBASpan_ARGB8888;
+      swdd->WriteRGBSpan	= tdfxWriteRGBSpan_ARGB8888;
+      swdd->WriteMonoRGBASpan	= tdfxWriteMonoRGBASpan_ARGB8888;
+      swdd->WriteRGBAPixels	= tdfxWriteRGBAPixels_ARGB8888;
+      swdd->WriteMonoRGBAPixels	= tdfxWriteMonoRGBAPixels_ARGB8888;
+      swdd->ReadRGBAPixels      = tdfxReadRGBAPixels_ARGB8888;
+      swdd->ReadRGBASpan	= tdfxReadRGBASpan_ARGB8888;
    }
    else
    {
@@ -1318,22 +1377,25 @@ void tdfxDDInitSpanFuncs( GLcontext *ctx )
    }
 
    if ( fxMesa->haveHwStencil ) {
-      ctx->Driver.WriteStencilSpan	= write_stencil_span;
-      ctx->Driver.ReadStencilSpan	= read_stencil_span;
-      ctx->Driver.WriteStencilPixels	= write_stencil_pixels;
-      ctx->Driver.ReadStencilPixels	= read_stencil_pixels;
+      swdd->WriteStencilSpan	= write_stencil_span;
+      swdd->ReadStencilSpan	= read_stencil_span;
+      swdd->WriteStencilPixels	= write_stencil_pixels;
+      swdd->ReadStencilPixels	= read_stencil_pixels;
    }
 
-   ctx->Driver.WriteDepthSpan		= tdfxDDWriteDepthSpan;
-   ctx->Driver.WriteDepthPixels		= tdfxDDWriteDepthPixels;
-   ctx->Driver.ReadDepthSpan		= tdfxDDReadDepthSpan;
-   ctx->Driver.ReadDepthPixels		= tdfxDDReadDepthPixels;
+   swdd->WriteDepthSpan		= tdfxDDWriteDepthSpan;
+   swdd->WriteDepthPixels	= tdfxDDWriteDepthPixels;
+   swdd->ReadDepthSpan		= tdfxDDReadDepthSpan;
+   swdd->ReadDepthPixels	= tdfxDDReadDepthPixels;
 
-   ctx->Driver.WriteCI8Span		= NULL;
-   ctx->Driver.WriteCI32Span		= NULL;
-   ctx->Driver.WriteMonoCISpan		= NULL;
-   ctx->Driver.WriteCI32Pixels		= NULL;
-   ctx->Driver.WriteMonoCIPixels	= NULL;
-   ctx->Driver.ReadCI32Span		= NULL;
-   ctx->Driver.ReadCI32Pixels		= NULL;
+   swdd->WriteCI8Span		= NULL;
+   swdd->WriteCI32Span		= NULL;
+   swdd->WriteMonoCISpan	= NULL;
+   swdd->WriteCI32Pixels	= NULL;
+   swdd->WriteMonoCIPixels	= NULL;
+   swdd->ReadCI32Span		= NULL;
+   swdd->ReadCI32Pixels		= NULL;
+
+   swdd->SpanRenderStart          = tdfxSpanRenderStart;
+   swdd->SpanRenderFinish         = tdfxSpanRenderFinish; 
 }

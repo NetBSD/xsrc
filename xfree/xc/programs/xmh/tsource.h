@@ -47,6 +47,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
+/* $XFree86: xc/programs/xmh/tsource.h,v 1.3 2002/07/01 02:26:05 tsi Exp $ */
 
 #ifndef _tsource_h
 #define _tsource_h
@@ -69,7 +70,8 @@ extern WidgetClass tocSourceWidgetClass;
 typedef struct _TocSourceClassRec *TocSourceWidgetClass;
 typedef struct _TocSourceRec      *TocSourceWidget;
 
-extern void TSourceInvalid();
+extern Msg MsgFromPosition(Toc, XawTextPosition, XawTextScanDirection);
+extern void TSourceInvalid(Toc, XawTextPosition, int);
 
 #endif /* _XawTextSrc_h */
 /* DON'T ADD STUFF AFTER THIS #endif */

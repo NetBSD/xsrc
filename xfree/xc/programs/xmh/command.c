@@ -1,5 +1,5 @@
 /* $XConsortium: command.c,v 2.49 95/04/05 19:59:06 kaleb Exp $ */
-/* $XFree86: xc/programs/xmh/command.c,v 3.8 2001/12/09 15:48:36 herrb Exp $ */
+/* $XFree86: xc/programs/xmh/command.c,v 3.9 2002/04/05 21:06:28 dickey Exp $ */
 
 /*
  *			  COPYRIGHT 1987, 1989
@@ -66,11 +66,10 @@ typedef struct _CommandStatus {
 } CommandStatusRec, *CommandStatus;
 
 typedef char* Pointer;
-static void FreeStatus();
-static void CheckReadFromPipe();
+static void FreeStatus(XMH_CB_ARGS);
+static void CheckReadFromPipe(int, char **, int *, Bool);
 
-static void SystemError(text)
-    char* text;
+static void SystemError(char* text)
 {
     char msg[BUFSIZ];
     sprintf( msg, "%s; errno = %d %s", text, errno, 
@@ -81,8 +80,7 @@ static void SystemError(text)
 
 /* Return the full path name of the given mh command. */
 
-static char *FullPathOfCommand(str)
-  char *str;
+static char *FullPathOfCommand(char *str)
 {
     static char result[100];
     (void) sprintf(result, "%s/%s", app_resources.mh_path, str);
@@ -91,10 +89,10 @@ static char *FullPathOfCommand(str)
 
 
 /*ARGSUSED*/
-static void ReadStdout(closure, fd, id)
-    XtPointer closure;
-    int *fd;
-    XtInputId *id;	/* unused */
+static void ReadStdout(
+    XtPointer closure,
+    int *fd,
+    XtInputId *id)	/* unused */
 {
     register CommandStatus status = (CommandStatus)closure;
     CheckReadFromPipe(*fd, &status->output_buffer, &status->output_buf_size,
@@ -103,10 +101,10 @@ static void ReadStdout(closure, fd, id)
 
 
 /*ARGSUSED*/
-static void ReadStderr(closure, fd, id)
-    XtPointer closure;
-    int *fd;
-    XtInputId *id;	/* unused */
+static void ReadStderr(
+    XtPointer closure,
+    int *fd,
+    XtInputId *id)	/* unused */
 {
     register CommandStatus status = (CommandStatus)closure;
     CheckReadFromPipe(*fd, &status->error_buffer, &status->error_buf_size,
@@ -118,8 +116,7 @@ static volatile int childdone;		/* Gets nonzero when the child process
 				   finishes. */
 /* ARGSUSED */
 static void
-ChildDone(n)
-    int n;
+ChildDone(int n)
 {
     childdone++;
 }
@@ -129,12 +126,12 @@ ChildDone(n)
    incoming data.  This will prevent the socket from overflowing during
    long commands.  Returns 0 if stderr empty, -1 otherwise. */
 
-static int _DoCommandToFileOrPipe(argv, inputfd, outputfd, bufP, lenP)
-  char **argv;			/* The command to execute, and its args. */
-  int inputfd;			/* Input stream for command. */
-  int outputfd;			/* Output stream; /dev/null if == -1 */
-  char **bufP;			/* output buffer ptr if outputfd == -2 */
-  int *lenP;			/* output length ptr if outputfd == -2 */
+static int _DoCommandToFileOrPipe(
+  char **argv,			/* The command to execute, and its args. */
+  int inputfd,			/* Input stream for command. */
+  int outputfd,			/* Output stream; /dev/null if == -1 */
+  char **bufP,			/* output buffer ptr if outputfd == -2 */
+  int *lenP)			/* output length ptr if outputfd == -2 */
 {
     XtAppContext appCtx = XtWidgetToApplicationContext(toplevel);
     int return_status;
@@ -239,14 +236,15 @@ static int _DoCommandToFileOrPipe(argv, inputfd, outputfd, bufP, lenP)
 		 */
 		readfds = fds;
                 if (childdone) break;
-DEBUG("blocking.\n")
+		DEBUG("blocking.\n")
 		(void) Select(num_fds, &readfds, NULL, NULL, NULL);
-DEBUG1("unblocked; child%s done.\n", childdone ? "" : " not")
+		DEBUG1("unblocked; child%s done.\n", childdone ? "" : " not")
 		if (childdone) break;
-		if (!FD_ISSET(ConnectionNumber(theDisplay), &readfds))
-{DEBUG("reading alternate input...")
+		if (!FD_ISSET(ConnectionNumber(theDisplay), &readfds)) {
+		    DEBUG("reading alternate input...")
 		    XtAppProcessEvent(appCtx, (unsigned)XtIMAlternateInput);
-DEBUG("read.\n")}
+		    DEBUG("read.\n")
+		}
 	    }
 	    if (childdone) break;
 	    XtAppNextEvent(app, eventP);
@@ -369,11 +367,11 @@ DEBUG("read.\n")}
 
 
 static void
-CheckReadFromPipe( fd, bufP, lenP, waitEOF )
-    int fd;
-    char **bufP;
-    int *lenP;
-    Bool waitEOF;
+CheckReadFromPipe(
+    int fd,
+    char **bufP,
+    int *lenP,
+    Bool waitEOF)
 {
     int nread;
 /*  DEBUG2( " CheckReadFromPipe #%d,len=%d,", fd, *lenP )  */
@@ -403,10 +401,10 @@ CheckReadFromPipe( fd, bufP, lenP, waitEOF )
 
 
 /* ARGSUSED */
-static void FreeStatus( w, closure, call_data )
-    Widget w;			/* unused */
-    Pointer closure;
-    Pointer call_data;		/* unused */
+static void FreeStatus(
+    Widget w,			/* unused */
+    XtPointer closure,
+    XtPointer call_data)	/* unused */
 {
     CommandStatus status = (CommandStatus)closure;
     if (status->popup != (Widget)NULL) {
@@ -420,10 +418,10 @@ static void FreeStatus( w, closure, call_data )
 /* Execute the given command, waiting until it's finished.  Put the output
    in the specified file path.  Returns 0 if stderr empty, -1 otherwise */
 
-int DoCommand(argv, inputfile, outputfile)
-  char **argv;			/* The command to execute, and its args. */
-  char *inputfile;		/* Input file for command. */
-  char *outputfile;		/* Output file for command. */
+int DoCommand(
+  char **argv,			/* The command to execute, and its args. */
+  char *inputfile,		/* Input file for command. */
+  char *outputfile)		/* Output file for command. */
 {
     int fd_in, fd_out;
     int status;
@@ -452,8 +450,7 @@ int DoCommand(argv, inputfile, outputfile)
 /* Execute the given command, waiting until it's finished.  Put the output
    in a newly mallocced string, and return a pointer to that string. */
 
-char *DoCommandToString(argv)
-char ** argv;
+char *DoCommandToString(char ** argv)
 {
     char *result = NULL;
     int len = 0;
@@ -467,8 +464,7 @@ char ** argv;
 
 /* Execute the command to a temporary file, and return the name of the file. */
 
-char *DoCommandToFile(argv)
-  char **argv;
+char *DoCommandToFile(char **argv)
 {
     char *name;
     FILEPTR file;
@@ -480,4 +476,3 @@ char *DoCommandToFile(argv)
     _DoCommandToFileOrPipe(argv, -1, fd, (char **) NULL, (int *) NULL);
     return name;
 }
-

@@ -24,6 +24,7 @@
  * used in advertising or publicity pertaining to distribution of the software
  * without specific, written prior permission.
  */
+/* $XFree86: xc/programs/xmh/xmh.h,v 1.3 2002/07/01 02:26:05 tsi Exp $ */
 
 #ifndef _xmh_h
 #define _xmh_h
@@ -139,6 +140,7 @@ typedef struct {
    MsgList	mlist;		/* Messages in this sequence. */
 } SequenceRec, *Sequence;
 
+#define XMH_CB_ARGS Widget, XtPointer, XtPointer
 
 #include "globals.h"
 #include "externs.h"

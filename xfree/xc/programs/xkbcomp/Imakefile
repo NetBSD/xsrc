@@ -3,7 +3,7 @@ XCOMM $Xorg: Imakefile,v 1.3 2000/08/17 19:54:30 cpqbld Exp $
 
 
 
-XCOMM $XFree86: xc/programs/xkbcomp/Imakefile,v 3.18 2001/10/10 12:56:58 alanh Exp $
+XCOMM $XFree86: xc/programs/xkbcomp/Imakefile,v 3.21 2003/02/15 22:22:43 dawes Exp $
 
 #define IHaveSubdirs
 #define PassCDebugFlags 'CDEBUGFLAGS=$(CDEBUGFLAGS)'
@@ -23,6 +23,7 @@ XCOMM $XFree86: xc/programs/xkbcomp/Imakefile,v 3.18 2001/10/10 12:56:58 alanh E
 LOCAL_LIBRARIES = $(XKBFILELIB) $(XLIB)
         SUBDIRS = $(CROSS) compat geometry keycodes keymap semantics symbols \
 		  types compiled rules
+      DATAFILES = README README.config README.enhancing
 
 ROOT_DEFINES = -DDFLT_XKB_CONFIG_ROOT=\"$(LIBDIR)/xkb\"
 
@@ -38,24 +39,20 @@ install::
 	@echo "Creating $(LIBDIR)/xkb"
 	MakeDir($(DESTDIR)$(LIBDIR)/xkb)
 
-#ifdef VarDbDirectory
-CONFDIR = $(VARDBDIR)
-#endif
-LinkConfDirectory(xkb,xkb,compiled,compiled)
-
 InstallProgram(xkbcomp,$(LIBDIR)/xkb)
+InstallMultiple($(DATAFILES),$(LIBDIR)/xkb)
 
 clean::
 	RemoveFiles(test.h *.xkm *.xkb)
 
 ComplexProgramTarget(xkbcomp)
+#ifdef OS2Architecture
+all::
+	$(CP) ProgramTargetName(xkbcomp) /
+#endif
 
 LinkBuildBinary(ProgramTargetName(xkbcomp))
 
 MakeSubdirs($(SUBDIRS))
 DependSubdirs($(SUBDIRS))
 
-#ifdef OS2Architecture
-all::
-	$(CP) ProgramTargetName(xkbcomp) /
-#endif

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/os2/os2_stubs.c,v 3.3 1996/12/27 07:04:32 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/os2/os2_stubs.c,v 3.4 2002/05/31 18:46:02 dawes Exp $ */
 /*
  * (c) Copyright 1996 by Holger Veit
  *			<Holger.Veit@gmd.de>
@@ -28,6 +28,7 @@
  */
 /* $XConsortium: os2_stubs.c /main/3 1996/10/27 11:48:58 kaleb $ */
 
+#define I_NEED_OS2_H
 #include "X11/X.h"
 #include "X11/Xpoll.h"
 #include <stdio.h>
@@ -35,56 +36,6 @@
 #include <string.h>
 #include <sys/types.h>
 #include <sys/time.h>
-
-/* This code is duplicated from XLibInt.c, because the same problems with
- * the drive letter as in clients also exist in the server
- * Unfortunately the standalone servers don't link against libX11
- */
-
-char *__XOS2RedirRoot(char *fname)
-{
-    /* This adds a further redirection by allowing the ProjectRoot
-     * to be prepended by the content of the envvar X11ROOT.
-     * This is for the purpose to move the whole X11 stuff to a different
-     * disk drive.
-     * The feature was added despite various environment variables
-     * because not all file opens respect them.
-     */
-    static char redirname[300]; /* enough for long filenames */
-    char *root;
-
-    /* if name does not start with /, assume it is not root-based */
-    if (fname==0 || !(fname[0]=='/' || fname[0]=='\\'))
-	return fname;
-
-    root = (char*)getenv("X11ROOT");
-    if (root==0 || 
-	(fname[1]==':' && isalpha(fname[0]) ||
-        (strlen(fname)+strlen(root)+2) > 300))
-	return fname;
-    sprintf(redirname,"%s%s",root,fname);
-    return redirname;
-}
-
-char *__XOS2RedirRoot1(char *format, char *arg1, char *arg2, char *arg3)
-{
-    /* this first constructs a name from a format and up to three
-     * components, then adds a path
-     */
-    char buf[300];
-    sprintf(buf,format,arg1,arg2,arg3);
-    return __XOS2RedirRoot(buf);
-}
-
-/*
- * This declares a missing function in the __EMX__ library, used in
- * various places
- */
-void usleep(delay)
-	unsigned long delay;
-{
-	DosSleep(delay ? (delay/1000) : 1l);
-}
 
 /* This is there to resolve a symbol in Xvfb 
  * this version is somewhat crippled compared to the one in os2_io.c

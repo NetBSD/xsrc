@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/GL/glx/glxmem.c,v 1.6 2001/10/31 22:50:27 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/GL/glx/glxmem.c,v 1.7 2002/08/28 06:41:26 torrey Exp $ */
 /*
 ** License Applicability. Except to the extent portions of this file are
 ** made subject to an alternative license as permitted in the SGI Free
@@ -74,7 +74,7 @@ Resize(__GLdrawableBuffer *buf,
 
     /*
     ** Only allocate buffer space for the SGI core.
-    ** Mesa handles its own buffer allocations.
+    ** Mesa and Aqua handle their own buffer allocations.
     */
 #if defined(__GL_BUFFER_SIZE_TRACKS_WINDOW)
     if (__glXCoreType() == GL_CORE_SGI) {

@@ -24,7 +24,7 @@
  * used in advertising or publicity pertaining to distribution of the software
  * without specific, written prior permission.
  */
-/* $XFree86: xc/programs/xmh/folder.c,v 1.3 2001/10/28 03:34:38 tsi Exp $ */
+/* $XFree86: xc/programs/xmh/folder.c,v 1.4 2002/04/05 21:06:28 dickey Exp $ */
 
 /* folder.c -- implement buttons relating to folders and other globals. */
 
@@ -45,9 +45,13 @@ typedef struct {	/* client data structure for callbacks */
 } DeleteDataRec, *DeleteData;
 
 
-static void CreateFolderMenu();
-static void AddFolderMenuEntry();
-static void DeleteFolderMenuEntry();
+static void CheckAndDeleteFolder(XMH_CB_ARGS);
+static void CancelDeleteFolder(XMH_CB_ARGS);
+static void CheckAndConfirmDeleteFolder(XMH_CB_ARGS);
+static void FreeMenuData(XMH_CB_ARGS);
+static void CreateFolderMenu(Button);
+static void AddFolderMenuEntry(Button, char *);
+static void DeleteFolderMenuEntry(Button, char *);
 
 #ifdef DEBUG_CLEANUP
 extern Boolean ExitLoop;
@@ -56,10 +60,10 @@ extern Boolean ExitLoop;
 /* Close this toc&view scrn.  If this is the last toc&view, quit xmh. */
 
 /*ARGSUSED*/
-void DoClose(widget, client_data, call_data)
-    Widget	widget;
-    XtPointer	client_data;
-    XtPointer	call_data;
+void DoClose(
+    Widget	widget,
+    XtPointer	client_data,
+    XtPointer	call_data)
 {
     Scrn	scrn = (Scrn) client_data;
     register int i, count;
@@ -122,11 +126,11 @@ void DoClose(widget, client_data, call_data)
 }
 
 /*ARGSUSED*/
-void XmhClose(w, event, params, num_params)
-    Widget	w;
-    XEvent	*event;		/* unused */
-    String	*params;	/* unused */
-    Cardinal	*num_params;	/* unused */
+void XmhClose(
+    Widget	w,
+    XEvent	*event,		/* unused */
+    String	*params,	/* unused */
+    Cardinal	*num_params)	/* unused */
 {
     Scrn 	scrn = ScrnFromWidget(w);
     DoClose(w, (XtPointer) scrn, (XtPointer) NULL);
@@ -135,10 +139,10 @@ void XmhClose(w, event, params, num_params)
 /* Open the selected folder in this screen. */
 
 /* ARGSUSED*/
-void DoOpenFolder(widget, client_data, call_data)
-    Widget	widget;
-    XtPointer	client_data;
-    XtPointer	call_data;
+void DoOpenFolder(
+    Widget	widget,
+    XtPointer	client_data,
+    XtPointer	call_data)
 {
     /* Invoked by the Folder menu entry "Open Folder"'s notify action. */
 
@@ -152,11 +156,11 @@ void DoOpenFolder(widget, client_data, call_data)
 
 
 /*ARGSUSED*/
-void XmhOpenFolder(w, event, params, num_params)
-    Widget	w;
-    XEvent	*event;		/* unused */
-    String	*params;
-    Cardinal	*num_params;
+void XmhOpenFolder(
+    Widget	w,
+    XEvent	*event,		/* unused */
+    String	*params,
+    Cardinal	*num_params)
 {
     Scrn	scrn = ScrnFromWidget(w);
 
@@ -188,10 +192,10 @@ void XmhOpenFolder(w, event, params, num_params)
 /* Compose a new message. */
 
 /*ARGSUSED*/
-void DoComposeMessage(widget, client_data, call_data)
-    Widget	widget;
-    XtPointer	client_data;
-    XtPointer	call_data;
+void DoComposeMessage(
+    Widget	widget,
+    XtPointer	client_data,
+    XtPointer	call_data)
 {
     Scrn        scrn = NewCompScrn();
     Msg		msg = TocMakeNewMsg(DraftsFolder);
@@ -204,11 +208,11 @@ void DoComposeMessage(widget, client_data, call_data)
 
    
 /*ARGSUSED*/
-void XmhComposeMessage(w, event, params, num_params)
-    Widget	w;
-    XEvent	*event;		/* unused */
-    String	*params;	/* unused */
-    Cardinal	*num_params;	/* unused */
+void XmhComposeMessage(
+    Widget	w,
+    XEvent	*event,		/* unused */
+    String	*params,	/* unused */
+    Cardinal	*num_params)	/* unused */
 {
     DoComposeMessage(w, (XtPointer) NULL, (XtPointer) NULL);
 }
@@ -217,10 +221,10 @@ void XmhComposeMessage(w, event, params, num_params)
 /* Make a new scrn displaying the given folder. */
 
 /*ARGSUSED*/
-void DoOpenFolderInNewWindow(widget, client_data, call_data)
-    Widget	widget;
-    XtPointer	client_data;
-    XtPointer	call_data;
+void DoOpenFolderInNewWindow(
+    Widget	widget,
+    XtPointer	client_data,
+    XtPointer	call_data)
 {
     Scrn	scrn = (Scrn) client_data;
     Toc 	toc = SelectedToc(scrn);
@@ -234,11 +238,11 @@ void DoOpenFolderInNewWindow(widget, client_data, call_data)
 
 
 /*ARGSUSED*/
-void XmhOpenFolderInNewWindow(w, event, params, num_params)
-    Widget	w;
-    XEvent	*event;		/* unused */
-    String	*params;	/* unused */
-    Cardinal	*num_params;	/* unused */
+void XmhOpenFolderInNewWindow(
+    Widget	w,
+    XEvent	*event,		/* unused */
+    String	*params,	/* unused */
+    Cardinal	*num_params)	/* unused */
 {
     Scrn scrn = ScrnFromWidget(w);
     DoOpenFolderInNewWindow(w, (XtPointer) scrn, (XtPointer) NULL);
@@ -249,10 +253,10 @@ void XmhOpenFolderInNewWindow(w, event, params, num_params)
 
 static char *previous_label = NULL;
 /*ARGSUSED*/
-static void CreateFolder(widget, client_data, call_data)
-    Widget	widget;		/* the okay button of the dialog widget */
-    XtPointer	client_data;	/* the dialog widget */
-    XtPointer	call_data;
+static void CreateFolder(
+    Widget	widget,		/* the okay button of the dialog widget */
+    XtPointer	client_data,	/* the dialog widget */
+    XtPointer	call_data)
 {
     Toc		toc;
     register int i;
@@ -307,10 +311,10 @@ static void CreateFolder(widget, client_data, call_data)
 /* Create a new folder.  Requires the user to name the new folder. */
 
 /*ARGSUSED*/
-void DoCreateFolder(widget, client_data, call_data)
-    Widget	widget;		/* unused */
-    XtPointer	client_data;
-    XtPointer	call_data;	/* unused */
+void DoCreateFolder(
+    Widget	widget,		/* unused */
+    XtPointer	client_data,
+    XtPointer	call_data)	/* unused */
 {
     Scrn scrn = (Scrn) client_data;
     PopupPrompt(scrn->parent, "Create folder named:", CreateFolder);
@@ -318,11 +322,11 @@ void DoCreateFolder(widget, client_data, call_data)
 
 
 /*ARGSUSED*/
-void XmhCreateFolder(w, event, params, num_params)
-    Widget	w;
-    XEvent	*event;		/* unused */
-    String	*params;	/* unused */
-    Cardinal	*num_params;	/* unused */
+void XmhCreateFolder(
+    Widget	w,
+    XEvent	*event,		/* unused */
+    String	*params,	/* unused */
+    Cardinal	*num_params)	/* unused */
 {
     Scrn scrn = ScrnFromWidget(w);
     DoCreateFolder(w, (XtPointer)scrn, (XtPointer)NULL);
@@ -330,10 +334,10 @@ void XmhCreateFolder(w, event, params, num_params)
 
 
 /*ARGSUSED*/
-void CancelDeleteFolder(widget, client_data, call_data)
-    Widget	widget;		/* unused */
-    XtPointer	client_data;
-    XtPointer	call_data;	/* unused */
+static void CancelDeleteFolder(
+    Widget	widget,		/* unused */
+    XtPointer	client_data,
+    XtPointer	call_data)	/* unused */
 {
     DeleteData	deleteData = (DeleteData) client_data;
 
@@ -353,10 +357,10 @@ void CancelDeleteFolder(widget, client_data, call_data)
 
 
 /*ARGSUSED*/
-void CheckAndConfirmDeleteFolder(widget, client_data, call_data)
-    Widget	widget;		/* unreliable; sometimes NULL */
-    XtPointer	client_data;	/* data structure */
-    XtPointer	call_data;	/* unused */
+static void CheckAndConfirmDeleteFolder(
+    Widget	widget,		/* unreliable; sometimes NULL */
+    XtPointer	client_data,	/* data structure */
+    XtPointer	call_data)	/* unused */
 {
     DeleteData  deleteData = (DeleteData) client_data;
     Scrn	scrn = deleteData->scrn;
@@ -364,7 +368,6 @@ void CheckAndConfirmDeleteFolder(widget, client_data, call_data)
     char	str[300];
     XtCallbackRec confirms[2];
     XtCallbackRec cancels[2];
-    void CheckAndDeleteFolder();
 
     static XtCallbackRec yes_callbacks[] = {
 	{CheckAndDeleteFolder,	(XtPointer) NULL},
@@ -407,10 +410,10 @@ void CheckAndConfirmDeleteFolder(widget, client_data, call_data)
 
 
 /*ARGSUSED*/
-void CheckAndDeleteFolder(widget, client_data, call_data)
-    Widget	widget;		/* unused */
-    XtPointer	client_data;	/* data structure */
-    XtPointer	call_data;	/* unused */
+static void CheckAndDeleteFolder(
+    Widget	widget,		/* unused */
+    XtPointer	client_data,	/* data structure */
+    XtPointer	call_data)	/* unused */
 {
     DeleteData  deleteData = (DeleteData) client_data;
     Scrn	scrn = deleteData->scrn;
@@ -484,10 +487,10 @@ void CheckAndDeleteFolder(widget, client_data, call_data)
 /* Delete the selected folder.  Requires confirmation! */
 
 /*ARGSUSED*/
-void DoDeleteFolder(w, client_data, call_data)
-    Widget	w;
-    XtPointer	client_data;
-    XtPointer	call_data;
+void DoDeleteFolder(
+    Widget	w,
+    XtPointer	client_data,
+    XtPointer	call_data)
 {
     Scrn	scrn = (Scrn) client_data;
     Toc		toc  = SelectedToc(scrn);
@@ -520,11 +523,11 @@ void DoDeleteFolder(w, client_data, call_data)
 
 
 /*ARGSUSED*/
-void XmhDeleteFolder(w, event, params, num_params)
-    Widget	w;
-    XEvent	*event;		/* unused */
-    String	*params;	/* unused */
-    Cardinal	*num_params;	/* unused */
+void XmhDeleteFolder(
+    Widget	w,
+    XEvent	*event,		/* unused */
+    String	*params,	/* unused */
+    Cardinal	*num_params)	/* unused */
 {
     Scrn	scrn = ScrnFromWidget(w);
     DoDeleteFolder(w, (XtPointer) scrn, (XtPointer) NULL);
@@ -547,8 +550,7 @@ static int  flen = 0;		/* length of a substring of filename */
 /* Function name:	IsFolder
  * Description:		determines if a file is an mh subfolder.
  */
-static int IsFolder(name)
-    char *name;
+static int IsFolder(char *name)
 {
     register int i, len;
     struct stat buf;
@@ -577,19 +579,20 @@ static int IsFolder(name)
 /* menu entry selection callback for folder menus. */
 
 /*ARGSUSED*/
-static void DoSelectFolder(w, closure, data)
-    Widget 	w;		/* the menu entry object */
-    XtPointer	closure;	/* foldername */
-    XtPointer	data;	
+static void DoSelectFolder(
+    Widget 	w,		/* the menu entry object */
+    XtPointer	closure,	/* foldername */
+    XtPointer	data)	
 {
     Scrn	scrn = ScrnFromWidget(w);
     SetCurrentFolderName(scrn, (char *) closure);
 }
 
 /*ARGSUSED*/
-void FreeMenuData(w, client_data, call_data)
-    Widget	w;
-    XtPointer	client_data, call_data;
+static void FreeMenuData(
+    Widget	w,
+    XtPointer	client_data,
+    XtPointer	call_data)
 {
     XtFree((char*) client_data);
 }
@@ -601,9 +604,9 @@ void FreeMenuData(w, client_data, call_data)
  * 	If the menu is already created,	add the new entry.
  */
 
-static void AddFolderMenuEntry(button, entryname)
-    Button	button;		/* the corresponding menu button */
-    char	*entryname;	/* the new entry, relative to MailDir */
+static void AddFolderMenuEntry(
+    Button	button,		/* the corresponding menu button */
+    char	*entryname)	/* the new entry, relative to MailDir */
 {
     Arg		args[4];
     char *	name;
@@ -664,8 +667,8 @@ static void AddFolderMenuEntry(button, entryname)
  *	parent folder.  Remaining entries are alphabetized.
  */
 
-static void CreateFolderMenu(button)
-    Button	button;
+static void CreateFolderMenu(
+    Button	button)
 {
     char **namelist;
     register int i, n, length;
@@ -709,9 +712,9 @@ static void CreateFolderMenu(button)
  * Description:	Remove a subfolder from a menu.
  */
 
-static void DeleteFolderMenuEntry(button, foldername)
-    Button	button;
-    char	*foldername;
+static void DeleteFolderMenuEntry(
+    Button	button,
+    char	*foldername)
 {
     char *	c;
     Arg		args[2];
@@ -756,11 +759,11 @@ static void DeleteFolderMenuEntry(button, foldername)
  */
 
 /*ARGSUSED*/
-void XmhPopupFolderMenu(w, event, vector, count)
-    Widget	w;
-    XEvent	*event;		/* unused */
-    String	*vector;	/* unused */
-    Cardinal	*count;		/* unused */
+void XmhPopupFolderMenu(
+    Widget	w,
+    XEvent	*event,		/* unused */
+    String	*vector,	/* unused */
+    Cardinal	*count)		/* unused */
 {
     Button	button;
     Scrn	scrn;
@@ -791,11 +794,11 @@ void XmhPopupFolderMenu(w, event, vector, count)
  */
 
 /*ARGSUSED*/
-void XmhSetCurrentFolder(w, event, vector, count)
-    Widget	w;
-    XEvent	*event;		/* unused */
-    String	*vector;	/* unused */
-    Cardinal	*count;		/* unused */
+void XmhSetCurrentFolder(
+    Widget	w,
+    XEvent	*event,		/* unused */
+    String	*vector,	/* unused */
+    Cardinal	*count)		/* unused */
 {
     Button	button;
     Scrn	scrn;
@@ -823,19 +826,19 @@ void XmhSetCurrentFolder(w, event, vector, count)
 
 
 /*ARGSUSED*/
-void XmhLeaveFolderButton(w, event, vector, count)
-    Widget	w;
-    XEvent	*event;
-    String	*vector;
-    Cardinal	*count;
+void XmhLeaveFolderButton(
+    Widget	w,
+    XEvent	*event,
+    String	*vector,
+    Cardinal	*count)
 {
     LastMenuButtonPressed = NULL;
 }
 
 
-void Push(stack_ptr, data)
-    Stack	*stack_ptr;
-    char 	*data;
+void Push(
+    Stack	*stack_ptr,
+    char 	*data)
 {
     Stack	new = XtNew(StackRec);
     new->data = data;
@@ -843,8 +846,8 @@ void Push(stack_ptr, data)
     *stack_ptr = new;
 }
 
-char * Pop(stack_ptr)
-    Stack	*stack_ptr;
+char * Pop(
+    Stack	*stack_ptr)
 {
     Stack	top;
     char 	*data = NULL;
@@ -862,14 +865,14 @@ char * Pop(stack_ptr)
  */
 
 /*ARGSUSED*/
-void XmhPushFolder(w, event, params, count)
-    Widget	w;
-    XEvent 	*event;
-    String 	*params;
-    Cardinal 	*count;
+void XmhPushFolder(
+    Widget	w,
+    XEvent 	*event,
+    String 	*params,
+    Cardinal 	*count)
 {
     Scrn	scrn = ScrnFromWidget(w);
-    int		i;
+    Cardinal	i;
 
     for (i=0; i < *count; i++) 
 	Push(&scrn->folder_stack, params[i]);
@@ -881,11 +884,11 @@ void XmhPushFolder(w, event, params, count)
 /* Pop the stack & take that folder to be the currently selected folder. */
 
 /*ARGSUSED*/
-void XmhPopFolder(w, event, params, count)
-    Widget	w;
-    XEvent 	*event;
-    String 	*params;
-    Cardinal 	*count;
+void XmhPopFolder(
+    Widget	w,
+    XEvent 	*event,
+    String 	*params,
+    Cardinal 	*count)
 {
     Scrn	scrn = ScrnFromWidget(w);
     char	*folder;
@@ -894,12 +897,12 @@ void XmhPopFolder(w, event, params, count)
 	SetCurrentFolderName(scrn, folder);
 }
 
-static Boolean InParams(str, p, n)
-    String str;
-    String *p;
-    Cardinal n;
+static Boolean InParams(
+    String str,
+    String *p,
+    Cardinal n)
 {
-    int i;
+    Cardinal i;
     for (i=0; i < n; p++, i++)
 	if (! XmuCompareISOLatin1(*p, str)) return True;
     return False;
@@ -908,11 +911,11 @@ static Boolean InParams(str, p, n)
 /* generalized routine for xmh participation in WM protocols */
 
 /*ARGSUSED*/
-void XmhWMProtocols(w, event, params, num_params)
-    Widget	w;	/* NULL if from checkpoint timer */
-    XEvent *	event;	/* NULL if from checkpoint timer */
-    String *	params;
-    Cardinal *	num_params;
+void XmhWMProtocols(
+    Widget	w,	/* NULL if from checkpoint timer */
+    XEvent *	event,	/* NULL if from checkpoint timer */
+    String *	params,
+    Cardinal *	num_params)
 {
     Boolean	dw = False;	/* will we do delete window? */
     Boolean	sy = False;	/* will we do save yourself? */
@@ -988,10 +991,10 @@ typedef struct _InteractMsgTokenRec {
     XtCheckpointToken		cp_token;
 } InteractMsgTokenRec, *InteractMsgToken;
 
-static void CommitMsgChanges(w, client_data, call_data)
-    Widget	w;		/* unused */
-    XtPointer   client_data;	/* InteractMsgToken */
-    XtPointer	call_data;
+static void CommitMsgChanges(
+    Widget	w,		/* unused */
+    XtPointer   client_data,	/* InteractMsgToken */
+    XtPointer	call_data)
 {
     Cardinal zero = 0;
     InteractMsgToken iToken = (InteractMsgToken) client_data;
@@ -1005,10 +1008,10 @@ static void CommitMsgChanges(w, client_data, call_data)
     XtFree((XtPointer)iToken);
 }
 
-static void CancelMsgChanges(w, client_data, call_data)
-    Widget	w;		/* unused */
-    XtPointer   client_data;	/* InteractMsgToken */
-    XtPointer	call_data;
+static void CancelMsgChanges(
+    Widget	w,		/* unused */
+    XtPointer   client_data,	/* InteractMsgToken */
+    XtPointer	call_data)
 {
     InteractMsgToken iToken = (InteractMsgToken) client_data;
 
@@ -1021,10 +1024,10 @@ static void CancelMsgChanges(w, client_data, call_data)
     XtFree((XtPointer)iToken);
 }
 
-static void CommitMsgInteract(w, client_data, call_data)
-    Widget	w;		/* unused */
-    XtPointer   client_data;	/* Scrn */
-    XtPointer	call_data;	/* XtCheckpointToken */
+static void CommitMsgInteract(
+    Widget	w,		/* unused */
+    XtPointer   client_data,	/* Scrn */
+    XtPointer	call_data)	/* XtCheckpointToken */
 {
     Scrn		scrn = (Scrn) client_data;
     XtCheckpointToken	cpToken = (XtCheckpointToken) call_data;
@@ -1065,10 +1068,10 @@ typedef struct _InteractTocTokenRec {
     XtCheckpointToken		cp_token;
 } InteractTocTokenRec, *InteractTocToken;
 
-static void CommitTocChanges(w, client_data, call_data)
-    Widget	w;		/* unused */
-    XtPointer   client_data;	/* InteractTocToken */
-    XtPointer	call_data;
+static void CommitTocChanges(
+    Widget	w,		/* unused */
+    XtPointer   client_data,	/* InteractTocToken */
+    XtPointer	call_data)
 {
     InteractTocToken iToken = (InteractTocToken) client_data;
 
@@ -1078,10 +1081,10 @@ static void CommitTocChanges(w, client_data, call_data)
     XtFree((XtPointer)iToken);
 }
 
-static void CancelTocChanges(w, client_data, call_data)
-    Widget	w;		/* unused */
-    XtPointer   client_data;	/* InteractTocToken */
-    XtPointer	call_data;
+static void CancelTocChanges(
+    Widget	w,		/* unused */
+    XtPointer   client_data,	/* InteractTocToken */
+    XtPointer	call_data)
 {
     InteractTocToken iToken = (InteractTocToken) client_data;
 
@@ -1092,16 +1095,16 @@ static void CancelTocChanges(w, client_data, call_data)
     XtFree((XtPointer)iToken);
 }
 
-static void CommitTocInteract(w, client_data, call_data)
-    Widget	w;		/* unused */
-    XtPointer   client_data;	/* Toc */
-    XtPointer	call_data;	/* XtCheckpointToken */
+static void CommitTocInteract(
+    Widget	w,		/* unused */
+    XtPointer   client_data,	/* Toc */
+    XtPointer	call_data)	/* XtCheckpointToken */
 {
     Toc			toc = (Toc) client_data;
     XtCheckpointToken	cpToken = (XtCheckpointToken) call_data;
     char		str[300];
     Widget		tocwidget;
-    int			i;
+    Cardinal		i;
     InteractTocToken	iToken;
     static XtCallbackRec yes_callbacks[] = {
 	{CommitTocChanges,		(XtPointer) NULL},
@@ -1142,10 +1145,10 @@ static void CommitTocInteract(w, client_data, call_data)
 /* Callback for Session Manager SaveYourself */
 
 /*ARGSUSED*/
-void DoSaveYourself(w, client_data, call_data)
-    Widget	w;		/* unused; s/b toplevel */
-    XtPointer	client_data;	/* unused */
-    XtPointer	call_data;	/* XtCheckpointToken */
+void DoSaveYourself(
+    Widget	w,		/* unused; s/b toplevel */
+    XtPointer	client_data,	/* unused */
+    XtPointer	call_data)	/* XtCheckpointToken */
 {
     XtCheckpointToken cpToken = (XtCheckpointToken)call_data;
 

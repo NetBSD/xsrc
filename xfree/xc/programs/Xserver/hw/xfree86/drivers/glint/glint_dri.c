@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/glint/glint_dri.c,v 1.27 2001/05/02 15:06:09 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/glint/glint_dri.c,v 1.32 2003/02/10 13:20:10 alanh Exp $ */
 /**************************************************************************
 
 Copyright 1998-1999 Precision Insight, Inc., Cedar Park, Texas.
@@ -28,8 +28,9 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 **************************************************************************/
 
 /*
- * Author:
- *   Jens Owen <jens@precisioninsight.com>
+ * Authors:
+ *   Jens Owen <jens@tungstengraphics.com>
+ *   Alan Hourihane <alanh@fairlite.demon.co.uk>
  *
  */
 
@@ -56,6 +57,14 @@ static char GLINTClientDriverName[] = "gamma";
 static void GLINTDestroyContext(ScreenPtr pScreen, drmContext hwContext,
                                 DRIContextType contextStore);
 
+
+static unsigned int mylog2( unsigned int n )
+{
+   unsigned int log2 = 1;
+   while ( n > 1 ) n >>= 1, log2++;
+   return log2;
+}
+
 static int 
 GLINTDRIControlInit(int drmSubFD, int irq)
 {
@@ -68,265 +77,360 @@ GLINTDRIControlInit(int drmSubFD, int irq)
 static Bool
 GLINTInitVisualConfigs(ScreenPtr pScreen)
 {
-    ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
-    GLINTPtr pGlint = GLINTPTR(pScrn);
-    int numConfigs = 0;
-    __GLXvisualConfig *pConfigs = NULL;
-    GLINTConfigPrivPtr pGlintConfigs = NULL;
-    GLINTConfigPrivPtr *pGlintConfigPtrs = NULL;
-    int i;
-    
-    switch (pScrn->bitsPerPixel) {
-    case 8:
-	break;
-    case 16:
-	if (pGlint->DoubleBuffer) {
-	}
-	else {
-	}
-	break;
-    case 24:
-	break;
-    case 32:
-	/* if(pGlint->Overlay): differentiate overlays when we support
-	   either alpha buffer or 3D rendering in Overlay */
-	numConfigs = 5;
+   ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
+   GLINTPtr pGlint = GLINTPTR(pScrn);
+   int numConfigs = 0;
+   __GLXvisualConfig *pConfigs = NULL;
+   GLINTConfigPrivPtr pGlintConfigs = NULL;
+   GLINTConfigPrivPtr *pGlintConfigPtrs = NULL;
+   int db, depth, stencil, accum;
+   int i;
 
-	if (!(pConfigs = (__GLXvisualConfig *)xcalloc(
-					    sizeof(__GLXvisualConfig),
-					    numConfigs))) {
+   switch ( pScrn->depth ) {
+   case 15:
+      numConfigs = 8;
+
+      pConfigs = (__GLXvisualConfig*)xnfcalloc( sizeof(__GLXvisualConfig),
+						numConfigs );
+      if ( !pConfigs ) {
+	 return FALSE;
+      }
+
+      pGlintConfigs = (GLINTConfigPrivPtr)xnfcalloc( sizeof(GLINTConfigPrivRec),
+						 numConfigs );
+      if ( !pGlintConfigs ) {
+	 xfree( pConfigs );
+	 return FALSE;
+      }
+
+      pGlintConfigPtrs = (GLINTConfigPrivPtr*)xnfcalloc( sizeof(GLINTConfigPrivPtr),
+						     numConfigs );
+      if ( !pGlintConfigPtrs ) {
+	 xfree( pConfigs );
+	 xfree( pGlintConfigs );
+	 return FALSE;
+      }
+
+      for ( i = 0 ; i < numConfigs ; i++ ) {
+	 pGlintConfigPtrs[i] = &pGlintConfigs[i];
+      }
+
+      i = 0;
+      depth = 1;
+      for ( accum = 0 ; accum <= 1 ; accum++ ) {
+         for ( stencil = 0 ; stencil <= 1 ; stencil++ ) {
+            for ( db = 1 ; db >= 0 ; db-- ) {
+               pConfigs[i].vid			= -1;
+               pConfigs[i].class		= -1;
+               pConfigs[i].rgba			= TRUE;
+               pConfigs[i].redSize		= 5;
+               pConfigs[i].greenSize		= 5;
+               pConfigs[i].blueSize		= 5;
+               pConfigs[i].alphaSize		= 1;
+               pConfigs[i].redMask		= 0x00007C00;
+               pConfigs[i].greenMask		= 0x000003E0;
+               pConfigs[i].blueMask		= 0x0000001F;
+               pConfigs[i].alphaMask		= 0x00008000;
+               if ( accum ) {
+                  pConfigs[i].accumRedSize	= 16;
+                  pConfigs[i].accumGreenSize	= 16;
+                  pConfigs[i].accumBlueSize	= 16;
+                  pConfigs[i].accumAlphaSize	= 0;
+               } else {
+                  pConfigs[i].accumRedSize	= 0;
+                  pConfigs[i].accumGreenSize	= 0;
+                  pConfigs[i].accumBlueSize	= 0;
+                  pConfigs[i].accumAlphaSize	= 0;
+               }
+               if ( db ) {
+                  pConfigs[i].doubleBuffer	= TRUE;
+               } else {
+                  pConfigs[i].doubleBuffer	= FALSE;
+	       }
+               pConfigs[i].stereo		= FALSE;
+               pConfigs[i].bufferSize		= 20;
+               if ( depth ) {
+                  pConfigs[i].depthSize		= 16;
+               } else {
+                  pConfigs[i].depthSize		= 0;
+	       }
+               if ( stencil ) {
+                  pConfigs[i].stencilSize	= 8;
+               } else {
+                  pConfigs[i].stencilSize	= 0;
+	       }
+               pConfigs[i].auxBuffers		= 0;
+               pConfigs[i].level		= 0;
+               if ( accum || stencil ) {
+                  pConfigs[i].visualRating	= GLX_SLOW_VISUAL_EXT;
+               } else {
+                  pConfigs[i].visualRating	= GLX_NONE_EXT;
+	       }
+               pConfigs[i].transparentPixel	= 0;
+               pConfigs[i].transparentRed	= 0;
+               pConfigs[i].transparentGreen	= 0;
+               pConfigs[i].transparentBlue	= 0;
+               pConfigs[i].transparentAlpha	= 0;
+               pConfigs[i].transparentIndex	= 0;
+               i++;
+            }
+         }
+      }
+      if ( i != numConfigs ) {
+         xf86DrvMsg( pScrn->scrnIndex, X_ERROR,
+		     "[drm] Incorrect initialization of visuals\n" );
+         return FALSE;
+      }
+      break;
+
+   case 24:
+      numConfigs = 8;
+
+      pConfigs = (__GLXvisualConfig*)xnfcalloc( sizeof(__GLXvisualConfig),
+						numConfigs );
+      if ( !pConfigs ) {
+	 return FALSE;
+      }
+
+      pGlintConfigs = (GLINTConfigPrivPtr)xnfcalloc( sizeof(GLINTConfigPrivRec),
+						 numConfigs );
+      if ( !pGlintConfigs ) {
+	 xfree( pConfigs );
+	 return FALSE;
+      }
+
+      pGlintConfigPtrs = (GLINTConfigPrivPtr*)xnfcalloc( sizeof(GLINTConfigPrivPtr),
+						     numConfigs );
+      if ( !pGlintConfigPtrs ) {
+	 xfree( pConfigs );
+	 xfree( pGlintConfigs );
+	 return FALSE;
+      }
+
+      for ( i = 0 ; i < numConfigs ; i++ ) {
+	 pGlintConfigPtrs[i] = &pGlintConfigs[i];
+      }
+
+      i = 0;
+      for ( accum = 0 ; accum <= 1 ; accum++ ) {
+         for ( depth = 0 ; depth <= 1 ; depth++ ) { /* and stencil */
+            for ( db = 1 ; db >= 0 ; db-- ) {
+               pConfigs[i].vid			= -1;
+               pConfigs[i].class		= -1;
+               pConfigs[i].rgba			= TRUE;
+               pConfigs[i].redSize		= 8;
+               pConfigs[i].greenSize		= 8;
+               pConfigs[i].blueSize		= 8;
+               pConfigs[i].alphaSize		= 0;
+               pConfigs[i].redMask		= 0x00FF0000;
+               pConfigs[i].greenMask		= 0x0000FF00;
+               pConfigs[i].blueMask		= 0x000000FF;
+               pConfigs[i].alphaMask		= 0;
+               if ( accum ) {
+                  pConfigs[i].accumRedSize	= 16;
+                  pConfigs[i].accumGreenSize	= 16;
+                  pConfigs[i].accumBlueSize	= 16;
+                  pConfigs[i].accumAlphaSize	= 0;
+               } else {
+                  pConfigs[i].accumRedSize	= 0;
+                  pConfigs[i].accumGreenSize	= 0;
+                  pConfigs[i].accumBlueSize	= 0;
+                  pConfigs[i].accumAlphaSize	= 0;
+               }
+               if ( db ) {
+                  pConfigs[i].doubleBuffer	= TRUE;
+               } else {
+                  pConfigs[i].doubleBuffer	= FALSE;
+	       }
+               pConfigs[i].stereo		= FALSE;
+               pConfigs[i].bufferSize		= 24;
+               if ( depth ) {
+		     pConfigs[i].depthSize	= 16;
+                     pConfigs[i].stencilSize	= 8;
+               }
+               else {
+                     pConfigs[i].depthSize	= 0;
+                     pConfigs[i].stencilSize	= 0;
+               }
+               pConfigs[i].auxBuffers		= 0;
+               pConfigs[i].level		= 0;
+               if ( accum ) {
+                  pConfigs[i].visualRating	= GLX_SLOW_VISUAL_EXT;
+               } else {
+                  pConfigs[i].visualRating	= GLX_NONE_EXT;
+	       }
+               pConfigs[i].transparentPixel	= 0;
+               pConfigs[i].transparentRed	= 0;
+               pConfigs[i].transparentGreen	= 0;
+               pConfigs[i].transparentBlue	= 0;
+               pConfigs[i].transparentAlpha	= 0;
+               pConfigs[i].transparentIndex	= 0;
+               i++;
+            }
+         }
+      }
+      if ( i != numConfigs ) {
+         xf86DrvMsg( pScrn->scrnIndex, X_ERROR,
+		     "[drm] Incorrect initialization of visuals\n" );
+         return FALSE;
+      }
+      break;
+
+   default: /* Can't do depth 8 or 16, just 15 or 24 */
+      return FALSE;
+      break;
+   }
+
+   pGlint->numVisualConfigs = numConfigs;
+   pGlint->pVisualConfigs = pConfigs;
+   pGlint->pVisualConfigsPriv = pGlintConfigs;
+   GlxSetVisualConfigs(numConfigs, pConfigs, (void **)pGlintConfigPtrs);
+
+   return TRUE;
+}
+
+static Bool GLINTDRIAgpInit(ScreenPtr pScreen)
+{
+   ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
+   GLINTPtr pGlint = GLINTPTR(pScrn);
+   int ret, count;
+   CARD32 mode;
+
+   /* FIXME: Make these configurable...
+    */
+   pGlint->agp.size = 2 * 1024 * 1024;
+   pGlint->buffers.offset = 0;
+   pGlint->buffers.size = GLINT_DRI_BUF_COUNT * GLINT_DRI_BUF_SIZE;
+
+   if ( drmAgpAcquire( pGlint->drmSubFD ) < 0 ) {
+      xf86DrvMsg( pScreen->myNum, X_ERROR, "[agp] AGP not available\n" );
+      return FALSE;
+   }
+
+   /* Read AGP Capabilities */
+   mode = drmAgpGetMode(pGlint->drmSubFD) & ~0x03; /* Mask Host capabilities */
+
+   mode |= 0x01; /* Gamma only supports AGP 1x */
+
+   /* Now enable AGP only on the specified BusID */
+   if ( drmAgpEnable( pGlint->drmSubFD, mode ) < 0 ) {
+      xf86DrvMsg( pScreen->myNum, X_ERROR, "[agp] AGP not enabled\n" );
+      drmAgpRelease( pGlint->drmSubFD );
+      return FALSE;
+   }
+
+   ret = drmAgpAlloc( pGlint->drmSubFD, pGlint->agp.size, 0, NULL, 
+		      &pGlint->agp.handle);
+
+   if ( ret < 0 ) {
+      xf86DrvMsg( pScreen->myNum, X_ERROR, "[agp] Out of memory (%d)\n", ret );
+      drmAgpRelease( pGlint->drmSubFD );
+      return FALSE;
+   }
+   xf86DrvMsg( pScreen->myNum, X_INFO,
+	       "[agp] %d kB allocated with handle 0x%08x\n",
+	       pGlint->agp.size/1024, pGlint->agp.handle );
+
+   if ( drmAgpBind( pGlint->drmSubFD, pGlint->agp.handle, 0 ) < 0 ) {
+      xf86DrvMsg( pScreen->myNum, X_ERROR, "[agp] Could not bind memory\n" );
+      drmAgpFree( pGlint->drmSubFD, pGlint->agp.handle );
+      drmAgpRelease( pGlint->drmSubFD );
+      return FALSE;
+   }
+
+   /* DMA buffers
+    */
+   if ( drmAddMap( pGlint->drmSubFD, pGlint->buffers.offset, 
+		   pGlint->buffers.size, DRM_AGP, 0,
+		   &pGlint->buffers.handle ) < 0 ) {
+      xf86DrvMsg( pScreen->myNum, X_ERROR,
+		  "[agp] Could not add DMA buffers mapping\n" );
+      return FALSE;
+   }
+   xf86DrvMsg( pScreen->myNum, X_INFO,
+	       "[agp] DMA buffers handle = 0x%08lx\n",
+	       pGlint->buffers.handle );
+
+   if ( drmMap( pGlint->drmSubFD, pGlint->buffers.handle, 
+		pGlint->buffers.size, &pGlint->buffers.map ) < 0 ) {
+      xf86DrvMsg( pScreen->myNum, X_ERROR,
+		  "[agp] Could not map DMA buffers\n" );
+      return FALSE;
+   }
+   xf86DrvMsg( pScreen->myNum, X_INFO,
+	       "[agp] DMA buffers mapped at 0x%08lx\n", pGlint->buffers.map);
+
+   count = drmAddBufs( pGlint->drmSubFD,
+		       GLINT_DRI_BUF_COUNT, GLINT_DRI_BUF_SIZE,
+		       DRM_AGP_BUFFER, pGlint->buffers.offset );
+   if ( count <= 0 ) {
+      xf86DrvMsg( pScrn->scrnIndex, X_INFO,
+		  "[drm] failure adding %d %d byte DMA buffers\n",
+		  GLINT_DRI_BUF_COUNT, GLINT_DRI_BUF_SIZE );
+      return FALSE;
+   }
+   xf86DrvMsg( pScreen->myNum, X_INFO,
+	       "[drm] Added %d %d byte DMA buffers\n",
+	       count, GLINT_DRI_BUF_SIZE );
+
+    {
+	int bufs;
+	
+	if ((bufs = drmAddBufs(pGlint->drmSubFD,
+			       1,
+			       8192, /* 8K = 8MB physical memory */
+			       0,
+			       DRM_RESTRICTED /* flags */)) <= 0) {
+	    xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+		       "[drm] 0x%x failure adding page table buffer\n",bufs);
+	    DRICloseScreen(pScreen);
 	    return FALSE;
 	}
-
-	if (!(pGlintConfigs = (GLINTConfigPrivPtr)xcalloc(
-					    sizeof(GLINTConfigPrivRec),
-					    numConfigs))) {
-	    xfree(pConfigs);
-	    return FALSE;
-	}
-
-	if (!(pGlintConfigPtrs = (GLINTConfigPrivPtr *)xcalloc(
-					    sizeof(GLINTConfigPrivPtr),
-					    numConfigs))) {
-	    xfree(pGlintConfigs);
-	    xfree(pConfigs);
-	    return FALSE;
-	}
-
-	/* Init the list of Glint config pointers */
-	for (i = 0; i < numConfigs; i++)
-	    pGlintConfigPtrs[i] = &pGlintConfigs[i];
-
-	/* config 0: db=FALSE, depth=0, stencil=0, conformant (a lie) */ 
-	pConfigs[0].vid              = -1;
-	pConfigs[0].class            = -1;
-	pConfigs[0].rgba             = TRUE;
-	pConfigs[0].redSize          = 8;
-	pConfigs[0].greenSize        = 8;
-	pConfigs[0].blueSize         = 8;
-	pConfigs[0].alphaSize        = 0;
-	pConfigs[0].redMask          = 0x00ff0000;
-	pConfigs[0].greenMask        = 0x0000ff00;
-	pConfigs[0].blueMask         = 0x000000ff;
-	pConfigs[0].alphaMask        = 0;
-	pConfigs[0].accumRedSize     = 0;
-	pConfigs[0].accumGreenSize   = 0;
-	pConfigs[0].accumBlueSize    = 0;
-	pConfigs[0].accumAlphaSize   = 0;
-	pConfigs[0].doubleBuffer     = FALSE;
-	pConfigs[0].stereo           = FALSE;
-	pConfigs[0].bufferSize       = 32;
-	pConfigs[0].depthSize        = 0;
-	pConfigs[0].stencilSize      = 0;
-	pConfigs[0].auxBuffers       = 0;
-	pConfigs[0].level            = 0;
-	pConfigs[0].visualRating     = 0;
-	pConfigs[0].transparentPixel = 0;
-	pConfigs[0].transparentRed   = 0;
-	pConfigs[0].transparentGreen = 0;
-	pConfigs[0].transparentBlue  = 0;
-	pConfigs[0].transparentAlpha = 0;
-	pConfigs[0].transparentIndex = 0;
-	pGlintConfigs[0].index = 0;
-
-	/* config 1: db=FALSE, depth=16, stencil=0, conformant (a lie) */ 
-	pConfigs[1].vid              = -1;
-	pConfigs[1].class            = -1;
-	pConfigs[1].rgba             = TRUE;
-	pConfigs[1].redSize          = 8;
-	pConfigs[1].greenSize        = 8;
-	pConfigs[1].blueSize         = 8;
-	pConfigs[1].alphaSize        = 0;
-	pConfigs[1].redMask          = 0x00ff0000;
-	pConfigs[1].greenMask        = 0x0000ff00;
-	pConfigs[1].blueMask         = 0x000000ff;
-	pConfigs[1].alphaMask        = 0;
-	pConfigs[1].accumRedSize     = 0;
-	pConfigs[1].accumGreenSize   = 0;
-	pConfigs[1].accumBlueSize    = 0;
-	pConfigs[1].accumAlphaSize   = 0;
-	pConfigs[1].doubleBuffer     = FALSE;
-	pConfigs[1].stereo           = FALSE;
-	pConfigs[1].bufferSize       = 32;
-	pConfigs[1].depthSize        = 16;
-	pConfigs[1].stencilSize      = 0;
-	pConfigs[1].auxBuffers       = 0;
-	pConfigs[1].level            = 0;
-	pConfigs[1].visualRating     = 0;
-	pConfigs[1].transparentPixel = 0;
-	pConfigs[1].transparentRed   = 0;
-	pConfigs[1].transparentGreen = 0;
-	pConfigs[1].transparentBlue  = 0;
-	pConfigs[1].transparentAlpha = 0;
-	pConfigs[1].transparentIndex = 0;
-	pGlintConfigs[1].index = 1;
-
-	/* config 2: db=TRUE, depth=0, stencil=0, conformant (a lie) */ 
-	pConfigs[2].vid              = -1;
-	pConfigs[2].class            = -1;
-	pConfigs[2].rgba             = TRUE;
-	pConfigs[2].redSize          = 8;
-	pConfigs[2].greenSize        = 8;
-	pConfigs[2].blueSize         = 8;
-	pConfigs[2].alphaSize        = 0;
-	pConfigs[2].redMask          = 0x00ff0000;
-	pConfigs[2].greenMask        = 0x0000ff00;
-	pConfigs[2].blueMask         = 0x000000ff;
-	pConfigs[2].alphaMask        = 0;
-	pConfigs[2].accumRedSize     = 0;
-	pConfigs[2].accumGreenSize   = 0;
-	pConfigs[2].accumBlueSize    = 0;
-	pConfigs[2].accumAlphaSize   = 0;
-	pConfigs[2].doubleBuffer     = TRUE;
-	pConfigs[2].stereo           = FALSE;
-	pConfigs[2].bufferSize       = 32;
-	pConfigs[2].depthSize        = 0;
-	pConfigs[2].stencilSize      = 0;
-	pConfigs[2].auxBuffers       = 0;
-	pConfigs[2].level            = 0;
-	pConfigs[2].visualRating     = 0;
-	pConfigs[2].transparentPixel = 0;
-	pConfigs[2].transparentRed   = 0;
-	pConfigs[2].transparentGreen = 0;
-	pConfigs[2].transparentBlue  = 0;
-	pConfigs[2].transparentAlpha = 0;
-	pConfigs[2].transparentIndex = 0;
-	pGlintConfigs[2].index = 2;
-
-	/* config 3: db=TRUE, depth=16, stencil=0, conformant (a lie) */ 
-	pConfigs[3].vid              = -1;
-	pConfigs[3].class            = -1;
-	pConfigs[3].rgba             = TRUE;
-	pConfigs[3].redSize          = 8;
-	pConfigs[3].greenSize        = 8;
-	pConfigs[3].blueSize         = 8;
-	pConfigs[3].alphaSize        = 0;
-	pConfigs[3].redMask          = 0x00ff0000;
-	pConfigs[3].greenMask        = 0x0000ff00;
-	pConfigs[3].blueMask         = 0x000000ff;
-	pConfigs[3].alphaMask        = 0;
-	pConfigs[3].accumRedSize     = 0;
-	pConfigs[3].accumGreenSize   = 0;
-	pConfigs[3].accumBlueSize    = 0;
-	pConfigs[3].accumAlphaSize   = 0;
-	pConfigs[3].doubleBuffer     = TRUE;
-	pConfigs[3].stereo           = FALSE;
-	pConfigs[3].bufferSize       = 32;
-	pConfigs[3].depthSize        = 16;
-	pConfigs[3].stencilSize      = 0;
-	pConfigs[3].auxBuffers       = 0;
-	pConfigs[3].level            = 0;
-	pConfigs[3].visualRating     = 0;
-	pConfigs[3].transparentPixel = 0;
-	pConfigs[3].transparentRed   = 0;
-	pConfigs[3].transparentGreen = 0;
-	pConfigs[3].transparentBlue  = 0;
-	pConfigs[3].transparentAlpha = 0;
-	pConfigs[3].transparentIndex = 0;
-	pGlintConfigs[3].index = 3;
-
-	/* config 4: db=TRUE, depth=16, stencil=8, conformant (a lie) */ 
-	pConfigs[4].vid              = -1;
-	pConfigs[4].class            = -1;
-	pConfigs[4].rgba             = TRUE;
-	pConfigs[4].redSize          = 8;
-	pConfigs[4].greenSize        = 8;
-	pConfigs[4].blueSize         = 8;
-	pConfigs[4].alphaSize        = 0;
-	pConfigs[4].redMask          = 0x00ff0000;
-	pConfigs[4].greenMask        = 0x0000ff00;
-	pConfigs[4].blueMask         = 0x000000ff;
-	pConfigs[4].alphaMask        = 0;
-	pConfigs[4].accumRedSize     = 0;
-	pConfigs[4].accumGreenSize   = 0;
-	pConfigs[4].accumBlueSize    = 0;
-	pConfigs[4].accumAlphaSize   = 0;
-	pConfigs[4].doubleBuffer     = TRUE;
-	pConfigs[4].stereo           = FALSE;
-	pConfigs[4].bufferSize       = 32;
-	pConfigs[4].depthSize        = 16;
-	pConfigs[4].stencilSize      = 8;
-	pConfigs[4].auxBuffers       = 0;
-	pConfigs[4].level            = 0;
-	pConfigs[4].visualRating     = 0;
-	pConfigs[4].transparentPixel = 0;
-	pConfigs[4].transparentRed   = 0;
-	pConfigs[4].transparentGreen = 0;
-	pConfigs[4].transparentBlue  = 0;
-	pConfigs[4].transparentAlpha = 0;
-	pConfigs[4].transparentIndex = 0;
-	pGlintConfigs[4].index = 4;
-
-	break;
+	xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+		   "[drm] added 1 page table buffer\n");
     }
 
-    pGlint->numVisualConfigs = numConfigs;
-    pGlint->pVisualConfigs = pConfigs;
-    pGlint->pVisualConfigsPriv = pGlintConfigs;
-    GlxSetVisualConfigs(numConfigs, pConfigs, (void **)pGlintConfigPtrs);
-
-    /*
-     * All of the above visual configs use the same local buffer memory
-     * organiation, so just set once here at the bottom
-     */
-    GLINT_SLOW_WRITE_REG(
-			 (LBRF_DepthWidth16    | 
-                          LBRF_StencilWidth8   |
-                          LBRF_StencilPos16    |
-                          LBRF_FrameCount8     |
-                          LBRF_FrameCountPos24 |
-                          LBRF_GIDWidth4       |
-                          LBRF_GIDPos32         ), LBReadFormat);
-    GLINT_SLOW_WRITE_REG(
-			 (LBRF_DepthWidth16    | 
-                          LBRF_StencilWidth8   |
-                          LBRF_StencilPos16    |
-                          LBRF_FrameCount8     |
-                          LBRF_FrameCountPos24 |
-                          LBRF_GIDWidth4       |
-                          LBRF_GIDPos32         ), LBWriteFormat);
-    if (pGlint->numMultiDevices == 2) {
-    	ACCESSCHIP2();
-    	GLINT_SLOW_WRITE_REG(
-			 (LBRF_DepthWidth16    | 
-                          LBRF_StencilWidth8   |
-                          LBRF_StencilPos16    |
-                          LBRF_FrameCount8     |
-                          LBRF_FrameCountPos24 |
-                          LBRF_GIDWidth4       |
-                          LBRF_GIDPos32         ), LBReadFormat);
-    	GLINT_SLOW_WRITE_REG(
-			 (LBRF_DepthWidth16    | 
-                          LBRF_StencilWidth8   |
-                          LBRF_StencilPos16    |
-                          LBRF_FrameCount8     |
-                          LBRF_FrameCountPos24 |
-                          LBRF_GIDWidth4       |
-                          LBRF_GIDPos32         ), LBWriteFormat);
-    	ACCESSCHIP1();
-    }
+    pGlint->PCIMode = FALSE;
 
     return TRUE;
+}
+
+static Bool GLINTDRIKernelInit( ScreenPtr pScreen )
+{
+   ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
+   GLINTPtr pGlint = GLINTPTR(pScrn);
+   DRIInfoPtr pDRIInfo = pGlint->pDRIInfo;
+   GLINTDRIPtr pGlintDRI = pDRIInfo->devPrivate;
+   drmGAMMAInit init;
+   int ret;
+
+   memset( &init, 0, sizeof(drmGAMMAInit) );
+
+   init.func = GAMMA_INIT_DMA;
+   init.sarea_priv_offset = sizeof(XF86DRISAREARec);
+
+   init.mmio0 = pGlintDRI->registers0.handle;
+   init.mmio1 = pGlintDRI->registers1.handle;
+   init.mmio2 = pGlintDRI->registers2.handle;
+   init.mmio3 = pGlintDRI->registers3.handle;
+
+   if (!pGlint->PCIMode) {
+       init.pcimode = 0;
+       init.buffers_offset = pGlint->buffers.handle;
+   } else {
+       init.pcimode = 1;
+   }
+
+   ret = drmCommandWrite( pGlint->drmSubFD, DRM_GAMMA_INIT, 
+                          &init, sizeof(drmGAMMAInit) );
+
+   if ( ret < 0 ) {
+      xf86DrvMsg( pScrn->scrnIndex, X_ERROR,
+		  "[drm] Failed to initialize DMA! (%d)\n", ret );
+      return FALSE;
+   }
+
+   return TRUE;
 }
 
 Bool
@@ -419,6 +523,13 @@ GLINTDRIScreenInit(ScreenPtr pScreen)
 	return FALSE;
     }
 
+    /* setup visual configurations */
+    if (!(GLINTInitVisualConfigs(pScreen))) {
+	DRICloseScreen(pScreen);
+	return FALSE;
+    }
+    xf86DrvMsg(pScrn->scrnIndex, X_INFO, "visual configs initialized\n" );
+
     pDRIInfo->devPrivate     = pGlintDRI;
     pDRIInfo->devPrivateSize = sizeof(GLINTDRIRec);
     pDRIInfo->contextSize    = sizeof(GLINTDRIContextRec);
@@ -434,22 +545,65 @@ GLINTDRIScreenInit(ScreenPtr pScreen)
     pDRIInfo->createDummyCtx     = TRUE;
     pDRIInfo->createDummyCtxPriv = FALSE;
 
+    /* So DRICloseScreen does the right thing if we abort */
+    pGlint->buffers.map = 0;
+    pGlint->agp.handle = 0;
+
     if (!DRIScreenInit(pScreen, pDRIInfo, &(pGlint->drmSubFD))) {
 	DRIDestroyInfoRec(pGlint->pDRIInfo);
 	xfree(pGlintDRI);
 	return FALSE;
     }
 
-    /* Check the GLINT DRM version */
+    /* Check the DRM versioning */
     {
-        drmVersionPtr version = drmGetVersion(pGlint->drmSubFD);
+        drmVersionPtr version;
+
+	/* Check the DRM lib version.
+	   drmGetLibVersion was not supported in version 1.0, so check for
+	   symbol first to avoid possible crash or hang.
+	 */
+	if (xf86LoaderCheckSymbol("drmGetLibVersion")) {
+	    version = drmGetLibVersion(pGlint->drmSubFD);
+	}
+	else {
+	    /* drmlib version 1.0.0 didn't have the drmGetLibVersion
+	       entry point.  Fake it by allocating a version record
+	       via drmGetVersion and changing it to version 1.0.0
+	     */
+	    version = drmGetVersion(pGlint->drmSubFD);
+	    version->version_major      = 1;
+	    version->version_minor      = 0;
+	    version->version_patchlevel = 0;
+	}
+
+	if (version) {
+	    if (version->version_major != 1 ||
+		version->version_minor < 1) {
+		/* incompatible drm library version */
+		xf86DrvMsg(pScreen->myNum, X_ERROR,
+		    "[dri] GLINTDRIScreenInit failed because of a version mismatch.\n"
+		    "[dri] libdrm.a module version is %d.%d.%d but version 1.1.x is needed.\n"
+		    "[dri] Disabling DRI.\n",
+		    version->version_major,
+		    version->version_minor,
+		    version->version_patchlevel);
+		drmFreeVersion(version);
+		GLINTDRICloseScreen(pScreen);
+		return FALSE;
+	    }
+	    drmFreeVersion(version);
+	}
+
+        /* Check the GLINT DRM version */
+        version = drmGetVersion(pGlint->drmSubFD);
         if (version) {
-            if (version->version_major != 1 ||
+            if (version->version_major != 2 ||
                 version->version_minor < 0) {
                 /* incompatible drm version */
                 xf86DrvMsg(pScreen->myNum, X_ERROR,
                     "[dri] GLINTDRIScreenInit failed because of a version mismatch.\n"
-                    "[dri] gamma.o kernel module version is %d.%d.%d but version 1.0.x is needed.\n"
+                    "[dri] gamma.o kernel module version is %d.%d.%d but version 2.0.x is needed.\n"
                     "[dri] Disabling DRI.\n",
                     version->version_major,
                     version->version_minor,
@@ -466,138 +620,151 @@ GLINTDRIScreenInit(ScreenPtr pScreen)
     pGlintDRI->numMultiDevices = pGlint->numMultiDevices;
     /* Tell the client about our screen size setup */
     pGlintDRI->pprod = pGlint->pprod;
+
+    pGlintDRI->cpp = pScrn->bitsPerPixel / 8;
+    pGlintDRI->frontPitch = pScrn->displayWidth;
+    pGlintDRI->frontOffset = 0;
+
+    pGlintDRI->textureSize = 32 * 1024 * 1024;
+    pGlintDRI->logTextureGranularity = 
+		mylog2( pGlintDRI->textureSize / GAMMA_NR_TEX_REGIONS );
    
     /* setup device specific direct rendering memory maps */
 
     /* pci region 0: control regs, first 4k page, priveledged writes */
-    pGlintDRI->flagsControlRegs0 = DRM_READ_ONLY;
-    pGlintDRI->sizeControlRegs0 = 0x1000;
+    pGlintDRI->registers0.size = 0x1000;
     if (drmAddMap( pGlint->drmSubFD,
 		   (drmHandle)pGlint->IOAddress,
-		   pGlintDRI->sizeControlRegs0,
-		   DRM_REGISTERS,
-		   pGlintDRI->flagsControlRegs0,
-		   &pGlintDRI->hControlRegs0) < 0)
+		   pGlintDRI->registers0.size,
+		   DRM_REGISTERS, DRM_READ_ONLY,
+		   &pGlintDRI->registers0.handle) < 0)
     {
 	DRICloseScreen(pScreen);
 	return FALSE;
     }
     xf86DrvMsg(pScreen->myNum, X_INFO, 
 	       "[drm] Register handle 0 = 0x%08lx\n",
-	       pGlintDRI->hControlRegs0);
+	       pGlintDRI->registers0.handle);
 
     /* pci region 0: control regs, following region, client access */
-    pGlintDRI->flagsControlRegs1 = 0;
-    pGlintDRI->sizeControlRegs1 = 0xf000;
+    pGlintDRI->registers1.size = 0xf000;
     if (drmAddMap( pGlint->drmSubFD,
 		   (drmHandle)(pGlint->IOAddress + 0x1000),
-		   pGlintDRI->sizeControlRegs1,
-		   DRM_REGISTERS,
-		   pGlintDRI->flagsControlRegs1,
-		   &pGlintDRI->hControlRegs1) < 0)
+		   pGlintDRI->registers1.size,
+		   DRM_REGISTERS, 0,
+		   &pGlintDRI->registers1.handle) < 0)
     {
 	DRICloseScreen(pScreen);
 	return FALSE;
     }
     xf86DrvMsg(pScreen->myNum, X_INFO, 
 	       "[drm] Register handle 1 = 0x%08lx\n",
-	       pGlintDRI->hControlRegs1);
+	       pGlintDRI->registers1.handle);
 
     /* pci region 0: control regs, second MX, first 4k page */
-    pGlintDRI->flagsControlRegs2 = DRM_READ_ONLY;
-    pGlintDRI->sizeControlRegs2 = 0x1000;
+    pGlintDRI->registers2.size = 0x1000;
     if (drmAddMap( pGlint->drmSubFD,
 		   (drmHandle)(pGlint->IOAddress + 0x10000),
-		   pGlintDRI->sizeControlRegs2,
-		   DRM_REGISTERS,
-		   pGlintDRI->flagsControlRegs2,
-		   &pGlintDRI->hControlRegs2) < 0)
+		   pGlintDRI->registers2.size,
+		   DRM_REGISTERS, DRM_READ_ONLY,
+		   &pGlintDRI->registers2.handle) < 0)
     {
 	DRICloseScreen(pScreen);
 	return FALSE;
     }
     xf86DrvMsg(pScreen->myNum, X_INFO, 
 	       "[drm] Register handle 2 = 0x%08lx\n",
-	       pGlintDRI->hControlRegs2);
+	       pGlintDRI->registers2.handle);
 
     /* pci region 0: control regs, second MX, following region */
-    pGlintDRI->flagsControlRegs3 = 0;
-    pGlintDRI->sizeControlRegs3 = 0xf000;
+    pGlintDRI->registers3.size = 0xf000;
     if (drmAddMap( pGlint->drmSubFD,
 		   (drmHandle)(pGlint->IOAddress + 0x11000),
-		   pGlintDRI->sizeControlRegs3,
-		   DRM_REGISTERS,
-		   pGlintDRI->flagsControlRegs3,
-		   &pGlintDRI->hControlRegs3) < 0)
+		   pGlintDRI->registers3.size,
+		   DRM_REGISTERS, 0,
+		   &pGlintDRI->registers3.handle) < 0)
     {
 	DRICloseScreen(pScreen);
 	return FALSE;
     }
     xf86DrvMsg(pScreen->myNum, X_INFO, 
 	       "[drm] Register handle 3 = 0x%08lx\n",
-	       pGlintDRI->hControlRegs3);
+	       pGlintDRI->registers3.handle);
 
     /* setup DMA buffers */
 
-    if (xf86ConfigDRI.bufs_count) {
-	int i;
-	int bufs;
+    /* TRY AGP */
+    if ( !GLINTDRIAgpInit( pScreen ) ) {
+        /* OUCH, NO AGP, TRY PCI */
+        pGlint->PCIMode = TRUE;
+        if (xf86ConfigDRI.bufs_count) {
+	    int i;
+	    int bufs;
 	
-	for (i = 0; i < xf86ConfigDRI.bufs_count; i++) {
-	    if ((bufs = drmAddBufs(pGlint->drmSubFD,
+	    for (i = 0; i < xf86ConfigDRI.bufs_count; i++) {
+	    	if ((bufs = drmAddBufs(pGlint->drmSubFD,
 				   xf86ConfigDRI.bufs[i].count,
 				   xf86ConfigDRI.bufs[i].size,
 				   0,
 				   0 /* flags */)) <= 0) {
-		xf86DrvMsg(pScrn->scrnIndex, X_ERROR, 
+		    xf86DrvMsg(pScrn->scrnIndex, X_ERROR, 
 			   "[drm] failure adding %d %d byte DMA buffers\n",
 			   xf86ConfigDRI.bufs[i].count,
 			   xf86ConfigDRI.bufs[i].size);
-	    } else {
-		xf86DrvMsg(pScrn->scrnIndex, X_ERROR, 
+	    	} else {
+		    xf86DrvMsg(pScrn->scrnIndex, X_ERROR, 
 			   "[drm] added %d %d byte DMA buffers\n",
 			   bufs, xf86ConfigDRI.bufs[i].size);
-		dmabufs += bufs;
+		    dmabufs += bufs;
+	    	}
 	    }
-	}
-    }
+    	}
 
-    if (dmabufs <= 0) {
-	int bufs;
+    	if (dmabufs <= 0) {
+	    int bufs;
 	
-	if ((bufs = drmAddBufs(pGlint->drmSubFD,
+	    if ((bufs = drmAddBufs(pGlint->drmSubFD,
 			       GLINT_DRI_BUF_COUNT,
 			       GLINT_DRI_BUF_SIZE,
 			       0,
 			       0 /* flags */)) <= 0) {
-	    xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+	    	xf86DrvMsg(pScrn->scrnIndex, X_INFO,
 		       "[drm] failure adding %d %d byte DMA buffers\n",
 		       GLINT_DRI_BUF_COUNT,
 		       GLINT_DRI_BUF_SIZE);
-	    DRICloseScreen(pScreen);
-	    return FALSE;
-	}
-	xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+	    	DRICloseScreen(pScreen);
+	    	return FALSE;
+	    }
+	    xf86DrvMsg(pScrn->scrnIndex, X_INFO,
 		   "[drm] added %d %d byte DMA buffers\n",
 		   bufs, GLINT_DRI_BUF_SIZE);
-    }
+	
+	    if ((bufs = drmAddBufs(pGlint->drmSubFD,
+			       1,
+			       8192, /* 8K = 8MB physical memory */
+			       0,
+			       DRM_RESTRICTED /* flags */)) <= 0) {
+	    	xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+		       "[drm] 0x%x failure adding page table buffer\n",bufs);
+	    	DRICloseScreen(pScreen);
+	    	return FALSE;
+	    }
+	    xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+		   "[drm] added 1 page table buffer\n");
+    	}
 
-    /* -->> If you mark the buffer queueing policy, you'd do it here. <<-- */
-    
-    if (!(pGlint->drmBufs = drmMapBufs(pGlint->drmSubFD))) {
-	xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+    	if (!(pGlint->drmBufs = drmMapBufs(pGlint->drmSubFD))) {
+	    xf86DrvMsg(pScrn->scrnIndex, X_INFO,
 		   "[drm] failure mapping DMA buffers\n");
-	DRICloseScreen(pScreen);
-	return FALSE;
-    }
-    xf86DrvMsg(pScrn->scrnIndex, X_INFO, "[drm] buffers mapped with %p\n",
+	    DRICloseScreen(pScreen);
+	    return FALSE;
+    	}
+    	xf86DrvMsg(pScrn->scrnIndex, X_INFO, "[drm] buffers mapped with %p\n",
 	       pGlint->drmBufs);
-    xf86DrvMsg(pScrn->scrnIndex, X_INFO, "[drm] %d DMA buffers mapped\n",
+    	xf86DrvMsg(pScrn->scrnIndex, X_INFO, "[drm] %d DMA buffers mapped\n",
 	       pGlint->drmBufs->count);
+    } /* PCIMODE */
 
-    xf86EnablePciBusMaster(pGlint->PciInfo, TRUE);
-
-    /* tell the generic kernel driver how to handle Gamma DMA */
     if (pGlint->irq <= 0) {
 	pGlint->irq = drmGetInterruptFromBusID(pGlint->drmSubFD,
 					       ((pciConfigPtr)pGlint->PciInfo
@@ -608,26 +775,6 @@ GLINTDRIScreenInit(ScreenPtr pScreen)
 						->thisCard)->funcnum);
     }
     
-   if ( (pGlint->irq <= 0) || 
-	      GLINTDRIControlInit(pGlint->drmSubFD, pGlint->irq) ) {
-	xf86DrvMsg(pScrn->scrnIndex, X_INFO,
-	   "[drm] cannot initialize dma with IRQ %d\n",
-	   pGlint->irq);
-	DRICloseScreen(pScreen);
-	return FALSE;
-    }
-
-    xf86DrvMsg(pScrn->scrnIndex, X_INFO,
-	       "[drm] dma control initialized, using IRQ %d\n",
-	       pGlint->irq);
-
-    /* setup visual configurations */
-    if (!(GLINTInitVisualConfigs(pScreen))) {
-	DRICloseScreen(pScreen);
-	return FALSE;
-    }
-    xf86DrvMsg(pScrn->scrnIndex, X_INFO, "[dri] visual configs initialized.\n" );
-
     return TRUE;
 }
 
@@ -637,12 +784,27 @@ GLINTDRICloseScreen(ScreenPtr pScreen)
     ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
     GLINTPtr pGlint = GLINTPTR(pScrn);
 
-    xf86DrvMsg(pScrn->scrnIndex, X_INFO,
-	       "[drm] unmapping %d buffers\n",
-	       pGlint->drmBufs->count);
-    if (drmUnmapBufs(pGlint->drmBufs)) {
-	xf86DrvMsg(pScreen->myNum, X_INFO, 
-		   "[drm] unable to unmap DMA buffers\n");
+    if (pGlint->buffers.map) {
+	drmUnmap( pGlint->buffers.map, pGlint->buffers.size);
+	pGlint->buffers.map = NULL;
+    }
+
+    if (pGlint->agp.handle) {
+	drmAgpUnbind( pGlint->drmSubFD, pGlint->agp.handle );
+	drmAgpFree( pGlint->drmSubFD, pGlint->agp.handle );
+	pGlint->agp.handle = 0;
+	drmAgpRelease( pGlint->drmSubFD );
+    }
+
+    if (pGlint->drmBufs) {
+        xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+		   "[drm] unmapping %d buffers\n",
+		   pGlint->drmBufs->count);
+        if (drmUnmapBufs(pGlint->drmBufs)) {
+	    xf86DrvMsg(pScreen->myNum, X_INFO, 
+		       "[drm] unable to unmap DMA buffers\n");
+	}
+
     }
 
     DRICloseScreen(pScreen);
@@ -702,6 +864,9 @@ GLINTDRIFinishScreenInit(ScreenPtr pScreen)
 {
     ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
     GLINTPtr pGlint = GLINTPTR(pScrn);
+    DRIInfoPtr pDRIInfo = pGlint->pDRIInfo;
+    GLINTDRIPtr pGlintDRI = pDRIInfo->devPrivate;
+    FBAreaPtr fbarea;
 
     /* 
      * Setup one of 4 types of context swap handling methods
@@ -747,7 +912,71 @@ GLINTDRIFinishScreenInit(ScreenPtr pScreen)
 
     pGlint->pDRIInfo->driverSwapMethod = DRI_HIDE_X_CONTEXT;
 
-    return(DRIFinishScreenInit(pScreen));
+				/* Allocate the shared back buffer */
+    if ((fbarea = xf86AllocateOffscreenArea(pScreen,
+						pScrn->virtualX,
+						pScrn->virtualY,
+						32, NULL, NULL, NULL))) {
+	xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+		       "Reserved back buffer from (%d,%d) to (%d,%d)\n",
+		       fbarea->box.x1, fbarea->box.y1,
+		       fbarea->box.x2, fbarea->box.y2);
+
+    	pGlintDRI->backPitch = pScrn->displayWidth;
+        pGlintDRI->backOffset = (fbarea->box.y1 * pScrn->displayWidth * 
+				pScrn->bitsPerPixel / 8) +
+				(fbarea->box.x1 * pScrn->bitsPerPixel / 8);
+	pGlintDRI->backX = fbarea->box.x1;
+	pGlintDRI->backY = fbarea->box.y1;
+    } else {
+	xf86DrvMsg(pScrn->scrnIndex, X_ERROR, "Unable to reserve back buffer\n");
+    	pGlintDRI->backPitch = -1;
+        pGlintDRI->backOffset = -1;
+    }
+
+    if (!DRIFinishScreenInit(pScreen)) {
+	DRICloseScreen(pScreen);
+	return FALSE;
+    }
+
+    if (!GLINTDRIKernelInit(pScreen)) {
+	DRICloseScreen(pScreen);
+	return FALSE;
+    }
+
+   if ( (pGlint->irq <= 0) || 
+	      GLINTDRIControlInit(pGlint->drmSubFD, pGlint->irq) ) {
+	xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+	   "[drm] cannot initialize dma with IRQ %d\n",
+	   pGlint->irq);
+	DRICloseScreen(pScreen);
+	return FALSE;
+    }
+
+    xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+	       "[drm] dma control initialized, using IRQ %d\n",
+	       pGlint->irq);
+
+    if (!pGlint->PCIMode) {
+    	if (!(pGlint->drmBufs = drmMapBufs(pGlint->drmSubFD))) {
+		xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+		   	"[drm] failure mapping DMA buffers\n");
+		DRICloseScreen(pScreen);
+		return FALSE;
+    	}
+    	xf86DrvMsg(pScrn->scrnIndex, X_INFO, "[agp] buffers mapped with %p\n",
+	       pGlint->drmBufs);
+    	xf86DrvMsg(pScrn->scrnIndex, X_INFO, "[agp] %d DMA buffers mapped\n",
+	       pGlint->drmBufs->count);
+    }
+
+#if 0
+    /* Get the X server's context */
+    pGlint->DRIctx = DRIGetContext(pScreen);
+    pGlint->buf2D  = pGlint->drmBufs->list[GLINT_DRI_BUF_COUNT + 1].address;
+#endif
+
+    return TRUE;
 }
 
 #define ContextDump_tag 	0x1b8

@@ -47,7 +47,7 @@ in this Software without prior written authorization from The Open Group.
  * @(#)cache.c	4.2	91/05/02
  *
  */
-/* $XFree86: xc/programs/xfs/difs/cache.c,v 1.6 2001/12/14 20:01:33 dawes Exp $ */
+/* $XFree86: xc/programs/xfs/difs/cache.c,v 1.7 2002/10/15 01:45:02 dawes Exp $ */
 
 #include	"cachestr.h"
 #include	"misc.h"
@@ -370,7 +370,7 @@ CacheFreeMemory(
 	}
     }
     if (!found)
-	FatalError("Freeing cache entry %d which isn't there\n", cid);
+	FatalError("freeing cache entry %d which isn't there\n", cid);
 }
 
 /* ARGSUSED */

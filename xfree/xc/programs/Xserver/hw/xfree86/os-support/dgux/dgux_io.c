@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/dgux/dgux_io.c,v 1.2 1999/01/26 10:40:38 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/dgux/dgux_io.c,v 1.4 2003/02/17 15:11:56 dawes Exp $ */
 /*
  * INTEL DG/UX RELEASE 4.20 MU03
  * Copyright 1997 Takis Psarogiannakopoulos Cambridge,UK
@@ -81,4 +81,12 @@ MouseDevPtr mouse;
 	/* Flush any pending input */
 	ioctl(mouse->mseFd, TCFLSH, 0);
 	return(mouse->mseFd);
+}
+
+#include "xf86OSKbd.h"
+
+Bool
+xf86OSKbdPreInit(InputInfoPtr pInfo)
+{
+    return FALSE;
 }

@@ -13,7 +13,7 @@
     <date>21 April 2001
 
     <ident>
-    $XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/DRIcomp.sgml,v 1.16 2002/01/07 22:05:57 dawes Exp $
+    $XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/DRIcomp.sgml,v 1.19 2002/11/26 01:05:50 dawes Exp $
     </ident>
 
     <toc>
@@ -52,74 +52,61 @@
     <sect>Introduction <p>
 
         This document describes how to download, compile and install the
-        DRI project.
+        DRI.
         The DRI provides 3D graphics hardware acceleration for the XFree86
         project.
         This information is intended for experienced Linux developers.
         Beginners are probably better off installing precompiled packages.
       <p>
         Edits, corrections and updates to this document may be mailed
-        to <email>brian@tungstengrahpics.com</email>.
-
+        to <email>brian@tungstengraphics.com</email>.
+      <p>
+        Last updated on 13 February 2002 by Brian Paul.
 
     <sect>Prerequisites <p>
 
         You'll need the following:
         <itemize>
+	  <item>An installation of XFree86 4.1 or later.
+            The DRI tree has been pruned down to minimize its size.
+            But in order to build the DRI tree you need to have recent X
+            header files, etc. already installed.
+            If you don't have XFree86 4.1 (or later) installed you can
+            probably install it from RPMs (or another package format).
+            Or, you can download XFree86 as sources and compile/install
+            it yourself.
           <item>At least 200MB of free disk space.
             If you compile for debugging (the -g option) then you'll need
             about 600MB.
           <item>GCC compiler and related tools.
-          <item>ssh (secure shell) for registered developer downloading of the
-            DRI source tree
-          <item>A recent Linux Kernel.  See below for details.
+          <item>ssh (secure shell) if you're a DRI developer and don't want
+            to use anonymous CVS download.
+          <item>A 2.4.x Linux Kernel.  See below for details.
           <item>FreeBSD support is not currently being maintained and may not
             work.
         </itemize>
 
       <p>
         The DRI 3D drivers generally work on systems with Intel or AMD CPUs.
-        However, there is limited support for Alpha and PowerPC support is
-        underway.
+        However, limited support for Alpha and PowerPC support is underway.
 
       <p>
-        For 3dfx Voodoo3 hardware, you'll also need:
-        <itemize>
-          <item>Glide3 headers and runtime library if you want to use the
-            3dfx driver.
-            These can be obtained from
-            <htmlurl url="http://linux.3dfx.com/open_source/glide_kit.htm"
-            name="linux.3dfx.com">.
-          <item>A recent Linux 2.4.x kernel.  AGP support is not required.
-        </itemize>
+        For 3dfx Voodoo hardware, you'll also need the Glide3 runtime
+        library (libglide3-v3.so for Voodoo3 or libglide3-v5.so for
+        Voodoo4/5).
+        These can be downloaded from the DRI website.
+        You can compile them yourself, but it's often a painful process.
 
       <p>
-        For Matrox G200/G400 hardware, you'll also need:
-        <itemize>
-          <item>A recent Linux 2.4.x kernel with AGP support.
-        </itemize>
-
-      <p>
-        For Intel i810 hardware, you'll also need:
-        <itemize>
-          <item>A recent Linux 2.4.x kernel with AGP support.
-        </itemize>
-
-      <p>
-        For ATI Rage 128 and Radeon hardware, you'll also need:
-        <itemize>
-          <item>A recent Linux 2.4.x kernel with AGP support.
-        </itemize>
+        For Matrox G200/G400, Intel i810/i830 or ATI Rage128/Radeon hardware,
+        you'll also need AGP support in your Linux kernel, either built-in
+        or as a loadable module.
 
 
     <sect>Linux Kernel Preparation <p>
 
-        The DRI project closely tracks Linux kernel development.  Since
-        the internal Linux data structures might change in the 2.4 Linux
-        kernel, it's important to use the most recent Linux kernel and
-        not an old, intermediate development release.
-        As of this writing (Jan 2001), 2.4.0 is the most recent version
-        of Linux which the DRI is synchronized to.
+        Only the Linux 2.4.x kernels are currently supported by the DRI
+        hardware drivers.  2.5.x kernels may work, but aren't tested.
       <p>
         Most of the DRI drivers require AGP support and using Intel
         Pentium III SSE optimizations also requires an up-to-date Linux
@@ -222,7 +209,7 @@
 
         <sect1>Intel Pentium III Features <p>
 
-            The Pentium III SSE (Katmai) instructions are used in
+            The Pentium III SSE instructions are used in
             optimized vertex transformation functions in the Mesa-based
             DRI drivers.
             On Linux, SSE requires a recent kernel (such as 2.4.0-test11
@@ -265,8 +252,7 @@
 
     <sect>Downloading the XFree86/DRI CVS Sources <p>
 
-        The DRI project is hosted by VA Linux Systems'
-        <htmlurl url="http://dri.sourceforge.net/"
+        The DRI project is hosted by <htmlurl url="http://dri.sourceforge.net/"
         name="SourceForge">.
         The DRI source code, which is a subset of the XFree86 source tree,
         is kept in a CVS repository there.
@@ -404,7 +390,6 @@
             #define LinuxDistribution LinuxRedHat
             #define DefaultCCOptions -ansi GccWarningOptions -pipe
             #define BuildXF86DRI YES
-            #define HasGlide3 YES  
             /* Optionally turn these on for debugging */
             /* #define GlxBuiltInTdfx YES */
             /* #define GlxBuiltInMga YES */
@@ -415,28 +400,27 @@
           </verb>
           The <tt>ProjectRoot</tt> variable specifies where the XFree86 files
           will be installed.
-          You probably don't want to use <tt>/usr/X11R6/</tt> because that
-          would overwrite your default X files.
-          The following is recommended:
+          We recommend installing the DRI files over your existing XFree86
+          installation - it's generally safe to do and less error-prone.
+          This policy is different than what we used to recommend.
+        <p>
+          If XFree86 4.x is not installed in /usr/X11R6/ you'll have to
+          add the following to the <tt>host.def</tt> file:
           <verb>
-            #define ProjectRoot /usr/X11R6-DRI
+            #define ProjectRoot pathToYourXFree86installation
           </verb>
         <p>
-          Especially note the <em>XF86CardDrivers</em> line to be sure your
+          Note the <em>XF86CardDrivers</em> line to be sure your card's
           driver is listed.
-        <p>
-          If you have 3dfx hardware be sure that the Glide 3x headers are
-          installed in <tt>/usr/include/glide3/</tt> and that the Glide 3x
-          library is installed at <tt>/usr/lib/libglide3.so</tt>.
-        <p>
-          If you do not have 3dfx hardware comment out the <tt>HasGlide3</tt>
-          line in <tt>host.def</tt>.
         <p>
 	  If you want to enable 3DNow! optimizations in Mesa and the DRI
 	  drivers, you should add the following: 
           <verb>
             #define MesaUse3DNow YES
           </verb>
+          You don't have to be using an AMD processor in order to enable
+          this option.  The DRI will look for 3DNow! support and runtime
+          and only enable it if applicable.
         <p>
 	  If you want to enable SSE optimizations in Mesa and the DRI
 	  drivers, you <bf>must</bf> upgrade to a Linux 2.4.x kernel.
@@ -448,7 +432,7 @@
 	  <bf>will not compile</bf>.  You have been warned.  If you do
 	  have a 2.4.x kernel, you should add the following: 
           <verb>
-            #define MesaUseKatmai YES
+            #define MesaUseSSE YES
           </verb>
 	<p>
 
@@ -457,13 +441,13 @@
           To compile the complete DRI tree:
           <verb>
             cd ~/DRI-CVS/build/xc/
-            make World >& World.LOG
+            make World >& world.log
           </verb>
           Or if you want to watch the compilation progress:
           <verb>
             cd ~/DRI-CVS/build/xc/
-            make World >& World.LOG &
-            tail -f World.LOG
+            make World >& world.log &
+            tail -f world.log
           </verb>
           With the default compilation flags it's normal to get a lot of
           warnings during compilation.
@@ -477,7 +461,7 @@
 
       <sect1>Check for compilation errors <p>
 
-          Using your text editor, examine <tt>World.LOG</tt> for errors
+          Using your text editor, examine <tt>world.log</tt> for errors
           by searching for the pattern <tt>***</tt>.
         <p>
           Verify that the DRI kernel module(s) for your system were built:
@@ -514,7 +498,7 @@
 
       <sect1>DRI kernel module installation <p>
 
-        The DRI kernel modules are in
+        The DRI kernel modules will be in
         <tt>~/DRI-CVS/build/xc/programs/Xserver/hw/xfree86/os-support/linux/drm/kernel/</tt>.
         <p>
         To load the appropriate DRM module in your running kernel you can
@@ -531,95 +515,42 @@
 
     <sect>Normal Installation and Configuration <p>
 
-        Most users will want to install the new X server and use it instead
-        of the original X server.
+        Most users will want to install the new X server and use it in place
+        of their old X server.
         This section explains how to do that.
-        We assume that the user is upgrading from XFree86 3.3.x.
         <p>
         Developers, on the other hand, may just want to test the X server
         without actually installing it as their default server.
         If you want to do that, skip to the next section.
         <p>
 
-      <sect1>X Installation <p>
+      <sect1>Installation <p>
 
-          You'll need to run as root to do the following commands:
+          Here are the installation commands:
           <verb>
 	      su
-          </verb>
-	  As mentioned above, the installation directory is specified by the
-	  <tt>ProjectRoot</tt> variable in the <tt>host.def</tt> file.
-	  Create that directory now if it doesn't already exist, then
-          run the install commands:
-	  <verb>
-	      mkdir /usr/X11R6-DRI
 	      cd ~/DRI-CVS/build/xc
 	      make install
 	  </verb>
 
-      <sect1>Linker configuration <p>
+      <sect1>Update the XF86Config File <p>
 
-	  Edit your <tt>/etc/ld.so.conf</tt> file and put
-	  <tt>/usr/X11R6-DRI/lib</tt> as the first line.
-	  Then run:
-	  <verb>
-	      ldconfig
-	  </verb>
-          This will ensure that you use the new X libraries when you run
-          X programs.
+          You may need to edit your XF86Config file to enable the DRI.
+          The config file is usually installed as
+          <tt>/etc/X11/XF86Config-4</tt>.
+          See the DRI User Guide for details, but basically, you need
+          to load the "glx" and "dri" modules and add a "DRI" section.
         <p>
-
-      <sect1>Update Locale Information <p>
-
-          To update your X locale information do the following:
-          <verb>
-             cd ~/DRI-CVS/build/xc/nls
-             ../config/util/xmkmf -a
-             make
-             make install
-          </verb>
-          This will prevent a locale error message from being printed
-          when you run Xlib programs.
-
-      <sect1>Setup Miscellaneous Files <p>
-
-          Issue the following commands:
-          <verb>
-             cd /usr/X11R6-DRI/lib/X11
-             ln -s /usr/X11R6/lib/X11/rgb.txt .
-             ln -s /usr/X11R6/lib/X11/fonts .
-             ln -s /usr/X11R6/lib/X11/app-defaults .
-          </verb>
-
-          This will allow applications to use the fonts and resources
-          that they used in the past.
-
-      <sect1>Disable the Old X Server and Enable the New One <p>
-
-          Assuming that an installation of XFree86 3.3.x is present, we need
-          to disable the old 3.3.x X server and enable the new 4.0.x X server.
+          On the DRI web site, in the resources section, you'll find example
+          XF86Config files for a number of graphics cards.
+          These configuration files also setup DRI options so it's highly
+          recommended that you look at these examples.
         <p>
-          Issue the following commands:
-          <verb>
-             cd /usr/X11R6/bin
-             mv Xwrapper Xwrapper.old
-             rm X
-             ln -s /usr/X11R6-DRI/bin/XFree86  X
-          </verb>
-          This will cause the new X server to be used instead of the
-          original one.
-        <p>
-
-      <sect1>Create the XF86Config File <p>
-
-          Configuration files for XFree86 3.3.x will not work with
-          XFree86 4.0.x.
-        <p>
-          The new 4.0.x server can generate a basic configuration file
+          The XFree86 4.x server can generate a basic configuration file
           itself.
           Simply do this:
           <verb>
-             cd /usr/X11R6-DRI/bin
+             cd /usr/X11R6/bin
              ./XFree86 -configure
           </verb>
           A file named <tt>/root/XF86Config.new</tt> will be created.
@@ -629,27 +560,14 @@
           <tt>VertRefresh</tt> options to the <tt>Monitor</tt> section
           and <tt>Modes</tt> options to the <tt>Screen</tt> section.
           Also, the <tt>ModulePath</tt> option in the <tt>Files</tt>
-          section should be set to <tt>/usr/X11R6-DRI/lib/modules</tt>.
-        <p>
-          On the DRI web site, in the resources section, you'll find example
-          XF86Config files for a number of graphics cards.
-          These configuration files also setup DRI options so it's highly
-          recommended that you look at these examples.
-        <p>
-          In any case, your new XF86Config file should be placed in
-          <tt>/etc/X11/XF86Config-4</tt>.
-          This configuration file will be recognized by the 4.0.x server
-          but not by 3.3.x servers.
-          You can instead name it <tt>/etc/X11/XF86Config</tt> but
-          that'll overwrite your old config file, which you may want to
-          preserve.
+          section should be set to <tt>/usr/X11R6/lib/modules</tt>.
         <p>
 
       <sect1>Start the New X Server <p>
 
           The new X server should be ready to use now.
           Start your X server in your usual manner.
-          Typically, the <tt>startx</tt> command is used:
+          Often times the <tt>startx</tt> command is used:
           <verb>
              startx
           </verb>
@@ -657,7 +575,7 @@
 
     <sect>Testing the Server Without Installing It <p>
 
-        As mentioned at the start of section 8, developers may want to
+        As mentioned at the start of section 9, developers may want to
         simply run the X server without installing it.
         This can save some time and allow you to keep a number of X servers
         available for testing.
@@ -669,7 +587,8 @@
         Put the <tt>XF86Config</tt> file in your
         <tt>~/DRI-CVS/build/xc/programs/Xserver</tt> directory.
       <p>
-        Be sure the <tt>ModulePath</tt> option is set correctly.
+        Be sure the <tt>ModulePath</tt> option in your XF86Config file
+        is set correctly.
       <p>
 
       <sect1>A Startup Script <p>

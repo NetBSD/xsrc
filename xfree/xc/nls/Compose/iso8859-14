@@ -1,12 +1,12 @@
-XCOMM Alastair McKinstry, <amck@maths.tcd.ie>
-XCOMM Extensions to allow ISO-8859-14 (Celtic) composing
+XCOMM ISO 8859-14 (Latin 8) Compose Sequences
 XCOMM
-XCOMM ISO 8859-14 (Latin-8) Compose Sequence
+XCOMM Original version by Alastair McKinstry, <amck@maths.tcd.ie>
+XCOMM Fixed and tidied up by Seamus O Ciardhuain <seoc@cnds.ucd.ie> (Dec 2002)
 XCOMM
-XCOMM $XFree86: xc/nls/Compose/iso8859-14,v 1.4 2001/04/26 21:09:40 dawes Exp $
+XCOMM $XFree86: xc/nls/Compose/iso8859-14,v 1.5 2002/12/19 00:57:15 dawes Exp $
 XCOMM
-XCOMM The following is from the Latin-1 definitions
-XCOMM Sequence Definition
+XCOMM First part is taken from the Latin-1 definitions,
+XCOMM i.e. characters the same in 8859-1 and 8859-14.
 XCOMM
 XCOMM <Multi_key> Means <Compose>
 XCOMM Special Character
@@ -39,15 +39,6 @@ XCOMM Special Character
 <Multi_key> <space> <asciitilde>	: "~"	asciitilde
 <Multi_key> <minus> <space>		: "~"	asciitilde
 <Multi_key> <space> <minus>		: "~"	asciitilde
-<Multi_key> <exclam> <exclam>		: "\241"	exclamdown
-<Multi_key> <c> <slash>			: "\242"	cent
-<Multi_key> <slash> <c>			: "\242"	cent
-<Multi_key> <C> <slash>			: "\242"	cent
-<Multi_key> <slash> <C>			: "\242"	cent
-<Multi_key> <C> <bar>			: "\242"	cent
-<Multi_key> <bar> <C>			: "\242"	cent
-<Multi_key> <c> <bar>			: "\242"	cent
-<Multi_key> <bar> <c>			: "\242"	cent
 <Multi_key> <l> <minus>			: "\243"	sterling
 <Multi_key> <minus> <l>			: "\243"	sterling
 <Multi_key> <L> <minus>			: "\243"	sterling
@@ -56,16 +47,6 @@ XCOMM Special Character
 <Multi_key> <equal> <l>			: "\243"	sterling
 <Multi_key> <L> <equal>			: "\243"	sterling
 <Multi_key> <equal> <L>			: "\243"	sterling
-<Multi_key> <C> <equal>			: "\244"	EuroSign
-<Multi_key> <equal> <C>			: "\244"	EuroSign
-<Multi_key> <y> <minus>			: "\245"	yen
-<Multi_key> <minus> <y>			: "\245"	yen
-<Multi_key> <Y> <minus>			: "\245"	yen
-<Multi_key> <minus> <Y>			: "\245"	yen
-<Multi_key> <y> <equal>			: "\245"	yen
-<Multi_key> <equal> <y>			: "\245"	yen
-<Multi_key> <Y> <equal>			: "\245"	yen
-<Multi_key> <equal> <Y>			: "\245"	yen
 <Multi_key> <s> <o>			: "\247"	section
 <Multi_key> <o> <s>			: "\247"	section
 <Multi_key> <S> <O>			: "\247"	section
@@ -90,69 +71,21 @@ XCOMM Special Character
 <Multi_key> <0> <c>			: "\251"	copyright
 <Multi_key> <C> <0>			: "\251"	copyright
 <Multi_key> <0> <C>			: "\251"	copyright
-<Multi_key> <a> <underscore>		: "\252"	ordfeminine
-<Multi_key> <underscore> <a>		: "\252"	ordfeminine
-<Multi_key> <A> <underscore>		: "\252"	ordfeminine
-<Multi_key> <underscore> <A>		: "\252"	ordfeminine
-<Multi_key> <o> <underscore>		: "\272"	masculine
-<Multi_key> <underscore> <o>		: "\272"	masculine
-<Multi_key> <O> <underscore>		: "\272"	masculine
-<Multi_key> <underscore> <O>		: "\272"	masculine
-<Multi_key> <less> <less>		: "\253"	guillemotleft
-<Multi_key> <greater> <greater>		: "\273"	guillemotright
-<Multi_key> <0> <asciicircum>		: "\260"	degree
-<Multi_key> <asciicircum> <0>		: "\260"	degree
-<Multi_key> <0> <asterisk>		: "\260"	degree
-<Multi_key> <asterisk> <0>		: "\260"	degree
-<Multi_key> <plus> <minus>		: "\261"	plusminus
-<Multi_key> <minus> <plus>		: "\261"	plusminus
-<Multi_key> <slash> <u>			: "\265"	mu
-<Multi_key> <u> <slash>			: "\265"	mu
-<Multi_key> <slash> <U>			: "\265"	mu
-<Multi_key> <U> <slash>			: "\265"	mu
-<Multi_key> <1> <asciicircum>		: "\271"	onesuperior
-<Multi_key> <asciicircum> <1>		: "\271"	onesuperior
-<Multi_key> <S> <1>			: "\271"	onesuperior
-<Multi_key> <1> <S>			: "\271"	onesuperior
-<Multi_key> <s> <1>			: "\271"	onesuperior
-<Multi_key> <1> <s>			: "\271"	onesuperior
-<Multi_key> <2> <asciicircum>		: "\262"	twosuperior
-<Multi_key> <asciicircum> <2>		: "\262"	twosuperior
-<Multi_key> <S> <2>			: "\262"	twosuperior
-<Multi_key> <2> <S>			: "\262"	twosuperior
-<Multi_key> <s> <2>			: "\262"	twosuperior
-<Multi_key> <2> <s>			: "\262"	twosuperior
-<Multi_key> <3> <asciicircum>		: "\263"	threesuperior
-<Multi_key> <asciicircum> <3>		: "\263"	threesuperior
-<Multi_key> <S> <3>			: "\263"	threesuperior
-<Multi_key> <3> <S>			: "\263"	threesuperior
-<Multi_key> <s> <3>			: "\263"	threesuperior
-<Multi_key> <3> <s>			: "\263"	threesuperior
 <Multi_key> <p> <exclam>		: "\266"	paragraph
 <Multi_key> <exclam> <p>		: "\266"	paragraph
 <Multi_key> <P> <exclam>		: "\266"	paragraph
 <Multi_key> <exclam> <P>		: "\266"	paragraph
-<Multi_key> <period> <asciicircum>	: "\267"	periodcentered
-<Multi_key> <asciicircum> <period>	: "\267"	periodcentered
-<Multi_key> <period> <period>		: "\267"	periodcentered
-<Multi_key> <question> <question>	: "\277"	questiondown
 <Multi_key> <space> <space>		: "\240"	nobreakspace
-<Multi_key> <minus> <comma>		: "\254"	notsign
-<Multi_key> <comma> <minus>		: "\254"	notsign
 <Multi_key> <minus> <minus>		: "\255"	hyphen
 <Multi_key> <R> <O>			: "\256"	registered
 <Multi_key> <O> <R>			: "\256"	registered
-<Multi_key> <minus> <asciicircum>	: "\257"	macron
-<Multi_key> <asciicircum> <minus>	: "\257"	macron
-<Multi_key> <underscore> <asciicircum>	: "\257"	macron
-<Multi_key> <asciicircum> <underscore>	: "\257"	macron
-<Multi_key> <underscore> <underscore>	: "\257"	macron
-<Multi_key> <minus> <colon>		: "\367"	division
-<Multi_key> <colon> <minus>		: "\367"	division
-<Multi_key> <x> <x>			: "\327"	multiply
-<Multi_key> <apostrophe> <apostrophe>	: "\264"	acute
-<Multi_key> <comma> <comma>		: "\270"	cedilla
-<Multi_key> <quotedbl> <quotedbl>	: "\250"	diaeresis
+<Multi_key> <r> <o>			: "\256"	registered
+<Multi_key> <o> <r>			: "\256"	registered
+<Multi_key> <R> <0>			: "\256"	registered
+<Multi_key> <r> <0>			: "\256"	registered
+<Multi_key> <0> <R>			: "\256"	registered
+<Multi_key> <0> <r>			: "\256"	registered
+
 XCOMM Accented Alphabet
 <Multi_key> <A> <grave>			: "\300"	Agrave
 <Multi_key> <grave> <A>			: "\300"	Agrave
@@ -200,10 +133,6 @@ XCOMM Accented Alphabet
 <Multi_key> <comma> <C>			: "\307"	Ccedilla
 <Multi_key> <c> <comma>			: "\347"	ccedilla
 <Multi_key> <comma> <c>			: "\347"	ccedilla
-<Multi_key> <minus> <D>			: "\320"	ETH
-<Multi_key> <D> <minus>			: "\320"	ETH
-<Multi_key> <minus> <d>			: "\360"	eth
-<Multi_key> <d> <minus>			: "\360"	eth
 <Multi_key> <E> <grave>			: "\310"	Egrave
 <Multi_key> <grave> <E>			: "\310"	Egrave
 <Multi_key> <E> <acute>			: "\311"	Eacute
@@ -288,7 +217,6 @@ XCOMM Accented Alphabet
 <Multi_key> <diaeresis> <O>		: "\326"	Odiaeresis
 <Multi_key> <O> <slash>			: "\330"	Ooblique
 <Multi_key> <slash> <O>			: "\330"	Ooblique
-<Multi_key> <O> <E>			: "\274"	OE
 <Multi_key> <o> <grave>			: "\362"	ograve
 <Multi_key> <grave> <o>			: "\362"	ograve
 <Multi_key> <o> <acute>			: "\363"	oacute
@@ -309,11 +237,6 @@ XCOMM Accented Alphabet
 <Multi_key> <diaeresis> <o>		: "\366"	odiaeresis
 <Multi_key> <o> <slash>			: "\370"	oslash
 <Multi_key> <slash> <o>			: "\370"	oslash
-<Multi_key> <o> <e>			: "\275"	oe
-<Multi_key> <S> <less>			: "\246"	Scaron
-<Multi_key> <less> <S>			: "\246"	Scaron
-<Multi_key> <s> <less>			: "\250"	scaron
-<Multi_key> <less> <s>			: "\250"	scaron
 <Multi_key> <U> <grave>			: "\331"	Ugrave
 <Multi_key> <grave> <U>			: "\331"	Ugrave
 <Multi_key> <U> <acute>			: "\332"	Uacute
@@ -343,8 +266,6 @@ XCOMM Accented Alphabet
 <Multi_key> <u> <diaeresis>		: "\374"	udiaeresis
 <Multi_key> <diaeresis> <u>		: "\374"	udiaeresis
 <Multi_key> <s> <s>			: "\337"	ssharp
-<Multi_key> <T> <H>			: "\336"	THORN
-<Multi_key> <t> <h>			: "\376"	thorn
 <Multi_key> <Y> <acute>			: "\335"	Yacute
 <Multi_key> <acute> <Y>			: "\335"	Yacute
 <Multi_key> <Y> <apostrophe>		: "\335"	Yacute
@@ -357,32 +278,18 @@ XCOMM Accented Alphabet
 <Multi_key> <quotedbl> <y>		: "\377"	ydiaeresis
 <Multi_key> <y> <diaeresis>		: "\377"	ydiaeresis
 <Multi_key> <diaeresis> <y>		: "\377"	ydiaeresis
-<Multi_key> <Z> <less>			: "\264"	Zcaron
-<Multi_key> <less> <Z>			: "\264"	Zcaron
-<Multi_key> <z> <less>			: "\270"	zcaron
-<Multi_key> <less> <z>			: "\270"	zcaron
+
 XCOMM
 XCOMM dead key accent keysyms
 XCOMM Special Character
 <dead_circumflex>  <slash>		: "|"	bar
 <dead_grave> <space>			: "`"	grave
 <dead_acute> <space>			: "'"	apostrophe
-<dead_diaeresis> <space>		: "\250"	diaeresis
 <dead_circumflex> <space>		: "^"	asciicircum
 <dead_tilde> <space>			: "~"	asciitilde
 <dead_grave> <space>			: "`"	grave
 <dead_acute> <space>			: "'"	apostrophe
-<dead_circumflex> <0>			: "\260"	degree
-<dead_circumflex> <1>			: "\271"	onesuperior
-<dead_circumflex> <2>			: "\262"	twosuperior
-<dead_circumflex> <3>			: "\263"	threesuperior
-<dead_circumflex> <period>		: "\267"	periodcentered
-<dead_cedilla> <minus>			: "\254"	notsign
-<dead_circumflex> <minus>		: "\257"	macron
-<dead_circumflex> <underscore>		: "\257"	macron
-<dead_acute> <apostrophe>		: "\264"	acute
-<dead_cedilla> <comma>			: "\270"	cedilla
-<dead_diaeresis> <quotedbl>		: "\250"	diaeresis
+
 XCOMM Accented Alphabet
 <dead_grave> <A>			: "\300"	Agrave
 <dead_acute> <A>			: "\301"	Aacute
@@ -424,8 +331,6 @@ XCOMM Accented Alphabet
 <dead_circumflex> <o>			: "\364"	ocircumflex
 <dead_tilde> <o>			: "\365"	otilde
 <dead_diaeresis> <o>			: "\366"	odiaeresis
-<dead_caron> <S>			: "\246"	Scaron
-<dead_caron> <s>			: "\250"	scaron
 <dead_grave> <U>			: "\331"	Ugrave
 <dead_acute> <U>			: "\332"	Uacute
 <dead_circumflex> <U>			: "\333"	Ucircumflex
@@ -437,152 +342,167 @@ XCOMM Accented Alphabet
 <dead_acute> <Y>			: "\335"	Yacute
 <dead_acute> <y>			: "\375"	yacute
 <dead_diaeresis> <y>			: "\377"	ydiaeresis
-<dead_caron> <Z>			: "\264"	Zcaron
-<dead_caron> <z>			: "\270"	zcaron
 
-XCOMM The following is Celtic character support
-XCOMM
 
-<Multi_key> <period> <b>			: "¢"	bdotabove
-<Multi_key> <period> <B>			: "¡"   Bdotabove
-<Multi_key> <period> <c>			: "¥"   cdotabove
-<Multi_key> <period> <C>			: "¤"   Cdotabove
-<Multi_key> <period> <d>			: "«"   ddotabove
-<Multi_key> <period> <D>			: "¦"   Ddotabove
-<Multi_key> <period> <f>			: "¯"   fdotabove
-<Multi_key> <period> <F>			: "°"   Fdotabove
-<Multi_key> <period> <g>			: "³"   gdotabove
-<Multi_key> <period> <G>			: "²"   Gdotabove
-<Multi_key> <period> <m>			: "µ"   mdotabove
-<Multi_key> <period> <M>			: "´"   Mdotabove
-<Multi_key> <period> <p>			: "¹"   pdotabove
-<Multi_key> <period> <P>			: "·"   Pdotabove
-<Multi_key> <period> <s>			: "¿"   sdotabove
-<Multi_key> <period> <S>			: "»"   Sdotabove
-<Multi_key> <period> <t>			: "÷"   tdotabove
-<Multi_key> <period> <T>			: "×"   Tdotabove
-<Multi_key> <b> <period>			: "¢"   bdotabove
-<Multi_key> <B> <period>			: "¡"   Bdotabove
-<Multi_key> <c> <period>			: "¥"   cdotabove
-<Multi_key> <C> <period>			: "¤"   Cdotabove
-<Multi_key> <d> <period>			: "«"   ddotabove
-<Multi_key> <D> <period>			: "¦"   Ddotabove
-<Multi_key> <f> <period>			: "¯"   fdotabove
-<Multi_key> <F> <period>			: "°"   Fdotabove
-<Multi_key> <g> <period>			: "³"   gdotabove
-<Multi_key> <G> <period>			: "²"   Gdotabove
-<Multi_key> <m> <period>			: "µ"   mdotabove
-<Multi_key> <M> <period>			: "´"   Mdotabove
-<Multi_key> <p> <period>			: "¹"   pdotabove
-<Multi_key> <P> <period>			: "·"   Pdotabove
-<Multi_key> <s> <period>			: "¿"   sdotabove
-<Multi_key> <S> <period>			: "»"   Sdotabove
-<Multi_key> <t> <period>			: "÷"   tdotabove
-<Multi_key> <T> <period>			: "×"   Tdotabove
+XCOMM The following is Celtic character support,
+XCOMM i.e. the characters in 8859-14 which differ from 8859-1.
 
-<Multi_key> <y> <asciicircum>		: "\376" ycircumflex
-<Multi_key> <asciicircum> <y>           : "\376" ycircumflex
-<Multi_key> <Y> <asciicircum>           : "\336" Ycircumflex
-<Multi_key> <asciicircum> <Y>           : "\336" Ycircumflex
-<Multi_key> <w> <asciicircum>		: "\360" wcircumflex
-<Multi_key> <asciicircum> <w>           : "\360" wcircumflex
-<Multi_key> <W> <asciicircum>           : "\320" Wcircumflex
-<Multi_key> <asciicircum> <W>           : "\320" Wcircumflex
+<Multi_key> <period> <b>		: "\242"	babovedot
+<Multi_key> <period> <B>		: "\241"	Babovedot
+<Multi_key> <period> <c>		: "\245"	cabovedot
+<Multi_key> <period> <C>		: "\245"	Cabovedot
+<Multi_key> <period> <d>		: "\253"	dabovedot
+<Multi_key> <period> <D>		: "\246"	Dabovedot
+<Multi_key> <period> <f>		: "\261"	fabovedot
+<Multi_key> <period> <F>		: "\260"	Fabovedot
+<Multi_key> <period> <g>		: "\263"	gabovedot
+<Multi_key> <period> <G>		: "\262"	Gabovedot
+<Multi_key> <period> <m>		: "\265"	mabovedot
+<Multi_key> <period> <M>		: "\264"	Mabovedot
+<Multi_key> <period> <p>		: "\271"	pabovedot
+<Multi_key> <period> <P>		: "\267"	Pabovedot
+<Multi_key> <period> <s>		: "\277"	sabovedot
+<Multi_key> <period> <S>		: "\273"	Sabovedot
+<Multi_key> <period> <t>		: "\367"	tabovedot
+<Multi_key> <period> <T>		: "\327"	Tabovedot
+
+<Multi_key> <b> <period> 		: "\242"	babovedot
+<Multi_key> <B> <period> 		: "\241"	Babovedot
+<Multi_key> <c> <period> 		: "\245"	cabovedot
+<Multi_key> <C> <period> 		: "\245"	Cabovedot
+<Multi_key> <d> <period> 		: "\253"	dabovedot
+<Multi_key> <D> <period> 		: "\246"	Dabovedot
+<Multi_key> <f> <period> 		: "\261"	fabovedot
+<Multi_key> <F> <period> 		: "\260"	Fabovedot
+<Multi_key> <g> <period> 		: "\263"	gabovedot
+<Multi_key> <G> <period> 		: "\262"	Gabovedot
+<Multi_key> <m> <period> 		: "\265"	mabovedot
+<Multi_key> <M> <period> 		: "\264"	Mabovedot
+<Multi_key> <p> <period> 		: "\271"	pabovedot
+<Multi_key> <P> <period> 		: "\267"	Pabovedot
+<Multi_key> <s> <period> 		: "\277"	sabovedot
+<Multi_key> <S> <period> 		: "\273"	Sabovedot
+<Multi_key> <t> <period> 		: "\367"	tabovedot
+<Multi_key> <T> <period> 		: "\327"	Tabovedot
+
+<Multi_key> <y> <asciicircum>		: "\376"	ycircumflex
+<Multi_key> <asciicircum> <y>		: "\376"	ycircumflex
+<Multi_key> <Y> <asciicircum>		: "\336"	Ycircumflex
+<Multi_key> <asciicircum> <Y>		: "\336"	Ycircumflex
+
+<Multi_key> <w> <asciicircum>		: "\360"	wcircumflex
+<Multi_key> <asciicircum> <w>		: "\360"	wcircumflex
+<Multi_key> <W> <asciicircum>		: "\320"	Wcircumflex
+<Multi_key> <asciicircum> <W>		: "\320"	Wcircumflex
 
 <Multi_key> <Y> <quotedbl>		: "\257"	Ydiaeresis
 <Multi_key> <quotedbl> <Y>		: "\257"	Ydiaeresis
 <Multi_key> <Y> <diaeresis>		: "\257"	Ydiaeresis
 <Multi_key> <diaeresis> <Y>		: "\257"	Ydiaeresis
-<Multi_key> <W> <quotedbl>		: "½"	Wdiaeresis
-<Multi_key> <quotedbl> <W>		: "½"	Wdiaeresis
-<Multi_key> <W> <diaeresis>		: "½"	Wdiaeresis
-<Multi_key> <diaeresis> <W>		: "½"	Wdiaeresis
-<Multi_key> <w> <quotedbl>		: "¾"	wdiaeresis
-<Multi_key> <quotedbl> <w>		: "¾"	wdiaeresis
-<Multi_key> <w> <diaeresis>		: "¾"	wdiaeresis
-<Multi_key> <diaeresis> <w>		: "¾"	wdiaeresis
 
-<Multi_key> <Y> <grave>			: "¬"	Ygrave
-<Multi_key> <grave> <Y>			: "¬"	Ygrave
-<Multi_key> <y> <grave>			: "¼"	ygrave
-<Multi_key> <grave> <y>			: "¼"	ygrave
-<Multi_key> <W> <grave>			: "¨"	Wgrave
-<Multi_key> <grave> <w>			: "¨"	Wgrave
-<Multi_key> <W> <grave>			: "¸"	wgrave
-<Multi_key> <grave> <w>			: "¸"	wgrave
+<Multi_key> <W> <quotedbl>		: "\275"	Wdiaeresis
+<Multi_key> <quotedbl> <W>		: "\275"	Wdiaeresis
+<Multi_key> <W> <diaeresis>		: "\275"	Wdiaeresis
+<Multi_key> <diaeresis> <W>		: "\275"	Wdiaeresis
+<Multi_key> <w> <quotedbl>		: "\276"	wdiaeresis
+<Multi_key> <quotedbl> <w>		: "\276"	wdiaeresis
+<Multi_key> <w> <diaeresis>		: "\276"	wdiaeresis
+<Multi_key> <diaeresis> <w>		: "\276"	wdiaeresis
 
+<Multi_key> <Y> <grave>			: "\254"	Ygrave
+<Multi_key> <grave> <Y>			: "\254"	Ygrave
+<Multi_key> <y> <grave>			: "\274"	ygrave
+<Multi_key> <grave> <y>			: "\274"	ygrave
 
+<Multi_key> <W> <grave>			: "\250"	Wgrave
+<Multi_key> <grave> <W>			: "\250"	Wgrave
+<Multi_key> <w> <grave>			: "\270"	wgrave
+<Multi_key> <grave> <w>			: "\270"	wgrave
 
-<dead_abovedot> <b>			: "¢"	bdotabove
-<dead_abovedot> <B>			: "¡"   Bdotabove
-<dead_abovedot> <c>			: "¥"   cdotabove
-<dead_abovedot> <C>			: "¤"   Cdotabove
-<dead_abovedot> <d>			: "«"   ddotabove
-<dead_abovedot> <D>			: "¦"   Ddotabove
-<dead_abovedot> <f>			: "¯"   fdotabove
-<dead_abovedot> <F>			: "°"   Fdotabove
-<dead_abovedot> <g>			: "³"   gdotabove
-<dead_abovedot> <G>			: "²"   Gdotabove
-<dead_abovedot> <m>			: "µ"   mdotabove
-<dead_abovedot> <M>			: "´"   Mdotabove
-<dead_abovedot> <p>			: "¹"   pdotabove
-<dead_abovedot> <P>			: "·"   Pdotabove
-<dead_abovedot> <s>			: "¿"   sdotabove
-<dead_abovedot> <S>			: "»"   Sdotabove
-<dead_abovedot> <t>			: "÷"   tdotabove
-<dead_abovedot> <T>			: "×"   Tdotabove
+<Multi_key> <W> <apostrophe>		: "\252"	Wacute
+<Multi_key> <apostrophe> <W>		: "\252"	Wacute
+<Multi_key> <W> <acute>			: "\252"	Wacute
+<Multi_key> <acute> <W>			: "\252"	Wacute
+<Multi_key> <w> <apostrophe>		: "\272"	wacute
+<Multi_key> <apostrophe> <w>		: "\272"	wacute
+<Multi_key> <w> <acute>			: "\272"	wacute
+<Multi_key> <acute> <w>			: "\272"	wacute
 
-<dead_circumflex> <y>           : "\376" ycircumflex
-<dead_circumflex> <Y>           : "\336" Ycircumflex
-<dead_circumflex> <w>           : "\360" wcircumflex
-<dead_circumflex> <W>           : "\320" Wcircumflex
-<dead_circumflex> <b>			: "¢"	bdotabove
-<dead_circumflex> <B>			: "¡"   Bdotabove
-<dead_circumflex> <c>			: "¥"   cdotabove
-<dead_circumflex> <C>			: "¤"   Cdotabove
-<dead_circumflex> <d>			: "«"   ddotabove
-<dead_circumflex> <D>			: "¦"   Ddotabove
-<dead_circumflex> <f>			: "¯"   fdotabove
-<dead_circumflex> <F>			: "°"   Fdotabove
-<dead_circumflex> <g>			: "³"   gdotabove
-<dead_circumflex> <G>			: "²"   Gdotabove
-<dead_circumflex> <m>			: "µ"   mdotabove
-<dead_circumflex> <M>			: "´"   Mdotabove
-<dead_circumflex> <p>			: "¹"   pdotabove
-<dead_circumflex> <P>			: "·"   Pdotabove
-<dead_circumflex> <s>			: "¿"   sdotabove
-<dead_circumflex> <S>			: "»"   Sdotabove
-<dead_circumflex> <t>			: "÷"   tdotabove
-<dead_circumflex> <T>			: "×"   Tdotabove
+<dead_abovedot> <b>			: "\242"	babovedot
+<dead_abovedot> <B>			: "\241"	Babovedot
+<dead_abovedot> <c>			: "\245"	cabovedot
+<dead_abovedot> <C>			: "\245"	Cabovedot
+<dead_abovedot> <d>			: "\253"	dabovedot
+<dead_abovedot> <D>			: "\246"	Dabovedot
+<dead_abovedot> <f>			: "\261"	fabovedot
+<dead_abovedot> <F>			: "\260"	Fabovedot
+<dead_abovedot> <g>			: "\263"	gabovedot
+<dead_abovedot> <G>			: "\262"	Gabovedot
+<dead_abovedot> <m>			: "\265"	mabovedot
+<dead_abovedot> <M>			: "\264"	Mabovedot
+<dead_abovedot> <p>			: "\271"	pabovedot
+<dead_abovedot> <P>			: "\267"	Pabovedot
+<dead_abovedot> <s>			: "\277"	sabovedot
+<dead_abovedot> <S>			: "\273"	Sabovedot
+<dead_abovedot> <t>			: "\367"	tabovedot
+<dead_abovedot> <T>			: "\327"	Tabovedot
 
-<dead_acute> <w>			: "ª"	wacute
-<dead_acute> <W>			: "º"   Wacute
-<dead_acute> <b>			: "¢"	bdotabove
-<dead_acute> <B>			: "¡"   Bdotabove
-<dead_acute> <c>			: "¥"   cdotabove
-<dead_acute> <C>			: "¤"   Cdotabove
-<dead_acute> <d>			: "«"   ddotabove
-<dead_acute> <D>			: "¦"   Ddotabove
-<dead_acute> <f>			: "¯"   fdotabove
-<dead_acute> <F>			: "°"   Fdotabove
-<dead_acute> <g>			: "³"   gdotabove
-<dead_acute> <G>			: "²"   Gdotabove
-<dead_acute> <m>			: "µ"   mdotabove
-<dead_acute> <M>			: "´"   Mdotabove
-<dead_acute> <p>			: "¹"   pdotabove
-<dead_acute> <P>			: "·"   Pdotabove
-<dead_acute> <s>			: "¿"   sdotabove
-<dead_acute> <S>			: "»"   Sdotabove
-<dead_acute> <t>			: "÷"   tdotabove
-<dead_acute> <T>			: "×"   Tdotabove
+<dead_circumflex>  <b>			: "\242"	babovedot
+<dead_circumflex>  <B>			: "\241"	Babovedot
+<dead_circumflex>  <c>			: "\245"	cabovedot
+<dead_circumflex>  <C>			: "\245"	Cabovedot
+<dead_circumflex>  <d>			: "\253"	dabovedot
+<dead_circumflex>  <D>			: "\246"	Dabovedot
+<dead_circumflex>  <f>			: "\261"	fabovedot
+<dead_circumflex>  <F>			: "\260"	Fabovedot
+<dead_circumflex>  <g>			: "\263"	gabovedot
+<dead_circumflex>  <G>			: "\262"	Gabovedot
+<dead_circumflex>  <m>			: "\265"	mabovedot
+<dead_circumflex>  <M>			: "\264"	Mabovedot
+<dead_circumflex>  <p>			: "\271"	pabovedot
+<dead_circumflex>  <P>			: "\267"	Pabovedot
+<dead_circumflex>  <s>			: "\277"	sabovedot
+<dead_circumflex>  <S>			: "\273"	Sabovedot
+<dead_circumflex>  <t>			: "\367"	tabovedot
+<dead_circumflex>  <T>			: "\327"	Tabovedot
+
+<dead_acute>  <b>			: "\242"	babovedot
+<dead_acute>  <B>			: "\241"	Babovedot
+<dead_acute>  <c>			: "\245"	cabovedot
+<dead_acute>  <C>			: "\245"	Cabovedot
+<dead_acute>  <d>			: "\253"	dabovedot
+<dead_acute>  <D>			: "\246"	Dabovedot
+<dead_acute>  <f>			: "\261"	fabovedot
+<dead_acute>  <F>			: "\260"	Fabovedot
+<dead_acute>  <g>			: "\263"	gabovedot
+<dead_acute>  <G>			: "\262"	Gabovedot
+<dead_acute>  <m>			: "\265"	mabovedot
+<dead_acute>  <M>			: "\264"	Mabovedot
+<dead_acute>  <p>			: "\271"	pabovedot
+<dead_acute>  <P>			: "\267"	Pabovedot
+<dead_acute>  <s>			: "\277"	sabovedot
+<dead_acute>  <S>			: "\273"	Sabovedot
+<dead_acute>  <t>			: "\367"	tabovedot
+<dead_acute>  <T>			: "\327"	Tabovedot
 
 <dead_diaeresis> <Y>			: "\257"	Ydiaeresis
-<dead_diaeresis> <w>			: "½"	wdiaeresis
-<dead_diaeresis> <W>			: "¾"   Wdiaeresis
 
-<dead_grave> <Y>			: "¬"	Ygrave
-<dead_grave> <y>			: "¼"	ygrave
-<dead_grave> <w>			: "¨"	Wgrave
-<dead_grave> <w>			: "¸"	wgrave
+<dead_grave> <Y>			: "\254"	Ygrave
+<dead_grave> <y>			: "\274"	ygrave
+
+<dead_circumflex> <y>			: "\376"	ycircumflex
+<dead_circumflex> <Y>			: "\336"	Ycircumflex
+
+<dead_circumflex> <w>			: "\360"	wcircumflex
+<dead_circumflex> <W>			: "\320"	Wcircumflex
+
+<dead_diaeresis> <w>			: "\276"	wdiaeresis
+<dead_diaeresis> <W>			: "\275"	Wdiaeresis
+
+<dead_acute> <w>			: "\272"	wacute
+<dead_acute> <W>			: "\252"	Wacute
+
+<dead_grave> <W>			: "\250"	Wgrave
+<dead_grave> <w>			: "\270"	wgrave
 
 XCOMM End of Sequence Definition

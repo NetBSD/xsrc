@@ -26,7 +26,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/xdm/resource.c,v 3.7 2001/12/14 20:01:23 dawes Exp $ */
+/* $XFree86: xc/programs/xdm/resource.c,v 3.10 2002/12/07 20:31:04 herrb Exp $ */
 
 /*
  * xdm - display manager daemon
@@ -72,7 +72,6 @@ int	choiceTimeout;	/* chooser choice timeout */
  * parameters set util/imake.includes/site.def (or *.macros in that directory
  * if it is server-specific).  DO NOT CHANGE THESE DEFINITIONS!
  */
-#ifndef __EMX__
 #ifndef DEF_SERVER_LINE 
 #define DEF_SERVER_LINE ":0 local /usr/bin/X11/X :0"
 #endif
@@ -120,68 +119,15 @@ int	choiceTimeout;	/* chooser choice timeout */
 #define DEF_ACCESS_FILE	""
 #endif
 #ifndef DEF_RANDOM_FILE
-#define DEF_RANDOM_FILE "/dev/mem"
+# ifdef linux
+#  define DEF_RANDOM_FILE "/dev/urandom"
+# else
+#  define DEF_RANDOM_FILE "/dev/mem"
+# endif
 #endif
 #ifndef DEF_GREETER_LIB
-#define DEF_GREETER_LIB "/X11/lib/X11/xdm/libXdmGreet.so"
+#define DEF_GREETER_LIB "/usr/lib/X11/xdm/libXdmGreet.so"
 #endif
-#else
-/* unfortunately I have to declare all of them, because there is a limit
- * in argument size in OS/2
- * but everything needs to be fixed again
- */
-#define DEF_SERVER_LINE ":0 local /XFree86/bin/X :0"
-#ifndef XRDB_PROGRAM
-#define XRDB_PROGRAM "/XFree86/bin/xrdb"
-#endif
-#ifndef DEF_SESSION
-#define DEF_SESSION "/XFree86/bin/xterm -ls"
-#endif
-#ifndef DEF_USER_PATH
-#define DEF_USER_PATH "c:\\os2;c:\\os2\apps;\\XFree86\\bin"
-#endif
-#ifndef DEF_SYSTEM_PATH
-#define DEF_SYSTEM_PATH "c:\\os2;c:\\os2\apps;\\XFree86\\bin"
-#endif
-#ifndef DEF_SYSTEM_SHELL
-#define DEF_SYSTEM_SHELL "sh"
-#endif
-#ifndef DEF_FAILSAFE_CLIENT
-#define DEF_FAILSAFE_CLIENT "/XFree86/bin/xterm"
-#endif
-#ifndef DEF_XDM_CONFIG
-#define DEF_XDM_CONFIG "/XFree86/lib/X11/xdm/xdm-config"
-#endif
-#ifndef DEF_CHOOSER
-#define DEF_CHOOSER "/XFree86/lib/X11/xdm/chooser"
-#endif
-#ifndef DEF_AUTH_NAME
-#ifdef HASXDMAUTH
-#define DEF_AUTH_NAME	"XDM-AUTHORIZATION-1 MIT-MAGIC-COOKIE-1"
-#else
-#define DEF_AUTH_NAME	"MIT-MAGIC-COOKIE-1"
-#endif
-#endif
-#ifndef DEF_AUTH_DIR
-#define DEF_AUTH_DIR "/XFree86/lib/X11/xdm"
-#endif
-#ifndef DEF_USER_AUTH_DIR
-#define DEF_USER_AUTH_DIR	"/tmp"
-#endif
-#ifndef DEF_KEY_FILE
-#define DEF_KEY_FILE	""
-#endif
-#ifndef DEF_ACCESS_FILE
-#define DEF_ACCESS_FILE	""
-#endif
-#ifndef DEF_RANDOM_FILE
-#define DEF_RANDOM_FILE ""
-#endif
-#ifndef DEF_GREETER_LIB
-#define DEF_GREETER_LIB "/XFree86/lib/X11/xdm/libXdmGreet.so"
-#endif
-
-#endif /* __EMX__ */
 
 #define DEF_UDP_PORT	"177"	    /* registered XDMCP port, dont change */
 
@@ -476,8 +422,8 @@ LoadDMResources (void)
 	char	name[1024], class[1024];
 
 	for (i = 0; i < NUM_DM_RESOURCES; i++) {
-		sprintf (name, "DisplayManager.%s", DmResources[i].name);
-		sprintf (class, "DisplayManager.%s", DmResources[i].class);
+		snprintf (name, sizeof(name), "DisplayManager.%s", DmResources[i].name);
+		snprintf (class, sizeof(class), "DisplayManager.%s", DmResources[i].class);
 		GetResource (name, class, DmResources[i].type,
 			      (char **) DmResources[i].dm_value,
 			      DmResources[i].default_value);
@@ -517,9 +463,9 @@ LoadDisplayResources (
     CleanUpName (d->name, dpyName, sizeof (dpyName));
     CleanUpName (d->class ? d->class : d->name, dpyClass, sizeof (dpyClass));
     for (i = 0; i < numResources; i++) {
-	    sprintf (name, "DisplayManager.%s.%s", 
+	    snprintf (name, sizeof(name), "DisplayManager.%s.%s", 
 		    dpyName, resources[i].name);
-	    sprintf (class, "DisplayManager.%s.%s",
+	    snprintf (class, sizeof(class), "DisplayManager.%s.%s",
 		    dpyClass, resources[i].class);
 	    GetResource (name, class, resources[i].type,
 			  (char **) (((char *) d) + resources[i].offset),

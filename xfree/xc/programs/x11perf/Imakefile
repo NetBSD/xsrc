@@ -3,7 +3,7 @@ XCOMM $Xorg: Imakefile,v 1.3 2000/08/17 19:54:08 cpqbld Exp $
 
 
 
-XCOMM $XFree86: xc/programs/x11perf/Imakefile,v 3.6 2001/05/01 17:23:27 alanh Exp $
+XCOMM $XFree86: xc/programs/x11perf/Imakefile,v 3.10 2002/11/14 21:01:21 tsi Exp $
 
 #ifndef X11perfcompLib
 #define X11perfcompLib $(LIBDIR)/x11perfcomp
@@ -12,12 +12,20 @@ XCOMM $XFree86: xc/programs/x11perf/Imakefile,v 3.6 2001/05/01 17:23:27 alanh Ex
 #if HasShm
         SHMDEFS = -DMITSHM
 #endif
+#if BuildRenderLibrary
+    XRENDERDEFS = -DXRENDER
+    XRENDERDEPS = $(DEPXRENDERLIB)
+    XRENDERLIBS = $(XRENDERLIB)
+    XRENDERINCS = $(XRENDERINCLUDES)
+#endif
 #if BuildXftLibrary
         XFTDEFS = -DXFT
         XFTDEPS = XftClientDepLibs $(DEPXRENDERLIB)
         XFTLIBS = XftClientLibs $(XRENDERLIB)
+        XFTINCS = $(XFTINCLUDES)
 #endif
-        DEFINES = $(SIGNAL_DEFINES) $(SHMDEFS) $(XFTDEFS)
+        DEFINES = $(SIGNAL_DEFINES) $(SHMDEFS) $(XFTDEFS) $(XRENDERDEFS)
+       INCLUDES = $(XFTINCS) $(XRENDERINCS)
         PERFLIB = X11perfcompLib
         HEADERS = x11perf.h bitmaps.h
            SRCS = x11perf.c bitmaps.c do_tests.c \
@@ -32,15 +40,16 @@ XCOMM $XFree86: xc/programs/x11perf/Imakefile,v 3.6 2001/05/01 17:23:27 alanh Ex
 		  do_dots.o do_windows.o do_movewin.o do_text.o \
 		  do_blt.o do_arcs.o \
 		  do_tris.o do_complex.o do_traps.o
-LOCAL_LIBRARIES = $(XFTLIBS) $(XMUULIB) $(XLIB)
-        DEPLIBS = $(XFTDEPS) $(DEPXMUULIB) $(DEPXLIB)
+LOCAL_LIBRARIES = $(XFTLIBS) $(XRENDERLIBS) $(XMUULIB) $(XLIB)
+        DEPLIBS = $(XFTDEPS) $(XRENDERDEPS) $(DEPXMUULIB) $(DEPXLIB)
   SYS_LIBRARIES = MathLibrary
 
+#ifdef cygwinArchitecture
 #if UseCygIPC
 EXTRA_LIBRARIES = -lcygipc
 #endif
+#endif
 
-#ifndef OS2Architecture
 ComplexProgramTarget(x11perf)
 
 all:: x11perfcomp
@@ -54,7 +63,3 @@ InstallNamedProg(perfratio.sh,perfratio,$(PERFLIB))
 InstallNamedProg(Xmark.sh,Xmark,$(BINDIR))
 InstallManPage(Xmark,$(MANDIR))
 InstallManPageLong(x11pcomp,$(MANDIR),x11perfcomp)
-#else
-all::
-
-#endif

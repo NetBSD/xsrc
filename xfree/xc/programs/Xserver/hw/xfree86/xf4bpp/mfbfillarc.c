@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xf4bpp/mfbfillarc.c,v 1.4 1999/09/25 14:38:15 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xf4bpp/mfbfillarc.c,v 1.5 2003/02/18 21:29:59 tsi Exp $ */
 /************************************************************
 
 Copyright (c) 1989  X Consortium
@@ -88,14 +88,14 @@ v16FillEllipseSolid
 	if (!slw)
 	    continue;
 	xpos = xorg - x;
-	addrl = addrlt + (xpos >> 5);
-	if (((xpos & 0x1f) + slw) < 32)
+	addrl = addrlt + (xpos >> PWSH);
+	if (((xpos & PIM) + slw) < PPW)
 	{
 	    maskpartialbits(xpos, slw, startmask);
 	    UPDRW(addrl,startmask);
 	    if (miFillArcLower(slw))
 	    {
-		addrl = addrlb + (xpos >> 5);
+		addrl = addrlb + (xpos >> PWSH);
 		UPDRW(addrl,startmask);
 	    }
 	    continue;
@@ -115,7 +115,7 @@ v16FillEllipseSolid
 	}
 	if (!miFillArcLower(slw))
 	    continue;
-	addrl = addrlb + (xpos >> 5);
+	addrl = addrlb + (xpos >> PWSH);
 	if (startmask)
 	{
 	    UPDRW(addrl,startmask); addrl++;
@@ -135,8 +135,8 @@ v16FillEllipseSolid
     if (xr >= xl) \
     { \
 	width = xr - xl + 1; \
-	addrl = addr + (xl >> 5); \
-	if (((xl & 0x1f) + width) < 32) \
+	addrl = addr + (xl >> PWSH); \
+	if (((xl & PIM) + width) < PPW) \
 	{ \
 	    maskpartialbits(xl, width, startmask); \
 	    UPDRW(addrl,startmask); \

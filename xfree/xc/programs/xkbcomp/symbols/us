@@ -6,7 +6,7 @@
 // uses the punctuation keys configurations common on PC 
 // keyboards (e.g. key <ABO9> is { [ period greater ] })
 
-// $XFree86: xc/programs/xkbcomp/symbols/us,v 3.11 2001/08/17 13:27:58 dawes Exp $
+// $XFree86: xc/programs/xkbcomp/symbols/us,v 3.12 2002/11/20 04:49:03 dawes Exp $
 
 partial hidden alphanumeric_keys modifier_keys 
 xkb_symbols "basic" {
@@ -28,7 +28,10 @@ xkb_symbols "basic" {
     key <AE10> {	[	  0,	parenright	]	};
     key <AE11> {	[     minus,	underscore	]	};
     key <AE12> {	[     equal,	plus		]	};
-    key <BKSP> {	[ 	BackSpace		]	};
+    key <BKSP> {
+	type="CTRL+ALT",
+	symbols[Group1]= [ BackSpace,	Terminate_Server ]
+    };
 
     key  <TAB> {	[ 	Tab,	ISO_Left_Tab	]	};
     key <AD01> {	[	  q,	Q 		]	};
@@ -86,6 +89,7 @@ xkb_symbols "basic" {
 // defines the "extra" (right) modifier keys, function keys, cursor,
 // edit, and keypad keys.
 xkb_symbols "generic101" {
+    include "srvr_ctrl(xfree86)"
     include "us(basic)"
     key <RTSH> {	[ 	Shift_R		]	};
     key <LALT> {	[ 	Alt_L	 	]	};

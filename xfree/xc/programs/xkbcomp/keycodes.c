@@ -24,6 +24,7 @@
  THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
  ********************************************************/
+/* $XFree86: xc/programs/xkbcomp/keycodes.c,v 3.5 2002/07/01 02:26:01 tsi Exp $ */
 
 #include "xkbcomp.h"
 #include "tokens.h"
@@ -33,13 +34,7 @@
 #include "alias.h"
 
 char *
-#if NeedFunctionPrototypes
 longText(unsigned long val,unsigned format)
-#else
-longText(val,format)
-    unsigned long val;
-    unsigned format;
-#endif
 {
 char buf[4];
 
@@ -50,13 +45,7 @@ char buf[4];
 /***====================================================================***/
 
 void
-#if NeedFunctionPrototypes
 LongToKeyName(unsigned long val,char *name)
-#else
-LongToKeyName(val,name)
-    unsigned long 	val;
-    char *		name;
-#endif
 {
     name[0]= ((val>>24)&0xff);
     name[1]= ((val>>16)&0xff);
@@ -93,13 +82,7 @@ typedef struct _KeyNamesInfo {
 } KeyNamesInfo;
 
 static void
-#if NeedFunctionPrototypes
 InitIndicatorNameInfo(IndicatorNameInfo *ii,KeyNamesInfo *info)
-#else
-InitIndicatorNameInfo(ii,info)
-    IndicatorNameInfo *	ii;
-    KeyNamesInfo *		info;
-#endif
 {
     ii->defs.defined= 0;
     ii->defs.merge= info->merge;
@@ -112,13 +95,7 @@ InitIndicatorNameInfo(ii,info)
 }
 
 static void 
-#if NeedFunctionPrototypes
 ClearIndicatorNameInfo(IndicatorNameInfo *ii,KeyNamesInfo *info)
-#else
-ClearIndicatorNameInfo(ii,info)
-    IndicatorNameInfo *	ii;
-    KeyNamesInfo *		info;
-#endif
 {
     if (ii==info->leds) {
 	ClearCommonInfo(&ii->defs);
@@ -128,12 +105,7 @@ ClearIndicatorNameInfo(ii,info)
 }
 
 static IndicatorNameInfo *
-#if NeedFunctionPrototypes
 NextIndicatorName(KeyNamesInfo *info)
-#else
-NextIndicatorName(info)
-    KeyNamesInfo *	info;
-#endif
 {
 IndicatorNameInfo *	ii;
 
@@ -147,13 +119,7 @@ IndicatorNameInfo *	ii;
 }
 
 static IndicatorNameInfo *
-#if NeedFunctionPrototypes
 FindIndicatorByIndex(KeyNamesInfo *info,int ndx)
-#else
-FindIndicatorByIndex(info,ndx)
-    KeyNamesInfo *	info;
-    int			ndx;
-#endif
 {
 IndicatorNameInfo *	old;
 
@@ -165,13 +131,7 @@ IndicatorNameInfo *	old;
 }
 
 static IndicatorNameInfo *
-#if NeedFunctionPrototypes
 FindIndicatorByName(KeyNamesInfo *info,Atom name)
-#else
-FindIndicatorByName(info,name)
-    KeyNamesInfo *	info;
-    Atom		name;
-#endif
 {
 IndicatorNameInfo *	old;
 
@@ -183,13 +143,7 @@ IndicatorNameInfo *	old;
 }
 
 static Bool
-#if NeedFunctionPrototypes
 AddIndicatorName(KeyNamesInfo *info,IndicatorNameInfo *new)
-#else
-AddIndicatorName(info,new)
-    KeyNamesInfo *	info;
-    IndicatorNameInfo *new;
-#endif
 {
 IndicatorNameInfo *old;
 Bool 		   replace;
@@ -285,12 +239,7 @@ char *		   action;
 }
 
 static void
-#if NeedFunctionPrototypes
 ClearKeyNamesInfo(KeyNamesInfo *info)
-#else
-ClearKeyNamesInfo(info)
-    KeyNamesInfo *info;
-#endif
 {
     if (info->name!=NULL)
 	uFree(info->name);
@@ -310,12 +259,7 @@ ClearKeyNamesInfo(info)
 }
 
 static void
-#if NeedFunctionPrototypes
 InitKeyNamesInfo(KeyNamesInfo *info)
-#else
-InitKeyNamesInfo(info)
-    KeyNamesInfo *info;
-#endif
 {
     info->name= NULL;
     info->leds= NULL;
@@ -325,14 +269,8 @@ InitKeyNamesInfo(info)
     return;
 }
 
-int
-#if NeedFunctionPrototypes
+static int
 FindKeyByLong(KeyNamesInfo *info,unsigned long name)
-#else
-FindKeyByLong(info,name)
-    KeyNamesInfo *	info;
-    unsigned long	name;
-#endif
 {
 register int i;
 
@@ -344,22 +282,12 @@ register int i;
 }
 
 static Bool
-#if NeedFunctionPrototypes
 AddKeyName(	KeyNamesInfo *	info,
 		int		kc,
 		char *		name,
 		unsigned	merge,
 		unsigned	fileID,
 		Bool		reportCollisions)
-#else
-AddKeyName(info,kc,name,merge,fileID,reportCollisions)
-    KeyNamesInfo *	info;
-    int			kc;
-    char *		name;
-    unsigned		merge;
-    unsigned		fileID;
-    Bool		reportCollisions;
-#endif
 {
 int		old;
 unsigned long	lval;
@@ -442,14 +370,7 @@ unsigned long	lval;
 /***====================================================================***/
 
 static void
-#if NeedFunctionPrototypes
 MergeIncludedKeycodes(KeyNamesInfo *into,KeyNamesInfo *from,unsigned merge)
-#else
-MergeIncludedKeycodes(into,from,merge)
-    KeyNamesInfo *	into;
-    KeyNamesInfo *	from;
-    unsigned		merge;
-#endif
 {
 register int i;
 char buf[5];
@@ -498,27 +419,17 @@ char buf[5];
 }
 
 typedef void (*FileHandler)(
-#if NeedFunctionPrototypes
     XkbFile *		/* rtrn */,
     XkbDescPtr		/* xkb */,
     unsigned		/* merge */,
     KeyNamesInfo *	/* included */
-#endif
 );
 
 static Bool
-#if NeedFunctionPrototypes
 HandleIncludeKeycodes(	IncludeStmt *	stmt,
 			XkbDescPtr	xkb,
 			KeyNamesInfo *	info,
 			FileHandler	hndlr)
-#else
-HandleIncludeKeycodes(stmt,xkb,info,hndlr)
-    IncludeStmt	*	stmt;
-    XkbDescPtr		xkb;
-    KeyNamesInfo *	info;
-    FileHandler		hndlr;
-#endif
 {
 unsigned 	newMerge;
 XkbFile	*	rtrn;
@@ -584,18 +495,10 @@ Bool		haveSelf;
 }
 
 static int
-#if NeedFunctionPrototypes
 HandleKeycodeDef(	KeycodeDef *	stmt,
 			XkbDescPtr	xkb,
 			unsigned 	merge,
 			KeyNamesInfo *	info)
-#else
-HandleKeycodeDef(stmt,xkb,merge,info)
-    KeycodeDef *	stmt;
-    XkbDescPtr		xkb;
-    unsigned 		merge;
-    KeyNamesInfo *	info;
-#endif
 {
 int		code;
 ExprResult	result;
@@ -623,15 +526,7 @@ ExprResult	result;
 #define	MAX_KEYCODE_DEF		1
 
 static int
-#if NeedFunctionPrototypes
 HandleKeyNameVar(VarDef *stmt,XkbDescPtr xkb,unsigned merge,KeyNamesInfo *info)
-#else
-HandleKeyNameVar(stmt,xkb,merge,info)
-    VarDef *		stmt;
-    XkbDescPtr		xkb;
-    unsigned 		merge;
-    KeyNamesInfo *	info;
-#endif
 {
 ExprResult	tmp,field;
 ExprDef	*	arrayNdx;
@@ -704,18 +599,10 @@ int		which;
 }
 
 static int
-#if NeedFunctionPrototypes
 HandleIndicatorNameDef(	IndicatorNameDef *	def,
 			XkbDescPtr		xkb,
 			unsigned 		merge,
 			KeyNamesInfo *		info)
-#else
-HandleIndicatorNameDef(def,xkb,merge,info)
-    IndicatorNameDef *	def;
-    XkbDescPtr		xkb;
-    unsigned 		merge;
-    KeyNamesInfo *	info;
-#endif
 {
 IndicatorNameInfo 	ii;
 ExprResult		tmp;
@@ -742,18 +629,10 @@ ExprResult		tmp;
 }
 
 static void
-#if NeedFunctionPrototypes
 HandleKeycodesFile(	XkbFile *	file,
 			XkbDescPtr 	xkb,
 			unsigned	merge,
 			KeyNamesInfo *	info)
-#else
-HandleKeycodesFile(file,xkb,merge,info)
-    XkbFile		*file;
-    XkbDescPtr	 	 xkb;
-    unsigned		 merge;
-    KeyNamesInfo	*info;
-#endif
 {
 ParseCommon	*stmt;
 
@@ -812,14 +691,7 @@ ParseCommon	*stmt;
 }
 
 Bool
-#if NeedFunctionPrototypes
 CompileKeycodes(XkbFile	*file,XkbFileInfo *result,unsigned merge)
-#else
-CompileKeycodes(file,result,merge)
-    XkbFile	*	file;
-    XkbFileInfo *	result;
-    unsigned	 	merge;
-#endif
 {
 KeyNamesInfo	info;
 XkbDescPtr	xkb;

@@ -1,56 +1,52 @@
-XCOMM $XFree86: xc/programs/Xserver/GL/mesa/src/Imakefile,v 1.18 2001/04/26 16:54:47 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/GL/mesa/src/Imakefile,v 1.23 2002/11/22 22:56:00 tsi Exp $
 
+#if DoLoadableServer
+#if !BuildModuleInSubdir
 #define IHaveModules
+#elif !defined(IHaveModules)
+    MODSUBDIR = module
+#endif
+#endif
+
+#if !defined(IHaveModules) || !BuildModuleInSubdir
+#define IHaveSubdirs
+      SUBDIRS = math array_cache swrast swrast_setup tnl X $(MODSUBDIR)
+#endif
+
 #include <Server.tmpl>
 
-#define IHaveSubdirs
-
-      SUBDIRS = X
 
 #define NeedAllMesaSrc
 #define NeedToLinkMesaSrc
 #define MesaBuildDir /**/
-
+#if !defined(IHaveModules) || !BuildModuleInSubdir
 #include "../../../../../lib/GL/mesa/src/Imakefile.inc"
-
-#if DoLoadableServer
-        MSRCS = GLcoremodule.c
-        MOBJS = GLcoremodule.o
-
-        XOBJS = X/?*.o
+#else
+#include "../../../../../../lib/GL/mesa/src/Imakefile.inc"
 #endif
 
-         SRCS = $(COREMESASRCS) $(MSRCS)
-         OBJS = $(COREMESAOBJS) $(MOBJS)
+         SRCS = $(COREMESABASESRCS)
+         OBJS = $(COREMESABASEOBJS)
 
      INCLUDES = -I$(INCLUDESRC) -I$(XINCLUDESRC) -I$(EXTINCSRC) \
-		-I$(MESASRCDIR)/src -I$(SERVERSRC)/include
+		-I$(MESASRCDIR)/include -I$(GLXLIBSRC)/include \
+		-I$(MESASRCDIR)/src \
+		-I$(SERVERSRC)/include
 
       DEFINES = $(GLX_DEFINES)
 
-#if DoLoadableServer
-        DONES = X/DONE
-
-#if HasParallelMake
-MakeMutex($(SUBDIRS) $(OBJS) $(DONES))
-#endif
-
+#ifdef IHaveModules
 ModuleObjectRule()
-
-DepLibraryModuleTarget(GLcore,$(SUBDIRS) $(DONES) $(OBJS),$(OBJS) $(XOBJS))
-InstallLibraryModule(GLcore,$(MODULEDIR),extensions)
-ForceSubdirs($(SUBDIRS))
-
 #else
-MakeSubdirs($(SUBDIRS))
-NormalLibraryTarget(GLcore,$(OBJS))
 NormalLibraryObjectRule()
 #endif
 
+#ifdef IHaveSubdirs
+MakeSubdirs($(SUBDIRS))
+DependSubdirs($(SUBDIRS))
+#endif
+
+SubdirLibraryRule($(OBJS))
+
 DependTarget()
 
-InstallDriverSDKLibraryModule(GLcore,$(DRIVERSDKMODULEDIR),extensions)
-
-DependSubdirs($(SUBDIRS))
-MakeLintLibSubdirs($(SUBDIRS))
-LintSubdirs($(SUBDIRS))

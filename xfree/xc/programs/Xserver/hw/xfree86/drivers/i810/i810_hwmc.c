@@ -32,7 +32,7 @@ THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  *
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/i810/i810_hwmc.c,v 1.3 2001/12/04 21:17:56 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/i810/i810_hwmc.c,v 1.4 2002/09/11 00:29:32 dawes Exp $ */
 
 
 #include "xf86.h"
@@ -259,7 +259,7 @@ int I810XvMCCreateContext (ScrnInfoPtr pScrn, XvMCContextPtr pContext,
 
   if(!*priv) {
     *num_priv = 0;
-    return(BadAlloc);
+    return BadAlloc;
   }
 
   *num_priv = sizeof(I810XvMCCreateContextRec) >> 2;
@@ -267,7 +267,7 @@ int I810XvMCCreateContext (ScrnInfoPtr pScrn, XvMCContextPtr pContext,
     xf86DrvMsg(X_ERROR, pScrn->scrnIndex,
         "I810XvMCCreateContext: Unable to create DRMContext!\n");
     xfree(*priv);
-    return(BadAlloc);
+    return BadAlloc;
   }
 
   drmAuthMagic(pI810->drmSubFD, pContext->flags);
@@ -299,7 +299,7 @@ int I810XvMCCreateSurface (ScrnInfoPtr pScrn, XvMCSurfacePtr pSurf,
     xf86DrvMsg(X_ERROR, pScrn->scrnIndex,
         "I810XvMCCreateSurface: Unable to allocate memory!\n");
     *num_priv = 0;
-    return (BadAlloc);
+    return BadAlloc;
   }
   *num_priv = 2;
 
@@ -345,7 +345,7 @@ int I810XvMCCreateSubpicture (ScrnInfoPtr pScrn, XvMCSubpicturePtr pSubp,
     xf86DrvMsg(X_ERROR, pScrn->scrnIndex,
         "I810XvMCCreateSubpicture: Unable to allocate memory!\n");
     *num_priv = 0;
-    return (BadAlloc);
+    return BadAlloc;
   }
   *num_priv = 1;
 

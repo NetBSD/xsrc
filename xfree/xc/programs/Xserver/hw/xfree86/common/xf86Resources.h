@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Resources.h,v 1.13 2001/06/01 18:43:49 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Resources.h,v 1.14 2002/07/24 01:47:24 tsi Exp $ */
 
 #ifndef _XF86_RESOURCES_H
 
@@ -79,7 +79,7 @@
 #define _8514_SHARED \
 	{ResShrIoSparse | ResBios | ResBus, 0x02E8, 0x03F8}
 
-/* predefined resources */
+/* Predefined resources */
 extern resRange resVgaExclusive[];
 extern resRange resVgaShared[];
 extern resRange resVgaIoShared[];
@@ -91,11 +91,12 @@ extern resRange resVgaSparseShared[];
 extern resRange res8514Exclusive[];
 extern resRange res8514Shared[];
 
-/* Less misleading aliases for xf86SetOpratingState() */
+/* Less misleading aliases for xf86SetOperatingState() */
 #define resVgaMem resVgaMemShared
 #define resVgaIo  resVgaIoShared
+#define resVga    resVgaShared
 
-/* old style names */
+/* Old style names */
 #define RES_EXCLUSIVE_VGA   resVgaExclusive
 #define RES_SHARED_VGA      resVgaShared
 #define RES_EXCLUSIVE_8514  res8514Exclusive

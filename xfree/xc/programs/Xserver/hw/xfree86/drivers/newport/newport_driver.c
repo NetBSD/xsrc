@@ -5,7 +5,7 @@
  * 
  * This driver is based on the newport.c & newport_con.c kernel code
  *
- * (c) 2000,2001 Guido Guenther <agx@sigxcpu.org>
+ * (c) 2000-2002 Guido Guenther <agx@sigxcpu.org>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -30,7 +30,7 @@
  * Project.
  *
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/newport/newport_driver.c,v 1.19 2002/01/04 21:22:33 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/newport/newport_driver.c,v 1.24 2003/02/18 19:10:36 alanh Exp $ */
 
 /* function prototypes, common data structures & generic includes */
 #include "newport.h"
@@ -106,6 +106,12 @@ static const char *fbSymbols[] = {
 	NULL
 };	
 
+static const char *ramdacSymbols[] = {
+    "xf86CreateCursorInfoRec",
+    "xf86InitCursor",
+    NULL
+};
+
 static const char *shadowSymbols[] = {
 	"ShadowFBInit",
 	NULL
@@ -150,7 +156,7 @@ newportSetup(pointer module, pointer opts, int *errmaj, int *errmin)
 		 * might refer to.
 		 *
 		 */
-		LoaderRefSymLists( fbSymbols, shadowSymbols, NULL);
+		LoaderRefSymLists( fbSymbols, ramdacSymbols, shadowSymbols, NULL);
 
 
 		/*
@@ -168,13 +174,15 @@ newportSetup(pointer module, pointer opts, int *errmaj, int *errmin)
 
 typedef enum {
 	OPTION_BITPLANES,
-	OPTION_BUS_ID
+	OPTION_BUS_ID,
+	OPTION_HWCURSOR
 } NewportOpts;
 
 /* Supported options */
 static const OptionInfoRec NewportOptions [] = {
 	{ OPTION_BITPLANES, "bitplanes", OPTV_INTEGER, {0}, FALSE },
 	{ OPTION_BUS_ID, "BusID", OPTV_INTEGER, {0}, FALSE },
+	{ OPTION_HWCURSOR, "HWCursor", OPTV_BOOLEAN, {0}, FALSE },
 	{ -1, NULL, OPTV_NONE, {0}, FALSE }
 };
 
@@ -243,7 +251,8 @@ NewportProbe(DriverPtr drv, int flags)
 					 * Set it as an ISA entity to get the entity field set up right.
 					 */
 					entity = xf86ClaimIsaSlot(drv, 0, dev, TRUE);
-					base = (NEWPORT_BASE_ADDR0 + busID * NEWPORT_BASE_OFFSET);
+					base = (NEWPORT_BASE_ADDR0
+						+ busID * NEWPORT_BASE_OFFSET);
 					RANGE(range[0], base, base + sizeof(NewportRegs),\
 							ResExcMemBlock);
 					pScrn = xf86ConfigIsaEntity(pScrn, 0, entity, NULL, range, \
@@ -385,11 +394,17 @@ NewportPreInit(ScrnInfoPtr pScrn, int flags)
 			pNewport->bitplanes);
 		return FALSE;
 	}
+
+	from=X_DEFAULT;
+	pNewport->hwCursor = TRUE;
+    	if (xf86GetOptValBool(pNewport->Options, OPTION_HWCURSOR, &pNewport->hwCursor))
+        	from = X_CONFIG;
+	xf86DrvMsg(pScrn->scrnIndex, from, "Using %s cursor\n",
+        	pNewport->hwCursor ? "HW" : "SW");
 	
 	/* Set up clock ranges that are alway ok */
-	
 	/* XXX: Use information from VC2 here */
-	clockRanges = xnfalloc(sizeof(ClockRange));
+	clockRanges = xnfcalloc(sizeof(ClockRange),1);
 	clockRanges->next = NULL;
 	clockRanges->minClock = 10000;
 	clockRanges->maxClock = 300000;
@@ -437,6 +452,15 @@ NewportPreInit(ScrnInfoPtr pScrn, int flags)
 	}
 	xf86LoaderReqSymLists( fbSymbols, NULL);
 
+	/* Load ramdac modules */
+    	if (pNewport->hwCursor) {
+        	if (!xf86LoadSubModule(pScrn, "ramdac")) {
+			NewportFreeRec(pScrn);
+            		return FALSE;
+        	}
+        	xf86LoaderReqSymLists(ramdacSymbols, NULL);
+    	}
+
 	/* Load ShadowFB module */
 	if (!xf86LoadSubModule(pScrn, "shadowfb")) {
 		NewportFreeRec(pScrn);
@@ -478,7 +502,7 @@ NewportScreenInit(int index, ScreenPtr pScreen, int argc, char **argv)
 	/* Setup the stuff for the shadow framebuffer */
 	pNewport->ShadowPitch = (( pScrn->virtualX * pNewport->Bpp ) + 3) & ~3L;
 	pNewport->ShadowPtr = xnfalloc(pNewport->ShadowPitch * pScrn->virtualY);
-	
+
 	if (!NewportModeInit(pScrn, pScrn->currentMode))
 			return FALSE;
 
@@ -517,19 +541,35 @@ NewportScreenInit(int index, ScreenPtr pScreen, int argc, char **argv)
 	/* Initialize software cursor */
 	if(!miDCInitialize(pScreen, xf86GetPointerScreenFuncs()))
 		return FALSE;
-	
+
+	/* Initialize hardware cursor */
+	if(pNewport->hwCursor)
+		if(!NewportHWCursorInit(pScreen)) {
+			xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
+               		"Hardware cursor initialization failed\n");
+			return FALSE;
+	}
+
 	/* Initialise default colourmap */
 	if (!miCreateDefColormap(pScreen))
 		return FALSE;
 
 	/* Install our LoadPalette funciton */
 	if(!xf86HandleColormaps(pScreen, 256, 8, NewportLoadPalette, 0,
-				CMAP_RELOAD_ON_MODE_SWITCH ))
+				CMAP_RELOAD_ON_MODE_SWITCH )) {
+		xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
+                   "Colormap initialization failed\n");
 		return FALSE;
+	}
 
 	/* Initialise shadow frame buffer */
-	ShadowFBInit(pScreen, (pNewport->Bpp == 1) ? &NewportRefreshArea8 :
-				&NewportRefreshArea24);
+	if(!ShadowFBInit(pScreen, (pNewport->Bpp == 1) ? &NewportRefreshArea8 :
+				&NewportRefreshArea24)) {
+		xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
+                   "ShadowFB initialization failed\n");
+		return FALSE;
+	}
+
 
 #ifdef XvExtension
 	{
@@ -596,21 +636,27 @@ static Bool
 NewportSaveScreen(ScreenPtr pScreen, int mode)
 {
 	ScrnInfoPtr pScrn;
+	NewportPtr pNewport;
 	NewportRegsPtr pNewportRegs;
 	Bool unblank;
-	unsigned short treg;
+
+	if (!pScreen)
+		return TRUE;
 
 	unblank = xf86IsUnblank(mode);
 	pScrn = xf86Screens[pScreen->myNum];
+
+	if (!pScrn->vtSema)
+		return TRUE;
+
+	pNewport = NEWPORTPTR(pScrn);
 	pNewportRegs = NEWPORTPTR(pScrn)->pNewportRegs;
 	
-	if (unblank) {
-		treg = NewportVc2Get(pNewportRegs, VC2_IREG_CONTROL);
-	        NewportVc2Set( pNewportRegs, VC2_IREG_CONTROL, (treg | VC2_CTRL_EDISP));
-    	} else {
-		treg = NewportVc2Get(pNewportRegs, VC2_IREG_CONTROL);
-		NewportVc2Set( pNewportRegs, VC2_IREG_CONTROL, (treg & ~(VC2_CTRL_EDISP)));
-        }
+	if (unblank)
+		pNewport->vc2ctrl |= VC2_CTRL_EDISP;            
+	else
+		pNewport->vc2ctrl &= ~VC2_CTRL_EDISP;           
+	NewportVc2Set( pNewportRegs, VC2_IREG_CONTROL, pNewport->vc2ctrl);
 	return TRUE;
 }
 
@@ -641,11 +687,11 @@ NewportModeInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
 	pScrn->vtSema = TRUE;
 	/* first backup the necessary registers... */
 	NewportBackupRex3(pScrn);
-	pNewport->txt_vc2ctrl = NewportVc2Get( pNewportRegs, VC2_IREG_CONTROL);
+	if( pNewport->hwCursor )
+		NewportBackupVc2Cursor( pScrn );
+	NewportBackupVc2(pScrn);
 	NewportBackupPalette(pScrn);
-	if( pNewport->Bpp == 3) { /* at 24bpp we have to backup some more registers */
-		NewportBackupXmap9s( pScrn );
-	}
+	NewportBackupXmap9s( pScrn );
 	/* ...then  setup the hardware */
 	pNewport->drawmode1 = DM1_RGBPLANES | 
 				NPORT_DMODE1_CCLT | 
@@ -661,7 +707,7 @@ NewportModeInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
 
 		/* tell the xmap9s that we are using 24bpp */
 		NewportBfwait(pNewport->pNewportRegs);
-		pNewportRegs->set.dcbmode = (DCB_XMAP_ALL | R_DCB_XMAP9_PROTOCOL |
+		pNewportRegs->set.dcbmode = (DCB_XMAP_ALL | W_DCB_XMAP9_PROTOCOL |
 				XM9_CRS_CONFIG | NPORT_DMODE_W1 );
 		pNewportRegs->set.dcbdata0.bytes.b3 &= ~(XM9_8_BITPLANES | XM9_PUPMODE);
 		NewportBfwait(pNewport->pNewportRegs);
@@ -681,7 +727,11 @@ NewportModeInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
 					/* turn on RGB mode */	
 					NPORT_DMODE1_RGBMD | 
 					/* turn on 8888 = RGBA pixel packing */
-					NPORT_DMODE1_HD32 | NPORT_DMODE1_RWPCKD; 
+					NPORT_DMODE1_HD32 | NPORT_DMODE1_RWPCKD;
+		/* After setting up XMAP9 we have to reinitialize the CMAP for
+		 * whatever reason (the docs say nothing about it). RestorePalette()
+		 * is just a lazy way to do this */
+		NewportRestorePalette( pScrn );
 	}
 	/* blank the framebuffer */
 	NewportWait(pNewportRegs);
@@ -699,6 +749,9 @@ NewportModeInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
 	NewportWait(pNewportRegs);
 	pNewportRegs->set.drawmode1 = pNewport->drawmode1;
 
+	/* XXX: Lazy mode on: just use the textmode value */
+	pNewport->vc2ctrl = pNewport->txt_vc2ctrl;
+
 	return TRUE;
 }
 
@@ -712,15 +765,14 @@ static void
 NewportRestore(ScrnInfoPtr pScrn, Bool Closing)
 {
 	NewportPtr pNewport = NEWPORTPTR(pScrn);
-	NewportRegsPtr pNewportRegs = pNewport->pNewportRegs;
 
 	/* Restore backed up registers */
 	NewportRestoreRex3( pScrn );
-	NewportVc2Set( pNewportRegs, VC2_IREG_CONTROL, pNewport->txt_vc2ctrl );
+	if( pNewport->hwCursor )
+		NewportRestoreVc2Cursor( pScrn );
+	NewportRestoreVc2( pScrn );
 	NewportRestorePalette( pScrn );
-	if( pNewport->Bpp == 3) {
-		NewportRestoreXmap9s( pScrn);
-	}
+	NewportRestoreXmap9s( pScrn );
 }
 
 
@@ -729,21 +781,26 @@ NewportRestore(ScrnInfoPtr pScrn, Bool Closing)
 static unsigned
 NewportHWProbe(unsigned probedIDs[])
 {
-	FILE* cpuinfo;		
+	FILE* cpuinfo;
 	char line[80];
 	unsigned hasNewport = 0;
+
 	if ((cpuinfo = fopen("/proc/cpuinfo", "r"))) {
-		while(fgets(line, 80, cpuinfo) != NULL) {	
+		while(fgets(line, 80, cpuinfo) != NULL) {
 			if(strstr(line, "SGI Indy") != NULL) {
 				hasNewport = 1;
+				probedIDs[0] = 0;
+				break;
+			}
+			if(strstr(line, "SGI Indigo2") != NULL) {
+				hasNewport = 1;
+				probedIDs[0] = 1;
 				break;
 			}
 		}
-		fclose(cpuinfo);	
+		fclose(cpuinfo);
 	}
-
-	probedIDs[0] = 0;
-	return hasNewport;	
+	return hasNewport;
 }
 
 /* Probe for Chipset revisions */

@@ -51,11 +51,12 @@
 /*   number can be set via entry in OS2.INI.                               */
 /*                                                                         */
 /* For Intelligent Font Interface (IFI) specification please see IFI32.TXT */
+/* $XFree86: xc/extras/FreeType/contrib/ftos2/ifi/ftifi.c,v 1.2 2003/01/12 03:55:43 tsi Exp $ */
 
 #ifndef  __IBMC__
-   #ifndef __WATCOMC__
-      #error "This source requires IBM VisualAge C++ or Watcom C/C++"
-   #endif
+#   ifndef __WATCOMC__
+#       error "This source requires IBM VisualAge C++ or Watcom C/C++"
+#   endif
 #endif
 
 /* Defining the following uses UCONV.DLL instead of the built-in  */
@@ -193,19 +194,19 @@ char*  itoa10( int i, char* buffer ) {
     return buffer;
 }
 
-  #define  COPY(s)     strcpy(log, s)
-  #define  CAT(s)      strcat(log, s)
-  #define  CATI(v)     strcat(log, itoa10( (int)v, buf ))
-  #define  WRITE       DosWrite(LogHandle, log, strlen(log), &Written)
+#  define  COPY(s)     strcpy(log, s)
+#  define  CAT(s)      strcat(log, s)
+#  define  CATI(v)     strcat(log, itoa10( (int)v, buf ))
+#  define  WRITE       DosWrite(LogHandle, log, strlen(log), &Written)
 
-  #define  ERET1(label) { COPY("Error at ");  \
+#  define  ERET1(label) { COPY("Error at ");  \
                           CATI(__LINE__);    \
                           CAT("\r\n");       \
                           WRITE;             \
                           goto label;        \
                        }
 
-  #define  ERRRET(e)   { COPY("Error at ");  \
+#  define  ERRRET(e)   { COPY("Error at ");  \
                           CATI(__LINE__);    \
                           CAT("\r\n");       \
                           WRITE;             \
@@ -215,14 +216,14 @@ char*  itoa10( int i, char* buffer ) {
 
 #else
 
-  #define  COPY(s)
-  #define  CAT(s)
-  #define  CATI(v)
-  #define  WRITE
+#  define  COPY(s)
+#  define  CAT(s)
+#  define  CATI(v)
+#  define  WRITE
 
-  #define  ERET1(label)  goto label;
+#  define  ERET1(label)  goto label;
 
-  #define  ERRRET(e)  return(e);
+#  define  ERRRET(e)  return(e);
 
 #endif /* DEBUG */
 
@@ -1561,7 +1562,7 @@ LONG _System QueryFaces( HFF          hff,
       ERRRET(-1) /* error, invalid handle */
 
    if (cMetricLen == 0) {   /* only number of faces is requested */
-      #ifdef  FAKE_TNR
+#     ifdef  FAKE_TNR
       /* create an alias for Times New Roman */
       pface = &(file->faces[0]);
       name = LookupName(pface->face, TT_NAME_ID_FONT_FAMILY);
@@ -1569,7 +1570,7 @@ LONG _System QueryFaces( HFF          hff,
          file->flags |= FL_FLAG_FAKE_ROMAN;
          return 2;
       }
-      #endif
+#     endif
       if (file->flags & FL_FLAG_DBCS_FILE)
          return file->numFaces * 2;
       else
@@ -1779,7 +1780,7 @@ LONG _System QueryFaces( HFF          hff,
          pifi2->szFacename[0] = '@';
          ifiCount += cMetricLen;
       }
-      #ifdef  FAKE_TNR
+#     ifdef  FAKE_TNR
       if ((file->flags & FL_FLAG_FAKE_ROMAN) && (index + 1 >= cStart) &&
           (index + 1 < (cStart + cFontCount))) {
          pifi2 = (PIFIMETRICS) (((PBYTE) pifiMetrics) + ifiCount);
@@ -1802,7 +1803,7 @@ LONG _System QueryFaces( HFF          hff,
          }
          ifiCount += cMetricLen;
       }
-      #endif
+#     endif
    }
 
 Exit:
@@ -1839,11 +1840,11 @@ HFC _System OpenFontContext( HFF    hff,
    /* calculate real face index in font file */
    faceIndex = file->flags & FL_FLAG_DBCS_FILE ? ulFont / 2 : ulFont;
 
-   #ifdef  FAKE_TNR
+#  ifdef  FAKE_TNR
    if (file->flags & FL_FLAG_FAKE_ROMAN)
       /* This font isn't real! */
       faceIndex = 0;
-   #endif
+#  endif
 
    if (faceIndex > file->numFaces)
       ERRRET((HFC)-1)
@@ -2575,10 +2576,8 @@ ULONG  FirstInit(void) {
    LONG   lReqCount;
    ULONG  ulCurMaxFH;
 
-   #ifdef DEBUG
+#  ifdef DEBUG
       ULONG Action;
-   #endif /* DEBUG */
-   #ifdef DEBUG
       DosOpen("C:\\FTIFI.LOG", &LogHandle, &Action, 0, FILE_NORMAL,
               OPEN_ACTION_CREATE_IF_NEW | OPEN_ACTION_REPLACE_IF_EXISTS,
               OPEN_FLAGS_NO_CACHE | OPEN_FLAGS_WRITE_THROUGH |
@@ -2586,7 +2585,7 @@ ULONG  FirstInit(void) {
               NULL);
       COPY("FreeType/2 loaded.\r\n");
       WRITE;
-   #endif /* DEBUG */
+#  endif /* DEBUG */
 
    /* increase # of file handles by five to be on the safe side */
    lReqCount = 5;
@@ -2636,11 +2635,11 @@ ULONG  FinalTerm(void) {
    /* turn off engine */
    TT_Done_FreeType(engine);
 
-   #ifdef DEBUG
+#  ifdef DEBUG
       COPY("FreeType/2 terminated.\r\n");
       WRITE;
       DosClose(LogHandle);
-   #endif
+#  endif
    return 1;
 }
 /****************************************************************************/
@@ -2661,9 +2660,9 @@ ULONG _System _DLL_InitTerm(ULONG hModule, ULONG ulFlag) {
       case 1:  {          /* terminating */
          int   i;
          /* clean UCONV cache */
-         #ifdef USE_UCONV
+#        ifdef USE_UCONV
             CleanUCONVCache();
-         #endif
+#        endif
          if(--ulProcessCount == 0)
             return FinalTerm();
          else

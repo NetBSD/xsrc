@@ -2,6 +2,8 @@
 bin
 lib/libdps.a
 lib/libdpstk.a
+lib/libexpat.a
+lib/libfontconfig.a
 lib/libfntstubs.a
 lib/libfreetype.a
 lib/libFS.a
@@ -15,6 +17,7 @@ lib/libSM.a
 lib/libX11.a
 lib/libXau.a
 lib/libXaw.a
+lib/libXcursor.a
 lib/libXdmcp.a
 lib/libXext.a
 lib/libXfont.a

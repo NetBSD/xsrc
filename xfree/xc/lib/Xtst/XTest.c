@@ -30,16 +30,16 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/Xtst/XTest.c,v 1.5 2001/12/14 19:56:40 dawes Exp $ */
+/* $XFree86: xc/lib/Xtst/XTest.c,v 1.6 2002/10/16 00:37:33 dawes Exp $ */
 
 #define NEED_REPLIES
-#include "Xlibint.h"
-#include "XTest.h"
-#include "xteststr.h"
-#include "Xext.h"
-#include "extutil.h"
-#include "XInput.h"
-#include "XIproto.h"
+#include <X11/Xlibint.h>
+#include <X11/extensions/XTest.h>
+#include <X11/extensions/xteststr.h>
+#include <X11/extensions/Xext.h>
+#include <X11/extensions/extutil.h>
+#include <X11/extensions/XInput.h>
+#include <X11/extensions/XIproto.h>
 
 static XExtensionInfo _xtest_info_data;
 static XExtensionInfo *xtest_info = &_xtest_info_data;

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xf4bpp/mfbzerarc.c,v 1.4 1999/09/25 14:38:15 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xf4bpp/mfbzerarc.c,v 1.5 2003/02/18 21:29:59 tsi Exp $ */
 
 /************************************************************
 
@@ -71,19 +71,19 @@ extern ScrnInfoPtr *xf86Screens;
 
 #define PixelateWhite(addr,off) \
 { \
-    register int *tmpaddr = &((addr)[(off)>>5]); \
-    UPDRW(tmpaddr,SCRRIGHT (LEFTMOST, ((off) & 0x1f))); \
+    register int *tmpaddr = &((addr)[(off)>>PWSH]); \
+    UPDRW(tmpaddr,SCRRIGHT (LEFTMOST, ((off) & PIM))); \
 }
 #define PixelateBlack(addr,off) \
 { \
-    register int *tmpaddr = &((addr)[(off)>>5]); \
-    UPDRW(tmpaddr,~(SCRRIGHT (LEFTMOST, ((off) & 0x1f)))); \
+    register int *tmpaddr = &((addr)[(off)>>PWSH]); \
+    UPDRW(tmpaddr,~(SCRRIGHT (LEFTMOST, ((off) & PIM)))); \
 }
 
 #define Pixelate(base,off) \
 { \
-    paddr = base + ((off)>>5); \
-    pmask = SCRRIGHT(LEFTMOST, (off) & 0x1f); \
+    paddr = base + ((off)>>PWSH); \
+    pmask = SCRRIGHT(LEFTMOST, (off) & PIM); \
     UPDRW(paddr,(pixel & pmask)); \
 }
 

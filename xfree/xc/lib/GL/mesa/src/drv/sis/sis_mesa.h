@@ -24,7 +24,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 **************************************************************************/
-/* $XFree86: xc/lib/GL/mesa/src/drv/sis/sis_mesa.h,v 1.3 2000/09/26 15:56:48 tsi Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/sis/sis_mesa.h,v 1.4 2002/10/30 12:52:00 alanh Exp $ */
 
 /*
  * Authors:
@@ -44,7 +44,7 @@ GLbitfield sis_Clear (GLcontext * ctx, GLbitfield mask, GLboolean all,
 GLboolean sis_SetDrawBuffer (GLcontext * ctx, GLenum mode);
 void sis_SetReadBuffer (GLcontext *ctx, GLframebuffer *colorBuffer,
                         GLenum buffer);
-void sis_GetBufferSize (GLcontext * ctx, GLuint * width, GLuint * height);
+void sis_GetBufferSize (GLframebuffer * buffer, GLuint * width, GLuint * height);
 const char *sis_ExtensionString (GLcontext * ctx);
 const GLubyte *sis_GetString (GLcontext * ctx, GLenum name);
 void sis_Finish (GLcontext * ctx);

@@ -24,7 +24,7 @@
  *
  *
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/s3/s3_bios.c,v 1.2 2001/07/11 07:45:35 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/s3/s3_bios.c,v 1.3 2002/01/25 21:56:08 tsi Exp $ */
 
 #include "xf86.h"
 #include "xf86_OSproc.h"
@@ -34,7 +34,8 @@
 #include "s3.h"
 
 
-static unsigned char *find_bios_string(int BIOSbase, char *match1, char *match2)
+static unsigned char *find_bios_string(S3Ptr pS3, int BIOSbase,
+				       char *match1, char *match2)
 {
 	static unsigned char bios[BIOS_BSIZE];
 	static int init=0;
@@ -42,7 +43,7 @@ static unsigned char *find_bios_string(int BIOSbase, char *match1, char *match2)
 
 	if (!init) {
 		init = 1;
-		if (xf86ReadBIOS(BIOSbase, 0, bios, BIOS_BSIZE) != BIOS_BSIZE)
+		if (xf86ReadDomainMemory(pS3->PciTag, BIOSbase, BIOS_BSIZE, bios) != BIOS_BSIZE)
 			return NULL;
 		if ((bios[0] != 0x55) || (bios[1] != 0xaa))
 			return NULL;
@@ -73,9 +74,10 @@ static unsigned char *find_bios_string(int BIOSbase, char *match1, char *match2)
 
 int S3GetRefClock(ScrnInfoPtr pScrn)
 {
+	S3Ptr pS3 = S3PTR(pScrn);
 	int RefClock = 16000;	/* default */
 
-	if (find_bios_string(BIOS_BASE, "Number Nine Visual Technology",
+	if (find_bios_string(pS3, BIOS_BASE, "Number Nine Visual Technology",
 					"Motion 771") != NULL)
 		RefClock = 16000;
 

@@ -4,7 +4,7 @@
 /*                                                                         */
 /*    TrueType font driver implementation (body).                          */
 /*                                                                         */
-/*  Copyright 1996-2001 by                                                 */
+/*  Copyright 1996-2001, 2002 by                                           */
 /*  David Turner, Robert Wilhelm, and Werner Lemberg.                      */
 /*                                                                         */
 /*  This file is part of the FreeType project, and may only be used,       */
@@ -94,7 +94,7 @@
                FT_UInt     right_glyph,
                FT_Vector*  kerning )
   {
-    TT_Kern_0_Pair*  pair;
+    TT_Kern0_Pair  pair;
 
 
     if ( !face )
@@ -222,7 +222,7 @@
     size->strike_index    = 0xFFFF;
 #endif
 
-    return TT_Reset_Size( size );
+    return TT_Size_Reset( size );
   }
 
 
@@ -261,7 +261,7 @@
     size->strike_index    = 0xFFFF;
 #endif
 
-    return TT_Reset_Size( size );
+    return TT_Size_Reset( size );
   }
 
 
@@ -319,7 +319,7 @@
 
       if ( !size->ttmetrics.valid )
       {
-        if ( FT_SET_ERROR( TT_Reset_Size( size ) ) )
+        if ( FT_SET_ERROR( TT_Size_Reset( size ) ) )
           return error;
       }
     }
@@ -365,9 +365,9 @@
   Get_Char_Index( TT_CharMap  charmap,
                   FT_Long     charcode )
   {
-    FT_Error       error;
-    TT_Face        face;
-    TT_CMapTable*  cmap;
+    FT_Error      error;
+    TT_Face       face;
+    TT_CMapTable  cmap;
 
 
     cmap = &charmap->cmap;
@@ -376,7 +376,7 @@
     /* Load table if needed */
     if ( !cmap->loaded )
     {
-      SFNT_Interface*  sfnt = (SFNT_Interface*)face->sfnt;
+      SFNT_Service  sfnt = (SFNT_Service)face->sfnt;
 
 
       error = sfnt->load_charmap( face, cmap, face->root.stream );
@@ -388,6 +388,53 @@
 
     if ( cmap->get_index )
       return cmap->get_index( cmap, charcode );
+    else
+      return 0;
+  }
+
+
+  /*************************************************************************/
+  /*                                                                       */
+  /* <Function>                                                            */
+  /*    Get_Next_Char                                                      */
+  /*                                                                       */
+  /* <Description>                                                         */
+  /*    Uses a charmap to return the next encoded char.                    */
+  /*                                                                       */
+  /* <Input>                                                               */
+  /*    charmap  :: A handle to the source charmap object.                 */
+  /*    charcode :: The character code.                                    */
+  /*                                                                       */
+  /* <Return>                                                              */
+  /*    Next char code.  0 means `no more encoded characters'.             */
+  /*                                                                       */
+  static FT_UInt
+  Get_Next_Char( TT_CharMap  charmap,
+                 FT_Long     charcode )
+  {
+    FT_Error      error;
+    TT_Face       face;
+    TT_CMapTable  cmap;
+
+
+    cmap = &charmap->cmap;
+    face = (TT_Face)charmap->root.face;
+
+    /* Load table if needed */
+    if ( !cmap->loaded )
+    {
+      SFNT_Service  sfnt = (SFNT_Service)face->sfnt;
+
+
+      error = sfnt->load_charmap( face, cmap, face->root.stream );
+      if ( error )
+        return 0;
+
+      cmap->loaded = TRUE;
+    }
+
+    if ( cmap->get_next_char )
+      return cmap->get_next_char ( cmap, charcode );
     else
       return 0;
   }
@@ -408,19 +455,19 @@
 
   static FT_Module_Interface
   tt_get_interface( TT_Driver    driver,
-                    const char*  interface )
+                    const char*  tt_interface )
   {
-    FT_Module        sfntd = FT_Get_Module( driver->root.root.library,
-                                            "sfnt" );
-    SFNT_Interface*  sfnt;
+    FT_Module     sfntd = FT_Get_Module( driver->root.root.library,
+                                         "sfnt" );
+    SFNT_Service  sfnt;
 
 
     /* only return the default interface from the SFNT module */
     if ( sfntd )
     {
-      sfnt = (SFNT_Interface*)( sfntd->clazz->module_interface );
+      sfnt = (SFNT_Service)( sfntd->clazz->module_interface );
       if ( sfnt )
-        return sfnt->get_interface( FT_MODULE( driver ), interface );
+        return sfnt->get_interface( FT_MODULE( driver ), tt_interface );
     }
 
     return 0;
@@ -430,7 +477,7 @@
   /* The FT_DriverInterface structure is defined in ftdriver.h. */
 
   FT_CALLBACK_TABLE_DEF
-  const FT_Driver_Class  tt_driver_class =
+  const FT_Driver_ClassRec  tt_driver_class =
   {
     {
       ft_module_font_driver     |
@@ -449,8 +496,8 @@
 
       (void*)0,        /* driver specific interface */
 
-      (FT_Module_Constructor)TT_Init_Driver,
-      (FT_Module_Destructor) TT_Done_Driver,
+      (FT_Module_Constructor)TT_Driver_Init,
+      (FT_Module_Destructor) TT_Driver_Done,
       (FT_Module_Requester)  tt_get_interface,
     },
 
@@ -459,54 +506,24 @@
     sizeof ( FT_GlyphSlotRec ),
 
 
-    (FTDriver_initFace)     TT_Init_Face,
-    (FTDriver_doneFace)     TT_Done_Face,
-    (FTDriver_initSize)     TT_Init_Size,
-    (FTDriver_doneSize)     TT_Done_Size,
-    (FTDriver_initGlyphSlot)0,
-    (FTDriver_doneGlyphSlot)0,
+    (FT_Face_InitFunc)        TT_Face_Init,
+    (FT_Face_DoneFunc)        TT_Face_Done,
+    (FT_Size_InitFunc)        TT_Size_Init,
+    (FT_Size_DoneFunc)        TT_Size_Done,
+    (FT_Slot_InitFunc)        0,
+    (FT_Slot_DoneFunc)        0,
 
-    (FTDriver_setCharSizes) Set_Char_Sizes,
-    (FTDriver_setPixelSizes)Set_Pixel_Sizes,
-    (FTDriver_loadGlyph)    Load_Glyph,
-    (FTDriver_getCharIndex) Get_Char_Index,
+    (FT_Size_ResetPointsFunc) Set_Char_Sizes,
+    (FT_Size_ResetPixelsFunc) Set_Pixel_Sizes,
+    (FT_Slot_LoadFunc)        Load_Glyph,
+    (FT_CharMap_CharIndexFunc)Get_Char_Index,
 
-    (FTDriver_getKerning)   Get_Kerning,
-    (FTDriver_attachFile)   0,
-    (FTDriver_getAdvances)  0
+    (FT_Face_GetKerningFunc)  Get_Kerning,
+    (FT_Face_AttachFunc)      0,
+    (FT_Face_GetAdvancesFunc) 0,
+    
+    (FT_CharMap_CharNextFunc) Get_Next_Char
   };
-
-
-#ifdef FT_CONFIG_OPTION_DYNAMIC_DRIVERS
-
-
-  /*************************************************************************/
-  /*                                                                       */
-  /* <Function>                                                            */
-  /*    getDriverClass                                                     */
-  /*                                                                       */
-  /* <Description>                                                         */
-  /*    This function is used when compiling the TrueType driver as a      */
-  /*    shared library (`.DLL' or `.so').  It will be used by the          */
-  /*    high-level library of FreeType to retrieve the address of the      */
-  /*    driver's generic interface.                                        */
-  /*                                                                       */
-  /*    It shouldn't be implemented in a static build, as each driver must */
-  /*    have the same function as an exported entry point.                 */
-  /*                                                                       */
-  /* <Return>                                                              */
-  /*    The address of the TrueType's driver generic interface.  The       */
-  /*    format-specific interface can then be retrieved through the method */
-  /*    interface->get_format_interface.                                   */
-  /*                                                                       */
-  FT_EXPORT_DEF( const FT_Driver_Class* )
-  getDriverClass( void )
-  {
-    return &tt_driver_class;
-  }
-
-
-#endif /* CONFIG_OPTION_DYNAMIC_DRIVERS */
 
 
 /* END */

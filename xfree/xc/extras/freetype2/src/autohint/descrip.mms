@@ -3,7 +3,7 @@
 #
 
 
-# Copyright 2001 Catharon Productions Inc.
+# Copyright 2001, 2002 Catharon Productions Inc.
 #
 # This file is part of the Catharon Typography Project and shall only
 # be used, modified, and distributed under the terms of the Catharon
@@ -20,6 +20,6 @@ CFLAGS=$(COMP_FLAGS)$(DEBUG)/incl=([--.include],[--.src.autohint])
 OBJS=autohint.obj
 
 all : $(OBJS)
-	library [--.lib]freetype.olb $(OBJS)
+        library [--.lib]freetype.olb $(OBJS)
 
 # EOF

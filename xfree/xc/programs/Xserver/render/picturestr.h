@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/programs/Xserver/render/picturestr.h,v 1.16 2001/08/01 00:45:00 tsi Exp $
+ * $XFree86: xc/programs/Xserver/render/picturestr.h,v 1.22 2002/11/23 02:38:15 keithp Exp $
  *
  * Copyright © 2000 SuSE, Inc.
  *
@@ -37,16 +37,30 @@ typedef struct _DirectFormat {
     CARD16	    alpha, alphaMask;
 } DirectFormatRec;
 
+typedef struct _IndexFormat {
+    VisualPtr	    pVisual;
+    ColormapPtr	    pColormap;
+    int		    nvalues;
+    xIndexValue	    *pValues;
+    void	    *devPrivate;
+} IndexFormatRec;
+
 typedef struct _PictFormat {
     CARD32	    id;
     CARD32	    format;	    /* except bpp */
     unsigned char   type;
     unsigned char   depth;
     DirectFormatRec direct;
-    void	    *indexed;	    /* opaque indexed conversion data */
-    VisualPtr	    pVisual;	    /* for indexed formats */
-    ColormapPtr	    pColormap;
+    IndexFormatRec  index;
 } PictFormatRec;
+
+typedef struct _PictVector {
+    xFixed	    vector[3];
+} PictVector, *PictVectorPtr;
+
+typedef struct _PictTransform {
+    xFixed	    matrix[3][3];
+} PictTransform, *PictTransformPtr;
 
 typedef struct _Picture {
     DrawablePtr	    pDrawable;
@@ -80,7 +94,33 @@ typedef struct _Picture {
     RegionPtr	    pCompositeClip;
     
     DevUnion	    *devPrivates;
+    
+    PictTransform   *transform;
+
+    int		    filter;
+    xFixed	    *filter_params;
+    int		    filter_nparams;
 } PictureRec;
+
+typedef struct {
+    char	    *name;
+    xFixed	    *params;
+    int		    nparams;
+    int		    id;
+} PictFilterRec, *PictFilterPtr;
+
+#define PictFilterNearest	0
+#define PictFilterBilinear	1
+
+#define PictFilterFast		2
+#define PictFilterGood		3
+#define PictFilterBest		4
+
+typedef struct {
+    char	    *alias;
+    int		    alias_id;
+    int		    filter_id;
+} PictFilterAliasRec, *PictFilterAliasPtr;
 
 typedef int	(*CreatePictureProcPtr)	    (PicturePtr pPicture);
 typedef void	(*DestroyPictureProcPtr)    (PicturePtr pPicture);
@@ -90,6 +130,16 @@ typedef int	(*ChangePictureClipProcPtr) (PicturePtr	pPicture,
 					     int	n);
 typedef void	(*DestroyPictureClipProcPtr)(PicturePtr	pPicture);
     
+typedef int	(*ChangePictureTransformProcPtr)    (PicturePtr	    pPicture,
+						     PictTransform  *transform);
+
+typedef int	(*ChangePictureFilterProcPtr)	(PicturePtr	pPicture,
+						 int		filter,
+						 xFixed		*params,
+						 int		nparams);
+
+typedef void	(*DestroyPictureFilterProcPtr)	(PicturePtr pPicture);
+
 typedef void	(*ChangePictureProcPtr)	    (PicturePtr pPicture,
 					     Mask	mask);
 typedef void	(*ValidatePictureProcPtr)    (PicturePtr pPicture,
@@ -122,6 +172,47 @@ typedef void	(*CompositeRectsProcPtr)    (CARD8	    op,
 					     xRenderColor   *color,
 					     int	    nRect,
 					     xRectangle	    *rects);
+
+typedef void	(*RasterizeTrapezoidProcPtr)(PicturePtr	    pMask,
+					     xTrapezoid	    *trap,
+					     int	    x_off,
+					     int	    y_off);
+
+typedef void	(*TrapezoidsProcPtr)	    (CARD8	    op,
+					     PicturePtr	    pSrc,
+					     PicturePtr	    pDst,
+					     PictFormatPtr  maskFormat,
+					     INT16	    xSrc,
+					     INT16	    ySrc,
+					     int	    ntrap,
+					     xTrapezoid	    *traps);
+
+typedef void	(*TrianglesProcPtr)	    (CARD8	    op,
+					     PicturePtr	    pSrc,
+					     PicturePtr	    pDst,
+					     PictFormatPtr  maskFormat,
+					     INT16	    xSrc,
+					     INT16	    ySrc,
+					     int	    ntri,
+					     xTriangle	    *tris);
+
+typedef void	(*TriStripProcPtr)	    (CARD8	    op,
+					     PicturePtr	    pSrc,
+					     PicturePtr	    pDst,
+					     PictFormatPtr  maskFormat,
+					     INT16	    xSrc,
+					     INT16	    ySrc,
+					     int	    npoint,
+					     xPointFixed    *points);
+
+typedef void	(*TriFanProcPtr)	    (CARD8	    op,
+					     PicturePtr	    pSrc,
+					     PicturePtr	    pDst,
+					     PictFormatPtr  maskFormat,
+					     INT16	    xSrc,
+					     INT16	    ySrc,
+					     int	    npoint,
+					     xPointFixed    *points);
 
 typedef Bool	(*InitIndexedProcPtr)	    (ScreenPtr	    pScreen,
 					     PictFormatPtr  pFormat);
@@ -164,6 +255,23 @@ typedef struct _PictureScreen {
     CloseIndexedProcPtr		CloseIndexed;
     UpdateIndexedProcPtr	UpdateIndexed;
 
+    int				subpixel;
+    
+    PictFilterPtr		filters;
+    int				nfilters;
+    PictFilterAliasPtr		filterAliases;
+    int				nfilterAliases;
+
+    ChangePictureTransformProcPtr   ChangePictureTransform;
+    ChangePictureFilterProcPtr	ChangePictureFilter;
+    DestroyPictureFilterProcPtr	DestroyPictureFilter;
+    
+    TrapezoidsProcPtr		Trapezoids;
+    TrianglesProcPtr		Triangles;
+    TriStripProcPtr		TriStrip;
+    TriFanProcPtr		TriFan;
+
+    RasterizeTrapezoidProcPtr	RasterizeTrapezoid;
 } PictureScreenRec, *PictureScreenPtr;
 
 extern int		PictureScreenPrivateIndex;
@@ -200,6 +308,18 @@ PictureDestroyWindow (WindowPtr pWindow);
 Bool
 PictureCloseScreen (int Index, ScreenPtr pScreen);
 
+void
+PictureStoreColors (ColormapPtr pColormap, int ndef, xColorItem *pdef);
+
+Bool
+PictureInitIndexedFormats (ScreenPtr pScreen);
+
+Bool
+PictureSetSubpixelOrder (ScreenPtr pScreen, int subpixel);
+
+int
+PictureGetSubpixelOrder (ScreenPtr pScreen);
+
 PictFormatPtr
 PictureCreateDefaultFormats (ScreenPtr pScreen, int *nformatp);
 
@@ -211,6 +331,30 @@ PictureMatchFormat (ScreenPtr pScreen, int depth, CARD32 format);
     
 Bool
 PictureInit (ScreenPtr pScreen, PictFormatPtr formats, int nformats);
+
+int
+PictureGetFilterId (char *filter, int len, Bool makeit);
+
+char *
+PictureGetFilterName (int id);
+
+int
+PictureAddFilter (ScreenPtr pScreen, char *filter, xFixed *params, int nparams);
+
+Bool
+PictureSetFilterAlias (ScreenPtr pScreen, char *filter, char *alias);
+
+Bool
+PictureSetDefaultFilters (ScreenPtr pScreen);
+    
+void
+PictureResetFilters (ScreenPtr pScreen);
+
+PictFilterPtr
+PictureFindFilter (ScreenPtr pScreen, char *name, int len);
+
+int
+SetPictureFilter (PicturePtr pPicture, char *name, int len, xFixed *params, int nparams);
 
 Bool
 PictureFinishInit (void);
@@ -250,6 +394,10 @@ SetPictureClipRects (PicturePtr	pPicture,
 		     int	nRect,
 		     xRectangle	*rects);
 
+int
+SetPictureTransform (PicturePtr	    pPicture,
+		     PictTransform  *transform);
+		     
 void
 ValidatePicture(PicturePtr pPicture);
 
@@ -293,7 +441,57 @@ CompositeRects (CARD8		op,
 		int		nRect,
 		xRectangle      *rects);
 
+void
+CompositeTrapezoids (CARD8	    op,
+		     PicturePtr	    pSrc,
+		     PicturePtr	    pDst,
+		     PictFormatPtr  maskFormat,
+		     INT16	    xSrc,
+		     INT16	    ySrc,
+		     int	    ntrap,
+		     xTrapezoid	    *traps);
+
+void
+CompositeTriangles (CARD8	    op,
+		    PicturePtr	    pSrc,
+		    PicturePtr	    pDst,
+		    PictFormatPtr   maskFormat,
+		    INT16	    xSrc,
+		    INT16	    ySrc,
+		    int		    ntriangles,
+		    xTriangle	    *triangles);
+
+void
+CompositeTriStrip (CARD8	    op,
+		   PicturePtr	    pSrc,
+		   PicturePtr	    pDst,
+		   PictFormatPtr    maskFormat,
+		   INT16	    xSrc,
+		   INT16	    ySrc,
+		   int		    npoints,
+		   xPointFixed	    *points);
+
+void
+CompositeTriFan (CARD8		op,
+		 PicturePtr	pSrc,
+		 PicturePtr	pDst,
+		 PictFormatPtr	maskFormat,
+		 INT16		xSrc,
+		 INT16		ySrc,
+		 int		npoints,
+		 xPointFixed	*points);
+
+Bool
+PictureTransformPoint (PictTransformPtr transform,
+		       PictVectorPtr	vector);
+
 void RenderExtensionInit (void);
+
+Bool
+AnimCurInit (ScreenPtr pScreen);
+
+int
+AnimCursorCreate (CursorPtr *cursors, CARD32 *deltas, int ncursor, CursorPtr *ppCursor);
 
 #ifdef PANORAMIX
 void PanoramiXRenderInit (void);

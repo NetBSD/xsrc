@@ -27,20 +27,29 @@
  * Author: Paulo César Pereira de Andrade
  */
 
-/* $XFree86: xc/programs/xedit/lisp/time.c,v 1.2 2001/09/09 23:03:47 paulo Exp $ */
+/* $XFree86: xc/programs/xedit/lisp/time.c,v 1.7 2002/11/08 08:00:57 paulo Exp $ */
 
 #include "time.h"
+#include "bytecode.h"
 
 /*
  * Implementation
 */
 LispObj *
-Lisp_Time(LispMac *mac, LispObj *list, char *fname)
+Lisp_Time(LispBuiltin *builtin)
+/*
+ time form
+ */
 {
     struct itimerval real, virt, prof;
+    unsigned long count;
     long sec, usec;
-    LispObj *res;
+    LispObj *result;
 #define MONTH	60 * 60 * 31
+
+    LispObj *form;
+
+    form = ARGUMENT(0);
 
     real.it_value.tv_sec =
 	virt.it_value.tv_sec =
@@ -63,7 +72,18 @@ Lisp_Time(LispMac *mac, LispObj *list, char *fname)
     getitimer(ITIMER_VIRTUAL, &virt);
     getitimer(ITIMER_PROF, &prof);
 
-    res = EVAL(CAR(list));
+    lisp__data.gc.gctime = 0;
+    lisp__data.gc.timebits = 1;
+
+    count = lisp__data.gc.count;
+
+#if 0
+    form = CONS(form, NIL);
+    COD = CONS(form, COD);
+    result = LispExecuteBytecode(LispCompileForm(form));
+#else
+    result = EVAL(form);
+#endif
 
     getitimer(ITIMER_REAL, &real);
     getitimer(ITIMER_VIRTUAL, &virt);
@@ -75,7 +95,7 @@ Lisp_Time(LispMac *mac, LispObj *list, char *fname)
 	--sec;
 	usec += 1000000;
     }
-    fprintf(lisp_stderr, "Real time   : %g sec\n", sec + usec / 1000000.0);
+    LispMessage("Real time   : %g sec", sec + usec / 1000000.0);
 
     sec = virt.it_interval.tv_sec - virt.it_value.tv_sec;
     usec = virt.it_interval.tv_usec - virt.it_value.tv_usec + 10000;
@@ -83,7 +103,7 @@ Lisp_Time(LispMac *mac, LispObj *list, char *fname)
 	--sec;
 	usec += 1000000;
     }
-    fprintf(lisp_stderr, "Virtual time: %g sec\n", sec + usec / 1000000.0);
+    LispMessage("Virtual time: %g sec", sec + usec / 1000000.0);
 
     sec = prof.it_interval.tv_sec - prof.it_value.tv_sec;
     usec = prof.it_interval.tv_usec - prof.it_value.tv_usec + 10000;
@@ -91,7 +111,7 @@ Lisp_Time(LispMac *mac, LispObj *list, char *fname)
 	--sec;
 	usec += 1000000;
     }
-    fprintf(lisp_stderr, "Profile time: %g sec\n", sec + usec / 1000000.0);
+    LispMessage("Profile time: %g sec", sec + usec / 1000000.0);
 
     real.it_value.tv_sec =
 	virt.it_value.tv_sec =
@@ -110,5 +130,9 @@ Lisp_Time(LispMac *mac, LispObj *list, char *fname)
     setitimer(ITIMER_VIRTUAL, &virt, NULL);
     setitimer(ITIMER_PROF, &prof, NULL);
 
-    return (res);
+    LispMessage("GC: %ld times, %g sec",
+		lisp__data.gc.count - count, lisp__data.gc.gctime / 1000000.0);
+    lisp__data.gc.timebits = 0;
+
+    return (result);
 }

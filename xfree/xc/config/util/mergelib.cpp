@@ -61,9 +61,14 @@ XCOMM
 tmpdir=tmp.$$
 origdir=..
 
+XCOMM Remove directory if we fail
+trap "rm -rf $tmpdir; exit 1" 1 2 15
+trap "rm -rf $tmpdir; exit 0" 1 2 13
+
 mkdir $tmpdir
 
-if [ ! -d $tmpdir ]; then
+XCOMM Security: if $tmpdir exists before mkdir exit immediately
+if [ $? -gt 0 -o ! -d $tmpdir ]; then
     echo "$0:  unable to create temporary directory $tmpdir" 1>&2
     exit 1
 fi
@@ -83,7 +88,7 @@ XCOMM
 XCOMM In the temp directory, extract all of the object files and prefix
 XCOMM them with some symbol to avoid name clashes with the base library.
 XCOMM
-cd $tmpdir
+cd $tmpdir || exit 1
 ar x ${upfrom}$fromlib
 for i in *.o; do
     mv $i ${objprefix}$i
@@ -97,6 +102,4 @@ ARCMD ${upto}$tolib *.o
 RANLIB ${upto}$tolib
 cd $origdir
 rm -rf $tmpdir
-
-
 

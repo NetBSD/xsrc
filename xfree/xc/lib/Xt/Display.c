@@ -32,7 +32,7 @@ OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
 THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/lib/Xt/Display.c,v 3.13 2001/12/14 19:56:11 dawes Exp $ */
+/* $XFree86: xc/lib/Xt/Display.c,v 3.15 2002/09/18 01:25:01 dawes Exp $ */
 
 /*
 
@@ -275,7 +275,7 @@ Display *XtOpenDisplay(app, displayName, applName, className,
 #else
 		char *ptr = strrchr(argv[0], '/');
 #endif
-#ifdef __EMX__
+#ifdef __UNIXOS2__
 		char *dot_ptr,*ptr2;
 		ptr2 = strrchr(argv[0],'\\');
 		if (ptr2 > ptr) ptr = ptr2;
@@ -822,6 +822,6 @@ void XtGetDisplays(app_context, dpy_return, num_dpy_return)
     *num_dpy_return = app_context->count;
     *dpy_return = (Display**)__XtMalloc(app_context->count * sizeof(Display*));
     for (ii = 0; ii < app_context->count; ii++)
-	*dpy_return[ii] = app_context->list[ii];
+	(*dpy_return)[ii] = app_context->list[ii];
     UNLOCK_APP(app_context);
 }

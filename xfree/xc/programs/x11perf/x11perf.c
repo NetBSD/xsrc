@@ -21,7 +21,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ****************************************************************************/
-/* $XFree86: xc/programs/x11perf/x11perf.c,v 3.7 2001/11/06 16:11:38 alanh Exp $ */
+/* $XFree86: xc/programs/x11perf/x11perf.c,v 3.8 2002/12/04 10:28:08 eich Exp $ */
 
 #include <stdio.h>
 #include <ctype.h>
@@ -1165,7 +1165,8 @@ main(int argc, char *argv[])
 	    XInstallColormap(xparms.d, cmap);
 	}
     }
-
+    xparms.cmap = cmap;
+    
     printf("x11perf - X11 performance program, version %s\n",
 	   xparms.version & VERSION1_5 ? "1.5" :
 	   xparms.version & VERSION1_4 ? "1.4" :

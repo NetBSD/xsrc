@@ -21,7 +21,7 @@ XCOMM site:  $TOG: site.sample /main/r64_final/1 1998/02/05 16:28:49 kaleb $
  * .cf file, not overridden in site.def.                                   *
  *                                                                         *
  ***************************************************************************/
-XCOMM site:  $XFree86: xc/config/cf/site.def,v 3.24 2000/06/25 20:17:29 dawes Exp $
+XCOMM site:  $XFree86: xc/config/cf/site.def,v 3.25 2002/02/27 00:51:12 dawes Exp $
 
 /* if you want host-specific customization, this is one way to do it */
 /*
@@ -34,18 +34,6 @@ XCOMM site:  $XFree86: xc/config/cf/site.def,v 3.24 2000/06/25 20:17:29 dawes Ex
 
 #ifdef BeforeVendorCF
 
-#if defined(NetBSDArchitecture) && defined(Arm32Architecture)
-/*
- * Our kernel is 1.2C, but at user-level we're still 1.2 -JJK
- */
-#define OSTeenyVersion 0
-
-/*
- * This causes a problem with the X server, so I'm disabling it for now. -JJK
- */
-#define BuildXKB              NO
-#endif
-
 /*
  * Include this for easy XFree86 customisations
  */
@@ -57,7 +45,7 @@ XCOMM site:  $XFree86: xc/config/cf/site.def,v 3.24 2000/06/25 20:17:29 dawes Ex
 
 #include <xf86site.def>
 
-/* On systems where cpp doesn't expand correctly macros in include directives
+/* On systems where cpp doesn't correctly expand macros in include directives
  * the two following macros need to be defined directly (where "X11" is
  * really whatever the TopLevelProject macro is defined to be).
  */

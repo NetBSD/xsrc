@@ -46,7 +46,7 @@ in this Software without prior written authorization from The Open Group.
  * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
  * THIS SOFTWARE.
  */
-/* $XFree86: xc/programs/xfs/os/utils.c,v 3.18 2002/01/07 20:38:30 dawes Exp $ */
+/* $XFree86: xc/programs/xfs/os/utils.c,v 3.20 2002/10/15 01:45:03 dawes Exp $ */
 
 #include	<stdio.h>
 #include	<X11/Xos.h>
@@ -63,6 +63,8 @@ in this Software without prior written authorization from The Open Group.
 #include	<grp.h>
 #include	<errno.h>
 #include	<sys/types.h>
+#include	<errno.h>
+#include	<string.h>
 
 #ifndef X_NOT_POSIX
 #ifdef _POSIX_SOURCE
@@ -110,6 +112,11 @@ int 	     OldListenCount = 0;
 #else
 # define WRITES write(fileno(stderr), s, strlen(s))
 #endif
+
+static char *pidFile = XFSPIDDIR "/xfs.pid";
+static int  pidFd;
+static FILE *pidFilePtr;
+static int  StorePid (void);
 
 /* ARGSUSED */
 SIGVAL
@@ -212,7 +219,7 @@ GetTimeInMillis(void)
 static void
 usage(void)
 {
-    fprintf(stderr, "usage: %s [-config config_file] [-port tcp_port] [-droppriv] [-daemon] [-nodaemon] [-user user_name]\n",
+    fprintf(stderr, "usage: %s [-config config_file] [-port tcp_port] [-droppriv] [-daemon] [-nodaemon] [-user user_name] [-ls listen_socket]\n",
 	    progname);
     exit(1);
 }
@@ -235,9 +242,7 @@ OsInitAllocator (void)
  *
  * [] denotes optional and ... denotes repitition.
  *
- * The string must be _exactly_ in the above format.  Since this is
- * an internal option used by the font server, it's ok to be strict
- * about the format of the string.
+ * The string must be _exactly_ in the above format. 
  */
 
 void
@@ -259,12 +264,18 @@ ProcessLSoption (char *str)
     OldListenCount = count + 1;
     OldListen = (OldListenRec *) malloc (
 	OldListenCount * sizeof (OldListenRec));
-
+    if (OldListen == NULL) {
+	fprintf(stderr, "ProcessLSoption: malloc error\n");
+	exit(1);
+    }
     ptr = str;
 
     for (i = 0; i < OldListenCount; i++)
     {
 	slash = (char *) strchr (ptr, '/');
+	if (slash == NULL) {
+	    usage();
+	}
 	len = slash - ptr;
 	strncpy (number, ptr, len);
 	number[len] = '\0';
@@ -273,6 +284,9 @@ ProcessLSoption (char *str)
 	ptr = slash + 1;
 
 	slash = (char *) strchr (ptr, '/');
+	if (slash == NULL) {
+	    usage();
+	}
 	len = slash - ptr;
 	strncpy (number, ptr, len);
 	number[len] = '\0';
@@ -285,7 +299,9 @@ ProcessLSoption (char *str)
 	else
 	{
 	    char *comma = (char *) strchr (ptr, ',');
-
+	    if (comma == NULL) {
+		usage();
+	    }
 	    len = comma - ptr;
 	    strncpy (number, ptr, len);
 	    number[len] = '\0';
@@ -372,7 +388,7 @@ unsigned long	MemoryFail;
  * expectations of malloc, but this makes lint happier.
  */
 
-pointer 
+pointer
 FSalloc (unsigned long amount)
 {
     register pointer  ptr;
@@ -394,7 +410,7 @@ FSalloc (unsigned long amount)
 	return ptr;
 #endif
     if (Must_have_memory)
-	FatalError("Out of memory\n");
+	FatalError("out of memory\n");
     return 0;
 }
 
@@ -443,7 +459,7 @@ FSrealloc (pointer ptr, unsigned long amount)
         return ptr;
 #endif
     if (Must_have_memory)
-	FatalError("Out of memory\n");
+	FatalError("out of memory\n");
     return 0;
 }
                     
@@ -482,29 +498,24 @@ SetUserId(void)
 	pwent = getpwnam(user);
 	if (pwent) {
 	    if (setgid(pwent->pw_gid)) {
-		ErrorF("fatal: couldn't set groupid to xfs user's group\n");
-		exit(1);
+		FatalError("fatal: couldn't set groupid to xfs user's group\n");
 	    }
 #ifndef QNX4
 #ifndef __CYGWIN__
 	    if (setgroups(0, NULL)) {
-		ErrorF("fatal: couldn't drop supplementary groups\n");
-		exit(1);
+		FatalError("fatal: couldn't drop supplementary groups\n");
 	    }
 #endif
 	    if (initgroups(user, pwent->pw_gid)) {
-		ErrorF("fatal: couldn't init supplementary groups\n");
-		exit(1);
+		FatalError("fatal: couldn't init supplementary groups\n");
 	    }
 #endif /* QNX4 */
 	    if (setuid(pwent->pw_uid)) {
-		ErrorF("fatal: couldn't set userid to %s user\n", user);
-		exit(1);
+		FatalError("fatal: couldn't set userid to %s user\n", user);
 	    }
 	}
     } else if (dropPriv || userId) {
-	ErrorF("fatal: -droppriv or -user flag specified, but xfs not run as root\n");
-	exit(1);
+	FatalError("fatal: -droppriv or -user flag specified, but xfs not run as root\n");
     }
 }
 
@@ -512,18 +523,54 @@ SetUserId(void)
 void
 SetDaemonState(void)
 {
-    int oldpid;
+    int	    oldpid;
 
     if (becomeDaemon) {
 	BecomeOrphan();
 	BecomeDaemon();
-	if ((oldpid = StorePid())) {
+	if ((oldpid = StorePid ())) {
 	    if (oldpid == -1)
-		ErrorF ("can't create/lock pid file\n");
+		ErrorF ("error opening process-id file %s\n", pidFile);
 	    else
-		ErrorF ("can't lock pid file, another xfs is running (pid %s)\n",
-			oldpid);
+		ErrorF ("process-id file %s indicates another xfs is "
+			  "running (pid %d); exiting\n", pidFile, oldpid);
 	    exit(1);
 	}
     }
+}
+
+
+static int
+StorePid (void)
+{
+    int		oldpid;
+
+    if (pidFile[0] != '\0') {
+	pidFd = open (pidFile, O_RDWR);
+	if (pidFd == -1 && errno == ENOENT)
+	    pidFd = open (pidFile, O_RDWR|O_CREAT, 0666);
+	if (pidFd == -1 || !(pidFilePtr = fdopen (pidFd, "r+")))
+	{
+	    ErrorF ("cannot open process-id file %s: %s\n", pidFile,
+		    strerror (errno));
+	    return -1;
+	}
+	if (fscanf (pidFilePtr, "%d\n", &oldpid) != 1)
+	    oldpid = -1;
+	if (fseek (pidFilePtr, 0L, SEEK_SET) == -1)
+	{
+	    ErrorF ("cannot seek process-id file %s: %s\n", pidFile,
+		     strerror (errno));
+	    return -1;
+	}
+	if (fprintf (pidFilePtr, "%5ld\n", (long) getpid ()) != 6)
+	{
+	    ErrorF ("cannot write to process-id file %s: %s\n", pidFile,
+		    strerror (errno));
+	    return -1;
+	}
+	(void) fflush (pidFilePtr);
+	(void) fclose (pidFilePtr);
+    }
+    return 0;
 }

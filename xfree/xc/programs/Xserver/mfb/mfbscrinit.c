@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/mfb/mfbscrinit.c,v 3.8 2001/12/14 20:00:12 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/mfb/mfbscrinit.c,v 3.9 2003/02/18 21:30:01 tsi Exp $ */
 /***********************************************************
 
 Copyright 1987, 1998  The Open Group
@@ -159,7 +159,7 @@ mfbScreenInit(pScreen, pbits, xsize, ysize, dpix, dpiy, width)
     pScreen->InstallColormap = mfbInstallColormap;
     pScreen->UninstallColormap = mfbUninstallColormap;
     pScreen->ListInstalledColormaps = mfbListInstalledColormaps;
-    pScreen->StoreColors = (void (*)())NoopDDA;
+    pScreen->StoreColors = (StoreColorsProcPtr)NoopDDA;
     pScreen->ResolveColor = mfbResolveColor;
     pScreen->BitmapToRegion = mfbPixmapToRegion;
     if (!miScreenInit(pScreen, pbits, xsize, ysize, dpix, dpiy, width,

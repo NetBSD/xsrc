@@ -24,7 +24,7 @@
  *
  *
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/s3/s3_IBMRGB.c,v 1.3 2001/10/28 03:33:44 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/s3/s3_IBMRGB.c,v 1.5 2003/02/17 16:45:24 dawes Exp $ */
 
 
 #include "xf86.h"
@@ -48,7 +48,7 @@
 #define IBMRGB_INDEX_CONTROL        0x3C7   /* CR55 low bit == 1 */
 
 
-void S3OutIBMRGBIndReg(ScrnInfoPtr pScrn, CARD32 reg,
+static void S3OutIBMRGBIndReg(ScrnInfoPtr pScrn, CARD32 reg,
 		       unsigned char mask, unsigned char data)
 {
 	S3Ptr pS3 = S3PTR(pScrn);
@@ -70,7 +70,7 @@ void S3OutIBMRGBIndReg(ScrnInfoPtr pScrn, CARD32 reg,
 }
 
 
-unsigned char S3InIBMRGBIndReg(ScrnInfoPtr pScrn, CARD32 reg)
+static unsigned char S3InIBMRGBIndReg(ScrnInfoPtr pScrn, CARD32 reg)
 {
 	S3Ptr pS3 = S3PTR(pScrn);
 	unsigned char tmp, ret;
@@ -90,22 +90,22 @@ unsigned char S3InIBMRGBIndReg(ScrnInfoPtr pScrn, CARD32 reg)
 }
 
 
-void S3IBMWriteAddress(ScrnInfoPtr pScrn, CARD32 index)
+static void S3IBMWriteAddress(ScrnInfoPtr pScrn, CARD32 index)
 {
 	outb(IBMRGB_WRITE_ADDR, index);
 }
 
-void S3IBMWriteData(ScrnInfoPtr pScrn, unsigned char data)
+static void S3IBMWriteData(ScrnInfoPtr pScrn, unsigned char data)
 {
 	outb(IBMRGB_INDEX_DATA, data);
 }
 
-void S3IBMReadAddress(ScrnInfoPtr pScrn, CARD32 index)
+static void S3IBMReadAddress(ScrnInfoPtr pScrn, CARD32 index)
 {
 	outb(IBMRGB_READ_ADDR, index);
 }
 
-unsigned char S3IBMReadData(ScrnInfoPtr pScrn)
+static unsigned char S3IBMReadData(ScrnInfoPtr pScrn)
 {
 	return inb(IBMRGB_RAMDAC_DATA);
 }
@@ -133,14 +133,14 @@ Bool S3ProbeIBMramdac(ScrnInfoPtr pScrn)
 		return FALSE;
 	}
 
-	pS3->RamDac = IBMramdacProbe(pScrn, IBMRamdacs);
+	pS3->RamDac = IBMramdacProbe(pScrn, S3IBMRamdacs);
 	if (pS3->RamDac)
 		return TRUE;
 
 	return FALSE;
 }
 
-void S3ProgramIBMRGBClock(ScrnInfoPtr pScrn, int clk, unsigned char m,
+static void S3ProgramIBMRGBClock(ScrnInfoPtr pScrn, int clk, unsigned char m,
 			  unsigned char n, unsigned char df)
 {
 	S3OutIBMRGBIndReg(pScrn, IBMRGB_misc_clock, ~1, 1);
@@ -153,7 +153,7 @@ void S3ProgramIBMRGBClock(ScrnInfoPtr pScrn, int clk, unsigned char m,
 }
 
 
-void S3IBMRGBSetClock(ScrnInfoPtr pScrn, long freq, int clk, long dacspeed,
+static void S3IBMRGBSetClock(ScrnInfoPtr pScrn, long freq, int clk, long dacspeed,
 		      long fref)
 {
 	volatile double ffreq, fdacspeed, ffref;

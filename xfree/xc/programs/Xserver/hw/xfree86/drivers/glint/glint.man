@@ -1,4 +1,4 @@
-.\" $XFree86: xc/programs/Xserver/hw/xfree86/drivers/glint/glint.man,v 1.5 2001/12/17 20:52:32 dawes Exp $ 
+.\" $XFree86: xc/programs/Xserver/hw/xfree86/drivers/glint/glint.man,v 1.6 2003/02/14 12:03:09 alanh Exp $ 
 .\" shorthand for double quote that works everywhere.
 .ds q \N'34'
 .TH GLINT __drivermansuffix__ __vendorversion__
@@ -22,8 +22,8 @@ following framebuffer depths: 8, 15 (may give bad results with FBDev support),
 The
 .B glint
 driver supports 3Dlabs (GLINT MX, GLINT 500TX, GLINT 300SX, GLINT GAMMA, 
-GLINT DELTA, GLINT GAMMA2, Permedia, Permedia 2, Permedia 2v, Permedia 3, R4) 
-and Texas Instruments (Permedia, Permedia 2) chips.
+GLINT DELTA, GLINT GAMMA2, Permedia, Permedia 2, Permedia 2v, Permedia 3, R3, 
+R4) and Texas Instruments (Permedia, Permedia 2) chips.
 .SH CONFIGURATION DETAILS
 Please refer to XF86Config(__filemansuffix__) for general configuration
 details.  This section only covers configuration details specific to this

@@ -24,7 +24,7 @@
  THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
  ********************************************************/
-/* $XFree86: xc/programs/xkbcomp/symbols.c,v 3.11 2001/02/20 16:43:14 paulo Exp $ */
+/* $XFree86: xc/programs/xkbcomp/symbols.c,v 3.14 2002/12/20 20:18:33 paulo Exp $ */
 
 #include "xkbcomp.h"
 #include "tokens.h"
@@ -32,6 +32,7 @@
 
 #include <X11/keysym.h>
 #include <X11/Xutil.h>
+#include <stdlib.h>
 
 #include "expr.h"
 #include "vmod.h"
@@ -79,12 +80,7 @@ typedef struct _KeyInfo {
 } KeyInfo;
 
 static void
-#if NeedFunctionPrototypes
 InitKeyInfo(KeyInfo *info)
-#else
-InitKeyInfo(info)
-    KeyInfo *	info;
-#endif
 {
 register int i;
 static char dflt[4]= "*";
@@ -113,12 +109,7 @@ static char dflt[4]= "*";
 }
 
 static void
-#if NeedFunctionPrototypes
 FreeKeyInfo(KeyInfo *info)
-#else
-FreeKeyInfo(info)
-    KeyInfo *	info;
-#endif
 {
 register int i;
 
@@ -148,14 +139,7 @@ register int i;
 }
 
 static Bool
-#if NeedFunctionPrototypes
 CopyKeyInfo(KeyInfo *old,KeyInfo *new,Bool clearOld)
-#else
-CopyKeyInfo(old,new,clearOld)
-    KeyInfo *	old;
-    KeyInfo *	new;
-    Bool	clearOld;
-#endif
 {
 register int i;
 
@@ -215,6 +199,7 @@ typedef struct _SymbolsInfo {
     int				errorCount;
     unsigned			fileID;
     unsigned			merge;
+    unsigned			explicit_group;
     unsigned			groupInfo;
     unsigned			szKeys;
     unsigned			nKeys;
@@ -229,13 +214,7 @@ typedef struct _SymbolsInfo {
 } SymbolsInfo;
 
 static void
-#if NeedFunctionPrototypes
 InitSymbolsInfo(SymbolsInfo *info,XkbDescPtr xkb)
-#else
-InitSymbolsInfo(info,xkb)
-    SymbolsInfo *	info;
-    XkbDescPtr		xkb;
-#endif
 {
 register int i;
 
@@ -243,6 +222,7 @@ register int i;
     tok_TWO_LEVEL= XkbInternAtom(NULL,"TWO_LEVEL",False);
     tok_KEYPAD= XkbInternAtom(NULL,"KEYPAD",False);
     info->name= NULL;
+    info->explicit_group= 0;
     info->errorCount= 0;
     info->fileID= 0;
     info->merge= MergeOverride;
@@ -261,12 +241,7 @@ register int i;
 }
 
 static void
-#if NeedFunctionPrototypes
 FreeSymbolsInfo(SymbolsInfo *info)
-#else
-FreeSymbolsInfo(info)
-    SymbolsInfo *	info;
-#endif
 {
 register int	i;
 
@@ -293,18 +268,10 @@ register int	i;
 }
 
 static Bool
-#if NeedFunctionPrototypes
 ResizeKeyGroup(	KeyInfo *	key,
 		unsigned	group,
 		unsigned 	atLeastSize,
 		Bool 		forceActions)
-#else
-ResizeKeyGroup(key,group,atLeastSize,forceActions)
-    KeyInfo *		key;
-    unsigned		group;
-    unsigned		atLeastSize;
-    Bool		forceActions;
-#endif
 {
 Bool		tooSmall;
 unsigned	newWidth;
@@ -333,18 +300,10 @@ unsigned	newWidth;
 }
 
 static Bool
-#if NeedFunctionPrototypes
 MergeKeyGroups(	SymbolsInfo *	info,
 		KeyInfo *	into,
 		KeyInfo *	from,
 		unsigned	group)
-#else
-MergeKeyGroups(info,into,from,group)
-    SymbolsInfo *	info;
-    KeyInfo *		into;
-    KeyInfo *		from;
-    unsigned		group;
-#endif
 {
 KeySym	*	resultSyms;
 XkbAction *	resultActs;
@@ -438,23 +397,24 @@ Bool		report,clobber;
 	uFree(into->syms[group]);
     if ((from->syms[group]!=NULL)&&(resultSyms!=from->syms[group]))
 	uFree(from->syms[group]);
+    if ((into->acts[group]!=NULL)&&(resultActs!=into->acts[group]))
+	uFree(into->acts[group]);
+    if ((from->acts[group]!=NULL)&&(resultActs!=from->acts[group]))
+	uFree(from->acts[group]);
     into->numLevels[group]= resultWidth;
     into->syms[group]= resultSyms;
     from->syms[group]= NULL;
+    into->acts[group]= resultActs;
+    from->acts[group]= NULL;
     into->symsDefined|= (1<<group);
     from->symsDefined&= ~(1<<group);
+    into->actsDefined|= (1<<group);
+    from->actsDefined&= ~(1<<group);
     return True;
 }
 
 static Bool
-#if NeedFunctionPrototypes
 MergeKeys(SymbolsInfo *info,KeyInfo *into,KeyInfo *from)
-#else
-MergeKeys(info,into,from)
-    SymbolsInfo *	info;
-    KeyInfo *		into;
-    KeyInfo *		from;
-#endif
 {
 register int	i;
 unsigned	collide= 0;
@@ -552,14 +512,7 @@ Bool		report;
 }
 
 static Bool
-#if NeedFunctionPrototypes
 AddKeySymbols(SymbolsInfo *info,KeyInfo *key,XkbDescPtr xkb)
-#else
-AddKeySymbols(info,key)
-    SymbolsInfo *	  info;
-    KeyInfo *		  key;
-    XkbDescPtr		xkb;
-#endif
 {
 register int i;
 unsigned long real_name;
@@ -587,13 +540,7 @@ unsigned long real_name;
 }
 
 static Bool
-#if NeedFunctionPrototypes
 AddModMapEntry(SymbolsInfo *info,ModMapEntry *new)
-#else
-AddModMapEntry(info,new)
-    SymbolsInfo *	info;
-    ModMapEntry *	new;
-#endif
 {
 ModMapEntry *	mm;
 Bool		clobber;
@@ -658,16 +605,8 @@ Bool		clobber;
 /***====================================================================***/
 
 static void
-#if NeedFunctionPrototypes
 MergeIncludedSymbols(SymbolsInfo *into,SymbolsInfo *from,
                      unsigned merge,XkbDescPtr xkb)
-#else
-MergeIncludedSymbols(into,from,merge,xkb)
-    SymbolsInfo *	into;
-    SymbolsInfo *	from;
-    unsigned		merge;
-    XkbDescPtr		xkb;
-#endif
 {
 register int 	i;
 KeyInfo *	key;
@@ -710,27 +649,17 @@ KeyInfo *	key;
 }
 
 typedef void	(*FileHandler)(
-#if NeedFunctionPrototypes
 	XkbFile *	/* rtrn */,
 	XkbDescPtr	/* xkb */,
 	unsigned	/* merge */,
 	SymbolsInfo *	/* included */
-#endif
 );
 
 static Bool
-#if NeedFunctionPrototypes
 HandleIncludeSymbols(	IncludeStmt *	stmt,
 			XkbDescPtr	xkb,
 			SymbolsInfo *	info,
 			FileHandler	hndlr)
-#else
-HandleIncludeSymbols(stmt,xkb,info,hndlr)
-    IncludeStmt	*	  stmt;
-    XkbDescPtr		  xkb;
-    SymbolsInfo *	  info;
-    void		(*hndlr)();
-#endif
 {
 unsigned 	newMerge;
 XkbFile	*	rtrn;
@@ -747,6 +676,11 @@ Bool		haveSelf;
 	InitSymbolsInfo(&included,xkb);
 	included.fileID= included.dflt.defs.fileID= rtrn->id;
 	included.merge= included.dflt.defs.merge= MergeOverride;
+        if (stmt->modifier) {
+           included.explicit_group= atoi(stmt->modifier) - 1;
+        } else {
+           included.explicit_group= info->explicit_group;
+        }
 	(*hndlr)(rtrn,xkb,MergeOverride,&included);
 	if (stmt->stmt!=NULL) {
 	    if (included.name!=NULL)
@@ -774,6 +708,11 @@ Bool		haveSelf;
 		InitSymbolsInfo(&next_incl,xkb);
 		next_incl.fileID= next_incl.dflt.defs.fileID= rtrn->id;
 		next_incl.merge= next_incl.dflt.defs.merge= MergeOverride;
+                if (next->modifier) {
+                   next_incl.explicit_group= atoi(next->modifier) - 1;
+                } else {
+                   next_incl.explicit_group= info->explicit_group;
+                }
 		(*hndlr)(rtrn,xkb,MergeOverride,&next_incl);
 		MergeIncludedSymbols(&included,&next_incl,op,xkb);
 		FreeSymbolsInfo(&next_incl);
@@ -810,18 +749,10 @@ static LookupEntry	groupNames[]= {
 #define	ACTIONS	2
 
 static Bool
-#if NeedFunctionPrototypes
 GetGroupIndex(	KeyInfo *	key,
 		ExprDef *	arrayNdx,
 		unsigned	what,
 		unsigned *	ndx_rtrn)
-#else
-GetGroupIndex(key,arrayNdx,what,ndx_rtrn)
-    KeyInfo *	key;
-    ExprDef *	arrayNdx;
-    unsigned	what;
-    unsigned *	ndx_rtrn;
-#endif
 {
 char *		name;
 ExprResult	tmp;
@@ -865,22 +796,12 @@ ExprResult	tmp;
 }
 
 static Bool
-#if NeedFunctionPrototypes
 AddSymbolsToKey(	KeyInfo *	key,
 			XkbDescPtr	xkb,
 			char *		field,
 			ExprDef *	arrayNdx,
 			ExprDef *	value,
 			SymbolsInfo *	info)
-#else
-AddSymbolsToKey(key,xkb,field,arrayNdx,value,info)
-    KeyInfo *		key;
-    XkbDescPtr		xkb;
-    char *		field;
-    ExprDef *		arrayNdx;
-    ExprDef *		value;
-    SymbolsInfo *	info;
-#endif
 {
 unsigned	ndx,nSyms;
 int		i;
@@ -914,8 +835,6 @@ int		i;
     key->symsDefined|= (1<<ndx);
     memcpy((char *)key->syms[ndx],(char *)value->value.list.syms,
 							nSyms*sizeof(KeySym));
-    uFree(value->value.list.syms);
-    value->value.list.syms= NULL;
     for (i=key->numLevels[ndx]-1;(i>=0)&&(key->syms[ndx][i]==NoSymbol);i--) {
 	key->numLevels[ndx]--;
     }
@@ -923,22 +842,12 @@ int		i;
 }
 
 static Bool
-#if NeedFunctionPrototypes
 AddActionsToKey(	KeyInfo *	key,
 			XkbDescPtr	xkb,
 			char *		field,
 			ExprDef *	arrayNdx,
 			ExprDef *	value,
 			SymbolsInfo *	info)
-#else
-AddActionsToKey(key,xkb,field,arrayNdx,value,info)
-    KeyInfo *		key;
-    XkbDescPtr		xkb;
-    char *		field;
-    ExprDef *		arrayNdx;
-    ExprDef *		value;
-    SymbolsInfo *	info;
-#endif
 {
 register int	i;
 unsigned	ndx,nActs;
@@ -994,14 +903,7 @@ XkbAnyAction *	toAct;
 }
 
 static int
-#if NeedFunctionPrototypes
 SetAllowNone(KeyInfo *key,ExprDef *arrayNdx,ExprDef *value)
-#else
-SetAllowNone(key,arrayNdx,value)
-    KeyInfo *	key;
-    ExprDef *	arrayNdx;
-    ExprDef *	value;
-#endif
 {
 ExprResult	tmp;
 unsigned	radio_groups= 0;
@@ -1063,22 +965,12 @@ static	LookupEntry	rgEntries[]= {
 };
 
 static Bool
-#if NeedFunctionPrototypes
 SetSymbolsField(	KeyInfo *	key,
 			XkbDescPtr	xkb,
 			char *		field,
 			ExprDef *	arrayNdx,
 			ExprDef *	value,
 			SymbolsInfo *	info)
-#else
-SetSymbolsField(key,xkb,field,arrayNdx,value,info)
-    KeyInfo *		key;
-    XkbDescPtr		xkb;
-    char *		field;
-    ExprDef *		arrayNdx;
-    ExprDef *		value;
-    SymbolsInfo *	info;
-#endif
 {
 Bool 		ok= True;
 ExprResult	tmp;
@@ -1282,14 +1174,7 @@ ExprResult	tmp;
 }
 
 static int
-#if NeedFunctionPrototypes
 SetGroupName(SymbolsInfo *info,ExprDef *arrayNdx,ExprDef *value)
-#else
-SetGroupName(info,arrayNdx,value)
-    SymbolsInfo *	info;
-    ExprDef *		arrayNdx;
-    ExprDef *		value;
-#endif
 {
 ExprResult	tmp,name;
 
@@ -1314,19 +1199,14 @@ ExprResult	tmp,name;
 	ACTION1("Illegal name for group %d ignored\n",tmp.uval);
 	return False;
     }
-    info->groupNames[tmp.uval-1]= XkbInternAtom(NULL,name.str,False);
+    info->groupNames[tmp.uval-1+info->explicit_group]=
+        XkbInternAtom(NULL,name.str,False);
+ 
     return True;
 }
 
 static int
-#if NeedFunctionPrototypes
 HandleSymbolsVar(VarDef *stmt,XkbDescPtr xkb,SymbolsInfo *info)
-#else
-HandleSymbolsVar(stmt,xkb,info)
-    VarDef *		stmt;
-    XkbDescPtr		xkb;
-    SymbolsInfo *	info;
-#endif
 {
 ExprResult	elem,field,tmp;
 ExprDef *	arrayNdx;
@@ -1388,18 +1268,10 @@ ExprDef *	arrayNdx;
 }
 
 static Bool
-#if NeedFunctionPrototypes
 HandleSymbolsBody(	VarDef *	def,
 			XkbDescPtr	xkb,
 			KeyInfo *	key,
 			SymbolsInfo *	info)
-#else
-HandleSymbolsBody(def,xkb,key,info)
-    VarDef *		def;
-    XkbDescPtr		xkb;
-    KeyInfo *		key;
-    SymbolsInfo *	info;
-#endif
 {
 Bool		ok= True;
 ExprResult	tmp,field;
@@ -1427,19 +1299,50 @@ ExprDef *	arrayNdx;
     return ok;
 }
 
+static Bool
+SetExplicitGroup(      SymbolsInfo *   info,
+                       KeyInfo *       key)
+{
+    unsigned group = info->explicit_group;
+
+    if (group == 0)
+       return True;
+
+   if ((key->typesDefined|key->symsDefined|key->actsDefined) & ~1) {
+       int i;
+       WARN1("For the map %s an explicit group specified\n", info->name);
+       WARN1("but key %s has more than one group defined\n",
+                       longText(key->name,XkbMessage));
+       ACTION("All groups except first one will be ignored\n");
+           for (i = 1; i < XkbNumKbdGroups ; i++) {
+	       key->numLevels[i]= 0;
+	       if (key->syms[i]!=NULL)
+	          uFree(key->syms[i]);
+	       key->syms[i]= (KeySym*) NULL;
+	       if (key->acts[i]!=NULL)
+	          uFree(key->acts[i]);
+	       key->acts[i]= (XkbAction*) NULL;
+	       key->types[i]= (Atom) 0;
+	   }
+   }
+   key->typesDefined = key->symsDefined = key->actsDefined = 1 << group;
+
+   key->numLevels[group]= key->numLevels[0];
+   key->numLevels[0]= 0;
+   key->syms[group]= key->syms[0];
+   key->syms[0]= (KeySym*) NULL;
+   key->acts[group]= key->acts[0];
+   key->acts[0]= (XkbAction*) NULL;
+   key->types[group]= key->types[0];
+   key->types[0]= (Atom) 0;
+   return True;
+}
+
 static int
-#if NeedFunctionPrototypes
 HandleSymbolsDef(	SymbolsDef *	stmt,
 			XkbDescPtr 	xkb,
 			unsigned 	merge,
 			SymbolsInfo *	info)
-#else
-HandleSymbolsDef(stmt,xkb,merge,info)
-    SymbolsDef *	stmt;
-    XkbDescPtr		xkb;
-    unsigned 		merge;
-    SymbolsInfo *	info;
-#endif
 {
 KeyInfo			key;
  
@@ -1452,6 +1355,11 @@ KeyInfo			key;
 	return False;
     }
 
+    if (!SetExplicitGroup(info,&key)) {
+        info->errorCount++;
+        return False;
+    }
+
     if (!AddKeySymbols(info,&key,xkb)) {
 	info->errorCount++;
 	return False;
@@ -1460,18 +1368,10 @@ KeyInfo			key;
 }
 
 static Bool
-#if NeedFunctionPrototypes
 HandleModMapDef(	ModMapDef *	def,
 			XkbDescPtr	xkb,
 			unsigned	merge,
 			SymbolsInfo *	info)
-#else
-HandleModMapDef(def,xkb,merge,info)
-    ModMapDef *		def;
-    XkbDescPtr		xkb;
-    unsigned		merge;
-    SymbolsInfo *	info;
-#endif
 {
 ExprDef	*	key;
 ModMapEntry	tmp;
@@ -1508,18 +1408,10 @@ Bool 		ok;
 }
 
 static void
-#if NeedFunctionPrototypes
 HandleSymbolsFile(	XkbFile	*	file,
 			XkbDescPtr	xkb,
 			unsigned	merge,
 			SymbolsInfo *	info)
-#else
-HandleSymbolsFile(file,xkb,merge,info)
-    XkbFile	*	file;
-    XkbDescPtr	 	xkb;
-    unsigned		merge;
-    SymbolsInfo	*	info;
-#endif
 {
 ParseCommon	*stmt;
 
@@ -1576,14 +1468,7 @@ ParseCommon	*stmt;
 }
 
 static Bool
-#if NeedFunctionPrototypes
 FindKeyForSymbol(XkbDescPtr xkb,KeySym sym,unsigned int *kc_rtrn)
-#else
-FindKeyForSymbol(xkb,sym,kc_rtrn)
-    XkbDescPtr		xkb;
-    KeySym		sym;
-    unsigned int *	kc_rtrn;
-#endif
 {
 register int 	i, j;
 register Bool	gotOne;
@@ -1606,14 +1491,7 @@ register Bool	gotOne;
 }
 
 static Bool
-#if NeedFunctionPrototypes
 FindNamedType(XkbDescPtr xkb,Atom name,unsigned *type_rtrn)
-#else
-FindNamedType(xkb,name,type_rtrn)
-    XkbDescPtr		xkb;
-    Atom		name;
-    unsigned *		type_rtrn;
-#endif
 {
 register unsigned n;
 
@@ -1629,34 +1507,121 @@ register unsigned n;
 }
 
 static Bool
-#if NeedFunctionPrototypes
 FindAutomaticType(int width,KeySym *syms,Atom *typeNameRtrn)
-#else
-FindAutomaticType(width,syms,typeNameRtrn)
-    int		width;
-    KeySym *	syms;
-    Atom *	typeNameRtrn;
-#endif
 {
-    if ((width==1)||(width==0))
+    if ((width==1)||(width==0)) {
 	 *typeNameRtrn= XkbInternAtom(NULL,"ONE_LEVEL",False);
-    else if ( syms && XkbKSIsLower(syms[0]) && XkbKSIsUpper(syms[1]) )
-	 *typeNameRtrn= XkbInternAtom(NULL,"ALPHABETIC",False);
-    else if ( syms && (XkbKSIsKeypad(syms[0]) || XkbKSIsKeypad(syms[1])) ) 
-	 *typeNameRtrn= XkbInternAtom(NULL,"KEYPAD",False);
-    else *typeNameRtrn= XkbInternAtom(NULL,"TWO_LEVEL",False);
-    return ((width>=0)&&(width<=2));
+    } else if (width == 2) {
+        if ( syms && XkbKSIsLower(syms[0]) && XkbKSIsUpper(syms[1]) )
+	     *typeNameRtrn= XkbInternAtom(NULL,"ALPHABETIC",False);
+        else if ( syms && (XkbKSIsKeypad(syms[0]) || XkbKSIsKeypad(syms[1])) ) 
+	     *typeNameRtrn= XkbInternAtom(NULL,"KEYPAD",False);
+        else *typeNameRtrn= XkbInternAtom(NULL,"TWO_LEVEL",False);
+    } else if (width <= 4 ) {
+        if ( syms && XkbKSIsLower(syms[0]) && XkbKSIsUpper(syms[1]) )
+	     *typeNameRtrn= XkbInternAtom(NULL,
+                            "FOUR_LEVEL_ALPHABETIC",False);
+        else if ( syms && (XkbKSIsKeypad(syms[0]) || XkbKSIsKeypad(syms[1])) ) 
+	     *typeNameRtrn= XkbInternAtom(NULL,
+                            "FOUR_LEVEL_KEYPAD",False);
+        else *typeNameRtrn= XkbInternAtom(NULL,"FOUR_LEVEL",False);
+    }
+    return ((width>=0)&&(width<=4));
+}
+
+static void
+PrepareKeyDef(KeyInfo *key)
+{
+    int i, j, width, defined, lastGroup;
+    Bool identical;
+    
+    defined = key->symsDefined | key->actsDefined | key->typesDefined;
+    for (i = XkbNumKbdGroups - 1; i >= 0; i--) {
+	if (defined & (1<<i))
+	    break;
+    }
+    lastGroup = i;
+
+    if (lastGroup == 0)
+       return;
+
+    /* If there are empty groups between non-empty ones fill them with data */
+    /* from the first group. */
+    /* We can make a wrong assumption here. But leaving gaps is worse. */
+    for (i = lastGroup; i > 0; i--) {
+        if (defined & (1<<i))
+            continue;
+        width = key->numLevels[0];
+        if (key->typesDefined & 1) {
+            for (j = 0; j < width; j++) {
+                key->types[i] = key->types[0];
+            }
+            key->typesDefined |= 1 << i;
+        }
+        if (key->actsDefined & 1) {
+            key->acts[i]= uTypedCalloc(width, XkbAction);
+            if (key->acts[i] == NULL)
+                continue;
+            memcpy((void *) key->acts[i], (void *) key->acts[0],
+                   width * sizeof(XkbAction));
+            key->actsDefined |= 1 << i;
+        }
+        if (key->symsDefined & 1) {
+            key->syms[i]= uTypedCalloc(width, KeySym);
+            if (key->syms[i] == NULL)
+                continue;
+            memcpy((void *) key->syms[i], (void *) key->syms[0],
+                   width * sizeof(KeySym));
+            key->symsDefined |= 1 << i;
+        }
+        if (defined & 1) {
+            key->numLevels[i] = key->numLevels[0];
+        }
+    }
+    /* If all groups are completely identical remove them all */
+    /* exept the first one. */
+    identical = True;
+    for (i = lastGroup; i > 0; i--) {
+        if ((key->numLevels[i] != key->numLevels[0]) ||
+            (key->types[i] != key->types[0])) {
+            identical = False;
+            break;
+        }
+        if ((key->syms[i] != key->syms[0]) &&
+	    (key->syms[i] == NULL || key->syms[0] == NULL ||
+	    memcmp((void*) key->syms[i], (void*) key->syms[0],
+                       sizeof(KeySym) * key->numLevels[0])) ) {
+             identical = False;
+             break;
+	}
+        if ((key->acts[i] != key->acts[0]) &&
+	    (key->acts[i] == NULL || key->acts[0] == NULL ||
+	    memcmp((void*) key->acts[i], (void*) key->acts[0],
+                       sizeof(XkbAction) * key->numLevels[0]))) {
+            identical = False;
+            break;
+	}
+    }
+    if (identical) {
+        for (i = lastGroup; i > 0; i--) {
+            key->numLevels[i]= 0;
+	    if (key->syms[i] != NULL)
+	        uFree(key->syms[i]);
+	    key->syms[i]= (KeySym*) NULL;
+	    if (key->acts[i] != NULL)
+	        uFree(key->acts[i]);
+	    key->acts[i]= (XkbAction*) NULL;
+	    key->types[i]= (Atom) 0;
+        }
+	key->symsDefined &= 1;
+	key->actsDefined &= 1;
+	key->typesDefined &= 1;
+    }
+    return;
 }
 
 static Bool
-#if NeedFunctionPrototypes
 CopySymbolsDef(XkbFileInfo *result,KeyInfo *key,int start_from)
-#else
-CopySymbolsDef(result,key,start_from)
-    XkbFileInfo *	result;
-    KeyInfo *		key;
-    int			start_from;
-#endif
 {
 register int	i;
 unsigned	okc,kc,width,tmp,nGroups;
@@ -1706,7 +1671,7 @@ unsigned	types[XkbNumKbdGroups];
 	    }
 	}
 	if (FindNamedType(xkb,key->types[i],&types[i]))  {
-	    if (!autoType)
+	    if (!autoType || key->numLevels[i] > 2)
 		xkb->server->explicit[kc]|= (1<<i);
 	}
 	else {
@@ -1814,13 +1779,7 @@ unsigned	types[XkbNumKbdGroups];
 }
 
 static Bool
-#if NeedFunctionPrototypes
 CopyModMapDef(XkbFileInfo *result,ModMapEntry *entry)
-#else
-CopyModMapDef(result,entry)
-    XkbFileInfo *	result;
-    ModMapEntry *	entry;
-#endif
 {
 unsigned	kc;
 XkbDescPtr	xkb;
@@ -1852,14 +1811,7 @@ XkbDescPtr	xkb;
 }
 
 Bool
-#if NeedFunctionPrototypes
 CompileSymbols(XkbFile *file,XkbFileInfo *result,unsigned merge)
-#else
-CompileSymbols(file,result,merge)
-    XkbFile *		file;
-    XkbFileInfo *	result;
-    unsigned	 	merge;
-#endif
 {
 register int	i;
 SymbolsInfo	info;
@@ -1902,6 +1854,9 @@ XkbDescPtr	xkb;
 	for (i=0;i<XkbNumKbdGroups;i++) {
 	    if (info.groupNames[i]!=None)
 		xkb->names->groups[i]= info.groupNames[i];
+	}
+	for (key=info.keys,i=0;i<info.nKeys;i++,key++) {
+	    PrepareKeyDef(key);
 	}
 	for (key=info.keys,i=0;i<info.nKeys;i++,key++) {
 	    if (!CopySymbolsDef(result,key,0))

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/r128_sarea.h,v 1.6 2001/01/08 01:07:35 martin Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/r128_sarea.h,v 1.7 2002/02/16 21:26:35 herrb Exp $ */
 /*
  * Copyright 1999, 2000 ATI Technologies Inc., Markham, Ontario,
  *                      Precision Insight, Inc., Cedar Park, Texas, and
@@ -164,10 +164,12 @@ typedef struct {
     unsigned int vertsize;
     unsigned int vc_format;
 
+#ifdef XF86DRI
     /* The current cliprects, or a subset thereof.
      */
     XF86DRIClipRectRec boxes[R128_NR_SAREA_CLIPRECTS];
     unsigned int nbox;
+#endif
 
     /* Counters for throttling of rendering clients.
      */

@@ -23,24 +23,25 @@
  * advertising or publicity pertaining to distribution of the software
  * without specific, written prior permission.
  */
+/* $XFree86: xc/programs/xmh/tocutil.h,v 1.3 2002/07/01 02:26:05 tsi Exp $ */
 
 #ifndef _tocutil_h
 #define _tocutil_h
 
-extern Toc	TUMalloc			(/* void	*/);
-extern int	TUScanFileOutOfDate		(/* Toc 	*/);
-extern void	TUCheckSequenceMenu		(/* Toc		*/);
-extern void	TUScanFileForToc		(/* Toc 	*/);
-extern int	TUGetMsgPosition		(/* Toc, Msg 	*/);
-extern void	TUResetTocLabel			(/* Scrn 	*/);
-extern void	TURedisplayToc			(/* Scrn 	*/);
-extern void	TULoadSeqLists			(/* Toc 	*/);
-extern void	TURefigureWhatsVisible		(/* Toc 	*/);
-extern void	TULoadTocFile			(/* Toc 	*/);
-extern void	TUSaveTocFile			(/* Toc 	*/);
-extern void	TUEnsureScanIsValidAndOpen	(/* Toc, delay	*/);
-extern void	TURefigureTocPositions		(/* Toc 	*/);
-extern void	TUGetFullFolderInfo		(/* Toc 	*/);
-extern Msg	TUAppendToc			(/* Toc, char *	*/);
+extern Toc	TUMalloc			(void);
+extern int	TUScanFileOutOfDate		(Toc);
+extern void	TUCheckSequenceMenu		(Toc);
+extern void	TUScanFileForToc		(Toc);
+extern int	TUGetMsgPosition		(Toc, Msg);
+extern void	TUResetTocLabel			(Scrn);
+extern void	TURedisplayToc			(Scrn);
+extern void	TULoadSeqLists			(Toc);
+extern void	TURefigureWhatsVisible		(Toc);
+extern void	TULoadTocFile			(Toc);
+extern void	TUSaveTocFile			(Toc);
+extern void	TUEnsureScanIsValidAndOpen	(Toc, Boolean);
+extern void	TURefigureTocPositions		(Toc);
+extern void	TUGetFullFolderInfo		(Toc);
+extern Msg	TUAppendToc			(Toc, char *);
 
 #endif /* _tocutil_h */

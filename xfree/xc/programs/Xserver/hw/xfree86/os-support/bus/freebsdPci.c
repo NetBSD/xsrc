@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bus/freebsdPci.c,v 1.2 2000/11/06 19:24:09 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bus/freebsdPci.c,v 1.5 2002/08/27 22:07:07 tsi Exp $ */
 /*
  * Copyright 1998 by Concurrent Computer Corporation
  *
@@ -58,25 +58,30 @@
  * freebsd platform specific PCI access functions -- using /dev/pci
  * needs kernel version 2.2.x
  */
-CARD32 freebsdPciCfgRead(PCITAG tag, int off);
-void freebsdPciCfgWrite(PCITAG, int off, CARD32 val);
-void freebsdPciCfgSetBits(PCITAG tag, int off, CARD32 mask, CARD32 bits);
+static CARD32 freebsdPciCfgRead(PCITAG tag, int off);
+static void freebsdPciCfgWrite(PCITAG, int off, CARD32 val);
+static void freebsdPciCfgSetBits(PCITAG tag, int off, CARD32 mask, CARD32 bits);
 
-pciBusInfo_t freebsdPci0 = {
-/* configMech  */	  PCI_CFG_MECH_OTHER,
-/* numDevices  */	  32,
-/* secondary   */	  FALSE,
-/* primary_bus */	  0,
-/* ppc_io_base */	  0,
-/* ppc_io_size */	  0,		  
-/* funcs       */	  {
-	                    freebsdPciCfgRead,
-			    freebsdPciCfgWrite,
-			    freebsdPciCfgSetBits,
-			    pciAddrNOOP,
-			    pciAddrNOOP
-		          },
-/* pciBusPriv  */	  NULL
+static pciBusFuncs_t freebsdFuncs0 = {
+/* pciReadLong      */	freebsdPciCfgRead,
+/* pciWriteLong     */	freebsdPciCfgWrite,
+/* pciSetBitsLong   */	freebsdPciCfgSetBits,
+/* pciAddrHostToBus */	pciAddrNOOP,
+/* pciAddrBusToHost */	pciAddrNOOP
+};
+
+static pciBusInfo_t freebsdPci0 = {
+/* configMech  */	PCI_CFG_MECH_OTHER,
+/* numDevices  */	32,
+/* secondary   */	FALSE,
+/* primary_bus */	0,
+#ifdef PowerMAX_OS
+/* ppc_io_base */	0,
+/* ppc_io_size */	0,
+#endif
+/* funcs       */	&freebsdFuncs0,
+/* pciBusPriv  */	NULL,
+/* bridge      */	NULL
 };
 
 #if !defined(__OpenBSD__)
@@ -100,7 +105,7 @@ __ret;											\
 #define PCI_CPU(val)	(val)
 #endif
 #else /* ! OpenBSD */
-/* OpenBSD has already the bytes in the right order 
+/* OpenBSD has already the bytes in the right order
    for all architectures */
 #define PCI_CPU(val)	(val)
 #endif
@@ -111,7 +116,7 @@ __ret;											\
 
 static int pciFd = -1;
 
-void  
+void
 freebsdPciInit()
 {
 	pciFd = open("/dev/pci", O_RDWR);
@@ -124,7 +129,7 @@ freebsdPciInit()
 	pciFindNextFP  = pciGenFindNext;
 }
 
-CARD32
+static CARD32
 freebsdPciCfgRead(PCITAG tag, int off)
 {
 	struct pci_io io;
@@ -140,7 +145,7 @@ freebsdPciCfgRead(PCITAG tag, int off)
 	return PCI_CPU(io.pi_data);
 }
 
-void
+static void
 freebsdPciCfgWrite(PCITAG tag, int off, CARD32 val)
 {
 	struct pci_io io;
@@ -153,7 +158,7 @@ freebsdPciCfgWrite(PCITAG tag, int off, CARD32 val)
 	ioctl(pciFd, PCIOCWRITE, &io);
 }
 
-void
+static void
 freebsdPciCfgSetBits(PCITAG tag, int off, CARD32 mask, CARD32 bits)
 {
 	CARD32	val = freebsdPciCfgRead(tag, off);

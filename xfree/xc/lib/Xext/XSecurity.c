@@ -24,13 +24,13 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/Xext/XSecurity.c,v 1.4 2001/12/14 19:55:00 dawes Exp $ */
+/* $XFree86: xc/lib/Xext/XSecurity.c,v 1.6 2002/10/16 02:19:22 dawes Exp $ */
 
 #include <X11/Xlibint.h>
 #include <stdio.h>
-#include "Xext.h"
-#include "extutil.h"
-#include "securstr.h"
+#include <X11/extensions/Xext.h>
+#include <X11/extensions/extutil.h>
+#include <X11/extensions/securstr.h>
 
 static XExtensionInfo _Security_info_data;
 static XExtensionInfo *Security_info = &_Security_info_data;
@@ -54,10 +54,12 @@ static char *Security_extension_name = SECURITY_EXTENSION_NAME;
 /*
  * find_display - locate the display info block
  */
-static int close_display();
-static Bool     wire_to_event();
-static Status   event_to_wire();
-static char *error_string();
+static int close_display(Display *dpy, XExtCodes *codes);
+static Bool wire_to_event(Display *dpy, XEvent *event, xEvent *wire);
+static Status event_to_wire(Display *dpy, XEvent *event, xEvent *wire);
+static char *error_string(Display *dpy, int code, XExtCodes *codes,
+			  char *buf, int n);
+
 static XExtensionHooks Security_extension_hooks = {
     NULL,                               /* create_gc */
     NULL,                               /* copy_gc */
@@ -78,21 +80,18 @@ static char    *security_error_list[] = {
 };
 
 static XEXT_GENERATE_FIND_DISPLAY (find_display, Security_info,
-				   Security_extension_name, 
-				   &Security_extension_hooks, 
+				   Security_extension_name,
+				   &Security_extension_hooks,
 				   XSecurityNumberEvents, NULL)
 
 static XEXT_GENERATE_CLOSE_DISPLAY (close_display, Security_info)
 
-static 
+static
 XEXT_GENERATE_ERROR_STRING(error_string, Security_extension_name,
 			   XSecurityNumberErrors, security_error_list)
 
-static Bool     
-wire_to_event(dpy, event, wire)
-    Display        *dpy;
-    XEvent         *event;
-    xEvent         *wire;
+static Bool
+wire_to_event(Display *dpy, XEvent *event, xEvent *wire)
 {
     XExtDisplayInfo *info = find_display(dpy);
 
@@ -104,7 +103,7 @@ wire_to_event(dpy, event, wire)
 	{
 	    xSecurityAuthorizationRevokedEvent *rwire =
 		(xSecurityAuthorizationRevokedEvent *)wire;
-	    XSecurityAuthorizationRevokedEvent *revent = 
+	    XSecurityAuthorizationRevokedEvent *revent =
 		(XSecurityAuthorizationRevokedEvent *)event;
 
 	  revent->type = rwire->type & 0x7F;
@@ -119,11 +118,8 @@ wire_to_event(dpy, event, wire)
     return False;
 }
 
-static Status 
-event_to_wire(dpy, event, wire)
-    Display        *dpy;
-    XEvent         *event;
-    xEvent         *wire;
+static Status
+event_to_wire(Display *dpy, XEvent *event, xEvent *wire)
 {
     XExtDisplayInfo *info = find_display(dpy);
 
@@ -135,7 +131,7 @@ event_to_wire(dpy, event, wire)
 	{
 	    xSecurityAuthorizationRevokedEvent *rwire =
 		(xSecurityAuthorizationRevokedEvent *)wire;
-	    XSecurityAuthorizationRevokedEvent *revent = 
+	    XSecurityAuthorizationRevokedEvent *revent =
 		(XSecurityAuthorizationRevokedEvent *)event;
 	    rwire->type = revent->type | (revent->send_event ? 0x80 : 0);
 	    rwire->sequenceNumber = revent->serial & 0xFFFF;
@@ -300,7 +296,7 @@ XSecurityRevokeAuthorization(
 {
     XExtDisplayInfo *info = find_display (dpy);
     xSecurityRevokeAuthorizationReq *req;
-    
+
     SecurityCheckExtension (dpy, info, 0);
     LockDisplay(dpy);
     SecurityGetReq(SecurityRevokeAuthorization, req, info);

@@ -1,6 +1,6 @@
 /*
 ** $XConsortium: tests.c,v 1.20 91/06/08 18:57:07 rws Exp $
-** $XFree86: xc/programs/xgc/tests.c,v 1.9 2002/01/10 04:29:18 dawes Exp $
+** $XFree86: xc/programs/xgc/tests.c,v 1.10 2002/05/31 18:46:13 dawes Exp $
 **
 */
 
@@ -52,7 +52,7 @@ timer(flag)
 #if !defined(SYSV)
   static struct timeval starttime;  /* starting time for gettimeofday() */
   struct timeval endtime;           /* ending time for gettimeofday() */
-#if !defined(__EMX__) && !defined(QNX4)
+#if !defined(__UNIXOS2__) && !defined(QNX4)
   static struct rusage startusage;  /* starting time for getrusage() */
   struct rusage endusage;           /* ending time for getrusage() */
 #endif
@@ -63,13 +63,13 @@ timer(flag)
   switch (flag) {
     case StartTimer:                       /* store initial values */
       gettimeofday(&starttime,&tz);       
-#if !defined(__EMX__) && !defined(QNX4)
+#if !defined(__UNIXOS2__) && !defined(QNX4)
       getrusage(RUSAGE_SELF,&startusage);
 #endif
       return((long) NULL);
     case EndTimer:
       gettimeofday(&endtime,&tz);          /* store final values */
-#if !defined(__EMX__) && !defined(QNX4)
+#if !defined(__UNIXOS2__) && !defined(QNX4)
       getrusage(RUSAGE_SELF,&endusage);
 #endif
 
@@ -77,7 +77,7 @@ timer(flag)
      elapsed time = ending time - starting time, but there are three 
      different timers and two different units of time, ack... */
 
-#if !defined(__EMX__) && !defined(QNX4)
+#if !defined(__UNIXOS2__) && !defined(QNX4)
       elapsedtime = (long) ((long)
 	((endtime.tv_sec - endusage.ru_utime.tv_sec - endusage.ru_stime.tv_sec
 	 - starttime.tv_sec + startusage.ru_utime.tv_sec

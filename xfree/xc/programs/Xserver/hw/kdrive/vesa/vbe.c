@@ -19,7 +19,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
-/* $XFree86: xc/programs/Xserver/hw/kdrive/vesa/vbe.c,v 1.10 2001/09/05 07:12:42 keithp Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/kdrive/vesa/vbe.c,v 1.11 2002/10/08 21:27:18 keithp Exp $ */
 
 #include "vesa.h"
 
@@ -210,7 +210,7 @@ VbeSetMode (Vm86InfoPtr vi, VbeInfoPtr vbe, int mode, int linear, int direct)
     if (code < 0)
 	return -1;
     
-    mode = (mode & 0xffff) | 0x8000;
+    mode = (mode & 0xffff) &~ 0x8000;
     if (linear)
 	mode |= 0x4000;
     

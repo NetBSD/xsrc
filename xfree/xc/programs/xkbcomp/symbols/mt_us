@@ -1,51 +1,40 @@
-// Maltese keyboard map (for US-based keyboards)
+// Maltese keyboard map (based on MSA Standard DMS100, annex A)
 // by Ramon Casha (ramon.casha@linux.org.mt)
 //
-// $XFree86: xc/programs/xkbcomp/symbols/mt_us,v 1.1 2001/08/17 16:31:25 dawes Exp $
+// $XFree86: xc/programs/xkbcomp/symbols/mt_us,v 1.2 2002/12/13 04:18:03 dawes Exp $
 
 partial default alphanumeric_keys 
 xkb_symbols "basic" {
 
-    // Describes the differences between a very simple en_US
-    // keyboard and the interim Maltese keyboard
+    // Describes the differences between the en_US
+    // keyboard and the Maltese keyboard.
 
-    name[Group1]= "Maltese";
+    include "us(basic)"
+    name[Group1]= "Maltese (US layout)";
 
-    // define the ^ as a deadkey for long accents (â). The use of
-    // long accents was officially dropped recently but there are 
-    // still exists literature using it.
-    key <AE06> {
-        symbols[Group1]= [	6,		dead_circumflex ],
-        symbols[Group2]= [	asciicircum	]
-    };
-    // define the grave accent as a deadkey for the ordinary accent (à).
-    key <TLDE> {
-        symbols[Group1]= [	dead_grave,	asciitilde ],
-        symbols[Group2]= [	grave ]
-    };
-    // the following four sets are the four additional letters Å,Õ,¡,¯ (CGHZ)
-    key <AE12> {
-        symbols[Group1]= [	cabovedot,	Cabovedot ],
-        symbols[Group2]= [	equal,		plus ]
-    };
-    key <AD11> {
-        symbols[Group1]= [	gabovedot,	Gabovedot ],
-        symbols[Group2]= [	bracketleft,	braceleft ]
-    };
-    key <AD12> {
-        symbols[Group1]= [	hstroke,	Hstroke ],
-        symbols[Group2]= [	bracketright,	braceright ]
-    };
-    key <BKSL> {
-        symbols[Group1]= [	zabovedot,	Zabovedot ],
-        symbols[Group2]= [	backslash,	bar ]
-    };
-    // add Å Õ ¡ and ¯ as AltGr + C G H or Z for convenience.
-    key <AC05> {	[], [	gabovedot,	Gabovedot	]	};
-    key <AC06> {	[], [	hstroke,	Hstroke		]	};
-    key <AB01> {	[], [	zabovedot,	Zabovedot 	]	};
-    key <AB03> {	[], [	cabovedot,	Cabovedot	]	};
-    key <AD03> {	[], [	EuroSign	]	};
+    // the following four sets are the four additional letters (C. G. H- Z.)
+    // Group 2 contains the UK equivalents
+    key <TLDE> {	[	cabovedot,	Cabovedot	],
+			[	grave,		asciitilde	] };
+    key <AD11> {	[	gabovedot,	Gabovedot	],
+			[	bracketleft,	braceleft	] };
+    key <AD12> {	[	hstroke,	Hstroke		],
+			[	bracketright,	braceright	] };
+    key <BKSL> {	[	zabovedot,	Zabovedot	],
+			[	backslash,	bar		] };
+
+    // Euro symbol
+    key <AE03> {	[	3,		EuroSign	],
+    			[	numbersign			]	};
+    // Long accent
+    key <AE06> { [],	[	dead_circumflex, dead_circumflex ]	};
+
+    // Normal accented vowels
+    key <AD03> { [],	[	egrave,		Egrave		]	};
+    key <AD07> { [],	[	ugrave,		Ugrave		]	};
+    key <AD08> { [],	[	igrave,		Igrave		]	};
+    key <AD09> { [],	[	ograve,		Ograve		]	};
+    key <AC01> { [],	[	agrave,		Agrave		]	};
 
     // End alphanumeric section
 

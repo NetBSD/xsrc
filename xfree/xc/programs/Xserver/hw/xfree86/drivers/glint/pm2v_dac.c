@@ -27,7 +27,7 @@
  * this work is sponsored by S.u.S.E. GmbH, Fuerth, Elsa GmbH, Aachen and
  * Siemens Nixdorf Informationssysteme
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/glint/pm2v_dac.c,v 1.27 2001/11/28 21:53:01 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/glint/pm2v_dac.c,v 1.29 2002/05/07 23:15:59 alanh Exp $ */
 
 #include "xf86.h"
 #include "xf86_OSproc.h"
@@ -442,7 +442,7 @@ Permedia2vLoadCursorCallback(
 {
     GLINTPtr pGlint = GLINTPTR(pScrn);
     int i;
-       
+
     for (i=0; i<1024; i++) 
     	Permedia2vOutIndReg(pScrn, PM2VDACRDCursorPattern+i, 0x00, 
 					pGlint->HardwareCursorPattern[i]);

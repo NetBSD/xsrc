@@ -32,7 +32,7 @@ OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
 THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/lib/Xt/Intrinsic.c,v 3.20 2001/12/14 19:56:21 dawes Exp $ */
+/* $XFree86: xc/lib/Xt/Intrinsic.c,v 3.22 2003/01/12 03:55:46 tsi Exp $ */
 
 /*
 
@@ -903,7 +903,7 @@ static int AccessFile (path, pathbuf, len_pathbuf, pathret)
 
     /* try the places set in the environment */
     drive = getenv ("_XBASEDRIVE");
-#ifdef __EMX__
+#ifdef __UNIXOS2__
     if (!drive)
 	drive = getenv ("X11ROOT");
 #endif
@@ -918,7 +918,7 @@ static int AccessFile (path, pathbuf, len_pathbuf, pathret)
 	return 1;
     }
 
-#ifndef __EMX__ 
+#ifndef __UNIXOS2__ 
     /* one last place to look */
     drive = getenv ("HOMEDRIVE");
     if (drive) {
@@ -1119,7 +1119,7 @@ String XtFindFile(path, substitutions, num_substitutions, predicate)
 		continue;
 	    }
 	    if (*colon == ':')
-#ifdef __EMX__
+#ifdef __UNIXOS2__
 	      if (colon > (path+1))
 #endif
 		break;
@@ -1128,7 +1128,7 @@ String XtFindFile(path, substitutions, num_substitutions, predicate)
 	if (Resolve(path, len, substitutions, num_substitutions,
 		    buf, '/')) {
 	    if (firstTime || strcmp(buf1,buf2) != 0) {
-#ifdef __EMX__
+#ifdef __UNIXOS2__
 		{
 			char *bufx = (char*)__XOS2RedirRoot(buf);
 			strcpy(buf,bufx);
@@ -1176,7 +1176,7 @@ static char *ExtractLocaleName(lang)
     String	lang;
 {
 
-#if defined(hpux) || defined(CSRG_BASED) || defined(sun) || defined(SVR4) || defined(sgi) || defined(__osf__) || defined(AIXV3) || defined(ultrix) || defined(WIN32) || defined(__EMX__) || defined (linux)
+#if defined(hpux) || defined(CSRG_BASED) || defined(sun) || defined(SVR4) || defined(sgi) || defined(__osf__) || defined(AIXV3) || defined(ultrix) || defined(WIN32) || defined(__UNIXOS2__) || defined (linux)
 # ifdef hpux
 /* 
  * We need to discriminated between HPUX 9 and HPUX 10. The equivalent 
@@ -1189,16 +1189,16 @@ static char *ExtractLocaleName(lang)
 #   define STARTCHAR ':'
 #   define ENDCHAR ';'
 #  else
-   /* HPUX 10 */
-    #define ENDCHAR ' '
-   #endif
+    /* HPUX 10 */
+#   define ENDCHAR ' '
+#  endif
 # else
 #  ifdef ultrix
 #   define SKIPCOUNT 2
 #   define STARTCHAR '\001'
 #   define ENDCHAR '\001'
 #  else
-#   if defined(WIN32) || defined(__EMX__)
+#   if defined(WIN32) || defined(__UNIXOS2__)
 #    define SKIPCOUNT 1
 #    define STARTCHAR '='
 #    define ENDCHAR ';'
@@ -1354,7 +1354,7 @@ static char *implementation_default_path(void)
 static char *implementation_default_path()
 #endif
 {
-#if defined(WIN32) || defined(__EMX__)
+#if defined(WIN32) || defined(__UNIXOS2__)
     /* if you know how to pass % thru the compiler let me know */
     static char xfilesearchpath[] = XFILESEARCHPATHDEFAULT;
     static Bool fixed;

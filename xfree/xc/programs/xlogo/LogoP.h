@@ -26,7 +26,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-
+/* $XFree86: xc/programs/xlogo/LogoP.h,v 1.4 2002/07/01 02:26:04 tsi Exp $ */
 
 #ifndef _XawLogoP_h
 #define _XawLogoP_h
@@ -34,12 +34,25 @@ from The Open Group.
 #include "Logo.h"
 #include <X11/Xaw/SimpleP.h>
 
+#ifdef XRENDER
+#include <X11/extensions/Xrender.h>
+#include <X11/Xft/Xft.h>
+#endif
+
 typedef struct {
-	 Pixel	 fgpixel;
+         Pixel fgpixel;
 	 GC	 foreGC;
 	 GC	 backGC;
 	 Boolean shape_window;
 	 Boolean need_shaping;
+#ifdef XRENDER
+         Boolean render;
+         Boolean sharp;
+	 XftDraw    *draw;
+         XRenderPictFormat *mask_format;
+	 XftColor   fg;
+	 XftColor   bg;
+#endif
    } LogoPart;
 
 typedef struct _LogoRec {

@@ -3,7 +3,7 @@
 !
 !
 !
-! $XFree86: xc/programs/editres/Editres.ad,v 1.3 2001/01/17 23:44:52 dawes Exp $
+! $XFree86: xc/programs/editres/Editres.ad,v 1.4 2002/07/04 17:04:23 paulo Exp $
 !
 ! The App-defaults file for Editres.
 
@@ -144,7 +144,7 @@ Editres.Geometry:			500x568
 ! Universal Resources for the Resource Box.
 
 *mainViewport*resourceLabel.font:		\
--*-new century schoolbook-bold-r-*-*-15-*-*-*-*-*-*-*
+-*-new century schoolbook-bold-r-*-*-14-*-*-*-*-*-*-*
 *allowShellResize:				True
 *resourceLabel.allowResize:			True
 *List.verticalList:				True
@@ -152,15 +152,16 @@ Editres.Geometry:			500x568
 *star.Label:				*
 *dot.Label:					.
 *namesLabel.font:				\
--*-new century schoolbook-bold-r-*-*-15-*-*-*-*-*-*-*
+-*-new century schoolbook-bold-r-*-*-14-*-*-*-*-*-*-*
 *constraintLabel.font:			\
--*-new century schoolbook-bold-r-*-*-15-*-*-*-*-*-*-*
+-*-new century schoolbook-bold-r-*-*-14-*-*-*-*-*-*-*
 *valueLabel.BorderWidth:			0
 *valueForm*preferredPaneSize:		40
 *valueForm*min:				28
 *valueText*editType:			edit
 *valueText.Scroll:				WhenNeeded
-*valueText.width:				300
+*valueText.width:			297
+*setValuesPopup*resourceText.width:	297
 *setFile.Label:				Set Save File
 *save.Label:				Save
 *apply.Label:				Apply
@@ -263,6 +264,14 @@ Editres.Geometry:			500x568
    Ctrl<Key>q,<Key>Tab:    insert-char()     \n\
    <Btn1Down>:             select-start() SVActiveEntry(Value)\n\
    <Key>Tab:               SVActiveEntry(Resource)
+
+*Text.translations: #override \
+   m<Key>I:		no-op(r)\n\
+   c<Key>S:		no-op(r)\n\
+   c<Key>R:		no-op(r)\n\
+   <Key>Escape:		no-op()
+
+*fileDialog.?.Text.width:	280
 
 ! New resource settings
 *normalViewport.min:					19

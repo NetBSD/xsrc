@@ -22,7 +22,7 @@ Except as contained in this notice, the name of The Open Group shall not be
 used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 */
-/* $XFree86: xc/include/Xos_r.h,v 1.15 2001/12/14 19:53:26 dawes Exp $ */
+/* $XFree86: xc/include/Xos_r.h,v 1.18 2002/08/28 23:08:22 torrey Exp $ */
 
 /* 
  * Various and sundry Thread-Safe functions used by X11, Motif, and CDE.
@@ -228,6 +228,7 @@ extern void XtProcessUnlock(
 # endif
 #endif
 
+#undef X_NEEDS_PWPARAMS
 #if !defined(X_INCLUDE_PWD_H) || defined(_XOS_INCLUDED_PWD_H)
 /* Do nothing */
 
@@ -242,6 +243,7 @@ typedef int _Xgetpwparams;	/* dummy */
 
 #elif !defined(XOS_USE_MTSAFE_PWDAPI) || defined(XNO_MTSAFE_PWDAPI)
 /* UnixWare 2.0, or other systems with thread support but no _r API. */
+# define X_NEEDS_PWPARAMS
 typedef struct {
   struct passwd pws;
   char   pwbuf[1024];
@@ -254,7 +256,8 @@ typedef struct {
  * fields.
  */
    
-#if defined(__NetBSD__) || defined(__FreeBSD__) || defined(__OpenBSD__)
+#if defined(__NetBSD__) || defined(__FreeBSD__) || defined(__OpenBSD__) || \
+    defined(__APPLE__)
 static __inline__ void _Xpw_copyPasswd(_Xgetpwparams p)
 {
    memcpy(&(p).pws, (p).pwp, sizeof(struct passwd));
@@ -324,8 +327,9 @@ static __inline__ void _Xpw_copyPasswd(_Xgetpwparams p)
   (_Xos_processUnlock), \
   (p).pwp )
 
-#elif !defined(_POSIX_THREAD_SAFE_FUNCTIONS)
+#elif !defined(_POSIX_THREAD_SAFE_FUNCTIONS) && !defined(__APPLE__)
 /* SVR4 threads, AIX 4.2.0 and earlier and OSF/1 3.2 and earlier pthreads */
+# define X_NEEDS_PWPARAMS
 typedef struct {
   struct passwd pws;
   char pwbuf[X_LINE_MAX];
@@ -356,6 +360,7 @@ typedef struct {
 extern int _Pgetpwuid_r(uid_t, struct passwd *, char *, size_t, struct passwd **);
 extern int _Pgetpwnam_r(const char *, struct passwd *, char *, size_t, struct passwd **);
 # endif
+# define X_NEEDS_PWPARAMS
 typedef struct {
   struct passwd pws;
   char pwbuf[X_LINE_MAX];
@@ -614,7 +619,8 @@ typedef struct {
 # endif
 } _Xreaddirparams;
 
-# if defined(AIXV3) || defined(AIXV4) || defined(_POSIX_THREAD_SAFE_FUNCTIONS)
+# if defined(_POSIX_THREAD_SAFE_FUNCTIONS) || defined(AIXV3) || \
+     defined(AIXV4) || defined(__APPLE__)
 /* AIX defines the draft POSIX symbol, but uses the final API. */
 /* POSIX final API, returns (int)0 on success. */
 #  if defined(__osf__)

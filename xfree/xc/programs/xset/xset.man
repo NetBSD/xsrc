@@ -23,7 +23,7 @@
 .\" other dealings in this Software without prior written authorization
 .\" from The Open Group.
 .\" 
-.\" $XFree86: xc/programs/xset/xset.man,v 3.14 2001/12/14 20:02:22 dawes Exp $
+.\" $XFree86: xc/programs/xset/xset.man,v 3.15 2002/11/12 23:53:35 dawes Exp $
 .\" 
 .TH XSET 1 __xorgversion__
 .SH NAME
@@ -34,7 +34,7 @@ xset - user preference utility for X
 [-b] [b on/off] [b [\fIvolume\fP [\fIpitch\fP [\fIduration\fP]]]
 [[-]bc]
 [-c] [c on/off] [c [\fIvolume\fP]]
-[[+-]dpms] [dpms \fIstandby\fP [\fI suspend\fP [\fI off\fP]]] [dpms force standby/suspend/off]
+[[+-]dpms] [dpms \fIstandby\fP [\fI suspend\fP [\fI off\fP]]] [dpms force standby/suspend/off/on]
 [[-+]fp[-+=] \fIpath\fP[,\fIpath\fP[,...]]] [fp default] [fp rehash]
 [[-]led [\fIinteger\fP]] [led on/off]
 [m[ouse] [\fIaccel_mult\fP[/\fIaccel_div\fP] [\fIthreshold\fP]]] [m[ouse] default]
@@ -107,7 +107,7 @@ The \fBdpms\fP option allows the DPMS (Energy Star) parameters to be
 set.  The option can take up to three numerical values, or the `force'
 flag followed by a DPMS state.  The `force' flags forces the server
 to immediately switch to the DPMS state specified.  The DPMS state can
-be one of `standby', `suspend', or `off'.  When numerical values are
+be one of `standby', `suspend', `off', or `on'.  When numerical values are
 given, they set the inactivity period
 (in units of seconds)
 before the three modes are activated.

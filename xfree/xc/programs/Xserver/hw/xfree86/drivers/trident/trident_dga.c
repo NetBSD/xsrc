@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/trident/trident_dga.c,v 1.3 1999/10/26 22:46:59 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/trident/trident_dga.c,v 1.4 2002/10/08 22:14:11 tsi Exp $ */
 
 #include "xf86.h"
 #include "xf86_OSproc.h"
@@ -20,8 +20,10 @@ static int  TRIDENT_GetViewport(ScrnInfoPtr);
 static void TRIDENT_SetViewport(ScrnInfoPtr, int, int, int);
 static void TRIDENT_FillRect(ScrnInfoPtr, int, int, int, int, unsigned long);
 static void TRIDENT_BlitRect(ScrnInfoPtr, int, int, int, int, int, int);
+#if 0
 static void TRIDENT_BlitTransRect(ScrnInfoPtr, int, int, int, int, int, int, 
 					unsigned long);
+#endif
 
 static
 DGAFunctionRec TRIDENTDGAFuncs = {
@@ -238,7 +240,7 @@ TRIDENT_BlitRect(
     }
 }
 
-
+#if 0
 static void 
 TRIDENT_BlitTransRect(
    ScrnInfoPtr pScrn, 
@@ -250,7 +252,7 @@ TRIDENT_BlitTransRect(
   /* this one should be separate since the XAA function would
      prohibit usage of ~0 as the key */
 }
-
+#endif
 
 static Bool 
 TRIDENT_OpenFramebuffer(

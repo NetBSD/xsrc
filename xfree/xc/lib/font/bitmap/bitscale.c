@@ -26,7 +26,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/font/bitmap/bitscale.c,v 3.22 2001/12/14 19:56:46 dawes Exp $ */
+/* $XFree86: xc/lib/font/bitmap/bitscale.c,v 3.29 2003/01/12 03:55:46 tsi Exp $ */
 
 /*
  * Author:  Keith Packard, MIT X Consortium
@@ -50,7 +50,7 @@ from The Open Group.
 #endif
 
 /* Should get this from elsewhere */
-extern int serverGeneration;
+extern unsigned long serverGeneration;
 
 static void bitmapUnloadScalable (FontPtr pFont);
 static void ScaleBitmap ( FontPtr pFont, CharInfoPtr opci, 
@@ -89,9 +89,6 @@ ScaleFunc scale[] =
     BitmapScaleBitmaps,
     BitmapScaleBitmaps,
 #ifdef X_GZIP_FONT_COMPRESSION
-    BitmapScaleBitmaps,
-#endif
-#ifdef __EMX__
     BitmapScaleBitmaps,
 #endif
 #endif
@@ -143,9 +140,6 @@ FindToScale find_scale[] =
 #ifdef X_GZIP_FONT_COMPRESSION
     FindBestToScale,
 #endif
-#ifdef __EMX__
-    FindBestToScale,
-#endif
     FindBestToScale,
     FindBestToScale,
 #ifdef X_GZIP_FONT_COMPRESSION
@@ -159,7 +153,7 @@ FindToScale find_scale[] =
     FindPmfToScale,
 };
 
-static unsigned long fontGeneration = 0;	/* initialization flag */
+static unsigned long bitscaleGeneration = 0;	/* initialization flag */
 
 static fontProp fontNamePropTable[] = {
     { "FOUNDRY", 0, atom },
@@ -631,7 +625,7 @@ FindPmfToScale(FontPathElementPtr fpe, FontEntryPtr entry,
 	       the matrix appropriately */
 	    vals->pixel_matrix[0] *= rescale_x;
 	    vals->pixel_matrix[1] *= rescale_x;
-    #ifdef NOTDEF
+#ifdef NOTDEF
 	    /* This would force the pointsize and pixelsize fields in the
 	       FONT property to display as matrices to more accurately
 	       report the font being supplied.  It might also break existing
@@ -639,9 +633,9 @@ FindPmfToScale(FontPathElementPtr fpe, FontEntryPtr entry,
 	    vals->values_supplied =
 		vals->values_supplied & ~(PIXELSIZE_MASK | POINTSIZE_MASK) |
 		PIXELSIZE_ARRAY;
-    #else /* NOTDEF */
+#else /* NOTDEF */
 	    vals->values_supplied = vals->values_supplied & ~POINTSIZE_MASK;
-    #endif /* NOTDEF */
+#endif /* NOTDEF */
 	    /* Recompute and reround the FontScalablePtr values after
 	       rescaling for the new width. */
 	    FontFileCompleteXLFD(vals, vals);
@@ -730,16 +724,17 @@ ComputeScaledProperties(FontInfoPtr sourceFontInfo, /* the font to be scaled */
     char	*isStringProp;
     int		nProps;
 
-    if (fontGeneration != serverGeneration) {
+    if (bitscaleGeneration != serverGeneration) {
 	initFontPropTable();
-	fontGeneration = serverGeneration;
+	bitscaleGeneration = serverGeneration;
     }
     nProps = NPROPS + 1 + sizeof(fontPropTable) / sizeof(fontProp) +
 			  sizeof(rawFontPropTable) / sizeof(fontProp);
     fp = (FontPropPtr) xalloc(sizeof(FontPropRec) * nProps);
     *pProps = fp;
     if (!fp) {
- fprintf(stderr, "Error: Couldn't allocate font properties (%d*%d)\n", sizeof(FontPropRec), nProps);
+	fprintf(stderr, "Error: Couldn't allocate font properties (%ld*%d)\n",
+		(unsigned long)sizeof(FontPropRec), nProps);
 	return 1;
     }
     isStringProp = (char *) xalloc (nProps);
@@ -925,7 +920,8 @@ ScaleFont(FontPtr opf,            /* originating font */
 
     bitmapFont = 0;
     if (!(pf = CreateFontRec())) {
- fprintf(stderr, "Error: Couldn't allocate FontRec (%d)\n", sizeof(FontRec));
+	fprintf(stderr, "Error: Couldn't allocate FontRec (%ld)\n",
+		(unsigned long)sizeof(FontRec));
 	goto bail;
     }
     pf->refcnt = 0;
@@ -992,7 +988,8 @@ ScaleFont(FontPtr opf,            /* originating font */
 
     bitmapFont = (BitmapFontPtr) xalloc(sizeof(BitmapFontRec));
     if (!bitmapFont) {
- fprintf(stderr, "Error: Couldn't allocate bitmapFont (%d)\n", sizeof(BitmapFontRec));
+	fprintf(stderr, "Error: Couldn't allocate bitmapFont (%ld)\n",
+		(unsigned long)sizeof(BitmapFontRec));
 	goto bail;
     }
     nchars = (lastRow - firstRow + 1) * (lastCol - firstCol + 1);
@@ -1012,14 +1009,16 @@ ScaleFont(FontPtr opf,            /* originating font */
     bitmapFont->pDefault = 0;
     bitmapFont->metrics = (CharInfoPtr) xalloc(nchars * sizeof(CharInfoRec));
     if (!bitmapFont->metrics) {
- fprintf(stderr, "Error: Couldn't allocate metrics (%d*%d)\n", nchars, sizeof(CharInfoRec));
+	fprintf(stderr, "Error: Couldn't allocate metrics (%d*%ld)\n",
+		nchars, (unsigned long)sizeof(CharInfoRec));
 	goto bail;
     }
     bitmapFont->encoding = 
         (CharInfoPtr **) xcalloc(NUM_SEGMENTS(nchars),
                                  sizeof(CharInfoPtr*));
     if (!bitmapFont->encoding) {
- fprintf(stderr, "Error: Couldn't allocate encoding (%d*%d)\n", nchars, sizeof(CharInfoPtr));
+	fprintf(stderr, "Error: Couldn't allocate encoding (%d*%ld)\n",
+		nchars, (unsigned long)sizeof(CharInfoPtr));
 	goto bail;
     }
 
@@ -1336,7 +1335,9 @@ ScaleBitmap(FontPtr pFont, CharInfoPtr opci, CharInfoPtr pci,
 		    (INT32 *)xalloc((newWidth + 2) * 2 * sizeof(int));
 		if (!diffusion_workspace)
 		{
-		    fprintf(stderr, "Warning: Couldn't allocate diffusion workspace (%d)\n", (newWidth + 2) * 2 * sizeof(int));
+		    fprintf(stderr, "Warning: Couldn't allocate diffusion"
+			    " workspace (%ld)\n",
+			    (newWidth + 2) * 2 * (unsigned long)sizeof(int));
 		    xfree(char_grayscale);
 		    char_grayscale = (unsigned char *)0;
 		}
@@ -1921,6 +1922,7 @@ BitmapGetInfoScalable (FontPathElementPtr fpe,
         return ret;
     *pFontInfo = pfont->info;
 
+    pfont->info.nprops = 0;
     pfont->info.props = NULL;
     pfont->info.isStringProp = NULL;
 

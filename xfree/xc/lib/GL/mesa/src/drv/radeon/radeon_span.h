@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/radeon/radeon_span.h,v 1.1 2001/01/08 01:07:28 martin Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/radeon/radeon_span.h,v 1.2 2002/02/22 21:45:01 dawes Exp $ */
 /**************************************************************************
 
 Copyright 2000, 2001 ATI Technologies Inc., Ontario, Canada, and
@@ -39,7 +39,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #ifdef GLX_DIRECT_RENDERING
 
-extern void radeonDDInitSpanFuncs( GLcontext *ctx );
+extern void radeonInitSpanFuncs( GLcontext *ctx );
 
 #endif
 #endif

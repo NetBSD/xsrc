@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/linux/lnxResource.c,v 3.17 2001/11/01 23:35:33 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/linux/lnxResource.c,v 3.18 2002/01/25 21:56:19 tsi Exp $ */
 
 /* Resource information code */
 
@@ -12,8 +12,20 @@
 #include "xf86_OSlib.h"
 #include "lnx.h"
 
+/* Avoid Imakefile changes */
+#include "bus/Pci.h"
+
+resRange PciAvoid[] =
+{
+#if !defined(__sparc__) || !defined(INCLUDE_XF86_NO_DOMAIN)
+    _PCI_AVOID_PC_STYLE,
+#endif
+    _END
+};
+
+#ifdef INCLUDE_XF86_NO_DOMAIN
+
 #ifdef __alpha__
-resRange PciAvoid[] = {_PCI_AVOID_PC_STYLE, _END};
 
 resPtr
 xf86BusAccWindowsFromOS(void)
@@ -112,6 +124,8 @@ xf86PciBusAccWindowsFromOS(void)
     return ret;
 }
 
+#ifdef INCLUDE_UNUSED
+
 resPtr
 xf86IsaBusAccWindowsFromOS(void)
 {
@@ -125,6 +139,8 @@ xf86IsaBusAccWindowsFromOS(void)
     ret = xf86AddResToList(ret, &range, -1);
     return ret;
 }
+
+#endif /* INCLUDE_UNUSED */
 
 resPtr
 xf86AccResFromOS(resPtr ret)
@@ -165,18 +181,19 @@ xf86AccResFromOS(resPtr ret)
     return ret;
 }
 
-#elif defined(__powerpc__) || defined(__sparc__) || defined(__mips__) || defined(__sh__) || defined(__mc68000__) || defined(__arm__) || defined(__s390__) || defined(__hppa__)
+#elif defined(__powerpc__) || \
+      defined(__sparc__) || \
+      defined(__mips__) || \
+      defined(__sh__) || \
+      defined(__mc68000__) || \
+      defined(__arm__) || \
+      defined(__s390__) || \
+      defined(__hppa__)
 
  /* XXX this isn't exactly correct but it will get the server working 
   * for now until we get something better.
   */
   
-#ifdef __sparc__
-resRange PciAvoid[] = {_END};
-#else
-resRange PciAvoid[] = {_PCI_AVOID_PC_STYLE, _END};
-#endif
-
 resPtr
 xf86BusAccWindowsFromOS(void)
 {
@@ -213,6 +230,8 @@ xf86PciBusAccWindowsFromOS(void)
     return ret;
 }
 
+#ifdef INCLUDE_UNUSED */
+
 resPtr
 xf86IsaBusAccWindowsFromOS(void)
 {
@@ -230,6 +249,8 @@ xf86IsaBusAccWindowsFromOS(void)
     ret = xf86AddResToList(ret, &range, -1);
     return ret;
 }
+
+#endif /* INCLUDE_UNUSED */
 
 resPtr
 xf86AccResFromOS(resPtr ret)
@@ -261,3 +282,5 @@ xf86AccResFromOS(resPtr ret)
 #error : Put your platform dependent code here!!
 
 #endif
+
+#endif /* INCLUDE_XF86_NO_DOMAIN */

@@ -30,7 +30,7 @@
 
 Notice===
  */
-/* $XFree86: xc/extras/X-TrueType/xttcconv.c,v 1.10 2001/03/06 18:54:39 dawes Exp $ */
+/* $XFree86: xc/extras/X-TrueType/xttcconv.c,v 1.11 2003/02/25 22:10:15 dawes Exp $ */
 
 #include "xttversion.h"
 
@@ -510,14 +510,40 @@ codeconv_search_code_converter(char const *charsetName,
             {
                 char **l;
 		char **tryItFirst = NULL;
+        char **fallback_try = NULL;
 
-                for (l=list; *l ; l++) {
-			if(!mystrcasecmp(*l,moduleArg.charSetHints->charsetStdName)) {
-				tryItFirst = l;
-				break;
-			}
-		}
-
+        for (l=list; *l ; l++) {
+            int breaking=0;
+            char *tmp_left=NULL;
+            char *mark_underscore=NULL;
+            tmp_left=xstrdup(*l);
+            mark_underscore=strrchr(tmp_left,'_');
+            if( mark_underscore != NULL ){
+                *mark_underscore = '\0';
+                if( !mystrcasecmp(tmp_left,moduleArg.charSetHints->charsetStdName) ){
+                    if( !mystrcasecmp( mark_underscore+1,moduleArg.charSetHints->charsetEncoding ) ){
+                        tryItFirst = l;
+                        breaking=1;
+                    }
+                }
+            }
+            else{
+                if(!mystrcasecmp(*l,moduleArg.charSetHints->charsetStdName)) {
+                    tryItFirst = l;
+                    breaking=1;
+                }
+            }
+            if( fallback_try == NULL ){
+                if( !mystrcasecmp(*l,"ISO8859_1") ){
+                    fallback_try = l;
+                }
+            }
+            if( tmp_left ) xfree(tmp_left);
+            if( breaking ) break;
+        }
+#if 1
+        if( tryItFirst == NULL ) tryItFirst=fallback_try;
+#endif
 		if(tryItFirst)
 			l = tryItFirst;
 		else

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/pmax/pmax_pci.c,v 1.5 2000/07/31 23:24:32 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/pmax/pmax_pci.c,v 1.7 2002/08/27 22:07:08 tsi Exp $ */
 /*
  * Copyright 1998 by Concurrent Computer Corporation
  *
@@ -62,26 +62,26 @@
 #undef NH640X_PCI_MFDEV_SUPPORT
 #undef NH640X_PCI_BRIDGE_SUPPORT
 
-void    nh640xPciInit(void);
-PCITAG  nh640xPciFindNext(void);
-PCITAG  nh640xPciFindFirst(void);
-CARD32  nh6400PciReadLong(PCITAG tag, int offset);
-void    nh6400PciWriteLong(PCITAG tag, int offset, CARD32 val);
-ADDRESS nh6400BusToHostAddr(PCITAG tag, ADDRESS addr);
-ADDRESS nh6400HostToBusAddr(PCITAG tag, ADDRESS addr);
-CARD32  nh6408PciReadLong(PCITAG tag, int offset);
-void    nh6408PciWriteLong(PCITAG tag, int offset, CARD32 val);
-ADDRESS nh6408BusToHostAddr(PCITAG tag, ADDRESS addr);
-ADDRESS nh6408HostToBusAddr(PCITAG tag, ADDRESS addr);
+static void    nh640xPciInit(void);
+static PCITAG  nh640xPciFindNext(void);
+static PCITAG  nh640xPciFindFirst(void);
+static CARD32  nh6400PciReadLong(PCITAG tag, int offset);
+static void    nh6400PciWriteLong(PCITAG tag, int offset, CARD32 val);
+static ADDRESS nh6400BusToHostAddr(PCITAG tag, ADDRESS addr);
+static ADDRESS nh6400HostToBusAddr(PCITAG tag, ADDRESS addr);
+static CARD32  nh6408PciReadLong(PCITAG tag, int offset);
+static void    nh6408PciWriteLong(PCITAG tag, int offset, CARD32 val);
+static ADDRESS nh6408BusToHostAddr(PCITAG tag, ADDRESS addr);
+static ADDRESS nh6408HostToBusAddr(PCITAG tag, ADDRESS addr);
 
-pciBusFuncs_t nh6400_pci_funcs = {
+static pciBusFuncs_t nh6400_pci_funcs = {
   nh6400PciReadLong,
   nh6400PciWriteLong,
   nh6400HostToBusAddr,
   nh6400BusToHostAddr
 };
 
-pciBusFuncs_t nh6408_pci_funcs = {
+static pciBusFuncs_t nh6408_pci_funcs = {
   nh6408PciReadLong,
   nh6408PciWriteLong,
   nh6408HostToBusAddr,
@@ -101,7 +101,7 @@ pciBusFuncs_t nh6408_pci_funcs = {
 /*
  * Possible cfg addr values for NH640x GMEM PMC ports
  */
-unsigned long nh6400_pmc_cfgaddrs[] = {
+static unsigned long nh6400_pmc_cfgaddrs[] = {
 	PCI_CFGMECH1_TYPE0_CFGADDR(0,0,0)
 };
 
@@ -109,7 +109,7 @@ unsigned long nh6400_pmc_cfgaddrs[] = {
  * Possible cfg addr values for devices on a secondary bus
  * (e.g. behind DEC 21152 PCI-to-PCI bridge)
  */
-unsigned long dec_cfgaddrs[] = {
+static unsigned long dec_cfgaddrs[] = {
 	PCI_CFGMECH1_TYPE1_CFGADDR(1,0,0,0),
 	PCI_CFGMECH1_TYPE1_CFGADDR(1,1,0,0),
 	PCI_CFGMECH1_TYPE1_CFGADDR(1,2,0,0),
@@ -143,11 +143,12 @@ struct nh640x_pci_info {
   unsigned long  ioSize;
   unsigned char *cfgAddrReg;  /* After mapping */
 };
-/*type*/
+
+/* Type */
 #define PRIMARY_PCI   0
 #define SECONDARY_PCI 1
 
-struct nh640x_pci_info nh6400_pci_info[] = {
+static struct nh640x_pci_info nh6400_pci_info[] = {
 /* pci4 */  { 4,  PRIMARY_PCI,   1,  nh6400_pmc_cfgaddrs, 0, 0xa0000000, 0xa1000000, 0, 0xa2000000 },
 /* pci12 */ { 12, SECONDARY_PCI, 16, dec_cfgaddrs,        4                         },
 #if 0
@@ -158,7 +159,7 @@ struct nh640x_pci_info nh6400_pci_info[] = {
 
 #define NH6400_NUM_PCI_EXPANSION_BUSES (sizeof(nh6400_pci_info)/sizeof(struct nh640x_pci_info))
 
-struct nh640x_pci_info nh6408_pci_info[] = {
+static struct nh640x_pci_info nh6408_pci_info[] = {
 /* pci8 */  { 8,  PRIMARY_PCI,   1,  nh6400_pmc_cfgaddrs, 0, 0x98040000, 0x9a800000, 65536, 0xa0000000 },
 /* pci12 */ { 12, SECONDARY_PCI, 16, dec_cfgaddrs,        8,                        },
 #if 0
@@ -245,12 +246,12 @@ ppcPciIoMap(int pcibus)
 	}
 }
 
-void
+static void
 nh640xPciInit(void)
 {
   int                     i,n;
   struct nh640x_pci_info *infop;
-  pciBusFuncs_t          *functions;
+  pciBusFuncs_p           functions;
 	
   switch (pmax_sys_type) {
   case MODEL_NH6400:
@@ -291,7 +292,7 @@ nh640xPciInit(void)
 	  busp->numDevices  = infop->num_cfg_addrs;
 	  busp->secondary   = (infop->type == SECONDARY_PCI ? TRUE : FALSE);
 	  busp->primary_bus = infop->primary_bus;
-	  busp->funcs       = *functions;             /* Structure assignment */
+	  busp->funcs       = functions;
 	  busp->pciBusPriv  = infop;
 
 	  /* Initialize I/O base/size info */ 
@@ -320,7 +321,7 @@ nh640xPciInit(void)
   pciFindNextFP  = nh640xPciFindNext;
 }
 
-PCITAG
+static PCITAG
 nh640xPciFindNext(void)
 {
   unsigned long devid, tmp;
@@ -444,14 +445,14 @@ nh640xPciFindNext(void)
   /*NOTREACHED*/
 }
 
-PCITAG
+static PCITAG
 nh640xPciFindFirst(void)
 {
   pciBusNum = -1;
   return(nh640xPciFindNext());
 }
 
-unsigned long
+static unsigned long
 nh6400PciReadLong(PCITAG tag, int offset)
 {
   unsigned long           tmp;
@@ -557,7 +558,7 @@ nh6400PciReadLong(PCITAG tag, int offset)
   return(pciByteSwap(tmp));
 }
 
-void
+static void
 nh6400PciWriteLong(PCITAG tag, int offset, unsigned long val)
 {
   char                   *base;
@@ -665,7 +666,7 @@ nh6400PciWriteLong(PCITAG tag, int offset, unsigned long val)
  * we do do some bounds checking to make sure things are where they
  * should be.
  */
-ADDRESS
+static ADDRESS
 nh6400BusToHostAddr(PCITAG tag, ADDRESS addr)
 {
 	unsigned long           addr_l = (unsigned long)addr;  
@@ -709,7 +710,7 @@ nh6400BusToHostAddr(PCITAG tag, ADDRESS addr)
 	/*NOTREACHED*/
 }
 
-ADDRESS
+static ADDRESS
 nh6400HostToBusAddr(PCITAG tag, ADDRESS addr)
 {
 	unsigned long           addr_l = (unsigned long) addr;
@@ -757,7 +758,7 @@ nh6400HostToBusAddr(PCITAG tag, ADDRESS addr)
 /*
  * NH6408 platform support
  */
-unsigned long
+static unsigned long
 nh6408PciReadLong(PCITAG tag, int offset)
 {
   unsigned long           tmp;
@@ -863,7 +864,7 @@ nh6408PciReadLong(PCITAG tag, int offset)
   return(pciByteSwap(tmp));
 }
 
-void
+static void
 nh6408PciWriteLong(PCITAG tag, int offset, unsigned long val)
 {
   char                   *base;
@@ -965,7 +966,7 @@ nh6408PciWriteLong(PCITAG tag, int offset, unsigned long val)
 }
 
 
-ADDRESS
+static ADDRESS
 nh6408BusToHostAddr(PCITAG tag, ADDRESS addr)
 {
 	unsigned long           addr_l = (unsigned long)addr;
@@ -1011,7 +1012,7 @@ nh6408BusToHostAddr(PCITAG tag, ADDRESS addr)
 	/*NOTREACHED*/
 }
 
-ADDRESS
+static ADDRESS
 nh6408HostToBusAddr(PCITAG tag, ADDRESS addr)
 {
 	unsigned long           addr_l = (unsigned long)addr;
@@ -1060,7 +1061,7 @@ nh6408HostToBusAddr(PCITAG tag, ADDRESS addr)
 /*
  * NH6800 (Turbo) support
  */
-void
+static void
 nh6800tPciInit(void)
 {
 	FatalError("nh6800tPciInit: NH6800TURBO not supported (yet)!!!\n");

@@ -25,7 +25,7 @@
 .\" other dealings in this Software without prior written authorization
 .\" from the X Consortium.
 .\"
-.\" $XFree86: xc/programs/xedit/xedit.man,v 1.15 2001/01/27 18:21:11 dawes Exp $
+.\" $XFree86: xc/programs/xedit/xedit.man,v 1.18 2002/10/12 16:06:48 herrb Exp $
 .\"
 .TH XEDIT 1 __vendorversion__
 .SH NAME
@@ -97,6 +97,7 @@ Ctrl-w	Kill Selection	Meta-Backspace	Delete Previous Word
 Ctrl-y	Unkill	Meta-Shift Backspace	Kill Previous Word
 Ctrl-z	Scroll One Line Up	Meta-z	Scroll One Line Down
 Ctrl-_	Undo
+Escape	Line Edit Mode
 .sp
 In addition, the pointer may be used to cut and paste text:
 .ta .5i 2.0i
@@ -111,6 +112,120 @@ In addition, the pointer may be used to cut and paste text:
 	Button 3 Up	End Selection (cut)
 .fi
 .sp
+
+.SH LINE EDIT MODE
+.I Line edit mode
+enables several shortcut commands for searching and replacing text in a
+xedit buffer.
+.I Line edit mode
+commands have the format:
+.br
+.nf
+
+	[\fIline-number\fP[,\fIline-number\fP]]\fIcommand\fP[\fIparameters\fP]
+
+.fi
+.I Line number
+may be specified as:
+.TP 8
+\&.
+The current text line.
+.TP 8
+$
+The last line of the file.
+.TP 8
+number
+The literal line \fInumber\fP.
+.TP 8
+- or ^
+The previous line. Equivalent to \fI-1\fP.
+.TP 8
+-number or ^number
+The current line minus \fInumber\fP.
+.TP 8
++
+The next line. Equivalent to \fI+1\fP.
+.TP 8
++number
+The current line plus \fInumber\fP.
+.TP 8
+, or %
+From the first to the last line. Equivalent to \fI1,$\fP.
+.TP 8
+;
+From the current to the last line. Equivalent to \fI.,$\fP.
+
+.PP
+.I Command
+may be specified as:
+.TP 8
+s
+Substitute text in the specified lines.
+.TP 8
+/re/
+Search forward for the regular expression pattern \fIre\fP.
+.TP 8
+?re?
+Search backward for the regular expression pattern \fIre\fP.
+
+.PP
+.I Parameters
+may be specified as:
+.TP 8
+/re/
+Works as a parameter to \fIi\fP or as a command.
+.TP 8
+/re/text/
+Search forward for \fIre\fP and substitute by \fItext\fP.
+
+.PP
+.I Options
+may follow or be parameters, known values are:
+.TP 8
+i
+Case insensitive search.
+.TP 8
+g
+\fIGlobal\fP match when replacing text. Unless specified, only the nth,
+that defaults to 1, match will be replaced.
+.TP 8
+c
+\fIConfirm\fP before replacing text.
+.TP 8
+number
+Replace only the occurrence referenced by \fInumber\fP.
+.PP
+
+Commands accept some variations, examples:
+.br
+.nf
+	/pattern/i
+	i/pattern/
+	i/pattern
+.fi
+Search forward for \fIpattern\fP.
+.br
+.nf
+
+	,sc/pattern/text
+	,sc/pattern/text/
+	,s/pattern/text/c
+.fi
+Search the entire buffer and ask confirmation to replace \fIpattern\fP
+with \fItext\fP.
+.br
+.nf
+
+	,s/pattern/text/number
+.fi
+Replace the match \fInumber\fP in the text line. If not specified,
+defaults to the first occurrence.
+
+.PP
+When searching for text, type <Return> to go to the next match.
+When interactively replacing text, type \fIy\fP or \fIY\fP to accept the
+change, and \fIn\fP or \fIN\fP to ignore it and go to the next match.
+
 .SH COMMANDS
 .IP Quit 8
 Quits the current editing session. If any changes have not been saved,
@@ -304,7 +419,7 @@ to get the name of a resource file that overrides the global resources
 stored in the RESOURCE_MANAGER property.
 .SH FILES
 .TP 20
-.I <XRoot>/lib/X11/app-defaults/Xedit
+.I __apploaddir__/Xedit
 specifies required resources
 .SH "SEE ALSO"
 .IR X (__miscmansuffix__),

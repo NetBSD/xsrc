@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/r128/r128_state.c,v 1.8 2001/03/21 16:14:23 dawes Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/r128/r128_state.c,v 1.11 2002/10/30 12:51:39 alanh Exp $ */
 /**************************************************************************
 
 Copyright 1999, 2000 ATI Technologies Inc. and Precision Insight, Inc.,
@@ -30,7 +30,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
  * Authors:
  *   Gareth Hughes <gareth@valinux.com>
  *   Kevin E. Martin <martin@valinux.com>
- *   Keith Whitwell <keithw@valinux.com>
+ *   Keith Whitwell <keith@tungstengraphics.com>
  *
  */
 
@@ -43,8 +43,14 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "context.h"
 #include "mmath.h"
-#include "pb.h"
 #include "enums.h"
+
+#include "swrast/swrast.h"
+#include "array_cache/acache.h"
+#include "tnl/tnl.h"
+#include "swrast_setup/swrast_setup.h"
+
+#include "tnl/t_pipeline.h"
 
 
 /* =============================================================
@@ -95,6 +101,8 @@ static void r128UpdateAlphaMode( GLcontext *ctx )
       t &= ~R128_ALPHA_TEST_ENABLE;
    }
 
+   FALLBACK( rmesa, R128_FALLBACK_BLEND_FUNC, GL_FALSE );
+
    if ( ctx->Color.BlendEnabled ) {
       a &= ~(R128_ALPHA_BLEND_SRC_MASK | R128_ALPHA_BLEND_DST_MASK);
 
@@ -126,6 +134,8 @@ static void r128UpdateAlphaMode( GLcontext *ctx )
       case GL_SRC_ALPHA_SATURATE:
 	 a |= R128_ALPHA_BLEND_SRC_SRCALPHASAT;
 	 break;
+      default:
+         FALLBACK( rmesa, R128_FALLBACK_BLEND_FUNC, GL_TRUE );
       }
 
       switch ( ctx->Color.BlendDstRGB ) {
@@ -153,6 +163,8 @@ static void r128UpdateAlphaMode( GLcontext *ctx )
       case GL_ONE_MINUS_DST_ALPHA:
 	 a |= R128_ALPHA_BLEND_DST_INVDESTALPHA;
 	 break;
+      default:
+         FALLBACK( rmesa, R128_FALLBACK_BLEND_FUNC, GL_TRUE );
       }
 
       t |=  R128_ALPHA_ENABLE;
@@ -170,7 +182,7 @@ static void r128UpdateAlphaMode( GLcontext *ctx )
    }
 }
 
-static void r128DDAlphaFunc( GLcontext *ctx, GLenum func, GLclampf ref )
+static void r128DDAlphaFunc( GLcontext *ctx, GLenum func, GLchan ref )
 {
    r128ContextPtr rmesa = R128_CONTEXT(ctx);
 
@@ -183,13 +195,19 @@ static void r128DDBlendEquation( GLcontext *ctx, GLenum mode )
    r128ContextPtr rmesa = R128_CONTEXT(ctx);
 
    FLUSH_BATCH( rmesa );
-   rmesa->new_state |= R128_NEW_ALPHA;
 
-   if ( ctx->Color.ColorLogicOpEnabled && ctx->Color.LogicOp != GL_COPY ) {
-      rmesa->Fallback |= R128_FALLBACK_LOGICOP;
-   } else {
-      rmesa->Fallback &= ~R128_FALLBACK_LOGICOP;
-   }
+   /* BlendEquation sets ColorLogicOpEnabled in an unexpected
+    * manner.
+    */
+   FALLBACK( R128_CONTEXT(ctx), R128_FALLBACK_LOGICOP,
+	     (ctx->Color.ColorLogicOpEnabled &&
+	      ctx->Color.LogicOp != GL_COPY));
+
+   /* Can only do blend addition, not min, max, subtract, etc. */
+   FALLBACK( R128_CONTEXT(ctx), R128_FALLBACK_BLEND_EQ,
+	     mode != GL_FUNC_ADD_EXT);
+
+   rmesa->new_state |= R128_NEW_ALPHA;
 }
 
 static void r128DDBlendFunc( GLcontext *ctx, GLenum sfactor, GLenum dfactor )
@@ -317,13 +335,16 @@ static void r128UpdateFogAttrib( GLcontext *ctx )
    GLubyte c[4];
    GLuint col;
 
-   if ( ctx->FogMode == FOG_FRAGMENT ) {
+   if ( ctx->Fog.Enabled ) {
       t |=  R128_FOG_ENABLE;
    } else {
       t &= ~R128_FOG_ENABLE;
    }
 
-   FLOAT_RGB_TO_UBYTE_RGB( c, ctx->Fog.Color );
+   c[0] = FLOAT_TO_UBYTE( ctx->Fog.Color[0] );
+   c[1] = FLOAT_TO_UBYTE( ctx->Fog.Color[1] );
+   c[2] = FLOAT_TO_UBYTE( ctx->Fog.Color[2] );
+
    col = r128PackColor( 4, c[0], c[1], c[2], 0 );
 
    if ( rmesa->setup.fog_color_c != col ) {
@@ -419,7 +440,7 @@ static void r128UpdateCull( GLcontext *ctx )
 
    f |= R128_BACKFACE_SOLID | R128_FRONTFACE_SOLID;
 
-   if ( ctx->Polygon.CullFlag && ctx->PB->primitive == GL_POLYGON ) {
+   if ( ctx->Polygon.CullFlag ) {
       switch ( ctx->Polygon.CullFaceMode ) {
       case GL_FRONT:
 	 f &= ~R128_FRONTFACE_SOLID;
@@ -434,7 +455,7 @@ static void r128UpdateCull( GLcontext *ctx )
       }
    }
 
-   if ( rmesa->setup.pm4_vc_fpu_setup != f ) {
+   if ( 1 || rmesa->setup.pm4_vc_fpu_setup != f ) {
       rmesa->setup.pm4_vc_fpu_setup = f;
       rmesa->dirty |= R128_UPLOAD_CONTEXT | R128_UPLOAD_SETUP;
    }
@@ -477,17 +498,14 @@ static void r128UpdateMasks( GLcontext *ctx )
    }
 }
 
-static GLboolean r128DDColorMask( GLcontext *ctx,
-				  GLboolean r, GLboolean g,
-				  GLboolean b, GLboolean a )
+static void r128DDColorMask( GLcontext *ctx,
+			     GLboolean r, GLboolean g,
+			     GLboolean b, GLboolean a )
 {
    r128ContextPtr rmesa = R128_CONTEXT(ctx);
 
    FLUSH_BATCH( rmesa );
    rmesa->new_state |= R128_NEW_MASKS;
-
-   return GL_FALSE; /* This forces the software paths to do colormasking. */
-                    /* This function will return void when we use Mesa 3.5 */
 }
 
 
@@ -499,26 +517,58 @@ static GLboolean r128DDColorMask( GLcontext *ctx,
  * sense to break them out of the core texture state update routines.
  */
 
+static void updateSpecularLighting( GLcontext *ctx )
+{
+   r128ContextPtr rmesa = R128_CONTEXT(ctx);
+   GLuint t = rmesa->setup.tex_cntl_c;
+
+   if ( ctx->Light.Model.ColorControl == GL_SEPARATE_SPECULAR_COLOR &&
+        ctx->Light.Enabled) {
+      /* XXX separate specular color just doesn't seem to work as it should.
+       * For now, we fall back to s/w rendering whenever separate specular
+       * is enabled.
+       */
+#if 0
+      if (ctx->Light.ShadeModel == GL_FLAT) {
+         /* R128 can't do flat-shaded separate specular */
+         t &= ~R128_SPEC_LIGHT_ENABLE;
+         FALLBACK( rmesa, R128_FALLBACK_SEP_SPECULAR, GL_TRUE );
+         /*printf("%s fallback  sep spec\n", __FUNCTION__);*/
+      }
+      else {
+         t |= R128_SPEC_LIGHT_ENABLE;
+         FALLBACK( rmesa, R128_FALLBACK_SEP_SPECULAR, GL_FALSE );
+         /*printf("%s enable sep spec\n", __FUNCTION__);*/
+      }
+#else
+      t &= ~R128_SPEC_LIGHT_ENABLE;
+      FALLBACK( rmesa, R128_FALLBACK_SEP_SPECULAR, GL_TRUE );
+      /*printf("%s fallback  sep spec\n", __FUNCTION__);*/
+#endif
+   }
+   else {
+      t &= ~R128_SPEC_LIGHT_ENABLE;
+      FALLBACK( rmesa, R128_FALLBACK_SEP_SPECULAR, GL_FALSE );
+      /*printf("%s disable sep spec\n", __FUNCTION__);*/
+   }
+
+   if ( rmesa->setup.tex_cntl_c != t ) {
+      rmesa->setup.tex_cntl_c = t;
+      rmesa->dirty |= R128_UPLOAD_CONTEXT;
+      rmesa->dirty |= R128_UPLOAD_SETUP;
+      rmesa->new_state |= R128_NEW_CONTEXT;
+   }
+}
+
+
 static void r128DDLightModelfv( GLcontext *ctx, GLenum pname,
 				const GLfloat *param )
 {
    r128ContextPtr rmesa = R128_CONTEXT(ctx);
 
    if ( pname == GL_LIGHT_MODEL_COLOR_CONTROL ) {
-      GLuint t = rmesa->setup.tex_cntl_c;
-
       FLUSH_BATCH( rmesa );
-
-      if ( ctx->Light.Model.ColorControl == GL_SEPARATE_SPECULAR_COLOR ) {
-	 t |=  R128_SPEC_LIGHT_ENABLE;
-      } else {
-	 t &= ~R128_SPEC_LIGHT_ENABLE;
-      }
-
-      if ( rmesa->setup.tex_cntl_c != t ) {
-	 rmesa->setup.tex_cntl_c = t;
-	 rmesa->dirty |= R128_UPLOAD_CONTEXT;
-      }
+      updateSpecularLighting(ctx);
    }
 }
 
@@ -539,6 +589,8 @@ static void r128DDShadeModel( GLcontext *ctx, GLenum mode )
    default:
       return;
    }
+
+   updateSpecularLighting(ctx);
 
    if ( rmesa->setup.pm4_vc_fpu_setup != s ) {
       FLUSH_BATCH( rmesa );
@@ -566,27 +618,53 @@ void r128UpdateWindow( GLcontext *ctx )
    rmesa->dirty |= R128_UPLOAD_CONTEXT | R128_UPLOAD_WINDOW;
 }
 
+/* =============================================================
+ * Viewport
+ */
+
+
+static void r128CalcViewport( GLcontext *ctx )
+{
+   r128ContextPtr rmesa = R128_CONTEXT(ctx);
+   const GLfloat *v = ctx->Viewport._WindowMap.m;
+   GLfloat *m = rmesa->hw_viewport;
+
+   /* See also r128_translate_vertex.
+    */
+   m[MAT_SX] =   v[MAT_SX];
+   m[MAT_TX] =   v[MAT_TX] + SUBPIXEL_X;
+   m[MAT_SY] = - v[MAT_SY];
+   m[MAT_TY] = - v[MAT_TY] + rmesa->driDrawable->h + SUBPIXEL_Y;
+   m[MAT_SZ] =   v[MAT_SZ] * rmesa->depth_scale;
+   m[MAT_TZ] =   v[MAT_TZ] * rmesa->depth_scale;
+}
+
+static void r128Viewport( GLcontext *ctx,
+			  GLint x, GLint y,
+			  GLsizei width, GLsizei height )
+{
+   r128CalcViewport( ctx );
+}
+
+static void r128DepthRange( GLcontext *ctx,
+			    GLclampd nearval, GLclampd farval )
+{
+   r128CalcViewport( ctx );
+}
+
 
 /* =============================================================
  * Miscellaneous
  */
 
 static void r128DDClearColor( GLcontext *ctx,
-			      GLubyte r, GLubyte g, GLubyte b, GLubyte a )
+			      const GLchan color[4] )
 {
    r128ContextPtr rmesa = R128_CONTEXT(ctx);
 
    rmesa->ClearColor = r128PackColor( rmesa->r128Screen->cpp,
-				      r, g, b, a );
-}
-
-static void r128DDColor( GLcontext *ctx,
-			 GLubyte r, GLubyte g, GLubyte b, GLubyte a )
-{
-   r128ContextPtr rmesa = R128_CONTEXT(ctx);
-
-   rmesa->Color = r128PackColor( rmesa->r128Screen->cpp,
-				 r, g, b, a );
+				      color[0], color[1],
+				      color[2], color[3] );
 }
 
 static void r128DDLogicOpCode( GLcontext *ctx, GLenum opcode )
@@ -596,70 +674,38 @@ static void r128DDLogicOpCode( GLcontext *ctx, GLenum opcode )
    if ( ctx->Color.ColorLogicOpEnabled ) {
       FLUSH_BATCH( rmesa );
 
-      if ( opcode == GL_COPY ) {
-         rmesa->Fallback &= ~R128_FALLBACK_LOGICOP;
-      } else {
-         rmesa->Fallback |= R128_FALLBACK_LOGICOP;
-      }
-   } else {
-      rmesa->Fallback &= ~R128_FALLBACK_LOGICOP;
+      FALLBACK( rmesa, R128_FALLBACK_LOGICOP, opcode != GL_COPY );
    }
 }
 
-static GLboolean r128DDSetDrawBuffer( GLcontext *ctx, GLenum mode )
+static void r128DDSetDrawBuffer( GLcontext *ctx, GLenum mode )
 {
    r128ContextPtr rmesa = R128_CONTEXT(ctx);
-   int found = GL_TRUE;
 
    FLUSH_BATCH( rmesa );
 
    if ( rmesa->DrawBuffer != mode ) {
       rmesa->DrawBuffer = mode;
-      rmesa->Fallback &= ~R128_FALLBACK_DRAW_BUFFER;
 
       switch ( mode ) {
       case GL_FRONT_LEFT:
-	 rmesa->drawOffset = rmesa->r128Screen->frontOffset;
-	 rmesa->drawPitch  = rmesa->r128Screen->frontPitch;
+	 rmesa->drawOffset = rmesa->readOffset = rmesa->r128Screen->frontOffset;
+	 rmesa->drawPitch  = rmesa->readPitch  = rmesa->r128Screen->frontPitch;
+	 FALLBACK( rmesa, R128_FALLBACK_DRAW_BUFFER, GL_FALSE );
 	 break;
       case GL_BACK_LEFT:
-	 rmesa->drawOffset = rmesa->r128Screen->backOffset;
-	 rmesa->drawPitch  = rmesa->r128Screen->backPitch;
+	 rmesa->drawOffset = rmesa->readOffset = rmesa->r128Screen->backOffset;
+	 rmesa->drawPitch  = rmesa->readPitch  = rmesa->r128Screen->backPitch;
+	 FALLBACK( rmesa, R128_FALLBACK_DRAW_BUFFER, GL_FALSE );
 	 break;
       default:
-	 rmesa->Fallback |= R128_FALLBACK_DRAW_BUFFER;
-	 found = GL_FALSE;
+	 FALLBACK( rmesa, R128_FALLBACK_DRAW_BUFFER, GL_TRUE );
 	 break;
       }
 
       rmesa->setup.dst_pitch_offset_c = (((rmesa->drawPitch/8) << 21) |
 					 (rmesa->drawOffset >> 5));
       rmesa->new_state |= R128_NEW_WINDOW;
-   }
-
-   return found;
-}
-
-static void r128DDSetReadBuffer( GLcontext *ctx,
-				 GLframebuffer *colorBuffer,
-				 GLenum mode )
-{
-   r128ContextPtr rmesa = R128_CONTEXT(ctx);
-
-   rmesa->Fallback &= ~R128_FALLBACK_READ_BUFFER;
-
-   switch ( mode ) {
-   case GL_FRONT_LEFT:
-      rmesa->readOffset = rmesa->r128Screen->frontOffset;
-      rmesa->readPitch  = rmesa->r128Screen->frontPitch;
-      break;
-   case GL_BACK_LEFT:
-      rmesa->readOffset = rmesa->r128Screen->backOffset;
-      rmesa->readPitch  = rmesa->r128Screen->backPitch;
-      break;
-   default:
-      rmesa->Fallback |= R128_FALLBACK_READ_BUFFER;
-      break;
    }
 }
 
@@ -671,27 +717,40 @@ static void r128DDSetReadBuffer( GLcontext *ctx,
 static void r128DDPolygonStipple( GLcontext *ctx, const GLubyte *mask )
 {
    r128ContextPtr rmesa = R128_CONTEXT(ctx);
-   GLuint *stipple = (GLuint *)mask;
+   GLuint stipple[32], i;
+   drmR128Stipple stippleRec;
 
-   FLUSH_BATCH( rmesa );
-
-   rmesa->setup.dp_gui_master_cntl_c &= ~R128_GMC_BRUSH_NONE;
-
-   if ( ctx->Polygon.StippleFlag && ctx->PB->primitive == GL_POLYGON ) {
-      rmesa->setup.dp_gui_master_cntl_c |= R128_GMC_BRUSH_32x32_MONO_FG_LA;
-   } else {
-      rmesa->setup.dp_gui_master_cntl_c |= R128_GMC_BRUSH_SOLID_COLOR;
+   for (i = 0; i < 32; i++) {
+      stipple[31 - i] = ((mask[i*4+0] << 24) |
+                         (mask[i*4+1] << 16) |
+                         (mask[i*4+2] << 8)  |
+                         (mask[i*4+3]));
    }
 
+   FLUSH_BATCH( rmesa );
    LOCK_HARDWARE( rmesa );
 
-   drmR128PolygonStipple( rmesa->driFd, stipple );
+   stippleRec.mask = stipple;
+   drmCommandWrite( rmesa->driFd, DRM_R128_STIPPLE, 
+                    &stippleRec, sizeof(drmR128Stipple) );
 
    UNLOCK_HARDWARE( rmesa );
 
    rmesa->new_state |= R128_NEW_CONTEXT;
    rmesa->dirty |= R128_UPLOAD_CONTEXT;
 }
+
+
+/* =============================================================
+ * Render mode
+ */
+
+static void r128DDRenderMode( GLcontext *ctx, GLenum mode )
+{
+   r128ContextPtr rmesa = R128_CONTEXT(ctx);
+   FALLBACK( rmesa, R128_FALLBACK_RENDER_MODE, (mode != GL_RENDER) );
+}
+
 
 
 /* =============================================================
@@ -704,7 +763,7 @@ static void r128DDEnable( GLcontext *ctx, GLenum cap, GLboolean state )
 
    if ( R128_DEBUG & DEBUG_VERBOSE_API ) {
       fprintf( stderr, "%s( %s = %s )\n",
-	       __FUNCTION__, gl_lookup_enum_by_nr( cap ),
+	       __FUNCTION__, _mesa_lookup_enum_by_nr( cap ),
 	       state ? "GL_TRUE" : "GL_FALSE" );
    }
 
@@ -718,11 +777,11 @@ static void r128DDEnable( GLcontext *ctx, GLenum cap, GLboolean state )
       FLUSH_BATCH( rmesa );
       rmesa->new_state |= R128_NEW_ALPHA;
 
-      if ( ctx->Color.ColorLogicOpEnabled && ctx->Color.LogicOp != GL_COPY ) {
-	 rmesa->Fallback |= R128_FALLBACK_LOGICOP;
-      } else {
-	 rmesa->Fallback &= ~R128_FALLBACK_LOGICOP;
-      }
+      /* For some reason enable(GL_BLEND) affects ColorLogicOpEnabled.
+       */
+      FALLBACK( rmesa, R128_FALLBACK_LOGICOP,
+		(ctx->Color.ColorLogicOpEnabled &&
+		 ctx->Color.LogicOp != GL_COPY));
       break;
 
    case GL_CULL_FACE:
@@ -760,17 +819,23 @@ static void r128DDEnable( GLcontext *ctx, GLenum cap, GLboolean state )
 
    case GL_COLOR_LOGIC_OP:
       FLUSH_BATCH( rmesa );
-      if ( state && ctx->Color.LogicOp != GL_COPY ) {
-         rmesa->Fallback |= R128_FALLBACK_LOGICOP;
-      } else {
-         rmesa->Fallback &= ~R128_FALLBACK_LOGICOP;
-      }
+      FALLBACK( rmesa, R128_FALLBACK_LOGICOP,
+		state && ctx->Color.LogicOp != GL_COPY );
+      break;
+
+   case GL_LIGHTING:
+      updateSpecularLighting(ctx);
       break;
 
    case GL_SCISSOR_TEST:
       FLUSH_BATCH( rmesa );
       rmesa->scissor = state;
       rmesa->new_state |= R128_NEW_CLIP;
+      break;
+
+   case GL_STENCIL_TEST:
+      FLUSH_BATCH( rmesa );
+      FALLBACK( rmesa, R128_FALLBACK_STENCIL, state );
       break;
 
    case GL_TEXTURE_1D:
@@ -781,9 +846,7 @@ static void r128DDEnable( GLcontext *ctx, GLenum cap, GLboolean state )
       break;
 
    case GL_POLYGON_STIPPLE:
-      if ( (ctx->Driver.TriangleCaps & DD_TRI_STIPPLE) &&
-	   ctx->PB->primitive == GL_POLYGON )
-      {
+      if ( rmesa->render_primitive == GL_TRIANGLES ) {
 	 FLUSH_BATCH( rmesa );
 	 rmesa->setup.dp_gui_master_cntl_c &= ~R128_GMC_BRUSH_NONE;
 	 if ( state ) {
@@ -842,8 +905,8 @@ void r128EmitHwStateLocked( r128ContextPtr rmesa )
 {
    R128SAREAPrivPtr sarea = rmesa->sarea;
    r128_context_regs_t *regs = &(rmesa->setup);
-   r128TexObjPtr t0 = rmesa->CurrentTexObj[0];
-   r128TexObjPtr t1 = rmesa->CurrentTexObj[1];
+   const r128TexObjPtr t0 = rmesa->CurrentTexObj[0];
+   const r128TexObjPtr t1 = rmesa->CurrentTexObj[1];
 
    if ( R128_DEBUG & DEBUG_VERBOSE_MSG ) {
       r128DDPrintDirty( "r128EmitHwStateLocked", rmesa->dirty );
@@ -889,8 +952,8 @@ void r128EmitHwStateLocked( r128ContextPtr rmesa )
       tex->tex_border_color	= t1->setup.tex_border_color;
    }
 
-   sarea->vertsize = rmesa->vertsize;
-   sarea->vc_format = rmesa->vc_format;
+   sarea->vertsize = rmesa->vertex_size;
+   sarea->vc_format = rmesa->vertex_format;
 
    /* Turn off the texture cache flushing */
    rmesa->setup.tex_cntl_c &= ~R128_TEX_CACHE_FLUSH;
@@ -958,80 +1021,16 @@ void r128DDUpdateHWState( GLcontext *ctx )
    }
 }
 
-/* This is called when Mesa switches between rendering triangle
- * primitives (such as GL_POLYGON, GL_QUADS, GL_TRIANGLE_STRIP, etc),
- * and lines, points and bitmaps.
- *
- * As the r128 uses triangles to render lines and points, it is
- * necessary to turn off hardware culling when rendering these
- * primitives.
- */
-static void r128DDReducedPrimitiveChange( GLcontext *ctx, GLenum prim )
+
+static void r128DDInvalidateState( GLcontext *ctx, GLuint new_state )
 {
-   r128ContextPtr rmesa = R128_CONTEXT(ctx);
-   GLuint f = rmesa->setup.pm4_vc_fpu_setup;
-
-   f |= R128_BACKFACE_SOLID | R128_FRONTFACE_SOLID;
-
-   if ( ctx->Polygon.CullFlag && ctx->PB->primitive == GL_POLYGON ) {
-      switch ( ctx->Polygon.CullFaceMode ) {
-      case GL_FRONT:
-	 f &= ~R128_FRONTFACE_SOLID;
-	 break;
-      case GL_BACK:
-	 f &= ~R128_BACKFACE_SOLID;
-	 break;
-      case GL_FRONT_AND_BACK:
-	 f &= ~(R128_BACKFACE_SOLID |
-		R128_FRONTFACE_SOLID);
-	 break;
-      }
-   }
-
-   if ( rmesa->setup.pm4_vc_fpu_setup != f ) {
-      FLUSH_BATCH( rmesa );
-      rmesa->setup.pm4_vc_fpu_setup = f;
-
-      /* NOTE: Only upload the setup state, everything else has been
-       * uploaded by the usual means already.
-       */
-      rmesa->dirty |= R128_UPLOAD_SETUP;
-   }
+   _swrast_InvalidateState( ctx, new_state );
+   _swsetup_InvalidateState( ctx, new_state );
+   _ac_InvalidateState( ctx, new_state );
+   _tnl_InvalidateState( ctx, new_state );
+   R128_CONTEXT(ctx)->NewGLState |= new_state;
 }
 
-
-#define INTERESTED (~(NEW_MODELVIEW |		\
-		      NEW_PROJECTION |		\
-		      NEW_TEXTURE_MATRIX |	\
-		      NEW_USER_CLIP |		\
-		      NEW_CLIENT_STATE))
-
-void r128DDUpdateState( GLcontext *ctx )
-{
-   r128ContextPtr rmesa = R128_CONTEXT(ctx);
-
-   if ( ctx->NewState & INTERESTED ) {
-      r128DDChooseRenderState( ctx );
-      r128DDChooseRasterSetupFunc( ctx );
-   }
-
-   /* Need to do this here to detect texture fallbacks before
-    * setting triangle functions.
-    */
-   if ( rmesa->new_state & R128_NEW_TEXTURE ) {
-      r128DDUpdateHWState( ctx );
-   }
-
-   if ( !rmesa->Fallback ) {
-      ctx->IndirectTriangles &= ~DD_SW_RASTERIZE;
-      ctx->IndirectTriangles |= rmesa->IndirectTriangles;
-
-      ctx->Driver.PointsFunc	= rmesa->PointsFunc;
-      ctx->Driver.LineFunc	= rmesa->LineFunc;
-      ctx->Driver.TriangleFunc	= rmesa->TriangleFunc;
-      ctx->Driver.QuadFunc	= rmesa->QuadFunc;
-   }
-}
 
 
 /* Initialize the context's hardware state.
@@ -1054,35 +1053,26 @@ void r128DDInitState( r128ContextPtr rmesa )
 
    rmesa->ClearColor = 0x00000000;
 
-   switch ( rmesa->glCtx->Visual->DepthBits ) {
+   switch ( rmesa->glCtx->Visual.depthBits ) {
    case 16:
       rmesa->ClearDepth = 0x0000ffff;
-      rmesa->DepthMask = 0xffffffff;
       depth_bpp = R128_Z_PIX_WIDTH_16;
       rmesa->depth_scale = 1.0 / (GLfloat)0xffff;
       break;
    case 24:
       rmesa->ClearDepth = 0x00ffffff;
-      rmesa->DepthMask = 0x00ffffff;
       depth_bpp = R128_Z_PIX_WIDTH_24;
       rmesa->depth_scale = 1.0 / (GLfloat)0xffffff;
       break;
    default:
       fprintf( stderr, "Error: Unsupported depth %d... exiting\n",
-	       rmesa->glCtx->Visual->DepthBits );
+	       rmesa->glCtx->Visual.depthBits );
       exit( -1 );
    }
 
-   rmesa->RenderIndex	= R128_FALLBACK_BIT;
-   rmesa->PointsFunc	= NULL;
-   rmesa->LineFunc	= NULL;
-   rmesa->TriangleFunc	= NULL;
-   rmesa->QuadFunc	= NULL;
-
-   rmesa->IndirectTriangles = 0;
    rmesa->Fallback = 0;
 
-   if ( rmesa->glCtx->Visual->DBflag ) {
+   if ( rmesa->glCtx->Visual.doubleBufferMode ) {
       rmesa->DrawBuffer = GL_BACK_LEFT;
       rmesa->drawOffset = rmesa->readOffset = rmesa->r128Screen->backOffset;
       rmesa->drawPitch  = rmesa->readPitch  = rmesa->r128Screen->backPitch;
@@ -1198,33 +1188,14 @@ void r128DDInitState( r128ContextPtr rmesa )
  */
 void r128DDInitStateFuncs( GLcontext *ctx )
 {
-   ctx->Driver.UpdateState		= r128DDUpdateState;
+   ctx->Driver.UpdateState		= r128DDInvalidateState;
 
    ctx->Driver.ClearIndex		= NULL;
    ctx->Driver.ClearColor		= r128DDClearColor;
-   ctx->Driver.Index			= NULL;
-   ctx->Driver.Color			= r128DDColor;
    ctx->Driver.SetDrawBuffer		= r128DDSetDrawBuffer;
-   ctx->Driver.SetReadBuffer		= r128DDSetReadBuffer;
 
    ctx->Driver.IndexMask		= NULL;
    ctx->Driver.ColorMask		= r128DDColorMask;
-   ctx->Driver.LogicOp			= NULL;
-   ctx->Driver.Dither			= NULL;
-
-   ctx->Driver.NearFar			= NULL;
-
-   ctx->Driver.RenderStart		= r128DDUpdateHWState;
-   ctx->Driver.RenderFinish		= NULL;
-   ctx->Driver.RasterSetup		= NULL;
-
-   ctx->Driver.RenderVBClippedTab	= NULL;
-   ctx->Driver.RenderVBCulledTab	= NULL;
-   ctx->Driver.RenderVBRawTab		= NULL;
-
-   ctx->Driver.ReducedPrimitiveChange	= r128DDReducedPrimitiveChange;
-   ctx->Driver.MultipassFunc		= NULL;
-
    ctx->Driver.AlphaFunc		= r128DDAlphaFunc;
    ctx->Driver.BlendEquation		= r128DDBlendEquation;
    ctx->Driver.BlendFunc		= r128DDBlendFunc;
@@ -1234,7 +1205,6 @@ void r128DDInitStateFuncs( GLcontext *ctx )
    ctx->Driver.FrontFace		= r128DDFrontFace;
    ctx->Driver.DepthFunc		= r128DDDepthFunc;
    ctx->Driver.DepthMask		= r128DDDepthMask;
-   ctx->Driver.DepthRange		= NULL;
    ctx->Driver.Enable			= r128DDEnable;
    ctx->Driver.Fogfv			= r128DDFogfv;
    ctx->Driver.Hint			= NULL;
@@ -1243,11 +1213,29 @@ void r128DDInitStateFuncs( GLcontext *ctx )
    ctx->Driver.LogicOpcode		= r128DDLogicOpCode;
    ctx->Driver.PolygonMode		= NULL;
    ctx->Driver.PolygonStipple		= r128DDPolygonStipple;
+   ctx->Driver.RenderMode		= r128DDRenderMode;
    ctx->Driver.Scissor			= r128DDScissor;
    ctx->Driver.ShadeModel		= r128DDShadeModel;
    ctx->Driver.ClearStencil		= NULL;
    ctx->Driver.StencilFunc		= NULL;
    ctx->Driver.StencilMask		= NULL;
    ctx->Driver.StencilOp		= NULL;
-   ctx->Driver.Viewport			= NULL;
+
+   ctx->Driver.DepthRange               = r128DepthRange;
+   ctx->Driver.Viewport                 = r128Viewport;
+
+   /* Pixel path fallbacks.
+    */
+   ctx->Driver.Accum = _swrast_Accum;
+   ctx->Driver.Bitmap = _swrast_Bitmap;
+   ctx->Driver.CopyPixels = _swrast_CopyPixels;
+   ctx->Driver.DrawPixels = _swrast_DrawPixels;
+   ctx->Driver.ReadPixels = _swrast_ReadPixels;
+
+   /* Swrast hooks for imaging extensions:
+    */
+   ctx->Driver.CopyColorTable = _swrast_CopyColorTable;
+   ctx->Driver.CopyColorSubTable = _swrast_CopyColorSubTable;
+   ctx->Driver.CopyConvolutionFilter1D = _swrast_CopyConvolutionFilter1D;
+   ctx->Driver.CopyConvolutionFilter2D = _swrast_CopyConvolutionFilter2D;
 }

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vgahw/vgaHW.h,v 1.29 2001/12/12 00:12:48 mvojkovi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vgahw/vgaHW.h,v 1.31 2002/04/04 14:05:56 eich Exp $ */
 
 
 /*
@@ -21,6 +21,7 @@
 #include "colormapst.h"
 
 #include "xf86str.h"
+#include "xf86Pci.h"
 
 #include "xf86DDC.h"
 
@@ -152,30 +153,16 @@ typedef struct _vgaHWRec {
     vgaHWWriteProcPtr		writeDacData;
     vgaHWReadProcPtr		readDacData;
     pointer                     ddc;
-    int				PIOOffset;	/* offset + vgareg
+    IOADDRESS			PIOOffset;	/* offset + vgareg
 						   = pioreg */
     vgaHWReadProcPtr		readEnable;
     vgaHWWriteProcPtr		writeEnable;
+    PCITAG			Tag;
 } vgaHWRec;
 
 /* Some macros that VGA drivers can use in their ChipProbe() function */
 #define VGAHW_GET_IOBASE()	((inb(VGA_MISC_OUT_R) & 0x01) ?		      \
 					 VGA_IOBASE_COLOR : VGA_IOBASE_MONO)
-
-#define VGAHW_UNLOCK(base)	do {					      \
-				  unsigned char tmp;			      \
-				  outb((base) + VGA_CRTC_INDEX_OFFSET, 0x11); \
-				  tmp = inb((base) + VGA_CRTC_DATA_OFFSET);   \
-				  outb((base) + VGA_CRTC_DATA_OFFSET,	      \
-					tmp | 0x80);			      \
-				} while (0)
-#define VGAHW_LOCK(base)	do {					      \
-				  unsigned char tmp;			      \
-				  outb((base) + VGA_CRTC_INDEX_OFFSET, 0x11); \
-				  tmp = inb((base) + VGA_CRTC_DATA_OFFSET);   \
-				  outb((base) + VGA_CRTC_DATA_OFFSET,	      \
-					tmp & ~0x80);			      \
-				} while (0)
 
 #define OVERSCAN 0x11		/* Index of OverScan register */
 
@@ -183,7 +170,8 @@ typedef struct _vgaHWRec {
 #define KGA_FIX_OVERSCAN  1   /* overcan correction required */
 #define KGA_ENABLE_ON_ZERO 2  /* if possible enable display at beginning */
                               /* of next scanline/frame                  */
-
+#define KGA_BE_TOT_DEC 4      /* always fix problem by setting blank end */
+			      /* to total - 1                            */
 #define BIT_PLANE 3		/* Which plane we write to in mono mode */
 #define BITS_PER_GUN 6
 #define COLORMAP_SIZE 256
@@ -191,10 +179,10 @@ typedef struct _vgaHWRec {
 #if defined(__powerpc__)
 #define DACDelay(hw) /* No legacy VGA support */
 #else
-#define DACDelay(hw)							     \
-	do {								     \
-	    unsigned char temp = inb((hw)->IOBase + VGA_IN_STAT_1_OFFSET);   \
-	    temp = inb((hw)->IOBase + VGA_IN_STAT_1_OFFSET);		     \
+#define DACDelay(hw)							      \
+	do {								      \
+	    (void)inb((hw)->PIOOffset + (hw)->IOBase + VGA_IN_STAT_1_OFFSET); \
+	    (void)inb((hw)->PIOOffset + (hw)->IOBase + VGA_IN_STAT_1_OFFSET); \
 	} while (0)
 #endif
 

@@ -41,7 +41,7 @@ interest in or to any trademark, service mark, logo or trade name of
 Sun Microsystems, Inc. or its licensors is granted.
 
 */
-/* $XFree86: xc/lib/X11/XDefaultOMIF.c,v 1.2 2001/11/19 15:33:38 tsi Exp $ */
+/* $XFree86: xc/lib/X11/XDefaultOMIF.c,v 1.3 2002/09/18 17:11:42 tsi Exp $ */
 
 #include "Xlibint.h"
 #include "Xlcint.h"
@@ -689,7 +689,7 @@ static Bool
 wcs_to_mbs(oc, to, from, length)
     XOC oc;
     char *to;
-    wchar_t *from;
+    _Xconst wchar_t *from;
     int length;
 {
     XlcConv conv = XOC_GENERIC(oc)->wcs_to_cs;

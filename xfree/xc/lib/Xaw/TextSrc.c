@@ -25,7 +25,7 @@ in this Software without prior written authorization from The Open Group.
 
 */
 
-/* $XFree86: xc/lib/Xaw/TextSrc.c,v 1.30.2.1 2002/07/04 17:07:10 paulo Exp $ */
+/* $XFree86: xc/lib/Xaw/TextSrc.c,v 1.34 2002/09/22 07:09:05 paulo Exp $ */
 
 /*
  * Author:  Chris Peterson, MIT X Consortium.
@@ -1770,6 +1770,10 @@ XawTextSourceAddEntity(Widget w, int type, int flags, XtPointer data,
     XawTextAnchor *next, *anchor = _XawTextSourceFindAnchor(w, position);
     XawTextEntity *entity, *eprev;
 
+    /* There is no support for zero length entities for now */
+    if (length == 0)
+	return (NULL);
+
     if (anchor->cache && anchor->position + anchor->cache->offset +
 	anchor->cache->length <= position)
 	eprev = entity = anchor->cache;
@@ -1819,6 +1823,15 @@ XawTextSourceAddEntity(Widget w, int type, int flags, XtPointer data,
 					       length, property));
 	    }
 	}
+    }
+
+    /* Automatically join sequential entities if possible */
+    if (eprev &&
+	anchor->position + eprev->offset + eprev->length == position &&
+	eprev->property == property && eprev->type == type &&
+	eprev->flags == flags && eprev->data == data) {
+	eprev->length += length;
+	return (eprev);
     }
 
     entity = XtNew(XawTextEntity);

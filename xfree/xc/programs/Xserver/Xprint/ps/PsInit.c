@@ -73,7 +73,7 @@ in this Software without prior written authorization from The Open Group.
 **    *********************************************************
 **
 ********************************************************************/
-/* $XFree86: xc/programs/Xserver/Xprint/ps/PsInit.c,v 1.12 2001/12/14 19:59:16 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/Xprint/ps/PsInit.c,v 1.13 2002/10/16 21:13:33 dawes Exp $ */
 
 #include <stdio.h>
 #include <string.h>
@@ -228,7 +228,7 @@ InitializePsDriver(ndx, pScreen, argc, argv)
 static void
 AllocatePsPrivates(ScreenPtr pScreen)
 {
-  static long PsGeneration = -1;
+  static unsigned long PsGeneration = 0;
 
   if((unsigned long)PsGeneration != serverGeneration)
   {

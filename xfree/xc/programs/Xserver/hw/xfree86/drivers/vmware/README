@@ -1,5 +1,5 @@
 
-Copyright (C) 1999-2001 VMware, Inc.
+Copyright (C) 1999-2002 VMware, Inc.
 All Rights Reserved
 
 The code here may be used/distributed under the terms of the standard
@@ -254,6 +254,8 @@ table shows which capability indicates support for which command.
     SVGA_CMD_DISPLAY_CURSOR		SVGA_CAP_CURSOR
     SVGA_CMD_MOVE_CURSOR		SVGA_CAP_CURSOR
     SVGA_CMD_DEFINE_ALPHA_CURSOR	SVGA_CAP_ALPHA_CURSOR
+    SVGA_CMD_DRAW_GLYPH                 SVGA_CAP_GLYPH
+    SVGA_CMD_DRAW_GLYPH_CLIPPED         SVGA_CAP_GLYPH_CLIPPING
 
 Note:  SVGA_CMD_DISPLAY_CURSOR and SVGA_CMD_MOVE_CURSOR should not be used.
 Drivers wishing hardware cursor support should use cursor bypass (see below).
@@ -289,6 +291,19 @@ Other capabilities indicate other functionality as described below:
 	SVGA_REG_HOST_BITS_PER_PIXEL and a driver should assume
 	SVGA_REG_BITS_PER_PIXEL is both read-only and initialized to the only
 	available value if SVGA_CAP_8BIT_EMULATION is not set.
+        
+    SVGA_CAP_OFFSCREEN_1
+        SVGA_CMD_RECT_FILL, SVGA_CMD_RECT_COPY, SVGA_CMD_RECT_ROP_FILL,
+        SVGA_CMD_RECT_ROP_COPY can operate with a source or destination (or
+        both) in offscreen memory. 
+        
+        Usable offscreen memory is a rectangle located below the last scanline
+        of the visible memory:
+        x1 = 0
+        y1 = (SVGA_REG_FB_SIZE + SVGA_REG_BYTES_PER_LINE - 1) / 
+             SVGA_REG_BYTES_PER_LINE
+        x2 = SVGA_REG_BYTES_PER_LINE / SVGA_REG_DEPTH
+        y2 = SVGA_REG_VRAM_SIZE / SVGA_REG_BYTES_PER_LINE
 
 
 Cursor Handling
@@ -351,6 +366,8 @@ Version 10.4 - The version that knows about SVGA_CAP_CURSOR_BYPASS2
 Version 10.5 - [Never released or well defined]
 Version 10.6 - The version that knows about SVGA_CAP_8BIT_EMULATION
 Version 10.7 - The version that knows about SVGA_CAP_ALPHA_CURSOR
+Version 10.8 - The version that knows about SVGA_CAP_GLYPH
+Version 10.9 - The version that knows about SVGA_CAP_OFFSCREEN_1
 
 Note that this is merely the convention used by SVGA drivers written and
 maintained by VMware, Inc. and describes the capabilities of the driver, not
@@ -512,4 +529,14 @@ even in window mode), or else a software cursor.  Newer version of the virtual
 SVGA hardware will never put the hardware cursor in the framebuffer while in
 window mode, so everything will appear to work correctly there.
 
-$XFree86: xc/programs/Xserver/hw/xfree86/drivers/vmware/README,v 1.4 2001/12/17 20:52:35 dawes Exp $
+
+8. Why do my accelerated glyphs look funny?  OR  Why does the fifo complain
+about invalid commands when I draw accelerated glyphs?
+
+The bitmap data passed to SVGA_CMD_DRAW_GLYPH_* must not have any per-scanline
+alignment.  If there are any remaining bits left in the last byte of a scanline,
+the first bits of the next scanline should use them.  
+
+The bitmap data as a whole must be 4 byte aligned.
+
+$XFree86: xc/programs/Xserver/hw/xfree86/drivers/vmware/README,v 1.5 2002/10/16 22:12:53 alanh Exp $

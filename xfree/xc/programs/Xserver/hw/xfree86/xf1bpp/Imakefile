@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/xf1bpp/Imakefile,v 1.5 1999/08/14 10:50:15 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/xf1bpp/Imakefile,v 1.6 2002/05/31 18:46:03 dawes Exp $
 
 #define IHaveModules
 #include <Server.tmpl>
@@ -109,9 +109,7 @@ ObjectFromSpecialSource(mfbtileG,mfbtile,-DMROP=0)
 
 InstallLibraryModule(xf1bpp,$(MODULEDIR),.)
 
-#ifndef OS2Architecture
 DependTarget()
-#endif
 
 InstallDriverSDKLibraryModule(xf1bpp,$(DRIVERSDKMODULEDIR),.)
 

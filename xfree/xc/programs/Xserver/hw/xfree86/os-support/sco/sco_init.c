@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/sco/sco_init.c,v 3.12 2001/06/30 22:41:49 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/sco/sco_init.c,v 3.14 2002/11/20 23:00:44 dawes Exp $ */
 /*
  * Copyright 2001 by J. Kean Johnston <jkj@sco.com>
  *
@@ -38,7 +38,7 @@ static int VTnum = -1;
 static char *vtdevice = NULL;
 static int sco_console_mode = -1;
 
-Bool mpxLock = TRUE;
+extern Bool mpxLock;
 
 void
 xf86OpenConsole()
@@ -228,6 +228,14 @@ xf86CloseConsole()
   struct vt_mode VT;
   struct sigaction sigvtsw;
 
+  /* Set text mode (possibly briefly) */
+  ioctl(xf86Info.consoleFd, KDSETMODE, KD_TEXT0);
+
+  /* Restore the original mode */
+  if (sco_console_mode != -1) {
+      ioctl(xf86Info.consoleFd, MODESWITCH | sco_console_mode, 0L);
+  }
+
   ioctl(xf86Info.consoleFd, VT_RELDISP, 1);     /* Release the display */
 
   sigvtsw.sa_handler = SIG_DFL;
@@ -242,14 +250,6 @@ xf86CloseConsole()
   VT.acqsig = SIGUSR1;
   VT.frsig  = SIGINT;
   ioctl(xf86Info.consoleFd, VT_SETMODE, &VT); /* Revert to auto handling */
-
-  /* Set text mode (possibly briefly) */
-  ioctl(xf86Info.consoleFd, KDSETMODE, KD_TEXT0);
-
-  /* Restore the original mode */
-  if (sco_console_mode != -1) {
-      ioctl(xf86Info.consoleFd, MODESWITCH | sco_console_mode, 0L);
-  }
 
   close(xf86Info.consoleFd); /* We're done with the device */
 }

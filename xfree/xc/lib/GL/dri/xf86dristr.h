@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/dri/xf86dristr.h,v 1.9 2001/03/21 16:01:08 dawes Exp $ */
+/* $XFree86: xc/lib/GL/dri/xf86dristr.h,v 1.10 2002/10/30 12:51:25 alanh Exp $ */
 /**************************************************************************
 
 Copyright 1998-1999 Precision Insight, Inc., Cedar Park, Texas.
@@ -30,7 +30,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 /*
  * Authors:
  *   Kevin E. Martin <martin@valinux.com>
- *   Jens Owen <jens@valinux.com>
+ *   Jens Owen <jens@tungstengraphics.com>
  *   Rickard E. (Rik) Fiath <faith@valinux.com>
  *
  */
@@ -42,8 +42,17 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #define XF86DRINAME "XFree86-DRI"
 
-#define XF86DRI_MAJOR_VERSION	4	/* current version numbers */
-#define XF86DRI_MINOR_VERSION	0
+/* The DRI version number.  This was originally set to be the same of the
+ * XFree86 version number.  However, this version is really indepedent of
+ * the XFree86 version.
+ *
+ * Version History:
+ *    4.0.0: Original
+ *    4.0.1: Patch to bump clipstamp when windows are destroyed, 28 May 02
+ *    4.1.0: Add transition from single to multi in DRMInfo rec, 24 Jun 02
+ */
+#define XF86DRI_MAJOR_VERSION	4
+#define XF86DRI_MINOR_VERSION	1
 #define XF86DRI_PATCH_VERSION	0
 
 typedef struct _XF86DRIQueryVersion {

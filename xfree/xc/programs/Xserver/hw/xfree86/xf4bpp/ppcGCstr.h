@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xf4bpp/ppcGCstr.h,v 1.2 1998/07/25 16:59:34 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xf4bpp/ppcGCstr.h,v 1.3 2003/02/18 21:29:59 tsi Exp $ */
 /*
  * Copyright IBM Corporation 1987,1988,1989
  *
@@ -46,6 +46,7 @@ SOFTWARE.
 /* $XConsortium: ppcGCstr.h /main/3 1996/02/21 17:57:42 kaleb $ */
 
 #include "gc.h"
+#include "mfb.h"
 
 typedef struct {
     unsigned long	planemask ;
@@ -67,7 +68,7 @@ typedef struct {
     unsigned char	ropOpStip ;	/* rop for opaque stipple */
     unsigned char	ropFillArea ;	/*  == alu, rop, or ropOpStip */
     unsigned char	unused[sizeof(long) - 3];
-    void 	(* FillArea)() ;		/* fills regions; look at the code */
+    mfbFillAreaProcPtr 	FillArea;	/* fills regions; look at the code */
 /* ----- END OF "DO-NOT-CHANGE" REGION ----- */
     ppcReducedRrop	colorRrop ;
     short lastDrawableType ;	/* was last drawable a window or a pixmap? */

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/rendition/rendition.c,v 1.46 2001/11/08 04:15:32 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/rendition/rendition.c,v 1.50 2002/10/08 22:14:10 tsi Exp $ */
 /*
  * Copyright (C) 1998 The XFree86 Project, Inc.  All Rights Reserved.
  *
@@ -42,7 +42,6 @@
  */
 #define USE_ACCEL 0
 
-
 /*
  * includes 
  */
@@ -55,9 +54,7 @@
 
 #include "vtypes.h"
 #include "vboard.h"
-#include "vmisc.h"
 #include "vmodes.h"
-#include "vvga.h"
 #include "accel.h"
 #include "vramdac.h"
 #include "rendition_shadow.h"
@@ -96,10 +93,11 @@ static void       renditionFreeScreen(int, int);
 static ModeStatus renditionValidMode(int, DisplayModePtr, Bool, int);
 static Bool renditionMapMem(ScrnInfoPtr pScreenInfo);
 static Bool renditionUnmapMem(ScrnInfoPtr pScreenInfo);
-
+#if 0
 static xf86MonPtr renditionDDC(ScrnInfoPtr pScreenInfo);
 static unsigned int renditionDDC1Read (ScrnInfoPtr pScreenInfo);
-static void renditionProbeDDC(ScrnInfoPtr pScrn, int index);
+#endif
+static xf86MonPtr renditionProbeDDC(ScrnInfoPtr pScrn, int index);
 
 static void renditionLoadPalette(ScrnInfoPtr, int, int *, LOCO *, VisualPtr);
 
@@ -342,30 +340,32 @@ renditionProbe(DriverPtr drv, int flags)
 }
 
 
-
+#if 0
 static Bool
 renditionClockSelect(ScrnInfoPtr pScreenInfo, int ClockNumber)
 {
+        vgaHWPtr pvgaHW = VGAHWPTR(pScreenInfo);
         static CARD8 save_misc;
 
         switch (ClockNumber)
         {
             case CLK_REG_SAVE:
-                save_misc = inb(0x3CC);
+                save_misc = inb(pvgaHW->PIOOffset + VGA_MISC_OUT_R);
                 break;
 
             case CLK_REG_RESTORE:
-                outb(0x3C2, save_misc);
+                outb(pvgaHW->PIOOffset + VGA_MISC_OUT_W, save_misc);
                 break;
 
             default:
-                outb(0x3C2, (save_misc & 0xF3) | ((ClockNumber << 2) & 0x0C));
+                outb(pvgaHW->PIOOffset + VGA_MISC_OUT_W,
+		     (save_misc & 0xF3) | ((ClockNumber << 2) & 0x0C));
                 break;
         }
 
     return TRUE;
 }
-
+#endif
 
 static renditionPtr
 renditionGetRec(ScrnInfoPtr pScreenInfo)
@@ -405,7 +405,7 @@ renditionFreeRec(ScrnInfoPtr pScreenInfo)
 #endif
 }
 
-
+#if 0
 static void
 renditionProtect(ScrnInfoPtr pScreenInfo, Bool On)
 {
@@ -421,7 +421,7 @@ renditionProtect(ScrnInfoPtr pScreenInfo, Bool On)
     sleep(1);
 #endif
 }
-
+#endif
 
 static Bool
 renditionSaveScreen(ScreenPtr pScreen, int mode)
@@ -434,6 +434,7 @@ renditionSaveScreen(ScreenPtr pScreen, int mode)
     return vgaHWSaveScreen(pScreen, mode);
 }
 
+#if 0
 static void
 renditionBlankScreen(ScrnInfoPtr pScreenInfo, Bool Unblank)
 {
@@ -448,12 +449,14 @@ renditionBlankScreen(ScrnInfoPtr pScreenInfo, Bool Unblank)
     sleep(1);
 #endif
 }
+#endif
 
 
 /*
  * This function is called once for each screen at the start of the first
  * server generation to initialise the screen for all server generations.
  */
+
 static Bool
 renditionPreInit(ScrnInfoPtr pScreenInfo, int flags)
 {
@@ -484,7 +487,8 @@ renditionPreInit(ScrnInfoPtr pScreenInfo, int flags)
 	return FALSE;
 
     if (flags & PROBE_DETECT) {
-        renditionProbeDDC(pScreenInfo, pRendition->pEnt->index);
+        ConfiguredMonitor = 
+	    renditionProbeDDC(pScreenInfo, pRendition->pEnt->index);
         return TRUE;
     }
 
@@ -511,13 +515,7 @@ renditionPreInit(ScrnInfoPtr pScreenInfo, int flags)
      * XXX This could be refined if some VGA memory resources are not
      * decoded in operating mode.
      */
-    {
-        resRange vgamem[] =     { {ResShrMemBlock,0xA0000,0xAFFFF},
-                                  {ResShrMemBlock,0xB0000,0xB7FFF},
-                                  {ResShrMemBlock,0xB8000,0xBFFFF},
-                                  _END };
-        xf86SetOperatingState(vgamem, pRendition->pEnt->index, ResUnusedOpr);
-    }
+    xf86SetOperatingState(resVgaMem, pRendition->pEnt->index, ResUnusedOpr);
 
     if (xf86RegisterResources(pRendition->pEnt->index, NULL, ResExclusive))
          return FALSE;
@@ -601,8 +599,20 @@ renditionPreInit(ScrnInfoPtr pScreenInfo, int flags)
       renditionClockRange.clockIndex = -1;
     }
 
+    /***********************************************/
+    /* ensure vgahw private structure is allocated */
+
+    if (!vgaHWGetHWRec(pScreenInfo))
+        return FALSE;
+
+    pvgaHW = VGAHWPTR(pScreenInfo);
+    pvgaHW->MapSize = 0x00010000;       /* Standard 64kB VGA window */
+    vgaHWGetIOBase(pvgaHW);             /* Get VGA I/O base */
+
     pRendition->board.accel=0;
-    pRendition->board.io_base=pRendition->PciInfo->ioBase[1];
+    pRendition->board.vgaio_base = pvgaHW->PIOOffset;
+    pRendition->board.io_base =
+	pRendition->board.vgaio_base + pRendition->PciInfo->ioBase[1];
     pRendition->board.mmio_base=0;
     pRendition->board.vmmio_base=0;
     pRendition->board.mem_size=0;
@@ -622,40 +632,28 @@ renditionPreInit(ScrnInfoPtr pScreenInfo, int flags)
     /* XXX Is this still true?  If so, the wrong base is being checked */
     xf86DrvMsg(pScreenInfo->scrnIndex, X_PROBED,
 	       "Rendition %s @ %x/%x\n",
-	       renditionChipsets[pRendition->board.chip==V1000_DEVICE ? 0:1].name,
-	       pRendition->board.io_base,
-	       pRendition->board.mem_base);
+	       renditionChipsets[pRendition->board.chip==V1000_DEVICE ? 0:1]
+	       .name,
+	       pRendition->PciInfo->ioBase[1],
+	       pRendition->PciInfo->memBase[0]);
 
     /* First of all get a "clean" starting state */
     verite_resetboard(pScreenInfo);
-    /* determine video ram -- to do so, we assume a full size memory of 16M,
-     * then map it and use verite_getmemorysize() to determine the real amount of
-     * memory */
-    pScreenInfo->videoRam=pRendition->board.mem_size=16<<20;
-    renditionMapMem(pScreenInfo);
-    videoRam=verite_getmemorysize(pScreenInfo)>>10;
 
-    /* Unmapping delayed until after micrcode loading */
-      /****************************************/
-      /* Reserv memory and load the microcode */
-      /****************************************/
-#if USE_ACCEL
-    if (!xf86ReturnOptValBool(pRendition->Options, OPTION_NOACCEL,0)) {
-      RENDITIONAccelPreInit (pScreenInfo);
-    }
-    else
-      xf86DrvMsg(pScreenInfo->scrnIndex, X_CONFIG,
-		 ("Skipping acceleration on users request\n"));
-#else
-    xf86DrvMsg(pScreenInfo->scrnIndex, X_WARNING,
-	       ("Skipping acceleration\n"));
-#endif
+    /* determine video ram -- to do so, we assume a full size memory of 16M,
+     * then map it and use verite_getmemorysize() to determine the real 
+     * amount of memory */
+    pScreenInfo->videoRam = 16<<10;
+    pRendition->board.mem_size = pScreenInfo->videoRam * 1024;
+    renditionMapMem(pScreenInfo);
+
+    videoRam=verite_getmemorysize(pScreenInfo)>>10;
+    renditionUnmapMem(pScreenInfo);
 
     From = X_PROBED;
     xf86DrvMsg(pScreenInfo->scrnIndex, From, "videoRam: %d kBytes\n", videoRam);
     pScreenInfo->videoRam=videoRam;
-    pRendition->board.mem_size=videoRam;
-
+    pRendition->board.mem_size=videoRam * 1024;
 
     /* Load the needed symbols */
 
@@ -666,43 +664,44 @@ renditionPreInit(ScrnInfoPtr pScreenInfo, int flags)
 
     pRendition->board.shadowfb=TRUE;
 
-    if ((in_string = xf86GetOptValString(pRendition->Options, OPTION_ROTATE))) {
-      if(!xf86NameCmp(in_string, "CW")) {
-	/* accel is disabled below for shadowFB */
-	pRendition->board.shadowfb = TRUE;
-	pRendition->board.rotate = 1;
-	xf86DrvMsg(pScreenInfo->scrnIndex, X_CONFIG,
-		   "Rotating screen clockwise - acceleration disabled\n");
-      } else if(!xf86NameCmp(in_string, "CCW")) {
-	pRendition->board.shadowfb = TRUE;
-	pRendition->board.rotate = -1;
-	xf86DrvMsg(pScreenInfo->scrnIndex, X_CONFIG,  "Rotating screen "
-		   "counter clockwise - acceleration disabled\n");
-      } else {
-	xf86DrvMsg(pScreenInfo->scrnIndex, X_CONFIG, "\"%s\" is not a valid"
-		   "value for Option \"Rotate\"\n", in_string);
-	xf86DrvMsg(pScreenInfo->scrnIndex, X_INFO,
-		   "Valid options are \"CW\" or \"CCW\"\n");
-      }
+    if ((in_string = xf86GetOptValString(pRendition->Options, OPTION_ROTATE))){
+	if(!xf86NameCmp(in_string, "CW")) {
+	    /* accel is disabled below for shadowFB */
+	    pRendition->board.shadowfb = TRUE;
+	    pRendition->board.rotate = 1;
+	    xf86DrvMsg(pScreenInfo->scrnIndex, X_CONFIG,
+		       "Rotating screen clockwise - acceleration disabled\n");
+	} else if(!xf86NameCmp(in_string, "CCW")) {
+	    pRendition->board.shadowfb = TRUE;
+	    pRendition->board.rotate = -1;
+	    xf86DrvMsg(pScreenInfo->scrnIndex, X_CONFIG,  "Rotating screen "
+		       "counter clockwise - acceleration disabled\n");
+	} else {
+	    xf86DrvMsg(pScreenInfo->scrnIndex, X_CONFIG, 
+		       "\"%s\" is not a valid value for Option \"Rotate\"\n",
+		       in_string);
+	    xf86DrvMsg(pScreenInfo->scrnIndex, X_INFO,
+		       "Valid options are \"CW\" or \"CCW\"\n");
+	}
     }
-
+    
     if (xf86ReturnOptValBool(pRendition->Options, OPTION_SHADOW_FB,1)||
 	pRendition->board.rotate) {
-      if (!xf86LoadSubModule(pScreenInfo, "shadowfb")) {
-	xf86DrvMsg(pScreenInfo->scrnIndex, X_WARNING,
-	 "Oops, \"ShadowFB\" module loading failed, disabling ShadowFB!\n");
-      }
-      else{
-	xf86LoaderReqSymLists(shadowfbSymbols, NULL);
-	pRendition->board.shadowfb=TRUE;
-	xf86DrvMsg(pScreenInfo->scrnIndex, X_INFO,
-		   "Using \"Shadow Framebuffer\"\n");
-      }
+	if (!xf86LoadSubModule(pScreenInfo, "shadowfb")) {
+	    xf86DrvMsg(pScreenInfo->scrnIndex, X_WARNING,
+		       "Oops, \"ShadowFB\" module loading failed, disabling ShadowFB!\n");
+	}
+	else{
+	    xf86LoaderReqSymLists(shadowfbSymbols, NULL);
+	    pRendition->board.shadowfb=TRUE;
+	    xf86DrvMsg(pScreenInfo->scrnIndex, X_INFO,
+		       "Using \"Shadow Framebuffer\"\n");
+	}
     }
     else {
-      pRendition->board.shadowfb=FALSE;
-      xf86DrvMsg(pScreenInfo->scrnIndex, X_CONFIG,
-		 "\"Shadow Framebuffer\" disabled\n");
+	pRendition->board.shadowfb=FALSE;
+	xf86DrvMsg(pScreenInfo->scrnIndex, X_CONFIG,
+		   "\"Shadow Framebuffer\" disabled\n");
     }
 
 
@@ -714,17 +713,6 @@ renditionPreInit(ScrnInfoPtr pScreenInfo, int flags)
       }
       xf86LoaderReqSymLists(ramdacSymbols, NULL);
     }
-
-#if USE_ACCEL
-    /* Load XAA if needed */
-    if (!xf86ReturnOptValBool(pRendition->Options, OPTION_NOACCEL,0) &&
-	!pRendition->board.rotate) {
-      if (!xf86LoadSubModule(pScreenInfo, "xaa")) {
-	return FALSE;
-      }
-      xf86LoaderReqSymLists(xaaSymbols, NULL);
-    }
-#endif
 
 #if 0
     /* Load DDC module if needed */
@@ -750,8 +738,11 @@ renditionPreInit(ScrnInfoPtr pScreenInfo, int flags)
 		   ("Loading of DDC library failed, skipping DDC-probe\n"));
       }
       else {
-	xf86LoaderReqSymLists(vbeSymbols, NULL);
-        renditionProbeDDC(pScreenInfo, pRendition->pEnt->index);
+	  xf86MonPtr mon;
+	  xf86LoaderReqSymLists(vbeSymbols, NULL);
+	  mon = renditionProbeDDC(pScreenInfo, pRendition->pEnt->index);
+	  xf86PrintEDID(mon);
+	  xf86SetDDCproperties(pScreenInfo, mon);
       }
     }
     else {
@@ -759,16 +750,6 @@ renditionPreInit(ScrnInfoPtr pScreenInfo, int flags)
 		 ("Skipping DDC probe on users request\n"));
     }
 #endif
-
-    /***********************************************/
-    /* ensure vgahw private structure is allocated */
-
-    if (!vgaHWGetHWRec(pScreenInfo))
-        return FALSE;
-
-    pvgaHW = VGAHWPTR(pScreenInfo);
-    pvgaHW->MapSize = 0x00010000;       /* Standard 64kB VGA window */
-    vgaHWGetIOBase(pvgaHW);             /* Get VGA I/O base */
 
     /*
      * Determine clocks.  Limit them to the first four because that's all that
@@ -787,8 +768,10 @@ renditionPreInit(ScrnInfoPtr pScreenInfo, int flags)
     }
     else
     {
-        xf86GetClocks(pScreenInfo, 4, renditionClockSelect, renditionProtect,
-            renditionBlankScreen, VGAHW_GET_IOBASE() + 0x0A, 0x08, 1, 28322);
+        xf86GetClocks(pScreenInfo, 4,
+	    renditionClockSelect, renditionProtect, renditionBlankScreen,
+	    pvgaHW->PIOOffset + pvgaHW->IOBase + VGA_IN_STAT_1_OFFSET,
+	    0x08, 1, 28322);
         From = X_PROBED;
     }
     xf86ShowClocks(pScreenInfo, From);
@@ -849,7 +832,31 @@ renditionPreInit(ScrnInfoPtr pScreenInfo, int flags)
       xf86DrvMsg(pScreenInfo->scrnIndex, X_CONFIG,
 		 "Software cursor selected\n");
 
-    renditionUnmapMem(pScreenInfo);
+    /* Unmapping delayed until after micrcode loading */
+      /****************************************/
+      /* Reserve memory and load the microcode */
+      /****************************************/
+#if USE_ACCEL
+    if (!xf86ReturnOptValBool(pRendition->Options, OPTION_NOACCEL,0) &&
+	!pRendition->board.shadowfb) {
+	/* Load XAA if needed */
+	if (xf86LoadSubModule(pScreenInfo, "xaa")) {
+	    xf86LoaderReqSymLists(xaaSymbols, NULL);
+	    renditionMapMem(pScreenInfo);
+  	    RENDITIONAccelPreInit (pScreenInfo);
+	    renditionUnmapMem(pScreenInfo);
+	    pRendition->board.accel = TRUE;
+	} else     xf86DrvMsg(pScreenInfo->scrnIndex, X_WARNING,
+			      ("XAA module not found: "
+			       "Skipping acceleration\n"));
+    }
+    else
+      xf86DrvMsg(pScreenInfo->scrnIndex, X_CONFIG,
+		 ("Skipping acceleration on users request\n"));
+#else
+    xf86DrvMsg(pScreenInfo->scrnIndex, X_WARNING,
+	       ("Skipping acceleration\n"));
+#endif
 
 #ifdef DEBUG
     ErrorF("PreInit OK...!!!!\n");
@@ -876,7 +883,7 @@ renditionSave(ScrnInfoPtr pScreenInfo)
 #endif
 }
 
-
+#if 0
 /* Restore the mode that was saved on server entry */
 static void
 renditionRestore(ScrnInfoPtr pScreenInfo)
@@ -897,7 +904,7 @@ renditionRestore(ScrnInfoPtr pScreenInfo)
     sleep(1);
 #endif
 }
-
+#endif
 
 /* Set a graphics mode */
 static Bool
@@ -913,6 +920,7 @@ renditionSetMode(ScrnInfoPtr pScreenInfo, DisplayModePtr pMode)
 #endif
 
     pvgaHW = VGAHWPTR(pScreenInfo);
+
     /* construct a modeinfo for the verite_setmode function */
     modeinfo->clock=pMode->SynthClock;
     modeinfo->hdisplay=pMode->HDisplay;
@@ -925,10 +933,10 @@ renditionSetMode(ScrnInfoPtr pScreenInfo, DisplayModePtr pMode)
     modeinfo->vsyncend=pMode->VSyncEnd;
     modeinfo->vtotal=pMode->VTotal;
 
-    modeinfo->screenwidth=pMode->HDisplay;
-    modeinfo->virtualwidth=pScreenInfo->virtualX&0xfff8;
-    modeinfo->screenheight=pMode->VDisplay;
-    modeinfo->virtualheight=pScreenInfo->virtualY&0xfff8;
+    modeinfo->screenwidth = pMode->HDisplay;
+    modeinfo->virtualwidth = pScreenInfo->virtualX & 0xfff8;
+    modeinfo->screenheight = pMode->VDisplay;
+    modeinfo->virtualheight = pScreenInfo->virtualY & 0xfff8;
 
     if ((pMode->Flags&(V_PHSYNC|V_NHSYNC)) 
         && (pMode->Flags&(V_PVSYNC|V_NVSYNC))) {
@@ -990,64 +998,23 @@ renditionSetMode(ScrnInfoPtr pScreenInfo, DisplayModePtr pMode)
     return TRUE;
 }
 
-
-static Bool
-renditionEnterGraphics(ScreenPtr pScreen, ScrnInfoPtr pScreenInfo)
-{
-    vgaHWPtr pvgaHW = VGAHWPTR(pScreenInfo);
-
-#ifdef DEBUG
-    ErrorF("RENDITION: renditionEnterGraphics() called\n");
-    sleep(2);
-#endif
-
-    /* Map VGA aperture */
-    if (!vgaHWMapMem(pScreenInfo))
-        return FALSE;
-
-    /* Unlock VGA registers */
-    vgaHWUnlock(pvgaHW);
-
-    /* Save the current state and setup the current mode */
-    renditionSave(pScreenInfo);
-
-    if (!renditionSetMode(pScreenInfo, pScreenInfo->currentMode))
-        return FALSE;
-
-    /* Possibly blank the screen */
-    if (pScreen)
-        renditionSaveScreen(pScreen, SCREEN_SAVER_ON);
-
-    (*pScreenInfo->AdjustFrame)(pScreenInfo->scrnIndex,
-        pScreenInfo->frameX0, pScreenInfo->frameY0, 0);
-
-#ifdef DEBUG
-    ErrorF("Entergraphics OK...!!!!\n");
-    sleep(1);
-#endif
-
-    return TRUE;
-}
-
-
 static void
 renditionLeaveGraphics(ScrnInfoPtr pScreenInfo)
 {
+    renditionPtr pRendition = RENDITIONPTR(pScreenInfo);
+
 #ifdef DEBUG
     ErrorF("RENDITION: renditionLeaveGraphics() called\n");
-
-    ErrorF("Leavegraphics..!!!!\n");
     sleep(1);
 #endif
-#if 0
-    verite_textmode(&RENDITIONPTR(pScreenInfo)->board);
-#endif
-    renditionRestore(pScreenInfo);
+    verite_restore(pScreenInfo, &pRendition->saveRegs);
+
+    vgaHWProtect(pScreenInfo, TRUE);
+    vgaHWRestore(pScreenInfo, &VGAHWPTR(pScreenInfo)->SavedReg, VGA_SR_ALL);
+    vgaHWProtect(pScreenInfo, FALSE);
+
     vgaHWLock(VGAHWPTR(pScreenInfo));
 
-#if 0
-    verite_textmode(&RENDITIONPTR(pScreenInfo)->board);
-#endif
 #ifdef DEBUG
     ErrorF("Leavegraphics OK...!!!!\n");
     sleep(1);
@@ -1065,24 +1032,24 @@ renditionCloseScreen(int scrnIndex, ScreenPtr pScreen)
 
 #ifdef DEBUG
     ErrorF("RENDITION: renditionCloseScreen() called\n");
-
     sleep(1);
 #endif
 
     if (prenditionPriv->board.hwcursor_used)
-      RenditionHWCursorRelease(pScreenInfo);
+	RenditionHWCursorRelease(pScreenInfo);
 
     if (prenditionPriv->board.accel)
-      RENDITIONAccelNone(pScreenInfo);
+	RENDITIONAccelNone(pScreenInfo);
 
-    if (prenditionPriv && (pScreen->CloseScreen = prenditionPriv->CloseScreen))
-    {
+    if (prenditionPriv 
+	&& (pScreen->CloseScreen = prenditionPriv->CloseScreen)) {
         prenditionPriv->CloseScreen = NULL;
         Closed = (*pScreen->CloseScreen)(scrnIndex, pScreen);
     }
     
     if (pScreenInfo->vtSema)
 	renditionLeaveGraphics(pScreenInfo);
+
     pScreenInfo->vtSema = FALSE;
 
 #ifdef DEBUG
@@ -1103,13 +1070,11 @@ renditionDPMSSet(ScrnInfoPtr pScreen, int mode, int flags)
     vgaHWDPMSSet(pScreen, mode, flags);
 }
 
-
 static Bool
 renditionScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 {
     ScrnInfoPtr pScreenInfo = xf86Screens[scrnIndex];
     renditionPtr pRendition = RENDITIONPTR(pScreenInfo);
-    renditionPtr prenditionPriv;
     Bool Inited = FALSE;
     unsigned char *FBBase;
     VisualPtr visual;
@@ -1120,46 +1085,66 @@ renditionScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
     ErrorF("RENDITION: renditionScreenInit() called\n");
     sleep(1);
 #endif
-
-    /* Get driver private */
-    prenditionPriv=renditionGetRec(pScreenInfo);
-    if (NULL == prenditionPriv) /* xcalloc failed */
-      return FALSE;
-
-    /* Initialise graphics mode */
-    if (!renditionEnterGraphics(pScreen, pScreenInfo))
-        return FALSE;
-
     /* Get vgahw private     */
     pvgaHW = VGAHWPTR(pScreenInfo);
+
+    /* Get driver private */
+    pRendition=renditionGetRec(pScreenInfo);
+
+    /* Save the current state and setup the current mode */
+    renditionSave(pScreenInfo);
+
+    /* Map VGA aperture */
+    if (!vgaHWMapMem(pScreenInfo))
+        return FALSE;
+
+    if (!renditionMapMem(pScreenInfo))
+	return FALSE;
+
+    /* Unlock VGA registers */
+    vgaHWUnlock(pvgaHW);
+
+    verite_save(pScreenInfo);
+
+    if (!renditionSetMode(pScreenInfo, pScreenInfo->currentMode))
+        return FALSE;
+
+    /* blank the screen */
+    renditionSaveScreen(pScreen, SCREEN_SAVER_ON);
+
+    (*pScreenInfo->AdjustFrame)(pScreenInfo->scrnIndex,
+				pScreenInfo->frameX0, pScreenInfo->frameY0, 0);
+
 
     miClearVisualTypes();
 
     if (!miSetVisualTypes(pScreenInfo->depth,
-              miGetDefaultVisualMask(pScreenInfo->depth),
-              pScreenInfo->rgbBits, pScreenInfo->defaultVisual))
-      return FALSE;
+			  miGetDefaultVisualMask(pScreenInfo->depth),
+			  pScreenInfo->rgbBits, pScreenInfo->defaultVisual))
+	return FALSE;
 
     miSetPixmapDepths ();
 	
     if (pRendition->board.rotate) {
-      height = pScreenInfo->virtualX;
-      width = pScreenInfo->virtualY;
+	height = pScreenInfo->virtualX;
+	width = pScreenInfo->virtualY;
     } else {
-      width = pScreenInfo->virtualX;
-      height = pScreenInfo->virtualY;
+	width = pScreenInfo->virtualX;
+	height = pScreenInfo->virtualY;
     }
 
     if(pRendition->board.shadowfb) {
-      pRendition->board.shadowPitch = BitmapBytePad(pScreenInfo->bitsPerPixel * width);
-      pRendition->board.shadowPtr = xalloc(pRendition->board.shadowPitch * height);
-      displayWidth = pRendition->board.shadowPitch / 
-	             (pScreenInfo->bitsPerPixel >> 3);
-      FBBase = pRendition->board.shadowPtr;
+	pRendition->board.shadowPitch 
+	    = BitmapBytePad(pScreenInfo->bitsPerPixel * width);
+	pRendition->board.shadowPtr 
+	    = xalloc(pRendition->board.shadowPitch * height);
+	displayWidth = pRendition->board.shadowPitch 
+	    / (pScreenInfo->bitsPerPixel >> 3);
+	FBBase = pRendition->board.shadowPtr;
     } else {
-      pRendition->board.shadowPtr = NULL;
-      FBBase = pRendition->board.vmem_base+prenditionPriv->board.fbOffset;
-      displayWidth=pScreenInfo->displayWidth;
+	pRendition->board.shadowPtr = NULL;
+	FBBase = pRendition->board.vmem_base+pRendition->board.fbOffset;
+	displayWidth=pScreenInfo->displayWidth;
     }
 
     Inited = fbScreenInit(pScreen, FBBase,
@@ -1175,53 +1160,14 @@ renditionScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
         /* Fixup RGB ordering */
         visual=pScreen->visuals+pScreen->numVisuals;
         while (--visual >= pScreen->visuals) {
-	  if ((visual->class | DynamicClass) == DirectColor){
-	    visual->offsetRed = pScreenInfo->offset.red;
-	    visual->offsetGreen = pScreenInfo->offset.green;
-	    visual->offsetBlue = pScreenInfo->offset.blue;
-	    visual->redMask = pScreenInfo->mask.red;
-	    visual->greenMask = pScreenInfo->mask.green;
-	    visual->blueMask = pScreenInfo->mask.blue;
-	  }
-
-#if 0   /* This code is never called ? <DI> */
-	  else {
-	    switch (pScreenInfo->bitsPerPixel)
-	      {
-	      case 16:
-		if (pScreenInfo->weight.green == 5){
-		  /* weight 555 mode */
-		  ErrorF("RENDITION: 15bit mode\n");
-		  visual->offsetRed=10;
-		  visual->offsetGreen=5;
-		  visual->offsetBlue=0;
-		  visual->redMask=0x7c00;
-		  visual->greenMask=0x3e0;
-		  visual->blueMask=0x1f;
-		}
-		else{
-		  ErrorF("RENDITION: 16bit mode\n");
-		  visual->offsetRed=11;
-		  visual->offsetGreen=5;
-		  visual->offsetBlue=0;
-		  visual->redMask=0xf800;
-		  visual->greenMask=0x7e0;
-		  visual->blueMask=0x1f;
-		}
-		break;
-		
-	      case 32:
-		ErrorF("RENDITION: 32bit mode\n");
-		visual->offsetRed=16;
-		visual->offsetGreen=8;
-		visual->offsetBlue=0;
-		visual->redMask=0xff0000;
-		visual->greenMask=0xff00;
-		visual->blueMask=0xff;
-		break;
-	      }
-            }
-#endif  /* Never used fixup code */
+	    if ((visual->class | DynamicClass) == DirectColor){
+		visual->offsetRed = pScreenInfo->offset.red;
+		visual->offsetGreen = pScreenInfo->offset.green;
+		visual->offsetBlue = pScreenInfo->offset.blue;
+		visual->redMask = pScreenInfo->mask.red;
+		visual->greenMask = pScreenInfo->mask.green;
+		visual->blueMask = pScreenInfo->mask.blue;
+	    }
 	}
     }
 
@@ -1236,8 +1182,8 @@ renditionScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
     /* has to be after fbScreenInit and before cursor init */
     /*********************************************************/
 #if USE_ACCEL
-    if (!xf86ReturnOptValBool(pRendition->Options, OPTION_NOACCEL,0)) 
-      RENDITIONAccelXAAInit (pScreen);
+    if (pRendition->board.accel) 
+	RENDITIONAccelXAAInit (pScreen);
 #endif
 
     /* Initialise cursor functions */
@@ -1246,55 +1192,56 @@ renditionScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 
     if(!xf86ReturnOptValBool(pRendition->Options, OPTION_SW_CURSOR,0)&&
        !pRendition->board.rotate){
-      /* Initialise HW cursor */
-      if(!RenditionHWCursorInit(scrnIndex, pScreen)){
-	xf86DrvMsg(pScreenInfo->scrnIndex, X_ERROR,
-		   "Hardware Cursor initalization failed!!\n");
-      }
+	/* Initialise HW cursor */
+	if(!RenditionHWCursorInit(scrnIndex, pScreen)){
+	    xf86DrvMsg(pScreenInfo->scrnIndex, X_ERROR,
+		       "Hardware Cursor initalization failed!!\n");
+	}
     }
 
     if (pRendition->board.shadowfb) {
-      RefreshAreaFuncPtr refreshArea = renditionRefreshArea;
+	RefreshAreaFuncPtr refreshArea = renditionRefreshArea;
 
-      if(pRendition->board.rotate) {
-	if (!pRendition->board.PointerMoved) {
-	  pRendition->board.PointerMoved = pScreenInfo->PointerMoved;
-	  pScreenInfo->PointerMoved = renditionPointerMoved;
+	if(pRendition->board.rotate) {
+	    if (!pRendition->board.PointerMoved) {
+		pRendition->board.PointerMoved = pScreenInfo->PointerMoved;
+		pScreenInfo->PointerMoved = renditionPointerMoved;
+	    }
+
+	    switch(pScreenInfo->bitsPerPixel) {
+		case 8:         refreshArea = renditionRefreshArea8;  break;
+		case 16:        refreshArea = renditionRefreshArea16; break;
+		case 24:        refreshArea = renditionRefreshArea24; break;
+		case 32:        refreshArea = renditionRefreshArea32; break;
+	    }
 	}
 
-	switch(pScreenInfo->bitsPerPixel) {
-	case 8:         refreshArea = renditionRefreshArea8;  break;
-	case 16:        refreshArea = renditionRefreshArea16; break;
-	case 24:        refreshArea = renditionRefreshArea24; break;
-	case 32:        refreshArea = renditionRefreshArea32; break;
-	}
-      }
-
-      ShadowFBInit(pScreen, refreshArea);
+	ShadowFBInit(pScreen, refreshArea);
     }
 
     /* Setup default colourmap */
     if (!miCreateDefColormap(pScreen))
-      return FALSE;
+	return FALSE;
 
     /* Try the new code based on the new colormap layer */
     if (pScreenInfo->depth > 1)
-      if (!xf86HandleColormaps(pScreen, 256, pScreenInfo->rgbBits,
-			       renditionLoadPalette, NULL,
-			       CMAP_LOAD_EVEN_IF_OFFSCREEN|
-			       CMAP_RELOAD_ON_MODE_SWITCH)) {
-        xf86DrvMsg(pScreenInfo->scrnIndex, X_ERROR, "Colormap initialization failed\n");
-        return FALSE;
-      }
+	if (!xf86HandleColormaps(pScreen, 256, pScreenInfo->rgbBits,
+				 renditionLoadPalette, NULL,
+				 CMAP_LOAD_EVEN_IF_OFFSCREEN|
+				 CMAP_RELOAD_ON_MODE_SWITCH)) {
+	    xf86DrvMsg(pScreenInfo->scrnIndex, X_ERROR, 
+		       "Colormap initialization failed\n");
+	    return FALSE;
+	}
 
     xf86DPMSInit(pScreen, renditionDPMSSet, 0);
 
     if (xf86ReturnOptValBool(pRendition->Options, OPTION_OVERCLOCK_MEM,0)) {
-      RENDITIONPTR(pScreenInfo)->board.overclock_mem=TRUE;
+	pRendition->board.overclock_mem=TRUE;
     }
 
     /* Wrap the screen's CloseScreen vector and set its SaveScreen vector */
-    prenditionPriv->CloseScreen = pScreen->CloseScreen;
+    pRendition->CloseScreen = pScreen->CloseScreen;
     pScreen->CloseScreen = renditionCloseScreen;
     pScreen->SaveScreen = renditionSaveScreen;
 
@@ -1302,7 +1249,7 @@ renditionScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
         renditionCloseScreen(scrnIndex, pScreen);
 
     if (serverGeneration == 1)
-      xf86ShowUnusedOptions(pScreenInfo->scrnIndex, pScreenInfo->options);
+	xf86ShowUnusedOptions(pScreenInfo->scrnIndex, pScreenInfo->options);
 
 #ifdef DEBUG
     ErrorF("ScreenInit OK...!!!!\n");
@@ -1324,10 +1271,9 @@ renditionSwitchMode(int scrnIndex, DisplayModePtr pMode, int flags)
 static void
 renditionAdjustFrame(int scrnIndex, int x, int y, int flags)
 {
-        ScrnInfoPtr pScreenInfo=xf86Screens[scrnIndex];
-	renditionPtr pRendition = RENDITIONPTR(pScreenInfo);
-
-        int offset, virtualwidth, bitsPerPixel;
+    ScrnInfoPtr pScreenInfo=xf86Screens[scrnIndex];
+    renditionPtr pRendition = RENDITIONPTR(pScreenInfo);
+    int offset, virtualwidth, bitsPerPixel;
 
 #ifdef DEBUG
     ErrorF("RENDITION: renditionAdjustFrame() called\n");
@@ -1349,10 +1295,27 @@ renditionAdjustFrame(int scrnIndex, int x, int y, int flags)
 static Bool
 renditionEnterVT(int scrnIndex, int flags)
 {
+    ScrnInfoPtr pScreenInfo = xf86Screens[scrnIndex];
+    vgaHWPtr pvgaHW = VGAHWPTR(pScreenInfo);
+
 #ifdef DEBUG
     ErrorF("RENDITION: renditionEnterVT() called\n");
 #endif
-     return renditionEnterGraphics(NULL, xf86Screens[scrnIndex]);
+
+    /* Map VGA aperture */
+    if (!vgaHWMapMem(pScreenInfo))
+        return FALSE;
+
+    /* Unlock VGA registers */
+    vgaHWUnlock(pvgaHW);
+
+    if (!renditionSetMode(pScreenInfo, pScreenInfo->currentMode))
+        return FALSE;
+
+    (*pScreenInfo->AdjustFrame)(pScreenInfo->scrnIndex,
+				pScreenInfo->frameX0, pScreenInfo->frameY0, 0);
+
+    return TRUE;
 }
 
 
@@ -1374,7 +1337,8 @@ renditionFreeScreen(int scrnIndex, int flags)
 
 
 static ModeStatus
-renditionValidMode(int scrnIndex, DisplayModePtr pMode, Bool Verbose, int flags)
+renditionValidMode(int scrnIndex, DisplayModePtr pMode, Bool Verbose, 
+		   int flags)
 {
     if (pMode->Flags & V_INTERLACE)
         return MODE_NO_INTERLACE;
@@ -1385,46 +1349,45 @@ renditionValidMode(int scrnIndex, DisplayModePtr pMode, Bool Verbose, int flags)
 static Bool
 renditionMapMem(ScrnInfoPtr pScreenInfo)
 {
-  Bool WriteCombine;
-  int mapOption;
-  renditionPtr pRendition = RENDITIONPTR(pScreenInfo);
+    Bool WriteCombine;
+    int mapOption;
+    renditionPtr pRendition = RENDITIONPTR(pScreenInfo);
 
 #ifdef DEBUG
-  ErrorF("Mapping ...\n");
-  ErrorF("%d %d %d %x %d\n", pScreenInfo->scrnIndex, VIDMEM_FRAMEBUFFER, 
-     pRendition->pcitag,
-     pRendition->board.mem_base, pScreenInfo->videoRam);
+    ErrorF("Mapping ...\n");
+    ErrorF("%d %d %d %x %d\n", pScreenInfo->scrnIndex, VIDMEM_FRAMEBUFFER, 
+	   pRendition->pcitag,
+	   pRendition->board.mem_base, pScreenInfo->videoRam * 1024);
 #endif
 
-  if (pRendition->board.chip==V1000_DEVICE){
-    /* Some V1000 boards are known to have problems with Write-Combining */
-    /* V2x00 also found to have similar problems with memcpy & WC ! */
-    WriteCombine = 0;
-  }
-  else{
-    /* Activate Write_Combine if possible */
-    WriteCombine = 1;
-  }
-  /* Override on users request */
-  WriteCombine=xf86ReturnOptValBool(pRendition->Options, OPTION_FBWC, WriteCombine);
-  if (WriteCombine){
-    xf86DrvMsg(pScreenInfo->scrnIndex, X_CONFIG,
-	       ("Requesting Write-Combined memory access\n"));
-    mapOption = VIDMEM_FRAMEBUFFER;
-  }
-  else {
-    xf86DrvMsg(pScreenInfo->scrnIndex, X_CONFIG,
-	       ("Requesting MMIO-style memory access\n"));
-    mapOption = VIDMEM_MMIO;
-  }
+    if (pRendition->board.chip == V1000_DEVICE){
+	/* Some V1000 boards are known to have problems with Write-Combining */
+	/* V2x00 also found to have similar problems with memcpy & WC ! */
+	WriteCombine = 0;
+    } else {
+	/* Activate Write_Combine if possible */
+	WriteCombine = 1;
+    }
+       /* Override on users request */
+    WriteCombine
+	= xf86ReturnOptValBool(pRendition->Options, OPTION_FBWC, WriteCombine);
+    if (WriteCombine) {
+	xf86DrvMsg(pScreenInfo->scrnIndex, X_CONFIG,
+		   ("Requesting Write-Combined memory access\n"));
+	mapOption = VIDMEM_FRAMEBUFFER;
+    } else {
+	xf86DrvMsg(pScreenInfo->scrnIndex, X_CONFIG,
+		   ("Requesting MMIO-style memory access\n"));
+	mapOption = VIDMEM_MMIO;
+    }
 
     pRendition->board.vmem_base=
         xf86MapPciMem(pScreenInfo->scrnIndex, mapOption,
-        pRendition->pcitag,
-        (unsigned long)pRendition->board.mem_base,
-	pScreenInfo->videoRam);
+		      pRendition->pcitag,
+		      (unsigned long)pRendition->board.mem_base,
+		      pScreenInfo->videoRam * 1024);
     return TRUE;
-
+    
 #ifdef DEBUG0
     ErrorF("Done\n");
 #endif
@@ -1437,7 +1400,8 @@ renditionUnmapMem(ScrnInfoPtr pScreenInfo)
   ErrorF("Unmapping ...\n");
 #endif
     xf86UnMapVidMem(pScreenInfo->scrnIndex,
-        RENDITIONPTR(pScreenInfo)->board.mem_base, pScreenInfo->videoRam);
+        RENDITIONPTR(pScreenInfo)->board.vmem_base, 
+		    pScreenInfo->videoRam * 1024);
     return TRUE;
 #ifdef DEBUG0
     ErrorF("Done\n");
@@ -1452,12 +1416,28 @@ renditionLoadPalette(ScrnInfoPtr pScreenInfo, int numColors,
   verite_setpalette(pScreenInfo, numColors, indices, colors, pVisual);
 }
 
+xf86MonPtr
+renditionProbeDDC(ScrnInfoPtr pScreenInfo, int index)
+{
+  vbeInfoPtr pVbe;
+  xf86MonPtr mon = NULL;
 
+  if (xf86LoadSubModule(pScreenInfo, "vbe")) {
+    xf86LoaderReqSymLists(vbeSymbols, NULL);
+
+    pVbe = VBEInit(NULL,index);
+    mon = vbeDoEDID(pVbe, NULL);
+    vbeFree(pVbe);
+  }
+  return mon;
+}
+
+# if 0
 static xf86MonPtr
 renditionDDC (ScrnInfoPtr pScreenInfo)
 {
   renditionPtr pRendition = RENDITIONPTR(pScreenInfo);
-  vu16 iob=pRendition->board.io_base;
+  IOADDRESS iob=pRendition->board.io_base;
   vu32 temp;
 
   xf86MonPtr MonInfo = NULL;
@@ -1490,7 +1470,7 @@ static unsigned int
 renditionDDC1Read (ScrnInfoPtr pScreenInfo)
 {
   renditionPtr pRendition = RENDITIONPTR(pScreenInfo);
-  vu16 iob=pRendition->board.io_base;
+  IOADDRESS iob=pRendition->board.io_base;
   vu32 value = 0;
 
   /* wait for Vsync */
@@ -1514,3 +1494,4 @@ renditionProbeDDC(ScrnInfoPtr pScreenInfo, int index)
     vbeFree(pVbe);
   }
 }
+#endif

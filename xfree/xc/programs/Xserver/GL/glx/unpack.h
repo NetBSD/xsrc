@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/GL/glx/unpack.h,v 1.4 2002/01/14 22:47:08 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/GL/glx/unpack.h,v 1.5 2002/10/30 12:52:03 alanh Exp $ */
 #ifndef __GLX_unpack_h__
 #define __GLX_unpack_h__
 
@@ -49,7 +49,7 @@
 ** Fetch a double from potentially unaligned memory.
 */
 #ifdef __GLX_ALIGN64
-#define __GLX_MEM_COPY(dst,src,n)	memcpy(dst,src,n)
+#define __GLX_MEM_COPY(dst,src,n)	if (src && dst) memcpy(dst,src,n)
 #define __GLX_GET_DOUBLE(dst,src)	__GLX_MEM_COPY(&dst,src,8)
 #else
 #define __GLX_GET_DOUBLE(dst,src)	(dst) = *((GLdouble*)(src))

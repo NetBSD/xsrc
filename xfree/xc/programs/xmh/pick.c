@@ -24,7 +24,7 @@
  * used in advertising or publicity pertaining to distribution of the software
  * without specific, written prior permission.
  */
-/* $XFree86: xc/programs/xmh/pick.c,v 1.2 2001/08/01 00:45:06 tsi Exp $ */
+/* $XFree86: xc/programs/xmh/pick.c,v 1.3 2002/04/05 21:06:29 dickey Exp $ */
 
 /* pick.c -- handle a pick subwidget. */
 
@@ -93,9 +93,9 @@ typedef struct _PickRec {
 } PickRec;
 
 
-static FormEntry CreateWidget();
-static void DeleteWidget(), AddDetailGroup();
-
+static FormEntry CreateWidget(RowList, WidgetClass, ArgList, Cardinal);
+static void DeleteWidget(FormEntry);
+static void AddDetailGroup(FormBox);
 
 void InitPick(void)
 {
@@ -117,24 +117,19 @@ void InitPick(void)
 }
 
 
-static void PrepareToUpdate(form)
-  FormBox form;
+static void PrepareToUpdate(FormBox form)
 {
     XawFormDoLayout(form->inner, FALSE);
 }
 
-static void ExecuteUpdate(form)
-  FormBox form;
+static void ExecuteUpdate(FormBox form)
 {
     XawFormDoLayout(form->inner, TRUE);
     XtManageChild(form->inner);
     XtManageChild(form->outer);
 }
 
-static void AddLabel(row, text, usestd)
-  RowList row;
-  char *text;
-  int usestd;
+static void AddLabel(RowList row, char *text, int usestd)
 {
     static Arg arglist[] = {
 	{XtNlabel, (XtArgVal)NULL},
@@ -150,10 +145,7 @@ static void AddLabel(row, text, usestd)
 }
 
 
-static void AddButton(row, text, func)
-  RowList row;
-  char *text;
-  void (*func)();
+static void AddButton(RowList row, char *text, void (*func)(XMH_CB_ARGS))
 {
     FormEntry entry;
     static Arg args[] = {
@@ -166,12 +158,12 @@ static void AddButton(row, text, func)
 }
 
 
-static void AddToggle(row, text, initial_state, radio_group, radio_data)
-    RowList	row;
-    char	*text;
-    int		initial_state;
-    Widget	radio_group;
-    XtPointer	radio_data;
+static void AddToggle(
+    RowList	row,
+    char	*text,
+    int		initial_state,
+    Widget	radio_group,
+    XtPointer	radio_data)
 {
     FormEntry	entry;
     Arg		args[4];
@@ -188,9 +180,7 @@ static void AddToggle(row, text, initial_state, radio_group, radio_data)
 }
 
 
-static void AddTextEntry(row, str)
-  RowList row;
-  char *str;
+static void AddTextEntry(RowList row, char *str)
 {
     FormEntry	entry;
     static Arg arglist[] = {
@@ -207,9 +197,7 @@ static void AddTextEntry(row, str)
 }
 
 
-static void ChangeTextEntry(entry, str)
-FormEntry entry;
-char *str;
+static void ChangeTextEntry(FormEntry entry, char *str)
 {
     Arg arglist[1];
     char *ptr;
@@ -224,10 +212,10 @@ char *str;
 }
 
 /* ARGSUSED */
-static void ExecRowOr(w, closure, call_data)
-    Widget w;			/* unused */
-    XtPointer closure;		/* FormEntry */
-    XtPointer call_data;	/* unused */
+static void ExecRowOr(
+    Widget w,			/* unused */
+    XtPointer closure,		/* FormEntry */
+    XtPointer call_data)	/* unused */
 {
     FormEntry entry = (FormEntry)closure;
     RowList row = entry->row;
@@ -242,10 +230,10 @@ static void ExecRowOr(w, closure, call_data)
     
 
 /* ARGSUSED */
-static void ExecGroupOr(w, closure, call_data)
-    Widget w;			/* unused */
-    XtPointer closure;		/* FormEntry */
-    XtPointer call_data;	/* unused */
+static void ExecGroupOr(
+    Widget w,			/* unused */
+    XtPointer closure,		/* FormEntry */
+    XtPointer call_data)	/* unused */
 {
     FormBox form = ((FormEntry)closure)->row->group->form;
 /* %%%    XUnmapWindow(theDisplay, XtWindow(form->inner)); */
@@ -259,8 +247,7 @@ static char **argv;
 static int argvsize;
 
 
-static void AppendArgv(ptr)
-  char *ptr;
+static void AppendArgv(char *ptr)
 {
     argvsize++;
     argv = ResizeArgv(argv, argvsize);
@@ -276,8 +263,7 @@ static void EraseLast(void)
 
 
 
-static Boolean ParseRow(row)
-  RowList row;
+static Boolean ParseRow(RowList row)
 {
     int		result = FALSE;
     int		i;
@@ -341,8 +327,7 @@ static Boolean ParseRow(row)
 }
 	    
 
-static Boolean ParseGroup(group)
-  Group group;
+static Boolean ParseGroup(Group group)
 {
     int found = FALSE;
     int i;
@@ -358,10 +343,10 @@ static Boolean ParseGroup(group)
 }
 
 /* ARGSUSED */
-static void ExecOK(w, closure, call_data)
-    Widget w;			/* unused */
-    XtPointer closure;		/* FormEntry */
-    XtPointer call_data;	/* unused */
+static void ExecOK(
+    Widget w,			/* unused */
+    XtPointer closure,		/* FormEntry */
+    XtPointer call_data)	/* unused */
 {
     Pick pick = ((FormEntry)closure)->row->group->form->pick;
     Toc toc = pick->toc;
@@ -459,10 +444,10 @@ static void ExecOK(w, closure, call_data)
 
 
 /* ARGSUSED */
-static void ExecCancel(w, closure, call_data)
-    Widget w;			/* unused */
-    XtPointer closure;		/* FormEntry */
-    XtPointer call_data;	/* unused */
+static void ExecCancel(
+    Widget w,			/* unused */
+    XtPointer closure,		/* FormEntry */
+    XtPointer call_data)	/* unused */
 {
     Pick pick = ((FormEntry)closure)->row->group->form->pick;
     Scrn scrn = pick->scrn;
@@ -470,11 +455,11 @@ static void ExecCancel(w, closure, call_data)
 }
 
 
-static FormEntry CreateWidget(row, class, args, num_args)
-  RowList row;
-  WidgetClass class;
-  ArgList args;
-  Cardinal num_args;
+static FormEntry CreateWidget(
+    RowList row,
+    WidgetClass class,
+    ArgList args,
+    Cardinal num_args)
 {
     static Arg arglist[] = {
 	{XtNfromHoriz, (XtArgVal)NULL},
@@ -512,8 +497,7 @@ static FormEntry CreateWidget(row, class, args, num_args)
     
 
 static void
-DeleteWidget(entry)
-  FormEntry entry;
+DeleteWidget(FormEntry entry)
 {
     RowList row = entry->row;
     int i;
@@ -530,15 +514,13 @@ DeleteWidget(entry)
 /* Figure out how wide text fields and labels should be so that they'll all
    line up correctly, and be big enough to hold everything, but not too big. */
 
-static void FindStdWidth()
+static void FindStdWidth(void)
 {
     stdwidth = 100;		/* %%% HACK! */
 }
 
 
-static RowList AddRow(group, type)
-  Group group;
-  int type;
+static RowList AddRow(Group group, int type)
 {
     static Arg arglist[] = {
 	{XtNborderWidth, (XtArgVal) 0},
@@ -580,8 +562,7 @@ static RowList AddRow(group, type)
 }
 
 
-static Group AddGroup(form)
-  FormBox form;
+static Group AddGroup(FormBox form)
 {
     static Arg arglist[] = {
 	{XtNborderWidth, (XtArgVal) 0},
@@ -614,8 +595,7 @@ static Group AddGroup(form)
 
 
 static void
-AddDetailGroup(form)
-  FormBox form;
+AddDetailGroup(FormBox form)
 {
     Group group;
     RowList row;
@@ -639,8 +619,7 @@ AddDetailGroup(form)
 }
 
 
-static void AddGeneralGroup(form)
-  FormBox form;
+static void AddGeneralGroup(FormBox form)
 {
     Group group;
     RowList row;
@@ -675,9 +654,7 @@ static void AddGeneralGroup(form)
 }
 
 
-static void InitGeneral(pick, fromseq, toseq)
-Pick pick;
-char *fromseq, *toseq;
+static void InitGeneral(Pick pick, char *fromseq, char *toseq)
 {
     RowList row;
     row = pick->general->glist[0]->rlist[0];
@@ -686,8 +663,7 @@ char *fromseq, *toseq;
 }
 
 
-static void CleanForm(form)
-FormBox form;
+static void CleanForm(FormBox form)
 {
     int i, j, k;
     Group group;
@@ -707,8 +683,7 @@ FormBox form;
 }
 
 
-static FormBox MakeAForm(pick)
-Pick pick;
+static FormBox MakeAForm(Pick pick)
 {
     static Arg arglist1[] = {
 	{XtNallowHoriz, (XtArgVal)TRUE},
@@ -734,10 +709,7 @@ Pick pick;
 }
 
 
-void AddPick(scrn, toc, fromseq, toseq)
-  Scrn scrn;
-  Toc toc;
-  char *fromseq, *toseq;
+void AddPick(Scrn scrn, Toc toc, char *fromseq, char *toseq)
 {
     Pick pick;
     FormBox general, details;
@@ -779,7 +751,3 @@ void AddPick(scrn, toc, fromseq, toseq)
     ChangeLabel(pick->label, str);
     StoreWindowName(scrn, str);
 }
-
-
-
-

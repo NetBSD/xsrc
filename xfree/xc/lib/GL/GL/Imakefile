@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/lib/GL/GL/Imakefile,v 1.10 2001/11/24 11:22:35 herrb Exp $
+XCOMM $XFree86: xc/lib/GL/GL/Imakefile,v 1.16 2002/12/04 21:38:34 tsi Exp $
 
 #include <Threads.tmpl>
 
@@ -8,6 +8,12 @@ XCOMM $XFree86: xc/lib/GL/GL/Imakefile,v 1.10 2001/11/24 11:22:35 herrb Exp $
 #define DoDebugLib DebugLibGlx
 #define DoProfileLib ProfileLibGlx
 
+#ifndef ShLibBindGlobals
+#if !HasGcc2 || (GccMajorVersion > 2) || (GccMinorVersion > 7)
+#define ShlibBindGlobals YES
+#endif
+#endif
+
      LIBNAME = GL
      SOREV   = $(SOGLREV)
 
@@ -15,11 +21,18 @@ XCOMM $XFree86: xc/lib/GL/GL/Imakefile,v 1.10 2001/11/24 11:22:35 herrb Exp $
 BASEREQUIREDLIBS = SharedGLReqs
 #endif
 
-#define MesaBuildDir $(GLXLIBSRC)/mesa/src/
+#include "../mesa/src/array_cache/Imakefile.inc"
+#include "../mesa/src/math/Imakefile.inc"
+#include "../mesa/src/swrast/Imakefile.inc"
+#include "../mesa/src/swrast_setup/Imakefile.inc"
+#include "../mesa/src/tnl/Imakefile.inc"
+#include "../mesa/src/tnl_dd/Imakefile.inc"
 #include "../mesa/src/Imakefile.inc"
-#define MesaX86BuildDir $(GLXLIBSRC)/mesa/src/X86/
 #ifdef i386Architecture
 #include "../mesa/src/X86/Imakefile.inc"
+#endif
+#ifdef SparcArchitecture
+#include "../mesa/src/SPARC/Imakefile.inc"
 #endif
 
 XCOMM
@@ -183,16 +196,14 @@ OTHERREQUIREDLIBS = -lglide3 -ldl
     DRVDOBJS = $(SISDOBJS) $(MESADOBJS) $(DRIMESADOBJS) $(DRMDOBJS)
     DRVPOBJS = $(SISPOBJS) $(MESAPOBJS) $(DRIMESAPOBJS) $(DRMPOBJS)
 
-#elif GlxBuiltInMesa
+#elif GlxBuiltInXMesa
 
-#ifndef GlxDriverUsesMesa
+#include "../mesa/src/X/Imakefile.inc"
 
-     DRVOBJS = $(MESAOBJS)
-    DRVUOBJS = $(MESAUOBJS)
-    DRVDOBJS = $(MESADOBJS)
-    DRVPOBJS = $(MESAPOBJS)
-
-#endif
+     DRVOBJS = $(MESAOBJS) $(XMESA_OBJS)
+    DRVUOBJS = $(MESAUOBJS) $(XMESA_UOBJS)
+    DRVDOBJS = $(MESADOBJS) $(XMESA_DOBJS)
+    DRVPOBJS = $(MESAPOBJS) $(XMESA_POBJS)
 
 #else
 

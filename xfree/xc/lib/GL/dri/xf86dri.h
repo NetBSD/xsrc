@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/dri/xf86dri.h,v 1.7 2000/12/07 20:26:02 dawes Exp $ */
+/* $XFree86: xc/lib/GL/dri/xf86dri.h,v 1.8 2002/10/30 12:51:25 alanh Exp $ */
 /**************************************************************************
 
 Copyright 1998-1999 Precision Insight, Inc., Cedar Park, Texas.
@@ -30,7 +30,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 /*
  * Authors:
  *   Kevin E. Martin <martin@valinux.com>
- *   Jens Owen <jens@valinux.com>
+ *   Jens Owen <jens@tungstengraphics.com>
  *   Rickard E. (Rik) Faith <faith@valinux.com>
  *
  */

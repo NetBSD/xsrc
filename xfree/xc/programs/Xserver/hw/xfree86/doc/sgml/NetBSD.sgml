@@ -9,10 +9,10 @@ David Dawes,
 Marc  Wandschneider,
 Mark  Weaver,
 Matthieu Herrb
-<Date>Last modified on: 16 January 2002
+<Date>Last modified on: 9 November 2002
 
 <ident>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/NetBSD.sgml,v 3.63 2002/01/16 22:35:18 herrb Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/NetBSD.sgml,v 3.68 2003/02/16 17:21:11 dawes Exp $
 </ident>
 <toc>
 
@@ -20,18 +20,20 @@ $XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/NetBSD.sgml,v 3.63 2002/01/16 
 <sect>What and Where is XFree86?
 
 <p>
-XFree86 is the Open Source port of X.Org's X11R6.6 release that supports
-several UNIX(R) and UNIX-like (such as Linux, the BSDs and Solaris x86)
-operating systems on Intel and other platforms.
+XFree86 is an Open Source version of the X Window System that supports
+several UNIX(R) and UNIX-like operating systems (such as Linux, the BSDs
+and Solaris x86) on Intel and other platforms.  This version is compatible
+with X11R6.6.
 
 See the <htmlurl url="COPYRIGHT.html" name="Copyright Notice">.
 
+<![ %notsnapshot [
 The sources for XFree86 are available by anonymous ftp from:
 
 <htmlurl name="ftp://ftp.XFree86.org/pub/XFree86/&relvers;"
 url="ftp://ftp.XFree86.org/pub/XFree86/&relvers;">
 
-Binaries for NetBSD 1.4 and later are available from:
+Binaries for NetBSD 1.5 and later are available from:
 <htmlurl name="ftp://ftp.XFree86.org/pub/XFree86/&relvers;/binaries/NetBSD"
 url="ftp://ftp.XFree86.org/pub/XFree86/&relvers;/NetBSD">
 
@@ -39,6 +41,7 @@ url="ftp://ftp.XFree86.org/pub/XFree86/&relvers;/NetBSD">
 A list of mirror sites is provided by
 <htmlurl name="http://www.xfree86.org/MIRRORS.shtml"
 url="http://www.xfree86.org/MIRRORS.shtml">
+]]>
 
 
 XFree86 also builds on other NetBSD architectures. See section
@@ -145,7 +148,7 @@ sample file installed as <tt>/usr/X11R6/lib/X11/XF86Config.eg</tt>,
 which can be used as a starting point.
 
 For details about the <tt/XF86Config/ file format, refer to the
-<em>XF86Config(5)</em> manual page.
+<em><htmlurl name="XF86Config(5)" url="XF86Config.5.html"></em> manual page.
 
 Once you've set up a XF86Config file, you can fine tune the video
 modes with the <tt>xvidtune</tt> utility. 
@@ -466,8 +469,18 @@ and <bf/__bsdi__/ for BSD/386.
 <sect> Thanks
 <p>
 Many thanks to all people who contributed to make XFree86 work on
-*BSD, in particular, <bf/David Dawes/,
-<bf/Pace Willison/, <bf/Amancio Hasty/, <bf/Christoph Robitschko/,
-<bf/Nate Williams/, <bf/Rod Grimes/, <bf/Jack Velte/ and <bf/Michael Smith/.
+*BSD, in particular:
+<bf/David Dawes/,
+<bf/Todd Fries/,
+<bf/Rod Grimes/,
+<bf/Charles Hannum/,
+<bf/Amancio Hasty/, 
+<bf/Christoph Robitschko/,
+<bf/Matthias Scheler/,
+<bf/Michael Smith/,
+<bf/Ignatios Souvatzis/,
+<bf/Jack Velte/,
+<bf/Nate Williams/ and
+<bf/Pace Willison/.
 
 </article>

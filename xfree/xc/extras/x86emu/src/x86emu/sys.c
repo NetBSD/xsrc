@@ -39,9 +39,10 @@
 *				user library.
 *
 ****************************************************************************/
-/* $XFree86: xc/extras/x86emu/src/x86emu/sys.c,v 1.5 2000/08/23 22:10:01 tsi Exp $ */
+/* $XFree86: xc/extras/x86emu/src/x86emu/sys.c,v 1.7 2002/12/24 17:42:58 tsi Exp $ */
 
 #include "x86emu.h"
+#include "x86emu/x86emui.h"
 #include "x86emu/regs.h"
 #include "x86emu/debug.h"
 #include "x86emu/prim_ops.h"
@@ -69,7 +70,7 @@ X86EMU_intrFuncs	_X86EMU_intrTab[256];
  * packed structures to talk about such things with.
  */
 
-#if __GNUC__ > 2 || __GNUC_MINOR__ >= 91
+#if defined(__GNUC__) && ((__GNUC__ > 2) || (__GNUC_MINOR__ >= 91))
 struct __una_u64 { unsigned long  x __attribute__((packed)); };
 struct __una_u32 { unsigned int   x __attribute__((packed)); };
 struct __una_u16 { unsigned short x __attribute__((packed)); };
@@ -77,7 +78,7 @@ struct __una_u16 { unsigned short x __attribute__((packed)); };
 
 static __inline__ unsigned long ldq_u(unsigned long * r11)
 {
-#if __GNUC__ > 2 || __GNUC_MINOR__ >= 91
+#if defined(__GNUC__) && ((__GNUC__ > 2) || (__GNUC_MINOR__ >= 91))
 	const struct __una_u64 *ptr = (const struct __una_u64 *) r11;
 	return ptr->x;
 #else
@@ -96,7 +97,7 @@ static __inline__ unsigned long ldq_u(unsigned long * r11)
 
 static __inline__ unsigned long ldl_u(unsigned int * r11)
 {
-#if __GNUC__ > 2 || __GNUC_MINOR__ >= 91
+#if defined(__GNUC__) && ((__GNUC__ > 2) || (__GNUC_MINOR__ >= 91))
 	const struct __una_u32 *ptr = (const struct __una_u32 *) r11;
 	return ptr->x;
 #else
@@ -115,7 +116,7 @@ static __inline__ unsigned long ldl_u(unsigned int * r11)
 
 static __inline__ unsigned long ldw_u(unsigned short * r11)
 {
-#if __GNUC__ > 2 || __GNUC_MINOR__ >= 91
+#if defined(__GNUC__) && ((__GNUC__ > 2) || (__GNUC_MINOR__ >= 91))
 	const struct __una_u16 *ptr = (const struct __una_u16 *) r11;
 	return ptr->x;
 #else
@@ -138,7 +139,7 @@ static __inline__ unsigned long ldw_u(unsigned short * r11)
 
 static __inline__ void stq_u(unsigned long r5, unsigned long * r11)
 {
-#if __GNUC__ > 2 || __GNUC_MINOR__ >= 91
+#if defined(__GNUC__) && ((__GNUC__ > 2) || (__GNUC_MINOR__ >= 91))
 	struct __una_u64 *ptr = (struct __una_u64 *) r11;
 	ptr->x = r5;
 #else
@@ -163,7 +164,7 @@ static __inline__ void stq_u(unsigned long r5, unsigned long * r11)
 
 static __inline__ void stl_u(unsigned long r5, unsigned int * r11)
 {
-#if __GNUC__ > 2 || __GNUC_MINOR__ >= 91
+#if defined(__GNUC__) && ((__GNUC__ > 2) || (__GNUC_MINOR__ >= 91))
 	struct __una_u32 *ptr = (struct __una_u32 *) r11;
 	ptr->x = r5;
 #else
@@ -188,7 +189,7 @@ static __inline__ void stl_u(unsigned long r5, unsigned int * r11)
 
 static __inline__ void stw_u(unsigned long r5, unsigned short * r11)
 {
-#if __GNUC__ > 2 || __GNUC_MINOR__ >= 91
+#if defined(__GNUC__) && ((__GNUC__ > 2) || (__GNUC_MINOR__ >= 91))
 	struct __una_u16 *ptr = (struct __una_u16 *) r11;
 	ptr->x = r5;
 #else
@@ -522,7 +523,7 @@ and hook them out as necessary for their application.
 void X86EMU_setupMemFuncs(
 	X86EMU_memFuncs *funcs)
 {
-	sys_rdb = funcs->rdb;
+    sys_rdb = funcs->rdb;
     sys_rdw = funcs->rdw;
     sys_rdl = funcs->rdl;
     sys_wrb = funcs->wrb;

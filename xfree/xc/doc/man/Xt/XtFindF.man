@@ -25,7 +25,7 @@
 .\" dealing in this Software without prior written authorization from the 
 .\" X Consortium.
 .\"
-.\" $XFree86: xc/doc/man/Xt/XtFindF.man,v 1.3 2001/02/09 03:47:50 tsi Exp $
+.\" $XFree86: xc/doc/man/Xt/XtFindF.man,v 1.4 2002/10/12 16:06:41 herrb Exp $
 .\"
 .ds tk X Toolkit
 .ds xT X Toolkit Intrinsics \- C Language Interface
@@ -159,7 +159,7 @@ single colon.  The character sequence ``%%'' specifies a percent
 character that does not introduce a substitution; the sequence is
 replaced by a single percent character.  If a percent character is
 followed by any other character,
-.PN XtFindFile
+.ZN XtFindFile
 looks through the
 specified \fIsubstitutions\fP for that character in the \fImatch\fP field and if
 found replaces the percent and match characters with the string in the
@@ -167,29 +167,29 @@ corresponding \fIsubstitution\fP field.  A \fIsubstitution\fP field entry of NUL
 is equivalent to a pointer to an empty string.  If the operating
 system does not interpret multiple embedded name separators in the
 path (i.e., ``/'' in POSIX) the same way as a single separator,
-.PN XtFindFile
+.ZN XtFindFile
 will collapse multiple separators into a single one after performing
 all string substitutions.  Except for collapsing embedded separators,
 the contents of the string substitutions are not interpreted by
-.PN XtFindFile
+.ZN XtFindFile
 and may therefore contain any operating-system-dependent
 characters, including additional name separators.  Each resulting
 string is passed to the predicate procedure until a string is found for
 which the procedure returns
-.PN True ;
+.ZN True ;
 this string is the return value for
-.PN XtFindFile .
+.ZN XtFindFile .
 If no string yields a
-.PN True
+.ZN True
 return from the predicate,
-.PN XtFindFile
+.ZN XtFindFile
 returns NULL.
 .LP
 If the \fIpredicate\fP parameter is NULL, an internal procedure that checks
 if the file exists, is readable, and is not a directory will be used.
 .LP
 It is the responsibility of the caller to free the returned string using
-.PN XtFree
+.ZN XtFree
 when it is no longer needed.
 .SH "SEE ALSO"
 .br

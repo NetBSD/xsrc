@@ -7,7 +7,7 @@
 
 # define _XTT_V_MAJOR     1
 # define _XTT_V_MINOR     3
-# define _XTT_V_REVISION  0
+# define _XTT_V_REVISION  1
 # define _XTT_VENDOR_NAME "X-TrueType Server Project"
 # define _XTT_RELEASE_NAME \
     "===X-TT-ID: X-TrueType Server Version 1.3 [Aoi MATSUBARA Release 3] ==="

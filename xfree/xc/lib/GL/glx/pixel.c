@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/glx/pixel.c,v 1.5 2001/10/28 03:32:27 tsi Exp $ */
+/* $XFree86: xc/lib/GL/glx/pixel.c,v 1.7 2002/10/30 12:51:26 alanh Exp $ */
 /*
 ** License Applicability. Except to the extent portions of this file are
 ** made subject to an alternative license as permitted in the SGI Free
@@ -124,6 +124,7 @@ static GLint ElementsPerGroup(GLenum format, GLenum type)
       case GL_BLUE:
       case GL_ALPHA:
       case GL_LUMINANCE:
+      case GL_INTENSITY:
 	return 1;
       default:
 	return 0;
@@ -182,7 +183,11 @@ GLint __glImageSize(GLsizei width, GLsizei height, GLsizei depth,
     */
     components = ElementsPerGroup(format,type);
     if (type == GL_BITMAP) {
-	bytes_per_row = (width + 7) >> 3;
+	if (format == GL_COLOR_INDEX || format == GL_STENCIL_INDEX) {
+	    bytes_per_row = (width + 7) >> 3;
+	} else {
+	    return 0;
+	}
     } else {
 	bytes_per_row = BytesPerElement(type) * width;
     }

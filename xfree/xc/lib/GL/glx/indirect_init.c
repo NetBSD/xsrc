@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/glx/indirect_init.c,v 1.6 2001/03/21 16:04:39 dawes Exp $ */
+/* $XFree86: xc/lib/GL/glx/indirect_init.c,v 1.7 2002/02/22 21:32:54 dawes Exp $ */
 /**************************************************************************
 
 Copyright 1998-1999 Precision Insight, Inc., Cedar Park, Texas.
@@ -486,6 +486,12 @@ __GLapi *__glXNewIndirectAPI(void)
     glAPI->MultiTexCoord4ivARB = __indirect_glMultiTexCoord4ivARB;
     glAPI->MultiTexCoord4sARB = __indirect_glMultiTexCoord4sARB;
     glAPI->MultiTexCoord4svARB = __indirect_glMultiTexCoord4svARB;
+
+    /* ARB 3. GL_ARB_transpose_matrix */
+    glAPI->LoadTransposeMatrixdARB = __indirect_glLoadTransposeMatrixdARB;
+    glAPI->LoadTransposeMatrixfARB = __indirect_glLoadTransposeMatrixfARB;
+    glAPI->MultTransposeMatrixdARB = __indirect_glMultTransposeMatrixdARB;
+    glAPI->MultTransposeMatrixfARB = __indirect_glMultTransposeMatrixfARB;
 
     return glAPI;
 }

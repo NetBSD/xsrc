@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/os2/os2_init.c,v 3.15 1999/04/29 09:13:48 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/os2/os2_init.c,v 3.16 2002/05/31 18:46:01 dawes Exp $ */
 /*
  * (c) Copyright 1994 by Holger Veit
  *			<Holger.Veit@gmd.de>
@@ -29,13 +29,6 @@
  */
 /* $XConsortium: os2_init.c /main/9 1996/10/19 18:07:13 kaleb $ */
 
-#include "X.h"
-#include "Xmd.h"
-#include "input.h"
-#include "scrnintstr.h"
-
-#include "compiler.h"
-
 #define I_NEED_OS2_H
 #define INCL_DOSFILEMGR
 #define INCL_KBD
@@ -45,6 +38,13 @@
 #define INCL_DOSSEMAPHORES
 #define INCL_DOSMODULEMGR
 #define INCL_DOSFILEMGR
+#include "X.h"
+#include "Xmd.h"
+#include "input.h"
+#include "scrnintstr.h"
+
+#include "compiler.h"
+
 #include "xf86.h"
 #include "xf86Priv.h"
 #include "xf86_OSlib.h"

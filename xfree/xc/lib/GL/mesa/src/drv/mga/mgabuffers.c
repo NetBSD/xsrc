@@ -22,15 +22,16 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  *
  * Authors:
- *    Keith Whitwell <keithw@valinux.com>
+ *    Keith Whitwell <keith@tungstengraphics.com>
  */
-/* $XFree86: xc/lib/GL/mesa/src/drv/mga/mgabuffers.c,v 1.8 2001/10/31 22:50:24 tsi Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/mga/mgabuffers.c,v 1.13 2002/11/05 17:46:08 tsi Exp $ */
 
 #include <stdio.h>
 #include "mgacontext.h"
 #include "mgabuffers.h"
 #include "mgastate.h"
 #include "mgaioctl.h"
+#include "mgatris.h"
 
 static void mgaXMesaSetFrontClipRects( mgaContextPtr mmesa )
 {
@@ -131,8 +132,9 @@ static void mgaUpdateRectsFromSarea( mgaContextPtr mmesa )
 
    mmesa->dirty_cliprects = (MGA_FRONT|MGA_BACK) & ~(sarea->exported_buffers);
 }
+#endif
 
-
+#if 0
 static void printSareaRects( mgaContextPtr mmesa )
 {
    __DRIscreenPrivate *driScreen = mmesa->driScreen;
@@ -202,6 +204,7 @@ static void printMmesaRects( mgaContextPtr mmesa )
 #endif
 
 
+
 void mgaUpdateRects( mgaContextPtr mmesa, GLuint buffers )
 {
    __DRIdrawablePrivate *driDrawable = mmesa->driDrawable;
@@ -209,35 +212,35 @@ void mgaUpdateRects( mgaContextPtr mmesa, GLuint buffers )
 
 /*     fprintf(stderr, "%s\n", __FUNCTION__); */
 
-   XMESA_VALIDATE_DRAWABLE_INFO(mmesa->display,
-				mmesa->driScreen,
-				driDrawable);
-   mmesa->dirty_cliprects = 0;
+   DRI_VALIDATE_DRAWABLE_INFO(mmesa->display, mmesa->driScreen, driDrawable); 
+   mmesa->dirty_cliprects = 0;	
 
    if (mmesa->draw_buffer == MGA_FRONT)
       mgaXMesaSetFrontClipRects( mmesa );
    else
       mgaXMesaSetBackClipRects( mmesa );
 
-/*     printMmesaRects(mmesa); */
+#if 0
+   printMmesaRects(mmesa); 
+#endif
 
    sarea->req_drawable = driDrawable->draw;
    sarea->req_draw_buffer = mmesa->draw_buffer;
 
    mgaUpdateClipping( mmesa->glCtx );
+   mgaCalcViewport( mmesa->glCtx );
 
    mmesa->dirty |= MGA_UPLOAD_CLIPRECTS;
 }
 
 
 
-GLboolean mgaDDSetDrawBuffer(GLcontext *ctx, GLenum mode )
+void mgaDDSetDrawBuffer(GLcontext *ctx, GLenum mode )
 {
    mgaContextPtr mmesa = MGA_CONTEXT(ctx);
 
    FLUSH_BATCH( MGA_CONTEXT(ctx) );
 
-   mmesa->Fallback &= ~MGA_FALLBACK_BUFFER;
 
    if (mode == GL_FRONT_LEFT)
    {
@@ -247,7 +250,7 @@ GLboolean mgaDDSetDrawBuffer(GLcontext *ctx, GLenum mode )
       mmesa->dirty |= MGA_UPLOAD_CONTEXT;
       mmesa->draw_buffer = MGA_FRONT;
       mgaXMesaSetFrontClipRects( mmesa );
-      return GL_TRUE;
+      FALLBACK( ctx, MGA_FALLBACK_DRAW_BUFFER, GL_FALSE );
    }
    else if (mode == GL_BACK_LEFT)
    {
@@ -257,28 +260,11 @@ GLboolean mgaDDSetDrawBuffer(GLcontext *ctx, GLenum mode )
       mmesa->draw_buffer = MGA_BACK;
       mmesa->dirty |= MGA_UPLOAD_CONTEXT;
       mgaXMesaSetBackClipRects( mmesa );
-      return GL_TRUE;
+      FALLBACK( ctx, MGA_FALLBACK_DRAW_BUFFER, GL_FALSE );
    }
    else
    {
-      mmesa->Fallback |= MGA_FALLBACK_BUFFER;
-      return GL_FALSE;
+      FALLBACK( ctx, MGA_FALLBACK_DRAW_BUFFER, GL_TRUE );
    }
 }
 
-void mgaDDSetReadBuffer(GLcontext *ctx, GLframebuffer *buffer,
-			GLenum mode )
-{
-   mgaContextPtr mmesa = MGA_CONTEXT(ctx);
-
-   if (mode == GL_FRONT_LEFT)
-   {
-      mmesa->readOffset = mmesa->mgaScreen->frontOffset;
-      mmesa->read_buffer = MGA_FRONT;
-   }
-   else
-   {
-      mmesa->readOffset = mmesa->mgaScreen->backOffset;
-      mmesa->read_buffer = MGA_BACK;
-   }
-}

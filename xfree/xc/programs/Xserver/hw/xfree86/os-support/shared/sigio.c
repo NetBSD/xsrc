@@ -25,7 +25,7 @@
  * 
  * Authors: Rickard E. (Rik) Faith <faith@valinux.com>
  *
- * $XFree86: xc/programs/Xserver/hw/xfree86/os-support/shared/sigio.c,v 1.13 2001/12/24 22:30:45 dawes Exp $
+ * $XFree86: xc/programs/Xserver/hw/xfree86/os-support/shared/sigio.c,v 1.14 2002/05/05 19:18:14 herrb Exp $
  * 
  */
 
@@ -131,16 +131,6 @@ xf86InstallSIGIOHandler(int fd, void (*f)(int, void *), void *closure)
 	{
 	    if (xf86IsPipe (fd))
 		return 0;
-	    if (fcntl(fd, F_SETOWN, getpid()) == -1) {
-#ifdef XFree86Server
-		xf86Msg(X_WARNING, "fcntl(%d, F_SETOWN): %s\n", 
-			fd, strerror(errno));
-#else
-		fprintf(stderr,"fcntl(%d, F_SETOWN): %s\n", 
-			fd, strerror(errno));
-#endif
-		return 0;
-	    }
 	    blocked = xf86BlockSIGIO();
 	    if (fcntl(fd, F_SETFL, fcntl(fd, F_GETFL) | O_ASYNC) == -1) {
 #ifdef XFree86Server
@@ -151,6 +141,16 @@ xf86InstallSIGIOHandler(int fd, void (*f)(int, void *), void *closure)
 			fd, strerror(errno));
 #endif
 		xf86UnblockSIGIO(blocked);
+		return 0;
+	    }
+	    if (fcntl(fd, F_SETOWN, getpid()) == -1) {
+#ifdef XFree86Server
+		xf86Msg(X_WARNING, "fcntl(%d, F_SETOWN): %s\n", 
+			fd, strerror(errno));
+#else
+		fprintf(stderr,"fcntl(%d, F_SETOWN): %s\n", 
+			fd, strerror(errno));
+#endif
 		return 0;
 	    }
 	    sigemptyset(&sa.sa_mask);

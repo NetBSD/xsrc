@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/r128_accel.c,v 1.13 2001/10/02 19:44:01 herrb Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/r128_accel.c,v 1.16 2002/11/15 03:01:35 dawes Exp $ */
 /*
  * Copyright 1999, 2000 ATI Technologies Inc., Markham, Ontario,
  *                      Precision Insight, Inc., Cedar Park, Texas, and
@@ -32,7 +32,7 @@
  * Authors:
  *   Rickard E. Faith <faith@valinux.com>
  *   Kevin E. Martin <martin@valinux.com>
- *   Alan Hourihane <ahourihane@valinux.com>
+ *   Alan Hourihane <alanh@fairlite.demon.co.uk>
  *
  * Credits:
  *
@@ -82,6 +82,7 @@
 				/* Driver data structures */
 #include "r128.h"
 #include "r128_reg.h"
+#include "r128_sarea.h"
 #ifdef XF86DRI
 #include "r128_sarea.h"
 #define _XF86DRI_SERVER_
@@ -228,19 +229,20 @@ void R128WaitForIdle(ScrnInfoPtr pScrn)
 void R128CCEWaitForIdle(ScrnInfoPtr pScrn)
 {
     R128InfoPtr info = R128PTR(pScrn);
-    int         ret;
-    int         i    = 0;
+    int         ret, i;
 
     FLUSH_RING();
 
     for (;;) {
-	do {
-	    ret = drmR128WaitForIdleCCE(info->drmFD);
-	    if (ret && ret != -EBUSY) {
-		xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
-			   "%s: CCE idle %d\n", __FUNCTION__, ret);
-	    }
-	} while ((ret == -EBUSY) && (i++ < R128_TIMEOUT));
+        i = 0;
+        do {
+            ret = drmCommandNone(info->drmFD, DRM_R128_CCE_IDLE);
+        } while ( ret && errno == EBUSY && i++ < R128_IDLE_RETRY );
+
+	if (ret && ret != -EBUSY) {
+	    xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
+		       "%s: CCE idle %d\n", __FUNCTION__, ret);
+	}
 
 	if (ret == 0) return;
 
@@ -253,6 +255,49 @@ void R128CCEWaitForIdle(ScrnInfoPtr pScrn)
 	R128CCE_START(pScrn, info);
     }
 }
+
+int R128CCEStop(ScrnInfoPtr pScrn)
+{
+    R128InfoPtr    info = R128PTR(pScrn);
+    drmR128CCEStop stop;
+    int            ret, i;
+
+    stop.flush = 1;
+    stop.idle  = 1;
+
+    ret = drmCommandWrite( info->drmFD, DRM_R128_CCE_STOP,
+                           &stop, sizeof(drmR128CCEStop) );
+
+    if ( ret == 0 ) {
+        return 0;
+    } else if ( errno != EBUSY ) {
+        return -errno;
+    }
+
+    stop.flush = 0;
+
+    i = 0;
+    do {
+        ret = drmCommandWrite( info->drmFD, DRM_R128_CCE_STOP,
+                               &stop, sizeof(drmR128CCEStop) );
+    } while ( ret && errno == EBUSY && i++ < R128_IDLE_RETRY );
+
+    if ( ret == 0 ) {
+        return 0;
+    } else if ( errno != EBUSY ) {
+        return -errno;
+    }
+
+    stop.idle = 0;
+
+    if ( drmCommandWrite( info->drmFD, DRM_R128_CCE_STOP,
+                          &stop, sizeof(drmR128CCEStop) )) {
+        return -errno;
+    } else {
+        return 0;
+    }
+}
+
 #endif
 
 /* Setup for XAA SolidFill. */
@@ -704,6 +749,7 @@ static void R128SetupForScanlineCPUToScreenColorExpandFill(ScrnInfoPtr pScrn,
     unsigned char *R128MMIO = info->MMIO;
 
     R128WaitForFifo(pScrn, 4);
+#if X_BYTE_ORDER == X_LITTLE_ENDIAN
     OUTREG(R128_DP_GUI_MASTER_CNTL, (info->dp_gui_master_cntl
 				     | R128_GMC_DST_CLIPPING
 				     | R128_GMC_BRUSH_NONE
@@ -713,6 +759,16 @@ static void R128SetupForScanlineCPUToScreenColorExpandFill(ScrnInfoPtr pScrn,
 				     | R128_ROP[rop].rop
 				     | R128_GMC_BYTE_LSB_TO_MSB
 				     | R128_DP_SRC_SOURCE_HOST_DATA));
+#else	/* X_BYTE_ORDER == X_BIG_ENDIAN */
+    OUTREG(R128_DP_GUI_MASTER_CNTL, (info->dp_gui_master_cntl
+				     | R128_GMC_DST_CLIPPING
+				     | R128_GMC_BRUSH_NONE
+				     | (bg == -1
+					? R128_GMC_SRC_DATATYPE_MONO_FG_LA
+					: R128_GMC_SRC_DATATYPE_MONO_FG_BG)
+				     | R128_ROP[rop].rop
+				     | R128_DP_SRC_SOURCE_HOST_DATA));
+#endif
     OUTREG(R128_DP_WRITE_MASK,      planemask);
     OUTREG(R128_DP_SRC_FRGD_CLR,    fg);
     OUTREG(R128_DP_SRC_BKGD_CLR,    bg);
@@ -991,10 +1047,19 @@ void R128EngineInit(ScrnInfoPtr pScrn)
     OUTREG(R128_DP_WRITE_MASK,     0xffffffff);
 
     R128WaitForFifo(pScrn, 1);
+
 #if X_BYTE_ORDER == X_BIG_ENDIAN
-    OUTREGP(R128_DP_DATATYPE,
-	    R128_HOST_BIG_ENDIAN_EN, ~R128_HOST_BIG_ENDIAN_EN);
-#else
+    /* FIXME: this is a kludge for texture uploads in the 3D driver. Look at
+     * how the radeon driver handles HOST_DATA_SWAP if you want to implement
+     * CCE ImageWrite acceleration or anything needing this bit */
+#ifdef XF86DRI
+    if (info->directRenderingEnabled)
+	OUTREGP(R128_DP_DATATYPE, 0, ~R128_HOST_BIG_ENDIAN_EN);
+    else
+#endif
+	OUTREGP(R128_DP_DATATYPE,
+		R128_HOST_BIG_ENDIAN_EN, ~R128_HOST_BIG_ENDIAN_EN);
+#else /* X_LITTLE_ENDIAN */
     OUTREGP(R128_DP_DATATYPE, 0, ~R128_HOST_BIG_ENDIAN_EN);
 #endif
 
@@ -1127,6 +1192,150 @@ static void R128CCESubsequentScreenToScreenCopy(ScrnInfoPtr pScrn,
     OUT_RING_REG( R128_DST_HEIGHT_WIDTH, (h << 16) | w );
 
     ADVANCE_RING();
+}
+
+
+/*
+ * XAA scanline color expansion
+ *
+ * We use HOSTDATA_BLT CCE packets, dividing the image in chunks that fit into
+ * the indirect buffer if necessary.
+ */
+static void R128CCESetupForScanlineCPUToScreenColorExpandFill(ScrnInfoPtr pScrn,
+							      int fg, int bg,
+							      int rop,
+							      unsigned int
+							      planemask)
+{
+    R128InfoPtr   info      = R128PTR(pScrn);
+    RING_LOCALS;
+
+    R128CCE_REFRESH( pScrn, info );
+
+    BEGIN_RING( 2 );
+    OUT_RING_REG(R128_DP_WRITE_MASK,      planemask);
+    ADVANCE_RING();
+
+    info->scanline_rop = rop;
+    info->scanline_fg  = fg;
+    info->scanline_bg  = bg;
+}
+
+/* Helper function to write out a HOSTDATA_BLT packet into the indirect buffer
+   and set the XAA scratch buffer address appropriately */
+static void R128CCEScanlineCPUToScreenColorExpandFillPacket(ScrnInfoPtr pScrn,
+							    int bufno)
+{
+    R128InfoPtr	info = R128PTR(pScrn);
+    int chunk_words = info->scanline_hpass * info->scanline_words;
+    RING_LOCALS;
+
+    R128CCE_REFRESH( pScrn, info );
+
+    BEGIN_RING( chunk_words+9 );
+
+    OUT_RING( CCE_PACKET3( R128_CCE_PACKET3_CNTL_HOSTDATA_BLT, chunk_words+9-2 ) );
+#if X_BYTE_ORDER == X_LITTLE_ENDIAN
+    OUT_RING( (info->dp_gui_master_cntl
+	       | R128_GMC_DST_CLIPPING
+	       | R128_GMC_BRUSH_NONE
+	       | (info->scanline_bg == -1
+		  ? R128_GMC_SRC_DATATYPE_MONO_FG_LA
+		  : R128_GMC_SRC_DATATYPE_MONO_FG_BG)
+	       | R128_ROP[info->scanline_rop].rop
+	       | R128_GMC_BYTE_LSB_TO_MSB
+	       | R128_DP_SRC_SOURCE_HOST_DATA));
+#else	/* X_BYTE_ORDER == X_BIG_ENDIAN */
+    OUT_RING( (info->dp_gui_master_cntl
+	       | R128_GMC_DST_CLIPPING
+	       | R128_GMC_BRUSH_NONE
+	       | (info->scanline_bg == -1
+		  ? R128_GMC_SRC_DATATYPE_MONO_FG_LA
+		  : R128_GMC_SRC_DATATYPE_MONO_FG_BG)
+	       | R128_ROP[info->scanline_rop].rop
+	       | R128_DP_SRC_SOURCE_HOST_DATA));
+#endif
+    OUT_RING( (info->scanline_y << 16) | (info->scanline_x1clip & 0xffff) );
+    OUT_RING( ((info->scanline_y+info->scanline_hpass-1) << 16) | ((info->scanline_x2clip-1) & 0xffff) );
+    OUT_RING( info->scanline_fg );
+    OUT_RING( info->scanline_bg );
+    OUT_RING( (info->scanline_y << 16) | (info->scanline_x & 0xffff));
+
+    /* Have to pad the width here and use clipping engine */
+    OUT_RING( (info->scanline_hpass << 16)      | ((info->scanline_w + 31) & ~31));
+
+    OUT_RING( chunk_words );
+
+    info->scratch_buffer[bufno] = (unsigned char *) &__head[__count];
+    __count += chunk_words;
+
+    ADVANCE_RING();
+
+    info->scanline_y += info->scanline_hpass;
+    info->scanline_h -= info->scanline_hpass;
+
+    if ( R128_VERBOSE )
+          xf86DrvMsg( pScrn->scrnIndex, X_INFO,
+		      "%s: hpass=%d, words=%d => chunk_words=%d, y=%d, h=%d\n",
+		      __FUNCTION__, info->scanline_hpass, info->scanline_words,
+		      chunk_words, info->scanline_y, info->scanline_h );
+}
+
+/* Subsequent XAA indirect CPU-to-screen color expansion.  This is only
+   called once for each rectangle. */
+static void R128CCESubsequentScanlineCPUToScreenColorExpandFill(ScrnInfoPtr pScrn,
+								int x, int y,
+								int w, int h,
+								int skipleft)
+{
+    R128InfoPtr   info      = R128PTR(pScrn);
+
+#define BUFSIZE ( R128_BUFFER_SIZE/4-9 )
+
+    info->scanline_x      = x;
+    info->scanline_y      = y;
+    info->scanline_w      = w;
+    info->scanline_h      = h;
+
+    info->scanline_x1clip = x+skipleft;
+    info->scanline_x2clip = x+w;
+
+    info->scanline_words  = (w + 31) >> 5;
+    info->scanline_hpass  = min(h,(BUFSIZE/info->scanline_words));
+
+    if ( R128_VERBOSE )
+        xf86DrvMsg( pScrn->scrnIndex, X_INFO,
+		    "%s: x=%d, y=%d, w=%d, h=%d, skipleft=%d => x1clip=%d, x2clip=%d, hpass=%d, words=%d\n",
+		    __FUNCTION__, x, y, w, h, skipleft, info->scanline_x1clip, info->scanline_x2clip,
+		    info->scanline_hpass, info->scanline_words );
+
+    R128CCEScanlineCPUToScreenColorExpandFillPacket(pScrn, 0);
+}
+
+/* Subsequent XAA indirect CPU-to-screen color expansion.  This is called
+   once for each scanline. */
+static void R128CCESubsequentColorExpandScanline(ScrnInfoPtr pScrn,
+						 int bufno)
+{
+    R128InfoPtr     info      = R128PTR(pScrn);
+
+    if ( R128_VERBOSE )
+        xf86DrvMsg( pScrn->scrnIndex, X_INFO,
+		    "%s enter: scanline_hpass=%d, scanline_h=%d\n",
+		    __FUNCTION__, info->scanline_hpass, info->scanline_h );
+
+    if (--info->scanline_hpass) {
+        info->scratch_buffer[bufno] += 4 * info->scanline_words;
+    }
+    else if(info->scanline_h) {
+        info->scanline_hpass = min(info->scanline_h,(BUFSIZE/info->scanline_words));
+        R128CCEScanlineCPUToScreenColorExpandFillPacket(pScrn, bufno);
+    }
+
+    if ( R128_VERBOSE )
+        xf86DrvMsg( pScrn->scrnIndex, X_INFO,
+		    "%s exit: scanline_hpass=%d, scanline_h=%d\n",
+		    __FUNCTION__, info->scanline_hpass, info->scanline_h );
 }
 
 /* Solid lines */
@@ -1348,11 +1557,11 @@ drmBufPtr R128CCEGetBuffer( ScrnInfoPtr pScrn )
     while ( 1 ) {
 	do {
 	    ret = drmDMA( info->drmFD, &dma );
-	    if ( ret && ret != -EBUSY ) {
+	    if ( ret && ret != -EAGAIN ) {
 		xf86DrvMsg( pScrn->scrnIndex, X_ERROR,
 			    "%s: CCE GetBuffer %d\n", __FUNCTION__, ret );
 	    }
-	} while ( ( ret == -EBUSY ) && ( i++ < R128_TIMEOUT ) );
+	} while ( ( ret == -EAGAIN ) && ( i++ < R128_TIMEOUT ) );
 
 	if ( ret == 0 ) {
 	    buf = &info->buffers->list[indx];
@@ -1377,30 +1586,35 @@ drmBufPtr R128CCEGetBuffer( ScrnInfoPtr pScrn )
 
 /* Flush the indirect buffer to the kernel for submission to the card.
  */
-void R128CCEFlushIndirect( ScrnInfoPtr pScrn )
+void R128CCEFlushIndirect( ScrnInfoPtr pScrn, int discard )
 {
     R128InfoPtr   info = R128PTR(pScrn);
     drmBufPtr buffer = info->indirectBuffer;
     int start = info->indirectStart;
-    int discard;
+    drmR128Indirect indirect;
 
     if ( !buffer )
 	return;
 
-    if ( start == buffer->used )
-	return;
+    if ( (start == buffer->used) && !discard )
+        return;
 
-    discard = ( buffer->used + RING_THRESHOLD > buffer->total );
+    indirect.idx = buffer->idx;
+    indirect.start = start;
+    indirect.end = buffer->used;
+    indirect.discard = discard;
 
-    drmR128FlushIndirectBuffer( info->drmFD, buffer->idx,
-				start, buffer->used, discard );
+    drmCommandWriteRead( info->drmFD, DRM_R128_INDIRECT,
+                         &indirect, sizeof(drmR128Indirect));
 
-    if ( discard ) {
-	info->indirectBuffer = R128CCEGetBuffer( pScrn );
-	info->indirectStart = 0;
-    } else {
-	info->indirectStart = buffer->used;
-    }
+    if ( discard )
+        buffer = info->indirectBuffer = R128CCEGetBuffer( pScrn );
+
+    /* pad to an even number of dwords */
+    if (buffer->used & 7)
+        buffer->used = ( buffer->used+7 ) & ~7;
+
+    info->indirectStart = buffer->used;
 }
 
 /* Flush and release the indirect buffer.
@@ -1410,6 +1624,7 @@ void R128CCEReleaseIndirect( ScrnInfoPtr pScrn )
     R128InfoPtr   info = R128PTR(pScrn);
     drmBufPtr buffer = info->indirectBuffer;
     int start = info->indirectStart;
+    drmR128Indirect indirect;
 
     info->indirectBuffer = NULL;
     info->indirectStart = 0;
@@ -1417,12 +1632,19 @@ void R128CCEReleaseIndirect( ScrnInfoPtr pScrn )
     if ( !buffer )
 	return;
 
-    drmR128FlushIndirectBuffer( info->drmFD, buffer->idx,
-				start, buffer->used, 1 );
+    indirect.idx = buffer->idx;
+    indirect.start = start;
+    indirect.end = buffer->used;
+    indirect.discard = 1;
+
+    drmCommandWriteRead( info->drmFD, DRM_R128_INDIRECT,
+                         &indirect, sizeof(drmR128Indirect));
 }
 
 static void R128CCEAccelInit(ScrnInfoPtr pScrn, XAAInfoRecPtr a)
 {
+    R128InfoPtr info = R128PTR(pScrn);
+
     a->Flags                            = (PIXMAP_CACHE
 					   | OFFSCREEN_PIXMAPS
 					   | LINEAR_FRAMEBUFFER);
@@ -1447,6 +1669,18 @@ static void R128CCEAccelInit(ScrnInfoPtr pScrn, XAAInfoRecPtr a)
 					   : 0);
     a->SetupForScreenToScreenCopy       = R128CCESetupForScreenToScreenCopy;
     a->SubsequentScreenToScreenCopy     = R128CCESubsequentScreenToScreenCopy;
+
+				/* Indirect CPU-To-Screen Color Expand */
+    a->ScanlineCPUToScreenColorExpandFillFlags = LEFT_EDGE_CLIPPING
+					       | LEFT_EDGE_CLIPPING_NEGATIVE_X;
+    a->NumScanlineColorExpandBuffers   = 1;
+    a->ScanlineColorExpandBuffers      = info->scratch_buffer;
+    info->scratch_buffer[0]            = NULL;
+    a->SetupForScanlineCPUToScreenColorExpandFill
+	= R128CCESetupForScanlineCPUToScreenColorExpandFill;
+    a->SubsequentScanlineCPUToScreenColorExpandFill
+	= R128CCESubsequentScanlineCPUToScreenColorExpandFill;
+    a->SubsequentColorExpandScanline   = R128CCESubsequentColorExpandScanline;
 
 				/* Bresenham Solid Lines */
     a->SetupForSolidLine               = R128CCESetupForSolidLine;
@@ -1508,14 +1742,8 @@ static void R128MMIOAccelInit(ScrnInfoPtr pScrn, XAAInfoRecPtr a)
 					   | BIT_ORDER_IN_BYTE_LSBFIRST);
 
 				/* Indirect CPU-To-Screen Color Expand */
-#if X_BYTE_ORDER == X_LITTLE_ENDIAN
     a->ScanlineCPUToScreenColorExpandFillFlags = LEFT_EDGE_CLIPPING
 					       | LEFT_EDGE_CLIPPING_NEGATIVE_X;
-#else
-    a->ScanlineCPUToScreenColorExpandFillFlags = BIT_ORDER_IN_BYTE_MSBFIRST
-					       | LEFT_EDGE_CLIPPING
-					       | LEFT_EDGE_CLIPPING_NEGATIVE_X;
-#endif
     a->NumScanlineColorExpandBuffers   = 1;
     a->ScanlineColorExpandBuffers      = info->scratch_buffer;
     info->scratch_save                 = xalloc(((pScrn->virtualX+31)/32*4)
@@ -1567,8 +1795,6 @@ Bool R128AccelInit(ScreenPtr pScreen)
     if (!(a = info->accel = XAACreateInfoRec())) return FALSE;
 
 #ifdef XF86DRI
-    /* FIXME: When direct rendering is enabled, we should use the CCE to
-       draw 2D commands */
     if (info->directRenderingEnabled)
 	R128CCEAccelInit(pScrn, a);
     else

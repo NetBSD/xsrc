@@ -22,13 +22,12 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  *
  * Authors:
- *    Keith Whitwell <keithw@valinux.com>
+ *    Keith Whitwell <keith@tungstengraphics.com>
  */
-/* $XFree86: xc/lib/GL/mesa/src/drv/mga/mgadd.c,v 1.11 2001/08/18 02:51:05 dawes Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/mga/mgadd.c,v 1.14 2002/10/30 12:51:35 alanh Exp $ */
 
 
-#include "types.h"
-#include "vbrender.h"
+#include "mtypes.h"
 
 
 #include <stdio.h>
@@ -42,17 +41,13 @@
 #include "mgatex.h"
 #include "mgatris.h"
 #include "mgavb.h"
-#include "mgapipeline.h"
+#include "mga_xmesa.h"
 #include "extensions.h"
-#include "vb.h"
-#include "dd.h"
-
-#if defined(USE_X86_ASM) || defined(USE_3DNOW_ASM) || defined(USE_KATMAI_ASM)
+#if defined(USE_X86_ASM)
 #include "X86/common_x86_asm.h"
 #endif
 
-#define MGA_DATE	"20010622"
-
+#define MGA_DATE	"20020221"
 
 
 /***************************************
@@ -91,7 +86,7 @@ static const GLubyte *mgaDDGetString( GLcontext *ctx, GLenum name )
       /* Append any CPU-specific information.
        */
 #ifdef USE_X86_ASM
-      if ( gl_x86_cpu_features ) {
+      if ( _mesa_x86_cpu_features ) {
 	 strncat( buffer, " x86", 4 );
       }
 #endif
@@ -105,7 +100,7 @@ static const GLubyte *mgaDDGetString( GLcontext *ctx, GLenum name )
 	 strncat( buffer, "/3DNow!", 7 );
       }
 #endif
-#ifdef USE_KATMAI_ASM
+#ifdef USE_SSE_ASM
       if ( cpu_has_xmm ) {
 	 strncat( buffer, "/SSE", 4 );
       }
@@ -118,20 +113,10 @@ static const GLubyte *mgaDDGetString( GLcontext *ctx, GLenum name )
 }
 
 
-static GLint mgaGetParameteri(const GLcontext *ctx, GLint param)
-{
-   switch (param) {
-   case DD_HAVE_HARDWARE_FOG:
-      return 1;
-   default:
-      fprintf(stderr, "mgaGetParameteri(): unknown parameter!\n");
-      return 0;
-   }
-}
 
-
-static void mgaBufferSize(GLcontext *ctx, GLuint *width, GLuint *height)
+static void mgaBufferSize(GLframebuffer *buffer, GLuint *width, GLuint *height)
 {
+   GET_CURRENT_CONTEXT(ctx);
    mgaContextPtr mmesa = MGA_CONTEXT(ctx);
 
    /* Need to lock to make sure the driDrawable is uptodate.  This
@@ -147,53 +132,33 @@ static void mgaBufferSize(GLcontext *ctx, GLuint *width, GLuint *height)
 void mgaDDExtensionsInit( GLcontext *ctx )
 {
    /* paletted_textures currently doesn't work, but we could fix them later */
-   gl_extensions_disable( ctx, "GL_EXT_shared_texture_palette" );
-   gl_extensions_disable( ctx, "GL_EXT_paletted_texture" );
+   /*
+   _mesa_enable_extension( ctx, "GL_EXT_shared_texture_palette" );
+   _mesa_enable_extension( ctx, "GL_EXT_paletted_texture" );
+   */
 
-   /* Support multitexture only on the g400.
-    */
-   if (!MGA_IS_G400(MGA_CONTEXT(ctx)))
-   {
-      gl_extensions_disable( ctx, "GL_ARB_multitexture" );
-   }
+   _mesa_enable_extension( ctx, "GL_ARB_texture_compression" );
+   _mesa_enable_extension( ctx, "GL_ARB_multisample" );
 
-   /* Turn on texenv_add for the G400.
+   _mesa_enable_extension( ctx, "GL_SGIS_generate_mipmap" );
+
+   /* Turn on multitexture and texenv_add for the G400.
     */
-   if (MGA_IS_G400(MGA_CONTEXT(ctx)))
-   {
-      gl_extensions_enable( ctx, "GL_EXT_texture_env_add" );
+   if (MGA_IS_G400(MGA_CONTEXT(ctx))) {
+      _mesa_enable_extension( ctx, "GL_ARB_multitexture" );
+      _mesa_enable_extension( ctx, "GL_ARB_texture_env_add" );
+
+      _mesa_enable_extension( ctx, "GL_EXT_texture_env_add" );
 
 #if defined (MESA_packed_depth_stencil)
-      gl_extensions_enable( ctx, "GL_MESA_packed_depth_stencil" );
+      _mesa_enable_extension( ctx, "GL_MESA_packed_depth_stencil" );
 #endif
 
 #if defined (MESA_experimetal_agp_allocator)
-      if (!getenv("MGA_DISABLE_AGP_ALLOCATOR"))
-	 gl_extensions_enable( ctx, "GL_MESA_experimental_agp_allocator" );
+      if (!getenv("MGA_DISABLE_AGP_ALLOCATOR"))  
+	 _mesa_enable_extension( ctx, "GL_MESA_experimental_agp_allocator" );
 #endif
    }
-
-   /* we don't support point parameters in hardware yet */
-   gl_extensions_disable( ctx, "GL_EXT_point_parameters" );
-
-   /* No support for fancy imaging stuff.  This should kill off
-    * a few rogue fallbacks.
-    */
-   gl_extensions_disable( ctx, "ARB_imaging" );
-   gl_extensions_disable( ctx, "GL_EXT_blend_color" );
-   gl_extensions_disable( ctx, "GL_EXT_blend_minmax" );
-   gl_extensions_disable( ctx, "GL_EXT_blend_logic_op" );
-   gl_extensions_disable( ctx, "GL_EXT_blend_subtract" );
-   gl_extensions_disable( ctx, "GL_INGR_blend_func_separate" );
-   gl_extensions_disable( ctx, "GL_EXT_texture_lod_bias" );
-   gl_extensions_disable( ctx, "GL_MESA_resize_buffers" );
-
-   gl_extensions_disable( ctx, "GL_SGI_color_matrix" );
-   gl_extensions_disable( ctx, "GL_SGI_color_table" );
-   gl_extensions_disable( ctx, "GL_SGIX_pixel_texture" );
-   gl_extensions_disable( ctx, "GL_ARB_texture_cube_map" );
-   gl_extensions_disable( ctx, "GL_ARB_texture_compression" );
-   gl_extensions_disable( ctx, "GL_EXT_convolution" );
 }
 
 
@@ -201,9 +166,6 @@ void mgaDDExtensionsInit( GLcontext *ctx )
 void mgaDDInitDriverFuncs( GLcontext *ctx )
 {
    ctx->Driver.GetBufferSize = mgaBufferSize;
+   ctx->Driver.ResizeBuffers = _swrast_alloc_buffers;
    ctx->Driver.GetString = mgaDDGetString;
-   ctx->Driver.GetParameteri = mgaGetParameteri;
-   ctx->Driver.RegisterVB = mgaDDRegisterVB;
-   ctx->Driver.UnregisterVB = mgaDDUnregisterVB;
-   ctx->Driver.BuildPrecalcPipeline = mgaDDBuildPrecalcPipeline;
 }

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/dix/extension.c,v 3.11 2001/12/14 19:59:31 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/dix/extension.c,v 3.12 2002/02/19 11:09:22 alanh Exp $ */
 /***********************************************************
 
 Copyright 1987, 1998  The Open Group
@@ -79,15 +79,11 @@ static int lastError = FirstExtensionError;
 static unsigned int NumExtensions = 0;
 
 ExtensionEntry *
-AddExtension(name, NumEvents, NumErrors, MainProc, 
-	     SwappedMainProc, CloseDownProc, MinorOpcodeProc)
-    char *name;
-    int NumEvents;
-    int NumErrors;
-    int (* MainProc)();
-    int (* SwappedMainProc)();
-    void (* CloseDownProc)();
-    unsigned short (* MinorOpcodeProc)();
+AddExtension(char *name, int NumEvents, int NumErrors, 
+	     int (*MainProc)(ClientPtr c1), 
+	     int (*SwappedMainProc)(ClientPtr c2), 
+	     void (*CloseDownProc)(ExtensionEntry *e), 
+	     unsigned short (*MinorOpcodeProc)(ClientPtr c3))
 {
     int i;
     register ExtensionEntry *ext, **newexts;
@@ -186,9 +182,7 @@ Bool AddExtensionAlias(alias, ext)
 }
 
 static int
-FindExtension(extname, len)
-    char *extname;
-    int len;
+FindExtension(char *extname, int len)
 {
     int i, j;
 
@@ -217,7 +211,7 @@ CheckExtension(const char *extname)
 {
     int n;
 
-    n = FindExtension(extname, strlen(extname));
+    n = FindExtension((char*)extname, strlen(extname));
     if (n != -1)
 	return extensions[n];
     else

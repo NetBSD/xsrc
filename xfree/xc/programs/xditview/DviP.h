@@ -1,7 +1,7 @@
 /*
  * $XConsortium: DviP.h,v 1.10 92/02/11 01:27:15 keith Exp $
  */
-/* $XFree86: xc/programs/xditview/DviP.h,v 1.4 2001/08/01 00:45:03 tsi Exp $ */
+/* $XFree86: xc/programs/xditview/DviP.h,v 1.5 2002/06/20 17:40:44 keithp Exp $ */
 
 /* 
  * DviP.h - Private definitions for Dvi widget
@@ -234,8 +234,9 @@ extern int		DviGetAndPut(DviWidget, int *);
 
 #define ToX(dw,device)		    ((int) ((device) * (dw)->dvi.scale + 0.5))
 #define ToDevice(dw,x)		    ((int) ((x) / (dw)->dvi.scale + 0.5))
-#define FontSizeInPixels(dw,size)   ((int) ((size) * (dw)->dvi.screen_resolution / ((dw)->dvi.size_scale * 72)))
-#define FontSizeInDevice(dw,size)   ((int) ((size) * (dw)->dvi.device_resolution / ((dw)->dvi.size_scale * 72)))
+#define SizeScale(dw)		    ((dw)->dvi.size_scale ? (dw)->dvi.size_scale : 4)
+#define FontSizeInPixels(dw,size)   ((int) ((size) * (dw)->dvi.screen_resolution / (SizeScale(dw) * 72)))
+#define FontSizeInDevice(dw,size)   ((int) ((size) * (dw)->dvi.device_resolution / (SizeScale(dw) * 72)))
 
 /*
  * Full widget declaration

@@ -28,7 +28,7 @@
  * this work is sponsored by S.u.S.E. GmbH, Fuerth, Elsa GmbH, Aachen, 
  * Siemens Nixdorf Informationssysteme and Appian Graphics.
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/glint/glint_driver.c,v 1.144 2002/01/04 21:22:30 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/glint/glint_driver.c,v 1.156 2003/02/17 16:08:28 dawes Exp $ */
 
 #include "fb.h"
 #include "cfb8_32.h"
@@ -275,12 +275,14 @@ static const char *shadowSymbols[] = {
     NULL
 };
 
+#ifdef XFree86LOADER
 static const char *vbeSymbols[] = {
     "VBEInit",
     "vbeDoEDID",
     "vbeFree",
     NULL
 };
+#endif
 
 static const char *ramdacSymbols[] = {
     "IBMramdac526CalculateMNPCForClock",
@@ -341,9 +343,11 @@ const char *GLINTint10Symbols[] = {
 static const char *drmSymbols[] = {
     "drmAddBufs",
     "drmAddMap",
+    "drmCommandWrite",
     "drmCtlInstHandler",
     "drmFreeVersion",
     "drmGetInterruptFromBusID",
+    "drmGetLibVersion",
     "drmGetVersion",
     "drmMapBufs",
     "drmUnmapBufs",
@@ -1075,8 +1079,7 @@ GLINTPreInit(ScrnInfoPtr pScrn, int flags)
 	    return FALSE;
     }
 
-    xf86SetOperatingState(resVgaMemShared, pGlint->pEnt->index, ResDisableOpr);
-    xf86SetOperatingState(resVgaIoShared, pGlint->pEnt->index, ResDisableOpr);
+    xf86SetOperatingState(resVga, pGlint->pEnt->index, ResDisableOpr);
     
     /* Operations for which memory access is required. */
     pScrn->racMemFlags = RAC_FB | RAC_COLORMAP | RAC_CURSOR | RAC_VIEWPORT;
@@ -1384,22 +1387,25 @@ GLINTPreInit(ScrnInfoPtr pScrn, int flags)
     } else {
 	pGlint->IOAddress = pGlint->PciInfo->memBase[0] & 0xFFFFC000;
     }
-#if X_BYTE_ORDER == X_BIG_ENDIAN
-    pGlint->IOAddress += 0x10000;
-#endif
 
     if ((IS_J2000) && (pGlint->Chipset == PCI_VENDOR_3DLABS_CHIP_GAMMA)) {
-	/* Fix up for dual head mode, offset gamma registers at 0x10000 */
+	/* We know which head is the primary on the J2000 board, need a more
+	 * generix solution though.
+	 */
         if ((xf86IsEntityShared(pScrn->entityList[0])) &&
             (xf86IsPrimInitDone(pScrn->entityList[0]))) {
-#if 0 	/* When we need gamma & acceleration, this should be used instead */
 		pGlint->IOAddress += 0x10000;
-#endif
+		pGlint->MultiIndex = 2;
 	} else {
 		xf86SetPrimInitDone(pScrn->entityList[0]);
+		pGlint->MultiIndex = 1;
 	}
-#if 1   /* And then remove this */
-	pGlint->IOAddress = pGlint->MultiPciInfo[0]->memBase[0] & 0xFFFFC000;
+#if X_BYTE_ORDER == X_BIG_ENDIAN
+	GLINT_SLOW_WRITE_REG(
+		GLINT_READ_REG(GCSRAperture) | GCSRBitSwap
+		, GCSRAperture);
+    } else {
+    	pGlint->IOAddress += 0x10000;
 #endif
     }
 
@@ -1418,6 +1424,21 @@ GLINTPreInit(ScrnInfoPtr pScrn, int flags)
 	    return FALSE;
         }
     }
+    }
+
+    /* Initialize the card through int10 interface if needed */
+    if (pGlint->Chipset != PCI_VENDOR_3DLABS_CHIP_GAMMA && 
+	pGlint->Chipset != PCI_VENDOR_3DLABS_CHIP_GAMMA2 &&
+	pGlint->Chipset != PCI_VENDOR_3DLABS_CHIP_DELTA &&
+	!xf86IsPrimaryPci(pGlint->PciInfo) && !pGlint->FBDev) {
+    	if ( xf86LoadSubModule(pScrn, "int10")){
+	    xf86Int10InfoPtr pInt;
+
+	    xf86LoaderReqSymLists(GLINTint10Symbols, NULL);
+	    xf86DrvMsg(pScrn->scrnIndex, X_INFO, "Initializing int10\n");
+	    pInt = xf86InitInt10(pGlint->pEnt->index);
+	    xf86FreeInt10(pInt);
+        }
     }
 
     pGlint->FbMapSize = 0;
@@ -1714,12 +1735,24 @@ GLINTPreInit(ScrnInfoPtr pScrn, int flags)
 	    pGlint->FIFOSize = 31;
 	    maxheight = 1024;
 	    maxwidth = 1536;
-	    GLINTProbeIBMramdac(pScrn);
-	    if (pGlint->RamDac == NULL) return FALSE;
-	    if (pGlint->RamDac->RamDacType != (IBM526DB_RAMDAC) &&
-		pGlint->RamDac->RamDacType != (IBM526_RAMDAC))
+	    /* Test for an TI ramdac */
+	    if (!pGlint->RamDac) {
+	    	GLINTProbeTIramdac(pScrn);
+		if (pGlint->RamDac)
+	             if (pGlint->RamDac->RamDacType == (TI3026_RAMDAC)) 
+		    	pGlint->RefClock = 14318;
+	    }
+	    /* Test for an IBM ramdac */
+	    if (!pGlint->RamDac) {
+	    	GLINTProbeIBMramdac(pScrn);
+		if (pGlint->RamDac) {
+	    	    if (pGlint->RamDac->RamDacType == (IBM526DB_RAMDAC) ||
+		    	pGlint->RamDac->RamDacType == (IBM526_RAMDAC))
+		    	pGlint->RefClock = 14318;
+		}
+	    }
+	    if (!pGlint->RamDac)
 		return FALSE;
-	    pGlint->RefClock = 14318;
 	    break;
 	case PCI_VENDOR_3DLABS_CHIP_500TX:
 	case PCI_VENDOR_3DLABS_CHIP_300SX:
@@ -1762,12 +1795,24 @@ GLINTPreInit(ScrnInfoPtr pScrn, int flags)
 		case PCI_CHIP_TI_PERMEDIA:
 	    	    maxheight = 1024;
 	    	    maxwidth = 1536;
-	    	    GLINTProbeIBMramdac(pScrn);
-	    	    if (pGlint->RamDac == NULL) return FALSE;
-	    	    if (pGlint->RamDac->RamDacType != (IBM526DB_RAMDAC) &&
-			pGlint->RamDac->RamDacType != (IBM526_RAMDAC))
+	    	    /* Test for an TI ramdac */
+	    	    if (!pGlint->RamDac) {
+	    		GLINTProbeTIramdac(pScrn);
+			if (pGlint->RamDac)
+	             	    if (pGlint->RamDac->RamDacType == (TI3026_RAMDAC)) 
+		    		pGlint->RefClock = 14318;
+	    	    }
+	    	    /* Test for an IBM ramdac */
+	    	    if (!pGlint->RamDac) {
+	    		GLINTProbeIBMramdac(pScrn);
+			if (pGlint->RamDac) {
+	    	    	    if (pGlint->RamDac->RamDacType == (IBM526DB_RAMDAC) ||
+		    		pGlint->RamDac->RamDacType == (IBM526_RAMDAC))
+		    		    pGlint->RefClock = 14318;
+			}
+	    	    }
+	    	    if (!pGlint->RamDac)
 			return FALSE;
-	    	    pGlint->RefClock = 14318;
 		    break;
 		case PCI_CHIP_500TX:
 		case PCI_CHIP_300SX:
@@ -1826,11 +1871,6 @@ GLINTPreInit(ScrnInfoPtr pScrn, int flags)
 		    RamDacDestroyInfoRec(pGlint->RamDacRec);
 		    return FALSE;
 	    	}
-#if 1 /* REMOVE LATER - see other IS_J2000 fixup code */
-		/* As we push the acceleration through the pm3 (for now) we can
-	 	 * safely set the FIFOSize to 120 again */
-		pGlint->FIFOSize = 120;
-#endif
 		break;
 	    }
 	    if (IS_GMX2000) {
@@ -1892,24 +1932,18 @@ GLINTPreInit(ScrnInfoPtr pScrn, int flags)
 	    break;
     }
 
+    if ( pGlint->RamDac &&
+	 (pGlint->RamDac->RamDacType != (IBM640_RAMDAC)) &&
+	 (pScrn->depth == 30) )
+    {
+    	xf86DrvMsg(pScrn->scrnIndex, X_PROBED, 
+			"Depth 30 not supported for this chip\n");
+	return FALSE;
+    }
+
     if (pGlint->FIFOSize)
     	xf86DrvMsg(pScrn->scrnIndex, X_PROBED, "FIFO Size is %d DWORDS\n",
 	       pGlint->FIFOSize);
-
-    /* Initialize the card through int10 interface if needed */
-    if (pGlint->Chipset != PCI_VENDOR_3DLABS_CHIP_GAMMA && 
-	pGlint->Chipset != PCI_VENDOR_3DLABS_CHIP_GAMMA2 &&
-	pGlint->Chipset != PCI_VENDOR_3DLABS_CHIP_DELTA &&
-	!xf86IsPrimaryPci(pGlint->PciInfo) && !pGlint->FBDev) {
-    	if ( xf86LoadSubModule(pScrn, "int10")){
-	    xf86Int10InfoPtr pInt;
-
-	    xf86LoaderReqSymLists(GLINTint10Symbols, NULL);
-	    xf86DrvMsg(pScrn->scrnIndex, X_INFO, "Initializing int10\n");
-	    pInt = xf86InitInt10(pGlint->pEnt->index);
-	    xf86FreeInt10(pInt);
-        }
-    }
 
     /* Set the min pixel clock */
     pGlint->MinClock = 16250;	/* XXX Guess, need to check this */
@@ -3607,12 +3641,15 @@ GLINTBlockHandler (
     ScreenPtr      pScreen = screenInfo.screens[i];
     ScrnInfoPtr    pScrn = xf86Screens[i];
     GLINTPtr       pGlint = GLINTPTR(pScrn);
+    int sigstate = xf86BlockSIGIO();
 
     if(pGlint->CursorColorCallback) 
 	(*pGlint->CursorColorCallback)(pScrn);
 
     if(pGlint->LoadCursorCallback) 
 	(*pGlint->LoadCursorCallback)(pScrn);
+
+    xf86UnblockSIGIO(sigstate);
 
     pScreen->BlockHandler = pGlint->BlockHandler;
     (*pScreen->BlockHandler) (i, blockData, pTimeout, pReadmask);

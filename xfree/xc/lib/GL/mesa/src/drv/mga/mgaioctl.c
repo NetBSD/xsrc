@@ -22,16 +22,17 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  *
  * Authors:
- *    Keith Whitwell <keithw@valinux.com>
+ *    Keith Whitwell <keith@tungstengraphics.com>
  *    Gareth Hughes <gareth@valinux.com>
  */
-/* $XFree86: xc/lib/GL/mesa/src/drv/mga/mgaioctl.c,v 1.12 2001/10/31 22:50:24 tsi Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/mga/mgaioctl.c,v 1.16 2002/12/16 16:18:52 dawes Exp $ */
 
 #include <stdio.h>
 
-#include "types.h"
-#include "pb.h"
+#include "mtypes.h"
+#include "macros.h"
 #include "dd.h"
+#include "swrast/swrast.h"
 
 #include "mm.h"
 #include "mgacontext.h"
@@ -39,25 +40,36 @@
 #include "mgastate.h"
 #include "mgatex.h"
 #include "mgavb.h"
+#include "mgaioctl.h"
 #include "mgatris.h"
 #include "mgabuffers.h"
 
 
-#include "drm.h"
-#include <sys/ioctl.h>
+#include "xf86drm.h"
+#include "mga_common.h"
 
 static void mga_iload_dma_ioctl(mgaContextPtr mmesa,
 				unsigned long dest,
 				int length)
 {
    drmBufPtr buf = mmesa->iload_buffer;
-   int ret;
+   drmMGAIload iload;
+   int ret, i;
 
    if (MGA_DEBUG&DEBUG_VERBOSE_IOCTL)
       fprintf(stderr, "DRM_IOCTL_MGA_ILOAD idx %d dst %x length %d\n",
 	      buf->idx, (int) dest, length);
 
-   ret = drmMGATextureLoad( mmesa->driFd, buf->idx, dest, length );
+   iload.idx = buf->idx;
+   iload.dstorg = dest;
+   iload.length = length;
+
+   i = 0;
+   do {
+      ret = drmCommandWrite( mmesa->driFd, DRM_MGA_ILOAD, 
+                             &iload, sizeof(drmMGAIload) );
+   } while ( ret == -EBUSY && i++ < DRM_MGA_IDLE_RETRY );
+
    if ( ret < 0 ) {
       printf("send iload retcode = %d\n", ret);
       exit(1);
@@ -139,7 +151,7 @@ drmBufPtr mga_get_buffer_ioctl( mgaContextPtr mmesa )
 
 
 
-static GLbitfield
+static void
 mgaDDClear( GLcontext *ctx, GLbitfield mask, GLboolean all,
             GLint cx, GLint cy, GLint cw, GLint ch )
 {
@@ -153,6 +165,7 @@ mgaDDClear( GLcontext *ctx, GLbitfield mask, GLboolean all,
    int ret;
    int i;
    static int nrclears;
+   drmMGAClearRec clear;
 
    FLUSH_BATCH( mmesa );
 
@@ -182,101 +195,144 @@ mgaDDClear( GLcontext *ctx, GLbitfield mask, GLboolean all,
       mask &= ~DD_STENCIL_BIT;
    }
 
-   if ( !flags )
-      return mask;
+   if ( flags ) {
+      LOCK_HARDWARE( mmesa );
 
-   LOCK_HARDWARE( mmesa );
+      if ( mmesa->dirty_cliprects )
+	 mgaUpdateRects( mmesa, (MGA_FRONT | MGA_BACK) );
 
-   if ( mmesa->dirty_cliprects )
-      mgaUpdateRects( mmesa, (MGA_FRONT | MGA_BACK) );
-
-   /* flip top to bottom */
-   cy = dPriv->h-cy-ch;
-   cx += mmesa->drawX;
-   cy += mmesa->drawY;
-
-   if ( MGA_DEBUG & DEBUG_VERBOSE_IOCTL )
-      fprintf( stderr, "Clear, bufs %x nbox %d\n",
-	       (int)flags, (int)mmesa->numClipRects );
-
-   for (i = 0 ; i < mmesa->numClipRects ; )
-   {
-      int nr = MIN2(i + MGA_NR_SAREA_CLIPRECTS, mmesa->numClipRects);
-      XF86DRIClipRectPtr box = mmesa->pClipRects;
-      XF86DRIClipRectPtr b = mmesa->sarea->boxes;
-      int n = 0;
-
-      if (!all) {
-	 for ( ; i < nr ; i++) {
-	    GLint x = box[i].x1;
-	    GLint y = box[i].y1;
-	    GLint w = box[i].x2 - x;
-	    GLint h = box[i].y2 - y;
-
-	    if (x < cx) w -= cx - x, x = cx;
-	    if (y < cy) h -= cy - y, y = cy;
-	    if (x + w > cx + cw) w = cx + cw - x;
-	    if (y + h > cy + ch) h = cy + ch - y;
-	    if (w <= 0) continue;
-	    if (h <= 0) continue;
-
-	    b->x1 = x;
-	    b->y1 = y;
-	    b->x2 = x + w;
-	    b->y2 = y + h;
-	    b++;
-	    n++;
-	 }
-      } else {
-	 for ( ; i < nr ; i++) {
-	    *b++ = *(XF86DRIClipRectPtr)&box[i];
-	    n++;
-	 }
-      }
-
+      /* flip top to bottom */
+      cy = dPriv->h-cy-ch;
+      cx += mmesa->drawX;
+      cy += mmesa->drawY;
 
       if ( MGA_DEBUG & DEBUG_VERBOSE_IOCTL )
-	 fprintf( stderr,
-		  "DRM_IOCTL_MGA_CLEAR flag 0x%x color %x depth %x nbox %d\n",
-		  flags, clear_color, clear_depth, mmesa->sarea->nbox );
+	 fprintf( stderr, "Clear, bufs %x nbox %d\n",
+		  (int)flags, (int)mmesa->numClipRects );
 
-      mmesa->sarea->nbox = n;
+      for (i = 0 ; i < mmesa->numClipRects ; )
+      {
+	 int nr = MIN2(i + MGA_NR_SAREA_CLIPRECTS, mmesa->numClipRects);
+	 XF86DRIClipRectPtr box = mmesa->pClipRects;
+	 XF86DRIClipRectPtr b = mmesa->sarea->boxes;
+	 int n = 0;
 
-      ret = drmMGAClear( mmesa->driFd, flags,
-			 clear_color, clear_depth,
-			 color_mask, depth_mask );
-      if ( ret ) {
-	 fprintf( stderr, "send clear retcode = %d\n", ret );
-	 exit( 1 );
+	 if (!all) {
+	    for ( ; i < nr ; i++) {
+	       GLint x = box[i].x1;
+	       GLint y = box[i].y1;
+	       GLint w = box[i].x2 - x;
+	       GLint h = box[i].y2 - y;
+
+	       if (x < cx) w -= cx - x, x = cx;
+	       if (y < cy) h -= cy - y, y = cy;
+	       if (x + w > cx + cw) w = cx + cw - x;
+	       if (y + h > cy + ch) h = cy + ch - y;
+	       if (w <= 0) continue;
+	       if (h <= 0) continue;
+
+	       b->x1 = x;
+	       b->y1 = y;
+	       b->x2 = x + w;
+	       b->y2 = y + h;
+	       b++;
+	       n++;
+	    }
+	 } else {
+	    for ( ; i < nr ; i++) {
+	       *b++ = *(XF86DRIClipRectPtr)&box[i];
+	       n++;
+	    }
+	 }
+
+
+	 if ( MGA_DEBUG & DEBUG_VERBOSE_IOCTL )
+	    fprintf( stderr,
+		     "DRM_IOCTL_MGA_CLEAR flag 0x%x color %x depth %x nbox %d\n",
+		     flags, clear_color, clear_depth, mmesa->sarea->nbox );
+
+	 mmesa->sarea->nbox = n;
+
+         clear.flags = flags;
+         clear.clear_color = clear_color;
+         clear.clear_depth = clear_depth;
+         clear.color_mask = color_mask;
+         clear.depth_mask = depth_mask;
+         ret = drmCommandWrite( mmesa->driFd, DRM_MGA_CLEAR,
+                                 &clear, sizeof(drmMGAClearRec));
+	 if ( ret ) {
+	    fprintf( stderr, "send clear retcode = %d\n", ret );
+	    exit( 1 );
+	 }
+	 if ( MGA_DEBUG & DEBUG_VERBOSE_IOCTL )
+	    fprintf( stderr, "finished clear %d\n", ++nrclears );
       }
-      if ( MGA_DEBUG & DEBUG_VERBOSE_IOCTL )
-	 fprintf( stderr, "finished clear %d\n", ++nrclears );
+
+      UNLOCK_HARDWARE( mmesa );
+      mmesa->dirty |= MGA_UPLOAD_CLIPRECTS|MGA_UPLOAD_CONTEXT;
    }
 
-   UNLOCK_HARDWARE( mmesa );
-   mmesa->dirty |= MGA_UPLOAD_CLIPRECTS;
-
-   return mask;
+   if (mask) 
+      _swrast_Clear( ctx, mask, all, cx, cy, cw, ch );
 }
 
 
 int nrswaps;
 
 
+void mgaWaitForVBlank( mgaContextPtr mmesa )
+{
+    drmVBlank vbl;
+    int ret;
+
+    if ( !mmesa->mgaScreen->irq )
+	return;
+
+    if ( getenv("LIBGL_SYNC_REFRESH") ) {
+	/* Wait for until the next vertical blank */
+	vbl.request.type = DRM_VBLANK_RELATIVE;
+	vbl.request.sequence = 1;
+    } else if ( getenv("LIBGL_THROTTLE_REFRESH") ) {
+	/* Wait for at least one vertical blank since the last call */
+	vbl.request.type = DRM_VBLANK_ABSOLUTE;
+	vbl.request.sequence = mmesa->vbl_seq + 1;
+    } else {
+	return;
+    }
+
+    if ((ret = drmWaitVBlank( mmesa->driFd, &vbl ))) {
+	fprintf(stderr, "%s: drmWaitVBlank returned %d, IRQs don't seem to be"
+		" working correctly.\nTry running with LIBGL_THROTTLE_REFRESH"
+		" and LIBL_SYNC_REFRESH unset.\n", __FUNCTION__, ret);
+	exit(1);
+    }
+
+    mmesa->vbl_seq = vbl.reply.sequence;
+}
+
 
 /*
  * Copy the back buffer to the front buffer.
  */
-void mgaSwapBuffers( mgaContextPtr mmesa )
+void mgaSwapBuffers(Display *dpy, void *drawablePrivate)
 {
-   __DRIdrawablePrivate *dPriv = mmesa->driDrawable;
+   __DRIdrawablePrivate *dPriv = (__DRIdrawablePrivate *) drawablePrivate;
+   mgaContextPtr mmesa;
    XF86DRIClipRectPtr pbox;
    GLint nbox;
    GLint ret, wait = 0;
    GLint i;
    GLuint last_frame, last_wrap;
 
+   assert(dPriv);
+   assert(dPriv->driContextPriv);
+   assert(dPriv->driContextPriv->driverPrivate);
+
+   mmesa = (mgaContextPtr) dPriv->driContextPriv->driverPrivate;
+
    FLUSH_BATCH( mmesa );
+
+   mgaWaitForVBlank( mmesa );
 
    LOCK_HARDWARE( mmesa );
 
@@ -331,7 +387,7 @@ void mgaSwapBuffers( mgaContextPtr mmesa )
       if (0)
 	 fprintf(stderr, "DRM_IOCTL_MGA_SWAP\n");
 
-      ret = drmMGASwapBuffers( mmesa->driFd );
+      ret = drmCommandNone( mmesa->driFd, DRM_MGA_SWAP );
       if ( ret ) {
 	 printf("send swap retcode = %d\n", ret);
 	 exit(1);
@@ -407,13 +463,16 @@ static void age_mmesa( mgaContextPtr mmesa, int age )
    if (mmesa->CurrentTexObj[1]) mmesa->CurrentTexObj[1]->age = age;
 }
 
+#ifdef __i386__
 static int __break_vertex = 0;
+#endif
 
 void mgaFlushVerticesLocked( mgaContextPtr mmesa )
 {
    XF86DRIClipRectPtr pbox = mmesa->pClipRects;
    int nbox = mmesa->numClipRects;
    drmBufPtr buffer = mmesa->vertex_dma_buffer;
+   drmMGAVertex vertex;
    int i;
 
    mmesa->vertex_dma_buffer = 0;
@@ -448,7 +507,12 @@ void mgaFlushVerticesLocked( mgaContextPtr mmesa )
       if (MGA_DEBUG&DEBUG_VERBOSE_IOCTL)
 	 fprintf(stderr, "Firing vertex -- case a nbox %d\n", nbox);
 
-      drmMGAFlushVertexBuffer( mmesa->driFd, buffer->idx, buffer->used, 1 );
+      vertex.idx = buffer->idx;
+      vertex.used = buffer->used;
+      vertex.discard = 1;
+      drmCommandWrite( mmesa->driFd, DRM_MGA_VERTEX, 
+                       &vertex, sizeof(drmMGAVertex) );
+
       age_mmesa(mmesa, mmesa->sarea->last_enqueue);
    }
    else
@@ -489,8 +553,13 @@ void mgaFlushVerticesLocked( mgaContextPtr mmesa )
 	    discard = 1;
 
 	 mmesa->sarea->dirty |= MGA_UPLOAD_CLIPRECTS;
-	 drmMGAFlushVertexBuffer( mmesa->driFd, buffer->idx,
-				  buffer->used, discard );
+
+         vertex.idx = buffer->idx;
+         vertex.used = buffer->used;
+         vertex.discard = discard;
+         drmCommandWrite( mmesa->driFd, DRM_MGA_VERTEX, 
+                          &vertex, sizeof(drmMGAVertex) );
+
 	 age_mmesa(mmesa, mmesa->sarea->last_enqueue);
       }
    }
@@ -510,55 +579,6 @@ void mgaFlushVertices( mgaContextPtr mmesa )
    LOCK_HARDWARE( mmesa );
    mgaFlushVerticesLocked( mmesa );
    UNLOCK_HARDWARE( mmesa );
-}
-
-void mgaFlushEltsLocked( mgaContextPtr mmesa )
-{
-   if (mmesa->first_elt != mmesa->next_elt) {
-      mgaFireEltsLocked( mmesa,
-			 ((char *)mmesa->first_elt -
-			  (char *)mmesa->elt_buf->address),
-			 ((char *)mmesa->next_elt -
-			  (char *)mmesa->elt_buf->address),
-			 0 );
-      mmesa->first_elt = mmesa->next_elt;
-   }
-}
-
-void mgaFlushElts( mgaContextPtr mmesa )
-{
-   LOCK_HARDWARE( mmesa );
-   mgaFlushEltsLocked( mmesa );
-   UNLOCK_HARDWARE( mmesa );
-}
-
-
-GLuint *mgaAllocVertexDwords( mgaContextPtr mmesa, int dwords )
-{
-   int bytes = dwords * 4;
-   GLuint *head;
-
-   if (!mmesa->vertex_dma_buffer) {
-      LOCK_HARDWARE( mmesa );
-
-      if (mmesa->first_elt != mmesa->next_elt)
-	 mgaFlushEltsLocked(mmesa);
-
-      mmesa->vertex_dma_buffer = mga_get_buffer_ioctl( mmesa );
-      UNLOCK_HARDWARE( mmesa );
-   } else if (mmesa->vertex_dma_buffer->used + bytes >
-	      mmesa->vertex_dma_buffer->total) {
-      LOCK_HARDWARE( mmesa );
-      mgaFlushVerticesLocked( mmesa );
-      mmesa->vertex_dma_buffer = mga_get_buffer_ioctl( mmesa );
-      UNLOCK_HARDWARE( mmesa );
-   }
-
-   head = (GLuint *)((char *)mmesa->vertex_dma_buffer->address +
-		      mmesa->vertex_dma_buffer->used);
-
-   mmesa->vertex_dma_buffer->used += bytes;
-   return head;
 }
 
 
@@ -591,12 +611,6 @@ drmBufPtr mgaGetBufferLocked( mgaContextPtr mmesa )
    return mga_get_buffer_ioctl( mmesa );
 }
 
-void mgaGetEltBufLocked( mgaContextPtr mmesa )
-{
-   mmesa->elt_buf = mga_get_buffer_ioctl( mmesa );
-}
-
-
 
 
 void mgaDDFlush( GLcontext *ctx )
@@ -618,104 +632,60 @@ void mgaDDFlush( GLcontext *ctx )
 
 
 
-void mgaFireEltsLocked( mgaContextPtr mmesa,
-			GLuint start,
-			GLuint end,
-			GLuint discard )
-{
-   XF86DRIClipRectPtr pbox = mmesa->pClipRects;
-   int nbox = mmesa->numClipRects;
-   drmBufPtr buffer = mmesa->elt_buf;
-   int i;
-
-   if (!buffer)
-      return;
-
-   if (mmesa->dirty_cliprects & mmesa->draw_buffer)
-      mgaUpdateRects( mmesa, mmesa->draw_buffer );
-
-   if (mmesa->dirty & ~MGA_UPLOAD_CLIPRECTS)
-      mgaEmitHwStateLocked( mmesa );
-
-   /* FIXME: Workaround bug in kernel module.
-    */
-   mmesa->sarea->dirty |= MGA_UPLOAD_CONTEXT;
-
-   if (!nbox)
-      end = start;
-
-   if (nbox >= MGA_NR_SAREA_CLIPRECTS)
-      mmesa->dirty |= MGA_UPLOAD_CLIPRECTS;
-
-   if ( end == start || !(mmesa->dirty & MGA_UPLOAD_CLIPRECTS))
-   {
-      if (nbox == 1)
-	 mmesa->sarea->nbox = 0;
-      else
-	 mmesa->sarea->nbox = nbox;
-
-
-      drmMGAFlushIndices( mmesa->driFd, buffer->idx, start, end, discard );
-      age_mmesa(mmesa, mmesa->sarea->last_enqueue);
-   }
-   else
-   {
-      for (i = 0 ; i < nbox ; )
-      {
-	 int nr = MIN2(i + MGA_NR_SAREA_CLIPRECTS, nbox);
-	 XF86DRIClipRectPtr b = mmesa->sarea->boxes;
-	 int d = 0;
-
-	 if (mmesa->scissor) {
-	    mmesa->sarea->nbox = 0;
-
-	    for ( ; i < nr ; i++) {
-	       *b = pbox[i];
-	       if (intersect_rect(b, b, &mmesa->scissor_rect)) {
-		  mmesa->sarea->nbox++;
-		  b++;
-	       }
-	    }
-
-	    /* Culled?
-	     */
-	    if (!mmesa->sarea->nbox) {
-	       if (nr < nbox) continue;
-	       end = start;
-	    }
-	 } else {
-	    mmesa->sarea->nbox = nr - i;
-	    for ( ; i < nr ; i++)
-	       *b++ = pbox[i];
-	 }
-
-	 /* Potentially finished with the buffer?
-	  */
-	 if (nr == nbox)
-	    d = discard;
-
-
-	 mmesa->sarea->dirty |= MGA_UPLOAD_CLIPRECTS;
-	 drmMGAFlushIndices( mmesa->driFd, buffer->idx, start, end, d );
-	 age_mmesa(mmesa, mmesa->sarea->last_enqueue);
-      }
-   }
-
-   mmesa->dirty &= ~MGA_UPLOAD_CLIPRECTS;
-}
-
 
 void mgaReleaseBufLocked( mgaContextPtr mmesa, drmBufPtr buffer )
 {
+   drmMGAVertex vertex;
+
    if (!buffer) return;
 
-   drmMGAFlushVertexBuffer( mmesa->driFd, buffer->idx, 0, 1 );
+   vertex.idx = buffer->idx;
+   vertex.used = 0;
+   vertex.discard = 1;
+   drmCommandWrite( mmesa->driFd, DRM_MGA_VERTEX, 
+                    &vertex, sizeof(drmMGAVertex) );
 }
 
+int mgaFlushDMA( int fd, drmLockFlags flags )
+{
+   drmMGALock lock;
+   int ret, i = 0;
+
+   memset( &lock, 0, sizeof(drmMGALock) );
+
+   if ( flags & DRM_LOCK_QUIESCENT )    lock.flags |= DRM_LOCK_QUIESCENT;
+   if ( flags & DRM_LOCK_FLUSH )        lock.flags |= DRM_LOCK_FLUSH;
+   if ( flags & DRM_LOCK_FLUSH_ALL )    lock.flags |= DRM_LOCK_FLUSH_ALL;
+
+   do {
+      ret = drmCommandWrite( fd, DRM_MGA_FLUSH, &lock, sizeof(drmMGALock) );
+   } while ( ret && errno == EBUSY && i++ < DRM_MGA_IDLE_RETRY );
+
+   if ( ret == 0 )
+      return 0;
+   if ( errno != EBUSY )
+      return -errno;
+
+   if ( lock.flags & DRM_LOCK_QUIESCENT ) {
+      /* Only keep trying if we need quiescence.
+       */
+      lock.flags &= ~(DRM_LOCK_FLUSH | DRM_LOCK_FLUSH_ALL);
+
+      do {
+         ret = drmCommandWrite( fd, DRM_MGA_FLUSH, &lock, sizeof(drmMGALock) );
+      } while ( ret && errno == EBUSY && i++ < DRM_MGA_IDLE_RETRY );
+   }
+
+   if ( ret == 0 ) {
+      return 0;
+   } else {
+      return -errno;
+   }
+}
 
 void mgaDDInitIoctlFuncs( GLcontext *ctx )
 {
-   ctx->Driver.Clear	= mgaDDClear;
-   ctx->Driver.Flush	= mgaDDFlush;
-   ctx->Driver.Finish	= mgaDDFinish;
+   ctx->Driver.Clear = mgaDDClear;
+   ctx->Driver.Flush = mgaDDFlush;
+   ctx->Driver.Finish = mgaDDFinish;
 }

@@ -1,7 +1,7 @@
 #ifndef _glx_ansic_h_
 #define _glx_ansic_h_
 
-/* $XFree86: xc/programs/Xserver/GL/include/GL/glx_ansic.h,v 1.6 2002/01/10 21:51:47 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/GL/include/GL/glx_ansic.h,v 1.7 2002/04/04 14:05:36 eich Exp $ */
 /*
 ** License Applicability. Except to the extent portions of this file are
 ** made subject to an alternative license as permitted in the SGI Free
@@ -93,7 +93,7 @@
 #define __glXMemmove(dest, src, n)	memmove(dest, src, n)
 #define __glXMemcpy(dest, src, n)	memcpy(dest, src, n)
 #define __glXMemset(s, c, n)		memset(s, c, n)
-#define __glXStrdup(str)		strdup(str)
+#define __glXStrdup(str)		xstrdup(str)
 #define __glXStrcpy(dest, src)		strcpy(dest, src)
 #define __glXStrncpy(dest, src, n)	strncpy(dest, src, n)
 #define __glXStrcat(dest, src)		strcat(dest, src)

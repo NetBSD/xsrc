@@ -4,7 +4,7 @@
 .\"
 .\"
 .\"
-.\" $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/scripts/xmseconfig.man,v 3.5 2001/01/27 18:20:45 dawes Exp $
+.\" $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/scripts/xmseconfig.man,v 3.6 2002/10/12 16:06:43 herrb Exp $
 .TH xmseconfig 1 __vendorversion__
 .SH NAME
 xmseconfig - Graphical mouse configuration utility
@@ -33,11 +33,12 @@ If set, indicates the parent directory of X bin and lib directories.
 .TP 14
 .B XF86SETUPLIB
 If set, overrides the default location of the library directory
-(normally <XRoot>/lib/X11/XF86Setup).
+(normally __projectroot__/lib/X11/XF86Setup).
 .SH FILES
-<XRoot>/lib/X11/XF86Config
+.I __projectroot__/lib/X11/XF86Config
 .br
-\fIor\fP /etc/XF86Config
+or
+.I /etc/XF86Config
 .RS 14
 Used to determine the link to the mouse device
 .RE

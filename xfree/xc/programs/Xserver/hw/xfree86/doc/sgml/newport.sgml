@@ -5,38 +5,37 @@
 <article>
 <title>Information for newport Users
 <author>Guido Günther
-<date>16 January 2002
+<date>24 February 2003
 <ident>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/newport.sgml,v 1.4 2002/01/16 18:21:04 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/newport.sgml,v 1.6 2003/02/25 19:31:02 dawes Exp $
 </ident>
 <toc>
 
 <sect>Supported Hardware
 <p>
-This is an unaccelerated driver for the SGI Indy's newport cards. Both the
- 8bit and 24bit versions are tested and working.
-
+This is an unaccelerated driver for the SGI newport cards (a.k.a. XL) as found
+in the SGI Indy and Indigo2. Both the 8bit and 24bit versions are tested and
+working.
 
 <sect>Features
 <p>
 <itemize>
-  <item> support for 8 and 24 bit pixel depths
+  <item>Support for 8 and 24 bit pixel depths
+  <item>Hardware cursor support to reduce flicker
 </itemize>
 
 <sect>Notes
 <p>
 <itemize>
-  <item>X -configure does not generate a XF86Config file
-  <item>Restoration of the console fails on some variants of the newport
-  (Cmap revision C)
-  <item>There's only a 1280x1024 mode
+  <item>X -configure does not generate a XF86Config file.
+  <item>There's only a 1280x1024 mode.
 </itemize>
 
 
 <sect>Configuration
 <p>
 The driver auto-detects all device information necessary to
-initialize the card.  The only lines you need in the "Device"
+initialize the card on the Indy. The only lines you need in the "Device"
 section of your XF86Config file are:
 <verb>
        Section "Device"
@@ -44,10 +43,13 @@ section of your XF86Config file are:
            Driver     "newport"
        EndSection
 </verb>
+Indigo2 users have to use the BusID option as documented below.
 
 However, if you have problems with auto-detection, you can specify:
 <itemize>
   <item>bitplanes - number of physical bitplanes (8 or 24)
+  <item>HWCursor - enable or disable hardware cursor
+  <item>BusID - set this to "1" on the Indigo2 XL
 </itemize>
 
 <sect>Authors

@@ -49,7 +49,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/programs/xclock/ClockP.h,v 1.6 2001/12/14 20:01:17 dawes Exp $ */
+/* $XFree86: xc/programs/xclock/ClockP.h,v 1.12 2002/10/21 13:33:08 alanh Exp $ */
 
 #ifndef _XawClockP_h
 #define _XawClockP_h
@@ -57,13 +57,21 @@ SOFTWARE.
 #include <X11/Xos.h>		/* Needed for struct tm. */
 #include "Clock.h"
 #include <X11/Xaw/SimpleP.h>
+#ifdef XRENDER
+#include <X11/Xft/Xft.h>
+#include <X11/extensions/Xrender.h>
+#endif
 
 #define SEG_BUFF_SIZE		128
 #define ASCII_TIME_BUFLEN	32	/* big enough for 26 plus slop */
 
+#define STRFTIME_BUFF_SIZE      100     /* buffer for "strftime" option */
+
 /* New fields for the clock widget instance record */
 typedef struct {
+#ifndef RENDER
 	 Pixel	fgpixel;	/* color index for text */
+#endif
 	 Pixel	Hipixel;	/* color index for Highlighting */
 	 Pixel	Hdpixel;	/* color index for hands */
 	 XFontStruct	*font;	/* font for text */
@@ -79,7 +87,9 @@ typedef struct {
 	 Boolean beeped;
 	 Boolean analog;
 	 Boolean brief;
+	 Boolean twentyfour;
 	 Boolean utime;
+         String strftime;
 	 Boolean show_second_hand;
 	 Dimension second_hand_length;
 	 Dimension minute_hand_length;
@@ -96,7 +106,37 @@ typedef struct {
 	 struct tm  otm ;
 	 XtIntervalId interval_id;
 	 char prev_time_string[ASCII_TIME_BUFLEN];
+#ifdef XRENDER
+	 XftColor	fg_color;
+	 XftColor	hour_color;
+	 XftColor	min_color;
+	 XftColor	sec_color;
+	 XftColor	major_color;
+	 XftColor	minor_color;
+	 XftFont	*face;
+	 XRenderPictFormat  *mask_format;
+    
+	 Boolean    render;
+	 Boolean    sharp;
+	 Boolean    can_polygon;
+	 Boolean    buffer;
+	 XftDraw    *draw;
+	 Picture    picture;
+	 Picture    fill_picture;
+	 Pixmap	    pixmap;
+	 XRectangle damage;
+	 XDouble    x_scale;
+	 XDouble    x_off;
+	 XDouble    y_scale;
+	 XDouble    y_off;
+#endif
    } ClockPart;
+
+#ifdef XRENDER
+#define ClockFgPixel(c)	((c)->clock.fg_color.pixel)
+#else
+#define ClockFgPixel(c)	((c)->clock.fgpixel)
+#endif
 
 /* Full instance record declaration */
 typedef struct _ClockRec {

@@ -22,7 +22,7 @@ Except as contained in this notice, the name of The Open Group shall not be
 used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
  * */
-/* $XFree86: xc/programs/twm/icons.c,v 1.6 2001/12/14 20:01:08 dawes Exp $ */
+/* $XFree86: xc/programs/twm/icons.c,v 1.7 2002/12/10 22:29:54 tsi Exp $ */
 
 /**********************************************************************
  *
@@ -280,6 +280,7 @@ void
 AddIconRegion(geom, grav1, grav2, stepx, stepy)
 char *geom;
 int grav1, grav2;
+int stepx, stepy;
 {
     IconRegion *ir;
     int mask;

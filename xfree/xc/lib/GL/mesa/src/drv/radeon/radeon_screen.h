@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/radeon/radeon_screen.h,v 1.2 2001/03/21 16:14:25 dawes Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/radeon/radeon_screen.h,v 1.5 2002/12/16 16:18:58 dawes Exp $ */
 /**************************************************************************
 
 Copyright 2000, 2001 ATI Technologies Inc., Ontario, Canada, and
@@ -39,7 +39,16 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #ifdef GLX_DIRECT_RENDERING
 
+/*
+ * IMPORTS: these headers contain all the DRI, X and kernel-related
+ * definitions that we need.
+ */
+#include "dri_util.h"
+#include "radeon_common.h"
+#include "radeon_dri.h"
+#include "radeon_reg.h"
 #include "radeon_sarea.h"
+
 
 typedef struct {
    drmHandle handle;			/* Handle to the DRM region */
@@ -47,30 +56,30 @@ typedef struct {
    drmAddress map;			/* Mapping of the DRM region */
 } radeonRegionRec, *radeonRegionPtr;
 
+/* chipset features */
+#define RADEON_CHIPSET_TCL	(1 << 0)
+
 typedef struct {
 
-   GLint chipset;
-   GLint cpp;
-   GLint IsPCI;				/* Current card is a PCI card */
-   GLint AGPMode;
+   int chipset;
+   int cpp;
+   int IsPCI;				/* Current card is a PCI card */
+   int AGPMode;
+   unsigned int irq;			/* IRQ number (0 means none) */
 
-   GLuint frontOffset;
-   GLuint frontPitch;
-   GLuint backOffset;
-   GLuint backPitch;
+   unsigned int frontOffset;
+   unsigned int frontPitch;
+   unsigned int backOffset;
+   unsigned int backPitch;
 
-   GLuint depthOffset;
-   GLuint depthPitch;
+   unsigned int depthOffset;
+   unsigned int depthPitch;
 
     /* Shared texture data */
    int numTexHeaps;
    int texOffset[RADEON_NR_TEX_HEAPS];
    int texSize[RADEON_NR_TEX_HEAPS];
    int logTexGranularity[RADEON_NR_TEX_HEAPS];
-
-#ifdef PER_CONTEXT_SAREA
-   drmSize private_sarea_size;
-#endif
 
    radeonRegionRec mmio;
    radeonRegionRec status;
@@ -82,6 +91,7 @@ typedef struct {
 
    __DRIscreenPrivate *driScreen;
    unsigned int sarea_priv_offset;
+   unsigned int agp_buffer_offset;	/* offset in card memory space */
 } radeonScreenRec, *radeonScreenPtr;
 
 extern radeonScreenPtr radeonCreateScreen( __DRIscreenPrivate *sPriv );

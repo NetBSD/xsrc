@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/ffb/ffb_xmesa.h,v 1.1 2000/06/20 05:08:40 dawes Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/ffb/ffb_xmesa.h,v 1.2 2002/02/22 21:32:59 dawes Exp $ */
 
 #ifndef _FFB_XMESA_H_
 #define _FFB_XMESA_H_
@@ -6,9 +6,8 @@
 #ifdef GLX_DIRECT_RENDERING
 
 #include <sys/time.h>
-#include "dri_mesaint.h"
-#include "dri_mesa.h"
-#include "types.h"
+#include "dri_util.h"
+#include "mtypes.h"
 #include "ffb_drishare.h"
 #include "ffb_regs.h"
 #include "ffb_dac.h"

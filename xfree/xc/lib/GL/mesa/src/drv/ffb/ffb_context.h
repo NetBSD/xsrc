@@ -1,47 +1,157 @@
+/* $XFree86: xc/lib/GL/mesa/src/drv/ffb/ffb_context.h,v 1.2 2002/02/22 21:32:58 dawes Exp $ */
+
 #ifndef _FFB_CONTEXT_H
 #define _FFB_CONTEXT_H
 
 #include <X11/Xlibint.h>
-#include "dri_mesaint.h"
-#include "dri_mesa.h"
+#include "dri_util.h"
 
-#include "types.h"
+#include "mtypes.h"
 
 #include "ffb_xmesa.h"
 
+typedef struct {
+	GLfloat	alpha;
+	GLfloat	red;
+	GLfloat	green;
+	GLfloat	blue;
+} ffb_color;
+
+#define FFB_GET_ALPHA(VTX)	\
+	FFB_COLOR_FROM_FLOAT((VTX)->color[0].alpha)
+#define FFB_GET_RED(VTX)	\
+	FFB_COLOR_FROM_FLOAT((VTX)->color[0].red)
+#define FFB_GET_GREEN(VTX)	\
+	FFB_COLOR_FROM_FLOAT((VTX)->color[0].green)
+#define FFB_GET_BLUE(VTX)	\
+	FFB_COLOR_FROM_FLOAT((VTX)->color[0].blue)
+
+typedef struct {
+	GLfloat x, y, z;
+	ffb_color	color[2];
+} ffb_vertex;
+
+#define FFB_DELAYED_VIEWPORT_VARS				\
+	GLfloat		VP_SX = fmesa->hw_viewport[MAT_SX];	\
+	GLfloat		VP_TX = fmesa->hw_viewport[MAT_TX];	\
+	GLfloat		VP_SY = fmesa->hw_viewport[MAT_SY];	\
+	GLfloat		VP_TY = fmesa->hw_viewport[MAT_TY];	\
+	GLfloat		VP_SZ = fmesa->hw_viewport[MAT_SZ];	\
+	GLfloat		VP_TZ = fmesa->hw_viewport[MAT_TZ];	\
+	(void) VP_SX; (void) VP_SY; (void) VP_SZ; 		\
+	(void) VP_TX; (void) VP_TY; (void) VP_TZ
+
+#define FFB_GET_Z(VTX)			\
+	FFB_Z_FROM_FLOAT(VP_SZ * (VTX)->z + VP_TZ)
+#define FFB_GET_Y(VTX)			\
+	FFB_XY_FROM_FLOAT(VP_SY * (VTX)->y + VP_TY)
+#define FFB_GET_X(VTX)			\
+	FFB_XY_FROM_FLOAT(VP_SX * (VTX)->x + VP_TX)
+
+typedef void (*ffb_point_func)(GLcontext *, ffb_vertex *);
+typedef void (*ffb_line_func)(GLcontext *, ffb_vertex *, ffb_vertex *);
+typedef void (*ffb_tri_func)(GLcontext *, ffb_vertex *, ffb_vertex *,
+			     ffb_vertex *);
+typedef void (*ffb_quad_func)(GLcontext *, ffb_vertex *, ffb_vertex *,
+			      ffb_vertex *, ffb_vertex *);
+
+/* Immediate mode fast-path support. */
+typedef struct {
+	GLfloat		obj[4];
+	GLfloat 	normal[4];
+	GLfloat 	clip[4];
+	GLuint 		mask;
+	GLfloat		color[4];
+	GLfloat		win[4];
+	GLfloat		eye[4];
+} ffbTnlVertex, *ffbTnlVertexPtr;
+
+typedef void (*ffb_interp_func)(GLfloat t,
+				ffbTnlVertex *O,
+				const ffbTnlVertex *I,
+				const ffbTnlVertex *J);
+
+struct ffb_current_state {
+	GLfloat color[4];
+	GLfloat normal[4];
+	GLfloat specular[4];
+};
+
+struct ffb_light_state {
+	GLfloat base_color[3];
+	GLfloat base_alpha;
+};
+
+struct ffb_vertex_state {
+	struct ffb_current_state	current;
+	struct ffb_light_state		light;
+};
+
+struct ffb_imm_vertex {
+	ffbTnlVertex	vertices[8];
+	ffbTnlVertex	*v0;
+	ffbTnlVertex	*v1;
+	ffbTnlVertex	*v2;
+	ffbTnlVertex	*v3;
+
+	void (*save_vertex)(GLcontext *ctx, ffbTnlVertex *v);
+	void (*flush_vertex)(GLcontext *ctx, ffbTnlVertex *v);
+
+	ffb_interp_func interp;
+
+	GLuint prim, format;
+
+	GLvertexformat vtxfmt;
+};
+
 typedef struct ffb_context_t {
 	GLcontext		*glCtx;
-	GLuint			MonoColor;
 	GLframebuffer		*glBuffer;
+
+        /* Temporaries for translating to float colors. */
+        struct gl_client_array FloatColor;
+        struct gl_client_array FloatSecondaryColor;
 
 	ffb_fbcPtr		regs;
 	volatile char		*sfb32;
 
 	int			hw_locked;
-	int			SWrender;
 
 	int			back_buffer;	/* 0 = bufferA, 1 = bufferB */
 
-	/* Because MESA does not send us the raw primitives,
-	 * we send everything to the chip as independant lines,
-	 * points, tris, and quads.  If we could get the real
-	 * primitive being used by the user, we can optimize
-	 * things a lot.  This is particularly useful for
-	 * tri strips/fans, and quad strips/fans as FFB
-	 * specifically can optimize these cases.
-	 *
-	 * I suspect MESA does not preserve things to make it's
-	 * transformation/clip/cull optimizations simpler.
-	 *
-	 * Anyways, to try and get around this, we record the
-	 * vertices used in the most recent primitive and we
-	 * detect tri strips/fans and quad strips/fans this
-	 * way.  Actually, we only need to record the ffb_vertex
-	 * pointers, and this makes the tests cheaper and the
-	 * flushing faster (at VB updates and reduced primitive
-	 * changes).
-	 */
-	void			*vtx_cache[4];
+	/* Viewport matrix. */
+	GLfloat			hw_viewport[16];
+#define SUBPIXEL_X (-0.5F)
+#define SUBPIXEL_Y (-0.5F + 0.125)
+
+	/* Vertices in driver format. */
+	ffb_vertex              *verts;
+
+	/* Rasterization functions. */
+	ffb_point_func draw_point;
+	ffb_line_func draw_line;
+	ffb_tri_func draw_tri;
+	ffb_quad_func draw_quad;
+
+	GLenum raster_primitive;
+	GLenum render_primitive;
+
+	GLfloat backface_sign;
+	GLfloat depth_scale;
+
+	GLfloat	ffb_2_30_fixed_scale;
+	GLfloat	ffb_one_over_2_30_fixed_scale;
+	GLfloat ffb_16_16_fixed_scale;
+	GLfloat ffb_one_over_16_16_fixed_scale;
+	GLfloat ffb_ubyte_color_scale;
+	GLfloat ffb_zero;
+
+	/* Immediate mode state. */
+	struct ffb_vertex_state	vtx_state;
+	struct ffb_imm_vertex	imm;
+
+	/* Debugging knobs. */
+	GLboolean debugFallbacks;
 
 	/* This records state bits when a per-fragment attribute has
 	 * been set which prevents us from rendering in hardware.
@@ -56,6 +166,8 @@ typedef struct ffb_context_t {
 #define FFB_BADATTR_BLENDROP	0x00000004	/* Blend enabled and LogicOP != GL_COPY */
 #define FFB_BADATTR_BLENDEQN	0x00000008	/* Blend equation other than ADD */
 #define FFB_BADATTR_STENCIL	0x00000010	/* Stencil enabled when < FFB2+ */
+#define FFB_BADATTR_TEXTURE	0x00000020	/* Texture enabled */
+#define FFB_BADATTR_SWONLY	0x00000040	/* Environment var set */
 
 	unsigned int		state_dirty;
 	unsigned int		state_fifo_ents;
@@ -84,6 +196,13 @@ typedef struct ffb_context_t {
 
 	unsigned int		state_all_fifo_ents;
 
+#define FFB_MAKE_DIRTY(FMESA, STATE_MASK, FIFO_ENTS)	\
+do {	if ((STATE_MASK) & ~((FMESA)->state_dirty)) {	\
+		(FMESA)->state_dirty |= (STATE_MASK);	\
+		(FMESA)->state_fifo_ents += FIFO_ENTS;	\
+	}						\
+} while (0)
+
 	/* General hw reg state. */
 	unsigned int		fbc;
 	unsigned int		ppc;
@@ -92,7 +211,7 @@ typedef struct ffb_context_t {
 
 	unsigned int		lpat;
 #define FFB_LPAT_BAD		0xffffffff
-
+ 
 	unsigned int		wid;
 	unsigned int		pmask;
 	unsigned int		xpmask;
@@ -157,13 +276,8 @@ typedef struct ffb_context_t {
 	unsigned int		clear_stencil;
 
 	unsigned int		setupindex;
-	unsigned int		setupdone;
-
-	/* Rendering functions. */
-	points_func   PointsFunc;
-	line_func     LineFunc;
-	triangle_func TriangleFunc;
-	quad_func     QuadFunc;
+	unsigned int		setupnewinputs;
+	unsigned int		new_gl_state;
 
 	__DRIdrawablePrivate	*driDrawable;
 	__DRIscreenPrivate	*driScreen;
@@ -192,6 +306,6 @@ typedef struct ffb_context_t {
  * we tell the hw to discard those top 4 bits).
  */
 #define Z_TO_MESA(VAL)		((GLdepth)(((VAL) & 0x0fffffff) << (32 - 28)))
-#define Z_FROM_MESA(VAL)	(((GLuint)(VAL)) >> (32 - 28))
+#define Z_FROM_MESA(VAL)	(((GLuint)((GLdouble)(VAL))) >> (32 - 28))
 
 #endif /* !(_FFB_CONTEXT_H) */

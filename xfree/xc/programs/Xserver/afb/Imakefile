@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/programs/Xserver/afb/Imakefile,v 3.6 1999/08/14 10:49:26 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/afb/Imakefile,v 3.7 2002/05/31 18:45:54 dawes Exp $
 XCOMM $XConsortium: Imakefile,v 1.38 94/03/11 18:47:47 dpw Exp $
 #define IHaveModules
 #include <Server.tmpl>
@@ -60,9 +60,7 @@ ObjectFromSpecialSource(afbtileG,afbtile,-DMROP=0)
 
 InstallLibraryModule(afb,$(MODULEDIR),.)
 
-#ifndef OS2Architecture
 DependTarget()
-#endif
 
 InstallDriverSDKLibraryModule(afb,$(DRIVERSDKMODULEDIR),.)
 

@@ -26,13 +26,18 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
+/* $XFree86: xc/config/util/mkdirhier.c,v 1.7 2002/07/01 02:25:51 tsi Exp $ */
 
 /*
  * Simple mkdirhier program for Windows NT
  */
 #include <sys/types.h>
 #include <sys/stat.h>
+#ifndef __UNIXOS2__
 #include <direct.h>
+#else
+#include <dirent.h>
+#endif
 #include <stdlib.h>
 #include <string.h>
 

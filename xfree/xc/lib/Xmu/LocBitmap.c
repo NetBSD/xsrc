@@ -25,7 +25,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/Xmu/LocBitmap.c,v 3.9 2001/12/14 19:55:47 dawes Exp $ */
+/* $XFree86: xc/lib/Xmu/LocBitmap.c,v 3.10 2002/05/31 18:45:45 dawes Exp $ */
 
 /*
  * Author:  Jim Fulton, MIT X Consortium
@@ -156,7 +156,7 @@ XmuLocatePixmapFile(Screen *screen, _Xconst char *name,
 
 	switch (i) {
 	  case 1:
-#ifndef __EMX__
+#ifndef __UNIXOS2__
 	    if (!(name[0] == '/' || ((name[0] == '.') && name[1] == '/')))
 #else
 	    if (!(name[0] == '/' || (name[0] == '.' && name[1] == '/') ||
@@ -186,7 +186,7 @@ XmuLocatePixmapFile(Screen *screen, _Xconst char *name,
 
 	data = NULL;
 	pixmap = None;
-#ifdef __EMX__
+#ifdef __UNIXOS2__
 	fn = (char*)__XOS2RedirRoot(fn);
 #endif
 	if (XmuReadBitmapDataFromFile (fn, &width, &height, &data,

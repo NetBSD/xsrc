@@ -34,13 +34,13 @@
  **
  ******************************************************************************
  *****************************************************************************/
-/* $XFree86: xc/lib/Xp/XpExtUtil.c,v 1.6 2001/10/28 03:32:39 tsi Exp $ */
+/* $XFree86: xc/lib/Xp/XpExtUtil.c,v 1.7 2002/10/16 00:37:31 dawes Exp $ */
 
 #define NEED_EVENTS
 #define NEED_REPLIES
 #include <stdio.h>
-#include "Printstr.h"
-#include "Xlibint.h"
+#include <X11/extensions/Printstr.h>
+#include <X11/Xlibint.h>
 #include "XpExtUtil.h"
 #include <X11/Xos.h>
 

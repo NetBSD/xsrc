@@ -1,12 +1,16 @@
-XCOMM $XFree86: xc/lib/GL/mesa/src/X86/Imakefile,v 1.18 2001/05/02 15:06:03 dawes Exp $
+XCOMM $XFree86: xc/lib/GL/mesa/src/X86/Imakefile,v 1.24 2002/11/25 12:58:55 tsi Exp $
 
 /*
- * Only need SharedLib build unless OSMesa lib is built, or driver is built
- * in to libGL
+ * Need both shared and unshared Mesa objects in the following cases:
+ *   GlxDriverUsesMesa
+ *   GlxBuiltInXMesa
+ *   BuildOSMesaLib
+ *
+ * In other cases, only the shared version is needed to link in to loadable
+ * driver modules.
  */
-#if BuildXF86DRI && !GlxUseSGISI && \
-	(GlxUseBuiltInDRIDriver || \
-	 !GlxBuiltInMesa || !defined(GlxDriverUsesMesa))
+
+#if GlxDriverUsesMesa || GlxBuiltInXMesa || BuildOSMesaLib
 #define DoNormalLib (NormalLibGlx || SharedLibGlxWithoutPIC)
 #define DoSharedLib (SharedLibGlx && !SharedLibGlxWithoutPIC)
 #define DoExtraLib SharedLibGlx
@@ -20,6 +24,7 @@ XCOMM $XFree86: xc/lib/GL/mesa/src/X86/Imakefile,v 1.18 2001/05/02 15:06:03 dawe
 #define DoProfileLib NO
 #endif
 
+
 #if Malloc0ReturnsNull
 ALLOC_DEFINES = -DMALLOC_0_RETURNS_NULL
 #endif
@@ -30,9 +35,10 @@ ALLOC_DEFINES = -DMALLOC_0_RETURNS_NULL
 
       DEFINES = $(ALLOC_DEFINES) GlxDefines $(MESA_ASM_DEFINES)
      INCLUDES = -I$(INCLUDESRC) -I$(EXTINCSRC) -I$(MESASRCDIR)/src \
-		-I$(MESASRCDIR)/src/X86
+		-I$(MESASRCDIR)/src/X86 \
+		-I../../../include
 
-         SRCS = $(MESA_ASM_SRCS)
+         SRCS = $(MESA_ASM_SRCS) gen_matypes.c
          OBJS = $(MESA_ASM_OBJS)
 
 #include <Library.tmpl>
@@ -48,41 +54,48 @@ ObjectFromAsmSource(common_x86_asm, NullParameter)
 
 ObjectFromAsmSource(x86_cliptest, NullParameter)
 ObjectFromAsmSource(x86_vertex, NullParameter)
-ObjectFromAsmSource(x86_xform_masked2, NullParameter)
-ObjectFromAsmSource(x86_xform_masked3, NullParameter)
-ObjectFromAsmSource(x86_xform_masked4, NullParameter)
-ObjectFromAsmSource(x86_xform_raw2, NullParameter)
-ObjectFromAsmSource(x86_xform_raw3, NullParameter)
-ObjectFromAsmSource(x86_xform_raw4, NullParameter)
+ObjectFromAsmSource(x86_xform2, NullParameter)
+ObjectFromAsmSource(x86_xform3, NullParameter)
+ObjectFromAsmSource(x86_xform4, NullParameter)
 
 #if MesaUseMMX
 ObjectFromAsmSource(mmx_blend, NullParameter)
 #endif
 
 #if MesaUse3DNow
-ObjectFromAsmSource(3dnow_norm_raw, NullParameter)
+ObjectFromAsmSource(3dnow_normal, NullParameter)
 ObjectFromAsmSource(3dnow_vertex, NullParameter)
-ObjectFromAsmSource(3dnow_xform_masked1, NullParameter)
-ObjectFromAsmSource(3dnow_xform_masked2, NullParameter)
-ObjectFromAsmSource(3dnow_xform_masked3, NullParameter)
-ObjectFromAsmSource(3dnow_xform_masked4, NullParameter)
-ObjectFromAsmSource(3dnow_xform_raw1, NullParameter)
-ObjectFromAsmSource(3dnow_xform_raw2, NullParameter)
-ObjectFromAsmSource(3dnow_xform_raw3, NullParameter)
-ObjectFromAsmSource(3dnow_xform_raw4, NullParameter)
+ObjectFromAsmSource(3dnow_xform1, NullParameter)
+ObjectFromAsmSource(3dnow_xform2, NullParameter)
+ObjectFromAsmSource(3dnow_xform3, NullParameter)
+ObjectFromAsmSource(3dnow_xform4, NullParameter)
 #endif
 
-#if MesaUseKatmai
-ObjectFromAsmSource(katmai_norm_raw, NullParameter)
-ObjectFromAsmSource(katmai_vertex, NullParameter)
-ObjectFromAsmSource(katmai_xform_masked1, NullParameter)
-ObjectFromAsmSource(katmai_xform_masked2, NullParameter)
-ObjectFromAsmSource(katmai_xform_masked3, NullParameter)
-ObjectFromAsmSource(katmai_xform_masked4, NullParameter)
-ObjectFromAsmSource(katmai_xform_raw1, NullParameter)
-ObjectFromAsmSource(katmai_xform_raw2, NullParameter)
-ObjectFromAsmSource(katmai_xform_raw3, NullParameter)
-ObjectFromAsmSource(katmai_xform_raw4, NullParameter)
+#if MesaUseSSE
+ObjectFromAsmSource(sse_normal, NullParameter)
+ObjectFromAsmSource(sse_vertex, NullParameter)
+ObjectFromAsmSource(sse_xform1, NullParameter)
+ObjectFromAsmSource(sse_xform2, NullParameter)
+ObjectFromAsmSource(sse_xform3, NullParameter)
+ObjectFromAsmSource(sse_xform4, NullParameter)
 #endif
+
+LinkSourceFile(gen_matypes.c, $(MESASRCDIR)/src/X86)
+
+MATYPES = ./gen_matypes
+
+matypes.h: gen_matypes.c
+	RemoveFiles($@ HostProgramTargetName(gen_matypes))
+	-HostLinkRule(HostProgramTargetName(gen_matypes),$(CFLAGS) $(LOCAL_LDFLAGS),gen_matypes.c,$(LDLIBS))
+	RunProgram(MATYPES,> matypes_h)
+	$(MV) matypes_h $@
+	RemoveFiles(HostProgramTargetName(gen_matypes))
+
+includes:: matypes.h
+
+depend:: matypes.h
+
+clean::
+	RemoveFiles(matypes.h HostProgramTargetName(gen_matypes))
 
 DependTarget()

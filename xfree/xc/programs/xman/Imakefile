@@ -1,5 +1,5 @@
 XCOMM $XConsortium: Imakefile,v 1.22 91/09/09 16:02:18 rws Exp $
-XCOMM $XFree86: xc/programs/xman/Imakefile,v 1.5 2001/11/01 23:35:35 dawes Exp $
+XCOMM $XFree86: xc/programs/xman/Imakefile,v 1.8 2002/09/21 02:38:25 dawes Exp $
 
 #ifdef XmanSearchPath
 XMANSYSPATH = XmanSearchPath
@@ -17,14 +17,24 @@ MKSTEMP = -DHAS_MKSTEMP
 
 XCOMM select internal format of manpath configuration file
 #if defined(FreeBSDArchitecture) || \
-    (defined(LinuxDistribution) && (LinuxDistribution == LinuxDebian))
-MANCONFIGSTYLE = -DMANCONFIGSTYLE_FreeBSD
+    (defined(LinuxDistribution) && (LinuxDistribution == LinuxDebian)) || \
+    (defined(DarwinArchitecture) && (OSMajorVersion >= 6))
+    MANCONFIGSTYLE = -DMANCONFIGSTYLE_FreeBSD
+    MANCONF = -DMANCONF=\"/etc/manpath.config\"
 #elif defined(LinuxArchitecture)
-MANCONFIGSTYLE = -DMANCONFIGSTYLE_Linux
-#elif defined(OpenBSDArchitecture) || defined(NetBSDArchitecture)
-MANCONFIGSTYLE = -DMANCONFIGSTYLE_OpenBSD
+    MANCONFIGSTYLE = -DMANCONFIGSTYLE_Linux
+# if defined(LinuxDistribution) && (LinuxDistribution == LinuxRedHat)
+    MANCONF = -DMANCONF=\"/etc/man.config\"
+# else
+    MANCONF = -DMANCONF=\"/etc/man.conf\"
+# endif
+#elif defined(OpenBSDArchitecture) || defined(NetBSDArchitecture) || \
+    defined(DarwinArchitecture)
+    MANCONFIGSTYLE = -DMANCONFIGSTYLE_OpenBSD
+    MANCONF = -DMANCONF=\"/etc/man.conf\"
 #elif defined(BSDArchitecture)
-MANCONFIGSTYLE = -DMANCONFIGSTYLE_BSD
+    MANCONFIGSTYLE = -DMANCONFIGSTYLE_BSD
+    MANCONF = -DMANCONF=\"/etc/man.conf\"
 #endif
 
 #if HasGroff
@@ -42,7 +52,7 @@ SNPINCLUDES = $(LIBSRC)/misc
         DEFINES = -DOSMAJORVERSION=$(OSMAJORVERSION) \
 		  -DOSMINORVERSION=$(OSMINORVERSION) \
 		  $(SNPDEFINES) $(HELPFILE) $(MANPATHS) $(MKSTEMP) $(GROFF) \
-		  $(MANCONFIGSTYLE)
+		  $(MANCONFIGSTYLE) $(MANCONF)
        INCLUDES = -I$(SNPINCLUDES)
         DEPLIBS = XawClientDepLibs
 LOCAL_LIBRARIES = XawClientLibs

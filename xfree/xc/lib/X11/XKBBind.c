@@ -26,7 +26,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/X11/XKBBind.c,v 3.14 2001/12/14 19:54:08 dawes Exp $ */
+/* $XFree86: xc/lib/X11/XKBBind.c,v 3.15 2003/02/15 17:49:01 dawes Exp $ */
 
 	/* the new monsters ate the old ones */
 
@@ -865,7 +865,8 @@ XLookupString (event, buffer, nbytes, keysym, status)
     /* We *should* use the new_mods (which does not contain any modifiers */
     /* that were used to compute the symbol here, but pre-XKB XLookupString */
     /* did not and we have to remain compatible.  Sigh. */
-    if ((dpy->xkb_info->xlib_ctrls&XkbLC_ConsumeLookupMods)==0)
+    if (_XkbUnavailable(dpy) ||
+	(dpy->xkb_info->xlib_ctrls&XkbLC_ConsumeLookupMods)==0)
 	new_mods= event->state;
 
     rtrnLen= XkbLookupKeyBinding(dpy,*keysym,new_mods,buffer,nbytes,NULL);

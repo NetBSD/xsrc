@@ -25,7 +25,7 @@ in this Software without prior written authorization from The Open Group.
  *
  * Author:  Keith Packard, MIT X Consortium
  *
- * $XFree86: xc/programs/Xserver/cfb/cfb8line.c,v 3.17 2001/12/14 19:59:20 dawes Exp $
+ * $XFree86: xc/programs/Xserver/cfb/cfb8line.c,v 3.18 2002/09/18 17:11:47 tsi Exp $
  * Jeff Anton'x fixes: cfb8line.c   97/02/07
  */
 
@@ -733,16 +733,19 @@ FUNC_NAME(cfb8LineSS1Rect) (pDrawable, pGC, mode, npt, pptInit, pptInitOrig,
 		  *addrp   = piQxelXor[2];
 		  break;
 		case 1:
-		  *addrp++ = ((*addrp) & 0xFFFFFF) | (piQxelXor[0] & 0xFF000000);
-		  *addrp++ = piQxelXor[1];
-		  *addrp   = piQxelXor[2];
+		  *addrp = ((*addrp) & 0xFFFFFF) | (piQxelXor[0] & 0xFF000000);
+		  addrp++;
+		  *addrp = piQxelXor[1];
+		  addrp++;
+		  *addrp = piQxelXor[2];
 		  break;
 		case 2:
-		  *addrp++ =((*addrp) & 0xFFFF) | (piQxelXor[1] & 0xFFFF0000);
+		  *addrp = ((*addrp) & 0xFFFF) | (piQxelXor[1] & 0xFFFF0000);
+		  addrp++;
 		  *addrp = piQxelXor[2];
 		  break;
 		case 3:
-		  *addrp =((*addrp) & 0xFF) | (piQxelXor[2] & 0xFFFFFF00);
+		  *addrp = ((*addrp) & 0xFF) | (piQxelXor[2] & 0xFFFFFF00);
 		  break;
 		}
 		break;
@@ -754,12 +757,15 @@ FUNC_NAME(cfb8LineSS1Rect) (pDrawable, pGC, mode, npt, pptInit, pptInitOrig,
 		  *addrp = ((*addrp) & 0xFFFFFF00) | (piQxelXor[2] & 0xFF);
 		  break;
 		case 1:
-		  *addrp++ = ((*addrp) & 0xFFFFFF) | (piQxelXor[0] & 0xFF000000);
-		  *addrp++ = piQxelXor[1];
+		  *addrp = ((*addrp) & 0xFFFFFF) | (piQxelXor[0] & 0xFF000000);
+		  addrp++;
+		  *addrp = piQxelXor[1];
+		  addrp++;
 		  *addrp = ((*addrp) & 0xFFFFFF00) | (piQxelXor[2] & 0xFF);
 		  break;
 		case 2:
-		  *addrp++ =((*addrp) & 0xFFFF) | (piQxelXor[1] & 0xFFFF0000);
+		  *addrp = ((*addrp) & 0xFFFF) | (piQxelXor[1] & 0xFFFF0000);
+		  addrp++;
 		  *addrp = ((*addrp) & 0xFFFFFF00) | (piQxelXor[2] & 0xFF);
 		  break;
 		}
@@ -768,12 +774,14 @@ FUNC_NAME(cfb8LineSS1Rect) (pDrawable, pGC, mode, npt, pptInit, pptInitOrig,
 		switch(leftIndex){
 /*
 		case 2:
-		  *addrp++ = ((*addrp) & 0xFFFF) | (piQxelXor[1] & 0xFFFF0000);
+		  *addrp = ((*addrp) & 0xFFFF) | (piQxelXor[1] & 0xFFFF0000);
+		  addrp++;
 		  *addrp = ((*addrp) & 0xFFFFFF00) | (piQxelXor[2] & 0xFF);
 		  break;
 */
 		case 1:
-		  *addrp++ = ((*addrp) & 0xFFFFFF) | (piQxelXor[0] & 0xFF000000);
+		  *addrp = ((*addrp) & 0xFFFFFF) | (piQxelXor[0] & 0xFF000000);
+		  addrp++;
 		  *addrp = ((*addrp) & 0xFFFF0000) | (piQxelXor[1] & 0xFFFF);
 		  break;
 		case 0:
@@ -788,7 +796,8 @@ FUNC_NAME(cfb8LineSS1Rect) (pDrawable, pGC, mode, npt, pptInit, pptInitOrig,
 		}
 /*
 		else{
-		*addrp++ =  ((*addrp) & 0xFFFFFF) | (piQxelXor[0] & 0xFF000000);
+		*addrp =  ((*addrp) & 0xFFFFFF) | (piQxelXor[0] & 0xFF000000);
+		addrp++;
 		*addrp =  ((*addrp) & 0xFFFF0000) | (piQxelXor[1] & 0xFFFF);
 		}
 */
@@ -804,16 +813,22 @@ FUNC_NAME(cfb8LineSS1Rect) (pDrawable, pGC, mode, npt, pptInit, pptInitOrig,
 		  case 0:
 		    break;
 		  case 1:
-		    *addrp++ = ((*addrp) & 0xFFFFFF) | (piQxelXor[0] & 0xFF000000);
-		    *addrp++ = piQxelXor[1];
-		    *addrp++ = piQxelXor[2];
+		    *addrp = ((*addrp) & 0xFFFFFF) | (piQxelXor[0] & 0xFF000000);
+		    addrp++;
+		    *addrp = piQxelXor[1];
+		    addrp++;
+		    *addrp = piQxelXor[2];
+		    addrp++;
 		    break;
 		  case 2:
-		    *addrp++ = ((*addrp) & 0xFFFF) | (piQxelXor[1] & 0xFFFF0000);
-		    *addrp++ = piQxelXor[2];
+		    *addrp = ((*addrp) & 0xFFFF) | (piQxelXor[1] & 0xFFFF0000);
+		    addrp++;
+		    *addrp = piQxelXor[2];
+		    addrp++;
 		    break;
 		  case 3:
-		    *addrp++ = ((*addrp) & 0xFF) | (piQxelXor[2] & 0xFFFFFF00);
+		    *addrp = ((*addrp) & 0xFF) | (piQxelXor[2] & 0xFFFFFF00);
+		    addrp++;
 		    break;
 		  }
 		  while(nlmiddle--){
@@ -846,20 +861,23 @@ FUNC_NAME(cfb8LineSS1Rect) (pDrawable, pGC, mode, npt, pptInit, pptInitOrig,
 			| (piQxelXor[0] & 0xFFFFFF & e3);
 		      break;
 		    case 1:
-		      *addrp++ = ((*addrp) & (0xFFFFFF | ~(e3<<24)))
-				  | (piQxelXor[0] & 0xFF000000 & (e3<<24));
+		      *addrp = ((*addrp) & (0xFFFFFF | ~(e3<<24)))
+				  + (piQxelXor[0] & 0xFF000000 & (e3<<24));
+		      addrp++;
 		      *addrp = ((*addrp) & (0xFFFF0000|~(e3 >> 8)))
 				  | (piQxelXor[1] & 0xFFFF & (e3 >> 8));
 		      break;
 		    case 2:
-		      *addrp++ = ((*addrp) & (0xFFFF|~(e3 << 16)))
+		      *addrp = ((*addrp) & (0xFFFF|~(e3 << 16)))
 				  | (piQxelXor[1] & 0xFFFF0000 & (e3 << 16));
+		      addrp++;
 		      *addrp = ((*addrp) & (0xFFFFFF00|~(e3>>16)))
 				  | (piQxelXor[2] & 0xFF & (e3 >> 16));
 		      break;
 		    case 3:
-		      *addrp++ = ((*addrp) & (0xFF|~(e3<<8)))
+		      *addrp = ((*addrp) & (0xFF|~(e3<<8)))
 				  | (piQxelXor[2] & 0xFFFFFF00 & (e3<<8));
+		      addrp++;
 		      break;
 		    }
 		  }

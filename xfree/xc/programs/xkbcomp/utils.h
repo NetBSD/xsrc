@@ -27,7 +27,7 @@
    * used in advertising or publicity pertaining to distribution of the 
    * software without specific, written prior permission.
   \*/
-/* $XFree86: xc/programs/xkbcomp/utils.h,v 3.4 2001/07/25 15:05:24 dawes Exp $ */
+/* $XFree86: xc/programs/xkbcomp/utils.h,v 3.6 2002/12/24 17:43:00 tsi Exp $ */
 
 /***====================================================================***/
 
@@ -71,8 +71,6 @@ typedef	int		Comparison;
 #define	comparisonText(c)	((c)?((c)<0?"Less":"Greater"):"Equal")
 #endif
 
-_XFUNCPROTOBEGIN
-
 #if 0
 typedef union {
 	int		 i;
@@ -85,34 +83,24 @@ typedef union {
 /***====================================================================***/
 
 extern	Opaque	uAlloc(
-#if NeedFunctionPrototypes
     unsigned	/* size */
-#endif
 );
 extern	Opaque	uCalloc(
-#if NeedFunctionPrototypes
     unsigned	/* n */,
     unsigned	/* size */
-#endif
 );
 extern	Opaque	uRealloc(
-#if NeedFunctionPrototypes
     Opaque	/* old */,
     unsigned	/* newSize */
-#endif
 );
 extern	Opaque	uRecalloc(
-#if NeedFunctionPrototypes
     Opaque 	/* old */,
     unsigned	/* nOld */,
     unsigned	/* nNew */,
     unsigned 	/* newSize */
-#endif
 );
 extern	void	uFree(
-#if NeedFunctionPrototypes
     Opaque	/* ptr */
-#endif
 );
 
 #define	uTypedAlloc(t)		((t *)uAlloc((unsigned)sizeof(t)))
@@ -130,12 +118,9 @@ extern	void	uFree(
 /***====================================================================***/
 
 extern	Boolean	uSetErrorFile(
-#if NeedFunctionPrototypes
 	char *	/* name */
-#endif
 );
 
-#if NeedVarargsPrototypes
 #define INFO6 			uInformation
 #define INFO5 			uInformation
 #define INFO4 			uInformation
@@ -143,29 +128,16 @@ extern	Boolean	uSetErrorFile(
 #define INFO2 			uInformation
 #define INFO1 			uInformation
 #define INFO 			uInformation
-#else
-#define	INFO6(s,a,b,c,d,e,f)	uInformation((s),(Opaque)(a),(Opaque)(b),\
-						(Opaque)(c),(Opaque)(d),\
-						(Opaque)(e),(Opaque)(f))
-#define	INFO5(s,a,b,c,d,e)	INFO6(s,a,b,c,d,e,NULL)
-#define	INFO4(s,a,b,c,d)	INFO5(s,a,b,c,d,NULL)
-#define	INFO3(s,a,b,c)		INFO4(s,a,b,c,NULL)
-#define	INFO2(s,a,b)		INFO3(s,a,b,NULL)
-#define	INFO1(s,a)		INFO2(s,a,NULL)
-#define	INFO(s)			INFO1(s,NULL)
-#endif
 
 extern	void	uInformation(
-#if NeedVarargsPrototypes
 	char * /* s */, ...
-#endif
 )
-#if __GNUC__-0 > 2 || (__GNUC__-0 == 2 && __GNUC_MINOR__ >= 6)
+#if defined(__GNUC__) && \
+    ((__GNUC__ > 2) || ((__GNUC__ == 2) && (__GNUC_MINOR__ >= 6)))
 __attribute__((format(printf, 1, 2)))
 #endif
 ;
 
-#if NeedVarargsPrototypes
 #define ACTION6			uAction
 #define ACTION5			uAction
 #define ACTION4			uAction
@@ -173,29 +145,16 @@ __attribute__((format(printf, 1, 2)))
 #define ACTION2			uAction
 #define ACTION1			uAction
 #define ACTION			uAction
-#else
-#define	ACTION6(s,a,b,c,d,e,f)	uAction((s),(Opaque)(a),(Opaque)(b),\
-						(Opaque)(c),(Opaque)(d),\
-						(Opaque)(e),(Opaque)(f))
-#define	ACTION5(s,a,b,c,d,e)	ACTION6(s,a,b,c,d,e,NULL)
-#define	ACTION4(s,a,b,c,d)	ACTION5(s,a,b,c,d,NULL)
-#define	ACTION3(s,a,b,c)	ACTION4(s,a,b,c,NULL)
-#define	ACTION2(s,a,b)		ACTION3(s,a,b,NULL)
-#define	ACTION1(s,a)		ACTION2(s,a,NULL)
-#define	ACTION(s)		ACTION1(s,NULL)
-#endif
 
 extern	void	uAction(
-#if NeedVarargsPrototypes
 	char * /* s  */, ...
-#endif
 )
-#if __GNUC__-0 > 2 || (__GNUC__-0 == 2 && __GNUC_MINOR__ >= 6)
+#if defined(__GNUC__) && \
+    ((__GNUC__ > 2) || ((__GNUC__ == 2) && (__GNUC_MINOR__ >= 6)))
 __attribute__((format(printf, 1, 2)))
 #endif
 ;
 
-#if NeedVarargsPrototypes
 #define WARN6			uWarning
 #define WARN5			uWarning
 #define WARN4			uWarning
@@ -203,29 +162,16 @@ __attribute__((format(printf, 1, 2)))
 #define WARN2			uWarning
 #define WARN1			uWarning
 #define WARN			uWarning
-#else
-#define	WARN6(s,a,b,c,d,e,f)	uWarning((s),(Opaque)(a),(Opaque)(b),\
-						(Opaque)(c),(Opaque)(d),\
-						(Opaque)(e),(Opaque)(f))
-#define	WARN5(s,a,b,c,d,e)	WARN6(s,a,b,c,d,e,NULL)
-#define	WARN4(s,a,b,c,d)	WARN5(s,a,b,c,d,NULL)
-#define	WARN3(s,a,b,c)		WARN4(s,a,b,c,NULL)
-#define	WARN2(s,a,b)		WARN3(s,a,b,NULL)
-#define	WARN1(s,a)		WARN2(s,a,NULL)
-#define	WARN(s)			WARN1(s,NULL)
-#endif
 
 extern	void	uWarning(
-#if NeedVarargsPrototypes
 	char * /* s  */, ...
-#endif
 )
-#if __GNUC__-0 > 2 || (__GNUC__-0 == 2 && __GNUC_MINOR__ >= 6)
+#if defined(__GNUC__) && \
+    ((__GNUC__ > 2) || ((__GNUC__ == 2) && (__GNUC_MINOR__ >= 6)))
 __attribute__((format(printf, 1, 2)))
 #endif
 ;
 
-#if NeedVarargsPrototypes
 #define ERROR6			uError
 #define ERROR5			uError
 #define ERROR4			uError
@@ -233,29 +179,16 @@ __attribute__((format(printf, 1, 2)))
 #define ERROR2			uError
 #define ERROR1			uError
 #define ERROR			uError
-#else
-#define	ERROR6(s,a,b,c,d,e,f)	uError((s),(Opaque)(a),(Opaque)(b),\
-						(Opaque)(c),(Opaque)(d),\
-						(Opaque)(e),(Opaque)(f))
-#define	ERROR5(s,a,b,c,d,e)	ERROR6(s,a,b,c,d,e,NULL)
-#define	ERROR4(s,a,b,c,d)	ERROR5(s,a,b,c,d,NULL)
-#define	ERROR3(s,a,b,c)		ERROR4(s,a,b,c,NULL)
-#define	ERROR2(s,a,b)		ERROR3(s,a,b,NULL)
-#define	ERROR1(s,a)		ERROR2(s,a,NULL)
-#define	ERROR(s)		ERROR1(s,NULL)
-#endif
 
 extern	void	uError(
-#if NeedVarargsPrototypes
 	char * /* s  */, ...
-#endif
 )
-#if __GNUC__-0 > 2 || (__GNUC__-0 == 2 && __GNUC_MINOR__ >= 6)
+#if defined(__GNUC__) && \
+    ((__GNUC__ > 2) || ((__GNUC__ == 2) && (__GNUC_MINOR__ >= 6)))
 __attribute__((format(printf, 1, 2)))
 #endif
 ;
 
-#if NeedVarargsPrototypes
 #define FATAL6			uFatalError
 #define FATAL5			uFatalError
 #define FATAL4			uFatalError
@@ -263,30 +196,17 @@ __attribute__((format(printf, 1, 2)))
 #define FATAL2			uFatalError
 #define FATAL1			uFatalError
 #define FATAL			uFatalError
-#else
-#define	FATAL6(s,a,b,c,d,e,f)	uFatalError((s),(Opaque)(a),(Opaque)(b),\
-						(Opaque)(c),(Opaque)(d),\
-						(Opaque)(e),(Opaque)(f))
-#define	FATAL5(s,a,b,c,d,e)	FATAL6(s,a,b,c,d,e,NULL)
-#define	FATAL4(s,a,b,c,d)	FATAL5(s,a,b,c,d,NULL)
-#define	FATAL3(s,a,b,c)		FATAL4(s,a,b,c,NULL)
-#define	FATAL2(s,a,b)		FATAL3(s,a,b,NULL)
-#define	FATAL1(s,a)		FATAL2(s,a,NULL)
-#define	FATAL(s)		FATAL1(s,NULL)
-#endif
 
 extern	void	uFatalError(
-#if NeedVarargsPrototypes
 	char * /* s  */, ...
-#endif
 )
-#if __GNUC__-0 > 2 || (__GNUC__-0 == 2 && __GNUC_MINOR__ >= 6)
+#if defined(__GNUC__) && \
+    ((__GNUC__ > 2) || ((__GNUC__ == 2) && (__GNUC_MINOR__ >= 6)))
 __attribute__((format(printf, 1, 2)))
 #endif
 ;
 
 /* WSGO stands for "Weird Stuff Going On" */
-#if NeedVarargsPrototypes
 #define WSGO6			uInternalError
 #define WSGO5			uInternalError
 #define WSGO4			uInternalError
@@ -294,50 +214,30 @@ __attribute__((format(printf, 1, 2)))
 #define WSGO2			uInternalError
 #define WSGO1			uInternalError
 #define WSGO			uInternalError
-#else
-#define	WSGO6(s,a,b,c,d,e,f)	uInternalError((s),(Opaque)(a),(Opaque)(b),\
-						(Opaque)(c),(Opaque)(d),\
-						(Opaque)(e),(Opaque)(f))
-#define	WSGO5(s,a,b,c,d,e)	WSGO6(s,a,b,c,d,e,NULL)
-#define	WSGO4(s,a,b,c,d)	WSGO5(s,a,b,c,d,NULL)
-#define	WSGO3(s,a,b,c)		WSGO4(s,a,b,c,NULL)
-#define	WSGO2(s,a,b)		WSGO3(s,a,b,NULL)
-#define	WSGO1(s,a)		WSGO2(s,a,NULL)
-#define	WSGO(s)			WSGO1(s,NULL)
-#endif
 
 extern	void	uInternalError(
-#if NeedVarargsPrototypes
 	char * /* s  */, ...
-#endif
 )
-#if __GNUC__-0 > 2 || (__GNUC__-0 == 2 && __GNUC_MINOR__ >= 6)
+#if defined(__GNUC__) && \
+    ((__GNUC__ > 2) || ((__GNUC__ == 2) && (__GNUC_MINOR__ >= 6)))
 __attribute__((format(printf, 1, 2)))
 #endif
 ;
 
 extern	void	uSetPreErrorMessage(
-#if NeedFunctionPrototypes
 	char * /* msg */
-#endif
 );
 
 extern	void	uSetPostErrorMessage(
-#if NeedFunctionPrototypes
 	char * /* msg */
-#endif
 );
 
 extern	void	uSetErrorPrefix(
-#if NeedFunctionPrototypes
 	char * /* void */
-#endif
 );
 
 extern	void	uFinishUp(
-#if NeedFunctionPrototypes
 	void
-#endif
 );
 
 
@@ -356,25 +256,19 @@ extern	void	uFinishUp(
 #define	uStrCasePrefix(p,s)	(strncasecmp(p,s,strlen(p))==0)
 #else
 extern	int uStrCaseCmp(
-#if NeedFunctionPrototypes
 	char *	/* s1 */,
 	char *	/* s2 */
-#endif
 );
 extern	int uStrCasePrefix(
-#if NeedFunctionPrototypes
 	char *	/* p */,
 	char *	/* str */
-#endif
 );
 #endif
 #ifdef HAVE_STRDUP
 #define	uStringDup(s1)		(strdup(s1))
 #else
 extern	char *uStringDup(
-#if NeedFunctionPrototypes
 	char *	/* s1 */
-#endif
 );
 #endif
 
@@ -399,29 +293,25 @@ extern
 unsigned	int	DEBUG_VAR;
 
 extern	void	uDebug(
-#if NeedVarargsPrototypes
 	char * /* s  */, ...
-#endif
 )
-#if __GNUC__-0 > 2 || (__GNUC__-0 == 2 && __GNUC_MINOR__ >= 6)
+#if defined(__GNUC__) && \
+    ((__GNUC__ > 2) || ((__GNUC__ == 2) && (__GNUC_MINOR__ >= 6)))
 __attribute__((format(printf, 1, 2)))
 #endif
 ;
 
 extern	void	uDebugNOI(	/* no indent */
-#if NeedVarargsPrototypes
 	char * /* s  */, ...
-#endif
 )
-#if __GNUC__-0 > 2 || (__GNUC__-0 == 2 && __GNUC_MINOR__ >= 6)
+#if defined(__GNUC__) && \
+    ((__GNUC__ > 2) || ((__GNUC__ == 2) && (__GNUC_MINOR__ >= 6)))
 __attribute__((format(printf, 1, 2)))
 #endif
 ;
 
 extern	Boolean	uSetDebugFile(
-#if NeedFunctionPrototypes
     char *name
-#endif
 );
 
 extern	FILE	*uDebugFile;
@@ -458,25 +348,20 @@ extern	int	uDebugIndentSize;
 #endif
 
 extern	Boolean	uSetEntryFile(
-#if NeedFunctionPrototypes
     char *name
-#endif
 );
 extern	void	uEntry(
-#if NeedVarargsPrototypes
 	int	/* l */,
 	char *	/* s  */, ...
-#endif
 )
-#if __GNUC__-0 > 2 || (__GNUC__-0 == 2 && __GNUC_MINOR__ >= 6)
+#if defined(__GNUC__) && \
+    ((__GNUC__ > 2) || ((__GNUC__ == 2) && (__GNUC_MINOR__ >= 6)))
 __attribute__((format(printf, 2, 3)))
 #endif
 ;
 
 extern	void	uExit(
-#if NeedFunctionPrototypes
     int l,char *rtVal
-#endif
 );
 #ifdef ENTRY_TRACKING_ON
 #define	ENTRY_BIT	0x10
@@ -531,7 +416,6 @@ extern	int	uEntryLevel;
 #define	uFLAG_VOIDRETURN		{ return; }
 #endif 
 
-_XFUNCPROTOEND
 
 #endif /* UTILS_H */
 

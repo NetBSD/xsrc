@@ -45,12 +45,12 @@ in this Software without prior written authorization from The Open Group.
  *         XSetExtensionErrorHandler	establish an extension error handler
  *         XMissingExtension		raise an error about missing ext
  */
-/* $XFree86: xc/lib/Xext/extutil.c,v 1.4 2001/12/14 19:55:02 dawes Exp $ */
+/* $XFree86: xc/lib/Xext/extutil.c,v 1.5 2002/10/16 00:37:27 dawes Exp $ */
 
 #include <stdio.h>
-#include "Xlibint.h"
-#include "Xext.h"
-#include "extutil.h"
+#include <X11/Xlibint.h>
+#include <X11/extensions/Xext.h>
+#include <X11/extensions/extutil.h>
 
 
 /*

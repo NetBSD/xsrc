@@ -27,7 +27,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 **************************************************************************/
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/tdfx/tdfx_driver.c,v 1.87 2002/01/04 21:22:35 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/tdfx/tdfx_driver.c,v 1.92 2002/11/25 14:05:00 eich Exp $ */
 
 /*
  * Authors:
@@ -189,6 +189,7 @@ static const OptionInfoRec TDFXOptions[] = {
 };
 
 static const char *vgahwSymbols[] = {
+    "vgaHWEnable",
     "vgaHWFreeHWRec",
     "vgaHWGetHWRec",
     "vgaHWGetIOBase",
@@ -582,7 +583,8 @@ TDFXFindChips(ScrnInfoPtr pScrn, pciVideoPtr match)
       pTDFX->PciTag[pTDFX->numChips] = pciTag((*ppPci)->bus, 
 					      (*ppPci)->device,
 					      (*ppPci)->func);
-      pTDFX->PIOBase[pTDFX->numChips] = (*ppPci)->ioBase[2]&0xFFFFFFFC;
+      pTDFX->PIOBase[pTDFX->numChips] =
+	pScrn->domainIOBase + ((*ppPci)->ioBase[2] & 0xFFFFFFFCU);
       pTDFX->numChips++;
     }
   }
@@ -740,7 +742,7 @@ TDFXPreInit(ScrnInfoPtr pScrn, int flags)
    * We don't need VGA resources during OPERATING state. However I'm
    * not sure if they are disabled.
    */
-  xf86SetOperatingState(RES_SHARED_VGA, pTDFX->pEnt->index, ResDisableOpr);
+  xf86SetOperatingState(resVgaIo, pTDFX->pEnt->index, ResDisableOpr);
 #if 0
   pScrn->racIoFlags = RAC_COLORMAP | RAC_CURSOR | RAC_VIEWPORT;
   pScrn->racMemFlags = RAC_COLORMAP | RAC_CURSOR | RAC_VIEWPORT;
@@ -750,21 +752,22 @@ TDFXPreInit(ScrnInfoPtr pScrn, int flags)
 
   /* Is VGA memory disabled during OPERATING state? */
 
-  xf86SetOperatingState(resVgaMemShared, pTDFX->pEnt->index, ResDisableOpr);
+  xf86SetOperatingState(resVgaMem, pTDFX->pEnt->index, ResDisableOpr);
 #else
   pScrn->racMemFlags = RAC_FB | RAC_COLORMAP | RAC_CURSOR | RAC_VIEWPORT;
 #endif
 #endif
 
-#if 0  
+#if 1
     /* 
      * I'm sure we don't need to set these. All resources 
      * for these operations are exclusive.
      */
-  if (pTDFX->usePIO)
-    pScrn->racIoFlags = RAC_FB | RAC_COLORMAP | RAC_CURSOR | RAC_VIEWPORT;
-  else
-    pScrn->racMemFlags = RAC_FB | RAC_COLORMAP | RAC_CURSOR | RAC_VIEWPORT;
+  if (pTDFX->usePIO) {
+      pScrn->racMemFlags = RAC_FB;
+      pScrn->racIoFlags = RAC_FB | RAC_COLORMAP | RAC_CURSOR | RAC_VIEWPORT;
+  } else
+      pScrn->racMemFlags = RAC_FB | RAC_COLORMAP | RAC_CURSOR | RAC_VIEWPORT;
 #endif
 
   /* Set pScrn->monitor */
@@ -875,9 +878,7 @@ TDFXPreInit(ScrnInfoPtr pScrn, int flags)
   xf86DrvMsg(pScrn->scrnIndex, from, "MMIO registers at addr 0x%lX\n",
 	     (unsigned long)pTDFX->MMIOAddr[0]);
 
-  if (match->ioBase[2]) {
-    pTDFX->PIOBase[0] = match->ioBase[2]&0xFFFFFFFC;
-  } else {
+  if (!match->ioBase[2]) {
     xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
 	       "No valid PIO address in PCI config space\n");
     TDFXFreeRec(pScrn);
@@ -2392,7 +2393,7 @@ TDFXFreeScreen(int scrnIndex, int flags) {
 static int
 TDFXValidMode(int scrnIndex, DisplayModePtr mode, Bool verbose, int flags) {
   TDFXTRACE("TDFXValidMode start\n");
-  if ((mode->HDisplay>2046) || (mode->VDisplay>1536)) 
+  if ((mode->HDisplay>2048) || (mode->VDisplay>1536)) 
     return MODE_BAD;
   /* Banshee doesn't support interlace. Does V3? */
   if (mode->Flags&V_INTERLACE) 

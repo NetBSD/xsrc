@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/glint/README.pm3,v 1.12 2001/08/18 11:37:30 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/glint/README.pm3,v 1.13 2002/05/07 23:15:58 alanh Exp $ */
   
 STATUS as of Tue,  8 May 2001 19:01:39 +0200
   
@@ -41,7 +41,6 @@ Working :
         - 1 -> 25% Video, 75% FB
         - 2 -> 75% Video, 25% FB
         - 3 -> Video Only
-  * DRI : Work is underway.
 
 Not Working :
 
@@ -53,19 +52,6 @@ Not Working :
     - Render extension initialization.
     - CPUToScreenTexture.
     - CPUToScreenAlphaTexture.
-  * [WORK IS UNDERWAY] DRI/OpenGL (only together with a gamma chip) :
-    - DRI support should be ok, but accelerated openGL is not yet supported. 
-    - The accelerated OpenGL library supposes we are using a gamma together
-      with a MX rasterizer, not a Permedia3 one.
-
-Known problems :
-
-  * [FIXED] R-B inversion. Sometimes, all of a sudden, it seems as the
-    RGB order gets changed. going to console and back solves this.
-    Well, this is partly fixed, but still appears under very heavy load.
- => [NOTE] If this still happens, try disabling the Hardware cursor, with
-    the "SWCursor" option to your device XF86Config section.
- => [NOTE2] Or, try starting the Xserver with the -nosilk option.
 
 Sven Luther <luther@dpt-info.u-strasbg.fr>
 Alan Hourihane <alanh@fairlite.demon.co.uk>

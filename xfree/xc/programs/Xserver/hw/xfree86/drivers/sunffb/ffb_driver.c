@@ -20,7 +20,7 @@
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sunffb/ffb_driver.c,v 1.9 2001/05/04 19:05:46 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sunffb/ffb_driver.c,v 1.11 2002/12/06 02:44:04 tsi Exp $ */
 
 #include "xf86.h"
 #include "xf86_OSproc.h"
@@ -60,7 +60,7 @@ static void	FFBAdjustFrame(int scrnIndex, int x, int y, int flags);
 static void	FFBFreeScreen(int scrnIndex, int flags);
 static int	FFBValidMode(int scrnIndex, DisplayModePtr mode, Bool verbose,
 			     int flags);
-
+static void     FFBDPMSMode(ScrnInfoPtr pScrn, int DPMSMode, int flags);
 /* ffb_dga.c */
 extern void FFB_InitDGA(ScreenPtr pScreen);
 
@@ -436,7 +436,12 @@ FFBPreInit(ScrnInfoPtr pScrn, int flags)
 	return FALSE;
     }
 
-#ifdef XF86DRI
+#if 0
+/*#ifdef XF86DRI*/
+/*
+ * Loading this automatically isn't compatible
+ * to the behavior of other drivers
+ */
     if (xf86LoadSubModule(pScrn, "drm") == NULL) {
 	FFBFreeRec(pScrn);
 	return FALSE;
@@ -937,6 +942,8 @@ FFBScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
     pScreen->CloseScreen = FFBCloseScreen;
     pScreen->SaveScreen = FFBSaveScreen;
 
+    (void) xf86DPMSInit(pScreen, FFBDPMSMode, 0);
+
     /* Report any unused options (only for the first generation) */
     if (serverGeneration == 1) {
 	xf86ShowUnusedOptions(pScrn->scrnIndex, pScrn->options);
@@ -1085,11 +1092,14 @@ FFBValidMode(int scrnIndex, DisplayModePtr mode, Bool verbose, int flags)
 /* Mandatory */
 static Bool
 FFBSaveScreen(ScreenPtr pScreen, int mode)
-    /* this function should blank the screen when unblank is FALSE and
-       unblank it when unblank is TRUE -- it doesn't actually seem to be
-       used for much though */
+    /* This function blanks the screen when mode=SCREEN_SAVER_ON and
+       unblanks it when mode=SCREEN_SAVER_OFF.  It is used internally in the
+       FFBScreenInit code `for aesthetic reasons,' and it is used for
+       blanking if you set "xset s on s blank."  The work (such as it is) is
+       done in "ffb_dac.c" `for aesthetic reasons.'
+    */
 {
-    return TRUE;
+    return FFBDacSaveScreen(GET_FFB_FROM_SCREEN(pScreen), mode);
 }
 
 /*
@@ -1099,4 +1109,14 @@ void
 FFBSync(ScrnInfoPtr pScrn)
 {
     return;
+}
+
+/*
+  Hook for DPMS Mode.
+*/
+
+static void
+FFBDPMSMode(ScrnInfoPtr pScrn, int DPMSMode, int flags)
+{
+  FFBDacDPMSMode(GET_FFB_FROM_SCRN(pScrn), DPMSMode, flags);
 }

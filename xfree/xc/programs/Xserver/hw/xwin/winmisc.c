@@ -27,7 +27,7 @@
  *
  * Authors:	Harold L Hunt II
  */
-/* $XFree86: xc/programs/Xserver/hw/xwin/winmisc.c,v 1.5 2001/11/11 22:45:57 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xwin/winmisc.c,v 1.6 2002/07/05 09:19:26 alanh Exp $ */
 
 #include "win.h"
 
@@ -42,7 +42,7 @@ void
 winQueryBestSizeNativeGDI (int class, unsigned short *pWidth,
 			   unsigned short *pHeight, ScreenPtr pScreen)
 {
-  ErrorF ("winQueryBestSize()\n");
+  ErrorF ("winQueryBestSizeNativeGDI\n");
 }
 
 
@@ -79,16 +79,16 @@ winUpdateFBPointer (ScreenPtr pScreen, void *pbits)
   pScreenInfo->pfb = pbits;
 
   /* Update the screen pixmap */
-  if (!(*pScreen->ModifyPixmapHeader)(pScreen->devPrivate,
-				      pScreen->width,
-				      pScreen->height,
-				      pScreen->rootDepth,
-				      BitsPerPixel (pScreen->rootDepth),
-				      PixmapBytePad (pScreenInfo->dwStride,
-						     pScreenInfo->dwDepth),
-				      pScreenInfo->pfb))
+  if (!(*pScreen->ModifyPixmapHeader) (pScreen->devPrivate,
+				       pScreen->width,
+				       pScreen->height,
+				       pScreen->rootDepth,
+				       BitsPerPixel (pScreen->rootDepth),
+				       PixmapBytePad (pScreenInfo->dwStride,
+						      pScreenInfo->dwBPP),
+				       pScreenInfo->pfb))
     {
-      FatalError ("winUpdateFramebufferPointer () - Failed modifying "\
+      FatalError ("winUpdateFramebufferPointer - Failed modifying "\
 		  "screen pixmap\n");
     }
 

@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/programs/Xserver/hw/kdrive/linux/mouse.c,v 1.5 2001/12/20 16:47:30 keithp Exp $
+ * $XFree86: xc/programs/Xserver/hw/kdrive/linux/mouse.c,v 1.6 2002/08/02 16:11:35 keithp Exp $
  *
  * Copyright © 2001 Keith Packard, member of The XFree86 Project, Inc.
  *
@@ -912,6 +912,8 @@ MouseInit (void)
     {
 	next = mi->next;
 	prot = mi->prot;
+	if (mi->inputType)
+	    continue;
 	if (!mi->name)
 	{
 	    for (i = 0; i < NUM_DEFAULT_MOUSE; i++)
@@ -938,6 +940,7 @@ MouseInit (void)
 		km->i_prot = 0;
 		km->tty = isatty (fd);
 		mi->driver = km;
+		mi->inputType = MouseInputType;
 		MouseFirstProtocol (km, mi->prot);
 		if (KdRegisterFd (MouseInputType, fd, MouseRead, (void *) mi))
 		    n++;
@@ -945,8 +948,6 @@ MouseInit (void)
 	    else
 		close (fd);
 	}
-	else
-	    KdMouseInfoDispose (mi);
     }
 }
 
@@ -958,10 +959,11 @@ MouseFini (void)
     KdUnregisterFds (MouseInputType, TRUE);
     for (mi = kdMouseInfo; mi; mi = mi->next)
     {
-	if (mi->driver)
+	if (mi->inputType == MouseInputType)
 	{
 	    xfree (mi->driver);
 	    mi->driver = 0;
+	    mi->inputType = 0;
 	}
     }
 }

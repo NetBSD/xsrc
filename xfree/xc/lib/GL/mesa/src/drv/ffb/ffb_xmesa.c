@@ -1,7 +1,7 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/ffb/ffb_xmesa.c,v 1.3 2001/05/29 22:24:01 dawes Exp $
+/* $XFree86: xc/lib/GL/mesa/src/drv/ffb/ffb_xmesa.c,v 1.4 2002/02/22 21:32:59 dawes Exp $
  *
  * GLX Hardware Device Driver for Sun Creator/Creator3D
- * Copyright (C) 2000 David S. Miller
+ * Copyright (C) 2000, 2001 David S. Miller
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -32,10 +32,17 @@
 
 #include "ffb_xmesa.h"
 #include "context.h"
-#include "vbxform.h"
 #include "matrix.h"
 #include "simple_list.h"
 #include "mmath.h"
+#include "mem.h"
+
+#include "swrast/swrast.h"
+#include "swrast_setup/swrast_setup.h"
+#include "tnl/tnl.h"
+#include "tnl/t_pipeline.h"
+#include "array_cache/acache.h"
+
 
 #include "xf86dri.h"
 
@@ -50,40 +57,19 @@
 #include "ffb_lines.h"
 #include "ffb_points.h"
 #include "ffb_state.h"
-#include "ffb_pipeline.h"
+#include "ffb_tex.h"
 #include "ffb_lock.h"
+#include "ffb_vtxfmt.h"
+#include "ffb_bitmap.h"
 
-#if 0
-#include "xmesaP.h"
-#endif
-
-static ffbContextPtr ffbCtx = NULL;
-
-/* These functions are accessed by dlsym from dri_mesa_init.c:
- *
- * XMesaInitDriver
- * XMesaResetDriver
- * XMesaCreateVisual
- * XMesaDestroyVisual
- * XMesaCreateContext 
- * XMesaDestroyContext
- * XMesaCreateWindowBuffer
- * XMesaCreatePixmapBuffer
- * XMesaDestroyBuffer
- * XMesaSwapBuffers
- * XMesaMakeCurrent
- *
- * So this is kind of the public interface to the driver.  The driver
- * uses the X11 mesa driver context as a kind of wrapper around its
- * own driver context - but there isn't much justificiation for doing
- * it that way - the DRI might as well use a (void *) to refer to the
- * driver contexts.  Nothing in the X context really gets used.
- */
-
-GLboolean XMesaInitDriver(__DRIscreenPrivate *sPriv)
+static GLboolean
+ffbInitDriver(__DRIscreenPrivate *sPriv)
 {
 	ffbScreenPrivate *ffbScreen;
 	FFBDRIPtr gDRIPriv = (FFBDRIPtr) sPriv->pDevPriv;
+
+	if (getenv("LIBGL_FORCE_XSERVER"))
+		return GL_FALSE;
 
 	/* Allocate the private area. */
 	ffbScreen = (ffbScreenPrivate *) Xmalloc(sizeof(ffbScreenPrivate));
@@ -154,16 +140,15 @@ GLboolean XMesaInitDriver(__DRIscreenPrivate *sPriv)
 	ffbScreen->sPriv = sPriv;
 	sPriv->private = (void *) ffbScreen;
 
-	ffbDDSetupInit();
-	ffbDDTrifuncInit();
 	ffbDDLinefuncInit();
 	ffbDDPointfuncInit();
 
 	return GL_TRUE;
 }
 
-/* Accessed by dlsym from dri_mesa_init.c */
-void XMesaResetDriver(__DRIscreenPrivate *sPriv)
+
+static void
+ffbDestroyScreen(__DRIscreenPrivate *sPriv)
 {
 	ffbScreenPrivate *ffbScreen = sPriv->private;
 	FFBDRIPtr gDRIPriv = (FFBDRIPtr) sPriv->pDevPriv;
@@ -177,55 +162,50 @@ void XMesaResetDriver(__DRIscreenPrivate *sPriv)
 	Xfree(ffbScreen);
 }
 
-/* Accessed by dlsym from dri_mesa_init.c */
-GLvisual *XMesaCreateVisual(Display *dpy,
-			    __DRIscreenPrivate *driScrnPriv,
-			    const XVisualInfo *visinfo,
-			    const __GLXvisualConfig *config)
-{
-	/* Only RGB visuals (for now) in this FFB driver. */
-	if (!config->rgba)
-		return NULL;
-
-	/* Drivers may change the args to _mesa_create_visual() in order to
-	 * setup special visuals.
-	 */
-	return _mesa_create_visual(config->rgba,
-				   config->doubleBuffer,
-				   config->stereo,
-				   _mesa_bitcount(visinfo->red_mask),
-				   _mesa_bitcount(visinfo->green_mask),
-				   _mesa_bitcount(visinfo->blue_mask),
-				   config->alphaSize,
-				   0, /* index bits */
-				   config->depthSize,
-				   config->stencilSize,
-				   config->accumRedSize,
-				   config->accumGreenSize,
-				   config->accumBlueSize,
-				   config->accumAlphaSize,
-				   0 /* num samples */);
-}
+static const struct gl_pipeline_stage *ffb_pipeline[] = {
+   &_tnl_vertex_transform_stage, 
+   &_tnl_normal_transform_stage, 
+   &_tnl_lighting_stage,
+				/* REMOVE: fog coord stage */
+   &_tnl_texgen_stage, 
+   &_tnl_texture_transform_stage, 
+				/* REMOVE: point attenuation stage */
+   &_tnl_render_stage,		
+   0,
+};
 
 /* Create and initialize the Mesa and driver specific context data */
-GLboolean XMesaCreateContext(Display *dpy, GLvisual *mesaVis,
-			     __DRIcontextPrivate *driContextPriv)
+static GLboolean
+ffbCreateContext(Display *dpy, const __GLcontextModes *mesaVis,
+                 __DRIcontextPrivate *driContextPriv,
+                 void *sharedContextPrivate)
 {
 	ffbContextPtr fmesa;
-	GLcontext *glCtx;
+	GLcontext *ctx, *shareCtx;
 	__DRIscreenPrivate *sPriv;
 	ffbScreenPrivate *ffbScreen;
+	char *debug;
 
-	fmesa = (ffbContextPtr) Xmalloc(sizeof(ffbContextRec));
+        /* Allocate ffb context */
+	fmesa = (ffbContextPtr) CALLOC(sizeof(ffbContextRec));
 	if (!fmesa)
 		return GL_FALSE;
 
-	glCtx = driContextPriv->mesaContext;
+        /* Allocate Mesa context */
+        if (sharedContextPrivate)
+           shareCtx = ((ffbContextPtr) sharedContextPrivate)->glCtx;
+        else 
+           shareCtx = NULL;
+        fmesa->glCtx = _mesa_create_context(mesaVis, shareCtx, fmesa, GL_TRUE);
+        if (!fmesa->glCtx) {
+           FREE(fmesa);
+           return GL_FALSE;
+        }
+        driContextPriv->driverPrivate = fmesa;
+        ctx = fmesa->glCtx;
+
 	sPriv = driContextPriv->driScreenPriv;
 	ffbScreen = (ffbScreenPrivate *) sPriv->private;
-
-	fmesa->glCtx = glCtx;
-	glCtx->DriverCtx = (void *) fmesa;
 
 	/* Dri stuff. */
 	fmesa->display = dpy;
@@ -241,114 +221,155 @@ GLboolean XMesaCreateContext(Display *dpy, GLvisual *mesaVis,
 	fmesa->regs = ffbScreen->regs;
 	fmesa->sfb32 = ffbScreen->sfb32;
 
-	fmesa->SWrender = 0;
-	if (getenv("LIBGL_SOFTWARE_RENDERING"))
-		fmesa->SWrender = 1;
-
-	ffbDDInitContextHwState(glCtx);
+	ffbDDInitContextHwState(ctx);
 
 	/* Default clear and depth colors. */
 	{
-		GLubyte r = (GLint) (glCtx->Color.ClearColor[0] * 255.0F);
-		GLubyte g = (GLint) (glCtx->Color.ClearColor[1] * 255.0F);
-		GLubyte b = (GLint) (glCtx->Color.ClearColor[2] * 255.0F);
+		GLubyte r = (GLint) (ctx->Color.ClearColor[0] * 255.0F);
+		GLubyte g = (GLint) (ctx->Color.ClearColor[1] * 255.0F);
+		GLubyte b = (GLint) (ctx->Color.ClearColor[2] * 255.0F);
 
 		fmesa->clear_pixel = ((r << 0) |
 				      (g << 8) |
 				      (b << 16));
 	}
-	fmesa->clear_depth = Z_FROM_MESA(glCtx->Depth.Clear * 4294967295.0f);
-	fmesa->clear_stencil = glCtx->Stencil.Clear & 0xf;
+	fmesa->clear_depth = Z_FROM_MESA(ctx->Depth.Clear * 4294967295.0f);
+	fmesa->clear_stencil = ctx->Stencil.Clear & 0xf;
+
+	/* No wide points. */
+	ctx->Const.MinPointSize = 1.0;
+	ctx->Const.MinPointSizeAA = 1.0;
+	ctx->Const.MaxPointSize = 1.0;
+	ctx->Const.MaxPointSizeAA = 1.0;
+
+	/* Disable wide lines as we can't antialias them correctly in
+	 * hardware.
+	 */
+	ctx->Const.MinLineWidth = 1.0;
+	ctx->Const.MinLineWidthAA = 1.0;
+	ctx->Const.MaxLineWidth = 1.0;
+	ctx->Const.MaxLineWidthAA = 1.0;
+	ctx->Const.LineWidthGranularity = 1.0;
+
+	/* Instead of having GCC emit these constants a zillion times
+	 * everywhere in the driver, put them here.
+	 */
+	fmesa->ffb_2_30_fixed_scale           = __FFB_2_30_FIXED_SCALE;
+	fmesa->ffb_one_over_2_30_fixed_scale  = (1.0 / __FFB_2_30_FIXED_SCALE);
+	fmesa->ffb_16_16_fixed_scale          = __FFB_16_16_FIXED_SCALE;
+	fmesa->ffb_one_over_16_16_fixed_scale = (1.0 / __FFB_16_16_FIXED_SCALE);
+	fmesa->ffb_ubyte_color_scale          = 255.0f;
+	fmesa->ffb_zero			      = 0.0f;
+
+	fmesa->debugFallbacks = GL_FALSE;
+	debug = getenv("LIBGL_DEBUG");
+	if (debug && strstr(debug, "fallbacks"))
+		fmesa->debugFallbacks = GL_TRUE;
+
+	/* Initialize the software rasterizer and helper modules. */
+	_swrast_CreateContext( ctx );
+	_ac_CreateContext( ctx );
+	_tnl_CreateContext( ctx );
+	_swsetup_CreateContext( ctx );
 
 	/* All of this need only be done once for a new context. */
-	ffbDDExtensionsInit(glCtx);
-	ffbDDInitDriverFuncs(glCtx);
-	ffbDDInitStateFuncs(glCtx);
-	ffbDDInitSpanFuncs(glCtx);
-	ffbDDInitDepthFuncs(glCtx);
-	ffbDDInitStencilFuncs(glCtx);
+	ffbDDExtensionsInit(ctx);
+	ffbDDInitDriverFuncs(ctx);
+	ffbDDInitStateFuncs(ctx);
+	ffbDDInitSpanFuncs(ctx);
+	ffbDDInitDepthFuncs(ctx);
+	ffbDDInitStencilFuncs(ctx);
+	ffbDDInitRenderFuncs(ctx);
+	ffbDDInitTexFuncs(ctx);
+	ffbDDInitBitmapFuncs(ctx);
+	ffbInitVB(ctx);
 
-	/* Actually we do the culling in software.  The problem is
-	 * that there is apparently some bug in generic MESA if you
-	 * provide a driver triangle rendering function when culling
-	 * is enabled.
-	 *
-	 * Generic MESA in such a case does the culling in it's very
-	 * own software triangle rasterizers (ie. when the driver indicates
-	 * it cannot do it).  Perhaps this is a clue.
-	 */
-	glCtx->Driver.TriangleCaps = DD_TRI_CULL;
+	ffbInitTnlModule(ctx);
 
-	if (glCtx->VB)
-		ffbDDRegisterVB(glCtx->VB);
-
-	if (glCtx->NrPipelineStages)
-		glCtx->NrPipelineStages =
-			ffbDDRegisterPipelineStages(glCtx->PipelineStage,
-						    glCtx->PipelineStage,
-						    glCtx->NrPipelineStages);
-
-	driContextPriv->driverPrivate = (void *) fmesa;
+	_tnl_destroy_pipeline(ctx);
+	_tnl_install_pipeline(ctx, ffb_pipeline);
 
 	return GL_TRUE;
 }
 
-void XMesaDestroyContext(__DRIcontextPrivate *driContextPriv)
+static void
+ffbDestroyContext(__DRIcontextPrivate *driContextPriv)
 {
 	ffbContextPtr fmesa = (ffbContextPtr) driContextPriv->driverPrivate;
 
-	if (fmesa == ffbCtx)
-		ffbCtx = NULL;
+	if (fmesa) {
+		ffbFreeVB(fmesa->glCtx);
 
-	if (fmesa)
-		Xfree(fmesa);
+		_swsetup_DestroyContext( fmesa->glCtx );
+		_tnl_DestroyContext( fmesa->glCtx );
+		_ac_DestroyContext( fmesa->glCtx );
+		_swrast_DestroyContext( fmesa->glCtx );
+
+                /* free the Mesa context */
+                fmesa->glCtx->DriverCtx = NULL;
+                _mesa_destroy_context(fmesa->glCtx);
+
+		FREE(fmesa);
+	}
 }
 
 /* Create and initialize the Mesa and driver specific pixmap buffer data */
-GLframebuffer *XMesaCreateWindowBuffer(Display *dpy,
-				       __DRIscreenPrivate *driScrnPriv,
-				       __DRIdrawablePrivate *driDrawPriv,
-				       GLvisual *mesaVis)
+static GLboolean
+ffbCreateBuffer(Display *dpy,
+                __DRIscreenPrivate *driScrnPriv,
+                __DRIdrawablePrivate *driDrawPriv,
+                const __GLcontextModes *mesaVis,
+                GLboolean isPixmap )
 {
-	return gl_create_framebuffer(mesaVis,
-				     GL_FALSE,  /* software depth buffer? */
-				     mesaVis->StencilBits > 0,
-				     mesaVis->AccumRedBits > 0,
-				     mesaVis->AlphaBits > 0);
+   if (isPixmap) {
+      return GL_FALSE; /* not implemented */
+   }
+   else {
+      driDrawPriv->driverPrivate = (void *) 
+         _mesa_create_framebuffer(mesaVis,
+                                  GL_FALSE,  /* software depth buffer? */
+                                  mesaVis->stencilBits > 0,
+                                  mesaVis->accumRedBits > 0,
+                                  mesaVis->alphaBits > 0);
+      return (driDrawPriv->driverPrivate != NULL);
+   }
 }
 
-/* Create and initialize the Mesa and driver specific pixmap buffer data */
-GLframebuffer *XMesaCreatePixmapBuffer( Display *dpy,
-                                        __DRIscreenPrivate *driScrnPriv,
-                                        __DRIdrawablePrivate *driDrawPriv,
-                                        GLvisual *mesaVis)
+
+static void
+ffbDestroyBuffer(__DRIdrawablePrivate *driDrawPriv)
 {
-	return NULL;  /* not implemented yet */
+   _mesa_destroy_framebuffer((GLframebuffer *) (driDrawPriv->driverPrivate));
 }
+
 
 #define USE_FAST_SWAP
 
-void XMesaSwapBuffers(__DRIdrawablePrivate *driDrawPriv)
+static void
+ffbSwapBuffers(Display *dpy, void *drawablePrivate)
 {
+	__DRIdrawablePrivate *dPriv = (__DRIdrawablePrivate *) drawablePrivate;
+	ffbContextPtr fmesa = (ffbContextPtr) dPriv->driContextPriv->driverPrivate;
 	unsigned int fbc, wid, wid_reg_val, dac_db_bit;
 	unsigned int shadow_dac_addr, active_dac_addr;
 	ffb_fbcPtr ffb;
 	ffb_dacPtr dac;
 
-	if (ffbCtx == NULL ||
-	    ffbCtx->glCtx->Visual->DBflag == 0)
+	if (fmesa == NULL ||
+	    fmesa->glCtx->Visual.doubleBufferMode == 0)
 		return;
 
-	FLUSH_VB(ffbCtx->glCtx, "swap buffers");
+	/* Flush pending rendering commands */
+	_mesa_swapbuffers(fmesa->glCtx);
 
-	ffb = ffbCtx->regs;
-	dac = ffbCtx->ffbScreen->dac;
+	ffb = fmesa->regs;
+	dac = fmesa->ffbScreen->dac;
 
-	fbc = ffbCtx->fbc;
-	wid = ffbCtx->wid;
+	fbc = fmesa->fbc;
+	wid = fmesa->wid;
 
 	/* Swap the buffer we render into and read pixels from. */
-	ffbCtx->back_buffer ^= 1;
+	fmesa->back_buffer ^= 1;
 
 	/* If we are writing into both buffers, don't mess with
 	 * the WB setting.
@@ -366,16 +387,16 @@ void XMesaSwapBuffers(__DRIdrawablePrivate *driDrawPriv)
 	else
 		fbc = (fbc & ~FFB_FBC_RB_B) | FFB_FBC_RB_A;
 
-	LOCK_HARDWARE(ffbCtx);
+	LOCK_HARDWARE(fmesa);
 
-	if (ffbCtx->fbc != fbc) {
-		FFBFifo(ffbCtx, 1);
-		ffb->fbc = ffbCtx->fbc = fbc;
-		ffbCtx->ffbScreen->rp_active = 1;
+	if (fmesa->fbc != fbc) {
+		FFBFifo(fmesa, 1);
+		ffb->fbc = fmesa->fbc = fbc;
+		fmesa->ffbScreen->rp_active = 1;
 	}
 
 	/* And swap the buffer displayed in the WID. */
-	if (ffbCtx->ffb_sarea->flags & FFB_DRI_PAC1) {
+	if (fmesa->ffb_sarea->flags & FFB_DRI_PAC1) {
 		shadow_dac_addr = FFBDAC_PAC1_SPWLUT(wid);
 		active_dac_addr = FFBDAC_PAC1_APWLUT(wid);
 		dac_db_bit = FFBDAC_PAC1_WLUT_DB;
@@ -385,10 +406,10 @@ void XMesaSwapBuffers(__DRIdrawablePrivate *driDrawPriv)
 		dac_db_bit = FFBDAC_PAC2_WLUT_DB;
 	}
 
-	FFBWait(ffbCtx, ffb);
+	FFBWait(fmesa, ffb);
 
 	wid_reg_val = DACCFG_READ(dac, active_dac_addr);
-	if (ffbCtx->back_buffer == 0)
+	if (fmesa->back_buffer == 0)
 		wid_reg_val |=  dac_db_bit;
 	else
 		wid_reg_val &= ~dac_db_bit;
@@ -412,16 +433,16 @@ void XMesaSwapBuffers(__DRIdrawablePrivate *driDrawPriv)
 	}
 #endif
 
-	UNLOCK_HARDWARE(ffbCtx);
+	UNLOCK_HARDWARE(fmesa);
 }
 
-static void ffb_init_wid(unsigned int wid)
+static void ffb_init_wid(ffbContextPtr fmesa, unsigned int wid)
 {
-	ffb_dacPtr dac = ffbCtx->ffbScreen->dac;
+	ffb_dacPtr dac = fmesa->ffbScreen->dac;
 	unsigned int wid_reg_val, dac_db_bit, active_dac_addr;
 	unsigned int shadow_dac_addr;
 
-	if (ffbCtx->ffb_sarea->flags & FFB_DRI_PAC1) {
+	if (fmesa->ffb_sarea->flags & FFB_DRI_PAC1) {
 		shadow_dac_addr = FFBDAC_PAC1_SPWLUT(wid);
 		active_dac_addr = FFBDAC_PAC1_APWLUT(wid);
 		dac_db_bit = FFBDAC_PAC1_WLUT_DB;
@@ -456,77 +477,76 @@ static void ffb_init_wid(unsigned int wid)
 
 /* Force the context `c' to be the current context and associate with it
    buffer `b' */
-GLboolean XMesaMakeCurrent(__DRIcontextPrivate *driContextPriv,
-			   __DRIdrawablePrivate *driDrawPriv,
-			   __DRIdrawablePrivate *driReadPriv)
+static GLboolean
+ffbMakeCurrent(__DRIcontextPrivate *driContextPriv,
+               __DRIdrawablePrivate *driDrawPriv,
+               __DRIdrawablePrivate *driReadPriv)
 {
 	if (driContextPriv) {
 		ffbContextPtr fmesa = (ffbContextPtr) driContextPriv->driverPrivate;
 		int first_time;
 
-		if (ffbCtx != NULL &&
-		    fmesa == ffbCtx &&
-		    driDrawPriv == fmesa->driDrawable)
-			return GL_TRUE;
-
-		ffbCtx = fmesa;
 		fmesa->driDrawable = driDrawPriv;
 
-		gl_make_current2(ffbCtx->glCtx, 
-				 driDrawPriv->mesaBuffer, driReadPriv->mesaBuffer);
+		_mesa_make_current2(fmesa->glCtx, 
+			    (GLframebuffer *) driDrawPriv->driverPrivate, 
+			    (GLframebuffer *) driReadPriv->driverPrivate);
 
-		if (!ffbCtx->glCtx->Viewport.Width)
-			gl_Viewport(ffbCtx->glCtx,
-				    0, 0,
-				    driDrawPriv->w, driDrawPriv->h);
-
+		if (!fmesa->glCtx->Viewport.Width)
+			_mesa_set_viewport(fmesa->glCtx,
+					   0, 0,
+					   driDrawPriv->w, 
+					   driDrawPriv->h);
+		
 		first_time = 0;
-		if (ffbCtx->wid == ~0)
+		if (fmesa->wid == ~0) {
 			first_time = 1;
-
-		LOCK_HARDWARE(ffbCtx);
-		if (first_time) {
-			ffbCtx->wid = ffbCtx->ffb_sarea->wid_table[driDrawPriv->index];
-			ffbCtx->state_dirty |= FFB_STATE_WID;
-			ffb_init_wid(ffbCtx->wid);
+			if (getenv("LIBGL_SOFTWARE_RENDERING"))
+				FALLBACK( fmesa->glCtx, FFB_BADATTR_SWONLY, GL_TRUE );
 		}
 
-		ffbCtx->state_dirty |= FFB_STATE_ALL;
-		ffbCtx->state_fifo_ents = ffbCtx->state_all_fifo_ents;
-		ffbSyncHardware(ffbCtx);
-		UNLOCK_HARDWARE(ffbCtx);
+		LOCK_HARDWARE(fmesa);
+		if (first_time) {
+			fmesa->wid = fmesa->ffb_sarea->wid_table[driDrawPriv->index];
+			ffb_init_wid(fmesa, fmesa->wid);
+		}
+
+		fmesa->state_dirty |= FFB_STATE_ALL;
+		fmesa->state_fifo_ents = fmesa->state_all_fifo_ents;
+		ffbSyncHardware(fmesa);
+		UNLOCK_HARDWARE(fmesa);
 
 		if (first_time) {
 			/* Also, at the first switch to a new context,
 			 * we need to clear all the hw buffers.
 			 */
-			ffbDDClear(ffbCtx->glCtx,
+			ffbDDClear(fmesa->glCtx,
 				   (DD_FRONT_LEFT_BIT | DD_BACK_LEFT_BIT |
 				    DD_DEPTH_BIT | DD_STENCIL_BIT),
 				   1, 0, 0, 0, 0);
 		}
 	} else {
-		gl_make_current(0,0);
-		ffbCtx = NULL;
+		_mesa_make_current(NULL, NULL);
 	}
 
 	return GL_TRUE;
 }
 
 /* Force the context `c' to be unbound from its buffer */
-GLboolean XMesaUnbindContext(__DRIcontextPrivate *driContextPriv)
+static GLboolean
+ffbUnbindContext(__DRIcontextPrivate *driContextPriv)
 {
 	return GL_TRUE;
 }
 
-GLboolean
-XMesaOpenFullScreen(__DRIcontextPrivate *driContextPriv)
+static GLboolean
+ffbOpenFullScreen(__DRIcontextPrivate *driContextPriv)
 {
     return GL_TRUE;
 }
 
-GLboolean
-XMesaCloseFullScreen(__DRIcontextPrivate *driContextPriv)
+static GLboolean
+ffbCloseFullScreen(__DRIcontextPrivate *driContextPriv)
 {
     return GL_TRUE;
 }
@@ -537,14 +557,12 @@ void ffbXMesaUpdateState(ffbContextPtr fmesa)
 	__DRIscreenPrivate *sPriv = fmesa->driScreen;
 	int stamp = dPriv->lastStamp;
 
-	XMESA_VALIDATE_DRAWABLE_INFO(fmesa->display, sPriv, dPriv);
+	DRI_VALIDATE_DRAWABLE_INFO(fmesa->display, sPriv, dPriv);
 
 	if (dPriv->lastStamp != stamp) {
 		GLcontext *ctx = fmesa->glCtx;
 
-		if (ctx->Scissor.Enabled)
-			ffbDDScissor(ctx, ctx->Scissor.X, ctx->Scissor.Y,
-				     ctx->Scissor.Width, ctx->Scissor.Height);
+		ffbCalcViewport(ctx);
 		if (ctx->Polygon.StippleFlag)
 			ffbXformAreaPattern(fmesa,
 					    (const GLubyte *)ctx->PolygonStipple);
@@ -557,5 +575,36 @@ void ffbXMesaUpdateState(ffbContextPtr fmesa)
 void __driRegisterExtensions(void)
 {
 }
+
+
+static struct __DriverAPIRec ffbAPI = {
+   ffbInitDriver,
+   ffbDestroyScreen,
+   ffbCreateContext,
+   ffbDestroyContext,
+   ffbCreateBuffer,
+   ffbDestroyBuffer,
+   ffbSwapBuffers,
+   ffbMakeCurrent,
+   ffbUnbindContext,
+   ffbOpenFullScreen,
+   ffbCloseFullScreen
+};
+
+
+
+/*
+ * This is the bootstrap function for the driver.
+ * The __driCreateScreen name is the symbol that libGL.so fetches.
+ * Return:  pointer to a __DRIscreenPrivate.
+ */
+void *__driCreateScreen(Display *dpy, int scrn, __DRIscreen *psc,
+                        int numConfigs, __GLXvisualConfig *config)
+{
+   __DRIscreenPrivate *psp;
+   psp = __driUtilCreateScreen(dpy, scrn, psc, numConfigs, config, &ffbAPI);
+   return (void *) psp;
+}
+
 
 #endif /* GLX_DIRECT_RENDERING */

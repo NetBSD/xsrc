@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/input/calcomp/Imakefile,v 1.1 2001/08/12 22:48:43 alanh Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/input/calcomp/Imakefile,v 1.2 2002/10/16 01:47:01 dawes Exp $
 
 #define IHaveModules
 #include <Server.tmpl>
@@ -8,7 +8,7 @@ OBJS = xf86Calcomp.o
 
 DRIVER = calcomp
 
-INCLUDES = -I. -I$(XF86COMSRC) -I../../loader -I$(XF86OSSRC) \
+INCLUDES = -I. -I$(XF86COMSRC) -I$(XF86SRC)/loader -I$(XF86OSSRC) \
 			-I$(SERVERSRC)/include -I$(XINCLUDESRC) -I$(EXTINCSRC)
 
 #if MakeHasPosixVariableSubstitutions

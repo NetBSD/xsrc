@@ -26,7 +26,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/xdm/error.c,v 1.5 2001/12/14 20:01:21 dawes Exp $ */
+/* $XFree86: xc/programs/xdm/error.c,v 1.7 2002/10/09 16:38:20 tsi Exp $ */
 
 /*
  * xdm - display manager daemon
@@ -44,42 +44,52 @@ from The Open Group.
 # include "dm.h"
 # include "dm_error.h"
 
+#define WRITES(fd, buf) write(fd, buf, strlen(buf))
+
 void LogInfo(char * fmt, ...)
 {
-    fprintf (stderr, "xdm info (pid %ld): ", (long)getpid());
+    char buf[1024];
+
+    snprintf(buf, sizeof buf, "xdm info (pid %ld): ", (long)getpid());
+    WRITES(STDERR_FILENO, buf);
     {
 	va_list args;
 	va_start(args, fmt);
-	vfprintf (stderr, fmt, args);
+	vsnprintf (buf, sizeof buf, fmt, args);
 	va_end(args);
     }
-    fflush (stderr);
+    WRITES(STDERR_FILENO, buf);
 }
 
-void LogError (
-    char * fmt, ...)
+void LogError (char * fmt, ...)
 {
-    fprintf (stderr, "xdm error (pid %ld): ", (long)getpid());
+    char buf[1024];
+
+    snprintf (buf, sizeof buf, "xdm error (pid %ld): ", (long)getpid());
+    WRITES(STDERR_FILENO, buf);
     {
 	va_list args;
 	va_start(args, fmt);
-	vfprintf (stderr, fmt, args);
+	vsnprintf (buf, sizeof buf, fmt, args);
 	va_end(args);
     }
-    fflush (stderr);
+    WRITES(STDERR_FILENO, buf);
 }
 
 void LogPanic (char * fmt, ...)
 {
-    fprintf (stderr, "xdm panic (pid %ld): ", (long)getpid());
+    char buf[1024];
+
+    snprintf (buf, sizeof buf, "xdm panic (pid %ld): ", (long)getpid());
+    WRITES(STDERR_FILENO, buf);
     {
 	va_list args;
 	va_start(args, fmt);
-	vfprintf (stderr, fmt, args);
+	vsnprintf (buf, sizeof buf, fmt, args);
 	va_end(args);
     }
-    fflush (stderr);
-    exit (1);
+    WRITES(STDERR_FILENO, buf);
+    _exit (1);
 }
 
 void LogOutOfMem (char * fmt, ...)
@@ -107,13 +117,15 @@ void Panic (char *mesg)
 
 void Debug (char * fmt, ...)
 {
+    char buf[1024];
+
     if (debugLevel > 0)
     {
 	va_list args;
 	va_start(args, fmt);
-	vprintf (fmt, args);
+	vsnprintf (buf, sizeof buf, fmt, args);
 	va_end(args);
-	fflush (stdout);
+	WRITES(STDOUT_FILENO, buf);
     }
 }
 

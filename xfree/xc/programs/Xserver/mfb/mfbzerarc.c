@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/mfb/mfbzerarc.c,v 3.6 2001/12/14 20:00:13 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/mfb/mfbzerarc.c,v 3.7 2002/09/27 01:57:47 dawes Exp $ */
 /************************************************************
 
 Copyright 1989, 1998  The Open Group
@@ -218,7 +218,7 @@ mfbZeroPolyArcSS(pDraw, pGC, narcs, parcs)
     int x2, y2;
     RegionPtr cclip;
 
-    if (!pGC->planemask & 1)
+    if (!(pGC->planemask & 1))
 	return;
     cclip = pGC->pCompositeClip;
     for (arc = parcs, i = narcs; --i >= 0; arc++)

@@ -27,59 +27,70 @@
  * Author: Paulo César Pereira de Andrade
  */
 
-/* $XFree86: xc/programs/xedit/lisp/require.c,v 1.7 2001/10/18 03:15:22 paulo Exp $ */
+/* $XFree86: xc/programs/xedit/lisp/require.c,v 1.16 2002/11/23 08:26:50 paulo Exp $ */
 
 #include "require.h"
-
-/*
- * Initialization
- */
-static char *BadArgumentAt = "bad argument %s, at %s";
 
 /*
  * Implementation
  */
 LispObj *
-Lisp_Load(LispMac *mac, LispObj *list, char *fname)
+Lisp_Load(LispBuiltin *builtin)
+/*
+ load filename &key verbose print if-does-not-exist
+ */
 {
-    LispObj *file = CAR(list), *verbose, *print, *ifdoesnotexist;
+    LispObj *filename, *verbose, *print, *if_does_not_exist;
 
-    if (!STRING_P(file))
-	LispDestroy(mac, BadArgumentAt, LispStrObj(mac, file), fname);
+    if_does_not_exist = ARGUMENT(3);
+    print = ARGUMENT(2);
+    verbose = ARGUMENT(1);
+    filename = ARGUMENT(0);
 
-    LispGetKeys(mac, fname, "VERBOSE:PRINT:IF-DOES-NOT-EXIST", CDR(list),
-		&verbose, &print, &ifdoesnotexist);
+    if (PATHNAMEP(filename))
+	filename = CAR(filename->data.pathname);
+    else {
+	CHECK_STRING(filename);
+    }
 
-    return (_LispLoadFile(mac, STRPTR(file), fname,
-			  verbose != NIL, print != NIL, ifdoesnotexist != NIL));
+    return (LispLoadFile(filename,
+			 verbose != UNSPEC && verbose != NIL,
+			 print != UNSPEC && print != NIL,
+			 if_does_not_exist != UNSPEC &&
+			 if_does_not_exist != NIL));
 }
 
 LispObj *
-Lisp_Require(LispMac *mac, LispObj *list, char *fname)
+Lisp_Require(LispBuiltin *builtin)
+/*
+ require module &optional pathname
+ */
 {
-    LispObj *feat = CAR(list), *nam, *obj;
     char filename[1024], *ext;
     int len;
 
-    if (!STRING_P(feat) && !SYMBOL_P(feat))
-	LispDestroy(mac, BadArgumentAt, LispStrObj(mac, feat), fname);
+    LispObj *obj, *module, *pathname;
 
-    if (CDR(list) != NIL) {
-	nam = CAR(CDR(list));
+    pathname = ARGUMENT(1);
+    module = ARGUMENT(0);
 
-	if (!STRING_P(nam))
-	    LispDestroy(mac, "%s is not of type string, at %s",
-			LispStrObj(mac, nam), fname);
+    CHECK_STRING(module);
+    if (pathname != UNSPEC) {
+	if (PATHNAMEP(pathname))
+	    pathname = CAR(pathname->data.pathname);
+	else {
+	    CHECK_STRING(pathname);
+	}
     }
     else
-	nam = feat;
+	pathname = module;
 
-    for (obj = MOD; obj != NIL; obj = CDR(obj)) {
-	if (STRPTR(CAR(obj)) == STRPTR(feat))
-	    return (feat);
+    for (obj = MOD; CONSP(obj); obj = CDR(obj)) {
+	if (strcmp(THESTR(CAR(obj)), THESTR(module)) == 0)
+	    return (module);
     }
 
-    if (STRPTR(nam)[0] != '/') {
+    if (THESTR(pathname)[0] != '/') {
 #ifdef LISPDIR
 	snprintf(filename, sizeof(filename), "%s", LISPDIR);
 #else
@@ -95,48 +106,54 @@ Lisp_Require(LispMac *mac, LispObj *list, char *fname)
 	++len;
     }
 
-    snprintf(filename + len, sizeof(filename) - len - 5, "%s", STRPTR(nam));
+    snprintf(filename + len, sizeof(filename) - len - 5, "%s", THESTR(pathname));
 
     ext = filename + strlen(filename);
 
 #ifdef SHARED_MODULES
     strcpy(ext, ".so");
     if (access(filename, R_OK) == 0) {
-	LispModule *module;
+	LispModule *lisp_module;
 	char data[64];
 	int len;
 
-	if (mac->module == NULL) {
+	if (lisp__data.module == NULL) {
 	    /* export our own symbols */
 	    if (dlopen(NULL, RTLD_LAZY | RTLD_GLOBAL) == NULL)
-		LispDestroy(mac, dlerror());
+		LispDestroy(mac, "%s: ", STRFUN(builtin), dlerror());
 	}
 
-#if 0
-	if (mac->interactive)
-	    fprintf(lisp_stderr, "; Loading %s\n", filename);
-#endif
-	module = (LispModule*)LispMalloc(mac, sizeof(LispModule));
-	if ((module->handle = dlopen(filename, RTLD_LAZY | RTLD_GLOBAL)) == NULL)
-	    LispDestroy(mac, dlerror());
-	snprintf(data, sizeof(data), "%sLispModuleData", STRPTR(nam));
-	if ((module->data = (LispModuleData*)dlsym(module->handle, data)) == NULL) {
-	    dlclose(module->handle);
-	    LispDestroy(mac, "cannot find LispModuleData for %s",
-			LispStrObj(mac, feat));
+	lisp_module = (LispModule*)LispMalloc(sizeof(LispModule));
+	if ((lisp_module->handle =
+	     dlopen(filename, RTLD_LAZY | RTLD_GLOBAL)) == NULL)
+	    LispDestroy(mac, "%s: dlopen: %s", STRFUN(builtin), dlerror());
+	snprintf(data, sizeof(data), "%sLispModuleData", THESTR(module));
+	if ((lisp_module->data =
+	     (LispModuleData*)dlsym(lisp_module->handle, data)) == NULL) {
+	    dlclose(lisp_module->handle);
+	    LispDestroy("%s: cannot find LispModuleData for %s",
+			STRFUN(builtin), STROBJ(module));
 	}
-	LispMused(mac, module);
-	module->next = mac->module;
-	mac->module = module;
-	if (module->data->load)
-	    (module->data->load)(mac);
+	LispMused(lisp_module);
+	lisp_module->next = lisp__data.module;
+	lisp__data.module = lisp_module;
+	if (lisp_module->data->load)
+	    (lisp_module->data->load)();
 
-	return (Lisp_Provide(mac, CONS(feat, NIL), "PROVIDE"));
+	if (MOD == NIL)
+	    MOD = CONS(module, NIL);
+	else {
+	    RPLACD(MOD, CONS(CAR(MOD), CDR(MOD)));
+	    RPLACA(MOD, module);
+	}
+	LispSetVar(lisp__data.modules, MOD);
+
+	return (module);
     }
 #endif
 
     strcpy(ext, ".lsp");
-    (void)_LispLoadFile(mac, filename, fname, 0, 0, 0);
+    (void)LispLoadFile(STRING(filename), 0, 0, 0);
 
-    return (feat);
+    return (module);
 }

@@ -27,14 +27,14 @@
  *
  * Authors:	Harold L Hunt II
  */
-/* $XFree86: xc/programs/Xserver/hw/xwin/winnativegdi.c,v 1.11 2001/11/21 08:51:24 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xwin/winnativegdi.c,v 1.13 2002/10/17 08:18:22 alanh Exp $ */
 
 #include "win.h"
 
 Bool
 winAllocateFBNativeGDI (ScreenPtr pScreen)
 {
-  FatalError ("winAllocateFBNativeGDI ()\n");
+  FatalError ("winAllocateFBNativeGDI\n");
 
   return TRUE;
 }
@@ -49,7 +49,7 @@ winCloseScreenNativeGDI (int nIndex, ScreenPtr pScreen)
   winScreenPriv(pScreen);
   winScreenInfo		*pScreenInfo = pScreenPriv->pScreenInfo;
 
-  ErrorF ("winCloseScreenNativeGDI () - Freeing screen resources\n");
+  ErrorF ("winCloseScreenNativeGDI - Freeing screen resources\n");
 
   /* Flag that the screen is closed */
   pScreenPriv->fClosed = TRUE;
@@ -63,7 +63,7 @@ winCloseScreenNativeGDI (int nIndex, ScreenPtr pScreen)
   /* Delete the window property */
   RemoveProp (pScreenPriv->hwndScreen, WIN_SCR_PROP);
   
-  ErrorF ("winCloseScreenNativeGDI () - Destroying window\n");
+  ErrorF ("winCloseScreenNativeGDI - Destroying window\n");
   
   /* Kill our window */
   if (pScreenPriv->hwndScreen)
@@ -76,9 +76,9 @@ winCloseScreenNativeGDI (int nIndex, ScreenPtr pScreen)
   pScreenInfo->pScreen = NULL;
 
   /* Free the screen privates for this screen */
-  xfree (pScreenPriv);
+  free (pScreenPriv);
 
-  ErrorF ("winCloseScreenNativeGDI () - Returning\n");
+  ErrorF ("winCloseScreenNativeGDI - Returning\n");
 
   return TRUE;
 }
@@ -88,7 +88,7 @@ void
 winShadowUpdateNativeGDI (ScreenPtr pScreen, 
 			  shadowBufPtr pBuf)
 {
-  FatalError ("winShadowUpdateNativeGDI ()\n");
+  FatalError ("winShadowUpdateNativeGDI\n");
   return;
 }
 
@@ -102,7 +102,6 @@ winInitVisualsNativeGDI (ScreenPtr pScreen)
   /* Set the bitsPerRGB and bit masks */
   switch (pScreenInfo->dwDepth)
     {
-    case 32:
     case 24:
       pScreenPriv->dwBitsPerRGB = 8;
       pScreenPriv->dwRedMask = 0x00FF0000;
@@ -132,19 +131,18 @@ winInitVisualsNativeGDI (ScreenPtr pScreen)
       break;
 
     default:
-      ErrorF ("winInitVisualsNativeGDI () - Unknown screen depth\n");
+      ErrorF ("winInitVisualsNativeGDI - Unknown screen depth\n");
       return FALSE;
       break;
     }
 
   /* Tell the user how many bits per RGB we are using */
-  ErrorF ("winInitVisualsNativeGDI () - Using dwBitsPerRGB: %d\n",
+  ErrorF ("winInitVisualsNativeGDI - Using dwBitsPerRGB: %d\n",
 	  pScreenPriv->dwBitsPerRGB);
 
   /* Create a single visual according to the Windows screen depth */
   switch (pScreenInfo->dwDepth)
     {
-    case 32:
     case 24:
     case 16:
     case 15:
@@ -156,13 +154,13 @@ winInitVisualsNativeGDI (ScreenPtr pScreen)
 				     pScreenPriv->dwGreenMask,
 				     pScreenPriv->dwBlueMask))
 	{
-	  ErrorF ("winInitVisuals () - miSetVisualTypesAndMasks failed\n");
+	  ErrorF ("winInitVisuals - miSetVisualTypesAndMasks failed\n");
 	  return FALSE;
 	}
       break;
 
     case 8:
-      ErrorF ("winInitVisuals () - Calling miSetVisualTypesAndMasks\n");
+      ErrorF ("winInitVisuals - Calling miSetVisualTypesAndMasks\n");
       if (!miSetVisualTypesAndMasks (pScreenInfo->dwDepth,
 				     StaticColorMask,
 				     pScreenPriv->dwBitsPerRGB,
@@ -171,18 +169,18 @@ winInitVisualsNativeGDI (ScreenPtr pScreen)
 				     pScreenPriv->dwGreenMask,
 				     pScreenPriv->dwBlueMask))
 	{
-	  ErrorF ("winInitVisuals () - miSetVisualTypesAndMasks failed\n");
+	  ErrorF ("winInitVisuals - miSetVisualTypesAndMasks failed\n");
 	  return FALSE;
 	}
       break;
 
     default:
-      ErrorF ("winInitVisualsNativeGDI () - Unknown screen depth\n");
+      ErrorF ("winInitVisualsNativeGDI - Unknown screen depth\n");
       return FALSE;
     }
 
 #if 1
-  ErrorF ("winInitVisualsNativeGDI () - Returning\n");
+  ErrorF ("winInitVisualsNativeGDI - Returning\n");
 #endif
 
   return TRUE;
@@ -196,38 +194,38 @@ winAdjustVideoModeNativeGDI (ScreenPtr pScreen)
   winScreenPriv(pScreen);
   winScreenInfo		*pScreenInfo = pScreenPriv->pScreenInfo;
   HDC			hdc = NULL;
-  DWORD			dwDepth;
+  DWORD			dwBPP;
   
   hdc = GetDC (NULL);
 
   /* We're in serious trouble if we can't get a DC */
   if (hdc == NULL)
     {
-      ErrorF ("winAdjustVideoModeNativeGDI () - GetDC () failed\n");
+      ErrorF ("winAdjustVideoModeNativeGDI - GetDC () failed\n");
       return FALSE;
     }
 
   /* Query GDI for current display depth */
-  dwDepth = GetDeviceCaps (hdc, BITSPIXEL);
+  dwBPP = GetDeviceCaps (hdc, BITSPIXEL);
 
   /* GDI cannot change the screen depth */
-  if (pScreenInfo->dwDepth == WIN_DEFAULT_DEPTH)
+  if (pScreenInfo->dwBPP == WIN_DEFAULT_BPP)
     {
       /* No -depth parameter passed, let the user know the depth being used */
-      ErrorF ("winAdjustVideoModeNativeGDI () - Using Windows display "
-	      "depth of %d bits per pixel\n", dwDepth);
+      ErrorF ("winAdjustVideoModeNativeGDI - Using Windows display "
+	      "depth of %d bits per pixel\n", dwBPP);
 
       /* Use GDI's depth */
-      pScreenInfo->dwDepth = dwDepth;
+      pScreenInfo->dwBPP = dwBPP;
     }
-  else if (dwDepth != pScreenInfo->dwDepth)
+  else if (dwBPP != pScreenInfo->dwBPP)
     {
       /* Warn user if GDI depth is different than -depth parameter */
-      ErrorF ("winAdjustVideoModeNativeGDI () - Command line depth: %d, "\
-	      "using depth: %d\n", pScreenInfo->dwDepth, dwDepth);
+      ErrorF ("winAdjustVideoModeNativeGDI - Command line bpp: %d, "\
+	      "using bpp: %d\n", pScreenInfo->dwBPP, dwBPP);
 
       /* We'll use GDI's depth */
-      pScreenInfo->dwDepth = dwDepth;
+      pScreenInfo->dwBPP = dwBPP;
     }
   
   /* Release our DC */
@@ -290,17 +288,17 @@ winCreateDIBNativeGDI (int iWidth, int iHeight, int iDepth,
       || iHeight == 0
       || iDepth == 0)
     {
-      ErrorF ("\nwinCreateDIBNativeGDI () - Invalid specs w %d h %d d %d\n\n",
+      ErrorF ("\nwinCreateDIBNativeGDI - Invalid specs w %d h %d d %d\n\n",
 	      iWidth, iHeight, iDepth);
       return NULL;
     }
 
   /* Allocate bitmap info header */
-  pbmih = (BITMAPINFOHEADER*) xalloc (sizeof (BITMAPINFOHEADER)
+  pbmih = (BITMAPINFOHEADER*) malloc (sizeof (BITMAPINFOHEADER)
 				      + 256 * sizeof (RGBQUAD));
   if (pbmih == NULL)
     {
-      ErrorF ("winCreateDIBNativeGDI () - xalloc () failed\n");
+      ErrorF ("winCreateDIBNativeGDI - malloc () failed\n");
       return FALSE;
     }
   ZeroMemory (pbmih, sizeof(BITMAPINFOHEADER) + 256 * sizeof (RGBQUAD));
@@ -336,7 +334,7 @@ winCreateDIBNativeGDI (int iWidth, int iHeight, int iDepth,
 			      0);
   if (hBitmap == NULL)
     {
-      ErrorF ("winCreateDIBNativeGDI () - CreateDIBSection () failed\n");
+      ErrorF ("winCreateDIBNativeGDI - CreateDIBSection () failed\n");
       return NULL;
     }
 
@@ -348,7 +346,7 @@ winCreateDIBNativeGDI (int iWidth, int iHeight, int iDepth,
     }
   else
     {
-      xfree (pbmih);
+      free (pbmih);
       pbmih = NULL;
     }
 
@@ -367,7 +365,7 @@ winBltExposedRegionsNativeGDI (ScreenPtr pScreen)
 Bool
 winRedrawScreenNativeGDI (ScreenPtr pScreen)
 {
-  FatalError ("winRedrawScreenNativeGDI ()\n");
+  FatalError ("winRedrawScreenNativeGDI\n");
   return TRUE;
 }
 
@@ -375,7 +373,7 @@ winRedrawScreenNativeGDI (ScreenPtr pScreen)
 Bool
 winRealizeInstalledPaletteNativeGDI (ScreenPtr pScreen)
 {
-  FatalError ("winRealizeInstalledPaletteNativeGDI ()\n");
+  FatalError ("winRealizeInstalledPaletteNativeGDI\n");
   return TRUE;
 }
 
@@ -383,7 +381,7 @@ winRealizeInstalledPaletteNativeGDI (ScreenPtr pScreen)
 Bool
 winInstallColormapNativeGDI (ColormapPtr pColormap)
 {
-  FatalError ("winInstallColormapNativeGDI ()\n");
+  FatalError ("winInstallColormapNativeGDI\n");
   return TRUE;
 }
 
@@ -393,7 +391,7 @@ winStoreColorsNativeGDI (ColormapPtr pmap,
 			 int ndef,
 			 xColorItem *pdefs)
 {
-  FatalError ("winStoreColorsNativeGDI ()\n");
+  FatalError ("winStoreColorsNativeGDI\n");
   return TRUE;
 }
 
@@ -401,7 +399,7 @@ winStoreColorsNativeGDI (ColormapPtr pmap,
 Bool
 winCreateColormapNativeGDI (ColormapPtr pColormap)
 {
-  FatalError ("winCreateColormapNativeGDI ()\n");
+  FatalError ("winCreateColormapNativeGDI\n");
   return TRUE;
 }
 
@@ -409,7 +407,7 @@ winCreateColormapNativeGDI (ColormapPtr pColormap)
 Bool
 winDestroyColormapNativeGDI (ColormapPtr pColormap)
 {
-  FatalError ("winDestroyColormapNativeGDI ()\n");
+  FatalError ("winDestroyColormapNativeGDI\n");
   return TRUE;
 }
 
@@ -450,7 +448,7 @@ winSetEngineFunctionsNativeGDI (ScreenPtr pScreen)
   pScreenPriv->pwinStoreColors = winStoreColorsNativeGDI;
   pScreenPriv->pwinCreateColormap = winCreateColormapNativeGDI;
   pScreenPriv->pwinDestroyColormap = winDestroyColormapNativeGDI;
-  pScreenPriv->pwinHotKeyAltTab = (winHotKeyAltTabPtr) (void (*)())NoopDDA;
+  pScreenPriv->pwinHotKeyAltTab = (winHotKeyAltTabProcPtr) (void (*)())NoopDDA;
 
   return TRUE;
 }

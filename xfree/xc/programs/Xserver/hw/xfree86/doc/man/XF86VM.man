@@ -4,7 +4,7 @@
 .\"
 .\"
 .\" Copyright (c) 1996  Joe Moss, The XFree86 Project
-.\" $XFree86: xc/programs/Xserver/hw/xfree86/doc/man/XF86VM.man,v 3.10 2001/02/07 22:35:22 tsi Exp $
+.\" $XFree86: xc/programs/Xserver/hw/xfree86/doc/man/XF86VM.man,v 3.12 2002/12/22 00:46:54 dawes Exp $
 .\" 
 .de ZN
 .ie t \fB\^\\$1\^\fR\\$2
@@ -12,7 +12,7 @@
 ..
 .TH XF86VIDMODE 3X11 __vendorversion__ "X FUNCTIONS"
 .SH NAME
-XF86VidModeQueryExtension, XF86VidModeQueryVersion, XF86VidModeGetModeLine, XF86VidModeGetAllModeLines, XF86VidModeDeleteModeLine, XF86VidModeModModeLine, XF86VidModeValidateModeLine, XF86VidModeSwitchMode, XF86VidModeSwitchToMode, XF86VidModeLockModeSwitch, XF86VidModeGetMonitor, XF86VidModeGetViewPort, XF86VidModeSetViewPort \- XFree86-VidMode extension interface functions
+XF86VidModeQueryExtension, XF86VidModeQueryVersion, XF86VidModeSetClientVersion, XF86VidModeGetModeLine, XF86VidModeGetAllModeLines, XF86VidModeDeleteModeLine, XF86VidModeModModeLine, XF86VidModeValidateModeLine, XF86VidModeSwitchMode, XF86VidModeSwitchToMode, XF86VidModeLockModeSwitch, XF86VidModeGetMonitor, XF86VidModeGetViewPort, XF86VidModeSetViewPort, XF86VidModeGetDotClocks, XF86VidModeGetGamma, XF86VidModeSetGamma, XF86VidModeGetGammaRamp, XF86VidModeSetGammaRamp, XF86VidModeGetGammaRampSize, XF86VidModeGetPermissions \- XFree86-VidMode extension interface functions
 .SH SYNTAX
 .nf
 .LP
@@ -28,6 +28,9 @@ Bool XF86VidModeQueryVersion(
     int *\fImajor_version_return\fP\^,
     int *\fIminor_version_return\fP\^);
 .LP
+Bool XF86VidModeSetClientVersion(
+    Display *\fIdisplay\fP\^);
+.LP
 Bool XF86VidModeGetModeLine(
     Display *\fIdisplay\fP\^,
     int \fIscreen\fP\^,
@@ -38,7 +41,7 @@ Bool XF86VidModeGetAllModeLines(
     Display *\fIdisplay\fP\^,
     int \fIscreen\fP\^,
     int *\fImodecount_return\fP\^,
-    XF86VidModeModeInfo **\fImodesinfo\fP\^);
+    XF86VidModeModeInfo ***\fImodesinfo\fP\^);
 .ig
 .LP
 Bool XF86VidModeAddModeLine(
@@ -94,6 +97,45 @@ Bool XF86VidModeSetViewPort(
     int \fIscreen\fP\^,
     int \fIx\fP\^,
     int \fIy\fP\^);
+.LP
+XF86VidModeGetDotClocks(
+    Display *\fIdisplay\fP\^,
+    int \fIscreen\fP\^,
+    int *\fIflags return\fP\^,
+    int *\fInumber of clocks return\fP\^,
+    int *\fImax dot clock return\fP\^,
+    int **\fIclocks return\fP\^);
+.LP
+XF86VidModeGetGamma(
+    Display *\fIdisplay\fP\^,
+    int \fIscreen\fP\^,
+    XF86VidModeGamma *\fIGamma\fP\^);
+.LP
+XF86VidModeSetGamma(
+    Display *\fIdisplay\fP\^,
+    int \fIscreen\fP\^,
+    XF86VidModeGamma *\fIGamma\fP\^);
+.LP
+XF86VidModeGetGammaRamp(
+    Display *\fIdisplay\fP\^,
+    int \fIscreen\fP\^,
+    int \fIsize\fP\^,
+    unsigned short *\fIred array\fP\^,
+    unsigned short *\fIgreen array\fP\^,
+    unsigned short *\fIblue array\fP\^);
+.LP
+XF86VidModeSetGammaRamp(
+    Display *\fIdisplay\fP\^,
+    int \fIscreen\fP\^,
+    int \fIsize\fP\^,
+    unsigned short *\fIred array\fP\^,
+    unsigned short *\fIgreen array\fP\^,
+    unsigned short *\fIblue array\fP\^);
+.LP
+XF86VidModeGetGammaRampSize(
+    Display *\fIdisplay\fP\^,
+    int \fIscreen\fP\^,
+    int *\fIsize\fP\^);
 .fi
 .SH ARGUMENTS
 .IP \fIdisplay\fP 2i
@@ -185,6 +227,24 @@ typedef struct {
     float	hi;	/* Top of range */
     float	lo;	/* Bottom of range */
 } XF86VidModeSyncRange;
+.LP
+typedef struct {
+    int type;			/* of event */
+    unsigned long serial;	/* # of last request processed by server */
+    Bool send_event;		/* true if this came from a SendEvent req */
+    Display *display;		/* Display the event was read from */
+    Window root;		/* root window of event screen */
+    int state;			/* What happened */
+    int kind;			/* What happened */
+    Bool forced;		/* extents of new region */
+    Time time;			/* event timestamp */
+} XF86VidModeNotifyEvent;
+.LP
+typedef struct {
+    float red;			/* Red Gamma value */
+    float green;		/* Green Gamma value */
+    float blue;			/* Blue Gamma value */
+} XF86VidModeGamma;
 .fi
 .SH DESCRIPTION
 These functions provide an interface to the server extension
@@ -336,8 +396,20 @@ The function
 .ZN XF86VidModeQueryExtension
 returns the lowest numbered error and event values
 assigned to the extension.
+.SH BUGS
+The
+XF86VidModeSetClientVersion,
+XF86VidModeGetDotClocks,
+XF86VidModeGetGamma,
+XF86VidModeSetGamma,
+XF86VidModeSetGammaRamp,
+XF86VidModeGetGammaRamp,
+XF86VidModeGetGammaRampSize,
+and
+XF86VidModeGetPermissions
+functions need to be documented.  In the meantime, check the source
+code for information about how to use them.
 .SH SEE ALSO
-XFree86(1), XF86Config(4/5), xvidtune(1)
+XFree86(1), XF86Config(__filemansuffix__), xvidtune(1)
 .SH AUTHORS
 Kaleb Keithley, Jon Tombs, David Dawes, and Joe Moss
-

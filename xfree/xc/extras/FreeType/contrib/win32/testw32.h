@@ -1,5 +1,6 @@
 // testw32.h : main header file for the TESTW32 application
 //
+// $XFree86: xc/extras/FreeType/contrib/win32/testw32.h,v 1.2 2003/01/12 03:55:44 tsi Exp $
 
 #if !defined(AFX_TESTW32_H__70F52CA9_06A4_11D2_9AC4_0060978849F3__INCLUDED_)
 #define AFX_TESTW32_H__70F52CA9_06A4_11D2_9AC4_0060978849F3__INCLUDED_
@@ -9,7 +10,7 @@
 #endif // _MSC_VER >= 1000
 
 #ifndef __AFXWIN_H__
-	#error include 'stdafx.h' before including this file for PCH
+#	error include 'stdafx.h' before including this file for PCH
 #endif
 
 #include "resource.h"		// main symbols

@@ -58,13 +58,13 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/Xt/NextEvent.c,v 3.24 2001/12/17 20:52:24 dawes Exp $ */
+/* $XFree86: xc/lib/Xt/NextEvent.c,v 3.26 2002/06/04 21:55:42 dawes Exp $ */
 
 #include "IntrinsicI.h"
 #include <stdio.h>
 #include <errno.h>
 
-#ifdef __EMX__
+#ifdef __UNIXOS2__
 #include <sys/time.h>
 #endif
 
@@ -1591,10 +1591,11 @@ Boolean XtAppPeekEvent(app, event)
 					TimerEventRec *te_ptr = app->timerQueue;
 					app->timerQueue = app->timerQueue->te_next;
 					te_ptr->te_next = NULL;
-					if (te_ptr->te_proc != NULL)
+					if (te_ptr->te_proc != NULL) {
 					    TeCallProc(te_ptr);
+					    did_timer = True;
+					}
 					LOCK_PROCESS;
-					did_timer = True;
 					te_ptr->te_next = freeTimerRecs;
 					freeTimerRecs = te_ptr;
 					UNLOCK_PROCESS;

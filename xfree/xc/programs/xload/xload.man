@@ -1,6 +1,6 @@
 .\" $XConsortium: xload.man,v 1.29 94/04/17 20:43:44 matt Exp $
 .\"
-.\" $XFree86: xc/programs/xload/xload.man,v 1.4 2001/08/13 19:35:01 dawes Exp $
+.\" $XFree86: xc/programs/xload/xload.man,v 1.5 2002/10/12 16:06:48 herrb Exp $
 .\"
 .TH XLOAD 1 __xorgversion__
 .SH NAME
@@ -88,7 +88,9 @@ to get the default host and display number.
 to get the name of a resource file that overrides the global resources
 stored in the RESOURCE_MANAGER property.
 .SH FILES
-<XRoot>/lib/X11/app-defaults/XLoad - specifies required resources
+.TP
+.I __apploaddir__/XLoad
+specifies required resources
 .SH SEE ALSO
 X(__miscmansuffix__), xrdb(1), mem(4), Athena StripChart Widget.
 .SH BUGS

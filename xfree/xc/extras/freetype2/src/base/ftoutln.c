@@ -4,7 +4,7 @@
 /*                                                                         */
 /*    FreeType outline management (body).                                  */
 /*                                                                         */
-/*  Copyright 1996-2001 by                                                 */
+/*  Copyright 1996-2001, 2002 by                                           */
 /*  David Turner, Robert Wilhelm, and Werner Lemberg.                      */
 /*                                                                         */
 /*  This file is part of the FreeType project, and may only be used,       */
@@ -46,7 +46,7 @@
 
   FT_EXPORT_DEF( FT_Error )
   FT_Outline_Decompose( FT_Outline*              outline,
-                        const FT_Outline_Funcs*  interface,
+                        const FT_Outline_Funcs*  func_interface,
                         void*                    user )
   {
 #undef SCALED
@@ -70,11 +70,11 @@
     FT_Pos   delta;
 
 
-    if ( !outline || !interface )
+    if ( !outline || !func_interface )
       return FT_Err_Invalid_Argument;
 
-    shift = interface->shift;
-    delta = interface->delta;
+    shift = func_interface->shift;
+    delta = func_interface->delta;
     first = 0;
 
     for ( n = 0; n < outline->n_contours; n++ )
@@ -125,7 +125,7 @@
         tags--;
       }
 
-      error = interface->move_to( &v_start, user );
+      error = func_interface->move_to( &v_start, user );
       if ( error )
         goto Exit;
 
@@ -145,7 +145,7 @@
             vec.x = SCALED( point->x );
             vec.y = SCALED( point->y );
 
-            error = interface->line_to( &vec, user );
+            error = func_interface->line_to( &vec, user );
             if ( error )
               goto Exit;
             continue;
@@ -171,7 +171,7 @@
 
             if ( tag == FT_Curve_Tag_On )
             {
-              error = interface->conic_to( &v_control, &vec, user );
+              error = func_interface->conic_to( &v_control, &vec, user );
               if ( error )
                 goto Exit;
               continue;
@@ -183,7 +183,7 @@
             v_middle.x = ( v_control.x + vec.x ) / 2;
             v_middle.y = ( v_control.y + vec.y ) / 2;
 
-            error = interface->conic_to( &v_control, &v_middle, user );
+            error = func_interface->conic_to( &v_control, &v_middle, user );
             if ( error )
               goto Exit;
 
@@ -191,7 +191,7 @@
             goto Do_Conic;
           }
 
-          error = interface->conic_to( &v_control, &v_start, user );
+          error = func_interface->conic_to( &v_control, &v_start, user );
           goto Close;
 
         default:  /* FT_Curve_Tag_Cubic */
@@ -217,20 +217,20 @@
               vec.x = SCALED( point->x );
               vec.y = SCALED( point->y );
 
-              error = interface->cubic_to( &vec1, &vec2, &vec, user );
+              error = func_interface->cubic_to( &vec1, &vec2, &vec, user );
               if ( error )
                 goto Exit;
               continue;
             }
 
-            error = interface->cubic_to( &vec1, &vec2, &v_start, user );
+            error = func_interface->cubic_to( &vec1, &vec2, &v_start, user );
             goto Close;
           }
         }
       }
 
       /* close the contour with a line segment */
-      error = interface->line_to( &v_start, user );
+      error = func_interface->line_to( &v_start, user );
 
     Close:
       if ( error )
@@ -263,9 +263,9 @@
 
     *anoutline = null_outline;
 
-    if ( ALLOC_ARRAY( anoutline->points,   numPoints * 2L, FT_Pos    ) ||
-         ALLOC_ARRAY( anoutline->tags,     numPoints,      FT_Byte   ) ||
-         ALLOC_ARRAY( anoutline->contours, numContours,    FT_UShort ) )
+    if ( FT_NEW_ARRAY( anoutline->points,   numPoints * 2L ) ||
+         FT_NEW_ARRAY( anoutline->tags,     numPoints      ) ||
+         FT_NEW_ARRAY( anoutline->contours, numContours    ) )
       goto Fail;
 
     anoutline->n_points    = (FT_UShort)numPoints;
@@ -357,14 +357,14 @@
          source->n_contours != target->n_contours )
       return FT_Err_Invalid_Argument;
 
-    MEM_Copy( target->points, source->points,
-              source->n_points * sizeof ( FT_Vector ) );
+    FT_MEM_COPY( target->points, source->points,
+                 source->n_points * sizeof ( FT_Vector ) );
 
-    MEM_Copy( target->tags, source->tags,
-              source->n_points * sizeof ( FT_Byte ) );
+    FT_MEM_COPY( target->tags, source->tags,
+                 source->n_points * sizeof ( FT_Byte ) );
 
-    MEM_Copy( target->contours, source->contours,
-              source->n_contours * sizeof ( FT_Short ) );
+    FT_MEM_COPY( target->contours, source->contours,
+                 source->n_contours * sizeof ( FT_Short ) );
 
     /* copy all flags, except the `ft_outline_owner' one */
     is_owner      = target->flags & ft_outline_owner;
@@ -385,9 +385,9 @@
     {
       if ( outline->flags & ft_outline_owner )
       {
-        FREE( outline->points   );
-        FREE( outline->tags     );
-        FREE( outline->contours );
+        FT_FREE( outline->points   );
+        FT_FREE( outline->tags     );
+        FT_FREE( outline->contours );
       }
       *outline = null_outline;
 

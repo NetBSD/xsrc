@@ -1,10 +1,10 @@
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86DoScanPci.c,v 1.11 2000/02/24 05:36:50 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86DoScanPci.c,v 1.12 2002/07/15 20:46:01 dawes Exp $ */
 /*
- * finish setting up the server
- * call the functions from the scanpci module
+ * Finish setting up the server.
+ * Call the functions from the scanpci module.
  *
- * Copyright 1999 by The XFree86 Project, Inc.
+ * Copyright 1999-2002 by The XFree86 Project, Inc.
  *
  */
 
@@ -19,19 +19,14 @@
 #include "xf86.h"
 #include "xf86Priv.h"
 #include "xf86Pci.h"
-#define DECLARE_CARD_DATASTRUCTURES
-#include "xf86PciInfo.h"
 #include "xf86ScanPci.h"
 
 
 void DoScanPci(int argc, char **argv, int i)
 {
   int j,skip,globalVerbose,scanpciVerbose;
-  typedef void ScanPciFuncType(int);
-  typedef void DataSetupFuncType(SymTabPtr *, pciVendorDeviceInfo **,
-				 pciVendorCardInfo **);
-  ScanPciFuncType *xf86ScanPciFunc;
-  DataSetupFuncType *DataSetupFunc;
+  ScanPciSetupProcPtr PciSetup;
+  ScanPciDisplayCardInfoProcPtr DisplayPCICardInfo;
 #ifdef XFree86LOADER
   int errmaj, errmin;
 #endif
@@ -82,20 +77,21 @@ void DoScanPci(int argc, char **argv, int i)
       /* For now, just a warning */
       xf86Msg(X_WARNING, "Some symbols could not be resolved!\n");
   }
-  xf86ScanPciFunc = (ScanPciFuncType *)LoaderSymbol("xf86DisplayPCICardInfo");
-  DataSetupFunc = (DataSetupFuncType *)LoaderSymbol("xf86SetupScanPci");
+  PciSetup = (ScanPciSetupProcPtr)LoaderSymbol("ScanPciSetupPciIds");
+  DisplayPCICardInfo =
+    (ScanPciDisplayCardInfoProcPtr)LoaderSymbol("ScanPciDisplayPCICardInfo");
 #else
-  xf86ScanPciFunc = xf86DisplayPCICardInfo;
-  DataSetupFunc = xf86SetupScanPci;
+  PciSetup = ScanPciSetupPciIds;
+  DisplayPCICardInfo = ScanPciDisplayPCICardInfo;
 #endif
 
-  (*DataSetupFunc)(&xf86PCIVendorNameInfo, &xf86PCIVendorInfo,
-		    &xf86PCICardInfo);
-  (*xf86ScanPciFunc)(scanpciVerbose);
+  if (!(*PciSetup)())
+    FatalError("ScanPciSetupPciIds() failed\n");
+  (*DisplayPCICardInfo)(scanpciVerbose);
 
   /*
-   * that's it; we really should clean things up, but a simple
-   * exit seems to be all we need
+   * That's it; we really should clean things up, but a simple
+   * exit seems to be all we need.
    */
   exit(0);
 }

@@ -26,7 +26,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/xdm/greeter/Login.c,v 3.15 2002/01/02 23:24:04 dawes Exp $ */
+/* $XFree86: xc/programs/xdm/greeter/Login.c,v 3.16 2002/10/06 20:42:16 herrb Exp $ */
 
 /*
  * xdm - display manager daemon
@@ -969,8 +969,8 @@ InsertChar (
 #endif /* XPM */
 	    len = NAME_LEN - strlen(ctx->login.data.name) - 2;
     case GET_PASSWD:
-	if (len + (int)strlen(ctx->login.data.passwd) >= NAME_LEN - 1)
-	    len = NAME_LEN - strlen(ctx->login.data.passwd) - 2;
+	if (len + (int)strlen(ctx->login.data.passwd) >= PASSWORD_LEN - 1)
+	    len = PASSWORD_LEN - strlen(ctx->login.data.passwd) - 2;
     }
 #ifndef XPM
     if (len == 0)
@@ -1255,7 +1255,7 @@ static void Destroy (Widget gw)
 {
     LoginWidget w = (LoginWidget)gw;
     bzero (w->login.data.name, NAME_LEN);
-    bzero (w->login.data.passwd, NAME_LEN);
+    bzero (w->login.data.passwd, PASSWORD_LEN);
     XtReleaseGC(gw, w->login.textGC);
     XtReleaseGC(gw, w->login.bgGC);
     XtReleaseGC(gw, w->login.xorGC);

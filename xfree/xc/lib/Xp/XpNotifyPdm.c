@@ -41,13 +41,13 @@
  **
  ******************************************************************************
  *****************************************************************************/
-/* $XFree86: xc/lib/Xp/XpNotifyPdm.c,v 1.5 2001/10/28 03:32:39 tsi Exp $ */
+/* $XFree86: xc/lib/Xp/XpNotifyPdm.c,v 1.6 2002/10/16 00:37:32 dawes Exp $ */
 
-#include "Print.h"
-#include "X11/Xlibint.h"
-#include "X11/Xutil.h"
-#include "X11/Xatom.h"
-#include "X11/Xauth.h"
+#include <X11/extensions/Print.h>
+#include <X11/Xlibint.h>
+#include <X11/Xutil.h>
+#include <X11/Xatom.h>
+#include <X11/Xauth.h>
 #include <stdlib.h>
 #include <X11/Xos.h>
 

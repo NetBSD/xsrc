@@ -24,7 +24,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/font/fc/fserve.c,v 3.21 2001/12/14 19:56:48 dawes Exp $ */
+/* $XFree86: xc/lib/font/fc/fserve.c,v 3.22 2002/05/31 18:45:49 dawes Exp $ */
 
 /*
  * Copyright 1990 Network Computing Devices
@@ -210,8 +210,8 @@ _fs_add_rep_log (FSFpePtr conn, fsGenericReply *rep)
 static Bool
 fs_name_check(char *name)
 {
-#ifdef __EMX__
-    /* OS/2 uses D:/XFree86/.... as fontfile pathnames, so check that
+#ifdef __UNIXOS2__
+    /* OS/2 uses D:/usr/X11R6/.... as fontfile pathnames, so check that
      * there is not only a protocol/ prefix, but also that the first chars
      * are not a drive letter
      */

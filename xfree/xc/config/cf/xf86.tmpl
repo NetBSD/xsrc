@@ -2,7 +2,7 @@ XCOMM $Xorg: xf86.tmpl,v 1.3 2000/08/17 19:41:48 cpqbld Exp $
 
 
 
-XCOMM $XFree86: xc/config/cf/xf86.tmpl,v 3.30 2001/11/16 00:41:47 dawes Exp $
+XCOMM $XFree86: xc/config/cf/xf86.tmpl,v 3.33 2002/12/16 23:01:43 herrb Exp $
 
 #ifdef BuilderEMailAddr
 BUILDERADDR = BuilderEMailAddr
@@ -11,25 +11,27 @@ BUILDERADDR = "xfree86@xfree86.org"
 #endif
 BUGMSG = -DBUILDERADDR='$(BUILDERADDR)'
 
-#if XF86DriverSDK
+#if defined(XF86DriverSDK)
     BUILDMODULEDIR = $(DRIVERSDKMODULEDIR)
     BUILDMODULETOP = ..
     TOP_INCLUDES = TopIncludes
    IMAKE_DEFINES = -DXF86DriverSDK=1
 #ifdef UseInstalled
        IMAKE_CMD = $(IMAKE) -DUseInstalled -I$(TOP) -I$(IRULESRC) \
-		   $(IMAKE_DEFINES)
+		   $(IMAKE_DEFINES) $(IMAKE_WARNINGS)
 #else
-       IMAKE_CMD = $(IMAKE) -I$(TOP) -I$(IRULESRC) $(IMAKE_DEFINES)
+       IMAKE_CMD = $(IMAKE) -I$(TOP) -I$(IRULESRC) \
+		   $(IMAKE_DEFINES) $(IMAKE_WARNINGS)
 #endif
 
 #undef ImakeSubCmdHelper
 #ifdef UseInstalled
 #define ImakeSubCmdHelper $(IMAKE) -DUseInstalled -I$(IMAKETOP) \
-			  -I$(IRULESRC) $(IMAKE_DEFINES)
+			  -I$(IRULESRC) $(IMAKE_DEFINES) $(IMAKE_WARNINGS)
 #else
 #define ImakeSubCmdHelper $(IMAKEPREFIX)$(IMAKE) -I$(IMAKETOP) \
-			  -I$(IMAKEPREFIX)$(IRULESRC) $(IMAKE_DEFINES)
+			  $(IMAKE_DEFINES) $(IMAKE_WARNINGS) \
+			  -I$(IMAKEPREFIX)$(IRULESRC)
 #endif
 #endif
 
@@ -43,13 +45,23 @@ BUGMSG = -DBUILDERADDR='$(BUILDERADDR)'
  * of Imakefile (include <Server.tmpl>)
  */
 
+#ifndef HasGccStackProtector
+#define HasGccStackProtector	NO
+#endif
+
+#if HasGccStackProtector
+MODULE_GCC_FLAGS1 = -fno-stack-protector
+#endif 
+
 #ifndef HasGccMergeConstants
 #define HasGccMergeConstants	NO
 #endif
 
 #if HasGccMergeConstants && DoLoadableServer && !MakeDllModules
-MODULE_GCC_FLAGS = -fno-merge-constants
+MODULE_GCC_FLAGS2 = -fno-merge-constants
 #endif
+
+MODULE_GCC_FLAGS = $(MODULE_GCC_FLAGS1) $(MODULE_GCC_FLAGS2)
 
 #if defined(IHaveModules) && MakeDllModules
 MODULE_PIC_FLAGS = $(PICFLAGS)

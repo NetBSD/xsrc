@@ -3,7 +3,7 @@ XCOMM $XConsortium: Imakefile /main/16 1996/10/28 05:13:04 kaleb $
 
 
 
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/Imakefile,v 3.78 2001/11/15 18:12:50 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/Imakefile,v 3.83 2003/02/26 21:59:44 dawes Exp $
 
 #include <Server.tmpl>
 #include <lnxdoc.rules>
@@ -20,10 +20,11 @@ RELNOTES=RELNOTES.sgml
 SGMLDEPENDS = defs.ent
 MANSGMLDEPENDS = mdefs.ent
   INDEXLIST = README.sgml $(RELNOTES) Status.sgml LICENSE.sgml Install.sgml \
-	      DESIGN.sgml Versions.sgml \
+	      BUILD.sgml DESIGN.sgml Versions.sgml \
 	      mouse.sgml fonts.sgml DRI.sgml DRIcomp.sgml dps.sgml \
+	      XKB-Config.sgml XKB-Enhancing.sgml \
 	      Darwin.sgml isc.sgml LynxOS.sgml NetBSD.sgml OpenBSD.sgml \
-	      OS2Notes.sgml \
+	      OS2Notes.sgml SCO.sgml Solaris.sgml \
               apm.sgml ati.sgml chips.sgml cyrix.sgml DECtga.sgml \
 	      I128.sgml i740.sgml i810.sgml newport.sgml \
 	      r128.sgml rendition.sgml s3virge.sgml SiS.sgml
@@ -47,14 +48,9 @@ LinuxDocReadmeTarget(OpenBSD)
 LinuxDocReadmeTarget(OS2)
 #endif
 LinuxDocTargetLong(OS2Notes.sgml,OS2.Notes,OS2Notes)
-#ifdef OUTOFDATE
 LinuxDocReadmeTarget(SCO)
-#endif
-#ifdef NOTYET
 LinuxDocReadmeTarget(Solaris)
-#endif
 #ifdef OUTOFDATE
-LinuxDocReadmeTarget(SOLX86)
 LinuxDocReadmeTarget(SVR4)
 #endif
 
@@ -135,6 +131,8 @@ LinuxDocTarget(xinput)
 LinuxDocReadmeTarget(DRI)
 LinuxDocReadmeTarget(DRIcomp)
 LinuxDocReadmeTarget(dps)
+LinuxDocReadmeTarget(XKB-Config)
+LinuxDocReadmeTarget(XKB-Enhancing)
 
 SGMLMANDEFS=-D__drivermansuffix__='"$(DRIVERMANSUFFIX)"' \
 	    -D__filemansuffix__='"$(FILEMANSUFFIX)"' \
@@ -169,4 +167,8 @@ FORMATTEDDIR = ..
 /* Update RELNOTES at top level */
 UpdateFormattedDoc(RELNOTES,$(TOP))
 #endif
+
+/* Update the README files in xc/programs/xkbcomp */
+UpdateFormattedDocLong(README.XKB-Config,$(PROGRAMSRC)/xkbcomp,README.config)
+UpdateFormattedDocLong(README.XKB-Enhancing,$(PROGRAMSRC)/xkbcomp,README.enhancing)
 

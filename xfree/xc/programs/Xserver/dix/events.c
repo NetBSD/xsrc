@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/dix/events.c,v 3.44 2001/12/16 18:29:45 keithp Exp $ */
+/* $XFree86: xc/programs/Xserver/dix/events.c,v 3.46 2002/09/17 01:15:09 dawes Exp $ */
 /************************************************************
 
 Copyright 1987, 1998  The Open Group
@@ -110,8 +110,6 @@ extern Bool XkbFilterEvents();
 #include "dixgrabs.h"
 #include "dispatch.h"
 
-extern WindowPtr *WindowTable;
-
 #define EXTENSION_EVENT_BASE  64
 
 #define NoSuchEvent 0x80000000	/* so doesn't match NoEventMask */
@@ -220,25 +218,13 @@ static WindowPtr XYToWindow(
 #endif
 );
 
-void DeliverFocusedEvent();
-int DeliverDeviceEvents();
-void DoFocusEvents();
-Mask EventMaskForClient();
-Bool CheckDeviceGrabs();
-void EnqueueEvent();
-
-extern Bool GrabMatchesSecond();
-extern Bool DeletePassiveGrabFromList();
-extern int AddPassiveGrabToList();
-
-extern Bool permitOldBugs;
-extern Bool Must_have_memory;
 extern int lastEvent;
-#ifdef XINPUT
-extern int DeviceMotionNotify, DeviceButtonPress, DeviceKeyPress;
-#endif
 
 static Mask lastEventMask;
+
+#ifdef XINPUT
+extern int DeviceMotionNotify;
+#endif
 
 #define CantBeFiltered NoEventMask
 static Mask filters[128] =
@@ -607,13 +593,6 @@ XineramaChangeToCursor(CursorPtr cursor)
 
 #endif  /* PANORAMIX */
 
-static Mask
-GetNextEventMask()
-{
-    lastEventMask <<= 1;
-    return lastEventMask;
-}
-
 void
 SetMaskForEvent(mask, event)
     Mask mask;
@@ -817,10 +796,7 @@ CheckVirtualMotion(qe, pWin)
 }
 
 static void
-ConfineCursorToWindow(pWin, generateEvents, confineToScreen)
-    WindowPtr pWin;
-    Bool generateEvents;
-    Bool confineToScreen;
+ConfineCursorToWindow(WindowPtr pWin, Bool generateEvents, Bool confineToScreen)
 {
     ScreenPtr pScreen = pWin->drawable.pScreen;
 
@@ -950,6 +926,18 @@ GetSpritePosition(px, py)
     *px = sprite.hotPhys.x;
     *py = sprite.hotPhys.y;
 }
+
+#ifdef PANORAMIX
+int
+XineramaGetCursorScreen()
+{
+    if(!noPanoramiXExtension) {
+	return sprite.screen->myNum;
+    } else {
+	return 0;
+    }
+}
+#endif /* PANORAMIX */
 
 #define TIMESLOP (5 * 60 * 1000) /* 5 minutes */
 

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/dix/dixfonts.c,v 3.26 2001/10/28 03:33:06 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/dix/dixfonts.c,v 3.27 2003/02/15 03:47:05 dawes Exp $ */
 /************************************************************************
 Copyright 1987 by Digital Equipment Corporation, Maynard, Massachusetts.
 
@@ -81,8 +81,8 @@ FontToXError(err)
     case AllocError:
 	return BadAlloc;
     case BadFontName:
-    case BadFontPath:
 	return BadName;
+    case BadFontPath:
     case BadFontFormat:	/* is there something better? */
     case BadCharRange:
 	return BadValue;
@@ -1834,7 +1834,7 @@ bail:
     while (--valid_paths >= 0)
 	FreeFPE(fplist[valid_paths]);
     xfree(fplist);
-    return err;
+    return FontToXError(err);
 }
 
 /* XXX -- do we need to pass error down to each renderer? */
@@ -1849,7 +1849,7 @@ SetFontPath(client, npaths, paths, error)
 
     if (npaths == 0) {
 	if (SetDefaultFontPath(defaultFontPath) != Success)
-	    return BadName;
+	    return BadValue;
     } else {
 	err = SetFontPathElements(npaths, paths, error, FALSE);
     }

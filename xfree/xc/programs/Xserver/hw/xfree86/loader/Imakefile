@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/loader/Imakefile,v 1.29 2001/11/16 16:47:55 dawes Exp $ */
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/loader/Imakefile,v 1.35 2003/02/26 23:32:12 dawes Exp $ */
 
 
 
@@ -30,12 +30,20 @@ DLOBJ=dlloader.o
     SHM_DEFINES = -DHAS_SHM
 #endif
 
+#if HasGlibc21Sigsetjmp
+  SETJMPDEFINES = -DHAS_GLIBC_SIGSETJMP=1
+#endif
+
+#if defined (x86_64Architecture)
+ARCHDEFINES = -DDoMMAPedMerge -DMmapPageAlign
+#endif
+
 DEFINES = $(DBMALLOCDEFINE) $(DLOPENDEFINES) $(OS_DEFINES) $(COMPAT_DEFINES) \
-	  $(SHM_DEFINES)
+	  $(SHM_DEFINES) $(ARCHDEFINES)
 
 MODULEDEFINES = -DDEFAULT_MODULE_PATH=\"$(MODULEDIR)\"
 
-   INCLUDES = -I. -I.. -I$(XF86COMSRC) -I$(XF86OSSRC) -I$(XF86OSSRC)/vbe \
+   INCLUDES = -I. -I.. -I$(XF86COMSRC) -I$(XF86OSSRC) -I$(XF86SRC)/vbe \
 		-I$(SERVERSRC)/dbe -I$(SERVERSRC)/Xext -I$(XF86SRC)/int10 \
 		-I$(SERVERSRC)/mfb -I$(SERVERSRC)/mi -I$(SERVERSRC)/include \
 		-I$(SERVERSRC)/os -I$(XINCLUDESRC) -I$(FONTINCSRC) \
@@ -69,7 +77,7 @@ NormalLibraryTarget(loader,$(OBJS) )
 NormalLibraryTarget(xloader,$(XOBJS) )
 
 SpecialCObjectRule(loadmod,NullParameter,$(MODULEDEFINES) $(EXT_DEFINES))
-SpecialCObjectRule(xf86sym,NullParameter,$(EXT_DEFINES))
+SpecialCObjectRule(xf86sym,NullParameter,$(EXT_DEFINES) $(SETJMPDEFINES))
 SpecialCObjectRule(dixsym,NullParameter,$(EXT_DEFINES))
 
 #ifdef SparcArchitecture

@@ -1,19 +1,19 @@
-XCOMM platform:  $XFree86: xc/config/cf/cygwin.cf,v 3.34.2.2 2002/02/19 08:43:33 alanh Exp $
+XCOMM platform:  $XFree86: xc/config/cf/cygwin.cf,v 3.49 2002/12/31 19:48:42 alanh Exp $
 
 #ifndef OSName
-#define OSName                  Cygwin
+# define OSName                 Cygwin
 #endif
 #ifndef OSVendor
-#define OSVendor                Red Hat Inc.
+# define OSVendor               Red Hat Inc.
 #endif
 #ifndef OSMajorVersion
-#define OSMajorVersion          1
+# define OSMajorVersion		DefaultOSMajorVersion
 #endif
 #ifndef OSMinorVersion
-#define OSMinorVersion          3
+# define OSMinorVersion		DefaultOSMinorVersion
 #endif
 #ifndef OSTeenyVersion
-#define OSTeenyVersion		6
+# define OSTeenyVersion		DefaultOSTeenyVersion
 #endif
 
 #define ProjectRoot 		/usr/X11R6
@@ -24,14 +24,13 @@ XCOMM platform:  $XFree86: xc/config/cf/cygwin.cf,v 3.34.2.2 2002/02/19 08:43:33
 #define UnixCpp
 #endif
 
+#if !CrossCompiling
+#define HasGcc2			YES
+#endif /* !CrossCompiling */
 #define HasGcc2ForCplusplus     YES
 #define GccUsesGas              YES
 #define UseGas                  YES
 #define GnuCpp                  YES
-
-#if !CrossCompiling
-#define BootstrapCFlags		-L/lib/automode.o
-#endif
 
 #define ExtraLoadFlags		-Wl,--enable-auto-import
 
@@ -39,6 +38,9 @@ XCOMM platform:  $XFree86: xc/config/cf/cygwin.cf,v 3.34.2.2 2002/02/19 08:43:33
 #define HasLibCrypt             YES
 #define HasPutenv               YES
 #define HasPoll			NO
+#ifndef UseCygIPC
+#define UseCygIPC		NO
+#endif
 #if UseCygIPC
 # define HasShm			YES
 # define ServerExtraSysLibs	-lcygipc
@@ -70,7 +72,7 @@ XCOMM platform:  $XFree86: xc/config/cf/cygwin.cf,v 3.34.2.2 2002/02/19 08:43:33
  * /lib/libtermcap.a doesn't have tgetent, which is needed for
  * xc/programs/xterm/resize.exe
  */
-#define TermcapLibrary -lncurses.dll
+#define TermcapLibrary		-lncurses.dll
 
 #define AvoidNullMakeCommand    YES
 #define StripInstalledPrograms  YES
@@ -82,7 +84,7 @@ XCOMM platform:  $XFree86: xc/config/cf/cygwin.cf,v 3.34.2.2 2002/02/19 08:43:33
 #define NeedVarargsPrototypes   YES
 #define NeedWidePrototypes      NO
 #define SetTtyGroup             YES
-#define ExpandManNames          NO
+#define ExpandManNames          YES
 #define HasDlopen	        NO
 #define HasGnuMake		YES
 #define UseGccMakeDepend	NO
@@ -103,7 +105,7 @@ XCOMM platform:  $XFree86: xc/config/cf/cygwin.cf,v 3.34.2.2 2002/02/19 08:43:33
 #define GccGasOption	        -DGCCUSESGAS
 #define AsmDefines	        -DUSE_GAS -DGCCUSESGAS
 #ifndef LdCmd
-#define LdCmd                   ld
+#define LdCmd                   gcc -lautomode
 #endif /* LdCmd */
 #define MkdirHierCmd            mkdir -p
 #ifndef CppCmd
@@ -116,6 +118,20 @@ XCOMM platform:  $XFree86: xc/config/cf/cygwin.cf,v 3.34.2.2 2002/02/19 08:43:33
 #define LexLib                  -lfl
 #define HasFlex			YES
 
+/*
+ * Cygwin-specific Windows resource compiler command
+ */
+
+#ifdef CrossCompileDir
+# ifndef WindresCmd
+#  define WindresCmd		Concat3(CrossCompileDir,/,windres)
+# endif
+#else
+# ifndef WindresCmd
+#  define WindresCmd		windres
+# endif
+#endif
+
 #define PreProcessCmd           CcCmd -E
 
 #ifndef PostIncDir
@@ -127,22 +143,32 @@ XCOMM platform:  $XFree86: xc/config/cf/cygwin.cf,v 3.34.2.2 2002/02/19 08:43:33
 
 #define LdCombineFlags          -r
 
-/* We don't define -ansi yet as newlib (which is cygwin's library) doesn't
- * define some needed prototypes when -ansi is set, when that's fixed
- * we can remove these lines and use the default XFree86 options. */
+/*
+ * We do not define -ansi yet as newlib (which is Cygwin's library) does not
+ * define some needed prototypes when -ansi is set, when that is fixed
+ * we can remove these lines and use the default XFree86 options.
+ */
 #ifndef DefaultCCOptions
-# define DefaultCCOptions /* -ansi -pedantic */ GccWarningOptions
+# define DefaultCCOptions	/* -ansi -pedantic */ GccWarningOptions
 #endif
 
 # ifndef OptimizedCDebugFlags
 #  define OptimizedCDebugFlags	DefaultGcc2i386Opt
 # endif
 
-#define StandardDefines         -D__i386__ -DWIN32_LEAN_AND_MEAN -DX_LOCALE -D_X86_ -D__STDC__ -DNO_TCP_H -D__CYGWIN__ -D_XOPEN_SOURCE -D_POSIX_C_SOURCE=199309L -D_BSD_SOURCE -D_SVID_SOURCE -D_GNU_SOURCE -DNO_ALLOCA
+#define StandardDefines         -D__i386__ -DWIN32_LEAN_AND_MEAN -DX_LOCALE \
+				-D_X86_ -D__CYGWIN__ -D_XOPEN_SOURCE \
+				-D_POSIX_C_SOURCE=199309L -D_BSD_SOURCE \
+				-D_SVID_SOURCE -D_GNU_SOURCE -DNO_ALLOCA
 
 #define XawI18nDefines          -DUSE_XWCHAR_STRING -DUSE_XMBTOWC
 #define HasWChar32              YES
 #define StandardCppOptions	-traditional
+
+/*
+ * Cygwin only has shared memory support when using the cygipc package,
+ * or the newer cygserver package.
+ */
 #if UseCygIPC
 # if ThreadedX
 #  define StandardCppDefines      -DHAS_THREADS -DHAS_SHM StandardDefines
@@ -156,9 +182,29 @@ XCOMM platform:  $XFree86: xc/config/cf/cygwin.cf,v 3.34.2.2 2002/02/19 08:43:33
 #  define StandardCppDefines      StandardDefines
 # endif
 #endif
-#define ServerOSDefines         XFree86ServerDefines -DDDXTIME -DFD_SETSIZE=256 -DDDXOSINIT -DDDXOSVERRORF -DDDXOSFATALERROR
+
+/*
+ * Do not use XFree86ServerDefines here because it always defines
+ * XFree86Server.  Defining XFree86Server causes fb to not expose its
+ * fbSetVisualTypesAndMasks.  Instead, we create a local
+ * XWinServerDefines, which has everything that XFree86ServerDefines
+ * has in it, but it allows us to easily remove the XFree86Server
+ * define for experimental development purposes.
+ */
+#define XWinServerDefines	-DAVOID_GLYPHBLT -DPIXPRIV -DSINGLEDEPTH \
+				XFree86DGADefines XFree86XvDefines \
+				XFree86LoaderDefines -DXFree86Server \
+				VidModeExtensionDefines \
+				XFree86XvMCDefines \
+				ServerSnprintfDefines \
+				SmartScheduleDefines \
+				DebugDefines XFree86XResDefines \
+				-DX_BYTE_ORDER=ByteOrder
+#define ServerOSDefines         XWinServerDefines \
+				-DDDXTIME -DFD_SETSIZE=256 -DDDXOSINIT \
+				-DDDXOSVERRORF -DDDXOSFATALERROR
 #define XkbServerDefines        -DXKB_ALWAYS_USES_SOFT_REPEAT
-#define ServerExtraDefines      -DGCCUSESGAS XFree86ServerDefines
+#define ServerExtraDefines      -DGCCUSESGAS XWinServerDefines
 #define ConnectionFlags         -DTCPCONN -DUNIXCONN
 #define ExtraLibraries          
 #define InstUidFlags            -m 4711
@@ -206,12 +252,12 @@ XCOMM platform:  $XFree86: xc/config/cf/cygwin.cf,v 3.34.2.2 2002/02/19 08:43:33
 
 #define BuildGlxExt             YES
 #define BuildXInputExt		YES
-#define BuildXF86VidModeExt     YES
+#define BuildXF86VidModeExt     NO
 #define BuildXF86DGA		NO	/* No direct access to hardware */
 #define BuildXvExt		YES
 #define BuildXF86MiscExt	NO
 #define BuildRender		YES
-#define BuildRandR		YES
+#define BuildRandR		NO
 #define BuildXF86DRI		NO	/* No direct access to hardware */
 #define BuildXF86DRM		NO	/* No direct access to hardware */
 #define BuildXKB		YES
@@ -279,33 +325,6 @@ XCOMM platform:  $XFree86: xc/config/cf/cygwin.cf,v 3.34.2.2 2002/02/19 08:43:33
 #define XF86AFB			NO
 
 #define XF86CardDrivers		/**/
-
-
-/*
- * These man rules were ganked from linux.cf, verbatim.
- * I am not convinced that we need them.
- */
-#if 0
-/* Some of these man page defaults are overriden in the above OS sections */
-#ifndef ManSuffix
-# define ManSuffix      1x
-#endif
-#ifndef ManDir
-# define ManDir         $(MANSOURCEPATH)1
-#endif
-#ifndef LibManSuffix
-# define LibManSuffix   3x
-#endif
-#ifndef LibmanDir
-# define LibmanDir      $(MANSOURCEPATH)3
-#endif
-#ifndef FileManSuffix
-# define FileManSuffix  5x
-#endif
-#ifndef FileManDir
-# define FileManDir     $(MANSOURCEPATH)5
-#endif
-#endif
 
 /* Server build rules */
 #ifndef XnestServer

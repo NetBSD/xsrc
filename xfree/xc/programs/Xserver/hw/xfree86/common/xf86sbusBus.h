@@ -20,7 +20,7 @@
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86sbusBus.h,v 3.4 2001/10/28 03:33:19 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86sbusBus.h,v 3.5 2002/12/10 02:42:35 tsi Exp $ */
 
 #ifndef _XF86_SBUSBUS_H
 #define _XF86_SBUSBUS_H
@@ -80,7 +80,7 @@ void xf86SbusHideOsHwCursor(sbusDevicePtr psdp);
 void xf86SbusSetOsHwCursorCmap(sbusDevicePtr psdp, int bg, int fg);
 Bool xf86SbusHandleColormaps(ScreenPtr pScreen, sbusDevicePtr psdp);
 
-int promRootNode;
+extern int promRootNode;
 
 int promGetSibling(int node);
 int promGetChild(int node);

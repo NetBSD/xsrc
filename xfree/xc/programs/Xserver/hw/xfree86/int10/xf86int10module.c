@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/int10/xf86int10module.c,v 1.1 2000/01/23 04:44:35 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/int10/xf86int10module.c,v 1.2 2002/09/16 18:06:09 eich Exp $ */
 /*
  *                   XFree86 int10 module
  *   execute BIOS int 10h calls in x86 real mode environment
@@ -12,11 +12,22 @@
 
 #ifdef XFree86LOADER
 
-static MODULESETUPPROTO(int10Setup);
 
-static XF86ModuleVersionInfo int10VersRec =
+#ifndef MOD_NAME
+# define MOD_NAME int10
+#endif
+
+#define stringify(x) #x
+#define STRING(x) stringify(x)
+#define concat(x,y) x ## y
+#define combine(a,b) concat(a,b)
+#define NAME(x) combine(MOD_NAME,x)
+
+static MODULESETUPPROTO(NAME(Setup));
+
+static XF86ModuleVersionInfo NAME(VersRec) =
 {
-    "int10",
+    STRING(NAME( )),
     MODULEVENDORSTRING,
     MODINFOSTRING1,
     MODINFOSTRING2,
@@ -28,10 +39,10 @@ static XF86ModuleVersionInfo int10VersRec =
     {0,0,0,0}
 };
 
-XF86ModuleData int10ModuleData = { &int10VersRec, int10Setup, NULL };
+XF86ModuleData NAME(ModuleData) = { &NAME(VersRec), NAME(Setup), NULL };
 
 static pointer
-int10Setup(pointer module, pointer opts, int *errmaj, int *errmin)
+NAME(Setup)(pointer module, pointer opts, int *errmaj, int *errmin)
 {
     static Bool setupDone = FALSE;
     
@@ -50,4 +61,3 @@ int10Setup(pointer module, pointer opts, int *errmaj, int *errmin)
 }
 
 #endif
-

@@ -28,7 +28,7 @@ other dealings in this Software without prior written authorization
 from the X Consortium.
 
 */
-/* $XFree86: xc/programs/xman/man.c,v 1.6 2001/11/01 23:35:35 dawes Exp $ */
+/* $XFree86: xc/programs/xman/man.c,v 1.7 2002/08/05 01:47:34 torrey Exp $ */
 
 
 #include "globals.h"
@@ -1088,7 +1088,7 @@ ReadManConfig(char manpath[])
 	    continue;
 	}
 	memset(&gs, 0, sizeof(glob_t));
-	while (path = strtok((char *)NULL, " \t\n")) {
+	while ((path = strtok((char *)NULL, " \t\n"))) {
 	    if (glob(path, GLOB_BRACE, NULL, &gs) < 0) {
 		return FALSE;
 	    }
@@ -1136,7 +1136,7 @@ char  manpath[];
     path = strtok(line, " \t\n");
     if (!path || *path == '#' || strcmp(path, "_default"))
       continue;
-    while (path = strtok((char *)NULL, " \t\n")) {
+    while ((path = strtok((char *)NULL, " \t\n"))) {
       if (firstpath) {
         strcpy(manpath, path);
         firstpath = FALSE;

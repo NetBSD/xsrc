@@ -19,7 +19,7 @@
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/chips/ct_regs.c,v 1.7 2001/10/01 13:44:04 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/chips/ct_regs.c,v 1.8 2002/01/25 21:56:00 tsi Exp $ */
 
 /*
  * The functions in this file are used to read/write the C&T extension register
@@ -116,67 +116,67 @@
 void
 chipsStdWriteXR(CHIPSPtr cPtr, CARD8 index, CARD8 value)
 {
-    outb(CHIPS_XR_INDEX, index);
-    outb(CHIPS_XR_DATA, value);
+    outb(cPtr->PIOBase + CHIPS_XR_INDEX, index);
+    outb(cPtr->PIOBase + CHIPS_XR_DATA, value);
 }
 
 static CARD8
 chipsStdReadXR(CHIPSPtr cPtr, CARD8 index)
 {
-    outb(CHIPS_XR_INDEX, index);
-    return inb(CHIPS_XR_DATA);
+    outb(cPtr->PIOBase + CHIPS_XR_INDEX, index);
+    return inb(cPtr->PIOBase + CHIPS_XR_DATA);
 }
 
 static void
 chipsStdWriteFR(CHIPSPtr cPtr, CARD8 index, CARD8 value)
 {
-    outb(CHIPS_FR_INDEX, index);
-    outb(CHIPS_FR_DATA, value);
+    outb(cPtr->PIOBase + CHIPS_FR_INDEX, index);
+    outb(cPtr->PIOBase + CHIPS_FR_DATA, value);
 }
 
 static CARD8
 chipsStdReadFR(CHIPSPtr cPtr, CARD8 index)
 {
-    outb(CHIPS_FR_INDEX, index);
-    return inb(CHIPS_FR_DATA);
+    outb(cPtr->PIOBase + CHIPS_FR_INDEX, index);
+    return inb(cPtr->PIOBase + CHIPS_FR_DATA);
 }
 
 static void
 chipsStdWriteMR(CHIPSPtr cPtr, CARD8 index, CARD8 value)
 {
-    outb(CHIPS_MR_INDEX, index);
-    outb(CHIPS_MR_DATA, value);
+    outb(cPtr->PIOBase + CHIPS_MR_INDEX, index);
+    outb(cPtr->PIOBase + CHIPS_MR_DATA, value);
 }
 
 static CARD8
 chipsStdReadMR(CHIPSPtr cPtr, CARD8 index)
 {
-    outb(CHIPS_MR_INDEX, index);
-    return inb(CHIPS_MR_DATA);
+    outb(cPtr->PIOBase + CHIPS_MR_INDEX, index);
+    return inb(cPtr->PIOBase + CHIPS_MR_DATA);
 }
 
 static void
 chipsStdWriteMSS(CHIPSPtr cPtr, vgaHWPtr hwp, CARD8 value)
 {
-    outb(CHIPS_MSS, value);
+    outb(cPtr->PIOBase + CHIPS_MSS, value);
 }
 
 static CARD8
 chipsStdReadMSS(CHIPSPtr cPtr)
 {
-    return inb(CHIPS_MSS);
+    return inb(cPtr->PIOBase + CHIPS_MSS);
 }
 
 static void
 chipsStdWriteIOSS(CHIPSPtr cPtr, CARD8 value)
 {
-    outb(CHIPS_IOSS, value);
+    outb(cPtr->PIOBase + CHIPS_IOSS, value);
 }
 
 static CARD8
 chipsStdReadIOSS(CHIPSPtr cPtr)
 {
-    return inb(CHIPS_IOSS);
+    return inb(cPtr->PIOBase + CHIPS_IOSS);
 }
 
 void

@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/glx/packrender.h,v 1.6 2001/03/21 16:04:39 dawes Exp $ */
+/* $XFree86: xc/lib/GL/glx/packrender.h,v 1.7 2002/10/30 12:51:26 alanh Exp $ */
 #ifndef __GLX_packrender_h__
 #define __GLX_packrender_h__
 
@@ -156,7 +156,8 @@
 
 /* Array copy macros */
 #define __GLX_MEM_COPY(dest,src,bytes) \
-    memcpy(dest, src, bytes)
+    if (src && dest) \
+    	memcpy(dest, src, bytes)
 
 /* Single item copy macros */
 #define __GLX_PUT_CHAR(offset,a) \

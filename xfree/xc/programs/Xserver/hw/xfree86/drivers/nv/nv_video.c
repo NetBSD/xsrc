@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/nv/nv_video.c,v 1.6 2001/12/14 01:20:44 mvojkovi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/nv/nv_video.c,v 1.11 2002/11/26 23:41:59 mvojkovi Exp $ */
 
 #include "xf86.h"
 #include "xf86_OSproc.h"
@@ -18,9 +18,6 @@
 #include "fourcc.h"
 
 #include "nv_include.h"
-#include "nvreg.h"
-#include "nvvga.h"
-
 
 
 #define OFF_DELAY 	450  /* milliseconds */
@@ -51,6 +48,7 @@ typedef struct _NVPortPrivRec {
    int		currentBuffer;
    Time         videoTime;
    Bool		grabbedByV4L;
+   Bool         iturbt_709;
    FBLinearPtr  linear;
    int pitch;
    int offset;
@@ -58,8 +56,6 @@ typedef struct _NVPortPrivRec {
 
 
 static XF86VideoAdaptorPtr NVSetupImageVideo(ScreenPtr);
-
-static void NVResetVideo(ScrnInfoPtr);
 
 static void NVStopOverlay (ScrnInfoPtr);
 static void NVPutOverlayImage(ScrnInfoPtr pScrnInfo,
@@ -96,14 +92,15 @@ static void NVInitOffscreenImages (ScreenPtr pScreen);
 #define MAKE_ATOM(a) MakeAtom(a, sizeof(a) - 1, TRUE)
 
 static Atom xvBrightness, xvContrast, xvColorKey, xvSaturation, 
-            xvHue, xvAutopaintColorKey, xvSetDefaults, xvDoubleBuffer;
+            xvHue, xvAutopaintColorKey, xvSetDefaults, xvDoubleBuffer,
+            xvITURBT709;
 
 /* client libraries expect an encoding */
 static XF86VideoEncodingRec DummyEncoding =
 { 
    0,
    "XV_IMAGE",
-   2046, 2047,
+   2046, 2046,
    {1, 1}
 };
 
@@ -115,7 +112,7 @@ XF86VideoFormatRec NVFormats[NUM_FORMATS_ALL] =
    {15, DirectColor}, {16, DirectColor}, {24, DirectColor}
 };
 
-#define NUM_ATTRIBUTES 8
+#define NUM_ATTRIBUTES 9
 
 XF86AttributeRec NVAttributes[NUM_ATTRIBUTES] =
 {
@@ -126,7 +123,8 @@ XF86AttributeRec NVAttributes[NUM_ATTRIBUTES] =
    {XvSettable | XvGettable, -512, 511, "XV_BRIGHTNESS"},
    {XvSettable | XvGettable, 0, 8191, "XV_CONTRAST"},
    {XvSettable | XvGettable, 0, 8191, "XV_SATURATION"},
-   {XvSettable | XvGettable, 0, 360, "XV_HUE"}
+   {XvSettable | XvGettable, 0, 360, "XV_HUE"},
+   {XvSettable | XvGettable, 0, 1, "XV_ITURBT_709"}
 };
 
 #define NUM_IMAGES_ALL 4
@@ -151,10 +149,11 @@ NVSetPortDefaults (ScrnInfoPtr pScrnInfo, NVPortPrivPtr pPriv)
     pPriv->colorKey             = pNv->videoKey;
     pPriv->autopaintColorKey    = TRUE;
     pPriv->doubleBuffer		= TRUE;
+    pPriv->iturbt_709           = FALSE;
 }
 
 
-static void 
+void 
 NVResetVideo (ScrnInfoPtr pScrnInfo)
 {
     NVPtr          pNv     = NVPTR(pScrnInfo);
@@ -345,6 +344,7 @@ NVSetupImageVideo (ScreenPtr pScreen)
     xvHue               = MAKE_ATOM("XV_HUE");
     xvAutopaintColorKey = MAKE_ATOM("XV_AUTOPAINT_COLORKEY");
     xvSetDefaults       = MAKE_ATOM("XV_SET_DEFAULTS");
+    xvITURBT709         = MAKE_ATOM("XV_ITURBT_709");
 
     NVResetVideo(pScrnInfo);
 
@@ -434,6 +434,8 @@ NVPutOverlayImage (
 
     if(id != FOURCC_UYVY)
 	dstPitch |= 1 << 16;
+    if(pPriv->iturbt_709)
+        dstPitch |= 1 << 24;
 
     pRiva->PMC[(0x8958/4) + buffer] = dstPitch;
     pRiva->PMC[0x00008704/4] = 0;
@@ -534,6 +536,12 @@ static int NVSetPortAttribute
             return BadValue;
         pPriv->autopaintColorKey = value;
     }
+    else if (attribute == xvITURBT709)
+    {
+        if ((value < 0) || (value > 1))
+            return BadValue;
+        pPriv->iturbt_709 = value;
+    }
     else if (attribute == xvSetDefaults)
     {
         NVSetPortDefaults(pScrnInfo, pPriv);
@@ -572,6 +580,8 @@ static int NVGetPortAttribute
         *value = pPriv->colorKey;
     else if (attribute == xvAutopaintColorKey)
         *value = (pPriv->autopaintColorKey) ? 1 : 0;
+    else if (attribute == xvITURBT709)
+        *value = (pPriv->iturbt_709) ? 1 : 0;
     else
         return BadMatch;
     
@@ -714,6 +724,7 @@ static int NVPutImage
     int pitch, newSize, offset, s2offset, s3offset;
     int srcPitch, srcPitch2, dstPitch;
     int top, left, npixels, nlines, bpp;
+    Bool skip = FALSE;
     BoxRec dstBox;
     CARD32 tmp;
 
@@ -789,10 +800,26 @@ static int NVPutImage
 
     if(!pPriv->linear) return BadAlloc;
 
-    offset = pPriv->linear->offset * bpp; 
+    offset = pPriv->linear->offset * bpp;
 
-    if(pPriv->doubleBuffer && pPriv->currentBuffer) 
-	offset += (newSize * bpp) >> 1;
+    if(pPriv->doubleBuffer) {
+        RIVA_HW_INST  *pRiva   = &(pNv->riva);
+        int mask = 1 << (pPriv->currentBuffer << 2);
+
+#if 0
+        /* burn the CPU until the next buffer is available */
+        while(pRiva->PMC[0x00008700/4] & mask);
+#else
+        /* overwrite the newest buffer if there's not one free */
+        if(pRiva->PMC[0x00008700/4] & mask) {
+           if(!pPriv->currentBuffer)
+              offset += (newSize * bpp) >> 1;
+           skip = TRUE;
+        } else 
+#endif
+        if(pPriv->currentBuffer)
+            offset += (newSize * bpp) >> 1;
+    }
 
     dst_start = pNv->FbStart + offset;
         
@@ -800,15 +827,6 @@ static int NVPutImage
     top = ya >> 16;
     left = (xa >> 16) & ~1;
     npixels = ((((xb + 0xffff) >> 16) + 1) & ~1) - left;
-
-#if 0
-    /* I have my reservations about this */
-    if(pPriv->doubleBuffer) {
-	RIVA_HW_INST  *pRiva   = &(pNv->riva);
-	int mask = 1 << (pPriv->currentBuffer << 2);
-	while(pRiva->PMC[0x00008700/4] & mask);
-    }
-#endif
 
     switch(id) {
     case FOURCC_YV12:
@@ -839,10 +857,12 @@ static int NVPutImage
         break;
     }
 
-    NVPutOverlayImage(pScrnInfo, offset, id, dstPitch, &dstBox, xa, ya, xb, yb,
-                       width, height, src_w, src_h, drw_w, drw_h, clipBoxes);
-
-    pPriv->currentBuffer ^= 1;
+    if(!skip) {
+       NVPutOverlayImage(pScrnInfo, offset, id, dstPitch, &dstBox, 
+                         xa, ya, xb, yb,
+                         width, height, src_w, src_h, drw_w, drw_h, clipBoxes);
+       pPriv->currentBuffer ^= 1;
+    } 
 
     return Success;
 }
@@ -863,8 +883,8 @@ static int NVQueryImageAttributes
     
     if(*w > 2046)
         *w = 2046;
-    if(*h > 2047)
-        *h = 2047;
+    if(*h > 2046)
+        *h = 2046;
     
     *w = (*w + 1) & ~1;
     if (offsets)
@@ -960,7 +980,7 @@ NVAllocSurface (
 
     if(pPriv->grabbedByV4L) return BadAlloc;
 
-    if((w > 2046) || (h > 2047)) return BadValue;
+    if((w > 2046) || (h > 2046)) return BadValue;
 
     w = (w + 1) & ~1;
     pPriv->pitch = ((w << 1) + 63) & ~63;
@@ -980,6 +1000,7 @@ NVAllocSurface (
     surface->pitches = &pPriv->pitch; 
     surface->offsets = &pPriv->offset;
     surface->devPrivate.ptr = (pointer)pPriv;
+    surface->id = id;
 
     /* grab the video */
     NVStopOverlay(pScrnInfo);
@@ -1109,7 +1130,7 @@ XF86OffscreenImageRec NVOffscreenImages[2] =
    NVStopSurface,
    NVGetSurfaceAttribute,
    NVSetSurfaceAttribute,
-   2046, 2047,
+   2046, 2046,
    NUM_ATTRIBUTES - 1,
    &NVAttributes[1]
   },
@@ -1122,7 +1143,7 @@ XF86OffscreenImageRec NVOffscreenImages[2] =
    NVStopSurface,
    NVGetSurfaceAttribute,
    NVSetSurfaceAttribute,
-   2046, 2047,
+   2046, 2046,
    NUM_ATTRIBUTES - 1,
    &NVAttributes[1]
   },

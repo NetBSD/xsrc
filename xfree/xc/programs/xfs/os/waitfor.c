@@ -50,7 +50,7 @@ in this Software without prior written authorization from The Open Group.
  * $NCDXorg: @(#)waitfor.c,v 4.5 1991/06/24 11:59:20 lemke Exp $
  *
  */
-/* $XFree86: xc/programs/xfs/os/waitfor.c,v 3.15 2001/12/14 20:01:41 dawes Exp $ */
+/* $XFree86: xc/programs/xfs/os/waitfor.c,v 3.16 2002/05/31 18:46:12 dawes Exp $ */
 
 #include	<X11/Xos.h>	/* strings, time, etc */
 
@@ -66,7 +66,7 @@ in this Software without prior written authorization from The Open Group.
 #include	"osdep.h"
 #include	"os.h"
 
-#ifdef __EMX__
+#ifdef __UNIXOS2__
 #define select(n,r,w,x,t) os2PseudoSelect(n,r,w,x,t)
 #endif
 

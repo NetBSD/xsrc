@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/parser/Screen.c,v 1.21 2001/08/06 20:51:14 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/parser/Screen.c,v 1.24 2003/01/04 20:20:23 paulo Exp $ */
 /* 
  * 
  * Copyright (c) 1997  Metro Link Incorporated
@@ -173,7 +173,7 @@ static xf86ConfigSymTabRec ScreenTab[] =
 {
 	{ENDSECTION, "endsection"},
 	{IDENTIFIER, "identifier"},
-        {OBSDRIVER, "driver"},
+	{OBSDRIVER, "driver"},
 	{MDEVICE, "device"},
 	{MONITOR, "monitor"},
 	{VIDEOADAPTOR, "videoadaptor"},
@@ -192,7 +192,7 @@ XF86ConfScreenPtr
 xf86parseScreenSection (void)
 {
 	int has_ident = FALSE;
-        int has_driver= FALSE;
+	int has_driver= FALSE;
 	int token;
 
 	parsePrologue (XF86ConfScreenPtr, XF86ConfScreenRec)
@@ -208,17 +208,17 @@ xf86parseScreenSection (void)
 			if (xf86getSubToken (&(ptr->scrn_comment)) != STRING)
 				Error (QUOTE_MSG, "Identifier");
 			ptr->scrn_identifier = val.str;
-                        if (has_ident || has_driver)
-                                Error (ONLY_ONE_MSG,"Identifier or Driver");
-                        has_ident = TRUE;
+			if (has_ident || has_driver)
+				Error (ONLY_ONE_MSG,"Identifier or Driver");
+			has_ident = TRUE;
 			break;
-                case OBSDRIVER:
+		case OBSDRIVER:
 			if (xf86getSubToken (&(ptr->scrn_comment)) != STRING)
 				Error (QUOTE_MSG, "Driver");
 			ptr->scrn_obso_driver = val.str;
-                        if (has_ident || has_driver)
-                                Error (ONLY_ONE_MSG,"Identifier or Driver");
-                        has_driver = TRUE;
+			if (has_ident || has_driver)
+				Error (ONLY_ONE_MSG,"Identifier or Driver");
+			has_driver = TRUE;
 			break;
 		case DEFAULTDEPTH:
 			if (xf86getSubToken (&(ptr->scrn_comment)) != NUMBER)
@@ -275,7 +275,7 @@ xf86parseScreenSection (void)
 			if (xf86getSubToken (&(ptr->scrn_comment)) != STRING)
 				Error (QUOTE_MSG, "SubSection");
 			{
-			        xf86conffree(val.str);
+				xf86conffree(val.str);
 				HANDLE_LIST (scrn_display_lst, xf86parseDisplaySubSection,
 							 XF86ConfDisplayPtr);
 			}
@@ -475,10 +475,10 @@ xf86validateScreen (XF86ConfigPtr p)
 
 	while (screen)
 	{
-                if (screen->scrn_obso_driver && !screen->scrn_identifier)
-                        screen->scrn_identifier = screen->scrn_obso_driver;
-                
-                monitor = xf86findMonitor (screen->scrn_monitor_str, p->conf_monitor_lst);
+		if (screen->scrn_obso_driver && !screen->scrn_identifier)
+			screen->scrn_identifier = screen->scrn_obso_driver;
+
+		monitor = xf86findMonitor (screen->scrn_monitor_str, p->conf_monitor_lst);
 		if (!monitor)
 		{
 			xf86validationError (UNDEFINED_MONITOR_MSG,

@@ -26,7 +26,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/xtrans/Xtranstli.c,v 3.10 2001/12/14 19:57:07 dawes Exp $ */
+/* $XFree86: xc/lib/xtrans/Xtranstli.c,v 3.11 2002/12/15 01:28:33 dawes Exp $ */
 
 /* Copyright 1993, 1994 NCR Corporation - Dayton, Ohio, USA
  *
@@ -131,7 +131,7 @@ TRANS(TLISelectFamily)(char *family)
     
     for(i=0;i<NUMTLIFAMILIES;i++)
     {
-        if( !strcmp(family,TLItrans2devtab[i].transname) )
+	if( !strcmp(family,TLItrans2devtab[i].transname) )
 	    return i;
     }
     return -1;
@@ -175,9 +175,9 @@ TRANS(TLIGetAddr)(XtransConnInfo ciptr)
     
     if( (ciptr->addr=(char *)xalloc(netbuf.len)) == NULL )
     {
-        PRMSG(1, "TLIGetAddr: Can't allocate space for the addr\n",
+	PRMSG(1, "TLIGetAddr: Can't allocate space for the addr\n",
 	      0,0,0);
-        return -1;
+	return -1;
     }
     
     ciptr->family=((struct sockaddr *) &sockname)->sa_family;
@@ -225,10 +225,10 @@ TRANS(TLIGetPeerAddr)(XtransConnInfo ciptr)
     
     if( (ciptr->peeraddr=(char *)xalloc(netbuf.len)) == NULL )
     {
-        PRMSG(1,
+	PRMSG(1,
 	      "TLIGetPeerAddr: Can't allocate space for the addr\n",
 	      0,0,0);
-        return -1;
+	return -1;
     }
     
     ciptr->peeraddrlen=netbuf.len;
@@ -929,6 +929,23 @@ TRANS(TLIAccept)(XtransConnInfo ciptr, int *status)
 	extern int t_errno;
 	PRMSG(1, "TLIAccept() t_accept() failed\n", 0,0,0 );
 	PRMSG(1, "TLIAccept: %s\n", t_errlist[t_errno], 0,0 );
+	if( t_errno == TLOOK )
+	{
+	    int evtype = t_look(ciptr->fd);
+	    PRMSG(1, "TLIAccept() t_look() returned %d\n", evtype,0,0 );
+	    switch( evtype )
+	    {
+		case T_DISCONNECT:
+		    if( t_rcvdis(ciptr->fd, NULL) < 0 )
+		    {
+			PRMSG(1, "TLIAccept() t_rcvdis() failed\n", 0,0,0 );
+			PRMSG(1, "TLIAccept: %s\n", t_errlist[t_errno], 0,0 );
+		    }
+		    break;
+		default:
+		    break;
+	    }
+	}
 	t_free((char *)call,T_CALL);
 	t_close(newciptr->fd);
 	free(newciptr);
@@ -1284,7 +1301,7 @@ TRANS(TLICloseForCloning)(XtransConnInfo ciptr)
 Xtransport	TRANS(TLITCPFuncs) = {
 	/* TLI Interface */
 	"tcp",
-        0,
+	0,
 #ifdef TRANS_CLIENT
 	TRANS(TLIOpenCOTSClient),
 #endif /* TRANS_CLIENT */

@@ -24,6 +24,7 @@
  * used in advertising or publicity pertaining to distribution of the software
  * without specific, written prior permission.
  */
+/* $XFree86: xc/programs/xmh/mlist.c,v 1.3 2002/07/01 02:26:05 tsi Exp $ */
 
 /* mlist.c -- functions to deal with message lists. */
 
@@ -32,7 +33,7 @@
 
 /* Create a message list containing no messages. */
 
-MsgList MakeNullMsgList()
+MsgList MakeNullMsgList(void)
 {
     MsgList mlist;
     mlist = XtNew(MsgListRec);
@@ -45,9 +46,7 @@ MsgList MakeNullMsgList()
 
 /* Append a message to the given message list. */
 
-void AppendMsgList(mlist, msg)
-  MsgList mlist;
-  Msg msg;
+void AppendMsgList(MsgList mlist, Msg msg)
 {
     mlist->nummsgs++;
     mlist->msglist =
@@ -61,9 +60,7 @@ void AppendMsgList(mlist, msg)
 
 /* Delete a message from a message list. */
 
-void DeleteMsgFromMsgList(mlist, msg)
-MsgList mlist;
-Msg msg;
+void DeleteMsgFromMsgList(MsgList mlist, Msg msg)
 {
     int i;
     for (i=0 ; i<mlist->nummsgs ; i++) {
@@ -80,8 +77,7 @@ Msg msg;
 
 /* Create a new messages list containing only the one given message. */
 
-MsgList MakeSingleMsgList(msg)
-  Msg msg;
+MsgList MakeSingleMsgList(Msg msg)
 {
     MsgList result;
     result = MakeNullMsgList();
@@ -92,8 +88,7 @@ MsgList MakeSingleMsgList(msg)
 
 /* We're done with this message list; free it's storage. */
 
-void FreeMsgList(mlist)
-   MsgList mlist;
+void FreeMsgList(MsgList mlist)
 {
     XtFree((char *) mlist->msglist);
     XtFree((char *) mlist);
@@ -105,9 +100,7 @@ void FreeMsgList(mlist)
    message numbers.  This routine assumes those messages numbers refer to
    messages in the given toc. */
 
-MsgList StringToMsgList(toc, str)
-Toc toc;
-char *str;
+MsgList StringToMsgList(Toc toc, char *str)
 {
     MsgList mlist;
     char *ptr;

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/r128_dri.h,v 1.6 2001/03/21 17:02:21 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/r128_dri.h,v 1.7 2002/10/30 12:52:12 alanh Exp $ */
 /*
  * Copyright 1999, 2000 ATI Technologies Inc., Markham, Ontario,
  *                      Precision Insight, Inc., Cedar Park, Texas, and
@@ -40,7 +40,7 @@
 #define _R128_DRI_
 
 #include "xf86drm.h"
-#include "xf86drmR128.h"
+#include "r128_common.h"
 
 /* DRI Driver defaults */
 #define R128_DEFAULT_CCE_PIO_MODE R128_PM4_64PIO_64VCBM_64INDBM

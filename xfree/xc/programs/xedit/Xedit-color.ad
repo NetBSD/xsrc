@@ -1,4 +1,4 @@
-! $XFree86: xc/programs/xedit/Xedit-color.ad,v 1.6.8.1 2002/07/04 17:07:11 paulo Exp $
+! $XFree86: xc/programs/xedit/Xedit-color.ad,v 1.15 2002/11/13 04:35:45 paulo Exp $
 
 #include "Xedit"
 
@@ -6,37 +6,57 @@
 *foreground:			gray15
 *borderColor:			gray40
 *Command.highlightThickness:	1
-*Command.backgroundPixmap:	gradient:vertical?dimension=18&start=gray90&end=gray60
+*Command.backgroundPixmap:	gradient:vertical?dimension=18&start=gray90&end=gray65
 *Command.foreground:		gray20
 *Command.displayList:\
-foreground	gray60;\
-lines		+2,-2,-2,-2,-2,+2;\
+foreground	gray92;\
+line		1,0,-2,0;\
 foreground	gray95;\
-lines		-3,+1,+1,+1,+1,-3;\
-foreground	gray78;\
-points		-2,+1,+1,-2
+line		2,1,-3,1;\
+foreground	gray74;\
+segments	3,-3,-4,-3, 2,-4,-3,-4, 1,-6,-2,-6;\
+point		-1,-1;\
+foreground	gray80;\
+line		0,0,0,-1;\
+point		-1,0
 
 *Command.translations:	#override \
-<Btn1Down>:	declare(1, $set, 1) set-values(1, foreground, gray20, background, rgb:d/5/5) set()\n\
-Button1<Leave>: reset() declare(1, $set, 0) set-values(1, foreground, gray20, background, gray70)\n\
-<Btn1Up>:	set-values($set, foreground, gray70, background, gray20) notify() unset()
+<Btn1Down>:	set-values(1, foreground, gray20, background, rgb:d/5/5) set()\n\
+Button1<Leave>: reset() set-values(1, foreground, gray20, background, gray70)\n\
+<Btn1Up>:	notify() unset()
 
 *Toggle.foreground:		gray30
-*Toggle.background:		gray85
-*Toggle.borderColor:		gray70
+*Toggle.background:		gray82
+*Toggle.borderColor:		gray90
 *Toggle.displayList:\
-foreground	gray50;\
-lines		+2,-2,-2,-2,-2,+2;\
-foreground	gray60;\
-lines		-2,+1,+1,+1,+1,-2
+foreground	gray75;\
+segments	0,1,0,-2,-1,1,-1,-2;\
+foreground	gray80;\
+segments	0,0,-1,0,0,-1,-1,-1;\
+points		1,1,1,-2,-2,1, -2,-2
 
-*bc_label.backgroundPixmap:	gradient:vertical?dimension=18&start=gray90&end=gray60
+*bc_label.backgroundPixmap:	gradient:vertical?dimension=18&start=gray90&end=gray65
+*bc_label.displayList:\
+foreground	gray92;\
+line		1,0,-2,0;\
+foreground	gray95;\
+line		2,1,-3,1;\
+foreground	gray74;\
+segments	3,-2,-4,-2, 2,-3,-3,-3, 1,-5,-2,-5
 *bc_label.foreground:		gray20
-*formWindow.backgroundPixmap:	gradient:vertical?dimension=18&start=gray90&end=gray60
+
+*formWindow.backgroundPixmap:	gradient:vertical?dimension=18&start=gray90&end=gray65
+*formWindow.displayList:\
+foreground	gray92;\
+line		1,0,-2,0;\
+foreground	gray95;\
+line		2,1,-3,1;\
+foreground	gray74;\
+segments	3,-2,-4,-2, 2,-3,-3,-3, 1,-5,-2,-5
 *formWindow*backgroundPixmap:	ParentRelative
 *formWindow*foreground:		gray20
 *formWindow*background:		gray74
-*formWindow.labelWindow.background:	gray78
+*formWindow.labelWindow.background:	gray80
 *formWindow.labelWindow.displayList:\
 line-style	onoffdash;\
 foreground	gray30;\
@@ -46,7 +66,14 @@ foreground	gray78;\
 fill-rect	4,3,15,14
 
 *dirlabel.foreground:		gray20
-*dirlabel.backgroundPixmap:	gradient:vertical?dimension=18&start=gray90&end=gray60
+*dirlabel.backgroundPixmap:	gradient:vertical?dimension=18&start=gray90&end=gray65
+*dirlabel.displayList:\
+foreground	gray92;\
+line		1,0,-2,0;\
+foreground	gray95;\
+line		2,1,-3,1;\
+foreground	gray74;\
+segments	3,-2,-4,-2, 2,-3,-3,-3, 1,-5,-2,-5
 *dirwindow.background:		gray96
 
 *internalBorderColor:		gray40
@@ -55,17 +82,23 @@ fill-rect	4,3,15,14
 *Text.background:		gray96
 *Text.?.background:		gray96
 *Text*cursorColor:		rgb:d/5/5
+*Text.displayList:\
+foreground	white;\
+line		1,-1,-2,-1;\
+foreground	gray88;\
+line		1,0,-2,0
 
 *Scrollbar.foreground:		rgb:a/5/5
 *Scrollbar.background:		gray60
 *Text.Scrollbar.background:	gray60
-*Scrollbar.backgroundPixmap:	gradient:horizontal?dimension=14&start=gray80&end=gray40
-*hScrollbar.backgroundPixmap:	gradient:vertical?dimension=14&start=gray40&end=gray80
-*Scrollbar.displayList:\
+*Scrollbar.backgroundPixmap:	gradient:horizontal?dimension=14&start=gray70&end=gray85
+*hScrollbar.backgroundPixmap:	gradient:vertical?dimension=14&start=gray85&end=gray70
+*hScrollbar.displayList:\
 foreground	gray85;\
-lines		+1,-1,-1,-1,-1,+1;\
-foreground	gray30;\
-lines		-1,+0,+0,+0,+0,-1
+segments	1,-1,-2,-1,1,0,-2,0
+*vScrollbar.displayList:\
+foreground	gray85;\
+segments	0,1,0,-2,-1,1,-1,-2
 *Scrollbar.thumb:		vlines2
 *hScrollbar.thumb:		hlines2
 
@@ -92,7 +125,8 @@ lines		-1,+0,+0,+0,+0,-1
 *TransientShell.Form.backgroundPixmap:		ParentRelative
 *TransientShell.Form.Label.backgroundPixmap:	ParentRelative
 
-*ispell*Scrollbar.borderColor:	gray60
+*ispell*Scrollbar.borderColor:	gray50
+*ispell*Scrollbar.displayList:
 *ispell*List.background:	gray96
 *ispell*word.background:	gray96
 *ispell*word.backgroundPixmap:	XtUnspecifiedPixmap
@@ -133,7 +167,7 @@ line-style	onoffdash;\
 draw-rect	+1,+1,-2,-2
 *ispell*options.MenuButton.borderColor:	gray70
 *ispell*options.MenuButton.background:	gray78
-*ispell*options.MenuButton.backgroundPixmap:	gradient:vertical?dimension=18&start=gray90&end=gray60
+*ispell*options.MenuButton.backgroundPixmap:	gradient:vertical?dimension=18&start=gray90&end=gray65
 *ispell*options.MenuButton.displayList:\
 foreground	gray60;\
 lines		+2,-2,-2,-2,-2,+2;\
@@ -148,24 +182,14 @@ points		-2,+1,+1,-2
 *tip.rightMargin:	7
 *tip.bottomMargin:	3
 *tip.displayList:\
-foreground	rgb:f/f/3;\
+foreground	rgb:f/e/8;\
 fill-rect	1,1,-2,-2;\
-foreground	rgb:d/d/1;\
+foreground	rgb:d/c/6;\
 draw-segments	0,1,0,-3,1,-2,-3,-2,-2,-3,-2,1,-3,0,1,0;\
-foreground	rgb:a/a/0;\
+foreground	rgb:a/8/4;\
 draw-lines	2,-1, -2,-1, -1,-2, -1,2
 
-*editModes.C.auto:		True
-*editModes.C.properties:\
-default?foreground=black&font=*courier-medium-r*12*,\
-keyword?foreground=gray12&font=*courier-bold-r*12*,\
-preprocessor?foreground=green4&font=*courier-medium-r*12*,\
-comment?foreground=SlateBlue3&font=*courier-medium-o*12*,\
-string?foreground=RoyalBlue2&font=*lucidatypewriter-medium-r*12*,\
-constant?foreground=VioletRed3&font=*lucidatypewriter-medium-r*12*,\
-octal?foreground=OrangeRed3&font=*courier-bold-r*12*&overstrike,\
-hexa?foreground=OrangeRed3&font=*courier-bold-r*12*&underline,\
-integer?foreground=OrangeRed3&font=*courier-bold-r*12*,\
-float?foreground=OrangeRed3&font=*courier-bold-r*12*&overstrike&underline,\
-punctuation?foreground=gray12&font=*courier-bold-r*12*,\
-error?foreground=yellow&background=red&font=*new century schoolbook-bold*24*
+*grip.foreground:	gray10
+*grip.displayList:\
+foreground	gray80;\
+points		0,0,0,-1,-1,-1,-1,0

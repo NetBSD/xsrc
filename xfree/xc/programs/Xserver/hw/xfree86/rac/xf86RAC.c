@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/rac/xf86RAC.c,v 1.6 1999/09/25 14:38:12 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/rac/xf86RAC.c,v 1.7 2002/09/16 18:06:18 eich Exp $ */
 
 #include "misc.h"
 #include "xf86.h"
@@ -18,6 +18,9 @@
 #include "xf86RAC.h"
 #include "mipointer.h"
 #include "mipointrst.h"
+#ifdef RENDER
+# include "picturestr.h"
+#endif
 
 #ifdef DEBUG
 #define DPRINT_S(x,y) ErrorF(x ": %i\n",y);
@@ -39,6 +42,18 @@
             pScreen->x = \
              ((RACScreenPtr) (pScreen)->devPrivates[RACScreenIndex].ptr)->x
 #define SCREEN_EPILOG(x,y) pScreen->x = y;
+
+#define WRAP_PICT_COND(x,y,cond) if (ps)\
+				{pScreenPriv->x = ps->x;\
+					if (flag & (cond))\
+					ps->x = y;}
+#define UNWRAP_PICT(x) 	if (ps) {ps->x = pScreenPriv->x;}
+
+#define PICTURE_PROLOGUE(field) \
+	ps->field = \
+	((RACScreenPtr) (pScreen)->devPrivates[RACScreenIndex].ptr)->field
+#define PICTURE_EPILOGUE(field, wrap) \
+	ps->field = wrap
 
 #define WRAP_SCREEN_INFO(x,y) {pScreenPriv->x = pScrn->x;\
                                    pScrn->x = y;}
@@ -103,6 +118,11 @@ typedef struct _RACScreen {
     void                         (*LeaveVT)(int, int);
     void                         (*FreeScreen)(int, int);
     miPointerSpriteFuncPtr       miSprite;
+#ifdef RENDER
+    CompositeProcPtr			Composite;
+    GlyphsProcPtr			Glyphs;
+    CompositeRectsProcPtr		CompositeRects;
+#endif
 } RACScreenRec, *RACScreenPtr;
 
 typedef struct _RACGC {
@@ -208,6 +228,17 @@ static Bool RACSpriteUnrealizeCursor(ScreenPtr pScreen, CursorPtr pCur);
 static void RACSpriteSetCursor(ScreenPtr pScreen, CursorPtr pCur,
 			       int x, int y);
 static void RACSpriteMoveCursor(ScreenPtr pScreen, int x, int y);
+#ifdef RENDER
+static void RACComposite(CARD8 op, PicturePtr pSrc,  PicturePtr pMask,
+			 PicturePtr pDst, INT16 xSrc, INT16 ySrc,
+			 INT16 xMask, INT16 yMask, INT16 xDst,
+			 INT16 yDst, CARD16 width, CARD16 height);
+static void RACGlyphs(CARD8 op, PicturePtr pSrc, PicturePtr pDst,
+		      PictFormatPtr maskFormat, INT16 xSrc, INT16 ySrc,
+		      int nlist, GlyphListPtr list, GlyphPtr *glyphs);
+static void RACCompositeRects(CARD8 op, PicturePtr pDst, xRenderColor *color,
+			      int nRect, xRectangle *rects);
+#endif
 
 GCFuncs RACGCFuncs = {
     RACValidateGC, RACChangeGC, RACCopyGC, RACDestroyGC,
@@ -242,6 +273,9 @@ xf86RACInit(ScreenPtr pScreen, unsigned int flag)
     ScrnInfoPtr pScrn;
     RACScreenPtr pScreenPriv;
     miPointerScreenPtr PointPriv;
+#ifdef RENDER
+    PictureScreenPtr	ps = GetPictureScreenIfSet(pScreen);
+#endif
 
     pScrn = xf86Screens[pScreen->myNum];
     PointPriv = (miPointerScreenPtr)pScreen->devPrivates[miPointerScreenIndex].ptr;
@@ -282,6 +316,11 @@ xf86RACInit(ScreenPtr pScreen, unsigned int flag)
     WRAP_SCREEN_COND(UnrealizeCursor, RACUnrealizeCursor, RAC_CURSOR);
     WRAP_SCREEN_COND(RecolorCursor, RACRecolorCursor, RAC_CURSOR);
     WRAP_SCREEN_COND(SetCursorPosition, RACSetCursorPosition, RAC_CURSOR);
+#ifdef RENDER
+    WRAP_PICT_COND(Composite,RACComposite,RAC_FB);
+    WRAP_PICT_COND(Glyphs,RACGlyphs,RAC_FB);    
+    WRAP_PICT_COND(CompositeRects,RACCompositeRects,RAC_FB);    
+#endif
     WRAP_SCREEN_INFO_COND(AdjustFrame, RACAdjustFrame, RAC_VIEWPORT);
     WRAP_SCREEN_INFO(SwitchMode, RACSwitchMode);
     WRAP_SCREEN_INFO(EnterVT, RACEnterVT);
@@ -301,7 +340,10 @@ RACCloseScreen (int i, ScreenPtr pScreen)
 	(RACScreenPtr) pScreen->devPrivates[RACScreenIndex].ptr;
     miPointerScreenPtr PointPriv
 	= (miPointerScreenPtr)pScreen->devPrivates[miPointerScreenIndex].ptr;
-    
+#ifdef RENDER
+    PictureScreenPtr	ps = GetPictureScreenIfSet(pScreen);
+#endif
+
     DPRINT_S("RACCloseScreen",pScreen->myNum);
     UNWRAP_SCREEN(CreateGC);
     UNWRAP_SCREEN(CloseScreen);
@@ -321,6 +363,11 @@ RACCloseScreen (int i, ScreenPtr pScreen)
     UNWRAP_SCREEN(UnrealizeCursor);
     UNWRAP_SCREEN(RecolorCursor);
     UNWRAP_SCREEN(SetCursorPosition);
+#ifdef RENDER
+    UNWRAP_PICT(Composite);
+    UNWRAP_PICT(Glyphs);    
+    UNWRAP_PICT(CompositeRects);    
+#endif
     UNWRAP_SCREEN_INFO(AdjustFrame);
     UNWRAP_SCREEN_INFO(SwitchMode);
     UNWRAP_SCREEN_INFO(EnterVT);
@@ -1155,3 +1202,55 @@ RACSpriteMoveCursor(ScreenPtr pScreen, int x, int y)
     PointPriv->spriteFuncs->MoveCursor(pScreen, x, y);
     SPRITE_EPILOG;
 }
+
+#ifdef RENDER
+static void
+RACComposite(CARD8 op, PicturePtr pSrc, PicturePtr pMask,
+	     PicturePtr pDst, INT16 xSrc, INT16 ySrc, INT16 xMask,
+	     INT16 yMask, INT16 xDst, INT16 yDst, CARD16 width,
+	     CARD16 height)
+{
+    ScreenPtr		pScreen = pDst->pDrawable->pScreen;
+    PictureScreenPtr	ps = GetPictureScreen(pScreen);
+
+    PICTURE_PROLOGUE(Composite);
+
+    ENABLE;
+    (*ps->Composite) (op, pSrc, pMask, pDst, xSrc, ySrc, xMask, yMask, xDst,
+		      yDst, width, height);
+    
+    PICTURE_EPILOGUE(Composite, RACComposite);
+}
+
+static void
+RACGlyphs(CARD8 op, PicturePtr pSrc, PicturePtr pDst,
+	  PictFormatPtr maskFormat, INT16 xSrc, INT16 ySrc, int nlist,
+	  GlyphListPtr list, GlyphPtr *glyphs)
+{
+    ScreenPtr		pScreen = pDst->pDrawable->pScreen;
+    PictureScreenPtr	ps = GetPictureScreen(pScreen);
+
+    PICTURE_PROLOGUE(Glyphs);
+
+    ENABLE;
+    (*ps->Glyphs)(op, pSrc, pDst, maskFormat, xSrc, ySrc, nlist, list, glyphs);
+    
+    PICTURE_EPILOGUE (Glyphs, RACGlyphs);
+}
+
+static void
+RACCompositeRects(CARD8 op, PicturePtr pDst, xRenderColor *color, int nRect,
+		  xRectangle *rects)
+{
+    ScreenPtr		pScreen = pDst->pDrawable->pScreen;
+    PictureScreenPtr	ps = GetPictureScreen(pScreen);
+
+    PICTURE_PROLOGUE(CompositeRects);
+
+    ENABLE;
+    (*ps->CompositeRects)(op, pDst, color, nRect, rects);
+    
+    PICTURE_EPILOGUE (CompositeRects, RACCompositeRects);
+}
+#endif
+

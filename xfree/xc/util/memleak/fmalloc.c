@@ -26,7 +26,7 @@ in this Software without prior written authorization from The Open Group.
  * Author:  Keith Packard, MIT X Consortium
  */
 
-/* $XFree86: xc/util/memleak/fmalloc.c,v 3.13 2001/12/14 20:02:36 dawes Exp $ */
+/* $XFree86: xc/util/memleak/fmalloc.c,v 3.14 2002/04/04 14:06:00 eich Exp $ */
 
 
 /*
@@ -154,6 +154,8 @@ static int	freedMemoryCount;
 static int	activeMemoryTotal;
 static int	activeMemoryCount;
 static int	deadMemoryTotal;
+static int	unreferencedAllocatedTotal;
+static int	unreferencedAllocatedCount;
 
 int		FindLeakWarnMiddlePointers = 0;
 unsigned long	FindLeakAllocBreakpoint = ~0;
@@ -161,6 +163,7 @@ unsigned long	FindLeakFreeBreakpoint = ~0;
 unsigned long	FindLeakTime;
 int		FindLeakCheckAlways = 0;
 int		FindLeakValidateAlways = 0;
+int		FindPrintAllocations = 0;
 
 static void MarkActiveBlock ();
 static int  tree_insert (), tree_delete ();
@@ -302,8 +305,11 @@ SweepActiveTree (t)
     if (!t)
 	return;
     SweepActiveTree (t->left);
-    if (!t->marked)
+    if (!t->marked) {
+	unreferencedAllocatedTotal += t->desiredsize;
+	unreferencedAllocatedCount++;
 	MemError ("Unreferenced allocated", t, FALSE);
+    }
     else if (!(t->marked & REFERENCED_HEAD))
 	MemError ("Referenced allocated middle", t, FALSE);
     SweepActiveTree (t->right);
@@ -545,8 +551,11 @@ WarnReferenced(from, to)
 void
 CheckMemory ()
 {
+#if 0
     mem	foo;
 
+    unreferencedAllocatedTotal = 0;
+    unreferencedAllocatedCount = 0;
     foo = 1;
     fprintf (stderr, "\nCheckMemory\n");
     fprintf (stderr, "Static Memory Area: 0x%lx to 0x%lx\n",
@@ -565,8 +574,12 @@ CheckMemory ()
     SweepFreedMemory ();
     fprintf (stderr, "%d bytes freed memory still held from %d allocations\n",
 	     freedMemoryTotal, freedMemoryCount);
+    fprintf (stderr, 
+	   "%d bytes of allocated memory not referenced from %d allocations\n",
+	     unreferencedAllocatedTotal,unreferencedAllocatedCount);
     deadMemoryTotal = freedMemoryTotal;
     fprintf (stderr, "CheckMemory done\n");
+#endif
 }
 
 /*
@@ -653,7 +666,14 @@ malloc (desiredsize)
     getStackTrace (h->returnStack, MAX_RETURN_STACK);
 #endif
     AddActiveBlock (h);
-    return (char *) DataForHead(h);
+    ret =  (char *) DataForHead(h);
+    if (FindPrintAllocations) {
+	fprintf(stderr,"Allocated %i bytes at 0x%lx\n",desiredsize,ret);
+#ifdef HAS_GET_RETURN_ADDRESS
+	PrintReturnStack ("at",h->returnStack);
+#endif
+    }
+    return ret;
 }
 
 void
@@ -706,6 +726,11 @@ free (p)
 	ValidateActiveMemory ();
 	ValidateFreedMemory ();
     }
+    if (FindPrintAllocations) {
+	fprintf(stderr,"Freed at:  0x%lx\n",p);
+	PrintReturnStack ("at",h->returnStack);
+    }
+
 }
 
 char *
@@ -756,6 +781,13 @@ realloc (old, desiredsize)
 #endif
 	    AddFreedBlock (h);
 	}
+    }
+    if (FindPrintAllocations) {
+	fprintf(stderr,"Freed at: 0x%lx\n",old);
+	fprintf(stderr,"Reallocated: %i bytes at:  0x%lx\n",desiredsize,new);
+#ifdef HAS_GET_RETURN_ADDRESS
+        PrintReturnStack ("at", h->returnStack);
+#endif
     }
     return new;
 }

@@ -21,7 +21,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sunffb/ffb_dbe.c,v 1.1 2000/05/23 04:47:44 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sunffb/ffb_dbe.c,v 1.2 2003/02/11 03:19:02 dawes Exp $ */
 
 #define NEED_REPLIES
 #define NEED_EVENTS
@@ -892,10 +892,11 @@ FFBDbeInit(ScreenPtr pScreen, DbeScreenPrivPtr pDbeScreenPriv)
 	return TRUE;
 }
 
-extern Bool DbeRegisterFunction(ScreenPtr pScreen, Bool (*funct)(ScreenPtr, DbeScreenPrivPtr));
+extern void DbeRegisterFunction(ScreenPtr pScreen, Bool (*funct)(ScreenPtr, DbeScreenPrivPtr));
 
 Bool
 FFBDbePreInit(ScreenPtr pScreen)
 {
-	return DbeRegisterFunction(pScreen, FFBDbeInit);
+	DbeRegisterFunction(pScreen, FFBDbeInit);
+	return TRUE;
 }

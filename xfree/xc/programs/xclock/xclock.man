@@ -23,7 +23,7 @@
 .\" other dealings in this Software without prior written authorization
 .\" from The Open Group.
 .\"
-.\" $XFree86: xc/programs/xclock/xclock.man,v 1.10 2001/12/14 20:01:18 dawes Exp $
+.\" $XFree86: xc/programs/xclock/xclock.man,v 1.13 2002/10/21 13:33:08 alanh Exp $
 .\"
 .TH XCLOCK 1 __xorgversion__
 .SH NAME
@@ -33,6 +33,7 @@ xclock \- analog / digital clock for X
 \fBxclock\fP [ \fB\-help\fP ] [ \fB\-analog\fP ] [ \fB\-digital\fP ]
 [ \fB\-brief\fP ] [ \fB\-chime\fP ] [ \fB\-hd\fP \fIcolor\fP ]
 [ \fB\-hl\fP \fIcolor\fP ] [ \fB\-update\fP \fIseconds\fP ]
+[ \fB\-strftime\fP \fIformat\fP ]
 [ \fB\-padding\fP \fInumber\fP ]
 .SH DESCRIPTION
 The
@@ -63,6 +64,18 @@ and minutes fields.  The default is to show the full time and date information.
 This option indicates that a digital clock should display seconds since
 the Epoch (in format '970012340 seconds since Epoch' instead of a standard
 24-hour time.
+.TP 8
+.B \-strftime \fIformat\fP
+This option allows an strftime(3) format string to be specified for the
+digital clock's display.
+.TP 8
+.B \-twelve
+This option indicates that a digital clock should display the time in
+twelve hour format.
+.TP 8
+.B \-twentyfour
+This option indicates that a digital clock should display the time in
+twenty-four hour format.  This is the default when a digital clock is used.
 .TP 8
 .B \-chime
 This option indicates that the clock should chime 
@@ -127,6 +140,10 @@ the default is \fIlwhite\fP, otherwise the default is \fIblack\fP.
 Specifies whether or not an analog clock should be used instead of a digital
 one.  The default is True.
 .TP 8
+.B twentyfour (\fPclass\fB Boolean)
+Specifies whether or not a digital clock should display the time in
+twenty-four hour format.  The default is True.
+.TP 8
 .B chime (\fPclass\fB Boolean)
 Specifies whether or not a bell should be rung on the hour and half hour.
 .TP 8
@@ -160,7 +177,9 @@ to get the default host and display number.
 to get the name of a resource file that overrides the global resources
 stored in the RESOURCE_MANAGER property.
 .SH FILES
-<XRoot>/lib/X11/app-defaults/XClock - specifies required resources
+.TP
+.I __apploaddir__/XClock
+specifies required resources
 .SH "SEE ALSO"
 X(__miscmansuffix__), xrdb(1), time(3C)
 .SH BUGS

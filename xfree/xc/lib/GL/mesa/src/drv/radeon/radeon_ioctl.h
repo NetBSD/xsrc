@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/radeon/radeon_ioctl.h,v 1.2 2001/04/01 14:00:00 tsi Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/radeon/radeon_ioctl.h,v 1.6 2002/12/16 16:18:58 dawes Exp $ */
 /**************************************************************************
 
 Copyright 2000, 2001 ATI Technologies Inc., Ontario, Canada, and
@@ -39,123 +39,140 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #ifdef GLX_DIRECT_RENDERING
 
-#include "radeon_dri.h"
+#include "simple_list.h"
 #include "radeon_lock.h"
 
-#include "xf86drm.h"
-#include "xf86drmRadeon.h"
 
-#define RADEON_BUFFER_MAX_DWORDS	(RADEON_BUFFER_SIZE / sizeof(CARD32))
+extern void radeonEmitState( radeonContextPtr rmesa );
+extern void radeonEmitVertexAOS( radeonContextPtr rmesa,
+				 GLuint vertex_size,
+				 GLuint offset );
+
+extern void radeonEmitVbufPrim( radeonContextPtr rmesa,
+				GLuint vertex_format,
+				GLuint primitive,
+				GLuint vertex_nr );
+
+extern void radeonFlushElts( radeonContextPtr rmesa );
+
+extern GLushort *radeonAllocEltsOpenEnded( radeonContextPtr rmesa,
+					   GLuint vertex_format,
+					   GLuint primitive,
+					   GLuint min_nr );
+
+extern void radeonEmitAOS( radeonContextPtr rmesa,
+			   struct radeon_dma_region **regions,
+			   GLuint n,
+			   GLuint offset );
 
 
-extern drmBufPtr radeonGetBufferLocked( radeonContextPtr rmesa );
-extern void radeonFlushVerticesLocked( radeonContextPtr rmesa );
 
-extern void radeonGetEltBufLocked( radeonContextPtr rmesa );
-extern void radeonFlushEltsLocked( radeonContextPtr rmesa );
-extern void radeonFireEltsLocked( radeonContextPtr rmesa,
-				  GLuint start, GLuint end,
-				  GLuint discard );
-extern void radeonReleaseBufLocked( radeonContextPtr rmesa, drmBufPtr buffer );
+extern void radeonFlushCmdBuf( radeonContextPtr rmesa, const char * );
+extern void radeonRefillCurrentDmaRegion( radeonContextPtr rmesa );
 
-/* Make this available as both a regular and an inline function.
- */
-extern CARD32 *radeonAllocVertices( radeonContextPtr rmesa, GLuint count );
+extern void radeonAllocDmaRegion( radeonContextPtr rmesa,
+				  struct radeon_dma_region *region,
+				  int bytes, 
+				  int alignment );
 
-static __inline CARD32 *radeonAllocVerticesInline( radeonContextPtr rmesa,
-						   GLuint count )
-{
-   int bytes = count * rmesa->vertsize * 4;
-   CARD32 *head;
+extern void radeonAllocDmaRegionVerts( radeonContextPtr rmesa,
+				       struct radeon_dma_region *region,
+				       int numverts,
+				       int vertsize, 
+				       int alignment );
 
-   if ( !rmesa->vert_buf ) {
-      LOCK_HARDWARE( rmesa );
+extern void radeonReleaseDmaRegion( radeonContextPtr rmesa,
+				    struct radeon_dma_region *region,
+				    const char *caller );
 
-      if ( rmesa->first_elt != rmesa->next_elt ) {
-	 radeonFlushEltsLocked( rmesa );
-      }
-
-      rmesa->vert_buf = radeonGetBufferLocked( rmesa );
-
-      UNLOCK_HARDWARE( rmesa );
-   } else if ( rmesa->vert_buf->used + bytes > rmesa->vert_buf->total ) {
-      LOCK_HARDWARE( rmesa );
-
-      radeonFlushVerticesLocked( rmesa );
-      rmesa->vert_buf = radeonGetBufferLocked( rmesa );
-
-      UNLOCK_HARDWARE( rmesa );
-   }
-
-   head = (CARD32 *)((char *)rmesa->vert_buf->address +
-		     rmesa->vert_buf->used);
-
-   rmesa->vert_buf->used += bytes;
-   rmesa->num_verts += count;
-   return head;
-}
-
-extern void radeonFireBlitLocked( radeonContextPtr rmesa,
-				  drmBufPtr buffer,
-				  GLint offset, GLint pitch, GLint format,
-				  GLint x, GLint y,
-				  GLint width, GLint height );
-
-extern void radeonSwapBuffers( radeonContextPtr rmesa );
-extern void radeonPageFlip( radeonContextPtr rmesa );
-
+extern void radeonCopyBuffer( const __DRIdrawablePrivate *drawable );
+extern void radeonPageFlip( const __DRIdrawablePrivate *drawable );
+extern void radeonFlush( GLcontext *ctx );
+extern void radeonFinish( GLcontext *ctx );
 extern void radeonWaitForIdleLocked( radeonContextPtr rmesa );
+extern void radeonWaitForVBlank( radeonContextPtr rmesa );
+extern void radeonInitIoctlFuncs( GLcontext *ctx );
+extern void radeonGetAllParams( radeonContextPtr rmesa );
 
-
-extern void radeonDDInitIoctlFuncs( GLcontext *ctx );
+/* radeon_compat.c:
+ */
+extern void radeonCompatEmitPrimitive( radeonContextPtr rmesa,
+				       GLuint vertex_format,
+				       GLuint hw_primitive,
+				       GLuint nrverts );
 
 
 /* ================================================================
  * Helper macros:
  */
 
-#define FLUSH_BATCH( rmesa )						\
-do {									\
-   if ( RADEON_DEBUG & DEBUG_VERBOSE_IOCTL )				\
-      fprintf( stderr, "FLUSH_BATCH in %s\n", __FUNCTION__ );		\
-   if ( rmesa->vert_buf ) {						\
-      radeonFlushVertices( rmesa );					\
-   } else if ( rmesa->next_elt != rmesa->first_elt ) {			\
-      radeonFlushElts( rmesa );						\
-   }									\
-} while (0)
-
-/* 64-bit align the next element address, and then make room for the
- * next indexed prim packet header.
+/* Close off the last primitive, if it exists.
  */
-#define ALIGN_NEXT_ELT( rmesa )						\
-do {									\
-   rmesa->next_elt = (GLushort *)					\
-      (((unsigned long)rmesa->next_elt + 7) & ~0x7);			\
-   rmesa->next_elt = (GLushort *)					\
-      ((GLubyte *)rmesa->next_elt + RADEON_INDEX_PRIM_OFFSET);		\
+#define RADEON_NEWPRIM( rmesa )			\
+do {						\
+   if ( rmesa->dma.flush )			\
+      rmesa->dma.flush( rmesa );	\
 } while (0)
 
-#define radeonFlushVertices( rmesa )					\
-do {									\
-   LOCK_HARDWARE( rmesa );						\
-   radeonFlushVerticesLocked( rmesa );					\
-   UNLOCK_HARDWARE( rmesa );						\
+/* Can accomodate several state changes and primitive changes without
+ * actually firing the buffer.
+ */
+#define RADEON_STATECHANGE( rmesa, ATOM )			\
+do {								\
+   RADEON_NEWPRIM( rmesa );					\
+   move_to_head( &(rmesa->hw.dirty), &(rmesa->hw.ATOM));	\
 } while (0)
 
-#define radeonFlushElts( rmesa )					\
-do {									\
-   LOCK_HARDWARE( rmesa );						\
-   radeonFlushEltsLocked( rmesa );					\
-   UNLOCK_HARDWARE( rmesa );						\
+#define RADEON_DB_STATE( ATOM )			        \
+   memcpy( rmesa->hw.ATOM.lastcmd, rmesa->hw.ATOM.cmd,	\
+	   rmesa->hw.ATOM.cmd_size * 4)
+
+static __inline int RADEON_DB_STATECHANGE( 
+   radeonContextPtr rmesa,
+   struct radeon_state_atom *atom )
+{
+   if (memcmp(atom->cmd, atom->lastcmd, atom->cmd_size*4)) {
+      int *tmp;
+      RADEON_NEWPRIM( rmesa );
+      move_to_head( &(rmesa->hw.dirty), atom );
+      tmp = atom->cmd; 
+      atom->cmd = atom->lastcmd;
+      atom->lastcmd = tmp;
+      return 1;
+   }
+   else
+      return 0;
+}
+
+
+/* Fire the buffered vertices no matter what.
+ */
+#define RADEON_FIREVERTICES( rmesa )			\
+do {							\
+   if ( rmesa->store.cmd_used || rmesa->dma.flush ) {	\
+      radeonFlush( rmesa->glCtx );			\
+   }							\
 } while (0)
 
-#define radeonWaitForIdle( rmesa )					\
-do {									\
-   LOCK_HARDWARE( rmesa );						\
-   radeonWaitForIdleLocked( rmesa );					\
-   UNLOCK_HARDWARE( rmesa );						\
-} while (0)
+/* Alloc space in the command buffer
+ */
+static __inline char *radeonAllocCmdBuf( radeonContextPtr rmesa,
+					 int bytes, const char *where )
+{
+   if (rmesa->store.cmd_used + bytes > RADEON_CMD_BUF_SZ)
+      radeonFlushCmdBuf( rmesa, __FUNCTION__ );
+   
+   assert(rmesa->dri.drmMinor >= 3);
+
+   {
+      char *head = rmesa->store.cmd_buf + rmesa->store.cmd_used;
+      rmesa->store.cmd_used += bytes;
+      return head;
+   }
+}
+
+
+
 
 #endif
 #endif /* __RADEON_IOCTL_H__ */

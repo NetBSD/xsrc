@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/programs/Xserver/miext/layer/layerstr.h,v 1.2 2001/06/04 09:45:41 keithp Exp $
+ * $XFree86: xc/programs/Xserver/miext/layer/layerstr.h,v 1.3 2002/11/08 22:19:42 keithp Exp $
  *
  * Copyright © 2001 Keith Packard, member of The XFree86 Project, Inc.
  *
@@ -68,6 +68,9 @@ typedef struct _LayerKind {
     PaintWindowBorderProcPtr	PaintWindowBorder;
     CopyWindowProcPtr		CopyWindow;
     
+    CreatePixmapProcPtr		CreatePixmap;
+    DestroyPixmapProcPtr	DestroyPixmap;
+
     CreateGCProcPtr		CreateGC;
 
     CompositeProcPtr		Composite;
@@ -181,6 +184,12 @@ layerPaintWindowBorder (WindowPtr pWin, RegionPtr pRegion, int what);
 
 void
 layerCopyWindow(WindowPtr pWin, DDXPointRec ptOldOrg, RegionPtr prgnSrc);
+
+PixmapPtr
+layerCreatePixmap (ScreenPtr pScreen, int width, int height, int depth);
+
+Bool
+layerDestroyPixmap (PixmapPtr pPixmap);
 
 Bool
 layerCreateGC (GCPtr pGC);

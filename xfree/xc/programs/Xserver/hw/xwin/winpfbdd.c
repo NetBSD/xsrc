@@ -30,7 +30,7 @@
  *		Peter Busch
  *		Harold L Hunt II
  */
-/* $XFree86: xc/programs/Xserver/hw/xwin/winpfbdd.c,v 1.14 2001/11/21 08:51:24 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xwin/winpfbdd.c,v 1.17 2002/10/17 08:18:22 alanh Exp $ */
 
 #include "win.h"
 
@@ -49,8 +49,8 @@ winAllocateFBPrimaryDD (ScreenPtr pScreen)
   DDSURFACEDESC		*pddsdPrimary = NULL;
   DDSURFACEDESC		*pddsdOffscreen = NULL;
   RECT			rcClient;
-  
-  ErrorF ("winAllocateFBPrimaryDD ()\n");
+
+  ErrorF ("winAllocateFBPrimaryDD\n");
 
   /* Get client area location in screen coords */
   GetClientRect (pScreenPriv->hwndScreen, &rcClient);
@@ -59,9 +59,9 @@ winAllocateFBPrimaryDD (ScreenPtr pScreen)
 		   (LPPOINT)&rcClient, 2);
 
   /* Create a DirectDraw object, store the address at lpdd */
-  ddrval = DirectDrawCreate (NULL, &pScreenPriv->pdd, NULL);
+  ddrval = (*g_fpDirectDrawCreate) (NULL, &pScreenPriv->pdd, NULL);
   if (ddrval != DD_OK)
-    FatalError ("winAllocateFBPrimaryDD () - Could not start DirectDraw\n");
+    FatalError ("winAllocateFBPrimaryDD - Could not start DirectDraw\n");
   
   /* Get a DirectDraw2 interface pointer */
   ddrval = IDirectDraw_QueryInterface (pScreenPriv->pdd,
@@ -69,13 +69,13 @@ winAllocateFBPrimaryDD (ScreenPtr pScreen)
 				       (LPVOID*) &pScreenPriv->pdd2);
   if (FAILED (ddrval))
     {
-      ErrorF ("winAllocateFBShadowDD () - Failed DD2 query: %08x\n",
+      ErrorF ("winAllocateFBShadowDD - Failed DD2 query: %08x\n",
 	      ddrval);
       return FALSE;
     }
 
 
-  ErrorF ("winAllocateFBPrimaryDD () - Created and initialized DD\n");
+  ErrorF ("winAllocateFBPrimaryDD - Created and initialized DD\n");
 
   /* Are we windowed or fullscreen? */
   if (pScreenInfo->fFullScreen)
@@ -86,18 +86,18 @@ winAllocateFBPrimaryDD (ScreenPtr pScreen)
 						 DDSCL_FULLSCREEN
 						 | DDSCL_EXCLUSIVE);
       if (FAILED (ddrval))
-	FatalError ("winAllocateFBPrimaryDD () - Could not set "\
+	FatalError ("winAllocateFBPrimaryDD - Could not set "
 		    "cooperative level\n");
 
       /* Change the video mode to the mode requested */
       ddrval = IDirectDraw2_SetDisplayMode (pScreenPriv->pdd2,
 					    pScreenInfo->dwWidth,
 					    pScreenInfo->dwHeight,
-					    pScreenInfo->dwDepth,
+					    pScreenInfo->dwBPP,
 					    pScreenInfo->dwRefreshRate,
 					    0);
        if (FAILED (ddrval))
-	FatalError ("winAllocateFBPrimaryDD () - Could not set "\
+	FatalError ("winAllocateFBPrimaryDD - Could not set "
 		    "full screen display mode\n");
     }
   else
@@ -107,7 +107,7 @@ winAllocateFBPrimaryDD (ScreenPtr pScreen)
 						 pScreenPriv->hwndScreen,
 						 DDSCL_NORMAL);
       if (FAILED (ddrval))
-	FatalError ("winAllocateFBPrimaryDD () - Could not set "\
+	FatalError ("winAllocateFBPrimaryDD - Could not set "
 		    "cooperative level\n");
     }
 
@@ -123,16 +123,16 @@ winAllocateFBPrimaryDD (ScreenPtr pScreen)
 				       &pScreenPriv->pddsPrimary,
 				       NULL);
   if (FAILED (ddrval))
-       FatalError ("winAllocateFBPrimaryDD () - Could not create primary "\
+       FatalError ("winAllocateFBPrimaryDD - Could not create primary "
 		  "surface %08x\n", ddrval);
 
-  ErrorF ("winAllocateFBPrimaryDD () - Created primary\n");
+  ErrorF ("winAllocateFBPrimaryDD - Created primary\n");
 
   /* Allocate a DD surface description for our screen privates */
   pddsdPrimary = pScreenPriv->pddsdPrimary
-    = xalloc (sizeof (DDSURFACEDESC));
+    = malloc (sizeof (DDSURFACEDESC));
   if (pddsdPrimary == NULL)
-    FatalError ("winAllocateFBPrimaryDD () - Could not allocate surface "\
+    FatalError ("winAllocateFBPrimaryDD - Could not allocate surface "
 		"description memory\n");
   ZeroMemory (pddsdPrimary, sizeof (*pddsdPrimary));
   pddsdPrimary->dwSize = sizeof (*pddsdPrimary);
@@ -159,21 +159,21 @@ winAllocateFBPrimaryDD (ScreenPtr pScreen)
 				       &pScreenPriv->pddsOffscreen,
 				       NULL);
   if (ddrval != DD_OK)
-    FatalError ("winAllocateFBPrimaryDD () - Could not create shadow "\
+    FatalError ("winAllocateFBPrimaryDD - Could not create shadow "
 		"surface\n");
   
-  ErrorF ("winAllocateFBPrimaryDD () - Created offscreen\n");
+  ErrorF ("winAllocateFBPrimaryDD - Created offscreen\n");
 
   /* Allocate a DD surface description for our screen privates */
   pddsdOffscreen = pScreenPriv->pddsdOffscreen
-    = xalloc (sizeof (DDSURFACEDESC));
+    = malloc (sizeof (DDSURFACEDESC));
   if (pddsdOffscreen == NULL)
-    FatalError ("winAllocateFBPrimaryDD () - Could not allocate surface "\
+    FatalError ("winAllocateFBPrimaryDD - Could not allocate surface "
 		"description memory\n");
   ZeroMemory (pddsdOffscreen, sizeof (*pddsdOffscreen));
   pddsdOffscreen->dwSize = sizeof (*pddsdOffscreen);
 
-  ErrorF ("winAllocateFBPrimaryDD () - Locking primary\n");
+  ErrorF ("winAllocateFBPrimaryDD - Locking primary\n");
 
   /* Lock the primary surface */
   ddrval = IDirectDrawSurface2_Lock (pScreenPriv->pddsPrimary,
@@ -182,28 +182,28 @@ winAllocateFBPrimaryDD (ScreenPtr pScreen)
 				    DDLOCK_WAIT,
 				    NULL);
   if (ddrval != DD_OK || pddsdPrimary->lpSurface == NULL)
-    FatalError ("winAllocateFBPrimaryDD () - Could not lock "\
+    FatalError ("winAllocateFBPrimaryDD - Could not lock "
 		"primary surface\n");
 
-  ErrorF ("winAllocateFBPrimaryDD () - Locked primary\n");
+  ErrorF ("winAllocateFBPrimaryDD - Locked primary\n");
 
   /* We don't know how to deal with anything other than RGB */
   if (!(pddsdPrimary->ddpfPixelFormat.dwFlags & DDPF_RGB))
-    FatalError ("winAllocateFBPrimaryDD () - Color format other than RGB\n");
+    FatalError ("winAllocateFBPrimaryDD - Color format other than RGB\n");
 
-  /* Grab the pitch, and memory pointer from the surface desc */
-  pScreenInfo->dwStrideBytes = pddsdPrimary->u1.lPitch;
-  pScreenInfo->dwStride = (pScreenInfo->dwStrideBytes * 8)
-    / pScreenInfo->dwDepth;
+  /* Grab the pitch from the surface desc */
+  pScreenInfo->dwStride = (pddsdPrimary->u1.lPitch * 8)
+    / pScreenInfo->dwBPP;
+
+  /* Save the pointer to our surface memory */
   pScreenInfo->pfb = pddsdPrimary->lpSurface;
   
   /* Grab the color depth and masks from the surface description */
-  pScreenInfo->dwDepth = pddsdPrimary->ddpfPixelFormat.u1.dwRGBBitCount;
   pScreenPriv->dwRedMask = pddsdPrimary->ddpfPixelFormat.u2.dwRBitMask;
   pScreenPriv->dwGreenMask = pddsdPrimary->ddpfPixelFormat.u3.dwGBitMask;
   pScreenPriv->dwBlueMask = pddsdPrimary->ddpfPixelFormat.u4.dwBBitMask;
 
-  ErrorF ("winAllocateFBPrimaryDD () - Returning\n");
+  ErrorF ("winAllocateFBPrimaryDD - Returning\n");
 
   return TRUE;
 }
@@ -222,7 +222,7 @@ winCloseScreenPrimaryDD (int nIndex, ScreenPtr pScreen)
   winScreenInfo		*pScreenInfo = pScreenPriv->pScreenInfo;
   Bool			fReturn;
   
-  ErrorF ("winCloseScreenPrimaryDD () - Freeing screen resources\n");
+  ErrorF ("winCloseScreenPrimaryDD - Freeing screen resources\n");
 
   /* Flag that the screen is closed */
   pScreenPriv->fClosed = TRUE;
@@ -273,7 +273,7 @@ winCloseScreenPrimaryDD (int nIndex, ScreenPtr pScreen)
   pScreenInfo->pfb = NULL;
 
   /* Free the screen privates for this screen */
-  xfree ((pointer) pScreenPriv);
+  free ((pointer) pScreenPriv);
 
   return fReturn;
 }
@@ -307,7 +307,7 @@ winInitVisualsPrimaryDD (ScreenPtr pScreen)
   else
     pScreenPriv->dwBitsPerRGB = dwBlueBits;
   
-  ErrorF ("winInitVisualsPrimaryDD () - Masks: %08x %08x %08x bpRGB: %d\n",
+  ErrorF ("winInitVisualsPrimaryDD - Masks: %08x %08x %08x bpRGB: %d\n",
 	  pScreenPriv->dwRedMask,
 	  pScreenPriv->dwGreenMask,
 	  pScreenPriv->dwBlueMask,
@@ -316,7 +316,6 @@ winInitVisualsPrimaryDD (ScreenPtr pScreen)
   /* Create a single visual according to the Windows screen depth */
   switch (pScreenInfo->dwDepth)
     {
-    case 32:
     case 24:
     case 16:
     case 15:
@@ -328,7 +327,7 @@ winInitVisualsPrimaryDD (ScreenPtr pScreen)
 				     pScreenPriv->dwGreenMask,
 				     pScreenPriv->dwBlueMask))
 	{
-	  ErrorF ("winInitVisualsPrimaryDD () - " \
+	  ErrorF ("winInitVisualsPrimaryDD - " 
 		  "miSetVisualTypesAndMasks failed\n");
 	  return FALSE;
 	}
@@ -336,7 +335,7 @@ winInitVisualsPrimaryDD (ScreenPtr pScreen)
 
     case 8:
 #if CYGDEBUG
-      ErrorF ("winInitVisuals () - Calling miSetVisualTypesAndMasks\n");
+      ErrorF ("winInitVisuals - Calling miSetVisualTypesAndMasks\n");
 #endif /* CYGDEBUG */
       if (!miSetVisualTypesAndMasks (pScreenInfo->dwDepth,
 				     PseudoColorMask,
@@ -346,25 +345,26 @@ winInitVisualsPrimaryDD (ScreenPtr pScreen)
 				     pScreenPriv->dwGreenMask,
 				     pScreenPriv->dwBlueMask))
 	{
-	  ErrorF ("winInitVisualsPrimaryDD () - "\
+	  ErrorF ("winInitVisualsPrimaryDD - "
 		  "miSetVisualTypesAndMasks failed\n");
 	  return FALSE;
 	}
 #if CYGDEBUG
-      ErrorF ("winInitVisualsPrimaryDD () - Returned from "\
+      ErrorF ("winInitVisualsPrimaryDD - Returned from "
 	      "miSetVisualTypesAndMasks\n");
 #endif /* CYGDEBUG */
       break;
 
     default:
-      ErrorF ("winInitVisualsPrimaryDD () - Unknown screen depth\n");
+      ErrorF ("winInitVisualsPrimaryDD - Unknown screen depth\n");
       return FALSE;
     }
 
-  ErrorF ("winInitVisualsPrimaryDD () - Returning\n");
+  ErrorF ("winInitVisualsPrimaryDD - Returning\n");
 
   return TRUE;
 }
+
 
 Bool
 winAdjustVideoModePrimaryDD (ScreenPtr pScreen)
@@ -372,45 +372,45 @@ winAdjustVideoModePrimaryDD (ScreenPtr pScreen)
   winScreenPriv(pScreen);
   winScreenInfo		*pScreenInfo = pScreenPriv->pScreenInfo;
   HDC			hdc = NULL;
-  DWORD			dwDepth;
+  DWORD			dwBPP;
 
   /* We're in serious trouble if we can't get a DC */
   hdc = GetDC (NULL);
   if (hdc == NULL)
     {
-      ErrorF ("winAdjustVideoModePrimaryDD () - GetDC failed\n");
+      ErrorF ("winAdjustVideoModePrimaryDD - GetDC failed\n");
       return FALSE;
     }
 
   /* Query GDI for current display depth */
-  dwDepth = GetDeviceCaps (hdc, BITSPIXEL);
+  dwBPP = GetDeviceCaps (hdc, BITSPIXEL);
 
   /* DirectDraw can only change the depth in fullscreen mode */
-  if (pScreenInfo->dwDepth == WIN_DEFAULT_DEPTH)
+  if (pScreenInfo->dwBPP == WIN_DEFAULT_BPP)
     {
       /* No -depth parameter passed, let the user know the depth being used */
-      ErrorF ("winAdjustVideoModePrimaryDD () - Using Windows display "
-	      "depth of %d bits per pixel\n", dwDepth);
+      ErrorF ("winAdjustVideoModePrimaryDD - Using Windows display "
+	      "depth of %d bits per pixel\n", dwBPP);
 
       /* Use GDI's depth */
-      pScreenInfo->dwDepth = dwDepth;
+      pScreenInfo->dwBPP = dwBPP;
     }
   else if (pScreenInfo->fFullScreen
-	   && pScreenInfo->dwDepth != dwDepth)
+	   && pScreenInfo->dwBPP != dwBPP)
     {
       /* FullScreen, and GDI depth differs from -depth parameter */
-      ErrorF ("winAdjustVideoModePrimaryDD () - FullScreen, using command "
-	      "line depth: %d\n", pScreenInfo->dwDepth);
+      ErrorF ("winAdjustVideoModePrimaryDD - FullScreen, using command "
+	      "line depth: %d\n", pScreenInfo->dwBPP);
     }
-  else if (dwDepth != pScreenInfo->dwDepth)
+  else if (dwBPP != pScreenInfo->dwBPP)
     {
       /* Windowed, and GDI depth differs from -depth parameter */
-      ErrorF ("winAdjustVideoModePrimaryDD () - Windowed, command line "
+      ErrorF ("winAdjustVideoModePrimaryDD - Windowed, command line "
 	      "depth: %d, using depth: %d\n",
-	      pScreenInfo->dwDepth, dwDepth);
+	      pScreenInfo->dwBPP, dwBPP);
 
       /* We'll use GDI's depth */
-      pScreenInfo->dwDepth = dwDepth;
+      pScreenInfo->dwBPP = dwBPP;
     }
   
   /* Release our DC */
@@ -523,7 +523,7 @@ winHotKeyAltTabPrimaryDD (ScreenPtr pScreen)
   RECT			rcClient, rcSrc;
   HRESULT		ddrval = DD_OK;
 
-  ErrorF ("\nwinHotKeyAltTabPrimaryDD ()\n\n");
+  ErrorF ("\nwinHotKeyAltTabPrimaryDD\n\n");
 
   /* Alt+Tab was pressed, we will lose focus very soon */
   pScreenPriv->fActive = FALSE;
@@ -546,7 +546,7 @@ winHotKeyAltTabPrimaryDD (ScreenPtr pScreen)
       ddrval = IDirectDrawSurface2_Unlock (pScreenPriv->pddsPrimary,
 					   NULL);
       if (FAILED (ddrval))
-	FatalError ("winHotKeyAltTabPrimaryDD () - Failed unlocking primary "\
+	FatalError ("winHotKeyAltTabPrimaryDD - Failed unlocking primary "
 		    "surface\n");
     }
 
@@ -576,13 +576,13 @@ winHotKeyAltTabPrimaryDD (ScreenPtr pScreen)
 					DDBLT_WAIT,
 					NULL);
       if (FAILED (ddrval))
-	FatalError ("winHotKeyAltTabPrimaryDD () - Failed blitting primary "
+	FatalError ("winHotKeyAltTabPrimaryDD - Failed blitting primary "
 		    "surface to offscreen surface: %08x\n",
 		    ddrval);
     }
   else
     {
-      FatalError ("winHotKeyAltTabPrimaryDD() - Unknown error from "
+      FatalError ("winHotKeyAltTabPrimaryDD - Unknown error from "
 		  "Blt: %08dx\n", ddrval);
     }
 
@@ -594,7 +594,7 @@ winHotKeyAltTabPrimaryDD (ScreenPtr pScreen)
 				     NULL);
   if (ddrval != DD_OK
       || pScreenPriv->pddsdPrimary->lpSurface == NULL)
-    FatalError ("winHotKeyAltTabPrimaryDD () - Could not lock "\
+    FatalError ("winHotKeyAltTabPrimaryDD - Could not lock "
 		"offscreen surface\n");
 
   /* Notify FB of the new memory pointer */

@@ -1,5 +1,5 @@
 // $XConsortium: es /main/3 1996/08/31 12:19:38 kaleb $
-// $XFree86: xc/programs/xkbcomp/symbols/la,v 1.1 2001/11/21 22:28:52 dawes Exp $
+// $XFree86: xc/programs/xkbcomp/symbols/la,v 1.2 2002/06/04 22:50:58 dawes Exp $
 // Modified for a real Latin American Keyboard by Fabian Mandelbaum
 partial default alphanumeric_keys 
 xkb_symbols "basic" {
@@ -55,7 +55,7 @@ xkb_symbols "basic" {
 
 partial alphanumeric_keys 
 xkb_symbols "Sundeadkeys" {
-    include "es(basic)"
+    include "la(basic)"
 
     key <AC11> {	[     SunFA_Acute, SunFA_Diaeresis 	],	
 			[	braceleft,       braceleft	]	};
@@ -65,12 +65,12 @@ xkb_symbols "Sundeadkeys" {
 
 partial alphanumeric_keys 
 xkb_symbols "sundeadkeys" {
-    include "es(Sundeadkeys)"
+    include "la(Sundeadkeys)"
 };
 
 partial alphanumeric_keys 
 xkb_symbols "nodeadkeys" {
-    include "es(basic)"
+    include "la(basic)"
 
     key	<AC10> {	[	   ntilde,          Ntilde  	],	
 			[      asciitilde,     doubleacute	]	};

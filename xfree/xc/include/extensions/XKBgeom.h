@@ -24,7 +24,7 @@ OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
 THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ********************************************************/
-/* $XFree86: xc/include/extensions/XKBgeom.h,v 3.8 2001/08/01 00:44:35 tsi Exp $ */
+/* $XFree86: xc/include/extensions/XKBgeom.h,v 3.9 2002/09/18 17:11:40 tsi Exp $ */
 
 #ifndef _XKBGEOM_H_
 #define	_XKBGEOM_H_
@@ -113,7 +113,7 @@ typedef struct _XkbShape {
 	XkbOutlinePtr	 primary;
 	XkbBoundsRec	 bounds;
 } XkbShapeRec, *XkbShapePtr;
-#define	XkbOutlineIndex(s,o)	((o)-&(s)->outlines[0])
+#define	XkbOutlineIndex(s,o)	((int)((o)-&(s)->outlines[0]))
 
 typedef struct _XkbShapeDoodad {
 	Atom		 name;
@@ -295,7 +295,7 @@ typedef struct _XkbGeometry {
 	XkbDoodadPtr	 doodads;
 	XkbKeyAliasPtr	 key_aliases;
 } XkbGeometryRec;
-#define	XkbGeomColorIndex(g,c)	((c)-&(g)->colors[0])
+#define	XkbGeomColorIndex(g,c)	((int)((c)-&(g)->colors[0]))
 
 #define	XkbGeomPropertiesMask	(1<<0)
 #define	XkbGeomColorsMask	(1<<1)

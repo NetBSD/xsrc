@@ -26,7 +26,7 @@
  *
  * Author: Paulo César Pereira de Andrade <pcpa@conectiva.com.br>
  *
- * $XFree86: xc/programs/Xserver/hw/xfree86/xf86cfg/screen-cfg.c,v 1.10 2001/10/28 03:34:08 tsi Exp $
+ * $XFree86: xc/programs/Xserver/hw/xfree86/xf86cfg/screen-cfg.c,v 1.12 2002/11/18 05:24:18 paulo Exp $
  */
 
 #include "xf86config.h"
@@ -72,6 +72,7 @@ static char *standard_modes[] = {
     "1600x1200",
     "1800x1400",
     "512x384",
+    "1400x1050",
 };
 
 static char **modes;
@@ -377,10 +378,13 @@ MoveCallback(Widget w, XtPointer user_data, XtPointer call_data)
 	return;
 
     tmp = defmodes[unsel_index];
-    if (down)
-	defmodes[unsel_index] = defmodes[++unsel_index];
-    else
-	defmodes[unsel_index] = defmodes[--unsel_index];
+    if (down) {
+	defmodes[unsel_index] = defmodes[unsel_index + 1];
+	unsel_index++;
+    } else {
+	defmodes[unsel_index] = defmodes[unsel_index - 1];
+	unsel_index--;
+    }
     defmodes[unsel_index] = tmp;
 
     XawListUnhighlight(listR);

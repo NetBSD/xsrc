@@ -1,9 +1,9 @@
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.4
+ * Version:  4.0.4
  *
- * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -28,62 +28,128 @@
 #include "all.h"
 #else
 #include "glheader.h"
-#include "accum.h"
-#include "alphabuf.h"
+#include "buffers.h"
 #include "clip.h"
 #include "colortab.h"
 #include "context.h"
-#include "cva.h"
-#include "depth.h"
 #include "dlist.h"
 #include "eval.h"
 #include "enums.h"
 #include "extensions.h"
 #include "fog.h"
 #include "get.h"
-#include "glapi.h"
-#include "glapinoop.h"
 #include "glthread.h"
 #include "hash.h"
+#include "imports.h"
 #include "light.h"
 #include "macros.h"
-#include "matrix.h"
 #include "mem.h"
 #include "mmath.h"
-#include "pb.h"
-#include "pipeline.h"
-#include "shade.h"
 #include "simple_list.h"
-#include "stencil.h"
-#include "stages.h"
 #include "state.h"
-#include "translate.h"
 #include "teximage.h"
 #include "texobj.h"
 #include "texstate.h"
-#include "texture.h"
-#include "types.h"
+#include "mtypes.h"
 #include "varray.h"
-#include "vb.h"
-#include "vbcull.h"
-#include "vbrender.h"
-#include "vbxform.h"
-#include "vertices.h"
-#include "xform.h"
+#include "vtxfmt.h"
+
+#include "math/m_translate.h"
+#include "math/m_vertices.h"
+#include "math/m_matrix.h"
+#include "math/m_xform.h"
+#include "math/mathmod.h"
 #endif
 
+#if defined(MESA_TRACE)
+#include "Trace/tr_context.h"
+#include "Trace/tr_wrapper.h"
+#endif
+
+#ifdef USE_SPARC_ASM
+#include "SPARC/sparc.h"
+#endif
+
+#ifndef MESA_VERBOSE
+int MESA_VERBOSE = 0;
+#endif
+
+#ifndef MESA_DEBUG_FLAGS
+int MESA_DEBUG_FLAGS = 0;
+#endif
+
+/**********************************************************************/
+/*****       OpenGL SI-style interface (new in Mesa 3.5)          *****/
+/**********************************************************************/
+
+static GLboolean
+_mesa_DestroyContext(__GLcontext *gc)
+{
+   if (gc) {
+      _mesa_free_context_data(gc);
+      (*gc->imports.free)(gc, gc);
+   }
+   return GL_TRUE;
+}
+
+
+/* exported OpenGL SI interface */
+__GLcontext *
+__glCoreCreateContext(__GLimports *imports, __GLcontextModes *modes)
+{
+    GLcontext *ctx;
+
+    ctx = (GLcontext *) (*imports->calloc)(0, 1, sizeof(GLcontext));
+    if (ctx == NULL) {
+	return NULL;
+    }
+   ctx->Driver.CurrentExecPrimitive=0;
+    ctx->imports = *imports;
+
+    _mesa_initialize_visual(&ctx->Visual,
+                            modes->rgbMode,
+                            modes->doubleBufferMode,
+                            modes->stereoMode,
+                            modes->redBits,
+                            modes->greenBits,
+                            modes->blueBits,
+                            modes->alphaBits,
+                            modes->indexBits,
+                            modes->depthBits,
+                            modes->stencilBits,
+                            modes->accumRedBits,
+                            modes->accumGreenBits,
+                            modes->accumBlueBits,
+                            modes->accumAlphaBits,
+                            0);
+
+    /* KW: was imports->wscx */
+    _mesa_initialize_context(ctx, &ctx->Visual, NULL, imports->other, GL_FALSE);
+
+    ctx->exports.destroyContext = _mesa_DestroyContext;
+
+    return ctx;
+}
+
+
+/* exported OpenGL SI interface */
+void
+__glCoreNopDispatch(void)
+{
+#if 0
+   /* SI */
+   __gl_dispatch = __glNopDispatchState;
+#else
+   /* Mesa */
+   _glapi_set_dispatch(NULL);
+#endif
+}
 
 
 /**********************************************************************/
 /*****                  Context and Thread management             *****/
 /**********************************************************************/
 
-
-#if !defined(THREADS)
-
-struct immediate *_mesa_CurrentInput = NULL;
-
-#endif
 
 
 /**********************************************************************/
@@ -132,7 +198,7 @@ _mesa_create_visual( GLboolean rgbFlag,
                                    indexBits, depthBits, stencilBits,
                                    accumRedBits, accumGreenBits,
                                    accumBlueBits, accumAlphaBits,
-                                   numSamples )) {
+                                   numSamples)) {
          FREE(vis);
          return NULL;
       }
@@ -165,6 +231,8 @@ _mesa_initialize_visual( GLvisual *vis,
                          GLint accumAlphaBits,
                          GLint numSamples )
 {
+   (void) numSamples;
+
    assert(vis);
 
    /* This is to catch bad values from device drivers not updated for
@@ -192,67 +260,23 @@ _mesa_initialize_visual( GLvisual *vis,
       return GL_FALSE;
    }
 
-   vis->RGBAflag   = rgbFlag;
-   vis->DBflag     = dbFlag;
-   vis->StereoFlag = stereoFlag;
-   vis->RedBits    = redBits;
-   vis->GreenBits  = greenBits;
-   vis->BlueBits   = blueBits;
-   vis->AlphaBits  = alphaBits;
+   vis->rgbMode          = rgbFlag;
+   vis->doubleBufferMode = dbFlag;
+   vis->stereoMode       = stereoFlag;
+   vis->redBits          = redBits;
+   vis->greenBits        = greenBits;
+   vis->blueBits         = blueBits;
+   vis->alphaBits        = alphaBits;
 
-   vis->IndexBits      = indexBits;
-   vis->DepthBits      = depthBits;
-   vis->AccumRedBits   = (accumRedBits > 0) ? (8 * sizeof(GLaccum)) : 0;
-   vis->AccumGreenBits = (accumGreenBits > 0) ? (8 * sizeof(GLaccum)) : 0;
-   vis->AccumBlueBits  = (accumBlueBits > 0) ? (8 * sizeof(GLaccum)) : 0;
-   vis->AccumAlphaBits = (accumAlphaBits > 0) ? (8 * sizeof(GLaccum)) : 0;
-   vis->StencilBits    = (stencilBits > 0) ? (8 * sizeof(GLstencil)) : 0;
-
-   if (depthBits == 0) {
-      /* Special case.  Even if we don't have a depth buffer we need
-       * good values for DepthMax for Z vertex transformation purposes
-       * and for per-fragment fog computation.
-       */
-      vis->DepthMax = 1 << 16;
-      vis->DepthMaxF = (GLfloat) vis->DepthMax;
-   }
-   else if (depthBits < 32) {
-      vis->DepthMax = (1 << depthBits) - 1;
-      vis->DepthMaxF = (GLfloat) vis->DepthMax;
-   }
-   else {
-      /* Special case since shift values greater than or equal to the
-       * number of bits in the left hand expression's type are
-       * undefined.
-       */
-      vis->DepthMax = 0xffffffff;
-      vis->DepthMaxF = (GLfloat) vis->DepthMax;
-   }
+   vis->indexBits      = indexBits;
+   vis->depthBits      = depthBits;
+   vis->accumRedBits   = (accumRedBits > 0) ? (8 * sizeof(GLaccum)) : 0;
+   vis->accumGreenBits = (accumGreenBits > 0) ? (8 * sizeof(GLaccum)) : 0;
+   vis->accumBlueBits  = (accumBlueBits > 0) ? (8 * sizeof(GLaccum)) : 0;
+   vis->accumAlphaBits = (accumAlphaBits > 0) ? (8 * sizeof(GLaccum)) : 0;
+   vis->stencilBits    = (stencilBits > 0) ? (8 * sizeof(GLstencil)) : 0;
 
    return GL_TRUE;
-}
-
-
-/* This function should no longer be used. Use _mesa_create_visual() instead */
-GLvisual *
-gl_create_visual( GLboolean rgbFlag,
-                  GLboolean alphaFlag,
-                  GLboolean dbFlag,
-                  GLboolean stereoFlag,
-                  GLint depthBits,
-                  GLint stencilBits,
-                  GLint accumBits,
-                  GLint indexBits,
-                  GLint redBits,
-                  GLint greenBits,
-                  GLint blueBits,
-                  GLint alphaBits )
-{
-   (void) alphaFlag;
-   return _mesa_create_visual(rgbFlag, dbFlag, stereoFlag,
-                              redBits, greenBits, blueBits, alphaBits,
-                              indexBits, depthBits, stencilBits,
-                              accumBits, accumBits, accumBits, accumBits, 0);
 }
 
 
@@ -261,15 +285,6 @@ _mesa_destroy_visual( GLvisual *vis )
 {
    FREE(vis);
 }
-
-
-/* obsolete */
-void
-gl_destroy_visual( GLvisual *vis )
-{
-   _mesa_destroy_visual(vis);
-}
-
 
 
 /**********************************************************************/
@@ -281,20 +296,19 @@ gl_destroy_visual( GLvisual *vis )
  * Create a new framebuffer.  A GLframebuffer is a struct which
  * encapsulates the depth, stencil and accum buffers and related
  * parameters.
- * Input:  visual - a GLvisual pointer
+ * Input:  visual - a GLvisual pointer (we copy the struct contents)
  *         softwareDepth - create/use a software depth buffer?
  *         softwareStencil - create/use a software stencil buffer?
  *         softwareAccum - create/use a software accum buffer?
  *         softwareAlpha - create/use a software alpha buffer?
-
  * Return:  pointer to new GLframebuffer struct or NULL if error.
  */
 GLframebuffer *
-gl_create_framebuffer( GLvisual *visual,
-                       GLboolean softwareDepth,
-                       GLboolean softwareStencil,
-                       GLboolean softwareAccum,
-                       GLboolean softwareAlpha )
+_mesa_create_framebuffer( const GLvisual *visual,
+                          GLboolean softwareDepth,
+                          GLboolean softwareStencil,
+                          GLboolean softwareAccum,
+                          GLboolean softwareAlpha )
 {
    GLframebuffer *buffer = CALLOC_STRUCT(gl_frame_buffer);
    assert(visual);
@@ -309,11 +323,11 @@ gl_create_framebuffer( GLvisual *visual,
 
 /*
  * Initialize a GLframebuffer object.
- * Input:  See gl_create_framebuffer() above.
+ * Input:  See _mesa_create_framebuffer() above.
  */
 void
 _mesa_initialize_framebuffer( GLframebuffer *buffer,
-                              GLvisual *visual,
+                              const GLvisual *visual,
                               GLboolean softwareDepth,
                               GLboolean softwareStencil,
                               GLboolean softwareAccum,
@@ -322,25 +336,27 @@ _mesa_initialize_framebuffer( GLframebuffer *buffer,
    assert(buffer);
    assert(visual);
 
+   BZERO(buffer, sizeof(GLframebuffer));
+
    /* sanity checks */
    if (softwareDepth ) {
-      assert(visual->DepthBits > 0);
+      assert(visual->depthBits > 0);
    }
    if (softwareStencil) {
-      assert(visual->StencilBits > 0);
+      assert(visual->stencilBits > 0);
    }
    if (softwareAccum) {
-      assert(visual->RGBAflag);
-      assert(visual->AccumRedBits > 0);
-      assert(visual->AccumGreenBits > 0);
-      assert(visual->AccumBlueBits > 0);
+      assert(visual->rgbMode);
+      assert(visual->accumRedBits > 0);
+      assert(visual->accumGreenBits > 0);
+      assert(visual->accumBlueBits > 0);
    }
    if (softwareAlpha) {
-      assert(visual->RGBAflag);
-      assert(visual->AlphaBits > 0);
+      assert(visual->rgbMode);
+      assert(visual->alphaBits > 0);
    }
 
-   buffer->Visual = visual;
+   buffer->Visual = *visual;
    buffer->UseSoftwareDepthBuffer = softwareDepth;
    buffer->UseSoftwareStencilBuffer = softwareStencil;
    buffer->UseSoftwareAccumBuffer = softwareAccum;
@@ -352,31 +368,51 @@ _mesa_initialize_framebuffer( GLframebuffer *buffer,
  * Free a framebuffer struct and its buffers.
  */
 void
-gl_destroy_framebuffer( GLframebuffer *buffer )
+_mesa_destroy_framebuffer( GLframebuffer *buffer )
 {
    if (buffer) {
-      if (buffer->DepthBuffer) {
-         FREE( buffer->DepthBuffer );
-      }
-      if (buffer->Accum) {
-         FREE( buffer->Accum );
-      }
-      if (buffer->Stencil) {
-         FREE( buffer->Stencil );
-      }
-      if (buffer->FrontLeftAlpha) {
-         FREE( buffer->FrontLeftAlpha );
-      }
-      if (buffer->BackLeftAlpha) {
-         FREE( buffer->BackLeftAlpha );
-      }
-      if (buffer->FrontRightAlpha) {
-         FREE( buffer->FrontRightAlpha );
-      }
-      if (buffer->BackRightAlpha) {
-         FREE( buffer->BackRightAlpha );
-      }
+      _mesa_free_framebuffer_data(buffer);
       FREE(buffer);
+   }
+}
+
+
+/*
+ * Free the data hanging off of <buffer>, but not <buffer> itself.
+ */
+void
+_mesa_free_framebuffer_data( GLframebuffer *buffer )
+{
+   if (!buffer)
+      return;
+
+   if (buffer->DepthBuffer) {
+      MESA_PBUFFER_FREE( buffer->DepthBuffer );
+      buffer->DepthBuffer = NULL;
+   }
+   if (buffer->Accum) {
+      MESA_PBUFFER_FREE( buffer->Accum );
+      buffer->Accum = NULL;
+   }
+   if (buffer->Stencil) {
+      MESA_PBUFFER_FREE( buffer->Stencil );
+      buffer->Stencil = NULL;
+   }
+   if (buffer->FrontLeftAlpha) {
+      MESA_PBUFFER_FREE( buffer->FrontLeftAlpha );
+      buffer->FrontLeftAlpha = NULL;
+   }
+   if (buffer->BackLeftAlpha) {
+      MESA_PBUFFER_FREE( buffer->BackLeftAlpha );
+      buffer->BackLeftAlpha = NULL;
+   }
+   if (buffer->FrontRightAlpha) {
+      MESA_PBUFFER_FREE( buffer->FrontRightAlpha );
+      buffer->FrontRightAlpha = NULL;
+   }
+   if (buffer->BackRightAlpha) {
+      MESA_PBUFFER_FREE( buffer->BackRightAlpha );
+      buffer->BackRightAlpha = NULL;
    }
 }
 
@@ -407,19 +443,14 @@ one_time_init( void )
       assert( sizeof(GLushort) >= 2 );
       assert( sizeof(GLuint) >= 4 );
 
-      gl_init_clip();
-      gl_init_eval();
-      _mesa_init_fog();
-      _mesa_init_math();
-      gl_init_lists();
-      gl_init_texture();
-      gl_init_transformation();
-      gl_init_translate();
-      gl_init_shade();
-      gl_init_vbrender();
-      gl_init_vbxform();
-      gl_init_vertices();
+      _mesa_init_lists();
 
+      _math_init();
+      _mesa_init_math();
+
+#ifdef USE_SPARC_ASM
+      _mesa_init_sparc_glapi_relocs();
+#endif
       if (getenv("MESA_DEBUG")) {
          _glapi_noop_enable_warnings(GL_TRUE);
       }
@@ -444,7 +475,6 @@ one_time_init( void )
 static struct gl_shared_state *
 alloc_shared_state( void )
 {
-   GLuint d;
    struct gl_shared_state *ss;
    GLboolean outOfMemory;
 
@@ -456,27 +486,35 @@ alloc_shared_state( void )
 
    ss->DisplayList = _mesa_NewHashTable();
    ss->TexObjects = _mesa_NewHashTable();
-#ifdef VAO
-   ss->ArrayObjects = _mesa_NewHashTable();
-#endif
 
    /* Default Texture objects */
    outOfMemory = GL_FALSE;
-   for (d = 1 ; d <= 3 ; d++) {
-      ss->DefaultD[d] = gl_alloc_texture_object(ss, 0, d);
-      if (!ss->DefaultD[d]) {
-         outOfMemory = GL_TRUE;
-         break;
-      }
-      ss->DefaultD[d]->RefCount++; /* don't free if not in use */
+
+   ss->Default1D = _mesa_alloc_texture_object(ss, 0, GL_TEXTURE_1D);
+   if (!ss->Default1D) {
+      outOfMemory = GL_TRUE;
    }
 
-   ss->DefaultCubeMap = gl_alloc_texture_object(ss, 0, 6);
+   ss->Default2D = _mesa_alloc_texture_object(ss, 0, GL_TEXTURE_2D);
+   if (!ss->Default2D) {
+      outOfMemory = GL_TRUE;
+   }
+
+   ss->Default3D = _mesa_alloc_texture_object(ss, 0, GL_TEXTURE_3D);
+   if (!ss->Default3D) {
+      outOfMemory = GL_TRUE;
+   }
+
+   ss->DefaultCubeMap = _mesa_alloc_texture_object(ss, 0,
+                                                   GL_TEXTURE_CUBE_MAP_ARB);
    if (!ss->DefaultCubeMap) {
       outOfMemory = GL_TRUE;
    }
-   else {
-      ss->DefaultCubeMap->RefCount++;
+
+   ss->DefaultRect = _mesa_alloc_texture_object(ss, 0,
+                                                GL_TEXTURE_RECTANGLE_NV);
+   if (!ss->DefaultRect) {
+      outOfMemory = GL_TRUE;
    }
 
    if (!ss->DisplayList || !ss->TexObjects || outOfMemory) {
@@ -485,14 +523,16 @@ alloc_shared_state( void )
          _mesa_DeleteHashTable(ss->DisplayList);
       if (ss->TexObjects)
          _mesa_DeleteHashTable(ss->TexObjects);
-      if (ss->DefaultD[1])
-         gl_free_texture_object(ss, ss->DefaultD[1]);
-      if (ss->DefaultD[2])
-         gl_free_texture_object(ss, ss->DefaultD[2]);
-      if (ss->DefaultD[3])
-         gl_free_texture_object(ss, ss->DefaultD[3]);
+      if (ss->Default1D)
+         _mesa_free_texture_object(ss, ss->Default1D);
+      if (ss->Default2D)
+         _mesa_free_texture_object(ss, ss->Default2D);
+      if (ss->Default3D)
+         _mesa_free_texture_object(ss, ss->Default3D);
       if (ss->DefaultCubeMap)
-         gl_free_texture_object(ss, ss->DefaultCubeMap);
+         _mesa_free_texture_object(ss, ss->DefaultCubeMap);
+      if (ss->DefaultRect)
+         _mesa_free_texture_object(ss, ss->DefaultRect);
       FREE(ss);
       return NULL;
    }
@@ -512,7 +552,7 @@ free_shared_state( GLcontext *ctx, struct gl_shared_state *ss )
    while (1) {
       GLuint list = _mesa_HashFirstEntry(ss->DisplayList);
       if (list) {
-         gl_destroy_list(ctx, list);
+         _mesa_destroy_list(ctx, list);
       }
       else {
          break;
@@ -521,12 +561,11 @@ free_shared_state( GLcontext *ctx, struct gl_shared_state *ss )
    _mesa_DeleteHashTable(ss->DisplayList);
 
    /* Free texture objects */
-   while (ss->TexObjectList)
-   {
+   while (ss->TexObjectList) {
       if (ctx->Driver.DeleteTexture)
          (*ctx->Driver.DeleteTexture)( ctx, ss->TexObjectList );
       /* this function removes from linked list too! */
-      gl_free_texture_object(ss, ss->TexObjectList);
+      _mesa_free_texture_object(ss, ss->TexObjectList);
    }
    _mesa_DeleteHashTable(ss->TexObjects);
 
@@ -556,9 +595,9 @@ init_light( struct gl_light *l, GLuint n )
    ASSIGN_4V( l->EyePosition, 0.0, 0.0, 1.0, 0.0 );
    ASSIGN_3V( l->EyeDirection, 0.0, 0.0, -1.0 );
    l->SpotExponent = 0.0;
-   gl_compute_spot_exp_table( l );
+   _mesa_invalidate_spot_exp_table( l );
    l->SpotCutoff = 180.0;
-   l->CosCutoff = 0.0;		/* KW: -ve values not admitted */
+   l->_CosCutoff = 0.0;		/* KW: -ve values not admitted */
    l->ConstantAttenuation = 1.0;
    l->LinearAttenuation = 0.0;
    l->QuadraticAttenuation = 0.0;
@@ -570,7 +609,7 @@ init_light( struct gl_light *l, GLuint n )
 static void
 init_lightmodel( struct gl_lightmodel *lm )
 {
-   ASSIGN_4V( lm->Ambient, 0.2, 0.2, 0.2, 1.0 );
+   ASSIGN_4V( lm->Ambient, 0.2F, 0.2F, 0.2F, 1.0F );
    lm->LocalViewer = GL_FALSE;
    lm->TwoSide = GL_FALSE;
    lm->ColorControl = GL_SINGLE_COLOR;
@@ -580,10 +619,10 @@ init_lightmodel( struct gl_lightmodel *lm )
 static void
 init_material( struct gl_material *m )
 {
-   ASSIGN_4V( m->Ambient,  0.2, 0.2, 0.2, 1.0 );
-   ASSIGN_4V( m->Diffuse,  0.8, 0.8, 0.8, 1.0 );
-   ASSIGN_4V( m->Specular, 0.0, 0.0, 0.0, 1.0 );
-   ASSIGN_4V( m->Emission, 0.0, 0.0, 0.0, 1.0 );
+   ASSIGN_4V( m->Ambient,  0.2F, 0.2F, 0.2F, 1.0F );
+   ASSIGN_4V( m->Diffuse,  0.8F, 0.8F, 0.8F, 1.0F );
+   ASSIGN_4V( m->Specular, 0.0F, 0.0F, 0.0F, 1.0F );
+   ASSIGN_4V( m->Emission, 0.0F, 0.0F, 0.0F, 1.0F );
    m->Shininess = 0.0;
    m->AmbientIndex = 0;
    m->DiffuseIndex = 1;
@@ -597,8 +636,6 @@ init_texture_unit( GLcontext *ctx, GLuint unit )
 {
    struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
 
-   texUnit->Enabled = 0;
-   texUnit->ReallyEnabled = 0;
    texUnit->EnvMode = GL_MODULATE;
    texUnit->CombineModeRGB = GL_MODULATE;
    texUnit->CombineModeA = GL_MODULATE;
@@ -623,10 +660,10 @@ init_texture_unit( GLcontext *ctx, GLuint unit )
    texUnit->GenModeT = GL_EYE_LINEAR;
    texUnit->GenModeR = GL_EYE_LINEAR;
    texUnit->GenModeQ = GL_EYE_LINEAR;
-   texUnit->GenBitS = TEXGEN_EYE_LINEAR;
-   texUnit->GenBitT = TEXGEN_EYE_LINEAR;
-   texUnit->GenBitR = TEXGEN_EYE_LINEAR;
-   texUnit->GenBitQ = TEXGEN_EYE_LINEAR;
+   texUnit->_GenBitS = TEXGEN_EYE_LINEAR;
+   texUnit->_GenBitT = TEXGEN_EYE_LINEAR;
+   texUnit->_GenBitR = TEXGEN_EYE_LINEAR;
+   texUnit->_GenBitQ = TEXGEN_EYE_LINEAR;
 
    /* Yes, these plane coefficients are correct! */
    ASSIGN_4V( texUnit->ObjectPlaneS, 1.0, 0.0, 0.0, 0.0 );
@@ -638,61 +675,14 @@ init_texture_unit( GLcontext *ctx, GLuint unit )
    ASSIGN_4V( texUnit->EyePlaneR, 0.0, 0.0, 0.0, 0.0 );
    ASSIGN_4V( texUnit->EyePlaneQ, 0.0, 0.0, 0.0, 0.0 );
 
-   texUnit->CurrentD[1] = ctx->Shared->DefaultD[1];
-   texUnit->CurrentD[2] = ctx->Shared->DefaultD[2];
-   texUnit->CurrentD[3] = ctx->Shared->DefaultD[3];
+   texUnit->Current1D = ctx->Shared->Default1D;
+   texUnit->Current2D = ctx->Shared->Default2D;
+   texUnit->Current3D = ctx->Shared->Default3D;
    texUnit->CurrentCubeMap = ctx->Shared->DefaultCubeMap;
+   texUnit->CurrentRect = ctx->Shared->DefaultRect;
 }
 
 
-static void
-init_fallback_arrays( GLcontext *ctx )
-{
-   struct gl_client_array *cl;
-   GLuint i;
-
-   cl = &ctx->Fallback.Normal;
-   cl->Size = 3;
-   cl->Type = GL_FLOAT;
-   cl->Stride = 0;
-   cl->StrideB = 0;
-   cl->Ptr = (void *) ctx->Current.Normal;
-   cl->Enabled = 1;
-
-   cl = &ctx->Fallback.Color;
-   cl->Size = 4;
-   cl->Type = GL_UNSIGNED_BYTE;
-   cl->Stride = 0;
-   cl->StrideB = 0;
-   cl->Ptr = (void *) ctx->Current.ByteColor;
-   cl->Enabled = 1;
-
-   cl = &ctx->Fallback.Index;
-   cl->Size = 1;
-   cl->Type = GL_UNSIGNED_INT;
-   cl->Stride = 0;
-   cl->StrideB = 0;
-   cl->Ptr = (void *) &ctx->Current.Index;
-   cl->Enabled = 1;
-
-   for (i = 0 ; i < MAX_TEXTURE_UNITS ; i++) {
-      cl = &ctx->Fallback.TexCoord[i];
-      cl->Size = 4;
-      cl->Type = GL_FLOAT;
-      cl->Stride = 0;
-      cl->StrideB = 0;
-      cl->Ptr = (void *) ctx->Current.Texcoord[i];
-      cl->Enabled = 1;
-   }
-
-   cl = &ctx->Fallback.EdgeFlag;
-   cl->Size = 1;
-   cl->Type = GL_UNSIGNED_BYTE;
-   cl->Stride = 0;
-   cl->StrideB = 0;
-   cl->Ptr = (void *) &ctx->Current.EdgeFlag;
-   cl->Enabled = 1;
-}
 
 
 /* Initialize a 1-D evaluator map */
@@ -740,71 +730,75 @@ init_attrib_groups( GLcontext *ctx )
 
    assert(ctx);
 
+   assert(MAX_TEXTURE_LEVELS >= MAX_3D_TEXTURE_LEVELS);
+   assert(MAX_TEXTURE_LEVELS >= MAX_CUBE_TEXTURE_LEVELS);
+
    /* Constants, may be overriden by device drivers */
    ctx->Const.MaxTextureLevels = MAX_TEXTURE_LEVELS;
-   ctx->Const.MaxTextureSize = 1 << (MAX_TEXTURE_LEVELS - 1);
-   ctx->Const.MaxCubeTextureSize = ctx->Const.MaxTextureSize;
+   ctx->Const.Max3DTextureLevels = MAX_3D_TEXTURE_LEVELS;
+   ctx->Const.MaxCubeTextureLevels = MAX_CUBE_TEXTURE_LEVELS;
+   ctx->Const.MaxTextureRectSize = MAX_TEXTURE_RECT_SIZE;
    ctx->Const.MaxTextureUnits = MAX_TEXTURE_UNITS;
+   ctx->Const.MaxTextureMaxAnisotropy = MAX_TEXTURE_MAX_ANISOTROPY;
+   ctx->Const.MaxTextureLodBias = MAX_TEXTURE_LOD_BIAS;
    ctx->Const.MaxArrayLockSize = MAX_ARRAY_LOCK_SIZE;
    ctx->Const.SubPixelBits = SUB_PIXEL_BITS;
    ctx->Const.MinPointSize = MIN_POINT_SIZE;
    ctx->Const.MaxPointSize = MAX_POINT_SIZE;
    ctx->Const.MinPointSizeAA = MIN_POINT_SIZE;
    ctx->Const.MaxPointSizeAA = MAX_POINT_SIZE;
-   ctx->Const.PointSizeGranularity = POINT_SIZE_GRANULARITY;
+   ctx->Const.PointSizeGranularity = (GLfloat) POINT_SIZE_GRANULARITY;
    ctx->Const.MinLineWidth = MIN_LINE_WIDTH;
    ctx->Const.MaxLineWidth = MAX_LINE_WIDTH;
    ctx->Const.MinLineWidthAA = MIN_LINE_WIDTH;
    ctx->Const.MaxLineWidthAA = MAX_LINE_WIDTH;
-   ctx->Const.LineWidthGranularity = LINE_WIDTH_GRANULARITY;
+   ctx->Const.LineWidthGranularity = (GLfloat) LINE_WIDTH_GRANULARITY;
    ctx->Const.NumAuxBuffers = NUM_AUX_BUFFERS;
    ctx->Const.MaxColorTableSize = MAX_COLOR_TABLE_SIZE;
    ctx->Const.MaxConvolutionWidth = MAX_CONVOLUTION_WIDTH;
    ctx->Const.MaxConvolutionHeight = MAX_CONVOLUTION_HEIGHT;
    ctx->Const.NumCompressedTextureFormats = 0;
+   ctx->Const.MaxClipPlanes = MAX_CLIP_PLANES;
+   ctx->Const.MaxLights = MAX_LIGHTS;
 
    /* Modelview matrix */
-   gl_matrix_ctr( &ctx->ModelView );
-   gl_matrix_alloc_inv( &ctx->ModelView );
+   _math_matrix_ctr( &ctx->ModelView );
+   _math_matrix_alloc_inv( &ctx->ModelView );
 
    ctx->ModelViewStackDepth = 0;
    for (i = 0; i < MAX_MODELVIEW_STACK_DEPTH - 1; i++) {
-      gl_matrix_ctr( &ctx->ModelViewStack[i] );
-      gl_matrix_alloc_inv( &ctx->ModelViewStack[i] );
+      _math_matrix_ctr( &ctx->ModelViewStack[i] );
+      _math_matrix_alloc_inv( &ctx->ModelViewStack[i] );
    }
 
    /* Projection matrix - need inv for user clipping in clip space*/
-   gl_matrix_ctr( &ctx->ProjectionMatrix );
-   gl_matrix_alloc_inv( &ctx->ProjectionMatrix );
-
-   gl_matrix_ctr( &ctx->ModelProjectMatrix );
-   gl_matrix_ctr( &ctx->ModelProjectWinMatrix );
-   ctx->ModelProjectWinMatrixUptodate = GL_FALSE;
+   _math_matrix_ctr( &ctx->ProjectionMatrix );
+   _math_matrix_alloc_inv( &ctx->ProjectionMatrix );
 
    ctx->ProjectionStackDepth = 0;
-   ctx->NearFarStack[0][0] = 1.0; /* These values seem weird by make */
-   ctx->NearFarStack[0][1] = 0.0; /* sense mathematically. */
-
    for (i = 0; i < MAX_PROJECTION_STACK_DEPTH - 1; i++) {
-      gl_matrix_ctr( &ctx->ProjectionStack[i] );
-      gl_matrix_alloc_inv( &ctx->ProjectionStack[i] );
+      _math_matrix_ctr( &ctx->ProjectionStack[i] );
+      _math_matrix_alloc_inv( &ctx->ProjectionStack[i] );
    }
+
+   /* Derived ModelProject matrix */
+   _math_matrix_ctr( &ctx->_ModelProjectMatrix );
 
    /* Texture matrix */
    for (i = 0; i < MAX_TEXTURE_UNITS; i++) {
-      gl_matrix_ctr( &ctx->TextureMatrix[i] );
+      _math_matrix_ctr( &ctx->TextureMatrix[i] );
       ctx->TextureStackDepth[i] = 0;
       for (j = 0; j < MAX_TEXTURE_STACK_DEPTH - 1; j++) {
-         gl_matrix_ctr( &ctx->TextureStack[i][j] );
+         _math_matrix_ctr( &ctx->TextureStack[i][j] );
          ctx->TextureStack[i][j].inv = 0;
       }
    }
 
    /* Color matrix */
-   gl_matrix_ctr(&ctx->ColorMatrix);
+   _math_matrix_ctr(&ctx->ColorMatrix);
    ctx->ColorStackDepth = 0;
    for (j = 0; j < MAX_COLOR_STACK_DEPTH - 1; j++) {
-      gl_matrix_ctr(&ctx->ColorStack[j]);
+      _math_matrix_ctr(&ctx->ColorStack[j]);
    }
 
    /* Accumulate buffer group */
@@ -816,9 +810,8 @@ init_attrib_groups( GLcontext *ctx )
    ctx->Color.ColorMask[1] = 0xff;
    ctx->Color.ColorMask[2] = 0xff;
    ctx->Color.ColorMask[3] = 0xff;
-   ctx->Color.SWmasking = GL_FALSE;
    ctx->Color.ClearIndex = 0;
-   ASSIGN_4V( ctx->Color.ClearColor, 0.0, 0.0, 0.0, 0.0 );
+   ASSIGN_4V( ctx->Color.ClearColor, 0, 0, 0, 0 );
    ctx->Color.DrawBuffer = GL_FRONT;
    ctx->Color.AlphaEnabled = GL_FALSE;
    ctx->Color.AlphaFunc = GL_ALWAYS;
@@ -829,17 +822,14 @@ init_attrib_groups( GLcontext *ctx )
    ctx->Color.BlendSrcA = GL_ONE;
    ctx->Color.BlendDstA = GL_ZERO;
    ctx->Color.BlendEquation = GL_FUNC_ADD_EXT;
-   ctx->Color.BlendFunc = NULL;  /* this pointer set only when needed */
    ASSIGN_4V( ctx->Color.BlendColor, 0.0, 0.0, 0.0, 0.0 );
    ctx->Color.IndexLogicOpEnabled = GL_FALSE;
    ctx->Color.ColorLogicOpEnabled = GL_FALSE;
-   ctx->Color.SWLogicOpEnabled = GL_FALSE;
    ctx->Color.LogicOp = GL_COPY;
    ctx->Color.DitherFlag = GL_TRUE;
-   ctx->Color.MultiDrawBuffer = GL_FALSE;
 
    /* Current group */
-   ASSIGN_4V( ctx->Current.ByteColor, 255, 255, 255, 255);
+   ASSIGN_4V( ctx->Current.Color, 1.0, 1.0, 1.0, 1.0 );
    ctx->Current.Index = 1;
    for (i=0; i<MAX_TEXTURE_UNITS; i++)
       ASSIGN_4V( ctx->Current.Texcoord[i], 0.0, 0.0, 0.0, 1.0 );
@@ -853,12 +843,7 @@ init_attrib_groups( GLcontext *ctx )
    ctx->Current.RasterPosValid = GL_TRUE;
    ctx->Current.EdgeFlag = GL_TRUE;
    ASSIGN_3V( ctx->Current.Normal, 0.0, 0.0, 1.0 );
-   ctx->Current.Primitive = (GLenum) (GL_POLYGON + 1);
 
-   ctx->Current.Flag = (VERT_NORM|VERT_INDEX|VERT_RGBA|VERT_EDGE|
-                        VERT_TEX0_1|VERT_TEX1_1|VERT_MATERIAL);
-
-   init_fallback_arrays( ctx );
 
    /* Depth buffer group */
    ctx->Depth.Test = GL_FALSE;
@@ -934,6 +919,8 @@ init_attrib_groups( GLcontext *ctx )
    ctx->Fog.Density = 1.0;
    ctx->Fog.Start = 0.0;
    ctx->Fog.End = 1.0;
+   ctx->Fog.ColorSumEnabled = GL_FALSE;
+   ctx->Fog.FogCoordinateSource = GL_FRAGMENT_DEPTH_EXT;
 
    /* Hint group */
    ctx->Hint.PerspectiveCorrection = GL_DONT_CARE;
@@ -941,22 +928,19 @@ init_attrib_groups( GLcontext *ctx )
    ctx->Hint.LineSmooth = GL_DONT_CARE;
    ctx->Hint.PolygonSmooth = GL_DONT_CARE;
    ctx->Hint.Fog = GL_DONT_CARE;
-   ctx->Hint.AllowDrawWin = GL_TRUE;
-   ctx->Hint.AllowDrawFrg = GL_TRUE;
-   ctx->Hint.AllowDrawMem = GL_TRUE;
-   ctx->Hint.StrictLighting = GL_TRUE;
    ctx->Hint.ClipVolumeClipping = GL_DONT_CARE;
    ctx->Hint.TextureCompression = GL_DONT_CARE;
+   ctx->Hint.GenerateMipmap = GL_DONT_CARE;
 
    /* Histogram group */
    ctx->Histogram.Width = 0;
    ctx->Histogram.Format = GL_RGBA;
    ctx->Histogram.Sink = GL_FALSE;
-   ctx->Histogram.RedSize       = 0xffffffff;
-   ctx->Histogram.GreenSize     = 0xffffffff;
-   ctx->Histogram.BlueSize      = 0xffffffff;
-   ctx->Histogram.AlphaSize     = 0xffffffff;
-   ctx->Histogram.LuminanceSize = 0xffffffff;
+   ctx->Histogram.RedSize       = 0;
+   ctx->Histogram.GreenSize     = 0;
+   ctx->Histogram.BlueSize      = 0;
+   ctx->Histogram.AlphaSize     = 0;
+   ctx->Histogram.LuminanceSize = 0;
    for (i = 0; i < HISTOGRAM_TABLE_SIZE; i++) {
       ctx->Histogram.Count[i][0] = 0;
       ctx->Histogram.Count[i][1] = 0;
@@ -972,16 +956,8 @@ init_attrib_groups( GLcontext *ctx )
    ctx->MinMax.Min[BCOMP] = 1000;    ctx->MinMax.Max[BCOMP] = -1000;
    ctx->MinMax.Min[ACOMP] = 1000;    ctx->MinMax.Max[ACOMP] = -1000;
 
-
-
-   /* Pipeline */
-   gl_pipeline_init( ctx );
-   gl_cva_init( ctx );
-
    /* Extensions */
-   gl_extensions_ctr( ctx );
-
-   ctx->AllowVertexCull = CLIP_CULLED_BIT;
+   _mesa_extensions_ctr( ctx );
 
    /* Lighting group */
    for (i=0;i<MAX_LIGHTS;i++) {
@@ -996,42 +972,41 @@ init_attrib_groups( GLcontext *ctx )
    ctx->Light.Enabled = GL_FALSE;
    ctx->Light.ColorMaterialFace = GL_FRONT_AND_BACK;
    ctx->Light.ColorMaterialMode = GL_AMBIENT_AND_DIFFUSE;
-   ctx->Light.ColorMaterialBitmask
-      = gl_material_bitmask( ctx,
-                             GL_FRONT_AND_BACK,
-                             GL_AMBIENT_AND_DIFFUSE, ~0, 0 );
+   ctx->Light.ColorMaterialBitmask = _mesa_material_bitmask( ctx,
+                                               GL_FRONT_AND_BACK,
+                                               GL_AMBIENT_AND_DIFFUSE, ~0, 0 );
 
    ctx->Light.ColorMaterialEnabled = GL_FALSE;
 
    /* Lighting miscellaneous */
-   ctx->ShineTabList = MALLOC_STRUCT( gl_shine_tab );
-   make_empty_list( ctx->ShineTabList );
+   ctx->_ShineTabList = MALLOC_STRUCT( gl_shine_tab );
+   make_empty_list( ctx->_ShineTabList );
    for (i = 0 ; i < 10 ; i++) {
       struct gl_shine_tab *s = MALLOC_STRUCT( gl_shine_tab );
       s->shininess = -1;
       s->refcount = 0;
-      insert_at_tail( ctx->ShineTabList, s );
+      insert_at_tail( ctx->_ShineTabList, s );
    }
-   for (i = 0 ; i < 4 ; i++) {
-      ctx->ShineTable[i] = ctx->ShineTabList->prev;
-      ctx->ShineTable[i]->refcount++;
-   }
-
-   gl_compute_shine_table( ctx, 0, ctx->Light.Material[0].Shininess );
-   gl_compute_shine_table( ctx, 2, ctx->Light.Material[0].Shininess * .5 );
-   gl_compute_shine_table( ctx, 1, ctx->Light.Material[1].Shininess );
-   gl_compute_shine_table( ctx, 3, ctx->Light.Material[1].Shininess * .5 );
 
 
    /* Line group */
    ctx->Line.SmoothFlag = GL_FALSE;
    ctx->Line.StippleFlag = GL_FALSE;
    ctx->Line.Width = 1.0;
+   ctx->Line._Width = 1.0;
    ctx->Line.StipplePattern = 0xffff;
    ctx->Line.StippleFactor = 1;
 
    /* Display List group */
    ctx->List.ListBase = 0;
+
+   /* Multisample */
+   ctx->Multisample.Enabled = GL_FALSE;
+   ctx->Multisample.SampleAlphaToCoverage = GL_FALSE;
+   ctx->Multisample.SampleAlphaToOne = GL_FALSE;
+   ctx->Multisample.SampleCoverage = GL_FALSE;
+   ctx->Multisample.SampleCoverageValue = 1.0;
+   ctx->Multisample.SampleCoverageInvert = GL_FALSE;
 
    /* Pixel group */
    ctx->Pixel.RedBias = 0.0;
@@ -1042,7 +1017,6 @@ init_attrib_groups( GLcontext *ctx )
    ctx->Pixel.BlueScale = 1.0;
    ctx->Pixel.AlphaBias = 0.0;
    ctx->Pixel.AlphaScale = 1.0;
-   ctx->Pixel.ScaleOrBiasRGBA = GL_FALSE;
    ctx->Pixel.DepthBias = 0.0;
    ctx->Pixel.DepthScale = 1.0;
    ctx->Pixel.IndexOffset = 0;
@@ -1100,33 +1074,38 @@ init_attrib_groups( GLcontext *ctx )
       ASSIGN_4V(ctx->Pixel.ConvolutionFilterScale[i], 1.0, 1.0, 1.0, 1.0);
       ASSIGN_4V(ctx->Pixel.ConvolutionFilterBias[i], 0.0, 0.0, 0.0, 0.0);
    }
+   for (i = 0; i < MAX_CONVOLUTION_WIDTH * MAX_CONVOLUTION_WIDTH * 4; i++) {
+      ctx->Convolution1D.Filter[i] = 0.0;
+      ctx->Convolution2D.Filter[i] = 0.0;
+      ctx->Separable2D.Filter[i] = 0.0;
+   }
    ASSIGN_4V(ctx->Pixel.PostConvolutionScale, 1.0, 1.0, 1.0, 1.0);
    ASSIGN_4V(ctx->Pixel.PostConvolutionBias, 0.0, 0.0, 0.0, 0.0);
 
    /* Point group */
    ctx->Point.SmoothFlag = GL_FALSE;
-   ctx->Point.UserSize = 1.0;
    ctx->Point.Size = 1.0;
+   ctx->Point._Size = 1.0;
    ctx->Point.Params[0] = 1.0;
    ctx->Point.Params[1] = 0.0;
    ctx->Point.Params[2] = 0.0;
-   ctx->Point.Attenuated = GL_FALSE;
+   ctx->Point._Attenuated = GL_FALSE;
    ctx->Point.MinSize = 0.0;
-   ctx->Point.MaxSize = (GLfloat) MAX_POINT_SIZE;
+   ctx->Point.MaxSize = ctx->Const.MaxPointSize;
    ctx->Point.Threshold = 1.0;
 
    /* Polygon group */
    ctx->Polygon.CullFlag = GL_FALSE;
    ctx->Polygon.CullFaceMode = GL_BACK;
    ctx->Polygon.FrontFace = GL_CCW;
-   ctx->Polygon.FrontBit = 0;
+   ctx->Polygon._FrontBit = 0;
    ctx->Polygon.FrontMode = GL_FILL;
    ctx->Polygon.BackMode = GL_FILL;
-   ctx->Polygon.Unfilled = GL_FALSE;
    ctx->Polygon.SmoothFlag = GL_FALSE;
    ctx->Polygon.StippleFlag = GL_FALSE;
    ctx->Polygon.OffsetFactor = 0.0F;
    ctx->Polygon.OffsetUnits = 0.0F;
+   ctx->Polygon.OffsetMRD = 0.0F;
    ctx->Polygon.OffsetPoint = GL_FALSE;
    ctx->Polygon.OffsetLine = GL_FALSE;
    ctx->Polygon.OffsetFill = GL_FALSE;
@@ -1154,8 +1133,7 @@ init_attrib_groups( GLcontext *ctx )
 
    /* Texture group */
    ctx->Texture.CurrentUnit = 0;      /* multitexture */
-   ctx->Texture.CurrentTransformUnit = 0; /* multitexture */
-   ctx->Texture.ReallyEnabled = 0;
+   ctx->Texture._ReallyEnabled = 0;
    for (i=0; i<MAX_TEXTURE_UNITS; i++)
       init_texture_unit( ctx, i );
    ctx->Texture.SharedPalette = GL_FALSE;
@@ -1165,11 +1143,12 @@ init_attrib_groups( GLcontext *ctx )
    ctx->Transform.MatrixMode = GL_MODELVIEW;
    ctx->Transform.Normalize = GL_FALSE;
    ctx->Transform.RescaleNormals = GL_FALSE;
+   ctx->Transform.RasterPositionUnclipped = GL_FALSE;
    for (i=0;i<MAX_CLIP_PLANES;i++) {
       ctx->Transform.ClipEnabled[i] = GL_FALSE;
       ASSIGN_4V( ctx->Transform.EyeUserPlane[i], 0.0, 0.0, 0.0, 0.0 );
    }
-   ctx->Transform.AnyClip = GL_FALSE;
+   ctx->Transform._AnyClip = GL_FALSE;
 
    /* Viewport group */
    ctx->Viewport.X = 0;
@@ -1178,48 +1157,59 @@ init_attrib_groups( GLcontext *ctx )
    ctx->Viewport.Height = 0;
    ctx->Viewport.Near = 0.0;
    ctx->Viewport.Far = 1.0;
-   gl_matrix_ctr(&ctx->Viewport.WindowMap);
+   _math_matrix_ctr(&ctx->Viewport._WindowMap);
 
 #define Sz 10
 #define Tz 14
-   ctx->Viewport.WindowMap.m[Sz] = 0.5 * ctx->Visual->DepthMaxF;
-   ctx->Viewport.WindowMap.m[Tz] = 0.5 * ctx->Visual->DepthMaxF;
+   ctx->Viewport._WindowMap.m[Sz] = 0.5F * ctx->DepthMaxF;
+   ctx->Viewport._WindowMap.m[Tz] = 0.5F * ctx->DepthMaxF;
 #undef Sz
 #undef Tz
 
-   ctx->Viewport.WindowMap.flags = MAT_FLAG_GENERAL_SCALE|MAT_FLAG_TRANSLATION;
-   ctx->Viewport.WindowMap.type = MATRIX_3D_NO_ROT;
+   ctx->Viewport._WindowMap.flags = MAT_FLAG_GENERAL_SCALE|MAT_FLAG_TRANSLATION;
+   ctx->Viewport._WindowMap.type = MATRIX_3D_NO_ROT;
 
    /* Vertex arrays */
-#ifdef VAO
-   {
-      struct gl_array_object *arrayObj;
-      arrayObj = _mesa_alloc_vertex_array_object(ctx, 0);
-      ctx->Array.Current = arrayObj;
-   }
-#else
    ctx->Array.Vertex.Size = 4;
    ctx->Array.Vertex.Type = GL_FLOAT;
    ctx->Array.Vertex.Stride = 0;
    ctx->Array.Vertex.StrideB = 0;
    ctx->Array.Vertex.Ptr = NULL;
    ctx->Array.Vertex.Enabled = GL_FALSE;
+   ctx->Array.Vertex.Flags = CA_CLIENT_DATA;
    ctx->Array.Normal.Type = GL_FLOAT;
    ctx->Array.Normal.Stride = 0;
    ctx->Array.Normal.StrideB = 0;
    ctx->Array.Normal.Ptr = NULL;
    ctx->Array.Normal.Enabled = GL_FALSE;
+   ctx->Array.Normal.Flags = CA_CLIENT_DATA;
    ctx->Array.Color.Size = 4;
    ctx->Array.Color.Type = GL_FLOAT;
    ctx->Array.Color.Stride = 0;
    ctx->Array.Color.StrideB = 0;
    ctx->Array.Color.Ptr = NULL;
    ctx->Array.Color.Enabled = GL_FALSE;
+   ctx->Array.Color.Flags = CA_CLIENT_DATA;
+   ctx->Array.SecondaryColor.Size = 4;
+   ctx->Array.SecondaryColor.Type = GL_FLOAT;
+   ctx->Array.SecondaryColor.Stride = 0;
+   ctx->Array.SecondaryColor.StrideB = 0;
+   ctx->Array.SecondaryColor.Ptr = NULL;
+   ctx->Array.SecondaryColor.Enabled = GL_FALSE;
+   ctx->Array.SecondaryColor.Flags = CA_CLIENT_DATA;
+   ctx->Array.FogCoord.Size = 1;
+   ctx->Array.FogCoord.Type = GL_FLOAT;
+   ctx->Array.FogCoord.Stride = 0;
+   ctx->Array.FogCoord.StrideB = 0;
+   ctx->Array.FogCoord.Ptr = NULL;
+   ctx->Array.FogCoord.Enabled = GL_FALSE;
+   ctx->Array.FogCoord.Flags = CA_CLIENT_DATA;
    ctx->Array.Index.Type = GL_FLOAT;
    ctx->Array.Index.Stride = 0;
    ctx->Array.Index.StrideB = 0;
    ctx->Array.Index.Ptr = NULL;
    ctx->Array.Index.Enabled = GL_FALSE;
+   ctx->Array.Index.Flags = CA_CLIENT_DATA;
    for (i = 0; i < MAX_TEXTURE_UNITS; i++) {
       ctx->Array.TexCoord[i].Size = 4;
       ctx->Array.TexCoord[i].Type = GL_FLOAT;
@@ -1227,13 +1217,14 @@ init_attrib_groups( GLcontext *ctx )
       ctx->Array.TexCoord[i].StrideB = 0;
       ctx->Array.TexCoord[i].Ptr = NULL;
       ctx->Array.TexCoord[i].Enabled = GL_FALSE;
+      ctx->Array.TexCoord[i].Flags = CA_CLIENT_DATA;
    }
    ctx->Array.TexCoordInterleaveFactor = 1;
    ctx->Array.EdgeFlag.Stride = 0;
    ctx->Array.EdgeFlag.StrideB = 0;
    ctx->Array.EdgeFlag.Ptr = NULL;
    ctx->Array.EdgeFlag.Enabled = GL_FALSE;
-#endif
+   ctx->Array.EdgeFlag.Flags = CA_CLIENT_DATA;
    ctx->Array.ActiveTexture = 0;   /* GL_ARB_multitexture */
 
    /* Pixel transfer */
@@ -1267,10 +1258,6 @@ init_attrib_groups( GLcontext *ctx )
    ctx->Select.Hits = 0;
    ctx->Select.NameStackDepth = 0;
 
-   /* Optimized Accum buffer */
-   ctx->IntegerAccumMode = GL_TRUE;
-   ctx->IntegerAccumScaler = 0.0;
-
    /* Renderer and client attribute stacks */
    ctx->AttribStackDepth = 0;
    ctx->ClientAttribStackDepth = 0;
@@ -1293,15 +1280,13 @@ init_attrib_groups( GLcontext *ctx )
    _mesa_init_colortable(&ctx->ProxyPostColorMatrixColorTable);
 
    /* Miscellaneous */
-   ctx->NewState = NEW_ALL;
+   ctx->NewState = _NEW_ALL;
    ctx->RenderMode = GL_RENDER;
-   ctx->StippleCounter = 0;
-   ctx->NeedNormals = GL_FALSE;
-   ctx->DoViewportMapping = GL_TRUE;
+   ctx->_ImageTransferState = 0;
 
-   ctx->NeedEyeCoords = GL_FALSE;
-   ctx->NeedEyeNormals = GL_FALSE;
-   ctx->vb_proj_matrix = &ctx->ModelProjectMatrix;
+   ctx->_NeedNormals = 0;
+   ctx->_NeedEyeCoords = 0;
+   ctx->_ModelViewInvScale = 1.0;
 
    ctx->ErrorValue = (GLenum) GL_NO_ERROR;
 
@@ -1317,7 +1302,10 @@ init_attrib_groups( GLcontext *ctx )
    ctx->NoDither = getenv("MESA_NO_DITHER") ? GL_TRUE : GL_FALSE;
    if (ctx->NoDither) {
       if (getenv("MESA_DEBUG")) {
+	/* XXX This causes an OSMesa build problem on Solaris 2.6 */
+#ifndef SVR4
          fprintf(stderr, "MESA_NO_DITHER set - dithering disabled\n");
+#endif
       }
       ctx->Color.DitherFlag = GL_FALSE;
    }
@@ -1337,21 +1325,38 @@ alloc_proxy_textures( GLcontext *ctx )
    GLboolean out_of_memory;
    GLint i;
 
-   ctx->Texture.Proxy1D = gl_alloc_texture_object(NULL, 0, 1);
+   ctx->Texture.Proxy1D = _mesa_alloc_texture_object(NULL, 0, GL_TEXTURE_1D);
    if (!ctx->Texture.Proxy1D) {
       return GL_FALSE;
    }
 
-   ctx->Texture.Proxy2D = gl_alloc_texture_object(NULL, 0, 2);
+   ctx->Texture.Proxy2D = _mesa_alloc_texture_object(NULL, 0, GL_TEXTURE_2D);
    if (!ctx->Texture.Proxy2D) {
-      gl_free_texture_object(NULL, ctx->Texture.Proxy1D);
+      _mesa_free_texture_object(NULL, ctx->Texture.Proxy1D);
       return GL_FALSE;
    }
 
-   ctx->Texture.Proxy3D = gl_alloc_texture_object(NULL, 0, 3);
+   ctx->Texture.Proxy3D = _mesa_alloc_texture_object(NULL, 0, GL_TEXTURE_3D);
    if (!ctx->Texture.Proxy3D) {
-      gl_free_texture_object(NULL, ctx->Texture.Proxy1D);
-      gl_free_texture_object(NULL, ctx->Texture.Proxy2D);
+      _mesa_free_texture_object(NULL, ctx->Texture.Proxy1D);
+      _mesa_free_texture_object(NULL, ctx->Texture.Proxy2D);
+      return GL_FALSE;
+   }
+
+   ctx->Texture.ProxyCubeMap = _mesa_alloc_texture_object(NULL, 0, GL_TEXTURE_CUBE_MAP_ARB);
+   if (!ctx->Texture.ProxyCubeMap) {
+      _mesa_free_texture_object(NULL, ctx->Texture.Proxy1D);
+      _mesa_free_texture_object(NULL, ctx->Texture.Proxy2D);
+      _mesa_free_texture_object(NULL, ctx->Texture.Proxy3D);
+      return GL_FALSE;
+   }
+
+   ctx->Texture.ProxyRect = _mesa_alloc_texture_object(NULL, 0, GL_TEXTURE_RECTANGLE_NV);
+   if (!ctx->Texture.ProxyRect) {
+      _mesa_free_texture_object(NULL, ctx->Texture.Proxy1D);
+      _mesa_free_texture_object(NULL, ctx->Texture.Proxy2D);
+      _mesa_free_texture_object(NULL, ctx->Texture.Proxy3D);
+      _mesa_free_texture_object(NULL, ctx->Texture.ProxyCubeMap);
       return GL_FALSE;
    }
 
@@ -1360,9 +1365,13 @@ alloc_proxy_textures( GLcontext *ctx )
       ctx->Texture.Proxy1D->Image[i] = _mesa_alloc_texture_image();
       ctx->Texture.Proxy2D->Image[i] = _mesa_alloc_texture_image();
       ctx->Texture.Proxy3D->Image[i] = _mesa_alloc_texture_image();
+      ctx->Texture.ProxyCubeMap->Image[i] = _mesa_alloc_texture_image();
+      ctx->Texture.ProxyRect->Image[i] = _mesa_alloc_texture_image();
       if (!ctx->Texture.Proxy1D->Image[i]
           || !ctx->Texture.Proxy2D->Image[i]
-          || !ctx->Texture.Proxy3D->Image[i]) {
+          || !ctx->Texture.Proxy3D->Image[i]
+          || !ctx->Texture.ProxyCubeMap->Image[i]
+          || !ctx->Texture.ProxyRect->Image[i]) {
          out_of_memory = GL_TRUE;
       }
    }
@@ -1377,10 +1386,18 @@ alloc_proxy_textures( GLcontext *ctx )
          if (ctx->Texture.Proxy3D->Image[i]) {
             _mesa_free_texture_image(ctx->Texture.Proxy3D->Image[i]);
          }
+         if (ctx->Texture.ProxyCubeMap->Image[i]) {
+            _mesa_free_texture_image(ctx->Texture.ProxyCubeMap->Image[i]);
+         }
+         if (ctx->Texture.ProxyRect->Image[i]) {
+            _mesa_free_texture_image(ctx->Texture.ProxyRect->Image[i]);
+         }
       }
-      gl_free_texture_object(NULL, ctx->Texture.Proxy1D);
-      gl_free_texture_object(NULL, ctx->Texture.Proxy2D);
-      gl_free_texture_object(NULL, ctx->Texture.Proxy3D);
+      _mesa_free_texture_object(NULL, ctx->Texture.Proxy1D);
+      _mesa_free_texture_object(NULL, ctx->Texture.Proxy2D);
+      _mesa_free_texture_object(NULL, ctx->Texture.Proxy3D);
+      _mesa_free_texture_object(NULL, ctx->Texture.ProxyCubeMap);
+      _mesa_free_texture_object(NULL, ctx->Texture.ProxyRect);
       return GL_FALSE;
    }
    else {
@@ -1389,6 +1406,43 @@ alloc_proxy_textures( GLcontext *ctx )
 }
 
 
+static void add_debug_flags( const char *debug )
+{
+#ifdef MESA_DEBUG
+   if (strstr(debug, "varray")) 
+      MESA_VERBOSE |= VERBOSE_VARRAY;
+
+   if (strstr(debug, "tex")) 
+      MESA_VERBOSE |= VERBOSE_TEXTURE;
+
+   if (strstr(debug, "imm")) 
+      MESA_VERBOSE |= VERBOSE_IMMEDIATE;
+
+   if (strstr(debug, "pipe")) 
+      MESA_VERBOSE |= VERBOSE_PIPELINE;
+
+   if (strstr(debug, "driver")) 
+      MESA_VERBOSE |= VERBOSE_DRIVER;
+
+   if (strstr(debug, "state")) 
+      MESA_VERBOSE |= VERBOSE_STATE;
+
+   if (strstr(debug, "api")) 
+      MESA_VERBOSE |= VERBOSE_API;
+
+   if (strstr(debug, "list")) 
+      MESA_VERBOSE |= VERBOSE_DISPLAY_LIST;
+
+   if (strstr(debug, "lighting")) 
+      MESA_VERBOSE |= VERBOSE_LIGHTING;
+   
+   /* Debug flag:
+    */
+   if (strstr(debug, "flush")) 
+      MESA_DEBUG_FLAGS |= DEBUG_ALWAYS_FLUSH;
+#endif
+}
+
 
 /*
  * Initialize a GLcontext struct.  This includes allocating all the
@@ -1396,7 +1450,7 @@ alloc_proxy_textures( GLcontext *ctx )
  */
 GLboolean
 _mesa_initialize_context( GLcontext *ctx,
-                          GLvisual *visual,
+                          const GLvisual *visual,
                           GLcontext *share_list,
                           void *driver_ctx,
                           GLboolean direct )
@@ -1408,33 +1462,27 @@ _mesa_initialize_context( GLcontext *ctx,
    /* misc one-time initializations */
    one_time_init();
 
+   /**
+    ** OpenGL SI stuff
+    **/
+   if (!ctx->imports.malloc) {
+      _mesa_InitDefaultImports(&ctx->imports, driver_ctx, NULL);
+   }
+   /* exports are setup by the device driver */
+
    ctx->DriverCtx = driver_ctx;
-   ctx->Visual = visual;
+   ctx->Visual = *visual;
    ctx->DrawBuffer = NULL;
    ctx->ReadBuffer = NULL;
 
-   ctx->VB = gl_vb_create_for_immediate( ctx );
-   if (!ctx->VB) {
-      return GL_FALSE;
-   }
-   ctx->input = ctx->VB->IM;
-
-   ctx->PB = gl_alloc_pb();
-   if (!ctx->PB) {
-      ALIGN_FREE( ctx->VB );
-      return GL_FALSE;
-   }
-
    if (share_list) {
-      /* share the group of display lists of another context */
+      /* share state with another context */
       ctx->Shared = share_list->Shared;
    }
    else {
-      /* allocate new group of display lists */
+      /* allocate new, unshared state */
       ctx->Shared = alloc_shared_state();
       if (!ctx->Shared) {
-         ALIGN_FREE( ctx->VB );
-         FREE( ctx->PB );
          return GL_FALSE;
       }
    }
@@ -1442,12 +1490,16 @@ _mesa_initialize_context( GLcontext *ctx,
    ctx->Shared->RefCount++;
    _glthread_UNLOCK_MUTEX(ctx->Shared->Mutex);
 
+   /* Effectively bind the default textures to all texture units */
+   ctx->Shared->Default1D->RefCount += MAX_TEXTURE_UNITS;
+   ctx->Shared->Default2D->RefCount += MAX_TEXTURE_UNITS;
+   ctx->Shared->Default3D->RefCount += MAX_TEXTURE_UNITS;
+   ctx->Shared->DefaultCubeMap->RefCount += MAX_TEXTURE_UNITS;
+   ctx->Shared->DefaultRect->RefCount += MAX_TEXTURE_UNITS;
+
    init_attrib_groups( ctx );
 
-   gl_reset_vb( ctx->VB );
-   gl_reset_input( ctx );
-
-   if (visual->DBflag) {
+   if (visual->doubleBufferMode) {
       ctx->Color.DrawBuffer = GL_BACK;
       ctx->Color.DriverDrawBuffer = GL_BACK_LEFT;
       ctx->Color.DrawDestMask = BACK_LEFT_BIT;
@@ -1464,8 +1516,6 @@ _mesa_initialize_context( GLcontext *ctx,
 
    if (!alloc_proxy_textures(ctx)) {
       free_shared_state(ctx, ctx->Shared);
-      ALIGN_FREE( ctx->VB );
-      FREE( ctx->PB );
       return GL_FALSE;
    }
 
@@ -1492,14 +1542,48 @@ _mesa_initialize_context( GLcontext *ctx,
    ctx->Save = (struct _glapi_table *) CALLOC(dispatchSize * sizeof(void*));
    if (!ctx->Exec || !ctx->Save) {
       free_shared_state(ctx, ctx->Shared);
-      ALIGN_FREE( ctx->VB );
-      FREE( ctx->PB );
       if (ctx->Exec)
          FREE( ctx->Exec );
    }
    _mesa_init_exec_table(ctx->Exec, dispatchSize);
    _mesa_init_dlist_table(ctx->Save, dispatchSize);
    ctx->CurrentDispatch = ctx->Exec;
+
+   ctx->ExecPrefersFloat = GL_FALSE;
+   ctx->SavePrefersFloat = GL_FALSE;
+
+   /* Neutral tnl module stuff */
+   _mesa_init_exec_vtxfmt( ctx );
+   ctx->TnlModule.Current = NULL;
+   ctx->TnlModule.SwapCount = 0;
+
+   /* Z buffer stuff */
+   if (ctx->Visual.depthBits == 0) {
+      /* Special case.  Even if we don't have a depth buffer we need
+       * good values for DepthMax for Z vertex transformation purposes
+       * and for per-fragment fog computation.
+       */
+      ctx->DepthMax = 1 << 16;
+      ctx->DepthMaxF = (GLfloat) ctx->DepthMax;
+   }
+   else if (ctx->Visual.depthBits < 32) {
+      ctx->DepthMax = (1 << ctx->Visual.depthBits) - 1;
+      ctx->DepthMaxF = (GLfloat) ctx->DepthMax;
+   }
+   else {
+      /* Special case since shift values greater than or equal to the
+       * number of bits in the left hand expression's type are undefined.
+       */
+      ctx->DepthMax = 0xffffffff;
+      ctx->DepthMaxF = (GLfloat) ctx->DepthMax;
+   }
+   ctx->MRD = 1.0;  /* Minimum resolvable depth value, for polygon offset */
+
+   if (getenv("MESA_DEBUG"))
+      add_debug_flags(getenv("MESA_DEBUG"));
+
+   if (getenv("MESA_VERBOSE"))
+      add_debug_flags(getenv("MESA_VERBOSE"));
 
    return GL_TRUE;
 }
@@ -1508,22 +1592,22 @@ _mesa_initialize_context( GLcontext *ctx,
 
 /*
  * Allocate and initialize a GLcontext structure.
- * Input:  visual - a GLvisual pointer
+ * Input:  visual - a GLvisual pointer (we copy the struct contents)
  *         sharelist - another context to share display lists with or NULL
  *         driver_ctx - pointer to device driver's context state struct
- * Return:  pointer to a new gl_context struct or NULL if error.
+ * Return:  pointer to a new __GLcontextRec or NULL if error.
  */
 GLcontext *
-gl_create_context( GLvisual *visual,
-                   GLcontext *share_list,
-                   void *driver_ctx,
-                   GLboolean direct )
+_mesa_create_context( const GLvisual *visual,
+                      GLcontext *share_list,
+                      void *driver_ctx,
+                      GLboolean direct )
 {
    GLcontext *ctx = (GLcontext *) CALLOC( sizeof(GLcontext) );
    if (!ctx) {
       return NULL;
    }
-
+   ctx->Driver.CurrentExecPrimitive = 0;
    if (_mesa_initialize_context(ctx, visual, share_list, driver_ctx, direct)) {
       return ctx;
    }
@@ -1540,37 +1624,37 @@ gl_create_context( GLvisual *visual,
  * But don't free() the GLcontext struct itself!
  */
 void
-gl_free_context_data( GLcontext *ctx )
+_mesa_free_context_data( GLcontext *ctx )
 {
    struct gl_shine_tab *s, *tmps;
    GLuint i, j;
 
    /* if we're destroying the current context, unbind it first */
-   if (ctx == gl_get_current_context()) {
-      gl_make_current(NULL, NULL);
+   if (ctx == _mesa_get_current_context()) {
+      _mesa_make_current(NULL, NULL);
    }
 
-   gl_matrix_dtr( &ctx->ModelView );
+   _math_matrix_dtr( &ctx->ModelView );
    for (i = 0; i < MAX_MODELVIEW_STACK_DEPTH - 1; i++) {
-      gl_matrix_dtr( &ctx->ModelViewStack[i] );
+      _math_matrix_dtr( &ctx->ModelViewStack[i] );
    }
-   gl_matrix_dtr( &ctx->ProjectionMatrix );
+   _math_matrix_dtr( &ctx->ProjectionMatrix );
    for (i = 0; i < MAX_PROJECTION_STACK_DEPTH - 1; i++) {
-      gl_matrix_dtr( &ctx->ProjectionStack[i] );
+      _math_matrix_dtr( &ctx->ProjectionStack[i] );
    }
    for (i = 0; i < MAX_TEXTURE_UNITS; i++) {
-      gl_matrix_dtr( &ctx->TextureMatrix[i] );
+      _math_matrix_dtr( &ctx->TextureMatrix[i] );
       for (j = 0; j < MAX_TEXTURE_STACK_DEPTH - 1; j++) {
-         gl_matrix_dtr( &ctx->TextureStack[i][j] );
+         _math_matrix_dtr( &ctx->TextureStack[i][j] );
       }
    }
 
-   FREE( ctx->PB );
+   _math_matrix_dtr( &ctx->_ModelProjectMatrix );
 
-   if (ctx->input != ctx->VB->IM)
-      gl_immediate_free( ctx->input );
-
-   gl_vb_free( ctx->VB );
+   _math_matrix_dtr(&ctx->ColorMatrix);
+   for (j = 0; j < MAX_COLOR_STACK_DEPTH - 1; j++) {
+      _math_matrix_dtr(&ctx->ColorStack[j]);
+   }
 
    _glthread_LOCK_MUTEX(ctx->Shared->Mutex);
    ctx->Shared->RefCount--;
@@ -1581,15 +1665,17 @@ gl_free_context_data( GLcontext *ctx )
       free_shared_state( ctx, ctx->Shared );
    }
 
-   foreach_s( s, tmps, ctx->ShineTabList ) {
+   foreach_s( s, tmps, ctx->_ShineTabList ) {
       FREE( s );
    }
-   FREE( ctx->ShineTabList );
+   FREE( ctx->_ShineTabList );
 
    /* Free proxy texture objects */
-   gl_free_texture_object( NULL, ctx->Texture.Proxy1D );
-   gl_free_texture_object( NULL, ctx->Texture.Proxy2D );
-   gl_free_texture_object( NULL, ctx->Texture.Proxy3D );
+   _mesa_free_texture_object( NULL, ctx->Texture.Proxy1D );
+   _mesa_free_texture_object( NULL, ctx->Texture.Proxy2D );
+   _mesa_free_texture_object( NULL, ctx->Texture.Proxy3D );
+   _mesa_free_texture_object( NULL, ctx->Texture.ProxyCubeMap );
+   _mesa_free_texture_object( NULL, ctx->Texture.ProxyRect );
 
    /* Free evaluator data */
    if (ctx->EvalMap.Map1Vertex3.Points)
@@ -1635,13 +1721,9 @@ gl_free_context_data( GLcontext *ctx )
    _mesa_free_colortable_data( &ctx->PostColorMatrixColorTable );
    _mesa_free_colortable_data( &ctx->Texture.Palette );
 
-   /* Free cache of immediate buffers. */
-   while (ctx->nr_im_queued-- > 0) {
-      struct immediate * next = ctx->freed_im_queue->next;
-      ALIGN_FREE( ctx->freed_im_queue );
-      ctx->freed_im_queue = next;
-   }
-   gl_extensions_dtr(ctx);
+   _math_matrix_dtr(&ctx->Viewport._WindowMap);
+
+   _mesa_extensions_dtr(ctx);
 
    FREE(ctx->Exec);
    FREE(ctx->Save);
@@ -1653,24 +1735,12 @@ gl_free_context_data( GLcontext *ctx )
  * Destroy a GLcontext structure.
  */
 void
-gl_destroy_context( GLcontext *ctx )
+_mesa_destroy_context( GLcontext *ctx )
 {
    if (ctx) {
-      gl_free_context_data(ctx);
+      _mesa_free_context_data(ctx);
       FREE( (void *) ctx );
    }
-}
-
-
-
-/*
- * Called by the driver after both the context and driver are fully
- * initialized.  Currently just reads the config file.
- */
-void
-gl_context_initialize( GLcontext *ctx )
-{
-   gl_read_config_file( ctx );
 }
 
 
@@ -1682,84 +1752,148 @@ gl_context_initialize( GLcontext *ctx )
  *         mask - bitwise OR of GL_*_BIT flags
  */
 void
-gl_copy_context( const GLcontext *src, GLcontext *dst, GLuint mask )
+_mesa_copy_context( const GLcontext *src, GLcontext *dst, GLuint mask )
 {
    if (mask & GL_ACCUM_BUFFER_BIT) {
-      MEMCPY( &dst->Accum, &src->Accum, sizeof(struct gl_accum_attrib) );
+      /* OK to memcpy */
+      dst->Accum = src->Accum;
    }
    if (mask & GL_COLOR_BUFFER_BIT) {
-      MEMCPY( &dst->Color, &src->Color, sizeof(struct gl_colorbuffer_attrib) );
+      /* OK to memcpy */
+      dst->Color = src->Color;
    }
    if (mask & GL_CURRENT_BIT) {
-      MEMCPY( &dst->Current, &src->Current, sizeof(struct gl_current_attrib) );
+      /* OK to memcpy */
+      dst->Current = src->Current;
    }
    if (mask & GL_DEPTH_BUFFER_BIT) {
-      MEMCPY( &dst->Depth, &src->Depth, sizeof(struct gl_depthbuffer_attrib) );
+      /* OK to memcpy */
+      dst->Depth = src->Depth;
    }
    if (mask & GL_ENABLE_BIT) {
       /* no op */
    }
    if (mask & GL_EVAL_BIT) {
-      MEMCPY( &dst->Eval, &src->Eval, sizeof(struct gl_eval_attrib) );
+      /* OK to memcpy */
+      dst->Eval = src->Eval;
    }
    if (mask & GL_FOG_BIT) {
-      MEMCPY( &dst->Fog, &src->Fog, sizeof(struct gl_fog_attrib) );
+      /* OK to memcpy */
+      dst->Fog = src->Fog;
    }
    if (mask & GL_HINT_BIT) {
-      MEMCPY( &dst->Hint, &src->Hint, sizeof(struct gl_hint_attrib) );
+      /* OK to memcpy */
+      dst->Hint = src->Hint;
    }
    if (mask & GL_LIGHTING_BIT) {
-      MEMCPY( &dst->Light, &src->Light, sizeof(struct gl_light_attrib) );
-      /*       gl_reinit_light_attrib( &dst->Light ); */
+      GLuint i;
+      /* begin with memcpy */
+      MEMCPY( &dst->Light, &src->Light, sizeof(struct gl_light) );
+      /* fixup linked lists to prevent pointer insanity */
+      make_empty_list( &(dst->Light.EnabledList) );
+      for (i = 0; i < MAX_LIGHTS; i++) {
+         if (dst->Light.Light[i].Enabled) {
+            insert_at_tail(&(dst->Light.EnabledList), &(dst->Light.Light[i]));
+         }
+      }
    }
    if (mask & GL_LINE_BIT) {
-      MEMCPY( &dst->Line, &src->Line, sizeof(struct gl_line_attrib) );
+      /* OK to memcpy */
+      dst->Line = src->Line;
    }
    if (mask & GL_LIST_BIT) {
-      MEMCPY( &dst->List, &src->List, sizeof(struct gl_list_attrib) );
+      /* OK to memcpy */
+      dst->List = src->List;
    }
    if (mask & GL_PIXEL_MODE_BIT) {
-      MEMCPY( &dst->Pixel, &src->Pixel, sizeof(struct gl_pixel_attrib) );
+      /* OK to memcpy */
+      dst->Pixel = src->Pixel;
    }
    if (mask & GL_POINT_BIT) {
-      MEMCPY( &dst->Point, &src->Point, sizeof(struct gl_point_attrib) );
+      /* OK to memcpy */
+      dst->Point = src->Point;
    }
    if (mask & GL_POLYGON_BIT) {
-      MEMCPY( &dst->Polygon, &src->Polygon, sizeof(struct gl_polygon_attrib) );
+      /* OK to memcpy */
+      dst->Polygon = src->Polygon;
    }
    if (mask & GL_POLYGON_STIPPLE_BIT) {
       /* Use loop instead of MEMCPY due to problem with Portland Group's
        * C compiler.  Reported by John Stone.
        */
-      int i;
-      for (i=0;i<32;i++) {
+      GLuint i;
+      for (i = 0; i < 32; i++) {
          dst->PolygonStipple[i] = src->PolygonStipple[i];
       }
    }
    if (mask & GL_SCISSOR_BIT) {
-      MEMCPY( &dst->Scissor, &src->Scissor, sizeof(struct gl_scissor_attrib) );
+      /* OK to memcpy */
+      dst->Scissor = src->Scissor;
    }
    if (mask & GL_STENCIL_BUFFER_BIT) {
-      MEMCPY( &dst->Stencil, &src->Stencil, sizeof(struct gl_stencil_attrib) );
+      /* OK to memcpy */
+      dst->Stencil = src->Stencil;
    }
    if (mask & GL_TEXTURE_BIT) {
-      MEMCPY( &dst->Texture, &src->Texture, sizeof(struct gl_texture_attrib) );
+      /* Cannot memcpy because of pointers */
+      _mesa_copy_texture_state(src, dst);
    }
    if (mask & GL_TRANSFORM_BIT) {
-      MEMCPY( &dst->Transform, &src->Transform, sizeof(struct gl_transform_attrib) );
+      /* OK to memcpy */
+      dst->Transform = src->Transform;
    }
    if (mask & GL_VIEWPORT_BIT) {
-      MEMCPY( &dst->Viewport, &src->Viewport, sizeof(struct gl_viewport_attrib) );
+      /* Cannot use memcpy, because of pointers in GLmatrix _WindowMap */
+      dst->Viewport.X = src->Viewport.X;
+      dst->Viewport.Y = src->Viewport.Y;
+      dst->Viewport.Width = src->Viewport.Width;
+      dst->Viewport.Height = src->Viewport.Height;
+      dst->Viewport.Near = src->Viewport.Near;
+      dst->Viewport.Far = src->Viewport.Far;
+      _math_matrix_copy(&dst->Viewport._WindowMap, &src->Viewport._WindowMap);
    }
+
+   /* XXX FIXME:  Call callbacks?
+    */
+   dst->NewState = _NEW_ALL;
 }
 
 
 /*
  * Set the current context, binding the given frame buffer to the context.
  */
-void gl_make_current( GLcontext *newCtx, GLframebuffer *buffer )
+void
+_mesa_make_current( GLcontext *newCtx, GLframebuffer *buffer )
 {
-   gl_make_current2( newCtx, buffer, buffer );
+   _mesa_make_current2( newCtx, buffer, buffer );
+}
+
+
+static void print_info( void )
+{
+   fprintf(stderr, "Mesa GL_VERSION = %s\n",
+	   (char *) _mesa_GetString(GL_VERSION));
+   fprintf(stderr, "Mesa GL_RENDERER = %s\n",
+	   (char *) _mesa_GetString(GL_RENDERER));
+   fprintf(stderr, "Mesa GL_VENDOR = %s\n",
+	   (char *) _mesa_GetString(GL_VENDOR));
+   fprintf(stderr, "Mesa GL_EXTENSIONS = %s\n",
+	   (char *) _mesa_GetString(GL_EXTENSIONS));
+#if defined(THREADS)
+   fprintf(stderr, "Mesa thread-safe: YES\n");
+#else
+   fprintf(stderr, "Mesa thread-safe: NO\n");
+#endif
+#if defined(USE_X86_ASM)
+   fprintf(stderr, "Mesa x86-optimized: YES\n");
+#else
+   fprintf(stderr, "Mesa x86-optimized: NO\n");
+#endif
+#if defined(USE_SPARC_ASM)
+   fprintf(stderr, "Mesa sparc-optimized: YES\n");
+#else
+   fprintf(stderr, "Mesa sparc-optimized: NO\n");
+#endif
 }
 
 
@@ -1767,26 +1901,26 @@ void gl_make_current( GLcontext *newCtx, GLframebuffer *buffer )
  * Bind the given context to the given draw-buffer and read-buffer
  * and make it the current context for this thread.
  */
-void gl_make_current2( GLcontext *newCtx, GLframebuffer *drawBuffer,
-                       GLframebuffer *readBuffer )
+void
+_mesa_make_current2( GLcontext *newCtx, GLframebuffer *drawBuffer,
+                     GLframebuffer *readBuffer )
 {
-#if 0
-   GLcontext *oldCtx = gl_get_context();
+   if (MESA_VERBOSE)
+      fprintf(stderr, "_mesa_make_current2()\n");
 
-   /* Flush the old context
+   /* Check that the context's and framebuffer's visuals are compatible.
+    * We could do a lot more checking here but this'll catch obvious
+    * problems.
     */
-   if (oldCtx) {
-      ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(oldCtx, "gl_make_current");
-
-      /* unbind frame buffers from context */
-      if (oldCtx->DrawBuffer) {
-         oldCtx->DrawBuffer = NULL;
-      }
-      if (oldCtx->ReadBuffer) {
-         oldCtx->ReadBuffer = NULL;
+   if (newCtx && drawBuffer && readBuffer) {
+      if (newCtx->Visual.rgbMode != drawBuffer->Visual.rgbMode ||
+          newCtx->Visual.redBits != drawBuffer->Visual.redBits ||
+          newCtx->Visual.depthBits != drawBuffer->Visual.depthBits ||
+          newCtx->Visual.stencilBits != drawBuffer->Visual.stencilBits ||
+          newCtx->Visual.accumRedBits != drawBuffer->Visual.accumRedBits) {
+         return; /* incompatible */
       }
    }
-#endif
 
    /* We call this function periodically (just here for now) in
     * order to detect when multithreading has begun.
@@ -1794,48 +1928,69 @@ void gl_make_current2( GLcontext *newCtx, GLframebuffer *drawBuffer,
    _glapi_check_multithread();
 
    _glapi_set_context((void *) newCtx);
-   ASSERT(gl_get_current_context() == newCtx);
-   if (newCtx) {
-      SET_IMMEDIATE(newCtx, newCtx->input);
-      _glapi_set_dispatch(newCtx->CurrentDispatch);
-   }
-   else {
+   ASSERT(_mesa_get_current_context() == newCtx);
+
+
+   if (!newCtx) {
       _glapi_set_dispatch(NULL);  /* none current */
    }
+   else {
+      _glapi_set_dispatch(newCtx->CurrentDispatch);
 
-   if (MESA_VERBOSE) fprintf(stderr, "gl_make_current()\n");
+      if (drawBuffer && readBuffer) {
+	 /* TODO: check if newCtx and buffer's visual match??? */
+	 newCtx->DrawBuffer = drawBuffer;
+	 newCtx->ReadBuffer = readBuffer;
+	 newCtx->NewState |= _NEW_BUFFERS;
 
-   if (newCtx && drawBuffer && readBuffer) {
-      /* TODO: check if newCtx and buffer's visual match??? */
-      newCtx->DrawBuffer = drawBuffer;
-      newCtx->ReadBuffer = readBuffer;
-      newCtx->NewState = NEW_ALL;   /* just to be safe */
-      gl_update_state( newCtx );
-   }
+         if (drawBuffer->Width == 0 && drawBuffer->Height == 0) {
+            /* get initial window size */
+            GLuint bufWidth, bufHeight;
 
-   /* We can use this to help debug user's problems.  Tell the to set
-    * the MESA_INFO env variable before running their app.  Then the
-    * first time each context is made current we'll print some useful
-    * information.
-    */
-   if (newCtx && newCtx->FirstTimeCurrent) {
-      if (getenv("MESA_INFO")) {
-         fprintf(stderr, "Mesa GL_VERSION = %s\n", (char *) _mesa_GetString(GL_VERSION));
-         fprintf(stderr, "Mesa GL_RENDERER = %s\n", (char *) _mesa_GetString(GL_RENDERER));
-         fprintf(stderr, "Mesa GL_VENDOR = %s\n", (char *) _mesa_GetString(GL_VENDOR));
-         fprintf(stderr, "Mesa GL_EXTENSIONS = %s\n", (char *) _mesa_GetString(GL_EXTENSIONS));
-#if defined(THREADS)
-         fprintf(stderr, "Mesa thread-safe: YES\n");
-#else
-         fprintf(stderr, "Mesa thread-safe: NO\n");
-#endif
-#if defined(USE_X86_ASM)
-         fprintf(stderr, "Mesa x86-optimized: YES\n");
-#else
-         fprintf(stderr, "Mesa x86-optimized: NO\n");
-#endif
+            /* ask device driver for size of output buffer */
+            (*newCtx->Driver.GetBufferSize)( drawBuffer, &bufWidth, &bufHeight );
+
+            if (drawBuffer->Width == bufWidth && drawBuffer->Height == bufHeight)
+               return; /* size is as expected */
+
+            drawBuffer->Width = bufWidth;
+            drawBuffer->Height = bufHeight;
+
+            newCtx->Driver.ResizeBuffers( drawBuffer );
+         }
+
+         if (readBuffer != drawBuffer &&
+             readBuffer->Width == 0 && readBuffer->Height == 0) {
+            /* get initial window size */
+            GLuint bufWidth, bufHeight;
+
+            /* ask device driver for size of output buffer */
+            (*newCtx->Driver.GetBufferSize)( readBuffer, &bufWidth, &bufHeight );
+
+            if (readBuffer->Width == bufWidth && readBuffer->Height == bufHeight)
+               return; /* size is as expected */
+
+            readBuffer->Width = bufWidth;
+            readBuffer->Height = bufHeight;
+
+            newCtx->Driver.ResizeBuffers( readBuffer );
+         }
       }
-      newCtx->FirstTimeCurrent = GL_FALSE;
+
+      if (newCtx->Driver.MakeCurrent)
+	 newCtx->Driver.MakeCurrent( newCtx, drawBuffer, readBuffer );
+
+      /* We can use this to help debug user's problems.  Tell them to set
+       * the MESA_INFO env variable before running their app.  Then the
+       * first time each context is made current we'll print some useful
+       * information.
+       */
+      if (newCtx->FirstTimeCurrent) {
+	 if (getenv("MESA_INFO")) {
+	    print_info();
+	 }
+	 newCtx->FirstTimeCurrent = GL_FALSE;
+      }
    }
 }
 
@@ -1846,7 +2001,8 @@ void gl_make_current2( GLcontext *newCtx, GLframebuffer *drawBuffer,
  * This isn't the fastest way to get the current context.
  * If you need speed, see the GET_CURRENT_CONTEXT() macro in context.h
  */
-GLcontext *gl_get_current_context( void )
+GLcontext *
+_mesa_get_current_context( void )
 {
    return (GLcontext *) _glapi_get_context();
 }
@@ -1860,7 +2016,7 @@ GLcontext *gl_get_current_context( void )
 void
 _mesa_swapbuffers(GLcontext *ctx)
 {
-   FLUSH_VB( ctx, "swap buffers" );
+   FLUSH_VERTICES( ctx, 0 );
 }
 
 
@@ -1887,7 +2043,7 @@ _mesa_get_dispatch(GLcontext *ctx)
  * This function is called when the Mesa user has stumbled into a code
  * path which may not be implemented fully or correctly.
  */
-void gl_problem( const GLcontext *ctx, const char *s )
+void _mesa_problem( const GLcontext *ctx, const char *s )
 {
    fprintf( stderr, "Mesa implementation error: %s\n", s );
 #ifdef XF86DRI
@@ -1905,23 +2061,10 @@ void gl_problem( const GLcontext *ctx, const char *s )
  * something illogical or if there's likely a bug in their program
  * (like enabled depth testing without a depth buffer).
  */
-void gl_warning( const GLcontext *ctx, const char *s )
+void
+_mesa_warning( const GLcontext *ctx, const char *s )
 {
-   GLboolean debug;
-#ifdef DEBUG
-   debug = GL_TRUE;
-#else
-   if (getenv("MESA_DEBUG")) {
-      debug = GL_TRUE;
-   }
-   else {
-      debug = GL_FALSE;
-   }
-#endif
-   if (debug) {
-      fprintf( stderr, "Mesa warning: %s\n", s );
-   }
-   (void) ctx;
+   (*ctx->imports.warning)((__GLcontext *) ctx, (char *) s);
 }
 
 
@@ -1929,13 +2072,14 @@ void gl_warning( const GLcontext *ctx, const char *s )
 /*
  * Compile an error into current display list.
  */
-void gl_compile_error( GLcontext *ctx, GLenum error, const char *s )
+void
+_mesa_compile_error( GLcontext *ctx, GLenum error, const char *s )
 {
    if (ctx->CompileFlag)
-      gl_save_error( ctx, error, s );
+      _mesa_save_error( ctx, error, s );
 
    if (ctx->ExecuteFlag)
-      gl_error( ctx, error, s );
+      _mesa_error( ctx, error, s );
 }
 
 
@@ -1950,7 +2094,7 @@ void gl_compile_error( GLcontext *ctx, GLenum error, const char *s )
  *         where - usually the name of function where error was detected
  */
 void
-gl_error( GLcontext *ctx, GLenum error, const char *where )
+_mesa_error( GLcontext *ctx, GLenum error, const char *where )
 {
    const char *debugEnv = getenv("MESA_DEBUG");
    GLboolean debug;
@@ -2001,6 +2145,9 @@ gl_error( GLcontext *ctx, GLenum error, const char *where )
       fprintf(stderr, "Mesa user error: %s in %s\n", errstr, where);
    }
 
+   if (!ctx)
+      return;
+
    if (ctx->ErrorValue == GL_NO_ERROR) {
       ctx->ErrorValue = error;
    }
@@ -2017,7 +2164,7 @@ void
 _mesa_Finish( void )
 {
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glFinish");
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
    if (ctx->Driver.Finish) {
       (*ctx->Driver.Finish)( ctx );
    }
@@ -2029,8 +2176,26 @@ void
 _mesa_Flush( void )
 {
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glFlush");
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
    if (ctx->Driver.Flush) {
       (*ctx->Driver.Flush)( ctx );
    }
 }
+
+
+
+const char *_mesa_prim_name[GL_POLYGON+4] = {
+   "GL_POINTS",
+   "GL_LINES",
+   "GL_LINE_LOOP",
+   "GL_LINE_STRIP",
+   "GL_TRIANGLES",
+   "GL_TRIANGLE_STRIP",
+   "GL_TRIANGLE_FAN",
+   "GL_QUADS",
+   "GL_QUAD_STRIP",
+   "GL_POLYGON",
+   "outside begin/end",
+   "inside unkown primitive",
+   "unknown state"
+};

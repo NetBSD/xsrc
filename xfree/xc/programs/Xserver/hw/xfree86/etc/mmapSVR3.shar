@@ -1,5 +1,5 @@
 #!/bin/sh
-# $XFree86: xc/programs/Xserver/hw/xfree86/etc/mmapSVR3.shar,v 3.2 1996/12/23 06:47:16 dawes Exp $
+# $XFree86: xc/programs/Xserver/hw/xfree86/etc/mmapSVR3.shar,v 3.3 2002/10/08 23:07:43 dawes Exp $
 # This is a shell archive (produced by shar 3.49)
 # To extract the files from this archive, save it to a file, remove
 # everything above the "!/bin/sh" line above, and type "sh file_name".
@@ -534,10 +534,6 @@ X
 X   Under ISC you can check the output of the tstmap, e.g. with:
 X
 X	# hd -s 0xF0000 /dev/mem | more
-X
-X   Another option to do this is:
-X
-X	# tail +983040c /dev/mem | more
 X
 X
 6. Run the mmapstat utility hereafter, which should give following output:

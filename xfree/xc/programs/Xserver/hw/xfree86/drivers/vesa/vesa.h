@@ -26,7 +26,7 @@
  *
  * Authors: Paulo César Pereira de Andrade <pcpa@conectiva.com.br>
  *
- * $XFree86: xc/programs/Xserver/hw/xfree86/drivers/vesa/vesa.h,v 1.9 2001/05/04 19:05:49 dawes Exp $
+ * $XFree86: xc/programs/Xserver/hw/xfree86/drivers/vesa/vesa.h,v 1.14 2003/01/16 16:09:10 eich Exp $
  */
 
 #ifndef _VESA_H_
@@ -52,6 +52,7 @@
 
 /* VBE/DDC support */
 #include "vbe.h"
+#include "vbeModes.h"
 #include "xf86DDC.h"
 
 /* ShadowFB support */
@@ -97,30 +98,26 @@ typedef struct _VESARec
     miBankInfoRec bank;
     int curBank, bankSwitchWindowB;
     CARD16 maxBytesPerScanline;
-    int mapPhys, mapOff, mapSize;	/* video memory */
+    unsigned long mapPhys, mapOff, mapSize;	/* video memory */
     void *base, *VGAbase;
     CARD8 *state, *pstate;	/* SVGA state */
     int statePage, stateSize, stateMode;
     int page;
-    int pix24bpp;
     CARD32 *pal, *savedPal;
     CARD8 *fonts;
     xf86MonPtr monitor;
     Bool shadowFB, primary;
     CARD8 *shadowPtr;
     CARD32 windowAoffset;
+    /* Don't override the default refresh rate. */
+    Bool defaultRefresh;
     /* DGA info */
     DGAModePtr pDGAMode;
     int nDGAMode;
     CloseScreenProcPtr CloseScreen;
     OptionInfoPtr Options;
+    IOADDRESS ioBase;
 } VESARec, *VESAPtr;
-
-typedef struct _ModeInfoData {
-    int mode;
-    VbeModeInfoBlock *data;
-    VbeCRTCInfoBlock *block;
-} ModeInfoData;
 
 
 #endif /* _VESA_H_ */

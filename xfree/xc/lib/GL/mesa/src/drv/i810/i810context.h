@@ -21,7 +21,7 @@
  * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  */
-/* $XFree86: xc/lib/GL/mesa/src/drv/i810/i810context.h,v 1.6 2001/08/27 21:12:19 dawes Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/i810/i810context.h,v 1.9 2002/12/16 16:18:51 dawes Exp $ */
 
 #ifndef I810CONTEXT_INC
 #define I810CONTEXT_INC
@@ -31,42 +31,27 @@ typedef struct i810_context_t *i810ContextPtr;
 typedef struct i810_texture_object_t *i810TextureObjectPtr;
 
 #include <X11/Xlibint.h>
-#include "dri_tmm.h"
-#include "dri_mesaint.h"
-#include "dri_mesa.h"
 
-#include "types.h"
-#include "i810_init.h"
-#include "drm.h"
+#include "mtypes.h"
 #include "mm.h"
-#include "i810log.h"
 
+#include "i810screen.h"
 #include "i810tex.h"
-#include "i810vb.h"
 
 
-/* Reasons to fallback on all primitives.  (see also
- * imesa->IndirectTriangles).  
+/* Reasons to disable hardware rasterization. 
  */
 #define I810_FALLBACK_TEXTURE        0x1
 #define I810_FALLBACK_DRAW_BUFFER    0x2
 #define I810_FALLBACK_READ_BUFFER    0x4
 #define I810_FALLBACK_COLORMASK      0x8  
-#define I810_FALLBACK_STIPPLE        0x10  
 #define I810_FALLBACK_SPECULAR       0x20 
 #define I810_FALLBACK_LOGICOP        0x40
+#define I810_FALLBACK_RENDERMODE     0x80
+#define I810_FALLBACK_STENCIL        0x100
+#define I810_FALLBACK_BLEND_EQ       0x200
+#define I810_FALLBACK_BLEND_FUNC     0x400
 
-
-
-/* for i810ctx.new_state - manage GL->driver state changes
- */
-#define I810_NEW_TEXTURE 0x1
-
-
-typedef void (*i810_interp_func)( GLfloat t, 
-				  GLfloat *result,
-				  const GLfloat *in,
-				  const GLfloat *out );
 
 #ifndef PCI_CHIP_I810				 
 #define PCI_CHIP_I810              0x7121
@@ -81,71 +66,93 @@ typedef void (*i810_interp_func)( GLfloat t,
 #define IS_I815(imesa) (imesa->i810Screen->deviceID == PCI_CHIP_I815)
 
 
-struct i810_context_t {
-   GLint refcount;
+#define I810_UPLOAD_TEX(i) (I810_UPLOAD_TEX0<<(i))
 
+/* Use the templated vertex formats:
+ */
+#define TAG(x) i810##x
+#include "tnl_dd/t_dd_vertex.h"
+#undef TAG
+
+typedef void (*i810_tri_func)( i810ContextPtr, i810Vertex *, i810Vertex *,
+			       i810Vertex * );
+typedef void (*i810_line_func)( i810ContextPtr, i810Vertex *, i810Vertex * );
+typedef void (*i810_point_func)( i810ContextPtr, i810Vertex * );
+
+struct i810_context_t {
+   GLint refcount;   
    GLcontext *glCtx;
 
+   /* Textures
+    */
    i810TextureObjectPtr CurrentTexObj[2];
-
    struct i810_texture_object_t TexObjList;
    struct i810_texture_object_t SwappedOut; 
-
-   int TextureMode;
-
-   /* Hardware state
-    */
-   GLuint Setup[I810_CTX_SETUP_SIZE];
-   GLuint BufferSetup[I810_DEST_SETUP_SIZE];
-   int vertsize;
-   
-
-   /* Support for CVA and the fast paths.
-    */
-   GLuint setupdone;
-   GLuint setupindex;
-   GLuint renderindex;
-   GLuint using_fast_path;
-   i810_interp_func interp;
-
-   /* Shortcircuit some state changes.
-    */
-   points_func PointsFunc;
-   line_func LineFunc;
-   triangle_func TriangleFunc;
-   quad_func QuadFunc;
-
-   /* Manage our own state */
-   GLuint new_state; 
-
-   /* Manage hardware state */
-   GLuint dirty;
    memHeap_t *texHeap;
 
-   /* One of the few bits of hardware state that can't be calculated
-    * completely on the fly:
+   /* Bit flag to keep track of fallbacks.
+    */
+   GLuint Fallback;
+
+   /* Temporaries for translating away float colors:
+    */
+   struct gl_client_array UbyteColor;
+   struct gl_client_array UbyteSecondaryColor;
+
+   /* State for i810vb.c and i810tris.c.
+    */
+   GLuint new_state;		/* _NEW_* flags */
+   GLuint SetupNewInputs;
+   GLuint SetupIndex;
+   GLuint RenderIndex;
+   GLmatrix ViewportMatrix;
+   GLenum render_primitive;
+   GLenum reduced_primitive;
+   GLuint hw_primitive;
+   char *verts;
+
+   drmBufPtr  vertex_buffer;
+   char *vertex_addr;
+   GLuint vertex_low;
+   GLuint vertex_high;
+   GLuint vertex_last_prim;
+   
+   GLboolean upload_cliprects;
+
+
+   /* Fallback rasterization functions 
+    */
+   i810_point_func draw_point;
+   i810_line_func draw_line;
+   i810_tri_func draw_tri;
+
+   /* Hardware state 
+    */
+   GLuint dirty;		/* I810_UPLOAD_* */
+   GLuint Setup[I810_CTX_SETUP_SIZE];
+   GLuint BufferSetup[I810_DEST_SETUP_SIZE];
+   int vertex_size;
+   int vertex_stride_shift;
+   unsigned int lastStamp;
+   GLboolean stipple_in_hw;
+
+   GLenum TexEnvImageFmt[2];
+
+   /* State which can't be computed completely on the fly:
     */
    GLuint LcsCullMode;
+   GLuint LcsLineWidth;
+   GLuint LcsPointSize;
 
    /* Funny mesa mirrors
     */
-   GLushort MonoColor;
    GLushort ClearColor;
 
    /* DRI stuff
     */
-   drmBufPtr  vertex_dma_buffer;
-   GLuint vertex_prim;
-
-   GLframebuffer *glBuffer;
-   
-   /* Two flags to keep track of fallbacks.
-    */
-   GLuint IndirectTriangles;
-   GLuint Fallback;
-
-
    GLuint needClip;
+   GLframebuffer *glBuffer;
+   GLboolean doPageFlip;
 
    /* These refer to the current draw (front vs. back) buffer:
     */
@@ -157,15 +164,13 @@ struct i810_context_t {
    XF86DRIClipRectPtr pClipRects;
 
    int lastSwap;
-   int secondLastSwap;
    int texAge;
    int ctxAge;
    int dirtyAge;
-   int any_contend;		/* throttle me harder */
 
-   int scissor;
-   drm_clip_rect_t draw_rect;
-   drm_clip_rect_t scissor_rect;
+   GLboolean scissor;
+   XF86DRIClipRectRec draw_rect;
+   XF86DRIClipRectRec scissor_rect;
 
    drmContext hHWContext;
    drmLock *driHwLock;
@@ -175,31 +180,55 @@ struct i810_context_t {
    __DRIdrawablePrivate *driDrawable;
    __DRIscreenPrivate *driScreen;
    i810ScreenPrivate *i810Screen; 
-   drm_i810_sarea_t *sarea;
+   I810SAREAPtr sarea;
 };
 
 
-/* To remove all debugging, make sure I810_DEBUG is defined as a
- * preprocessor symbol, and equal to zero.  
- */
-#define I810_DEBUG 0   
-#ifndef I810_DEBUG
-#warning "Debugging enabled - expect reduced performance"
-extern int I810_DEBUG;
-#endif
+#define I810_CONTEXT(ctx)    ((i810ContextPtr)(ctx->DriverCtx))
 
-#define DEBUG_VERBOSE_2D     0x1
-#define DEBUG_VERBOSE_RING   0x8
-#define DEBUG_VERBOSE_OUTREG 0x10
-#define DEBUG_ALWAYS_SYNC    0x40
-#define DEBUG_VERBOSE_MSG    0x80
-#define DEBUG_NO_OUTRING     0x100
-#define DEBUG_NO_OUTREG      0x200
-#define DEBUG_VERBOSE_API    0x400
-#define DEBUG_VALIDATE_RING  0x800
-#define DEBUG_VERBOSE_LRU    0x1000
-#define DEBUG_VERBOSE_DRI    0x2000
-#define DEBUG_VERBOSE_IOCTL  0x4000
+#define GET_DISPATCH_AGE( imesa ) imesa->sarea->last_dispatch
+#define GET_ENQUEUE_AGE( imesa ) imesa->sarea->last_enqueue
+
+
+/* Lock the hardware and validate our state.  
+ */
+#define LOCK_HARDWARE( imesa )				\
+  do {							\
+    char __ret=0;					\
+    DRM_CAS(imesa->driHwLock, imesa->hHWContext,	\
+	    (DRM_LOCK_HELD|imesa->hHWContext), __ret);	\
+    if (__ret)						\
+        i810GetLock( imesa, 0 );			\
+  } while (0)
+
+
+
+/* Release the kernel lock.
+ */
+#define UNLOCK_HARDWARE(imesa)					\
+    DRM_UNLOCK(imesa->driFd, imesa->driHwLock, imesa->hHWContext);	
+
+
+/* This is the wrong way to do it, I'm sure.  Otherwise the drm
+ * bitches that I've already got the heavyweight lock.  At worst,
+ * this is 3 ioctls.  The best solution probably only gets me down 
+ * to 2 ioctls in the worst case.
+ */
+#define LOCK_HARDWARE_QUIESCENT( imesa ) do {	\
+   LOCK_HARDWARE( imesa );			\
+   i810RegetLockQuiescent( imesa );		\
+} while(0)
+
+
+extern void i810GetLock( i810ContextPtr imesa, GLuint flags );
+extern void i810EmitHwStateLocked( i810ContextPtr imesa );
+extern void i810EmitScissorValues( i810ContextPtr imesa, int box_nr, int emit );
+extern void i810EmitDrawingRectangle( i810ContextPtr imesa );
+extern void i810XMesaSetBackClipRects( i810ContextPtr imesa );
+extern void i810XMesaSetFrontClipRects( i810ContextPtr imesa );
+
+#define SUBPIXEL_X -.5
+#define SUBPIXEL_Y -.5
 
 
 #endif

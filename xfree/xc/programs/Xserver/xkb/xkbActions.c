@@ -24,7 +24,7 @@ OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
 THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ********************************************************/
-/* $XFree86: xc/programs/Xserver/xkb/xkbActions.c,v 3.7 2001/08/23 14:33:25 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/xkb/xkbActions.c,v 3.11 2003/02/13 15:36:48 dawes Exp $ */
 
 #include <stdio.h>
 #include <math.h>
@@ -245,7 +245,6 @@ _XkbFilterSetState(xkbi,filter,keycode,pAction)
     XkbAction *		pAction;
 #endif
 {
-
     if (filter->keycode==0) {		/* initial press */
 	filter->keycode = keycode;
 	filter->active = 1;
@@ -1019,6 +1018,69 @@ unsigned	mods,mask,oldCoreState = 0,oldCorePrevState = 0;
     return 1;
 }
 
+static int
+#if NeedFunctionPrototypes
+_XkbFilterSwitchScreen(	XkbSrvInfoPtr	xkbi,
+			XkbFilterPtr	filter,
+			unsigned	keycode,
+			XkbAction *	pAction)
+#else
+_XkbFilterSwitchScreen(xkbi,filter,keycode,pAction)
+    XkbSrvInfoPtr	xkbi;
+    XkbFilterPtr	filter;
+    unsigned		keycode;
+    XkbAction *		pAction;
+#endif
+{
+    if (filter->keycode==0) {		/* initial press */
+        DeviceIntPtr	dev = xkbi->device;
+	filter->keycode = keycode;
+	filter->active = 1;
+	filter->filterOthers = 0;
+	filter->filter = _XkbFilterSwitchScreen;
+	AccessXCancelRepeatKey(xkbi, keycode);
+	XkbDDXSwitchScreen(dev,keycode,pAction);
+        return 0; 
+    }
+    else if (filter->keycode==keycode) {
+	filter->active= 0;
+        return 0; 
+    }
+    return 1;
+}
+
+#ifdef XFree86Server
+static int
+#if NeedFunctionPrototypes
+_XkbFilterXF86Private(	XkbSrvInfoPtr	xkbi,
+			XkbFilterPtr	filter,
+			unsigned	keycode,
+			XkbAction *	pAction)
+#else
+_XkbFilterXF86Private(xkbi,filter,keycode,pAction)
+    XkbSrvInfoPtr	xkbi;
+    XkbFilterPtr	filter;
+    unsigned		keycode;
+    XkbAction *		pAction;
+#endif
+{
+    if (filter->keycode==0) {		/* initial press */
+        DeviceIntPtr	dev = xkbi->device;
+	filter->keycode = keycode;
+	filter->active = 1;
+	filter->filterOthers = 0;
+	filter->filter = _XkbFilterXF86Private;
+	XkbDDXPrivate(dev,keycode,pAction);
+        return 0; 
+    }
+    else if (filter->keycode==keycode) {
+	filter->active= 0;
+        return 0; 
+    }
+    return 1;
+}
+#endif
+
 #ifdef XINPUT
 
 static int
@@ -1247,7 +1309,8 @@ Bool		xiEvent;
 		    sendEvent= XkbDDXTerminateServer(dev,key,&act);
 		    break;
 		case XkbSA_SwitchScreen:
-		    sendEvent= XkbDDXSwitchScreen(dev,key,&act);
+		    filter = _XkbNextFreeFilter();
+		    sendEvent=_XkbFilterSwitchScreen(xkbi,filter,key,&act);
 		    break;
 		case XkbSA_SetControls:
 		case XkbSA_LockControls:
@@ -1267,6 +1330,12 @@ Bool		xiEvent;
 		case XkbSA_LockDeviceBtn:
 		    filter = _XkbNextFreeFilter();
 		    sendEvent= _XkbFilterDeviceBtn(xkbi,filter,key,&act);
+		    break;
+#endif
+#ifdef XFree86Server
+		case XkbSA_XFree86Private:
+		    filter = _XkbNextFreeFilter();
+		    sendEvent= _XkbFilterXF86Private(xkbi,filter,key,&act);
 		    break;
 #endif
 	    }

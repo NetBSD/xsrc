@@ -2,7 +2,7 @@
 
                          David Dawes, Matthieu Herrb
 
-                                 27 May 2001
+                              26 February 2003
 
                                   Abstract
 
@@ -17,63 +17,76 @@
 We highly recommend using gcc to build XFree86, but it generally also builds
 with the native compiler for each platform;
 
-1.  How to get the XFree86 4.2.1 source
+1.  How to get the XFree86 4.3.0 source
 
-There are a few starting points for getting the XFree86 source.  One option
-is to start directly with the XFree86 4.2.0 source distribution and updating
-it to 4.2.1 with a source patch.  In this case, the procedure is as follows:
+The recommended way of getting the XFree86 4.3.0 source is to get it directly
+from the XFree86 CVS repository.  There are several ways of doing that, and
+they are described at our CVS web page <URL:http://www.xfree86.org/cvs/>  The
+CVS tag for this release is "xf-4_3_0", and the tag for the maintenance
+branch for this release is "xf-4_3-branch".
 
-   o The XFree86 source is contained in files X420src-1.tgz, X420src-2.tgz
-     and X420src-3.tgz.  These can be found at
-     ftp://ftp.xfree86.org/pub/XFree86/4.2.0/source/ and similar locations on
-     XFree86 mirror sites.  X420src-2.tgz contains the fonts and documenta-
-     tion source.  X420src-3.tgz contains the hardcopy documentation.
-     X420src-1.tgz contains everything else.  If you don't need the docs or
-     fonts you can get by with only X420src-1.tgz.
+Another method of getting the XFree86 4.3.0 source is to either download the
+4.3.0 source tarballs from the XFree86 ftp site.  The procedure for this is
+as follows:
+
+   o The XFree86 4.3.0 source is contained in the files X430src-1.tgz,
+     X430src-2.tgz, X430src-3.tgz, X430src-4.tgz, X430src-5.tgz,
+     X430src-6.tgz and X430src-7.tgz.  These can be found at
+     ftp://ftp.xfree86.org/pub/XFree86/4.3.0/source/ and similar locations on
+     XFree86 mirror sites.  X430src-4.tgz and X430src-5.tgz contains the
+     fonts.  X430src-6.tgz contains the documentation source.  X430src-7.tgz
+     contains the hardcopy documentation.  X430src-1.tgz, X430src-2.tgz and
+     X430src-3.tgz contains everything else.  If you don't need the docs or
+     fonts you can get by with only X430src-1.tgz, X430src-2.tgz and
+     X430src-3.tgz.
 
    o Extract each of these files by running the following from a directory on
      a filesystem containing enough space (the full source requires around
-     270MB, and a similar amount is required in addition to this for the com-
+     305MB, and a similar amount is required in addition to this for the com-
      piled binaries):
 
-          gzip -d < X420src-1.tgz | tar vxf -
+          gzip -d < X430src-1.tgz | tar vxf -
 
-          gzip -d < X420src-2.tgz | tar vxf -
+          gzip -d < X430src-2.tgz | tar vxf -
 
-          gzip -d < X420src-3.tgz | tar vxf -
+          gzip -d < X430src-3.tgz | tar vxf -
 
-   o A patch relative to 4.2.0 is available at
-     ftp://ftp.xfree86.org/pub/XFree86/4.2.1/patches/.  The patch file is
-     4.2.0-4.2.1.diff.gz.
+          gzip -d < X430src-4.tgz | tar vxf -
 
-     The patch can be applied by running:
+          gzip -d < X430src-5.tgz | tar vxf -
 
-          cd the directory containing the xc directory
+          gzip -d < X430src-6.tgz | tar vxf -
 
-          gzip -d < 4.2.0-4.2.1.diff.gz | patch -s -p0 -E
+          gzip -d < X430src-7.tgz | tar vxf -
 
-     Look for special patching instructions in the Release  Notes.
-
-Another option is to get the source by anonymous CVS or CVSup.  See
-http://www.xfree86.org/cvs/ for details on the different procedure available.
+Alternatively, if you already have a pristine copy of the XFree86 4.2.0
+source, you can download patches from
+ftp://ftp.xfree86.org/pub/XFree86/4.3.0/patches/ that will allow you to con-
+vert it to 4.3.0.  Information about which patch files to download and how to
+apply them can be found in the "How to get XFree86" section of the README for
+this release.
 
 All methods will produce one main source directory called xc.
 
 2.  Configuring the source before building
 
-It is recommended that you start the configuration process by going to the
-xc/config/cf directory, and copying the file xf86site.def to host.def.  Then
-read through the host.def file (which is heavily commented), and set any
-parameters that you want for your configuration.  You can usually find out
-what the default settings are by checking the .cf file(s) relevant to your
-OS.
+In most cases it shouldn't be necessary to configure anything before build-
+ing.
 
-Unlike previous versions, imake can now automatically detect and set the var-
-ious OS*Version parameters, so you shouldn't need to enter those settings
-explicitly.
+If you do want to make configuration changes, it is recommended that you
+start by going to the xc/config/cf directory, and copying the file
+xf86site.def to host.def.  Then read through the host.def file (which is
+heavily commented), and set any parameters that you want for your configura-
+tion.  You can usually find out what the default settings are by checking the
+.cf file(s) relevant to your OS.
 
-If you are using just the X421src-1.tgz part of the source dist, you will
-need to define BuildFonts to NO.
+A general rule to follow is to only change things that you understand and
+have a good reason to change.  It is easy to create build problems by chang-
+ing the default configuration.  Many of the configuration parameters are doc-
+umented in xc/config/cf/README.
+
+If you are using just the X430src-1.tgz, X430src-2.tgz and X430src-3.tgz
+parts of the source dist, you will need to define BuildFonts to NO.
 
 3.  Using a shadow directory of symbolic links for the build
 
@@ -86,11 +99,11 @@ during the build, which has the following benefits:
      trol of CVS.
 
    o It is possible to build XFree86 for several different Operating System
-     or architectures from the same sources, shared by NFS.
+     or architectures from the same sources, shared by read-only NFS mounts.
 
    o It is possible to build XFree86 with different configuration options,
-     just by putting a real copyhost.def in each build tree and by customiz-
-     ing it separately in each build tree.
+     just by putting a real copy of the host.def file in each build tree and
+     by customizing it separately in each build tree.
 
 To make a shadow directory of symbolic links, use the following steps:
 
@@ -101,7 +114,7 @@ To make a shadow directory of symbolic links, use the following steps:
 
           mkdir build
 
-   o use the lndircommand to make the shadow tree:
+   o use the "lndir" command to make the shadow tree:
 
           lndir ../xc
 
@@ -119,16 +132,24 @@ from the XFree86 sources by running the following commands:
 
      cp lndir some directory in your PATH
 
+From time to time there may be some stale links in the build tree, for exam-
+ple, when files in the source tree are removed or renamed.  These can be
+cleaned up by running the "cleanlinks" script from the build directory (see
+the cleanlinks(1) manual page).  Rarely there will be changes that will
+require the build tree to be re-created from scratch.  A symptom of this can
+be mysterious build problems.  The best solution for this is to remove the
+build tree, and then re-create it using the steps outlined above.
+
 4.  Building and installing the distribution
 
 Before building the distribution, read through the OS-specific README file in
 xc/programs/Xserver/hw/xfree86/doc that is relevant to you.  Once those OS-
 specific details have been taken care of, go your build directory (either the
-xc directory or the shadow tree created before) and run ``make World'' with
-the BOOTSTRAPCFLAGS set as described in the OS-specific README (if necessary,
-but most systems supported by XFree86 don't need BOOTSTRAPCFLAGS).  It is
-advisable to redirect stdout and stderr to World.Log so that you can track
-down problems that might occur during the build.
+xc directory or the shadow tree created before) and run "make World" with the
+BOOTSTRAPCFLAGS set as described in the OS-specific README (if necessary, but
+most systems supported by XFree86 don't need BOOTSTRAPCFLAGS).  It is advis-
+able to redirect stdout and stderr to World.Log so that you can track down
+problems that might occur during the build.
 
 With Bourne-like shells (Bash, the Korn shell, zsh, etc.) use a command like:
 
@@ -144,9 +165,27 @@ You can follow the progress of the build by running:
 
  in a terminal.
 
-When the build is finished, you should check World.Log to see if there were
-any problems.  If there weren't any then you can install the binaries.  To do
-the install, run ``make install'' and ``make install.man''.  Make sure you
+When the build is finished, you should check the World.Log file to see if
+there were any problems.  If there weren't any then you can install the bina-
+ries.  By default the "make World" process will ignore errors and build as
+much as possible.  If there were problems and they are not corrected at this
+stage, the installation process will fail.  To restart the build process
+after correcting the problems, just run 'make'.  If Imakefiles or part of the
+build configuration was changed as part of correcting the problem, either re-
+run "make World", or run "make Everything".
+
+If you would prefer "make World" to exit at the first error, run it in the
+following way instead of the way described above:
+
+for Bourne-like shells:
+
+     make WORLDOPTS= World > World.log 2>&1
+
+for C-shell variants:
+
+     make WORLDOPTS= World >& World.log
+
+To do the install, run "make install" and "make install.man".  Make sure you
 have enough space in /usr/X11R6 for the install to succeed.  If you want to
 install on a filesystem other than /usr, make a symbolic link to /usr/X11R6
 before installing.
@@ -168,7 +207,7 @@ drivers installed:
 
                 make Makefile
                 make Makefiles
-                   make includes
+                make includes
                 make depend
                 make
 
@@ -177,7 +216,7 @@ drivers installed:
 There are some other useful targets defined in the top level Makefileof
 XFree86:
 
-   o Everything after a make World, make Everythingdoes everything a make
+   o Everything after a make World, make Everything does everything a make
      World does, except the cleaning of the tree. It is a way to quickly
      rebuild the tree after a source patch, but it is not 100% bullet proof.
      There are cases were it is better to force a full build by using make
@@ -207,9 +246,9 @@ XFree86:
 
    o VerifyOS displays the detected operating system version. If the numbers
      shown do not match your system, you probably need to set them manually
-     in host.def and report the problem to XFree86@XFree86.org.
+     in host.def and report the problem to <XFree86@XFree86.org>.
 
-     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/BUILD.sgml,v 3.6.4.1 2002/09/04 03:33:11 dawes Exp $
+     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/BUILD.sgml,v 3.11 2003/02/27 01:17:36 dawes Exp $
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/BUILD,v 3.7.4.1 2002/09/04 03:39:34 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/BUILD,v 3.16 2003/02/27 01:44:03 dawes Exp $

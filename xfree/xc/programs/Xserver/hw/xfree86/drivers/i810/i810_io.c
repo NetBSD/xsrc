@@ -24,7 +24,20 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 **************************************************************************/
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/i810/i810_io.c,v 1.3 2000/05/11 18:14:34 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/i810/i810_io.c,v 1.5 2002/09/11 00:29:32 dawes Exp $ */
+
+/*
+ * Reformatted with GNU indent (2.2.8), using the following options:
+ *
+ *    -bad -bap -c41 -cd0 -ncdb -ci6 -cli0 -cp0 -ncs -d0 -di3 -i3 -ip3 -l78
+ *    -lp -npcs -psl -sob -ss -br -ce -sc -hnl
+ *
+ * This provides a good match with the original i810 code and preferred
+ * XFree86 formatting conventions.
+ *
+ * When editing this driver, please follow the existing formatting, and edit
+ * with <TAB> characters expanded at 8-column intervals.
+ */
 
 /*
  * Authors:
@@ -37,63 +50,95 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "xf86_OSproc.h"
 #include "compiler.h"
 
+#ifdef BUILD_FOR_I830
+#include "i830.h"
+#define pI810 pI830
+#define I810Ptr I830Ptr
+#define I810WriteControlPIO I830WriteControlPIO
+#define I810ReadControlPIO I830ReadControlPIO
+#define I810WriteStandardPIO I830WriteStandardPIO
+#define I810ReadStandardPIO I830ReadStandardPIO
+#define I810SetPIOAccess I830SetPIOAccess
+#define I810WriteControlMMIO I830WriteControlMMIO
+#define I810ReadControlMMIO I830ReadControlMMIO
+#define I810WriteStandardMMIO I830WriteStandardMMIO
+#define I810ReadStandardMMIO I830ReadStandardMMIO
+#define I810SetMMIOAccess I830SetMMIOAccess
+#else
 #include "i810.h"
+#endif
+
+#define minb(p) *(volatile CARD8 *)(pI810->MMIOBase + (p))
+#define moutb(p,v) *(volatile CARD8 *)(pI810->MMIOBase + (p)) = (v)
 
 static void
-I810WriteControlPIO(I810Ptr pI810, int addr, CARD8 index, CARD8 val) {
-  outb(addr, index);
-  outb(addr+1, val);
+I810WriteControlPIO(I810Ptr pI810, IOADDRESS addr, CARD8 index, CARD8 val)
+{
+   addr += pI810->ioBase;
+   outb(addr, index);
+   outb(addr + 1, val);
 }
 
 static CARD8
-I810ReadControlPIO(I810Ptr pI810, int addr, CARD8 index) {
-  outb(addr, index);
-  return inb(addr+1);
+I810ReadControlPIO(I810Ptr pI810, IOADDRESS addr, CARD8 index)
+{
+   addr += pI810->ioBase;
+   outb(addr, index);
+   return inb(addr + 1);
 }
 
 static void
-I810WriteStandardPIO(I810Ptr pI810, int addr, CARD8 val) {
-  outb(addr, val);
+I810WriteStandardPIO(I810Ptr pI810, IOADDRESS addr, CARD8 val)
+{
+   outb(pI810->ioBase + addr, val);
 }
 
 static CARD8
-I810ReadStandardPIO(I810Ptr pI810, int addr) {
-  return inb(addr);
+I810ReadStandardPIO(I810Ptr pI810, IOADDRESS addr)
+{
+   return inb(pI810->ioBase + addr);
 }
 
-void I810SetPIOAccess(I810Ptr pI810) {
-  pI810->writeControl=I810WriteControlPIO;
-  pI810->readControl=I810ReadControlPIO;
-  pI810->writeStandard=I810WriteStandardPIO;
-  pI810->readStandard=I810ReadStandardPIO;
+void
+I810SetPIOAccess(I810Ptr pI810)
+{
+   pI810->writeControl = I810WriteControlPIO;
+   pI810->readControl = I810ReadControlPIO;
+   pI810->writeStandard = I810WriteStandardPIO;
+   pI810->readStandard = I810ReadStandardPIO;
 }
 
 static void
-I810WriteControlMMIO(I810Ptr pI810, int addr, CARD8 index, CARD8 val) {
-  moutb(addr, index);
-  moutb(addr+1, val);
+I810WriteControlMMIO(I810Ptr pI810, IOADDRESS addr, CARD8 index, CARD8 val)
+{
+   moutb(addr, index);
+   moutb(addr + 1, val);
 }
 
 static CARD8
-I810ReadControlMMIO(I810Ptr pI810, int addr, CARD8 index) {
-  moutb(addr, index);
-  return minb(addr+1);
+I810ReadControlMMIO(I810Ptr pI810, IOADDRESS addr, CARD8 index)
+{
+   moutb(addr, index);
+   return minb(addr + 1);
 }
 
 static void
-I810WriteStandardMMIO(I810Ptr pI810, int addr, CARD8 val) {
-  moutb(addr, val);
+I810WriteStandardMMIO(I810Ptr pI810, IOADDRESS addr, CARD8 val)
+{
+   moutb(addr, val);
 }
 
 static CARD8
-I810ReadStandardMMIO(I810Ptr pI810, int addr) {
-  return minb(addr);
+I810ReadStandardMMIO(I810Ptr pI810, IOADDRESS addr)
+{
+   return minb(addr);
 }
 
-void I810SetMMIOAccess(I810Ptr pI810) {
-  pI810->writeControl=I810WriteControlMMIO;
-  pI810->readControl=I810ReadControlMMIO;
-  pI810->writeStandard=I810WriteStandardMMIO;
-  pI810->readStandard=I810ReadStandardMMIO;
+void
+I810SetMMIOAccess(I810Ptr pI810)
+{
+   pI810->writeControl = I810WriteControlMMIO;
+   pI810->readControl = I810ReadControlMMIO;
+   pI810->writeStandard = I810WriteStandardMMIO;
+   pI810->readStandard = I810ReadStandardMMIO;
 }
-

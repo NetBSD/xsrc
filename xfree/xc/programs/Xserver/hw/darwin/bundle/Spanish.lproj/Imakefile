@@ -1,6 +1,8 @@
-XCOMM $XFree86: xc/programs/Xserver/hw/darwin/bundle/Spanish.lproj/Imakefile,v 1.1 2001/11/27 21:11:50 torrey Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/darwin/bundle/Spanish.lproj/Imakefile,v 1.2 2002/07/17 01:24:58 torrey Exp $
 
 #include <Server.tmpl>
+
+LinkSourceFile(InfoPlist.strings.cpp,../English.lproj)
 
 INCLUDES = -I$(SERVERSRC)/include
 

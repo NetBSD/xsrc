@@ -35,7 +35,7 @@
  * 
  * Author:  Adobe Systems Incorporated
  */
-/* $XFree86: xc/lib/dps/csstartNX.c,v 1.6 2001/10/28 03:32:43 tsi Exp $ */
+/* $XFree86: xc/lib/dps/csstartNX.c,v 1.7 2002/05/31 18:45:48 dawes Exp $ */
 
 #include <sys/param.h>
 #include <X11/X.h>
@@ -208,7 +208,7 @@ StartXDPSNX(char **additionalArgs)
   /* now try to start up the agent... */
   if ((childPid = fork()) != -1) {
     if (childPid == 0) {	/* Child process */
-#ifndef __EMX__
+#ifndef __UNIXOS2__
       if (setsid() < 0)
         DPSWarnProc(NULL, "Agent unable to create session.  Continuing...\n");
 #endif

@@ -1,6 +1,5 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/apm/apm_i2c.c,v 1.6 2001/01/06 21:29:12 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/apm/apm_i2c.c,v 1.7 2002/01/25 21:55:55 tsi Exp $ */
 
-#define COMPILER_H_EXTRAS
 #include "apm.h"
 #include "apm_regs.h"
 
@@ -32,15 +31,15 @@ ApmI2CPutBits(I2CBusPtr b, int clock,  int data)
     unsigned char	lock;
     ApmPtr pApm = ((ApmPtr)b->DriverPrivate.ptr);
 
-    lock = rdinx(0x3C4, 0x10);
-    wrinx(0x3C4, 0x10, 0x12);
+    lock = rdinx(pApm->xport, 0x10);
+    wrinx(pApm->xport, 0x10, 0x12);
     WaitForFifo(pApm, 2);
     reg = (RDXB_IOP(0xD0) & 0x07) | 0x60;
     if(clock) reg |= 0x08;
     if(data)  reg |= 0x10;
     WRXB_IOP(0xD0, reg);
     if (lock)
-	wrinx(0x3C4, 0x10, 0);
+	wrinx(pApm->xport, 0x10, 0);
 }
 
 static void
@@ -51,8 +50,8 @@ ApmI2CGetBits(I2CBusPtr b, int *clock, int *data)
     ApmPtr pApm = ((ApmPtr)b->DriverPrivate.ptr);
     unsigned char	tmp;
 
-    lock = rdinx(0x3C4, 0x10);
-    wrinx(0x3C4, 0x10, 0x12);
+    lock = rdinx(pApm->xport, 0x10);
+    wrinx(pApm->xport, 0x10, 0x12);
     WaitForFifo(pApm, 2);
     tmp = RDXB_IOP(0xD0);
     WRXB_IOP(0xD0, tmp & 0x07);
@@ -60,7 +59,7 @@ ApmI2CGetBits(I2CBusPtr b, int *clock, int *data)
     *clock = (reg & STATUS_SCL) != 0;
     *data  = (reg & STATUS_SDA) != 0;
     if (lock)
-	wrinx(0x3C4, 0x10, 0);
+	wrinx(pApm->xport, 0x10, 0);
 }
 
 Bool 

@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/include/extensions/renderproto.h,v 1.9 2001/09/07 16:21:15 keithp Exp $
+ * $XFree86: xc/include/extensions/renderproto.h,v 1.13 2002/11/23 02:34:45 keithp Exp $
  *
  * Copyright © 2000 SuSE, Inc.
  *
@@ -126,10 +126,26 @@ typedef struct {
 #define sz_xPointFixed	8
 
 typedef struct {
+    xPointFixed	p1;
+    xPointFixed p2;
+} xLineFixed;
+
+#define sz_xLineFixed	16
+
+typedef struct {
     xPointFixed	p1, p2, p3;
 } xTriangle;
 
 #define sz_xTriangle	24
+
+typedef struct {
+    Fixed	top B32;
+    Fixed	bottom B32;
+    xLineFixed	left;
+    xLineFixed	right;
+} xTrapezoid;
+
+#define sz_xTrapezoid	40
 
 typedef struct {
     CARD16  width B16;
@@ -197,7 +213,7 @@ typedef struct {
     CARD32  numScreens B32;
     CARD32  numDepths B32;
     CARD32  numVisuals B32;
-    CARD32  pad4 B32;
+    CARD32  numSubpixel B32;	    /* Version 0.6 */
     CARD32  pad5 B32;
 } xRenderQueryPictFormatsReply;
 
@@ -313,13 +329,65 @@ typedef struct {
     CARD8       reqType;
     CARD8       renderReqType;
     CARD16      length B16;
+    CARD8	op;
+    CARD8	pad1;
+    CARD16	pad2 B16;
     Picture	src B32;
     Picture	dst B32;
+    PictFormat	maskFormat B32;
+    INT16	xSrc B16;
+    INT16	ySrc B16;
+} xRenderTrapezoidsReq;
+
+#define sz_xRenderTrapezoidsReq			    24
+
+typedef struct {
+    CARD8       reqType;
+    CARD8       renderReqType;
+    CARD16      length B16;
+    CARD8	op;
+    CARD8	pad1;
+    CARD16	pad2 B16;
+    Picture	src B32;
+    Picture	dst B32;
+    PictFormat	maskFormat B32;
     INT16	xSrc B16;
     INT16	ySrc B16;
 } xRenderTrianglesReq;
 
-#define sz_xRenderTrianglesReq			    16
+#define sz_xRenderTrianglesReq			    24
+
+typedef struct {
+    CARD8       reqType;
+    CARD8       renderReqType;
+    CARD16      length B16;
+    CARD8	op;
+    CARD8	pad1;
+    CARD16	pad2 B16;
+    Picture	src B32;
+    Picture	dst B32;
+    PictFormat	maskFormat B32;
+    INT16	xSrc B16;
+    INT16	ySrc B16;
+} xRenderTriStripReq;
+
+#define sz_xRenderTriStripReq			    24
+
+typedef struct {
+    CARD8       reqType;
+    CARD8       renderReqType;
+    CARD16      length B16;
+    CARD8	op;
+    CARD8	pad1;
+    CARD16	pad2 B16;
+    Picture	src B32;
+    Picture	dst B32;
+    PictFormat	maskFormat B32;
+    INT16	xSrc B16;
+    INT16	ySrc B16;
+} xRenderTriFanReq;
+
+#define sz_xRenderTriFanReq			    24
 
 typedef struct {
     CARD8       reqType;
@@ -403,6 +471,102 @@ typedef struct {
 } xRenderFillRectanglesReq;
 
 #define sz_xRenderFillRectanglesReq		    20
+
+/* 0.5 and higher */
+
+typedef struct {
+    CARD8	reqType;
+    CARD8	renderReqType;
+    CARD16	length B16;
+    Cursor	cid B32;
+    Picture	src B32;
+    CARD16	x B16;
+    CARD16	y B16;
+} xRenderCreateCursorReq;
+
+#define sz_xRenderCreateCursorReq		    16
+
+/* 0.6 and higher */
+
+/*
+ * This can't use an array because 32-bit values may be in bitfields
+ */
+typedef struct {
+    Fixed	matrix11 B32;
+    Fixed	matrix12 B32;
+    Fixed	matrix13 B32;
+    Fixed	matrix21 B32;
+    Fixed	matrix22 B32;
+    Fixed	matrix23 B32;
+    Fixed	matrix31 B32;
+    Fixed	matrix32 B32;
+    Fixed	matrix33 B32;
+} xRenderTransform;
+
+#define sz_xRenderTransform 36
+
+typedef struct {
+    CARD8		reqType;
+    CARD8		renderReqType;
+    CARD16		length B16;
+    Picture		picture B32;
+    xRenderTransform	transform;
+} xRenderSetPictureTransformReq;
+
+#define sz_xRenderSetPictureTransformReq	    44
+
+typedef struct {
+    CARD8		reqType;
+    CARD8		renderReqType;
+    CARD16		length B16;
+    Drawable		drawable B32;
+} xRenderQueryFiltersReq;
+
+#define sz_xRenderQueryFiltersReq		    8
+
+typedef struct {
+    BYTE    type;   /* X_Reply */
+    BYTE    pad1;
+    CARD16  sequenceNumber B16;
+    CARD32  length B32;
+    CARD32  numAliases B32;	/* LISTofCARD16 */
+    CARD32  numFilters B32;	/* LISTofSTRING8 */
+    CARD32  pad2 B32;
+    CARD32  pad3 B32;
+    CARD32  pad4 B32;
+    CARD32  pad5 B32;
+} xRenderQueryFiltersReply;
+
+#define sz_xRenderQueryFiltersReply		    32
+
+typedef struct {
+    CARD8		reqType;
+    CARD8		renderReqType;
+    CARD16		length B16;
+    Picture		picture B32;
+    CARD16		nbytes B16; /* number of bytes in name */
+    CARD16		pad B16;
+} xRenderSetPictureFilterReq;
+
+#define sz_xRenderSetPictureFilterReq		    12
+    
+/* 0.8 and higher */
+
+typedef struct {
+    Cursor		cursor B32;
+    CARD32		delay B32;
+} xAnimCursorElt;
+
+#define sz_xAnimCursorElt			    8
+
+typedef struct {
+    CARD8		reqType;
+    CARD8		renderReqType;
+    CARD16		length B16;
+    Cursor		cid B32;
+} xRenderCreateAnimCursorReq;
+
+#define sz_xRenderCreateAnimCursorReq		    8
 
 #undef Window
 #undef Drawable

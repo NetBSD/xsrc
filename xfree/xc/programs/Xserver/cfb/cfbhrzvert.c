@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/cfb/cfbhrzvert.c,v 3.7 2001/12/14 19:59:23 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/cfb/cfbhrzvert.c,v 3.8 2002/09/16 18:05:30 eich Exp $ */
 /***********************************************************
 
 Copyright 1987,1998  The Open Group
@@ -104,18 +104,23 @@ int len;		/* length of line */
     case 4:
       switch(leftIndex){
       case 0:
-	*addrl++ = DoRRop (*addrl, piQxelAnd[0], piQxelXor[0]);
-	*addrl++ = DoRRop (*addrl, piQxelAnd[1], piQxelXor[1]);
-	*addrl   = DoRRop (*addrl, piQxelAnd[2], piQxelXor[2]);
+	*addrl = DoRRop (*addrl, piQxelAnd[0], piQxelXor[0]);
+	addrl++;
+	*addrl = DoRRop (*addrl, piQxelAnd[1], piQxelXor[1]);
+	addrl++;
+	*addrl = DoRRop (*addrl, piQxelAnd[2], piQxelXor[2]);
 	break;
       case 1:
-	*addrl++ = DoMaskRRop (*addrl, piQxelAnd[0], piQxelXor[0], 0xFF000000);
-	*addrl++ = DoRRop (*addrl, piQxelAnd[1], piQxelXor[1]);
-	*addrl   = DoRRop (*addrl, piQxelAnd[2], piQxelXor[2]);
+	*addrl = DoMaskRRop (*addrl, piQxelAnd[0], piQxelXor[0], 0xFF000000);
+	addrl++;
+	*addrl = DoRRop (*addrl, piQxelAnd[1], piQxelXor[1]);
+	addrl++;
+	*addrl = DoRRop (*addrl, piQxelAnd[2], piQxelXor[2]);
 	break;
       case 2:
-	*addrl++ = DoMaskRRop (*addrl, piQxelAnd[1], piQxelXor[1], 0xFFFF0000);
-	*addrl   = DoRRop (*addrl, piQxelAnd[2], piQxelXor[2]);
+	*addrl = DoMaskRRop (*addrl, piQxelAnd[1], piQxelXor[1], 0xFFFF0000);
+	addrl++;
+	*addrl = DoRRop (*addrl, piQxelAnd[2], piQxelXor[2]);
 	break;
       case 3:
 	*addrl = DoMaskRRop (*addrl, piQxelAnd[2], piQxelXor[2], 0xFFFFFF00);
@@ -125,27 +130,34 @@ int len;		/* length of line */
     case 3:
       switch(leftIndex){
       case 0:
-	*addrl++ = DoRRop (*addrl, piQxelAnd[0], piQxelXor[0]);
-	*addrl++ = DoRRop (*addrl, piQxelAnd[1], piQxelXor[1]);
+	*addrl = DoRRop (*addrl, piQxelAnd[0], piQxelXor[0]);
+	addrl++;
+	*addrl = DoRRop (*addrl, piQxelAnd[1], piQxelXor[1]);
+	addrl++;
 	*addrl = DoMaskRRop (*addrl, piQxelAnd[2], piQxelXor[2], 0xFF);
 	break;
       case 1:
-	*addrl++ = DoMaskRRop (*addrl, piQxelAnd[0], piQxelXor[0], 0xFF000000);
-	*addrl++ = DoRRop (*addrl, piQxelAnd[1], piQxelXor[1]);
+	*addrl = DoMaskRRop (*addrl, piQxelAnd[0], piQxelXor[0], 0xFF000000);
+	addrl++;
+	*addrl = DoRRop (*addrl, piQxelAnd[1], piQxelXor[1]);
+	addrl++;
 	*addrl = DoMaskRRop (*addrl, piQxelAnd[2], piQxelXor[2], 0xFF);
 	break;
       case 2:
-	*addrl++ = DoMaskRRop (*addrl, piQxelAnd[1], piQxelXor[1], 0xFFFF0000);
+	*addrl = DoMaskRRop (*addrl, piQxelAnd[1], piQxelXor[1], 0xFFFF0000);
+	addrl++;
 	*addrl = DoMaskRRop (*addrl, piQxelAnd[2], piQxelXor[2], 0xFF);
 	break;
       }
       break;
     case 2:
       if(leftIndex){
-	*addrl++ = DoMaskRRop (*addrl, piQxelAnd[0], piQxelXor[0], 0xFF000000);
+	*addrl = DoMaskRRop (*addrl, piQxelAnd[0], piQxelXor[0], 0xFF000000);
+	addrl++;
       }
       else{
-	*addrl++ = DoRRop (*addrl, piQxelAnd[0], piQxelXor[0]);
+	*addrl = DoRRop (*addrl, piQxelAnd[0], piQxelXor[0]);
+	addrl++;
       }
       *addrl =  DoMaskRRop (*addrl, piQxelAnd[1], piQxelXor[1], 0xFFFF);
       break;
@@ -161,16 +173,19 @@ int len;		/* length of line */
 	  case 0:
 	    break;
 	  case 1:
-	    *addrl++ = ((*addrl) & 0xFFFFFF) | (piQxelXor[0] & 0xFF000000);
+	    *addrl = ((*addrl) & 0xFFFFFF) | (piQxelXor[0] & 0xFF000000);
+	    addrl++;
 	    *addrl++ = piQxelXor[1];
 	    *addrl++ = piQxelXor[2];
 	    break;
 	  case 2:
-	    *addrl++ = ((*addrl) & 0xFFFF) | (piQxelXor[1] & 0xFFFF0000);
+	    *addrl = ((*addrl) & 0xFFFF) | (piQxelXor[1] & 0xFFFF0000);
+	    addrl++;
 	    *addrl++ = piQxelXor[2];
 	    break;
 	  case 3:
-	    *addrl++ = ((*addrl) & 0xFF) | (piQxelXor[2] & 0xFFFFFF00);
+	    *addrl = ((*addrl) & 0xFF) | (piQxelXor[2] & 0xFFFFFF00);
+	    addrl++;
 	    break;
 	  }
 	  while(nlmiddle--){
@@ -240,36 +255,49 @@ int len;		/* length of line */
 	    case 0:
 	      break;
 	    case 1:
-	      *addrl++ = DoMaskRRop (*addrl, piQxelAnd[0], piQxelXor[0], 0xFF000000);
-	      *addrl++ = DoRRop (*addrl, piQxelAnd[1], piQxelXor[1]);
-	      *addrl++ = DoRRop (*addrl, piQxelAnd[2], piQxelXor[2]);
+	      *addrl = DoMaskRRop (*addrl, piQxelAnd[0], piQxelXor[0], 0xFF000000);
+	      addrl++;
+	      *addrl = DoRRop (*addrl, piQxelAnd[1], piQxelXor[1]);
+	      addrl++;
+	      *addrl = DoRRop (*addrl, piQxelAnd[2], piQxelXor[2]);
+	      addrl++;
 	      break;
 	    case 2:
-	      *addrl++ = DoMaskRRop (*addrl, piQxelAnd[1], piQxelXor[1], 0xFFFF0000);
-	      *addrl++ = DoRRop (*addrl, piQxelAnd[2], piQxelXor[2]);
+	      *addrl = DoMaskRRop (*addrl, piQxelAnd[1], piQxelXor[1], 0xFFFF0000);
+	      addrl++;
+	      *addrl = DoRRop (*addrl, piQxelAnd[2], piQxelXor[2]);
+	      addrl++;
 	      break;
 	    case 3:
-	      *addrl++ = DoMaskRRop (*addrl, piQxelAnd[2], piQxelXor[2], 0xFFFFFF00);
+	      *addrl = DoMaskRRop (*addrl, piQxelAnd[2], piQxelXor[2], 0xFFFFFF00);
+	      addrl++;
 	      break;
 	  }
 	  while(nlmiddle--){
-	    *addrl++ = DoRRop (*addrl, piQxelAnd[0], piQxelXor[0]);
-	    *addrl++ = DoRRop (*addrl, piQxelAnd[1], piQxelXor[1]);
-	    *addrl++ = DoRRop (*addrl, piQxelAnd[2], piQxelXor[2]);
+	    *addrl = DoRRop (*addrl, piQxelAnd[0], piQxelXor[0]);
+	    addrl++;
+	    *addrl = DoRRop (*addrl, piQxelAnd[1], piQxelXor[1]);
+	    addrl++;
+	    *addrl = DoRRop (*addrl, piQxelAnd[2], piQxelXor[2]);
+	    addrl++;
 	  }
 	  switch(rightIndex){
 	  case 0:
 	    break;
 	  case 1:
-	    *addrl++ = DoMaskRRop (*addrl, piQxelAnd[0], piQxelXor[0], 0xFFFFFF);
+	    *addrl = DoMaskRRop (*addrl, piQxelAnd[0], piQxelXor[0], 0xFFFFFF);
+	    addrl++;
 	    break;
 	  case 2:
-	    *addrl++ = DoRRop (*addrl, piQxelAnd[0], piQxelXor[0]);
+	    *addrl = DoRRop (*addrl, piQxelAnd[0], piQxelXor[0]);
+	    addrl++;
 	    *addrl = DoMaskRRop (*addrl, piQxelAnd[1], piQxelXor[1], 0xFFFF);
 	    break;
 	  case 3:
-	    *addrl++ = DoRRop (*addrl, piQxelAnd[0], piQxelXor[0]);
-	    *addrl++ = DoRRop (*addrl, piQxelAnd[1], piQxelXor[1]);
+	    *addrl = DoRRop (*addrl, piQxelAnd[0], piQxelXor[0]);
+	    addrl++;
+	    *addrl = DoRRop (*addrl, piQxelAnd[1], piQxelXor[1]);
+	    addrl++;
 	    *addrl = DoMaskRRop (*addrl, piQxelAnd[2], piQxelXor[2], 0xFF);
 	    break;
 	  }

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xf4bpp/mfbimggblt.c,v 1.6 2001/05/15 10:19:43 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xf4bpp/mfbimggblt.c,v 1.7 2003/02/18 21:29:59 tsi Exp $ */
 
 /* Combined Purdue/PurduePlus patches, level 2.0, 1/17/89 */
 /***********************************************************
@@ -120,7 +120,7 @@ xf4bppImageGlyphBlt(pDrawable, pGC, x, y, nglyph, ppci, pglyphBase)
     int 	x, y;
     unsigned int nglyph;
     CharInfoPtr *ppci;		/* array of character info */
-    unsigned char *pglyphBase;	/* start of array of glyphs */
+    pointer	pglyphBase;	/* start of array of glyphs */
 {
     ExtentInfoRec info;	/* used by QueryGlyphExtents() */
     xRectangle backrect;/* backing rectangle to paint.
@@ -136,7 +136,7 @@ xf4bppImageGlyphBlt(pDrawable, pGC, x, y, nglyph, ppci, pglyphBase)
 	     FONTMINBOUNDS(pGC->font,characterWidth) < 0)) ) {
        miImageGlyphBlt(pDrawable, pGC, x, y, nglyph, ppci, pglyphBase);
     } else {
-       void (* oldFillArea)();
+       ppcPrivGC *pPrivGC;
        int oldfillStyle, oldfg, oldalu;
 
        if (!(pGC->planemask & 0x0F))
@@ -150,35 +150,23 @@ xf4bppImageGlyphBlt(pDrawable, pGC, x, y, nglyph, ppci, pglyphBase)
        backrect.height = FONTASCENT(pGC->font) + FONTDESCENT(pGC->font);
 
 
-       oldFillArea = ((ppcPrivGC *)(pGC->devPrivates[mfbGCPrivateIndex].ptr))->
-                           FillArea;
-       oldfillStyle = ((ppcPrivGC *)(pGC->devPrivates[mfbGCPrivateIndex].ptr))->
-                           colorRrop.fillStyle; /* GJA */
-       oldfg = ((ppcPrivGC *)(pGC->devPrivates[mfbGCPrivateIndex].ptr))->
-                           colorRrop.fgPixel; /* GJA */
-       oldalu = ((ppcPrivGC *)(pGC->devPrivates[mfbGCPrivateIndex].ptr))->
-                           colorRrop.alu; /* GJA */
+       pPrivGC = pGC->devPrivates[mfbGCPrivateIndex].ptr;
+       oldfillStyle = pPrivGC->colorRrop.fillStyle; /* GJA */
+       oldfg = pPrivGC->colorRrop.fgPixel; /* GJA */
+       oldalu = pPrivGC->colorRrop.alu; /* GJA */
 
-       ((ppcPrivGC *)(pGC->devPrivates[mfbGCPrivateIndex].ptr))->
-                           FillArea = xf4bppAreaFill;
-       ((ppcPrivGC *)(pGC->devPrivates[mfbGCPrivateIndex].ptr))->
-                           colorRrop.fillStyle = FillSolid; /* GJA */
-       ((ppcPrivGC *)(pGC->devPrivates[mfbGCPrivateIndex].ptr))->
-   			   colorRrop.fgPixel = pGC->bgPixel; /* GJA */
+       pPrivGC->colorRrop.fillStyle = FillSolid; /* GJA */
+       pPrivGC->colorRrop.fgPixel = pGC->bgPixel; /* GJA */
        pGC->fgPixel = pGC->bgPixel;
-       ((ppcPrivGC *)(pGC->devPrivates[mfbGCPrivateIndex].ptr))->
-                           colorRrop.alu = GXcopy; /* GJA */
+       pPrivGC->colorRrop.alu = GXcopy; /* GJA */
        pGC->alu = GXcopy;
 
        /* Required fields:
-        * colorRrop.alu, colorRrop.planemask, colorRrop.fgPixel, FillArea
+        * colorRrop.alu, colorRrop.planemask, colorRrop.fgPixel
         */
        xf4bppPolyFillRect(pDrawable, pGC, 1, &backrect);
 
-       ((ppcPrivGC *)(pGC->devPrivates[mfbGCPrivateIndex].ptr))->
-                           FillArea = oldFillArea;
-       ((ppcPrivGC *)(pGC->devPrivates[mfbGCPrivateIndex].ptr))->
-                        colorRrop.fgPixel = oldfg; /* GJA */
+       pPrivGC->colorRrop.fgPixel = oldfg; /* GJA */
        pGC->fgPixel = oldfg;
 
        /* the faint-hearted can open their eyes now */
@@ -186,10 +174,8 @@ xf4bppImageGlyphBlt(pDrawable, pGC, x, y, nglyph, ppci, pglyphBase)
        DO_WM3(pGC,doImageGlyphBlt(pDrawable, pGC, x, y, nglyph, ppci,
 			pglyphBase,&info))
 
-       ((ppcPrivGC *)(pGC->devPrivates[mfbGCPrivateIndex].ptr))->
-                           colorRrop.fillStyle = oldfillStyle; /* GJA */
-       ((ppcPrivGC *)(pGC->devPrivates[mfbGCPrivateIndex].ptr))->
-                        colorRrop.alu = oldalu; /* GJA */
+       pPrivGC->colorRrop.fillStyle = oldfillStyle; /* GJA */
+       pPrivGC->colorRrop.alu = oldalu; /* GJA */
        pGC->alu = oldalu;
     }
 
@@ -279,8 +265,8 @@ doImageGlyphBlt(pDrawable, pGC, x, y, nglyph, ppci, pglyphBase,infop)
       case rgnOUT:
 	break;
       case rgnIN:
-        pdstBase = pdstBase + (widthDst * y) + (x >> 5);
-        xchar = x & 0x1f;
+        pdstBase = pdstBase + (widthDst * y) + (x >> PWSH);
+        xchar = x & PIM;
 
         while(nglyph--)
         {
@@ -297,18 +283,18 @@ doImageGlyphBlt(pDrawable, pGC, x, y, nglyph, ppci, pglyphBase,infop)
 	       for left edge of glyph
 	    */
 	    xoff = xchar + pci->metrics.leftSideBearing;
-	    if (xoff > 31)
+	    if (xoff > PIM)
 	    {
 	        pdst++;
-	        xoff &= 0x1f;
+	        xoff &= PIM;
 	    }
 	    else if (xoff < 0)
 	    {
-	        xoff += 32;
+	        xoff += PPW;
 	        pdst--;
 	    }
 
-	    if ((xoff + w) <= 32)
+	    if ((xoff + w) <= PPW)
 	    {
 	        /* glyph all in one longword */
 	        maskpartialbits(xoff, w, startmask);
@@ -325,7 +311,7 @@ doImageGlyphBlt(pDrawable, pGC, x, y, nglyph, ppci, pglyphBase,infop)
 	    {
 	        /* glyph crosses longword boundary */
 	        maskPPWbits(xoff, w, startmask, endmask);
-	        nFirst = 32 - xoff;
+	        nFirst = PPW - xoff;
 	        while (h--)
 	        {
 		    getleftbits(pglyph, w, tmpSrc);
@@ -339,14 +325,14 @@ doImageGlyphBlt(pDrawable, pGC, x, y, nglyph, ppci, pglyphBase,infop)
 	    /* update character origin */
 	    x += pci->metrics.characterWidth;
 	    xchar += pci->metrics.characterWidth;
-	    if (xchar > 31)
+	    if (xchar > PLST)
 	    {
-	        xchar -= 32;
+	        xchar -= PPW;
 	        pdstBase++;
 	    }
 	    else if (xchar < 0)
 	    {
-	        xchar += 32;
+	        xchar += PPW;
 	        pdstBase--;
 	    }
 	    ppci++;
@@ -371,9 +357,9 @@ doImageGlyphBlt(pDrawable, pGC, x, y, nglyph, ppci, pglyphBase,infop)
 	if(!(ppos = (TEXTPOS *)ALLOCATE_LOCAL(nglyph * sizeof(TEXTPOS))))
 	    return;
 
-        pdstBase = pdstBase + (widthDst * y) + (x >> 5);
+        pdstBase = pdstBase + (widthDst * y) + (x >> PWSH);
         xpos = x;
-	xchar = xpos & 0x1f;
+	xchar = xpos & PIM;
 
 	for (i=0; i<nglyph; i++)
 	{
@@ -390,14 +376,14 @@ doImageGlyphBlt(pDrawable, pGC, x, y, nglyph, ppci, pglyphBase,infop)
 
 	    xpos += pci->metrics.characterWidth;
 	    xchar += pci->metrics.characterWidth;
-	    if (xchar > 31)
+	    if (xchar > PLST)
 	    {
-		xchar &= 0x1f;
+		xchar &= PIM;
 		pdstBase++;
 	    }
 	    else if (xchar < 0)
 	    {
-		xchar += 32;
+		xchar += PPW;
 		pdstBase--;
 	    }
 	}
@@ -468,18 +454,18 @@ doImageGlyphBlt(pDrawable, pGC, x, y, nglyph, ppci, pglyphBase,infop)
 			   (pci->metrics.leftSideBearing);
 		getWidth = w + glyphCol;
 		xoff = xchar + (leftEdge - ppos[i].xpos);
-		if (xoff > 31)
+		if (xoff > PLST)
 		{
-		    xoff &= 0x1f;
+		    xoff &= PIM;
 		    pdst++;
 		}
 		else if (xoff < 0)
 		{
-		    xoff += 32;
+		    xoff += PPW;
 		    pdst--;
 		}
 
-		if ((xoff + w) <= 32)
+		if ((xoff + w) <= PPW)
 		{
 		    maskpartialbits(xoff, w, startmask);
 		    while (h--)
@@ -493,7 +479,7 @@ doImageGlyphBlt(pDrawable, pGC, x, y, nglyph, ppci, pglyphBase,infop)
 		else
 		{
 		    maskPPWbits(xoff, w, startmask, endmask);
-		    nFirst = 32 - xoff;
+		    nFirst = PPW - xoff;
 		    while (h--)
 		    {
 			getshiftedleftbits(pglyph, glyphCol, getWidth, tmpSrc);

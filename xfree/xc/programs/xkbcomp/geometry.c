@@ -24,7 +24,7 @@
  THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
  ********************************************************/
-/* $XFree86: xc/programs/xkbcomp/geometry.c,v 1.3 2001/12/19 21:30:30 dawes Exp $ */
+/* $XFree86: xc/programs/xkbcomp/geometry.c,v 1.4 2002/06/05 00:00:37 dawes Exp $ */
 
 #include "xkbcomp.h"
 #include "tokens.h"
@@ -241,13 +241,7 @@ typedef struct _GeometryInfo {
 } GeometryInfo;
 
 static char *
-#if NeedFunctionPrototypes
 ddText(Display *dpy,DoodadInfo *di)
-#else
-ddText(dpy,di)
-    Display *		dpy;
-    DoodadInfo *	di;
-#endif
 {
 static char	buf[64];
 
@@ -266,13 +260,7 @@ static char	buf[64];
 /***====================================================================***/
 
 static void
-#if NeedFunctionPrototypes
 InitPropertyInfo(PropertyInfo *pi,GeometryInfo *info)
-#else
-InitPropertyInfo(pi,info)
-    PropertyInfo *	pi;
-    GeometryInfo *	info;
-#endif
 {
     pi->defs.defined= 0;
     pi->defs.fileID= info->fileID;
@@ -282,13 +270,7 @@ InitPropertyInfo(pi,info)
 }
 
 static void
-#if NeedFunctionPrototypes
 FreeProperties(PropertyInfo *pi,GeometryInfo *info)
-#else
-FreeProperties(pi,info)
-    PropertyInfo *	pi;
-    GeometryInfo *	info;
-#endif
 {
 PropertyInfo *	tmp;
 PropertyInfo *	next;
@@ -310,14 +292,7 @@ PropertyInfo *	next;
 }
 
 static void
-#if NeedFunctionPrototypes
 InitKeyInfo(KeyInfo *key,RowInfo *row,GeometryInfo *info)
-#else
-InitKeyInfo(key,row,info)
-    KeyInfo *		key;
-    RowInfo *		row;
-    GeometryInfo *	info;
-#endif
 {
 
     if (key!=&row->dfltKey) {
@@ -338,12 +313,7 @@ InitKeyInfo(key,row,info)
 }
 
 static void
-#if NeedFunctionPrototypes
 ClearKeyInfo(KeyInfo *key)
-#else
-ClearKeyInfo(key)
-    KeyInfo *		key;
-#endif
 {
     key->defs.defined&= ~_GK_Default;
     strcpy(key->name,"default");
@@ -354,14 +324,7 @@ ClearKeyInfo(key)
 }
 
 static void
-#if NeedFunctionPrototypes
 FreeKeys(KeyInfo *key,RowInfo *row,GeometryInfo *info)
-#else
-FreeKeys(key,row,info)
-    KeyInfo *		key;
-    RowInfo *		row;
-    GeometryInfo *	info;
-#endif
 {
 KeyInfo *	tmp;
 KeyInfo *	next;
@@ -379,14 +342,7 @@ KeyInfo *	next;
 }
 
 static void
-#if NeedFunctionPrototypes
 InitRowInfo(RowInfo *row,SectionInfo *section,GeometryInfo *info)
-#else
-InitRowInfo(row,section,info)
-    RowInfo *		row;
-    SectionInfo *	section;
-    GeometryInfo *	info;
-#endif
 {
     if (row!= &section->dfltRow) {
 	*row= section->dfltRow;
@@ -407,13 +363,7 @@ InitRowInfo(row,section,info)
 }
 
 static void
-#if NeedFunctionPrototypes
 ClearRowInfo(RowInfo *row,GeometryInfo *info)
-#else
-ClearRowInfo(row,info)
-    RowInfo *		row;
-    GeometryInfo *	info;
-#endif
 {
     row->defs.defined&= ~_GR_Default;
     row->top= row->left= 0;
@@ -427,14 +377,7 @@ ClearRowInfo(row,info)
 }
 
 static void
-#if NeedFunctionPrototypes
 FreeRows(RowInfo *row,SectionInfo *section,GeometryInfo *info)
-#else
-FreeRows(row,section,info)
-    RowInfo *		row;
-    SectionInfo *	section;
-    GeometryInfo *	info;
-#endif
 {
 RowInfo *	next;
 RowInfo *	tmp;
@@ -452,13 +395,7 @@ RowInfo *	tmp;
 }
 
 static DoodadInfo *
-#if NeedFunctionPrototypes
 FindDoodadByType(DoodadInfo *di,unsigned type)
-#else
-FindDoodadByType(di,type)
-    DoodadInfo *	di;
-    unsigned		type;
-#endif
 {
     while (di) {
 	if (di->type==type)
@@ -469,13 +406,7 @@ FindDoodadByType(di,type)
 }
 
 static DoodadInfo *
-#if NeedFunctionPrototypes
 FindDoodadByName(DoodadInfo *di,Atom name)
-#else
-FindDoodadByName(di,name)
-    DoodadInfo *	di;
-    Atom		name;
-#endif
 {
     while (di) {
 	if (di->name==name)
@@ -486,15 +417,7 @@ FindDoodadByName(di,name)
 }
 
 static void
-#if NeedFunctionPrototypes
 InitDoodadInfo(DoodadInfo *di,unsigned type,SectionInfo *si,GeometryInfo *info)
-#else
-InitDoodadInfo(di,type,si,info)
-    DoodadInfo *	di;
-    unsigned		type;
-    SectionInfo *	si;
-    GeometryInfo *	info;
-#endif
 {
 DoodadInfo *	dflt;
 
@@ -527,12 +450,7 @@ DoodadInfo *	dflt;
 }
 
 static void
-#if NeedFunctionPrototypes
 ClearDoodadInfo(DoodadInfo *di)
-#else
-ClearDoodadInfo(di)
-    DoodadInfo *	di;
-#endif
 {
 CommonInfo	defs;
 
@@ -544,12 +462,7 @@ CommonInfo	defs;
 }
 
 static void
-#if NeedFunctionPrototypes
 ClearOverlayInfo(OverlayInfo *ol)
-#else
-ClearOverlayInfo(ol)
-    OverlayInfo *	ol;
-#endif
 {
     if (ol && ol->keys) {
 	ol->keys= (OverlayKeyInfo *)ClearCommonInfo(&ol->keys->defs);
@@ -559,14 +472,7 @@ ClearOverlayInfo(ol)
 }
 
 static void
-#if NeedFunctionPrototypes
 FreeDoodads(DoodadInfo *di,SectionInfo *si,GeometryInfo *info)
-#else
-FreeDoodads(di,si,info)
-    DoodadInfo *	di;
-    SectionInfo *	si;
-    GeometryInfo *	info;
-#endif
 {
 DoodadInfo *	tmp;
 DoodadInfo *	next;
@@ -594,13 +500,7 @@ DoodadInfo *	next;
 }
 
 static void
-#if NeedFunctionPrototypes
 InitSectionInfo(SectionInfo *si,GeometryInfo *info)
-#else
-InitSectionInfo(si,info)
-    SectionInfo *	si;
-    GeometryInfo *	info;
-#endif
 {
     if (si!=&info->dfltSection) {
 	*si= info->dfltSection;
@@ -623,14 +523,7 @@ InitSectionInfo(si,info)
 }
 
 static void
-#if NeedFunctionPrototypes
 DupSectionInfo(SectionInfo *into,SectionInfo *from,GeometryInfo *info)
-#else
-DupSectionInfo(into,from,info)
-    SectionInfo *	into;
-    SectionInfo *	from;
-    GeometryInfo *	info;
-#endif
 {
 CommonInfo	defs;
 
@@ -651,13 +544,7 @@ CommonInfo	defs;
 }
 
 static void
-#if NeedFunctionPrototypes
 ClearSectionInfo(SectionInfo *si,GeometryInfo *info)
-#else
-ClearSectionInfo(si,info)
-    SectionInfo *	si;
-    GeometryInfo *	info;
-#endif
 {
 
     si->defs.defined&= ~_GS_Default;
@@ -679,13 +566,7 @@ ClearSectionInfo(si,info)
 }
 
 static void
-#if NeedFunctionPrototypes
 FreeSections(SectionInfo *si,GeometryInfo *info)
-#else
-FreeSections(si,info)
-    SectionInfo *	si;
-    GeometryInfo *	info;
-#endif
 {
 SectionInfo *	tmp;
 SectionInfo *	next;
@@ -703,13 +584,7 @@ SectionInfo *	next;
 }
 
 static void
-#if NeedFunctionPrototypes
 FreeShapes(ShapeInfo *si,GeometryInfo *info)
-#else
-FreeShapes(si,info)
-    ShapeInfo *		si;
-    GeometryInfo *	info;
-#endif
 {
 ShapeInfo *	tmp;
 ShapeInfo *	next;
@@ -743,14 +618,7 @@ ShapeInfo *	next;
 /***====================================================================***/
 
 static void
-#if NeedFunctionPrototypes
 InitGeometryInfo(GeometryInfo *info,unsigned fileID,unsigned merge)
-#else
-InitGeometryInfo(info,fileID,merge)
-    GeometryInfo *	info;
-    unsigned		fileID;
-    unsigned		merge;
-#endif
 {
     bzero(info,sizeof(GeometryInfo));
     info->fileID= fileID;
@@ -761,12 +629,7 @@ InitGeometryInfo(info,fileID,merge)
 }
 
 static void
-#if NeedFunctionPrototypes
 ClearGeometryInfo(GeometryInfo *info)
-#else
-ClearGeometryInfo(info)
-    GeometryInfo *	info;
-#endif
 {
     if (info->name)
 	uFree(info->name);
@@ -790,12 +653,7 @@ ClearGeometryInfo(info)
 /***====================================================================***/
 
 static PropertyInfo *
-#if NeedFunctionPrototypes
 NextProperty(GeometryInfo *info)
-#else
-NextProperty(info)
-    GeometryInfo *	info;
-#endif
 {
 PropertyInfo *	pi;
 
@@ -810,13 +668,7 @@ PropertyInfo *	pi;
 }
 
 static PropertyInfo *
-#if NeedFunctionPrototypes
 FindProperty(GeometryInfo *info,char *name)
-#else
-FindProperty(info,name)
-    GeometryInfo *	info;
-    char *		name;
-#endif
 {
 PropertyInfo *	old;
 
@@ -830,13 +682,7 @@ PropertyInfo *	old;
 }
 
 static Bool
-#if NeedFunctionPrototypes
 AddProperty(GeometryInfo *info,PropertyInfo *new)
-#else
-AddProperty(info,new)
-    GeometryInfo *	info;
-    PropertyInfo *	new;
-#endif
 {
 PropertyInfo	*	old;
 
@@ -876,12 +722,7 @@ PropertyInfo	*	old;
 /***====================================================================***/
 
 static ShapeInfo *
-#if NeedFunctionPrototypes
 NextShape(GeometryInfo *info)
-#else
-NextShape(info)
-    GeometryInfo *	info;
-#endif
 {
 ShapeInfo *	si;
 
@@ -897,15 +738,7 @@ ShapeInfo *	si;
 }
 
 static ShapeInfo *
-#if NeedFunctionPrototypes
 FindShape(GeometryInfo *info,Atom name,char *type,char *which)
-#else
-FindShape(info,name,type,which)
-    GeometryInfo *	info;
-    Atom		name;
-    char *		type;
-    char *		which;
-#endif
 {
 ShapeInfo *	old;
 
@@ -928,13 +761,7 @@ ShapeInfo *	old;
 }
 
 static Bool
-#if NeedFunctionPrototypes
 AddShape(GeometryInfo *info,ShapeInfo *new)
-#else
-AddShape(info,new)
-    GeometryInfo *	info;
-    ShapeInfo *		new;
-#endif
 {
 ShapeInfo	*	old;
 
@@ -973,13 +800,7 @@ ShapeInfo	*	old;
 /***====================================================================***/
 
 static void
-#if NeedFunctionPrototypes
 ReplaceDoodad(DoodadInfo *into,DoodadInfo *from)
-#else
-ReplaceDoodad(into,from)
-    DoodadInfo *	into;
-    DoodadInfo *	from;
-#endif
 {
 CommonInfo *	next;
 
@@ -994,13 +815,7 @@ CommonInfo *	next;
 }
 
 static DoodadInfo *
-#if NeedFunctionPrototypes
 NextDfltDoodad(SectionInfo *si,GeometryInfo *info)
-#else
-NextDfltDoodad(si,info)
-    SectionInfo *	si;
-    GeometryInfo *	info;
-#endif
 {
 DoodadInfo *	di;
 
@@ -1019,13 +834,7 @@ DoodadInfo *	di;
 }
 
 static DoodadInfo *
-#if NeedFunctionPrototypes
 NextDoodad(SectionInfo *si,GeometryInfo *info)
-#else
-NextDoodad(si,info)
-    SectionInfo *	si;
-    GeometryInfo *	info;
-#endif
 {
 DoodadInfo *	di;
 
@@ -1046,14 +855,7 @@ DoodadInfo *	di;
 }
 
 static Bool
-#if NeedFunctionPrototypes
 AddDoodad(SectionInfo *si,GeometryInfo *info,DoodadInfo *new)
-#else
-AddDoodad(si,info,new)
-    SectionInfo *	si;
-    GeometryInfo *	info;
-    DoodadInfo *	new;
-#endif
 {
 DoodadInfo	*	old;
 
@@ -1088,14 +890,7 @@ DoodadInfo	*	old;
 }
 
 static DoodadInfo *
-#if NeedFunctionPrototypes
 FindDfltDoodadByTypeName(char *name,SectionInfo *si,GeometryInfo *info)
-#else
-FindDfltDoodadByTypeName(name,si,info)
-    char *		name;
-    SectionInfo *	si;
-    GeometryInfo *	info;
-#endif
 {
 DoodadInfo *	dflt;
 unsigned	type;
@@ -1124,14 +919,7 @@ unsigned	type;
 /***====================================================================***/
 
 static Bool
-#if NeedFunctionPrototypes
 AddOverlay(SectionInfo	*si,GeometryInfo *info,OverlayInfo *new)
-#else
-AddOverlay(si,info,new)
-    SectionInfo		*si;
-    GeometryInfo	*info;
-    OverlayInfo		*new;
-#endif
 {
 OverlayInfo	*	old;
 
@@ -1187,12 +975,7 @@ OverlayInfo	*	old;
 /***====================================================================***/
 
 static SectionInfo *
-#if NeedFunctionPrototypes
 NextSection(GeometryInfo *info)
-#else
-NextSection(info)
-    GeometryInfo *	info;
-#endif
 {
 SectionInfo *	si;
 
@@ -1211,13 +994,7 @@ SectionInfo *	si;
 }
 
 static SectionInfo *
-#if NeedFunctionPrototypes
 FindMatchingSection(GeometryInfo *info,SectionInfo *new)
-#else
-FindMatchingSection(info,new)
-    GeometryInfo *	info;
-    SectionInfo *		new;
-#endif
 {
 SectionInfo *	old;
 
@@ -1229,13 +1006,7 @@ SectionInfo *	old;
 }
 
 static Bool
-#if NeedFunctionPrototypes
 AddSection(GeometryInfo *info,SectionInfo *new)
-#else
-AddSection(info,new)
-    GeometryInfo *	info;
-    SectionInfo *		new;
-#endif
 {
 SectionInfo	*	old;
 
@@ -1284,12 +1055,7 @@ SectionInfo	*	old;
 /***====================================================================***/
 
 static RowInfo *
-#if NeedFunctionPrototypes
 NextRow(SectionInfo *si)
-#else
-NextRow(si)
-    SectionInfo *	si;
-#endif
 {
 RowInfo *	row;
 
@@ -1307,13 +1073,7 @@ RowInfo *	row;
 }
 
 static Bool
-#if NeedFunctionPrototypes
 AddRow(SectionInfo *si,RowInfo *new)
-#else
-AddRow(si,new)
-    SectionInfo *	si;
-    RowInfo *		new;
-#endif
 {
 RowInfo	*	old;
 
@@ -1330,12 +1090,7 @@ RowInfo	*	old;
 /***====================================================================***/
 
 static KeyInfo *
-#if NeedFunctionPrototypes
 NextKey(RowInfo *row)
-#else
-NextKey(row)
-    RowInfo *	row;
-#endif
 {
 KeyInfo *	key;
 
@@ -1350,13 +1105,7 @@ KeyInfo *	key;
 }
 
 static Bool
-#if NeedFunctionPrototypes
 AddKey(RowInfo *row,KeyInfo *new)
-#else
-AddKey(row,new)
-    RowInfo *	row;
-    KeyInfo *	new;
-#endif
 {
 KeyInfo	*	old;
 
@@ -1372,14 +1121,7 @@ KeyInfo	*	old;
 /***====================================================================***/
 
 static void
-#if NeedFunctionPrototypes
 MergeIncludedGeometry(GeometryInfo *into,GeometryInfo *from,unsigned merge)
-#else
-MergeIncludedGeometry(into,from,merge)
-    GeometryInfo *	into;
-    GeometryInfo *	from;
-    unsigned		merge;
-#endif
 {
 Bool clobber;
 
@@ -1454,25 +1196,15 @@ Bool clobber;
 }
 
 typedef void	(*FileHandler)(
-#if NeedFunctionPrototypes
 	XkbFile *	/* file */,
 	XkbDescPtr	/* xkb */,
 	unsigned	/* merge */,
 	GeometryInfo *	/* info */
-#endif
 );
 
 static Bool
-#if NeedFunctionPrototypes
 HandleIncludeGeometry(IncludeStmt *stmt,XkbDescPtr xkb,GeometryInfo *info,
 							FileHandler hndlr)
-#else
-HandleIncludeGeometry(stmt,xkb,info,hndlr)
-    IncludeStmt	*	  stmt;
-    XkbDescPtr		  xkb;
-    GeometryInfo *	  info;
-    FileHandler		  hndlr;
-#endif
 {
 unsigned 	newMerge;
 XkbFile	*	rtrn;
@@ -1539,20 +1271,11 @@ Bool		haveSelf;
 }
 
 static int
-#if NeedFunctionPrototypes
 SetShapeField(	ShapeInfo *	si,
 		char *		field,
 		ExprDef *	arrayNdx,
 		ExprDef *	value,
 		GeometryInfo *	info)
-#else
-SetShapeField(si,field,arrayNdx,value,info)
-    ShapeInfo *		si;
-    char *		field;
-    ExprDef *		arrayNdx;
-    ExprDef *		value;
-    GeometryInfo *	info;
-#endif
 {
 ExprResult	tmp;
 
@@ -1577,22 +1300,12 @@ ExprResult	tmp;
 }
 
 static int
-#if NeedFunctionPrototypes
 SetShapeDoodadField(	DoodadInfo *	di,
 			char *		field,
 			ExprDef *	arrayNdx,
 			ExprDef *	value,
 			SectionInfo *	si,
 			GeometryInfo *	info)
-#else
-SetShapeDoodadField(di,field,arrayNdx,value,si,info)
-    DoodadInfo *	di;
-    char *		field;
-    ExprDef *		arrayNdx;
-    ExprDef *		value;
-    SectionInfo *	si;
-    GeometryInfo *	info;
-#endif
 {
 ExprResult	tmp;
 char *		typeName;
@@ -1645,22 +1358,12 @@ char *		typeName;
 #define	FIELD_USHORT	2
 
 static int
-#if NeedFunctionPrototypes
 SetTextDoodadField(	DoodadInfo *	di,
 			char *		field,
 			ExprDef *	arrayNdx,
 			ExprDef *	value,
 			SectionInfo *	si,
 			GeometryInfo *	info)
-#else
-SetTextDoodadField(di,field,arrayNdx,value,si,info)
-    DoodadInfo *	di;
-    char *		field;
-    ExprDef *		arrayNdx;
-    ExprDef *		value;
-    SectionInfo *	si;
-    GeometryInfo *	info;
-#endif
 {
 ExprResult	tmp;
 unsigned	def;
@@ -1781,22 +1484,12 @@ union {
 }
 
 static int
-#if NeedFunctionPrototypes
 SetIndicatorDoodadField(	DoodadInfo *	di,
 				char *		field,
 				ExprDef *	arrayNdx,
 				ExprDef *	value,
 				SectionInfo *	si,
 				GeometryInfo *	info)
-#else
-SetIndicatorDoodadField(di,field,arrayNdx,value,si,info)
-    DoodadInfo *	di;
-    char *		field;
-    ExprDef *		arrayNdx;
-    ExprDef *		value;
-    SectionInfo *	si;
-    GeometryInfo *	info;
-#endif
 {
 ExprResult	tmp;
 
@@ -1830,22 +1523,12 @@ ExprResult	tmp;
 }
 
 static int
-#if NeedFunctionPrototypes
 SetLogoDoodadField(	DoodadInfo *	di,
 			char *		field,
 			ExprDef *	arrayNdx,
 			ExprDef *	value,
 			SectionInfo *	si,
 			GeometryInfo *	info)
-#else
-SetLogoDoodadField(di,field,arrayNdx,value,si,info)
-    DoodadInfo *	di;
-    char *		field;
-    ExprDef *		arrayNdx;
-    ExprDef *		value;
-    SectionInfo *	si;
-    GeometryInfo *	info;
-#endif
 {
 ExprResult	tmp;
 char *		typeName= "logo doodad";
@@ -1905,22 +1588,12 @@ char *		typeName= "logo doodad";
 }
 
 static int
-#if NeedFunctionPrototypes
 SetDoodadField(	DoodadInfo *	di,
 		char *		field,
 		ExprDef *	arrayNdx,
 		ExprDef *	value,
 		SectionInfo *	si,
 		GeometryInfo *	info)
-#else
-SetDoodadField(di,field,arrayNdx,value,si,info)
-    DoodadInfo *	di;
-    char *		field;
-    ExprDef *		arrayNdx;
-    ExprDef *		value;
-    SectionInfo *	si;
-    GeometryInfo *	info;
-#endif
 {
 ExprResult	tmp;
 
@@ -2000,20 +1673,11 @@ ExprResult	tmp;
 }
 
 static int
-#if NeedFunctionPrototypes
 SetSectionField(	SectionInfo *	si,
 			char *		field,
 			ExprDef *	arrayNdx,
 			ExprDef *	value,
 			GeometryInfo *	info)
-#else
-SetSectionField(si,field,arrayNdx,value,info)
-    SectionInfo *	si;
-    char *		field;
-    ExprDef *		arrayNdx;
-    ExprDef *		value;
-    GeometryInfo *	info;
-#endif
 {
 unsigned short *	pField;
 unsigned		def;
@@ -2082,20 +1746,11 @@ ExprResult		tmp;
 }
 
 static int
-#if NeedFunctionPrototypes
 SetRowField(	RowInfo *	row,
 		char *		field,
 		ExprDef *	arrayNdx,
 		ExprDef *	value,
 		GeometryInfo *	info)
-#else
-SetRowField(row,field,arrayNdx,value,info)
-    RowInfo *		row;
-    char *		field;
-    ExprDef *		arrayNdx;
-    ExprDef *		value;
-    GeometryInfo *	info;
-#endif
 {
 ExprResult	tmp;
 
@@ -2146,20 +1801,11 @@ ExprResult	tmp;
 }
 
 static int
-#if NeedFunctionPrototypes
 SetKeyField(	KeyInfo *key,
 		char *field,
 		ExprDef *arrayNdx,
 		ExprDef *value,
 		GeometryInfo *info)
-#else
-SetKeyField(key,field,arrayNdx,value,info)
-    KeyInfo *		key;
-    char *		field;
-    ExprDef *		arrayNdx;
-    ExprDef *		value;
-    GeometryInfo *	info;
-#endif
 {
 ExprResult tmp;
 
@@ -2221,14 +1867,7 @@ ExprResult tmp;
 }
 
 static int
-#if NeedFunctionPrototypes
 SetGeometryProperty(GeometryInfo *info,char *property,ExprDef *value)
-#else
-SetGeometryProperty(info,property,value)
-    GeometryInfo *	info;
-    char *		property;
-    ExprDef *		value;
-#endif
 {
 PropertyInfo	pi;
 ExprResult	result;
@@ -2246,14 +1885,7 @@ ExprResult	result;
 }
 
 static int
-#if NeedFunctionPrototypes
 HandleGeometryVar(VarDef *stmt,XkbDescPtr xkb,GeometryInfo *info)
-#else
-HandleGeometryVar(stmt,xkb,info)
-    VarDef *		stmt;
-    XkbDescPtr		xkb;
-    GeometryInfo *	info;
-#endif
 {
 ExprResult	elem,field,tmp;
 ExprDef *	ndx;
@@ -2464,15 +2096,7 @@ Atom *		pField;
 /***====================================================================***/
 
 static Bool
-#if NeedFunctionPrototypes
 HandleShapeBody(ShapeDef *def,ShapeInfo *si,unsigned merge,GeometryInfo *info)
-#else
-HandleShapeBody(def,si,merge,info)
-    ShapeDef *		def;
-    ShapeInfo *		si;
-    unsigned 		merge;
-    GeometryInfo *	info;
-#endif
 {
 OutlineDef *	ol;
 int		nOut,nPt;
@@ -2551,15 +2175,7 @@ ExprDef *	pt;
 }
 
 static int
-#if NeedFunctionPrototypes
 HandleShapeDef(ShapeDef *def,XkbDescPtr xkb,unsigned merge,GeometryInfo *info)
-#else
-HandleShapeDef(def,xkb,merge,info)
-    ShapeDef *		def;
-    XkbDescPtr		xkb;
-    unsigned 		merge;
-    GeometryInfo *	info;
-#endif
 {
 ShapeInfo		si;
 
@@ -2580,18 +2196,10 @@ ShapeInfo		si;
 /***====================================================================***/
 
 static int
-#if NeedFunctionPrototypes
 HandleDoodadDef(	DoodadDef *def,
 			unsigned merge,
 			SectionInfo *si,
 			GeometryInfo *info)
-#else
-HandleDoodadDef(def,merge,si,info)
-    DoodadDef *		def;
-    unsigned		merge;
-    SectionInfo *	si;
-    GeometryInfo *	info;
-#endif
 {
 ExprResult	elem,field;
 ExprDef *	ndx;
@@ -2624,18 +2232,10 @@ VarDef *	var;
 /***====================================================================***/
 
 static int
-#if NeedFunctionPrototypes
 HandleOverlayDef(	OverlayDef *	def,
 			unsigned 	merge,
 			SectionInfo *	si,
 			GeometryInfo *	info)
-#else
-HandleOverlayDef(def,merge,si,info)
-    OverlayDef *	def;
-    unsigned		merge;
-    SectionInfo *	si;
-    GeometryInfo *	info;
-#endif
 {
 OverlayKeyDef *	keyDef;
 OverlayKeyInfo *key;
@@ -2676,14 +2276,7 @@ OverlayInfo	ol;
 /***====================================================================***/
 
 static Bool
-#if NeedFunctionPrototypes
 HandleComplexKey(KeyDef *def,KeyInfo *key,GeometryInfo *info)
-#else
-HandleComplexKey(def,key,info)
-    KeyDef *		def;
-    KeyInfo *		key;
-    GeometryInfo *	info;
-#endif
 {
 RowInfo *	row;
 ExprDef *	expr;
@@ -2732,15 +2325,7 @@ ExprDef *	expr;
 }
 
 static Bool
-#if NeedFunctionPrototypes
 HandleRowBody(RowDef *def,RowInfo *row,unsigned merge,GeometryInfo *info)
-#else
-HandleRowBody(def,row,merge,info)
-    RowDef *		def;
-    RowInfo *		row;
-    unsigned 		merge;
-    GeometryInfo *	info;
-#endif
 {
 KeyDef *	keyDef;
 
@@ -2800,18 +2385,10 @@ KeyDef *	keyDef;
 }
 
 static Bool
-#if NeedFunctionPrototypes
 HandleSectionBody(	SectionDef *	def,
 			SectionInfo *	si,
 			unsigned 	merge,
 			GeometryInfo *	info)
-#else
-HandleSectionBody(def,si,merge,info)
-    SectionDef *	def;
-    SectionInfo *	si;
-    unsigned 		merge;
-    GeometryInfo *	info;
-#endif
 {
 RowDef *	rowDef;
 DoodadInfo *	di;
@@ -2879,18 +2456,10 @@ DoodadInfo *	di;
 }
 
 static int
-#if NeedFunctionPrototypes
 HandleSectionDef(	SectionDef *	def,
 			XkbDescPtr 	xkb,
 			unsigned 	merge,
 			GeometryInfo *	info)
-#else
-HandleSectionDef(def,xkb,merge,info)
-    SectionDef *	def;
-    XkbDescPtr		xkb;
-    unsigned 		merge;
-    GeometryInfo *	info;
-#endif
 {
 SectionInfo 	si;
 char *	 	str;
@@ -2916,18 +2485,10 @@ char *	 	str;
 /***====================================================================***/
 
 static void
-#if NeedFunctionPrototypes
 HandleGeometryFile(	XkbFile *	file,
 			XkbDescPtr 	xkb,
 			unsigned 	merge,
 			GeometryInfo *	info)
-#else
-HandleGeometryFile(file,xkb,merge,info)
-    XkbFile *		file;
-    XkbDescPtr 		xkb;
-    unsigned		merge;
-    GeometryInfo *	info;
-#endif
 {
 ParseCommon *	stmt;
 char *		failWhat;
@@ -2999,14 +2560,7 @@ char *		failWhat;
 /***====================================================================***/
 
 static Bool
-#if NeedFunctionPrototypes
 CopyShapeDef(Display *dpy,XkbGeometryPtr geom,ShapeInfo *si)
-#else
-CopyShapeDef(dpy,geom,si)
-    Display *		dpy;
-    XkbGeometryPtr	geom;
-    ShapeInfo *		si;
-#endif
 {
 register int	i,n;
 XkbShapePtr	shape;
@@ -3047,13 +2601,7 @@ Atom		name;
 }
 
 static Bool
-#if NeedFunctionPrototypes
 VerifyDoodadInfo(DoodadInfo *di,GeometryInfo *info)
-#else
-VerifyDoodadInfo(di,info)
-    DoodadInfo *	di;
-    GeometryInfo *	info;
-#endif
 {
     if ((di->defs.defined&(_GD_Top|_GD_Left))!=(_GD_Top|_GD_Left)) {
 	if (warningLevel<9) {
@@ -3303,7 +2851,6 @@ VerifyDoodadInfo(di,info)
 #define	FONT_TEMPLATE	"-*-%s-%s-%s-%s-%s-*-%d-*-*-*-*-%s"
 
 static char *
-#if NeedFunctionPrototypes
 FontFromParts(	Atom	fontTok,
     		Atom	weightTok,
 		Atom	slantTok,
@@ -3311,16 +2858,6 @@ FontFromParts(	Atom	fontTok,
 		Atom	varTok,
 		int	size,
 		Atom	encodingTok)
-#else
-FontFromParts(fontTok,weightTok,slantTok,setWidthTok,varTok,size,encodingTok)
-    Atom	fontTok;
-    Atom	weightTok;
-    Atom	slantTok;
-    Atom	setWidthTok;
-    Atom	varTok;
-    int		size;
-    Atom	encodingTok;
-#endif
 {
 int	totalSize;
 char 	*font,*weight,*slant,*setWidth,*variant,*encoding;
@@ -3347,18 +2884,10 @@ char *	rtrn;
 }
 
 static Bool
-#if NeedFunctionPrototypes
 CopyDoodadDef(	XkbGeometryPtr	geom,
     		XkbSectionPtr	section,
     		DoodadInfo *	di,
     		GeometryInfo *	info)
-#else
-CopyDoodadDef(geom,section,di,info)
-    XkbGeometryPtr	geom;
-    XkbSectionPtr	section;
-    DoodadInfo *	di;
-    GeometryInfo *	info;
-#endif
 {
 Atom		name;
 XkbDoodadPtr	doodad;
@@ -3436,22 +2965,12 @@ ShapeInfo *	si;
 /***====================================================================***/
 
 static Bool
-#if NeedFunctionPrototypes
 VerifyOverlayInfo(	XkbGeometryPtr	geom,
 			XkbSectionPtr	section,
 			OverlayInfo *	oi,
 			GeometryInfo *	info,
 			short		rowMap[256],
 			short		rowSize[256])
-#else
-VerifyOverlayInfo(geom,section,oi,info,rowMap,rowSize)
-    XkbGeometryPtr	geom;
-    XkbSectionPtr	section;
-    OverlayInfo *	oi;
-    GeometryInfo *	info;
-    short		rowMap[256];
-    short		rowSize[256];
-#endif
 {
 register OverlayKeyInfo *	ki,*next;
 unsigned long			oKey,uKey,sKey;
@@ -3529,18 +3048,10 @@ int				r,k;
 }
 
 static Bool
-#if NeedFunctionPrototypes
 CopyOverlayDef(	XkbGeometryPtr	geom,
 		XkbSectionPtr	section,
 		OverlayInfo *	oi,
 		GeometryInfo *	info)
-#else
-CopyOverlayDef(geom,section,oi,info)
-    XkbGeometryPtr	geom;
-    XkbSectionPtr	section;
-    OverlayInfo *	oi;
-    GeometryInfo *	info;
-#endif
 {
 Atom			name;
 XkbOverlayPtr		ol;
@@ -3586,14 +3097,7 @@ int			i;
 /***====================================================================***/
 
 static Bool
-#if NeedFunctionPrototypes
 CopySectionDef(XkbGeometryPtr geom,SectionInfo *si,GeometryInfo *info)
-#else
-CopySectionDef(geom,si,info)
-    XkbGeometryPtr	geom;
-    SectionInfo *	si;
-    GeometryInfo *	info;
-#endif
 {
 XkbSectionPtr	section;
 XkbRowPtr	row;
@@ -3682,14 +3186,7 @@ Atom		name;
 /***====================================================================***/
 
 Bool
-#if NeedFunctionPrototypes
 CompileGeometry(XkbFile *file,XkbFileInfo *result,unsigned merge)
-#else
-CompileGeometry(file,result,merge)
-    XkbFile *		file;
-    XkbFileInfo *	result;
-    unsigned	 	merge;
-#endif
 {
 GeometryInfo	info;
 XkbDescPtr	xkb;

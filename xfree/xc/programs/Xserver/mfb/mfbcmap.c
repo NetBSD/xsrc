@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/mfb/mfbcmap.c,v 1.7 2001/12/14 20:00:06 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/mfb/mfbcmap.c,v 1.8 2003/02/18 21:30:01 tsi Exp $ */
 /***********************************************************
 
 Copyright 1987, 1998  The Open Group
@@ -51,6 +51,7 @@ SOFTWARE.
 #include "colormapst.h"
 #include "resource.h"
 #include "micmap.h"
+#include "mfb.h"
 
 /* A monochrome frame buffer is a static gray colormap with two entries.
  * We have a "required list" of length 1.  Because we can only support 1

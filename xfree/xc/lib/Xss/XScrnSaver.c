@@ -26,16 +26,16 @@ in this Software without prior written authorization from the X Consortium.
  *
  * Author:  Keith Packard, MIT X Consortium
  */
-/* $XFree86: xc/lib/Xss/XScrnSaver.c,v 3.1 2001/10/28 03:32:40 tsi Exp $ */
+/* $XFree86: xc/lib/Xss/XScrnSaver.c,v 3.2 2002/10/16 00:37:32 dawes Exp $ */
 
 #define NEED_EVENTS
 #define NEED_REPLIES
 #include <X11/Xlibint.h>
 #include <X11/Xutil.h>
-#include "Xext.h"			/* in ../include */
-#include "extutil.h"			/* in ../include */
-#include "saverproto.h"			/* in ../include */
-#include "scrnsaver.h"
+#include <X11/extensions/Xext.h>
+#include <X11/extensions/extutil.h>
+#include <X11/extensions/saverproto.h>
+#include <X11/extensions/scrnsaver.h>
 
 
 static XExtensionInfo _screen_saver_info_data;

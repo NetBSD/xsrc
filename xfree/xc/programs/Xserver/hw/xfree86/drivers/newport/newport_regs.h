@@ -4,7 +4,7 @@
  * Register Layouts of the various newport chips
  * mostly as found in linux/include/asm/newport.h 
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/newport/newport_regs.h,v 1.2 2001/11/23 19:50:45 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/newport/newport_regs.h,v 1.3 2002/12/10 04:03:00 dawes Exp $ */
 
 typedef volatile unsigned long npireg_t;
 
@@ -427,7 +427,7 @@ struct Newport_regs {
 #define XM9_MREG_BUF_SEL	(1 << 0)
 #define XM9_MREG_OVL_BUF_SEL	(1 << 1)	
 #define XM9_MREG_GAMMA_BYPASS	(1 << 2)
-#define XM9_MREG_MSB_CMAP	(31 << 3
+#define XM9_MREG_MSB_CMAP	(31 << 3)
 #define XM9_MREG_PIX_MODE_MASK	(3 << 8)
 #define XM9_MREG_PIX_MODE_RGB0	(1 << 8)
 #define XM9_MREG_PIX_MODE_RGB1	(1 << 9)

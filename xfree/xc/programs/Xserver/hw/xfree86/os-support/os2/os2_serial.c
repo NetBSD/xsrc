@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/os2/os2_serial.c,v 1.3 2000/04/05 18:13:53 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/os2/os2_serial.c,v 1.4 2002/05/31 18:46:02 dawes Exp $ */
 /*
  * (c) Copyright 1999 by Holger Veit
  *			<Holger.Veit@gmd.de>
@@ -28,6 +28,7 @@
  */
 /* $XConsortium$ */
 
+#define I_NEED_OS2_H
 #include "X.h"
 #include "Xmd.h"
 #include "input.h"
@@ -35,7 +36,6 @@
 
 #include "compiler.h"
 
-#define I_NEED_OS2_H
 #define INCL_DOSDEVIOCTL
 #include "xf86.h"
 #include "xf86Priv.h"

@@ -64,7 +64,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/xf86_OSproc.h,v 3.54 2001/11/08 21:49:43 herrb Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/xf86_OSproc.h,v 3.55 2002/01/25 21:56:17 tsi Exp $ */
 
 #ifndef _XF86_OSPROC_H
 #define _XF86_OSPROC_H
@@ -248,7 +248,9 @@ resPtr xf86StdAccResFromOS(resPtr ret);
 /* available to the common layer */
 resPtr xf86BusAccWindowsFromOS(void);
 resPtr xf86PciBusAccWindowsFromOS(void);
+#ifdef INCLUDE_UNUSED
 resPtr xf86IsaBusAccWindowsFromOS(void);
+#endif
 resPtr xf86AccResFromOS(resPtr ret);
 #endif /* NEED_OS_RAC_PROTOS */
 

@@ -1,7 +1,7 @@
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.3
+ * Version:  3.5
  * 
  * Copyright (C) 1999  Brian Paul   All Rights Reserved.
  * 
@@ -27,10 +27,9 @@
 #ifndef GLX_HEADER_H
 #define GLX_HEADER_H
 
-#ifdef VMS
-#include <vms_x_fix.h>
+#ifdef __VMS
+#include <GL/vms_x_fix.h>
 #endif
-
 
 #ifdef HAVE_CONFIG_H
 #include "conf.h"
@@ -50,9 +49,6 @@
 
 #else
 
-# ifdef GLX_DIRECT_RENDERING
-#  include "dri_mesaint.h"
-# endif
 # include <X11/Xlib.h>
 # include <X11/Xutil.h>
 # ifdef USE_XSHM  /* was SHM */

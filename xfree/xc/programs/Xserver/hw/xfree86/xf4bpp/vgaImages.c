@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xf4bpp/vgaImages.c,v 1.3 1999/06/06 08:49:07 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xf4bpp/vgaImages.c,v 1.4 2002/01/25 21:56:22 tsi Exp $ */
 /*
  * Copyright IBM Corporation 1987,1988,1989
  *
@@ -46,6 +46,7 @@ register int RowIncrement ;
 const int alu ;
 const unsigned long int planes ;
 {
+IOADDRESS REGBASE;
 register unsigned long int tmp ;
 register const unsigned char *src ;
 register volatile unsigned char *dst ;
@@ -71,6 +72,9 @@ register unsigned char tmp1;
 #ifdef	PC98_EGC
 	unsigned short ROP_value;
 #endif
+
+	REGBASE = 0x300 +
+	    xf86Screens[((DrawablePtr)pWin)->pScreen->myNum]->domainIOBase;
 
 	switch ( alu ) {
 		case GXclear:		/* 0x0 Zero 0 */
@@ -270,6 +274,7 @@ return ;
 static unsigned long int
 read8Z
 (
+	IOADDRESS REGBASE,
 	register volatile unsigned char *screen_ptr
 )
 {
@@ -350,6 +355,7 @@ int lx, ly ;
 register unsigned char *data ;
 int RowIncrement ;
 {
+IOADDRESS REGBASE;
 register unsigned long int tmp ;
 register volatile unsigned char *src ;
 volatile unsigned char *masterSrc ;
@@ -371,10 +377,13 @@ unsigned char tmpc;
 if ( ( lx <= 0 ) || ( ly <= 0 ) )
 	return ;
 
+	REGBASE = 0x300 +
+	    xf86Screens[((DrawablePtr)pWin)->pScreen->myNum]->domainIOBase;
+
 /* Setup VGA Registers */
 #ifndef	PC98_EGC
 SetVideoGraphicsIndex( Graphics_ModeIndex ) ;
-tmpc = inb( 0x3CF );
+tmpc = inb( GraphicsDataRegister );
 SetVideoGraphicsData( tmpc & ~0x8 ) ; /* Clear the bit */
 SetVideoGraphicsIndex( Read_Map_SelectIndex ) ;
 #else
@@ -393,7 +402,7 @@ center_width = ROW_OFFSET( x + lx ) - ROW_OFFSET( ( x + 0x7 ) & ~0x7 ) ;
 if ( center_width < 0 ) {
 	src = masterSrc;
 	for ( ; ly-- ; ) {
-		tmp = read8Z( src ) >> ( skip << 2 ) ;
+		tmp = read8Z( REGBASE, src ) >> ( skip << 2 ) ;
 		for ( dx = lx + 1 ; --dx ; ) {
 			SINGLE_STEP ;
 		}
@@ -406,7 +415,7 @@ if ( center_width < 0 ) {
 	      center_width = savCenterWidth,
 	      masterSrc += BYTES_PER_LINE(pWin) ) {
 		src = masterSrc ;
-		tmp = read8Z( src ) ; src++;
+		tmp = read8Z( REGBASE, src ) ; src++;
 		if ((dx = skip))
 			tmp >>= ( dx << 2 ) ;
 		else
@@ -429,13 +438,13 @@ if ( center_width < 0 ) {
 
 			/* Fall Through To End Of Inner Loop */
 			if ( center_width > 0 ) {
-				tmp = read8Z( src ) ; src++;
+				tmp = read8Z( REGBASE, src ) ; src++;
 				center_width-- ;
 				goto LoopTop ;
 			}
 			else if ( ( center_width == 0 )
 			       && ( dx = ( - ignore ) & 07 ) ) {
-				tmp = read8Z( src ) ; src++;
+				tmp = read8Z( REGBASE, src ) ; src++;
 				center_width-- ;
 				goto BranchPoint ; /* Do Mod 8 edge */
 			}

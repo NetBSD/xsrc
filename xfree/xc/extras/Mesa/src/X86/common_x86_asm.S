@@ -1,9 +1,9 @@
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.4
+ * Version:  4.0.3
  *
- * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -22,6 +22,7 @@
  * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
+/* $XFree86: xc/extras/Mesa/src/X86/common_x86_asm.S,v 1.16 2002/12/16 16:18:33 dawes Exp $ */
 
 /*
  * Check extended CPU capabilities.  Now justs returns the raw CPUID
@@ -33,7 +34,13 @@
  * Cleaned up and simplified by Gareth Hughes <gareth@valinux.com>
  */
 
-#include "assyntax.h"
+/*
+ * NOTE: Avoid using spaces in between '(' ')' and arguments, especially
+ * with macros like CONST, LLBL that expand to CONCAT(...).  Putting spaces
+ * in there will break the build on some platforms.
+ */
+
+#include "matypes.h"
 #include "common_x86_features.h"
 
 
@@ -57,8 +64,8 @@
 GLNAME( found_intel ):	STRING( "Genuine Intel processor found\n\0" )
 GLNAME( found_amd ):	STRING( "Authentic AMD processor found\n\0" )
 
-#ifdef USE_KATMAI_ASM
-GLNAME( katmai_test_dummy ):
+#ifdef USE_SSE_ASM
+GLNAME( sse_test_dummy ):
 	D_LONG 0x3f800000, 0x3f800000, 0x3f800000, 0x3f800000
 #endif
 
@@ -66,10 +73,11 @@ GLNAME( katmai_test_dummy ):
 	SEG_TEXT
 
 ALIGNTEXT4
-GLOBL GLNAME( gl_identify_x86_cpu_features )
-GLNAME( gl_identify_x86_cpu_features ):
+GLOBL GLNAME( _mesa_identify_x86_cpu_features )
+GLNAME( _mesa_identify_x86_cpu_features ):
 
 	PUSH_L	( EBX )
+	PUSH_L	( ESI )
 
 	/* Test for the CPUID command.  If the ID Flag bit in EFLAGS
 	 * (bit 21) is writable, the CPUID command is present.
@@ -86,7 +94,7 @@ GLNAME( gl_identify_x86_cpu_features ):
 	/* Verify the ID Flag bit has been written.
 	 */
 	CMP_L	( ECX, EAX )
-	JZ	( LLBL ( cpuid_done ) )
+	JZ	( LLBL (cpuid_done) )
 
 	/* Get the CPU vendor info.
 	 */
@@ -97,11 +105,11 @@ GLNAME( gl_identify_x86_cpu_features ):
 	 * "GenuineIntel" string in EBX, ECX and EDX.
 	 */
 	CMP_L	( CONST(GENU), EBX )
-	JNE	( LLBL( cpuid_amd ) )
+	JNE	( LLBL(cpuid_amd) )
 	CMP_L	( CONST(INEI), EDX )
-	JNE	( LLBL( cpuid_amd ) )
+	JNE	( LLBL(cpuid_amd) )
 	CMP_L	( CONST(NTEL), ECX )
-	JNE	( LLBL( cpuid_amd ) )
+	JNE	( LLBL(cpuid_amd) )
 
 	/* We have an Intel processor, so we can get the feature
 	 * information with an CPUID input value of 1.
@@ -109,40 +117,58 @@ GLNAME( gl_identify_x86_cpu_features ):
 	MOV_L	( CONST(0x1), EAX )
 	CPUID
 	MOV_L	( EDX, EAX )
-	JMP	( LLBL( cpuid_done ) )
 
-LLBL( cpuid_amd ):
+	/* Mask out highest bit, which is used by AMD for 3dnow.
+	 * Newer Intel have this bit set, but do not support 3dnow.
+	 */
+	AND_L	( CONST(0X7FFFFFFF), EAX)
+	JMP	( LLBL(cpuid_done) )
+
+LLBL(cpuid_amd):
 
 	/* Test for AMD processors.  We must look for the
 	 * "AuthenticAMD" string in EBX, ECX and EDX.
 	 */
 	CMP_L	( CONST(AUTH), EBX )
-	JNE	( LLBL( cpuid_other ) )
+	JNE	( LLBL(cpuid_other) )
 	CMP_L	( CONST(ENTI), EDX )
-	JNE	( LLBL( cpuid_other ) )
+	JNE	( LLBL(cpuid_other) )
 	CMP_L	( CONST(CAMD), ECX )
-	JNE	( LLBL( cpuid_other ) )
+	JNE	( LLBL(cpuid_other) )
 
 	/* We have an AMD processor, so we can get the feature
 	 * information after we verify that the extended functions are
 	 * supported.
 	 */
+	/* The features we need are almost all in the extended set.  The
+	 * exception is SSE enable, which is in the standard set (0x1).
+	 */
+	MOV_L	( CONST(0x1), EAX )
+	CPUID
+	TEST_L	( EAX, EAX )
+	JZ	( LLBL (cpuid_failed) )
+	MOV_L	( EDX, ESI )
+
 	MOV_L	( CONST(0x80000000), EAX )
 	CPUID
 	TEST_L	( EAX, EAX )
-	JZ	( LLBL ( cpuid_failed ) )
+	JZ	( LLBL (cpuid_failed) )
 
 	MOV_L	( CONST(0x80000001), EAX )
 	CPUID
 	MOV_L	( EDX, EAX )
-	JMP	( LLBL ( cpuid_done ) )
+	
+	AND_L	( CONST(0x02000000), ESI )	/* OR in the SSE bit */
+	OR_L	( ESI, EAX )
+	
+	JMP	( LLBL (cpuid_done) )
 
-LLBL( cpuid_other ):
+LLBL(cpuid_other):
 
 	/* Test for other processors here when required.
 	 */
 
-LLBL( cpuid_failed ):
+LLBL(cpuid_failed):
 
 	/* If we can't determine the feature information, we must
 	 * return zero to indicate that no platform-specific
@@ -150,21 +176,22 @@ LLBL( cpuid_failed ):
 	 */
 	MOV_L	( CONST(0), EAX )
 
-LLBL ( cpuid_done ):
+LLBL (cpuid_done):
 
+	POP_L	( ESI )
 	POP_L	( EBX )
 	RET
 
 
-#ifdef USE_KATMAI_ASM
+#ifdef USE_SSE_ASM
 /* Execute an SSE instruction to see if the operating system correctly
  * supports SSE.  A signal handler for SIGILL should have been set
  * before calling this function, otherwise this could kill the client
  * application.
  */
 ALIGNTEXT4
-GLOBL GLNAME( gl_test_os_katmai_support )
-GLNAME( gl_test_os_katmai_support ):
+GLOBL GLNAME( _mesa_test_os_sse_support )
+GLNAME( _mesa_test_os_sse_support ):
 
 	XORPS	( XMM0, XMM0 )
 
@@ -177,8 +204,8 @@ GLNAME( gl_test_os_katmai_support ):
  * otherwise this could kill the client application.
  */
 ALIGNTEXT4
-GLOBL GLNAME( gl_test_os_katmai_exception_support )
-GLNAME( gl_test_os_katmai_exception_support ):
+GLOBL GLNAME( _mesa_test_os_sse_exception_support )
+GLNAME( _mesa_test_os_sse_exception_support ):
 
 	PUSH_L	( EBP )
 	MOV_L	( ESP, EBP )
@@ -195,7 +222,7 @@ GLNAME( gl_test_os_katmai_exception_support ):
 	LDMXCSR	( REGOFF( -8, EBP ) )
 
 	XORPS	( XMM0, XMM0 )
-	MOVUPS	( GLNAME( katmai_test_dummy ), XMM1 )
+	MOVUPS	( CONTENT( GLNAME( sse_test_dummy ) ), XMM1 )
 
 	DIVPS	( XMM0, XMM1 )
 

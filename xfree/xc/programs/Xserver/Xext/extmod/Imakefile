@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/programs/Xserver/Xext/extmod/Imakefile,v 1.21 2001/03/05 04:51:56 mvojkovi Exp $
+XCOMM $XFree86: xc/programs/Xserver/Xext/extmod/Imakefile,v 1.22 2002/03/06 21:12:32 mvojkovi Exp $
 XCOMM This directory is only entered if DoLoadableServer is set
 
 #define IHaveModules
@@ -59,6 +59,12 @@ LinkSourceFile(xvmod.c,..)
 LinkSourceFile(xvmc.c,..)
 #endif
 
+#if BuildXResExt
+   XRESSRCS = xres.c
+   XRESOBJS = xres.o
+LinkSourceFile(xres.c,..)
+#endif
+
 #if BuildEVI
          EVISRCS = EVI.c sampleEVI.c
          EVIOBJS = EVI.o sampleEVI.o
@@ -80,13 +86,13 @@ LinkSourceFile(cup.c,..)
 	      bigreq.c sync.c $(SCRNSAVSRC) xcmisc.c $(VIDMODESRCS) \
 	      $(XF86MISCSRCS) $(XF86DGASRCS) \
 	      $(CUPSRCS) $(DPMSSRCS) $(FONTCACHESRCS)  \
-	      $(EVISRCS) $(XVSRCS) $(MODINITSRCS)
+	      $(EVISRCS) $(XVSRCS) $(MODINITSRCS) $(XRESSRCS)
 
       MOBJS = $(MODINITOBJS) shape.o $(MULTIBUFOBJ) mitmisc.o \
 	      bigreq.o sync.o $(SCRNSAVOBJ) xcmisc.o \
 	      $(VIDMODEOBJS) $(XF86MISCOBJS) $(XF86DGAOBJS) \
               $(CUPOBJS) $(DPMSOBJS) $(FONTCACHEOBJS) \
-	      $(EVIOBJS) $(XVOBJS)
+	      $(EVIOBJS) $(XVOBJS) $(XRESOBJS)
 
     DEFINES = -DEXTMODULE $(EXT_DEFINES)
 

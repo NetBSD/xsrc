@@ -3,7 +3,7 @@
 
 
 
-// $XFree86: xc/programs/xkbcomp/symbols/de_CH,v 3.5 2001/01/17 23:45:58 dawes Exp $
+// $XFree86: xc/programs/xkbcomp/symbols/de_CH,v 3.6 2002/11/25 14:05:06 eich Exp $
 
 partial default alphanumeric_keys 
 xkb_symbols "basic" {
@@ -56,7 +56,10 @@ xkb_symbols "basic" {
     key <AB09> {	[    period,	colon		]	};
     key <AB10> {	[     minus,	underscore	]	};
 
-    // End alphanumeric section
+    // End alphanumeric section, begin "Keypad"
+    key <KPDL> {	[  KP_Delete,	KP_Decimal	]	};
+    // End "Keypad" section
+
 
     // begin modifier mappings
     modifier_map Shift  { Shift_L };

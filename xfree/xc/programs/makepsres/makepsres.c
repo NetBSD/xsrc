@@ -35,7 +35,7 @@
  * 
  * Author:  Adobe Systems Incorporated
  */
-/* $XFree86: xc/programs/makepsres/makepsres.c,v 1.5 2001/08/01 00:45:01 tsi Exp $ */
+/* $XFree86: xc/programs/makepsres/makepsres.c,v 1.7 2002/09/18 17:11:51 tsi Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -257,7 +257,8 @@ int Hash(string)
 	    hash += *ch;
 	    return hash % HASHSIZE;
 	}
-	hash += *ch++ + (*ch++ << 8);
+	hash += *ch++;
+	hash += (*ch++ << 8);
     }
 }
 
@@ -2189,7 +2190,7 @@ void CheckBackup(filename)
 
     (void) unlink (backupname); /* Ignore error */
 
-#ifndef __EMX__
+#ifndef __UNIXOS2__
     if (link (filename, backupname) != 0) {
 	if (errno != ENOENT) {
 	    fprintf(stderr, "%s:  Could not back up output file %s\n",

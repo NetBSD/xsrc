@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ark/ark_driver.c,v 1.19 2001/10/28 03:33:22 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ark/ark_driver.c,v 1.21 2002/07/24 01:47:24 tsi Exp $ */
 /*
  *	Copyright 2000	Ani Joshi <ajoshi@unixbox.com>
  *
@@ -28,7 +28,6 @@
  *
  */
 
-#define COMPILER_H_EXTRAS
 #include "xf86.h"
 #include "xf86_OSproc.h"
 #include "xf86_ansic.h"
@@ -73,8 +72,8 @@ static void ARKLoadPalette(ScrnInfoPtr pScrn, int numColors,
 static void ARKWriteMode(ScrnInfoPtr pScrn, vgaRegPtr pVga, ARKRegPtr new);
 
 /* helpers */
-static unsigned char get_daccomm(void);
-static unsigned char set_daccom(unsigned char comm);
+static unsigned char get_daccomm(IOADDRESS);
+static unsigned char set_daccom(IOADDRESS, unsigned char comm);
 
 
 DriverRec ARK =
@@ -350,8 +349,8 @@ static Bool ARKPreInit(ScrnInfoPtr pScrn, int flags)
 
 	pARK->PciInfo = xf86GetPciInfoForEntity(pEnt->index);
 	xf86RegisterResources(pEnt->index, NULL, ResNone);
-	xf86SetOperatingState(RES_SHARED_VGA, pEnt->index, ResUnusedOpr);
-	xf86SetOperatingState(resVgaMemShared, pEnt->index, ResDisableOpr);
+	xf86SetOperatingState(resVgaIo, pEnt->index, ResUnusedOpr);
+	xf86SetOperatingState(resVgaMem, pEnt->index, ResDisableOpr);
 
 	if (pEnt->device->chipset && *pEnt->device->chipset) {
 		pScrn->chipset = pEnt->device->chipset;
@@ -383,14 +382,14 @@ static Bool ARKPreInit(ScrnInfoPtr pScrn, int flags)
 			      pARK->PciInfo->func);
 
 	/* unlock CRTC[0-7] */
-	outb(hwp->IOBase + 4, 0x11);
-	tmp = inb(hwp->IOBase + 5);
-	outb(hwp->IOBase + 5, tmp & 0x7f);
-	modinx(0x3c4, 0x1d, 0x01, 0x01);
+	outb(hwp->PIOOffset + hwp->IOBase + 4, 0x11);
+	tmp = inb(hwp->PIOOffset + hwp->IOBase + 5);
+	outb(hwp->PIOOffset + hwp->IOBase + 5, tmp & 0x7f);
+	modinx(hwp->PIOOffset + 0x3c4, 0x1d, 0x01, 0x01);
 
 	/* use membase's later on ??? */
-	pARK->FBAddress = (rdinx(0x3c4, 0x13) << 16) +
-			  (rdinx(0x3c4, 0x14) << 24);
+	pARK->FBAddress = (rdinx(hwp->PIOOffset + 0x3c4, 0x13) << 16) +
+			  (rdinx(hwp->PIOOffset + 0x3c4, 0x14) << 24);
 
 	xf86DrvMsg(pScrn->scrnIndex, X_PROBED, "Framebuffer @ 0x%x\n",
 		   pARK->FBAddress);
@@ -401,7 +400,7 @@ static Bool ARKPreInit(ScrnInfoPtr pScrn, int flags)
 	if (!pScrn->videoRam) {
 		unsigned char sr10;
 
-		sr10 = rdinx(0x3c4, 0x10);
+		sr10 = rdinx(hwp->PIOOffset + 0x3c4, 0x10);
 		if (pARK->Chipset == PCI_CHIP_1000PV) {
 			if ((sr10 & 0x40) == 0)
 				pScrn->videoRam = 1024;
@@ -426,9 +425,9 @@ static Bool ARKPreInit(ScrnInfoPtr pScrn, int flags)
 	{
 		int man_id, dev_id;
 
-		inb(0x3c6);		/* skip command register */
-		man_id = inb(0x3c6);	/* manufacturer id */
-		dev_id = inb(0x3c6);	/* device id */
+		inb(hwp->PIOOffset + 0x3c6);		/* skip cmd register */
+		man_id = inb(hwp->PIOOffset + 0x3c6);	/* manufacturer id */
+		dev_id = inb(hwp->PIOOffset + 0x3c6);	/* device id */
 		if (man_id == 0x84 && dev_id == 0x98) {
 			pARK->ramdac = ZOOMDAC;
 			pARK->dac_width = 16;
@@ -605,45 +604,46 @@ static void ARKSave(ScrnInfoPtr pScrn)
 	ARKPtr pARK = ARKPTR(pScrn);
 	ARKRegPtr save = &pARK->SavedRegs;
 	vgaHWPtr hwp = VGAHWPTR(pScrn);
-	int vgaIOBase = hwp->IOBase;
+	IOADDRESS isaIOBase = hwp->PIOOffset;
+	IOADDRESS vgaIOBase = isaIOBase + hwp->IOBase;
 
 	vgaHWUnlock(hwp);
 	vgaHWSave(pScrn, &hwp->SavedReg, VGA_SR_ALL);
 	vgaHWLock(hwp);
 
 	/* set read and write aperture index to 0 */
-	wrinx(0x3c4, 0x15, 0x00);
-	wrinx(0x3c4, 0x16, 0x00);
-	outb(0x3c8, 0);		/* reset DAC register access mode */
+	wrinx(isaIOBase + 0x3c4, 0x15, 0x00);
+	wrinx(isaIOBase + 0x3c4, 0x16, 0x00);
+	outb(isaIOBase + 0x3c8, 0);	/* reset DAC register access mode */
 
-	save->sr10 = rdinx(0x3c4, 0x10);
-	save->sr11 = rdinx(0x3c4, 0x11);
-	save->sr12 = rdinx(0x3c4, 0x12);
-	save->sr13 = rdinx(0x3c4, 0x13);
-	save->sr14 = rdinx(0x3c4, 0x14);
-	save->sr15 = rdinx(0x3c4, 0x15);
-	save->sr16 = rdinx(0x3c4, 0x16);
-	save->sr17 = rdinx(0x3c4, 0x17);
-	save->sr18 = rdinx(0x3c4, 0x18);
+	save->sr10 = rdinx(isaIOBase + 0x3c4, 0x10);
+	save->sr11 = rdinx(isaIOBase + 0x3c4, 0x11);
+	save->sr12 = rdinx(isaIOBase + 0x3c4, 0x12);
+	save->sr13 = rdinx(isaIOBase + 0x3c4, 0x13);
+	save->sr14 = rdinx(isaIOBase + 0x3c4, 0x14);
+	save->sr15 = rdinx(isaIOBase + 0x3c4, 0x15);
+	save->sr16 = rdinx(isaIOBase + 0x3c4, 0x16);
+	save->sr17 = rdinx(isaIOBase + 0x3c4, 0x17);
+	save->sr18 = rdinx(isaIOBase + 0x3c4, 0x18);
 
 #if 0
-	save->sr1d = rdinx(0x3c4, 0x1d);
-	save->sr1c = rdinx(0x3c4, 0x1c);
+	save->sr1d = rdinx(isaIOBase + 0x3c4, 0x1d);
+	save->sr1c = rdinx(isaIOBase + 0x3c4, 0x1c);
 
-	save->sr20 = rdinx(0x3c4, 0x20);
-	save->sr21 = rdinx(0x3c4, 0x21);
-	save->sr22 = rdinx(0x3c4, 0x22);
-	save->sr23 = rdinx(0x3c4, 0x23);
-	save->sr24 = rdinx(0x3c4, 0x24);
-	save->sr25 = rdinx(0x3c4, 0x25);
-	save->sr26 = rdinx(0x3c4, 0x26);
-	save->sr27 = rdinx(0x3c4, 0x27);
-	save->sr29 = rdinx(0x3c4, 0x29);
-	save->sr2a = rdinx(0x3c4, 0x2a);
+	save->sr20 = rdinx(isaIOBase + 0x3c4, 0x20);
+	save->sr21 = rdinx(isaIOBase + 0x3c4, 0x21);
+	save->sr22 = rdinx(isaIOBase + 0x3c4, 0x22);
+	save->sr23 = rdinx(isaIOBase + 0x3c4, 0x23);
+	save->sr24 = rdinx(isaIOBase + 0x3c4, 0x24);
+	save->sr25 = rdinx(isaIOBase + 0x3c4, 0x25);
+	save->sr26 = rdinx(isaIOBase + 0x3c4, 0x26);
+	save->sr27 = rdinx(isaIOBase + 0x3c4, 0x27);
+	save->sr29 = rdinx(isaIOBase + 0x3c4, 0x29);
+	save->sr2a = rdinx(isaIOBase + 0x3c4, 0x2a);
 	if ((pARK->Chipset == PCI_CHIP_2000PV) ||
 	    (pARK->Chipset == PCI_CHIP_2000MT)) {
-		save->sr28 = rdinx(0x3c4, 0x28);
-		save->sr2b = rdinx(0x3c4, 0x2b);
+		save->sr28 = rdinx(isaIOBase + 0x3c4, 0x28);
+		save->sr2b = rdinx(isaIOBase + 0x3c4, 0x2b);
 	}
 #endif
 
@@ -657,7 +657,7 @@ static void ARKSave(ScrnInfoPtr pScrn)
 		save->cr46 = rdinx(vgaIOBase + 4, 0x46);
 
 	/* save RAMDAC regs here, based on type */
-	save->dac_command = get_daccomm();
+	save->dac_command = get_daccomm(isaIOBase);
 }
 
 
@@ -669,7 +669,8 @@ static Bool ARKModeInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
 	int multiplexing, dac16, modepitch;
 	vgaHWPtr hwp = VGAHWPTR(pScrn);
 	vgaRegPtr pVga = &hwp->ModeReg;
-	int vgaIOBase = hwp->IOBase;
+	IOADDRESS isaIOBase = hwp->PIOOffset;
+	IOADDRESS vgaIOBase = isaIOBase + hwp->IOBase;
 	unsigned char tmp;
 	int offset;
 
@@ -772,13 +773,13 @@ static Bool ARKModeInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
 	new->sr17 &= ~0xc7;
 	new->sr17 |= modepitch;
 
-	new->sr10 = rdinx(0x3c4, 0x10) & ~0x1f;
+	new->sr10 = rdinx(isaIOBase + 0x3c4, 0x10) & ~0x1f;
 	new->sr10 |= 0x1f;
 
 	new->sr13 = pARK->FBAddress >> 16;
 	new->sr14 = pARK->FBAddress >> 24;
 
-	new->sr12 = rdinx(0x3c4, 0x12) & ~0x03;
+	new->sr12 = rdinx(isaIOBase + 0x3c4, 0x12) & ~0x03;
 	switch (pScrn->videoRam) {
 		case 1024:
 			new->sr12 |= 0x01;
@@ -834,7 +835,7 @@ static Bool ARKModeInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
 				(pScrn->bitsPerPixel / 8);
 		/* 120000 is another guess */
 		percentused = (bandwidthused * 100) / 120000;
-		tmp = rdinx(0x3c4, 0x18);
+		tmp = rdinx(isaIOBase + 0x3c4, 0x18);
 		if (pARK->Chipset == PCI_CHIP_1000PV) {
 			threshold = 4;
 			tmp |= 0x08;	/* enable full FIFO (8 deep) */
@@ -884,20 +885,20 @@ static Bool ARKModeInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
 
 #if 0
 	/* hw cursor regs */
-	new->sr20 = rdinx(0x3c4, 0x20);
-	new->sr21 = rdinx(0x3c4, 0x21);
-	new->sr22 = rdinx(0x3c4, 0x22);
-	new->sr23 = rdinx(0x3c4, 0x23);
-	new->sr24 = rdinx(0x3c4, 0x24);
-	new->sr25 = rdinx(0x3c4, 0x25);
-	new->sr26 = rdinx(0x3c4, 0x26);
-	new->sr27 = rdinx(0x3c4, 0x27);
-	new->sr29 = rdinx(0x3c4, 0x29);
-	new->sr2a = rdinx(0x3c4, 0x2a);
+	new->sr20 = rdinx(isaIOBase + 0x3c4, 0x20);
+	new->sr21 = rdinx(isaIOBase + 0x3c4, 0x21);
+	new->sr22 = rdinx(isaIOBase + 0x3c4, 0x22);
+	new->sr23 = rdinx(isaIOBase + 0x3c4, 0x23);
+	new->sr24 = rdinx(isaIOBase + 0x3c4, 0x24);
+	new->sr25 = rdinx(isaIOBase + 0x3c4, 0x25);
+	new->sr26 = rdinx(isaIOBase + 0x3c4, 0x26);
+	new->sr27 = rdinx(isaIOBase + 0x3c4, 0x27);
+	new->sr29 = rdinx(isaIOBase + 0x3c4, 0x29);
+	new->sr2a = rdinx(isaIOBase + 0x3c4, 0x2a);
 	if ((pARK->Chipset == PCI_CHIP_2000PV) ||
 	    (pARK->Chipset == PCI_CHIP_2000MT)) {
-		new->sr28 = rdinx(0x3c4, 0x28);
-		new->sr2b = rdinx(0x3c4, 0x3b);
+		new->sr28 = rdinx(isaIOBase + 0x3c4, 0x28);
+		new->sr2b = rdinx(isaIOBase + 0x3c4, 0x3b);
 	}
 #endif
 
@@ -913,7 +914,7 @@ static void ARKAdjustFrame(int scrnIndex, int x, int y, int flags)
 	ScrnInfoPtr pScrn = xf86Screens[scrnIndex];
 	ARKPtr pARK = ARKPTR(pScrn);
 	vgaHWPtr hwp = VGAHWPTR(pScrn);
-	int vgaIOBase = hwp->IOBase;
+	IOADDRESS vgaIOBase = hwp->PIOOffset + hwp->IOBase;
 	int base;
 
 	base = ((y * pScrn->displayWidth + x) *
@@ -940,47 +941,48 @@ static void ARKWriteMode(ScrnInfoPtr pScrn, vgaRegPtr pVga, ARKRegPtr new)
 {
 	ARKPtr pARK = ARKPTR(pScrn);
 	vgaHWPtr hwp = VGAHWPTR(pScrn);
-	int vgaIOBase = hwp->IOBase;
+	IOADDRESS isaIOBase = hwp->PIOOffset;
+	IOADDRESS vgaIOBase = isaIOBase + hwp->IOBase;
 
 	vgaHWProtect(pScrn, TRUE);
 
 	/* set read and write aperture index to 0 */
-	wrinx(0x3c4, 0x15, 0x00);
-	wrinx(0x3c4, 0x16, 0x00);
+	wrinx(isaIOBase + 0x3c4, 0x15, 0x00);
+	wrinx(isaIOBase + 0x3c4, 0x16, 0x00);
 
 	/* write the extended registers first so that textmode font
 	 * restoration can suceed
 	 */
-	wrinx(0x3c4, 0x10, new->sr10);
-	wrinx(0x3c4, 0x11, new->sr11);
-	wrinx(0x3c4, 0x12, new->sr12);
-	wrinx(0x3c4, 0x13, new->sr13);
-	wrinx(0x3c4, 0x14, new->sr14);
-	wrinx(0x3c4, 0x15, new->sr15);
-	wrinx(0x3c4, 0x16, new->sr16);
-	wrinx(0x3c4, 0x17, new->sr17);
+	wrinx(isaIOBase + 0x3c4, 0x10, new->sr10);
+	wrinx(isaIOBase + 0x3c4, 0x11, new->sr11);
+	wrinx(isaIOBase + 0x3c4, 0x12, new->sr12);
+	wrinx(isaIOBase + 0x3c4, 0x13, new->sr13);
+	wrinx(isaIOBase + 0x3c4, 0x14, new->sr14);
+	wrinx(isaIOBase + 0x3c4, 0x15, new->sr15);
+	wrinx(isaIOBase + 0x3c4, 0x16, new->sr16);
+	wrinx(isaIOBase + 0x3c4, 0x17, new->sr17);
 
 #if 0
-	wrinx(0x3c4, 0x1c, new->sr1c);
-	wrinx(0x3c4, 0x1d, new->sr1d);
+	wrinx(isaIOBase + 0x3c4, 0x1c, new->sr1c);
+	wrinx(isaIOBase + 0x3c4, 0x1d, new->sr1d);
 
 	/* hw cursor regs */
-	wrinx(0x3c4, 0x20, new->sr20);
-	wrinx(0x3c4, 0x21, new->sr21);
-	wrinx(0x3c4, 0x22, new->sr22);
-	wrinx(0x3c4, 0x23, new->sr23);
-	wrinx(0x3c4, 0x24, new->sr24);
-	wrinx(0x3c4, 0x25, new->sr25);
-	wrinx(0x3c4, 0x26, new->sr26);
-	wrinx(0x3c4, 0x27, new->sr27);
-	wrinx(0x3c4, 0x29, new->sr29);
-	wrinx(0x3c4, 0x2a, new->sr2a);
+	wrinx(isaIOBase + 0x3c4, 0x20, new->sr20);
+	wrinx(isaIOBase + 0x3c4, 0x21, new->sr21);
+	wrinx(isaIOBase + 0x3c4, 0x22, new->sr22);
+	wrinx(isaIOBase + 0x3c4, 0x23, new->sr23);
+	wrinx(isaIOBase + 0x3c4, 0x24, new->sr24);
+	wrinx(isaIOBase + 0x3c4, 0x25, new->sr25);
+	wrinx(isaIOBase + 0x3c4, 0x26, new->sr26);
+	wrinx(isaIOBase + 0x3c4, 0x27, new->sr27);
+	wrinx(isaIOBase + 0x3c4, 0x29, new->sr29);
+	wrinx(isaIOBase + 0x3c4, 0x2a, new->sr2a);
 #endif
 
 	if ((pARK->Chipset == PCI_CHIP_2000PV) ||
 	    (pARK->Chipset == PCI_CHIP_2000MT)) {
-		wrinx(0x3c4, 0x28, new->sr28);
-		wrinx(0x3c4, 0x2B, new->sr2b);
+		wrinx(isaIOBase + 0x3c4, 0x28, new->sr28);
+		wrinx(isaIOBase + 0x3c4, 0x2B, new->sr2b);
 	}
 
 	wrinx(vgaIOBase + 4, 0x40, new->cr40);
@@ -994,7 +996,7 @@ static void ARKWriteMode(ScrnInfoPtr pScrn, vgaRegPtr pVga, ARKRegPtr new)
 
 	/* RAMDAC regs */
 	if (pARK->ramdac == ZOOMDAC) {
-		set_daccom(new->dac_command);
+		set_daccom(isaIOBase, new->dac_command);
 	}
 
 	if (xf86IsPrimaryPci(pARK->PciInfo))
@@ -1003,7 +1005,6 @@ static void ARKWriteMode(ScrnInfoPtr pScrn, vgaRegPtr pVga, ARKRegPtr new)
 		vgaHWRestore(pScrn, pVga, VGA_SR_MODE);
 
 	vgaHWProtect(pScrn, FALSE);
-
 }
 
 
@@ -1033,8 +1034,6 @@ static void ARKLeaveVT(int scrnIndex, int flags)
 	vgaHWUnlock(hwp);
 	vgaHWRestore(pScrn, &hwp->SavedReg, VGA_SR_MODE | VGA_SR_FONTS);
 	vgaHWLock(hwp);
-
-	return;
 }
 
 
@@ -1046,8 +1045,8 @@ static Bool ARKMapMem(ScrnInfoPtr pScrn)
 	/* extended to cover MMIO space at 0xB8000 */
 	hwp->MapSize = 0x20000;
 
-	pARK->MMIOBase = xf86MapVidMem(pScrn->scrnIndex, VIDMEM_MMIO,
-				       0xb8000, 0x8000);
+	pARK->MMIOBase = xf86MapDomainMemory(pScrn->scrnIndex, VIDMEM_MMIO,
+					     pARK->PciTag, 0xb8000, 0x8000);
 
 	pARK->FBBase = xf86MapPciMem(pScrn->scrnIndex, VIDMEM_FRAMEBUFFER,
 				     pARK->PciTag, pARK->FBAddress,
@@ -1071,8 +1070,6 @@ static void ARKUnmapMem(ScrnInfoPtr pScrn)
 
 	xf86UnMapVidMem(pScrn->scrnIndex, (pointer)pARK->FBBase,
 			pScrn->videoRam * 1024);
-
-	return;
 }
 
 
@@ -1114,14 +1111,15 @@ static void ARKLoadPalette(ScrnInfoPtr pScrn, int numColors,
 			   int *indicies, LOCO *colors,
 			   VisualPtr pVisual)
 {
+	IOADDRESS isaIOBase = pScrn->domainIOBase;
 	int i, index;
 
 	for (i=0; i<numColors; i++) {
 		index = indicies[i];
-		outb(0x3c8, index);
-		outb(0x3c9, colors[index].red);
-		outb(0x3c9, colors[index].green);
-		outb(0x3c9, colors[index].blue);
+		outb(isaIOBase + 0x3c8, index);
+		outb(isaIOBase + 0x3c9, colors[index].red);
+		outb(isaIOBase + 0x3c9, colors[index].green);
+		outb(isaIOBase + 0x3c9, colors[index].blue);
 	}
 }
 
@@ -1136,39 +1134,39 @@ static void ARKFreeScreen(int scrnIndex, int flags)
 }
 
 
-static unsigned char get_daccomm(void)
+static unsigned char get_daccomm(IOADDRESS isaIOBase)
 {
 	unsigned char tmp;
 
-	outb(0x3c8, 0);
-	inb(0x3c6);
-	inb(0x3c6);
-	inb(0x3c6);
-	inb(0x3c6);
-	tmp = inb(0x3c6);
-	outb(0x3c8, 0);
+	outb(isaIOBase + 0x3c8, 0);
+	inb(isaIOBase + 0x3c6);
+	inb(isaIOBase + 0x3c6);
+	inb(isaIOBase + 0x3c6);
+	inb(isaIOBase + 0x3c6);
+	tmp = inb(isaIOBase + 0x3c6);
+	outb(isaIOBase + 0x3c8, 0);
 
 	return tmp;
 }
 
 
-static unsigned char set_daccom(unsigned char comm)
+static unsigned char set_daccom(IOADDRESS isaIOBase, unsigned char comm)
 {
 #if 0
-	outb(0x3c8, 0);
+	outb(isaIOBase + 0x3c8, 0);
 #else
-	inb(0x3c8);
+	inb(isaIOBase + 0x3c8);
 #endif
-	inb(0x3c6);
-	inb(0x3c6);
-	inb(0x3c6);
-	inb(0x3c6);
-	outb(0x3c6, comm);
+	inb(isaIOBase + 0x3c6);
+	inb(isaIOBase + 0x3c6);
+	inb(isaIOBase + 0x3c6);
+	inb(isaIOBase + 0x3c6);
+	outb(isaIOBase + 0x3c6, comm);
 #if 0
-	outb(0x3c8, 0);
+	outb(isaIOBase + 0x3c8, 0);
 #else
-	inb(0x3c8);
+	inb(isaIOBase + 0x3c8);
 #endif
 
-	return inb(0x3c6);
+	return inb(isaIOBase + 0x3c6);
 }

@@ -26,7 +26,7 @@
  *
  * Author: Paulo César Pereira de Andrade <pcpa@conectiva.com.br>
  *
- * $XFree86: xc/programs/Xserver/hw/xfree86/xf86cfg/interface.c,v 1.33 2001/11/30 12:12:04 eich Exp $
+ * $XFree86: xc/programs/Xserver/hw/xfree86/xf86cfg/interface.c,v 1.37 2002/10/21 04:18:36 paulo Exp $
  */
 
 #include <X11/IntrinsicP.h>
@@ -298,9 +298,12 @@ main(int argc, char *argv[])
     
     startedx = startx();
     if (XF86Config_path == NULL)
-	XF86Config_path = "XF86Config-4";
-    if (XkbConfig_path == NULL)
-	XkbConfig_path = XkbConfigDir XkbConfigFile;
+	XF86Config_path = XtNewString("XF86Config-4");
+    if (XkbConfig_path == NULL) {
+	XmuSnprintf(XkbConfig_path_static, sizeof(XkbConfig_path_static),
+		    "%s/%s%s", XFree86Dir, XkbConfigDir, XkbConfigFile);
+	XkbConfig_path = XkbConfig_path_static;
+    }
     toplevel = XtAppInitialize(&appcon, "XF86Cfg",
 		    	       NULL, 0,
 			       &argc, argv,
@@ -501,7 +504,7 @@ main(int argc, char *argv[])
 		char path[PATH_MAX];
 
 		XmuSnprintf(path, sizeof(path), "%s/bin/twm", XFree86Dir);
-		execl(path, "twm", NULL);
+		execl(path, "twm", (void *)NULL);
 		exit(-127);
 	    }	break;
 	    case -1:
@@ -597,7 +600,7 @@ AskConfig(void)
 	XSetWMProtocols(DPY, XtWindow(shell_cf), &wm_delete_window, 1);
 	XtSetArg(args[0], XtNlabel, &l);
 	XtGetValues(dialog, args, 1);
-	label = XtMalloc(len = (strlen(l) + strlen(XF86CONFIG) + 1));
+	label = XtMalloc(len = (strlen(l) + strlen(XF86CONFIG) + 2));
 	XmuSnprintf(label, len, "%s\n", XF86CONFIG);
 	strcat(label, l);
 	XtSetArg(args[0], XtNlabel, label);

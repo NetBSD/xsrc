@@ -24,7 +24,7 @@ OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
 THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ********************************************************/
-/* $XFree86: xc/include/extensions/XKBsrv.h,v 3.21 2001/08/23 14:46:27 alanh Exp $ */
+/* $XFree86: xc/include/extensions/XKBsrv.h,v 3.22 2002/11/20 04:49:01 dawes Exp $ */
 
 #ifndef _XKBSRV_H_
 #define	_XKBSRV_H_
@@ -1060,6 +1060,14 @@ extern int XkbDDXTerminateServer(
 );
 
 extern int XkbDDXSwitchScreen(
+#if NeedFunctionPrototypes
+	DeviceIntPtr	/* dev */,
+	KeyCode		/* key */,
+	XkbAction *	/* act */
+#endif
+);
+
+extern int XkbDDXPrivate(
 #if NeedFunctionPrototypes
 	DeviceIntPtr	/* dev */,
 	KeyCode		/* key */,

@@ -26,7 +26,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/xdm/greeter/greet.c,v 3.15 2001/12/14 20:01:29 dawes Exp $ */
+/* $XFree86: xc/programs/xdm/greeter/greet.c,v 3.16 2002/10/06 20:42:16 herrb Exp $ */
 
 /*
  * xdm - display manager daemon
@@ -147,7 +147,7 @@ GreetDone (
     case NOTIFY_OK:
 	strcpy (name, data->name);
 	strcpy (password, data->passwd);
-	bzero (data->passwd, NAME_LEN);
+	bzero (data->passwd, PASSWORD_LEN);
 	code = 0;
 	done = 1;
 	break;

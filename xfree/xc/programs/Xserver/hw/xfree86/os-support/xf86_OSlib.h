@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/xf86_OSlib.h,v 3.89 2001/12/24 23:21:25 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/xf86_OSlib.h,v 3.90 2002/05/31 18:46:00 dawes Exp $ */
 /*
  * Copyright 1990, 1991 by Thomas Roell, Dinkelscherben, Germany
  * Copyright 1992 by David Dawes <dawes@XFree86.org>
@@ -551,8 +551,8 @@ extern int errno;
 /**************************************************************************/
 /* OS/2                                                                   */
 /**************************************************************************/
-/* currently OS/2 with EMX/GCC compiler only */
-#if defined(__EMX__)
+/* currently OS/2 with a modified EMX/GCC compiler only */
+#if defined(__UNIXOS2__) 
 # include <signal.h>
 # include <errno.h>
 # include <sys/stat.h>

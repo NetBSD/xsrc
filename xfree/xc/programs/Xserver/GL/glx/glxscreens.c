@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/GL/glx/glxscreens.c,v 1.8 2001/10/31 22:50:27 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/GL/glx/glxscreens.c,v 1.10 2002/04/04 14:05:36 eich Exp $ */
 /*
 ** License Applicability. Except to the extent portions of this file are
 ** made subject to an alternative license as permitted in the SGI Free
@@ -47,12 +47,22 @@
 #include "glxutil.h"
 
 static char GLServerExtensions[] = 
-			"GL_ARB_multitexture "
 			"GL_ARB_imaging "
+			"GL_ARB_multitexture "
+			"GL_ARB_texture_border_clamp "
+			"GL_ARB_texture_cube_map "
+			"GL_ARB_texture_env_add "
+			"GL_ARB_texture_env_combine "
+			"GL_ARB_texture_env_dot3 "
+			"GL_ARB_transpose_matrix "
 			"GL_EXT_abgr "
 			"GL_EXT_blend_color "
 			"GL_EXT_blend_minmax "
 			"GL_EXT_blend_subtract "
+			"GL_EXT_texture_env_add "
+			"GL_EXT_texture_env_combine "
+			"GL_EXT_texture_env_dot3 "
+			"GL_EXT_texture_lod_bias "
 			;
 
 /*
@@ -309,6 +319,7 @@ void __glXScreenReset(void)
       __glXFree(__glXActiveScreens[i].GLXvendor);
       __glXFree(__glXActiveScreens[i].GLXversion);
       __glXFree(__glXActiveScreens[i].GLXextensions);
+      __glXFree(__glXActiveScreens[i].GLextensions);
   }
   xfree(__glXActiveScreens);
   __glXActiveScreens = NULL;

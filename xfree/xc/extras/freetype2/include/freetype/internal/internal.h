@@ -4,7 +4,7 @@
 /*                                                                         */
 /*    Internal header files (specification only).                          */
 /*                                                                         */
-/*  Copyright 1996-2001 by                                                 */
+/*  Copyright 1996-2001, 2002 by                                           */
 /*  David Turner, Robert Wilhelm, and Werner Lemberg.                      */
 /*                                                                         */
 /*  This file is part of the FreeType project, and may only be used,       */
@@ -14,7 +14,7 @@
 /*  understand and accept it fully.                                        */
 /*                                                                         */
 /***************************************************************************/
-/* $XFree86: xc/extras/freetype2/include/freetype/internal/internal.h,v 1.7 2002/01/14 17:00:59 keithp Exp $ */
+/* $XFree86: xc/extras/freetype2/include/freetype/internal/internal.h,v 1.8 2002/06/20 08:25:27 keithp Exp $ */
 
   /*************************************************************************/
   /*                                                                       */
@@ -32,13 +32,17 @@
 #define FT_INTERNAL_CALC_H                <freetype/internal/ftcalc.h>
 #define FT_INTERNAL_DRIVER_H              <freetype/internal/ftdriver.h>
 #define FT_INTERNAL_EXTEND_H              <freetype/internal/ftextend.h>
-
+#define FT_INTERNAL_TRACE_H               <freetype/internal/fttrace.h>
+#define FT_INTERNAL_GLYPH_LOADER_H        <freetype/internal/ftgloadr.h>
 #define FT_INTERNAL_SFNT_H                <freetype/internal/sfnt.h>
 
 #define FT_INTERNAL_TRUETYPE_TYPES_H      <freetype/internal/tttypes.h>
 #define FT_INTERNAL_TYPE1_TYPES_H         <freetype/internal/t1types.h>
+#define FT_INTERNAL_TYPE42_TYPES_H        <freetype/internal/t42types.h>
 #define FT_INTERNAL_CFF_TYPES_H           <freetype/internal/cfftypes.h>
 #define FT_INTERNAL_FNT_TYPES_H           <freetype/internal/fnttypes.h>
+#define FT_INTERNAL_BDF_TYPES_H           <freetype/internal/bdftypes.h>
+#define FT_INTERNAL_PCF_TYPES_H           <freetype/internal/pcftypes.h>
 
 #define FT_INTERNAL_POSTSCRIPT_NAMES_H    <freetype/internal/psnames.h>
 #define FT_INTERNAL_POSTSCRIPT_AUX_H      <freetype/internal/psaux.h>

@@ -24,7 +24,7 @@
  THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
  ********************************************************/
-/* $XFree86: xc/programs/xkbcomp/xkbcomp.h,v 3.8 2001/12/19 21:30:30 dawes Exp $ */
+/* $XFree86: xc/programs/xkbcomp/xkbcomp.h,v 3.9 2002/06/05 00:00:38 dawes Exp $ */
 
 #ifndef XKBCOMP_H
 #define	XKBCOMP_H 1
@@ -120,6 +120,7 @@ typedef struct _IncludeStmt {
     char 		*stmt;
     char		*file;
     char		*map;
+    char		*modifier;
     char		*path;
     struct _IncludeStmt	*next;
 } IncludeStmt;
@@ -310,60 +311,44 @@ typedef struct _XkbFile {
     Bool	 compiled;
 } XkbFile;
 
-_XFUNCPROTOBEGIN
-
 extern	Bool	CompileKeymap(
-#if NeedFunctionPrototypes
     XkbFile	*	/* file */,
     XkbFileInfo *	/* result */,
     unsigned	 	/* merge */
-#endif
 );
 
 extern	Bool	CompileKeycodes(
-#if NeedFunctionPrototypes
     XkbFile	*	/* file */,
     XkbFileInfo *	/* result */,
     unsigned	 	/* merge */
-#endif
 );
 
 extern	Bool	CompileGeometry(
-#if NeedFunctionPrototypes
     XkbFile	*	/* file */,
     XkbFileInfo *	/* result */,
     unsigned	 	/* merge */
-#endif
 );
 
 extern	Bool	CompileKeyTypes(
-#if NeedFunctionPrototypes
     XkbFile	*	/* file */,
     XkbFileInfo *	/* result */,
     unsigned	 	/* merge */
-#endif
 );
 
 typedef struct _LEDInfo *LEDInfoPtr;
 
 extern	Bool	CompileCompatMap(
-#if NeedFunctionPrototypes
     XkbFile	*	/* file */,
     XkbFileInfo *	/* result */,
     unsigned	 	/* merge */,
     LEDInfoPtr *	/* unboundLEDs */
-#endif
 );
 
 extern	Bool	CompileSymbols(
-#if NeedFunctionPrototypes
     XkbFile	*	/* file */,
     XkbFileInfo *	/* result */,
     unsigned	 	/* merge */
-#endif
 );
-
-_XFUNCPROTOEND
 
 #define	WantLongListing	(1<<0)
 #define	WantPartialMaps	(1<<1)
@@ -375,33 +360,21 @@ extern char *	rootDir;
 extern unsigned verboseLevel;
 extern unsigned	dirsToStrip;
 
-_XFUNCPROTOBEGIN
-
 extern	Bool	AddListing(
-#if NeedFunctionPrototypes
     char *	/* file */,
     char *	/* map */
-#endif
 );
 
 extern Bool AddMatchingFiles(
-#if NeedFunctionPrototypes
     char *	/* head_in */
-#endif
 );
 
 extern	int AddMapOnly(
-#if NeedFunctionPrototypes
     char *	/* map */
-#endif
 );
 
 extern	int GenerateListing(
-#if NeedFunctionPrototypes
     char *	/* filename */
-#endif
 );
-
-_XFUNCPROTOEND
 
 #endif /* XKBCOMP_H */

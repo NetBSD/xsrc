@@ -3,7 +3,7 @@ XCOMM $XConsortium: Imakefile /main/12 1996/12/16 12:31:46 rws $
 
 
 
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/Imakefile,v 3.79 2001/10/29 16:51:55 tsi Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/Imakefile,v 3.82 2003/02/17 17:06:40 dawes Exp $
 
 #include <Server.tmpl>
 #define IHaveSubdirs
@@ -67,6 +67,10 @@ RACDIR = rac
 INT10DIR = int10
 #endif
 
+#if XF86VBE
+VBEDIR = vbe
+#endif
+
 #if BuildXF86Setup
 XF86SETUPDIR = XF86Setup
 #endif
@@ -75,7 +79,7 @@ XF86SETUPDIR = XF86Setup
 LOADERDIR = loader
 #endif
 
-#if BuildXInputExt
+#if BuildXInputExt && defined(XInputDrivers)
 INPUTDIR = input
 #endif
 
@@ -87,10 +91,10 @@ DRIVERSDK = sdk
 XF86CFGDIRS = xf86cfg xf86config
 #endif
 
-SUBDIRS = os-support common $(XAADIR) $(XF1BPPDIR) $(XF4BPPDIR) \
+SUBDIRS = os-support common $(I2CDIR) $(XAADIR) $(XF1BPPDIR) $(XF4BPPDIR) \
           $(XF8_32BPPDIR) $(XF8_16BPPDIR) $(XF24_32BPPDIR) $(SHADOWFBDIR) \
 	  drivers $(LOADERDIR) $(VGAHWDIR) $(FBDEVHWDIR) $(RAMDACDIR) \
-	  $(RACDIR) $(I2CDIR) $(DDCDIR) $(INPUTDIR) $(INT10DIR) parser \
+	  $(RACDIR) $(DDCDIR) $(INPUTDIR) $(INT10DIR) $(VBEDIR) parser \
           scanpci doc dummylib $(XF86CFGDIRS) $(XF86SETUPDIR) etc \
           $(DRIVERSDK) $(XF8_32WIDDIR)
 

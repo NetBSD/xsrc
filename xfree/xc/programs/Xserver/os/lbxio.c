@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/os/lbxio.c,v 3.16 2001/12/14 20:00:34 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/os/lbxio.c,v 3.17 2002/05/31 18:46:06 dawes Exp $ */
 /*
 
 Copyright 1996, 1998  The Open Group
@@ -55,7 +55,7 @@ SOFTWARE.
 #include <errno.h>
 #ifndef Lynx
 #include <sys/param.h>
-#ifndef __EMX__
+#ifndef __UNIXOS2__
 #include <sys/uio.h>
 #endif
 #else

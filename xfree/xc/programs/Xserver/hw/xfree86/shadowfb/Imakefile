@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/shadowfb/Imakefile,v 1.3 1999/08/14 10:50:09 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/shadowfb/Imakefile,v 1.4 2002/10/16 22:12:54 alanh Exp $
 
 #define IHaveModules
 #include <Server.tmpl>
@@ -15,7 +15,8 @@ SRCS = 	shadow.c $(XFMODSRC)
 OBJS = 	shadow.o $(XFMODOBJ)
 
 INCLUDES = -I. -I$(SERVERSRC)/mi -I$(SERVERSRC)/include \
-	   -I$(XF86OSSRC) -I$(XF86COMSRC) -I$(XINCLUDESRC) -I$(FONTINCSRC)
+	   -I$(XF86OSSRC) -I$(XF86COMSRC) -I$(XINCLUDESRC) -I$(FONTINCSRC) \
+           -I../../../render -I$(EXTINCSRC)
 
 
 ModuleObjectRule()

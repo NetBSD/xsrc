@@ -22,9 +22,9 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  *
  * Authors:
- *    Keith Whitwell <keithw@valinux.com>
+ *    Keith Whitwell <keith@tungstengraphics.com>
  */
-/* $XFree86: xc/lib/GL/mesa/src/drv/mga/mgatexmem.c,v 1.4 2001/04/10 16:07:51 dawes Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/mga/mgatexmem.c,v 1.7 2002/10/30 12:51:36 alanh Exp $ */
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -254,8 +254,18 @@ void mgaAgeTextures( mgaContextPtr mmesa, int heap )
 	idx != MGA_NR_TEX_REGIONS && nr < MGA_NR_TEX_REGIONS ;
 	idx = sarea->texList[heap][idx].prev, nr++)
    {
+      /* If switching texturing schemes, then the SAREA might not
+       * have been properly cleared, so we need to reset the
+       * global texture LRU.
+       */
+      if ( idx * sz > mmesa->mgaScreen->textureSize[heap] ) {
+         nr = MGA_NR_TEX_REGIONS;
+         break;
+      }
+
       if (sarea->texList[heap][idx].age > mmesa->texAge[heap]) {
-	 mgaTexturesGone(mmesa, heap, idx * sz, sz, 1);
+        mgaTexturesGone(mmesa, heap, idx * sz, sz,
+                        sarea->texList[heap][idx].in_use);
       }
    }
 
@@ -377,7 +387,8 @@ void mgaUploadSubImageLocked( mgaContextPtr mmesa,
 
    /* Fill in the secondary buffer with properly converted texels
     * from the mesa buffer. */
-   if(t->heap == MGA_CARD_HEAP) {
+   /* FIXME: the sync for direct copy reduces speed.. */
+   if(t->heap == MGA_CARD_HEAP  ) {
       mgaGetILoadBufferLocked( mmesa );
       mgaConvertTexture( (GLuint *)mmesa->iload_buffer->address,
 			 texelBytes, image, x, y, width, height );
@@ -400,6 +411,8 @@ void mgaUploadSubImageLocked( mgaContextPtr mmesa,
       /* This works, is slower for uploads to card space and needs
        * additional synchronization with the dma stream.
        */
+       
+      UPDATE_LOCK(mmesa, DRM_LOCK_FLUSH | DRM_LOCK_QUIESCENT);
       mgaConvertTexture( (GLuint *)
 			 (mmesa->mgaScreen->texVirtual[t->heap] +
 			  offset +
@@ -434,7 +447,43 @@ static void mgaMigrateTexture( mgaContextPtr mmesa, mgaTextureObjectPtr t )
 
 static int mgaChooseTexHeap( mgaContextPtr mmesa, mgaTextureObjectPtr t )
 {
-	return 0;
+   int freeagp, freecard;
+   int fitincard, fitinagp;
+   int totalcard, totalagp;
+   TMemBlock *b;
+
+   totalcard = totalagp = fitincard = fitinagp = freeagp = freecard = 0;
+
+   b = mmesa->texHeap[0];
+   while(b)
+   {
+     totalcard += b->size;
+     if(b->free) if(t->totalSize <= b->size)fitincard = 1;
+     b = b->next;
+   }
+
+   b = mmesa->texHeap[1];
+   while(b)
+   {
+     totalagp += b->size;
+     if(b->free)  if(t->totalSize <= b->size)fitinagp = 1;
+     b = b->next;
+   }
+
+   if(fitincard)return 0;
+   if(fitinagp)return 1;
+
+   if(totalcard && totalagp)
+   {
+     int ages;
+     int ratio = (totalcard > totalagp) ? totalcard / totalagp : totalagp / totalcard;
+     ages = mmesa->sarea->texAge[0] + mmesa->sarea->texAge[1];
+     if( (ages % ratio) == 0)return totalcard > totalagp ? 1 : 0;
+     else return totalcard > totalagp ? 0 : 1;
+   }
+
+   if(totalagp) return 1;
+   return 0;
 }
 
 

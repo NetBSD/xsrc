@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/twm/parse.c,v 1.12 2001/12/14 20:01:09 dawes Exp $ */
+/* $XFree86: xc/programs/twm/parse.c,v 1.16 2002/12/10 22:29:55 tsi Exp $ */
 /*****************************************************************************/
 /*
 
@@ -325,6 +325,7 @@ void twmUnput (c)
 
 void
 TwmOutput(c)
+    int c;
 {
     putchar(c);
 }
@@ -1144,8 +1145,8 @@ do_squeeze_entry (list, name, justify, num, denom)
 
 	if (!sinfo) {
 	    twmrc_error_prefix();
-	    fprintf (stderr, "unable to allocate %d bytes for squeeze info\n",
-		     sizeof(SqueezeInfo));
+	    fprintf (stderr, "unable to allocate %ld bytes for squeeze info\n",
+		     (unsigned long)sizeof(SqueezeInfo));
 	    return;
 	}
 	sinfo->justify = justify;

@@ -22,7 +22,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Xinput.c,v 3.66 2001/08/17 13:27:54 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Xinput.c,v 3.68 2002/10/11 01:40:31 dawes Exp $ */
 
 #include "Xfuncproto.h"
 #include "Xmd.h"
@@ -1306,6 +1306,28 @@ xf86PostKeyEvent(DeviceIntPtr	device,
     va_end(var);
 }
 
+void
+xf86PostKeyboardEvent(DeviceIntPtr      device,
+                      unsigned int      key_code,
+                      int               is_down)
+{
+    xEvent                      xE[2];
+    deviceKeyButtonPointer      *xev = (deviceKeyButtonPointer*) xE;
+
+    if (xf86IsCoreKeyboard(device)) {
+        xev->type = is_down ? KeyPress : KeyRelease;
+    } else {
+        xev->type = is_down ? DeviceKeyPress : DeviceKeyRelease;
+    }
+    xev->detail = key_code;
+    xf86Info.lastEventTime = xev->time = GetTimeInMillis();
+
+#ifdef XFreeXDGA
+    /* if(!DGAStealKeyEvent(xf86EventQueue.pEnqueueScreen->myNum, xE)) */
+#endif
+    ENQUEUE(xE);
+}
+
 /* 
  * Motion history management.
  */
@@ -1317,7 +1339,7 @@ xf86MotionHistoryAllocate(LocalDevicePtr	local)
     
     if (!HAS_MOTION_HISTORY(local))
 	return;
-    
+    if (local->motion_history) xfree(local->motion_history);
     local->motion_history = xalloc((sizeof(INT32) * valuator->numAxes + sizeof(Time))
 				   * valuator->numMotionEvents);
     local->first = 0;

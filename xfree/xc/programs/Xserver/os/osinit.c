@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/os/osinit.c,v 3.25 2001/12/14 20:00:35 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/os/osinit.c,v 3.27 2002/06/17 08:04:18 alanh Exp $ */
 /***********************************************************
 
 Copyright 1987, 1998  The Open Group
@@ -110,7 +110,7 @@ OsInit()
 #ifdef XFree86LOADER
 	xf86WrapperInit();
 #endif
-#if !defined(SCO)
+#if !defined(SCO) && !defined(__CYGWIN__)
 	fclose(stdin);
 	fclose(stdout);
 #endif
@@ -138,7 +138,7 @@ OsInit()
 		dup2 (fileno (err), 2);
 		fclose (err);
 	    }
-#if defined(SYSV) || defined(SVR4) || defined(__EMX__) || defined(WIN32) || defined(__CYGWIN__)
+#if defined(SYSV) || defined(SVR4) || defined(__UNIXOS2__) || defined(WIN32) || defined(__CYGWIN__)
 	    {
 	    static char buf[BUFSIZ];
 	    setvbuf (stderr, buf, _IOLBF, BUFSIZ);

@@ -46,7 +46,7 @@ in this Software without prior written authorization from The Open Group.
  * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
  * THIS SOFTWARE.
  */
-/* $XFree86: xc/programs/xfs/difs/fontinfo.c,v 1.10 2001/12/14 20:01:34 dawes Exp $ */
+/* $XFree86: xc/programs/xfs/difs/fontinfo.c,v 1.11 2002/10/15 01:45:02 dawes Exp $ */
 
 #include        "FS.h"
 #include        "FSproto.h"
@@ -61,24 +61,6 @@ in this Software without prior written authorization from The Open Group.
 #include	"dispatch.h"
 #include	<swapreq.h>
 #include	<swaprep.h>
-
-extern int
-QueryBitmaps(
-    ClientPtr   client,
-    ClientFontPtr cfp,
-    int         item_size,
-    fsBitmapFormat format,
-    int         nranges,
-    Bool        range_flag,
-    pointer     range_data);
-extern int
-QueryExtents(
-    ClientPtr   client,
-    ClientFontPtr cfp,
-    int         item_size,
-    int         nranges,
-    Bool        range_flag,
-    pointer     range_data);
 
 void
 CopyCharInfo(

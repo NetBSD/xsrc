@@ -30,7 +30,7 @@
  * used in advertising or publicity pertaining to distribution of the software
  * without specific, written prior permission.
  */
-/* $XFree86: xc/programs/xrdb/xrdb.c,v 3.15 2001/11/06 16:11:37 alanh Exp $ */
+/* $XFree86: xc/programs/xrdb/xrdb.c,v 3.16 2002/05/31 18:46:14 dawes Exp $ */
 
 /*
  * this program is used to load, or dump the resource manager database
@@ -55,12 +55,12 @@
 #define SCREEN_RESOURCES "SCREEN_RESOURCES"
 
 #ifndef CPP
-#ifdef __EMX__
+#ifdef __UNIXOS2__
 /* expected to be in path */
 #define CPP "cpp"
 #else
 #define CPP "/usr/lib/cpp"
-#endif /* __EMX__ */
+#endif /* __UNIXOS2__ */
 #endif /* CPP */
 
 #define INIT_BUFFER_SIZE 10000
@@ -887,10 +887,10 @@ main(int argc, char *argv[])
 	strcpy(tmpname2, "xrdbD_XXXXXX");
 	strcpy(tmpname3, "\\temp\\xrdbD_XXXXXX");
 #else
-#ifdef __EMX__
+#ifdef __UNIXOS2__
 	{ char *tmpdir=getenv("TMP");
-	  if (!tmpdir) tmpdir="\\";
-	  sprintf(tmpname2, "%s\\xrdbD_XXXXXX",tmpdir);
+	  if (!tmpdir) tmpdir="/";
+	  sprintf(tmpname2, "%s/xrdbD_XXXXXX",tmpdir);
 	}
 #else
 	strcpy(tmpname2, "/tmp/xrdbD_XXXXXX");
@@ -912,10 +912,10 @@ main(int argc, char *argv[])
 #ifdef WIN32
 	strcpy(tmpname, "\\temp\\xrdb_XXXXXX");
 #else
-#ifdef __EMX__
+#ifdef __UNIXOS2__
 	{ char *tmpdir=getenv("TMP");
-	  if (!tmpdir) tmpdir="\\";
-	  sprintf(tmpname, "%s\\xrdb_XXXXXX",tmpdir);
+	  if (!tmpdir) tmpdir="/";
+	  sprintf(tmpname, "%s/xrdb_XXXXXX",tmpdir);
 	}
 #else
 	strcpy(tmpname, "/tmp/xrdb_XXXXXX");

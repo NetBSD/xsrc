@@ -28,7 +28,7 @@ in this Software without prior written authorization from The Open Group.
  * Modified into "iceauth"    : Ralph Mor, X Consortium
  */
 
-/* $XFree86: xc/programs/iceauth/process.c,v 3.7 2001/12/14 20:00:49 dawes Exp $ */
+/* $XFree86: xc/programs/iceauth/process.c,v 3.8 2002/05/31 18:46:07 dawes Exp $ */
 
 #include "iceauth.h"
 #include <ctype.h>
@@ -715,7 +715,7 @@ int auth_finalize ()
 			 ProgramName, temp_name);
 	    } else {
 		(void) unlink (iceauth_filename);
-#if defined(WIN32) || defined(__EMX__)
+#if defined(WIN32) || defined(__UNIXOS2__)
 		if (rename(temp_name, iceauth_filename) == -1)
 #else
 		if (link (temp_name, iceauth_filename) == -1)

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/radeon_probe.h,v 1.6 2001/07/25 08:04:43 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/radeon_probe.h,v 1.8 2002/04/24 16:20:40 martin Exp $ */
 /*
  * Copyright 2000 ATI Technologies Inc., Markham, Ontario, and
  *                VA Linux Systems Inc., Fremont, California.
@@ -29,7 +29,7 @@
 
 /*
  * Authors:
- *   Kevin E. Martin <martin@valinux.com>
+ *   Kevin E. Martin <martin@xfree86.org>
  *
  * Modified by Marc Aurele La France <tsi@xfree86.org> for ATI driver merge.
  */
@@ -47,45 +47,50 @@ typedef struct
 
     Bool HasSecondary;
     Bool BypassSecondary;
-    /*These two registers are used to make sure the CRTC2 is
-      retored before CRTC_EXT, otherwise it could lead to blank screen.*/
+
+    /*
+     * The next two are used to make sure CRTC2 is restored before CRTC_EXT,
+     * otherwise it could lead to blank screens.
+     */
     Bool IsSecondaryRestored;
     Bool RestorePrimary;
 
-    ScrnInfoPtr pSecondaryScrn;    
+    ScrnInfoPtr pSecondaryScrn;
     ScrnInfoPtr pPrimaryScrn;
-}RADEONEntRec, *RADEONEntPtr;
+} RADEONEntRec, *RADEONEntPtr;
 
 /* radeon_probe.c */
-extern const OptionInfoRec * RADEONAvailableOptions
-			     FunctionPrototype((int, int));
-extern void                  RADEONIdentify
-			     FunctionPrototype((int));
-extern Bool                  RADEONProbe
-			     FunctionPrototype((DriverPtr, int));
+extern const OptionInfoRec *RADEONAvailableOptions
+			    FunctionPrototype((int, int));
+extern void                 RADEONIdentify
+			    FunctionPrototype((int));
+extern Bool                 RADEONProbe
+			    FunctionPrototype((DriverPtr, int));
 
-extern SymTabRec             RADEONChipsets[];
-extern PciChipsets           RADEONPciChipsets[];
+extern SymTabRec            RADEONChipsets[];
+extern PciChipsets          RADEONPciChipsets[];
 
 /* radeon_driver.c */
-extern Bool                  RADEONPreInit
-			     FunctionPrototype((ScrnInfoPtr, int));
-extern Bool                  RADEONScreenInit
-			     FunctionPrototype((int, ScreenPtr, int, char **));
-extern Bool                  RADEONSwitchMode
-			     FunctionPrototype((int, DisplayModePtr, int));
-extern void                  RADEONAdjustFrame
-			     FunctionPrototype((int, int, int, int));
-extern Bool                  RADEONEnterVT
-			     FunctionPrototype((int, int));
-extern void                  RADEONLeaveVT
-			     FunctionPrototype((int, int));
-extern void                  RADEONFreeScreen
-			     FunctionPrototype((int, int));
-extern int                   RADEONValidMode
-			     FunctionPrototype((int, DisplayModePtr, Bool,
-						int));
+extern void                 RADEONLoaderRefSymLists
+			    FunctionPrototype((void));
+extern Bool                 RADEONPreInit
+			    FunctionPrototype((ScrnInfoPtr, int));
+extern Bool                 RADEONScreenInit
+			    FunctionPrototype((int, ScreenPtr, int, char **));
+extern Bool                 RADEONSwitchMode
+			    FunctionPrototype((int, DisplayModePtr, int));
+extern void                 RADEONAdjustFrame
+			    FunctionPrototype((int, int, int, int));
+extern Bool                 RADEONEnterVT
+			    FunctionPrototype((int, int));
+extern void                 RADEONLeaveVT
+			    FunctionPrototype((int, int));
+extern void                 RADEONFreeScreen
+			    FunctionPrototype((int, int));
+extern int                  RADEONValidMode
+			    FunctionPrototype((int, DisplayModePtr, Bool,
+					       int));
 
-extern const OptionInfoRec   RADEONOptions[];
+extern const OptionInfoRec  RADEONOptions[];
 
 #endif /* _RADEON_PROBE_H_ */

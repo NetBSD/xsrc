@@ -74,7 +74,7 @@ SOFTWARE.
  * XFree86 Project.
  */
 
-/* $XFree86: xc/lib/Xaw/Text.c,v 3.50 2001/12/17 20:29:18 paulo Exp $ */
+/* $XFree86: xc/lib/Xaw/Text.c,v 3.52 2002/11/03 20:10:25 paulo Exp $ */
 
 #include <stdio.h>
 #include <X11/IntrinsicP.h>
@@ -1372,8 +1372,8 @@ _BuildLineTable(TextWidget ctx, XawTextPosition position, int line)
 	    _XawTextNeedsUpdating(ctx, position,
 				  end <= position ? position + 1 : end);
 	    ctx->text.clear_to_eol = True;
+	    lt->position = position;
 	}
-
 	if (lt->y != y) {
 	    if (update_from < 0)
 		update_from = line == 0 ?
@@ -1382,8 +1382,11 @@ _BuildLineTable(TextWidget ctx, XawTextPosition position, int line)
 	    lt->y = y;
 	    ctx->text.clear_to_eol = True;
 	}
-	lt->position = position;
-	lt->textWidth = width;
+	if (lt->textWidth != width) {
+	    if (lt->textWidth > width)
+		ctx->text.clear_to_eol = True;
+	    lt->textWidth = width;
+	}
 	y += height;
 
 	if (end > ctx->text.lastPos) {
@@ -1425,6 +1428,7 @@ _BuildLineTable(TextWidget ctx, XawTextPosition position, int line)
 		XtRealloc((char *)ctx->text.lt.info,
 			  sizeof(XawTextLineTableEntry) * (line + 1));
 	    lt = ctx->text.lt.info + line;
+	    bzero(lt, sizeof(XawTextLineTableEntry));
 	    ++ctx->text.lt.lines;
 	}
 	else

@@ -24,7 +24,7 @@
  THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
  ********************************************************/
-/* $XFree86: xc/programs/xkbcomp/action.c,v 3.8 2001/01/17 23:45:42 dawes Exp $ */
+/* $XFree86: xc/programs/xkbcomp/action.c,v 3.11 2002/11/22 22:56:04 tsi Exp $ */
 
 #include "xkbcomp.h"
 #include "tokens.h"
@@ -43,13 +43,7 @@ static ExprDef	constFalse;
 /***====================================================================***/
 
 static Bool
-#if NeedFunctionPrototypes
 stringToAction(char *str,unsigned *type_rtrn)
-#else
-stringToAction(str,type_rtrn)
-    char *	str;
-    unsigned *	type_rtrn;
-#endif
 {
     if (str==NULL)
 	return False;
@@ -110,13 +104,7 @@ stringToAction(str,type_rtrn)
 }
 
 static Bool
-#if NeedFunctionPrototypes
 stringToField(char *str,unsigned *field_rtrn)
-#else
-stringToField(str,field_rtrn)
-   char *	str;
-   unsigned *	field_rtrn;
-#endif
 {
 
     if (str==NULL)
@@ -161,12 +149,7 @@ stringToField(str,field_rtrn)
 }
 
 static char *
-#if NeedFunctionPrototypes
 fieldText(unsigned field)
-#else
-fieldText(field)
-   unsigned field;
-#endif
 {
 static char buf[32];
 
@@ -202,14 +185,7 @@ static char buf[32];
 /***====================================================================***/
 
 static Bool
-#if NeedFunctionPrototypes
 ReportMismatch(unsigned action,unsigned field,char *type)
-#else
-ReportMismatch(action,field,type)
-    unsigned		action;
-    unsigned		field;
-    char *		type;
-#endif
 {
     ERROR2("Value of %s field must be of type %s\n",fieldText(field),type);
     ACTION1("Action %s definition ignored\n",
@@ -218,13 +194,7 @@ ReportMismatch(action,field,type)
 }
 
 static Bool
-#if NeedFunctionPrototypes
 ReportIllegal(unsigned action,unsigned field)
-#else
-ReportIllegal(action,field)
-    unsigned		action;
-    unsigned		field;
-#endif
 {
     ERROR2("Field %s is not defined for an action of type %s\n",
 				fieldText(field),
@@ -234,13 +204,7 @@ ReportIllegal(action,field)
 }
 
 static Bool
-#if NeedFunctionPrototypes
 ReportActionNotArray(unsigned action,unsigned field)
-#else
-ReportActionNotArray(action,field)
-    unsigned		action;
-    unsigned		field;
-#endif
 {
     ERROR2("The %s field in the %s action is not an array\n",
 				fieldText(field),
@@ -250,15 +214,7 @@ ReportActionNotArray(action,field)
 }
 
 static Bool
-#if NeedFunctionPrototypes
 ReportNotFound(unsigned action,unsigned field,char *what,char *bad)
-#else
-ReportNotFound(action,field,what,bad)
-    unsigned	action;
-    unsigned	field;
-    char *	what;
-    char *	bad;
-#endif
 {
     ERROR2("%s named %s not found\n",what,bad);
     ACTION2("Ignoring the %s field of an %s action\n",fieldText(field),
@@ -267,37 +223,20 @@ ReportNotFound(action,field,what,bad)
 }
 
 static Bool
-#if NeedFunctionPrototypes
 HandleNoAction(	XkbDescPtr	xkb,
 		XkbAnyAction *	action,
 		unsigned	field,
 		ExprDef *	array_ndx,
 		ExprDef *	value)
-#else
-HandleNoAction(xkb,action,field,array_ndx,value)
-    XkbDescPtr		xkb;
-    XkbAnyAction *	action;
-    unsigned		field;
-    ExprDef *		array_ndx;
-    ExprDef *		value;
-#endif
 {
     return ReportIllegal(action->type,field);
 }
 
 static Bool
-#if NeedFunctionPrototypes
 CheckLatchLockFlags(	unsigned	action,
 			unsigned	field,
 			ExprDef *	value,
 			unsigned *	flags_inout)
-#else
-CheckLatchLockFlags(action,field,value,flags_inout)
-    unsigned	action;
-    unsigned	field;
-    ExprDef *	value;
-    unsigned *	flags_inout;
-#endif
 {
 unsigned	tmp;
 ExprResult	result;
@@ -313,20 +252,11 @@ ExprResult	result;
 }
 
 static Bool
-#if NeedFunctionPrototypes
 CheckModifierField(	XkbDescPtr	xkb,
 			unsigned	action,
 			ExprDef *	value,
 			unsigned *	flags_inout,
 			unsigned *	mods_rtrn)
-#else
-CheckModifierField(xkb,action,value,flags_inout,mods_rtrn)
-    XkbDescPtr		xkb;
-    unsigned		action;
-    ExprDef *		value;
-    unsigned *		flags_inout;
-    unsigned *		mods_rtrn;
-#endif
 {
 ExprResult	rtrn;
 
@@ -349,20 +279,11 @@ ExprResult	rtrn;
 }
 
 static Bool
-#if NeedFunctionPrototypes
 HandleSetLatchMods(	XkbDescPtr	xkb,
 			XkbAnyAction *	action,
 			unsigned	field,
 			ExprDef *	array_ndx,
 			ExprDef *	value)
-#else
-HandleSetLatchMods(xkb,action,field,array_ndx,value)
-    XkbDescPtr		xkb;
-    XkbAnyAction *	action;
-    unsigned		field;
-    ExprDef *		array_ndx;
-    ExprDef *		value;
-#endif
 {
 XkbModAction *	act;
 unsigned	rtrn;
@@ -400,20 +321,11 @@ unsigned	t1,t2;
 }
 
 static Bool
-#if NeedFunctionPrototypes
 HandleLockMods(	XkbDescPtr	xkb,
 		XkbAnyAction *	action,
 		unsigned	field,
 		ExprDef *	array_ndx,
 		ExprDef *	value)
-#else
-HandleLockMods(xkb,action,field,array_ndx,value)
-    XkbDescPtr		xkb;
-    XkbAnyAction *	action;
-    unsigned		field;
-    ExprDef *		array_ndx;
-    ExprDef *		value;
-#endif
 {
 XkbModAction *	act;
 unsigned	t1,t2;
@@ -449,18 +361,10 @@ static LookupEntry groupNames[] = {
 };
 
 static Bool
-#if NeedFunctionPrototypes
 CheckGroupField(	unsigned	action,
 			ExprDef *	value,
 			unsigned *	flags_inout,
 			int *		grp_rtrn)
-#else
-CheckGroupField(action,value,flags_inout,grp_rtrn)
-    unsigned		action;
-    ExprDef *		value;
-    unsigned *		flags_inout;
-    int *		grp_rtrn;
-#endif
 {
 ExprDef *	spec;
 ExprResult 	rtrn;
@@ -490,20 +394,11 @@ ExprResult 	rtrn;
 }
 
 static Bool
-#if NeedFunctionPrototypes
 HandleSetLatchGroup(	XkbDescPtr	xkb,
 			XkbAnyAction *	action,
 			unsigned	field,
 			ExprDef *	array_ndx,
 			ExprDef *	value)
-#else
-HandleSetLatchGroup(xkb,action,field,array_ndx,value)
-    XkbDescPtr		xkb;
-    XkbAnyAction *	action;
-    unsigned		field;
-    ExprDef *		array_ndx;
-    ExprDef *		value;
-#endif
 {
 XkbGroupAction *	act;
 unsigned		rtrn;
@@ -540,20 +435,11 @@ int			t2;
 }
 
 static Bool
-#if NeedFunctionPrototypes
 HandleLockGroup(	XkbDescPtr	xkb,
 			XkbAnyAction *	action,
 			unsigned	field,
 			ExprDef *	array_ndx,
 			ExprDef *	value)
-#else
-HandleLockGroup(xkb,action,field,array_ndx,value)
-    XkbDescPtr		xkb;
-    XkbAnyAction *	action;
-    unsigned		field;
-    ExprDef *		array_ndx;
-    ExprDef *		value;
-#endif
 {
 XkbGroupAction *	act;
 unsigned		t1;
@@ -575,20 +461,11 @@ int			t2;
 }
 
 static Bool
-#if NeedFunctionPrototypes
 HandleMovePtr(	XkbDescPtr 	xkb,
 		XkbAnyAction *	action,
 		unsigned	field,
 		ExprDef *	array_ndx,
 		ExprDef *	value)
-#else
-HandleMovePtr(xkb,action,field,array_ndx,value)
-    XkbDescPtr		xkb;
-    XkbAnyAction *	action;
-    unsigned		field;
-    ExprDef *		array_ndx;
-    ExprDef *		value;
-#endif
 {
 ExprResult	rtrn;
 XkbPtrAction *	act;
@@ -644,20 +521,11 @@ static LookupEntry lockWhich[] = {
 };
 
 static Bool
-#if NeedFunctionPrototypes
 HandlePtrBtn(	XkbDescPtr 	xkb,
 		XkbAnyAction *	action,
 		unsigned	field,
 		ExprDef *	array_ndx,
 		ExprDef *	value)
-#else
-HandlePtrBtn(xkb,action,field,array_ndx,value)
-    XkbDescPtr		xkb;
-    XkbAnyAction *	action;
-    unsigned		field;
-    ExprDef *		array_ndx;
-    ExprDef *		value;
-#endif
 {
 ExprResult		rtrn;
 XkbPtrBtnAction	*	act;
@@ -709,20 +577,11 @@ static LookupEntry ptrDflts[] = {
 };
 
 static Bool
-#if NeedFunctionPrototypes
 HandleSetPtrDflt(	XkbDescPtr 	xkb,
 			XkbAnyAction *	action,
 			unsigned	field,
 			ExprDef *	array_ndx,
 			ExprDef *	value)
-#else
-HandleSetPtrDflt(xkb,action,field,array_ndx,value)
-    XkbDescPtr		xkb;
-    XkbAnyAction *	action;
-    unsigned		field;
-    ExprDef *		array_ndx;
-    ExprDef *		value;
-#endif
 {
 ExprResult		rtrn;
 XkbPtrDfltAction *	act;
@@ -784,20 +643,11 @@ static LookupEntry	isoNames[] = {
 };
 
 static Bool
-#if NeedFunctionPrototypes
 HandleISOLock(	XkbDescPtr 	xkb,
 		XkbAnyAction *	action,
 		unsigned	field,
 		ExprDef *	array_ndx,
 		ExprDef *	value)
-#else
-HandleISOLock(xkb,action,field,array_ndx,value)
-    XkbDescPtr		xkb;
-    XkbAnyAction *	action;
-    unsigned		field;
-    ExprDef *		array_ndx;
-    ExprDef *		value;
-#endif
 {
 ExprResult	rtrn;
 XkbISOAction *	act;
@@ -840,20 +690,11 @@ int		group;
 }
 
 static Bool
-#if NeedFunctionPrototypes
 HandleSwitchScreen(	XkbDescPtr 	xkb,
 			XkbAnyAction *	action,
 			unsigned	field,
 			ExprDef *	array_ndx,
 			ExprDef *	value)
-#else
-HandleSwitchScreen(xkb,action,field,array_ndx,value)
-    XkbDescPtr		xkb;
-    XkbAnyAction *	action;
-    unsigned		field;
-    ExprDef *		array_ndx;
-    ExprDef *		value;
-#endif
 {
 ExprResult		rtrn;
 XkbSwitchScreenAction *	act;
@@ -918,20 +759,11 @@ LookupEntry	ctrlNames[]= {
 };
 
 static Bool
-#if NeedFunctionPrototypes
 HandleSetLockControls(	XkbDescPtr 	xkb,
 			XkbAnyAction *	action,
 			unsigned	field,
 			ExprDef *	array_ndx,
 			ExprDef *	value)
-#else
-HandleSetLockControls(xkb,action,field,array_ndx,value)
-    XkbDescPtr		xkb;
-    XkbAnyAction *	action;
-    unsigned		field;
-    ExprDef *		array_ndx;
-    ExprDef *		value;
-#endif
 {
 ExprResult		rtrn;
 XkbCtrlsAction *	act;
@@ -959,20 +791,11 @@ static LookupEntry evNames[]= {
 };
 
 static Bool
-#if NeedFunctionPrototypes
 HandleActionMessage(	XkbDescPtr 	xkb,
 			XkbAnyAction *	action,
 			unsigned	field,
 			ExprDef *	array_ndx,
 			ExprDef *	value)
-#else
-HandleActionMessage(xkb,action,field,array_ndx,value)
-    XkbDescPtr		xkb;
-    XkbAnyAction *	action;
-    unsigned		field;
-    ExprDef *		array_ndx;
-    ExprDef *		value;
-#endif
 {
 ExprResult		rtrn;
 XkbMessageAction *	act;
@@ -1037,20 +860,11 @@ XkbMessageAction *	act;
 }
 
 static Bool
-#if NeedFunctionPrototypes
 HandleRedirectKey(	XkbDescPtr 	xkb,
 			XkbAnyAction *	action,
 			unsigned	field,
 			ExprDef *	array_ndx,
 			ExprDef *	value)
-#else
-HandleRedirectKey(xkb,action,field,array_ndx,value)
-    XkbDescPtr		xkb;
-    XkbAnyAction *	action;
-    unsigned		field;
-    ExprDef *		array_ndx;
-    ExprDef *		value;
-#endif
 {
 ExprResult		rtrn;
 XkbRedirectKeyAction *	act;
@@ -1098,20 +912,11 @@ unsigned long 		tmp;
 }
 
 static Bool
-#if NeedFunctionPrototypes
 HandleDeviceBtn(	XkbDescPtr 	xkb,
 			XkbAnyAction *	action,
 			unsigned	field,
 			ExprDef *	array_ndx,
 			ExprDef *	value)
-#else
-HandleDeviceBtn(xkb,action,field,array_ndx,value)
-    XkbDescPtr		xkb;
-    XkbAnyAction *	action;
-    unsigned		field;
-    ExprDef *		array_ndx;
-    ExprDef *		value;
-#endif
 {
 ExprResult		rtrn;
 XkbDeviceBtnAction *	act;
@@ -1169,20 +974,28 @@ XkbDeviceBtnAction *	act;
 }
 
 static Bool
-#if NeedFunctionPrototypes
+HandleDeviceValuator(	XkbDescPtr 	xkb,
+			XkbAnyAction *	action,
+			unsigned	field,
+			ExprDef *	array_ndx,
+			ExprDef *	value)
+{
+#if 0
+ExprResult			rtrn;
+XkbDeviceValuatorAction *	act;
+
+    act= (XkbDeviceValuatorAction *)action;
+    /*  XXX - Not yet implemented */
+#endif
+    return False;
+}
+
+static Bool
 HandlePrivate(	XkbDescPtr 	xkb,
 		XkbAnyAction *	action,
 		unsigned	field,
 		ExprDef *	array_ndx,
 		ExprDef *	value)
-#else
-HandlePrivate(xkb,action,field,array_ndx,value)
-    XkbDescPtr		xkb;
-    XkbAnyAction *	action;
-    unsigned		field;
-    ExprDef *		array_ndx;
-    ExprDef *		value;
-#endif
 {
 ExprResult	rtrn;
 
@@ -1240,13 +1053,11 @@ ExprResult	rtrn;
 }
 
 typedef	Bool	(*actionHandler)(
-#if NeedFunctionPrototypes
 	XkbDescPtr 	/* xkb */,
 	XkbAnyAction *	/* action */,
 	unsigned	/* field */,
 	ExprDef *	/* array_ndx */,
 	ExprDef *	/* value */
-#endif
 );
 
 static actionHandler	handleAction[XkbSA_NumActions+1] = {
@@ -1270,18 +1081,14 @@ static actionHandler	handleAction[XkbSA_NumActions+1] = {
 	HandleRedirectKey		/* RedirectKey	*/,
 	HandleDeviceBtn			/* DeviceBtn	*/,
 	HandleDeviceBtn			/* LockDeviceBtn*/,
+	HandleDeviceValuator		/* DeviceValuatr*/,
 	HandlePrivate			/* Private	*/
 };
 
 /***====================================================================***/
 
 static void
-#if NeedFunctionPrototypes
 ApplyActionFactoryDefaults(XkbAction *action)
-#else
-ApplyActionFactoryDefaults(action)
-    XkbAction *	action;
-#endif
 {
     if (action->type==XkbSA_SetPtrDflt) { /* increment default button */
 	action->dflt.affect= XkbSA_AffectDfltBtn;
@@ -1296,20 +1103,11 @@ ApplyActionFactoryDefaults(action)
 
 
 int 
-#if NeedFunctionPrototypes
 HandleActionDef(	ExprDef *	def,
 			XkbDescPtr	xkb,
 			XkbAnyAction *	action,
 			unsigned	mergeMode,
 			ActionInfo *	info)
-#else
-HandleActionDef(def,xkb,action,mergeMode,info)
-    ExprDef *		def;
-    XkbDescPtr		xkb;
-    XkbAnyAction *	action;
-    unsigned		mergeMode;
-    ActionInfo *	info;
-#endif
 {
 ExprDef *		arg;
 register char *		str;
@@ -1387,22 +1185,12 @@ unsigned 		tmp,hndlrType;
 /***====================================================================***/
 
 int 
-#if NeedFunctionPrototypes
 SetActionField(	XkbDescPtr	xkb,
 		char *		elem,
 		char *		field,
 		ExprDef *	array_ndx,
 		ExprDef *	value,
 		ActionInfo **	info_rtrn)
-#else
-SetActionField(xkb,elem,field,array_ndx,value,info_rtrn)
-    XkbDescPtr		xkb;
-    char *		elem;
-    char *		field;
-    ExprDef *		array_ndx;
-    ExprDef *		value;
-    ActionInfo **	info_rtrn;
-#endif
 {
 ActionInfo *new,*old;
 
@@ -1442,11 +1230,7 @@ ActionInfo *new,*old;
 /***====================================================================***/
 
 void
-#if NeedFunctionPrototypes
 ActionsInit(void)
-#else
-ActionsInit()
-#endif
 {
     if (!actionsInitialized) {
 	bzero((char *)&constTrue,sizeof(constTrue));

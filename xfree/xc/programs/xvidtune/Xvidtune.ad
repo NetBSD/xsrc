@@ -1,4 +1,4 @@
-! $XFree86: xc/programs/xvidtune/Xvidtune.ad,v 3.11 1998/01/11 03:48:47 dawes Exp $
+! $XFree86: xc/programs/xvidtune/Xvidtune.ad,v 3.12 2003/02/19 18:55:22 eich Exp $
 !
 *adInstalled: true
 *borderWidth: 0
@@ -107,6 +107,7 @@
 *Abort.label: Abort Test Now
 *WarnOK.label: OK
 *WarnCancel.label: Cancel
+*NoTuneOK.label: OK
 *Left.label: Left
 *Right.label: Right
 *Wider.label: Wider
@@ -134,7 +135,7 @@ The XFree86 Project Inc. BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\n\
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING\n\
 FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER\n\
 DEALINGS IN THE SOFTWARE.\n\n
-
+*NoTuneLabel.label: Video modes are not tunable on this chip.\n
 
 	
 *S3-form.fromVert: Buttons2-form

@@ -1,8 +1,4 @@
-XCOMM $XFree86: xc/lib/font/FreeType/Imakefile,v 1.17 2001/08/27 17:40:58 dawes Exp $
-
-XCOMM Imakefile created for the Freetype TrueType renderer.
-XCOMM Mark Leisher <mleisher@crl.nmsu.edu>
-XCOMM Juliusz Chroboczek <jec@dcs.ed.ac.uk>
+XCOMM $XFree86: xc/lib/font/FreeType/Imakefile,v 1.24 2003/01/01 22:08:40 torrey Exp $
 
 #if BuildServer && DoLoadableServer
 #define IHaveSubdirs
@@ -11,29 +7,41 @@ XCOMM Juliusz Chroboczek <jec@dcs.ed.ac.uk>
 SUBDIRS = module
 #endif
 
-/*
- * The variable `HasUsableFileMmap' should be set to YES if mmap(2) can
- * reliably be used to access regular files.  This should be done in
- * the platform-specific `*.cf' files.
- *
- * mmap(2) use is optional in FreeType, so no harm is done if we miss
- * a few architectures.
- */
-#if HasUsableFileMmap
-MMAPDEFINES = -DHAVE_MMAP=1
+DEFINES = ServerExtraDefines StrcasecmpDefines
+
+#if FontLibSharedFreeType
+FT2INCS = -I$(FREETYPE2INCDIR) -I$(FREETYPE2INCDIR)/include
+#else
+
+FT2SOURCEDIR = $(TOP)/extras/freetype2/src
+FT2INCDIR = $(TOP)/extras/freetype2/include
+
+FT2INCS =  -I$(FT2INCDIR) \
+           -I$(FT2SOURCEDIR)/base \
+           -I$(FT2SOURCEDIR)/raster \
+           -I$(FT2SOURCEDIR)/sfnt \
+           -I$(FT2SOURCEDIR)/truetype \
+           -I$(FT2SOURCEDIR)/cff \
+           -I$(FT2SOURCEDIR)/type1 \
+           -I$(FT2SOURCEDIR)/psaux \
+           -I$(FT2SOURCEDIR)/psnames \
+           -I$(FT2SOURCEDIR)/pshinter \
+           -I$(FT2SOURCEDIR)/autohint
+
+FT2SRCS = ftbase.c ftinit.c ftglyph.c ftsystem.c fttype1.c ftxf86.c \
+          raster.c sfnt.c truetype.c cff.c type1.c \
+          psaux.c psnames.c pshinter.c  autohint.c
+
+FT2OBJS = ftbase.o ftinit.o ftglyph.o ftsystem.o fttype1.o ftxf86.o \
+          raster.o sfnt.o truetype.o cff.o type1.o \
+          psaux.o psnames.o pshinter.o autohint.o
 #endif
 
-DEFINES = ServerExtraDefines \
-	  -DTT_MAKE_OPTION_SINGLE_OBJECT=1 $(MMAPDEFINES) StrcasecmpDefines
-	  
+INCLUDES = -I. -I$(FONTINCSRC) -I../include -I$(XINCLUDESRC) \
+           -I$(SERVERSRC)/include $(FT2INCS) -I$(INCLUDESRC)
 
-/* Much of the source is simply #included by freetype.c */
-INCLUDES = -I. -I$(FONTINCSRC) -I../include -I$(SERVERSRC)/include \
-           -I$(FTSOURCEDIR)/lib -I$(FTSOURCEDIR)/lib/extend \
-           -I$(FTSOURCEDIR)/lib/arch/unix -I$(XTOP)/include
-
-SRCS = ftfuncs.c ftenc.c ftutil.c freetype.c ftxcmap.c
-OBJS = ftfuncs.o ftenc.o ftutil.o freetype.o ftxcmap.o
+SRCS = ftfuncs.c ftenc.c fttools.c $(FT2SRCS)
+OBJS = ftfuncs.o ftenc.o fttools.o $(FT2OBJS)
 
 #if BuildFontLib
 #define DoNormalLib NormalLibFont
@@ -46,8 +54,25 @@ LibraryObjectRule()
 SubdirLibraryRule($(OBJS))
 NormalLintTarget($(SRCS))
 
-LinkSourceFile(freetype.c,$(FTSOURCEDIR)/lib/arch/unix)
-LinkSourceFile(ftxcmap.c,$(FTSOURCEDIR)/lib/extend)
+#if !FontLibSharedFreeType
+LinkSourceFile(ftbase.c,$(FT2SOURCEDIR)/base)
+LinkSourceFile(ftinit.c,$(FT2SOURCEDIR)/base)
+LinkSourceFile(ftglyph.c,$(FT2SOURCEDIR)/base)
+/* LinkSourceFile(ftsystem.c,$(FT2SOURCEDIR)/base) */
+LinkSourceFile(ftutil.c,$(FT2SOURCEDIR)/base)
+LinkSourceFile(fttype1.c,$(FT2SOURCEDIR)/base)
+LinkSourceFile(ftxf86.c,$(FT2SOURCEDIR)/base)
+LinkSourceFile(raster.c,$(FT2SOURCEDIR)/raster)
+LinkSourceFile(sfnt.c,$(FT2SOURCEDIR)/sfnt)
+LinkSourceFile(truetype.c,$(FT2SOURCEDIR)/truetype)
+LinkSourceFile(cff.c,$(FT2SOURCEDIR)/cff)
+LinkSourceFile(type1.c,$(FT2SOURCEDIR)/type1)
+LinkSourceFile(psaux.c,$(FT2SOURCEDIR)/psaux)
+LinkSourceFile(psnames.c,$(FT2SOURCEDIR)/psnames)
+LinkSourceFile(pshinter.c,$(FT2SOURCEDIR)/pshinter)
+LinkSourceFile(autohint.c,$(FT2SOURCEDIR)/autohint)
+#endif
+
 #endif
 
 #if BuildServer && DoLoadableServer

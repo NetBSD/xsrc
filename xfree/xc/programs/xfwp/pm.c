@@ -29,7 +29,7 @@ authorization from The Open Group.
 X Window System is a trademark of The Open Group.
 
 */
-/* $XFree86: xc/programs/xfwp/pm.c,v 1.7 2001/12/14 20:01:43 dawes Exp $ */
+/* $XFree86: xc/programs/xfwp/pm.c,v 1.8 2002/09/18 17:11:56 tsi Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -352,7 +352,7 @@ void FWPprocessMessages(
 	(void) fprintf(stderr, "\tclass = 0x%x, offending minor opcode = %d\n",
 		       pMsg->errorClass, pMsg->offendingMinorOpcode);
 	(void) fprintf(stderr, "\tseverity = %d, sequence = %ld\n",
-		       pMsg->severity, pMsg->offendingSequenceNum);
+		       pMsg->severity, (long)pMsg->offendingSequenceNum);
 
 	IceDisposeCompleteMessage (iceConn, pStart);
 

@@ -30,16 +30,16 @@
  *     Xlib DBE code
  *
  *****************************************************************************/
-/* $XFree86: xc/lib/Xext/Xdbe.c,v 3.5 2001/07/25 15:04:50 dawes Exp $ */
+/* $XFree86: xc/lib/Xext/Xdbe.c,v 3.7 2002/10/16 02:19:22 dawes Exp $ */
 
 #define NEED_EVENTS
 #define NEED_REPLIES
 #include <stdio.h>
 #include <X11/Xlibint.h>
-#include "Xext.h"
-#include "extutil.h"
+#include <X11/extensions/Xext.h>
+#include <X11/extensions/extutil.h>
 #define NEED_DBE_PROTOCOL
-#include "Xdbe.h"
+#include <X11/extensions/Xdbe.h>
 
 static XExtensionInfo _dbe_info_data;
 static XExtensionInfo *dbe_info = &_dbe_info_data;
@@ -70,8 +70,9 @@ static char *dbe_extension_name = DBE_PROTOCOL_NAME;
 /*
  * find_display - locate the display info block
  */
-static int close_display();
-static char *error_string();
+static int close_display(Display *dpy, XExtCodes *codes);
+static char *error_string(Display *dpy, int code, XExtCodes *codes,
+			  char *buf, int n);
 static XExtensionHooks dbe_extension_hooks = {
     NULL,                               /* create_gc */
     NULL,                               /* copy_gc */
