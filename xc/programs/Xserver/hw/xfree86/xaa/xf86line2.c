@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xf86line2.c,v 3.2 1997/01/12 10:48:11 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xf86line2.c,v 3.2.2.1 1997/07/19 04:59:36 dawes Exp $ */
 
 /***********************************************************
 
@@ -48,7 +48,7 @@ SOFTWARE.
 
 ******************************************************************/
 /* $XConsortium: cfbline.c,v 1.24 94/07/28 14:33:33 dpw Exp $ */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xf86line2.c,v 3.2 1997/01/12 10:48:11 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xf86line2.c,v 3.2.2.1 1997/07/19 04:59:36 dawes Exp $ */
 
 /*
  * Accelerated general lines for chips that cannot hardware accelerate
@@ -165,6 +165,13 @@ xf86PolyLine2(pDrawable, pGC, mode, npt, pptInit)
     int usevline;
     Bool UseTwoPointLine;
     Bool blit;
+    int needs_setup;            /* Call the Setup function only if we're
+				   really going to call a Subsequent function.
+				   This is an issue for sloped lines when
+				   only FillRectSolid() is defined (i.e.
+				   don't call the Setup function for sloped
+				   lines -- no Subsequent functions will
+				   be called). */
 
 				/* a bunch of temporaries */
     int tmp;
@@ -180,8 +187,7 @@ xf86PolyLine2(pDrawable, pGC, mode, npt, pptInit)
     pboxInit = REGION_RECTS(cclip);
     nboxInit = REGION_NUM_RECTS(cclip);
 
-    xf86AccelInfoRec.SetupForFillRectSolid(pGC->fgPixel, pGC->alu,
-        pGC->planemask);
+    needs_setup = 1;
 
     /*
      * Determine whether TwoPointLine can be used for non-clipped
@@ -297,6 +303,12 @@ xf86PolyLine2(pDrawable, pGC, mode, npt, pptInit)
 			    int length;
 			    length = y2t - y1t;
 			    if (usevline == VLINE_TWOPOINTLINE) {
+			      if (needs_setup) {
+				xf86AccelInfoRec.SetupForFillRectSolid(
+				     pGC->fgPixel, pGC->alu, pGC->planemask);
+				needs_setup = 0;
+			      }
+
 			        xf86AccelInfoRec.SubsequentTwoPointLine(
 			            x1, y1t, x1, y2t - 1, bias);
 			        blit = TRUE;
@@ -315,6 +327,12 @@ xf86PolyLine2(pDrawable, pGC, mode, npt, pptInit)
 		                    x1, y1t, length);
 		            }
 		            else {
+			      if (needs_setup) {
+				xf86AccelInfoRec.SetupForFillRectSolid(
+				     pGC->fgPixel, pGC->alu, pGC->planemask);
+				needs_setup = 0;
+			      }
+
 	                        xf86AccelInfoRec.SubsequentFillRectSolid(
 	                            x1, y1t, 1, length);
 	                        blit = TRUE;
@@ -386,6 +404,12 @@ xf86PolyLine2(pDrawable, pGC, mode, npt, pptInit)
 		    x2t = min(x2, pbox->x2);
 		    if (x1t != x2t)
 		    {
+		      if (needs_setup) {
+			xf86AccelInfoRec.SetupForFillRectSolid(
+			    pGC->fgPixel, pGC->alu, pGC->planemask);
+			needs_setup = 0;
+		      }
+
 		        xf86AccelInfoRec.SubsequentFillRectSolid(
 		            x1t, y1, x2t - x1t, 1);
 		        blit = TRUE;
@@ -440,6 +464,12 @@ xf86PolyLine2(pDrawable, pGC, mode, npt, pptInit)
 		if ((oc1 | oc2) == 0)
 		{
 		    if (UseTwoPointLine) {
+		      if (needs_setup) {
+			xf86AccelInfoRec.SetupForFillRectSolid(
+			    pGC->fgPixel, pGC->alu, pGC->planemask);
+			needs_setup = 0;
+		      }
+
 		        xf86AccelInfoRec.SubsequentTwoPointLine(
 		            x1, y1, x2, y2, bias);
 		        blit = TRUE;
@@ -546,6 +576,12 @@ xf86PolyLine2(pDrawable, pGC, mode, npt, pptInit)
 		(y2 <  pbox->y2))
 	    {
 	        /* Maybe it would be better do this with TwoPointLine if av. */
+	      if (needs_setup) {
+		xf86AccelInfoRec.SetupForFillRectSolid(
+		  pGC->fgPixel, pGC->alu, pGC->planemask);
+		needs_setup = 0;
+	      }
+	      
 		xf86AccelInfoRec.SubsequentFillRectSolid(x2, y2, 1, 1);
 		break;
 	    }

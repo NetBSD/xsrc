@@ -4,7 +4,7 @@ XCOMM $XConsortium: Imakefile /main/12 1996/10/28 05:13:56 kaleb $
 
 
 
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree98/doc/sgml/Imakefile,v 3.16.2.2 1997/05/24 13:38:20 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree98/doc/sgml/Imakefile,v 3.16.2.3 1997/07/27 02:41:33 dawes Exp $
 
 #include <Server.tmpl>
 
@@ -120,6 +120,7 @@ LinkSourceFile(Mach32.sgml,$(XF86SRC)/doc/sgml)
 LinkSourceFile(Mach64.sgml,$(XF86SRC)/doc/sgml)
 LinkSourceFile(MGA.sgml,$(XF86SRC)/doc/sgml)
 LinkSourceFile(NetBSD.sgml,$(XF86SRC)/doc/sgml)
+LinkSourceFile(OpenBSD.sgml,$(XF86SRC)/doc/sgml)
 LinkSourceFile(NV1.sgml,$(XF86SRC)/doc/sgml)
 LinkSourceFile(OS2.sgml,$(XF86SRC)/doc/sgml)
 LinkSourceFile(OS2note.sgml,$(XF86SRC)/doc/sgml)
@@ -155,4 +156,3 @@ InstallLinkKitNamedNonExec(README.LinkKit,README,$(LINKKITDIR))
 InstallLinkKitNonExecFile(VGADriver.Doc,$(LINKKITDIR)/VGADriverDoc)
 #endif
 
-LinkFile(OpenBSD.sgml, NetBSD.sgml)

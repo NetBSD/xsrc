@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xf86initac.c,v 3.10.2.2 1997/05/18 12:00:21 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xf86initac.c,v 3.10.2.5 1997/07/28 14:17:33 dawes Exp $ */
 
 /*
  * Copyright 1996  The XFree86 Project
@@ -302,7 +302,9 @@ xf86InitializeAcceleration(pScreen)
             if (xf86Verbose)
                 ErrorF("TE");
             /* Only DWORD padding currently supported */
-            if (xf86AccelInfoRec.ColorExpandFlags & SCANLINE_PAD_DWORD &&
+            if ((xf86AccelInfoRec.ColorExpandFlags & SCANLINE_PAD_DWORD) &&
+		!(xf86AccelInfoRec.ColorExpandFlags & CPU_TRANSFER_BASE_FIXED)
+		&& !(xf86AccelInfoRec.ColorExpandFlags & TRIPLE_BITS_24BPP) &&
 		SimpleFillRectSolid) {
                 xf86AccelInfoRec.ImageTextNonTE =
                      xf86ImageTextNonTECPUToScreenColorExpand;
@@ -325,7 +327,9 @@ xf86InitializeAcceleration(pScreen)
             xf86GCInfoRec.PolyGlyphBltTEFlags =
                 xf86AccelInfoRec.ColorExpandFlags;
             /* Only DWORD padding currently supported */
-            if (xf86AccelInfoRec.ColorExpandFlags & SCANLINE_PAD_DWORD) {
+            if ((xf86AccelInfoRec.ColorExpandFlags & SCANLINE_PAD_DWORD) &&
+		!(xf86AccelInfoRec.ColorExpandFlags & CPU_TRANSFER_BASE_FIXED)
+		&& !(xf86AccelInfoRec.ColorExpandFlags & TRIPLE_BITS_24BPP)) {
                 xf86AccelInfoRec.PolyTextNonTE =
                      xf86PolyTextNonTECPUToScreenColorExpand;
                 xf86GCInfoRec.PolyGlyphBltNonTEFlags =

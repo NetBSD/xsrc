@@ -223,8 +223,8 @@ board, but that's not discussed here.
 <p>
 A monitor draws an image on the screen by using an electron beam (3 electron
 beams for most color models, 1 electron beam for Trinitron color monitors and
-monochrone monitors). The front of the screen is covered by a pattern of
-colored phospors (pixels). If a phospor is hit by an electron, it emits a
+monochrome monitors). The front of the screen is covered by a pattern of
+colored phosphors (pixels). If a phosphor is hit by an electron, it emits a
 photon and thus becomes visible.
 
 The electron beam draws horizontal lines (scanlines) from left to right, and
@@ -423,7 +423,7 @@ The frame buffer device abstraction was designed by Martin Schaller.
 
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree68/doc/sgml/fbdev.sgml,v 1.1.2.3 1997/05/28 13:12:47 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree68/doc/sgml/fbdev.sgml,v 1.1.2.4 1997/08/02 13:54:10 dawes Exp $
 
 </verb>
 

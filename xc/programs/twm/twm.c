@@ -54,7 +54,7 @@ in this Software without prior written authorization from the X Consortium.
 /***********************************************************************
  *
  * $XConsortium: twm.c,v 1.135 94/12/27 20:52:15 mor Exp $
- * $XFree86: xc/programs/twm/twm.c,v 3.1 1995/01/27 04:54:18 dawes Exp $
+ * $XFree86: xc/programs/twm/twm.c,v 3.1.8.1 1997/06/11 12:08:57 dawes Exp $
  *
  * twm - "Tom's Window Manager"
  *
@@ -82,7 +82,7 @@ in this Software without prior written authorization from the X Consortium.
 
 XtAppContext appContext;	/* Xt application context */
 
-Display *dpy;			/* which display are we talking to */
+Display *dpy = NULL;		/* which display are we talking to */
 Window ResizeWindow;		/* the window we are resizing */
 
 int MultiScreen = TRUE;		/* try for more than one screen? */
@@ -863,8 +863,11 @@ Time time;
 
 SIGNAL_T Done()
 {
-    Reborder (CurrentTime);
-    XCloseDisplay(dpy);
+    if (dpy)
+    {
+	Reborder (CurrentTime);
+	XCloseDisplay(dpy);
+    }
     exit(0);
     SIGNAL_RETURN;
 }

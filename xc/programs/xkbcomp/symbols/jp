@@ -1,4 +1,4 @@
-// $XFree86: xc/programs/xkbcomp/symbols/jp,v 3.1 1996/09/22 13:32:49 dawes Exp $
+// $XFree86: xc/programs/xkbcomp/symbols/jp,v 3.1.4.2 1997/07/10 08:02:28 hohndel Exp $
 //
 // symbols for a Japanese 106 keyboard(by tsuka@kawalab.dnj.ynu.ac.jp)
 default xkb_symbols "jp106" {
@@ -52,7 +52,7 @@ default xkb_symbols "jp106" {
     key <AC12> { [ bracketright, braceright ], [ kana_MU, kana_closingbracket ] };
 
     key <LFSH> { [ Shift_L		]	};
-    key <AB01> { [ z, Z 		], [ kana_TSU		]	};
+    key <AB01> { [ z, Z 		], [ kana_TSU, kana_tsu	]	};
     key <AB02> { [ x, X			], [ kana_SA		]	};
     key <AB03> { [ c, C			], [ kana_SO		]	};
     key <AB04> { [ v, V			], [ kana_HI		]	};

@@ -327,7 +327,7 @@ If the server gets it wrong, you may end up with a severe system crash (e.g.
 if it maps the video memory right on top of your system memory). If this
 happens, RESET IMMEDIATELY. Do not try to shut down cleanly, because the
 X-server, thinking it writes to the VGA memory, will write to system memory
-instead, and you'll by writing corrupted data to disk. If you did a sync
+instead, and you'll be writing corrupted data to disk. If you did a sync
 prior to starting the server, there will be no harm done (only a filesystem
 check which should end up clean). DO NOT attempt to redirect the server
 output to a file on the system you're testing on (that will write data after
@@ -345,7 +345,7 @@ determining the MemBase your card uses, trying to put it a few Mb above the
 system memory is a good first guess. E.g. if you have 16 Mb of RAM, defining
 MemBase 0x01000000 (=16M) or 0x01400000 (=20M) may work.
 
-However, this may only work on non-PCI systems, as those mostly map all
+However, this may only work on non-PCI systems, as PCI systems mostly map all
 hardware above the 2GB mark. But then again, on PCI systems the server is
 almost always able to detect the correct linear memory base address. The
 only exception are those systems with more than one PCI VGA card.
@@ -389,6 +389,20 @@ On ET4000W32i, things are worse: the linear address base is hardwired on the
 card, and there is no reliable way to read it back from the card. You need
 to know the address in some way, and specify it. The current code does an
 intelligent guess at it, but this is no guarantee.
+
+On ISA cards, things are much more simple: ISA only uses 24 address lines,
+and hence the linear memory MUST lie within the 16 MB boundary. Together
+with the 4MB granularity of the linear memory base address on ET4000 cards,
+this means that you cannot have more than 12 MB of system memory in the
+machine if you want to use linear memory. Hence, the only realistic MemBase
+for ISA cards is 0x00C00000. This is also what the server will automatically
+choose if it detects an ISA W32 card.
+
+WARNING: you must not have over 12 MB of system memory in this case. Or if
+you have it, you must disable access to all memory above the 12 MB mark.
+Some operating systems allow you to specify at startup how much memory it is
+allowed to use, so you don't have to unplug some memory each time you want
+to use linear memory.
 
 <sect> Mode issues <p>
 
@@ -725,6 +739,17 @@ Problems with DMA hardware (floppy, tape)
 	
 	The <tt>"pci_retry"</tt> option applies not only to the PCI bus
         systems, but has a similar effect on other busses.
+<tag>
+"Cannot read colourmap from VGA.  Will restore with default"
+</tag>
+	If this error occurs, the server was unable to properly initialize
+	the RAMDAC, and tries to restore a default color map. On some
+	unsupported RAMDACs, this will have the adverse effect of removing
+	all color altogether, leaving you with a bunch of weird colors, or
+	with a completely black screen. If that happens, add the <tt>ramdac
+	"normal"</tt> statement to the Device section in your
+	<tt>XF86Config</tt> file. In most cases, this will solve the color
+	problem.
 
 </descrip>
 For other screen drawing related problems, try the <tt>"noaccel"</tt>
@@ -747,7 +772,7 @@ keep an eye on forthcoming beta releases at <it>www.xfree86.org</it>.
 
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/tseng.sgml,v 3.15.2.9 1997/06/01 12:33:37 dawes Exp $ 
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/tseng.sgml,v 3.15.2.11 1997/08/02 13:48:15 dawes Exp $ 
 
 
 

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3/s3ramdacs.c,v 3.10.2.4 1997/05/19 08:06:55 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3/s3ramdacs.c,v 3.10.2.5 1997/07/19 04:59:26 dawes Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  * 
@@ -2556,11 +2556,15 @@ static int S3_TRIO_PreInit()
     } else if (s3Bpp < 4)
        if (OFLG_ISSET(CLOCK_OPTION_S3TRIO64V2, &s3InfoRec.clockOptions))
 	  s3InfoRec.maxClock = 170000;
+       else if (S3_TRIO64V_SERIES(s3ChipId))
+	  s3InfoRec.maxClock = 95000;
        else
 	  s3InfoRec.maxClock = 80000;
     else
        if (OFLG_ISSET(CLOCK_OPTION_S3TRIO64V2, &s3InfoRec.clockOptions))
 	  s3InfoRec.maxClock = 135000;
+       else if (S3_TRIO64V_SERIES(s3ChipId))
+	  s3InfoRec.maxClock = 57000;
        else
 	  s3InfoRec.maxClock = 50000;
  

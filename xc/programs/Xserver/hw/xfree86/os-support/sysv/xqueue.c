@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/sysv/xqueue.c,v 3.8 1996/12/23 06:51:28 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/sysv/xqueue.c,v 3.8.2.1 1997/07/13 14:45:04 dawes Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany
  *
@@ -37,6 +37,10 @@
 #ifdef XQUEUE
 
 static xqEventQueue      *XqueQaddr;
+static int xqueFd = -1;
+#ifndef XQUEUE_ASYNC
+static int xquePipe[2];
+#endif
 
 #ifdef XKB
 #include <X11/extensions/XKB.h>
@@ -53,16 +57,44 @@ extern int miPointerGetMotionEvents(DeviceIntPtr pPtr, xTimecoord *coords,
 				unsigned long start, unsigned long stop,
 				ScreenPtr pScreen);
 
+#ifndef XQUEUE_ASYNC
+/*
+ * xf86XqueSignal --
+ *	Trap the signal from xqueue and let it be known that events are
+ *	ready for collection
+ */
+
+static void
+xf86XqueSignal(int signum)
+{
+  xf86Info.mouseDev->xquePending = 1;
+  /*
+   * This is a hack, but it is the only reliable way I can find of letting
+   * the main select() loop know that there is more input waiting.  Receiving
+   * a signal will interrupt select(), but there is no way I can find of
+   * dealing with events that come in between the end of processing the
+   * last set and when select() gets called.
+   *
+   * Suggestions for better ways of dealing with this without going back to
+   * asynchronous event processing are welcome.
+   */
+  write(xquePipe[1], "X", 1);
+  signal(SIGUSR2, xf86XqueSignal);
+}
+#endif
+  
+
 /*
  * xf86XqueRequest --
  *      Notice an i/o request from the xqueue.
  */
 
-static void
+void
 xf86XqueRequest()
 {
   xqEvent  *XqueEvents = XqueQaddr->xq_events;
   int      XqueHead = XqueQaddr->xq_head;
+  char buf[100];
 
   while (XqueHead != XqueQaddr->xq_tail)
     {
@@ -94,8 +126,29 @@ xf86XqueRequest()
 
   /* reenable the signal-processing */
   xf86Info.inputPending = TRUE;
+#ifdef XQUEUE_ASYNC
   signal(SIGUSR2, (void (*)()) xf86XqueRequest);
+#else
+#if 0
+  signal(SIGUSR2, (void (*)()) xf86XqueSignal);
+#endif
+#endif
+
+#ifndef XQUEUE_ASYNC
+  {
+    int rval;
+
+    while ((rval = read(xquePipe[0], buf, sizeof(buf))) > 0)
+#ifdef DEBUG
+      ErrorF("Read %d bytes from xquePipe[0]\n", rval);
+#else
+      ;
+#endif
+  }
+#endif
+
   XqueQaddr->xq_head = XqueQaddr->xq_tail;
+  xf86Info.mouseDev->xquePending = 0;
   XqueQaddr->xq_sigenable = 1; /* UNLOCK */
 }
 
@@ -113,7 +166,7 @@ xf86XqueEnable()
   static Bool              was_here = FALSE;
 
   if (!was_here) {
-    if ((xf86Info.mouseDev->xqueFd = open("/dev/mouse", O_RDONLY|O_NDELAY)) < 0)
+    if ((xqueFd = open("/dev/mouse", O_RDONLY|O_NDELAY)) < 0)
       {
 	if (xf86AllowMouseOpenFail) {
 	  ErrorF("Cannot open /dev/mouse (%s) - Continuing...\n",
@@ -124,12 +177,21 @@ xf86XqueEnable()
 	  return (!Success);
 	}
       }
+#ifndef XQUEUE_ASYNC
+    pipe(xquePipe);
+    fcntl(xquePipe[0],F_SETFL,fcntl(xquePipe[0],F_GETFL,0)|O_NDELAY);
+    fcntl(xquePipe[1],F_SETFL,fcntl(xquePipe[1],F_GETFL,0)|O_NDELAY);
+#endif
     was_here = TRUE;
   }
 
   if (xf86Info.mouseDev->xqueSema++ == 0) 
     {
+#ifdef XQUEUE_ASYNC
       (void) signal(SIGUSR2, (void (*)()) xf86XqueRequest);
+#else
+      (void) signal(SIGUSR2, (void (*)()) xf86XqueSignal);
+#endif
       xqueMode.qsize = 64;    /* max events */
       xqueMode.signo = SIGUSR2;
       ioctl(xf86Info.consoleFd, KDQUEMODE, NULL);
@@ -186,6 +248,7 @@ xf86XqueMseProc(pPointer, what)
 {
   MouseDevPtr	mouse = MOUSE_DEV(pPointer);
   unchar        map[4];
+  int ret;
  
   mouse->device = pPointer;
 
@@ -210,12 +273,22 @@ xf86XqueMseProc(pPointer, what)
       mouse->lastButtons = 0;
       mouse->emulateState = 0;
       pPointer->public.on = TRUE;
-      return(xf86XqueEnable());
+      ret = xf86XqueEnable();
+#ifndef XQUEUE_ASYNC
+      if (xquePipe[0] != -1)
+	AddEnabledDevice(xquePipe[0]);
+#endif
+      return(ret);
       
     case DEVICE_CLOSE:
     case DEVICE_OFF:
       pPointer->public.on = FALSE;
-      return(xf86XqueDisable());
+      ret = xf86XqueDisable();
+#ifndef XQUEUE_ASYNC
+      if (xquePipe[0] != -1)
+	RemoveEnabledDevice(xquePipe[0]);
+#endif
+      return(ret);
     }
   
   return Success;

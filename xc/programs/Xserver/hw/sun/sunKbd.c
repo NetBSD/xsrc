@@ -1,4 +1,4 @@
-/* $XConsortium: sunKbd.c /main/76 1996/09/25 00:53:01 dpw $ */
+/* $TOG: sunKbd.c /main/77 1997/03/26 16:50:17 kaleb $ */
 /*-
  * Copyright (c) 1987 by the Regents of the University of California
  *
@@ -486,10 +486,21 @@ static void sunInitKbdNames (names, pKbd)
 		(void) strcat (names->symbols, "sun/us(sun4)");
 	} else {
 	    (void) strcat (names->keycodes, "sun(type5)");
-	    if (pKbd->layout == 34 || pKbd->layout == 81)
-		(void) strcat (names->geometry, "sun(type5unix)");
-	    else
+
+	    switch (pKbd->layout) {
+	    case 33: case 80: /* U.S. */
+	    case 47: case 94: /* Korea */
+	    case 48: case 95: /* Taiwan */
+	    case 49: case 96: /* Japan */
 		(void) strcat (names->geometry, "sun(type5)");
+		break;
+	    case 34: case 81: /* U.S. Unix */
+		(void) strcat (names->geometry, "sun(type5unix)");
+		break;
+	    default:
+		(void) strcat (names->geometry, "sun(type5euro)");
+	    }
+
 	    if (sunSwapLkeys)
 		(void) strcat (names->symbols, "sun/us(sun5ol)");
 	    else
@@ -502,6 +513,23 @@ static void sunInitKbdNames (names, pKbd)
     }
 
     /* extra symbols */
+
+    if (pKbd->type == KB_SUN4) {
+	switch (pKbd->layout) {
+	case  4: case 36: case 83: 
+	case  5: case 37: case 84: 
+	case  6: case 38: case 85: 
+	case  8: case 40: case 87: 
+	case  9: case 41: case 88: 
+	case 10: case 42: case 89: 
+	case 11: case 43: case 90: 
+	case 12: case 44: case 91: 
+	case 13: case 45: case 92: 
+	case 14: case 46: case 93: 
+	    (void) strcat (names->symbols, "+iso9995-3(basic)"); break;
+	}
+    }
+
     if (pKbd->type == KB_SUN4) {
 	switch (pKbd->layout) {
 	case  0: case  1: case 33: case 34: case 80: case 81: 

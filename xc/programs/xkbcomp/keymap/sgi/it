@@ -1,17 +1,17 @@
-// $XConsortium: it /main/1 1996/08/31 12:18:24 kaleb $
+// $TOG: it /main/3 1997/06/14 06:36:37 kaleb $
 default xkb_keymap "indy" {
-    xkb_keycodes	{ include "sgi/indy(pc102)"	};
-    xkb_types		{ include "default"		};
-    xkb_compatibility	{ include "default"		};
-    xkb_symbols 	{ include "en_US(pc102)+it"	};
-    xkb_geometry	{ include "sgi/indy(pc102)"	};
+    xkb_keycodes	{ include "sgi/indy(universal)"		};
+    xkb_types		{ include "default"			};
+    xkb_compatibility	{ include "default"			};
+    xkb_symbols 	{ include "en_US(pc_universal)+it"	};
+    xkb_geometry	{ include "sgi/indy(pc102)"		};
 };
 xkb_keymap "indy_nodeadkeys" {
-    xkb_keycodes	{ include "sgi/indy(pc102)"	};
+    xkb_keycodes	{ include "sgi/indy(universal)"	};
     xkb_types		{ include "default"		};
     xkb_compatibility	{ include "default"		};
     xkb_symbols 	{
-	include "en_US(pc102_nodeadkeys)+it(nodeadkeys)"
+	include "en_US(pc_universal_nodeadkeys)+it(nodeadkeys)"
     };
     xkb_geometry	{ include "sgi/indy(pc102)"	};
 };

@@ -1,7 +1,7 @@
 /*
  * Host.def for building UnixWare bindists
  *
- * $XFree86: xc/programs/Xserver/hw/xfree86/etc/bindist/UnixWare/host.def,v 1.1.2.1 1997/05/27 05:52:41 dawes Exp $
+ * $XFree86: xc/programs/Xserver/hw/xfree86/etc/bindist/UnixWare/host.def,v 1.1.2.2 1997/06/08 15:41:27 dawes Exp $
  */
 
 #define InstallEmptyHostDef
@@ -11,5 +11,5 @@
 #define HasTcl			YES
 #define HasTk			YES
 #define TclLibName		tcl7.6
-#define TkName			tk4.2
+#define TkLibName		tk4.2
 

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Events.c,v 3.42.2.2 1997/05/12 12:52:26 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Events.c,v 3.42.2.3 1997/07/13 14:45:03 dawes Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  *
@@ -61,6 +61,10 @@
 
 #include "mipointer.h"
 #include "dixevents.h"
+#include "opaque.h"
+#ifdef DPMSExtension
+#include "extensions/dpms.h"
+#endif
 
 #ifdef XKB
 extern Bool noXkbExtension;
@@ -150,6 +154,14 @@ extern fd_set EnabledDevices;
 
 #if defined(CODRV_SUPPORT)
 extern unsigned char xf86CodrvMap[];
+#endif
+
+#if defined(XQUEUE) && !defined(XQUEUE_ASYNC)
+extern void xf86XqueRequest(
+#if NeedFunctionPrototypes
+	void
+#endif
+	);
 #endif
 
 static void xf86VTSwitch(
@@ -1355,6 +1367,12 @@ xf86Wakeup(blockData, err, pReadmask)
 
 #endif  /* __EMX__ */
 
+#if defined(XQUEUE) && !defined(XQUEUE_ASYNC)
+  /* This could be done more cleanly */
+  if (xf86Info.mouseDev->xqueSema && xf86Info.mouseDev->xquePending)
+    xf86XqueRequest();
+#endif
+
   if (xf86VTSwitchPending()) xf86VTSwitch();
 
   if (xf86Info.inputPending) ProcessInputEvents();
@@ -1412,6 +1430,10 @@ xf86VTSwitch()
       for (j = 0; j < screenInfo.numScreens; j++)
         (XF86SCRNINFO(screenInfo.screens[j])->EnterLeaveVT)(ENTER, j);
       SaveScreens(SCREEN_SAVER_FORCER,ScreenSaverReset);
+#ifdef DPMSExtension
+      if (DPMSEnabled)
+        DPMSSet(DPMSModeOn);
+#endif
 
 #ifndef __EMX__
       EnableDevice((DeviceIntPtr)xf86Info.pKeyboard);
@@ -1430,6 +1452,10 @@ xf86VTSwitch()
       
     /* Turn screen saver off when switching back */
     SaveScreens(SCREEN_SAVER_FORCER,ScreenSaverReset);
+#ifdef DPMSExtension
+    if (DPMSEnabled)
+      DPMSSet(DPMSModeOn);
+#endif
 
 #ifndef __EMX__
     EnableDevice((DeviceIntPtr)xf86Info.pKeyboard);

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/mga/mga.h,v 3.8.2.2 1997/05/25 05:06:50 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/mga/mga.h,v 3.8.2.3 1997/07/26 06:30:53 dawes Exp $ */
 /*
  * MGA Millennium (MGA2064W) functions
  *
@@ -54,6 +54,7 @@ typedef struct {
 extern MGARamdacRec MGAdac;
 extern pciTagRec MGAPciTag;
 extern int MGAchipset;
+extern int MGArev;
 extern int MGAinterleave;
 extern int MGABppShft;
 extern int MGAusefbitblt;

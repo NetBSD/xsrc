@@ -1,44 +1,53 @@
-// $XConsortium: ru /main/1 1996/08/31 12:18:36 kaleb $
+// $TOG: ru /main/3 1997/06/14 06:36:51 kaleb $
 default xkb_keymap "indy" {
-    xkb_keycodes	{ include "sgi/indy(pc102)"		};
-    xkb_types		{ include "default"			};
-    xkb_compatibility	{ include "default"			};
-    xkb_symbols 	{ include "en_US(pc102)+ru(basic)"	};
-    xkb_geometry	{ include "sgi/indy(pc102)"		};
+    xkb_keycodes	{ include "sgi/indy(universal)"			};
+    xkb_types		{ include "default"				};
+    xkb_compatibility	{ include "default"				};
+    xkb_symbols 	{ include "en_US(pc_universal)+ru(basic)"	};
+    xkb_geometry	{ include "sgi/indy(pc102)"			};
 };
-xkb_keymap "indy_alternate" {
-    xkb_keycodes	{ include "sgi/indy(pc102)"		};
+xkb_keymap "indy_toggle" {
+    xkb_keycodes	{ include "sgi/indy(universal)"		};
     xkb_types		{ include "default"			};
     xkb_compatibility	{ include "default"			};
     xkb_symbols { 
-	include "en_US(pc102)+ru(basic)+group(toggle)" 
+	include "en_US(pc_universal)+ru(basic)+group(toggle)" 
     };
     xkb_geometry	{ include "sgi/indy(pc102)"		};
 };
-xkb_keymap "indy_alternate1" {
-    xkb_keycodes	{ include "sgi/indy(pc102)"		};
+xkb_keymap "indy_shift_toggle" {
+    xkb_keycodes	{ include "sgi/indy(universal)"		};
     xkb_types		{ include "default"			};
     xkb_compatibility	{ include "default"			};
     xkb_symbols { 
-	include "en_US(pc102)+ru(basic)+group(shift_toggle)" 
+	include "en_US(pc_universal)+ru(basic)+group(shift_toggle)" 
     };
     xkb_geometry	{ include "sgi/indy(pc102)"		};
 };
-xkb_keymap "indy_alternate2" {
-    xkb_keycodes	{ include "sgi/indy(pc102)"		};
+xkb_keymap "indy_ctrl_shift_toggle" {
+    xkb_keycodes	{ include "sgi/indy(universal)"		};
     xkb_types		{ include "default"			};
     xkb_compatibility	{ include "default"			};
     xkb_symbols { 
-	include "en_US(pc102)+ru(basic)+group(ctrl_shift_toggle)" 
+	include "en_US(pc_universal)+ru(basic)+group(ctrl_shift_toggle)" 
     };
     xkb_geometry	{ include "sgi/indy(pc102)"		};
 };
-xkb_keymap "indy_alternate3" {
-    xkb_keycodes	{ include "sgi/indy(pc102)"		};
+xkb_keymap "indy_ctrl_alt_toggle" {
+    xkb_keycodes	{ include "sgi/indy(universal)"		};
     xkb_types		{ include "default"			};
     xkb_compatibility	{ include "default"			};
     xkb_symbols { 
-	include "en_US(pc102)+ru(basic)+group(ctrl_alt_toggle)" 
+	include "en_US(pc_universal)+ru(basic)+group(ctrl_alt_toggle)" 
+    };
+    xkb_geometry	{ include "sgi/indy(pc102)"		};
+};
+xkb_keymap "indy_caps_toggle" {
+    xkb_keycodes	{ include "sgi/indy(universal)"		};
+    xkb_types		{ include "default"			};
+    xkb_compatibility	{ include "default"			};
+    xkb_symbols { 
+	include "en_US(pc_universal)+ru(basic)+group(caps_toggle)" 
     };
     xkb_geometry	{ include "sgi/indy(pc102)"		};
 };
@@ -49,7 +58,7 @@ xkb_keymap "indigo" {
     xkb_symbols 	{ include "en_US(pc102)+ru(basic)"	};
     xkb_geometry	{ include "sgi/indigo(pc102)"		};
 };
-xkb_keymap "indigo_alternate" {
+xkb_keymap "indigo_toggle" {
     xkb_keycodes	{ include "sgi/indigo(pc102)"		};
     xkb_types		{ include "default"			};
     xkb_compatibility	{ include "default"			};
@@ -58,7 +67,7 @@ xkb_keymap "indigo_alternate" {
     };
     xkb_geometry	{ include "sgi/indigo(pc102)"		};
 };
-xkb_keymap "indigo_alternate1" {
+xkb_keymap "indigo_shift_toggle" {
     xkb_keycodes	{ include "sgi/indigo(pc102)"		};
     xkb_types		{ include "default"			};
     xkb_compatibility	{ include "default"			};
@@ -67,7 +76,7 @@ xkb_keymap "indigo_alternate1" {
     };
     xkb_geometry	{ include "sgi/indigo(pc102)"		};
 };
-xkb_keymap "indigo_alternate2" {
+xkb_keymap "indigo_ctrl_shift_toggle" {
     xkb_keycodes	{ include "sgi/indigo(pc102)"		};
     xkb_types		{ include "default"			};
     xkb_compatibility	{ include "default"			};
@@ -76,12 +85,21 @@ xkb_keymap "indigo_alternate2" {
     };
     xkb_geometry	{ include "sgi/indigo(pc102)"		};
 };
-xkb_keymap "indigo_alternate3" {
+xkb_keymap "indigo_ctrl_alt_toggle" {
     xkb_keycodes	{ include "sgi/indigo(pc102)"		};
     xkb_types		{ include "default"			};
     xkb_compatibility	{ include "default"			};
     xkb_symbols { 
 	include "en_US(pc102)+ru(basic)+group(ctrl_alt_toggle)" 
+    };
+    xkb_geometry	{ include "sgi/indigo(pc102)"		};
+};
+xkb_keymap "indigo_caps_toggle" {
+    xkb_keycodes	{ include "sgi/indigo(pc102)"		};
+    xkb_types		{ include "default"			};
+    xkb_compatibility	{ include "default"			};
+    xkb_symbols { 
+	include "en_US(pc102)+ru(basic)+group(caps_toggle)" 
     };
     xkb_geometry	{ include "sgi/indigo(pc102)"		};
 };

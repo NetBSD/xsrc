@@ -1,19 +1,20 @@
-  XFree86 3.2 リンクキットの Readme
+  XFree86 3.3 リンクキットの Readme
   XFree86 プロジェクト社著
+  16 May 1997
   岡本 一幸 Kazuyuki Okamoto <ikko-@pacific.rim.or.jp> 訳
-  1996 年 10 月 14 日
+  30 July 1997
 
-  1.  XFree86 3.2 リンクキットの Readme
+  1.  XFree86 3.3 リンクキットの Readme
 
   1. gcc-2 を使用しないシステムで、gcc-2 で作成されたバイナリ配付物を使
      用する場合は libgcc.a を組み込む必要があります。
 
-  2. リンクキットで Xnest を組み込む場合は XFree86 3.2 の /usr/X11R6 の
+  2. リンクキットで Xnest を組み込む場合は XFree86 3.3 の /usr/X11R6 の
      下に組み込まれたライブラリを確認して下さい。現在、リンクキットは他
-     のサーバーでは内蔵しています。
+     のサーバでは内蔵しています。
 
-  3. どのサーバーを組み込みたいかと、どのドライバと機能拡張を含ませたい
-     かを定義するために xf86site.def ファイルを編集して下さい。
+  3. どのサーバを組み込みたいかと、どのドライバと機能拡張を含ませたいか
+     を定義するために xf86site.def ファイルを編集して下さい。
 
   o  初期値が正しくない場合に、使用するコンパイラーに合わせて HasGcc と
      HasGcc2 を設定して下さい。
@@ -22,77 +23,79 @@
      使用する場合、 libgcc.a と NeedLibGcc を YES に設定する必要がありま
      す。
 
-  o  256 色サーバーを作成するには: XF86SVGAServer を YES にします。
+  o  256 色サーバを作成するには: XF86SVGAServer を YES にします。
 
-  o  16 色サーバーを作成するには: XF86VGA16Server を YES にします。
+  o  16 色サーバを作成するには: XF86VGA16Server を YES にします。
 
-  o  白黒サーバーを作成するには: XF86MonoServer を YES にします。
+  o  白黒サーバを作成するには: XF86MonoServer を YES にします。
 
-  o  S3 サーバーを作成するには: XF86S3Server を YES にします。
+  o  S3 サーバを作成するには: XF86S3Server を YES にします。
 
-  o  Mach8 サーバーを作成するには: XF86Mach8Server を YES にします。
+  o  Mach8 サーバを作成するには: XF86Mach8Server を YES にします。
 
-  o  Mach32 サーバーを作成するには: XF86Mach32Server を YES にします。
+  o  Mach32 サーバを作成するには: XF86Mach32Server を YES にします。
 
-  o  Mach64 サーバーを作成するには: XF86Mach64Server を YES にします。
+  o  Mach64 サーバを作成するには: XF86Mach64Server を YES にします。
 
-  o  P9000 サーバーを作成するには: XF86P9000Server を YES にします。
+  o  P9000 サーバを作成するには: XF86P9000Server を YES にします。
 
-  o  AGX サーバーを作成するには: XF86AGXServer を YES にします。
+  o  AGX サーバを作成するには: XF86AGXServer を YES にします。
 
-  o  ET4000/W32 サーバーを作成するには: XF86W32Server を YES にします。
+  o  ET4000/W32 サーバを作成するには: XF86W32Server を YES にします。
 
-  o  IBM 8514/A サーバーを作成するには: XF86I8514Server を YES にしま
-     す。
+  o  IBM 8514/A サーバを作成するには: XF86I8514Server を YES にします。
 
-  o  I128 サーバーを作成するには: XF86I128Server を YES にします。
+  o  I128 サーバを作成するには: XF86I128Server を YES にします。
 
-  o  TGA サーバーを作成するには: XF86TGAServer を YES にします。
+  o  TGA サーバを作成するには: XF86TGAServer を YES にします。
 
-  o  GA-98NB/WAP サーバーを作成するには: XF98GANBServer を YES にしま
-     す。
+  o  GA-98NB/WAP サーバを作成するには: XF98GANBServer を YES にします。
 
-  o  NEC480 サーバーを作成するには: XF98NEC480Server を YES にします。
+  o  NEC480 サーバを作成するには: XF98NEC480Server を YES にします。
 
   o  NEC-CIRRUS/EPSON NKV/NKV2 server: XF98NKVNECServer を YES にしま
      す。
 
-  o  WAB-S サーバーを作成するには: XF98WABSServer を YES にします。
+  o  WAB-S サーバを作成するには: XF98WABSServer を YES にします。
 
-  o  WAB-EP サーバーを作成するには: XF98WABEPServer を YES にします。
+  o  WAB-EP サーバを作成するには: XF98WABEPServer を YES にします。
 
-  o  WSN-A2F サーバーを作成するには: XF98WSNAServer を YES にします。
+  o  WSN-A2F サーバを作成するには: XF98WSNAServer を YES にします。
 
-  o  Trident Cyber9320/9680 server: XF98TGUIServer を YES にします。
+  o  Trident Cyber9320/9680 サーバを作成するには: XF98TGUIServer を YES
+     にします。
 
-  o  EGC サーバーを作成するには: XF98EGCServer を YES にします。
+  o  EGC サーバを作成するには: XF98EGCServer を YES にします。
 
-  o  NEC S3 サーバーを作成するには: XF98NECS3Server を YES にします。
+  o  NEC S3 サーバを作成するには: XF98NECS3Server を YES にします。
 
-  o  S3 PW/PCSKB サーバーを作成するには: XF98PWSKBServer を YES にしま
-     す。
+  o  S3 PW/PCSKB サーバを作成するには: XF98PWSKBServer を YES にします。
 
-  o  S3 PW/LB サーバーを作成するには: XF98PWLBServer を YES にします。
+  o  S3 PW/LB サーバを作成するには: XF98PWLBServer を YES にします。
 
-  o  S3 GA-968 サーバーを作成するには: XF98GA968Server を YES にします。
+  o  S3 GA-968 サーバを作成するには: XF98GA968Server を YES にします。
 
-  o  Xnest サーバーを作成するには: XnestServer を YES にします。
+  o  Xnest サーバを作成するには: XnestServer を YES にします。
 
-  o  XF86SvgaDrivers  を SVGA サーバーに含めたいドライバの一覧に設定して
+  o  一つ以上の Xserver を作成する場合は、ServerToInstall の行のコメント
+     を取って標準のサーバにしたい Xserver の名称を設定してください。(つ
+     まり、そのサーバを X にシンボリックリンクします。)
+
+  o  XF86SvgaDrivers  を SVGA サーバに含めたいドライバの一覧に設定して下
+     さい。
+
+  o  XF86Vga16Drivers を 16 色 サーバに含めたいドライバの一覧に設定して
      下さい。
 
-  o  XF86Vga16Drivers を 16 色 サーバーに含めたいドライバの一覧に設定し
-     て下さい。
+  o  XF86Vga2Drivers を白黒 vga サーバに含めたいドライバの一覧に設定して
+     下さい。
 
-  o  XF86Vga2Drivers を白黒 vga サーバーに含めたいドライバの一覧に設定し
-     て下さい。
-
-  o  XF86MonoDrivers を白黒又は VGA16 サーバー (双頭のサーバーを作成する
-     とき)を含めたい非 VGA ドライバの一覧に設定して下さい。
+  o  XF86MonoDrivers を白黒又は VGA16 サーバ (双頭のサーバを作成すると
+     き)を含めたい非 VGA ドライバの一覧に設定して下さい。
 
   o  注意: ドライバの順番はドライバの検出の順番を決定します。 `汎用'
      (`generic') ドライバは常に検出に成功するので Mono と VGA16 と SVGA
-     サーバーに含ませるドライバの最後に指定して下さい。
+     サーバに含ませるドライバの最後に指定して下さい。
 
   o  動的ロード可能モジュール(例えば PEX, XIE)を使用するには:
      ExtensionsDynamicModules を YES にします。
@@ -101,6 +104,8 @@
 
   o  X イメージ機能拡張を組み込むには: BuildXIE を YES にします。
 
+  o  GLX 機能拡張を組み込むには: BuildGlxExt を YES にします。
+
   o  二重バッファ機能拡張をはずす時は: BuildDBE を NO にします。
 
   o  記録機能拡張をはずす時は: BuildRECORD を NO にします。
@@ -108,18 +113,13 @@
   o  スクリーンセーバー機能拡張をはずす時は: BuildScreenSaverExt to NO
      にします。
 
-  o  Although it is possible to disable other extensions through this
-     mechanism, doing so is not recommended because savings in server
-     size are not appreciable, or the resulting server might even be
-     crippled in some way.
-
   o  その他の機能拡張をこの機構を使ってはずすことは出来ますが、サーバの
      大きさが目に見えるほど節約出来ない、またはいくつかの点で不便になる
      のでお勧めしません。
 
-  4. 標準配付物に含まれないドライバを組み込む場合は、drivers/vga256 (白
-     黒サーバーの VGA2 の場合は drivers/vga2、16 色サーバーの場合は
-     drivers/vga16、非 VGA の 白黒と 16 色サーバーの場合は drivers/mono)
+  4. 標準配付物に含まれないドライバを組み込む場合は、 drivers/vga256 (白
+     黒サーバの VGA2 の場合は drivers/vga2、16 色サーバの場合は
+     drivers/vga16、非 VGA の 白黒と 16 色サーバの場合は drivers/mono)
      のディレクトリを作成して、そのディレクトリの下にソースファイルか .o
      ファイルのいずれかと適切な Imakefile をコピーしましょう。そのディレ
      クトリの名称は該当するドライバの名称と一致させて下さい（より詳しく
@@ -129,41 +129,37 @@
 
        ./mkmf
 
-  6. `make' を実行すると構成定義したサーバーを結合します。
+  6. `make' を実行すると構成定義したサーバを結合します。
 
-  7. `make install' を実行すると新しいサーバーを組み込みます。
+  7. `make install' を実行すると新しいサーバを組み込みます。
 
   8. `make clean' を実行するとこの手順で作成したファイルを削除します。
 
-  9. xf86site.def ファイルを編集し、作成するサーバーかサーバーに含ませる
-     ドライバの選択を変更して、上記の手順を繰り返して下さ
-     い。xf86site.def ファイルにて X サーバー機能拡張の選択を変更した場
-     合は、`./mkmf' のかわりに `make Makefile' を実行すれば十分でしょ
-     う。
+  9. xf86site.def ファイルを編集し、作成するサーバかサーバに含ませるドラ
+     イバの選択を変更して、上記の手順を繰り返して下さい。
+     xf86site.defファイルにて X サーバ機能拡張の選択を変更した場合
+     は、`./mkmf' のかわりに `make Makefile' を実行すれば十分でしょう。
 
   10.
-     X サーバーに `-showconfig' オプションを付けて実行すれば X サーバー
-     に含まれているドライバを調べることが出来ます。どんな機能拡張が含ま
-     れているかを確認するには、X サーバーを起動し、`xdpyinfo' を実行して
-     下さい。
+     X サーバに `-showconfig' オプションを付けて実行すれば X サーバに含
+     まれているドライバを調べることが出来ます。どんな機能拡張が含まれて
+     いるかを確認するには、X サーバを起動し、 `xdpyinfo' を実行して下さ
+     い。
 
-  XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/LinkKit.sgml,v 3.11 1996/10/16 14:41:12 dawes Exp
-  $XConsortium: LinkKit.sgml /main/4 1995/11/12 19:59:36 kaleb $
+  $XConsortium: LinkKit.sgml /main/8 1996/10/27 11:05:58 kaleb $
 
   ______________________________________________________________________
 
   このファイルは xc/programs/Xserver/hw/xfree86/doc/sgml/LinkKit.sgml,v
-  3.11 1996/10/16 14:41:12   を、岡本  一幸 ( Kazuyuki Okamoto
+  3.14.2.1 1997/05/17 12:03:29 を、岡本  一幸 ( Kazuyuki Okamoto
   <ikko-@pacific.rim.or.jp> <mailto:ikko-@pacific.rim.or.jp> ) が
-  XFree86 3.2 を日本でインストールする人向けに和訳したものです。ここがお
+  XFree86 3.3 を日本でインストールする人向けに和訳したものです。ここがお
   かしいとか、ここはこうしたほうがいいといったご意見がありましたら、電子
   メールでお知らせ下さい。原文の著作権は XFree86 プロジェクト社にありま
   す。この和訳の著作権は XFree86 プロジェクト社と岡本 一幸にありますが、
   この和訳の不具合は私に、電子メールで送って下さい。
 
-  XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/Japanese/LinkKit.sgml,v 3.12 1996/12/09 07:52:23 dawes Exp
+  $XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/LinkKit,v 3.1.2.1 1997/07/31 06:05:48 dawes Exp $
 
   ______________________________________________________________________
-
-  [EOF]
 

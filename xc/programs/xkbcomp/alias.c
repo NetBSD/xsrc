@@ -1,4 +1,4 @@
-/* $XConsortium: alias.c /main/7 1996/12/27 21:16:10 kaleb $ */
+/* $TOG: alias.c /main/8 1997/06/10 06:53:55 kaleb $ */
 /************************************************************
  Copyright (c) 1995 by Silicon Graphics Computer Systems, Inc.
 
@@ -214,7 +214,7 @@ Status		status;
 	unsigned int kc;
 
 	lname= KeyNameToLong(info->real);
-	if (!FindNamedKey(xkb,lname,&kc,False,CreateKeyNames(xkb))) {
+	if (!FindNamedKey(xkb,lname,&kc,False,CreateKeyNames(xkb),0)) {
 	    if (warningLevel>4) {
 		WARN2("Attempt to alias %s to non-existent key %s\n",
 					XkbKeyNameText(info->alias,XkbMessage),
@@ -225,7 +225,7 @@ Status		status;
 	    continue;
 	}
 	lname= KeyNameToLong(info->alias);
-	if (FindNamedKey(xkb,lname,&kc,False,False)) {
+	if (FindNamedKey(xkb,lname,&kc,False,False,0)) {
 	    if (warningLevel>4) {
 		WARN("Attempt to create alias with the name of a real key\n");
 		ACTION2("Alias \"%s = %s\" ignored\n",

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/s3v/regs3v.h,v 1.1.2.1 1997/05/14 07:52:57 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/s3v/regs3v.h,v 1.1.2.2 1997/06/29 08:43:37 dawes Exp $ */
 
 /* regs3v.h
  *
@@ -291,22 +291,22 @@
 #define	ROP_1				(0xff<<17)
 
 /* ROP  ->  (ROP & P) | (D & ~P) */
-#define	ROP_0PaDPnao    /* DPna     */	(0x0a<<17)
-#define	ROP_DSonPaDPnao /* PDSPaox  */	(0x1a<<17)
-#define	ROP_DSnaPaDPnao /* DPSana   */	(0x2a<<17)
-#define	ROP_SnPaDPnao   /* SPDSxox  */	(0x3a<<17)
-#define	ROP_SDnaPaDPnao /* DPSDoax  */	(0x4a<<17)
-#define	ROP_DnPaDPnao   /* DPx      */	(0x5a<<17)
-#define	ROP_DSxPaDPnao  /* DPSax    */	(0x6a<<17)
-#define	ROP_DSanPaDPnao /* DPSDnoax */	(0x7a<<17)
-#define	ROP_DSaPaDPnao  /* DSPnoa   */	(0x8a<<17)
-#define	ROP_DSxnPaDPnao /* DPSnax   */	(0x9a<<17)
-#define	ROP_DPaDPnao    /* D        */	(0xaa<<17)
-#define	ROP_DSnoPaDPnao /* DPSnao   */	(0xba<<17)
-#define	ROP_SPaDPnao    /* DPSDxax  */	(0xca<<17)
-#define	ROP_SDnoPaDPnao /* DPSDanax */	(0xda<<17)
-#define	ROP_DSoPaDPnao  /* DPSao    */  (0xea<<17)
-#define	ROP_1PaDPnao    /* DPo      */	(0xfa<<17)
+#define	ROP_0_PaDPnao    /* DPna     */	(0x0a<<17)
+#define	ROP_DSon_PaDPnao /* PDSPaox  */	(0x1a<<17)
+#define	ROP_DSna_PaDPnao /* DPSana   */	(0x2a<<17)
+#define	ROP_Sn_PaDPnao   /* SPDSxox  */	(0x3a<<17)
+#define	ROP_SDna_PaDPnao /* DPSDoax  */	(0x4a<<17)
+#define	ROP_Dn_PaDPnao   /* DPx      */	(0x5a<<17)
+#define	ROP_DSx_PaDPnao  /* DPSax    */	(0x6a<<17)
+#define	ROP_DSan_PaDPnao /* DPSDnoax */	(0x7a<<17)
+#define	ROP_DSa_PaDPnao  /* DSPnoa   */	(0x8a<<17)
+#define	ROP_DSxn_PaDPnao /* DPSnax   */	(0x9a<<17)
+#define	ROP_D_PaDPnao    /* D        */	(0xaa<<17)
+#define	ROP_DSno_PaDPnao /* DPSnao   */	(0xba<<17)
+#define	ROP_S_PaDPnao    /* DPSDxax  */	(0xca<<17)
+#define	ROP_SDno_PaDPnao /* DPSDanax */	(0xda<<17)
+#define	ROP_DSo_PaDPnao  /* DPSao    */ (0xea<<17)
+#define	ROP_1_PaDPnao    /* DPo      */	(0xfa<<17)
 
 
 /* S -> P */
@@ -338,6 +338,25 @@
 #define ROP_SPDSxax			(0xac<<17)
 #define ROP_SDPnoa			(0x8c<<17)
 #define ROP_SDPao			(0xec<<17)
+
+/* ROP_sp -> (ROP_sp & S) | (D & ~S) */
+#define	ROP_0_SaDSnao    /* DSna     */	(0x22<<17)
+#define	ROP_DPa_SaDSnao  /* DPSnoa   */	(0xa2<<17)
+#define	ROP_PDna_SaDSnao /* DSPDoax  */	(0x62<<17)
+#define	ROP_P_SaDSnao    /* DSPDxax  */	(0xe2<<17)
+#define	ROP_DPna_SaDSnao /* DPSana   */	(0x2a<<17)
+#define	ROP_D_SaDSnao    /* D        */	(0xaa<<17)
+#define	ROP_DPx_SaDSnao  /* DPSax    */	(0x6a<<17)
+#define	ROP_DPo_SaDSnao  /* DPSao    */	(0xea<<17)
+#define	ROP_DPon_SaDSnao /* SDPSaox  */	(0x26<<17)
+#define	ROP_DPxn_SaDSnao /* DSPnax   */	(0xa6<<17)
+#define	ROP_Dn_SaDSnao   /* DSx      */	(0x66<<17)
+#define	ROP_PDno_SaDSnao /* SDPSanax */	(0xe6<<17)
+#define	ROP_Pn_SaDSnao   /* PSDPxox  */	(0x2e<<17)
+#define	ROP_DPno_SaDSnao /* DSPnao   */	(0xae<<17)
+#define	ROP_DPan_SaDSnao /* SDPSnoax */	(0x6e<<17)
+#define	ROP_1_SaDSnao    /* DSo      */	(0xee<<17)
+
 
 typedef struct {
    unsigned char r, g, b;

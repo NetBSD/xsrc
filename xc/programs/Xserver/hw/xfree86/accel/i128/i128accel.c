@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/i128/i128accel.c,v 3.4.2.1 1997/05/23 12:19:38 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/i128/i128accel.c,v 3.4.2.4 1997/07/31 06:05:46 dawes Exp $ */
 
 /*
  * Copyright 1997 by Robin Cutshaw <robin@XFree86.Org>
@@ -36,6 +36,7 @@
 extern struct i128io i128io;
 extern struct i128mem i128mem;
 extern int i128DisplayWidth;
+extern int i128DisplayOffset;
 extern int i128DeviceType;
 static volatile CARD32 *eng_a;
 static volatile CARD32 *eng_b;
@@ -109,7 +110,7 @@ i128EngineDone()
 
 	do {
 		flow = eng_a[FLOW];
-	} while (flow & (FLOW_DEB | FLOW_MCB));
+	} while (flow & (FLOW_DEB | FLOW_MCB | FLOW_PRV));
 }
 
 void
@@ -145,8 +146,8 @@ i128SetupForScreenToScreenCopy(int xdir, int ydir, int rop, unsigned planemask,
 	}
 
 	eng_a[DE_PGE] = 0x00;
-	eng_a[DE_SORG] = 0x00;
-	eng_a[DE_DORG] = 0x00;
+	eng_a[DE_SORG] = i128DisplayOffset;
+	eng_a[DE_DORG] = i128DisplayOffset;
 	eng_a[DE_MSRC] = 0x00;
 	eng_a[DE_WKEY] = 0x00;
 	eng_a[DE_SPTCH] = i128mem.rbase_g[DB_PTCH];
@@ -268,6 +269,8 @@ i128AccelInit()
 
 	xf86AccelInfoRec.PixmapCacheMemoryEnd =
 		i128InfoRec.videoRam * 1024-1024;
+
+	i128InfoRec.displayWidth = i128DisplayWidth;
 	
 	eng_a = i128mem.rbase_a;
 	eng_b = i128mem.rbase_b;

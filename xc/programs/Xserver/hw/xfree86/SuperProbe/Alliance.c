@@ -25,7 +25,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/Alliance.c,v 3.0 1996/12/09 12:03:10 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/Alliance.c,v 3.0.2.1 1997/07/07 04:10:59 dawes Exp $ */
 
 #include "Probe.h"
 
@@ -49,7 +49,8 @@ Bool Probe_Alliance(Chipset)
 int *Chipset;
 {
         Bool result = FALSE;
-	Byte chip, old, old1, val;
+	Byte idx;
+	char chipid[9];
 	int i = 0;
 
 	if (!NoPCI)
@@ -69,7 +70,7 @@ int *Chipset;
 				*Chipset = CHIP_ALSCAT24;
 				break;
 			default:
-				Chip_data = chip;
+				Chip_data = pcrp->_device;
 				*Chipset = CHIP_ALSC_UNK;
 				break;
 			}
@@ -80,7 +81,23 @@ int *Chipset;
 	    }
 	}
 
-        return(FALSE);
+	EnableIOPorts(NUMPORTS, Ports);
+	for (idx = 0x11; idx < 0x19; idx++) {
+		chipid[idx-0x11] = rdinx(SEQ_IDX, idx);
+	}
+	DisableIOPorts(NUMPORTS, Ports);
+
+	chipid[7] = '\0';
+	if ( !strcmp(chipid, "Pro6410") )
+		*Chipset = CHIP_ALSC6410;
+	else if ( !strcmp(chipid, "Pro6422") )
+		*Chipset = CHIP_ALSC6422;
+	else if ( !strcmp(chipid, "Pro6424") )
+		*Chipset = CHIP_ALSCAT24;
+	else
+		return(FALSE);
+
+	return(TRUE);
 }
 
 

@@ -1,4 +1,4 @@
-/* $XConsortium: osstruct.h,v 1.4 94/04/17 19:56:00 dpw Exp $ */
+/* $TOG: osstruct.h /main/5 1997/06/06 13:36:42 barstow $ */
 /*
 Copyright (c) 1987  X Consortium
 
@@ -55,7 +55,7 @@ in this Software without prior written authorization from the X Consortium.
 
 typedef struct _alt_server {
     char        subset;
-    char        namelen;
+    short       namelen;
     char       *name;
 }           AlternateServerRec;
 

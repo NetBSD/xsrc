@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86_Mouse.c,v 3.21.2.2 1997/05/12 12:52:30 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86_Mouse.c,v 3.21.2.3 1997/07/27 02:41:13 dawes Exp $ */
 /*
  *
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
@@ -337,7 +337,7 @@ xf86MouseProtocol(device, rBuf, nBytes)
      *         Microsoft...)
      */
     if (pBufP != 0 &&
-#if !defined(__NetBSD__) && !defined(__OpenBSD__)
+#if !defined(__NetBSD__)
 	mouse->mseType != P_PS2 &&
 #endif
 	((rBuf[i] & proto[mouse->mseType][2]) != proto[mouse->mseType][3]
@@ -449,7 +449,7 @@ xf86MouseProtocol(device, rBuf, nBytes)
       break;
       
     case P_BM:              /* BusMouse */
-#if defined(__NetBSD__) || defined(__OpenBSD__)
+#if defined(__NetBSD__)
     case P_PS2:
 #endif
       buttons = (~pBuf[0]) & 0x07;
@@ -457,7 +457,7 @@ xf86MouseProtocol(device, rBuf, nBytes)
       dy = - (char)pBuf[2];
       break;
 
-#if !defined(__NetBSD__) && !defined(__OpenBSD__)
+#if !defined(__NetBSD__)
     case P_PS2:		    /* PS/2 mouse */
       buttons = (pBuf[0] & 0x04) >> 1 |       /* Middle */
 	        (pBuf[0] & 0x02) >> 1 |       /* Right */

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3_virge/s3init.c,v 3.15.2.8 1997/05/24 14:31:32 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3_virge/s3init.c,v 3.15.2.9 1997/07/19 04:59:27 dawes Exp $ */
 /*
  * Written by Jake Richter Copyright (c) 1989, 1990 Panacea Inc.,
  * Londonderry, NH - All Rights Reserved
@@ -617,15 +617,13 @@ s3Init(mode)
 
       outb(vgaCRReg, cr33);
 
-      if (S3_ViRGE_VX_SERIES(s3ChipId)) {
-	 outb(vgaCRIndex, 0x55);
-	 tmp = inb(vgaCRReg) & ~0x40;
-	 if (s3DAC8Bit) {
-	    tmp |= 0x40;
-	    pixmux |= 0x02;  /* enable "gamma correction" */
-	 }
-	 outb(vgaCRReg, tmp);
+      outb(vgaCRIndex, 0x55);
+      tmp = inb(vgaCRReg) & ~0x50;
+      if (S3_ViRGE_VX_SERIES(s3ChipId) && s3DAC8Bit) {
+	 tmp |= 0x40;
+	 pixmux |= 0x02;  /* enable "gamma correction" */
       }
+      outb(vgaCRReg, tmp);
 
       outb(vgaCRIndex, 0x67);	
       		/* KJB - temp */

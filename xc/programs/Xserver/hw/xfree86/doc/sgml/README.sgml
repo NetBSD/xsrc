@@ -3,25 +3,26 @@
 
  <article>
 
- <title>README for XFree86&tm; 3.3
+ <title>README for XFree86&tm; 3.3.1
  <author>The XFree86 Project, Inc
- <date>1 June 1997
+ <date>26 July 1997
 
 
 <abstract>
 
 XFree86 is a port of X11R6.3 that supports several Unix and Unix-like
-operating systems on Intel and other platforms.
-This release consists
-of new features and performance improvements as well as many bug fixes.
-The release is available as source patches against the X Consortium
-X11R6.3 code, as well as binary distributions for many architectures.
+operating systems on Intel and other platforms.  This release is a
+maintenance release, fixing bugs found in XFree86 3.3.  It also includes
+the latest public patch for X11R6.3 (patch 2).  The release is available
+as source patches against the X Consortium X11R6.3 code and the XFree86
+3.3 release.  Binary distributions for many architectures are also
+available, including a binary upgrade for XFree86 3.3.
 
 </abstract>
 
 <toc>
 
-<sect>What's new in XFree86 3.3
+<sect>What's new in XFree86 3.3.1
 <p>
 
 For a summary of new features in this release, please refer to the
@@ -99,7 +100,7 @@ Note: Not all systems listed here have been tested with the current release.
 <sect> Supported video-card chip-sets
 <p>
 
-At this time, XFree86 3.3 supports the following chipsets:
+At this time, XFree86 3.3.1 supports the following chipsets:
 
   <DESCRIP>
     <tag/Ark Logic/
@@ -115,13 +116,13 @@ At this time, XFree86 3.3 supports the following chipsets:
 	ALG2101, ALG2228, ALG2301, ALG2302, ALG2308, ALG2401
     <tag/Chips &amp; Technologies /
 	65520, 65530, 65540, 65545, 65520, 65530, 65540,
-	65545, 65546, 65548, 65550, 65554
+	65545, 65546, 65548, 65550, 65554, 65555, 68554
     <tag/Cirrus Logic /
 	CLGD5420, CLGD5422, CLGD5424, CLGD5426, CLGD5428,
 	CLGD5429, CLGD5430, CLGD5434, CLGD5436, CLGD5440, CLGD5446, CLGD5462,
 	CLGD5464, CLGD5465, CLGD5480, CLGD6205, CLGD6215,
 	CLGD6225, CLGD6235, CLGD6410, CLGD6412, CLGD6420,
-	CLGD6440, CLGD7541, CLGD7543, CLGD7548, CLGD7555
+	CLGD6440, CLGD7541(*), CLGD7543(*), CLGD7548(*), CLGD7555(*)
     <tag/Digital Equipment Corporation /
 	TGA
     <tag/Compaq /
@@ -135,9 +136,9 @@ At this time, XFree86 3.3 supports the following chipsets:
     <tag/Matrox/
 	MGA2064W (Millennium), MGA1064SG (Mystique)
     <tag/MX /
-	MX68000, MX680010 
+	MX68000(*), MX680010(*)
     <tag/NCR /
-	77C22, 77C22E, 77C22E+ 
+	77C22(*), 77C22E(*), 77C22E+(*)
     <tag/Number Nine/
 	I128 (series I and II)
     <tag>NVidia/SGS Thomson </tag>
@@ -145,10 +146,10 @@ At this time, XFree86 3.3 supports the following chipsets:
     <tag/OAK /
 	OTI067, OTI077, OTI087
     <tag/RealTek/
-	RTG3106
+	RTG3106(*)
     <tag/S3 /
 	86C911, 86C924, 86C801, 86C805, 86C805i, 86C928, 86C864, 86C964,
-	86C732, 86C764, 86C765, 86C775, 86C868, 86C968,
+	86C732, 86C764, 86C765, 86C767, 86C775, 86C868, 86C968,
 	86C325, 86C375, 86C385, 86C988, 86CM65
     <tag/SiS/
 	86C201, 86C202, 86C205
@@ -156,12 +157,12 @@ At this time, XFree86 3.3 supports the following chipsets:
 	ET3000, ET4000AX, ET4000/W32, ET4000/W32i, ET4000/W32p, ET6000 
     <tag/Trident /
 	TVGA8800CS, TVGA8900B, TVGA8900C, TVGA8900CL, TVGA9000,
-	TVGA9000i, TVGA9100B, TVGA9200CXR, TVGA9320, TVGA9400CXi,
+	TVGA9000i, TVGA9100B, TVGA9200CXR, TVGA9320(*), TVGA9400CXi,
  	TVGA9420, TGUI9420DGi, TGUI9430DGi, TGUI9440AGi, TGUI9660XGi,
-	TGUI9680, ProVidia 9682, ProVidia 9685, ProVidia 9692, Cyber 9382,
-	Cyber 9385
+	TGUI9680, ProVidia 9682, ProVidia 9685, ProVidia 9692, Cyber 9382(*),
+	Cyber 9385(*)
     <tag>Video 7/Headland Technologies </tag>
-	HT216-32 
+	HT216-32(*)
     <tag/Weitek /
 	P9000
     <tag>Western Digital/Paradise </tag>
@@ -170,6 +171,9 @@ At this time, XFree86 3.3 supports the following chipsets:
 	WD90C00, WD90C10, WD90C11, WD90C24, WD90C24A, WD90C30, WD90C31,
 	WD90C33
  </DESCRIP>
+
+(*) Note, chips marked in this way have either limited support or
+the drivers for them are not actively maintained.
 
 All of the above are supported in both 256 color, and some are supported
 in mono and 16 color modes, and some are supported an higher color depths.
@@ -665,7 +669,7 @@ XFree86 support was integrated into the base X11R6 distribution by:
 <itemize>
        <item>Frederic Lepied <it>&lt;lepied@XFree86.Org&gt;</it> (XInput integration, Wacom tablet, Joystick and extended mouse devices, xsetpointer and xsetmode clients)
        <item>Patrick Lecoanet <it>&lt;lecoanet@cena.dgac.fr&gt;</it> (Elographics touchscreen device)
-       <item>Steven Lang <it>&lt;tiger@ecis.com&gt;</it> (Summagraphics tablet device)
+       <item>Steven Lang <it>&lt;tiger@tyger.org&gt;</it> (Summagraphics tablet device)
 </itemize>
 
 <tag/Other contributors:  /
@@ -893,8 +897,10 @@ information, contact The XFree86 Project, Inc, at
 <sect>Source and binary archive sites
 <p>
 
-Source patches are available to upgrade X11R6.3 PL1 from the X Consortium
-to XFree86 3.3.  Binaries for many OSs are also available.
+Source patches are available to upgrade X11R6.3 PL2 from the X Consortium
+(now The Open Group)
+to XFree86 3.3.1.  Binaries for many OSs are also available.  The distribution
+is available from:
 
 <itemize>
 <item><htmlurl url="ftp://ftp.XFree86.org/pub/XFree86"
@@ -905,6 +911,9 @@ and the following mirror sites:
 <itemize>
 <item>North America:  
 <itemize>
+<item><htmlurl url="ftp://ftp2.XFree86.org/pub/XFree86"
+	name="ftp://ftp2.XFree86.org/pub/XFree86">
+	(source and binaries)
 <!--
 <item><htmlurl url="ftp://ftp.bsdi.com/contrib/X11/XFree86" 
 	name="ftp://ftp.bsdi.com/contrib/X11/XFree86">
@@ -914,16 +923,20 @@ and the following mirror sites:
 <item><htmlurl url="ftp://XFree86.cdrom.com/pub/XFree86" 
 	name="ftp://XFree86.cdrom.com/pub/XFree86">
 	(source and binaries)
-<item><htmlurl url="ftp://ftp.redhat.com/pub/mirrors/ftp.xfree86.org" 
-	name="ftp://ftp.redhat.com/pub/mirrors/ftp.xfree86.org">
-	(source and Linux binaries)
 -->
-<item><htmlurl url="ftp://ftp.rge.com/pub/X/XFree86" 
-	name="ftp://ftp.rge.com/pub/X/XFree86">
-	(source and binaries)
+<!--
 <item><htmlurl url="ftp://ftp.gw.com/pub/unix/XFree86" 
 	name="ftp://ftp.gw.com/pub/unix/XFree86">
 	(source and NetBSD binaries)
+-->
+<item><htmlurl url="ftp://ftp.infomagic.com/pub/mirrors/XFree86-current" 
+	name="ftp://ftp.infomagic.com/pub/mirrors/XFree86-current">
+	(source and binaries)
+<item><htmlurl url="ftp://ftp.rge.com/pub/X/XFree86" 
+	name="ftp://ftp.rge.com/pub/X/XFree86"> and
+      <htmlurl url="http://www.rge.com/pub/X/XFree86" 
+	name="http://www.rge.com/pub/X/XFree86">
+	(source and binaries)
 <item><htmlurl url="ftp://ftp.varesearch.com/pub/mirrors/xfree86" 
 	name="ftp://ftp.varesearch.com/pub/mirrors/xfree86">
 	(source and binaries)
@@ -932,48 +945,25 @@ and the following mirror sites:
 	name="ftp://ftp.iastate.edu/pub/XFree86/XFree86-3.3">
 	(source patches and NetBSD binaries)<newline>
 	(Also via AFS: /afs/iastate.edu/public/ftp/pub/XFree86/XFree86-3.3)
-<item><htmlurl url="ftp://tsx-11.mit.edu/pub/linux/packages/X11/XFree86-3.3" 
-	name="ftp://tsx-11.mit.edu/pub/linux/packages/X11/XFree86-3.3">
-	(Linux binaries and source)
--->
-<!--
-<item><htmlurl url="ftp://ref.tfs.com/pub/mirrors/XFree86" 
-	name="ftp://ref.tfs.com/pub/mirrors/XFree86">
-	(source patches and FreeBSD binaries)
--->
-<!--
-<item><htmlurl url="ftp://ftp.eecs.umich.edu/BSD/XFree86" 
-	name="ftp://ftp.eecs.umich.edu/BSD/XFree86">
-	(source and binaries)
 -->
 <item><htmlurl url="ftp://ftp.cs.umn.edu/pub/XFree86" 
 	name="ftp://ftp.cs.umn.edu/pub/XFree86">
 	(source and binaries)
-<!--
-<item><htmlurl url="ftp://sunsite.unc.edu/pub/X11/XFree86" 
-	name="ftp://sunsite.unc.edu/pub/X11/XFree86">
-	(source patches and binaries)
-<item><htmlurl url="ftp://abode.ccd.bnl.gov/pub/XFree86" 
-	name="ftp://abode.ccd.bnl.gov/pub/XFree86">
-	(Solaris, SVR4, SCO binaries)
--->
-<item><htmlurl url="ftp://ftp.thebandit.com/pub/XFree86" 
-	name="ftp://ftp.thebandit.com/pub/XFree86">
-	(Linux, NetBSD and FreeBSD binaries)
+<item><htmlurl url="ftp://ftp.kernel.org/pub/mirrors/xfree86" 
+	name="ftp://ftp.kernel.org/pub/mirrors/xfree86">
+	(source and binaries)
 </itemize> 
 
 <item>Europe:  
 <itemize>
-<!--
 <item><htmlurl url="ftp://fvkma.tu-graz.ac.at/pub/XFree86" 
 	name="ftp://fvkma.tu-graz.ac.at/pub/XFree86">
 	(source and binaries)
--->
-<!--
-<item><htmlurl url="ftp://ftp.switch.ch/mirror/XFree86" 
-	name="ftp://ftp.switch.ch/mirror/XFree86">
+<item><htmlurl url="ftp://gd.tuwien.ac.at/hci/X11/XFree86" 
+	name="ftp://gd.tuwien.ac.at/hci/X11/XFree86"> and
+      <htmlurl url="http://gd.tuwien.ac.at/hci/X11/XFree86" 
+	name="http://gd.tuwien.ac.at/hci/X11/XFree86">
 	(source and binaries)
--->
 <!--
 <item><htmlurl url="ftp://sunsite.mff.cuni.cz/X11/XFree86"
 	name="ftp://sunsite.mff.cuni.cz/X11/XFree86">
@@ -985,35 +975,27 @@ and the following mirror sites:
 <item><htmlurl url="ftp://ftp.gwdg.de/pub/xfree86/XFree86"
 	name="ftp://ftp.gwdg.de/pub/xfree86/XFree86">
 	(source and binaries)
-<!--
-<item><htmlurl url="ftp://ftp.uni-erlangen.de/pub/Linux/MIRROR.xfree86" 
+<item><htmlurl url="ftp://ftp.mpi-sb.mpg.de/pub/X/mirror/ftp.xfree86.org"
+	name="ftp://ftp.mpi-sb.mpg.de/pub/X/mirror/ftp.xfree86.org">
+	(source and binaries)
+<item><htmlurl url="ftp://ftp.cs.tu-berlin.de/pub/X/XFree86"
+	name="ftp://ftp.cs.tu-berlin.de/pub/X/XFree86">
+	(source and binaries)
+<item><htmlurl url="ftp://ftp.uni-erlangen.de/pub/Linux/MIRROR.xfree86"
 	name="ftp://ftp.uni-erlangen.de/pub/Linux/MIRROR.xfree86">
-	(source patches and Linux binaries)
-<item><htmlurl url="ftp://ftp.uni-stuttgart.de/pub/X11/Xfree86" 
+	(source and Linux binaries)
+<item><htmlurl url="ftp://ftp.uni-stuttgart.de/pub/X11/Xfree86"
 	name="ftp://ftp.uni-stuttgart.de/pub/X11/Xfree86">
 	(source and binaries)
--->
-<item><htmlurl url="ftp://ftp.funet.fi/pub/X11/XFree86" 
+<item><htmlurl url="ftp://ftp.funet.fi/pub/X11/XFree86"
 	name="ftp://ftp.funet.fi/pub/X11/XFree86">
 	(source and binaries)
-<!--
-<item><htmlurl url="ftp://ftp.calvacom.fr/pub/unix/X/XFree86" 
-	name="ftp://ftp.calvacom.fr/pub/unix/X/XFree86">
+<item><htmlurl url="ftp://ftp.ibp.fr/pub/X11/XFree86"
+	name="ftp://ftp.ibp.fr/pub/X11/XFree86">
 	(source and binaries)
--->
-<item><htmlurl url="ftp://ftp.ibp.fr/pub/X11/XFree86/XFree86" 
-	name="ftp://ftp.ibp.fr/pub/X11/XFree86/XFree86">
+<item><htmlurl url="ftp://ftp.unina.it/pub/XFree86"
+	name="ftp://ftp.unina.it/pub/XFree86">
 	(source and binaries)
-<!--
-<item><htmlurl url="ftp://ftp.laas.fr/pub/ii/NetBSD/XFree86" 
-	name="ftp://ftp.laas.fr/pub/ii/NetBSD/XFree86">
-	(NetBSD binaries only)
--->
-<!--
-<item><htmlurl url="ftp://ftp.unipi.it/pub/mirrors/XFree86-3.3"
-	name="ftp://ftp.unipi.it/pub/mirrors/XFree86-3.3">
-	(source and binaries)
--->
 <item><htmlurl url="ftp://ftp.pvv.unit.no/pub/XFree86" 
 	name="ftp://ftp.pvv.unit.no/pub/XFree86">
 	(source and binaries)
@@ -1031,9 +1013,6 @@ and the following mirror sites:
 <!--
 <item>Middle East:  
 <itemize>
-<item><htmlurl url="ftp://orgchem.weizmann.ac.il/pub/XFree86" 
-	name="ftp://orgchem.weizmann.ac.il/pub/XFree86">
-	(sources and FreeBSD binaries)
 </itemize>
 -->
 
@@ -1042,20 +1021,25 @@ and the following mirror sites:
 <item><htmlurl url="ftp://x.physics.usyd.edu.au/pub/XFree86" 
 	name="ftp://x.physics.usyd.edu.au/pub/XFree86">
 	(source and binaries)
+<item><htmlurl url="ftp://ftp.netlab.is.tsukuba.ac.jp/pub/XFree86" 
+	name="ftp://ftp.netlab.is.tsukuba.ac.jp/pub/XFree86">
+	(source and binaries)
 <item><htmlurl url="ftp://ftp.iij.ad.jp/pub/X/XFree86/XFree86" 
 	name="ftp://ftp.iij.ad.jp/pub/X/XFree86/XFree86">
 	(source and binaries)
-<!--
-<item><htmlurl url="ftp://ftp.sf.co.kr/pub/XFree86" 
-	name="ftp://ftp.sf.co.kr/pub/XFree86">
+<item><htmlurl url="ftp://ftp.kreonet.re.kr/pub/Linux/xfree86" 
+	name="ftp://ftp.kreonet.re.kr/pub/Linux/xfree86">
 	(source and binaries)
--->
+<!--
 <item><htmlurl url="ftp://ftp.hk.super.net/mirror/XFree86" 
 	name="ftp://ftp.hk.super.net/mirror/XFree86">
 	(source and binaries)
+-->
+<!--
 <item><htmlurl url="ftp://ftp.nectec.or.th/pub/mirrors/XFree86" 
 	name="ftp://ftp.nectec.or.th/pub/mirrors/XFree86">
 	(source patches and binaries)
+-->
 <!--
 <item><htmlurl url="ftp://ftp.edu.tw/X/XFree86" 
 	name="ftp://ftp.edu.tw/X/XFree86">
@@ -1072,13 +1056,13 @@ Refer to the <tt>README</tt> file under the specified directory for information 
 which files you need to get to build your distribution.
 -->
 
-Ensure that you are getting XFree86 3.3 - some of these sites may archive
+Ensure that you are getting XFree86 3.3.1 - some of these sites may archive
 older releases as well.  Check the <htmlurl name="RELNOTES"
 url="RELNOTES.html"> to find which files you need to take from the
 archive.
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/README.sgml,v 3.75.2.16 1997/06/01 12:33:34 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/README.sgml,v 3.75.2.24 1997/07/26 11:49:28 dawes Exp $
 
 
 

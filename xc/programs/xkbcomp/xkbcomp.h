@@ -1,5 +1,4 @@
-/* $XConsortium: xkbcomp.h /main/11 1996/08/31 12:16:02 kaleb $ */
-/* $XFree86: xc/programs/xkbcomp/xkbcomp.h,v 3.3 1996/12/23 07:11:41 dawes Exp $ */
+/* $TOG: xkbcomp.h /main/12 1997/06/10 06:54:19 kaleb $ */
 /************************************************************
  Copyright (c) 1994 by Silicon Graphics Computer Systems, Inc.
 
@@ -25,6 +24,7 @@
  THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
  ********************************************************/
+/* $XFree86: xc/programs/xkbcomp/xkbcomp.h,v 3.3.2.1 1997/06/22 10:32:41 dawes Exp $ */
 
 #ifndef XKBCOMP_H
 #define	XKBCOMP_H 1
@@ -106,6 +106,7 @@ typedef	struct _ParseCommon {
 #define	MergeAugment	1
 #define	MergeOverride	2
 #define	MergeReplace	3
+#define	MergeAltForm	4
 
 #define	AutoKeyNames	(1L <<  0)
 #define	CreateKeyNames(x)	((x)->flags&AutoKeyNames)

@@ -1,10 +1,11 @@
-<!doctype linuxdoc system>
+<!DOCTYPE linuxdoc PUBLIC "-//XFree86//DTD linuxdoc//EN">
 
 <article>
 <title> S3 チップセット使用者のための情報
 <author>XFree86 プロジェクト社
 <date>1996 年 1 月 15 日
 <trans> 岡本　一幸 Kazuyuki Okamoto &lt;ikko-@pacific.rim.or.jp&gt;
+<tdate>1997 年 7 月 31 日
 <toc>
 
 <sect> サポートしているハードウェア
@@ -18,8 +19,8 @@
 しかし、それらのチップセットを搭載している全てのビデオボードを十分サポート
 していません。動作確認をしたビデオボードのいくつかを次の一覧に示します。自
 分のカードに似たカードが一覧の中にある場合は、そのカードも動作する可能性が
-あります。
-[ 訳注：bpp (bit per pixel) は１ピクセル(画素) を表現するビット数 ]
+あります。<newline>
+&lsqb; 訳注：bpp (bit per pixel) は 1 ピクセル(画素) を表現するビット数 &rsqb;
 
 <descrip>
 <tag>S3 801/805, AT&amp;T 20C490 (または そっくりさん) RAMDAC</tag>
@@ -35,8 +36,8 @@
         `<tt/Ramdac "att20c490"/'と明記してください。
 
         本物の AT&amp;T 20C490 と 20C491 RAMDAC は <tt/"dac_8_bit"/ という
-		オプションを付けて動作します。（Winbond 82C490 のような）いくつかの
-		そっくりさんにはオプションを付けないでください。
+	オプションを付けて動作します。（Winbond 82C490 のような）いくつかの
+	そっくりさんにはオプションを付けないでください。
 
          Orchid Fahrenheit 1280+ VLB には `<tt/Option "nolinear"/' が必要です。
 
@@ -45,7 +46,7 @@
 <tag>S3 805 VLB, S3 GENDAC (RAMDAC + クロックシンセサイザー)</tag>
 	<itemize>
 	<item> MIRO 10SD (VLB と PCI 用が利用可能) 
-			全ての10SD が S3 GENDAC を搭載しているかどうかはわかりません。
+	全ての10SD が S3 GENDAC を搭載しているかどうかはわかりません。
 	</itemize>
 
 	8 と 15/16 bpp が利用可能です。次のように設定してください。
@@ -481,9 +482,93 @@
         Invert_VCLK "*" 0
  </verb></tscreen>
 	これを各々の Display サブセクションに明記してください。
+      <item>MIRO 80SV
+ <tscreen><verb>
+ s3RefClk   16
+ DACspeed  250
+ </verb></tscreen>
 	</itemize>
 
-	8/15/16/24 bpp が利用可能です。次のように設定してください。
+	8/15/16/24 bpp が利用可能です。
+
+<!--
+<tag>ELSA Winner 2000PRO/X-8 (S3 968, 8MB VRAM, 220MHz for 32bpp)</tag>
+
+ The server has only been tested for "revision C" of this card
+ (guess the serial number should start with C, but not sure since
+ mine says  Ser.No. A-0000.000.000;)  which have an IBM RGB528A
+ note the A;  can't be probed though)
+ depending on the mode line etc there may be some display distortions like:
+-->
+<tag>ELSA Winner 2000PRO/X-8 (S3 968, 8MB VRAM, 32bpp では 220MHz)</tag>
+
+このカードの "revision C" でのみテスト済みです。(シリアル番号が C で
+始まっていることから推測しましたが、筆者のものは A-0000.000.000;) です。
+この IBM RGB528A ノートのは A; だと思いますが mode 行のせいか画像が
+歪んでしまって探査できません。:
+
+ <enum>
+<!--
+    <item>many long horizontal lines/stripes
+    <item>pixel jitter or short horizontal stripes like snow all over the
+        screen
+    <item>Like 2., but only when doing graphics ops (like opaque move of
+        windows).
+    <item>additional pixel at the left display edge and some missing pixels
+        at the right edge.
+-->
+    <item>とても長い水平線/縞模様がでる。
+    <item>画面全域でピクセルがチカチカするか小さな縞模様がでる。
+    <item>上記と似た現象ですが、窓を移動させるなどグラフィック操作を
+	するときだけ現象が発生する。
+    <item>ディスプレイの左端にピクセルが表示されると同時に右端から
+	ピクセルが消えて行く。
+</enum>
+
+<!--
+ All of these problems can be fixed by small adjustments to the mode line
+ (best to run `xvidtune' and make these adjustments interactively).  E.g.,
+ for the first three problems, shift the display left or right a few steps.
+ For the last problem, increasing HSyncEnd (making the hsync pulse longer)
+ solves the problem.  In some cases, a significant increase in the sync
+ pulse width is needed, and rarely, it needs to be shortened (by decreasing
+ HSyncEnd).
+-->
+これらの問題は mode 行を少し調整すれば修正できます。
+( `xvidtune' を実行して対話形式で調整するのが最適です。)例えば、
+最初の 3 つの問題はディスプレイ画像を左か右に数ドットずらしてみましょう。
+最後の問題は、水平同期信号を大きくして HSyncEnd を増やすと修正できます。
+幾つかの場合では、特に大きな水平同期信号が必要で、稀に HSyncEnd を減ら
+して水平同期信号を短くする必要があります。
+
+<!--
+ In rare cases, InvertVCLK and/or EarlySC may need to be adjusted, followed
+ by an adjustment of BlankDelay (see the bottom line of xvidtune).
+
+ If you see any of these problems, please contact
+ <htmlurl url="mailto:koenig@XFree86.org" name="koenig@XFree86.org">, and
+ send details of:
+-->
+稀に、InvertVCLK 且つ/又は EarlySC を調整して、結果として BlankDelayの
+調整を行う必要があるかもしれません。
+
+この他の問題があった場合は、
+<htmlurl url="mailto:koenig@XFree86.org" name="koenig@XFree86.org">
+に連絡をとってください。その時は次の詳細を送付してください。:
+ <itemize>
+<!--
+    <item>Original mode showing the problem,
+    <item>Tuned/fixed mode, including all flags from the bottom line of
+        xvidtune,
+    <item>Colour depth used for this tuned mode line,
+    <item>Full server startup output.
+-->
+    <item>問題が発生した元々のモード。
+    <item>xvidtune が出力した最下行のすべてのフラグと調整/修正したモード。
+    <item>調整したモードが使用している色深度。
+    <item>サーバが出力した開始時のすべてのメッセージ。
+ </itemize>
+
 
 </descrip>
 
@@ -852,13 +937,19 @@ exit
 </code>
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/sgml/S3.sgml,v 3.2 1997/01/26 04:34:25 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/sgml/S3.sgml,v 3.2.2.1 1997/08/01 13:46:05 dawes Exp $
+
+
+
+
+
+$XConsortium: S3.sgml /main/14 1996/02/21 17:45:58 kaleb $
 </verb>
 <hrule>
-このファイルは xc/programs/Xserver/hw/xfree86/
-doc/sgml/S3.sgml,v 3.26 1995/07/30 04:15:58 を、岡本  一幸 
+このファイルは
+xc/programs/Xserver/hw/xfree86/ doc/sgml/S3.sgml,v 3.37.2.1 1997/05/27 06:22:23 を、岡本  一幸 
 ( Kazuyuki Okamoto <url url="mailto:ikko-@pacific.rim.or.jp"
-name="&lt;ikko-@pacific.rim.or.jp&gt;"> ) が XFree86 3.1.2 を
+name="&lt;ikko-@pacific.rim.or.jp&gt;"> ) が XFree86 3.3 を
 日本でインストールする人向けに和訳したものです。ここがおかしいとか、
 ここはこうしたほうがいいといったご意見がありましたら、電子メールで
 お知らせ下さい。

@@ -1,5 +1,4 @@
-/* $XConsortium: connection.c /main/155 1996/12/15 21:27:07 rws $ */
-/* $XFree86: xc/programs/Xserver/os/connection.c,v 3.25.2.1 1997/05/25 05:06:55 dawes Exp $ */
+/* $TOG: connection.c /main/156 1997/06/05 18:43:01 sekhar $ */
 /***********************************************************
 
 Copyright (c) 1987, 1989  X Consortium
@@ -47,6 +46,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
+/* $XFree86: xc/programs/Xserver/os/connection.c,v 3.25.2.2 1997/07/05 15:55:45 dawes Exp $ */
 /*****************************************************************
  *  Stuff to create connections --- OS dependent
  *
@@ -789,7 +789,8 @@ EstablishNewConnections(clientUnused, closure)
 	{
 	    oc = (OsCommPtr)(client->osPrivate);
 	    if (oc && (oc->conn_time != 0) &&
-		(connect_time - oc->conn_time) >= TimeOutValue)
+		(connect_time - oc->conn_time) >= TimeOutValue || 
+		client->noClientException != Success && !client->clientGone)
 		CloseDownClient(client);     
 	}
     }

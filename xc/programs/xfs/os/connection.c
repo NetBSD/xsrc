@@ -1,5 +1,4 @@
-/* $XConsortium: connection.c,v 1.32 95/04/05 19:58:18 kaleb Exp $ */
-/* $XFree86: xc/programs/xfs/os/connection.c,v 3.11 1997/01/18 07:02:46 dawes Exp $ */
+/* $TOG: connection.c /main/34 1997/06/06 11:35:03 barstow $ */
 /*
  * handles connections
  */
@@ -69,6 +68,7 @@ in this Software without prior written authorization from the X Consortium.
  * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
  * THIS SOFTWARE.
  */
+/* $XFree86: xc/programs/xfs/os/connection.c,v 3.11.2.2 1997/07/05 15:55:53 dawes Exp $ */
 
 #include	<X11/Xtrans.h>
 #include	"misc.h"
@@ -340,7 +340,9 @@ MakeNewConnections()
 	if ((client = clients[i]) != NullClient) {
 	    oc = (OsCommPtr) client->osPrivate;
 	    if (oc && (oc->conn_time != 0) &&
-		    (connect_time - oc->conn_time) >= TimeOutValue)
+		    (connect_time - oc->conn_time) >= TimeOutValue ||
+		    client->noClientException != FSSuccess &&
+		    client->clientGone != CLIENT_GONE)
 		CloseDownClient(client);
 	}
     }
@@ -453,8 +455,6 @@ XtransConnInfo trans_conn;
 		(void) _FontTransWrite(trans_conn,
 		(char *) pad, ((4 - (altlen & 3)) & 3));
 	}
-	if (num_alts)
-	    fsfree((char *) altservers);
     }
 }
 

@@ -1,4 +1,4 @@
-/* $XConsortium: charinfo.c,v 1.15 94/04/17 19:56:12 gildea Exp $ */
+/* $TOG: charinfo.c /main/16 1997/06/03 19:59:02 barstow $ */
 /*
  
 Copyright (c) 1990, 1991  X Consortium
@@ -362,12 +362,10 @@ packGlyphs (client, pfont, format, flags, num_ranges, range, tsize, num_glyphs,
 	    inkc = *inkChars++;
     	l->position = size;
 	/*
-	 * Repad even characters with no bits (bitc->bits == NULL).
-	 * When X server requests all characters to be repadded to
-	 * charcell size (because it thinks the font is TE) it assumes
-	 * the FS will do it.
-	 */
-    	if (bitc) {
+         * Do not repad characters with no bits except for those
+         * with non-zero width.
+         */
+        if (bitc && (bitc->bits || bitc->metrics.characterWidth)) {
 	    if (!gdata)
 		gdata = (pointer) bitc->bits;
 	    if ((char *) gdata + size != bitc->bits)

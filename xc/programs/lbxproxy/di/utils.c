@@ -45,12 +45,12 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XConsortium: utils.c /main/37 1996/12/15 21:28:59 rws $ */
+/* $TOG: utils.c /main/39 1997/06/23 21:37:31 kaleb $ */
 
 
 
 
-/* $XFree86: xc/programs/lbxproxy/di/utils.c,v 1.5 1997/01/27 06:59:02 dawes Exp $ */
+/* $XFree86: xc/programs/lbxproxy/di/utils.c,v 1.5.2.1 1997/07/05 15:55:48 dawes Exp $ */
 
 #include "lbx.h"
 #include <stdio.h>
@@ -256,7 +256,15 @@ Bool lbxDoCmapGrabbing = TRUE; /* do colormap grabbing? */
 
 int lbxMaxMotionEvents = NUM_MOTION_EVENTS;	/* max # motion events */
 
-int zlevel = 9;		/* best compression */
+/* 
+ * zlevel = 1..9, 9 == max compression. 6 == good tradeoff between 
+ * compression and speed. Try gzipping a large file at the default
+ * level (which is 6) and at max compression (9) and notice the
+ * difference in time it takes to compress the file and the difference 
+ * in file size. level 9 compression takes ~50 more (time, cpu) but 
+ * only yields a very small improvement in compression.
+ */
+int zlevel = 6;		
 
 AtomControlPtr atom_control = NULL;
 int atom_control_count = 0;

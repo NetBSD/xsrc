@@ -5,7 +5,7 @@
 
 <title>Notes for Mach32 X Server
 <author>Bryan Feir (jenora@istar.ca)
-<date>18 September 1996
+<date>2 July 1997
 
 <!-- Table of contents -->
 <toc>
@@ -66,6 +66,11 @@ almost certainly be set after first running the server with the
 		This option enables 8 bits per RGB value.  Note
 		this option does not work with all RAMDACs, and
                 is not considered supported by the Mach32 itself.
+<tag>Option &dquot;ast_mach32&dquot;</tag>
+		This option sets some special handling for the AST
+		version of the Mach32 card that comes soldered in to
+		some of their motherboards.  This card will lock up
+		without this option.
 <tag>Option &dquot;intel_gx&dquot;</tag>
                 This option sets the memory aperture address to
                 the hardwired value for the Intel GX Pro.  It is
@@ -139,7 +144,7 @@ comp.windows.x.i386unix newsgroup.
 <p>
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/Mach32.sgml,v 3.5.2.1 1997/05/26 14:36:18 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/Mach32.sgml,v 3.5.2.2 1997/07/10 08:02:10 hohndel Exp $
 
 
 

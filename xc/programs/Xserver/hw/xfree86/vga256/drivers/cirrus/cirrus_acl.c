@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/cirrus/cirrus_acl.c,v 3.6.2.7 1997/05/24 08:36:11 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/cirrus/cirrus_acl.c,v 3.6.2.10 1997/08/02 13:48:19 dawes Exp $ */
 
 /*
  * New-style acceleration for chips with BitBLT engine:
@@ -188,8 +188,7 @@ static void InitializeChipFeatures() {
 
 #ifdef MMIO
     if (cirrusChip == CLGD5436 || cirrusChip == CLGD5446 ||
-	cirrusChip == CLGD5480 || cirrusChip == CLGD7548 || 
-	cirrusChip == CLGD7555)
+	cirrusChip == CLGD5480)
         cirrusChipFeatures |= AUTOSTART;
 #endif
 

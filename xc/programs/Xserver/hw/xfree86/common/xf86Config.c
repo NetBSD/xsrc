@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Config.c,v 3.113.2.9 1997/06/01 12:33:32 dawes Exp $
+ * $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Config.c,v 3.113.2.13 1997/08/04 02:10:39 dawes Exp $
  *
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  *
@@ -960,24 +960,28 @@ xf86Config (vtopen)
 #ifndef __EMX__ /* in OS/2 we don't care about uids */
     int real_uid = getuid();
 
+    if (real_uid) {
 #ifdef MINIX
-    setuid(getuid());
+      setuid(getuid());
 #else
 #if !defined(SVR4) && !defined(__NetBSD__) && !defined(__OpenBSD__) && !defined(__FreeBSD__)
-    setruid(0);
+      setruid(0);
 #endif
-    seteuid(real_uid);
+      seteuid(real_uid);
 #endif /* MINIX */
+    }
 #endif /* __EMX__ */
 
     HANDLE_RETURN(findConfigFile(configPath, &configFile));
 #if defined(MINIX) || defined(__EMX__)
     /* no need to restore the uid to root */
 #else
-    seteuid(0);
+    if (real_uid) {
+      seteuid(0);
 #if !defined(SVR4) && !defined(__NetBSD__) && !defined(__OpenBSD__) && !defined(__FreeBSD__)
-    setruid(real_uid);
+      setruid(real_uid);
 #endif
+    }
 #endif /* MINIX */
   }
 #endif /* SYSV || linux */
@@ -1677,12 +1681,14 @@ configPointerSection(MouseDevPtr	mouse_dev,
 
     case SAMPLERATE:
       if (xf86GetToken(NULL) != NUMBER) xf86ConfigError("Sample rate expected");
+#if 0
       if (mouse_dev->mseType + MICROSOFT == LOGIMAN)
 	{
 	  /* XXXX Most mice don't allow this */
 	  /* Moan about illegal sample rate!  [CHRIS-211092] */
 	  xf86ConfigError("Selection of sample rate is not supported by MouseMan");
 	}
+#endif
       mouse_dev->sampleRate = val.num;
       break;
 #endif /* OSMOUSE_ONLY */
@@ -1822,6 +1828,9 @@ configDeviceSection()
   n_devices++; 
   
   /* Pre-init the newly created device */
+  devp->identifier = NULL;
+  devp->board = NULL;
+  devp->vendor = NULL;
   devp->chipset = NULL;
   devp->ramdac = NULL;
   for (i=0; i<MAXDACSPEEDS; i++)
@@ -2820,7 +2829,7 @@ configScreenSection()
     case BLANKTIME:
       if (xf86GetToken(NULL) != NUMBER)
 	xf86ConfigError("Screensaver blank time expected");
-      if (!xf86sFlag)
+      if (!dummy && !xf86sFlag)
 	defaultScreenSaverTime = ScreenSaverTime = val.num * MILLI_PER_MIN;
       break;
 
@@ -2828,7 +2837,8 @@ configScreenSection()
       if (xf86GetToken(NULL) != NUMBER)
 	xf86ConfigError("Screensaver standby time expected");
 #ifdef DPMSExtension
-      defaultDPMSStandbyTime = DPMSStandbyTime = val.num * MILLI_PER_MIN;
+      if (!dummy)
+        defaultDPMSStandbyTime = DPMSStandbyTime = val.num * MILLI_PER_MIN;
 #endif
       break;
 
@@ -2836,7 +2846,8 @@ configScreenSection()
       if (xf86GetToken(NULL) != NUMBER)
 	xf86ConfigError("Screensaver suspend time expected");
 #ifdef DPMSExtension
-      defaultDPMSSuspendTime = DPMSSuspendTime = val.num * MILLI_PER_MIN;
+      if (!dummy)
+        defaultDPMSSuspendTime = DPMSSuspendTime = val.num * MILLI_PER_MIN;
 #endif
       break;
 
@@ -2844,7 +2855,8 @@ configScreenSection()
       if (xf86GetToken(NULL) != NUMBER)
 	xf86ConfigError("Screensaver off time expected");
 #ifdef DPMSExtension
-      defaultDPMSOffTime = DPMSOffTime = val.num * MILLI_PER_MIN;
+      if (!dummy)
+        defaultDPMSOffTime = DPMSOffTime = val.num * MILLI_PER_MIN;
 #endif
       break;
 
@@ -2930,11 +2942,15 @@ configScreenSection()
 #endif
             }
           }
-          if (dispIndex == numDisps) {
-            /* Still no match, so exit */
-            FatalError("No \"Display\" subsection for -bpp depth %d\n",
-                       xf86bpp);
-          }
+	  if (dispIndex == numDisps) {
+	    if (!(driverno >= VGA2 && driverno <= VGA16)) {
+	      /* Still no match, so exit */
+	      FatalError("No \"Display\" subsection for -bpp depth %d\n",
+			 xf86bpp);
+	    }
+	    else 
+	      dispIndex = 0;
+	  }
         }
       }
       /* Now copy the info across to the screen rec */

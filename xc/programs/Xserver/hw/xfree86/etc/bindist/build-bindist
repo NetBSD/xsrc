@@ -1,7 +1,10 @@
 #!/bin/sh
 #
-# $XFree86: xc/programs/Xserver/hw/xfree86/etc/bindist/build-bindist,v 1.1.2.1 1997/05/27 05:53:23 dawes Exp $
+# $XFree86: xc/programs/Xserver/hw/xfree86/etc/bindist/build-bindist,v 1.1.2.3 1997/07/27 02:41:18 dawes Exp $
 #
+#
+# This script assumes that you have the `extract' binary installed somewhere
+# in your path, as well as a link to it called `gnu-tar'.
 
 Usage()
 {
@@ -43,8 +46,9 @@ DIRFILE=dir
 BINDIR=bindist
 EXTRASFILE=extras
 TAR="gnu-tar"
+EXTRACT="extract"
 TAROPTS="-c -v -z"
-TARLOPTS="-t -v -z -i"
+EXTRACTLOPTS="-t -v"
 SUMFILE=SUMS.md5
 LISTFILE=FILES
 
@@ -65,10 +69,11 @@ GenList()
     for i in *.tgz; do
       echo $i
       $CKSUM $i >> $SUMFILE
-      echo $i >> $LISTFILE
-      echo "------------" >> $LISTFILE
-      $TAR $TARLOPTS -f $i >> $LISTFILE
-      echo "" >> $LISTFILE
+#      echo $i >> $LISTFILE
+#      echo "------------" >> $LISTFILE
+#      $TAR $TARLOPTS -f $i >> $LISTFILE
+#      echo "" >> $LISTFILE
+      $EXTRACT $EXTRACTLOPTS $i >> $LISTFILE
     done
     if [ -f $TODIR/$EXTRASFILE ]; then
       for i in `cat $TODIR/$EXTRASFILE`; do

@@ -7,15 +7,15 @@
 
 
 
-			README for XFree86 3.3 on OS/2
+		       README for XFree86 3.3.1 on OS/2
 
 				  Holger Veit
 
-			 Last modified on: 17 May 1997
+			Last modified on: 2 August 1997
 
 
 
-1.  Introductory Note about the release 3.3
+1.  Introductory Note about the release 3.3.1
 
 Before looking into this file, please check for any LATEST.OS2 files that may
 come with the binary distribution. Please also check out the following
@@ -29,12 +29,15 @@ XFree86/OS2 WWW pages:
 
 before you claim to have found any problems.
 
-This version of the code is called XFree86/OS2 3.3. This is a full, unre-
-stricted version which does not expire, and for which the complete source code
-is available. In contrast to beta versions, we consider this code as suffi-
-ciently stable for use by an end user. Since there have been numerous bugfixes,
-we recommend this version, even if you had XFree86/OS2 3.2 before and it worked
-satisfyingly with your hardware.
+This version of the code is called XFree86/OS2 3.3.1. This is a bugfix release
+for 3.3. It is a full, unrestricted version which does not expire, and for
+which the complete source code is available. In contrast to beta versions, we
+consider this code as sufficiently stable for use by an end user. Since there
+have been numerous bugfixes, we recommend this version, even if you had
+XFree86/OS2 3.2 before and it worked satisfyingly with your hardware.  By the
+time 3.3.1 is released, the older version 3.3 will be withdrawn, and archives
+will be updated to this version. There may still be references to 3.3 still in
+documents; these apply to 3.3.1 as well, unless otherwise noted.
 
 Previous versions have been tested in a large number of configurations and have
 been found to be working, with some bugs left, rather flawlessly.
@@ -57,20 +60,19 @@ However,
      ble to damage hardware with this code; some deeply hidden bugs may still
      be present in the software.
 
+
+README for XFree86 3.3.1 on OS/2
+
+
+
+
+
+README for XFree86 3.3.1 on OS/2
+
+
+
 It is recommended that you backup essential data of your system before
 installing this software, but this should be your general precautions before
-
-
-README for XFree86 3.3 on OS/2
-
-
-
-
-
-README for XFree86 3.3 on OS/2
-
-
-
 ANY installation. No reports exist that a crashing X server itself actively
 destroys or modifies data, but it is possible in rare cases that the system is
 left in an unusable state (video display mode garbled or system unresponsive,
@@ -121,20 +123,24 @@ It is possible to build XFree86/OS2 from the sources.  Read about this in the
 document OS2.NOTES.
 
 
+
+
+
+
+
+
+
+
+
+
+README for XFree86 3.3.1 on OS/2
+
+
+
 3.  Bug Reports for This Document
 
 Send email to Holger.Veit@gmd.de (Holger Veit) or XFree86@XFree86.org if you
 have comments or suggestions about this file and we'll revise it.
-
-
-
-
-
-
-
-
-README for XFree86 3.3 on OS/2
-
 
 
 4.  Hardware and Software Requirements
@@ -149,8 +155,8 @@ README for XFree86 3.3 on OS/2
      or CD ROM equipment; of course the more powerful, the better.
 
    o Depending on the packages installed, a disk space of 20-55MB on a HPFS
-     formatted partition (or a NFS partition natively allowing long filenames)
-     is required. XFree86/OS2 will not run on FAT partitions.
+     formatted partition (or a NFS or ext2fs partition natively allowing long
+     filenames) is required. XFree86/OS2 will not run on FAT partitions.
 
    o You need a video card that is supported by XFree86. Refer to the general
      README document for a list of supported cards. Note that the sets of video
@@ -163,7 +169,7 @@ README for XFree86 3.3 on OS/2
 
    o Any version of Warp 3 with at least fixpack 17, or Warp 4 is required
 
-   o XFree86/OS2-3.3 may use a local named-pipe connection or a TCP/IP based
+   o XFree86/OS2-3.3.1 may use a local named-pipe connection or a TCP/IP based
      network connection.
 
        1.  Warp comes with the Internet Access Kit (IAK), which is sufficient.
@@ -182,11 +188,9 @@ README for XFree86 3.3 on OS/2
      work, and I won't to provide support for that in the future.
 
    o If you want to write or port applications for XFree86, you are encouraged
-     to do so. You will need a complete installation of EMX/gcc 0.9C or later
-     for doing so. Neither the second (obsolete) implementation of gcc, nor any
-     commercial package, including Cset/2, VAC++, Borland C++/OS2, Watcom C++,
-     Metaware C, and others, is suitable for porting, because various parts of
-     the X DLLs rely on certain features only present with EMX.
+     to do so. You will need a complete installation of EMX/gcc 0.9C fix2 or
+     later for doing so. Neither the second (obsolete) implementation of gcc,
+     nor any commercial package, including Cset/2, VAC++, Borland C++/OS2,
 
 
 
@@ -195,12 +199,12 @@ README for XFree86 3.3 on OS/2
 
 
 
+README for XFree86 3.3.1 on OS/2
 
 
 
-
-README for XFree86 3.3 on OS/2
-
+     Watcom C++, Metaware C, and others, is suitable for porting, because vari-
+     ous parts of the X DLLs rely on certain features only present with EMX.
 
 
 5.  Installing the System
@@ -223,17 +227,17 @@ The contents of the packages are:
 
       REQUIRED:
 
-		  X33base
+		  X331base
 			A special device driver and the SuperProbe program
 
-		  X33doc
+		  X331doc
 			READMEs and XFree86 specific man pages.
 
-		  X33bin
+		  X331bin
 			all of the executable X client applications and shared
 			libs
 
-		  X33fnts
+		  X331fnts
 			the misc and 75dpi fonts
 
 		  emxrt
@@ -241,104 +245,102 @@ The contents of the packages are:
 
 	    Choose at least one of the following to match your hardware:
 
-		  X338514
+		  X3318514
 			the X server for IBM 8514/A and compatible boards
 
-		  X33AGX
+		  X331AGX
 			the X server for AGX boards
 
-		  XA32AI128
+		  X331I128
 			the X server for #9 Imagination 128 boards
 
-		  X33Ma32
+		  X331Ma32
 			the X server for ATI Mach32 graphics boards
 
-		  X33Ma64
+
+
+
+
+
+
+
+
+README for XFree86 3.3.1 on OS/2
+
+
+
+		  X331Ma64
 			the X server for ATI Mach64 graphics boards
 
-
-
-
-
-
-
-
-
-
-README for XFree86 3.3 on OS/2
-
-
-
-		  X33Ma8
+		  X331Ma8
 			the X server for ATI Mach8 graphics boards
 
-		  X33Mono
+		  X331Mono
 			the Monochrome X Server
 
-		  X33P9K
+		  X331P9K
 			the X server for P9000 based boards
 
-		  X33S3
+		  X331S3
 			the X server for S3 based boards (excluding S3 ViRGE)
 
-		  X33S3V
+		  X331S3V
 			the X server for S3 ViRGE based boards
 
-		  X33SVGA
+		  X331SVGA
 			the 8-bit pseudo-color X server for Super VGA cards
 
-		  X33VG16
+		  X331VG16
 			the 4-bit pseudo-color X server for VGA & SVGA cards.
 
-		  X33W32
+		  X331W32
 			the X server for et4000w32 based boards
 
       OPTIONAL:
 
-		  X33man
+		  X331man
 			pre-formatted man pages for the X11 interface and
 			clients
 
-		  X33f100
+		  X331f100
 			100dpi fonts
 
-		  X33fscl
+		  X331fscl
 			Speedo and Type1 fonts
 
-		  X33fnon
+		  X331fnon
 			Japanese, Chinese and other fonts
 
-		  X33fcyr
+		  X331fcyr
 			Cyrillic fonts
 
-		  X33fsrv
+		  X331fsrv
 			the font server with man pages.
 
-		  X33prog
+		  X331prog
 			the X11 header files and programmer's utilities for
 			compiling other X applications
 
-		  X33pex
+		  X331pex
 			PEX fonts and libraries required for PEX applications
 
+
+
+
+
+
+
+
+README for XFree86 3.3.1 on OS/2
+
+
+
 In order to save space on your disk and reduce net bandwidth, choose the soft-
-ware to obtain carefully. Each X server is an archive of about 1.2MB and
+ware to obtain carefully. Each X server is an archive of about 1.2MB and occu-
+pies 3.0MB on the disk. You won't normally need more than the single Xserver
+tailored to your video card.
 
-
-
-
-
-
-
-
-README for XFree86 3.3 on OS/2
-
-
-
-occupies 3.0MB on the disk. You won't normally need more than the single
-Xserver tailored to your video card.
-
-If it is your first time install, get the X33base archive before any of the
+If it is your first time install, get the X331base archive before any of the
 other packages. This package contains a driver and a test program, which ana-
 lyzes your video hardware. If this program fails or reports an incompatible
 hardware, it makes no sense to obtain the other packages in the hope that they
@@ -381,12 +383,12 @@ In the following, we assume that you want to install XFree86/OS2 on a disk
 drive with the letter Y: (which you probably don't have). Change the letter in
 all commands accordingly.
 
-  1.  Obtain the package X33base and install it from the root directory of the
+  1.  Obtain the package X331base and install it from the root directory of the
       Y: drive, by entering the following commands:
 
 	   [C:\] Y:
 	   [Y:\] cd \
-	   [Y:\] unzip \path_of_package\X33base.zip
+	   [Y:\] unzip \path_of_package\X331base.zip
 
 
 
@@ -395,9 +397,7 @@ all commands accordingly.
 
 
 
-
-
-README for XFree86 3.3 on OS/2
+README for XFree86 3.3.1 on OS/2
 
 
 
@@ -463,16 +463,16 @@ can be changed, but is strictly discouraged.
 
 
 
-README for XFree86 3.3 on OS/2
+README for XFree86 3.3.1 on OS/2
 
 
 
 	   drive:> cd \
-	   drive:> unzip \path_of_packages\X33xxxx.zip
+	   drive:> unzip \path_of_packages\X331xxxx.zip
 
   3.  You might encounter that some packages report duplicate files, e.g.  the
       X server packages install corresponding README files, which are also in
-      the X33doc package. This is okay, the files are the same. Let unzip
+      the X331doc package. This is okay, the files are the same. Let unzip
       replace the files.
 
   4.  There is no special sequence of installing packages required.
@@ -529,7 +529,7 @@ rectly. Please add the following settings:
 
 
 
-README for XFree86 3.3 on OS/2
+README for XFree86 3.3.1 on OS/2
 
 
 
@@ -595,7 +595,7 @@ README for XFree86 3.3 on OS/2
 
 
 
-README for XFree86 3.3 on OS/2
+README for XFree86 3.3.1 on OS/2
 
 
 
@@ -661,7 +661,7 @@ this:
 
 
 
-README for XFree86 3.3 on OS/2
+README for XFree86 3.3.1 on OS/2
 
 
 
@@ -727,7 +727,7 @@ will encounter a few differences:
 
 
 
-README for XFree86 3.3 on OS/2
+README for XFree86 3.3.1 on OS/2
 
 
 
@@ -793,7 +793,7 @@ By default, the systemwide xinitrc file (in
 
 
 
-README for XFree86 3.3 on OS/2
+README for XFree86 3.3.1 on OS/2
 
 
 
@@ -829,7 +829,7 @@ Many thanks to:
 
    o ME - no, no, forget this: I won't praise myself :-)
 
-     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/OS2.sgml,v 3.9.2.3 1997/05/24 08:36:06 dawes Exp $
+     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/OS2.sgml,v 3.9.2.4 1997/08/04 02:10:42 dawes Exp $
 
 
 
@@ -859,7 +859,7 @@ Many thanks to:
 
 
 
-README for XFree86 3.3 on OS/2
+README for XFree86 3.3.1 on OS/2
 
 
 
@@ -933,11 +933,11 @@ README for XFree86 3.3 on OS/2
 
 
 
-1.  Introductory Note about the release 3.3 ................................. 1
+1.  Introductory Note about the release 3.3.1 ............................... 1
 
 2.  What and Where is XFree86? .............................................. 2
 
-3.  Bug Reports for This Document ........................................... 2
+3.  Bug Reports for This Document ........................................... 3
 
 4.  Hardware and Software Requirements ...................................... 3
     4.1 Supported, Required, and Recommended Hardware ....................... 3
@@ -989,4 +989,4 @@ README for XFree86 3.3 on OS/2
 
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.OS2,v 3.13.2.3 1997/05/24 09:12:06 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.OS2,v 3.13.2.4 1997/08/04 02:12:39 dawes Exp $

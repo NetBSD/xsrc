@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/Tseng.c,v 3.7.2.1 1997/05/06 13:24:52 dawes Exp $ */ 
+/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/Tseng.c,v 3.7.2.2 1997/07/07 04:11:02 dawes Exp $ */ 
 /*
  * (c) Copyright 1993,1994 by David Wexelblat <dwex@xfree86.org>
  *
@@ -70,7 +70,14 @@ int *Chipset;
 			switch (pcrp->_device)
 			{
 			case PCI_CHIP_ET6000:
-				*Chipset = CHIP_ET6K;
+				if (pcrp->_rev_id >= 0x70)
+					*Chipset = CHIP_ET6K1;
+				else
+					*Chipset = CHIP_ET6K;
+				ET6Kbase = pcrp->_base1 & ~0xFF;
+				break;
+			case PCI_CHIP_ET6300:
+				*Chipset = CHIP_ET6K3;
 				ET6Kbase = pcrp->_base1 & ~0xFF;
 				break;
                         case PCI_CHIP_ET4000_W32P_A:
@@ -160,6 +167,124 @@ int *Chipset;
 	return(result);
 }
 
+
+/*
+ * The 8*32kb ET6000 MDRAM granularity causes the more general probe to
+ * detect too much memory in some configurations, because that code has a
+ * 8-bank (=256k) granularity. E.g. it fails to recognize 2.25 MB of memory
+ * (detects 2.5 instead). This function goes to check if the RAM is actually
+ * there. MDRAM comes in multiples of 4 banks (16, 24, 32, 36, 40, 64, 72,
+ * 80, ...), so checking each 64k block should be enough granularity.
+ *
+ * The exact same code could be used on other Tseng chips, or even on ANY
+ * VGA board, but probably only in case of trouble.
+ *
+ */
+#define VIDMEM ((volatile unsigned int*)check_vgabase)
+#define SEGSIZE 64   /* 64 kb */
+
+/* vgaSetVidPage() doesn't seem to work -- dunno why */
+static void Tseng_set_segment(int seg)
+{
+  int seg1, seg2;
+  seg1 = seg & 0x0F;
+  seg2 = (seg & 0x30) >> 4;
+  outp(0x3CB, seg2 | (seg2 << 4));
+  outp(0x3CD, seg1 | (seg1 << 4));
+}
+
+static int et6000_check_videoram(int ram)
+{
+  unsigned char oldSegSel1, oldSegSel2, oldGR5, oldGR6, oldSEQ2, oldSEQ4;
+  int segment, i;
+  int real_ram;
+  Byte * check_vgabase;
+  Bool fooled = FALSE;
+  int save_vidmem;
+  
+  if (ram > 4096) {
+    printf("ET6000: Detected more than 4MB of video RAM.\n");
+    printf("        Although some cards are sold with more than 4MB,\n");
+    printf("        the ET6000 can only use 4MB maximum.\n");
+    ram = 4096;
+  }
+  
+  check_vgabase = MapVGA();
+
+ /*
+  * We need to set the VGA controller in VGA graphics mode, or else we won't
+  * be able to access the full 4MB memory range. First, we save the
+  * registers we modify, of course.
+  */
+  oldSegSel1 = inp(0x3CD);
+  oldSegSel2 = inp(0x3CB);
+  oldGR5 = rdinx(GRC_IDX, 5);
+  oldGR6 = rdinx(GRC_IDX, 6);
+  oldSEQ2 = rdinx(SEQ_IDX, 2);
+  oldSEQ4 = rdinx(SEQ_IDX, 4);
+
+  /* set graphics mode */  
+  wrinx(GRC_IDX, 5, 5);
+  wrinx(GRC_IDX, 6, 0x40);
+  wrinx(SEQ_IDX, 2, 0x0f);
+  wrinx(SEQ_IDX, 4, 0x0e);
+
+ /*
+  * count down from presumed amount of memory in SEGSIZE steps, and
+  * look at each segment for real RAM.
+  */
+
+  for (segment = (ram / SEGSIZE) - 1; segment >= 0; segment--)
+  {
+      Tseng_set_segment(segment);
+
+      /* save contents of memory probing location */
+      save_vidmem = *(VIDMEM);
+
+      /* test with pattern */
+      *VIDMEM = 0xAAAA5555;
+      if (*VIDMEM != 0xAAAA5555) {
+          *VIDMEM = save_vidmem;
+          continue;
+      }
+      
+      /* test with inverted pattern */
+      *VIDMEM = 0x5555AAAA;
+      if (*VIDMEM != 0x5555AAAA) {
+          *VIDMEM = save_vidmem;
+          continue;
+      }
+      
+      /* check if we aren't fooled by address wrapping (mirroring) */
+      fooled = FALSE;
+      for (i = segment-1; i >=0; i--) {
+          Tseng_set_segment(i);
+          if (*VIDMEM == 0x5555AAAA) {
+               fooled = TRUE;
+               break;
+          }
+      }
+      if (!fooled) {
+          real_ram = (segment+1) * SEGSIZE;
+          break;
+      }
+      /* restore old contents again */
+      *VIDMEM = save_vidmem;
+  }
+
+  /* restore original register contents */  
+  outp(0x3CD, oldSegSel1);
+  outp(0x3CB, oldSegSel2);
+  wrinx(GRC_IDX, 5, oldGR5);
+  wrinx(GRC_IDX, 6, oldGR6);
+  wrinx(SEQ_IDX, 2, oldSEQ2);
+  wrinx(SEQ_IDX, 4, oldSEQ4);
+
+  UnMapVGA(check_vgabase);
+
+  return real_ram;
+}
+
 static int MemProbe_Tseng(Chipset)
 int Chipset;
 {
@@ -232,6 +357,8 @@ int Chipset;
 		}
 		break;
 	case CHIP_ET6K:
+	case CHIP_ET6K1:
+	case CHIP_ET6K3:
 		switch (rdinx(CRTC_IDX, 0x34) & 0x80)
 		{
 		case 0x00:  /* MDRAM */
@@ -240,6 +367,9 @@ int Chipset;
 			{
 			Mem <<= 1;
 			}
+			/* 8*32kb MDRAM refresh control granularity in the ET6000 fails to */
+			/* recognize 2.25 MB of memory (detects 2.5 instead) */
+                	Mem = et6000_check_videoram(Mem);
 			break;
 		case 0x80:  /* DRAM */
 			Mem = 1024 << (inp(ET6Kbase+0x45) & 0x03);

@@ -1,8 +1,8 @@
-// $XConsortium: ru /main/3 1996/08/31 12:20:12 kaleb $
+// $TOG: ru /main/4 1997/06/10 06:56:17 kaleb $
 
 
 
-// $XFree86: xc/programs/xkbcomp/symbols/ru,v 3.3.2.1 1997/05/09 14:54:14 hohndel Exp $
+// $XFree86: xc/programs/xkbcomp/symbols/ru,v 3.3.2.2 1997/07/05 15:55:54 dawes Exp $
 
 partial alphanumeric_keys 
 xkb_symbols "toggle" {

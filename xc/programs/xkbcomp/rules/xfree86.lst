@@ -1,8 +1,10 @@
+// $TOG: xfree86.lst /main/2 1997/06/13 06:29:00 kaleb $
+
 //
 //  Rules descriptions for XFree86
 //  Copyright 1996 by Joseph Moss
 //
-//  $XFree86: xc/programs/xkbcomp/rules/xfree86.lst,v 3.3 1996/12/18 03:30:14 dawes Exp $
+//  $XFree86: xc/programs/xkbcomp/rules/xfree86.lst,v 3.3.2.1 1997/06/22 10:32:54 dawes Exp $
 
 ! model
   pc101		Generic 101-key PC
@@ -31,6 +33,7 @@
   fr		French
   fr_CH		Swiss French
   gb		United Kingdom
+  hu		Hungarian
   it		Italian
   jp		Japanese
   no		Norwegian

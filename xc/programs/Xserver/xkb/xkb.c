@@ -1,5 +1,4 @@
-/* $XConsortium: xkb.c /main/21 1996/08/31 12:44:16 kaleb $ */
-/* $XFree86: xc/programs/Xserver/xkb/xkb.c,v 3.11 1996/12/23 07:10:10 dawes Exp $ */
+/* $TOG: xkb.c /main/22 1997/06/10 06:53:48 kaleb $ */
 /************************************************************
 Copyright (c) 1993 by Silicon Graphics Computer Systems, Inc.
 
@@ -25,6 +24,7 @@ OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
 THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ********************************************************/
+/* $XFree86: xc/programs/Xserver/xkb/xkb.c,v 3.11.2.1 1997/06/22 10:32:35 dawes Exp $ */
 
 #include <stdio.h>
 #include "X.h"
@@ -5796,20 +5796,25 @@ ProcXkbGetKbdByName(client)
     if (stuff->load)
 	 fwant= XkbGBN_AllComponentsMask;
     else fwant= stuff->want|stuff->need;
-    if ((!names.compat)&&
+    if (!names.keymap) {
+	if ((!names.compat)&&
     		(fwant&(XkbGBN_CompatMapMask|XkbGBN_IndicatorMapMask))) {
-	names.compat= _XkbDupString("%");
+	    names.compat= _XkbDupString("%");
+	}
+	if ((!names.types)&&(fwant&(XkbGBN_TypesMask))) {
+	    names.types= _XkbDupString("%");
+	}
+	if ((!names.symbols)&&(fwant&XkbGBN_SymbolsMask)) {
+	    names.symbols= _XkbDupString("%");
+	}
+	geom_changed= ((names.geometry!=NULL)&&(strcmp(names.geometry,"%")!=0));
+	if ((!names.geometry)&&(fwant&XkbGBN_GeometryMask)) {
+	    names.geometry= _XkbDupString("%");
+	    geom_changed= False;
+	}
     }
-    if ((!names.types)&&(fwant&(XkbGBN_TypesMask))) {
-	names.types= _XkbDupString("%");
-    }
-    if ((!names.symbols)&&(fwant&XkbGBN_SymbolsMask))
-	names.symbols= _XkbDupString("%");
-
-    geom_changed= ((names.geometry!=NULL)&&(strcmp(names.geometry,"%")!=0));
-    if ((!names.geometry)&&(fwant&XkbGBN_GeometryMask)) {
-	names.geometry= _XkbDupString("%");
-	geom_changed= False;
+    else {
+	geom_changed= True;
     }
 
     bzero(mapFile,PATH_MAX);
@@ -5844,12 +5849,11 @@ ProcXkbGetKbdByName(client)
 	    rep.loaded= True;
 	if (stuff->load || 
 		((rep.reported&XkbGBN_SymbolsMask) && (finfo.xkb->compat))) {
-	    register int first,num,key;
-	    first= finfo.xkb->min_key_code;
-	    num= XkbNumKeys(finfo.xkb);
-	    for (key=first;key<(first+num);key++) {
-		XkbApplyCompatMapToKey(finfo.xkb,key,NULL);
-	    }
+	    XkbChangesRec changes;
+	    bzero(&changes,sizeof(changes));
+	    XkbUpdateDescActions(finfo.xkb,
+			finfo.xkb->min_key_code,XkbNumKeys(finfo.xkb),
+			&changes);
 	}
 
 	if (finfo.xkb->map==NULL)
@@ -6009,6 +6013,7 @@ ProcXkbGetKbdByName(client)
     if (rep.loaded) {
 	XkbDescPtr		old_xkb;
 	xkbNewKeyboardNotify 	nkn;
+	int 			i,nG,nTG;
 	old_xkb= xkb;
 	xkb= finfo.xkb;
 	dev->key->xkbInfo->desc= xkb;
@@ -6019,6 +6024,17 @@ ProcXkbGetKbdByName(client)
 	    dev->kbdfeed->xkb_sli= NULL;
 	}
 	*xkb->ctrls= *old_xkb->ctrls;
+	for (nG=nTG=0,i=xkb->min_key_code;i<=xkb->max_key_code;i++) {
+	    nG= XkbKeyNumGroups(xkb,i);
+	    if (nG>=XkbNumKbdGroups) {
+		nTG= XkbNumKbdGroups;
+		break;
+	    }
+	    if (nG>nTG) {
+		nTG= nG;
+	    }
+	}
+	xkb->ctrls->num_groups= nTG;
 
 	memcpy(dev->key->modifierMap,xkb->map->modmap,xkb->max_key_code+1);
 	XkbUpdateCoreDescription(dev,True);

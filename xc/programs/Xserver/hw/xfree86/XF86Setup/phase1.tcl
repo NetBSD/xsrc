@@ -3,7 +3,7 @@
 #
 #
 #
-# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/phase1.tcl,v 3.13 1996/12/27 06:54:09 dawes Exp $
+# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/phase1.tcl,v 3.13.2.1 1997/06/20 09:13:50 hohndel Exp $
 #
 # Copyright 1996 by Joseph V. Moss <joe@XFree86.Org>
 #
@@ -99,13 +99,13 @@ proc set_xf86config_defaults {} {
 	foreach mon [info vars monitor_*] {
 		set id [string range $mon 8 end]
 		global Monitor_$id
-		if { "from: id" == "priname" } {
+		if { "$id" == "$priname" } {
 			set primon 1
 		} else {
-			array set Monitor_from: id [array get Monitor_priname]
+			array set Monitor_$id [array get Monitor_$priname]
 		}
 		lappend MonitorIDs $id
-		array set Monitor_from: id	[array get monitor_id]
+		array set Monitor_$id	[array get monitor_$id]
 	}
 	if !$primon { global Monitor_$priname; unset Monitor_$priname }
 	set pridev 0
@@ -114,13 +114,13 @@ proc set_xf86config_defaults {} {
 	foreach dev [info vars device_*] {
 		set id [string range $dev 7 end]
 		global Device_$id
-		if { "from: id" == "priname" } {
+		if { "$id" == "$priname" } {
 			set pridev 1
 		} else {
-			array set Device_from: id [array get Device_priname]
+			array set Device_$id [array get Device_$priname]
 		}
 		lappend DeviceIDs $id
-		array set Device_from: id	[array get device_id]
+		array set Device_$id	[array get device_$id]
 		set Device_${id}(Options) [set Device_${id}(Option)]
 		set Device_${id}(Server) NoMatch
 	}
@@ -136,7 +136,7 @@ proc set_xf86config_defaults {} {
 	    if { [string compare $tmp {SECTION"DEVICE"}] == 0 } {
 		while { [gets $fd nextline] >= 0 } {
 		    set upper [string toupper $nextline]
-		    if { [regexp from: idpat nextline dummy id] } {
+		    if { [regexp $idpat $nextline dummy id] } {
 			set found [regexp $servpat $upper dummy serv]
 			if $found {
 				if { [string match XF86_* $serv] } {
@@ -316,6 +316,9 @@ if { ![getuid] } {
 		    && [file type $Pointer(Device)] == "link" } {
 	        set Pointer(RealDev) [readlink $Pointer(Device)]
 	        set Pointer(OldLink) $Pointer(Device)
+	    	if ![string compare $Pointer(RealDev) "/dev/psaux"] {
+		    set Pointer(Protocol) "PS/2"
+		}
 	    } else {
 		set Pointer(RealDev) $Pointer(Device)
 	    }

@@ -1,5 +1,4 @@
-/* $XConsortium: utils.c /main/127 1996/12/02 10:23:20 lehors $ */
-/* $XFree86: xc/programs/Xserver/os/utils.c,v 3.27 1997/01/18 06:58:03 dawes Exp $ */
+/* $TOG: utils.c /main/128 1997/06/01 13:50:39 sekhar $ */
 /*
 
 Copyright (c) 1987  X Consortium
@@ -52,6 +51,7 @@ OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE
 OR PERFORMANCE OF THIS SOFTWARE.
 
 */
+/* $XFree86: xc/programs/Xserver/os/utils.c,v 3.27.2.2 1997/07/05 15:55:46 dawes Exp $ */
 
 #ifdef WIN32
 #include <X11/Xwinsock.h>
@@ -146,7 +146,6 @@ void VErrorF(char*, va_list);
 #endif
 
 #ifdef AIXV3
-#define AIXFILE "/tmp/aixfile"
 FILE *aixfd;
 int SyncOn  = 0;
 extern int SelectWaitTime;
@@ -1056,6 +1055,12 @@ ExpandCommandLine(pargc, pargv)
     }
 } /* end ExpandCommandLine */
 
+#if defined(TCPCONN) || defined(STREAMSCONN)
+#ifndef WIN32
+#include <netdb.h>
+#endif
+#endif
+
 /* Implement a simple-minded font authorization scheme.  The authorization
    name is "hp-hostname-1", the contents are simply the host name. */
 int
@@ -1066,9 +1071,6 @@ pointer client;
 {
 #define AUTHORIZATION_NAME "hp-hostname-1"
 #if defined(TCPCONN) || defined(STREAMSCONN)
-#ifndef WIN32
-#include <netdb.h>
-#endif
     static char result[1024];
     static char *p = NULL;
 
@@ -1405,11 +1407,22 @@ ErrorF(
 #ifdef AIXV3
 OpenDebug()
 {
-        if((aixfd = fopen(AIXFILE,"w")) == NULL )
+    char aixlogfile[100];
+    struct stat aixfilebuf;
+
+        sprintf(aixlogfile,"/tmp/xlogfile%d",getpid());
+
+        /* if the logfile already exists & is a symlink, fopen() overwrites
+         * it without unlinking the file. It is necessary to unlink the
+         * logfile to avoid a security breach & possible exploitation.
+         */
+        if (stat((const char *)aixlogfile,&aixfilebuf) == 0)
+                unlink(aixlogfile);
+        if((aixfd = fopen(aixlogfile,"w")) == NULL )
         {
-                fprintf(stderr,"open aixfile failed\n");
+                fprintf(stderr,"open %s failed\n",aixlogfile);
                 exit(-1);
         }
-        chmod(AIXFILE,00777);
+        chmod(aixlogfile,00644);
 }
 #endif

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/i128/i128init.c,v 3.6.2.1 1997/05/23 12:19:38 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/i128/i128init.c,v 3.6.2.5 1997/07/26 06:30:46 dawes Exp $ */
 /*
  * Copyright 1995 by Robin Cutshaw <robin@XFree86.Org>
  *
@@ -30,24 +30,24 @@
 #include "IBMRGB.h"
 
 
-typedef struct {
-CARD32 i128_base_g[0x60/4];	/* base g registers                  */
-CARD32 i128_base_w[0x28/4];	/* base w registers                  */
-unsigned char Ti302X[0x40];		/* Ti302[05] registers               */
-unsigned char Ti3025[9];		/* Ti3025 N,M,P for PCLK, MCLK, LCLK */
-unsigned char IBMRGB[0x101];		/* IBMRGB registers                  */
-} i128Registers;
-static i128Registers iR;
+i128Registers iR;
 
 static int i128Initialized = 0;
+static int i128FontsSaved = 0;
+static int i128LUTSaved = 0;
 static Bool LUTInited = FALSE;
 static LUTENTRY oldlut[256];
+#define VGA_SAVE_COUNT 64*1024
+static unsigned char vgamem[VGA_SAVE_COUNT];    /* vga text memory */
 int i128InitCursorFlag = TRUE;
 int i128HDisplay;
 
 extern struct i128mem i128mem;
+extern struct i128io i128io;
 extern int i128Weight;
 extern int i128DisplayWidth;
+extern int i128DisplayOffset;
+extern int i128MemoryTypeDram;
 extern int i128RamdacType;
 
 
@@ -60,6 +60,18 @@ void
 saveI128state()
 #endif
 {
+	/* iobase is filled in during the device probe (as well as config 1&2)*/
+	if ((i128io.id&0x7) > 1) {
+        	unsigned PCI_DevIOPorts[1];
+
+      		PCI_DevIOPorts[0] = iR.iobase + 0x30;
+                xf86AddIOPorts(i128InfoRec.scrnIndex, 1, PCI_DevIOPorts);
+                xf86EnableIOPorts(i128InfoRec.scrnIndex);
+		iR.vga_ctl = inl(iR.iobase + 0x30);
+
+                xf86DisableIOPorts(i128InfoRec.scrnIndex);
+	}
+
 	if (i128RamdacType == TI3025_DAC) {
 		iR.i128_base_g[INDEX_TI/4] =
 			i128mem.rbase_g[INDEX_TI/4]; /*  0x0018  */
@@ -181,7 +193,7 @@ saveI128state()
 		iR.Ti3025[8] = i128mem.rbase_g_b[DATA_TI];
 	} else if ((i128RamdacType == IBM526_DAC) ||
 		   (i128RamdacType == IBM528_DAC)) {
-		short i;
+		CARD32 i;
 
 		for (i=0; i<0x100; i++) {
 			i128mem.rbase_g_b[IDXL_I] = i;
@@ -200,6 +212,9 @@ void
 restoreI128state()
 #endif
 {
+	int i;
+        unsigned PCI_DevIOPorts[3];
+
 	if (i128RamdacType == TI3025_DAC) {
 		i128mem.rbase_g_b[INDEX_TI] = TI_PLL_CONTROL;
 		i128mem.rbase_g_b[DATA_TI] = 0x00;
@@ -278,12 +293,51 @@ restoreI128state()
 		i128mem.rbase_g_b[DATA_TI] = iR.Ti302X[TI_COLOR_KEY_CONTROL];
 	} else if ((i128RamdacType == IBM526_DAC) ||
 		   (i128RamdacType == IBM528_DAC)) {
-		short i;
+		CARD32 i;
 
 		for (i=0; i<0x100; i++) {
+			if ((i == IBMRGB_sysclk_vco_div) ||
+			    (i == IBMRGB_sysclk_ref_div))
+				continue;
 			i128mem.rbase_g_b[IDXL_I] = i;
 			i128mem.rbase_g_b[DATA_I] = iR.IBMRGB[i];
 		}
+
+   		i128mem.rbase_g_b[IDXL_I] = IBMRGB_sysclk_ref_div;
+   		i128mem.rbase_g_b[DATA_I] =
+			iR.IBMRGB[IBMRGB_sysclk_ref_div];
+   		i128mem.rbase_g_b[IDXL_I] = IBMRGB_sysclk_vco_div;
+   		i128mem.rbase_g_b[DATA_I] =
+			iR.IBMRGB[IBMRGB_sysclk_vco_div];
+		usleep(50000);
+	}
+
+        PCI_DevIOPorts[0] = iR.iobase + 0x1C;
+        PCI_DevIOPorts[1] = iR.iobase + 0x20;
+        PCI_DevIOPorts[2] = iR.iobase + 0x30;
+
+        xf86AddIOPorts(i128InfoRec.scrnIndex, 3, PCI_DevIOPorts);
+        xf86EnableIOPorts(i128InfoRec.scrnIndex);
+
+	/* iobase is filled in during the device probe (as well as config 1&2)*/
+	if ((i128io.id&0x7) > 1) {
+		int i;
+		unsigned char *vidmem = (unsigned char *)i128mem.mw0_ad;
+
+		for (i=0; i<VGA_SAVE_COUNT; i++)
+			vidmem[i] = vgamem[i];
+		outl(iR.iobase + 0x30, iR.vga_ctl);
+	}
+
+	/* restore the LUT */
+
+	i128mem.rbase_g_b[PEL_MASK] = 0xff;
+	i128mem.rbase_g_b[WR_ADR] = 0x00;
+
+	for (i=0; i<256; i++) {
+	   i128mem.rbase_g_b[PAL_DAT] = oldlut[i].r;
+	   i128mem.rbase_g_b[PAL_DAT] = oldlut[i].g;
+	   i128mem.rbase_g_b[PAL_DAT] = oldlut[i].b;
 	}
 
 	i128mem.rbase_w[MW0_CTRL] = iR.i128_base_w[MW0_CTRL]; /*  0x0000  */
@@ -329,6 +383,10 @@ restoreI128state()
 	i128mem.rbase_g[CRT_1CON] = iR.i128_base_g[CRT_1CON]; /*  0x0058  */
 	i128mem.rbase_g[CRT_2CON] = iR.i128_base_g[CRT_2CON]; /*  0x005C  */
 
+	outl(iR.iobase + 0x20, iR.config2);
+	outl(iR.iobase + 0x1C, iR.config1);
+
+	xf86DisableIOPorts(i128InfoRec.scrnIndex);
 }
 
 
@@ -355,9 +413,23 @@ i128Init(mode)
 #endif
 {
 	int pitch_multiplier, iclock;
+      	unsigned PCI_DevIOPorts[2];
 	Bool ret;
+	CARD32 tmp;
 
 	i128HDisplay = mode->HDisplay;
+
+	/* config 1 and 2 were saved in Probe()
+	 * we reset here again in case there was a VT switch
+	 */
+
+      	PCI_DevIOPorts[0] = iR.iobase + 0x1C;
+      	PCI_DevIOPorts[1] = iR.iobase + 0x20;
+        xf86AddIOPorts(i128InfoRec.scrnIndex, 2, PCI_DevIOPorts);
+        xf86EnableIOPorts(i128InfoRec.scrnIndex);
+	outl(iR.iobase + 0x1C, i128io.config1);
+	outl(iR.iobase + 0x20, i128io.config2);
+        xf86DisableIOPorts(i128InfoRec.scrnIndex);
 
 	if (!i128Initialized)
 		saveI128state();
@@ -370,12 +442,14 @@ i128Init(mode)
 		iclock = 4;
 	else if (i128RamdacType == IBM528_DAC)
 		iclock = 128 / i128InfoRec.bitsPerPixel;
+	else if (i128MemoryTypeDram)
+		iclock = 32 / i128InfoRec.bitsPerPixel; /* IBM526 DAC 32b bus */
 	else
 		iclock = 64 / i128InfoRec.bitsPerPixel; /* IBM524/526 DAC */
 
 	i128mem.rbase_g[INT_VCNT] = 0x00;
 	i128mem.rbase_g[INT_HCNT] = 0x00;
-	i128mem.rbase_g[DB_ADR] = 0x00;
+	i128mem.rbase_g[DB_ADR] = i128DisplayOffset;
 	i128mem.rbase_g[DB_PTCH] = i128DisplayWidth * pitch_multiplier;
 	i128mem.rbase_g[CRT_HAC] = mode->HDisplay/iclock;
 	i128mem.rbase_g[CRT_HBL] = (mode->HTotal - mode->HDisplay)/iclock;
@@ -387,7 +461,17 @@ i128Init(mode)
 	i128mem.rbase_g[CRT_VS] = mode->VSyncEnd - mode->VSyncStart;
 	i128mem.rbase_g[CRT_BORD] = 0x00;
 	i128mem.rbase_g[CRT_1CON] = 0x00000070;
-	i128mem.rbase_g[CRT_2CON] = 0x01040101;
+	if (i128MemoryTypeDram)
+		tmp = 0x20000100;
+	else {
+		tmp = 0x00040101;
+		if (i128InfoRec.videoRam == 2048)
+			tmp |= 0x00000002;
+		if ((i128DisplayWidth & (i128DisplayWidth-1)) ||
+		    ((i128DisplayWidth * i128InfoRec.bitsPerPixel) > 32768L))
+			tmp |= 0x01000000;  /* split transfer */
+	}
+	i128mem.rbase_g[CRT_2CON] = tmp;
 
 	i128mem.rbase_w[MW0_CTRL] = 0x00000000;
 	if (i128InfoRec.videoRam == 2048)
@@ -402,6 +486,28 @@ i128Init(mode)
 	i128mem.rbase_w[MW0_WKEY] = 0x00000000;
 	i128mem.rbase_w[MW0_KDAT] = 0x00000000;
 	i128mem.rbase_w[MW0_MASK] = 0xFFFFFFFF;
+
+	if ((i128io.id&0x7) > 1) {
+      		PCI_DevIOPorts[0] = iR.iobase + 0x30;
+        	xf86AddIOPorts(i128InfoRec.scrnIndex, 1, PCI_DevIOPorts);
+        	xf86EnableIOPorts(i128InfoRec.scrnIndex);
+
+	   	i128io.vga_ctl &= 0x0000FF00;
+   		i128io.vga_ctl |= 0x00000082;
+   		outl(iR.iobase + 0x30, i128io.vga_ctl);
+
+        	xf86DisableIOPorts(i128InfoRec.scrnIndex);
+
+		if (!i128FontsSaved) {
+			int i;
+			unsigned char *vidmem = (unsigned char *)i128mem.mw0_ad;
+
+			for (i=0; i<VGA_SAVE_COUNT; i++)
+				vgamem[i] = vidmem[i];
+			i128FontsSaved = 1;
+		}
+
+	}
 
 	if (i128RamdacType == TI3025_DAC)
 		ret = i128ProgramTi3025(mode->SynthClock);
@@ -427,11 +533,14 @@ InitLUT()
 
    i128mem.rbase_g_b[PEL_MASK] = 0xff;
 
-   i128mem.rbase_g_b[RD_ADR] = 0x00;
-   for (i=0; i<256; i++) {
-      oldlut[i].r = i128mem.rbase_g_b[PAL_DAT];
-      oldlut[i].g = i128mem.rbase_g_b[PAL_DAT];
-      oldlut[i].b = i128mem.rbase_g_b[PAL_DAT];
+   if (!i128LUTSaved) {
+   	i128mem.rbase_g_b[RD_ADR] = 0x00;
+   	for (i=0; i<256; i++) {
+   	   oldlut[i].r = i128mem.rbase_g_b[PAL_DAT];
+   	   oldlut[i].g = i128mem.rbase_g_b[PAL_DAT];
+   	   oldlut[i].b = i128mem.rbase_g_b[PAL_DAT];
+   	}
+	i128LUTSaved = 1;
    }
       
    i128mem.rbase_g_b[WR_ADR] = 0x00;

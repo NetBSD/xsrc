@@ -1,4 +1,4 @@
-/* $XConsortium: parseutils.c /main/6 1996/02/02 14:17:26 kaleb $ */
+/* $TOG: parseutils.c /main/8 1997/06/13 05:59:21 kaleb $ */
 /************************************************************
  Copyright (c) 1994 by Silicon Graphics Computer Systems, Inc.
 
@@ -30,6 +30,7 @@
 #include "xkbpath.h"
 #include <X11/keysym.h>
 #include <X11/extensions/XKBgeom.h>
+#include <X11/Xalloca.h>
 
 XkbFile	*rtrnValue;
 
@@ -946,4 +947,20 @@ static int	fileID;
 	file->flags= flags;
     }
     return file;
+}
+
+unsigned 
+#if NeedFunctionPrototypes
+StmtSetMerge(ParseCommon *stmt,unsigned	merge)
+#else
+StmtSetMerge(stmt,merge)
+    ParseCommon *	stmt;
+    unsigned		merge;
+#endif
+{
+    if ((merge==MergeAltForm) && (stmt->stmtType!=StmtKeycodeDef)) {
+	yyerror("illegal use of 'alternate' merge mode");
+	merge= MergeDefault;
+    }
+    return merge;
 }

@@ -64,7 +64,7 @@ proc unknown args {
 	set ret [catch {auto_load $name} msg]
 	unset unknown_pending($name);
 	if {$ret != 0} {
-	    return -code $ret "error while autoloading \"from: name\": msg"
+	    return -code $ret "error while autoloading \"$name\": $msg"
 	}
 	if ![array size unknown_pending] {
 	    unset unknown_pending
@@ -117,7 +117,7 @@ proc unknown args {
 		return -code error "empty command name \"\""
 	    } else {
 		return -code error \
-			"ambiguous command name \"from: name\": [lsort cmds]"
+			"ambiguous command name \"$name\": [lsort $cmds]"
 	    }
 	}
     }
@@ -168,7 +168,7 @@ proc auto_load cmd {
 			continue
 		    }
 		    set name [lindex $line 0]
-		    set auto_index(from: name) "source dir/[lindex $line 1]"
+		    set auto_index($name) "source $dir/[lindex $line 1]"
 		}
 	    } else {
 		error "$dir/tclIndex isn't a proper Tcl index file"
@@ -203,7 +203,7 @@ proc auto_execok name {
     }
     set auto_execs($name) 0
     if {[string first / $name] >= 0} {
-	if {[file executable from: name] && ![file isdirectory name]} {
+	if {[file executable $name] && ![file isdirectory $name]} {
 	    set auto_execs($name) 1
 	}
 	return $auto_execs($name)
@@ -212,7 +212,7 @@ proc auto_execok name {
 	if {$dir == ""} {
 	    set dir .
 	}
-	if {[file executable $dir/from: name] && ![file isdirectory dir/$name]} {
+	if {[file executable $dir/$name] && ![file isdirectory $dir/$name]} {
 	    set auto_execs($name) 1
 	    return 1
 	}

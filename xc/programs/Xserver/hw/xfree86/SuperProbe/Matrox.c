@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/Matrox.c,v 3.2.2.3 1997/05/22 14:00:33 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/Matrox.c,v 3.2.2.4 1997/08/02 13:48:08 dawes Exp $ */
 /*
  * (c) Copyright 1997 Alan Hourihane <alanh@fairlite.demon.co.uk>
  *
@@ -67,6 +67,9 @@ int *Chipset;
 				break;
 			case PCI_CHIP_MGA2064W:
 				*Chipset = CHIP_MGA2064W;
+				break;
+			case PCI_CHIP_MGA2164W:
+				*Chipset = CHIP_MGA2164W;
 				break;
 			case PCI_CHIP_MGA2085PX:
 				*Chipset = CHIP_MGA2085PX;

@@ -1,8 +1,8 @@
-XCOMM $XConsortium: Imakefile /main/13 1996/11/19 10:35:28 kaleb $
+XCOMM $TOG: Imakefile /main/14 1997/06/11 06:46:23 kaleb $
 
 
 
-XCOMM $XFree86: xc/nls/XLC_LOCALE/Imakefile,v 1.5 1997/01/27 06:56:45 dawes Exp $
+XCOMM $XFree86: xc/nls/XLC_LOCALE/Imakefile,v 1.5.2.2 1997/06/15 07:25:26 dawes Exp $
 
   WCHAR32 = HasWChar32
    TBLDIR = $(XLOCALEDIR)/tbl_data
@@ -17,7 +17,7 @@ CppFileTarget(name.lt,name,-DWCHAR32=$(WCHAR32),NullParameter)		@@\
 all:: name.lt								@@\
 	MakeDir($(BUILDLIBDIR)/locale/name)				@@\
 	RemoveFile($(BUILDLIBDIR)/locale/name/XLC_LOCALE)		@@\
-	cd $(BUILDLIBDIR)/locale/name && $(LN) $(BUILDLIBTOP)/../../$(CURRENT_DIR)/name XLC_LOCALE @@\
+	cd $(BUILDLIBDIR)/locale/name && $(LN) $(BUILDLIBTOP)/../../$(CURRENT_DIR)/name.lt XLC_LOCALE @@\
 									@@\
 InstallNamedNonExec(name.lt,XLC_LOCALE,$(XLOCALEDIR)/name)
 #else
@@ -30,7 +30,7 @@ CppFileTarget(name.lt,name,-DWCHAR32=$(WCHAR32),NullParameter)		@@\
 									@@\
 all:: name.lt								@@\
 	MakeDir($(BUILDLIBDIR)/locale/name)				@@\
-	LinkFileSpecial($(BUILDLIBDIR)/locale/name,XLC_LOCALE,$(BUILDLIBTOP)/../../$(CURRENT_DIR)/name) @@\
+	LinkFileSpecial($(BUILDLIBDIR)/locale/name,XLC_LOCALE,$(BUILDLIBTOP)/../../$(CURRENT_DIR)/name.lt) @@\
 									@@\
 InstallNamedNonExec(name.lt,XLC_LOCALE,$(XLOCALEDIR)/name)
 #endif
@@ -43,7 +43,7 @@ CppFileTarget(name.lt,name,-DWCHAR32=$(WCHAR32),NullParameter)		@@\
 all:: name.lt								@@\
 	MakeDir(Concat($(BUILDLIBDIR:/=\)\locale\,name))		@@\
 	RemoveFile(Concat($(BUILDLIBDIR:/=\)\locale\,name\XLC_LOCALE))	@@\
-	cd Concat($(BUILDLIBDIR:/=\)\locale\,name) && $(LN) Concat($(BUILDLIBTOP:/=\)\..\..\$(CURRENT_DIR:/=\)\,name) XLC_LOCALE @@\
+	cd Concat($(BUILDLIBDIR:/=\)\locale\,name) && $(LN) Concat($(BUILDLIBTOP:/=\)\..\..\$(CURRENT_DIR:/=\)\,name.lt) XLC_LOCALE @@\
 									@@\
 InstallNamedNonExec(name.lt,XLC_LOCALE,$(XLOCALEDIR)/name)
 #endif

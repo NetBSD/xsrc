@@ -1,4 +1,4 @@
-// $XConsortium: de /main/1 1996/08/31 12:18:53 kaleb $
+// $TOG: de /main/2 1997/03/26 16:50:37 kaleb $
 //
 //Copyright (c) 1996  X Consortium
 //
@@ -60,7 +60,7 @@ default xkb_keymap "type5_de" {
     xkb_symbols 	{ 
 	include "sun/us(sun5)+iso9995-3(basic)+de"
     };
-    xkb_geometry	{ include "sun(type5)"		};
+    xkb_geometry	{ include "sun(type5euro)"	};
 };
 xkb_keymap "type5_de_nodeadkeys" {
     xkb_keycodes	{ include "sun(type5_euro)"	};
@@ -69,12 +69,12 @@ xkb_keymap "type5_de_nodeadkeys" {
     xkb_symbols 	{ 
 	include "sun/us(sun5)+iso9995-3(nodeadkeys)+de(nodeadkeys)" 
     };
-    xkb_geometry	{ include "sun(type5)"		};
+    xkb_geometry	{ include "sun(type5euro)"	};
 };
 xkb_keymap "type5_de_openlook" {
     xkb_keycodes	{ include "sun(type5_euro)"	};
     xkb_types		{ include "default"		};
     xkb_compatibility	{ include "default"		};
     xkb_symbols 	{ include "sun/us(sun5ol)+iso9995-3+de"	};
-    xkb_geometry	{ include "sun(type5)"		};
+    xkb_geometry	{ include "sun(type5euro)"	};
 };

@@ -11,7 +11,7 @@
 
 			 Bryan Feir (jenora@istar.ca)
 
-			       18 September 1996
+				  2 July 1997
 
 
 
@@ -80,6 +80,11 @@ Notes for Mach32 X Server
 	    not work with all RAMDACs, and is not considered supported by the
 	    Mach32 itself.
 
+      Option "ast_mach32"
+	    This option sets some special handling for the AST version of the
+	    Mach32 card that comes soldered in to some of their motherboards.
+	    This card will lock up without this option.
+
       Option "intel_gx"
 	    This option sets the memory aperture address to the hardwired value
 	    for the Intel GX Pro.  It is equivalent to setting Membase to
@@ -119,11 +124,6 @@ Notes for Mach32 X Server
 
 	       o mu9c4870
 
-	       o ati68875*
-
-	       o bt885
-
-	       o tlc34075*
 
 
 
@@ -136,6 +136,12 @@ Notes for Mach32 X Server
 Notes for Mach32 X Server
 
 
+
+	       o ati68875*
+
+	       o bt885
+
+	       o tlc34075*
 
 	       o bt476
 
@@ -185,12 +191,6 @@ server.  They include:
 
    o Sixteen bit character support (e.g., Chinese and Japanese character sets)
      has been known to lose parts of characters.  While this should be fixed,
-     if it occurs try running the server with Option "no_linear".
-
-Bug reports should be sent to XFree86@XFree86.org or posted to the comp.win-
-dows.x.i386unix newsgroup.
-
-
 
 
 
@@ -203,17 +203,17 @@ Notes for Mach32 X Server
 
 
 
-     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/Mach32.sgml,v 3.5.2.1 1997/05/26 14:36:18 dawes Exp $
+     if it occurs try running the server with Option "no_linear".
+
+Bug reports should be sent to XFree86@XFree86.org or posted to the comp.win-
+dows.x.i386unix newsgroup.
+
+     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/Mach32.sgml,v 3.5.2.2 1997/07/10 08:02:10 hohndel Exp $
 
 
 
 
      $XConsortium: Mach32.sgml /main/4 1996/10/28 04:47:43 kaleb $
-
-
-
-
-
 
 
 
@@ -395,4 +395,4 @@ Notes for Mach32 X Server
 
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/READ.Mach32,v 3.7.2.1 1997/05/26 14:53:32 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/READ.Mach32,v 3.7.2.2 1997/07/19 12:30:34 dawes Exp $

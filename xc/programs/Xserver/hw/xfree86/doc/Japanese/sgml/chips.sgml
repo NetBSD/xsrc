@@ -1,0 +1,1239 @@
+<!DOCTYPE linuxdoc PUBLIC "-//XFree86//DTD linuxdoc//EN">
+ 
+<article>
+
+<!-- Title information -->
+<!--
+<title> Information for Chips and Technologies Users
+-->
+<title> Chips and Technologies ユーザ用の情報
+<author> David Bateman <!--(<it>dbateman@ee.uts.edu.au</it>),
+         Egbert Eich (<it>Egbert.Eich@Physik.TH-Darmstadt.DE</it>)
+-->
+<date> 22nd April 1997
+<trans> 岡本　一幸 Kazuyuki Okamoto &lt;ikko-@pacific.rim.or.jp&gt;
+<tdate> 27th July 1997
+<!-- Table of contents -->
+<toc>
+
+<!--
+<sect> Introduction <p>
+-->
+<sect> はじめに <p>
+
+<!--
+The Chips and Technologies ct655xx range of chips are primarily
+manufactured for use in laptop computers, where their power
+conservation circuitry is of importance. They can however be found in
+a few "<tt>Green</tt>" video cards for desktop machines. Prior to
+the release of XFree 3.2, XFree contained only limited support for
+these chipsets. The support that was introduced in XFree3.1.1 was not
+capable of linear addressing or using the programmable clocks in the
+ct65535 and later chips. In addition to these chipsets the new driver
+supports the WinGine ct643xx series of chips and gives limited support
+to the WinGine ct642xx chips.
+
+The driver has been almost completely rewritten, with many additional
+features added. These include
+-->
+Chips and Technologies ct655xx シリーズのチップセットは主にラップトップ
+コンピュータ用に製造されているため、電源管理回路が重要です。
+しかし、Chips and Technologies 社はデスクトップ機用の数少ない
+ "<tt>Green</tt>" ビデオカードを製造しています。XFree86 3.2 以前は
+XFree はこれらのチップセットでは限られたチップセットをサポートしていま
+した。XFree86 3.1.1 で紹介した時はリニアアドレッシングはサポートされて
+いませんし、ct65535 以降のチップのプログラマブルクロックを使用していま
+した。
+新しいドライバは WinGine ct643xx 系列のサポートと WinGine ct642xx の
+限定したサポートを提供します。
+
+ドライバは多くの追加機能を加えてほぼ完全に書き直しました。
+追加機能は次の通りです。
+<itemize>
+<!--
+<item>Linear Addressing
+<item>16/ 24 bits per pixel
+<item>Fully programmable clocks are supported
+<item>H/W cursor support
+<item>BitBLT acceleration of many operations
+-->
+<item>リニアアドレッシング
+<item>ピクセルあたり 16/ 24 ビット
+<item>全てのプログラマブルクロック
+<item>ハードウェアカーソル
+<item>殆んどの操作での BitBLT 高速化機能
+</itemize>
+
+<!--
+With the latest release of XFree, the Chips and Technologies driver 
+supports the new XAA acceleration interface. This should improve
+the graphics performance particularly at higher depths or for the
+newer chips.
+-->
+最新の XFree では、Chips and Technologies のドライバは新しい XAA の
+高速化インタフェースをサポートします。この高速化インタフェースは
+特により大きな色深度または新しいチップでグラフィックの性能を向上させ
+ます。
+
+<!--
+<sect> Supported Chips <p>
+-->
+<sect> サポートしているチップ <p>
+<descrip>
+<tag>ct65520</tag>
+<!--
+	(Max Ram: 1Mb, Max Dclk: 68MHz@5V)
+-->
+	(最大メモリ: 1M バイト,最大ドットクロック: 5V 時 68MHz )
+<tag>ct65525</tag>
+<!--
+        This chip is basically identical to the 65530. It has the same
+      ID and is identified as a 65530 when probed. See ct65530 for
+      details.
+-->
+	このチップは基本的に 65530 として認識します。探査時に、
+	65530 と同じ ID を返します。詳細は ct65530 を見てください。
+<tag>ct65530</tag>
+<!--
+	This is a very similar chip to the 65520. However it additionally
+	has the ability for mixed 5V and 3.3V operation and linear addressing
+	of the video memory.
+	(Max Ram: 1Mb, Max Dclk: 56MHz@3.3V, 68MHz@5V)
+-->
+	このチップは 65520 そっくりです。しかし、 5V と 3.3V の動作
+	モードとビデオメモリのリニアアドレッシングを追加しています。
+	(最大メモリ: 1M バイト,最大ドットクロック: 3.3V 時 56MHz, 5V 時 68MHz )
+<tag>ct65535</tag>
+<!--
+      This is the first chip of the ct655xx series to support fully
+      programmable clocks. Otherwise it has the the same properties
+      as the 65530.
+-->
+	このチップはプログラマブルクロックを完全にサポートした
+	ct655xx 系列の最初のチップです。その他は 65530 と特性は
+	同じです。
+<tag>ct65540</tag>
+<!--
+	This is the first version of the of the ct655xx that was capable
+	of supporting Hi-Color and True-Color. It also includes a fully
+	programmable dot clock and supports all types of flat panels.
+	(Max Ram: 1Mb, Max Dclk: 56MHz@3.3V, 68MHz@5V)
+-->
+	ct655xx の Hi-Color と True-Color をサポートした最初のものです。
+	全てをプログラム可能なドットクロックと全てのフラットパネルを
+	サポートしています。
+	(最大メモリ: 1M バイト,最大ドットクロック: 3.3V 時 56MHz, 5V 時 68MHz )
+<tag>ct65545</tag>
+<!--
+	The chip is very similar to the 65540, with the addition of H/W
+	cursor, pop-menu acceleration, BitBLT and support of PCI Buses.
+	PCI version also allow all the BitBLT and H/W cursor registers
+	to be memory mapped 2Mb above the Base Address.
+	(Max Ram: 1Mb, Max Dclk: 56MHz@3.3V,68MHz@5V)
+-->
+	このチップは 65540 そっくりです。ハードウェアカーソル、ポップ
+	アップメニューの高速化、BitBLT 機能と PCI バスをサポートしています。
+	PCI 版は全て BitBLT 機能とハードウェアカーソルレジスタを 2M バイト
+	以上の基底アドレスに割り付け出来ます。
+	(最大メモリ: 1M バイト,最大ドットクロック: 3.3V 時 56MHz, 5V 時 68MHz )
+<tag>ct65546</tag>
+<!--
+	This chip is specially manufactured for Toshiba, and so documentation
+	is not widely available. It is believed that this is really just a
+	65545 with a higher maximum dot-clock of 80MHz.
+	(Max Ram: 1Mb?, Max Dclk: 80MHz?)
+-->
+	このチップは東芝の為に製造されました。そのために資料が広く公開されて
+	いません。65545 に 80MHz の最大ドットクロックを使えるようにしたもの
+	と思って下さい。
+	(最大メモリ: 1M バイト?,最大ドットクロック: 80MHz? )
+<tag>ct65548</tag>
+<!--
+	This chip is similar to the 65545, but it also includes XRAM support
+	and supports the higher dot clocks of the 65546. 
+	(Max Ram: 1Mb, Max Dclk: 80MHz)
+-->
+	このチップは 65545 に似ています。しかし、XRAM と 65546 の高いドット
+	クロックをサポートしています。
+	(最大メモリ: 1M バイト,最大ドットクロック: 80MHz )
+<tag>ct65550/ct65554</tag>
+<!--
+	These chips are a completely new architecture to previous ct655xx
+	chips. They include many new features, including improved BitBLT
+	support (24bpp color expansion, wider maximum pitch, etc), Multimedia
+	unit (video capture, zoom video port, etc) and 24bpp uncompressed true
+        color (i.e 32bpp mode). Also memory mapped I/O is possible on all bus
+        configurations. There is only limited support for H/W acceleration at
+        this point.
+	(Max Ram: 4Mb, Max Dclk: 80MHz@3.3V,110MHz@5V)
+-->
+	以前の ct655xx チップのとは異なり全く新しいアーキテクチャです。
+	新しい機能が盛り込まれています。進化した BitBLT (24bpp に色を拡張、
+	最大ピッチを拡大等々)、マルチメディア機構(例えば ビデオキャプチャ、
+	ズームビデオポート等々)、24bpp 非圧縮天然色(例えば 32bpp 等々)を
+	含んでいます。また、全てのバス構成でメモリマップト入出力も可能です。
+	今の所、ハードウェアカーソルのみの限定サポートになっています。
+	(最大メモリ: 4M バイト,最大ドットクロック: 3.3V 時 80MHz, 5V 時 l00MHz )
+<tag>ct64200</tag>
+<!--
+      This chip, also known as the WinGine, is used in video cards
+        for desktop systems. It often uses external DAC's and programmable
+      clock chips to supply additional functionally. None of these are
+      currently supported within the driver itself, so many cards will only
+      have limited support. Linear addressing is not supported for this
+      card in the driver.
+      (Max Ram: 2Mb, Max Dclk: 80MHz)
+-->
+	WinGine としても知られているこのチップはデスクトップシステム用の
+	ビデオカードとして使用されています。このチップは外部 DAC と
+	プログラマブルクロックチップとして機能追加するのにしばしば使用
+	されます。これら全てをこのドライバ自身ではサポートしていません。
+	従って殆んどのカードでは制限がついたサポートになります。リニア
+	アドレッシングはこのドライバではこのカード用ではサポートしてい
+	ません。
+	(最大メモリ: 2M バイト,最大ドットクロック: 80MHz)
+<tag>ct64300</tag>
+<!--
+      This is a more advanced version of the WinGine chip, with specification
+      very similar to the 6554x series of chips. However there are many
+      difference at a register level. A similar level of acceleration to
+      the 65545 is included for this driver.
+      (Max Ram: 2Mb, Max Dclk: 80MHz)
+-->
+	このチップは WinGine 用チップのより進化したもので、仕様的には
+	6554x 系列のチップと良く似ています。しかしながら、レジスタなど
+	は異なります。このドライバでは高速化は 65545 程度になります。
+	(最大メモリ: 2M バイト,最大ドットクロック: 80MHz)
+</descrip>
+
+<!--
+<sect> XF86Config Options <p>
+-->
+<sect> XF86Config オプション <p>
+
+<!--
+The following options are of particular interest to the Chips
+and Technologies ct655xx driver.  Each of them must be specified in the
+`svga' driver section of the XF86Config file, within the Screen
+subsections of the depths to which they are applicable (you can enable
+options for all depths by specifying them in the Device section).
+-->
+次のオプションは特に Chips and Technologies ct655xx ドライバに重要な
+ものです。そのオプションのそれぞれは XF86Config ファイルの 'svga' 
+ドライバ節で指定して下さい。使いたい色深度の Screen サブセクションで
+指定して下さい。(Device 節で指定した全ての色深度にオプションを指定しても
+構いません。)
+
+<descrip>
+<tag>
+<!--
+Option &dquot;noaccel&dquot;
+-->
+Option &dquot;noaccel&dquot;
+</tag>
+<!--
+        This option will disable the use of any accelerated functions.
+        This is likely to help with some problems related to DRAM
+        timing, high dot clocks, and bugs in accelerated functions, at
+        the cost of performance (which will still be reasonable on VLB/PCI).
+-->
+	高速化機能を無効にします。
+	DRAM の時間調整や高ドットクロックと高速化機能のバグなどに関する
+	問題がある時に性能と引き替えに救ってくれます。(VLB/PCI の問題が
+	未だあるかもしれません。)
+<tag>
+<!--
+Option &dquot;no_bitblt&dquot; (Chips 65545 and later)
+-->
+Option &dquot;no_bitblt&dquot; (Chips 65545 以降)
+</tag>
+<!--
+        This option will disable the use of the BitBLT engine which the
+	65545 and above have. If you can use the  "<tt>noaccel</tt>" option
+	to correct a problem, then this option might be better to use.
+	It still allows the use of generic speedups.
+-->
+	65545 以上に搭載している BitBLT エンジンを無効にします。
+	"<tt>noaccel</tt>" オプションを使用して問題が解決したら、この
+	オプションを使用した方がいいかもしれません。一般的な速度向上
+	に寄与します。
+<tag>
+<!--
+Option &dquot;xaa_no_color_exp&dquot; (Chips 65545 and later)
+-->
+Option &dquot;xaa_no_color_exp&dquot; (Chips 65545 以降)
+</tag>
+<!--
+      This option will have the effect of disabling the use
+      of monochrome colour expansion. In particular this effects
+      text and bitmaps. It is useful for problems related to image writes,
+      and possible acceleration problems. In general this will result in
+      a reduced performance. Note that this option replaces the 
+      "<tt>no_imageblt</tt>" option used in XFree 3.2.
+-->
+	白黒展開を無効にします。特にテキストとビットマップに作用します。
+	画像書き込みや高速化に問題がある時に有用です。これを使うと
+	一般に性能は低下します。XFree 3.2 で使われていた
+	"<tt>no_imageblt</tt>" を置き換えたことに注意してください。
+<tag>
+<!--
+Option &dquot;xaa_benchmark&dquot; (Chips 65545 and later)
+-->
+Option &dquot;xaa_benchmark&dquot; (Chips 65545 以降)
+</tag>
+<!--
+      Turns on the XAA acceleration benchmarks. Information regarding
+      what graphics primitives are accelerated and their relatives
+      speeds will be printed when the X server starts.
+-->
+	XAA 高速化ベンチマークを起動します。X サーバの起動時に
+	どのグラフィックプリミティブが高速化されていているか相対的な
+	速度を表示します。
+<tag>
+<!--
+videoram 1024 (or another value)
+-->
+videoram 1024 (または他の値)
+</tag>
+<!--
+        This option will override the detected amount of video memory,
+        and pretend the given amount of memory is present on the card.
+	Note that many ct655xx chips only allow up to 1Mb of videoram,
+	and the amount should be correctly detected.
+-->
+	探知したビデオメモリの大きさを上書きし、カードのメモリの大きさ
+	を指定した大きさにだまします。多くの ct655xx チップは 1M バイト
+	以上のメモリを搭載できますが、その量を正しく認識する必要がある
+	ので注意して下さい。
+<tag>
+<!--
+Option &dquot;nolinear&dquot; (Chips 65530 and later)
+-->
+Option &dquot;nolinear&dquot; (Chips 65530 以降)
+</tag>
+<!--
+	By default linear addressing is used on all ct655xx chips.
+	However this might be broken in some implementations. It
+	is possible to turn the linear addressing off with this
+	option. Note that H/W acceleration and 16/24bpp are only
+	supported with linear addressing.
+-->
+	標準で全ての ct655xx チップはリニアアドレッシングを使います。
+	しかし、いくつかの実装においてうまく動作しません。そんな時は
+	リニアアドレッシングをこのオプションで使わないようにしてください。
+	ハードウェアによる高速化と 16/24bpp はリニアアドレッシングで
+	動作するので注意して下さい。
+<tag>
+<!--
+MemBase 0x03b00000 (or a different address)
+-->
+MemBase 0x03b00000 (もしくは異なるアドレス)
+</tag>
+<!--
+        This sets the physical memory base address of the linear
+        framebuffer. Typically this is probed correctly, but if
+	you believe it to be mis-probed, this option might help.
+	Also for non PCI machines specifying this force the linear base
+	address to be this value, reprogramming the video processor
+	to suit. Note that for the 65530 this is required as the
+	base address can't be correctly probed.
+-->
+	リニアフレームバッファの物理メモリの基底アドレスを設定し
+	ます。一般にこれば正しく探知されますが、探知に失敗してい
+	ると感じたらこのオプションが救いになるでしょう。
+	非 PCI 機器でこの値を指定して強制的に置き換えた場合、
+	ビデオプロセッサは適正にもう一度プログラムされます。65530
+	では基底アドレスは正しく探知出来ないので基底アドレスを
+	設定する必要があるので注意してください。
+<tag>
+<!--
+Option &dquot;sw_cursor&dquot; (Chips 65545 and later)
+-->
+Option &dquot;sw_cursor&dquot; (Chips 65545 以降)
+</tag>
+<!--
+        This disables use of the hardware cursor provided by the chip.
+        Try this if the cursor seems to have problems. 
+-->
+	チップが提供しているハードウェアカーソルを無効にします。
+	カーソルに問題があると思ったら試してみましょう。
+<tag>
+<!--
+Option &dquot;STN&dquot;
+-->
+Option &dquot;STN&dquot;
+</tag>
+<!--
+	The server is unable to differentiate between SS STN 
+ 	and TFT displays. This forces it to identify the display
+	as a SS STN rather than a TFT.
+-->
+	SS STN と TFT ディスプレイの識別を無効にします。
+	ディスプレイを TFT ではなく SS STN に強制的に識別させます。
+<tag>
+<!--
+Option &dquot;use_modeline&dquot;
+-->
+Option &dquot;use_modeline&dquot;
+</tag>
+<!--
+	The flat panel timings are related to the panel size and not the
+	size of the mode specified in XF86Config. For this reason the
+	default behaviour of the server is to use the panel timings already
+	installed in the chip. The user can force the panel timings to be
+	recalculated from the modeline with this option. However the panel
+	size will still be probed.
+-->
+	フラットパネルの時間調整はパネルの大きさに依存しますが、
+	XF86Config で指定したモードの大きさには依存しません。
+	これは標準のサーバの動作では既にチップに組み込まれているパネルの
+	時間調整を使用しているからです。このオプションは modeline から
+	パネルの時間調整を再計算して置き換える事ができます。しかし、
+	パネルの大きさは既に探知済みです。
+<tag>
+<!--
+Option &dquot;fix_panel_size&dquot;
+-->
+Option &dquot;fix_panel_size&dquot;
+</tag>
+<!--
+	For some machines the LCD panel size is incorrectly probed from
+	the registers. This option forces the LCD panel size to be
+	overridden by the modeline display sizes. This will prevent the
+	use of a mode that is a different size than the panel. Before
+	using this check that the server reports an incorrect panel
+	size. This option can be used in conjunction with the option
+	&dquot;use_modeline&dquot; to program all the panel timings using
+	the modeline values.
+-->
+	いくつかの機器では LCD パネルの大きさが間違ってレジスタから探知
+	している場合に使います。このオプションは modeline で指定した
+	LCD パネルの大きさを置き換えるのに使用します。使用するモードと
+	異なっているサイズのパネルを使用する事を防止します。このオプション
+	を使う前に間違ったパネルの大きさをサーバが報告していない事を
+	確認して下さい。このオプションは全てのパネルの時間調整を modeline
+	から行なうように &dquot;use_modeline&dquot; と一緒に使用して下さい。
+<tag>
+<!--
+Option &dquot;no_stretch&dquot;
+-->
+Option &dquot;no_stretch&dquot;
+</tag>
+<!--
+	When the size of the mode used is less than the panel size, the
+	default behaviour of the server is to stretch the mode in an attempt
+	to fill the screen. A "<tt>letterbox</tt>" effect with no stretching
+	can be achieved using this option.
+-->
+	パネルの大きさがパネルより小さく指定された場合、サーバの標準の
+	挙動は画面一杯に引き延ばすように動作します。このオプションで
+	"<tt>letterbox</tt>" 効果が得られます。
+<tag>
+<!--
+Option &dquot;lcd_center&dquot;
+-->
+Option &dquot;lcd_center&dquot;
+</tag>
+<!--
+	When the size of the mode used is less than the panel size, the
+	default behaviour of the server is to align the left hand edge of
+	the display with the left hand edge of the screen. Using this option
+	the mode can be centered in the screen. This option is reported to
+	have problems with some machines at 16/24bpp, the effect of which
+	is that the right-hand edge of the mode will be pushed off the screen.
+-->
+	モードの大きさがパネルより小さく指定された場合、サーバの標準の
+	挙動は画面の左端をパネルの左端に合わせます。このオプションを使うと
+	画面を中央に置くようになります。このオプションは16/24bpp の場合に
+	いくつかの機器で問題か生じると報告がありました。その症状は画面の
+	右端が欠けるとの事です。
+
+<tag>
+<!--
+Option &dquot;hw_clocks&dquot; (Chips 65535 and later)
+-->
+Option &dquot;hw_clocks&dquot; (Chips 65535 以降)
+</tag>
+<!--
+	On chips 65535 and later, the default is to use the programmable
+	clock for all clocks. It is possible to use the fixed clocks
+	supported by the chip instead by using this option. Typically
+	this will give you some or all of the clocks 25.175, 28.322,
+	31.000 and 36.000MHz. The current programmable clock will be
+	given as the last clock in the list. On a cold-booted system this
+	might be the appropriate value to use at the text console (see the 
+	"<tt>TextClockFreq</tt>" option), as many flat panels will need a
+	dot clock different than the default to synchronise. The
+	programmable clock makes this option obsolete and so it's use
+	isn't recommended.
+-->
+	chips 65535 以降のチップでは、全てのクロックでプログラマブル
+	クロックが標準で使用できます。チップがサポートしている固定周波数
+	でも使えるかもしれません。例えば、25.175, 28.322, 31.000 と
+	36.000MHz の全てか一部の周波数が使えるでしょう。最新のプログラ
+	マブルクロックは一覧の最後のクロックの値で与えられます。コール
+	ド・ブートしたシステムではテキストコンソールに適正な
+	値になっています( "<tt>TextClockFreq</tt>" 参照)が、多くのフラット
+	パネルでは同期する標準値としては異なるクロック値が必要です。
+	プログラマブルクロックがこのオプションを古めかしくしてしまったの
+	で使用をお勧めしません。
+<tag>
+<!--
+Option &dquot;use_vclk1&dquot; (Chips 65550 and later)
+-->
+Option &dquot;use_vclk1&dquot; (Chips 65550 以降)
+</tag>
+<!--
+        The HiQV series of chips have three programmable clocks. The
+        first two are usually loaded with 25.175 and 28.322MHz for
+        VGA backward compatibility, and the third is used as a fully
+        programmable clock. On at least one system (the Inside 686 LCD/S
+        single board computer) the third clock is unusable. This option
+        forces the use of VClk1 as the programmable clock.
+-->
+	chips の HiQV 系列のチップには 3 つのプログラマブルクロックが
+	あります。最初の 2 つは VGA との互換性のために 25.175 と
+	28.322MHz を 準備しています。3 つめはすべてプログラム可能な
+	クロックです。最新のシステム (Inside 686 LCD/S シングルボード
+	コンピュータ) では 3 つめのクロックは使えません。このオプション
+	はプログラマブルクロックに VClk1 を強制使用させるものです。
+<tag>
+<!--
+TextClockFreq 25.175
+-->
+TextClockFreq 25.175
+</tag>
+<!--
+	It is impossible for the server to read the value of the currently
+	used frequency for the text console from the chip with the ct6554x
+	series of chips. Therefore the server uses a default value of
+	25.175MHz as the text console clock. For some LCDs, in particular
+	DSTN screens, this clock will be wrong. This allows the user to
+	select a different clock for the server to use when returning to
+	the text console.
+-->
+	テキスト用コンソールが現在使用している周波数を ct6554x 系列のチップ
+	から読み出すのは不可能です。従ってサーバはテキスト用コンソールの
+	周波数の標準値に 25.175MHz を用います。いくつかの LCD では、
+	特に DSTN スクリーンの場合、この値は好ましくありません。この事は
+	テキスト用コンソールに戻る時にサーバに異なるクロックを指定する
+	必要があります。
+<tag>
+<!--
+Option &dquot;mmio&dquot;
+-->
+Option &dquot;mmio&dquot;
+</tag>
+<!--
+        This enables the use of memory-mapped I/O to talk to the BitBLT
+        engine. By default memory-mapped I/O is not enabled on the
+	6554x series of chips, and is only usable on 6554x's with PCI
+	buses.  This option has no effect when not using the BitBLT engine
+	(e.g. when using "<tt>no_bitblt</tt>"), or for the 65550 which can
+	only use MMIO for access to the BitBLT engine. On 65545 PCI
+	machines MMIO is enabled by default because the blitter can not
+	be used otherwise.
+-->
+	BitBLT エンジンと接続する為にメモリマップド入出力を有効にします。
+	6554x の標準ではメモリマップド入出力は無効になっていますが、PCI
+	バスの 6554x では標準で有効です。BitBLT エンジンを使用していない場合は
+	(例えば "<tt>no_bitblt</tt>" を使っている場合) 効果がありません。
+	BitBLT エンジンに接続するのに MMIO だけを使う 65550 の場合も
+	効果がありません。65545 PCI 機器では blitter は他に使うことが
+	出来ないので MMIO は標準で有効になっています。
+<tag>
+<!--
+Option &dquot;suspend_hack&dquot;
+-->
+Option &dquot;suspend_hack&dquot;
+</tag>
+<!--
+	This option sets the centering and stretching to the bios
+	default values. This can fix suspend/resume problems on some
+	machines. It overrides the options &dquot;lcd_center&dquot; 
+	and &dquot;no_stretch&dquot;.
+-->
+	センタリングと画面の拡大をバイオスの標準値に設定します。
+	いくつかの機器でのサスペンド/リジュームの問題を修正します。
+	&dquot;lcd_center&dquot; と &dquot;no_stretch&dquot; を
+	上書きします。
+<tag>
+<!--
+Option &dquot;use_18bit_bus&dquot;  (Chips 65540/45/46/48)
+-->
+Option &dquot;use_18bit_bus&dquot;  (Chips 65540/45/46/48)
+</tag>
+<!--
+	For 24bpp on TFT screens, the server assumes that a 24bit bus
+	is being used. This can result in a reddish tint to 24bpp mode.
+	This option, selects an 18 bit TFT bus. For other depths this
+	option has no effect.
+-->
+	TFT 画面上で 24BPP 用に、サーバは 24 ビットバスを使用する事を
+	仮定します。これにより 24bpp モードにほのかに赤みがかかります。
+	このオプションは 18 bit TFT バスを選択します。他の色深度では、
+	このオプションは無効です。
+<tag>
+<!--
+Chipset &dquot;ct65546&dquot; (or some other chip)
+-->
+Chipset &dquot;ct65546&dquot; (または他のチップ)
+</tag>
+<!--
+	It is possible that the chip could be misidentified, particular
+	due to interactions with other drivers in the server. It is
+	possible to force the server to identify a particular chip with
+	this option. 
+-->
+	特にサーバ内の他のドライバと干渉した場合、チップが誤認される可能性
+	があります。このオプションで所定のチップをサーバに強制認識させます。
+<tag>
+<!--
+Option &dquot;sync_on_green&dquot; (Chips 65550/54)
+-->
+Option &dquot;sync_on_green&dquot; (Chips 65550/54)
+</tag>
+<!--
+	Composite sync on green. Possibly useful if you wish to use an
+	old workstation monitor. The 65550/54 internal RAMDAC's support
+	this mode of operation, but whether a particular machine does
+	depends on the manufacturer. 
+-->
+	グリーン同期を設定します。多分、古いワークステーションのモニタ
+	を使いたいときに役にたつでしょう。65550/54 の内蔵 RAMDAC はこの
+	モードをサポートしますが、特定の機器では製造会社に依存します。
+<tag>
+Option &dquot;fast_dram&dquot; (Chips 65550/54)
+</tag>
+<!--
+	This option sets the internal memory clock (MCLK) register to
+	another value. The default value programmed by the BIOS is
+	usually OK, but some machines can accept a faster MClk to achieve
+	a better performance. One machine known to work well with this
+	option is the Toshiba 720CDT. This option is generally not
+	recommended.
+-->
+	内蔵メモリクロック(MCLK) レジスタを他の値に設定します。
+	標準値では BIOS がプログラムした値で大丈夫なのですが、いくつかの
+	機器ではより良い性能に達するためにより高速な MClk を受けとらなければ
+	いけません。 Toshiba 720CDT という機器ではこのオプションでうまく
+	動作することが知られています。このオプションは一般にはお勧めでき
+	ません。
+</descrip>
+
+<sect> Modelines <p>
+
+<!--
+When constructing a modeline for use with the Chips and Technologies
+driver you'll needed to considered several points
+-->
+Chips and Technologies のドライバの使用する modeline を構築する
+時は次のいくつかの点に考慮してください。
+<descrip>
+<tag> * Virtual Screen Size </tag>
+<!--
+                It is the virtual screen size that determines the amount
+        of memory used by a mode. So if you have a virtual screen size
+        set to 1024x768 using a 800x600 at 8bpp, you use 768kB for the
+        mode. Further to this some of the XAA acceleration requires that
+        the display pitch is a multiple of 64 pixels. So the driver will
+        attempt to round-up the virtual X dimension to a multiple of 64,
+        but leave the virtual resolution untouched. This might further
+        reduce the available memory.
+-->
+	モードで使う認識したメモリ量で可能な仮想画面です。従って 8bpp
+	の 800x600 で 仮想画面を 1024x768 に設定すると、そのモードでは
+	768kB 使います。さらに XAA アクセラレーションは画面のピッチが
+	64 ピクセルの倍数であることを要求します。したがって、ドライバは
+	仮想 X 画面の寸法を 64 の倍数に切り上げますが仮想画面解像度に
+	影響が無いようにします。これによって利用可能なメモリをかなり
+	節約するでしょう。
+<tag> * 16/24 Bits Per Pixel </tag>
+<!--
+		Chips later than the ct65540 are capable of supporting
+	Hi-Color and True-Color modes. These are implemented in the current
+	server. The clocks in the 6554x series of chips are internally
+	divided by 2 for 16bpp and 3 for 24bpp, allowing one modeline to
+	be used at all depths.  The effect of this is that the maximum
+	dot clock visible to the user is a half or a third of the value
+	at 8bpp. The 6555x series of chips doesn't need to use additional
+	clock cycles to display higher depths, and so the same modeline
+	can be used at all depths, without needing to divide the clocks.
+	Also 16/24 bpp modes will need 2 or 3 times respectively more video
+	ram.
+-->
+	ct65540 以降のチップでは Hi-Color モードと True-Color モード
+	が可能です。現在のサーバに実装しています。一つの modeline を
+	全ての色深度で使えるように、6554x 系列のクロックを内部で 16bpp
+	では 2 で割っていて 24bpp では 3 で割っています。この割算の
+	効果は最大ドットクロックが 8bpp では 1/2 や 1/3 に見えること
+	です。6555x 系列のチップではより高い色深度を表示する為にクロック
+	を追加する必要がありません。従ってクロックを割算しないでも全ての
+	色深度で同じ modeline を使用することが出来ます。また、16/24 bpp 
+	モードでは 2 倍から 3 倍のビデオメモリが必要になるでしょう。
+<tag> * Frame Acceleration</tag>
+<!--
+<tag> * Frame Acceleration</tag>
+		Many DSTN screens use frame acceleration to improve the
+	performance of the screen. This can be done by using an external
+	frame buffer, or incorporating the framebuffer at the top of video
+	ram depending on the particular implementation. The Xserver assumes
+	that the framebuffer, if used, will be at the top of video ram.
+	The amount of ram required for the framebuffer will vary depending
+	on the size of the screen, and will reduce the amount of video
+	ram available to the modes. Typical values for the size of the
+       framebuffer will be 61440 bytes (640x480 panel), 96000 bytes
+       (800x600 panel) and 157287 bytes (1024x768 panel).
+-->
+	ほとんどの DSTN 表示では表示速度の向上のためフレーム高速化を行なって
+	います。この高速化は個々の実装によって、外部のフレームバッファか
+	ビデオメモリの上位メモリをフレームバッファに結合して行なっています。
+	フレームバッファに必要なメモリ量は画面サイズに依存し、かつモードに
+	必要なメモリ量で変わります。典型的なフレームバッファの大きさは
+	640x480 画素では 61440 バイト、800x600 画素では 96000 バイト、
+	1024x768 画素では 157287 バイトです。
+<tag> * H/W Acceleration </tag>
+<!--
+<tag> * H/W Acceleration </tag>
+               The H/W cursor will need 1kB for the 6554x and 4kb for the
+       65550. On the 64300 chips the H/W cursors is stored in registers and
+       so no allowance is needed for the H/W cursor. In addition to this
+       many graphics operations are speeded up using a
+       "<tt>pixmap cache</tt>". Leaving too little memory available for
+       the cache will only have a detrimental effect on the graphics
+       performance.
+-->
+	6554x では 1kB そして 65550 では 4kb がハードウェアカーソルには
+	必須です。64300 ではハードウェアカーソルをレジスタに格納してい
+	るのでハードウェアカーソル用のメモリは必要ありません。さらに、
+	これによってグラフィック操作が "<tt>pixmap cache</tt>" を
+	使用することにより速くなります。キャッシュ用のメモリが小さ過ぎる
+	場合はグラフィック性能にのみ害を及ぼします。
+<tag> * VESA like modes </tag>
+<!--
+<tag> * VESA like modes </tag>
+		We recommend that you try and pick a mode that is similar
+	to a standard VESA mode. If you don't a suspend/resume or LCD/CRT
+	switch might mess up the screen. This is a problem with the video
+	BIOS not knowing about all the funny modes that might be selected.
+-->
+	標準 VESA モードに近いモードを試してみることをお勧めします。
+	サスペンド/リジュームや LCD/CRT 切替えを行なうと画面が乱れる
+	でしょう。これはビデオ BIOS が認識できないおかしなモードになって
+	いる時問題が生じます。
+<tag> * Dot Clock </tag>
+<!--
+<tag> * Dot Clock </tag>
+		For LCD screens, the lowest clock that gives acceptable
+	contrast and flicker is usually the best one. This also gives
+	more memory bandwidth for use in the drawing operations. Some
+	users prefer to use clocks that are defined by their BIOS. This
+	has the advantage that the BIOS will probably restore the clock
+	they specified after a suspend/resume or LCD/CRT switch.
+-->
+	LCD 画面で満足できるコントラストとちらつきが得られる最低の
+	クロックを使いましょう。また、最低のクロックは描画時に使用され
+	るメモリの帯域を大きくします。BIOS 自身が定義しているクロックの
+	ほうを好むユーザもいます。BIOS のクロックはサスペンド/リジューム
+	や切替えを行なった後で設定するクロックとなります。
+</descrip>
+
+<!--
+The ct655xx driver is capable of driving both a CRT and a flat panel
+display. In fact the timing for the flat panel are dependent on the
+specification of the panel itself and are independent of the particular
+mode chosen. For this reason it is recommended to use one of the programs
+that automatically generate XF86Config files, such as "<tt>xf86config</tt>"
+or "<tt>XF86Setup</tt>".
+
+However there are many machines, particular those with 800x600 screen or
+larger, that need to reprogram the panel timings. The reason for this is
+that the manufacturer has used the panel timings to get a standard EGA
+mode to work on flat panel, and these same timings don't work for an SVGA
+mode. For these machines the "<tt>use_modeline</tt>" and/or possibly the
+"<tt>fix_panel_size</tt>" option might be needed. Some machines that 
+are known to need these options include.
+-->
+ct655xx ドライバは CRT とフラットパネルディスプレイの両方を駆動することが
+出来ます。フラットパネル用の時間調整はパネル自身の仕様とは独立で且つ特定の
+モードからも独立しています。その理由は XF86Config ファイルを自動生成する
+"<tt>xf86config</tt>" や "<tt>XF86Setup</tt>" のようなプログラムの使用を
+お勧めしているからです。
+
+しかしながら、特に 800x600 の画面またはそれ以上の解像度の機器に、パネルの
+時間調整が必要になります。それは製造会社がパネルの時間調整の値を標準
+EGA モードで動作するように設定していて、その時間調整の値では SVGA
+モードは動作しないからです。このような機器では "<tt>use_modeline</tt>"
+または/同時に "<tt>fix_panel_size</tt>" を必要とします。いくつかの機器
+ではこれらのオプションが必要であるのが知られています。
+
+<quote><verb>
+Modeline "640x480@8bpp"	  25.175  640  672  728  816   480  489  501  526
+Modeline "640x480@16bpp"  25.175  640  672  728  816   480  489  501  526
+Options: "use_modeline"
+<!--
+Tested on a Prostar 8200, (640x480, 65548, 1Mbyte)
+-->
+Prostar 8200 でテスト済み, (640x480, 65548, 1Mbyte)
+</verb></quote>
+
+<quote><verb>
+Modeline "800x600@8bpp"   28.322  800  808  848  936   600  600  604  628
+Options: "fix_panel_size", "use_modeline"
+<!--
+Tested on a HP OmniBook 5000CTS (800x600 TFT, 65548, 1Mbyte)
+-->
+HP OmniBook 5000CTS でテスト済み (800x600 TFT, 65548, 1Mbyte)
+</verb></quote>
+
+<quote><verb>
+Modeline "800x600@8bpp"   30.150  800  896  960 1056   600  600  604  628
+Options: "fix_panel_size", "use_modeline"
+<!--
+Test on a Zeos Meridan 850c (800x600 DSTN, 65545, 1Mbyte)
+-->
+Zeos Meridan 850c でテスト済み (800x600 DSTN, 65545, 1Mbyte)
+</verb></quote>
+
+<!--
+The NEC Versa 4080 just needs the "fix_panel_size" option.
+-->
+NEC Versa 4080 では "fix_panel_size" オプションが必須です。
+
+<!--
+<sect> Troubleshooting <p>
+-->
+<sect> トラブルシューティング(問題解決)<p>
+
+<descrip>
+<!--
+<tag>	The cursor appears as a white box, after switching modes</tag>
+	There is a known bug in the H/W cursor, that sometimes causes
+	the cursor to be redrawn as a white box, when the mode is changed.
+	This can be fixed by moving the cursor to a different region,
+	switching to the console and back again, or if it is too annoying
+	the H/W cursor can be disabled with the "<tt>sw_cursor</tt>" option.
+-->
+<tag>	モードを切替えた後で、カーソルが白い矩形になって見える。</tag>
+	モードを切替えた時カーソルを白い矩形に再描画してしまう、
+	ハードウェアカーソルの問題だと分かっています。
+	この問題を解決するにはカーソルを他の領域に移動させ、コンソールへ
+	切替えてから元に戻すか、切替えが面倒なら "<tt>sw_cursor</tt>" 
+	オプションを用いてハードウェアカーソルを無効にしてください。
+<!--
+<tag> The cursor hot-spot isn't at the same point as the cursor</tag>
+      With modes on the 6555x machines that are stretched to fill the
+      flat panel, the H/W cursor is not correspondingly stretched. This
+      is a small and long-standing bug in the current server. You can
+      avoid this by either using the "<tt>no_stretch</tt>" or
+      <tt>sw_cursor</tt>" options.
+-->
+<tag>	カーソルのホットスポットがカーソルと一致していない。</tag>
+	6555x の機器でフラットパネル全体に拡大したモードで、ハード
+	ウェアカーソルがそれ相応に対応していません。これを使用すると
+	現在のサーバには短時間か長時間だんまりになるバグがあります。
+	"<tt>no_stretch</tt>" か "<tt>sw_cursor</tt>" のどちらかを使うと
+	このバグを避けることが出来ます。<newline>
+	訳注：ホットスポット:クリックした時の有効点。
+<!--
+<tag> The lower part of the screen is corrupted</tag>
+	Many DSTN screens use the top of video ram to implement a frame
+	accelerator. This reduces the amount of video ram available to
+	the modes. The server doesn't prevent the user from specifying
+	a mode that will use this memory, it prints a warning on the console.
+	The effect of this problem will be that the lower part of the screen
+	will reside in the same memory as the frame accelerator and will
+	therefore be corrupt. Try reducing the amount of memory consumed
+	by the mode.
+-->
+<tag>	画面の下の方が表示が乱れる </tag>
+	殆んどの DSTN 画面はビデオメモリの上位をフレーム高速化に使用して
+	います。これはモードに必要なメモリの量を減少させてしまいます。
+	サーバは利用者が指定したこのメモリを使うモードを指定することを
+	妨げたりせず、コンソールに警告のメッセージを表示します。
+	これによって、画面の下の方にあたる同じメモリ部分がフレーム高速化と
+	衝突して問題が生じます。モードが消費するメモリの量を削減して下さい。
+<!--
+<tag> There is a video signal, but the screen doesn't sync.</tag>
+        You are using a mode that your screen cannot handle. If it is a
+        non-standard mode, maybe you need to tweak the timings a bit. If
+        it is a standard mode and frequency that your screen should be
+        able to handle, try to find different timings for a similar mode
+        and frequency combination. For LCD modes, it is possible that your
+	LCD panel requires different panel timings at the text console than
+	with a graphics mode. In this case you will need the
+	"<tt>use_modeline</tt>" and perhaps also the "<tt>fix_panel_size</tt>"
+	options to reprogram the LCD panel timings to sensible values.
+-->
+<tag>	ビデオ信号は来ているが、画面が同期しない。</tag>
+	その画面を取り扱うことができないモードを使用しています。非標準
+	なモードを使用している場合は、少し画面の時間調整を行なう必要がある
+	かもしれません。標準的なモードと周波数を使用している場合は、その
+	画面は取り扱うことができるはずですので、異なる時間調整用に似た
+	ようなモードと周波数の組合せを探して下さい。LCD のモードでは、
+	テキストコンソールのパネルの時間調整とグラフィックのそれとは
+	異なる数値を要求することが可能です。この場合は "<tt>use_modeline</tt>" 
+	を指定する必要があり、多分 "<tt>fix_panel_size</tt>" も指定して
+	LCD パネルの時間調整を微妙に行なう必要があるでしょう。
+<!--
+<tag> `Wavy' screen.</tag>
+        Horizontal waving or jittering of the whole screen, continuously
+        (independent from drawing operations).  You are probably using a
+        dot clock that is too high (or too low); it is also possible that
+	there is interference with a close MCLK. Try a lower dot clock.
+      For CRT's you can also try to tweak the mode timings; try increasing
+        the second horizontal value somewhat.
+-->
+<tag>	`波うつ' 画面。</tag>
+	描画操作によらず絶えまなく水平方向に波うったり画面全体に落ち着かない。
+	ドットクロックが高過ぎるものを使用しているか低過ぎる場合です。
+	近過ぎる MCLK と干渉をおこしている可能性もあります。より低いドット
+	クロックを試してみましょう。CRT 対応のモードの時間調整もまた調整
+	しましょう。2 番めの水平方向の数値を幾らか増加させましょう。
+<!--
+<tag> Crash or hang after start-up (probably with a black screen).</tag>
+        Try the "<tt>noaccel</tt>" or "<tt>no_bitblt</tt>" options. Check
+        that the BIOS settings are OK; in particular, disable caching of
+        0xa0000-0xaffff. Disabling hidden DRAM refresh may also help.
+-->
+<tag>	起動後に終了したまたは固まった(多分、画面が黒いままで)。</tag>
+	"<tt>noaccel</tt>" または "<tt>no_bitblt</tt>" オプションを
+	試して下さい。BIOS の設定が大丈夫かチェックしましょう。特に
+	0xa0000-0xaffff のキャッシュは無効にしましょう。隠し DRAM の
+	リフレッシュも無効にしましょう。
+<!--
+<tag> Crash, hang, or trash on the screen after a graphics operation.</tag>
+        This may be related to a bug in one of the accelerated
+        functions, or a problem with the BitBLT engine. Try the
+        "<tt>noaccel</tt>" or "<tt>no_bitblt</tt>" options. Also check the
+	BIOS settings. It is also possible that with a high dot clock and
+	depth on a large screen there is very little bandwidth left for using
+	the BitBLT engine. Try reducing the clock.
+-->
+<tag>	グラフィック操作後に終了する、固まるまたは画面にゴミをまき散らす。</tag>
+	この現象はアクセラレータ関数のバグに起因したものか、BitBLT エンジン
+	に関する問題です。 "<tt>noaccel</tt>" か "<tt>no_bitblt</tt>" を
+	試して下さい。また BIOS の設定もチェックしましょう。
+	大きな画面での高いドットクロックと色深度は BitBLT エンジンが使う残り
+	のメモリがとても小さな帯域幅になってしまうからです。クロックの
+	削減を試して下さい。
+<!--
+<tag> Chipset is not detected.</tag>
+        Try forcing the chipset to a type that is most similar to what
+        you have.
+-->
+<tag> チップセットを探知しない。</tag>
+	お手持ちのチップセットに似た型のチップセットを強制的に指定して
+	みましょう。
+<!--
+<tag>The screen is blank when starting X</tag>
+      One possible cause of this problem is if the kernel has been 
+      compiled with the "APM_DISPLAY_BLANK" option. It appears that
+      this option doesn't work as specified and can cause the Xserver
+      to blank when starting X. In all cases the kernel should be compiled
+      without this option. If the problem remains a CRT/LCD or switch to
+      and from the virtual console will often fix it.
+-->
+<tag>X の開始時に画面が真っ黒になる。</tag>
+	この問題が起こるのは "APM_DISPLAY_BLANK" オプション
+	を指定してカーネルをコンパイルしている場合に起こる可能性があります。
+	このオプションを無効になるに指定しても、X 開始時に Xserver が真っ黒
+	になる場合があります。いずれの場合でもカーネルはこのオプション
+	を指定しないでコンパイルしなければいけません。この問題が CRT/LCD
+	または仮想コンソール切替えで起こる場合に回復します。
+<!--
+<tag> Textmode is not properly restored</tag>
+      This has been reported on some configurations. Many laptops
+	use the programmable clock of the 6554x chips at the console.
+	It is not always possible to find out the setting that is
+	used for this clock if BIOS has written the MClk after the
+	VClk. Hence the server assumes a 25.175MHz clock at the
+	console. This is correct for most modes, but can cause some
+	problems. Usually this is fixed by switching between the LCD
+	and CRT. Alternatively the user can use the "<tt>TextClockFreq</tt>"
+	option described above to select a different clock for the
+      text console. Another possible cause of this problem is if the kernel
+      is compiled with the "APM_DISPLAY_BLANK" option. As mentioned
+      before, this option should be disabled.
+
+-->
+<tag> テキストモードが全く回復しない。</tag>
+	いくつかの環境で発生すると報告を受けています。多くのラップトップ
+	ではコンソールで 6554x のプログラマブルクロックを使っています。
+	BIOS が VClk の後に MClk をプログラマブルクロックに書き込んだ
+	場合の設定がいつも発見出来るわけではありません。故にサーバは
+	 25.175MHz をコンソール用に決めています。この設定が
+	殆んどのモードで正常に動作しますが、いくつかの問題が起こります。
+	一般に LCD と CRT の間の切替えの問題は修正されます。
+	あるいは "<tt>TextClockFreq</tt>" オプションを使うと
+	上記と異なるテキストコンソール用のクロックが選べます。
+	この問題が起こる他の可能性としてカーネルを "APM_DISPLAY_BLANK" 
+	オプションを指定してコンパイルしている場合があります。
+	思い当たるならば、このオプションを無効にしてください。
+<!--
+<tag> I can't display 640x480 on my 800x600 LCD</tag>
+	The problem here is that the flat panel needs timings that
+	are related to the panel size, and not the mode size. There is
+	no facility in the current Xservers to specify these values,
+	and so the server attempts to read the panel size from the
+	chip. If the user has used the "<tt>use_modeline</tt>" or
+	"<tt>fix_panel_size</tt>" options the panel timings are derived
+	from the mode, which can be different than the panel size. Try
+	deleting theses options	from XF86Config or using an LCD/CRT switch.
+-->
+<tag> 800x600 の液晶ディスプレイで 640x480 が表示出来ません。 </tag>
+	この問題はモードによる画面サイズではなくパネルの大きさに関係した
+	フラットパネルの時間調節が必要になります。現在の Xservers には
+	この数値を指定する機能はありませんので、サーバはチップから
+	パネルの大きさを読み込みます。 "<tt>use_modeline</tt>" か
+	"<tt>fix_panel_size</tt>" オプションを指定した場合は、
+	パネルの時間調整をこのモードの画面の大きさがパネルの大きさと
+	異なるようなモードから行ないます。これらのオプションを
+	XF86Config から取り除くか、LCD/CRT 切替えを試してみましょう。
+<!--
+<tag> I can't get a 320x240 mode to occupy the whole 640x480 LCD</tag>
+      There is a bug in the 6554x's H/W cursor for modes that are
+      doubled vertically. The lower half of the screen is not accessible.
+      The servers solution to this problem is not to do doubling vertically.
+      Which results in the 320x240 mode only expanded to 640x360. If this
+      is a problem, a work around is to use the "<tt>sw_cursor</tt>"
+      option. The server will then allow the mode to occupy the whole
+      640x480 LCD.
+-->
+<tag> 640x480 LCD 全面を占有する 320x240 モードを得ることが出来ない。</tag>
+	6554x のハードウェアカーソルでは縦方向に 2 倍になるモードの
+	バグがあります。画面の下半分が利用できません。
+	この問題の解決方法は縦方向に 2 倍にしない事です。
+	320x240 モードでの解決結果は 640x360 に拡大する事だけです。
+	これをしたくないならば、"<tt>sw_cursor</tt>" オプションを使って
+	ください。640x480 LCD の全面を占有するモードを使う事が出来ます。
+<!--
+<tag> After a suspend/resume my screen is messed up</tag>
+	During a suspend/resume, the BIOS controls what is read and 
+	written back to the registers. If the screen is using a mode
+	that BIOS doesn't know about, then there is no guarantee that
+	it will be resumed correctly. For this reason a mode that is
+	as close to VESA like as possible should be selected. It is also
+	possible that the VGA palette can be affected by a suspend/resume.
+	Using an 8bpp, the colour will then be displayed incorrectly. This
+	shouldn't affect higher depths, and is fixable with a switch to
+	the virtual console and back.
+-->
+<tag> サスペンド/リジュームの後で画面が乱れる。 </tag>
+	サスペンド/リジュームの時は BIOS がレジスタを読み書きします。
+	BIOS が分からないモードを使っている場合、
+	正しくリジュームする保証がありません。したがって、VESA 標準に
+	出来るだけ近いモードを選択しましょう。BIOS が分からないモードは
+	 VGA パレットに影響を与える可能性があります。8bpp を使用している
+	場合、色が正しく表示出来ません。より多い bpp の場合は、この現象
+	は発生しませんが、この問題は仮想コンソールと切替えて修正可能です。
+<!--
+<tag> The right hand edge of the mode isn't visible on the LCD</tag>
+	This is usually due to a problem with the "<tt>lcd-center</tt>"
+	option. If this option is removed form XF86Config, then the problem
+	might go away. Alternatively the manufacturer could have incorrectly
+	programmed the panel size in the EGA console mode. The
+	"<tt>fix_panel_size</tt>" can be used to force the modeline values into
+	the panel size registers. Two machines that are known to have this
+	problem are the "<tt>HP OmniBook 5000</tt>" and the "<tt>NEC  Versa
+	4080</tt>".
+-->
+<tag> LCD 上でモードの右端が表示出来ない。 </tag>
+	この現象は通常 "<tt>lcd-center</tt>" オプションを使うと発生します。
+	このオプションを XF86Config から取り除くと、この問題は発生しません。
+	または、製造者が EGA コンソールモードのパネルの大きさを間違って
+	仕込んだ場合にも発生します。 "<tt>fix_panel_size</tt>" を使用して
+	modeline の数値からパネルサイズレジスタの内容を置き換えれます。
+	"<tt>HP OmniBook 5000</tt>" と  "<tt>NEC  Versa 4080</tt>" と
+	いう 2 つの機器でこの問題が発生することが知られています。
+<!--
+<tag> My TFT screen has a reddish tint in 24bpp mode</tag>
+	The server assumes that the TFT bus width is 24bits. If this is not
+	true then the screen will appear to have a reddish tint. This can
+	be fixed by using the "<tt>use_18bit_bus</tt>" option. Note that
+	the reverse is also true. If the "<tt>use_18bit_bus</tt>" is used
+	and the TFT bus width is 24bpp, then the screen will appear reddish.
+	Note that this option only has an effect on TFT screens. 
+-->
+<tag> 24bpp モードの時、 TFT の画面にほのかに赤みがかかる。</tag>
+	サーバは TFT のバスを 24 ビットを仮定しています。ほのかに
+	赤みがかかるのはこの仮定が正しくない場合です。この問題は
+	"<tt>use_18bit_bus</tt>" オプションを使用することで解決します。
+	この反対もありうるので注意してください。24bpp の TFT バスに
+	"<tt>use_18bit_bus</tt>" を使用すると画面がほのかに赤みが
+	かかります。このオプションは TFT にしか効果がないので注意して
+	ください。
+<!--
+<tag> I can't start X-windows with 16 or 24bpp</tag>
+	Firstly, is your machine capable of 16/24bpp with the mode
+	specified. Many LCD displays are incapable of using a 24bpp 
+	mode. Also you need at least a 65540 to use 16/24bpp, and the
+	amount of memory used by the mode will be doubled/tripled. The
+	correct options to start the server with these modes are
+-->
+<tag> 16 または 24 bpp の時に X が起動できない。</tag>
+	先ず、16/24 bpp モードが使える機器であるか確認してください。
+	多くの液晶ディスプレイは 24bpp が使えません。また、16/24bpp
+	を使うには最低減 65540 が必要です。ビデオメモリは 8bpp の
+	それぞれ 2倍/3倍 必要です。それぞれの起動時の正しいオプション
+	は次のように指定します。
+<verb>
+	  startx -- -bpp 16               5-6-5 RGB ('64K color', XGA)
+	  startx -- -bpp 16 -weight 555   5-5-5 RGB ('Hicolor')
+	  startx -- -bpp 24               8-8-8 RGB truecolor
+</verb>
+<!--
+	Note that there is currently no "<tt>-bpp 32</tt>" mode in the Xserver,
+	although the 65550 is capable of this.
+-->
+	65550 そのものは 32bpp が可能ですが "<tt>-bpp 32</tt>" が可能な
+	Xserver は現在無いことに注意してください。
+</descrip>
+
+<!--
+  A general problem with the server that can manifested in many way such
+  as drawing errors, wavy screens, etc is related to the programmable
+  clock. Many potential programmable clock register setting are unstable.
+  However luckily there are many different clock register setting that
+  can give the same or very similar clocks. The clock code can be fooled
+  into giving a different and perhaps more stable clock by simply changing
+  the clock value slightly. For example 65.00MHz might be unstable while
+  65.10MHz is not. So for unexplained problems not addressed above, please
+  try to alter the clock you are using slightly, say in steps of 0.05MHz
+  and see if the problem goes away.
+-->
+  サーバに関する画面描画や波うつ画面に関する一般的な問題はプログラマブル
+  クロックに関連したものです。多くのプログラマブルクロックレジスタの設定
+  は潜在的に不安定です。とはいえ好運にも同じか非常に良く似たクロックを発生
+  させる多くの異なるレジスタの設定があります。クロックプログラムは異なる
+  クロックを発生するようにし、単にクロックを少し変更することでより安定した
+  クロックを得るようにだまします。例えば 65.00MHz は不安定ですが 65.10MHz 
+  は安定しています。上記で説明していない問題には、クロックを少し変更して
+  例えば 0.05MHz づつ変更して問題が解消するまで切替えてみましょう。
+<!--
+  For other screen drawing related problems, try the "<tt>noaccel</tt>" or
+  "<tt>no_bitblt</tt>" options. A useful trick for all laptop computers is to
+  switch between LCD/CRT (usually with something like Fn-F5), if the
+  screen is having problems.
+-->
+  その他の画面描画の問題は、"<tt>noaccel</tt>" または "<tt>no_bitblt</tt>"
+  オプションを試してみて下さい。画面に問題が発生した場合、すべての
+  ラップトップコンピュータで有効な技は LCD/CRT 切替えです。
+  (通常ファンクションキー 5 番です)
+
+<!--
+  If you are having driver-related problems that are not addressed by this
+  document, or if you have found bugs in accelerated functions, you can
+  try contacting the XFree86 team (the current driver maintainer can be
+  reached at <it>dbateman@eng.uts.edu.au</it> or 
+  <it>Egbert.Eich@Physik.TH-Darmstadt.DE)</it>,
+  or post in the Usenet newsgroup "<it>comp.windows.x.i386unix</it>".
+-->
+　この文書に記載の無いドライバ関連の問題が発生したら、もしくは
+　高速化機能にバグを発見したら、XFree86 チームに連絡をとってみて下さい。
+　(現在このドライバの保守は  <it>dbateman@eng.uts.edu.au</it> か
+　<it>Egbert.Eich@Physik.TH-Darmstadt.DE</it> が行なっています。)
+　もしくは、Usenet のニュースグループ "<it>comp.windows.x.i386unix</it>"
+　に投稿して下さい。
+
+<!--
+<sect> Disclaimer <p>
+-->
+<sect> 責任放棄声明 <p>
+
+<!--
+Xfree, allows the user to do damage to their hardware with software.
+Although the authors of this software have tried to prevent this, they
+disclaim all responsibility for any damage caused by the software. Use
+caution, if you think the Xserver is frying your screen, TURN THE COMPUTER
+OFF!!
+-->
+Xfree は利用者がソフトで利用者自身のハードを損傷させる可能性があります。
+しかし、このソフトの作者がこれを防止出来ません。このソフトの作者は
+このソフトによる如何なる損傷について全ての責任を放棄致します。
+注意して使用して下さい。Xserver が画面を焼いた場合は
+すぐに電源を切って下さい。
+
+<!--
+<sect> Acknowledgement <p>
+-->
+<sect> 謝辞 <p>
+
+<!--
+The authors of this software wish to acknowledge the support
+supplied by Chips and Technologies during the development of this
+software.
+-->
+このソフトの著者はこのソフトの開発にあたり
+Chips and Technologies の支援に感謝致します。
+
+<!--
+<sect> Authors <p>
+-->
+<sect> 著者 <p>
+
+<!--
+<tt>Major Contributors</tt> (In no particular order)
+<itemize>
+<item>Nozomi Ytow
+<item>Egbert Eich
+<item>David Bateman
+<item>Xavier Ducoin
+</itemize>
+-->
+<tt>主な貢献者</tt> (順不同)
+<itemize>
+<item>Nozomi Ytow
+<item>Egbert Eich
+<item>David Bateman
+<item>Xavier Ducoin
+</itemize>
+
+<!--
+<tt>Contributors</tt> (In no particular order)
+<itemize>
+<item>Ken Raeburn
+<item>Shigehiro Nomura
+<item>Marc de Courville
+<item>Adam Sulmicki
+<item>Jens Maurer
+</itemize>
+-->
+<tt>貢献者</tt> (順不同)
+<itemize>
+<item>Ken Raeburn
+<item>Shigehiro Nomura
+<item>Marc de Courville
+<item>Adam Sulmicki
+<item>Jens Maurer
+</itemize>
+
+<!--
+We also thank the many people on the net who have contributed by reporting
+bugs and extensively testing this server before its inclusion in XFree 3.2
+-->
+このサーバをXFree 3.2 に含める前にバグレポートと広大な領域のテストで貢献
+してくださったインターネット上の多くの皆さんにも感謝致します。
+
+<verb>
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/sgml/chips.sgml,v 1.1.2.1 1997/07/31 06:05:52 dawes Exp $
+</verb>
+<hrule>
+
+このファイルは
+xc/programs/Xserver/hw/xfree86/doc/sgml/chips.sgml,v 3.12.2.4 1997/05/ 23 12:19:43
+を、岡本  一幸 
+( Kazuyuki Okamoto <url url="mailto:ikko-@pacific.rim.or.jp"
+name="&lt;ikko-@pacific.rim.or.jp&gt;"> ) が XFree86 3.3 を
+日本でインストールする人向けに和訳したものです。ここがおかしいとか、
+ここはこうしたほうがいいといったご意見がありましたら、電子メールで
+お知らせ下さい。
+原文の著作権は XFree86 プロジェクト社にあります。この和訳の著作権は 
+XFree86 プロジェクト社と岡本　一幸にありますが、この和訳の不具合は私に、
+電子メールで送って下さい。
+<hrule>
+&lsqb;EOF&rsqb;
+
+</article>
+
+

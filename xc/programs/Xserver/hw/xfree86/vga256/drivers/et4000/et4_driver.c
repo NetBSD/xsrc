@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/et4000/et4_driver.c,v 3.45.2.14 1997/05/30 12:59:07 dawes Exp $ 
+ * $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/et4000/et4_driver.c,v 3.45.2.16 1997/07/10 08:02:26 hohndel Exp $ 
  *
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  *
@@ -719,7 +719,7 @@ static int et6000_check_videoram(int ram)
   outb(0x3C4, 4); outb(0x3C5, oldSEQ4);
 
   xf86UnMapVidMem(vga256InfoRec.scrnIndex, VGA_REGION,
-                (pointer)0xA0000, 0x10000);
+                check_vgabase, 0x10000);
 
   return real_ram;
 }
@@ -942,12 +942,12 @@ ET4000Probe()
   switch(TsengRamdacType) {
     case ET6000_DAC:
     case ICS5341_DAC:
+    case STG1703_DAC:
+    case STG1702_DAC:
        ET4000.ChipHas16bpp = TRUE;
        ET4000.ChipHas24bpp = TRUE;
        ET4000.ChipHas32bpp = TRUE;
        break;
-    case STG1703_DAC:
-    case STG1702_DAC:
     case ATT20C490_DAC:
     case ATT20C491_DAC:
     case ATT20C492_DAC:
@@ -956,8 +956,11 @@ ET4000Probe()
        ET4000.ChipHas24bpp = TRUE;
        break;
     case CH8398_DAC:  /* CH8398 seems to have trouble with "hibit" (MCLK/2) clocks at 24bpp */
+       ET4000.ChipHas16bpp = TRUE;
+       break;
     case STG1700_DAC: /* STG1700 can't do packed 24bpp over a 16-bit bus */
        ET4000.ChipHas16bpp = TRUE;
+       ET4000.ChipHas32bpp = TRUE;
        break;
   }
 

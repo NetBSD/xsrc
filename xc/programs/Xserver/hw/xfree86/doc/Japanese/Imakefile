@@ -4,7 +4,7 @@ XCOMM $XConsortium: Imakefile /main/6 1996/02/21 17:41:56 kaleb $
 
 
 
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/Imakefile,v 3.8 1997/01/26 04:32:55 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/Imakefile,v 3.8.2.1 1997/07/31 06:05:48 dawes Exp $
 #include <Server.tmpl>
 
 #ifdef LinuxArchitecture
@@ -12,8 +12,8 @@ OSREADME = README.Linux
 #endif
 
 MAINDOCS = COPYRIGHT QuickStart.doc README README.Config INSTALL AccelCards \
-	   /*VideoModes.doc*/ README.S3 README.Mach64 README.ati \
-	   README.cirrus RELNOTES LinkKit VGADriver.doc
+	   /*VideoModes.doc*/ README.S3 README.Mach64 README.ati BUILD \
+	   README.chips README.cirrus RELNOTES LinkKit VGADriver.doc
 
 FILES = $(MAINDOCS) $(OSREADME)
 

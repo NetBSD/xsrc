@@ -11,7 +11,7 @@
 
 			   The XFree86 Project Inc.
 
-				  16 May 1997
+				 2 August 1997
 
 
 
@@ -19,8 +19,15 @@
 
 The current MGA driver in the SVGA server supports the Matrox Millennium
 (MGA2064W) with Ti3026 RAMDAC. It has been tested with 175, 220MHz, and 250MHz
-cards with 2MB, 4MB and 8MB WRAM.  It also supports, for the first time, Matrox
-Mystique (MGA1064SG) board tested up to 135 MHz for 2 and 4 MB configs.
+cards with 2MB, 4MB and 8MB WRAM. It supports the Matrox Mystique with 170 and
+220 MHz RAMDACs.
+
+There is experimental support for the Matrox Millennium II, which for the most
+part works, but DO NOT USE THIS ON PRODUCTION SYSTEMS - it is no where near
+tested enough for that role. We do not yet have the card's documentation, so
+this is a alpha quality addition - test this support at your own risk.
+
+This version of the server does not support the rev 3 Matrox Millennium I.
 
 NOTE: This driver is pretty new, and not everything works like you expect it
 to. It shouldn't crash your machine, but you may have video artifacts or miss-
@@ -51,6 +58,19 @@ appropriate bug report sheet.
 
 	     o lines
 
+
+
+
+Information for Matrox Millennium/Mystique Users
+
+
+
+
+
+Information for Matrox Millennium/Mystique Users
+
+
+
 	     o most bitblts
 
 	     o filled rectangles
@@ -59,21 +79,9 @@ appropriate bug report sheet.
 
 	     o many more...
 
-
-
-Information for Matrox Millennium/Mystique Users
-
-
-
-
-
-Information for Matrox Millennium/Mystique Users
-
-
-
 	  The Millennium server is fairly well accelerated, and is one of the
-	  fastest XFree86 3.3 Xservers. Future work will concentrate on fixing
-	  remaining bugs.
+	  fastest XFree86 3.3.1 Xservers. Future work will concentrate on fix-
+	  ing remaining bugs.
 
 
    o Basic support for the Matrox Mystique video adapter
@@ -102,6 +110,35 @@ Information for Matrox Millennium/Mystique Users
 	       insert: Option "noaccel" line in the Device section of XF86Con-
 	       fig file. It will be slower but will work better.
 
+   o Experimental Support for the Matrox Millennium II
+
+   o Provided ONLY as a test and to provide early access to Mill II owners
+
+   o Works as if it is a Millennium I
+
+   o We don't have the card's tech docs yet, so no specific Mill II speedups
+
+   o Has plenty of bugs:
+
+	o May corrupt your text font when you exit X
+
+	o May not work correctly at 24 bpp
+
+
+
+
+
+
+
+
+
+
+Information for Matrox Millennium/Mystique Users
+
+
+
+	o Lots more where that came from... :-)
+
 
 3.  Future Features (in order from highest to lowest priority)
 
@@ -122,20 +159,10 @@ This driver only supports:
      have only so far made 175, 220 and 250 MHz boards with these two compo-
      nents, although a 135 MHz RAMDAC part exists.
 
-   o the MGA Storm (MGA1064SG) chipset with integrated 170 MHz RAMDAC
+   o the MGA Storm (MGA1064SG) chipset with integrated 170 and 220 MHz RAMDAC
 
-
-
-
-
-
-
-
-
-
-Information for Matrox Millennium/Mystique Users
-
-
+   o the MGA Storm (MGA2164W) chipset with the TI TVP 3026 RAMDAC. This is
+     experimental
 
    o We will eventually provide support for the other Matrox chipsets (once the
      Millennium driver is at a far enough stage and more people with other
@@ -151,7 +178,8 @@ in your "Device" section, as they will be overridden. The TVP3026 and MGA1064SG
 have a programmable clock generator, so probing and setting clocks is unneces-
 sary as well.
 
-The "nolinear" option is currently unsupported - do not use this
+The "nolinear" option is not a valid option for the MGA server.  The driver now
+ignores this directive.
 
 The options "noaccel" or "no_bitblt" turn off BitBlt Engine and other acceler-
 ated functions.
@@ -162,6 +190,17 @@ ated functions.
    o the driver doesn't support some values of HTotal parameter in Modelines in
      the XF86Config file. If you get flickering vertical stripes on the screen,
      try to change this parameter +/- 8.
+
+
+
+
+
+
+
+
+
+Information for Matrox Millennium/Mystique Users
+
 
 
 7.  Authors
@@ -191,49 +230,10 @@ and:
    o Guy Desbief, g.desbief@aix.pacwan.net
 
 Visit the Matrox Millennium XServer for XFree86 Home Page
-
-
-
-
-
-
-
-
-Information for Matrox Millennium/Mystique Users
-
-
-
 <URL:http://www.bf.rmit.edu.au/~ajv/xf86-matrox.html> to keep up to date with
 the latest news, new sources, etc.
 
-     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/MGA.sgml,v 3.4.2.4 1997/05/31 13:34:40 dawes Exp $
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/MGA.sgml,v 3.4.2.5 1997/08/02 13:48:14 dawes Exp $
 
 
 
@@ -343,15 +343,15 @@ Information for Matrox Millennium/Mystique Users
 
 2. Features: ................................................................ 1
 
-3. Future Features (in order from highest to lowest priority) ............... 2
+3. Future Features (in order from highest to lowest priority) ............... 3
 
-4. Technical Note: .......................................................... 2
+4. Technical Note: .......................................................... 3
 
 5. Configuration: ........................................................... 3
 
 6. Known solutions for some problems: ....................................... 3
 
-7. Authors .................................................................. 3
+7. Authors .................................................................. 4
 
 
 
@@ -395,4 +395,4 @@ Information for Matrox Millennium/Mystique Users
 
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.MGA,v 3.6.2.3 1997/05/31 13:43:45 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.MGA,v 3.6.2.4 1997/08/02 13:53:31 dawes Exp $

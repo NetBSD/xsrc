@@ -1,4 +1,4 @@
-/* $XConsortium: parseutils.h /main/1 1996/02/02 14:17:30 kaleb $ */
+/* $TOG: parseutils.h /main/3 1997/06/13 05:59:24 kaleb $ */
 /************************************************************
  Copyright (c) 1994 by Silicon Graphics Computer Systems, Inc.
 
@@ -261,6 +261,13 @@ extern	IncludeStmt *IncludeCreate(
 #if NeedFunctionPrototypes
     char *	/* str */,
     unsigned	/* merge */
+#endif
+);
+
+extern unsigned StmtSetMerge(
+#if NeedFunctionPrototypes
+    ParseCommon *	/* stmt */,
+    unsigned		/* merge */
 #endif
 );
 

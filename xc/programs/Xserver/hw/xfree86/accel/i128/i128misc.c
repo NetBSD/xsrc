@@ -27,7 +27,7 @@
  * 
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/i128/i128misc.c,v 3.5.2.1 1997/05/22 14:00:37 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/i128/i128misc.c,v 3.5.2.3 1997/07/26 06:30:47 dawes Exp $ */
 
 #include "servermd.h"
 
@@ -189,13 +189,9 @@ i128EnterLeaveVT(enter, screen_idx)
 
 	 if ((pointer)pspix->devPrivate.ptr != i128VideoMem && ppix) {
 	    pspix->devPrivate.ptr = i128VideoMem;
-#ifdef WORKWORKWORK
-	    (*i128ImageWriteFunc)(0, 0, pScreen->width, pScreen->height,
-			        ppix->devPrivate.ptr,
-			        PixmapBytePad(i128DisplayWidth, 
-					      pScreen->rootDepth),
-			        0, 0, i128alu[GXcopy], ~0);
-#endif
+	    memcpy((char *)i128VideoMem, (char *)ppix->devPrivate.ptr,
+		   pScreen->height *
+		   PixmapBytePad(i128DisplayWidth, pScreen->rootDepth));
 	 }
       }
       if (ppix) {
@@ -207,13 +203,9 @@ i128EnterLeaveVT(enter, screen_idx)
 	 ppix = (pScreen->CreatePixmap)(pScreen, i128DisplayWidth,
 					pScreen->height, pScreen->rootDepth);
 	 if (ppix) {
-#ifdef WORKWORKWORK
-	    (*i128ImageReadFunc)(0, 0, pScreen->width, pScreen->height,
-			       ppix->devPrivate.ptr,
-			       PixmapBytePad(i128DisplayWidth, 
-					     pScreen->rootDepth),
-			       0, 0, ~0);
-#endif
+	    memcpy((char *)ppix->devPrivate.ptr, (char *)i128VideoMem,
+		   pScreen->height *
+		   PixmapBytePad(i128DisplayWidth, pScreen->rootDepth));
 	    pspix->devPrivate.ptr = ppix->devPrivate.ptr;
 	 }
       }
@@ -316,7 +308,7 @@ i128AdjustFrame(int x, int y)
 {
    int   Base;
    unsigned char tmp;
-   extern int i128HDisplay, i128AdjustCursorXPos;
+   extern int i128HDisplay, i128AdjustCursorXPos, i128DisplayOffset;
 #define I128_PAN_MASK 0x01FFFFE0
 
    if (OFLG_ISSET(OPTION_SHOWCACHE, &i128InfoRec.options)) {
@@ -328,7 +320,7 @@ i128AdjustFrame(int x, int y)
       x  = i128DisplayWidth - i128HDisplay;
 
    Base = ((y*i128DisplayWidth + x) * (i128InfoRec.bitsPerPixel/8));
-   i128mem.rbase_g[DB_ADR] = Base & I128_PAN_MASK;
+   i128mem.rbase_g[DB_ADR] = (Base & I128_PAN_MASK) + i128DisplayOffset;
 
    /* now warp the cursor after the screen move */
    i128AdjustCursorXPos = Base - (Base & I128_PAN_MASK);

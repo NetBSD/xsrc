@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xf86config/xf86config.c,v 3.37.2.3 1997/05/25 05:06:54 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xf86config/xf86config.c,v 3.37.2.4 1997/07/19 04:59:37 dawes Exp $ */
 
 /*
  * This is a configuration program that will create a base XF86Config
@@ -87,8 +87,9 @@
 /*
  * Define the following to 310 to remove references to XFree86 features that
  * have been added since XFree86 3.1 (e.g. DoubleScan modes).
+ * or to 311 to remove certain new modelines
  */
-#define XFREE86_VERSION 313
+#define XFREE86_VERSION 330
 
 /*
  * This is the filename of the temporary XF86Config file that is written
@@ -1303,10 +1304,14 @@ static int videomemory[5] = {
 	256, 512, 1024, 2048, 4096
 };
 
+#if XFREE86_VERSION >= 330
+#define NU_MODESTRINGS 12
+#else
 #if XFREE86_VERSION >= 311
 #define NU_MODESTRINGS 8
 #else
 #define NU_MODESTRINGS 5
+#endif
 #endif
 
 static char *modestring[NU_MODESTRINGS] = {
@@ -1319,6 +1324,12 @@ static char *modestring[NU_MODESTRINGS] = {
 	"\"320x200\"",
 	"\"320x240\"",
 	"\"400x300\""
+#endif
+#if XFREE86_VERSION >= 330
+	,"\"1152x864\"",
+	"\"1600x1200\"",
+	"\"1800x1400\"",
+	"\"512x384\""
 #endif
 };
 

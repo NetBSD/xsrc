@@ -1,5 +1,5 @@
 /*
- * Copyright 1996 by Steven Lang <tiger@ecis.com>
+ * Copyright 1996 by Steven Lang <tiger@tyger.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -20,7 +20,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Summa.c,v 3.5 1996/12/18 03:12:27 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Summa.c,v 3.5.2.2 1997/07/06 07:28:12 dawes Exp $ */
 
 #include "Xos.h"
 #include <signal.h>
@@ -497,7 +497,7 @@ xf86SumControlProc(DeviceIntPtr	device, PtrCtrl *ctrl)
 ** Flushes all pending data from a fd..  (Isn't there a system call to do this
 ** more effeciently?)
 */
-void
+static void
 fdflush(int	fd)
 {
   fd_set readfds;
@@ -560,8 +560,8 @@ write_and_read(int fd, char *data, char *buffer, int len, int cr_term)
 	    break;
 	}
 	if (cr_term && buffer[numread - 1] == '\r') {
-	    break;
 	    buffer[numread - 1] = 0;
+	    break;
 	}
     }
     buffer[numread] = 0;

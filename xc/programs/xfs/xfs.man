@@ -35,8 +35,8 @@
 .\" no representations about the
 .\" suitability of this software for any purpose.  It is provided "as is"
 .\" without express or implied warranty.
-.\" $XConsortium: xfs.man /main/13 1996/12/09 17:08:59 kaleb $
-.\" $XFree86: xc/programs/xfs/xfs.man,v 3.3 1996/12/23 07:11:13 dawes Exp $
+.\" $TOG: xfs.man /main/14 1997/06/09 17:58:07 barstow $
+.\" $XFree86: xc/programs/xfs/xfs.man,v 3.3.2.1 1997/07/05 15:55:51 dawes Exp $
 .TH XFS 1 "Release 6.3" "X Version 11"
 .SH NAME
 xfs \- X font server
@@ -66,6 +66,7 @@ additional connections.
 .TP 8
 .B \-port tcp_port
 Specifies the TCP port number on which the server will listen for connections.
+The default port number is 7100.
 .SH "SIGNALS"
 .TP 8
 .I SIGTERM

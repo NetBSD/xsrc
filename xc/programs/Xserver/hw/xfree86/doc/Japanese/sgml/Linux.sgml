@@ -1,58 +1,129 @@
-<!doctype linuxdoc system>
+<!DOCTYPE linuxdoc PUBLIC "-//XFree86//DTD linuxdoc//EN">
  
 <article>
- 
+
+<!-- 
+<title>Information for Linux Users
+<author>Orest Zborowski, Dirk Hohndel
+<date>May 13, 1997
+-->
 <title> Linux дЄ╗╚═╤д╖д╞ддды┐═д╬д┐дсд╬╛Ё╩є
 <author> Orest Zborowski, Dirk Hohndel
 <date> 1996 ╟п 10 ╖ю 20 ╞№
 <trans> ▓м╦▄бб░ь╣м Kazuyuki Okamoto &lt;ikko-@pacific.rim.or.jp&gt;
+<tdate> 1997 ╟п 7 ╖ю 5 ╞№
 <toc>
 
+<!-- 
+<sect>Linux versions on which XFree86 has been tested <p>
+XFree86 has been tested with Linux version 2.0.30. It should work
+with any version since 1.0 without change. The binaries and libraries are
+based on the 5.4.7 Elf C libraries, and the 1.7.14 dynamic linker
+<tt>ld.so</tt>. You will at least need the 5.2.x Elf C libraries to
+successfully use the servers.
+-->
 <sect> XFree86 дме╞е╣е╚д╡дьд┐ Linux д╬е╨б╝е╕ечеє <p>
-XFree86 д╧ Linux д╬е╨б╝е╕ечеє 2.0.19 д╟е╞е╣е╚║╤д▀д╟д╣бг 1.0 ░╩╣▀д╬е╨б╝е╕еч
+XFree86 д╧ Linux д╬е╨б╝е╕ечеє 2.0.30 д╟е╞е╣е╚║╤д▀д╟д╣бг 1.0 ░╩╣▀д╬е╨б╝е╕еч
 еєд╟д╧бвXFree86 д╦╩╤╣╣дмд╩д▒дьд╨╞░дпд╟д╖дчджбге╨еде╩еъд╚ещеде╓ещеъд╧ 
-5.2.18 Elf C ещеде╓ещеъд╚ 1.7.14 д╬е└еде╩е▀е├епбжеъеєелб╝ <tt>ld.so</tt> дЄ┤Ёд╦д╖
-д╞ддд▐д╣бг
-DLL X ещеде╓ещеъ
-д╧ Eric Youngdale ╗сд╦дшд├д╞ 2.16 DLL-tools дЄ╗╚═╤д╖д╞║ю└од╡дьд▐д╖д┐бг
+5.4.7 Elf C ещеде╓ещеъд╚ 1.7.14 д╬е└еде╩е▀е├епбжеъеєелб╝ <tt>ld.so</tt>
+дЄ┤Ёд╦д╖д╞ддд▐д╣бгджд▐дпе╡б╝е╨дЄ╞░║юд╡д╗дыд╦д╧║╟─у 5.2.x Elf C ещеде╓ещеъ
+дм╔м═╫д╦д╩дыд╟д╖дчджбг
 
+<!-- 
+<sect>Backwards Compatibility <p>
+X11R6 is considered a major update from X11R5, so the shared
+libraries in XFree86 3.1 and later are not compatible with XFree86 2.1.1
+and older libraries. To continue to run X11R5 applications, you must keep
+the old libraries somewhere on your machine. They can be moved from
+<tt>/usr/X386/lib</tt> elsewhere, but <tt>/etc/ld.so.conf</tt> must be updated.
+All X11R5 applications should work with the X11R6 servers without problems.
+-->
 <sect> ┴░д╬е╨б╝е╕ечеєд╚д╬╕▀┤╣└н <p>
 X11R6 д╧ X11R5 длдщ┬чдндп╣╣┐╖д╖д┐дтд╬д╚д╩д├д╞ддд▐д╣д╬д╟бвXFree86-3.1 ░╩╣▀
 д╬╢ж═нещеде╓ещеъд╧бвXFree86-2.1.1 ░╩┴░д╬╕┼ддещеде╓ещеъд╚д╧╕▀┤╣└ндмдвдъд▐д╗
 дєбгX11R5 д╬еве╫еъе▒б╝е╖ечеєдЄ╝┬╣╘д╣дыд╦д╧бве▐е╖еєд╬▓┐╜шдлд╦╕┼ддещеде╓ещеъ
-дЄ╩▌┬╕д╖д╞дкдлд╩д▒дьд╨ддд▒д▐д╗дєбг╕┼ддещеде╓ещеъд╧<tt>/usr/X386/lib</tt> длдщ▓┐╜шдл
-д╪░▄╞░д╣дьд╨ддддд╬д╟д╣дмбв<tt>/etc/ld.so.conf</tt> д╧╣╣┐╖д╖д╩д▒дьд╨ддд▒д▐д╗дєбг┴┤д╞
-д╬ X11R5 д╬еве╫еъе▒б╝е╖ечеєд╧╠ф┬ъ╠╡дп X11R6 д╬е╡б╝е╨б╝д╚░ь╜яд╦╞░║юд╣дыд╟д╖
-дчджбг
+дЄ╩▌┬╕д╖д╞дкдлд╩д▒дьд╨ддд▒д▐д╗дєбг╕┼ддещеде╓ещеъд╧ <tt>/usr/X386/lib</tt>
+длдщ▓┐╜шдлд╪░▄╞░д╣дьд╨ддддд╬д╟д╣дмбв<tt>/etc/ld.so.conf</tt> д╧╣╣┐╖д╖д╩д▒
+дьд╨ддд▒д▐д╗дєбг┴┤д╞д╬ X11R5 д╬еве╫еъе▒б╝е╖ечеєд╧╠ф┬ъ╠╡дп X11R6 д╬е╡б╝е╨д╚
+░ь╜яд╦╞░║юд╣дыд╟д╖дчджбг
 
-<!--X11R6.1 is yet another update to X11R6. While the minor number for some
+<!-- 
+X11R6.1 is yet another update to X11R6. While the minor number for some
 libraries has been increased to '1' it is believed to be fully
-compatible with X11R6 based applications.-->
-X11R6.1 д╧X11R6 д╬дтдж░ьд─д╬║╟┐╖╚╟д╟д╣бг дддпд─длд╬ещеде╓ещеъд╬е▐еде╩б╝╚╓╣цдм
- '1'┴¤▓├д╖д╞ддды╗■бвд╜д╬ещеде╓ещеъд╧ X11R6 д╟╞░║юд╣дыеве╫еъе▒б╝е╖ечеєд╚┤░┴┤д╦
-╕▀┤╣└ндмдвдыд╚╣═дид▐д╣бг
+compatible with X11R6 based applications.
+-->
+X11R6.1 д╧X11R6 д╬дтдж░ьд─д╬╣╣┐╖╚╟д╟д╣бг дддпд─длд╬ещеде╓ещеъд╬е▐еде╩б╝╚╓╣ц
+дм '1' д╦┴¤▓├д╖д╞ддды╛ь╣чбвд╜д╬ещеде╓ещеъд╧ X11R6 д╟╞░║юд╣дыеве╫еъе▒б╝е╖ечеє
+д╚┤░┴┤д╦╕▀┤╣└ндмдвдыд╚╣═дид▐д╣бг
 
+<!-- 
+X11R6.3 is yet another update to X11R6.1. While the minor number for some
+libraries has been increased to '3' it is believed to be fully
+compatible with X11R6 based applications.
+-->
+X11R6.3 д╧ X11R6.1 длдщд╬дтдж░ьд─д╬д╡дщд╩ды╣╣┐╖╚╟д╟д╣бг┤Ўд─длд╬ещеде╓ещеъд╬
+е▐еде╩б╝╚╓╣цдм '3' д╦┴¤дид╞ддды╛ь╣чбвд╜д╬ещеде╓ещеъд╧ X11R6 д╟
+╞░║юд╣дыеве╫еъе▒б╝е╖ечеєд╚┤░┴┤д╦╕▀┤╣└ндмдвдыд╚╣═дид▐д╣бг
+
+<!-- 
+Very old binaries (linked to XFree86-1.2, XFree86-1.3 or
+XFree86-2.0 libraries) will continue to work, but may need an explicit
+symlink from <tt>/lib/libX{11,t,aw}.so.3</tt> to
+<tt>/usr/X386/lib/libX{11,t,aw}.so.3</tt>.
+-->
 XFree86-1.2бвXFree86-1.3 д▐д┐д╧ XFree86-2.0 ещеде╓ещеъд╚┤╪╧вд╬двды╕┼дде╨ед
 е╩еъд╧░·дн┬│дн╞░║юд╖д▐д╣дмбв<tt>/lib/libX{11,t,aw}.so.3</tt>
-<tt>/usr/X386/lib/libX{11,t,aw}.so.3</tt> д╪╠└│╬д╦е╖еєе▄еъе├епеъеєепдЄ─еды╔м═╫дмдв
-дъд▐д╣бгXView3L5 ╟█╔╒╩кд╦┬╨д╖д╞ <tt>ld.so</tt> дЄеъеєепд╣ды╗■д╧бвXView ещеде╓ещеъд╦
-ld.so дм╞░║юд╖д╩дддшджд╦╢ж═недесб╝е╕д╪д╬└ф┬╨е╤е╣дЄ┤▐д▐д╗д╩ддд╚бв1.3 ░╩┴░д╬
-е╨б╝е╕ечеєд╬ <tt>ld.so</tt> д╚д╧╠ф┬ъдЄ└╕д╕дыд╟д╖дчджбг╗├─ъ┼к┬╨║Ўд╧бв<tt>/</tt>б╩еыб╝е╚е╟егеь
-епе╚еъб╦дЄ <tt>/etc/ld.so.config</tt> д╦╞■дьдыд│д╚д╟д╣дмбвдшдъ╬╔дпд╣дыд╩дщбвXView 
-дЄ┴ъ┬╨ещеде╓ещеъ╠╛д╚еъеєепд╣дыдлбвдшдъ┐╖д╖дд <tt>ld.so</tt> дЄ╝ъд╦╞■дьдыд│д╚д╟д╣бг
+<tt>/usr/X386/lib/libX{11,t,aw}.so.3</tt> д╪╠└│╬д╦е╖еєе▄еъе├епеъеєепдЄ─еды
+╔м═╫дмдвдъд▐д╣бг
 
+<!-- 
+<sect>Installing XFree86 <p>
+Starting with version 3.0, XFree86 is installed in <tt>/usr/X11R6</tt>.
+Each binary distribution of XFree86 3.X comes with a detailed
+installation document relevant to that release. The most up-to-date
+information is kept there, while this document describes basic features
+of XFree86 3.X on Linux and how to compile the sources.
+-->
 <sect> XFree86 дЄ╞│╞■д╣дыд╦д╧ <p>
-е╨б╝е╕ечеє 3.0 длдщ╗╧дсдыд╩дщбвXFree86 дЄ <tt>/usr/X11R6</tt> д╦╞│╞■д╖д▐д╣бгX11R5 
-д╚ X11R6 д╬╬╛╩¤дЄ╞│╞■д╣ды╜╜╩мд╩е╟еге╣еп═╞╬╠дм╠╡дд╛ь╣чд╧бвX11R5 д╬╔м═╫д╬╠╡
-дд╔Ї╩мдЄ╝╬д╞ды╗Ўд╟е╟еге╣еп═╞╬╠дЄ│╬╩▌д╖д▐д╖дчджбг╞├д╦бве╒ейеєе╚д╚╕┼дд 
-X11R5 д╬е╨еде╩еъд╧бв╛├╡ю╜╨═шд▐д╣бге└еде╩е▀е├епеъеєепдЄ╗╚дж X11R5 д╬е╨еде╩
-еъдЄ╞░║юд╡д╗дыд╦д╧╢ж═нещеде╓ещеъдЄ╝шд├д╞дкддд╞▓╝д╡ддбг
+е╨б╝е╕ечеє 3.0 длдщ╗╧дсдыд╩дщбвXFree86 дЄ <tt>/usr/X11R6</tt> д╦╞│╞■д╖д▐д╣бг
+XFree86 3.X д╬д╜дьд╛дьд╬е╨еде╩еъ╟█╔╒╩кд╦д╧бв┬╨▒■д╣ды╚╟д╬╛▄║┘д╩╞│╞■д╦┤╪д╣ды
+╩╕╜ёдм╔╒┬░д╖д╞ддд▐д╣бг╦╪д╔д╬║╟┐╖д╬╛Ё╩єдмд╜д╬╩╕╜ёд╦двдъд▐д╣дмбвд│д╬╩╕╜ёд╦ 
+Linux д╟╞░дп XFree86 3.X д╬┤Ё╦▄┼кд╩╡б╟╜д╚е╜б╝е╣дЄд╔дждфд├д╞е│еєе╤едеыд╣ды
+длдЄ╡н╜╥д╖д╞ддд▐д╣бг
+X11R5 д╚ X11R6 д╬╬╛╩¤дЄ╞│╞■д╣ды╜╜╩мд╩е╟еге╣еп═╞╬╠дм╠╡дд╛ь╣чд╧бвX11R5
+д╬╔м═╫д╬╠╡дд╔Ї╩мдЄ╝╬д╞ды╗Ўд╟е╟еге╣еп═╞╬╠дЄ│╬╩▌д╖д▐д╖дчджбг
+╞├д╦бве╒ейеєе╚д╚╕┼дд X11R5 д╬е╨еде╩еъд╧бв╛├╡ю╜╨═шд▐д╣бг
+е└еде╩е▀е├епеъеєепдЄ╗╚дж X11R5 д╬е╨еде╩еъдЄ╞░║юд╡д╗дыд╦д╧╢ж═нещеде╓ещеъдЄ
+╝шд├д╞дкддд╞▓╝д╡ддбг
 
+<!-- 
+After unpacking the tar files, you need to include <tt>/usr/X11R6/lib</tt>
+in <tt>/etc/ld.so.conf</tt> (where it should already be by default) or in your
+<tt>LD_LIBRARY_PATH</tt> environment variable. Also, the configuration file
+<tt>/etc/XF86Config</tt> or <tt>/usr/X11R6/lib/X11/XF86Config</tt>
+<em>must</em> be properly filled out
+based on the host setup. Ideally this is done using <tt>XF86Setup</tt> or (if
+for some reason this doesn't work) using <tt>xf86config</tt>. If you really
+insist in hand-creating your config file use <tt>XF86Config.eg</tt> as a
+starting point and <tt>README.Config</tt> as
+guideline.  You may damage your hardware if you use a wrong
+<tt>XF86Config</tt> file, so <em>read the docs</em>,
+especially the man pages and the other <tt>README</tt> files in
+<tt>/usr/X11R6/lib/X11/doc</tt>.
+-->
 XFree86 3.X д╬д╜дьд╛дьд╬е╨еде╩еъ╟█╔╒╩кд╦д╧бв┬╨▒■д╣ды╚╟д╬╛▄║┘д╩╞│╞■д╦┤╪д╣ды
 ╩╕╜ёдм╔╒┬░д╖д╞ддд▐д╣бг╦╪д╔д╬║╟┐╖д╬╛Ё╩єдмд╜д╬╩╕╜ёд╦двдъд▐д╣дмбвд│д╬╩╕╜ёд╦ 
 Linux д╟╞░дп XFree86 3.X д╬┤Ё╦▄┼кд╩╡б╟╜д╚е╜б╝е╣дЄд╔дждфд├д╞е│еєе╤едеыд╣ды
 длдЄ╡н╜╥д╖д╞ддд▐д╣бг
 
+<!-- 
+<sect>Running XFree86 <p>
+XFree86 requires about 4mb of virtual memory to run, although
+having 8mb of RAM is probably the minimum comfortable configuration. A 387
+coprocessor is helpful for 386 machines, although greater gains in
+interactive performance are obtained with an increase in physical memory.
+Also, a faster graphics card, bus or RAM, will improve server performance.
+-->
 <sect> XFree86 дЄ╞░║юд╡д╗дыд╦д╧ <p>
 XFree86 дЄ╞░║юд╡д╗дыд┐дсд╦д╧ 4MB д╬▓╛┴█есетеъдм╔м═╫д╟д╣дмбв▓ў┼мд╦╞░║юд╡д╗
 ды║╟╛од╬┤─╢нд╚д╖д╞д╧бв┬┐╩м 8MB д╬╝┬╡н▓▒дмдвд├д┐д█дждмддддд╟д╖дчджбг386 е╫
@@ -60,6 +131,21 @@ XFree86 дЄ╞░║юд╡д╗дыд┐дсд╦д╧ 4MB д╬▓╛┴█есетеъдм╔м═╫д╟д╣дмбв▓ў┼мд╦╞░║юд╡д╗
 д█дждм┬╨╧├╜ш═¤д╬┬о┼┘д╧│╩├╩д╦╕■╛хд╖д▐д╣бгд▐д┐бв╣т┬од╩е░еще╒еге├епелб╝е╔бве╨
 е╣д▐д┐д╧есетеъдме╡б╝е╨б╝д╬└н╟╜дЄ╕■╛хд╡д╗дыд╟д╖дчджбг
 
+<!-- 
+After unpacking the tar files, you need to include <tt>/usr/X11R6/lib</tt>
+in <tt>/etc/ld.so.conf</tt> (where it should already be by default) or in your
+<tt>LD_LIBRARY_PATH</tt> environment variable. Also, the configuration file
+<tt>/etc/XF86Config</tt> or <tt>/usr/X11R6/lib/X11/XF86Config</tt>
+<em>must</em> be properly filled out
+based on the host setup. Ideally this is done using <tt>XF86Setup</tt> or (if
+for some reason this doesn't work) using <tt>xf86config</tt>. If you really
+insist in hand-creating your config file use <tt>XF86Config.eg</tt> as a
+starting point and <tt>README.Config</tt> as
+guideline.  You may damage your hardware if you use a wrong
+<tt>XF86Config</tt> file, so <em>read the docs</em>,
+especially the man pages and the other <tt>README</tt> files in
+<tt>/usr/X11R6/lib/X11/doc</tt>.
+-->
 tar е╒ебедеыдЄ┼╕│лд╖д┐дщбв<tt>/etc/ld.so.conf</tt> д╬├цдлб╩╜щ┤№├═д╦дшд├д╞┤√д╦д╜дж─ъ
 ╡┴д╡дьд╞дддыд╧д║д╟д╣б╦бв<tt>LD_LIBRARY_PATH</tt> ┤─╢н╩╤┐Їд╬├цд╦ <tt>/usr/X11R6/lib</tt> дЄ─ъ
 ╡┴д╣ды╔м═╫дмдвдъд▐д╣бгд▐д┐бв╣╜└о─ъ╡┴е╒ебедеыд╟двды 
@@ -79,6 +165,20 @@ XFree86-3.1.2F длдщд╧д╕дсдыд╩дщд╨╟█╔█╩кд╦╞■д├д╞ддды┐╖д╖дд└▀─ъецб╝е╞егеъе╞ег
 д╟двды <tt>XF86Setup</tt> дмдвдъд▐д╣бг<tt>XF86Config</tt> дЄ└▀─ъд╣ды
 д│д╬е─б╝еыдЄ╗╚═╤д╣дыд│д╚дЄдк┤лдсд╖д▐д╣бг┼м└┌д╩╩╕╜ёдЄдк╞╔д▀дпд└д╡ддбг
 
+<!-- 
+XFree86 has the ability to perform VT switching to and from the X
+server. When first started, XFree86 will automatically locate the first
+available VT (one that hasn't been opened by any process), and run on that
+VT.  If there isn't one available, XFree86 will terminate with an error
+message.  The server can be run on a specific VT by using the
+``vt&lt;nn&gt;'' option, where
+ &lt;nn&gt; is the number of an available VT (starting from 1). If
+you don't have a free VT XFree86 cannot run. Normally you can simply disable
+one of the <tt>getty</tt> programs in <tt>/etc/inittab</tt>, but if this is
+not an option, you can increase the number of
+available VTs by increasing the value of <tt>NR_CONSOLES</tt> in
+<tt>include/linux/tty.h</tt> and recompiling the kernel.
+-->
 XFree86 д╧бвX е╡б╝е╨б╝д╚д╬┤╓д╟┴╨╩¤╕■д╦▓╛┴█├╝╦Ў (VT) └┌дъ┬╪диб╩е╡б╝е╨б╝длдщ
 ▓╛┴█├╝╦Ўд╪бв▓╛┴█├╝╦Ўдлдще╡б╝е╨б╝д╪└┌дъ┬╪дидыб╦дЄд╣ды╡б╟╜дмдвдъд▐д╣бг╜щдсд╞
 ╡п╞░д╣дыд╚днд╧бвXFree86 дмбв└шд║▓╛┴█├╝╦Ўб╩╗╚═╤▓─╟╜д╩┬╛д╬е╫еэе╗е╣д╦│лдлдьд╞
@@ -90,6 +190,15 @@ XFree86 д╧бвX е╡б╝е╨б╝д╚д╬┤╓д╟┴╨╩¤╕■д╦▓╛┴█├╝╦Ў (VT) └┌дъ┬╪диб╩е╡б╝е╨б╝длдщ
 <tt>include/linux/tty.h</tt> д╬├цд╬ <tt>NR_CONSOLES</tt> д╬┐ЇдЄ┴¤дфд╖д╞елб╝е═еыдЄе│еєе╤едеы
 д╣дьд╨бв╗╚═╤▓─╟╜д╩▓╛┴█├╝╦Ўд╬┐ЇдЄ┴¤дфд╣д│д╚дмд╟днд▐д╣бг
 
+<!-- 
+Once running inside X, switching to another VT is accomplished by
+pressing Ctrl-Alt-&lt;Fnn&gt; where nn is the number of the VT to switch to.
+To return to the server, press the proper key-combination that moves you back
+to the VT that XFree86 is using: by default, this is Alt-&lt;Fmm&gt;, where
+mm is the number of the VT the server is running on (this number is printed
+when the server is started).  Note that this is NOT the VT from which the
+server was started.
+-->
 ░ь├╢бвXFree86 дм╞░║юд╖д╞д╖д▐дид╨бве│еєе╚еэб╝еыенб╝ &lt;Ctrl&gt; д╚екеые┐е═еде╚ен
 б╝ &lt;Alt&gt; д╚е╒ебеєепе╖ечеєенб╝ &lt;Fnn&gt; дЄ╞▒╗■д╦▓бд╣д│д╚д╟бв┬╛д╬▓╛┴█├╝╦Ўд╦└┌дъ
 ┬╪дидщдьд▐д╣бгд│д│д╬ nn д╧└┌дъ┬╪дид┐дд▓╛┴█├╝╦Ў╚╓╣цд╟д╣бгXFree86 е╡б╝е╨б╝д╦
@@ -99,12 +208,27 @@ XFree86 д╧бвX е╡б╝е╨б╝д╚д╬┤╓д╟┴╨╩¤╕■д╦▓╛┴█├╝╦Ў (VT) └┌дъ┬╪диб╩е╡б╝е╨б╝длдщ
 д╬╚╓╣цд╟д╣бгб╩д│д╬╚╓╣цд╧е╡б╝е╨б╝дм╡п╞░д╣дыд╚днд╦╔╜╝ид╡дьд▐д╣бгб╦┤√д╦╡п╞░д╖
 д╞дддые╡б╝е╨б╝длдщ╡п╞░д╖д┐▓╛┴█├╝╦Ў<em>д╟д╧д╩дд</em>д│д╚д╦├э░╒д╖д╞▓╝д╡ддбг
 
+<!-- 
+NOTE: you can redefine the text-mode keybindings with the
+`<tt>loadkeys</tt>' command found in the <tt>kbd-0.81.tar.gz</tt>
+archive (or a later version thereof).
+With this, you can (for example) make Ctrl-Alt-&lt;Fmm&gt; work from text mode
+the same way it works under the XFree86 server.
+-->
 ├э░╒: <tt>kbd-0.81.tar.gz</tt> ░╩╣▀д╬е╨б╝е╕ечеєд╬├цд╦двды `<tt>loadkeys</tt>' е│е▐еєе╔д╟бве╞
 ене╣е╚етб╝е╔д╬енб╝│ф┼ЎдЄ║╞─ъ╡┴д╟днд▐д╣бгд│дьдЄ╗╚дид╨бв╬удид╨бве│еєе╚еэб╝еы
 енб╝ &lt;Ctrl&gt; д╚екеые┐е═еде╚енб╝ &lt;Alt&gt; д╚е╒ебеєепе╖ечеєенб╝ &lt;Fmm&gt; дЄ╞▒╗■д╦╗╚
 ═╤д╖д╞ X е╡б╝е╨б╝▓╝длдщ░▄╞░д╣дыд╬д╚╞▒д╕дшджд╩енб╝┴р║юд╟бв▓╛┴█├╝╦Ўд╬е╞ене╣
 е╚етб╝е╔длдщбв░▄╞░д╣ды╗Ўдм╜╨═шд▐д╣бг
 
+<!-- 
+When the server is exited, it will return to the original VT it was
+started from, unless it dies unexpectedly, when the switch must be done
+manually. There still seem to be weird combinations of graphic cards and
+motherboards that have problems to restore the textfont when returning from
+XFree86 to the text mode. In these cases using the <tt>runx</tt> script from
+the <bf>svgalib</bf> distribution might help.
+-->
 е╡б╝е╨б╝дЄ╜к╬╗д╡д╗дыд╚е╡б╝е╨б╝дЄ╡п╞░д╖д┐▓╛┴█├╝╦Ўд╦╠сдъд▐д╣дмбвдтд╖е╡б╝е╨б╝
 дЄ╡п╞░д╖д┐▓╛┴█├╝╦Ўдм╗рдєд╟д╖д▐д├д┐д╚днд╧бв╝ъ╞░д╟╠сд╡д╩д▒дьд╨д╩дъд▐д╗дєбг
 XFree86 длдще╞ене╣е╚етб╝е╔д╦╠сды╗■д╦бв╠дд└▓ш╠╠д╬▓є╔№д╦╠ф┬ъдмдвдыд╬д╧бве░ещ
@@ -112,6 +236,22 @@ XFree86 длдще╞ене╣е╚етб╝е╔д╦╠сды╗■д╦бв╠дд└▓ш╠╠д╬▓є╔№д╦╠ф┬ъдмдвдыд╬д╧бве░ещ
 <bf>svgalib</bf> д╚дддж╟█╔╒╩кд╦╞■д├д╞ддды <tt>runx</tt> д╚дддже╣епеъе╫е╚дЄ╝┬╣╘д╣дьд╨бв▓Є╛├д╟
 дндыд╟д╖дчджбг
 
+<!-- 
+The XFree86 server now queries the kernel to obtain the key binding
+in effect at startup. These bindings are either the default map in place
+when the kernel was compiled, or reloaded using the
+`<tt>loadkeys</tt>' utility. Not
+all keys are bound: kernel-specific, multiple keysym, and dead keys are not
+handled by the server. All others are translated to their X equivalents.
+Note that the XFree86 server only allows for four modifier maps: unshifted,
+shifted, modeswitch unshifted and modeswitch shifted.  Depending on what
+the modeswitch key is (it is configurable in your <tt>XF86Config</tt> and defaul
+ts
+to Alt),
+XFree86 will read those tables into its keymaps.  This means if you use
+certain keys, like left-Control, for Linux modeswitch, that will not be
+mappable to X.
+-->
 ╡п╞░╗■д╦бвXFree86 е╡б╝е╨б╝д╧елб╝е═еыд╦┬╨д╖д╞енб╝│фдъ╔╒д▒дЄ│═╞└д╣дыд│д╚дЄ═╫
 ╡сд╖д▐д╣бгд│д╬│фдъ╔╒д▒д╧елб╝е═еыдЄе│еєе╤едеыд╖д┐д╚дн└▀─ъд╡дьды╜щ┤№├═длд▐д┐
 д╧бв`<tt>loadkeys</tt>' ецб╝е╞егеъе╞егд╦дшд├д╞╜ёдн┬╪дид┐├═д╦д╩дъд▐д╣бге╡б╝е╨б╝д╟д╧бв
@@ -142,75 +282,93 @@ XFree86 длдще╞ене╣е╚етб╝е╔д╦╠сды╗■д╦бв╠дд└▓ш╠╠д╬▓є╔№д╦╠ф┬ъдмдвдыд╬д╧бве░ещ
 <sect> е╟еге╣е╫еьеде▐е═б╝е╕еу Xdm д╬╞│╞■
 <p>
 
-<!--Since xdm is dynamically linked, there's no issue on
+<!--
+Since xdm is dynamically linked, there's no issue on
 export restriction outside US for this binary distribution of xdm: it
 does not contain the DES encryption code. So it's now included in the
-bin package.-->
+bin package.
+-->
 xdm д╧╞░┼кд╦еъеєепд╖д╞дддыд╬д╟бвxdm д╬е╨еде╩еъ╟█╔█╩кд╬евесеъел╣ё│░д╪д╬
 ═в╜╨└й╕┬д╧╠ф┬ъд╧двдъд▐д╗дєбгд│дьд╧ DES ░┼╣ц▓╜е╫еэе░ещердЄ┤▐дєд╟ддд╩дд
 ╗Ўдлдщд╟д╣бг╜╛д├д╞╕╜║▀бве╨еде╩еъе╤е├е▒б╝е╕д╦ xdm дм┤▐д▐дьд╞ддд▐д╣бг
 
-<!--However the file <tt>xc/lib/Xdmcp/WrapHelp.c</tt> is not included in the
-XFree86-3.2 source, so support for
+<!--
+However the file <tt>xc/lib/Xdmcp/WrapHelp.c</tt> is not included in the
+XFree86-3.3 source, so support for
 XDM-AUTHORIZATION-1 is not included here. You'll have to get
 WrapHelp.c and rebuild xdm after having set <tt/HasXdmAuth/ in
-<tt/xf86site.def/.-->
+<tt/xf86site.def/.
+-->
 <tt>xc/lib/Xdmcp/WrapHelp.c</tt> д╚дддже╒ебедеыдм XFree86-3.2 д╬е╜б╝е╣д╦
 ┤▐д▐дьд╞ддд╩ддд╬д╟бвXDM-AUTHORIZATION-1 д╧е╡е▌б╝е╚д╖д▐д╗дєбгWrapHelp.c дЄ
 ╞■╝ъд╖д╞ <tt/xf86site.def/ д╬├цд╦ <tt/HasXdmAuth/ дЄ└▀─ъд╖д┐╕хд╟ xdm дЄ
 ║╞╣╜├█д╣ды╔м═╫дмдвдъд▐д╣бг
 
-<!--The file is available within the US; for
+<!--
+The file is available within the US; for
 details see <htmlurl name="ftp.x.org:/pub/R6/xdm-auth/README"
-url="ftp://ftp.x.org/pub/R6/xdm-auth/README">.-->
+url="ftp://ftp.x.org/pub/R6/xdm-auth/README">.
+-->
 WrapHelp.c д╧евесеъел╣ё╞тд╦двдъд▐д╣бг╛▄║┘д╧
 <htmlurl name="ftp.x.org:/pub/R6/xdm-auth/README"
 url="ftp://ftp.x.org/pub/R6/xdm-auth/README">
 дЄд┤═ўдпд└д╡ддбг
 
-<!--To start the display manager, log in as root on the console and type:
-``<tt/xdm -nodaemon/''.-->
+<!--
+To start the display manager, log in as root on the console and type:
+``<tt/xdm -nodaemon/''.
+-->
 е╟еге╣е╫еьеде▐е═б╝е╕еудЄ╡п╞░д╣ды┴░д╦бвеыб╝е╚ (root) д╟еэе░едеєд╖д╞
 е│еєе╜б╝еыдлдщ ``<tt/xdm -nodaemon/'' д╚╞■╬╧д╖д╞▓╝д╡ддбг
 
-<!--You can start xdm automatically on bootup by disabling the console getty
+<!--
+You can start xdm automatically on bootup by disabling the console getty
 and modifying <tt>/etc/inittab</tt>. Details about this setup depend on the
-Linux distribution that you use, so check the documentation provided there.-->
+Linux distribution that you use, so check the documentation provided there.
+-->
 console getty дЄ╠╡╕·д╦д╖д╞бв <tt>/etc/inittab</tt> дЄ╩╤╣╣д╣дыд│д╚д╦дшдъ
 е╓б╝е╚╗■д╦╝л╞░┼кд╦ xdm дЄ╡п╞░╜╨═шд▐д╣бг╛▄║┘д╧╗╚дкджд╚д╣ды Linux ╟█╔█╩кд╬
 xdm д╬└▀─ъд╦░═┬╕д╖д▐д╣д╬д╟д│д│д╦двды╩╕╜ёдЄ│╬╟зд╖д╞▓╝д╡ддбг
 
-<!--The xdm binary provided should run with both shadow- and non-shadow password
-systems.-->
+<!--
+The xdm binary provided should run with both shadow- and non-shadow password
+systems.
+-->
 xdm е╨еде╩еъ╟█╔█╩кд╧е╖еуе╔еже╤е╣еяб╝е╔д╚╔с─╠д╬е╤е╣еяб╝е╔д╬е╖е╣е╞ерд╬╬╛╩¤д╟
 ╞░║юд╣дыд╟д╖дчджбг
 
 <sect>xterm
 <p>
-<!--The XFree86-3.2 binary release contains an xterm binary that has been linked
+<!--
+The XFree86-3.3 binary release contains an xterm binary that has been linked
 statically against libtermcap. This was done to make sure that it will
 correctly work with all distributions, regardless whether they rely on
 libtermcap or libncurses. Contrary to the xterm binaries in some beta version
 following XFree86-3.1.2, this binary does not rely on a recent libncurses
-being installed on your system.-->
+being installed on your system.
+-->
 XFree86-3.2 е╨еде╩еъ╟█╔█╩кд╧ libtermcap д╚└┼┼кд╦еъеєепд╖д╞ддды xterm е╨еде╩еъ
 ╟█╔█╩кдЄ┤▐дєд╟ддд▐д╣бгxterm д╧ libtermcap д╚ libncurses д╬д╔д┴дщд╦д╟дт┤╪╧вд╬
 двдые╫еэе░ещерд╬┴┤д╞д╬╟█╔█╩кд╟└╡д╖дп╞░║юд╣ды│╬╟здЄд╖д╞ддд▐д╣бг╡╒д╦ XFree86-3.1.2
 д╦╔╒┬░д╣дыдддпд─длд╬е┘б╝е┐╚╟д╬ xterm е╨еде╩еъ╟█╔█╩кд╧╞│╞■д╖д┐║╟┐╖д╬ libncurses
 д╚д╧┤╪╧вдмдвдъд▐д╗дєбг
 
-<!--<sect>Input devices-->
+<!--
+<sect>Input devices
+-->
 <sect>╞■╬╧╡б┤я
 <p>
-<!--XFree86 now support the dynamic loading of drivers for external
+<!--
+XFree86 now support the dynamic loading of drivers for external
 input devices using the <tt/XInput/ extension. Currently supported
 devices are:
 <itemize>
-<item> Joystick (<tt/xf86Jstk.so/)
-<item> Wacom tablets (Wacom IV protocol only, <tt/xf86Wacom.so/)
-<item> SummaSketch tablets (<tt/xf86Summa.so/)
-<item> Elographics touchscreen (<tt/xf86Elo.so/)
-</itemize>-->
+<item>Joystick (<tt/xf86Jstk.so/)
+<item>Wacom tablets (Wacom IV protocol only, <tt/xf86Wacom.so/)
+<item>SummaSketch tablets (<tt/xf86Summa.so/)
+<item>Elographics touchscreen (<tt/xf86Elo.so/)
+</itemize>
+-->
 ║г▓єбв<tt/XInput/ ╡б╟╜│╚─едЄ╗╚д├д┐│░╔Ї╞■╬╧╡б┤яе╔ещеде╨д╬е└еде╩е▀е├еп
 еэб╝е╟егеєе░дЄе╡е▌б╝е╚д╖д▐д╖д┐бг╕╜║▀╝бд╬╡б┤ядЄе╡е▌б╝е╚д╖д╞ддд▐д╣бг
 <itemize>
@@ -220,15 +378,17 @@ devices are:
 <item> Elographics е┐е├е┴е╣епеъб╝еє (<tt/xf86Elo.so/)
 </itemize>
 
-<!--To use a specific device, add the line
+<!--
+To use a specific device, add the line
 <tscreen>
 <tt/load/ <tt/"/<em/module/<tt/"/
 </tscreen>
 in the <bf/Module/ section of <tt/XF86Config/, where <em/module/ is
 the name of the <tt/.so/ file corresponding to your device.
-You also need to set up a <bf/XInput/ section in <tt/XF86Config/. 
+You also need to set up a <bf/XInput/ section in <tt/XF86Config/.
 Refer to the <em>XF86Config(5)</em> man page for detailed
-configuration instructions.-->
+configuration instructions.
+-->
 ╞├─ъд╬╡б┤ядЄ╗╚═╤д╣дыд╦д╧бв╝бд╬╣╘дЄ <tt/XF86Config/ д╬ <bf/Module/
 д╦─╔▓├д╖д╞дпд└д╡ддбгд│д│д╟ <em/module/ д╧ ╡б┤яд╦┬╨▒■д╣ды<tt/.so/ 
 е╒ебедеыд╬╠╛╛╬д╟д╣бг
@@ -239,26 +399,36 @@ configuration instructions.-->
 └▀─ъ╝ъ╜чд╬╛▄║┘д╦д─ддд╞д╧ <em>XF86Config(5)</em> д╬екеєещедеєе▐е╦ехевеы
 дЄ╗▓╛╚д╖д╞дпд└д╡ддбг
 <p>
-<!--You can then change the device used to drive the X pointer with the
-<em/xsetpointer(1)/ command.-->
+<!--
+You can then change the device used to drive the X pointer with the
+<em/xsetpointer(1)/ command.
+-->
 <em/xsetpointer(1)/ е│е▐еєе╔дЄ╗╚д├д╞ X д╬елб╝е╜еыдЄ╢ю╞░д╣ды╗╚═╤д╖д┐дд
 ╡б┤яд╦╩╤╣╣╜╨═шд▐д╣бг
 <p>
-<!--For joystick support, you'll need to install the joystick device
-driver in the kernel. -->
+<!--
+For joystick support, you'll need to install the joystick device
+driver in the kernel.
+-->
 е╕ечеде╣е╞еге├епдЄ╗╚джд╦д╧елб╝е═еыд╦е╕ечеде╣е╞еге├епд╬е╟е╨еде╣е╔ещеде╨
 дЄ┴╚д▀╣■др╔м═╫дмдвдъд▐д╣бг
 
-<!--<sect1>Configuring PEX and XIE extensions-->
+<!--
+<sect1>Configuring PEX, XIE and GLX extensions
+-->
 <sect1>PEX д╚ XIE ╡б╟╜│╚─ед╬└▀─ъ
 <p>
-<!--The PEX and XIE extensions are now supported as external modules.
+<!--
+The PEX, XIE and GLX extensions are now supported as external modules.
 If you want to have access to these extensions, add the following
 lines to the <bf/Module/ section of <tt/XF86Config/:
 <tscreen><verb>
    load    "pex5.so"
    load    "xie.so"
-</verb></tscreen>-->
+</verb></tscreen>
+For GLX you need to get the appropriate GLX modules, first. They are, at this
+time, not part of the XFree86 distribution.
+-->
 ╕╜║▀бвPEX д╚ XIE ╡б╟╜│╚─ед╧│░╔Їете╕ехб╝еыд╚д╖д╞е╡е▌б╝е╚д╖д▐д╖д┐бг
 д│д╬╡б╟╜│╚─едЄ╗╚ддд┐дд╛ь╣чд╧бв╝бд╬╣╘дЄ <tt/XF86Config/ д╬ <bf/Module/
 д╦─╔▓├д╖д╞дпд└д╡дд
@@ -267,13 +437,16 @@ lines to the <bf/Module/ section of <tt/XF86Config/:
    load    "xie.so"
 </verb></tscreen>
 
-<!--<sect> Compiling XFree86 <p>
-Only the sources for full releases of XFree86 are freely available. The
-last full release of XFree86 is 3.2.
-
+<!--
+<sect> Compiling XFree86 <p>
 There are no special instructions required for compiling XFree86.
-This version was compiled with gcc-2.7.2, the 5.2.18 Elf libraries and the
-1.7.14 shared, dynamic linker ld.so. -->
+This version was compiled with gcc-2.7.2.1, the 5.4.7 Elf libraries and the
+1.7.14 shared, dynamic linker ld.so.
+The server has been
+compiled with <tt>-m486</tt>, which optimizes it for the 486 processor, but
+the binary will run on the 386 processor (there is a slight increase in
+binary size over using <tt>-m386</tt>, but no loss of performance).
+-->
 
 <sect> XFree86 дЄе│еєе╤едеыд╣дыд╦д╧ <p>
 XFree86 д╬┤░┴┤╚╟д╬е╜б╝е╣д└д▒д╧╠╡╬┴д╟╕°│лд╡дьд╞ддд▐д╣бг║╟┐╖д╬ XFree86 д╬
@@ -291,6 +464,14 @@ XFree86 дЄе│еєе╤едеыд╣дыд┐дсд╦д╧╞├╩╠д╩╝ъ╜ч╜ёд╧╔м═╫двдъд▐д╗дєбг
 д┐дтд╬д╧бв<tt>-m386</tt> дЄ╔╒д▒д╞е│еєе╤едеыд╖д┐дтд╬дшдъ╛пб╣е╒ебедеые╡еде║дм┬чдндпд╩
 д├д╞ддд▐д╣дмбв└н╟╜д╬┬╗╝║д╧двдъд▐д╗дєбгб╦
 
+<!--
+All extensions and clients have been ported and tested. By default,
+the servers are compiled without any extra extensions (PEX, XIE, etc),
+but libraries for those extensions are always generated. They can be loaded
+at runtime, see the XFree86 man page for details. By modifying
+<tt>site.def</tt>, extra extensions can be compiled into the server.
+Alternately, the link kit can be used to craft modified servers.
+-->
 ┴┤д╞д╬╡б╟╜│╚─ед╚епещедевеєе╚д╧░▄┐вд╚е╞е╣е╚дм╜кдяд├д╞ддд▐д╣бг╔╕╜рд╟д╧бве╡б╝
 е╨б╝д╧│░╔Ї╡б╟╜│╚─е (PEX, XIE ┼∙) ╠╡д╖д╟е│еєе╤едеыд╖д╞ддд▐д╣дмбвд│дьдщд╬│░
 ╔Ї╡б╟╜│╚─ед╬ещеде╓ещеъд╧┤√д╦└╕└о║╤д▀д╟д╣бг
@@ -302,6 +483,17 @@ at runtime, see the XFree86 man page for details. -->
 │╚─едЄе│еєе╤едеыд╖д╞е╡б╝е╨б╝д╦┴╚д▀╣■дсд▐д╣бг╝уд╖дпд╧бвеъеєепене├е╚дме╡б╝е╨
 б╝дЄ╩╤╣╣д╟днд▐д╣бг
 
+<!--
+The distribution is very large, but it is possible to compile
+XFree86 on a single 64mb partition, if the source tree is carefully trimmed
+(no manpages, PEX or large clients). Simply run ``<tt>make Makefiles</tt>'' to
+create
+the Makefiles, then stop the make and run each piece individually. It is
+not necessary to run ``<tt>make depend</tt>'' as well, which saves some
+space.  Having
+150mb available makes compiling XFree86 a lot easier. You will need about
+10mb of virtual memory to compile the entire server.
+-->
 ╟█╔╒╩кд╧┬ч╩╤┬чдндддтд╬д╟д╣дмбвекеєещедеєе▐е╦ехевеыбвPEX дф┬чднд╩епещедевеє
 е╚дЄ╛├╡юд╣ды┼∙д╖д╞е╜б╝е╣дЄ├э░╒┐╝дп└░═¤д╣дьд╨бвXFree86 д╧ 64MB д╬е╤б╝е╞еге╖
 ечеєг▒д─д╟бве│еєе╤едеы╜╨═шд▐д╣бг Makefile дЄ║ю└од╣дыд╦д╧бв├▒д╦ ``<tt>make Makefiles</tt>'' дЄ╝┬╣╘д╖д╞дпд└д╡ддбге╒ебедеыдм╝л╞░┼кд╦║ю└од╡дьбв╝┬╣╘д╧╜к╬╗д╖д▐
@@ -309,11 +501,24 @@ at runtime, see the XFree86 man page for details. -->
 100MB д╬╢їдне╟еге╣епдмдвдьд╨бвдтд├д╚═╞░╫д╦ XFree86 дЄе│еєе╤едеыд╟днд▐д╣бг
 е╡б╝е╨б╝┴┤д╞дЄе│еєе╤едеыд╣дыд╦д╧бв╠є 10MB д╬▓╛┴█есетеъдм╔м═╫д╟д╖дчджбг
 
+<!--
+If an aout version of XFree86 is to be built and patches are applied which
+significantly change the libraries,
+modified jump_xxx files will be needed. Those can be generated according to
+instructions given in the DLL tools package, and will be made available as
+XFree86 patches.
+-->
 XFree86 д╬ aout ╚╟дЄ└╕└од╖д┐дъ
 е╤е├е┴дмещеде╓ещеъд╦╜┼═╫д╩╩╤╣╣дЄ╣╘д╩дж╛ь╣чд╧бв╣╣┐╖д╖д┐ jump_xxx дм╔м═╫д╟д╖
 дчджбгDLL tools е╤е├е▒б╝е╕д╦╔╒┬░д╣ды╝ъ╜чд╟е╤е├е┴дм└╕└од╟днбвXFree86 д╬е╤е├
 е┴дЄ┼Ўд╞дыд╬д╦╔м═╫д╟д╖дчджбг
 
+<!--
+The JUMP_xxx defines used to compile the X libraries can also be
+used to compile external X shared libraries, like Xaw3d. Detailed
+instructions are provided in <tt>/usr/X11R6/lib/X11/config/lnxLib.rules</tt>,
+where the X library definitions are provided, as an example.
+-->
 ╬удид╨бвXaw3d д╬дшджд╩│░╔Ї X ╢ж═нещеде╓ещеъдт X ещеде╓ещеъдЄе│еєе╤едеыд╣ды
 дшджд╦бв X ещеде╓ещеъдЄ─ъ╡┴д╣ды JUMP_xxx д╟─ъ╡┴д╖д╞е│еєе╤едеы╜╨═шд▐д╣бг╛▄
 ║┘д╩╝ъ╜чд╦д─ддд╞д╧бвX ещеде╓ещеъд╬─ъ╡┴╬удЄбв
@@ -323,12 +528,23 @@ Orest Zborowski (<it>orestz@eskimo.com</it>) ╗сдм│л╚пд╖д┐║╟┐╖д╬╩¤╦бд╟бв┴┤д╞д╬╛▄║
 └т╠└е╒ебедеыдЄ╜ёднбв╜щдсд╞ XFree86 DLL ещеде╓ещеъдЄ║ю└од╖д╞дпдьд┐ Dirk 
 Hohndel (<it>hohndel@aib.com</it>) ╗сд╦┤╢╝╒д╖д▐д╣бг
 
+<!--
+<sect>Bug Notification <p>
+Bug reports should be sent to <it>XFree86@XFree86.org</it> or posted
+to the <it>comp.windows.x.i386unix</it> newsgroup.
+-->
 <sect> е╨е░д╬╣Ё├╬д╦д─ддд╞ <p>
 е╨е░╩є╣Ёд╧ <it>XFree86@XFree86.org</it> д╦┴ўдыдл <it>comp.windows.x.i386unix</it> д╬е╦ехб╝е╣
 е░еыб╝е╫д╦┼ъ╣╞д╖д╞▓╝д╡ддбг
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/sgml/Linux.sgml,v 3.2 1997/01/26 04:34:20 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/sgml/Linux.sgml,v 3.2.2.1 1997/07/31 06:05:51 dawes Exp $
+
+
+
+
+
+$XConsortium: Linux.sgml /main/6 1996/10/28 04:47:37 kaleb $
 </verb>
 <hrule>
 д│д╬е╒ебедеыд╧ xc/programs/Xserver/hw/xfree86/doc/sgml/Linux.sgml,v 3.9 1996/10/20 13:33:12 дЄбв▓м╦▄  ░ь╣м 

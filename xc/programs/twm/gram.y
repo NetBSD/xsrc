@@ -53,14 +53,15 @@ in this Software without prior written authorization from the X Consortium.
 
 /***********************************************************************
  *
- * $XConsortium: gram.y,v 1.93 94/04/17 20:38:11 dave Exp $
- * $XFree86: xc/programs/twm/gram.y,v 3.0 1996/06/29 14:13:06 dawes Exp $
+ * $TOG: gram.y /main/66 1997/05/27 11:55:53 kaleb $
  *
  * .twmrc command grammer
  *
  * 07-Jan-86 Thomas E. LaStrange	File created
  * 11-Nov-90 Dave Sternlicht            Adding SaveColors
  * 10-Oct-90 David M. Sternlicht        Storing saved colors on root
+ *
+ * $XFree86: xc/programs/twm/gram.y,v 3.0.4.2 1997/07/06 07:28:19 dawes Exp $
  *
  ***********************************************************************/
 
@@ -104,8 +105,7 @@ extern int yylineno;
     char *ptr;
 };
 
-%token LB RB LP RP
-%token <num> MENUS MENU BUTTON DEFAULT_FUNCTION PLUS MINUS
+%token <num> LB RB LP RP MENUS MENU BUTTON DEFAULT_FUNCTION PLUS MINUS
 %token <num> ALL OR CURSORS PIXMAPS ICONS COLOR SAVECOLOR MONOCHROME FUNCTION 
 %token <num> ICONMGR_SHOW ICONMGR WINDOW_FUNCTION ZOOM ICONMGRS
 %token <num> ICONMGR_GEOMETRY ICONMGR_NOSHOW MAKE_TITLE GRAYSCALE
@@ -121,8 +121,10 @@ extern int yylineno;
 %token <ptr> STRING 
 
 %type <ptr> string
+%type <num> pixmap_list cursor_list color_list save_color_list stmt
+%type <num> win_color_list iconm_list win_list icon_list function menu
+%type <num> noarg sarg error narg squeeze
 %type <num> action button number signed_number full fullkey
-%type <num> stmt noarg error sarg narg squeeze
 
 %start twmrc 
 
@@ -234,11 +236,11 @@ stmt		: error
 		  icon_list
 		| COLOR 		{ color = COLOR; }
 		  color_list
-  		| GRAYSCALE 		{ color = GRAYSCALE; }
+		| GRAYSCALE 		{ color = GRAYSCALE; }
   		  color_list
-                | SAVECOLOR          
+		| SAVECOLOR          
                   save_color_list
-                | MONOCHROME 		{ color = MONOCHROME; }
+		| MONOCHROME 		{ color = MONOCHROME; }
 	          color_list
 		| DEFAULT_FUNCTION action { Scr->DefaultFunction.func = $2;
 					  if ($2 == F_MENU)

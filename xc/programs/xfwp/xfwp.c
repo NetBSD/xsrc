@@ -1,4 +1,4 @@
-/* $XConsortium: xfwp.c /main/38 1996/12/27 16:18:32 kaleb $ */
+/* $TOG: xfwp.c /main/42 1997/04/21 11:46:39 reed $ */
 
 /*
 Copyright (c) 1996  X Consortium
@@ -33,7 +33,7 @@ from the X Consortium.
   under contract to X Consortium, Inc.
  */
 
-/* $XFree86: xc/programs/xfwp/xfwp.c,v 1.7 1997/01/18 07:02:52 dawes Exp $ */
+/* $XFree86: xc/programs/xfwp/xfwp.c,v 1.7.2.1 1997/06/11 12:08:59 dawes Exp $ */
 
 #if defined(sun) && defined(i386) && defined(SVR4)
 #define __EXTENSIONS__
@@ -121,7 +121,7 @@ void doPrintEval(struct config*, int);
 
 static void Usage()
 {
-    fprintf(stderr, "Usage:  xfwp [-pdt <#secs>] [-clt <#secs>] [-cdt <#secs>] [-pmport <port#>] [-config <path>] [-verify]\n");
+     fprintf(stderr, "Usage:  xfwp [-pdt <#secs>] [-clt <#secs>] [-cdt <#secs>]        [-pmport <port#>] [-config <path>] [-logfile <path>] [-loglevel <0|1>] [-verify\n");
     exit(0);
 }
 
@@ -254,11 +254,13 @@ void  doProcessInputArgs(struct config * config_info,
   config_info->pm_data_timeout = 0;
   config_info->client_listen_timeout = 0;
   config_info->client_data_timeout = 0;
+  config_info->log_level = 0;
 
   config_info->rule_count = config_info->lines_allocated = 0;
+  config_info->pm_listen_port = NULL;
   config_info->config_file_data = NULL;
-
   config_info->config_file_path = NULL;
+  config_info->log_file_path = NULL;
   
   /*
   // initialize timeout for three port types; if a timeout for a 
@@ -319,12 +321,31 @@ void  doProcessInputArgs(struct config * config_info,
           break_flag = 1;
           break; 
         }
-	config_info->config_file_path = Malloc(strlen(argv[arg_counter+1])+1);
+        config_info->config_file_path = Malloc(strlen(argv[arg_counter+1])+1);
 	strcpy(config_info->config_file_path, argv[arg_counter + 1]);
       }
       else if (!strcmp("-verify", argv[arg_counter]))
       {
 	  printConfigVerify = TRUE;
+      }
+      else if (!strcmp("-logfile", argv[arg_counter]))
+      {
+        if (arg_counter + 1 == argc)
+        {
+          break_flag = 1;
+          break;
+        }
+        config_info->log_file_path = Malloc(strlen(argv[arg_counter+1])+1);
+        strcpy(config_info->log_file_path, argv[arg_counter + 1]);
+      }
+      else if (!strcmp("-loglevel", argv[arg_counter]))
+      {
+        if ((arg_counter + 1 == argc) || (atoi(argv[arg_counter + 1]) > 1))
+        {
+          break_flag = 1;
+          break; 
+        }
+	config_info->log_level = atoi(argv[arg_counter + 1]);
       }
       else
       {
@@ -345,8 +366,11 @@ void  doProcessInputArgs(struct config * config_info,
     config_info->client_listen_timeout = CLIENT_LISTEN_TIMEOUT_DEFAULT;
   if (config_info->client_data_timeout <= 0)
     config_info->client_data_timeout = CLIENT_DATA_TIMEOUT_DEFAULT;
-  if (strlen(config_info->pm_listen_port) == 0)
+  if (config_info->pm_listen_port == NULL)
+  {
+    config_info->pm_listen_port = Malloc(strlen(PM_LISTEN_PORT) + 1);
     strcpy(config_info->pm_listen_port, PM_LISTEN_PORT);
+  }
 }
 
 
@@ -844,6 +868,8 @@ void  doProcessWritables(int fd_counter,
       }  
       client_conn_array[client_conn_array[fd_counter]->conn_to]->conn_to = -1;
       client_conn_array[fd_counter]->conn_to = -1;
+      free(client_conn_array[fd_counter]->source);
+      free(client_conn_array[fd_counter]->destination);
       free(client_conn_array[fd_counter]);
       client_conn_array[fd_counter] = NULL;
       return;
@@ -889,6 +915,8 @@ void  doProcessWritables(int fd_counter,
 	  client_conn_array[fd_counter]->conn_to = -1;
 	  client_conn_array[fd_counter]->wclose = 0;
 	  close(fd_counter);
+	  free(client_conn_array[fd_counter]->source);
+	  free(client_conn_array[fd_counter]->destination);
 	  free(client_conn_array[fd_counter]);
 	  client_conn_array[fd_counter] = NULL;
 	}
@@ -931,6 +959,8 @@ void  doProcessWritables(int fd_counter,
 	client_conn_array[fd_counter]->conn_to = -1;
 	client_conn_array[fd_counter]->wclose = 0;
 	close(fd_counter);
+	free(client_conn_array[fd_counter]->source);
+	free(client_conn_array[fd_counter]->destination);
 	free(client_conn_array[fd_counter]);
 	client_conn_array[fd_counter] = NULL;
       }
@@ -971,6 +1001,7 @@ void  doProcessReadables(int fd_counter,
   enum CONFIG_CHECK		server_status;
   xConnClientPrefix 		client;    
   xConnSetupPrefix 		prefix;    
+  struct log_struct		log_data;
   /*
   // Check to see if this readable is the PM requesting 
   // a connection (this is a single well-known fd); NOTE:
@@ -1036,7 +1067,8 @@ void  doProcessReadables(int fd_counter,
     if ((config_check = doConfigCheck(&temp_sockaddr_in, 
 				      &server_sockaddr_in,
 				      config_info,
-				      PMGR)) == FAILURE)
+				      PMGR,
+				      &log_data)) == FAILURE)
     {
       /*
       // close the PM connection 
@@ -1317,6 +1349,17 @@ void  doProcessReadables(int fd_counter,
 	return;
       }
       /*
+      // derive and save the client IP source and destination address strings 
+      // for logging purposes (have to do it here while we have them; even if
+      // this client connection passes the config check, it might fail the
+      // server security checks later); also, init the config_rule_num field
+      */
+      log_data.source = Malloc(strlen(inet_ntoa(temp_sockaddr_in.sin_addr)));
+      log_data.destination = Malloc(strlen(inet_ntoa(server_sockaddr_in.sin_addr)));
+      strcpy(log_data.source, inet_ntoa(temp_sockaddr_in.sin_addr));
+      strcpy(log_data.destination, inet_ntoa(server_sockaddr_in.sin_addr)); 
+      log_data.config_rule_num = -1; 
+      /*
       // do config check on client source and destination (must do
       // it here because otherwise we don't have a server socket
       // to query and we may not be able to resolve server name 
@@ -1325,17 +1368,63 @@ void  doProcessReadables(int fd_counter,
       if ((config_check = doConfigCheck(&temp_sockaddr_in, 
 				 	&server_sockaddr_in,
 					config_info,
-					CLIENT)) == FAILURE)
+					CLIENT,
+				        &log_data)) == FAILURE)
       {
         /*
-        // close client and server sockets and return
-        // 
+        // log the client connection failure, close client and server sockets and return
         */
+        log_data.event = CLIENT_REJECT_CONFIG;
+        if (log_data.log_status = doFormatLogEntry(&log_data, config_info))
+        {
 #ifdef DEBUG
-        fprintf(stderr, 
-		"doProcessReadables:  Remote client failed config check!\n");
+          fprintf(stderr, "Log format error!\n");
+          /*
+          // NOTE:  in this case we freed our log memory inside doFormat()
+          */
+#endif 
+        }
+#ifdef DEBUG
+        /*
+        // if in debug mode, display the log string 
+        */
+        if (!log_data.log_status)
+	  fprintf(stderr, log_data.log_string);
 #endif
-        close(temp_sock_fd);
+        /*
+        // write the log file only if the format succeeded and log_level is set
+        */
+        if ((!log_data.log_status) && (config_info->log_level >= 0))
+        {
+          if (log_data.log_status = doWriteLogFile(&log_data, config_info))
+          {
+#ifdef DEBUG
+            fprintf(stderr, "Logfile write error!\n");
+#endif 
+          }
+          /*
+          // the format succeeded and you at least tried to write the log,
+          // so free log memory 
+          */
+          free(log_data.source);
+          free(log_data.destination);
+          free(log_data.log_string);
+        } else
+        if (!log_data.log_status)
+        {
+          /*
+          // format succeeded but you didn't even *try* to write the log, 
+          // still free log memory 
+          */
+          free(log_data.source);
+          free(log_data.destination);
+          free(log_data.log_string);
+        }
+#ifdef DEBUG
+        fprintf(stderr,
+                "doProcessReadables:  Remote client failed config check!\n");
+#endif
+
         close(server_array[listen_counter]->server_fd);
         return;
       }
@@ -1353,6 +1442,19 @@ void  doProcessReadables(int fd_counter,
 #endif
 	return;
       }
+      /*
+      // save the source and destination data for this connection (since
+      // the log data struct will go out of scope before we check the
+      // server security extension or other loggable events)
+      */
+      client_conn_array[temp_sock_fd]->source = 
+			Malloc(strlen(inet_ntoa(temp_sockaddr_in.sin_addr)));
+      client_conn_array[temp_sock_fd]->destination = 
+			Malloc(strlen(inet_ntoa(server_sockaddr_in.sin_addr)));
+      strcpy(client_conn_array[temp_sock_fd]->source, 
+	     inet_ntoa(temp_sockaddr_in.sin_addr));
+      strcpy(client_conn_array[temp_sock_fd]->destination, 
+             inet_ntoa(server_sockaddr_in.sin_addr)); 
       /*
       // allocate a buffer for the X server connection 
       // and create the association between client and server 
@@ -1560,6 +1662,8 @@ void  doProcessReadables(int fd_counter,
           FD_CLR(client_conn_array[fd_counter]->conn_to, winit);
           close(client_conn_array[fd_counter]->conn_to);
           close(fd_counter);
+          free(client_conn_array[fd_counter]->source);
+          free(client_conn_array[fd_counter]->destination);
           free(client_conn_array[fd_counter]);
           client_conn_array[fd_counter] = NULL;
           /*
@@ -1774,6 +1878,68 @@ void  doProcessReadables(int fd_counter,
 	    // clean up memory
 	    */
 	    free(server_reason_padded);
+            /*
+            // retrieve the client IP source and destination address strings 
+            */
+            log_data.source = 
+	       Malloc(strlen
+	       (client_conn_array[client_conn_array[fd_counter]->conn_to]->source));
+            log_data.destination = 
+	       Malloc(strlen
+	       (client_conn_array[client_conn_array[fd_counter]->conn_to]->destination));
+            strcpy(log_data.source, 
+	       client_conn_array[client_conn_array[fd_counter]->conn_to]->source);
+            strcpy(log_data.destination, 
+	       client_conn_array[client_conn_array[fd_counter]->conn_to]->destination);
+	    /*
+            // Log the client connection failure
+            */
+            log_data.event = CLIENT_REJECT_SERVER;
+            log_data.config_rule_num = -1;
+            if (log_data.log_status = doFormatLogEntry(&log_data, config_info))
+            {
+#ifdef DEBUG
+              fprintf(stderr, "Log format error!\n");
+#endif 
+            }
+#ifdef DEBUG
+            /*
+            // if in debug mode, output the log string even if not writing it to file
+            */
+            if (!log_data.log_status)
+	      fprintf(stderr, log_data.log_string);
+#endif
+            /*
+            // write the log file only if the format operation succeeded and log
+            // level is appropriate
+            */
+            if (!log_data.log_status && config_info->log_level)
+            {
+              if (log_data.log_status = doWriteLogFile(&log_data, config_info))
+              {
+#ifdef DEBUG
+                fprintf(stderr, "Logfile write error!\n");
+#endif 
+              }
+              /*
+              // the format succeeded and you at least tried to write the log,
+              // so free log memory 
+              */
+              free(log_data.source);
+              free(log_data.destination);
+              free(log_data.log_string);
+            } else
+            if (!log_data.log_status)
+            {
+              /*
+              // format succeeded but you didn't even *try* to write the log
+              // (probably because log level is set to no file write), but
+              // you still need to free log memory 
+              */
+              free(log_data.source);
+              free(log_data.destination);
+              free(log_data.log_string);
+            }
 	    break;
 	  case SERVER_REPLY_AUTHENTICATE:
 	    /*
@@ -1786,6 +1952,66 @@ void  doProcessReadables(int fd_counter,
 #ifdef DEBUG
 	    fprintf(stderr, "Server replied AUTHENTICATE!\n");
 #endif
+            /*
+            // retrieve the client IP source and destination address strings 
+            */
+            log_data.source = 
+	       Malloc(strlen
+	       (client_conn_array[client_conn_array[fd_counter]->conn_to]->source));
+            log_data.destination = 
+	       Malloc(strlen
+	       (client_conn_array[client_conn_array[fd_counter]->conn_to]->destination));
+            strcpy(log_data.source, 
+	       client_conn_array[client_conn_array[fd_counter]->conn_to]->source);
+            strcpy(log_data.destination, 
+	       client_conn_array[client_conn_array[fd_counter]->conn_to]->destination);
+	    /*
+            // Log the client connection success 
+            */
+            log_data.event = CLIENT_ACCEPT;
+            if (log_data.log_status = doFormatLogEntry(&log_data, config_info))
+            {
+#ifdef DEBUG
+              fprintf(stderr, "Log format error!\n");
+#endif 
+            }
+#ifdef DEBUG
+            /*
+            // if in debug mode, output the log string even if not writing it to file
+            */
+            if (!log_data.log_status)
+	      fprintf(stderr, log_data.log_string);
+#endif
+            /*
+            // write the log file only if the format operation succeeded
+            */
+            if (!log_data.log_status && config_info->log_level)
+            {
+              if (log_data.log_status = doWriteLogFile(&log_data, config_info))
+              {
+#ifdef DEBUG
+                fprintf(stderr, "Logfile write error!\n");
+#endif 
+              }
+              /*
+              // the format succeeded and you at least tried to write the log,
+              // so free log memory 
+              */
+              free(log_data.source);
+              free(log_data.destination);
+              free(log_data.log_string);
+            } else
+            if (!log_data.log_status)
+            {
+              /*
+              // format succeeded but you didn't even *try* to write the log
+              // (probably because log level is set to no file write), but
+              // you still need to free log memory 
+              */
+              free(log_data.source);
+              free(log_data.destination);
+              free(log_data.log_string);
+            }
 	    break;
 	  default:
 #ifdef DEBUG
@@ -1801,7 +2027,8 @@ void  doProcessReadables(int fd_counter,
 int doConfigCheck(struct sockaddr_in * source_sockaddr_in,
 	          struct sockaddr_in * dest_sockaddr_in,
 		  struct config * config_info,
-		  int context)
+		  int context,
+		  struct log_struct * log_data)
 {
   int			line_counter;
   /*
@@ -1852,6 +2079,10 @@ int doConfigCheck(struct sockaddr_in * source_sockaddr_in,
 		{
 	  	  if (printConfigVerify)
 		    doPrintEval(config_info, line_counter);  
+                  /*
+                  // if you are permitting, there's no rule match to log 
+                  */
+                  log_data->config_rule_num = line_counter + 1;
 		  return 1;
 		} else
 		  /*
@@ -1865,6 +2096,7 @@ int doConfigCheck(struct sockaddr_in * source_sockaddr_in,
 		*/
                 if (printConfigVerify)
 		  doPrintEval(config_info, line_counter);
+                log_data->config_rule_num = line_counter + 1;
 		return 1;
             } else
               /*
@@ -1890,6 +2122,9 @@ int doConfigCheck(struct sockaddr_in * source_sockaddr_in,
 		{
 		  if (printConfigVerify)
 		    doPrintEval(config_info, line_counter);
+                  /*
+                  // not logging PM events so don't save rule match
+                  */
 		  return 1;
 		} else
 		  /*
@@ -1904,6 +2139,7 @@ int doConfigCheck(struct sockaddr_in * source_sockaddr_in,
 		*/
                 if (printConfigVerify)
 		  doPrintEval(config_info, line_counter);
+                log_data->config_rule_num = line_counter + 1;
 		return 1;
 	      }
 	    } else
@@ -1913,6 +2149,7 @@ int doConfigCheck(struct sockaddr_in * source_sockaddr_in,
               */
               if (printConfigVerify)
 		doPrintEval(config_info, line_counter);
+              log_data->config_rule_num = line_counter + 1;
 	      return 1;
 	    }
         }
@@ -1951,6 +2188,10 @@ int doConfigCheck(struct sockaddr_in * source_sockaddr_in,
 	          */
 	  	  if (printConfigVerify)
 		    doPrintEval(config_info, line_counter);  
+                  /*
+                  // save the rule match number before returning 
+                  */
+                  log_data->config_rule_num = line_counter + 1;
 		  return 0;
 	        } else
 		  /*
@@ -1966,6 +2207,10 @@ int doConfigCheck(struct sockaddr_in * source_sockaddr_in,
 		*/
 	  	if (printConfigVerify)
 		  doPrintEval(config_info, line_counter);  
+                /*
+                // save the rule match number before returning 
+                */
+                log_data->config_rule_num = line_counter + 1;
                 return 0;
 	      }	
             } else
@@ -1995,6 +2240,9 @@ int doConfigCheck(struct sockaddr_in * source_sockaddr_in,
 		  */
 	  	  if (printConfigVerify)
 		    doPrintEval(config_info, line_counter);  
+                  /*
+                  // not logging PM events, but if we were, save rule match here
+                  */
 		  return 0;
 		} else
 		  /*
@@ -2009,6 +2257,9 @@ int doConfigCheck(struct sockaddr_in * source_sockaddr_in,
 		*/
 	  	if (printConfigVerify)
 		  doPrintEval(config_info, line_counter);  
+                /*
+                // if we were logging PM events ...
+                */
                 return 0;
 	      }
 	    } else
@@ -2018,6 +2269,10 @@ int doConfigCheck(struct sockaddr_in * source_sockaddr_in,
 	      */
 	      if (printConfigVerify)
 	        doPrintEval(config_info, line_counter);  
+              /*
+              // save rule match
+              */
+              log_data->config_rule_num = line_counter + 1;
               return 0;	
 	    }
 	  } /* end else deny */
@@ -2032,12 +2287,19 @@ int doConfigCheck(struct sockaddr_in * source_sockaddr_in,
   {
     if (printConfigVerify)
 	fputs("matched default permit 0.0.0.0 255.255.255.255\n", stderr);
+    /*
+    // there's no rule match to save
+    */
+    log_data->config_rule_num = -1;
     return 1;
   }
 
   if (printConfigVerify)
       fputs("matched default deny 0.0.0.0 255.255.255.255\n", stderr);
-
+  /*
+  // not in this case either 
+  */
+  log_data->config_rule_num = -1;
   return 0;
 }
 
@@ -2133,6 +2395,7 @@ void FWPprocessMessages(IceConn iceConn,
       int			config_check;
       char *			config_failure = "unrecognized server or permission denied";
       char *			tmp_str;
+      struct log_struct         log_data;	
       /*
       // this is where we need and get access to that client data we
       // went through such contortions to set up earlier!
@@ -2243,10 +2506,11 @@ void FWPprocessMessages(IceConn iceConn,
       memcpy((char *) &dummy_sockaddr_in.sin_addr, 
 	 hostptr->h_addr,
 	 hostptr->h_length);
-      if (!(config_check = doConfigCheck(&dummy_sockaddr_in, 
+      if ((config_check = doConfigCheck(&dummy_sockaddr_in, 
   				        &server_sockaddr_in,
 				        global_data.config_info,
-					FINDPROXY)))
+				        FINDPROXY,
+					&log_data)) == FAILURE)
       { 
       sendFailure:
         /*
@@ -2611,6 +2875,8 @@ void  doCheckTimeouts(struct config * config_info,
  	close(client_conn_array[client_data_counter]->fd);
  	close(client_conn_array[client_data_counter]->conn_to);
         free(client_conn_array[client_conn_array[client_data_counter]->conn_to]);
+        free(client_conn_array[client_data_counter]->source);
+        free(client_conn_array[client_data_counter]->destination);
         free(client_conn_array[client_data_counter]);
         client_conn_array[client_conn_array[client_data_counter]->conn_to] = NULL;
         client_conn_array[client_data_counter] = NULL; 
@@ -3270,3 +3536,113 @@ void doInstallIOErrorHandler ()
 #endif
 }
 
+int doWriteLogFile(struct log_struct * log_data, struct config * config_info)
+{
+  FILE * stream = NULL;
+  int	 bytes_written = 0;
+  /*
+  // if no logfile, then return without action
+  */
+  if (config_info->log_file_path == NULL)
+    return 1;
+  /*
+  // else, proceed 
+  */
+  if ((stream = fopen(config_info->log_file_path, "a")) == NULL)
+  {
+#ifdef DEBUG
+    fprintf(stderr, "XFWP:  Could not open log file!\n");
+#endif
+    return 1;
+  }
+  if ((bytes_written = fputs(log_data->log_string, stream)) == 0)
+  {
+#ifdef DEBUG
+    fprintf(stderr, "XFWP:  Could not write log file!\n");
+#endif
+    fclose(stream); 
+    return 1;
+  }
+  fclose(stream); 
+  return 0;
+}
+
+int doFormatLogEntry(struct log_struct * log_data, struct config * config_info)
+{
+  int 			total_msg_length = 0;
+  char			event_buff[3];  /* up to 99 events */	
+  char			config_num_buff[4];  /* up to 999 rules */	
+  struct timezone 	current_zone;
+  struct timeval 	current_time;	
+  char		      *	time_stamp;
+  int			time_length;
+  int			event_length;
+  int			spaces = 12; 	/* two spaces between each field */
+  /*
+  // if no logfile, then return without action
+  */
+  if (config_info->log_file_path == NULL)
+  {
+    /*
+    // free the source and destination strings before returning
+    */
+    free(log_data->source);
+    free(log_data->destination);
+    return 1;
+  }
+  /*
+  // generate time stamp for this event
+  */ 
+  gettimeofday(&current_time, &current_zone); 
+  time_stamp = ctime((time_t *) &current_time.tv_sec); 
+  time_length = strlen(time_stamp);
+  /*
+  // eliminate newline character in time stamp
+  */
+  *(&time_stamp[time_length - 1]) = (char) 0;
+  /*
+  // convert event code
+  */
+  sprintf(event_buff, "%d", log_data->event);
+  event_length = strlen(event_buff);
+  sprintf(config_num_buff, "%d", log_data->config_rule_num); 
+  /*
+  // allocate formatted line
+  */
+  total_msg_length = event_length + time_length + strlen(log_data->source) +
+			strlen(log_data->destination) + 
+			strlen(config_num_buff) +
+                        spaces;
+  /*
+  // add newlines and null to formatted string length
+  */
+  if ((log_data->log_string = malloc(total_msg_length + 2)) == NULL)
+  {
+#ifdef DEBUG
+    fprintf(stderr, "doFormatLogEntry:  error on string malloc!\n");
+#endif
+    /*
+    // free memory before returning
+    */
+    free(log_data->source);
+    free(log_data->destination);
+    free(time_stamp);
+    return 1;
+  }
+  /*
+  // build the formatted string
+  */
+  strcpy(log_data->log_string, time_stamp);
+  free(time_stamp);
+  strcat(log_data->log_string, "  ");
+  strcat(log_data->log_string, event_buff);
+  strcat(log_data->log_string, "  ");
+  strcat(log_data->log_string, log_data->source);
+  strcat(log_data->log_string, "  ");
+  strcat(log_data->log_string, log_data->destination);
+  strcat(log_data->log_string, "  ");
+  strcat(log_data->log_string, config_num_buff);
+  strcat(log_data->log_string, "\n");
+ 
+  return 0;
+}

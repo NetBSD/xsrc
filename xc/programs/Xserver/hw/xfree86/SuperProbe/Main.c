@@ -26,7 +26,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/Main.c,v 3.17.2.4 1997/05/18 12:00:05 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/Main.c,v 3.17.2.5 1997/07/07 04:10:59 dawes Exp $ */
 
 #include "Probe.h"
 #include "PatchLevel.h"
@@ -356,7 +356,7 @@ int argc;
 char *argv[];
 {
     char *p, *order = NULL;
-    Byte copyright[3];
+    Byte copyright[5];
     Word Ports[10];		/* For whatever we need */
     int Primary = -1;
     int Secondary = -1;
@@ -623,7 +623,7 @@ char *argv[];
          * Look for 'IBM' at Bios_Base+0x1E of the BIOS.  It will be there for
          * an EGA or VGA.
          */
-        if (ReadBIOS(COPYRIGHT_BASE, copyright, 3) < 0)
+        if (ReadBIOS(COPYRIGHT_BASE, copyright, 5) < 0)
         {
     	    fprintf(stderr, "%s: Failed to read BIOS\n", MyName);
     	    CloseVideo();
@@ -635,7 +635,10 @@ char *argv[];
 	((NoBIOS) ||
          ((copyright[0] == 'I') && 
           (copyright[1] == 'B') &&
-          (copyright[2] == 'M')))))
+          (copyright[2] == 'M')) ||
+         ((copyright[2] == 'P') && 
+          (copyright[3] == 'C') &&
+          (copyright[4] == 'I')))))
     {
     	/*
     	 * It's an EGA or VGA
