@@ -532,7 +532,7 @@ AllTarget(module)							@@\
 									@@\
 module: modlist								@@\
 	RemoveFile($@)							@@\
-	$(CC) -o $@ $(SHLIBLDFLAGS) modlist				@@\
+	$(CC) -nostdlib -o $@ -Wl,-Bshareable -R$(USRLIBDIR) modlist	@@\
 									@@\
 clean::									@@\
 	RemoveFile(module)
