@@ -472,10 +472,7 @@ install.man:: 								@@\
 #endif
 #define XdecServer NO
 
-#ifdef BuildServer
-#undef BuildServer
-#endif
-#define BuildServer NO
+#define XpmaxServer YES
 
 #ifdef UseElfFormat
 #undef UseElfFormat
