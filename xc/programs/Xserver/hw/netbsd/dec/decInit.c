@@ -1,4 +1,4 @@
-/* $NetBSD: decInit.c,v 1.4 2002/02/25 11:36:37 ad Exp $ */
+/* $NetBSD: decInit.c,v 1.5 2002/02/26 12:34:53 ad Exp $ */
 
 #include    "dec.h"
 #include    "gcstruct.h"
@@ -32,10 +32,9 @@ decPtrPrivRec decPtrPriv = {
 };
 
 decFbDataRec decFbData[] = {
-#ifdef notyet
-    { WSDISPLAY_TYPE_MFB,	TRUE,	"MX (MFB)",	decMFBInit },
-#endif
+    { WSDISPLAY_TYPE_MFB,	TRUE,	"MX (MFB)",	decCFBInit },
     { WSDISPLAY_TYPE_SFB,	TRUE,	"HX (SFB)",	decSFBInit },
+    { WSDISPLAY_TYPE_SFBP,	TRUE,	"HX+ (SFB+)",	decSFBInit },
     { WSDISPLAY_TYPE_CFB,	TRUE,	"CX (CFB)",	decCFBInit },
     { WSDISPLAY_TYPE_TX,	TRUE,	"TX (TFB)",	decCFBInit },
     { WSDISPLAY_TYPE_PX,	FALSE,	"PX",		decPXInit  },
@@ -47,10 +46,8 @@ decFbDataRec decFbData[] = {
 
 #elif defined(__mips__)
 
-#ifdef notyet
-    { WSDISPLAY_TYPE_PM_MONO,	TRUE,	"PM (mono)",	decMFBInit, },
-#endif
-    { WSDISPLAY_TYPE_PM_COLOR,	TRUE,	"PM (color)",	decCFBInit, },
+    { WSDISPLAY_TYPE_PM_MONO,	FALSE,	"PM (mono)",	decMFBInit, },
+    { WSDISPLAY_TYPE_PM_COLOR,	FALSE,	"PM (color)",	decCFBInit, },
     { WSDISPLAY_TYPE_XCFB,	TRUE,	"XCFB",		decCFBInit, },
 
 #endif

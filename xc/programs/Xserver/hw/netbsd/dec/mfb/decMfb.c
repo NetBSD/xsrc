@@ -1,4 +1,4 @@
-/* $NetBSD: decCfb.c,v 1.3 2002/02/26 12:34:53 ad Exp $ */
+/* $NetBSD: decMfb.c,v 1.1 2002/02/26 12:34:54 ad Exp $ */
 
 /* XConsortium: sunCfb.c,v 1.15.1.2 95/01/12 18:54:42 kaleb Exp */
 /* XFree86: xc/programs/Xserver/hw/sun/sunCfb.c,v 3.2 1995/02/12 02:36:22 dawes Exp */
@@ -87,9 +87,9 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include "dec.h"
-#include "cfb.h"
+#include "mfb.h"
 
-Bool decCFBInit (screen, pScreen, argc, argv)
+Bool decMFBInit (screen, pScreen, argc, argv)
     int	    	  screen;    	/* what screen am I going to be */
     ScreenPtr	  pScreen;  	/* The Screen to initialize */
     int	    	  argc;	    	/* The number of the Server's arguments. */
@@ -97,7 +97,6 @@ Bool decCFBInit (screen, pScreen, argc, argv)
 {
 	unsigned char *fb;
 	size_t sz;
-	int stride;
 
 	fb = decFbs[screen].fb;
 
@@ -114,108 +113,21 @@ Bool decCFBInit (screen, pScreen, argc, argv)
 	        decFbs[screen].fb = fb;
 	}
 
-	if (decFbs[screen].type == WSDISPLAY_TYPE_MFB)
-	    stride = 2048;
-	else
-	    stride = decFbs[screen].width;
-
-	if (!decCfbScreenInit(pScreen, fb,
-	    decFbs[screen].width,
-	    decFbs[screen].height,
-	    monitorResolution, monitorResolution,
-	    stride,
-	    decFbs[screen].depth)) {
-            ErrorF("decCfbScreenInit failed\n");
-            return FALSE;
+	if (!mfbScreenInit(pScreen, scrInfo->bitmap, 1024, 864,
+	    monitorResolution, monitorResolution, 2048)) {
+	    ErrorF("mfbScreenInit failed\n");
+	    return FALSE;
 	}
 
+	pScreen->blackPixel = 0;
+	pScreen->whitePixel = 1;
 	decColormapScreenInit(pScreen);
+
 	if (!decScreenInit(pScreen)) {
                 ErrorF("decScreenInit failed\n");
 		return FALSE;
 	}
 
 	(void) decSaveScreen(pScreen, SCREEN_SAVER_OFF);
-	return cfbCreateDefColormap(pScreen);
-}
-
-Bool
-decCfbSetupScreen(pScreen, pbits, xsize, ysize, dpix, dpiy, width, bpp)
-    register ScreenPtr pScreen;
-    pointer pbits;		/* pointer to screen bitmap */
-    int xsize, ysize;		/* in pixels */
-    int dpix, dpiy;		/* dots per inch */
-    int width;			/* pixel width of frame buffer */
-    int	bpp;			/* bits per pixel of root */
-{
-    switch (bpp) {
-    case 32:
-	if (!cfb32SetupScreen(pScreen, pbits, xsize, ysize, dpix, dpiy,
-	  width))
-	    return FALSE;
-	return cfbSetVisualTypes(24, 1 << TrueColor, 8);
-    case 8:
-	if (!cfbSetupScreen(pScreen, pbits, xsize, ysize, dpix, dpiy,
-	  width))
-	    return FALSE;
-        if (decFbs[pScreen->num].type == WSDISPLAY_TYPE_MFB)
-		return (cfbSetVisualTypes(1, 1 << StaticGray, 8));
-	return TRUE;
-    default:
-	ErrorF("decCfbSetupScreen:  unsupported bpp = %d\n", bpp);
-	return FALSE;
-    }
-}
-
-Bool
-decCfbFinishScreenInit(pScreen, pbits, xsize, ysize, dpix, dpiy, width, bpp)
-    register ScreenPtr pScreen;
-    pointer pbits;		/* pointer to screen bitmap */
-    int xsize, ysize;		/* in pixels */
-    int dpix, dpiy;		/* dots per inch */
-    int width;			/* pixel width of frame buffer */
-    int bpp;			/* bits per pixel of root */
-{
-    Bool retval;
-
-    switch (bpp) {
-    case 32:
-	retval = cfb32FinishScreenInit(pScreen, pbits, xsize, ysize,
-		    dpix, dpiy, width);
-
-	/* XXXNJW cfb doesn't provide a way to tweak these, so cheat. */
-	pScreen->visuals[0].redMask = 0xff0000;
-	pScreen->visuals[0].greenMask = 0xff00;
-	pScreen->visuals[0].blueMask = 0xff;
-
-	pScreen->visuals[0].offsetRed = 16;
-	pScreen->visuals[0].offsetGreen = 8;
-	pScreen->visuals[0].offsetBlue = 0;
-
-	break;
-    case 8:
-	retval = cfbFinishScreenInit(pScreen, pbits, xsize, ysize,
-		    dpix, dpiy, width);
-	break;
-    default:
-	retval = FALSE;
-    }
-
-    return retval;
-}
-
-Bool
-decCfbScreenInit(pScreen, pbits, xsize, ysize, dpix, dpiy, width, bpp)
-    register ScreenPtr pScreen;
-    pointer pbits;		/* pointer to screen bitmap */
-    int xsize, ysize;		/* in pixels */
-    int dpix, dpiy;		/* dots per inch */
-    int width;			/* pixel width of frame buffer */
-    int bpp;			/* bits per pixel of root */
-{
-    if (!decCfbSetupScreen(pScreen, pbits, xsize, ysize, dpix,
-	dpiy, width, bpp))
-	    return FALSE;
-    return decCfbFinishScreenInit(pScreen, pbits, xsize, ysize, dpix,
-	  dpiy, width, bpp);
+	return (mfbCreateDefColormap(pScreen));
 }
