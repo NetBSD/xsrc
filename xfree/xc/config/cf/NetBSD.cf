@@ -134,11 +134,6 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 # define ThreadedX		NO
 #endif
 
-#if (OSMajorVersion >= 2 || \
-      (OSMajorVersion == 1 && OSMinorVersion == 6 && OSTeenyVersion >= 2))
-# define HasArc4Random		YES
-#endif
-
 /*
  * Compiler Features
  */
@@ -776,9 +771,15 @@ InstallManPageAliasesBase(file,destdir,aliases)
 #define UseSeparateConfDir NO	/* We don't want appdefs in "/etc/X11". */
 #endif
 
-#if defined(NetBSDArchitecture) && \
-     ((OSMajorVersion > 1) || \
-      (OSMajorVersion == 1 && OSMinorVersion > 3))
-#define HasDevRandom		YES
-#define RandomDeviceFile	/dev/urandom
+/*
+ * Use rnd(4) under NetBSD from 1.4 to 1.6A and arc4random(3) under 1.6B
+ * and above.
+ */
+#if (OSMajorVersion > 1 || \
+     (OSMajorVersion == 1 && OSMinorVersion == 6 && OSTeenyVersion >= 2))
+# define HasArc4Random		YES
+#elif ((OSMajorVersion > 1) || \
+       (OSMajorVersion == 1 && OSMinorVersion > 3))
+# define HasDevRandom		YES
+# define RandomDeviceFile	/dev/urandom
 #endif
