@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/radeon_driver.c,v 1.91 2003/02/25 03:50:15 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/radeon_driver.c,v 1.91.2.1 2003/07/14 23:57:07 daenzer Exp $ */
 /*
  * Copyright 2000 ATI Technologies Inc., Markham, Ontario, and
  *                VA Linux Systems Inc., Fremont, California.
@@ -5691,12 +5691,12 @@ void RADEONDoAdjustFrame(ScrnInfoPtr pScrn, int x, int y, int clone)
 
     	pSAREAPriv = DRIGetSAREAPrivate(pScrn->pScreen);
 
-	if (pSAREAPriv->pfCurrentPage == 1) {
-	    Base += info->backOffset;
-	}
-
 	if (clone || info->IsSecondary) {
 	    pSAREAPriv->crtc2_base = Base;
+	}
+
+	if (pSAREAPriv->pfCurrentPage == 1) {
+	    Base += info->backOffset;
 	}
     }
 #endif

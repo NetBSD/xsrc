@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Mode.c,v 1.63 2003/01/22 21:44:09 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Mode.c,v 1.63.2.2 2003/10/08 17:56:34 eich Exp $ */
 
 /*
  * Copyright (c) 1997,1998 by The XFree86 Project, Inc.
@@ -1639,7 +1639,7 @@ xf86ValidateModes(ScrnInfoPtr scrp, DisplayModePtr availModes,
 	/*
 	 * Don't let non-user defined modes increase the virtual size
 	 */
-	if (!(p->type & M_T_USERDEF)) {
+	if (!(p->type & M_T_USERDEF) && (numModes > 0)) {
 	    if (p->HDisplay > virtX) {
 		p->status = MODE_VIRTUAL_X;
 		goto lookupNext;
@@ -1732,16 +1732,17 @@ xf86ValidateModes(ScrnInfoPtr scrp, DisplayModePtr availModes,
     scrp->virtualX = virtX;
     scrp->virtualY = virtY;
     scrp->displayWidth = linePitch;
+
+    if (numModes <= 0)
+	return 0;
     
     /* Make the mode list into a circular list by joining up the ends */
-    if (numModes > 0) {
-	p = scrp->modes;
-	while (p->next != NULL)
-	    p = p->next;
-	/* p is now the last mode on the list */
-	p->next = scrp->modes;
-	scrp->modes->prev = p;
-    }
+    p = scrp->modes;
+    while (p->next != NULL)
+	p = p->next;
+    /* p is now the last mode on the list */
+    p->next = scrp->modes;
+    scrp->modes->prev = p;
 
     if (minHeight > 0 && virtY < minHeight) {
 	xf86DrvMsg(scrp->scrnIndex, X_ERROR,
@@ -1832,8 +1833,16 @@ xf86PruneDriverModes(ScrnInfoPtr scrp)
     } while (p != NULL && p != first);
 
     /* modePool is no longer needed, turf it */
-    while (scrp->modePool)
+    while (scrp->modePool) {
+	/*
+	 * A modePool mode's prev field is used to hold a pointer to the
+	 * member of the scrp->modes list for which a match was considered.
+	 * Clear that pointer first, otherwise xf86DeleteMode might get 
+	 * confused 
+	 */
+	scrp->modePool->prev = NULL;
 	xf86DeleteMode(&scrp->modePool, scrp->modePool);
+    }
 }
 
 

@@ -24,7 +24,7 @@
 /* Hacked together from mga driver and 3.3.4 NVIDIA driver by Jarno Paananen
    <jpaana@s2.org> */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/nv/nv_setup.c,v 1.27 2003/02/10 23:42:51 mvojkovi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/nv/nv_setup.c,v 1.27.2.1 2003/05/09 02:17:49 dawes Exp $ */
 
 #include "nv_include.h"
 
@@ -416,6 +416,9 @@ NVCommonSetup(ScrnInfoPtr pScrn)
         break;
     }
 
+    if(pNv->riva.Architecture == 3)
+       pNv->riva.PCRTC0 = pNv->riva.PGRAPH;
+
     if(pNv->SecondCRTC) {
        pNv->riva.PCIO = pNv->riva.PCIO0 + 0x2000;
        pNv->riva.PCRTC = pNv->riva.PCRTC0 + 0x800;
@@ -484,7 +487,6 @@ NV3Setup(ScrnInfoPtr pScrn)
                                      frameBase+0x00C00000, 0x00008000);
             
     NVCommonSetup(pScrn);
-    pNv->riva.PCRTC = pNv->riva.PCRTC0 = pNv->riva.PGRAPH;
 }
 
 void

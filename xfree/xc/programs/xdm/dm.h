@@ -26,7 +26,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/xdm/dm.h,v 3.29 2002/05/31 18:46:10 dawes Exp $ */
+/* $XFree86: xc/programs/xdm/dm.h,v 3.29.2.1 2003/09/17 05:58:16 herrb Exp $ */
 
 /*
  * xdm - display manager daemon
@@ -116,6 +116,21 @@ typedef union wait	waitType;
 #endif
 #endif
 
+#ifdef USE_PAM
+#include <security/pam_appl.h>
+#endif
+
+#ifdef CSRG_BASED
+#include <sys/param.h>
+#ifdef HAS_SETUSERCONTEXT
+#include <login_cap.h>
+#include <pwd.h>
+#ifdef USE_BSDAUTH
+#include <bsd_auth.h>
+#endif
+#endif
+#endif
+
 # define waitCompose(sig,core,code) ((sig) * 256 + (core) * 128 + (code))
 # define waitVal(w)	waitCompose(waitSig(w), waitCore(w), waitCode(w))
 
@@ -186,6 +201,7 @@ struct display {
 	int		useChooser;	/* Run the chooser for this display */
 	ARRAY8		clientAddr;	/* for chooser picking */
 	CARD16		connectionType;	/* ... */
+	int		xdmcpFd;
 #endif
 	/* server management resources */
 	int		serverAttempts;	/* number of attempts at running X */
@@ -279,6 +295,7 @@ struct greet_info {
 #endif
 
 typedef void (*ChooserFunc)(CARD16 connectionType, ARRAY8Ptr addr, char *closure);
+typedef void (*ListenFunc)(ARRAY8Ptr addr, void **closure);
 
 struct verify_info {
 	int		uid;		/* user id */
@@ -318,7 +335,12 @@ extern int	removeDomainname;
 extern char	*keyFile;
 extern char	*accessFile;
 extern char	**exportList;
+#if !defined(ARC4_RANDOM)
 extern char	*randomFile;
+extern char	*prngdSocket;
+extern int	prngdPort;
+#endif
+
 extern char	*greeterLib;
 extern char	*willing;
 extern int	choiceTimeout;	/* chooser choice timeout */
@@ -352,6 +374,8 @@ extern int ForEachMatchingIndirectHost (ARRAY8Ptr clientAddress, CARD16 connecti
 extern int ScanAccessDatabase (void);
 extern int UseChooser (ARRAY8Ptr clientAddress, CARD16 connectionType);
 extern void ForEachChooserHost (ARRAY8Ptr clientAddress, CARD16 connectionType, ChooserFunc function, char *closure);
+extern void ForEachListenAddr(ListenFunc listenfunction,
+  ListenFunc mcastfcuntion, void **closure);
 
 /* in choose.c */
 extern ARRAY8Ptr IndirectChoice (ARRAY8Ptr clientAddress, CARD16 connectionType);
@@ -439,9 +463,12 @@ extern int StartServer (struct display *d);
 extern int WaitForServer (struct display *d);
 extern void ResetServer (struct display *d);
 
-/* socket.c */
+/* socket.c or streams.c */
 extern int GetChooserAddr (char *addr, int *lenp);
 extern void CreateWellKnownSockets (void);
+extern void UpdateListenSockets (void);
+extern void CloseListenSockets (void);
+extern void ProcessListenSockets (fd_set *readmask);
 
 /* in util.c */
 extern char *localHostname (void);
@@ -467,6 +494,7 @@ extern void WaitForChild (void);
 extern void WaitForSomething (void);
 extern void init_session_id(void);
 extern void registerHostname(char *name, int namelen);
+extern void ProcessRequestSocket(int fd);
 
 /*
  * CloseOnFork flags
@@ -495,6 +523,11 @@ extern void registerHostname(char *name, int namelen);
 #define Setjmp(e)   sigsetjmp(e,1)
 #define Longjmp(e,v)	siglongjmp(e,v)
 #define Jmp_buf		sigjmp_buf
+#endif
+
+#ifndef HAS_SNPRINTF
+#include <X11/Xmu/SysUtil.h>
+#define snprintf XmuSnprintf
 #endif
 
 typedef SIGVAL (*SIGFUNC)(int);
