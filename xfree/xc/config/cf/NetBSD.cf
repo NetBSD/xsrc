@@ -2,7 +2,7 @@ XCOMM platform:  $Xorg: NetBSD.cf,v 1.3 2000/08/17 19:41:46 cpqbld Exp $
 
 
 
-XCOMM platform:  $XFree86: xc/config/cf/NetBSD.cf,v 3.95 2001/04/22 08:54:03 herrb Exp $
+XCOMM platform:  $XFree86: xc/config/cf/NetBSD.cf,v 3.102 2002/01/03 16:33:49 tsi Exp $
 
 
 #ifndef OSName
@@ -47,6 +47,7 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #define SetTtyGroup     	YES
 #define DBMLibrary		/**/
 #define HasDlopen		YES
+#define HasSetProcTitle		YES
 #ifndef HasLibCrypt
 # define HasLibCrypt		YES
 #endif
@@ -115,6 +116,16 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 
 #define MkdirHierCmd		mkdir -p
 
+#if OSMajorVersion < 1 || OSMajorVersion == 1 && OSMinorVersion < 5
+#define CppCmd          	/usr/libexec/cpp
+#else
+#define CppCmd			/usr/bin/cpp
+#endif
+#define StandardCppOptions	-traditional
+#define StandardCppDefines	/**/
+#define PreProcessCmd   	CppCmd
+#define PreIncDir		/usr/include
+
 #undef CcCmd
 #define CcCmd 			gcc
 #ifndef DefaultCCOptions
@@ -122,9 +133,11 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #define DefaultCCOptions 	/**/
 #else
 #ifdef Arm32Architecture
-#define DefaultCCOptions 	-ansi -Dasm=__asm -fsigned-char -fomit-frame-pointer GccWarningOptions
+#define DefaultCCOptions 	-ansi -Dasm=__asm -fsigned-char \
+				-fomit-frame-pointer GccWarningOptions
 #elif defined(PpcArchitecture)
-# define DefaultCCOptions 	-ansi -Dasm=__asm -fsigned-char GccWarningOptions
+# define DefaultCCOptions 	-ansi -Dasm=__asm -fsigned-char \
+				GccWarningOptions
 #else
 # define DefaultCCOptions 	-ansi -Dasm=__asm GccWarningOptions
 #endif
@@ -195,10 +208,12 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 # define OptimizedCDebugFlags 	-O2
 # if defined(SparcArchitecture)
 #  define ServerOSDefines 	-DDDXOSINIT
-# elif defined(AlphaArchitecture) || defined(PpcArchitecture)
+# elif defined(AlphaArchitecture)
 #  define ServerOSDefines 	XFree86ServerOSDefines
 # elif defined(Arm32Architecture)
-#  define ServerOSDefines	XFree86ServerOSDefines
+#   define ServerOSDefines	XFree86ServerOSDefines -DDDXTIME
+# elif defined(PpcArchitecture)
+#  define ServerOSDefines	XFree86ServerOSDefines -DDDXTIME -DDDXOSINIT
 # else
 #  define ServerOSDefines 	/**/
 # endif
@@ -219,8 +234,7 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #   define XFree86ConsoleDefines -DPCCONS_SUPPORT -DPCVT_SUPPORT
 #  endif
 # endif
-#else
-# if defined(SparcArchitecture)
+#elif defined(SparcArchitecture)
 #  if defined(Sparc64Architecture)
 #   define ServerExtraDefines XFree86ServerDefines -D_XSERVER64
 #  else
@@ -232,20 +246,20 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #  ifndef XFree86ConsoleDefines
 #   define XFree86ConsoleDefines -DWSCONS_SUPPORT -DPCCONS_SUPPORT -DPCVT_SUPPORT
 #  endif
-# elif defined(Arm32Architecture)
+#elif defined(AlphaArchitecture)
+#   define ServerExtraDefines GccGasOption -D_XSERVER64
+#elif defined(Arm32Architecture)
 #  define ServerExtraDefines GccGasOption XFree86ServerDefines
 #  ifndef XFree86ConsoleDefines
-#   define XFree86ConsoleDefines -DPCCONS_SUPPORT
+#    define XFree86ConsoleDefines -DPCCONS_SUPPORT
 #  endif
-# elif defined(PpcArchitecture)
-#   define ServerExtraDefines   GccGasOption XFree86ServerDefines
-#   define XkbServerDefines     -DXKB_ALWAYS_USES_SOFT_REPEAT
-#   ifndef XFree86ConsoleDefines
+#elif defined(PpcArchitecture)
+#  define ServerExtraDefines	GccGasOption XFree86ServerDefines
+#  ifndef XFree86ConsoleDefines
 #    define XFree86ConsoleDefines	-DWSCONS_SUPPORT
-#   endif
-# else   
+#  endif
+#else
 #  define ServerExtraDefines GccGasOption
-# endif
 #endif
 
 #define StandardDefines	-DCSRG_BASED
@@ -291,12 +305,23 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 
 #define HasFlex			YES
 
+/* NetBSD doesn't have gperf in the base install */
+#define DontRebuildGperfOutput	YES
+
 /* 
  * NetBSD doesn't have perl in default system
  * you may override this in host.def if you installed perl from the packages
  */
 #ifndef HasPerl
 #define HasPerl			NO
+#endif
+
+/*
+ * NetBSD doesn't have gperf in default system
+ * you may override this in host.def if you installed perl from the packages
+ */
+#ifndef HasGperf
+#define HasGperf		NO
 #endif
 
 /*
@@ -345,11 +370,9 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
       (OSMajorVersion == 1 && OSMinorVersion == 5 && \
        OSTeenyVersion >= 25))
 #  define HasMTRRBuiltin        YES
-
 # else
-
  /*
-  * MTRR support is provided by the Aperture driver
+  * MTRR support  provided by the Aperture driver
   */
 #  if HasNetBSDApertureDriver
 #   ifndef HasMTRRSupport
@@ -358,6 +381,18 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #  endif
 # endif /* MTRRBuiltin */
 #endif /* i386Architecture */
+
+/*
+ * agpgart support (NetBSD 1.5Y and up)
+ */
+#if ((OSMajorVersion > 1) || \
+     (OSMajorVersion == 1 && OSMinorVersion >= 6) || \
+     (OSMajorVersion == 1 && OSMinorVersion == 5 && \
+      OSTeenyVersion >= 25))
+# ifndef HasAgpGart
+#  define HasAgpGart   YES
+# endif
+#endif
 
 #ifndef HasCookieMaker
 # if OSMajorVersion == 1 && OSMinorVersion >= 5 || OSMajorVersion >= 2
@@ -575,6 +610,22 @@ sed 's/\.[0-9]*$$//'`
 #ifdef AlphaArchitecture
 /* Build the shared XDM greeter on Alpha if it supports shared libs */
 #define SharedLibXdmGreet HasSharedLibraries
+#endif
+
+/*
+ * Definition for compile on macppc machines
+ */
+#ifdef PpcArchitecture
+
+# define OptimizedCDebugFlags 	-O2
+# define XkbServerDefines	-DXKB_ALWAYS_USES_SOFT_REPEAT
+
+# ifndef DoLoadableServer
+#   define DoLoadableServer	YES
+# endif
+
+# define UseElfFormat		YES
+
 #endif
 
 /*

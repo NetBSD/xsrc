@@ -1,9 +1,13 @@
-/* $XFree86: xc/include/Xmd.h,v 3.9.2.1 2001/05/30 14:29:30 alanh Exp $ */
+/* $XFree86: xc/include/Xmd.h,v 3.14 2001/12/14 19:53:25 dawes Exp $ */
 /***********************************************************
 
 Copyright 1987, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -43,7 +47,7 @@ SOFTWARE.
 ******************************************************************/
 #ifndef XMD_H
 #define XMD_H 1
-/* $Xorg: Xmd.h,v 1.3 2000/08/18 04:05:44 coskrey Exp $ */
+/* $Xorg: Xmd.h,v 1.4 2001/02/09 02:03:22 xorgcvs Exp $ */
 /*
  *  Xmd.h: MACHINE DEPENDENT DECLARATIONS.
  */
@@ -56,7 +60,9 @@ SOFTWARE.
 #endif
 #if defined(__alpha) || defined(__alpha__) || \
     defined(__ia64__) || defined(ia64) || \
-    defined(__sparc64__)
+    defined(__sparc64__) || \
+    defined(__s390x__) || \
+    (defined(__hppa__) && defined(__LP64__))
 #define LONG64				/* 32/64-bit architecture */
 #endif
 #ifdef __sgi

@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/Xxf86dga/XF86DGA2.c,v 1.17 2001/01/13 00:04:18 mvojkovi Exp $ */
+/* $XFree86: xc/lib/Xxf86dga/XF86DGA2.c,v 1.18 2001/08/17 13:27:51 dawes Exp $ */
 /*
 
 Copyright (c) 1995  Jon Tombs
@@ -742,6 +742,8 @@ void XDGAKeyEventToXKeyEvent(
 
 #if defined(SVR4) && !defined(sun) && !defined(SCO325)
 #define DEV_MEM "/dev/pmem"
+#elif defined(SVR4) && defined(sun)
+#define DEV_MEM "/dev/xsvc"
 #else
 #define DEV_MEM "/dev/mem"
 #endif

@@ -26,7 +26,7 @@
  * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
  * THIS SOFTWARE.
  */
-/* $XFree86: xc/lib/font/Type1/paths.c,v 1.5 2001/01/17 19:43:22 dawes Exp $ */
+/* $XFree86: xc/lib/font/Type1/paths.c,v 1.6 2001/08/27 19:49:53 dawes Exp $ */
 
  /* PATHS    CWEB         V0021 ********                             */
 /*
@@ -119,7 +119,7 @@ knows how (in the FONTS module).
 struct segment *
 CopyPath(struct segment *p0)         /* path to duplicate                    */
 {
-       register struct segment *p,*n,*last,*anchor;
+       register struct segment *p,*n = NULL,*last = NULL,*anchor;
  
        for (p = p0, anchor = NULL; p != NULL; p = p->link) {
  
@@ -598,10 +598,10 @@ struct segment *
 t1_ClosePath(struct segment *p0, /* path to close                            */
 	     int lastonly)     /*  flag deciding to close all subpaths or... */
 {
-       register struct segment *p,*last,*start;  /* used in looping through path */
+       register struct segment *p,*last = NULL,*start;  /* used in looping through path */
        register fractpel x,y;  /* current position in path                   */
-       register fractpel firstx,firsty;  /* start position of sub path       */
-       register struct segment *lastnonhint;  /* last non-hint segment in path */
+       register fractpel firstx = 0,firsty = 0;  /* start position of sub path       */
+       register struct segment *lastnonhint = NULL;  /* last non-hint segment in path */
  
        IfTrace1((MustTraceCalls),"ClosePath(%z)\n", p0);
        if (p0 != NULL && p0->type == TEXTTYPE)

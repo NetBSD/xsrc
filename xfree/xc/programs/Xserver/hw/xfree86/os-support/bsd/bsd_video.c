@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bsd/bsd_video.c,v 3.43 2001/04/22 08:48:51 herrb Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bsd/bsd_video.c,v 3.45 2001/10/28 03:34:00 tsi Exp $ */
 /*
  * Copyright 1992 by Rich Murphey <Rich@Rice.edu>
  * Copyright 1993 by David Wexelblat <dwex@goblin.org>
@@ -516,9 +516,11 @@ xf86ReadBIOS(unsigned long Base, unsigned long Offset, unsigned char *Buf,
 #endif
 	(void)memcpy(Buf, (void *)(ptr + Offset), Len);
 	(void)munmap((caddr_t)ptr, mlen);
+#ifdef DEBUG
 	xf86MsgVerb(X_INFO, 3, "xf86ReadBIOS(%x, %x, Buf, %x)"
 		"-> %02x %02x %02x %02x...\n",
 		Base, Offset, Len, Buf[0], Buf[1], Buf[2], Buf[3]);
+#endif
 	return(Len);
 }
 
@@ -738,8 +740,9 @@ xf86ReadBIOS(unsigned long Base, unsigned long Offset, unsigned char *Buf,
  		FatalError("xf86ReadBIOS: open /dev/kmem\n");
  	}
 
-
+#ifdef DEBUG
 	fprintf(stderr, "xf86ReadBIOS() %lx %lx, %x\n", Base, Offset, Len);
+#endif
 
 	if (Base < 0x80000000) {
 		fprintf(stderr, "No VGA\n");
@@ -1761,7 +1764,7 @@ int  (*xf86ReadMmio16)(pointer Base, unsigned long Offset)
 int  (*xf86ReadMmio32)(pointer Base, unsigned long Offset)
      = readDense32;
 
-#endif /* __alpha__ */
+#endif /* __FreeBSD__ && __alpha__ */
 
 #if defined(HAS_MTRR_BUILTIN) && defined(__NetBSD__)
 static pointer

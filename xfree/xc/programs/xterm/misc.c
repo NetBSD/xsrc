@@ -2,11 +2,11 @@
  *	$Xorg: misc.c,v 1.3 2000/08/17 19:55:09 cpqbld Exp $
  */
 
-/* $XFree86: xc/programs/xterm/misc.c,v 3.62 2001/04/12 01:02:50 dickey Exp $ */
+/* $XFree86: xc/programs/xterm/misc.c,v 3.66 2001/10/24 01:21:24 dickey Exp $ */
 
 /*
  *
- * Copyright 1999-2000 by Thomas E. Dickey
+ * Copyright 1999,2000,2001 by Thomas E. Dickey
  *
  *                        All Rights Reserved
  *
@@ -82,6 +82,7 @@
 #include <menu.h>
 #include <fontutils.h>
 #include <xcharmouse.h>
+#include <xstrings.h>
 #include <VTparse.h>
 
 #if (XtSpecificationRelease < 6)
@@ -495,9 +496,9 @@ Bell(int which GCC_UNUSED, int percent)
 #else
 	XBell(screen->display, percent);
 #endif
-	
+
     if (screen->poponbell)
-        XRaiseWindow(screen->display, VShellWindow);
+	XRaiseWindow(screen->display, VShellWindow);
 
     if(screen->bellSuppressTime) {
 	/* now we change a property and wait for the notify event to come
@@ -752,7 +753,7 @@ Redraw(void)
 		event.width = term->core.width;
 		event.height = term->core.height;
 		(*term->core.widget_class->core_class.expose)((Widget)term, (XEvent *)&event, NULL);
-		if(Scrollbar(screen))
+		if(ScrollbarWidth(screen))
 			(*screen->scrollWidget->core.widget_class->core_class.expose)(screen->scrollWidget, (XEvent *)&event, NULL);
 		}
 
@@ -943,15 +944,12 @@ StartLog(register TScreen *screen)
 		if(screen->logfile)
 			free(screen->logfile);
 		if(log_default == NULL) {
-			log_default = (char *)malloc(strlen(log_def_name) + 1);
-			if (log_default == 0)
+			if ((log_default = x_strdup(log_def_name)) == NULL)
 				return;
-			strcpy(log_default, log_def_name);
 			mktemp(log_default);
 		}
-		if((screen->logfile = (char *)malloc(strlen(log_default) + 1)) == 0)
+		if((screen->logfile = x_strdup(log_default)) == 0)
 			return;
-		strcpy(screen->logfile, log_default);
 	}
 	if(*screen->logfile == '|') {	/* exec command */
 #ifdef ALLOWLOGFILEEXEC
@@ -1095,6 +1093,95 @@ static void ReportAnsiColorRequest(XtermWidget pTerm, int colornum, int final)
 	unparseputc1(final, pTerm->screen.respond);
 }
 
+/*
+* Find closest color for "def" in "cmap".
+* Set "def" to the resulting color.
+* Based on Monish Shah's "find_closest_color()" for Vim 6.0,
+* modified with ideas from David Tong's "noflash" library.
+* Return FALSE if not able to find or allocate a color.
+*/
+static int
+find_closest_color(Display *display, Colormap cmap, XColor *def)
+{
+    double	tmp, distance, closestDistance;
+    int		i, closest, numFound, cmap_size;
+    XColor	*colortable;
+    XVisualInfo	template, *visInfoPtr;
+    char	*found;
+    int		attempts;
+
+    template.visualid = XVisualIDFromVisual(DefaultVisual(display,
+					    XDefaultScreen(display)));
+    visInfoPtr = XGetVisualInfo(display, (long)VisualIDMask,
+				&template, &numFound);
+    if (numFound < 1) {
+	/* FindClosestColor couldn't lookup visual */
+	return FALSE;
+    }
+
+    cmap_size = visInfoPtr->colormap_size;
+    XFree((char *)visInfoPtr);
+    colortable = (XColor *)malloc(cmap_size * sizeof(XColor));
+    if (!colortable) {
+	return FALSE;  /* out of memory */
+    }
+    found = (char *)calloc(cmap_size, sizeof(char));
+    if (!found) {
+	free(colortable);
+	return FALSE;  /* out of memory */
+    }
+
+    for (i = 0; i  < cmap_size; i++) {
+	colortable[i].pixel = (unsigned long)i;
+    }
+    XQueryColors (display, cmap, colortable, cmap_size);
+
+    /*
+     * Find the color that best approximates the desired one, then
+     * try to allocate that color.  If that fails, it must mean that
+     * the color was read-write (so we can't use it, since its owner
+     * might change it) or else it was already freed.  Try again,
+     * over and over again, until something succeeds.
+     */
+    for(attempts = 0; attempts < cmap_size; attempts++) {
+	closestDistance = 1e30;
+	closest = 0;
+	for (i = 0; i < cmap_size; i++) {
+	    if (!found[closest]) {
+		/*
+		 * Use Euclidean distance in RGB space, weighted by Y (of YIQ)
+		 * as the objective function;  this accounts for differences
+		 * in the color sensitivity of the eye.
+		 */
+		tmp = .30 * (((int)def->red) - (int)colortable[i].red);
+		distance = tmp * tmp;
+		tmp = .61 * (((int)def->green) - (int)colortable[i].green);
+		distance += tmp * tmp;
+		tmp = .11 * (((int)def->blue) - (int)colortable[i].blue);
+		distance += tmp * tmp;
+		if (distance < closestDistance)
+		{
+		    closest = i;
+		    closestDistance = distance;
+		}
+	    }
+	}
+	if (XAllocColor(display, cmap, &colortable[closest]) != 0) {
+	    *def = colortable[closest];
+	    break;
+	}
+	found[closest] = TRUE;	/* Don't look at this entry again */
+    }
+
+    free(colortable);
+    free(found);
+    if (attempts < cmap_size) {
+	return TRUE;		/* Got a closest matching color */
+    } else {
+	return FALSE;		/* Couldn't allocate a near match */
+    }
+}
+
 static Boolean
 AllocateAnsiColor(
 	XtermWidget	 pTerm,
@@ -1106,7 +1193,8 @@ register TScreen	*screen =	&pTerm->screen;
 Colormap		 cmap =		pTerm->core.colormap;
 
     if (XParseColor(screen->display, cmap, spec, &def)
-     && XAllocColor(screen->display, cmap, &def)) {
+     && (XAllocColor(screen->display, cmap, &def)
+      || find_closest_color(screen->display, cmap, &def))) {
 	SET_COLOR_RES(res, def.pixel);
 	TRACE(("AllocateAnsiColor %s (pixel %#lx)\n", spec, def.pixel));
 	return(TRUE);
@@ -1174,6 +1262,8 @@ ChangeAnsiColorRequest(
 	ChangeAnsiColors(pTerm);
     return(r);
 }
+#else
+#define find_closest_color(display, cmap, def) 0
 #endif /* OPT_ISO_COLORS */
 
 /***====================================================================***/
@@ -1219,6 +1309,7 @@ do_osc(Char *oscbuf, int len GCC_UNUSED, int final)
 				return;
 		}
 	}
+	if (buf == 0) return;
 
 	switch(mode) {
 	case 0:	/* new icon name and title*/
@@ -1793,7 +1884,8 @@ Colormap		 cmap =		pTerm->core.colormap;
 char			*newName;
 
     if (XParseColor(screen->display, cmap, name, &def)
-     && XAllocColor(screen->display, cmap, &def)
+     && (XAllocColor(screen->display, cmap, &def)
+      || find_closest_color(screen->display, cmap, &def))
      && (newName = XtMalloc(strlen(name)+1)) != 0) {
 	SET_COLOR_VALUE(pNew, ndx, def.pixel);
 	strcpy(newName, name);
@@ -1902,6 +1994,16 @@ Error (int i)
 	Cleanup(i);
 }
 
+static void
+Sleep (int msec)
+{
+	static struct timeval select_timeout;
+
+	select_timeout.tv_sec = 0;
+	select_timeout.tv_usec = msec * 1000;
+	select(0, 0, 0, 0, &select_timeout);
+}
+
 /*
  * cleanup by sending SIGHUP to client processes
  */
@@ -1925,6 +2027,7 @@ Cleanup (int code)
 		hold_screen = 2;
 		while (hold_screen) {
 			xevents();
+			Sleep(10);
 		}
 	}
 

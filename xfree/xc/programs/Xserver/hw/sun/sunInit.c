@@ -15,7 +15,7 @@
  *
  *
  */
-/* $XFree86: xc/programs/Xserver/hw/sun/sunInit.c,v 3.9 2001/01/30 22:06:15 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/sun/sunInit.c,v 3.11 2001/08/17 22:08:11 tsi Exp $ */
 
 /************************************************************
 Copyright 1987 by Sun Microsystems, Inc. Mountain View, CA.
@@ -51,6 +51,8 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include    "mi.h"
 #include    "mibstore.h"
 #include    "cfb.h"
+#include    "cfb16.h"
+#include    "cfb32.h"
 
 /* maximum pixmap depth */
 #ifndef SUNMAXDEPTH
@@ -560,6 +562,12 @@ void OsVendorInit(
 	inited = 1;
     }
 }
+
+#ifdef DDXOSFATALERROR
+void OsVendorFatalError(void)
+{
+}
+#endif
 
 /*-
  *-----------------------------------------------------------------------

@@ -1,12 +1,16 @@
 /*
-* $Xorg: Xtos.h,v 1.3 2000/08/17 19:46:20 cpqbld Exp $
+* $Xorg: Xtos.h,v 1.4 2001/02/09 02:03:59 xorgcvs Exp $
 */
 
 /***********************************************************
 
 Copyright 1987, 1988, 1994, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -44,7 +48,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/lib/Xt/Xtos.h,v 3.5 2001/01/17 19:43:13 dawes Exp $ */
+/* $XFree86: xc/lib/Xt/Xtos.h,v 3.9 2001/12/14 19:56:33 dawes Exp $ */
 
 #ifndef _Xtos_h
 #define _Xtos_h
@@ -59,7 +63,9 @@ SOFTWARE.
 
 #if defined(__alpha) || defined(__alpha__) || \
     defined(__ia64__) || defined(ia64) || \
-    defined(__sparc64__)
+    defined(__sparc64__) || \
+    defined(__s390x__) || \
+    (defined(__hppa__) && defined(__LP64__))
 #define LONG64
 #endif
 

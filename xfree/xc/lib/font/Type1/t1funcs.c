@@ -1,4 +1,4 @@
-/* $Xorg: t1funcs.c,v 1.4 2000/08/17 19:46:33 cpqbld Exp $ */
+/* $Xorg: t1funcs.c,v 1.5 2001/02/09 02:04:01 xorgcvs Exp $ */
 /* Copyright International Business Machines,Corp. 1991
  * All Rights Reserved
  *
@@ -71,13 +71,17 @@
  * The Original Software is CID font code that was developed by Silicon
  * Graphics, Inc.
  */
-/* $XFree86: xc/lib/font/Type1/t1funcs.c,v 3.23 2001/01/17 19:43:23 dawes Exp $ */
+/* $XFree86: xc/lib/font/Type1/t1funcs.c,v 3.26 2001/12/14 19:56:44 dawes Exp $ */
 
 /*
 
 Copyright 1987, 1994, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included
 in all copies or substantial portions of the Software.
@@ -119,10 +123,10 @@ from The Open Group.
 #else
 #include "Xmd.h"
 #include "Xdefs.h"
-#include "os.h"
 #include "xf86_ansic.h"
 #endif
 
+#include "os.h"
 #include "fntfilst.h"
 #include "fontutil.h"
 #include "FSproto.h"
@@ -508,8 +512,7 @@ Type1OpenScalable (FontPathElementPtr fpe,
        int len, rc, count = 0;
        struct type1font *type1;
        char *p;
-       struct font_encoding *encoding;
-       struct font_encoding_mapping *mapping;
+       FontMapPtr mapping = NULL;
        int no_mapping;
        psobj *fontmatrix;
        long x0, total_width = 0, total_raw_width = 0;
@@ -602,36 +605,30 @@ Type1OpenScalable (FontPathElementPtr fpe,
        if (sxmult > EPS) sxmult = 1000.0 / sxmult;
 
        no_mapping=0;
-       p=font_encoding_from_xlfd(entry->name.name, entry->name.length);
+       p = FontEncFromXLFD(entry->name.name, entry->name.length);
 
        if(p==0) {               /* XLFD does not specify an encoding */
-         mapping=0;
-         no_mapping=2;         /* ISO 8859-1 */
+           mapping=0;
+           no_mapping=2;        /* ISO 8859-1 */
        }
 
        if(!strcmp(p, "adobe-fontspecific")) {
-         mapping=0;
-         no_mapping=1;         /* font's native encoding vector */
+           mapping=0;
+           no_mapping=1;        /* font's native encoding vector */
        }
 
        if(!no_mapping) {
-         encoding=font_encoding_find(p,fileName);
-         mapping=0;
-         
-         if(encoding) {
-           for(mapping=encoding->mappings; mapping; mapping=mapping->next)
-             if(mapping->type==FONT_ENCODING_POSTSCRIPT)
-               break;
+           mapping = FontEncMapFind(p, 
+                                    FONT_ENCODING_POSTSCRIPT, -1, -1,
+                                    fileName);
            if(!mapping)
-             for(mapping=encoding->mappings; mapping; mapping=mapping->next)
-               if(mapping->type==FONT_ENCODING_UNICODE)
-                 break;
+               mapping = FontEncMapFind(p, 
+                                        FONT_ENCODING_UNICODE, -1, -1,
+                                        fileName);
            if(!mapping)
-             no_mapping=2;
+               no_mapping=2;
            else
-             no_mapping=0;
-         } else
-           no_mapping=2;
+               no_mapping=0;
        }
 
        pFont->info.firstCol = 255;
@@ -643,55 +640,53 @@ Type1OpenScalable (FontPathElementPtr fpe,
 	       int j;
 	       char *codename;
 
-               if(no_mapping==1) {
-                 codename=FontP->fontInfoP[ENCODING].
-                   value.data.arrayP[i].data.valueP;
-                 len=FontP->fontInfoP[ENCODING].
-                   value.data.arrayP[i].len;
+               if(no_mapping == 1) {
+                   codename = FontP->fontInfoP[ENCODING].
+                       value.data.arrayP[i].data.valueP;
+                   len = FontP->fontInfoP[ENCODING].
+                       value.data.arrayP[i].len;
                } else if(no_mapping) {
-                 codename=unicodetoPSname(i);
-                 len=codename?strlen(codename):0;
+                   codename = unicodetoPSname(i);
+                 len = codename ? strlen(codename) : 0;
                } else {
-                 if(mapping->type==FONT_ENCODING_UNICODE) {
-                   codename=unicodetoPSname(font_encoding_recode(i,
-                                                                 encoding,
-                                                                 mapping));
+                 if(mapping->type == FONT_ENCODING_UNICODE) {
+                     codename = unicodetoPSname(FontEncRecode(i, mapping));
                  } else
-                   codename=font_encoding_name(i, encoding, mapping);
+                     codename = FontEncName(i, mapping);
                  len=codename?strlen(codename):0;
                }
 
                /* Avoid multiply rasterising the undefined glyph */
                if(len==7 && !strncmp(codename, ".notdef", 7)) {
-                 len=0;
-                 codename=0;
+                   len=0;
+                   codename=0;
                }
 
                /* But do rasterise it at least once */
                if(len==0) {
-                 if(i==0) {
-                   codename=".notdef";
-                   len=7;
-                 } else
-                   continue;
+                   if(i==0) {
+                       codename=".notdef";
+                       len=7;
+                   } else
+                       continue;
                }
 
 	       /* See if this character is in the list of ranges specified
 		  in the XLFD name */
                if(i!=0) {
-                 for (j = 0; j < vals->nranges; j++)
-		   if (i >= minchar(vals->ranges[j]) &&
-		       i <= maxchar(vals->ranges[j]))
-                     break;
+                   for (j = 0; j < vals->nranges; j++)
+                       if (i >= minchar(vals->ranges[j]) &&
+                           i <= maxchar(vals->ranges[j]))
+                           break;
 
-                 /* If not, don't realize it. */
-                 if (vals->nranges && j == vals->nranges)
-		   continue;
+                   /* If not, don't realize it. */
+                   if (vals->nranges && j == vals->nranges)
+                       continue;
                }
 
                rc = 0;
                area = (struct region *)fontfcnB(S, (unsigned char *)codename,
-                   &len, &rc);
+                                                &len, &rc);
                if (rc < 0) {
                        rc = Type1ReturnCodeToXReturnCode(rc);
                        break;

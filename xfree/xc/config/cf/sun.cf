@@ -3,7 +3,7 @@ XCOMM platform:  $Xorg: sun.cf,v 1.4 2000/08/17 19:41:48 cpqbld Exp $
 
 
 
-XCOMM platform:  $XFree86: xc/config/cf/sun.cf,v 3.56 2001/05/11 09:03:05 alanh Exp $
+XCOMM platform:  $XFree86: xc/config/cf/sun.cf,v 3.61 2002/01/03 16:33:49 tsi Exp $
 
 #ifndef OSName
 # define OSName		DefaultOSName
@@ -168,21 +168,18 @@ XCOMM SunPro C++ CplusplusCompilerMajorVersion./**/CplusplusCompilerMinorVersion
 # if OSMajorVersion > 4
 #  if OSMinorVersion >= 8
 #   define ServerExtraDefines	AllocateLocalDefines XFree86ServerDefines \
-				-D__EXTENSIONS__ -D__SOL8__
+				-D__SOL8__
 #  else
-#   define ServerExtraDefines	AllocateLocalDefines XFree86ServerDefines \
-				-D__EXTENSIONS__
+#   define ServerExtraDefines	AllocateLocalDefines XFree86ServerDefines
 #  endif
-#  define ServerOSDefines	XFree86ServerOSDefines IncludeCG2HeaderDefine
 # else
 #  define ServerExtraDefines	AllocateLocalDefines
-#  define ServerOSDefines	-DDDXOSINIT IncludeCG2HeaderDefine
 # endif
 #else
-# define ServerExtraDefines	AllocateLocalDefines
-# define ServerOSDefines	-DDDXOSINIT IncludeCG2HeaderDefine
+# define ServerExtraDefines	AllocateLocalDefines XFree86ServerDefines
 # define HasPlugin		YES
 #endif
+#define ServerOSDefines		XFree86ServerOSDefines IncludeCG2HeaderDefine
 
 #ifndef HasPerl
 /* Solaris 8 comes with perl.  Earlier versions don't. */
@@ -237,15 +234,17 @@ XCOMM SunPro C++ CplusplusCompilerMajorVersion./**/CplusplusCompilerMinorVersion
 #  define InstallCmd	    /usr/ucb/install
 # endif
 # ifdef i386Architecture
-#  define StandardDefines	  -Dsun -Di386 -DSVR4 -D__i386
+#  define StandardDefines	  -Dsun -Di386 -DSVR4 -D__EXTENSIONS__ -D__i386
 #  define ToolkitStringsABIOptions	-intelabi
 # else
-#  define StandardDefines	  -Dsun -DSVR4
+#  define StandardDefines	  -Dsun -Dsparc -DSVR4 -D__EXTENSIONS__
 #  define ToolkitStringsABIOptions	-sparcabi
 # endif
 # define ExtraLibraries    -lsocket -lnsl
 # if OSMinorVersion > 1
-#  define ThreadedX	  YES
+#  ifndef ThreadedX
+#   define ThreadedX	  YES
+#  endif
 #  define MTSafeAPIDefines	-DXUSE_MTSAFE_API -DXUSE_NETDB_R_API
 #  if HasSunC && CCompilerMajorVersion > 2
 #   define ThreadsCompileFlags -mt
@@ -310,14 +309,32 @@ XCOMM SunPro C++ CplusplusCompilerMajorVersion./**/CplusplusCompilerMinorVersion
 # ifndef BuildPexExt
 #  define BuildPexExt	  (XsunServer || Xsun24Server)
 # endif
-#if (OSMajorVersion > 4)
-# ifdef UseGas
-#  define AsVISOption		-Av9a
-# else
-#  define AsVISOption		-xarch=v8plus
-#endif
-# define AsOutputArchSize	32
-#endif
+# undef BuildXF86DRI
+# undef BuildXF86DRM
+# define BuildXF86DRI     NO
+# define BuildXF86DRM     NO
+# if (OSMajorVersion > 4)
+#  if !defined(AsOutputArchSize) || \
+      ((AsOutputArchSize != 32) && (AsOutputArchSize != 64))
+#   undef AsOutputArchSize
+#   define AsOutputArchSize	32
+#  endif
+#  ifndef AsVISOption
+#   if AsOutputArchSize == 32
+#    ifdef UseGas
+#     define AsVISOption		-Av8plusa
+#    else
+#     define AsVISOption		-xarch=v8plusa
+#    endif
+#   else
+#    ifdef UseGas
+#     define AsVISOption		-Av9a
+#    else
+#     define AsVISOption		-xarch=v9a
+#    endif
+#   endif
+#  endif
+# endif
 #endif /* not i386Architecture */
 
 #if OSMajorVersion >= 4
@@ -325,19 +342,16 @@ XCOMM SunPro C++ CplusplusCompilerMajorVersion./**/CplusplusCompilerMinorVersion
 #endif
 
 #if HasGcc
-# if OSMajorVersion > 4 && defined(i386Architecture)
+# if OSMajorVersion > 4
 #  ifndef DefaultCCOptions
 #   if UseInstalled
 #    define DefaultCCOptions -DNO_ASM
+#   elif OSMinorVersion > 6
+#    define DefaultCCOptions -DNO_ASM GccWarningOptions
+#   elif OSMinorVersion > 3
+#    define DefaultCCOptions -DNO_ASM GccWarningOptions -ansi -pedantic
 #   else
-#    if OSMinorVersion > 6
-#     define DefaultCCOptions -DNO_ASM -D__EXTENSIONS__ GccWarningOptions
-#    elif OSMinorVersion > 3
-#     define DefaultCCOptions -ansi -pedantic -DNO_ASM \
-				-D__EXTENSIONS__ GccWarningOptions
-#    else
-#     define DefaultCCOptions -DNO_ASM
-#    endif
+#    define DefaultCCOptions -DNO_ASM
 #   endif
 #  endif
 # endif
