@@ -20,7 +20,7 @@ OBJS =	dreamcastInit.o \
 	dreamcastColormap.o \
 	dreamcastKeymap.o
 
-INCLUDES = -I. -I$(SERVERSRC)/mfb -I$(SERVERSRC)/mi -I$(SERVERSRC)/cfb16 \
+INCLUDES = -I. -I$(SERVERSRC)/mfb -I$(SERVERSRC)/mi -I$(SERVERSRC)/cfb \
 	   -I$(SERVERSRC)/include -I$(SERVERSRC)/os \
 	   -I$(XINCLUDESRC) -I$(EXTINCSRC)
 
