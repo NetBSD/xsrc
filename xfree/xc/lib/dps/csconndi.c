@@ -743,7 +743,7 @@ void N_XWaitForWritable(Display *dpy)
 
 	if (_XANYSET(r_mask)) {
 	    char buf[BUFSIZE];
-	    long pend_not_register;
+	    BytesReadable_t pend_not_register;
 	    register long pend;
 	    register xEvent *ev;
 
