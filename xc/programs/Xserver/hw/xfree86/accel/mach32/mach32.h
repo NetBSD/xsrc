@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach32/mach32.h,v 3.15 1996/12/23 06:38:21 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach32/mach32.h,v 3.15.2.1 2000/02/28 04:51:23 tsi Exp $ */
 /*
  * Copyright 1992,1993 by Kevin E. Martin, Chapel Hill, North Carolina.
  *
@@ -29,7 +29,7 @@
 #ifndef MACH32_H
 #define MACH32_H
 
-#define MACH32_PATCHLEVEL "0"
+#define MACH32_PATCHLEVEL "1"
 
 #define MACH32_CURSBYTES	1024
 #define MACH32_CURSMAX		64

@@ -10,6 +10,8 @@ lib/libX11.so.6
 lib/libX11.so
 lib/libXIE.so.6
 lib/libXIE.so
+lib/libXThrStub.so.6
+lib/libXThrStub.so
 lib/libXaw.so.6
 lib/libXaw.so
 lib/libXext.so.6

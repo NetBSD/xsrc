@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach8/mach8.h,v 3.8 1996/12/23 06:39:42 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach8/mach8.h,v 3.8.2.1 2000/02/28 04:51:25 tsi Exp $ */
 /*
  * Copyright 1992 by Kevin E. Martin, Chapel Hill, North Carolina.
  *
@@ -30,7 +30,7 @@
 #ifndef MACH8_H
 #define MACH8_H
 
-#define MACH8_PATCHLEVEL "0"
+#define MACH8_PATCHLEVEL "1"
 
 #include "X.h"
 #include "input.h"

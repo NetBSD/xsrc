@@ -1,5 +1,5 @@
 // $XConsortium: de_CH /main/3 1996/08/31 12:19:25 kaleb $
-// $XFree86: xc/programs/xkbcomp/symbols/de_CH,v 3.3 1996/12/23 07:13:16 dawes Exp $
+// $XFree86: xc/programs/xkbcomp/symbols/de_CH,v 3.3.2.1 2000/01/20 22:57:52 dawes Exp $
 partial default alphanumeric_keys 
 xkb_symbols "basic" {
 
@@ -26,14 +26,16 @@ xkb_symbols "basic" {
     key <AE09> {	[	  9,	parenright	]	};
     key <AE10> {	[	  0,	equal		]	};
     key <AE11> {	[ apostrophe,	question	],
-			[     acute			]	};
-    key <AE12> {	[ asciicircum,	grave		],
-			[ asciitilde			]	};
+			[ dead_acute			]	};
+    key <AE12> {	[ dead_circumflex, dead_grave	],
+			[ dead_tilde			]	};
 
+    key <AD03> {	[	  e,	E		],
+			[  EuroSign			]	};
     key <AD06> {	[	  z,	Z		]	};
     key <AD11> {	[ udiaeresis,	egrave		],
 			[ bracketleft			]	};
-    key <AD12> {	[ diaeresis,	exclam		],
+    key <AD12> {	[ dead_diaeresis, exclam	],
 			[ bracketright			]	};
 
     key <AC10> {	[ odiaeresis,	eacute		]	};
@@ -58,13 +60,27 @@ xkb_symbols "basic" {
 };
 partial alphanumeric_keys 
 xkb_symbols "Sundeadkeys" {
-    include "de_CH(basic)" // for the sake of consistency
+    // modify the default Swiss German layout to use Sun dead keys
+    include "de_CH(basic)"
+    key <AE11> {	[ apostrophe,	question	],
+			[ SunFA_Acute			]	};
+    key <AE12> {	[ SunFA_Circum,	SunFA_Grave	],
+			[ SunFA_Tilde			]	};
+    key <AD12> {	[ SunFA_Diaeresis, exclam	],
+			[ bracketright			]	};
 };
 partial alphanumeric_keys 
 xkb_symbols "sundeadkeys" {
-    include "de_CH(Sundeadkeys)" // for the sake of consistency
+    include "de_CH(Sundeadkeys)"
 };
 partial alphanumeric_keys 
 xkb_symbols "nodeadkeys" {
-    include "de_CH(basic)" // for the sake of consistency
+    // modify the default Swiss German layout not to have any dead keys
+    include "de_CH(basic)"
+    key <AE11> {	[ apostrophe,	question	],
+			[ acute				]	};
+    key <AE12> {	[ asciicircum,	grave		],
+			[ asciitilde			]	};
+    key <AD12> {	[ diaeresis,	exclam		],
+			[ bracketright			]	};
 };

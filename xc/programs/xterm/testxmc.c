@@ -1,10 +1,10 @@
 /*
- * $XFree86: xc/programs/xterm/testxmc.c,v 3.7 2000/02/08 17:19:43 dawes Exp $
+ * $XFree86: xc/programs/xterm/testxmc.c,v 3.2.2.2 1998/10/20 20:51:54 hohndel Exp $
  */
 
 /************************************************************
 
-Copyright 1997-2000 by Thomas E. Dickey <dickey@clark.net>
+Copyright 1997 by Thomas E. Dickey <dickey@clark.net>
 
                         All Rights Reserved
 
@@ -93,16 +93,14 @@ authorization.
 
 void Mark_XMC(register TScreen *screen, int param)
 {
-	static IChar *glitch;
+	static Char *glitch;
 	Boolean found = FALSE;
 	Char my_attrs = (screen->xmc_attributes & XMC_FLAGS);
 	Char whichone = 0;
 
 	if (glitch == 0) {
-		unsigned len = screen->xmc_glitch;
-		glitch = (IChar *)malloc(len * sizeof(IChar));
-		while (len--)
-			glitch[len] = XMC_GLITCH;
+		glitch = (Char *)malloc(screen->xmc_glitch);
+		memset(glitch, XMC_GLITCH, screen->xmc_glitch);
 	}
 	switch (param) {
 	case -1:/* DEFAULT */
@@ -136,8 +134,8 @@ void Mark_XMC(register TScreen *screen, int param)
 	if (found) {
 		unsigned save = term->flags;
 		term->flags ^= whichone;
-		TRACE(("XMC Writing glitch (%d/%d) after SGR %d\n", my_attrs, whichone, param));
-		dotext(screen, '?', glitch, screen->xmc_glitch);
+		TRACE(("XMC Writing glitch (%d/%d) after SGR %d\n", my_attrs, whichone, param))
+		dotext(screen, '?', glitch, glitch + screen->xmc_glitch);
 		term->flags = save;
 	}
 }
@@ -168,7 +166,7 @@ void Resolve_XMC(register TScreen *screen)
 
 	/* Find the preceding cell.
 	 */
-	if (getXtermCell(screen, row, col) != XMC_GLITCH) {
+	if (SCRN_BUF_CHARS(screen, row)[col] != XMC_GLITCH) {
 		if (col != 0) {
 			col--;
 		} else if (!screen->xmc_inline && row != 0) {
@@ -189,7 +187,7 @@ void Resolve_XMC(register TScreen *screen)
 			col = 0;
 		} else
 			break;
-		if (getXtermCell(screen, row, col) == XMC_GLITCH)
+		if (SCRN_BUF_CHARS(screen, row)[col] == XMC_GLITCH)
 			break;
 		if ((SCRN_BUF_ATTRS(screen, row)[col] & my_attrs) != start) {
 			SCRN_BUF_ATTRS(screen, row)[col] = start |
@@ -202,7 +200,7 @@ void Resolve_XMC(register TScreen *screen)
 		changed ? "Ripple" : "Nochange",
 		term->flags & my_attrs ? "on" : "off",
 		my_attrs, start,
-		screen->cur_row, screen->cur_col, row, col));
+		screen->cur_row, screen->cur_col, row, col))
 
 	if (changed) {
 		ScrnRefresh (screen, screen->cur_row, 0, row + 1 - screen->cur_row, screen->max_col + 1, True);

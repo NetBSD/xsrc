@@ -1,6 +1,6 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/ati/atiprobe.c,v 1.1.2.8 1999/10/13 14:32:32 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/ati/atiprobe.c,v 1.1.2.11 2000/05/14 02:02:17 tsi Exp $ */
 /*
- * Copyright 1997 through 1999 by Marc Aurele La France (TSI @ UQV), tsi@ualberta.ca
+ * Copyright 1997 through 2000 by Marc Aurele La France (TSI @ UQV), tsi@ualberta.ca
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -49,6 +49,14 @@
 #ifdef XFreeXDGA
 #   define _XF86DGA_SERVER_
 #   include "extensions/xf86dga.h"
+#endif
+
+/* To allow compilation with older vgaPCI.h */
+#ifndef PCI_CHIP_RAGE128LE
+#define PCI_CHIP_RAGE128LE 0x4C45
+#endif
+#ifndef PCI_CHIP_RAGE128LF
+#define PCI_CHIP_RAGE128LF 0x4C46
 #endif
 
 /*
@@ -406,6 +414,7 @@ ATIProbe(void)
     unsigned int LCDTable = 0, LCDPanelInfo = 0;
     const DACRec *DAC;
     pciConfigPtr PCIDevice;
+    Bool Rage128Seen = FALSE;
 
     /* Get out if this isn't the driver the user wants */
     if (!ATIIdentProbe())
@@ -554,31 +563,34 @@ Skip8514Probe:
                     continue;
                 if (PCIDevice->_device == PCI_CHIP_MACH32)
                     continue;
-                /*
-                 * The legacy servers provide Rage 128 support elsewhere.
-                 */
-                if (PCIDevice->_device == PCI_CHIP_RAGE128RE)
-                    continue;
-                if (PCIDevice->_device == PCI_CHIP_RAGE128RF)
-                    continue;
-                if (PCIDevice->_device == PCI_CHIP_RAGE128RK)
-                    continue;
-                if (PCIDevice->_device == PCI_CHIP_RAGE128RL)
-                    continue;
-                /* Rage 128 PRO */
-                if ((PCIDevice->_device >= PCI_CHIP_RAGE128PA) &&
-                    (PCIDevice->_device <= PCI_CHIP_RAGE128PX))
-                    continue;
-                if ((PCIDevice->_device >= PCI_CHIP_RAGE128SE) &&
-                    (PCIDevice->_device <= PCI_CHIP_RAGE128SG))
-                    continue;
-                if ((PCIDevice->_device >= PCI_CHIP_RAGE128SK) &&
-                    (PCIDevice->_device <= PCI_CHIP_RAGE128SM))
-                    continue;
+
                 if ((PCIDevice->_command &
                      (PCI_CMD_IO_ENABLE | PCI_CMD_MEM_ENABLE)) !=
                     (PCI_CMD_IO_ENABLE | PCI_CMD_MEM_ENABLE))
                     continue;
+
+                /*
+                 * The legacy servers provide Rage 128 support elsewhere.
+                 */
+                if ((PCIDevice->_device == PCI_CHIP_RAGE128RE) ||
+                    (PCIDevice->_device == PCI_CHIP_RAGE128RF) ||
+                    (PCIDevice->_device == PCI_CHIP_RAGE128RK) ||
+                    (PCIDevice->_device == PCI_CHIP_RAGE128RL) ||
+                /* Rage 128 PRO */
+                    ((PCIDevice->_device >= PCI_CHIP_RAGE128PA) &&
+                     (PCIDevice->_device <= PCI_CHIP_RAGE128PX)) ||
+                    ((PCIDevice->_device >= PCI_CHIP_RAGE128SE) &&
+                     (PCIDevice->_device <= PCI_CHIP_RAGE128SG)) ||
+                    ((PCIDevice->_device >= PCI_CHIP_RAGE128SK) &&
+                     (PCIDevice->_device <= PCI_CHIP_RAGE128SM)) ||
+                /* Rage 128 Mobility */
+                    (PCIDevice->_device == PCI_CHIP_RAGE128LE) ||
+                    (PCIDevice->_device == PCI_CHIP_RAGE128LF))
+                {
+                    Rage128Seen = TRUE;
+                    continue;
+                }
+
                 ATIMach64Probe(PCIDevice->_base1 & BLOCK_IO_BASE, BLOCK_IO,
                     PCIDevice->_device);
             }
@@ -728,7 +740,6 @@ Skip8514Probe:
                     ATIIOPortHORZ_STRETCHING = ATIIOPort(HORZ_STRETCHING);
                     ATIIOPortVERT_STRETCHING = ATIIOPort(VERT_STRETCHING);
                     ATIIOPortLCD_GEN_CTRL = ATIIOPort(LCD_GEN_CTRL);
-                    ATIIOPortPOWER_MANAGEMENT = ATIIOPort(POWER_MANAGEMENT);
 
                     /*
                      * Don't bother with panel support if it's not enabled by
@@ -800,10 +811,11 @@ Skip8514Probe:
      * Attempt to find the ATI signature in the first 1024 bytes of the video
      * BIOS.
      */
-    for (Signature = 0;  Signature < No_Signature;  Signature++)
-        for (Index = 0; BIOS[Signature + Index] == ATISignature[Index];  )
-            if (++Index >= Signature_Size)
-                goto signature_found;
+    if (!Rage128Seen)
+        for (Signature = 0;  Signature < No_Signature;  Signature++)
+            for (Index = 0; BIOS[Signature + Index] == ATISignature[Index];  )
+                if (++Index >= Signature_Size)
+                    goto signature_found;
     signature_found:;
 
     /*
@@ -913,7 +925,8 @@ Skip8514Probe:
     if (Signature != BIOS_Signature)
     {
         if ((ATIVGAAdapter == ATI_ADAPTER_NONE) &&
-            (ATIChipSet == ATI_CHIPSET_IBMVGA))
+            (ATIChipSet == ATI_CHIPSET_IBMVGA) &&
+            !Rage128Seen)
         {
             /*
              * VGA has one more attribute register than EGA.  See if it can be
@@ -1184,17 +1197,22 @@ Skip8514Probe:
                 ATILCDHorizontal = BIOSWord(LCDPanelInfo + 0x19U);
                 ATILCDVertical = BIOSWord(LCDPanelInfo + 0x1BU);
 
-                /* Assume clock 0 */
-                ATILCDClock = 2 * ATIGetMach64PLLReg(PLL_VCLK0_FB_DIV);
+                /* Compute panel clock */
+                if (inl(ATIIOPortCRTC_GEN_CNTL) & CRTC_EXT_DISP_EN)
+                    Index = GetBits(inb(ATIIOPortCLOCK_CNTL), CLOCK_SELECT);
+                else
+                    Index = GetBits(inb(R_GENMO), 0x0C);
+                ATILCDClock = 2 * ATIGetMach64PLLReg(PLL_VCLK0_FB_DIV + Index);
                 ATILCDClock *= ATIReferenceNumerator;
                 ATILCDClock /= ATIClockDescriptor->MinM;
                 ATILCDClock /= ATIReferenceDenominator;
-                Index =
-                    GetBits(ATIGetMach64PLLReg(PLL_XCLK_CNTL), PLL_VCLK0_XDIV);
-                Index *= MaxBits(PLL_VCLK0_POST_DIV) + 1;
-                Index |= GetBits(ATIGetMach64PLLReg(PLL_VCLK_POST_DIV),
-                    PLL_VCLK0_POST_DIV);
-                ATILCDClock /= ATIClockDescriptor->PostDividers[Index];
+                Index2 =
+                    GetBits(ATIGetMach64PLLReg(PLL_XCLK_CNTL),
+                        PLL_VCLK0_XDIV << Index);
+                Index2 *= MaxBits(PLL_VCLK0_POST_DIV) + 1;
+                Index2 |= GetBits(ATIGetMach64PLLReg(PLL_VCLK_POST_DIV),
+                    PLL_VCLK0_POST_DIV << (2 * Index));
+                ATILCDClock /= ATIClockDescriptor->PostDividers[Index2];
             }
         }
 
@@ -1524,6 +1542,7 @@ Skip8514Probe:
      * can architecturally handle.
      */
     if ((MachvideoRam < vga256InfoRec.videoRam) && (ATICRTC == ATI_CRTC_VGA))
+    {
         if (OFLG_ISSET(OPTION_FB_DEBUG, &vga256InfoRec.options))
             ErrorF("Virtual resolutions requiring more than %d kB\n of video"
                    " memory might not function correctly.\n",
@@ -1543,6 +1562,7 @@ Skip8514Probe:
             }
             vga256InfoRec.videoRam = MachvideoRam;
         }
+    }
 
     /* VT-B's and later have DSP registers */
     if ((ATIChip >= ATI_CHIP_264VTB) && (ATIIODecoding == BLOCK_IO) &&
@@ -1560,6 +1580,7 @@ Skip8514Probe:
         if (vga256InfoRec.videoRam <= 256)
             vga256InfoRec.bankedMono = FALSE;
         else if (ATIChip <= ATI_CHIP_18800_1)
+        {
             if (OFLG_ISSET(OPTION_FB_DEBUG, &vga256InfoRec.options))
                 ErrorF("Virtual resolutions requiring more than %s kB\n of"
                        " video memory might not function properly.\n See"
@@ -1578,6 +1599,7 @@ Skip8514Probe:
                 vga256InfoRec.videoRam = 256;
                 vga256InfoRec.bankedMono = FALSE;
             }
+        }
 
         /* Planar modes also need a larger virtual X rounding */
         ATI.ChipRounding = 32;

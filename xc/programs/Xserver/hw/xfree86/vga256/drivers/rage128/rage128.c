@@ -21,7 +21,7 @@
  *
  * Author:  Alan Hourihane, alanh@fairlite.demon..co.uk
  *
- * $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/rage128/rage128.c,v 1.1.2.2 1999/10/12 18:33:27 hohndel Exp $
+ * $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/rage128/rage128.c,v 1.1.2.3 2000/01/18 16:30:38 tsi Exp $
  */
 
 #include "X.h"
@@ -178,12 +178,12 @@ RAGE128Probe()
 		if (PCIDevice->_vendor != PCI_VENDOR_ATI)
 		    continue;
 		if (!vga256InfoRec.chipset) {
-		    if ((PCIDevice->_device != PCI_CHIP_RAGE128_RE) &&
-			(PCIDevice->_device != PCI_CHIP_RAGE128_RF) &&
-			(PCIDevice->_device != PCI_CHIP_RAGE128_RK) &&
-			(PCIDevice->_device != PCI_CHIP_RAGE128_RL) &&
-			( (PCIDevice->_device < PCI_CHIP_RAGE128_SE) || /* consecutive device ids! */
-			  (PCIDevice->_device > PCI_CHIP_RAGE128_PX) ))
+		    if ((PCIDevice->_device != PCI_CHIP_RAGE128RE) &&
+			(PCIDevice->_device != PCI_CHIP_RAGE128RF) &&
+			(PCIDevice->_device != PCI_CHIP_RAGE128RK) &&
+			(PCIDevice->_device != PCI_CHIP_RAGE128RL) &&
+			( (PCIDevice->_device > PCI_CHIP_RAGE128SE) || /* consecutive device ids! */
+			  (PCIDevice->_device < PCI_CHIP_RAGE128PX) ))
 			continue;
 		}
 		if ((PCIDevice->_command &
@@ -198,19 +198,19 @@ RAGE128Probe()
     }
 
     switch (FoundRage128) {
-	    case PCI_CHIP_RAGE128_RE:
+	    case PCI_CHIP_RAGE128RE:
 		ErrorF("%s %s: Found ATI Rage 128 RE chip\n", 
 			XCONFIG_PROBED, vga256InfoRec.name);
 		break;
-	    case PCI_CHIP_RAGE128_RF:
+	    case PCI_CHIP_RAGE128RF:
 		ErrorF("%s %s: Found ATI Rage 128 RF chip\n", 
 			XCONFIG_PROBED, vga256InfoRec.name);
 		break;
-	    case PCI_CHIP_RAGE128_RK:
+	    case PCI_CHIP_RAGE128RK:
 		ErrorF("%s %s: Found ATI Rage 128 RK chip\n", 
 			XCONFIG_PROBED, vga256InfoRec.name);
 		break;
-	    case PCI_CHIP_RAGE128_RL:
+	    case PCI_CHIP_RAGE128RL:
 		ErrorF("%s %s: Found ATI Rage 128 RL chip\n", 
 			XCONFIG_PROBED, vga256InfoRec.name);
 	    break;
@@ -623,8 +623,8 @@ clockdone:
     switch (temp & 0x03) {
 	case 0:
 	    switch (FoundRage128) {
-		case PCI_CHIP_RAGE128_RE:
-		case PCI_CHIP_RAGE128_RF:
+		case PCI_CHIP_RAGE128RE:
+		case PCI_CHIP_RAGE128RF:
                     /*
                     These are 128-bit cards.
                     */
@@ -637,8 +637,8 @@ clockdone:
                     Tr2w        = 1;
                     Rloop       = 12 + ML;
                     break;
-               	case PCI_CHIP_RAGE128_RK:
-               	case PCI_CHIP_RAGE128_RL:
+               	case PCI_CHIP_RAGE128RK:
+               	case PCI_CHIP_RAGE128RL:
                     /*
                     These are 64-bit cards.
                     */

@@ -5,7 +5,7 @@
 
 <title>README for XFree86&tm; 3.3.6
 <author>The XFree86 Project, Inc
-<date>13 October 1999
+<date>31 December 1999
 
 
 <abstract>
@@ -760,7 +760,7 @@ Core Team.  At this time the Core Team consists of (in chronoligical order):
        <item>Mark Vojkovich <it>&lt;mvojkovi@ucsd.edu&gt;</it
        <item>Alan Hourihane <it>&lt;alanh@fairlite.demon.co.uk&gt;</it>
        <item>Preston Brown <it>&lt;pbrown@redhat.com&gt;</it>
-       <item>Marc Aurele La France <it>&lt;tsi@ualberta.cait&gt;</it>
+       <item>Marc Aurele La France <it>&lt;tsi@ualberta.ca&gt;</it>
        <item>Kevin E. Martin <it>&lt;kevin@precisioninsight.com&gt;</it>
        <item>Keith Packard <it>&lt;keithp@suse.com&gt;</it>
 </itemize>
@@ -991,9 +991,11 @@ and the following mirror sites:
 <itemize>
 <item>North America:  
 <itemize>
+<!--
 <item><htmlurl url="ftp://ftp2.XFree86.org/pub/XFree86"
 	name="ftp://ftp2.XFree86.org/pub/XFree86">
 	(source and binaries)
+-->
 <!--
 <item><htmlurl url="ftp://ftp.bsdi.com/contrib/X11/XFree86" 
 	name="ftp://ftp.bsdi.com/contrib/X11/XFree86">
@@ -1142,7 +1144,7 @@ url="RELNOTES.html"> to find which files you need to take from the
 archive.
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/README.sgml,v 3.75.2.57 1999/10/13 21:46:26 hohndel Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/README.sgml,v 3.75.2.60 2000/03/22 03:16:23 tsi Exp $
 
 
 

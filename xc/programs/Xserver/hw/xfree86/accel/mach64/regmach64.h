@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach64/regmach64.h,v 3.15.2.8 1999/10/12 17:18:44 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach64/regmach64.h,v 3.15.2.9 2000/02/15 03:47:06 tsi Exp $ */
 /*
  * Copyright 1992,1993,1994,1995,1996,1997 by Kevin E. Martin, Chapel Hill, North Carolina.
  *
@@ -353,6 +353,8 @@ extern unsigned ioLCD_DATA;
 #define VCLK1_POST		0x0C
 #define VCLK2_POST		0x30
 #define VCLK3_POST		0xC0
+#define XCLK_SRC_SEL		0x07
+#define MFB_TIMES_4_2		0x08
 
 /* LCD_INDEX register mapping */
 #define LCD_REG_INDEX		0x0000000f

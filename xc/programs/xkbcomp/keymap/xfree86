@@ -1,5 +1,5 @@
 // $XConsortium: xfree86 /main/12 1996/08/31 12:17:30 kaleb $
-// $XFree86: xc/programs/xkbcomp/keymap/xfree86,v 3.8.2.3 1999/07/21 18:07:48 hohndel Exp $
+// $XFree86: xc/programs/xkbcomp/keymap/xfree86,v 3.8.2.4 2000/06/15 21:58:35 dawes Exp $
 default xkb_keymap "us" {
     xkb_keycodes	{ include "xfree86"		};
     xkb_types		{ include "default"		};
@@ -97,6 +97,13 @@ xkb_keymap "it"	{
     xkb_compatibility	{ include "default"		};
     xkb_symbols		{ include "en_US(pc105)+it"	};
     xkb_geometry 	{ include "pc(pc102)"		};
+};
+xkb_keymap "mk" {
+    xkb_keycodes        { include "xfree86"                     };
+    xkb_types           { include "default"                     };
+    xkb_compatibility   { include "default"                     };
+    xkb_symbols         { include "en_US(pc105)+mk"             };
+    xkb_geometry        { include "pc(pc102)"                   };
 };
 xkb_keymap "no"	{
     xkb_keycodes	{ include "xfree86"		};

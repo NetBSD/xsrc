@@ -23,7 +23,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/i128/i128.c,v 3.22.2.14 1999/06/18 13:08:13 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/i128/i128.c,v 3.22.2.16 2000/09/04 00:42:33 robin Exp $ */
 
 #include "i128.h"
 #include "i128reg.h"
@@ -34,6 +34,16 @@
 #include "IBMRGB.h"
 
 #include "xf86xaa.h"
+
+#ifdef XFreeXDGA
+#include "X.h"
+#include "Xproto.h"
+#include "scrnintstr.h" 
+#include "servermd.h"
+#define _XF86DGA_SERVER_
+#include "extensions/xf86dgastr.h"
+#endif  
+
 
 extern char *xf86VisualNames[];
 extern int defaultColorVisualClass;
@@ -62,7 +72,7 @@ ScrnInfoRec i128InfoRec =
    (void (*)())NoopDDA,		/* void (* EnterLeaveCursor)() */
    i128AdjustFrame,		/* void (* AdjustFrame)() */
    i128SwitchMode,		/* Bool (* SwitchMode)() */
-   (void (*)())NoopDDA,		/* void (* DPMSSet)() */
+   i128DPMSSet,			/* void (* DPMSSet)() */
    i128PrintIdent,		/* void (* PrintIdent)() */
    8,				/* int depth */
    {5, 6, 5},			/* xrgb weight */
@@ -116,7 +126,7 @@ ScrnInfoRec i128InfoRec =
    0				/* int LCDClk */
 #ifdef XFreeXDGA
    ,0,				/* int directMode */
-   0,				/* Set Vid Page */
+   NULL,			/* Set Vid Page */
    0,				/* unsigned long physBase */
    0				/* int physSize */
 #endif
@@ -481,6 +491,7 @@ i128Probe()
 			(pointer)(pcrp->_base0 & 0xFFC00000),
                         i128InfoRec.videoRam * 1024);
    i128VideoMem = (pointer )i128mem.mw0_ad;
+   i128InfoRec.MemBase = pcrp->_base0 & 0xFFC00000;
 #ifdef TOOMANYMMAPS
    i128mem.mw1_ad =  (unsigned char *)xf86MapVidMem(0, 1,
 			(pointer)(pcrp->_base1 & 0xFFC00000),
@@ -857,6 +868,11 @@ i128Probe()
        (OFLG_ISSET(OPTION_POWER_SAVER, &i128InfoRec.options) &&
 	!DPMSDisabledSwitch))
       defaultDPMSEnabled = DPMSEnabled = TRUE;
+#endif
+
+#ifdef XFreeXDGA
+   i128InfoRec.displayWidth = i128DisplayWidth;
+   i128InfoRec.directMode = XF86DGADirectPresent;
 #endif
 
    /* Free PCI information */

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach64/mach64.h,v 3.14.2.6 1999/07/23 13:22:36 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach64/mach64.h,v 3.14.2.7 2000/02/15 03:47:04 tsi Exp $ */
 /*
  * Copyright 1992,1993,1994,1995,1996,1997 by Kevin E. Martin, Chapel Hill, North Carolina.
  *
@@ -29,7 +29,7 @@
 #ifndef MACH64_H
 #define MACH64_H
 
-#define MACH64_PATCHLEVEL "0"
+#define MACH64_PATCHLEVEL "1"
 
 #define MACH64_CURSBYTES	1024
 #define MACH64_CURSMAX		64
@@ -85,6 +85,7 @@ extern int mach64CXClk;
 extern int mach64MemClk;
 extern int mach64DRAMMemClk;
 extern int mach64VRAMMemClk;
+extern int mach64XCLK;
 extern int mach64MemCycle;
 
 extern int mach64LCDPanelID;

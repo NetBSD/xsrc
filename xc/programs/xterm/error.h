@@ -3,7 +3,7 @@
  */
 
 
-/* $XFree86: xc/programs/xterm/error.h,v 1.5 1998/10/10 15:25:48 dawes Exp $ */
+/* $XFree86: xc/programs/xterm/error.h,v 1.1.1.1.12.3 1998/10/20 20:51:45 hohndel Exp $ */
 /*
  * Copyright 1987 by Digital Equipment Corporation, Maynard, Massachusetts.
  *
@@ -65,13 +65,13 @@
 #define	ERROR_TIOCKGETC	45	/* spawn: ioctl() failed on TIOCKGETC */
 #define	ERROR_TIOCKSET	46	/* spawn: ioctl() failed on TIOCKSET */
 #define	ERROR_TIOCKSETC	47	/* spawn: ioctl() failed on TIOCKSETC */
-#define	ERROR_SPREALLOC 48	/* spawn: realloc of ttydev failed */
+#define ERROR_SPREALLOC 48	/* spawn: realloc of ttydev failed */
 /* charproc.c */
 #define	ERROR_SELECT	50	/* in_put: select() failed */
 #define	ERROR_VINIT	54	/* VTInit: can't initialize window */
 #define	ERROR_CNMALLOC1	55	/* Changename: malloc failed */
 #define	ERROR_CNMALLOC2	56	/* Changename: malloc failed */
-#define	ERROR_KMMALLOC1 57	/* HandleKeymapChange: malloc failed */
+#define	ERROR_KMMALLOC1	57	/* HandleKeymapChange: malloc failed */
 #define	ERROR_VTREALLOC	58	/* VTParse: realloc failed */
 /* Tekproc.c */
 #define	ERROR_TSELECT	60	/* Tinput: select() failed */
