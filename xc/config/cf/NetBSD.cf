@@ -17,7 +17,7 @@ XCOMM 		NetBSD/mac68k	client/server
 XCOMM 		NetBSD/pmax	client/server
 XCOMM		NetBSD/amiga	client/server
 XCOMM		NetBSD/alpha	client/server
-XCOMM		NetBSD/arm32	client
+XCOMM		NetBSD/arm32	client/server
 XCOMM		NetBSD/atari	client/server
 XCOMM		NetBSD/vax	client/server
 XCOMM		NetBSD/pc532	client
@@ -122,6 +122,8 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #define CcCmd 			gcc
 #if defined(UseInstalled) && (!defined(XF86LinkKit) || !XF86LinkKit)
 #define DefaultCCOptions 	/**/
+#elif defined(arm32Architecture)
+#define DefaultCCOptions 	-ansi -Dasm=__asm -fsigned-char -fomit-frame-pointer
 #else
 #define DefaultCCOptions 	-ansi -Dasm=__asm
 #endif
@@ -204,7 +206,7 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 /*
  * XXX always build XKBuilib, override xfree86.cf
  */
-#if defined(i386Architecture) || defined(atariArchitecture)
+#if defined(arm32Architecture) || defined(i386Architecture) || defined(atariArchitecture)
 # define BuildXKBuilib		YES
 #endif
 
@@ -256,9 +258,12 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #endif
 
 #if defined(arm32Architecture)
-# define BuildServer		NO		/* XXX */
-# define ServerOSDefines	-DDDXOSINIT
-# define ServerExtraDefines	GccGasOption
+# define BuildServer		YES
+# define ServerOSDefines	-DDDXOSINIT -DDDXTIME
+# define ServerExtraDefines	GccGasOption XFree86ServerDefines
+# ifndef XFree86ConsoleDefines
+#  define XFree86ConsoleDefines -DPCCONS_SUPPORT
+# endif
 # define PexDynamicModule	NO
 # define XieDynamicModule	NO
 #endif
@@ -365,6 +370,18 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 
 #ifndef ExtraFilesToClean
 # define ExtraFilesToClean 	*.core
+#endif
+
+#ifdef arm32Architecture
+/*
+ * NetBSD's default .SUFFIXES target places .s at a higher priority
+ * than .c.  This breaks architectures which use the .c versions of
+ * various files in the XFree86 server tree for which there are also
+ * .s versions.  Default to the basic .SUFFIXES list specified in
+ * SUSv2 (without the SCCS-related suffixes) plus .cxx for Motif.rules.
+ */
+.SUFFIXES:
+.SUFFIXES: .o .c .y .l .a .sh .f .cxx
 #endif
 
 /*
@@ -491,7 +508,7 @@ install.man:: 								@@\
 #include <bsdLib.rules>
 #endif /* HasSharedLibraries */
 
-#if defined(i386Architecture) || defined(Arm32Architecture) || \
+#if defined(i386Architecture) || defined(arm32Architecture) || \
     defined(atariArchitecture)
 # include <xfree86.cf>
 
@@ -517,7 +534,7 @@ module: modlist								@@\
 clean::									@@\
 	RemoveFile(module)
 
-#endif /* i386Architecture || Arm32Architecture || atariArchitecture */
+#endif /* i386Architecture || arm32Architecture || atariArchitecture */
 
 /*
  * NetBSD always uses the XFree86 contrib distribution.

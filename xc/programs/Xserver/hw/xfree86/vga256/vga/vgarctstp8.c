@@ -491,7 +491,7 @@ vga2568FillRectTransparentStippled32 (pDrawable, pGC, nBox, pBox)
     }
 }
 
-#if defined(SPEEDUP) || defined(__alpha__)
+#if defined(SPEEDUP) || defined(__alpha__) || defined(__arm32__)
 void
 vga2568FillRectStippledUnnatural (pDrawable, pGC, nBox, pBox)
     DrawablePtr	    pDrawable;
@@ -625,4 +625,4 @@ vga2568FillRectStippledUnnatural (pDrawable, pGC, nBox, pBox)
 	}
     }
 }
-#endif /* SPEEDUP || __alpha__ */
+#endif /* SPEEDUP || __alpha__ || __arm32__ */

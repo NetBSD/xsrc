@@ -34,6 +34,13 @@ XCOMM site:  $XFree86: xc/config/cf/site.def,v 3.17.2.1 1997/06/22 10:32:21 dawe
 
 #ifdef BeforeVendorCF
 
+#if defined(NetBSDArchitecture) && defined(arm32Architecture)
+/*
+ * This causes a problem with the X server, so I'm disabling it for now. -JJK
+ */
+#define BuildXKB              NO
+#endif
+
 /*
  * Include this for easy XFree86 customisations
  */

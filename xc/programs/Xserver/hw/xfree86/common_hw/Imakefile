@@ -15,7 +15,7 @@ IOOBJ=glibcAxpIo.o
 XSRCS = BUSmemcpy.c IODelay.c SlowBcopy.c $(IOSRC)
 XOBJS = BUSmemcpy.o IODelay.o SlowBcopy.o $(IOOBJ)
 #else
-#if defined(ArcArchitecture)
+#if defined(ArcArchitecture) || defined(arm32Architecture)
 XSRCS = BUSmemcpy.c IODelay.c SlowBcopy.c $(IOSRC)
 XOBJS = BUSmemcpy.o IODelay.o SlowBcopy.o $(IOOBJ)
 #else
@@ -42,7 +42,7 @@ NormalAsmObjectRule()
 
 NormalLibraryTarget(xf86_hw,$(OBJS))
 
-#if !(defined(LinuxArchitecture) && defined(AlphaArchitecture)) && !defined(ArcArchitecture)
+#if !(defined(LinuxArchitecture) && defined(AlphaArchitecture)) && !defined(ArcArchitecture) && !defined(arm32Architecture)
 ObjectFromAsmSource(BUSmemcpy,NullParameter)
 ObjectFromAsmSource(IODelay,NullParameter)
 ObjectFromAsmSource(SlowBcopy,NullParameter)

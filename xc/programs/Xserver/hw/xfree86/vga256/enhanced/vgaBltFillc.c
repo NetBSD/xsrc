@@ -1,4 +1,30 @@
 /*
+ * Copyright 1997
+ * Digital Equipment Corporation. All rights reserved.
+ * This software is furnished under license and may be used and copied only in 
+ * accordance with the following terms and conditions.  Subject to these 
+ * conditions, you may download, copy, install, use, modify and distribute 
+ * this software in source and/or binary form. No title or ownership is 
+ * transferred hereby.
+ * 1) Any source code used, modified or distributed must reproduce and retain 
+ *    this copyright notice and list of conditions as they appear in the 
+ *    source file.
+ *
+ * 2) No right is granted to use any trade name, trademark, or logo of Digital 
+ *    Equipment Corporation. Neither the "Digital Equipment Corporation" name 
+ *    nor any trademark or logo of Digital Equipment Corporation may be used 
+ *    to endorse or promote products derived from this software without the 
+ *    prior written permission of Digital Equipment Corporation.
+ *
+ * 3) This software is provided "AS-IS" and any express or implied warranties,
+ *    including but not limited to, any implied warranties of merchantability,
+ *    fitness for a particular purpose, or non-infringement are disclaimed. In
+ *    no event shall DIGITAL be liable for any damages whatsoever, and in 
+ *    particular, DIGITAL shall not be liable for special, indirect, 
+ *    consequential, or incidental damages or damages for lost profits, loss 
+ *    of revenue or loss of use, whether such damages arise in contract, 
+ *    negligence, tort, under statute, in equity, at law or otherwise, even if
+ *    advised of the possibility of such damage. 
  */
 
 /* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/enhanced/vgaBltFillc.c,v 3.0 1996/12/09 11:54:28 dawes Exp $ */
@@ -22,24 +48,254 @@ void fastBitBltCopy(
     int xdir,
     unsigned char *psrc,
     unsigned char *pdst,
-    int h,
-    int w,
+    int height,
+    int width,
     int srcPitch,
     int dstPitch
 )
 {
   if (xdir <= 0) {
-    while (h--) {
-      memmove(pdst-w, psrc-w, w);
-      pdst += dstPitch - w;
-      psrc += srcPitch - w;
+#ifdef	__arm32__
+      /* I wouldn't have called these variables Pitch... -JJK */
+      srcPitch -= width;
+      dstPitch -= width;
+
+      /* Note that in this case the inital pdst/psrc are at
+       * the upper right of the rectangle
+       */
+      if (width < 4)
+      {
+	  while(height > 0)
+	  {
+	      int i;
+	      for(i = 1; i <= width; i++) pdst[-i] = psrc[-i];
+	      pdst += dstPitch;
+	      psrc += srcPitch;
+	      height--;
+	  }
+      }
+      else while(height > 0)
+      {
+	  /* The plan is to use 32bit reads and writes as much as possible */
+	  /* word align the dst first whatever this does to the src        */
+	  /* Then do word read/writes using a hold-ing register for spills */
+	  /* remember on the ARM the shifts come almost free               */
+	  unsigned int hold, tmp;
+	  int i, wid = width;
+	  unsigned int *ps, *pd;
+	  i = 0;
+
+	  /* Need to back up dst */
+	  /* if dst is odd do the stray byte */
+	  if ((unsigned int)pdst & 1)
+	  {
+	      i++;
+	      pdst[-1] = psrc[-1];
+	  }
+	  /* pdst - i is at least 16 bit aligned */
+	  if (((unsigned int)pdst-i) & 2)
+	  {
+	      /* Could do one less read if src is short aligned */
+	      i+=2;
+	      *((unsigned short *)(pdst - i)) = psrc[-i] | ((psrc[-i+1])<<8); 
+	  }
+	  wid -= i;
+	  pd = (unsigned int *) (pdst - i);
+	  /* pd points just past first word for copy */
+	  ps = (unsigned int *) (((unsigned int)psrc - i) & ~3); /* align down */
+	  switch (((unsigned int)psrc - i) & 3)
+	  {
+	      case 0:
+		  /* easy, both alligned */
+		  while (wid >= 4) 
+		  {
+		      *--pd = *--ps;
+		      wid -= 4;
+		  }
+		  if (wid > 0) hold = ps[-1];
+		  break;
+	      case 1:
+		  /* bottom byte valid in hold */
+		  hold = *ps;
+		  hold <<= 24;
+		  while (wid >= 4)
+		  {
+		      tmp = *--ps;
+		      *--pd = hold | (tmp >> 8);
+		      hold = tmp<<24;
+		      wid -= 4;
+		  }
+		  if (wid > 1) hold |= (ps[-1]>>8);
+		  break;
+	      case 2:
+		  /* bottom two bytes valid in hold */
+		  hold = *ps;
+		  hold<<=16;
+		  while (wid >= 4)
+		  {
+		      tmp = *--ps;
+		      *--pd = hold | (tmp >> 16);
+		      hold = tmp<<16;
+		      wid -= 4;
+		  }
+		  if (wid > 2) hold |= (ps[-1] >> 16);
+		  break;
+	      case 3:		    
+		  /* top byte valid in hold */
+		  hold = *ps;
+		  hold<<=8;
+		  while (wid >= 4)
+		  {
+		      tmp = *--ps;
+		      *--pd = hold | (tmp >> 24);
+		      hold = tmp<<8;
+		      wid -= 4;
+		  }
+		  /* Always 3 bytes in hold */
+		  break;
+	  }
+	  /* Always have >= wid bytes in hold */
+	  /* pd is word aligned */
+	  if (wid > 1)
+	  {
+	      ((unsigned short *)pd)[-1] = hold>>16;
+	      /* pd becomes a BOGUS int * */
+	      pd = (unsigned int *) ((unsigned int)pd - 2);
+	      wid -= 2;
+	      hold <<= 16;
+	  }
+	  /* pd may be malformed, but we don't care */
+	  if (wid > 0)
+	      ((unsigned char *)pd)[-1] = hold >> 24;
+	  /* next line */
+	  psrc += srcPitch;
+	  pdst += dstPitch;
+	  height--;
+      }
+#else	/* !__arm32__ */
+    while (height--) {
+      memmove(pdst-width, psrc-width, width);
+      pdst += dstPitch - width;
+      psrc += srcPitch - width;
     }
+#endif	/* __arm32__ */
   } else {
-    while (h--) {
-      memcpy(pdst, psrc, w);
-      pdst += dstPitch + w;
-      psrc += srcPitch + w;
+#ifdef	__arm32__
+      /* I wouldn't have called these variables Pitch... -JJK */
+      srcPitch += width;
+      dstPitch += width;
+
+      if (width < 4)
+      {
+	  while(height > 0)
+	  {
+	      int i;
+	      for(i = 0; i < width; i++) pdst[i] = psrc[i];
+	      pdst += dstPitch;
+	      psrc += srcPitch;
+	      height--;
+	  }
+      }
+      else while(height > 0)
+      {
+	  /* The plan is to use 32bit reads and writes as much as possible */
+	  /* word align the dst first whatever this does to the src        */
+	  /* Then do word read/writes using a hold-ing register for spills */
+	  /* remember on the ARM the shifts come almost free               */
+	  unsigned int hold, tmp;
+	  int i, wid = width;
+	  unsigned int *ps, *pd;
+	  i = 0;
+
+	  /* if dst is odd do the stray byte */
+	  if ((unsigned int)pdst & 1)
+	      *pdst = *psrc, i++;
+	  /* pdst + i is at least 16 bit aligned */
+	  if (((unsigned int)pdst+i) & 2)
+	  {
+	      /* Could do one less read if src is short aligned */
+	      *((unsigned short *)(pdst + i)) = psrc[i] | ((psrc[i+1])<<8); 
+	      i+=2;
+	  }
+	  wid -= i;
+	  pd = (unsigned int *) (pdst + i);
+	  ps = (unsigned int *) (((int)psrc + i) & ~3); /* align down */
+	  switch (((unsigned int)psrc + i) & 3)
+	  {
+	      case 0:
+		  /* easy, both alligned */
+		  while (wid >= 4) 
+		  {
+		      *pd++ = *ps++;
+		      wid -= 4;
+		  }
+		  if (wid > 0) hold = *ps;
+		  break;
+	      case 1:
+		  /* top three bytes valid in hold */
+		  hold = *ps;
+		  hold >>= 8;
+		  while (wid >= 4)
+		  {
+		      tmp = *++ps;
+		      *pd++ = hold | (tmp << 24);
+		      hold = tmp>>8;
+		      wid -= 4;
+		  }
+		  /* Never need to read more: wid < 4, have 3 valid */
+		  break;
+	      case 2:
+		  /* top two bytes valid in hold */
+		  hold = *ps;
+		  hold>>=16;
+		  while (wid >= 4)
+		  {
+		      tmp = *++ps;
+		      *pd++ = hold | (tmp << 16);
+		      hold = tmp>>16;
+		      wid -= 4;
+		  }
+		  if (wid > 2) hold |= (ps[1] << 16);
+		  break;
+	      case 3:		    
+		  /* top byte valid in hold */
+		  hold = *ps;
+		  hold>>=24;
+		  while (wid >= 4)
+		  {
+		      tmp = *++ps;
+		      *pd++ = hold | (tmp << 8);
+		      hold = tmp>>24;
+		      wid -= 4;
+		  }
+		  if (wid > 1) hold |= (ps[1] << 8);
+		  break;
+	  }
+	  /* Always have > wid bytes in hold */
+	  /* pd is word aligned */
+	  if (wid > 1)
+	  {
+	      *(unsigned short *)pd = hold & 0xffff;
+	      /* pd becomes a BOGUS int * */
+	      pd = (unsigned int *) ((int)pd + 2);
+	      wid -= 2;
+	      hold >>= 16;
+	  }
+	  /* pd may be malformed, but we don't care */
+	  if (wid > 0)
+	      *(unsigned char *)pd = hold & 0xff;
+	  /* next line */
+	  psrc += srcPitch;
+	  pdst += dstPitch;
+	  height--;
+      }
+#else	/* !__arm32__ */
+    while (height--) {
+      memcpy(pdst, psrc, width);
+      pdst += dstPitch + width;
+      psrc += srcPitch + width;
     }
+#endif	/* __arm32__ */
   }
 }
 
@@ -102,30 +358,29 @@ unsigned char *fastFillSolidGXand(
 
 	/*
 	 * Perform bulk copy, knowing 0mod8 alignment
-	 * Assumes 64-bit longs.
 	 */
 
-    while (cur_count >= 64) {
+    while (cur_count >= 8 * sizeof(long)) {
 
 	/* Hand unrolled x8, assumes scheduler does a good job */
-	*(unsigned long *) ((long) pdst + 0 ) &= fill1;
-	*(unsigned long *) ((long) pdst + 8 ) &= fill1;
-	*(unsigned long *) ((long) pdst + 16) &= fill1;
-	*(unsigned long *) ((long) pdst + 24) &= fill1;
-	*(unsigned long *) ((long) pdst + 32) &= fill1;
-	*(unsigned long *) ((long) pdst + 40) &= fill1;
-	*(unsigned long *) ((long) pdst + 48) &= fill1;
-	*(unsigned long *) ((long) pdst + 56) &= fill1;
+	*(unsigned long *) ((long) pdst + 0 * sizeof(long)) &= fill1;
+	*(unsigned long *) ((long) pdst + 1 * sizeof(long)) &= fill1;
+	*(unsigned long *) ((long) pdst + 2 * sizeof(long)) &= fill1;
+	*(unsigned long *) ((long) pdst + 3 * sizeof(long)) &= fill1;
+	*(unsigned long *) ((long) pdst + 4 * sizeof(long)) &= fill1;
+	*(unsigned long *) ((long) pdst + 5 * sizeof(long)) &= fill1;
+	*(unsigned long *) ((long) pdst + 6 * sizeof(long)) &= fill1;
+	*(unsigned long *) ((long) pdst + 7 * sizeof(long)) &= fill1;
 
-	pdst += 64;
-	cur_count -= 64;
+	pdst += 8 * sizeof(long);
+	cur_count -= 8 * sizeof(long);
     }
 
 	/* Perform trailing bits cleanup */
-    while (cur_count >= 8) {
+    while (cur_count >= sizeof(long)) {
 	*(unsigned long *) ((long) pdst + 0) &= fill1;
-	pdst += 8;
-	cur_count -= 8;
+	pdst += sizeof(long);
+	cur_count -= sizeof(long);
     }
 
     if (cur_count >= 4) {
@@ -217,30 +472,29 @@ unsigned char *fastFillSolidGXor(
 
 	/*
 	 * Perform bulk copy, knowing 0mod8 alignment
-	 * Assumes 64-bit longs.
 	 */
 
-    while (cur_count >= 64) {
+    while (cur_count >= 8 * sizeof(long)) {
 
 	/* Hand unrolled x8, assumes scheduler does a good job */
-	*(unsigned long *) ((long) pdst + 0 ) |= fill1;
-	*(unsigned long *) ((long) pdst + 8 ) |= fill1;
-	*(unsigned long *) ((long) pdst + 16) |= fill1;
-	*(unsigned long *) ((long) pdst + 24) |= fill1;
-	*(unsigned long *) ((long) pdst + 32) |= fill1;
-	*(unsigned long *) ((long) pdst + 40) |= fill1;
-	*(unsigned long *) ((long) pdst + 48) |= fill1;
-	*(unsigned long *) ((long) pdst + 56) |= fill1;
+	*(unsigned long *) ((long) pdst + 0 * sizeof(long)) |= fill1;
+	*(unsigned long *) ((long) pdst + 1 * sizeof(long)) |= fill1;
+	*(unsigned long *) ((long) pdst + 2 * sizeof(long)) |= fill1;
+	*(unsigned long *) ((long) pdst + 3 * sizeof(long)) |= fill1;
+	*(unsigned long *) ((long) pdst + 4 * sizeof(long)) |= fill1;
+	*(unsigned long *) ((long) pdst + 5 * sizeof(long)) |= fill1;
+	*(unsigned long *) ((long) pdst + 6 * sizeof(long)) |= fill1;
+	*(unsigned long *) ((long) pdst + 7 * sizeof(long)) |= fill1;
 
-	pdst += 64;
-	cur_count -= 64;
+	pdst += 8 * sizeof(long);
+	cur_count -= 8 * sizeof(long);
     }
 
 	/* Perform trailing bits cleanup */
-    while (cur_count >= 8) {
+    while (cur_count >= sizeof(long)) {
 	*(unsigned long *) ((long) pdst + 0) |= fill1;
-	pdst += 8;
-	cur_count -= 8;
+	pdst += sizeof(long);
+	cur_count -= sizeof(long);
     }
 
     if (cur_count >= 4) {
@@ -332,30 +586,29 @@ unsigned char *fastFillSolidGXxor(
 
 	/*
 	 * Perform bulk copy, knowing 0mod8 alignment
-	 * Assumes 64-bit longs.
 	 */
 
-    while (cur_count >= 64) {
+    while (cur_count >= 8 * sizeof(long)) {
 
 	/* Hand unrolled x8, assumes scheduler does a good job */
-	*(unsigned long *) ((long) pdst + 0 ) ^= fill1;
-	*(unsigned long *) ((long) pdst + 8 ) ^= fill1;
-	*(unsigned long *) ((long) pdst + 16) ^= fill1;
-	*(unsigned long *) ((long) pdst + 24) ^= fill1;
-	*(unsigned long *) ((long) pdst + 32) ^= fill1;
-	*(unsigned long *) ((long) pdst + 40) ^= fill1;
-	*(unsigned long *) ((long) pdst + 48) ^= fill1;
-	*(unsigned long *) ((long) pdst + 56) ^= fill1;
+	*(unsigned long *) ((long) pdst + 0 * sizeof(long)) ^= fill1;
+	*(unsigned long *) ((long) pdst + 1 * sizeof(long)) ^= fill1;
+	*(unsigned long *) ((long) pdst + 2 * sizeof(long)) ^= fill1;
+	*(unsigned long *) ((long) pdst + 3 * sizeof(long)) ^= fill1;
+	*(unsigned long *) ((long) pdst + 4 * sizeof(long)) ^= fill1;
+	*(unsigned long *) ((long) pdst + 5 * sizeof(long)) ^= fill1;
+	*(unsigned long *) ((long) pdst + 6 * sizeof(long)) ^= fill1;
+	*(unsigned long *) ((long) pdst + 7 * sizeof(long)) ^= fill1;
 
-	pdst += 64;
-	cur_count -= 64;
+	pdst += 8 * sizeof(long);
+	cur_count -= 8 * sizeof(long);
     }
 
 	/* Perform trailing bits cleanup */
-    while (cur_count >= 8) {
+    while (cur_count >= sizeof(long)) {
 	*(unsigned long *) ((long) pdst + 0) ^= fill1;
-	pdst += 8;
-	cur_count -= 8;
+	pdst += sizeof(long);
+	cur_count -= sizeof(long);
     }
 
     if (cur_count >= 4) {
@@ -447,30 +700,29 @@ unsigned char *fastFillSolidGXcopy(
 
 	/*
 	 * Perform bulk copy, knowing 0mod8 alignment
-	 * Assumes 64-bit longs.
 	 */
 
-    while (cur_count >= 64) {
+    while (cur_count >= 8 * sizeof(long)) {
 
 	/* Hand unrolled x8, assumes scheduler does a good job */
-	*(unsigned long *) ((long) pdst + 0 ) = fill1;
-	*(unsigned long *) ((long) pdst + 8 ) = fill1;
-	*(unsigned long *) ((long) pdst + 16) = fill1;
-	*(unsigned long *) ((long) pdst + 24) = fill1;
-	*(unsigned long *) ((long) pdst + 32) = fill1;
-	*(unsigned long *) ((long) pdst + 40) = fill1;
-	*(unsigned long *) ((long) pdst + 48) = fill1;
-	*(unsigned long *) ((long) pdst + 56) = fill1;
+	*(unsigned long *) ((long) pdst + 0 * sizeof(long)) = fill1;
+	*(unsigned long *) ((long) pdst + 1 * sizeof(long)) = fill1;
+	*(unsigned long *) ((long) pdst + 2 * sizeof(long)) = fill1;
+	*(unsigned long *) ((long) pdst + 3 * sizeof(long)) = fill1;
+	*(unsigned long *) ((long) pdst + 4 * sizeof(long)) = fill1;
+	*(unsigned long *) ((long) pdst + 5 * sizeof(long)) = fill1;
+	*(unsigned long *) ((long) pdst + 6 * sizeof(long)) = fill1;
+	*(unsigned long *) ((long) pdst + 7 * sizeof(long)) = fill1;
 
-	pdst += 64;
-	cur_count -= 64;
+	pdst += 8 * sizeof(long);
+	cur_count -= 8 * sizeof(long);
     }
 
 	/* Perform trailing bits cleanup */
-    while (cur_count >= 8) {
+    while (cur_count >= sizeof(long)) {
 	*(unsigned long *) ((long) pdst + 0) = fill1;
-	pdst += 8;
-	cur_count -= 8;
+	pdst += sizeof(long);
+	cur_count -= sizeof(long);
     }
 
     if (cur_count >= 4) {
@@ -575,22 +827,21 @@ unsigned char *fastFillSolidGXset(
 
 	/*
 	 * Perform bulk copy, knowing 0mod8 alignment
-	 * Assumes 64-bit longs.
 	 */
 
-    while (cur_count >= 64) {
+    while (cur_count >= 8 * sizeof(long)) {
 	unsigned long	tmp_1, tmp_2, tmp_3, tmp_4;
 	unsigned long	tmp_5, tmp_6, tmp_7, tmp_8;
 
 	/* Hand unrolled x8, assumes scheduler does a good job */
-	tmp_1 = *(unsigned long *) ((long) pdst + 0);
-	tmp_2 = *(unsigned long *) ((long) pdst + 8);
-	tmp_3 = *(unsigned long *) ((long) pdst + 16);
-	tmp_4 = *(unsigned long *) ((long) pdst + 24);
-	tmp_5 = *(unsigned long *) ((long) pdst + 32);
-	tmp_6 = *(unsigned long *) ((long) pdst + 40);
-	tmp_7 = *(unsigned long *) ((long) pdst + 48);
-	tmp_8 = *(unsigned long *) ((long) pdst + 56);
+	tmp_1 = *(unsigned long *) ((long) pdst + 0 * sizeof(long));
+	tmp_2 = *(unsigned long *) ((long) pdst + 1 * sizeof(long));
+	tmp_3 = *(unsigned long *) ((long) pdst + 2 * sizeof(long));
+	tmp_4 = *(unsigned long *) ((long) pdst + 3 * sizeof(long));
+	tmp_5 = *(unsigned long *) ((long) pdst + 4 * sizeof(long));
+	tmp_6 = *(unsigned long *) ((long) pdst + 5 * sizeof(long));
+	tmp_7 = *(unsigned long *) ((long) pdst + 6 * sizeof(long));
+	tmp_8 = *(unsigned long *) ((long) pdst + 7 * sizeof(long));
 
 	tmp_1 = (fill1 & tmp_1) ^ fill2;
 	tmp_2 = (fill1 & tmp_2) ^ fill2;
@@ -601,28 +852,28 @@ unsigned char *fastFillSolidGXset(
 	tmp_7 = (fill1 & tmp_7) ^ fill2;
 	tmp_8 = (fill1 & tmp_8) ^ fill2;
 
-	*(unsigned long *) ((long) pdst + 0) = tmp_1;
-	*(unsigned long *) ((long) pdst + 8) = tmp_2;
-	*(unsigned long *) ((long) pdst + 16) = tmp_3;
-	*(unsigned long *) ((long) pdst + 24) = tmp_4;
-	*(unsigned long *) ((long) pdst + 32) = tmp_5;
-	*(unsigned long *) ((long) pdst + 40) = tmp_6;
-	*(unsigned long *) ((long) pdst + 48) = tmp_7;
-	*(unsigned long *) ((long) pdst + 56) = tmp_8;
+	*(unsigned long *) ((long) pdst + 0 * sizeof(long)) = tmp_1;
+	*(unsigned long *) ((long) pdst + 1 * sizeof(long)) = tmp_2;
+	*(unsigned long *) ((long) pdst + 2 * sizeof(long)) = tmp_3;
+	*(unsigned long *) ((long) pdst + 3 * sizeof(long)) = tmp_4;
+	*(unsigned long *) ((long) pdst + 4 * sizeof(long)) = tmp_5;
+	*(unsigned long *) ((long) pdst + 5 * sizeof(long)) = tmp_6;
+	*(unsigned long *) ((long) pdst + 6 * sizeof(long)) = tmp_7;
+	*(unsigned long *) ((long) pdst + 7 * sizeof(long)) = tmp_8;
 
-	pdst += 64;
-	cur_count -= 64;
+	pdst += 8 * sizeof(long);
+	cur_count -= 8 * sizeof(long);
     }
 
 	/* Perform trailing bits cleanup */
-    while (cur_count >= 8) {
+    while (cur_count >= sizeof(long)) {
 	unsigned long	tmpl;
 
 	tmpl = *(unsigned long *) ((long) pdst + 0);
 	tmpl = (tmpl & fill1) ^ fill2;
 	*(unsigned long *) ((long) pdst + 0) = tmpl;
-	pdst += 8;
-	cur_count -= 8;
+	pdst += sizeof(long);
+	cur_count -= sizeof(long);
     }
 
     if (cur_count >= 4) {
