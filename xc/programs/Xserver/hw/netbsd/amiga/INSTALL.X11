@@ -92,8 +92,8 @@ Please read the X11-Faq for installing X11.
 
     0 = Device for the Amiga CustomChips Color/Monochrome (ECS/AGA)
     1 = Device for the RetinaZ2 (which is NOT supported in this Xserver)
-    2 = Device for the RetinaZ3 Graphics board
-    3 = Device for Cirrus 54xx based Graphics Board
+    2 = Device for the RetinaZ3 and the Altais Graphics boards
+    3 = Device for Cirrus 54xx based Graphics Boards
         (Picollo, Picollo SD64, Spectrum, PicassoII, II+ and IV)
     4 = Device for the A2410 board (which is NOT supported in this Xserver)
     5 = Device for the CyberVision64 Graphics board
@@ -118,6 +118,11 @@ Please read the X11-Faq for installing X11.
 
      -debug                 disable non-blocking console mode
      -dev fn[:fn][:fn]      name of device[s] to open
+     -mouse /dev/mouse0	    use 1st Amiga mouse port
+     -mouse /dev/mouse1	    use 2nd Amiga mouse port
+     -mouse /dev/ttyC1	    use 2nd com-style serial port with Microsoft
+			    3-button mouse protocol
+			    (e.g.: DraCo standard mouse port)
      -flipPixels            switch colors 0 and 1
      -mono                  force monochrome-only screen
      -zaphod                disable active Zaphod mode
@@ -171,7 +176,7 @@ Please read the X11-Faq for installing X11.
    See section I. and II. at the end of this document for more informations
    of the grfmode file.
 
-    The RetinaZ3 use a fixed set of gfx modes.
+    The RetinaZ3 and Altais use a fixed set of gfx modes.
     This modes are in the Kernel, so grfconfig does not work:
       -mode  1 =  80x46 (640x506) 31.5kHz
       -mode  2 =  96x54 (768x594) 38kHz
