@@ -18,7 +18,7 @@ XCOMM 		NetBSD/pmax	client
 XCOMM		NetBSD/amiga	client/server
 XCOMM		NetBSD/alpha	client/server
 XCOMM		NetBSD/arm32	client
-XCOMM		NetBSD/vax	client
+XCOMM		NetBSD/vax	client/server
 XCOMM		NetBSD/pc532	client
 XCOMM
 
@@ -251,8 +251,7 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #endif
 
 #if defined(VaxArchitecture)
-# define BuildServer		NO		/* XXX */
-# define ServerOSDefines	-DDDXOSINIT
+# define BuildServer		YES
 # define ServerExtraDefines	GccGasOption
 # define PexDynamicModule	NO
 # define XieDynamicModule	NO
@@ -265,7 +264,6 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 # define PexDynamicModule	NO
 # define XieDynamicModule	NO
 #endif
-
 
 #ifndef OptimizedCDebugFlags
 # define OptimizedCDebugFlags 	-O2
@@ -513,6 +511,26 @@ install.man:: 								@@\
 # ifndef Xmac68kServer
 #  define Xmac68kServer		YES
 # endif
+#endif
+
+/*
+ * Definitions for the NetBSD/vax server.
+ */
+#ifdef VaxArchitecture
+#define XvaxMonoServer YES
+#if HasGcc
+#define BuildPexExt XvaxMonoServer
+#else
+#define BuildPex        NO      /* compiler runs out of table space */
+#define BuildXInputLib  NO      /* compiler runs out of table space */
+#endif
+#define HasSaberC YES
+#else
+#define BuildServer NO
+#endif
+
+#ifdef VaxArchitecture
+#define UnalignedReferencesAllowed YES         /* if arbitrary deref is okay */
 #endif
 
 /*
