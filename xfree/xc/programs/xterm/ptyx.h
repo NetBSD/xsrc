@@ -2,7 +2,7 @@
  *	$Xorg: ptyx.h,v 1.3 2000/08/17 19:55:09 cpqbld Exp $
  */
 
-/* $XFree86: xc/programs/xterm/ptyx.h,v 3.91 2002/01/05 22:05:03 dickey Exp $ */
+/* $XFree86: xc/programs/xterm/ptyx.h,v 3.100 2003/02/25 23:36:55 dickey Exp $ */
 
 /*
  * Copyright 1999,2000,2001,2002 by Thomas E. Dickey
@@ -67,12 +67,13 @@
 /* @(#)ptyx.h	X10/6.6	11/10/86 */
 
 #include <X11/IntrinsicP.h>
+#include <X11/Shell.h>		/* for XtNdieCallback, etc. */
+#include <X11/StringDefs.h>	/* for standard resource names */
 #include <X11/Xmu/Misc.h>	/* For Max() and Min(). */
 #include <X11/Xfuncs.h>
 #include <X11/Xosdefs.h>
 #include <X11/Xmu/Converters.h>
 #ifdef XRENDERFONT
-#include <X11/extensions/Xrender.h>
 #include <X11/Xft/Xft.h>
 #endif
 
@@ -84,17 +85,6 @@
 
 #define MyStackFree(pointer, stack_cache_array) \
     if ((pointer) != ((char *)(stack_cache_array))) free(pointer)
-
-#ifdef AMOEBA
-/* Avoid name clashes with standard Amoeba types: */
-#define event    am_event_t
-#define interval am_interval_t
-#include <amoeba.h>
-#include <semaphore.h>
-#include <circbuf.h>
-#undef event
-#undef interval
-#endif
 
 /*
 ** System V definitions
@@ -125,7 +115,7 @@
 #define USE_PTY_DEVICE 1
 #define USE_PTY_SEARCH 1
 
-#if defined(__osf__) || (defined(linux) && defined(__GLIBC__) && (__GLIBC__ >= 2) && (__GLIBC_MINOR__ >= 1))
+#if defined(__osf__) || (defined(linux) && defined(__GLIBC__) && (__GLIBC__ >= 2) && (__GLIBC_MINOR__ >= 1)) || defined(__NetBSD__)
 #undef USE_PTY_DEVICE
 #undef USE_PTY_SEARCH
 #define USE_PTS_DEVICE 1
@@ -177,11 +167,11 @@
 #ifdef __hpux
 #define PTYCHAR1	"zyxwvutsrqp"
 #else	/* !__hpux */
-#ifdef __EMX__
+#ifdef __UNIXOS2__
 #define PTYCHAR1	"pq"
 #else
 #define	PTYCHAR1	"pqrstuvwxyzPQRSTUVWXYZ"
-#endif  /* !__EMX__ */
+#endif  /* !__UNIXOS2__ */
 #endif	/* !__hpux */
 #endif	/* !PTYCHAR1 */
 
@@ -492,16 +482,20 @@ typedef struct {
 #define OPT_HIGHLIGHT_COLOR 1 /* true if xterm supports color highlighting */
 #endif
 
+#ifndef OPT_LUIT_PROG
+#define OPT_LUIT_PROG   0 /* true if xterm supports luit */
+#endif
+
 #ifndef OPT_MAXIMIZE
 #define OPT_MAXIMIZE	1 /* add actions for iconify ... maximize */
 #endif
 
-#ifndef OPT_NUM_LOCK
-#define OPT_NUM_LOCK	1 /* use NumLock key only for numeric-keypad */
+#ifndef OPT_MOD_FKEYS
+#define OPT_MOD_FKEYS	1 /* modify cursor- and function-keys in normal mode */
 #endif
 
-#ifndef OPT_SAME_NAME
-#define OPT_SAME_NAME   1 /* suppress redundant updates of title, icon, etc. */
+#ifndef OPT_NUM_LOCK
+#define OPT_NUM_LOCK	1 /* use NumLock key only for numeric-keypad */
 #endif
 
 #ifndef OPT_PC_COLORS
@@ -512,8 +506,24 @@ typedef struct {
 #define OPT_PRINT_COLORS 1 /* true if we print color information */
 #endif
 
+#ifndef OPT_READLINE
+#define OPT_READLINE	0 /* mouse-click/paste support for readline */
+#endif
+
+#ifndef OPT_SAME_NAME
+#define OPT_SAME_NAME   1 /* suppress redundant updates of title, icon, etc. */
+#endif
+
 #ifndef OPT_SCO_FUNC_KEYS
 #define OPT_SCO_FUNC_KEYS 0 /* true if xterm supports SCO-style function keys */
+#endif
+
+#ifndef OPT_SESSION_MGT
+#if defined(XtNdieCallback) && defined(XtNsaveCallback)
+#define OPT_SESSION_MGT 1
+#else
+#define OPT_SESSION_MGT 0
+#endif
 #endif
 
 #ifndef OPT_SHIFT_FONTS
@@ -560,27 +570,38 @@ typedef struct {
 
 #if OPT_AIX_COLORS && !OPT_ISO_COLORS
 /* You must have ANSI/ISO colors to support AIX colors */
-#undef OPT_AIX_COLORS
+#undef  OPT_AIX_COLORS
+#define OPT_AIX_COLORS 0
 #endif
 
 #if OPT_PC_COLORS && !OPT_ISO_COLORS
 /* You must have ANSI/ISO colors to support PC colors */
-#undef OPT_PC_COLORS
+#undef  OPT_PC_COLORS
+#define OPT_PC_COLORS 0
+#endif
+
+#if OPT_PRINT_COLORS && !OPT_ISO_COLORS
+/* You must have ANSI/ISO colors to be able to print them */
+#undef  OPT_PRINT_COLORS
+#define OPT_PRINT_COLORS 0
 #endif
 
 #if OPT_256_COLORS && !OPT_ISO_COLORS
 /* You must have ANSI/ISO colors to support 256 colors */
-#undef OPT_256_COLORS
+#undef  OPT_256_COLORS
+#define OPT_256_COLORS 0
 #endif
 
 #if OPT_88_COLORS && !OPT_ISO_COLORS
 /* You must have ANSI/ISO colors to support 88 colors */
-#undef OPT_88_COLORS
+#undef  OPT_88_COLORS
+#define OPT_88_COLORS 0
 #endif
 
 #if OPT_88_COLORS && OPT_256_COLORS
 /* 256 colors supersedes 88 colors */
-#undef OPT_88_COLORS
+#undef  OPT_88_COLORS
+#define OPT_88_COLORS 0
 #endif
 
 /***====================================================================***/
@@ -636,7 +657,7 @@ typedef struct {
 
 /* Define a fake XK code, we need it for the fake color response in
  * xtermcapKeycode(). */
-#ifdef OPT_TCAP_QUERY
+#if OPT_TCAP_QUERY
 # define XK_COLORS 0x0003
 #endif
 
@@ -715,6 +736,10 @@ typedef struct {
 #define CurMaxCol(screen, row) screen->max_col
 #define CurCursorX(screen, row, col) CursorX(screen, col)
 #define CurFontWidth(screen, row) FontWidth(screen)
+#endif
+
+#if OPT_LUIT_PROG && !OPT_WIDE_CHARS
+#error Luit requires the wide-chars configuration
 #endif
 
 	/* the number of pointers per row in 'ScrnBuf' */
@@ -1012,11 +1037,6 @@ typedef struct {
 #if OPT_TCAP_QUERY
 	int		tc_query;
 #endif
-#ifdef AMOEBA
-	capability      proccap;        /* process capability           */
-	struct circbuf  *tty_inq;       /* tty server input queue       */
-	struct circbuf  *tty_outq;      /* tty server output queue      */
-#endif
 	long		pid;		/* pid of process on far side   */
 	int		uid;		/* user id of actual person	*/
 	int		gid;		/* group id of actual person	*/
@@ -1030,6 +1050,7 @@ typedef struct {
 	Pixel		mousecolorback;	/* Mouse color background	*/
 #if OPT_ISO_COLORS
 	ColorRes	Acolors[MAXCOLORS]; /* ANSI color emulation	*/
+	int		veryBoldColors;	/* modifier for boldColors	*/
 	Boolean		boldColors;	/* can we make bold colors?	*/
 	Boolean		colorMode;	/* are we using color mode?	*/
 	Boolean		colorULMode;	/* use color for underline?	*/
@@ -1050,6 +1071,7 @@ typedef struct {
 #endif
 #if OPT_WIDE_CHARS
 	Boolean		wide_chars;	/* true when 16-bit chars	*/
+	Boolean		vt100_graphics;	/* true to allow vt100-graphics	*/
 	int		utf8_mode;	/* use UTF-8 decode/encode: 0-2	*/
 	int		utf_count;	/* state of utf_char */
 	IChar		utf_char;	/* in-progress character */
@@ -1059,6 +1081,14 @@ typedef struct {
 	unsigned long	event_mask;
 	unsigned short	send_mouse_pos;	/* user wants mouse transition  */
 					/* and position information	*/
+#if OPT_READLINE
+	unsigned	click1_moves;
+	unsigned	paste_moves;
+	unsigned	dclick3_deletes;
+	unsigned	paste_brackets;
+	unsigned	paste_quotes;
+	unsigned	paste_literal_nl;
+#endif	/* OPT_READLINE */
 #if OPT_DEC_LOCATOR
 	Boolean		locator_reset;	/* turn mouse off after 1 report? */
 	Boolean		locator_pixels;	/* report in pixels?		*/
@@ -1077,6 +1107,7 @@ typedef struct {
 	Boolean		visualbell;	/* visual bell mode		*/
 	Boolean		poponbell;	/* pop on bell mode		*/
 	Boolean		allowSendEvents;/* SendEvent mode		*/
+	Boolean		allowWindowOps;	/* WindowOps mode		*/
 	Boolean		awaitInput;	/* select-timeout mode		*/
 	Boolean		grabbedKbd;	/* keyboard is grabbed		*/
 #ifdef ALLOWLOGGING
@@ -1103,9 +1134,7 @@ typedef struct {
 	Boolean printer_extent;		/* print complete page		*/
 	Boolean printer_formfeed;	/* print formfeed per function	*/
 	int	printer_controlmode;	/* 0=off, 1=auto, 2=controller	*/
-#if OPT_PRINT_COLORS
 	int	print_attributes;	/* 0=off, 1=normal, 2=color	*/
-#endif
 
 	Boolean		fnt_prop;	/* true if proportional fonts	*/
 	Boolean		fnt_boxes;	/* true if font has box-chars	*/
@@ -1280,7 +1309,7 @@ typedef struct {
 	XftFont		*renderFontBold;
 	XftDraw		*renderDraw;
 #endif
-#ifdef OPT_INPUT_METHOD
+#if OPT_INPUT_METHOD
 	XFontSet	fs;		/* fontset for XIM preedit */
 	int		fs_ascent;	/* ascent of fs */
 #endif
@@ -1297,7 +1326,16 @@ typedef struct _TekPart {
 #endif
 } TekPart;
 
-
+#if OPT_READLINE
+#define SCREEN_FLAG(screenp,f)		(1&(screenp)->f)
+#define SCREEN_FLAG_set(screenp,f)	((screenp)->f |= 1)
+#define SCREEN_FLAG_unset(screenp,f)	((screenp)->f &= ~1L)
+#define SCREEN_FLAG_save(screenp,f)	\
+	((screenp)->f = (((screenp)->f)<<1) | SCREEN_FLAG(screenp,f))
+#define SCREEN_FLAG_restore(screenp,f)	((screenp)->f = (((screenp)->f)>>1))
+#else
+#define SCREEN_FLAG(screenp,f)		(0)
+#endif
 
 /* meaning of bits in screen.select flag */
 #define	INWINDOW	01	/* the mouse is in one of the windows */
@@ -1321,6 +1359,7 @@ typedef struct
 #if OPT_INITIAL_ERASE
     int	reset_DECBKM;		/* reset should set DECBKM */
 #endif
+    int modify_cursor_keys;	/* how to handle modifiers */
 } TKeyboard;
 
 typedef struct _Misc {
@@ -1331,6 +1370,13 @@ typedef struct _Misc {
 #if OPT_WIDE_CHARS
     char *f_w;
     char *f_wb;
+    Boolean	cjk_width;	/* true when CJK width convention is turned on */
+#endif
+#if OPT_LUIT_PROG
+    Boolean callfilter;		/* true to invoke luit */
+    Boolean use_encoding;	/* true to use -encoding option for luit */
+    char *locale_str;		/* "locale" resource */
+    char *localefilter;		/* path for luit */
 #endif
 #if OPT_INPUT_METHOD
     char *f_x;
@@ -1423,8 +1469,11 @@ typedef struct _TekClassRec {
 
 
 #define N_MARGINBELL	10
-#define MAX_TABS	320
+
+#define TAB_BITS_SHIFT	5	/* 2**5 == 32 */
+#define TAB_BITS_WIDTH	(1 << TAB_BITS_SHIFT)
 #define TAB_ARRAY_SIZE	10	/* number of ints to provide MAX_TABS bits */
+#define MAX_TABS	(TAB_BITS_WIDTH * TAB_ARRAY_SIZE)
 
 typedef unsigned Tabs [TAB_ARRAY_SIZE];
 
