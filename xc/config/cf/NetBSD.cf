@@ -1,4 +1,4 @@
-XCOMM $NetBSD: NetBSD.cf,v 1.56 1999/05/24 17:43:12 jwise Exp $
+XCOMM $NetBSD: NetBSD.cf,v 1.57 1999/06/04 10:21:21 mark Exp $
 XCOMM platform:  $XConsortium: NetBSD.cf /main/16 1996/10/31 14:47:14 kaleb $
 
 
@@ -633,6 +633,13 @@ clean::									@@\
 #ifndef XkbServerDefines
 #define XkbServerDefines	-DXKB_ALWAYS_USES_SOFT_REPEAT
 #endif
+#endif
+
+/*
+ * Definitions for the NetBSD/arm32 VIDC20 X server.
+ */
+#if defined(arm32Architecture)
+# define Xarm32VIDCServer	YES
 #endif
 
 /*
