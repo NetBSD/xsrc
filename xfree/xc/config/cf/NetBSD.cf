@@ -174,7 +174,8 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
  *
  * Disabled for NetBSD/vax until I figure out the scheme. --CS 
  */
-#if (OSMajorVersion > 0) && defined(i386Architecture)
+#if ((OSMajorVersion > 0) && defined(i386Architecture)) || \
+    defined(PpcArchitecture)
 #  ifndef DoLoadableServer
 #  define DoLoadableServer	YES
 #  endif
