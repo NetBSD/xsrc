@@ -285,6 +285,7 @@ typedef struct {
     RADEONConnectorType ConnectorType;
     Bool              HasCRTC2;         /* All cards except original Radeon  */
     Bool              IsMobility;       /* Mobile chips for laptops */
+    Bool	      IsIBook;		/* iBook tweaks */
     Bool              IsIGP;            /* IGP chips */
     Bool              IsSecondary;      /* Second Screen                     */
     Bool              IsSwitching;      /* Flag for switching mode           */
