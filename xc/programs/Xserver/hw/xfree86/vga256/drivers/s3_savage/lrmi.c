@@ -692,6 +692,21 @@ emulate(void)
 			i++;
 			break;
 			}
+		else if (insn[i] == 0xe4)
+			{
+			/* This is INB imm8 */
+			CONTEXT_REGS.REG(eax) &= ~0xff;
+			CONTEXT_REGS.REG(eax) |= inb(insn[i+1]);
+			i+=2;
+			break;
+			}
+		else if (insn[i] == 0xe6)
+			{
+			/* This is OUTB imm8 */
+			outb(insn[i+1], CONTEXT_REGS.REG(eax) & 0xff);
+			i+=2;
+			break;
+			}
 		else if (insn[i] == 0xec)
 			{
 			em_inb();
@@ -724,7 +739,11 @@ emulate(void)
 			break;
 			}
 		else
+			{
+			fprintf(stderr, "LRMI: non-emulated insn 0x%02x\n",
+			    insn[i]);
 			return 0;
+			}
 		}
 
 	CONTEXT_REGS.REG(eip) += i;
