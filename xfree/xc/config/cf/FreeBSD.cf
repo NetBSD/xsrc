@@ -60,6 +60,10 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #define HasVarRun		YES
 #define HasVarDb		YES
 
+#if (OSMajorVersion >= 3)
+#define HasIssetugid		YES
+#endif
+
 #if (OSMajorVersion > 1)
 #define InstallXloadSetGID	NO
 #else

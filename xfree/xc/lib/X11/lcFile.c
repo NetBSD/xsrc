@@ -143,18 +143,62 @@ xlocaledir(
     char *buf,
     int buf_len)
 {
-    char *dir, *p = buf;
+    char *p = buf;
     int len = 0;
 
+#ifndef NO_XLOCALEDIR
+    char *dir;
+    int priv = 1;
+
     dir = getenv("XLOCALEDIR");
-    if (dir != NULL) {
-	len = strlen(dir);
-	strncpy(p, dir, buf_len);
-	if (len < buf_len) {
-	    p[len++] = LC_PATHDELIM;
-	    p += len;
+
+    if (dir) {
+	/*
+	 * Only use the user-supplied path if the process isn't priviledged.
+	 */
+	if (getuid() == geteuid() && getgid() == getegid()) {
+#if defined(HASSETUGID)
+	    priv = issetugid();
+#elif defined(HASGETRESUID)
+	    {
+		uid_t ruid, euid, suid;
+		gid_t rgid, egid, sgid;
+		if ((getresuid(&ruid, &euid, &suid) == 0) &&
+		    (getresgid(&rgid, &egid, &sgid) == 0))
+		    priv = (euid != suid) || (egid != sgid);
+	    }
+#else
+	    /*
+	     * If there are saved ID's the process might still be priviledged
+	     * even though the above test succeeded.  If issetugid() and
+	     * getresgid() aren't available, test this by trying to set
+	     * euid to 0.
+	     *
+	     * Note: this only protects setuid-root clients.  It doesn't
+	     * protect other setuid or any setgid clients.  If this tradeoff
+	     * isn't acceptable, set DisableXLocaleDirEnv to YES in host.def.
+	     */
+	    unsigned int oldeuid;
+	    oldeuid = geteuid();
+	    if (seteuid(0) != 0) {
+		priv = 0;
+	    } else {
+		seteuid(oldeuid);
+		priv = 1;
+	    }
+#endif
+	}
+	if (!priv) {
+	    len = strlen(dir);
+	    strncpy(p, dir, buf_len);
+	    if (len < buf_len) {
+	        p[len++] = LC_PATHDELIM;
+	        p += len;
+	    }
 	}
     }
+#endif /* NO_XLOCALEDIR */
+
     if (len < buf_len)
 #ifndef __EMX__
       strncpy(p, XLOCALEDIR, buf_len - len);

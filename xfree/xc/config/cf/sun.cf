@@ -296,6 +296,9 @@ XCOMM SunPro C++ CplusplusCompilerMajorVersion./**/CplusplusCompilerMinorVersion
 #define HasSecureRPC	  YES
 #define SetTtyGroup	  YES
 #define HasPutenv	  YES
+#if (OSMajorVersion > 5) || ((OSMajorVersion == 5) && (OSMinorVersion >= 9))
+# define HasIssetugid	  YES
+#endif
 #ifndef i386Architecture
 # ifndef Xsun24Server
 #  define Xsun24Server	  NO		/* color, mono, multiple depths */
