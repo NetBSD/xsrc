@@ -71,6 +71,7 @@ extern int errno;
 #endif
 #include "lbxbufstr.h"
 #include "lbx_zlib.h"
+#include "os.h"
 
 void ZlibFree();
 

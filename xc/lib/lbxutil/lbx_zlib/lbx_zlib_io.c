@@ -38,6 +38,7 @@ extern int errno;
 #endif
 #include "lbxbufstr.h"
 #include "lbx_zlib.h"
+#include "os.h"
 
 #ifndef NULL
 #define NULL		0
