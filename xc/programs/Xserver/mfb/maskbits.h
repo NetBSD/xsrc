@@ -359,7 +359,7 @@ extern PixelType mask[];
     endmask = endtab[((x)+(w)) & PIM];
 
 #ifdef __GNUC__ /* XXX don't want for Alpha? */
-#ifdef vax
+#if defined(vax) || defined(__vax__)
 #define FASTGETBITS(psrc,x,w,dst) \
     __asm ("extzv %1,%2,%3,%0" \
 	 : "=g" (dst) \
