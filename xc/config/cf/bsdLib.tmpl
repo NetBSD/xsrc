@@ -2,10 +2,10 @@ XCOMM $XConsortium: bsdLib.tmpl /main/3 1996/09/28 16:09:25 rws $
 XCOMM $XFree86: xc/config/cf/bsdLib.tmpl,v 3.3.2.3 1999/12/02 14:27:24 hohndel Exp $
 
 /*
- * NetBSD/FreeBSD/OpenBSD shared library template
+ * FreeBSD/OpenBSD a.out shared library template
  */
 
-#if !UseElfFormat
+#if !UseElfFormat && !defined(NetBSDArchitecture)
 
 #ifndef FixupLibReferences
 #define FixupLibReferences()						@@\
@@ -28,10 +28,10 @@ XMULIB = $(XMULIBONLY) $(XTOOLLIB) $(XLIB)
 # endif
 #endif
 
-#else /* UseElfFormat */
+#else /* UseElfFormat || defined(NetBSDArchitecture) */
 
 /*
- * NetBSD/FreeBSD (ELF) shared library template
+ * NetBSD/FreeBSD-ELF/OpenBSD-ELF shared library template
  * Cloned from Linux ELF rules, but with a minor number.
  */
 
@@ -72,4 +72,4 @@ XMULIB = $(XMULIBONLY) $(XTOOLLIB) $(XLIB)
 #define SharedFrescoReqs	$(LDPRELIBS) $(XLIBONLY) FrescoSysLibs
 #define SharedXtfReqs	$(LDPRELIBS) $(FRESCOLIB) $(XTOOLLIB) $(XLIB) FrescoSysLibs
 
-#endif /* UseElfFormat */
+#endif /* !UseElfFormat && !defined(NetBSDArchitecture) */
