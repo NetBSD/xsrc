@@ -198,14 +198,14 @@ void OsVendorInit(
 )
 {
 	struct rlimit rl;
-	int maxfds;
-	int kbdtype;
+	int maxfds, kbdtype;
+	int i;
 
 	static int inited;
 
 fprintf(stderr, "OsVendorInit\n");
 	if (inited)
-		return;
+	    return;
 
 	/*
 	 * one per client, one per screen, one per listen endpoint,
@@ -217,23 +217,35 @@ fprintf(stderr, "OsVendorInit\n");
 	    rl.rlim_cur = maxfds < rl.rlim_max ? maxfds : rl.rlim_max;
 	    (void) setrlimit (RLIMIT_NOFILE, &rl);
 	}
-	macppcKbdPriv.fd = open("/dev/wskbd0", O_RDWR);
-	macppcPtrPriv.fd = open("/dev/wsmouse0", O_RDWR);
+
+	macppcKbdPriv.fd = macppcPtrPriv.fd = -1;
+	for (i = 0; i < 8; i++) {
+	    char devname[16];
+
+	    sprintf(devname, "/dev/wskbd%d", i);
+	    if (macppcKbdPriv.fd == -1)
+		macppcKbdPriv.fd = open(devname, O_RDWR);
+
+	    sprintf(devname, "/dev/wsmouse%d", i);
+	    if (macppcPtrPriv.fd == -1)
+		macppcPtrPriv.fd = open(devname, O_RDWR);
+	}
+
 	if (macppcKbdPriv.fd == -1 || macppcPtrPriv.fd == -1)
 	    err(1, "open kbd/mouse");
 	noXkbExtension = FALSE;		/* XXX for now */
 	inited = 1;
 
 	if (ioctl(macppcKbdPriv.fd, WSKBDIO_GTYPE, &kbdtype) == -1) {
-		fprintf(stderr, "cannot get keyboard type\n");
-		kbdtype = 0;
+	    fprintf(stderr, "cannot get keyboard type\n");
+	    kbdtype = 0;
 	}
 
 	/* XXX for now */
 	if (kbdtype == WSKBD_TYPE_USB)
-		macppcKbdPriv.type = 1;	/* USB keyboard */
+	    macppcKbdPriv.type = 1;	/* USB keyboard */
 	else
-		macppcKbdPriv.type = 0;	/* ADB keyboard */
+	    macppcKbdPriv.type = 0;	/* ADB keyboard */
 
 fprintf(stderr, "kbdtype = %d\n", macppcKbdPriv.type);
 }
