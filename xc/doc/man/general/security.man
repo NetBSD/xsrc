@@ -26,7 +26,7 @@
 .\" from the X Consortium.
 .\"
 .nr )S 12
-.TH XSECURITY 1 "Release 6.3" "X Version 11"
+.TH XSECURITY 7 "Release 6.3" "X Version 11"
 .SH NAME
 Xsecurity \- X display access control
 .SH SYNOPSIS
