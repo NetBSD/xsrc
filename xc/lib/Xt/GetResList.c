@@ -68,6 +68,8 @@ in this Software without prior written authorization from the X Consortium.
  * XtGetResourceList(), XtGetConstraintResourceList()
  */
 
+#define	TOXRMQUARK(p) ((XrmQuark)(long)(p))	/* avoid LP64 warnings */
+
 void XtGetResourceList(widget_class, resources, num_resources)
 	WidgetClass widget_class;
 	XtResourceList *resources;
@@ -98,17 +100,17 @@ void XtGetResourceList(widget_class, resources, num_resources)
 	for (i = 0; i < widget_class->core_class.num_resources; i++) {
 	    if (list[i] != NULL) {
 		dlist[dest].resource_name = (String)
-			XrmQuarkToString((XrmQuark) list[i]->resource_name);
+			XrmQuarkToString(TOXRMQUARK(list[i]->resource_name));
 		dlist[dest].resource_class = (String) 
-			XrmQuarkToString((XrmQuark) list[i]->resource_class);
+			XrmQuarkToString(TOXRMQUARK(list[i]->resource_class));
 		dlist[dest].resource_type = (String)
-			XrmQuarkToString((XrmQuark) list[i]->resource_type);
+			XrmQuarkToString(TOXRMQUARK(list[i]->resource_type));
 		dlist[dest].resource_size = list[i]->resource_size;
 		/* trust that resource_offset isn't that big */
 		dlist[dest].resource_offset = (Cardinal)
 			-((int)(list[i]->resource_offset + 1));
 		dlist[dest].default_type = (String)
-			XrmQuarkToString((XrmQuark) list[i]->default_type);
+			XrmQuarkToString(TOXRMQUARK(list[i]->default_type));
 		dlist[dest].default_addr = list[i]->default_addr;
 		dest++;
 	    }
@@ -170,17 +172,17 @@ void XtGetConstraintResourceList(widget_class, resources, num_resources)
 	for (i = 0; i < class->constraint_class.num_resources; i++) {
 	    if (list[i] != NULL) {
 		dlist[dest].resource_name = (String)
-			XrmQuarkToString((XrmQuark) list[i]->resource_name);
+			XrmQuarkToString(TOXRMQUARK(list[i]->resource_name));
 		dlist[dest].resource_class = (String) 
-			XrmQuarkToString((XrmQuark) list[i]->resource_class);
+			XrmQuarkToString(TOXRMQUARK(list[i]->resource_class));
 		dlist[dest].resource_type = (String)
-			XrmQuarkToString((XrmQuark) list[i]->resource_type);
+			XrmQuarkToString(TOXRMQUARK(list[i]->resource_type));
 		dlist[dest].resource_size = list[i]->resource_size;
 		/* trust that resource_offset isn't that big */
 		dlist[dest].resource_offset = (Cardinal)
 			-((int)(list[i]->resource_offset + 1));
 		dlist[dest].default_type = (String)
-			XrmQuarkToString((XrmQuark) list[i]->default_type);
+			XrmQuarkToString(TOXRMQUARK(list[i]->default_type));
 		dlist[dest].default_addr = list[i]->default_addr;
 		dest++;
 	    }

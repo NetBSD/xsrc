@@ -952,7 +952,7 @@ _XimEncodeLineSpace(info, top, val)
     int			*out;
 
     out = (int *)((char *)top + info->offset);
-    *out = (int)val;
+    *out = (long)val;
     return True;
 }
 

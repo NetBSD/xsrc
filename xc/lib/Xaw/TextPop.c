@@ -819,7 +819,7 @@ struct SearchAndReplace * search;
       text.length = strlen(text.ptr);
   text.firstPos = 0;
   
-  dir = (XawTextScanDirection)(int) ((XPointer)XawToggleGetCurrent(search->left_toggle) -
+  dir = (XawTextScanDirection)(long) ((XPointer)XawToggleGetCurrent(search->left_toggle) -
 				R_OFFSET);
   
   pos = XawTextSearch( tw, dir, &text);
@@ -959,7 +959,7 @@ Boolean once_only, show_current;
   else
       replace.length = strlen(replace.ptr);
     
-  dir = (XawTextScanDirection)(int) ((XPointer)XawToggleGetCurrent(search->left_toggle) -
+  dir = (XawTextScanDirection)(long) ((XPointer)XawToggleGetCurrent(search->left_toggle) -
 				R_OFFSET);
   /* CONSTCOND */
   while (TRUE) {

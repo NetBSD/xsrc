@@ -1228,7 +1228,7 @@ XtPointer callData;		/* #pixels */
 {
   TextWidget ctx = (TextWidget) closure;
   Widget tw = (Widget) ctx;
-  Position old_left, pixels = (Position)(int) callData;
+  Position old_left, pixels = (Position)(long) callData;
   XRectangle rect, t_rect;
   
   _XawTextPrepareToUpdate(ctx);
@@ -1392,7 +1392,7 @@ XtPointer closure;		/* TextWidget */
 XtPointer callData;		/* #pixels */
 {
   TextWidget ctx = (TextWidget)closure;
-  int height, lines = (int) callData;
+  int height, lines = (int)(long) callData;
 
   height = ctx->core.height - VMargins(ctx);
   if (height < 1)

@@ -628,7 +628,7 @@ _XimValueToAttribute(res, buf, buf_size, value, len, mode, param)
 	    return False;
 	}
 
-	*((CARD32 *)buf) = (CARD32)value;
+	*((CARD32 *)buf) = (CARD32)(long)value;
 	*len = ret_len;
 	break;
 
