@@ -13,7 +13,12 @@ Changes from the NetBSD-1.4 distribution:
 
 Please read the X11-Faq for installing X11.
 
-1. Install these files as root, because some of them have setuid or setgid
+1a: The Miniroot does install these sets now, if you tell it to. Install
+   xbase before you install the other sets.
+1b: If you want to install them manually later (when your system is installed
+   already):
+
+   Install these files as root, because some of them have setuid or setgid
    flags which you lose when do this as an normal user.
    Then use the following command to install the files:
 
@@ -209,7 +214,7 @@ NetBSD-1.4 distribution.
     Note that on some setups, the devices /dev/kbd, /dev/mouse and /dev/view??
     have been created to be accessable only by superuser; each Xserver needs
     to open these devices.
-    We don't install the Xserver setuid root, so you have three options to
+    The Xserver does refuse to run setuid root, so you have three options to
     fix this:
       - use xdm
       - use the Xwrapper
