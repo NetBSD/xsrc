@@ -5,7 +5,7 @@
 #ifndef lint
 static char *rid="$XConsortium: main.c,v 1.227.1.2 95/06/29 18:13:15 kaleb Exp $";
 #endif /* lint */
-/* $XFree86: xc/programs/xterm/os2main.c,v 3.32 2000/02/08 17:19:39 dawes Exp $ */
+/* $XFree86: xc/programs/xterm/os2main.c,v 3.34 2000/04/05 18:14:09 dawes Exp $ */
 
 /***********************************************************
 
@@ -473,7 +473,7 @@ static struct _options {
 { "-b number",             "internal border in pixels" },
 { "-/+bc",		   "turn on/off text cursor blinking" },
 { "-bcf milliseconds",	   "time text cursor is off when blinking"},
-{ "-bcn milliseconds",	   "time text cursor is on when blinking"}.
+{ "-bcn milliseconds",	   "time text cursor is on when blinking"},
 { "-/+bdc",                "turn off/on display of bold as color"},
 { "-/+cb",                 "turn on/off cut-to-beginning-of-line inhibit" },
 { "-cc classrange",        "specify additional character classes" },
@@ -870,7 +870,7 @@ main (int argc, char **argv, char **envp)
 	*/
 	d_tio.c_iflag = ICRNL|IXON;
 	d_tio.c_oflag = OPOST|ONLCR|TAB3;
-    	d_tio.c_cflag = B9600|CS8|CREAD|PARENB|HUPCL;
+    	d_tio.c_cflag = B38400|CS8|CREAD|PARENB|HUPCL;
     	d_tio.c_lflag = ISIG|ICANON|ECHO|ECHOE|ECHOK;
 	d_tio.c_line = 0;
 	d_tio.c_cc[VINTR] = CONTROL('C');	/* '^C'	*/
@@ -1062,7 +1062,7 @@ main (int argc, char **argv, char **envp)
 	 so the debug feature is disabled by default. */
 	int i = -1;
 	if(debug) {
-	        creat_as (getuid(), getgid(), "xterm.debug.log", 0666);
+	        creat_as (getuid(), getgid(), True, "xterm.debug.log", 0666);
 		i = open ("xterm.debug.log", O_WRONLY | O_TRUNC, 0666);
 	}
 	if(i >= 0) {

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/xterm/xterm.h,v 3.56 2000/02/29 03:09:31 dawes Exp $ */
+/* $XFree86: xc/programs/xterm/xterm.h,v 3.57 2000/03/31 20:13:49 dawes Exp $ */
 
 /************************************************************
 
@@ -119,8 +119,12 @@ authorization.
 #define USE_SYSV_UTMP
 #endif
 
-#if defined(__GNU__) || defined(__MVS__)
+#if defined(__GNU__) || defined(__MVS__) || defined(__osf__)
 #define USE_TTY_GROUP
+#endif
+
+#ifdef __osf__
+#define TTY_GROUP_NAME "terminal"
 #endif
 
 #if defined(__MVS__)
@@ -177,6 +181,7 @@ extern int errno;
 
 #if (XtSpecificationRelease >= 6) && !defined(NO_XPOLL_H)
 #include <X11/Xpoll.h>
+#define USE_XPOLL_H 1
 #else
 #define Select(n,r,w,e,t) select(n,(fd_set*)r,(fd_set*)w,(fd_set*)e,(struct timeval *)t)
 #define XFD_COPYSET(src,dst) bcopy((src)->fds_bits, (dst)->fds_bits, sizeof(fd_set))
@@ -189,7 +194,7 @@ extern int errno;
 
 #include <sys/types.h>
 
-#if defined(AIXV3) && defined(NFDBITS)
+#if defined(USE_XPOLL_H) && defined(AIXV3) && defined(NFDBITS)
 #undef NFDBITS	/* conflict between X11/Xpoll.h and sys/select.h */
 #endif
 
@@ -240,6 +245,7 @@ extern int errno;
 #define XtNcolorMode		"colorMode"
 #define XtNcolorUL		"colorUL"
 #define XtNcolorULMode		"colorULMode"
+#define XtNctrlFKeys		"ctrlFKeys"
 #define XtNcurses		"curses"
 #define XtNcursorBlink		"cursorBlink"
 #define XtNcursorColor		"cursorColor"
@@ -324,6 +330,7 @@ extern int errno;
 #define XtCCharClass		"CharClass"
 #define XtCColorMode		"ColorMode"
 #define XtCColumn		"Column"
+#define XtCCtrlFKeys		"CtrlFKeys"
 #define XtCCurses		"Curses"
 #define XtCCursorBlink		"CursorBlink"
 #define XtCCursorOffTime	"CursorOffTime"
@@ -502,6 +509,7 @@ extern GC xterm_DoubleGC(unsigned chrset, unsigned flags, GC old_gc);
 #endif
 
 /* input.c */
+extern Boolean xtermDeleteIsDEL (void);
 extern void Input (TKeyboard *keyboard, TScreen *screen, XKeyEvent *event, Bool eightbit);
 extern void StringInput (TScreen *screen, char *string, size_t nbytes);
 
@@ -539,6 +547,8 @@ extern char *SysErrorMsg (int n);
 extern char *strindex (char *s1, char *s2);
 extern char *udk_lookup (int keycode, int *len);
 extern int XStrCmp (char *s1, char *s2);
+extern int creat_as (int uid, int gid, Boolean append, char *pathname, int mode);
+extern int open_userfile (int uid, int gid, char *path, Boolean append);
 extern int xerror (Display *d, XErrorEvent *ev);
 extern int xioerror (Display *dpy);
 extern void Bell (int which, int percent);
@@ -558,7 +568,8 @@ extern void HandleStringEvent        PROTO_XT_ACTIONS_ARGS;
 extern void Panic (char *s, int a);
 extern void Redraw (void);
 extern void ReverseOldColors (void);
-extern void creat_as (int uid, int gid, char *pathname, int mode);
+extern void SysError (int i);
+extern void VisualBell (void);
 extern void do_dcs (Char *buf, size_t len);
 extern void do_osc (Char *buf, int len, int final);
 extern void do_xevents (void);
@@ -570,11 +581,10 @@ extern void reset_decudk (void);
 extern void set_tek_visibility (Boolean on);
 extern void set_vt_visibility (Boolean on);
 extern void switch_modes (Bool tovt);
-extern void SysError (int i);
-extern void VisualBell (void);
+extern void timestamp_filename(char *dst, const char *src);
 extern void xevents (void);
-extern void xtermSetenv (char *var, char *value);
 extern void xt_error (String message);
+extern void xtermSetenv (char *var, char *value);
 
 #if OPT_MAXIMIZE
 extern int QueryMaximize (TScreen *screen, unsigned *width, unsigned *height);

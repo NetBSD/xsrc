@@ -288,7 +288,7 @@ ResizeScrollBar(TScreen *screen)
 		screen->scrollWidget,
 #ifdef SCROLLBAR_RIGHT
         	(term->misc.useRight)
-			? (term->core.width -
+			? (screen->fullVwin.fullwidth -
 			   screen->scrollWidget->core.width -
 			   screen->scrollWidget->core.border_width)
 			: -1,
