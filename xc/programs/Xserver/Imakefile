@@ -441,6 +441,48 @@ ServerTarget(Xmac68k,$(MACDIRS),$(MACOBJS),$(MACLIBS),$(MACSYSLIBS))
 #endif
 #endif /* XmacServer */
 
+#if XamigaCCmono || XamigaCCcolor || XamigaGfxCardSupport
+XCOMM
+XCOMM NetBSD/Amiga 24Bit server with Cybervision64/Cirrus 5426/RetinaZ3/ECS
+XCOMM and AGA-Support
+XCOMM
+DDXDIR1  = hw/amigaNetBSD
+MFBDIR   = mfb
+#if XamigaGfxCardSupport
+CFB8DIR  = cfb
+CFB16DIR = cfb16
+CFB24DIR = cfb24
+CFB32DIR = cfb32
+XAmigaGfxLibs = $(CFB)
+#endif /* XamigaGfxCardSupport */
+#if XamigaCCcolor
+AfbDir   = $(DDXDIR1)/afb
+AfbLib   = $(AfbDir)/LibraryTargetName(afb)
+#endif /* XamigaCCcolor */
+#if XamigaRetinaZ3Support
+RetinaZ3Dir = $(DDXDIR1)/retina
+RetinaZ3Lib = $(RetinaZ3Dir)/LibraryTargetName(amigaRetina)
+#endif /* XamigaRetinaZ3Support */
+#if XamigaCl5426Server
+CirrusDir = $(DDXDIR1)/cirrus
+CirrusLib = $(CirrusDir)/LibraryTargetName(amigaCirrus)
+#endif /* XamigaCl5426Server */
+#if XamigaCV64Support
+CV64Dir = $(DDXDIR1)/s3
+CV64Lib = $(CV64Dir)/LibraryTargetName(amigaS3)
+#endif /* XamigaCV64Support */
+XAmigaDDXLib = $(DDXDIR1)/LibraryTargetName(amiga)
+XAmigaDirs = $(STDDIRS) $(MFBDIR) $(CFB8DIR) $(CFB16DIR) $(CFB24DIR) $(CFB32DIR) \
+		$(DDXDIR1) $(DEPDIRS) $(RetinaZ3Dir) $(CirrusDir) $(CV64Dir)
+XAmigaObjs = $(DDXDIR1)/amigaInit.o
+XAmigaLibs = $(XAmigaDDXLib) PreFbLibs $(AfbLib) $(RetinaZ3Lib) $(CirrusLib) \
+		$(CV64Lib) $(XAmigaGfxLibs) $(MFB) PostFbLibs
+XAmigaSysLibs = $(SYSLIBS)
+SetUIDServerTarget(Xamiga,$(XAmigaDirs),$(XAmigaObjs),$(XAmigaLibs),$(XAmigaSysLibs))
+#ifndef ServerToInstall
+#define ServerToInstall Xamiga
+#endif
+#endif
 
 #ifdef XFree86Version
 XF86INIT   = $(XF86COMSRC)/xf86Init.o $(XF86CONFIGSRC)/xf86IniExt.o
