@@ -330,17 +330,17 @@ amigaCProbe(pScreenInfo, index, fbNum, argc, argv)
 
     colormap.first = 0;
     colormap.size = numColors;
-    colormap.entry = amigaFbs[index].view.entry;
+    colormap.entry = amigaFbs[fbNum].view.entry;
     
     if(ioctl (fd, VIOCGCMAP, &colormap)== -1)
         Error("getting colormap");
 
-    amigaFbs[index].fb = (pointer)mapaddr;
-    amigaFbs[index].fd = fd;
-    amigaFbs[index].view.bm = bm;
-    amigaFbs[index].view.vs = vs;
-    amigaFbs[index].view.colormap = colormap;
-    amigaFbs[index].EnterLeave = NULL;
+    amigaFbs[fbNum].fb = (pointer)mapaddr;
+    amigaFbs[fbNum].fd = fd;
+    amigaFbs[fbNum].view.bm = bm;
+    amigaFbs[fbNum].view.vs = vs;
+    amigaFbs[fbNum].view.colormap = colormap;
+    amigaFbs[fbNum].EnterLeave = NULL;
 
 #ifndef GDBUG
     if (ioctl(fd, VIOCDISPLAY, 0)) {
