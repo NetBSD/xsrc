@@ -1,4 +1,4 @@
-/* $NetBSD: decInit.c,v 1.3 2002/02/22 15:46:33 ad Exp $ */
+/* $NetBSD: decInit.c,v 1.4 2002/02/25 11:36:37 ad Exp $ */
 
 #include    "dec.h"
 #include    "gcstruct.h"
@@ -259,7 +259,7 @@ InitKbdMouse(void)
 
     if (decKbdDev == NULL)
         decKbdDev = "/dev/wskbd0";
-    if (decPtrDev == NULL) {
+    if (decPtrDev == NULL)
        decPtrDev = "/dev/wsmouse0";
 
     /* warn(3) isn't X11 API, but we know we are on NetBSD */
