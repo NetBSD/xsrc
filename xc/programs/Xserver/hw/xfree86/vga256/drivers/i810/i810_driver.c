@@ -236,7 +236,7 @@ I810Ident(n)
     int n;
 {
     static char *chipsets[] = {
-	"i810", "i810-dc100", "i810e"
+	"i810", "i810-dc100", "i810e", "i815-dc100", "i815"
     };
 
     if (n + 1 > sizeof(chipsets) / sizeof(char *))
@@ -333,9 +333,27 @@ I810Probe()
 	       I810pcr = pcr; 
 	       break;
 
+	    case PCI_CHIP_I815_DC100:
+	       vga256InfoRec.chipset = I810Ident(3);
+	       I810Chipset = id;
+	       I810LinearAddr = pcr->_base0 & 0xfe000000; /* 32/64M */
+	       I810MMIOAddr = pcr->_base1 & 0xfff80000; /* 512K window */
+	       I810pcr = pcr; 
+	       break;
+
+	    case PCI_CHIP_I815:
+	       vga256InfoRec.chipset = I810Ident(4);
+	       I810Chipset = id;
+	       I810LinearAddr = pcr->_base0 & 0xfe000000; /* 32/64M */
+	       I810MMIOAddr = pcr->_base1 & 0xfff80000; /* 512K window */
+	       I810pcr = pcr; 
+	       break;
+
 	    case PCI_CHIP_I810_BRIDGE:
 	    case PCI_CHIP_I810_DC100_BRIDGE:
 	    case PCI_CHIP_I810_E_BRIDGE:
+	    case PCI_CHIP_I815_DC100_BRIDGE:
+	    case PCI_CHIP_I815_BRIDGE:
 	       I810BridgePcr = pcr;
 	       break;
 	    }
@@ -480,6 +498,8 @@ I810Probe()
       case PCI_CHIP_I810:
       case PCI_CHIP_I810_DC100:
       case PCI_CHIP_I810_E:
+      case PCI_CHIP_I815_DC100:
+      case PCI_CHIP_I815:
 	 switch (vgaBitsPerPixel) {
 	 case 8:  vga256InfoRec.maxClock = 203000; break;
 	 case 16: vga256InfoRec.maxClock = 163000; break;
@@ -1272,6 +1292,12 @@ I810FbInit()
 	 break;
       case PCI_CHIP_I810_E:
 	 ErrorF("Intel i810e\n");
+	 break;
+      case PCI_CHIP_I815_DC100:
+	 ErrorF("Intel i815 DC100\n");
+	 break;
+      case PCI_CHIP_I815:
+	 ErrorF("Intel i815\n");
 	 break;
       }
    }
