@@ -1,0 +1,195 @@
+  i740 ユーザ向けの情報
+  Precision Insight, Inc.
+  18 February 1999
+  The X Japanese Documentation Project
+  3 August 1999
+  ____________________________________________________________
+
+  目次
+
+  1. サポートしているハードウェア
+  2. 機能
+  3. 技術的な事項
+  4. 動作が報告されているビデオカード
+  5. 設定
+  6. ドライバのオプション
+  7. 既知の制限
+  8. 作者
+  9. 日本語訳について
+
+  ______________________________________________________________________
+
+  1.  サポートしているハードウェア
+
+  o  Intel 740 ベースのカード
+
+  2.  機能
+
+  o  8, 15, 16, 24, 32 bpp を完全にサポート
+
+  o  スプライトのちらつきを減らすハードウェアカーソルをサポート
+
+  o  8, 15, 16, 24 bpp 対応のハードウェアアクセラレーション付き 2D 描画
+     エンジン
+
+  o  1600x1200 までの高解像度ビデオモードのサポート
+
+  o  ダブルスキャンビデオモードのサポート(例: 320x200, 320x240)
+
+  o  任意の深さにおけるガンマ補正をサポート
+
+  o  完全にプログラミング可能なクロックをサポート
+
+  o  仮想端末への復帰時に頑健なテキストモード
+
+  3.  技術的な事項
+
+  o  ハードウェアアクセラレーションは 32 bpp では使用できません。
+
+  o  インタレースモードはサポートされていません。
+
+  4.  動作が報告されているビデオカード
+
+  o  Real3D Starfighter AGP
+
+  o  Real3D Starfighter PCI
+
+  o  Diamond Stealth II/G460 AGP
+
+  o  3DVision-i740 AGP
+
+  o  ABIT G740 8MB SDRAM
+
+  o  Acorp AGP i740
+
+  o  AGP 2D/3D V. 1N, AGP-740D
+
+  o  AOpen AGP 2X 3D Navigator PA740
+
+  o  ARISTO i740 AGP (ART-i740-G)
+
+  o  ASUS AGP-V2740
+
+  o  Atrend (Speedy) 3DIO740 AGP (ATC-2740)
+
+  o  Chaintech AGP-740D
+
+  o  EliteGroup(ECS) 3DVision-i740 AGP
+
+  o  EONtronics Picasso 740
+
+  o  EONtronics Van Gogh
+
+  o  Everex MVGA i740/AG
+
+  o  Flagpoint Shocker i740 8MB
+
+  o  Gainward CardExpert 740 8MB
+
+  o  Genoa Systems Phantom 740
+
+  o  Gigabyte Predator i740 8MB AGP
+
+  o  Hercules Terminator 128 2X/i AGP
+
+  o  HOT-158 (Shuttle)
+
+  o  Intel Express 3D AGP
+
+  o  Jaton Video-740 AGP 3D
+
+  o  Jetway J-740-3D 8MB AGP, i740 AGP 3D
+
+  o  Joymedia Apollo 7400
+
+  o  Leadtek Winfast S900
+
+  o  Machspeed Raptor i740 AGP 4600
+
+  o  Magic-Pro MP-740DVD
+
+  o  MAXI Gamer AGP 8 MB
+
+  o  Palit Daytona AGP740
+
+  o  PowerColor C740 (SG/SD) AGP
+
+  o  QDI Amazing I
+
+  o  Soyo AGP (SY-740 AGP)
+
+  o  Spacewalker Hot-158
+
+  o  VideoExcel AGP 740
+
+  o  ViewTop ZeusL 8MB
+
+  o  Winfast S900 i740 AGP 8MB
+
+  5.  設定
+
+  このドライバはカードの初期化に必要なデバイス情報を全て自動的に検出しま
+  す。唯一必要のは XF86Config ファイルの "Device" セクションで、これは以
+  下のように指定します:
+
+         Section "Device"
+             Identifier "i740"
+         EndSection
+
+  xf86config や XF86Setup を使って設定することもできます。
+
+  しかし、自動検出がうまく行かない場合には以下の指定を行うこともできま
+  す:
+
+  o  VideoRam - キロバイト単位
+
+  o  DacSpeed - MHz 単位
+
+  o  MemBase  - リニアフレームバッファの物理アドレス
+
+  o  IOBase   - メモリマップド I/O レジスタの物理アドレス
+
+  6.  ドライバのオプション
+
+  o  "hw_cursor" - ハードウェアカーソルを使います (デフォルト)
+
+  o  "sw_cursor" - ソフトウェアカーソルしか使いません
+
+  o  "no_accel"  - ソフトウェアレンダリングしか行いません
+
+  o  "sgram"     - SGRAM のタイミング情報を使います
+
+  o  "sdram"     - SDRAM のタイミング情報を使います
+
+  注意: i740 X サーバは、お使いのカードが SGRAM と SDRAM のどちらを使っ
+  ているのかを自動的に検出するはずです。"sgram", "sdram" オプションを使
+  うのは、検出が正しく行えない場合です。
+
+  7.  既知の制限
+
+  o  24bpp モードでは特定の描画操作が非常に遅くなります。この問題は将来
+     のリリースでは直ると思います。
+
+  8.  作者
+
+  o  Kevin E. Martin <kevin@precisioninsight.com>
+
+  このドライバは、Precision Insight 社が XFree86 プロジェクトに寄付しま
+  した:
+
+      Precision Insight, Inc.
+      Cedar Park, TX
+      USA
+
+  http://www.precisioninsight.com
+
+  $XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/README.i740,v 1.1.2.1 1999/12/02 12:30:33 hohndel Exp $
+
+  9.  日本語訳について
+
+  日本語訳は X Japanese Documentation Project が行いました (翻訳: 藤原輝
+  嘉 <fujiwara@linux.or.jp> <mailto:fujiwara@linux.or.jp>)。問題点の指摘
+  やご意見は藤原まで御連絡ください。原文の著作権は XFree86 プロジェクト
+  社にあり、日本語訳の著作権は X Japanese Documentation Project にありま
+  す。
+

@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/os-support/Imakefile,v 3.14.2.6 1999/07/29 09:22:54 hohndel Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/os-support/Imakefile,v 3.14.2.7 1999/12/01 12:49:26 hohndel Exp $
 
 
 
@@ -80,7 +80,11 @@ OS_SUBDIR = os2
 OS_SUBDIR = sco
 #endif
 
-SUBDIRS = $(OS_SUBDIR) misc
+#if UsbMouseSupport && !HasLibUsb
+USB_SUBDIR = libusb
+#endif
+
+SUBDIRS = $(OS_SUBDIR) misc $(USB_SUBDIR)
 
 SRCS = $(OS_SUBDIR)/?*.c misc/?*.c
 OBJS = $(OS_SUBDIR)/?*.o misc/?*.o

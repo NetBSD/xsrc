@@ -1,0 +1,89 @@
+           Information for i810 Users - i810 Driver Version 1.0.0
+
+                               21 October 1999
+
+1.  Supported Hardware
+
+   o Intel 810 motherboards
+
+2.  Features
+
+   o Full support for 8, 15, 16 and 24 bit per pixel depths.
+
+   o Hardware cursor support to reduce sprite flicker.
+
+   o Hardware accelerated 2D drawing engine support for 8, 15, 16 and 24 bit
+     per pixel depths.
+
+   o Support for high resolution video modes up to 1600x1200.
+
+   o Fully programmable clock supported.
+
+   o Robust text mode restore for VT switching.
+
+3.  Technical Notes
+
+   o 32 bpp is unaccelerated on this chipset, and unsupported by this driver.
+
+   o Interlace modes cannot be supported.
+
+   o Normal use requires agpgart.o module, distributed with the server.
+
+4.  Reported Working Video Cards
+
+   o Intel evaluation hardware
+
+5.  Configuration
+
+The driver auto-detects all device information necessary to initialize the
+card.  The only lines you need in the "Device" section of your XF86Config
+file are:
+
+            Section "Device"
+                Identifier "i810"
+            EndSection
+
+or let xf86config or XF86Setup do this for you. NOTE: config programs have
+not been tested, yet.
+
+However, if you have problems with auto-detection, you can specify:
+
+   o DacSpeed - in MHz
+
+   o MemBase  - physical address of the linear framebuffer
+
+   o IOBase   - physical address of the memory mapped IO registers
+
+In order to use most resolutions, it is necessary to install the 'agpgart.o'
+module which accompanies this server.  You will probably have to compile the
+module yourself (see the notes in the module).
+
+Note: the i810 X server detects whether your motherboard has display cache
+video memory.  This memory is has reduced bandwidth compared to 'normal' sys-
+tem memory, and isn't used by the server.  The main function of this memory
+is for ancillary buffers (eg. z buffer) in a forthcoming 3d capable server.
+
+6.  Driver Options
+
+   o "no_accel"  - software rendering only
+
+7.  Known Limitations
+
+   o No 3d support in this release.
+
+8.  Author
+
+   o Keith Whitwell <keithw@precisioninsight.com>
+
+This driver was donated to The XFree86 Project by:
+
+         Precision Insight, Inc.
+         Cedar Park, TX
+         USA
+
+http://www.precisioninsight.com
+
+     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/i810.sgml,v 1.1.2.1 1999/10/25 07:36:25 hohndel Exp $
+
+
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.i810,v 1.1.2.1 1999/12/10 16:01:21 hohndel Exp $

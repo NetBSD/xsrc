@@ -8,23 +8,23 @@
 <author>The XFree86 Project, Inc
 <date>23 December 1998
 <trans>The X Japanese Documentation Project
-<tdate>21 January 1999
+<tdate>2 August 1999
 
 <!-- <sect> Available Documentation <p> -->
 <sect> 利用可能な文書 <p>
 
 <itemize>
 <!--
-<item><htmlurl name="Release Notes for XFree86&trade; 3.3.3.1"
+<item><htmlurl name="Release Notes for XFree86&trade; 3.3.4"
 	url="RELNOTES.html">
 -->
-<item><htmlurl name="XFree86&trade; 3.3.3.1 リリースノート"
+<item><htmlurl name="XFree86&trade; 3.3.4 リリースノート"
 	url="RELNOTE.html">
 <!--
-<item><htmlurl name="README for XFree86&trade; 3.3.3.1"
+<item><htmlurl name="README for XFree86&trade; 3.3.4"
 	url="README.html">
 -->
-<item><htmlurl name="XFree86&trade; 3.3.3.1 の README"
+<item><htmlurl name="XFree86&trade; 3.3.4 の README"
 	url="README.html">
 <!--
 <item><htmlurl name="Copyright"
@@ -55,6 +55,13 @@
 <item><htmlurl name="README for XFree86 on BSD/OS 2.0"
 	url="Bsdi.html">
 -->
+<!--
+<item><htmlurl name="Instructions for Building XFree86 on an Intel Pentium
+Aviion machine with DG/ux R4.20MU04"
+	url="DGux.html">
+-->
+<item><htmlurl name="DG/ux R4.20MU04 が動作する Intel Pentium Aviion マシンでの XFree86 の構築手順"
+	url="DGux.html">
 <!--
 <item><htmlurl name="README for XFree86 on FreeBSD"
 	url="FreeBSD.html">
@@ -199,11 +206,29 @@
 <item><htmlurl name="Cirrus 製チップセットユーザ向けの情報"
 	url="cirrus.html">
 <!--
+<item><htmlurl name="Information for Cyrix Chipset Users"
+	url="cyrix.html">
+-->
+<item><htmlurl name="Cyrix チップセットのユーザ向けの情報"
+	url="cyrix.html">
+<!--
 <item><htmlurl name="Information for DEC 21030 Users (aka TGA)"
 	url="DECtga.html">
 -->
 <item><htmlurl name="DEC 21030 (別名 TGA)ユーザ向けの情報"
 	url="DECtga.html">
+<!--
+<item><htmlurl name="Information for EPSON SPC8110 Chipset Users"
+	url="epson.html">
+-->
+<item><htmlurl name="EPSON SPC8110 ユーザ向けの情報"
+	url="epson.html">
+<!--
+<item><htmlurl name="The Linux/m68k Frame Buffer Device"
+	url="fbdev.html">
+-->
+<item><htmlurl name="Linux/m68k のフレームバッファデバイスについて"
+	url="fbdev.html">
 <!--
 <item><htmlurl name="Notes for Mach32 X Server"
 	url="Mach32.html">
@@ -229,6 +254,18 @@
 <item><htmlurl name="Number Nine I128 ユーザ向けの情報"
 	url="I128.html">
 <!--
+<item><htmlurl name="Information for i740 Users"
+	url="i740.html">
+-->
+<item><htmlurl name="i740 ユーザ向けの情報"
+	url="i740.html">
+<!--
+<item><htmlurl name="Information for NeoMagic Chipset Users"
+	url="neo.html">
+-->
+<item><htmlurl name="NeoMagic ユーザ向けの情報"
+	url="neo.html">
+<!--
 <item><htmlurl name="Information for NVidia / SGS-Thomson NV1, Riva 128 and Riva TNT Users"
 	url="NVIDIA.html">
 -->
@@ -247,6 +284,12 @@
 <item><htmlurl name="XFree86 P9000 サーバ リリースノート"
 	url="P9000.html">
 <!--
+<item><htmlurl name="Information for Rendition Chipset Users"
+	url="rendition.html">
+-->
+<item><htmlurl name="Rendition ユーザ向けの情報"
+	url="rendition.html">
+<!--
 <item><htmlurl name="Information for S3 Chipset Users"
 	url="S3.html">
 -->
@@ -264,6 +307,12 @@
 -->
 <item><htmlurl name="SiS ユーザ向けの情報"
 	url="SiS.html">
+<!--
+<item><htmlurl name="Information for 3DLabs Chipset Users"
+	url="3DLabs.html">
+-->
+<item><htmlurl name="3DLabs 製チップセットユーザ向けの情報"
+	url="3DLabs.html">
 <!--
 <item><htmlurl name="Information for Trident Chipset Users"
 	url="trident.html">
@@ -289,51 +338,16 @@
 <item><htmlurl name="ET4000/W32 と ET6000 チップセットユーザ向けの情報"
 	url="W32.html">
 <!--
-<item><htmlurl name="Information for Cyrix Chipset Users"
-	url="cyrix.html">
--->
-<item><htmlurl name="Cyrix 製チップセットユーザ向けの情報"
-	url="cyrix.html">
-<!--
-<item><htmlurl name="Information for 3DLabs Chipset Users"
-	url="3DLabs.html">
--->
-<item><htmlurl name="3DLabs 製チップセットユーザ向けの情報"
-	url="3DLabs.html">
-<!--
-<item><htmlurl name="Information for NeoMagic Chipset Users"
-	url="neo.html">
--->
-<item><htmlurl name="NeoMagic 製チップセットユーザ向けの情報"
-	url="neo.html">
-<!--
-<item><htmlurl name="Information for Rendition Chipset Users"
-	url="rendition.html">
--->
-<item><htmlurl name="Rendition 製チップセットユーザ向けの情報"
-	url="rendition.html">
-<!--
 <item><htmlurl name="Information for Western Digital Chipset Users"
 	url="WstDig.html">
 -->
 <item><htmlurl name="Western Digital 製チップセットユーザ向けの情報"
 	url="WstDig.html">
-<!--
-<item><htmlurl name="Information for EPSON SPC8110 Chipset Users"
-	url="epson.html">
--->
-<item><htmlurl name="EPSON SPC8110 チップセットユーザ向けの情報"
-	url="epson.html">
-<!--
-<item><htmlurl name="The Linux/m68k Frame Buffer Device"
-	url="fbdev.html">
--->
-<item><htmlurl name="Linux/m68k のフレームバッファデバイスについて"
-	url="fbdev.html">
 </itemize>
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/sgml/DocIndex.sgml,v 3.2.2.1 1999/05/25 06:39:11 hohndel Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/sgml/DocIndex.sgml,v 3.2.2.2 1999/11/26 15:23:40 hohndel Exp $
+
 
 
 

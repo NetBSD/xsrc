@@ -2,36 +2,36 @@
 
                                  Holger Veit
 
-                     Last modified on: August 1st, 1999
+                    Last modified on: December 12th, 1999
 
-1.  Introductory Note about the release 3.3.5
+1.  Introductory Note about the release 3.3.6
 
 Before looking into this file, please check for any LATEST.OS2 files that may
 come with the binary distribution. Please also check out the following
 XFree86/OS2 WWW pages:
 
-   o http://set.gmd.de/~veit/os2/xf86os2.html
+   o http://ais.gmd.de/~veit/os2/xf86os2.html
 
-   o http://set.gmd.de/~veit/os2/xf86bugs.html
+   o http://ais.gmd.de/~veit/os2/xf86bugs.html
 
-   o http://set.gmd.de/~veit/os2/x11os2faq.html
+   o http://ais.gmd.de/~veit/os2/x11os2faq.html
 
 before you claim to have found any problems.
 
-This version of the code is called XFree86/OS2 3.3.5. This is a bugfix
-release for 3.3.3.1 (3.3.4 was never released for XFree86/OS2) which also
-adds hardware support for some newer cards, including AGP boards.
-XFree86-3.3.5 contains all security fixes that were released for earlier ver-
-sions. See the RELNOTES document for details.
+This version of the code is called XFree86/OS2 3.3.6. This is a bugfix
+release for 3.3.5 and previous versions which again adds hardware support for
+some newer cards, including AGP boards. XFree86-3.3.6 contains all security
+fixes that were released for earlier versions. See the RELNOTES document for
+details.
 
-XFree86/OS2-3.3.5 is a full, unrestricted version which does not expire, and
+XFree86/OS2-3.3.6 is a full, unrestricted version which does not expire, and
 for which the complete  source code is available. In contrast to beta ver-
 sions, we consider this  code as sufficiently stable for use by an end user.
 Since there  have been numerous bugfixes, we recommend this version, even if
 you had  XFree86/OS2 3.3.x before and it worked satisfyingly with your hard-
-ware. By the time 3.3.5 is released, the older version 3.3 will be withdrawn,
+ware. By the time 3.3.6 is released, the older version 3.3 will be withdrawn,
 and archives will be updated to this version. There may still be references
-to 3.3 or 3.3.x still in documents; these apply to 3.3.5 as well, unless oth-
+to 3.3 or 3.3.x still in documents; these apply to 3.3.6 as well, unless oth-
 erwise noted.
 
 Previous versions have been tested in a large number of configurations and
@@ -39,7 +39,7 @@ have been found to be working, with some bugs left, rather flawlessly.
 
 This release is almost complete (with a few exceptions) regarding the X11R6.3
 ``core'' distribution. A subset of the ``contrib'' distribution is available
-from the ported software page http://set.gmd.de/~veit/os2/xf86ported.html
+from the ported software page http://ais.gmd.de/~veit/os2/xf86ported.html
 
 In the past beta testing, it has been found that the software itself is
 rather stable and does not damage hardware - provided the user does not try
@@ -78,8 +78,8 @@ tems.
 
 See the Copyright Notice.
 
-Binaries for OS/2 Warp and Merlin are available from:
-ftp.XFree86.org:/pub/XFree86/3.3.5/OS2
+Binaries for OS/2 Warp, Merlin, and Aurora are available from:
+ftp.XFree86.org:/pub/XFree86/3.3.6/OS2
 
 The WWW page http://borneo.gmd.de/~veit/os2/xf86os2.html will usually show
 more references to FTP or WWW sites to retrieve sources or binaries.
@@ -124,8 +124,8 @@ have comments or suggestions about this file and we'll revise it.
      or CD ROM equipment; of course the more powerful, the better.
 
    o Depending on the packages installed, a disk space of 20-55MB on a HPFS
-     formatted partition (or a NFS or ext2fs partition natively allowing long
-     filenames) is required. XFree86/OS2 will not run on FAT partitions.
+     formatted partition (or a JFS, NFS or ext2fs partition natively allowing
+     long filenames) is required. XFree86/OS2 will not run on FAT partitions.
 
    o You need a video card that is supported by XFree86. Refer to the general
      README document for a list of supported cards. Note that the sets of
@@ -139,7 +139,7 @@ have comments or suggestions about this file and we'll revise it.
 
    o Any version of Warp 3 with at least fixpack 17, or Warp 4 is required
 
-   o XFree86/OS2-3.3.5 may use a local named-pipe connection or a TCP/IP
+   o XFree86/OS2-3.3.6 may use a local named-pipe connection or a TCP/IP
      based network connection.
 
        1.  Warp comes with the Internet Access Kit (IAK), which is suffi-
@@ -191,6 +191,10 @@ The contents of the packages are:
 
                   Xbase
                         A special device driver and the SuperProbe program
+                        Note: In order to fix a problem occurring with WSeB
+                        (Aurora), you must install the most recent version of
+                        the xf86sup.sys driver that comes with this file.
+                        Older versions won't work.
 
                   Xdoc
                         READMEs and XFree86 specific man pages.
@@ -302,10 +306,10 @@ may be some special situations and configurations where the below description
 is not successful. If this happens, read - I repeat READ - the list of ``fre-
 quently asked questions'' (FAQ) which has meanwhile evolved to a trou-
 bleshooting guide. The latest version is always at
-http://set.gmd.de/~veit/os2/x11os2faq.html .
+http://ais.gmd.de/~veit/os2/x11os2faq.html .
 
 Maybe - but we found you must be very creative - you find a bug. Consult the
-page http://set.gmd.de/~veit/os2/xf86bugs.html whether it is already known.
+page http://ais.gmd.de/~veit/os2/xf86bugs.html whether it is already known.
 If not, you have a case and should report it to XFree86
 (xfree86@xfree86.org). Please refer to the FAQ about the information to be
 provided for a complete problem report.
@@ -420,11 +424,19 @@ forward versus backward slashes correctly:
 
                  SET ETC=C:\TCPIP\ETC
 
+            For Warp 4 and later, this may point to the \MPTN\ directory.
+            This is okay.
+
       TMP
-            Set to an TMP directory. Normally, this is already set to the TMP
-            directory of the TCP/IP code, such as
+            Set to an TMP directory which should reside on a HPFS drive (or
+            other filesystem that has real long names). Often, this variable
+            is already set to the TMP directory of the TCP/IP code, such as
 
                  SET TMP=C:\TCPIP\TMP
+
+            If you have installed additional software, like VisualAge for
+            C++, it might be that this variable points to some directory
+            \ibmcpp\tmp .
 
       HOSTNAME
             Set to the internet hostname. Normally, this is already set by
@@ -485,7 +497,8 @@ forward versus backward slashes correctly:
 
       XSERVER
             Set this to the executable name of the X server to be used. This
-            must be a complete path. My setting is as follows:
+            must be a complete path. My setting, for instance, looks as fol-
+            lows:
 
                  SET XSERVER=D:/XFree86/bin/XF86_Mach64.exe
 
@@ -497,7 +510,8 @@ forward versus backward slashes correctly:
 
             It is possible to move the binaries to another directory in the
             search path; for maintenance reasons and clarity of the struc-
-            ture, this is not recommended, though.
+            ture, this is not recommended, though. You might, of course, use
+            a software like TVFS to redirect these files to elsewhere.
 
       LIBPATH
             Add the DLL directory for the X11 utilities to the LIBPATH.  This
@@ -512,6 +526,29 @@ forward versus backward slashes correctly:
             where, rather they must stay there, because most utilities form a
             path to these directories by using %X11ROOT%\XFree86\lib as a
             base.
+
+                 SET MANPATH=Y:\XFree86\man;Y:\EMX\man
+
+            Note: xman alone might not be sufficient to display arbitrary
+            Unix man pages correctly. You might have to install the GROFF
+            formatter tool as well. See FAQ for more details.
+
+      OS2_SHELL
+
+      COMSPEC
+
+      SHELL
+
+      X11SHELL
+            Some scripts in XFree86 rely on a shell that is compatible to the
+            standard CMD.EXE. CMD.EXE has some essential properties that
+            allows it to work correctly in an xterm. Third party shells may
+            not been developed with running in an environment that, like
+            xterm.  accept input and output from the stdin/stdout file chan-
+            nels, but access keyboard and video services directly. The above
+            variables allow reconfiguration of your system in order to run
+            any favorite shell outside XFree86 and still have XFree86 use
+            CMD.EXE. See the FAQ for more details.
 
 The recent version of XFree86/OS2 has a REXX script named checkinstall.cmd
 which you can (and should) use to check whether you have entered most things
@@ -561,15 +598,41 @@ You don't need this ``loopback'' interface if your PC is connected to a LAN
 (either directly or through SLIP/PPP).
 
 In case of a SLIP/PPP line, you have to establish this connection BEFORE you
-start XFree86.
+start XFree86. See the next section for more details.
 
-The checkinstall.cmd script coming with XFree86/OS2 gives some advice on the
-configuration as well.
+Note that the ability to use host names, for instance in the DISPLAY vari-
+able, correlates with the existance of a name resolver. If you don't have a
+LAN-based DNS server available, you have to add the relevant hostnames to
+your HOSTS/ file. The TCP/IP configuration dialogue in your system configura-
+tion folder allows you to edit this file.  The checkinstall.cmd script coming
+with XFree86/OS2 gives some advice on the configuration as well.  If you have
+problems to get this or other basic networking things running, seek assis-
+tance in the FAQ, the xf86os2 mailing list or the mailing list archive.
 
-If you have problems to get this or other basic networking things running,
-seek assistance elsewhere.
+11.  Dynamic IP Considerations
 
-11.  Configuring X for Your Hardware
+Generally, the whole stuff works best, if your machine has a fixed IP
+address.  The localhost address, and also fixed (non-routable) local
+addresses (10.x.x.x, 192.168.x.x, 172.16.x.x-172.31.x.x) work fine. A problem
+occurs on both sides of such an X connection if there are dynamic IP
+addresses involved, for instance in case of a PPP line to an ISP. Unfortu-
+nately, the XFree86/OS2 net community hasn't come up with a set of helpful
+scripts yet (which I would integrate), so there are here only some hints what
+the problem really is: The X server listens for X protocol packets on some
+defined host/port socket. It gets the information about the socket from
+either the command line or the resolved hostname (which it gets from the
+HOSTS file or the DNS server). Here the HOSTNAME variable comes into play.
+Once the server is running, a change in the IP/HOSTNAME configuration won't
+be recognized any more. Thus, the general approach for X over a dynamic IP
+line is: build the connection to the ISP first, then start the server. The
+relevant script that is responsible for starting the server is the startx.cmd
+script which executes (indirectly) the \XFree86\lib\X11\xinit\xinitrc.cmd
+script. You have to modify these scripts in order to set the HOSTNAME and
+DISPLAY variables correctly and start the server with the right IP address.
+The X server log shows, right to the beginning, at which IP address it is
+listening, for debug purposes.
+
+12.  Configuring X for Your Hardware
 
 After you have added the required settings and setup a working network, run
 the xf86config program to create a standard configuration file in
@@ -616,21 +679,34 @@ you will encounter a few differences:
    o There is no support for the Wacom and Elographics input devices yet.
 
 In most cases, an existing XF86Config file for the same XFree86 version from
-Linux or another platform may be used without changes. There is one prominent
-exception: some S3 805 based VLB cards put their video memory in odd loca-
-tions. The X server can search for this memory by experimentally mapping and
-unmapping possible memory regions. In XFree86/OS2, the OS may run out of mem-
-ory tiles during this process. If this happens, you must find out the loca-
-tion of the memory yourself and add it as an option
+Linux or another platform may be used without changes. There are two promi-
+nent exceptions: some S3 805 based VLB cards put their video memory in odd
+locations, and there seems to be an unresolvable PM driver inconsistency with
+Matrox cards.
+
+For S3 VLB cards, the X server can search for this memory by experimentally
+mapping and unmapping possible memory regions. However, in XFree86/OS2, the
+OS may run out of memory tiles during this process. If this happens, you must
+find out the location of the memory yourself and add it as an option
 
           MemBase 0x12345678
 
-to the XF86Config file.
+to the section "Device" of your XF86Config file.
+
+For Matrox cards, the X server may fail to detect the PCI ID of the card cor-
+rectly, as the PM driver and Matrox BIOS may have reprogrammed the card's PCI
+configuration in a non-standard way. The server will then fall into a VGA
+compatible mode at 320x200 resolution. To prevent this, add a
+
+          PCIProbe2
+
+to the section "ServerFlags" of your XF86Config file.
 
 Once you've set up a XF86Config file, you can fine tune the video modes with
-the xvidtune utility.
+the xvidtune utility. Note this is an X11 program which has to be executed in
+a local xterm window of a running X server, not in a PM window.
 
-12.  Running X
+13.  Running X
 
 16mb of memory is a recommended minimum for running the network software, X
 and the presentation manager in parallel.  The server, window manager and an
@@ -639,11 +715,23 @@ with 8MB or less, but the performance will severely suffer from heavy disk
 swapping. Your mileage may vary, though, so some people might consider this
 still tolerable.
 
+Some more on resource requirements: With the arrival of complex desktops like
+WindowMaker, KDE, Gnome, Enlightment, etc. which add a lot of graphical fea-
+tures, resource requirements grow. The X server will cache used fonts and
+resource settings internally, and depending on the number of windows (back-
+ing- store) it may require much more memory and swapspace than the mentioned
+few MBs. Also take into consideration that X runs in parallel to PM which
+also takes its share. My own system, albeit meanwhile rather outdated, is a
+PII-233 with 128MB, however, it is a development system. 64 MB are meanwhile
+standard, and okay for the purpose, and my laptop runs Aurora with XFree86 in
+32MB, as well.
+
 The easiest way for new users to start X windows is to type:
 
-     [C:\] startx
+     startx
 
-.
+ in a PM CMD window. People have reported problems when starting this in a
+fullscreen session or through a remote telnet session, so don't try it.
 
 To get out of X windows, type: ``exit'' in the console xterm.  You can cus-
 tomize your X by creating .xinitrc, .xserverrc, and .twmrc files in the
@@ -653,14 +741,15 @@ described in the xinit and startx man pages.
 By default, the systemwide xinitrc file (in Y:/XFree86/lib/X11/xinit/xini-
 trc.cmd) installs the rather simplistic twm window manager. You can find bet-
 ter window managers on the ported software page at
-http://set.gmd.de/~veit/os2/xf86ported.html .
+ .
 
-13.  Rebuilding the XFree86 Distribution
+14.  Rebuilding the XFree86 Distribution
 
 Do you really want to rebuild XFree86/OS2 from source? Read the file
-OS2.Notes on details to recompile XFree86/OS2 from scratch.
 
-14.  Building New X Clients
+on details to recompile XFree86/OS2 from scratch.
+
+15.  Building New X Clients
 
 The easiest way to build a new client (X application) is to use xmkmf if an
 Imakefile is included in the sources.  Type ``xmkmf -a'' to create the Make-
@@ -669,7 +758,7 @@ a wrapper for the GNU make program which defeats the improper SHELL setting
 typically found in a Makefile generated from an Imakefile. Also see the
 XFree86/OS2 FAQ for more hints about porting X clients.
 
-15.  Acknowledgements
+16.  Acknowledgements
 
 Many thanks to:
 
@@ -681,9 +770,11 @@ Many thanks to:
 
    o ME - no, no, forget this: I won't praise myself :-)
 
-     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/OS2.sgml,v 3.9.2.10 1999/08/02 08:38:16 hohndel Exp $
+     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/OS2.sgml,v 3.9.2.11 1999/12/20 12:55:51 hohndel Exp $
 
      $XConsortium: OS2.sgml /main/4 1996/03/11 10:46:06 kaleb $
 
+"
 
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.OS2,v 3.13.2.13 1999/08/02 09:52:44 hohndel Exp $
+
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.OS2,v 3.13.2.14 1999/12/20 16:37:01 hohndel Exp $

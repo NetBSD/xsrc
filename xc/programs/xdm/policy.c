@@ -1,5 +1,5 @@
 /* $XConsortium: policy.c,v 1.12 94/04/17 20:03:41 hersh Exp $ */
-/* $XFree86: xc/programs/xdm/policy.c,v 3.1.2.1 1999/07/21 18:07:43 hohndel Exp $ */
+/* $XFree86: xc/programs/xdm/policy.c,v 3.1.2.2 1999/11/18 15:37:36 hohndel Exp $ */
 /*
 
 Copyright (c) 1988  X Consortium
@@ -136,12 +136,9 @@ SelectAuthorizationTypeIndex (authenticationName, authorizationNames)
 static void
 avail_msg(char *statusBuf)
 {
-#ifndef __linux__
-    sprintf(statusBuf, "Willing to manage");
-    return;
-#else /* __linux__ */
-    FILE *lavg;
     const char *err = "Willing to manage";
+#ifdef __linux__
+    FILE *lavg;
     char buf[5];
 
     lavg = fopen("/proc/loadavg", "r");
@@ -161,6 +158,17 @@ avail_msg(char *statusBuf)
 
     sprintf(statusBuf, "Available (load: %s)", buf);
     fclose(lavg);
+    return;
+#else /* __linux__ */
+#if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)
+    double lavg;
+
+    if (getloadavg(&lavg, 1) == 1) {
+	sprintf(statusBuf, "Available (load: %.2f)", lavg);
+	return;
+    }
+#endif /* __FreeBSD__ || __NetBSD__ || __OpenBSD__ */
+    strcpy(statusBuf, err);
     return;
 #endif /* __linux__ */
 }

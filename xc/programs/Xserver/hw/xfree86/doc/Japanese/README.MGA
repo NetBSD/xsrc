@@ -2,11 +2,10 @@
   The XFree86 Project Inc.
   30 December 1998
   The X Japanese Documentation Project
-  16 January 1999
+  2 August 1999
   ____________________________________________________________
 
   目次
-
 
   1. サポートしているハードウェア
      1.1 サポートされていないハードウェア
@@ -17,14 +16,12 @@
   5. 作者
   6. 日本語訳について
 
-
   ______________________________________________________________________
 
   1.  サポートしているハードウェア
 
   SVGA サーバの MGA ドライバが現在サポートしているハードウェアを以下に示
   します:
-
 
   o  Matrox Millennium (Texas Instruments TVP3026 RAMDAC を載せた
      MGA2064W)。2MB, 4MB, 8MB の WRAM を載せた 175MHz, 220MHz, 250MHz の
@@ -45,9 +42,9 @@
   o  SGRAM 版と SDRAM 版の Productiva G100。テストは 4MB 版と 8MB 版で行
      いました。
 
+  o  Matrox G400 (対応したばかりであり、TV 出力はサポートしていません)
 
   1.1.  サポートされていないハードウェア
-
 
   o  上記のリストに載っていないチップセット。Impression, Atlas, Genesis
      等を含む Matrox の他のチップセットのサポートに関心はあるのですが、
@@ -56,9 +53,7 @@
   o  MGA2064W, MGA2164W ベースのカードで、RAMDAC が TVP3026 RAMDAC でな
      いもの(Matrox Corona 等)はサポートされていません。
 
-
   2.  機能:
-
 
   o  リニアフレームバッファの使用
 
@@ -77,7 +72,6 @@
   o  グラフィックスアクセラレータの最大限に利用できます。このサーバのア
      クセラレーションはよくできており、XFree86 の X サーバの中でも最も速
      い部類に入ります。
-
 
   3.  設定:
 
@@ -98,8 +92,6 @@
           VideoRam 8192
              または
           VideoRam 16384
-
-
 
   サーバが自動検出を行う必要がないように、指定は適切に行ってください。
 
@@ -138,10 +130,7 @@
      このオプションを指定すると、サーバはブロックモードの塗りつぶしやハ
      ードウェアプレーンマスク等の SGRAM の機能を無効にします。
 
-
   4.  解決方法がわかっている問題:
-
-
 
   o  Millennium と Millennium II でカーソル形状を変更すると一時的にモニ
      タの同期が取れなくなる問題。3.3.3.1 ではハードウェアカーソルがデ
@@ -150,7 +139,6 @@
      イルの "Device" セクションに
 
              Option "sw_cursor"
-
 
   を設定して、ハードウェアカーソルを無効にしましょう。これは XFree86
   3.3.3.1 ではされており、このようなケースではソフトウェアカーソルが自動
@@ -162,7 +150,6 @@
      起きたら、XF86Config ファイルの "Device" セクションに
 
              Option "sw_cursor"
-
 
   を設定して、ハードウェアカーソルを無効にしましょう。
 
@@ -176,7 +163,6 @@
      は、 Device セクションに
 
              Option "mga_24bpp_fix"
-
 
   を設定すれば、問題が解決するかもしれません。
 
@@ -196,22 +182,19 @@
   o  8MB 以上のメモリを使う仮想スクリーン(2048x2048 16bpp 等)を使ってい
      る時、スクリーンを垂直方向にパンさせるとカーソルが歪むことがありま
      す。この現象が起こったら、
-             Option "sw_cursor"
 
+             Option "sw_cursor"
 
   という行を XF86Config ファイルの "Device" セクションに入れて、ハード
   ウェアカーソルを無効にしましょう。
 
-
   5.  作者
-
 
   Radoslaw Kapitan, kapitan@student.uci.agh.edu.pl
 
   Mark Vojkovich, mvojkovi@sdcc10.ucsd.edu
 
   そして以下のメンバー:
-
 
   o  Andrew Vanderstock, vanderaj@mail2.svhm.org.au
 
@@ -235,11 +218,7 @@
 
   o  Doug Merritt, doug@netcom.com
 
-
-  $XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/README.MGA,v 1.1.2.1 1999/06/02 07:50:47 hohndel Exp $
-
-
-
+  $XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/README.MGA,v 1.1.2.2 1999/11/26 15:23:05 hohndel Exp $
 
   6.  日本語訳について
 
@@ -249,16 +228,4 @@
   の指摘やご意見は藤原まで御連絡ください。原文の著作権は XFree86 プロ
   ジェクト社にあり、日本語訳の著作権は X Japanese Documentation Project
   にあります。
-
-
-
-
-
-
-
-
-
-
-
-
 

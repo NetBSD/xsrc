@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/tdfx/vb_accel.c,v 1.1.2.5 1999/07/13 07:09:53 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/tdfx/vb_accel.c,v 1.1.2.7 1999/10/21 12:08:08 hohndel Exp $ */
 /*
    Voodoo Banshee driver version 1.0.2
 
@@ -121,7 +121,7 @@ void VBIdle()
   pVB=VBPTR();
   VBMakeRoom(1);
   VBLaunch(SST_3D_OFFSET+SST_3D_COMMAND, SST_3D_NOP);
-  pVB->BltPrevX=pVB->BltPrevY=pVB->BltPrevW=pVB->BltPrevH=0;
+  pVB->BltPrevY=-1;
   i=0;
   while (1) {
     stat=REF32(0);
@@ -173,6 +173,7 @@ VBSubsequentFillRectSolid(int x, int y, int w, int h)
   VBMakeRoom(2);
   VBLaunch(SST_2D_OFFSET+SST_2D_DSTSIZE, (w&0x1FFF) | ((h&0x1FFF)<<16));
   VBLaunch(SST_2D_OFFSET+SST_2D_LAUNCH, (x&0x1FFF) | ((y&0x1FFF)<<16));
+  pVB->BltPrevY=y;
 }
 
 void
@@ -230,16 +231,9 @@ VBSubsequentScreenToScreenCopy(int srcX, int srcY, int dstX, int dstY,
     srcY+=h-1;
     dstY+=h-1;
   }
-  /* Consecutive Overlapping regions can hang the board */
-  if (!((srcX+w<pVB->BltPrevX) || (srcX>=pVB->BltPrevX+pVB->BltPrevW) ||
-      (srcY+h<pVB->BltPrevY) || (srcY>=pVB->BltPrevY+pVB->BltPrevH))) {
+  if (srcY>=pVB->BltPrevY-8 && srcY<=pVB->BltPrevY) {
     VBMakeRoom(1);
     VBLaunch(SST_3D_OFFSET+SST_3D_COMMAND, SST_3D_NOP);
-  } else {
-    pVB->BltPrevX=dstX;
-    pVB->BltPrevY=dstY;
-    pVB->BltPrevW=w;
-    pVB->BltPrevH=h;
   }
   if(pVB->Transparent) {
     /* Turn on source color keying for transpaerncy. */
@@ -255,6 +249,7 @@ VBSubsequentScreenToScreenCopy(int srcX, int srcY, int dstX, int dstY,
     VBMakeRoom(1);
     VBLaunch(SST_2D_OFFSET+SST_2D_COMMANDEXTRA, 0);
   }
+  pVB->BltPrevY=dstY;
 }
 
 void
@@ -298,6 +293,7 @@ VBSubsequentCPUToScreenColorExpand(int x, int y, int w, int h, int skipleft)
   VBLaunch(SST_2D_OFFSET+SST_2D_DSTSIZE, (w-skipleft&0x1FFF)|((h&0x1FFF)<<16));
   VBLaunch(SST_2D_OFFSET+SST_2D_SRCXY, skipleft&0x1F);
   VBLaunch(SST_2D_OFFSET+SST_2D_DSTXY, (x+skipleft&0x1FFF) | ((y&0x1FFF)<<16));
+  pVB->BltPrevY=y;
 }
 
 void
@@ -343,6 +339,7 @@ VBSubsequentScreenToScreenColorExpand(int srcx, int srcy, int x, int y, int w,
   VBLaunch(SST_2D_OFFSET+SST_2D_DSTSIZE, (w&0x1FFF) | ((h&0x1FFF)<<16));
   VBLaunch(SST_2D_OFFSET+SST_2D_DSTXY, (x&0x1FFF) | ((y&0x1FFF)<<16));
   VBLaunch(SST_2D_OFFSET+SST_2D_LAUNCH, (srcx&0x1FFF) | ((srcy&0x1FFF)<<16));
+  pVB->BltPrevY=y;
 }
 
 void
@@ -391,6 +388,7 @@ VBSubsequentTwoPointLine(int x1, int y1, int x2, int y2, int bias)
   }
   VBLaunch(SST_2D_OFFSET+SST_2D_LAUNCH, (x2&0x1FFF) | ((y2&0x1FFF)<<16));
 
+  pVB->BltPrevY=y2;
   pVB->ClipSelect = 0;
 }
 
@@ -467,6 +465,7 @@ VBSubsequentDashedTwoPointLine(int x1, int y1, int x2, int y2, int bias,
   }
   VBLaunch(SST_2D_OFFSET+SST_2D_LAUNCH, (x2&0x1FFF) | ((y2&0x1FFF)<<16));
 
+  pVB->BltPrevY=y2;
   pVB->ClipSelect = 0;
 }
 
@@ -523,6 +522,7 @@ VBSubsequent8x8PatternColorExpand(int patternx, int patterny, int x, int y,
   VBLaunch(SST_2D_OFFSET+SST_2D_DSTSIZE, (w&0x1FFF) | ((h&0x1FFF)<<16));
   VBLaunch(SST_2D_OFFSET+SST_2D_COMMAND, cmd);
   VBLaunch(SST_2D_OFFSET+SST_2D_LAUNCH, (x&0x1FFF) | ((y&0x1FFF)<<16));
+  pVB->BltPrevY=y;
 }
 
 void
@@ -578,6 +578,7 @@ VBSubsequentFillTrapezoidSolid(int ytop, int height, int left, int dxL,
   VBLaunch(SST_2D_OFFSET+SST_2D_COMMAND, cmd);
   VBLaunch(SST_2D_OFFSET+SST_2D_LAUNCH, (x3&0x1FFF) | ((ybot&0x1FFF)<<16));
   VBLaunch(SST_2D_OFFSET+SST_2D_LAUNCH, (x4&0x1FFF) | ((ybot&0x1FFF)<<16));
+  pVB->BltPrevY=ytop;
 }
 
 void VBImageWrite(int x, int y, int w, int h, void *src, int srcwidth,
@@ -608,6 +609,7 @@ void VBImageWrite(int x, int y, int w, int h, void *src, int srcwidth,
     VBMakeRoom(1);
     VBLaunch(SST_2D_OFFSET+SST_2D_LAUNCH, *((int *)src+i));
   }
+  pVB->BltPrevY=y;
 }
 
 static Bool
@@ -1164,6 +1166,7 @@ VBPolyLine(DrawablePtr pDrawable, GCPtr pGC, int mode, int npt, DDXPointPtr ppt)
   int xorg, yorg;
   RegionPtr cclip;
   cfbPrivGCPtr devPriv;
+  int linestipple, i;
   int cmd, fmt;
   int x1, y1, x2, y2;
   int PatternLength;
@@ -1223,8 +1226,7 @@ VBPolyLine(DrawablePtr pDrawable, GCPtr pGC, int mode, int npt, DDXPointPtr ppt)
     VBLaunch(SST_2D_OFFSET+SST_2D_COLORBACK, pGC->bgPixel);
   }
   
-  if(pGC->lineStyle != LineSolid) {
-    int linestipple, i;
+  if (pGC->lineStyle != LineSolid) {
     /* X Starts the pattern with the MSB, 3dfx starts with the LSB.
      * Swap the bit order.
      */
@@ -1272,15 +1274,24 @@ VBPolyLine(DrawablePtr pDrawable, GCPtr pGC, int mode, int npt, DDXPointPtr ppt)
     VBLaunch(SST_2D_OFFSET+SST_2D_LAUNCH, (x2&0x1FFF) | ((y2&0x1FFF)<<16));
   }
   
-  if(pGC->capStyle != CapNotLast) {
+  if (pGC->capStyle != CapNotLast) {
     cmd = SST_2D_LINE | (pVB->ClipSelect<<23) | (VBROPCvt[pGC->alu]<<24);
-    if(pGC->lineStyle == LineOnOffDash) {
+    if (pGC->lineStyle == LineOnOffDash) {
       cmd |= SST_2D_TRANSPARENT_MONOCHROME | SST_2D_STIPPLE_LINE;
-    } else if(pGC->lineStyle == LineDoubleDash) {
+    } else if (pGC->lineStyle == LineDoubleDash) {
       cmd |= SST_2D_STIPPLE_LINE;
     }
     VBIdle();
-    VBMakeRoom(1);
+    if (pGC->lineStyle != LineSolid) {
+      VBMakeRoom(2);
+      VBLaunch(SST_2D_OFFSET+SST_2D_LINESTIPPLE, linestipple);
+      VBLaunch(SST_2D_OFFSET+SST_2D_LINESTYLE, ((PatternLength-1)<<8) |
+	       (((pGC->dashOffset%PatternLength)&0x1F)<<24));
+    }
+    VBMakeRoom(4);
+    VBLaunch(SST_2D_OFFSET+SST_2D_DSTFORMAT, pVB->stride | (fmt<<16));
+    VBLaunch(SST_2D_OFFSET+SST_2D_COLORFORE, pGC->fgPixel);
+    VBLaunch(SST_2D_OFFSET+SST_2D_SRCXY, (x2&0x1FFF) | ((y2&0x1FFF)<<16));
     VBLaunch(SST_2D_OFFSET+SST_2D_COMMAND, cmd);
   }
   
@@ -1357,9 +1368,9 @@ VBPolySegment(DrawablePtr pDrawable, GCPtr pGC, int nseg, xSegment *pSeg)
   yorg = pDrawable->y;
   
   if(pGC->capStyle == CapNotLast) {
-    cmd = SST_2D_POLYLINE | (pVB->ClipSelect<<23) | (VBROPCvt[pVB->CurrentROP]<<24);
+    cmd = SST_2D_POLYLINE | (pVB->ClipSelect<<23) | (VBROPCvt[pGC->alu]<<24);
   } else {
-    cmd = SST_2D_LINE | (pVB->ClipSelect<<23) | (VBROPCvt[pVB->CurrentROP]<<24);
+    cmd = SST_2D_LINE | (pVB->ClipSelect<<23) | (VBROPCvt[pGC->alu]<<24);
   }
   
   if(pGC->lineStyle == LineOnOffDash) {
@@ -1399,13 +1410,15 @@ VBPolySegment(DrawablePtr pDrawable, GCPtr pGC, int nseg, xSegment *pSeg)
     pVB->ErrorSet=FALSE;
   }
   
-  if(pGC->lineStyle != LineSolid) {
-    VBMakeRoom(1);
-    VBLaunch(SST_2D_OFFSET+SST_2D_LINESTYLE, linestyle);
-  }
+  VBMakeRoom(1);
   VBLaunch(SST_2D_OFFSET+SST_2D_COMMAND, cmd);
   while(nseg--) {
-    VBMakeRoom(3);
+    if(pGC->lineStyle != LineSolid) {
+      /* The pattern offset needs to be set for each segment */
+      VBMakeRoom(1);
+      VBLaunch(SST_2D_OFFSET+SST_2D_LINESTYLE, linestyle);
+    }
+    VBMakeRoom(2);
     VBLaunch(SST_2D_OFFSET+SST_2D_SRCXY,
              ((pSeg->x1+xorg)&0x1FFF) | (((pSeg->y1+yorg)&0x1FFF)<<16));
     VBLaunch(SST_2D_OFFSET+SST_2D_LAUNCH,

@@ -1,20 +1,22 @@
-                        README for XFree86[tm] 3.3.5
+                        README for XFree86[tm] 3.3.6
 
                           The XFree86 Project, Inc
 
-                               17 August 1999
+                               13 October 1999
 
                                   Abstract
 
      XFree86 is a port of X11R6.3 that supports several Unix and Unix-
-     like operating systems on Intel and other platforms.  This release
-     is a quick update to XFree86 3.3.4, fixing a few bugs that were
-     found after releasing it and adding support to two more operating
-     systems. The release is available as source patches against the X
-     Consortium X11R6.3 code and the XFree86 3.3.4 release.  Binary dis-
-     tributions for many architectures are also available.
+     like operating systems on Intel and other platforms.  The 3.3.x
+     versions of XFree86 are considered the "legacy branch" of XFree86.
+     The majority of development is being done in the XFree86-4 branch.
+     We will continue to maintain XFree86-3.3.x to some degree at least
+     throughout the year 2000.  The release is available as source
+     patches against the X Consortium X11R6.3 code and the XFree86 3.3.5
+     release.  Binary distributions for many architectures are also
+     available.
 
-1.  What's new in XFree86 3.3.5
+1.  What's new in XFree86 3.3.6
 
 For a summary of new features in this release, please refer to the RELNOTES
 file.  For a detailed list of changes, refer to the CHANGELOG file in the
@@ -28,33 +30,17 @@ Note: Not all systems listed here have been tested with the current release.
 
                o Esix: 4.0.3A, 4.0.4, 4.0.4.1
 
-               o Microport: 2.2, 3.1, 4.1, 4.2
-
-               o Dell: 2.1, 2.2, 2.2.1
-
-               o UHC: 2.0, 3.6
-
-               o Consensys: 1.2
-
-               o MST: 4.0.3 (Load 2.07 and Load 3.02)
-
-               o ISC: 4.0.3
-
-               o AT&T: 2.1, 4.0
-
-               o NCR: MP-RAS
-
                o SunSoft: Solaris x86 2.1, 2.4, 2.5, 2.5.1, 2.6
 
-               o PANIX 5.0 for AT
-
       SVR4.2:
+            (untested lately)
 
                o Consensys
 
                o Novell/SCO UnixWare
 
       SVR3:
+            (untested lately)
 
                o ISC: 3.0, 4.0, 4.1
 
@@ -91,7 +77,7 @@ Note: Not all systems listed here have been tested with the current release.
 
 3.  Supported video-card chip-sets
 
-At this time, XFree86 3.3.5 supports the following chipsets:
+At this time, XFree86 3.3.6 supports the following chipsets:
 
       Ark Logic
             ARK1000PV, ARK1000VL, ARK2000PV, ARK2000MT
@@ -104,7 +90,7 @@ At this time, XFree86 3.3.5 supports the following chipsets:
             68800-6, 68800AX, 68800LX, 88800GX-C, 88800GX-D, 88800GX-E,
             88800GX-F, 88800CX, 264CT, 264ET, 264VT, 264GT, 264VT-B, 264VT3,
             264GT-B, 264GT3 (this list includes the Mach8, Mach32, Mach64, 3D
-            Rage, 3D Rage II and 3D Rage Pro)
+            Rage, 3D Rage II and 3D Rage Pro), Rage LT, Rage LT PRO, Rage 128
 
       Avance Logic
             ALG2101, ALG2228, ALG2301, ALG2302, ALG2308, ALG2401
@@ -180,7 +166,7 @@ At this time, XFree86 3.3.5 supports the following chipsets:
 
       SiS
             86C201, 86C202, 86C205, 86C215, 86C225, 5597, 5598, 6326, 530,
-            620
+            620, 540, 630, 300
 
       3dfx
             Voodoo Banshee, Voodoo3
@@ -222,8 +208,8 @@ mono and 16 color modes, and some are supported an higher color depths.
 Refer to the chipset-specific README files (currently for TGA, Matrox,
 Mach32, Mach64, NVidia, Oak, P9000, S3 (except ViRGE), S3 ViRGE, SiS, Video7,
 Western Digital, Tseng (W32), Tseng (all), AGX/XGA, ARK, ATI (SVGA server),
-Chips and Technologies, Cirrus, Trident, NeoMagic, Rendition, Epson, 3DLabs)
-i740) for more information about using those chipsets.
+Chips and Technologies, Cirrus, Trident, NeoMagic, Rendition, Rage128, Epson,
+3DLabs) i740) for more information about using those chipsets.
 
 The monochrome server also supports generic VGA cards, using 64k of video
 memory in a single bank, the Hercules monochrome card, the Hyundai HGC1280,
@@ -351,6 +337,10 @@ XFree86 support was integrated into the base X11R6 distribution by:
       Linux support by:
 
                o Orest Zborowski <orestz@eskimo.com>
+
+      DG/ux support by:
+
+               o Takis Psarogiannakopoulos <takis@dpmms.cam.ac.uk>
 
       SCO Unix support by:
 
@@ -859,27 +849,39 @@ XFree86 support was integrated into the base X11R6 distribution by:
 6.  Contact information
 
 Ongoing development planning and support is coordinated by the XFree86 Core
-Team.  At this time the Core Team consists of (in alphabetical order):
-
-   o Robin Cutshaw <robin@XFree86.org>
+Team.  At this time the Core Team consists of (in chronoligical order):
 
    o David Dawes <dawes@XFree86.org>
 
-   o Marc Evans <marc@XFree86.org>
-
-   o Harm Hanemaayer <H.Hanemaayer@inter.nl.net>
-
-   o Dirk Hohndel <hohndel@XFree86.org>
-
-   o Harald Koenig <koenig@XFree86.org>
+   o David Wexelblat <dwex@XFree86.org>
 
    o Rich Murphey <rich@XFree86.org>
 
-   o Takaaki Nomura <nomura@XFree86.org>
+   o Dirk Hohndel <hohndel@XFree86.org>
 
    o Jon Tombs <tombs@XFree86.org>
 
-   o David Wexelblat <dwex@XFree86.org>
+   o Marc Evans <marc@XFree86.org>
+
+   o Robin Cutshaw <robin@XFree86.org>
+
+   o Takaaki Nomura <nomura@XFree86.org>
+
+   o Harald Koenig <koenig@XFree86.org>
+
+   o Egbert Eich <eich@hilbert.ikp.physik.tu-darmstadt.de>
+
+   o Mark Vojkovich <mvojkovi@ucsd.edu>
+
+   o Alan Hourihane <alanh@fairlite.demon.co.uk>
+
+   o Preston Brown <pbrown@redhat.com>
+
+   o Marc Aurele La France <tsi@ualberta.cait>
+
+   o Kevin E. Martin <kevin@precisioninsight.com>
+
+   o Keith Packard <keithp@suse.com>
 
 Mail sent to <Core@XFree86.org> will reach the core team.  Please note that
 support questions should be sent to <XFree86@XFree86.org>.
@@ -922,6 +924,10 @@ are:
    o David Dawes, President and Secretary
 
    o Dirk Hohndel, Vice-President
+
+   o Robin Cutshaw, Director
+
+   o Marc Evans, Director
 
    o Glenn Lai, Director
 
@@ -984,6 +990,15 @@ the donation of equipment and resources.  The XFree86 Project, Inc gratefully
 acknowledges these contributions, and hopes that we can do justice to them by
 continuing to release high-quality free software for the betterment of the
 Internet community as a whole.
+
+   o SuSE <URL:http://www.suse.com/>
+
+SuSE, together with the Atlanta Linux Enthusiasts <URL:http://www.ale.org>
+and VA Linux Systems <URL:http://www.valinux.com> sponsored and organized the
+1st XFree86 hothouse as part of the Atlanta Linux Showcase from Oct 9 till
+Oct 15, 1999. In this week XFree86 made more progress than in any other week
+in the history of The XFree86 Project.  We are already planning to repeat
+this in 2000.
 
    o UUNET Communications Services, Inc. <URL:http://www.uu.net/>
 
@@ -1080,7 +1095,7 @@ ject has been provided from its proceeds.
 
    o Joel Storm
 
-   o S.u.S.E. GmbH <URL:http://www.suse.de>, Fuerth, Germany
+   o SuSE GmbH <URL:http://www.suse.de>, Nürnberg, Germany
 
    o Tekelec Airtronic GmbH <URL:http://www.tekelec.com>, Muenchen, Germany
 
@@ -1104,8 +1119,8 @@ tion, contact The XFree86 Project, Inc, at <BOD@XFree86.org>
 8.  Source and binary archive sites
 
 Source patches are available to upgrade X11R6.3 PL2 from the X Consortium
-(now The Open Group) to XFree86 3.3.3.1.  Binaries for many OSs are also
-available.  The distribution is available from:
+(now The Open Group) to XFree86 3.3.6.  Binaries for many OSs are also avail-
+able.  The distribution is available from:
 
    o ftp://ftp.XFree86.org/pub/XFree86
 
@@ -1168,13 +1183,13 @@ and the following mirror sites:
 
         o ftp://ftp.kreonet.re.kr/pub/Linux/xfree86 (source and binaries)
 
-Ensure that you are getting XFree86 3.3.3.1 - some of these sites may archive
+Ensure that you are getting XFree86 3.3.6 - some of these sites may archive
 older releases as well.  Check the RELNOTES to find which files you need to
 take from the archive.
 
-     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/README.sgml,v 3.75.2.54 1999/08/17 07:39:29 hohndel Exp $
+     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/README.sgml,v 3.75.2.57 1999/10/13 21:46:26 hohndel Exp $
 
      $XConsortium: README.sgml /main/31 1996/10/28 05:43:24 kaleb $
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/README,v 3.76.2.51 1999/08/17 13:28:07 hohndel Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/README,v 3.76.2.52 1999/10/13 21:48:10 hohndel Exp $

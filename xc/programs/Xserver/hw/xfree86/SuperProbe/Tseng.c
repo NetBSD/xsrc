@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/Tseng.c,v 3.7.2.2 1997/07/07 04:11:02 dawes Exp $ */ 
+/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/Tseng.c,v 3.7.2.3 1999/11/26 15:22:53 hohndel Exp $ */ 
 /*
  * (c) Copyright 1993,1994 by David Wexelblat <dwex@xfree86.org>
  *
@@ -65,7 +65,7 @@ int *Chipset;
 	if (!NoPCI)
 	{
 	    while ((pcrp = pci_devp[i]) != (struct pci_config_reg *)NULL) {
-		if (pcrp->_vendor == PCI_VENDOR_TSENG)
+		if (pcrp->_vendor == PCI_VENDOR_TSENG && pcrp->_status_command & 7)
 		{
 			switch (pcrp->_device)
 			{

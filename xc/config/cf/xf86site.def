@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/config/cf/xf86site.def,v 3.101.2.31 1999/08/02 08:37:48 hohndel Exp $
+XCOMM $XFree86: xc/config/cf/xf86site.def,v 3.101.2.36 1999/12/28 12:13:34 hohndel Exp $
 /******************************************************************************/
 /*
  * This file is to provide a quick method for most people to change the
@@ -269,11 +269,11 @@ XCOMM $XFree86: xc/config/cf/xf86site.def,v 3.101.2.31 1999/08/02 08:37:48 hohnd
 /*
  * SVGA server:
  *
-#define XF86SvgaDrivers		nv et4000 et3000 pvga1 gvga ati sis tvga8900 \
+#define XF86SvgaDrivers		nv et4000 et3000 pvga1 gvga r128 ati sis tvga8900 \
 				cirrus ncr77c22 compaq mga oak al2101 ali \
 				cl64xx video7 ark mx realtek apm s3_savage \
 				s3v s3_svga neo chips cyrix rendition p9x00 \
-				spc8110 i740 tdfx generic
+				spc8110 i740 tdfx i810 smi generic
  */
 
 /*
@@ -594,8 +594,6 @@ XCOMM $XFree86: xc/config/cf/xf86site.def,v 3.101.2.31 1999/08/02 08:37:48 hohnd
 
 /*
  * To install Japanese versions of the documentation uncomment this.
- * Note: The Japanese documentation consists of a subset of the
- * XFree86 3.1 docs.
  *
 #define InstallJapaneseDocs	YES
  */

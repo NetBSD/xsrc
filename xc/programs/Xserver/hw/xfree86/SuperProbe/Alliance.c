@@ -25,7 +25,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/Alliance.c,v 3.0.2.1 1997/07/07 04:10:59 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/Alliance.c,v 3.0.2.3 1999/11/26 15:22:49 hohndel Exp $ */
 
 #include "Probe.h"
 
@@ -56,7 +56,7 @@ int *Chipset;
 	if (!NoPCI)
 	{
 	    while ((pcrp = pci_devp[i]) != (struct pci_config_reg *)NULL) {
-		if (pcrp->_vendor == PCI_VENDOR_ALLIANCE)
+		if (pcrp->_vendor == PCI_VENDOR_ALLIANCE && pcrp->_status_command & 7)
 		{
 			switch (pcrp->_device)
 			{
@@ -68,6 +68,9 @@ int *Chipset;
 				break;
 			case PCI_CHIP_PMAT24:
 				*Chipset = CHIP_ALSCAT24;
+				break;
+			case PCI_CHIP_PMAT3D:
+				*Chipset = CHIP_ALSCAT3D;
 				break;
 			default:
 				Chip_data = pcrp->_device;
@@ -94,6 +97,8 @@ int *Chipset;
 		*Chipset = CHIP_ALSC6422;
 	else if ( !strcmp(chipid, "Pro6424") )
 		*Chipset = CHIP_ALSCAT24;
+	else if ( !strcmp(chipid, "ProAT3D") )
+		*Chipset = CHIP_ALSCAT3D;
 	else
 		return(FALSE);
 

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/chips/ct_driver.c,v 3.35.2.12 1998/11/06 09:46:58 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/chips/ct_driver.c,v 3.35.2.13 1999/12/11 19:00:44 hohndel Exp $ */
 /*
  * Copyright 1993 by Jon Block <block@frc.com>
  * Modified by Mike Hollick <hollick@graphics.cis.upenn.edu>
@@ -186,7 +186,7 @@ int ctCurrentClock;
 ctMemClockReg ctMemClkReg;
 ctMemClockPtr ctMemClk = &ctMemClkReg;
 static unsigned char ctClockType;
-static unsigned char ctConsole_clk[3];
+static unsigned char ctConsole_clk[4];
 
 #define TYPE_HW 0x01
 #define TYPE_PROGRAMMABLE 0x02
@@ -811,7 +811,7 @@ ctCalcClock(int Clock, unsigned char *vclk)
     int M_min = 3;
 
     /* Hack to deal with problem of Toshiba 720CDT clock */
-    int M_max = ctisHiQV32 ? 63 : 127;
+    int M_max = (ctisHiQV32 && CHIPSchipset != CT_9000) ? 63 : 127;
 
 
     /* Other parameters available on the 65548 but not the 65545, and
@@ -838,11 +838,18 @@ ctCalcClock(int Clock, unsigned char *vclk)
      * 
      * I haven't put in any support for those here.  For simplicity,
      * they should be set to 0 on the 65548, and left untouched on
-     * earlier chips.  */
+     * earlier chips.
+     *
+     * Other parameters available on the 69000
+     *
+     * + The 69000 has no reference clock divider, so PSN must
+     *   always be 1.
+     *   XRCB[0:1] are reserved according to the data book
+     */
 
     target = Clock * 1000;
 
-    for (PSNx = 0; PSNx <= 1; PSNx++) {
+    for (PSNx = (CHIPSchipset == CT_9000) ? 1 : 0; PSNx <= 1; PSNx++) {
 	int low_N, high_N;
 	double Fref4PSN;
 
@@ -860,7 +867,7 @@ ctCalcClock(int Clock, unsigned char *vclk)
 	for (N = low_N; N <= high_N; N++) {
 	    double tmp = Fref4PSN / N;
 
-	    for (P = ctisHiQV32 ? 1 : 0; P <= 5; P++) {	
+	    for (P = (ctisHiQV32 && CHIPSchipset != CT_9000) ? 1 :  0; P <= 5; P++) {	
 	      /* to force post divisor on Toshiba 720CDT */
 		double Fvco_desired = target * (1 << P);
 		double M_desired = Fvco_desired / tmp;
@@ -880,7 +887,7 @@ ctCalcClock(int Clock, unsigned char *vclk)
 
 		for (M = M_low; M <= M_hi; M++) {
 		    Fvco = tmp * M;
-		    if (Fvco <= 48.0e6)
+		    if (Fvco <= ((CHIPSchipset == CT_9000) ? 100.0e6 : 48.0e6))
 			continue;
 		    if (Fvco > 220.0e6)
 			break;
@@ -903,7 +910,8 @@ ctCalcClock(int Clock, unsigned char *vclk)
 	    }
 	}
     }
-    vclk[0] = (bestP << (ctisHiQV32 ? 4 : 1)) + (bestPSN == 1);
+    vclk[0] = (bestP << (ctisHiQV32 ? 4 : 1)) +
+    		((CHIPSchipset == CT_9000) ? 0 : (bestPSN == 1));
     vclk[1] = bestM - 2;
     vclk[2] = bestN - 2;
 #ifdef DEBUG
@@ -2821,8 +2829,10 @@ CHIPSRestore(restore)
 #ifdef IO_DEBUG
     ErrorF("1: 0x3CC: %X ", (unsigned char)inb(0x3CC));
 #endif
-    if (restore->std.NoClock >= 0)
+    if (restore->std.NoClock >= 0) {
       ctClockLoad(ctClockType, &restore->ctClock);
+      ((vgaHWPtr) restore)->MiscOutReg = inb(0x3cc);
+    }
 #ifdef IO_DEBUG
     ErrorF("-> %X\n", (unsigned char)inb(0x3CC));
 #endif

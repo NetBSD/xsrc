@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/tdfx/vb_driver.c,v 1.1.2.7 1999/07/13 07:09:53 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/tdfx/vb_driver.c,v 1.1.2.9 1999/11/21 18:45:06 robin Exp $ */
 /*
    Voodoo Banshee driver version 1.0.2
 
@@ -466,6 +466,7 @@ VBProbe() {
     ErrorF("VB: unsupported depth\n");
     return FALSE;
   }
+  pVB->vgaInitDone=FALSE;
 
   vga256InfoRec.bankedMono = FALSE;
 #ifdef XFreeXDGA
@@ -477,6 +478,8 @@ VBProbe() {
 #endif
 
   OFLG_SET(CLOCK_OPTION_PROGRAMABLE, &vga256InfoRec.clockOptions);
+  OFLG_SET(OPTION_SW_CURSOR, &TDFX.ChipOptionFlags);
+  OFLG_SET(OPTION_NOACCEL, &TDFX.ChipOptionFlags);
   return TRUE;
 }
 
@@ -519,10 +522,12 @@ VBRestore(void *restorein)
 {
   VBPtr pVB;
   vgaVBPtr restore = (vgaVBPtr)restorein;
-  int stat;
 
   VBTRACE("VBRestore start restore=%x\n", restore);
   pVB = VBPTR();
+
+  /* This will be nonzero when glide is active */
+  if (REF32(0x0080024)) return;
 
   vgaProtect(TRUE);
   VBvgaHWRestore(restorein);
@@ -539,8 +544,8 @@ VBRestore(void *restorein)
   REF32(SST_2D_OFFSET+SST_2D_CLIP1MIN)=restore->clip1min;
   REF32(SST_2D_OFFSET+SST_2D_CLIP1MAX)=restore->clip1max;
   outl(pVB->IOBase+VGAINIT0, restore->vgainit0);
+
   outl(pVB->IOBase+VIDPROCCFG, restore->vidcfg);
-  /*  outl(pVB->IOBase+VGAINIT1, restore->vgainit1); */
   vgaProtect(FALSE);
   VBIdle();
 }
@@ -754,17 +759,15 @@ SetupGfxPLL(int freq) {
 static Bool
 VBInitVGA()
 {
-  static Bool initDone=FALSE;
   VBPtr pVB;
   vgaVBPtr vbReg;
   int miscinit1;
   int i, j;
 
   VBTRACE("VBInitVGA start\n");
-  if (initDone) return TRUE;
-  initDone=TRUE;
   pVB=VBPTR();
   if (!pVB->IOBase) return FALSE;
+  pVB->vgaInitDone=TRUE;
   vbReg = (vgaVBPtr)vgaNewVideoState;
   vbReg->vgainit0 = 0;
   vbReg->vgainit0 |= SST_VGA0_EXTENSIONS;
@@ -828,8 +831,8 @@ VBSetMode(DisplayModePtr mode) {
 
   VBTRACE("VBSetMode start\n");
 
-  VBInitVGA();
   pVB = VBPTR();
+  if (!pVB->vgaInitDone) VBInitVGA();
   vbReg = (vgaVBPtr)vgaNewVideoState;
 
   vbReg->ExtVga[0]=0;
@@ -911,6 +914,7 @@ VBSetMode(DisplayModePtr mode) {
 static Bool
 VBInit(DisplayModePtr mode)
 {
+  VBPtr pVB;
   vgaHWPtr hwp;
   Bool dbl;
   vgaVBPtr vbReg;

@@ -1,6 +1,6 @@
 /*
  * $XConsortium: xdpyinfo.c /main/34 1995/12/08 12:09:32 dpw $
- * $XFree86: xc/programs/xdpyinfo/xdpyinfo.c,v 3.12.2.3 1999/04/21 07:21:23 hohndel Exp $
+ * $XFree86: xc/programs/xdpyinfo/xdpyinfo.c,v 3.12.2.4 1999/12/01 14:54:04 hohndel Exp $
  * 
  * xdpyinfo - print information about X display connecton
  *
@@ -682,7 +682,7 @@ char *msetable[] = { "None", "Microsoft", "MouseSystems", "MMSeries",
 		     "GlidePoint", "IntelliMouse", "ThinkingMouse",
 		     "IMPS/2", "ThinkingMousePS/2", "MouseManPlusPS/2",
 		     "GlidePointPS/2", "NetMousePS/2", "NetScrollPS/2",
-		     "SysMouse", "Auto", "AceCad", "wsmouse" };
+		     "SysMouse", "Auto", "AceCad", "wsmouse", "usb" };
 
 char *flgtable[] = { "None", "ClearDTR", "ClearRTS",
 		     "ClearDTR and ClearRTS" };
@@ -714,7 +714,7 @@ print_XF86Misc_info(dpy, extname)
 	printf("Xqueue\n");
       else if (mouseinfo.type == MTYPE_OSMOUSE)
 	printf("OSMouse\n");
-      else if (mouseinfo.type <= MTYPE_WSMOUSE)
+      else if (mouseinfo.type <= MTYPE_USB)
 	printf("%s\n", msetable[mouseinfo.type+1]);
       else
 	  printf("Unknown\n");

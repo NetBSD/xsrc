@@ -8,9 +8,9 @@
 -->
 <title> SiS ユーザ向けの情報
 <author> Xavier Ducoin (<it>xavier@rd.lectra.fr</it>)
-<date> 27 February 1998
+<date> June 25 1999
 <trans>The X Japanese Documentation Project
-<tdate> 15 January 1999
+<tdate> August 2 1999
 
 <!-- Table of contents -->
 <toc>
@@ -20,20 +20,19 @@
 
 <!--
 This driver was primarily written for the SiS86c201.  It also works
-on the 202 , 205 and 5597/5598 chips. Support for 6326 is currently 
-enabled, but tested only on few cards. 
+on the 202 , 205 and 5597/5598 chips. Support for 6326, 530 and 620
+has been added since.
 Some support for SiS86c215 and 225 was added as well. This support consists
 simply in 
 identify it as 205, so probably 86c215 won't work with acceleration 
 (is a cheap 205 without some features).
 -->
 このドライバは当初 SiS86c201 用に作成されました。そしてこのドライバは 
-SiS86c202, SiS86c205, SiS5597/5598 チップでも動作します。現在は 
-SiS6326 をサポートするようになりましたが、テストはほとんど行っていませ
-ん。また、SiS86c215 と SiS86c225 のサポートもいくらか追加しました。サ
-ポートと言っても単にチップを SiS86c205 として識別するだけですから、お
-そらく 86c215 はアクセラレーションモードでは動作しないでしょう(機能を
-いくつか取り除いた安物の 205 ということになります)。
+202, 205, 5597/5598 チップでも動作します。現在は 6326, 530, 620 もサポー
+トされています。また、SiS86c215 と 225 もいくらかサポートされるように
+なりました。サポートと言っても単にチップを 205 として識別するだけです
+から、おそらく 86c215 はアクセラレーションモードでは動作しないでしょう
+(機能をいくつか取り除いた安物の 205 ということになります)。
 
 <!--
 The driver supports many advanced features.  These include:
@@ -64,12 +63,12 @@ The driver supports many advanced features.  These include:
 <!--
 <tag>SiS 86c201</tag>
 	(External hardware clock)
-<tag>SiS 86c202, SiS 86c2x5, SiS 5597/5598, SiS 6326</tag>
+<tag>SiS 86c202, SiS 86c2x5, SiS 5597/5598, SiS 6326, SiS 530, SiS 620</tag>
 	(Internal clock synthesizer)
 -->
 <tag>SiS 86c201</tag>
 	(外部ハードウェアクロック)
-<tag>SiS 86c202, SiS 86c2x5, SiS 5597/5598, SiS 6326</tag>
+<tag>SiS 86c202, SiS 86c2x5, SiS 5597/5598, SiS 6326, SiS 530, SiS 620</tag>
 	(内部クロックシンセサイザ)
 </descrip>
 
@@ -363,12 +362,13 @@ solve the problem.
 下げれば問題が解決するでしょう。
 
 <verb>
+Updated June 25, 1999 by Dirk Hohndel, covering changes for 530 and 620.
 Updated October 12, 1998 by Juanjo Santamarta, covering changes for 5597 and 6326.
 Updated November 6, 1998 by Juanjo Santamarta, covering changes for 5597, 86c2x5 and 6326.
 </verb>
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/sgml/SiS.sgml,v 1.1.2.2 1999/05/25 12:00:33 hohndel Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/sgml/SiS.sgml,v 1.1.2.3 1999/11/26 15:23:51 hohndel Exp $
 </verb>
 
 <sect>日本語訳について<p>

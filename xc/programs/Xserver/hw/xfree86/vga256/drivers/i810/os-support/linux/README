@@ -1,0 +1,23 @@
+This is the gart device driver for the linux kernel, written by Jeff
+Hartmann and others as part of the accelerated glx project.
+
+To build, you should just be able to type make.  The makefile is extremely simple, so if it doesn't work, fix it... 
+
+You should get a module you can start with:
+
+insmod agpgart.o
+
+To create the device file:
+
+mknod /dev/agpgart c 10 175
+
+Then recompile the glx module:
+
+./configure --with-mesa=<mesasrc> --enable-agp && make
+make install (as root)
+restart X
+
+For the i810 beta release I (Keith Whitwell) have removed support for the LX,BX and Via chipsets originally in this module.  The i810 changes haven't been tested on those boards yet, so this is probably prudent.
+
+
+$XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/i810/os-support/linux/README,v 1.1.2.2 1999/11/18 19:06:19 hohndel Exp $

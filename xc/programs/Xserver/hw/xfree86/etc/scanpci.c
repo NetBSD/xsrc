@@ -19,12 +19,11 @@
  *                        wcc386p -zq -omaxet -7 -4s -s -w3 -d2 name.c
  *                        and link with PharLap or other dos extender for exe
  *
- * case Intel DG/ux:  gcc -DDGUX scanpci.c -o scanpci (with gcc-DG-2.8.1.3)
- *                    OR you may need -DDGUX -DDG_NO_SYSI86 for old DG/ux Releases.
+ * case Intel DG/ux:  gcc -DDGUX scanpci.c -o scanpci (with gcc-DG-2.7.2.88)
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/etc/scanpci.c,v 3.34.2.32 1999/08/26 05:38:44 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/etc/scanpci.c,v 3.34.2.35 1999/11/26 15:24:08 hohndel Exp $ */
 
 /*
  * Copyright 1995 by Robin Cutshaw <robin@XFree86.Org>
@@ -68,6 +67,7 @@
 #endif
 
 #include <stdio.h>
+#include <unistd.h>
 #include <sys/types.h>
 #if defined(SVR4) && !defined(DGUX)
 #if defined(sun)
@@ -89,9 +89,15 @@
 #else
 #include <sys/seg.h>
 #endif
-#if !defined(V86SC_IOPL)
-#include <sys/v86.h>
-#endif
+#if defined(sun) && defined (i386) && defined (SVR4)	/* Solaris? */
+# if !defined(V86SC_IOPL)				/* Solaris 7? */
+#include <sys/v86.h>					/* Nope */
+# else
+/* Do nothing what so ever */				/* Yup */
+# endif /* V86SC_IOPL */
+#else
+#  include <sys/v86.h>					/* Not solaris */
+#endif /* sun/i386/svr4 */
 #endif
 #if defined(__FreeBSD__) || defined(__386BSD__)
 #include <sys/file.h>
@@ -162,7 +168,7 @@ unsigned inb(unsigned port);
 
 #if defined(__GNUC__)
 
-#if !defined(__alpha__) && !defined(__powerpc__)
+#if !defined(__alpha__) && !defined(__powerpc__) && !defined(__sparc__)
 #if defined(GCCUSESGAS)
 #define OUTB_GCC "outb %0,%1"
 #define OUTL_GCC "outl %0,%1"
@@ -184,7 +190,7 @@ static unsigned char inb(unsigned short port) { unsigned char ret;
 static unsigned long inl(unsigned short port) { unsigned long ret;
      __asm__ __volatile__(INL_GCC : "=a" (ret) : "d" (port)); return ret; }
 
-#endif /* !defined(__alpha__) && !defined(__powerpc__) */
+#endif /* !defined(__alpha__) && !defined(__powerpc__) && !defined(__sparc__) */
 #else  /* __GNUC__ */
 
 #if defined(__STDC__) && (__STDC__ == 1)
@@ -265,9 +271,15 @@ static unsigned long inl(unsigned short port) { unsigned long ret;
 #endif /* __WATCOMC__ */
 
 
-#if defined(__alpha__)
+#if defined(__alpha__) || defined(__sparc__)
 #if defined(linux)
 #include <asm/unistd.h>
+#if defined(__sparc__)
+#if !defined(__NR_pciconfig_read)
+#define __NR_pciconfig_read  148
+#define __NR_pciconfig_write 149
+#endif
+#endif
 #define BUS(tag) (((tag)>>16)&0xff)
 #define DFN(tag) (((tag)>>8)&0xff)
 int pciconfig_read(
@@ -289,9 +301,9 @@ int pciconfig_write(
   return syscall(__NR_pciconfig_write, bus, dfn, off, len, buf);
 }
 #else
-Generate compiler error - scanpci unsupported on non-linux alpha platforms
+Generate compiler error - scanpci unsupported on non-linux alpha and sparc platforms
 #endif /* linux */
-#endif /* __alpha__ */
+#endif /* __alpha__ || __sparc__ */
 #if defined(Lynx) && defined(__powerpc__)
 /* let's mimick the Linux Alpha stuff for LynxOS so we don't have
  * to change too much code
@@ -358,7 +370,7 @@ int pciconfig_write(
 }
 #endif
 
-#if !defined(__powerpc__)
+#if !defined(__powerpc__) && !defined(__sparc__)
 struct pci_config_reg {
     /* start of official PCI config space header */
     union {
@@ -451,24 +463,43 @@ struct pci_config_reg {
 #define _prefetch_mem_base		bc.bg.prefetch_mem_base
 #define _prefetch_mem_limit		bc.bg.prefetch_mem_limit
     unsigned long rsvd1;
-    unsigned long rsvd2;
+    union {     /* Offset 0x2c - 0x2f */
+        unsigned long subsys_card_vendor;
+        unsigned long rsvd2;
+        struct {
+            unsigned short subsys_vendor;
+            unsigned short subsys_card;
+        } ssys;
+    } ssys_id;
+#define _subsys_card_vendor		ssys_id.subsys_card_vendor
+#define _subsys_vendor			ssys_id.ssys.subsys_vendor
+#define _subsys_card			ssys_id.ssys.subsys_card
     unsigned long _baserom;
     unsigned long rsvd3;
     unsigned long rsvd4;
     union {
-        unsigned long max_min_ipin_iline;
-	struct {
-	    unsigned char int_line;
-	    unsigned char int_pin;
-	    unsigned char min_gnt;
-	    unsigned char max_lat;
+	union {
+	    unsigned long max_min_ipin_iline;
+	    struct {
+		unsigned char int_line;
+		unsigned char int_pin;
+		unsigned char min_gnt;
+		unsigned char max_lat;
+	    } mmii;
 	} mmii;
-    } mmii;
-#define _max_min_ipin_iline mmii.max_min_ipin_iline
-#define _int_line mmii.mmii.int_line
-#define _int_pin  mmii.mmii.int_pin
-#define _min_gnt  mmii.mmii.min_gnt
-#define _max_lat  mmii.mmii.max_lat
+	struct {
+	    unsigned char res1;
+	    unsigned char res2;
+	    unsigned char bridge_control;
+	    unsigned char res3;
+	} bctrl;
+    } bm;
+#define _max_min_ipin_iline bm.mmii.max_min_ipin_iline
+#define _int_line bm.mmii.mmii.int_line
+#define _int_pin  bm.mmii.mmii.int_pin
+#define _min_gnt  bm.mmii.mmii.min_gnt
+#define _max_lat  bm.mmii.mmii.max_lat
+#define _b_ctrl   bm.bctrl.bridge_control
     /* I don't know how accurate or standard this is (DHD) */
     union {
 	unsigned long user_config;
@@ -493,7 +524,7 @@ struct pci_config_reg {
     unsigned long _cardnum;       /* config type 2 - private card number */
 };
 #else
-/* ppc is big endian, swapping bytes is not quite enough
+/* ppc and sparc are big endian, swapping bytes is not quite enough
  * to interpret the PCI config registers...
  */
 struct pci_config_reg {
@@ -593,24 +624,43 @@ struct pci_config_reg {
 #define _prefetch_mem_base		bc.bg.prefetch_mem_base
 #define _prefetch_mem_limit		bc.bg.prefetch_mem_limit
     unsigned long rsvd1;
-    unsigned long rsvd2;
+    union {     /* Offset 0x2c - 0x2f */
+        unsigned long subsys_card_vendor;
+        unsigned long rsvd2;
+        struct {
+            unsigned short subsys_card;
+            unsigned short subsys_vendor;
+        } ssys;
+    } ssys_id;
+#define _subsys_card_vendor		ssys_id.subsys_card_vendor
+#define _subsys_vendor			ssys_id.ssys.subsys_vendor
+#define _subsys_card			ssys_id.ssys.subsys_card
     unsigned long _baserom;
     unsigned long rsvd3;
     unsigned long rsvd4;
     union {
-        unsigned long max_min_ipin_iline;
-	struct {
-	    unsigned char max_lat;
-	    unsigned char min_gnt;
-	    unsigned char int_pin;
-	    unsigned char int_line;
+	union {
+	    unsigned long max_min_ipin_iline;
+	    struct {
+		unsigned char max_lat;
+		unsigned char min_gnt;
+		unsigned char int_pin;
+		unsigned char int_line;
+	    } mmii;
 	} mmii;
-    } mmii;
-#define _max_min_ipin_iline mmii.max_min_ipin_iline
-#define _int_line mmii.mmii.int_line
-#define _int_pin  mmii.mmii.int_pin
-#define _min_gnt  mmii.mmii.min_gnt
-#define _max_lat  mmii.mmii.max_lat
+	struct {
+	    unsigned char res1;
+	    unsigned char bridge_control;
+	    unsigned char res2;
+	    unsigned char res3;
+	} bctrl;
+    } bm;
+#define _max_min_ipin_iline bm.mmii.max_min_ipin_iline
+#define _int_line bm.mmii.mmii.int_line
+#define _int_pin  bm.mmii.mmii.int_pin
+#define _min_gnt  bm.mmii.mmii.min_gnt
+#define _max_lat  bm.mmii.mmii.max_lat
+#define _b_ctrl   bm.bctrl.bridge_control
     /* I don't know how accurate or standard this is (DHD) */
     union {
 	unsigned long user_config;
@@ -637,18 +687,21 @@ struct pci_config_reg {
 #endif
 
 extern void identify_card(struct pci_config_reg *, int);
+extern void print_default_class(struct pci_config_reg *pcr);
+extern void print_bridge_pci_class(struct pci_config_reg *pcr);
+extern void print_bridge_class(struct pci_config_reg *pcr);
 extern void print_i128(struct pci_config_reg *);
 extern void print_mach64(struct pci_config_reg *);
 extern void print_pcibridge(struct pci_config_reg *);
 extern void enable_os_io();
 extern void disable_os_io();
 
-#define MAX_DEV_PER_VENDOR_CFG1 48
+#define MAX_DEV_PER_VENDOR_CFG1 64
 #define MAX_DEV_PER_VENDOR_CFG2 16
 #define MAX_PCI_DEVICES         64
 #define NF ((void (*)())NULL)
 #define PCI_MULTIFUNC_DEV	0x80
-#if defined(__alpha__) || defined(__powerpc__)
+#if defined(__alpha__) || defined(__powerpc__) || defined(__sparc__)
 #define PCI_ID_REG              0x00
 #define PCI_CMD_STAT_REG        0x04
 #define PCI_CLASS_REG           0x08
@@ -695,16 +748,13 @@ struct pci_vendor_device {
                             { 0x0000, (char *)NULL, NF } } },
         { 0x1002, "ATI", {
                             { 0x4158, "Mach32", NF },
-			    { 0x5245, "Rage 128 RE", NF },
-			    { 0x5246, "Rage 128 RF", NF },
-			    { 0x524B, "Rage 128 RX", NF },
-			    { 0x524C, "Rage 128 RL", NF },
                             { 0x4354, "Mach64 CT", print_mach64 },
                             { 0x4358, "Mach64 CX", print_mach64 },
                             { 0x4554, "Mach64 ET", print_mach64 },
                             { 0x4742, "Mach64 GB", print_mach64 },
                             { 0x4744, "Mach64 GD", print_mach64 },
                             { 0x4749, "Mach64 GI", print_mach64 },
+                            { 0x474C, "Mach64 GL", print_mach64 },
                             { 0x474D, "Mach64 GM", print_mach64 },
                             { 0x474E, "Mach64 GN", print_mach64 },
                             { 0x474F, "Mach64 GO", print_mach64 },
@@ -722,7 +772,15 @@ struct pci_vendor_device {
                             { 0x4C44, "Mach64 LD", print_mach64 },
                             { 0x4C47, "Mach64 LG", print_mach64 },
                             { 0x4C49, "Mach64 LI", print_mach64 },
+                            { 0x4C4D, "Mach64 LM", print_mach64 },
+                            { 0x4C4E, "Mach64 LN", print_mach64 },
                             { 0x4C50, "Mach64 LP", print_mach64 },
+                            { 0x4C52, "Mach64 LR", print_mach64 },
+                            { 0x4C53, "Mach64 LS", print_mach64 },
+                            { 0x5245, "Rage 128 RE", NF },
+                            { 0x5246, "Rage 128 RF", NF },
+                            { 0x524B, "Rage 128 RK", NF },
+                            { 0x524C, "Rage 128 RL", NF },
                             { 0x5654, "Mach64 VT", print_mach64 },
                             { 0x5655, "Mach64 VU", print_mach64 },
                             { 0x5656, "Mach64 VV", print_mach64 },
@@ -859,8 +917,8 @@ struct pci_vendor_device {
                             { 0x5513, "85C5513", NF },
                             { 0x5571, "5571", NF },
                             { 0x5597, "5597", NF },
-			    { 0x6306, "530", NF },
-			    { 0x6326, "6326", NF },
+                            { 0x6306, "530", NF },
+                            { 0x6326, "6326", NF },
                             { 0x7001, "7001", NF },
                             { 0x0000, (char *)NULL, NF } } },
         { 0x103C, "HP", {
@@ -980,7 +1038,9 @@ struct pci_vendor_device {
         { 0x108E, "Sun", {
                             { 0x1000, "EBUS", NF },
                             { 0x1001, "Happy Meal", NF },
+                            { 0x5000, "Simba Bus Module", NF },
                             { 0x8000, "PCI Bus Module", NF },
+                            { 0xa000, "Sabre Bus Module", NF },
                             { 0x0000, (char *)NULL, NF } } },
         { 0x1095, "CMD", {
                             { 0x0640, "640A", NF },
@@ -1125,7 +1185,7 @@ struct pci_vendor_device {
                             { 0x0000, (char *)NULL, NF } } },
         { 0x1163, "Rendition", {
                             { 0x0001, "V1000", NF },
-                            { 0x2000, "V2100", NF },
+                            { 0x2000, "V2100/V2200", NF },
                             { 0x0000, (char *)NULL, NF } } },
         { 0x1179, "Toshiba", {
                             { 0x0000, (char *)NULL, NF } } },
@@ -1166,6 +1226,8 @@ struct pci_vendor_device {
                             { 0x0004, "GLINT Permedia", NF },
                             { 0x0006, "GLINT MX", NF },
                             { 0x0007, "GLINT Permedia 2", NF },
+                            { 0x0008, "GLINT Gamma", NF },
+                            { 0x0009, "GLINT Permedia 2v", NF },
                             { 0x0000, (char *)NULL, NF } } } ,
         { 0x4005, "Avance", {
                             { 0x0000, (char *)NULL, NF } } },
@@ -1193,8 +1255,9 @@ struct pci_vendor_device {
                             { 0x8A21, "Savage3D S3 (Macrovision Support)", NF },
                             { 0x8A22, "Savage4", NF },
                             { 0x8C01, "ViRGE/MX", NF },
-                            { 0x8C02, "ViRGE/MX?", NF },
-                            { 0x8C03, "ViRGE/MX+", NF },
+                            { 0x8C02, "ViRGE/MX+", NF },
+                            { 0x8C03, "ViRGE/MX+MV", NF },
+                            { 0x9102, "Savage2000", NF },
                             { 0x0000, (char *)NULL, NF } } },
         { 0x8086, "Intel", {
                             { 0x0482, "82375EB pci-eisa bridge", NF },
@@ -1261,7 +1324,7 @@ struct pci_vendor_device {
                             { 0x0000, (char *)NULL, NF } } }
 };
 
-#if defined(__alpha__)
+#if defined(__alpha__) || defined(__sparc__)
 #define PCI_EN 0x00000000
 #else
 #define PCI_EN 0x80000000
@@ -1303,9 +1366,10 @@ main(int argc, char *argv[])
 		exit(1);
         }
     }
+
 #if !defined(MSDOS)
-    if (getuid()) {
-	printf("This program must be run as root\n");
+    if (geteuid()) {
+	printf("This program must have root privileges\n");
 	exit(1);
     }
 #endif
@@ -1316,7 +1380,7 @@ main(int argc, char *argv[])
 
     enable_os_io();
 
-#if !defined(__alpha__) && !defined(__powerpc__)
+#if !defined(__alpha__) && !defined(__powerpc__) && !defined(__sparc__)
     pcr._configtype = 0;
 
     outb(PCI_MODE2_ENABLE_REG, 0x00);
@@ -1357,20 +1421,19 @@ main(int argc, char *argv[])
     idx = 0;
 
     do {
-        printf("Probing for devices on PCI bus %d:\n\n", pcr._pcibusidx);
+        printf("\nProbing for devices on PCI bus %d:\n", pcr._pcibusidx);
 
-        for (pcr._cardnum = 0x0; pcr._cardnum < MAX_DEV_PER_VENDOR_CFG1;
-		pcr._cardnum += 0x1) {
+        for (pcr._cardnum = 0x0; pcr._cardnum < 0x20; pcr._cardnum += 0x1) {
 	  func = 0;
 	  do { /* loop over the different functions, if present */
-#if !defined(__alpha__) && !defined(__powerpc__)
+#if !defined(__alpha__) && !defined(__powerpc__) && !defined(__sparc__)
 	    config_cmd = PCI_EN | (pcr._pcibuses[pcr._pcibusidx]<<16) |
                                   (pcr._cardnum<<11) | (func<<8);
 
             outl(PCI_MODE1_ADDRESS_REG, config_cmd);         /* ioreg 0 */
             pcr._device_vendor = inl(PCI_MODE1_DATA_REG);
 #else
-	    pciconfig_read(pcr._pcibuses[pcr._pcibusidx], pcr._cardnum<<3,
+	    pciconfig_read(pcr._pcibuses[pcr._pcibusidx], (pcr._cardnum<<3)|func,
 		PCI_ID_REG, 4, &pcr._device_vendor);
 #endif
 
@@ -1381,7 +1444,7 @@ main(int argc, char *argv[])
 	        pcr._pcibuses[pcr._pcibusidx], pcr._cardnum, func,
 		pcr._vendor, pcr._device);
 
-#if !defined(__alpha__) && !defined(__powerpc__)
+#if !defined(__alpha__) && !defined(__powerpc__) && !defined(__sparc__)
             outl(PCI_MODE1_ADDRESS_REG, config_cmd | 0x04);
 	    pcr._status_command  = inl(PCI_MODE1_DATA_REG);
             outl(PCI_MODE1_ADDRESS_REG, config_cmd | 0x08);
@@ -1400,6 +1463,8 @@ main(int argc, char *argv[])
 	    pcr._base4  = inl(PCI_MODE1_DATA_REG);
             outl(PCI_MODE1_ADDRESS_REG, config_cmd | 0x24);
 	    pcr._base5  = inl(PCI_MODE1_DATA_REG);
+            outl(PCI_MODE1_ADDRESS_REG, config_cmd | 0x2c);
+	    pcr._subsys_card_vendor = inl(PCI_MODE1_DATA_REG);
             outl(PCI_MODE1_ADDRESS_REG, config_cmd | 0x30);
 	    pcr._baserom = inl(PCI_MODE1_DATA_REG);
             outl(PCI_MODE1_ADDRESS_REG, config_cmd | 0x3C);
@@ -1407,29 +1472,31 @@ main(int argc, char *argv[])
             outl(PCI_MODE1_ADDRESS_REG, config_cmd | 0x40);
 	    pcr._user_config = inl(PCI_MODE1_DATA_REG);
 #else
-	    pciconfig_read(pcr._pcibuses[pcr._pcibusidx], pcr._cardnum<<3,
+	    pciconfig_read(pcr._pcibuses[pcr._pcibusidx], (pcr._cardnum<<3)|func,
 			PCI_CMD_STAT_REG, 4, &pcr._status_command);
-	    pciconfig_read(pcr._pcibuses[pcr._pcibusidx], pcr._cardnum<<3,
+	    pciconfig_read(pcr._pcibuses[pcr._pcibusidx], (pcr._cardnum<<3)|func,
 			PCI_CLASS_REG, 4, &pcr._class_revision);
-	    pciconfig_read(pcr._pcibuses[pcr._pcibusidx], pcr._cardnum<<3,
+	    pciconfig_read(pcr._pcibuses[pcr._pcibusidx], (pcr._cardnum<<3)|func,
 			PCI_HEADER_MISC, 4, &pcr._bist_header_latency_cache);
-	    pciconfig_read(pcr._pcibuses[pcr._pcibusidx], pcr._cardnum<<3,
+	    pciconfig_read(pcr._pcibuses[pcr._pcibusidx], (pcr._cardnum<<3)|func,
 			PCI_MAP_REG_START, 4, &pcr._base0);
-	    pciconfig_read(pcr._pcibuses[pcr._pcibusidx], pcr._cardnum<<3,
+	    pciconfig_read(pcr._pcibuses[pcr._pcibusidx], (pcr._cardnum<<3)|func,
 			PCI_MAP_REG_START + 0x04, 4, &pcr._base1);
-	    pciconfig_read(pcr._pcibuses[pcr._pcibusidx], pcr._cardnum<<3,
+	    pciconfig_read(pcr._pcibuses[pcr._pcibusidx], (pcr._cardnum<<3)|func,
 			PCI_MAP_REG_START + 0x08, 4, &pcr._base2);
-	    pciconfig_read(pcr._pcibuses[pcr._pcibusidx], pcr._cardnum<<3,
+	    pciconfig_read(pcr._pcibuses[pcr._pcibusidx], (pcr._cardnum<<3)|func,
 			PCI_MAP_REG_START + 0x0C, 4, &pcr._base3);
-	    pciconfig_read(pcr._pcibuses[pcr._pcibusidx], pcr._cardnum<<3,
+	    pciconfig_read(pcr._pcibuses[pcr._pcibusidx], (pcr._cardnum<<3)|func,
 			PCI_MAP_REG_START + 0x10, 4, &pcr._base4);
-	    pciconfig_read(pcr._pcibuses[pcr._pcibusidx], pcr._cardnum<<3,
+	    pciconfig_read(pcr._pcibuses[pcr._pcibusidx], (pcr._cardnum<<3)|func,
 			PCI_MAP_REG_START + 0x14, 4, &pcr._base5);
-	    pciconfig_read(pcr._pcibuses[pcr._pcibusidx], pcr._cardnum<<3,
+	    pciconfig_read(pcr._pcibuses[pcr._pcibusidx], (pcr._cardnum<<3)|func,
+			PCI_MAP_REG_START + 0x1c, 4, &pcr._subsys_card_vendor);
+	    pciconfig_read(pcr._pcibuses[pcr._pcibusidx], (pcr._cardnum<<3)|func,
 			PCI_MAP_ROM_REG, 4, &pcr._baserom);
-	    pciconfig_read(pcr._pcibuses[pcr._pcibusidx], pcr._cardnum<<3,
+	    pciconfig_read(pcr._pcibuses[pcr._pcibusidx], (pcr._cardnum<<3)|func,
 			PCI_INTERRUPT_REG, 4, &pcr._max_min_ipin_iline);
-	    pciconfig_read(pcr._pcibuses[pcr._pcibusidx], pcr._cardnum<<3,
+	    pciconfig_read(pcr._pcibuses[pcr._pcibusidx], (pcr._cardnum<<3)|func,
 			PCI_REG_USERCONFIG, 4, &pcr._user_config);
 #endif
 
@@ -1469,7 +1536,7 @@ main(int argc, char *argv[])
     } while (++pcr._pcibusidx < pcr._pcinumbus);
     }
 
-#if !defined(__alpha__) && !defined(__powerpc__)
+#if !defined(__alpha__) && !defined(__powerpc__) && !defined(__sparc__)
     /* Now try pci config 2 probe (deprecated) */
 
     if ((pcr._configtype == 2) || do_mode2_scan) {
@@ -1508,6 +1575,7 @@ main(int argc, char *argv[])
             pcr._base3 = inl(pcr._ioaddr + 0x1C);
             pcr._base4 = inl(pcr._ioaddr + 0x20);
             pcr._base5 = inl(pcr._ioaddr + 0x24);
+            pcr._subsys_card_vendor = inl(pcr._ioaddr + 0x2c);
             pcr._baserom = inl(pcr._ioaddr + 0x30);
             pcr._max_min_ipin_iline = inl(pcr._ioaddr + 0x3C);
             pcr._user_config = inl(pcr._ioaddr + 0x40);
@@ -1571,6 +1639,8 @@ identify_card(struct pci_config_reg *pcr, int verbose)
 	}
 
 	if (verbose) {
+	    printf(" CardVendor 0x%04x card 0x%04x\n",
+		pcr->_subsys_vendor, pcr->_subsys_card);
             if (pcr->_status_command)
                 printf("  STATUS    0x%04x  COMMAND 0x%04x\n",
                     pcr->_status, pcr->_command);
@@ -1578,53 +1648,114 @@ identify_card(struct pci_config_reg *pcr, int verbose)
                 printf("  CLASS     0x%02x 0x%02x 0x%02x  REVISION 0x%02x\n",
                     pcr->_base_class, pcr->_sub_class, pcr->_prog_if,
 		    pcr->_rev_id);
-            if (pcr->_bist_header_latency_cache)
-                printf("  BIST      0x%02x  HEADER 0x%02x  LATENCY 0x%02x  CACHE 0x%02x\n",
-                    pcr->_bist, pcr->_header_type, pcr->_latency_timer,
-		    pcr->_cache_line_size);
-            if (pcr->_base0)
-                printf("  BASE0     0x%08x  addr 0x%08x  %s\n",
-                    pcr->_base0, pcr->_base0 & (pcr->_base0 & 0x1 ?
-		    0xFFFFFFFC : 0xFFFFFFF0),
-		    pcr->_base0 & 0x1 ? "I/O" : "MEM");
-            if (pcr->_base1)
-                printf("  BASE1     0x%08x  addr 0x%08x  %s\n",
-                    pcr->_base1, pcr->_base1 & (pcr->_base1 & 0x1 ?
-		    0xFFFFFFFC : 0xFFFFFFF0),
-		    pcr->_base1 & 0x1 ? "I/O" : "MEM");
-            if (pcr->_base2)
-                printf("  BASE2     0x%08x  addr 0x%08x  %s\n",
-                    pcr->_base2, pcr->_base2 & (pcr->_base2 & 0x1 ?
-		    0xFFFFFFFC : 0xFFFFFFF0),
-		    pcr->_base2 & 0x1 ? "I/O" : "MEM");
-            if (pcr->_base3)
-                printf("  BASE3     0x%08x  addr 0x%08x  %s\n",
-                    pcr->_base3, pcr->_base3 & (pcr->_base3 & 0x1 ?
-		    0xFFFFFFFC : 0xFFFFFFF0),
-		    pcr->_base3 & 0x1 ? "I/O" : "MEM");
-            if (pcr->_base4)
-                printf("  BASE4     0x%08x  addr 0x%08x  %s\n",
-                    pcr->_base4, pcr->_base4 & (pcr->_base4 & 0x1 ?
-		    0xFFFFFFFC : 0xFFFFFFF0),
-		    pcr->_base4 & 0x1 ? "I/O" : "MEM");
-            if (pcr->_base5)
-                printf("  BASE5     0x%08x  addr 0x%08x  %s\n",
-                    pcr->_base5, pcr->_base5 & (pcr->_base5 & 0x1 ?
-		    0xFFFFFFFC : 0xFFFFFFF0),
-		    pcr->_base5 & 0x1 ? "I/O" : "MEM");
-            if (pcr->_baserom)
-                printf("  BASEROM   0x%08x  addr 0x%08x  %sdecode-enabled\n",
-                    pcr->_baserom, pcr->_baserom & 0xFFFF8000,
-                    pcr->_baserom & 0x1 ? "" : "not-");
-            if (pcr->_max_min_ipin_iline)
-                printf("  MAX_LAT   0x%02x  MIN_GNT 0x%02x  INT_PIN 0x%02x  INT_LINE 0x%02x\n",
-                    pcr->_max_lat, pcr->_min_gnt,
-		    pcr->_int_pin, pcr->_int_line);
-            if (pcr->_user_config)
-                printf("  BYTE_0    0x%02x  BYTE_1  0x%02x  BYTE_2  0x%02x  BYTE_3  0x%02x\n",
-                    pcr->_user_config_0, pcr->_user_config_1,
-		    pcr->_user_config_2, pcr->_user_config_3);
+	    switch (pcr->_class_revision & PCI_CLASS_MASK) {
+	    case PCI_CLASS_BRIDGE:
+		switch (pcr->_class_revision & PCI_SUBCLASS_MASK) {
+		case PCI_SUBCLASS_BRIDGE_PCI:
+		    print_bridge_pci_class(pcr);
+		    break;
+		default:
+		    print_bridge_class(pcr);
+		    break;
+		}
+		break;
+	    default:
+		print_default_class(pcr);
+		break;
+	    }
 	}
+}
+
+void
+print_default_class(struct pci_config_reg *pcr)
+{
+    if (pcr->_bist_header_latency_cache)
+	printf("  BIST      0x%02x  HEADER 0x%02x  LATENCY 0x%02x  CACHE 0x%02x\n",
+	       pcr->_bist, pcr->_header_type, pcr->_latency_timer,
+	       pcr->_cache_line_size);
+    if (pcr->_base0)
+	printf("  BASE0     0x%08x  addr 0x%08x  %s\n",
+	       pcr->_base0, pcr->_base0 & (pcr->_base0 & 0x1 ?
+					   0xFFFFFFFC : 0xFFFFFFF0), 
+	       pcr->_base0 & 0x1 ? "I/O" : "MEM");
+    if (pcr->_base1)
+	printf("  BASE1     0x%08x  addr 0x%08x  %s\n",
+	       pcr->_base1, pcr->_base1 & (pcr->_base1 & 0x1 ?
+					   0xFFFFFFFC : 0xFFFFFFF0), 
+	       pcr->_base1 & 0x1 ? "I/O" : "MEM");
+    if (pcr->_base2)
+	printf("  BASE2     0x%08x  addr 0x%08x  %s\n",
+	       pcr->_base2, pcr->_base2 & (pcr->_base2 & 0x1 ?
+					   0xFFFFFFFC : 0xFFFFFFF0), 
+	       pcr->_base2 & 0x1 ? "I/O" : "MEM");
+    if (pcr->_base3)
+	printf("  BASE3     0x%08x  addr 0x%08x  %s\n",
+	       pcr->_base3, pcr->_base3 & (pcr->_base3 & 0x1 ?
+					   0xFFFFFFFC : 0xFFFFFFF0), 
+	       pcr->_base3 & 0x1 ? "I/O" : "MEM");
+    if (pcr->_base4)
+	printf("  BASE4     0x%08x  addr 0x%08x  %s\n",
+	       pcr->_base4, pcr->_base4 & (pcr->_base4 & 0x1 ?
+					   0xFFFFFFFC : 0xFFFFFFF0), 
+	       pcr->_base4 & 0x1 ? "I/O" : "MEM");
+    if (pcr->_base5)
+	printf("  BASE5     0x%08x  addr 0x%08x  %s\n",
+	       pcr->_base5, pcr->_base5 & (pcr->_base5 & 0x1 ?
+					   0xFFFFFFFC : 0xFFFFFFF0), 
+	       pcr->_base5 & 0x1 ? "I/O" : "MEM");
+    if (pcr->_baserom)
+	printf("  BASEROM   0x%08x  addr 0x%08x  %sdecode-enabled\n",
+	       pcr->_baserom, pcr->_baserom & 0xFFFF8000,
+	       pcr->_baserom & 0x1 ? "" : "not-");
+    if (pcr->_max_min_ipin_iline)
+	printf("  MAX_LAT   0x%02x  MIN_GNT 0x%02x  INT_PIN 0x%02x  INT_LINE 0x%02x\n",
+	       pcr->_max_lat, pcr->_min_gnt, 
+	       pcr->_int_pin, pcr->_int_line);
+    if (pcr->_user_config)
+	printf("  BYTE_0    0x%02x  BYTE_1  0x%02x  BYTE_2  0x%02x  BYTE_3  0x%02x\n",
+	       pcr->_user_config_0, pcr->_user_config_1, 
+	       pcr->_user_config_2, pcr->_user_config_3);
+}
+
+#define PCI_B_FAST_B_B 0x80
+#define PCI_B_SB_RESET 0x40
+#define PCI_B_M_ABORT  0x20
+#define PCI_B_VGA_EN   0x08
+#define PCI_B_ISA_EN   0x04
+#define PCI_B_P_ERR    0x01
+void
+print_bridge_pci_class(struct pci_config_reg *pcr)
+{
+    if (pcr->_bist_header_latency_cache)
+        printf("  HEADER    0x%02x  LATENCY 0x%02x\n",
+	       pcr->_header_type, pcr->_latency_timer);
+    printf("  PRIBUS    0x%02x  SECBUS 0x%02x  SUBBUS 0x%02x  SECLT 0x%02x\n",
+           pcr->_primary_bus_number, pcr->_secondary_bus_number,
+	   pcr->_subordinate_bus_number, pcr->_secondary_latency_timer);
+    printf("  IOBASE    0x%02x  IOLIM 0x%02x  SECSTATUS 0x%04x\n",
+	   pcr->_io_base << 8, (pcr->_io_limit << 8) | 0xfff,
+	   pcr->_secondary_status);
+    printf("  NOPREFETCH_MEMBASE 0x%08x  MEMLIM 0x%08x\n",
+	   pcr->_mem_base << 16, (pcr->_mem_limit << 16) | 0xfffff);
+    printf("  PREFETCH_MEMBASE   0x%08x  MEMLIM 0x%08x\n",
+	   pcr->_prefetch_mem_base << 16,
+	   (pcr->_prefetch_mem_limit << 16) | 0xfffff);
+    printf("  %sFAST_B2B %sSEC_BUS_RST %sM_ABRT %sVGA_EN %sISA_EN"
+	   " %sPERR_EN\n",
+	   (pcr->_b_ctrl & PCI_B_FAST_B_B) ? "" : "NO_",
+	   (pcr->_b_ctrl & PCI_B_SB_RESET) ? "" : "NO_",
+	   (pcr->_b_ctrl & PCI_B_M_ABORT) ? "" : "NO_",
+	   (pcr->_b_ctrl & PCI_B_VGA_EN) ? "" : "NO_",
+	   (pcr->_b_ctrl & PCI_B_ISA_EN) ? "" : "NO_",
+	   (pcr->_b_ctrl & PCI_B_P_ERR) ? "" : "NO_");
+}
+
+void
+print_bridge_class(struct pci_config_reg *pcr)
+{
+    if (pcr->_bist_header_latency_cache)
+        printf("  HEADER    0x%02x  LATENCY 0x%02x\n",
+	       pcr->_header_type, pcr->_latency_timer);
 }
 
 
@@ -1673,10 +1804,9 @@ print_mach64(struct pci_config_reg *pcr)
 	sparse_io = 0x1c8;
 	break;
     }
-    printf("  SPARSEIO  0x%03x    %s    %s\n",
-	    sparse_io, pcr->_user_config_0 & 0x04 ? "Block IO enabled" :
-	    "Sparse IO enabled",
-	    pcr->_user_config_0 & 0x08 ? "Disable 0x46E8" : "Enable 0x46E8");
+    printf("  SPARSEIO  0x%03x    %s IO enabled    %sable 0x46E8\n",
+	    sparse_io, pcr->_user_config_0 & 0x04 ? "Block" : "Sparse",
+	    pcr->_user_config_0 & 0x08 ? "Dis" : "En");
 }
 
 void
@@ -1727,15 +1857,17 @@ print_pcibridge(struct pci_config_reg *pcr)
         printf("  BIST      0x%02x  HEADER 0x%02x  LATENCY 0x%02x  CACHE 0x%02x\n",
             pcr->_bist, pcr->_header_type, pcr->_latency_timer,
             pcr->_cache_line_size);
-    printf("  PRIBUS 0x%02x SECBUS 0x%02x SUBBUS 0x%02x SECLT 0x%02x\n",
+    printf("  PRIBUS    0x%02x  SECBUS 0x%02x  SUBBUS 0x%02x  SECLT 0x%02x\n",
            pcr->_primary_bus_number, pcr->_secondary_bus_number,
 	   pcr->_subordinate_bus_number, pcr->_secondary_latency_timer);
-    printf("  IOBASE: 0x%02x00 IOLIM 0x%02x00 SECSTATUS 0x%04x\n",
-	pcr->_io_base, pcr->_io_limit, pcr->_secondary_status);
-    printf("  NOPREFETCH MEMBASE: 0x%08x MEMLIM 0x%08x\n",
-	pcr->_mem_base, pcr->_mem_limit);
-    printf("  PREFETCH MEMBASE: 0x%08x MEMLIM 0x%08x\n",
-	pcr->_prefetch_mem_base, pcr->_prefetch_mem_limit);
+    printf("  IOBASE    0x%02x  IOLIM 0x%02x  SECSTATUS 0x%04x\n",
+	   pcr->_io_base << 8, (pcr->_io_limit << 8) | 0xfff,
+	   pcr->_secondary_status);
+    printf("  NOPREFETCH_MEMBASE 0x%08x  MEMLIM 0x%08x\n",
+	   pcr->_mem_base << 16, (pcr->_mem_limit << 16) | 0xfffff);
+    printf("  PREFETCH_MEMBASE   0x%08x  MEMLIM 0x%08x\n",
+	   pcr->_prefetch_mem_base << 16,
+	   (pcr->_prefetch_mem_limit << 16) | 0xfffff);
     printf("  RBASE_E   0x%08x  addr 0x%08x  %sdecode-enabled\n",
         pcr->_baserom, pcr->_baserom & 0xFFFF8000,
         pcr->_baserom & 0x1 ? "" : "not-");
@@ -1759,7 +1891,7 @@ enable_os_io()
     sysi86(SI86V86, V86SC_IOPL, PS_IOPL);
 #endif
 #endif
-#if defined(linux)
+#if defined(linux) && !defined(__sparc__)
     iopl(3);
 #endif
 #if defined(__FreeBSD__)  || defined(__386BSD__) || defined(__bsdi__)
@@ -1863,7 +1995,7 @@ disable_os_io()
     sysi86(SI86V86, V86SC_IOPL, 0);
 #endif
 #endif
-#if defined(linux)
+#if defined(linux) && !defined(__sparc__)
     iopl(0);
 #endif
 #if defined(__FreeBSD__)  || defined(__386BSD__)

@@ -1,17 +1,22 @@
   Rendition ユーザ向けの情報
-  The XFree86 Project Inc.
-  23 October 1998
+  The XFree86 Project Inc. (最終更新: Dejan Ilic
+  <dejan.ilic@home.se>)
+  1 August 1999
   The X Japanese Documentation Project
-  12 January 1999
+  4 December 1999
   ____________________________________________________________
 
   目次
 
 
   1. サポートしているハードウェア
-  2. 機能
-  3. XF86Config のオプション
-  4. 日本語訳について
+  2. 重要な注意
+  3. 機能
+  4. Rendition 用ドライバが識別・利用する XF86Config のオプション
+  5. 本リリースの新しい点
+  6. 現在のドライバで知られている問題
+  7. 進行中の作業
+  8. 日本語訳について
 
 
   ______________________________________________________________________
@@ -19,11 +24,31 @@
   1.  サポートしているハードウェア
 
   V1000, V2x00 ベースのカードは全てサポートされているはずです。サーバの
-  テストは miroCRYSTAL VRX (V1000), Diamond Stealth II S220 (V2100),
-  Hercules Thriller3D (V2200) で行いました。
+  テストは miroCRYSTAL VRX (V1000), Intergraph Intense-100 3D (V1000),
+  Diamond Stealth II S220 (V2100), Hercules Thriller3D (V2200),
+  Innovision Warrior3D (V2200)で行いました。
 
 
-  2.  機能
+  2.  重要な注意
+
+  V1000 カードはハードウェアの制限のため、プライマリのディスプレイカード
+  でしか動作しません。
+
+  V1000 ベースの一部のビデオカードでは、write-combine 機能を有効にすると
+  コンピュータを凍ってしまうことが知られています。この問題を回避するに
+  は、この機能を無効にしてください。マザーボードの BIOS 設定を参照し、
+  write-combine 機能に関係する全ての設定を無効にしてください( 通常は
+  USWC と呼ばれるか、あるいは短縮して WC と呼ばれています)。
+
+  "chipset" オプションは現在は実装されており、指定されていればこれに従い
+  ます。残念ながら、ドライバ中の一部の古いコードのせいで、プライマリの
+  ディスプレイカード以外の任意のカードでは動作しません。
+
+  ハードウェアカーソルを使っていて問題があれば、"sw_cursor" オプションを
+  使ってソフトウェアカーソルに戻してください。
+
+
+  3.  機能
 
 
   o  アクセラレーション無し
@@ -34,12 +59,15 @@
 
   o  8 bpp (256 pseudo colour)
 
-  o  16 bpp (high color)
+  o  15 bpp (RGB の重み付けが 555 の 16 ビット。32768 色。V1000 カードの
+     み)
 
-  o  32 bpp (true colour)
+  o  16 bpp (high colour, RGB の重み付けは 565, 65536 色)
+
+  o  32 bpp (true colour, 疎な 24 ビット、1600 万色)
 
 
-  3.  XF86Config のオプション
+  4.  Rendition 用ドライバが識別・利用する XF86Config のオプション
 
 
      Option "sw_cursor"
@@ -50,17 +78,68 @@
         カードで有効なことがあります。ただし、ハードウェアを壊してしまう
         リスクを負うことになります。使うときには注意しましょう。
 
+     DacSpeed "MHz"
+        RAMDAC 独自の上限値を設定します。現在は v2x00 チップが v2100
+        (170MHz) と v2200 (203MHz, 230MHz)のどちらであるかを調べる方法が
+        ないので、最も低い値を使うことにしています。このオプションを手動
+        で設定して、この値を上書きしてください。
 
-  $XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/README.rendition,v 1.1.2.1 1999/06/02 07:51:02 hohndel Exp $
+
+  5.  本リリースの新しい点
+
+
+  o  XFree86 4.0 ドライバのため、XFree86 3.3.x の Rendition ドライバの開
+     発は停止しました
+
+
+  6.  現在のドライバで知られている問題
+
+
+  o  15 bpp ("-bpp 15" または "-bpp 16 -weight 555")の表示は、 V2x00 カ
+     ードではサポートされていません。これはハードウェアの「制限」であ
+     り、Rendition もこれを認めています。ドライバはこのモードの表示がで
+     きますが、画面表示は赤みがかってしまいます。というのも、カードは実
+     際には 565 の重みになっているのに、X はこの重みが 555 のはずだと考
+     えるからです。
+
+  o  V2x00 カードでは、ディスプレイから仮想コンソールに行き、またディス
+     プレイに戻ると固まることがあります。
+
+  o  V1000 カードで仮想ディスプレイをスクロールさせると、画面の一部が歪
+     んでしまいます。動かし続ければおかしい部分は消えます。V2x00 ではこ
+     の問題は現われません。たぶんチップの制限ではなく、ドライバのバグだ
+     と思います。
+
+  o  オプション "chipset" に従います。残念ながらドライバにはまだ問題があ
+     り、rendition のカードがシステムのプライマリのディスプレイカードで
+     なければ動作しません。
+
+  o  仮想コンソールに切り替えても正しいテキストモードが復元されません。
+     正しいモードではなく、デフォルトの 80x25 モードになります。
+
+  o  特定のモードで、ハードウェアカーソルのまわりに水平な歪みが現われる
+     ことがあります。この問題は、ハードウェアカーソルを使わないか、その
+     モードで必要なバンド幅を小さくすることにより直せます。
+
+
+  7.  進行中の作業
+
+
+  o  アクセラレーションを含めた将来的な開発項目は全て、 XFree86 4.0 用の
+     ドライバに移行しました。現時点では、XFree86 3.3.x 用ドライバの改良
+     はもう計画されていません。
+
+
+  $XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/README.rendition,v 1.1.2.3 1999/12/28 12:13:50 hohndel Exp $
 
 
 
 
-  4.  日本語訳について
+  8.  日本語訳について
 
-  日本語訳は X Japanese Documentation Project が行いました (翻訳: 藤原輝
-  嘉 <fujiwara@linux.or.jp> <mailto:fujiwara@linux.or.jp>, 校正: 金田浩
-  司 <vanitas@ma3.seikyou.ne.jp> <mailto:vanitas@ma3.seikyou.ne.jp>)。問
-  題点の指摘やご意見は藤原まで御連絡ください。原文の著作権は XFree86 プ
-  ロジェクト社にあり、日本語訳の著作権は X Japanese Documentation
-  Project にあります。
+  日本語訳は X Japanese Documentation Project が行いました (3.3.5, 3.3.6
+  版翻訳: 藤原輝嘉 <fujiwara@linux.or.jp> <mailto:fujiwara@linux.or.jp>,
+  校正: 金田浩司 <vanitas@ma3.seikyou.ne.jp>
+  <mailto:vanitas@ma3.seikyou.ne.jp>)。問題点の指摘やご意見は藤原まで御
+  連絡ください。原文の著作権は XFree86 プロジェクト社にあり、日本語訳に
+  伴う権利は X Japanese Documentation Project にあります。

@@ -6,9 +6,9 @@
 -->
 <title>XFree86 の構築
 <author>David Dawes
-<Date>7 November 1998
+<Date>25 June 1999
 <trans>The X Japanese Documentation Project
-<tdate>11 January 1999
+<tdate>3 August 1999
 
 <abstract>
 <!--
@@ -59,39 +59,41 @@ gcc-2.8.0 と egcs はどちらも、コードが何ヶ所かで壊れてしまうことが分かっ
 ています。特に、egcs は一部のモジュールのコンパイル時に最適化で問題を
 起こすようです。
 
-<!-- <sect1>How to get the XFree86 3.3.3 source -->
-<SECT1>XFree86 3.3.3 のソースの取得方法
+<!--
+<sect1>How to get the XFree86 3.3.4 source
+-->
+<sect1>XFree86 3.3.4 のソースの取得方法
 <p>
 <!--
 There are a few starting points for getting the XFree86 source.  One option
-is to start directly with the XFree86 3.3.3 source distribution.  In this
+is to start directly with the XFree86 3.3.4 source distribution.  In this
 case, the procedure is as follows:
 -->
 XFree86 のソースの入手のスタート地点はいくつかあります。そのうちの1つ
-は、XFree86 3.3.3 のソースアーカイブから直接作業を開始することです。こ
+は、XFree86 3.3.4 のソースアーカイブから直接作業を開始することです。こ
 の場合の手順は以下のようになります:
 <itemize>
 <!--
-  <item>The XFree86 3.3.3 source is contained in files <tt>X333src-1.tgz</tt>,
-	<tt>X333src-2.tgz</tt> and <tt>X333src-3.tgz</tt>.  These can be found
-	at <htmlurl name="ftp://ftp.xfree86.org/pub/XFree86/3.3.3/source/"
-	url="ftp://ftp.xfree86.org/pub/XFree86/3.3.3/source/"> and similar
-	locations on XFree86 mirror sites.  <tt>X333src-2.tgz</tt> contains
-	the fonts and documentation source.  <tt>X333src-3.tgz</tt> contains
-	the hardcopy documentation.  <tt>X333src-1.tgz</tt> contains
+  <item>The XFree86 3.3.4 source is contained in files <tt>X334src-1.tgz</tt>,
+	<tt>X334src-2.tgz</tt> and <tt>X334src-3.tgz</tt>.  These can be found
+	at <htmlurl name="ftp://ftp.xfree86.org/pub/XFree86/3.3.4/source/"
+	url="ftp://ftp.xfree86.org/pub/XFree86/3.3.4/source/"> and similar
+	locations on XFree86 mirror sites.  <tt>X334src-2.tgz</tt> contains
+	the fonts and documentation source.  <tt>X334src-3.tgz</tt> contains
+	the hardcopy documentation.  <tt>X334src-1.tgz</tt> contains
 	everything else.  If you don't need the docs or fonts you can get
-	by with only <tt>X333src-1.tgz</tt>.
+	by with only <tt>X334src-1.tgz</tt>.
 -->
-  <item>XFree86 3.3.3 のソースは <tt>X333src-1.tgz</tt>,
-	<tt>X333src-2.tgz</tt>, <tt>X333src-3.tgz</tt> に含まれています。
+  <item>XFree86 3.3.4 のソースは <tt>X334src-1.tgz</tt>,
+	<tt>X334src-2.tgz</tt>, <tt>X334src-3.tgz</tt> に含まれています。
 	これらのファイルは
-	<htmlurl name="ftp://ftp.xfree86.org/pub/XFree86/3.3.3/source/"
-	url="ftp://ftp.xfree86.org/pub/XFree86/3.3.3/source/">や 
+	<htmlurl name="ftp://ftp.xfree86.org/pub/XFree86/3.3.4/source/"
+	url="ftp://ftp.xfree86.org/pub/XFree86/3.3.4/source/">や 
 	XFree86 のミラーサイトの同様のディレクトリにあります。
-	<tt>X333src-2.tgz</tt> はフォントと文書のソースです。
-	<tt>X333src-3.tgz</tt> は印刷可能な形式の文書です。
-	<tt>X333src-1.tgz</tt> には他のものが全て入っています。文書や
-	フォントが必要ない場合は、<tt>X333src-1.tgz</tt> だけ入手して
+	<tt>X334src-2.tgz</tt> はフォントと文書のソースです。
+	<tt>X334src-3.tgz</tt> は印刷可能な形式の文書です。
+	<tt>X334src-1.tgz</tt> には他のものが全て入っています。文書や
+	フォントが必要ない場合は、<tt>X334src-1.tgz</tt> だけ入手して
 	もかまいません。
 <!--
   <item>Extract each of these files by running the following from a directory
@@ -99,9 +101,9 @@ XFree86 のソースの入手のスタート地点はいくつかあります。そのうちの1つ
 	around 140MB, and a similar amount is required in addition to this
 	for the compiled binaries):
 	<quote><verb>
-	gzip -d < X333src-1.tgz | tar vxf -
-	gzip -d < X333src-2.tgz | tar vxf -
-	gzip -d < X333src-3.tgz | tar vxf -
+	gzip -d < X334src-1.tgz | tar vxf -
+	gzip -d < X334src-2.tgz | tar vxf -
+	gzip -d < X334src-3.tgz | tar vxf -
 	</verb></quote>
 -->
   <item>空き容量が十分あるファイルシステムのディレクトリで次のコマンド
@@ -109,18 +111,20 @@ XFree86 のソースの入手のスタート地点はいくつかあります。そのうちの1つ
 	開するには約 140MB, コンパイルしてバイナリを得るには同程度の空
 	きスペース必要です):
 	<quote><verb>
-	gzip -d < X333src-1.tgz | tar vxf -
-	gzip -d < X333src-2.tgz | tar vxf -
-	gzip -d < X333src-3.tgz | tar vxf -
+	gzip -d < X334src-1.tgz | tar vxf -
+	gzip -d < X334src-2.tgz | tar vxf -
+	gzip -d < X334src-3.tgz | tar vxf -
 	</verb></quote>
 </itemize>
 
 <!--
 Another option is to start with the X11R6.3 source distribution and patch
-it up to XFree86 3.3.3.  In this case you need to do the following:
+it up to XFree86 3.3.3 and then patch that to XFree86 3.3.4 (see below).  
+In this case you need to do the following:
 -->
 別の方法は、X11R6.3 ソース配布物を入手し、これにパッチを当てて XFree86
-3.3.3 にすることです。これは次の手順で行います:
+3.3.3 にし、さらにパッチを当てて XFree86 3.3.4 にすることです(後述)。
+これは次の手順で行います:
 <itemize>
 <!--
   <item>Start with the X Consortium's X11R6.3 distribution with public
@@ -174,43 +178,44 @@ it up to XFree86 3.3.3.  In this case you need to do the following:
 </itemize>
 
 <!--
-A further option is to start with the XFree86 3.3.2 source, and patch
-it up to XFree86 3.3.3.  In this case you need to do the following:
+A further option is to start with the XFree86 3.3.3 source, and patch
+it up to XFree86 3.3.4.  In this case you need to do the following:
 -->
-さらに別の方法として、XFree86 3.3.2 のソースを用意し、これにパッチを当
-てて XFree86 3.3.3 にすることもできます。この場合には以下の手順を行い
+さらに別の方法として、XFree86 3.3.3 のソースを用意し、これにパッチを当
+てて XFree86 3.3.4 にすることもできます。この場合には以下の手順を行い
 ます:
 <itemize>
 <!--
-  <item>If using this option, you would already have the XFree86 3.3.2
-	source.  If you have applied any of the public patches to 3.3.2,		back them out before starting the upgrade to 3.3.3.
+  <item>If using this option, you would already have the XFree86 3.3.3
+	source.  If you have applied any of the public patches to 3.3.3,
+	back them out before starting the upgrade to 3.3.4.
 -->
-  <item>この方法を使う場合には、既に XFree86 3.3.2 のソースをお持ちの
-	ことと思います。3.3.2 への公式パッチを1つでも当てていたら、
-	3.3.3 へのアップグレードを始める前に、これらのパッチを外してく
+  <item>この方法を使う場合には、既に XFree86 3.3.3 のソースをお持ちの
+	ことと思います。3.3.3 への公式パッチを1つでも当てていたら、
+	3.3.4 へのアップグレードを始める前に、これらのパッチを外してく
 	ださい。
 <!--
-  <item>Get the file <tt>3.3.2-3.3.3.diff.gz</tt>
-	from <htmlurl name="ftp://ftp.xfree86.org/pub/XFree86/3.3.3/patches/"
-	url="ftp://ftp.xfree86.org/pub/XFree86/3.3.3/patches/"> (or a similar
-	location on mirror sites).  To upgrade the source to XFree86 3.3.3,
+  <item>Get the file <tt>3.3.3-3.3.4.diff.gz</tt>
+	from <htmlurl name="ftp://ftp.xfree86.org/pub/XFree86/3.3.4/patches/"
+	url="ftp://ftp.xfree86.org/pub/XFree86/3.3.4/patches/"> (or a similar
+	location on mirror sites).  To upgrade the source to XFree86 3.3.4,
 	run the following from directory containing the <tt>xc</tt>
-	directory of the XFree86 3.3.2 source tree:
+	directory of the XFree86 3.3.3 source tree:
 	<quote><verb>
-	gzip -d < 3.3.2-3.3.3.diff.gz | patch -p0 -E
+	gzip -d < 3.3.3-3.3.4.diff.gz | patch -p0 -E
 	</verb></quote>
 	Be sure to do this with a clean unmodified source tree.  If you
 	don't some patches may fail.
 -->
-  <item><tt>3.3.2-3.3.3.diff.gz</tt> ファイルを
-	<htmlurl name="ftp://ftp.xfree86.org/pub/XFree86/3.3.3/patches/"
-	url="ftp://ftp.xfree86.org/pub/XFree86/3.3.3/patches/">
+  <item><tt>3.3.3-3.3.4.diff.gz</tt> ファイルを
+	<htmlurl name="ftp://ftp.xfree86.org/pub/XFree86/3.3.4/patches/"
+	url="ftp://ftp.xfree86.org/pub/XFree86/3.3.4/patches/">
 	(またはミラーサイトの同様のディレクトリ)から入手します。このソー
-	スをアップグレードして XFree86 3.3.3 にするには、XFree86 3.3.2 
+	スをアップグレードして XFree86 3.3.4 にするには、XFree86 3.3.3 
 	のソースツリー内の <tt>xc</tt> ディレクトリがあるディレクトリ
 	から次のコマンドを実行します:
 	<quote><verb>
-	gzip -d < 3.3.2-3.3.3.diff.gz | patch -p0 -E
+	gzip -d < 3.3.3-3.3.4.diff.gz | patch -p0 -E
 	</verb></quote>
 	パッチ当ては必ず修正をしていないソースツリーで行ってください。
 	さもなければ、うまく当たらないパッチがあるかもしれません。
@@ -226,24 +231,24 @@ XFree86 の X サーバだけを構築したい場合は、``servers only'' 配布物と呼
 選択した場合は、次の手順を実行します:
 <itemize>
 <!--
-  <item>Get the <tt>X333servonly.tgz</tt> file from
-	<htmlurl name="ftp://ftp.xfree86.org/pub/XFree86/3.3.3/source/"
-	url="ftp://ftp.xfree86.org/pub/XFree86/3.3.3/source/"> (or a similar
+  <item>Get the <tt>X334servonly.tgz</tt> file from
+	<htmlurl name="ftp://ftp.xfree86.org/pub/XFree86/3.3.4/source/"
+	url="ftp://ftp.xfree86.org/pub/XFree86/3.3.4/source/"> (or a similar
 	locations on mirror sites.
 -->
-  <item><tt>X333servonly.tgz</tt> というファイルを
-	<htmlurl name="ftp://ftp.xfree86.org/pub/XFree86/3.3.3/source/"
-	url="ftp://ftp.xfree86.org/pub/XFree86/3.3.3/source/"> から
+  <item><tt>X334servonly.tgz</tt> というファイルを
+	<htmlurl name="ftp://ftp.xfree86.org/pub/XFree86/3.3.4/source/"
+	url="ftp://ftp.xfree86.org/pub/XFree86/3.3.4/source/"> から
 	(またはミラーサイトの同様な場所から)入手します。
 <!--
   <item>Extract this by running the following:
 	<quote><verb>
-	gzip -d < X333servonly.tgz | tar vxf -
+	gzip -d < X334servonly.tgz | tar vxf -
 	</verb></quote>
 -->
   <item>次の手順でファイルを展開します:
 	<quote><verb>
-	gzip -d < X333servonly.tgz | tar vxf -
+	gzip -d < X334servonly.tgz | tar vxf -
 	</verb></quote>
 </itemize>
 
@@ -340,10 +345,10 @@ enter those settings explicitly.
 関する設定を明示的に入力する必要はなくなりました。
 
 <!--
-If you are using just the <tt>X333src-1.tgz</tt> part of the source dist,
+If you are using just the <tt>X334src-1.tgz</tt> part of the source dist,
 you will need to define <bf>BuildFonts</bf> to <bf>NO</bf>.
 -->
-ソース配布物のうち <tt>X333src-1.tgz</tt> の部分だけを使う場合には、
+ソース配布物のうち <tt>X334src-1.tgz</tt> の部分だけを使う場合には、
 <bf>BuildFonts</bf> は <bf>NO</bf> と定義する必要があります。
 
 <!--
@@ -484,14 +489,14 @@ name="README.LinkKit"> file.
 してください。
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/sgml/BUILD.sgml,v 1.1.2.2 1999/05/25 06:39:09 hohndel Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/sgml/BUILD.sgml,v 1.1.2.3 1999/11/26 15:23:36 hohndel Exp $
 </verb>
 
 <sect>日本語訳について<p>
 日本語訳は X Japanese Documentation Project が行いました(
 翻訳(XFree86 3.3): 岡本一幸
 <url url="mailto:ikko-@pacific.rim.or.jp" name="&lt;ikko-@pacific.rim.or.jp&gt;">,
-更新(XFree86 3.3.3 対応): 藤原輝嘉
+更新(XFree86 3.3.3, 3.3.4 対応): 藤原輝嘉
 <url url="mailto:fujiwara@linux.or.jp" name="&lt;fujiwara@linux.or.jp&gt;">,
 校正: 金田浩司  <url url="mailto:vanitas@ma3.seikyou.ne.jp"
 name="&lt;vanitas@ma3.seikyou.ne.jp&gt;">)。

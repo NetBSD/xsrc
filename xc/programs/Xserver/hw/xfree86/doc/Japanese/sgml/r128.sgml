@@ -1,0 +1,225 @@
+<!DOCTYPE linuxdoc PUBLIC "-//XFree86//DTD linuxdoc//EN">
+
+<article>
+<!--O
+<title>Information for ATI Rage 128 Users
+-->
+<title>ATI Rage 128 ユーザ向けの情報
+<author>Precision Insight, Inc., SuSE GmBH
+<date>6 October 1999
+<trans>The X Japanese Documentation Project
+<tdate>16 October 1999
+<toc>
+
+<!--O
+<sect>Supported Hardware
+-->
+<sect>サポートしているハードウェア
+<p>
+<itemize>
+<!--O
+  <item>ATI Rage 128 based cards
+-->
+  <item>ATI Rage 128 ベースのカード
+</itemize>
+
+
+<!--O
+<sect>Features
+-->
+<sect>機能
+<p>
+<itemize>
+<!--O
+  <item>Full support (including hardware accelerated 2D drawing) for 8, 15,
+        16, 24, and 32 bit per pixel depths.
+-->
+  <item>8, 15, 16, 24, 32 bpp を完全にサポート(2D 描画のハードウェアア
+クセラレーションも含む)
+<!--
+  <item>Hardware cursor support to reduce sprite flicker.
+-->
+  <item>スプライトのちらつきの少ないハードウェアカーソル
+<!--
+  <item>Support for high resolution video modes up to 1800x1440 @ 70Hz.
+-->
+  <item>1800x1440 @ 70Hz までの高解像度のビデオモードのサポート
+<!--
+  <item>Support for doublescan video modes (e.g., 320x200 and 320x240).
+-->
+  <item>ダブルスキャンビデオモード(320x200, 320x240 など)のサポート
+<!--
+  <item>Support for gamma correction at all pixel depths.
+-->
+  <item>ガンマ補正を全てのピクセルの深さでサポート
+<!--
+  <item>Fully programmable clock supported.
+-->
+  <item>完全にプログラム可能なクロックのサポート
+<!--
+  <item>Robust text mode restore for VT switching.
+-->
+  <item>仮想端末の切り替えに対して頑健なテキストモード復元
+</itemize>
+
+
+<!--O
+<sect>Technical Notes
+-->
+<sect>技術的な事項
+<p>
+<itemize>
+<!--O
+  <item>None
+-->
+  <item>なし
+</itemize>
+
+
+<!--O
+<sect>Reported Working Video Cards
+-->
+<sect>動作が報告されているビデオカード
+<p>
+<itemize>
+  <item>Rage Fury AGP 32MB
+  <item>XPERT 128 AGP 16MB
+  <item>XPERT 99 AGP 8MB
+</itemize>
+
+
+<!--O
+<sect>Configuration
+-->
+<sect>設定
+<p>
+<!--O
+The driver auto-detects all device information necessary to
+initialize the card.  The only lines you need in the "Device"
+section of your XF86Config file are:
+-->
+このドライバはカードを初期化するために必要な全てのデバイス情報を自動的
+に検出します。XF86Config ファイルの "Device" セクションに記述する必要
+があるのは以下の行だけです:
+<verb>
+       Section "Device"
+           Identifier "r128"
+       EndSection
+</verb>
+<!--O
+or let xf86config or XF86Setup do this for you.
+-->
+あるいは、xf86config や XF86Setup がこれと同じことを行います。
+
+<!--O
+However, if you have problems with auto-detection, you can specify:
+-->
+ただし、自動検出がうまく行かない場合には以下の項目を設定することができ
+ます:
+<itemize>
+<!--O
+  <item>VideoRam - in kilobytes
+-->
+  <item>VideoRam - キロバイト単位
+<!--O
+  <item>MemBase  - physical address of the linear framebuffer
+-->
+  <item>MemBase  - リニアフレームバッファの物理アドレス
+<!--O
+  <item>IOBase   - physical address of the memory mapped IO registers
+-->
+  <item>IOBase   - メモリマップト I/O レジスタの物理アドレス
+<!--O
+  <item>ChipID   - PCI DEVICE ID
+-->
+  <item>ChipID   - PCI のデバイス ID
+</itemize>
+
+
+<!--O
+<sect>Driver Options
+-->
+<sect>ドライバのオプション
+<p>
+<itemize>
+<!--O
+  <item>"hw_cursor" - request hardware cursor (default)
+-->
+  <item>"hw_cursor" - ハードウェアカーソルを使用する(デフォルト)
+<!--O
+  <item>"sw_cursor" - software cursor only
+-->
+  <item>"sw_cursor" - ソフトウェアカーソルのみを使用
+<!--O
+  <item>"no_accel"  - software rendering only
+-->
+  <item>"no_accel"  - ソフトウェアレンダリングのみを使用
+<!--O
+  <item>"dac_8_bit" - use color weight 888 in 8 bpp mode (default)
+-->
+  <item>"dac_8_bit" - 8bpp モードでの色の重み付けを 888 とする(デフォルト)
+<!--O
+  <item>"dac_6_bit" - use color weight 666 in 8 bpp mode (VGA emulation)
+-->
+  <item>"dac_6_bit" - 8bpp モードでの色の重み付けを 666 とする(VGA エミュレーション)
+</itemize>
+
+
+<!--O
+<sect>Known Limitations
+-->
+<sect>知られている制限
+<p>
+<itemize>
+<!--O
+  <item>None
+-->
+  <item>なし
+</itemize>
+
+
+<!--O
+<sect>Authors
+-->
+<sect>作者
+<p>
+<itemize>
+   <item>Alan Hourihane <it>alanh@fairlite.demon.co.uk</it>
+   <item>Rickard E. (Rik) Faith <it>&lt;faith@precisioninsight.com&gt;</it>
+   <item>Kevin E. Martin <it>&lt;kevin@precisioninsight.com&gt;</it>
+   <item>Dirk Hohndel <it>&lt;hohndel@suse.de&gt;</it>
+</itemize>
+
+<!--O
+<p>This driver was donated to The XFree86 Project by:
+-->
+<p>このドライバは
+<verb>
+    Precision Insight, Inc.
+    Cedar Park, TX
+    USA
+</verb>
+によって XFree86 プロジェクトに寄付されました。
+<!--O
+it is based on earlier work donated to The XFree86 Project by:
+-->
+このドライバは
+<verb>
+    SuSE GmbH
+    Schanzaekerstr. 10
+    90443 Nuernberg
+    Germany
+</verb>
+が以前に寄付した成果を元にしています。
+
+<htmlurl name="http://www.precisioninsight.com"
+          url="http://www.precisioninsight.com"> -- 
+<htmlurl name="http://www.suse.com"
+          url="http://www.suse.com">
+
+<verb>
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/sgml/r128.sgml,v 1.1.2.1 1999/12/02 12:30:35 hohndel Exp $
+$PI: xc/programs/Xserver/hw/xfree86/doc/sgml/r128.sgml,v 1.2 1999/10/08 08:33:58 faith Exp $
+</verb>
+
+</article>

@@ -1,0 +1,754 @@
+  DG/ux R4.20MU04 が動作する Intel Pentium Aviion マシンでの
+  XFree86 の構築手順
+  Takis Psarogiannakopoulos
+  July 27, 1999
+  The X Japanese Documentation Project
+  September 12, 1999
+  ____________________________________________________________
+
+  目次
+
+  1. 新しいことがら
+  2. 一般的な手順:
+  3. 構築のための設定:
+  4. GCC に関する説明
+  5. 構築
+  6. バイナリのインストール:
+  7. What is about:
+  8. 日本語訳について
+
+  ______________________________________________________________________
+
+  1.  新しいことがら
+
+  1999 年 7 月 12 日
+
+  DG は /usr/lib/tcpip.so にあるストリームのバグを修正しました(後述)。 7
+  月 25 日のソース時点での問題回避のコードは削除されました。筆者は DG よ
+  り、DGUX では BSD ソケットの方が SVR4 ネイティブの STREAMS より高性能
+  であると聞きました。R4.20MU06 から DG/ux は正しい tcpip.so を持ってい
+  ます(STREAMS にバグがない)。MU05, MU04 をお使いで、何らかの理由により
+  STREAMS が絶対必要ならば、DG に連絡して修正済みの /usr/lib/tcpip.so を
+  もらいましょう(MU04,5 へのパッチです)。
+
+  現時点では DG/ux には sysi86 システムコールと SYSI86IOPL の定義があり
+  ません(SYSI86IOPL の定義は <sys/sysi86.h> にありますが、UNIXWARE の定
+  義に守られています。UNIXWARE の定義は当然、DG/ux には適用できません)。
+  このヘッダが単純に -DDGUX を指定することで適用されるようになり、かつ
+  _sysi86  と sysi86 サブルーチンが libc(あるいはその他の追加ライブラ
+  リ)に加えらるまでは、DG_NO_SYSI86 に 1 を定義しなければなりません。 DG
+  がこのような修正を行えば、(構築前に!)手動でファイル
+  xc/programs/Xserver/hw/xfree86/SuperProbe/OS_DGUX.c,
+  xc/programs/Xserver/hw/xfree86/etc/scanpci.c,
+  xc/programs/Xserver/hw/xfree86/os-support/dgux/dgux_video.c を編集
+  し、DG_NO_SYSI86 フラグを 1 から 0 に変えることにより取り消す必要があ
+  ります。
+
+  1999 年 7 月 25 日
+
+  大きなバグはこのリリースで修正されました。バグにより DG/ux の STREAMS
+  インタフェースが壊れていたため、サーバはポート 6000(= 0x1770) ではなく
+  0x7017 を監視していました。3.3.3.1 と 3.3.3 に含まれていた全てのバイナ
+  リはローカル(プログラムをサーバと同じマシンで動かした場合)、では動きま
+  すがリモートでは動きません。なぜならこれらはポート 28365 に接続しよう
+  とする Xlib を使っているからです。リモートでも動作するようにしたけれ
+  ば、再コンパイルが必要です!  最初にこれに気づかせてくれた Steve さんに
+  感謝しますが、その後忙しすぎて詳しく見ることができませんでした…。多分
+  やらなければならなかったのでしょうが…。
+
+  ioctl ではなくソケットを使うようにしました。しかし STREAMS の修正とテ
+  ストも行いました。
+
+  これは実は DG/ux の問題であることをわからせてくれた David さんに感謝し
+  ます。
+  筆者は、苦労して gdb-4.17/8 と ddd (gdb の X インタフェース)の移植も行
+  いました。これは X サーバが生成したコアファイルのトレース結果を筆者に
+  送れるようにするためのもので、 pub/XFree86/3.3.5/binaries/DGUX-
+  ix86/GDB_BETA にあります(バイナリとソースの両方)。コマンド
+
+    gdb /usr/X11R6/bin/X location of core/core
+    gdb: where
+
+  を実行し、その表示結果を筆者に送ってください。(X サーバの実行ファイル
+  は /usr/X11R6.3/bin にあるものとしています。)
+
+  3.3.3.1 より: いくつかのバグが修正されました。この公式リリースパッチで
+  DG/ux がサポートされるようになりました。全ての設定は
+  xc/config/cf/DGUX.cf と xf86site.def にあります。また、Imake は DGUX
+  OS を(リリースバージョンも含めて)自動検出します(David Dawes に感謝)。
+  したがって、ただ "make World" するだけで ix86 用の DG/ux を構築できま
+  す。普通の構築手順は、("xc" ツリーの展開とパッチ当てを行った後に)
+  xc/config/cf に行き、ファイル xf86site.def を site.def にコピーし、
+  DGUX.cf, site.def を編集して必要な変更を全て行うというものです。
+
+  3.3.5 での ProjectRoot のデフォルト値は /usr/X11R6 です(DGUX.cf で特別
+  にこの値を設定している場合は除きます。筆者は /usr/X11R6.3 にしています
+  し、読者の皆さんが好きな値を設定していることもあるでしょう)。
+
+  1998 年 12 月 1 日。重要: README-GCC-2.8.1 ファイルを読んでください。
+  X11R6.3 を DGUX で構築するには、GCC のバージョン 2.8.1 が推奨されま
+  す。既に gcc-2.8.1 をお使いであれば、gcc コンパイラに関する以下の古い
+  説明は無視して構いません。
+
+  2.  一般的な手順:
+
+  ftp.xfree86.org から XFree 3.3.x のソースコードを入手します:
+
+    ftp ftp.xfree86.org
+    login: ftp
+    passwd: あなたのメールアドレス
+    cd pub/XFree86/3.3.5/source
+    You need the files:
+    X335src-1.tgz
+    X335src-2.tgz
+    X335src-3.tgz
+
+  X の contrib ソフトウェアを入手します。
+
+    cd /pub/XFree86/3.3.5/source
+    X335contrib.tgz
+
+  3.3.3 のソースファイルの tar アーカイブをお持ちであれば、
+  /pub/XfFree86/3.3.5/binaries/DGUX-ix86/SOURCE に移動し、DGUX 用のソー
+  スパッチを入手します:
+
+    3.3.3-3.3.5-DGUX.diff.gz
+    X335contrib-DGUX.diff.gz (contrib ソフトウェア用のパッチ)
+
+  これは同じソースコードを何度もダウンロードするのを避けるためです。
+
+  申し訳ありませんが、DGUX 用の変更は 3.3.4 の公式リリースの締め切りに間
+  に合いませんでした。筆者は無償でこの作業を行っているので、すみませんが
+  時にはこういうことになります…。
+
+  X11R6.3 を構築するには、DG/ux 用のツールも必要です(後で説明します)。必
+  要なツールは anonymous ftp で dpmms.cam.ac.uk (University of
+  Cambridge,Department of Pure Mathematics) の /pub/takis/DGUX-
+  Tools/BuildXtools.tar.gz, あるいは ftp.xfree86.org の
+  pub/XFree86/3.3.5/binaries/DGUX-ix86/SOURCE/BUILD-
+  TOOLS/BuildXtools.tar.gz を入手してください。
+
+  big ファイルシステムを使って(筆者は、ブロックサイズが 1400000 である仮
+  想ディスク "xf86work" を/xf86work にマウントして使っています)ソースを
+  以下のようにコピーします:
+
+    cp X335src-1.tgz  /xf86work/X335src-1.tar.gz
+    cp X335src-2.tgz  /xf86work/X335src-2.tar.gz
+    cp X335src-3.tgz  /xf86work/X335src-3.tar.gz
+
+  (あるいは、上記の X333src-1,2,3.tar.gz に加えて 3.3.5 への DG/ux 用
+  パッチ、すなわち 3.3.3-3.3.5-DGUX.diff.gz もコピーします。 )
+
+  たぶん contrib ソフトウェアもコピーするでしょう:
+
+    cp  X335contrib.tgz           /xf86work
+
+    (cp  X335contrib-DGUX.diff.gz  /xf86work)
+
+  DGUX-ix86 からパッチを入手した場合には、ソースから 3.3.3 を構築する際
+  の最初の問題は、ソースパッチを適用するためには、非常に一般的な GNU プ
+  ログラムなのに DG/ux には入っていない(!?) "patch" が必要なことです。こ
+  のプログラムは BuildXtools.tar.gz に入っています(または ftp
+  prep.ai.mit.edu, cd /pub/gnu, get patch-2.5.tar.gz してください)。です
+  から、他のことの前にこれらのツールのことを説明しておきましょう:
+  "sysadm" を使ってファイルシステム usr_local を /usr/local にマウントし
+  てください。ブロックサイズは 200000 です。それから BuildXtools ファイ
+  ルを /usr にコピーし、以下のコマンドを実行します:
+
+    gzip -d < BuildXtools.tar.gz | tar xvf -
+
+  これは新しいファイルシステム /usr/local に展開されます。それから自分の
+  ".profile" (自分のホームディレクトリにあります。筆者の例では /admin に
+  あります)を編集して、/usr/local/bin をパスに加え、 /usr/local/lib をラ
+  イブラリパスに加えます。
+
+  以下のような設定が必要です(vi .profile):
+
+    PATH=/usr/local/bin:/sbin:/usr/sbin:/usr/bin
+    if [ -d /usr/opt/X11/bin ]
+    then
+      PATH=$PATH:/usr/opt/X11/bin
+    fi
+    export PATH
+    (/usr/local/bin は他のどのパスよりも前です!)
+
+    LD_LIBRARY_PATH=/usr/local/lib:/usr/lib:/usr/ccs/lib
+    export LD_LIBRARY_PATH
+
+  編集が終わったらログインし直して、修正済みの .profile を有効にします。
+
+  それから以下の手順を行います:
+
+    cd /usr/sbin
+    cp install install_dg
+    rm install
+    cp /usr/local/bin
+    cp install /usr/bin  *(GNU installをデフォルトの install コマンドにします)*
+    (DG/ux の install コマンドは役立たずです)
+    (後述の xc/config/cf/DGUX.cf ファイルも見てください)
+
+    (あるいは GNU make-3.77 を入手し、install.sh (または -sh) を /usr/bin/install にコピーします)
+
+    cd /usr/bin
+    cp true    /usr/local/bin
+    cd /usr/local/bin
+    ln -s true ranlib (DG/ux システムでは、true コマンドを ranlib としてインストールします)
+
+  全ての /usr/local/bin のツールは通常、-v, -V, --version を与えるとバー
+  ジョン情報を返します。
+
+  **構築を行う前には、gcc に関する説明(後述)を見てください。**
+
+  ここで、ソースツリーの tar アーカイブを展開します。 /xf86work (または
+  構築のために用意した big ファイルシステムの名前) で以下のコマンドを実
+  行してください:
+
+    gzip -d < X335src-1.tar.gz | tar xvf -
+    gzip -d < X335src-2.tar.gz | tar xvf -
+    gzip -d < X335src-3.tar.gz | tar xvf -
+
+  (X-3.3.3 を持っていれば、3.3.3 のソースを同じように展開し、以下のコマ
+  ンドで 3.3.5-DGUX のソースパッチを適用します:
+
+    gzip -d < 3.3.3-3.3.5-DGUX.diff.gz | patch -p0 -E)
+
+  これで、構築用のファイルシステムに xc ディレクトリができました。
+
+  3.  構築のための設定:
+
+  必要な設定はほとんど全て xc/config/cf にある "DGUX.cf" ファイルにあり
+  ます。DGUX.cf ファイルと site.def ファイルを編集し、必要な設定を全て行
+  います。DGUX.cf は site.def の設定を上書きすることを覚えておいてくださ
+  い。XFree86-3.3.5 からは ProjectRoot のデフォルト値が /usr/X11R6 にな
+  りました(site.def で設定されています)。この値を好きなように変更したけ
+  れば(筆者は /usr/X11R6.3 が好きで、/usr/X11R6->X11R6.3 というリンクを
+  作っています)、DGUX.cf を編集して以下のような項目を見つけてください:
+
+    #if 0
+    #define ProjectRoot /usr/X11R6.3
+    #endif
+
+  #if 0, #endif を削除します。それからこの値を好きなように変更します(筆
+  者はコンパイル済みのバイナリが使えるように上記の設定を使うようにしてい
+  ます)。
+
+  DG/ux の malloc はゴミ同然で、一部の X ソフトウェアで問題ばかり起こす
+  ので、筆者は使っていません。その代わりに GNU malloc を移植したものを
+  /usr/local に置いています(これは BuildXtools file に入っています)。
+  DG/ux の /lib/libmalloc.a を使って構築しようとしてはいけませんし、これ
+  を使ったために一部のプログラムが正しく動作しなくても筆者にメールを送ら
+  ないでください。筆者が構築した時には tcl8.0 と tk8.0 を使っています。
+  というのも、R4.20MU03 の xconfig はモニタについて誤った値を返すので、
+  ディスプレイの調整を行うために XF86SEtup を構築する必要があるからで
+  す。これを使わない(あるいは欲しくない)のであれば、(DGUX.cf の)tck, tk
+  に関する行をコメントアウトしてください:
+
+    /*******TCL TK DEFINITIONS ***********/
+     #define HasTk  YES-->NO
+     ...
+     #define HasTcl YES-->NO
+
+  また、X11R6.3 を正しく構築するためには 'GNU make' も必要です(これは
+  Buildxtools ファイルに入っています)。tcl, tk を使う設定にした場合には
+
+                       tcl8.0.3.tar.gz
+                       tk8.0.3.tar.gz    (どこかの FTP サイトから)
+
+  を入手し、X11R6.3 を構築する前にこれらをコンパイルしてください(まず
+  tck8.0.3 を構築し、それから tk8.0.3 を構築します)。
+
+  4.  GCC に関する説明
+
+  DG/ux のシステム付属の gcc については、言わなければならないことが多す
+  ぎます。このコンパイラを使うと問題が起きるプログラムを全部押えようとす
+  ると、きっと本が一冊できてしまいます(もちろん DG にとっては役立つで
+  しょうが)。しかし筆者のすべきことは DG/ux のコンパイラのバグを直す類の
+  ことではないし、DG の賢い人のために報告を集めることでは特にありませ
+  ん。 (DG へ: 仕事でやっている人には申し訳ないですが、筆者は純粋な数学
+  者であり、全ての作業は楽しむためにやっており、DG やその他から金をもら
+  いたいわけでもなく、DG の就職しようと思っているわけでもありません。し
+  たがって、筆者は基本的には DG/ux のトラブルシューターではありません。
+  しかし、たぶん場合によっては、DG が手助けをしてくれるなら、筆者もお手
+  伝いできることがあるかもしれません。)
+
+  筆者が行いたいのは X11 の構築です。以上が、BuildXtools に新しい gcc が
+  入っている理由です。この gcc は DG/ux R4.20MU02 用に作られています。で
+  すから、このバージョンまで DG/ux の OS のバージョンを上げる必要があり
+  ます。しかし、この gcc は信頼できるので、X11 だけでなく他に欲しいもの
+  全てを構築する際にも使えます。DG/ux の gcc を使ってはいけません。これ
+  を使ったら、どんな問題に出会おうが筆者の知るところではありません。この
+  新しい gcc のインストールは以下の手順で行います:
+
+    cp -r /usr/local/gcc-dgux  /usr/opt/sdk/sde/ix86dgux/usr/lib
+    cd  /usr/opt/sdk/sde/ix86dgux/usr/lib
+    rm gcc
+    ln -s gcc-dgux gcc   (gcc--->gcc-dgux のリンクを設定します)
+
+    cd /usr/local
+    cp -r /usr/local/gcc-dgux  /usr/sde/ix86dgux/usr/lib
+    cd  /usr/sde/ix86dgux/usr/lib
+    rm gcc
+    ln -s gcc-dgux gcc  (gcc-->gcc-dgux のリンクを設定します)
+
+  DG/ux の古い gcc も使えるように、上の 2 つのリンクを gcc--<gcc-dgux か
+  ら gcc-->gcc-2 に変更します。これは以下のコマンドで行います(上の 2 つ
+  のディレクトリで実行します):
+
+    rm gcc
+    ln -s gcc-2 gcc
+
+  /usr/bin/gcc -v を実行すると使える gcc のバージョンが表示されます。こ
+  のバージョンの X11 を正しく作るには、gcc は *必須* です。
+
+  動的ローディングサーバ: xc/config/cf/DGUX.cf を編集し、以下の項目を変
+  更します:
+
+  #ifndef BuildDynamicLoading #define BuildDynamicLoading NO ---<YES.
+  #endif
+
+  構築を行う時には、たくさんのエラーが表示されてサーバがコンパイルされな
+  いことを覚えておいてください! これは動的リンカが新しく作られた R6 の
+  libX の場所を知らないからです。したがって、(失敗したように見えた)構築
+  の後に以下のコマンドを実行してください:
+
+  make DESTDIR=ProjectRoot/lib install
+
+  (インストールの説明は後述します。ProjectRoot は前述の
+  xc/config/cf/DGUX.cf ファイルを置くことにした場所です。)
+
+  全ての新しい libXR6 ライブラリはその場所にインストールされます (cd
+  ProjectRoot/lib を行って確かめてください)。
+
+  ホームディレクトリに移動して、パス ProjectRoot/lib を LD_LIBRARY_PATH
+  として宣言してください。これは(.profile で)以下のように設定します。
+
+  LD_LIBRARY_PATH=ProjectRoot/lib:$LD_LIBRARY_PATH export
+  LD_LIBRARY_PATH
+
+  それからログインし直してください!
+
+  ここで、DGUX.cf で以下の項目を設定して XFree86-3.3.5 全体を再構築しま
+  す。
+
+  #define BuildDynamicLoading YES
+
+  今度は、XFree86-3.3.5 全体が正しく生成されるでしょう。
+
+  5.  構築
+
+  DG 標準の X11R5 (mwm) 上で xterm を開き、以下のコマンドを実行します
+  (/bin/sh = Bourne シェル):
+
+    cd xc
+    make World > Build-dg.log
+
+  これにより、画面上の全てのエラーメッセージを保存することができます。
+  -znodefs に関するメッセージは気にしなくても構いません。
+
+  注意: 古いコマンドである
+
+    make World BOOTSTRAPCFLAGS="-DDGUX" > Build-dg.log
+
+  は現在は必要ありません。というのも、(XFree86-3.3.3.1 以降では)imake が
+  DGUX OS を自動的に検出し、設定を全て行うからです。しかし、このコマンド
+  も使えます。
+
+  別の xterm 上で 'cd xc', 'tail -f Build-dg.log' を実行し、構築の進行状
+  況を見張ります。
+
+  X11R6.3 ベースである XFree86 バージョン 3.3.5 を構築した後にインストー
+  ルを行うには、usr_X11R6.3 といったファイルシステムがあり、 /usr/X11R6
+  にマウントされていなければなりません。ブロックサイズは 350000 で
+  す。(DGUX.cf を編集して ProjectRoot の値を site.def のデフォルト値であ
+  る /usr/X11R6 以外に変えた場合には、そこで設定した ProjectRoot を指定
+  してください。) 次に以下のコマンドを実行します:
+
+    make install
+    make install.man (オンラインマニュアルをインストールします)
+
+  このインストールでは XF86Config が /usr/X11R6.3/lib/X11/ にインストー
+  ルされないので、startx を実行しても新しい X11 は起動しないでしょう。こ
+  の ftp サイトにある README-X3331.DGUX (バイナリのディレクトリにありま
+  す)を読んで、X11R6.3 全体のインストール手順を調べてください。簡単に済
+  ませるなら以下の手順を行ってください: (DG/ux のマウスデバイスは
+  "/dev/mouse" とします) cd /usr/X11R6.3/bin ln -s XF86_VGA16 X 次にパス
+  /usr/X11R6.3/bin を .profile に設定し、XF86Setup を実行します。マウス
+  デバイスを設定し、それから他の調整を全て行います。 (本当は README-
+  DGUX.INSTALL ファイルを読む必要があります。このファイルの最後を見てく
+  ださい。)
+
+  XFree86-3.3.5 付属の contib ソフトウェアを構築するには、
+  X335contrib.tgz を入手し、以下のコマンドを実行します:
+
+    gzip -d < X335contrib.tgz | tar xvf -
+
+  (3.3.3 のソースがある場合には、X333contrib.tgz を展開し、DGUX 用のパッ
+  チを以下のようにして当てます):
+
+    gzip -d < X335contrib-DGUX.diff.gz  | patch -p0 -E ).
+
+  注意してください: お使いのシステムで imake が正しく動作するためには、
+  構築した X11R6.3 が既にインストール・動作していなければなりません。こ
+  の X ウィンドウシステムをインストールする方法は後述します。その後に以
+  下のコマンドを実行してください:
+
+    cd contrib
+    xmkmf -a
+    make
+    make install
+    make install.man (オンラインマニュアルのインストール)
+
+  6.  バイナリのインストール:
+
+  注意: この実行ファイルはマクロ -DPENTIUM_CHANGE 付きで構築されています
+  (これは新しい Aviion マシンを全てサポートするためのものです)。古い
+  i486 をお使いであれば(あまりないでしょうが)、実行ファイルは正しく動作
+  しません。しかし、-mcpu=pentiumpro は使っていないので、全ての Pentium
+  マシンで動作します。
+
+  o  ProjectRoot の設定: 筆者は ix86 DG/ux 用の ProjectRoot の位置を
+     /usr/X11R6.3 にしています。(3.3.5 のソースの)デフォルト値は
+     /usr/X11R6 です。これに対応するため、/usr ディレクトリに
+     X11R6-<X11R6.3 というリンクを作ります(後述)。したがって、忘れずにこ
+     のリンクを作ってください。筆者は /usr/opt/X11 (DG の X11 のデフォル
+     ト位置)に置くのは好きではありません。これに合わせるように言ってくる
+     方も何人かいたのですが、いくつかの理由により、筆者はオリジナルの
+     X11 そのままにしておくのが良いと考えています。
+
+  o  sysadm を使ってファイルシステムを作り、/usr/X11R6.3 にマウントしま
+     す。これは X11R6.3 のデフォルトの位置なので、X をソースからコンパイ
+     ルし直さない限り変えることはできません(これについて筆者にメールを送
+     らないでください)。このファイルシステムのサイズは 175MB (350000 ブ
+     ロック) 程度にすべきです。
+
+     ファイルのリストを示します:
+
+       X3353DL.tgz    3D_Labs 用の X サーバなど
+       X3358514.tgz
+       X335AGX.tgz
+       X335I128.tgz
+       X335Ma32.tgz   Mach32 用の X サーバ
+       X335Ma64.tgz   Mach64 用の X サーバ
+       X335Ma8.tgz
+       X335Mono.tgz
+       X335P9K.tgz
+       X335S3.tgz
+       X335S3V.tgz
+       X335SVGA.tgz   SuperVGA 用の X サーバ (AV3700 Cirrus もサポート)
+       X335VG16.tgz   VGA16 用の X サーバ (XF86Setup を使うために必要です)
+       X335W32.tgz
+       X335bin.tgz    BIN (これは必ず必要です)
+       X335cfg.tgz
+       X335doc.tgz
+       X335f100.tgz
+       X335fcyr.tgz
+       X335fnon.tgz
+       X335fnts.tgz
+       X335fscl.tgz
+       X335fsrv.tgz
+       X335lib.tgz    LIB (これは必ず必要です)
+       X335lkit.tgz   Linkkit (X の開発を行うためのものです)
+       X335man.tgz    オンラインマニュアル
+       X335nest.tgz
+       X335prog.tgz
+       X335prt.tgz
+       X335set.tgz
+       X335vfb.tgz
+       preinst.sh    インストール用スクリプト
+       extract        XFree86 を展開するためのプログラム (ix86 DG/ux 用)
+
+       SUMS.md5       ファイルが改竄されていないこと確認するためのチェックサム
+
+  (prep.ai.mit.edu の /pub/gnu にある GNU textutils-1.22.tar.gz をコンパ
+  イルしてみましょう。md5sum はこれに入っています。)
+
+  最低限必要なのは
+
+    X335bin.tgz
+    X335lib.tgz
+
+  および、お使いのマシンとグラフィックスカード用の正しい X サーバです。
+  筆者の意見では、将来に他のグラフィックスデバイスに換えることもあるかも
+  しれないので全てを入手するといいでしょう…(mget *)。一般的には X11R6.3
+  ウィンドウシステムの配布物全てを持っておくのはいいことです。DG/ux 上で
+  の暮らしが楽になるはずだからです。
+
+  (明らかですが、root 権限が必要です。)
+
+  o  / ディレクトリで *.tgz  ファイルを展開し、これらを直接新しいファイ
+     ルシステム /usr/X11R6.3 に入れます。これを行った後で /usr に cd
+     し、'ln -s X11R6.3 X11R6' でリンクを作成します(インストールスクリプ
+     トを使います)。このリンクは、XF86Setup といった XFree86 のプログラ
+     ムに新しい X11 ウィンドウシステムの場所を示します。
+
+  o  ホームディレクトリに cd し、"cp .profile myprofile" として .profile
+     のバックアップを取ります。それから /usr/X11R6.3 に cd します。ファ
+     イル HOME.profile-X11R6.3 を "cp HOME.profile-X11R6.3 your home
+     dir/.profile" としてホームディレクトリにコピーし、ホームディレクト
+     リに cd し、"chmod 644 .profile" を実行して新しい .profile が必ず有
+     効であるようにします。これは、DG/ux 標準の /usr/bin/X11 でない位置
+     にある X のソフトウェアをシステムに探させるように指定する必要がある
+     ためです。また、新しい X のライブラリが /usr/X11R6.3/lib にあること
+     も教える必要があります。
+
+     ** .profile を有効にするためにはログインし直す必要があります! ** **
+     いきなり "startx" を実行せず、先に設定の項目を見てください! **
+
+  o  設定について: DG/ux には、設定を行うための xconfig というプログラ
+     ム(実際にはスクリプト)があります。普通は DG/ux-X11R5 で xconfig を
+     実行すると、 /var/X11/Xserver ディレクトリに XdgConfig ファイルがで
+     きます。このファイルは /usr/X11R6.3/lib/X11/XF86Config に置かれる
+     XFree86 の設定ファイルに対応するものです。このファイル(のモニタのセ
+     クション)にはモニタに関する全ての値が書かれています。注意してくださ
+     い: 残念ながら DG/ux R4.20MU02 で事情が変わってしまいました。しかも
+     前進ではなく後退しています…。xconfig は筆者の DG-DA1765VA に対して
+     は全くおかしな値を返します。ですから、DG/ux R4.11MU02 や MU03 の
+     CD-ROM をお持ちであれば、お使いのモニタに対して信頼できる値を返す
+     xconfig をこの中から探して使いましょう。
+
+     正しく調節するための一番手堅い方法は XF86Setup を使うことです。
+
+     以上が、バイナリ配布の中に tcl, tk(バージョン 8.0)の最小限のファイ
+     ルが入っている理由です。XF86Setup を実行する前には、www.xfree86.org
+     にある関連文書を読んでください(あるいは後述の手動設定の項目を読んで
+     ください)。
+
+     XF86Setup に関する注意: "The program is running on a different
+     virtual" "Please switch to the correct virtual terminal" というメッ
+     セージが表示されるでしょう。
+
+     DG/ux には仮想端末はありません。しかし XF86Setup はこれをチェックし
+     ないスクリプトを使っているのです。したがって、いずれにせよこのメッ
+     セージは表示されます。これは無視してください。仮想端末を設定する方
+     法を筆者にメールで尋ねたりしないでください!  XF86Setup は(正しく使
+     えば)ちゃんと動き、設定を行うことができます。設定については以下の項
+     目を忘れないでください:
+
+     1. /usr/X11R6.3/bin でのリンク作成: ln -s XF86_VGA16 X
+
+     2. XF86Config でのマウスデバイスの設定を /dev/mouse とする(これは
+        DGUX のマウスです)
+
+     3. 正しいマウスプロトコルを設定する (一般的な AViiON では PS/2 が普
+        通)
+
+     あるいは、/usr/X11R6.3/lib/X11 に cd し、XF86Config.eg.dgux(ほとん
+     ど全ての AViiON で使われている PS/2 マウス用の設定) を XF86Config
+     にコピーし、それから XF86Setup を実行し、この XF86Config ファイルを
+     デフォルトとして選ぶことができます(したがってマウスが使えます)。
+
+     XF86Setup の代わりに、グラフィカルな設定ユーティリティでない
+     xf86config を使うこともできます。しかし、このユーティリティではモニ
+     タの設定値も全て手で入力する必要があります。ミニタに付属している小
+     冊子をお持ちであれば、これを使ってもいいでしょう。
+
+     手動での設定: 筆者は DG/ux の中解像度(1280x1024),17 インチの
+     DG-26059, DA1765VA を持っています。読者の皆さんが ***全く同じ*** モ
+     ニタを使っている場合に限り、/usr/X11R6.3/ にある
+     XF86Config_SVGA_DGUX を使うことができます。筆者とモニタを使っていな
+     ければ、このファイルの利用は読者の皆さん自身の責任で行ってくださ
+     い。ビデオモニタやグラフィックスカードを傷める可能性があります。
+
+     アクセラレーション付きのサーバ(例: ATI 用の XF86_Mach64)の設定例は
+     XF86Config_ATI_DGUX ファイルにあります。繰り返しになりますが忘れな
+     いでください: 筆者が持っているのは DG/ux の中解像度(1280x1024),17
+     インチの DG-26059, DA1765VA です。
+
+     読者の皆さんが ***全く同じ*** モニタを使っている場合に限
+     り、/usr/X11R6.3/ にある XF86Config_ATI_DGUX を使うことができます。
+     筆者とモニタを使っていなければ、このファイルの利用は読者の皆さん自
+     身の責任で行ってください。ビデオモニタを傷める可能性があります。
+
+     プロトタイプとしてまずは XF86Config.eg を使いましょう。REAME.Config
+     を読んでください。Cirrus チップの場合には /usr/X11R6.3 にある
+     README.cirrus を読む必要があります。アクセラレーション付きの XAA コ
+     ードには問題があるので、XF86Config には以下のオプションを使ってみる
+     必要があります:
+
+       Option "no_mmio" (Screen セクションの Display サブセクション)
+
+  どうやってこれを行うかは XF86Config_SVGA_DGUX を見てください。これが動
+  作しなければ(たぶん動作すると思いますが)、Option "noaccel" または
+  "no_bitblt" を試してください。繰り返しになりますが、README.cirrus (と
+  README.Config)を読んでください。筆者としては、XdgConfig を(紙に)印刷
+  し、これを見ることをお勧めします。そうすれば、XFree86 の設定ファイルで
+  設定すべきことが明らかになるでしょう。つまり XF86Config のマウス、キー
+  ボード、スクリーン等のセクションです。正しい XF86Config を
+  /usr/X11R6.3/lib/X11 に置いた後は、以下のコマンドを実行します:
+
+    chmod 444 XF86Config
+
+  既にログインし直して .profile が有効になっており、かつ(XdgConfig が示
+  すように)正しい XF86Config ファイルが用意されているものとすると(cirrus
+  チップの場合には、忘れずにScreen セクションで Option "no_mmio" を設定
+  してください!)、startx を実行すると新しい X11 が起動します。覚えておい
+  てください: (何かがおかしい時には)CONTROL+ALT+BACKSPACE を押せばいつで
+  も X サーバをシャットダウンさせることができます。また、X サーバは出力
+  するように指定しなければメッセージを出力しません。これは、X サーバの起
+  動中にテキストが出力されると、DG/ux のコンソールドライバが画面をめちゃ
+  くちゃにすることがあるからです。メッセージが必要ならば、bash のシェル
+  で以下のコマンドを実行してください:
+
+    X -verbose >& info1  、あるいはもっと詳しいメッセージが見たければ
+    X -verbose -verbose >& info2 を使います。
+
+  それから、X サーバが起動した後で CONTROL+ALT+BACKSPACE を押してサーバ
+  をシャットダウンさせます。ファイル info1 (または info2) にはグラフィッ
+  クスカード、ディスプレイのメモリ容量などに関する関連情報が記録されてい
+  ます。筆者としては、新しい X11R6.3 を使い始める前に最低一度はこれを行
+  うことをお勧めします。このファイルを見て、全て正しいかどうかを確認しま
+  す。そうでなければ、XF86Config の設定を変更し、それで正しくなるか試し
+  てみましょう。
+
+  ATI RageII (または RageII+)をお使いであれば、XF86_Mach64 を使ってくだ
+  さい(X-#045;#045;<XF86_MACH64 のリンクを作るか、xf86config を実行する
+  か、前述の XF86Setup を使います)。
+
+  o  X11R6.3 でプログラムをコンパイルしたければ、/usr/include/X11 にある
+     ヘッダが DG/ux の /usr/opt/X11 を指していると問題が起きます。
+
+     a): /usr/opt/X11 をアウマヌトすると、sysadm で X の GUI が使えなく
+     なります。しかし、失われるのはこれだけです。X11R6.3 に対する正しい
+     処理は、ファイルシステム /usr/opt/X11 を消して、リンク
+     /usr/opt/X11---</usr/X11R6.3 を作ることです。これは dglib と
+     /usr/lib のライブラリが /usr/X11r6.3/lib にある新しいライブラリを正
+     しく示すようにするためです。このファイルシステムをアンマウントする
+     前には以下の作業を行う必要があります:
+
+       cd /usr/opt/X11/include
+       cp -r Mrm    /usr/X11R6.3/include
+       cp -r uil    /usr/X11R6.3/include
+       cp -r Xm     /usr/X11R6.3/include
+       cd /usr/X11R6.3/include
+       ln -s uil Uil
+
+  ライブラリ:
+
+    cd /usr/opt/X11/lib
+    cp libXm.a       /usr/X11R6.3/lib
+
+  を行ってください。同様に、以下のライブラリも /usr/X11R6.3/lib にコピー
+  してください:
+
+    libX11.so.2, libX11.so.5, libXIM.so.1, libXaw.so.1, libXaw.so.2,
+    libXext.so.2, libXi.so.2, libXimp.so.1, libXm.so.2, libXmu.so.2,
+    libXsess.so.1, libXsi.so.1, libXt.so.2, libXt.so.5.0, libMrm.a,
+    libUil.a, libX11_s, libXR4sco_s
+
+  それから /usr/X11R6.3/lib に cd し、リンクを作成します:
+
+    ln -s libXm.so.2 libXm.so
+    ln -s libXm.so.2 libXm.so.1
+    ln -s libXm.so.2 libXm.so.5.0
+
+    ln -s libX11.so.5.0 libX11.so.1
+
+    ln -s libXIM.so.1 libXIM.so.5.0
+
+    ln -s libXaw.so.2 libXaw.so.5.0
+
+    ln -s libXext.so.2 libXext.so.5.0
+    ln -s libXext.so.2 libXext.so.1
+
+    ln -s libXi.so.2 libXi.so.1
+    ln -s libXi.so.2 libXi.so.5.0
+
+    ln -s libXimp.so.1 libXimp.so.5.0
+
+    ln -s libXmu.so.2 libXmu.so.5.0
+
+    ln -s libXt.so.2 libXt.so.5.0
+
+    ln -s libXsi.so.1 libXi.so.5.0
+
+    cd /usr/X11R6.3/lib
+    rm libXmu.so (X のソフトウェアを構築する時に未定義になるのを避けるため)
+
+  また、少なくとも /usr/dglib 以下のリンクは正しくなくてはなりません!
+  (正しい処理は、/usr/lib にある /usr/opt/X11 へのリンクも修正することで
+  す。) そして以下のコマンドを実行し(gzip は dglib のバックアップのサイ
+  ズを最小限にするために使います)、
+
+    cd /usr/
+    tar -cvf dglib-orig.tar dglib
+    gzip dglib-orig.tar
+
+  それから
+
+    cd /usr/dglib
+
+  して、/usr/opt/X11 にあるライブラリへのリンクを全て消します。次に cre-
+  ate_new_links_in_dglib スクリプト(/usr/X11R6.3 にある)を /usr/dglib に
+  コピーし、cd /usr/dglib してからこのスクリプトを実行します。これにより
+  X11R6.3 で使う新しいリンクが全て作成されます。
+
+  しかし、最後に次の作業を忘れずに行ってください:
+
+    cd /usr/dglib
+    rm *.a (dglib 内にはスタティックライブラリでないリンクはありません)
+
+  それから "umount /usr/opt/X11" を行って古い X11 をアンマウント(削除)し
+  ます。
+
+  注意: X11R6 でプログラムをコンパイルする場合には、/usr/opt/X11 がアン
+  マウントされているか、あるいは /usr/opt/X11/lib の古い libX のライブラ
+  リを指している /usr/lib のリンクが削除されていることを確かめてくださ
+  い。さもなければ、gcc がこれらの古いライブラリをリンクしてしまいます!
+  そして正しく動作しないバイナリができます。 R6 のコンパイルを行った後に
+  は、"ldd プログラム" を実行して、バイナリが R6 のバージョンのライビラ
+  リをロードすることを確かめましょう(Motif のライブラリである libXm.so.2
+  はたぶん例外です)――スタティックライブラリである libXm.a を使わないの
+  であれば。
+
+  b:)
+
+    cd /usr/include
+    tar -cvf old-X11headers.tar X11
+    gzip old-X11headers.tar
+
+  これは /usr/include にある古いヘッダを保存するための操作です。
+
+  それから cd /usr/include し、以下のようにファイルの削除を行います:
+
+  7.  What is about:
+
+  この新しい X11R6 は、単にサーバを最新のものに更新するだけではありませ
+  ん。これは DG/ux システムの新しいプログラミング環境であり、全ての *フ
+  リー* なソフトウェア、つまり X ウィンドウシステム用でないソフトウェア
+  も導入できるようになります。このソフトウェアは Data General の古い(そ
+  して質の低い)  X11 ではコンパイルできません。ほとんど全ての(ソースで提
+  供されている)X11 用ソフトウェア(フリーでも、そうでなくても)に用意され
+  ている Imakefile は、DG/ux の /usr/opt/X11 にある壊れた "imake" コマン
+  ドでは全く動作しません。
+
+  DG/ux の imake はひどい壊れ方です: 筆者は DG/ux のリリース R4.11,MU01,
+  ...MU04, R420, R4.20MU02 ,R4.20MU03 と見てきましたが、これらのリリース
+  に入っている imkae コマンドをわざわざ見ようという人は誰一人いませんで
+  した…。
+
+  今までは、DG/ux に新しい X11 を取り込むという点で DG は比較的冷淡でし
+  たが、新しい人が何人か加わって、最近は DG のX11R6(XFree6)への考え方が
+  転換しました。これは良い方向です。なぜなら、究極の目標は XFree86
+  (3.3.5 あるいは別のバージョン)を彼らの DG/ux Unix で動かすことだからで
+  す。筆者が DG/ux のソース(つまり元々の R5 のソース。ですがそれだけでは
+  なく例えば DG/ux のカーネルコンソールドライバのソース等のようなカーネ
+  ルのドライバのソースも含みます)に触れることができれば、DG/ux での X11
+  環境をもっと良くできると思います。
+
+  筆者はこの X11 を使って、Linux で動作しているほとんど全てのソフトウェ
+  アを DG/ux でコンパイルしています。XFree86 でこの作業を行うにあたっ
+  て、筆者はいくつかの技術的な疑問についてずっと助けてくれた David Dawes
+  さんに感謝の意を示したいと思います。また D.T. さんも貴重な手助けをして
+  くれた人達の一人です。最後に、システムコールにまつわるいくつかの問題に
+  ついて教えてくださって John H. さんに感謝の意を示します。
+
+  $XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/README.DGux,v 1.1.2.1 1999/12/02 12:30:33 hohndel Exp $
+
+  8.  日本語訳について
+
+  日本語訳は X Japanese Documentation Project が行いました (翻訳: 藤原輝
+  嘉 <fujiwara@linux.or.jp> <mailto:fujiwara@linux.or.jp>)。問題点の指摘
+  やご意見は藤原まで御連絡ください。原文の著作権は XFree86 プロジェクト
+  社にあり、日本語訳に伴う権利は X Japanese Documentation Project にあり
+  ます。
+

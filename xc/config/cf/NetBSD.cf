@@ -2,7 +2,7 @@ XCOMM platform:  $XConsortium: NetBSD.cf /main/16 1996/10/31 14:47:14 kaleb $
 
 
 
-XCOMM platform:  $XFree86: xc/config/cf/NetBSD.cf,v 3.49.2.12 1998/12/22 11:23:02 hohndel Exp $
+XCOMM platform:  $XFree86: xc/config/cf/NetBSD.cf,v 3.49.2.13 1999/10/12 17:18:20 hohndel Exp $
 
 
 #ifndef OSName
@@ -85,6 +85,7 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #define NeedVarargsPrototypes	YES
 #define NeedWidePrototypes	NO
 
+#define HasMktemp		NO
 #define MkdirHierCmd		mkdir -p
 
 #define CppCmd          	/usr/libexec/cpp

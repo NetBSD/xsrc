@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/s3v/s3v_cursor.c,v 1.1.2.5 1998/10/21 10:44:46 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/s3v/s3v_cursor.c,v 1.1.2.6 2000/01/06 02:14:27 robin Exp $ */
 
 /*
  *
@@ -447,9 +447,15 @@ S3VRecolorCursor(pScr, pCurs, displayed)
       outb(vgaCRIndex, 0x4A);
       outb(vgaCRReg, packedcolfg);
       outb(vgaCRReg, packedcolfg>>8);
+      /* needed for 2nd pixel in double-clock modes */
+      outb(vgaCRReg, packedcolfg);
+      outb(vgaCRReg, packedcolfg>>8);
       outb(vgaCRIndex, 0x45);
       inb(vgaCRReg);		/* reset stack pointer */
       outb(vgaCRIndex, 0x4B);
+      outb(vgaCRReg, packedcolbg);
+      outb(vgaCRReg, packedcolbg>>8);
+      /* needed for 2nd pixel in double-clock modes */
       outb(vgaCRReg, packedcolbg);
       outb(vgaCRReg, packedcolbg>>8);
       break;

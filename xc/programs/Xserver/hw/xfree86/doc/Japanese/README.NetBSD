@@ -1,9 +1,10 @@
   NetBSD で XFree86 を使用する人は読んでください
   Rich  Murphey, David Dawes, Marc  Wandschneider, Mark
   Weaver, Matthieu Herrb
-  Last modified on: 29 December 1998
+  Last modified on: 20 August 1999
   大石  勲 Isao Ohishi <ohishi@hf.rim.or.jp> & The X Documen-
   tation Project
+  Last modified on: 12 September 1999
   ____________________________________________________________
 
   目次
@@ -11,7 +12,7 @@
 
   1. XFree86 って何？どこにあるの？
   2. このドキュメントのバグの報告について
-  3. 本リリースの新しい機能
+  3. XFree86 3.3.4 における、OS 依存の新機能
   4. バイナリのインストール
   5. ハードウェアに応じた X の設定
      5.1 マウスの設定について
@@ -35,6 +36,7 @@
 
   9. 新しい X クライアントの構築
   10. 謝辞
+  11. 日本語訳について
 
 
   ______________________________________________________________________
@@ -54,21 +56,19 @@
 
   ftp://ftp.XFree86.org/pub/XFree86/current
 
-  NetBSD 1.2 用のバイナリは以下の場所から入手できます:
-  ftp://ftp.XFree86.org/pub/XFree86/current/binaries/NetBSD-1.2
-
-  NetBSD 1.3 以降用のバイナリは以下の場所から入手できます:
-  ftp://ftp.XFree86.org/pub/XFree86/current/binaries/NetBSD-1.3
+  NetBSD 1.4 以降用のバイナリは以下の場所から入手できます:
+  ftp://ftp.XFree86.org/pub/XFree86/current/binaries/NetBSD-1.4
 
   ミラーサイトのリストは以下の場所にあります:
   ftp://ftp.XFree86.org/pub/XFree86/MIRRORS
 
 
+
   その他のバージョンの NetBSD :
 
   これらのバイナリは初期のバージョンの NetBSD とは互換性がありません。も
-  し NetBSD 0.9, 1.0, 1.1 を使用しているのであれば、まず最初に新しいバー
-  ジョンの NetBSD を使用する事を検討してください。
+  しバージョン 1.4 より前の NetBSD を使用しているのであれば、まず最初に
+  新しいバージョンの NetBSD を使用する事を検討してください。
 
   アップグレードを行わないなら、XFree86 をソースから構築する必要がありま
   す。XFree86 は初期のバージョンの NetBSD でもきちんとコンパイルできるは
@@ -90,10 +90,13 @@
   ただければ、修正します。
 
 
-  3.  本リリースの新しい機能
+  3.  XFree86 3.3.4 における、OS 依存の新機能
 
-  XFree86 3.3.3.1 の OS に依存しない新機能に関しては、リリースノート を
-  参照してください。
+
+  o  サーバの最大接続数が 128 に増えました。
+
+  o  NetBSD 1.4 に含まれている wsmouse マウスプロトコルに対応しました。
+
 
 
   4.  バイナリのインストール
@@ -126,9 +129,9 @@
   例も /usr/X11R6/lib/X11/XF86Config.eg にインストールされていますので、
   それをベースに修正して使用することもできます。
 
+
   XF86Config ファイルの記述形式の詳細に関しては、XF86Config(5) のマニュ
   アルを参照してください。
-
 
   XF86Config ファイルの設定が一旦終ったら、xvidtune ユーティリティを使用
   してビデオモードのチューニングを行う事ができます。
@@ -147,6 +150,12 @@
   このドライバは普通の PS/2 マウスしかサポートしていません。最新のPS/2
   マウス(特に"3D"ローラー付の IntelliMouse や MouseMan+ 等)は一度に3バイ
   ト以上の通信が可能ですが、これらはまだサポートされていません。
+
+  XFree86 3.3.4 以降は NetBSD 1.4 で導入された新しい wscons コンソールド
+  ライバに含まれているマウスドライバもサポートしています。NetBSD 1.4 で
+  wscons を使っているならば、/etc/XF86Config ではマウスのプロトコルとし
+  て ``wsmouse'' を指定し、デバイスとして ``/dev/wsmouse0'' を指定してく
+  ださい。
 
   XFree86 での一般的なマウスの設定手順に関しては README.mouse を見てくだ
   さい。
@@ -184,6 +193,9 @@
   います。詳しくは joy(4) を見てください。
 
 
+
+
+
   5.3.  PEX と XIE 拡張機能の設定
 
   PEX と XIE 拡張機能は外部モジュールでサポートされています。これらの拡
@@ -193,6 +205,9 @@
 
           load    "pex5.so"
           load    "xie.so"
+
+
+
 
 
 
@@ -247,9 +262,32 @@
 
         ttyv0  "/usr/libexec/getty Pc"     pc      off secure
 
+  NetBSD 1.4 で wscons コンソールドライバを使っている場合、最初に X サー
+  バ用の仮想コンソールを有効にしなければなりません。これを行うには、以下
+  の手順に従ってください:
+
+  o  デバイスファイルが存在することを確かめます。もしなければ ``cd /dev
+     ; ./MAKEDEV wscons'' で作ります。
+
+  o  次に、カーネルが wscons を使う設定になっていることを確かめます (こ
+     れは ``後述します'')。
+
+  o  次に、/etc/rc.conf において ``wscons=YES'' が設定されていることを確
+     かめます。
+
+
+       #screen 0       -       vt100
+       screen  1       -       vt100
+       screen  2       -       vt100
+       screen  3       -       vt100
+       screen  4       -       -
+       screen  5       -       vt100
 
 
 
+
+  (この説明を書いてくださった Mason Loring Bliss さ
+  ん(<mason@acheron.middleboro.ma.us>) に感謝します)
 
   NetBSD 用の XFree86 のバイナリ配布には、XDM-AUTHORIZATION-1 プロトコル
   のサポートは含まれていない点に注意してください。
@@ -261,16 +299,15 @@
   の設定ファイルに記述しておかなければなりません:
 
 
-
-  options XSERVER, UCONSOLE
+       options XSERVER, UCONSOLE
 
 
 
   7.1.  コンソールドライバ
 
-  サーバは NetBSD/i386 で標準的な 2 つのコンソールドライバ(pccons と
-  pcvt) をサポートしています。これらは実行時に検出されるので、サーバの設
-  定などは必要ありません。
+  このサーバは NetBSD/i386 で標準的な コンソールドライバである pccons,
+  pcvt, wscons(pcvt 互換モード)をサポートしています。これらは実行時に検
+  出されるので、サーバの設定などは必要ありません。
 
 
   pccons ドライバは最もよくテストされ、NetBSD のバイナリ配布用のカーネル
@@ -291,17 +328,26 @@
 
        device         vt0     at isa? port "IO_KBD" irq 1
 
-
   に変更してカーネルを再構築して新しいカーネルをインストールしてくださ
   い。
 
 
-  XFree86 は NetBSD-current の  wscons コンソールドライバでも動作しま
-  す。現在のところは pcvt 互換モードを使っているので、wscons を使ってい
-  る場合には、以下の行をカーネルの設定ファイルに必ず入れてください:
+
+  XFree86 は NetBSD 1.4 の  wscons コンソールドライバでも動作します。現
+  在のところは pcvt 互換モードを使っているので、wscons を使っている場合
+  には、以下の行をカーネルの設定ファイルに必ず入れてください:
+
 
        options         WSDISPLAY_COMPAT_PCVT           # emulate some ioctls
+       options         WSDISPLAY_COMPAT_SYSCONS        # emulate some ioctls
+       options         WSDISPLAY_COMPAT_USL            # VT handling
+       options         WSDISPLAY_COMPAT_RAWKBD         # can get raw scancodes
 
+
+
+
+  wscons をカーネルに組み込む方法については、wscons(4) と wsmouse(4) の
+  オンラインマニュアルを参照してください。
 
 
   7.2.  アパーチャドライバ
@@ -347,7 +393,8 @@
      /etc/lkm.conf に次の行を追加します。
 
 
-       /usr/X11R6/lib/X11/kernel/ap.o  -  ap /usr/X11R6/lib/X11/kernel/apinstall -
+
+  /usr/X11R6/lib/X11/kernel/ap.o  -  ap /usr/X11R6/lib/X11/kernel/apinstall -
 
 
 
@@ -392,7 +439,6 @@
   NetBSD 1.0 以降では System V 形式の共有メモリがサポートされています。
   XFree86 はカーネル内でこれがサポートされていることを検出すると、MIT-
   SHM 機能拡張をサポートするようになります。
-
 
   カーネルに System V 形式の共有メモリサポートを組み込むには、以下の行を
   カーネル設定ファイルに追加してください:
@@ -480,9 +526,6 @@
 
        cp /usr/src/sys/arch/i386/isa/pcvt/pcvt_ioctl.h /usr/include/machine
 
-
-
-
   カーネルのソースが無い場合は、ftp.netbsd.org かそのミラーサイトからこ
   のファイルを入手する事もできます。また PCVT を使用していなければ、
   xf86site.def の XFree86ConsoleDefines から -DPCVT_SUPPORT を削除するこ
@@ -525,7 +568,6 @@
   xc/programs/Xserver/hw/sun に統合されています。 xf86site.def は多少の
   変更する必要があります:
 
-
   o  構築するサーバを定義する変数を全て NO に設定します。(Sun 用のサーバ
      Xsun24Server, XsunServer, XsunMonoServer のどれを作るかという指示は
      NetBSD.cf の最後に定義します。)
@@ -546,6 +588,8 @@
   ースを使用して再構築することもできます。NetBSD の xsrc ソースツリーは
   以下のところから入手可能です: ftp://ftp.netbsd.org/pub/NetBSD/NetBSD-
   current/xsrc/
+
+
 
 
   9.  新しい X クライアントの構築
@@ -591,7 +635,6 @@
        ld.so: undefined symbol _XtCvtStringToFont
 
 
-
   NetBSD のダイナミックリンク機構の弱点でつまづいています。libXmu を使用
   するアプリケーションは、libXt も使用します。クライアントがごく普通の
   Imakefile を使用するなら、この依存性は自動的に Makefile 中に含まれま
@@ -614,47 +657,26 @@
 
   o  Nate Williams さんは X 用のパッチキットのサポートを行いました。
 
+
   o  Walnut Creek Cdrom の Rod Grimes さんと Jack Velte さんは FreeBSD
      のバイナリリリース用に機材の提供してくださいました。
 
 
-  $XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/README.NetBSD,v 1.1.2.2 1999/06/02 07:50:48 hohndel Exp $
+  $XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/README.NetBSD,v 1.1.2.4 1999/12/28 12:13:47 hohndel Exp $
 
 
-  <sect>日本語訳について<p>
-  この日本語訳は
-  大石勲 さん <ohishi@hf.rim.or.jp>
-  の 3.3.2 版の翻訳をベースに
-  X Japanese Documentation Project が更新を行ったものです(
-  (更新: 藤原輝嘉 <url url="mailto:fujiwara@linux.or.jp"
-  name="<fujiwara@linux.or.jp>">
-  )。
+
+
+
 
   $XConsortium: NetBSD.sgml /main/26 1996/10/28 05:43:20 kaleb $
 
 
 
 
+  11.  日本語訳について
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+  この日本語訳(バージョン 3.3.3-3.3.6)は大石勲 さん
+  <ohishi@hf.rim.or.jp> の 3.3.2 版の翻訳をベースに X Japanese
+  Documentation Project が更新を行ったものです (更新: 藤原輝嘉
+  <fujiwara@linux.or.jp> <mailto:fujiwara@linux.or.jp>)。

@@ -3,36 +3,45 @@
 <article>
 <!--
 <title> Information for S3 ViRGE, ViRGE/DX, ViRGE/GX, ViRGE/GX2, 
-ViRGE/MX and ViRGE/VX Users
+ViRGE/MX, ViRGE/VX, Trio3D, Trio3D/2X, Savage3D and Savage4 Users
 -->
 <title> S3 ViRGE, ViRGE/DX, ViRGE/GX, ViRGE/GX2, 
-ViRGE/MX, ViRGE/VX ユーザ向けの情報
+ViRGE/MX, ViRGE/VX, Trio3D, Trio3D/2X, Savage3D, Savage4
+ユーザ向けの情報
 <author>The XFree86 Project Inc.
-<date>1 March 1998
+<date>2 August 1999
 <trans>The X Japanese Documentation Project
-<tdate>13 January 1999
+<tdate>12 September 1999
 <toc>
 
 <!-- <sect> Supported hardware -->
 <sect> サポートしているハードウェア
 <p>
 <!--
-With release 3.3.2 of XFree86, there are now two servers which support
+Since release 3.3.2 of XFree86, there are now two servers which support
 the ViRGE family of chips. The XF86_S3V server 
 is a dedicated server which supports the S3 ViRGE (86C325), the ViRGE/DX 
-(86C375), ViRGE/GX (86C385) and the ViRGE/VX (86C988) chips. New with 
-this release, the above ViRGE chipsets are also supported in the 
-XF86_SVGA server, which includes a new ViRGE driver making use 
-of the XAA acceleration architecture and also supports 
-ViRGE/GX2 (86C357) and ViRGE/MX (86C260) chips now.
+(86C375), ViRGE/GX (86C385) and the ViRGE/VX (86C988) chips. Use of that
+server is no longer recommended. It is not actively being supported anymore.
 -->
 XFree86 リリース 3.3.2 から、ViRGE 系のチップをサポートするサーバは2つ
 になりました。XF86_S3V サーバは S3 ViRGE (86C325), ViRGE/DX (86C375),
 ViRGE/GX (86C385), ViRGE/VX (86C988) チップをサポートする専用サーバで
-す。このリリースから上記の ViRGE チップセットは XF86_SVGA サーバでも新
-たにサポートされるようになりました。このサーバには XAA アクセラレーショ
-ンアーキテクチャを利用した ViRGE ドライバが含まれており、現在は
-ViRGE/GX2 (86C357) と ViRGE/MX (86C260) もサポートしています。
+す。現在はこれらのサーバは使わない方がいいでしょう。既にサポートが活発
+に行われなくなったからです。
+
+<!--
+The above ViRGE chipsets are supported in the 
+XF86_SVGA server, which includes a new ViRGE driver making use 
+of the XAA acceleration architecture and also supports 
+ViRGE/GX2 (86C357), ViRGE/MX (86C260), Trio3D (86C365), Trio3D/2X (86C362), 
+Savage3D (86C391), Savage4 (86C396/86C397) and Savage2000 chips as of 3.3.6.
+-->
+上記の ViRGE 系チップセットは XF86_SVGA サーバでもサポートされています。
+このサーバには XAA アクセラレーションアーキテクチャを利用した ViRGE ド
+ライバが含まれており、XFree86 3.3.6 では ViRGE/GX2 (86C357), ViRGE/MX
+(86C260), Trio3D (86C365), Trio3D/2X (86C362), Savage3D (86C391),
+Savage4 (86C396/86C397), Savage2000 チップもサポートしています。
 <p>
 <!--
 The following sections describe details of ViRGE support.  Be aware that
@@ -123,49 +132,43 @@ using the appropriate bug report sheet.
 <sect1>既知の制限事項
 <p>
 
-<!--
 <itemize>
+<!--
 <item>No support for external RAMDACs on the ViRGE/VX.
+-->
+<item>ViRGE/VX では 外部 RAMDAC はサポートされていません。
+<!--
 <item>No support for VLB cards.
+-->
+<item>VL バスのカードはサポートされていません。
+<!--
 <item>No support for doublescan modes.
+-->
+<item>複数スクリーンモードはサポートされていません。
+<!--
 <item>The driver only works with linear addressing.
+-->
+<item>ドライバはリニアアドレッシングでしか動作しません。
+<!--
 <item>For 24/32 bpp some simple dashed line acceleration is implemented, but
 sloped dash/double dash are drawn as solid lines.
-</itemize>
 -->
-<itemize>
-<item>ViRGE/VX では 外部 RAMDAC はサポートされていません。
-<item>VL バスのカードはサポートされていません。
-<item>複数スクリーンモードはサポートされていません。
-<item>ドライバはリニアアドレッシングでしか動作しません。
 <item>24/32 bpp の場合、点線のうち簡単なもののいくつかのアクセラレーショ
 ンは実装されていますが、sloped dash や double dash は実線を使って描画さ
 れます。
-</itemize>
-
-<!-- <sect1>Future Features (in order from highest to lowest priority) -->
-<sect1>将来的にサポートされる機能 (優先度の高い順)
-<p>
-
 <!--
-<itemize>
-<item>there is a good chance that the SVGA ViRGE driver will replace XF86_S3V
-in future releases
-<item>some more hardware acceleration
-<item>3d acceleration (once we work out how that's done)
-<item>more chipsets and RAMDACs
-</itemize>
+<item>No support for current chipsets.
 -->
-<itemize>
-<item>将来のリリースでは、SVGA ViRGE ドライバが XF86_S3V に置き換わる
-可能性が十分あります。
-<item>ハードウェアアクセラレーション機能の追加。
-<item>3D アクセラレーション(実現方法を考えたことはあります)
-<item>より多くのチップセットや RAMDAC への対応。
+<item>最新のチップセットはサポートされていません。
+<!--
+<item>No longer actively maintained.
+-->
+<item>もはや活発にはメンテナンスされていません。
 </itemize>
+
 
 <!-- <sect1>Configuration: -->
-<sect1>設定
+<sect1>設定:
 <p>
 <!--
 The server auto-detects RAM size, RAMDAC and ClockChip. Do not bother putting 
@@ -197,22 +200,25 @@ The "nolinear" option is unsupported.
 <p>
 <!--
 The XF86_SVGA ViRGE driver supports all current flavors of the S3 ViRGE
-chipset. 
+chipset including Trio3D and the Savage family.
 It uses the XAA acceleration architecture for acceleration, and allows
 color depths of 8, 15, 16, 24 and 32 bpp. It has been tested on several 2MB
-and 4MB ViRGE cards, a 4MB ViRGE/DX card and a ViRGE/VX card. Resolutions 
-of up to 1600x1200 have been achieved. This is an early release of this
-driver, and not everything may work as expected. Please report any problems 
-to <htmlurl name="XFree86@Xfree86.org" url="mailto:XFree86@Xfree86.org">
+and 4MB ViRGE cards, a 4MB ViRGE/DX card, a ViRGE/VX card and a 4MB Trio3D
+card. Resolutions of up to 1600x1200 have been achieved. This is an early
+release of this driver, and not everything may work as expected. Please note
+that Trio3D support is an initial release and not very well tested. Please
+report any problems to <htmlurl name="XFree86@Xfree86.org" url="mailto:XFree86@Xfree86.org">
 using the appropriate bug report sheet. 
 -->
-XF86_SVGA の ViRGE ドライバは現在の S3 ViRGE 系のチップセットを全てサ
-ポートしています。このドライバは XAA アクセラレーションアーキテクチャ
-を使ってアクセラレーションを行っており、色の深さは 8, 15, 16, 24, 32
-bpp を利用できます。このドライバのテストを行ったのは、2MB, 4MB の
-ViRGE カードのいくつか、4MB の ViRGE/DX カード, ViRGE/VX カードです。
+XF86_SVGA の ViRGE ドライバは、Trio3D と Savage 系を含めた現在の S3
+ViRGE 系のチップセットを全てサポートしています。
+このドライバは XAA アクセラレーションアーキテクチャを使ってアクセラレー
+ションを行っており、色の深さは 8, 15, 16, 24, 32 bpp を利用できます。
+このドライバのテストを行ったのは、2MB, 4MB の ViRGE カードのいくつか、
+4MB の ViRGE/DX カード と ViRGE/VX カード、4MB の Trio3D カードです。
 解像度は 1600x1200 まで使用できます。このドライバは初期リリースなので、
-全て期待通りに動作するとは限りません。問題点があれば、
+全て期待通りに動作するとは限りません。Trio3D のサポートは初めてのリリー
+スであり、テストも十分でない点に注意してください。何か問題があれば、
 <htmlurl name="XFree86@Xfree86.org" url="mailto:XFree86@Xfree86.org">
 までお知らせください。連絡の際には適切なバグレポート用紙を使ってくださ
 い。
@@ -223,11 +229,11 @@ ViRGE カードのいくつか、4MB の ViRGE/DX カード, ViRGE/VX カードです。
 
 <itemize>
 <!--
-<item>Supports PCI hardware, ViRGE, ViRGE/DX, ViRGE/GX, ViRGE/GX2, ViRGE/MX 
-and ViRGE/VX.
+<item>Supports PCI hardware, ViRGE, ViRGE/DX, ViRGE/GX, ViRGE/GX2, ViRGE/MX, 
+ViRGE/VX, Trio3D and the Savage family.
 -->
 <item>PCI ハードウェア、ViRGE, ViRGE/DX, ViRGE/GX, ViRGE/GX2,
-ViRGE/MX, ViRGE/VX をサポートしています。
+ViRGE/MX, ViRGE/VX, Trio3D, Savage 系をサポートしています。
 <!--
 <item>Supports 8bpp, 15/16bpp, 24bpp and 32bpp.
 -->
@@ -264,27 +270,82 @@ ViRGE 自体に 32bpp でのアクセラレーション機能がないため、グラフィック
 <item>全てのモードでハードウェアカーソルがサポートされています。
 </itemize>
 
-<!-- <sect1>Known limitations -->
-<sect1>既知の制限事項
+<!--
+<sect1>Known limitations in the Savage family support (s3_savage driver)
+-->
+<sect1>Savage 系チップのサポートにおける既知の制限 (s3_savage ドライバ)
+<p>
+<!--
+The Savage family driver for the Savage3D and the Savage4 was donated to XFree86
+by S3 very closely before the release of XFree86-3.3.5. The driver violates a few
+design principles and goals, but since there is massive demand for it, we decided
+to include it in XFree86-3.3.5. For 3.3.6 some rewrites have been done,
+there is fallback code for non-BIOS modes.
+-->
+Savage3D と Savage4 向けの Savage 系チップ用ドライバは、XFree86-3.3.5 
+のリリースの直前に S3 が XFree86 に寄付しました。このドライバは 
+XFree86 の設計の原則と目的に違反している部分がいくつかありますが、需要
+が非常に大きいので、XFree86-3.3.5 に含めることに決めました。
+3.3.6 ではいくらか書き直しが行われ、非 BIOS モードのために昔に戻したコー
+ドが入っています。
 <p>
 
 <!--
+<sect1>Known limitations of the s3_virge driver
+-->
+<sect1>s3_virge ドライバの既知の制限
+<p>
+
 <itemize>
+<!--
 <item>No support for external RAMDACs on the ViRGE/VX.
+-->
+<item>ViRGE/VX では外部 RAMDAC はサポートされていません。
+<!--
 <item>No support for VLB cards.
+-->
+<item>VL バスのカードはサポートされていません。
+<!--
 <item>No support for doublescan modes.
+-->
+<item>ダブルスキャンモードはサポートされていません。
+<!--
 <item>The driver only works with linear addressing.
+-->
+<item>このドライバはリニアアドレッシングでしか動作しません。
+<!--
 <item>Lines and polygons are not accelerated yet (but XAA still provides some
 acceleration in this respect).
-</itemize>
 -->
-<itemize>
-<item>ViRGE/VX では外部 RAMDAC はサポートされていません。
-<item>VL バスのカードはサポートされていません。
-<item>複数スクリーンモードはサポートされていません。
-<item>ドライバの動作はリニアアドレッシングだけです。
 <item>線や多角形ではまだアクセラレーションは使えません(ただし、XAA は
 一部のアクセラレーションをサポートしています)。
+<!--
+<item>Burst Command Interface (BCI) support and 32bpp support not implemented
+for the Trio3D.
+-->
+<item>バーストコマンドインタフェース(BCI, Burst Command Interface)のサ
+ポートと 32bpp のサポートは、Trio3D 用には実装されていません。
+<!--
+<item>Trio3D support only works for some modelines. Many of the standard
+modelines do not work (often slightly modifying the dot clock works, though).
+The following two modelines seem to work reliably at 8bpp and 24bpp:
+-->
+<item>Trio3D サポートが動作するのは一部のモード行だけです。標準の
+モード行の多くでは動作しません(ただし、少しドットクロックを変えれば動
+くかもしれません)。以下の 2 つのモード行は 8bpp と 24bpp で安定して動
+作するようです:
+<verb>
+Modeline "1024x768"  75  1024 1048 1184 1328  768  771  777  806 -hsync -vsync
+Modeline "1280x1024" 135 1280 1312 1416 1664  1024 1027 1030 1064
+</verb>
+<!--
+The following two modelines seem to work reliably at 16bpp:
+-->
+以下の 2 つのモード行は 16bpp で安定して動作するようです:
+<verb>
+Modeline "640x480"  45.80 640 672 768 864 480 488 494 530 -hsync -vsync 
+Modeline "800x600"  36      800  824  896 1024    600  601  603  625
+</verb>
 </itemize>
 
 <!-- <sect1>Configuration -->
@@ -578,10 +639,13 @@ Sebastien Marineau <it>&lt;marineau@genie.uottawa.ca&gt;</it>
 <itemize>
 <item>Harald Koenig <it>&lt;koenig@tat.physik.uni-tuebingen.de&gt;</it>
 <item>Kevin Brosius <it>Cobra@compuserve.com</it>
+<item>Sebastian Kloska <it>kloska@mpimp-golm.mpg.de</it>
+<item>Alok Ladsariya <it>alok@XFree86.Org</it>
+<item>Dirk Hohndel <it>hohndel@XFree86.Org</it>
 </itemize>
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/sgml/S3V.sgml,v 1.1.2.1 1999/05/25 06:39:21 hohndel Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/sgml/S3V.sgml,v 1.1.2.3 1999/12/28 12:13:57 hohndel Exp $
 </verb>
 
 <sect>日本語訳について<p>

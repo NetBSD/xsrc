@@ -64,7 +64,7 @@ SOFTWARE.
 
 ******************************************************************/
 
-/* $XFree86: xc/programs/xterm/main.c,v 3.47.2.21 1999/07/29 09:23:09 hohndel Exp $ */
+/* $XFree86: xc/programs/xterm/main.c,v 3.47.2.23 1999/11/26 15:24:21 hohndel Exp $ */
 
 
 /* main.c */
@@ -182,7 +182,7 @@ static Bool IsPts = False;
 #endif
 #endif
 
-#ifdef __CYGWIN32__
+#ifdef __CYGWIN__
 #define SYSV
 #define SVR4
 #define LASTLOG
@@ -216,7 +216,7 @@ static Bool IsPts = False;
 #include <grp.h>
 #endif
 
-#ifndef __CYGWIN32__
+#ifndef __CYGWIN__
 #include <sys/ioctl.h>
 #endif
 
@@ -434,7 +434,7 @@ extern time_t time ();
 #include <sys/filio.h>
 #endif
 
-#if (defined(SVR4) || defined(SCO325)) && !defined(__CYGWIN32__)
+#if (defined(SVR4) || defined(SCO325)) && !defined(__CYGWIN__)
 
 #include <utmpx.h>
 #define setutent setutxent
@@ -546,6 +546,7 @@ extern "C" {
 #endif
 
 extern int tgetent (char *ptr, char *name);
+extern char *tgetstr (char *name, char **ptr);
 
 #ifdef	__cplusplus
 	}
@@ -557,9 +558,9 @@ extern int tgetent (char *ptr, char *name);
 static SIGNAL_T reapchild (int n);
 static char *base_name (char *name);
 static int pty_search (int *pty);
-static int remove_termcap_entry (char *buf, char *str);
 static int spawn (void);
 static void get_terminal (void);
+static void remove_termcap_entry (char *buf, char *str);
 static void resize (TScreen *s, char *oldtc, char *newtc);
 
 static Bool added_utmp_entry = False;
@@ -622,6 +623,7 @@ static struct jtchars d_jtc = {
 #endif /* sony */
 #endif /* USE_SYSV_TERMIO */
 
+#define TERMCAP_ERASE "kb"
 #define VAL_INITIAL_ERASE 127
 
 /* allow use of system default characters if defined and reasonable */
@@ -1185,12 +1187,13 @@ DeleteWindow(
 	Cardinal *num_params GCC_UNUSED)
 {
 #if OPT_TEK4014
-  if (w == toplevel)
-    if (term->screen.Tshow)
+  if (w == toplevel) {
+    if (term->screen.Tshow) {
       hide_vt_window();
-    else
+    } else {
       do_hangup(w, (XtPointer)0, (XtPointer)0);
-  else
+    }
+  } else
     if (term->screen.Vshow)
       hide_tek_window();
     else
@@ -2223,6 +2226,19 @@ void first_map_occurred (void)
 #ifndef AMOEBA
 extern char **environ;
 
+static void
+set_owner(char *device, int uid, int gid, int mode)
+{
+	if (chown (device, uid, gid) < 0) {
+		if (errno != ENOENT
+		 && getuid() == 0) {
+			fprintf(stderr, "Cannot chown %s to %d,%d: %s\n",
+				device, uid, gid, strerror(errno));
+		}
+	}
+	chmod (device, mode);
+}
+
 static int
 spawn (void)
 /*
@@ -2278,7 +2294,7 @@ spawn (void)
 #endif
 	struct passwd *pw = NULL;
 #ifdef UTMP
-#if (defined(SVR4) || defined(SCO325)) && !defined(__CYGWIN32__)
+#if (defined(SVR4) || defined(SCO325)) && !defined(__CYGWIN__)
 	struct utmpx utmp;
 #else
 	struct utmp utmp;
@@ -2413,7 +2429,7 @@ spawn (void)
 #endif	/* USE_SYSV_TERMIO */
 			}
 			if (resource.backarrow_is_erase) 
-			if (initial_erase == 0177) {	/* see input.c */
+			if (initial_erase == 127) {	/* see input.c */
 				term->keyboard.flags &= ~MODE_DECBKM;
 			}
 #endif
@@ -2524,11 +2540,11 @@ spawn (void)
 	}
 
 #if OPT_INITIAL_ERASE
-	if (!resource.ptyInitialErase && *newtc) {
-		char *s = strstr(newtc, "kD=");
+	if (!resource.ptyInitialErase) {
+		char temp[1024], *p = temp;
+		char *s = tgetstr(TERMCAP_ERASE, &p);
 		TRACE(("extracting initial_erase value from termcap\n"))
 		if (s != 0) {
-			s += 3;
 			if (*s == '^') {
 				if (*++s == '?') {
 					initial_erase = 127;
@@ -2544,7 +2560,12 @@ spawn (void)
 				initial_erase = *s;
 			}
 			initial_erase &= 0xff;
+			TRACE(("... initial_erase:%d\n", initial_erase))
 		}
+	}
+	if (resource.backarrow_is_erase && initial_erase == 127) {
+		/* see input.c */
+		term->keyboard.flags &= ~MODE_DECBKM;
 	}
 #endif
 
@@ -2780,22 +2801,17 @@ spawn (void)
 		struct group *ttygrp;
 		if ((ttygrp = getgrnam("tty")) != 0) {
 			/* change ownership of tty to real uid, "tty" gid */
-			chown (ttydev, screen->uid, ttygrp->gr_gid);
-			chmod (ttydev, 0620);
+			set_owner (ttydev, screen->uid, ttygrp->gr_gid, 0620);
 		}
 		else {
 			/* change ownership of tty to real group and user id */
-			chown (ttydev, screen->uid, screen->gid);
-			chmod (ttydev, 0622);
+			set_owner (ttydev, screen->uid, screen->gid, 0622);
 		}
 		endgrent();
 	}
 #else /* else !USE_TTY_GROUP */
 		/* change ownership of tty to real group and user id */
-		chown (ttydev, screen->uid, screen->gid);
-
-		/* change protection of tty */
-		chmod (ttydev, 0622);
+		set_owner (ttydev, screen->uid, screen->gid, 0622);
 #endif /* USE_TTY_GROUP */
 
 		/*
@@ -3454,24 +3470,24 @@ spawn (void)
 		    resize (screen, termcap, newtc);
 		}
 		if (term->misc.titeInhibit) {
-		    remove_termcap_entry (newtc, ":ti=");
-		    remove_termcap_entry (newtc, ":te=");
+		    remove_termcap_entry (newtc, "ti=");
+		    remove_termcap_entry (newtc, "te=");
 		}
 		/*
 		 * work around broken termcap entries */
 		if (resource.useInsertMode)	{
-		    remove_termcap_entry (newtc, ":ic=");
+		    remove_termcap_entry (newtc, "ic=");
 		    /* don't get duplicates */
-		    remove_termcap_entry (newtc, ":im=");
-		    remove_termcap_entry (newtc, ":ei=");
-		    remove_termcap_entry (newtc, ":mi");
+		    remove_termcap_entry (newtc, "im=");
+		    remove_termcap_entry (newtc, "ei=");
+		    remove_termcap_entry (newtc, "mi");
 		    if(*newtc)
 			strcat (newtc, ":im=\\E[4h:ei=\\E[4l:mi:");
 		}
 #if OPT_INITIAL_ERASE
-		remove_termcap_entry (newtc, ":kD=");
 		if (*newtc) {
-		    sprintf(newtc + strlen(newtc), ":kD=\\%03o", initial_erase & 0377);
+		    remove_termcap_entry (newtc, TERMCAP_ERASE "=");
+		    sprintf(newtc + strlen(newtc), ":%s=\\%03o", TERMCAP_ERASE, initial_erase & 0377);
 		}
 #endif
 		if(*newtc)
@@ -3908,16 +3924,16 @@ static int spawn(void)
 	resize (screen, termcap, newtc);
     }
     if (term->misc.titeInhibit) {
-	remove_termcap_entry (newtc, ":ti=");
-	remove_termcap_entry (newtc, ":te=");
+	remove_termcap_entry (newtc, "ti=");
+	remove_termcap_entry (newtc, "te=");
     }
     /* work around broken termcap entries */
     if (resource.useInsertMode) {
-	remove_termcap_entry (newtc, ":ic=");
+	remove_termcap_entry (newtc, "ic=");
 	/* don't get duplicates */
-	remove_termcap_entry (newtc, ":im=");
-	remove_termcap_entry (newtc, ":ei=");
-	remove_termcap_entry (newtc, ":mi");
+	remove_termcap_entry (newtc, "im=");
+	remove_termcap_entry (newtc, "ei=");
+	remove_termcap_entry (newtc, "mi");
 	if (*newtc)
 	    strcat (newtc, ":im=\\E[4h:ei=\\E[4l:mi:");
     }
@@ -4135,15 +4151,9 @@ Exit(int n)
 #ifndef AMOEBA
 	if (!am_slave) {
 		/* restore ownership of tty and pty */
-		chown (ttydev, 0, 0);
+		set_owner (ttydev, 0, 0, 0666);
 #if (!defined(__sgi) && !defined(__osf__) && !defined(__hpux))
-		chown (ptydev, 0, 0);
-#endif
-
-		/* restore modes of tty and pty */
-		chmod (ttydev, 0666);
-#if (!defined(__sgi) && !defined(__osf__) && !defined(__hpux))
-		chmod (ptydev, 0666);
+		set_owner (ptydev, 0, 0, 0666);
 #endif
 	}
 #endif /* AMOEBA */
@@ -4246,24 +4256,42 @@ static SIGNAL_T reapchild (int n GCC_UNUSED)
     SIGNAL_RETURN;
 }
 
-static int
+static void
 remove_termcap_entry (char *buf, char *str)
 {
-    register char *strinbuf;
+    char *base = buf;
+    char *first = base;
+    int count = 0;
+    size_t len = strlen(str);
 
-    strinbuf = strindex (buf, str);
-    if (strinbuf) {
-        register char *colonPtr = strchr(strinbuf+1, ':');
-        if (colonPtr) {
-            while (*colonPtr) {
-                *strinbuf++ = *colonPtr++;      /* copy down */
-            }
-            *strinbuf = '\0';
-        } else {
-            strinbuf[1] = '\0';
-        }
+    TRACE(("*** remove_termcap_entry('%s', '%s')\n", str, buf))
+
+    while (*buf != 0) {
+	if (!count && !strncmp(buf, str, len)) {
+	    while (*buf != 0) {
+		if (*buf == '\\')
+		    buf++;
+		else if (*buf == ':')
+		    break;
+		if (*buf != 0)
+		    buf++;
+	    }
+	    while ((*first++ = *buf++) != 0)
+		;
+	    TRACE(("...removed_termcap_entry('%s', '%s')\n", str, base))
+	    return;
+	} else if (*buf == '\\') {
+	    buf++;
+	} else if (*buf == ':') {
+	    first = buf;
+	    count = 0;
+	} else if (!isspace(*buf)) {
+	    count++;
+	}
+	if (*buf != 0)
+	    buf++;
     }
-    return 0;
+    TRACE(("...cannot remove\n"))
 }
 
 /*
@@ -4325,7 +4353,7 @@ int GetBytesAvailable (int fd)
     long arg;
     ioctl (fd, FIONREAD, (char *) &arg);
     return (int) arg;
-#elif defined(__CYGWIN32__)
+#elif defined(__CYGWIN__)
     fd_set set;
     struct timeval timeout = {0, 0};
 

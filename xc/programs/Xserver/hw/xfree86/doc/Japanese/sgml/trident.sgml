@@ -4,13 +4,13 @@
 <!--
 <title> Information for Trident Chipset Users
 <author> The XFree86 Project, Inc.
-<date> December 29 1998
+<date> June 25 1999
 -->
 <title> Trident チップセット使用者のための情報
 <author>XFree86 プロジェクト社
-<date> December 29 1998
+<date> June 25 1999
 <trans> X Japanese Documentation Project &lt;<tt>http://xjman.dsl.gr.jp/</tt>&gt;
-<tdate>1999 年 2 月 1 日
+<tdate>1999 年 8 月 2 日
 <toc>
 
 <!--
@@ -31,7 +31,8 @@ Trident ドライバーは XFree86 3.3.3 のリリースを前に、すこしばかり
 8900B 8900C 8900CL/D 9000 9000i 9100B
 9200CXr 9320LCD 9400CXi 9420 9420DGi 9430DGi 9440AGi 9660XGi 9680
 ProVidia9682 ProVidia9685 Cyber9382 Cyber9385 Cyber9385-1 Cyber9388
-Cyber9397 Cyber9520 3DImage975(PCI) 3DImage975(AGP) 3DImage985(AGP)
+Cyber9397 Cyber9520 Cyber9525 3DImage975(PCI) 3DImage975(AGP) 
+3DImage985(AGP) Blade3D CyberBlade
 </bf></quote>
 <!--
 It must be noted that the 9000i chipset is treated as a 9000 by the server.
@@ -349,7 +350,7 @@ be worth checking wait states etc. on the card and in the BIOS setup.
 しておく価値はあるでしょう。
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/sgml/trident.sgml,v 1.1.2.2 1999/06/02 07:51:47 hohndel Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/sgml/trident.sgml,v 1.1.2.3 1999/11/26 15:24:00 hohndel Exp $
 
 
 
@@ -359,9 +360,9 @@ $XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/sgml/trident.sgml,v 1.1.2.
 $XConsortium: trident.sgml /main/11 1996/10/28 04:24:08 kaleb $
 </verb>
 
-<code></code>
+<hrule>
 このファイルは
-xc/programs/Xserver/hw/xfree86/doc/sgml/trident.sgml,v 3.22.2.8 1998/12/29 12:26:23
+xc/programs/Xserver/hw/xfree86/doc/sgml/trident.sgml,v 3.22.2.9 1999/06/25 08:57:15
 を佐野 武俊 (Taketoshi Sano <url url="mailto:kgh12351@nifty.ne.jp"
  name="&lt;kgh12351@nifty.ne.jp&gt;"> が
 和訳したものです。ここがおかしいとか、ここはこうしたほうがいいといった

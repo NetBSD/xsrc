@@ -26,7 +26,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/Print.c,v 3.46.2.20 1999/07/30 11:21:17 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/Print.c,v 3.46.2.22 1999/11/18 15:37:23 hohndel Exp $ */
 
 #include "Probe.h"
 
@@ -48,7 +48,7 @@ static CONST char *SVGA_Names[NUM_VENDORS+1][CHPS_PER_VENDOR] =
 		  "ATI 264GT-B+DVD (3D Rage II+DVD)",
 		  "ATI 264GT-IIc (3D Rage IIc)", "ATI 264GT3 (3D Rage Pro)",
 		  "ATI 264LT", "ATI 264LT Pro (3D Rage LT Pro)",
-		  "ATI Rage XL or XC" },
+		  "ATI Rage XL or XC", "ATI Rage Mobility" },
 /* AL */	{ "Avance Logic (chipset unknown)",
 		  "Avance Logic 2101", "Avance Logic 2228" },
 /* CT */	{ "Chips & Tech (chipset unknown)",
@@ -61,8 +61,9 @@ static CONST char *SVGA_Names[NUM_VENDORS+1][CHPS_PER_VENDOR] =
 		  "Chips & Tech F65548", "Chips & Tech F65546",
 		  "Chips & Tech F65550", "Chips & Tech F65554",
 		  "Chips & Tech F65555", "Chips & Tech F68554",
-		  "Chips & Tech F69000", "Chips & Tech 64200 WinGine",
-		  "Chips & Tech F64300 WinGine" },
+		  "Chips & Tech F69000", "Chips & Tech F69030",
+		  "Chips & Tech 64200 WinGine",
+		  "Chips & Tech 64300 WinGine" },
 /* Cirrus */	{ "Cirrus (chipset unknown)",
 		  "Cirrus CL-GD 510/520", "Cirrus CL-GD 610/620",
 		  "Cirrus Video7 OEM",
@@ -146,6 +147,8 @@ static CONST char *SVGA_Names[NUM_VENDORS+1][CHPS_PER_VENDOR] =
 		  "S3 Savage3D",
 		  "S3 Savage3D (Macrovision Support)",
 		  "S3 Trio3D/2X",
+		  "S3 Savage4",
+		  "S3 Savage2000",
 	       },
 /* Trident */	{ "Trident (chipset unknown)",
 		  "Trident LX8200",

@@ -3,12 +3,12 @@
 <article>
 
 <!-- Title information -->
-<title> NVidia NV1 / SGS-Thomson STG2000, Riva 128, Riva TNT ユーザ向けの情報
-<!-- Information for NVidia NV1 / SGS-Thomson STG2000, Riva 128 and Riva TNT Users -->
+<title> NVidia NV1 / SGS-Thomson STG2000, Riva 128, Riva TNT/TNT2 ユーザ向けの情報
+<!-- Information for NVidia NV1 / SGS-Thomson STG2000, Riva 128 and Riva TNT and TNT2 Users -->
 <author>David McKay, Dirk Hohndel
-<date>5 November 1998
+<date>June 25 1999
 <trans>The X Japanese Documentation Project
-<tdate>3 December 1998
+<tdate>August 2 1999
 
 <!-- Table of contents -->
 <toc>
@@ -17,16 +17,11 @@
 <!-- Supported hardware -->
 <p>
 <!--
-This driver supports good acceleration for both the NV1/STG2000 as well as
-the Riva128. It is known to work on PCI and AGP versions of the Riva128.
-The Riva TNT was added to this driver and is not yet as well accelerated as
-it could be. Still, the server is very usable.
+This driver supports good acceleration for the NV1/STG2000 as well as
+the Riva128, Riva TNT and Riva TNT2.
 -->
-このドライバは NV1/STG2000 と Riva128 の両者についてはアクセラレーショ
-ンをうまくサポートしています。Riva128 は PCI 版と AGP 版で動作します。
-今回のドライバから Riva TNT のサポートも追加されましたが、アクセラレー
-ションではまだ性能を生かし切れていません。しかし、利用については問題あ
-りません。
+このドライバは NV1/STG2000 や Riva128, Riva TNT, Riva TNT2 の
+アクセラレーションをきちんとサポートしています。
 
 <sect>注意事項
 <!-- Notes -->
@@ -104,7 +99,7 @@ it could be. Still, the server is very usable.
 </itemize>
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/sgml/NVIDIA.sgml,v 1.1.2.1 1999/05/25 06:39:16 hohndel Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/sgml/NVIDIA.sgml,v 1.1.2.2 1999/11/26 15:23:44 hohndel Exp $
 </verb>
 
 <sect>日本語訳について<p>

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86.h,v 3.47.2.11 1999/04/21 07:21:09 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86.h,v 3.47.2.12 1999/12/01 12:49:21 hohndel Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  *
@@ -373,6 +373,9 @@ typedef struct _MouseDevRec {
 #endif
 #ifdef XINPUT
     struct _LocalDeviceRec	*local;
+#endif
+#ifdef USB_MOUSE
+    struct UsbMouseRec *usb;
 #endif
   int		pBufP;
   unsigned char pBuf[32];

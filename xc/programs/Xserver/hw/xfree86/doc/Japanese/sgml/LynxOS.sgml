@@ -7,9 +7,9 @@
 -->
 <title>LynxOS における XFree86 に関する README
 <author>Thomas Mueller
-<date>Last modified on: 29 December 1998
+<date>Last modified on: 15 November 1999
 <trans>The X Japanese Documentation Project
-<tdate>Last modified on: 9 February 1999
+<tdate>Last modified on: 21 December 1999
 <toc>
 
 <!--
@@ -47,20 +47,21 @@ XFree86 のソースコードは以下の場所から anonymous ftp で入手できます:
 url="ftp://ftp.XFree86.org/pub/XFree86/current">
 
 <!--
-Binaries of XFree86 for LynxOS AT are available from:
+Binaries of XFree86 for LynxOS x86 are available from:
 -->
-XFree86 の LynxOS AT 用バイナリは以下の場所から入手できます:
+XFree86 の LynxOS x86 用バイナリは以下の場所から入手できます:
 
 <htmlurl name="ftp://ftp.XFree86.org/pub/XFree86/current/binaries/LynxOS"
 url="ftp://ftp.XFree86.org/pub/XFree86/current/binaries/LynxOS">
 
 <!--
-The binaries were built on `LynxOS x86 3.0.0'. Because of changes
-made to the object format they don't run on earlier LynxOS versions.
+The binaries were built on `LynxOS x86 3.0.1'. Because of changes
+made to the object format they don't run on LynxOS versions earlier
+than 3.0.0.
 -->
-バイナリは `LynxOS x86 3.0.0' 上で構築されています。オブジェクトのフォー
-マットが変更されたため、このバイナリは古いバージョンの LynxOS では動作
-しません。
+バイナリは `LynxOS x86 3.0.1' 上で構築されています。オブジェクトの
+フォーマットが変更されたため、このバイナリは 3.0.0 より古いバージョン
+の LynxOS では動作しません。
 
 <!--
 Building of this XFree86 version has never been tested on LynxOS versions
@@ -108,26 +109,24 @@ this file and we'll revise it.
 <sect>バイナリのインストール
 <p>
 <!--
-Please refer to section "Installing the XFree86 3.3.3.1 Release" of the 
+Please refer to section "Installing the XFree86 3.3.6 Release" of the 
 <htmlurl url="RELNOTES.html" name="Release Notes"> for detailed 
 installation instructions.
 -->
 詳しいインストール手順については、
 <htmlurl url="RELNOTES.html" name="リリースノート"> の
-「XFree86 3.3.3.1 の導入」セクションを参照してください。
+「XFree86 3.3.6 の導入」セクションを参照してください。
 
 <!--
 If you plan to install XF86Setup you'll have to install
-<tt/X333prog/ as well since XF86Setup checks for the existence of
+<tt/X336prog/ as well since XF86Setup checks for the existence of
 a certain file name pattern which is satisfied only if you install
-the library files from <tt/X333prog/. This restriction will be
-fixed in future XFree86 releases for LynxOS.
+the library files from <tt/X336prog/.
 -->
-XF86Setup をインストールする予定ならば、<tt/X333prog/ もインストールす
-る必要があります。というのも、XF86Setup は <tt/X333prog/ からライブラ
+XF86Setup をインストールする予定ならば、<tt/X336prog/ もインストールす
+る必要があります。というのも、XF86Setup は <tt/X336prog/ からライブラ
 リファイルをインストールした場合だけ満たされる、特定のファイル名パター
-ンがあることを確認するからです。この制限は将来の LynxOS 用の XFree86 
-リリースでは修正されるでしょう。
+ンの存在を確認するからです。
 
 <!--
 It may be necessary to increase the process stack limit in order to
@@ -202,9 +201,9 @@ XFree86 をうまく動作させるためには、システムのパラメータをいくつか変更
 する必要があるかもしれません。
 
 <!--
-  On LynxOS 2.5.0 and 3.0.0 include a line
+  On LynxOS 2.5.x and 3.0.x include a line
 -->
-LynxOS 2.5.0 と 3.0.0 では、
+LynxOS 2.5.x と 3.0.x では、
 
 <verb>
   #define X_WINDOWS
@@ -247,6 +246,20 @@ LynxOS 2.5.0 と 3.0.0 では、
 -->
 新しい値は、LynxOS のドキュメントに OS 付属の X ウィンドウパッケージ用
 として書かれている値です。
+
+<!--
+<sect2>Adjustment for Riva 128 and Riva TNT driver>
+-->
+<sect2>Riva 128/Riva TNT ドライバ用の調整
+
+<!--
+If you're using the nVidia driver (Riva 128, TNT, TNT2) of the SVGA
+server, you will have to increase the value of the SMEMS parameter in 
+<tt>/sys/lynx.os/uparam.h</tt> from 10 to 20.
+-->
+SVGA サーバの nVidia ドライバ(Riva 128, TNT, TNT2)をお使いであれば、
+<tt>/sys/lynx.os/uparam.h</tt> ファイル中の SMEMS パラメータの値を
+10 から 20 に増やす必要があるでしょう。
 
 <!--
 <sect2>Increase number of ptys<p>
@@ -299,26 +312,39 @@ name="XFree86 におけるマウスのサポート">も参照してください)。しかし、
 ことができないので、LynxOS では PnP マウスのサポートは無効にされます。
 
 <!--
+  Starting with LynxOS x86 2.4.0 LynxOS includes a PS/2 mouse driver.
+  This driver does protocol conversion and requires to specify the 
+  mouse type as <em>Microsoft</em> regardless of real mouse type.
+  In some cases you won't have all mouse buttons supported.
+-->
+バージョン2.4.0 以降の LynxOS x86 には PS/2 マウスドライバが入っていま
+す。このドライバはプロトコル変換を行うので、マウスの種類としては実際の
+マウスの種類に関係なく <em>Microsoft</em> を指定する必要があります。
+場合によっては、マウスのボタンが全くサポートされないこともあります。
+
+<!--
+  The PS/2 mouse driver included in LynxOS x86 3.0.1 patch #XXX
+  does not perform protocol conversion and requires to set the
+  mouse type to <em>PS/2</em>. This driver will also support the
+  extended PS/2 mouse types.
+-->
+LynxOS x86 3.0.1 patch #XXX に含まれる PS/2 マウスドライバはプロトコル
+変換を行わないので、マウスの種類としては <em>PS/2</em> を設定する必要
+があります。このドライバは拡張 PS/2 マウスもサポートしています。
+
+<!--
 <sect1>Bus mouse drivers<p>
 -->
 <sect1>バスマウスのドライバ<p>
 <!--
-  Starting with LynxOS AT 2.4.0 LynxOS includes a PS/2 mouse driver.
-  Currently this driver is not fully supported by XFree86 (you'll
-  probably have to specify the mouse type as <em>Microsoft</em>
-  regardless of real mouse type and in some cases you won't have
-  all mouse buttons supported).
   <tt>/usr/X11R6/lib/X11/etc/BM-Lynx.shar</tt> contains a LynxOS port 
   of the Linux bus mouse drivers. To install the drivers
   unpack the shar archive
 -->
-LynxOS AT 2.4.0 以降、LynxOS には PS/2 マウスのドライバが入っています。
-XFree86 は現在このドライバを完全にはサポートしていません(おそらく、実
-際のマウスの種類に関係なくマウスの種類に  <em>Microsoft</em> を指定し
-なければなりませんし、マウスのボタン全てがサポートされない場合もありま
-す)。<tt>/usr/X11R6/lib/X11/etc/BM-Lynx.shar</tt> に、Linux のバスマウ
-スドライバを LynxOS に移植したものがあります。このドライバをインストー
-ルするには、まず以下の操作で shar 形式のアーカイブを展開します:
+Linux のバスマウスドライバを LynxOS に移植したものが
+<tt>/usr/X11R6/lib/X11/etc/BM-Lynx.shar</tt> にあります。このドライバ
+をインストールするには、まず以下の操作で shar 形式のアーカイブを展開し
+ます:
 
   <tscreen><verb>
     # cd /
@@ -334,11 +360,11 @@ XFree86 は現在このドライバを完全にはサポートしていません(おそらく、実
 
 <!--
   The XFree86 PS/2 mouse driver works also with MetroLink X 2.3.3.1 as
-  shipped with LynxOS AT 2.4.0 unless you have the LynxOS patch
+  shipped with LynxOS x86 2.4.0 unless you have the LynxOS patch
   000055-00 installed.
 -->
 XFree86 の PS/2 マウスドライバは、LynxOS のパッチ 000055-00 をインストー
-ルしていなければ、LynxOS AT 2.4.0 に付属している MetroLink X 2.3.3.1 
+ルしていなければ、LynxOS x86 2.4.0 に付属している MetroLink X 2.3.3.1 
 でも動作します。
 
 <!--
@@ -504,11 +530,11 @@ LynxOS 2.2.1 の man コマンドは MANPATH 環境変数を正しくサポートしてい
 <sect>XFree86 の Motif と組み合わせての利用<p>
 
 <!--
-  The Motif libraries shipped with LynxOS AT 2.3.0 and 2.4.0 can be
+  The Motif libraries shipped with LynxOS x86 2.3.0 and 2.4.0 can be
   used with the XFree86 libraries. Follow the steps outlined below after
   you have installed XFree86 and LynxOS Motif on your system.
 -->
-LynxOS AT 2.3.0 と 2.4.0 付属の Motif ライブラリは、XFree86 のライブラ
+LynxOS x86 2.3.0 と 2.4.0 付属の Motif ライブラリは、XFree86 のライブラ
 リと組み合わせて使うこともできます。XFree86 と LynxOS の Motif をシス
 テムにインストールした後に、以下の手順の概略にしたがってください。
 
@@ -548,19 +574,19 @@ Motif の imake 設定ファイルは LynxOS の X ウィンドウパッケージに含まれ
   </verb></tscreen>
 
 <!--
-<sect1>Motif library patch for LynxOS AT 2.3.0<p>
+<sect1>Motif library patch for LynxOS x86 2.3.0<p>
 -->
-<sect1>LynxOS AT 2.3.0 用の Motif ライブラリへのパッチ<p>
+<sect1>LynxOS x86 2.3.0 用の Motif ライブラリへのパッチ<p>
 
 <!--
   The XFree86 libraries are compiled with the -mposix compiler option
-  while the Motif libraries shipped with LynxOS AT 2.3.0 are not. This
+  while the Motif libraries shipped with LynxOS x86 2.3.0 are not. This
   incompatibility will cause Motif <tt>XmFileSelection</tt> widgets to be linked 
   with the wrong (i.e. POSIX) directory routines. To circumvent this 
   problem apply the following patch to the library:
 -->
 XFree86 のライブラリは -mposix コンパイラオプションを使ってコンパイル
-されており、一方 LynxOS 2.3.0 付属の Motif のライブラリではこのオプショ
+されており、一方 LynxOS x86 2.3.0 付属の Motif のライブラリではこのオプショ
 ンを使っていません。この非互換性により、Motif の 
 <tt>XmFileSelection</tt> ウィジェットは誤った(つまり POSIX)のディレク
 トリルーチンとリンクされてしまいます。この問題を回避するためには、ライ
@@ -675,9 +701,9 @@ the system you will need at least 230 MBytes of free disk space.
 少なくとも空きディスク容量が 230MB 必要でしょう。
 
 <!--
-<sect1>Changes to system environment (LynxOS AT)<p>
+<sect1>Changes to system environment (LynxOS x86)<p>
 -->
-<sect1>システム環境に対する変更点 (LynxOS AT)<p>
+<sect1>システム環境に対する変更点 (LynxOS x86)<p>
 <!--
 Before compiling the XFree86 distribution you will have to make a
 few little adjustments to your system:
@@ -686,7 +712,7 @@ XFree86 の配布物をコンパイルする前には、システムを少し調整しなければな
 らないでしょう:
 
   <descrip>
-  <tag>LynxOS AT 2.5</tag>
+  <tag>LynxOS x86 2.5</tag>
   <itemize>
 <!--
   <item>Create a shell script named <tt>/lib/cpp</tt> as follows:
@@ -738,7 +764,7 @@ Lynx 固有の呼び出しと一緒に入っています。これらの呼び出しは(残念ながら)
   </verb></tscreen>
 
   </itemize>
-  <tag>LynxOS AT 2.4</tag>
+  <tag>LynxOS x86 2.4</tag>
   <itemize>
 <!--
   <item>Use the CYGNUS GNU-C Compiler to build XFree86. With LynxOS 
@@ -777,14 +803,14 @@ Lynx 固有の呼び出しと一緒に入っています。これらの呼び出しは(残念ながら)
   </verb></tscreen>
   </itemize>
 を使って設定します。
-  <tag>LynxOS AT 2.3</tag>
+  <tag>LynxOS x86 2.3</tag>
 <!--
   This has actually not been tested, but the steps for described
   for 2.4 should apply to 2.3 as well.
 -->
 これは実際にはテストされていませんが、2.4 向けに説明した手順は 2.3 に
 も適用できるはずです。
-  <tag>LynxOS AT 2.2.1</tag>
+  <tag>LynxOS x86 2.2.1</tag>
 <!--
   This has actually never been tested, be prepared that the build will
   fail somewhere!
@@ -925,11 +951,11 @@ LinkKit をインストールするには、
 セクションを参照してください。
 
 <!--
-  On LynxOS AT 2.5.0 you may encounter problems with <tt>make</tt> in
+  On LynxOS x86 2.5.0 you may encounter problems with <tt>make</tt> in
   deeply nested subdirectories (eg core dumps, hangups). In this case
   update to GNU make version 3.75 or higher.
 -->
-LynxOS AT 2.5.0 では、深くネストしたディレクトリで <tt>make</tt> の問
+LynxOS x86 2.5.0 では、深くネストしたディレクトリで <tt>make</tt> の問
 題(コアダンプやハングアップ等)に出会うかもしれません。このような場合に
 は、GNU make のバージョン 3.75 以上に更新してください。
 
@@ -1036,7 +1062,7 @@ microSPARC 上で X サーバを初めて起動する際には、ポインタがマウスの動き
 されますが、テストは全く行われていません(報告はお待ちしています)。
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/sgml/LynxOS.sgml,v 1.1.2.1 1999/05/25 06:39:13 hohndel Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/sgml/LynxOS.sgml,v 1.1.2.3 1999/12/28 12:13:53 hohndel Exp $
 
 
 
@@ -1044,4 +1070,13 @@ $XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/sgml/LynxOS.sgml,v 1.1.2.1
 
 $XConsortium: LynxOS.sgml /main/10 1996/10/28 05:13:07 kaleb $
 </verb>
+
+<sect>日本語訳について<p>
+日本語訳は X Japanese Documentation Project が行いました(
+翻訳(XFree86 3.3.3-3.3.6): 藤原輝嘉
+<url url="mailto:fujiwara@linux.or.jp" name="&lt;fujiwara@linux.or.jp&gt;">,
+校正: 金田浩司  <url url="mailto:vanitas@ma3.seikyou.ne.jp"
+name="&lt;vanitas@ma3.seikyou.ne.jp&gt;">)。
+問題点の指摘やご意見は藤原までお願いします。
+
 </article>

@@ -1,5 +1,5 @@
 /* $XConsortium: fontscale.c /main/15 1996/09/28 16:49:13 rws $ */
-/* $XFree86: xc/lib/font/fontfile/fontscale.c,v 3.4 1996/12/24 02:23:08 dawes Exp $ */
+/* $XFree86: xc/lib/font/fontfile/fontscale.c,v 3.4.2.1 1999/12/03 09:27:29 hohndel Exp $ */
 
 /*
 
@@ -372,7 +372,7 @@ MatchScalable (a, b)
 
     if (!(a->x == b->x &&
 	  a->y == b->y &&
-	  (a->width == b->width || a->width == 0 || b->width == 0) &&
+	  (a->width == b->width || a->width == 0 || b->width == 0 || b->width == -1) &&
 	  (!(b->values_supplied & PIXELSIZE_MASK) ||
 	    (a->values_supplied & PIXELSIZE_MASK) ==
 	    (b->values_supplied & PIXELSIZE_MASK) &&

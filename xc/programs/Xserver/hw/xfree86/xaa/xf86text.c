@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xf86text.c,v 3.6.2.3 1998/11/13 05:15:03 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xf86text.c,v 3.6.2.4 1999/10/21 12:08:11 hohndel Exp $ */
 
 /*
  * Copyright 1996  The XFree86 Project
@@ -1237,6 +1237,7 @@ glyphwidth)
     xf86AccelInfoRec.Sync();
 }
 
+static int static_offset = 0;
 
 /*
  * The following function is used for Imagetext/Polytext with TE font
@@ -1283,9 +1284,14 @@ static void DrawTextTEScreenToScreenColorExpand(nglyph, w, h, glyphp, glyphwidth
         bitmapwidth = ((w + 31) & ~31) * 3;
     else
         bitmapwidth = (w + 31) & ~31;
-    endoffset = (bitmapwidth / 8) * xf86AccelInfoRec.PingPongBuffers;
 
-    offset = 0;
+    if (xf86AccelInfoRec.ColorExpandFlags & CPU_TRANSFER_PAD_QWORD)
+       bitmapwidth = (w + 63) & ~63;
+
+    endoffset = (bitmapwidth / 8) * xf86AccelInfoRec.PingPongBuffers;
+    endoffset = xf86AccelInfoRec.ScratchBufferSize - bitmapwidth;
+
+    offset = static_offset;
     line = 0;
     while (line < h) {
 	if (!(xf86AccelInfoRec.Flags & COP_FRAMEBUFFER_CONCURRENCY))
@@ -1302,9 +1308,11 @@ static void DrawTextTEScreenToScreenColorExpand(nglyph, w, h, glyphp, glyphwidth
          * and so on.
          */
 	offset += bitmapwidth / 8;
-	if (offset == endoffset)
+	if (offset >= endoffset)
 	    offset = 0;
     }
+
+    static_offset = offset;
 
     if (xf86AccelInfoRec.Flags & BACKGROUND_OPERATIONS)
         xf86AccelInfoRec.Sync();
@@ -1393,9 +1401,15 @@ DrawTextNonTEScreenToScreenColorExpand(nglyph, w, h, glyphinfop)
     /* Calculate the non-expanded bitmap width rounded up to 32-bit words, */
     /* in units of pixels. */
     bitmapwidth = (w + 31) & ~31;
-    endoffset = (bitmapwidth / 8) * xf86AccelInfoRec.PingPongBuffers;
 
-    offset = 0;
+    if (xf86AccelInfoRec.ColorExpandFlags & CPU_TRANSFER_PAD_QWORD)
+       bitmapwidth = (w + 63) & ~63;
+
+    endoffset = xf86AccelInfoRec.ScratchBufferSize - bitmapwidth;
+
+/*  (bitmapwidth / 8) * xf86AccelInfoRec.PingPongBuffers; */
+    
+    offset = static_offset;
     line = 0;
     while (line < h) {
 	if (!(xf86AccelInfoRec.Flags & COP_FRAMEBUFFER_CONCURRENCY))
@@ -1417,9 +1431,11 @@ DrawTextNonTEScreenToScreenColorExpand(nglyph, w, h, glyphinfop)
          * and so on.
          */
 	offset += bitmapwidth / 8;
-	if (offset == endoffset)
+	if (offset >= endoffset)
 	    offset = 0;
     }
+
+    static_offset = offset;
 
     if (xf86AccelInfoRec.Flags & BACKGROUND_OPERATIONS)
         xf86AccelInfoRec.Sync();

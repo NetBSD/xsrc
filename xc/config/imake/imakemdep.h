@@ -25,7 +25,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from the X Consortium.
 
 */
-/* $XFree86: xc/config/imake/imakemdep.h,v 3.24.2.14 1999/07/29 09:22:27 hohndel Exp $ */
+/* $XFree86: xc/config/imake/imakemdep.h,v 3.24.2.15 2000/01/06 04:58:58 dawes Exp $ */
 
 
 /* 
@@ -265,8 +265,11 @@ in this Software without prior written authorization from the X Consortium.
 #ifdef _CRAY
 #define DEFAULT_CPP "/lib/pcpp"
 #endif
-#if defined(__386BSD__) || defined(__NetBSD__) || defined(__OpenBSD__) || defined(__FreeBSD__)
+#if defined(__386BSD__) || defined(__NetBSD__) || defined(__OpenBSD__)
 #define DEFAULT_CPP "/usr/libexec/cpp"
+#endif
+#if defined(__FreeBSD__)
+#define USE_CC_E
 #endif
 #if defined(__sgi) && defined(__ANSI_CPP__)
 #define USE_CC_E

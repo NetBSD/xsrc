@@ -1,5 +1,5 @@
 /* $XConsortium: session.c /main/77 1996/11/24 17:32:33 rws $ */
-/* $XFree86: xc/programs/xdm/session.c,v 3.11.2.7 1999/07/29 09:23:05 hohndel Exp $ */
+/* $XFree86: xc/programs/xdm/session.c,v 3.11.2.8 1999/12/11 17:20:02 hohndel Exp $ */
 /*
 
 Copyright (c) 1988  X Consortium
@@ -923,7 +923,7 @@ char	*user, *home;
     return env;
 }
 
-#if defined(Lynx) || defined(SCO) && !defined(SCO_USA) && !defined(_SCO_DS)
+#if (defined(Lynx) && !defined(HAS_CRYPT)) || defined(SCO) && !defined(SCO_USA) && !defined(_SCO_DS)
 char *crypt(s1, s2)
 	char	*s1, *s2;
 {

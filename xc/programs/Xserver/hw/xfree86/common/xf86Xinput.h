@@ -22,7 +22,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Xinput.h,v 3.14.2.4 1999/06/21 09:45:12 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Xinput.h,v 3.14.2.5 1999/10/21 12:07:51 hohndel Exp $ */
 
 #ifndef _xf86Xinput_h
 #define _xf86Xinput_h
@@ -300,6 +300,20 @@ xf86SwitchCoreDevice(
 #if NeedFunctionPrototypes
 		LocalDevicePtr	device,
 		DeviceIntPtr	core
+#endif
+);
+
+void
+xf86DisableInputDevices(
+#if NeedFunctionPrototypes
+		void
+#endif
+);
+
+void
+xf86EnableInputDevices(
+#if NeedFunctionPrototypes
+		void
 #endif
 );
 

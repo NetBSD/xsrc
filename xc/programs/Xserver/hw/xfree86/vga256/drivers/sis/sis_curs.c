@@ -26,7 +26,7 @@
  * accel/s3/s3Cursor.c, and ark/ark_cursor.c
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/sis/sis_curs.c,v 3.4.2.6 1999/05/15 13:53:32 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/sis/sis_curs.c,v 3.4.2.9 1999/12/21 07:43:44 hohndel Exp $ */
 
 #include "X.h"
 #include "Xproto.h"
@@ -147,7 +147,17 @@ Bool SISCursorInit(pm, pScr)
 		/* disable the hardware cursor side pattern */
                 temp2 = rdinx(0x3C4,0x1E);
                 outb(0x3C5, (temp2 & 0xF7) );
+	} else if (SISfamily == SIS300) {
+		unsigned addr, *p;
+		addr = (SISCursorAddress >> 10) & 0xFFFF;
+
+		/* hardware cursor registers in MMIO space */
+		p = (unsigned *) (sisMMIOBase + SIS300_CURSOR_CONTROL);
+
+		*p &= 0x00ff0000;
+		*p |= addr; /* use pattern 0 */
 	}
+
 	return TRUE;
 }
 
@@ -157,9 +167,15 @@ Bool SISCursorInit(pm, pScr)
 
 static void SISShowCursor() {
 	unsigned char temp;
+	unsigned *p;
 
-	temp = rdinx(0x3C4, 0x06);
-	outb(0x3C5, temp | 0x40);
+	if (SISfamily == SIS300) {
+		p = (unsigned *) (sisMMIOBase + SIS300_CURSOR_CONTROL);
+		*p |= SIS300_CURSOR_ENABLE;
+	} else {
+		temp = rdinx(0x3C4, 0x06);
+		outb(0x3C5, temp | 0x40);
+	}
 }
 
 /*
@@ -168,9 +184,15 @@ static void SISShowCursor() {
 
 void SISHideCursor() {
 	unsigned char temp;
+	unsigned *p;
 
-	temp = rdinx(0x3C4, 0x06);
-	outb(0x3C5, temp & 0xBF);
+	if (SISfamily == SIS300) {
+		p = (unsigned *) (sisMMIOBase + SIS300_CURSOR_CONTROL);
+		*p &= SIS300_CURSOR_DISABLE;
+	} else {
+		temp = rdinx(0x3C4, 0x06);
+		outb(0x3C5, temp & 0xBF);
+	}
 }
 
 /*
@@ -179,6 +201,29 @@ void SISHideCursor() {
  * provided by the server into a format that the graphics card
  * can conveniently handle, and store that in system memory.
  * Adapted from accel/s3/s3Cursor.c.
+ */
+
+/*
+ * SiS300 has changed hardware cursor bitmap format.
+ * The new format is still a 64x64 bitmap, 64 lines, each line is
+ * 16 bytes. But each line is 8 bytes AND mask first and
+ * followed by 8 bytes XOR mask.
+ * If cursor image is smaller than 64x64, then fill the AND mask with 0xFF
+ * and the XOR mask with 0x00.
+ *
+ *    8 bytes AND mask 8 bytes XOR mask
+ *    |--------------| |--------------|
+ *  ^ ................ ................
+ *  |
+ * 64
+ *  l
+ *  i
+ *  n
+ *  e
+ *  s
+ *  |
+ *  v ................ ................
+ *
  */
 
 static Bool SISRealizeCursor(pScr, pCurs)
@@ -190,21 +235,33 @@ static Bool SISRealizeCursor(pScr, pCurs)
    unsigned char *pServSrc;
    int   index = pScr->myNum;
    pointer *pPriv = &pCurs->bits->devPriv[index];
-   unsigned char *ram;
+   unsigned char *ram, *p;
    int wsrc, h;
    CursorBitsPtr bits = pCurs->bits;
 
    if (pCurs->bits->refcnt > 1)
       return TRUE;
 
-   ram = (unsigned char *)xalloc(16384);
-
-   memset (ram, 0xAA, 16384);
-
-   *pPriv = (pointer) ram;
+   if (SISfamily == SIS300)
+	ram = (unsigned char *)xalloc(1024);
+   else
+	ram = (unsigned char *)xalloc(16384);
 
    if (!ram)
       return FALSE;
+
+   if (SISfamily == SIS300) {
+	p = ram;
+	for (i=0;i<SISCursorHeight;i++) {
+		for (j=0;j<8;j++)
+			*p++ = 0xFF;
+		for (j=0;j<8;j++)
+			*p++ = 0x00;
+	}
+   } else
+	memset (ram, 0xAA, 16384);
+
+   *pPriv = (pointer) ram;
 
    pServSrc = (unsigned char *)bits->source;
    pServMsk = (unsigned char *)bits->mask;
@@ -221,6 +278,21 @@ static Bool SISRealizeCursor(pScr, pCurs)
 	for (j = 0; j < SISCursorWidth / 16; j++) {
 	unsigned char m, s;
 
+     if (SISfamily == SIS300) {
+	if (i < h && j < wsrc) {
+                m = *pServMsk++;
+                s = *pServSrc++;
+                m = ~m;
+                ram[j] = (((m & 0x01) << 7) | ((m & 0x02) << 5) |
+                          ((m & 0x04) << 3) | ((m & 0x08) << 1) |
+                          ((m & 0x10) >> 1) | ((m & 0x20) >> 3) |
+                          ((m & 0x40) >> 5) | ((m & 0x80) >> 7));
+                ram[j+8] = (((s & 0x01) << 7) | ((s & 0x02) << 5) |
+                            ((s & 0x04) << 3) | ((s & 0x08) << 1) |
+                            ((s & 0x10) >> 1) | ((s & 0x20) >> 3) |
+                            ((s & 0x40) >> 5) | ((s & 0x80) >> 7));
+	}
+     } else {
 	if (i < h && j < wsrc) {
 		m = *pServMsk++;
 		s = *pServSrc++;
@@ -240,6 +312,7 @@ static Bool SISRealizeCursor(pScr, pCurs)
 		ram[(j*2)+1] = 0xAA;
 	}
 	}
+      }
     }
    return TRUE;
 }
@@ -292,15 +365,20 @@ static void SISLoadCursorToCard(pScr, pCurs, x, y)
 
 	cursor_image = pCurs->bits->devPriv[index];
 
-	if (vgaUseLinearAddressing)
+	if (SISfamily == SIS300) {
 		memcpy((unsigned char *)vgaLinearBase + SISCursorAddress,
-			cursor_image, 16384);
-	else {
-		vgaSaveBank();
-		SISSetWrite(SISCursorAddress >> 16);
-		memcpy((unsigned char *)vgaBase + (SISCursorAddress & 0xFFFF),
-			cursor_image, 16384);
-		vgaRestoreBank();
+			cursor_image, 1024);
+	} else {
+		if (vgaUseLinearAddressing)
+			memcpy((unsigned char *)vgaLinearBase +
+				SISCursorAddress, cursor_image, 16384);
+		else {
+			vgaSaveBank();
+			SISSetWrite(SISCursorAddress >> 16);
+			memcpy((unsigned char *)vgaBase + (SISCursorAddress
+				& 0xFFFF), cursor_image, 16384);
+			vgaRestoreBank();
+		}
 	}
 }
 
@@ -397,6 +475,7 @@ static void SISMoveCursor(pScr, x, y)
 	int x, y;
 {
 	int xorigin, yorigin;
+	unsigned *p;
 
 	if (!xf86VTSema)
 		return;
@@ -424,15 +503,25 @@ static void SISMoveCursor(pScr, x, y)
 	if (XF86SCRNINFO(pScr)->modes->Flags & V_INTERLACE)
 		y /= 2;
 
+	if (SISfamily == SIS300) {
+		p = (unsigned *) (sisMMIOBase + SIS300_CURSOR_H_LOC);
+
+		/* Horizontal */
+		*p++ = ((xorigin & 0x3F) << 16) | (x & 0xFFF);
+
+		/* Vertical */
+		*p = ((yorigin & 0x3F) << 16) | (y & 0x7FF);
+	} else {
 	/* Program the cursor origin (offset into the cursor bitmap). */
-	wrinx(0x3C4, 0x1C, xorigin);
-	wrinx(0x3C4, 0x1F, yorigin);
+		wrinx(0x3C4, 0x1C, xorigin);
+		wrinx(0x3C4, 0x1F, yorigin);
 
 	/* Program the new cursor position. */
-	wrinx(0x3C4, 0x1A, x);		/* Low byte. */
-	wrinx(0x3C4, 0x1B, x >> 8);	/* High byte. */
-	wrinx(0x3C4, 0x1D, y);		/* Low byte. */
-	wrinx(0x3C4, 0x1E, y >> 8);	/* High byte. */
+		wrinx(0x3C4, 0x1A, x);		/* Low byte. */
+		wrinx(0x3C4, 0x1B, x >> 8);	/* High byte. */
+		wrinx(0x3C4, 0x1D, y);		/* Low byte. */
+		wrinx(0x3C4, 0x1E, y >> 8);	/* High byte. */
+	}
 }
 
 /*
@@ -453,6 +542,7 @@ SISRecolorCursor(pScr, pCurs, displayed)
    int i;
    VisualPtr pVisual;
    unsigned char AddColReg;
+   unsigned *p;
 
    if (!xf86VTSema)
        return;
@@ -490,13 +580,27 @@ SISRecolorCursor(pScr, pCurs, displayed)
 
    pScr->ResolveColor (&fred, &fgreen, &fblue, pVisual);
 
-   wrinx(0x3C4, 0x14, bred>>shift);
-   wrinx(0x3C4, 0x15, bgreen>>shift);
-   wrinx(0x3C4, 0x16, bblue>>shift);
+   if (SISfamily == SIS300) {
+	p = (unsigned *) (sisMMIOBase + SIS300_CURSOR_COLOR0);
 
-   wrinx(0x3C4, 0x17, fred>>shift);
-   wrinx(0x3C4, 0x18, fgreen>>shift);
-   wrinx(0x3C4, 0x19, fblue>>shift);
+	/* cursor color 0 */
+	*p++ = ((bred   & 0xFF00) << 8)|
+	       ((bgreen & 0xFF00))     |
+	       ((bblue  & 0xFF00) >> 8);
+
+	/* cursor color 1 */
+	*p = ((fred   & 0xFF00) << 8)|
+	     ((fgreen & 0xFF00))     |
+	     ((fblue  & 0xFF00) >> 8);
+   } else {
+	wrinx(0x3C4, 0x14, bred>>shift);
+	wrinx(0x3C4, 0x15, bgreen>>shift);
+	wrinx(0x3C4, 0x16, bblue>>shift);
+
+	wrinx(0x3C4, 0x17, fred>>shift);
+	wrinx(0x3C4, 0x18, fgreen>>shift);
+	wrinx(0x3C4, 0x19, fblue>>shift);
+   }
 }
 
 /*

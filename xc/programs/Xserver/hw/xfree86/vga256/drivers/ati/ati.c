@@ -1,6 +1,6 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/ati/ati.c,v 1.1.2.1 1998/02/01 16:41:36 robin Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/ati/ati.c,v 1.1.2.2 1999/10/12 17:18:51 hohndel Exp $ */
 /*
- * Copyright 1997,1998 by Marc Aurele La France (TSI @ UQV), tsi@ualberta.ca
+ * Copyright 1997 through 1999 by Marc Aurele La France (TSI @ UQV), tsi@ualberta.ca
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -53,6 +53,7 @@
  * Benjamin T. Yang, risk@uclink.berkeley.edu
  * James Fast Kane, jfk2@engr.uark.edu
  * Randall Hopper, rhh@ct.picker.com
+ * Christian Lupien <lupien@physics.utoronto.ca>
  *
  * ... and, many, many others from around the world.
  *

@@ -1,6 +1,6 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/ati/atividmem.h,v 1.1.2.1 1998/02/01 16:42:09 robin Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/ati/atividmem.h,v 1.1.2.2 1999/10/12 17:18:58 hohndel Exp $ */
 /*
- * Copyright 1997,1998 by Marc Aurele La France (TSI @ UQV), tsi@ualberta.ca
+ * Copyright 1997 through 1999 by Marc Aurele La France (TSI @ UQV), tsi@ualberta.ca
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -71,7 +71,7 @@ extern const char *ATIMemoryTypeNames_88800CX[];
 #define MEM_264_PSEUDO_EDO      3
 #define MEM_264_SDRAM           4
 #define MEM_264_SGRAM           5
-#define MEM_264_TYPE_6          6
+#define MEM_264_SGRAM32         6
 #define MEM_264_TYPE_7          7
 extern const char *ATIMemoryTypeNames_264xT[];
 

@@ -6,9 +6,9 @@
 -->
 <title>XFree86/OS2 を最初から再構築する際の注意
 <author>Holger Veit
-<date>Last modified 04 October 1998
+<date>Last modified December 12th, 1999
 <trans>The X Japanese Documentation Project
-<tdate>Last modified 11 February 1999
+<tdate>Last modified December 21th, 1999
 
 <toc>
 
@@ -42,14 +42,14 @@ information, and set at least the environment variables described there.
 んで、最低限ここに書かれている環境変数の設定を行ってください。
 <p>
 <!--
-At the current time, the most recent version available is XFree86-3.3.3.
+At the current time, the most recent version available is XFree86-3.3.6.
 This is a full and unrestricted version which comes with complete source 
-code. 3.3.3 is not only a bugfix release, but also supports new hardware,
+code. 3.3.6 is not only a bugfix release, but also supports new hardware,
 some of which might not even supported by OS/2 itself. See the RELEASE NOTES
 document for details.
 -->
-現時点では、利用可能な最新バージョンは XFree86-3.3.3 です。これは制限
-無しの完全なバージョンであり、ソースコードも全て付いています。3.3.3 は
+現時点では、利用可能な最新バージョンは XFree86-3.3.6 です。これは制限
+無しの完全なバージョンであり、ソースコードも全て付いています。3.3.6 は
 単なるバグ修正リリースではなく、新しいハードウェアもサポートしています。
 この中には OS/2 自身でさえサポートしていないものがあるかもしれません。
 詳しくはリリースノートを参照してください。
@@ -58,14 +58,14 @@ document for details.
 If you want to join the XFree86 developer team, e.g. to add support for
 certain hardware, please send a request to BOD@XFree86.org. Please
 think about such a step carefully before, though, since much work is 
-involved. Please use the XFree86-3.3.3 source code as a test example how
+involved. Please use the XFree86-3.3.6 source code as a test example how
 to compile the system. The ability to manage that is a basic requirement
 for becoming a developer.
 -->
 (あるハードウェアのサポート追加等で)XFree86 開発チームに参加したいと思
 われたなら、BOD@XFree86.org にリクエストを送ってください。しかし、その
 前にこのようなステップについてよく考えてください。というのも、作業がた
-くさんあるからです。XFree86-3.3.3 のソースコードをシステムのコンパイル
+くさんあるからです。XFree86-3.3.6 のソースコードをシステムのコンパイル
 方法のテスト例として使ってください。開発者になるためには、これを管理す
 る能力が基本的に必要です。
 
@@ -93,7 +93,7 @@ CMD.EXE シェルだけで全て行えるようにしようとしました。しかし、必要なソ
 
 <itemize>
 <!--
-<item>gcc	EMX/gcc emx 0.9C patch4 or later
+<item>gcc	EMX/gcc emx 0.9d patch2 or later
 -->
 <item>gcc	EMX/gcc emx 0.9C patch4 以降
 <item>gzip	GNU zip/unzip
@@ -119,15 +119,21 @@ CMD.EXE シェルだけで全て行えるようにしようとしました。しかし、必要なソ
 <item>grep	GNU grep
 <item>gawk	GNU awk
 <!--
-<item>make	GNU make 3.71/3.72 (use the one from X332prog.zip!)
+<item>make	GNU make 3.71/3.72 (use the one from Xprog.zip!)
 -->
-<item>make	GNU make 3.71/3.72 (X332prog.zip に入っているものを使ってください!)
+<item>make	GNU make 3.71/3.72 (Xprog.zip に入っているものを使ってください!)
 <item>flex	GNU flex
 <item>bison	GNU bison
 <!--
 <item>find	GNU find    (attention: incompatible tool with the same name in OS/2)
 -->
 <item>find	GNU find    (注意: OS/2 の同名のコマンドとは互換性はありません)
+<!--
+<item>unix2dos  Some conversion utility to convert LF delimiter to CRLF (may
+		be called unixtoos2 or alike as well)
+-->
+<item>unix2dos  改行コード LF を CRLF に変換する変換ツール類(unixtoos2 
+といった名前である場合もあります)
 </itemize>
 
 <!--
@@ -144,10 +150,10 @@ which might still be available from some archives is NOT compatible.
 <!--
 Furthermore, you need the XFree86 sources. These are available from 
 the common XFree86 repositories. Look into a directory which is 
-often named /pub/XFree86/3.3/source.
+often named /pub/XFree86/3.3.6/source.
 -->
 これに加えて、XFree86 のソースが必要です。これは一般の XFree86 のリポ
-ジトリから入手することができます。/pub/XFree86/3.3/source といった名前
+ジトリから入手することができます。/pub/XFree86/3.3.6/source といった名前
 であることが多いので、そのディレクトリを見てください。
 
 <!--
@@ -157,14 +163,15 @@ often named /pub/XFree86/3.3/source.
 <p>
 
 <!--
-You need about 300MB of free HPFS space for the whole system. This does not
-include space for the postscript and troff documentation files. I have never
-installed them. Nor did I install the test subtree.
+You need about 300MB of free HPFS (or NFS, JFS, ext2fs) space for the whole 
+system. This does not include space for the postscript and troff documentation 
+files. I have never installed them. Nor did I install the test subtree.
 -->
-システム全体をコンパイルするためには、HPFS の空き領域が約 300MB 必要で
-す。このサイズには Postscript 形式や troff 形式のドキュメントの分は含
-まれていません。筆者はこれらをインストールしたことがありません。また、
-テスト用のサブツリーをインストールしたこともありません。
+システム全体をコンパイルするためには、HPFS(または NFS, JFS, ext2fs) の
+空き領域が約 300MB 必要です。このサイズには Postscript 形式や troff 形
+式のドキュメントの分は含まれていません。筆者はこれらをインストールした
+ことがありません。また、テスト用のサブツリーをインストールしたこともあ
+りません。
 
 <enum>
 <!--
@@ -297,11 +304,19 @@ installed them. Nor did I install the test subtree.
 <item>Go to the <tt>xc/config/cf</tt> directory and edit the <tt>xf86site.def</tt>
       file to match your requirements (you probably don't want to compile
       all X servers). Certain changes must be set to the following values:
+
+<item>Go to the <tt>xc&bsol;config&bsol;cf</tt> directory and copy the file
+      <tt>&bsol;x11bsol;xcbsol;programsbsol;Xserverbsol;hwbsol;xfree86bsol;etcbsol;bindistbsol;OS2bsol;host.def.os2</tt>
+      into <tt>xc/config/cf/host.def</tt> and edit it to match your
+      requirements (you probably don't want to compile all X servers).
+      Certain changes must be set to the following values:
 -->
-<item><tt>xc/config/cf</tt> ディレクトリに移動し、
-<tt>xf86site.def</tt> を編集して必要な条件に合うようにします(たぶん、
-全ての X サーバをコンパイルするつもりはないでしょう)。いくつかの変更が
-必要で、以下に設定しなければなりません:
+<item><tt>xc&bsol;config&bsol;cf</tt> ディレクトリに移動し、
+<tt>&bsol;x11bsol;xcbsol;programsbsol;Xserverbsol;hwbsol;xfree86bsol;etcbsol;bindistbsol;OS2bsol;host.def.os2</tt>
+ファイルを <tt>xc/config/cf/host.def</tt> にコピーし、これを必要な条件
+に合わせて編集します(たぶん、全ての X サーバをコンパイルすることはない
+でしょう)。いくつかの変更は必須であり、以下の値に設定しなければなりま
+せん:
       <itemize>
 <!--
       <item>Disable if not already done any PC98 server; PC98 (Japanese XFree86)
@@ -311,28 +326,21 @@ installed them. Nor did I install the test subtree.
       本独自のマシン用の XFree86)はまだ動作しません。移植する人が日本
       から現われるのを待ってます!
 <!--
-      <item><tt>&num;define WacomSupport            NO
-            &num;define ElographicsSupport      NO</tt>
-            Both options are not yet supported.
+      <item>Disable the whole external input device stuff, like JoystickSupport, Wacom-
+	Support, etc.
 -->
-      <item><tt>&num;define WacomSupport            NO
-            &num;define ElographicsSupport      NO</tt>
-	    どちらのオプションもまだサポートされていません。	    
-<!--
-      <item>Tcl* and Tk* don't need to be set explicitly. Reasonable defaults
-            are in the other config files, provided you have a complete 
-            XFree86/OS2 binary tree with the tcl/tk runtime support installed.
--->
-      <item>Tcl* and Tk* の設定を明示的に行う必要はありません。Tcl/Tk
-      のランタイムサポートを含む XFree86/OS2 のバイナリ全体がインストー
-      ルされていれば、適切なデフォルト値が他の設定ファイルで設定されま
-      す。
+<item>JoystickSupport や WacomSupport 等の外部入力関係を全て無効にします。
 <!--
       <item><tt>&num;define BuildDynamicLoading   NO</tt>
 	    This does not work.
 -->
       <item><tt>&num;define BuildDynamicLoading   NO</tt>
       これは動作しません。
+<!--
+      <item>Disable the special servers XVirtualFramebufferServer, XnestServer, XprtServer
+-->
+<item>特殊なサーバである XVirtualFramebufferServer, XnestServer,
+XprtServer を無効にします。
       </itemize>
 <!--
 <item>Go to the directory <tt>xc&bsol;util&bsol;compress</tt> and 
@@ -364,6 +372,16 @@ installed them. Nor did I install the test subtree.
 されてしまいます。この環境変数が設定されていない場合、本ドキュメントの
 前書きまで戻ってください。何か忘れものをしています。
 <!--
+<item>Copy the file <tt>xc/programs/Xserver/hw/xfree86/etc/bindist/OS2/host.def.os2</tt>
+      to the location <tt>xc/config/cf/host.def</tt>. Use this file to do
+      any specific modifications to imake variables, rather than editing
+      the file xfree86.cf, imake.tmpl, or os2.cf directly.
+-->
+<item><tt>xc/programs/Xserver/hw/xfree86/etc/bindist/OS2/host.def.os2</tt>
+ファイルを <tt>xc/config/cf/host.def</tt> にコピーします。このファイル
+は、xfree86.cf, imake.tmpl, os2.cf ファイルを直接編集せずに imake 編集
+に固有の変更を加えるために用います。
+<!--
 <item>Copy the file <tt>xc/config/util/buildos2.cmd</tt> into the <tt/xc/
       directory. If this is a second or later attempt, you might need to
       copy the saved toplevel Makefile.os2 back to Makefile.
@@ -379,12 +397,24 @@ installed them. Nor did I install the test subtree.
 す。このコマンドは、このディレクトリにログファイル
 <tt>buildxc.log</tt> を作ります。
 <!--
+      Note: this may immediately fail in case, you got your distribution
+      from a Unix tar archive. Unfortunately the OS/2 REXX interpreter
+      has a problem with scripts that use the Unix convention as a line
+      delimiter. So go through the whole tree and convert the *.cmd files
+      to "OS/2 ASCII" by one of the typical unix2dos or unixtoos2 programs.
+-->
+注意: 配布物を Unix tar 形式のアーカイブから取り出した場合には、この
+コマンドは即座に失敗するでしょう。残念なことに、OS/2 の REXX インタプ
+リタには、Unix 流の改行コードを使っているスクリプトで問題を起こします。
+ですから、ツリー全体を調べ、unix2dos や unixtoos2 に代表されるプログラ
+ムを使って *.cmd ファイルを "OS/2 ASCII" 形式にしてください。
+<!--
 <item>Go have a bucket of coffee, or better, buy new coffee - in Colombia!
       The compile will need between 2 and 20 hours, depending on your
       selections, and the horse power of your hardware.
 -->
-<item>コーヒーを飲みます。新しいコーヒーをコロンビアまで買いに行くともっ
-といいでしょう! マシン選択とハードウェアの馬力によって、コンパイルには
+<item>コーヒーを飲みます。コロンビア産ならもっといいでしょう!
+選んだ設定とハードウェアの馬力によって、コンパイルには
 2 時間から 20 時間かかります。
 <!--
 <item>When finished, view the logfile for errors, and fix the problems if
@@ -396,8 +426,8 @@ installed them. Nor did I install the test subtree.
 たので、動作する設定は少なくとも 1 つはあると言えます。
 <!--
 <item>Finally, from the <tt/xc/ dir, execute
-<item>最後に、<tt/xc/ ディレクトリで次のコマンドを実行します:
 -->
+<item>最後に、<tt/xc/ ディレクトリで次のコマンドを実行します:
       <verb>
       xmake install
       xmake install.man
@@ -447,7 +477,7 @@ Well, you see, this was quite easy :-)
 
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/sgml/OS2note.sgml,v 1.1.2.1 1999/05/25 06:39:17 hohndel Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/sgml/OS2note.sgml,v 1.1.2.3 1999/12/28 12:13:55 hohndel Exp $
 
 
 
@@ -455,5 +485,13 @@ $XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/sgml/OS2note.sgml,v 1.1.2.
 
 $XConsortium: OS2note.sgml /main/1 1996/02/24 10:08:59 kaleb $
 </verb>
+
+<sect>日本語訳について<p>
+日本語訳は X Japanese Documentation Project の藤原輝嘉 <url
+url="mailto:fujiwara@linux.or.jp"
+name="&lt;fujiwara@linux.or.jp&gt;"> が行いました。問題点の指摘やご意
+見は藤原まで御連絡ください。
+原文の著作権は XFree86 プロジェクト社にあり、日本語訳に伴う権利は
+X Japanese Documentation Project にあります。
 
 </article>

@@ -2,7 +2,7 @@ XCOMM $TOG: Imakefile /main/235 1997/05/25 15:12:21 kaleb $
 /*
  * Server Master Makefile
  */
-XCOMM $XFree86: xc/programs/Xserver/Imakefile,v 3.85.2.16 1999/07/30 11:21:00 hohndel Exp $
+XCOMM $XFree86: xc/programs/Xserver/Imakefile,v 3.85.2.18 1999/12/01 14:53:58 hohndel Exp $
 
 #include <Server.tmpl>
 
@@ -152,13 +152,21 @@ XPFBLIBS = dix/LibraryTargetName(xpstubs)
              MI = mi/LibraryTargetName(mi)
             DIX = dix/LibraryTargetName(dix)
            FONT = $(DEPFONTLIB)
+#if UsbMouseSupport 
+#if !HasLibUsb
+            USB = $(XF86OSSRC)/libusb/LibraryTargetName(usb)
+#else
+	    USB = -lusb
+#endif
+#endif
 #ifdef ServerExtraSysLibs
    EXTRASYSLIBS = ServerExtraSysLibs
 #endif
 #if SystemV4 || defined(SGIArchitecture) || UseRgbTxt
-        SYSLIBS = $(ZLIB) MathLibrary Krb5Libraries $(EXTRASYSLIBS)
+        SYSLIBS = $(ZLIB) MathLibrary Krb5Libraries $(USB) $(EXTRASYSLIBS)
 #else
-        SYSLIBS = $(ZLIB) MathLibrary Krb5Libraries DBMLibrary $(EXTRASYSLIBS)
+        SYSLIBS = $(ZLIB) MathLibrary Krb5Libraries DBMLibrary \
+	$(USB) $(EXTRASYSLIBS)
 #endif
 #if HasPam
 	PAMLIBS = -lpam -lpam_misc -ldl
@@ -1665,10 +1673,14 @@ FBDEVFBLIBS:= $(FBDEVFBLIBS) $(XF68SRC)/mach64/LibraryTargetName(mach64)
 IMSTTDIR = hw/xfree68/imstt
 FBDEVFBLIBS:= $(FBDEVFBLIBS) $(XF68SRC)/imstt/LibraryTargetName(imstt)
 #endif
+#if XF68FBDevIMSTT
+PM2DIR = hw/xfree68/pm2
+FBDEVFBLIBS:= $(FBDEVFBLIBS) $(XF68SRC)/pm2/LibraryTargetName(pm2)
+#endif
 XF68FBDevSUBDIRS = $(STDDIRS) $(MFBDIR) $(IPLAN2P2DIR) $(IPLAN2P4DIR) \
                    $(IPLAN2P8DIR) $(ILBMDIR) $(AFBDIR) $(CFB8DIR) \
                    $(CFB16DIR) $(CFB24DIR) $(CFB32DIR) $(DDXDIR3) $(DEPDIRS) \
-		   $(NCR77C32DIR) $(MACH64DIR) $(IMSTTDIR)
+		   $(NCR77C32DIR) $(MACH64DIR) $(IMSTTDIR) $(PM2DIR)
 XF68FBDevOBJS = $(XF68COMSRC)/XF68_FBDev.o
 XF68FBDevLIBS = $(XF68SRC)/fbdev/LibraryTargetName(fbdev) $(XF68LIBS) \
                 PreFbLibs $(FBDEVFBLIBS) PostFbLibs

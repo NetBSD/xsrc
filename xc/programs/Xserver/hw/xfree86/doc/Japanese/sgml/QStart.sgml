@@ -1386,9 +1386,9 @@ This guide is for them.
 <!--  ここに何か追加すべきことはありますか？ -->
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/sgml/QStart.sgml,v 3.1.2.2 1999/06/02 07:51:42 hohndel Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/sgml/QStart.sgml,v 3.1.2.3 1999/11/26 15:23:47 hohndel Exp $
 </verb>
-<code></code>
+<hrule>
 
 このファイルは
 xc/programs/Xserver/hw/xfree86/doc/sgml/QStart.sgml,v 3.4.2.2 1998/02/28 04:47:08
@@ -1401,7 +1401,7 @@ name="&lt;ikko-@pacific.rim.or.jp&gt;"> ) が XFree86 3.3.2 を
 原文の著作権は XFree86 プロジェクト社にあります。この和訳の著作権は 
 XFree86 プロジェクト社と X Japanese Documentation Project にありますが、
 この和訳の不具合は私に、電子メールで送って下さい。
-<code></code>
+<hrule>
 &lsqb;EOF&rsqb;
 </article>
 

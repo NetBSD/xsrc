@@ -2380,7 +2380,7 @@ Here is a copy of modeplot:
 # Do `modeplot -?' to see the control options.
 # `modeplot -?' と入力すると制御オプションを見ることができます。
 #
-# ($Id: VidModes.sgml,v 1.1.1.3 1999/07/20 17:47:02 veego Exp $)
+# ($Id: VidModes.sgml,v 1.1.1.4 2000/01/10 22:02:26 veego Exp $)
 
 # Monitor description. Bandwidth in MHz, horizontal frequencies in kHz
 # and vertical frequencies in Hz.
@@ -2438,7 +2438,7 @@ modeplot ツールは Eric S. Raymond <esr@thyrsus.com> が
  Martin Lottermoser <Martin.Lottermoser@mch.sni.de> による
 分析と一から書いたコードを元に作成しました。
 
-This is modeplot $Revision: 1.1.1.3 $
+This is modeplot $Revision: 1.1.1.4 $
 EOF
 		exit;;
 	esac
@@ -2722,7 +2722,8 @@ ESR が配布する <TT>modeplot</TT> は Martin の元の gnuplot の一件の
 場合のスクリプトから再設計と一般化を行いました。 <newline>
 &lsqb;訳注 : ESR は Eric S. Raymond です。&rsqb;
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/sgml/VidModes.sgml,v 3.2.2.2 1999/05/25 12:00:33 hohndel Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/sgml/VidModes.sgml,v 3.2.2.3 1999/11/26 15:23:52 hohndel Exp $
+02/20 23:10:30 dawes Exp $
 
 $XConsortium: VidModes.sgml /main/7 1996/02/21 17:46:17 kaleb $
 </verb>

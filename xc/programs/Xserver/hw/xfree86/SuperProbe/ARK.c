@@ -26,7 +26,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/ARK.c,v 3.2 1996/12/27 06:53:24 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/ARK.c,v 3.2.2.1 1999/11/26 15:22:48 hohndel Exp $ */
 
 #include "Probe.h"
 
@@ -58,7 +58,7 @@ int *Chipset;
 	{
 	    i = 0;
 	    while ((pcrp = pci_devp[i]) != (struct pci_config_reg *)NULL) {
-		if (pcrp->_vendor == PCI_VENDOR_ARK)
+		if (pcrp->_vendor == PCI_VENDOR_ARK && pcrp->_status_command & 7)
 		{
 			switch (pcrp->_device)
 			{

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/Trident.c,v 3.11.2.6 1999/04/23 17:41:56 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/Trident.c,v 3.11.2.7 1999/11/26 15:22:52 hohndel Exp $ */
 /*
  * (c) Copyright 1993,1994 by David Wexelblat <dwex@xfree86.org>
  *
@@ -57,7 +57,7 @@ int *Chipset;
 	if (!NoPCI)
 	{
 	    while ((pcrp = pci_devp[i]) != (struct pci_config_reg *)NULL) {
-		if (pcrp->_vendor == PCI_VENDOR_TRIDENT)
+		if (pcrp->_vendor == PCI_VENDOR_TRIDENT && pcrp->_status_command & 7)
 		{
 			switch (pcrp->_device)
 			{

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/i128/i128init.c,v 3.6.2.9 1998/12/19 15:40:51 robin Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/i128/i128init.c,v 3.6.2.10 2000/01/08 02:06:33 robin Exp $ */
 /*
  * Copyright 1995 by Robin Cutshaw <robin@XFree86.Org>
  * Copyright 1998 by Number Nine Visual Technology, Inc.
@@ -69,10 +69,10 @@ saveI128state()
 	/* iobase is filled in during the device probe (as well as config 1&2)*/
 	if ((i128io.id&0x7) > 0) {
 
-                xf86EnableIOPorts(i128InfoRec.scrnIndex);
+                /*xf86EnableIOPorts(i128InfoRec.scrnIndex);*/
 		iR.vga_ctl = inl(iR.iobase + 0x30);
 
-                xf86DisableIOPorts(i128InfoRec.scrnIndex);
+                /*xf86DisableIOPorts(i128InfoRec.scrnIndex);*/
 	}
 
 	if (i128RamdacType == TI3025_DAC) {
@@ -317,7 +317,7 @@ restoreI128state()
 		usleep(50000);
 	}
 
-        xf86EnableIOPorts(i128InfoRec.scrnIndex);
+        /*xf86EnableIOPorts(i128InfoRec.scrnIndex);*/
 
 	if (i128MemoryType == I128_MEMORY_SGRAM) {
 		outl(iR.iobase + 0x24, iR.sgram & 0x7FFFFFFF);
@@ -395,7 +395,7 @@ restoreI128state()
 	outl(iR.iobase + 0x20, iR.config2);
 	outl(iR.iobase + 0x1C, iR.config1);
 
-	xf86DisableIOPorts(i128InfoRec.scrnIndex);
+	/*xf86DisableIOPorts(i128InfoRec.scrnIndex);*/
 }
 
 
@@ -408,7 +408,7 @@ i128CleanUp()
 #endif
 {
 	restoreI128state();
-	xf86DisableIOPorts(i128InfoRec.scrnIndex);
+	/*xf86DisableIOPorts(i128InfoRec.scrnIndex);*/
 }
 
 
@@ -438,7 +438,7 @@ i128Init(mode)
 	xf86EnableIOPorts(i128InfoRec.scrnIndex);
 	outl(iR.iobase + 0x1C, i128io.config1);
 	outl(iR.iobase + 0x20, i128io.config2);
-	xf86DisableIOPorts(i128InfoRec.scrnIndex);
+	/*xf86DisableIOPorts(i128InfoRec.scrnIndex);*/
 
 	if (!i128Initialized)
 		saveI128state();
@@ -539,7 +539,7 @@ i128Init(mode)
 	if ((i128io.id&0x7) > 0 || i128DeviceType == I128_DEVICE_ID3
 			        || i128DeviceType == I128_DEVICE_ID4) {
 
-        	xf86EnableIOPorts(i128InfoRec.scrnIndex);
+        	/*xf86EnableIOPorts(i128InfoRec.scrnIndex);*/
 
 	   	i128io.vga_ctl &= 0x0000FF00;
    		i128io.vga_ctl |= 0x00000082;
@@ -557,7 +557,7 @@ i128Init(mode)
 			outl(iR.iobase + 0x24, 0xA1089030);
 		}
 
-        	xf86DisableIOPorts(i128InfoRec.scrnIndex);
+        	/*xf86DisableIOPorts(i128InfoRec.scrnIndex);*/
 
 		if (!i128FontsSaved) {
 			int i;

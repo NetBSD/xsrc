@@ -22,7 +22,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Xinput.c,v 3.22.2.15 1999/06/21 09:45:11 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Xinput.c,v 3.22.2.16 1999/10/21 12:07:50 hohndel Exp $ */
 
 #include "Xmd.h"
 #include "XI.h"
@@ -408,6 +408,45 @@ xf86XinputFinalizeInit(DeviceIntPtr	dev)
     }
 }
 
+/***********************************************************************
+ *
+ * xf86EnableInputDevices --
+ * 
+ *	Enable input devices after a switch back from the console.
+ *
+ ***********************************************************************
+ */
+void
+xf86EnableInputDevices()
+{
+  int			i;
+
+  for (i = 0; i < num_devices; i++) {
+    if (localDevices[i]->dev) {
+      EnableDevice(localDevices[i]->dev);
+    }
+  }
+}
+
+/***********************************************************************
+ *
+ * xf86DisableInputDevices --
+ * 
+ *	Disable input devices after a switch to the console.
+ *
+ ***********************************************************************
+ */
+void
+xf86DisableInputDevices()
+{
+  int			i;
+
+  for (i = 0; i < num_devices; i++) {
+    if (localDevices[i]->dev) {
+      DisableDevice(localDevices[i]->dev);
+    }
+  }
+}
 
 /***********************************************************************
  *

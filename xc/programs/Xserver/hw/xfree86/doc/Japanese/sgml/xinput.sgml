@@ -9,7 +9,7 @@ WORD : valuator	バリュエータ
 <author> Fr&eacute;d&eacute;ric Lepied
 <date> 2 November 1998
 <trans> The X Japanese Documentation Project
-<tdate> 30 December 1998
+<tdate> 2 August 1999
 <toc>
 
 <!-- <sect> Introduction <p> -->
@@ -143,13 +143,14 @@ XFree86 での実装は2つの部分からなります。すなわち、サーバ部分とクライ
 	<item>Wacom stylus. Features :
 	<itemize>
 		<item>Absolute or relative modes.
-		<item>5 valuators :
+		<item>6 valuators :
 		<enum>
 			<item>X axis.
 			<item>Y axis.
 			<item>pressure.
 			<item>X tilt.
 			<item>Y tilt.
+			<item>wheel.
 		</enum>
 		<item>3 buttons.
 		<item>Proximity report.
@@ -160,13 +161,14 @@ XFree86 での実装は2つの部分からなります。すなわち、サーバ部分とクライ
 	<item>Wacom 製スタイラスペン:
 	<itemize>
 		<item>絶対モード、相対モード
-		<item>バリュエータ 5 つ:
+		<item>バリュエータ y つ:
 		<enum>
 			<item>X 軸
 			<item>Y 軸
 			<item>圧力
 			<item>X チルト
 			<item>Y チルト
+			<item>ホイール
 		</enum>
 		<item>ボタン 3 つ
 		<item>近接通知機能
@@ -178,13 +180,14 @@ XFree86 での実装は2つの部分からなります。すなわち、サーバ部分とクライ
 	<item>Wacom eraser. Features :
 	<itemize>
 		<item>Absolute or relative modes.
-		<item>5 valuators :
+		<item>6 valuators :
 		<enum>
 			<item>X axis.
 			<item>Y axis.
 			<item>pressure.
 			<item>X tilt.
 			<item>Y tilt.
+			<item>wheel.
 		</enum>
 		<item>1 button.
 		<item>Proximity report.
@@ -195,13 +198,14 @@ XFree86 での実装は2つの部分からなります。すなわち、サーバ部分とクライ
 	<item>Wacom 製イレーザ:
 	<itemize>
 		<item>絶対モード、相対モード
-		<item>バリュエータ 5 つ:
+		<item>バリュエータ 6 つ:
 		<enum>
 			<item>X 軸
 			<item>Y 軸
 			<item>圧力
 			<item>X チルト
 			<item>Y チルト
+			<item>ホイール
 		</enum>
 		<item>ボタン 1 つ
 		<item>近接通知機能
@@ -213,13 +217,14 @@ XFree86 での実装は2つの部分からなります。すなわち、サーバ部分とクライ
 	<item>Wacom cursor. Features :
 	<itemize>
 		<item>Absolute or relative modes.
-		<item>5 valuators :
+		<item>6 valuators :
 		<enum>
 			<item>X axis.
 			<item>Y axis.
 			<item>pressure.
 			<item>X tilt.
 			<item>Y tilt.
+			<item>wheel.
 		</enum>
 		<item>16 buttons.
 		<item>Proximity report.
@@ -230,13 +235,14 @@ XFree86 での実装は2つの部分からなります。すなわち、サーバ部分とクライ
 	<item>Wacom 製カーソル:
 	<itemize>
 		<item>絶対モード、相対モード
-		<item>バリュエータ 5 つ:
+		<item>バリュエータ 6 つ:
 		<enum>
 			<item>X 軸
 			<item>Y 軸
 			<item>圧力
 			<item>X チルト
 			<item>Y チルト
+			<item>ホイール
 		</enum>
 		<item>ボタン 16 個
 		<item>近接通知機能
@@ -249,7 +255,7 @@ XFree86 での実装は2つの部分からなります。すなわち、サーバ部分とクライ
 	<itemize>
 		<item>Absolute or relative modes.
 		<item>2 valuators (x and y axis).
-		<item>2 button stylus or 4 button puck.
+		<item>2 buttons stylus or 4 buttons puck.
 		<item>Proximity report.
 		<item>Motion history capability.
 	</itemize>
@@ -268,7 +274,7 @@ XFree86 での実装は2つの部分からなります。すなわち、サーバ部分とクライ
 	<itemize>
 		<item>Absolute or relative modes.
 		<item>2 valuators (x and y axis).
-		<item>2 button stylus or 4 button puck.
+		<item>2 buttons stylus or 4 buttons puck.
 		<item>Proximity report.
 		<item>Motion history capability.
 	</itemize>
@@ -278,6 +284,25 @@ XFree86 での実装は2つの部分からなります。すなわち、サーバ部分とクライ
 		<item>絶対モード、相対モード
 		<item>バリュエータ 2 つ(x 軸と y 軸)
 		<item>2 ボタンのスタイラスペン、4ボタンのパック
+		<item>近接通知機能
+		<item>移動履歴機能
+	</itemize>
+
+<!--
+	<item>Calcomp DrawingBoard tablet. Features :
+	<itemize>
+		<item>Absolute or relative modes.
+		<item>2 valuators (x and y axis).
+		<item>4 buttons stylus or 16 buttons puck.
+		<item>Proximity report.
+		<item>Motion history capability.
+	</itemize>
+-->
+	<item>Calcomp 製 DrawingBoard タブレット:
+	<itemize>
+		<item>絶対モード、相対モード
+		<item>バリュエータ 2 つ(x 軸と y 軸)
+		<item>4 ボタンのスタイラスペン、16 ボタンのパック
 		<item>近接通知機能
 		<item>移動履歴機能
 	</itemize>
@@ -362,7 +387,8 @@ modes and the device must not control the core pointer. <p> -->
 詳しくはオンラインマニュアルで調べてください。
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/sgml/xinput.sgml,v 1.1.2.1 1999/05/25 06:39:35 hohndel Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/sgml/xinput.sgml,v 1.1.2.2 1999/11/26 15:24:01 hohndel Exp $
+
 
 
 

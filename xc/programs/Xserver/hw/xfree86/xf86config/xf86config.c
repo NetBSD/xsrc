@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xf86config/xf86config.c,v 3.37.2.16 1999/08/17 07:39:39 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xf86config/xf86config.c,v 3.37.2.17 1999/12/20 12:55:59 hohndel Exp $ */
 
 /*
  * This is a configuration program that will create a base XF86Config
@@ -2219,7 +2219,7 @@ static char *XF86Config_fontpathchunk_text =
 "\n"
 "#    Protocol	\"Xqueue\"\n"
 "\n"
-"    AutoRepeat	500 5\n"
+"    AutoRepeat	500 30\n"
 "# Let the server do the NumLock processing.  This should only be required\n"
 "# when using pre-R6 clients\n"
 "#    ServerNumLock\n"

@@ -7,7 +7,6 @@
 
   目次
 
-
   1. Interactive Unix 上での X11R6/XFree86(TM)
   2. ソースをコンパイルするために必要なもの
   3. システムのヘッダファイルの修正
@@ -27,11 +26,9 @@
   10. 使い方 ...
   11. 謝辞
 
-
   ______________________________________________________________________
 
   1.  Interactive Unix 上での X11R6/XFree86(TM)
-
 
   本ドキュメントには、 Interactive Unix(ISC とも呼ばれます)上で X11R6 と
   XFree86 をコンパイル・使用するための追加情報が書かれています。
@@ -44,17 +41,13 @@
 
   質問等はニュースグループ comp.windows.x.i386unix に投稿してください。
 
-
   現在は共有ライブラリがサポートされていないので、X11R6 で X11 クライア
   ントを作ろうとするとファイル空間を大量に使ってしまいます。一番良い方法
   は、X11R6 のサーバを X11R5 や X11R4 のクライアントと組み合わせて使うこ
   とです。そして、X11R6 のライブラリで新しく用意された機能が必要なクライ
   アントだけをコンパイルすると良いでしょう。
 
-
   2.  ソースをコンパイルするために必要なもの
-
-
 
       gcc
         x の数字ができるだけ大きいものを使いましょう。Fresco は 2.6.3 以
@@ -95,7 +88,6 @@
         でないようであれば、必要に応じて #define GnuMallocLibrary を有効
         にし、値を設定してください。
 
-
       inline-math (省略可能)
         これは、お近くの Linux のミラーサイトで入手できる「オリジナル」
         の inline-math パッケージです。
@@ -104,11 +96,7 @@
         ください。このパッケージを使うためには他にも作業が必要なので、次
         の修正に関するセクションを参照してください。
 
-
-
-
   3.  システムのヘッダファイルの修正
-
 
   Interactive Unix 付属の標準ヘッダファイルを少し修正しなければなりませ
   ん。また、gcc-lib/include ディレクトリのヘッダファイルも少し修正する必
@@ -119,16 +107,9 @@
 
   /usr/local/lib/gcc-lib/i[345]86-isc[34].[0-9]/2.6.x
 
-
-
   3.1.  /usr/include/sys/limits.h
 
   および gcc-lib/include/sys/limits.h
-
-
-
-
-
 
             #ifndef OPEN_MAX
             #ifdef ISC
@@ -138,11 +119,8 @@
             #endif
             #endif
 
-
-
   Xlib でエラー(クライアント数が最大値になってしまう)が起こらないように
   するため OPEN_MAX を
-
 
   3.2.  /usr/include/sys/ioctl.h
 
@@ -154,50 +132,34 @@
           ...
           #endif
 
-
-
-
-
   3.3.  /usr/include/errno.h
 
   (および、 gcc の対応するインクルードファイル)
 
           #include <net/errno.h>
 
-
-
   EWOULDBLOCK  が未定義になるためです。 /usr/include/net/errno.h を
-
 
           #ifndef _NET_ERRNO_H
           #define _NET_ERRNO_H
           ...
           #endif
 
-
-
-
   で囲みます。これは、<net/errno.h> がソースから明示的にインクルードされ
   ると多重インクルードが起こるのを避けるためです。
-
 
   3.4.  /usr/include/rpc/types.h
 
   このファイルを gcc-lib/include/rpc/types.h にコピーし、 malloc() の定
   義を
 
-
            #if !defined(__cplusplus)
            extern char *malloc();
            #endif
 
-
-
-
   のように変更します。
 
   この作業は Fresco を構築する場合だけに必要な点に注意してください。
-
 
   3.5.  /usr/include/sys/un.h
 
@@ -213,10 +175,6 @@
                    char    sun_path[108];          /* path name (gag) */
            };
            #endif
-
-
-
-
 
   3.6.  /usr/include/math.h
 
@@ -254,29 +212,16 @@
   #include "/usr/local/include/i386/__math.h"
   #endif
 
-
-
-
-
-
-
-
-
   4.  make World
-
 
   ______________________________________________________________________
   BOOTSTRAPCFLAGS="-DISC [-DISC30 | -DISC40] -DSYSV [-Di386]"
   ______________________________________________________________________
 
-
-
-
      -DISC -DISC30
         この 2 つのオプションはバージョン 3.x の ISC で構築を行うために
         必要です。筆者は、3.x より前の ISC でうまく構築できるどうかは知
         りません。
-
 
      -DISC40
         これは ISC バージョン 4.x 専用のオプションで、したがって
@@ -302,17 +247,12 @@
         ラリは、4.0 では利用できない関数を含むので、4.0 のシステムでは動
         作しません。
 
-
      -DSYSV [-Di386]
         x86 プラットフォームにおける SystemV リリース 3 用の標準の定義で
         す。 -Di386  は /lib/cpp で予め定義されているので、明示的に定義
         する必要はありません。
 
-
-
   5.  リニアアドレッシング
-
-
 
   o  コンパイル
 
@@ -320,7 +260,6 @@
      xf86site.def ファイルに
 
      #define HasSVR3mmapDrv          YES
-
 
   という行を定義しなければなりません。システムには mmap-2.2.3 ドライバが
   インストールされている必要があります。 mmap-2.2.3 がインストールされて
@@ -332,15 +271,12 @@
 
   /usr/X11R6/lib/X11/etc/mmapSVR3.shar
 
-
   ファイル内にあるドライバのソースを利用できます。ドライバの構築とインス
   トールは説明されている手順通りに行ってください。リニアアドレッシングを
   有効にして X11R6/XFree86 ソースツリーの構築を行うには、
   /usr/include/sys/mmap.h ファイルが必要です。
 
-
   o  使用
-
 
      フレームバッファのリニアアドレスマッピングを使うためには、 Thomas
      Wolfram さんが作成した mmap ドライバ(バージョン 2.2.3)をカーネルに
@@ -349,7 +285,6 @@
      使うでしょう。そうでないサーバの場合には、XF86Config ファイルで
 
      Option "linear"
-
 
   を指定する必要があるかもしれません。詳しくは適切なオンラインマニュアル
   を参照してください。また、XF86Config で MemBase を指定する必要もあるか
@@ -367,7 +302,6 @@
      が全く表示されなかったり、マシンがいきなりリブートするという結果に
      なりました。
 
-
   o  ATI GUP      - mach32   - VLB
 
      32MB のメインメモリを積んだマシンで、カードのメモリを MemBase
@@ -377,17 +311,12 @@
      います)をアクティブにしようとするまででした。これにより、X サーバが
      クラッシュしてしまいました。
 
-
                 !!! しかし、この問題は回避することができます。!!!
-
-
 
   .Xdefaults ファイルに
 
              *blinkRate:                  0
              *cursorPositionVisible:      false
-
-
 
   という記述を加えてください。このバグは 3.1.2 以降では修正されているよ
   うなので、この回避方法はもはや必要でなくなりました。
@@ -401,17 +330,11 @@
 
                 Chipset "mmio_928"
 
-
-
   という宣言があれば、重ねて安心でしょう。
 
   筆者は、最新の XF86_S3 を使っていて問題に出会ったことはありません。
 
-
-
   6.  XKeyboard 機能拡張
-
-
 
   o  設定例
 
@@ -427,8 +350,6 @@
          XkbCompat   "default"
          XkbGeometry "pc"
 
-
-
   あるいは、新しいオプションを使って以下のように指定することもできます。
 
      XkbRules        "xfree86"
@@ -436,29 +357,18 @@
      XkbLayout       "de"
      XkbVariant      "nodeadkeys"
 
-
-
-
-
   7.  マルチバッファ機能拡張
-
 
   この機能拡張は古くて使われないものになってしまいました。それでも、構築
   時にこの機能拡張を組み込みたいならば、xf86site.def に #define
   BuildMultibuffer        YES を追加してください。ローダサーバを構築する
   ときには、この機能拡張は無効にしておくべきである点に注意してください。
 
-
   8.  定義ファイルのサンプル
-
 
   筆者が現在ソースからの構築を行う際に使っている host.def を以下に示しま
   す。(したがって、xf86site.def をこれ以上変更する必要はありませんし、中
   身を読むのも悪くない考えです ;-)
-
-
-
-
 
   #ifdef BeforeVendorCF
 
@@ -507,15 +417,11 @@
 
   #endif /* BeforeVendorCF */
 
-
-
   9.  インストール
-
 
   make World BOOTSTRAPCFLAGS="... が正常終了したら、
 
   make install
-
 
   を実行して /usr/X11R6 にインストールしてください。十分なディスク容量が
   あることと、/usr/X11R6 がディレクトリや(たぶん)他のファイルシステムの
@@ -524,18 +430,14 @@
 
   make install.man
 
-
-
   を実行して、圧縮した nroff 形式のオンラインマニュアルを /usr/X11R6/man
   にインストールしてください。このディレクトリが存在しなければ、自動的に
   作成されます。それから
 
   make install.linkkit
 
-
   を実行して、サーバのバイナリリンクキットを /usr/X11R6/lib/Server にイ
   ンストールしてください。
-
 
   ______________________________________________________________________
          コマンドファイルである
@@ -548,8 +450,6 @@
          のフォントと端末設定ファイルをインストールすることもできます。
   ______________________________________________________________________
 
-
-
   また、MAXUMEM は最大値まで増やすべきです。さもないと、プログラムは次の
   ようなメッセージを出力して止まってしまうかもしれません:
 
@@ -561,12 +461,7 @@
     Widget hierarchy of resource: unknown
   ______________________________________________________________________
 
-
-
-
   10.  使い方 ...
-
-
 
   o  Xprt:
 
@@ -574,21 +469,17 @@
      設定されます。したがって、Xprt を使うためには lpr のインストール・
      設定を行う必要があります。
 
-
   o  Keyboard:
 
      iso-8859-1 フォントをキーボードで入力で入力するために modmap ファイ
      ルは必要ありません。単に、XF86Config ファイルの Keyboard セクション
      で以下の指定を行ってください:
 
-
   o  LeftAlt  Meta
 
   o  RightAlt ModeShift
 
   o  RightCtl Compose
-
-
 
   o  xpcterm:
 
@@ -607,14 +498,10 @@
                          Meta<Key>ssharp: string(0x5c)  \n\
                              <Key>ssharp: string(0xe1)
 
-
-
-
   この設定の唯一の短所は、(ドイツ語キーボードで) \ Backslash を入力する
   際に AltGr でなく Alt を使わなければならないことです。
 
   xpcterm を起動するときには、オプション -name XEga -fn ega が必要です。
-
 
   o  X11R5 と X11R6 の間の設定切替え
 
@@ -622,7 +509,6 @@
      ることは簡単なはずです。/usr/X11R6/bin/xmkmf と /usr/X386/bin/xmkmf
      のうち使いたいほうが新しい Makefile を生成するように、単に PATH 環
      境変数を切替えるだけです。
-
 
   o  ISC のストリームパイプ
 
@@ -639,88 +525,31 @@
      捉しようと試みているので、サーバがコアダンプしたらお知らせくださ
      い。
 
-
   o  出会うかもしれないウォーニング:
-
 
   o  XFree86 3.2A 以降では、X11R6.3 以前のクライアントを使うと
 
-
                 Warning: Unable to load any usable fontset
-
-
 
   というウォーニングが出るかもしれません。これはフォントが新たに gzip さ
   れるようになったためですが、ウォーニングは深刻なものではありません。
 
-
   o  サーバを起動しようとすると、次のメッセージが表示されるかもしれませ
      ん:
-
 
              _XSERVTransOpen: transport open failed for named/enigma:0
              _XSERVTransMakeAllCOTSServerListeners: failed to open listener for named
 
-
-
   このメッセージはいずれも致命的なものではありません。Interactive Unix
   はこの種類の接続をサポートしていません。
 
-
-
-
   11.  謝辞
-
 
   素晴らしい仕事をした XFree86 チームと X11R6 のパブリックリリースを出し
   た X コンソーシアム、この素晴らしいフリーソフトウェアに貢献した全ての
   方々に深く感謝します。
 
-
-  $XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/README.isc,v 1.1.2.1 1999/06/02 07:51:00 hohndel Exp $
-
-
-
-
+  $XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/README.isc,v 1.1.2.2 1999/11/26 15:23:19 hohndel Exp $
 
   $XConsortium: isc.sgml /main/8 1996/10/23 11:45:58 kaleb $
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 

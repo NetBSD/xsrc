@@ -1,11 +1,11 @@
   LynxOS における XFree86 に関する README
   Thomas Mueller
-  Last modified on: 29 December 1998
+  Last modified on: 15 November 1999
   The X Japanese Documentation Project
-  Last modified on: 9 February 1999
+  Last modified on: 21 December 1999
   ____________________________________________________________
 
-  目次
+  Table of Contents
 
 
   1. XFree86 とその入手方法について
@@ -14,8 +14,9 @@
      3.1 システム要件
      3.2 システムのチューニング
         3.2.1 チューニングできるパラメータ
-        3.2.2 pty の数を増やす
-        3.2.3 カーネルの構築
+        3.2.2 Riva 128/Riva TNT ドライバ用の調整 SVGA サーバの nVidia ドライバ(Riva 128, TNT, TNT2)をお使いであれば、 /sys/lynx.os/uparam.h ファイル中の SMEMS パラメータの値を 10 から 20 に増やす必要があるでしょう。
+        3.2.3 pty の数を増やす
+        3.2.4 カーネルの構築
      3.3 XFree86 におけるマウスのサポート
      3.4 バスマウスのドライバ
      3.5 ATC コンソールドライバと仮想端末切り替え
@@ -24,18 +25,20 @@
   4. XFree86 のオンラインマニュアルのインストール
   5. XFree86 の Motif と組み合わせての利用
      5.1 Motif のファイルのコピー
-     5.2 LynxOS AT 2.3.0 用の Motif ライブラリへのパッチ
+     5.2 LynxOS x86 2.3.0 用の Motif ライブラリへのパッチ
      5.3 X11R6 設定ファイルへのパッチ
      5.4 Motif 設定ファイルへのパッチ
 
   6. XFree86 配布物のコンパイル
      6.1 必要なディスク容量
-     6.2 システム環境に対する変更点 (LynxOS AT)
+     6.2 システム環境に対する変更点 (LynxOS x86)
      6.3 make World
 
   7. microSPARC と PowerPC 上での構築
      7.1 microSPARC 用のコンソールドライバのパッチ
      7.2 microSPARC サーバの既知のバグ
+
+  8. 日本語訳について
 
 
   ______________________________________________________________________
@@ -56,13 +59,14 @@
 
   ftp://ftp.XFree86.org/pub/XFree86/current
 
-  XFree86 の LynxOS AT 用バイナリは以下の場所から入手できます:
+  XFree86 の LynxOS x86 用バイナリは以下の場所から入手できます:
 
   ftp://ftp.XFree86.org/pub/XFree86/current/binaries/LynxOS
 
-  バイナリは `LynxOS x86 3.0.0' 上で構築されています。オブジェクトのフォ
-  ーマットが変更されたため、このバイナリは古いバージョンの LynxOS では動
-  作しません。
+
+  バイナリは `LynxOS x86 3.0.1' 上で構築されています。オブジェクトのフォ
+  ーマットが変更されたため、このバイナリは 3.0.0 より古いバージョンの
+  LynxOS では動作しません。
 
   このバージョンの XFree86 の構築は、バージョン 2.4.0 以前の LynxOS でテ
   ストされています。LynxOS 2.4.0 上で構築したバイナリは、2.3.0 でもきっ
@@ -83,14 +87,13 @@
 
   2.  バイナリのインストール
 
-  詳しいインストール手順については、リリースノート の「XFree86 3.3.3.1
-  の導入」セクションを参照してください。
+  詳しいインストール手順については、リリースノート の「XFree86 3.3.6 の
+  導入」セクションを参照してください。
 
-  XF86Setup をインストールする予定ならば、X333prog もインストールする必
-  要があります。というのも、XF86Setup は X333prog からライブラリファイル
-  をインストールした場合だけ満たされる、特定のファイル名パターンがあるこ
-  とを確認するからです。この制限は将来の LynxOS 用の XFree86 リリースで
-  は修正されるでしょう。
+  XF86Setup をインストールする予定ならば、X336prog もインストールする必
+  要があります。というのも、XF86Setup は X336prog からライブラリファイル
+  をインストールした場合だけ満たされる、特定のファイル名パターンの存在を
+  確認するからです。
 
   お使いのシステム上で XFree86 を動かすためには、プロセススタックの上限
   を増やす必要があるかもしれません。インストールを始める前には
@@ -127,7 +130,7 @@
   XFree86 をうまく動作させるためには、システムのパラメータをいくつか変更
   する必要があるかもしれません。
 
-  LynxOS 2.5.0 と 3.0.0 では、
+  LynxOS 2.5.x と 3.0.x では、
 
 
     #define X_WINDOWS
@@ -153,7 +156,12 @@
   として書かれている値です。
 
 
-  3.2.2.  pty の数を増やす
+  3.2.2.  Riva 128/Riva TNT ドライバ用の調整 SVGA サーバの nVidia ドライ
+  バ(Riva 128, TNT, TNT2)をお使いであれば、 /sys/lynx.os/uparam.h  ファ
+  イル中の SMEMS パラメータの値を 10 から 20 に増やす必要があるでしょ
+  う。
+
+  3.2.3.  pty の数を増やす
 
 
   xterm を何個も実行できるようにするためには、pty の数も増やさなければな
@@ -161,7 +169,7 @@
   き換えることもできます。
 
 
-  3.2.3.  カーネルの構築
+  3.2.4.  カーネルの構築
 
   PS/2 マウスやバスマウスの使用を考えている場合、カーネルの再構築の前に
   以下のセクションを見てください。考えていない場合には、すぐにカーネルを
@@ -186,16 +194,24 @@
   は TRS ラインで必要な操作を行うことができないので、LynxOS では PnP マ
   ウスのサポートは無効にされます。
 
+  バージョン2.4.0 以降の LynxOS x86 には PS/2 マウスドライバが入っていま
+  す。このドライバはプロトコル変換を行うので、マウスの種類としては実際の
+  マウスの種類に関係なく Microsoft を指定する必要があります。場合によっ
+  ては、マウスのボタンが全くサポートされないこともあります。
+
+  LynxOS x86 3.0.1 patch #XXX に含まれる PS/2 マウスドライバはプロトコル
+  変換を行わないので、マウスの種類としては PS/2 を設定する必要がありま
+  す。このドライバは拡張 PS/2 マウスもサポートしています。
+
 
   3.4.  バスマウスのドライバ
 
-  LynxOS AT 2.4.0 以降、LynxOS には PS/2 マウスのドライバが入っていま
-  す。 XFree86 は現在このドライバを完全にはサポートしていません(おそら
-  く、実際のマウスの種類に関係なくマウスの種類に  Microsoft を指定しなけ
-  ればなりませんし、マウスのボタン全てがサポートされない場合もありま
-  す)。/usr/X11R6/lib/X11/etc/BM-Lynx.shar に、Linux のバスマウスドライ
-  バを LynxOS に移植したものがあります。このドライバをインストールするに
-  は、まず以下の操作で shar 形式のアーカイブを展開します:
+  Linux のバスマウスドライバを LynxOS に移植したものが
+  /usr/X11R6/lib/X11/etc/BM-Lynx.shar にあります。このドライバをインスト
+  ールするには、まず以下の操作で shar 形式のアーカイブを展開します:
+
+
+
            # cd /
            # bash /usr/X11R6/lib/X11/etc/BM-Lynx.shar
 
@@ -207,8 +223,8 @@
   ている注意に従ってください。
 
   XFree86 の PS/2 マウスドライバは、LynxOS のパッチ 000055-00 をインスト
-  ールしていなければ、LynxOS AT 2.4.0 に付属している MetroLink X 2.3.3.1
-  でも動作します。
+  ールしていなければ、LynxOS x86 2.4.0 に付属している MetroLink X
+  2.3.3.1 でも動作します。
 
 
   3.5.  ATC コンソールドライバと仮想端末切り替え
@@ -262,6 +278,8 @@
 
   XFree98 のオンラインマニュアルは次のコマンドでインストールできます:
 
+
+
             make install.man
 
 
@@ -302,13 +320,21 @@
 
 
 
-             for i in 1 3 5
-             do
-               ln -s /usr/X11R6/man/cat$i/*.* /usr/man/cat$i
-               cat /usr/X11R6/man/cat$i/LIST$i >> /usr/man/cat$i/LIST$i
-               sort -o /usr/man/cat$i/LIST$i /usr/man/cat$i/LIST$i
-               cat /usr/X11R6/man/cat$i/whatis$i >> /usr/man/whatis
-             done
+
+
+
+
+
+
+
+
+        for i in 1 3 5
+        do
+          ln -s /usr/X11R6/man/cat$i/*.* /usr/man/cat$i
+          cat /usr/X11R6/man/cat$i/LIST$i >> /usr/man/cat$i/LIST$i
+          sort -o /usr/man/cat$i/LIST$i /usr/man/cat$i/LIST$i
+          cat /usr/X11R6/man/cat$i/whatis$i >> /usr/man/whatis
+        done
 
 
 
@@ -318,9 +344,9 @@
   5.  XFree86 の Motif と組み合わせての利用
 
 
-  LynxOS AT 2.3.0 と 2.4.0 付属の Motif ライブラリは、XFree86 のライブラ
-  リと組み合わせて使うこともできます。XFree86 と LynxOS の Motif をシス
-  テムにインストールした後に、以下の手順の概略にしたがってください。
+  LynxOS x86 2.3.0 と 2.4.0 付属の Motif ライブラリは、XFree86 のライブ
+  ラリと組み合わせて使うこともできます。XFree86 と LynxOS の Motif をシ
+  ステムにインストールした後に、以下の手順の概略にしたがってください。
 
 
   5.1.  Motif のファイルのコピー
@@ -328,6 +354,9 @@
 
   Motif のライブラリとユーティリティへのシンボリックリンクを /usr/X11R6
   ディレクトリツリーに作らなければなりません。
+
+
+
              ln -s /usr/bin/X11/uil /usr/X11R6/bin
              ln -s /usr/lib/libUil.a /usr/X11R6/lib
              ln -s /usr/lib/libMrm.a /usr/X11R6/lib
@@ -354,16 +383,15 @@
 
 
 
-  5.2.  LynxOS AT 2.3.0 用の Motif ライブラリへのパッチ
+  5.2.  LynxOS x86 2.3.0 用の Motif ライブラリへのパッチ
 
 
   XFree86 のライブラリは -mposix コンパイラオプションを使ってコンパイル
-  されており、一方 LynxOS 2.3.0 付属の Motif のライブラリではこのオプ
-  ションを使っていません。この非互換性により、Motif の XmFileSelection
+  されており、一方 LynxOS x86 2.3.0 付属の Motif のライブラリではこのオ
+  プションを使っていません。この非互換性により、Motif の XmFileSelection
   ウィジェットは誤った(つまり POSIX)のディレクトリルーチンとリンクされて
   しまいます。この問題を回避するためには、ライブラリに以下のパッチを適用
   します:
-
 
 
              cp /usr/lib/libXm.a /usr/X11R6/lib
@@ -392,9 +420,7 @@
 
        から
 
-
-
-         #define HasMotif    YES
+              #define HasMotif    YES
 
 
 
@@ -445,24 +471,20 @@
   少なくとも空きディスク容量が 230MB 必要でしょう。
 
 
-  6.2.  システム環境に対する変更点 (LynxOS AT)
+  6.2.  システム環境に対する変更点 (LynxOS x86)
 
   XFree86 の配布物をコンパイルする前には、システムを少し調整しなければな
   らないでしょう:
 
 
-     LynxOS AT 2.5
+     LynxOS x86 2.5
 
      o  /lib/cpp という名前で、次のようなシェルスクリプトを作成します:
 
 
-
-
-
-
-         #!/bin/sh
-         /usr/lib/gcc-lib/i386-unknown-lynxos2.5/2.7-96q1/cpp \
-                   -traditional "$@"
+              #!/bin/sh
+              /usr/lib/gcc-lib/i386-unknown-lynxos2.5/2.7-96q1/cpp \
+                        -traditional "$@"
 
 
 
@@ -504,11 +526,7 @@
               # ranlib /lib/liblynx.a
 
 
-
-
-
-
-     LynxOS AT 2.4
+     LynxOS x86 2.4
 
      o  XFree86 を構築するには CYGNUS GNU C コンパイラを使います。LynxOS
         2.4.0 ではシェルスクリプト /CYGNUS.bash を実行して、環境に対して
@@ -547,11 +565,11 @@
 
      を使って設定します。
 
-     LynxOS AT 2.3
+     LynxOS x86 2.3
         これは実際にはテストされていませんが、2.4 向けに説明した手順は
         2.3 にも適用できるはずです。
 
-     LynxOS AT 2.2.1
+     LynxOS x86 2.2.1
         これは実際には全くテストされておらず、構築はどこかで失敗するで
         しょう。
 
@@ -572,12 +590,14 @@
         これをインストールしてください:
 
 
-                # cd xc/programs/Xserver/hw/xfree/etc
-                # cc -o ld ld-wrapper.c
-                # mv /bin/ld /bin/ld.org
-                # mv ld /bin/ld
-                # chmod 511 /bin/ld
-                # chown root /bin/ld
+
+
+           # cd xc/programs/Xserver/hw/xfree/etc
+           # cc -o ld ld-wrapper.c
+           # mv /bin/ld /bin/ld.org
+           # mv ld /bin/ld
+           # chmod 511 /bin/ld
+           # chown root /bin/ld
 
 
 
@@ -589,13 +609,10 @@
            を
 
 
-
-
-
-                  #ifndef _UIO_H
-                  #define _UIO_H
-                  ...
-                  #endif
+                       #ifndef _UIO_H
+                       #define _UIO_H
+                       ...
+                       #endif
 
 
 
@@ -641,7 +658,7 @@
 
 
 
-            make World
+       make World
 
 
 
@@ -679,7 +696,7 @@
   オンラインマニュアルのインストールについては、 ``XFree86 のオンライン
   マニュアルのインストール'' セクションを参照してください。
 
-  LynxOS AT 2.5.0 では、深くネストしたディレクトリで make の問題(コアダ
+  LynxOS x86 2.5.0 では、深くネストしたディレクトリで make の問題(コアダ
   ンプやハングアップ等)に出会うかもしれません。このような場合には、GNU
   make のバージョン 3.75 以上に更新してください。
 
@@ -707,8 +724,6 @@
   ーボードの種類の検出とキークリックの制御の機能を追加します。オリジナル
   のドライバのバックアップを生成し、パッチをインストールするには、以下の
   コマンドを実行します:
-
-
         # cd /
         # tar cf /sys/drivers/console.tar /sys/drivers/console
         # patch -p -E < xc/programs/Xserver/hw/sunLynx/patch.Console
@@ -724,13 +739,14 @@
   パッチをインストールしないことを選んだ場合には、 xc/config/cf/lynx.cf
   を編集し、SparcConsoleDefines の定義を
 
-         #define SparcConsoleDefines    -DPATCHED_CONSOLE
+
+              #define SparcConsoleDefines    -DPATCHED_CONSOLE
 
 
 
-  から
+       から
 
-         #define SparcConsoleDefines    /* -DPATCHED_CONSOLE */
+              #define SparcConsoleDefines    /* -DPATCHED_CONSOLE */
 
 
 
@@ -752,7 +768,7 @@
   が、テストは全く行われていません(報告はお待ちしています)。
 
 
-  $XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/README.LynxOS,v 1.1.2.1 1999/06/02 07:50:46 hohndel Exp $
+  $XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/README.LynxOS,v 1.1.2.3 1999/12/28 12:13:47 hohndel Exp $
 
 
 
@@ -763,30 +779,10 @@
 
 
 
+  8.  日本語訳について
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+  日本語訳は X Japanese Documentation Project が行いました( 翻訳(XFree86
+  3.3.3-3.3.6): 藤原輝嘉 <fujiwara@linux.or.jp>
+  <mailto:fujiwara@linux.or.jp>, 校正: 金田浩司
+  <vanitas@ma3.seikyou.ne.jp> <mailto:vanitas@ma3.seikyou.ne.jp>)。問題
+  点の指摘やご意見は藤原までお願いします。

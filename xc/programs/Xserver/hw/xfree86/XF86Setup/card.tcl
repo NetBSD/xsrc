@@ -3,7 +3,7 @@
 #
 #
 #
-# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/card.tcl,v 3.12.2.6 1999/04/26 07:23:32 hohndel Exp $
+# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/card.tcl,v 3.12.2.7 1999/10/11 16:04:59 hohndel Exp $
 #
 # Copyright 1996 by Joseph V. Moss <joe@XFree86.Org>
 #
@@ -385,13 +385,15 @@ proc Card_set_cboxlists { win args } {
 
 	set w [winpathprefix $win]
 	$w.card.bot.message configure -text [make_message_card $args]
-	if { [llength $CardReadmes($cardServer)] > 0 } {
+	if { [string length [array names CardReadmes $cardServer]] > 0 && 
+	     [llength $CardReadmes($cardServer)] > 0 } {
 		$w.card.readme configure -state normal
 	} else {
 		$w.card.readme configure -state disabled
 	}
 	$w.card.chipset.cbox ldelete 0 end
-	if [llength $CardChipSets($cardServer)] {
+	if { [string length [array names CardChipSets $cardServer]] > 0 && 
+	     [llength $CardChipSets($cardServer)]} {
 		$w.card.chipset.cbox.button configure -state normal
 		$w.card.chipset.cbox linsert end "<Probed>"
 		eval [list $w.card.chipset.cbox linsert end] \
@@ -401,13 +403,15 @@ proc Card_set_cboxlists { win args } {
 	
 	}
 	set chipset [$w.card.chipset.cbox eget]
-	if { [string length $chipset] && [lsearch \
+	if { [string length [array names CardChipSets $cardServer]] > 0 &&
+             [string length $chipset] && [lsearch \
 			$CardChipSets($cardServer) $chipset] < 0} {
 		Card_cbox_setentry $w.card.chipset.cbox ""
 	}
 
 	$w.card.ramdac.cbox ldelete 0 end
-	if [llength $CardRamDacs($cardServer)] {
+	if { [string length [array names CardRamDacs $cardServer]] > 0 &&
+             [llength $CardRamDacs($cardServer)] } {
 		$w.card.ramdac.cbox.button configure -state normal
 		$w.card.ramdac.cbox linsert end "<Probed>"
 		eval [list $w.card.ramdac.cbox linsert end] \
@@ -416,14 +420,16 @@ proc Card_set_cboxlists { win args } {
 		$w.card.ramdac.cbox.button configure -state disabled
 	}
 	set ramdac [$w.card.ramdac.cbox eget]
-	if { [string length $ramdac] && [lsearch \
+	if { [string length [array names CardRamDacs $cardServer]] > 0 &&
+	     [string length $ramdac] && [lsearch \
 			$CardRamDacs($cardServer) $ramdac] < 0} {
 		Card_cbox_setentry $w.card.ramdac.cbox ""
 	}
 
 
 	$w.card.clockchip.cbox ldelete 0 end
-	if [llength $CardClockChips($cardServer)] {
+	if { [string length [array names CardClockChips $cardServer]] > 0 &&
+	     [llength $CardClockChips($cardServer)] } {
 		$w.card.clockchip.cbox.button configure -state normal
 		$w.card.clockchip.cbox linsert end "<Probed>"
 		eval [list $w.card.clockchip.cbox linsert end] \
@@ -432,13 +438,15 @@ proc Card_set_cboxlists { win args } {
 		$w.card.clockchip.cbox.button configure -state disabled
 	}
 	set clockchip [$w.card.clockchip.cbox eget]
-	if { [string length $clockchip] && [lsearch \
+	if { [string length [array names CardClockChips $cardServer]] > 0 &&
+	     [string length $clockchip] && [lsearch \
 			$CardClockChips($cardServer) $clockchip] < 0} {
 		Card_cbox_setentry $w.card.clockchip.cbox ""
 	}
 
 	$w.card.options.list.cbox ldelete 0 end
-	if [llength $CardOptions($cardServer)] {
+	if { [string length [array names CardOptions $cardServer]] > 0 &&
+	     [llength $CardOptions($cardServer)] } {
 		$w.card.options.list.cbox.button configure -state normal
 		eval [list $w.card.options.list.cbox linsert end] \
 			$CardOptions($cardServer)

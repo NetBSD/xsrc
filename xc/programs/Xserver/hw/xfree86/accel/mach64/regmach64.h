@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach64/regmach64.h,v 3.15.2.7 1999/07/23 09:00:35 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach64/regmach64.h,v 3.15.2.8 1999/10/12 17:18:44 hohndel Exp $ */
 /*
  * Copyright 1992,1993,1994,1995,1996,1997 by Kevin E. Martin, Chapel Hill, North Carolina.
  *
@@ -369,6 +369,7 @@ extern unsigned ioLCD_DATA;
 #define LCD_VERT_STRETCHING	0x05
 #define LCD_EXT_VERT_STRETCH	0x06
 #define LCD_POWER_MANAGEMENT	0x08
+#define LCD_POWER_MANAGEMENT_2	0x1D
 
 /* Fields in LCD registers */
 #define DONT_SHADOW_HEND	0x00004000
@@ -377,7 +378,10 @@ extern unsigned ioLCD_DATA;
 #define HORZ_DIVBY2_EN		0x00000004
 #define LOCK_8DOT		0x00000010
 #define DONT_SHADOW_VPAR	0x00000040
+#define DISABLE_PCLK_RESET	0x00000200
 #define DIS_HOR_CRT_DIVBY2	0x00000400
+#define VCLK_DAC_PM_EN		0x00020000
+#define XTALIN_PM_EN		0x00080000
 #define CRTC_RW_SELECT		0x08000000
 #define USE_SHADOWED_VEND	0x10000000
 #define USE_SHADOWED_ROWCUR	0x20000000
@@ -385,6 +389,7 @@ extern unsigned ioLCD_DATA;
 #define SHADOW_RW_EN		0x80000000
 #define HORZ_STRETCH_RATIO	0x0000FFFF
 #define HORZ_STRETCH_LOOP	0x00070000
+#define AUTO_HORZ_RATIO		0x0FF00000
 #define HORZ_STRETCH_MODE	0x40000000
 #define HORZ_STRETCH_EN		0x80000000
 #define VERT_STRETCH_RATIO0	0x000003FF
@@ -395,6 +400,15 @@ extern unsigned ioLCD_DATA;
 #define VERT_STRETCH_MODE	0x00000400
 #define AUTO_VERT_RATIO		0x00400000
 #define PWR_MGT_ON		0x00000001
+#define LCD_XCLK_DISP_PM_EN	0x00000001
+#define LCD_XCLK_GUI_PM_EN	0x00000010
+#define LCD_MCLK_PM_EN		0x00000100
+#define LCD_PM_DYN_XCLK_EN	0x00010000
+#define LCD_PM_XCLK_ALWAYS	0x00020000
+#define LCD_PCI_ACC_DIS		0x00080000
+#define LCD_PM_DYN_XCLK_DISP	0x00100000
+#define LCD_PM_DYN_XCLK_GUI	0x04000000
+#define LCD_PM_DYN_XCLK_HOST	0x08000000
 
 /* CONFIG_CNTL register constants */
 #define APERTURE_4M_ENABLE      1
@@ -430,6 +444,7 @@ extern unsigned ioLCD_DATA;
 #define PSEUDO_EDO		3
 #define SDRAM			4
 #define SGRAM			5
+#define SGRAM32			6
 
 #define DAC_INTERNAL		0x00
 #define DAC_IBMRGB514		0x01
@@ -511,11 +526,16 @@ extern unsigned ioLCD_DATA;
 #define PCI_MACH64_LB_ID	0x4C42
 #define PCI_MACH64_LI_ID	0x4C49
 #define PCI_MACH64_LP_ID	0x4C50
+#define PCI_MACH64_GL_ID	0x474C
 #define PCI_MACH64_GM_ID	0x474D
 #define PCI_MACH64_GN_ID	0x474E
 #define PCI_MACH64_GO_ID	0x474F
 #define PCI_MACH64_GR_ID	0x4752
 #define PCI_MACH64_GS_ID	0x4753
+#define PCI_MACH64_LM_ID	0x4C4D
+#define PCI_MACH64_LN_ID	0x4C4E
+#define PCI_MACH64_LR_ID	0x4C52
+#define PCI_MACH64_LS_ID	0x4C53
 
 /* CONFIG_CHIP_ID register constants */
 #define CFG_CHIP_TYPE		0x0000FFFF
@@ -548,11 +568,16 @@ extern unsigned ioLCD_DATA;
 #define MACH64_LB_ID		0x4C42
 #define MACH64_LI_ID		0x4C49
 #define MACH64_LP_ID		0x4C50
+#define MACH64_GL_ID		0x474C
 #define MACH64_GM_ID		0x474D
 #define MACH64_GN_ID		0x474E
 #define MACH64_GO_ID		0x474F
 #define MACH64_GR_ID		0x4752
 #define MACH64_GS_ID		0x4753
+#define MACH64_LM_ID		0x4C4D
+#define MACH64_LN_ID		0x4C4E
+#define MACH64_LR_ID		0x4C52
+#define MACH64_LS_ID		0x4C53
 #define MACH64_UNKNOWN_ID	0x0000
 
 /* DST_CNTL register constants */

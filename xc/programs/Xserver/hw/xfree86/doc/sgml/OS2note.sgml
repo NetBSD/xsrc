@@ -3,7 +3,7 @@
 
 <title>Notes on Rebuilding XFree86/OS2 from Scratch
 <author>Holger Veit
-<date>Last modified August 1st, 1999
+<date>Last modified December 12th, 1999
 
 <toc>
 
@@ -20,16 +20,16 @@ from scratch under OS/2.
 Please also read <htmlurl name=README.OS2 url=OS2.html> for end-user
 information, and set at least the environment variables described there.
 <p>
-At the current time, the most recent version available is XFree86-3.3.5.
+At the current time, the most recent version available is XFree86-3.3.6.
 This is a full and unrestricted version which comes with complete source 
-code. 3.3.5 is not only a bugfix release, but also supports new hardware,
+code. 3.3.6 is not only a bugfix release, but also supports new hardware,
 some of which might not even supported by OS/2 itself. See the RELEASE NOTES
 document for details.
 
 If you want to join the XFree86 developer team, e.g. to add support for
 certain hardware, please send a request to BOD@XFree86.org. Please
 think about such a step carefully before, though, since much work is 
-involved. Please use the XFree86-3.3.5 source code as a test example how
+involved. Please use the XFree86-3.3.6 source code as a test example how
 to compile the system. The ability to manage that is a basic requirement
 for becoming a developer.
 
@@ -45,7 +45,7 @@ Most of this software is available from <tt/hobbes.nmsu.edu/ or <tt/ftp.leo.org/
 via anonymous FTP. The following shopping list shows what you will need:
 
 <itemize>
-<item>gcc	EMX/gcc emx 0.9C patch4 or later (0.9d preferred!)
+<item>gcc	EMX/gcc emx 0.9d patch2 or later
 <item>gzip	GNU zip/unzip
 <item>tar	GNU tar
 <item>patch	Larry Wall's patch utility (attention: incompatible tool with same name in OS/2)
@@ -60,6 +60,8 @@ via anonymous FTP. The following shopping list shows what you will need:
 <item>flex	GNU flex
 <item>bison	GNU bison
 <item>find	GNU find    (attention: incompatible tool with the same name in OS/2)
+<item>unix2dos  Some conversion utility to convert LF delimiter to CRLF (may
+		be called unixtoos2 or alike as well)
 </itemize>
 
 If there is no version number given, any new version will do. Particularly
@@ -68,14 +70,14 @@ which might still be available from some archives is NOT compatible.
 
 Furthermore, you need the XFree86 sources. These are available from 
 the common XFree86 repositories. Look into a directory which is 
-often named /pub/XFree86/3.3.5/source.
+often named /pub/XFree86/3.3.6/source.
 
 <sect>Compiling and Installing
 <p>
 
-You need about 300MB of free HPFS space for the whole system. This does not
-include space for the postscript and troff documentation files. I have never
-installed them. Nor did I install the test subtree.
+You need about 300MB of free HPFS (or NFS, JFS, ext2fs) space for the whole 
+system. This does not include space for the postscript and troff documentation 
+files. I have never installed them. Nor did I install the test subtree.
 
 <enum>
 <item>Install all the above utilities. Refer to the corresponding documentation.
@@ -132,20 +134,19 @@ installed them. Nor did I install the test subtree.
       <verb>
       find &bsol;x11 -name *.orig -print -exec rm {} ;
       </verb>
-<item>Go to the <tt>xc/config/cf</tt> directory and edit the <tt>xf86site.def</tt>
-      file to match your requirements (you probably don't want to compile
-      all X servers). Certain changes must be set to the following values:
+<item>Go to the <tt>xc&bsol;config&bsol;cf</tt> directory and copy the file
+      <tt>&bsol;x11bsol;xcbsol;programsbsol;Xserverbsol;hwbsol;xfree86bsol;etcbsol;bindistbsol;OS2bsol;host.def.os2</tt>
+      into <tt>xc/config/cf/host.def</tt> and edit it to match your
+      requirements (you probably don't want to compile all X servers).
+      Certain changes must be set to the following values:
       <itemize>
       <item>Disable if not already done any PC98 server; PC98 (Japanese XFree86)
             does not work yet. Porters from Japan are welcome!
-      <item><tt>&num;define WacomSupport            NO
-            &num;define ElographicsSupport      NO</tt>
-            Both options are not yet supported.
-      <item>Tcl* and Tk* don't need to be set explicitly. Reasonable defaults
-            are in the other config files, provided you have a complete 
-            XFree86/OS2 binary tree with the tcl/tk runtime support installed.
+      <item>Disable the whole external input device stuff, like JoystickSupport, Wacom-
+	Support, etc.
       <item><tt>&num;define BuildDynamicLoading   NO</tt>
 	    This does not work.
+      <item>Disable the special servers XVirtualFramebufferServer, XnestServer, XprtServer
       </itemize>
 <item>Go to the directory <tt>xc&bsol;util&bsol;compress</tt> and 
       <tt>make compress.exe</tt> there. Install the program produced 
@@ -168,6 +169,11 @@ installed them. Nor did I install the test subtree.
       copy the saved toplevel Makefile.os2 back to Makefile.
 <item>Execute this <tt/buildos2.cmd/ command in the <tt/xc/ directory;
       it will produce a logfile <tt>buildxc.log</tt> in this directory.
+      Note: this may immediately fail in case, you got your distribution
+      from a Unix tar archive. Unfortunately the OS/2 REXX interpreter
+      has a problem with scripts that use the Unix convention as a line
+      delimiter. So go through the whole tree and convert the *.cmd files
+      to "OS/2 ASCII" by one of the typical unix2dos or unixtoos2 programs.
 <item>Go have a bucket of coffee, or better, buy new coffee - in Colombia!
       The compile will need between 2 and 20 hours, depending on your
       selections, and the horse power of your hardware.
@@ -201,7 +207,7 @@ Well, you see, this was quite easy :-)
 
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/OS2note.sgml,v 3.4.2.6 1999/08/02 08:38:17 hohndel Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/OS2note.sgml,v 3.4.2.7 1999/12/20 12:55:51 hohndel Exp $
 
 
 

@@ -1,4 +1,4 @@
-/* $XFree86: xc/config/cf/nto.cf,v 1.1.2.2 1999/08/17 07:39:16 hohndel Exp $ */
+/* $XFree86: xc/config/cf/nto.cf,v 1.1.2.3 1999/11/18 15:37:13 hohndel Exp $ */
 /* Get X to build using the gcc toolchain, from QNX4 */
 /* Let us try to separate the x86 stuff out of here as well... */ 
 
@@ -98,7 +98,7 @@
 #define BootstrapCFlags		-D__QNXNTO__ -DMIPS
 #define OSDefines		-DNO_REGEX -DSTRINGS_ALIGNED
 #define NTODefines		-D__MIPS__ -D__ELF__ -D__QNXNTO__
-#define CcCmd			/usr/gcc/ntomips/bin/gcc -bntomips -EB
+#define CcCmd			/usr/gcc/ntomips/bin/gcc -bntomips -EL
 #define ArCmd			/usr/gcc/bin/ar cq
 #define LdCmd			/usr/gcc/bin/ld
 #define AsCmd			/usr/gcc/ntomips/bin/as

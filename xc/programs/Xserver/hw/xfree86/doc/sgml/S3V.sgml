@@ -19,7 +19,7 @@ The above ViRGE chipsets are supported in the
 XF86_SVGA server, which includes a new ViRGE driver making use 
 of the XAA acceleration architecture and also supports 
 ViRGE/GX2 (86C357), ViRGE/MX (86C260), Trio3D (86C365), Trio3D/2X (86C362), 
-Savage3D (86C391) and Savage4 (86C396/86C397) chips as of 3.3.5.
+Savage3D (86C391), Savage4 (86C396/86C397) and Savage2000 chips as of 3.3.6.
 <p>
 The following sections describe details of ViRGE support.  Be aware that
 there are two servers described.  XF86_S3V is the ViRGE specific server
@@ -126,17 +126,9 @@ acceleration, so the graphics engine is used in 16bpp mode.
 The Savage family driver for the Savage3D and the Savage4 was donated to XFree86
 by S3 very closely before the release of XFree86-3.3.5. The driver violates a few
 design principles and goals, but since there is massive demand for it, we decided
-to include it in XFree86-3.3.5.
+to include it in XFree86-3.3.5. For 3.3.6 some rewrites have been done,
+there is fallback code for non-BIOS modes.
 <p>
-The following issues and problems will be addressed for a future release of this 
-driver:
-<itemize>
-<item>Only supported on Linux/x86 due to use of the Linux Real Mode Interface.
-<item>Restricted to modes that the BIOS supports. The Modeline specified in the
-      XF86Config file is being ignored.
-<item>Limited acceleration.
-<item>Limited testing.
-</itemize>
 
 <sect1>Known limitations of the s3_virge driver
 <p>
@@ -310,7 +302,7 @@ and:
 </itemize>
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/S3V.sgml,v 3.3.2.12 1999/08/02 12:45:00 hohndel Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/S3V.sgml,v 3.3.2.13 1999/12/11 15:28:31 hohndel Exp $
 </verb>
 
 </article>

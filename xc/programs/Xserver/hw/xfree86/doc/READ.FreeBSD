@@ -73,16 +73,19 @@ your mouse, /dev entry and the protocol type to use.
 The interface type can be determined by looking at the connector of the
 mouse.  The serial mouse has a D-Sub female 9- or 25-pin connector.  The bus
 mouse has either a D-Sub male 9-pin connector or a round DIN 9-pin connector.
-The PS/2 mouse is equipped with a small, round DIN 6-pin connector.  Some
-mice come with adapters with which the connector can be converted to another.
-If you are to use such an adapter, remember the connector at the very end of
-the mouse/adapter pair is what matters.
+The PS/2 mouse is equipped with a small, round DIN 6-pin connector.  The USB
+mouse has a flat rectangular connector.  Some mice come with adapters with
+which the connector can be converted to another.  If you are to use such an
+adapter, remember the connector at the very end of the mouse/adapter pair is
+what matters.
 
 The next thing to decide is a /dev entry for the given interface.  For the
 bus and PS/2 mice, there is little choice: the bus mouse always use
-/dev/mse0, and the PS/2 mouse is always at /dev/psm0.  There may be more than
-one serial port to which the serial mouse can be attached.  Many people often
-assign the first, built-in serial port /dev/cuaa0 to the mouse.
+/dev/mse0, and the PS/2 mouse is always at /dev/psm0.  You can attach multi-
+ple USB mice to your system or to your USB hub.  They are accessible as
+/dev/ums0, /dev/ums1,...  There may be more than one serial port to which the
+serial mouse can be attached.  Many people often assign the first, built-in
+serial port /dev/cuaa0 to the mouse.
 
 If you are not sure which serial device your mouse is plugged into, the easi-
 est way to find out the device is to use ``cat'' or ``kermit'' to look at the
@@ -132,24 +135,31 @@ There is rule of thumb:
            sary to tell the X server which PS/2 mouse protocol type is
            to be used; ``Auto'' should work, otherwise use ``PS/2''.
 
-  3.  The ``Logitech'' protocol is for old mouse models from Logitech.  Mod-
+  3.  You must specify the ``Auto'' protocol for the USB mouse.
+
+           NOTE: Other XFree86 document may mention ``Usb'' as one of
+           keywords for the mouse protocol.  This keyword is not neces-
+           sary, thus, not supported in FreeBSD.  Be sure to use
+           ``Auto'' for the USB mouse.
+
+  4.  The ``Logitech'' protocol is for old mouse models from Logitech.  Mod-
       ern Logitech mice use either the ``MouseMan'' or ``Microsoft'' proto-
       col.
 
-  4.  Most 2-button serial mice support the ``Microsoft'' protocol.
+  5.  Most 2-button serial mice support the ``Microsoft'' protocol.
 
-  5.  3-button serial mice may work with the ``MouseSystems'' protocol. If it
+  6.  3-button serial mice may work with the ``MouseSystems'' protocol. If it
       doesn't, it may work with the ``Microsoft'' protocol although the third
       (middle) button won't function.  3-button serial mice may also work
       with the ``MouseMan'' protocol under which the third button may func-
       tion as expected.
 
-  6.  3-button serial mice may have a small switch to choose between ``MS''
+  7.  3-button serial mice may have a small switch to choose between ``MS''
       and ``PC'', or ``2'' and ``3''.  ``MS'' or ``2'' usually mean the
       ``Microsoft'' protocol.  ``PC'' or ``3'' will choose the ``MouseSys-
       tems'' protocol.
 
-  7.  If the serial mouse has a roller or a wheel, it may be compatible with
+  8.  If the serial mouse has a roller or a wheel, it may be compatible with
       the ``IntelliMouse'' protocol.
 
 5.  Running X
@@ -283,9 +293,9 @@ Many thanks to:
    o Orest Zborowski, Simon Cooper and Dirk Hohndel for ideas from the Linux
      distribution.
 
-     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/FreeBSD.sgml,v 3.25.2.4 1998/10/22 04:31:02 hohndel Exp $
+     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/FreeBSD.sgml,v 3.25.2.7 1999/12/10 16:00:17 hohndel Exp $
 
      $XConsortium: FreeBSD.sgml /main/12 1996/10/28 05:43:08 kaleb $
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/READ.FreeBSD,v 3.31.2.9 1999/06/25 08:56:28 hohndel Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/READ.FreeBSD,v 3.31.2.11 1999/12/11 15:28:28 hohndel Exp $

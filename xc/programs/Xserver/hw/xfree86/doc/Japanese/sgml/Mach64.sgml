@@ -8,9 +8,9 @@
 -->
 <title>Mach64 用 X サーバ向けリリースノート
 <author>Kevin E. Martin (martin@cs.unc.edu)
-<date>27 October 1998
+<date>1999 June 28
 <trans>The X Japanese Documentation Project
-<tdate>15 January 1999
+<tdate>1999 August 2
 
 <!-- Table of contents -->
 <toc>
@@ -594,13 +594,6 @@ Mach64 X server.  They include:
 
 <itemize>
 <!--
-<item>The ATI Rage LT Pro chips found in many laptop computers are not
-       currently supported.  This chip will be supported in a future
-       release.
--->
-<item>ノート PC によく搭載されている ATI Rage LT Pro チップは現在サポートさ
-れていません。このチップは将来のリリースではサポートされるでしょう。
-<!--
 <item>Gamma correction is not currently supported.  It will be
        supported in a future release.
 -->
@@ -689,7 +682,7 @@ enhancements to the X server.  Thanks!
 <p>
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/sgml/Mach64.sgml,v 3.2.2.1 1999/05/25 06:39:15 hohndel Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/sgml/Mach64.sgml,v 3.2.2.2 1999/11/26 15:23:44 hohndel Exp $
 
 
 

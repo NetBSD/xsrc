@@ -7,7 +7,6 @@
 
   目次
 
-
   1. サポートしているハードウェア
   2. 機能:
   3. 設定:
@@ -15,14 +14,12 @@
   5. 作者
   6. 日本語訳について
 
-
   ______________________________________________________________________
 
   1.  サポートしているハードウェア
 
   アクセラレーション付きの I128 サーバが現在サポートしているカードを以下
   に示します:
-
 
   o  Imagine 128 (Texas Instruments TVP3025 または IBM528 RAMDAC を載せ
      た I128)。4MB の VRAM を載せたカードでテストを行いました。
@@ -37,9 +34,7 @@
   o  Imagine 128 Revolution IV (SILVERHAMMER RAMDAC を載せた I128-R4)。
      メモリを 32MB 載せたカードでテストを行いました。
 
-
   2.  機能:
-
 
   o  リニアフレームバッファを使用できます
 
@@ -52,7 +47,6 @@
      式)をサポートしています。
 
   o  グラフィックスアクセラレータを利用できます
-
 
   3.  設定:
 
@@ -80,9 +74,7 @@
      Sync-on-Green を必要とするモニタに対する設定を有効にします(これらの
      モニタは普通、ワークステーション用の周波数が固定のモニタです)。
 
-
   4.  Silicon Graphics 社製のフラット液晶パネルディスプレイ用のモード行
-
 
   o  以下に示すのは、T2R4 (Rev 4) で Silicon Graphics 社製のフラット液晶
      パネルディスプレイを使うために必要なモード行です。
@@ -105,23 +97,15 @@
   o  Modeline "800x512d08"   54.375   800 800 840 848 512 512 514 515
      HSkew 1 DoubleScan +Hsync +Vsync
 
-
   5.  作者
 
-
   Robin Cutshaw, robin@XFree86.Org
-
-
 
   o  Galen Brooks, galen@nine.com
 
   さんには特に助けていただきました。
 
-
-  $XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/README.I128,v 1.1.2.1 1999/06/02 07:50:43 hohndel Exp $
-
-
-
+  $XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/README.I128,v 1.1.2.2 1999/11/26 15:23:04 hohndel Exp $
 
   6.  日本語訳について
 
@@ -131,68 +115,4 @@
   点の指摘やご意見は藤原まで御連絡ください。原文の著作権は XFree86 プロ
   ジェクト社にあり、日本語訳の著作権は X Japanese Documentation Project
   にあります。
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/tvga8900/t89_driver.c,v 3.66.2.35 1999/07/05 09:07:41 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/tvga8900/t89_driver.c,v 3.66.2.37 1999/11/26 15:24:17 hohndel Exp $ */
 /*
  * Copyright 1992 by Alan Hourihane, Wigan, England.
  *
@@ -935,32 +935,32 @@ TVGA8900Probe()
 		TVGA8900.ChipUse2Banks = TRUE;
 #endif
 		break;
+	case CYBER9388:
+	case CYBER9397:
+	case CYBER939A:
+	case CYBER9520:
+	case CYBER9525:
+		if(OFLG_ISSET(OPTION_ACCEL, &vga256InfoRec.options))
+			tridentHasAcceleration = TRUE;
+		/* no break needed, falling through ... */
 	case TGUI96xx:
 	case TGUI9680:
 	case TGUI9682:
 	case TGUI9685:
 	case CYBER9382:
 	case CYBER9385:
-	case CYBER9388:
-	case CYBER9397:
-	case CYBER939A:
-	case CYBER9520:
-	case CYBER9525:
-		if(((TVGAchipset != CYBER9388) &&
-		    (TVGAchipset != CYBER9397) &&
-		    (TVGAchipset != CYBER939A) &&
-		    (TVGAchipset != CYBER9520) &&
-		    (TVGAchipset != CYBER9525)) ||
-		   OFLG_ISSET(OPTION_ACCEL, &vga256InfoRec.options))
-			tridentHasAcceleration = TRUE;
 		TVGA8900.ChipHas16bpp = TRUE;
 		TVGA8900.ChipHas24bpp = TRUE;
 		if (vgaBitsPerPixel == 24) 
 			tridentHasAcceleration = FALSE;
+#ifdef PC98_TGUI
+		else
+			tridentHasAcceleration = TRUE;
+#endif
 		TVGA8900.ChipHas32bpp = TRUE;
 		/* We've found a 96xx graphics engine */
 		/* Let's probe furthur */
-		if (vga256InfoRec.chipset == NULL)
+		if (vga256InfoRec.chipset == NULL) {
 		    switch (revision) {
 			case 0x00:
 				REV = "9660";
@@ -1041,12 +1041,13 @@ TVGA8900Probe()
 				REV = "Unknown ID - Please report to trident@xfree86.org";
 				break;
 		    }
-		outb(vgaIOBase + 4, 0xCF);
-		temp = inb(vgaIOBase + 5);
-		ErrorF("%s %s: BIOS reports Clock Control Bits 0x%x\n",
-			XCONFIG_PROBED, vga256InfoRec.name, temp);
-		ErrorF("%s %s: Detected a Trident %s.\n",
-			XCONFIG_PROBED, vga256InfoRec.name, REV);
+		    outb(vgaIOBase + 4, 0xCF);
+		    temp = inb(vgaIOBase + 5);
+		    ErrorF("%s %s: BIOS reports Clock Control Bits 0x%x\n",
+			   XCONFIG_PROBED, vga256InfoRec.name, temp);
+		    ErrorF("%s %s: Detected a Trident %s.\n",
+			   XCONFIG_PROBED, vga256InfoRec.name, REV);
+		}
 		tridentIsTGUI = TRUE;
 		tridentTGUIProgrammableClocks = TRUE;
 		tridentLinearOK = TRUE;

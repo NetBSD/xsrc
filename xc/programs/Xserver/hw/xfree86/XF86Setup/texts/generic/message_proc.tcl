@@ -1,4 +1,4 @@
-# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/texts/generic/message_proc.tcl,v 1.1.2.2 1998/02/26 20:11:19 hohndel Exp $
+# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/texts/generic/message_proc.tcl,v 1.1.2.3 1999/10/11 16:05:03 hohndel Exp $
 #
 # These procedures generate local messages with arguments
 
@@ -21,21 +21,26 @@ proc make_message_card { args } {
     global cardServer
     
     set mes ""
+    set prefix ""
+  
     if !$pc98 {
-	if ![file exists $Xwinhome/bin/XF86_$cardServer] {
+	if ![string match XFCom* $cardServer] {
+	    set prefix "XF86_"
+	}
+	if ![file exists $Xwinhome/bin/$prefix$cardServer] {
 	    if ![string compare $args cardselected] {
 		set mes \
 		        "*** The server required by your card is not\
 		        installed!  Please abort, install the\
 		        $cardServer server as\n\
-		        $Xwinhome/bin/XF86_$cardServer and\
+		        $Xwinhome/bin/$prefix$cardServer and\
 		        run this program again ***"
 	    } else {
 		set mes \
 		        "*** The selected server is not\
 		        installed!  Please abort, install the\
 		        $cardServer server as\n\
-		        $Xwinhome/bin/XF86_$cardServer and\
+		        $Xwinhome/bin/$prefix$cardServer and\
 		        run this program again ***"
 	    }
 	    bell

@@ -1,3 +1,5 @@
+! $XFree86: xc/programs/xdm/config/xdm-conf.cpp,v 1.1.1.2.4.2 1999/10/12 18:33:29 hohndel Exp $
+!
 ! $XConsortium: xdm-conf.cpp /main/3 1996/01/15 15:17:26 gildea $
 DisplayManager.errorLogFile:	XDMDIR/xdm-errors
 DisplayManager.pidFile:		XDMDIR/xdm-pid
@@ -17,3 +19,6 @@ DisplayManager._0.reset:	XDMDIR/TakeConsole
 DisplayManager*resources:	XDMDIR/Xresources
 DisplayManager*session:		XDMDIR/Xsession
 DisplayManager*authComplain:	false
+! SECURITY: do not listen for XDMCP or Chooser requests
+! Comment out this line if you want to manage X terminals with xdm
+DisplayManager.requestPort:	0

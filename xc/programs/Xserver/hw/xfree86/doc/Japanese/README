@@ -1,19 +1,20 @@
-  XFree86(TM) 3.3.3.1 のための README
+  XFree86(TM) 3.3.6 のための README
   XFree86 プロジェクト社
-  20 December 1998
+  13 October 1999
   X Japanese Documentation Project <http://xjman.dsl.gr.jp/>
-  1999 年 2 月 5 日
+  1999 年 12 月 4 日
 
-  XFree86 は X11R6.3 を移植したもので、インテル i386 系や Alpha、arm な
-  ど他のアーキテクチャのプラットフォーム上で動作するいくつかのバージョン
-  の Unix および Unix に似ているオペレーティングシステムをサポートしてい
-  ます。今回の版は XFree86 3.3.3 のリリース後に判明したいくつかのバグを
-  修正するために急いで更新したものです。この版は X コンソーシアムの
-  X11R6.3 または XFree86 3.3.3 リリースのソースコードに対するパッチデー
-  タとして入手可能です。 XFree86 3.3.3 に対するバイナリアップデートを含
-  むバイナリ配付物もまた多くのアーキテクチャで入手可能です。
+  XFree86 は X11R6.3 を移植したもので、Intel や他のアーキテクチャのプ
+  ラットフォーム上で動作するいくつかのバージョンの Unix 系オペレーティン
+  グシステムをサポートしています。 XFree86 のバージョン 3.3.x
+  は、XFree86 の「古いブランチ」であると考えられています。現在は開発の大
+  部分は XFree86-4 のブランチで行われています。我々は当面の間、少なくと
+  も 2000 年の間は XFree86-3.3.x のメンテナンスも続けます。この版は X コ
+  ンソーシアムの X11R6.3 または XFree86 3.3.5 リリースのソースコードに対
+  するパッチデータとして入手可能です。多くのアーキテクチャ用のバイナリ配
+  付物も入手可能です。
 
-  1.  XFree86 3.3.3.1 で何が新しくなったか ?
+  1.  XFree86 3.3.6 で何が新しくなったか ?
 
 
   この版の新機能の要約は RELNOTES ファイルを参照してください。変更の詳細
@@ -31,22 +32,6 @@
 
      o  Esix: 4.0.3A, 4.0.4, 4.0.4.1
 
-     o  Microport: 2.2, 3.1, 4.1, 4.2
-
-     o  Dell: 2.1, 2.2, 2.2.1
-
-     o  UHC: 2.0, 3.6
-
-     o  Consensys: 1.2
-
-     o  MST: 4.0.3 (Load 2.07 と Load 3.02)
-
-     o  ISC: 4.0.3
-
-     o  AT&T: 2.1, 4.0
-
-     o  NCR: MP-RAS
-
      o  SunSoft: Solaris x86 2.1, 2.4, 2.5, 2.5.1, 2.6
 
      o  AT 用 PANIX 5.0
@@ -54,6 +39,7 @@
 
 
      SVR4.2:
+        (最近はテストされていません)
 
      o  Consensys
 
@@ -62,28 +48,29 @@
 
 
      SVR3:
-
+        (最近はテストされていません)
 
      o  ISC: 3.0, 4.0, 4.1
 
 
 
-     Others:
+     その他:
 
-     o  NetBSD 1.0, 1.1, 1.2, 1.2.1, 1.3, 1.3.1, 1.3.2, 1.3.3
+     o  NetBSD 1.0, 1.1, 1.2, 1.2.1, 1.3, 1.3.1, 1.3.2, 1.3.3, 1.4
 
      o  OpenBSD 2.0, 2.1, 2.2, 2.3, 2.4
 
      o  FreeBSD 2.0.5, 2.1, 2.1.5, 2.1.6, 2.1.7, 2.1.7.1, 2.2, 2.2.1,
-        2.2.2, 2.2.5, 2.2.6, 2,2,7, 2.2.8, 3.0
+        2.2.2, 2.2.5, 2.2.6, 2,2,7, 2.2.8, 3.0, 3.1, 3.2
+
 
      o  Linux (Intel x86, DEC Alpha/AXP と m68k)
 
-     o  LynxOS AT 2.3.0, 2.4.0, 2.5.0
+     o  LynxOS x86 2.3.0, 2.4.0, 2.5.x, 3.0.x
 
-     o  LynxOS microSPARC 2.4.0, 2.5.0
+     o  LynxOS microSPARC 2.4.0, 2.5.x, 3.0.x
 
-     o  LynxOS PowerPC 2.4.0, 2.5.0
+     o  LynxOS PowerPC 2.4.0, 2.5.x, 3.0.x
 
      o  OS/2 Warp 3 FP5/17/22, Warp 4 -/FP1
 
@@ -92,9 +79,10 @@
      PC98:
 
      o  FreeBSD(98) 2.0.5, 2.1, 2.1.5, 2.1.7.1, 2.2, 2.2.1, 2.2.2,
-        2.2.5, 2.2.6, 2,2,7, 2.2.8, 3.0
+        2.2.5, 2.2.6, 2,2,7, 2.2.8, 3.0, 3.1, 3.2
 
-     o  NetBSD/pc98 (NetBSD 1.2, 1.2.1, 1.3, 1.3.1, 1.3.2 を基にした)
+     o  NetBSD/pc98 (NetBSD 1.2, 1.2.1, 1.3, 1.3.1, 1.3.2, 1.3.3 を基に
+        したもの)
 
      o  98 用 PANIX 5.0
 
@@ -105,7 +93,7 @@
   3.  サポートしているビデオカードのチップセット
 
 
-  現在、XFree86 3.3.3.1 は次のアクセラレータチップをサポートしています:
+  現在、XFree86 3.3.6 は次のアクセラレータチップをサポートしています:
 
 
      Ark Logic
@@ -118,8 +106,9 @@
         18800, 18800-1, 28800-2, 28800-4, 28800-5, 28800-6, 68800-3,
         68800-6, 68800AX, 68800LX, 88800GX-C, 88800GX-D, 88800GX-E,
         88800GX-F, 88800CX, 264CT, 264ET, 264VT, 264GT, 264VT-B, 264VT3,
-        264GT-B, 264GT3 (このリストは Mach8, Mach32, Mach64, 3D Rage, 3D
-        Rage II および 3D Rage Pro を含んでいます)
+        264GT-B, 264GT3 (このリストには Mach8, Mach32, Mach64, 3D Rage,
+        3D Rage II, 3D Rage Pro が含まれます), Rage LT, Rage LT PRO,
+        Rage 128
 
      Avance Logic
         ALG2101, ALG2228, ALG2301, ALG2302, ALG2308, ALG2401
@@ -153,12 +142,15 @@
      IBM
         8514/A (および純粋なクローン), XGA-2
 
+     Intel
+        i740
+
      IIT
         AGX-014, AGX-015, AGX-016
 
      Matrox
         MGA2064W (Millennium), MGA1064SG (Mystique と Mystique 220),
-        MGA2164W (Millennium II PCI および AGP), G100, G200
+        MGA2164W (Millennium II PCI および AGP), G100, G200, G400
 
      MX MX68000(*), MX680010(*)
 
@@ -172,7 +164,7 @@
         I128 (series I, II および IV), Revolution 3D (T2R)
 
      NVidia/SGS Thomson
-        NV1, STG2000, RIVA128, Riva TNT
+        NV1, STG2000, RIVA128, Riva TNT, Riva TNT2
 
      OAK
         OTI067, OTI077, OTI087
@@ -185,10 +177,15 @@
 
      S3 86C911, 86C924, 86C801, 86C805, 86C805i, 86C928, 86C864, 86C964,
         86C732, 86C764, 86C765, 86C767, 86C775, 86C785, 86C868, 86C968,
-        86C325, 86C357, 86C375, 86C375, 86C385, 86C988, 86CM65, 86C260
+        86C325, 86C357, 86C362, 86C375, 86C375, 86C385, 86C988, 86CM65,
+        86C260
 
      SiS
-        86C201, 86C202, 86C205, 86C215, 86C225, 5597, 5598, 6326
+        86C201, 86C202, 86C205, 86C215, 86C225, 5597, 5598, 6326, 530,
+        620, 540, 630, 300
+
+     3dfx
+        Voodoo Banshee, Voodoo3
 
      3DLabs
         GLINT 500TX, GLINT MX, Permedia, Permedia 2, Permedia 2v
@@ -196,12 +193,14 @@
      Tseng
         ET3000, ET4000AX, ET4000/W32, ET4000/W32i, ET4000/W32p, ET6000,
         ET6100
+
      Trident
         TVGA8800CS, TVGA8900B, TVGA8900C, TVGA8900CL, TVGA9000,
         TVGA9000i, TVGA9100B, TVGA9200CXR, Cyber9320(*), TVGA9400CXi,
         TVGA9420, TGUI9420DGi, TGUI9430DGi, TGUI9440AGi, TGUI9660XGi,
         TGUI9680, ProVidia 9682, ProVidia 9685(*), Cyber 9382, Cyber
-        9385, Cyber 9388, 3DImage975, 3DImage985, Cyber 9397, Cyber 9520
+        9385, Cyber 9388, 3DImage975, 3DImage985, Cyber 9397, Cyber
+        9520, Cyber 9525, Blade3D, CyberBlade
 
      Video 7/Headland Technologies
         HT216-32(*)
@@ -223,12 +222,12 @@
   いくつかは白黒と 16 色をサポートしています。また、幾つかはより多い色数
   をサポートしています。
 
-  これらのチップセットを使う為のより詳しい情報は、チップセット固有の
+  これらのチップセットを使うためのより詳しい情報は、チップセット固有の
   README ファイル (現在用意されているのは TGA, Matrox, Mach32, Mach64,
   NVidia, Oak, P9000, S3 (ViRGE を除く), S3 ViRGE, SiS, Video7, Western
   Digital, Tseng (W32), Tseng (all), AGX/XGA, ARK, ATI (SVGA server),
-  Chips and Technologies, Cirrus, Trident, NeoMagic, Rendition, Epson,
-  3DLabs) を参照して下さい。
+  Chips and Technologies, Cirrus, Trident, NeoMagic, Rendition, Rage128,
+  Epson, 3DLabs, i740) を参照してください。
 
   白黒サーバはシングルバンク 64k のビデオメモリを使用している一般的な
   VGA カード、Hercules 白黒カード、現代 ( Hyundai ) HGC1280、 Sigma
@@ -251,20 +250,20 @@
   は、バイナリ配付物では /usr/X11R6/lib/X11/doc の、またソース配付物では
   xc/programs/Xserver/hw/xfree86/doc のディレクトリにあります。
 
-  QuickStart.doc と README.Config のファイルは XFree86 サーバの設定方法
-  についての参考情報になるでしょう。XFree86 チーム に支援を求める連絡を
-  取る前に、提供した全ての文章、オンラインマニュアル、そして XFree86 FAQ
-  <http://www.XFree86.org/FAQ> を読んで下さい。
+  QuickStart.doc と README.Config は XFree86 サーバの設定方法についての
+  参考情報になるでしょう。XFree86 チーム に連絡して助けを求める前に、提
+  供した全ての文章、オンラインマニュアル、 XFree86 FAQ
+  <http://www.XFree86.org/FAQ> を読んでください。
 
   SVGA ドライバの開発についての文書は、バイナリ配付物で
   は、/usr/X11R6/lib/Server/VGADriverDoc に、ソース配付物で
   は、xc/programs/Xserver/hw/xfree86/VGADriverDoc にあります。
 
   どうしていいか全く分からなくなって途方に暮れてしまった場合には、
-  <XFree86@XFree86.Org> によって XFree86 サポートチームに連絡して下さ
-  い。連絡をとる前に、最新版の XFree86 を使っていることを確認してくださ
-  い。ftp://ftp.xfree86.org/pub/XFree86 に掲載しているバージョンを調べて
-  ください。
+  <XFree86@XFree86.Org> 宛にメールを出して XFree86 サポートチームに連絡
+  してください。連絡をとる前には、最新版の XFree86 を使っていることを確
+  認してください。 ftp://ftp.xfree86.org/pub/XFree86 に掲載しているバー
+  ジョンを調べてください。
 
   Usenet ニュースグループである comp.windows.x.i386unix では、 XFree86
   と、XFree86 に関係する話題についての議論がしょっちゅう行なわれており、
@@ -327,7 +326,6 @@
 
   o  Jon Tombs <tombs@XFree86.org>
 
-
   o  Kees Verstoep <versto@cs.vu.nl>
 
   o  Paul Vixie <paul@vix.com>
@@ -365,6 +363,10 @@
 
      o  Orest Zborowski <orestz@eskimo.com>
 
+     DG/ux 用は次のメンバーがサポートしています :
+
+     o  Takis Psarogiannakopoulos <takis@dpmms.cam.ac.uk>
+
      SCO Unix 用は次のメンバーがサポートしています :
 
      o  David McCullough <davidm@stallion.oz.au>
@@ -391,8 +393,8 @@
 
      o  Doug Anson <danson@lgc.com>,
 
-     o  David Holland <davidh@use.com>
 
+     o  David Holland <davidh@use.com>
 
      ISC SVR3 用は次のメンバーがサポートしています :
 
@@ -444,7 +446,7 @@
 
      o  Kohji Ohishi <atena@njk.co.jp>,
 
-     o  Shin'ichi Yairo <QZR00522@niftyserve.or.jp>,
+     o  Shin'ichi Yairo <QZR00522@nifty.ne.jp>,
 
      o  Kazuo Ito <ft4k-itu@asahi-net.or.jp>,
 
@@ -472,7 +474,7 @@
 
      o  Yasushi Suzuki <suz@d2.bs1.fc.nec.co.jp>,
 
-     o  Satoshi Kimura <KFB03633@niftyserve.or.jp>,
+     o  Satoshi Kimura <KFB03633@nifty.ne.jp>,
 
      o  Kazuhiko Uno <Kazuhiko.Uno@softvision.co.jp>,
 
@@ -523,8 +525,8 @@
 
      S3V アクセラレータプログラムは、次のメンバーが作成しました :
 
-     o  Harald Koenig <koenig@tat.physik.uni-tuebingen.de>,
 
+     o  Harald Koenig <koenig@tat.physik.uni-tuebingen.de>,
 
      o  Kevin Brosius <Cobra@compuserve.com>
 
@@ -650,6 +652,8 @@
 
      o  Xavier Ducoin <xavier@rd.lectra.fr>
 
+     o  Dirk Hohndel <hohndel@XFree86.Org>
+
      DEC 21030 (TGA) サーバは次のメンバーが作成しました :
 
      o  Alan Hourihane <alanh@fairlite.demon.co.uk>
@@ -719,10 +723,10 @@
 
      o  Nozomi Ytow
 
+
      o  Egbert Eich <Egbert.Eich@Physik.TH-Darmstadt.DE>
 
      o  David Bateman <dbateman@ee.uts.edu.au>
-
 
      o  Xavier Ducoin <xavier@rd.lectra.fr>
 
@@ -786,9 +790,7 @@
 
      Tseng ET4000 と ET6000 SVGA ドライバは、次のメンバーが作成しました
         :
-
      o  [作者不明]
-
 
      o  Dirk Hohndel <hohndel@XFree86.Org>
 
@@ -832,6 +834,18 @@
      o  Helmut Fahrion <hf@suse.de>
 
 
+     3dfx 用のアクセラレータコードは、次のメンバーが作成しました :
+
+     o  Daryll Strauss <daryll@harlot.rb.ca.us>
+
+     o  Scott Bertin
+
+
+     Intel i740 用のアクセラレータコードは、次のメンバーが作成しました :
+
+     o  Kevin E. Martin <martin@cs.unc.edu>,
+
+
      XFree86-VidMode 機能拡張 と xvidtune クライアントは、次のメンバーが
         作成しました :
 
@@ -840,6 +854,7 @@
      o  David Dawes <dawes@XFree86.org>
 
      o  Jon Tombs <tombs@XFree86.org>
+
 
      o  Joe Moss <joe@XFree86.org>
 
@@ -854,7 +869,6 @@
      XFree86-DGA 機能拡張は次のメンバーが作成しました :
 
      o  Jon Tombs <tombs@XFree86.org>
-
 
      o  Mark Vojkovich <mvojkovi@ucsd.edu>
 
@@ -895,27 +909,40 @@
 
 
   開発計画とサポートは XFree86 コアチームによって推進しています。現在、
-  コアチームは、次のメンバーで構成しています。（順不同）:
-
-  o  Robin Cutshaw <robin@XFree86.org>
+  コアチームは以下のメンバーで構成されています(年代順):
 
   o  David Dawes <dawes@XFree86.org>
 
-  o  Marc Evans <marc@XFree86.org>
-
-  o  Harm Hanemaayer <H.Hanemaayer@inter.nl.net>
-
-  o  Dirk Hohndel <hohndel@XFree86.org>
-
-  o  Harald Koenig <koenig@XFree86.org>
+  o  David Wexelblat <dwex@XFree86.org>
 
   o  Rich Murphey <rich@XFree86.org>
 
-  o  Takaaki Nomura <nomura@XFree86.org>
+  o  Dirk Hohndel <hohndel@XFree86.org>
 
   o  Jon Tombs <tombs@XFree86.org>
 
-  o  David Wexelblat <dwex@XFree86.org>
+
+  o  Marc Evans <marc@XFree86.org>
+
+  o  Robin Cutshaw <robin@XFree86.org>
+
+  o  Takaaki Nomura <nomura@XFree86.org>
+
+  o  Harald Koenig <koenig@XFree86.org>
+
+  o  Egbert Eich <eich@hilbert.ikp.physik.tu-darmstadt.de>
+
+  o  Mark Vojkovich <mvojkovi@ucsd.edu>
+
+  o  Alan Hourihane <alanh@fairlite.demon.co.uk>
+
+  o  Preston Brown <pbrown@redhat.com>
+
+  o  Marc Aurele La France <tsi@ualberta.cait>
+
+  o  Kevin E. Martin <kevin@precisioninsight.com>
+
+  o  Keith Packard <keithp@suse.com>
 
      コアチームへの連絡は <Core@XFree86.org> 宛てに電子メールを送信して
      ください。サポートに関する質問は <XFree86@XFree86.org> 宛てに電子メ
@@ -958,23 +985,29 @@
   から動いて必要なものを手に入れ、そしてそれを実際の開発作業にたずさわる
   人々に提供することが可能となるからです。
 
-  現在のXFree86 プロジェクト社の取締役会と幹事会は、以下の通り:
+  現在の XFree86 プロジェクト社の取締役会と幹事会は以下の通りです:
 
-  o  David Dawes, President と Secretary (社長と秘書)
 
-  o  Dirk Hohndel, Vice-President (副社長)
+  o  David Dawes, President および Secretary
 
-  o  Glenn Lai, Director (取締役)
+  o  Dirk Hohndel, Vice-President
 
-  o  Rich Murphey, Treasurer (会計係)
+  o  Robin Cutshaw, Director
 
-  o  Jim Tsillas, Director (取締役)
+  o  Marc Evans, Director
 
-  o  Jon Tombs, Director (取締役)
+  o  Glenn Lai, Director
 
-  o  David Wexelblat, Director (取締役)
+  o  Rich Murphey, Treasurer
 
-     取締役会への連絡は <BOD@XFree86.org> まで電子メールを送って下さい。
+  o  Jim Tsillas, Director
+
+  o  Jon Tombs, Director
+
+  o  David Wexelblat, Director
+
+     取締役会への連絡は <BOD@XFree86.org> まで電子メールを送ってくださ
+     い。
 
   弊社の内規は、XFree86 が現在も、そして将来もずっと、フリーソフトウェア
   プロジェクトであり続けることを保証するような形で起草されています。コア
@@ -1014,11 +1047,21 @@
      ままコンパイルしたようなバイナリ版を我々のサポートする OS 用の製品
      として提供することは容認できません。
 
-  ここに、XFree86 プロジェクト社のスポンサーとなり、金銭の提供又は機材と
-  資源の提供をしてくださった組織と個人の方を一覧に致します。 XFree86 プ
-  ロジェクト社は彼らに大変感謝し、インターネット社会全体の改善の為に高品
+  ここに、XFree86 プロジェクト社のスポンサーとなり、金銭の提供または機材
+  と資源の提供をしてくださった組織と個人の一覧を示します。 XFree86 プロ
+  ジェクト社は彼らに大変感謝し、インターネット社会全体の改善のために高品
   質なフリーソフトウェアを継続して提供することで、彼らの期待に沿えること
   を願っております。
+
+
+  o  SuSE <http://www.suse.com/>
+
+     SuSE は Atlanta Linux Enthusiasts <http://www.ale.org>や VA Linux
+     Systems <http://www.valinux.com> とともに、 1999 年 10 月 9 日から
+     10 月 15 日まで Atlanta Linux Showcase の一部として行われた第1回の
+     XFree86 hothouse の後援と準備を行ってくださいました。この週
+     は、XFree86 プロジェクトの歴史の中で最も進捗があった週です。我々は
+     既に 2000 年に第2回を計画しています。
 
 
   o  UUNET Communications Services, Inc. <http://www.uu.net/>
@@ -1119,8 +1162,7 @@
 
   o  Joel Storm
 
-
-  o  S.u.S.E. GmbH <http://www.suse.de>, Fuerth, Germany
+  o  SuSE GmbH <http://www.suse.de>, Nuernberg, Germany
 
   o  Tekelec Airtronic GmbH <http://www.tekelec.com>, Muenchen, Germany
 
@@ -1143,13 +1185,14 @@
      <BOD@XFree86.org> まで。
 
 
+
   8.  ソースとバイナリファイルのあるサイト
 
 
   X コンソーシアム(現在は The Open Group) の X11R6.3 PL2 から XFree86
-  3.3.3.1 へのバージョンアップ用ソースコードパッチが入手可能です。これに
-  加えて多くの OS 用にバイナリも用意されており、以下の匿名 FTP サイト経
-  由で手に入ります :
+  3.3.6 へのバージョンアップ用ソースコードパッチが入手可能です。これに加
+  えて多くの OS 用にバイナリも用意されており、以下の匿名 FTP サイト経由
+  で手に入ります :
 
 
   o  ftp://ftp.XFree86.org/pub/XFree86
@@ -1186,6 +1229,7 @@
 
   o  ftp://ftp.mpi-sb.mpg.de/pub/X/mirror/ftp.xfree86.org (ソースおよび
      バイナリ)
+
   o  ftp://ftp.cs.tu-berlin.de/pub/X/XFree86 (ソースおよびバイナリ)
 
   o  ftp://ftp.uni-erlangen.de/pub/Linux/MIRROR.xfree86 (ソースおよび
@@ -1221,13 +1265,13 @@
 
 
 
-  入手したリリースが XFree86 3.3.3.1 であるかどうか、よく確認してくださ
+  入手したリリースが XFree86 3.3.6 であるかどうか、よく確認してくださ
   い。いくつかのサイトでは、古い版の XFree86 が保存されている場合があり
   ます。 RELNOTES をしっかり読んで、どのファイルを格納場所から入手する必
-  要があるのか、調べておいて下さい。
+  要があるのか、調べておいてください。
 
 
-  $XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/README,v 3.4.2.2 1999/06/02 07:50:40 hohndel Exp $
+  $XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/README,v 3.4.2.4 1999/12/28 12:13:46 hohndel Exp $
 
 
 
@@ -1237,84 +1281,16 @@
 
 
 
-  ______________________________________________________________________
-  ______________________________________________________________________
-
-
-
-  このファイルは xc/programs/Xserver/hw/xfree86/doc/sgml/README.sgml,v
-  3.75.2.46 1999/01/05 07:15:48 を、佐野 武俊 ( Taketoshi Sano
-  <kgh12351@nifty.ne.jp> <mailto:kgh12351@nifty.ne.jp> ) が XFree86
-  3.3.3.1 を日本でインストールする人向けに和訳したものです。ここがおかし
-  いとか、ここはこうしたほうがいいといったご意見がありましたら、電子メー
-  ルでお知らせ下さい。
-
-  なお、翻訳にあたっては岡本  一幸 ( Kazuyuki Okamoto
-  <ikko-@pacific.rim.or.jp> <mailto:ikko-@pacific.rim.or.jp> ) さんによ
-  る XFree86 3.3.2 の和訳から大部分の文章を頂きましたことをここに記し、
-  感謝を示します。原文の著作権は XFree86 プロジェクト社にあります。この
-  和訳の著作権は X Japanese Documentation Project
-  http://xjman.dsl.gr.jp/ <http://xjman.dsl.gr.jp/> (略称 xjman プロジェ
-  クト) にあります。この和訳の不具合は私 <kgh12351@nifty.ne.jp> または
-  xjman プロジェクトまで電子メールで送って下さい。
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+  日本語訳は X Japanese Documentation Project が行いました (XFree86
+  3.3.2 版の翻訳: 岡本一幸 <ikko-@pacific.rim.or.jp>
+  <mailto:ikko-@pacific.rim.or.jp>, XFree86 3.3.3.1 版の翻訳: 佐野 武俊
+  <kgh12351@nifty.ne.jp> <mailto:kgh12351@nifty.ne.jp>, XFree86 3.3.4,
+  3.3.5, 3.3.6 版への更新: 藤原輝嘉 <fujiwara@linux.or.jp>
+  <mailto:fujiwara@linux.or.jp>)。ここがおかしいとか、ここはこうしたほう
+  がいいといったご意見がありましたら、電子メールでお知らせください。
+
+  原文の著作権は XFree86 プロジェクト社にあります。この和訳の著作権は X
+  Japanese Documentation Project http://xjman.dsl.gr.jp/
+  <http://xjman.dsl.gr.jp/> (略称 xjman プロジェクト) にあります。この和
+  訳の不具合は私 <kgh12351@nifty.ne.jp> または xjman プロジェクトまで電
+  子メールで送ってください。
