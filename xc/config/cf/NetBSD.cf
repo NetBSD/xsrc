@@ -1,4 +1,4 @@
-XCOMM $NetBSD: NetBSD.cf,v 1.97 2002/05/10 16:40:38 matt Exp $
+XCOMM $NetBSD: NetBSD.cf,v 1.98 2002/07/05 17:42:03 tron Exp $
 XCOMM platform:  $XConsortium: NetBSD.cf /main/16 1996/10/31 14:47:14 kaleb $
 
 
@@ -157,6 +157,10 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #define LibraryCCOptions 	-ansi -Dasm=__asm -ffixed-g4 -mcmodel=medany
 #else
 #define DefaultCCOptions 	-ansi -Dasm=__asm
+#endif
+
+#ifndef UseGccMakeDepend
+#define UseGccMakeDepend	YES
 #endif
 
 #define CppCmd          	cpp
