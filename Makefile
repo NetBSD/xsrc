@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.26 2001/04/13 17:01:47 wiz Exp $
+#	$NetBSD: Makefile,v 1.27 2001/05/23 12:47:13 fredb Exp $
 #
 # Targets & Variables
 #
@@ -62,13 +62,19 @@ all-local:
 install: install-xc install-contrib install-local
 
 install-xc:
-	@cd ${XCDIR} && ${MAKE} install && ${MAKE} install.man
+	@cd ${XCDIR} && \
+	  ${MAKE} DESTDIR="${DESTDIR}" install && \
+	  ${MAKE} DESTDIR="${DESTDIR}" install.man
 
 install-contrib:
-	@cd contrib && ${MAKE} install && ${MAKE} install.man
+	@cd contrib && \
+	  ${MAKE} DESTDIR="${DESTDIR}" install && \
+	  ${MAKE} DESTDIR="${DESTDIR}" install.man
 
 install-local:
-	@cd local && ${MAKE} install && ${MAKE} install.man
+	@cd local && \
+	  ${MAKE} DESTDIR="${DESTDIR}" install && \
+	  ${MAKE} DESTDIR="${DESTDIR}" install.man
 
 clean:
 	@-cd ${XCDIR} && ${MAKE} clean
