@@ -1,4 +1,4 @@
-/* $NetBSD: hpcKbd.c,v 1.4 2002/03/26 14:59:26 takemura Exp $	*/
+/* $NetBSD: hpcKbd.c,v 1.5 2002/03/29 15:48:54 shin Exp $	*/
 /* $XConsortium: sunKbd.c,v 5.47 94/08/16 13:45:30 dpw Exp $ */
 /*-
  * Copyright (c) 1987 by the Regents of the University of California
@@ -49,9 +49,9 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <dev/pckbc/pckbdreg.h>
 #include "atKeynames.h"
 
-#define MOUSE_EMUL_KEY	(0xdd + MIN_KEYCODE)	/* menu key on windows keyboard */
-#define MOUSE_EMUL_KEY1	(0x02 + MIN_KEYCODE)
-#define MOUSE_EMUL_KEY5	(0x07 + MIN_KEYCODE)
+#define MOUSE_EMUL_KEY	(KEY_Menu + MIN_KEYCODE)	/* menu key on windows keyboard */
+#define MOUSE_EMUL_KEY1	(KEY_1 + MIN_KEYCODE)
+#define MOUSE_EMUL_KEY5	(KEY_5 + MIN_KEYCODE)
 
 extern KeySymsRec hpcKeySyms[];
 extern hpcModmapRec *hpcModMaps[];
