@@ -291,7 +291,7 @@ XCOMM $XFree86: xc/config/cf/xf86site.def,v 3.101.2.15 1998/02/24 19:05:42 hohnd
 #define XF86SvgaDrivers		nv et4000 et3000 pvga1 gvga ati sis tvga8900 \
 				cirrus ncr77c22 compaq mga oak al2101 ali \
 				cl64xx video7 ark mx realtek apm \
-				s3v s3_svga chips generic
+				s3v s3_svga chips neomagic generic
  */
 
 /*
