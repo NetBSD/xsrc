@@ -58,6 +58,9 @@ from the X Consortium.
 #undef _POSIX_SOURCE
 #endif
 #endif
+#ifndef SIZE_T_MAX
+# define SIZE_T_MAX UINT_MAX
+#endif
 #ifndef OPEN_MAX
 #if defined(SVR4) || defined(__EMX__)
 #ifdef SCO325
