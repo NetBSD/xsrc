@@ -112,7 +112,7 @@ KMODSRC = kmod_noop.c
 KMODOBJ = kmod_noop.o
 #endif
 
-#if defined(i386Architecture) || defined(ia64Architecture) || defined(x86_64Architecture)
+#if defined(i386Architecture) || defined(ia64Architecture) || defined(AMD64Architecture)
 RES_SRC=stdResource.c
 RES_OBJ=stdResource.o
 #else
