@@ -7,7 +7,7 @@ char rcsId_vmwarewindow[] =
 
     "Id: vmwarewindow.c,v 1.4 2001/01/27 00:28:15 bennett Exp $";
 #endif
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/vmware/vmwarewindow.c,v 1.2 2001/05/16 06:48:12 keithp Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/vmware/vmwarewindow.c,v 1.3 2002/05/14 20:24:06 alanh Exp $ */
 
 #include "vmware.h"
 
@@ -34,13 +34,11 @@ vmwareCopyWindow(WindowPtr pWin, DDXPointRec ptOldOrg, RegionPtr prgnSrc)
     REGION_INTERSECT(pWin->drawable.pScreen, &rgnDst, &pWin->borderClip,
 	prgnSrc);
     pBB = REGION_EXTENTS(pWin->drawable.pScreen, &rgnDst);
-    HIDE_CURSOR_ACCEL(pVMWARE, *pBB);
-    
+
     fbCopyRegion ((DrawablePtr) pwinRoot, (DrawablePtr) pwinRoot,
 		  0,
 		  &rgnDst, dx, dy, vmwareDoBitblt, 0, 0);
 
-    SHOW_CURSOR(pVMWARE, *pBB);
     UPDATE_ACCEL_AREA(pVMWARE, *pBB);
     REGION_UNINIT(pWin->drawable.pScreen, &rgnDst);
 }
@@ -97,16 +95,9 @@ vmwarePaintWindow(WindowPtr pWin, RegionPtr pRegion, int what)
 	((what == PW_BACKGROUND && pWin->backgroundState == BackgroundPixel)
 	    || (what == PW_BORDER && pWin->borderIsPixel))) {
 	BoxPtr pBB;
-	Bool hidden = pVMWARE->mouseHidden;
 
 	pBB = REGION_EXTENTS(pWin->drawable.pScreen, pRegion);
-	if (!hidden) {
-	    HIDE_CURSOR(pVMWARE, *pBB);
-	}
 	accelPaintWindow(pVMWARE, pWin, pRegion, what, pBB);
-	if (!hidden) {
-	    SHOW_CURSOR(pVMWARE, *pBB);
-	}
 	UPDATE_ACCEL_AREA(pVMWARE, *pBB);
 	/* vmwareWaitForFB(); */ /* XXX */
 	return;

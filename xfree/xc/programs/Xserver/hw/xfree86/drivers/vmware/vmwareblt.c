@@ -7,7 +7,7 @@ char rcsId_vmwareblt[] =
 
     "Id: vmwareblt.c,v 1.4 2001/01/27 00:28:15 bennett Exp $";
 #endif
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/vmware/vmwareblt.c,v 1.3 2001/09/05 22:13:10 keithp Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/vmware/vmwareblt.c,v 1.4 2002/05/14 20:24:06 alanh Exp $ */
 
 #include "X.h"
 #include "fb.h"
@@ -63,28 +63,17 @@ GCPtr pGC, int srcx, int srcy, int width, int height, int dstx, int dsty)
 	pSrcDrawable->type == DRAWABLE_WINDOW &&
 	pDstDrawable->type == DRAWABLE_WINDOW &&
 	(pGC->planemask & pVMWARE->Pmsk) == pVMWARE->Pmsk) {
-	fbCopyProc  doBitBlt;
+	fbCopyProc doBitBlt;
 	BoxRec updateBB;
-	BoxRec mouseBB;
-	Bool hidden = pVMWARE->mouseHidden;
 
 	updateBB.x1 = pDstDrawable->x + dstx;
 	updateBB.y1 = pDstDrawable->y + dsty;
 	updateBB.x2 = updateBB.x1 + width;
 	updateBB.y2 = updateBB.y1 + height;
-	mouseBB.x1 = MIN(pSrcDrawable->x + srcx, pDstDrawable->x + dstx);
-	mouseBB.y1 = MIN(pSrcDrawable->y + srcy, pDstDrawable->y + dsty);
-	mouseBB.x2 = MAX(pSrcDrawable->x + srcx, pDstDrawable->x + dstx) + width;
-	mouseBB.y2 = MAX(pSrcDrawable->y + srcy, pDstDrawable->y + dsty) + height;
+
 	doBitBlt = vmwareDoBitblt;
-	if (!hidden) {
-	    HIDE_CURSOR_ACCEL(pVMWARE, mouseBB);
-	}
 	prgn = fbDoCopy (pSrcDrawable, pDstDrawable, pGC, srcx, srcy, width,
 			 height, dstx, dsty, doBitBlt, 0, 0);
-	if (!hidden) {
-	    SHOW_CURSOR(pVMWARE, mouseBB);
-	}
 	UPDATE_ACCEL_AREA(pVMWARE, updateBB);
     } else if (pDstDrawable->type == DRAWABLE_WINDOW ||
 	pSrcDrawable->type == DRAWABLE_WINDOW) {

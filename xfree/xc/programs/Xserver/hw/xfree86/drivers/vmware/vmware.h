@@ -3,7 +3,7 @@
  * All Rights Reserved
  * Id: vmware.h,v 1.6 2001/01/30 18:13:47 bennett Exp $
  * **********************************************************/
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/vmware/vmware.h,v 1.3 2001/09/13 08:36:24 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/vmware/vmware.h,v 1.5 2002/05/14 20:24:06 alanh Exp $ */
 
 #ifndef VMWARE_H
 #define VMWARE_H
@@ -13,14 +13,12 @@
 #include "xf86_ansic.h"
 #include "xf86Resources.h"
 
-#include "compiler.h"	/* inb/outb */
+#include "compiler.h"	        /* inb/outb */
 
 #include "xf86PciInfo.h"	/* pci vendor id */
 #include "xf86Pci.h"		/* pci */
+#include "xf86Cursor.h"		/* hw cursor */
 
-#include "mipointer.h"		/* sw cursor */
-#include "mibstore.h"		/* backing store */
-#include "micmap.h"		/* mi color map */
 #include "vgaHW.h"		/* VGA hardware */
 #include "fb.h"
 
@@ -28,6 +26,9 @@
 
 #include "vm_basic_types.h"
 #include "svga_reg.h"
+
+/* Arbitrarily choose max cursor dimensions.  The emulation doesn't care. */
+#define MAX_CURS        32
 
 typedef struct {
 	CARD32		svga_reg_enable;
@@ -68,7 +69,7 @@ typedef struct {
 	Bool noAccel;
 	Bool hwCursor;
 	Bool cursorDefined;
-	Bool mouseHidden;
+	Bool cursorHidden;
 
         unsigned int    cursorRemoveFromFB;
         unsigned int    cursorRestoreToFB;
@@ -80,18 +81,22 @@ typedef struct {
 	CARD32*		vmwareFIFO;
 	Bool		vmwareFIFOMarkSet;
 	BoxRec		vmwareAccelArea;
-	struct {
-	BoxRec		Box;
-	unsigned int	Width;
-	unsigned int	Height;
-	unsigned int	XHot;
-	unsigned int	YHot;
-		      } Mouse;
-	Bool		checkCursorColor;
+
+        xf86CursorInfoPtr       CursorInfoRec;
+        struct {
+        int             bg, fg, x, y;
+        BoxRec          box;
+
+        uint32          mask[SVGA_BITMAP_SIZE(MAX_CURS, MAX_CURS)];
+        uint32          maskPixmap[SVGA_PIXMAP_SIZE(MAX_CURS, MAX_CURS, 32)];
+        uint32          source[SVGA_BITMAP_SIZE(MAX_CURS, MAX_CURS)];
+        uint32          sourcePixmap[SVGA_PIXMAP_SIZE(MAX_CURS, MAX_CURS, 32)];
+                      } hwcur;
+
 	unsigned int	vmwareBBLevel;
 	unsigned long	Pmsk;
 
-	uint16		indexReg, valueReg;
+	IOADDRESS       indexReg, valueReg;
 
 	ScreenRec	ScrnFuncs;
 	/* ... */
@@ -155,85 +160,34 @@ static __inline ScrnInfoPtr infoFromScreen(ScreenPtr s) {
 		ABS(((a).y1 + (a).y2) - ((b).y1 + (b).y2)) <= \
 		((a).y2 - (a).y1) + ((b).y2 - (b).y1))
 
-#define HIDE_CURSOR(vmPtr,box) \
+#define HIDE_CURSOR(vmPtr,_box) \
 { \
-    if (!(vmPtr)->mouseHidden) { \
+    if (!(vmPtr)->cursorHidden) { \
 	if ((vmPtr)->hwCursor && (vmPtr)->cursorDefined && \
-	    BOX_INTERSECT((vmPtr)->Mouse.Box, box)) { \
-		(vmPtr)->mouseHidden = TRUE; \
-		if ((vmPtr)->vmwareCapability & SVGA_CAP_CURSOR_BYPASS) { \
-		    vmwareWriteReg(vmPtr, SVGA_REG_CURSOR_ID, MOUSE_ID); \
-		    vmwareWriteReg(vmPtr, SVGA_REG_CURSOR_ON, \
-                                   (vmPtr)->cursorRemoveFromFB); \
-		} else { \
-		    vmwareWriteWordToFIFO(vmPtr, SVGA_CMD_DISPLAY_CURSOR); \
-		    vmwareWriteWordToFIFO(vmPtr, MOUSE_ID); \
-		    vmwareWriteWordToFIFO(vmPtr, 0); \
-		    UPDATE_ACCEL_AREA(vmPtr,(vmPtr)->Mouse.Box); \
-		} \
+	    BOX_INTERSECT((vmPtr)->hwcur.box, _box)) { \
+		(vmPtr)->cursorHidden = TRUE; \
+                vmwareWriteReg(vmPtr, SVGA_REG_CURSOR_ID, MOUSE_ID); \
+                vmwareWriteReg(vmPtr, SVGA_REG_CURSOR_ON, \
+                               (vmPtr)->cursorRemoveFromFB); \
 	} \
     } \
 }
 
-#define HIDE_CURSOR_ACCEL(vmPtr,box) \
+#define SHOW_CURSOR(vmPtr,_box) \
 { \
-    if (!(vmPtr)->mouseHidden) { \
-        if ((vmPtr)->hwCursor && (vmPtr)->cursorDefined && \
-            !((vmPtr)->vmwareCapability & SVGA_CAP_CURSOR_BYPASS) && \
-            BOX_INTERSECT((vmPtr)->Mouse.Box, box)) { \
-                (vmPtr)->mouseHidden = TRUE; \
-                vmwareWriteWordToFIFO(vmPtr, SVGA_CMD_DISPLAY_CURSOR); \
-                vmwareWriteWordToFIFO(vmPtr, MOUSE_ID); \
-                vmwareWriteWordToFIFO(vmPtr, 0); \
-                UPDATE_ACCEL_AREA(vmPtr,(vmPtr)->Mouse.Box); \
-        } \
-    } \
-}
-
-
-#define SHOW_CURSOR(vmPtr,box) \
-{ \
-    if ((vmPtr)->mouseHidden) { \
+    if ((vmPtr)->cursorHidden) { \
 	if ((vmPtr)->hwCursor && (vmPtr)->cursorDefined && \
-	    BOX_INTERSECT((vmPtr)->Mouse.Box, box)) { \
-		(vmPtr)->mouseHidden = FALSE; \
-		if ((vmPtr)->vmwareCapability & SVGA_CAP_CURSOR_BYPASS) { \
-		    vmwareWriteReg(vmPtr, SVGA_REG_CURSOR_ID, MOUSE_ID); \
-		    vmwareWriteReg(vmPtr, SVGA_REG_CURSOR_ON, \
-                                   (vmPtr)->cursorRestoreToFB); \
-		} else { \
-		    vmwareWriteWordToFIFO(vmPtr, SVGA_CMD_DISPLAY_CURSOR); \
-		    vmwareWriteWordToFIFO(vmPtr, MOUSE_ID); \
-		    vmwareWriteWordToFIFO(vmPtr, 1); \
-		    UPDATE_ACCEL_AREA(vmPtr,(vmPtr)->Mouse.Box); \
-		} \
+	    BOX_INTERSECT((vmPtr)->hwcur.box, _box)) { \
+		(vmPtr)->cursorHidden = FALSE; \
+                vmwareWriteReg(vmPtr, SVGA_REG_CURSOR_ID, MOUSE_ID); \
+                vmwareWriteReg(vmPtr, SVGA_REG_CURSOR_ON, \
+                               (vmPtr)->cursorRestoreToFB); \
 	} \
     } \
-}
-
-/* Only use this for debugging */
-
-#define HIDE_CURSOR_ALWAYS(vmPtr,box) \
-{ \
-	vmwareWriteWordToFIFO(vmPtr, SVGA_CMD_DISPLAY_CURSOR); \
-	vmwareWriteWordToFIFO(vmPtr, MOUSE_ID); \
-	vmwareWriteWordToFIFO(vmPtr, 0); \
-	(vmPtr)->mouseHidden = TRUE; \
-	vmwareFIFOMarkSet = TRUE; \
-        UPDATE_ACCEL_AREA(vmPtr,(vmPtr)->Mouse.Box); \
-}
-
-#define SHOW_CURSOR_ALWAYS(vmPtr,box) \
-{ \
-	vmwareWriteWordToFIFO(vmPtr, SVGA_CMD_DISPLAY_CURSOR); \
-	vmwareWriteWordToFIFO(vmPtr, MOUSE_ID); \
-	vmwareWriteWordToFIFO(vmPtr, 1); \
-	(vmPtr)->mouseHidden = FALSE; \
-	vmwareFIFOMarkSet = TRUE; \
 }
 
 /*#define DEBUG_LOGGING*/
-#undef DEBUG_LOGGING
+/*#undef DEBUG_LOGGING*/
 #ifdef DEBUG_LOGGING
 #define	VmwareLog(args)		ErrorF args
 #define TRACEPOINT		VmwareLog((__FUNCTION__ ":" __FILE__ "\n"));
@@ -288,16 +242,9 @@ extern int vmwareGCPrivateIndex;
 	VMWAREPtr pVMWARE = VMWAREPTR(infoFromScreen(screen));		\
         if (accelcond) {						\
 	    BoxRec BB;							\
-	    Bool hidden = pVMWARE->mouseHidden;				\
 									\
 	    setBB;							\
-	    if (!hidden) {						\
-		HIDE_CURSOR_ACCEL(pVMWARE, BB);				\
-	    }								\
 	    accel;							\
-	    if (!hidden) {						\
-		SHOW_CURSOR(pVMWARE, BB);				\
-	    }								\
 	    UPDATE_ACCEL_AREA(pVMWARE, BB);				\
 	    return;							\
 	},								\
@@ -474,85 +421,7 @@ void vmwareRestoreColor0(
 /* vmwarecurs.c */
 Bool vmwareCursorInit(
 #if NeedFunctionPrototypes
-    char *pm, ScreenPtr pScr
-#endif
-    );
-
-Bool vmwareRealizeCursor(
-#if NeedFunctionPrototypes
-    ScreenPtr pScr, CursorPtr pCurs
-#endif
-    );
-
-Bool vmwareUnrealizeCursor(
-#if NeedFunctionPrototypes
-    ScreenPtr pScr, CursorPtr pCurs
-#endif
-    );
-
-void vmwareSetCursor(
-#if NeedFunctionPrototypes
-    ScreenPtr pScr, CursorPtr pCurs, int x, int y
-#endif
-    );
-
-void vmwareRepositionCursor(
-#if NeedFunctionPrototypes
     ScreenPtr pScr
-#endif
-    );
-
-void vmwareRestoreCursor(
-#if NeedFunctionPrototypes
-    ScreenPtr pScr
-#endif
-    );
-
-void vmwareMoveCursor(
-#if NeedFunctionPrototypes
-    ScreenPtr pScr, int x, int y
-#endif
-    );
-
-void vmwareRenewCursorColor(
-#if NeedFunctionPrototypes
-    ScreenPtr pScr
-#endif
-    );
-
-void vmwareRecolorCursor(
-#if NeedFunctionPrototypes
-    ScreenPtr pScr, CursorPtr pCurs, Bool displayed
-#endif
-    );
-
-void vmwareWarpCursor(
-#if NeedFunctionPrototypes
-    ScreenPtr pScr, int x, int y
-#endif
-    );
-
-void vmwareQueryBestSize(
-#if NeedFunctionPrototypes
-    int class, unsigned short *pwidth, unsigned short *pheight, ScreenPtr pScr
-#endif
-    );
-
-void vmwareCursorOff(
-#if NeedFunctionPrototypes
-    VMWAREPtr pVMWARE
-#endif
-    );
-
-void vmwareClearSavedCursor(
-#if NeedFunctionPrototypes
-    int scr_index
-#endif
-    );
-
-void vmwareBlockHandler(
-#if NeedFunctionPrototypes
-    int i, pointer blockData, pointer pTimeout, pointer pReadmask
 #endif
     );
 
