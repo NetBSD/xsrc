@@ -51,6 +51,10 @@ from the X Consortium.
 #endif
 #endif
 
+#if defined(__OpenBSD__) || defined(__NetBSD__)
+#include <sys/utsname.h>
+#endif
+
 #ifdef DEBUG
 static char error_buf[BUFSIZ];		/* The buffer for error messages. */
 #endif /* DEBUG */
@@ -392,11 +396,17 @@ int flags)
 static void
 AddToCurrentSection(Manual * local_manual, char * path)
 {
+#if defined(__OpenBSD__) || defined(__NetBSD__)
+  struct utsname uts;
+#endif
   char temp_path[BUFSIZ];
 
 #if defined(__OpenBSD__) || defined(__NetBSD__)
-  sprintf(temp_path, "%s/%s", path, MACHINE);
-  ReadCurrentSection(local_manual, temp_path);
+  /* XXX: No way to deal w. error here so just move on. */
+  if (uname(&uts) == 0) {
+    sprintf(temp_path, "%s/%s", path, uts.machine);
+    ReadCurrentSection(local_manual, temp_path);
+  }
 #endif
   ReadCurrentSection(local_manual, path);
   sprintf(temp_path, "%s.%s", path, COMPRESSION_EXTENSION);
