@@ -381,6 +381,7 @@ The name of this extension is "DPMS".
 .ta .2i .5i 1.5i 2.5i
 .R
  =>
+.De
 .LP
 .Ds 0
 .TA .2i .5i 1.5i 2.5i
@@ -396,6 +397,7 @@ The name of this extension is "DPMS".
 .ta .2i .5i 1.5i 2.5i
 .R
  =>
+.De
 .LP
 .Ds 0
 .TA .2i .5i 1.5i 2.5i
@@ -411,6 +413,7 @@ The name of this extension is "DPMS".
 .ta .2i .5i 1.5i 2.5i
 .R
  =>
+.De
 .LP
 .Ds 0
 .TA .2i .5i 1.5i 2.5i
