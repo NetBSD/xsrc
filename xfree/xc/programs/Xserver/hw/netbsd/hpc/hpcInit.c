@@ -1,4 +1,4 @@
-/* $NetBSD: hpcInit.c,v 1.1 2004/01/03 01:09:19 takemura Exp $	*/
+/* $NetBSD: hpcInit.c,v 1.2 2004/01/03 01:19:25 takemura Exp $	*/
 
 #include    "hpc.h"
 #include    "gcstruct.h"
@@ -403,3 +403,34 @@ InitInput(argc, argv)
 	}
     }
 }
+
+/*#ifdef DDXOSFATALERROR*/
+void OsVendorFatalError(void)
+{
+}
+/*#endif*/
+
+#ifdef DPMSExtension
+/**************************************************************
+ * DPMSSet(), DPMSGet(), DPMSSupported()
+ *
+ * stubs
+ *
+ ***************************************************************/
+
+void DPMSSet (level)
+    int level;
+{
+}
+
+int DPMSGet (level)
+    int* level;
+{
+    return -1;
+}
+
+Bool DPMSSupported ()
+{
+    return FALSE;
+}
+#endif
