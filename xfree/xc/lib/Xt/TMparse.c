@@ -494,7 +494,7 @@ static Cardinal LookupTMEventType(eventStr,error)
   String eventStr;
   Boolean *error;
 {
-    register int   i, left, right;
+    register int   i = 0, left, right;
     register XrmQuark	signature;
     static int 	previous = 0;
 
