@@ -188,6 +188,13 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 # define OptimizedCDebugFlags 	-O2
 #endif
 
+/*
+ * XXX always build XKBuilib, override xfree86.cf
+ */
+#if defined(i386Architecture)
+# define BuildXKBuilib		YES
+#endif
+
 #if defined(SparcArchitecture)
 # define ServerOSDefines	-DDDXOSINIT
 # define ServerExtraDefines	GccGasOption
