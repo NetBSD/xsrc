@@ -228,6 +228,10 @@ XCOMM $XFree86: xc/config/cf/Imake.cf,v 3.34.2.14 1999/07/29 09:22:23 hohndel Ex
 #  define mipscoArchitecture
 #  undef mipsco
 # endif
+# if defined(__algor__) || defined(algor)
+#  define algorArchitecture
+#  undef algor
+# endif
 #endif /* NetBSD */
 
 #ifdef __FreeBSD__
