@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.31 2002/04/26 16:52:42 lukem Exp $
+#	$NetBSD: Makefile,v 1.32 2002/07/06 14:41:06 tron Exp $
 #
 # Targets & Variables
 #
@@ -25,6 +25,10 @@
 # clean: Remove object files, but keep imake generated makefiles.
 
 .include <bsd.own.mk>
+
+# Backwards compatibility with NetBSD 1.5 and 1.5.x where NETBSDSRCDIR
+# doesn't get defined by  "bsd.own.mk".
+NETBSDSRCDIR?=	${BSDSRCDIR}
 
 .if defined(USE_XF86_4) && (${USE_XF86_4} != no)
 XCDIR=	xfree/xc
