@@ -686,7 +686,9 @@ MACPPCDDXDIR  = hw/netbsd/macppc
 MACPPCDIRS = $(STDDIRS) $(MFBDIR) $(CFB8DIR) $(MACPPCDDXDIR) $(DEPDIRS)
 MACPPCOBJS = hw/netbsd/macppc/macppcInit.o
 MACPPCLIBS = hw/netbsd/macppc/libmacppc.a CFB8Libs
-ServerTarget(Xmacppc,$(MACPPCDIRS),$(MACPPCOBJS),$(MACPPCLIBS),$(SYSLIBS))
+ServerTarget(Xmacppc,$(MACPPCDIRS),$(MACPPCOBJS), \
+	$(MACPPCLIBS) $(LOADABLEEXTS) $(LIBCWRAPPER), \
+	$(MACPPCLIBS) $(LOADABLEEXTS) $(FONTLIBS) $(SYSLIBS))
 #ifndef ServerToInstall
 #define ServerToInstall Xmacppc
 #endif
