@@ -37,7 +37,6 @@
 #define size_t int
 #define time_t long
 #endif
-#endif
 
 #endif /* HAVE_CONFIG_H */
 
