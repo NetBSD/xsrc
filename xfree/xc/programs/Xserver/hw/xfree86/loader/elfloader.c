@@ -2418,6 +2418,10 @@ Elf_RelocateEntry(ELFModulePtr elffile, Elf_Word secn, Elf_Rel_t *rel,
 # ifdef ELFDEBUG
 	ELFDEBUG("*dest32=%8.8lx\n", *dest32);
 # endif
+#if defined(__NetBSD__)
+            arm_sync_icache(dest32, 4);
+#endif
+
 	break;
 
     case R_ARM_REL32:
@@ -2442,6 +2446,10 @@ Elf_RelocateEntry(ELFModulePtr elffile, Elf_Word secn, Elf_Rel_t *rel,
 # ifdef ELFDEBUG
 	ELFDEBUG("*dest32=%8.8lx\n", *dest32);
 # endif
+#if defined(__NetBSD__)
+            arm_sync_icache(dest32, 4);
+#endif
+
 
 	break;
 
@@ -2456,6 +2464,10 @@ Elf_RelocateEntry(ELFModulePtr elffile, Elf_Word secn, Elf_Rel_t *rel,
 	    *dest32 = (*dest32 & 0xff000000) | (val & 0x00ffffff);
 #ifdef NOTYET
 	    arm_flush_cache(dest32);
+#else
+#if defined(__NetBSD__)
+            arm_sync_icache(dest32, 4);
+#endif
 #endif
 	}
 	break;

@@ -204,6 +204,62 @@ extern long __umodsi3(long, long);
 #include <sys/io.h>
 #endif
 
+#if defined(__arm__) && defined(__NetBSD__)
+/* pull in the softfloat functions */
+extern float __addsf3 (float, float);
+extern double __adddf3 (double, double);
+extern float __subsf3 (float, float);
+extern double __subdf3 (double, double);
+extern float __floatsisf (long);
+extern double __floatsidf (long);
+extern float __floatdisf (long long);
+extern double __floatdidf (long long);
+extern long __fixsfsi (float);
+extern long __fixdfsi (double);
+extern long long __fixsfdi (float);
+extern long long __fixdfdi (double);
+extern unsigned long __fixunssfsi (float);
+extern unsigned long __fixunsdfsi (double);
+extern double __extendsfdf2 (float);
+extern float __truncdfsf2 (double);
+extern int __ltsf2(float, float);
+extern int __ltdf2(double, double);
+extern int __ledf2(double, double);
+extern int __eqdf2(double, double);
+extern int __nesf2(float, float);
+extern int __nedf2(double, double);
+extern int __gedf2(double, double);
+extern int __gtdf2(double, double);
+extern double __negdf2(double);
+
+#pragma weak __addsf3
+#pragma weak __adddf3
+#pragma weak __subsf3
+#pragma weak __subdf3
+#pragma weak __floatsisf
+#pragma weak __floatsidf
+#pragma weak __floatdisf
+#pragma weak __floatdidf
+#pragma weak __fixsfsi
+#pragma weak __fixdfsi
+#pragma weak __fixsfdi
+#pragma weak __fixdfdi
+#pragma weak __fixunssfsi
+#pragma weak __fixunsdfsi
+#pragma weak __extendsfdf2
+#pragma weak __truncdfsf2
+#pragma weak __ltsf2
+#pragma weak __ltdf2
+#pragma weak __ledf2
+#pragma weak __eqdf2
+#pragma weak __nesf2
+#pragma weak __nedf2
+#pragma weak __gedf2
+#pragma weak __gtdf2
+#pragma weak __negdf2
+
+#endif
+
 #if defined(__powerpc__) && (defined(Lynx) || defined(linux))
 void _restf14();
 void _restf17();
@@ -1110,6 +1166,36 @@ LOOKUP xfree86LookupTab[] = {
     SYMFUNC(_Qp_qtoux)
     SYMFUNC(_Qp_uitoq)
     SYMFUNC(_Qp_dtoq)
+#endif
+#endif
+
+#if defined(__NetBSD__)
+#if defined(__arm__)
+    SYMFUNC(__addsf3)
+    SYMFUNC(__adddf3)
+    SYMFUNC(__subsf3)
+    SYMFUNC(__subdf3)
+    SYMFUNC(__floatsisf)
+    SYMFUNC(__floatsidf)
+    SYMFUNC(__floatdisf)
+    SYMFUNC(__floatdidf)
+    SYMFUNC(__fixsfsi)
+    SYMFUNC(__fixdfsi)
+    SYMFUNC(__fixsfdi)
+    SYMFUNC(__fixdfdi)
+    SYMFUNC(__fixunssfsi)
+    SYMFUNC(__fixunsdfsi)
+    SYMFUNC(__extendsfdf2)
+    SYMFUNC(__truncdfsf2)
+    SYMFUNC(__ltsf2)
+    SYMFUNC(__ltdf2)
+    SYMFUNC(__ledf2)
+    SYMFUNC(__eqdf2)
+    SYMFUNC(__nesf2)
+    SYMFUNC(__nedf2)
+    SYMFUNC(__gedf2)
+    SYMFUNC(__gtdf2)
+    SYMFUNC(__negdf2)
 #endif
 #endif
 
