@@ -434,7 +434,7 @@ Converting String Lists
 .LP
 Many of the text properties allow a variety of types and formats.
 Because the data stored in these properties are not
-simple null-terminated strings, a
+simple null-terminated strings, an
 .PN XTextProperty
 structure is used to describe the encoding, type, and length of the text 
 as well as its value.
@@ -1386,7 +1386,7 @@ XWMHints *XAllocWMHints\^(\|)
 .eM
 The
 .PN XAllocWMHints
-function allocates and returns a pointer to a
+function allocates and returns a pointer to an
 .PN XWMHints
 structure.
 Note that all fields in the
@@ -1641,7 +1641,7 @@ The
 .PN XGetWMHints
 function reads the window manager hints and 
 returns NULL if no WM_HINTS property was set on the window 
-or returns a pointer to a 
+or returns a pointer to an 
 .PN XWMHints 
 structure if it succeeds.
 When finished with the data,
@@ -1690,7 +1690,7 @@ XSizeHints *XAllocSizeHints\^(\|)
 .eM
 The
 .PN XAllocSizeHints
-function allocates and returns a pointer to a
+function allocates and returns a pointer to an
 .PN XSizeHints
 structure.
 Note that all fields in the
@@ -2119,7 +2119,7 @@ XClassHint *XAllocClassHint\^(\|)
 .eM
 The
 .PN XAllocClassHint
-function allocates and returns a pointer to a
+function allocates and returns a pointer to an
 .PN XClassHint
 structure.
 Note that the pointer fields in the
@@ -2461,7 +2461,7 @@ The
 .PN XSetWMColormapWindows 
 function replaces the WM_COLORMAP_WINDOWS property on the specified
 window with the list of windows specified by the colormap_windows argument.
-It the property does not already exist,
+If the property does not already exist,
 .PN XSetWMColormapWindows
 sets the WM_COLORMAP_WINDOWS property on the specified
 window to the list of windows specified by the colormap_windows argument.
@@ -2556,7 +2556,7 @@ XIconSize *XAllocIconSize\^(\|)
 .eM
 The
 .PN XAllocIconSize 
-function allocates and returns a pointer to a
+function allocates and returns a pointer to an
 .PN XIconSize 
 structure.
 Note that all fields in the
@@ -2655,7 +2655,7 @@ Returns the number of items in the size list.
 The
 .PN XGetIconSizes
 function returns zero if a window manager has not set icon sizes;
-otherwise, it return nonzero.
+otherwise, it returns nonzero.
 .PN XGetIconSizes
 should be called by an application that
 wants to find out what icon sizes would be most appreciated by the
@@ -2880,7 +2880,7 @@ If the window_name argument is non-NULL,
 .PN XSetWMProperties
 calls
 .PN XSetWMName ,
-which in turn, sets the WM_NAME property (see section 14.1.4).
+which, in turn, sets the WM_NAME property (see section 14.1.4).
 If the icon_name argument is non-NULL,
 .PN XSetWMProperties
 calls
@@ -3199,7 +3199,7 @@ XStandardColormap *XAllocStandardColormap\^(\|)
 .eM
 The
 .PN XAllocStandardColormap
-function allocates and returns a pointer to a
+function allocates and returns a pointer to an
 .PN XStandardColormap
 structure.
 Note that all fields in the
@@ -3307,7 +3307,7 @@ storing the result in the appropriate _mult field.
 The step of masking by 0xFFFFFFFF effectively converts the resulting
 positive multiplier into a negative one.
 The masking step will take place automatically on many machine architectures,
-depending on the size of the integer type used to do the computation,
+depending on the size of the integer type used to do the computation.
 .LP
 The visualid member gives the ID number of the visual from which the
 colormap was created.

@@ -518,7 +518,7 @@ A variable-length argument list may contain a nested list.
 If the name 
 .PN XVaNestedList
 is specified in place of an argument name,
-then the following value is interpreted as a 
+then the following value is interpreted as an 
 .PN XVaNestedList
 value that specifies a list of values logically inserted into the
 original list at the point of declaration.
@@ -622,7 +622,7 @@ The abstraction used to communicate with an output method
 is an opaque data structure represented by the 
 .PN XOM
 data type.
-The abstraction for representing state of a particular output thread
+The abstraction for representing the state of a particular output thread
 is called an \fIoutput context\fP.
 The Xlib representation of an output context is an 
 .PN XOC ,
@@ -818,7 +818,6 @@ X Output Method Values
 .LP
 The following table describes how XOM values are interpreted by an
 output method.
-.LP
 The first column lists the XOM values.  The second column indicates
 how each of the XOM values are treated by a particular output style.
 .LP
@@ -1041,7 +1040,7 @@ An
 .PN XOC
 can be used anywhere an
 .PN XFontSet
-can be used, and vise versa;
+can be used, and vice versa;
 .PN XFontSet
 is retained for compatibility with previous releases.
 The concepts of output methods and output contexts include broader,
@@ -1219,7 +1218,6 @@ Output Context Values
 .LP
 The following table describes how XOC values are interpreted
 by an output method.
-.LP
 The first column lists the XOC values.
 The second column indicates the alternative interfaces that function
 identically and are provided for compatibility with previous releases.
@@ -1265,7 +1263,7 @@ l c c.
 _
 .sp 6p
 .B
-XOC Value	alternative interface	Key
+XOC Value	Alternative Interface	Key
 .sp 6p
 _
 .sp 6p
@@ -1393,7 +1391,7 @@ The
 .PN XNMissingCharSet
 argument returns the list of required charsets that are missing from the
 font set.
-The value of argument is a pointer to a structure of type
+The value of the argument is a pointer to a structure of type
 .PN XOMCharSetList .
 .LP
 If fonts exist for all of the charsets required by the current locale,
@@ -1437,7 +1435,7 @@ but the client can draw or measure the default glyphs
 by including this string in a string being drawn or measured with the
 .PN XOC .
 .LP
-If
+If the
 .PN XNDefaultString
 argument returned the empty string ("\^"),
 no glyphs are drawn and the escapement is zero.
@@ -2899,7 +2897,7 @@ a user usually has a keyboard on which there exist key symbols corresponding
 to the alphabet.
 Sometimes, a few characters of an alphabetic language are missing
 on the keyboard.
-Many computer users, who speak a Latin-alphabet-based language 
+Many computer users who speak a Latin-alphabet-based language 
 only have an English-based keyboard.
 They need to hit a combination of keystrokes
 to enter a character that does not exist directly on the keyboard.
@@ -3107,7 +3105,7 @@ and the input server.
 A front-end architecture introduces synchronization issues
 and a filtering mechanism for noncharacter keystrokes
 (Function keys, Help, and so on).
-A back-end architecturs sometimes implies more communication overhead
+A back-end architecture sometimes implies more communication overhead
 and more process switching.
 If all three processes (X server, input server, client)
 are running on a single workstation, 
@@ -3130,7 +3128,7 @@ or natural language package to use an input method.
 A single input server may be used for one or more languages,
 supporting one or more encoding schemes.
 But the strings returned from an input method will always be encoded
-in the (single) locale associated with
+in the (single) locale associated with the
 .PN XIM
 object.
 .NH 4
@@ -3552,7 +3550,7 @@ pass the string to be converted.  The client is guaranteed that
 no
 .PN XNStringConversionCallback
 will be issued when this value is set; thus, the client need
-only set one of the these values.
+only set one of these values.
 .LP
 The
 .PN XNStringConversionCallback
@@ -3706,7 +3704,7 @@ an application needs to register a callback by calling
 with the
 .PN XNPreeditStateNotifyCallback
 XIC value. 
-In order to change the preedit state programatically, an application 
+In order to change the preedit state programmatically, an application 
 needs to call 
 .PN XSetICValues
 with
@@ -3714,7 +3712,7 @@ with
 .LP
 Availability of the preedit state is input method dependent.  The input 
 method may not provide the ability to set the state or to
-retrieve the state programatically.  Therefore, clients have to 
+retrieve the state programmatically.  Therefore, clients have to 
 query availability of preedit state operations by checking the 
 supported XIC values list by calling
 .PN XGetIMValues
@@ -3762,7 +3760,7 @@ This implies that the strings returned by
 .PN XmbLookupString
 or
 .PN XwcLookupString ,
-for any input context affiliated with a given input method
+for any input context affiliated with a given input method,
 will be encoded in the locale current at the time the input method is opened.
 .LP
 The specific input method to which this call will be routed
@@ -3922,7 +3920,7 @@ function returns the locale associated with the specified input method.
 .LP
 .sp
 To register an input method instantiate callback, use
-.PN XRegisterIMInstantiateCallback
+.PN XRegisterIMInstantiateCallback .
 .IN "XRegisterIMInstantiateCallback" "" "@DEF@"
 .sM
 .FD 0
@@ -3986,7 +3984,7 @@ Not used for this callback and always passed as NULL.
 .LP
 .eM
 To unregister an input method instantiation callback, use
-.PN XUnregisterIMInstantiateCallback
+.PN XUnregisterIMInstantiateCallback .
 .IN "XUnregisterIMInstantiateCallback" "" "@DEF@"
 .sM
 .FD 0
@@ -4034,7 +4032,6 @@ Input Method Values
 .LP
 The following table describes how XIM values are interpreted
 by an input method.
-.LP
 The first column lists the XIM values.
 The second column indicates how each of the XIM values 
 are treated by that input style.
@@ -4507,7 +4504,7 @@ argument originally included in the X11R6 specification has been
 deprecated.\(dg
 .\" If XNR6PreeditCallbackBehavior is not deprecated, then its type
 .\" should be changed from *Bool to Bool.
-.FS
+.FS \(dg
 During formulation of the X11R6 specification, the behavior of
 the R6 PreeditDrawCallbacks was going to differ significantly from
 that of the R5 callbacks.
@@ -5454,7 +5451,7 @@ This is usually used to switch the input method between hot key
 operation and normal input processing.
 .LP
 The value of the argument is a pointer to a structure of type
-XIMHotKeyState.
+XIMHotKeyState .
 .LP
 .sM
 .Ds 0
@@ -5750,7 +5747,7 @@ The
 argument specifies the state of input preediting for the input method.
 Input preediting can be on or off.
 .LP
-The valid masks names for
+The valid mask names for
 .PN XNPreeditState
 are as follows:
 .LP
@@ -5793,8 +5790,7 @@ If a value of
 is set, then input preediting is turned on by the input method.
 .LP
 If a value of
-.PN
-XIMPreeditDisable
+.PN XIMPreeditDisable
 is set, then input preediting is turned off by the input method.
 .LP
 If
@@ -5911,7 +5907,7 @@ T}
 A client that wants to support the input style
 .PN XIMStatusCallbacks
 must provide a set of status callbacks to the input method.
-The set of status callbacks are as follows:
+The set of status callbacks is as follows:
 .IN "XNStatusStartCallback" "" "@DEF@"
 .IN "XNStatusDoneCallback" "" "@DEF@"
 .IN "XNStatusDrawCallback" "" "@DEF@"
@@ -6046,7 +6042,7 @@ Specifies the additional client data.
 Not used for this callback and always passed as NULL.
 .LP
 .eM
-A GeometryCallback is called with a NULL call_data argument.
+The callback is called with a NULL call_data argument.
 .NH 4
 Destroy Callback
 .XS
@@ -6107,17 +6103,19 @@ Specifies the additional client data.
 Specifies the amount of the string to be converted.
 .LP
 .eM
-The callback is passed a
+The callback is passed an
 .PN XIMStringConversionCallbackStruct
 structure in the call_data argument.
-The text member is a
+The text member is an
 .PN XIMStringConversionText
 structure (see section 13.5.6.9) to be filled in by the client
 and describes the text to be sent to the input method.
 The data pointed to by the 
 string and feedback elements of the
 .PN XIMStringConversionText
-structure will be freed using XFree by the input method
+structure will be freed using
+.PN XFree
+by the input method
 after the callback returns.  So the client should not point to 
 internal buffers that are critical to the client.
 Similarly, because the feedback element is currently reserved for future
@@ -6214,8 +6212,10 @@ Preedit State Callbacks
 \*(SN Preedit State Callbacks
 .XE
 .LP
-When the input method turns preediting on or off,
-a PreeditStartCallback or PreeditDoneCallback
+When the input method turns preediting on or off, a
+.PN PreeditStartCallback
+or
+.PN PreeditDoneCallback
 callback is triggered to let the toolkit do the setup
 or the cleanup for the preedit region.
 .IN "PreeditStartCallback" "" "@DEF@"
@@ -6239,7 +6239,8 @@ Not used for this callback and always passed as NULL.
 .eM
 When preedit starts on the specified input context,
 the callback is called with a NULL call_data argument.
-PreeditStartCallback will return the maximum size of the preedit string.
+.PN PreeditStartCallback
+will return the maximum size of the preedit string.
 A positive number indicates the maximum number of bytes allowed
 in the preedit string, 
 and a value of \-1 indicates there is no limit.
@@ -6265,14 +6266,18 @@ Not used for this callback and always passed as NULL.
 When preedit stops on the specified input context,
 the callback is called with a NULL call_data argument.
 The client can release the data allocated by
-PreeditStartCallback.
+.PN PreeditStartCallback .
 .LP
-PreeditStartCallback should initialize appropriate data needed for
+.PN PreeditStartCallback
+should initialize appropriate data needed for
 displaying preedit information and for handling further 
-PreeditDrawCallback calls.
-Once PreeditStartCallback
+.PN PreeditDrawCallback
+calls.
+Once
+.PN PreeditStartCallback
 is called, it will not be called again before
-PreeditDoneCallback has been called.
+.PN PreeditDoneCallback
+has been called.
 .NH 4
 Preedit Draw Callback
 .XS
@@ -6306,7 +6311,7 @@ Specifies the additional client data.
 Specifies the preedit drawing information.
 .LP
 .eM
-The callback is passed a 
+The callback is passed an 
 .PN XIMPreeditDrawCallbackStruct
 structure in the call_data argument.
 The text member of this structure contains the text to be drawn.
@@ -6417,7 +6422,7 @@ if the text string is encoded in wide character or multibyte format.
 The text string may be passed either as multibyte or as wide character;
 the input method controls in which form data is passed.
 The client's
-callback routine must be able to handle with data passed in either form.
+callback routine must be able to handle data passed in either form.
 .IP \(bu 5
 The string member is the text string.
 .IP \(bu 5
@@ -6601,7 +6606,7 @@ from
 .PN XIMReverse
 and
 .PN XIMUnderline .
-.FS
+.FS \(dg
 The values for
 .PN XIMPrimary ,
 .PN XIMSecondary ,
@@ -7216,7 +7221,7 @@ A
 .PN KeyPress
 event whose KeyCode value is modified by an input method filter
 .LP
-When callback support is specified by client,
+When callback support is specified by the client,
 input methods will not take action unless they explicitly
 called back the client and obtained no response
 (the callback is not specified or returned invalid data).
@@ -7496,7 +7501,6 @@ T}	T{
 "cursor"
 T}
 .TE
-.LP
 .sp -1
 .TS
 lw(.5i) lw(2.75i) lw(2.5i).
@@ -7571,7 +7575,6 @@ T}	T{
 "r6PreeditCallback"
 T}
 .TE
-.LP
 .sp -1
 .IN "XNQueryIMValuesList" "" "@DEF@"
 .IN "XNQueryICValuesList" "" "@DEF@"

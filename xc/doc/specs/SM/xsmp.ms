@@ -1,5 +1,5 @@
 .\" Use tbl, -ms, and macros.t
-.\" $XConsortium: xsmp.ms /main/7 1996/02/06 14:19:04 swick $
+.\" $XConsortium: xsmp.ms /main/8 1996/12/11 14:49:56 kaleb $
 .EH ''''
 .OH ''''
 .EF ''''
@@ -12,7 +12,7 @@
 .sp
 X Consortium Standard
 .sp
-X Version 11, Release 6.1
+X Version 11, Release 6.3
 .AU
 Mike Wexler
 .AI
@@ -58,8 +58,8 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 .OF ''\\\\n(PN''
 .bp 1
 .af PN 1
-.EH '\fBX Session Management Protocol\fP''\fBX11, Release 6.1\fP'
-.OH '\fBX Session Management Protocol\fP''\fBX11, Release 6.1\fP'
+.EH '\fBX Session Management Protocol\fP''\fBX11, Release 6.3\fP'
+.OH '\fBX Session Management Protocol\fP''\fBX11, Release 6.3\fP'
 .EF ''\fB\\\\n(PN\fP''
 .OF ''\fB\\\\n(PN\fP''
 .nH 1 "Acknowledgements"

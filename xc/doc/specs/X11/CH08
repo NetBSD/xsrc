@@ -1602,7 +1602,7 @@ typedef struct {
 	XCharStruct max_bounds;	/* maximum bounds over all existing char */
 	XCharStruct *per_char;	/* first_char to last_char information */
 	int ascent;	/* logical extent above baseline for spacing */
-	int descent;	/* logical decent below baseline for spacing */
+	int descent;	/* logical descent below baseline for spacing */
 } XFontStruct;
 .De
 .LP
@@ -3343,6 +3343,7 @@ and
 .PN BadValue 
 errors.
 .sp
+.LP
 To copy the contents of a rectangle on the display
 to a location within a preexisting image structure, use
 .PN XGetSubImage .

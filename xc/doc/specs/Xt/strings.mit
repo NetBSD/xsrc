@@ -1,4 +1,4 @@
-.\" $XConsortium: strings.mit /main/7 1996/02/07 21:23:58 swick $
+.\" $XConsortium: strings.mit /main/8 1996/12/11 15:08:04 kaleb $
 .ds tk X Toolkit
 .ds xT X Toolkit Intrinsics \- C Language Interface
 .ds xI Intrinsics
@@ -6,7 +6,7 @@
 .ds xL Xlib \- C Language X Interface
 .ds xC Inter-Client Communication Conventions Manual
 .ds xP X Window System Protocol
-.ds Rn 6.1
+.ds Rn 6.3
 .ds Vn 2.2
 .ds oI Must be of class Object or any subclass thereof.
 .ds rI Must be of class RectObj or any subclass thereof.

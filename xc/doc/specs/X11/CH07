@@ -2130,7 +2130,7 @@ Specifies the pixmap or
 .eM
 If the clip-mask is set to
 .PN None ,
-the pixels are are always drawn (regardless of the clip-origin).
+the pixels are always drawn (regardless of the clip-origin).
 .LP
 .PN XSetClipMask
 can generate

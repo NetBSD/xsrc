@@ -1,7 +1,7 @@
 .\"#! troff -ms $1		-*- Nroff -*-
 .\" "Xterm Control Sequences" document
 .\" $XConsortium: ctlseqs.ms,v 1.16 94/12/28 20:45:48 gildea Exp $
-.\" $XFree86: xc/doc/specs/xterm/ctlseqs.ms,v 3.5 1996/09/22 04:59:06 dawes Exp $
+.\" $XFree86: xc/doc/specs/xterm/ctlseqs.ms,v 3.8.2.1 1997/05/25 05:06:27 dawes Exp $
 .\"
 .\" Copyright 1991, 1994 X Consortium
 .\"
@@ -135,6 +135,8 @@
 .[] : :
 .[] ; ;
 .[] = =
+.[] / /
+.[] < <
 .[] > >
 .[] ? ?
 .[] @ @
@@ -160,6 +162,7 @@
 .[] V V
 .[] W W
 .[] XX X
+.[] Y Y
 .[] Z Z
 .[] [[ [
 .[] ]] ]
@@ -190,6 +193,7 @@
 .[] x x
 .[] | |
 .[] } }
+.[] ! !
 .[] c" \(lq
 .[] c~ ~
 .[] Sc \fIc\fP
@@ -294,9 +298,10 @@ VT100 Mode
 .ds RH VT100 Mode
 .LP
 Most of these control sequences are standard VT102 control sequences,
-but there is support for later DEC VT terminals (i.e., VT220 and VT320), too.
-VT102 features not supported are double size
-characters, blinking characters, and VT52 mode.
+but there is support for later DEC VT terminals (i.e., VT220 and VT320),
+as well as ISO 6429 and \fIaixterm\fP color controls.
+VT102 features not supported are
+double size characters and blinking characters.
 There are additional control sequences to provide
 \fIxterm-\fPdependent functions, such as the scrollbar or window size.
 Where the function is specified by DEC or ISO 6429, the code assigned
@@ -539,7 +544,7 @@ Delete \*(Ps Character(s) (default = 1) (DCH)
 .IP \\*(Cs\\*(Ps\\*s\\*S
 Scroll up \*(Ps lines (default = 1) (SU)
 .
-.IP \\*(Cs\\*(Ps\\*s\\*\\*T
+.IP \\*(Cs\\*(Ps\\*s\\*T
 Scroll down \*(Ps lines (default = 1) (SD, according to DEC)
 .
 .IP \\*(Cs\\*(Ps\\*s\\*;\\*(Ps\\*s\\*;\\*(Ps\\*s\\*;\\*(Ps\\*s\\*;\\*(Ps\\*s\\*T
@@ -553,8 +558,14 @@ Erase \*(Ps Character(s) (default = 1) (ECH)
 .IP \\*(Cs\\*(Ps\\*s\\*Z
 Cursor Backward Tabulation \*(Ps tab stops (default = 1) (CBT)
 .
-.IP \\*(Cs\\*(Ps\\*s\\*\\*^
+.IP \\*(Cs\\*(Ps\\*s\\*^
 Scroll down \*(Ps lines (default = 1) (SD, according to ISO)
+.
+.IP \\*(Cs\\*(Pm\\*s\\*`
+Character Position Absolute  [column] (default = [row,1]) (HPA)
+.
+.IP \\*(Cs\\*(Ps\\*s\\*b
+Repeat the preceding graphic character \*(Ps times (REP)
 .
 .IP \\*(Cs\\*(Ps\\*s\\*c
 Send Device Attributes (DA)
@@ -576,9 +587,6 @@ Tab Clear (TBC)
 Set Mode (SM)
   \*(Ps = \*4 \(-> Insert Mode (IRM)
   \*(Ps = \*2\*0 \(-> Automatic Newline (LNM)
-.
-.IP \\*(Cs\\*(Pm\\*s\\*`
-Character Position Absolute  [column] (default = [row,1]) (HPA)
 .
 .IP \\*(Cs\\*(Pm\\*s\\*l
 Reset Mode (RM)
@@ -614,7 +622,32 @@ Character Attributes (SGR)
   \*(Ps = \*4\*6 \(-> Set background color to Cyan
   \*(Ps = \*4\*7 \(-> Set background color to White
   \*(Ps = \*4\*9 \(-> Set background color to default (original).
+.sp
+If 16-color support is compiled, the following apply.
+Assume that \fIxterm\fP's resources
+are set so that the ISO color codes are the first 8 of a set of 16.
+Then the \fIaixterm\fP colors are the bright versions of the ISO colors:
+  \*(Ps = \*9\*0 \(-> Set foreground color to Black
+  \*(Ps = \*9\*1 \(-> Set foreground color to Red
+  \*(Ps = \*9\*2 \(-> Set foreground color to Green
+  \*(Ps = \*9\*3 \(-> Set foreground color to Yellow
+  \*(Ps = \*9\*4 \(-> Set foreground color to Blue
+  \*(Ps = \*9\*5 \(-> Set foreground color to Magenta
+  \*(Ps = \*9\*7 \(-> Set foreground color to Cyan
+  \*(Ps = \*9\*7 \(-> Set foreground color to White
+  \*(Ps = \*1\*0\*0 \(-> Set background color to Black
+  \*(Ps = \*1\*0\*1 \(-> Set background color to Red
+  \*(Ps = \*1\*0\*2 \(-> Set background color to Green
+  \*(Ps = \*1\*0\*3 \(-> Set background color to Yellow
+  \*(Ps = \*1\*0\*4 \(-> Set background color to Blue
+  \*(Ps = \*1\*0\*5 \(-> Set background color to Magenta
+  \*(Ps = \*1\*0\*6 \(-> Set background color to Cyan
+  \*(Ps = \*1\*0\*7 \(-> Set background color to White
+.sp
+If \fIxterm\fP is compiled with the 16-color support disabled, it supports
+the following, from \fIrxvt\fP:
   \*(Ps = \*1\*0\*0 \(-> Set foreground and background color to default
+.sp
 .
 .IP \\*(Cs\\*(Ps\\*s\\*n
 Device Status Report (DSR)
@@ -637,6 +670,9 @@ or
 \*(Cs\*?\*2\*1\*s\*n (locked)
   \*(Ps = \*2\*6 \(-> Report Keyboard status as
 \*(Cs\*?\*2\*7\*s\*;\*s\*1\*s\*;\*s\*0\*s\*;\*s\*0\*s\*n (North American)
+.
+.IP \\*(Cs\\*s\\*!\\*p
+Soft terminal reset (DECSTR)
 .
 .IP \\*(Cs\\*(Ps\\*s\\*;\\*(Ps\\*s\\*(c"\\*p
 Set conformance level (DECSCL)
@@ -691,9 +727,8 @@ Request Terminal Parameters (DECREQTPARM)
 .IP \\*(Cs\\*?\\*(Pm\\*s\\*h
 DEC Private Mode Set (DECSET)
   \*(Ps = \*1 \(-> Application Cursor Keys (DECCKM)
-  \*(Ps = \*2 \(-> Designate USASCII for character sets G0-G3.
-(In the VT102, this selects VT52 mode (DECANM), which \fIxterm\fP
-doesn't support.)
+  \*(Ps = \*2 \(-> Designate USASCII for character sets G0-G3 (DECANM),
+and set VT100 mode.
   \*(Ps = \*3 \(-> 132 Column Mode (DECCOLM)
   \*(Ps = \*4 \(-> Smooth (Slow) Scroll (DECSCLM)
   \*(Ps = \*5 \(-> Reverse Video (DECSCNM)
@@ -720,6 +755,7 @@ See the section \fBMouse Tracking\fP.
 .IP \\*(Cs\\*?\\*(Pm\\*s\\*l
 DEC Private Mode Reset (DECRST)
   \*(Ps = \*1 \(-> Normal Cursor Keys (DECCKM)
+  \*(Ps = \*2 \(-> Designate VT52 mode (DECANM).
   \*(Ps = \*3 \(-> 80 Column Mode (DECCOLM)
   \*(Ps = \*4 \(-> Jump (Fast) Scroll (DECSCLM)
   \*(Ps = \*5 \(-> Normal Video (DECSCNM)
@@ -812,6 +848,8 @@ range of lines from the program, highlights the region covered by
 the mouse within that range until button release, and then sends the
 program the release coordinates.
 It is enabled by specifying parameter 1001 to DECSET.
+Highlighting is performed only for button 1, though other button events
+can be received.
 Warning: use of this mode requires a cooperating program or it will
 hang \fIxterm.\fP
 On button press, the same information as for normal tracking is
@@ -873,7 +911,7 @@ Begin 4015 APL mode (ignored by \fIxterm\fP) (ESC Ctrl-N)
 .IP \\*(Es\\*(Si
 End 4015 APL mode (ignored by \fIxterm\fP) (ESC Ctrl-O)
 .IP \\*(Es\\*(Eb
-COPY (Save Tektronix Codes to file COPYyy-mm-dd.hh:mm:ss) (ESC Ctrl-W)
+COPY (Save Tektronix Codes to file COPYyyyy-mm-dd.hh:mm:ss) (ESC Ctrl-W)
 .IP \\*(Es\\*(Ca
 Bypass Condition (ESC Ctrl-X)
 .IP \\*(Es\\*(Su
@@ -934,4 +972,49 @@ Incremental Plot Mode (Ctrl-^)
 .IP \\*(Us
 Alpha Mode (Ctrl-_)
 .Ed
+.
+.
+.br
+.ds RH VT52 Mode
+.SH
+VT52 Mode
+.LP
+Parameters for cursor movement are at the end of the \*(Es\*Y escape sequence.
+Each ordinate is encoded in a single character as \fIvalue\fP+040.
+For example, \*! is 1.
+The screen coodinate system is 0-based.
+.St
+.IP \\*(Es\\*A
+Cursor up.
+.IP \\*(Es\\*(cB
+Cursor down.
+.IP \\*(Es\\*C
+Cursor right.
+.IP \\*(Es\\*D
+Cursor left.
+.IP \\*(Es\\*F
+Enter graphics mode.
+.IP \\*(Es\\*G
+Exit graphics mode.
+.IP \\*(Es\\*H
+Move the cursor to the home position.
+.IP \\*(Es\\*I
+Reverse line feed.
+.IP \\*(Es\\*J
+Erase from the cursor to the end of the screen.
+.IP \\*(Es\\*K
+Erase from the cursor to the end of the line.
+.IP \\*(Es\\*Y\\*(Ps\\*s\\*(Ps
+Move the cursor to given row and column.
+.IP \\*(Es\\*Z
+Identify
+  \(-> \*(Es\*s\*/\*s\*Z (``I am a VT52.'')
+.IP \\*(Es\\*=
+Enter alternate keypad mode.
+.IP \\*(Es\\*>
+Exit alternate keypad mode.
+.IP \\*(Es\\*<
+Exit VT52 mode (Enter VT100 mode).
+.Ed
+.
 .if n .pl \n(nlu+1v

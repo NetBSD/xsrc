@@ -451,7 +451,7 @@ The
 function changes the specified dynamic parameters if the pointer is actively
 grabbed by the client and if the specified time is no earlier than the
 last-pointer-grab time and no later than the current X server time.
-This function has no effect on the passive parameters of a
+This function has no effect on the passive parameters of an
 .PN XGrabButton .
 The interpretation of event_mask and cursor is the same as described in
 .PN XGrabPointer .
@@ -580,7 +580,7 @@ issuing the request for all possible buttons.
 Otherwise, it is not required that the specified button currently be assigned
 to a physical button.
 .LP
-If some other client has already issued a 
+If some other client has already issued an
 .PN XGrabButton
 with the same button/key combination on the same window, a
 .PN BadAccess 
@@ -1120,13 +1120,13 @@ T{
 .PN ReplayPointer
 T}	T{
 If the pointer is actively grabbed by the client and is frozen as the result of
-an event having been sent to the client (either from the activation of a 
+an event having been sent to the client (either from the activation of an 
 .PN XGrabButton 
 or from a previous 
 .PN XAllowEvents 
 with mode 
 .PN SyncPointer
-but not from a 
+but not from an 
 .PN XGrabPointer ),
 the pointer grab is released and that event is completely reprocessed.
 This time, however, the function ignores any passive grabs at or above 
@@ -1171,13 +1171,13 @@ T{
 T}	T{
 If the keyboard is actively grabbed by the client and is frozen 
 as the result of an event having been sent to the client (either from the
-activation of a 
+activation of an 
 .PN XGrabKey 
 or from a previous 
 .PN XAllowEvents 
 with mode 
 .PN SyncKeyboard 
-but not from a 
+but not from an 
 .PN XGrabKeyboard ),
 the keyboard grab is released and that event is completely reprocessed.
 This time, however, the function ignores any passive grabs at or above 
@@ -2142,7 +2142,7 @@ for which both lowercase and uppercase forms are defined.
 In that case,
 the group should be treated as if the first element were 
 the lowercase form of ``\fIK\fP'' and the second element were 
-the uppercase form of ``\fIK\fP.''
+the uppercase form of ``\fIK\fP''.
 .LP
 The standard rules for obtaining a KeySym from a
 .PN KeyPress

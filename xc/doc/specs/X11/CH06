@@ -478,7 +478,7 @@ RGB Device
 Red, green, and blue values appropriate for the specified output device.
 .PN XcmsRGB
 values are of type unsigned short,
-scaled from 0 to 65535 inclusive
+scaled from 0 to 65535 inclusive,
 and are interchangeable with the red, green, and blue values in an 
 .PN XColor
 structure. 
@@ -1059,16 +1059,13 @@ Specifies the connection to the X server.
 .IP \fIcolormap\fP 1i
 Specifies the colormap.
 .ds St
-.\" $Header: /cvsroot/xsrc/xc/doc/specs/X11/Attic/CH06,v 1.1.1.1 1997/03/15 06:16:54 scottr Exp $
 .IP \fIcolor_string\fP 1i
 Specifies the color string\*(St.
-.\" $Header: /cvsroot/xsrc/xc/doc/specs/X11/Attic/CH06,v 1.1.1.1 1997/03/15 06:16:54 scottr Exp $
 .IP \fIcolor_exact_return\fP 1i
 Returns the color specification parsed from the color string
 or parsed from the corresponding string found in a color-name database.
 .IP \fIcolor_screen_return\fP 1i
 Returns the color that can be reproduced on the screen.
-.\" $Header: /cvsroot/xsrc/xc/doc/specs/X11/Attic/CH06,v 1.1.1.1 1997/03/15 06:16:54 scottr Exp $
 .IP \fIresult_format\fP 1i
 Specifies the color format for the returned color
 specifications (color_screen_return and color_exact_return arguments).
@@ -1213,11 +1210,9 @@ Status XcmsAllocColor\^(\^\fIdisplay\fP\^, \fIcolormap\fP\^, \fIcolor_in_out\fP\
 Specifies the connection to the X server.
 .IP \fIcolormap\fP 1i
 Specifies the colormap.
-.\" $Header: /cvsroot/xsrc/xc/doc/specs/X11/Attic/CH06,v 1.1.1.1 1997/03/15 06:16:54 scottr Exp $
 .IP \fIcolor_in_out\fP 1i
 Specifies the color to allocate and returns the pixel and color 
 that is actually used in the colormap.
-.\" $Header: /cvsroot/xsrc/xc/doc/specs/X11/Attic/CH06,v 1.1.1.1 1997/03/15 06:16:54 scottr Exp $
 .IP \fIresult_format\fP 1i
 Specifies the color format for the returned color specification.
 .LP
@@ -1346,18 +1341,14 @@ Specifies the connection to the X server.
 .IP \fIcolormap\fP 1i
 Specifies the colormap.
 .ds St \ whose color definition structure is to be returned
-.\" $Header: /cvsroot/xsrc/xc/doc/specs/X11/Attic/CH06,v 1.1.1.1 1997/03/15 06:16:54 scottr Exp $
 .IP \fIcolor_string\fP 1i
 Specifies the color string\*(St.
-.\" $Header: /cvsroot/xsrc/xc/doc/specs/X11/Attic/CH06,v 1.1.1.1 1997/03/15 06:16:54 scottr Exp $
 .IP \fIcolor_screen_return\fP 1i
 Returns the pixel value of the color cell and color specification 
 that actually is stored for that cell.
-.\" $Header: /cvsroot/xsrc/xc/doc/specs/X11/Attic/CH06,v 1.1.1.1 1997/03/15 06:16:54 scottr Exp $
 .IP \fIcolor_exact_return\fP 1i
 Returns the color specification parsed from the color string
 or parsed from the corresponding string found in a color-name database.
-.\" $Header: /cvsroot/xsrc/xc/doc/specs/X11/Attic/CH06,v 1.1.1.1 1997/03/15 06:16:54 scottr Exp $
 .IP \fIresult_format\fP 1i
 Specifies the color format for the returned color
 specifications (color_screen_return and color_exact_return arguments).
@@ -2211,7 +2202,6 @@ Specifies the pixel member that indicates the color cell to query.
 The color specification stored for the color cell is returned in this
 .PN XcmsColor
 structure.
-.\" $Header: /cvsroot/xsrc/xc/doc/specs/X11/Attic/CH06,v 1.1.1.1 1997/03/15 06:16:54 scottr Exp $
 .IP \fIresult_format\fP 1i
 Specifies the color format for the returned color specification.
 .LP
@@ -2267,7 +2257,6 @@ The color specifications for the color cells are returned in these structures.
 Specifies the number of 
 .PN XcmsColor
 structures in the color-specification array.
-.\" $Header: /cvsroot/xsrc/xc/doc/specs/X11/Attic/CH06,v 1.1.1.1 1997/03/15 06:16:54 scottr Exp $
 .IP \fIresult_format\fP 1i
 Specifies the color format for the returned color specification.
 .LP
@@ -3114,7 +3103,7 @@ and destination white points.
 This procedure simply converts the color specifications to 
 .PN XcmsCIELab
 using the source white point and then converts to the target specification
-format using the destinations white point.
+format using the destination's white point.
 No client data is necessary.
 .IP \(bu 5
 .PN XcmsCIELuvWhiteShiftColors
@@ -3125,7 +3114,7 @@ and destination white points.
 This procedure simply converts the color specifications to 
 .PN XcmsCIELuv
 using the source white point and then converts to the target specification
-format using the destinations white point.
+format using the destination's white point.
 No client data is necessary.
 .IP \(bu 5
 .PN XcmsTekHVCWhiteShiftColors
@@ -3136,7 +3125,7 @@ and destination white points.
 This procedure simply converts the color specifications to
 .PN XcmsTekHVC
 using the source white point and then converts to the target specification
-format using the destinations white point.
+format using the destination's white point.
 An advantage of this procedure over those previously described
 is an attempt to minimize hue shift.
 No client data is necessary.

@@ -1250,7 +1250,7 @@ Window XCreateWindow\^(\^\fIdisplay\fP, \fIparent\fP\^, \fIx\fP\^, \fIy\fP\^, \f
 .br
       unsigned int \fIclass\fP\^;
 .br
-      Visual *\fIvisual\fP\^
+      Visual *\fIvisual\fP\^;
 .br
       unsigned long \fIvaluemask\fP\^;
 .br

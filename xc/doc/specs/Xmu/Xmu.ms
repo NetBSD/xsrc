@@ -2,7 +2,7 @@
 .ce 2
 \s+2\fBXmu Library\fP\s-2
 .sp 6p
-X Version 11, Release 6.1
+X Version 11, Release 6.3
 .sp 1
 .ce 1
 ``\fIDon't ask.\fP''
