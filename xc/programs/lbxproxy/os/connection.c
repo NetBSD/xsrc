@@ -319,7 +319,7 @@ trans_mkdir(char *path, int mode)
 	if (lstat(path, &buf) != 0) {
 	    return -1;
 	}
-	if (S_ISDIR(buf.st_mode) && (buf.st_uid == 0 ) &&
+	if (S_ISDIR(buf.st_mode) &&
 	    ((buf.st_mode & ~S_IFMT) == mode)) {
 	    return 0;
 	}
