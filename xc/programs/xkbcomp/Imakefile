@@ -1,6 +1,7 @@
 XCOMM $XConsortium: Imakefile /main/12 1996/09/04 09:36:17 kaleb $
 XCOMM $XFree86: xc/programs/xkbcomp/Imakefile,v 3.3.2.1 1998/01/23 12:35:23 dawes Exp $
 #define IHaveSubdirs
+#define PassCDebugFlags 'CDEBUGFLAGS=$(CDEBUGFLAGS)'
 
           SRCS = xkbcomp.c xkbscan.c expr.c vmod.c indicators.c misc.c \
 		 keymap.c keycodes.c keytypes.c compat.c action.c alias.c \
@@ -55,4 +56,9 @@ ComplexProgramTarget(xkbcomp)
 #ifdef OS2Architecture
 all::
 	$(CP) ProgramTargetName(xkbcomp) /
+#endif
+
+#ifdef IHaveSubdirs
+MakeSubdirs($(SUBDIRS))
+DependSubdirs($(SUBDIRS))
 #endif
