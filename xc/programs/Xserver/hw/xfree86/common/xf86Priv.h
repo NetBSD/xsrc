@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Priv.h,v 3.24.2.2 1998/12/18 11:56:23 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Priv.h,v 3.24.2.3 2001/02/04 21:41:28 herrb Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  *
@@ -138,6 +138,7 @@ extern xf86InfoRec xf86Info;
 #define CODRV01X	   2
 #define SYSCONS		   8
 #define PCVT		  16
+#define WSCONS		  32
 #endif
 
 /* Values of xf86Info.mouseFlags */

@@ -26,6 +26,7 @@ PERFORMANCE OF THIS SOFTWARE.
                                fujiwara@a80.tech.yk.fujitsu.co.jp
 
 ******************************************************************/
+/* $XFree86: xc/lib/X11/imLcIc.c,v 1.1.1.3.2.2 2000/02/23 18:07:50 tsi Exp $ */
 
 #include <stdio.h>
 #include <X11/Xlib.h>
@@ -52,9 +53,13 @@ _XimLocalDestroyIC(xic)
     XIC	 xic;
 {
     Xic	 ic = (Xic)xic;
+
     if(((Xim)ic->core.im)->private.local.current_ic == (XIC)ic) {
-	_XimLocalUnSetFocus(xic);
+	((Xim)ic->core.im)->private.local.current_ic = (XIC)NULL;
     }
+    if (ic->core.focus_window)
+	_XUnregisterFilter(ic->core.im->core.display,
+			ic->core.focus_window, _XimLocalFilter, (XPointer)ic);
     if(ic->private.local.ic_resources) {
 	Xfree(ic->private.local.ic_resources);
 	ic->private.local.ic_resources = NULL;

@@ -5,7 +5,7 @@ XCOMM
 XCOMM
 XCOMM
 XCOMM
-XCOMM $XFree86: xc/config/cf/Imake.tmpl,v 3.32.2.12 1999/01/09 14:18:57 dawes Exp $
+XCOMM $XFree86: xc/config/cf/Imake.tmpl,v 3.32.2.14 2001/02/26 18:28:17 dawes Exp $
 XCOMM ----------------------------------------------------------------------
 
 /*
@@ -266,6 +266,17 @@ XCOMM the platform-specific parameters - edit site.def to change
 #ifndef HasMkstemp
 #define HasMkstemp		NO	/* assume not */
 #endif
+#ifndef HasPam
+#define HasPam			NO
+#endif
+#ifndef PamLibrary
+#if HasPam
+#define PamLibrary		-lpam
+#else
+#define PamLibrary		/**/
+#endif
+#endif
+PAMLIBRARY = PamLibrary
 #ifndef HasFortran
 #define HasFortran		NO
 #endif
@@ -275,6 +286,9 @@ XCOMM the platform-specific parameters - edit site.def to change
 #else
 #define HasCplusplus		NO
 #endif
+#endif
+#ifndef HasMktemp
+#define HasMktemp		NO	/* if you have the mktemp command */
 #endif
 #ifndef HasNdbm
 #define HasNdbm			NO

@@ -1,5 +1,5 @@
 XCOMM $XConsortium: Imakefile /main/16 1996/11/13 14:43:28 lehors $
-XCOMM $XFree86: xc/config/util/Imakefile,v 3.15.2.4 1999/08/03 09:41:32 hohndel Exp $
+XCOMM $XFree86: xc/config/util/Imakefile,v 3.15.2.5 2001/02/26 23:13:35 dawes Exp $
 
 #if UseCCMakeDepend
 MDEP_PROG = makedepend
@@ -15,10 +15,6 @@ CMKDIRHIER = mkdirhier.exe
 
 #ifndef OS2Architecture
 GCCMDEP_PROG = gccmakedep
-#endif
-
-#if HasMktemp
-MKTEMPDEFINE = -DHAS_MKTEMP
 #endif
 
 #if defined(DguxArchitecture)
@@ -57,7 +53,7 @@ CppScriptTarget(xmkmf,xmkmf.cpp,-DCONFIGDIRSPEC='"'"-I$(CONFIGDIR)"'"',$(ICONFIG
 CppScriptTarget(makedepend,mdepend.cpp,-DPREPROC='"'"$(PREPROCESSCMD)"'"',$(ICONFIGFILES))
 CppScriptTarget(mergelib,mergelib.cpp,"-DARCMD=$(AR)" "-DRANLIB=$(RANLIB)",$(ICONFIGFILES))
 #ifndef OS2Architecture
-CppScriptTarget(gccmakedep,gccmdep.cpp,$(MKTEMPDEFINE) -DCCCMD='"'"$(GCCCMD)"'"' -DRMCMD='"'"$(RM)"'"' -DLNCMD='"'"$(LN)"'"' -DMVCMD='"'"$(MV)"'"',$(ICONFIGFILES))
+CppScriptTarget(gccmakedep,gccmdep.cpp,-DCCCMD='"'"$(GCCCMD)"'"' -DRMCMD='"'"$(RM)"'"' -DLNCMD='"'"$(LN)"'"' -DMVCMD='"'"$(MV)"'"',$(ICONFIGFILES))
 #endif
 #ifdef QNXArchitecture
 QNXCopyInstaller($(PROJECTROOT)/bin/install.qnx,./install.sh)
