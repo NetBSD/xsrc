@@ -1,5 +1,5 @@
 /* $XConsortium: man.c,v 1.30 94/04/17 20:43:56 rws Exp $ */
-/* $XFree86: contrib/programs/xman/man.c,v 3.1 1994/08/02 07:14:42 dawes Exp $ */
+/* $XFree86: contrib/programs/xman/man.c,v 3.1.2.1 1998/09/26 06:45:14 dawes Exp $ */
 /*
 
 Copyright (c) 1987, 1988  X Consortium
@@ -353,6 +353,10 @@ char * path;
 {
   char temp_path[BUFSIZ];
 
+#if defined(__OpenBSD__) || defined(__NetBSD__)
+  sprintf(temp_path, "%s/%s", path, MACHINE);
+  ReadCurrentSection(local_manual, temp_path);
+#endif
   ReadCurrentSection(local_manual, path);
   sprintf(temp_path, "%s.%s", path, COMPRESSION_EXTENSION);
   ReadCurrentSection(local_manual, temp_path);
@@ -940,11 +944,13 @@ DumpManual(number)
 
 #ifdef MANCONF
 
+#if !defined(__OpenBSD__) && !defined(__NetBSD__)
 /*    Function Name: ReadManConfig
  *    Description: Reads man.conf file used by BSD 4.4
  *      Argument: manpath - char array to return path in.
  *    Returns: TRUE if read was successful.
  */
+
 
 Bool
 ReadManConfig(manpath)
@@ -978,4 +984,65 @@ char  manpath[];
   fclose(fp);
   return(!firstpath);
 }
+#else /* __OpenBSD__ || __NetBSD__ */
+
+/*    Function Name: ReadManConfig
+ *    Description: Reads man.conf file used by Open/NetBSD
+ *      Argument: manpath - char array to return path in.
+ *    Returns: TRUE if read was successful.
+ *
+ *     This version expands the glob pattern that can be found 
+ *     in man.conf
+ */
+#include <glob.h>
+
+Bool
+ReadManConfig(manpath)
+
+char  manpath[];
+
+{
+    FILE        *fp;
+    char        line[BUFSIZ];
+    char        *path;
+    Bool        firstpath = TRUE;
+    glob_t      gs;
+    int         i;
+    
+    if (!(fp = fopen(MANCONF, "r")))
+	return(FALSE);
+    
+    while (fgets(line, sizeof(line), fp)) {
+	path = strtok(line, " \t\n");
+	if (!path || *path == '#')
+	    continue;
+	if (strcmp(path, "_default")) {
+	    /* for now */
+	    continue;
+	}
+	memset(&gs, 0, sizeof(glob_t));
+	while (path = strtok((char *)NULL, " \t\n")) {
+	    if (glob(path, GLOB_BRACE, NULL, &gs) < 0) {
+		return FALSE;
+	    }
+	} /* while */
+	for (i = 0; i < gs.gl_pathc; i++) {
+	    
+	    if (firstpath) {
+		strcpy(manpath, gs.gl_pathv[i]);
+		firstpath = FALSE;
+	    }
+	    else {
+		strcat(manpath, ":");
+		strcat(manpath, gs.gl_pathv[i]);
+	    }
+	} /* for */
+	globfree(&gs);
+    }
+    fclose(fp);
+    return(!firstpath);
+}
+
+#endif /* __OpenBSD__ || __NetBSD__ */
+
 #endif /* MANCONF */

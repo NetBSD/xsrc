@@ -1,5 +1,5 @@
 /* $XConsortium: ScrollByL.c,v 1.30 94/04/17 20:43:46 rws Exp $ */
-/* $XFree86: contrib/programs/xman/ScrollByL.c,v 3.0 1994/06/05 08:00:15 dawes Exp $ */
+/* $XFree86: contrib/programs/xman/ScrollByL.c,v 3.0.2.1 1998/09/26 06:45:13 dawes Exp $ */
 /*
 
 Copyright (c) 1987, 1988  X Consortium
@@ -601,7 +601,7 @@ Widget w;
 XtPointer client_data;
 XtPointer call_data;
 {
-  int pos = (int) call_data;
+  int pos = (int)(long) call_data;
   int new_line;			/* The new location for the line pointer. */
   ScrollByLineWidget sblw = (ScrollByLineWidget) XtParent(w);
 

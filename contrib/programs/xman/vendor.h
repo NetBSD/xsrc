@@ -1,5 +1,5 @@
 /* $XConsortium: vendor.h,v 1.12 94/04/17 20:44:00 rws Exp $ */
-/* $XFree86: contrib/programs/xman/vendor.h,v 3.3 1995/07/15 14:11:20 dawes Exp $ */
+/* $XFree86: contrib/programs/xman/vendor.h,v 3.3.2.1 1998/09/26 06:45:15 dawes Exp $ */
 /*
 
 Copyright (c) 1991  X Consortium
@@ -89,6 +89,12 @@ from the X Consortium.
 #ifdef __bsdi__
 #  define SYSMANPATH "/usr/share/man:/usr/contrib/man:/usr/contrib/isode/man:/usr/local/man"
 #endif /* __bsdi__ */
+#ifdef __OpenBSD__
+# ifdef SYSMANPATH
+#  undef SYSMANPATH
+# endif
+#  define SYSMANPATH "/usr/share/man:/usr/local/man:/usr/X11R6/man"
+#endif /* __OpenBSD__ */
 
 #ifndef SYSMANPATH
 #  define SYSMANPATH "/usr/man"

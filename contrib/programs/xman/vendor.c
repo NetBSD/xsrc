@@ -1,5 +1,5 @@
 /* $XConsortium: vendor.c,v 1.10 94/04/17 20:43:59 rws Exp $ */
-/* $XFree86: contrib/programs/xman/vendor.c,v 3.1.2.1 1998/02/20 15:14:00 robin Exp $ */
+/* $XFree86: contrib/programs/xman/vendor.c,v 3.1.2.2 1998/09/26 06:45:15 dawes Exp $ */
 /*
 
 Copyright (c) 1987, 1988  X Consortium
@@ -148,6 +148,12 @@ static SectionNameRec SectionNames[] = {
     {"(8) Sys. Administration",		"8"},
 #ifdef Lynx
     {"(9) Device driver service calls",	"9"},
+#endif
+#if defined(__OpenBSD__) || defined(__NetBSD__)
+    {"(9) Kernel Manual",		"9"},
+#endif
+#if defined(__FreeBSD__)
+    {"(9) Kernel Interfaces",		"9"},
 #endif
     {"(l) Local",			"l"},
     {"(n) New",				"n"},
