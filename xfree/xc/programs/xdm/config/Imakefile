@@ -18,8 +18,8 @@ DEFAULTVT=vt7
 #endif
 
 #ifndef XdmPixmap
-# define XdmPixmap XFree86.xpm
-# define XdmbwPixmap XFree86bw.xpm
+# define XdmPixmap NetBSD.xpm
+# define XdmbwPixmap NetBSDbw.xpm
 #endif
 
 CHOOSERPATH = $(XDMDIR)/chooser
