@@ -95,6 +95,15 @@ XCOMM Alpha (NetBSD) PCI driver
 PCIDRVRSRC = netbsdPci.c
 PCIDRVROBJ = netbsdPci.o
 
+#elif defined(NetBSDArchitecture) && defined(Sparc64Architecture)
+
+XCOMM Sparc64 (NetBSD) PCI driver
+
+PCIDRVRSRC = netbsdPci.c
+PCIDRVROBJ = netbsdPci.o
+#SBUSDRVSRC = Sbus.c
+#SBUSDRVOBJ = Sbus.o
+
 #elif defined(i386Architecture) || \
       defined(ia64Architecture) || \
       defined(x86_64Architecture)
@@ -110,12 +119,7 @@ XCOMM PCIDRVROBJ = linuxPci.o
 XCOMM no PCI driver -- shouldn't get here
 #endif
 
-#if defined(SparcArchitecture)
-# if !defined(SunArchitecture)
-PCIARCHSRC = sparcPci.c
-PCIARCHOBJ = sparcPci.o
-# endif
-#elif defined(ia64Architecture)
+#if defined(ia64Architecture)
 PCIARCHSRC = ia64Pci.c 460gxPCI.c e8870PCI.c zx1PCI.c
 PCIARCHOBJ = ia64Pci.o 460gxPCI.o e8870PCI.o zx1PCI.o
 #endif
