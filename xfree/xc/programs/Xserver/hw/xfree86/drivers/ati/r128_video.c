@@ -1,10 +1,10 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/r128_video.c,v 1.20 2001/10/02 11:44:16 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/r128_video.c,v 1.26 2003/02/19 01:19:41 dawes Exp $ */
 
 #include "r128.h"
 #include "r128_reg.h"
 
 #ifdef XF86DRI
-#include "xf86drmR128.h"
+#include "r128_common.h"
 #include "r128_sarea.h"
 #endif
 
@@ -377,6 +377,8 @@ R128StopVideo(ScrnInfoPtr pScrn, pointer data, Bool cleanup)
   if(cleanup) {
      if(pPriv->videoStatus & CLIENT_VIDEO_ON) {
 	OUTREG(R128_OV0_SCALE_CNTL, 0);
+	if (info->cursor_start)
+	   xf86ForceHWCursor (pScrn->pScreen, FALSE);
      }
      if(pPriv->linear) {
 	xf86FreeOffscreenLinear(pPriv->linear);
@@ -509,9 +511,10 @@ R128DMA(
     int err=-1, i, idx, offset, hpass, passes, srcpassbytes, dstpassbytes;
     int sizes[MAXPASSES], list[MAXPASSES];
     drmDMAReq req;
+    drmR128Blit blit;
 
     /* Verify conditions and bail out as early as possible */
-    if (!info->directRenderingEnabled)
+    if (!info->directRenderingEnabled || !info->DMAForXv)
         return FALSE;
 
     if ((hpass = min(h,(BUFSIZE/w))) == 0)
@@ -567,8 +570,17 @@ R128DMA(
 	    }
 	}
 
-	if ((err = drmR128TextureBlit(info->drmFD, idx, offset, dstPitch,
-		  (R128_DATATYPE_CI8 >> 16), (offset % 32), 0, w, hpass)) < 0)
+        blit.idx = idx;
+        blit.offset = offset;
+        blit.pitch = dstPitch;
+        blit.format = (R128_DATATYPE_CI8 >> 16);
+        blit.x = (offset % 32);
+        blit.y = 0;
+        blit.width = w;
+        blit.height = hpass;
+
+	if ((err = drmCommandWrite(info->drmFD, DRM_R128_BLIT,
+                                   &blit, sizeof(drmR128Blit))) < 0)
 	    break;
     }
 
@@ -875,6 +887,14 @@ R128PutImage(
    int top, left, npixels, nlines, bpp;
    BoxRec dstBox;
    CARD32 tmp;
+#if X_BYTE_ORDER == X_BIG_ENDIAN
+   unsigned char *R128MMIO = info->MMIO;
+   CARD32 config_cntl = INREG(R128_CONFIG_CNTL);
+
+   /* We need to disable byte swapping, or the data gets mangled */
+   OUTREG(R128_CONFIG_CNTL, config_cntl &
+	  ~(APER_0_BIG_ENDIAN_16BPP_SWAP | APER_0_BIG_ENDIAN_32BPP_SWAP));
+#endif
 
    /*
     * s1offset, s2offset, s3offset - byte offsets to the Y, U and V planes
@@ -983,24 +1003,9 @@ R128PutImage(
 	}
 
 	nlines = ((((yb + 0xffff) >> 16) + 1) & ~1) - top;
-	{
-#if X_BYTE_ORDER == X_BIG_ENDIAN
-	   unsigned char *R128MMIO = info->MMIO;
-	   CARD32 config_cntl;
-
-	   /* We need to disable byte swapping, or the data gets mangled */
-	   config_cntl = INREG(R128_CONFIG_CNTL);
-	   OUTREG(R128_CONFIG_CNTL, config_cntl &
-		 ~(APER_0_BIG_ENDIAN_16BPP_SWAP|APER_0_BIG_ENDIAN_32BPP_SWAP));
-#endif
-	   R128CopyData420(info, buf + s1offset, buf + s2offset, buf + s3offset,
-			  info->FB+d1offset, info->FB+d2offset, info->FB+d3offset,
-			  srcPitch, srcPitch2, dstPitch, nlines, npixels);
-#if X_BYTE_ORDER == X_BIG_ENDIAN
-	   /* restore byte swapping */
-	   OUTREG(R128_CONFIG_CNTL, config_cntl);
-#endif
-	}
+	R128CopyData420(info, buf + s1offset, buf + s2offset, buf + s3offset,
+			info->FB+d1offset, info->FB+d2offset, info->FB+d3offset,
+			srcPitch, srcPitch2, dstPitch, nlines, npixels);
 	break;
     case FOURCC_UYVY:
     case FOURCC_YUY2:
@@ -1019,6 +1024,10 @@ R128PutImage(
 	break;
     }
 
+#if X_BYTE_ORDER == X_BIG_ENDIAN
+    /* restore byte swapping */
+    OUTREG(R128_CONFIG_CNTL, config_cntl);
+#endif
 
     /* update cliplist */
     if(!RegionsEqual(&pPriv->clip, clipBoxes)) {
@@ -1046,6 +1055,8 @@ R128PutImage(
 	break;
     }
 
+    if (info->cursor_start && !(pPriv->videoStatus & CLIENT_VIDEO_ON))
+	xf86ForceHWCursor (pScrn->pScreen, TRUE);
     pPriv->videoStatus = CLIENT_VIDEO_ON;
 
     info->VideoTimerCallback = R128VideoTimerCallback;
@@ -1107,6 +1118,8 @@ R128VideoTimerCallback(ScrnInfoPtr pScrn, Time now)
 	    if(pPriv->offTime < now) {
 		unsigned char *R128MMIO = info->MMIO;
 		OUTREG(R128_OV0_SCALE_CNTL, 0);
+		if (info->cursor_start && pPriv->videoStatus & CLIENT_VIDEO_ON)
+		    xf86ForceHWCursor (pScrn->pScreen, FALSE);
 		pPriv->videoStatus = FREE_TIMER;
 		pPriv->freeTime = now + FREE_DELAY;
 	    }
@@ -1116,6 +1129,8 @@ R128VideoTimerCallback(ScrnInfoPtr pScrn, Time now)
 		   xf86FreeOffscreenLinear(pPriv->linear);
 		   pPriv->linear = NULL;
 		}
+		if (info->cursor_start && pPriv->videoStatus & CLIENT_VIDEO_ON)
+		    xf86ForceHWCursor (pScrn->pScreen, FALSE);
 		pPriv->videoStatus = 0;
 		info->VideoTimerCallback = NULL;
 	    }

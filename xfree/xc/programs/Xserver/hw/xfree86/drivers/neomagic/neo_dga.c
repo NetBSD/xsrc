@@ -78,7 +78,7 @@ NEODGAInit(ScreenPtr pScreen)
    imlines =  (pScrn->videoRam * 1024) /
       (pScrn->displayWidth * (pScrn->bitsPerPixel >> 3));
 
-   pixlines = (imlines > 1024 && !pNEO->noAccel)  ? 1024 : imlines;
+   pixlines =  (imlines > 1024 && !pNEO->noAccel)  ? 1024 : imlines;
 
    pMode = firstMode = pScrn->modes;
 
@@ -186,7 +186,7 @@ NEO_SetViewport(
 ){
    NEOPtr pNEO = NEOPTR(pScrn);
    vgaHWPtr hwp = VGAHWPTR(pScrn);
-
+   
    NEOAdjustFrame(pScrn->pScreen->myNum, x, y, flags);
    /* wait for retrace */
    while((hwp->readST01(hwp) & 0x08));

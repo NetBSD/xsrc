@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/loader/xf86sym.c,v 1.202 2002/01/14 18:16:52 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/loader/xf86sym.c,v 1.227 2003/02/26 20:08:02 dawes Exp $ */
 
 /*
  *
@@ -22,8 +22,11 @@
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
-#define COMPILER_H_EXTRAS
+
+#define INCLUDE_DEPRECATED 1
+
 #include <fcntl.h>
+#include <setjmp.h>
 #include "sym.h"
 #include "misc.h"
 #include "mi.h"
@@ -34,14 +37,13 @@
 #include "xf86.h"
 #include "xf86Resources.h"
 #include "xf86_OSproc.h"
-#define DECLARE_CARD_DATASTRUCTURES
-#include "xf86PciInfo.h"
 #include "xf86Parser.h"
 #include "xf86Config.h"
 #ifdef XINPUT
 # include "xf86Xinput.h"
 #endif
 #include "xf86OSmouse.h"
+#include "xf86OSKbd.h"
 #include "xf86xv.h"
 #include "xf86xvmc.h"
 #include "xf86cmap.h"
@@ -55,8 +57,17 @@
 #include "xf86_ansic.h"
 #include "xisb.h"
 #include "vbe.h"
+#ifndef __OpenBSD__
 #include "xf86sbusBus.h"
+#endif
 #include "compiler.h"
+
+#ifndef HAS_GLIBC_SIGSETJMP
+#if defined(setjmp) && \
+    defined(__GLIBC__) && __GLIBC__ == 2 && __GLIBC_MINOR__ < 2
+#define HAS_GLIBC_SIGSETJMP 1
+#endif
+#endif
 
 #ifdef __FreeBSD__
 /* XXX used in drmOpen(). This should change to use a less os-specific
@@ -95,24 +106,43 @@ extern void* __remq(long, long);
 extern void* __remqu(long, long);
 #endif
 
-#if defined(__ia64__)
+#if defined(__GNUC__)
+extern long __div64(long, long);
 extern long __divdf3(long, long);
 extern long __divdi3(long, long);
 extern long __divsf3(long, long);
-extern long __moddi3(long, long);
-extern long __udivdi3(long, long);
-extern long __umoddi3(long, long);
-#endif
-
-#if defined(__arm__)
-#if defined(__linux__)
-#include <sys/io.h>
-#endif
-
 extern long __divsi3(long, long);
+extern long __moddi3(long, long);
 extern long __modsi3(long, long);
+extern long __mul64(long, long);
+extern long __muldf3(long, long);
+extern long __muldi3(long, long);
+extern long __mulsf3(long, long);
+extern long __mulsi3(long, long);
+extern long __udivdi3(long, long);
 extern long __udivsi3(long, long);
+extern long __umoddi3(long, long);
 extern long __umodsi3(long, long);
+#pragma weak __div64
+#pragma weak __divdf3
+#pragma weak __divdi3
+#pragma weak __divsf3
+#pragma weak __divsi3
+#pragma weak __moddi3
+#pragma weak __modsi3
+#pragma weak __mul64
+#pragma weak __muldf3
+#pragma weak __muldi3
+#pragma weak __mulsf3
+#pragma weak __mulsi3
+#pragma weak __udivdi3
+#pragma weak __udivsi3
+#pragma weak __umoddi3
+#pragma weak __umodsi3
+#endif
+
+#if defined(__arm__) && defined(__linux__)
+#include <sys/io.h>
 #endif
 
 #if defined(__powerpc__) && (defined(Lynx) || defined(linux))
@@ -150,23 +180,18 @@ void _savef29();
 extern volatile unsigned char *ioBase;
 
 /* XXX Should get all of these from elsewhere */
-
-extern void outb(unsigned short, unsigned char);
-extern void outw(unsigned short, unsigned short);
-extern void outl(unsigned short, unsigned int);
-extern unsigned int inb(unsigned short);
-extern unsigned int inw(unsigned short);
-extern unsigned int inl(unsigned short);
+#ifndef linux
+extern void outb(IOADDRESS, unsigned char);
+extern void outw(IOADDRESS, unsigned short);
+extern void outl(IOADDRESS, unsigned int);
+extern unsigned int inb(IOADDRESS);
+extern unsigned int inw(IOADDRESS);
+extern unsigned int inl(IOADDRESS);
+#endif
 extern void stl_brx(unsigned long, volatile unsigned char *, int);
 extern void stw_brx(unsigned short, volatile unsigned char *, int);
 extern unsigned long ldl_brx(volatile unsigned char *, int);
 extern unsigned short ldw_brx(volatile unsigned char *, int);
-extern unsigned char rdinx(unsigned short, unsigned char);
-extern void wrinx(unsigned short, unsigned char, unsigned char);
-extern void modinx(unsigned short, unsigned char, unsigned char, unsigned char);
-extern int testrg(unsigned short, unsigned char);
-extern int testinx2(unsigned short, unsigned char, unsigned char);
-extern int testinx(unsigned short, unsigned char);
 #endif
 
 /* XFree86 things */
@@ -184,6 +209,10 @@ LOOKUP xfree86LookupTab[] = {
    SYMFUNC(xf86MapVidMem)
    SYMFUNC(xf86UnMapVidMem)
    SYMFUNC(xf86MapReadSideEffects)
+   SYMFUNC(xf86GetPciDomain)
+   SYMFUNC(xf86MapDomainMemory)
+   SYMFUNC(xf86MapDomainIO)
+   SYMFUNC(xf86ReadDomainMemory)
    SYMFUNC(xf86UDelay) 
    SYMFUNC(xf86IODelay)
    SYMFUNC(xf86SlowBcopy)
@@ -209,6 +238,7 @@ LOOKUP xfree86LookupTab[] = {
    SYMFUNC(xf86SerialModemClearBits)
    SYMFUNC(xf86LoadKernelModule)
    SYMFUNC(xf86OSMouseInit)
+   SYMFUNC(xf86OSKbdPreInit)
    SYMFUNC(xf86AgpGARTSupported)
    SYMFUNC(xf86GetAGPInfo)
    SYMFUNC(xf86AcquireGART)
@@ -238,8 +268,10 @@ LOOKUP xfree86LookupTab[] = {
    SYMFUNC(xf86SetPciVideo)
    SYMFUNC(xf86ClaimIsaSlot)
    SYMFUNC(xf86ClaimFbSlot)
+   SYMFUNC(xf86ClaimNoSlot)
    SYMFUNC(xf86ParsePciBusString)
    SYMFUNC(xf86ComparePciBusString)
+   SYMFUNC(xf86FormatPciBusNumber)
    SYMFUNC(xf86ParseIsaBusString)
    SYMFUNC(xf86EnableAccess)
    SYMFUNC(xf86SetCurrentAccess)
@@ -276,7 +308,9 @@ LOOKUP xfree86LookupTab[] = {
    SYMFUNC(xf86FindScreenForEntity)
    SYMFUNC(xf86FindPciDeviceVendor)
    SYMFUNC(xf86FindPciClass)
+#ifdef INCLUDE_DEPRECATED
    SYMFUNC(xf86EnablePciBusMaster)
+#endif
    SYMFUNC(xf86RegisterStateChangeNotificationCallback)
    SYMFUNC(xf86DeregisterStateChangeNotificationCallback)
    SYMFUNC(xf86NoSharedResources)
@@ -299,11 +333,7 @@ LOOKUP xfree86LookupTab[] = {
    /* xf86Configure.c */
    SYMFUNC(xf86AddDeviceToConfigure)
 	   
-   /* xf86Cursor.c  XXX not all of these should be exported */
-   SYMFUNC(xf86LockZoom)
-   SYMFUNC(xf86SetViewport)
-   SYMFUNC(xf86ZoomLocked)
-   SYMFUNC(xf86ZoomViewport)
+   /* xf86Cursor.c */
    SYMFUNC(xf86GetPointerScreenFuncs)
 
    /* xf86DGA.c */
@@ -394,7 +424,11 @@ LOOKUP xfree86LookupTab[] = {
    SYMFUNC(xf86GetModInDevAllowNonLocal)
    SYMFUNC(xf86GetModInDevEnabled)
    SYMFUNC(xf86GetAllowMouseOpenFail)
+   SYMFUNC(xf86CommonSpecialKey)
    SYMFUNC(xf86IsPc98)
+   SYMFUNC(xf86DisableRandR)
+   SYMFUNC(xf86GetVersion)
+   SYMFUNC(xf86GetModuleVersion)
    SYMFUNC(xf86GetClocks)
    SYMFUNC(xf86SetPriority)
    SYMFUNC(xf86LoadDrvSubModule)
@@ -424,7 +458,7 @@ LOOKUP xfree86LookupTab[] = {
    SYMFUNC(xf86AddModuleInfo)
    SYMFUNC(xf86DeleteModuleInfo)
 
-#ifdef __sparc__
+#if defined(__sparc__) && !defined(__OpenBSD__)
    /* xf86sbusBus.c */
    SYMFUNC(xf86MatchSbusInstances)
    SYMFUNC(xf86GetSbusInfoForEntity)
@@ -576,6 +610,7 @@ LOOKUP xfree86LookupTab[] = {
    SYMFUNC(MiscExtGetMouseSettings)
    SYMFUNC(MiscExtGetMouseValue)
    SYMFUNC(MiscExtSetMouseValue)
+   SYMFUNC(MiscExtSetMouseDevice)
    SYMFUNC(MiscExtGetKbdSettings)
    SYMFUNC(MiscExtGetKbdValue)
    SYMFUNC(MiscExtSetKbdValue)
@@ -583,6 +618,7 @@ LOOKUP xfree86LookupTab[] = {
    SYMFUNC(MiscExtCreateStruct)
    SYMFUNC(MiscExtDestroyStruct)
    SYMFUNC(MiscExtApply)
+   SYMFUNC(MiscExtGetFilePaths)
 #endif
 
    /* Misc */
@@ -596,9 +632,11 @@ LOOKUP xfree86LookupTab[] = {
    SYMFUNC(xf86PostProximityEvent)
    SYMFUNC(xf86PostButtonEvent)
    SYMFUNC(xf86PostKeyEvent)
+   SYMFUNC(xf86PostKeyboardEvent)
    SYMFUNC(xf86GetMotionEvents)
    SYMFUNC(xf86MotionHistoryAllocate)
    SYMFUNC(xf86FirstLocalDevice)
+   SYMFUNC(xf86eqEnqueue)
 /* The following segment merged from Metrolink tree */
    SYMFUNC(xf86XInputSetScreen)
    SYMFUNC(xf86ScaleAxis)
@@ -804,8 +842,9 @@ LOOKUP xfree86LookupTab[] = {
    SYMFUNC(xf86strcspn)
    SYMFUNC(xf86strerror)
    SYMFUNC(xf86strlen)
-   SYMFUNC(xf86strncmp)
    SYMFUNC(xf86strncasecmp)
+   SYMFUNC(xf86strncat)
+   SYMFUNC(xf86strncmp)
    SYMFUNC(xf86strncpy)
    SYMFUNC(xf86strpbrk)
    SYMFUNC(xf86strchr)
@@ -856,8 +895,17 @@ LOOKUP xfree86LookupTab[] = {
    SYMFUNC(xf86shmat)
    SYMFUNC(xf86shmdt)
    SYMFUNC(xf86shmctl)
+#ifdef HAS_GLIBC_SIGSETJMP
    SYMFUNC(xf86setjmp)
-   SYMFUNC(xf86longjmp)
+   SYMFUNCALIAS("xf86setjmp1",__sigsetjmp)
+#else
+   SYMFUNCALIAS("xf86setjmp",setjmp)
+   SYMFUNC(xf86setjmp1)
+#endif
+   SYMFUNCALIAS("xf86longjmp",longjmp)
+   SYMFUNC(xf86getjmptype)
+   SYMFUNC(xf86setjmp1_arg2)
+   SYMFUNC(xf86setjmperror)
 #ifdef XF86DRI
 				/* These may have more general uses, but
                                    for now, they are only used by the DRI.
@@ -890,6 +938,12 @@ LOOKUP xfree86LookupTab[] = {
    SYMFUNC(_inb)
    SYMFUNC(_inw)
    SYMFUNC(_inl)
+   SYMFUNC(_alpha_outw)
+   SYMFUNC(_alpha_outb)
+   SYMFUNC(_alpha_outl)
+   SYMFUNC(_alpha_inb)
+   SYMFUNC(_alpha_inw)
+   SYMFUNC(_alpha_inl)
 # else
    SYMFUNC(outw)
    SYMFUNC(outb)
@@ -938,12 +992,6 @@ LOOKUP xfree86LookupTab[] = {
    SYMFUNC(stw_u)
    SYMFUNC(write_mem_barrier)
 # endif
-   SYMFUNC(rdinx)
-   SYMFUNC(wrinx)
-   SYMFUNC(modinx)
-   SYMFUNC(testrg)
-   SYMFUNC(testinx2)
-   SYMFUNC(testinx)
 # if defined(Lynx)
    SYMFUNC(_restf14)
    SYMFUNC(_restf17)
@@ -981,13 +1029,25 @@ LOOKUP xfree86LookupTab[] = {
    SYMFUNC(debug_outl)
 # endif
 #endif
-#if defined(__ia64__)
+#if defined(__GNUC__)
+   SYMFUNC(__div64)
    SYMFUNC(__divdf3)
    SYMFUNC(__divdi3)
    SYMFUNC(__divsf3)
+   SYMFUNC(__divsi3)
    SYMFUNC(__moddi3)
+   SYMFUNC(__modsi3)
+   SYMFUNC(__mul64)
+   SYMFUNC(__muldf3)
+   SYMFUNC(__muldi3)
+   SYMFUNC(__mulsf3)
+   SYMFUNC(__mulsi3)
    SYMFUNC(__udivdi3)
+   SYMFUNC(__udivsi3)
    SYMFUNC(__umoddi3)
+   SYMFUNC(__umodsi3)
+#endif
+#if defined(__ia64__)
    SYMFUNC(_outw)
    SYMFUNC(_outb)
    SYMFUNC(_outl)
@@ -996,10 +1056,6 @@ LOOKUP xfree86LookupTab[] = {
    SYMFUNC(_inl)
 #endif
 #if defined(__arm__)
-   SYMFUNC(__divsi3)
-   SYMFUNC(__udivsi3)
-   SYMFUNC(__modsi3)
-   SYMFUNC(__umodsi3)
    SYMFUNC(outw)
    SYMFUNC(outb)
    SYMFUNC(outl)
@@ -1027,6 +1083,7 @@ LOOKUP xfree86LookupTab[] = {
    SYMVAR(xf86PixmapIndex)
    SYMVAR(xf86Screens)
    SYMVAR(byte_reversed)
+   SYMVAR(xf86inSuspend)
    /* debugging variables */
 #ifdef BUILDDEBUG
    SYMVAR(xf86p8bit)
@@ -1035,10 +1092,6 @@ LOOKUP xfree86LookupTab[] = {
    SYMVAR(xf86DummyVar3)
 #endif
 
-   /* variables for PCI devices and cards from xf86Bus.c */
-   SYMVAR(xf86PCICardInfo)
-   SYMVAR(xf86PCIVendorInfo)
-   SYMVAR(xf86PCIVendorNameInfo)
 #ifdef async
    SYMVAR(xf86CurrentScreen)
 #endif

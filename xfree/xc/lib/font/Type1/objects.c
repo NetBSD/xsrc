@@ -26,7 +26,7 @@
  * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
  * THIS SOFTWARE.
  */
-/* $XFree86: xc/lib/font/Type1/objects.c,v 1.9 2001/01/17 19:43:22 dawes Exp $ */
+/* $XFree86: xc/lib/font/Type1/objects.c,v 1.10 2002/02/18 20:51:57 herrb Exp $ */
  /* OBJECTS  CWEB         V0025 ********                             */
 /*
 :h1.OBJECTS Module - TYPE1IMAGER Objects Common Routines
@@ -306,14 +306,14 @@ t1_Allocate(int size,     /* number of bytes to allocate & initialize     */
        size = (size + sizeof(long) - 1) & -(int)sizeof(long);
        extra = (extra + sizeof(long) - 1) & -(int)sizeof(long);
        if (size + extra <= 0)
-               Xabort("Non-positive allocate?");
+               Abort("Non-positive allocate?");
        r = (struct xobject *) xiMalloc(size + extra);
  
        while (r == NULL) {
                if (!GimeSpace()) {
                        IfTrace1(TRUE, "malloc attempted %d bytes.\n",
                                            size + extra);
-                       Xabort("We have REALLY run out of memory");
+                       Abort("We have REALLY run out of memory");
                }
                r = (struct xobject *) xiMalloc(size + extra);
        }
@@ -366,7 +366,7 @@ Free(pointer objPtr)
        struct xobject *obj = (struct xobject *)objPtr;  /* structure to free */
 
        if (obj->type == INVALIDTYPE)
-               Xabort("Free of already freed object?");
+               Abort("Free of already freed object?");
        obj->type = INVALIDTYPE;
  
        if (MemoryDebug > 1) {
@@ -803,7 +803,7 @@ Pragmatics(char *username,   /* name of the flag                             */
        char name[NAMESIZE];  /* buffer to store my copy of 'username'        */
  
        if (strlen(username) >= (unsigned)NAMESIZE)
-               Xabort("Pragmatics name too large");
+               Abort("Pragmatics name too large");
        strcpy(name, username);
        for (p = name; *p != '\0'; p++)
                *p = toupper(*p);
@@ -986,7 +986,7 @@ TypeErr(char *name,          /* Name of routine (for error message)          */
        ObjectPostMortem(obj);
  
        if (MustCrash)
-               Xabort("Terminating because of CrashOnUserError...");
+               Abort("Terminating because of CrashOnUserError...");
        else
                ErrorMessage = typemsg;
  
@@ -1064,14 +1064,14 @@ ArgErr(char *string,       /* description of error                         */
        if (obj != NULL)
                ObjectPostMortem(obj);
        if (MustCrash)
-               Xabort("Terminating because of CrashOnUserError...");
+               Abort("Terminating because of CrashOnUserError...");
        else
                ErrorMessage = string;
        return(ret);
 }
  
 /*
-:h3.abort() - Crash Due to Error
+:h3.Abort() - Crash Due to Error
  
 Defined in objects.h to be FatalError(), the server's abort routine.
 */
@@ -1112,7 +1112,7 @@ InitImager(void)
  
  
 /*       if (sizeof(short) != 2 || sizeof(INT32) != 4)
-               Xabort("Fundamental TYPE1IMAGER assumptions invalid in this port");
+               Abort("Fundamental TYPE1IMAGER assumptions invalid in this port");
 */
        InitSpaces();
        InitFonts();

@@ -1,8 +1,8 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Config.c,v 3.254 2002/01/15 01:56:55 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Config.c,v 3.269 2003/02/20 04:36:07 dawes Exp $ */
 
 
 /*
- * Copyright 1991-1999 by The XFree86 Project, Inc.
+ * Copyright 1991-2002 by The XFree86 Project, Inc.
  * Copyright 1997 by Metro Link, Inc.
  *
  * Loosely based on code bearing the following copyright:
@@ -11,7 +11,7 @@
  *
  *  <Put copyright message here>
  *
- * Author: Dirk Hohndel <hohndel@XFree86.Org>
+ * Author: Dirk Hohndel <hohndel@XFree86.Org> and others.
  */
 
 #ifdef XF86DRI
@@ -38,20 +38,14 @@ extern DeviceAssocRec mouse_assoc;
 #include "XKBsrv.h"
 #endif
 
+#ifdef RENDER
+#include "picture.h"
+#endif
+
 #if (defined(i386) || defined(__i386__)) && \
     (defined(__FreeBSD__) || defined(__NetBSD__) || defined(linux) || \
      (defined(SVR4) && !defined(sun)) || defined(__GNU__))
 #define SUPPORT_PC98
-#endif
-
-#ifdef __EMX__
-#define ROOT_CONFIGPATH	"%A," "%R," \
-			"%E," \
-			"%D/%X," \
-			"%&/XFree86/lib/X11/%X-%M," "%&/XFree86/lib/X11/%X," "%&XFree86/lib/X11/%X," \
-			"%P/etc/X11/%X.%H," "%P/etc/X11/%X-%M," \
-			"%P/etc/X11/%X,"
-#define USER_CONFIGPATH ROOT_CONFIGPATH
 #endif
 
 /*
@@ -144,13 +138,12 @@ xf86ValidateFontPath(char *path)
   next = path;
   while (next != NULL) {
     path_elem = xf86GetPathElem(&next);
-#ifndef __EMX__
     if (*path_elem == '/') {
+#ifndef __UNIXOS2__
       dir_elem = xnfcalloc(1, strlen(path_elem) + 1);
       if ((p1 = strchr(path_elem, ':')) != 0)
 #else
     /* OS/2 must prepend X11ROOT */
-    if (*path_elem == '/') {
       path_elem = (char*)__XOS2RedirRoot(path_elem);
       dir_elem = xnfcalloc(1, strlen(path_elem) + 1);
       if (p1 = strchr(path_elem+2, ':'))
@@ -167,6 +160,7 @@ xf86ValidateFontPath(char *path)
       if (flag != 0) {
         xf86Msg(X_WARNING, "The directory \"%s\" does not exist.\n", dir_elem);
 	xf86ErrorF("\tEntry deleted from font path.\n");
+	xfree(dir_elem);
 	continue;
       }
       else {
@@ -177,7 +171,7 @@ xf86ValidateFontPath(char *path)
 	if (flag == 0)
 	  if (!S_ISREG(stat_buf.st_mode))
 	    flag = -1;
-#ifndef __EMX__
+#ifndef __UNIXOS2__
 	xfree(p1);
 #endif
 	if (flag != 0) {
@@ -186,6 +180,7 @@ xf86ValidateFontPath(char *path)
 		  dir_elem);
 	  xf86ErrorF("\tEntry deleted from font path.\n");
 	  xf86ErrorF("\t(Run 'mkfontdir' on \"%s\").\n", dir_elem);
+	  xfree(dir_elem);
 	  continue;
 	}
       }
@@ -623,7 +618,7 @@ configFiles(XF86ConfFilesPtr fileconf)
   /* If defaultFontPath is still empty, exit here */
 
   if (! *defaultFontPath)
-    FatalError("No valid FontPath could be found\n");
+    FatalError("No valid FontPath could be found.");
 
   xf86Msg(pathFrom, "FontPath set to \"%s\"\n", defaultFontPath);
 
@@ -642,6 +637,13 @@ configFiles(XF86ConfFilesPtr fileconf)
 
   xf86Msg(pathFrom, "RgbPath set to \"%s\"\n", rgbPath);
 
+  if (fileconf && fileconf->file_inputdevs) {
+      xf86InputDeviceList = fileconf->file_inputdevs;
+      xf86Msg(X_CONFIG, "Input device list set to \"%s\"\n",
+	  xf86InputDeviceList);
+  }
+  
+  
 #ifdef XFree86LOADER
   /* ModulePath */
 
@@ -677,6 +679,7 @@ configFiles(XF86ConfFilesPtr fileconf)
 
 typedef enum {
     FLAG_NOTRAPSIGNALS,
+    FLAG_DONTVTSWITCH,
     FLAG_DONTZAP,
     FLAG_DONTZOOM,
     FLAG_DISABLEVIDMODE,
@@ -686,10 +689,12 @@ typedef enum {
     FLAG_ALLOWMOUSEOPENFAIL,
     FLAG_VTINIT,
     FLAG_VTSYSREQ,
+    FLAG_XKBDISABLE,
     FLAG_PCIPROBE1,
     FLAG_PCIPROBE2,
     FLAG_PCIFORCECONFIG1,
     FLAG_PCIFORCECONFIG2,
+    FLAG_PCIFORCENONE,
     FLAG_PCIOSCONFIG,
     FLAG_SAVER_BLANKTIME,
     FLAG_DPMS_STANDBYTIME,
@@ -702,11 +707,16 @@ typedef enum {
     FLAG_XINERAMA,
     FLAG_ALLOW_DEACTIVATE_GRABS,
     FLAG_ALLOW_CLOSEDOWN_GRABS,
-    FLAG_SYNCLOG
+    FLAG_LOG,
+    FLAG_RENDER_COLORMAP_MODE,
+    FLAG_HANDLE_SPECIAL_KEYS,
+    FLAG_RANDR
 } FlagValues;
    
 static OptionInfoRec FlagOptions[] = {
   { FLAG_NOTRAPSIGNALS,		"NoTrapSignals",		OPTV_BOOLEAN,
+	{0}, FALSE },
+  { FLAG_DONTVTSWITCH,		"DontVTSwitch",			OPTV_BOOLEAN,
 	{0}, FALSE },
   { FLAG_DONTZAP,		"DontZap",			OPTV_BOOLEAN,
 	{0}, FALSE },
@@ -726,6 +736,8 @@ static OptionInfoRec FlagOptions[] = {
 	{0}, FALSE },
   { FLAG_VTSYSREQ,		"VTSysReq",			OPTV_BOOLEAN,
 	{0}, FALSE },
+  { FLAG_XKBDISABLE,		"XkbDisable",			OPTV_BOOLEAN,
+	{0}, FALSE },
   { FLAG_PCIPROBE1,		"PciProbe1"		,	OPTV_BOOLEAN,
 	{0}, FALSE },
   { FLAG_PCIPROBE2,		"PciProbe2",			OPTV_BOOLEAN,
@@ -733,6 +745,8 @@ static OptionInfoRec FlagOptions[] = {
   { FLAG_PCIFORCECONFIG1,	"PciForceConfig1",		OPTV_BOOLEAN,
 	{0}, FALSE },
   { FLAG_PCIFORCECONFIG2,	"PciForceConfig2",		OPTV_BOOLEAN,
+	{0}, FALSE },
+  { FLAG_PCIFORCENONE,		"PciForceNone",			OPTV_BOOLEAN,
 	{0}, FALSE },
   { FLAG_PCIOSCONFIG,	        "PciOsConfig",   		OPTV_BOOLEAN,
 	{0}, FALSE },
@@ -758,7 +772,13 @@ static OptionInfoRec FlagOptions[] = {
 	{0}, FALSE },
   { FLAG_ALLOW_CLOSEDOWN_GRABS, "AllowClosedownGrabs",		OPTV_BOOLEAN,
 	{0}, FALSE },
-  { FLAG_SYNCLOG,		"SyncLog",			OPTV_BOOLEAN,
+  { FLAG_LOG,			"Log",				OPTV_STRING,
+	{0}, FALSE },
+  { FLAG_RENDER_COLORMAP_MODE,	"RenderColormapMode",		OPTV_STRING,
+        {0}, FALSE },
+  { FLAG_HANDLE_SPECIAL_KEYS,	"HandleSpecialKeys",		OPTV_STRING,
+        {0}, FALSE },
+  { FLAG_RANDR,			"RandR",			OPTV_BOOLEAN,
 	{0}, FALSE },
   { -1,				NULL,				OPTV_NONE,
 	{0}, FALSE },
@@ -810,6 +830,7 @@ configServerFlags(XF86ConfFlagsPtr flagsconf, XF86OptionPtr layoutopts)
     xf86ProcessOptions(-1, optp, FlagOptions);
 
     xf86GetOptValBool(FlagOptions, FLAG_NOTRAPSIGNALS, &xf86Info.notrapSignals);
+    xf86GetOptValBool(FlagOptions, FLAG_DONTVTSWITCH, &xf86Info.dontVTSwitch);
     xf86GetOptValBool(FlagOptions, FLAG_DONTZAP, &xf86Info.dontZap);
     xf86GetOptValBool(FlagOptions, FLAG_DONTZOOM, &xf86Info.dontZoom);
 
@@ -843,10 +864,20 @@ configServerFlags(XF86ConfFlagsPtr flagsconf, XF86OptionPtr layoutopts)
     if (xf86GetOptValBool(FlagOptions, FLAG_VTSYSREQ, &value)) {
 #ifdef USE_VT_SYSREQ
 	xf86Info.vtSysreq = value;
-	xf86Msg(X_CONFIG, "VTSysReq enabled\n");
+	xf86Msg(X_CONFIG, "VTSysReq %s\n", value ? "enabled" : "disabled");
 #else
 	if (value)
 	    xf86Msg(X_WARNING, "VTSysReq is not supported on this OS\n");
+#endif
+    }
+
+    if (xf86GetOptValBool(FlagOptions, FLAG_XKBDISABLE, &value)) {
+#ifdef XKB
+	noXkbExtension = value;
+	xf86Msg(X_CONFIG, "Xkb %s\n", value ? "disabled" : "enabled");
+#else
+	if (!value)
+	    xf86Msg(X_WARNING, "Xserver doesn't support XKB\n");
 #endif
     }
 
@@ -862,15 +893,68 @@ configServerFlags(XF86ConfFlagsPtr flagsconf, XF86OptionPtr layoutopts)
 	xf86Info.pciFlags = PCIForceConfig2;
     if (xf86IsOptionSet(FlagOptions, FLAG_PCIOSCONFIG))
 	xf86Info.pciFlags = PCIOsConfig;
+    if (xf86IsOptionSet(FlagOptions, FLAG_PCIFORCENONE))
+	xf86Info.pciFlags = PCIForceNone;
 
     xf86Info.pmFlag = TRUE;
     if (xf86GetOptValBool(FlagOptions, FLAG_NOPM, &value)) 
 	xf86Info.pmFlag = !value;
-    if (xf86GetOptValBool(FlagOptions, FLAG_SYNCLOG, &value)) {
-	xf86Msg(X_CONFIG, "SyncLog %s\n",value?"enabled":"disabled");
-	xf86Info.syncLog = value;
+    {
+	const char *s;
+	if ((s = xf86GetOptValString(FlagOptions, FLAG_LOG))) {
+	    if (!xf86NameCmp(s,"flush")) {
+		xf86Msg(X_CONFIG, "Flushing logfile enabled\n");
+		xf86Info.log = LogFlush;
+	    } else if (!xf86NameCmp(s,"sync")) {
+		xf86Msg(X_CONFIG, "Syncing logfile enabled\n");
+		xf86Info.log = LogSync;
+	    } else {
+		xf86Msg(X_WARNING,"Unknown Log option\n");
+	    }
+        }
     }
     
+#ifdef RENDER
+    {
+	const char *s;
+
+	if ((s = xf86GetOptValString(FlagOptions, FLAG_RENDER_COLORMAP_MODE))){
+	    int policy = PictureParseCmapPolicy (s);
+	    if (policy == PictureCmapPolicyInvalid)
+		xf86Msg(X_WARNING, "Unknown colormap policy \"%s\"\n", s);
+	    else
+	    {
+		xf86Msg(X_CONFIG, "Render colormap policy set to %s\n", s);
+		PictureCmapPolicy = policy;
+	    }
+	}
+    }
+#endif
+    {
+	const char *s;
+	if ((s = xf86GetOptValString(FlagOptions, FLAG_HANDLE_SPECIAL_KEYS))) {
+	    if (!xf86NameCmp(s,"always")) {
+		xf86Msg(X_CONFIG, "Always handling special keys in DDX\n");
+		xf86Info.ddxSpecialKeys = SKAlways;
+	    } else if (!xf86NameCmp(s,"whenneeded")) {
+		xf86Msg(X_CONFIG, "Special keys handled in DDX only if needed\n");
+		xf86Info.ddxSpecialKeys = SKWhenNeeded;
+	    } else if (!xf86NameCmp(s,"never")) {
+		xf86Msg(X_CONFIG, "Never handling special keys in DDX\n");
+		xf86Info.ddxSpecialKeys = SKNever;
+	    } else {
+		xf86Msg(X_WARNING,"Unknown HandleSpecialKeys option\n");
+	    }
+        }
+    }
+#ifdef RANDR
+    xf86Info.disableRandR = FALSE;
+    xf86Info.randRFrom = X_DEFAULT;
+    if (xf86GetOptValBool(FlagOptions, FLAG_RANDR, &value)) {
+	xf86Info.disableRandR = !value;
+	xf86Info.randRFrom = X_CONFIG;
+    }
+#endif
     i = -1;
     xf86GetOptValInteger(FlagOptions, FLAG_ESTIMATE_SIZES_AGGRESSIVELY, &i);
     if (i >= 0)
@@ -981,7 +1065,7 @@ configInputKbd(IDevPtr inputp)
 #ifdef XKB
   if (!xf86IsPc98()) {
     xf86Info.xkbrules      = "xfree86";
-    xf86Info.xkbmodel      = "pc101";
+    xf86Info.xkbmodel      = "pc105";
     xf86Info.xkblayout     = "us";
     xf86Info.xkbvariant    = NULL;
     xf86Info.xkboptions    = NULL;
@@ -1026,7 +1110,7 @@ configInputKbd(IDevPtr inputp)
 			 " the \"wskbd\" keyboard protocol");
 	 return FALSE;
      }
-     xf86Info.kbdFd = open(s, O_RDONLY | O_NONBLOCK | O_EXCL);
+     xf86Info.kbdFd = open(s, O_RDWR | O_NONBLOCK | O_EXCL);
      if (xf86Info.kbdFd == -1) {
        xf86ConfigError("cannot open \"%s\"", s);
        xfree(s);
@@ -1052,6 +1136,11 @@ configInputKbd(IDevPtr inputp)
 #ifdef WSKBD_TYPE_ADB
      case WSKBD_TYPE_ADB:
 	     xf86Msg(X_PROBED, "Keyboard type: ADB\n");
+	     break;
+#endif
+#ifdef WSKBD_TYPE_SUN
+     case WSKBD_TYPE_SUN:
+	     xf86Msg(X_PROBED, "Keyboard type: Sun\n");
 	     break;
 #endif
      default:
@@ -1101,6 +1190,9 @@ configInputKbd(IDevPtr inputp)
   if (noXkbExtension)
     from = X_CMDLINE;
   else if (xf86FindOption(inputp->commonOptions, "XkbDisable")) {
+    xf86Msg(X_WARNING, "KEYBOARD: XKB should be disabled in the "
+	    "ServerFlags section instead\n"
+	    "\tof in the \"keyboard\" InputDevice section.\n");
     noXkbExtension =
 	xf86SetBoolOption(inputp->commonOptions, "XkbDisable", FALSE);
     from = X_CONFIG;
@@ -1463,12 +1555,14 @@ configLayout(serverLayoutPtr servlayoutp, XF86ConfLayoutPtr conf_layout,
 		slp[i].right = slp[j].screen;
 	    }
 	}
-	if (slp[i].where != CONF_ADJ_OBSOLETE
-	    && slp[i].where != CONF_ADJ_ABSOLUTE
+	if (slp[i].where != PosObsolete
+	    && slp[i].where != PosAbsolute
 	    && !slp[i].refscreen) {
 	    xf86Msg(X_ERROR,"Screen %s doesn't exist: deleting placement\n",
 		     slp[i].refname);
-	    slp[i].where = 0;
+	    slp[i].where = PosAbsolute;
+	    slp[i].x = 0;
+	    slp[i].y = 0;
 	}
     }
 
@@ -2131,6 +2225,7 @@ xf86HandleConfigFile(void)
     filename = xf86openConfigFile(searchpath, xf86ConfigFile, PROJECTROOT);
     if (filename) {
 	xf86MsgVerb(from, 0, "Using config file: \"%s\"\n", filename);
+	xf86ConfigFile = xnfstrdup(filename);
     } else {
 	xf86Msg(X_ERROR, "Unable to locate/open config file");
 	if (xf86ConfigFile)

@@ -24,12 +24,9 @@
 /* Hacked together from mga driver and 3.3.4 NVIDIA driver by Jarno Paananen
    <jpaana@s2.org> */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/nv/nv_dac.c,v 1.25 2002/03/15 05:16:40 mvojkovi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/nv/nv_dac.c,v 1.31 2003/01/02 20:44:56 mvojkovi Exp $ */
 
 #include "nv_include.h"
-
-#include "nvreg.h"
-#include "nvvga.h"
 
 Bool
 NVDACInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
@@ -106,6 +103,8 @@ NVDACInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
     pVga->CRTC[0x13] = ((pLayout->displayWidth/8)*(pLayout->bitsPerPixel/8));
     pVga->CRTC[0x15] = Set8Bits(vertBlankStart);
     pVga->CRTC[0x16] = Set8Bits(vertBlankEnd);
+
+    pVga->Attribute[0x10] = 0x01;
 
     nvReg->screen = SetBitField(horizBlankEnd,6:6,4:4)
                   | SetBitField(vertBlankStart,10:10,3:3)
@@ -186,6 +185,34 @@ NVDACInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
        nvReg->vpll2 = pNv->riva.PRAMDAC0[0x00000520/4];
     }
 
+    nvReg->cursorConfig = 0x00000100;
+    if(mode->Flags & V_DBLSCAN)
+       nvReg->cursorConfig |= (1 << 4);
+    if(pNv->alphaCursor) {
+        nvReg->cursorConfig |= 0x04011000;
+        nvReg->general |= (1 << 29);
+
+        if((pNv->Chipset & 0x0ff0) == 0x0110) {
+            nvReg->dither = pNv->riva.PRAMDAC[0x0528/4] & ~0x00010000;
+            if(pNv->riva.flatPanel & FP_DITHER)
+               nvReg->dither |= 0x00010000;
+            else
+               nvReg->cursorConfig |= (1 << 28);
+        } else 
+        if((pNv->riva.Chipset & 0x0ff0) >= 0x0170) {
+           nvReg->dither = pNv->riva.PRAMDAC[0x083C/4] & ~1;
+           nvReg->cursorConfig |= (1 << 28);
+           if(pNv->riva.flatPanel & FP_DITHER)
+              nvReg->dither |= 1;
+        } else {
+           nvReg->cursorConfig |= (1 << 28);
+        }
+    } else
+       nvReg->cursorConfig |= 0x02000000;
+
+    nvReg->vpllB = 0;
+    nvReg->vpll2B = 0;
+
     return (TRUE);
 }
 
@@ -199,7 +226,8 @@ NVDACRestore(ScrnInfoPtr pScrn, vgaRegPtr vgaReg, NVRegPtr nvReg,
     DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO, "NVDACRestore\n"));
 
     if(primary) restore |= VGA_SR_CMAP | VGA_SR_FONTS;
-
+    else if((pNv->Chipset & 0xffff) == 0x0018) 
+	restore |= VGA_SR_CMAP;
     pNv->riva.LoadStateExt(&pNv->riva, nvReg);
 #if defined(__powerpc__)
     restore &= ~VGA_SR_FONTS;
@@ -301,7 +329,7 @@ NV_ddc1Read(ScrnInfoPtr pScrn)
     while(!(VGA_RD08(pNv->riva.PCIO, 0x3da) & 0x08));
 
     /* Get the result */
-    VGA_WR08(pNv->riva.PCIO, 0x3d4, 0x3e);
+    VGA_WR08(pNv->riva.PCIO, 0x3d4, pNv->DDCBase);
     val = VGA_RD08(pNv->riva.PCIO, 0x3d5);
     DEBUG(ErrorF("NV_ddc1Read(%p,...) returns %d\n",
                  pScrn, val));
@@ -315,7 +343,7 @@ NV_I2CGetBits(I2CBusPtr b, int *clock, int *data)
     unsigned char val;
 
     /* Get the result. */
-    VGA_WR08(pNv->riva.PCIO, 0x3d4, 0x3e);
+    VGA_WR08(pNv->riva.PCIO, 0x3d4, pNv->DDCBase);
     val = VGA_RD08(pNv->riva.PCIO, 0x3d5);
 
     *clock = (val & DDC_SCL_READ_MASK) != 0;
@@ -330,7 +358,7 @@ NV_I2CPutBits(I2CBusPtr b, int clock, int data)
     NVPtr pNv = NVPTR(xf86Screens[b->scrnIndex]);
     unsigned char val;
 
-    VGA_WR08(pNv->riva.PCIO, 0x3d4, 0x3f);
+    VGA_WR08(pNv->riva.PCIO, 0x3d4, pNv->DDCBase + 1);
     val = VGA_RD08(pNv->riva.PCIO, 0x3d5) & 0xf0;
     if (clock)
         val |= DDC_SCL_WRITE_MASK;
@@ -342,7 +370,7 @@ NV_I2CPutBits(I2CBusPtr b, int clock, int data)
     else
         val &= ~DDC_SDA_WRITE_MASK;
 
-    VGA_WR08(pNv->riva.PCIO, 0x3d4, 0x3f);
+    VGA_WR08(pNv->riva.PCIO, 0x3d4, pNv->DDCBase + 1);
     VGA_WR08(pNv->riva.PCIO, 0x3d5, val | 0x1);
     
     DEBUG(ErrorF("NV_I2CPutBits(%p, %d, %d) val=0x%x\n", b, clock, data, val));

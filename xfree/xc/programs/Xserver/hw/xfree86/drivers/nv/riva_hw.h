@@ -36,7 +36,7 @@
 |*     those rights set forth herein.                                        *|
 |*                                                                           *|
 \***************************************************************************/
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/nv/riva_hw.h,v 1.19 2002/03/14 20:35:53 mvojkovi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/nv/riva_hw.h,v 1.24 2003/02/10 23:42:51 mvojkovi Exp $ */
 #ifndef __RIVA_HW_H__
 #define __RIVA_HW_H__
 #define RIVA_SW_VERSION 0x00010003
@@ -295,6 +295,9 @@ typedef volatile struct
 *                                                                           *
 \***************************************************************************/
 
+#define FP_ENABLE  1
+#define FP_DITHER  2
+
 struct _riva_hw_inst;
 struct _riva_hw_state;
 /*
@@ -318,7 +321,7 @@ typedef struct _riva_hw_inst
     U032 FifoFreeCount;
     U032 FifoEmptyCount;
     U032 CursorStart;
-    Bool flatPanel;
+    U032 flatPanel;
     Bool twoHeads;
     /*
      * Non-FIFO registers.
@@ -379,6 +382,7 @@ typedef struct _riva_hw_state
     U032 repaint1;
     U032 screen;
     U032 scale;
+    U032 dither;
     U032 extra;
     U032 pixel;
     U032 horiz;
@@ -386,23 +390,20 @@ typedef struct _riva_hw_state
     U032 arbitration1;
     U032 vpll;
     U032 vpll2;
+    U032 vpllB;
+    U032 vpll2B;
     U032 pllsel;
     U032 general;
     U032 crtcOwner;
     U032 head; 
     U032 head2; 
     U032 config;
+    U032 cursorConfig;
     U032 cursor0;
     U032 cursor1;
     U032 cursor2;
-    U032 offset0;
-    U032 offset1;
-    U032 offset2;
-    U032 offset3;
-    U032 pitch0;
-    U032 pitch1;
-    U032 pitch2;
-    U032 pitch3;
+    U032 offset;
+    U032 pitch;
 } RIVA_HW_STATE;
 
 /*
@@ -412,6 +413,7 @@ typedef struct _riva_hw_state
 #define RIVA_FIFO_FREE(hwinst,hwptr,cnt)                           \
 {                                                                  \
    while ((hwinst).FifoFreeCount < (cnt)) {                          \
+        mem_barrier(); \
         mem_barrier(); \
 	(hwinst).FifoFreeCount = (hwinst).hwptr->FifoFree >> 2;        \
    } \

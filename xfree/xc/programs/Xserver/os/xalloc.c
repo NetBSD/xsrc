@@ -1,3 +1,4 @@
+#define FATALERRORS 1
 /*
 Copyright (C) 1995 Pascal Haible.  All Rights Reserved.
 
@@ -25,7 +26,7 @@ dealings in this Software without prior written authorization from
 Pascal Haible.
 */
 
-/* $XFree86: xc/programs/Xserver/os/xalloc.c,v 3.32 2001/10/10 19:06:37 herrb Exp $ */
+/* $XFree86: xc/programs/Xserver/os/xalloc.c,v 3.33 2002/04/04 14:05:57 eich Exp $ */
 
 /* Only used if INTERNAL_MALLOC is defined
  * - otherwise xalloc() in utils.c is used
@@ -181,7 +182,8 @@ extern Bool Must_have_memory;
 #if defined(__alpha__) || defined(__alpha) || \
     defined(__ia64__) || defined(ia64) || \
     defined(__sparc64__) || \
-    defined(__s390x__)
+    defined(__s390x__) || \
+    defined(__x86_64__) || defined(x86_64)
 #define MAGIC			0x1404196414071968
 #define MAGIC_FREE              0x1506196615061966
 #define MAGIC2			0x2515207525182079

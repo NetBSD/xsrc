@@ -26,7 +26,7 @@
  * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
  * THIS SOFTWARE.
  */
-/* $XFree86: xc/lib/font/Type1/hints.c,v 1.6 2001/08/27 19:49:52 dawes Exp $ */
+/* $XFree86: xc/lib/font/Type1/hints.c,v 1.7 2002/02/18 20:51:57 herrb Exp $ */
 
  /* HINTS    CWEB         V0006 ********                             */
 /*
@@ -170,7 +170,7 @@ multiple of 90 degrees.
     }
   else                             /* error */
     {
-    Xabort("ComputeHint: invalid orientation");
+    Abort("ComputeHint: invalid orientation");
     }
  
   IfTrace4((HintDebug > 1),
@@ -204,7 +204,7 @@ multiple of 90 degrees.
     }
   else                           /* error */
     {
-    Xabort("ComputeHint: invalid hinttype");
+    Abort("ComputeHint: invalid hinttype");
     }
  
   IfTrace1((HintDebug > 1),"  hintValue=%p", hintValue);
@@ -221,7 +221,7 @@ multiple of 90 degrees.
     }
   else                             /* error */
     {
-    Xabort("ComputeHint: invalid orientation");
+    Abort("ComputeHint: invalid orientation");
     }
 }
  
@@ -270,7 +270,7 @@ ProcessHint(struct hintsegment *hP,
       }
     else                             /* error */
       {
-      Xabort("ProcessHint: invalid label");
+      Abort("ProcessHint: invalid label");
       }
     }
   else if (hP->adjusttype == 'r')  /* Reverse */
@@ -286,18 +286,18 @@ ProcessHint(struct hintsegment *hP,
         }
       else                           /* error */
         {
-        Xabort("ProcessHint: label is not in use");
+        Abort("ProcessHint: label is not in use");
         }
       }
     else                           /* error */
       {
-      Xabort("ProcessHint: invalid label");
+      Abort("ProcessHint: invalid label");
       }
  
     }
   else                           /* error */
     {
-    Xabort("ProcessHint: invalid adjusttype");
+    Abort("ProcessHint: invalid adjusttype");
     }
   IfTrace3((HintDebug > 1),"  label=%d, thisHint=(%p,%p)\n",
     hP->label, thisHint.x, thisHint.y);
@@ -389,7 +389,7 @@ SearchXofY(register struct edgelist *edge,   /* represents edge              */
        else
                return(XofY(edge, y));
  
-       Xabort("bad subpath chain");
+       Abort("bad subpath chain");
        /*NOTREACHED*/
 }
 /*
@@ -471,7 +471,7 @@ Now we have everything to return the answer:
        else if (ISBOTTOM(e1->flag) && y == e1->ymax)
                return(!ISDOWN(e2->flag));
        else
-               Xabort("ImpliedHorizontalLine:  why ask?");
+               Abort("ImpliedHorizontalLine:  why ask?");
        /*NOTREACHED*/
 }
  
@@ -510,7 +510,7 @@ FixSubPaths(struct region *R)           /* anchor of region                  */
                if (!ISBREAK(edge, next))
                        continue;
                if (edge->ymax < next->ymin)
-                       Xabort("disjoint subpath?");
+                       Abort("disjoint subpath?");
 /*
 'edge' now contains an edgelist at the bottom of an edge, and 'next'
 contains the next subsequent edgelist in the subpath, which must be at
@@ -571,7 +571,7 @@ as 'next':
  
                break1->subpath = break2->subpath;
                if (ISBREAK(break1, break1->subpath))
-                       Xabort("unable to fix subpath break?");
+                       Abort("unable to fix subpath break?");
  
                break2->subpath = next;
  

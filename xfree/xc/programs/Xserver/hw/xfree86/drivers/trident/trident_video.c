@@ -21,7 +21,7 @@
  *
  * Author:  Alan Hourihane, alanh@fairlite.demon.co.uk
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/trident/trident_video.c,v 1.21.2.1 2002/01/28 14:32:55 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/trident/trident_video.c,v 1.31 2002/12/22 18:54:43 alanh Exp $ */
 
 #include "xf86.h"
 #include "xf86_OSproc.h"
@@ -41,7 +41,7 @@
 #include "dixstruct.h"
 #include "fourcc.h"
 
-#define OFF_DELAY 	200  /* milliseconds */
+#define OFF_DELAY 	800  /* milliseconds */
 #define FREE_DELAY 	60000
 
 #define OFF_TIMER 	0x01
@@ -63,16 +63,15 @@ static int TRIDENTPutImage( ScrnInfoPtr,
 static int TRIDENTQueryImageAttributes(ScrnInfoPtr, 
 	int, unsigned short *, unsigned short *,  int *, int *);
 static void TRIDENTVideoTimerCallback(ScrnInfoPtr pScrn, Time time);
-static void tridentSetVideoGamma(TRIDENTPtr pTrident,int value,int brightness);
 static void tridentSetVideoContrast(TRIDENTPtr pTrident,int value);
 static void tridentSetVideoParameters(TRIDENTPtr pTrident, int brightness, 
 				      int saturation, int hue);
 void tridentFixFrame(ScrnInfoPtr pScrn, int *fixFrame);
-
+static void WaitForSync(ScrnInfoPtr pScrn);
 
 #define MAKE_ATOM(a) MakeAtom(a, sizeof(a) - 1, TRUE)
 
-static Atom xvColorKey, xvSaturation, xvBrightness, xvHUE, xvGamma, xvContrast;
+static Atom xvColorKey, xvSaturation, xvBrightness, xvHUE,  xvContrast;
 
 void TRIDENTInitVideo(ScreenPtr pScreen)
 {
@@ -81,11 +80,12 @@ void TRIDENTInitVideo(ScreenPtr pScreen)
     XF86VideoAdaptorPtr newAdaptor = NULL;
     TRIDENTPtr pTrident = TRIDENTPTR(pScrn);
     int num_adaptors;
-	
+
     /* 
      * The following has been tested on:
      *
      * 9525         : flags: None
+     * Cyber9397(DVD) : flags: VID_ZOOM_NOMINI
      * CyberBlade/i7: flags: VID_ZOOM_INV | VID_ZOOM_MINI
      * CyberBlade/i1: flags: VID_ZOOM_INV | VID_ZOOM_MINI
      * CyberBlade/Ai1: flags: VID_ZOOM_INV 
@@ -103,7 +103,12 @@ void TRIDENTInitVideo(ScreenPtr pScreen)
 		|| pTrident->Chipset > CYBERBLADEAI1D)
 	 pTrident->videoFlags |= VID_OFF_SHIFT_4;
     }
- 
+    if (pTrident->Chipset == CYBER9397 || pTrident->Chipset == CYBER9397DVD)
+	pTrident->videoFlags = VID_ZOOM_NOMINI;
+
+    if (pTrident->Chipset == CYBER9397DVD || pTrident->Chipset >= CYBER9525DVD)
+	pTrident->videoFlags |= VID_DOUBLE_LINEBUFFER_FOR_WIDE_SRC;
+
     newAdaptor = TRIDENTSetupImageVideo(pScreen);
     TRIDENTInitOffscreenImages(pScreen);
 
@@ -132,10 +137,13 @@ void TRIDENTInitVideo(ScreenPtr pScreen)
     if(newAdaptors)
 	xfree(newAdaptors);
 
-    xf86DrvMsgVerb(pScrn->scrnIndex,X_INFO,3,"XvFlags: %s %s %s\n",
+    if (pTrident->videoFlags)
+	xf86DrvMsgVerb(pScrn->scrnIndex,X_INFO,3,
+		       "Trident Video Flags: %s %s %s\n",
 		   pTrident->videoFlags & VID_ZOOM_INV ? "VID_ZOOM_INV" : "",
-		   pTrident->videoFlags & VID_ZOOM_MINI ? "VID_ZOOM_MINI" : "",
-		   pTrident->videoFlags & VID_OFF_SHIFT_4 ? "VID_OFF_SHIFT_4"
+		   pTrident->videoFlags & VID_ZOOM_MINI ? "VID_ZOOM_MINI" : "",                   pTrident->videoFlags & VID_OFF_SHIFT_4 ? "VID_OFF_SHIFT_4"
+		   : "",
+		   pTrident->videoFlags & VID_ZOOM_NOMINI ? "VID_ZOOM_NOMINI"
 		   : "");
 		   
 }
@@ -158,7 +166,11 @@ static XF86VideoFormatRec Formats[NUM_FORMATS] =
   {8, PseudoColor},  {15, TrueColor}, {16, TrueColor}, {24, TrueColor}
 };
 
+#ifdef TRIDENT_XV_GAMMA
 #define NUM_ATTRIBUTES 6
+#else
+#define NUM_ATTRIBUTES 5
+#endif
 
 static XF86AttributeRec Attributes[NUM_ATTRIBUTES] =
 {
@@ -166,15 +178,19 @@ static XF86AttributeRec Attributes[NUM_ATTRIBUTES] =
     {XvSettable | XvGettable, 0, 187,           "XV_SATURATION"},
     {XvSettable | XvGettable, 0, 0x3F,          "XV_BRIGHTNESS"},
     {XvSettable | XvGettable, 0, 360 ,          "XV_HUE"},
-    {XvSettable | XvGettable, -128, 127,        "XV_GAMMA"},
     {XvSettable | XvGettable, 0, 7,           "XV_CONTRAST"}
 };
 
-#define NUM_IMAGES 4
+#if 0
+# define NUM_IMAGES 4
+#else
+# define NUM_IMAGES 4
+#endif
 
 static XF86ImageRec Images[NUM_IMAGES] =
 {
-   {
+#if 0
+    {
 	0x35315652,
         XvRGB,
 	LSBFirst,
@@ -191,6 +207,7 @@ static XF86ImageRec Images[NUM_IMAGES] =
 	  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
 	XvTopToBottom
    },
+#endif
    {
 	0x36315652,
         XvRGB,
@@ -200,7 +217,7 @@ static XF86ImageRec Images[NUM_IMAGES] =
 	16,
 	XvPacked,
 	1,
-	16, 0x001F, 0x07E0, 0xF800,
+	16, 0xF800, 0x07E0, 0x001F,
 	0, 0, 0,
 	0, 0, 0,
 	0, 0, 0,
@@ -219,7 +236,6 @@ typedef struct {
    CARD8        Saturation;
    CARD8        Brightness;
    CARD16       HUE;
-   INT8         Gamma;
    INT8         Contrast;
    CARD32	videoStatus;
    Time		offTime;
@@ -238,31 +254,30 @@ void TRIDENTResetVideo(ScrnInfoPtr pScrn)
     int vgaIOBase = VGAHWPTR(pScrn)->IOBase;
     int red, green, blue;
     int tmp;
-    
-    OUTW(vgaIOBase + 4, 0x008E);
-    OUTW(vgaIOBase + 4, 0x008F);
 
-    if (pTrident->Chipset >= CYBER9397) {
+    if (pTrident->Chipset >= CYBER9388) {
     	OUTW(vgaIOBase + 4, 0x80B9); 
+    	OUTW(vgaIOBase + 4, 0x00BE); 
     	OUTW(0x3C4, 0xC057);
-    	OUTW(0x3C4, 0x3421);
+    	OUTW(0x3C4, 0x3420);
     	OUTW(0x3C4, 0x3037);
     } else {
 	if (pTrident->Chipset >= PROVIDIA9682) {
     	    OUTB(0x83C8, 0x57);
     	    OUTB(0x83C6, 0xC0);
-    	    OUTW(vgaIOBase + 4, 0x24BE); 
+    	    OUTW(vgaIOBase + 4, 0x26BE); 
 	} else {
     	    OUTB(0x83C8, 0x37);
     	    OUTB(0x83C6, 0x01);
+    	    OUTB(0x83C8, 0x00);
+    	    OUTB(0x83C6, 0x00);
 	}
     }
 
-    if (pTrident->Chipset >= CYBERBLADEXPm8) {
+    if (pTrident->Chipset >= BLADEXP) {
 	OUTW(0x3C4, 0x007A);
 	OUTW(0x3C4, 0x007D);
     }
-    
     switch (pScrn->depth) {
     case 8:
 	VIDEOOUT(pPriv->colorKey, pTrident->keyOffset);
@@ -304,11 +319,15 @@ void TRIDENTResetVideo(ScrnInfoPtr pScrn)
 	    VIDEOOUT(0xFF, (pTrident->keyOffset + 6));
 	    break;
 	}    
-    }    
-    tridentSetVideoGamma(pTrident,pPriv->Gamma,pPriv->Brightness);
-    tridentSetVideoContrast(pTrident,pPriv->Contrast);
-    tridentSetVideoParameters(pTrident,pPriv->Brightness,pPriv->Saturation,
+    }
+
+    if (pTrident->Chipset >= CYBER9388) {
+    	tridentSetVideoContrast(pTrident,pPriv->Contrast);
+    	tridentSetVideoParameters(pTrident,pPriv->Brightness,pPriv->Saturation,
                             pPriv->HUE);
+    }
+
+    OUTW(vgaIOBase + 4, 0x848E);
 }
 
 
@@ -338,7 +357,11 @@ TRIDENTSetupImageVideo(ScreenPtr pScreen)
     adapt->pPortPrivates[0].ptr = (pointer)(pPriv);
     adapt->pAttributes = Attributes;
     adapt->nImages = NUM_IMAGES;
-    adapt->nAttributes = NUM_ATTRIBUTES;
+    if (pTrident->Chipset >= CYBER9388) {
+    	adapt->nAttributes = NUM_ATTRIBUTES;
+    } else {
+    	adapt->nAttributes = 1; /* Just colorkey */
+    }
     adapt->pImages = Images;
     adapt->PutVideo = NULL;
     adapt->PutStill = NULL;
@@ -355,7 +378,6 @@ TRIDENTSetupImageVideo(ScreenPtr pScreen)
     pPriv->Brightness = 45;
     pPriv->Saturation = 80;
     pPriv->Contrast = 4;
-    pPriv->Gamma = 0;
     pPriv->HUE = 0;
     pPriv->videoStatus = 0;
     pPriv->fixFrame = 100;
@@ -367,11 +389,10 @@ TRIDENTSetupImageVideo(ScreenPtr pScreen)
 
     xvColorKey   = MAKE_ATOM("XV_COLORKEY");
    
-    if (pTrident->Chipset >= CYBER9397) {
+    if (pTrident->Chipset >= CYBER9388) {
     	xvBrightness = MAKE_ATOM("XV_BRIGHTNESS");
     	xvSaturation = MAKE_ATOM("XV_SATURATION");
     	xvHUE        = MAKE_ATOM("XV_HUE");
-    	xvGamma      = MAKE_ATOM("XV_GAMMA");
     	xvContrast   = MAKE_ATOM("XV_CONTRAST");
     }
 
@@ -428,8 +449,9 @@ TRIDENTStopVideo(ScrnInfoPtr pScrn, pointer data, Bool shutdown)
 
   if(shutdown) {
      if(pPriv->videoStatus & CLIENT_VIDEO_ON) {
-	OUTW(vgaIOBase + 4, 0x008E);
-	OUTW(vgaIOBase + 4, 0x008F);
+	 OUTW(vgaIOBase + 4, 0x0091);
+	 WaitForSync(pScrn);
+	 OUTW(vgaIOBase + 4, 0x848E);
      }
      if(pPriv->linear) {
 	xf86FreeOffscreenLinear(pPriv->linear);
@@ -453,59 +475,6 @@ tridentSetVideoContrast(TRIDENTPtr pTrident,int value)
 {
   OUTW(0x3C4, (((value & 0x7)|((value & 0x7) << 4)) << 8) | 0xBC);
 }
-
-static void 
-tridentSetVideoGamma(TRIDENTPtr pTrident,int value,int brightness)
-{
-  int pivots[] = {0,3,15,63,255};
-
-  int slope;
-  int y_0;
-  float x, x_prev = 0, y, y_prev = 0;
-  int i;
-  int exp;
-  CARD8 i_slopes[4];
-  CARD8 intercepts[4];
-  
-  brightness = (brightness - 0x20);
-  if (value == 0) {
-      OUTW(0x3C4, 0x80 << 8 | 0xB4);
-      OUTW(0x3C4, (brightness) << 8 | 0xB8);
-      OUTW(0x3C4, (brightness) << 8 | 0xB9);
-      OUTW(0x3C4, (brightness) << 8 | 0xBA);
-      OUTW(0x3C4, (brightness) << 8 | 0xBB);
-      return;
-  }
-  exp = log(value);
-  for (i = 0; i < 4; i++) {
-    x = pivots[i-1] / 255.0;
-    y = pow(x,exp);
-    slope = (y - y_prev) / (x - x_prev);
-    y_0 = y - x * slope;
-    {
-      int val = slope;
-	  if (val > 7) 
-	    i_slopes[i] = (3 << 4) | (val & 0xf);
-	  else if (val > 3) 
-	  i_slopes[i] = (2 << 4) | ((int)(slope / 2) & 0xf);
-	  else if (val > 2) 
-	  i_slopes[i] = (1 << 4) | ((int)(slope / 4) & 0xf);
-	  else 
-	    i_slopes[i] = ((int)(slope / 8) & 0xf);
-    }
-    intercepts[i] = y_0 * 256 / 4;
-    x_prev = x;
-    y_prev = y;
-  }
-      OUTW(0x3C4, i_slopes[0] << 8 | 0xB4);
-      OUTW(0x3C4, i_slopes[1] << 8 | 0xB5);
-      OUTW(0x3C4, i_slopes[2] << 8 | 0xB6);
-      OUTW(0x3C4, i_slopes[3] << 8 | 0xB7);
-      OUTW(0x3C4, (intercepts[0] + brightness) << 8 | 0xB8);
-      OUTW(0x3C4, (intercepts[1] + brightness) << 8 | 0xB9);
-      OUTW(0x3C4, (intercepts[2] + brightness) << 8 | 0xBA);
-      OUTW(0x3C4, (intercepts[3] + brightness) << 8 | 0xBB);
-} 
 
 static void
 tridentSetVideoParameters(TRIDENTPtr pTrident, int brightness, 
@@ -595,18 +564,12 @@ TRIDENTSetPortAttribute(
     pPriv->HUE = value;
     tridentSetVideoParameters(pTrident, pPriv->Brightness, pPriv->Saturation,
 			      pPriv->HUE);
-    tridentSetVideoGamma(pTrident,pPriv->Gamma,pPriv->Brightness);
-  } else if (attribute == xvGamma) {
-    if ((value < -128) || (value > 127))
-      return BadValue;
-    pPriv->Gamma = value;
-    tridentSetVideoGamma(pTrident,value,pPriv->Brightness);
   } else if (attribute == xvContrast) {
-    if ((value < 0) || (value > 127))
+    if ((value < 0) || (value > 7))
       return BadValue;
     pPriv->Contrast = value;
     tridentSetVideoContrast(pTrident,value);
-  } else 
+  } else
     return BadMatch;
 
   return Success;
@@ -629,8 +592,6 @@ TRIDENTGetPortAttribute(
 	*value = pPriv->Saturation;
   } else if (attribute == xvHUE) {
 	*value = pPriv->HUE;
-  } else if (attribute == xvGamma) {
-	*value = pPriv->Gamma;
   } else if (attribute == xvContrast) {
 	*value = pPriv->Contrast;
   } else
@@ -762,12 +723,13 @@ TRIDENTDisplayVideo(
     int zoomx1, zoomx2, zoomy1, zoomy2;
     int tx1,tx2;
     int ty1,ty2;
-
+    
     switch(id) {
     case 0x35315652:		/* RGB15 */
     case 0x36315652:		/* RGB16 */
-	if (pTrident->Chipset >= CYBER9397) {
+	if (pTrident->Chipset >= CYBER9388) {
     	    OUTW(vgaIOBase + 4, 0x22BF);
+	    OUTW(vgaIOBase + 4, 0x248F);
 	} else {
     	    OUTW(vgaIOBase + 4, 0x118F);
 	}
@@ -775,8 +737,9 @@ TRIDENTDisplayVideo(
     case FOURCC_YV12:		/* YV12 */
     case FOURCC_YUY2:		/* YUY2 */
     default:
-	if (pTrident->Chipset >= CYBER9397) {
+	if (pTrident->Chipset >= CYBER9388) {
     	    OUTW(vgaIOBase + 4, 0x00BF);
+	    OUTW(vgaIOBase + 4, 0x208F);
 	} else {
     	    OUTW(vgaIOBase + 4, 0x108F);
 	}
@@ -807,93 +770,95 @@ TRIDENTDisplayVideo(
     OUTW(vgaIOBase + 4, ((width<<1) & 0xff00)      | 0x91);
     OUTW(vgaIOBase + 4, ((offset) & 0xff) << 8     | 0x92);
     OUTW(vgaIOBase + 4, ((offset) & 0xff00)        | 0x93);
-    OUTW(vgaIOBase + 4, ((offset) & 0xff0000) >> 8 | 0x94);
-
+    OUTW(vgaIOBase + 4, ((offset) & 0x070000) >> 8 | 0x94);
+    
     /* Horizontal Zoom */
     if (pTrident->videoFlags & VID_ZOOM_INV) {
 	if ((pTrident->videoFlags & VID_ZOOM_MINI) && src_w > drw_w)
-	  zoomx2 = (int)((float)drw_w/(float)src_w * 1024) 
-	    | (((int)((float)src_w/(float)drw_w) - 1)&7)<<10 | 0x8000;
+	    zoomx2 = (int)((float)drw_w/(float)src_w * 1024) 
+		| (((int)((float)src_w/(float)drw_w) - 1)&7)<<10 | 0x8000;
 	else
-	  zoomx2 = (int)(float)src_w/(float)drw_w * 1024;
-
+	    zoomx2 = (int)(float)src_w/(float)drw_w * 1024;
+	
 	OUTW(vgaIOBase + 4, (zoomx2&0xff)<<8 | 0x80);
 	OUTW(vgaIOBase + 4, (zoomx2&0x9f00) | 0x81);
-    }  else {
-    if (drw_w == src_w) {
-	OUTW(vgaIOBase + 4, 0x0080);
-	OUTW(vgaIOBase + 4, 0x0081);
-    } else
-    if (drw_w > src_w) {
-	float z;
-
-        z = (float)drw_w/(float)src_w - 1;
-	zoomx1 =  z;
-	zoomx2 = (z - (int)zoomx1 ) * 1024;
-		
-	OUTW(vgaIOBase + 4, (zoomx2&0xff)<<8 | 0x80);
-		OUTW(vgaIOBase + 4, (zoomx1&0x0f)<<10 | (zoomx2&0x0300) |0x81);
     } else {
-	zoomx1 =   ((float)drw_w/(float)src_w);
-	zoomx2 = ( ((float)drw_w/(float)src_w) - (int)zoomx1 ) * 1024;
-	OUTW(vgaIOBase + 4, (zoomx2&0xff)<<8 |   0x80);
-	OUTW(vgaIOBase + 4, (zoomx2&0x0300)|
-			(((int)((float)src_w/(float)drw_w)-1)&7)<<10 | 0x8081);
-    }
-    }
+	if (drw_w == src_w
+	    || ((pTrident->videoFlags & VID_ZOOM_NOMINI) && (src_w > drw_w))) {
+	    OUTW(vgaIOBase + 4, 0x0080);
+	    OUTW(vgaIOBase + 4, 0x0081);
+	} else
+	    if (drw_w > src_w) {
+		float z;
 
+		z = (float)((drw_w)/(float)src_w) - 1.0;
+		
+		zoomx1 =  z;
+		zoomx2 = (z - (int)zoomx1 ) * 1024;
+		
+		OUTW(vgaIOBase + 4, (zoomx2&0xff)<<8 | 0x80);
+		OUTW(vgaIOBase + 4, (zoomx1&0x0f)<<10 | (zoomx2&0x0300) |0x81);
+	    } else {
+		zoomx1 =   ((float)drw_w/(float)src_w);
+		zoomx2 = ( ((float)drw_w/(float)src_w) - (int)zoomx1 ) * 1024;
+		OUTW(vgaIOBase + 4, (zoomx2&0xff)<<8 |   0x80);
+		OUTW(vgaIOBase + 4, (zoomx2&0x0300)|
+		     (((int)((float)src_w/(float)drw_w)-1)&7)<<10 | 0x8081);
+	    }
+    }
+    
     /* Vertical Zoom */
     if (pTrident->videoFlags & VID_ZOOM_INV) {
-       if ((pTrident->videoFlags & VID_ZOOM_MINI) && src_h > drw_h)
-         zoomy2 = (int)(( ((float)drw_h/(float)src_h)) * 1024) 
-	   | (((int)((float)src_h/(float)drw_h)-1)&7)<<10 
-	   | 0x8000;
-       else 
-         zoomy2 = ( ((float)src_h/(float)drw_h)) * 1024;
+	if ((pTrident->videoFlags & VID_ZOOM_MINI) && src_h > drw_h)
+	    zoomy2 = (int)(( ((float)drw_h/(float)src_h)) * 1024) 
+		| (((int)((float)src_h/(float)drw_h)-1)&7)<<10 
+		| 0x8000;
+	else 
+	    zoomy2 = ( ((float)src_h/(float)drw_h)) * 1024;
 	OUTW(vgaIOBase + 4, (zoomy2&0xff)<<8 | 0x82);
 	OUTW(vgaIOBase + 4, (zoomy2&0x9f00) | 0x0083);
     } else {
-    if (drw_h == src_h) {
-	OUTW(vgaIOBase + 4, 0x0082);
-	OUTW(vgaIOBase + 4, 0x0083);
-    } else
-    if (drw_h > src_h) {
-	float z;
-
-	z = (float)drw_h/(float)src_h - 1;
-	zoomy1 =  z;
-	zoomy2 = (z - (int)zoomy1 ) * 1024;
-
-	OUTW(vgaIOBase + 4, (zoomy2&0xff)<<8 | 0x82);
+	if (drw_h == src_h
+	    || ((pTrident->videoFlags & VID_ZOOM_NOMINI) && (src_h > drw_h))) {
+	    OUTW(vgaIOBase + 4, 0x0082);
+	    OUTW(vgaIOBase + 4, 0x0083);
+	} else
+	    if (drw_h > src_h) {
+		float z;
+		
+		z = (float)drw_h/(float)src_h - 1;
+		zoomy1 =  z;
+		zoomy2 = (z - (int)zoomy1 ) * 1024;
+		
+		OUTW(vgaIOBase + 4, (zoomy2&0xff)<<8 | 0x82);
 		OUTW(vgaIOBase + 4, (zoomy1&0x0f)<<10 | (zoomy2&0x0300) |0x83);
-    } else {
-	zoomy1 =   ((float)drw_h/(float)src_h);
-	zoomy2 = ( ((float)drw_h/(float)src_h) - (int)zoomy1 ) * 1024;
-	OUTW(vgaIOBase + 4, (zoomy2&0xff)<<8 | 0x82);
-	OUTW(vgaIOBase + 4, (zoomy2&0x0300)|
-			(((int)((float)src_h/(float)drw_h)-1)&7)<<10 | 0x8083);
-    }
+	    } else {
+		zoomy1 =   ((float)drw_h/(float)src_h);
+		zoomy2 = ( ((float)drw_h/(float)src_h) - (int)zoomy1 ) * 1024;
+		OUTW(vgaIOBase + 4, (zoomy2&0xff)<<8 | 0x82);
+		OUTW(vgaIOBase + 4, (zoomy2&0x0300)|
+		     (((int)((float)src_h/(float)drw_h)-1)&7)<<10 | 0x8083);
+	    }
     } 
 
-    if (pTrident->Chipset >= CYBER9397) {
+    if (pTrident->Chipset >= CYBER9388) {
 	int lb = (width+2) >> 2;
 
     	OUTW(vgaIOBase + 4, ((lb & 0x100)>>1) | 0x0895);
     	OUTW(vgaIOBase + 4,  (lb & 0xFF)<<8   | 0x0096);
-
-    	if (src_w > 384) { 
+    	if ((pTrident->videoFlags & VID_DOUBLE_LINEBUFFER_FOR_WIDE_SRC)
+	      && (src_w > 384)) { 
     	    OUTW(0x3C4, 0x0497); /* 2x line buffers */ 
     	} else {
     	    OUTW(0x3C4, 0x0097); /* 1x line buffers */
     	}
-    	OUTW(vgaIOBase + 4, 0x0097); 
+    	OUTW(vgaIOBase + 4, 0x8097); 
     	OUTW(vgaIOBase + 4, 0x00BA);
     	OUTW(vgaIOBase + 4, 0x00BB);
     	OUTW(vgaIOBase + 4, 0xFFBC);
     	OUTW(vgaIOBase + 4, 0xFFBD);
     	OUTW(vgaIOBase + 4, 0x04BE); 
-    	OUTW(vgaIOBase + 4, 0xD48E);
-    	OUTW(vgaIOBase + 4, 0x208F);
+    	OUTW(vgaIOBase + 4, 0x948E);
     } else {
 	
     	OUTW(vgaIOBase + 4, ((((id == FOURCC_YV12) || (id == FOURCC_YUY2)) 
@@ -901,7 +866,7 @@ TRIDENTDisplayVideo(
     	OUTW(vgaIOBase + 4, ((((id == FOURCC_YV12) || (id == FOURCC_YUY2)) 
 				? ((width+2) >> 2) : ((width+2) >> 6)) << 8) |0x96);
 
-    	OUTW(vgaIOBase + 4, 0x938E);
+    	OUTW(vgaIOBase + 4, 0x948E);
 	OUTB(0x83C8, 0x00);
 	OUTB(0x83C6, 0x95);
     }
@@ -1136,8 +1101,10 @@ TRIDENTStopSurface(
     if(pPriv->isOn) {
 	TRIDENTPtr pTrident = TRIDENTPTR(surface->pScrn);
     	int vgaIOBase = VGAHWPTR(surface->pScrn)->IOBase;
-	OUTW(vgaIOBase + 4, 0x008E);
-	OUTW(vgaIOBase + 4, 0x008F);
+
+	OUTW(vgaIOBase + 4, 0x0091);
+	WaitForSync(surface->pScrn);
+ 	OUTW(vgaIOBase + 4, 0x848E);
 	pPriv->isOn = FALSE;
     }
 
@@ -1243,6 +1210,8 @@ TRIDENTDisplaySurface(
 static void 
 TRIDENTInitOffscreenImages(ScreenPtr pScreen)
 {
+    ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
+    TRIDENTPtr pTrident = TRIDENTPTR(pScrn);
     XF86OffscreenImagePtr offscreenImages;
 
     /* need to free this someplace */
@@ -1260,7 +1229,11 @@ TRIDENTInitOffscreenImages(ScreenPtr pScreen)
     offscreenImages[0].getAttribute = TRIDENTGetSurfaceAttribute;
     offscreenImages[0].max_width = 1024;
     offscreenImages[0].max_height = 1024;
-    offscreenImages[0].num_attributes = NUM_ATTRIBUTES;
+    if (pTrident->Chipset >= CYBER9388) {
+    	offscreenImages[0].num_attributes = NUM_ATTRIBUTES;
+    } else {
+    	offscreenImages[0].num_attributes = 1; /* just colorkey */
+    }
     offscreenImages[0].attributes = Attributes;
     
     xf86XVRegisterOffscreenImages(pScreen, offscreenImages, 1);
@@ -1276,8 +1249,9 @@ TRIDENTVideoTimerCallback(ScrnInfoPtr pScrn, Time time)
     if(pPriv->videoStatus & TIMER_MASK) {
 	if(pPriv->videoStatus & OFF_TIMER) {
 	    if(pPriv->offTime < time) {
-		OUTW(vgaIOBase + 4, 0x008E);
-		OUTW(vgaIOBase + 4, 0x008F);
+		OUTW(vgaIOBase + 4, 0x0091);
+		WaitForSync(pScrn);
+  		OUTW(vgaIOBase + 4, 0x848E);
 		pPriv->videoStatus = FREE_TIMER;
 		pPriv->freeTime = time + FREE_DELAY;
 	    }
@@ -1302,117 +1276,133 @@ void
 tridentFixFrame(ScrnInfoPtr pScrn, int *fixFrame)
 {
 
-  TRIDENTPtr pTrident = TRIDENTPTR(pScrn);
-  int vgaIOBase = VGAHWPTR(pScrn)->IOBase;
-  int HTotal, HSyncStart;
-  int VTotal, VSyncStart;
-  int h_off = 0;
-  int v_off = 0;
-  unsigned char CRTC[0x11];
-  Bool isShadow;
-  unsigned char shadow = 0;
+    TRIDENTPtr pTrident = TRIDENTPTR(pScrn);
+    int vgaIOBase = VGAHWPTR(pScrn)->IOBase;
+    int HTotal, HSyncStart;
+    int VTotal, VSyncStart;
+    int h_off = 0;
+    int v_off = 0;
+    unsigned char CRTC[0x11];
+    Bool isShadow;
+    unsigned char shadow = 0;
 
-  if ((*fixFrame)++ < 100) 
-    return;
+    if ((*fixFrame)++ < 100) 
+	return;
   
   *fixFrame = 0;
-  isShadow = (pTrident->ModeReg.tridentRegs3CE[CyberControl] & 0x81) == 0x81;
+
+  OUTB(0x3CE, CyberControl);
+  isShadow = ((INB(0x3CF) & 0x81) == 0x81);
   
   if (isShadow)
-    SHADOW_ENABLE(shadow);
+      SHADOW_ENABLE(shadow);
 
-  OUTB(vgaIOBase + 4, 0x0);
-  CRTC[0x0] = INB(vgaIOBase + 5);
-  OUTB(vgaIOBase + 4, 0x4);
-  CRTC[0x4] = INB(vgaIOBase + 5);
-  OUTB(vgaIOBase + 4, 0x5);
-  CRTC[0x5] = INB(vgaIOBase + 5);
-  OUTB(vgaIOBase + 4, 0x6);
-  CRTC[0x6] = INB(vgaIOBase + 5);
-  OUTB(vgaIOBase + 4, 0x7);
-  CRTC[0x7] = INB(vgaIOBase + 5);
-  OUTB(vgaIOBase + 4, 0x10);
-  CRTC[0x10] = INB(vgaIOBase + 5);
+    OUTB(vgaIOBase + 4, 0x0);
+    CRTC[0x0] = INB(vgaIOBase + 5);
+    OUTB(vgaIOBase + 4, 0x4);
+    CRTC[0x4] = INB(vgaIOBase + 5);
+    OUTB(vgaIOBase + 4, 0x5);
+    CRTC[0x5] = INB(vgaIOBase + 5);
+    OUTB(vgaIOBase + 4, 0x6);
+    CRTC[0x6] = INB(vgaIOBase + 5);
+    OUTB(vgaIOBase + 4, 0x7);
+    CRTC[0x7] = INB(vgaIOBase + 5);
+    OUTB(vgaIOBase + 4, 0x10);
+    CRTC[0x10] = INB(vgaIOBase + 5);
 
-  HTotal = CRTC[0] << 3;
-  VTotal = CRTC[6] 
-    | ((CRTC[7] & (1<<0)) << 8)
-    | ((CRTC[7] & (1<<5)) << 4);
-  HSyncStart = (CRTC[4] 
-		+ ((CRTC[5] >> 5) & 0x3)) << 3;
-  VSyncStart = CRTC[0x10] 
-    | ((CRTC[7] & (1<<2)) << 6)
-    | ((CRTC[7] & (1<<7)) << 2);
+    HTotal = CRTC[0] << 3;
+    VTotal = CRTC[6] 
+	| ((CRTC[7] & (1<<0)) << 8)
+	| ((CRTC[7] & (1<<5)) << 4);
+    HSyncStart = (CRTC[4] 
+		  + ((CRTC[5] >> 5) & 0x3)) << 3;
+    VSyncStart = CRTC[0x10] 
+	| ((CRTC[7] & (1<<2)) << 6)
+	| ((CRTC[7] & (1<<7)) << 2);
 
-  if (isShadow) {
-    SHADOW_RESTORE(shadow);
-    if (pTrident->lcdMode != 0xff) {
-      h_off = (LCD[pTrident->lcdMode].display_x 
-	       - pScrn->currentMode->HDisplay) >> 1;
-      v_off = (LCD[pTrident->lcdMode].display_y 
-	       - pScrn->currentMode->VDisplay) >> 1;
-    }
-  } 
+    if (isShadow) {
+	SHADOW_RESTORE(shadow);
+	if (pTrident->lcdMode != 0xff) {
+	    h_off = (LCD[pTrident->lcdMode].display_x 
+		     - pScrn->currentMode->HDisplay) >> 1;
+	    v_off = (LCD[pTrident->lcdMode].display_y 
+		     - pScrn->currentMode->VDisplay) >> 1;
+	}
+    } 
 
-  pTrident->hsync = (HTotal - HSyncStart) + 23 + h_off;
-  pTrident->vsync = (VTotal - VSyncStart) - 2 + v_off;
-  pTrident->hsync_rskew = 0;
-  pTrident->vsync_bskew = 0;
+    pTrident->hsync = (HTotal - HSyncStart) + 23 + h_off;
+    pTrident->vsync = (VTotal - VSyncStart) - 2 + v_off;
+    pTrident->hsync_rskew = 0;
+    pTrident->vsync_bskew = 0;
   
-  /* 
-   * HACK !! As awful as this is, it appears to be the only way....Sigh!
-   * We have XvHsync and XvVsync as options now, which adjust 
-   * at the very end of this function. It'll be helpful for now
-   * and we can get more data on some of these skew values.
-   */
-  switch (pTrident->Chipset) {
-  case TGUI9680:
-    /* Furthur tweaking needed */
-#if 0
-    pTrident->hsync -= (mode->CrtcHTotal / 16);
-#endif
-    pTrident->vsync += 2;
-    break;
-  case PROVIDIA9682:
-    /* Furthur tweaking needed */
-    pTrident->hsync += 7;
-    break;
-  case PROVIDIA9685:
-    /* Spot on */
-    break;
-  case CYBERBLADEXPm8:
-  case CYBERBLADEXPm16:
-  case CYBERBLADEXPAI1:
-    pTrident->hsync -= 15;
-    pTrident->hsync_rskew = 3;
-    break;
-  case BLADE3D:
-    if (pScrn->depth == 24)
-      pTrident->hsync -= 8;
-    else
-      pTrident->hsync -= 6;
-    break;
-  case CYBERBLADEI7:
-  case CYBERBLADEI7D:
-  case CYBERBLADEI1:
-  case CYBERBLADEI1D:
-    pTrident->hsync -= 8;
-    break;
-  case CYBERBLADEAI1:
-    pTrident->hsync -= 7;
-    break;
-  case CYBERBLADEAI1D:
-      pTrident->vsync += 2;
-      pTrident->vsync_bskew = -4;
-      pTrident->hsync -= 5;
-      break;
-  case CYBERBLADEE4:
-    pTrident->hsync -= 8;
-    break;
-  }
-  pTrident->hsync+=pTrident->OverrideHsync;
-  pTrident->vsync+=pTrident->OverrideVsync;
-  pTrident->hsync_rskew+=pTrident->OverrideRskew;
-  pTrident->vsync_bskew+=pTrident->OverrideBskew;
+    /* 
+     * HACK !! As awful as this is, it appears to be the only way....Sigh!
+     * We have XvHsync and XvVsync as options now, which adjust 
+     * at the very end of this function. It'll be helpful for now
+     * and we can get more data on some of these skew values.
+     */
+    switch (pTrident->Chipset) {
+	case TGUI9680:
+	    /* Furthur tweaking needed */
+    	    pTrident->hsync -= 84;
+	    pTrident->vsync += 2;
+	    break;
+	case PROVIDIA9682:
+	    /* Furthur tweaking needed */
+	    pTrident->hsync += 7;
+	    break;
+	case PROVIDIA9685:
+	    /* Spot on */
+	    break;
+        case BLADEXP:
+        case CYBERBLADEXPAI1:
+	    pTrident->hsync -= 15;
+	    pTrident->hsync_rskew = 3;
+	    break;
+	case BLADE3D:
+	    if (pScrn->depth == 24)
+		pTrident->hsync -= 8;
+	    else
+		pTrident->hsync -= 6;
+	    break;
+	case CYBERBLADEI7:
+	case CYBERBLADEI7D:
+	case CYBERBLADEI1:
+	case CYBERBLADEI1D:
+	    pTrident->hsync -= 8;
+	    break;
+	case CYBERBLADEAI1:
+	    pTrident->hsync -= 7;
+	    break;
+	case CYBERBLADEAI1D:
+	    pTrident->vsync += 2;
+	    pTrident->vsync_bskew = -4;
+	    pTrident->hsync -= 5;
+	    break;
+	case CYBERBLADEE4:
+	    pTrident->hsync -= 8;
+	    break;
+	case CYBER9397:
+	    pTrident->hsync -= 1;
+  	    pTrident->vsync -= 0;	     
+	    pTrident->vsync_bskew = 0;
+	    break;
+    case CYBER9397DVD:
+	    pTrident->hsync_rskew = -1;
+	    pTrident->vsync_bskew = -1;
+	    break;
+    }
+    pTrident->hsync+=pTrident->OverrideHsync;
+    pTrident->vsync+=pTrident->OverrideVsync;
+    pTrident->hsync_rskew += pTrident->OverrideRskew;
+    pTrident->vsync_bskew += pTrident->OverrideBskew;
 }
     
+static void
+WaitForSync(ScrnInfoPtr	pScrn)
+{
+    register vgaHWPtr hwp = VGAHWPTR(pScrn);
+
+    while (!(hwp->readST01(hwp)&0x8)) {};
+    while (hwp->readST01(hwp)&0x8) {};
+}

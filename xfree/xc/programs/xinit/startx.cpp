@@ -11,7 +11,7 @@ XCOMM and pop a clock and serveral xterms.
 XCOMM
 XCOMM Site administrators are STRONGLY urged to write nicer versions.
 XCOMM
-XCOMM $XFree86: xc/programs/xinit/startx.cpp,v 3.12.2.2 2002/01/28 18:27:34 tsi Exp $
+XCOMM $XFree86: xc/programs/xinit/startx.cpp,v 3.16 2003/01/24 21:30:02 herrb Exp $
 
 #ifdef SCO
 
@@ -149,7 +149,7 @@ removelist=
 XCOMM set up default Xauth info for this machine
 case `uname` in
 Linux*)
-	if [ -z "`hostname --version | grep GNU`" ]; then
+	if [ -z "`hostname --version 2>&1 | grep GNU`" ]; then
 		hostname=`hostname -f`
 	else
 		hostname=`hostname`
@@ -164,7 +164,9 @@ authdisplay=${display:-:0}
 mcookie=`MK_COOKIE`
 for displayname in $authdisplay $hostname$authdisplay; do
     if ! xauth list "$displayname" | grep "$displayname " >/dev/null 2>&1; then
-	xauth add $displayname . $mcookie
+        xauth << EOF 
+add $displayname . $mcookie
+EOF
 	removelist="$displayname $removelist"
     fi
 done

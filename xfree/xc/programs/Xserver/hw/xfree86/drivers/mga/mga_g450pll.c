@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/mga/mga_g450pll.c,v 1.7 2002/04/06 17:55:11 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/mga/mga_g450pll.c,v 1.8 2002/09/16 18:05:56 eich Exp $ */
 
 /* All drivers should typically include these */
 #include "xf86.h"
@@ -136,6 +136,7 @@ static CARD32 G450FindNextPLLParam(ScrnInfoPtr pScrn, CARD32 ulFout,
       *pulPLLMNP |= (CARD32)ucM << 16;
       *pulPLLMNP |= (CARD32)ucN << 8;
       *pulPLLMNP |= (CARD32)ucP;
+      
 #ifdef DEBUG
       ErrorF("FINS_S: VCO = %d, S = %02X, *pulPLLMNP = %08X\n", ulVCO, (ULONG)ucS, *pulPLLMNP);
 #endif
@@ -315,14 +316,13 @@ double MGAG450SetPLLFreq(ScrnInfoPtr pScrn, long f_out)
 {
    Bool bFoundValidPLL;
    Bool bLocked;
-   CARD8  ucMisc;
+   CARD8  ucMisc, ucSIndex, ucSTable[4];
    CARD32 ulMaxIndex;
    CARD32 ulMNP;
    CARD32 ulMNPTable[MNP_TABLE_SIZE];
    CARD32 ulIndex;
    CARD32 ulTryMNP;
    long lCompareResult;
-
    MGAPtr pMga = MGAPTR(pScrn);
 
 #ifdef DEBUG
@@ -387,16 +387,25 @@ double MGAG450SetPLLFreq(ScrnInfoPtr pScrn, long f_out)
 
    for(ulIndex = 0; !bFoundValidPLL && (ulIndex < ulMaxIndex); ulIndex++)
    {
-      ulTryMNP = ulMNPTable[ulIndex];
+       ulTryMNP = ulMNPTable[ulIndex];
+       
+       ucSTable[3] = 0xff;
+       ucSTable[2] = 0xff;
+       ucSTable[0] = (CARD8) (ulTryMNP & 0x38);
 
-#if 0
-      for(ucS = 0; !bFoundValidPLL && (ucS < 0x40); ucS += 8)
-#endif
-      {
-#if 0
-         ulTryMNP &= 0xffffffc7;
-         ulTryMNP |= (CARD32)ucS;
-#endif
+       if (ucSTable[0] != 0)  {
+	   ucSTable[1] = ucSTable[0] - 8;
+	   if (ucSTable[0] != 0x38) {
+	       ucSTable[2] = ucSTable[0] + 8;
+	   }
+       } else {
+	   ucSTable[1] = 8;
+       }
+       
+       for(ucSIndex = 0; !bFoundValidPLL && (ucSTable[ucSIndex] != 0xff);
+	   ucSIndex++) {
+	    ulTryMNP &= 0xffffffc7;
+	    ulTryMNP |= (CARD32)ucSTable[ucSIndex];
          
          bLocked = TRUE;
          if((ulMNPTable[ulIndex] & 0xff00) < 0x300 ||
@@ -495,3 +504,20 @@ MGAG450SavePLLFreq(ScrnInfoPtr pScrn)
 #endif
     return freq;
 }
+
+#ifdef DEBUG
+void
+MGAG450PrintPLL(ScrnInfoPtr pScrn)
+{
+    CARD32 ulMNP = G450ReadMNP(pScrn);
+    CARD8  ucP;
+    CARD32 freq;
+
+    G450CalculVCO(pScrn, ulMNP, &freq);
+    ucP = (CARD8)(ulMNP & 0x03);
+    G450ApplyPFactor(pScrn, ucP, &freq);
+
+    xf86DrvMsg(pScrn->scrnIndex,X_INFO,"MGAGClock = %d -- MNP = 0x%x\n",
+	       freq,ulMNP);
+}
+#endif

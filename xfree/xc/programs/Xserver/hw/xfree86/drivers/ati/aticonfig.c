@@ -1,6 +1,6 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/aticonfig.c,v 1.9.2.1 2002/01/23 16:17:59 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/aticonfig.c,v 1.12 2003/01/01 19:16:31 tsi Exp $ */
 /*
- * Copyright 2000 through 2002 by Marc Aurele La France (TSI @ UQV), tsi@xfree86.org
+ * Copyright 2000 through 2003 by Marc Aurele La France (TSI @ UQV), tsi@xfree86.org
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -34,9 +34,10 @@
  */
 typedef enum
 {
-    ATI_OPTION_DEVEL,   /* Intentionally undocumented */
-    ATI_OPTION_SYNC,    /* Use XF86Config panel mode porches */
-    ATI_OPTION_BLEND    /* Force horizontal blending of small modes */
+    ATI_OPTION_CRT_SCREEN,      /* Legacy negation of "PanelDisplay" */
+    ATI_OPTION_DEVEL,           /* Intentionally undocumented */
+    ATI_OPTION_BLEND,           /* Force horizontal blending of small modes */
+    ATI_OPTION_SYNC             /* Use XF86Config panel mode porches */
 } ATIPrivateOptionType;
 
 /*
@@ -55,9 +56,16 @@ ATIProcessOptions
     OptionInfoPtr PublicOption = xnfalloc(ATIPublicOptionSize);
     OptionInfoRec PrivateOption[] =
     {
-        {                       /* ON:   Ease exploration of loose ends */
-            ATI_OPTION_DEVEL,   /* OFF:  Fit for public consumption */
-            "tsi",
+        {                       /* Negation of "PanelDisplay" public option */
+            ATI_OPTION_CRT_SCREEN,
+            "crtscreen",
+            OPTV_BOOLEAN,
+            {0, },
+            FALSE
+        },
+        {                       /* ON:   Horizontally blend most modes */
+            ATI_OPTION_BLEND,   /* OFF:  Use pixel replication more often */
+            "lcdblend",
             OPTV_BOOLEAN,
             {0, },
             FALSE
@@ -69,9 +77,9 @@ ATIProcessOptions
             {0, },
             FALSE
         },
-        {                       /* ON:   Horizontally blend most modes */
-            ATI_OPTION_BLEND,   /* OFF:  Use pixel replication more often */
-            "lcdblend",
+        {                       /* ON:   Ease exploration of loose ends */
+            ATI_OPTION_DEVEL,   /* OFF:  Fit for public consumption */
+            "tsi",
             OPTV_BOOLEAN,
             {0, },
             FALSE
@@ -87,24 +95,26 @@ ATIProcessOptions
 
     (void)memcpy(PublicOption, ATIPublicOptions, ATIPublicOptionSize);
 
-#   define Accel       PublicOption[ATI_OPTION_ACCEL].value.bool
-#   define Blend       PrivateOption[ATI_OPTION_BLEND].value.bool
-#   define CRTScreen   PublicOption[ATI_OPTION_CRT].value.bool
-#   define CSync       PublicOption[ATI_OPTION_CSYNC].value.bool
-#   define Devel       PrivateOption[ATI_OPTION_DEVEL].value.bool
-#   define HWCursor    PublicOption[ATI_OPTION_HWCURSOR].value.bool
+#   define Accel        PublicOption[ATI_OPTION_ACCEL].value.bool
+#   define Blend        PrivateOption[ATI_OPTION_BLEND].value.bool
+#   define CRTDisplay   PublicOption[ATI_OPTION_CRT_DISPLAY].value.bool
+#   define CRTScreen    PrivateOption[ATI_OPTION_CRT_SCREEN].value.bool
+#   define CSync        PublicOption[ATI_OPTION_CSYNC].value.bool
+#   define Devel        PrivateOption[ATI_OPTION_DEVEL].value.bool
+#   define HWCursor     PublicOption[ATI_OPTION_HWCURSOR].value.bool
 
 #ifndef AVOID_CPIO
 
-#   define Linear      PublicOption[ATI_OPTION_LINEAR].value.bool
+#   define Linear       PublicOption[ATI_OPTION_LINEAR].value.bool
 
 #endif /* AVOID_CPIO */
 
-#   define CacheMMIO   PublicOption[ATI_OPTION_MMIO_CACHE].value.bool
-#   define ProbeClocks PublicOption[ATI_OPTION_PROBE_CLOCKS].value.bool
-#   define ShadowFB    PublicOption[ATI_OPTION_SHADOW_FB].value.bool
-#   define SWCursor    PublicOption[ATI_OPTION_SWCURSOR].value.bool
-#   define Sync        PrivateOption[ATI_OPTION_SYNC].value.bool
+#   define CacheMMIO    PublicOption[ATI_OPTION_MMIO_CACHE].value.bool
+#   define PanelDisplay PublicOption[ATI_OPTION_PANEL_DISPLAY].value.bool
+#   define ProbeClocks  PublicOption[ATI_OPTION_PROBE_CLOCKS].value.bool
+#   define ShadowFB     PublicOption[ATI_OPTION_SHADOW_FB].value.bool
+#   define SWCursor     PublicOption[ATI_OPTION_SWCURSOR].value.bool
+#   define Sync         PrivateOption[ATI_OPTION_SYNC].value.bool
 
 #   define ReferenceClock \
         PublicOption[ATI_OPTION_REFERENCE_CLOCK].value.freq.freq
@@ -143,7 +153,7 @@ ATIProcessOptions
         ShadowFB = TRUE;
     }
 
-    Blend = /* CSync = Sync = */ TRUE;
+    Blend = PanelDisplay = TRUE;
 
     xf86ProcessOptions(pScreenInfo->scrnIndex, pScreenInfo->options,
         PublicOption);
@@ -166,7 +176,7 @@ ATIProcessOptions
     /* Move option values into driver private structure */
     pATI->OptionAccel = Accel;
     pATI->OptionBlend = Blend;
-    pATI->OptionCRT = CRTScreen;
+    pATI->OptionCRTDisplay = CRTDisplay;
     pATI->OptionCSync = CSync;
     pATI->OptionDevel = Devel;
 
@@ -180,6 +190,13 @@ ATIProcessOptions
     pATI->OptionProbeClocks = ProbeClocks;
     pATI->OptionShadowFB = ShadowFB;
     pATI->OptionSync = Sync;
+
+    /* "CRTScreen" is now "NoPanelDisplay" */
+    if ((PanelDisplay != CRTScreen) ||
+        PublicOption[ATI_OPTION_PANEL_DISPLAY].found)
+        pATI->OptionPanelDisplay = PanelDisplay;
+    else
+        pATI->OptionPanelDisplay = !CRTScreen;
 
     /* Validate and set cursor options */
     pATI->Cursor = ATI_CURSOR_SOFTWARE;

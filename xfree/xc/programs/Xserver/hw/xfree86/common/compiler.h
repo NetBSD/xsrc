@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/compiler.h,v 3.88 2002/01/07 20:38:27 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/compiler.h,v 3.99 2003/01/29 15:23:20 tsi Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  *
@@ -25,52 +25,52 @@
 
 #ifndef _COMPILER_H
 
-#if !defined(_XF86_ANSIC_H) && defined(XFree86Module)
-# error missing #include "xf86_ansic.h" before #include "compiler.h"
-#endif
+# if !defined(_XF86_ANSIC_H) && defined(XFree86Module)
+#  error missing #include "xf86_ansic.h" before #include "compiler.h"
+# endif
 
-#define _COMPILER_H
+# define _COMPILER_H
 
 /* Allow drivers to use the GCC-supported __inline__ and/or __inline. */
-#ifndef __inline__
-# if defined(__GNUC__)
-   /* gcc has __inline__ */
-# elif defined(__HIGHC__)
-#  define __inline__ _Inline
-# else
-#  define __inline__ /**/
-# endif
-#endif /* __inline__ */
-#ifndef __inline
-# if defined(__GNUC__)
-   /* gcc has __inline */
-# elif defined(__HIGHC__)
-#  define __inline _Inline
-# else
-#  define __inline /**/
-# endif
-#endif /* __inline */
+# ifndef __inline__
+#  if defined(__GNUC__)
+    /* gcc has __inline__ */
+#  elif defined(__HIGHC__)
+#   define __inline__ _Inline
+#  else
+#   define __inline__ /**/
+#  endif
+# endif /* __inline__ */
+# ifndef __inline
+#  if defined(__GNUC__)
+    /* gcc has __inline */
+#  elif defined(__HIGHC__)
+#   define __inline _Inline
+#  else
+#   define __inline /**/
+#  endif
+# endif /* __inline */
 
-#if defined(IODEBUG) && defined(__GNUC__)
-#define outb RealOutb
-#define outw RealOutw
-#define outl RealOutl
-#define inb RealInb
-#define inw RealInw
-#define inl RealInl
-#endif
+# if defined(IODEBUG) && defined(__GNUC__)
+#  define outb RealOutb
+#  define outw RealOutw
+#  define outl RealOutl
+#  define inb RealInb
+#  define inw RealInw
+#  define inl RealInl
+# endif
 
-#if defined(QNX4) /* Do this for now to keep Watcom happy */
-#define outb outp
-#define outw outpw
-#define outl outpd 
-#define inb inp
-#define inw inpw
-#define inl inpd
+# if defined(QNX4) /* Do this for now to keep Watcom happy */
+#  define outb outp
+#  define outw outpw
+#  define outl outpd 
+#  define inb inp
+#  define inw inpw
+#  define inl inpd
 
 /* Define the ffs function for inlining */
 extern int ffs(unsigned long);
-#pragma aux ffs_ = \
+#  pragma aux ffs_ = \
         "bsf edx, eax"          \
         "jnz bits_set"          \
         "xor eax, eax"          \
@@ -83,11 +83,12 @@ extern int ffs(unsigned long);
         __modify [eax edx]      \
         __value [eax]           \
         ;
-#endif
+# endif
 
-#if defined(NO_INLINE) || defined(DO_PROTOTYPES)
+# if defined(NO_INLINE) || defined(DO_PROTOTYPES)
 
-#if !defined(__sparc__)
+#  if !defined(__sparc__) && !defined(__arm32__) \
+      && !(defined(__alpha__) && defined(linux))
 
 extern void outb(unsigned short, unsigned char);
 extern void outw(unsigned short, unsigned short);
@@ -96,7 +97,7 @@ extern unsigned int inb(unsigned short);
 extern unsigned int inw(unsigned short);
 extern unsigned int inl(unsigned short);
 
-#else /* __sparc__ */
+#  else /* __sparc__,  __arm32__, __alpha__*/
 
 extern void outb(unsigned long, unsigned char);
 extern void outw(unsigned long, unsigned short);
@@ -105,7 +106,7 @@ extern unsigned int inb(unsigned long);
 extern unsigned int inw(unsigned long);
 extern unsigned int inl(unsigned long);
 
-#endif /* __sparc__ */
+#  endif /* __sparc__,  __arm32__, __alpha__ */
 
 extern unsigned long ldq_u(unsigned long *);
 extern unsigned long ldl_u(unsigned int *);
@@ -119,73 +120,67 @@ extern void stl_brx(unsigned long, volatile unsigned char *, int);
 extern void stw_brx(unsigned short, volatile unsigned char *, int);
 extern unsigned long ldl_brx(volatile unsigned char *, int);
 extern unsigned short ldw_brx(volatile unsigned char *, int);
-extern unsigned char rdinx(unsigned short, unsigned char);
-extern void wrinx(unsigned short, unsigned char, unsigned char);
-extern void modinx(unsigned short, unsigned char, unsigned char, unsigned char);
-extern int testrg(unsigned short, unsigned char);
-extern int testinx2(unsigned short, unsigned char, unsigned char);
-extern int testinx(unsigned short, unsigned char);
 
-#endif
+# endif
 
-#ifndef NO_INLINE
+# ifndef NO_INLINE
+#  ifdef __GNUC__
+#   if (defined(linux) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)) && defined(__alpha__)
 
-#ifdef __GNUC__
-
-#if (defined(linux) || defined(__FreeBSD__) || defined(__NetBSD__)) && defined(__alpha__)
-
-#ifdef linux
+#    ifdef linux
 /* for Linux on Alpha, we use the LIBC _inx/_outx routines */
 /* note that the appropriate setup via "ioperm" needs to be done */
 /*  *before* any inx/outx is done. */
 
-extern void _outb(char val, unsigned short port);
+extern void (*_alpha_outb)(char val, unsigned long port);
 static __inline__ void
-outb(unsigned short port, unsigned char val)
+outb(unsigned long port, unsigned char val)
 {
-    _outb(val, port);
+    _alpha_outb(val, port);
 }
 
-extern void _outw(short val, unsigned short port);
+extern void (*_alpha_outw)(short val, unsigned long port);
 static __inline__ void
-outw(unsigned short port, unsigned short val)
+outw(unsigned long port, unsigned short val)
 {
-    _outw(val, port);
+    _alpha_outw(val, port);
 }
 
-extern void _outl(int val, unsigned short port);
+extern void (*_alpha_outl)(int val, unsigned long port);
 static __inline__ void
-outl(unsigned short port, unsigned int val)
+outl(unsigned long port, unsigned int val)
 {
-    _outl(val, port);
+    _alpha_outl(val, port);
 }
 
-extern unsigned int _inb(unsigned short port);
+extern unsigned int (*_alpha_inb)(unsigned long port);
 static __inline__ unsigned int
-inb(unsigned short port)
+inb(unsigned long port)
 {
-  return _inb(port);
+  return _alpha_inb(port);
 }
 
-extern unsigned int _inw(unsigned short port);
+extern unsigned int (*_alpha_inw)(unsigned long port);
 static __inline__ unsigned int
-inw(unsigned short port)
+inw(unsigned long port)
 {
-  return _inw(port);
+  return _alpha_inw(port);
 }
 
-extern unsigned int _inl(unsigned short port);
+extern unsigned int (*_alpha_inl)(unsigned long port);
 static __inline__ unsigned int
-inl(unsigned short port)
+inl(unsigned long port)
 {
-  return _inl(port);
+  return _alpha_inl(port);
 }
 
-#endif /* linux */
+#    endif /* linux */
 
-#if defined(__FreeBSD__) && !defined(DO_PROTOTYPES)
+#    if (defined(__FreeBSD__) || defined(__OpenBSD__)) \
+      && !defined(DO_PROTOTYPES)
 
-/* for FreeBSD on Alpha, we use the libio inx/outx routines */
+/* for FreeBSD and OpenBSD on Alpha, we use the libio (resp. libalpha) */
+/*  inx/outx routines */
 /* note that the appropriate setup via "ioperm" needs to be done */
 /*  *before* any inx/outx is done. */
 
@@ -196,7 +191,8 @@ extern unsigned char inb(unsigned int port);
 extern unsigned short inw(unsigned int port);
 extern unsigned int inl(unsigned int port);
 
-#endif /* __FreeBSD__ && !DO_PROTOTYPES */
+#    endif /* (__FreeBSD__ || __OpenBSD__ ) && !DO_PROTOTYPES */
+
 
 #if defined(__NetBSD__)
 #include <machine/pio.h>
@@ -223,10 +219,10 @@ struct __una_u16 { unsigned short x __attribute__((packed)); };
 
 static __inline__ unsigned long ldq_u(unsigned long * r11)
 {
-#if __GNUC__ > 2 || __GNUC_MINOR__ >= 91
+#    if defined(__GNUC__) && ((__GNUC__ > 2) || (__GNUC_MINOR__ >= 91))
 	const struct __una_u64 *ptr = (const struct __una_u64 *) r11;
 	return ptr->x;
-#else
+#    else
 	unsigned long r1,r2;
 	__asm__("ldq_u %0,%3\n\t"
 		"ldq_u %1,%4\n\t"
@@ -237,15 +233,15 @@ static __inline__ unsigned long ldq_u(unsigned long * r11)
 		 "m" (*r11),
 		 "m" (*(const unsigned long *)(7+(char *) r11)));
 	return r1 | r2;
-#endif
+#    endif
 }
 
 static __inline__ unsigned long ldl_u(unsigned int * r11)
 {
-#if __GNUC__ > 2 || __GNUC_MINOR__ >= 91
+#    if defined(__GNUC__) && ((__GNUC__ > 2) || (__GNUC_MINOR__ >= 91))
 	const struct __una_u32 *ptr = (const struct __una_u32 *) r11;
 	return ptr->x;
-#else
+#    else
 	unsigned long r1,r2;
 	__asm__("ldq_u %0,%3\n\t"
 		"ldq_u %1,%4\n\t"
@@ -256,15 +252,15 @@ static __inline__ unsigned long ldl_u(unsigned int * r11)
 		 "m" (*r11),
 		 "m" (*(const unsigned long *)(3+(char *) r11)));
 	return r1 | r2;
-#endif
+#    endif
 }
 
 static __inline__ unsigned long ldw_u(unsigned short * r11)
 {
-#if __GNUC__ > 2 || __GNUC_MINOR__ >= 91
+#    if defined(__GNUC__) && ((__GNUC__ > 2) || (__GNUC_MINOR__ >= 91))
 	const struct __una_u16 *ptr = (const struct __una_u16 *) r11;
 	return ptr->x;
-#else
+#    else
 	unsigned long r1,r2;
 	__asm__("ldq_u %0,%3\n\t"
 		"ldq_u %1,%4\n\t"
@@ -275,7 +271,7 @@ static __inline__ unsigned long ldw_u(unsigned short * r11)
 		 "m" (*r11),
 		 "m" (*(const unsigned long *)(1+(char *) r11)));
 	return r1 | r2;
-#endif
+#    endif
 }
 
 /*
@@ -284,10 +280,10 @@ static __inline__ unsigned long ldw_u(unsigned short * r11)
 
 static __inline__ void stq_u(unsigned long r5, unsigned long * r11)
 {
-#if __GNUC__ > 2 || __GNUC_MINOR__ >= 91
+#    if defined(__GNUC__) && ((__GNUC__ > 2) || (__GNUC_MINOR__ >= 91))
 	struct __una_u64 *ptr = (struct __una_u64 *) r11;
 	ptr->x = r5;
-#else
+#    else
 	unsigned long r1,r2,r3,r4;
 
 	__asm__("ldq_u %3,%1\n\t"
@@ -304,15 +300,15 @@ static __inline__ void stq_u(unsigned long r5, unsigned long * r11)
 		 "=m" (*(unsigned long *)(7+(char *) r11)),
 		 "=&r" (r1), "=&r" (r2), "=&r" (r3), "=&r" (r4)
 		:"r" (r5), "r" (r11));
-#endif
+#    endif
 }
 
 static __inline__ void stl_u(unsigned long r5, unsigned int * r11)
 {
-#if __GNUC__ > 2 || __GNUC_MINOR__ >= 91
+#    if defined(__GNUC__) && ((__GNUC__ > 2) || (__GNUC_MINOR__ >= 91))
 	struct __una_u32 *ptr = (struct __una_u32 *) r11;
 	ptr->x = r5;
-#else
+#    else
 	unsigned long r1,r2,r3,r4;
 
 	__asm__("ldq_u %3,%1\n\t"
@@ -329,15 +325,15 @@ static __inline__ void stl_u(unsigned long r5, unsigned int * r11)
 		 "=m" (*(unsigned long *)(3+(char *) r11)),
 		 "=&r" (r1), "=&r" (r2), "=&r" (r3), "=&r" (r4)
 		:"r" (r5), "r" (r11));
-#endif
+#    endif
 }
 
 static __inline__ void stw_u(unsigned long r5, unsigned short * r11)
 {
-#if __GNUC__ > 2 || __GNUC_MINOR__ >= 91
+#    if defined(__GNUC__) && ((__GNUC__ > 2) || (__GNUC_MINOR__ >= 91))
 	struct __una_u16 *ptr = (struct __una_u16 *) r11;
 	ptr->x = r5;
-#else
+#    else
 	unsigned long r1,r2,r3,r4;
 
 	__asm__("ldq_u %3,%1\n\t"
@@ -354,89 +350,89 @@ static __inline__ void stw_u(unsigned long r5, unsigned short * r11)
 		 "=m" (*(unsigned long *)(1+(char *) r11)),
 		 "=&r" (r1), "=&r" (r2), "=&r" (r3), "=&r" (r4)
 		:"r" (r5), "r" (r11));
-#endif
+#    endif
 }
 
 /* to flush the I-cache before jumping to code which just got loaded */
-#define PAL_imb 134
-#define istream_mem_barrier() \
+#    define PAL_imb 134
+#    define istream_mem_barrier() \
 	__asm__ __volatile__("call_pal %0 #imb" : : "i" (PAL_imb) : "memory")
-#define mem_barrier()        __asm__ __volatile__("mb"  : : : "memory")
-#ifdef __ELF__
-#define write_mem_barrier()  __asm__ __volatile__("wmb" : : : "memory")
-#else  /*  ECOFF gas 2.6 doesn't know "wmb" :-(  */
-#define write_mem_barrier()  mem_barrier()
-#endif
+#    define mem_barrier()        __asm__ __volatile__("mb"  : : : "memory")
+#    ifdef __ELF__
+#     define write_mem_barrier()  __asm__ __volatile__("wmb" : : : "memory")
+#    else  /*  ECOFF gas 2.6 doesn't know "wmb" :-(  */
+#     define write_mem_barrier()  mem_barrier()
+#    endif
 
 
-#elif defined(linux) && defined(__ia64__) 
+#   elif defined(linux) && defined(__ia64__) 
  
-#include <inttypes.h>
+#    include <inttypes.h>
 
-#include <sys/io.h>
+#    include <sys/io.h>
 
 struct __una_u64 { uint64_t x __attribute__((packed)); };
 struct __una_u32 { uint32_t x __attribute__((packed)); };
 struct __una_u16 { uint16_t x __attribute__((packed)); };
 
-extern __inline__ unsigned long
+static __inline__ unsigned long
 __uldq (const unsigned long * r11)
 {
 	const struct __una_u64 *ptr = (const struct __una_u64 *) r11;
 	return ptr->x;
 }
 
-extern __inline__ unsigned long
+static __inline__ unsigned long
 __uldl (const unsigned int * r11)
 {
 	const struct __una_u32 *ptr = (const struct __una_u32 *) r11;
 	return ptr->x;
 }
 
-extern __inline__ unsigned long
+static __inline__ unsigned long
 __uldw (const unsigned short * r11)
 {
 	const struct __una_u16 *ptr = (const struct __una_u16 *) r11;
 	return ptr->x;
 }
 
-extern __inline__ void
+static __inline__ void
 __ustq (unsigned long r5, unsigned long * r11)
 {
 	struct __una_u64 *ptr = (struct __una_u64 *) r11;
 	ptr->x = r5;
 }
 
-extern __inline__ void
+static __inline__ void
 __ustl (unsigned long r5, unsigned int * r11)
 {
 	struct __una_u32 *ptr = (struct __una_u32 *) r11;
 	ptr->x = r5;
 }
 
-extern __inline__ void
+static __inline__ void
 __ustw (unsigned long r5, unsigned short * r11)
 {
 	struct __una_u16 *ptr = (struct __una_u16 *) r11;
 	ptr->x = r5;
 }
 
-#define ldq_u(p)	__uldq(p)
-#define ldl_u(p)	__uldl(p)
-#define ldw_u(p)	__uldw(p) 
-#define stq_u(v,p)	__ustq(v,p)
-#define stl_u(v,p)	__ustl(v,p)
-#define stw_u(v,p)	__ustw(v,p)
+#    define ldq_u(p)	__uldq(p)
+#    define ldl_u(p)	__uldl(p)
+#    define ldw_u(p)	__uldw(p) 
+#    define stq_u(v,p)	__ustq(v,p)
+#    define stl_u(v,p)	__ustl(v,p)
+#    define stw_u(v,p)	__ustw(v,p)
   
-#define mem_barrier()        __asm__ __volatile__ ("mf" ::: "memory")
-#define write_mem_barrier()  __asm__ __volatile__ ("mf" ::: "memory")
+#    define mem_barrier()        __asm__ __volatile__ ("mf" ::: "memory")
+#    define write_mem_barrier()  __asm__ __volatile__ ("mf" ::: "memory")
 
 /*
  * This is overkill, but for different reasons depending on where it is used.
  * This is thus general enough to be used everywhere cache flushes are needed.
  * It doesn't handle memory access serialisation by other processors, though.
  */
-#define ia64_flush_cache(Addr) \
+#    define ia64_flush_cache(Addr) \
 	__asm__ __volatile__ ( \
 		"fc %0;;;" \
 		"sync.i;;;" \
@@ -444,22 +440,88 @@ __ustw (unsigned long r5, unsigned short * r11)
 		"srlz.i;;;" \
 		:: "r"(Addr) : "memory")
 
-#undef outb
-#undef outw
-#undef outl
+#    undef outb
+#    undef outw
+#    undef outl
  
-#define outb(a,b)	_outb(b,a)
-#define outw(a,b)	_outw(b,a)
-#define outl(a,b)	_outl(b,a) 
+#    define outb(a,b)	_outb(b,a)
+#    define outw(a,b)	_outw(b,a)
+#    define outl(a,b)	_outl(b,a) 
 
-#elif (defined(linux) || defined(Lynx) || defined(sun)) && defined(__sparc__)
+#   elif defined(linux) && defined(__x86_64__) 
+ 
+#    include <inttypes.h>
 
-#if !defined(Lynx)
-#ifndef ASI_PL
-#define ASI_PL 0x88
-#endif
+#    define ldq_u(p)	(*((unsigned long  *)(p)))
+#    define ldl_u(p)	(*((unsigned int   *)(p)))
+#    define ldw_u(p)	(*((unsigned short *)(p)))
+#    define stq_u(v,p)	(*(unsigned long  *)(p)) = (v)
+#    define stl_u(v,p)	(*(unsigned int   *)(p)) = (v)
+#    define stw_u(v,p)	(*(unsigned short *)(p)) = (v)
+  
+#    define mem_barrier() \
+       __asm__ __volatile__ ("lock; addl $0,0(%%rsp)": : :"memory")
+#    define write_mem_barrier() \
+       __asm__ __volatile__ ("": : :"memory")
 
-#define barrier() __asm__ __volatile__(".word 0x8143e00a": : :"memory")
+
+static __inline__ void
+outb(unsigned short port, unsigned char val)
+{
+   __asm__ __volatile__("outb %0,%1" : :"a" (val), "d" (port));
+}
+
+
+static __inline__ void
+outw(unsigned short port, unsigned short val)
+{
+   __asm__ __volatile__("outw %0,%1" : :"a" (val), "d" (port));
+}
+
+static __inline__ void
+outl(unsigned short port, unsigned int val)
+{
+   __asm__ __volatile__("outl %0,%1" : :"a" (val), "d" (port));
+}
+
+static __inline__ unsigned int
+inb(unsigned short port)
+{
+   unsigned char ret;
+   __asm__ __volatile__("inb %1,%0" :
+       "=a" (ret) :
+       "d" (port));
+   return ret;
+}
+
+static __inline__ unsigned int
+inw(unsigned short port)
+{
+   unsigned short ret;
+   __asm__ __volatile__("inw %1,%0" :
+       "=a" (ret) :
+       "d" (port));
+   return ret;
+}
+
+static __inline__ unsigned int
+inl(unsigned short port)
+{
+   unsigned int ret;
+   __asm__ __volatile__("inl %1,%0" :
+       "=a" (ret) :
+       "d" (port));
+   return ret;
+}
+
+#   elif (defined(linux) || defined(Lynx) || defined(sun) || defined(__OpenBSD__)) && defined(__sparc__)
+
+#    if !defined(Lynx)
+#     ifndef ASI_PL
+#      define ASI_PL 0x88
+#     endif
+
+#     define barrier() __asm__ __volatile__(".word 0x8143e00a": : :"memory")
 
 static __inline__ void
 outb(unsigned long port, unsigned char val)
@@ -693,141 +755,146 @@ xf86WriteMmio32LeNB(__volatile__ void *base, const unsigned long offset,
 			     : "r" (val), "r" (addr), "i" (ASI_PL));
 }
 
-#endif	/* !Lynx */
+#    endif	/* !Lynx */
 
 /*
  * EGCS 1.1 knows about arbitrary unaligned loads.  Define some
  * packed structures to talk about such things with.
  */
 
-#if defined(__arch64__) || defined(__sparcv9)
+#    if defined(__arch64__) || defined(__sparcv9)
 struct __una_u64 { unsigned long  x __attribute__((packed)); };
-#endif
+#    endif
 struct __una_u32 { unsigned int   x __attribute__((packed)); };
 struct __una_u16 { unsigned short x __attribute__((packed)); };
 
 static __inline__ unsigned long ldq_u(unsigned long *p)
 {
-#if __GNUC__ > 2 || __GNUC_MINOR__ >= 91
-#if defined(__arch64__) || defined(__sparcv9)
+#    if defined(__GNUC__) && ((__GNUC__ > 2) || (__GNUC_MINOR__ >= 91))
+#     if defined(__arch64__) || defined(__sparcv9)
 	const struct __una_u64 *ptr = (const struct __una_u64 *) p;
-#else
+#     else
 	const struct __una_u32 *ptr = (const struct __una_u32 *) p;
-#endif
+#     endif
 	return ptr->x;
-#else
+#    else
 	unsigned long ret;
 	memmove(&ret, p, sizeof(*p));
 	return ret;
-#endif
+#    endif
 }
 
 static __inline__ unsigned long ldl_u(unsigned int *p)
 {
-#if __GNUC__ > 2 || __GNUC_MINOR__ >= 91
+#    if defined(__GNUC__) && ((__GNUC__ > 2) || (__GNUC_MINOR__ >= 91))
 	const struct __una_u32 *ptr = (const struct __una_u32 *) p;
 	return ptr->x;
-#else
+#    else
 	unsigned int ret;
 	memmove(&ret, p, sizeof(*p));
 	return ret;
-#endif
+#    endif
 }
 
 static __inline__ unsigned long ldw_u(unsigned short *p)
 {
-#if __GNUC__ > 2 || __GNUC_MINOR__ >= 91
+#    if defined(__GNUC__) && ((__GNUC__ > 2) || (__GNUC_MINOR__ >= 91))
 	const struct __una_u16 *ptr = (const struct __una_u16 *) p;
 	return ptr->x;
-#else
+#    else
 	unsigned short ret;
 	memmove(&ret, p, sizeof(*p));
 	return ret;
-#endif
+#    endif
 }
 
 static __inline__ void stq_u(unsigned long val, unsigned long *p)
 {
-#if __GNUC__ > 2 || __GNUC_MINOR__ >= 91
-#if defined(__arch64__) || defined(__sparcv9)
+#    if defined(__GNUC__) && ((__GNUC__ > 2) || (__GNUC_MINOR__ >= 91))
+#     if defined(__arch64__) || defined(__sparcv9)
 	struct __una_u64 *ptr = (struct __una_u64 *) p;
-#else
+#     else
 	struct __una_u32 *ptr = (struct __una_u32 *) p;
-#endif
+#     endif
 	ptr->x = val;
-#else
+#    else
 	unsigned long tmp = val;
 	memmove(p, &tmp, sizeof(*p));
-#endif
+#    endif
 }
 
 static __inline__ void stl_u(unsigned long val, unsigned int *p)
 {
-#if __GNUC__ > 2 || __GNUC_MINOR__ >= 91
+#    if defined(__GNUC__) && ((__GNUC__ > 2) || (__GNUC_MINOR__ >= 91))
 	struct __una_u32 *ptr = (struct __una_u32 *) p;
 	ptr->x = val;
-#else
+#    else
 	unsigned int tmp = val;
 	memmove(p, &tmp, sizeof(*p));
-#endif
+#    endif
 }
 
 static __inline__ void stw_u(unsigned long val, unsigned short *p)
 {
-#if __GNUC__ > 2 || __GNUC_MINOR__ >= 91
+#    if defined(__GNUC__) && ((__GNUC__ > 2) || (__GNUC_MINOR__ >= 91))
 	struct __una_u16 *ptr = (struct __una_u16 *) p;
 	ptr->x = val;
-#else
+#    else
 	unsigned short tmp = val;
 	memmove(p, &tmp, sizeof(*p));
-#endif
+#    endif
 }
 
-#define mem_barrier()         /* XXX: nop for now */
-#define write_mem_barrier()   /* XXX: nop for now */
+#    define mem_barrier()         /* XXX: nop for now */
+#    define write_mem_barrier()   /* XXX: nop for now */
 
-#elif defined(__mips__) || defined(__arm32__) || defined(__arm__)
+#   elif defined(__mips__) || defined(__arm32__) || defined(__arm__)
+#ifdef __arm32__
+#define PORT_SIZE long
+#else
+#define PORT_SIZE short
+#endif
 
 unsigned int IOPortBase;  /* Memory mapped I/O port area */
 
 static __inline__ void
-outb(unsigned short port, unsigned char val)
+outb(unsigned PORT_SIZE port, unsigned char val)
 {
-	*(volatile unsigned char*)(((unsigned short)(port))+IOPortBase) = val;
+	*(volatile unsigned char*)(((unsigned PORT_SIZE)(port))+IOPortBase) = val;
 }
 
 static __inline__ void
-outw(unsigned short port, unsigned short val)
+outw(unsigned PORT_SIZE port, unsigned short val)
 {
-	*(volatile unsigned short*)(((unsigned short)(port))+IOPortBase) = val;
+	*(volatile unsigned short*)(((unsigned PORT_SIZE)(port))+IOPortBase) = val;
 }
 
 static __inline__ void
-outl(unsigned short port, unsigned int val)
+outl(unsigned PORT_SIZE port, unsigned int val)
 {
-	*(volatile unsigned int*)(((unsigned short)(port))+IOPortBase) = val;
+	*(volatile unsigned int*)(((unsigned PORT_SIZE)(port))+IOPortBase) = val;
 }
 
 static __inline__ unsigned int
-inb(unsigned short port)
+inb(unsigned PORT_SIZE port)
 {
-	return *(volatile unsigned char*)(((unsigned short)(port))+IOPortBase);
+	return *(volatile unsigned char*)(((unsigned PORT_SIZE)(port))+IOPortBase);
 }
 
 static __inline__ unsigned int
-inw(unsigned short port)
+inw(unsigned PORT_SIZE port)
 {
-	return *(volatile unsigned short*)(((unsigned short)(port))+IOPortBase);
+	return *(volatile unsigned short*)(((unsigned PORT_SIZE)(port))+IOPortBase);
 }
 
 static __inline__ unsigned int
-inl(unsigned short port)
+inl(unsigned PORT_SIZE port)
 {
-	return *(volatile unsigned int*)(((unsigned short)(port))+IOPortBase);
+	return *(volatile unsigned int*)(((unsigned PORT_SIZE)(port))+IOPortBase);
 }
 
 
-#if defined(__mips__)
+#    if defined(__mips__)
 static __inline__ unsigned long ldq_u(unsigned long * r11)
 {
 	unsigned long r1;
@@ -864,7 +931,7 @@ static __inline__ unsigned long ldw_u(unsigned short * r11)
 	return r1;
 }
 
-#ifdef linux	/* don't mess with other OSs */
+#     ifdef linux	/* don't mess with other OSs */
 
 /*
  * EGCS 1.1 knows about arbitrary unaligned loads (and we don't support older
@@ -887,7 +954,7 @@ static __inline__ void stl_u(unsigned long val, unsigned int *p)
 	ptr->x = val;
 }
 
-#if X_BYTE_ORDER == X_BIG_ENDIAN
+#       if X_BYTE_ORDER == X_BIG_ENDIAN
 static __inline__ unsigned int
 xf86ReadMmio32Be(__volatile__ void *base, const unsigned long offset)
 {
@@ -910,54 +977,55 @@ xf86WriteMmio32Be(__volatile__ void *base, const unsigned long offset,
 			     : /* No outputs */
 			     : "r" (val), "r" (addr));
 }
-#endif
+#      endif
 
-#define mem_barrier() \
-__asm__ __volatile__(					\
-	"# prevent instructions being moved around\n\t"	\
-	".set\tnoreorder\n\t"				\
-	"# 8 nops to fool the R4400 pipeline\n\t"	\
-	"nop;nop;nop;nop;nop;nop;nop;nop\n\t"		\
-	".set\treorder"					\
-	: /* no output */				\
-	: /* no input */				\
-	: "memory")
-#define write_mem_barrier() mem_barrier()
+#      define mem_barrier() \
+        __asm__ __volatile__(					\
+		"# prevent instructions being moved around\n\t"	\
+       		".set\tnoreorder\n\t"				\
+		"# 8 nops to fool the R4400 pipeline\n\t"	\
+		"nop;nop;nop;nop;nop;nop;nop;nop\n\t"		\
+		".set\treorder"					\
+		: /* no output */				\
+		: /* no input */				\
+		: "memory")
+#      define write_mem_barrier() mem_barrier()
 
-#else  /* !linux */
-#define stq_u(v,p)	stl_u(v,p)
-#define stl_u(v,p)	(*(unsigned char *)(p)) = (v); \
+#     else  /* !linux */
+
+#      define stq_u(v,p)	stl_u(v,p)
+#      define stl_u(v,p)	(*(unsigned char *)(p)) = (v); \
 			(*(unsigned char *)(p)+1) = ((v) >> 8);  \
 			(*(unsigned char *)(p)+2) = ((v) >> 16); \
 			(*(unsigned char *)(p)+3) = ((v) >> 24)
 
-#define stw_u(v,p)	(*(unsigned char *)(p)) = (v); \
-			(*(unsigned char *)(p)+1) = ((v) >> 8)
+#      define stw_u(v,p)	(*(unsigned char *)(p)) = (v); \
+				(*(unsigned char *)(p)+1) = ((v) >> 8)
 
-#define mem_barrier()   /* NOP */
-#endif /* !linux */
-#endif /* __mips__ */
+#      define mem_barrier()   /* NOP */
+#     endif /* !linux */
+#    endif /* __mips__ */
 
-#if defined(__arm32__) || defined(__arm__)
-#define ldq_u(p)	(*((unsigned long  *)(p)))
-#define ldl_u(p)	(*((unsigned int   *)(p)))
-#define ldw_u(p)	(*((unsigned short *)(p)))
-#define stq_u(v,p)	(*(unsigned long  *)(p)) = (v)
-#define stl_u(v,p)	(*(unsigned int   *)(p)) = (v)
-#define stw_u(v,p)	(*(unsigned short *)(p)) = (v)
-#define mem_barrier()	/* NOP */
-#define write_mem_barrier()	/* NOP */
-#endif /* __arm32__ */
+#    if defined(__arm32__)
+#     define ldq_u(p)	(*((unsigned long  *)(p)))
+#     define ldl_u(p)	(*((unsigned int   *)(p)))
+#     define ldw_u(p)	(*((unsigned short *)(p)))
+#     define stq_u(v,p)	(*(unsigned long  *)(p)) = (v)
+#     define stl_u(v,p)	(*(unsigned int   *)(p)) = (v)
+#     define stw_u(v,p)	(*(unsigned short *)(p)) = (v)
+#     define mem_barrier()	/* NOP */
+#     define write_mem_barrier()	/* NOP */
+#    endif /* __arm32__ */
 
-#elif (defined(Lynx) || defined(linux) || defined(__OpenBSD__) || defined(__NetBSD__)) && defined(__powerpc__)
+#   elif (defined(Lynx) || defined(linux) || defined(__OpenBSD__) || defined(__NetBSD__)) && defined(__powerpc__)
 
-#ifndef MAP_FAILED
-#define MAP_FAILED ((void *)-1)
-#endif
+#    ifndef MAP_FAILED
+#     define MAP_FAILED ((void *)-1)
+#    endif
 
 extern volatile unsigned char *ioBase;
 
-#define eieio()		__asm__ __volatile__ ("eieio")
+#    define eieio()		__asm__ __volatile__ ("eieio" ::: "memory")
 
 static __inline__ unsigned char
 xf86ReadMmio8(__volatile__ void *base, const unsigned long offset)
@@ -1157,38 +1225,38 @@ inl(unsigned short port)
         return xf86ReadMmio32Le((void *)ioBase, port);
 }
 
-#define ldq_u(p)	ldl_u(p)
-#define ldl_u(p)	((*(unsigned char *)(p))	| \
+#    define ldq_u(p)	ldl_u(p)
+#    define ldl_u(p)	((*(unsigned char *)(p))	| \
 			(*((unsigned char *)(p)+1)<<8)	| \
 			(*((unsigned char *)(p)+2)<<16)	| \
 			(*((unsigned char *)(p)+3)<<24))
-#define ldw_u(p)	((*(unsigned char *)(p)) | \
+#    define ldw_u(p)	((*(unsigned char *)(p)) | \
 			(*((unsigned char *)(p)+1)<<8))
 
-#define stq_u(v,p)	stl_u(v,p)
-#define stl_u(v,p)	(*(unsigned char *)(p)) = (v); \
-			(*((unsigned char *)(p)+1)) = ((v) >> 8);  \
-			(*((unsigned char *)(p)+2)) = ((v) >> 16); \
-			(*((unsigned char *)(p)+3)) = ((v) >> 24)
-#define stw_u(v,p)	(*(unsigned char *)(p)) = (v); \
-			(*((unsigned char *)(p)+1)) = ((v) >> 8)
+#    define stq_u(v,p)	stl_u(v,p)
+#    define stl_u(v,p)	(*(unsigned char *)(p)) = (v); \
+				(*((unsigned char *)(p)+1)) = ((v) >> 8);  \
+				(*((unsigned char *)(p)+2)) = ((v) >> 16); \
+				(*((unsigned char *)(p)+3)) = ((v) >> 24)
+#    define stw_u(v,p)	(*(unsigned char *)(p)) = (v); \
+				(*((unsigned char *)(p)+1)) = ((v) >> 8)
 
-#define mem_barrier()		eieio()
-#define write_mem_barrier()	eieio()
+#    define mem_barrier()	eieio()
+#    define write_mem_barrier()	eieio()
 
-#else /* ix86 */
+#   else /* ix86 */
 
-#define ldq_u(p)	(*((unsigned long  *)(p)))
-#define ldl_u(p)	(*((unsigned int   *)(p)))
-#define ldw_u(p)	(*((unsigned short *)(p)))
-#define stq_u(v,p)	(*(unsigned long  *)(p)) = (v)
-#define stl_u(v,p)	(*(unsigned int   *)(p)) = (v)
-#define stw_u(v,p)	(*(unsigned short *)(p)) = (v)
-#define mem_barrier()   /* NOP */
-#define write_mem_barrier()   /* NOP */
+#    define ldq_u(p)	(*((unsigned long  *)(p)))
+#    define ldl_u(p)	(*((unsigned int   *)(p)))
+#    define ldw_u(p)	(*((unsigned short *)(p)))
+#    define stq_u(v,p)	(*(unsigned long  *)(p)) = (v)
+#    define stl_u(v,p)	(*(unsigned int   *)(p)) = (v)
+#    define stw_u(v,p)	(*(unsigned short *)(p)) = (v)
+#    define mem_barrier()   /* NOP */
+#    define write_mem_barrier()   /* NOP */
 
-#if !defined(FAKEIT) && !defined(__mc68000__) && !defined(__arm__) && !defined(__sh__) && !defined(__hppa__)
-#ifdef GCCUSESGAS
+#    if !defined(FAKEIT) && !defined(__mc68000__) && !defined(__arm__) && !defined(__sh__) && !defined(__hppa__)
+#     ifdef GCCUSESGAS
 
 /*
  * If gcc uses gas rather than the native assembler, the syntax of these
@@ -1244,7 +1312,7 @@ inl(unsigned short port)
    return ret;
 }
 
-#else	/* GCCUSESGAS */
+#     else	/* GCCUSESGAS */
 
 static __inline__ void
 outb(unsigned short port, unsigned char val)
@@ -1294,9 +1362,9 @@ inl(unsigned short port)
   return ret;
 }
 
-#endif /* GCCUSESGAS */
+#     endif /* GCCUSESGAS */
 
-#else /* !defined(FAKEIT) && !defined(__mc68000__) && !defined(__arm__) && !defined(__sh__) && !defined(__hppa__) */
+#    else /* !defined(FAKEIT) && !defined(__mc68000__)  && !defined(__arm__) && !defined(__sh__) && !defined(__hppa__)*/
 
 static __inline__ void
 outb(unsigned short port, unsigned char val)
@@ -1331,53 +1399,53 @@ inl(unsigned short port)
   return 0;
 }
 
-#endif /* FAKEIT */
+#    endif /* FAKEIT */
 
-#endif /* ix86 */
+#   endif /* ix86 */
 
-#elif defined(__powerpc__) /* && !__GNUC__ */
+#  elif defined(__powerpc__) /* && !__GNUC__ */
 /*
  * NON-GCC PowerPC - Presumed to be PowerMAX OS for now
  */
-# ifndef PowerMAX_OS
-# error - Non-gcc PowerPC and !PowerMAXOS ???
-# endif
+#   ifndef PowerMAX_OS
+#    error - Non-gcc PowerPC and !PowerMAXOS ???
+#   endif
 
-#define PPCIO_DEBUG  0
-#define PPCIO_INLINE 1
-#define USE_ABS_MACRO 1
+#   define PPCIO_DEBUG  0
+#   define PPCIO_INLINE 1
+#   define USE_ABS_MACRO 1
 /*
  * Use compiler intrinsics to access certain PPC machine instructions
  */
-#define eieio() 	      __inst_eieio()
-#define stw_brx(val,base,ndx) __inst_sthbrx(val,base,ndx)
-#define stl_brx(val,base,ndx) __inst_stwbrx(val,base,ndx)
-#define ldw_brx(base,ndx)     __inst_lhbrx(base,ndx)
-#define ldl_brx(base,ndx)     __inst_lwbrx(base,ndx)
+#   define eieio() 	      __inst_eieio()
+#   define stw_brx(val,base,ndx) __inst_sthbrx(val,base,ndx)
+#   define stl_brx(val,base,ndx) __inst_stwbrx(val,base,ndx)
+#   define ldw_brx(base,ndx)     __inst_lhbrx(base,ndx)
+#   define ldl_brx(base,ndx)     __inst_lwbrx(base,ndx)
 
-#define ldq_u(p)	(*((unsigned long long  *)(p)))
-#define ldl_u(p)	(*((unsigned long   *)(p)))
-#define ldw_u(p)	(*((unsigned short *)(p)))
-#define stq_u(v,p)	(*(unsigned long long *)(p)) = (v)
-#define stl_u(v,p)	(*(unsigned long  *)(p)) = (v)
-#define stw_u(v,p)	(*(unsigned short *)(p)) = (v)
-#define mem_barrier()         eieio()
-#define write_mem_barrier()   eieio()
+#   define ldq_u(p)	(*((unsigned long long  *)(p)))
+#   define ldl_u(p)	(*((unsigned long   *)(p)))
+#   define ldw_u(p)	(*((unsigned short *)(p)))
+#   define stq_u(v,p)	(*(unsigned long long *)(p)) = (v)
+#   define stl_u(v,p)	(*(unsigned long  *)(p)) = (v)
+#   define stw_u(v,p)	(*(unsigned short *)(p)) = (v)
+#   define mem_barrier()         eieio()
+#   define write_mem_barrier()   eieio()
 
 extern volatile unsigned char *ioBase;
 
-#if !defined(abs) && defined(USE_ABS_MACRO)
-#define abs(x) ((x) >= 0 ? (x) : -(x))
-#endif
+#   if !defined(abs) && defined(USE_ABS_MACRO)
+#    define abs(x) ((x) >= 0 ? (x) : -(x))
+#   endif
 
-#undef inb
-#undef inw
-#undef inl
-#undef outb
-#undef outw
-#undef outl
+#   undef inb
+#   undef inw
+#   undef inl
+#   undef outb
+#   undef outw
+#   undef outl
 
-#if PPCIO_DEBUG
+#   if PPCIO_DEBUG
 
 extern void debug_outb(unsigned int a, unsigned char b, int line, char *file); 
 extern void debug_outw(unsigned int a, unsigned short w, int line, char *file); 
@@ -1386,217 +1454,119 @@ extern unsigned char debug_inb(unsigned int a, int line, char *file);
 extern unsigned short debug_inw(unsigned int a, int line, char *file); 
 extern unsigned int debug_inl(unsigned int a, int line, char *file); 
 
-#define outb(a,b) debug_outb(a,b, __LINE__, __FILE__)
-#define outw(a,w) debug_outw(a,w, __LINE__, __FILE__)
-#define outl(a,l) debug_outl(a,l, __LINE__, __FILE__)
-#define inb(a)    debug_inb(a, __LINE__, __FILE__)
-#define inw(a)    debug_inw(a, __LINE__, __FILE__)
-#define inl(a)    debug_inl(a, __LINE__, __FILE__)
+#    define outb(a,b) debug_outb(a,b, __LINE__, __FILE__)
+#    define outw(a,w) debug_outw(a,w, __LINE__, __FILE__)
+#    define outl(a,l) debug_outl(a,l, __LINE__, __FILE__)
+#    define inb(a)    debug_inb(a, __LINE__, __FILE__)
+#    define inw(a)    debug_inw(a, __LINE__, __FILE__)
+#    define inl(a)    debug_inl(a, __LINE__, __FILE__)
 
-#else /* !PPCIO_DEBUG */
+#   else /* !PPCIO_DEBUG */
 
 extern unsigned char  inb(unsigned int a);
 extern unsigned short inw(unsigned int a);
 extern unsigned int   inl(unsigned int a);
 
-# if PPCIO_INLINE
+#    if PPCIO_INLINE
 
-#define outb(a,b) (*((volatile unsigned char *)(ioBase + (a))) = (b), eieio())
-#define outw(a,w) (stw_brx((w),ioBase,(a)), eieio())
-#define outl(a,l) (stl_brx((l),ioBase,(a)), eieio())
+#     define outb(a,b) \
+            (*((volatile unsigned char *)(ioBase + (a))) = (b), eieio())
+#     define outw(a,w) (stw_brx((w),ioBase,(a)), eieio())
+#     define outl(a,l) (stl_brx((l),ioBase,(a)), eieio())
 
-# else /* !PPCIO_INLINE */
+#    else /* !PPCIO_INLINE */
 
 extern void outb(unsigned int a, unsigned char b);
 extern void outw(unsigned int a, unsigned short w);
 extern void outl(unsigned int a, unsigned int l);
 
-# endif /* PPCIO_INLINE */
+#    endif /* PPCIO_INLINE */
 
-#endif /* !PPCIO_DEBUG */
+#   endif /* !PPCIO_DEBUG */
 
-#else /* !GNUC && !PPC */
-#if !defined(QNX4)
-# if defined(__STDC__) && (__STDC__ == 1)
-#  ifndef asm
-#   define asm __asm
-#  endif
-# endif
-# ifdef SVR4
+#  else /* !GNUC && !PPC */
+#   if !defined(QNX4)
+#    if defined(__STDC__) && (__STDC__ == 1)
+#     ifndef asm
+#      define asm __asm
+#     endif
+#    endif
+#    ifdef SVR4
 #if 0
-#  include <sys/types.h>
-#endif
-#  ifndef __HIGHC__
-#   ifndef __USLC__
-#    define __USLC__
-#   endif
-#  endif
-# endif
-#  ifndef SCO325
-#   if defined(USL)
-#    if defined(IN_MODULE)
-#     /* avoid including <sys/types.h> for <sys/inline.h> on UnixWare */
-#     define ushort unsigned short
-#     define ushort_t unsigned short
-#     define ulong unsigned long
-#     define ulong_t unsigned long
-#     define uint_t unsigned int
-#     define uchar_t unsigned char
-#    else
 #     include <sys/types.h>
-#    endif /* IN_MODULE */
-#   endif /* USL */
-#   include <sys/inline.h>
-#  else
-#   include "scoasm.h"
-#  endif
-
-# if !defined(__HIGHC__) && !defined(SCO325)
-#  pragma asm partial_optimization outl
-#  pragma asm partial_optimization outw
-#  pragma asm partial_optimization outb
-#  pragma asm partial_optimization inl
-#  pragma asm partial_optimization inw
-#  pragma asm partial_optimization inb
-# endif
 #endif
-#define ldq_u(p)	(*((unsigned long  *)(p)))
-#define ldl_u(p)	(*((unsigned int   *)(p)))
-#define ldw_u(p)	(*((unsigned short *)(p)))
-#define stq_u(v,p)	(*(unsigned long  *)(p)) = (v)
-#define stl_u(v,p)	(*(unsigned int   *)(p)) = (v)
-#define stw_u(v,p)	(*(unsigned short *)(p)) = (v)
-#define mem_barrier()   /* NOP */
-#define write_mem_barrier()   /* NOP */
-#endif /* __GNUC__ */
+#     ifndef __HIGHC__
+#      ifndef __USLC__
+#       define __USLC__
+#      endif
+#     endif
+#    endif
+#    ifndef SCO325
+#     if defined(USL)
+#      if defined(IN_MODULE)
+#     /* avoid including <sys/types.h> for <sys/inline.h> on UnixWare */
+#       define ushort unsigned short
+#       define ushort_t unsigned short
+#       define ulong unsigned long
+#       define ulong_t unsigned long
+#       define uint_t unsigned int
+#       define uchar_t unsigned char
+#      else
+#       include <sys/types.h>
+#      endif /* IN_MODULE */
+#     endif /* USL */
+#     include <sys/inline.h>
+#    else
+#     include "scoasm.h"
+#    endif
+#    if !defined(__HIGHC__) && !defined(SCO325)
+#     pragma asm partial_optimization outl
+#     pragma asm partial_optimization outw
+#     pragma asm partial_optimization outb
+#     pragma asm partial_optimization inl
+#     pragma asm partial_optimization inw
+#     pragma asm partial_optimization inb
+#    endif
+#   endif
+#   define ldq_u(p)	(*((unsigned long  *)(p)))
+#   define ldl_u(p)	(*((unsigned int   *)(p)))
+#   define ldw_u(p)	(*((unsigned short *)(p)))
+#   define stq_u(v,p)	(*(unsigned long  *)(p)) = (v)
+#   define stl_u(v,p)	(*(unsigned int   *)(p)) = (v)
+#   define stw_u(v,p)	(*(unsigned short *)(p)) = (v)
+#   define mem_barrier()   /* NOP */
+#   define write_mem_barrier()   /* NOP */
+#  endif /* __GNUC__ */
 
-#if defined(QNX4)
-#include <sys/types.h>
+#  if defined(QNX4)
+#   include <sys/types.h>
 extern unsigned  inb(unsigned port);
 extern unsigned  inw(unsigned port);
 extern unsigned  inl(unsigned port);
 extern void outb(unsigned port, unsigned val);
 extern void outw(unsigned port, unsigned val);
 extern void outl(unsigned port, unsigned val);
-#endif /* QNX4 */
+#  endif /* QNX4 */
 
-#if defined(IODEBUG) && defined(__GNUC__)
-#undef inb
-#undef inw
-#undef inl
-#undef outb
-#undef outw
-#undef outl
-#define inb(a) __extension__ ({unsigned char __c=RealInb(a); ErrorF("inb(0x%03x) = 0x%02x\t@ line %4d, file %s\n", a, __c, __LINE__, __FILE__);__c;})
-#define inw(a) __extension__ ({unsigned short __c=RealInw(a); ErrorF("inw(0x%03x) = 0x%04x\t@ line %4d, file %s\n", a, __c, __LINE__, __FILE__);__c;})
-#define inl(a) __extension__ ({unsigned int __c=RealInl(a); ErrorF("inl(0x%03x) = 0x%08x\t@ line %4d, file %s\n", a, __c, __LINE__, __FILE__);__c;})
+#  if defined(IODEBUG) && defined(__GNUC__)
+#   undef inb
+#   undef inw
+#   undef inl
+#   undef outb
+#   undef outw
+#   undef outl
+#   define inb(a) __extension__ ({unsigned char __c=RealInb(a); ErrorF("inb(0x%03x) = 0x%02x\t@ line %4d, file %s\n", a, __c, __LINE__, __FILE__);__c;})
+#   define inw(a) __extension__ ({unsigned short __c=RealInw(a); ErrorF("inw(0x%03x) = 0x%04x\t@ line %4d, file %s\n", a, __c, __LINE__, __FILE__);__c;})
+#   define inl(a) __extension__ ({unsigned int __c=RealInl(a); ErrorF("inl(0x%03x) = 0x%08x\t@ line %4d, file %s\n", a, __c, __LINE__, __FILE__);__c;})
 
-#define outb(a,b) (ErrorF("outb(0x%03x, 0x%02x)\t@ line %4d, file %s\n", a, b, __LINE__, __FILE__),RealOutb(a,b))
-#define outw(a,b) (ErrorF("outw(0x%03x, 0x%04x)\t@ line %4d, file %s\n", a, b, __LINE__, __FILE__),RealOutw(a,b))
-#define outl(a,b) (ErrorF("outl(0x%03x, 0x%08x)\t@ line %4d, file %s\n", a, b, __LINE__, __FILE__),RealOutl(a,b))
-#endif
+#   define outb(a,b) (ErrorF("outb(0x%03x, 0x%02x)\t@ line %4d, file %s\n", a, b, __LINE__, __FILE__),RealOutb(a,b))
+#   define outw(a,b) (ErrorF("outw(0x%03x, 0x%04x)\t@ line %4d, file %s\n", a, b, __LINE__, __FILE__),RealOutw(a,b))
+#   define outl(a,b) (ErrorF("outl(0x%03x, 0x%08x)\t@ line %4d, file %s\n", a, b, __LINE__, __FILE__),RealOutl(a,b))
+#  endif
 
-/*
- * This header sometimes gets included where is isn't needed, and on some OSs
- * this causes problems because the following functions generate references to
- * inx() and outx() which can't be resolved.  If you need the extra definitions
- * below, #define COMPILER_H_EXTRAS.
- */
+# endif /* NO_INLINE */
 
-#ifdef COMPILER_H_EXTRAS
-/*
- *-----------------------------------------------------------------------
- * Port manipulation convenience functions
- *-----------------------------------------------------------------------
- */
-
-/*
- * rdinx - read the indexed byte port 'port', index 'ind', and return its value
- */
-static __inline__ unsigned char 
-rdinx(unsigned short port, unsigned char ind)
-{
-	if (port == 0x3C0)		/* reset attribute flip-flop */
-		(void) inb(0x3DA);
-	outb(port, ind);
-	return inb(port+1);
-}
-
-/*
- * wrinx - write 'val' to port 'port', index 'ind'
- */
-static __inline__ void 
-wrinx(unsigned short port, unsigned char ind, unsigned char val)
-{
-	outb(port, ind);
-	outb(port+1, val);
-}
-
-/*
- * modinx - in register 'port', index 'ind', set the bits in 'mask' as in 'new';
- *	    the other bits are unchanged.
- */
-static __inline__ void
-modinx(unsigned short port, unsigned char ind, 
-       unsigned char mask, unsigned char new)
-{
-	unsigned char tmp;
-
-	tmp = (rdinx(port, ind) & ~mask) | (new & mask);
-	wrinx(port, ind, tmp);
-}
-
-/*
- * tstrg - returns true iff the bits in 'mask' of register 'port' are
- *	   readable & writable.
- */
-
-static __inline__ int
-testrg(unsigned short port, unsigned char mask)
-{
-	unsigned char old, new1, new2;
-
-	old = inb(port);
-	outb(port, old & ~mask);
-	new1 = inb(port) & mask;
-	outb(port, old | mask);
-	new2 = inb(port) & mask;
-	outb(port, old);
-	return (new1 == 0) && (new2 == mask);
-}
-
-/*
- * testinx2 - returns true iff the bits in 'mask' of register 'port', index
- *	      'ind' are readable & writable.
- */
-static __inline__ int
-testinx2(unsigned short port, unsigned char ind, unsigned char mask)
-{
-	unsigned char old, new1, new2;
-
-	old = rdinx(port, ind);
-	wrinx(port, ind, old & ~mask);
-	new1 = rdinx(port, ind) & mask;
-	wrinx(port, ind, old | mask);
-	new2 = rdinx(port, ind) & mask;
-	wrinx(port, ind, old);
-	return (new1 == 0) && (new2 == mask);
-}
-
-/*
- * testinx - returns true iff all bits of register 'port', index 'ind' are 
- *     	     readable & writable.
- */
-static __inline__ int
-testinx(unsigned short port, unsigned char ind)
-{
-	return testinx2(port, ind, 0xFF);
-}
-#endif /* COMPILER_H_EXTRAS */
-
-#endif /* NO_INLINE */
-
-#ifdef __alpha__
+# ifdef __alpha__
 /* entry points for Mmio memory access routines */
 extern int (*xf86ReadMmio8)(void *, unsigned long);
 extern int (*xf86ReadMmio16)(void *, unsigned long);
@@ -1614,74 +1584,74 @@ extern void xf86SlowBCopyToBus(unsigned char *, unsigned char *, int);
 
 /* Some macros to hide the system dependencies for MMIO accesses */
 /* Changed to kill noise generated by gcc's -Wcast-align */
-#define MMIO_IN8(base, offset) (*xf86ReadMmio8)(base, offset)
-#define MMIO_IN16(base, offset) (*xf86ReadMmio16)(base, offset)
-#define MMIO_IN32(base, offset) (*xf86ReadMmio32)(base, offset)
+#  define MMIO_IN8(base, offset) (*xf86ReadMmio8)(base, offset)
+#  define MMIO_IN16(base, offset) (*xf86ReadMmio16)(base, offset)
+#  define MMIO_IN32(base, offset) (*xf86ReadMmio32)(base, offset)
 
-# if defined (JENSEN_SUPPORT)
-#define MMIO_OUT32(base, offset, val) \
+#  if defined (JENSEN_SUPPORT)
+#   define MMIO_OUT32(base, offset, val) \
     (*xf86WriteMmio32)((CARD32)(val), base, offset)
-#define MMIO_ONB32(base, offset, val) \
+#   define MMIO_ONB32(base, offset, val) \
     (*xf86WriteMmioNB32)((CARD32)(val), base, offset)
-# else
-#define MMIO_OUT32(base, offset, val) \
+#  else
+#   define MMIO_OUT32(base, offset, val) \
     do { \
 	write_mem_barrier(); \
 	*(volatile CARD32 *)(void *)(((CARD8*)(base)) + (offset)) = (val); \
     } while (0)
-#define MMIO_ONB32(base, offset, val) \
+#   define MMIO_ONB32(base, offset, val) \
 	*(volatile CARD32 *)(void *)(((CARD8*)(base)) + (offset)) = (val)
-# endif
+#  endif
 
-#define MMIO_OUT8(base, offset, val) \
+#  define MMIO_OUT8(base, offset, val) \
     (*xf86WriteMmio8)((CARD8)(val), base, offset)
-#define MMIO_OUT16(base, offset, val) \
+#  define MMIO_OUT16(base, offset, val) \
     (*xf86WriteMmio16)((CARD16)(val), base, offset)
-#define MMIO_ONB8(base, offset, val) \
+#  define MMIO_ONB8(base, offset, val) \
     (*xf86WriteMmioNB8)((CARD8)(val), base, offset)
-#define MMIO_ONB16(base, offset, val) \
+#  define MMIO_ONB16(base, offset, val) \
     (*xf86WriteMmioNB16)((CARD16)(val), base, offset)
-#define MMIO_MOVE32(base, offset, val) \
+#  define MMIO_MOVE32(base, offset, val) \
     MMIO_OUT32(base, offset, val)
 
-#elif defined(__powerpc__)  
+# elif defined(__powerpc__)  
  /* 
   * we provide byteswapping and no byteswapping functions here
   * with byteswapping as default, 
   * drivers that don't need byteswapping should define PPC_MMIO_IS_BE 
   */
-# define MMIO_IN8(base, offset) xf86ReadMmio8(base, offset)
-# define MMIO_OUT8(base, offset, val) \
+#  define MMIO_IN8(base, offset) xf86ReadMmio8(base, offset)
+#  define MMIO_OUT8(base, offset, val) \
     xf86WriteMmio8(base, offset, (CARD8)(val))
-# define MMIO_ONB8(base, offset, val) \
+#  define MMIO_ONB8(base, offset, val) \
     xf86WriteMmioNB8(base, offset, (CARD8)(val))
 
-# if defined(PPC_MMIO_IS_BE) /* No byteswapping */
-#  define MMIO_IN16(base, offset) xf86ReadMmio16Be(base, offset)
-#  define MMIO_IN32(base, offset) xf86ReadMmio32Be(base, offset)
-#  define MMIO_OUT16(base, offset, val) \
+#  if defined(PPC_MMIO_IS_BE) /* No byteswapping */
+#   define MMIO_IN16(base, offset) xf86ReadMmio16Be(base, offset)
+#   define MMIO_IN32(base, offset) xf86ReadMmio32Be(base, offset)
+#   define MMIO_OUT16(base, offset, val) \
     xf86WriteMmio16Be(base, offset, (CARD16)(val))
-#  define MMIO_OUT32(base, offset, val) \
+#   define MMIO_OUT32(base, offset, val) \
     xf86WriteMmio32Be(base, offset, (CARD32)(val))
-#  define MMIO_ONB16(base, offset, val) \
+#   define MMIO_ONB16(base, offset, val) \
     xf86WriteMmioNB16Be(base, offset, (CARD16)(val))
-#  define MMIO_ONB32(base, offset, val) \
+#   define MMIO_ONB32(base, offset, val) \
     xf86WriteMmioNB32Be(base, offset, (CARD32)(val))
-# else /* byteswapping is the default */
-#  define MMIO_IN16(base, offset) xf86ReadMmio16Le(base, offset)
-#  define MMIO_IN32(base, offset) xf86ReadMmio32Le(base, offset)
-#  define MMIO_OUT16(base, offset, val) \
-    xf86WriteMmio16Le(base, offset, (CARD16)(val))
-#  define MMIO_OUT32(base, offset, val) \
-    xf86WriteMmio32Le(base, offset, (CARD32)(val))
-#  define MMIO_ONB16(base, offset, val) \
-    xf86WriteMmioNB16Le(base, offset, (CARD16)(val))
-#  define MMIO_ONB32(base, offset, val) \
-    xf86WriteMmioNB32Le(base, offset, (CARD32)(val))
-# endif
+#  else /* byteswapping is the default */
+#   define MMIO_IN16(base, offset) xf86ReadMmio16Le(base, offset)
+#   define MMIO_IN32(base, offset) xf86ReadMmio32Le(base, offset)
+#   define MMIO_OUT16(base, offset, val) \
+     xf86WriteMmio16Le(base, offset, (CARD16)(val))
+#   define MMIO_OUT32(base, offset, val) \
+     xf86WriteMmio32Le(base, offset, (CARD32)(val))
+#   define MMIO_ONB16(base, offset, val) \
+     xf86WriteMmioNB16Le(base, offset, (CARD16)(val))
+#   define MMIO_ONB32(base, offset, val) \
+     xf86WriteMmioNB32Le(base, offset, (CARD32)(val))
+#  endif
 
-#define MMIO_MOVE32(base, offset, val) \
-    xf86WriteMmio32Be(base, offset, (CARD32)(val))
+#  define MMIO_MOVE32(base, offset, val) \
+       xf86WriteMmio32Be(base, offset, (CARD32)(val))
 
 static __inline__ void ppc_flush_icache(char *addr)
 {
@@ -1694,7 +1664,7 @@ static __inline__ void ppc_flush_icache(char *addr)
 		: : "r"(addr) : "memory");
 }
 
-#elif defined(__sparc__)
+# elif defined(__sparc__)
  /*
   * Like powerpc, we provide byteswapping and no byteswapping functions
   * here with byteswapping as default, drivers that don't need byteswapping
@@ -1702,72 +1672,72 @@ static __inline__ void ppc_flush_icache(char *addr)
   * do not need to use PPC_MMIO_IS_BE and the sparc one in all the same places
   * of drivers?).
   */
-# define MMIO_IN8(base, offset) xf86ReadMmio8(base, offset)
-# define MMIO_OUT8(base, offset, val) \
+#  define MMIO_IN8(base, offset) xf86ReadMmio8(base, offset)
+#  define MMIO_OUT8(base, offset, val) \
     xf86WriteMmio8(base, offset, (CARD8)(val))
-# define MMIO_ONB8(base, offset, val) \
+#  define MMIO_ONB8(base, offset, val) \
     xf86WriteMmio8NB(base, offset, (CARD8)(val))
 
-# if defined(SPARC_MMIO_IS_BE) /* No byteswapping */
-#  define MMIO_IN16(base, offset) xf86ReadMmio16Be(base, offset)
-#  define MMIO_IN32(base, offset) xf86ReadMmio32Be(base, offset)
-#  define MMIO_OUT16(base, offset, val) \
-    xf86WriteMmio16Be(base, offset, (CARD16)(val))
-#  define MMIO_OUT32(base, offset, val) \
-    xf86WriteMmio32Be(base, offset, (CARD32)(val))
-#  define MMIO_ONB16(base, offset, val) \
-    xf86WriteMmio16BeNB(base, offset, (CARD16)(val))
-#  define MMIO_ONB32(base, offset, val) \
-    xf86WriteMmio32BeNB(base, offset, (CARD32)(val))
-# else /* byteswapping is the default */
-#  define MMIO_IN16(base, offset) xf86ReadMmio16Le(base, offset)
-#  define MMIO_IN32(base, offset) xf86ReadMmio32Le(base, offset)
-#  define MMIO_OUT16(base, offset, val) \
-    xf86WriteMmio16Le(base, offset, (CARD16)(val))
-#  define MMIO_OUT32(base, offset, val) \
-    xf86WriteMmio32Le(base, offset, (CARD32)(val))
-#  define MMIO_ONB16(base, offset, val) \
-    xf86WriteMmio16LeNB(base, offset, (CARD16)(val))
-#  define MMIO_ONB32(base, offset, val) \
-    xf86WriteMmio32LeNB(base, offset, (CARD32)(val))
-# endif
+#  if defined(SPARC_MMIO_IS_BE) /* No byteswapping */
+#   define MMIO_IN16(base, offset) xf86ReadMmio16Be(base, offset)
+#   define MMIO_IN32(base, offset) xf86ReadMmio32Be(base, offset)
+#   define MMIO_OUT16(base, offset, val) \
+     xf86WriteMmio16Be(base, offset, (CARD16)(val))
+#   define MMIO_OUT32(base, offset, val) \
+     xf86WriteMmio32Be(base, offset, (CARD32)(val))
+#   define MMIO_ONB16(base, offset, val) \
+     xf86WriteMmio16BeNB(base, offset, (CARD16)(val))
+#   define MMIO_ONB32(base, offset, val) \
+     xf86WriteMmio32BeNB(base, offset, (CARD32)(val))
+#  else /* byteswapping is the default */
+#   define MMIO_IN16(base, offset) xf86ReadMmio16Le(base, offset)
+#   define MMIO_IN32(base, offset) xf86ReadMmio32Le(base, offset)
+#   define MMIO_OUT16(base, offset, val) \
+     xf86WriteMmio16Le(base, offset, (CARD16)(val))
+#   define MMIO_OUT32(base, offset, val) \
+     xf86WriteMmio32Le(base, offset, (CARD32)(val))
+#   define MMIO_ONB16(base, offset, val) \
+     xf86WriteMmio16LeNB(base, offset, (CARD16)(val))
+#   define MMIO_ONB32(base, offset, val) \
+     xf86WriteMmio32LeNB(base, offset, (CARD32)(val))
+#  endif
 
-#define MMIO_MOVE32(base, offset, val) \
-    xf86WriteMmio32Be(base, offset, (CARD32)(val))
+#  define MMIO_MOVE32(base, offset, val) \
+       xf86WriteMmio32Be(base, offset, (CARD32)(val))
 
-#else /* !__alpha__ && !__powerpc__ && !__sparc__ */
+# else /* !__alpha__ && !__powerpc__ && !__sparc__ */
 
-#define MMIO_IN8(base, offset) \
+#  define MMIO_IN8(base, offset) \
 	*(volatile CARD8 *)(((CARD8*)(base)) + (offset))
-#define MMIO_IN16(base, offset) \
+#  define MMIO_IN16(base, offset) \
 	*(volatile CARD16 *)(void *)(((CARD8*)(base)) + (offset))
-#define MMIO_IN32(base, offset) \
+#  define MMIO_IN32(base, offset) \
 	*(volatile CARD32 *)(void *)(((CARD8*)(base)) + (offset))
-#define MMIO_OUT8(base, offset, val) \
+#  define MMIO_OUT8(base, offset, val) \
 	*(volatile CARD8 *)(((CARD8*)(base)) + (offset)) = (val)
-#define MMIO_OUT16(base, offset, val) \
+#  define MMIO_OUT16(base, offset, val) \
 	*(volatile CARD16 *)(void *)(((CARD8*)(base)) + (offset)) = (val)
-#define MMIO_OUT32(base, offset, val) \
+#  define MMIO_OUT32(base, offset, val) \
 	*(volatile CARD32 *)(void *)(((CARD8*)(base)) + (offset)) = (val)
-#define MMIO_ONB8(base, offset, val) MMIO_OUT8(base, offset, val) 
-#define MMIO_ONB16(base, offset, val) MMIO_OUT16(base, offset, val) 
-#define MMIO_ONB32(base, offset, val) MMIO_OUT32(base, offset, val) 
+#  define MMIO_ONB8(base, offset, val) MMIO_OUT8(base, offset, val) 
+#  define MMIO_ONB16(base, offset, val) MMIO_OUT16(base, offset, val) 
+#  define MMIO_ONB32(base, offset, val) MMIO_OUT32(base, offset, val) 
 
-#define MMIO_MOVE32(base, offset, val) MMIO_OUT32(base, offset, val)
+#  define MMIO_MOVE32(base, offset, val) MMIO_OUT32(base, offset, val)
 
-#endif /* __alpha__ */
+# endif /* __alpha__ */
 
 /*
  * With Intel, the version in os-support/misc/SlowBcopy.s is used.
  * This avoids port I/O during the copy (which causes problems with
  * some hardware).
  */
-#ifdef __alpha__
-#define slowbcopy_tobus(src,dst,count) xf86SlowBCopyToBus(src,dst,count)
-#define slowbcopy_frombus(src,dst,count) xf86SlowBCopyFromBus(src,dst,count)
-#else /* __alpha__ */
-#define slowbcopy_tobus(src,dst,count) xf86SlowBcopy(src,dst,count)
-#define slowbcopy_frombus(src,dst,count) xf86SlowBcopy(src,dst,count)
-#endif /* __alpha__ */
+# ifdef __alpha__
+#  define slowbcopy_tobus(src,dst,count) xf86SlowBCopyToBus(src,dst,count)
+#  define slowbcopy_frombus(src,dst,count) xf86SlowBCopyFromBus(src,dst,count)
+# else /* __alpha__ */
+#  define slowbcopy_tobus(src,dst,count) xf86SlowBcopy(src,dst,count)
+#  define slowbcopy_frombus(src,dst,count) xf86SlowBcopy(src,dst,count)
+# endif /* __alpha__ */
 
 #endif /* _COMPILER_H */

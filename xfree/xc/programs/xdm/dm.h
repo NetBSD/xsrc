@@ -26,7 +26,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/xdm/dm.h,v 3.28 2002/01/14 22:49:45 herrb Exp $ */
+/* $XFree86: xc/programs/xdm/dm.h,v 3.29 2002/05/31 18:46:10 dawes Exp $ */
 
 /*
  * xdm - display manager daemon
@@ -483,8 +483,8 @@ extern void registerHostname(char *name, int namelen);
 #define SIGVAL void
 #endif
 
-#if defined(X_NOT_POSIX) || defined(__EMX__) || defined(__NetBSD__) && defined(__sparc__)
-#if defined(SYSV) || defined(__EMX__)
+#if defined(X_NOT_POSIX) || defined(__UNIXOS2__) || defined(__NetBSD__) && defined(__sparc__)
+#if defined(SYSV) || defined(__UNIXOS2__)
 #define SIGNALS_RESET_WHEN_CAUGHT
 #define UNRELIABLE_SIGNALS
 #endif

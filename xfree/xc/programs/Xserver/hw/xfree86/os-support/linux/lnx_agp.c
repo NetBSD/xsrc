@@ -7,7 +7,7 @@
  * Copyright © 2001 The XFree86 Project, Inc.
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/linux/lnx_agp.c,v 3.8 2001/11/26 19:02:02 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/linux/lnx_agp.c,v 3.10 2002/12/12 18:29:11 eich Exp $ */
 
 #include "X.h"
 #include "xf86.h"
@@ -89,9 +89,16 @@ GARTInit(int screenNum)
 	xf86ReleaseGART(-1);
 
 #if defined(linux)
-	/* Should this look for version >= rather than version == ? */
-	if (agpinf.version.major != AGPGART_MAJOR_VERSION &&
-	    agpinf.version.minor != AGPGART_MINOR_VERSION) {
+	/* Per Dave Jones, every effort will be made to keep the 
+	 * agpgart interface backwards compatible, so allow all 
+	 * future versions.
+	 */
+	if (
+#if (AGPGART_MAJOR_VERSION > 0) /* quiet compiler */
+	    agpinf.version.major < AGPGART_MAJOR_VERSION ||
+#endif
+	    (agpinf.version.major == AGPGART_MAJOR_VERSION &&
+	     agpinf.version.minor < AGPGART_MINOR_VERSION)) {
 		xf86DrvMsg(screenNum, X_ERROR,
 			"GARTInit: Kernel agpgart driver version is not current"
 			" (%d.%d vs %d.%d)\n",
@@ -262,6 +269,10 @@ xf86BindGARTMemory(int screenNum, int key, unsigned long offset)
 	}
 	pageOffset = offset / AGP_PAGE_SIZE;
 
+	xf86DrvMsgVerb(screenNum, X_INFO, 3,
+		       "xf86BindGARTMemory: bind key %d at 0x%08x "
+		       "(pgoffset %d)\n", key, offset, pageOffset);
+
 	bind.pg_start = pageOffset;
 	bind.key = key;
 
@@ -301,6 +312,9 @@ xf86UnbindGARTMemory(int screenNum, int key)
 			   "failed (%s)\n", key, strerror(errno));
 		return FALSE;
 	}
+
+	xf86DrvMsgVerb(screenNum, X_INFO, 3,
+		       "xf86UnbindGARTMemory: unbind key %d\n", key);
 
 	return TRUE;
 }

@@ -23,7 +23,7 @@
  * SOFTWARE.
  *
 */
-/* $XFree86: xc/lib/X11/lcFile.c,v 3.25.4.1 2002/09/04 02:38:09 dawes Exp $ */
+/* $XFree86: xc/lib/X11/lcFile.c,v 3.30 2002/11/25 14:04:53 eich Exp $ */
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -41,7 +41,7 @@
 #define isreadable(f)	((access((f), R_OK) != -1) ? 1 : 0)
 #endif
 
-#ifndef __EMX__
+#ifndef __UNIXOS2__
 #define LC_PATHDELIM ':'
 #else
 #define LC_PATHDELIM ';'
@@ -200,7 +200,7 @@ xlocaledir(
 #endif /* NO_XLOCALEDIR */
 
     if (len < buf_len)
-#ifndef __EMX__
+#ifndef __UNIXOS2__
       strncpy(p, XLOCALEDIR, buf_len - len);
 #else
       strncpy(p,__XOS2RedirRoot(XLOCALEDIR), buf_len - len);
@@ -231,7 +231,7 @@ resolve_name(
 	char *p = buf;
 	int n;
 	char *args[2], *from, *to;
-#ifdef __EMX__  /* Take out CR under OS/2 */
+#ifdef __UNIXOS2__  /* Take out CR under OS/2 */
 	int len;
 
 	len = strlen(p);
@@ -433,53 +433,63 @@ _XlcLocaleDirName(dir_name, lc_name)
      char *dir_name;
      char *lc_name;
 {
-  char dir[PATH_MAX], buf[PATH_MAX], *name = NULL;
-  int i, n;
-  char *args[NUM_LOCALEDIR];
-  static char locale_alias[] = LOCALE_ALIAS;
-  char *target_name = (char*)0;
-  char *target_dir = (char*)0;
+    char dir[PATH_MAX], buf[PATH_MAX], *name = NULL;
+    int i, n;
+    char *args[NUM_LOCALEDIR];
+    static char locale_alias[] = LOCALE_ALIAS;
+    char *target_name = (char*)0;
+    char *target_dir = (char*)0;
 
-  xlocaledir (dir, PATH_MAX);
-  n = _XlcParsePath(dir, args, 256);
-  for (i = 0; i < n; ++i){
-    if ((2 + (args[i] ? strlen(args[i]) : 0) + 
-	 strlen(locale_alias)) < PATH_MAX) {
-      sprintf (buf, "%s/%s", args[i], locale_alias);
-      name = resolve_name(lc_name, buf, LtoR);
+    xlocaledir (dir, PATH_MAX);
+    n = _XlcParsePath(dir, args, 256);
+    for (i = 0; i < n; ++i) {
+  
+	if ((2 + (args[i] ? strlen(args[i]) : 0) + 
+ 	     strlen(locale_alias)) < PATH_MAX) {
+ 	    sprintf (buf, "%s/%s", args[i], locale_alias);
+ 	    name = resolve_name(lc_name, buf, LtoR);
+ 	}
+  
+ 	/* If name is not an alias, use lc_name for locale.dir search */
+ 	if (name == NULL)
+ 	    name = lc_name;
+ 
+ 	/* look at locale.dir */
+ 
+ 	target_dir = args[i];
+ 	if (!target_dir) {
+ 	    /* something wrong */
+ 	    if (name != lc_name)
+ 		Xfree(name);
+ 	    continue;
+ 	}
+ 	if ((1 + (target_dir ? strlen (target_dir) : 0) +
+ 	     strlen("locale.dir")) < PATH_MAX) {
+ 	    sprintf(buf, "%s/locale.dir", target_dir);
+ 	    target_name = resolve_name(name, buf, RtoL);
+ 	}
+ 	if (name != lc_name)
+ 	    Xfree(name);
+ 	if (target_name != NULL) {
+ 	    char *p = 0;
+ 	    if ((p = strstr(target_name, "/XLC_LOCALE"))) {
+ 		*p = '\0';
+ 		break;
+ 	    }
+ 	    Xfree(target_name);
+ 	    target_name = NULL;
+ 	}
+ 	name = NULL;
     }
-
-    /* If name is not an alias, use lc_name for locale.dir search */
-    if (name == NULL)
-      name = lc_name;
-
-    /* look at locale.dir */
-
-    target_dir = args[i];
-    if (!target_dir) {
-      /* something wrong */
-      continue;
+    if (target_name == NULL) {
+ 	/* vendor locale name == Xlocale name, no expansion of alias */
+ 	target_dir = args[0];
+ 	target_name = lc_name;
     }
-    if ((1 + (target_dir ? strlen (target_dir) : 0) +
-	 strlen("locale.dir")) < PATH_MAX) {
-      sprintf(buf, "%s/locale.dir", target_dir);
-      target_name = resolve_name(name, buf, RtoL);
-    }
-    if (target_name != NULL) {
-      char *p = 0;
-      if ((p = strstr(target_name, "/XLC_LOCALE"))) {
-	*p = '\0';
-	break;
-      }
-    }
-  }
-  if (target_name == NULL) {
-    /* vendor locale name == Xlocale name, no expansion of alias */
-    target_dir = args[0];
-    target_name = lc_name;
-  }
-  strcpy(dir_name, target_dir);
-  strcat(dir_name, "/");
-  strcat(dir_name, target_name);
-  return dir_name;
+    strcpy(dir_name, target_dir);
+    strcat(dir_name, "/");
+    strcat(dir_name, target_name);
+    if (target_name != lc_name)
+ 	Xfree(target_name);
+    return dir_name;
 }

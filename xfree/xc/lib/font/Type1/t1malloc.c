@@ -26,7 +26,7 @@
  * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
  * THIS SOFTWARE.
  */
-/* $XFree86: xc/lib/font/Type1/t1malloc.c,v 1.10 2001/07/25 15:04:55 dawes Exp $ */
+/* $XFree86: xc/lib/font/Type1/t1malloc.c,v 1.11 2002/02/18 20:51:57 herrb Exp $ */
  /* MALLOC   CWEB         V0004 LOTS                                 */
 /*
 :h1.MALLOC - Fast Memory Allocation
@@ -46,7 +46,7 @@ routines (malloc/free).
 #else
 #include "os.h"
 #endif
-#include "objects.h"	/* get #define for Xabort() */
+#include "objects.h"	/* get #define for Abort() */
 
 
 /*
@@ -240,9 +240,9 @@ Make sure this address looks OK; 'size' must be less than zero (meaning
 the block is allocated) and should be repeated at the end of the block.
 */
         if (size >= 0)
-                Xabort("free: bad size");
+                Abort("free: bad size");
         if (addr[-1 - size] != size)
-                Xabort("free: mismatched size");
+                Abort("free: mismatched size");
 /*
 Now make this a 'freeblock' structure and tack it on the FRONT of the
 free list (where uncombined blocks go):
@@ -290,12 +290,12 @@ combine(void)
  
         p = firstcombined->back;
         if (p == &firstfree)
-               Xabort("why are we combining?");
+               Abort("why are we combining?");
  
         addr = (long *) p;
         size = - p->size;
         if (--uncombined < 0)
-                Xabort("too many combine()s");
+                Abort("too many combine()s");
  
         if (addr[-1] < 0 && addr[size] < 0) {
 /*
@@ -319,7 +319,7 @@ First we attempt to combine this with the block immediately above:
                 *addr = COMBINED;  /* might help debug */
                 addr -= size2;
                 if (addr[0] != size2)
-                        Xabort("bad block above");
+                        Abort("bad block above");
                 unhook((struct freeblock *)addr);
                 size += size2;
         }
@@ -334,7 +334,7 @@ below:
         if (size2 > 0) {     /* i.e., block below is free                    */
                 p->size = COMBINED;
                 if (size2 != ((long *) p)[size2 - 1])
-                        Xabort("bad block below");
+                        Abort("bad block below");
                 unhook(p);
                 size += size2;
         }
@@ -587,7 +587,7 @@ We'll record where the area was that was given to us for later reports:
         for (i=0; i < MAXAREAS; i++)
                 if (freearea[i] == NULL) break;
         if (i >= MAXAREAS)
-                Xabort("too many addmemory()s");
+                Abort("too many addmemory()s");
         aaddr = (long *) ( ((long) addr + sizeof(double) - 1) & - (long)sizeof(double) );
         size -= (char *) aaddr - (char *) addr;
         freearea[i] = aaddr;
@@ -644,13 +644,13 @@ dumpchain(void)
         for (p = firstfree.fore, i=uncombined; p != firstcombined;
                                  p = p->fore) {
                 if (--i < 0)
-                        Xabort("too many uncombined areas");
+                        Abort("too many uncombined areas");
                 size = p->size;
                 printf(". . . area @ %p, size = %ld\n", p, -size);
                 if (size >= 0 || size != ((int *) p)[-1 - size])
-                        Xabort("dumpchain: bad size");
+                        Abort("dumpchain: bad size");
                 if (p->back != back)
-                        Xabort("dumpchain: bad back");
+                        Abort("dumpchain: bad back");
                 back = p;
         }
         printf("DUMPING COMBINED FREE LIST:\n");
@@ -658,13 +658,13 @@ dumpchain(void)
                 size = p->size;
                 printf(". . . area @ %p, size = %ld\n", p, size);
                 if (size <= 0 || size != ((int *) p)[size - 1])
-                        Xabort("dumpchain: bad size");
+                        Abort("dumpchain: bad size");
                 if (p->back != back)
-                        Xabort("dumpchain: bad back");
+                        Abort("dumpchain: bad back");
                 back = p;
         }
         if (back != lastfree.back)
-                Xabort("dumpchain: bad lastfree");
+                Abort("dumpchain: bad lastfree");
 }
  
 #ifdef notused
@@ -708,20 +708,20 @@ reportarea(long *area)        /* start of blocks (from addmemory)            */
                        printf("Free %ld bytes at %p\n", size * sizeof(long),
                                area);
                        if (size == 0)
-                               Xabort("zero sized memory block");
+                               Abort("zero sized memory block");
  
                        for (p = firstfree.fore; p != NULL; p = p->fore)
                                if ((long *) p == area) break;
                        if ((long *) p != area)
-                               Xabort("not found on forward chain");
+                               Abort("not found on forward chain");
  
                        for (p = lastfree.back; p != NULL; p = p->back)
                                if ((long *) p == area) break;
                        if ((long *) p != area)
-                               Xabort("not found on backward chain");
+                               Abort("not found on backward chain");
                }
                if (area[0] != area[size - 1])
-                       Xabort("unmatched check sizes");
+                       Abort("unmatched check sizes");
                area += size;
                wholesize -= size;
        }

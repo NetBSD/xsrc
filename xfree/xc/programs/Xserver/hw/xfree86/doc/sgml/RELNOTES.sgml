@@ -6,10 +6,10 @@
 
 <title>Release Notes for XFree86&trade; &relvers;
 <author>The XFree86 Project, Inc
-<date>3 September 2002
+<date>26 February 2003
 
 <ident>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/RELNOTES.sgml,v 1.70.2.2 2002/09/04 03:01:48 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/RELNOTES.sgml,v 1.81 2003/02/27 00:45:05 dawes Exp $
 </ident>
 
 <abstract>
@@ -20,6 +20,8 @@ in XFree86 &relvers; and their status.
 </abstract>
 
 <toc>
+
+<p>
 
 <sect>Introduction to the 4.x Release Series
 <p>
@@ -32,35 +34,39 @@ is the latest full release in that series.
 The current release (&relvers;) is the latest in that series.
 ]]>
 XFree86
-4 represents a significant redesign of the XFree86 X server.
-Not all of the hardware drivers from 3.3.x have been ported to 4.x yet,
-but conversely, 4.x has some hardware support not present in 3.3.x.
-Our <htmlurl name="Driver Status document" url="Status.html"> summarizes
-how the hardware driver support compares between &legacyvers; and &relvers;.
-Please check there first before downloading &relvers;.
+4 represents a significant redesign of the XFree86 X server.  Not all
+of the hardware drivers from 3.3.x have been ported to 4.x yet, but
+conversely, 4.x has support for a lot of hardware that is not supported
+in 3.3.x.  Our <htmlurl name="Driver Status document" url="Status.html">
+summarizes how the hardware driver support compares between &legacyvers;
+and &relvers;.  Please check there first before downloading &relvers;.
 
 The 4.0.1 release introduced a new graphical configuration tool,
 "<tt>xf86cfg</tt>", and a text mode interface was added to it for the
-4.0.2 release.  It is work in progress, but definitely worth trying out.
-The trusty old text-based tool "<tt>xf86config</tt>" can also be used
-for generating X server config files.  In addition to these tools, we've
-been working on a configuration tool that is built-in to the X
-server.  It is included in the release, and it works well for some
-hardware.  To try it out, just run (as root) "<tt>XFree86 -configure</tt>".
+4.0.2 release.  It is the preferred configuration tool provided by with
+XFree86.  The trusty old text-based tool "<tt>xf86config</tt>" can also
+be used for generating X server config files.  In addition to these
+tools, the XFree86 server has some built in capabilities for generating
+a base config file.  This works well for most hardware, and in most
+cases is the easiest way to get an initial config file.  To try it out,
+just run (as root):
+
+<tscreen><verb>
+XFree86 -configure
+</verb></tscreen>
+
 Each of these configuration options will give you a reasonable starting
 point for a suitable configuration file.  We've put some effort into
 documenting the &relvers; config file format, and you can find that
-information in the XF86Config manual page. Check that, the driver manual
-pages and the related documentation for further information.
+information in the <htmlurl name="XF86Config manual page"
+url="XF86Config.5.html">.  Check there and the driver-specific manual
+pages and the related documentation for further information.  References
+to this driver-specific information can be found in the <ref id="drivertables"
+name="tables below">.
 
-<!--
-Oh, another thing you might notice is that our documentation is rather
-patchy.  Most of what is present should be in reasonable shape, but
-there are gaps.  We thought it better to leave out docs that were very
-out of date rather than providing inaccurate and misleading information.
-We are looking for people to also help fill those gaps in &lt;hint hint
-:-&gt;.
--->
+We have plans to make the configuration file optional in a future release.
+The XFree86 server is close to being able to automatically determine
+a complete base configuration for most popular hardware configurations.
 
 Before you go to download and install the binary distributions for
 this release, please have a quick read through the <htmlurl
@@ -84,29 +90,6 @@ don't have enough space to cover them all here.
 <![ %updaterel [
 <sect>Summary of updates in &relvers;.
 <p>
-<sect1>Security
-<p>
-<itemize>
-<item> Fix a zlib bug that may have security implications on some platforms.
-<item> MIT-SHM update to not access SHM segments that the client doesn't
-	have sufficient privileges to access.
-<item> Fix an Xlib problem that made it possible to load (and execute)
-	arbitrary code in privileged clients.
-</itemize>
-
-<sect1>Other
-<p>
-<itemize>
-<item>Revert the ATI driver's composite sync default to a safer value.
-<item>Fix Xlib's modular i18n support on Solaris.
-<item>Fix an X server crash when printing some types of modes.
-<item>Startx and xon script fixes.
-<item>Fix a colormap bug with 24+8 overlay mode.
-<item>Update XDarwin support for the Jaguar release.
-<item>Xaw bug fix.
-<item>Fix a vesa driver floating point exception.
-<item>Fix Emulate3Buttons for wsmouse protocol on NetBSD and OpenBSD.
-</itemize>
 
 </sect>
 ]]>
@@ -117,38 +100,37 @@ don't have enough space to cover them all here.
 
 <p>
 <itemize>
-<item> An s3 driver is added, which provides support for many of the
-	older non-ViRGE and non-Savage S3 chipsets.
-<item> Some vmware driver problems are fixed, and the driver is updated
-	to take advantage of VMWare Workstation 3.0 features.  These
-	include improved hardware cursor handling and support for 8 bit
-	emulation.
-<item> Support added for Trident *BladeXP chipsets (currently not-accelerated).
-<item> Xv support added for Trident TGUI series chips (not 9440 though).
-<item> Support added for the older Trident chipsets again for ISA/VLBus (not tested)
-<item> Support added to the glint driver for 3DLabs Permedia4, GLINT R4 and
-	Gamma 2 chipsets.
-<item> Support added to the i810 driver for Intel i830 (tested on Linux only).
-<item> Support added to the ATI radeon driver for Radeon 7500 (2D and 3D),
-	Radeon 8500 (2D only), and Rage128ProII.
-<item> Support added for the Matrox G550 support.  This included dual-head
-	support.
-<item> Support added for NVIDIA nForce integrated graphics.
-<item> The NVIDIA nv driver now has preliminary powerpc support for the
-	NV11 and NV20.
-<item> Support added to the NVIDIA nv driver for interlaced modes on
-	hardware that supports this, and support for resolutions higher
-	than 1600x1200.
-<item> Fixes for the savage driver on 64-bit platforms, XVideo support for the
-	SuperSavage, and other savage driver updates.
-<item> The ATI r128 driver now uses the CCE DMA engine for 2D acceleration
-	when direct rendering is enabled, which reduces context switching
-	overhead and improves stability and performance for XVideo and some 2D
-	operations.
-<item> The fbdev driver now supports rotation.
-<item> Various updates to the apm, ark, chips (C&amp;T), cirrus, i128,
-	neomagic, newport, s3virge, siliconmotion, sis, tdfx, tseng, vesa,
-	and vga drivers.
+<item> ATI Radeon 9x00 2D support added, and 3D support added for the
+	Radeon 8500, 9000, 9100, and M9.  The 3D support for the Radeon
+	now includes hardware TCL.
+
+<item> Support added to the i810 driver for Intel 845G, 852GM, 855GM
+	and 865G integrated graphics chipsets, including 2D, 3D (DRI)
+	and XVideo.  Support for the 830M has been improved, and XVideo
+	support added.
+
+<item> National Semiconductor SC1x00, GX1, and GX2 chipset support added
+	with the "nsc" driver.
+
+<item> Support added for the NVIDIA nForce2 integrated graphics, GeForce 4,
+	and GeForce FX.
+
+<item> Major SiS driver updates for some of the latest chipsets.  Unfortunately
+	the SiS 3D driver has had to be disabled because no one has yet
+	taken up the challenge to port it to Mesa 4.x.
+
+<item> The s3virge driver now has support for double scan modes on the DX
+	(with XVideo disabled).
+	
+<item> Updates to the savage driver, including fixing problems with the
+	TwisterK, and problems with incorrect memory size detection.
+
+<item> 2D acceleration added for the Trident CyberBladeXP/Ai1 chipsets.
+
+<item> Support for big endian architectures has been added to the C&amp;T
+	driver.
+
+<item> Various updates and bug fixes have been made to most other drivers.
 
 </itemize>
 
@@ -156,98 +138,130 @@ don't have enough space to cover them all here.
 
 <p>
 <itemize>
-<item> The mouse driver now has support for mouse wheel emulation.
-<item> The mouse driver can now handle replug events on Linux for PS/2 mice.
-<item> The "Min/Max X/Y Position" options in the elographics and mutouch
-	drivers are changed to "Min/Max X/Y" to be consistent with the other
-	input drivers.
-<item> Linux USB keyboard access is fixed when no PS/2 controller is present.
-<item> Added calcomp input driver.
-<item> Added DMC input driver.
-<item> Added hyperpen input driver.
+<item> The mouse driver now has automatic protocol detection for PS/2 mice.
+
+<item> Several new input drivers have been added, including tek4957,
+	jamstudio (js_x), fpit, palmax, and ur98 (Linux only).
 </itemize>
 
 <sect1>X Server and Extension Updates
 
 <p>
 <itemize>
-<item> Resynced with X.Org's X11R6.6.
-<item> Mesa updated to the post-3.4.2 3.4 branch version as of November 2001.
-<item> DRI drivers resynced with the latest from the DRI project.
-<item> Various updates to the Xft library.
-<item> The DEC-XTRAP extension is now available.
-<item> The PEX and XIE extensions are no longer built/distributed by default.
-<item> A security problem related to glyph clipping for large origins is fixed.
-<item> An i810 XvMC (motion compensation) driver is now available (Linux only).
-<item> A fatal bug XVideo Xineramification bug is fixed.
+<item> Support for the RandR extension has been partially integrated
+	into the XFree86 server, providing support for resizing the root
+	window at run-time.
+
+<item> The Mesa version used for OpenGL&reg; 1.3 and DRI 
+	driver support has been updated to 4.0.4.
+
+<item> The XFree86 server's hot keys (including those for switching
+	modes and virtual terminals) can now be configured via XKB.
+	Previously they were hard coded.  An X server configuration
+	option has been added to allow the VT switching hot keys to be
+	disabled.
+
 </itemize>
 
 <sect1>Client and Library Updates
 
 <p>
 <itemize>
-<item> FreeType2 updated to version 2.0.6.
-<item> Added libGL man pages.
-<item> Xload now has support for displaying the load of remote hosts.
-<item> Xterm updated to patch level 165.
-<item> SuperProbe is removed.
-<item> Sample xtrap clients added.
+<item> An Xcursor library providing support for alpha blended (ARGB)
+	and animated cursors.  Two Xcursor themes are provided (redglass
+	and whiteglass), as well as the default "core" theme (the traditional
+	cursors).
+
+<item> Xterm updated to patch level 173, including the following bugfixes:
+	<itemize>
+	<item> Fix two infinite loops (special cases of mouse hilite tracking,
+		DECUDK parsing).
+	<item> Make repainting of the 256-color example work properly.
+	<item> Modify parser tables to improve detection of malformed
+		control sequences, making xterm behave more like a real
+		DEC terminal.
+	<item> Fix a problem with the blinking cursor which occasionally caused
+		xterm to pause until a key was pressed.
+	<item> Fix improper parsing of multiple items in the ttyModes resource.
+
+	</itemize>
+	and the following improvements:
+	<itemize>
+	<item> Modify xterm to invoke luit.
+	<item> Add simple session management client capabilities.
+	<item> Add a modifyCursorKeys resource to control how the shift- and
+		similar modifiers are used to make a cursor escape sequence.
+	<item> Check if the printerCommand resource string is empty,
+		and use this to allow the user to disable printer function.
+	<item> Sort the options list which is displayed in help- and
+		syntax-messages at runtime to simplify maintenance.
+	</itemize>
+
 </itemize>
 
 <sect1>I18N and Font Updates
 
 <p>
 <itemize>
-<item> New Luxi scalable fonts (TrueType and Type&nbsp;1) from Bigelow &amp;
-	Holmes.
-	These fonts are original designs by Kris Holmes and Charles Bigelow.
-	See <ref id="luxi" name="below"> for further information.
-<item> More locale/international keyboards supported.
-<item> Modularized I18N support in Xlib is included from X11R6.6.
-<item> A problem that caused bdftopcf to sometimes write corrupted fonts
-	is fixed.
-<item> Some problem with Xlib's handling of CTEXT and multi-byte
-	characters are fixed.
-<item> The fontenc layer is updated, and the fontenc library is now installed
-	and available for other applications.
-<item> Improvements to the input method framework in Xlib for UTF-8 locales.
-<item> A filter called ``luit'' is added, which provides locale and
-	ISO&nbsp;2022 support to any Unicode terminal, notably xterm.
-	Use of luit is still experimental in this release.
+<item> FreeType2 updated to version 2.1.1.
+
+<item> The "freetype" X server font backend has undergone a partial rewrite.
+	The new version is based on FreeType 2, and handles TrueType
+	(including OpenType/TTF), OpenType/CFF and Type 1 fonts.  The old
+	"type1" backend is now deprecated, and is only used for CIDFonts
+	by default.
+
+<item> A new utility called "mkfontscale", which builds fonts.scale files,
+	has been added.
+
+<item> The Xft library has undergone a major restructuring, and is now
+	split into fontconfig (which deals with font discovery and
+	configuration and is independent from X), and Xft itself (which
+	uses fontconfig and deals with font rasterisation and rendering.
+	The format of the Xft font configuration files has changed in
+	an incompatible manner.
+
+<item> Support has been added to the Xft library to do rendering with the
+	core X11 protocol.  This allows clients using this library to
+	render to X servers that don't have support for the RENDER extension.
+
+<item> There has been a significant reworking of the XKB support to allow
+	multi-layout configurations.  Multi-layout configurations provide
+	a flexible way of supporting multiple language layouts and switching
+	between them.
+
 </itemize>
 
 <sect1>OS Support Updates
 
 <p>
 <itemize>
-<item> Build problems on both QNX4 and QNX6 are fixed.
-<item> VT switching problems with the i810 driver on FreeBSD are worked around.
-<item> Problems building modules with some enhanced versions of gcc are fixed.
-<item> Lots of updates for Darwin/Mac OS X, including:
+<item> Updates for Darwin/Mac OS X, including:
 	<itemize>
-	<item> On Mac OS X, a new rootless mode is added to the XDarwin
-		X server.  This allows X clients to display windows on
-		the Aqua desktop.
-	<item> Xinerama support added to XDarwin
-	<item> With XDarwin in full screen mode, the depth, size, and refresh
-		rate can now be chosen to be different from the settings
-		used by Aqua.
-	<item> GLX support added for Darwin and Mac OS X with software
-		rendering.
-	<item> Keymap setup in XDarwin is improved, particularly for
-		international keyboards.
-	<item> In addition to English and Japanese, the XDarwin user
-		interface is now localized in Dutch, French, German, Spanish,
-		and Korean.
+	<item> Indirect GLX acceleration added.
+	<item> Smaller memory footprint and faster 2-D drawing in rootless
+		mode.
+	<item> Full screen mode now uses shadowfb for much faster 2-D drawing.
+	<item> Native fonts can be used on MacOS X.
 	</itemize>
-<item> Lots of Cygwin support updates.
-<item> Support added for OpenBSD/powerpc.
-<item> Build support added for Linux on IBM S/390.
-<item> Removed stale support for Amoeba and Minix.
-<item> Client-side support added for sparc64 on NetBSD and OpenBSD.
-<item> Support added for building the X server on Linux/m68k.
-<item> Support added for building on Linux/arm32.
-<item> Updates to Linux/mips support.
+
+<item> Various Cygwin support updates, including an experimental rootless
+	X server for Cygwin/XFree86.
+
+<item> AMD x86-64 support (primarily for Linux so far) has been added.
+
+<item> Support added for OpenBSD/sparc64.
+
+<item> Major OS/2 support updates.
+
+<item> Major SCO OpenServer updates.
+
+<item> Multi-head support has been added for 460GX-based Itanium systems,
+	and for ZX1-based Itanium2 systems.
+
+<item> Experimental support for SunOS/Solaris on UltraSPARC systems.
+
+
 </itemize>
 
 A more complete list of changes can be found in the CHANGELOG that is
@@ -260,7 +274,7 @@ url="http://cvsweb.xfree86.org/cvsweb/xc/programs/Xserver/hw/xfree86/CHANGELOG?r
 <p>
 -->
 
-<sect>Drivers
+<sect>Drivers<label id="drivertables">
 <p>
 
 <sect1>Video Drivers
@@ -278,7 +292,8 @@ XFree86 &relvers; includes the following video drivers:
    <tabrow><tt>ati</tt><colsep>ATI<colsep><htmlurl
 		name="README.ati" url="ati.html">, <htmlurl
 		name="README.r128" url="r128.html">, <htmlurl
-		name="r128(4)" url="r128.4.html"></tabrow>
+		name="r128(4)" url="r128.4.html">, <htmlurl
+		name="radeon(4)" url="radeon.4.html"></tabrow>
    <tabrow><tt>chips</tt><colsep>Chips &amp; Technologies<colsep><htmlurl
 		name="README.chips" url="chips.html">, <htmlurl
 		name="chips(4)" url="chips.4.html"></tabrow>
@@ -296,7 +311,7 @@ XFree86 &relvers; includes the following video drivers:
 		name="i128(4)" url="i128.4.html"></tabrow>
    <tabrow><tt>i740</tt><colsep>Intel i740<colsep><htmlurl
 		name="README.i740" url="i740.html"></tabrow>
-   <tabrow><tt>i810</tt><colsep>Intel i810<colsep><htmlurl
+   <tabrow><tt>i810</tt><colsep>Intel i8xx<colsep><htmlurl
 		name="README.i810" url="i810.html">, <htmlurl
 		name="i810(4)" url="i810.4.html"></tabrow>
    <tabrow><tt>imstt</tt><colsep>Integrated Micro Solns<colsep>&nbsp;</tabrow>
@@ -307,6 +322,8 @@ XFree86 &relvers; includes the following video drivers:
    <tabrow><tt>newport</tt> (-)<colsep>SGI Newport<colsep><htmlurl
 		name="README.newport" url="newport.html">, <htmlurl
 		name="newport(4)" url="newport.4.html"></tabrow>
+   <tabrow><tt>nsc</tt><colsep>National Semiconductor<colsep><htmlurl
+		name="nsc(4)" url="nsc.4.html"></tabrow>
    <tabrow><tt>nv</tt><colsep>NVIDIA<colsep><htmlurl
 		name="nv(4)" url="nv.4.html"></tabrow>
    <tabrow><tt>rendition</tt><colsep>Rendition<colsep><htmlurl
@@ -321,7 +338,8 @@ XFree86 &relvers; includes the following video drivers:
    <tabrow><tt>siliconmotion</tt><colsep>Silicon Motion<colsep><htmlurl
 		name="siliconmotion(4)" url="siliconmotion.4.html"></tabrow>
    <tabrow><tt>sis</tt><colsep>SiS<colsep><htmlurl
-		name="README.SiS" url="SiS.html"></tabrow>
+		name="README.SiS" url="SiS.html">, <htmlurl
+		name="sis(4)" url="sis.4.html"></tabrow>
    <tabrow><tt>sunbw2</tt> (+)<colsep>Sun bw2<colsep>&nbsp;</tabrow>
    <tabrow><tt>suncg14</tt> (+)<colsep>Sun cg14<colsep>&nbsp;</tabrow>
    <tabrow><tt>suncg3</tt> (+)<colsep>Sun cg3<colsep>&nbsp;</tabrow>
@@ -329,7 +347,8 @@ XFree86 &relvers; includes the following video drivers:
    <tabrow><tt>sunffb</tt> (+)<colsep>Sun Creator/3D, Elite 3D<colsep>&nbsp;</tabrow>
    <tabrow><tt>sunleo</tt> (+)<colsep>Sun Leo (ZX)<colsep>&nbsp;</tabrow>
    <tabrow><tt>suntcx</tt> (+)<colsep>Sun TCX<colsep>&nbsp;</tabrow>
-   <tabrow><tt>tdfx</tt><colsep>3Dfx<colsep>&nbsp;</tabrow>
+   <tabrow><tt>tdfx</tt><colsep>3Dfx<colsep><htmlurl
+		name="tdfx(4)" url="tdfx.4.html"></tabrow>
    <tabrow><tt>tga</tt><colsep>DEC TGA<colsep><htmlurl
 		name="README.DECtga" url="DECtga.html"></tabrow>
    <tabrow><tt>trident</tt><colsep>Trident<colsep><htmlurl
@@ -378,22 +397,37 @@ XFree86 &relvers; includes the following input drivers:
 		name="dmc(4)" url="dmc.4.html"></tabrow>
    <tabrow><tt>dynapro</tt><colsep>Dynapro<colsep>&nbsp;</tabrow>
    <tabrow><tt>elographics</tt><colsep>EloGraphics<colsep>&nbsp;</tabrow>
+   <tabrow><tt>elographics</tt><colsep>EloGraphics<colsep>&nbsp;</tabrow>
+   <tabrow><tt>fpit</tt><colsep>Fujitsu Stylistic Tablet PCs<colsep><htmlurl
+		name="fpit(4)" url="fpit.4.html"></tabrow>
    <tabrow><tt>hyperpen</tt><colsep>HyperPen<colsep>&nbsp;</tabrow>
+   <tabrow><tt>js_x</tt><colsep>JamStudio pentablet<colsep><htmlurl
+		name="js_x(4)" url="js_x.4.html"></tabrow>
+   <tabrow><tt>kbd</tt><colsep>generic keyboards (alternate)<colsep><htmlurl
+		name="kbd(4)" url="kbd.4.html"></tabrow>
    <tabrow><tt>keyboard</tt><colsep>generic keyboards<colsep><htmlurl
 		name="keyboard(4)" url="keyboard.4.html"></tabrow>
    <tabrow><tt>microtouch</tt><colsep>MicroTouch<colsep>&nbsp;</tabrow>
    <tabrow><tt>mouse</tt><colsep>most mouse devices<colsep><htmlurl
 		name="mouse(4)" url="mouse.4.html"></tabrow>
    <tabrow><tt>mutouch</tt><colsep>MicroTouch<colsep>&nbsp;</tabrow>
+   <tabrow><tt>palmax</tt><colsep>Palmax PD1000/PD1100<colsep><htmlurl
+		name="palmax(4)" url="palmax.4.html"></tabrow>
    <tabrow><tt>penmount</tt><colsep>PenMount<colsep>&nbsp;</tabrow>
    <tabrow><tt>spaceorb</tt><colsep>SpaceOrb<colsep>&nbsp;</tabrow>
    <tabrow><tt>summa</tt><colsep>SummaGraphics<colsep>&nbsp;</tabrow>
+   <tabrow><tt>tek4957</tt><colsep>Tektronix 4957 tablet<colsep><htmlurl
+		name="tek4957(4)" url="tek4957.4.html"></tabrow>
+   <tabrow><tt>ur98(*)</tt><colsep>Union Reality UR-F98 headtracker<colsep><htmlurl
+		name="ur98(4)" url="ur98.4.html"></tabrow>
    <tabrow><tt>void</tt><colsep>dummy device<colsep><htmlurl
 		name="void(4)" url="void.4.html"></tabrow>
    <tabrow><tt>wacom</tt><colsep>Wacom tablets<colsep><htmlurl
 		name="wacom(4)" url="wacom.4.html"></tabrow>
 </tabular>
 </table>
+
+Drivers marked with (*) are available for Linux only.
 
 <sect>Overview of XFree86 4.x.
 <p>
@@ -557,7 +591,7 @@ EndSection
 	The new option <tt>AllowDeactivateGrabs</tt> allows deactivating
 	any active grab with the key sequence <tt>Ctrl+Alt+Keypad-Divide</tt>
 	and the new option <tt>AllowClosedownGrabs</tt> allows closing the
-	conection to the grabbing client with the key sequence
+	connection to the grabbing client with the key sequence
 	<tt>Ctrl+Alt+Keypad-Multiply</tt>. Note that these options are off
 	by default as they allow users to remove the grab used by screen
 	saver/locker programs.
@@ -640,8 +674,9 @@ Section "ServerLayout"
 EndSection
 </verb></quote>
 
-See the XF86Config man page for a more detailed explanation of the format
-of the new ServerLayout section.
+See the <htmlurl name="XF86Config(5)" url="XF86Config.5.html"> man page
+for a more detailed explanation of the format of the new ServerLayout
+section.
 
 
 </itemize>
@@ -972,32 +1007,14 @@ configuring XFree86 to use an existing FreeType installation.
 The Xft library uses a configuration file, <tt>XftConfig</tt>, which
 contains information about which directories contain font files and also
 provides a sophisticated font aliasing mechanism.  Documentation for that
-file is included in the Xft man page.
+file is included in the <htmlurl name="Xft(3)" url="Xft.3.man"> man page.
 
 </sect2>
 <sect2>FreeType support in Xft
 <p>
 
-XFree86 &relvers; includes sources for FreeType version 2.0.6, and, by
+XFree86 &relvers; includes sources for FreeType version 2.1.1, and, by
 default, they are built and installed automatically.
-
-<p>
-
-If you prefer, you can configure XFree86 &relvers; to use an existing
-Freetype2 installation by telling XFree86 not to build the internal copy and
-indicating where that external version has been installed. Edit (or create)
-<tt>config/cf/host.def</tt> to include:
-
-<itemize>
-	<item><tt>#define BuildFreetype2Library NO</tt>
-	<item><tt>#define Freetype2Dir /usr/local</tt>
-</itemize>
-
-Note that XFree86 assumes you'll be using a release FreeType no older than
-version 2.0.1.  Early FreeType version 2 releases used a different header file 
-installation and aren't compatible with XFree86. Instructions for building and
-installing FreeType can be found in the <tt>INSTALL</tt> file included with
-the FreeType release.
 
 </sect2>
 
@@ -1047,142 +1064,17 @@ new features should be completed in a future release.
 <p>
 -->
 
-<sect1>Xaw
-<p>
-
-Two versions of the Xaw library are provided with XFree86 4.x. A version with
-bug fixes and a few binary compatible improvements and a new version with
-several new features.
-
-New features:
-
-<itemize>
-
-  <item>A <tt>displayList</tt> resource is available to all Xaw widgets. It
-	basically consists of a list of drawing commands, fully described in
-	the <tt>Xaw(3)</tt> manual page, that enables a integration of Xaw
-	programs with the new window/desktop managers that allows for
-	configurable themes.
-
-  <item>Some new actions were added to all Xaw widgets, to allow more
-	configurable control of the widgets, and to allow setting resources
-	at run time.
-
-  <item>Since Xpm was integrated into XFree86, programs linked with the
-	new Xaw library	will also link with Xpm. This allows for color
-	background pixmaps, and also for shaped widgets.
-
-  <item>The text widget is the widget that will present more changes. These
-	include:
-
-	<itemize>
-
-	  <item>Block cursor.
-
-	  <item>Compile time limit of 16384 undo/redo levels (that will
-		automatically grow if the text is not saved when this mark is
-		reached).
-
-	  <item>Overwrite mode.
-
-	  <item>Text killed is inserted in a kill ring list, this text is not
-		forgotten, pressing <tt>M-y</tt> allows traversing the kill
-		ring list.
-
-	  <item>International support for latin languages is available even
-		if the <tt>international</tt> resource is not set. Users will
-		need to properly set the <it>locale</it> environment to make
-		complete use of this feature.
-
-	  <item>A better <tt>multiply</tt> interface is provided. Pressing
-		<tt>C-u,&lt;number&gt;</tt> (where number can be negative)
-		allows passing parameters for text actions.
-
-	  <item>Text can be formatted to have left, right, center or full
-		justification.
-
-	  <item>Text indentation support is also available.
-
-	</itemize>
-
-</itemize>
-
-Bug fixes:
-
-<itemize>
-
-  <item>The simple menu widget geometry management code was improved to solve
-	problems with menu entries not visible in the screen.
-
-  <item>The form widget geometry code was changed to solve problems with integer
-	round problems in the child widgets geometry when resizing the parent
-	form widget.
-
-  <item>Several bugs were fixed in the text code, while some code was rewritten
-	from scratch.
-
-</itemize>
-
-<p>
-
-<sect1>Xpm
-<p>
-
-Version 3.4k of the Xpm (X pixmap) library is now integrated into XFree86.
-
 <sect1>xedit
 <p>
 
-Xedit have been changed to use most of the new features added to the new
-version of the Xaw library, and some xedit only features were added. Emacs
-users will find that several of the emacs key bindings work with the new
-version of xedit. These include:
-
+Xedit has several new features, including:
 <itemize>
-
-  <item>File name tab completion. Including a <it>Emacs dired</it> like window,
-	that will be shown when there are more than one match, when
-	<tt>C-x,d</tt> is pressed, or when a directory name is specified.
-
-  <item>An unlimited number of files can be edited at the same time. Including
-	multiple views of the same or different files.
-
-  <item>The line number of the cursor position is always visible. It can also
-	be customized to show the column number, the position offset and the
-	current size of the file.
-
-  <item>There is an <tt>autoReplace</tt> resource, that enables automatic text
-	replacement at the time text is typed. This feature is useful to create
-	simple macros, or to correct common spelling errors.
-
-  <item>A fully featured ispell interface is also available. This interface
-	is expected to provide most of the features of the terminal interface
-	of the ispell program, with some extra features that include:
-
-	<itemize>
-
-	  <item>A compile time limit of 16 undo levels.
-
-	  <item>Terse mode switch.
-
-	  <item>Dictionary change.
-
-	  <item>The interface also checks for repeated words.
-
-	</itemize>
-
-  <item>A first tentative to add programming modes was done. Currently, there
-	is one mode:
-	<itemize>
-
-	  <item><bf>C-mode:</bf> this mode is expected to be stable, and fully
-		usable.
-	</itemize>
-
+  <item>An embedded lisp interpreter that allows easier extension of the editor.
+  <item>Several new syntax highlight modes, and indentation rules for C and Lisp.
+  <item>Flexible search/replace interface that allows regex matches.
+  <item>Please refer to <tt><htmlurl name="xedit(1)" url="xedit.1.html"></tt>
+	for more details.
 </itemize>
-
-<p>
-
 
 <!--
 <sect>Fonts and Internationalisation
