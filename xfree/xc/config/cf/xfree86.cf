@@ -666,6 +666,15 @@ XCOMM $XFree86: xc/config/cf/xfree86.cf,v 3.492 2005/02/28 23:19:12 dawes Exp $
 #  endif
 # endif
 
+#if defined(NetBSDArchitecture)
+# ifndef XF86CardDrivers
+#  define XF86CardDrivers	sunffb sunleo suncg6 suncg3 suncg14 suntcx \
+				sunbw2  ati vga \
+				XF86OSCardDrivers XF86ExtraCardDrivers \
+				DevelDrivers
+# endif
+#endif
+
 /* Pure PCI drivers should go first */
 # ifndef XF86CardDrivers
 #  define XF86CardDrivers	ati \
