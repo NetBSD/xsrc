@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/mga/mga_dri.c,v 1.22 2001/09/26 12:59:17 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/mga/mga_dri.c,v 1.23 2002/02/14 23:10:11 dawes Exp $ */
 
 /*
  * Copyright 2000 VA Linux Systems Inc., Fremont, California.
@@ -571,11 +571,14 @@ static Bool MGADRIAgpInit(ScreenPtr pScreen)
    MGADRIServerPrivatePtr pMGADRIServer = pMga->DRIServerInfo;
    unsigned long mode;
    unsigned int vendor, device;
-   int ret, count;
+   int ret, count, i;
+
+   if(pMga->agpSize < 12)pMga->agpSize = 12;
+   if(pMga->agpSize > 64)pMga->agpSize = 64; /* cap */
 
    /* FIXME: Make these configurable...
     */
-   pMGADRIServer->agp.size = 12 * 1024 * 1024;
+   pMGADRIServer->agp.size = pMga->agpSize * 1024 * 1024;
 
    pMGADRIServer->warp.offset = 0;
    pMGADRIServer->warp.size = MGA_WARP_UCODE_SIZE;
@@ -587,6 +590,13 @@ static Bool MGADRIAgpInit(ScreenPtr pScreen)
    pMGADRIServer->buffers.offset = (pMGADRIServer->primary.offset +
 				    pMGADRIServer->primary.size);
    pMGADRIServer->buffers.size = MGA_NUM_BUFFERS * MGA_BUFFER_SIZE;
+
+
+   pMGADRIServer->agpTextures.offset = (pMGADRIServer->buffers.offset +
+                                    pMGADRIServer->buffers.size);
+
+   pMGADRIServer->agpTextures.size = pMGADRIServer->agp.size -
+                                     pMGADRIServer->agpTextures.offset;
 
    if ( drmAgpAcquire( pMga->drmFD ) < 0 ) {
       xf86DrvMsg( pScreen->myNum, X_ERROR, "[agp] AGP not available\n" );
@@ -750,6 +760,28 @@ static Bool MGADRIAgpInit(ScreenPtr pScreen)
 	       "[drm] Added %d %d byte DMA buffers\n",
 	       count, MGA_BUFFER_SIZE );
 
+   i = mylog2(pMGADRIServer->agpTextures.size / MGA_NR_TEX_REGIONS);
+   if(i < MGA_LOG_MIN_TEX_REGION_SIZE)
+      i = MGA_LOG_MIN_TEX_REGION_SIZE;
+   pMGADRIServer->agpTextures.size = (pMGADRIServer->agpTextures.size >> i) << i;
+
+   if ( drmAddMap( pMga->drmFD,
+                   pMGADRIServer->agpTextures.offset,
+                   pMGADRIServer->agpTextures.size,
+                   DRM_AGP, 0,
+                   &pMGADRIServer->agpTextures.handle ) < 0 ) {
+      xf86DrvMsg( pScreen->myNum, X_ERROR,
+                  "[agp] Could not add agpTexture mapping\n" );
+      return FALSE;
+   }
+/* should i map it ? */
+   xf86DrvMsg( pScreen->myNum, X_INFO,
+               "[agp] agpTexture handle = 0x%08lx\n",
+               pMGADRIServer->agpTextures.handle );
+   xf86DrvMsg( pScreen->myNum, X_INFO,
+               "[agp] agpTexture size: %d kb\n", pMGADRIServer->agpTextures.size/1024 );
+
+
    xf86EnablePciBusMaster( pMga->PciInfo, TRUE );
 
    return TRUE;
@@ -852,6 +884,9 @@ static Bool MGADRIKernelInit( ScreenPtr pScreen )
    init.warp_offset = pMGADRIServer->warp.handle;
    init.primary_offset = pMGADRIServer->primary.handle;
    init.buffers_offset = pMGADRIServer->buffers.handle;
+
+   init.texture_offset[1] = pMGADRIServer->agpTextures.handle;
+   init.texture_size[1] = pMGADRIServer->agpTextures.size;
 
    ret = drmMGAInitDMA( pMga->drmFD, &init );
    if ( ret < 0 ) {
@@ -1192,6 +1227,14 @@ Bool MGADRIFinishScreenInit( ScreenPtr pScreen )
    pMGADRI->logTextureGranularity = i;
    pMGADRI->textureSize = (pMGADRI->textureSize >> i) << i; /* truncate */
 
+   i = mylog2( pMGADRIServer->agpTextures.size / MGA_NR_TEX_REGIONS );
+   if ( i < MGA_LOG_MIN_TEX_REGION_SIZE )
+      i = MGA_LOG_MIN_TEX_REGION_SIZE;
+
+   pMGADRI->logAgpTextureGranularity = i;
+   pMGADRI->agpTextureOffset = (unsigned int)pMGADRIServer->agpTextures.handle;
+   pMGADRI->agpTextureSize = (unsigned int)pMGADRIServer->agpTextures.size;
+
    pMGADRI->registers.handle	= pMGADRIServer->registers.handle;
    pMGADRI->registers.size	= pMGADRIServer->registers.size;
    pMGADRI->status.handle	= pMGADRIServer->status.handle;
@@ -1233,6 +1276,11 @@ void MGADRICloseScreen( ScreenPtr pScreen )
    if ( pMGADRIServer->warp.map ) {
       drmUnmap( pMGADRIServer->warp.map, pMGADRIServer->warp.size );
       pMGADRIServer->warp.map = NULL;
+   }
+
+   if ( pMGADRIServer->agpTextures.map ) {
+      drmUnmap( pMGADRIServer->agpTextures.map, pMGADRIServer->agpTextures.size );
+      pMGADRIServer->agpTextures.map = NULL;
    }
 
    if ( pMGADRIServer->agp.handle ) {

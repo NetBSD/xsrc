@@ -45,7 +45,7 @@
  *		Added digital screen option for first head
  */
  
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/mga/mga_driver.c,v 1.214 2002/01/07 21:50:11 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/mga/mga_driver.c,v 1.219 2002/04/04 14:05:43 eich Exp $ */
 
 /*
  * This is a first cut at a non-accelerated version to work with the
@@ -213,6 +213,7 @@ typedef enum {
     OPTION_CRTC2RAM,
     OPTION_INT10,
     OPTION_AGP_MODE,
+    OPTION_AGP_SIZE,
     OPTION_DIGITAL,
     OPTION_TV,
     OPTION_TVSTANDARD,
@@ -244,6 +245,7 @@ static const OptionInfoRec MGAOptions[] = {
     { OPTION_CRTC2RAM,		"Crtc2Ram",	OPTV_INTEGER,	{0}, FALSE },
     { OPTION_INT10,		"Int10",	OPTV_BOOLEAN,	{0}, FALSE },
     { OPTION_AGP_MODE,		"AGPMode",	OPTV_INTEGER,	{0}, FALSE },
+    { OPTION_AGP_SIZE,		"AGPSize",      OPTV_INTEGER,   {0}, FALSE },
     { OPTION_DIGITAL,		"DigitalScreen",OPTV_BOOLEAN,	{0}, FALSE },
     { OPTION_TV,		"TV",		OPTV_BOOLEAN,	{0}, FALSE },
     { OPTION_TVSTANDARD,	"TVStandard",	OPTV_ANYSTR,	{0}, FALSE },
@@ -740,8 +742,9 @@ MGAReadBios(ScrnInfoPtr pScrn)
 	pBios = &pMga->Bios;
 	pBios2 = &pMga->Bios2;
         
-        /* Get the output mode set by the BIOS */
-        xf86ReadBIOS(pMga->BiosAddress, 0x7ff1, &pMga->BiosOutputMode, sizeof(CARD8)); 
+	/* Get the output mode set by the BIOS */
+	xf86ReadDomainMemory(pMga->PciTag, pMga->BiosAddress + 0x7ff1u,
+			     sizeof(CARD8), &pMga->BiosOutputMode); 
 
 	/*
 	 * If the BIOS address was probed, it was found from the PCI config
@@ -757,7 +760,8 @@ MGAReadBios(ScrnInfoPtr pScrn)
 	    rlen = xf86ReadPciBIOS(0, pMga->PciTag, pMga->FbBaseReg,
 				   BIOS, sizeof(BIOS));
 	else
-	    rlen = xf86ReadBIOS(pMga->BiosAddress, 0, BIOS, sizeof(BIOS));
+	    rlen = xf86ReadDomainMemory(pMga->PciTag, pMga->BiosAddress,
+					sizeof(BIOS), BIOS);
 
 	if (rlen < (BIOS[2] << 9)) {
 		xf86DrvMsg(pScrn->scrnIndex, X_WARNING,
@@ -1299,28 +1303,122 @@ MGAPreInit(ScrnInfoPtr pScrn, int flags)
     pScrn->monitor = pScrn->confScreen->monitor;
 
     /*
-     * In case of DualHead, we need to determine if we are the 'master' head or the 'slave'
-     * head. In order to do that, at the end of the first initialisation, PrimInit is set as
-     * DONE to the shared entity. So that the second initialisation knows that something has
-     * been done before it. This always assume that the first device initialised is the master
+     * Set the Chipset and ChipRev, allowing config file entries to
+     * override.
+     */
+    if (pMga->device->chipset && *pMga->device->chipset) {
+	pScrn->chipset = pMga->device->chipset;
+        pMga->Chipset = xf86StringToToken(MGAChipsets, pScrn->chipset);
+        from = X_CONFIG;
+    } else if (pMga->device->chipID >= 0) {
+	pMga->Chipset = pMga->device->chipID;
+	pScrn->chipset = (char *)xf86TokenToString(MGAChipsets, pMga->Chipset);
+	from = X_CONFIG;
+	xf86DrvMsg(pScrn->scrnIndex, X_CONFIG, "ChipID override: 0x%04X\n",
+		   pMga->Chipset);
+    } else {
+	from = X_PROBED;
+	pMga->Chipset = pMga->PciInfo->chipType;
+	pScrn->chipset = (char *)xf86TokenToString(MGAChipsets, pMga->Chipset);
+    }
+    if (pMga->device->chipRev >= 0) {
+	pMga->ChipRev = pMga->device->chipRev;
+	xf86DrvMsg(pScrn->scrnIndex, X_CONFIG, "ChipRev override: %d\n",
+		   pMga->ChipRev);
+    } else {
+	pMga->ChipRev = pMga->PciInfo->chipRev;
+    }
+
+    /*
+     * This shouldn't happen because such problems should be caught in
+     * MGAProbe(), but check it just in case.
+     */
+    if (pScrn->chipset == NULL) {
+	xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
+		   "ChipID 0x%04X is not recognised\n", pMga->Chipset);
+	return FALSE;
+    }
+    if (pMga->Chipset < 0) {
+	xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
+		   "Chipset \"%s\" is not recognised\n", pScrn->chipset);
+	return FALSE;
+    }
+
+    xf86DrvMsg(pScrn->scrnIndex, from, "Chipset: \"%s\"", pScrn->chipset);
+    if ((pMga->Chipset == PCI_CHIP_MGAG400) &&
+	(pMga->ChipRev >= 0x80))
+	xf86ErrorF(" (G450)\n");
+    else
+	xf86ErrorF(" (G400)\n");
+
+#ifdef USEMGAHAL
+    if (HAL_CHIPSETS) {
+	Bool loadHal = TRUE;
+	
+	from = X_DEFAULT;
+	if (xf86FindOption(pMga->device->options, "NoHal")) {
+	    loadHal = !xf86SetBoolOption(pMga->device->options,
+					 "NoHal", !loadHal);
+	    from = X_CONFIG;
+	} else if (xf86FindOption(pMga->device->options, "Hal")) {
+	    loadHal = xf86SetBoolOption(pMga->device->options,
+					"Hal", loadHal);
+	    from = X_CONFIG;
+	}
+        if (loadHal && xf86LoadSubModule(pScrn, "mga_hal")) {
+	  xf86LoaderReqSymLists(halSymbols, NULL);
+	  xf86DrvMsg(pScrn->scrnIndex, from,"Matrox HAL module used\n");
+	  pMga->HALLoaded = TRUE;
+	} else {
+	  xf86DrvMsg(pScrn->scrnIndex, from, "Matrox HAL module not loaded "
+		     "- using builtin mode setup instead\n");
+	  pMga->HALLoaded = FALSE;
+	}
+    }
+#endif
+
+    pMga->DualHeadEnabled = FALSE;
+    if (xf86IsEntityShared(pScrn->entityList[0])) {/* dual-head mode requested*/
+#ifdef USEMGAHAL
+	if (pMga->HALLoaded || !MGA_DH_NEEDS_HAL(pMga)) {
+#else
+	if (!MGA_DH_NEEDS_HAL(pMga)) {
+#endif
+	    pMga->DualHeadEnabled = TRUE;
+	} else if (xf86IsPrimInitDone(pScrn->entityList[0])) {
+	    xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
+	 "This card requires the \"mga_hal\" module for dual-head operation\n"
+	 "\tIt can be found at the Matrox web site <http://www.matrox.com>\n");
+	}
+    }
+
+    /*
+     * In case of DualHead, we need to determine if we are the 'master' head
+     * or the 'slave' head. In order to do that, at the end of the first
+     * initialisation, PrimInit is set as DONE to the shared entity. So that
+     * the second initialisation knows that something has been done before it.
+     * This always assume that the first device initialised is the master
      * head, and the second the slave.
      * 
      */
     if (xf86IsEntityShared(pScrn->entityList[0])) {      /* dual-head mode */
-        
         if (!xf86IsPrimInitDone(pScrn->entityList[0])) { /* Is it the first initialisation? */
             /* First CRTC  */
             pMga->SecondCrtc = FALSE;
             pMga->HWCursor = TRUE;
             pMgaEnt->pScrn_1 = pScrn;
-        }
-        else {
+        } else if (pMga->DualHeadEnabled) {
             /* Second CRTC */
             pMga->SecondCrtc = TRUE;
             pMga->HWCursor = FALSE;
             pMgaEnt->pScrn_2 = pScrn;
             pScrn->AdjustFrame = MGAAdjustFrameCrtc2;
-        }
+        } else {
+	    return FALSE;
+	}
+    }
+
+    if (pMga->DualHeadEnabled) {
 #ifdef XF86DRI
         pMga->GetQuiescence = MGAGetQuiescenceShared;
 #endif
@@ -1421,65 +1519,6 @@ MGAPreInit(ScrnInfoPtr pScrn, int flags)
     if (pScrn->depth == 8)
 	pScrn->rgbBits = 8;
 
-    /*
-     * Set the Chipset and ChipRev, allowing config file entries to
-     * override.
-     */
-    if (pMga->device->chipset && *pMga->device->chipset) {
-	pScrn->chipset = pMga->device->chipset;
-        pMga->Chipset = xf86StringToToken(MGAChipsets, pScrn->chipset);
-        from = X_CONFIG;
-    } else if (pMga->device->chipID >= 0) {
-	pMga->Chipset = pMga->device->chipID;
-	pScrn->chipset = (char *)xf86TokenToString(MGAChipsets, pMga->Chipset);
-	from = X_CONFIG;
-	xf86DrvMsg(pScrn->scrnIndex, X_CONFIG, "ChipID override: 0x%04X\n",
-		   pMga->Chipset);
-    } else {
-	from = X_PROBED;
-	pMga->Chipset = pMga->PciInfo->chipType;
-	pScrn->chipset = (char *)xf86TokenToString(MGAChipsets, pMga->Chipset);
-    }
-    if (pMga->device->chipRev >= 0) {
-	pMga->ChipRev = pMga->device->chipRev;
-	xf86DrvMsg(pScrn->scrnIndex, X_CONFIG, "ChipRev override: %d\n",
-		   pMga->ChipRev);
-    } else {
-	pMga->ChipRev = pMga->PciInfo->chipRev;
-    }
-
-#ifdef USEMGAHAL
-    if (HAL_CHIPSETS) {
-        if (!xf86ReturnOptValBool(pMga->Options, OPTION_NOHAL, FALSE)
-	    && xf86LoadSubModule(pScrn, "mga_hal")) {
-	  xf86LoaderReqSymLists(halSymbols, NULL);
-	  xf86DrvMsg(pScrn->scrnIndex, X_INFO,"Matrox HAL module used\n");
-	  pMga->HALLoaded = TRUE;
-	} else {
-	  xf86DrvMsg(pScrn->scrnIndex, X_INFO, "Matrox HAL module not loaded "
-		     "- using builtin mode setup instead\n");
-	  pMga->HALLoaded = FALSE;
-	}
-    }
-#endif
-
-    /*
-     * This shouldn't happen because such problems should be caught in
-     * MGAProbe(), but check it just in case.
-     */
-    if (pScrn->chipset == NULL) {
-	xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
-		   "ChipID 0x%04X is not recognised\n", pMga->Chipset);
-	return FALSE;
-    }
-    if (pMga->Chipset < 0) {
-	xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
-		   "Chipset \"%s\" is not recognised\n", pScrn->chipset);
-	return FALSE;
-    }
-
-    xf86DrvMsg(pScrn->scrnIndex, from, "Chipset: \"%s\"\n", pScrn->chipset);
-
 #ifdef XF86DRI
     from = X_DEFAULT;
     pMga->agpMode = MGA_DEFAULT_AGP_MODE;
@@ -1493,6 +1532,12 @@ MGAPreInit(ScrnInfoPtr pScrn, int flags)
 	  pMga->agpMode = MGA_MAX_AGP_MODE;
        }
        from = X_CONFIG;
+    }
+    if (xf86GetOptValInteger(pMga->Options,
+                             OPTION_AGP_SIZE, &(pMga->agpSize))) {
+                             /* check later */
+       xf86DrvMsg(pScrn->scrnIndex, from, "Using %d MB of AGP memory\n",
+	          pMga->agpSize);
     }
 
     xf86DrvMsg(pScrn->scrnIndex, from, "Using AGP %dx mode\n",
@@ -1812,7 +1857,7 @@ MGAPreInit(ScrnInfoPtr pScrn, int flags)
 	pScrn->videoRam = MGACountRam(pScrn);
     }
 
-    if(xf86IsEntityShared(pScrn->entityList[0])) {
+    if (pMga->DualHeadEnabled) {
        /* This takes gives either half or 8 meg to the second head
 	* whichever is less. */
         if(pMga->SecondCrtc == FALSE) {
@@ -2073,6 +2118,17 @@ MGAPreInit(ScrnInfoPtr pScrn, int flags)
         pMga->pClientStruct->pMga = (MGAPtr) pMga;
 
         MGAMapMem(pScrn);
+	/* 
+	 * For some reason the MGAOPM_DMA_BLIT bit needs to be set
+	 * on G200 before opening the HALlib. I don't know why.
+	 * MATROX: hint, hint.
+	 */
+	/*if (pMga->Chipset == PCI_CHIP_MGAG200 ||
+	  pMga->Chipset == PCI_CHIP_MGAG200_PCI) */{
+	    CARD32 opmode;
+	    opmode = INREG(MGAREG_OPMODE);
+	    OUTREG(MGAREG_OPMODE,  MGAOPM_DMA_BLIT | opmode);
+	}
         MGAOpenLibrary(pMga->pBoard,pMga->pClientStruct,sizeof(CLIENTDATA));
         MGAUnmapMem(pScrn);
         pMga->pMgaHwInfo = xalloc(sizeof(MGAHWINFO));
@@ -2101,7 +2157,7 @@ MGAPreInit(ScrnInfoPtr pScrn, int flags)
         }
 
         /* copy the board handles */
-        if (xf86IsEntityShared(pScrn->entityList[0])) {
+        if (pMga->DualHeadEnabled) {
             pMgaEnt->pClientStruct = pMga->pClientStruct;
             pMgaEnt->pBoard = pMga->pBoard;
             pMgaEnt->pMgaHwInfo = pMga->pMgaHwInfo;
@@ -2182,7 +2238,11 @@ MGAPreInit(ScrnInfoPtr pScrn, int flags)
      * Can we trust HALlib to set the memory configuration
      * registers correctly?
      */
+#ifdef USEMGAHAL
     else if ((pMga->softbooted || pMga->Primary /*|| pMga->HALLoaded*/ ) &&
+#else
+    else if ((pMga->softbooted || pMga->Primary) &&
+#endif
 	     (pMga->Chipset != PCI_CHIP_MGA2064) &&
 	     (pMga->Chipset != PCI_CHIP_MGA2164) &&
 	     (pMga->Chipset != PCI_CHIP_MGA2164_AGP)) {
@@ -2264,7 +2324,7 @@ MGAPreInit(ScrnInfoPtr pScrn, int flags)
 
     xf86DrvMsgVerb(pScrn->scrnIndex, X_INFO, 2, "YDstOrg is set to %d\n",
 		   pMga->YDstOrg);
-    if(xf86IsEntityShared(pScrn->entityList[0])) {
+    if(pMga->DualHeadEnabled) {
         if(pMga->SecondCrtc == FALSE) {
 	    pMga->FbUsableSize = pMgaEnt->masterFbMapSize;
             /* Allocate HW cursor buffer at the end of video ram */
@@ -2368,7 +2428,7 @@ MGAPreInit(ScrnInfoPtr pScrn, int flags)
     /* This needs to only happen after this board has completed preinit
      * both times
      */
-      if(xf86IsEntityShared(pScrn->entityList[0])) {
+      if(pMga->DualHeadEnabled) {
 	  /* Entity is shared make sure refcount == 2 */
 	  /* If ref count is 2 then reset it to 0 */
 	  if(pMgaEnt->refCount == 2) {
@@ -2630,6 +2690,7 @@ MGAModeInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
     vgaRegPtr vgaReg;
     MGAPtr pMga = MGAPTR(pScrn);
     MGARegPtr mgaReg;
+
 #ifdef USEMGAHAL
     Bool digital1 = FALSE;
     Bool digital2 = FALSE;
@@ -2736,7 +2797,7 @@ MGAModeInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
     
     );	/* MGA_HAL */
 
-    /* getting around bugs in the HAL lib. MATROX: hint, hint */
+    /* getting around bugs in the HAL lib. MATROX: hint, hint. */
     MGA_HAL(
 	    switch (pMga->Chipset) {
 	    case PCI_CHIP_MGA1064:
@@ -2745,7 +2806,8 @@ MGAModeInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
 	    case PCI_CHIP_MGAG200:
 	    case PCI_CHIP_MGAG200_PCI:
 	    case PCI_CHIP_MGAG400:	      
-	      if(pMga->SecondCrtc == FALSE && pMga->HWCursor == TRUE) {
+	    case PCI_CHIP_MGAG550:
+		if(pMga->SecondCrtc == FALSE && pMga->HWCursor == TRUE) {
 		outMGAdac(MGA1064_CURSOR_BASE_ADR_LOW, 
 			  pMga->FbCursorOffset >> 10);
 		outMGAdac(MGA1064_CURSOR_BASE_ADR_HI, 
@@ -2769,6 +2831,7 @@ MGAModeInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
 
     MGAStormSync(pScrn);
     MGAStormEngineInit(pScrn);
+
     vgaHWProtect(pScrn, FALSE);
 
     if (xf86IsPc98()) {
@@ -2840,7 +2903,6 @@ MGARestore(ScrnInfoPtr pScrn)
 
     if (pScrn->pScreen != NULL)
 	MGAStormSync(pScrn);
-
     if(pMga->SecondCrtc) {
         MGARestoreSecondCrtc(pScrn);
         return;
@@ -2930,7 +2992,7 @@ MGAScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 	|| (pMga->Chipset == PCI_CHIP_MGAG100_PCI))
         MGAG100BlackMagic(pMga);
 
-    if (xf86IsEntityShared(pScrn->entityList[0])) {
+    if (pMga->DualHeadEnabled) {
        DevUnion *pPriv;
        pPriv = xf86GetEntityPrivate(pScrn->entityList[0], MGAEntityIndex);
        pMgaEnt = pPriv->ptr;
@@ -2988,7 +3050,7 @@ MGAScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 #ifdef USEMGAHAL
     MGA_HAL(
 	/* There is a problem in the HALlib: set soft reset bit */
-	/* MATROX: hint, hint */
+	/* MATROX: hint, hint. */
 	if (!pMga->Primary && !pMga->FBDev &&
 	    (pMga->PciInfo->subsysCard == PCI_CARD_MILL_G200_SG) ) {
 	    OUTREG(MGAREG_Reset, 1);
@@ -3040,7 +3102,6 @@ MGAScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 	if (!MGAModeInit(pScrn, pScrn->currentMode))
 	    return FALSE;
     }
-
     /* Darken the screen for aesthetic reasons and set the viewport */
     if (pMga->SecondCrtc == TRUE) {
         MGASaveScreenCrtc2(pScreen, SCREEN_SAVER_ON);
@@ -3290,7 +3351,7 @@ MGAScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
     } else {
         xf86DrvMsg(pScrn->scrnIndex, driFrom, "Direct rendering disabled\n");
     }
-    if (xf86IsEntityShared(pScrn->entityList[0]) && pMga->SecondCrtc == FALSE)
+    if (pMga->DualHeadEnabled && pMga->SecondCrtc == FALSE)
 	pMgaEnt->directRenderingEnabled = pMga->directRenderingEnabled;
     pMga->haveQuiescense = 1;
 #endif
@@ -3318,7 +3379,7 @@ MGAScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 Bool
 MGASwitchMode(int scrnIndex, DisplayModePtr mode, int flags)
 {
-    return MGAModeInit(xf86Screens[scrnIndex], mode);
+    return  MGAModeInit(xf86Screens[scrnIndex], mode);
 }
 
 
@@ -3513,6 +3574,7 @@ MGACloseScreen(int scrnIndex, ScreenPtr pScreen)
     vgaHWPtr hwp = VGAHWPTR(pScrn);
     MGAPtr pMga = MGAPTR(pScrn);
     MGAEntPtr pMgaEnt = NULL;
+
 #ifdef USEMGAHAL    
     MGA_HAL( RESTORE_TEXTMODE_ON_DVI(pMga); );
 #endif
@@ -3534,7 +3596,7 @@ MGACloseScreen(int scrnIndex, ScreenPtr pScreen)
    }
 #endif
 
-   if (xf86IsEntityShared(pScrn->entityList[0])) {
+   if (pMga->DualHeadEnabled) {
        DevUnion *pPriv;
        pPriv = xf86GetEntityPrivate(pScrn->entityList[0], MGAEntityIndex);
        pMgaEnt = pPriv->ptr;
@@ -3543,7 +3605,7 @@ MGACloseScreen(int scrnIndex, ScreenPtr pScreen)
 
 #ifdef USEMGAHAL
    MGA_HAL(
-   if(xf86IsEntityShared(pScrn->entityList[0])) {
+   if(pMga->DualHeadEnabled) {
       if(pMgaEnt->refCount == 0) {
 	 /* Both boards have closed there screen */
 	 MGACloseLibrary(pMga->pBoard);
