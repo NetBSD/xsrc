@@ -1,0 +1,102 @@
+XCOMM platform:  $XConsortium: Win32.cf /main/45 1996/01/19 15:18:37 kaleb $
+
+#ifndef OSName
+#define OSName			Microsoft Windows NT 3.5
+#endif
+XCOMM operating system:  OSName
+#ifndef OSMajorVersion
+#define OSMajorVersion		3
+#endif
+#ifndef OSMinorVersion
+#define OSMinorVersion		5
+#endif
+#ifndef OSTeenyVersion
+#define OSTeenyVersion		0
+#endif
+
+#ifndef CompilerMajorVersion
+#define CompilerMajorVersion	2	/* 0 == NT 3.1 Win32 SDK */
+#endif
+
+#define BootstrapCFlags		-DWIN32
+#ifdef _M_IX86
+#define CpuDefines -D_X86_
+#endif
+/* brain-damaged windows headers will not compile with -Za */
+#define StandardDefines -DWIN32 -DWIN32_LEAN_AND_MEAN -D_DLL -D_MT -D__STDC__ CpuDefines
+#define DefaultCCOptions -nologo -batch -G4 -W2
+#define DebuggableCDebugFlags -Zi
+#define ThreadedX		YES
+#define HasThreadSafeAPI	NO
+#define CpCmd copy
+#define LnCmd copy
+#define MvCmd ren
+#define RmCmd del
+#ifndef RmTreeCmd
+/* if you do not have deltree, substitute rd /s and suffer the prompts */
+#define RmTreeCmd deltree /y
+#endif
+#define CcCmd cl
+#define HasCplusplus		YES
+#define CplusplusCmd cl
+#define PreProcessCmd CcCmd -nologo -batch -EP
+#define CppCmd  CcCmd -nologo -batch -E
+#define PatheticCpp		YES
+#define ConstructMFLAGS		YES
+#if (CompilerMajorVersion == 0)
+#define ArCmdBase lib32
+#else
+#define ArCmdBase lib
+#endif
+#define ArCmd ArCmdBase
+#define CplusplusCmd cl
+#define MkdirHierCmd mkdir
+#define InstallCmd copy
+#define InstPgmFlags /**/
+#define InstBinFlags /**/
+#define InstUidFlags /**/
+#define InstLibFlags /**/
+#define InstIncFlags /**/
+#define InstManFlags /**/
+#define InstDatFlags /**/
+#define InstallFlags /**/
+#if (CompilerMajorVersion == 0)
+#define ExtraLibraries crtdll.lib kernel32.lib wsock32.lib
+#else
+#define ExtraLibraries msvcrt.lib kernel32.lib wsock32.lib
+#endif
+#define MakeCmd nmake -nologo
+#if (CompilerMajorVersion == 0)
+#define LdCmd link32
+#else
+#define LdCmd link
+#endif
+#define MathLibrary
+#define HasSymLinks		NO
+#define HasPutenv		YES
+#define Osuf obj
+#ifndef CCsuf
+#define CCsuf cxx
+#endif
+#define BuildServer		NO
+#define ConnectionFlags		-DTCPCONN
+
+/* override as necessary in site.def/host.def */
+#ifndef StdIncDir
+#define StdIncDir 		D:/MSVC20/INCLUDE
+#endif
+#define LdPreLib /**/
+#define LdPostLib /**/
+#ifndef UseInstalled
+#define ImakeCmd $(IMAKESRC:/=\)\imake
+#define DependCmd $(DEPENDSRC:/=\)\makedepend
+#endif
+#define FilesToClean *.bak *.obj *.lib make.log
+#define ShLibDir $(BINDIR)
+
+#define XFileSearchPathBase Concat4($(LIBDIR)/;L/;T/;N;C,;S:$(LIBDIR)/;l/;T/;N;C,;S:$(LIBDIR)/;T/;N;C,;S:$(LIBDIR)/;L/;T/;N;S:$(LIBDIR)/;l/;T/;N;S:$(LIBDIR)/;T/;N;S)
+
+#define BuildFonts		NO
+#define XawI18nDefines		-DHAS_WCHAR_H
+
+#include <Win32.rules>

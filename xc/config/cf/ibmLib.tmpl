@@ -1,0 +1,29 @@
+XCOMM $XConsortium: ibmLib.tmpl /main/18 1995/12/14 15:31:05 matt $
+
+/*
+ * AIX shared library template
+ */
+
+#if ThreadedX
+#define SharedX11Reqs -lpthreads
+#endif
+
+#define SharedXextReqs $(XLIBONLY)
+#define SharedXmuReqs $(XTOOLLIB) $(XLIB)
+#define SharedOldXReqs $(XLIBONLY)
+#if ThreadedX
+#define SharedXtReqs $(XLIBONLY) $(SMLIB) $(ICELIB) -lpthreads
+#else
+#define SharedXtReqs $(XLIBONLY) $(SMLIB) $(ICELIB) 
+#endif
+#define SharedXawReqs $(XMULIB) $(XTOOLLIB) $(XLIB)
+#define SharedXiReqs $(XLIB)
+#define SharedXtstReqs $(XLIB)
+#define SharedPexReqs $(XLIBONLY)
+#define SharedXieReqs $(XLIBONLY)
+#define SharedSMReqs $(ICELIB)
+
+#ifndef FixupLibReferences
+#define FixupLibReferences()						@@\
+DEPXTOOLLIB = _UseCat($(USRLIBDIR),$(TOOLKITSRC),/libXt.a)
+#endif

@@ -1,0 +1,113 @@
+XCOMM $XConsortium: bsdLib.rules /main/2 1996/01/24 06:38:15 kaleb $
+
+
+
+
+
+XCOMM $XFree86: xc/config/cf/bsdLib.rules,v 3.2 1996/10/03 08:28:08 dawes Exp $
+/*
+ * NetBSD/FreeBSD shared library rules
+ */
+
+#ifndef HasSharedLibraries
+#define HasSharedLibraries YES
+#endif
+#ifndef SharedDataSeparation
+#define SharedDataSeparation NO
+#endif
+#ifndef SharedCodeDef
+#define SharedCodeDef
+#endif
+#ifndef SharedLibraryDef
+#define SharedLibraryDef -DBSDSHLIB
+#endif
+#ifndef ShLibIncludeFile
+#define ShLibIncludeFile <bsdLib.tmpl>
+#endif
+#ifndef SharedLibraryLoadFlags
+#define SharedLibraryLoadFlags -Bshareable
+#endif
+#ifndef PositionIndependentCFlags
+#define PositionIndependentCFlags -fpic
+#endif
+
+/*
+ * InstallSharedLibrary - generate rules to install the shared library.
+ */
+#ifndef InstallSharedLibrary
+#define InstallSharedLibrary(libname,rev,dest)				@@\
+install:: Concat(lib,libname.so.rev)					@@\
+	MakeDir($(DESTDIR)dest)						@@\
+	$(INSTALL) -c $(INSTLIBFLAGS) Concat(lib,libname.so.rev) $(DESTDIR)dest 
+@@\
+
+#endif /* InstallSharedLibrary */
+
+/*
+ * NormalSharedLibraryTarget - generate rules to create a shared library;
+ * build it into a different name so that the we do not hose people by having
+ * the library gone for long periods.
+ */
+#ifndef SharedLibraryTarget
+#define SharedLibraryTarget(libname,rev,solist,down,up)			@@\
+AllTarget(Concat(lib,libname.so.rev))					@@\
+									@@\
+Concat(lib,libname.so.rev):  solist					@@\
+	$(RM) $@~							@@\
+	(cd down; $(LD) -o up/$@~ $(SHLIBLDFLAGS) solist $(REQUIREDLIBS)) @@\
+	$(RM) $@							@@\
+	$(MV) $@~ $@							@@\
+	LinkBuildLibrary($@)						@@\
+									@@\
+clean::									@@\
+	$(RM) Concat(lib,libname.so.rev)
+
+#endif /* SharedLibraryTarget */
+
+#ifndef SharedDepModuleTarget
+#define SharedDepModuleTarget(name,deps,solist)				@@\
+AllTarget(name)								@@\
+									@@\
+name: deps								@@\
+	$(RM) $@~							@@\
+	$(LD) -o $@~ $(SHLIBLDFLAGS) solist $(REQUIREDLIBS)		@@\
+	$(RM) $@							@@\
+	$(MV) $@~ $@							@@\
+									@@\
+clean::									@@\
+	$(RM) name
+
+#endif /* SharedDepModuleTarget */
+
+/*
+ * SharedLibraryDataTarget - generate rules to create shlib data file;
+ */
+#ifndef SharedLibraryDataTarget
+#define SharedLibraryDataTarget(libname,rev,salist)
+#endif /* SharedLibraryDataTarget */
+
+#ifndef InstallSharedLibraryData
+#define InstallSharedLibraryData(libname,rev,dest)
+#endif /* InstallSharedLibraryData */
+
+/*
+ * SharedLibReferences - variables for shared libraries
+ */
+#ifndef SharedLibReferences
+#define SharedLibReferences(varname,libname,libsource,revname,rev)	@@\
+revname = rev								@@\
+Concat3(DEP,varname,LIB) = SharedLibDependencies(libname,libsource,revname) @@\
+Concat(varname,LIB) = LoaderLibPrefix Concat(-l,libname)		@@\
+LintLibReferences(varname,libname,libsource)
+#endif
+
+/*
+ * SharedDSLibReferences - variables for shared libraries
+ */
+#ifndef SharedDSLibReferences
+#define SharedDSLibReferences(varname,libname,libsource,revname,rev)	@@\
+revname = rev								@@\
+Concat3(DEP,varname,LIB) = SharedDSLibDependencies(libname,libsource,revname) @@\
+Concat(varname,LIB) = LoaderLibPrefix Concat(-l,libname) Concat3(Shared,libname,Reqs)		@@\
+LintLibReferences(varname,libname,libsource)
+#endif

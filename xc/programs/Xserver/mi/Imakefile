@@ -1,0 +1,66 @@
+XCOMM $XConsortium: Imakefile /main/42 1996/01/15 19:47:40 kaleb $
+XCOMM $XFree86: xc/programs/Xserver/mi/Imakefile,v 3.10 1996/10/03 08:49:08 dawes Exp $
+#include <Server.tmpl>
+
+SRCS =  mivaltree.c mipolyseg.c mipolyrect.c \
+	mipoly.c mipolycon.c mipolygen.c mipolyutil.c \
+	mifillrct.c miwideline.c mispans.c \
+	miarc.c mizerarc.c mifillarc.c \
+	miwindow.c micursor.c miregion.c \
+	mipolytext.c mibitblt.c mipolypnt.c mipushpxl.c \
+	miexpose.c miglblt.c mizerline.c mifpolycon.c \
+	midash.c mibstore.c miinitext.c mieq.c \
+	mipointer.c misprite.c midispcur.c miscrinit.c miclipn.c migc.c
+
+OBJS =	mivaltree.o mipolyseg.o mipolyrect.o \
+	mipoly.o mipolycon.o mipolygen.o mipolyutil.o \
+	mifillrct.o miwideline.o mispans.o \
+	miarc.o mizerarc.o mifillarc.o \
+	miwindow.o micursor.o miregion.o \
+	mipolytext.o mibitblt.o mipolypnt.o mipushpxl.o \
+	miexpose.o miglblt.o mizerline.o mifpolycon.o \
+	midash.o mibstore.o miinitext.o mieq.o \
+	mipointer.o misprite.o midispcur.o miscrinit.o miclipn.o migc.o
+
+#ifdef XFree86Version
+/* 
+ * Make sure XINPUT, XF86VidTune, etc aren't defined for the miinitext.o 
+ * used by Xnest, Xvfb 
+ */
+EXT_DEFINES = ExtensionDefines -UXINPUT -UXF86VIDMODE -UXFreeXDGA -UXF86MISC
+#else
+EXT_DEFINES = ExtensionDefines
+#endif
+#if PexDynamicModule
+PEX_MODULE_DEFINES = -DPEX_MODULE
+#endif
+#if XieDynamicModule
+XIE_MODULE_DEFINES = -DXIE_MODULE
+#endif
+EXT_MODULES_DEFINES = $(PEX_MODULE_DEFINES) $(XIE_MODULE_DEFINES)
+
+INCLUDES = -I. -I../include -I$(INCLUDESRC) -I$(FONTINCSRC)
+LINTLIBS = ../dix/llib-ldix.ln ../os/llib-los.ln
+
+NormalLibraryObjectRule()
+NormalLibraryTarget(mi,$(OBJS))
+LintLibraryTarget(mi,$(SRCS))
+NormalLintTarget($(SRCS))
+
+NormalLibraryTarget(cbrt,cbrt.o)
+
+SpecialCObjectRule(miinitext,$(ICONFIGFILES),$(EXT_DEFINES))
+SpecialCObjectRule(miscrinit,$(ICONFIGFILES),$(EXT_DEFINES))
+
+InstallLinkKitLibrary(mi,$(LINKKITDIR)/lib)
+InstallLinkKitLibrary(cbrt,$(LINKKITDIR)/lib)
+InstallLinkKitNonExecFile(mi.h,$(LINKKITDIR)/include)
+InstallLinkKitNonExecFile(mibstore.h,$(LINKKITDIR)/include)
+InstallLinkKitNonExecFile(miline.h,$(LINKKITDIR)/include)
+InstallLinkKitNonExecFile(mipointer.h,$(LINKKITDIR)/include)
+InstallLinkKitNonExecFile(misprite.h,$(LINKKITDIR)/include)
+InstallLinkKitNonExecFile(mispritest.h,$(LINKKITDIR)/include)
+InstallLinkKitNonExecFile(mistruct.h,$(LINKKITDIR)/include)
+InstallLinkKitNonExecFile(miinitext.c,$(LINKKITDIR))
+
+DependTarget()

@@ -1,0 +1,21 @@
+XCOMM $XConsortium: Imakefile /main/13 1996/01/04 11:11:00 gildea $
+
+MakeSimpleDoc(shape,shape.ms)
+
+MakeSimpleDoc(xtest,xtest.ms)
+
+MakeSimpleDoc(mit-shm,mit-shm.ms)
+
+MakeSimpleDoc(bigreq,bigreq.ms)
+
+MakeSimpleDoc(xc-misc,xc-misc.ms)
+
+XCOMM the RECORD spec is in two parts, protocol and library
+MakeTblDoc(record,record.ms)
+MakeSimpleDoc(recordlib,recordlib.ms)
+
+MakeTblDoc(buffer,buffer.ms)
+
+MakeLatexDoc(sync,sync.tex)
+
+MakeLatexDoc(dbe,dbe.tex)

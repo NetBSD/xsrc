@@ -1,0 +1,31 @@
+XCOMM $XConsortium: osfLib.tmpl /main/21 1995/12/14 15:31:29 matt $
+
+/*
+ * OSF/1 shared library template
+ */
+
+#if ThreadedX && ModernOSF1
+#if OSMajorVersion < 4
+#define SharedX11Reqs -lpthreads -lmach
+#endif
+#endif
+#define SharedOldXReqs $(LDPRELIB) $(XLIBONLY)
+
+#if ThreadedX && ModernOSF1 && OSMajorVersion < 4
+#define SharedXtReqs $(LDPRELIB) $(XLIBONLY) $(SMLIB) $(ICELIB) -lpthreads -lmach
+#else
+#define SharedXtReqs $(LDPRELIB) $(XLIBONLY) $(SMLIB) $(ICELIB)
+#endif
+#if ModernOSF1
+#define SharedXawReqs $(LDPRELIB) $(XMULIB) $(XTOOLLIB) $(XLIB)
+#else
+#define SharedXawReqs $(LDPRELIB) $(XMULIB) $(XTOOLLIB) $(XLIB) -init _XawFixupVendorShell
+#endif
+#define SharedXmuReqs $(LDPRELIB) $(XTOOLLIB) $(XLIB)
+#define SharedXextReqs $(LDPRELIB) $(XLIBONLY)
+#define SharedXiReqs $(LDPRELIB) $(XLIB)
+#define SharedPexReqs $(LDPRELIB) $(XLIBONLY) MathLibrary
+#define SharedXtstReqs $(LDPRELIB) $(XLIB)
+#define SharedXieReqs $(LDPRELIB) $(XLIBONLY)
+#define SharedSMReqs $(LDPRELIB) $(ICELIB)
+

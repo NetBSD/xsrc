@@ -1,0 +1,9 @@
+XCOMM $XConsortium: Imakefile /main/1 1995/11/30 19:17:12 kaleb $
+
+     DATAFILES = basic cancel nocancel complete default mousekeys iso9995 pc
+
+all::
+
+MakeXkbDir($(LIBDIR)/xkb,types)
+InstallMultiple($(DATAFILES),$(LIBDIR)/xkb/types)
+DependTarget()

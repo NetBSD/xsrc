@@ -1,0 +1,51 @@
+XCOMM $XConsortium: Imakefile,v 5.11 94/01/03 11:09:30 hersh Exp $
+XCOMM $XFree86: xc/programs/Xserver/PEX5/Imakefile,v 3.1 1996/10/03 09:17:00 dawes Exp $
+
+#include <Server.tmpl>
+
+#define IHaveSubdirs
+
+#ifndef PexDipexCDebugFlags
+#define PexDipexCDebugFlags ServerCDebugFlags 
+#endif
+
+ CDEBUGFLAGS = PexDipexCDebugFlags
+
+     SUBDIRS = dipex/dispatch dipex/swap dipex/objects ddpex/mi/level1 \
+		ddpex/mi/level2 ddpex/mi/level3 ddpex/mi/level4 \
+		ddpex/mi/shared ospex
+
+#if PexDynamicModule
+
+OBJS = \
+	dipex/dispatch/?*.o \
+	dipex/swap/?*.o \
+	dipex/objects/?*.o \
+	ddpex/mi/level1/?*.o \
+	ddpex/mi/level2/?*.o \
+	ddpex/mi/level3/?*.o \
+	ddpex/mi/level4/?*.o \
+	ddpex/mi/shared/?*.o \
+	ospex/?*.o
+
+DONES = \
+	dipex/dispatch/DONE \
+	dipex/swap/DONE \
+	dipex/objects/DONE \
+	ddpex/mi/level1/DONE \
+	ddpex/mi/level2/DONE \
+	ddpex/mi/level3/DONE \
+	ddpex/mi/level4/DONE \
+	ddpex/mi/shared/DONE \
+	ospex/DONE
+SharedDepModuleTarget(pex5.so,$(SUBDIRS) $(DONES),$(OBJS))
+InstallDynamicModule(pex5.so,$(MODULEDIR))
+ForceSubdirs($(SUBDIRS))
+
+#else
+MakeSubdirs($(SUBDIRS)) 
+#endif
+
+DependSubdirs($(SUBDIRS))
+MakeLintLibSubdirs($(SUBDIRS))
+LintSubdirs($(SUBDIRS))

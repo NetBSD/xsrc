@@ -1,0 +1,27 @@
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/accel/cache/Imakefile,v 1.1.1.2 1996/01/03 07:12:04 dawes Exp $
+
+
+
+
+XCOMM $XConsortium: Imakefile /main/2 1995/11/13 10:10:55 kaleb $
+#include <Server.tmpl>
+
+SRCS = 	xf86bcache.c xf86fcache.c xf86text.c
+
+OBJS = 	xf86bcache.o xf86fcache.o xf86text.o
+
+DEFINES = -DPSZ=8
+
+INCLUDES = -I$(XF86COMSRC) -I$(XF86HWSRC) -I$(XF86OSSRC) -I. \
+	   -I$(SERVERSRC)/mfb -I$(SERVERSRC)/mi -I$(SERVERSRC)/include \
+           -I$(SERVERSRC)/cfb -I$(INCLUDESRC) -I$(FONTINCSRC)
+
+NormalLibraryObjectRule()
+
+NormalAsmObjectRule()
+
+NormalLibraryTarget(xf86cache,$(OBJS))
+
+InstallLinkKitLibrary(xf86cache,$(LINKKITDIR)/lib)
+
+DependTarget()

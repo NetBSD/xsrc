@@ -1,0 +1,64 @@
+XCOMM $XConsortium: Imakefile /main/r61_main/1 1995/12/11 20:58:09 mor $
+XCOMM $XFree86: xc/lib/Imakefile,v 3.12 1996/08/19 13:36:44 dawes Exp $
+#define IHaveSubdirs
+#define PassCDebugFlags
+
+#ifndef NeedBerklib
+#define NeedBerklib NO
+#endif
+
+#if NeedBerklib
+BERKDIR = Xbsd
+#endif
+
+#if BuildXKBlib
+XKBLIBDIR = xkbfile
+#endif
+
+#if BuildXKBuilib
+XKBUILIBDIR = xkbui
+#endif
+
+#if BuildThreadStubLibrary
+THRSTUBLIB = XThrStub
+#endif
+
+#if BuildScreenSaverLibrary
+SSLIB = Xss
+#endif
+
+#if BuildXF86MiscLibrary
+XF86MISCLIB = Xxf86misc
+#endif
+
+#if BuildXF86VidModeLibrary
+XF86VMLIB = Xxf86vm
+#endif
+
+#if BuildXF86DGALibrary
+XF86DGALIB = Xxf86dga
+#endif
+
+XF86EXTLIBS = $(XF86MISCLIB) $(XF86VMLIB) $(XF86DGALIB)
+
+#if BuildLBX
+LBXUTIL = lbxutil
+#endif
+
+#if !BuildServersOnly
+LINTSUBDIRS = Xau Xdmcp $(THRSTUBLIB) X11 oldX ICE SM Xext \
+	     $(SSLIB) $(XF86MISCLIB) $(XF86VMLIB) $(XF86DGALIB) \
+	     $(LBXUTIL) Xt Xmu Xaw XIE Xi Xtst FS \
+	     PEX5 $(XKBLIBDIR) $(XKBUILIBDIR)
+#else
+/* For ServersOnly */
+LINTSUBDIRS = Xau Xdmcp X11 $(XKBLIBDIR) $(XKBUILIBDIR) $(XF86EXTLIBS)
+#endif
+FONTSUBDIR = font
+
+SUBDIRS = $(BERKDIR) xtrans $(LINTSUBDIRS) $(FONTSUBDIR)
+
+MakeSubdirs($(SUBDIRS))
+DependSubdirs($(SUBDIRS))
+MakeLintLibSubdirs($(LINTSUBDIRS))
+MakeLintSubdirs($(LINTSUBDIRS),install.ln,install.ln)

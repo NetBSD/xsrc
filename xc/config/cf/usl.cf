@@ -1,0 +1,38 @@
+XCOMM platform:  $XConsortium: usl.cf /main/42 1996/01/22 17:37:55 gildea $
+XCOMM platform:  $XFree86: xc/config/cf/usl.cf,v 3.12 1996/05/13 06:36:02 dawes Exp $
+
+#ifndef OSName
+#define OSName			UNIX System V/386 Release 4.2 Version 2.0
+#endif
+XCOMM operating system:  OSName
+#ifndef OSMajorVersion
+#define OSMajorVersion		4
+#endif
+#ifndef OSMinorVersion
+#define OSMinorVersion		2
+#endif
+#ifndef OSTeenyVersion
+#define OSTeenyVersion		2
+#endif
+#ifndef CcCmd
+#define CcCmd			/usr/ccs/bin/cc
+#endif
+#define BootstrapCFlags		/* none needed */
+#define StandardDefines		-DUSL -DSVR4 -Di386
+#define NeedWidePrototypes	NO	/* experimental */
+#define ServerExtraDefines	-D__USLC__ XFree86ServerDefines
+#define ServerOSDefines		-DDDXTIME XFree86ServerOSDefines
+#define ToolkitStringsABIOptions -intelabi -earlyR6bc
+#define XawI18nDefines		-DHAS_WCTYPE_H -DHAS_ISW_FUNCS
+#if OSTeenyVersion > 1
+#define ExtraLibraries		-lsocket -lnsl -lgen
+#define ThreadedX		YES
+#define BuildThreadStubLibrary	YES
+#define NeedUIThrStubs		YES
+#define HasThreadSafeAPI	NO
+#define SystemMTDefines		-D_REENTRANT
+#define ThreadsLibraries	-lthread
+#define DefaultCCOptions	-W0,-2A -Xa -Dasm=__asm
+#define SharedX11Reqs		-L$(BUILDLIBDIR) -lXThrStub
+#endif
+#include <svr4.cf>

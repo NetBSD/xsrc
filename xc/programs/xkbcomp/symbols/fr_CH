@@ -1,0 +1,38 @@
+// $XConsortium: fr_CH /main/2 1995/12/07 21:42:37 kaleb $
+// $XFree86: xc/programs/xkbcomp/symbols/fr_CH,v 3.2 1996/10/13 11:35:33 dawes Exp $
+partial default alphanumeric_keys 
+xkb_symbols "basic" {
+
+    // Describes the differences between a very simple US/ASCII
+    // keyboard and a very simple Swiss/French keybaord
+
+    include "de_CH(basic)"
+    name[Group1]= "Swiss French";
+
+    override key <AD11> {
+	[ egrave,	udiaeresis	],
+	[ bracketleft			]
+    };
+    override key <AC10> {
+	[ eacute,	odiaeresis	]
+    };
+    override key <AC11> {
+	[ agrave,	adiaeresis	],
+	[  braceleft			]
+    };
+};
+
+partial alphanumeric_keys
+xkb_symbols "Sundeadkeys" {
+    include "fr_CH(basic)" // for consistent naming
+};
+
+partial alphanumeric_keys
+xkb_symbols "sundeadkeys" {
+    include "fr_CH(Sundeadkeys)" // for consistent naming
+};
+
+partial alphanumeric_keys
+xkb_symbols "nodeadkeys" {
+    include "fr_CH(basic)" // for consistent naming
+};

@@ -1,0 +1,54 @@
+<!doctype linuxdoc system>
+<article>
+
+<title> Information for DEC 21030 Users (aka TGA)
+<author> The XFree86 Project, Inc.
+<date> 17th October 1996
+<toc>
+
+<p>
+<sect>DEC 21030
+<p>
+<itemize>
+<item>The DEC 21030 is now supported by XFree86 in this first release of
+XFree86 3.2. This server is still experimental but seems to work well.
+
+<item>Current Known Problems
+
+<enum>
+<item>Only one modeline is accepted, this will be the first viable one
+that matches other criteria.
+
+<item>Due to the above, Virtual Resolutions is not supported either.
+
+<item>VideoRam is currently limited to 2MB.
+
+<item>The 8plane 21030 is currently the only supported chipset. I don't
+have access to the 24plane or the 24plane3D chip.
+</enum>
+
+<item>The following options may be specified for the 21030 driver:
+<descrip>
+<tag>Option &dquot;dac_8_bit&dquot;</tag>
+	Turn on 8Bit BT485 RamDac.
+<tag>Option &dquot;dac_6_bit&dquot;</tag>
+	Turn on 6Bit BT485 RamDac.
+<tag>MemBase &dquot;0x???????&dquot;</tag>
+	If the server does not detect the base address of the 21030, then
+	Check /proc/pci for the 21030 and look for the "Prefetchable 32 bit
+	memory at 0x???????" and enter this as your MemBase setting.
+
+</descrip>
+<item>No acceleration features of the 21030 have been taken advantage of yet!
+</itemize>
+
+<sect> Additional Notes <p>
+The code for the 21030 as yet - has only been tested on DEC's UDB box, better
+known as the Multia, in a Linux environment.
+
+<p>
+<verb>
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/DECtga.sgml,v 3.4 1996/10/19 15:15:41 dawes Exp $
+</verb>
+
+</article>

@@ -1,0 +1,10 @@
+XCOMM $XConsortium: Imakefile /main/10 1996/02/02 14:22:19 kaleb $
+
+    DATAFILES = sgi xfree86
+    LISTFILES = sgi.lst xfree86.lst
+
+all::
+
+InstallMultiple($(DATAFILES),$(LIBDIR)/xkb/rules)
+InstallMultiple($(LISTFILES),$(LIBDIR)/xkb/rules)
+DependTarget()

@@ -1,0 +1,19 @@
+XCOMM $XConsortium: Imakefile,v 1.8 93/09/04 17:42:56 rws Exp $
+XCOMM $XFree86: xc/programs/mkfontdir/Imakefile,v 3.2 1995/11/12 09:54:53 dawes Exp $
+LOCAL_LIBRARIES = $(FONTLIB)
+DEPLIBS = $(DEPFONTLIB)
+INCLUDES = -I$(FONTINCSRC) -I$(FONTLIBSRC)/include
+SYS_LIBRARIES = MathLibrary
+SRCS = mkfontdir.c
+OBJS = mkfontdir.o
+
+#ifdef NoScaleHack
+DEFINES = -DNOSCALE_HACK
+#endif
+
+ComplexProgramTarget(mkfontdir)
+
+#ifdef OS2Architecture
+all:: mkfontdir.exe
+	$(CP) mkfontdir.exe /
+#endif

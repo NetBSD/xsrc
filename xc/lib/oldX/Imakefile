@@ -1,0 +1,37 @@
+XCOMM $XConsortium: Imakefile,v 1.27 94/03/29 15:54:14 gildea Exp $
+#define DoNormalLib NormalOldX
+#define DoSharedLib SharedOldX
+#define DoDebugLib DebugOldX
+#define DoProfileLib ProfileOldX
+#define LibName oldX
+#define SoRev SOOLDXREV
+
+#ifdef SharedOldXReqs
+REQUIREDLIBS = SharedOldXReqs
+#endif
+
+#if Malloc0ReturnsNull
+        DEFINES = -DMALLOC_0_RETURNS_NULL
+#endif
+       INCLUDES = -I$(INCLUDESRC) -I$(XLIBSRC)
+           SRCS = \
+		XDraw.c \
+		XCrAssoc.c \
+		XDelAssoc.c \
+		XDestAssoc.c \
+		XLookAssoc.c \
+		XMakeAssoc.c
+        HEADERS = X10.h
+       LINTLIBS =
+
+           OBJS = \
+		XDraw.o \
+		XCrAssoc.o \
+		XDelAssoc.o \
+		XDestAssoc.o \
+		XLookAssoc.o \
+		XMakeAssoc.o
+
+#include <Library.tmpl>
+
+DependTarget()

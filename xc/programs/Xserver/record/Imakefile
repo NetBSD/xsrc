@@ -1,0 +1,17 @@
+XCOMM $XConsortium: Imakefile /main/2 1996/01/31 19:17:07 dpw $
+#include <Server.tmpl>
+
+       SRCS = record.c set.c
+       OBJS = record.o set.o
+   INCLUDES = -I../include -I$(INCLUDESRC) -I$(EXTINCSRC)
+   LINTLIBS = ../dix/llib-ldix.ln
+    DEFINES = -DNDEBUG
+
+NormalLibraryObjectRule()
+NormalLibraryTarget(record,$(OBJS))
+LintLibraryTarget(record,$(SRCS))
+NormalLintTarget($(SRCS))
+
+InstallLinkKitLibrary(record,$(LINKKITDIR)/lib)
+
+DependTarget()

@@ -1,0 +1,26 @@
+XCOMM $XConsortium: Imakefile,v 1.11 94/02/04 11:14:00 gildea Exp $
+XCOMM $XFree86: xc/lib/font/fontfile/Imakefile,v 3.2 1995/11/30 12:54:38 dawes Exp $
+#include <Server.tmpl>
+
+        INCLUDES = -I$(FONTINCSRC) -I../include -I$(SERVERSRC)/include
+         HEADERS = 
+#ifdef FontFormatDefines
+     FORMAT_DEFS = FontFormatDefines
+#endif
+            SRCS = dirfile.c fontdir.c fontfile.c fileio.c fontscale.c \
+	    	   defaults.c bitsource.c register.c renderers.c \
+		   bufio.c decompress.c filewr.c
+            OBJS = dirfile.o fontdir.o fontfile.o fileio.o fontscale.o \
+	    	   defaults.o bitsource.o register.o renderers.o \
+		   bufio.o decompress.o filewr.o
+
+      ATTRIBDEFS = -DFONTDIRATTRIB
+
+         DEFINES = $(ATTRIBDEFS)
+
+SubdirLibraryRule($(OBJS))
+NormalLibraryObjectRule()
+NormalLintTarget($(SRCS))
+
+DependTarget()
+

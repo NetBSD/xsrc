@@ -1,0 +1,33 @@
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/accel/i128/Imakefile,v 3.2 1996/04/15 11:29:44 dawes Exp $
+
+
+
+
+XCOMM $XConsortium: Imakefile /main/1 1995/12/09 15:31:13 kaleb $
+
+#include <Server.tmpl>
+
+SRCS = 	i128.c i128TiCurs.c i128scrin.c i128gc.c i128misc.c i128init.c \
+	i128cmap.c i128Cursor.c i128stubs.c i128IBMCurs.c
+
+OBJS = 	i128.o i128TiCurs.o i128scrin.o i128gc.o i128misc.o i128init.o \
+	i128cmap.o i128Cursor.o i128stubs.o i128IBMCurs.o
+
+INCLUDES = -I$(XF86SRC) -I. -I$(SERVERSRC)/mfb -I$(SERVERSRC)/mi \
+	   -I$(SERVERSRC)/include -I$(SERVERSRC)/cfb -I$(INCLUDESRC) \
+	   -I$(FONTSRC)/include -I$(XF86COMSRC) \
+	   -I$(XF86HWSRC) -I$(FONTINCSRC) -I$(XF86OSSRC) \
+	   -I$(XF86SRC)/accel/cache
+
+DEFINES = -DI128_SERVER -DPSZ=8
+
+NormalLibraryObjectRule()
+
+NormalAsmObjectRule()
+
+NormalLibraryTarget(i128,$(OBJS))
+
+InstallLinkKitLibrary(i128,$(LINKKITDIR)/drivers)
+
+DependTarget()
+

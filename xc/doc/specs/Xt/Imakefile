@@ -1,0 +1,14 @@
+XCOMM $XConsortium: Imakefile,v 1.4 94/02/10 17:14:26 rws Exp $
+SRCS = 	strings.mit \
+	Xtk.intr.front \
+	CH[01][0123456789] \
+	appA \
+	appB \
+	appC \
+	appD \
+	appE \
+	postproc
+
+MakeEqnDoc(intrinsics,$(SRCS))
+
+MakeDocIndex(intr,intr.idxmac.t)

@@ -1,0 +1,134 @@
+  Information for S3 ViRGE and ViRGE/VX Users
+  The XFree86 Project Inc.
+  19 October 1996
+
+  1.  Supported hardware
+
+  The current XF86_S3V server supports S3 ViRGE (86C325) and S3 ViRGE/VX
+  (86C988) chips.  32bpp TrueColor and External RAMDACs for ViRGE/VX are
+  not yet supported.  It has been tested with ViRGE cards with 2 and 4MB
+  DRAM and with a 220MHz ViRGE/VX card with 2MB VRAM up to 1600x1200
+  with 8/15/16bpp.
+
+  NOTE: This driver is pretty new, and not everything might work like
+  you expect it to. It shouldn't crash your machine, but you may have
+  video artifacts or missing lines. Please report any and all problems
+  to XFree86@Xfree86.org using the appropriate bug report sheet.
+
+  There will be updated drivers in the coming XFree86 beta releases.
+
+  2.  Features:
+
+
+     o  Basic support for S3 ViRGE and ViRGE/VX video adapters
+
+     o  uses linear frame buffer
+
+     o  it should be possible to reach resolutions up to 2048x2048
+
+     o  it should be possible to use pixel depths of 8, 15, and 16
+        (24/32 not yet) bits per pixel.
+
+  3.  Future Features (in order from highest to lowest priority)
+
+
+     o  support of 24/32bpp
+
+     o  some more hardware acceleration
+
+     o  3d acceleration (once we work out how that's done)
+
+     o  more chipsets and RAMDACs
+
+  4.  Configuration:
+
+  The server auto-detects RAM size, RAMDAC and ClockChip. Do not bother
+  putting these in your "Device" section.  The "nolinear" option is
+  unsupported.
+
+  5.  Authors
+
+  Harald Koenig <koenig@tat.physik.uni-tuebingen.de>
+
+  and:
+
+
+     o  Kevin Brosius 70247.1640@compuserve.com
+
+     o  Berry Dijk berry_dijk@tasking.nl
+
+     o  Dirk Hohndel hohndel@XFree86.Org
+
+     o  Dirk Vangestel gesteld@sh.bel.alcatel.be
+
+
+
+
+  Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/S3V.sgml,v 3.0 1996/10/20 13:33:21 dawes Exp $
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.S3V,v 3.1 1996/10/24 12:42:26 dawes Exp $

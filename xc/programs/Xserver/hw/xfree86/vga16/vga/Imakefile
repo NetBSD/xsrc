@@ -1,0 +1,36 @@
+XCOMM $XConsortium: Imakefile /main/4 1996/01/12 12:03:40 kaleb $
+
+
+
+
+
+
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/vga16/vga/Imakefile,v 3.4 1996/02/04 09:11:49 dawes Exp $
+
+#include <Server.tmpl>
+
+SRCS = 	vgaHW.c vga.c vgaCmap.c vgaBank.s vgaPCI.c
+
+OBJS = 	vgaHW.o vga.o vgaCmap.o vgaBank.o vgaPCI.o
+
+INCLUDES = -I$(XF86COMSRC) -I$(XF86OSSRC) -I$(XF86HWSRC) \
+	   -I$(XF86SRC)/vga256/vga -I$(SERVERSRC)/mfb -I$(SERVERSRC)/mi \
+	   -I$(SERVERSRC)/cfb -I$(SERVERSRC)/include -I$(INCLUDESRC)
+
+SubdirLibraryRule($(OBJS))
+NormalLibraryObjectRule()
+NormalAsmObjectRule()
+
+#if DirtyStartup
+STARTUPDEFINES = -DDIRTY_STARTUP
+#endif
+
+DEFINES = -DXF86VGA16 $(STARTUPDEFINES)
+
+LinkSourceFile(vga.c,../../vga256/vga)
+LinkSourceFile(vgaHW.c,../../vga256/vga)
+LinkSourceFile(vgaCmap.c,../../vga256/vga)
+LinkSourceFile(vgaBank.s,../../vga256/vga)
+LinkSourceFile(vgaPCI.c,../../vga256/vga)
+
+DependTarget()

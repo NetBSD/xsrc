@@ -1,0 +1,9 @@
+XCOMM $XConsortium: Imakefile,v 1.7 93/09/04 17:41:16 rws Exp $
+LOCAL_LIBRARIES = $(FSLIB)
+DEPLIBS = $(DEPFSLIB)
+SRCS = fslsfonts.c
+OBJS = fslsfonts.o
+INCLUDES = -I$(BUILDINCDIR)/fonts -I$(FONTINCSRC)
+
+ComplexProgramTarget(fslsfonts)
+

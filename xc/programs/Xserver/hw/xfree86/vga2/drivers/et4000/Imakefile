@@ -1,0 +1,30 @@
+XCOMM $XConsortium: Imakefile /main/7 1996/01/26 14:28:24 kaleb $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/vga2/drivers/et4000/Imakefile,v 3.6 1996/02/04 09:12:02 dawes Exp $
+#include <Server.tmpl>
+
+SRCS = et4_driver.c et4_bank.s
+
+OBJS = et4_driver.o et4_bank.o
+
+#if XF86LinkKit
+INCLUDES = -I. -I../../../include -I../../../include/X11 -I../..
+#else
+INCLUDES = -I. -I$(XF86COMSRC) -I$(XF86HWSRC) -I$(XF86OSSRC) \
+           -I../../../vga256/vga -I$(SERVERSRC)/include -I$(INCLUDESRC)
+#endif
+
+DEFINES = -DMONOVGA -DW32_SUPPORT
+
+#if MakeHasPosixVariableSubstitutions
+SubdirLibraryRule($(OBJS))
+#endif
+NormalLibraryObjectRule()
+
+NormalRelocatableTarget(et4_drv,$(OBJS))
+
+LinkSourceFile(et4_driver.c,$(VGADRIVERSRC)/et4000)
+ObjectFromSpecialAsmSource(et4_bank,$(VGADRIVERSRC)/et4000/bank,NullParameter)
+
+InstallLinkKitNonExecFile(Imakefile,$(LINKKITDIR)/drivers/vga2/et4000)
+
+DependTarget()

@@ -1,0 +1,38 @@
+XCOMM $XConsortium: Imakefile /main/10 1996/02/05 05:59:55 kaleb $
+#define IHaveSubdirs
+
+          SRCS = xkbcomp.c xkbscan.c expr.c vmod.c indicators.c misc.c \
+		 keymap.c keycodes.c keytypes.c compat.c action.c alias.c \
+		 symbols.c geometry.c xkbpath.c listing.c \
+		 xkbparse.c parseutils.c utils.c
+          OBJS = xkbcomp.o xkbscan.o expr.o vmod.o indicators.o misc.o alias.o \
+		 keymap.o keycodes.o keytypes.o compat.o action.o \
+		 symbols.o geometry.o xkbpath.o listing.o \
+		 xkbparse.o parseutils.o utils.o
+        DEPLIBS = $(DEPXKBFILELIB) $(DEPXLIBONLY)
+LOCAL_LIBRARIES = $(XKBFILELIB) $(XLIB)
+        SUBDIRS = compat geometry keycodes keymap semantics symbols types \
+		  compiled rules
+
+ROOT_DEFINES = -DDFLT_XKB_CONFIG_ROOT=\"$(LIBDIR)/xkb\"
+
+INCLUDES = -I$(EXTINCSRC)
+
+all::
+
+SpecialCObjectRule(xkbpath,$(ICONFIGFILES),$(ROOT_DEFINES))
+
+YaccFile(xkbparse,$(YFLAGS))
+
+install::
+	@echo "Creating $(LIBDIR)/xkb and $(LIBDIR)/xkb/compiled"
+	MakeDir($(DESTDIR)$(LIBDIR)/xkb)
+	MakeDir($(DESTDIR)$(LIBDIR)/xkb/compiled)
+
+InstallProgram(xkbcomp,$(LIBDIR)/xkb)
+
+clean::
+	RemoveFiles(test.h *.xkm *.xkb)
+
+ComplexProgramTarget(xkbcomp)
+

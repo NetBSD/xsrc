@@ -1,0 +1,13 @@
+XCOMM $XConsortium: Imakefile,v 1.16 94/01/06 15:34:08 gildea Exp $
+XCOMM $XFree86: xc/programs/xauth/Imakefile,v 3.1 1994/12/02 05:49:51 dawes Exp $
+DEPLIBS = $(DEPXAUTHLIB) $(DEPXMULIB)
+LOCAL_LIBRARIES = $(XAUTHLIB) $(XMULIB)
+           SRCS = xauth.c gethost.c process.c parsedpy.c
+           OBJS = xauth.o gethost.o process.o parsedpy.o
+   CONN_DEFINES = ConnectionFlags
+
+ComplexProgramTarget(xauth)
+
+SpecialCObjectRule(gethost,$(ICONFIGFILES),$(CONN_DEFINES) $(SIGNAL_DEFINES))
+SpecialCObjectRule(process,$(ICONFIGFILES),$(SIGNAL_DEFINES))
+SpecialCObjectRule(parsedpy,$(ICONFIGFILES),$(CONN_DEFINES))

@@ -1,0 +1,1434 @@
+% $XConsortium: sync.tex /main/8 1996/02/07 17:30:41 swick $
+%
+% Copyright 1991 by Olivetti Research Limited, Cambridge, England and
+% Digital Equipment Corporation, Maynard, Massachusetts.
+%
+%                        All Rights Reserved
+%
+% Permission to use, copy, modify, and distribute this software and its 
+% documentation for any purpose and without fee is hereby granted, 
+% provided that the above copyright notice appear in all copies and that
+% both that copyright notice and this permission notice appear in 
+% supporting documentation, and that the names of Digital or Olivetti
+% not be used in advertising or publicity pertaining to distribution of the
+% software without specific, written prior permission.  
+%
+% DIGITAL AND OLIVETTI DISCLAIM ALL WARRANTIES WITH REGARD TO THIS SOFTWARE,
+% INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO EVENT
+% SHALL THEY BE LIABLE FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR
+% ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER
+% IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
+% OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+%\documentstyle[a4]{article}
+\documentstyle{article}
+
+\setlength{\parindent}{0 pt}
+\setlength{\parskip}{6pt}
+
+\newcommand{\system}[1]{{\sc #1}}
+\newcommand{\request}[1]{{\bf #1}}
+\newcommand{\event}[1]{{\bf #1}}
+
+\newcommand{\param}[1]{{\it #1}}
+\newcommand{\error}[1]{{\bf #1}}
+\newcommand{\enum}[1]{{\bf #1}}
+
+\newcommand{\eventdef}[1]{\item \event{#1}}
+\newcommand{\requestdef}[1]{\item \request{#1}}
+\newcommand{\errordef}[1]{\item \error{#1}}
+\newcommand{\systemdef}[1]{\item \system{#1}}
+
+\newcommand{\defn}[1]{{\bf #1}}
+
+\newcommand{\tabstopsA}{\hspace*{4cm}\=\hspace*{1cm}\=\hspace*{7cm}\=\kill}
+\newcommand{\tabstopsB}{\hspace*{1cm}\=\hspace*{1cm}\=\hspace*{3cm}\=\kill}
+\newcommand{\tabstopsC}{\hspace*{1cm}\=\hspace*{1cm}\=\hspace*{5cm}\=\kill}
+
+% commands for formatting the API
+
+\newcommand{\cfunctionname}[1]{\mbox{\tt#1}}
+\newcommand{\ctypename}[1]{\mbox{\tt#1}}
+\newcommand{\cconst}[1]{\mbox{\tt#1}}
+\newcommand{\cargname}[1]{\mbox{\it#1}}
+\newcommand{\cstartfunction}[2]{\begin{sloppypar}\begin{samepage}\ctypename{#1}\\ \cfunctionname{#2}\ (}
+\newcommand{\cargdecl}[2]{\penalty -1\ctypename{#1} \cargname{#2}}
+\newcommand{\cendfunctiondecl}{){\hangafter=2 \hangindent=20pt \raggedright\par}}
+\newcommand{\cendfuncdescription}{\end{samepage}\end{sloppypar}}
+
+\newcommand{\cstartmacro}[2]{\begin{sloppypar}\begin{samepage}\ctypename{#1}\\ \cfunctionname{#2}\ (}
+\newcommand{\cendmacrodecl}{)\par}
+\newcommand{\cendmacrodescription}{\end{samepage}\end{sloppypar}}
+
+% make things easier with all the long names
+\spaceskip .3333em plus 5em
+\tolerance=2000
+
+\begin{document}
+
+\begin{center}
+
+{\large X SYNCHRONIZATION EXTENSION}\\[10pt]
+{\large Version 3.0}\\[15pt]
+{\large X Consortium Standard}\\[15pt]
+{\large X Version 11, Release 6.1}\\[15pt]
+{\it Tim Glauert}\\[0pt]
+{\tt thg@cam-orl.co.uk}\\[0pt]
+{\bf Olivetti Research / MultiWorks}\\[5pt]
+{\it Dave Carver}\\[0pt]
+{\tt dcc@athena.mit.edu}\\[0pt]
+{\bf Digital Equipment Corporation,}\\[0pt]
+{\bf MIT / Project Athena}\\[5pt]
+{\it Jim Gettys}\\[0pt]
+{\tt jg@crl.dec.com}\\[0pt]
+{\bf Digital Equipment Corporation,}\\[0pt]
+{\bf Cambridge Research Laboratory}\\[5pt]
+{\it David P. Wiggins}\\[0pt]
+{\tt dpw@x.org}\\[0pt]
+{\bf X Consortium, Inc.}\\[0pt]
+
+\end {center}
+
+Copyright 1991 by Olivetti Research Limited, Cambridge, England and
+Digital Equipment Corporation, Maynard, Massachusetts.
+
+{\small Permission to use, copy, modify, and distribute this documentation
+for any purpose and without fee is hereby granted, provided that the above
+copyright notice appear in all copies. Olivetti, Digital, MIT, and the
+X Consortium
+make no representations about the suitability for any purpose of the
+information in this document. This documentation is provided as is without
+express or implied warranty.}
+
+Copyright (c) 1991 X Consortium, Inc.
+
+{\small Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the ``Software''), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED ``AS IS'', WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+X CONSORTIUM BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
+AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+Except as contained in this notice, the name of the X Consortium shall not be
+used in advertising or otherwise to promote the sale, use or other dealings
+in this Software without prior written authorization from the X Consortium.}
+\eject
+
+\subsection*{Synchronization}
+
+The core X protocol makes no guarantees about the relative order of execution
+of requests for different clients. This means that any synchronization between
+clients must be done at the client level in an operating-system dependent and
+network dependent manner. Even if there was an accepted standard for such
+synchronization, the use of a network introduces unpredictable delays between
+the synchronization of the clients and the delivery of the resulting requests
+to the X server.
+
+The core X protocol also makes no guarantees about the time at which requests
+are executed, which means that all clients with real-time constraints must
+implement their timing on the host computer. Any such timings are subject to
+error introduced by delays within the operating system and network, and are
+inefficient due to the need for round-trip requests which keep the client and
+server synchronized.
+
+The synchronization extension provides primitives which allow synchronization
+between clients to take place entirely within the X server. This removes any
+error introduced by the network and makes it possible to synchronize clients
+on different hosts running different operating systems. This is important for
+multi-media applications where audio, video and graphics data streams are
+being synchronized. The extension also provides internal timers within the X
+server to which client requests can be synchronized. This allows simple
+animation applications to be implemented without any round-trip requests and
+makes best use of buffering within the client, network and server.
+
+\subsection*{Description}
+
+The mechanism used by this extension for synchronization within the X server
+is to block the processing of requests from a client until a specific
+synchronization condition occurs. When the condition occurs the client is
+released and processing of requests continues. Multiple clients may block on
+the same condition to give inter-client synchronization.  Alternatively, a
+single client may block on a condition such as an animation frame-marker.
+
+The extension adds \defn{Counter} and \defn{Alarm} to the set of resources
+managed by the server. A counter has a 64-bit integer value which may be
+increased or decreased by client requests or by the server internally. A
+client can block by sending an \request{Await} request which waits until
+one of a set of synchronization conditions, called TRIGGERs, becomes TRUE.
+
+The \request{CreateCounter} request allows a client to create a
+\defn{Counter} which can be changed by explicit \request{SetCounter} and
+\request{ChangeCounter} requests. These can be used to implement
+synchronization between different clients.
+
+There are some counters, called \defn{System Counters}, which are changed by
+the server internally rather than by client requests. The effect of any change
+to a system counter is not visible until the server has finished processing the
+current request. In other words, system counters are apparently updated in the
+gaps between the execution of requests rather than during the actual execution
+of a request. The extension provides a system counter which advances with the
+server time as defined by the core protocol, and it may also provide counters
+which advance with the real-world time or which change each time the CRT
+screen is refreshed.  Other extensions may provide their own
+extension-specific system counters.
+
+The extension provides an \defn{Alarm} mechanism which allows clients to
+receive an event on a regular basis when a particular counter is changed.
+
+\subsection*{Types}
+
+Please refer to the X11 Protocol specification as this document uses
+syntactic conventions established there and references types defined there.
+
+The following new types are used by the extension.
+
+\begin{tabbing}{l}
+SYSTEMCOUNTER: \=\kill
+	INT64:	\>64-bit signed integer\\
+	COUNTER:\>XID\\
+  	VALUETYPE:\>  \{\enum{Absolute},\enum{Relative}\}\\
+ 	TESTTYPE:\> \{\enum{PositiveTransition},\enum{NegativeTransition},\\
+		\>\enum{PositiveComparison},\enum{NegativeComparison}\}\\
+	TRIGGER:\>[\\
+ 		\>\param{counter}:COUNTER,\\
+		\>\param{value-type}:VALUETYPE,\\
+		\>\param{wait-value}:INT64,\\
+		\>\param{test-type}:TESTTYPE\\
+		\>]\\
+	WAITCONDITION:\>[\\
+		\>\param{trigger}:TRIGGER,\\
+		\>\param{event-threshold}:INT64\\
+		\>]\\
+	SYSTEMCOUNTER:\>[\\
+		\>\param{name}:STRING8,\\
+		\>\param{counter}:COUNTER,\\
+		\>\param{resolution}:INT64\\
+		\>]\\
+	ALARM:	\>XID\\
+	ALARMSTATE:\> \{\enum{Active},\enum{Inactive},\enum{Destroyed}\}\\
+\end{tabbing}
+
+The COUNTER type defines the client-side handle on a server \defn{Counter}.
+The value of a counter is an INT64.
+
+The TRIGGER type defines a test on a counter which is either TRUE or FALSE.
+The value of the test is determined by the combination of a test value, the
+value of the \param{counter} and the \param{test-type}.
+
+The test value for a trigger is calculated using the \param{value-type} and
+\param{wait-value} fields when the trigger is initialized. 
+If the \param{value-type} field is not one of the 
+named VALUETYPE constants, the request which initialized the trigger
+will return a \error{Value} error. If the
+\param{value-type} field is \enum{Absolute}, the test value is given by the
+\param{wait-value} field. If the \param{value-type} field is
+\enum{Relative}, the test value is obtained by adding the
+\param{wait-value} field to the value of the counter.  If the
+resulting test value would lie outside the range for an INT64, the
+request which initialized the trigger will return a
+\error{Value} error. If \param{counter} is \enum{None} and the
+\param{value-type} is \enum{Relative}, the request which initialized the 
+trigger will return a \error{Match} error. 
+If \param{counter} is not \enum{None} and does not name a valid
+counter, a \error{Counter} error is generated.
+
+If the \param{test-type} is \enum{PositiveTransition}, the trigger is
+initialized to FALSE and it will become TRUE when the \param{counter} changes
+from a value less than the test value to a value greater than or equal to the
+test value. If the \param{test-type} is \enum{NegativeTransition}, the
+trigger is initialize to FALSE and it will become TRUE when the
+\param{counter} changes from a value greater than the test value to a value
+less than or equal to the test value. If the \param{test-type} is
+\enum{PositiveComparison} the trigger is TRUE if the counter is greater than or
+equal to the test value and FALSE otherwise.  If the \param{test-type} is
+\enum{NegativeComparison} the trigger is TRUE if the counter is less than or
+equal to the test value and FALSE otherwise. If the \param{test-type}
+is not one of the named TESTTYPE constants, the request which
+initialized the trigger will return a \error{Value} error.  A trigger
+with a \param{counter} value of \enum{None} and a valid \param{test-type}
+is always TRUE.
+
+The WAITCONDITION type is simply a trigger with an associated
+\param{event-threshold}.  The event threshold is used by the \request{Await}
+request to decide whether or not to generate an event to the client after the
+trigger has become TRUE. By setting the \param{event-threshold} to an
+appropriate value it is possible to detect the situation where an
+\request{Await} request was processed {\it after} the TRIGGER became TRUE,
+which usually indicates that the server is not processing requests as fast as
+the client expects.
+
+The SYSTEMCOUNTER type provides the client with information about a
+\defn{System Counter}. The \param{name} field is the textual name of the
+counter which identifies the counter to the client. The \param{counter} field
+is the client-side handle which should be used in requests which require a
+counter. The \param{resolution} field gives the approximate step size of the
+system counter. This is a hint to the client that the extension may not be
+able to resolve two wait conditions with test values that differ by less than
+this step size. A microsecond clock, for example, may advance in steps of 64
+microseconds so a counter based on this clock would have a \param{resolution}
+of 64.
+
+The only system counter that is guaranteed to be present is called
+\system{SERVERTIME}, which counts milliseconds from some arbitrary starting
+point. The least-significant 32-bits of this counter track the value of Time
+used by the server in Events and Requests. Other system counters may be
+provided by different implementations of the extension. The X Consortium will
+maintain a registry of system counter names to avoid collisions in the
+name space.
+
+An ALARM is the client-side handle on an \defn{Alarm} resource.
+
+\subsection*{Errors}
+
+\begin{description}
+
+\errordef{Counter}
+
+This error is generated if the value for a COUNTER argument in a request does
+not name a defined COUNTER.
+
+\errordef{Alarm}
+
+This error is generated if the value for an ALARM argument in a request does
+not name a defined ALARM.
+
+\end{description}
+
+\subsection*{Requests}
+
+\begin{description}
+
+\requestdef{Initialize}
+
+\begin{tabular}{l}
+	\param{version-major},\param{version-minor}: CARD8
+\end{tabular}\\
+$\Rightarrow$\\
+\begin{tabular}{l}
+	\param{version-major},\param{version-minor}: CARD8	
+\end{tabular}
+
+This request must be executed before any other requests for this
+extension.  If a client violates this rule, the results of all SYNC
+requests that it issues are undefined.  The request takes the version
+number of the extension which the client wishes to use and returns the
+actual version number being implemented by the extension for this
+client. The extension may return different version numbers to a client
+depending of the version number supplied by that client. This request
+should only be executed once for each client connection.
+
+Given two different versions of the SYNC protocol, v1 and v2, v1 is
+compatible with v2 if and only if $v1.version\_major = v2.version\_major$
+and $v1.version\_minor \leq v2.version\_minor$.  Compatible means that the
+functionality is fully supported in an identical fashion in the two
+versions.
+
+This document describes major version 3, minor version 0 of the SYNC
+protocol.
+
+\requestdef{ListSystemCounters}
+
+$\Rightarrow$\\
+\begin{tabular}{l}
+	\param{system-counters}: LISTofSYSTEMCOUNTER\\[5pt]
+	Errors: \error{Alloc}
+\end{tabular}
+
+This request returns a list of all the system counters which are available at
+the time the request is executed, which includes the system counters which are
+maintained by other extensions. The list returned by this request may change
+as counters are created and destroyed by other extensions.
+
+\requestdef{CreateCounter}
+
+\begin{tabular}{l}
+	\param{id}: COUNTER\\
+ 	\param{initial-value}: INT64\\[5pt]
+	Errors: \error{IDChoice}, \error{Alloc}
+\end{tabular}
+
+This request creates a counter and assigns the identifier \param{id} to it.
+The counter value is initialized to \param{initial-value} and there are no
+clients waiting on the counter.
+
+\requestdef{DestroyCounter}
+
+\begin{tabular}{l}
+	\param{counter}: COUNTER\\[5pt]
+	Errors: \error{Counter},\error{Access}
+\end{tabular}
+
+This request destroys the given counter and sets the \param{counter} fields
+for all triggers which specify this counter to \enum{None}. All clients
+waiting on the counter are released and a \event{CounterNotify} event with the
+\param{destroyed} field set to TRUE is sent to each waiting client,
+regardless of the \param{event-threshold}.  All alarms specifying the counter
+become \enum{Inactive} and an \event{AlarmNotify} event with a \param{state}
+field of \enum{Inactive} is generated. A counter is destroyed automatically
+when the connection to the creating client is closed down if the close-down
+mode is {\bf Destroy}. An \error{Access} error is generated if \param{counter}
+is a system counter. A \error{Counter} error is generated if \param{counter}
+does not name a valid counter.
+
+\requestdef{QueryCounter}
+
+\begin{tabular}{l}
+	\param{counter}: COUNTER\\
+\end{tabular}\\
+$\Rightarrow$\\
+\begin{tabular}{l}
+	\param{value}: INT64\\[5pt]
+	Errors: \error{Counter}
+\end{tabular}
+
+This request returns the current value of the given counter or a generates
+\error{Counter} error if \param{counter} does not name a valid counter.
+
+\requestdef{Await}
+
+\begin{tabular}{l}
+	\param{wait-list}: LISTofWAITCONDITION\\[5pt]
+	Errors: \error{Counter}, \error{Alloc}, \error{Value}
+\end{tabular}
+
+When this request is executed, the triggers in the \param{wait-list} are
+initialized using the \param{wait-value} and \param{value-type} fields, as
+described in the definition of TRIGGER above. The processing of further
+requests for the client is blocked until one or more of the triggers becomes
+TRUE. This may happen immediately, as a result of the initialization, or at
+some later time, as a result of a subsequent \request{SetCounter},
+\request{ChangeCounter} or \request{DestroyCounter} request.
+
+A \error{Value} error is generated if \param{wait-list} is empty.
+
+When the client becomes unblocked, each trigger is checked to determine
+whether a \event{CounterNotify} event should be generated. The difference
+between the \param{counter} and the test value is calculated by
+subtracting the test value from the value of the \param{counter}. If the
+\param{test-type} is \enum{PositiveTransition} or \enum{PositiveComparison}, a \event{CounterNotify} event is generated if the
+difference is at least \param{event-threshold}. If the \param{test-type} is
+\enum{NegativeTransition} or \enum{NegativeComparison}, a
+\event{CounterNotify} event is generated if the difference is at most
+\param{event-threshold}. If the difference lies outside the range for an
+INT64, an event is not generated.
+
+This threshold check is made for each trigger in the list and a
+\event{CounterNotify} event is generated for every trigger for which
+the check succeeds. The check for \enum{CounterNotify} events is performed
+even if one of the triggers is TRUE when the request is first executed. Note
+that a \event{CounterNotify} event may be generated for a \param{trigger} that
+is FALSE if there are multiple triggers in the request. A
+\event{CounterNotify} event with the \param{destroyed} flag set to TRUE is
+always generated if the counter for one of the triggers is destroyed.
+
+\requestdef{ChangeCounter}
+
+\begin{tabular}{l}
+	\param{counter}: COUNTER\\
+	\param{amount}: INT64\\[5pt]
+	Errors: \error{Counter},\error{Access},\error{Value}
+\end{tabular}
+
+This request changes the given counter by adding \param{amount} to the current
+counter value. If the change to this counter satisfies a trigger for which a
+client is waiting, that client is unblocked and one or more
+\event{CounterNotify} events may be generated. If the change to the counter
+satisfies the trigger for an alarm, an \event{AlarmNotify} event is generated
+and the alarm is updated.  An \error{Access} error is generated if
+\param{counter} is a system counter. A \error{Counter} error is generated if
+\param{counter} does not name a valid counter. If the resulting value for the
+counter would be outside the range for an INT64, a \error{Value} error is
+generated and the counter is not changed.
+
+It should be noted that {\it all} the clients whose triggers are satisfied by
+this change are unblocked, so this request cannot be used to implement mutual
+exclusion.
+
+\requestdef{SetCounter}
+
+\begin{tabular}{l}
+	\param{counter}: COUNTER\\
+	\param{value}: INT64\\[5pt]
+	Errors: \error{Counter},\error{Access}
+\end{tabular}
+
+This request sets the value of the given counter to \param{value}. The effect
+is equivalent to executing the appropriate \request{ChangeCounter} request to
+change the counter value to \param{value}. An \error{Access} error is
+generated if \param{counter} names a system counter. A \error{Counter} error
+is generated if \param{counter} does not name a valid counter.
+
+\requestdef{CreateAlarm}
+
+\begin{tabular}{l}
+	\param{id}: ALARM\\
+ 	\param{values-mask}: CARD32\\
+        \param{values-list}: LISTofVALUE\\[5pt]
+ 	Errors: \error{IDChoice},\error{Counter},\error{Match},\error{Value},\error{Alloc}
+\end{tabular}
+
+This request creates an alarm and assigns the identifier \param{id} to it. The
+\param{values-mask} and \param{values-list} specify the attributes which are
+to be explicitly initialized. The attributes for an Alarm and their defaults
+are:
+
+\begin{center}
+\begin{tabular}{l|l|ll}
+Attribute	& Type		& Default \\
+\hline
+trigger		& TRIGGER	& counter	& \enum{None}\\
+		&		& value-type	& \enum{Absolute}\\
+		&		& value	& 0\\
+		&		& test-type	& \enum{PositiveComparison}\\
+delta		& INT64		& 1 \\
+events		& BOOL		& TRUE
+\end{tabular}
+\end{center}
+
+The \param{trigger} is initialized as described in the definition of TRIGGER,
+with an error being generated if necessary.
+
+If the \param{counter} is \enum{None}, the state of the alarm is set to
+\enum{Inactive}, else it is set to \enum{Active}.
+
+Whenever the \param{trigger} becomes TRUE, either as a result of this request
+or as the result of a \request{SetCounter}, \request{ChangeCounter},
+\request{DestroyCounter} or \request{ChangeAlarm} request, an
+\event{AlarmNotify} event is generated and the alarm is updated. The alarm is
+updated by repeatedly adding \param{delta} to the \param{value} of the
+\param{trigger} and re-initializing it until it becomes FALSE. If this update
+would cause \param{value} to fall outside the range for an INT64, or if the
+\param{counter} value is \enum{None}, or if the
+\param{delta} is 0 and \param{test-type} is \enum{PositiveComparison} or
+\enum{NegativeComparison}, no change is made to \param{value} and the alarm
+state is changed to \enum{Inactive} before the event is generated. No further
+events are generated by an \enum{Inactive} alarm until a \request{ChangeAlarm}
+or \request{DestroyAlarm} request is executed.
+
+If the \param{test-type} is \enum{PositiveComparison} or
+\enum{PositiveTransition} and \param{delta} is less than zero, or
+if the \param{test-type} is \enum{NegativeComparison} or
+\enum{NegativeTransition} and \param{delta} is greater than zero,
+a \error{Match} error is generated.
+
+The \param{events} value enables or disables delivery of \event{AlarmNotify}
+events to the requesting client.  The alarm keeps a separate event flag for
+each client so that other clients may select to receive events from this
+alarm.
+
+An \event{AlarmNotify} event is always generated at some time after the
+execution of a \request{CreateAlarm} request. This will happen immediately if
+the \param{trigger} is TRUE or it will happen later when the
+\param{trigger} becomes TRUE or the Alarm is destroyed.
+
+\requestdef{ChangeAlarm}
+
+\begin{tabular}{l}
+	\param{id}: ALARM\\
+	\param{values-mask}: CARD32\\
+	\param{values-list}: LISTofVALUE\\[5pt]
+	Errors: \error{Alarm},\error{Counter},\error{Value},\error{Match}
+\end{tabular}
+
+This request changes the parameters of an Alarm. All of the parameters
+specified for the \request{CreateAlarm} request may be changed using this
+request. The \param{trigger} is re-initialized and an \event{AlarmNotify}
+event is generated if appropriate, as explained in the description of the
+\request{CreateAlarm} request.
+
+Changes to the \param{events} flag affect the event delivery to the requesting
+client only, and may be used by a client to select or de-select event delivery
+from an alarm created by another client.
+
+The order in which attributes are verified and altered is
+server-dependent.  If an error is generated, a subset of the
+attributes may have been altered.
+
+\requestdef{DestroyAlarm}
+
+\begin{tabular}{l}
+	\param{alarm}: ALARM\\[5pt] 	Errors: \error{Alarm}
+\end{tabular}
+
+This request destroys an alarm. An alarm is automatically destroyed
+when the creating client is closed down if the close-down mode is {\bf
+Destroy}. When an alarm is destroyed, an \event{AlarmNotify} event is
+generated with a \param{state} value of \enum{Destroyed}.
+
+\requestdef{QueryAlarm}
+
+\begin{tabular}{l}
+	\param{alarm}: ALARM\\
+\end{tabular}\\
+$\Rightarrow$\\
+\begin{tabular}{l}
+	\param{trigger}: TRIGGER\\
+	\param{delta}: INT64\\
+	\param{events}: ALARMEVENTMASK\\
+	\param{state}: ALARMSTATE\\[5pt]
+	Errors: \error{Alarm}
+\end{tabular}
+
+This request retrieves the current parameters for an Alarm.
+
+\requestdef{SetPriority}
+
+\begin{tabular}{l}
+	\param{client-resource}: XID\\
+	\param{priority}: INT32\\[5pt]
+	Errors: \error{Match}
+\end{tabular}
+
+This request changes the scheduling priority of the client which created
+\param{client-resource}. If \param{client-resource} is \enum{None} then the
+priority for the client making the request is changed. A \error{Match} error
+is generated if \param{client-resource} is not \enum{None} and does not name
+an existing resource in the server.  For any two \param{priority} values,
+{\tt A} and {\tt B}, {\tt A} is higher priority if and only if {\tt A} is
+greater than {\tt B}.
+
+The priority of a client is set to 0 when the initial client connection is
+made.
+
+The effect of different client priorities depends on the particular
+implementation of the extension, and in some cases it may have no effect at
+all. However, the intention is that higher priority clients will have their
+requests executed before those of lower priority clients.
+
+For most animation applications, it is desireable that animation clients are
+given priority over non-real-time clients. This improves the smoothness of the
+animation on a loaded server. Because a server is free to implement very strict
+priorities, processing requests for the highest priority client to the
+exclusion of all others, it is important that a client which may potentially
+monopolize the whole server, such as an animation which produces continuous
+output as fast as it can with no rate control, is run at low rather than high
+priority.
+
+\requestdef{GetPriority}
+
+\begin{tabular}{l}
+	\param{client-resource}: XID\\
+\end{tabular}\\
+$\Rightarrow$\\
+\begin{tabular}{l}
+	\param{priority}: INT32\\[5pt]
+	Errors: \error{Match}
+\end{tabular}
+
+This request returns the scheduling priority of the client which created
+\param{client-resource}. If \param{client-resource} is \enum{None} then the
+priority for the client making the request is returned. A \error{Match} error
+is generated if \param{client-resource} is not \enum{None} and does not name
+an existing resource in the server.
+
+\end{description}
+
+\subsection*{Events}
+
+\begin{description}
+
+\eventdef{CounterNotify}
+
+\begin{tabular}{l}
+	\param{counter}: COUNTER \\
+ 	\param{wait-value}: INT64 \\
+	\param{counter-value}: INT64 \\
+ 	\param{time}: TIME \\
+	\param{count}: CARD16 \\
+	\param{destroyed}: BOOL
+\end{tabular}
+
+\event{CounterNotify} events may be generated when a client becomes unblocked
+after an \request{Await} request has been processed.
+\param{wait-value} is the value being waited for and
+\param{counter-value} is the actual value of the counter at the time
+the event was generated. The
+\param{destroyed} flag is TRUE if this request was generated as the
+result of the destruction of the counter, and FALSE otherwise.
+\param{time} is the server time at which the event was generated.
+
+When a client is unblocked, all the \event{CounterNotify} events for the
+\request{Await} request are generated contiguously. If
+\param{count} is 0 there are no more events to follow for this request. If
+\param{count} is $n$, there are at least $n$ more events to follow.
+
+\eventdef{AlarmNotify}
+
+\begin{tabular}{l}
+	\param{alarm}: ALARM \\
+ 	\param{counter-value}: INT64 \\
+	\param{alarm-value}: INT64 \\
+ 	\param{state}: ALARMSTATE \\
+ 	\param{time}: TIME
+\end{tabular}
+
+An \event{AlarmNotify} event is generated when an alarm is triggered.
+\param{alarm-value} is the test value of the trigger in the alarm when it was
+triggered, \param{counter-value} is the value of the counter which triggered
+the alarm and \param{time} is the server time at which the event was
+generated. \param{state} is the new state of the alarm. If \param{state} is
+\enum{Inactive}, no more events will be generated by this alarm until a
+\request{ChangeAlarm} request is executed, the alarm is destroyed or the
+counter for the alarm is destroyed.
+
+\end{description}
+
+\section*{Encoding}
+
+Please refer to the X11 Protocol Encoding document as this section uses
+syntactic conventions established there and references types defined there.
+
+The name of this extension is ``SYNC''.
+
+\subsection*{New Types}
+
+The following new types are used by the extension.
+
+\begin{tabbing}
+\tabstopsC
+ALARM: CARD32\\
+ALARMSTATE:\\
+\tabstopsB
+	\> 0	\> Active \\
+	\> 1	\> Inactive \\
+	\> 2	\> Destroyed\\
+\tabstopsC
+COUNTER: CARD32\\
+INT64: 64-bit signed integer\\
+SYSTEMCOUNTER:\\
+	\> 4	\> COUNTER	\> counter \\
+	\> 8	\> INT64	\> resolution\\
+	\> 2	\> n		\> length of name in bytes\\
+	\> n	\> STRING8	\> name \\
+	\> p	\> 		\> pad,p=pad(n+2)\\
+TESTTYPE:\\
+\tabstopsB
+	\> 0	\> PositiveTransition \\
+	\> 1	\> NegativeTransition \\
+	\> 2	\> PositiveComparison \\
+	\> 3	\> NegativeComparison \\
+\tabstopsC
+TRIGGER:\\
+	\> 4	\> COUNTER	\> counter \\
+	\> 4	\> VALUETYPE	\> wait-type \\	
+	\> 8	\> INT64	\> wait-value \\
+	\> 4	\> TESTTYPE	\> test-type \\
+VALUETYPE:\\
+\tabstopsB
+	\> 0	\> Absolute \\
+	\> 1	\> Relative \\
+\tabstopsC
+WAITCONDITION:\\
+	\> 20	\> TRIGGER	\> trigger \\
+	\> 8	\> INT64	\> event threshold\\
+\end{tabbing}
+
+An INT64 is encoded in 8 bytes with the most significant 4 bytes
+first followed by the least significant 4 bytes.  Within these
+4 byte groups, the byte ordering determined during connection setup
+is used.
+
+\subsection*{Errors}
+
+\begin{tabbing}
+\tabstopsC
+{\bf Counter}\\
+	\> 1	\> 0		\> Error \\
+	\> 1	\> Base + 0	\> code \\
+	\> 2	\> CARD16	\> sequence number \\
+	\> 4	\> CARD32	\> bad counter \\
+	\> 2	\> CARD16	\> minor opcode \\
+	\> 1	\> CARD8	\> major opcode \\
+	\> 21	\>		\> unused \\
+{\bf Alarm}\\
+	\> 1	\> 0		\> Error \\
+	\> 1	\> Base + 1	\> code \\
+	\> 2	\> CARD16	\> sequence number \\
+	\> 4	\> CARD32	\> bad alarm \\
+	\> 2	\> CARD16	\> minor opcode \\
+	\> 1	\> CARD8	\> major opcode \\
+	\> 21	\>		\> unused \\
+\end{tabbing}
+
+\subsection*{Requests}
+
+\renewcommand{\thefootnote}{\fnsymbol{footnote}}
+\setcounter{footnote}{1}
+\setlength{\topsep}{0pt}	%vertical space before and after tabbing
+\begin{tabbing}
+\tabstopsC
+{\bf Initialize}\\
+	\> 1	\> CARD8	\> major opcode \\
+	\> 1	\> 0		\> minor opcode \\
+	\> 2	\> 2		\> request length \\
+	\> 1	\> CARD8	\> major version \\
+	\> 1	\> CARD8	\> minor version \\
+	\> 2	\> 		\> unused \\
+$\Rightarrow$\\
+	\> 1	\> 1		\> Reply \\
+	\> 1	\>		\> unused \\
+	\> 2	\> CARD16	\> sequence number \\
+	\> 4	\> 0		\> reply length \\
+	\> 1	\> CARD8	\> major version \\
+	\> 1	\> CARD8	\> minor version \\
+	\> 2	\>		\> unused \\
+	\> 20	\>		\> unused \\
+\\
+{\bf ListSystemCounters}\\
+	\> 1	\> CARD8	\> major opcode \\
+	\> 1	\> 1		\> minor opcode \\
+	\> 2	\> 1		\> request length \\
+$\Rightarrow$\\
+	\> 1	\> 1		\> Reply \\
+	\> 1	\>		\> unused \\
+	\> 2	\> CARD16	\> sequence number \\
+	\> 4	\> {\it variable} \> reply length \\
+	\> 4	\> INT32	\> list length \\
+	\> 20	\>		\> unused \\
+	\> 4n   \> list of SYSTEMCOUNTER \> system counters \\
+\\
+{\bf CreateCounter}\\
+	\> 1	\> CARD8	\> major opcode \\
+	\> 1	\> 2		\> minor opcode \\
+	\> 2	\> 4		\> request length \\
+	\> 4	\> COUNTER	\> id\\
+	\> 8	\> INT64	\> initial value\\
+\\
+{\bf DestroyCounter}\\
+	\> 1	\> CARD8	\> major opcode \\
+	\> 1	\> 6		\> minor opcode\footnotemark[1] \\
+	\> 2	\> 2		\> request length \\
+	\> 4	\> COUNTER	\> counter
+\end{tabbing}
+\footnotetext{A previous version of this document gave an incorrect
+minor opcode.}
+\setlength{\topsep}{0pt}	%vertical space before and after tabbing
+\begin{tabbing}
+\tabstopsC
+{\bf QueryCounter}\\
+	\> 1	\> CARD8	\> major opcode \\
+	\> 1	\> 5		\> minor opcode\footnotemark[1] \\
+	\> 2	\> 2		\> request length \\
+	\> 4	\> COUNTER	\> counter \\
+$\Rightarrow$\\
+	\> 1	\> 1		\> Reply \\
+	\> 1	\>		\> unused \\
+	\> 2	\> CARD16	\> sequence number \\
+	\> 4	\> 0		\> reply length \\
+	\> 8	\> INT64	\> counter value \\
+	\> 16	\>		\> unused\\
+\\
+{\bf Await}\\
+	\> 1	\> CARD8	\> major opcode \\
+	\> 1	\> 7		\> minor opcode\footnotemark[1] \\
+	\> 2	\> 1 + 7*n	\> request length \\
+	\> 28n	\> LISTofWAITCONDITION \> wait conditions
+\end{tabbing}
+\footnotetext{A previous version of this document gave an incorrect
+minor opcode.}
+\setlength{\topsep}{0pt}	%vertical space before and after tabbing
+\begin{tabbing}
+\tabstopsC
+{\bf ChangeCounter}\\
+	\> 1	\> CARD8	\> major opcode \\
+	\> 1	\> 4		\> minor opcode\footnotemark[1] \\
+	\> 2	\> 4		\> request length \\
+	\> 4	\> COUNTER	\> counter \\
+	\> 8	\> INT64	\> amount \\
+\\
+{\bf SetCounter}\\
+	\> 1	\> CARD8	\> major opcode \\
+	\> 1	\> 3		\> minor opcode\footnotemark[1] \\
+	\> 2	\> 4		\> request length \\
+	\> 4	\> COUNTER	\> counter \\
+	\> 8	\> INT64	\> value \\
+\\
+{\bf CreateAlarm}\\
+	\> 1	\> CARD8	\> major opcode \\
+	\> 1	\> 8		\> minor opcode \\
+	\> 2	\> 3+n		\> request length \\
+	\> 4	\> ALARM	\> id \\
+	\> 4	\> BITMASK	\> values mask\\
+\tabstopsB
+	\>	\> \#x00000001	\> counter \\
+	\>	\> \#x00000002	\> value-type \\
+	\>	\> \#x00000004	\> value \\
+	\>	\> \#x00000008	\> test-type \\
+	\>	\> \#x00000010	\> delta \\
+	\>	\>  \#x00000020	\> events \\
+\tabstopsC
+	\> 4n	\> LISTofVALUE	\> values\\
+\tabstopsB
+VALUES\\
+	\> 4	\> COUNTER	\> counter\\
+	\> 4	\> VALUETYPE	\> value-type \\
+	\> 8	\> INT64	\> value \\
+	\> 4	\> TESTTYPE	\> test-type \\
+	\> 8	\> INT64	\> delta \\
+	\> 4	\> BOOL		\> events\\
+\tabstopsC
+\\
+{\bf ChangeAlarm}\\
+	\> 1	\> CARD8	\> major opcode \\
+	\> 1	\> 9		\> minor opcode \\
+	\> 2	\> 3+n		\> request length \\
+	\> 4	\> ALARM	\> id \\
+	\> 4	\> BITMASK	\> values mask \\
+	\> 	\> encodings as for {\bf CreateAlarm}\\
+	\> 4n	\> LISTofVALUE	\> values\\
+	\>	\> encodings as for {\bf CreateAlarm}\\
+\\
+{\bf DestroyAlarm}\\
+	\> 1	\> CARD8	\> major opcode \\
+	\> 1	\> 11		\> minor opcode\footnotemark[1] \\
+	\> 2	\> 2		\> request length \\
+	\> 4	\> ALARM	\> alarm
+\end{tabbing}
+\footnotetext{A previous version of this document gave an incorrect
+minor opcode.}
+\setlength{\topsep}{0pt}	%vertical space before and after tabbing
+\begin{tabbing}
+\tabstopsC
+{\bf QueryAlarm}\\
+	\> 1	\> CARD8	\> major opcode \\
+	\> 1	\> 10		\> minor opcode\footnotemark[1] \\
+	\> 2	\> 2		\> request length \\
+	\> 4	\> ALARM	\> alarm \\
+$\Rightarrow$\\
+	\> 1	\> 1		\> Reply \\
+	\> 1	\>		\> unused \\
+	\> 2	\> CARD16	\> sequence number \\
+	\> 4	\> 2		\> reply length \\
+	\> 20	\> TRIGGER	\> trigger \\
+	\> 8	\> INT64	\> delta \\
+	\> 1	\> BOOL		\> events \\
+	\> 1	\> ALARMSTATE	\> state \\
+	\> 2	\>		\> unused \\
+\\
+{\bf SetPriority}\\
+	\> 1	\> CARD8	\> major opcode \\
+	\> 1	\> 12		\> minor opcode \\
+	\> 2	\> 3		\> request length \\
+	\> 4	\> CARD32	\> id \\
+	\> 4	\> INT32	\> priority \\
+\\
+{\bf GetPriority}\\
+	\> 1	\> CARD8	\> major opcode \\
+	\> 1	\> 13		\> minor opcode \\
+	\> 2	\> 1		\> request length \\
+	\> 4	\> CARD32	\> id \\
+$\Rightarrow$\\
+	\> 1	\> 1		\> Reply \\
+	\> 1	\>		\> unused \\
+	\> 2	\> CARD16	\> sequence number \\
+	\> 4	\> 0		\> reply length \\
+	\> 4	\> INT32	\> priority \\
+	\> 20	\>		\> unused\\
+\end{tabbing}
+
+\subsection*{Events}
+
+\begin{tabbing}
+\tabstopsC
+{\bf CounterNotify}\\
+	\> 1	\> Base + 0	\> code \\
+	\> 1	\> 0		\> kind \\
+	\> 2	\> CARD16	\> sequence number \\
+	\> 4	\> COUNTER	\> counter \\
+	\> 8	\> INT64	\> wait value \\
+	\> 8	\> INT64	\> counter value \\
+	\> 4	\> TIME		\> timestamp \\
+	\> 2	\> CARD16	\> count \\
+	\> 1	\> BOOL		\> destroyed \\
+	\> 1	\> 		\> unused \\
+\\
+{\bf AlarmNotify}\\
+	\> 1	\> Base + 1	\> code \\
+	\> 1	\> 1		\> kind \\
+	\> 2	\> CARD16	\> sequence number \\
+	\> 4	\> ALARM	\> alarm \\
+	\> 8	\> INT64	\> counter value \\
+	\> 8	\> INT64	\> alarm value \\
+	\> 4	\> TIME		\> timestamp \\
+	\> 1	\> ALARMSTATE	\> state \\
+	\> 3	\>		\> unused\\
+\end{tabbing}
+
+\section*{C Language Binding}
+
+The C routines provide direct access to	the protocol and add
+no additional semantics.
+
+The include file for this extension is \verb|<X11/extensions/sync.h>|.
+
+Most of the names in the language binding are derived from the
+protocol names by prepending XSync to the protocol name and changing
+the capitalization.
+
+\subsection*{C Functions}
+
+Most of the following functions generate SYNC protocol requests.
+
+\cstartfunction{Status}{XSyncQueryExtension}
+\cargdecl{Display *}{dpy},
+\cargdecl{int *}{event\_base\_return},
+\cargdecl{int *}{error\_base\_return}
+\cendfunctiondecl
+
+If \cargname{dpy} supports the SYNC extension, this function returns
+\cconst{True}, sets *\cargname{event\_base\_return} to the event number for the
+first SYNC event, and sets
+*\cargname{error\_base\_return} to the error number for the first SYNC
+error.  If \cargname{dpy} does not support the SYNC extension, this function
+returns \cconst{False}.
+\cendfuncdescription
+
+\cstartfunction{Status}{XSyncInitialize}
+\cargdecl{Display *}{dpy},
+\cargdecl{int *}{major\_version\_return},
+\cargdecl{int *}{minor\_version\_return}
+\cendfunctiondecl
+
+Sets *\cargname{major\_version\_return} and
+*\cargname{minor\_version\_return} to the major/minor SYNC protocol
+version supported by the server.  If the XSync library is compatible
+with the version returned by the server, this function returns \cconst{True}.
+If \cargname{dpy} does not support the SYNC extension, or if there was an error during
+communication with the server, or if the server and library protocol
+versions are incompatible, this function returns \cconst{False}.  The only
+XSync function that may be called before this function is
+\cfunctionname{XSyncQueryExtension}.  If a client violates this rule,
+the effects of all XSync calls that it makes are undefined.
+\cendfuncdescription
+
+\cstartfunction{XSyncSystemCounter *}{XSyncListSystemCounters}
+\cargdecl{Display *}{dpy},
+\cargdecl{int *}{n\_counters\_return}
+\cendfunctiondecl
+
+Returns a pointer to an array of system counters supported by the
+display, and sets *\cargname{n\_counters\_return} to the number of
+counters in the array.  The array should be freed with
+\cfunctionname{XSyncFreeSystemCounterList}.  If \cargname{dpy} does not
+support the SYNC extension, or if there was an error during communication with the
+server, or if the server does not support any system counters, this
+function returns \cconst{NULL}.
+
+\ctypename{XSyncSystemCounter} has the following fields:
+
+\begin{tabular}{lll}
+\ctypename{char *} & name; & /* null-terminated name of system counter */\\
+\ctypename{XSyncCounter} & counter; & /* counter id of this system counter */\\
+\ctypename{XSyncValue} & resolution; & /* resolution of this system counter */\\
+\end{tabular}
+\cendfuncdescription
+
+\cstartfunction{void}{XSyncFreeSystemCounterList}
+\cargdecl{XSyncSystemCounter *}{list}
+\cendfunctiondecl
+
+Frees the memory associated with the system counter list returned by
+\cfunctionname{XSyncListSystemCounters}.
+\cendfuncdescription
+
+\cstartfunction{XSyncCounter}{XSyncCreateCounter}
+\cargdecl{Display *}{dpy}, 
+\cargdecl{XSyncValue}{initial\_value}
+\cendfunctiondecl
+
+Creates a counter on the \cargname{dpy} with the given \cargname{initial\_value}
+and returns the counter ID.  Returns \cconst{None} if \cargname{dpy} does not
+support the SYNC extension.
+\cendfuncdescription
+
+\cstartfunction{Status}{XSyncSetCounter}
+\cargdecl{Display *}{dpy},
+\cargdecl{XSyncCounter}{counter},
+\cargdecl{XSyncValue}{value}
+\cendfunctiondecl
+
+Sets \cargname{counter} to \cargname{value}.  Returns \cconst{False}
+if \cargname{dpy} does not support the SYNC extension, else returns \cconst{True}.
+\cendfuncdescription
+
+\cstartfunction{Status}{XSyncChangeCounter}
+\cargdecl{Display *}{dpy},
+\cargdecl{XSyncCounter}{counter},
+\cargdecl{XSyncValue}{value}
+\cendfunctiondecl
+
+Adds \cargname{value} to \cargname{counter}.  Returns \cconst{False}
+if \cargname{dpy} does not support the SYNC extension, else returns \cconst{True}.
+\cendfuncdescription
+
+\cstartfunction{Status}{XSyncDestroyCounter}
+\cargdecl{Display *}{dpy}, 
+\cargdecl{XSyncCounter}{counter}
+\cendfunctiondecl
+
+Destroys \cargname{counter}.  Returns \cconst{False} if \cargname{dpy} does not
+support the SYNC extension, else returns \cconst{True}.
+\cendfuncdescription
+
+\cstartfunction{Status}{XSyncQueryCounter}
+\cargdecl{Display *}{dpy},
+\cargdecl{XSyncCounter}{counter},
+\cargdecl{XSyncValue *}{value\_return}
+\cendfunctiondecl
+
+Sets \cargname{*value\_return} to the current value of
+\cargname{counter}.  Returns \cconst{False} if there was an error during
+communication with the server, or if \cargname{dpy} does not support
+the SYNC extension, else returns \cconst{True}.
+\cendfuncdescription
+
+\cstartfunction{Status}{XSyncAwait}
+\cargdecl{Display *}{dpy},
+\cargdecl{XSyncWaitCondition *}{wait\_list},
+\cargdecl{int}{n\_conditions}
+\cendfunctiondecl
+
+Awaits on the conditions in \cargname{wait\_list}.
+\cargname{n\_conditions} is the number of wait conditions in
+\cargname{wait\_list}.  Returns \cconst{False} if \cargname{dpy} does not
+support the SYNC extension, else returns \cconst{True}.  The await is processed
+asynchronously by the server; this function always returns immediatley
+after issuing the request.
+
+\ctypename{XSyncWaitCondition} has the following fields:
+
+\begin{tabular}{lll}
+\ctypename{XSyncCounter} & trigger.counter; & /* counter to trigger on */ \\
+\ctypename{XSyncValueType} & trigger.value\_type; & /* absolute/relative */ \\
+\ctypename{XSyncValue} & trigger.wait\_value; & /* value to compare counter to */ \\
+\ctypename{XSyncTestType} & trigger.test\_type;	& /* pos/neg comparison/transtion */ \\
+\ctypename{XSyncValue} & event\_threshold; & /* send event if past threshold */ \\
+\end{tabular}
+
+\ctypename{XSyncValueType} can be either \cconst{XSyncAbsolute} or \cconst{XSyncRelative}.
+
+\ctypename{XSyncTestType} can be one of \cconst{XSyncPositiveTransition},
+\cconst{XSyncNegativeTransition}, \cconst{XSyncPositiveComparison}, or
+\cconst{XSyncNegativeComparison}.
+\cendfuncdescription
+
+\cstartfunction{XSyncAlarm}{XSyncCreateAlarm}
+\cargdecl{Display *}{dpy},
+\cargdecl{unsigned long}{values\_mask},
+\cargdecl{XSyncAlarmAttributes *}{values}
+\cendfunctiondecl
+
+Creates an alarm and returns the alarm ID.  Returns \cconst{None} if the
+display does not support the SYNC extension.  \cargname{values\_mask} and \cargname{values}
+specify the alarm attributes.
+
+\ctypename{XSyncAlarmAttributes} has the following fields.  The attribute\_mask
+column specifies the symbol that the caller should OR into
+\cargname{values\_mask} to indicate that the value for the corresponding
+attribute was actually supplied.  Default values are used for all
+attributes that do not have their attribute\_mask OR'ed into 
+\cargname{values\_mask}.
+See the protocol
+description for CreateAlarm for the defaults.
+
+\begin{tabular}{lll}
+type & field name & attribute\_mask \\
+\ctypename{XSyncCounter} & trigger.counter; & \cconst{XSyncCACounter} \\
+\ctypename{XSyncValueType}& trigger.value\_type; & \cconst{XSyncCAValueType} \\
+\ctypename{XSyncValue} & trigger.wait\_value; & \cconst{XSyncCAValue} \\
+\ctypename{XSyncTestType} & trigger.test\_type; & \cconst{XSyncCATestType} \\
+\ctypename{XSyncValue} & delta;	& \cconst{XSyncCADelta} \\
+\ctypename{Bool} & events; & \cconst{XSyncCAEvents} \\
+\ctypename{XSyncAlarmState} & state; & client cannot set this \\
+\end{tabular}
+\cendfuncdescription
+
+\cstartfunction{Status}{XSyncDestroyAlarm}
+\cargdecl{Display *}{dpy},
+\cargdecl{XSyncAlarm}{alarm}
+\cendfunctiondecl
+
+Destroys \cargname{alarm}.  Returns \cconst{False} if \cargname{dpy} does not
+support the SYNC extension, else returns \cconst{True}.
+\cendfuncdescription
+
+\cstartfunction{Status}{XSyncQueryAlarm}
+\cargdecl{Display *}{dpy},
+\cargdecl{XSyncAlarm}{alarm},
+\cargdecl{XSyncAlarmAttributes *}{values\_return}
+\cendfunctiondecl
+
+Sets *\cargname{values\_return} to the alarm's attributes.  Returns
+\cconst{False} if there was an error during communication with the
+server, or if \cargname{dpy} does not support the SYNC extension, else returns
+\cconst{True}.
+\cendfuncdescription
+
+\cstartfunction{Status}{XSyncChangeAlarm}
+\cargdecl{Display *}{dpy},
+\cargdecl{XSyncAlarm}{alarm},
+\cargdecl{unsigned long}{values\_mask},
+\cargdecl{XSyncAlarmAttributes *}{values}
+\cendfunctiondecl
+
+Changes \cargname{alarm}'s attributes.  The attributes to change are specified
+as in \cfunctionname{XSyncCreateAlarm}.  Returns \cconst{False} if
+\cargname{dpy} does not support the SYNC extension, else returns \cconst{True}.
+\cendfuncdescription
+
+\cstartfunction{Status}{XSyncSetPriority}
+\cargdecl{Display *}{dpy},
+\cargdecl{XID}{client\_resource\_id},
+\cargdecl{int}{priority}
+\cendfunctiondecl
+
+Sets the priority of the client owning \cargname{client\_resource\_id} to
+\cargname{priority}.  If \cargname{client\_resource\_id} is \cconst{None},
+sets the caller's priority.  Returns \cconst{False} if \cargname{dpy}
+does not support the SYNC extension, else returns \cconst{True}.
+\cendfuncdescription
+
+\cstartfunction{Status}{XSyncGetPriority}
+\cargdecl{Display *}{dpy},
+\cargdecl{XID}{client\_resource\_id},
+\cargdecl{int *}{return\_priority}
+\cendfunctiondecl
+
+Sets *\cargname{return\_priority} to the priority of the client owning
+\cargname{client\_resource\_id}.  If \cargname{client\_resource\_id} is
+\cconst{None}, sets *\cargname{return\_priority} to the caller's priority.
+Returns \cconst{False} if there was an error
+during communication with the server, or if \cargname{dpy} does not
+support the SYNC extension, else returns \cconst{True}.
+\cendfuncdescription
+
+\subsection*{C Macros/Functions}
+
+The following procedures manipulate 64 bit values.  They are defined
+both as macros and as functions.  By default, the macro form is used.
+To use the function form, \#undef the macro name to uncover the
+function.
+
+\cstartmacro{void}{XSyncIntToValue}
+\cargdecl{XSyncValue}{*pv},
+\cargdecl{int}{i}
+\cendmacrodecl
+
+Converts \cargname{i} to an \ctypename{XSyncValue} and stores it in
+\cargname{*pv}.  Performs sign extension (\cargname{*pv} will have the
+same sign as \cargname{i}.)
+\cendmacrodescription
+
+\cstartmacro{void}{XSyncIntsToValue}
+\cargdecl{XSyncValue}{*pv},
+\cargdecl{unsigned int}{low},
+\cargdecl{int}{high}
+\cendmacrodecl
+
+Stores \cargname{low} in the low 32 bits of \cargname{*pv} and 
+\cargname{high} in the high 32 bits of \cargname{*pv}.
+\cendmacrodescription
+
+\cstartmacro{Bool}{XSyncValueGreaterThan}
+\cargdecl{XSyncValue}{a},
+\cargdecl{XSyncValue}{b}
+\cendmacrodecl
+
+Returns \cconst{True} if \cargname{a} is greater than \cargname{b},
+else returns \cconst{False}.
+\cendmacrodescription
+
+\cstartmacro{Bool}{XSyncValueLessThan}
+\cargdecl{XSyncValue}{a},
+\cargdecl{XSyncValue}{b}
+\cendmacrodecl
+
+Returns \cconst{True} if \cargname{a} is less than \cargname{b},
+else returns \cconst{False}.
+\cendmacrodescription
+
+\cstartmacro{Bool}{XSyncValueGreaterOrEqual}
+\cargdecl{XSyncValue}{a},
+\cargdecl{XSyncValue}{b}
+\cendmacrodecl
+
+Returns \cconst{True} if  \cargname{a} is greater than or equal to \cargname{b},
+else returns \cconst{False}.
+\cendmacrodescription
+
+\cstartmacro{Bool}{XSyncValueLessOrEqual}
+\cargdecl{XSyncValue}{a},
+\cargdecl{XSyncValue}{b}
+\cendmacrodecl
+
+Returns \cconst{True} if  \cargname{a} is less than or equal to \cargname{b},
+\cendmacrodescription
+
+\cstartmacro{Bool}{XSyncValueEqual}
+\cargdecl{XSyncValue}{a},
+\cargdecl{XSyncValue}{b}
+\cendmacrodecl
+
+Returns \cconst{True} if  \cargname{a} is equal to \cargname{b},
+else returns \cconst{False}.
+\cendmacrodescription
+
+\cstartmacro{Bool}{XSyncValueIsNegative}
+\cargdecl{XSyncValue}{v}
+\cendmacrodecl
+
+Returns \cconst{True} if \cargname{v} is negative, else returns
+\cconst{False}.
+\cendmacrodescription
+
+\cstartmacro{Bool}{XSyncValueIsZero}
+\cargdecl{XSyncValue}{v}
+\cendmacrodecl
+
+Returns \cconst{True} if  \cargname{v} is zero,
+else returns \cconst{False}.
+\cendmacrodescription
+
+\cstartmacro{Bool}{XSyncValueIsPositive}
+\cargdecl{XSyncValue}{v}
+\cendmacrodecl
+
+Returns \cconst{True} if \cargname{v} is positive, else returns
+\cconst{False}.
+\cendmacrodescription
+
+\cstartmacro{unsigned int}{XSyncValueLow32}
+\cargdecl{XSyncValue}{v}
+\cendmacrodecl
+
+Returns the low 32 bits of \cargname{v}.
+\cendmacrodescription
+
+\cstartmacro{int}{XSyncValueHigh32}
+\cargdecl{XSyncValue}{v}
+\cendmacrodecl
+
+Returns the high 32 bits of \cargname{v}.
+\cendmacrodescription
+
+\cstartmacro{void}{XSyncValueAdd}
+\cargdecl{XSyncValue *}{presult},
+\cargdecl{XSyncValue}{a},
+\cargdecl{XSyncValue}{b},
+\cargdecl{Bool *}{poverflow}
+\cendmacrodecl
+
+Adds \cargname{a} to \cargname{b} and stores the result in \cargname{*presult}.
+If the result could not fit in 64 bits, \cargname{*poverflow} is set to
+\cconst{True} else it is set to \cconst{False}.
+\cendmacrodescription
+
+\cstartmacro{void}{XSyncValueSubtract}
+\cargdecl{XSyncValue *}{presult},
+\cargdecl{XSyncValue}{a},
+\cargdecl{XSyncValue}{b},
+\cargdecl{Bool *}{poverflow}
+\cendmacrodecl
+
+Subtracts \cargname{b} from \cargname{a} and stores the result in
+\cargname{*presult}.
+If the result could not fit in 64 bits, \cargname{overflow} is set to
+\cconst{True} else it is set to \cconst{False}.
+\cendmacrodescription
+
+\cstartmacro{void}{XSyncMaxValue}
+\cargdecl{XSyncValue *}{pv}
+\cendmacrodecl
+
+Sets \cargname{*pv} to the maximum value expressible in 64 bits.
+\cendmacrodescription
+
+\cstartmacro{void}{XSyncMinValue}
+\cargdecl{XSyncValue *}{pv}
+\cendmacrodecl
+
+Sets \cargname{*pv} to the minimum value expressible in 64 bits.
+\cendmacrodescription
+
+\subsection*{Events}
+
+Let \cargname{event\_base} be the value \cargname{event\_base\_return}
+as defined in the function \cfunctionname{XSyncQueryExtension}.
+
+An \ctypename{XSyncCounterNotifyEvent}'s type field has the value
+\cargname{event\_base} + \cconst{XSyncCounterNotify}.  The fields of
+this structure are:
+
+\begin{tabular}{lll}
+\ctypename{int} & type;	& /* event base + \cconst{XSyncCounterNotify} */ \\
+\ctypename{unsigned long} & serial; & /* number of last request processed by server */ \\
+\ctypename{Bool} & send\_event;& /* true if this came from a SendEvent request */ \\
+\ctypename{Display *} & display; & /* Display the event was read from */\\
+\ctypename{XSyncCounter} & counter;	& /* counter involved in await */\\
+\ctypename{XSyncValue} & wait\_value; & /* value being waited for */\\
+\ctypename{XSyncValue} & counter\_value; & /* counter value when this event was sent */\\
+\ctypename{Time} & time; & /* milliseconds */\\
+\ctypename{int} & count; & /* how many more events to come */\\
+\ctypename{Bool} & destroyed; & /* True if counter was destroyed */\\
+\end{tabular}
+
+An \ctypename{XSyncAlarmNotifyEvent}'s type field has the value
+\cargname{event\_base} + \cconst{XSyncAlarmNotify}.  The fields of this
+structure are:
+
+\begin{tabular}{lll}
+\ctypename{int} & type;&	/* event base + \cconst{XSyncAlarmNotify} */\\
+\ctypename{unsigned long} & serial;&/* number of last request processed by server */\\
+\ctypename{Bool} & send\_event;& /* true if this came from a SendEvent request */\\
+\ctypename{Display *} & display;&	/* Display the event was read from */\\
+\ctypename{XSyncAlarm} & alarm;&	/* alarm that triggered */\\
+\ctypename{XSyncValue} & counter\_value;&/* value that triggered the alarm */\\
+\ctypename{XSyncValue} & alarm\_value;&	/* test  value of trigger in alarm */\\
+\ctypename{Time} & time;&	/* milliseconds */\\
+\ctypename{XSyncAlarmState} & state;&	/* new state of alarm */\\
+\end{tabular}
+
+\subsection*{Errors}
+
+Let \cargname{error\_base} be the value \cargname{error\_base\_return}
+as defined in the function \cfunctionname{XSyncQueryExtension}.
+
+An \ctypename{XSyncAlarmError}'s error\_code field has the value
+\cargname{error\_base} + \cconst{XSyncBadAlarm}.  The fields of
+this structure are:
+
+\begin{tabular}{lll}
+\ctypename{int} & type;	\\
+\ctypename{Display *} & display;& /* Display the event was read from */\\
+\ctypename{XSyncAlarm} &  alarm;& /* resource id */\\
+\ctypename{unsigned long} & serial;& /* serial number of failed request */\\
+\ctypename{unsigned char} & error\_code;&/* error base + XSyncBadAlarm */\\
+\ctypename{unsigned char} & request\_code;&/* Major op-code of failed request */\\
+\ctypename{unsigned char} & minor\_code;&/* Minor op-code of failed request */\\
+\end{tabular}
+
+An \ctypename{XSyncCounterError}'s error\_code field has the value
+\cargname{error\_base} + \cconst{XSyncBadCounter}.  The fields of
+this structure are:
+
+\begin{tabular}{lll}
+\ctypename{int} &type;\\
+\ctypename{Display *} & display;&	/* Display the event was read from */\\
+\ctypename{XSyncCounter} & counter;&	/* resource id */\\
+\ctypename{unsigned long} & serial;&	/* serial number of failed request */\\
+\ctypename{unsigned char} & error\_code;&/* error base + XSyncBadCounter */\\
+\ctypename{unsigned char} & request\_code;&/* Major op-code of failed request */\\
+\ctypename{unsigned char} & minor\_code;& /* Minor op-code of failed request */\\
+\end{tabular}
+
+\end{document}
