@@ -63,7 +63,7 @@
 
 #define R128_DEBUG    0         /* Turn off debugging output                */
 #define R128_TIMEOUT  2000000   /* Fall out of wait loops after this count */
-#define R128_MMIOSIZE 0x80000
+#define R128_MMIOSIZE 0x4000
 
 #define R128_VBIOS_SIZE 0x00010000
 
