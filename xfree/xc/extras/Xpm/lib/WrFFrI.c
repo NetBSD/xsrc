@@ -39,9 +39,13 @@
  */
 
 #include "XpmI.h"
-#if !defined(NO_ZPIPE) && defined(WIN32)
-# define popen _popen
-# define pclose _pclose
+
+#ifndef NO_ZPIPE
+#include "sys/wait.h"
+#include "sys/types.h"
+#include "fcntl.h"
+#include "unistd.h"
+#include "errno.h"
 #endif
 
 /* MS Windows define a function called WriteFile @#%#&!!! */
@@ -98,7 +102,7 @@ XpmWriteFileFromXpmImage(filename, image, info)
     XpmInfo *info;
 {
     xpmData mdata;
-    char *name, *dot, *s, new_name[BUFSIZ];
+    char *name, *dot, *s, new_name[BUFSIZ] = {0};
     int ErrorStatus;
 
     /* open file to write */
@@ -121,7 +125,8 @@ XpmWriteFileFromXpmImage(filename, image, info)
 #endif
 	/* let's try to make a valid C syntax name */
 	if (index(name, '.')) {
-	    strcpy(new_name, name);
+	    strncpy(new_name, name, sizeof(new_name));
+	    new_name[sizeof(new_name)-1] = '\0';
 	    /* change '.' to '_' */
 	    name = s = new_name;
 	    while ((dot = index(s, '.'))) {
@@ -248,7 +253,7 @@ WritePixels(file, width, height, cpp, pixels, colors)
     unsigned int x, y, h;
 
     h = height - 1;
-    if (cpp != 0 && width >= (SIZE_MAX - 3)/cpp) 
+    if (cpp != 0 && width >= (UINT_MAX - 3)/cpp) 
 	return XpmNoMemory;    
     p = buf = (char *) XpmMalloc(width * cpp + 3);
     if (!buf)
@@ -297,6 +302,14 @@ WriteExtensions(file, ext, num)
     fprintf(file, ",\n\"XPMENDEXT\"");
 }
 
+
+#ifndef NO_ZPIPE
+FUNC(xpmPipeThrough, FILE*, (int fd,
+			     const char* cmd,
+			     const char* arg1,
+			     const char* mode));
+#endif
+
 /*
  * open the given file to be written as an xpmData which is returned
  */
@@ -305,38 +318,32 @@ OpenWriteFile(filename, mdata)
     char *filename;
     xpmData *mdata;
 {
-#ifndef NO_ZPIPE
-    char buf[BUFSIZ];
-
-#endif
-
     if (!filename) {
 	mdata->stream.file = (stdout);
 	mdata->type = XPMFILE;
     } else {
 #ifndef NO_ZPIPE
-	int len = strlen(filename);
+	size_t len;
+#endif
+	int fd = open(filename, O_WRONLY|O_CREAT|O_TRUNC, 0644);
+	if ( fd < 0 )
+	    return(XpmOpenFailed);
+#ifndef NO_ZPIPE
+	len = strlen(filename);
 	if (len > 2 && !strcmp(".Z", filename + (len - 2))) {
-	    sprintf(buf, "compress > \"%s\"", filename);
-	    if (!(mdata->stream.file = popen(buf, "w")))
-		return (XpmOpenFailed);
-
+	    mdata->stream.file = xpmPipeThrough(fd, "compress", NULL, "w");
 	    mdata->type = XPMPIPE;
 	} else if (len > 3 && !strcmp(".gz", filename + (len - 3))) {
-	    sprintf(buf, "gzip -q > \"%s\"", filename);
-	    if (!(mdata->stream.file = popen(buf, "w")))
-		return (XpmOpenFailed);
-
+	    mdata->stream.file = xpmPipeThrough(fd, "gzip", "-q", "w");
 	    mdata->type = XPMPIPE;
-	} else {
+	} else
 #endif
-	    if (!(mdata->stream.file = fopen(filename, "w")))
-		return (XpmOpenFailed);
-
+	{
+	    mdata->stream.file = fdopen(fd, "w");
 	    mdata->type = XPMFILE;
-#ifndef NO_ZPIPE
 	}
-#endif
+	if (!mdata->stream.file)
+	    return (XpmOpenFailed);
     }
     return (XpmSuccess);
 }
@@ -348,15 +355,7 @@ static void
 xpmDataClose(mdata)
     xpmData *mdata;
 {
-    switch (mdata->type) {
-    case XPMFILE:
-	if (mdata->stream.file != (stdout))
-	    fclose(mdata->stream.file);
-	break;
-#ifndef NO_ZPIPE
-    case XPMPIPE:
-	pclose(mdata->stream.file);
-	break;
-#endif
-    }
+    if (mdata->stream.file != (stdout))
+	fclose(mdata->stream.file);
 }
+
