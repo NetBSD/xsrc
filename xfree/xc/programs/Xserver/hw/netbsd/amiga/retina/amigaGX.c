@@ -52,6 +52,7 @@ in this Software without prior written authorization from the X Consortium.
 #define cfb8CopyArea			cfbCopyArea
 #define cfb8BitBlt			cfbBitBlt
 #define cfb8CopyPlane			cfbCopyPlane
+#define cfb8CopyPlaneReduce		cfbCopyPlaneReduce
 #define cfb8CopyPlane8to1 		cfbCopyPlane8to1
 #define cfb8PolyGlyphBlt8		cfbPolyGlyphBlt8
 #define cfb8NonTEOps			cfbNonTEOps
@@ -642,7 +643,7 @@ __dolog("amigaGXCopyPlane: s(%d) -> d(%d), plane = %d\n",
 	    pGC->alu = InverseAlu[pGC->alu];
     	else if ((pGC->fgPixel & 1) == (pGC->bgPixel & 1))
 	    pGC->alu = mfbReduceRop(pGC->alu, pGC->fgPixel);
-	ret = cfb8BitBlt (pSrcDrawable, pDstDrawable,
+	ret = cfb8CopyPlaneReduce (pSrcDrawable, pDstDrawable,
 		    pGC, srcx, srcy, width, height, dstx, dsty, cfb8CopyPlane8to1, bitPlane);
 	pGC->alu = oldalu;
     }
@@ -669,7 +670,7 @@ __dolog("amigaGXCopyPlane: s(%d) -> d(%d), plane = %d\n",
 	 */
 	ValidateGC ((DrawablePtr) pBitmap, pGC1);
 	/* no exposures here, scratch GC's don't get graphics expose */
-	(void) cfb8BitBlt (pSrcDrawable, (DrawablePtr) pBitmap,
+	(void) cfb8CopyPlaneReduce (pSrcDrawable, (DrawablePtr) pBitmap,
 			  pGC1, srcx, srcy, width, height, 0, 0, 
 			  cfb8CopyPlane8to1, bitPlane);
 	copyPlaneFG = pGC->fgPixel;
