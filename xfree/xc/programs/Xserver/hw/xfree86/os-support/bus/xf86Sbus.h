@@ -37,6 +37,7 @@
 #elif defined(CSRG_BASED)
 # if defined(__NetBSD__)
 #  include <dev/sun/fbio.h>
+#  include <dev/ofw/openfirmio.h>
 # else
 #  include <machine/fbio.h>
 # endif
