@@ -1,3 +1,4 @@
+/* $XdotOrg: pre-CVS proposed fix for CESA-2004-003 alanc 7/25/2004 $ */
 /*
  * Copyright (C) 1989-95 GROUPE BULL
  *
@@ -32,7 +33,7 @@
 *                                                                             *
 *  Developed by Arnaud Le Hors                                                *
 \*****************************************************************************/
-/* $XFree86: xc/extras/Xpm/lib/create.c,v 1.5 2003/10/07 21:25:37 herrb Exp $ */
+/* $XFree86: xc/extras/Xpm/lib/create.c,v 1.4 2003/05/27 22:26:20 tsi Exp $ */
 
 /*
  * The code related to FOR_MSW has been added by
@@ -44,7 +45,6 @@
  * Lorens Younes (d93-hyo@nada.kth.se) 4/96
  */
 
-#include "X11/Xmd.h"
 #include "XpmI.h"
 #include <ctype.h>
 
@@ -817,6 +817,9 @@ XpmCreateImageFromXpmImage(display, image,
 
     ErrorStatus = XpmSuccess;
 
+    if (image->ncolors >= SIZE_MAX / sizeof(Pixel)) 
+	return (XpmNoMemory);
+
     /* malloc pixels index tables */
     image_pixels = (Pixel *) XpmMalloc(sizeof(Pixel) * image->ncolors);
     if (!image_pixels)
@@ -989,6 +992,8 @@ CreateXImage(display, visual, depth, format, width, height, image_return)
 	return (XpmNoMemory);
 
 #if !defined(FOR_MSW) && !defined(AMIGA)
+    if (height != 0 && (*image_return)->bytes_per_line >= SIZE_MAX / height)
+	return XpmNoMemory;
     /* now that bytes_per_line must have been set properly alloc data */
     (*image_return)->data =
 	(char *) XpmMalloc((*image_return)->bytes_per_line * height);
@@ -2056,6 +2061,9 @@ xpmParseDataAndCreate(display, data, image_return, shapeimage_return,
 	xpmGetCmt(data, &colors_cmt);
 
     /* malloc pixels index tables */
+    if (ncolors >= SIZE_MAX / sizeof(Pixel)) 
+	return XpmNoMemory;
+
     image_pixels = (Pixel *) XpmMalloc(sizeof(Pixel) * ncolors);
     if (!image_pixels)
 	RETURN(XpmNoMemory);
@@ -2310,7 +2318,8 @@ ParseAndPutPixels(
 	    }
 	    obm = SelectObject(*dc, image->bitmap);
 #endif
-
+	    if (ncolors > 256)
+		return (XpmFileInvalid);
 
 	    bzero((char *)colidx, 256 * sizeof(short));
 	    for (a = 0; a < ncolors; a++)
@@ -2415,6 +2424,9 @@ if (cidx[f]) XpmFree(cidx[f]);}
 	{
 	    char *s;
 	    char buf[BUFSIZ];
+
+	    if (cpp >= sizeof(buf))
+		return (XpmFileInvalid);
 
 	    buf[cpp] = '\0';
 	    if (USE_HASHTABLE) {

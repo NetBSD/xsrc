@@ -31,7 +31,7 @@
 *                                                                             *
 *  Developed by Arnaud Le Hors                                                *
 \*****************************************************************************/
-/* $XFree86: xc/extras/Xpm/lib/WrFFrI.c,v 1.2 2001/10/28 03:32:09 tsi Exp $ */
+/* $XFree86$ */
 
 /*
  * The code related to AMIGA has been added by
@@ -248,6 +248,8 @@ WritePixels(file, width, height, cpp, pixels, colors)
     unsigned int x, y, h;
 
     h = height - 1;
+    if (cpp != 0 && width >= (SIZE_MAX - 3)/cpp) 
+	return XpmNoMemory;    
     p = buf = (char *) XpmMalloc(width * cpp + 3);
     if (!buf)
 	return (XpmNoMemory);

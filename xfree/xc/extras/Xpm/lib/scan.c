@@ -31,7 +31,7 @@
 *                                                                             *
 *  Developed by Arnaud Le Hors                                                *
 \*****************************************************************************/
-/* $XFree86: xc/extras/Xpm/lib/scan.c,v 1.3 2002/01/07 19:40:49 dawes Exp $ */
+/* $XFree86: xc/extras/Xpm/lib/scan.c,v 1.2 2001/10/28 03:32:11 tsi Exp $ */
 
 /*
  * The code related to FOR_MSW has been added by
@@ -107,7 +107,8 @@ LFUNC(MSWGetImagePixels, int, (Display *d, XImage *image, unsigned int width,
 LFUNC(ScanTransparentColor, int, (XpmColor *color, unsigned int cpp,
 				  XpmAttributes *attributes));
 
-LFUNC(ScanOtherColors, int, (Display *display, XpmColor *colors, int ncolors,
+LFUNC(ScanOtherColors, int, (Display *display, XpmColor *colors, 
+			     unsigned int ncolors, 
 			     Pixel *pixels, unsigned int mask,
 			     unsigned int cpp, XpmAttributes *attributes));
 
@@ -232,9 +233,15 @@ XpmCreateXpmImageFromImage(display, image, shapeimage,
     else
 	cpp = 0;
 
+    if ((height > 0 && width >= SIZE_MAX / height) ||
+	width * height >= SIZE_MAX / sizeof(unsigned int))
+	RETURN(XpmNoMemory);
     pmap.pixelindex =
 	(unsigned int *) XpmCalloc(width * height, sizeof(unsigned int));
     if (!pmap.pixelindex)
+	RETURN(XpmNoMemory);
+
+    if (pmap.size >= SIZE_MAX / sizeof(Pixel)) 
 	RETURN(XpmNoMemory);
 
     pmap.pixels = (Pixel *) XpmMalloc(sizeof(Pixel) * pmap.size);
@@ -301,7 +308,8 @@ XpmCreateXpmImageFromImage(display, image, shapeimage,
      * get rgb values and a string of char, and possibly a name for each
      * color
      */
-
+    if (pmap.ncolors >= SIZE_MAX / sizeof(XpmColor))
+	RETURN(XpmNoMemory);
     colorTable = (XpmColor *) XpmCalloc(pmap.ncolors, sizeof(XpmColor));
     if (!colorTable)
 	RETURN(XpmNoMemory);
@@ -360,6 +368,8 @@ ScanTransparentColor(color, cpp, attributes)
 
     /* first get a character string */
     a = 0;
+    if (cpp >= SIZE_MAX - 1)
+	return (XpmNoMemory);
     if (!(s = color->string = (char *) XpmMalloc(cpp + 1)))
 	return (XpmNoMemory);
     *s++ = printable[c = a % MAXPRINTABLE];
@@ -407,7 +417,7 @@ static int
 ScanOtherColors(display, colors, ncolors, pixels, mask, cpp, attributes)
     Display *display;
     XpmColor *colors;
-    int ncolors;
+    unsigned int ncolors;
     Pixel *pixels;
     unsigned int mask;
     unsigned int cpp;
@@ -451,6 +461,8 @@ ScanOtherColors(display, colors, ncolors, pixels, mask, cpp, attributes)
     }
 
     /* first get character strings and rgb values */
+    if (ncolors >= SIZE_MAX / sizeof(XColor) || cpp >= SIZE_MAX - 1)
+	return (XpmNoMemory);
     xcolors = (XColor *) XpmMalloc(sizeof(XColor) * ncolors);
     if (!xcolors)
 	return (XpmNoMemory);
