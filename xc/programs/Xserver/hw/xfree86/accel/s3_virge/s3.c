@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3_virge/s3.c,v 3.14.2.10 1998/02/07 10:05:18 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3_virge/s3.c,v 3.14.2.11 1998/07/16 06:55:01 hohndel Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  *
@@ -172,6 +172,7 @@ static SymTabRec s3ChipTable[] = {
    { S3_ViRGE_DXGX,	"ViRGE/DX or /GX" },
    { S3_ViRGE_GX2,	"ViRGE/GX2" },
    { S3_ViRGE_MX,	"ViRGE/MX" },
+   { S3_ViRGE_MXP,	"ViRGE/MX+" },
    { -1,		"" },
 };
 
@@ -360,6 +361,9 @@ s3GetPCIInfo()
 	 case PCI_ViRGE_MX:
 	    info.ChipType = S3_ViRGE_MX;
 	    break;
+	 case PCI_ViRGE_MXP:
+	    info.ChipType = S3_ViRGE_MXP;
+	    break;
 	 default:
 	    info.ChipType = S3_UNKNOWN;
 	    info.DevID = pcrp->_device;
@@ -405,17 +409,11 @@ s3GetPCIInfo()
       for (j=0; (pcrp = pcrpp[j]); j++) {
 	 if (i != j) {
 	    map_64m[ (pcrp->_base0 >> 26) & 0x3f] = 1;
-	    map_64m[((pcrp->_base0+0x3ffffff) >> 26) & 0x3f] = 1;
 	    map_64m[ (pcrp->_base1 >> 26) & 0x3f] = 1;
-	    map_64m[((pcrp->_base1+0x3ffffff) >> 26) & 0x3f] = 1;
 	    map_64m[ (pcrp->_base2 >> 26) & 0x3f] = 1;
-	    map_64m[((pcrp->_base2+0x3ffffff) >> 26) & 0x3f] = 1;
 	    map_64m[ (pcrp->_base3 >> 26) & 0x3f] = 1;
-	    map_64m[((pcrp->_base3+0x3ffffff) >> 26) & 0x3f] = 1;
 	    map_64m[ (pcrp->_base4 >> 26) & 0x3f] = 1;
-	    map_64m[((pcrp->_base4+0x3ffffff) >> 26) & 0x3f] = 1;
 	    map_64m[ (pcrp->_base5 >> 26) & 0x3f] = 1;
-	    map_64m[((pcrp->_base5+0x3ffffff) >> 26) & 0x3f] = 1;
 	 }
       }
 
@@ -794,7 +792,10 @@ s3Probe()
 	 chipname = "ViRGE";
       }
       else if (S3_ViRGE_GX2_SERIES(s3ChipId)) {
-	 chipname = "ViRGE/GX";
+	 chipname = "ViRGE/GX2";
+      }
+      else if (S3_ViRGE_MXP_SERIES(s3ChipId)) {
+	 chipname = "ViRGE/MX+";
       }
       else if (S3_ViRGE_MX_SERIES(s3ChipId)) {
 	 chipname = "ViRGE/MX";
@@ -1735,6 +1736,18 @@ redo_mode_lookup:
       }
    }
    s3BppDisplayWidth = realS3Bpp /*s3Bpp*/ * s3DisplayWidth;
+
+   /*
+    * Reduce the videoRam value if necessary to prevent Y coords exceeding
+    * the 12-bit (4096) limit when small display widths are used on cards
+    * with a lot of memory
+    */
+   if (s3InfoRec.videoRam * 1024 / s3BppDisplayWidth > 4096) {
+      s3InfoRec.videoRam = s3BppDisplayWidth * 4096 / 1024;
+      ErrorF("%s %s: videoram usage reduced to %dk to avoid co-ord overflow\n",
+	     XCONFIG_PROBED, s3InfoRec.name, s3InfoRec.videoRam);
+   }
+
    /*
     * Work out where to locate S3's HW cursor storage.  It must be on a
     * 1k boundary.  We now set the cursor at the top of video memory -1K
@@ -1749,17 +1762,6 @@ redo_mode_lookup:
       s3CursorStartX = st_addr % s3BppDisplayWidth;
       s3CursorStartY = st_addr / s3BppDisplayWidth;
       s3CursorLines = ((s3CursorStartX + 1023) / s3BppDisplayWidth) + 1;
-   }
-
-   /*
-    * Reduce the videoRam value if necessary to prevent Y coords exceeding
-    * the 12-bit (4096) limit when small display widths are used on cards
-    * with a lot of memory
-    */
-   if (s3InfoRec.videoRam * 1024 / s3BppDisplayWidth > 4096) {
-      s3InfoRec.videoRam = s3BppDisplayWidth * 4096 / 1024;
-      ErrorF("%s %s: videoram usage reduced to %dk to avoid co-ord overflow\n",
-	     XCONFIG_PROBED, s3InfoRec.name, s3InfoRec.videoRam);
    }
 
    /*

@@ -1,5 +1,5 @@
 /* $XConsortium: closestr.h,v 1.10 95/05/19 19:18:55 dpw Exp $ */
-/* $XFree86: xc/programs/Xserver/include/closestr.h,v 3.0 1996/04/15 11:34:23 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/include/closestr.h,v 3.0.4.1 1998/07/15 23:48:56 robin Exp $ */
 /*
 
 Copyright (c) 1991  X Consortium
@@ -64,8 +64,9 @@ typedef struct _OFclosure {
 
 /* ListFontsWithInfo */
 
+#define XLFDMAXFONTNAMELEN	256
 typedef struct _LFWIstate {
-    char	pattern[256];  /* max len of font name */
+    char	pattern[XLFDMAXFONTNAMELEN];
     int		patlen;
     int		current_fpe;
     int		max_names;

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common_hw/xf86_PCI.c,v 3.16.2.7 1998/05/22 13:46:11 robin Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common_hw/xf86_PCI.c,v 3.16.2.8 1998/07/12 09:53:04 dawes Exp $ */
 /*
  * Copyright 1995 by Robin Cutshaw <robin@XFree86.Org>
  *
@@ -1159,7 +1159,8 @@ xf86scanpci(int scrnIndex)
 		    if (pcr._sub_class == PCI_SUBCLASS_BRIDGE_PCI) {
 		        if (pcr._secondary_bus_number > 0)
 			    pcibuses[pcinumbus++] = pcr._secondary_bus_number;
-		    } else if (++hostbridges > 1) {
+		    } else if (pcr._sub_class == PCI_SUBCLASS_BRIDGE_HOST &&
+				 ++hostbridges > 1) {
 			    pcibuses[pcinumbus] = pcinumbus;
 			    pcinumbus++;
 		    }

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/s3_svga/s3probe.c,v 1.1.2.4 1998/02/24 13:54:26 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/s3_svga/s3probe.c,v 1.1.2.5 1998/07/16 06:55:05 hohndel Exp $ */
 /*
  *
  * Copyright 1995-1997 The XFree86 Project, Inc.
@@ -351,7 +351,8 @@ Bool S3Probe()
       return(FALSE);
    }
 
-   if((!S3_TRIO64V_SERIES(s3ChipId) && !S3_x68_SERIES(s3ChipId)) ||
+   if((!S3_TRIO64V_SERIES(s3ChipId) && !S3_x68_SERIES(s3ChipId)) 
+      && !S3_TRIO64V2_SERIES(s3ChipId) && !S3_AURORA64VP_SERIES(s3ChipId) ||
 	OFLG_ISSET(OPTION_NO_MMIO, &vga256InfoRec.options)){
       ErrorF("%s %s: Using Port I/O\n",
 		   XCONFIG_PROBED, vga256InfoRec.name);

@@ -27,7 +27,7 @@ in this Software without prior written authorization from the X Consortium.
 
 */
 
-/* $XFree86: xc/lib/Xaw/TextPop.c,v 1.1.1.2.4.2 1998/05/18 14:08:43 dawes Exp $ */
+/* $XFree86: xc/lib/Xaw/TextPop.c,v 1.1.1.2.4.3 1998/07/12 09:52:59 dawes Exp $ */
 
 /************************************************************
  *
@@ -1043,7 +1043,7 @@ Boolean once_only, show_current;
 	pmsg = msg;
 	(void) sprintf(pmsg, "string ***");
       }
-      SetSearchLabels(search, "*** Error while replacing", msg, TRUE);
+      SetSearchLabels(search, "*** Error while replacing", pmsg, TRUE);
       XtStackFree(pmsg, msg);
       return(FALSE);
     }      

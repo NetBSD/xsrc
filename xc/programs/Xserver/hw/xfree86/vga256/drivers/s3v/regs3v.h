@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/s3v/regs3v.h,v 1.1.2.3 1998/01/31 14:23:30 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/s3v/regs3v.h,v 1.1.2.4 1998/07/16 06:55:06 hohndel Exp $ */
 
 /* regs3v.h
  *
@@ -57,6 +57,9 @@
 
 
 #define S3_ViRGE_SERIES(chip)     ((chip&0xfff0)==0x31e0)
+#define S3_ViRGE_GX2_SERIES(chip) (chip == S3_ViRGE_GX2)
+#define S3_ViRGE_MX_SERIES(chip)  (chip == S3_ViRGE_MX || chip == S3_ViRGE_MXP)
+#define S3_ViRGE_MXP_SERIES(chip) (chip == S3_ViRGE_MXP)
 #define S3_ViRGE_VX_SERIES(chip)  ((chip&0xfff0)==0x3de0)
 #define S3_ANY_ViRGE_SERIES(chip) (    S3_ViRGE_SERIES(chip)		\
 				    || S3_ViRGE_VX_SERIES(chip))
@@ -70,6 +73,7 @@
 #define PCI_ViRGE_DXGX 		0x8A01
 #define PCI_ViRGE_GX2 		0x8A10
 #define PCI_ViRGE_MX 		0x8C01
+#define PCI_ViRGE_MXP 		0x8C03
 
 /* Chip tags */
 #define S3_UNKNOWN		 0
@@ -78,6 +82,7 @@
 #define S3_ViRGE_DXGX		 3
 #define S3_ViRGE_GX2		 4
 #define S3_ViRGE_MX		 5
+#define S3_ViRGE_MXP		 6
 
 
 /* VESA Approved Register Definitions */
