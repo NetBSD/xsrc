@@ -153,7 +153,7 @@ LintLibReferences(varname,libname,libsource)
 #define ShLibIncludeFile <bsdLib.tmpl>
 #endif
 #ifndef SharedLibraryLoadFlags
-#define SharedLibraryLoadFlags -shared -Wl,-rpath,$(USRLIBDIR)
+#define SharedLibraryLoadFlags -shared -Wl,-rpath,$(USRLIBDIR) -Wl,-rpath,$(XPROJECTROOT)/lib
 #endif
 #ifndef PositionIndependentCFlags
 #define PositionIndependentCFlags -fPIC
@@ -163,9 +163,9 @@ LintLibReferences(varname,libname,libsource)
 #endif
 #ifndef ExtraLoadFlags
 #ifdef UseInstalled
-#define ExtraLoadFlags -Wl,-rpath,$(USRLIBDIRPATH)
+#define ExtraLoadFlags -Wl,-rpath,$(USRLIBDIRPATH) -Wl,-rpath,$(XPROJECTROOT)/lib
 #else
-#define ExtraLoadFlags -Wl,-rpath,$(USRLIBDIRPATH) -Wl,-rpath-link,$(BUILDLIBDIR)
+#define ExtraLoadFlags -Wl,-rpath,$(USRLIBDIRPATH) -Wl,-rpath-link,$(BUILDLIBDIR) -Wl,-rpath,$(XPROJECTROOT)/lib
 #endif
 #endif
 
