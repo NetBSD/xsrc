@@ -111,8 +111,9 @@ static void WsfbRestore(ScrnInfoPtr);
 
 /* dga stuff */
 #ifdef XFreeXDGA
-static Bool WsfbDGAOpenFramebuffer(ScrnInfoPtr, char **, unsigned char **,
-				   int *, int *, int *);
+static Bool WsfbDGAOpenFramebuffer(ScrnInfoPtr, char **, unsigned int *,
+				   unsigned int *, unsigned int *,
+				   unsigned int *);
 static Bool WsfbDGASetMode(ScrnInfoPtr, DGAModePtr);
 static void WsfbDGASetViewport(ScrnInfoPtr, int, int, int);
 static Bool WsfbDGAInit(ScrnInfoPtr, ScreenPtr);
@@ -1006,11 +1007,11 @@ WsfbRestore(ScrnInfoPtr pScrn)
 
 static Bool
 WsfbDGAOpenFramebuffer(ScrnInfoPtr pScrn, char **DeviceName,
-		       unsigned char **ApertureBase, int *ApertureSize,
-		       int *ApertureOffset, int *flags)
+		       unsigned int *ApertureBase, unsigned int *ApertureSize,
+		       unsigned int *ApertureOffset, unsigned int *flags)
 {
 	*DeviceName = NULL;		/* No special device */
-	*ApertureBase = (unsigned char *)(pScrn->memPhysBase);
+	*ApertureBase = (unsigned int)(pScrn->memPhysBase);
 	*ApertureSize = pScrn->videoRam;
 	*ApertureOffset = pScrn->fbOffset;
 	*flags = 0;
