@@ -290,7 +290,7 @@ amigaCVCopyWindow(pWin, ptOldOrg, prgnSrc)
 
    dummyGC.subWindowMode = ~IncludeInferiors;
 
-   prgnDst = REGION_CREATE(*pWin->drawable.pScreen, NULL, 1);
+   prgnDst = REGION_CREATE(pWin->drawable.pScreen, NULL, 1);
 
    if ((dx = ptOldOrg.x - pWin->drawable.x) > 0)
       direction |= INC_X;
