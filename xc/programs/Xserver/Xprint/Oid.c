@@ -33,6 +33,7 @@ copyright holders.
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
+#include "os.h"
 #include "Oid.h"
 #include <X11/Xfuncs.h>		/* for memmove */
 
