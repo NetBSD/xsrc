@@ -97,7 +97,7 @@ static void CGUpdateColormap(pScreen, dex, count, rmap, gmap, bmap)
     int		dex, count;
     u_char	*rmap, *gmap, *bmap;
 {
-    struct wsdisplay_cmap alphaCmap;
+    struct fbcmap alphaCmap;
 
     alphaCmap.index = dex;
     alphaCmap.count = count;
@@ -105,10 +105,9 @@ static void CGUpdateColormap(pScreen, dex, count, rmap, gmap, bmap)
     alphaCmap.green = &gmap[dex];
     alphaCmap.blue = &bmap[dex];
 
-    if (ioctl(alphaFbs[pScreen->myNum].fd, WSDISPLAYIO_PUTCMAP,
-      &alphaCmap) < 0) {
+    if (ioctl(alphaFbs[pScreen->myNum].fd, FBIOPUTCMAP, &alphaCmap) < 0) {
 	Error("CGUpdateColormap");
-	FatalError( "CGUpdateColormap: WSDISPLAYIO_PUTCMAP failed\n" );
+	FatalError( "CGUpdateColormap: FBIOPUTCMAP failed\n" );
     }
 }
 
@@ -254,7 +253,7 @@ fprintf(stderr, "alphaTGAInit\n");
     	if (!alphaScreenAllocate(pScreen))
 		return FALSE;
 	if (!fb) {
-		if ((fb = alphaMemoryMap ((size_t)alphaFbs[screen].info.size,
+		if ((fb = alphaMemoryMap ((size_t)alphaFbs[screen].info.fb_size,
 		    0, alphaFbs[screen].fd)) == NULL)
 			return FALSE;
 	        alphaFbs[screen].fb = fb;
@@ -271,7 +270,7 @@ fprintf(stderr, "mapped\n");
 	 * things out, we have to look at the TGA registers.
 	 */ 
 	tgaregs = (tga_reg_t *)(fb + (1 * 1024 * 1024));
-	fb_off = (int)alphaFbs[screen].info.size / 2;
+	fb_off = (int)alphaFbs[screen].info.fb_size / 2;
 
 	/* Find out real pixel width of the display. */
         switch (tgaregs[TGA_REG_VHCR] & 0x1ff) {            /* XXX */
