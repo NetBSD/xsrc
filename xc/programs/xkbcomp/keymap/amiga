@@ -7,7 +7,7 @@ default xkb_keymap "usa1" {
     xkb_geometry	{ include "amiga(usa1)"		};
 };
 
-default xkb_keymap "de" {
+xkb_keymap "de" {
     xkb_keycodes	{ include "amiga(de)"		};
     xkb_types		{ include "default"		};
     xkb_compatibility	{ include "default"		};
