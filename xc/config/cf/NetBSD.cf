@@ -1,4 +1,4 @@
-XCOMM $NetBSD: NetBSD.cf,v 1.69 2000/05/19 15:23:01 matt Exp $
+XCOMM $NetBSD: NetBSD.cf,v 1.70 2000/05/23 12:16:33 shin Exp $
 XCOMM platform:  $XConsortium: NetBSD.cf /main/16 1996/10/31 14:47:14 kaleb $
 
 
@@ -24,7 +24,7 @@ XCOMM		NetBSD/vax	client/server
 XCOMM		NetBSD/pc532	client
 XCOMM		NetBSD/x68k	client/server
 XCOMM		NetBSD/macppc	client/server
-XCOMM		NetBSD/hpcmips	client
+XCOMM		NetBSD/hpcmips	client/server
 XCOMM		NetBSD/next68k	client
 XCOMM		NetBSD/prep	client
 XCOMM
@@ -219,6 +219,13 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #endif
 
 /*
+ * On mips, all libs are compiled with ABIcalls, not just sharedlibs.
+ */
+#if defined(MipsArchitecture)
+# define SeparateSharedCompile NO
+#endif
+
+/*
  * XXX always build XKBuilib, override xfree86.cf
  */
 #if defined(arm32Architecture) || defined(i386Architecture) || defined(atariArchitecture)
@@ -333,8 +340,6 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 # define BuildServer		YES
 # define PexDynamicModule	NO
 # define XieDynamicModule	NO
-# undef OptimizedCDebugFlags
-# define OptimizedCDebugFlags 	-g
 # define ServerExtraDefines	-DSTATIC_COLOR
 #endif
 
