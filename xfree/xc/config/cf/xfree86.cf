@@ -403,6 +403,9 @@ XCOMM $Xorg: xfree86.cf,v 1.4 2000/08/17 19:41:49 cpqbld Exp $
 # ifndef XF86Server
 #  define XF86Server		YES
 # endif
+# ifndef XF86AFB
+#  define XF86AFB		!DoLoadableServer
+# endif
 /* 1bpp module */
 # ifndef XF1Bpp
 #  define XF1Bpp		YES
