@@ -3613,7 +3613,7 @@ static void RADEONRestore(ScrnInfoPtr pScrn)
      */
     vgaHWRestore(pScrn, &hwp->SavedReg, VGA_SR_MODE );
 #else
-    vgaHWRestore(pScrn, &hwp->SavedReg, VGA_SR_MODE | VGA_SR_FONTS );
+    vgaHWRestore(pScrn, &hwp->SavedReg, VGA_SR_ALL );
 #endif
     vgaHWLock(hwp);
 
@@ -4409,6 +4409,8 @@ Bool RADEONEnterVT(int scrnIndex, int flags)
     RADEONInfoPtr info  = RADEONPTR(pScrn);
 
     RADEONTRACE(("RADEONEnterVT\n"));
+
+    RADEONSave(pScrn);
 
     if (info->FBDev) {
 	unsigned char *RADEONMMIO = info->MMIO;
