@@ -69,7 +69,7 @@ SOFTWARE.
 #endif
 #if defined(__sparc_v9__) || defined(__sparcv9__)
 #define LONG64
-#elif ((defined(__sparc) || defined(__sparc__)) && defined(__arch64__)
+#elif (defined(__sparc) || defined(__sparc__)) && defined(__arch64__)
 #define LONG64
 #endif
 
