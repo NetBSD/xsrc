@@ -1,5 +1,7 @@
+/*	$NetBSD: pmax_io.c,v 1.5 2000/01/07 14:41:03 ad Exp $	*/
+
 /*
- * Copyright (c) 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
