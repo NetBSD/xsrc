@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 #
 # bdftruncate.pl -- Markus Kuhn <mkuhn@acm.org>
 #
