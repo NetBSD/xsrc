@@ -81,7 +81,7 @@ InstallManPage(kbd_mode,$(MANDIR))
        SRCS2 = scanpci.c
 
 #if defined(OpenBSDArchitecture) || defined(NetBSDArchitecture) \
-    && ((OSMajorVersion == 1 && OSMinorVersion >= 1) || OSMajorVersion >= 2)
+    && defined(i386BsdArchitecture)
 DEFINES = -DUSE_I386_IOPL
 SYS_LIBRARIES = -li386
 #endif
