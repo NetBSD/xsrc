@@ -48,7 +48,7 @@
 .ft P
 .fi
 ..
-.\" $XConsortium $
+.\" $TOG: fontlib.ms /main/5 1997/06/09 17:51:45 barstow $
 .EF 'Font Library Interface'- % -'July 27, 1991'
 .OF 'Font Library Interface'- % -'July 27, 1991'
 .EH ''''
@@ -394,3 +394,10 @@ This returns the metrics for the specified font from the specified ranges.
 .LP
 This is called from the FPE routine (*close_font), and so should not ever be
 called from the application.
+.NH 2
+maxPrivate
+.LP
+When initializing a new font structure, maxPrivate should be set to -1
+so that the FontSetPrivate() macro works properly with an index of 0.
+Initializing maxPrivate to 0 can cause problems if the server tries to set 
+something at index 0.

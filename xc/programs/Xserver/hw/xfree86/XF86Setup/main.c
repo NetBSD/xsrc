@@ -3,7 +3,7 @@
 
 
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/main.c,v 3.9 1996/12/27 06:54:05 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/main.c,v 3.9.2.1 1997/07/13 14:45:02 dawes Exp $ */
 /*
  * Copyright 1996 by Joseph V. Moss <joe@XFree86.Org>
  *
@@ -44,8 +44,8 @@
 #include <sys/resource.h>
 #endif
 
-#if TK_MAJOR_VERSION < 4
-#error You must use Tk 4.0 or newer
+#if TK_MAJOR_VERSION < 4 || (TK_MAJOR_VERSION == 4 && TK_MINOR_VERSION < 1)
+#error You must use Tk 4.1 or newer
 #endif
 
 static Tcl_Interp *interp;

@@ -1,0 +1,450 @@
+<!DOCTYPE linuxdoc PUBLIC "-//XFree86//DTD linuxdoc//EN">
+
+<article>
+<!--
+<title>Building XFree86
+-->
+<title>XFree86 の構築
+<author>David Dawes
+<Date>2 June 1997
+<trans>岡本　一幸 Kazuyuki Okamoto &lt;ikko-@pacific.rim.or.jp&gt;
+<tdate>29 July 1997
+
+<abstract>
+<!--
+This document describes how to build XFree86 from the <bf>source</bf>
+distribution.  It covers building from the full source distribution as
+well as from the cut-down source distribution available for building
+only the X servers.  It is designed to
+be used in conjunction with the OS-specific README files.
+-->
+この文書は如何に XFree86 を <bf>ソース</bf> 配布物から構築するか
+説明します。この文書は全ソース配布物と同様に X サーバだけ構築するよう
+に切り詰めたソース配布物から構築する説明も言及します。この文書は
+OS 固有の README ファイルと併せて使用するように設計しています。
+</abstract>
+
+<toc>
+
+    
+<!--
+<sect>Building XFree86 From a Source Distribution
+-->
+<sect>ソース配布物から XFree86 を構築する。
+
+<p>
+<quote>
+<!--
+<bf/NOTE:/  Refer to the appropriate OS-specific README file before attempting
+       to build XFree86.  These files contain additional information that 
+       you may need to successfully build under your OS.
+-->
+<bf/注意:/  XFree86 を構築しようとする前に適切な OS 固有の README ファイルを
+	参照してください。OS 固有の README ファイルはお手元の OS の下で
+	構築がうまくいくのに必要な追加情報が含まれています。
+</quote>
+
+
+<!--
+We highly recommend using GCC-2 to build XFree86.  Do not use version
+2.6.0 or 2.4.x versions prior to 2.4.5 due to bugs that cause either
+build or execution failures.  (gcc-2 is available from prep.ai.mit.edu
+and other sites archiving GNU source.)
+-->
+我々は XFree86 を構築するのに GCC-2 を使用することを強くお勧めします。
+2.6.0 または 2.4.5 以前の 2.4.x 版は構築や実行を阻害するバグがあるので
+使用しないでください。(gcc-2 は prep.ai.mit.edu かその他の GNU ソース
+アーカイブサイトにあります。)
+
+<!--
+<sect1>How to get the XFree86 3.3 source
+-->
+<SECT1>XFree86 3.3 のソースをどうやって入手するか。
+<p>
+<!--
+There are a few starting points for getting the XFree86 source.  One option
+is to start directly with the XFree86 3.3 source distribution.  In this
+case, the procedure is as follows:
+-->
+XFree86 のソースを入手するのに幾つかの開始方法があります。一つ目は XFree86 3.3 
+ソースアーカイブから直接はじめることです。この場合は次の手順で行います。
+<itemize>
+<!--
+  <item>The XFree86 3.3 source is contained in files <tt>X33src-1.tgz</tt>,
+	<tt>X33src-2.tgz</tt> and <tt>X33src-3.tgz</tt>.  These can be found
+	at <htmlurl name="ftp://ftp.xfree86.org/pub/XFree86/3.3/source/"
+	url="ftp://ftp.xfree86.org/pub/XFree86/3.3/source/"> and similar
+	locations on XFree86 mirror sites.  <tt>X33src-2.tgz</tt> contains
+	the fonts and documentation source.  <tt>X33src-3.tgz</tt> contains
+	the hardcopy documentation.  <tt>X33src-1.tgz</tt> contains
+	everything else.  If you don't need the docs or fonts you can get
+	by with only <tt>X33src-1.tgz</tt>.
+-->
+  <item>XFree86 3.3 のソースは <tt>X33src-1.tgz</tt>, <tt>X33src-2.tgz</tt> と
+	<tt>X33src-3.tgz</tt> に含まれています。これらのファイルは
+	<htmlurl name="ftp://ftp.xfree86.org/pub/XFree86/3.3/source/"
+	url="ftp://ftp.xfree86.org/pub/XFree86/3.3/source/"> と
+	XFree86 のミラーサイトの同様な場所にあります。<tt>X33src-2.tgz</tt>
+	はフォントと文書のソースです。<tt>X33src-3.tgz</tt> は
+	印刷可能な形態の文書です。文書やフォントが必要ない場合は、
+	<tt>X33src-1.tgz</tt> だけ入手してください。
+<!--
+  <item>Extract each of these files by running the following from a directory
+	on a filesystem containing enough space (the full source requires
+	around 130MB, and a similar amount is required in addition to this
+	for the compiled binaries):
+-->
+  <item>十分容量に余裕があるファイルシステムのディレクトリで次の手順を
+	実行してこれらのファイルを伸長してください。(全てのソースには
+	約 130MB ,コンパイルしてバイナリを得るには同量の空きスペース
+	が必要です。)
+	<quote><verb>
+	gzip -d < X33src-1.tgz | tar vxf -
+	gzip -d < X33src-2.tgz | tar vxf -
+	gzip -d < X33src-3.tgz | tar vxf -
+	</verb></quote>
+</itemize>
+
+<!--
+Another option is to start with the X11R6.3 source distribution and patch
+it up to XFree86 3.3.  In this case you need to do the following:
+-->
+他の X11R6.3 ソース配布物と XFree86 3.3 にパッチを当てて始める方法は
+次の手順で行います。
+<itemize>
+<!--
+  <item>Start with the X Consortium's X11R6.3 distribution with public
+	patch 1 applied.  This can be obtained by following the links
+	from the <url name="X home page" url="http://www.x.org">.
+-->
+  <item>公式パッチ 1 が当たった X コンソーシアムの X11R6.3 配布から
+	始めます。次の URL <url name="X のホームページ" url="http://www.x.org">
+	からのリンクから得られます。
+<!--
+  <item>Get the files <tt>R6.3pl1-3.3.diff1.gz</tt>,
+	<tt>R6.3pl1-3.3.diff2.gz</tt>, <tt>R6.3pl1-3.3.diff3.gz</tt>,
+	<tt>R6.3pl1-3.3.diff4.gz</tt>, and <tt>cfont33.tgz</tt>
+	from <htmlurl name="ftp://ftp.xfree86.org/pub/XFree86/3.3/patches/"
+	url="ftp://ftp.xfree86.org/pub/XFree86/3.3/patches/"> (or a similar
+	location on mirror sites).  To upgrade the source to XFree86 3.3,
+	run the following from directory containing the <tt>xc</tt>
+	directory of the X11R6.3 pl1 source tree:
+-->
+  <item><tt>R6.3pl1-3.3.diff1.gz</tt>, <tt>R6.3pl1-3.3.diff2.gz</tt>, 
+	<tt>R6.3pl1-3.3.diff3.gz</tt>, <tt>R6.3pl1-3.3.diff4.gz</tt> と
+	<tt>cfont33.tgz</tt> を 
+	<htmlurl name="ftp://ftp.xfree86.org/pub/XFree86/3.3/patches/"
+        url="ftp://ftp.xfree86.org/pub/XFree86/3.3/patches/"> から
+	(または ミラーサイトの同様な場所から)入手してください。
+	XFree86 3.3 へソースを更新するには次の X11R6.3 pl1 のソース
+	ファイルの <tt>xc</tt> ディレクトリで次の手順を実行してください。
+	<quote><verb>
+	gzip -d < R6.3pl1-3.3.diff1.gz | patch -p0 -E
+	gzip -d < R6.3pl1-3.3.diff2.gz | patch -p0 -E
+	gzip -d < R6.3pl1-3.3.diff3.gz | patch -p0 -E
+	gzip -d < R6.3pl1-3.3.diff4.gz | patch -p0 -E
+	gzip -d < cfont33.tgz | tar vxf -
+	</verb></quote>
+<!--
+	Be sure to do this with a clean unmodified source tree.  If you
+	don't some patches may fail.
+-->
+	まっ更な変更していないソースファイルで行うことを確認してください。
+	そうしないとパッチが失敗します。
+</itemize>
+
+<!--
+If you only want to build the XFree86 X servers, you can use a cut-down
+version of the XFree86 source tree called the ``servers only'' distribution.
+If you choose this option, do the following:
+-->
+XFree86 X サーバだけを構築したいの時は、``servers only'' 配布物と呼ば
+れる XFree86 ソースファイルを切り詰めたものを使用しましょう。
+この方法を選択した場合は、次の手順を実行しましょう。:
+<itemize>
+<!--
+  <item>Get the <tt>X33servonly.tgz</tt> file from
+	<htmlurl name="ftp://ftp.xfree86.org/pub/XFree86/3.3/source/"
+	url="ftp://ftp.xfree86.org/pub/XFree86/3.3/source/"> (or a similar
+	locations on mirror sites.
+-->
+  <item><tt>X33servonly.tgz</tt> というファイルを
+	<htmlurl name="ftp://ftp.xfree86.org/pub/XFree86/3.3/source/"
+	url="ftp://ftp.xfree86.org/pub/XFree86/3.3/source/"> から
+	(またはミラーサイトの同様な場所から) 入手しましょう。
+<!--
+  <item>Extract this by running the following:
+-->
+  <item>次の手順でファイルを伸長してください。:
+	<quote><verb>
+	gzip -d < X33servonly.tgz | tar vxf -
+	</verb></quote>
+</itemize>
+
+<!--
+There is no patch to upgrade from the XFree86 3.2 source to 3.3.  The
+reason for this is the large number of changes associated with the
+move from X11R6.1 to X11R6.3.
+-->
+XFree86 3.2 のソースから 3.3 に更新するパッチはありません。その理由は
+X11R6.1 から X11R6.3 に移行するにあたり関連する変更点が多すぎたためです。
+
+<!--
+XFree86 supports a small subset of the X Consortium X11R6.1 contrib
+distribution.  If you wish to build this, you will need at least the
+following files/directories from that distribution:
+-->
+XFree86 は X コンソーシアムの X11R6.1 contrib 配布物の一部をサポート
+しています。これを構築したい場合は、次のファイルやディレクトリを配布物
+から入手しましょう。:
+<tscreen><verb>
+	contrib/Imakefile
+	contrib/programs/Imakefile
+	contrib/programs/ico
+	contrib/programs/listres
+	contrib/programs/showfont
+	contrib/programs/viewres
+	contrib/programs/xbiff
+	contrib/programs/xcalc
+	contrib/programs/xditview
+	contrib/programs/xedit
+	contrib/programs/xev
+	contrib/programs/xeyes
+	contrib/programs/xfontsel
+	contrib/programs/xgc
+	contrib/programs/xload
+	contrib/programs/xman
+	contrib/programs/xmessage
+</verb></tscreen>
+<!--
+You will also need the XFree86 patch <tt>contrib-3.3.diff.gz</tt>.  To
+apply the patch, run the following from the directory containing the
+<tt>contrib</tt> directory:
+-->
+また、XFree86 patch <tt>contrib-3.3.diff.gz</tt> が必要です。パッチを
+当てるためには、<tt>contrib</tt> ディレクトリがあるディレクトリで
+次のコマンドを実行してください。:
+<tscreen><verb>
+	gzip -d < contrib-3.3.diff.gz | patch -p0 -E
+</verb></tscreen>
+<!--
+Alternatively, you can just get the file <tt>X33contrib.tgz</tt> from
+the XFree86 source directory, and extract it by running:
+-->
+ほかの方法としては、XFree86 ソースディレクトリから <tt>X33contrib.tgz</tt>
+というファイルを入手して次のコマンドで伸長してください。:
+<tscreen><verb>
+	gzip -d < X33contrib.tgz | tar vxf -
+</verb></tscreen>
+
+<!--
+If you wish to build the xtest distribution, get the source distribution
+<tt>X33test.tgz</tt> from the XFree86 source directory, and extract it
+by running:
+-->
+xtest 配布物を構築したい場合は、XFree86 ソースディレクトリから
+<tt>X33test.tgz</tt> ソース配布物 を入手して次のコマンドで伸長してください。:
+<tscreen><verb>
+	gzip -d < X33test.tgz | tar vxf -
+</verb></tscreen>
+<!--
+Note, xtest is no longer part of the core X11 distribution (since X11R6.3).
+-->
+注意として、xtest は (X11R6.3 から) コア X11 配布物の一部ではなくなりました。
+
+<!--
+<sect1>Configuring the source before building
+-->
+<sect1>構築前のソースの設定
+<p>
+<!--
+It is recommended that you start the configuration process by going to the
+<tt>xc/config/cf</tt> directory, and copying the file <tt>xf86site.def</tt>
+to <tt>host.def</tt>.  Then read through the <tt>host.def</tt> file
+(which is heavily commented), and set any parameters that you want for
+your configuration.  You can usually find out what the default settings
+are by checking the <tt>.cf</tt> file(s) relevant to your OS.
+-->
+設定過程をはじめる前に <tt>xc/config/cf</tt> ディレクトリに移動して、
+<tt>xf86site.def</tt> ファイルを <tt>host.def</tt> にコピーしてください。
+そして、<tt>host.def</tt> ファイルを通読いし、幾つかのパラメタを設定
+してください。良く読むことを強くお勧めします。標準値の設定は御使用の
+OS の名前に <tt>.cf</tt> が付いたファイルにありますので調べてください。
+
+
+<!--
+Unlike previous versions, imake can now automatically detect and set
+the various <bf>OS*Version</bf> parameters, so you shouldn't need to
+enter those settings explicitly.
+-->
+前の版と異なっているのは、imake が自動認識するようになったことと
+いろいろな <bf>OS*Version</bf> パラメタを設定するようになったので、
+これらの設定を明示的に設定する必要がなくなりました。
+
+<!--
+If you are using just the <tt>X33src-1.tgz</tt> part of the source dist,
+you will need to define <bf>BuildFonts</bf> to <bf>NO</bf>.
+-->
+ソース配布物から <tt>X33src-1.tgz</tt> 部分だけを使用する場合は、
+<bf>BuildFonts</bf> を <bf>NO</bf> にしてください。
+
+<!--
+If you are using the ``servers only'' distribution, you will need to
+define <bf>BuildServersOnly</bf> to <bf>YES</bf>.
+-->
+``servers only'' 配布物を使用する場合は、 <bf>BuildServersOnly</bf> を
+ <bf>YES</bf> にしてください。
+
+<!--
+<sect1>Building and installing the distribution
+-->
+<sect1>配布物の構築と導入
+<p>
+<!--
+Before building the distribution, read through the OS-specific <tt/README/
+file in <tt>xc/programs/Xserver/hw/xfree86/doc</tt> that is relevant to
+you.  Once those OS-specific details have been taken care of, go the
+<tt/xc/ directory and run ``<tt/make World/'' with the <bf/BOOTSTRAPCFLAGS/
+set as described in the OS-specific README (if necessary).  It is
+advisable to redirect stdout and stderr to <tt/World.Log/ so that you
+can track down problems that might occur during the build.
+-->
+配布物を構築する前に、<tt>xc/programs/Xserver/hw/xfree86/doc</tt>
+にある適切な OS 固有の <tt/README/ ファイルを通読してください。
+OS 固有の詳細な処理を行ってから、<tt/xc/ ディレクトリに移動して、
+``<tt/make World/'' を OS 固有の README ファイルに従って必要に応じて
+<bf/BOOTSTRAPCFLAGS/ を追加して実行してください。標準出力と標準エラー出力
+を <tt/World.Log/ にリダイレクトしておくと構築中に発生した問題を追跡する
+のに役に立ちます。
+
+<!--
+When the build is finished, you should check <tt/World.Log/ to see
+if there were any problems.  If there weren't any then you can install
+the binaries.  When using the full source distribution, the installation
+should be done from the <tt/xc/ directory.  When using the ``servers only''
+distribution, the install should be done from the
+<tt>xc/programs/Xserver</tt> directory.
+-->
+構築が終了したら、 <tt/World.Log/ を見て問題が無いことを確認してください。
+問題がなければバイナリを導入できます。全てのソース配布物を使用している場合
+は、<tt/xc/ ディレクトリから導入を行います。``servers only'' 配布物を
+使用している場合は、<tt>xc/programs/Xserver</tt> ディレクトリから導入
+を行います。
+<!--
+To do
+the install, run ``<tt/make
+install/'' and ``<tt/make install.man/''.  Make sure you have enough
+space in <tt>/usr/X11R6</tt> for the install to succeed.  If you want
+to install on a filesystem other than <tt>/usr</tt>, make a symbolic
+link to <tt>/usr/X11R6</tt> before installing.
+-->
+導入を行うには``<tt/make install/'' と ``<tt/make install.man/'' を
+実行してください。導入を行う <tt>/usr/X11R6</tt> に十分な空き容量が
+あることを確認してください。<tt>/usr</tt> 以外のファイルシステムに
+導入したい場合は導入前に <tt>/usr/X11R6</tt> へシンボリックリンクを
+張ってください。
+
+<!--
+To install the binary LinkKit (in <tt>/usr/X11R6/lib/Server</tt>),
+run ``<tt>make install.linkkit</tt>'' from the <tt/xc/ directory.
+-->
+<tt>/usr/X11R6/lib/Server</tt> にあるバイナリの LinkKit を導入するに
+は、``<tt>make install.linkkit</tt>'' を <tt/xc/ ディレクトリから
+実行してください。
+
+<!--
+To build the subset of the contrib release supported by
+XFree86, make sure that you have first built and installed the core
+distribution.  Then go to the <tt/contrib/ directory and run
+``<tt/xmkmf -a; make/''.  When that is completed, run
+``<tt/make install/'' and ``<tt/make install.man/'' to install it.
+-->
+XFree86 のサポートしている contrib の一部を構築するにはコア配布物が
+先ず導入してあることを確認してください。そうしたら <tt/contrib/ 
+ディレクトリに移動して ``<tt/xmkmf -a; make/'' を実行してください。
+コンパイルが終了したら ``<tt/make install/'' と ``<tt/make install.man/'' 
+を実行して導入してください。
+
+<!--
+To build/run the xtest distribution, refer to the instructions in
+the file <tt>test/xsuite/NOTES.xf86</tt>.
+-->
+xtest 配布物を構築/実行するには、<tt>test/xsuite/NOTES.xf86</tt> ファイル
+にある手順を参照してください。
+
+<!--
+<sect>Reconfiguring the server (source distribution)
+-->
+<sect>サーバの再設定 (ソース配布物の場合)
+<p>
+<!--
+To build a different set of servers or servers with a different set of
+drivers installed:
+-->
+複数の異なるサーバや異なるドライバを含むサーバを構築するには:
+<enum>
+<!--
+<item>Make sure the source for any new drivers is in the correct place (e.g.,
+driver source for the SVGA server should be in a subdirectory of
+<tt>xc/programs/Xserver/hw/xfree86/vga256/drivers</tt>).
+-->
+<item>新しいドライバが正しい位置 (例えば SVGA サーバのドライバのソースは
+<tt>xc/programs/Xserver/hw/xfree86/vga256/drivers</tt> というサブ
+ディレクトリに置いてあります) にあることを確認してください。
+
+<!--
+<item>Change the settings of the server defines
+in <tt/host.def/ to specify which servers you
+wish to build.  Also, change the driver lists to suit your needs.
+-->
+<item>サーバの定義の設定変更
+
+<!--
+<item>From <tt>xc/programs/Xserver</tt>, run:
+-->
+<item><tt>xc/programs/Xserver</tt> から実行してください。
+<tscreen><verb>
+	make Makefile
+	make Makefiles
+	make depend
+	make
+</verb></tscreen>
+</enum>
+
+<!--
+<sect>Reconfiguring the server (binary distribution)
+-->
+<sect>サーバの再設定 (バイナリ配布物の場合)
+<p>
+
+<!--
+If you have installed the server Binary LinkKit, it is possible to
+reconfigure the drivers and some of the extensions in the servers.  For
+details of how to do this, please refer to the <htmlurl url="LinkKit.html"
+name="README.LinkKit"> file.
+-->
+サーバのバイナリリンクキットを導入する場合は、ドライバとサーバ内の
+幾つかの機能拡張を再設定できます。この作業の詳細は
+<htmlurl url="LinkKit.html" name="README.LinkKit"> ファイルを参照して
+下さい。
+
+<verb>
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/sgml/BUILD.sgml,v 1.1.2.1 1997/07/31 06:05:50 dawes Exp $
+</verb>
+<hrule>
+このファイルは
+xc/programs/Xserver/hw/xfree86/doc/sgml/BUILD.sgml,v 3.1.2.4 1997/06/02 03:12:42
+を、岡本  一幸
+( Kazuyuki Okamoto <url url="mailto:ikko-@pacific.rim.or.jp"
+name="&lt;ikko-@pacific.rim.or.jp&gt;"> ) が XFree86 3.3 を
+日本でインストールする人向けに和訳したものです。ここがおかしいとか、
+ここはこうしたほうがいいといったご意見がありましたら、電子メールで
+お知らせ下さい。
+原文の著作権は XFree86 プロジェクト社にあります。この和訳の著作権は
+XFree86 プロジェクト社と岡本　一幸にありますが、この和訳の不具合は私に、
+電子メールで送って下さい。
+<hrule>
+&lsqb;EOF&rsqb;
+
+</article>
+

@@ -1,34 +1,35 @@
 
 
 
-README for XFree86[tm] 3.3
+README for XFree86[tm] 3.3.1
 
 
 
 
 
-			  README for XFree86[tm] 3.3
+			 README for XFree86[tm] 3.3.1
 
 
 			   The XFree86 Project, Inc
 
 
-				  1 June 1997
+				 26 July 1997
 
 
 
 				   Abstract
 
      XFree86 is a port of X11R6.3 that supports several Unix and Unix-like
-     operating systems on Intel and other platforms.  This release con-
-     sists of new features and performance improvements as well as many
-     bug fixes.  The release is available as source patches against the X
-     Consortium X11R6.3 code, as well as binary distributions for many
-     architectures.
+     operating systems on Intel and other platforms.  This release is a
+     maintenance release, fixing bugs found in XFree86 3.3.  It also
+     includes the latest public patch for X11R6.3 (patch 2).  The release
+     is available as source patches against the X Consortium X11R6.3 code
+     and the XFree86 3.3 release.  Binary distributions for many architec-
+     tures are also available, including a binary upgrade for XFree86 3.3.
 
 
 
-1.  What's new in XFree86 3.3
+1.  What's new in XFree86 3.3.1
 
 For a summary of new features in this release, please refer to the RELNOTES
 file.
@@ -57,19 +58,20 @@ Note: Not all systems listed here have been tested with the current release.
 
 	       o ISC: 4.0.3
 
+
+
+
+README for XFree86[tm] 3.3.1
+
+
+
+
+
+README for XFree86[tm] 3.3.1
+
+
+
 	       o AT&T: 2.1, 4.0
-
-
-
-README for XFree86[tm] 3.3
-
-
-
-
-
-README for XFree86[tm] 3.3
-
-
 
 	       o NCR: MP-RAS
 
@@ -121,21 +123,22 @@ README for XFree86[tm] 3.3
 
 3.  Supported video-card chip-sets
 
-At this time, XFree86 3.3 supports the following chipsets:
+At this time, XFree86 3.3.1 supports the following chipsets:
+
+
+
+
+
+
+
+
+
+README for XFree86[tm] 3.3.1
+
+
 
       Ark Logic
 	    ARK1000PV, ARK1000VL, ARK2000PV, ARK2000MT
-
-
-
-
-
-
-
-
-README for XFree86[tm] 3.3
-
-
 
       Alliance
 	    AP6422, AT24
@@ -151,14 +154,14 @@ README for XFree86[tm] 3.3
 
       Chips & Technologies
 	    65520, 65530, 65540, 65545, 65520, 65530, 65540, 65545, 65546,
-	    65548, 65550, 65554
+	    65548, 65550, 65554, 65555, 68554
 
       Cirrus Logic
 	    CLGD5420, CLGD5422, CLGD5424, CLGD5426, CLGD5428, CLGD5429,
 	    CLGD5430, CLGD5434, CLGD5436, CLGD5440, CLGD5446, CLGD5462,
 	    CLGD5464, CLGD5465, CLGD5480, CLGD6205, CLGD6215, CLGD6225,
-	    CLGD6235, CLGD6410, CLGD6412, CLGD6420, CLGD6440, CLGD7541,
-	    CLGD7543, CLGD7548, CLGD7555
+	    CLGD6235, CLGD6410, CLGD6412, CLGD6420, CLGD6440, CLGD7541(*),
+	    CLGD7543(*), CLGD7548(*), CLGD7555(*)
 
       Digital Equipment Corporation
 	    TGA
@@ -179,40 +182,40 @@ README for XFree86[tm] 3.3
 	    MGA2064W (Millennium), MGA1064SG (Mystique)
 
       MX
-	    MX68000, MX680010
+	    MX68000(*), MX680010(*)
 
       NCR
-	    77C22, 77C22E, 77C22E+
+	    77C22(*), 77C22E(*), 77C22E+(*)
 
       Number Nine
 	    I128 (series I and II)
 
+
+
+
+
+
+
+
+
+
+README for XFree86[tm] 3.3.1
+
+
+
       NVidia/SGS Thomson
 	    NV1, STG2000
-
-
-
-
-
-
-
-
-
-
-README for XFree86[tm] 3.3
-
-
 
       OAK
 	    OTI067, OTI077, OTI087
 
       RealTek
-	    RTG3106
+	    RTG3106(*)
 
       S3
 	    86C911, 86C924, 86C801, 86C805, 86C805i, 86C928, 86C864, 86C964,
-	    86C732, 86C764, 86C765, 86C775, 86C868, 86C968, 86C325, 86C375,
-	    86C385, 86C988, 86CM65
+	    86C732, 86C764, 86C765, 86C767, 86C775, 86C868, 86C968, 86C325,
+	    86C375, 86C385, 86C988, 86CM65
 
       SiS
 	    86C201, 86C202, 86C205
@@ -222,12 +225,13 @@ README for XFree86[tm] 3.3
 
       Trident
 	    TVGA8800CS, TVGA8900B, TVGA8900C, TVGA8900CL, TVGA9000, TVGA9000i,
-	    TVGA9100B, TVGA9200CXR, TVGA9320, TVGA9400CXi, TVGA9420,
+	    TVGA9100B, TVGA9200CXR, TVGA9320(*), TVGA9400CXi, TVGA9420,
 	    TGUI9420DGi, TGUI9430DGi, TGUI9440AGi, TGUI9660XGi, TGUI9680, Pro-
-	    Vidia 9682, ProVidia 9685, ProVidia 9692, Cyber 9382, Cyber 9385
+	    Vidia 9682, ProVidia 9685, ProVidia 9692, Cyber 9382(*), Cyber
+	    9385(*)
 
       Video 7/Headland Technologies
-	    HT216-32
+	    HT216-32(*)
 
       Weitek
 	    P9000
@@ -238,6 +242,9 @@ README for XFree86[tm] 3.3
       Western Digital
 	    WD90C00, WD90C10, WD90C11, WD90C24, WD90C24A, WD90C30, WD90C31,
 	    WD90C33
+
+(*) Note, chips marked in this way have either limited support or the drivers
+for them are not actively maintained.
 
 All of the above are supported in both 256 color, and some are supported in
 mono and 16 color modes, and some are supported an higher color depths.
@@ -251,24 +258,23 @@ The monochrome server also supports generic VGA cards, using 64k of video mem-
 ory in a single bank, the Hercules monochrome card, the Hyundai HGC1280, Sigma
 LaserView, Visa and Apollo monochrome cards.
 
+
+
+
+
+
+
+
+README for XFree86[tm] 3.3.1
+
+
+
 The VGA16 server supports memory banking with the ET4000, Trident, ATI, NCR,
 OAK and Cirrus 6420 chipsets allowing virtual display sizes up to about
 1600x1200 (with 1MB of video memory).  For other chipsets the display size is
 limited to approximately 800x600.
 
 Note: The Diamond SpeedStar 24 (and possibly some SpeedStar+) boards are NOT
-
-
-
-
-
-
-
-
-README for XFree86[tm] 3.3
-
-
-
 supported, even though they use the ET4000.
 
 The Weitek 9100 and 9130 chipsets are not supported (these are used on the Dia-
@@ -316,24 +322,24 @@ the 3.3 release would not have been possible in this form and at this time, and
 the work on our 4.0 branch wouldn't be where it is today.
 
 
+
+
+
+
+
+
+
+
+
+README for XFree86[tm] 3.3.1
+
+
+
 6.  Credits
 
 XFree86 was originally put together by:
 
    o David Dawes <dawes@XFree86.org>
-
-
-
-
-
-
-
-
-
-
-README for XFree86[tm] 3.3
-
-
 
    o Glenn Lai <glenn@cs.utexas.edu>
 
@@ -383,23 +389,23 @@ XFree86 support was integrated into the base X11R6 distribution by:
 
    o Jon Tombs <tombs@XFree86.org>
 
+
+
+
+
+
+
+
+
+README for XFree86[tm] 3.3.1
+
+
+
    o Kees Verstoep <versto@cs.vu.nl>
 
    o Paul Vixie <paul@vix.com>
 
    o Mark Weaver <Mark_Weaver@brown.edu>
-
-
-
-
-
-
-
-
-
-README for XFree86[tm] 3.3
-
-
 
    o David Wexelblat <dwex@XFree86.org>
 
@@ -449,23 +455,23 @@ README for XFree86[tm] 3.3
 
       BSD/OS support by:
 
+
+
+
+
+
+
+
+
+README for XFree86[tm] 3.3.1
+
+
+
 	       o Hans Nasten <nasten@everyware.se>,
 
 	       o Paul Vixie <paul@vix.com>
 
       Solaris support by:
-
-
-
-
-
-
-
-
-
-README for XFree86[tm] 3.3
-
-
 
 	       o Doug Anson <danson@lgc.com>,
 
@@ -515,23 +521,23 @@ README for XFree86[tm] 3.3
 
 	       o Koichiro Suzuki <ksuzuki@cc.tuat.ac.jp>,
 
+
+
+
+
+
+
+
+
+README for XFree86[tm] 3.3.1
+
+
+
 	       o Tsuyoshi Tamaki <tamaki@sail.t.u-tokyo.ac.jp>,
 
 	       o Isao Ohishi <ohishi@hf.rim.or.jp>,
 
 	       o Kohji Ohishi <atena@njk.co.jp>,
-
-
-
-
-
-
-
-
-
-README for XFree86[tm] 3.3
-
-
 
 	       o Shin'ichi Yairo <QZR00522@niftyserve.or.jp>,
 
@@ -581,23 +587,23 @@ README for XFree86[tm] 3.3
 
 	       o Harald Koenig <koenig@tat.physik.uni-tuebingen.de>,
 
+
+
+
+
+
+
+
+
+README for XFree86[tm] 3.3.1
+
+
+
 	       o David Wexelblat <dwex@XFree86.org>,
 
 	       o David Dawes <dawes@XFree86.org>,
 
 	       o Robin Cutshaw <robin@XFree86.org>,
-
-
-
-
-
-
-
-
-
-README for XFree86[tm] 3.3
-
-
 
 	       o Amancio Hasty <hasty@netcom.com>,
 
@@ -647,23 +653,23 @@ README for XFree86[tm] 3.3
 
 	       o Kevin Martin <martin@cs.unc.edu>,
 
+
+
+
+
+
+
+
+
+README for XFree86[tm] 3.3.1
+
+
+
 	       o Rik Faith <faith@cs.unc.edu>,
 
 	       o Tiago Gons <tiago@comosjn.hobby.nl>,
 
 	       o Hans Nasten <nasten@everyware.se>,
-
-
-
-
-
-
-
-
-
-README for XFree86[tm] 3.3
-
-
 
 	       o Scott Laird <scott@laird.com>
 
@@ -713,23 +719,23 @@ README for XFree86[tm] 3.3
 
 	       o Jorge Delgado <ernar@dit.upm.es>,
 
+
+
+
+
+
+
+
+
+README for XFree86[tm] 3.3.1
+
+
+
       16 color VGA server by:
 
 	       o Gertjan Akkerman <akkerman@dutiba.twi.tudelft.nl>
 
       2 color VGA and non-VGA mono servers by:
-
-
-
-
-
-
-
-
-
-README for XFree86[tm] 3.3
-
-
 
 	       o Pascal Haible <haible@izfm.uni-stuttgart.de>
 
@@ -779,23 +785,23 @@ README for XFree86[tm] 3.3
 
 	       o Corin Anderson <corina@bdc.cirrus.com>
 
+
+
+
+
+
+
+
+
+README for XFree86[tm] 3.3.1
+
+
+
       Cirrus CL64xx driver by:
 
 	       o Manfred Brands <mb@oceonics.nl>
 
 	       o Randy Hendry <randy@sgi.com>
-
-
-
-
-
-
-
-
-
-README for XFree86[tm] 3.3
-
-
 
 	       o Jeff Kirk <jeff@bambam.dsd.ES.COM>
 
@@ -845,23 +851,23 @@ README for XFree86[tm] 3.3
 
       MX SVGA driver by:
 
+
+
+
+
+
+
+
+
+README for XFree86[tm] 3.3.1
+
+
+
 	       o Frank Dikker <dikker@cs.utwente.nl>
 
       Video7 SVGA driver by:
 
 	       o Craig Struble <cstruble@acm.vt.edu>
-
-
-
-
-
-
-
-
-
-README for XFree86[tm] 3.3
-
-
 
       RealTek SVGA driver by:
 
@@ -911,23 +917,23 @@ README for XFree86[tm] 3.3
 
 	       o [Unknown authors]
 
+
+
+
+
+
+
+
+
+README for XFree86[tm] 3.3.1
+
+
+
 	       o Dirk Hohndel <hohndel@XFree86.Org>
 
 	       o Koen Gadeyne <koen.gadeyne@barco.com>
 
 	       o ... and others
-
-
-
-
-
-
-
-
-
-README for XFree86[tm] 3.3
-
-
 
       XFree86-VidModeExtension and xvidtune client by:
 
@@ -964,7 +970,7 @@ README for XFree86[tm] 3.3
 	       o Patrick Lecoanet <lecoanet@cena.dgac.fr> (Elographics touch-
 		 screen device)
 
-	       o Steven Lang <tiger@ecis.com> (Summagraphics tablet device)
+	       o Steven Lang <tiger@tyger.org> (Summagraphics tablet device)
 
       Other contributors:
 
@@ -976,6 +982,19 @@ README for XFree86[tm] 3.3
 	       o Eric Raymond <esr@snark.thyrsus.com> (new video mode documen-
 		 tation),
 
+
+
+
+
+
+
+
+
+
+README for XFree86[tm] 3.3.1
+
+
+
 	       o and an entire horde of beta-testers around the world!
 
 
@@ -983,17 +1002,6 @@ README for XFree86[tm] 3.3
 
 Ongoing development planning and support is coordinated by the XFree86 Core
 Team.  At this time the Core Team consists of (in alphabetical order):
-
-
-
-
-
-
-
-
-README for XFree86[tm] 3.3
-
-
 
    o Robin Cutshaw <robin@XFree86.org>
 
@@ -1042,6 +1050,17 @@ and have contributed the majority of XFree86 to the X11R6 and X11R6.1 core
 release.  The version of XFree86 in the initial X11R6 core is 3.0.  The version
 of XFree86 in the current X11R6.3 release is 3.2.
 
+
+
+
+
+
+
+
+README for XFree86[tm] 3.3.1
+
+
+
 An additional benefit of this incorporation is that The XFree86 Project, Inc
 has obtained outside financial support for our work.  This will hopefully give
 us the freedom to be more pro-active in obtaining new video hardware, and
@@ -1049,18 +1068,6 @@ enable us to release better products more quickly, as we will be able to go and
 get what we need, and get it into the hands of the people who can do the work.
 
 The current Board of Directors and Officers of the The XFree86 Project, Inc,
-
-
-
-
-
-
-
-
-README for XFree86[tm] 3.3
-
-
-
 are:
 
    o David Dawes, President and Secretary
@@ -1108,6 +1115,18 @@ release policy.  The main points of the new policy are:
 	  nation with the Core Team) of the servers they are actively working
 	  on available to external testers for specific testing.
 
+
+
+
+
+
+
+
+
+README for XFree86[tm] 3.3.1
+
+
+
 	o Commercial members.  Commercial members are non-voting members of The
 	  XFree86 Project who donate US$5000/year to the Project.  Addition-
 	  ally, companies who contribute significantly to the development
@@ -1115,18 +1134,6 @@ release policy.  The main points of the new policy are:
 	  Team on a yearly bases.  Commercial members can use the internal
 	  XFree86 development source for derived binary-only products providing
 	  that they take full responsibility for supporting the product, and
-
-
-
-
-
-
-
-
-README for XFree86[tm] 3.3
-
-
-
 	  don't call it ``XFree86'' (although the derivation of the product
 	  must be acknowledged in any accompanying documentation).  Binary
 	  packages for the OSs we support which are simply compiled from our
@@ -1174,24 +1181,23 @@ ject has been provided from its proceeds.
 
    o Diamond Multimedia Systems, Inc. <URL:http://www.diamondmm.com/>
 
+
+
+
+
+
+
+
+
+README for XFree86[tm] 3.3.1
+
+
+
    o Digital Equipment Corporation <URL:http://www.digital.com/>
 
    o Elsa GmbH <URL:http://www.elsa.de/>, Aachen, Germany
 
    o Genoa Systems Corporation
-
-
-
-
-
-
-
-
-
-
-README for XFree86[tm] 3.3
-
-
 
    o Helius, Inc. <URL:http://www.helius.com/>
 
@@ -1241,23 +1247,23 @@ README for XFree86[tm] 3.3
 
    o Clifford M Stein
 
+
+
+
+
+
+
+
+
+README for XFree86[tm] 3.3.1
+
+
+
    o Joel Storm
 
    o S.u.S.E. GmbH <URL:http://www.suse.de>, Fuerth, Germany
 
    o Tekelec Airtronic GmbH <URL:http://www.tekelec.com>, Muenchen, Germany
-
-
-
-
-
-
-
-
-
-README for XFree86[tm] 3.3
-
-
 
    o Jim Tsillas
 
@@ -1279,8 +1285,9 @@ tion, contact The XFree86 Project, Inc, at <BOD@XFree86.org>
 
 9.  Source and binary archive sites
 
-Source patches are available to upgrade X11R6.3 PL1 from the X Consortium to
-XFree86 3.3.  Binaries for many OSs are also available.
+Source patches are available to upgrade X11R6.3 PL2 from the X Consortium (now
+The Open Group) to XFree86 3.3.1.  Binaries for many OSs are also available.
+The distribution is available from:
 
    o ftp://ftp.XFree86.org/pub/XFree86
 
@@ -1288,42 +1295,62 @@ and the following mirror sites:
 
    o North America:
 
-	o ftp://ftp.rge.com/pub/X/XFree86 (source and binaries)
+	o ftp://ftp2.XFree86.org/pub/XFree86 (source and binaries)
 
-	o ftp://ftp.gw.com/pub/unix/XFree86 (source and NetBSD binaries)
+	o ftp://ftp.infomagic.com/pub/mirrors/XFree86-current (source and bina-
+	  ries)
+
+	o ftp://ftp.rge.com/pub/X/XFree86 and http://www.rge.com/pub/X/XFree86
+	  (source and binaries)
 
 	o ftp://ftp.varesearch.com/pub/mirrors/xfree86 (source and binaries)
 
 	o ftp://ftp.cs.umn.edu/pub/XFree86 (source and binaries)
 
-	o ftp://ftp.thebandit.com/pub/XFree86 (Linux, NetBSD and FreeBSD bina-
-	  ries)
+	o ftp://ftp.kernel.org/pub/mirrors/xfree86 (source and binaries)
 
 
    o Europe:
+
+
+
+
+
+
+
+
+
+
+README for XFree86[tm] 3.3.1
+
+
+
+	o ftp://fvkma.tu-graz.ac.at/pub/XFree86 (source and binaries)
+
+	o ftp://gd.tuwien.ac.at/hci/X11/XFree86 and
+	  http://gd.tuwien.ac.at/hci/X11/XFree86 (source and binaries)
 
 	o ftp://ftp.fee.vutbr.cz/pub/XFree86 (source patches and binaries)
 
 	o ftp://ftp.gwdg.de/pub/xfree86/XFree86 (source and binaries)
 
+	o ftp://ftp.mpi-sb.mpg.de/pub/X/mirror/ftp.xfree86.org (source and
+	  binaries)
+
+	o ftp://ftp.cs.tu-berlin.de/pub/X/XFree86 (source and binaries)
+
+	o ftp://ftp.uni-erlangen.de/pub/Linux/MIRROR.xfree86 (source and Linux
+	  binaries)
+
+	o ftp://ftp.uni-stuttgart.de/pub/X11/Xfree86 (source and binaries)
+
 	o ftp://ftp.funet.fi/pub/X11/XFree86 (source and binaries)
 
-	o ftp://ftp.ibp.fr/pub/X11/XFree86/XFree86 (source and binaries)
+	o ftp://ftp.ibp.fr/pub/X11/XFree86 (source and binaries)
+
+	o ftp://ftp.unina.it/pub/XFree86 (source and binaries)
 
 	o ftp://ftp.pvv.unit.no/pub/XFree86 (source and binaries)
-
-
-
-
-
-
-
-
-
-
-README for XFree86[tm] 3.3
-
-
 
 	o ftp://sunsite.doc.ic.ac.uk/packages/XFree86 (source and binaries)
 
@@ -1334,19 +1361,18 @@ README for XFree86[tm] 3.3
 
 	o ftp://x.physics.usyd.edu.au/pub/XFree86 (source and binaries)
 
+	o ftp://ftp.netlab.is.tsukuba.ac.jp/pub/XFree86 (source and binaries)
+
 	o ftp://ftp.iij.ad.jp/pub/X/XFree86/XFree86 (source and binaries)
 
-	o ftp://ftp.hk.super.net/mirror/XFree86 (source and binaries)
-
-	o ftp://ftp.nectec.or.th/pub/mirrors/XFree86 (source patches and bina-
-	  ries)
+	o ftp://ftp.kreonet.re.kr/pub/Linux/xfree86 (source and binaries)
 
 
-Ensure that you are getting XFree86 3.3 - some of these sites may archive older
-releases as well.  Check the RELNOTES to find which files you need to take from
-the archive.
+Ensure that you are getting XFree86 3.3.1 - some of these sites may archive
+older releases as well.  Check the RELNOTES to find which files you need to
+take from the archive.
 
-     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/README.sgml,v 3.75.2.16 1997/06/01 12:33:34 dawes Exp $
+     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/README.sgml,v 3.75.2.24 1997/07/26 11:49:28 dawes Exp $
 
 
 
@@ -1361,33 +1387,7 @@ the archive.
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-README for XFree86[tm] 3.3
+README for XFree86[tm] 3.3.1
 
 
 
@@ -1461,7 +1461,7 @@ README for XFree86[tm] 3.3
 
 
 
-1. What's new in XFree86 3.3 ................................................ 1
+1. What's new in XFree86 3.3.1 .............................................. 1
 
 2. Systems XFree86 has been tested on ....................................... 1
 
@@ -1471,9 +1471,9 @@ README for XFree86[tm] 3.3
 
 5. Thanks ................................................................... 5
 
-6. Credits .................................................................. 5
+6. Credits .................................................................. 6
 
-7. Contact information ..................................................... 15
+7. Contact information ..................................................... 16
 
 8. The XFree86 Project, Inc. ............................................... 16
 
@@ -1517,4 +1517,4 @@ README for XFree86[tm] 3.3
 
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/README,v 3.76.2.14 1997/06/01 12:41:30 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/README,v 3.76.2.21 1997/07/26 12:55:58 dawes Exp $

@@ -1,5 +1,5 @@
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/et4000/tseng_acl.c,v 3.6.2.7 1997/05/25 05:06:49 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/et4000/tseng_acl.c,v 3.6.2.8 1997/07/26 06:30:52 dawes Exp $ */
 
 #include "misc.h"
 #include "xf86.h"
@@ -66,6 +66,7 @@ ByteP ACL_SECONDARY_EDGE;
 WordP ACL_SECONDARY_ERROR_TERM,
       ACL_SECONDARY_DELTA_MINOR,
       ACL_SECONDARY_DELTA_MAJOR;
+ByteP ACL_TRANSFER_DISABLE;
 
 ByteP W32BytePtr;
 WordP W32WordPtr;
@@ -243,6 +244,7 @@ void tseng_init_acl()
 
 
     ACL_PATTERN_WRAP		= (ByteP) (MMioBase + 0x90);
+    ACL_TRANSFER_DISABLE        = (ByteP) (MMioBase + 0x91); /* ET6000 only */
     ACL_SOURCE_WRAP		= (ByteP) (MMioBase + 0x92);
 
     ACL_X_COUNT			= (WordP) (MMioBase + 0x98);
@@ -312,6 +314,7 @@ void tseng_init_acl()
       *ACL_STEPPING_INHIBIT = 0x0; /* let all maps (Src, Dst, Mix, Pat) step */
       *ACL_6K_CONFIG = 0x00;        /* maximum performance -- what did you think? */
       *ACL_POWER_CONTROL = 0x01;   /* conserve power when ACL is idle */
+      *ACL_TRANSFER_DISABLE = 0x00;  /* Undefined at power-on, enable all transfers */
     }
     else /* W32i/W32p */
     {

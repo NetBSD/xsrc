@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/sco/sco_video.c,v 3.2 1996/12/23 06:50:51 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/sco/sco_video.c,v 3.2.2.1 1997/07/19 04:59:31 dawes Exp $ */
 /*
  * Copyright 1993 by David McCullough <davidm@stallion.oz.au>
  * Copyright 1993 by David Wexelblat <dwex@goblin.org>
@@ -85,7 +85,7 @@ unsigned long Size;
 	{
 		int		fd;
 
-#if defined(SVR4)
+#if defined(SVR4) || defined(SCO325)
 		if ((fd = open(DEV_MEM, O_RDWR)) < 0)
 		{
 			FatalError("xf86MapVidMem: failed to open %s (%s)\n",
@@ -148,7 +148,7 @@ unsigned long Size;
 {
 	int	fd;
 
-#if defined (SVR4)
+#if defined (SVR4) || defined(SCO325)
 	munmap(Base, Size);
 #else /* SVR4 */
 	if (MapDSC[ScreenNum][Region].vaddr) {
@@ -172,7 +172,7 @@ Bool xf86LinearVidMem()
 {
 	int		fd, ver;
 
-#ifdef SVR4
+#if defined(SVR4) || defined(SCO325)
 	return TRUE;
 #else
 	if ((fd = open("/dev/dmmap", O_RDWR)) >= 0) {

@@ -6,39 +6,29 @@
 <title> Information for Chips and Technologies Users
 <author> David Bateman (<it>dbateman@ee.uts.edu.au</it>),
          Egbert Eich (<it>Egbert.Eich@Physik.TH-Darmstadt.DE</it>)
-<date> 22nd April 1997
+<date> 28th July 1997
 
 <!-- Table of contents -->
 <toc>
 
 <sect> Introduction <p>
 
-The Chips and Technologies ct655xx range of chips are primarily
-manufactured for use in laptop computers, where their power
-conservation circuitry is of importance. They can however be found in
-a few "<tt>Green</tt>" video cards for desktop machines. Prior to
-the release of XFree 3.2, XFree contained only limited support for
-these chipsets. The support that was introduced in XFree3.1.1 was not
-capable of linear addressing or using the programmable clocks in the
-ct65535 and later chips. In addition to these chipsets the new driver
-supports the WinGine ct643xx series of chips and gives limited support
-to the WinGine ct642xx chips.
-
-The driver has been almost completely rewritten, with many additional
-features added. These include
+The Chips and Technologies range of chips are primarily manufactured
+for use in laptop computers, where their power conservation circuitry
+is of importance. They can however be found in a few "<tt>Green</tt>"
+video cards for desktop machines. This release of XFree includes 
+support for 
 
 <itemize>
 <item>Linear Addressing
 <item>16/ 24 bits per pixel
 <item>Fully programmable clocks are supported
 <item>H/W cursor support
-<item>BitBLT acceleration of many operations
+<item>BitBLT acceleration of many operations using XAA
 </itemize>
 
-With the latest release of XFree, the Chips and Technologies driver 
-supports the new XAA acceleration interface. This should improve
-the graphics performance particularly at higher depths or for the
-newer chips.
+Most of the Chips and Technologies chipsets are supported by this driver
+to some degree.
 
 <sect> Supported Chips <p>
 <descrip>
@@ -77,15 +67,29 @@ newer chips.
 	This chip is similar to the 65545, but it also includes XRAM support
 	and supports the higher dot clocks of the 65546. 
 	(Max Ram: 1Mb, Max Dclk: 80MHz)
-<tag>ct65550/ct65554</tag>
-	These chips are a completely new architecture to previous ct655xx
-	chips. They include many new features, including improved BitBLT
+<tag>ct65550</tag>
+	This chip started a completely new architecture to previous ct655xx
+	chips. It includes many new features, including improved BitBLT
 	support (24bpp color expansion, wider maximum pitch, etc), Multimedia
 	unit (video capture, zoom video port, etc) and 24bpp uncompressed true
 	color (i.e 32bpp mode). Also memory mapped I/O is possible on all bus
-	configurations. There is only limited support for H/W acceleration at
-	this point.
-	(Max Ram: 4Mb, Max Dclk: 80MHz@3.3V,110MHz@5V)
+	configurations. 
+	(Max Ram: 2Mb, Max Dclk: 80MHz@3.3V,100MHz@5V)
+<tag>ct65554</tag>
+	This chip is similar to the 65550 but has a 64bit memory bus as 
+	opposed to a 32bit bus. It also has higher limits on the maximum
+	memory and pixel clocks
+	(Max Ram: 4Mb, Max Dclk: 100MHz@3.3V)
+<tag>ct65555</tag>
+	Similar to the 65554 but has yet higher maximum memory and pixel
+	clocks. It also includes a new DSTN dithering scheme that improves
+	the performance of DSTN screens.
+	(Max Ram: 4Mb, Max Dclk: 110MHz@3.3V)
+<tag>ct68554</tag>
+	Similar to the 65555 but also incorporates "PanelLink" drivers. This
+	serial link allows an LCD screens to be located up to 100m from the 
+	video processor. Expect to see this chip soon in LCD desktop machines
+	(Max Ram: 4Mb, Max Dclk: 110MHz@3.3V)
 <tag>ct64200</tag>
 	This chip, also known as the WinGine, is used in video cards
         for desktop systems. It often uses external DAC's and programmable
@@ -105,7 +109,7 @@ newer chips.
 <sect> XF86Config Options <p>
 
 The following options are of particular interest to the Chips
-and Technologies ct655xx driver.  Each of them must be specified in the
+and Technologies driver.  Each of them must be specified in the
 `svga' driver section of the XF86Config file, within the Screen
 subsections of the depths to which they are applicable (you can enable
 options for all depths by specifying them in the Device section).
@@ -278,21 +282,22 @@ Chipset &dquot;ct65546&dquot; (or some other chip)
 	possible to force the server to identify a particular chip with
 	this option.
 <tag>
-Option &dquot;sync_on_green&dquot; (Chips 65550/54)
+Option &dquot;sync_on_green&dquot; (Chips 65550/54/55 and 68554)
 </tag>
 	Composite sync on green. Possibly useful if you wish to use an
 	old workstation monitor. The 65550/54 internal RAMDAC's support
 	this mode of operation, but whether a particular machine does
 	depends on the manufacturer. 
 <tag>
-Option &dquot;fast_dram&dquot; (Chips 65550/54)
+Option &dquot;fast_dram&dquot; (Chips 65550/54/55 and 68554)
 </tag>
-	This option sets the internal memory clock (MCLK) register to
-	another value. The default value programmed by the BIOS is
-	usually OK, but some machines can accept a faster MClk to achieve
-	a better performance. One machine known to work well with this
-	option is the Toshiba 720CDT. This option is generally not
-	recommended.
+	This option sets the internal memory clock (MCLK) registers to 38MHz.
+	The default value programmed by the BIOS is usually OK, but some
+	machines can accept a faster MClk to achieve a better performance.
+	One machine known to work well with this option is the Toshiba 720CDT.
+	Note that newer machines often have an MClk greater than 38MHz, and
+	so this option might actually slower the machine down. This option
+	is generally not recommended.
 </descrip>
 
 <sect> Modelines <p>
@@ -355,7 +360,7 @@ driver you'll needed to considered several points
 	they specified after a suspend/resume or LCD/CRT switch.
 </descrip>
 
-The ct655xx driver is capable of driving both a CRT and a flat panel
+The driver is capable of driving both a CRT and a flat panel
 display. In fact the timing for the flat panel are dependent on the
 specification of the panel itself and are independent of the particular
 mode chosen. For this reason it is recommended to use one of the programs
@@ -436,6 +441,12 @@ The NEC Versa 4080 just needs the "fix_panel_size" option.
         Try the "<tt>noaccel</tt>" or "<tt>no_bitblt</tt>" options. Check
         that the BIOS settings are OK; in particular, disable caching of
         0xa0000-0xaffff. Disabling hidden DRAM refresh may also help.
+<tag> Hang as the first text is appearing on the screen on SVR4 machines.</tag>
+        This problem has been reported under UnixWare 1.x, but not tracked
+        down. It doesn't occur under UnixWare 2.x and only occurs on the
+        HiQV series of chips. It might affect some other SVR4 operating
+        systems as well. The workaround is to turn off the use of CPU to
+        screen acceleration with the "<tt>xaa_no_color_exp</tt>" option.
 <tag> Crash, hang, or trash on the screen after a graphics operation.</tag>
         This may be related to a bug in one of the accelerated
         functions, or a problem with the BitBLT engine. Try the
@@ -585,7 +596,7 @@ We also thank the many people on the net who have contributed by reporting
 bugs and extensively testing this server before its inclusion in XFree 3.2
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/chips.sgml,v 3.12.2.4 1997/05/23 12:19:43 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/chips.sgml,v 3.12.2.6 1997/07/28 14:17:31 dawes Exp $
 </verb>
 
 </article>

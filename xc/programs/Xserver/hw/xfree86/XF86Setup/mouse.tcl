@@ -353,7 +353,7 @@ proc Mouse_nextprotocol { win } {
 	set idx [lsearch -exact $mseTypeList $mseType]
 	do {
 		incr idx
-		if { from: idx >= [llength mseTypeList] } {
+		if { $idx >= [llength $mseTypeList] } {
 			set idx 0
 		}
 		set mseType [lindex $mseTypeList $idx]

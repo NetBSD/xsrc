@@ -1,4 +1,5 @@
 // $XConsortium: th /main/3 1996/08/31 12:20:18 kaleb $
+// $XFree86: xc/programs/xkbcomp/symbols/th,v 3.1.2.1 1997/07/19 13:28:20 dawes Exp $
 partial default alphanumeric_keys 
 xkb_symbols "basic" {
     name[Group2]= "Thai";
@@ -13,6 +14,7 @@ xkb_symbols "basic" {
     key <AE02> {	[], [       slash,  	ntilde		]	};
     key <AE03> {	[], [       minus,	ograve		]	};
     key <AE04> {	[], [      Agrave,    	oacute		]	};
+    key <AE05> {	[], [   paragraph,    	ocircumflex	]	};
     key <AE06> {	[], [    Ooblique,      Ugrave		]	};
     key <AE07> {	[], [  Odiaeresis,	ssharp		]	};
     key <AE08> {	[], [    currency,	otilde		]	};
@@ -41,7 +43,7 @@ xkb_symbols "basic" {
     key <AC05> {	[], [      agrave,	notsign		]	};
     key <AC06> {	[], [      eacute,	ccedilla	]	};
     key <AC07> {	[], [      egrave,	ediaeresis	]	};
-    key <AC08> {	[], [      Ograve,	eacute		]	};
+    key <AC08> {	[], [      Ograve,	Eacute		]	};
     key <AC09> {	[], [ Ecircumflex,	Egrave		]	};
     key <AC10> {	[], [    Ccedilla,	guillemotleft	]	};
     key <AC11> {	[], [     section,	period		]	};

@@ -1,5 +1,4 @@
-/* $XConsortium: misc.c /main/7 1996/02/02 14:17:22 kaleb $ */
-/* $XFree86: xc/programs/xkbcomp/misc.c,v 3.1 1996/08/26 14:44:11 dawes Exp $ */
+/* $TOG: misc.c /main/9 1997/06/13 05:59:19 kaleb $ */
 /************************************************************
  Copyright (c) 1994 by Silicon Graphics Computer Systems, Inc.
 
@@ -25,6 +24,7 @@
  THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
  ********************************************************/
+/* $XFree86: xc/programs/xkbcomp/misc.c,v 3.1.4.1 1997/06/22 10:32:39 dawes Exp $ */
 
 #include "xkbcomp.h"
 #include "xkbpath.h"
@@ -500,21 +500,30 @@ FindNamedKey(	XkbDescPtr	xkb,
 		unsigned long	name,
 		unsigned int *	kc_rtrn,
 		Bool		use_aliases,
-		Bool		create)
+		Bool		create,
+		int		start_from)
 #else
-FindNamedKey(xkb,name,kc_rtrn,use_aliases,create)
+FindNamedKey(xkb,name,kc_rtrn,use_aliases,create,start_from)
     XkbDescPtr		xkb;
     unsigned long	name;
     unsigned int *	kc_rtrn;
     Bool		use_aliases;
     Bool		create;
+    int			start_from;
 #endif
 {
 register unsigned n;
 
+    if (start_from<xkb->min_key_code) {
+	start_from= xkb->min_key_code;
+    }
+    else if (start_from>xkb->max_key_code) {
+	return False;
+    }
+
     *kc_rtrn= 0;	/* some callers rely on this */
     if (xkb&&xkb->names&&xkb->names->keys) {
-	for (n=xkb->min_key_code;n<=xkb->max_key_code;n++) {
+	for (n=start_from;n<=xkb->max_key_code;n++) {
 	    unsigned long tmp;
 	    tmp= KeyNameToLong(xkb->names->keys[n].name);
 	    if (tmp==name) {
@@ -525,7 +534,7 @@ register unsigned n;
 	if (use_aliases) {
 	    unsigned long new_name;
 	    if (FindKeyNameForAlias(xkb,name,&new_name))
-		return FindNamedKey(xkb,new_name,kc_rtrn,False,create);
+		return FindNamedKey(xkb,new_name,kc_rtrn,False,create,0);
 	}
     }
     if (create) {

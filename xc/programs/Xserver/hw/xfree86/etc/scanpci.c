@@ -21,7 +21,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/etc/scanpci.c,v 3.34.2.3 1997/05/19 08:06:57 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/etc/scanpci.c,v 3.34.2.4 1997/08/02 13:48:16 dawes Exp $ */
 
 /*
  * Copyright 1995 by Robin Cutshaw <robin@XFree86.Org>
@@ -518,6 +518,7 @@ struct pci_vendor_device {
                             { 0x0518, "MGA-2 Atlas PX2085", NF },
                             { 0x0519, "MGA Millennium", NF },
                             { 0x051a, "MGA Mystique", NF },
+                            { 0x051b, "MGA Millennium II", NF },
                             { 0x0D10, "MGA Impression", NF },
                             { 0x0000, (char *)NULL, NF } } },
         { 0x102C, "CT", {

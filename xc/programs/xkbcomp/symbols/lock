@@ -1,0 +1,17 @@
+// $TOG: lock /main/2 1997/06/13 06:25:10 kaleb $
+
+partial hidden modifier_keys
+xkb_symbols "shift" {
+    key <CAPS> {	[	Shift_Lock		]	};
+    modifier_map Shift { Shift_Lock };
+};
+partial hidden modifier_keys
+xkb_symbols "caps" {
+    key <CAPS> {	[	Caps_Lock		]	};
+    modifier_map Lock { Caps_Lock }
+};
+partial hidden modifier_keys
+xkb_symbols "group" {
+    key <CAPS> {	[	ISO_Next_Group		]	};
+};
+

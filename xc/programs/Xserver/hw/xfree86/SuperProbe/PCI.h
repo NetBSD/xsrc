@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/PCI.h,v 3.17.2.3 1997/05/22 14:00:34 dawes Exp $ */ 
+/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/PCI.h,v 3.17.2.5 1997/08/02 13:48:08 dawes Exp $ */ 
 /*
  * PCI Probe
  *
@@ -232,6 +232,7 @@ void xf86writepci(
 #define PCI_CHIP_MGA2085PX	0x0518
 #define PCI_CHIP_MGA2064W	0x0519
 #define PCI_CHIP_MGA1064SG	0x051A
+#define PCI_CHIP_MGA2164W	0x051B
 
 /* ATI */
 #define PCI_CHIP_MACH32		0x4158
@@ -251,6 +252,7 @@ void xf86writepci(
 #define PCI_CHIP_ET4000_W32P_D	0x3206
 #define PCI_CHIP_ET4000_W32P_C	0x3207
 #define PCI_CHIP_ET6000		0x3208
+#define PCI_CHIP_ET6300		0x4702
 
 /* Weitek */
 #define PCI_CHIP_P9000		0x9001

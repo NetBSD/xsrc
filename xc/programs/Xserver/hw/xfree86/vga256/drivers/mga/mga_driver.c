@@ -17,7 +17,7 @@
  * Contributors:
  *		Andrew Vanderstock, Melbourne, Australia
  *			vanderaj@mail2.svhm.org.au
- *		additions, corrections, cleanups
+ *		additions, corrections, cleanups, Mill II early support
  *
  *		Dirk Hohndel
  *			hohndel@XFree86.Org
@@ -37,7 +37,7 @@
  *		Support for 8MB boards, RGB Sync-on-Green, and DPMS.
  */
  
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/mga/mga_driver.c,v 1.1.2.11 1997/05/27 12:02:51 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/mga/mga_driver.c,v 1.1.2.20 1997/08/02 13:48:22 dawes Exp $ */
 
 #include "X.h"
 #include "input.h"
@@ -70,12 +70,15 @@
 
 extern vgaPCIInformation *vgaPCIInfo;
 
+#define DEFAULT_SW_CURSOR
+
 /*
  * Driver data structures.
  */
 MGABiosInfo MGABios;
 pciTagRec MGAPciTag;
 int MGAchipset;
+int MGArev;
 int MGAinterleave;
 int MGABppShft;
 int MGAusefbitblt;
@@ -344,7 +347,7 @@ static char *
 MGAIdent(n)
 int n;
 {
-	static char *chipsets[] = {"mga2064w", "mga1064sg"};
+	static char *chipsets[] = {"mga2064w", "mga1064sg", "mga2164w" };
 
 	if (n + 1 > sizeof(chipsets) / sizeof(char *))
 		return(NULL);
@@ -364,6 +367,7 @@ MGAProbe()
 	unsigned long MGAMMIOAddr = 0;
 	pciConfigPtr pcr = NULL;
 	int i;
+	CARD32 save;
 
 	/*
 	 * First we attempt to figure out if one of the supported chipsets
@@ -384,15 +388,27 @@ MGAProbe()
 	if (vgaPCIInfo && vgaPCIInfo->AllCards) {
 	  while (pcr = vgaPCIInfo->AllCards[i++]) {
 		if (pcr->_vendor == PCI_VENDOR_MATROX) {
-			switch(pcr->_device) {
+			int id = pcr->_device;
+
+			if (vga256InfoRec.chipID) {
+			    ErrorF("%s %s: MGA chipset override, using ChipID "
+				   "0x%04x instead of 0x%04x\n", XCONFIG_GIVEN,
+				   vga256InfoRec.name, vga256InfoRec.chipID,
+				   pcr->_device);
+			    id = vga256InfoRec.chipID;
+			}
+			switch(id) {
 				case PCI_CHIP_MGA2064:
-					MGAchipset = pcr->_device;
+					MGAchipset = id;
 					vga256InfoRec.chipset = MGAIdent(0);
 				break;
 				case PCI_CHIP_MGA1064:
-					MGAchipset = pcr->_device;
+					MGAchipset = id;
 					vga256InfoRec.chipset = MGAIdent(1);
 				break;
+				case PCI_CHIP_MGA2164:
+					MGAchipset = id;
+					vga256InfoRec.chipset = MGAIdent(2);
 			}
 			if (MGAchipset)
 				break;
@@ -407,6 +423,28 @@ MGAProbe()
 		return(FALSE);
 	}
 
+	if (vga256InfoRec.chipRev) {
+		ErrorF("%s %s: MGA chipset override, using ChipRev "
+		       "0x%02x instead of 0x%02x\n", XCONFIG_GIVEN,
+		       vga256InfoRec.name, vga256InfoRec.chipRev, pcr->_rev_id);
+		MGArev = vga256InfoRec.chipRev;
+	} else {
+		MGArev = pcr->_rev_id;
+	}
+	/*
+	 * make it obvious that Millennium II support is experimental
+	 */
+	if (MGAchipset == PCI_CHIP_MGA2164) 
+	{
+		ErrorF("(!!) %s: Support for the Millennium II in this release\n",
+			vga256InfoRec.name);
+	
+		ErrorF("(!!) %s: is HIGHLY EXPERIMENTAL and largely untested\n",
+			vga256InfoRec.name);
+		ErrorF("(!!) %s:    ===================     ================\n",
+			vga256InfoRec.name);
+	}
+	   
 	/*
 	 *	OK. It's MGA
 	 */
@@ -418,16 +456,37 @@ MGAProbe()
 	/* XXX - ajv I'm assuming that pcr->_base0 is pci config space + 0x10 */
 	/*				and _base1 is another four bytes on */
 	/* XXX - these values are Intel byte order I believe. */
+	/* rev 3 (at least Mystique 220) has these swapped */
+	/* so does the Mill II */
 	
-	if ( pcr->_base0 )	/* details: mgabase1 sdk pp 4-11 */
-		MGAMMIOAddr = pcr->_base0 & 0xffffc000;
-	else
-		MGAMMIOAddr = 0;
+	if ( pcr->_base0 ) {	/* details: mgabase1 sdk pp 4-11 */
+		if ( (MGAchipset == PCI_CHIP_MGA1064 && MGArev >= 3) ||
+			MGAchipset == PCI_CHIP_MGA2164 )
+			MGA.ChipLinearBase = pcr->_base0 & 0xff800000;
+		else
+			MGAMMIOAddr = pcr->_base0 & 0xffffc000;
+	} else {
+		if ( (MGAchipset == PCI_CHIP_MGA1064 && MGArev >= 3) ||
+			MGAchipset == PCI_CHIP_MGA2164 )
+			MGA.ChipLinearBase = 0;
+		else
+			MGAMMIOAddr = 0;
+	}
 	
-	if ( pcr->_base1 )	/* details: mgabase2 sdk pp 4-12 */
-		MGA.ChipLinearBase = pcr->_base1 & 0xff800000;
-	else
-		MGA.ChipLinearBase = 0;
+	if ( pcr->_base1 ) {	/* details: mgabase2 sdk pp 4-12 */
+		if ( (MGAchipset == PCI_CHIP_MGA1064 && MGArev >= 3) ||
+			MGAchipset == PCI_CHIP_MGA2164 )
+	
+			MGAMMIOAddr = pcr->_base1 & 0xffffc000;
+		else
+			MGA.ChipLinearBase = pcr->_base1 & 0xff800000;
+	} else {
+		if ( (MGAchipset == PCI_CHIP_MGA1064 && MGArev >= 3) ||
+			MGAchipset == PCI_CHIP_MGA2164 )
+			MGAMMIOAddr = 0;
+		else
+			MGA.ChipLinearBase = 0;
+	}
 
 	/* Allow this to be overriden in the XF86Config file */
 	if (vga256InfoRec.BIOSbase == 0) {
@@ -457,6 +516,28 @@ MGAProbe()
 	}
 	
 	/*
+	 * Set up I/O ports to be used by this card.
+	 */
+	xf86ClearIOPortList(vga256InfoRec.scrnIndex);
+	xf86AddIOPorts(vga256InfoRec.scrnIndex, Num_VGA_IOPorts, VGA_IOPorts);
+	xf86AddIOPorts(vga256InfoRec.scrnIndex, Num_mgaExtPorts,
+				mgaExtPorts);
+
+	/* enable IO ports, etc. */
+	MGAEnterLeave(ENTER);
+	
+	/*
+	 * Disable memory and I/O before mapping the MMIO area.
+	 * This avoids the MMIO area being read during the mapping
+	 * (which happens on some SVR4 versions), which will cause
+	 * a lockup.
+	 */
+
+	save = pciReadLong(MGAPciTag, PCI_CMD_STAT_REG);
+	pciWriteLong(MGAPciTag, PCI_CMD_STAT_REG,
+		     save & ~(PCI_CMD_IO_ENABLE | PCI_CMD_MEM_ENABLE));
+
+	/*
 	 * Map IO registers to virtual address space
 	 */ 
 	MGAMMIOBase =
@@ -469,6 +550,24 @@ MGAProbe()
 #endif /* __alpha__ */
 			    vga256InfoRec.scrnIndex, MMIO_REGION,
 			    (pointer)(MGAMMIOAddr), 0x4000);
+#if defined(SVR4)
+	/*
+	 * For some SVR4 versions, a 32-bit read is done for the first
+	 * location in each page when the page is first mapped.  If this
+	 * is done while memory and I/O are enabled, the result will be
+	 * a lockup, so make sure each page is mapped here while it is safe
+	 * to do so.
+	 */
+	{
+		CARD32 val;
+
+		val = *(volatile CARD32 *)(MGAMMIOBase+0);
+		val = *(volatile CARD32 *)(MGAMMIOBase+0x1000);
+		val = *(volatile CARD32 *)(MGAMMIOBase+0x2000);
+		val = *(volatile CARD32 *)(MGAMMIOBase+0x3000);
+	}
+#endif
+
 #ifdef __alpha__
 	MGAMMIOBaseDENSE =
 	  /* for Alpha, we need to map DENSE memory
@@ -480,9 +579,13 @@ MGAProbe()
 			    (pointer)(MGAMMIOAddr), 0x4000);
 #endif /* __alpha__ */
 
+	/* Re-enable I/O and memory */
+	pciWriteLong(MGAPciTag, PCI_CMD_STAT_REG,
+		     save | (PCI_CMD_IO_ENABLE | PCI_CMD_MEM_ENABLE));
+
 	if (!MGAMMIOBase)
 		FatalError("MGA: Can't map IO registers\n");
-	
+
 	/*
 	 * Read the BIOS data struct
 	 */
@@ -490,17 +593,6 @@ MGAProbe()
 #ifdef DEBUG
 	ErrorF("MGABios.RamdacType = 0x%x\n",MGABios.RamdacType);
 #endif
-	
-	/*
-	 * Set up I/O ports to be used by this card.
-	 */
-	xf86ClearIOPortList(vga256InfoRec.scrnIndex);
-	xf86AddIOPorts(vga256InfoRec.scrnIndex, Num_VGA_IOPorts, VGA_IOPorts);
-	xf86AddIOPorts(vga256InfoRec.scrnIndex, Num_mgaExtPorts,
-				mgaExtPorts);
-
-	/* enable IO ports, etc. */
-	MGAEnterLeave(ENTER);
 	
 	/*
 	 * If the user has specified the amount of memory in the XF86Config
@@ -518,6 +610,7 @@ MGAProbe()
 	switch (MGAchipset)
 	{
 	case PCI_CHIP_MGA2064:
+	case PCI_CHIP_MGA2164:
 		MGA3026RamdacInit();
 		break;
 	case PCI_CHIP_MGA1064:
@@ -547,6 +640,7 @@ MGAProbe()
 	OFLG_SET(OPTION_SYNC_ON_GREEN, &MGA.ChipOptionFlags);
 	OFLG_SET(OPTION_DAC_8_BIT, &MGA.ChipOptionFlags);
 	OFLG_SET(OPTION_SW_CURSOR, &MGA.ChipOptionFlags);
+	OFLG_SET(OPTION_HW_CURSOR, &MGA.ChipOptionFlags);
 
 	OFLG_SET(CLOCK_OPTION_PROGRAMABLE, &vga256InfoRec.clockOptions);
 	OFLG_SET(OPTION_DAC_8_BIT, &vga256InfoRec.options);
@@ -788,7 +882,17 @@ MGAFbInit()
 	        /*
 		 * Hardware cursor
 		 */
-	        if ( !OFLG_ISSET(OPTION_SW_CURSOR, &vga256InfoRec.options)) {
+#ifdef DEFAULT_SW_CURSOR
+	        if (OFLG_ISSET(OPTION_HW_CURSOR, &vga256InfoRec.options)) {
+		    if (MGAHwCursorInit())
+		        ErrorF("%s %s: Using hardware cursor\n",
+			   XCONFIG_GIVEN, vga256InfoRec.name);
+		}	
+		else
+		    ErrorF("%s %s: Using software cursor\n",
+			   XCONFIG_PROBED, vga256InfoRec.name);
+#else
+	        if (!OFLG_ISSET(OPTION_SW_CURSOR, &vga256InfoRec.options)) {
 		    if (MGAHwCursorInit())
 		        ErrorF("%s %s: Using hardware cursor\n",
 			   XCONFIG_PROBED, vga256InfoRec.name);
@@ -796,6 +900,7 @@ MGAFbInit()
 		else
 		    ErrorF("%s %s: Disabling hardware cursor\n",
 			   XCONFIG_GIVEN, vga256InfoRec.name);
+#endif
 
 		/*
 		 * now call the new acc interface
@@ -824,6 +929,7 @@ DisplayModePtr mode;
 	switch (MGAchipset)
 	{
 	case PCI_CHIP_MGA2064:
+	case PCI_CHIP_MGA2164:
 		return MGA3026Init(mode);
 	case PCI_CHIP_MGA1064:                               
 		return MGA1064Init(mode);
@@ -848,6 +954,7 @@ vgaHWPtr restore;
 	switch (MGAchipset)
 	{
 	case PCI_CHIP_MGA2064:
+	case PCI_CHIP_MGA2164:
 		MGA3026Restore(restore);
 		break;
 	case PCI_CHIP_MGA1064:
@@ -874,6 +981,7 @@ vgaHWPtr save;
 	switch (MGAchipset)
 	{
 	case PCI_CHIP_MGA2064:
+	case PCI_CHIP_MGA2164:
 		return (void *)MGA3026Save(save);
 	case PCI_CHIP_MGA1064:
 		return (void *)MGA1064Save(save);
@@ -933,6 +1041,17 @@ Bool enter;
  			MGAStormSync();
 			xf86UnMapDisplay(vga256InfoRec.scrnIndex,
 					MMIO_REGION);
+			if (xf86Exiting && xf86Info.caughtSignal)
+			{
+				/*
+				 * Without this a core dump can cause a
+				 * lockup on some platforms.
+				 */
+				xf86UnMapVidMem(vga256InfoRec.scrnIndex,
+						MMIO_REGION, MGAMMIOBase,
+						0x4000);
+				MGAMMIOBase = 0;
+			}
 		}
 		
 		xf86DisableIOPorts(vga256InfoRec.scrnIndex);

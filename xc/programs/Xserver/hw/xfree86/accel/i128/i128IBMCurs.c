@@ -21,7 +21,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/i128/i128IBMCurs.c,v 3.0.4.1 1997/05/23 12:19:38 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/i128/i128IBMCurs.c,v 3.0.4.2 1997/06/11 12:08:51 dawes Exp $ */
 
 #include "servermd.h"
 
@@ -281,7 +281,7 @@ i128IBMLoadCursor(pScr, pCurs, x, y)
     * their correct order, so we can just blast this out.
     */
    p = ram;
-   for (i = 0; i < /*1024*/512; i++,p++)
+   for (i = 0; i < 1024; i++,p++)
       i128mem.rbase_g_b[DATA_I] = *p;
 
    if (i128hotX >= MAX_CURS_WIDTH)

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/cirrus/cir_driver.c,v 3.80.2.8 1997/05/21 15:02:44 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/cirrus/cir_driver.c,v 3.80.2.11 1997/08/02 13:48:18 dawes Exp $ */
 /*
  * cir_driver.c,v 1.10 1994/09/14 13:59:50 scooper Exp
  *
@@ -1050,12 +1050,25 @@ cirrusProbe()
 	           * Handles 60 MHz MCLK and 135 MHz VCLK.
 	           */
 	          cirrusChipRevision = 0x01;
-		  cirrusClockLimit[CLGD5434] = 135100;
+#ifdef MONOVGA
+		  cirrusClockLimit4bpp[CLGD5434] = 135100;
+#else
+		  cirrusClockLimit8bpp[CLGD5434] = 135100;
+		  cirrusClockLimit16bpp[CLGD5434] = 85500;
+		  cirrusClockLimit24bpp[CLGD5434] = 85500;
+#endif
+	       } else {
+	           if (partstatus == 0x8E) {
+	       	      /* Intermediate revision, supports 135 MHz VCLK. */
+#ifdef MONOVGA
+		      cirrusClockLimit4bpp[CLGD5434] = 135100;
+#else
+		      cirrusClockLimit8bpp[CLGD5434] = 135100;
+		      cirrusClockLimit16bpp[CLGD5434] = 85500;
+		      cirrusClockLimit24bpp[CLGD5434] = 85500;
+#endif
+		   }
 	       }
-	       else
-	       if (partstatus == 0x8E)
-	       	  /* Intermediate revision, supports 135 MHz VCLK. */
-		  cirrusClockLimit[CLGD5434] = 135100;
 	       cirrusChip = CLGD5434;
 	       break;
 
@@ -1768,7 +1781,10 @@ cirrusProbe()
      OFLG_SET(OPTION_16CLKS, &CIRRUS.ChipOptionFlags);
      ErrorF("CIRRUS: Warning: Out of spec clocks can be enabled\n");
 #endif
-     OFLG_SET(OPTION_NOACCEL, &CIRRUS.ChipOptionFlags);
+     /* option noaccel doesn't presently work with the Laguna chips.
+	Hey -- I never needed it!  --corey  8/1/97 */
+     if (!HAVE546X())
+       OFLG_SET(OPTION_NOACCEL, &CIRRUS.ChipOptionFlags);
      OFLG_SET(OPTION_PROBE_CLKS, &CIRRUS.ChipOptionFlags);
      OFLG_SET(OPTION_LINEAR, &CIRRUS.ChipOptionFlags);
      OFLG_SET(OPTION_NOLINEAR_MODE, &CIRRUS.ChipOptionFlags);
@@ -2213,8 +2229,9 @@ nolinear:
 	}
     }	  
 
-  if (!OFLG_ISSET(OPTION_NOACCEL, &vga256InfoRec.options)
-      && !(cirrusChip == CLGD5420 && cirrusChipRevision == 1)) {
+  if ((!OFLG_ISSET(OPTION_NOACCEL, &vga256InfoRec.options)
+      && !(cirrusChip == CLGD5420 && cirrusChipRevision == 1)) || 
+      HAVE546X()) {
     if (xf86Verbose)
       {
         ErrorF ("%s %s: %s: Using accelerator functions\n",

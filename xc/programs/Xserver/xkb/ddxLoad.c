@@ -1,4 +1,4 @@
-/* $XConsortium: ddxLoad.c /main/20 1996/12/02 10:23:54 lehors $ */
+/* $TOG: ddxLoad.c /main/21 1997/06/18 07:33:24 kaleb $ */
 /************************************************************
 Copyright (c) 1993 by Silicon Graphics Computer Systems, Inc.
 
@@ -24,7 +24,7 @@ OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
 THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ********************************************************/
-/* $XFree86: xc/programs/Xserver/xkb/ddxLoad.c,v 3.19 1997/01/27 06:58:53 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/xkb/ddxLoad.c,v 3.19.2.1 1997/06/29 08:43:39 dawes Exp $ */
 
 #include <stdio.h>
 #include <ctype.h>
@@ -83,7 +83,7 @@ OutputDirectory (outdir)
     {
 #ifdef _PATH_VARTMP
 	(void) strcpy (outdir, _PATH_VARTMP);
-	if (outdir[strlen(outdir)] != '/')
+	if (outdir[strlen(outdir) - 1] != '/')	/* Hi IBM, Digital */
 	    (void) strcat (outdir, "/");
 #else
 	(void) strcpy (outdir, "/tmp/");
@@ -125,9 +125,6 @@ char 	cmd[PATH_MAX],file[PATH_MAX],xkm_output_dir[PATH_MAX],*map,*outFile;
     else outFile= _XkbDupString(file);
     XkbEnsureSafeMapName(outFile);
     OutputDirectory(xkm_output_dir);
-/*  (void) strcpy (xkm_output_dir, XKM_OUTPUT_DIR); */
-    if (xkm_output_dir[strlen(xkm_output_dir)] != '/') /* hi IBM, Digital */
-	(void) strcat (xkm_output_dir, "/");
 
     if (XkbBaseDirectory!=NULL) {
 #ifdef __EMX__

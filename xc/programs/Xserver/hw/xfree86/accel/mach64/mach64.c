@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach64/mach64.c,v 3.62.2.9 1997/06/02 01:44:13 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach64/mach64.c,v 3.62.2.11 1997/07/07 04:11:04 dawes Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  * Copyright 1993,1994,1995,1996 by Kevin E. Martin, Chapel Hill, North Carolina.
@@ -469,9 +469,12 @@ static ATIInformationBlock *GetATIInformationBlock(BlockIO)
 	info.ChipType = MACH64_ET;
 	break;
    case MACH64_VT_ID:
+   case MACH64_VU_ID:
 	info.ChipType = MACH64_VT;
 	break;
    case MACH64_GT_ID:
+   case MACH64_GU_ID:
+   case MACH64_GP_ID:
 	info.ChipType = MACH64_GT;
 	break;
    default:
@@ -517,7 +520,7 @@ static ATIInformationBlock *GetATIInformationBlock(BlockIO)
 
    tmp = inl(ioMEM_CNTL);
    if ((info.ChipType == MACH64_VT || info.ChipType == MACH64_GT) &&
-       (info.ChipRev & 0x01)) {
+       (info.ChipRev & 0x07)) {
      switch (tmp & MEM_SIZE_ALIAS_GTB) {
      case MEM_SIZE_512K:
        info.Mem_Size = 512;
@@ -622,6 +625,7 @@ GetATIPCIInformation()
     pciConfigPtr pcrp, *pcrpp;
     Bool found = FALSE;
     int i = 0;
+    int devid;
 
     pcrpp = xf86scanpci(mach64InfoRec.scrnIndex);
 
@@ -631,6 +635,7 @@ GetATIPCIInformation()
     while (pcrp = pcrpp[i]) {
 	if (pcrp->_vendor == PCI_ATI_VENDOR_ID) {
 	    found = TRUE;
+	    devid = pcrp->_device;
 	    switch (pcrp->_device) {
 	    case PCI_MACH64_GX:
 		info.ChipType = MACH64_GX;
@@ -645,9 +650,12 @@ GetATIPCIInformation()
 		info.ChipType = MACH64_ET;
 		break;
 	    case PCI_MACH64_VT:
+	    case PCI_MACH64_VU:
 		info.ChipType = MACH64_VT;
 		break;
 	    case PCI_MACH64_GT:
+	    case PCI_MACH64_GU:
+	    case PCI_MACH64_GP:
 		info.ChipType = MACH64_GT;
 		break;
 	    default:
@@ -711,9 +719,9 @@ GetATIPCIInformation()
 		info.ChipRev, info.ApertureBase,
 		info.BlockIO ? "Block" : "Sparse", info.IOBase);
       } else {
-	ErrorF("%s %s: PCI: unknown ATI (%0x04x) rev %d, Aperture @ 0x%08x,"
+	ErrorF("%s %s: PCI: unknown ATI (0x%04x) rev %d, Aperture @ 0x%08x,"
 		" %s I/O @ 0x%04x\n", XCONFIG_PROBED, mach64InfoRec.name,
-		pcrp->_device, info.ChipRev, info.ApertureBase,
+		devid, info.ChipRev, info.ApertureBase,
 		info.BlockIO ? "Block" : "Sparse", info.IOBase);
       }
     }
@@ -741,7 +749,7 @@ mach64PrintCTPLL()
 
     N = pll[VCLK0_FB_DIV];
     if ((mach64ChipType == MACH64_VT || mach64ChipType == MACH64_GT) &&
-	(mach64ChipRev & 0x01) && (pll[PLL_XCLK_CNTL] & 0x10)) {
+	(mach64ChipRev & 0x07) && (pll[PLL_XCLK_CNTL] & 0x10)) {
 	switch (pll[VCLK_POST_DIV] & VCLK0_POST) {
 	case 0: P = 3; break;
 	case 1: P = 2; break; /* Unknown */
@@ -755,7 +763,7 @@ mach64PrintCTPLL()
 	   (double)((2 * R * N)/(M * P)) / 100.0);
     N = pll[VCLK1_FB_DIV];
     if ((mach64ChipType == MACH64_VT || mach64ChipType == MACH64_GT) &&
-	(mach64ChipRev & 0x01) && (pll[PLL_XCLK_CNTL] & 0x20)) {
+	(mach64ChipRev & 0x07) && (pll[PLL_XCLK_CNTL] & 0x20)) {
 	switch ((pll[VCLK_POST_DIV] & VCLK1_POST) >> 2) {
 	case 0: P = 3; break;
 	case 1: P = 2; break; /* Unknown */
@@ -769,7 +777,7 @@ mach64PrintCTPLL()
 	   (double)((2 * R * N)/(M * P)) / 100.0);
     N = pll[VCLK2_FB_DIV];
     if ((mach64ChipType == MACH64_VT || mach64ChipType == MACH64_GT) &&
-	(mach64ChipRev & 0x01) && (pll[PLL_XCLK_CNTL] & 0x40)) {
+	(mach64ChipRev & 0x07) && (pll[PLL_XCLK_CNTL] & 0x40)) {
 	switch ((pll[VCLK_POST_DIV] & VCLK2_POST) >> 4) {
 	case 0: P = 3; break;
 	case 1: P = 2; break; /* Unknown */
@@ -783,7 +791,7 @@ mach64PrintCTPLL()
 	   (double)((2 * R * N)/(M * P)) / 100.0);
     N = pll[VCLK3_FB_DIV];
     if ((mach64ChipType == MACH64_VT || mach64ChipType == MACH64_GT) &&
-	(mach64ChipRev & 0x01) && (pll[PLL_XCLK_CNTL] & 0x80)) {
+	(mach64ChipRev & 0x07) && (pll[PLL_XCLK_CNTL] & 0x80)) {
 	switch ((pll[VCLK_POST_DIV] & VCLK3_POST) >> 6) {
 	case 0: P = 3; break;
 	case 1: P = 2; break; /* Unknown */
@@ -1054,7 +1062,7 @@ mach64Probe()
 	break;
     case DAC_INTERNAL:
 	if ((mach64ChipType == MACH64_VT || mach64ChipType == MACH64_GT) &&
-	    (mach64ChipRev & 0x01)) {
+	    (mach64ChipRev & 0x07)) {
 	    mach64InfoRec.maxClock = 170000;
 	} else {
 	    if (xf86bpp == 8)

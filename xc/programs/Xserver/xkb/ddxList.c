@@ -1,5 +1,4 @@
-/* $XConsortium: ddxList.c /main/5 1996/12/02 10:23:46 lehors $ */
-/* $XFree86: xc/programs/Xserver/xkb/ddxList.c,v 3.3 1996/12/23 07:10:07 dawes Exp $ */
+/* $TOG: ddxList.c /main/6 1997/06/10 06:53:45 kaleb $ */
 /************************************************************
 Copyright (c) 1995 by Silicon Graphics Computer Systems, Inc.
 
@@ -25,6 +24,7 @@ OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
 THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ********************************************************/
+/* $XFree86: xc/programs/Xserver/xkb/ddxList.c,v 3.3.2.1 1997/06/22 10:32:34 dawes Exp $ */
 
 #include <stdio.h>
 #include <ctype.h>
@@ -83,13 +83,15 @@ char *		tmp;
 	return Success;
     }
     tmp= strchr(str,')');
-    if (tmp==NULL) {
-	while ((*tmp!='\0')&&((*tmp=='_')||(*tmp=='-')||isalnum(*tmp))) {
-	    tmp++;
+    if ((tmp==NULL)&&((tmp=strchr(str,'('))==NULL)) {
+	slen= strlen(str);
+	while ((slen>0) && isspace(str[slen-1])) {
+	    slen--;
 	}
-	tmp--;
     }
-    slen= (tmp-str+1);
+    else {
+	slen= (tmp-str+1);
+    }
     wlen= (((slen+1)/2)*2)+4;	/* four bytes for flags and length, pad to */
 				/* 2-byte boundary */
     if ((list->szPool-list->nPool)<wlen) {

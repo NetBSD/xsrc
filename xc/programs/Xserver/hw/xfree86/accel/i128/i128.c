@@ -22,7 +22,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/i128/i128.c,v 3.22.2.5 1997/06/01 12:33:26 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/i128/i128.c,v 3.22.2.9 1997/07/26 06:39:27 dawes Exp $ */
 
 #include "i128.h"
 #include "i128reg.h"
@@ -136,16 +136,17 @@ ScreenPtr i128savepScreen;
 Bool  i128DAC8Bit = FALSE;
 Bool  i128DACSyncOnGreen = FALSE;
 int i128DisplayWidth;
+int i128DisplayOffset = 0;
 int i128Weight;
 int i128AdjustCursorXPos = 0;
 pointer i128VideoMem = NULL;
 struct i128io i128io;
 struct i128mem i128mem;
-CARD32 i128io_config1_save, i128io_config2_save;
 int i128hotX, i128hotY;
 Bool i128BlockCursor, i128ReloadCursor;
 int i128CursorStartX, i128CursorStartY, i128CursorLines;
 int i128DeviceType;
+int i128MemoryTypeDram = 0;
 int i128RamdacType = UNKNOWN_DAC;
 
 extern Bool xf86Exiting, xf86Resetting, xf86ProbeFailed, xf86Verbose;
@@ -187,7 +188,7 @@ i128Probe()
    DisplayModePtr pMode, pEnd;
    int i, tx, ty;
    int maxDisplayWidth, maxDisplayHeight;
-   unsigned short ioaddr, iobase;
+   unsigned short ioaddr;
    OFlagSet validOptions;
    unsigned PCI_CtrlIOPorts[] = { 0xCF8, 0xCFA };
    int Num_PCI_CtrlIOPorts = 2;
@@ -199,6 +200,7 @@ i128Probe()
    float mclk;
    pciConfigPtr pcrp, *pcrpp;
    unsigned char tmpl, tmph, tmp;
+   extern i128Registers iR;
 
    pcrpp = xf86scanpci(i128InfoRec.scrnIndex);
 
@@ -216,26 +218,31 @@ i128Probe()
    if (!pcrp)
       return(FALSE);
 
-   iobase = (unsigned short )pcrp->_base5 & 0xFF00;
+   iR.iobase = (unsigned short )pcrp->_base5 & 0xFF00;
 
    i128DeviceType = pcrp->_device_vendor;
 
+   if (((pcrp->_status_command & 0x03) == 0x03) &&
+       ((pcrp->rsvd2 >>16) == 0x08))
+      i128MemoryTypeDram = 1;
+
    for (i=0; i<11; i++)  /* 11 32bit I/O address registers (0x00-0x28) */
-      PCI_DevIOPorts[i] = iobase + (i*4);
+      PCI_DevIOPorts[i] = iR.iobase + (i*4);
 
    xf86AddIOPorts(i128InfoRec.scrnIndex, 11, PCI_DevIOPorts);
    xf86EnableIOPorts(i128InfoRec.scrnIndex);
 
-   i128io.rbase_g = inl(iobase)        & 0xFFFFFF00;
-   i128io.rbase_w = inl(iobase + 0x04) & 0xFFFFFF00;
-   i128io.rbase_a = inl(iobase + 0x08) & 0xFFFFFF00;
-   i128io.rbase_b = inl(iobase + 0x0C) & 0xFFFFFF00;
-   i128io.rbase_i = inl(iobase + 0x10) & 0xFFFFFF00;
-   i128io.rbase_e = inl(iobase + 0x14) & 0xFFFF8003;
-   i128io.id =      inl(iobase + 0x18) & 0x7FFFFFFF;
-   i128io.config1 = inl(iobase + 0x1C) & 0xF3333F1F;
-   i128io.config2 = inl(iobase + 0x20) & 0xFFF70F03;
-   i128io.soft_sw = inl(iobase + 0x28) & 0x0000FFFF;
+   i128io.rbase_g = inl(iR.iobase)        & 0xFFFFFF00;
+   i128io.rbase_w = inl(iR.iobase + 0x04) & 0xFFFFFF00;
+   i128io.rbase_a = inl(iR.iobase + 0x08) & 0xFFFFFF00;
+   i128io.rbase_b = inl(iR.iobase + 0x0C) & 0xFFFFFF00;
+   i128io.rbase_i = inl(iR.iobase + 0x10) & 0xFFFFFF00;
+   i128io.rbase_e = inl(iR.iobase + 0x14) & 0xFFFF8003;
+   i128io.id =      inl(iR.iobase + 0x18) & /* 0x7FFFFFFF */ 0xFFFFFFFF;
+   i128io.config1 = inl(iR.iobase + 0x1C) & /* 0xF3333F1F */ 0xFF333F1F;
+   i128io.config2 = inl(iR.iobase + 0x20) & /* 0xFFF70F03 */ 0xC1F70FFF;
+   i128io.soft_sw = inl(iR.iobase + 0x28) & 0x0000FFFF;
+   i128io.vga_ctl = inl(iR.iobase + 0x30) & 0x0000FFFF;
 
 #ifdef DEBUG
    ErrorF("  PCI Registers\n");
@@ -253,6 +260,10 @@ i128Probe()
 	    pcrp->_base4, pcrp->_base4 & 0xFFFF0000);
    ErrorF("    IO        0x%08x  addr 0x%08x\n",
 	    pcrp->_base5, pcrp->_base5 & 0xFFFFFF00);
+   ErrorF("    R1        0x%08x  addr 0x%08x\n",
+	    pcrp->rsvd1, pcrp->rsvd1 & 0xFFFFFF00);
+   ErrorF("    R2        0x%08x  addr 0x%08x\n",
+	    pcrp->rsvd2, pcrp->rsvd2 & 0xFFFFFF00);
    ErrorF("    RBASE_E   0x%08x  addr 0x%08x  %sdecode-enabled\n\n",
 	    pcrp->_baserom, pcrp->_baserom & 0xFFFF8000,
 	    pcrp->_baserom & 0x1 ? "" : "not-");
@@ -276,20 +287,22 @@ i128Probe()
    ErrorF("    CONFIG1   0x%08x\n", i128io.config1);
    ErrorF("    CONFIG2   0x%08x\n", i128io.config2);
    ErrorF("    SOFT_SW   0x%08x\n", i128io.soft_sw);
+   ErrorF("    VGA_CTL   0x%08x\n", i128io.vga_ctl);
 #endif
 
-   i128io_config1_save = i128io.config1;
-   i128io_config2_save = i128io.config2;
+   iR.config1 = i128io.config1;
+   iR.config2 = i128io.config2;
+   /* vga_ctl is saved later */
 
    /* enable all of the memory mapped windows */
 
-   i128io.config1 &= 0xF300201D;
+   i128io.config1 &= 0xFF00001F;
    i128io.config1 |= 0x00333F10;
-   outl(iobase + 0x1C, i128io.config1);
+   outl(iR.iobase + 0x1C, i128io.config1);
 
-   i128io.config2 &= 0xFF000000;
+   i128io.config2 &= 0xFF0FFFFF;
    i128io.config2 |= 0x00500000;
-   outl(iobase + 0x20, i128io.config2);
+   outl(iR.iobase + 0x20, i128io.config2);
 
    xf86DisableIOPorts(i128InfoRec.scrnIndex);
    xf86ClearIOPortList(i128InfoRec.scrnIndex);
@@ -390,16 +403,16 @@ i128Probe()
  
    /* Now we can map the rest of the chip into memory */
 
-   i128mem.mw0_ad =  (CARD32 *)xf86MapVidMem(0, 0,
+   i128mem.mw0_ad =  (unsigned char *)xf86MapVidMem(0, 0,
 			(pointer)(pcrp->_base0 & 0xFFC00000),
                         i128InfoRec.videoRam * 1024);
    i128VideoMem = (pointer )i128mem.mw0_ad;
 #ifdef TOOMANYMMAPS
-   i128mem.mw1_ad =  (CARD32 *)xf86MapVidMem(0, 1,
+   i128mem.mw1_ad =  (unsigned char *)xf86MapVidMem(0, 1,
 			(pointer)(pcrp->_base1 & 0xFFC00000),
                         i128InfoRec.videoRam * 1024);
 #endif
-   i128mem.xyw_ada = (CARD32 *)xf86MapVidMem(0, 2,
+   i128mem.xyw_ada = (unsigned char *)xf86MapVidMem(0, 2,
 			(pointer)(pcrp->_base2 & 0xFFC00000),
                         i128InfoRec.videoRam * 1024);
 #ifdef TOOMANYMMAPS
@@ -420,8 +433,15 @@ i128Probe()
 	 i128RamdacType = IBM528_DAC;
       else
 	 i128RamdacType = TI3025_DAC;
-   } if (pcrp->_device_vendor == I128_DEVICE_ID2) {
+   } else if (pcrp->_device_vendor == I128_DEVICE_ID2) {
+      if (i128io.id & 0x0400)       /* 2 banks VRAM   */
+	 i128RamdacType = IBM528_DAC;
+      else
 	 i128RamdacType = IBM526_DAC;
+   } else {
+            ErrorF("%s: Unknown I128 rev (%x).\n", i128InfoRec.name,
+		pcrp->_device_vendor);
+            return(FALSE);
    }
 
    switch(i128RamdacType) {
@@ -519,9 +539,13 @@ i128Probe()
       ErrorF("%s %s: Ramdac type: %s\n",
          XCONFIG_PROBED, i128InfoRec.name, i128InfoRec.ramdac);
 
-/* i128io.config2&0x80000000 is obsolete - DAC is always 220 MHZ (for now) */
+/*
+ * i128io.config2&0x80000000 is obsolete
+ * rev 2 board or 8MB rev 1 board DAC is always 220 MHZ (for now)
+ */
    if (i128InfoRec.dacSpeeds[0] <= 0) {
-      if (i128io.config2&0x80000000)
+      if ((pcrp->_device_vendor == I128_DEVICE_ID2) ||
+          (i128InfoRec.videoRam == 8192))
 	 i128InfoRec.dacSpeeds[0] = 220000;
       else
 	 i128InfoRec.dacSpeeds[0] = 175000;
@@ -607,6 +631,12 @@ i128Probe()
       i128DisplayWidth = 1920;
    else
       i128DisplayWidth = 2048;
+
+   if (i128InfoRec.videoRam > 4096)
+      i128DisplayOffset = 0x400000L %
+		          (i128DisplayWidth * (i128InfoRec.bitsPerPixel/8));
+
+   i128VideoMem = (pointer)((CARD32)i128VideoMem + i128DisplayOffset);
 
    if (OFLG_ISSET(OPTION_DAC_8_BIT, &i128InfoRec.options) ||
        (i128InfoRec.bitsPerPixel > 8))
@@ -777,7 +807,7 @@ i128ProgramIBMRGB(freq, flags)
    i128mem.rbase_g_b[IDXL_I] = IBMRGB_pwr_mgmt;
    i128mem.rbase_g_b[DATA_I] = 0x00;
    i128mem.rbase_g_b[IDXL_I] = IBMRGB_dac_op;
-   tmp2 = (i128RamdacType == IBM526_DAC) ? 0x00 : 0x02;  /* fast slew */
+   tmp2 = (i128RamdacType == IBM528_DAC) ? 0x02 : 0x00;  /* fast slew */
    if (i128DACSyncOnGreen) tmp2 |= 0x08;
    i128mem.rbase_g_b[DATA_I] = tmp2;
    i128mem.rbase_g_b[IDXL_I] = IBMRGB_pal_ctrl;
@@ -786,23 +816,32 @@ i128ProgramIBMRGB(freq, flags)
    i128mem.rbase_g_b[DATA_I] = 0x01;
    i128mem.rbase_g_b[IDXL_I] = IBMRGB_misc1;
    tmp2 = i128mem.rbase_g_b[DATA_I] & 0xbc;
-   i128mem.rbase_g_b[DATA_I] = tmp2 | ((i128RamdacType == IBM528_DAC) ? 3 : 1);
+   if (!i128MemoryTypeDram)
+   	tmp2 |= (i128RamdacType == IBM528_DAC) ? 3 : 1;
+   i128mem.rbase_g_b[DATA_I] = tmp2;
    i128mem.rbase_g_b[IDXL_I] = IBMRGB_misc2;
-   i128mem.rbase_g_b[DATA_I] = 0x43 | (i128DAC8Bit ? 0x04 : 0x00);
+   tmp2 = 0x03;
+   if (i128DAC8Bit)
+	tmp2 |= 0x04;
+   if (!(i128MemoryTypeDram && (i128InfoRec.bitsPerPixel > 16)))
+	tmp2 |= 0x40;
+   i128mem.rbase_g_b[DATA_I] = tmp2;
    i128mem.rbase_g_b[IDXL_I] = IBMRGB_misc3;
    i128mem.rbase_g_b[DATA_I] = 0x00;
    i128mem.rbase_g_b[IDXL_I] = IBMRGB_misc4;
    i128mem.rbase_g_b[DATA_I] = 0x00;
 
-   if (i128RamdacType == IBM526_DAC) {
-	/* program mclock to 57MHz */
-   	i128mem.rbase_g_b[IDXL_I] = IBMRGB_pll_ref_div_fix;
-   	i128mem.rbase_g_b[DATA_I] = 0x08;
-   	i128mem.rbase_g_b[IDXL_I] = IBMRGB_sysclk_ref_div;
-   	i128mem.rbase_g_b[DATA_I] = 0x47;
-   }
-
    /* ?? There is no write to cursor control register */
+
+   if (i128RamdacType == IBM526_DAC) {
+	/* program mclock to 52MHz */
+   	i128mem.rbase_g_b[IDXL_I] = IBMRGB_sysclk_ref_div;
+   	i128mem.rbase_g_b[DATA_I] = 0x08;
+   	i128mem.rbase_g_b[IDXL_I] = IBMRGB_sysclk_vco_div;
+   	i128mem.rbase_g_b[DATA_I] = 0x41;
+	/* should delay at least a millisec so we'll wait 50 */
+   	usleep(50000);
+   }
 
    switch (i128InfoRec.depth) {
    	case 24: /* 32 bit */
@@ -839,7 +878,6 @@ i128ProgramIBMRGB(freq, flags)
    i128mem.rbase_g_b[IDXH_I] = tmph;
    i128mem.rbase_g_b[IDXL_I] = tmpl;
 
-   usleep(150000);
    return(TRUE);
 }
 
@@ -850,7 +888,9 @@ int freq;
 {
    unsigned char tmp, misc_ctrl, aux_ctrl, oclk, col_key, mux1_ctrl, mux2_ctrl;
    unsigned char n, m, p;
-   int nl, ml, pl;
+   double ffreq, diff, mindiff;
+   int ni, mi, pi;
+   int best_n=32, best_m=32;
 
    if (freq < 20000) {
       ErrorF("%s %s: Specified dot clock (%.3f) too low for TI 3025",
@@ -858,10 +898,55 @@ int freq;
       return(FALSE);
    }
 
-   Ti3025CalcNMP(freq, &nl, &ml, &pl);
-   n = (unsigned char )nl;
-   m = (unsigned char )ml;
-   p = (unsigned char )pl;
+   
+#define FREQ_MIN   12000
+#define FREQ_MAX  220000
+
+   if (freq < FREQ_MIN)
+      ffreq = FREQ_MIN / 1000.0;
+   else if (freq > FREQ_MAX)
+      ffreq = FREQ_MAX / 1000.0;
+   else
+      ffreq = freq / 1000.0;
+   
+   for(pi=0; (pi<4) && (ffreq<110.0); pi++)
+      ffreq *= 2;
+
+   if (pi==4) {
+      ffreq /= 2;
+      pi--;
+   }
+   
+   /* now 110.0 <= ffreq <= 220.0 */   
+   
+   ffreq /= TI_REF_FREQ;
+   
+   /* now 7.6825 <= ffreq <= 15.3650 */
+   /* the remaining formula is  ffreq = (m+2)*8 / (n+2) */
+   
+   mindiff = ffreq;
+   
+   for (ni = 1; ni <= (int)(TI_REF_FREQ/0.5 - 2); ni++) {
+      mi = (int)(ffreq * (ni+2) / 8.0 + 0.5) - 2;
+      if (mi < 1)
+	 mi = 1;
+      else if (mi > 127) 
+	 mi = 127;
+      
+      diff = ((mi+2) * 8) / (ni+2.0) - ffreq;
+      if (diff<0)
+	 diff = -diff;
+      
+      if (diff < mindiff) {
+	 mindiff = diff;
+	 best_n = ni;
+	 best_m = mi;
+      }
+   }
+
+   n = (unsigned char )best_n;
+   m = (unsigned char )best_m;
+   p = (unsigned char )pi;
 
    tmp = i128mem.rbase_g_b[INDEX_TI];
 

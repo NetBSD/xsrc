@@ -1,6 +1,6 @@
-XCOMM $XConsortium: Imakefile /main/1 1996/02/02 14:19:09 kaleb $
+XCOMM $TOG: Imakefile /main/2 1997/06/10 06:54:34 kaleb $
 
-     DATAFILES = indy indigo
+     DATAFILES = indy indigo O2
 
 all::
 

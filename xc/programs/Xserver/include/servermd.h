@@ -48,7 +48,7 @@ SOFTWARE.
 #ifndef SERVERMD_H
 #define SERVERMD_H 1
 /* $XConsortium: servermd.h /main/58 1996/12/02 10:22:09 lehors $ */
-/* $XFree86: xc/programs/Xserver/include/servermd.h,v 3.19.2.1 1997/05/12 12:52:39 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/include/servermd.h,v 3.19.2.3 1997/07/28 14:17:34 dawes Exp $ */
 
 /*
  * Machine dependent values:
@@ -153,7 +153,8 @@ SOFTWARE.
     (defined(AMOEBA) && (defined(sparc) || defined(mc68000))) || \
     (defined(__uxp__) && (defined(sparc) || defined(mc68000))) || \
     (defined(Lynx) && defined(__sparc__)) || \
-    (defined(__NetBSD__) && (defined(__sparc__) || defined(mc68000)))
+    ((defined(__NetBSD__) || defined(__OpenBSD__)) && \
+     (defined(__sparc__) || defined(__mc68000__)))
 
 #if defined(sun386) || defined(sun5)
 # define IMAGE_BYTE_ORDER	LSBFirst        /* Values for the SUN only */

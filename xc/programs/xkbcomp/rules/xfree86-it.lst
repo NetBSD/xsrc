@@ -1,7 +1,10 @@
+// $TOG: xfree86-it.lst /main/2 1997/06/13 06:28:38 kaleb $
+
 //
 //  Elenco dei modelli e dei lingauggi
 //  Copyright 1996 by Joseph Moss
 //
+// $XFree86: xc/programs/xkbcomp/rules/xfree86-it.lst,v 1.1.1.1.2.1 1997/06/22 10:32:54 dawes Exp $
 
 ! model
   microsoft       Microsoft Natural
@@ -29,7 +32,9 @@
   fr              Francese
   fr_CH           Francese Svizzero
   gb              Regno Unito
+  hu              Ungherese
   it              Italiano
+  jp              Giapponese
   no              Norvegese
   pl              Polacco
   pt              Portoghese

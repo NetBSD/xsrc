@@ -1,4 +1,4 @@
-// $XConsortium: us /main/11 1996/08/31 12:20:22 kaleb $
+// $TOG: us /main/12 1997/06/14 06:37:07 kaleb $
 
 // symbols definition for a very simple US/ASCII layout.
 // It has basically the alphanumeric keys, punctuation, 
@@ -221,6 +221,12 @@ xkb_symbols "pc104" {
     modifier_map Mod4   { Meta_L, Meta_R };
 };
 
+// definition of Euro-style, Right "logo" key == [Mode_switch, Multi_key]
+xkb_symbols "pc104euro" {
+    include "us(pc104)"
+    key <RWIN> {	[	Mode_switch, Multi_key	]	};
+};
+
 // put the compose key on the right "logo" key
 xkb_symbols "pc104compose" {
     include "us(pc104)"
@@ -231,5 +237,26 @@ xkb_symbols "pc104compose" {
 // the extra key on most European keyboards.
 xkb_symbols "pc105" {
     include "us(pc104)"
+    key <LSGT> {	[      less,    greater		]	};
+};
+xkb_symbols "pc105euro" {
+    include "us(pc104euro)"
+    key <LSGT> {	[      less,    greater		]	};
+};
+xkb_symbols "pc105compose" {
+    include "us(pc104compose)"
+    key <LSGT> {	[      less,    greater		]	};
+};
+// universam maps are identical to pc105; wish we had aliases for map names.
+xkb_symbols "pc_universal" {
+    include "us(pc104)"
+    key <LSGT> {	[      less,    greater		]	};
+};
+xkb_symbols "pc105euro" {
+    include "us(pc104euro)"
+    key <LSGT> {	[      less,    greater		]	};
+};
+xkb_symbols "pc105compose" {
+    include "us(pc104compose)"
     key <LSGT> {	[      less,    greater		]	};
 };

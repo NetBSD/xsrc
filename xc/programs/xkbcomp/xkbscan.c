@@ -1,5 +1,4 @@
-/* $XConsortium: xkbscan.c /main/9 1996/08/31 12:16:13 kaleb $ */
-/* $XFree86: xc/programs/xkbcomp/xkbscan.c,v 3.6 1996/12/23 07:11:43 dawes Exp $ */
+/* $TOG: xkbscan.c /main/10 1997/06/10 06:54:25 kaleb $ */
 /************************************************************
  Copyright (c) 1994 by Silicon Graphics Computer Systems, Inc.
 
@@ -25,6 +24,7 @@
  THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
  ********************************************************/
+/* $XFree86: xc/programs/xkbcomp/xkbscan.c,v 3.6.2.1 1997/06/22 10:32:41 dawes Exp $ */
 
 #include <stdio.h>
 #include <ctype.h>
@@ -88,6 +88,7 @@ static char buf[32];
 	case OVERRIDE:		sprintf(buf, "OVERRIDE"); break;
 	case AUGMENT:		sprintf(buf, "AUGMENT"); break;
 	case REPLACE:		sprintf(buf, "REPLACE"); break;
+	case ALTERNATE:		sprintf(buf, "ALTERNATE"); break;
 
 	case VIRTUAL_MODS:	sprintf(buf, "VIRTUAL_MODS"); break;
 	case TYPE:		sprintf(buf, "TYPE"); break;
@@ -317,6 +318,7 @@ struct _Keyword {
     { "override",		OVERRIDE		},
     { "augment",		AUGMENT			},
     { "replace",		REPLACE			},
+    { "alternate",		ALTERNATE		},
     { "partial",		PARTIAL			},
     { "default",		DEFAULT			},
     { "hidden",			HIDDEN			},

@@ -3,15 +3,23 @@
 <article>
 <title>Information for Matrox Millennium/Mystique Users
 <author>The XFree86 Project Inc.
-<date>16 May 1997
+<date>2 August 1997
 <toc>
 
 <sect>Supported hardware
 <p>
 The current MGA driver in the SVGA server supports the Matrox Millennium 
 (MGA2064W) with Ti3026 RAMDAC. It has been tested with 175, 220MHz, and
-250MHz cards with 2MB, 4MB and 8MB WRAM. 
-It also supports, for the first time, Matrox Mystique (MGA1064SG) board tested up to 135 MHz for 2 and 4 MB configs.
+250MHz cards with 2MB, 4MB and 8MB WRAM. It supports the Matrox Mystique
+with 170 and 220 MHz RAMDACs.
+
+There is experimental support for the Matrox
+Millennium II, which for the most part works, but DO NOT USE THIS ON PRODUCTION
+SYSTEMS - it is no where near tested enough for that role. We do not yet have
+the card's documentation, so this is a alpha quality addition - test this support
+at your own risk.
+
+This version of the server does not support the rev 3 Matrox Millennium I. 
 
 NOTE: This driver is pretty new, and not everything works like you expect
 it to. It shouldn't crash your machine, but you may have video artifacts
@@ -42,7 +50,7 @@ using the appropriate bug report sheet.
   <item>many more...
 </itemize>
 The Millennium server is fairly well accelerated, and is one of the fastest
-XFree86 3.3 Xservers. Future work will concentrate on fixing
+XFree86 3.3.1 Xservers. Future work will concentrate on fixing
 remaining bugs.
 </itemize>
 
@@ -67,6 +75,18 @@ line in the Device section of XF86Config file. It will be slower but will work b
 </itemize>
 </itemize>
 
+<itemize>Experimental Support for the Matrox Millennium II
+<item>Provided ONLY as a test and to provide early access to Mill II owners
+<item>Works as if it is a Millennium I
+<item>We don't have the card's tech docs yet, so no specific Mill II speedups
+<item>Has plenty of bugs:
+<itemize>
+  <item>May corrupt your text font when you exit X
+  <item>May not work correctly at 24 bpp
+  <item>Lots more where that came from... :-)
+</itemize>
+</itemize>
+
 
 <sect>Future Features (in order from highest to lowest priority)
 <p>
@@ -87,7 +107,9 @@ This driver only supports:
 (TVP) 3026 RAMDAC. Matrox have only so far made 175, 220 and 250 MHz boards
 with these two components, although a 135 MHz RAMDAC part exists.
 
-<item>the MGA Storm (MGA1064SG) chipset with integrated 170 MHz RAMDAC
+<item>the MGA Storm (MGA1064SG) chipset with integrated 170 and 220 MHz RAMDAC
+
+<item>the MGA Storm (MGA2164W) chipset with the TI TVP 3026 RAMDAC. This is experimental 
 
 <item>We will eventually provide support for the other Matrox chipsets (once the
 Millennium driver is at a far enough stage and more people with other cards
@@ -103,7 +125,8 @@ The server auto-detects WRAM size and RAMDAC speed. Do not bother putting
 these in your "Device" section, as they will be overridden. The TVP3026 and MGA1064SG have a programmable clock generator, so probing and setting clocks is unnecessary as
 well.
 
-The "nolinear" option is currently unsupported - do not use this
+The "nolinear" option is not a valid option for the MGA server.
+The driver now ignores this directive.
 
 The options "noaccel" or "no_bitblt" turn off BitBlt Engine and other
 accelerated functions.
@@ -143,7 +166,7 @@ to keep up to date with the latest news, new sources, etc.
 
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/MGA.sgml,v 3.4.2.4 1997/05/31 13:34:40 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/MGA.sgml,v 3.4.2.5 1997/08/02 13:48:14 dawes Exp $
 </verb>
 
 </article>

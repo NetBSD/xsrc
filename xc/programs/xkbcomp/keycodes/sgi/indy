@@ -1,4 +1,12 @@
-// $XConsortium: indy /main/1 1996/08/31 12:17:15 kaleb $
+// $TOG: indy /main/3 1997/06/13 05:59:09 kaleb $
+default xkb_keycodes "universal" {
+    minimum= 15;
+    maximum= 149;
+    include "sgi/indy(pc105)"
+    alternate <BKSL> = 91;
+    alternate <BKSL> = 100;
+    alternate <BKSL> = 101;
+};
 xkb_keycodes "pc101" {
     minimum= 15;
     maximum= 149;
@@ -136,8 +144,11 @@ xkb_keycodes "pc101" {
 
 };
 xkb_keycodes "pc102" {
-    include "sgi/indy(pc101)"
+    <BKSL> = 91;
     <LSGT> = 27;
+    augment "sgi/indy(pc101)"
+    maximum= 149;
+    minimum= 15;
 };
 xkb_keycodes "pc104" {
     include "sgi/indy(pc101)"
@@ -151,6 +162,42 @@ xkb_keycodes "pc104" {
     <MENU> = 149;
 };
 xkb_keycodes "pc105" {
-    include "sgi/indy(pc104)"
     <LSGT> = 27;
+    augment "sgi/indy(pc104)"
+    minimum= 15;
+    maximum= 149;
+};
+xkb_keycodes "jp106" {
+    <HZTG> = 22;
+    <AB11> = 89;
+    <AC12> = 91;
+    <NFER> = 141;
+    <XFER> = 142;
+    <HKTG> = 143;
+    alias <TLDE> = <HZTG>;
+    alias <AE00> = <HZTG>;
+    alias <AE13> = <BKSL>;
+    augment "sgi/indy(pc101)"
+    minimum= 15;
+    maximum= 149;
+};
+// can be combined with any other "indy" keycode
+// description to add virtual keys which can be
+// used to implement an overlay-based numeric
+// keypad.
+partial hidden xkb_keycodes "overlayKeypad" {
+    <KO7> = 17;
+    <KO8> = 18;
+    <KO9> = 19;
+    <KO6> = 146;
+    <KO5> = 145;
+    <KO4> = 144;
+    <KO1> = 136;
+    <KO2> = 137;
+    <KO3> = 138;
+    <KO0> = 135;
+    <KODL> = 139;
+};
+partial hidden xkb_keycodes "shiftLock" {
+    indicator 5 = "Shift Lock";
 };

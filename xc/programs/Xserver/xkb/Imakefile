@@ -1,5 +1,5 @@
-XCOMM $XConsortium: Imakefile /main/11 1996/12/02 10:23:37 lehors $
-XCOMM $XFree86: xc/programs/Xserver/xkb/Imakefile,v 3.10 1996/12/28 08:20:28 dawes Exp $
+XCOMM $TOG: Imakefile /main/12 1997/07/16 14:51:50 kaleb $
+XCOMM $XFree86: xc/programs/Xserver/xkb/Imakefile,v 3.10.2.1 1997/07/19 04:59:39 dawes Exp $
 #define SGIHyperOpt
 #include <Server.tmpl>
 
@@ -43,7 +43,7 @@ XKB_DDXDEFS = XkbServerDefines
    INCLUDES = -I../include -I$(XINCLUDESRC) -I$(EXTINCSRC)
    LINTLIBS = ../dix/llib-ldix.ln ../os/llib-los.ln
 
-EXTRA_DEFINES = -DXKB_IN_SERVER $(EXTRA_ALLOC_DEFINES) $(XKB_DDXDEFS)
+DEFINES = -DXKB_IN_SERVER $(EXTRA_ALLOC_DEFINES) $(XKB_DDXDEFS)
 XKB_DEFINES = -DXKB_BASE_DIRECTORY=\"$(LIBDIR)/xkb\" $(XKB_DISABLE)
 
 NormalLibraryObjectRule()

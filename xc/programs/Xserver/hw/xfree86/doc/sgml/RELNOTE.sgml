@@ -2,13 +2,14 @@
 
  <article>
 
- <title>Release Notes for XFree86&tm; 3.3
+ <title>Release Notes for XFree86&tm; 3.3.1
  <author>The XFree86 Project, Inc
- <date>30 May 1997
+ <date>4 August 1997
 
 <abstract>
 
-This document describes the new features in XFree86 3.3 compared with the
+This document describes the bugs fixed in XFree86 3.3.1 compared with the
+3.3 release, as well as the new features in XFree86 3.3 compared with the
 previous full release, 3.2.  It also includes installation instructions
 for the binary distributions.
 
@@ -51,6 +52,120 @@ url="ftp://tsx-11.mit.edu/pub/linux/packages/GCC">.
 Note: Elf is now the only binary type supported for Linux OSs.  This means
 that binaries for ix86/a.out and AXP/ECOFF are not available with this
 release.
+
+<sect> What's new in 3.3.1?
+<p>
+<sect1> Bug fixes
+<p>
+<itemize>
+  <item>XFree86 3.3.1 includes The Open Group's public patch 2 for X11R6.3.
+  <item>Build problems that showed up on some OSs have been fixed.
+  <item>Support for SCO Open Server 5 should now be complete.
+  <item>A malloc problem in libXt which showed up on FreeBSD has been fixed.
+  <item>Depth-specific DacSpeeds are now implemented for the ET6000.
+  <item>Depth-specific DacSpeeds are fixed for the S3 server.
+  <item>HW cursor problem with the I128 server has been fixed.
+  <item>I128 Series II rev 2 chips are now supported.
+  <item>Xterm will now startup on Linux if /etc/termcap is missing.
+  <item>Various problems with the S3V server and the SVGA s3v driver have been
+	fixed.
+  <item>A problem with the clock limit for some revisions of the Circus 5434
+	has been fixed.
+  <item>The Mach64 server will now correctly recognise some of the newer
+	ATI chip revisions, including the Rage II+, Rage Pro and VT3.  If
+	you needed the ChipId/ChipRev workaround when using 3.3, you should
+	remove those lines from your XF86Config file when upgrading to 3.3.1.
+  <item>An initialisation problem in the S3 server that shows up when the
+	ramdac type is given in the XF86Config file should be fixed.
+  <item>The MGA driver now defaults to using the software cursor because
+	some people have reported problems when using the hardware cursor
+	with Millennium cards.
+  <item>Lockups with the MGA driver that happen on some SVR4 versions have
+	been fixed.  Lockups when the server crashes and dumps core on some
+	OSs have also been fixed where possible.
+  <item>The xterm termcap field for turning off colour has been fixed.
+  <item>A server crash that happens when starting some servers on Solaris
+	has been fixed.
+  <item>Some problems with the Trident 9860 and 9685 chips have been fixed.
+  <item>A problem with xterm writing an invalid wtmp entry on Linux has been
+	fixed.
+  <item>A PolyPoint bug in the S3V server has been fixed.
+  <item>Screen wraparound problems with the S3 server that show up on some
+	old Number Nine GXE level 10 cards have been fixed.
+  <item>A problem with the PCI framebuffer remapping in the S3 server has been
+	fixed.
+  <item>A problem with XF86Setup not showing the correct chipset-specific
+	README file has been fixed.
+  <item>A problem with XF86Setup not setting up the link to the Xserver in
+	some situations has been fixed.
+  <item>Some libXt error/warning messages were partially duplicated, and this
+	is now fixed.
+  <item>Some line drawing problems that show up with the Cirrus 542x chips
+	have been fixed.
+  <item>A problem drawing wide fonts with some Cirrus chips has been fixed.
+  <item>Some bugs in some XKB symbols files have been fixed.
+  <item>The Chips and Technologies 65555 and 68554 are now detected by
+	the chips driver.
+  <item>`xset dpms' didn't accept some parameters correctly.
+  <item>Some raster op bugs in the SVGA server's s3v driver have been fixed.
+  <item>Problems with the Mach32 server that show up with some AST motherboards
+	that have an on-board Mach32 chip have been fixed (see the
+	<htmlurl url="Mach32.html" name="README.Mach32"> file for details).
+  <item>A bug in the ET6000 driver which can cause the server to crash on
+	non-Linux systems has been fixed.
+  <item>An initialisation problem with the ET6000 driver which can result in
+	a black screen has been fixed.
+  <item>The Eraser support in the Wacom driver has been fixed.
+  <item>Support for two relative devices has been fixed in the Wacom driver.
+  <item>The DPMS state is now correctly reset when switching back to the
+	Xserver's VT.
+  <item>A bug in the 24bpp framebuffer code which caused a server crash
+	when running StarOffice has been fixed.
+  <item>An Xserver bug which could cause a server crash when using lbxproxy
+	has been fixed.
+  <item>A conflict between Imake.rules and Motif.rules has been fixed.
+  <item>Some problems that show up with some accelerated servers on SVR4
+	when using Xqueue have been fixed.
+  <item>A problem that can cause a server crash when drawing some arcs has
+	been fixed.
+  <item>The MGA driver now recognises the newer 220MHz Mystique chips.
+  <item>The MGA driver has experimental support for the Millennium II.
+	This really is very new, and is largely untested.  There are known
+	problems (see <htmlurl name="README.MGA" url="MGA.html"> for details).
+  <item>The "noaccel" option could cause a lockup with the Cirrus Laguna
+	chips (546x).  This option is now disabled for those chips.
+  <item>Some blitter timeouts that show up with Cirrus 7548 and 7555 chips
+	should now be fixed.
+  <item>The handling of the PS/2 mouse protocol is fixed for OpenBSD.
+  <item>The SiS driver should now correctly determine the MMIO address.
+</itemize>
+<sect1>Known Problems
+<p>
+<itemize>
+  <item>There are problems with some Cirrus laptop chipsets (75xx).  The
+	driver seems to work for some people, but not others.  Until
+	someone with the appropriate hardware can look into
+	this, these problems are unlikely to be fixed.  If you wish to
+	work on this, please contact us.  We don't need testers, we need
+	people willing and able to fix the problems.
+  <item>There are problems with some of the Trident laptop chipsets.  The
+	driver seems to work in a limited way for some people, but not
+	others.  Until someone with the appropriate hardware can look into
+	this, these problems are unlikely to be fixed.  If you wish to
+	work on this, please contact us.  We don't need testers, we need
+	people willing and able to fix the problems.
+  <item>We have had some reports of apparently random lockups with some
+	Mystique cards.  We have not been able to reproduce this problem,
+	and have no fix for it.
+  <item>There is a drawing bug in the MGA driver that shows up when running
+	`viewfax'.  We have no fix for this problem yet.
+  <item>Some people have reported problems with some newer Rage II cards.
+	We have no fix for this problem yet.
+  <item>We've had a report that the SVGA server will cause a lockup on
+	some SVR4 versions (UnixWare 1.x) with some Chips and Technologies
+	chips.  A workaround for this problem is to use the "xaa_no_color_exp"
+	option.
+</itemize>
 
 <sect> New Features in 3.3
 <p>
@@ -444,26 +559,41 @@ release.
   <item>Gzipped fonts are now supported.
 </itemize>
 
-<sect>Installing the XFree86 3.3 Release
+<sect>Installing the XFree86 3.3.1 Release
 <p>
-The XFree86 3.3 binaries are distributed as a full release,
-not as an upgrade.
+The XFree86 3.3.1 binaries are distributed as both a full release
+and as an upgrade to XFree86 3.3.
 
-What follows is a list of the XFree86 3.3 components.  There may be
+What follows is a list of the XFree86 3.3.1 components.  There may be
 some variations in this for some OSs.
 
-The following are required for all installations:
+The following are required for all new installations or upgrades from
+versions prior to 3.3:
 <quote>
 <verb>
 preinst.sh      Pre-installation script
 postinst.sh     Post-installation script
-X33bin.tgz      Clients, run-time libs, and app-defaults files
-X33doc.tgz      Documentation
-X33fnts.tgz     75dpi, misc and PEX fonts
-X33lib.tgz      Data files required at run-time
-X33man.tgz      Manual pages
-X33set.tgz      XF86Setup utility
-X33VG16.tgz     16 colour VGA server (XF86Setup needs this server)
+extract.tgz     XFree86 extraction utility
+X331bin.tgz     Clients, run-time libs, and app-defaults files
+X331doc.tgz     Documentation
+X331fnts.tgz    75dpi, misc and PEX fonts
+X331lib.tgz     Data files required at run-time
+X331man.tgz     Manual pages
+X331set.tgz     XF86Setup utility
+X331VG16.tgz    16 colour VGA server (XF86Setup needs this server)
+</verb>
+</quote>
+
+The following are required for an upgrade from XFree86 3.3:
+<quote>
+<verb>
+preinst.sh      Pre-installation script
+postinst.sh     Post-installation script
+extract.tgz     XFree86 extraction utility
+X331upd.tgz     Changes since 3.3 (except the servers)
+X331doc.tgz     Documentation
+X331set.tgz     XF86Setup utility
+X331VG16.tgz    16 colour VGA server (XF86Setup needs this server)
 </verb>
 </quote>
 
@@ -471,19 +601,19 @@ The following is required for new installations, and optional for existing
 installations:
 <quote>
 <verb>
-X33cfg.tgz      sample config files for xinit, xdm
+X331cfg.tgz     sample config files for xinit, xdm
 </verb>
 </quote>
 
-NOTE: Be very careful about installing X33cfg.tgz over an existing
+NOTE: Be very careful about installing X331cfg.tgz over an existing
 installation if you have customised your xinit and/or xdm config files.
-Installing X33cfg.tgz will overwrite any existing files.  If you do have
-customised files, there is no need to install X33cfg.tgz.
+Installing X331cfg.tgz will overwrite any existing files.  If you do have
+customised files, there is no need to install X331cfg.tgz.
 
 NOTE: The bitmap fonts distributed with this release are compressed using
 gzip rather than compress.  This means that you will probably want to
 remove the old versions (after backing them up).  The Xservers and font
-server in previous releases cannot read gzipped fonts, so keep a copy
+server in releases prior to 3.2A cannot read gzipped fonts, so keep a copy
 of the old fonts if you wish to run older servers.
 
 The following X servers are for PC/AT based hardware (i.e., typical
@@ -492,32 +622,31 @@ matches your hardware, as well as the VGA16 server.  The VGA16 server is
 required by the new configuration utility (XF86Setup).
 <quote>
 <verb>
-X338514.tgz     8514/A server
-X33AGX.tgz      AGX server
-X33I128.tgz     I128 server
-X33Ma32.tgz     Mach 32 server
-X33Ma64.tgz     Mach 64 server
-X33Ma8.tgz      Mach 8 server
-X33Mono.tgz     Mono server
-X33P9K.tgz      P9000 server
-X33S3.tgz       S3 server
-X33S3V.tgz      S3 ViRGE server
-X33SVGA.tgz     SVGA server
-X33VG16.tgz     16 colour VGA server (XF86Setup needs this server)
-X33W32.tgz      ET4000/W32, ET6000 server
+X3318514.tgz    8514/A server
+X331AGX.tgz     AGX server
+X331I128.tgz    I128 server
+X331Ma32.tgz    Mach 32 server
+X331Ma64.tgz    Mach 64 server
+X331Ma8.tgz     Mach 8 server
+X331Mono.tgz    Mono server
+X331P9K.tgz     P9000 server
+X331S3.tgz      S3 server
+X331S3V.tgz     S3 ViRGE server
+X331SVGA.tgz    SVGA server
+X331VG16.tgz    16 colour VGA server (XF86Setup needs this server)
+X331W32.tgz     ET4000/W32, ET6000 server
 </verb>
 </quote>
 The following X servers are available for Alpha hardware:
 <quote>
 <verb>
-X33I128.tgz     I128 server
-X33Ma64.tgz     Mach 64 server
-X33Mono.tgz     Mono server (generic driver only)
-X33P9K.tgz      P9000 server
-X33TGA.tgz      DEC 21030 (TGA) server
-X33S3.tgz       S3 server
-X33S3V.tgz      S3 ViRGE server
-X33SVGA.tgz     SVGA server (Matrox Millennium driver only)
+X331Ma64.tgz    Mach 64 server
+X331Mono.tgz    Mono server (generic driver only)
+X331P9K.tgz     P9000 server
+X331TGA.tgz     DEC 21030 (TGA) server
+X331S3.tgz      S3 server
+X331S3V.tgz     S3 ViRGE server
+X331SVGA.tgz    SVGA server (Matrox Millennium driver only)
 </verb>
 </quote>
 The following X servers are for PC98 hardware.  If you have a PC98 machine,
@@ -525,38 +654,38 @@ choose one which suits your hardware.  If you don't know what a PC98 machine
 is, you don't need any of these.
 <quote>
 <verb>
-X339NS3.tgz     PC98 NEC(S3) server
-X339SPW.tgz     PC98 PCSKB-PowerWindow(S3) server
-X339LPW.tgz     PC98 PowerWindowLB(S3) server
-X339EGC.tgz     PC98 EGC(generic) server
-X339GA9.tgz     PC98 GA-968V4/PCI(S3 968) server
-X339GAN.tgz     PC98 GANB-WAP(cirrus) server
-X339480.tgz     PC98 PEGC-480(generic) server
-X339NKV.tgz     PC98 NKV-NEC(cirrus) server
-X339WS.tgz      PC98 WABS(cirrus) server
-X339WEP.tgz     PC98 WAB-EP(cirrus) server
-X339WSN.tgz     PC98 WSN-A2F(cirrus) server
-X339TGU.tgz     PC98 TGUI server
+X3319NS3.tgz    PC98 NEC(S3) server
+X3319SPW.tgz    PC98 PCSKB-PowerWindow(S3) server
+X3319LPW.tgz    PC98 PowerWindowLB(S3) server
+X3319EGC.tgz    PC98 EGC(generic) server
+X3319GA9.tgz    PC98 GA-968V4/PCI(S3 968) server
+X3319GAN.tgz    PC98 GANB-WAP(cirrus) server
+X3319480.tgz    PC98 PEGC-480(generic) server
+X3319NKV.tgz    PC98 NKV-NEC(cirrus) server
+X3319WS.tgz     PC98 WABS(cirrus) server
+X3319WEP.tgz    PC98 WAB-EP(cirrus) server
+X3319WSN.tgz    PC98 WSN-A2F(cirrus) server
+X3319TGU.tgz    PC98 TGUI server
 </verb>
 </quote>
 The following are optional.
 <quote>
 <verb>
-X33f100.tgz    100dpi fonts
-X33fcyr.tgz    Cyrillic fonts
-X33fnon.tgz    Other fonts (Chinese, Japanese, Korean, Hebrew)
-X33fscl.tgz    Scalable fonts (Speedo and Type1)
-X33fsrv.tgz    Font server and config files
-X33prog.tgz    X header files, config files and compile-time libs
-X33nest.tgz    Nested X server
-X33vfb.tgz     Virtual framebuffer X server
-X33prt.tgz     X Print server
-X33ps.tgz      PostScript version of the documentation
-X33html.tgz    HTML version of the documentation
-X33jdoc.tgz    Documentation in Japanese (for version 3.2)
-X33jhtm.tgz    HTML version of the documentation in Japanese (3.2)
-X33lkit.tgz    X server LinkKit
-X33lk98.tgz    X server LinkKit for PC98 servers
+X331f100.tgz    100dpi fonts
+X331fcyr.tgz    Cyrillic fonts
+X331fnon.tgz    Other fonts (Chinese, Japanese, Korean, Hebrew)
+X331fscl.tgz    Scalable fonts (Speedo and Type1)
+X331fsrv.tgz    Font server and config files
+X331prog.tgz    X header files, config files and compile-time libs
+X331nest.tgz    Nested X server
+X331vfb.tgz     Virtual framebuffer X server
+X331prt.tgz     X Print server
+X331ps.tgz      PostScript version of the documentation
+X331html.tgz    HTML version of the documentation
+X331jdoc.tgz    Documentation in Japanese (for version 3.2)
+X331jhtm.tgz    HTML version of the documentation in Japanese (3.2)
+X331lkit.tgz    X server LinkKit
+X331lk98.tgz    X server LinkKit for PC98 servers
 </verb>
 </quote>
 
@@ -580,60 +709,61 @@ to install new versions of some system components before proceeding with
 the installation.  This script may also remove some outdated files and
 symbolic links from a previous installation that could cause problems.
 
-Copy the <tt>preinst.sh</tt> script to
-<tt>/var/tmp</tt>, then go to <tt>/usr/X11R6</tt> and run it:
+For the purposes of these installation instructions, it is assumed that
+you have downloaded all the files to the <tt>/var/tmp</tt> directory.
+If you've put them in another directory, that's fine -- just replace
+all occurrences of ``<tt>/var/tmp</tt>'' with the name of that directory.
+
+To run the pre-installation script, go to <tt>/usr/X11R6</tt> and run it:
 <tscreen><verb>
 	cd /usr/X11R6
 	sh /var/tmp/preinst.sh
 </verb></tscreen>
 
-The <tt>.tgz</tt> files are gzipped tar files.  To extract them, go to
-<tt>/usr/X11R6</tt>, and run the following as <bf>root</bf> for each
-file you need:
-<tscreen><verb>
-	gzip -d < X33file.tgz | tar vxf -
-</verb></tscreen>
-On some OSs, you might get some "Broken Pipe" messages.  Providing there
-are no other messages associated with this, they can be safely ignored.
-Note: You should not be running X while doing this installation.  Doing
-so may cause the installation to fail, or cause your X session to crash.
+The next step is to untar the installation utility.  To do this, make
+sure the extract.tgz file is in the same directory as all the X331*.tgz
+files, and run the following from that directory:
 
-If you are using NetBSD or FreeBSD, a more reliable (and highly recommended)
-way of doing this is to extract the <tt>.tgz</tt> files with:
 <tscreen><verb>
-        gzip -d < X33file.tgz | tar -v -x --unlink -f -
+	cd /var/tmp
+	gzip -d < extract.tgz | tar vxf -
 </verb></tscreen>
 
-If you have GNU cpio (as Linux does) or SVR4 cpio, a more reliable (and
-highly recommended) way of doing this is to extract the <tt>.tgz</tt>
-files with:
+The installation utility ``extract'' is used to unpack the .tgz files
+that make up the XFree86 distribution.  The .tgz files are gzipped
+tar files.  However, ``tar'' in its standard form on most OSs is not
+well-suited to the task of installing XFree86.  The extract utility is
+a modified version of GNU tar 1.12 built with the options required to
+make it suitable for installing XFree86.  The source for extract is
+available from the same place you got the XFree86 distribution.
+
+It is strongly recommended that you use the provided extract utility to
+unpack the XFree86 distribution.  If you choose to ignore this and use
+something else, we don't want to hear from you if you run into problems.
+It is also important that you do not rename the extract utility.  If
+renamed, it behaves just like the normal GNU tar.
+
+To extract the XFree86 binaries, run the following as <bf>root</bf>:
 <tscreen><verb>
-	gzip -d < X33file.tgz | cpio -i -v -d -u -H ustar
+	cd /usr/X11R6
+	/var/tmp/extract /var/tmp/X331*.tgz
 </verb></tscreen>
 
-Once the required <tt>.tgz</tt> files have been extracted, copy the
-<tt>postinst.sh</tt> script to <tt>/var/tmp</tt>, then go to
-<tt>/usr/X11R6</tt> and run it:
+Once the required <tt>.tgz</tt> files have been extracted, run the post
+installation script:
 <tscreen><verb>
 	cd /usr/X11R6
 	sh /var/tmp/postinst.sh
 </verb></tscreen>
 
-For OSs which use ldconfig (like Linux, FreeBSD, NetBSD and OpenBSD), you
-should either run ldconfig or reboot to complete the installation.
-Some Linux releases don't run ldconfig automatically at reboot, so you
-may need to run it manually.
-If you are using FreeBSD, NetBSD or OpenBSD, and your version of ldconfig
-supports the <tt>-m</tt> option, you can run:
-<tscreen><verb>
-	ldconfig -m /usr/X11R6/lib
-</verb></tscreen>
-Otherwise for these OSs, check <tt>/etc/rc</tt> to see how ldconfig gets
-run at boot time.
+For OSs which use ldconfig, you may need to run ldconfig or reboot to
+complete the installation.  The postinst.sh script should run ldconfig
+correctly for you if you are using Linux, FreeBSD, NetBSD or OpenBSD.
+For other OSs that use ldconfig, check how it normally gets run at boot time.
 
 <p>
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/RELNOTE.sgml,v 3.59.2.16 1997/06/02 01:44:14 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/RELNOTE.sgml,v 3.59.2.21 1997/08/04 02:10:43 dawes Exp $
 </verb>
 
 </article>

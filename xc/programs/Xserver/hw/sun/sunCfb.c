@@ -1,6 +1,5 @@
 
 /* $XConsortium: sunCfb.c /main/20 1996/10/31 14:24:08 kaleb $ */
-/* $XFree86: xc/programs/Xserver/hw/sun/sunCfb.c,v 3.5 1996/12/23 06:30:14 dawes Exp $ */
 
 /*
 Copyright (c) 1990  X Consortium
@@ -26,6 +25,7 @@ Except as contained in this notice, the name of the X Consortium shall not be
 used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from the X Consortium.
  */
+/* $XFree86: xc/programs/Xserver/hw/sun/sunCfb.c,v 3.5.2.2 1997/07/28 14:17:26 dawes Exp $ */
 
 /************************************************************
 Copyright 1987 by Sun Microsystems, Inc. Mountain View, CA.
@@ -291,7 +291,10 @@ Bool sunTCXInit (screen, pScreen, argc, argv)
 #ifndef CSRG_BASED
 #include <pixrect/cg2reg.h>
 #else
+#if defined(__sparc__) || defined(__sparc)
 #include <machine/cgtworeg.h>
+#else
+#include <machine/cg2reg.h>
 #endif
 #endif
 

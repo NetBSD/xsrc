@@ -1,5 +1,5 @@
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/et4000/tseng_acl.h,v 3.5.2.3 1997/05/24 08:36:15 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/et4000/tseng_acl.h,v 3.5.2.4 1997/07/26 06:30:53 dawes Exp $ */
 
 #ifndef _TSENG_ACL_H
 #define _TSENG_ACL_H
@@ -95,6 +95,7 @@ extern
 WordP ACL_SECONDARY_ERROR_TERM,
       ACL_SECONDARY_DELTA_MINOR,
       ACL_SECONDARY_DELTA_MAJOR;
+ByteP ACL_TRANSFER_DISABLE;
 
 
 extern int W32OpTable[16];

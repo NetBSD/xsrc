@@ -1,3 +1,4 @@
+/* $TOG: README /main/4 1997/06/09 16:57:45 barstow $ */
 Installation instructions for fontserver
 
 1 - set DefaultFSConfigFile to point to the correct place, if the default
@@ -9,7 +10,7 @@ Installation instructions for fontserver
 	parameter points to a set of valid font directories.
 
 At this point the test programs should work.  Start the font server
-	(fs &) and try some tests.  Most of the clients take
+	(xfs &) and try some tests.  Most of the clients take
 	a command line switch of where to find the server, and
 	FSlib understands the environment variable FONTSERVER.
 	The format is the same as Xlib, (ie, hostname:server_number).

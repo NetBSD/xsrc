@@ -1,4 +1,4 @@
-/* $XConsortium: Init.c /main/4 1996/12/30 14:55:45 kaleb $ */
+/* $TOG: Init.c /main/6 1997/06/12 09:59:34 samborn $ */
 /*
 (c) Copyright 1996 Hewlett-Packard Company
 (c) Copyright 1996 International Business Machines Corp.
@@ -50,7 +50,7 @@ copyright holders.
 **    *********************************************************
 ** 
 ********************************************************************/
-/* $XFree86: xc/programs/Xserver/Xprint/Init.c,v 1.5 1997/01/14 22:14:04 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/Xprint/Init.c,v 1.5.2.1 1997/06/15 07:25:27 dawes Exp $ */
 
 #include <unistd.h>
 #include <stdlib.h>
@@ -307,7 +307,7 @@ static driverInitRec driverInits[] = {
     {
 	"XP-PCL-MONO",
 	InitializeMonoPclDriver,
-	PclValidatePoolsRec,
+	&PclValidatePoolsRec,
 	(pVFunc) NULL,
 	MonoPclPixmapFormats,
 	NUMMPCLFORMATS
@@ -645,6 +645,12 @@ StoreDriverNames()
 	   strlen(pEntry->driverName) == 0 ||
 	   GetInitFunc(pEntry->driverName) == (Bool(*)())NULL)
 	{
+	    if (pEntry->driverName && (strlen(pEntry->driverName) != 0)) {
+	        ErrorF("Xp Extension: Can't load driver %s\n", 
+		       pEntry->driverName);
+	        ErrorF("              init function missing\n"); 
+	    }
+
 	    pEntry->driverName = defaultDriver;
 	    XpAddPrinterAttribute(pEntry->name,
 			          (pEntry->qualifier != (char *)NULL)?
@@ -1282,6 +1288,32 @@ PrinterInitOutput(pScreenInfo, argc, argv)
     PrinterDbPtr pDb, pDbEntry;
     int driverCount = 0, i;
     char **driverNames;
+    char *configDir;
+
+    /* 
+     * this little test is just a warning at startup to make sure
+     * that the config directory exists.
+     *
+     * what this ugly looking if says is that if both ways of
+     * calling configDir works and both directories don't exist, 
+     * then print an error saying we can't find the non-lang one.
+     */
+    if (((configDir = XpGetConfigDir(TRUE)) != NULL) && 
+	(access(configDir, F_OK) == 0))
+    {
+        xfree(configDir);
+    }
+    else if (((configDir = XpGetConfigDir(FALSE)) != NULL) &&
+	     (access(configDir, F_OK) == 0))
+    {
+        xfree(configDir);
+    }
+    else {
+	ErrorF("Xp Extension: could not find config dir %s\n",
+	       configDir ? configDir : XPRINTDIR);
+
+	if (configDir) xfree(configDir);
+    }
 
     if(printerDb != (PrinterDbPtr)NULL)
 	FreePrinterDb();

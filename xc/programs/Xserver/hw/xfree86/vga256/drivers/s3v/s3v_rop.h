@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/s3v/s3v_rop.h,v 1.1.2.1 1997/05/14 07:52:59 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/s3v/s3v_rop.h,v 1.1.2.2 1997/06/29 08:43:38 dawes Exp $ */
 /*
  *
  * Copyright 1995-1997 The XFree86 Project, Inc.
@@ -61,42 +61,42 @@ static int s3vAlu_sp[16]=
 /* These are used to support a planemask for S->D ops */
 static int s3vAlu_pat[16] =
 {
-   ROP_0PaDPnao,
-   ROP_DSaPaDPnao,
-   ROP_SDnaPaDPnao,
-   ROP_SPaDPnao,
-   ROP_DSnaPaDPnao,
-   ROP_DPaDPnao,
-   ROP_DSxPaDPnao,
-   ROP_DSoPaDPnao,
-   ROP_DSonPaDPnao,
-   ROP_DSxnPaDPnao,
-   ROP_DnPaDPnao,
-   ROP_SDnoPaDPnao,
-   ROP_SnPaDPnao,
-   ROP_DSnoPaDPnao,
-   ROP_DSanPaDPnao,
-   ROP_1PaDPnao
+   ROP_0_PaDPnao,
+   ROP_DSa_PaDPnao,
+   ROP_SDna_PaDPnao,
+   ROP_S_PaDPnao,
+   ROP_DSna_PaDPnao,
+   ROP_D_PaDPnao,
+   ROP_DSx_PaDPnao,
+   ROP_DSo_PaDPnao,
+   ROP_DSon_PaDPnao,
+   ROP_DSxn_PaDPnao,
+   ROP_Dn_PaDPnao,
+   ROP_SDno_PaDPnao,
+   ROP_Sn_PaDPnao,
+   ROP_DSno_PaDPnao,
+   ROP_DSan_PaDPnao,
+   ROP_1_PaDPnao
 };
 
-/* ROP -> (ROP & S) | (~ROP & D) */
+/* ROP_sp -> (ROP_sp & S) | (D & ~S) */
 /* This is used for our transparent mono pattern fills to support trans/plane*/
 static int s3vAlu_MonoTrans[16] =
 {
-   ROP_D,
-   ROP_DSPnoa,
-   ROP_DPSao,
-   ROP_DPSDxax,
-   ROP_DPSoa,
-   ROP_DSa,
-   ROP_SSPxDSxax,
-   ROP_SDPoa,
-   ROP_DSPnao,
-   ROP_SSDxPDxax,
-   ROP_DSo,
-   ROP_SDPnao,
-   ROP_SPDSxax,
-   ROP_SDPnoa,
-   ROP_SDPao,
-   ROP_S
+   ROP_0_SaDSnao,
+   ROP_DPa_SaDSnao,
+   ROP_PDna_SaDSnao,
+   ROP_P_SaDSnao,
+   ROP_DPna_SaDSnao,
+   ROP_D_SaDSnao,
+   ROP_DPx_SaDSnao,
+   ROP_DPo_SaDSnao,
+   ROP_DPon_SaDSnao,
+   ROP_DPxn_SaDSnao,
+   ROP_Dn_SaDSnao,
+   ROP_PDno_SaDSnao,
+   ROP_Pn_SaDSnao,
+   ROP_DPno_SaDSnao,
+   ROP_DPan_SaDSnao,
+   ROP_1_SaDSnao
 };

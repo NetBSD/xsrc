@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/programs/Xserver/iplan2p4/Imakefile,v 3.2 1997/01/25 04:21:47 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/iplan2p4/Imakefile,v 3.2.2.1 1997/06/08 15:41:28 dawes Exp $
 XCOMM $XConsortium: Imakefile,v 5.41 93/09/06 18:37:23 rws Exp $
 #include <Server.tmpl>
 
@@ -122,7 +122,7 @@ InstallLinkKitLibrary(ipl2p2,$(LINKKITDIR)/lib)
 InstallLinkKitLibrary(ipl2p4,$(LINKKITDIR)/lib)
 InstallLinkKitNonExecFile(ipl.h,$(LINKKITDIR)/include)
 InstallLinkKitNonExecFile(iplmap.h,$(LINKKITDIR)/include)
-InstallLinkKitNonExecFile(iplmergeop.h,$(LINKKITDIR)/include)
+InstallLinkKitNonExecFile(iplmergerop.h,$(LINKKITDIR)/include)
 InstallLinkKitNonExecFile(iplmskbits.h,$(LINKKITDIR)/include)
 InstallLinkKitNonExecFile(iplpack.h,$(LINKKITDIR)/include)
 InstallLinkKitNonExecFile(iplrrop.h,$(LINKKITDIR)/include)

@@ -1,4 +1,4 @@
-/* $XConsortium: ddxBeep.c /main/4 1996/02/02 14:39:20 kaleb $ */
+/* $TOG: ddxBeep.c /main/5 1997/06/10 06:53:42 kaleb $ */
 /************************************************************
 Copyright (c) 1993 by Silicon Graphics Computer Systems, Inc.
 
@@ -42,11 +42,14 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <alpha/prom.h>
 #endif
 
-#define FALLING_TONE	1
-#define RISING_TONE	1
+/*#define FALLING_TONE	1*/
+/*#define RISING_TONE	1*/
+#define FALLING_TONE	10
+#define RISING_TONE	10
 #define	SHORT_TONE	50
 #define	SHORT_DELAY	60
 #define	LONG_TONE	75
+#define	VERY_LONG_TONE	100
 #define	LONG_DELAY	85
 #define CLICK_DURATION	1
 
@@ -209,22 +212,31 @@ Atom		name;
          */
 	case _BEEP_FEATURE_ON:
 	    if (name==None)	name= featureOn;
-	    duration= RISING_TONE;
-	    pitch = LOW_PITCH + (128 * xkbInfo->beepCount);
-	    if (doesPitch && (pitch <= HIGH_PITCH))
-		next = RISING_TONE;
+	    if (xkbInfo->beepCount<1) {
+		pitch= LOW_PITCH;
+		duration= VERY_LONG_TONE;
+		if (doesPitch)
+		    next= SHORT_DELAY;
+	    }
+	    else {
+		pitch= MID_PITCH;
+		duration= SHORT_TONE;
+	    }
 	    break;
 
 	case _BEEP_FEATURE_OFF:
-	    if (name==None)	name= featureOn;
-	    duration= FALLING_TONE;
-	    pitch = HIGH_PITCH - (128 * xkbInfo->beepCount);
-	    if (doesPitch) {
-		if (pitch >= LOW_PITCH)
-		    next = FALLING_TONE;	    
+	    if (name==None)	name= featureOff;
+	    if (xkbInfo->beepCount<1) {
+		pitch= MID_PITCH;
+		if (doesPitch)
+		     duration= VERY_LONG_TONE;
+		else duration= SHORT_TONE;
+		next= SHORT_DELAY;
 	    }
-	    else if (xkbInfo->beepCount<1)
-		next = SHORT_DELAY;
+	    else {
+		pitch= LOW_PITCH;
+		duration= SHORT_TONE;
+	    }
 	    break;
 
 	/* Two high beeps indicate an LED or Feature changed

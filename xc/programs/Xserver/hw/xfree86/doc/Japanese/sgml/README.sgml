@@ -639,7 +639,7 @@ integration, Wacom タブレット, ジョイスティック と 拡張マウスデバイスドライ
 バ, xsetpointer と xsetmode クライアント)
        <item> Patrick Lecoanet <it>&lt;lecoanet@cena.dgac.fr&gt;</it>
 (Elographics タッチスクリーンデバイスドライバ)
-       <item> Steven Lang <it>&lt;tiger@ecis.com&gt;</it> (Summagraphics タ
+       <item> Steven Lang <it>&lt;tiger@tyger.org&gt;</it> (Summagraphics タ
 ブレット デバイスドライバ)
 </itemize>
 
@@ -987,7 +987,7 @@ url="RELNOTE.html"> に格納場所からダウンする必要のあるファイル
 について記載されています。
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/sgml/README.sgml,v 3.2 1997/01/26 04:34:23 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/sgml/README.sgml,v 3.2.2.1 1997/07/06 07:28:17 dawes Exp $
 </verb>
 <hrule>
 

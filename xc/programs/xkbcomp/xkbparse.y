@@ -1,4 +1,4 @@
-/* $XConsortium: xkbparse.y /main/9 1996/08/31 12:16:06 kaleb $ */
+/* $TOG: xkbparse.y /main/11 1997/06/13 05:59:27 kaleb $ */
 /************************************************************
  Copyright (c) 1994 by Silicon Graphics Computer Systems, Inc.
 
@@ -39,6 +39,7 @@
 	OVERRIDE	11
 	AUGMENT		12
 	REPLACE		13
+	ALTERNATE	14
 	VIRTUAL_MODS	20
 	TYPE		21
 	INTERPRET	22
@@ -242,77 +243,83 @@ DeclList	:	DeclList Decl
 
 Decl		:	OptMergeMode VarDecl
 			{
-			    $2->merge= $1;
+			    $2->merge= StmtSetMerge(&$2->common,$1);
 			    $$= &$2->common;
 			}
 		|	OptMergeMode VModDecl
 			{
-			    $2->merge= $1;
+			    $2->merge= StmtSetMerge(&$2->common,$1);
 			    $$= &$2->common;
 			}
 		|	OptMergeMode InterpretDecl
 			{
-			    $2->merge= $1;
+			    $2->merge= StmtSetMerge(&$2->common,$1);
 			    $$= &$2->common;
 			}
 		|	OptMergeMode KeyNameDecl
 			{
-			    $2->merge= $1;
+			    $2->merge= StmtSetMerge(&$2->common,$1);
 			    $$= &$2->common;
 			}
 		|	OptMergeMode KeyAliasDecl
 			{
-			    $2->merge= $1;
+			    $2->merge= StmtSetMerge(&$2->common,$1);
 			    $$= &$2->common;
 			}
 		|	OptMergeMode KeyTypeDecl
 			{
-			    $2->merge= $1;
+			    $2->merge= StmtSetMerge(&$2->common,$1);
 			    $$= &$2->common;
 			}
 		|	OptMergeMode SymbolsDecl
 			{
-			    $2->merge= $1;
+			    $2->merge= StmtSetMerge(&$2->common,$1);
 			    $$= &$2->common;
 			}
 		|	OptMergeMode ModMapDecl
 			{
-			    $2->merge= $1;
+			    $2->merge= StmtSetMerge(&$2->common,$1);
 			    $$= &$2->common;
 			}
 		|	OptMergeMode GroupCompatDecl
 			{
-			    $2->merge= $1;
+			    $2->merge= StmtSetMerge(&$2->common,$1);
 			    $$= &$2->common;
 			}
 		|	OptMergeMode IndicatorMapDecl
 			{
-			    $2->merge= $1;
+			    $2->merge= StmtSetMerge(&$2->common,$1);
 			    $$= &$2->common;
 			}
 		|	OptMergeMode IndicatorNameDecl
 			{
-			    $2->merge= $1;
+			    $2->merge= StmtSetMerge(&$2->common,$1);
 			    $$= &$2->common;
 			}
 		|	OptMergeMode ShapeDecl
 			{
-			    $2->merge= $1;
+			    $2->merge= StmtSetMerge(&$2->common,$1);
 			    $$= &$2->common;
 			}
 		|	OptMergeMode SectionDecl
 			{
-			    $2->merge= $1;
+			    $2->merge= StmtSetMerge(&$2->common,$1);
 			    $$= &$2->common;
 			}
 		|	OptMergeMode DoodadDecl
 			{
-			    $2->merge= $1;
+			    $2->merge= StmtSetMerge(&$2->common,$1);
 			    $$= &$2->common;
 			}
 		|	MergeMode STRING
 			{
-			    $$= &IncludeCreate(scanStr,$1)->common;
+			    if ($1==MergeAltForm) {
+				yyerror("cannot use 'alternate' to include other maps");
+				$$= &IncludeCreate(scanStr,MergeDefault)->common;
+			    }
+			    else {
+				$$= &IncludeCreate(scanStr,$1)->common;
+			    }
                         }
 		;
 
@@ -586,6 +593,7 @@ MergeMode	:	INCLUDE			{ $$= MergeDefault; }
 		|	AUGMENT			{ $$= MergeAugment; }
 		|	OVERRIDE		{ $$= MergeOverride; }
 		|	REPLACE			{ $$= MergeReplace; }
+		|	ALTERNATE		{ $$= MergeAltForm; }
 		;
 
 OptExprList	:	ExprList			{ $$= $1; }

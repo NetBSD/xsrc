@@ -1346,5 +1346,41 @@ Section "Monitor"
    Modeline  "320x200"    12.59 320 336 384 400 200 204 205 225 doublescan
 EndSection
 
-# $XFree86: xc/programs/Xserver/hw/xfree86/doc/Monitors,v 3.15.2.1 1997/05/22 14:00:38 dawes Exp $
+#From: hohndel@XFree86.Org (Dirk Hohndel)
+#Date: 31 July 1997, 12:18:28 MEST
+
+Section "Monitor"
+   Identifier      "Elsa 24"
+   VendorName      "Elsa"
+   ModelName       "24H96
+   HorizSync       30-96
+   VertRefresh     50-160
+   # 640x480@60Hz
+   Modeline "640x480" 25.200 640 656 720 840 480 481 484 500
+   # 800x600@90Hz
+   Modeline "800x600" 59.400 800 816 896 1056 600 601 604 625
+   # 1024x768@90Hz
+   Modeline "1024x768" 94.464 1024 1040 1136 1312 768 769 772 800
+   # 1152x864@90Hz
+   Modeline "1152x864" 120.528 1152 1168 1280 1488 864 865 868 900
+   # 1280x1024@90Hz
+   Modeline "1280x1024" 161.947 1280 1296 1440 1688 1024 1025 1028 1066
+   # 1600x1000@90Hz
+   Modeline "1600x1000" 194.875 1600 1616 1744 2080 1000 1001 1004 1041
+   # 1600x1024@90Hz
+   Modeline "1600x1024" 201.090 1600 1616 1760 2096 1024 1025 1028 1066
+   # 1600x1200@75Hz
+   Modeline "1600x1200" 198.000 1600 1616 1776 2112 1200 1201 1204 1250
+   # 1792x1120@75Hz
+   Modeline "1792x1120" 204.983 1792 1808 1952 2344 1120 1121 1124 1166
+   # 1920x1200@75Hz
+   Modeline "1920x1200" 237.000 1920 1936 2096 2528 1200 1201 1204 1250
+   # 1920x1280@70Hz
+   Modeline "1920x1280" 235.357 1920 1936 2096 2528 1280 1281 1284 1330
+   # 2048x1280@60Hz
+   Modeline "2048x1280" 243.139 2048 2064 2576 3016 1280 1281 1284 1333
+EndSection
+
+
+# $XFree86: xc/programs/Xserver/hw/xfree86/doc/Monitors,v 3.15.2.2 1997/07/31 10:23:10 hohndel Exp $
 # $XConsortium: Monitors /main/13 1996/10/25 14:11:55 kaleb $

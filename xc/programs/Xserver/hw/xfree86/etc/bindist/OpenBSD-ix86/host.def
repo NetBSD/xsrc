@@ -1,0 +1,16 @@
+/*
+ * Host.def for building OpenBSD bindists
+ *
+ * $XFree86: xc/programs/Xserver/hw/xfree86/etc/bindist/OpenBSD-ix86/host.def,v 1.1.2.1 1997/07/27 02:41:27 dawes Exp $
+ */
+
+#define InstallEmptyHostDef
+
+#define ForceNormalLib		YES
+
+#define HasTcl			YES
+#define HasTk			YES
+#define TkLibName		tk41
+#define TclLibName		tcl75
+
+#define JoystickSupport		YES

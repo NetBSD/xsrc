@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86_Option.h,v 3.65.2.6 1997/05/21 15:02:35 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86_Option.h,v 3.65.2.8 1997/07/10 08:02:09 hohndel Exp $ */
 /*
  * Copyright 1993 by David Wexelblat <dwex@goblin.org>
  *
@@ -132,6 +132,7 @@ typedef struct {
 #define OPTION_MIRO_MAGIC_S4	109 /* miroMagic S4 with (S3) 928 and BT485 */
 #define OPTION_ELSA_W2000PRO_X8	110 /* clock/phase_detect for ELSA Winner 2000PRO/X-8 (S3) */
 #define OPTION_MIRO_80SV	111 /* clock/phase_detect for MIRO 80SV (S3) */
+#define OPTION_AST_MACH32       112 /* AST's soldered-in SVGA motherboard (Mach32) */
 
 /* Misc options */
 #define OPTION_CSYNC		120 /* Composite sync */
@@ -153,6 +154,7 @@ typedef struct {
 #define OPTION_18_BIT_BUS	136 /* (CT) Use 18bit TFT bus for 24bpp mode */
 #define OPTION_PCI_RETRY	137 /* Use PCI-retry instead of busy-waiting */
 #define OPTION_NO_PCI_DISC	138 /* Disable PCI disconnect (S3) */
+#define OPTION_NO_SPLIT_XFER	139 /* Disable split VRAM transfers to avoid pixel wrapping (S3) */
 
 /* Debugging options */
 #define OPTION_SHOWCACHE	150 /* Allow cache to be seen (S3) */
@@ -351,6 +353,7 @@ OptFlagRec xf86_OptionTab[] = {
   { "stb",		OPTION_STB },
   { "hercules",		OPTION_HERCULES },
   { "miro_magic_s4",	OPTION_MIRO_MAGIC_S4},
+  { "ast_mach32",       OPTION_AST_MACH32},
 
   { "composite",	OPTION_CSYNC },
   { "secondary",	OPTION_SECONDARY },
@@ -371,6 +374,7 @@ OptFlagRec xf86_OptionTab[] = {
   { "use_18bit_bus",	OPTION_18_BIT_BUS },
   { "pci_retry",	OPTION_PCI_RETRY },
   { "no_pci_disconnect",	OPTION_NO_PCI_DISC },
+  { "no_split_xfer",	OPTION_NO_SPLIT_XFER },
 
   { "showcache",	OPTION_SHOWCACHE },
   { "fb_debug",		OPTION_FB_DEBUG },

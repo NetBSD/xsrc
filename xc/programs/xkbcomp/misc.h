@@ -1,4 +1,4 @@
-/* $XConsortium: misc.h /main/4 1996/01/23 06:57:05 kaleb $ */
+/* $TOG: misc.h /main/5 1997/06/10 06:54:04 kaleb $ */
 /************************************************************
  Copyright (c) 1994 by Silicon Graphics Computer Systems, Inc.
 
@@ -139,7 +139,8 @@ extern Bool FindNamedKey(
     unsigned long	/* name */,
     unsigned int *	/* kc_rtrn */,
     Bool		/* use_aliases */,
-    Bool		/* create */
+    Bool		/* create */,
+    int			/* start_from */
 #endif
 );
 

@@ -1,26 +1,27 @@
-XCOMM $XConsortium: Imakefile /main/15 1996/12/06 09:34:35 swick $
+XCOMM $TOG: Imakefile /main/16 1997/05/25 15:12:17 kaleb $
 
 
 
 
 
-XCOMM $XFree86: xc/programs/lbxproxy/Imakefile,v 1.6.2.1 1997/05/03 09:50:50 dawes Exp $
+XCOMM $XFree86: xc/programs/lbxproxy/Imakefile,v 1.6.2.3 1997/07/07 04:11:12 dawes Exp $
 
 #include <Server.tmpl>
 #define       IHaveSubdirs
 
 LBXPROXYCONFIGDIR = LbxproxyConfigSubdir
 
+   ZLIB = GzipLibrary
 SUBDIRS = di os $(LBXPROXYCONFIGDIR)
 LBXLIBS = di/LibraryTargetName(dilbx) os/LibraryTargetName(os) $(TOP)/lib/lbxutil/LibraryTargetName(lbxutil)
   
 #ifdef i386IscArchitecture
-OTHERLIBS = $(ICELIB) $(XLIB) -linet GzipLibrary
+OTHERLIBS = $(ICELIB) $(XLIB) -linet $(ZLIB)
 #else
 #ifdef LynxOSArchitecture
-OTHERLIBS = $(ICELIB) $(XLIB) -lbsd GzipLibrary
+OTHERLIBS = $(ICELIB) $(XLIB) -lbsd $(ZLIB)
 #else
-OTHERLIBS = $(ICELIB) $(XLIB) GzipLibrary
+OTHERLIBS = $(ICELIB) $(XLIB) $(ZLIB)
 #endif
 #endif
 

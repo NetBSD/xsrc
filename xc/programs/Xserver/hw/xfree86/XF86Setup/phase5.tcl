@@ -3,7 +3,7 @@
 #
 #
 #
-# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/phase5.tcl,v 3.7 1997/01/02 11:58:41 dawes Exp $
+# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/phase5.tcl,v 3.7.2.1 1997/06/20 09:13:50 hohndel Exp $
 #
 # Copyright 1996 by Joseph V. Moss <joe@XFree86.Org>
 #
@@ -47,6 +47,10 @@ if { ![getuid] } {
 	    set lastlink $linkname
 	    set linkname [readlink $linkname]
 	}
+        if { [file type $linkname]=="link" && ![file exists $linkname] } {
+                set lastlink [readlink $linkname]
+	}
+
 	if { $nlinks < 20 } {
 	    set servname [string range [file tail $linkname] 5 end]
 	    if ![string compare $servname $server] {

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach32/mach32.c,v 3.63.2.4 1997/05/26 14:36:16 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach32/mach32.c,v 3.63.2.5 1997/07/10 08:02:07 hohndel Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  * Copyright 1993 by Kevin E. Martin, Chapel Hill, North Carolina.
@@ -580,6 +580,7 @@ mach32Probe()
     OFLG_SET(OPTION_CSYNC, &validOptions);
     OFLG_SET(OPTION_INTEL_GX, &validOptions);
     OFLG_SET(OPTION_DAC_8_BIT, &validOptions);
+    OFLG_SET(OPTION_AST_MACH32, &validOptions);
     xf86VerifyOptions(&validOptions, &mach32InfoRec);
     
     mach32InfoRec.chipset = "mach32";

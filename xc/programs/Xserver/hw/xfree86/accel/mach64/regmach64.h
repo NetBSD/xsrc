@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach64/regmach64.h,v 3.15 1997/01/05 11:53:46 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach64/regmach64.h,v 3.15.2.2 1997/07/27 02:41:12 dawes Exp $ */
 /*
  * Copyright 1992,1993,1994,1995,1996 by Kevin E. Martin, Chapel Hill, North Carolina.
  *
@@ -219,6 +219,7 @@ extern unsigned ioCRTC_GEN_CNTL;
 #define CRTC_PIX_ORDER_LSN_MSN	0x00000800
 
 #define CRTC_FIFO_LWM		0x000f0000
+#define CRTC_LOCK_REGS		0x00400000
 #define CRTC_EXT_DISP_EN	0x01000000
 #define CRTC_EXT_EN		0x02000000
 
@@ -422,7 +423,10 @@ extern unsigned ioCRTC_GEN_CNTL;
 #define PCI_MACH64_CT		0x4354
 #define PCI_MACH64_ET		0x4554
 #define PCI_MACH64_VT		0x5654
+#define PCI_MACH64_VU		0x5655
 #define PCI_MACH64_GT		0x4754
+#define PCI_MACH64_GU		0x4755
+#define PCI_MACH64_GP		0x4750
 
 /* CONFIG_CHIP_ID register constants */
 #define CFG_CHIP_TYPE		0x0000FFFF
@@ -438,7 +442,10 @@ extern unsigned ioCRTC_GEN_CNTL;
 #define MACH64_CT_ID		0x4354
 #define MACH64_ET_ID		0x4554
 #define MACH64_VT_ID		0x5654
+#define MACH64_VU_ID		0x5655
 #define MACH64_GT_ID		0x4754
+#define MACH64_GU_ID		0x4755
+#define MACH64_GP_ID		0x4750
 
 /* Mach64 chip types */
 #define MACH64_UNKNOWN		0

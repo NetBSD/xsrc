@@ -1,5 +1,4 @@
-/* $XConsortium: symbols.c /main/13 1996/12/27 21:17:07 kaleb $ */
-/* $XFree86: xc/programs/xkbcomp/symbols.c,v 3.5 1996/12/29 13:56:19 dawes Exp $ */
+/* $TOG: symbols.c /main/15 1997/06/14 06:35:50 kaleb $ */
 /************************************************************
  Copyright (c) 1994 by Silicon Graphics Computer Systems, Inc.
 
@@ -25,6 +24,7 @@
  THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
  ********************************************************/
+/* $XFree86: xc/programs/xkbcomp/symbols.c,v 3.5.2.1 1997/06/22 10:32:40 dawes Exp $ */
 
 #include "xkbcomp.h"
 #include "tokens.h"
@@ -1638,27 +1638,30 @@ FindAutomaticType(width,syms,typeNameRtrn)
     return ((width>=0)&&(width<=2));
 }
 
-static Bool
+Bool
 #if NeedFunctionPrototypes
-CopySymbolsDef(XkbFileInfo *result,KeyInfo *key)
+CopySymbolsDef(XkbFileInfo *result,KeyInfo *key,int start_from)
 #else
-CopySymbolsDef(result,key)
+CopySymbolsDef(result,key,start_from)
     XkbFileInfo *	result;
     KeyInfo *		key;
+    int			start_from;
 #endif
 {
 register int	i;
 unsigned	okc,kc,width,tmp,nGroups;
 XkbKeyTypePtr	type;
-Bool		haveActions,autoType;
+Bool		haveActions,autoType,useAlias;
 KeySym *	outSyms;
 XkbAction *	outActs;
 XkbDescPtr	xkb;
 unsigned	types[XkbNumKbdGroups];
 
     xkb= result->xkb;
-    if (!FindNamedKey(xkb,key->name,&kc,True,CreateKeyNames(xkb))) {
-	if (warningLevel>=5) {
+    useAlias= (start_from==0);
+    if (!FindNamedKey(xkb,key->name,&kc,useAlias,CreateKeyNames(xkb),
+								start_from)) {
+	if ((start_from==0)&&(warningLevel>=5)) {
 	    WARN2("Key %s not found in %s keycodes\n",
 	    		longText(key->name,XkbMessage),
 			XkbAtomText(NULL,xkb->names->keycodes,XkbMessage));
@@ -1770,7 +1773,7 @@ unsigned	types[XkbNumKbdGroups];
 	case XkbKB_Overlay2:
 	    /* find key by name! */
 	    if (!FindNamedKey(xkb,key->nameForOverlayKey,&okc,True,
-	    						CreateKeyNames(xkb))) {
+    						CreateKeyNames(xkb),0)) {
 		if (warningLevel>=1) {
 		    WARN2("Key %s not found in %s keycodes\n",
 			longText(key->nameForOverlayKey,XkbMessage),
@@ -1796,6 +1799,7 @@ unsigned	types[XkbNumKbdGroups];
 	else xkb->ctrls->per_key_repeat[kc/8]&= ~(1<<(kc%8));
 	xkb->server->explicit[kc]|= XkbExplicitAutoRepeatMask;
     }
+    CopySymbolsDef(result,key,kc+1);
     return True;
 }
 
@@ -1813,7 +1817,7 @@ XkbDescPtr	xkb;
 
     xkb= result->xkb;
     if ((!entry->haveSymbol)&&(!FindNamedKey(xkb,entry->u.keyName,&kc,True,
-    							CreateKeyNames(xkb)))) {
+    						CreateKeyNames(xkb),0))) {
 	if (warningLevel>=5) {
 	    WARN2("Key %s not found in %s keycodes\n",
 			longText(entry->u.keyName,XkbMessage),
@@ -1888,7 +1892,7 @@ XkbDescPtr	xkb;
 		xkb->names->groups[i]= info.groupNames[i];
 	}
 	for (key=info.keys,i=0;i<info.nKeys;i++,key++) {
-	    if (!CopySymbolsDef(result,key))
+	    if (!CopySymbolsDef(result,key,0))
 		info.errorCount++;
 	}
 	if (warningLevel>3) {
@@ -1899,7 +1903,7 @@ XkbDescPtr	xkb;
 		    char buf[5];
 		    memcpy(buf,xkb->names->keys[i].name,4);
 		    buf[4]= '\0';
-		    WARN1("No symbols defined for <%s>\n",buf);
+		    WARN2("No symbols defined for <%s> (keycode %d)\n",buf,i);
 		}
 	    }
 	}
