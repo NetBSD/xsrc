@@ -116,16 +116,6 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 
 #define MkdirHierCmd		mkdir -p
 
-#if OSMajorVersion < 1 || OSMajorVersion == 1 && OSMinorVersion < 5
-#define CppCmd          	/usr/libexec/cpp
-#else
-#define CppCmd			/usr/bin/cpp
-#endif
-#define StandardCppOptions	-traditional
-#define StandardCppDefines	/**/
-#define PreProcessCmd   	CppCmd
-#define PreIncDir		/usr/include
-
 #undef CcCmd
 #define CcCmd 			gcc
 #ifndef DefaultCCOptions
