@@ -223,10 +223,15 @@ extern unsigned long __fixunsdfsi (double);
 extern double __extendsfdf2 (float);
 extern float __truncdfsf2 (double);
 extern int __ltsf2(float, float);
+extern int __lesf2(float, float);
+extern int __eqsf2(float, float);
+extern int __nesf2(float, float);
+extern int __gesf2(float, float);
+extern int __gtsf2(float, float);
+extern float __negsf2(float);
 extern int __ltdf2(double, double);
 extern int __ledf2(double, double);
 extern int __eqdf2(double, double);
-extern int __nesf2(float, float);
 extern int __nedf2(double, double);
 extern int __gedf2(double, double);
 extern int __gtdf2(double, double);
@@ -249,10 +254,15 @@ extern double __negdf2(double);
 #pragma weak __extendsfdf2
 #pragma weak __truncdfsf2
 #pragma weak __ltsf2
+#pragma weak __lesf2
+#pragma weak __eqsf2
+#pragma weak __nesf2
+#pragma weak __gesf2
+#pragma weak __gtsf2
+#pragma weak __negsf2
 #pragma weak __ltdf2
 #pragma weak __ledf2
 #pragma weak __eqdf2
-#pragma weak __nesf2
 #pragma weak __nedf2
 #pragma weak __gedf2
 #pragma weak __gtdf2
@@ -1188,10 +1198,15 @@ LOOKUP xfree86LookupTab[] = {
     SYMFUNC(__extendsfdf2)
     SYMFUNC(__truncdfsf2)
     SYMFUNC(__ltsf2)
+    SYMFUNC(__lesf2)
+    SYMFUNC(__eqsf2)
+    SYMFUNC(__nesf2)
+    SYMFUNC(__gesf2)
+    SYMFUNC(__gtsf2)
+    SYMFUNC(__negsf2)
     SYMFUNC(__ltdf2)
     SYMFUNC(__ledf2)
     SYMFUNC(__eqdf2)
-    SYMFUNC(__nesf2)
     SYMFUNC(__nedf2)
     SYMFUNC(__gedf2)
     SYMFUNC(__gtdf2)
