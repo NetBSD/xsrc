@@ -133,6 +133,10 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #endif
 #endif
 
+#ifndef UseGccMakeDepend
+#define UseGccMakeDepend	YES
+#endif
+
 #define CppCmd          	cpp
 #define StandardCppOptions	-traditional
 #define StandardCppDefines	/**/
