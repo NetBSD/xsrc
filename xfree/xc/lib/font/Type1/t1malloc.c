@@ -1,4 +1,4 @@
-/* $TOG: t1malloc.c /main/8 1998/05/07 15:31:25 kaleb $ */
+/* $Xorg: t1malloc.c,v 1.3 2000/08/17 19:46:34 cpqbld Exp $ */
 /* Copyright International Business Machines, Corp. 1991
  * All Rights Reserved
  * Copyright Lexmark International, Inc. 1991
@@ -26,7 +26,7 @@
  * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
  * THIS SOFTWARE.
  */
-/* $XFree86: xc/lib/font/Type1/t1malloc.c,v 1.7 1999/08/22 05:35:45 dawes Exp $ */
+/* $XFree86: xc/lib/font/Type1/t1malloc.c,v 1.9 2001/01/17 19:43:24 dawes Exp $ */
  /* MALLOC   CWEB         V0004 LOTS                                 */
 /*
 :h1.MALLOC - Fast Memory Allocation

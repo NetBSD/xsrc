@@ -1,4 +1,4 @@
-/* $TOG: paths.c /main/6 1998/05/01 16:41:54 kaleb $ */
+/* $Xorg: paths.c,v 1.3 2000/08/17 19:46:31 cpqbld Exp $ */
 /* Copyright International Business Machines, Corp. 1991
  * All Rights Reserved
  * Copyright Lexmark International, Inc. 1991
@@ -26,7 +26,7 @@
  * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
  * THIS SOFTWARE.
  */
-/* $XFree86$ */
+/* $XFree86: xc/lib/font/Type1/paths.c,v 1.5 2001/01/17 19:43:22 dawes Exp $ */
 
  /* PATHS    CWEB         V0021 ********                             */
 /*

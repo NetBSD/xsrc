@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86PciInfo.h,v 1.83.2.1 2001/02/15 16:01:40 martin Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86PciInfo.h,v 1.98 2001/05/11 07:56:10 alanh Exp $ */
 /*
  * PCI Probe
  *
@@ -150,6 +150,7 @@
 #define PCI_VENDOR_TRITECH	0x1292
 #define PCI_VENDOR_NVIDIA_SGS	0x12d2
 #define PCI_VENDOR_NETGEAR	0x1385
+#define PCI_VENDOR_VMWARE	0x15AD
 #define PCI_VENDOR_SYMPHONY	0x1C1C
 #define PCI_VENDOR_TEKRAM_2	0x1DE1
 #define PCI_VENDOR_3DLABS	0x3D3D
@@ -238,6 +239,7 @@
 #define PCI_CHIP_RADEON_QE	0x5145
 #define PCI_CHIP_RADEON_QF	0x5146
 #define PCI_CHIP_RADEON_QG	0x5147
+#define PCI_CHIP_RADEON_VE	0x5159
 #define PCI_CHIP_RAGE128RE	0x5245
 #define PCI_CHIP_RAGE128RF	0x5246
 #define PCI_CHIP_RAGE128RG	0x5247
@@ -259,6 +261,7 @@
 /* Avance Logic */
 #define PCI_CHIP_ALG2064	0x2064
 #define PCI_CHIP_ALG2301	0x2301
+#define PCI_CHIP_ALG2501	0x2501
 
 /* NS */
 #define PCI_CHIP_87415		0x0002
@@ -341,6 +344,7 @@
 #define PCI_CHIP_9850		0x9850
 #define PCI_CHIP_9880		0x9880
 #define PCI_CHIP_9910		0x9910
+#define PCI_CHIP_9930		0x9930
 
 /* ALI */
 #define PCI_CHIP_M1435		0x1435
@@ -405,7 +409,8 @@
 #define PCI_CHIP_SIS300		0x0300
 #define PCI_CHIP_SIS630		0x6300
 #define PCI_CHIP_SIS540		0x5300
-
+/* Agregado por Carlos Duclos & Manuel Jander */
+#define PCI_CHIP_SIS82C204	0x0204
 /* HP */
 #define PCI_CHIP_J2585A		0x1030
 #define PCI_CHIP_J2585B		0x1031
@@ -475,8 +480,8 @@
 #define PCI_CHIP_UTNT2		0x0029
 #define PCI_CHIP_VTNT2		0x002C
 #define PCI_CHIP_UVTNT2		0x002D
-#define PCI_CHIP_TNT2_A         0x002E
-#define PCI_CHIP_TNT2_B         0x002F
+#define PCI_CHIP_TNT2_A		0x002E
+#define PCI_CHIP_TNT2_B		0x002F
 #define PCI_CHIP_ITNT2		0x00A0
 #define PCI_CHIP_GEFORCE256     0x0100
 #define PCI_CHIP_GEFORCEDDR     0x0101
@@ -489,14 +494,17 @@
 #define PCI_CHIP_GEFORCE2GTS_1  0x0151
 #define PCI_CHIP_GEFORCE2ULTRA  0x0152
 #define PCI_CHIP_QUADRO2PRO     0x0153
-#define PCI_CHIP_GEFORCE3       0x0200
-#define PCI_CHIP_GEFORCE3_1     0x0201
-#define PCI_CHIP_GEFORCE3_2     0x0202
-#define PCI_CHIP_GEFORCE3_3     0x0203
-
+#define PCI_CHIP_GEFORCE3	0x0200
+#define PCI_CHIP_GEFORCE3_1	0x0201
+#define PCI_CHIP_GEFORCE3_2	0x0202
+#define PCI_CHIP_GEFORCE3_3	0x0203
 
 /* NVIDIA & SGS */
 #define PCI_CHIP_RIVA128	0x0018
+
+/* IMS */
+#define PCI_CHIP_IMSTT128	0x9128
+#define PCI_CHIP_IMSTT3D	0x9135
 
 /* Alliance Semiconductor */
 #define PCI_CHIP_AP6410		0x3210
@@ -504,12 +512,15 @@
 #define PCI_CHIP_AT24		0x6424
 #define PCI_CHIP_AT3D		0x643D
 
-/* 3Dfx Interactive */
+/* 3dfx Interactive */
 #define PCI_CHIP_VOODOO_GRAPHICS 0x0001
 #define PCI_CHIP_VOODOO2	0x0002
 #define PCI_CHIP_BANSHEE	0x0003
 #define PCI_CHIP_VOODOO3	0x0005
 #define PCI_CHIP_VOODOO5	0x0009
+
+#define PCI_CARD_VOODOO3_2000	0x0036
+#define PCI_CARD_VOODOO3_3000	0x003a
 
 /* Rendition */
 #define PCI_CHIP_V1000		0x0001
@@ -525,6 +536,10 @@
 #define PCI_CHIP_GAMMA		0x0008
 #define PCI_CHIP_PERMEDIA2V	0x0009
 #define PCI_CHIP_PERMEDIA3	0x000A
+#define PCI_CHIP_PERMEDIA4	0x000C
+#define PCI_CHIP_R4		0x000D
+#define PCI_CHIP_GAMMA2		0x000E
+#define PCI_CHIP_R4ALT		0x0011
 
 /* S3 */
 #define PCI_CHIP_PLATO		0x0551
@@ -598,6 +613,10 @@
 #define PCI_CHIP_SMI710		0x710
 #define PCI_CHIP_SMI712		0x712
 #define PCI_CHIP_SMI720		0x720
+
+/* VMware */
+#define PCI_CHIP_VMWARE0405		0x0405
+#define PCI_CHIP_VMWARE0710		0x0710
 
 /*
  * first the VendorId - VendorName mapping
@@ -700,7 +719,7 @@ static SymTabRec xf86PCIVendorNameInfoData[] = {
     {PCI_VENDOR_RICOH,	"Ricoh"},
     {PCI_VENDOR_ZEINET,	"Zeinet"},
     {PCI_VENDOR_LITEON,	"Lite-On"},
-    {PCI_VENDOR_3DFX,	"3Dfx Interactive"},
+    {PCI_VENDOR_3DFX,	"3dfx Interactive"},
     {PCI_VENDOR_SIGMADESIGNS, "Sigma Designs"},
     {PCI_VENDOR_ENSONIQ, "Ensoniq"},
     {PCI_VENDOR_ROCKWELL, "Rockwell"},
@@ -719,6 +738,7 @@ static SymTabRec xf86PCIVendorNameInfoData[] = {
     {PCI_VENDOR_ARK,	"ARK Logic"},
     {PCI_VENDOR_YAMAHA, "Yamaha"},
     {PCI_VENDOR_SMI,	"Silicon Motion Inc."},
+    {PCI_VENDOR_VMWARE,	"VMware"},
     {0,NULL}
 };
 #endif
@@ -812,6 +832,7 @@ static pciVendorDeviceInfo xf86PCIVendorInfoData[] = {
 				{PCI_CHIP_RADEON_QE,	"Radeon QE",0},
 				{PCI_CHIP_RADEON_QF,	"Radeon QF",0},
 				{PCI_CHIP_RADEON_QG,	"Radeon QG",0},
+				{PCI_CHIP_RADEON_VE,	"Radeon VE",0},
 				{PCI_CHIP_RAGE128RE,	"Rage 128 RE",0},
 				{PCI_CHIP_RAGE128RF,	"Rage 128 RF",0},
 				{PCI_CHIP_RAGE128RK,	"Rage 128 RK",0},
@@ -855,7 +876,7 @@ static pciVendorDeviceInfo xf86PCIVendorInfoData[] = {
     {PCI_VENDOR_DIGITAL, {
 				{PCI_CHIP_DEC21030,	"21030/TGA",0},
 				{0x0001,		"DC21050 PCI-PCI Bridge"
-						 /* print_pcibridge} */,0 },
+						 /* print_pcibridge */,0 },
 				{0x0002,		"DC21040 10Mb/s Ethernet",0 },
 				{0x0009,		"DC21140 10/100 Mb/s Ethernet",0 },
 				{0x000D,		"TGA2",0 },
@@ -920,7 +941,8 @@ static pciVendorDeviceInfo xf86PCIVendorInfoData[] = {
 				{PCI_CHIP_9750,		"3DImage975",0},
 				{PCI_CHIP_9850,		"3DImage985",0},
 				{PCI_CHIP_9880,		"Blade3D",0},
-				{PCI_CHIP_9910,		"CyberBlade",0},
+				{PCI_CHIP_9910,		"Cyber/BladeXP",0},
+				{PCI_CHIP_9930,		"CyberBlade/XPm",0},
 				{PCI_CHIP_8400,		"CyberBlade/i7",0},
 				{PCI_CHIP_8420,		"CyberBlade/DSTN/i7",0},
 				{PCI_CHIP_8500,		"CyberBlade/i1",0},
@@ -978,6 +1000,7 @@ static pciVendorDeviceInfo xf86PCIVendorInfoData[] = {
 				{PCI_CHIP_SIS300,	"300",0},
 				{PCI_CHIP_SIS630,	"630",0},
 				{PCI_CHIP_SIS540,	"540",0},
+				{PCI_CHIP_SIS82C204,    "82C204",0},
 				{0x0000,		NULL,0}}},
 #ifdef VENDOR_INCLUDE_NONVIDEO
      {PCI_VENDOR_HP, {
@@ -1217,8 +1240,8 @@ static pciVendorDeviceInfo xf86PCIVendorInfoData[] = {
 				{PCI_CHIP_UTNT2,	"Riva Ultra TNT2",0},
 				{PCI_CHIP_VTNT2,	"Riva Vanta",0},
 				{PCI_CHIP_UVTNT2,	"Riva Ultra 64",0},
-                                {PCI_CHIP_TNT2_A,       "Riva TNT2 (A)",0},
-                                {PCI_CHIP_TNT2_B,       "Riva TNT2 (B)",0},
+				{PCI_CHIP_TNT2_A,	"Riva TNT2 (A)",0},
+				{PCI_CHIP_TNT2_B,	"Riva TNT2 (B)",0},
 				{PCI_CHIP_ITNT2,	"Riva Integrated",0},
 				{PCI_CHIP_GEFORCE256,	"GeForce 256",0},
 				{PCI_CHIP_GEFORCEDDR,	"GeForce DDR",0},
@@ -1230,15 +1253,19 @@ static pciVendorDeviceInfo xf86PCIVendorInfoData[] = {
 				{PCI_CHIP_GEFORCE2GTS_1,"GeForce2 GTS (rev 1)",0},
 				{PCI_CHIP_GEFORCE2ULTRA,"GeForce2 Ultra",0},
 				{PCI_CHIP_QUADRO2PRO,	"Quadro 2 Pro",0},
-                                {PCI_CHIP_GEFORCE3,     "GeForce3",0},
-                                {PCI_CHIP_GEFORCE3_1,   "GeForce3 (rev 1)",0},
-                                {PCI_CHIP_GEFORCE3_2,   "GeForce3 (rev 2)",0},
-                                {PCI_CHIP_GEFORCE3_3,   "GeForce3 (rev 3)",0},
+				{PCI_CHIP_GEFORCE3,	"GeForce3",0},
+				{PCI_CHIP_GEFORCE3_1,	"GeForce3 (rev 1)",0},
+				{PCI_CHIP_GEFORCE3_2,	"GeForce3 (rev 2)",0},
+				{PCI_CHIP_GEFORCE3_3,	"GeForce3 (rev 3)",0},
+				{0x0000,		NULL,0}}},
+    {PCI_VENDOR_IMS, {
+				{PCI_CHIP_IMSTT128,	"TwinTurbo 128", 0},
+				{PCI_CHIP_IMSTT3D,	"TwinTurbo 3D", 0},
+#ifdef VENDOR_INCLUDE_NONVIDEO
+                                {0x8849, "8849",0 },
+#endif
 				{0x0000,		NULL,0}}},
 #ifdef VENDOR_INCLUDE_NONVIDEO
-    {PCI_VENDOR_IMS, {
-                                {0x8849, "8849",0 },
-				{0x0000,		NULL,0}}},
     {PCI_VENDOR_TEKRAM, {
                                 {0x690C, "DC690C",0 },
 				{0x0000,		NULL,0}}},
@@ -1394,9 +1421,14 @@ static pciVendorDeviceInfo xf86PCIVendorInfoData[] = {
 				{PCI_CHIP_GAMMA,	"GLINT Gamma",0},
 				{PCI_CHIP_PERMEDIA2V,	"GLINT Permedia 2v",0},
 				{PCI_CHIP_PERMEDIA3,	"GLINT Permedia 3",0},
+				{PCI_CHIP_PERMEDIA4,	"GLINT Permedia 4",0},
+				{PCI_CHIP_R4,		"GLINT R4",0},
+				{PCI_CHIP_R4ALT,	"GLINT R4 (Alt)",0},
+				{PCI_CHIP_GAMMA2,	"GLINT Gamma 2",0},
 				{0x0000,		NULL,0}}},
     {PCI_VENDOR_AVANCE_2, {
 				{PCI_CHIP_ALG2064,	"ALG2064",0},
+				{PCI_CHIP_ALG2501,	"ALG2501",0},
 				{0x0000,		NULL,0}}},
     {PCI_VENDOR_S3,	{
 				{PCI_CHIP_PLATO,	"PLATO/PX",0},
@@ -1526,6 +1558,10 @@ static pciVendorDeviceInfo xf86PCIVendorInfoData[] = {
 				{PCI_CHIP_SMI712,	"LynxEM+",0},
 				{PCI_CHIP_SMI720,	"Lynx3DM",0},
 				{0x0000,		NULL,0}}},
+    {PCI_VENDOR_VMWARE, {
+    				{PCI_CHIP_VMWARE0405,	"PCI SVGA (FIFO)",0},
+    				{PCI_CHIP_VMWARE0710,	"LEGACY SVGA",0},
+				{0x0000,		NULL,0}}},
     {0x0000, {
 				{0x0000,		NULL,0}}},
 };
@@ -1583,14 +1619,14 @@ static pciVendorCardInfo xf86PCICardInfoData[] = {
                         { 0x0000, (char *)NULL,0, NF } } },
 #endif
 	{ PCI_VENDOR_SONY, {
-						{ 0x8051, "Vaio Video",0,NF },
+			{ 0x8051, "Vaio Video",0,NF },
 #ifdef VENDOR_INCLUDE_NONVIDEO
-						{ 0x8052, "Vaio Audio",0,NF },
-						{ 0x8054, "Vaio Firewire",0,NF },
-						{ 0x8056, "Vaio Modem",0,NF },
-						{ 0x8057, "Vaio Ethernet",0,NF },
+			{ 0x8052, "Vaio Audio",0,NF },
+			{ 0x8054, "Vaio Firewire",0,NF },
+			{ 0x8056, "Vaio Modem",0,NF },
+			{ 0x8057, "Vaio Ethernet",0,NF },
 #endif
-						{ 0x0000, (char *)NULL,0, NF } } },
+			{ 0x0000, (char *)NULL,0, NF } } },
 	{ PCI_VENDOR_DIAMOND, {
                         { 0x0003, "Monster Fusion",0, NF },
 			{ 0x00b8, "Fire GL1",0, NF },
@@ -1608,6 +1644,35 @@ static pciVendorCardInfo xf86PCICardInfoData[] = {
                         { 0x8000, "C&T 69000",0, NF },
 			{ 0x8760, "Fireport 40 Dual",0, NF },
                         { 0x8a10, "Stealth 3D 4000",0, NF },
+                        { 0x0000, (char *)NULL,0, NF } } },
+	{ PCI_VENDOR_APPIAN, {
+                        { 0x3d32, "Jeronimo 2000",0, NF },
+                        { 0x3db3, "Jeronimo Pro",0, NF },
+                        { 0x0000, (char *)NULL,0, NF } } },
+	{ PCI_VENDOR_3DFX, {
+                        { PCI_CARD_VOODOO3_2000, "Voodoo3 2000",0, NF },
+                        { PCI_CARD_VOODOO3_3000, "Voodoo3 3000",0, NF },
+                        { 0x0000, (char *)NULL,0, NF } } },
+	{ PCI_VENDOR_3DLABS, {
+                        { 0x0096, "Permedia",0, NF },
+                        { 0x0098, "PermediaNT",0, NF },
+                        { 0x0099, "PermediaLC",0, NF },
+                        { 0x0100, "Permedia2 PCI",0, NF },
+                        { 0x0101, "Permedia2 AGP",0, NF },
+                        { 0x0102, "Oxygen GMX2000 PCI",0, NF },
+                        { 0x0106, "Oxygen GMX2000 AGP",0, NF },
+                        { 0x0116, "Oxygen GVX1 AGP",0, NF },
+                        { 0x0121, "Oxygen VX1 PCI",0, NF },
+                        { 0x0122, "Oxygen ACX AGP",0, NF },
+                        { 0x0123, "Oxygen ACX PCI",0, NF },
+                        { 0x0125, "Oxygen VX1 AGP",0, NF },
+                        { 0x0127, "Permedia3 Create!",0, NF },
+                        { 0x0134, "Oxygen GVX1 PCI",0, NF },
+                        { 0x0136, "Oxygen GVX210 AGP",0, NF },
+                        { 0x0140, "Oxygen VX1-16 AGP",0, NF },
+                        { 0x0144, "Oxygen VX1-4X AGP",0, NF },
+                        { 0x0400, "Oxygen GVX420 AGP",0, NF },
+                        { 0x0800, "Oxygen VX1-1600SW PCI",0, NF },
                         { 0x0000, (char *)NULL,0, NF } } },
 	{ PCI_VENDOR_ELSA, {
                         { 0x0914, "Winner 1000",0, NF },
@@ -1728,6 +1793,12 @@ static pciVendorCardInfo xf86PCICardInfoData[] = {
 	{ PCI_VENDOR_NETGEAR, {
 			{ 0xf004, "FA310-TX Rev. D2",0, NF },
                         { 0x0000, (char *)NULL,0, NF } } },
+#endif
+#if 0
+	{ PCI_VENDOR_VMWARE, {
+    			{PCI_CHIP_VMWARE0405,	"PCI SVGA (FIFO)",0, NF },
+    			{PCI_CHIP_VMWARE0710,	"LEGACY SVGA",0, NF },
+			{0x0000,		NULL,0, NF } } },
 #endif
 	{0x0000, {
 	  		{0x0000,  NULL,0, NF } } },

@@ -1,5 +1,10 @@
-! $XConsortium: xdm-conf.cpp /main/3 1996/01/15 15:17:26 gildea $
-! $XFree86: xc/programs/xdm/config/xdm-conf.cpp,v 1.5 1999/08/29 12:21:06 dawes Exp $
+! $Xorg: xdm-conf.cpp,v 1.3 2000/08/17 19:54:17 cpqbld Exp $
+!
+!
+!
+!
+! $XFree86: xc/programs/xdm/config/xdm-conf.cpp,v 1.7 2001/01/17 23:45:24 dawes Exp $
+!
 DisplayManager.errorLogFile:	XDMLOGDIR/xdm-errors
 DisplayManager.pidFile:		XDMPIDDIR/xdm.pid
 DisplayManager.keyFile:		XDMDIR/xdm-keys

@@ -1,7 +1,8 @@
 /*
- *	$XConsortium: misc.c /main/112 1996/11/29 10:34:07 swick $
- *	$XFree86: xc/programs/xterm/misc.c,v 3.58 2000/11/02 16:33:29 tsi Exp $
+ *	$Xorg: misc.c,v 1.3 2000/08/17 19:55:09 cpqbld Exp $
  */
+
+/* $XFree86: xc/programs/xterm/misc.c,v 3.62 2001/04/12 01:02:50 dickey Exp $ */
 
 /*
  *
@@ -74,12 +75,6 @@
 #include <X11/Xmu/WinUtil.h>
 #if HAVE_X11_SUNKEYSYM_H
 #include <X11/Sunkeysym.h>
-#endif
-
-#ifdef X_NOT_STDC_ENV
-extern time_t time ();
-#else
-#include <time.h>
 #endif
 
 #include <data.h>
@@ -500,6 +495,9 @@ Bell(int which GCC_UNUSED, int percent)
 #else
 	XBell(screen->display, percent);
 #endif
+	
+    if (screen->poponbell)
+        XRaiseWindow(screen->display, VShellWindow);
 
     if(screen->bellSuppressTime) {
 	/* now we change a property and wait for the notify event to come

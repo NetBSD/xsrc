@@ -1,4 +1,4 @@
-/* $XConsortium: spaces.c,v 1.8 95/06/08 23:20:39 gildea Exp $ */
+/* $Xorg: spaces.c,v 1.4 2000/08/17 19:46:32 cpqbld Exp $ */
 /* Copyright International Business Machines, Corp. 1991
  * All Rights Reserved
  * Copyright Lexmark International, Inc. 1991
@@ -26,7 +26,7 @@
  * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
  * THIS SOFTWARE.
  */
-/* $XFree86: xc/lib/font/Type1/spaces.c,v 3.6 1999/08/22 05:35:44 dawes Exp $ */
+/* $XFree86: xc/lib/font/Type1/spaces.c,v 3.8 2001/01/17 19:43:23 dawes Exp $ */
  /* SPACES   CWEB         V0021 ********                             */
 /*
 :h1 id=spaces.SPACES Module - Handles Coordinate Spaces
