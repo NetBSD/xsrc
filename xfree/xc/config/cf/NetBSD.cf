@@ -99,7 +99,8 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
  * NetBSD 1.6M and newer supports POSIX Threads.
  */
 
-#if ((OSMajorVersion > 1) || \
+#if defined(NetBSDThreads) &&
+    ((OSMajorVersion > 1) || \
      (OSMajorVersion == 1 && OSMinorVersion > 6) || \
      (OSMajorVersion == 1 && OSMinorVersion == 6 && OSTeenyVersion >= 12))
 
