@@ -20,7 +20,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF   *
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.            *
  *****************************************************************************
-  $XFree86: xc/programs/xterm/xterm.log.html,v 1.1.2.5 1998/03/03 12:51:03 dawes Exp $
+  $XFree86: xc/programs/xterm/xterm.log.html,v 1.2 1998/03/20 21:38:04 hohndel Exp $
   -->
 <HTML>
 <HEAD>
@@ -41,6 +41,8 @@ in the XFree86 CHANGELOG (found in the unbundled tree,
 xc/programs/Xserver/hw/xfree86).
 
 <UL>
+<LI><A HREF="#xterm_70">Patch #70 - 1998/3/29 - XFree86 3.9Af and 3.3.2</A>
+<LI><A HREF="#xterm_69">Patch #69 - 1998/3/16 - XFree86 3.9Ad and 3.3.2</A>
 <LI><A HREF="#xterm_68">Patch #68 - 1998/3/4 - XFree86 3.9Ad and 3.3.1z</A>
 <LI><A HREF="#xterm_67">Patch #67 - 1998/2/23 - XFree86 3.9Ad and 3.3.1e</A>
 <LI><A HREF="#xterm_66">Patch #66 - 1998/2/16 - XFree86 3.9Ad and 3.3.1d</A>
@@ -110,6 +112,63 @@ xc/programs/Xserver/hw/xfree86).
 <LI><A HREF="#xterm_02">Patch #2 - 1996/1/7</A>
 <LI><A HREF="#xterm_01">Patch #1 - 1996/1/6</A>
 </UL>
+
+<H1><A NAME="xterm_70">Patch #70 - 1998/3/29 - XFree86 3.9Af and 3.3.2</A></H1>
+
+This patch corrects some minor bugs in xterm, and fills in some more details
+in the VT220 emulation:
+<UL>
+	<LI>modify Imakefile to use SpecialCObjectRule for menu and data modules,
+	  making xterm build properly if logging is enabled
+	  (patch by Scott Sewall &lt;scott@iprg.nokia.com&gt;).
+
+	<LI>restore "ich" capability to terminfo entries, since
+	  Michael Schroeder points out that "ich1"
+	  is the one which is the problem in Solaris vi.
+
+	<LI>correct color of cursor, which would disappear on inverse-video
+	  since the initialization did not compare the cursor color against
+	  both foreground and background (reported by Olivier Calle).
+
+	<LI>correct abbreviation-test for -version and -help options, making
+	  command-line option -vb work (reported by Stefan Dalibor).
+
+	<LI>correct a dependency between ifdef's for OPT_I18N_SUPPORT and
+	  OPT_INPUT_METHOD (reported by Stefan Dalibor).
+
+	<LI>split-out character-set translations as new module charsets.c, to
+	  implement VT220 national replacement character sets (a mode where
+	  some of the characters are displayed as specific European glyphs).
+	  This relies on xterm using an ISO 8859-1 font (approach suggested by
+	  Kenneth R. Robinette &lt;zkrr01@mailbox.neosoft.com&gt;).
+
+	<LI>correct a missing increment, which made SS2 and SS3 controls
+	  repeat the shifted character.
+
+	<LI>add xterm-nrc to terminfo to illustrate the VT220 national
+	  replacement character sets.
+
+	<LI>reformat terminfo using new ncurses tic option "-f", which makes
+	  if/then/else/endif expressions easier to read.
+</UL>
+
+<H1><A NAME="xterm_69">Patch #69 - 1998/3/16 - XFree86 3.9Ad and 3.3.2</A></H1>
+
+This corrects the problem in xterm with utmp, reported by Olivier Calle
+&lt;olivier@tc.fluke.com&gt
+as well as some other people after the XFree86 3.3.2 release.
+<P>
+The error was introduced by my patch #53 in XFree86 3.9r (October 1997).
+<P>
+The correction removes the reset of setuid/setgid before the main event loop,
+and solves the problem which I had worked around in a different manner:  for
+some reason, the particular waitpid() call in creat_as() hangs, does not
+return when the child process exits.  I changed the ifdef's to force the Linux
+configuration to use wait() instead.  This call appears to work properly on
+other platforms such as SunOS and Solaris.
+<P>
+I also added tests in the standalone configure script to check for the
+existence of waitpid().
 
 <H1><A NAME="xterm_68">Patch #68 - 1998/3/4 - XFree86 3.9Ad and 3.3.1z</A></H1>
 
