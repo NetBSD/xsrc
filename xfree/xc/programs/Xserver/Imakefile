@@ -628,7 +628,26 @@ ServerDriverSDKTarget(XFree86)
 #define ServerToInstall XFree86
 #endif
 #endif        /* XF86Server */
-  
+
+#if defined(XdreamcastServer) && XdreamcastServer
+XCOMM
+XCOMM NetBSD/dreamcast server
+XCOMM
+MFBSUBDIR  = mfb
+CFB8SUBDIR = cfb
+CFB16SUBDIR = cfb16
+DREAMCASTDDXDIR = hw/netbsd/dreamcast
+DREAMCASTDIRS = $(STDDIRS) $(MFBDIR) $(CFB8DIR) $(CFB16DIR) \
+		$(DREAMCASTDDXDIR) $(DEPDIRS)
+DREAMCASTLIBS = hw/netbsd/dreamcast/libdreamcast.a CFB8Libs CFB16Libs
+SetUIDServerTarget(Xdreamcast,$(DREAMCASTDIRS),$(DREAMCASTOBJS), \
+	$(DREAMCASTLIBS) $(LOADABLEEXTS) $(LIBCWRAPPER), \
+	$(DREAMCASTLIBS) $(LOADABLEEXTS) $(FONTLIBS) $(SYSLIBS))
+#ifndef ServerToInstall
+#define ServerToInstall Xdreamcast
+#endif
+#endif /* XdreamcastServer */
+
 #if defined(XmacppcServer) && XmacppcServer
 XCOMM
 XCOMM NetBSD/macppc server
@@ -1413,6 +1432,7 @@ CFBSUBDIRS = $(CFB8SUBDIR) $(CFB16SUBDIR) $(CFB24SUBDIR) $(CFB32SUBDIR)
 MIEXTDIRS = $(SHADOWDIR) $(LAYERDIR) $(ROOTLESSDIR)
 IPLANDIRS = $(IPLAN2P2DIR) $(IPLAN2P4DIR) $(IPLAN2P8DIR)
 DDXDIRS = $(DECWSDDXDIR) $(SUNDDXDIR) $(LYNXDDXDIR) \
+	  $(DREAMCASTDDXDIR) \
 	  $(MACPPCDDXDIR) $(MAC68KDDXDIR) \
 	  $(HPDDXDIR) $(XFREE86DDXDIR) $(XWINDDXDIR) $(DARWINDDXDIR) \
 	  $(XVFBDDXDIR) $(XNESTDDXDIR)
