@@ -119,6 +119,12 @@ sunLoadCursor (pScreen, pCursor, x, y)
     unsigned char   r[2], g[2], b[2];
     DDXPointRec	ptSrc;
     unsigned char   source_temp[1024], mask_temp[1024];
+#ifdef INTERNAL_VS_EXTERNAL_PADDING
+    long                widthBytesLine, length;
+    long                widthBytesLineProto, lengthProto;
+    int			linesDone;
+#endif  
+
 
     fbcursor.set = FB_CUR_SETALL;
     fbcursor.enable = 1;
@@ -155,6 +161,57 @@ sunLoadCursor (pScreen, pCursor, x, y)
 	fbcursor.image = (char *) source_temp;
 	fbcursor.mask = (char *) mask_temp;
     }
+#ifdef INTERNAL_VS_EXTERNAL_PADDING
+    widthBytesLine = BitmapBytePad(w);
+    length = widthBytesLine * h;
+    widthBytesLineProto = BitmapBytePadProto(w);
+    lengthProto = widthBytesLineProto * h;
+
+    /* for 64-bit server, convert image to pad to 32 bits */
+    if ( widthBytesLine != widthBytesLineProto ) {
+	if (widthBytesLine - widthBytesLineProto  == 4) {
+		register int * sprotoPtr, * mprotoPtr;
+		register int * sbufPtr, * mbufPtr;
+		register int i, j;
+
+		sbufPtr = (int *)fbcursor.image;
+		mbufPtr = (int *)fbcursor.mask;
+		sprotoPtr = (int *)source_temp;
+		mprotoPtr = (int *)mask_temp;
+		for (i=0; i<h; i++) {
+			for (j=0; j<widthBytesLineProto; j+=4) {
+				*sprotoPtr++ = *sbufPtr++;
+				*mprotoPtr++ = *mbufPtr++;
+			}
+			sbufPtr++;
+			mbufPtr++;
+		}
+	} else {
+        register char * sbufPtr, * sprotoPtr;
+        register char * mbufPtr, * mprotoPtr;
+        register int i;
+
+        for (i = 0,
+             sbufPtr = fbcursor.image,
+             sprotoPtr = source_temp,
+             mbufPtr = fbcursor.mask,
+             mprotoPtr = mask_temp;
+             i < h;
+             sbufPtr += widthBytesLine,
+             sprotoPtr += widthBytesLineProto,
+             mbufPtr += widthBytesLine,
+             mprotoPtr += widthBytesLineProto,
+             i++) {       
+	    if (sprotoPtr != sbufPtr)
+            	memmove(sprotoPtr, sbufPtr, widthBytesLineProto);
+	    if (mprotoPtr != mbufPtr)
+            	memmove(mprotoPtr, mbufPtr, widthBytesLineProto);
+	}
+} /* else */
+	fbcursor.image = (char *) source_temp;
+	fbcursor.mask = (char *) mask_temp;
+    }
+#endif
     fbcursor.size.x = w;
     fbcursor.size.y = h;
 #ifndef Lynx

@@ -296,7 +296,8 @@ extern ClientPtr *clients;
 extern ClientPtr serverClient;
 extern int currentMaxClients;
 
-#if !(defined(__alpha) || defined(__alpha__))
+#if !(defined(__alpha) || defined(__alpha__) || \
+      defined(__sparc_v9__))
 typedef long HWEventQueueType;
 #else
 typedef int HWEventQueueType;

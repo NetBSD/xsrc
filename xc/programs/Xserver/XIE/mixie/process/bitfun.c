@@ -167,11 +167,11 @@ unsigned char _ByteReverseTable[]= {
 
 #if (IMAGE_BYTE_ORDER == MSBFirst)
 #define g4	(c = (inval>>26) & 0x3c, inval <<= 4,			\
-		*((CARD32 *) ((int) &xie8StippleMasks[0] + c)) & val)
+		*((CARD32 *) ((long) &xie8StippleMasks[0] + c)) & val)
 #define g4r	(c = (inval>>26) & 0x3c, inval <<= 4,			\
-		~(*((CARD32 *) ((int) &xie8StippleMasks[0] + c))) & val)
+		~(*((CARD32 *) ((long) &xie8StippleMasks[0] + c))) & val)
 #define g4b	(c = (inval>>26) & 0x3c, inval <<= 4,			\
-		 c = *((CARD32 *) ((int) &xie8StippleMasks[0] + c)), \
+		 c = *((CARD32 *) ((long) &xie8StippleMasks[0] + c)), \
 						(loval & ~c) | (hival & c))
 #else
 #define g4	(c = inval & 0xf, inval >>= 4, xie8StippleMasks[c] & val)

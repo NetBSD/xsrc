@@ -255,7 +255,7 @@ extern PixelType mask[];
                         | ( ( ( x ) & (unsigned long)0x00FF0000 ) >> 0x08 ) \
                         | ( ( ( x ) & (unsigned long)0xFF000000 ) >> 0x18 ) )
 #else /* PPW == 64 */
-#if defined( __alpha__)
+#if defined( __alpha__) || defined(__sparc_v9__)
 #define LONG2CHARS( x ) \
       ( ( ( ( x ) & 0x000000FFUL) << 0x38 ) \
       | ( ( ( x ) & 0x0000FF00UL) << 0x28 ) \
@@ -562,26 +562,30 @@ extern PixelType mask[];
 #endif
 
 #if GETLEFTBITS_ALIGNMENT == 1
-#define getleftbits(psrc, w, dst)	dst = *((CARD32 *) psrc)
+#if (BITMAP_BIT_ORDER == MSBFirst && PPW == 64)
+#define getleftbits(psrc, w, dst) 	dst = SCRLEFT(*((CARD32 *) psrc), PPW - 32)
+#else
+#define getleftbits(psrc, w, dst)	dst = *((CARD32 *) psrc) 
+#endif
 #endif /* GETLEFTBITS_ALIGNMENT == 1 */
 
 #if GETLEFTBITS_ALIGNMENT == 2
 #define getleftbits(psrc, w, dst) \
     { \
-	if ( ((int)(psrc)) & 0x01 ) \
-		getbits( ((CARD32 *)(((char *)(psrc))-1)), 8, (w), (dst) ); \
+	if ( ((long)(psrc)) & 0x01 ) \
+		getbits( ((PixelType *)(((char *)(psrc))-1)), 8, (w), (dst) ); \
 	else \
-		getbits(psrc, 0, w, dst); \
+		getbits((PixelType *)psrc, 0, w, dst); \
     }
 #endif /* GETLEFTBITS_ALIGNMENT == 2 */
 
 #if GETLEFTBITS_ALIGNMENT == 4
 #define getleftbits(psrc, w, dst) \
     { \
-	int off, off_b; \
-	off_b = (off = ( ((int)(psrc)) & 0x03)) << 3; \
+	long off, off_b; \
+	off_b = (off = ( ((long)(psrc)) & (PGSZB-1))) << 3; \
 	getbits( \
-		(CARD32 *)( ((char *)(psrc)) - off), \
+		(PixelType *)( ((char *)(psrc)) - off), \
 		(off_b), (w), (dst) \
 	       ); \
     }
@@ -667,13 +671,13 @@ extern PixelType mask[];
     putbitsrop(_tmpbits, dstbit, width, pdst, rop) \
 }
 
+
 #define getandputrrop(psrc, srcbit, dstbit, width, pdst, rop) \
 { \
     register PixelType _tmpbits; \
     getbits(psrc, srcbit, width, _tmpbits) \
     putbitsrrop(_tmpbits, dstbit, width, pdst, rop) \
 }
-
 
 #define getandputbits0(psrc, sbindex, width, pdst) \
 {			/* unroll the whole damn thing to see how it * behaves */ \
