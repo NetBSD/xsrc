@@ -7,7 +7,7 @@ MAPFILES = \
 	map-ISO8859-16 map-JISX0201.1976-0 map-KOI8-R
 
 InstallMultipleFlags($(MAPFILES),$(FONTDIR)/util,$(INSTDATFLAGS))
-SimpleProgramTarget(ucs2any)
+NormalProgramTarget(ucs2any,ucs2any.o,,,)
 InstallNamedProg(bdftruncate.pl,bdftruncate,$(BINDIR))
 InstallManPage(bdftruncate,$(MANDIR))
 
@@ -29,4 +29,3 @@ LinkFile(map-ISO8859-16,8859-16.TXT)
 LinkFile(map-JISX0201.1976-0,JIS0201.TXT)
 LinkFile(map-KOI8-R,KOI8-R.TXT)
 
-includes :: ucs2any
