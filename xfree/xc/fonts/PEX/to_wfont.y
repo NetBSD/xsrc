@@ -1,5 +1,5 @@
 %{
-/* $TOG: to_wfont.y /main/10 1998/02/09 11:54:22 kaleb $ */
+/* $Xorg: to_wfont.y,v 1.3 2000/08/17 19:42:52 cpqbld Exp $ */
 
 /*****************************************************************
 
@@ -43,13 +43,14 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/fonts/PEX/to_wfont.y,v 3.8 1998/10/25 07:11:10 dawes Exp $ */
+/* $XFree86: xc/fonts/PEX/to_wfont.y,v 3.11 2001/04/01 13:59:58 tsi Exp $ */
 
 
 #define YYMAXDEPTH 10000
 
 #include <X11/Xos.h>
 #include <stdio.h>
+#include <stdlib.h>
 #ifndef L_SET
 #define L_SET SEEK_SET
 #endif
