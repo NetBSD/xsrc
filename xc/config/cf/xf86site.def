@@ -128,7 +128,11 @@ XCOMM $XFree86: xc/config/cf/xf86site.def,v 3.91 1996/10/19 15:12:30 dawes Exp $
 #endif
 
 #ifdef Mc68020Architecture
+#ifdef LinuxArchitecture
 #define XF68FBDevServer		YES
+#else
+#define XF68FBDevServer		NO
+#endif
 #endif
 
 #ifndef XF86SVGAServer
