@@ -414,7 +414,7 @@ static void BadSize(size, name)
     String params[2];
     Cardinal num_params = 2;
 
-    params[0] = (String) size;
+    params[0] = (String)(long) size;
     params[1] = XrmQuarkToString(name);
     XtWarningMsg("invalidSizeOverride", "xtDependencies", XtCXtToolkitError,
 	"Representation size %d must match superclass's to override %s",

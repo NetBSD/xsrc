@@ -473,7 +473,7 @@ _XlcCopyFromArg(src, dst, size)
 	*((long *) dst) = (long) src;
 #ifdef LONG64
     else if (size == sizeof(int))
-	*((int *) dst) = (int) src;
+	*((int *) dst) = (int)(long) src;
 #endif
     else if (size == sizeof(short))
 	*((short *) dst) = (short)(long) src;

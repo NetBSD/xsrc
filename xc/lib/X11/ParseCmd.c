@@ -209,7 +209,7 @@ void XrmParseCommand(pdb, options, num_options, prefix, argc, argv)
 
 		case XrmoptionSkipNArgs:
 		    {
-			register int j = 1 + (int) options[i].value;
+			register int j = 1 + (long) options[i].value;
 
 			if (j > myargc) j = myargc;
 			for (; j > 0; j--) {

@@ -670,7 +670,8 @@ static void NotifyScroll( gw, event, params, num_params   )
         case 'b':    call_data = -call_data;
 	  	     /* fall through */
         case 'F':
-	case 'f':    XtCallCallbacks( gw, XtNscrollProc, (XtPointer)call_data);
+	case 'f':    XtCallCallbacks( gw, XtNscrollProc,
+					(XtPointer)(long)call_data);
 	             break;
 
         case 'C':

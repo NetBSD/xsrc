@@ -99,7 +99,7 @@ _XCopyToArg(src, dst, size)
 	    memcpy((char *)&u, (char *)src, (int)size);
 	    if (size == sizeof(long))	       *dst = (XPointer)u.longval;
 #ifdef LONG64
-	    else if (size == sizeof(int))      *dst = (XPointer)u.intval;
+	    else if (size == sizeof(int))      *dst = (XPointer)(long)u.intval;
 #endif
 	    else if (size == sizeof(short))    *dst = (XPointer)(long)u.shortval;
 	    else if (size == sizeof(char))     *dst = (XPointer)(long)u.charval;
