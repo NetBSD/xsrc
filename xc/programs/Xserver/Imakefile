@@ -486,6 +486,22 @@ SetUIDServerTarget(Xamiga,$(XAmigaDirs),$(XAmigaObjs),$(XAmigaLibs),$(XAmigaSysL
 #endif
 #endif
 
+#if XalphaNetBSDServer
+XCOMM
+XCOMM NetBSD/Alpha server
+XCOMM
+MFBDIR   = mfb
+CFB8DIR  = cfb
+DDXDIR1  = hw/netbsd/alpha
+ANBDIRS1 = $(STDDIRS) $(MFBDIR) $(CFB8DIR) $(DDXDIR1) $(DEPDIRS)
+ANBOBJS1 = hw/netbsd/alpha/alphaInit.o
+ANBLIBS1 = hw/netbsd/alpha/libalpha.a CFB8Libs
+SetUIDServerTarget(XalphaNetBSD,$(ANBDIRS1),$(ANBOBJS1),$(ANBLIBS1),$(SYSLIBS))
+#ifndef ServerToInstall
+#define ServerToInstall XalphaNetBSD
+#endif
+#endif /* XalphaNetBSDServer */
+
 #ifdef XFree86Version
 XF86INIT   = $(XF86COMSRC)/xf86Init.o $(XF86CONFIGSRC)/xf86IniExt.o
 XF86MINIT  = $(XF86COMSRC)/xf86Init_m.o $(XF86CONFIGSRC)/xf86MIniExt.o
