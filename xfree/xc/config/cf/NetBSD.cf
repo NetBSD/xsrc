@@ -695,15 +695,6 @@ sed 's/\.[0-9]*$$//'`
 #endif
 
 /*
- * Definition for compiling on Alpha machines
- */
-#ifdef AlphaArchitecture
-
-/* Build the shared XDM greeter on Alpha if it supports shared libs */
-#define SharedLibXdmGreet HasSharedLibraries
-#endif
-
-/*
  * Definition for compile on macppc machines
  */
 #ifdef PpcArchitecture
