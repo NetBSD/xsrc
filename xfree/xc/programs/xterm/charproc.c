@@ -2,7 +2,7 @@
  * $Xorg: charproc.c,v 1.6 2001/02/09 02:06:02 xorgcvs Exp $
  */
 
-/* $XFree86: xc/programs/xterm/charproc.c,v 3.139 2003/02/25 23:36:55 dickey Exp $ */
+/* $XFree86: xc/programs/xterm/charproc.c,v 3.143 2003/05/21 22:59:12 dickey Exp $ */
 
 /*
 
@@ -100,6 +100,8 @@ in this Software without prior written authorization from The Open Group.
 #include <X11/Xaw3d/XawImP.h>
 #elif defined(HAVE_LIB_NEXTAW)
 #include <X11/neXtaw/XawImP.h>
+#elif defined(HAVE_LIB_XAWPLUS)
+#include <X11/XawPlus/XawImP.h>
 #endif
 
 #endif
@@ -385,7 +387,6 @@ static XtResource resources[] =
     Bres(XtNautoWrap, XtCAutoWrap, misc.autoWrap, TRUE),
     Bres(XtNawaitInput, XtCAwaitInput, screen.awaitInput, FALSE),
     Bres(XtNfreeBoldBox, XtCBoolean, screen.free_bold_box, FALSE),
-    Bres(XtNforceBoxChars, XtCBoolean, screen.force_box_chars, FALSE),
     Bres(XtNbackarrowKey, XtCBackarrowKey, screen.backarrow_key, TRUE),
     Bres(XtNboldMode, XtCBoldMode, screen.bold_mode, TRUE),
     Bres(XtNbrokenSelections, XtCBrokenSelections, screen.brokenSelections, FALSE),
@@ -471,21 +472,30 @@ static XtResource resources[] =
 #ifndef NO_ACTIVE_ICON
     Bres("activeIcon", "ActiveIcon", misc.active_icon, FALSE),
     Ires("iconBorderWidth", XtCBorderWidth, misc.icon_border_width, 2),
-
-    {"iconFont", "IconFont", XtRFontStruct, sizeof(XFontStruct),
-     XtOffsetOf(XtermWidgetRec, screen.fnt_icon),
-     XtRString, (XtPointer) XtExtdefaultfont},
-
-    {"iconBorderColor", XtCBorderColor, XtRPixel, sizeof(Pixel),
-     XtOffsetOf(XtermWidgetRec, misc.icon_border_pixel),
-     XtRString, XtExtdefaultbackground},
-
+    Fres("iconFont", "IconFont", screen.fnt_icon, XtExtdefaultfont),
+    Cres("iconBorderColor", XtCBorderColor, misc.icon_border_pixel, XtExtdefaultbackground),
 #endif				/* NO_ACTIVE_ICON */
 
 #if OPT_BLINK_CURS
     Bres(XtNcursorBlink, XtCCursorBlink, screen.cursor_blink, FALSE),
     Ires(XtNcursorOnTime, XtCCursorOnTime, screen.cursor_on, 600),
     Ires(XtNcursorOffTime, XtCCursorOffTime, screen.cursor_off, 300),
+#endif
+
+#if OPT_BOX_CHARS
+    Bres(XtNforceBoxChars, XtCBoolean, screen.force_box_chars, FALSE),
+#endif
+
+#if OPT_BROKEN_OSC
+    Bres(XtNbrokenLinuxOSC, XtCBrokenLinuxOSC, screen.brokenLinuxOSC, TRUE),
+#endif
+
+#if OPT_BROKEN_ST
+    Bres(XtNbrokenStringTerm, XtCBrokenStringTerm, screen.brokenStringTerm, TRUE),
+#endif
+
+#if OPT_C1_PRINT
+    Bres(XtNallowC1Printable, XtCAllowC1Printable, screen.c1_printable, FALSE),
 #endif
 
 #if OPT_DEC_CHRSET
@@ -506,13 +516,14 @@ static XtResource resources[] =
 
 #if OPT_ISO_COLORS
     Bres(XtNboldColors, XtCColorMode, screen.boldColors, TRUE),
-    Ires(XtNveryBoldColors, XtCColorMode, screen.veryBoldColors, 0),
-    Bres(XtNcolorAttrMode, XtCColorMode, screen.colorAttrMode, FALSE),
-    Bres(XtNcolorBDMode, XtCColorMode, screen.colorBDMode, FALSE),
-    Bres(XtNcolorBLMode, XtCColorMode, screen.colorBLMode, FALSE),
+    Ires(XtNveryBoldColors, XtCVeryBoldColors, screen.veryBoldColors, 0),
     Bres(XtNcolorMode, XtCColorMode, screen.colorMode, DFT_COLORMODE),
-    Bres(XtNcolorRVMode, XtCColorMode, screen.colorRVMode, FALSE),
-    Bres(XtNcolorULMode, XtCColorMode, screen.colorULMode, FALSE),
+
+    Bres(XtNcolorAttrMode, XtCColorAttrMode, screen.colorAttrMode, FALSE),
+    Bres(XtNcolorBDMode, XtCColorAttrMode, screen.colorBDMode, FALSE),
+    Bres(XtNcolorBLMode, XtCColorAttrMode, screen.colorBLMode, FALSE),
+    Bres(XtNcolorRVMode, XtCColorAttrMode, screen.colorRVMode, FALSE),
+    Bres(XtNcolorULMode, XtCColorAttrMode, screen.colorULMode, FALSE),
 
     COLOR_RES("0", screen.Acolors[COLOR_0], DFT_COLOR("black")),
     COLOR_RES("1", screen.Acolors[COLOR_1], DFT_COLOR("red3")),
@@ -998,6 +1009,75 @@ VTparse(void)
 	} else
 #endif
 	    nextstate = parsestate[E2A(c)];
+
+#if OPT_BROKEN_OSC
+	/*
+	 * Linux console palette escape sequences start with an OSC, but do
+	 * not terminate correctly.  Some scripts do not check before writing
+	 * them, making xterm appear to hang (it's awaiting a valid string
+	 * terminator).  Just ignore these if we see them - there's no point
+	 * in emulating bad code.
+	 */
+	if (screen->brokenLinuxOSC
+	    && parsestate == sos_table) {
+	    if (string_used) {
+		switch (string_area[0]) {
+		case 'P':
+		    if (string_used <= 7)
+			break;
+		    /* FALLTHRU */
+		case 'R':
+		    parsestate = groundtable;
+		    nextstate = parsestate[E2A(c)];
+		    TRACE(("Reset to ground state (brokenLinuxOSC)\n"));
+		    break;
+		}
+	    }
+	}
+#endif
+
+#if OPT_BROKEN_ST
+	/*
+	 * Before patch #171, carriage control embedded within an OSC string
+	 * would terminate it.  Some (buggy, of course) applications rely on
+	 * this behavior.  Accommodate them by allowing one to compile xterm
+	 * and emulate the old behavior.
+	 */
+	if (screen->brokenStringTerm
+	    && parsestate == sos_table
+	    && c < 32) {
+	    switch (c) {
+	    case 5:		/* FALLTHRU */
+	    case 8:		/* FALLTHRU */
+	    case 9:		/* FALLTHRU */
+	    case 10:		/* FALLTHRU */
+	    case 11:		/* FALLTHRU */
+	    case 12:		/* FALLTHRU */
+	    case 13:		/* FALLTHRU */
+	    case 14:		/* FALLTHRU */
+	    case 15:		/* FALLTHRU */
+	    case 24:
+		parsestate = groundtable;
+		nextstate = parsestate[E2A(c)];
+		TRACE(("Reset to ground state (brokenStringTerm)\n"));
+		break;
+	    }
+	}
+#endif
+
+#if OPT_C1_PRINT
+	/*
+	 * This is not completely foolproof, but will allow an application
+	 * with values in the C1 range to use them as printable characters,
+	 * provided that they are not intermixed with an escape sequence.
+	 */
+	if (screen->c1_printable
+	    && (c >= 128 && c < 160)) {
+	    nextstate = parsestate[E2A(160)];
+	    if (nextstate == CASE_ESC_SP_STATE)
+		nextstate = CASE_ESC_IGNORE;
+	}
+#endif
 
 #if OPT_WIDE_CHARS
 	/* if this character is a different width than
@@ -2031,25 +2111,25 @@ VTparse(void)
 	    break;
 
 	case CASE_SOS:
-	    /* Start of String */
+	    TRACE(("begin SOS: Start of String\n"));
 	    string_mode = SOS;
 	    parsestate = sos_table;
 	    break;
 
 	case CASE_PM:
-	    /* Privacy Message */
+	    TRACE(("begin PM: Privacy Message\n"));
 	    string_mode = PM;
 	    parsestate = sos_table;
 	    break;
 
 	case CASE_DCS:
-	    /* Device Control String */
+	    TRACE(("begin DCS: Device Control String\n"));
 	    string_mode = DCS;
 	    parsestate = sos_table;
 	    break;
 
 	case CASE_APC:
-	    /* Application Program Command */
+	    TRACE(("begin APC: Application Program Command\n"));
 	    string_mode = APC;
 	    parsestate = sos_table;
 	    break;
@@ -2239,7 +2319,7 @@ VTparse(void)
 	    break;
 
 	case CASE_OSC:
-	    /* Operating System Command */
+	    TRACE(("begin OSC: Operating System Command\n"));
 	    parsestate = sos_table;
 	    string_mode = OSC;
 	    break;
@@ -2602,15 +2682,15 @@ in_put(void)
 	    if (screen->cursor_state)
 		HideCursor();
 	    ShowCursor();
+#if OPT_INPUT_METHOD
+	    PreeditPosition(screen);
+#endif
 	} else if (screen->cursor_set != screen->cursor_state) {
 	    if (screen->cursor_set)
 		ShowCursor();
 	    else
 		HideCursor();
 	}
-#if OPT_INPUT_METHOD
-	PreeditPosition(screen);
-#endif
 
 	if (QLength(screen->display)) {
 	    select_mask = X_mask;
@@ -2679,15 +2759,15 @@ in_put(void)
 	    if (screen->cursor_state)
 		HideCursor();
 	    ShowCursor();
+#if OPT_INPUT_METHOD
+	    PreeditPosition(screen);
+#endif
 	} else if (screen->cursor_set != screen->cursor_state) {
 	    if (screen->cursor_set)
 		ShowCursor();
 	    else
 		HideCursor();
 	}
-#if OPT_INPUT_METHOD
-	PreeditPosition(screen);
-#endif
 
 	XFlush(screen->display);	/* always flush writes before waiting */
 
@@ -3052,8 +3132,13 @@ WriteText(TScreen * screen, PAIRED_CHARS(Char * str, Char * str2), Cardinal len)
 	    zIconBeep_flagged = True;
 	    Changename(icon_name);
 	}
-	if (zIconBeep > 0)
+	if (zIconBeep > 0) {
+#if defined(HAVE_XKBBELL)
+	    XkbBell(XtDisplay(toplevel), VShellWindow, zIconBeep, XkbBI_Info);
+#else
 	    XBell(XtDisplay(toplevel), zIconBeep);
+#endif
+	}
     }
     mapstate = -1;
 #endif /* OPT_ZICONBEEP */
@@ -3235,7 +3320,10 @@ dpmodes(XtermWidget termw,
 	    update_autowrap();
 	    break;
 	case 8:		/* DECARM                       */
-	    /* ignore autorepeat */
+	    /* ignore autorepeat
+	     * XAutoRepeatOn() and XAutoRepeatOff() can do this, but only
+	     * for the whole display - not limited to a given window.
+	     */
 	    break;
 	case SET_X10_MOUSE:	/* MIT bogus sequence           */
 	    MotionOff(screen, termw);
@@ -3721,17 +3809,19 @@ report_win_label(TScreen * screen,
 }
 
 /*
- * Window operations (from CDE dtterm description, as well as extensions)
+ * Window operations (from CDE dtterm description, as well as extensions).
+ * See also "allowWindowOps" resource.
  */
 static void
 window_ops(XtermWidget termw)
 {
-    register TScreen *screen = &termw->screen;
+    TScreen *screen = &termw->screen;
     XWindowChanges values;
     XWindowAttributes win_attrs;
     XTextProperty text;
-    unsigned int value_mask;
-    unsigned root_width, root_height;
+    unsigned value_mask;
+    unsigned root_width;
+    unsigned root_height;
 
     switch (param[0]) {
     case 1:			/* Restore (de-iconify) window */
@@ -3862,18 +3952,12 @@ window_ops(XtermWidget termw)
 
     case 20:			/* Report the icon's label */
 	report_win_label(screen, 'L', &text,
-			 XGetWMIconName(
-					   screen->display,
-					   VShellWindow,
-					   &text));
+			 XGetWMIconName(screen->display, VShellWindow, &text));
 	break;
 
     case 21:			/* Report the window's title */
 	report_win_label(screen, 'l', &text,
-			 XGetWMName(
-				       screen->display,
-				       VShellWindow,
-				       &text));
+			 XGetWMName(screen->display, VShellWindow, &text));
 	break;
 
     default:			/* DECSLPP (24, 25, 36, 48, 72, 144) */
@@ -4526,7 +4610,9 @@ VTInitialize(Widget wrequest,
     wnew->screen.mouse_row = -1;
     wnew->screen.mouse_col = -1;
 
+#if OPT_BOX_CHARS
     init_Bres(screen.force_box_chars);
+#endif
     init_Bres(screen.free_bold_box);
 
     init_Bres(screen.c132);
@@ -4656,6 +4742,18 @@ VTInitialize(Widget wrequest,
     wnew->screen.menu_font_names[fontMenu_fontsel] = NULL;
     wnew->screen.menu_font_number = fontMenu_fontdefault;
 
+#if OPT_BROKEN_OSC
+    init_Bres(screen.brokenLinuxOSC);
+#endif
+
+#if OPT_BROKEN_ST
+    init_Bres(screen.brokenStringTerm);
+#endif
+
+#if OPT_C1_PRINT
+    init_Bres(screen.c1_printable);
+#endif
+
 #if OPT_DEC_CHRSET
     init_Bres(screen.font_doublesize);
     init_Ires(screen.cache_doublesize);
@@ -4697,20 +4795,20 @@ VTInitialize(Widget wrequest,
 #endif
     }
     /*
-     * Check if we're trying to use color in a monochrome screen.  Disable color
-     * in that case, since that would make ANSI colors unusable.  A 4-bit or
-     * 8-bit display is usable, so we do not have to check for anything more
+     * Check if we're trying to use color in a monochrome screen.  Disable
+     * color in that case, since that would make ANSI colors unusable.  A 4-bit
+     * or 8-bit display is usable, so we do not have to check for anything more
      * specific.
      */
     if (color_ok) {
 	Display *display = wnew->screen.display;
-	XVisualInfo template, *visInfoPtr;
+	XVisualInfo myTemplate, *visInfoPtr;
 	int numFound;
 
-	template.visualid = XVisualIDFromVisual(DefaultVisual(display,
-							      XDefaultScreen(display)));
+	myTemplate.visualid = XVisualIDFromVisual(DefaultVisual(display,
+								XDefaultScreen(display)));
 	visInfoPtr = XGetVisualInfo(display, (long) VisualIDMask,
-				    &template, &numFound);
+				    &myTemplate, &numFound);
 	if (visInfoPtr == 0
 	    || numFound == 0
 	    || visInfoPtr->depth <= 1) {
@@ -4873,7 +4971,7 @@ VTInitialize(Widget wrequest,
 static void
 VTDestroy(Widget w)
 {
-    XtFree(((XtermWidget) w)->screen.selection_data);
+    XtFree((char *) (((XtermWidget) w)->screen.selection_data));
 }
 
 /*ARGSUSED*/
@@ -5127,8 +5225,36 @@ VTRealize(Widget w,
 }
 
 #if OPT_I18N_SUPPORT && OPT_INPUT_METHOD
+
+/* limit this feature to recent XFree86 since X11R6.x core dumps */
+#if defined(XtSpecificationRelease) && XtSpecificationRelease >= 6 && defined(X_HAVE_UTF8_STRING)
+#define USE_XIM_INSTANTIATE_CB
+
 static void
-VTInitI18N(void)
+xim_instantiate_cb(Display * display,
+		   XPointer client_data GCC_UNUSED,
+		   XPointer call_data GCC_UNUSED)
+{
+    if (display != XtDisplay(term))
+	return;
+
+    VTInitI18N();
+}
+
+static void
+xim_destroy_cb(XIM im GCC_UNUSED,
+	       XPointer client_data GCC_UNUSED,
+	       XPointer call_data GCC_UNUSED)
+{
+    term->screen.xic = NULL;
+
+    XRegisterIMInstantiateCallback(XtDisplay(term), NULL, NULL, NULL,
+				   xim_instantiate_cb, NULL);
+}
+#endif /* X11R6+ */
+
+static void
+xim_real_init(void)
 {
     unsigned i, j;
     char *p, *s, *t, *ns, *end, buf[32];
@@ -5153,8 +5279,9 @@ VTInitI18N(void)
 
     term->screen.xic = NULL;
 
-    if (!term->misc.open_im)
+    if (!term->misc.open_im) {
 	return;
+    }
 
     if (!term->misc.input_method || !*term->misc.input_method) {
 	if ((p = XSetLocaleModifiers("")) != NULL && *p)
@@ -5325,10 +5452,32 @@ VTInitI18N(void)
 	fprintf(stderr, "Failed to create input context\n");
 	XCloseIM(xim);
     }
+#if defined(USE_XIM_INSTANTIATE_CB)
+    else {
+	XIMCallback destroy_cb;
+
+	destroy_cb.callback = xim_destroy_cb;
+	destroy_cb.client_data = NULL;
+	if (XSetIMValues(xim, XNDestroyCallback, &destroy_cb, NULL))
+	    fprintf(stderr, "Could not set destroy callback to IM\n");
+    }
+#endif
 
     return;
 }
+
+static void
+VTInitI18N(void)
+{
+    xim_real_init();
+
+#if defined(USE_XIM_INSTANTIATE_CB)
+    if (term->screen.xic == NULL)
+	XRegisterIMInstantiateCallback(XtDisplay(term), NULL, NULL, NULL,
+				       xim_instantiate_cb, NULL);
 #endif
+}
+#endif /* OPT_I18N_SUPPORT && OPT_INPUT_METHOD */
 
 static Boolean
 VTSetValues(Widget cur,
