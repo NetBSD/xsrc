@@ -1,4 +1,4 @@
-XCOMM $NetBSD: NetBSD.cf,v 1.101 2002/09/20 21:45:30 ad Exp $
+XCOMM $NetBSD: NetBSD.cf,v 1.102 2003/01/26 22:58:52 thorpej Exp $
 XCOMM platform:  $XConsortium: NetBSD.cf /main/16 1996/10/31 14:47:14 kaleb $
 
 
@@ -114,6 +114,25 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #if ((OSMajorVersion == 1 && OSMinorVersion > 4) || \
      (OSMajorVersion == 1 && OSMinorVersion == 4 && OSTeenyVersion > 8))
 #  define HasUsbLib		YES
+#endif
+
+/*
+ * NetBSD 1.6M and newer supports POSIX Threads.
+ */
+
+#define NetBSDThreads           
+#if defined(NetBSDThreads) && \
+    ((OSMajorVersion > 1) || \
+     (OSMajorVersion == 1 && OSMinorVersion > 6) || \
+     (OSMajorVersion == 1 && OSMinorVersion == 6 && OSTeenyVersion >= 12))
+
+# define HasPosixThreads	YES
+# define ThreadedX		YES
+# define HasThreadSafeAPI	YES
+# define ThreadsLibraries	-lpthread
+# define LibraryMTDefines	-DUSE_NBSD_THREADLIB
+# define SystemMTDefines	-D_REENTRANT
+# define MTSafeAPIDefines	-DXUSE_MTSAFE_API -DXNO_MTSAFE_PWDAPI
 #endif
 
   

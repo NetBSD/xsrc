@@ -201,6 +201,37 @@ typedef pthread_mutex_t xmutex_rec;
 #define xcondition_signal(c) tis_cond_signal(c)
 #define xcondition_broadcast(c) tis_cond_broadcast(c)
 #else
+#ifdef USE_NBSD_THREADLIB
+/*
+ * NetBSD threadlib support is intended for thread safe libraries.
+ * This should not be used for general client programming.
+ */
+#include <threadlib.h>
+typedef thr_t xthread_t;
+typedef thread_key_t xthread_key_t;
+typedef cond_t xcondition_rec;
+typedef mutex_t xmutex_rec;
+#define xthread_self thr_self
+#define xthread_fork(func,closure) { thr_t _tmpxthr; \
+	/* XXX Create it detached?  --thorpej */ \
+	thr_create(&_tmpxthr,NULL,func,closure); }
+#define xthread_yield() thr_yield()
+#define xthread_exit(v) thr_exit(v)
+#define xthread_key_create(kp,d) thr_keycreate(kp,d)
+#define xthread_key_delete(k) thr_keydelete(k)
+#define xthread_set_specific(k,v) thr_setspecific(k,v)
+#define xthread_get_specific(k,vp) *(vp) = thr_getspecific(k)
+#define XMUTEX_INITIALIZER MUTEX_INITIALIZER
+#define xmutex_init(m) mutex_init(m, 0)
+#define xmutex_clear(m) mutex_destroy(m)
+#define xmutex_lock(m) mutex_lock(m)
+#define xmutex_unlock(m) mutex_unlock(m)
+#define xcondition_init(c) cond_init(c, 0, 0)
+#define xcondition_clear(c) cond_destroy(c)
+#define xcondition_wait(c,m) cond_wait(c,m)
+#define xcondition_signal(c) cond_signal(c)
+#define xcondition_broadcast(c) cond_broadcast(c)
+#else
 #include <pthread.h>
 #ifndef LINE_MAX
 #define LINE_MAX 2048
@@ -251,6 +282,7 @@ static xthread_t _X_no_thread_id;
 #define xcondition_set_name(cv,str) ((char**)(cv)->field1)[5] = (str)
 #endif /* DEBUG */
 #endif /* _CMA_VENDOR_ == _CMA__IBM */
+#endif /* USE_NBSD_THREADLIB */
 #endif /* USE_TIS_SUPPORT */
 #endif /* WIN32 */
 #endif /* SVR4 */
