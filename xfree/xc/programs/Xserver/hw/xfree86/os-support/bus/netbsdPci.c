@@ -50,7 +50,7 @@ netbsdPciInit()
 	pciFindNextFP  = pciGenFindNext;
 	/* use businfo to get the number of devs */
 	if (ioctl(devpci, PCI_IOC_BUSINFO, &pci_businfo) != 0)
-	    FatalError("netbsdPciInit: not a PCI bus device", dvname);
+	    FatalError("netbsdPciInit: not a PCI bus device");
 	netbsdPci0.numDevices = pci_businfo.maxdevs;
 }
 
