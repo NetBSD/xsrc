@@ -79,6 +79,7 @@ static Bool create_connection_block();
 
 extern ClientPtr currentClient;
 char       *configfilename;
+int	    DebugMode;
 extern Bool drone_server;
 
 extern OldListenRec *OldListen;
@@ -95,6 +96,7 @@ main(argc, argv)
     argvGlobal = argv;
 
     configfilename = DEFAULT_CONFIG_FILE;
+    DebugMode = 0;
 
     /* init stuff */
     ProcessCmdLine(argc, argv);
@@ -106,6 +108,11 @@ main(argc, argv)
     if (ReadConfigFile(configfilename) != FSSuccess) {
 	ErrorF("fatal: couldn't read config file\n");
 	exit(1);
+    }
+
+    if (!DebugMode) {
+	BecomeOrphan();
+	BecomeDaemon();
     }
 
     while (1) {
