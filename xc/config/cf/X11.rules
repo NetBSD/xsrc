@@ -69,12 +69,18 @@ XCOMM $XConsortium: X11.rules /main/2 1996/12/04 10:13:00 swick $
 #elif !UseInstalledX11
 # define TopXInclude	-I$(TOP)/exports/include
 #else
-# define TopXInclude	/**/
+# ifdef X11ProjectRoot
+#  define TopXInclude	-I$(XPROJECTROOT)/include
+# endif
 #endif
 #ifdef TopIncludes
 # undef TopIncludes
 #endif
-#define TopIncludes	TopInclude $(TOP_X_INCLUDES)
+#ifdef X11ProjectRoot
+# define TopIncludes	TopInclude $(TOP_X_INCLUDES)
+#else
+# define TopIncludes	TopInclude
+#endif
 
 #if UseInstalledX11 && defined(X11ProjectRoot)
 # define X11BuildLibPath	$(XPROJECTROOT)/lib
