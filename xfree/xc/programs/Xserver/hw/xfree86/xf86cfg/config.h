@@ -26,22 +26,17 @@
  *
  * Author: Paulo César Pereira de Andrade <pcpa@conectiva.com.br>
  *
- * $XFree86: xc/programs/Xserver/hw/xfree86/xf86cfg/config.h,v 1.22 2004/02/14 17:53:49 dawes Exp $
+ * $XFree86: xc/programs/Xserver/hw/xfree86/xf86cfg/config.h,v 1.23 2004/04/05 01:34:12 tsi Exp $
  */
 
 #include <X11/IntrinsicP.h>
 #include <X11/StringDefs.h>
 #include <X11/Xmu/SysUtil.h>
-#include <X11/Xos.h>
+#include <X11/Xfuncs.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <dirent.h>
 #include <string.h>
-#ifdef sun
-#undef index
-#undef rindex
-#include <strings.h>
-#endif
 #include <unistd.h>
 
 #include <stdarg.h>

@@ -26,13 +26,13 @@
  *
  * Author: Paulo César Pereira de Andrade <pcpa@conectiva.com.br>
  *
- * $XFree86: xc/programs/Xserver/hw/xfree86/xf86cfg/text-mode.c,v 1.26 2003/11/14 02:40:22 dawes Exp $
+ * $XFree86: xc/programs/Xserver/hw/xfree86/xf86cfg/text-mode.c,v 1.27 2004/04/03 22:26:25 dawes Exp $
  */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#ifdef _SCO_DS
+#if defined(__SCO__) || defined(__USLC__)
 #include <curses.h>
 #else
 #include <ncurses.h>
@@ -349,7 +349,7 @@ static char *protocols[] = {
 #ifdef __UNIXOS2__
     "OS2Mouse",
 #endif
-#ifdef SCO
+#ifdef __SCO__
     "OsMouse",
 #endif
 #ifdef WSCONS_SUPPORT

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/parser/Screen.c,v 1.29 2004/02/13 23:58:50 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/parser/Screen.c,v 1.30 2005/01/07 17:19:32 dawes Exp $ */
 /* 
  * 
  * Copyright (c) 1997  Metro Link Incorporated
@@ -27,7 +27,7 @@
  * 
  */
 /*
- * Copyright (c) 1997-2003 by The XFree86 Project, Inc.
+ * Copyright (c) 1997-2005 by The XFree86 Project, Inc.
  * All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining
@@ -95,6 +95,7 @@ static xf86ConfigSymTabRec DisplayTab[] =
 	{BPP, "fbbpp"},
 	{WEIGHT, "weight"},
 	{OPTION, "option"},
+	{MONITOR, "monitor"},
 	{-1, ""},
 };
 
@@ -109,6 +110,7 @@ xf86parseDisplaySubSection (void)
 	ptr->disp_black.red = ptr->disp_black.green = ptr->disp_black.blue = -1;
 	ptr->disp_white.red = ptr->disp_white.green = ptr->disp_white.blue = -1;
 	ptr->disp_frameX0 = ptr->disp_frameY0 = -1;
+	ptr->monitor_num = -1;
 	while ((token = xf86getToken (DisplayTab)) != ENDSUBSECTION)
 	{
 		switch (token)
@@ -198,7 +200,11 @@ xf86parseDisplaySubSection (void)
 		case OPTION:
 			ptr->disp_option_lst = xf86parseOption(ptr->disp_option_lst);
 			break;
-			
+		case MONITOR:
+			if (xf86getSubToken (&(ptr->disp_comment)) != NUMBER)
+				Error (NUMBER_MSG, "Display");
+			ptr->monitor_num = val.num;
+			break;
 		case EOF_TOKEN:
 			Error (UNEXPECTED_EOF_MSG, NULL);
 			break;
@@ -236,6 +242,7 @@ static xf86ConfigSymTabRec ScreenTab[] =
 };
 
 #define CLEANUP xf86freeScreenList
+
 XF86ConfScreenPtr
 xf86parseScreenSection (void)
 {
@@ -289,9 +296,33 @@ xf86parseScreenSection (void)
 			ptr->scrn_device_str = val.str;
 			break;
 		case MONITOR:
-			if (xf86getSubToken (&(ptr->scrn_comment)) != STRING)
-				Error (QUOTE_MSG, "Monitor");
-			ptr->scrn_monitor_str = val.str;
+			{
+				XF86ConfMonitorListPtr mlptr;
+
+				mlptr = xf86confcalloc (1, sizeof (XF86ConfMonitorListRec));
+				mlptr->list.next = NULL;
+				mlptr->monitor_num = -1;
+				if ((token = xf86getSubToken (&(ptr->scrn_comment))) == NUMBER)
+					mlptr->monitor_num = val.num;
+				else
+					xf86unGetToken (token);
+				token = xf86getSubToken(&(ptr->scrn_comment));
+				if (token != STRING)
+					Error (MONITOR_MSG, NULL);
+				mlptr->monitor_str = val.str;
+
+				/*
+				 * For compatibility, set scrn_monitor_str to the first
+				 * Monitor name.
+				 */
+				if (!ptr->scrn_monitor_lst)
+				{
+					ptr->scrn_monitor_str =
+						xf86configStrdup(mlptr->monitor_str);
+				}
+				ptr->scrn_monitor_lst = (XF86ConfMonitorListPtr)
+					xf86addListItem ((glp) ptr->scrn_monitor_lst, (glp) mlptr);
+			}
 			break;
 		case VIDEOADAPTOR:
 			{
@@ -352,6 +383,7 @@ xf86printScreenSection (FILE * cf, XF86ConfScreenPtr ptr)
 {
 	XF86ConfAdaptorLinkPtr aptr;
 	XF86ConfDisplayPtr dptr;
+	XF86ConfMonitorListPtr monlptr;
 	XF86ModePtr mptr;
 
 	while (ptr)
@@ -365,8 +397,24 @@ xf86printScreenSection (FILE * cf, XF86ConfScreenPtr ptr)
 			fprintf (cf, "\tDriver     \"%s\"\n", ptr->scrn_obso_driver);
 		if (ptr->scrn_device_str)
 			fprintf (cf, "\tDevice     \"%s\"\n", ptr->scrn_device_str);
-		if (ptr->scrn_monitor_str)
-			fprintf (cf, "\tMonitor    \"%s\"\n", ptr->scrn_monitor_str);
+		if (ptr->scrn_monitor_lst)
+		{
+			for (monlptr = ptr->scrn_monitor_lst; monlptr;
+				 monlptr = monlptr->list.next)
+			{
+				fprintf (cf, "\tMonitor  ");
+				if (monlptr->monitor_num != -1)
+					fprintf (cf, "%d  ", monlptr->monitor_num);
+				else
+					fprintf (cf, "   ");
+				fprintf (cf, "\"%s\"\n", monlptr->monitor_str);
+			}
+		}
+		else
+		{
+			if (ptr->scrn_monitor_str)
+				fprintf (cf, "\tMonitor    \"%s\"\n", ptr->scrn_monitor_str);
+		}
 		if (ptr->scrn_defaultdepth)
 			fprintf (cf, "\tDefaultDepth     %d\n",
 					 ptr->scrn_defaultdepth);
@@ -514,6 +562,7 @@ xf86validateScreen (XF86ConfigPtr p)
 	XF86ConfMonitorPtr monitor;
 	XF86ConfDevicePtr device;
 	XF86ConfAdaptorLinkPtr adaptor;
+	XF86ConfMonitorListPtr mlist;
 
 	if (!screen)
 	{
@@ -541,6 +590,21 @@ xf86validateScreen (XF86ConfigPtr p)
 				if (!xf86validateMonitor(p, screen))
 					return (FALSE);
 			}
+		}
+
+		mlist = screen->scrn_monitor_lst;
+		while (mlist)
+		{
+			monitor = xf86findMonitor (mlist->monitor_str, p->conf_monitor_lst);
+			if (!monitor)
+			{
+				xf86validationError (UNDEFINED_MONITOR_MSG,
+						 mlist->monitor_str, screen->scrn_identifier);
+				return (FALSE);
+			}
+			else
+				mlist->monitor = monitor;
+			mlist = mlist->list.next;
 		}
 
 		device = xf86findDevice (screen->scrn_device_str, p->conf_device_lst);

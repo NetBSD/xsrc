@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vbe/vbe.c,v 1.3 2003/11/03 05:11:53 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vbe/vbe.c,v 1.6 2005/02/26 03:18:38 dawes Exp $ */
 
 /*
  *                   XFree86 vbe module
@@ -8,6 +8,53 @@
  * have been moved here.
  * Copyright (c) 2000 by Conectiva S.A. (http://www.conectiva.com)
  * Authors: Paulo César Pereira de Andrade <pcpa@conectiva.com.br> 
+ */
+
+/*
+ * Copyright (c) 2002-2005 by The XFree86 Project, Inc.
+ * All rights reserved.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining
+ * a copy of this software and associated documentation files (the
+ * "Software"), to deal in the Software without restriction, including
+ * without limitation the rights to use, copy, modify, merge, publish,
+ * distribute, sublicense, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject
+ * to the following conditions:
+ *
+ *   1.  Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions, and the following disclaimer.
+ *
+ *   2.  Redistributions in binary form must reproduce the above copyright
+ *       notice, this list of conditions and the following disclaimer
+ *       in the documentation and/or other materials provided with the
+ *       distribution, and in the same place and form as other copyright,
+ *       license and disclaimer information.
+ *
+ *   3.  The end-user documentation included with the redistribution,
+ *       if any, must include the following acknowledgment: "This product
+ *       includes software developed by The XFree86 Project, Inc
+ *       (http://www.xfree86.org/) and its contributors", in the same
+ *       place and form as other third-party acknowledgments.  Alternately,
+ *       this acknowledgment may appear in the software itself, in the
+ *       same form and location as other such third-party acknowledgments.
+ *
+ *   4.  Except as contained in this notice, the name of The XFree86
+ *       Project, Inc shall not be used in advertising or otherwise to
+ *       promote the sale, use or other dealings in this Software without
+ *       prior written authorization from The XFree86 Project, Inc.
+ *
+ * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESSED OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE XFREE86 PROJECT, INC OR ITS CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+ * OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
+ * OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+ * BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+ * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+ * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 #include "xf86.h"
@@ -37,6 +84,7 @@ static Bool vbeProbeDDC(vbeInfoPtr pVbe);
 
 const char *vbe_ddcSymbols[] = {
     "xf86InterpretEDID",
+    "xf86DoEDID_Option",
     NULL
 };
 
@@ -134,6 +182,10 @@ VBEExtendedInit(xf86Int10InfoPtr pInt, int entityIndex, int Flags)
 	    xf86DrvMsgVerb(screen,X_INFO,3,"VESA VBE OEM Product Rev: %s\n",
 		    (CARD8*)xf86int10Addr(pInt,L_ADD(vbe->OemProductRevPtr)));
     }
+    xf86DrvMsgVerb(screen,X_INFO,3,"VESA VBE Capabilities: "
+		   "0x%02x%02x%02x%02x\n",
+		   vbe->Capabilities[3], vbe->Capabilities[2],
+		   vbe->Capabilities[1], vbe->Capabilities[0]);
     vip = (vbeInfoPtr)xnfalloc(sizeof(vbeInfoRec));
     vip->version = B_O16(vbe->VbeVersion);
     vip->pInt10 = pInt;
@@ -235,13 +287,15 @@ vbeProbeDDC(vbeInfoPtr pVbe)
 }
 
 typedef enum {
-  VBEOPT_NOVBE,
-    VBEOPT_NODDC
+    VBEOPT_NOVBE,
+    VBEOPT_NODDC,
+    VBEOPT_EDID_DATA
 } VBEOpts;
 
 static const OptionInfoRec VBEOptions[] = {
     { VBEOPT_NOVBE,	"NoVBE",	OPTV_BOOLEAN,	{0},	FALSE },
     { VBEOPT_NODDC,	"NoDDC",	OPTV_BOOLEAN,	{0},	FALSE },
+    { VBEOPT_EDID_DATA,	"EDID Data",	OPTV_STRING,	{0},	FALSE },
     { -1,		NULL,		OPTV_NONE,	{0},	FALSE },
 };
 
@@ -255,6 +309,7 @@ vbeReadEDID(vbeInfoPtr pVbe)
     Bool noddc = FALSE;
     int screen = pVbe->pInt10->scrnIndex;
     OptionInfoPtr options;
+    char *edidOption;
 
     if (!page) return NULL;
 
@@ -263,9 +318,15 @@ vbeReadEDID(vbeInfoPtr pVbe)
     xf86ProcessOptions(screen, xf86Screens[screen]->options, options);
     xf86GetOptValBool(options, VBEOPT_NOVBE, &novbe);
     xf86GetOptValBool(options, VBEOPT_NODDC, &noddc);
+    edidOption = xf86GetOptValString(options, VBEOPT_EDID_DATA);
     xfree(options);
     if (novbe || noddc) return NULL;
     
+    if (edidOption)
+	tmp = xf86DoEDID_Option(screen, edidOption);
+    if (tmp)
+	return tmp;
+	
     if (!vbeProbeDDC(pVbe)) goto error;
 
     memset(page,0,sizeof(vbeInfoPtr));

@@ -24,7 +24,7 @@ not be used in advertising or otherwise to promote the sale, use or
 other dealings in this Software without prior written authorization
 from The Open Group.
 */
-/* $XFree86: xc/programs/Xserver/os/secauth.c,v 1.11 2001/12/14 20:00:35 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/os/secauth.c,v 1.13 2004/08/05 20:37:42 tsi Exp $ */
 
 #include "X.h"
 #include "os.h"
@@ -35,7 +35,6 @@ from The Open Group.
 #ifdef XCSECURITY
 #define _SECURITY_SERVER
 #include "extensions/security.h"
-#endif
 
 static char InvalidPolicyReason[] = "invalid policy specification";
 static char PolicyViolationReason[] = "policy violation";
@@ -110,6 +109,7 @@ AuthCheckSitePolicy(
     *dataP = (char *)policy;
     return TRUE;
 }
+#endif
 
 XID
 AuthSecurityCheck (
