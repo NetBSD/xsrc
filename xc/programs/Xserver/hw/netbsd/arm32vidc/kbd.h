@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.h,v 1.1.1.1 1999/06/05 00:21:00 mark Exp $	*/
+/*	$NetBSD: kbd.h,v 1.2 2002/06/22 13:53:03 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1999 Mark Brinicombe & Neil A. Carson 
@@ -150,7 +150,7 @@ int kbdmap[] = {
 	-1,		/* 0x6d */
 	-1,		/* 0x6e */
 	-1,		/* 0x6f */
-	-1,		/* 0x70 */
+	KEY_KP_0,	/* 0x70 */
 	KEY_KP_Decimal,	/* 0x71 */
 	KEY_KP_2,	/* 0x72 */
 	KEY_KP_5,	/* 0x73 */
@@ -165,6 +165,7 @@ int kbdmap[] = {
 	KEY_KP_Multiply,/* 0x7c */
 	KEY_KP_9,	/* 0x7d */
 	KEY_ScrollLock,	/* 0x7e */
+	KEY_Break,	/* 0x7f */
 	-1,		/* 0x80 */
 	-1,		/* 0x81 */
 	-1,		/* 0x82 */
