@@ -1,4 +1,4 @@
-/* $NetBSD: hpcFB.c,v 1.4 2004/01/03 04:06:04 uwe Exp $	*/
+/* $NetBSD: hpcFB.c,v 1.5 2004/01/03 15:20:23 uwe Exp $	*/
 /************************************************************
 Copyright 1987 by Sun Microsystems, Inc. Mountain View, CA.
 
@@ -37,9 +37,11 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 /* Adapt cfb logic */
 #undef CFB_NEED_SCREEN_PRIVATE
+#if 0 /* XXX */
 #if !defined(SINGLEDEPTH) || defined(FORCE_SEPARATE_PRIVATE)
 #define CFB_NEED_SCREEN_PRIVATE
 #endif
+#endif /* XXX */
 
 extern BSFuncRec cfbBSFuncRec, cfb16BSFuncRec;
 extern int cfb16ScreenPrivateIndex;
