@@ -1,9 +1,0 @@
-#	Demonstration test suite.
-all
-	"starting scenario"
-	/ts/tc1
-	/ts/tc2
-	"next is the last test case"
-	/ts/tc3
-	"done"
-

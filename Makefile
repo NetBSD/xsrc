@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.42 2004/06/14 16:04:28 tron Exp $
+#	$NetBSD: Makefile,v 1.43 2005/01/07 18:51:33 tron Exp $
 #
 # Targets & Variables
 #
@@ -31,19 +31,10 @@
 # doesn't get defined by  "bsd.own.mk".
 NETBSDSRCDIR?=	${BSDSRCDIR}
 
-.if ${USE_XF86_4:Uno} != "no"
 XCDIR=	xfree/xc
-.else
-XCDIR=	xc
-.endif
-
 
 .MAIN: all
-.if ${USE_XF86_4:Uno} != "no"
 all: all-xc all-local
-.else
-all: all-xc all-contrib all-local
-.endif
 
 all-xc:
 .if exists(${XCDIR}/xmakefile) && defined(UPDATE)
@@ -69,11 +60,7 @@ all-local:
 	fi
 	@cd local && ${MAKE}
 
-.if ${USE_XF86_4:Uno} != "no"
 install: install-xc install-local
-.else
-install: install-xc install-contrib install-local
-.endif
 
 install-xc:
 	@cd ${XCDIR} && \
@@ -91,14 +78,8 @@ install-local:
 	  ${MAKE} DESTDIR="${DESTDIR}" install.man
 
 clean:
-.if ${USE_XF86_4:Uno} != "no"
 	@-cd ${XCDIR} && ${MAKE} clean
 	@-cd local && ${MAKE} clean
-.else
-	@-cd ${XCDIR} && ${MAKE} clean
-	@-cd contrib && ${MAKE} clean
-	@-cd local && ${MAKE} clean
-.endif
 
 cleandir distclean: clean
 	find ${XCDIR} contrib local -name .depend | xargs -n5 rm
@@ -138,10 +119,6 @@ release snapshot: build
 .endif # INSTALL_DONE or BUILD_DONE
 #
 	${INSTALL} -d -m 755 -o root -g wheel ${RELEASEDIR}/${MACHINE}/binary/sets
-.if (${MACHINE} == "amiga") && ${USE_XF86_4:Uno} == "no"
-	cd ${XCDIR}/programs/Xserver/hw/netbsd/amiga && \
-		${INSTALL} -c -m 644 INSTALL.X11 ${RELEASEDIR}/${MACHINE}
-.endif
 	${INSTALL} -d -m 755 -o root -g wheel ${DESTDIR}/etc/mtree
 .if defined(METALOG.add) && !exists(${DESTDIR}/etc/master.passwd)
 	cd ${NETBSDSRCDIR}/distrib/sets && \
