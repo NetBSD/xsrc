@@ -126,9 +126,17 @@ XCOMM $XConsortium: xfree86.cf /main/34 1996/12/06 11:45:18 rws $
  * are supported on this platform.
  */
 #ifdef Mc68020Architecture
-#ifndef XF68FBDevServer
-#define XF68FBDevServer		YES
-#endif
+# ifndef XF68FBDevServer
+#  define XF68FBDevServer		YES
+# endif
+# ifdef NetBSDArchitecture
+#  ifndef XF68SVGAServer
+#   define XF68SVGAServer		YES
+#  endif
+#  ifndef XF68W32Server
+#   define XF68W32Server		YES
+#  endif
+# endif
 #endif
 
 /* 
@@ -233,6 +241,14 @@ XCOMM $XConsortium: xfree86.cf /main/34 1996/12/06 11:45:18 rws $
 # define XF86TGAServer		NO
 #endif
 
+#ifndef XF68SVGAServer
+# define XF68SVGAServer		NO
+#endif
+
+#ifndef XF68W32Server
+# define XF68W32Server		NO
+#endif
+
 #if XF86S3Server
 # define XF86S3Dir		s3
 #else
@@ -303,6 +319,12 @@ XCOMM $XConsortium: xfree86.cf /main/34 1996/12/06 11:45:18 rws $
 # define XF86TGADir		tga
 #else
 # define XF86TGADir		/**/
+#endif
+
+#if XF68W32Server
+# define XF68W32Dir		et4000w32
+#else
+# define XF68W32Dir		/**/
 #endif
 
 #ifndef BuildPC98Servers
@@ -405,6 +427,16 @@ XCOMM $XConsortium: xfree86.cf /main/34 1996/12/06 11:45:18 rws $
 # define XF86AccelServer	NO
 #endif
 
+#undef XF68AccelServerDirs
+#define XF68AccelServerDirs	XF68W32Dir
+
+#undef XF68AccelServer
+#if XF68W32Server
+# define XF68AccelServer	YES
+#else
+# define XF68AccelServer	NO
+#endif
+
 #undef XF98AccelServerDirs
 #define XF98AccelServerDirs   XF98NECS3Dir XF98PWSKBDir XF98PWLBDir XF98GA968Dir
 
@@ -428,6 +460,10 @@ XCOMM $XConsortium: xfree86.cf /main/34 1996/12/06 11:45:18 rws $
 				s3_svga neo chips cyrix rendition p9x00 \
 				spc8110 generic
 # endif
+#endif
+
+#ifndef XF68SvgaDrivers
+# define XF68SvgaDrivers	et4000
 #endif
 
 #ifndef XF98SvgaDrivers
@@ -477,37 +513,71 @@ XCOMM $XConsortium: xfree86.cf /main/34 1996/12/06 11:45:18 rws $
 # define XF86W32Drivers		et4000w32
 #endif
 
+#ifndef XF68W32Drivers
+# define XF68W32Drivers		et4000w32
+#endif
+
 #if XF68FBDevServer || XF86FBDevServer
-# ifndef XF68FBDevIPLAN2p2
-#  define XF68FBDevIPLAN2p2	YES
-# endif
-# ifndef XF68FBDevIPLAN2p4
-#  define XF68FBDevIPLAN2p4	YES
-# endif
-# ifndef XF68FBDevIPLAN2p8
-#  define XF68FBDevIPLAN2p8	YES
-# endif
-# ifndef XF68FBDevILBM
-#  define XF68FBDevILBM		YES
-# endif
-# ifndef XF68FBDevAFB
-#  define XF68FBDevAFB		YES
-# endif
-# ifndef XF68FBDevCFB8
-#  define XF68FBDevCFB8		YES
-# endif
-# ifndef XF68FBDevCFB16
-#  define XF68FBDevCFB16	YES
-# endif
-# ifndef XF68FBDevCFB24
-#  ifdef i386Architecture
-#   define XF68FBDevCFB24	YES
-#  else
+# if defined(NetBSDArchitecture) && defined(atariArchitecture)
+#  ifndef XF68FBDevIPLAN2p2
+#   define XF68FBDevIPLAN2p2	NO
+#  endif
+#  ifndef XF68FBDevIPLAN2p4
+#   define XF68FBDevIPLAN2p4	YES
+#  endif
+#  ifndef XF68FBDevIPLAN2p8
+#   define XF68FBDevIPLAN2p8	YES
+#  endif
+#  ifndef XF68FBDevILBM
+#   define XF68FBDevILBM	NO
+#  endif
+#  ifndef XF68FBDevAFB
+#   define XF68FBDevAFB		NO
+#  endif
+#  ifndef XF68FBDevCFB8
+#   define XF68FBDevCFB8	NO
+#  endif
+#  ifndef XF68FBDevCFB16
+#   define XF68FBDevCFB16	NO
+#  endif
+#  ifndef XF68FBDevCFB24
 #   define XF68FBDevCFB24	NO
 #  endif
-# endif
-# ifndef XF68FBDevCFB32
-#  define XF68FBDevCFB32	YES
+#  ifndef XF68FBDevCFB32
+#   define XF68FBDevCFB32	NO
+#  endif
+# else
+#  ifndef XF68FBDevIPLAN2p2
+#   define XF68FBDevIPLAN2p2	YES
+#  endif
+#  ifndef XF68FBDevIPLAN2p4
+#   define XF68FBDevIPLAN2p4	YES
+#  endif
+#  ifndef XF68FBDevIPLAN2p8
+#   define XF68FBDevIPLAN2p8	YES
+#  endif
+#  ifndef XF68FBDevILBM
+#   define XF68FBDevILBM	YES
+#  endif
+#  ifndef XF68FBDevAFB
+#   define XF68FBDevAFB		YES
+#  endif
+#  ifndef XF68FBDevCFB8
+#   define XF68FBDevCFB8	YES
+#  endif
+#  ifndef XF68FBDevCFB16
+#   define XF68FBDevCFB16	YES
+#  endif
+#  ifndef XF68FBDevCFB24
+#   ifdef i386Architecture
+#    define XF68FBDevCFB24	YES
+#   else
+#    define XF68FBDevCFB24	NO
+#   endif
+#  endif
+#  ifndef XF68FBDevCFB32
+#   define XF68FBDevCFB32	YES
+#  endif
 # endif
 #else
 # ifndef XF68FBDevIPLAN2p2
@@ -577,7 +647,8 @@ XCOMM $XConsortium: xfree86.cf /main/34 1996/12/06 11:45:18 rws $
 #if XF86AccelServer || XF86SVGAServer || XF98AccelServer || \
     XF98GANBWAPServer || XF98NEC480Server || XF98NKVNECServer || \
     XF98WABSServer || XF98WABEPServer || XF98WSNAServer || XF98TGUIServer || \
-    XF98MGAServer || XF98SVGAServer || XF68FBDevServer || XF86FBDevServer
+    XF98MGAServer || XF98SVGAServer || XF68FBDevServer || XF86FBDevServer || \
+    XF68AccelServer || XF68SVGAServer
 #define BuildPexExt		YES
 #else
 #define BuildPexExt		NO
@@ -593,7 +664,8 @@ XCOMM $XConsortium: xfree86.cf /main/34 1996/12/06 11:45:18 rws $
 #  if XF86AccelServer || XF86SVGAServer || XF98AccelServer || \
       XF98GANBWAPServer || XF98NEC480Server || XF98NKVNECServer || \
       XF98WABSServer || XF98WABEPServer || XF98WSNAServer || XF98TGUIServer || \
-      XF98MGAServer || XF98SVGAServer || XF68FBDevServer || XF86FBDevServer
+      XF98MGAServer || XF98SVGAServer || XF68FBDevServer || XF86FBDevServer || \
+      XF68AccelServer || XF68SVGAServer
 #    define BuildGlxExt             YES
 #  else
 #    define BuildGlxExt             NO
@@ -608,7 +680,8 @@ XCOMM $XConsortium: xfree86.cf /main/34 1996/12/06 11:45:18 rws $
 #if XF86AccelServer || XF86SVGAServer || XF98AccelServer || \
     XF98GANBWAPServer || XF98NEC480Server || XF98NKVNECServer || \
     XF98WABSServer || XF98WABEPServer || XF98WSNAServer || XF98TGUIServer || \
-    XF98MGAServer || XF98SVGAServer || XF68FBDevServer || XF86FBDevServer
+    XF98MGAServer || XF98SVGAServer || XF68FBDevServer || XF86FBDevServer || \
+    XF68AccelServer || XF68SVGAServer
 #define BuildXIE		YES
 #else
 #define BuildXIE		NO
@@ -985,9 +1058,12 @@ VGA16DRIVERSRC = $(XF86SRC)/vga16/drivers
   S3VDRIVERSRC = $(XF86SRC)/accel/s3_virge/drivers
 
        XF68SRC = $(SERVERSRC)/hw/xfree68
+  XF68ACCELSRC = $(XF68SRC)/accel
     XF68COMSRC = $(XF68SRC)/common
+     XF68HWSRC = $(XF68SRC)/common_hw
  XF68CONFIGSRC = $(XF68COMSRC)
      XF68OSSRC = $(XF68SRC)/os-support
+VGA68DRIVERSRC = $(XF68SRC)/vga256/drivers
 
            XF98SRC = $(SERVERSRC)/hw/xfree98
       XF98ACCELSRC = $(XF98SRC)/accel

@@ -256,11 +256,19 @@ XCOMM $XFree86: xc/config/cf/xf86site.def,v 3.101.2.25 1998/11/08 09:06:29 dawes
  * The following servers are supported on m68k platforms:
  */
 #ifdef Mc68020Architecture
-#ifdef LinuxArchitecture
-#define XF68FBDevServer		YES
-#else
-#define XF68FBDevServer		NO
-#endif
+# ifdef LinuxArchitecture
+#  define XF68FBDevServer	YES
+#  define XF68SVGAServer	NO
+#  define XF68W32Server		NO
+# elif defined(NetBSDArchitecture)
+#  define XF68FBDevServer	YES
+#  define XF68SVGAServer	YES
+#  define XF68W32Server		YES
+# else
+#  define XF68FBDevServer	NO
+#  define XF68SVGAServer	NO
+#  define XF68W32Server		NO
+# endif
 #endif
 
 /*
@@ -300,6 +308,8 @@ XCOMM $XFree86: xc/config/cf/xf86site.def,v 3.101.2.25 1998/11/08 09:06:29 dawes
  * The following server is supported on Motorola 68k platforms:
  *
 #define XF68FBDevServer		NO
+#define XF68SVGAServer		NO
+#define XF68W32Server		NO
  */
 
 /*
@@ -336,6 +346,12 @@ XCOMM $XFree86: xc/config/cf/xf86site.def,v 3.101.2.25 1998/11/08 09:06:29 dawes
  */
 
 /*
+ * m68k SVGA server:
+ *
+#define XF68SvgaDrivers		et4000
+ */
+
+/*
  * VGA16 server:
  *
 #define XF86Vga16Drivers	et4000 et3000 ncr77c22 ati sis tvga8900 oak \
@@ -359,6 +375,12 @@ XCOMM $XFree86: xc/config/cf/xf86site.def,v 3.101.2.25 1998/11/08 09:06:29 dawes
  * ET4000/W32 server:
  *
 #define XF86W32Drivers		et4000w32
+ */
+
+/*
+ * m68k ET4000/W32 server:
+ *
+#define XF68W32Drivers		et4000w32
  */
 
 /*
