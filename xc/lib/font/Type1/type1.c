@@ -1458,12 +1458,17 @@ static double Div(num1, num2)
 /*   Calling sequence: 'idmin epX epY 3 0 callothersubr' */
 /*   Computes Flex values, and renders the Flex path,    */
 /*   and returns (leaves) ending coordinates on stack    */
+#ifdef __sparc_v9__
+static void FlxProc(inputs, idmin)
+  double inputs[];
+#else
 static void FlxProc(c1x2, c1y2, c3x0, c3y0, c3x1, c3y1, c3x2, c3y2,
              c4x0, c4y0, c4x1, c4y1, c4x2, c4y2, epY, epX, idmin)
   double c1x2, c1y2;
   double c3x0, c3y0, c3x1, c3y1, c3x2, c3y2;
   double c4x0, c4y0, c4x1, c4y1, c4x2, c4y2;
   double epX, epY;
+#endif
   int idmin;
 {
   double dmin;
@@ -1482,6 +1487,24 @@ static void FlxProc(c1x2, c1y2, c3x0, c3y0, c3x1, c3y1, c3x2, c3y2,
   double eShift;
   double cx, cy;
   double ex, ey;
+#ifdef __sparc_v9__
+  double c1x2 = *inputs++;
+  double c1y2 = *inputs++;
+  double c3x0 = *inputs++;
+  double c3y0 = *inputs++;
+  double c3x1 = *inputs++;
+  double c3y1 = *inputs++;
+  double c3x2 = *inputs++;
+  double c3y2 = *inputs++;
+  double c4x0 = *inputs++;
+  double c4y0 = *inputs++;
+  double c4x1 = *inputs++;
+  double c4y1 = *inputs++;
+  double c4x2 = *inputs++;
+  double c4y2 = *inputs++;
+  double epX = *inputs++;
+  double epY = *inputs++;
+#endif
  
   Destroy(path);
   path = FlxOldPath; /* Restore previous path (stored in FlxProc1) */
@@ -1676,10 +1699,14 @@ static CallOtherSubr(othersubrno)
       if (PSFakeTop < 16) Error0("CallOtherSubr: PSFakeStack low");
       ClearPSFakeStack();
       FlxProc(
+#ifdef __sparc_v9__
+        PSFakeStack,
+#else
         PSFakeStack[0],  PSFakeStack[1],  PSFakeStack[2],  PSFakeStack[3],
         PSFakeStack[4],  PSFakeStack[5],  PSFakeStack[6],  PSFakeStack[7],
         PSFakeStack[8],  PSFakeStack[9],  PSFakeStack[10], PSFakeStack[11],
         PSFakeStack[12], PSFakeStack[13], PSFakeStack[14], PSFakeStack[15],
+#endif
         (int) PSFakeStack[16]
       );
       break;
