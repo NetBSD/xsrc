@@ -1,5 +1,5 @@
 /* $XConsortium: Scale.c,v 1.20 95/01/05 19:49:01 kaleb Exp $ */
-/* $XFree86: xc/programs/xmag/Scale.c,v 3.2 1995/01/28 16:17:27 dawes Exp $ */
+/* $XFree86: xc/programs/xmag/Scale.c,v 3.2.8.1 1999/07/23 13:23:27 hohndel Exp $ */
 /*
 
 Copyright (c) 1989  X Consortium
@@ -56,8 +56,12 @@ extern double atof(char *);
 #endif
 
 #define streq(a,b) (strcmp( (a), (b) ) == 0)
+#ifndef min
 #define min(x, y) (x > y ? y : x)
+#endif
+#ifndef max
 #define max(x, y) (x < y ? y : x)
+#endif
 
 #define DefaultBufferSize 1024
 #define DefaultScaleFactor NULL

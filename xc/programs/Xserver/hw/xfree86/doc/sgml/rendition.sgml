@@ -3,22 +3,29 @@
 <article>
 <title>Information for Rendition Users
 <author>The XFree86 Project Inc.
-<date>19 June 1999
+<date>1 August 1999
 <toc>
 
 <sect>Supported hardware <p>
 All cards based on the V1000 or the V2x00 should be supported. The server
 was tested on a miroCRYSTAL VRX (V1000), Intergraph Intense-100 3D (V1000), Diamond Stealth II S220 (V2100), Hercules Thriller3D (V2200) and Innovision Warrior3D (V2200).
 
+<sect>Important notices <p>
+V1000 cards can only work as primary display card due to hardware limitations. <p>
+Some V1000-based videocards are known to lock up the computer if you have write-combine activated. Disabling it removes the problem. Look for settings in the motherboards BIOS and disable ALL settings that has to do with write-combine (usualy called USWC or just WC for short). <p>
+The "chipset" option is now implemented and honored when used. Unfortunatly some legacy-code in the driver is preventing it from working with any cards but the primary display card. <p>
+If you have problems with hardware cursor use the "sw_cursor" option to revert back to software cursor.
+
 <sect>Features <p>
 <itemize>
 <item>Unaccelerated
-<item>Hardware cursor on V1000-based cards
+<item>Hardware cursor
 <item>Supported color depths
 <itemize>
 <item>8 bits per pixel (256 pseudo colour)
-<item>16 bits per pixel (high colour)
-<item>32 bits per pixel (true colour)
+<item>15 bits per pixel (actualy 16-bits with RGB-weight 555, 32768 colors)
+<item>16 bits per pixel (high colour, RGB-weight 565, 65536 colors)
+<item>32 bits per pixel (true colour, sparse 24bit, 16M colors)
 </itemize>
 </itemize>
 
@@ -36,31 +43,33 @@ Set custom ramdac limit. We have currently no way of knowing if the v2x00 chip i
 
 <sect>News in this release <p>
 <itemize>
-<item>Maximum allowed clock on V2x00 cards increased to 170MHz.
-<item>Hardware-cursor on V1000 cards.
+<item>Hardware-cursor on V2x00 cards.
 </itemize>
 
 <sect>Major fixes in this release <p>
 <itemize>
-<item>The driver should now correctly autodetect the primary display card.
+<item>Depth 15 works on V1000 cards.
+<item>Bandwith limits are now included. Can be overrided with DacSpeed option.
 </itemize>
 
 <sect>Known problems in current driver<p>
 <itemize>
-<item>Displays with depth 15 (-fbb 15) has incorrect redish color.
-<item>Swithing from display to VC and back to display can lock up V2x00 cards.
-<item>No limits are programmed into driver. High-bandwidth resolutions might be corrupted.
+<item>Displays with depth 15 ("-bpp 15" or "-bpp 16 -weight 555") has problems on V2x00 cards.
+<item>Switching from display to VC and back to display can lock up V2x00 cards.
+<item>When scrolling the virtual display on a V1000 card parts of the screen will become distorted. Problem dissapears when you continue moving around. V2x00 does not exhibit this problem. Probably a bug in the driver rather than a limitation of the chip.
+<item>Option "chipset" is honored. Unfortunatly the driver still has problems and will only work if the rendition card is the primary display card in the system.
+<item>Switching to VC does not restore correct textmode. Instead it defaults to 80x25.
+<item>A horizontal distortion around the hardware cursor can be seen on certain modes. It can be fixed by turning off hardware cursor or by lowering the required bandwith of the mode.
 </itemize>
 
 <sect>Work in progress (not finished in time for release) <p>
 <itemize>
-<item>Hardware cursor for V2100 and V2200. Almost done.
 <item>Acceleration for V1000 chipset. Some bugs to clear out.
 <item>Acceleration for V2100 and V2200 chipset. Not ready for general use.
 </itemize>
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/rendition.sgml,v 1.1.2.8 1999/07/13 07:38:01 hohndel Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/rendition.sgml,v 1.1.2.10 1999/08/17 07:39:31 hohndel Exp $
 </verb>
 
 </article>

@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/programs/Xserver/hw/xfree86/vga256/vga/vgaHW.c,v 3.50.2.6 1998/12/22 11:23:28 hohndel Exp $
+ * $XFree86: xc/programs/Xserver/hw/xfree86/vga256/vga/vgaHW.c,v 3.50.2.7 1999/07/23 13:23:04 hohndel Exp $
  *
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  *
@@ -78,7 +78,7 @@
 #endif
 #endif
 
-#if defined(Lynx) || defined(CSRG_BASED) || defined(MACH386) || defined(__GNU__)  || defined(linux) || defined(AMOEBA) || defined(MINIX)
+#if defined(Lynx) || defined(CSRG_BASED) || defined(MACH386) || defined(__GNU__)  || defined(linux) || defined(AMOEBA) || defined(MINIX) || defined(__QNX__)
 #ifndef NEED_SAVED_CMAP
 #define NEED_SAVED_CMAP
 #endif
@@ -93,7 +93,7 @@
 #endif
 
 /* bytes per plane to save for text */
-#if defined(Lynx) || defined(linux) || defined(MINIX)
+#if defined(Lynx) || defined(linux) || defined(MINIX) || defined(__QNX__)
 #define TEXT_AMOUNT 16384
 #else
 #define TEXT_AMOUNT 4096

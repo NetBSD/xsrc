@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/S3.c,v 3.15.2.6 1999/06/17 16:24:03 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/S3.c,v 3.15.2.7 1999/07/30 11:21:19 hohndel Exp $ */
 /*
  * (c) Copyright 1993,1994 by David Wexelblat <dwex@xfree86.org>
  *
@@ -173,6 +173,10 @@ int *Chipset;
 			case PCI_CHIP_TRIO3D:
 			        PCIProbed = TRUE;
 				*Chipset = CHIP_S3_Trio3D;
+				break;
+			case PCI_CHIP_TRIO3D_2X:
+			        PCIProbed = TRUE;
+				*Chipset = CHIP_S3_Trio3D_2X;
 				break;
 			case PCI_CHIP_SAVAGE3D:
 			        PCIProbed = TRUE;
@@ -411,6 +415,8 @@ int *Chipset;
                               *Chipset = CHIP_S3_Trio3D_B;
                            else if (chip_id == PCI_CHIP_TRIO3D)
                               *Chipset = CHIP_S3_Trio3D;
+                           else if (chip_id == PCI_CHIP_TRIO3D_2X)
+                              *Chipset = CHIP_S3_Trio3D_2X;
                            else if (chip_id == PCI_CHIP_SAVAGE3D)
                               *Chipset = CHIP_S3_Savage3D;
                            else if (chip_id == PCI_CHIP_SAVAGE3D_M)
@@ -500,6 +506,22 @@ int Chipset;
 			      Mem = 4 * 1024;
 			      break;
 			   case 4:
+			      Mem = 2 * 1024;
+			      break;
+			   }
+			}
+			else if (Chipset == CHIP_S3_Trio3D_2X)
+			{
+			   switch((config & 0xE0) >> 5)
+			   {
+			   case 0:
+			      Mem = 8 * 1024;
+			      break;
+			   case 1:  /* 32 bit interface -- yuck */
+			   case 2:
+			      Mem = 4 * 1024;
+			      break;
+			   case 6:
 			      Mem = 2 * 1024;
 			      break;
 			   }

@@ -1,5 +1,5 @@
 XCOMM platform:  $TOG: linux.cf /main/36 1997/06/16 22:21:03 kaleb $
-XCOMM platform:  $XFree86: xc/config/cf/linux.cf,v 3.57.2.16 1998/11/08 11:21:49 hohndel Exp $
+XCOMM platform:  $XFree86: xc/config/cf/linux.cf,v 3.57.2.18 1999/07/22 08:13:51 hohndel Exp $
 
 #ifndef LinuxElfDefault
 #define LinuxElfDefault		YES
@@ -40,7 +40,9 @@ XCOMM platform:  $XFree86: xc/config/cf/linux.cf,v 3.57.2.16 1998/11/08 11:21:49
 
 /* Set some defaults for the Default* values in case imake doesn't find them */
 #ifndef DefaultLinuxCLibMajorVersion
-#if defined(AlphaArchitecture) || defined(PowerPCArchitecture)
+#if defined(AlphaArchitecture) || defined(PowerPCArchitecture) || \
+    defined(SparcArchitecture) || defined(ArmArchitecure) || \
+    defined(i386Architecture)
 #define DefaultLinuxCLibMajorVersion	6
 #else
 #define DefaultLinuxCLibMajorVersion	5
@@ -92,7 +94,7 @@ XCOMM binutils:	(LinuxBinUtilsMajorVersion)
 				-D_POSIX_SOURCE -D_XOPEN_SOURCE=500L \
 				-D_BSD_SOURCE -D_SVID_SOURCE
 #define XawI18nDefines		-DHAS_WCHAR_H -DHAS_WCTYPE_H -DNO_WIDEC_H
-#if !defined(AlphaArchitecture)
+#if !defined(ArmArchitecture)
 #define HasPosixThreads		YES
 #define ThreadedX		YES
 #define HasThreadSafeAPI	YES
@@ -135,6 +137,9 @@ XCOMM binutils:	(LinuxBinUtilsMajorVersion)
 #if UseElfFormat || defined(AlphaArchitecture)
 #define HasSnprintf		YES
 #define HasMkstemp		YES
+#endif
+#ifndef HasPam
+#define HasPam			NO
 #endif
 
 #define AvoidNullMakeCommand	YES
@@ -266,6 +271,14 @@ XCOMM binutils:	(LinuxBinUtilsMajorVersion)
 #define ServerOSDefines		XFree86ServerOSDefines -DDDXTIME -DPART_NET
 #define ServerExtraDefines	-DGCCUSESGAS XFree86ServerDefines
 #endif /* PowerPCArchitecture */
+
+#ifdef ArmArchitecture
+#define DefaultCCOptions        -fsigned-char
+#define OptimizedCDebugFlags   -O2
+#define LinuxMachineDefines    -D__arm__
+#define ServerOSDefines                XFree86ServerOSDefines -DDDXTIME -DPART_NET
+#define ServerExtraDefines     -DGCCUSESGAS XFree86ServerDefines
+#endif /* Arm */
 
 #define StandardDefines		-Dlinux LinuxMachineDefines LinuxSourceDefines
 

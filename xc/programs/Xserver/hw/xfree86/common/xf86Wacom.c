@@ -22,7 +22,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Wacom.c,v 3.25.2.13 1999/07/13 07:09:47 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Wacom.c,v 3.25.2.16 1999/07/29 09:22:50 hohndel Exp $ */
 
 /*
  * This driver is only able to handle the Wacom IV and Wacom V protocols.
@@ -68,10 +68,12 @@ static const char identification[] = "$Identification: 8 $";
 #include <misc.h>
 #include <xf86.h>
 #define NEED_XF86_TYPES
+#if !defined(DGUX)
 #include <xf86_ansic.h>
+#include <xisb.h>
+#endif
 #include <xf86_OSproc.h>
 #include <xf86Xinput.h>
-#include <xisb.h>
 #include <exevents.h>		/* Needed for InitValuator/Proximity stuff */
 #include <keysym.h>
 #include <mipointer.h>
@@ -172,6 +174,10 @@ static InputDriverPtr wcmDrv;
 #endif
 
 #endif /* Pre 3.9 headers */
+
+#if defined(__QNX__) || defined(__QNXNTO__)
+#define POSIX_TTY
+#endif
 
 /******************************************************************************
  * debugging macro

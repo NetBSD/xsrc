@@ -1,5 +1,5 @@
 /* $XConsortium: session.c /main/77 1996/11/24 17:32:33 rws $ */
-/* $XFree86: xc/programs/xdm/session.c,v 3.11.2.3 1998/10/22 04:31:11 hohndel Exp $ */
+/* $XFree86: xc/programs/xdm/session.c,v 3.11.2.7 1999/07/29 09:23:05 hohndel Exp $ */
 /*
 
 Copyright (c) 1988  X Consortium
@@ -54,6 +54,12 @@ from the X Consortium.
 #endif
 #ifdef K5AUTH
 # include <krb5/krb5.h>
+#endif
+#ifdef USE_PAM
+# include <security/pam_appl.h>
+#endif
+#ifdef USESHADOW
+# include <shadow.h>
 #endif
 
 #ifndef GREET_USER_STATIC
@@ -123,11 +129,17 @@ static	struct dlfuncs	dlfuncs = {
 	endgrent,
 #ifdef USESHADOW
 	getspnam,
+#ifndef __QNX__
 	endspent,
+#endif /* QNX doesn't use endspent */
 #endif
 	getpwnam,
 	crypt,
 	};
+
+#if defined(__QNX__)
+#include <shadow.h>
+#endif
 
 #ifdef X_NOT_STDC_ENV
 extern int errno;
@@ -140,6 +152,10 @@ static struct greet_info	greet;
 static struct verify_info	verify;
 
 static Jmp_buf	abortSession;
+
+#ifdef USE_PAM
+extern pam_handle_t *pamh;
+#endif
 
 /* ARGSUSED */
 static SIGVAL
@@ -482,6 +498,14 @@ SessionExit (d, status, removeAuth)
 	    }
 	}
 #endif /* K5AUTH */
+#ifdef USE_PAM
+	if (pamh) {
+	  /* shutdown PAM session */
+	  pam_close_session(pamh, 0);
+	  pam_end(pamh, PAM_SUCCESS);
+	  pamh = NULL;
+	}
+#endif
     }
     Debug ("Display %s exiting with status %d\n", d->name, status);
     exit (status);
@@ -513,6 +537,9 @@ StartClient (verify, d, pidp, name, passwd)
 		Debug ("%s ", *f);
 	Debug ("\n");
     }
+#ifdef USE_PAM
+    if (pamh) pam_open_session(pamh, 0);
+#endif    
     switch (pid = fork ()) {
     case 0:
 	CleanUpChild ();
@@ -522,6 +549,18 @@ StartClient (verify, d, pidp, name, passwd)
 #endif
 
 	/* Do system-dependent login setup here */
+
+#ifdef USE_PAM
+    /* pass in environment variables set by libpam and modules it called */
+        if (pamh) {
+          long i;
+          char **pam_env = pam_getenvlist(pamh);
+          for(i = 0; pam_env && pam_env[i]; i++)
+            {
+              verify->userEnviron = putEnv(pam_env[i], verify->userEnviron);
+            }
+        }
+#endif
 
 #ifndef AIXV3
 #ifndef HAS_SETUSERCONTEXT
@@ -544,11 +583,13 @@ StartClient (verify, d, pidp, name, passwd)
 		     verify->gid, name, errno);
 	    return (0);
 	}
+#ifndef __QNX__
 	if (initgroups(name, verify->gid) < 0)
 	{
 	    LogError("initgroups for \"%s\" failed, errno=%d\n", name, errno);
 	    return (0);
 	}
+#endif   /* QNX doesn't support multi-groups, no initgroups() */
 	if (setuid(verify->uid) < 0)
 	{
 	    LogError("setuid %d (user \"%s\") failed, errno=%d\n",
@@ -887,5 +928,60 @@ char *crypt(s1, s2)
 	char	*s1, *s2;
 {
 	return(s2);
+}
+#endif
+#if defined(__QNX__) && !defined(__QNXNTO__)
+
+#define	FIELDS	5
+int parse_sp(char *buf, struct spwd * sp)
+{
+	char           *fields[FIELDS];
+	char           *cp;
+	char           *cpp;
+	int             i;
+
+	if (cp = strrchr(buf, '\n'))
+		*cp = '\0';
+
+	for (cp = buf, i = 0; *cp && i < FIELDS; i++) {
+		fields[i] = cp;
+		while (*cp && *cp != ':')
+			cp++;
+
+		if (*cp)
+			*cp++ = '\0';
+	}
+	if (*cp || i != FIELDS)
+		return 0;
+
+	sp->sp_namp = fields[0];
+	sp->sp_pwdp = fields[1];
+
+	if ((sp->sp_lstchg = strtol(fields[2], &cpp, 10)) == 0 && *cpp)	return 0;
+	if ((sp->sp_min = strtol(fields[3], &cpp, 10)) == 0 && *cpp) return 0;
+	if ((sp->sp_max = strtol(fields[4], &cpp, 10)) == 0 && *cpp) return 0;
+	return 1;
+}
+
+static char     buf[BUFSIZ];
+static struct spwd spwd;
+
+struct spwd *getspnam(char *name)
+{
+	FILE           *f;
+	int             found = 0;
+	struct			passwd *pwd;
+
+	if ((f = fopen(SHADOW, "r")) == NULL)
+		return NULL;
+	while (fgets(buf, sizeof(buf) - 1, f)) {
+		if (parse_sp(buf, &spwd)) {
+			if ((found = !strcmp(spwd.sp_namp, name)))
+				break;
+		}
+	}
+	fclose(f);
+
+	if ( found ) return ( &spwd );
 }
 #endif

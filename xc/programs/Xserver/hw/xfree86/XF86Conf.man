@@ -1,5 +1,5 @@
-.\" $XFree86: xc/programs/Xserver/hw/xfree86/XF86Conf.man,v 3.52.2.13 1999/06/30 13:00:15 hohndel Exp $
-.TH XF86Config 4/5 "Version 3.3.4"  "XFree86"
+.\" $XFree86: xc/programs/Xserver/hw/xfree86/XF86Conf.man,v 3.52.2.14 1999/08/02 08:38:00 hohndel Exp $
+.TH XF86Config 4/5 "Version 3.3.5"  "XFree86"
 .SH NAME
 XF86Config - Configuration File for XFree86
 .SH DESCRIPTION

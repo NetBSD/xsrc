@@ -26,6 +26,7 @@ Except as contained in this notice, the name of the X Consortium shall
 not be used in advertising or otherwise to promote the sale, use or
 other dealings in this Software without prior written authorization
 from the X Consortium.
+$XFree86: xc/programs/xfwp/xfwp.h,v 1.1.1.1.2.3 1999/07/23 13:56:18 hohndel Exp $
 */
 
 /*
@@ -63,8 +64,10 @@ from the X Consortium.
 #define SEPARATOR1              " \t\n"
 #define SEPARATOR2              '.'
 
+#ifndef __QNX__
 #define		min(a,b)		((a) < (b) ? (a) : (b))
 #define		max(a,b)		((a) > (b) ? (a) : (b))
+#endif
 
 typedef void fp1();
 typedef Bool fp2();

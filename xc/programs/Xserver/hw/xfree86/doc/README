@@ -1,20 +1,20 @@
-                        README for XFree86[tm] 3.3.4
+                        README for XFree86[tm] 3.3.5
 
                           The XFree86 Project, Inc
 
-                                21 June 1999
+                               17 August 1999
 
                                   Abstract
 
      XFree86 is a port of X11R6.3 that supports several Unix and Unix-
      like operating systems on Intel and other platforms.  This release
-     is a quick update to XFree86 3.3.3, fixing a number of bugs that
-     were found after releasing it.  The release is available as source
-     patches against the X Consortium X11R6.3 code and the XFree86 3.3.3
-     release.  Binary distributions for many architectures are also
-     available, including a binary upgrade for XFree86 3.3.3.
+     is a quick update to XFree86 3.3.4, fixing a few bugs that were
+     found after releasing it and adding support to two more operating
+     systems. The release is available as source patches against the X
+     Consortium X11R6.3 code and the XFree86 3.3.4 release.  Binary dis-
+     tributions for many architectures are also available.
 
-1.  What's new in XFree86 3.3.4
+1.  What's new in XFree86 3.3.5
 
 For a summary of new features in this release, please refer to the RELNOTES
 file.  For a detailed list of changes, refer to the CHANGELOG file in the
@@ -60,12 +60,12 @@ Note: Not all systems listed here have been tested with the current release.
 
       Others:
 
-               o NetBSD 1.0, 1.1, 1.2, 1.2.1, 1.3, 1.3.1, 1.3.2, 1.3.3
+               o NetBSD 1.0, 1.1, 1.2, 1.2.1, 1.3, 1.3.1, 1.3.2, 1.3.3, 1.4
 
                o OpenBSD 2.0, 2.1, 2.2, 2.3, 2.4
 
                o FreeBSD 2.0.5, 2.1, 2.1.5, 2.1.6, 2.1.7, 2.1.7.1, 2.2,
-                 2.2.1, 2.2.2, 2.2.5, 2.2.6, 2,2,7, 2.2.8, 3.0
+                 2.2.1, 2.2.2, 2.2.5, 2.2.6, 2,2,7, 2.2.8, 3.0, 3.1, 3.2
 
                o Linux (Intel x86, DEC Alpha/AXP and m68k)
 
@@ -80,9 +80,10 @@ Note: Not all systems listed here have been tested with the current release.
       PC98:
 
                o FreeBSD(98) 2.0.5, 2.1, 2.1.5, 2.1.7.1, 2.2, 2.2.1, 2.2.2,
-                 2.2.5, 2.2.6, 2,2,7, 2.2.8, 3.0
+                 2.2.5, 2.2.6, 2,2,7, 2.2.8, 3.0, 3.1, 3.2
 
-               o NetBSD/pc98 (based on NetBSD 1.2, 1.2.1, 1.3, 1.3.1, 1.3.2)
+               o NetBSD/pc98 (based on NetBSD 1.2, 1.2.1, 1.3, 1.3.1, 1.3.2,
+                 1.3.3)
 
                o PANIX 5.0 for 98
 
@@ -90,7 +91,7 @@ Note: Not all systems listed here have been tested with the current release.
 
 3.  Supported video-card chip-sets
 
-At this time, XFree86 3.3.4 supports the following chipsets:
+At this time, XFree86 3.3.5 supports the following chipsets:
 
       Ark Logic
             ARK1000PV, ARK1000VL, ARK2000PV, ARK2000MT
@@ -174,7 +175,8 @@ At this time, XFree86 3.3.4 supports the following chipsets:
       S3
             86C911, 86C924, 86C801, 86C805, 86C805i, 86C928, 86C864, 86C964,
             86C732, 86C764, 86C765, 86C767, 86C775, 86C785, 86C868, 86C968,
-            86C325, 86C357, 86C375, 86C375, 86C385, 86C988, 86CM65, 86C260
+            86C325, 86C357, 86C362, 86C375, 86C375, 86C385, 86C988, 86CM65,
+            86C260
 
       SiS
             86C201, 86C202, 86C205, 86C215, 86C225, 5597, 5598, 6326, 530,
@@ -1170,9 +1172,9 @@ Ensure that you are getting XFree86 3.3.3.1 - some of these sites may archive
 older releases as well.  Check the RELNOTES to find which files you need to
 take from the archive.
 
-     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/README.sgml,v 3.75.2.51 1999/06/23 12:37:18 hohndel Exp $
+     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/README.sgml,v 3.75.2.54 1999/08/17 07:39:29 hohndel Exp $
 
      $XConsortium: README.sgml /main/31 1996/10/28 05:43:24 kaleb $
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/README,v 3.76.2.48 1999/06/25 08:56:30 hohndel Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/README,v 3.76.2.51 1999/08/17 13:28:07 hohndel Exp $

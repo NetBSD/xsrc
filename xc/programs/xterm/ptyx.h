@@ -1,6 +1,6 @@
 /*
  *	$XConsortium: ptyx.h /main/67 1996/11/29 10:34:19 swick $
- *	$XFree86: xc/programs/xterm/ptyx.h,v 3.19.2.7 1999/04/21 07:21:29 hohndel Exp $
+ *	$XFree86: xc/programs/xterm/ptyx.h,v 3.19.2.8 1999/07/28 13:38:05 hohndel Exp $
  */
 
 /*
@@ -103,7 +103,7 @@
 #ifdef __hpux 
 #define TTYDEV		"/dev/pty/ttyxx"
 #else	/* !__hpux */ 
-#ifdef __osf__
+#if defined(__osf__) || (defined(linux) && (__GLIBC__ >= 2) && (__GLIBC_MINOR__ >= 1))
 #define TTYDEV		"/dev/ttydirs/xxx/xxxxxxxxxxxxxx"
 #else
 #define	TTYDEV		"/dev/ttyxx"
@@ -296,7 +296,7 @@ typedef struct {
 
 /***====================================================================***/
 
-#if XtSpecificationRelease < 6
+#if (XtSpecificationRelease < 6)
 #ifndef NO_ACTIVE_ICON
 #define NO_ACTIVE_ICON 1 /* Note: code relies on an X11R6 function */
 #endif
@@ -313,7 +313,7 @@ typedef struct {
 #endif
 
 #ifndef OPT_I18N_SUPPORT
-#if XtSpecificationRelease >= 6
+#if (XtSpecificationRelease >= 6)
 #define OPT_I18N_SUPPORT 1 /* true if xterm uses internationalization support */
 #else
 #define OPT_I18N_SUPPORT 0
@@ -325,7 +325,7 @@ typedef struct {
 #endif
 
 #ifndef OPT_INPUT_METHOD
-#if XtSpecificationRelease >= 6
+#if (XtSpecificationRelease >= 6)
 #define OPT_INPUT_METHOD 1 /* true if xterm uses input-method support */
 #else
 #define OPT_INPUT_METHOD 0

@@ -24,7 +24,7 @@ Except as contained in this notice, the name of the X Consortium shall not be
 used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from the X Consortium.
 ******************************************************************************/
-/* $XFree86: xc/programs/xsm/xsm.c,v 1.1.1.2.2.2 1999/02/13 02:37:30 dawes Exp $ */
+/* $XFree86: xc/programs/xsm/xsm.c,v 1.1.1.2.2.3 1999/07/29 09:23:08 hohndel Exp $ */
 
 /*
  * X Session Manager.
@@ -523,7 +523,10 @@ Bool use_default;
     }
 
     if (!sm_id)
+    {
 	sm_id = SmsGenerateClientID (NULL);
+	if (!sm_id) return (0);
+    }
     XChangeProperty (XtDisplay (topLevel), XtWindow (topLevel),
 	XInternAtom (XtDisplay (topLevel), "SM_CLIENT_ID", False),
 	XA_STRING, 8, PropModeReplace,

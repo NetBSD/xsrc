@@ -1,5 +1,5 @@
 XCOMM $XConsortium: Imakefile /main/81 1996/10/22 18:32:26 kaleb $
-XCOMM $XFree86: xc/programs/xdm/Imakefile,v 3.19.2.5 1998/11/04 13:18:02 hohndel Exp $
+XCOMM $XFree86: xc/programs/xdm/Imakefile,v 3.19.2.10 1999/07/29 09:23:03 hohndel Exp $
 #define IHaveSubdirs
 #define PassCDebugFlags 'CDEBUGFLAGS=$(CDEBUGFLAGS)'
 
@@ -18,6 +18,19 @@ XCOMM $XFree86: xc/programs/xdm/Imakefile,v 3.19.2.5 1998/11/04 13:18:02 hohndel
  * but not all NetBSD/Alpha systems have shared libraries, and
  * it can't be shared on those which do not.
  */
+
+#if HasPam
+/* Don't use the shared greeter library with PAM */
+#ifdef SharedLibXdmGreet
+#undef SharedLibXdmGreet
+#endif
+
+#ifdef BuildBoth
+#undef BuildBoth
+#define BuildBoth 0
+#endif
+
+#else
 #ifndef SharedLibXdmGreet
 #define SharedLibXdmGreet						\
     ((defined(AlphaArchitecture) &&					\
@@ -29,6 +42,7 @@ XCOMM $XFree86: xc/programs/xdm/Imakefile,v 3.19.2.5 1998/11/04 13:18:02 hohndel
 #ifndef BuildBoth
 #define BuildBoth (defined(LinuxArchitecture) && !SharedLibXdmGreet && !UseElfFormat)
 #endif
+#endif /* HasPam */
 
 #ifndef LinuxShadowSuite
 #define LinuxShadowSuite NO
@@ -78,7 +92,7 @@ PWD_DEFINES = -DUSESHADOW
 #else
 PWD_DEFINES = -DUSESHADOW -DSHADOWSUITE
 #endif
-#if !defined(i386IscArchitecture) && !defined(i386ScoArchitecture) && !defined(LinuxArchitecture)
+#if !defined(i386IscArchitecture) && !defined(i386ScoArchitecture) && !defined(LinuxArchitecture) && !defined(NTOArchitecture)
 SYS_LIBRARIES3 = -lresolv
 #endif
 #if SystemV || defined(SequentArchitecture)
@@ -103,6 +117,10 @@ CRYPT_LIBRARIES = SpecialLibCrypt
 #else
 CRYPT_LIBRARIES = -lcrypt
 #endif
+#endif
+
+#if HasPam
+PAM_LIBRARIES = -lpam DlLibrary
 #endif
 
 SYS_LIBRARIES = $(SYS_LIBRARIES1) $(SYS_LIBRARIES2) $(SYS_LIBRARIES3)
@@ -133,7 +151,7 @@ SYS_LIBRARIES1 = -lutil
 
 INCLUDES = $(KRB5_INCLUDE)
 DEPLIBS = $(DEPXMULIB) $(DEPXTOOLLIB) $(DEPXLIB) $(DEPXAUTHLIB) $(DEPXDMCPLIB)
-LOCAL_LIBRARIES = $(XMULIB) $(XTOOLLIB) $(XLIB) $(XAUTHLIB) $(XDMCPLIB) $(RPCLIB) $(DLLIBRARY) $(CRYPT_LIBRARIES)
+LOCAL_LIBRARIES = $(XMULIB) $(XTOOLLIB) $(XLIB) $(XAUTHLIB) $(XDMCPLIB) $(RPCLIB) $(PAM_LIBRARIES) $(DLLIBRARY) $(CRYPT_LIBRARIES)
 
           SRCS1 = auth.c daemon.c server.c dpylist.c dm.c error.c file.c \
 		  netaddr.c reset.c resource.c protodpy.c policy.c \
@@ -182,6 +200,11 @@ LOCAL_LIBRARIES = $(XMULIB) $(XTOOLLIB) $(XLIB) $(XAUTHLIB) $(XDMCPLIB) $(RPCLIB
  OSMAJORVERSION = OSMajorVersion
  OSMINORVERSION = OSMinorVersion
    CONN_DEFINES = $(CONNECTION_FLAGS)
+#if HasPam
+  EXTRA_DEFINES = -DUSE_PAM
+#else
+  EXTRA_DEFINES =
+#endif
         DEFINES = -DBINDIR=\"$(BINDIR)\" -DXDMDIR=\"$(XDMDIR)\" \
 		$(SIGNAL_DEFINES) \
 		$(XDMAUTH_DEFINES) $(RPC_DEFINES) $(KRB5_DEFINES) \

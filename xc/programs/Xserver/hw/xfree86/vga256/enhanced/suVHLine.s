@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/enhanced/suVHLine.s,v 3.2 1996/12/23 06:59:14 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/enhanced/suVHLine.s,v 3.2.2.1 1999/07/23 13:23:03 hohndel Exp $ */
 /*******************************************************************************
 			Copyright 1992, 1993 by Glenn G. Lai 
 
@@ -97,6 +97,10 @@ moreThanOnePoint:
 	PUSH_L 	(EDI)
 	PUSH_L	(ESI)
 	PUSH_L	(EBX)
+#ifdef __QNX__
+	PUSH_SR	(DS)
+	POP_SR	(ES)
+#endif
 
 	MOV_L	(screen, ESI)
 	MOV_L	(ESI, EBX)
@@ -219,6 +223,10 @@ windowH1:
 	JNC	(pMode)
 windowH8:
 	PUSH_L	(EDI)
+#ifdef __QNX__
+	PUSH_SR	(DS)
+	POP_SR	(ES)
+#endif
 	MOV_L	(EAX, EDI)
 	SHR_L	(CONST(16), EAX)
 	MOV_B	(AL, CONTENT(segment))
@@ -284,6 +292,10 @@ pixmapH:
 	JC	(pixmapH0)
 
 	PUSH_L	(EDI)
+#ifdef __QNX__
+	PUSH_SR (DS)
+	POP_SR	(ES)
+#endif
 	MOV_L	(EAX, EDI)
 	MOV_L	(REGOFF(12,ESP), EAX)
 
@@ -336,6 +348,10 @@ pMode:
 	PUSH_L 	(EDI)
 	PUSH_L	(ESI)
 	PUSH_L	(EBX)
+#ifdef __QNX__
+	PUSH_SR (DS)
+	POP_SR	(ES)
+#endif
 /***************************/
 	MOV_W	(CONST(0x3c4), DX)
 	MOV_W	(CONST(0x0604), AX )

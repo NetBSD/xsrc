@@ -1,12 +1,12 @@
 XCOMM $TOG: Imakefile /main/13 1997/06/10 06:56:01 kaleb $
-XCOMM $XFree86: xc/programs/xkbcomp/symbols/Imakefile,v 3.9.2.6 1999/06/21 09:45:31 hohndel Exp $
+XCOMM $XFree86: xc/programs/xkbcomp/symbols/Imakefile,v 3.9.2.7 1999/07/21 18:07:49 hohndel Exp $
 #define IHaveSubdirs
 
       TESTDATA = 
      DATAFILES = amiga ataritt be bg br ca ca_enhanced cs ctrl de de_CH dk \
 		 dvorak en_US es fi fr fr_CH \
 		 gb group hu iso9995-3 it jp keypad lock no pc104 pl pt \
-		 ralt ru se th us us_intl
+		 ralt ru se th us us_intl czsk is
        SUBDIRS = digital fujitsu macintosh nec sgi sony sun
 
 MakeXkbDir($(LIBDIR)/xkb,symbols)

@@ -20,7 +20,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Summa.c,v 3.5.2.6 1999/05/25 06:55:42 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Summa.c,v 3.5.2.8 1999/07/29 09:22:49 hohndel Exp $ */
 
 #include "Xos.h"
 #include <signal.h>
@@ -66,6 +66,9 @@
 #include "extinit.h"
 #endif
 
+#if defined(__QNX__) || defined(__QNXNTO__)
+#define POSIX_TTY
+#endif
 /*
 ** Debugging macros
 */

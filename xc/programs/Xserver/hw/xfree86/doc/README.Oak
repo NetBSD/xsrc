@@ -1,8 +1,8 @@
              Information for Oak Technologies Inc. Chipset Users
 
-                 Jorge F. Delgado Mendoza (ernar@dit.upm.es)
+             Jorge F. Delgado Mendoza (delgadomendoza.j@pg.com)
 
-                              27 February 1998
+                               17 August 1999
 
 1.  Supported chipsets
 
@@ -40,9 +40,10 @@ The following chipsets for Oak Tech. Inc. are supported:
             These are new, PCI chipsets by Oak Tech. Inc. Support is not
             included for them, as they are very rare and I haven't had the
             chance to look at one of these boards.  We have been unable to
-            locate either 107's or 111's (also called "Spitfire 64111"). If
-            anybody has such a board and can donate it to XFree86, I would be
-            more than glad to add support for them.
+            locate 107's. If anybody has such a board and can donate it to
+            XFree86, we would be more than glad to add support for them.
+
+            An OTI111 is now available and we are working on support for it.
 
 All the chipsets up to the OTI087 are "Backwards compatible", in fact some
 early drivers for the OTI087 based chipsets were those made for the 077.
@@ -162,9 +163,9 @@ found.
 I hope (because I have not tested it very thoroughly) that linear addressing
 will work on all ISA boards, VLB ones work flawlessly.
 
-     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/Oak.sgml,v 3.12.2.2 1998/02/28 13:29:46 dawes Exp $
+     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/Oak.sgml,v 3.12.2.4 1999/08/18 13:12:11 hohndel Exp $
 
      $XConsortium: Oak.sgml /main/8 1996/05/12 20:58:00 kaleb $
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.Oak,v 3.17.2.7 1999/06/25 08:56:39 hohndel Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.Oak,v 3.17.2.8 1999/08/18 13:18:29 hohndel Exp $

@@ -1,0 +1,507 @@
+// Czech and Slovak keyboard symbols for XKB and PC keyboard
+//
+// (C) 1997,1999 Stanislav Meduna, stano@eunet.sk
+//
+// Permission is granted to anyone to use, distribute and modify
+// this file in any way, provided that the above copyright notice
+// is left intact and the author of the modification summarizes
+// the changes in this header.
+//
+// This file is distributed without any expressed or implied warranty.
+//
+// $XFree86: xc/programs/xkbcomp/symbols/czsk,v 1.1.2.2 1999/07/22 14:21:30 hohndel Exp $
+
+partial default alphanumeric_keys 
+xkb_symbols "us_sk_qwerty" {
+    Name[Group1] = "US/ASCII";
+    Name[Group2] = "Slovak";
+
+    include "czsk(def_basic)"
+    include "czsk(def_us_czsk)"
+    include "czsk(def_us_sk_prog)"
+    include "czsk(def_us_sk)"
+};
+
+partial alphanumeric_keys 
+xkb_symbols "us_sk_qwertz" {
+    Name[Group1] = "US/ASCII";
+    Name[Group2] = "Slovak";
+
+    include "czsk(us_sk_qwerty)"
+    include "czsk(def_us_qwertz)"
+};
+
+partial alphanumeric_keys 
+xkb_symbols "us_sk_prog" {
+    Name[Group1] = "US/ASCII";
+    Name[Group2] = "Slovak";
+
+    include "czsk(def_basic)"
+    include "czsk(def_us_sk_prog)"
+};
+
+partial alphanumeric_keys 
+xkb_symbols "sk_us_qwerty" {
+    Name[Group1] = "Slovak";
+    Name[Group2] = "US/ASCII";
+
+    include "czsk(def_basic)"
+    include "czsk(def_czsk_us)"
+    include "czsk(def_sk_us_prog)"
+    include "czsk(def_sk_us)"
+};
+
+partial alphanumeric_keys 
+xkb_symbols "sk_us_qwertz" {
+    Name[Group1] = "Slovak";
+    Name[Group2] = "US/ASCII";
+
+    include "czsk(sk_us_qwerty)"
+    include "czsk(def_qwertz_us)"
+};
+
+partial alphanumeric_keys 
+xkb_symbols "sk_us_prog" {
+    Name[Group1] = "Slovak";
+    Name[Group2] = "US/ASCII";
+
+    include "czsk(def_basic)"
+    include "czsk(def_sk_us_prog)"
+};
+
+partial alphanumeric_keys 
+xkb_symbols "us_cz_qwerty" {
+    Name[Group1] = "US/ASCII";
+    Name[Group2] = "Czech";
+
+    include "czsk(def_basic)"
+    include "czsk(def_us_czsk)"
+    include "czsk(def_us_cz_prog)"
+    include "czsk(def_us_cz)"
+};
+
+partial alphanumeric_keys 
+xkb_symbols "us_cz_qwertz" {
+    Name[Group1] = "US/ASCII";
+    Name[Group2] = "Czech";
+
+    include "czsk(us_cz_qwerty)"
+    include "czsk(def_us_qwertz)"
+};
+
+partial alphanumeric_keys 
+xkb_symbols "us_cz_prog" {
+    Name[Group1] = "US/ASCII";
+    Name[Group2] = "Czech";
+
+    include "czsk(def_basic)"
+    include "czsk(def_us_cz_prog)"
+};
+
+partial alphanumeric_keys 
+xkb_symbols "cz_us_qwerty" {
+    Name[Group1] = "Czech";
+    Name[Group2] = "US/ASCII";
+
+    include "czsk(def_basic)"
+    include "czsk(def_czsk_us)"
+    include "czsk(def_cz_us_prog)"
+    include "czsk(def_cz_us)"
+};
+
+partial alphanumeric_keys 
+xkb_symbols "cz_us_qwertz" {
+    Name[Group1] = "Czech";
+    Name[Group2] = "US/ASCII";
+
+    include "czsk(cz_us_qwerty)"
+    include "czsk(def_qwertz_us)"
+};
+
+partial alphanumeric_keys 
+xkb_symbols "cz_us_prog" {
+    Name[Group1] = "Czech";
+    Name[Group2] = "US/ASCII";
+
+    include "czsk(def_basic)"
+    include "czsk(def_cz_us_prog)"
+};
+
+
+
+
+partial alphanumeric_keys 
+xkb_symbols "def_basic" {
+
+    // Describes the differences between a very simple us
+    // keyboard and a very simple Slovak keybaord
+
+    include "us(pc102)"
+    include "group(shift_toggle)"
+
+    //   key <RCTL> {	[ Multi_key				]	};
+    key <PAUS> {	[ Multi_key				]	};
+    key <RALT> {	[ Mode_switch				]	};
+    key <SCLK> {	[ ISO_Next_Group, 	ISO_Next_Group	]	};
+
+    // End alphanumeric section
+
+    // begin modifier mappings
+    
+    modifier_map Shift  { Shift_L, Shift_R };
+    modifier_map Lock   { Caps_Lock };
+    modifier_map Control{ Control_L, Control_R };
+    modifier_map Mod3   { Mode_switch };
+};
+
+partial alphanumeric_keys 
+xkb_symbols "def_czsk_us" {
+    key <AE11> {
+	[	    equal,        percent	],
+	[           minus,     underscore	]
+	};
+    key <AD11> {
+	[	   uacute,          slash	],
+	[     bracketleft,      braceleft	]
+	};
+    key <AC11> {
+	[	  section,         exclam	],
+	[      apostrophe,       quotedbl	]
+	};
+    key <AB08> {
+	[	    comma,	 question	],
+	[	    comma,	     less	]
+	};
+    key <AB09> {
+	[	   period,	    colon	],
+	[	   period,	  greater	]
+	};
+    key <AB10> {
+	[	    minus,     underscore	],
+	[	    slash,	 question	]
+	};
+};
+
+partial alphanumeric_keys 
+xkb_symbols "def_sk_us" {
+    key <AC10> {
+	[     ocircumflex,       quotedbl	],
+	[       semicolon,	    colon	]
+	};
+    key <AD12> {
+	[      adiaeresis,      parenleft	],
+	[    bracketright,     braceright	]
+	};
+    key <BKSL> {
+	[	   ncaron,	parenright	],
+	[	backslash,	      bar	]
+	};
+};
+
+partial alphanumeric_keys 
+xkb_symbols "def_cz_us" {
+    key <AC10> {
+	[           uring,       quotedbl	],
+	[       semicolon,	    colon	]
+	};
+    key <AD12> {
+	[      parenright,      parenleft	],
+	[    bracketright,     braceright	]
+	};
+    key <BKSL> {
+	[	backslash,	      bar	],
+	[	backslash,	      bar	]
+	};
+};
+
+partial alphanumeric_keys 
+xkb_symbols "def_us_czsk" {
+    key <AE11> {
+	[           minus,     underscore	],
+	[	    equal,        percent	]
+	};
+    key <AD11> {
+	[     bracketleft,      braceleft	],
+	[	   uacute,          slash	]
+	};
+    key <AC11> {
+	[      apostrophe,       quotedbl	],
+	[	  section,         exclam	]
+	};
+    key <AB08> {
+	[	    comma,	     less	],
+	[	    comma,	 question	]
+	};
+    key <AB09> {
+	[	   period,	  greater	],
+	[	   period,	    colon	]
+	};
+    key <AB10> {
+	[	    slash,	 question	],
+	[	    minus,     underscore	]
+	};
+};
+
+partial alphanumeric_keys 
+xkb_symbols "def_us_sk" {
+    key <AC10> {
+	[       semicolon,	    colon	],
+	[     ocircumflex,       quotedbl	]
+	};
+    key <AD12> {
+	[    bracketright,     braceright	],
+	[      adiaeresis,      parenleft	]
+	};
+    key <BKSL> {
+	[	backslash,	      bar	],
+	[	   ncaron,	parenright	]
+	};
+};
+
+partial alphanumeric_keys 
+xkb_symbols "def_us_cz" {
+    key <AC10> {
+	[       semicolon,	    colon	],
+	[           uring,       quotedbl	]
+	};
+    key <AD12> {
+	[    bracketright,     braceright	],
+	[      parenright,      parenleft	]
+	};
+    key <BKSL> {
+	[	backslash,	      bar	],
+	[	backslash,	      bar	]
+	};
+};
+
+partial alphanumeric_keys 
+xkb_symbols "def_qwertz_us" {
+    key <AD06> {
+	[               z,	        Z	],
+	[               y,              Y	]
+	};
+    key <AB01> {
+	[               y,	        Y	],
+	[               z,              Z	]
+	};
+};
+
+partial alphanumeric_keys 
+xkb_symbols "def_us_qwertz" {
+    key <AD06> {
+	[               y,	        Y	],
+	[               z,              Z	]
+	};
+    key <AB01> {
+	[               z,	        Z	],
+	[               y,              Y	]
+	};
+};
+
+partial alphanumeric_keys 
+xkb_symbols "def_us_sk_prog" {
+    key <TLDE> {
+	[           grave,     asciitilde	],
+        [  dead_diaeresis,dead_circumflex       ]        
+	};
+    key <AE01> {
+	[		1,	   exclam	],
+	[	     plus,		1	]
+	};
+    key <AE02> {
+	[		2,	       at	],
+	[	   lcaron,		2	]
+	};
+    key <AE03> {
+	[		3,     numbersign	],
+	[	   scaron,		3	]
+	};
+    key <AE04> {
+	[		4,	   dollar	],
+	[	   ccaron,		4	]
+	};
+    key <AE05> {
+	[		5,        percent	],
+	[	   tcaron,		5	]
+	};
+    key <AE06> {
+	[		6,    asciicircum	],
+	[	   zcaron,		6	]
+	};
+    key <AE07> {
+	[		7,      ampersand	],
+	[	   yacute,		7	]
+	};
+    key <AE08> {
+	[		8,       asterisk	],
+	[	   aacute,		8	]
+	};
+    key <AE09> {
+	[		9,      parenleft	],
+	[	   iacute,		9	]
+	};
+    key <AE10> {
+	[		0,     parenright	],
+	[	   eacute,		0	]
+	};
+    key <AE12> {
+	[           equal,           plus	],
+	[      dead_acute,     dead_caron	]
+	};
+};
+
+partial alphanumeric_keys 
+xkb_symbols "def_us_cz_prog" {
+    key <TLDE> {
+	[           grave,     asciitilde	],
+        [  dead_diaeresis, dead_abovering       ]        
+	};
+    key <AE01> {
+	[		1,	   exclam	],
+	[	     plus,		1	]
+	};
+    key <AE02> {
+	[		2,	       at	],
+	[	   ecaron,		2	]
+	};
+    key <AE03> {
+	[		3,     numbersign	],
+	[	   scaron,		3	]
+	};
+    key <AE04> {
+	[		4,	   dollar	],
+	[	   ccaron,		4	]
+	};
+    key <AE05> {
+	[		5,        percent	],
+	[	   rcaron,		5	]
+	};
+    key <AE06> {
+	[		6,    asciicircum	],
+	[	   zcaron,		6	]
+	};
+    key <AE07> {
+	[		7,      ampersand	],
+	[	   yacute,		7	]
+	};
+    key <AE08> {
+	[		8,       asterisk	],
+	[	   aacute,		8	]
+	};
+    key <AE09> {
+	[		9,      parenleft	],
+	[	   iacute,		9	]
+	};
+    key <AE10> {
+	[		0,     parenright	],
+	[	   eacute,		0	]
+	};
+    key <AE12> {
+	[           equal,           plus	],
+	[      dead_acute,     dead_caron	]
+	};
+};
+
+partial alphanumeric_keys 
+xkb_symbols "def_sk_us_prog" {
+    key <TLDE> {
+        [  dead_diaeresis,dead_circumflex       ],
+	[           grave,     asciitilde	]
+	};
+    key <AE01> {
+	[	     plus,		1	],
+	[		1,	   exclam	]
+	};
+    key <AE02> {
+	[	   lcaron,		2	],
+	[		2,	       at	]
+	};
+    key <AE03> {
+	[	   scaron,		3	],
+	[		3,     numbersign	]
+	};
+    key <AE04> {
+	[	   ccaron,		4	],
+	[		4,	   dollar	]
+	};
+    key <AE05> {
+	[	   tcaron,		5	],
+	[		5,        percent	]
+	};
+    key <AE06> {
+	[	   zcaron,		6	],
+	[		6,    asciicircum	]
+	};
+    key <AE07> {
+	[	   yacute,		7	],
+	[		7,      ampersand	]
+	};
+    key <AE08> {
+	[	   aacute,		8	],
+	[		8,       asterisk	]
+	};
+    key <AE09> {
+	[	   iacute,		9	],
+	[		9,      parenleft	]
+	};
+    key <AE10> {
+	[	   eacute,		0	],
+	[		0,     parenright	]
+	};
+    key <AE12> {
+	[      dead_acute,     dead_caron	],
+	[           equal,           plus	]
+	};
+};
+
+partial alphanumeric_keys 
+xkb_symbols "def_cz_us_prog" {
+    key <TLDE> {
+        [  dead_diaeresis, dead_abovering       ],       
+	[           grave,     asciitilde	]
+	};
+    key <AE01> {
+	[	     plus,		1	],
+	[		1,	   exclam	]
+	};
+    key <AE02> {
+	[	   ecaron,		2	],
+	[		2,	       at	]
+	};
+    key <AE03> {
+	[	   scaron,		3	],
+	[		3,     numbersign	]
+	};
+    key <AE04> {
+	[	   ccaron,		4	],
+	[		4,	   dollar	]
+	};
+    key <AE05> {
+	[	   rcaron,		5	],
+	[		5,        percent	]
+	};
+    key <AE06> {
+	[	   zcaron,		6	],
+	[		6,    asciicircum	]
+	};
+    key <AE07> {
+	[	   yacute,		7	],
+	[		7,      ampersand	]
+	};
+    key <AE08> {
+	[	   aacute,		8	],
+	[		8,       asterisk	]
+	};
+    key <AE09> {
+	[	   iacute,		9	],
+	[		9,      parenleft	]
+	};
+    key <AE10> {
+	[	   eacute,		0	],
+	[		0,     parenright	]
+	};
+    key <AE12> {
+	[      dead_acute,     dead_caron	],
+	[           equal,           plus	]
+	};
+};

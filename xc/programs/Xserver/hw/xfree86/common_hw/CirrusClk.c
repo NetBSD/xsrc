@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common_hw/CirrusClk.c,v 3.11.2.1 1998/11/01 09:59:21 hohndel Exp $ */ 
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common_hw/CirrusClk.c,v 3.11.2.2 1999/07/23 13:22:48 hohndel Exp $ */ 
 
 /*
  * Programming of the built-in Cirrus clock generator.
@@ -146,7 +146,7 @@ int CirrusSetClock(freq)
 	int num, den, usemclk;
 	unsigned char tmp;
 
-	CirrusFindClock(freq, &num, &den, &usemclk);
+	CirrusFindClock(freq, MAX_VCO, &num, &den, &usemclk);
 
 	/*
 	 * The 'Use MCLK as VCLK' flag is ignored.

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/rendition/vmodes.c,v 1.1.2.7 1998/11/05 06:20:21 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/rendition/vmodes.c,v 1.1.2.8 1999/08/02 08:38:24 hohndel Exp $ */
 /*
  * file vmodes.c
  *
@@ -283,7 +283,6 @@ int v_setmode(struct v_board_t *board, struct v_modeinfo_t *mode)
                         |CRTCCTL_HSYNCENABLE
                         |CRTCCTL_VSYNCENABLE
                         |CRTCCTL_VIDEOENABLE);
- 
    return 0;
 }
 

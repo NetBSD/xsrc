@@ -1,5 +1,5 @@
 /* $XConsortium: daemon.c,v 1.16 94/12/01 17:10:49 kaleb Exp $ */
-/* $XFree86: xc/programs/xdm/daemon.c,v 3.6.4.1 1998/12/22 11:23:32 hohndel Exp $ */
+/* $XFree86: xc/programs/xdm/daemon.c,v 3.6.4.2 1999/07/29 09:23:04 hohndel Exp $ */
 /*
 
 Copyright (c) 1988  X Consortium
@@ -89,7 +89,7 @@ BecomeOrphan ()
 	/* parent */
 
 #ifndef CSRG_BASED
-#if defined(SVR4)
+#if defined(SVR4) || defined(__QNXNTO__)
 	stat = setpgid(child_id, child_id);
 	/* This gets error EPERM.  Why? */
 #else
@@ -120,7 +120,7 @@ BecomeDaemon ()
 #ifdef CSRG_BASED
     daemon (0, 0);
 #else
-#if defined(SYSV) || defined(SVR4) || defined(__GNU__)
+#if defined(SYSV) || defined(SVR4) || defined(__QNXNTO__) || defined(__GNU__)
     setpgrp ();
 #else
     setpgrp (0, getpid());

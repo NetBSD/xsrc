@@ -1,5 +1,5 @@
 /* $XConsortium: Xtranstli.c /main/26 1995/12/13 18:07:13 kaleb $ */
-/* $XFree86: xc/lib/xtrans/Xtranstli.c,v 3.5 1996/09/01 04:14:14 dawes Exp $ */
+/* $XFree86: xc/lib/xtrans/Xtranstli.c,v 3.5.4.3 1999/07/26 06:54:34 hohndel Exp $ */
 /*
 
 Copyright (c) 1993, 1994  X Consortium
@@ -61,6 +61,11 @@ from the X Consortium.
 #include <netdir.h>
 #include <netconfig.h>
 
+#if defined(DGUX)
+#define X_INCLUDE_NETDB_H
+#include <X11/Xos_r.h>
+#include <netdb.h>
+#endif
 
 /*
  * This is the TLI implementation of the X Transport service layer
@@ -379,13 +384,20 @@ char		*port;
 struct netbuf	*netbufp;
 
 {
+
+/*
+ * This code was trying to fix a bug
+ * in DGUX with streams connections...
+ * Use OS >= MU06 or contact DG for
+ * for a patch (new /usr/lib/tcpip.so). 
+ */
     struct netconfig *netconfigp;
     struct nd_hostserv	nd_hostserv;
     struct nd_addrlist *nd_addrlistp = NULL;
     void *handlep;
     
     PRMSG(3,"TLIAddrToNetbuf(%d,%s,%s)\n", tlifamily, host, port );
-    
+
     if( (handlep=setnetconfig()) == NULL )
 	return -1;
     

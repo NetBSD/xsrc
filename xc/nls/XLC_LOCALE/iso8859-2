@@ -1,6 +1,9 @@
 XCOMM  $XConsortium: iso8859-2 /main/7 1996/09/28 16:51:05 rws $
 XCOMM  XLocale Database Sample for iso8859-2.
 XCOMM 
+XCOMM
+XCOMM $XFree86: xc/nls/XLC_LOCALE/iso8859-2,v 1.1.1.1.2.2 1999/07/22 14:21:29 hohndel Exp $
+XCOMM
 
 XCOMM 
 XCOMM 	XLC_FONTSET category
@@ -67,7 +70,7 @@ cs1	{
 #else
 	wc_encoding	\x00008080
 #endif
-	ct_encoding	ISO8859-2:GR
+	ct_encoding	ISO8859-2:GR; ISO8859-1:GR
 }
 
 END XLC_XLOCALE

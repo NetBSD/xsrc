@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Config.c,v 3.113.2.21 1999/04/21 07:21:10 hohndel Exp $
+ * $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Config.c,v 3.113.2.23 1999/07/29 09:22:44 hohndel Exp $
  *
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  *
@@ -777,7 +777,14 @@ findConfigFile(filename, fp)
      * /etc/XF86Config
      */
     configPaths[++pcount] = (char *)xalloc(PATH_MAX);
+#if !defined(__QNX__) || defined(__QNXNTO__)
     strcpy(configPaths[pcount], "/etc/XF86Config");
+#else
+    /* On QNX, we default to /etc/config/XF86Config.nid to 
+     * keep config files separate for network setups
+     */
+    sprintf(configPaths[pcount], "/etc/config/X11/XF86Config.%d", getnid());
+#endif
     if (xconfig) strcat(configPaths[pcount],xconfig);
     if ((configFile = fopen( configPaths[pcount], "r" )) != 0) break;
     
@@ -964,7 +971,7 @@ xf86Config (vtopen)
 #ifdef MINIX
       setuid(getuid());
 #else
-#if !defined(SVR4) && !defined(__NetBSD__) && !defined(__OpenBSD__) && !defined(__FreeBSD__) && !defined(__GNU__)
+#if !defined(SVR4) && !defined(__NetBSD__) && !defined(__OpenBSD__) && !defined(__FreeBSD__) && !defined(__GNU__) && !defined(__QNX__) && !defined(__QNXNTO__)
       setruid(0);
 #endif
       seteuid(real_uid);
@@ -978,7 +985,7 @@ xf86Config (vtopen)
 #else
     if (real_uid) {
       seteuid(0);
-#if !defined(SVR4) && !defined(__NetBSD__) && !defined(__OpenBSD__) && !defined(__FreeBSD__) && !defined(__GNU__)
+#if !defined(SVR4) && !defined(__NetBSD__) && !defined(__OpenBSD__) && !defined(__FreeBSD__) && !defined(__GNU__) && !defined(__QNX__) && !defined(__QNXNTO__)
       setruid(real_uid);
 #endif
     }

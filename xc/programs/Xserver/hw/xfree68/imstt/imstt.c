@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree68/imstt/imstt.c,v 1.1.2.3 1999/06/02 07:50:10 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree68/imstt/imstt.c,v 1.1.2.4 1999/07/23 09:00:23 hohndel Exp $ */
 
 #include "X.h"
 #include "Xmd.h"
@@ -49,14 +49,14 @@ static inline void ttout (volatile unsigned long addr, unsigned int val)
 {
 	register unsigned long base_addr = (unsigned long)fbdevRegBase;
 
-	asm("stwbrx %0,%1,%2; eieio": : "r"(val), "r"(addr), "r"(base_addr):"memory");
+	asm("stwbrx %0,%1,%2; eieio": : "r"(val), "b"(addr), "r"(base_addr):"memory");
 }
 
 static inline unsigned int ttin (volatile unsigned long addr)
 {
 	register unsigned long base_addr = (unsigned long)fbdevRegBase, val;
 
-	asm("lwbrx %0,%1,%2": "=r"(val):"r"(addr), "r"(base_addr));
+	asm("lwbrx %0,%1,%2": "=r"(val):"b"(addr), "r"(base_addr));
 	return val;
 }
 

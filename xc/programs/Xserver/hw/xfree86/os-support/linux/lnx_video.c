@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/linux/lnx_video.c,v 3.13.2.2 1998/10/18 20:42:25 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/linux/lnx_video.c,v 3.13.2.3 1999/07/21 18:07:38 hohndel Exp $ */
 /*
  * Copyright 1992 by Orest Zborowski <obz@Kodak.com>
  * Copyright 1993 by David Wexelblat <dwex@goblin.org>
@@ -455,9 +455,17 @@ pointer Base;
 unsigned long Size;
 {
 	pointer base;
+	unsigned long bus_base_addr;
       	int fd;
 
 	if (!_bus_base()) xf86SparseShift = 7; /* Uh, oh, JENSEN... */
+	if (!_bus_base_sparse())
+	{
+		xf86SparseShift = 0; /* Uh, oh, TSUNAMI... */
+		bus_base_addr = _bus_base();
+	} else {
+		bus_base_addr = _bus_base_sparse();
+	}
 
 	Size <<= xf86SparseShift;
 	Base = (pointer)((unsigned long)Base << xf86SparseShift);
@@ -471,7 +479,7 @@ unsigned long Size;
 	base = (pointer)mmap((caddr_t)0, Size,
 			     PROT_READ | PROT_WRITE,
 			     MAP_SHARED, fd,
-			     (off_t)Base + _bus_base_sparse());
+			     (off_t)Base + bus_base_addr);
 	close(fd);
 	if ((long)base == -1)
 	{
@@ -503,6 +511,15 @@ unsigned long Offset;
     unsigned long result, shift;
     unsigned long msb = 0;
 
+    if (!xf86SparseShift)
+    {
+      __asm__ __volatile__ (
+		"ldbu %0,%1"
+		: "=r" (result)
+		: "m"  (*((unsigned char *)Base + Offset)));
+      return 0xffUL & result;
+    }
+
     shift = (Offset & 0x3) * 8;
     if (xf86SparseShift != 7) { /* if not JENSEN, we may need HAE */
       if (Offset >= (1UL << 24)) {
@@ -526,6 +543,15 @@ unsigned long Offset;
 {
     unsigned long result, shift;
     unsigned long msb = 0;
+
+    if (!xf86SparseShift)
+    {
+      __asm__ __volatile__ (
+		"ldwu %0,%1"
+		: "=r" (result)
+		: "m"  (*((unsigned char *)Base + Offset)));
+      return 0xffffUL & result;
+    }
 
     shift = (Offset & 0x2) * 8;
     if (xf86SparseShift != 7) { /* if not JENSEN, we may need HAE */
@@ -551,6 +577,15 @@ unsigned long Offset;
     unsigned long result;
     unsigned long msb = 0;
 
+    if (!xf86SparseShift)
+    {
+      __asm__ __volatile__ (
+		"ldl %0,%1"
+		: "=r" (result)
+		: "m"  (*((unsigned char *)Base + Offset)));
+      return 0xffffffffUL & result;
+    }
+
     if (xf86SparseShift != 7) { /* if not JENSEN, we may need HAE */
       if (Offset >= (1UL << 24)) {
         msb = Offset & 0xf8000000UL;
@@ -574,6 +609,16 @@ unsigned long Offset;
     unsigned long msb = 0;
     unsigned int b = Value & 0xffU;
 
+    if (!xf86SparseShift)
+    {
+        __asm__ __volatile__ (
+                 "stb %1,%0\n\t"
+                 "mb"
+                 : : "m" (*((unsigned char *)Base + Offset)),
+		     "r" (b));
+	return;
+    }
+
     if (xf86SparseShift != 7) { /* not JENSEN */
       if (Offset >= (1UL << 24)) {
         msb = Offset & 0xf8000000;
@@ -596,6 +641,16 @@ unsigned long Offset;
     unsigned long msb = 0;
     unsigned int w = Value & 0xffffU;
 
+    if (!xf86SparseShift)
+    {
+        __asm__ __volatile__ (
+                 "stw %1,%0\n\t"
+                 "mb"
+                 : : "m" (*((unsigned char *)Base + Offset)),
+		     "r" (w));
+	return;
+    }
+
     if (xf86SparseShift != 7) { /* not JENSEN */
       if (Offset >= (1UL << 24)) {
         msb = Offset & 0xf8000000;
@@ -617,6 +672,16 @@ pointer Base;
 unsigned long Offset;
 {
     unsigned long msb = 0;
+
+    if (!xf86SparseShift)
+    {
+        __asm__ __volatile__ (
+                 "stl %1,%0\n\t"
+                 "mb"
+                 : : "m" (*((unsigned char *)Base + Offset)),
+		     "r" (Value));
+	return;
+    }
 
     if (xf86SparseShift != 7) { /* not JENSEN */
       if (Offset >= (1UL << 24)) {

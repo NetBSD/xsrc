@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Events.c,v 3.42.2.9 1998/12/26 00:12:37 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Events.c,v 3.42.2.11 1999/07/29 09:22:46 hohndel Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  *
@@ -692,6 +692,28 @@ xf86PostKbdEvent(key)
 	}
 	break;
 
+	/* Under QNX, we set the vtPending flag for VT switching and 
+	 * let the VT switch function do the rest...
+	 * This is a little different from the other OS'es.
+	 */
+#if defined(__QNX__) && !defined(__QNXNTO__)
+      case KEY_1:
+      case KEY_2:
+      case KEY_3:
+      case KEY_4:
+      case KEY_5:
+      case KEY_6:
+      case KEY_7:
+      case KEY_8:
+      case KEY_9:
+		if (down){
+			xf86Info.vtRequestsPending = 
+				specialkey - KEY_1 + 1;
+			return;
+			}
+		break;
+#endif
+
 #if defined(linux) || (defined(CSRG_BASED) && (defined(SYSCONS_SUPPORT) || defined(PCVT_SUPPORT))) || defined(SCO)
 	/*
 	 * Under Linux, the raw keycodes are consumed before the kernel
@@ -1295,7 +1317,7 @@ xf86Wakeup(blockData, err, pReadmask)
      pointer pReadmask;
 {
 
-#ifndef __EMX__
+#if !defined(__EMX__) && !(defined(__QNX__) && !defined(__QNXNTO__))
 #ifdef	__OSF__
   fd_set kbdDevices;
   fd_set mseDevices;
@@ -1333,9 +1355,9 @@ xf86Wakeup(blockData, err, pReadmask)
       }
 #endif	/* __OSF__ */
   }
-#else   /* __EMX__ */
+#else   /* __EMX__  and __QNX__*/
 
-	(xf86Info.kbdEvents)();  /* Under OS/2, always call */
+	(xf86Info.kbdEvents)();  /* Under OS/2 and QNX, always call */
 	(xf86Info.mouseDev->mseEvents)(xf86Info.mouseDev);
 
 #endif  /* __EMX__ */

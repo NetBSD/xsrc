@@ -46,13 +46,19 @@ SOFTWARE.
 
 ******************************************************************/
 /* $XConsortium: miinitext.c /main/41 1996/09/28 17:15:08 rws $ */
-/* $XFree86: xc/programs/Xserver/mi/miinitext.c,v 3.17.2.3 1997/05/22 14:00:46 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/mi/miinitext.c,v 3.17.2.5 1999/07/26 06:54:49 hohndel Exp $ */
 
 #include "misc.h"
 #include "extension.h"
 
 #ifdef NOPEXEXT /* sleaze for Solaris cpp building XsunMono */
 #undef PEXEXT
+#endif
+
+#if defined(NO_GRAFEXT) || defined(__QNX__) /* sleaze for Watcom on QNX... */
+#undef PEXEXT
+#undef XIE
+#undef GLXEXT
 #endif
 
 extern Bool noTestExtensions;

@@ -46,7 +46,7 @@ SOFTWARE.
 
 ******************************************************************/
 /* $XConsortium: osdep.h /main/42 1996/12/15 21:27:39 rws $ */
-/* $XFree86: xc/programs/Xserver/os/osdep.h,v 3.4.2.3 1999/06/17 16:24:21 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/os/osdep.h,v 3.4.2.4 1999/07/23 13:23:11 hohndel Exp $ */
 
 #ifdef AMOEBA
 #include <stddef.h>
@@ -91,6 +91,9 @@ SOFTWARE.
 #endif /* X_NOT_POSIX */
 #endif
 
+#ifdef __QNX__
+#define NOFILES_MAX 256
+#endif
 #ifndef OPEN_MAX
 #ifdef SVR4
 #define OPEN_MAX 128

@@ -34,6 +34,7 @@
  **
  ******************************************************************************
  *****************************************************************************/
+/* $XFree86: xc/lib/Xp/XpGetData.c,v 1.1.1.1.2.1 1999/07/26 09:21:07 hohndel Exp $ */
 
 #define NEED_REPLIES
 
@@ -168,7 +169,7 @@ XpGetDocumentData (
 )
 {
     xPrintGetDocumentDataReq *req;
-    XExtensionVersion *ext;
+
     XExtDisplayInfo *info = (XExtDisplayInfo *) xp_find_display (dpy);
     _XAsyncHandler *async;
     _XpState *async_state;

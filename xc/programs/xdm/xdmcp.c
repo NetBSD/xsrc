@@ -28,7 +28,7 @@ other dealings in this Software without prior written authorization
 from the X Consortium.
 
 */
-/* $XFree86: xc/programs/xdm/xdmcp.c,v 3.4.2.3 1998/02/01 16:05:43 robin Exp $ */
+/* $XFree86: xc/programs/xdm/xdmcp.c,v 3.4.2.4 1999/07/21 18:07:44 hohndel Exp $ */
 
 /*
  * xdm - display manager daemon
@@ -1202,7 +1202,7 @@ NetworkAddressToHostname (connectionType, connectionAddress)
 				     connectionAddress->length, AF_INET);
 
 	    if (hostent)
-		local_name = hostent->h_name;
+		local_name = (char *)hostent->h_name;
 	    else {
 		/* can't get name, so use emergency fallback */
 		sprintf(dotted, "%d.%d.%d.%d",

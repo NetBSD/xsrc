@@ -33,7 +33,7 @@ from the X Consortium.
   under contract to X Consortium, Inc.
  */
 
-/* $XFree86: xc/programs/xfwp/xfwp.c,v 1.7.2.2 1998/01/22 23:53:25 robin Exp $ */
+/* $XFree86: xc/programs/xfwp/xfwp.c,v 1.7.2.3 1999/07/23 13:23:23 hohndel Exp $ */
 
 #if defined(sun) && defined(i386) && defined(SVR4)
 #define __EXTENSIONS__
@@ -88,7 +88,7 @@ from the X Consortium.
 #define SOMAXCONN 128
 #endif
 
-#ifdef __EMX__
+#if defined(__EMX__) || defined(__QNX__)
 typedef unsigned short ushort;
 #else
 extern int errno;
@@ -2745,7 +2745,7 @@ int doCheckServerList(char * server_address,
     	  fprintf(stderr, 
 		"DoCheckServerList: listen_port_string malloc failed!\n");
 #endif
-	  return;
+	  return(0);
 	}
         strcpy(*listen_port_string, 
 	       server_array[list_counter]->listen_port_string);
@@ -2794,7 +2794,7 @@ int doServerConnectSetup(char * x_server_hostport,
 #ifdef DEBUG
     fprintf(stderr, "doServerConnectSetup:  could not get server host name!\n");
 #endif
-    return;
+    return(0);
   }
   if ((*server_connect_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
   {

@@ -24,7 +24,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86AceCad.c,v 3.6.2.4 1999/06/02 07:50:34 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86AceCad.c,v 3.6.2.5 1999/07/23 13:22:39 hohndel Exp $ */
 
 #include "Xos.h"
 #include <signal.h>
@@ -38,6 +38,10 @@
 #include "scrnintstr.h"
 #include "XI.h"
 #include "XIproto.h"
+
+#if defined(__QNX__)
+#define POSIX_TTY
+#endif
 
 #if defined(sun) && !defined(i386)
 #define POSIX_TTY

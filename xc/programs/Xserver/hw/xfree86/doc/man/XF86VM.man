@@ -4,13 +4,13 @@
 .\"
 .\"
 .\" Copyright (c) 1996  Joe Moss, The XFree86 Project
-.\" $XFree86: xc/programs/Xserver/hw/xfree86/doc/man/XF86VM.man,v 3.6.2.5 1999/06/30 13:00:26 hohndel Exp $
+.\" $XFree86: xc/programs/Xserver/hw/xfree86/doc/man/XF86VM.man,v 3.6.2.6 1999/08/02 08:38:15 hohndel Exp $
 .\" 
 .de ZN
 .ie t \fB\^\\$1\^\fR\\$2
 .el \fI\^\\$1\^\fP\\$2
 ..
-.TH XF86VIDMODE 3X11 "3.3.4" "XFree86" "X FUNCTIONS"
+.TH XF86VIDMODE 3X11 "3.3.5" "XFree86" "X FUNCTIONS"
 .SH NAME
 XF86VidModeQueryExtension, XF86VidModeQueryVersion, XF86VidModeGetModeLine, XF86VidModeGetAllModeLines, XF86VidModeDeleteModeLine, XF86VidModeModModeLine, XF86VidModeValidateModeLine, XF86VidModeSwitchMode, XF86VidModeSwitchToMode, XF86VidModeLockModeSwitch, XF86VidModeGetMonitor, XF86VidModeGetViewPort, XF86VidModeSetViewPort \- XFree86-VidMode extension interface functions
 .SH SYNTAX

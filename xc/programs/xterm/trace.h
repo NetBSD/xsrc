@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/programs/xterm/trace.h,v 3.1.2.3 1998/10/20 20:51:55 hohndel Exp $
+ * $XFree86: xc/programs/xterm/trace.h,v 3.1.2.4 1999/07/28 13:38:07 hohndel Exp $
  */
 
 /************************************************************
@@ -36,6 +36,8 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #ifdef HAVE_CONFIG_H
 #include <xtermcfg.h>
 #endif
+
+#include <ptyx.h>
 
 extern	void	Trace ( char *, ... )
 #ifdef GCC_PRINTF

@@ -3,7 +3,7 @@ XCOMM $XConsortium: Imakefile /main/16 1996/10/28 05:13:04 kaleb $
 
 
 
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/Imakefile,v 3.25.2.17 1999/04/15 12:04:31 hohndel Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/Imakefile,v 3.25.2.18 1999/07/22 08:14:03 hohndel Exp $
 
 #include <Server.tmpl>
 #include <lnxdoc.rules>
@@ -25,7 +25,11 @@ LinuxDocReadmeTarget(Mach)
 #endif
 #if defined(LinuxArchitecture) || BuildAllDocs
 LinuxDocReadmeTarget(Linux)
+LinuxDocReadmeTarget(fbdev)
 #endif
+# if defined(DguxArchitecture) || BuildAllDocs
+LinuxDocReadmeTarget(DGux)
+# endif
 #if defined(LynxOSArchitecture) || BuildAllDocs
 LinuxDocReadmeTarget(LynxOS)
 #endif
@@ -88,7 +92,6 @@ LinuxDocReadmeTarget(rendition)
 LinuxDocReadmeTarget(3DLabs)
 LinuxDocReadmeTarget(trident)
 LinuxDocReadmeTarget(tseng)
-LinuxDocReadmeTarget(fbdev)
 LinuxDocReadmeTarget(i740)
 
 /* Main docs */
@@ -110,6 +113,6 @@ LinuxDocTargetLong(VGADriv.sgml,VGADriver.Doc,VGADriver)
 InstallLinkKitNamedNonExec(README.LinkKit,README,$(LINKKITDIR))
 InstallLinkKitNonExecFile(VGADriver.Doc,$(LINKKITDIR)/VGADriverDoc)
 
-#if BuildAllDocs
+#if defined(LinuxArchitecture) || BuildAllDocs
 LinkSourceFile(fbdev.sgml,$(XF68SRC)/doc/sgml)
 #endif

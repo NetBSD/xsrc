@@ -28,7 +28,7 @@ other dealings in this Software without prior written authorization
 from the X Consortium.
 
 */
-/* $XFree86: xc/programs/xmag/xmag.c,v 1.1.1.1.12.2 1998/10/04 15:23:18 hohndel Exp $ */
+/* $XFree86: xc/programs/xmag/xmag.c,v 1.1.1.1.12.3 1999/07/23 13:23:28 hohndel Exp $ */
 
 
 #include <X11/Intrinsic.h>
@@ -51,7 +51,9 @@ from the X Consortium.
 #define SRCWIDTH  64
 #define SRCHEIGHT 64
 
+#ifndef min
 #define min(a, b) a < b ? a : b
+#endif
 
 extern void SWGrabSelection();
 extern void SWRequestSelection();

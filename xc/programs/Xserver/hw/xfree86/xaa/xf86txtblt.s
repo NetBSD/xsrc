@@ -22,7 +22,7 @@
  * Written by Harm Hanemaayer (H.Hanemaayer@inter.nl.net).
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xf86txtblt.s,v 3.3 1997/01/12 10:48:17 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xf86txtblt.s,v 3.3.2.1 1999/07/23 13:23:06 hohndel Exp $ */
 
 /*
  * Intel Pentium-optimized versions of "terminal emulator font" text
@@ -35,7 +35,11 @@
 
 #include "assyntax.h"
 
+#ifndef QNX
  	FILE("xf86txtblt.s")
+#else
+ 	FILE( __FILE__ )
+#endif
 
 	AS_BEGIN
 

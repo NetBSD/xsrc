@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/rendition/vramdac.c,v 1.1.2.5 1998/10/24 07:39:45 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/rendition/vramdac.c,v 1.1.2.7 1999/08/02 08:38:24 hohndel Exp $ */
 /*
  * includes
  */
@@ -6,6 +6,7 @@
 #include "vramdac.h"
 #include "vos.h"
 #include "v1kregs.h"
+#include "v2kregs.h"
 
 #include "vga.h"
 
@@ -144,7 +145,8 @@ int v_initdac(struct v_board_t *board, vu8 bpp, vu8 doubleclock)
                                             BT485_DISABLE_CURSOR);
             break;
 
-        case 15:
+        case 16:
+	  if (vga256InfoRec.depth == 15){
             v_out8(iob+BT485_COMMAND_REG_0, BT485_CR0_EXTENDED_REG_ACCESS |
                                             BT485_CR0_8_BIT_DAC);
             v_out8(iob+BT485_COMMAND_REG_1, BT485_CR1_16BPP |
@@ -154,10 +156,9 @@ int v_initdac(struct v_board_t *board, vu8 bpp, vu8 doubleclock)
                                             BT485_CR1_PIXEL_PORT_AB);
             v_out8(iob+BT485_COMMAND_REG_2, BT485_PIXEL_INPUT_GATE |
                                             BT485_DISABLE_CURSOR);
-            break;
-
-        case 16:
-            v_out8(iob+BT485_COMMAND_REG_0, BT485_CR0_EXTENDED_REG_ACCESS |
+	  }
+	  else{
+	    v_out8(iob+BT485_COMMAND_REG_0, BT485_CR0_EXTENDED_REG_ACCESS |
                                             BT485_CR0_8_BIT_DAC);
             v_out8(iob+BT485_COMMAND_REG_1, BT485_CR1_16BPP |
                                             BT485_CR1_BYPASS_CLUT |
@@ -166,6 +167,7 @@ int v_initdac(struct v_board_t *board, vu8 bpp, vu8 doubleclock)
                                             BT485_CR1_PIXEL_PORT_AB);
             v_out8(iob+BT485_COMMAND_REG_2, BT485_PIXEL_INPUT_GATE |
                                             BT485_DISABLE_CURSOR);
+	  }
             break;
 
         case 32:
@@ -243,6 +245,17 @@ void v_movecursor(struct v_board_t *board, vu16 x, vu16 y, vu8 xo, vu8 yo)
     x+=Cursor_size-xo;
     y+=Cursor_size-yo;
 
+#if 0
+    if ((board->chip != V1000_DEVICE) &&
+	/* Hide cursor ? */
+	!((x==0) && (y==0))){
+
+      /* This should be fixed! <DI> */
+      /* Adjust the cursor a couple pixels right */
+      x += 3;
+    }
+#endif
+
     v_out8(iob+BT485_CURS_X_LOW, x&0xff);
     v_out8(iob+BT485_CURS_X_HIGH, (x>>8)&0x0f);
     v_out8(iob+BT485_CURS_Y_LOW, y&0xff);
@@ -289,10 +302,15 @@ void v_loadcursor(struct v_board_t *board, vu8 size, vu8 *cursorimage)
     int c, bytes, row;
     vu8 *src;
     vu16 iob=board->io_base+RAMDACBASEADDR;
+    vu8 memend; /* Added for byte-swap fix */
     vu8 tmp;
 
     if (NULL == cursorimage) 
         return;
+
+    /* Following two lines added for the byte-swap fix */
+    memend = v_in8(board->io_base + MEMENDIAN);
+    v_out8(board->io_base + MEMENDIAN, MEMENDIAN_HW);
 
     size&=1;
     if (size)
@@ -336,8 +354,13 @@ void v_loadcursor(struct v_board_t *board, vu8 size, vu8 *cursorimage)
         v_out8(iob+BT485_CURS_RAM_DATA, *src);
         src+=2;
       }
-    } else {                                            /* V2x00 */
+    } else {
+
+      /* Upload V2x00 Cursor image */
+
+      /* Cursor has to be aligned to a 1024 byte boundary */
       v_out32(iob+0xAC /* CURSORBASE - v2k */, 0);
+
       for (row=0; row<64; row++)
 	for (c=0, src=cursorimage+1+16*row; c<8; c++, src+=2)
 	  v_write_memory8(board->vmem_base, 16*(63-row)+c,
@@ -348,6 +371,9 @@ void v_loadcursor(struct v_board_t *board, vu8 size, vu8 *cursorimage)
 	  v_write_memory8(board->vmem_base, 8+16*(63-row)+c,
 			  (c&1)?(*(src-2)):(*(src+2)));
     }
+
+    /* Following line added for the byte-swap fix */
+    v_out8(board->io_base + MEMENDIAN, memend);
 }
 
 

@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/config/cf/xf86site.def,v 3.101.2.29 1999/06/17 16:23:45 hohndel Exp $
+XCOMM $XFree86: xc/config/cf/xf86site.def,v 3.101.2.31 1999/08/02 08:37:48 hohndel Exp $
 /******************************************************************************/
 /*
  * This file is to provide a quick method for most people to change the
@@ -271,7 +271,7 @@ XCOMM $XFree86: xc/config/cf/xf86site.def,v 3.101.2.29 1999/06/17 16:23:45 hohnd
  *
 #define XF86SvgaDrivers		nv et4000 et3000 pvga1 gvga ati sis tvga8900 \
 				cirrus ncr77c22 compaq mga oak al2101 ali \
-				cl64xx video7 ark mx realtek apm \
+				cl64xx video7 ark mx realtek apm s3_savage \
 				s3v s3_svga neo chips cyrix rendition p9x00 \
 				spc8110 i740 tdfx generic
  */
@@ -608,3 +608,9 @@ XCOMM $XFree86: xc/config/cf/xf86site.def,v 3.101.2.29 1999/06/17 16:23:45 hohnd
 #define DontDefineXF86Contrib
  */
 
+/*
+ * By default, gccmakedep uses mktemp for security reasons.
+ * Uncomment this, if your system lacks mktemp.
+ *
+#define HasMktemp		NO
+ */

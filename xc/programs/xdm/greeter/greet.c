@@ -1,5 +1,5 @@
 /* $XConsortium: greet.c,v 1.41 94/09/12 21:32:49 converse Exp $ */
-/* $XFree86: xc/programs/xdm/greeter/greet.c,v 3.1 1995/10/21 12:52:36 dawes Exp $ */
+/* $XFree86: xc/programs/xdm/greeter/greet.c,v 3.1.4.1 1999/07/21 18:07:46 hohndel Exp $ */
 /*
 
 Copyright (c) 1988  X Consortium
@@ -247,8 +247,15 @@ Greet (d, greet)
     Debug ("dispatching %s\n", d->name);
     done = 0;
     while (!done) {
-	    XtAppNextEvent (context, &event);
+	XtAppNextEvent (context, &event);
+	switch (event.type) {
+	case MappingNotify:
+	    XRefreshKeyboardMapping(&event.xmapping);
+	    break;
+	default:
 	    XtDispatchEvent (&event);
+	    break;
+	}
     }
     XFlush (XtDisplay (toplevel));
     Debug ("Done dispatch %s\n", d->name);

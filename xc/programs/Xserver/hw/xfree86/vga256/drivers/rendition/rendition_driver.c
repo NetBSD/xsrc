@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/rendition/rendition_driver.c,v 1.1.2.8 1999/06/23 12:37:23 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/rendition/rendition_driver.c,v 1.1.2.11 1999/08/17 07:39:36 hohndel Exp $ */
 /*
  * Rendition driver v0.2
  *   implements support for Rendition Verite 1000/2x00 
@@ -199,6 +199,13 @@ vgaVideoChipRec RENDITION={
 };  
 
 
+static SymTabRec rendition_chipsets[] = {
+  { PCI_CHIP_V1000,     "V1000" },
+  { PCI_CHIP_V2x00,     "V2100" },
+  { PCI_CHIP_V2x00,     "V2200" },
+  { -1, ""},
+};
+
 
 /*
  * functions
@@ -213,14 +220,11 @@ static char *
 RENDITIONIdent(n)
 int n;
 {
-    static char *chipsets[]={"V1000", "V2x00"};
-
-    if (n+1 > sizeof(chipsets)/sizeof(char *))
-        return NULL;
-    else
-        return chipsets[n];
+  if (rendition_chipsets[n].token < 0)
+    return(NULL);
+  else
+    return(rendition_chipsets[n].name);
 }
-
 
 
 /*
@@ -233,18 +237,52 @@ static Bool
 RENDITIONProbe()
 {
     pciConfigPtr pcr=NULL;
-    int c;
+    int c,rendition_search;
 
     /* First we attempt to figure out if one of the supported chipsets
      * is present. This code fragment is from the mga driver. */
     c=0;
     BOARD.chip=NOVERITE;
-    if (vgaPCIInfo && vgaPCIInfo->AllCards) {
+    if (vga256InfoRec.chipset)  /* no auto-detect: chipset is given */
+      {
+	rendition_search = xf86StringToToken(rendition_chipsets, vga256InfoRec.chipset);
+
+	if (vgaPCIInfo && vgaPCIInfo->AllCards) {
+	  while (pcr=vgaPCIInfo->AllCards[c++]) {
+	    /* #ifdef DEBUG */
+	    ErrorF( "RENDITION: vendor 0x%x chip 0x%x\n", 
+		    pcr->_vendor, pcr->_device);
+	    /* #endif */
+            if ((pcr->_vendor == PCI_VENDOR_RENDITION) &&
+		(pcr->_device == rendition_search)){
+
+	      switch(pcr->_device) {
+	      case PCI_CHIP_V1000:
+
+		/* Extra checks to see if primary */
+                if (!((pcr->_command & PCI_CMD_IO_ENABLE) &&
+		      (pcr->_command & PCI_CMD_MEM_ENABLE))){
+		  ErrorF("%s %s: RENDITION: V1000 cards can only work as primary display\n",
+			 XCONFIG_PROBED, vga256InfoRec.name);
+		  break;
+		}
+		else {
+		  BOARD.chip=V1000_DEVICE;
+		  break;
+		}
+	      case PCI_CHIP_V2x00:
+		BOARD.chip=V2000_DEVICE;
+		break;
+	      }
+	      if (BOARD.chip != NOVERITE)
+		break;
+            }
+	  }
+	}
+      }
+    else
+      if (vgaPCIInfo && vgaPCIInfo->AllCards) {
         while (pcr=vgaPCIInfo->AllCards[c++]) {
-#ifdef DEBUG
-            ErrorF( "RENDITION: vendor 0x%x chip 0x%x\n", 
-                pcr->_vendor, pcr->_device);
-#endif
             if ((pcr->_vendor == PCI_VENDOR_RENDITION) &&
                 /* Extra checks to find active card */
                 (pcr->_command & PCI_CMD_IO_ENABLE) &&
@@ -257,15 +295,15 @@ RENDITIONProbe()
                         break;
                     case PCI_CHIP_V2x00:
                         BOARD.chip=V2000_DEVICE;
-                        vga256InfoRec.chipset=RENDITIONIdent(1);
+                        vga256InfoRec.chipset=RENDITIONIdent(2);
                         break;
                 }
                 if (BOARD.chip != NOVERITE)
                     break;
             }
         }
-    } 
-    else 
+      }
+      else 
         return FALSE;
 
     if (BOARD.chip == NOVERITE) {
@@ -325,27 +363,49 @@ RENDITIONProbe()
             RENDITIONExtPorts);
     }
 
-    RENDITIONEnterLeave(ENTER); 
+    RENDITIONEnterLeave(ENTER);
 
     /* count memory */
     RENDITION.ChipLinearBase=(unsigned long)BOARD.mem_base;
     RENDITION.ChipLinearSize=v_getmemorysize(&BOARD);
 
-/*
-    RENDITION.ChipLinearSize=4*1024*1024;
-*/
-
     /* use some specified information */
-    if (!vga256InfoRec.videoRam)
-        vga256InfoRec.videoRam=RENDITION.ChipLinearSize/1024;
+    if (!vga256InfoRec.videoRam) {
+      vga256InfoRec.videoRam=RENDITION.ChipLinearSize >> 10; /* /1024 */
+    }
+    else if (vga256InfoRec.videoRam > (RENDITION.ChipLinearSize >> 10))
+      ErrorF ("%s %s: WARNING: Manualy set memory size is larger than probed (%dMB > %dMB)\n",
+	      XCONFIG_GIVEN, vga256InfoRec.name,
+	      vga256InfoRec.videoRam,
+	      RENDITION.ChipLinearSize >> 10);
 
     if(vga256InfoRec.dacSpeeds[0])
         vga256InfoRec.maxClock=vga256InfoRec.dacSpeeds[0];
     else {
       if (BOARD.chip==V1000_DEVICE){
-        vga256InfoRec.maxClock=135000;
+	switch (vgaBitsPerPixel){
+	  case 8:
+	  case 16:
+	    vga256InfoRec.maxClock=135000;
+	    break;
+	  case 32:
+	    vga256InfoRec.maxClock=76500;
+	    break;
+	}
       }
-      else vga256InfoRec.maxClock=170000;
+      else
+      /* V2x00 chips maxClock */
+      	switch (vgaBitsPerPixel){
+	  case 8:
+	    vga256InfoRec.maxClock=170000;
+	    break;
+	  case 16:
+	    vga256InfoRec.maxClock=124000;
+	    break;
+	  case 32:
+	    vga256InfoRec.maxClock=62500;
+	    break;
+	}
     }
 
     vga256InfoRec.bankedMono=FALSE;
@@ -358,9 +418,10 @@ RENDITIONProbe()
     OFLG_SET(OPTION_SW_CURSOR, &RENDITION.ChipOptionFlags);
     OFLG_SET(CLOCK_OPTION_PROGRAMABLE, &vga256InfoRec.clockOptions);
 
-  /*vgaSetLinearOffsetHook(RENDITIONLinearOffset);
-    vgaSetPitchAdjustHook(RENDITIONPitchAdjust);*/
+    vgaSetLinearOffsetHook(RENDITIONLinearOffset);
+    vgaSetPitchAdjustHook(RENDITIONPitchAdjust);
  
+    BOARD.initialized = FALSE;
     return TRUE;
 }
 
@@ -379,8 +440,9 @@ RENDITIONLinearOffset()
     ErrorF( "RENDITION: RENDITIONLinearOffset() called\n");
 #endif
 
-    /* this function should be filled with something <ml> */
-    return 0;
+    if (!OFLG_ISSET(OPTION_SW_CURSOR, &vga256InfoRec.options))
+      return 1024;
+    else return 0;
 }
 
 
@@ -399,18 +461,9 @@ RENDITIONFbInit()
 #endif
 
     if (!OFLG_ISSET(OPTION_SW_CURSOR, &vga256InfoRec.options)) {
-      if (BOARD.chip==V1000_DEVICE){
         RENDITIONHwCursorInit();
         ErrorF("%s %s: Using hardware cursor\n",
 	       XCONFIG_PROBED, vga256InfoRec.name);
-      }
-      else{
-	/* Disabled for the moment due to bugs in software */
-	ErrorF("%s %s: Hardware cursor on v2x00 not implemented in this release\n",
-	       XCONFIG_PROBED, vga256InfoRec.name);
-        ErrorF("%s %s: Disabling hardware cursor\n",
-            XCONFIG_PROBED, vga256InfoRec.name);
-      }
     }
     else
         ErrorF("%s %s: Disabling hardware cursor\n",
@@ -498,8 +551,9 @@ DisplayModePtr mode;
             break;
         case 16:
             modeinfo.bitsperpixel=16;
-            if (vga256InfoRec.weight.green == 5)
-                /* on a V1000, this looks too 'red/magenta' <ml> */
+	    /* This will colours look strange <DI> */
+	    /* Probably due to the alpha-bit */
+            if ((vga256InfoRec.weight.green == 5) && (BOARD.chip==V2000_DEVICE))
                 modeinfo.pixelformat=V_PIXFMT_1555;
             else
                 modeinfo.pixelformat=V_PIXFMT_565;
@@ -514,6 +568,7 @@ DisplayModePtr mode;
 
     v_setmode(&BOARD, &modeinfo);
 
+    BOARD.initialized = TRUE;
     return TRUE;
 }
 
@@ -530,16 +585,16 @@ static void
 RENDITIONRestore(restore)
 vgaHWPtr restore;
 {
-    int c;
-
 #ifdef DEBUG
     ErrorF( "RENDITION: RENDITIONRestore() called\n");
 #endif
 
+    vgaProtect(TRUE);
     v_setmode(&BOARD, &(BOARD.mode));
 
-    /* do we need this? <ml> */
     vgaHWRestore((vgaHWPtr)restore);
+    vgaProtect(FALSE);
+
 }
 
 
@@ -554,8 +609,6 @@ static void *
 RENDITIONSave(save)
 vgaRenditionPtr save;
 {
-    int c;
-
 #ifdef DEBUG
     ErrorF( "RENDITION: RENDITIONSave() called\n");
 #endif
@@ -607,7 +660,8 @@ Bool enter;
         outb(vgaIOBase + 5, temp & 0x7F);
     }
     else {
-        v_textmode(&BOARD);
+        if (BOARD.initialized)
+          v_textmode(&BOARD);
 
         /* Protect CRTC[0-7] */
         outb(vgaIOBase + 4, 0x11); temp = inb(vgaIOBase + 5);
@@ -633,14 +687,18 @@ static void
 RENDITIONAdjust(x, y)
 int x, y;
 {
-    int offset;
+    int offset = 0;
 
 #ifdef DEBUG
     ErrorF( "RENDITION: RENDITIONAdjust(%d, %d) called\n", x, y);
 #endif
 
+    /* Reserv space for HW-cursor ? */
+    if (!OFLG_ISSET(OPTION_SW_CURSOR, &vga256InfoRec.options))
+      offset = 1024;
+
     /* this calculation has to be revised! <ml> */
-    offset=(y*BOARD.mode.virtualwidth+x)*(BOARD.mode.bitsperpixel>>3);
+    offset+=(y*BOARD.mode.virtualwidth+x)*(BOARD.mode.bitsperpixel>>3);
 
     v_setframebase(&BOARD, offset);
 }

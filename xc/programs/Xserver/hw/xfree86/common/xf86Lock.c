@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Lock.c,v 3.11 1997/01/18 06:55:34 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Lock.c,v 3.11.2.2 1999/07/29 09:22:49 hohndel Exp $ */
 
 /*
  * Explicit support for a server lock file like the ones used for UUCP.
@@ -65,8 +65,14 @@ xf86LockServer()
    * Path names
    */
 #ifndef __EMX__
+#if !(defined(__QNX__) && !defined(__QNXNTO__))
   (void) sprintf(tmp, "%s%s%s", LOCK_TMPPATH, display, LOCK_SUFFIX);
   (void) sprintf(lock, "%s%s%s", LOCK_PATH, display, LOCK_SUFFIX);
+#else
+/* On QNX, suffix locks with node ID */
+  (void) sprintf(tmp, "%s%s%s.%d", LOCK_TMPPATH, display, LOCK_SUFFIX, getnid());
+  (void) sprintf(lock, "%s%s%s.%d", LOCK_PATH, display, LOCK_SUFFIX, getnid());
+#endif
 #else
   /* OS/2 uses TMP directory, must also prepare for 8.3 names */
   char *tmppath = getenv("TMP");

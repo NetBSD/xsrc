@@ -1,5 +1,5 @@
-.\" $XFree86: xc/programs/Xserver/hw/xfree86/XF86_SVGA.man,v 3.42.2.11 1999/06/30 13:00:17 hohndel Exp $ 
-.TH XF86_SVGA 1 "Version 3.3.4"  "XFree86"
+.\" $XFree86: xc/programs/Xserver/hw/xfree86/XF86_SVGA.man,v 3.42.2.12 1999/08/02 08:38:03 hohndel Exp $ 
+.TH XF86_SVGA 1 "Version 3.3.5"  "XFree86"
 .SH NAME
 XF86_SVGA - SVGA X Window System servers for UNIX on 
 x86 platforms

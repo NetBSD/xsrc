@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/compiler.h,v 3.24.2.4 1998/10/18 20:42:10 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/compiler.h,v 3.24.2.6 1999/07/29 09:22:43 hohndel Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  *
@@ -58,6 +58,31 @@
 #define inb RealInb
 #define inw RealInw
 #define inl RealInl
+#endif
+
+#if defined(__QNX__) && !defined(__QNXNTO__) /* Do this for now to keep Watcom happy */
+#define outb outp
+#define outw outpw
+#define outl outpd 
+#define inb inp
+#define inw inpw
+#define inl inpd
+
+/* Define the ffs function for inlining */
+extern int ffs(unsigned long);
+#pragma aux ffs_ = \
+	"bsf edx, eax"		\
+	"jnz bits_set"		\
+	"xor eax, eax"		\
+	"jmp exit1"		\
+	"bits_set:"		\
+	"mov eax, edx"		\
+	"inc eax"		\
+	"exit1:"		\
+	__parm [eax]		\
+	__modify [eax edx] 	\
+	__value [eax]		\
+	;
 #endif
 
 #ifdef NO_INLINE
@@ -990,7 +1015,7 @@ unsigned short int port;
 #endif /* defined(AlphaArchitecture) && defined(LinuxArchitecture) */
 
 #else /* __GNUC__ */
-#if !defined(AMOEBA) && !defined(MINIX)
+#if !defined(AMOEBA) && !defined(MINIX) && !defined(__QNX__)
 # if defined(__STDC__) && (__STDC__ == 1)
 #  ifndef asm
 #   define asm __asm
@@ -1312,6 +1337,24 @@ static int inb(port)
 #define mem_barrier()   /* NOP */
 #define write_mem_barrier()   /* NOP */
 #endif /* __GNUC__ */
+
+#if defined(__QNX__) && !defined(__QNXNTO__)
+#include <sys/types.h>
+extern ushort_t  inb(int port);
+extern ushort_t  inw(int port);
+extern ulong_t   inl(int port);
+extern void      outb(int port, ushort_t val);
+extern void      outw(int port, ushort_t val);
+extern void      outl(int port, ulong_t val);
+#define ldq_u(p)	(*((unsigned long  *)(p)))
+#define ldl_u(p)	(*((unsigned int   *)(p)))
+#define ldw_u(p)	(*((unsigned short *)(p)))
+#define stq_u(v,p)	((unsigned long  *)(p)) = (v)
+#define stl_u(v,p)	((unsigned int   *)(p)) = (v)
+#define stw_u(v,p)	((unsigned short *)(p)) = (v)
+#define mem_barrier()   /* NOP */
+#define write_mem_barrier()   /* NOP */
+#endif /* __QNX__ */
 
 #if defined(IODEBUG) && defined(__GNUC__)
 #undef inb

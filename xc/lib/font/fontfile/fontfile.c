@@ -26,7 +26,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from the X Consortium.
 
 */
-/* $XFree86: xc/lib/font/fontfile/fontfile.c,v 3.3.4.3 1998/07/12 09:53:00 dawes Exp $ */
+/* $XFree86: xc/lib/font/fontfile/fontfile.c,v 3.3.4.4 1999/07/23 13:22:21 hohndel Exp $ */
 
 /*
  * Author:  Keith Packard, MIT X Consortium
@@ -506,6 +506,8 @@ FontFileOpenBitmapNCF (fpe, pFont, flags, entry, format, fmask,
     int			flags;
     FontEntryPtr	entry;
     FontPtr		*pFont;
+    fsBitmapFormat	format;
+    fsBitmapFormatMask	fmask;
     FontPtr		non_cachable_font;
 {
     FontBitmapEntryPtr	bitmap;

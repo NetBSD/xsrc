@@ -1,7 +1,7 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/dgux/bios_DGmmap.c,v 1.1.2.1 1998/12/18 11:56:27 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/dgux/bios_DGmmap.c,v 1.1.2.2 1999/07/19 11:46:43 hohndel Exp $ */
 /*
- * INTEL DG/UX RELEASE 4.20 MU03
- * Copyright 1997 Takis Psarogiannakopoulos Cambridge,UK
+ * INTEL DG/UX RELEASE 4.20 MU04
+ * Copyright 1999 Takis Psarogiannakopoulos Cambridge,UK
  * <takis@dpmms.cam.ac.uk>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -27,6 +27,9 @@
 #include "xf86Priv.h"
 #include "xf86_OSlib.h"
 
+#include <unistd.h>
+#include <sys/m88kbcs.h>
+
 /*
  * Read the BIOS via mmap() to the device /dev/mem.
  */
@@ -38,6 +41,8 @@ int Len;
 {
 	int fd;
 	unsigned char *ptr;
+	int psize;
+	int mlen;
 
 	if ((fd = open(DEV_MEM, O_RDONLY)) < 0)
 	{
@@ -45,16 +50,19 @@ int Len;
 		       strerror(errno));
 		return(-1);
 	}
-	ptr = (unsigned char *)mmap((caddr_t)0, 0x8000, PROT_READ, MAP_SHARED,
-				    fd, (off_t)Base);
+	psize = sysconf(_SC_PAGESIZE);
+	mlen = (Offset + Len + psize -1) & ~psize;
+	ptr = (unsigned char *)mmap((caddr_t)0, mlen, PROT_READ, MAP_SHARED,
+					fd, (off_t)Base);
 	if ((int)ptr == -1)
 	{
 		ErrorF("xf86ReadBios: %s mmap failed\n", DEV_MEM);
 		close(fd);
 		return(-1);
 	}
+
 	(void)memcpy(Buf, (void *)(ptr + Offset), Len);
-	(void)munmap((caddr_t)ptr, 0x8000);
+	(void)munmap((caddr_t)ptr, mlen);
 	(void)close(fd);
 	return(Len);
 }

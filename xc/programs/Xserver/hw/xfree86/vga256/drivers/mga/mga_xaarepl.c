@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/mga/mga_xaarepl.c,v 1.1.2.3 1998/11/10 11:55:41 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/mga/mga_xaarepl.c,v 1.1.2.5 1999/07/26 06:54:49 hohndel Exp $ */
 
 
 #define PSZ 8
@@ -147,6 +147,15 @@ static unsigned int ShiftMasks[32] = {
   0x0FFFFFFF, 0x1FFFFFFF, 0x3FFFFFFF, 0x7FFFFFFF
 };
 
+struct CARD32_unaligned {
+	CARD32	unal32 
+#if defined(__alpha__) && defined(__GNUC__)
+	__attribute__((packed));
+#endif
+	;
+};
+
+typedef struct CARD32_unaligned CARD32u;
 
 static void
 MGAFillStippledCPUToScreenColorExpand(x, y, dwords, h, src, srcwidth,
@@ -172,7 +181,7 @@ stipplewidth, stippleheight, srcx, srcy)
 	while(h--) {
 	   switch(stipplewidth) {
 		case 32:
-	   	    pattern = *((CARD32*)srcp);  
+	   	    pattern = ((CARD32u*)srcp)->unal32;
 		    break;
 	      	case 16:
 		    kludge[0] = kludge[2] = srcp[0];
@@ -219,7 +228,7 @@ stipplewidth, stippleheight, srcx, srcy)
 
 	while(h--) {
 	   width = stipplewidth;
-	   pattern = *((CARD32*)srcp) & ShiftMasks[width];  
+	   pattern = ((CARD32u*)srcp)->unal32 & ShiftMasks[width];  
 	   while(!(width & ~15)) {
 		pattern |= (pattern << width);
 		width <<= 1;	
@@ -248,7 +257,7 @@ stipplewidth, stippleheight, srcx, srcy)
 	   }
 	}
     } else {
-	register CARD32* scratch;
+	register CARD32u* scratch;
 	int shift, offset, scratch2, count;
 
 	while(h--) {
@@ -257,18 +266,18 @@ stipplewidth, stippleheight, srcx, srcy)
 	   	   	
 	   while(count--) {
 	   	shift = stipplewidth - offset;
-		scratch = (CARD32*)(srcp + (offset >> 3));
+		scratch = (CARD32u*)(srcp + (offset >> 3));
 		scratch2 = offset & 0x07;
 
 		if(shift & ~31) {
 		   if(scratch2) {
-		      *(destptr++) = (*scratch >> scratch2) |
-			(scratch[1] << (32 - scratch2));
+		      *(destptr++) = (scratch->unal32 >> scratch2) |
+			(scratch[1].unal32 << (32 - scratch2));
 		   } else 
-		       *(destptr++) = *scratch; 
+		       *(destptr++) = scratch->unal32;
 		} else {
-		    *(destptr++) = (*((CARD32*)srcp) << shift) |
-			((*scratch >> scratch2) & ShiftMasks[shift]);
+		    *(destptr++) = (((CARD32u*)srcp)->unal32 << shift) |
+			((scratch->unal32 >> scratch2) & ShiftMasks[shift]);
 		}
 		offset += 32;
 		while(offset >= stipplewidth) 

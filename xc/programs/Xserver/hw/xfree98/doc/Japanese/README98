@@ -1,6 +1,6 @@
   XFree86 PC98 Dependent Information
   The XFree86 Project Inc. and X98 CORE TEAM 著
-  1998 年 12 月 30 日
+  1999 年 8 月 6 日
 
   このドキュメントでは、PC98 サーバ固有の事項について解説します。PC-AT
   と共通の事項については、共通のドキュメントを参照してください。このド
@@ -659,6 +659,11 @@
         ション機能には最悪の場合システムのハングアップを伴う不具合が見付
         かっています。
 
+     Option ``pci_burst_off''
+        マウスの軌跡やメニューが汚れたり、kterm の文字がかすれたりした場
+        合に指定してみて下さい。一部の機種 (PC-9821Ra20) で効果があるこ
+        とが報告されています。
+
   3.12.2.  報告されている問題
 
   o  XFree86 3.2A 以降では、GA-DRV/98 は使用できなくなっています。
@@ -737,5 +742,5 @@
 
   README.cirrus、XF86_SVGA man page
 
-  $XFree86: xc/programs/Xserver/hw/xfree98/doc/Japanese/README98,v 3.6.2.6 1998/12/30 09:14:46 hohndel Exp $
+  $XFree86: xc/programs/Xserver/hw/xfree98/doc/Japanese/README98,v 3.6.2.7 1999/08/17 07:39:43 hohndel Exp $
 

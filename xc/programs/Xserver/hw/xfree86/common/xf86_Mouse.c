@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86_Mouse.c,v 3.21.2.20 1999/05/07 00:52:04 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86_Mouse.c,v 3.21.2.21 1999/07/19 11:46:40 hohndel Exp $ */
 /*
  *
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
@@ -606,15 +606,13 @@ MouseDevPtr mouse;
 	{
 	  unsigned char c[2];
 
-	  c[0] = 246;		/* default settings */
-	  write(mouse->mseFd, c, 1);
 	  c[0] = 230;		/* 1:1 scaling */
 	  write(mouse->mseFd, c, 1);
 	  c[0] = 244;		/* enable mouse */
 	  write(mouse->mseFd, c, 1);
+	  c[0] = 243;		/* set sampling rate */
 	  if (mouse->sampleRate > 0) 
 	    {
-	      c[0] = 243;	/* set sampling rate */
  	      if (mouse->sampleRate >= 200)
  		c[1] = 200;
  	      else if (mouse->sampleRate >= 100)
@@ -625,11 +623,15 @@ MouseDevPtr mouse;
  		c[1] = 40;
  	      else
  		c[1] = 20;
-	      write(mouse->mseFd, c, 2);
 	    }
+	  else
+	    {
+ 	      c[1] = 100;
+	    }
+	  write(mouse->mseFd, c, 2);
+	  c[0] = 232;		/* set device resolution */
 	  if (mouse->resolution > 0) 
 	    {
-	      c[0] = 232;	/* set device resolution */
 	      if (mouse->resolution >= 200)
 		c[1] = 3;
 	      else if (mouse->resolution >= 100)
@@ -638,8 +640,12 @@ MouseDevPtr mouse;
 		c[1] = 1;
 	      else
 		c[1] = 0;
-	      write(mouse->mseFd, c, 2);
 	    }
+	  else
+	    {
+	      c[1] = 2;
+	    }
+	  write(mouse->mseFd, c, 2);
 	  usleep(30000);
 	  xf86FlushInput(mouse->mseFd);
 	}
@@ -877,21 +883,35 @@ xf86MouseProtocol(device, rBuf, nBytes)
       break;
 
     case P_MMANPLUSPS2:     /* MouseMan+ PS/2 */
-      if ((mouse->pBuf[0] & ~0x07) == 0xc8) {
+      buttons = (mouse->pBuf[0] & 0x04) >> 1 |       /* Middle */
+	        (mouse->pBuf[0] & 0x02) >> 1 |       /* Right */
+		(mouse->pBuf[0] & 0x01) << 2;        /* Left */
+      dx = (mouse->pBuf[0] & 0x10) ?    mouse->pBuf[1]-256  :  mouse->pBuf[1];
+      if (((mouse->pBuf[0] & 0x48) == 0x48) &&
+	  (abs(dx) > 191) &&
+	  ((((mouse->pBuf[2] & 0x03) << 2) | 0x02) == (mouse->pBuf[1] & 0x0f))) {
 	/* extended data packet */
-        buttons = (mouse->pBuf[0] & 0x04) >> 1 |       /* Middle */
-	          (mouse->pBuf[0] & 0x02) >> 1 |       /* Right */
-		  (mouse->pBuf[0] & 0x01) << 2 |       /* Left */
-		  ((mouse->pBuf[2] & 0x10) ? 0x08 : 0);/* fourth button */
-	dx = dy = 0;
-	dz = (mouse->pBuf[1] & 0x08) ? (mouse->pBuf[2] & 0x0f) - 16 : (mouse->pBuf[2] & 0x0f);
+	switch ((((mouse->pBuf[0] & 0x30) >> 2) | 
+		((mouse->pBuf[1] & 0x30) >> 4))) {
+	case 1:		/* wheel data packet */
+	  buttons |= ((mouse->pBuf[2] & 0x10) ? 0x08 : 0) | /* fourth button */
+		     ((mouse->pBuf[2] & 0x20) ? 0x10 : 0);  /* fifth button */
+	  dx = dy = 0;
+	  dz = (mouse->pBuf[2] & 0x08) ? (mouse->pBuf[2] & 0x0f) - 16 :
+					 (mouse->pBuf[2] & 0x0f);
+	  break;
+	case 0:		/* device type packet - shouldn't happen */
+	case 2:		/* reserved packet - shouldn't happen */
+	default:
+	  buttons |= (mouse->lastButtons & ~0x07);
+	  dx = dy = 0;
+	  dz = 0;
+	  break;
+	}
       } else {
-        buttons = (mouse->pBuf[0] & 0x04) >> 1 |     /* Middle */
-	          (mouse->pBuf[0] & 0x02) >> 1 |     /* Right */
-		  (mouse->pBuf[0] & 0x01) << 2 |     /* Left */
-		  (mouse->lastButtons & ~0x07);
-        dx = (mouse->pBuf[0] & 0x10) ?    mouse->pBuf[1]-256  :  mouse->pBuf[1];
-        dy = (mouse->pBuf[0] & 0x20) ?  -(mouse->pBuf[2]-256) : -mouse->pBuf[2];
+	buttons |= (mouse->lastButtons & ~0x07);
+	dx = (mouse->pBuf[0] & 0x10) ?   mouse->pBuf[1]-256  :  mouse->pBuf[1];
+	dy = (mouse->pBuf[0] & 0x20) ? -(mouse->pBuf[2]-256) : -mouse->pBuf[2];
       }
       break;
 
@@ -919,8 +939,8 @@ xf86MouseProtocol(device, rBuf, nBytes)
 	        (mouse->pBuf[0] & 0x02) >> 1 |       /* Right */
 		(mouse->pBuf[0] & 0x01) << 2 |       /* Left */
 		((mouse->pBuf[0] & 0x08) ? 0x08 : 0);/* fourth button */
-      dx = (mouse->pBuf[0] & 0x10) ?   (mouse->pBuf[1]&0x7f)-128 :
-						mouse->pBuf[1];
+      mouse->pBuf[1] |= (mouse->pBuf[0] & 0x40) ? 0x80 : 0x00;
+      dx = (mouse->pBuf[0] & 0x10) ?    mouse->pBuf[1]-256  :  mouse->pBuf[1];
       dy = (mouse->pBuf[0] & 0x20) ?  -(mouse->pBuf[2]-256) : -mouse->pBuf[2];
       break;
 

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/enhanced/fFill.s,v 3.6 1996/12/23 06:59:02 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/enhanced/fFill.s,v 3.6.2.1 1999/07/23 13:23:01 hohndel Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  *
@@ -113,6 +113,10 @@ GL_RROP_NAME:
 	PUSH_L	(EDI)
 	PUSH_L	(ESI)
 	PUSH_L	(EBX)
+#ifdef __QNX__
+	PUSH_SR (DS)
+	POP_SR  (ES)
+#endif
 	MOV_L	(REGOFF(8,EBP),pdst)
 	MOV_L	(REGOFF(12,EBP),fill)
 	MOV_L	(REGOFF(20,EBP),hcount)

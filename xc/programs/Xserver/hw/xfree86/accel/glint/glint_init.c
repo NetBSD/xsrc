@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/glint/glint_init.c,v 1.20.2.6 1999/07/01 16:23:29 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/glint/glint_init.c,v 1.20.2.7 1999/08/17 07:39:27 hohndel Exp $ */
 /*
  * Copyright 1997 by Alan Hourihane <alanh@fairlite.demon.co.uk>
  *
@@ -240,8 +240,12 @@ glintCalcCRTCRegs(glintCRTCRegPtr crtcRegs, DisplayModePtr mode)
 
     else if (IS_3DLABS_PM_FAMILY(coprotype)) {
         if (OFLG_ISSET(OPTION_SYNC_ON_GREEN, &glintInfoRec.options)) 
- 	    crtcRegs->vtgpolarity = (0x1 << 3) | (0x1 << 5) | 
-	        ((mode->Flags & V_DBLSCAN) ? (1 << 2) : 0) | 1;
+             /* default is positive sync polarity, but many SOG monitors 
+                want negative sync polarity */
+            crtcRegs->vtgpolarity = 
+                 (((mode->Flags & V_NHSYNC) ? 0x3 : 0x1) << 3) |  
+                 (((mode->Flags & V_NVSYNC) ? 0x3 : 0x1) << 5) |
+                 ((mode->Flags & V_DBLSCAN) ? (1 << 2) : 0) | 1;
  	else
  	    crtcRegs->vtgpolarity = 
 		(((mode->Flags & V_PHSYNC) ? 0x1 : 0x3) << 3) |  

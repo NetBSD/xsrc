@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/OS_DGUX.c,v 1.1.2.2 1999/07/17 05:00:54 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/OS_DGUX.c,v 1.1.2.4 1999/08/03 09:41:41 hohndel Exp $ */
 /*
  * INTEL DG/UX RELEASE 4.20 MU04
  * Copyright Takis Psarogiannakopoulos
@@ -33,8 +33,12 @@
  * Unixware
  */
 
+#define DG_NO_SYSI86 1
+
 #include <sys/sysi86.h>
+#if defined(DG_NO_SYSI86)
 #define SI86IOPL 112
+#endif
 
 #define DEV_MEM	"/dev/mem"
 
@@ -244,7 +248,8 @@ int Delay;
 }
 
 /* Added to allow lightweight processes to access I/O directly  */
-#if defined(DGUX)
+
+#if defined(DGUX) && defined(DG_NO_SYSI86)
       asm("sysi86:_sysi86:pushl %ebp");
       asm("movl %esp,%ebp");
       asm("pushl 12(%ebp)");

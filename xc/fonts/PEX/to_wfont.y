@@ -1,6 +1,6 @@
 %{
 /* $XConsortium: to_wfont.y /main/9 1996/06/11 07:38:48 kaleb $ */
-/* $XFree86: xc/fonts/PEX/to_wfont.y,v 3.6.2.1 1998/12/22 11:23:04 hohndel Exp $ */
+/* $XFree86: xc/fonts/PEX/to_wfont.y,v 3.6.2.3 1999/07/28 13:37:32 hohndel Exp $ */
 
 /*****************************************************************
 
@@ -267,7 +267,12 @@ main(argc, argv)
 			}
 		}
 	}
+#if defined(__QNX__)
+	yyparse();
+	return;
+#else
 	return (yyparse());
+#endif
 }
 
 /* set number of characters */
@@ -351,7 +356,7 @@ check_num_ch()
 
 yyerror()
 {
-#if !defined(CSRG_BASED) && !defined(linux) && !defined(Lynx) && !defined(__GNU__)
+#if !defined(CSRG_BASED) && !defined(linux) && !defined(Lynx) && !defined(__GNU__) && !defined(__QNX__)
 	extern int      yylineno;
 #endif
 #	define ERR_SIZE (sizeof(err_string) / sizeof(char *))
@@ -374,7 +379,7 @@ yyerror()
 		str = err_string[yyerrno-1];
 	else
 		str = "Syntax error";
-#if !defined(CSRG_BASED) && !defined(linux) && !defined(Lynx) && !defined(__GNU__)
+#if !defined(CSRG_BASED) && !defined(linux) && !defined(Lynx) && !defined(__GNU__) && !defined(__QNX__)
 		fprintf(stderr, "line %d: %s.\n", yylineno, str);
 #else
 		fprintf(stderr, "%s.\n", str);

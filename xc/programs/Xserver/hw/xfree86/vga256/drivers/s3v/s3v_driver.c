@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/s3v/s3v_driver.c,v 1.1.2.24 1999/06/23 12:37:24 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/s3v/s3v_driver.c,v 1.1.2.25 1999/07/30 11:21:39 hohndel Exp $ */
 
 /*
  *
@@ -155,7 +155,10 @@ SymTabRec s3vChipTable[] = {
    { S3_ViRGE_GX2, "ViRGE/GX2"},
    { S3_ViRGE_MX,  "ViRGE/MX"},
    { S3_ViRGE_MXP, "ViRGE/MX+"},
-   { S3_TRIO_3D,   "Trio 3D"},
+   { S3_TRIO_3D,   "Trio3D"},
+   { S3_TRIO_3D_2X,"Trio3D/2X"},
+   { S3_SAVAGE_3D, "Savage3D"},
+   { S3_SAVAGE_3D_M, "Savage3D (Macrovision Support)"},
    { -1,           ""},
    };
 
@@ -873,7 +876,12 @@ DisplayModePtr pMode, pEnd;
 	 pciInfo->ChipType != S3_ViRGE_GX2 &&
 	 pciInfo->ChipType != S3_ViRGE_MX &&
 	 pciInfo->ChipType != S3_ViRGE_MXP &&
-	 pciInfo->ChipType != S3_TRIO_3D){
+#if 0 /* not yet */
+	 pciInfo->ChipType != S3_SAVAGE_3D &&
+	 pciInfo->ChipType != S3_SAVAGE_3D_M &&
+#endif
+	 pciInfo->ChipType != S3_TRIO_3D &&
+	 pciInfo->ChipType != S3_TRIO_3D_2X){
           if (xf86Verbose > 1)
              ErrorF("%s %s: Unsupported (non-ViRGE) S3 chipset detected!\n", 
                 XCONFIG_PROBED, vga256InfoRec.name);
@@ -942,6 +950,20 @@ DisplayModePtr pMode, pEnd;
             break;
          }
          vga256InfoRec.videoRam -= s3vPriv.MemOffScreen;
+      }
+      else if (S3_TRIO_3D_2X_SERIES(s3vPriv.chip)) {
+         switch((config1 & 0xE0) >> 5) {
+         case 0:
+            vga256InfoRec.videoRam = 0 * 1024;
+            break;
+         case 1:    /* 32 bit interface -- yuck */
+         case 2:
+            vga256InfoRec.videoRam = 4 * 1024;
+            break;
+         case 6:
+            vga256InfoRec.videoRam = 2 * 1024;
+            break;
+         }
       }
       else if (S3_ViRGE_GX2_SERIES(s3vPriv.chip) || S3_ViRGE_MX_SERIES(s3vPriv.chip)) {
          switch((config1 & 0xC0) >> 6) {
@@ -1432,16 +1454,21 @@ int i, j;
       }    
 
 /* Now set linear addr. registers */
-/* LAW size: we have 2 cases, 2MB, 4MB or >= 4MB for VX */
 
    outb(vgaCRIndex, 0x58);
    new->CR58 = inb(vgaCRReg) & 0x80;
-   if(vga256InfoRec.videoRam == 2048){   
+   if(vga256InfoRec.videoRam == 2048) {
       new->CR58 |= 0x02 | 0x10; 
-      }
+   }
+   else if(vga256InfoRec.videoRam == 1024) {
+      new->CR58 |= 0x01 | 0x10;
+   }
    else {
-      new->CR58 |= 0x03 | 0x10; /* 4MB window on virge, 8MB on VX */
-      } 
+     if (S3_TRIO_3D_2X_SERIES(s3vPriv.chip) && vga256InfoRec.videoRam == 8192)
+       new->CR58 |= 0x07 | 0x10; /* 8MB window on Trio3D/2X */
+     else
+       new->CR58 |= 0x03 | 0x10; /* 4MB window on virge, 8MB on VX */
+   } 
    if(s3vPriv.chip == S3_ViRGE_VX)
       new->CR58 |= 0x40;
    if (OFLG_ISSET(OPTION_EARLY_RAS_PRECHARGE, &vga256InfoRec.options))

@@ -7,7 +7,7 @@ David Dawes,
 Marc  Wandschneider,
 Mark  Weaver,
 Matthieu Herrb
-<Date>Last modified on: 25 June 1999
+<Date>Last modified on: 20 August 1999
 
 <toc>
 
@@ -29,10 +29,6 @@ The sources for XFree86 are available by anonymous ftp from:
 <htmlurl name="ftp://ftp.XFree86.org/pub/XFree86/current"
 url="ftp://ftp.XFree86.org/pub/XFree86/current">
 
-Binaries for NetBSD 1.2 are available from:
-<htmlurl name="ftp://ftp.XFree86.org/pub/XFree86/current/binaries/NetBSD-1.2"
-url="ftp://ftp.XFree86.org/pub/XFree86/current/binaries/NetBSD-1.2">
-
 Binaries for NetBSD 1.4 and later are available from:
 <htmlurl name="ftp://ftp.XFree86.org/pub/XFree86/current/binaries/NetBSD-1.4"
 url="ftp://ftp.XFree86.org/pub/XFree86/current/binaries/NetBSD-1.4">
@@ -45,7 +41,7 @@ url="ftp://ftp.XFree86.org/pub/XFree86/MIRRORS">
 Other NetBSD versions:
 
 These binaries are not compatible with earlier NetBSD versions. If
-you're still running NetBSD 0.9, 1.0 or 1.1, you should think about
+you're still running NetBSD earlier than 1.4, you should think about
 upgrading to a newer version of NetBSD first.
 
 If you don't upgrade, you'll have to build XFree86 from the sources.
@@ -68,8 +64,14 @@ Send email to <em/matthieu@laas.fr/ (Matthieu Herrb) or
 <em/XFree86@XFree86.org/ if you have comments or suggestions about
 this file and we'll revise it.
 
-<sect>New features in this release
+<sect>New OS-dependant features in XFree86 3.3.5
+<p>
+None.
+<p>
+See the <htmlurl url="RELNOTES.html" name="Release Notes"> for
+non-OS dependent new features in XFree86 3.3.5.
 
+<sect>New OS-dependant features in XFree86 3.3.4
 <p>
 <itemize>
 <item>The maximum number of open connections in the server has been
@@ -78,9 +80,6 @@ raised to 128,
 been added. 
 </itemize>
 
-<p>
-See the <htmlurl url="RELNOTES.html" name="Release Notes"> for
-non-OS dependent new features in XFree86 3.3.4.
 
 <sect>Installing the Binaries
 
@@ -136,7 +135,7 @@ Only standard PS/2 mice are supported by this driver. Newest PS/2
 mice that send more than three bytes at a time (especially
 Intellimouse, or MouseMan+ with a ``3D'' roller) are not supported yet. 
 <p>
-XFree86 3.3.4 also has support for the mouse driver included in
+XFree86 3.3.4 and later also have support for the mouse driver included in
 the new <bf/wscons/ console driver introduced by NetBSD 1.4. Specify
 ``<tt/wsmouse/'' as the protocol and ``<tt>/dev/wsmouse0</tt>'' as the 
 device in <tt>/etc/XF86Config</tt> if you're using NetBSD 1.4 with
@@ -588,7 +587,7 @@ and many others.
 </itemize>
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/NetBSD.sgml,v 3.45.2.12 1999/06/30 13:00:27 hohndel Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/NetBSD.sgml,v 3.45.2.13 1999/08/23 08:49:48 hohndel Exp $
 
 
 

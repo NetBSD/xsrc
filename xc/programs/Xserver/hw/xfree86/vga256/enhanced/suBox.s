@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/enhanced/suBox.s,v 3.2 1996/12/23 06:59:10 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/enhanced/suBox.s,v 3.2.2.1 1999/07/23 13:23:02 hohndel Exp $ */
 /*******************************************************************************
 			Copyright 1992 by Glenn G. Lai 
 
@@ -93,6 +93,10 @@ notVHLine:
 	PUSH_L 	(EDI)
 	PUSH_L	(ESI)
 	PUSH_L	(EBX)
+#ifdef __QNX__
+	PUSH_SR	(DS)
+	POP_SR	(ES)
+#endif
 pix:
 	MOV_L	(fill, EBX)
 	MOV_L	(width, ECX)
@@ -186,6 +190,10 @@ window:
 	MOV_L	(EAX, EDI)
 	PUSH_L	(ESI)
 	PUSH_L	(EBX)
+#ifdef __QNX__
+	PUSH_SR	(DS)
+	POP_SR	(ES)
+#endif
 
 /* Change THRESHOLD at your own risk!!! */ 
 #define THRESHOLD	CONST(22)

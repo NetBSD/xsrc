@@ -1,0 +1,48 @@
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/s3_savage/Imakefile,v 1.1.2.1 1999/07/30 11:21:25 hohndel Exp $ */
+/*
+ *
+ * Copyright 1995-1997 The XFree86 Project, Inc.
+ *
+ */
+
+#include <Server.tmpl>
+
+SRCS = s3sav_driver.c s3sav_misc.c s3sav_accel.c s3sav_cursor.c s3sav_vbe.c lrmi.c
+
+OBJS = s3sav_driver.o s3sav_misc.o s3sav_accel.o s3sav_cursor.o s3sav_vbe.o lrmi.o
+
+DEFINES = -DPSZ=8
+#if XF86LinkKit
+INCLUDES = -I. -I../../../include -I../../../include/X11 -I../..
+#else
+INCLUDES = -I. -I$(XF86COMSRC) -I$(XF86HWSRC) -I$(XF86OSSRC) \
+           -I$(SERVERSRC)/mfb -I$(SERVERSRC)/mi \
+           -I$(SERVERSRC)/cfb -I../../vga -I../../../xaa \
+           -I$(FONTINCSRC) -I$(SERVERSRC)/include -I$(XINCLUDESRC)
+#endif
+
+#if MakeHasPosixVariableSubstitutions
+SubdirLibraryRule($(OBJS))
+#endif
+NormalLibraryObjectRule()
+NormalAsmObjectRule()
+
+NormalRelocatableTarget(s3sav_drv, $(OBJS))
+
+InstallLinkKitNonExecFile(s3sav_driver.c,$(LINKKITDIR)/drivers/vga256/s3sav)
+InstallLinkKitNonExecFile(s3sav_accel.c,$(LINKKITDIR)/drivers/vga256/s3sav)
+InstallLinkKitNonExecFile(s3sav_misc.c,$(LINKKITDIR)/drivers/vga256/s3sav)
+InstallLinkKitNonExecFile(s3sav_cursor.c,$(LINKKITDIR)/drivers/vga256/s3sav)
+InstallLinkKitNonExecFile(s3sav_vbe.c,$(LINKKITDIR)/drivers/vga256/s3sav)
+InstallLinkKitNonExecFile(lrmi.c,$(LINKKITDIR)/drivers/vga256/s3sav)
+InstallLinkKitNonExecFile(s3bitblt.c,$(LINKKITDIR)/drivers/vga256/s3sav)
+InstallLinkKitNonExecFile(s3bitmap.c,$(LINKKITDIR)/drivers/vga256/s3sav)
+InstallLinkKitNonExecFile(regs3sav.h,$(LINKKITDIR)/drivers/vga256/s3sav)
+InstallLinkKitNonExecFile(newmmio.h,$(LINKKITDIR)/drivers/vga256/s3sav)
+InstallLinkKitNonExecFile(s3sav_driver.h,$(LINKKITDIR)/drivers/vga256/s3sav)
+InstallLinkKitNonExecFile(s3sav_rop.h,$(LINKKITDIR)/drivers/vga256/s3sav)
+InstallLinkKitNonExecFile(lrmi.h,$(LINKKITDIR)/drivers/vga256/s3sav)
+InstallLinkKitNonExecFile(vbe.h,$(LINKKITDIR)/drivers/vga256/s3sav)
+InstallLinkKitNonExecFile(Imakefile,$(LINKKITDIR)/drivers/vga256/s3sav)
+
+DependTarget()

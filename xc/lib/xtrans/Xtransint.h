@@ -1,5 +1,5 @@
 /* $XConsortium: Xtransint.h /main/25 1995/12/05 16:51:28 mor $ */
-/* $XFree86: xc/lib/xtrans/Xtransint.h,v 3.18.2.5 1999/07/17 01:32:46 dawes Exp $ */
+/* $XFree86: xc/lib/xtrans/Xtransint.h,v 3.18.2.7 1999/07/29 09:22:32 hohndel Exp $ */
 /*
 
 Copyright (c) 1993, 1994  X Consortium
@@ -116,7 +116,7 @@ extern int  errno;		/* Internal system error number. */
  * Moved the setting of NEED_UTSNAME to this header file from Xtrans.c,
  * to avoid a race condition. JKJ (6/5/97)
  */
-#if (defined(_POSIX_SOURCE) && !defined(AIXV3)) || defined(hpux) || defined(USG) || defined(SVR4) || defined(SCO)
+#if (defined(_POSIX_SOURCE) && !defined(AIXV3) && !defined(__QNX__)) || defined(hpux) || defined(USG) || defined(SVR4) || defined(SCO)
 #ifndef NEED_UTSNAME
 #define NEED_UTSNAME
 #endif
@@ -150,7 +150,7 @@ extern int  errno;		/* Internal system error number. */
 #ifdef NOFILE
 #define OPEN_MAX NOFILE
 #else
-#ifndef __EMX__
+#if ((!defined __EMX__) && (!defined __QNX__))
 #define OPEN_MAX NOFILES_MAX
 #else
 #define OPEN_MAX 256

@@ -4,7 +4,7 @@
 <title>README for XFree86 on OpenBSD
 <author>
 Matthieu Herrb
-<Date>Last modified on: 25 June 1999
+<Date>Last modified on: 20 August 1999
 
 <toc>
 
@@ -48,7 +48,12 @@ Send email to <em/matthieu@laas.fr/ (Matthieu Herrb) or
 <em/XFree86@XFree86.org/ if you have comments or suggestions about
 this file and we'll revise it.
 
-<sect>New features in this release
+<sect>New OS-dependent features in this release
+<p>
+None. See the <htmlurl url="RELNOTES.html" name="Release Notes"> for
+non-OS dependent new features in XFree86 3.3.5.
+
+<sect>New OS-dependent features in XFree86 3.3.4
 <p>
 <itemize>
 <item>The maximum number of open connections in the server has been
@@ -56,8 +61,6 @@ raised to 128,
 <item>the <tt>resize</tt> utility was fixed.
 </itemize>
 <p>
-See the <htmlurl url="RELNOTES.html" name="Release Notes"> for
-non-OS dependent new features in XFree86 3.3.4.
 
 <sect>Installing the Binaries
 
@@ -399,7 +402,7 @@ pages you should update <tt/whatis.db/ by running ``<tt>makewhatis
 
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/OpenBSD.sgml,v 1.1.2.10 1999/06/30 13:00:28 hohndel Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/OpenBSD.sgml,v 1.1.2.11 1999/08/23 08:49:49 hohndel Exp $
 
 
 

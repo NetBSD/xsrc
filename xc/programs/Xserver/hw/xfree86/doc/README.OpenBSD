@@ -2,7 +2,7 @@
 
                                Matthieu Herrb
 
-                       Last modified on: 25 June 1999
+                      Last modified on: 20 August 1999
 
 1.  What and Where is XFree86?
 
@@ -27,28 +27,31 @@ A list of mirror sites is provided by ftp://ftp.XFree86.org/pub/XFree86/MIR-
 RORS
 
 XFree86 also builds on other OpenBSD architectures. See section Building on
-other architectures (section 8.2, page 1) for details.
+other architectures (section 9.2, page 1) for details.
 
 2.  Bug Reports for This Document
 
 Send email to matthieu@laas.fr (Matthieu Herrb) or XFree86@XFree86.org if you
 have comments or suggestions about this file and we'll revise it.
 
-3.  New features in this release
+3.  New OS-dependent features in this release
+
+None. See the Release Notes for non-OS dependent new features in XFree86
+3.3.5.
+
+4.  New OS-dependent features in XFree86 3.3.4
 
    o The maximum number of open connections in the server has been raised to
      128,
 
    o the resize utility was fixed.
 
-See the Release Notes for non-OS dependent new features in XFree86 3.3.4.
-
-4.  Installing the Binaries
+5.  Installing the Binaries
 
 Refer to section 5 of the Release Notes  for detailed installation instruc-
 tions.
 
-5.  Configuring X for Your Hardware
+6.  Configuring X for Your Hardware
 
 The /etc/XF86Config file tells the X server what kind of monitor, video card
 and mouse you have.  You must create it to tell the server what specific
@@ -76,7 +79,7 @@ ual page.
 Once you've set up a XF86Config file, you can fine tune the video modes with
 the xvidtune utility.
 
-5.1  About mouse configuration
+6.1  About mouse configuration
 
 If your serial mouse does not work try using kermit or tip to connect to the
 mouse serial port and verify that it does indeed generate characters.
@@ -95,7 +98,7 @@ with a "3D" roller).
 
 See README.mouse  for general instruction on mouse configuration in XFree86.
 
-5.2  Other input devices
+6.2  Other input devices
 
 XFree86  supports the dynamic loading of drivers for external input devices
 using the XInput extension. Currently supported devices are:
@@ -123,7 +126,7 @@ pointer(1) command.
 For joystick support, you'll need to enable the joystick device driver in the
 kernel.  See joy(4) for details.
 
-5.3  Configuring PEX and XIE extensions
+6.3  Configuring PEX and XIE extensions
 
 The PEX and XIE extensions are  supported as external modules.  If you want
 to have access to these extensions, add the following lines to the Module
@@ -132,7 +135,7 @@ section of XF86Config:
         load    "pex5.so"
         load    "xie.so"
 
-6.  Running X
+7.  Running X
 
 8mb of memory is a recommended minimum for running X.  The server, window
 manager and an xterm take about 4 Mb of memory themselves.  On a 4Mb system
@@ -141,7 +144,7 @@ expect a few meg free.  X will work with 4Mb of memory, but in practice com-
 pilation while running X can take 5 or 10 times as long due to constant pag-
 ing.
 
-6.1  Starting xdm, the display manager
+7.1  Starting xdm, the display manager
 
 To start the display manager, log in as root on the console and type: ``xdm
 -nodaemon''.
@@ -162,7 +165,7 @@ console device for the X server:
 Note that the binary distributions of XFree86 for OpenBSD don't include sup-
 port for the XDM-AUTHORIZATION-1 protocol.
 
-6.2  Running X without the display manager
+7.2  Running X without the display manager
 
 The easiest way for new users to start X windows is to type: ``startx >&
 startx.log''.  Error messages are lost unless you redirect them because the
@@ -172,14 +175,14 @@ To get out of X windows, type: ``exit'' in the console xterm.  You can cus-
 tomize your X by creating .xinitrc, .xserverrc, and .twmrc files in your home
 directory as described in the xinit and startx man pages.
 
-7.  Kernel Support for X
+8.  Kernel Support for X
 
 To make sure X support is enabled under  OpenBSD, the following line must be
 in your config file in /sys/arch/i386/conf:
 
      options XSERVER
 
-7.1  Console drivers
+8.1  Console drivers
 
 The server supports the two standard  OpenBSD/i386 console drivers: pccons
 and pcvt. They are detected at runtime and no configuration of the server
@@ -188,7 +191,7 @@ itself is required.
 The pcvt console driver is the default in OpenBSD.  It offers several virtual
 consoles and international keyboard support.
 
-7.2  Aperture Driver
+8.2  Aperture Driver
 
 By default OpenBSD includes the BSD 4.4 kernel security feature that disable
 access to the /dev/mem device when in multi-users mode. But XFree86 servers
@@ -252,7 +255,7 @@ figuration file and build a new kernel.  In OpenBSD 2.2 and later, you will
 also need to comment out the line initializing securelevel to 1 in
 /etc/rc.securelevel.
 
-7.3  MIT-SHM
+8.3  MIT-SHM
 
 OpenBSD supports System V shared memory. If XFree86 detects this support in
 your kernel, it will support the MIT-SHM extension.
@@ -266,7 +269,7 @@ To add support for system V shared memory to your kernel add the lines:
 
 to your kernel config file.
 
-8.  Rebuilding the XFree86 Distribution
+9.  Rebuilding the XFree86 Distribution
 
 The server link kit allow you to rebuild just the X server with a minimum
 amount of disk space.  Just unpack it, make the appropriate changes to the
@@ -280,7 +283,7 @@ You should configure the distribution by editing xc/config/cf/host.def
 before compiling.  To compile the sources, invoke ``make World'' in the xc
 directory.
 
-8.1  Console drivers
+9.1  Console drivers
 
 XFree86 has a configuration option to select the console drivers to use in
 xf86site.def:
@@ -296,7 +299,7 @@ xf86site.def:
 If you don't define XFree86ConsoleDefines in xf86site.def the pccons and pcvt
 drivers will be supported.
 
-8.2  Building on other architectures
+9.2  Building on other architectures
 
 XFree86 also compiles on other OpenBSD architectures.
 
@@ -320,7 +323,7 @@ tree to rebuild from sources.  The OpenBSD X11 source tree is available by
 anoncvs from all OpenBSD anoncvs servers. See http://www.openbsd.org/anon-
 cvs.html for details on anoncvs.
 
-9.  Building New X Clients
+10.  Building New X Clients
 
 The easiest way to build a new client (X application) is to use xmkmf if an
 Imakefile is included in the sources.  Type ``xmkmf -a'' to create the Make-
@@ -328,9 +331,9 @@ files, check the configuration if necessary and type ``make''.  Whenever you
 install additional man pages you should update whatis.db by running ``make-
 whatis /usr/X11R6/man''.
 
-     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/OpenBSD.sgml,v 1.1.2.10 1999/06/30 13:00:28 hohndel Exp $
+     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/OpenBSD.sgml,v 1.1.2.11 1999/08/23 08:49:49 hohndel Exp $
 
      $XConsortium$
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.OpenBSD,v 1.1.2.14 1999/07/05 10:25:12 hohndel Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.OpenBSD,v 1.1.2.15 1999/08/23 08:53:18 hohndel Exp $

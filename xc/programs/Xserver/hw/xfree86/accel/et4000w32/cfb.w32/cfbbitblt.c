@@ -30,7 +30,7 @@ in this Software without prior written authorization from the X Consortium.
 Author: Keith Packard
 
 */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/et4000w32/cfb.w32/cfbbitblt.c,v 3.3 1996/12/23 06:34:42 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/et4000w32/cfb.w32/cfbbitblt.c,v 3.3.2.1 1999/07/23 13:22:35 hohndel Exp $ */
 
 #include	"X.h"
 #include	"Xmd.h"
@@ -338,7 +338,7 @@ cfbCopyArea(pSrcDrawable, pDstDrawable,
 {
     void (*doBitBlt) ();
 
-    CHECK_NOOP
+    if (pGC->alu == GXnoop) return 0; /* For ansi */
     
     doBitBlt = cfbDoBitbltCopy;
     if (pGC->alu != GXcopy || (pGC->planemask & PMSK) != PMSK)

@@ -51,7 +51,7 @@ OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE
 OR PERFORMANCE OF THIS SOFTWARE.
 
 */
-/* $XFree86: xc/programs/Xserver/os/utils.c,v 3.27.2.11 1998/12/27 02:01:20 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/os/utils.c,v 3.27.2.13 1999/07/29 09:23:02 hohndel Exp $ */
 
 #ifdef WIN32
 #include <X11/Xwinsock.h>
@@ -75,7 +75,7 @@ OR PERFORMANCE OF THIS SOFTWARE.
 #undef _POSIX_SOURCE
 #endif
 #endif
-#if !defined(SYSV) && !defined(AMOEBA) && !defined(_MINIX) && !defined(WIN32) && !defined(Lynx)
+#if !defined(SYSV) && !defined(AMOEBA) && !defined(_MINIX) && !defined(WIN32) && !defined(Lynx) && !defined(__QNX__)
 #include <sys/resource.h>
 #endif
 #include <time.h>
@@ -265,6 +265,10 @@ LockServer()
   int lfd, i, haslock, l_pid, t;
   char *tmppath = NULL;
   int len;
+#if defined(__QNX__) && !defined(__QNXNTO__)
+  char nodeid[8];
+  sprintf(nodeid, ".%d", getnid());
+#endif
 
   if (nolock) return;
   /*
@@ -281,12 +285,22 @@ LockServer()
 
   len = strlen(LOCK_PREFIX) > strlen(LOCK_TMP_PREFIX) ? strlen(LOCK_PREFIX) :
 						strlen(LOCK_TMP_PREFIX);
+#if !(defined(__QNX__) && !defined(__QNXNTO__))
   len += strlen(tmppath) + strlen(display) + strlen(LOCK_SUFFIX) + 1;
+#else
+  len += strlen(tmppath) + strlen(display) + strlen(LOCK_SUFFIX) + strlen(nodeid) + 1;
+#endif
   if (len > sizeof(LockFile))
     FatalError("Display name `%s' is too long\n");
+#if !(defined(__QNX__) && !defined(__QNXNTO__))
   (void)sprintf(tmp, "%s" LOCK_TMP_PREFIX "%s" LOCK_SUFFIX, tmppath, display);
   (void)sprintf(LockFile, "%s" LOCK_PREFIX "%s" LOCK_SUFFIX, tmppath, display);
-
+#else
+  (void)sprintf(tmp, "%s" LOCK_TMP_PREFIX "%s" LOCK_SUFFIX "%s", 
+	tmppath, display, nodeid);
+  (void)sprintf(LockFile, "%s" LOCK_PREFIX "%s" LOCK_SUFFIX "%s", 
+	tmppath, display, nodeid);
+#endif
   /*
    * Create a temporary file containing our PID.  Attempt three times
    * to create the file.
