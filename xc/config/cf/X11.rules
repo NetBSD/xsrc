@@ -69,18 +69,12 @@ XCOMM $TOG: X11.rules /main/4 1997/04/30 15:23:24 kaleb $
 #elif !UseInstalledX11
 # define TopXInclude	-I$(TOP)/exports/include
 #else
-# ifdef X11ProjectRoot
-#  define TopXInclude	-I$(XPROJECTROOT)/include
-# endif
+# define TopXInclude	-I$(XPROJECTROOT)/include
 #endif
 #ifdef TopIncludes
 # undef TopIncludes
 #endif
-#ifdef X11ProjectRoot
-# define TopIncludes	TopInclude $(TOP_X_INCLUDES)
-#else
-# define TopIncludes	TopInclude
-#endif
+#define TopIncludes	TopInclude $(TOP_X_INCLUDES)
 
 #if UseInstalledX11 && defined(X11ProjectRoot)
 # define X11BuildLibPath	$(XPROJECTROOT)/lib
