@@ -1,4 +1,4 @@
-/* $NetBSD: hpcInit.c,v 1.6 2001/06/24 14:46:54 takemura Exp $	*/
+/* $NetBSD: hpcInit.c,v 1.7 2004/06/24 13:18:41 manu Exp $	*/
 
 #include    "hpc.h"
 #include    "gcstruct.h"
@@ -232,7 +232,7 @@ InitKbdMouse(argc, argv)
 	for (i = 0; i < 8; i++) {
 	    char devname[16];
 
-#if 0
+#if __arm__
 	    /*
 	     * We can't use wskbd for now, because primary keyboard(wskbd0)
              * is already connected with console(/dev/ttyE0).
