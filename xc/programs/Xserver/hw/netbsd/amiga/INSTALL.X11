@@ -15,6 +15,7 @@ Please read the X11-Faq for installing X11.
 
 1a: The Miniroot does install these sets now, if you tell it to. Install
    xbase before you install the other sets.
+
 1b: If you want to install them manually later (when your system is installed
    already):
 
@@ -57,7 +58,9 @@ NetBSD-1.4 distribution.
 
    and this is an example for /usr/X11R6/lib/X11/xinit/xserverrc or
    ~/.xserverrc:
-    X -dev /dev/grf0 -width 680 -height 540 -nozap
+    Xwrapper -dev /dev/grf0 -width 680 -height 540 -nozap
+
+   (for the meaning of Xwrapper, see below at the end of section 2.)
 
    Locale keymap support:
        Currently supported keymaps: usa1 (default) and de.
@@ -95,7 +98,7 @@ NetBSD-1.4 distribution.
    and a display height of 540.
    You need to remove '-width 680 -height 540' if you want to use the
    Xserver on another device. This two options works only on grf0.
-   This is a list of possible devices (dev/grfX), where X:
+   This is a list of possible devices (dev/grfN), where N:
 
     0 = Device for the Amiga CustomChips Color/Monochrome (ECS/AGA)
     1 = Device for the RetinaZ2 (which is NOT supported in this Xserver)
@@ -157,12 +160,14 @@ NetBSD-1.4 distribution.
      -virtualW              virtual screen width (CV64 only)
      -virtualH              virtual screen height (CV64 only)
 
-   You can change the graphics resolution for grf[3567] with:
+   You can change the graphics resolution for grf[23567] with:
 
-     X -dev /dev/grfX -mode ?
+     X -dev /dev/grfN -mode ?	(for xdm, or)
+     Xwrapper -dev /dev/grfN -mode ?	(for startx)
 
-    where the '?' is an number for the resolution mode which you set with
-    grfconfig and X is the device nummer.
+    where the '?' is an number for the resolution mode (which you set with
+    grfconfig on grf[3457], or is compiled into the kernel for grf2) and N
+    is the device number.
 
     See the manpage for grfconfig for more informations.
     Here is a short example for /dev/grf5:
@@ -305,12 +310,12 @@ I. NetBSD uses since the release of NetBSD 1.3 a new format for the
    See Mode #2 and #3 for what has changed for the vertical values and the new
    flags field.
 
-   grf3 (grfcl), grf5 (grfcv), grf6 (grfet) and grf7 (grfcv3d) supports the
+   grf3 (grfcl), grf5 (grfcv), grf6 (grfet) and grf7 (grfcv3d) support the
    above flags, without the sync-on-green flag which is not supported for
-   this VGA chipsets.
+   these VGA chipsets.
 
    This is a small script which can convert the old NetBSD grfconfig formats
-   to the new format, BUT please check the output by hand, because I CAN'T
+   to the new format, BUT please check the output yourself, because I CAN'T
    guarantee that the conversion works correct in all cases:
 
    Save the next lines to a file: grfconfig2grfconfig and then use this
@@ -374,9 +379,9 @@ II. Example grfmodes files:
     You can see the current list of modes if you use grfconfig without the
     modefilename:
 
-    grfconfig /dev/grfX
+    grfconfig /dev/grfN
 
-    where X is your device you want to use (3,5-9)
+    where N is your device you want to use (3,5-9)
 
    And here are some example grfmodes which are allready converted for the
    new format used by NetBSD-1.3:
