@@ -88,6 +88,8 @@
 static void usbSigioReadInput (int fd, void *closure);
 #endif
 
+#define TSTOMILLI(ts)       (((ts).tv_nsec/1000000)+((ts).tv_sec*1000))
+
 #if defined(__FreeBSD__)
 /* These are for FreeBSD */
 #define DEFAULT_MOUSE_DEV		"/dev/mouse"
@@ -408,7 +410,7 @@ wsconsReadInput(InputInfoPtr pInfo)
 {
     MouseDevPtr pMse;
     static struct wscons_event eventList[NUMEVENTS];
-    int n, c; 
+    int n, c, x, y; 
     struct wscons_event *event = eventList;
     unsigned char *pBuf;
 
@@ -447,9 +449,26 @@ wsconsReadInput(InputInfoPtr pInfo)
 	    dz = event->value;
 	    break;
 #endif
+        case WSCONS_EVENT_MOUSE_ABSOLUTE_X:
+            miPointerPosition (&x, &y);
+            miPointerAbsoluteCursor (event->value, y, TSTOMILLI(event->time));
+            ++event;
+            continue;
+                            
+        case WSCONS_EVENT_MOUSE_ABSOLUTE_Y:
+            miPointerPosition (&x, &y);
+            miPointerAbsoluteCursor (x, event->value, TSTOMILLI(event->time));
+            ++event;
+            continue;
+                            
+        case WSCONS_EVENT_MOUSE_ABSOLUTE_Z:
+            ++event;
+            continue;
+            
 	default:
 	    xf86Msg(X_WARNING, "%s: bad wsmouse event type=%d\n", pInfo->name,
 		    event->type);
+            ++event;
 	    continue;
 	}
 
