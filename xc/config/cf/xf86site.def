@@ -352,7 +352,7 @@ XCOMM $XFree86: xc/config/cf/xf86site.def,v 3.101.2.36 1999/12/28 12:13:34 hohnd
 				cirrus ncr77c22 compaq mga oak al2101 ali \
 				cl64xx video7 ark mx realtek apm s3_savage \
 				s3v s3_svga neo chips cyrix rendition p9x00 \
-				spc8110 i740 tdfx i810 smi generic
+				spc8110 i740 tdfx smi generic
 
 /*
  * m68k SVGA server:
