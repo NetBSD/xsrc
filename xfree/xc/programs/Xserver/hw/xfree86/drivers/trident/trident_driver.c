@@ -2389,7 +2389,8 @@ TRIDENTSave(ScrnInfoPtr pScrn)
     vgaReg = &VGAHWPTR(pScrn)->SavedReg;
     tridentReg = &pTrident->SavedReg;
 
-    vgaHWSave(pScrn, vgaReg, VGA_SR_MODE | (IsPrimaryCard ? VGA_SR_FONTS : 0));
+    vgaHWSave(pScrn, vgaReg, VGA_SR_MODE | VGA_SR_CMAP |
+	      (IsPrimaryCard ? VGA_SR_FONTS : 0));
 
     if (pScrn->progClock)
     	TridentSave(pScrn, tridentReg);
@@ -2543,7 +2544,8 @@ TRIDENTRestore(ScrnInfoPtr pScrn)
     else
 	TVGARestore(pScrn, tridentReg);
 
-    vgaHWRestore(pScrn, vgaReg, VGA_SR_MODE|(IsPrimaryCard ? VGA_SR_FONTS : 0));
+    vgaHWRestore(pScrn, vgaReg, VGA_SR_MODE | VGA_SR_CMAP |
+		 (IsPrimaryCard ? VGA_SR_FONTS : 0));
 
     vgaHWProtect(pScrn, FALSE);
 }
@@ -2920,10 +2922,14 @@ TRIDENTEnterVT(int scrnIndex, int flags)
 {
     ScrnInfoPtr pScrn = xf86Screens[scrnIndex];
     TRIDENTPtr pTrident = TRIDENTPTR(pScrn);
+    vgaHWPtr hwp = VGAHWPTR(pScrn);
 
     if (IsPciCard && UseMMIO) TRIDENTEnableMMIO(pScrn);
 
     /* Should we re-save the text mode on each VT enter? */
+    vgaHWUnlock(hwp);
+    TRIDENTSave(pScrn);
+
     if (!TRIDENTModeInit(pScrn, pScrn->currentMode))
 	return FALSE;
 
