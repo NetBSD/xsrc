@@ -55,7 +55,11 @@ NormalLibraryObjectRule()
 NormalLibraryTarget(fbdev,$(OBJS))
 LintLibraryTarget(fbdev,$(SRCS))
 NormalLintTarget($(SRCS))
+#ifdef NetBSDArchitecture
+SpecialCObjectRule(fbdev_netbsd,NullParameter,$(FB_DEFINES))
+#else
 SpecialCObjectRule(fbdev,NullParameter,$(FB_DEFINES))
+#endif
 
 InstallLinkKitLibrary(fbdev,$(LINKKITDIR)/drivers)
 
