@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/dgux/dgux_video.c,v 1.1.2.2 1999/07/17 05:00:57 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/dgux/dgux_video.c,v 1.1.2.4 1999/08/03 09:41:44 hohndel Exp $ */
 /*
  * INTEL DG/UX RELEASE 4.20 MU04
  * Copyright 1997-1999 Takis Psarogiannakopoulos Cambridge,UK
@@ -28,12 +28,17 @@
 #include "xf86Priv.h"
 #include "xf86_OSlib.h"
 
+#define DG_NO_SYSI86 1
+
 /***************************************************************************/
 /* SET_IOPL() and RESET_IOPL() section for ix86 DG/ux 4.20MU04             */
 /***************************************************************************/
 
 #include <sys/sysi86.h>
+
+#if defined(DG_NO_SYSI86)
 #define SI86IOPL 112  /* Definition of SI86IOPL for DG/ux */
+
 
       asm("sysi86:_sysi86:pushl %ebp");
       asm("movl %esp,%ebp");
@@ -46,9 +51,10 @@
       asm("leave");
       asm("ret");
 
+#endif /* NO_SYSI86 */
+
 #define SET_IOPL() sysi86(SI86IOPL ,3)
 #define RESET_IOPL() sysi86(SI86IOPL,0)
-
 
 /***************************************************************************/
 /* DG/ux Video Memory Mapping part                                         */

@@ -1,6 +1,6 @@
 /*
  * $XConsortium: Xos.h /main/70 1996/11/15 16:00:41 kaleb $
- * $XFree86: xc/include/Xos.h,v 3.21.2.2 1998/12/22 11:23:05 hohndel Exp $
+ * $XFree86: xc/include/Xos.h,v 3.21.2.5 1999/08/17 07:39:18 hohndel Exp $
  * 
  * 
 Copyright (c) 1987  X Consortium
@@ -229,11 +229,17 @@ struct timeval {
 #ifdef MINIX
 #include <time.h>
 #else /* !MINIX */
+#ifdef __QNXNTO__
+#define FD_SETSIZE 256 /* sys/select.h is included from sys/time.h... */
+#include <sys/time.h>
+#include <time.h>
+#else
 #ifndef Lynx
 #include <sys/time.h>
 #else
 #include <time.h>
 #endif /* Lynx */
+#endif /* QNX/Nto */
 #endif /* MINIX */
 #endif /* AMOEBA */
 #endif /* _SEQUENT_ */
@@ -297,6 +303,10 @@ typedef unsigned long fd_mask;
 #define OPEN_MAX 256 
 #endif
 
+#ifdef __QNX__
+typedef unsigned long fd_mask;
+#endif
+
 /* use POSIX name for signal */
 #if defined(X_NOT_POSIX) && defined(SYSV) && !defined(SIGCHLD) && !defined(ISC)
 #define SIGCHLD SIGCLD
@@ -308,7 +318,7 @@ typedef unsigned long fd_mask;
 #define NGROUPS 16
 #endif
 
-#if defined(ISC) || defined(__EMX__)
+#if defined(ISC) || defined(__EMX__) || defined(__QNXNTO__)
 /*
  *	Some OS's may not have this
  */

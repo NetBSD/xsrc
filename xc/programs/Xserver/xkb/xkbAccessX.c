@@ -24,10 +24,13 @@ OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
 THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ********************************************************/
-/* $XFree86: xc/programs/Xserver/xkb/xkbAccessX.c,v 1.3 1997/01/18 07:18:41 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/xkb/xkbAccessX.c,v 1.3.2.1 1999/07/23 13:23:13 hohndel Exp $ */
 
 #include <stdio.h>
 #include <math.h>
+#ifdef __QNX__
+#include <limits.h>
+#endif
 #define NEED_EVENTS 1
 #include <X11/X.h>
 #include <X11/Xproto.h>

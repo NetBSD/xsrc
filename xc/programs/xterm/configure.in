@@ -1,5 +1,5 @@
 dnl
-dnl $XFree86: xc/programs/xterm/configure.in,v 3.1.2.7 1999/04/21 07:21:28 hohndel Exp $
+dnl $XFree86: xc/programs/xterm/configure.in,v 3.1.2.8 1999/07/28 13:37:59 hohndel Exp $
 dnl
 dnl ---------------------------------------------------------------------------
 dnl 
@@ -98,6 +98,10 @@ CF_X_ATHENA
 CPPFLAGS="$cf_save_CPPFLAGS"
 
 LIBS="$LIBS $X_EXTRA_LIBS"
+
+# Check for openpty() in -lutil if the UNIX98-style pty functions are not
+# available. E.g. for GNU libc 2.0.
+AC_CHECK_FUNCS(grantpt, [], AC_CHECK_LIB(util,openpty))
 
 CF_XTERM_MODE
 

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/enhanced/suBBlt2.s,v 3.2 1996/12/23 06:59:08 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/enhanced/suBBlt2.s,v 3.2.2.1 1999/07/23 13:23:02 hohndel Exp $ */
 /*******************************************************************************
 			Copyright 1992 by Glenn G. Lai 
 
@@ -87,6 +87,10 @@ GLNAME(PixWin):
 	PUSH_L	(EDI)
 	PUSH_L	(ESI)
 	PUSH_L	(EBX)
+#ifdef __QNX__
+	PUSH_SR	(DS)
+	POP_SR	(ES)
+#endif
 
 	MOV_L	(dWidth, EAX)
 	MOV_L	(width, ECX)
@@ -364,6 +368,10 @@ GLNAME(WinPix):
 	PUSH_L	(EDI)
 	PUSH_L	(ESI)
 	PUSH_L	(EBX)
+#ifdef __QNX__
+	PUSH_SR	(DS)
+	POP_SR	(ES)
+#endif
 
 	MOV_L	(sWidth, EAX)
 	MOV_L	(width, ECX)
@@ -517,6 +525,10 @@ GLNAME(PixPix):
 	PUSH_L	(EDI)
 	PUSH_L	(ESI)
 	PUSH_L	(EBX)
+#ifdef __QNX__
+	PUSH_SR	(DS)
+	POP_SR	(ES)
+#endif
 	MOV_L	(REGOFF(8,EBP), ESI)
 	MOV_L	(REGOFF(12,EBP), EDI)
 	CMP_L	(ESI, EDI)

@@ -23,6 +23,7 @@
  OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
  THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
+$XFree86: xc/programs/xkbprint/psgeom.c,v 1.1.1.5.4.2 1999/07/23 13:56:21 hohndel Exp $
  ********************************************************/
 
 #define	XK_TECHNICAL
@@ -1396,7 +1397,7 @@ int	eG,nG,gI,l,g;
     nG= XkbKeyNumGroups(xkb,kc);
     gI= XkbKeyGroupInfo(xkb,kc);
     if ((state->args->wantDiffs)&&(eG>=XkbKeyNumGroups(xkb,kc)))
-	return;
+	return 0;
     if (nG==0) {
 	return False;
     }

@@ -34,6 +34,7 @@
  **
  ******************************************************************************
  *****************************************************************************/
+/* $XFree86: xc/lib/Xp/XpExtVer.c,v 1.1.1.1.2.1 1999/07/26 09:21:07 hohndel Exp $ */
 
 #define NEED_REPLIES
 
@@ -70,7 +71,7 @@ XpQueryVersion (
 {
     xPrintQueryVersionReq     *req;
     xPrintQueryVersionReply   rep;
-    XExtensionVersion         *ext;
+
     XExtDisplayInfo *info = (XExtDisplayInfo *) xp_find_display (dpy);
 
     /*

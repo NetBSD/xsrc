@@ -4,6 +4,8 @@ XCOMM $XConsortium: mergelib.cpp,v 1.4 94/04/17 20:10:43 rws Exp $
 XCOMM 
 XCOMM Copyright (c) 1989  X Consortium
 XCOMM 
+XCOMM $XFree86: xc/config/util/mergelib.cpp,v 1.1.1.1.12.2 1999/07/22 14:21:27 hohndel Exp $
+XCOMM
 XCOMM Permission is hereby granted, free of charge, to any person obtaining a copy
 XCOMM of this software and associated documentation files (the "Software"), to deal
 XCOMM in the Software without restriction, including without limitation the rights
@@ -62,9 +64,14 @@ XCOMM
 tmpdir=tmp.$$
 origdir=..
 
+XCOMM Remove directory if we fail
+trap "rm -rf $tmpdir; exit 1" 1 2 15
+trap "rm -rf $tmpdir; exit 0" 1 2 13
+
 mkdir $tmpdir
 
-if [ ! -d $tmpdir ]; then
+XCOMM Security: if $tmpdir exists before mkdir exit immediately
+if [ $? -gt 0 -o ! -d $tmpdir ]; then
     echo "$0:  unable to create temporary directory $tmpdir" 1>&2
     exit 1
 fi
@@ -84,7 +91,7 @@ XCOMM
 XCOMM In the temp directory, extract all of the object files and prefix
 XCOMM them with some symbol to avoid name clashes with the base library.
 XCOMM
-cd $tmpdir
+cd $tmpdir || exit 1
 ar x ${upfrom}$fromlib
 for i in *.o; do
     mv $i ${objprefix}$i
@@ -98,6 +105,4 @@ ARCMD ${upto}$tolib *.o
 RANLIB ${upto}$tolib
 cd $origdir
 rm -rf $tmpdir
-
-
 

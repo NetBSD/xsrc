@@ -19,7 +19,7 @@
  * OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE 
  * SOFTWARE.
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/p9x00/p9x00Regs.h,v 1.1.2.2 1998/09/13 12:29:13 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/p9x00/p9x00Regs.h,v 1.1.2.3 1999/07/23 13:22:58 hohndel Exp $ */
 
 #ifndef P9X00REGS_H
 #define P9X00REGS_H
@@ -44,7 +44,7 @@ typedef struct
 #define P9X_RV_COLOR_MODE(c)        (((CARD32)(c))<<26)
 #define P9X_RV_SHIFT_3(a)	     (((CARD32)(a))<<29)
 
-   volatile CARD32 interrupt;
+   volatile CARD32 vinterrupt;
 
 #define P9X_RV_CLEAR_IDLE           0x00000002
 #define P9X_RV_CLEAR_PICK           0x00000008
@@ -368,7 +368,7 @@ typedef struct
 
 
 #define P9X_R_SYSCFG p9x00regs.system_ctrl->system_config
-#define P9X_R_INT    p9x00regs.system_ctrl->interrupt
+#define P9X_R_INT    p9x00regs.system_ctrl->vinterrupt
 #define P9X_R_INTEN  p9x00regs.system_ctrl->interrupt_enable
 #define P9X_R_AWRITE p9x00regs.system_ctrl->alternate_write
 #define P9X_R_AREAD  p9x00regs.system_ctrl->alternate_read

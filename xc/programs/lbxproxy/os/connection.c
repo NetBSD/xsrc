@@ -46,7 +46,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/programs/lbxproxy/os/connection.c,v 1.1.1.2.2.5 1999/06/30 13:00:41 hohndel Exp $ */
+/* $XFree86: xc/programs/lbxproxy/os/connection.c,v 1.1.1.2.2.7 1999/08/02 08:38:30 hohndel Exp $ */
 /*
  *
  * The connection code/ideas for SVR4/Intel environments was contributed by
@@ -99,6 +99,7 @@ SOFTWARE.
 extern int errno;
 #endif
 #include <sys/socket.h>
+#include <sys/stat.h>
 
 #include <signal.h>
 #include <setjmp.h>
@@ -110,6 +111,10 @@ extern int errno;
 
 #ifdef AIXV3
 #include <sys/ioctl.h>
+#endif
+
+#ifdef __QNX__
+#include <sys/stat.h>
 #endif
 
 #ifdef TCPCONN
@@ -134,7 +139,6 @@ extern int errno;
  * sites should be careful to have separate /tmp directories for diskless nodes
  */
 #include <sys/un.h>
-#include <sys/stat.h>
 static int unixDomainConnection = -1;
 #endif
 

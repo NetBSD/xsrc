@@ -1,8 +1,6 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/rendition/v2kregs.h,v 1.1.2.2 1998/08/07 06:40:22 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/rendition/v2kregs.h,v 1.1.2.4 1999/08/17 07:39:36 hohndel Exp $ */
 #ifndef _V2KREGS_H
 #define _V2KREGS_H
-
-#include "vtypes.h"
 
 #define FIFO_SIZE	0x1f
 
@@ -265,6 +263,7 @@ typedef struct _v_mem_io {
 #define CRTCCTL_EVENFRAME       0x10000
 #define CRTCCTL_LINEDOUBLE      0x20000
 #define CRTCCTL_FRAMESWITCHED   0x40000
+#define CRTCCTL_VIDEOFIFOSIZE256        0x800010
 
 #define CRTCHORZ_ACTIVE_MASK    	0xFF
 #define CRTCHORZ_ACTIVE_SHIFT    	0

@@ -5,7 +5,7 @@
 <!-- Title information -->
 <title> XFree86 PC98 Dependent Information
 <author> The XFree86 Project Inc. and X98 CORE TEAM
-<date> 1998年  12月 30日
+<date> 1999年  8月 6日
 <abstract>
 このドキュメントでは、PC98サーバ固有の事項について解説します。
 PC-ATと共通の事項については、共通のドキュメントを参照してください。この
@@ -560,6 +560,10 @@ README.s3、XF86_Accel man page
 	アクセラレーションを無効にする場合、指定して下さい。
 	アクセラレーション機能には最悪の場合システムのハングアップを伴う
 	不具合が見付かっています。
+<tag>Option ``pci_burst_off''</tag>
+	マウスの軌跡やメニューが汚れたり、ktermの文字がかすれたりした場合
+	に指定してみて下さい。一部の機種(PC-9821Ra20)で効果があることが
+	報告されています。
 </descrip>
 <sect2>報告されている問題<p>
 <itemize>
@@ -624,6 +628,6 @@ README.s3、XF86_Accel man page
 <sect2>関連<p>
 	README.cirrus、XF86_SVGA man page
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree98/doc/Japanese/sgml/read98.sgml,v 3.6.2.7 1998/12/30 09:14:47 hohndel Exp $
+$XFree86: xc/programs/Xserver/hw/xfree98/doc/Japanese/sgml/read98.sgml,v 3.6.2.8 1999/08/17 07:39:44 hohndel Exp $
 </verb>
 </article>

@@ -57,6 +57,7 @@
  **
  ******************************************************************************
  *****************************************************************************/
+/* $XFree86: xc/include/extensions/Print.h,v 1.1.1.1.2.1 1999/07/26 09:21:05 hohndel Exp $ */
 
 #ifndef _XpPrint_H_
 #define _XpPrint_H_
@@ -267,12 +268,14 @@ typedef char * (*XPHinterProc)();
  *
  * Extension version structures.
  *
- */
+ **** this structure is now defined localy in the one file that uses it
+ **** in order to avoid clashes with its definition in XI.h
 typedef struct {
         int     present;
         short   major_version;
         short   minor_version;
 } XExtensionVersion;
+ */
 
 /********************************************************************
  *

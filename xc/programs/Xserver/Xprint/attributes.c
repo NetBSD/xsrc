@@ -44,7 +44,7 @@ copyright holders.
 **    *********************************************************
 ** 
 ********************************************************************/
-/* $XFree86: xc/programs/Xserver/Xprint/attributes.c,v 1.7 1997/01/18 06:53:09 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/Xprint/attributes.c,v 1.7.2.1 1999/07/23 13:22:25 hohndel Exp $ */
 
 #include <Xproto.h>
 #include <string.h>
@@ -798,7 +798,7 @@ AppendEntry(db, bindings, quarks, type, value, data)
     char *s, c;
 
     if (*type != XrmQString)
-	return;
+	return 0;
 
     for (firstNameSeen = False; *quarks; bindings++, quarks++) {
         if (*bindings == XrmBindLoosely) {
@@ -1234,8 +1234,10 @@ ReplaceAllKeywords(
 
     return command;
 }
-
-#if defined(CSRG_BASED) || defined(linux) || (defined(sun) && !defined(SVR4)) || (defined(SVR4) && !defined(sun) && !defined(USL)) || defined(__EMX__) || defined(ISC) || defined(Lynx)
+#ifdef __QNX__
+#define toascii( c ) ((unsigned)(c) & 0x007f)
+#endif
+#if defined(CSRG_BASED) || defined(linux) || (defined(sun) && !defined(SVR4)) || (defined(SVR4) && !defined(sun) && !defined(USL)) || defined(__EMX__) || defined(ISC) || defined(Lynx) || defined(__QNX__)
 #define iswspace(c) (isascii(c) && isspace(toascii(c)))
 #endif
 

@@ -4,7 +4,7 @@ XCOMM $XConsortium: Imakefile /main/10 1996/10/19 18:06:19 kaleb $
 
 
 
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/os-support/linux/Imakefile,v 3.8.2.1 1998/09/13 12:29:06 hohndel Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/os-support/linux/Imakefile,v 3.8.2.2 1999/08/02 08:38:21 hohndel Exp $
 
 #include <Server.tmpl>
 
@@ -45,6 +45,10 @@ AllTarget(lnx_jstk.o)
 SpecialObjectRule(lnx_jstk.o,lnx_jstk.c,$(SHARED_CFLAGS))
 #  endif
 # endif
+#endif
+
+#if defined(AlphaArchitecture)
+SpecialCObjectRule(lnx_video,NullParameter,"-Wa,-mev56")
 #endif
 
 ObjectFromSpecialSource(bios_devmem,../shared/bios_devmem,/**/)

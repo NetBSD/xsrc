@@ -1,6 +1,6 @@
 /*
  *	$XConsortium: resize.c,v 1.34 95/05/24 22:12:04 gildea Exp $
- *	$XFree86: xc/programs/xterm/resize.c,v 3.18.2.8 1999/05/25 06:55:52 hohndel Exp $
+ *	$XFree86: xc/programs/xterm/resize.c,v 3.18.2.10 1999/07/28 13:38:05 hohndel Exp $
  */
 
 /*
@@ -37,7 +37,7 @@
 #include <stdio.h>
 #include <ctype.h>
 
-#if defined(att) || (defined(SYSV) && defined(i386))
+#if defined(att)
 #define ATT
 #endif
 
@@ -52,7 +52,7 @@
 #define ATT
 #endif
 
-#ifdef ATT
+#if (defined(ATT) && !defined(__sgi)) || (defined(SYSV) && defined(i386)) || (defined (__GLIBC__) && (__GLIBC__ == 2) && (__GLIBC_MINOR__ >= 1))
 #define USE_USG_PTYS
 #endif
 
@@ -65,6 +65,11 @@
 #define USE_TERMCAP
 #endif
 
+#ifdef __QNX__
+#define USE_TERMINFO
+#include <unix.h>
+#endif
+
 #ifdef macII
 #define USE_SYSV_TERMIO
 #undef SYSV				/* pretend to be bsd */
@@ -72,18 +77,22 @@
 
 #ifdef SCO
 #define USE_TERMCAP
-#define USE_TERMINFO
 #endif
 
 #ifdef linux
 #define USE_TERMIOS
-#define USE_TERMINFO
 #define USE_SYSV_UTMP
 #endif
 
 #ifdef __OpenBSD__
 #define USE_TERMINFO
 #include <term.h>
+#endif
+
+#ifndef USE_TERMINFO
+#if defined(SCO) || defined(linux)
+#define USE_TERMINFO
+#endif
 #endif
 
 #if defined(SYSV) || defined(Lynx) || defined(__CYGWIN32__)
@@ -94,7 +103,9 @@
 #define USE_TERMCAP
 #endif
 #else /* else not SYSV */
+#ifndef __QNX__
 #define USE_TERMCAP
+#endif
 #endif /* SYSV */
 
 /*
@@ -127,10 +138,12 @@
 # endif /* USE_TERMIOS */
 #endif	/* USE_SYSV_TERMIO */
 
+#ifdef SYSV
 #ifdef USE_USG_PTYS
 #include <sys/stream.h>
 #ifndef SVR4
 #include <sys/ptem.h>
+#endif
 #endif
 #endif
 
@@ -247,7 +260,7 @@ char *wsize[EMULATIONS] = {
 #endif	/* TIOCSWINSZ */
 #endif	/* sun */
 
-#include "proto.h"
+#include <proto.h>
 
 static SIGNAL_T onintr (int sig);
 static SIGNAL_T resize_timeout (int sig);
@@ -257,7 +270,7 @@ static void readstring (FILE *fp, char *buf, char *str);
 
 #ifdef USE_TERMCAP
 static char *strindex (char *s1, char *s2);
-#if HAVE_TERMCAP_H
+#ifdef HAVE_TERMCAP_H
 #include <termcap.h>
 #if defined(NCURSES_VERSION)
 	/* The tgetent emulation function in SVr4-style curses implementations
@@ -599,7 +612,7 @@ static void
 readstring(register FILE *fp, register char *buf, char *str)
 {
 	register int last, c;
-#if !defined(USG) && !defined(AMOEBA) && !defined(MINIX) && !(__EMX__)
+#if !defined(USG) && !defined(AMOEBA) && !defined(MINIX) && !defined(__EMX__)
 	/* What is the advantage of setitimer() over alarm()? */
 	struct itimerval it;
 #endif

@@ -1,5 +1,5 @@
 /* $XConsortium: osdep.h /main/10 1996/08/30 14:22:08 kaleb $ */
-/* $XFree86: xc/programs/xfs/os/osdep.h,v 3.3 1996/12/23 07:11:20 dawes Exp $ */
+/* $XFree86: xc/programs/xfs/os/osdep.h,v 3.3.2.1 1999/07/23 13:23:23 hohndel Exp $ */
 /*
 Copyright (c) 1987  X Consortium
 
@@ -71,6 +71,9 @@ in this Software without prior written authorization from the X Consortium.
 #endif
 
 #ifndef OPEN_MAX
+#ifdef __QNX__
+#define NOFILES_MAX _POSIX_OPEN_MAX
+#endif
 #ifdef __EMX__
 #define OPEN_MAX 256
 #else

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach64/mach64init.c,v 3.24.2.9 1999/07/05 09:07:26 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach64/mach64init.c,v 3.24.2.10 1999/07/23 13:22:37 hohndel Exp $ */
 /*
  * Written by Jake Richter
  * Copyright (c) 1989, 1990 Panacea Inc., Londonderry, NH - All Rights Reserved
@@ -344,8 +344,8 @@ void mach64CalcCRTCRegs(crtcRegs, mode)
 	((crtcRegs->h_sync_strt_wid & 0xffffff00) |
 	 ((crtcRegs->h_sync_strt_wid & 0xff) + pixel_delay));
 
-    crtcRegs->fifo_v1 =	mach64FIFOdepth(crtcRegs->color_depth,
-					crtcRegs->dot_clock, mode->HDisplay);
+    crtcRegs->fifo_v1 =	mach64FIFOdepth((int)crtcRegs->color_depth,
+					(int)crtcRegs->dot_clock, mode->HDisplay);
 
     if (mach64LCDPanelID < 0)
 	return;

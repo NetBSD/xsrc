@@ -1,5 +1,5 @@
 /* $XConsortium: Xlib.h /main/119 1996/09/28 16:35:29 rws $ */
-/* $XFree86: xc/lib/X11/Xlib.h,v 3.10.2.4 1999/05/15 06:23:00 dawes Exp $ */
+/* $XFree86: xc/lib/X11/Xlib.h,v 3.10.2.5 1999/07/26 06:54:33 hohndel Exp $ */
 /* 
 
 Copyright (c) 1985, 1986, 1987, 1991  X Consortium
@@ -75,8 +75,13 @@ in this Software without prior written authorization from the X Consortium.
 #ifdef __EMX__
 #include <stdlib.h>
 #else
+#ifdef DGUX
+/* DG/ux needs this always! */
+#include <stddef.h>
+#else
 /* replace this with #include or typedef appropriate for your system */
 typedef unsigned long wchar_t;
+#endif
 #endif
 #endif
 

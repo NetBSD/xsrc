@@ -2,7 +2,7 @@
 
                                  Holger Veit
 
-                        Last modified July 6th, 1999
+                       Last modified August 1st, 1999
 
 1.  Preface
 
@@ -16,16 +16,16 @@ hints if you intend to rebuild the system from scratch under OS/2.
 Please also read README.OS2 for end-user information, and set at least the
 environment variables described there.
 
-At the current time, the most recent version available is XFree86-3.3.4.
+At the current time, the most recent version available is XFree86-3.3.5.
 This is a full and unrestricted version which comes with complete source
-code. 3.3.4 is not only a bugfix release, but also supports new hardware,
+code. 3.3.5 is not only a bugfix release, but also supports new hardware,
 some of which might not even supported by OS/2 itself. See the RELEASE NOTES
 document for details.
 
 If you want to join the XFree86 developer team, e.g. to add support for cer-
 tain hardware, please send a request to BOD@XFree86.org. Please think about
 such a step carefully before, though, since much work is involved. Please use
-the XFree86-3.3.4 source code as a test example how to compile the system.
+the XFree86-3.3.5 source code as a test example how to compile the system.
 The ability to manage that is a basic requirement for becoming a developer.
 
 2.  Tools required
@@ -37,7 +37,7 @@ software required.  Most of this software is available from hobbes.nmsu.edu
 or ftp.leo.org via anonymous FTP. The following shopping list shows what you
 will need:
 
-   o gcc  EMX/gcc emx 0.9C patch4 or later
+   o gcc  EMX/gcc emx 0.9C patch4 or later (0.9d preferred!)
 
    o gzip GNU zip/unzip
 
@@ -60,7 +60,7 @@ will need:
 
    o gawk GNU awk
 
-   o make GNU make 3.71/3.72 (use the one from X332prog.zip!)
+   o make GNU make 3.71/3.72 (use the one from Xprog.zip!)
 
    o flex GNU flex
 
@@ -75,7 +75,7 @@ tion which might still be available from some archives is NOT compatible.
 
 Furthermore, you need the XFree86 sources. These are available from the com-
 mon XFree86 repositories. Look into a directory which is often named
-/pub/XFree86/3.3/source.
+/pub/XFree86/3.3.5/source.
 
 3.  Compiling and Installing
 
@@ -219,9 +219,9 @@ installed them. Nor did I install the test subtree.
 
 Well, you see, this was quite easy :-)
 
-     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/OS2note.sgml,v 3.4.2.5 1999/07/13 07:09:50 hohndel Exp $
+     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/OS2note.sgml,v 3.4.2.6 1999/08/02 08:38:17 hohndel Exp $
 
      $XConsortium: OS2note.sgml /main/1 1996/02/24 10:08:59 kaleb $
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/OS2.Notes,v 3.8.2.8 1999/07/13 07:37:59 hohndel Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/OS2.Notes,v 3.8.2.9 1999/08/02 09:52:40 hohndel Exp $

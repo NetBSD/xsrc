@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/rendition/vtypes.h,v 1.1.2.3 1998/10/11 12:36:06 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/rendition/vtypes.h,v 1.1.2.4 1999/08/17 07:39:37 hohndel Exp $ */
 #ifndef _VTYPES_H_
 #define _VTYPES_H_
 
@@ -122,6 +122,9 @@ struct v_board_t {
   vu8 offset_hi;
   vu8 offset_low;
   vu8 *scr_contents;
+
+  /* is the board initialized */
+  int initialized;
 };
   
 

@@ -3,7 +3,7 @@
 
 
 
-/* $XFree86: xc/lib/Xi/XExtInt.c,v 3.1.4.1 1997/05/03 09:43:49 dawes Exp $ */
+/* $XFree86: xc/lib/Xi/XExtInt.c,v 3.1.4.2 1999/07/21 18:07:27 hohndel Exp $ */
 
 /************************************************************
 
@@ -200,7 +200,7 @@ _XiCheckExtInit(dpy, version_index)
 	    return (-1);
 	    }
 	((XInputData *) info->data)->vers =
-	    XGetExtensionVersion (dpy, "XInputExtension");
+	    XInput_get_extension_version (dpy, "XInputExtension");
 	}
 
     if (versions[version_index].major_version > Dont_Check)

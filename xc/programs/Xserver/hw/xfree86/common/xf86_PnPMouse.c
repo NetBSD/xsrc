@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86_PnPMouse.c,v 1.1.2.4 1998/03/02 09:58:23 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86_PnPMouse.c,v 1.1.2.6 1999/07/29 09:22:51 hohndel Exp $ */
 
 /*
  * Copyright 1998 by Kazutaka YOKOTA <yokota@zodiac.mech.utsunomiya-u.ac.jp>
@@ -38,6 +38,11 @@
 #define TIOCMGET	0x5415
 #define TIOCMBIS	0x5416
 #define TIOCMSET	0x5418
+#define	TIOCM_DTR	0x002
+#define	TIOCM_RTS	0x004
+#endif
+
+#if defined(__QNX__) || defined(__QNXNTO__)
 #define	TIOCM_DTR	0x002
 #define	TIOCM_RTS	0x004
 #endif

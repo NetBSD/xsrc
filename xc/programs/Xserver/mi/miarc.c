@@ -49,9 +49,9 @@ SOFTWARE.
 /* Author: Keith Packard and Bob Scheifler */
 /* Warning: this code is toxic, do not dally very long here. */
 
-/* $XFree86: xc/programs/Xserver/mi/miarc.c,v 3.4.2.1 1997/07/13 14:45:05 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/mi/miarc.c,v 3.4.2.2 1999/07/29 09:23:00 hohndel Exp $ */
 
-#ifdef _XOPEN_SOURCE
+#if defined(_XOPEN_SOURCE) || defined(__QNXNTO__)
 #include <math.h>
 #else
 #define _XOPEN_SOURCE	/* to get prototype for hypot on some systems */

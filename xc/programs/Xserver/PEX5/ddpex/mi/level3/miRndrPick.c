@@ -25,6 +25,7 @@ Except as contained in this notice, the name of the X Consortium shall not be
 used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from the X Consortium.
 
+$XFree86: xc/programs/Xserver/PEX5/ddpex/mi/level3/miRndrPick.c,v 1.1.1.1.12.2 1999/07/23 13:56:17 hohndel Exp $
 ******************************************************************/
 
 #include "miLUT.h"
@@ -431,7 +432,7 @@ miPPLevel		*path;		/* the path 	   */
     /* dont know what this is supposed to do */
     if ((pRend->pickstr.list)->numObj >= pRend->pickstr.max_hits) {
 	pRend->pickstr.more_hits = PEXMoreHits;
-	return;
+	return 0; 
     }
     else pRend->pickstr.more_hits = PEXNoMoreHits;
 

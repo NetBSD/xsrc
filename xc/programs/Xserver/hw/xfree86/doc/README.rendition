@@ -2,7 +2,7 @@
 
                           The XFree86 Project Inc.
 
-                                19 June 1999
+                                1 August 1999
 
 1.  Supported hardware
 
@@ -11,21 +11,41 @@ tested on a miroCRYSTAL VRX (V1000), Intergraph Intense-100 3D (V1000), Dia-
 mond Stealth II S220 (V2100), Hercules Thriller3D (V2200) and Innovision War-
 rior3D (V2200).
 
-2.  Features
+2.  Important notices
+
+V1000 cards can only work as primary display card due to hardware limita-
+tions.
+
+Some V1000-based videocards are known to lock up the computer if you have
+write-combine activated. Disabling it removes the problem. Look for settings
+in the motherboards BIOS and disable ALL settings that has to do with write-
+combine (usualy called USWC or just WC for short).
+
+The "chipset" option is now implemented and honored when used. Unfortunatly
+some legacy-code in the driver is preventing it from working with any cards
+but the primary display card.
+
+If you have problems with hardware cursor use the "sw_cursor" option to
+revert back to software cursor.
+
+3.  Features
 
    o Unaccelerated
 
-   o Hardware cursor on V1000-based cards
+   o Hardware cursor
 
    o Supported color depths
 
         o 8 bits per pixel (256 pseudo colour)
 
-        o 16 bits per pixel (high colour)
+        o 15 bits per pixel (actualy 16-bits with RGB-weight 555, 32768 col-
+          ors)
 
-        o 32 bits per pixel (true colour)
+        o 16 bits per pixel (high colour, RGB-weight 565, 65536 colors)
 
-3.  XF86Config Option
+        o 32 bits per pixel (true colour, sparse 24bit, 16M colors)
+
+4.  XF86Config Option
 
       Option "sw_cursor"
             Disables use of the hardware cursor.
@@ -41,34 +61,47 @@ rior3D (V2200).
             so we assume the lowest. Use this option to manualy override the
             value.
 
-4.  News in this release
+5.  News in this release
 
-   o Maximum allowed clock on V2x00 cards increased to 170MHz.
+   o Hardware-cursor on V2x00 cards.
 
-   o Hardware-cursor on V1000 cards.
+6.  Major fixes in this release
 
-5.  Major fixes in this release
+   o Depth 15 works on V1000 cards.
 
-   o The driver should now correctly autodetect the primary display card.
+   o Bandwith limits are now included. Can be overrided with DacSpeed option.
 
-6.  Known problems in current driver
+7.  Known problems in current driver
 
-   o Displays with depth 15 (-fbb 15) has incorrect redish color.
+   o Displays with depth 15 ("-bpp 15" or "-bpp 16 -weight 555") has problems
+     on V2x00 cards.
 
-   o Swithing from display to VC and back to display can lock up V2x00 cards.
+   o Switching from display to VC and back to display can lock up V2x00
+     cards.
 
-   o No limits are programmed into driver. High-bandwidth resolutions might
-     be corrupted.
+   o When scrolling the virtual display on a V1000 card parts of the screen
+     will become distorted. Problem dissapears when you continue moving
+     around. V2x00 does not exhibit this problem. Probably a bug in the
+     driver rather than a limitation of the chip.
 
-7.  Work in progress (not finished in time for release)
+   o Option "chipset" is honored. Unfortunatly the driver still has problems
+     and will only work if the rendition card is the primary display card in
+     the system.
 
-   o Hardware cursor for V2100 and V2200. Almost done.
+   o Switching to VC does not restore correct textmode. Instead it defaults
+     to 80x25.
+
+   o A horizontal distortion around the hardware cursor can be seen on cer-
+     tain modes. It can be fixed by turning off hardware cursor or by lower-
+     ing the required bandwith of the mode.
+
+8.  Work in progress (not finished in time for release)
 
    o Acceleration for V1000 chipset. Some bugs to clear out.
 
    o Acceleration for V2100 and V2200 chipset. Not ready for general use.
 
-     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/rendition.sgml,v 1.1.2.8 1999/07/13 07:38:01 hohndel Exp $
+     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/rendition.sgml,v 1.1.2.10 1999/08/17 07:39:31 hohndel Exp $
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.rendition,v 1.1.2.7 1999/07/13 07:44:38 hohndel Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.rendition,v 1.1.2.9 1999/08/17 13:28:10 hohndel Exp $

@@ -4,7 +4,7 @@
  *
  *
  *
- * $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/ali/ali_driver.c,v 3.16.2.2 1997/05/09 07:15:26 hohndel Exp $
+ * $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/ali/ali_driver.c,v 3.16.2.3 1999/07/29 09:22:57 hohndel Exp $
  */
 
 #include "X.h"
@@ -87,8 +87,8 @@ extern void     ALISetRead();
 extern void     ALISetWrite();
 extern void     ALISetReadWrite();
 static Bool	Check_Writing_GCP();
-static void	lock();
-static void	unlock();
+static void	_lock();
+static void	_unlock();
 
 vgaVideoChipRec ALI = {
 	/* 
@@ -464,7 +464,7 @@ ALIRestore(restore)
   outw(vgaIOBase+4, (restore->Reg3D4_19 << 8) | 0x19);	/* 3D4.19.6 & 3D4.19.7 */
   outw(vgaIOBase+4, (restore->Reg3D4_1A << 8) | 0x1A);
   /* DT */
-  unlock();
+  _unlock();
   outw(0x3CE, (restore->Reg3CE_0B << 8) | 0x0B);
   outw(0x3CE, (restore->Reg3CE_0C << 8) | 0x0C);
 
@@ -638,11 +638,11 @@ Check_Writing_GCP()
 
 
 /*
- * unlock() -
+ * _unlock() -
  *   unlock some ALI registers thru 3X4.1A.4
  */
 static void
-unlock()
+_unlock()
 {
    unsigned char temp, temp1;
 
@@ -655,11 +655,11 @@ unlock()
 
 #if 0
 /*
- * lock() -
+ * _lock() -
  *   lock some ALI registers thru 3X4.1A.4
  */
 static void
-lock()
+_lock()
 {
    unsigned char temp, temp1;
 

@@ -27,6 +27,7 @@ not be used in advertising or otherwise to promote the sale, use or
 other dealings in this Software without prior written authorization
 from the X Consortium.
 
+$XFree86: xc/programs/xprop/xprop.c,v 1.1.1.1.12.2 1999/07/23 13:56:22 hohndel Exp $
 */
 
 
@@ -50,7 +51,9 @@ char *getenv();
 
 #define MAXSTR 10000
 
+#ifndef min
 #define min(a,b)  ((a) < (b) ? (a) : (b))
+#endif
 
 /*
  *

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/cirrus/cir_solid.c,v 3.8 1996/12/23 06:56:53 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/cirrus/cir_solid.c,v 3.8.2.1 1999/07/23 13:22:56 hohndel Exp $ */
 
 /*
 
@@ -423,7 +423,8 @@ CirrusMMIOFillRectSolid(pDrawable, pGC, nBox, pBox)
 
 /* Wrapper for vga256lowlevFuncs.fillBoxSolid(). Currently not used. */
 
-void CirrusMMIOFillBoxSolid(pDrawable, nBox, pBox, pixel1, pixel2, alu) {
+void CirrusMMIOFillBoxSolid(DrawablePtr pDrawable, int nBox, BoxPtr pBox, 
+int pixel1, int pixel2, unsigned char alu) {
 	struct _GC dummyGC;
 	dummyGC.fgPixel = pixel1;
 	dummyGC.bgPixel = pixel2;

@@ -1,5 +1,5 @@
 /* $XConsortium: policy.c,v 1.12 94/04/17 20:03:41 hersh Exp $ */
-/* $XFree86: xc/programs/xdm/policy.c,v 3.1 1997/01/18 07:02:22 dawes Exp $ */
+/* $XFree86: xc/programs/xdm/policy.c,v 3.1.2.1 1999/07/21 18:07:43 hohndel Exp $ */
 /*
 
 Copyright (c) 1988  X Consortium
@@ -52,6 +52,8 @@ from the X Consortium.
 # include <netinet/in.h>
 #endif
 #endif
+
+#include <stdio.h>
 
 static ARRAY8 noAuthentication = { (CARD16) 0, (CARD8Ptr) 0 };
 
@@ -123,6 +125,46 @@ SelectAuthorizationTypeIndex (authenticationName, authorizationNames)
     return -1;
 }
 
+/*
+ * From Debain changes:
+ * Find out the system load, and fill in either:
+ *   "Available (load x.xx)"
+ * or
+ *   "Willing to manage"
+ * if finding the load turns out to be impossible
+ */
+static void
+avail_msg(char *statusBuf)
+{
+#ifndef __linux__
+    sprintf(statusBuf, "Willing to manage");
+    return;
+#else /* __linux__ */
+    FILE *lavg;
+    const char *err = "Willing to manage";
+    char buf[5];
+
+    lavg = fopen("/proc/loadavg", "r");
+    if (lavg == NULL)
+    {
+	sprintf(statusBuf, err);
+	return;
+    }
+
+    if (fread(buf, sizeof(char), 4, lavg) != 4)
+    {
+	fclose(lavg);
+	sprintf(statusBuf, err);
+	return;
+    }
+    buf[4] = '\0';
+
+    sprintf(statusBuf, "Available (load: %s)", buf);
+    fclose(lavg);
+    return;
+#endif /* __linux__ */
+}
+
 /*ARGSUSED*/
 int
 Willing (addr, connectionType, authenticationName, status, type)
@@ -139,7 +181,7 @@ Willing (addr, connectionType, authenticationName, status, type)
     if (!ret)
 	sprintf (statusBuf, "Display not authorized to connect");
     else
-	sprintf (statusBuf, "Willing to manage");
+	avail_msg (statusBuf);
     status->length = strlen (statusBuf);
     status->data = (CARD8Ptr) malloc (status->length);
     if (!status->data)

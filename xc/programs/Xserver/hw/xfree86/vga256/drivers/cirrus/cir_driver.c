@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/cirrus/cir_driver.c,v 3.80.2.21 1999/06/18 13:08:23 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/cirrus/cir_driver.c,v 3.80.2.22 1999/07/23 13:22:54 hohndel Exp $ */
 /*
  * cir_driver.c,v 1.10 1994/09/14 13:59:50 scooper Exp
  *
@@ -3427,7 +3427,7 @@ cirrusSave(save)
   if (HAVE546X()) {
     if (!cirrusMMIOBase) {
       ErrorF("No memory-mapped IO base address found.  Cannot save mode.\n");
-      return;
+      return ((void *) NULL);
     }
     else {
 #if 1

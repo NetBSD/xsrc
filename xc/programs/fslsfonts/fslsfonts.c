@@ -1,5 +1,5 @@
 /* $XConsortium: fslsfonts.c,v 1.7 94/04/17 20:38:29 rws Exp $ */
-/* $XFree86: xc/programs/fslsfonts/fslsfonts.c,v 3.1 1996/05/06 06:00:36 dawes Exp $ */
+/* $XFree86: xc/programs/fslsfonts/fslsfonts.c,v 3.1.4.1 1999/07/23 13:23:14 hohndel Exp $ */
 /*
  
 Copyright (c) 1990  X Consortium
@@ -448,7 +448,9 @@ show_font_header(list)
     }
 }
 
+#ifndef max
 #define	max(a, b)	((a) > (b) ? (a) : (b))
+#endif
 
 copy_number(pp1, pp2, n1, n2)
     char      **pp1,

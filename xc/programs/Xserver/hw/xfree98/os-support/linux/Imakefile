@@ -4,7 +4,7 @@ XCOMM $XConsortium: Imakefile /main/10 1996/10/19 18:06:19 kaleb $
 
 
 
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree98/os-support/linux/Imakefile,v 1.1.2.1 1998/02/01 16:42:16 robin Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree98/os-support/linux/Imakefile,v 1.1.2.2 1999/08/17 07:39:45 hohndel Exp $
 
 #include <Server.tmpl>
 
@@ -32,6 +32,11 @@ INCLUDES = -I$(XF86COMSRC) -I$(XF86OSSRC) -I. -I$(SERVERSRC)/include \
 
 DEFINES = $(CONSDEFINES) $(APDEFINES) $(IOPERMDEFINES) -DPC98
 
+#if XF86FBDevServer
+INIT_DEFINES = -DUSE_DEV_FB
+
+SpecialCObjectRule(lnx_init,NullParameter,$(INIT_DEFINES))
+#endif
 SubdirLibraryRule($(OBJS))
 NormalLibraryObjectRule()
 
@@ -44,6 +49,10 @@ SpecialObjectRule(lnx_jstk.o,lnx_jstk.c,$(SHARED_CFLAGS))
 #   endif
 #  endif
 # endif
+#endif
+
+#if defined(AlphaArchitecture)
+SpecialCObjectRule(lnx_video,NullParameter,"-Wa,-mev56")
 #endif
 
 LinkSourceFile(lnx_init.c,$(XF86OSSRC)/linux)

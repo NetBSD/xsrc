@@ -35,7 +35,7 @@
  * authorization from the XFree86 Project.
  */
 
-/* $XFree86: xc/programs/Xserver/os/wrapper.c,v 1.1.2.6 1999/04/17 05:52:41 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/os/wrapper.c,v 1.1.2.9 1999/07/29 09:23:02 hohndel Exp $ */
 
 /* This is normally set in the Imakefile */
 #ifndef XSERVER_PATH
@@ -47,6 +47,12 @@
 #include <string.h>
 #include <errno.h>
 #include <unistd.h>
+#include <sys/types.h>
+#ifdef USE_PAM
+#include <security/pam_appl.h>
+#include <security/pam_misc.h>
+#include <pwd.h>
+#endif /* USE_PAM */
 
 /* Neither of these should be required for XFree86 3.3.2 */
 #ifndef REJECT_CONFIG
@@ -96,7 +102,11 @@ enum BadCode {
     ArgTooLong,
     UnprintableArg,
     EnvTooLong,
-    InternalError
+    InternalError,
+#ifdef USE_PAM
+    PamFailed,
+    PamAuthFailed,
+#endif /* USE_PAM */
 };
 
 #define ARGMSG \
@@ -111,15 +121,64 @@ enum BadCode {
       "XFree86@XFree86.org.  In the meantime, you can start the Xserver as\n" \
       "the \"super user\" (root).\n"
 
+#ifdef USE_PAM
+static struct pam_conv conv = {
+    misc_conv,
+    NULL
+};
+#endif /* USE_PAM */
+
+
 int
 main(int argc, char **argv, char **envp)
 {
     enum BadCode bad = NotBad;
     int i, j;
     char *a, *e;
+#if defined(__QNX__) && !defined(__QNXNTO__)
+    char cmd_name[64];
+#endif
+#ifdef USE_PAM
+    pam_handle_t *pamh = NULL;
+    struct passwd *pw;
+    int retval;
+
+    pw = getpwuid(getuid());
+    if (pw == NULL) {
+	bad = InternalError;
+    }
+
+    if (!bad) {
+	retval = pam_start("xserver", pw->pw_name, &conv, &pamh);
+	if (retval != PAM_SUCCESS)
+	    bad = PamFailed;
+    }
+
+    if (!bad) {
+	retval = pam_authenticate(pamh, 0);
+	if (retval != PAM_SUCCESS) {
+	    pam_end(pamh, retval);
+	    bad = PamAuthFailed;
+	}
+    }
+
+    if (!bad) {
+	retval = pam_acct_mgmt(pamh, 0);
+	if (retval != PAM_SUCCESS) {
+	    pam_end(pamh, retval);
+	    bad = PamAuthFailed;
+	}
+    }
+
+    /* this is not a session, so do not do session management */
+
+    if (!bad) pam_end(pamh, PAM_SUCCESS);
+#endif /* USE_PAM */
 
 #if CHECK_EUID
-    if (geteuid() == 0 && getuid() != geteuid()) {
+    if (!bad && geteuid() == 0 && getuid() != geteuid()) {
+#else
+    if (!bad) {
 #endif
 	/* Check each argv[] */
 	for (i = 1; i < argc; i++) {
@@ -201,13 +260,16 @@ main(int argc, char **argv, char **envp)
 #endif
 		}
 	    }
-#if CHECK_EUID
     }
-#endif
     switch (bad) {
     case NotBad:
 	argv[0] = XSERVER_PATH;
+#if defined(__QNX__) && !defined(__QNXNTO__)
+	sprintf(cmd_name,"%s.%d",XSERVER_PATH,getnid());
+	execve(cmd_name, argv, envp);
+#else
 	execve(XSERVER_PATH, argv, envp);
+#endif
 	fprintf(stderr, "execve failed for %s (errno %d)\n", XSERVER_PATH,
 		errno);
 	break;
@@ -231,6 +293,15 @@ main(int argc, char **argv, char **envp)
     case InternalError:
 	fprintf(stderr, "Internal Error\n");
 	break;
+#ifdef USE_PAM
+    case PamFailed:
+	fprintf(stderr, "Authentication System Failure, "
+			"missing or mangled PAM configuration file or module?\n");
+	break;
+    case PamAuthFailed:
+	fprintf(stderr, "Authentication failed - cannot start X server.\nPerhaps you do not have console ownership?");
+	break;
+#endif
     default:
 	fprintf(stderr, "Unknown error\n");
 	fprintf(stderr, ARGMSG);

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common_hw/xf86_HWlib.h,v 3.31.2.2 1998/02/01 16:04:49 robin Exp $ */ 
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common_hw/xf86_HWlib.h,v 3.31.2.4 1999/07/29 09:22:53 hohndel Exp $ */ 
 /*
  * Copyright 1990, 1991 by Thomas Roell, Dinkelscherben, Germany
  * Copyright 1993 by David Wexelblat <dwex@goblin.org>
@@ -331,6 +331,10 @@ extern void STG1703magic(int);
 extern void STG1703setIndex(unsigned int, unsigned char);
 
 /* BUSmemcpy.s */
+#if defined(__QNX__) && !defined(__QNXNTO__)
+#pragma aux BusToMem modify [eax ebx ecx edx esi edi];
+#pragma aux MemToBus modify [eax ebx ecx edx esi edi];
+#endif
 extern void BusToMem(
 #if NeedFunctionPrototypes
 	void *,

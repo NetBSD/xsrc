@@ -34,6 +34,7 @@
  **
  ******************************************************************************
  *****************************************************************************/
+/* $XFree86: xc/lib/Xp/XpExtUtil.c,v 1.1.1.1.2.1 1999/07/26 09:21:06 hohndel Exp $ */
 
 #define NEED_EVENTS
 #define NEED_REPLIES
@@ -73,9 +74,15 @@ static /* const */ XExtensionHooks xpprint_extension_hooks = {
     XpError,			/* error_string */
 };
 
+typedef struct {
+        int     present;
+        short   major_version;
+        short   minor_version;
+} XPrintLocalExtensionVersion;
+ 
 typedef struct _xpPrintData {
     XEvent              data;
-    XExtensionVersion   *vers;
+    XPrintLocalExtensionVersion   *vers;
 } xpPrintData;
 
 static char *XpErrorList[ /* XP_ERRORS */ ] = {
@@ -95,7 +102,7 @@ static XEXT_GENERATE_ERROR_STRING (XpError, xp_extension_name,
  * XP Print extension versions.
  */
 
-static XExtensionVersion xpprintversions[] = {{XP_ABSENT,0,0},
+static XPrintLocalExtensionVersion xpprintversions[] = {{XP_ABSENT,0,0},
 	{XP_PRESENT, XP_PROTO_MAJOR, XP_PROTO_MINOR}};
 
 
@@ -139,7 +146,7 @@ int XpCheckExtInit(dpy, version_index)
 	}
 
 	((xpPrintData *) info->data)->vers =
-	    (XExtensionVersion *) Xmalloc(sizeof(XExtensionVersion));
+	    (XPrintLocalExtensionVersion *) Xmalloc(sizeof(XPrintLocalExtensionVersion));
 	if (!(((xpPrintData *) info->data)->vers)) {
 	    _XUnlockMutex(_Xglobal_lock);
 	    return (-1);

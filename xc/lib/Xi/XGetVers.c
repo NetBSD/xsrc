@@ -1,5 +1,5 @@
 /* $XConsortium: XGetVers.c,v 1.10 94/04/17 20:18:06 rws Exp $ */
-/* $XFree86: xc/lib/Xi/XGetVers.c,v 3.0 1996/08/25 13:52:47 dawes Exp $ */
+/* $XFree86: xc/lib/Xi/XGetVers.c,v 3.0.4.1 1999/07/21 18:07:28 hohndel Exp $ */
 
 /************************************************************
 
@@ -61,6 +61,49 @@ SOFTWARE.
 #include "extutil.h"
 #include "XIint.h"
 
+/* We need the following variant because we can't call 
+ * XGetExtensionVersion from within the display lock, and we 
+ * need to retrieve the version from _XiCheckExtInit
+ */
+XExtensionVersion
+#if NeedFunctionPrototypes
+*XInput_get_extension_version (
+    register Display 	*dpy,
+    _Xconst char	*name)
+#else
+*XInput_get_extension_version (dpy, name)
+    register Display 	*dpy;
+    char		*name;
+#endif
+    {       
+    xGetExtensionVersionReq 	*req;
+    xGetExtensionVersionReply 	rep;
+    XExtensionVersion		*ext;
+    XExtDisplayInfo *info = XInput_find_display (dpy);
+
+    GetReq(GetExtensionVersion,req);		
+    req->reqType = info->codes->major_opcode;
+    req->ReqType = X_GetExtensionVersion;
+    req->nbytes = name ? strlen(name) : 0;
+    req->length += (unsigned)(req->nbytes+3)>>2;
+    _XSend(dpy, name, (long)req->nbytes);
+
+    if (! _XReply (dpy, (xReply *) &rep, 0, xTrue)) 
+	return (XExtensionVersion *) NULL;
+
+    ext = (XExtensionVersion *) Xmalloc (sizeof (XExtensionVersion));
+    if (ext)
+	{
+	ext->present = rep.present;
+	if (ext->present)
+	    {
+	    ext->major_version = rep.major_version;
+	    ext->minor_version = rep.minor_version;
+	    }
+	}
+    return (ext);
+    }
+
 XExtensionVersion
 #if NeedFunctionPrototypes
 *XGetExtensionVersion (
@@ -72,38 +115,14 @@ XExtensionVersion
     char		*name;
 #endif
     {       
-    xGetExtensionVersionReq 	*req;
-    xGetExtensionVersionReply 	rep;
     XExtensionVersion		*ext;
-    XExtDisplayInfo *info = XInput_find_display (dpy);
 
     LockDisplay (dpy);
     if (_XiCheckExtInit(dpy, Dont_Check) == -1)
 	return ((XExtensionVersion *) NoSuchExtension);
 
-    GetReq(GetExtensionVersion,req);		
-    req->reqType = info->codes->major_opcode;
-    req->ReqType = X_GetExtensionVersion;
-    req->nbytes = name ? strlen(name) : 0;
-    req->length += (unsigned)(req->nbytes+3)>>2;
-    _XSend(dpy, name, (long)req->nbytes);
+    ext = XInput_get_extension_version(dpy, name);
 
-    if (! _XReply (dpy, (xReply *) &rep, 0, xTrue)) 
-	{
-	UnlockDisplay(dpy);
-	SyncHandle();
-	return (XExtensionVersion *) NULL;
-	}
-    ext = (XExtensionVersion *) Xmalloc (sizeof (XExtensionVersion));
-    if (ext)
-	{
-	ext->present = rep.present;
-	if (ext->present)
-	    {
-	    ext->major_version = rep.major_version;
-	    ext->minor_version = rep.minor_version;
-	    }
-	}
     UnlockDisplay(dpy);
     SyncHandle();
     return (ext);

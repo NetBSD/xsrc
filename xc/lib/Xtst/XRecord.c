@@ -29,6 +29,7 @@ not be used in advertising or otherwise to promote the sale, use or
 other dealings in this Software without prior written authorization
 from the X Consortium.
 
+$XFree86: xc/lib/Xtst/XRecord.c,v 1.1.1.2.4.2 1999/07/23 13:56:14 hohndel Exp $
 */
 /***************************************************************************
  * Copyright 1995 Network Computing Devices
@@ -965,7 +966,8 @@ record_async_handler(dpy, rep, buf, len, adata)
 	reply = NULL;
     }
 
-    status = parse_reply_call_callback(dpy, state->info, rep, reply,
+    status = parse_reply_call_callback(dpy, state->info, 
+		(xRecordEnableContextReply *)rep, reply,
 				       state->callback, state->closure);
 
     if (status != Continue)

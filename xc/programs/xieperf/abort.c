@@ -26,6 +26,7 @@ Except as contained in this notice, the name of the X Consortium shall not be
 used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from the X Consortium.
 
+$XFree86: xc/programs/xieperf/abort.c,v 1.1.1.1.12.2 1999/07/23 13:56:19 hohndel Exp $
 
 				NOTICE
                               
@@ -161,7 +162,7 @@ void DoAbort(xp, p, reps)
 
 		/* now, the flo should be active and waiting for data */
 
-		if ( !AbortAndWaitForEvent( xp, p, 0, flo ) )
+		if ( !AbortAndWaitForEvent( xp, p, 0L, flo ) )
 			break;
     	}
 }

@@ -5,7 +5,7 @@
 #ifndef lint
 static char *rid="$XConsortium: main.c,v 1.227.1.2 95/06/29 18:13:15 kaleb Exp $";
 #endif /* lint */
-/* $XFree86: xc/programs/xterm/os2main.c,v 3.5.2.6 1998/10/20 20:51:49 hohndel Exp $ */
+/* $XFree86: xc/programs/xterm/os2main.c,v 3.5.2.7 1999/07/28 13:38:03 hohndel Exp $ */
 
 /***********************************************************
 
@@ -98,28 +98,21 @@ char *ttyname(int fd) { return "/dev/tty"; }
 #include <sys/param.h>	/* for NOFILE */
 
 #include <stdio.h>
-#include <setjmp.h>
-
 #include <time.h>
 
 #include <signal.h>
 
 extern char *strindex ();
 
-int switchfb[] = {0, 2, 1, 3};
+#undef  CTRL
+#define	CTRL(c)	((c) & 0x1f)
 
 static SIGNAL_T reapchild (int n);
 static char *base_name (char *name);
 static int pty_search (int *pty);
 static int remove_termcap_entry (char *buf, char *str);
 static int spawn (void);
-static void DeleteWindow PROTO_XT_ACTIONS_ARGS;
-static void Help (void);
-static void KeyboardMapping PROTO_XT_ACTIONS_ARGS;
-static void Syntax (char *badOption);
-static void Version (void);
 static void get_terminal (void);
-static void my_error_handler (String message);
 static void resize (TScreen *s, char *oldtc, char *newtc);
 
 static Bool added_utmp_entry = False;
@@ -134,37 +127,40 @@ static struct termio d_tio;
 
 /* allow use of system default characters if defined and reasonable */
 #ifndef CEOF
-#define CEOF ('D'&037)
+#define CEOF     CTRL('D')
 #endif
 #ifndef CSUSP
-#define CSUSP ('Z'&037)
+#define CSUSP    CTRL('Z')
 #endif
 #ifndef CQUIT
-#define CQUIT ('\\'&037)
+#define CQUIT    CTRL('\\')
 #endif
 #ifndef CEOL
 #define CEOL 0
+#endif
+#ifndef CNUL
+#define CNUL 0
 #endif
 #ifndef CSWTCH
 #define CSWTCH 0
 #endif
 #ifndef CLNEXT
-#define CLNEXT ('V'&037)
+#define CLNEXT   CTRL('V')
 #endif
 #ifndef CWERASE
-#define CWERASE ('W'&037)
+#define CWERASE  CTRL('W')
 #endif
 #ifndef CRPRNT
-#define CRPRNT ('R'&037)
+#define CRPRNT   CTRL('R')
 #endif
 #ifndef CFLUSH
-#define CFLUSH ('O'&037)
+#define CFLUSH   CTRL('O')
 #endif
 #ifndef CSTOP
-#define CSTOP ('S'&037)
+#define CSTOP    CTRL('S')
 #endif
 #ifndef CSTART
-#define CSTART ('Q'&037)
+#define CSTART   CTRL('Q')
 #endif
 
 /*
@@ -839,9 +835,9 @@ main (int argc, char **argv, char **envp)
     	d_tio.c_cflag = B9600|CS8|CREAD|PARENB|HUPCL;
     	d_tio.c_lflag = ISIG|ICANON|ECHO|ECHOE|ECHOK;
 	d_tio.c_line = 0;
-	d_tio.c_cc[VINTR] = 'C' & 0x3f;		/* '^C'	*/
+	d_tio.c_cc[VINTR] = CTRL('C');		/* '^C'	*/
 	d_tio.c_cc[VERASE] = 0x7f;		/* DEL	*/
-	d_tio.c_cc[VKILL] = 'U' & 0x3f;		/* '^U'	*/
+	d_tio.c_cc[VKILL] = CTRL('U');		/* '^U'	*/
 	d_tio.c_cc[VQUIT] = CQUIT;		/* '^\'	*/
     	d_tio.c_cc[VEOF] = CEOF;		/* '^D'	*/
 	d_tio.c_cc[VEOL] = CEOL;		/* '^@'	*/

@@ -4,7 +4,7 @@ XCOMM $TOG: Imakefile /main/16 1997/05/25 15:12:17 kaleb $
 
 
 
-XCOMM $XFree86: xc/programs/lbxproxy/Imakefile,v 1.6.2.4 1998/01/23 12:35:18 dawes Exp $
+XCOMM $XFree86: xc/programs/lbxproxy/Imakefile,v 1.6.2.5 1999/07/28 13:37:49 hohndel Exp $
 
 #include <Server.tmpl>
 #define       IHaveSubdirs
@@ -33,7 +33,7 @@ MakeMutex($(SUBDIRS) $(LBXLIBS))
 $(LBXLIBS): $(SUBDIRS)
 #endif
 
-#ifndef LynxOSArchitecture
+#if !defined(LynxOSArchitecture) && !defined(QNXArchitecture)
 ServerTarget(lbxproxy,$(SUBDIRS),NullParameter,$(LBXLIBS),$(OTHERLIBS))
 #else
 ServerTarget(lbxproxy,$(SUBDIRS),di/main.o,$(LBXLIBS),$(OTHERLIBS))

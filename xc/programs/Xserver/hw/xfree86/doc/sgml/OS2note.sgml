@@ -3,7 +3,7 @@
 
 <title>Notes on Rebuilding XFree86/OS2 from Scratch
 <author>Holger Veit
-<date>Last modified July 6th, 1999
+<date>Last modified August 1st, 1999
 
 <toc>
 
@@ -20,16 +20,16 @@ from scratch under OS/2.
 Please also read <htmlurl name=README.OS2 url=OS2.html> for end-user
 information, and set at least the environment variables described there.
 <p>
-At the current time, the most recent version available is XFree86-3.3.4.
+At the current time, the most recent version available is XFree86-3.3.5.
 This is a full and unrestricted version which comes with complete source 
-code. 3.3.4 is not only a bugfix release, but also supports new hardware,
+code. 3.3.5 is not only a bugfix release, but also supports new hardware,
 some of which might not even supported by OS/2 itself. See the RELEASE NOTES
 document for details.
 
 If you want to join the XFree86 developer team, e.g. to add support for
 certain hardware, please send a request to BOD@XFree86.org. Please
 think about such a step carefully before, though, since much work is 
-involved. Please use the XFree86-3.3.4 source code as a test example how
+involved. Please use the XFree86-3.3.5 source code as a test example how
 to compile the system. The ability to manage that is a basic requirement
 for becoming a developer.
 
@@ -45,7 +45,7 @@ Most of this software is available from <tt/hobbes.nmsu.edu/ or <tt/ftp.leo.org/
 via anonymous FTP. The following shopping list shows what you will need:
 
 <itemize>
-<item>gcc	EMX/gcc emx 0.9C patch4 or later
+<item>gcc	EMX/gcc emx 0.9C patch4 or later (0.9d preferred!)
 <item>gzip	GNU zip/unzip
 <item>tar	GNU tar
 <item>patch	Larry Wall's patch utility (attention: incompatible tool with same name in OS/2)
@@ -56,7 +56,7 @@ via anonymous FTP. The following shopping list shows what you will need:
 <item>sed	GNU sed stream editor
 <item>grep	GNU grep
 <item>gawk	GNU awk
-<item>make	GNU make 3.71/3.72 (use the one from X332prog.zip!)
+<item>make	GNU make 3.71/3.72 (use the one from Xprog.zip!)
 <item>flex	GNU flex
 <item>bison	GNU bison
 <item>find	GNU find    (attention: incompatible tool with the same name in OS/2)
@@ -68,7 +68,7 @@ which might still be available from some archives is NOT compatible.
 
 Furthermore, you need the XFree86 sources. These are available from 
 the common XFree86 repositories. Look into a directory which is 
-often named /pub/XFree86/3.3/source.
+often named /pub/XFree86/3.3.5/source.
 
 <sect>Compiling and Installing
 <p>
@@ -201,7 +201,7 @@ Well, you see, this was quite easy :-)
 
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/OS2note.sgml,v 3.4.2.5 1999/07/13 07:09:50 hohndel Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/OS2note.sgml,v 3.4.2.6 1999/08/02 08:38:17 hohndel Exp $
 
 
 

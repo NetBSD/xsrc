@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/agx/agxText.c,v 3.7 1996/12/23 06:33:02 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/agx/agxText.c,v 3.7.2.1 1999/07/23 13:22:34 hohndel Exp $ */
 /*
  * Copyright 1992 by Kevin E. Martin, Chapel Hill, North Carolina.
  * Copyright 1994 by Henry A. Worth, Sunnyvale, California.
@@ -201,7 +201,7 @@ agxNoCPolyText(pDraw, pGC, x, y, count, chars, is8bit, opaque)
             return miPolyText8(pDraw, pGC, x, y, count, chars );
          else
             return miPolyText16(pDraw, pGC, x, y, count, (unsigned short *)chars );
-      return;
+      return 0;
    }
 
    if( !(charinfo = (CharInfoPtr *)ALLOCATE_LOCAL(count*sizeof(CharInfoPtr)) ) )

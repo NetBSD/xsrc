@@ -4,8 +4,8 @@
 
 <!-- Title information -->
 <title>Information for Oak Technologies Inc. Chipset Users
-<author>Jorge F. Delgado Mendoza (<it>ernar@dit.upm.es</it>)
-<date>27 February 1998
+<author>Jorge F. Delgado Mendoza (<it>delgadomendoza.j@pg.com</it>)
+<date>17 August 1999
 
 <!-- Table of contents -->
 <toc>
@@ -46,10 +46,11 @@ up to
         These are new, PCI chipsets by Oak Tech. Inc. Support is not
         included for them, as they are very rare and I haven't had
         the chance to look at one of these boards. 
-        We have been unable to locate either 107's or 111's (also
-        called "Spitfire 64111"). If anybody has such a board and
-        can donate it to XFree86, I would be more than glad to add
+        We have been unable to locate 107's. If anybody has such a board and
+        can donate it to XFree86, we would be more than glad to add
         support for them. 
+	<p>
+	An OTI111 is now available and we are working on support for it.
 </descrip>
 
 All the chipsets up to the OTI087 are "Backwards compatible", 
@@ -200,7 +201,7 @@ downwards. ISA card owners should not use these options.
     addressing will work on all ISA boards, VLB ones work flawlessly.
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/Oak.sgml,v 3.12.2.3 1998/11/07 13:37:48 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/Oak.sgml,v 3.12.2.4 1999/08/18 13:12:11 hohndel Exp $
 
 
 

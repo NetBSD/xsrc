@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xf86bench.c,v 3.5.2.4 1998/12/18 11:56:31 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xf86bench.c,v 3.5.2.5 1999/07/23 13:23:05 hohndel Exp $ */
 
 /*
  * Copyright 1996  The XFree86 Project
@@ -47,6 +47,10 @@
 #define __bsd_tod    1
 #define tz_minuteswest  __hide__tz_minuteswest
 #define tz_dsttime      __hide__tz_dsttime
+#endif
+
+#ifdef __QNX__
+#include <sys/time.h>
 #endif
 
 static struct timeval tv;

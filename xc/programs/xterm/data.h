@@ -1,6 +1,6 @@
 /*
  *	$XConsortium: data.h /main/13 1996/11/24 17:35:40 rws $
- *	$XFree86: xc/programs/xterm/data.h,v 3.3.2.3 1998/10/20 20:51:45 hohndel Exp $
+ *	$XFree86: xc/programs/xterm/data.h,v 3.3.2.4 1999/07/28 13:38:00 hohndel Exp $
  */
 /*
  * Copyright 1987 by Digital Equipment Corporation, Maynard, Massachusetts.
@@ -28,38 +28,23 @@
 #ifndef included_data_h
 #define included_data_h 1
 
-#include <ptyx.h>
-
-#if XtSpecificationRelease >= 6 && !defined(NO_XPOLL_H)
-#include <X11/Xpoll.h>
-#else
-#define Select(n,r,w,e,t) select(n,(fd_set*)r,(fd_set*)w,(fd_set*)e,(struct timeval *)t)
-#define XFD_COPYSET(src,dst) bcopy((src)->fds_bits, (dst)->fds_bits, sizeof(fd_set))
-#endif
-
-#if USE_SYS_SELECT_H
-#include <sys/types.h>
-#include <sys/select.h>
-#endif
+#include <xterm.h>
 
 extern XtAppContext app_con;
 
 #if OPT_TEK4014
-extern TekLink *TekRefresh;
-extern TekWidget tekWidget;
-
-extern XPoint T_box2[];
-extern XPoint T_box3[];
-extern XPoint T_boxlarge[];
-extern XPoint T_boxsmall[];
 extern Char *Tbptr;
 extern Char *Tbuffer;
 extern Char *Tpushb;
 extern Char *Tpushback;
+extern TekLink *TekRefresh;
+extern TekWidget tekWidget;
+extern int TEKgcFontMask;
 extern int T_lastx;
 extern int T_lasty;
 extern int Tbcnt;
 extern int Ttoggled;
+extern jmp_buf Tekend;
 #endif
 
 extern Char *bptr;
@@ -70,24 +55,29 @@ extern char *ptydev;
 extern char *ttydev;
 extern char *xterm_name;
 extern Boolean sunFunctionKeys;
+
 #if OPT_ZICONBEEP 
 extern int zIconBeep; 
 extern Boolean zIconBeep_flagged; 
 #endif 
+
 #if OPT_SAME_NAME 
 extern Boolean sameName; 
 #endif 
+
 #if OPT_SUNPC_KBD
 extern Boolean sunKeyboard;
 #endif
+
 extern Char VTbuffer[];
 extern int am_slave;
 extern int bcnt;
+extern int max_plus1;
+extern jmp_buf VTend;
+
 #ifdef DEBUG
 extern int debug;
 #endif	/* DEBUG */
-extern int max_plus1;
-extern int switchfb[];
 
 extern fd_set Select_mask;
 extern fd_set X_mask;
@@ -96,11 +86,6 @@ extern fd_set pty_mask;
 extern int waitingForTrackInfo;
 
 extern EventMode eventMode;
-
-extern GC visualBellGC;
-
-extern int VTgcFontMask;
-extern int TEKgcFontMask;
 
 extern XtermWidget term;
 

@@ -2,7 +2,7 @@ XCOMM $TOG: Imakefile /main/17 1998/05/21 07:51:40 kaleb $
 
 
 
-XCOMM $XFree86: xc/nls/XLC_LOCALE/Imakefile,v 1.5.2.3 1998/10/21 06:40:44 dawes Exp $
+XCOMM $XFree86: xc/nls/XLC_LOCALE/Imakefile,v 1.5.2.4 1999/07/26 07:33:16 hohndel Exp $
 
   WCHAR32 = HasWChar32
    TBLDIR = $(XLOCALEDIR)/tbl_data
@@ -67,6 +67,7 @@ LTarget(ko)
 LTarget(koi8-r)
 LTarget(zh)
 LTarget(zh_TW)
+LTarget(zh_TW.Big5)
 LTarget(th_TH.TACTIS)
 LTarget(en_US.utf)
 #ifdef UXPArchitecture

@@ -1,5 +1,5 @@
 XCOMM $XConsortium: Imakefile /main/16 1996/11/13 14:43:28 lehors $
-XCOMM $XFree86: xc/config/util/Imakefile,v 3.15.2.1 1998/10/04 13:36:16 hohndel Exp $
+XCOMM $XFree86: xc/config/util/Imakefile,v 3.15.2.4 1999/08/03 09:41:32 hohndel Exp $
 
 #if UseCCMakeDepend
 MDEP_PROG = makedepend
@@ -17,7 +17,17 @@ CMKDIRHIER = mkdirhier.exe
 GCCMDEP_PROG = gccmakedep
 #endif
 
-PROGRAMS = xmkmf $(MDEP_PROG) $(GCCMDEP_PROG) mergelib ProgramTargetName(makestrs) $(EXPORTLISTGEN) $(CMKDIRHIER)
+#if HasMktemp
+MKTEMPDEFINE = -DHAS_MKTEMP
+#endif
+
+#if defined(DguxArchitecture)
+DG_MKTEMP = mktemp
+#endif
+
+
+
+PROGRAMS = xmkmf $(MDEP_PROG) $(GCCMDEP_PROG) $(DG_MKTEMP) mergelib ProgramTargetName(makestrs) $(EXPORTLISTGEN) $(CMKDIRHIER)
 DEPLIBS =
 #ifndef Win32Architecture
   EXTRA_LIBRARIES =
@@ -47,7 +57,10 @@ CppScriptTarget(xmkmf,xmkmf.cpp,-DCONFIGDIRSPEC='"'"-I$(CONFIGDIR)"'"',$(ICONFIG
 CppScriptTarget(makedepend,mdepend.cpp,-DPREPROC='"'"$(PREPROCESSCMD)"'"',$(ICONFIGFILES))
 CppScriptTarget(mergelib,mergelib.cpp,"-DARCMD=$(AR)" "-DRANLIB=$(RANLIB)",$(ICONFIGFILES))
 #ifndef OS2Architecture
-CppScriptTarget(gccmakedep,gccmdep.cpp,-DCCCMD='"'"$(GCCCMD)"'"' -DRMCMD='"'"$(RM)"'"' -DLNCMD='"'"$(LN)"'"' -DMVCMD='"'"$(MV)"'"',$(ICONFIGFILES))
+CppScriptTarget(gccmakedep,gccmdep.cpp,$(MKTEMPDEFINE) -DCCCMD='"'"$(GCCCMD)"'"' -DRMCMD='"'"$(RM)"'"' -DLNCMD='"'"$(LN)"'"' -DMVCMD='"'"$(MV)"'"',$(ICONFIGFILES))
+#endif
+#ifdef QNXArchitecture
+QNXCopyInstaller($(PROJECTROOT)/bin/install.qnx,./install.sh)
 #endif
 
 #ifndef OpenBSDArchitecture
@@ -58,6 +71,10 @@ SimpleHostProgramTarget(lndir)
 SimpleProgramTarget(lndir)
 #endif
 #endif
+#endif
+
+#if defined(DguxArchitecture)
+NormalProgramTarget(mktemp,mktemp-dgux.c,,,)
 #endif
 
 #ifdef Win32Architecture
@@ -101,3 +118,8 @@ InstallLinkKitNamedProg(makedepend,makedepend,$(LINKKITDIR)/config/util)
 InstallNamedProg(bsdinst.sh,bsdinst,$(BINDIR))
 InstallLinkKitNamedProg(bsdinst.sh,bsdinst.sh,$(LINKKITDIR)/config/util)
 #endif
+#if defined(DguxArchitecture)
+InstallNamedProg(mktemp,mktemp,$(BINDIR))
+InstallLinkKitNamedProg(mktemp,mktemp,$(LINKKITDIR)/config/util)
+#endif
+

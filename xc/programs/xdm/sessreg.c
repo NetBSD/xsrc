@@ -1,6 +1,6 @@
 /*
  * $XConsortium: sessreg.c /main/18 1996/01/25 18:45:57 kaleb $
- * $XFree86: xc/programs/xdm/sessreg.c,v 3.9 1997/01/18 07:02:23 dawes Exp $
+ * $XFree86: xc/programs/xdm/sessreg.c,v 3.9.2.2 1999/07/23 13:23:18 hohndel Exp $
  *
  * Copyright (c) 1990  X Consortium
  * 
@@ -54,7 +54,7 @@
 # include	<stdio.h>
 # include	<utmp.h>
 
-#if defined(SYSV) || defined(SVR4) || defined(Lynx)
+#if defined(SYSV) || defined(SVR4) || defined(Lynx) || defined(__QNX__)
 #define NO_LASTLOG
 #endif
 
@@ -274,7 +274,7 @@ char	**argv;
 	if (!Lflag)
 		llog_file = LLOG_FILE;
 #endif
-#if !defined(SYSV) && !defined(linux)
+#if !defined(SYSV) && !defined(linux) && !defined(__QNX__)
 	if (!tflag)
 		ttys_file = TTYS_FILE;
 	if (!sflag && !utmp_none) {
@@ -291,8 +291,14 @@ char	**argv;
 			line = line + 1;
 		else
 			line = line_tmp;
+	} else {
+		if ((line_tmp = strrchr(line,':')) != 0) {
+			if (!hflag)
+				host_name = strdup("console");
+			line = line_tmp;
+		}
 	}
-	current_time = time ((Time_t *) 0);
+	time (&current_time);
 	set_utmp (&utmp_entry, line, user_name, host_name, current_time, aflag);
 	if (!utmp_none) {
 #ifdef SYSV
@@ -325,12 +331,14 @@ char	**argv;
 	        struct passwd *pwd = getpwnam(user_name);
 
 	        sysnerr( pwd != NULL, "get user id");
-	        llog = open (llog_file, O_WRONLY);
+	        llog = open (llog_file, O_RDWR);
 
 		if (llog != -1) {
 			int	user_id;
 			struct lastlog ll;
 
+			sysnerr (lseek (llog, (long) pwd->pw_uid*sizeof(ll), 0)
+				        != -1, "seeking lastlog entry");
 			bzero((char *)&ll, sizeof(ll));
 			ll.ll_time = current_time;
 			if (line)
@@ -338,7 +346,6 @@ char	**argv;
 			if (host_name)
 			 (void) strncpy (ll.ll_host, host_name, sizeof (ll.ll_host));
 
-			sysnerr (lseek(llog, (long) pwd->pw_uid*sizeof(ll), 0) != -1, "seeking lastlog entry");
 			sysnerr (write (llog, (char *) &ll, sizeof (ll))
 				        == sizeof (ll), "write lastlog entry");
 			close (llog);
@@ -391,7 +398,7 @@ Time_t		date;
 		u->ut_type = DEAD_PROCESS;
 	}
 #endif
-#if !defined(SYSV) || defined(linux)
+#if (!defined(SYSV) && !defined(__QNX__)) || defined(linux)
 	if (addp && host)
 		(void) strncpy (u->ut_host, host, sizeof (u->ut_host));
 	else
@@ -434,7 +441,7 @@ int	addp;
 	    if (pos)
 		*pos = '\0';
 	}
-	sysnerr (ttys = fopen (ttys_file, "r"), ttys_file);
+	sysnerr ((int)(ttys = fopen (ttys_file, "r")), ttys_file);
 	while ((c = getc (ttys)) != EOF)
 		if (c == '\n') {
 			++slot;
@@ -444,7 +451,7 @@ int	addp;
 	if (!column0)
 		++slot;
 	(void) fclose (ttys);
-	sysnerr (servers = fopen (servers_file, "r"), servers_file);
+	sysnerr ((int)(servers = fopen (servers_file, "r")), servers_file);
 
 	len = strlen (disp_name);
 	column0 = 1;
@@ -496,9 +503,14 @@ int	slot;
 
 	while (read (utmp, (char *) &entry, sizeof (entry)) == sizeof (entry)) {
 		if (strncmp(entry.ut_line, line_name,
-			sizeof(entry.ut_line)) == 0 &&
+			sizeof(entry.ut_line)) == 0 
+#ifndef __QNX__
+                    &&
 		    strncmp(entry.ut_host, host_name,
-			sizeof(entry.ut_host)) == 0) {
+			sizeof(entry.ut_host)) == 0
+#endif  /* QNX doesn't log ut_host entry */
+                   ) 
+                {
 			found = 1;
 			break;
 		}

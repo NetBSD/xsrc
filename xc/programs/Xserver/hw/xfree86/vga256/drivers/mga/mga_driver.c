@@ -40,7 +40,7 @@
  *		Fixed 32bpp hires 8MB horizontal line glitch at middle right
  */
  
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/mga/mga_driver.c,v 1.1.2.41 1999/06/21 09:45:15 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/mga/mga_driver.c,v 1.1.2.43 1999/07/30 11:21:23 hohndel Exp $ */
 
 #include "X.h"
 #include "input.h"
@@ -765,7 +765,7 @@ MGAProbe()
 
 	if ( MGA_IS_2164(MGAchipset) || MGA_IS_GCLASS(MGAchipset) )
 	{
-		if ( MGA.ChipLinearSize < 2048 || MGA.ChipLinearSize > 16384 )
+		if ( MGA.ChipLinearSize < 2048 || MGA.ChipLinearSize > 32768 )
 		{
 			MGA.ChipLinearSize = 2048; /* nice safe size */
 			ErrorF("(!!) %s: reset VideoRAM to 2 MB for safety!\n",
@@ -1069,6 +1069,10 @@ MGALinearOffset()
 	int offset, offset_modulo, ydstorg_modulo;
 
 	MGAydstorg = 0;
+
+	if ((MGAchipset == PCI_CHIP_MGA1064) || (MGA_IS_GCLASS(MGAchipset)))
+	    return 0;
+
 	if (vga256InfoRec.virtualX * vga256InfoRec.virtualY * BytesPerPixel
 		<= 4*1024*1024)
 	    return 0;

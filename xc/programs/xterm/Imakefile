@@ -7,7 +7,7 @@ XCOMM Xterm assumes that bcopy can handle overlapping arguments.  If your
 XCOMM bcopy (or memcpy) cannot, write a routine called bcopy and link it in
 XCOMM or add -Dbcopy=mybcopy to the DEFINES list below.
 XCOMM
-XCOMM $XFree86: xc/programs/xterm/Imakefile,v 3.11.4.6 1998/10/20 20:51:31 hohndel Exp $
+XCOMM $XFree86: xc/programs/xterm/Imakefile,v 3.11.4.7 1999/07/28 13:37:50 hohndel Exp $
 XCOMM
 
 /* Uncomment SCROLLBAR_RIGHT if you want the scroll bar to be on the right */
@@ -47,6 +47,10 @@ module.o: ; $(CC) -c defines $(CFLAGS) module.c
 #if UsePUCCPtyd			/* turn on in config/site.def */
     PUCCPTYDDEF = -DPUCC_PTYD		/* does not need to be setuid */
          PTYLIB = -lpucc
+#endif
+
+#if ((LinuxCLibMajorVersion == 6) && (LinuxCLibMinorVersion < 1))
+         PTYLIB = -lutil
 #endif
 
 #if XtermWithI18N
@@ -102,7 +106,7 @@ module.o: ; $(CC) -c defines $(CFLAGS) module.c
 
 #ifndef TermcapLibrary
 #if SystemV && !defined(MacIIArchitecture)
-#if defined(CrayArchitecture) || (defined(HPArchitecture) && OSMajorVersion < 10) || defined(RsArchitecture)
+#if defined(CrayArchitecture) || (defined(HPArchitecture) && (OSMajorVersion < 10)) || defined(RsArchitecture)
 #define TermcapLibrary -lcurses		/* special cases of System V */
 #else
 #define TermcapLibrary -ltermlib	/* usually in here */
@@ -128,9 +132,9 @@ SetUIDProgramTarget(xterm,$(OBJS1),$(DEPLIBS1),XkbClientLibs XawClientLibs,$(TER
 NormalProgramTarget(xterm,$(OBJS1),$(DEPLIBS1),XkbClientLibs XawClientLibs,$(TERMCAPLIB) $(PTYLIB))
 #endif
 
-#if InstallXtermSetUID && defined(SunArchitecture) && HasSharedLibraries && OSMajorVersion < 5
+#if InstallXtermSetUID && defined(SunArchitecture) && HasSharedLibraries && (OSMajorVersion < 5)
 #if AlternateUsrLibDir
-#if OSMajorVersion == 4 && OSMinorVersion >= 1
+#if ((OSMajorVersion == 4) && (OSMinorVersion >= 1))
 LDOVERRIDE = -L$(DESTDIR)$(USRLIBDIR)
 #else
 #if HasGcc

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach64/regmach64.h,v 3.15.2.6 1999/07/05 09:07:26 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach64/regmach64.h,v 3.15.2.7 1999/07/23 09:00:35 hohndel Exp $ */
 /*
  * Copyright 1992,1993,1994,1995,1996,1997 by Kevin E. Martin, Chapel Hill, North Carolina.
  *
@@ -769,14 +769,14 @@ static inline void regw(volatile unsigned long regindex, unsigned long regdata)
 {
   register unsigned long base_addr = (unsigned long)mach64MemReg;
 
-  asm("stwbrx %0,%1,%2": : "r"(regdata), "r"(regindex), "r"(base_addr):"memory");
+  asm("stwbrx %0,%1,%2": : "r"(regdata), "b"(regindex), "r"(base_addr):"memory");
 }
 
 static inline unsigned long regr(volatile unsigned long regindex)
 {
   register unsigned long base_addr = (unsigned long)mach64MemReg, val;
 
-  asm("lwbrx %0,%1,%2": "=r"(val):"r"(regindex), "r"(base_addr));
+  asm("lwbrx %0,%1,%2": "=r"(val):"b"(regindex), "r"(base_addr));
   return(val);
 }
 

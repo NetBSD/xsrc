@@ -1,6 +1,8 @@
 #!/bin/sh
 # $XConsortium: mkdirhier.sh,v 1.7 94/03/24 15:46:34 gildea Exp $
 # Courtesy of Paul Eggert
+#
+# $XFree86: xc/config/util/mkdirhier.sh,v 1.1.1.1.12.2 1999/07/22 14:21:28 hohndel Exp $
 
 newline='
 '
@@ -51,7 +53,7 @@ do
 			paths=$path
 			for filename
 			do
-				if [ "$filename" != "." ]; then
+				if [ -n "$filename" -a "$filename" != "." ]; then
 					path=$path/$filename
 					paths=$paths$newline$path
 				fi

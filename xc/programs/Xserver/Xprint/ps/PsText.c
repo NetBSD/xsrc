@@ -48,7 +48,7 @@
 **    *********************************************************
 ** 
 ********************************************************************/
-/* $XFree86: xc/programs/Xserver/Xprint/ps/PsText.c,v 1.3 1996/12/31 07:06:35 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/Xprint/ps/PsText.c,v 1.3.2.1 1999/07/23 13:22:26 hohndel Exp $ */
 
 #include "Ps.h"
 #include "gcstruct.h"
@@ -71,7 +71,7 @@ PsPolyText8(
     DisplayListPtr  disp;
     GCPtr           gc;
 
-    if ((gc = PsCreateAndCopyGC(pDrawable, pGC)) == NULL) return;
+    if ((gc = PsCreateAndCopyGC(pDrawable, pGC)) == NULL) return 0;
 
     disp = PsGetFreeDisplayBlock(priv);
 
@@ -125,7 +125,11 @@ PsPolyText16(
     DisplayListPtr  disp;
     GCPtr           gc;
 
+#ifndef __QNX__
     if ((gc = PsCreateAndCopyGC(pDrawable, pGC)) == NULL) return;
+#else
+    if ((gc = PsCreateAndCopyGC(pDrawable, pGC)) == NULL) return (0);
+#endif
 
     disp = PsGetFreeDisplayBlock(priv);
 

@@ -1,5 +1,5 @@
 /* $XConsortium: server.c,v 1.20 94/10/17 18:29:34 converse Exp $ */
-/* $XFree86: xc/programs/xdm/server.c,v 3.2.4.1 1998/10/04 13:37:20 hohndel Exp $ */
+/* $XFree86: xc/programs/xdm/server.c,v 3.2.4.2 1999/08/23 08:49:51 hohndel Exp $ */
 /*
 
 Copyright (c) 1988  X Consortium
@@ -328,6 +328,7 @@ openErrorHandler (dpy)
     Display *dpy;
 {
     LogError ("IO Error in XOpenDisplay\n");
+    Debug ("IO Error in XOpenDisplay\n");
     exit (OPENFAILED_DISPLAY);
 }
 
@@ -344,7 +345,9 @@ WaitForServer (d)
 	    Debug ("Before XOpenDisplay(%s)\n", d->name);
 	    errno = 0;
 	    (void) XSetIOErrorHandler (openErrorHandler);
+	    Debug ("After XSetIOErrorHandler\n");
 	    dpy = XOpenDisplay (d->name);
+	    Debug ("After XOpenDisplay(%s)\n", d->name);
 #ifdef STREAMSCONN
 	    {
 		/* For some reason, the next XOpenDisplay we do is
@@ -356,6 +359,7 @@ WaitForServer (d)
 		if (bogusDpy) XCloseDisplay(bogusDpy); /* just in case */
 	    }
 #endif
+	    Debug ("XOpenDisplay(%s) returned 0x%x\n",d->name,dpy);
 	    (void) alarm ((unsigned) 0);
 	    (void) Signal (SIGALRM, SIG_DFL);
 	    (void) XSetIOErrorHandler ((int (*)()) 0);

@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/Xxf86dga/XF86DGA.c,v 3.11.2.5 1999/06/02 07:50:03 hohndel Exp $ */
+/* $XFree86: xc/lib/Xxf86dga/XF86DGA.c,v 3.11.2.6 1999/07/21 18:07:29 hohndel Exp $ */
 /*
 
 Copyright (c) 1995  Jon Tombs
@@ -27,6 +27,12 @@ static char *xf86dga_extension_name = XF86DGANAME;
 
 #define XF86DGACheckExtension(dpy,i,val) \
   XextCheckExtension (dpy, i, xf86dga_extension_name, val)
+
+/* Alpha Patch by Georg Acher, acher@in.tum.de
+   modified by Ivan Kokshaysky <ink@rc.ru> */
+#ifdef	__alpha__
+extern unsigned long _bus_base(void);
+#endif
 
 /*****************************************************************************
  *                                                                           *
@@ -565,6 +571,19 @@ int *width, *bank, *ram;
    HFILE hfd;
 #endif
 
+#ifdef	__alpha__
+   off_t bus_base_addr = _bus_base();
+
+   /* DGA would be broken on Jensen anyway due to the lack of
+      dense memory space */
+   if (!bus_base_addr) {
+        fprintf(stderr, "XF86DGAGetVideo: DGA is not supported on Jensen\n");
+	exit(-3);
+   }
+#else
+#define	bus_base_addr	0
+#endif
+
    XF86DGAGetVideoLL(dis, screen , &offset, width, bank, ram);
 
 #ifndef Lynx
@@ -669,7 +688,8 @@ int *width, *bank, *ram;
 #endif
    /* This requires linux-0.99.pl10 or above */
    *addr = (void *)mmap(NULL, *bank, PROT_READ,
-                        MAP_FILE | MAP_SHARED, fd, (off_t)offset);
+                        MAP_FILE | MAP_SHARED, fd, 
+			(off_t)offset + bus_base_addr);
 #ifdef DEBUG
    fprintf(stderr, "XF86DGAGetVideo: physaddr: 0x%08x, size: %d\n",
 	   (long)offset, *bank);

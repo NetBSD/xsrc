@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $XFree86: xc/programs/Xserver/hw/xfree86/etc/preinst.sh,v 3.8.2.7 1999/01/15 03:23:27 dawes Exp $
+# $XFree86: xc/programs/Xserver/hw/xfree86/etc/preinst.sh,v 3.8.2.8 1999/08/23 08:49:50 hohndel Exp $
 #
 # preinst.sh  (for XFree86 3.3.3)
 #
@@ -72,9 +72,9 @@ if [ "`uname`" = Linux ]; then
 	    esac
 	    # Check ldconfig
 	    LDSO=`/sbin/ldconfig -v -n | awk '{ print $3 }'`
-	    LDSOMIN=`echo $LDSO | awk -F. '{ print $3 }'`
-	    LDSOMID=`echo $LDSO | awk -F. '{ print $2 }'`
-	    LDSOMAJ=`echo $LDSO | awk -F. '{ print $1 }'`
+	    LDSOMIN=`echo $LDSO | awk -F[.-] '{ print $3 }'`
+	    LDSOMID=`echo $LDSO | awk -F[.-] '{ print $2 }'`
+	    LDSOMAJ=`echo $LDSO | awk -F[.-] '{ print $1 }'`
 	    if [ "$LDSOMAJ" -gt 1 ]; then
 	    	: OK
 	    else
