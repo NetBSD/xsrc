@@ -926,6 +926,7 @@ do_dcs(Char *dcsbuf, size_t dcslen)
 			reset_decudk();
 
 		while (*cp) {
+			char *base = cp;
 			char *str = (char *)malloc(strlen(cp) + 2);
 			int key = 0;
 			int len = 0;
@@ -953,6 +954,9 @@ do_dcs(Char *dcsbuf, size_t dcslen)
 			}
 			if (*cp == ';')
 				cp++;
+			if (cp == base) /* badly formed sequence
+					   - bail out */
+				break;
 		}
 	}
 }
