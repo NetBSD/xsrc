@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/et4000w32/cfb.w32/cfbglblt8.c,v 3.2 1996/02/04 08:59:36 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/et4000w32/cfb.w32/cfbglblt8.c,v 3.3 1996/12/23 06:34:47 dawes Exp $ */
 /*
 
 Copyright (c) 1989  X Consortium
@@ -24,7 +24,7 @@ Except as contained in this notice, the name of the X Consortium shall not be
 used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from the X Consortium.
 */
-/* $XConsortium: cfbglblt8.c /main/2 1995/11/12 16:17:38 kaleb $ */
+/* $XConsortium: cfbglblt8.c /main/3 1996/02/21 17:20:33 kaleb $ */
 
 /*
  * Poly glyph blt.  Accepts an arbitrary font <= 32 bits wide, in Copy mode

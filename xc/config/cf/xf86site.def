@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/config/cf/xf86site.def,v 3.91 1996/10/19 15:12:30 dawes Exp $
+XCOMM $XFree86: xc/config/cf/xf86site.def,v 3.101.2.10 1997/05/24 13:38:10 dawes Exp $
 /******************************************************************************/
 /*
  * This file is to provide a quick method for most people to change the
@@ -7,8 +7,23 @@ XCOMM $XFree86: xc/config/cf/xf86site.def,v 3.91 1996/10/19 15:12:30 dawes Exp $
  *
  * These are the most common settings you would choose for compiling and
  * installing XFree86 on the systems supported by it.
+ *
+ * A good way to use this file is to copy it to host.def, and make the
+ * changes there.  That way, future patches to this file won't fail.
+ * The host.def file will never be patched.
+ *
+ * The distributed version of this file should contain no uncommented
+ * definitions.  Such default definitions belong in xfree86.cf.
  */
 /******************************************************************************/
+
+/*
+ * If you have build-specific modifications in your host.def file, but
+ * want an empty host.def file installed when doing 'make install',
+ * uncomment the following
+ *
+#define InstallEmptyHostDef
+ */
 
 /*
  * If using GCC 2.x on a system where it isn't the default, uncomment
@@ -30,6 +45,8 @@ XCOMM $XFree86: xc/config/cf/xf86site.def,v 3.91 1996/10/19 15:12:30 dawes Exp $
  * here to work around a bug in -O2 for GCC 2.x on i386 platforms.
  * If you are using a version that doesn't have this bug, you can
  * uncomment the following line, and remove '-fno-strength-reduce'
+ * If you are building binaries for a 486, it may be beneficial to add
+ * -m486
  *
 #define DefaultGcc2i386Opt	-O2 -fno-strength-reduce
  */
@@ -38,7 +55,15 @@ XCOMM $XFree86: xc/config/cf/xf86site.def,v 3.91 1996/10/19 15:12:30 dawes Exp $
  * For Linux, this should match the Binutils version you have.  This example
  * is for 2.6.0.7.  See linux.cf for the default setting.
  *
-#define BinUtilsVersion		2607
+#define BinUtilsMajorVersion	26
+ */
+
+/*
+ * For Linux, these should match the libc version you have.  This example
+ * is for libc.5.4.x.  See linux.cf for the default setting.
+ *
+#define LinuxCLibMajorVersion	5
+#define LinuxClibMinorVersion	4
  */
 
 /*
@@ -61,6 +86,13 @@ XCOMM $XFree86: xc/config/cf/xf86site.def,v 3.91 1996/10/19 15:12:30 dawes Exp $
  */
 
 /*
+ * Some Linux releases don't have a libtermcap.  In this case you may need
+ * to uncomment the following
+ *
+#define TermcapLibrary		-lncurses
+ */
+
+/*
  * If you have Tk (which is required to build XF86Setup), uncomment this
  * Note: version 4.0 or 4.1 is required, and XF86Setup links it statically by
  * default.
@@ -72,9 +104,23 @@ XCOMM $XFree86: xc/config/cf/xf86site.def,v 3.91 1996/10/19 15:12:30 dawes Exp $
  * Set the paths and names for your Tk library if they don't match the
  * defaults (check your OS .cf file or Imake.tmpl for the defaults).
  *
+ * Common values for TkLibName are tk4.0, tk4.1, etc.
+ *
+ * Some Linux releases need TkIncDir set to /usr/include/tcl, and some
+ * need it set to /usr/X11R6/include.
+ *
+ * Some Linux releases need TkLibDir set to /usr/X11R6/lib
+ *
 #define TkLibDir		/usr/local/lib
 #define TkIncDir		/usr/local/include
 #define TkLibName		tk
+ */
+
+/*
+ * By default, XF86Setup is linked with a static Tk library.  To change
+ * that, uncomment the following line.
+ *
+#define XF86SetupUsesStaticTk	NO
  */
 
 /*
@@ -89,9 +135,20 @@ XCOMM $XFree86: xc/config/cf/xf86site.def,v 3.91 1996/10/19 15:12:30 dawes Exp $
  * Set the paths and names for your Tcl library if they don't match the
  * defaults (check your OS .cf file or Imake.tmpl for the defaults).
  *
+ * Common values for TclLibName are tcl7.4, tcl7.5, etc.
+ *
+ * Some Linux releases need TclIncDir set to /usr/include/tcl.
+ *
 #define TclLibDir		/usr/local/lib
 #define TclIncDir		/usr/local/include
 #define TclLibName		tcl
+ */
+
+/*
+ * By default, XF86Setup is linked with a static Tcl library.  To change
+ * that, uncomment the following line.
+ *
+#define XF86SetupUsesStaticTcl	NO
  */
 
 /*
@@ -100,33 +157,42 @@ XCOMM $XFree86: xc/config/cf/xf86site.def,v 3.91 1996/10/19 15:12:30 dawes Exp $
  * considerable compile time.
  */
 
-#ifdef AlphaArchitecture
-#define XF86S3Server		YES
-#define XF86S3VServer		YES
-#define XF86Mach64Server	YES
-#define XF86P9000Server		YES
-#define XF86I128Server		YES
-#define XF86TGAServer		YES
-#endif
-
+/*
+ * The following servers are supported in Intel x86 platforms
+ */
 #ifdef i386Architecture
-#define XF86SVGAServer          YES
-#define XF86VGA16Server         YES
-#define XF86VGA16DualServer	YES
-#define XF86MonoServer          YES
-#define XF86MonoDualServer	YES
-#define XF86S3Server            YES
-#define XF86S3VServer		YES
-#define XF86I8514Server         YES
-#define XF86Mach8Server         YES
-#define XF86Mach32Server        YES
-#define XF86Mach64Server        YES
-#define XF86P9000Server		YES
-#define XF86AGXServer		YES
-#define XF86W32Server		YES
-#define XF86I128Server		YES
+#define XF86SVGAServer          NO
+#define XF86VGA16Server         NO
+#define XF86VGA16DualServer	NO
+#define XF86MonoServer          NO
+#define XF86MonoDualServer	NO
+#define XF86S3Server            NO
+#define XF86S3VServer           NO
+#define XF86I8514Server         NO
+#define XF86Mach8Server         NO
+#define XF86Mach32Server        NO
+#define XF86Mach64Server        NO
+#define XF86P9000Server		NO
+#define XF86AGXServer		NO
+#define XF86W32Server		NO
+#define XF86I128Server		NO
 #endif
 
+/*
+ * The following servers are supported on Digital Alpha platforms:
+ */
+#ifdef AlphaArchitecture
+#define XF86SVGAServer          NO
+#define XF86MonoServer          NO
+#define XF86S3Server            NO
+#define XF86S3VServer           NO
+#define XF86P9000Server		NO
+#define XF86TGAServer		NO
+#endif
+
+/*
+ * The following servers are supported on m68k platforms:
+ */
 #ifdef Mc68020Architecture
 #ifdef LinuxArchitecture
 #define XF68FBDevServer		YES
@@ -135,54 +201,22 @@ XCOMM $XFree86: xc/config/cf/xf86site.def,v 3.91 1996/10/19 15:12:30 dawes Exp $
 #endif
 #endif
 
-#ifndef XF86SVGAServer
-#define XF86SVGAServer          NO
-#endif
-#ifndef XF86VGA16Server
-#define XF86VGA16Server         NO
-#endif
-#ifndef XF86VGA16DualServer
-#define XF86VGA16DualServer	NO
-#endif
-#ifndef XF86MonoServer
-#define XF86MonoServer          NO
-#endif
-#ifndef XF86MonoDualServer
-#define XF86MonoDualServer	NO
-#endif
-#ifndef XF86S3Server
+/*
+ * The following server is supported on Mips/Arc platforms:
+ *
 #define XF86S3Server            NO
-#endif
-#ifndef XF86I8514Server
-#define XF86I8514Server         NO
-#endif
-#ifndef XF86Mach8Server
-#define XF86Mach8Server         NO
-#endif
-#ifndef XF86Mach32Server
-#define XF86Mach32Server        NO
-#endif
-#ifndef XF86Mach64Server
-#define XF86Mach64Server        NO
-#endif
-#ifndef XF86P9000Server
-#define XF86P9000Server		NO
-#endif
-#ifndef XF86AGXServer
-#define XF86AGXServer		NO
-#endif
-#ifndef XF86W32Server
-#define XF86W32Server		NO
-#endif
-#ifndef XF86I128Server
-#define XF86I128Server		NO
-#endif
-#ifndef XF86TGAServer
-#define XF86TGAServer		NO
-#endif
+ */
 
 /*
  * PC98 X servers
+ *
+ * Uncommenting the following automatically enables all PC98 servers
+ *
+#define BuildPC98Servers	YES
+ */
+
+/*
+ * To enable/disable individual PC98 servers, use these
  *
 #define XF98EGCServer		YES
 #define XF98GANBWAPServer	YES
@@ -198,19 +232,28 @@ XCOMM $XFree86: xc/config/cf/xf86site.def,v 3.91 1996/10/19 15:12:30 dawes Exp $
 #define XF98GA968Server		YES
  */
 
-#define XnestServer		YES
+/*
+ * The following server is supported on Motorola 68k platforms:
+ *
+#define XF68FBDevServer		NO
+ */
+
+/*
+ * To disable building the Xnest server, uncomment this.
+ *
+#define XnestServer		NO
+ */
+
+/*
+ * To disable building Xvfb, uncomment this.
+ *
+#define XVirtualFramebufferServer	NO
+ */
 
 /*
  * Set the default server (ie the one that gets the sym-link to "X")
  *
 #define ServerToInstall		XF86_S3
- */
-
-
-/*
- * To build Xvfb, uncomment this.
- *
-#define XVirtualFramebufferServer	YES
  */
 
 
@@ -222,8 +265,9 @@ XCOMM $XFree86: xc/config/cf/xf86site.def,v 3.91 1996/10/19 15:12:30 dawes Exp $
  * SVGA server:
  *
 #define XF86SvgaDrivers		nv et4000 et3000 pvga1 gvga ati sis tvga8900 \
-				cirrus ncr77c22 mga oak al2101 ali cl64xx \
-				video7 chips ark mx realtek apm generic
+				cirrus ncr77c22 compaq mga oak al2101 ali \
+				cl64xx video7 chips ark mx realtek apm \
+				s3v generic
  */
 
 /*
@@ -236,14 +280,14 @@ XCOMM $XFree86: xc/config/cf/xf86site.def,v 3.91 1996/10/19 15:12:30 dawes Exp $
 /*
  * VGA2 driver in Mono server:
  *
-#define XF86Vga2Drivers		et4000 et3000 pvga1 gvga ati sis tvga8900
+#define XF86Vga2Drivers		et4000 et3000 pvga1 gvga ati sis tvga8900 \
 				cirrus ncr77c22 oak cl64xx generic
  */
 
 /*
  * Mono driver in Mono or VGA16 server:
  *
-#define XF86MonoDrivers		hgc1280 sigma apollo
+#define XF86MonoDrivers		hgc1280 sigma apollo hercules
  */
 
 /*
@@ -273,16 +317,14 @@ XCOMM $XFree86: xc/config/cf/xf86site.def,v 3.91 1996/10/19 15:12:30 dawes Exp $
  * installed SetUID on most OSs.
  * Consult your system administrator before making the X server setuid.
  *
+#define InstallXserverSetUID	NO
  */
-#if !defined(i386MachArchitecture) && !defined(OS2Architecture)
-#define InstallXserverSetUID	YES
-#endif
 
 /*
- * Do you want to include support for the FontServer
+ * To disable building the font server, uncomment this.
  *
+#define BuildFontServer		NO
  */
-#define BuildFontServer		YES
 
 /*
  * Do you want to Build Fonts (Usually you only want to build and install
@@ -330,8 +372,13 @@ XCOMM $XFree86: xc/config/cf/xf86site.def,v 3.91 1996/10/19 15:12:30 dawes Exp $
  */
 
 /*
- * To build the servers with Extended input devices.
- * Select the devices you want setting them to YES.       
+ * To disable building XInput support, uncomment this
+ *
+#define BuildXInputExt		NO
+ */
+
+/*
+ * Select the XInput devices you want by setting them to YES.       
  *
  * Note: Joystick support is only included for Linux and FreeBSD at the
  * moment.  For Linux it requires the Joystick module to be installed (it
@@ -339,14 +386,11 @@ XCOMM $XFree86: xc/config/cf/xf86site.def,v 3.91 1996/10/19 15:12:30 dawes Exp $
  * will need to be built with the Joystick driver in order to be able to
  * use this.
  *
- */
-#define BuildXInputExt		YES
-/*
-#define JoystickSupport		YES
-*/
+#define JoystickSupport		NO
 #define WacomSupport		YES
 #define ElographicsSupport	YES 
 #define SummaSketchSupport	YES
+ */
 
 /*
  * if your system supports dynamic loading of modules using
@@ -356,10 +400,10 @@ XCOMM $XFree86: xc/config/cf/xf86site.def,v 3.91 1996/10/19 15:12:30 dawes Exp $
  */
 
 /*
- * To disable the ScreenSaver Extension, comment this line.
+ * To disable the ScreenSaver Extension, uncomment this line.
  *
+#define BuildScreenSaverExt	NO
  */
-#define BuildScreenSaverExt	YES
 
 /*
  * If you don't want to build PEX, uncomment this.
@@ -372,6 +416,28 @@ XCOMM $XFree86: xc/config/cf/xf86site.def,v 3.91 1996/10/19 15:12:30 dawes Exp $
  *
 #define BuildXIE		NO
  */
+
+/*
+ * If you don't want to build support for an external GLX server module or
+ * library, uncomment this.
+ *
+ * NOTE: XFree86 3.3 does not include GLX server source, module, or
+ *       functional libraries. Building in support does not require
+ *       availability of a GLX package, but will allow it to be used
+ *       when released (by dynamic load or relinking).  
+ *
+#define BuildGlxExt             NO
+ */
+
+/*
+ * If you aren't building with support for loadable modules and wish
+ * to statically link external GLX server libs instead of the default
+ * non-functional stub library, uncomment the following define and
+ * specify the space-seperated pathnames of those libraries here.
+ *
+#define GlxStaticServerLib	/full/path/name/to/glx/servGL/libServerGlx.a \
+				/full/path/name/to/glx/servGL/libMesaGlx.a
+ */ 
 
 /*
  * If you want to build only the DIS (Document Imaging Subset of XIE)
@@ -400,17 +466,17 @@ XCOMM $XFree86: xc/config/cf/xf86site.def,v 3.91 1996/10/19 15:12:30 dawes Exp $
  */
 
 /*
- * If you are running Solaris x86, and have the aperture driver installed,
- * uncomment this.
+ * If you are running Solaris x86, and want to disable building support
+ * for the aperture driver, uncomment this.
  *
-#define HasSolx86ApertureDriver	YES
+#define HasSolx86ApertureDriver	NO
  */
 
 /*
- * If you are running NetBSD 0.9C or later, and have the aperture driver
- * installed, uncomment this.
+ * If you are running NetBSD 0.9C or later, or OpenBSD and want to disable
+ * building support for the NetBSD aperture driver, uncomment this.
  *
-#define HasNetBSDApertureDriver	YES
+#define HasNetBSDApertureDriver NO
  */
 
 /*
@@ -433,7 +499,7 @@ XCOMM $XFree86: xc/config/cf/xf86site.def,v 3.91 1996/10/19 15:12:30 dawes Exp $
  * Could be used with gcc 'till Version 2.6.3
  * Should be used with gcc 2.7.2. 
  *
-# define UsePosix		YES
+#define UsePosix		YES
  */
 
 /*
@@ -501,10 +567,10 @@ XCOMM $XFree86: xc/config/cf/xf86site.def,v 3.91 1996/10/19 15:12:30 dawes Exp $
  */
 
 /*
- * Define to build only those parts of contrib supported by XFree86
- * NOTE: This should not be defined at all if you want to build all
- * of contrib.  Defining it to NO won't work.
+ * By default, XF86Contrib is defined so build only those parts of
+ * of the contrib distribution supported by XFree86.  To prevent this
+ * from being defined, uncomment the following.
  *
+#define DontDefineXF86Contrib
  */
-#define XF86Contrib
 

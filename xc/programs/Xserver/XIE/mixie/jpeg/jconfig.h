@@ -71,6 +71,7 @@ terms and conditions:
 	Gary Rogers, AGE Logic, Inc., January 1994
 
 ****************************************************************************/
+/* $XFree86: xc/programs/Xserver/XIE/mixie/jpeg/jconfig.h,v 1.2 1996/12/31 04:16:12 dawes Exp $ */
 
 /*
  * jconfig.h

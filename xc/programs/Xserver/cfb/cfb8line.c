@@ -1,6 +1,7 @@
 /*
  * $XConsortium: cfb8line.c,v 1.30 95/01/03 15:28:30 dpw Exp $
- * $XFree86: xc/programs/Xserver/cfb/cfb8line.c,v 3.1 1996/08/25 14:05:38 dawes Exp $
+ * $XFree86: xc/programs/Xserver/cfb/cfb8line.c,v 3.2.2.1 1997/05/10 07:02:47 hohndel Exp $
+ * Jeff Anton'x fixes: cfb8line.c   97/02/07
  *
 Copyright (c) 1990  X Consortium
 
@@ -474,8 +475,8 @@ FUNC_NAME(cfb8LineSS1Rect) (pDrawable, pGC, mode, npt, pptInit, pptInitOrig,
 	    if (_x2 < ex_x1 || _x2 >= ex_x2 ||
 		_y2 < ex_y1 || _y2 >= ex_y2)
 #else
-	    if (_x1 < extents_x1 || _x1 >= extents_x2 ||
-		_y1 < extents_y1 || _y1 >= extents_y2)
+	    if (_x2 < extents_x1 || _x2 >= extents_x2 ||
+		_y2 < extents_y1 || _y2 >= extents_y2)
 #endif
 	    {
 		break;
@@ -910,9 +911,17 @@ FUNC_NAME(cfb8LineSS1Rect) (pDrawable, pGC, mode, npt, pptInit, pptInitOrig,
 		    RROP_SOLID_MASK((unsigned long *) addrp, e);
 		    addrp += PPW;
 	    	}
+#if 0
+		RROP_SPAN_lu(addrp, x1_or_len)
+#else
 		RROP_SPAN(addrp, x1_or_len)
+#endif
 	    	if (e3)
+#if 0
+		    RROP_SOLID_MASK_lu((unsigned long *) addrp, e3);
+#else
 		    RROP_SOLID_MASK((unsigned long *) addrp, e3);
+#endif
 	    }
 #endif /* PSZ == 24 */
 	}
