@@ -156,6 +156,20 @@ extern Bool sunCG8Init(
 
 #endif /* } */
 
+#if SUNMAXDEPTH > 8 && defined(FBTYPE_SUNLEO) && defined(__NetBSD__)
+extern Bool sunLEOInit(
+#  if NeedFunctionPrototypes
+    int /* screen */,
+    ScreenPtr /* pScreen */,
+    int /* argc */,
+    char** /* argv */
+#  endif
+);
+# define LEOI sunLEOInit
+#else
+# define LEOI NULL
+#endif
+
 extern KeySymsRec sunKeySyms[];
 extern SunModmapRec *sunModMaps[];
 extern int sunMaxLayout;
@@ -214,7 +228,7 @@ sunFbDataRec sunFbData[XFBTYPE_LASTPLUSONE] = {
   { NULL, "SUNGT         (gt)" },
 #endif
 #ifdef FBTYPE_SUNLEO
-  { NULL, "SUNLEO        (zx)" },
+  { LEOI, "SUNLEO        (zx)" },
 #endif
 #ifdef FBTYPE_MDICOLOR
   { NULL, "MDICOLOR      (cgfourteen)" },
