@@ -14,6 +14,7 @@ XCOMM 		NetBSD/sparc	client/server
 XCOMM 		NetBSD/sun3	client/server
 XCOMM 		NetBSD/hp300	client
 XCOMM 		NetBSD/mac68k	client/server
+XCOMM		NetBSD/amiga	client/server
 XCOMM
 
 #ifndef OSName
@@ -34,9 +35,6 @@ XCOMM
 #define OSTeenyVersion	  0
 #endif
 
-#ifndef OSVendor
-#define	OSVendor	/**/
-#endif
 XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVersion)
 
 /*
@@ -151,7 +149,10 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
      !defined(AlphaArchitecture) && !defined(MipsArchitecture)) || \
     UseElfFormat
 # ifndef BuildDynamicLoading
-# define BuildDynamicLoading	YES
+#  define BuildDynamicLoading	YES
+# endif
+# ifndef ForceNormalLib
+#  define ForceNormalLib	YES
 # endif
 #endif
 
@@ -211,11 +212,19 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #endif
 
 #if defined(AlphaArchitecture)
+# define BuildServer		NO
 # define ServerExtraDefines	GccGasOption -D_XSERVER64
 # define ServerOSDefines	-DDDXOSINIT
 # define PexDynamicModule	NO
 # define XieDynamicModule	NO
 # define OptimizedCDebugFlags	
+#endif
+
+#if defined(amigaArchitecture)
+# define ServerOSDefines	-DDDXOSINIT
+# define ServerExtraDefines	GccGasOption -D__amiga__
+# define PexDynamicModule	NO
+# define XieDynamicModule	NO
 #endif
 
 #ifndef OptimizedCDebugFlags
@@ -252,6 +261,15 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #define GzipFontCompression	YES
 #define DefaultUserPath		/bin:/usr/bin:/usr/local/bin:$(BINDIR)
 #define DefaultSystemPath	/sbin:/usr/sbin:/bin:/usr/bin:$(BINDIR)
+
+#define InstPgmFlags		-s -m 0555 -o bin -g bin
+#define InstBinFlags		-m 0555 -o bin -g bin
+#define InstUidFlags		-m 4511 -o root -g bin
+#define InstLibFlags		-m 0444 -o bin -g bin
+#define InstIncFlags		-m 0444 -o bin -g bin
+#define InstManFlags		-m 0444 -o bin -g bin
+#define InstDatFlags		-m 0444 -o bin -g bin
+#define InstKmemFlags		-m 2555 -o bin -g kmem
 
 #ifdef  InstallCmd
 # undef  InstallCmd
@@ -364,11 +382,11 @@ install.man:: 								@@\
  */
 #ifdef MipsArchitecture
 #define PositionIndependentCFlags
-#define SharedLibraryLoadFlags -x -shared --whole-archive -soname `echo $@ |
-sed 's/\.[0-9]*$$//'`
+#define SharedLibraryLoadFlags -x -shared --whole-archive -soname `echo $@ | sed 's/\.[0-9]*$$//'`
 #define SharedXtReqs	$(XLIBONLY) $(SMLIB) $(ICELIB)
 #define SharedXmuReqs	$(LDPRELIB) $(XTOOLONLYLIB) $(XONLYLIB) $(EXTENSIONLIB)
 #endif
+
 /*
  * Shared libraries supported starting in 1.0 on a.out platforms,
  * and on all ELF platforms.
@@ -432,6 +450,45 @@ sed 's/\.[0-9]*$$//'`
 # endif
 #endif
 
+/*
+ * Definitions for the NetBSD/amiga server.
+ */
+#ifdef amigaArchitecture
+# ifndef XamigaCCmono
+#  define XamigaCCmono		NO
+# endif
+# ifndef XamigaCCcolor
+#  define XamigaCCcolor		YES
+# endif
+# ifndef XamigaGfxCardSupport
+#  define XamigaGfxCardSupport	YES
+# endif
+# ifndef XamigaRetinaZ3Support
+#  define XamigaRetinaZ3Support	YES
+# endif
+# ifndef XamigaCl5426Server
+#  define XamigaCl5426Server	YES
+# endif
+# ifndef XamigaCV64Support
+#  define XamigaCV64Support	YES
+# endif
+/*
+ * You need XamigaGfxCardSupport if you enable XamigaCl5426Server,
+ * XamigaRetinaZ3Support or XamigaCV64Support and you can't use XamigaCCmono
+ * if you enable XamigaCCcolor.
+ * Don't change the next 10 lines !!!!!!!!!
+ */
+# if (XamigaCl5426Server || XamigaCV64Support || XamigaRetinaZ3Support) \
+	&& !XamigaGfxCardSupport
+#  undef XamigaGfxCardSupport
+#  define XamigaGfxCardSupport	YES
+# endif
+# if XamigaCCcolor
+#  undef XamigaCCmono
+#  define XamigaCCmono		NO
+# endif
+#endif
+
 #ifndef BuildScreenSaverLibrary
 #define BuildScreenSaverLibrary	YES
 #endif
@@ -450,22 +507,4 @@ sed 's/\.[0-9]*$$//'`
  */
 #ifndef UseRgbTxt
 #define UseRgbTxt	NO
-#endif
-
-/*
- * Definition for compiling on MIPS machines
- */
-#ifdef MipsArchitecture
-#define PositionIndependentCFlags
-#define SharedLibraryLoadFlags -x -shared --whole-archive -soname `echo $@ |
-sed 's/\.[0-9]*$$//'`
-#define SharedXtReqs $(XLIBONLY) $(SMLIB) $(ICELIB)
-#define SharedXmuReqs $(LDPRELIB) $(XTOOLONLYLIB) $(XONLYLIB) $(EXTENSIONLIB)
-#endif
-
-/*
- * Definition for compiling on Alpha machines
- */
-#ifdef AlphaArchitecture
-#define	BuildServer	NO
 #endif
