@@ -44,7 +44,7 @@ int Len;
 	char *p;
 	int mlen;
 
-	mlen = (Offset + Len + 4095) & ~4096;
+	mlen = (Offset + Len + 4095) & ~4095;
 	p = smem_create("BIOS-probe", (char *)Base, mlen, SM_READ);
 	if (p == NULL)
 	{
