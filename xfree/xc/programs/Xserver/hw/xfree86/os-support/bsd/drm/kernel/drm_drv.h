@@ -209,6 +209,10 @@ static drm_ioctl_desc_t		  DRM(ioctls)[] = {
 
 const char *DRM(find_description)(int vendor, int device);
 
+static drm_pci_id_list_t DRM(pciidlist)[] = {
+	DRIVER_PCI_IDS
+};
+
 #ifdef __FreeBSD__
 static struct cdevsw DRM(cdevsw) = {
 	.d_open =	DRM( open ),
@@ -223,10 +227,6 @@ static struct cdevsw DRM(cdevsw) = {
 #if __FreeBSD_version < 500000
 	.d_bmaj =	-1
 #endif
-};
-
-static drm_pci_id_list_t DRM(pciidlist)[] = {
-	DRIVER_PCI_IDS
 };
 
 static int DRM(probe)(device_t dev)
