@@ -31,9 +31,10 @@
 *                                                                             *
 *  Developed by Arnaud Le Hors                                                *
 \*****************************************************************************/
-/* $XFree86: xc/extras/Xpm/lib/CrBufFrI.c,v 1.3 2004/11/18 21:30:51 herrb Exp $ */
 
 /* October 2004, source code review by Thomas Biege <thomas@suse.de> */
+
+/* $XFree86$ */
 
 #include "XpmI.h"
 
