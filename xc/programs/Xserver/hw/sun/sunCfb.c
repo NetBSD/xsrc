@@ -273,13 +273,17 @@ Bool sunCG3Init (screen, pScreen, argc, argv)
 #if !defined(i386) && !defined(__bsdi__) /* { */
 
 #ifdef SVR4
-#include <sys/cg2reg.h>
+# include <sys/cg2reg.h>
 #else
-#if !defined(__NetBSD__) && !defined(__OpenBSD__)
-#include <pixrect/cg2reg.h>
-#else
-#include <machine/cgtworeg.h>
-#endif
+# if !defined(__NetBSD__) && !defined(__OpenBSD__)
+#  include <pixrect/cg2reg.h>
+# else
+#  ifdef __sparc__
+#   include <machine/cgtworeg.h>
+#  else
+#   include <machine/cgtworeg.h>
+#  endif
+# endif
 #endif
 
 typedef struct {

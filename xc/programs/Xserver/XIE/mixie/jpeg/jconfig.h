@@ -471,7 +471,7 @@ typedef short INT16;
 /* to have 64-bit longs, you might want to change this. */
 
 #ifndef XMD_H					/* X11/xmd.h correctly defines INT32 */
-#ifdef __alpha
+#if defined(__alpha) || defined(__alpha__)
 typedef int INT32;
 #else
 typedef long INT32;

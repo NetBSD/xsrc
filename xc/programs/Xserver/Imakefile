@@ -391,6 +391,26 @@ SetUIDServerTarget(Xsvga,$(SVGASUBDIRS),$(SVGAOBJS),$(SVGALIBS),$(SVGASYSLIBS))
 #endif	/* XsvgaServer */
 
 
+#if Xmac68kServer
+XCOMM
+XCOMM NetBSD/mac68k server
+XCOMM
+MFBDIR  = mfb
+CFB8DIR = cfb
+CFB16DIR = cfb16
+CFB32DIR = cfb32
+DDXDIR1 = hw/macNetBSD
+MACDIRS = $(STDDIRS) $(MFBDIR) $(CFB8DIR) $(CFB16DIR) $(CFB32DIR) $(DDXDIR1) $(DEPDIRS)
+MACOBJS = hw/macNetBSD/macInit.o hw/macNetBSD/macEvent.o
+MACLIBS = hw/macNetBSD/libmac.a CFBLibs
+MACSYSLIBS = $(CBRT) $(SYSLIBS)
+ServerTarget(Xmac68k,$(MACDIRS),$(MACOBJS),$(MACLIBS),$(MACSYSLIBS))
+#ifndef ServerToInstall
+#define ServerToInstall Xmac68k
+#endif
+#endif /* XmacServer */
+
+
 #ifdef XFree86Version
 XF86INIT   = $(XF86COMSRC)/xf86Init.o $(XF86CONFIGSRC)/xf86IniExt.o
 XF86MINIT  = $(XF86COMSRC)/xf86Init_m.o $(XF86CONFIGSRC)/xf86MIniExt.o

@@ -732,10 +732,10 @@ FreePhigsWks(pWKS, WKSid)
 static XID  ulNULL = 0;
 
 #define PLUTID( plut ) \
-	(plut)==NULL ? &ulNULL : &(plut)->id
+	(plut)==NULL ? &ulNULL : (ddULONG *)&(plut)->id
 
 #define PNSID( pns ) \
-	(pns)==NULL ? &ulNULL : &(pns)->id
+	(pns)==NULL ? &ulNULL : (ddULONG *)&(pns)->id
 
 ddpex4rtn
 InquireWksInfo(pWKS, mask, pNumValues, pBuffer)
