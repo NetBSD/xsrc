@@ -11,6 +11,7 @@ SRCS1 =	sunInit.c \
 	sunMfb.c \
 	sunMouse.c\
 	sunGX.c \
+	sunZX.c \
 	sunKeyMap.c
 
 SRCS =	$(SRCS1) kbd_mode.c constype.c
@@ -30,6 +31,7 @@ OBJS = 	sunCfb.o \
 	sunMfb.o \
 	sunMouse.o \
 	sunGX.o \
+	sunZX.o \
 	sunKeyMap.o
 
    INCLUDES = -I. -I../.. -I../../mi -I../../mfb -I../../cfb -I../../cfb32 \

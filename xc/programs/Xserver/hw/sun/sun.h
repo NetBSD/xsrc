@@ -344,6 +344,13 @@ extern int sunGXInit(
 #endif
 );
 
+extern int sunZXInit(
+#if NeedFunctionPrototypes
+    ScreenPtr /* pScreen */,
+    fbFd* /* fb */
+#endif
+);
+
 extern Bool sunSaveScreen(
 #if NeedFunctionPrototypes
     ScreenPtr /* pScreen */,
