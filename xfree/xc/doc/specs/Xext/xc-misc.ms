@@ -1,5 +1,5 @@
 .\" Use -ms and macros.t
-.\" $TOG: xc-misc.ms /main/5 1997/11/04 17:56:14 kaleb $
+.\" $Xorg: xc-misc.ms,v 1.3 2000/08/17 19:42:37 cpqbld Exp $
 .EH ''''
 .OH ''''
 .EF ''''

@@ -1,5 +1,5 @@
 .\" Use tbl, -ms, and macros.t
-.\" $TOG: xsmp.ms /main/9 1997/11/04 18:13:06 kaleb $
+.\" $Xorg: xsmp.ms,v 1.3 2000/08/17 19:42:19 cpqbld Exp $
 .EH ''''
 .OH ''''
 .EF ''''

@@ -1,5 +1,5 @@
 #! /bin/nawk -f
-# $XConsortium: fix.nawk,v 1.2 94/02/06 16:38:05 mor Exp $
+# $Xorg: fix.nawk,v 1.3 2000/08/17 19:42:50 cpqbld Exp $
 #
 
 BEGIN {

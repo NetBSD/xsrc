@@ -1,5 +1,5 @@
 
-/* $XConsortium: winnt.h,v 1.1 94/09/09 20:27:49 kaleb Exp $ */
+/* $Xorg: winnt.h,v 1.3 2000/08/17 19:55:22 cpqbld Exp $ */
 
 
 #define stat _stat

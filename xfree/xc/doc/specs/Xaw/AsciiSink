@@ -1,4 +1,4 @@
-.\" $XConsortium: AsciiSink,v 1.10 94/05/02 08:33:09 gildea Exp $
+.\" $Xorg: AsciiSink,v 1.3 2000/08/17 19:42:25 cpqbld Exp $
 .LP
 .NH 2
 Ascii Sink Object and Multi Sink Object

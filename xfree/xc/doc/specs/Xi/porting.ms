@@ -1,4 +1,4 @@
-.\" $XFree86$
+.\" $XFree86: xc/doc/specs/Xi/porting.ms,v 1.2 2000/12/04 23:25:59 dawes Exp $
 .\" Input Extension Porting Document
 .EH ''''
 .OH ''''

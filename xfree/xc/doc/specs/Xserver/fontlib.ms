@@ -48,7 +48,7 @@
 .ft P
 .fi
 ..
-.\" $TOG: fontlib.ms /main/5 1997/06/09 17:51:45 barstow $
+.\" $Xorg: fontlib.ms,v 1.3 2000/08/17 19:42:42 cpqbld Exp $
 .EF 'Font Library Interface'- % -'July 27, 1991'
 .OF 'Font Library Interface'- % -'July 27, 1991'
 .EH ''''

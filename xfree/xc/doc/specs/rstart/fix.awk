@@ -1,5 +1,5 @@
 #! /bin/awk -f
-# $XConsortium: fix.awk,v 1.2 94/02/06 16:37:59 mor Exp $
+# $Xorg: fix.awk,v 1.3 2000/08/17 19:42:50 cpqbld Exp $
 #
 
 BEGIN {

@@ -8,7 +8,7 @@
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  */
 
-/* $XConsortium: backupfile.c,v 3.1 94/09/09 20:33:43 kaleb Exp $ */
+/* $Xorg: backupfile.c,v 1.3 2000/08/17 19:55:22 cpqbld Exp $ */
 
 /* David MacKenzie <djm@ai.mit.edu>.
    Some algorithms adapted from GNU Emacs. */

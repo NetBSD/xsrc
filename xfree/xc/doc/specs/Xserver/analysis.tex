@@ -1,6 +1,8 @@
-\documentstyle[computer]{article}
+\documentstyle{article}
 \setlength{\parindent}{0 pt}
 \setlength{\parskip}{6pt}
+
+% $XFree86: xc/doc/specs/Xserver/analysis.tex,v 1.2 2001/04/19 23:36:35 dawes Exp $
 
 \begin{document}
 
@@ -216,9 +218,9 @@ The problems run deeper.  The logical thing for the allocator to do if
 the client is over its limit is to return NULL, indicating allocation
 failure.  Unfortunately, there are many places in the server that will
 react badly if this happens.  Most of these places, but not all, are
-``protected'' by setting the global variable Must_have_memory to True
+``protected'' by setting the global variable Must\_have\_memory to True
 around the delicate code.  We could help the problem by skipping the
-limit check if Must_have_memory is True.  The best solution would be
+limit check if Must\_have\_memory is True.  The best solution would be
 to bullet-proof the server against allocation failures, but that is
 beyond the scope of Broadway.  Another consideration is that the
 additional checking may have a measurable performance impact, since
@@ -615,9 +617,9 @@ answer: yes, some configurable list.  Do those properties need to be
 polyinstantiated?
 
 ISSUE: Motif drag and drop needs to be able to read the following
-properties: WM_STATE to identify top-level windows, _MOTIF_DRAG_WINDOW
-on the root window, _MOTIF_DRAG_TARGETS on the window given in the
-_MOTIF_DRAG_WINDOW property, and _MOTIF_DRAG_RECEIVER_INFO on windows
+properties: WM\_STATE to identify top-level windows, \_MOTIF\_DRAG\_WINDOW
+on the root window, \_MOTIF\_DRAG\_TARGETS on the window given in the
+\_MOTIF\_DRAG\_WINDOW property, and \_MOTIF\_DRAG\_RECEIVER\_INFO on windows
 with drop sites.  Additionally, some properties are needed that do not
 have fixed names.
 
@@ -1514,10 +1516,10 @@ Rosenthal, David S. H., ``LINX - a Less INsecure X server,'' Sun Microsystems,
 
 Rosenthal, David and Marks, Stuart W., ``Inter-Client Communication
 Conventions Manual Version 2.0,''
-\file{ftp://ftp.x.org/pub/R6.1/xc/doc/hardcopy/ICCCM/icccm.PS.Z}
+{\tt ftp://ftp.x.org/pub/R6.1/xc/doc/hardcopy/ICCCM/icccm.PS.Z}
 
 Scheifler, Robert W., ``X Window System Protocol,''
-\file{ftp://ftp.x.org/pub/R6.1/xc/doc/hardcopy/XProtocol/proto.PS.Z}
+{\tt ftp://ftp.x.org/pub/R6.1/xc/doc/hardcopy/XProtocol/proto.PS.Z}
 
 Treese, G. Winfield and Wolman, Alec, ``X Through the Firewall, and
 Other Application Relays,'' Digital Equipment Corporation Cambridge

@@ -1,7 +1,7 @@
 .\" Record Extension Library, v1.13
 .\" Use -ms and macros.t
 .\" edited for DP edits and code consistency w/ core protocol/xlib 4/1/96
-.\" $TOG: recordlib.ms /main/21 1997/11/04 17:55:39 kaleb $
+.\" $Xorg: recordlib.ms,v 1.3 2000/08/17 19:42:36 cpqbld Exp $
 .\" -----------------------------------------------
 .de Ip
 .IP \(bu 5

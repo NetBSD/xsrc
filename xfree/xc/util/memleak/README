@@ -1,4 +1,4 @@
-.\" $XConsortium: README,v 1.3 92/05/15 14:04:04 keith Exp $
+.\" $Xorg: README,v 1.3 2000/08/17 19:55:19 cpqbld Exp $
 
 This library replaces the C library allocator;
 providing malloc, free, realloc and calloc (sorry, no valloc)
