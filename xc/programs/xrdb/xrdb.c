@@ -2,7 +2,7 @@
  * xrdb - X resource manager database utility
  *
  * $XConsortium: xrdb.c,v 11.76 95/05/12 18:36:46 mor Exp $
- * $XFree86: xc/programs/xrdb/xrdb.c,v 3.7.2.1 1997/05/25 05:06:57 dawes Exp $
+ * $XFree86: xc/programs/xrdb/xrdb.c,v 3.7.2.2 1998/02/15 16:09:53 hohndel Exp $
  */
 
 /*
