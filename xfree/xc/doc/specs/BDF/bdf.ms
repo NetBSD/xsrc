@@ -1,4 +1,4 @@
-.\" $TOG: bdf.ms /main/12 1997/11/04 18:00:51 kaleb $
+.\" $Xorg: bdf.ms,v 1.3 2000/08/17 19:42:06 cpqbld Exp $
 \&
 .sp 1
 .ce 4

@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/fonts/encodings/Imakefile,v 1.5 2000/08/28 16:23:20 dawes Exp $
+XCOMM $XFree86: xc/fonts/encodings/Imakefile,v 1.6 2000/12/18 00:19:26 dawes Exp $
 
 #define IHaveSubdirs
 #define PassCDebugFlags 'CDEBUGFLAGS=$(CDEBUGFLAGS)'
