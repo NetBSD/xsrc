@@ -65,6 +65,10 @@ KRB5SRCS = k5auth.c k5encode.c
    LBX_OBJS =
 #endif
 
+#if HasGetpeereid
+GETPEEREID_DEFINES = -DHAS_GETPEEREID
+#endif
+
 BOOTSTRAPCFLAGS = 
            SRCS = WaitFor.c access.c connection.c io.c oscolor.c \
                   osinit.c utils.c auth.c mitauth.c secauth.c $(XDMAUTHSRCS) \
@@ -93,7 +97,7 @@ BOOTSTRAPCFLAGS =
   XDMCP_DEFINES = ServerXdmcpDefines
      OS_DEFINES = ServerOSDefines
    KRB5_DEFINES = Krb5Defines
-        DEFINES = -DXSERV_t -DTRANS_SERVER $(CONNECTION_FLAGS) $(MEM_DEFINES) $(XDMAUTHDEFS) $(RPCDEFS) $(SIGNAL_DEFINES) $(OS_DEFINES) $(KRB5_DEFINES) $(RGB_DEFINES)
+        DEFINES = -DXSERV_t -DTRANS_SERVER $(CONNECTION_FLAGS) $(MEM_DEFINES) $(XDMAUTHDEFS) $(RPCDEFS) $(SIGNAL_DEFINES) $(OS_DEFINES) $(KRB5_DEFINES) $(RGB_DEFINES) $(GETPEEREID_DEFINES)
        INCLUDES = -I.  -I../include -I$(XINCLUDESRC) -I$(EXTINCSRC) -I$(TOP)/lib/Xau -I../lbx Krb5Includes
 #if HasPam
         EXTRA_DEFINES = -DUSE_PAM

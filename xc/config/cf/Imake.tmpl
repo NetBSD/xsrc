@@ -283,6 +283,9 @@ XCOMM the platform-specific parameters - edit site.def to change
 #endif
 #endif
 PAMLIBRARY = PamLibrary
+#ifndef HasGetpeereid
+#define HasGetpeereid		NO
+#endif
 #ifndef HasFortran
 #define HasFortran		NO
 #endif
