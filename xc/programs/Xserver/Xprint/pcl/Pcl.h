@@ -329,7 +329,7 @@ extern int PclUpdateDrawableGC(
     FILE **outFile);
 extern void PclValidateGC(
     GCPtr pGC,
-    Mask changes,
+    unsigned long changes,
     DrawablePtr pDrawable);
 extern void PclSetDrawablePrivateStuff(
     DrawablePtr pDrawable,
