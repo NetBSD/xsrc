@@ -113,12 +113,12 @@ Not obeyed by all servers.
 .B \-co \fIfilename\fP
 sets name of RGB color database.  The default is <XRoot>/lib/X11/rgb,
 where <XRoot> refers to the root of the X11 install tree.
-.TP 8
-.B \-config \fIfilename\fP
-reads more options from the given file.  Options in the file may be separated
-by newlines if desired.  If a '#' character appears on a line, all characters
-between it and the next newline are ignored, providing a simple commenting
-facility.  The \fB\-config\fP option itself may appear in the file.
+.\" .TP 8
+.\" .B \-config \fIfilename\fP
+.\" reads more options from the given file.  Options in the file may be separated
+.\" by newlines if desired.  If a '#' character appears on a line, all characters
+.\" between it and the next newline are ignored, providing a simple commenting
+.\" facility.  The \fB\-config\fP option itself may appear in the file.
 .TP 8
 .B \-core
 causes the server to generate a core dump on fatal errors.
