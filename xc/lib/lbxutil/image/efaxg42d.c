@@ -23,6 +23,7 @@
  * OF THIS SOFTWARE.
  */
 
+#include <X11/Xos.h>
 #include <X11/Xfuncproto.h>
 #include "lbxfax.h"
 #include "lbximage.h"
