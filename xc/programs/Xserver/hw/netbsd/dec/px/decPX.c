@@ -1,4 +1,4 @@
-/*	$NetBSD: decPX.c,v 1.3 2002/02/22 16:06:51 ad Exp $	*/
+/*	$NetBSD: decPX.c,v 1.4 2002/02/25 11:39:39 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -408,7 +408,7 @@ decPXInit(int screen, ScreenPtr pScreen, int argc, char **argv)
 			FatalError("WSDISPLAYIO_SMODE");
 		sxm = mmap(NULL, sz, PROT_READ | PROT_WRITE,
 		    MAP_SHARED /* | MAP_NODUMP */, sp->mapfd, 0);
-		if (sxm == NULL) {
+		if (sxm == MAP_FAILED) {
 			FatalError("unable to map buffers");
 			return (FALSE);
 		}
