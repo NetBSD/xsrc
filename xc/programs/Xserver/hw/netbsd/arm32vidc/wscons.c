@@ -1,4 +1,4 @@
-/*	$NetBSD: wscons.c,v 1.5 2002/04/04 02:25:24 reinoud Exp $	*/
+/*	$NetBSD: wscons.c,v 1.6 2002/06/22 13:51:35 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -181,19 +181,18 @@ void wskbd_io(void)
 		 * time now figuring out the correct mappings when I can
 		 * borrow existing AT ones.
 		 */
-		if (wsev.value < 0x90 && kbdmap[wsev.value] != -1) {
+		DPRINTF(("wscons code = 0x%x\n", wsev.value));
+		if (wsev.value < 0x90 && kbdmap[wsev.value] != -1)
 			x_event.u.u.detail = kbdmap[wsev.value];
-/*			ErrorF("xlated code=%x\n", kbdmap[wsev.value]);*/
-		} else if (wsev.value > 0x210 && wsev.value < 0x215
-		    && kbdmap1[(wsev.value - 0x210)] != -1) {
-			x_event.u.u.detail = kbdmap1[(wsev.value - 0x210)];
-/*			ErrorF("xlated code=%x\n", kbdmap[wsev.value - 0x210]);*/
-		} else if (wsev.value > 0x240 && wsev.value < 0x280
-		    && kbdmap2[(wsev.value - 0x240)] != -1) {
-			x_event.u.u.detail = kbdmap2[(wsev.value - 0x240)];
-/*			ErrorF("xlated code=%x\n", kbdmap[wsev.value - 0x240]);*/
-		} else
+		else if (wsev.value > 0x110 && wsev.value < 0x115
+		    && kbdmap1[(wsev.value - 0x110)] != -1)
+			x_event.u.u.detail = kbdmap1[(wsev.value - 0x110)];
+		else if (wsev.value > 0x140 && wsev.value < 0x180
+		    && kbdmap2[(wsev.value - 0x140)] != -1)
+			x_event.u.u.detail = kbdmap2[(wsev.value - 0x140)];
+		else
 			continue;
+		DPRINTF(("X11 code = 0x%x\n", x_event.u.u.detail));
 
 		/*
 		 * Bit of hackery to provide a Xserver kill hot key
