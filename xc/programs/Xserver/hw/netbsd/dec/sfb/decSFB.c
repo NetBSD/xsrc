@@ -1,4 +1,4 @@
-/* $NetBSD: decSFB.c,v 1.2 2001/09/22 19:43:51 ad Exp $ */
+/* $NetBSD: decSFB.c,v 1.3 2002/02/26 12:34:54 ad Exp $ */
 
 /* XConsortium: sunCfb.c,v 1.15.1.2 95/01/12 18:54:42 kaleb Exp */
 /* XFree86: xc/programs/Xserver/hw/sun/sunCfb.c,v 3.2 1995/02/12 02:36:22 dawes Exp */
@@ -134,7 +134,6 @@ Bool decSFBInit (screen, pScreen, argc, argv)
 	}
 
 	/*
-	 * Frame buffer RAM always starts at core space size / 2.
 	 * SFB Registers always start at offset 1M into core space.
 	 *
 	 * The actual offset of the displayed screen may vary, because
@@ -142,9 +141,14 @@ Bool decSFBInit (screen, pScreen, argc, argv)
 	 * may not be the same as the displayed width.  To figure these
 	 * things out, we have to look at the SFB registers.
 	 */ 
+	if (decFbs[screen].type == WSDISPLAY_TYPE_SFBP)
+		fb_off = 0x800000;
+	else
+		fb_off = 0x200000;
+
 	sfbregs = (sfb_reg_t *)(fb + SFB_ASIC_OFFSET);
-	fb_off = (int)decFbs[screen].size / 2;
 	fbr = fb + SFB_ASIC_OFFSET;
+
 	decFbs[screen].regs.sfbregs[0] = (sfb_reg_t *)(fbr + 0 * 64 * 1024);
 	decFbs[screen].regs.sfbregs[1] = (sfb_reg_t *)(fbr + 1 * 64 * 1024);
 	decFbs[screen].regs.sfbregs[2] = (sfb_reg_t *)(fbr + 2 * 64 * 1024);
