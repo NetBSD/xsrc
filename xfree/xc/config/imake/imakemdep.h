@@ -883,7 +883,7 @@ char *cpp_argv[ARGUMENTS] = {
 	ptr = endptr;							\
 									\
 	if (major > 2 || (major == 2 && minor >= 99)) {			\
-		if (*endptr++ == '.') {					\
+		if (*ptr++ == '.') {					\
 			teeny = (int)strtol(ptr, &endptr, 10);		\
 			if (ptr == endptr)				\
 				goto error;				\
