@@ -1,4 +1,4 @@
-/* $NetBSD: x68kInit.c,v 1.2 2004/01/07 12:55:00 minoura Exp $ */
+/* $NetBSD: x68kInit.c,v 1.3 2004/01/10 16:30:22 rtr Exp $ */
 /*-------------------------------------------------------------------------
  * Copyright (c) 1996 Yasushi Yamasaki
  * All rights reserved.
@@ -234,14 +234,6 @@ void ddxUseMsg(void)
 {
     ErrorF("\nX68k dependent options\n");
     ErrorF("-x68kconfig filename   specify configuration file\n");
-}
-
-CARD32 GetTimeInMillis(void)
-{
-    struct timeval  tp;
-
-    X_GETTIMEOFDAY(&tp);
-    return(tp.tv_sec * 1000) + (tp.tv_usec / 1000);
 }
 
 void OsVendorFatalError(void)
