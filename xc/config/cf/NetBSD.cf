@@ -1,4 +1,4 @@
-XCOMM $NetBSD: NetBSD.cf,v 1.68 2000/05/06 06:01:48 takemura Exp $
+XCOMM $NetBSD: NetBSD.cf,v 1.69 2000/05/19 15:23:01 matt Exp $
 XCOMM platform:  $XConsortium: NetBSD.cf /main/16 1996/10/31 14:47:14 kaleb $
 
 
@@ -540,8 +540,8 @@ install.man:: 								@@\
  * and on all ELF platforms.
  */
 #if ((OSMajorVersion > 0) && \
-     !defined(AlphaArchitecture) && !defined(MipsArchitecture) && \
-     !defined(VaxArchitecture)) || UseElfFormat
+     !defined(AlphaArchitecture) && !defined(MipsArchitecture)) \
+     || UseElfFormat
 # ifndef HasSharedLibraries
 # define HasSharedLibraries	YES
 # endif
