@@ -21,7 +21,7 @@
  * ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
  * SOFTWARE.
  */
-/* $XFree86: xc/programs/xterm/button.c,v 3.11.2.2 1998/02/15 16:09:58 hohndel Exp $ */
+/* $XFree86: xc/programs/xterm/button.c,v 3.20 1998/01/11 03:48:35 dawes Exp $ */
 
 /*
 button.c	Handles button events in the terminal emulator.

@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/programs/xterm/testxmc.c,v 3.2.2.1 1998/02/15 16:10:11 hohndel Exp $
+ * $XFree86: xc/programs/xterm/testxmc.c,v 3.2 1997/07/29 13:26:06 hohndel Exp $
  */
 
 /************************************************************

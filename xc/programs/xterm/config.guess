@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-# $XFree86: xc/programs/xterm/config.guess,v 1.2.2.1 1998/02/15 16:10:00 hohndel Exp $
+# $XFree86: xc/programs/xterm/config.guess,v 1.2 1997/09/19 11:24:41 hohndel Exp $
 #
 # Attempt to guess a canonical system name.
 #   Copyright (C) 1992, 93, 94, 95, 1996 Free Software Foundation, Inc.

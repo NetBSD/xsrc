@@ -1,5 +1,5 @@
 dnl
-dnl $XFree86: xc/programs/xterm/aclocal.m4,v 3.1.2.6 1998/02/24 13:54:35 hohndel Exp $
+dnl $XFree86: xc/programs/xterm/aclocal.m4,v 3.12 1998/03/27 23:23:58 hohndel Exp $
 dnl
 dnl ---------------------------------------------------------------------------
 dnl 

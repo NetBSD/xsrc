@@ -1,5 +1,5 @@
 dnl
-dnl $XFree86: xc/programs/xterm/configure.in,v 3.1.2.5 1998/02/24 13:54:37 hohndel Exp $
+dnl $XFree86: xc/programs/xterm/configure.in,v 3.14 1998/03/20 21:08:35 hohndel Exp $
 dnl
 dnl ---------------------------------------------------------------------------
 dnl 
@@ -54,6 +54,7 @@ AC_CHECK_FUNCS( \
 	bcopy \
 	memmove \
 	strerror \
+	waitpid \
 	)
 CF_FUNC_MEMMOVE
 CF_FUNC_TGETENT
@@ -68,6 +69,7 @@ CF_ANSI_CC_CHECK
 ###	checks for system services and user specified options
 
 AC_CHECK_HEADERS(unistd.h)
+AC_HEADER_SYS_WAIT
 
 CF_X_TOOLKIT
 

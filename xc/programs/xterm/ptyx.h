@@ -1,6 +1,6 @@
 /*
  *	$XConsortium: ptyx.h /main/67 1996/11/29 10:34:19 swick $
- *	$XFree86: xc/programs/xterm/ptyx.h,v 3.19.2.3 1998/02/15 16:10:08 hohndel Exp $
+ *	$XFree86: xc/programs/xterm/ptyx.h,v 3.35 1998/03/27 23:24:02 hohndel Exp $
  */
 
 /*
@@ -928,6 +928,7 @@ typedef struct _TekWidgetRec {
 #define SMOOTHSCROLL	0x10000	/* true if in smooth scroll mode */
 #define IN132COLUMNS	0x20000	/* true if in 132 column mode */
 #define INVISIBLE	0x40000	/* true if writing invisible text */
+#define NATIONAL       0x100000	/* true if writing national charset */
 
 /*
  * Per-line flags
