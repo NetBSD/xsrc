@@ -22,3 +22,5 @@ DisplayManager*authComplain:	false
 ! SECURITY: do not listen for XDMCP or Chooser requests
 ! Comment out this line if you want to manage X terminals with xdm
 DisplayManager.requestPort:	0
+! Set the following to share your /usr/X11R6 ($X11BASE):
+! DisplayManager*authDir:         /var/run
