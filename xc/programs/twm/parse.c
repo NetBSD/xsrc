@@ -194,8 +194,8 @@ int ParseTwmrc (filename)
 		if (home) {
 		    homelen = strlen (home);
 		    cp = tmpfilename;
-		    (void) sprintf (tmpfilename, "%s/.twmrc.%d",
-				    home, Scr->screen);
+		    (void) snprintf (tmpfilename, sizeof(tmpfilename),
+		        "%s/.twmrc.%d", home, Scr->screen);
 		    break;
 		}
 	    }
