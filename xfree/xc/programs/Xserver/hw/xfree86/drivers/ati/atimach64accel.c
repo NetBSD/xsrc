@@ -1,6 +1,6 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/atimach64accel.c,v 1.2 2004/01/05 16:42:02 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/atimach64accel.c,v 1.4 2004/12/31 16:07:06 tsi Exp $ */
 /*
- * Copyright 2003 through 2004 by Marc Aurele La France (TSI @ UQV), tsi@xfree86.org
+ * Copyright 2003 through 2005 by Marc Aurele La France (TSI @ UQV), tsi@xfree86.org
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -263,16 +263,7 @@ ATIMach64SetupForScreenToScreenCopy
         SetBits(SRC_BLIT, DP_FRGD_SRC) | SetBits(SRC_BKGD, DP_BKGD_SRC));
     outf(DP_MIX, SetBits(ATIMach64ALU[rop], DP_FRGD_MIX));
 
-#ifdef AVOID_DGA
-
-    if (TransparencyColour == -1)
-
-#else /* AVOID_DGA */
-
     if (!pATI->XAAForceTransBlit && (TransparencyColour == -1))
-
-#endif /* AVOID_DGA */
-
     {
         outf(CLR_CMP_CNTL, CLR_CMP_FN_FALSE);
     }

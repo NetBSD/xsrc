@@ -46,7 +46,7 @@ in this Software without prior written authorization from The Open Group.
  * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
  * THIS SOFTWARE.
  */
-/* $XFree86: xc/programs/xfs/os/utils.c,v 3.21 2004/01/07 03:47:36 dawes Exp $ */
+/* $XFree86: xc/programs/xfs/os/utils.c,v 3.22 2004/04/03 10:50:36 herrb Exp $ */
 
 #include	<stdio.h>
 #include	<X11/Xos.h>
@@ -518,7 +518,6 @@ SetUserId(void)
 	FatalError("fatal: -droppriv or -user flag specified, but xfs not run as root\n");
     }
 }
-
 
 void
 SetDaemonState(void)

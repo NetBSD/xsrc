@@ -23,7 +23,7 @@ shall not be used in advertising or otherwise to promote the sale, use or other
 dealings in this Software without prior written authorization from Digital
 Equipment Corporation.
 ******************************************************************/
-/* $XFree86: xc/lib/Xinerama/Xinerama.c,v 1.3 2002/10/16 00:37:31 dawes Exp $ */
+/* $XFree86: xc/lib/Xinerama/Xinerama.c,v 1.4 2004/04/03 22:38:52 tsi Exp $ */
 
 #define NEED_EVENTS
 #define NEED_REPLIES
@@ -33,6 +33,7 @@ Equipment Corporation.
 #include <X11/extensions/extutil.h>
 #include <X11/extensions/panoramiXext.h>
 #include <X11/extensions/panoramiXproto.h>
+#include <X11/extensions/panoramiXwrap.h>
 #include <X11/extensions/Xinerama.h>
 
 
@@ -45,7 +46,8 @@ static /* const */ char *panoramiX_extension_name = PANORAMIX_PROTOCOL_NAME;
 #define PanoramiXSimpleCheckExtension(dpy,i) \
   XextSimpleCheckExtension (dpy, i, panoramiX_extension_name)
 
-static int close_display();
+static XEXT_GENERATE_CLOSE_DISPLAY (close_display, panoramiX_ext_info)
+
 static /* const */ XExtensionHooks panoramiX_extension_hooks = {
     NULL,				/* create_gc */
     NULL,				/* copy_gc */
@@ -64,9 +66,6 @@ static XEXT_GENERATE_FIND_DISPLAY (find_display, panoramiX_ext_info,
 				   panoramiX_extension_name, 
 				   &panoramiX_extension_hooks,
 				   0, NULL)
-
-static XEXT_GENERATE_CLOSE_DISPLAY (close_display, panoramiX_ext_info)
-
 
 
 /****************************************************************************

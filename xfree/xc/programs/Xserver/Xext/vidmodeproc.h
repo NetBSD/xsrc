@@ -1,6 +1,6 @@
-/* $XFree86: xc/programs/Xserver/Xext/vidmodeproc.h,v 1.5 2001/05/06 00:51:19 mvojkovi Exp $ */
+/* $XFree86: xc/programs/Xserver/Xext/vidmodeproc.h,v 1.6 2004/06/25 15:44:42 tsi Exp $ */
 
-/* Prototypes for DGA functions that the DDX must provide */
+/* Prototypes for VidMode functions that the DDX must provide */
 
 #ifndef _VIDMODEPROC_H_
 #define _VIDMODEPROC_H_

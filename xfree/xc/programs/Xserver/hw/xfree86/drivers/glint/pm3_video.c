@@ -22,7 +22,7 @@
  * Authors: Alan Hourihane, alanh@fairlite.demon.co.uk
  *          Sven Luther <luther@dpt-info.u-strasbg.fr>
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/glint/pm3_video.c,v 1.15 2003/11/10 18:22:21 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/glint/pm3_video.c,v 1.17 2004/09/01 22:56:57 dawes Exp $ */
 
 #include "xf86.h"
 #include "xf86_OSproc.h"
@@ -39,7 +39,6 @@
 #include "pm3_regs.h"
 #include "Xv.h"
 #include "xaa.h"
-#include "xaalocal.h"
 #include "dixstruct.h"
 #include "fourcc.h"
 
@@ -65,6 +64,7 @@ static int Permedia3PutImage( ScrnInfoPtr,
 static int Permedia3QueryImageAttributes(ScrnInfoPtr, 
 	int, unsigned short *, unsigned short *,  int *, int *);
 static void Permedia3VideoTimerCallback(ScrnInfoPtr pScrn, Time time);
+static void Permedia3ResetVideo(ScrnInfoPtr);
 
 #define MAKE_ATOM(a) MakeAtom(a, sizeof(a) - 1, TRUE)
 
@@ -260,7 +260,7 @@ do{                                                             \
 	GLINT_WRITE_REG(data, PM3RD_IndexedData);		\
 }while(0)
 
-void Permedia3ResetVideo(ScrnInfoPtr pScrn) 
+static void Permedia3ResetVideo(ScrnInfoPtr pScrn) 
 {
     GLINTPtr pGlint = GLINTPTR(pScrn);
     GLINTPortPrivPtr pPriv = pGlint->adaptor->pPortPrivates[0].ptr;

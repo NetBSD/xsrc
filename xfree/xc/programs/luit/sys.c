@@ -19,7 +19,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
-/* $XFree86: xc/programs/luit/sys.c,v 1.10 2003/09/08 14:25:30 eich Exp $ */
+/* $XFree86: xc/programs/luit/sys.c,v 1.11 2004/10/27 23:03:54 dickey Exp $ */
 
 #include <stdlib.h>
 #include <string.h>
@@ -301,12 +301,11 @@ fix_pty_perms(char *line)
 {
     int rc;
     struct stat s;
-    int uid = getuid(), gid = getgid();
 
     rc = stat(line, &s);
     if(rc < 0)
         return -1;
-    if(s.st_uid != uid || s.st_gid != gid) {
+    if(s.st_uid != getuid() || s.st_gid != getgid()) {
         rc = chown(line, getuid(), getgid());
         if(rc < 0) {
             fprintf(stderr, 

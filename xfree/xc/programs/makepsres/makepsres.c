@@ -35,7 +35,7 @@
  * 
  * Author:  Adobe Systems Incorporated
  */
-/* $XFree86: xc/programs/makepsres/makepsres.c,v 1.9 2003/10/24 20:38:13 tsi Exp $ */
+/* $XFree86: xc/programs/makepsres/makepsres.c,v 1.10 2004/04/03 22:38:55 tsi Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -171,8 +171,8 @@ static char *ckcalloc(int count, int size, char *whynot)
 }
 
 
-static Category *AddCategory (name)
-  char *name;
+static Category *AddCategory (
+  char *name)
 {
   Category *newCategory = (Category *) ckcalloc (1, sizeof (Category),
 		"Failed to allocate Category record.");
@@ -218,8 +218,8 @@ static Category *AddCategory (name)
 }
 
 
-static Category *FindCategory (name)
-  char *name;
+static Category *FindCategory (
+  char *name)
 {
   Category *category = categories;
 
@@ -237,8 +237,8 @@ static Category *FindCategory (name)
 }
 
 
-int Hash(string)
-    char *string;
+static int Hash(
+    char *string)
 {
     int hash = 0;
     unsigned char *ch = (unsigned char *) string;
@@ -254,9 +254,9 @@ int Hash(string)
     }
 }
 
-static void AddHashedResource(resource, category)
-    Resource *resource;
-    Category *category;
+static void AddHashedResource(
+    Resource *resource,
+    Category *category)
 {
     Resource *current, *previous;
     int     comparison, hash;
@@ -299,9 +299,10 @@ static void AddHashedResource(resource, category)
     }
 }
 
-void EnterDuplicateWarning(category, res1, res2)
-    Category *category;
-    Resource *res1, *res2;
+static void EnterDuplicateWarning(
+    Category *category,
+    Resource *res1,
+    Resource *res2)
 {
     Duplicate *dup, *previous, *current;
 
@@ -334,11 +335,11 @@ void EnterDuplicateWarning(category, res1, res2)
     }
 }
 
-static void AddResource (categoryName, resourceName, fileName, noPrefix)
-  char *resourceName;
-  char *categoryName;
-  char *fileName;
-  int noPrefix;
+static void AddResource (
+  char *categoryName,
+  char *resourceName,
+  char *fileName,
+  int noPrefix)
 {
   Category *category = FindCategory (categoryName);
   Resource *resource,
@@ -409,9 +410,9 @@ static void AddResource (categoryName, resourceName, fileName, noPrefix)
   }
 }
 
-int FindResource(categoryName, resourceName)
-  char *categoryName;
-  char *resourceName;
+static int FindResource(
+  char *categoryName,
+  char *resourceName)
 {
     Category *category = FindCategory (categoryName);
     Resource *resource;
@@ -452,13 +453,12 @@ int bucketCount[HASHSIZE];
 int totalHashed = 0;
 #endif
 
-static void AddUPRResource (categoryName, resourceName, fileName, prefix,
-			    noPrefix)
-  char *resourceName;
-  char *categoryName;
-  char *fileName;
-  char *prefix;
-  int noPrefix;
+static void AddUPRResource (
+  char *categoryName,
+  char *resourceName,
+  char *fileName,
+  char *prefix,
+  int noPrefix)
 {
   UPRResource *resource, *current, *previous;
   int     comparison, hash;
@@ -558,9 +558,9 @@ static void AddUPRResource (categoryName, resourceName, fileName, prefix,
 }
 
 
-void AddUPRResourceBDF(font, sizes)
-    char *font;
-    char *sizes;
+static void AddUPRResourceBDF(
+    char *font,
+    char *sizes)
 {
     char *ch = sizes;
     char *buf;
@@ -583,9 +583,9 @@ void AddUPRResourceBDF(font, sizes)
     }
 }
 
-void AddUPRResourceFontFamily(family, faces)
-    char *family;
-    char *faces;
+static void AddUPRResourceFontFamily(
+    char *family,
+    char *faces)
 {
     char *ch = faces, *chunk = faces;
     char old;
@@ -614,8 +614,8 @@ void AddUPRResourceFontFamily(family, faces)
     }
 }
 
-static int SkipWhiteSpace(file)
-    FILE *file;
+static int SkipWhiteSpace(
+    FILE *file)
 {
     int c;
 
@@ -629,10 +629,10 @@ static int SkipWhiteSpace(file)
 }
 
 
-static int ReadItem(file, buf, size)
-    FILE *file;
-    char *buf;
-    int size;
+static int ReadItem(
+    FILE *file,
+    char *buf,
+    int size)
 {
     int c;
     char closechar, openchar;
@@ -667,9 +667,9 @@ static int ReadItem(file, buf, size)
     return true;
 }
 
-static char *FindKeyValue (file, key)
-  FILE *file;
-  char *key;
+static char *FindKeyValue (
+  FILE *file,
+  char *key)
 {
   char    lineKey[64];
   char   *result = NULL;
@@ -691,8 +691,8 @@ static char *FindKeyValue (file, key)
   return (result);
 }
 
-static void StripName (name)
-  char *name;
+static void StripName (
+  char *name)
 {
   char    closeCharacter = '\0';
   char   *pointer;
@@ -740,10 +740,14 @@ static int missingFoundryLen[] = {
     9, 4, 9, 0
 };
 
-static void MungeFontNames(name, family, fullname, weight,
-			   familyReturn, fullnameReturn, faceReturn)
-    char *name, *family, *fullname, *weight;
-    char *familyReturn, *fullnameReturn, *faceReturn;
+static void MungeFontNames(
+    char *name,
+    char *family,
+    char *fullname,
+    char *weight,
+    char *familyReturn,
+    char *fullnameReturn,
+    char *faceReturn)
 {
     register char *src, *dst, prev;
     char buf[256];
@@ -911,8 +915,8 @@ FAMILY_DONE:
 }
 
 
-void StripComments(buf)
-    char *buf;
+static void StripComments(
+    char *buf)
 {
     register char *ch = buf;
 
@@ -941,8 +945,8 @@ void StripComments(buf)
 
 /* Caller must free returned line */
 
-char *GetWholeLine(file)
-    FILE *file;
+static char *GetWholeLine(
+    FILE *file)
 {
     char *line;
     int len, oldlen;
@@ -980,9 +984,9 @@ char *GetWholeLine(file)
     return line;
 }
 
-static void HandleUnopenableUPRFile(filename, err)
-    char *filename;
-    int err;
+static void HandleUnopenableUPRFile(
+    char *filename,
+    int err)
 {
     if (issueWarnings) {
 	fprintf (stderr, "%s:  Could not open file %s (%s).\n",
@@ -993,8 +997,8 @@ static void HandleUnopenableUPRFile(filename, err)
 }
 
 
-void PreprocessResourceDirectory(fullname)
-    char *fullname;
+static void PreprocessResourceDirectory(
+    char *fullname)
 {
     char *category;
     FILE *file;
@@ -1074,9 +1078,9 @@ void PreprocessResourceDirectory(fullname)
     }
 }
 
-static int SkipToCharacter (file, character)
-  FILE *file;
-  char character;
+static int SkipToCharacter (
+  FILE *file,
+  char character)
 {
   int c;
 
@@ -1088,10 +1092,11 @@ static int SkipToCharacter (file, character)
   return (false);
 }
 
-static int SkipToEitherCharacter (file, character1, character2, outchar)
-  FILE *file;
-  char character1, character2;
-  char *outchar;
+static int SkipToEitherCharacter (
+  FILE *file,
+  char character1,
+  char character2,
+  char *outchar)
 {
   register int c;
 
@@ -1106,9 +1111,9 @@ static int SkipToEitherCharacter (file, character1, character2, outchar)
 }
 
 
-static void ProcessFont (file, fileName)
-    FILE *file;
-    char *fileName;
+static void ProcessFont (
+    FILE *file,
+    char *fileName)
 {
     char fontName[256], fontFamily[256], fontFullName[256], fontWeight[256];
     char key[256], buf[513];
@@ -1198,9 +1203,9 @@ static void ProcessFont (file, fileName)
 }
 
 
-static void ProcessResource (file, fileName)
-    FILE *file;
-    char *fileName;
+static void ProcessResource (
+    FILE *file,
+    char *fileName)
 {
     char    resourceType[256];
     char    resourceName[256];
@@ -1227,9 +1232,9 @@ static void ProcessResource (file, fileName)
 }
 
 
-static void ProcessBDF (file, fileName)
-    FILE *file;
-    char *fileName;
+static void ProcessBDF (
+    FILE *file,
+    char *fileName)
 {
     char    fontName[256];
     char    psFontName[256];
@@ -1293,9 +1298,9 @@ static void ProcessBDF (file, fileName)
     AddResource ("FontBDFSizes", fontName, sizebuf, true);
 }
 
-static void ProcessAFM (file, fileName)
-    FILE *file;
-    char *fileName;
+static void ProcessAFM (
+    FILE *file,
+    char *fileName)
 {
     char    fontName[256];
     char   *pointer;
@@ -1316,14 +1321,14 @@ static void ProcessAFM (file, fileName)
 }
 
 /* ARGSUSED */
-static void ProcessResourceDirectory (file, fileName)
-    FILE *file;
-    char *fileName;
+static void ProcessResourceDirectory (
+    FILE *file,
+    char *fileName)
 {
 }
 
-void MarkAsNonResource(filename)
-    char *filename;
+static void MarkAsNonResource(
+    char *filename)
 {
     AddResource("mkpsresPrivate", "NONRESOURCE", filename, false);
 }
@@ -1341,9 +1346,9 @@ char *userCategories[] = {
     NULL
 };
 
-static void IdentifyFromUser(filename, file)
-    char *filename;
-    FILE *file;
+static void IdentifyFromUser(
+    char *filename,
+    FILE *file)
 {
     int i, numCats, choice, size;
     char buf[256], name[256];
@@ -1484,8 +1489,8 @@ static void IdentifyFromUser(filename, file)
     }
 }
 
-int IdentifyFromUPRList(filename)
-    char *filename;
+static int IdentifyFromUPRList(
+    char *filename)
 {
     UPRResource *resource = UPRresources[Hash(filename)];
 
@@ -1498,8 +1503,8 @@ int IdentifyFromUPRList(filename)
     return true;
 }
 
-int IdentifyFromFileSuffix(fileName)
-    char *fileName;
+static int IdentifyFromFileSuffix(
+    char *fileName)
 {
     int len, len1;
     char fontName[256];
@@ -1535,9 +1540,9 @@ int IdentifyFromFileSuffix(fileName)
     return false;
 }
 
-static void HandleUnopenableFile(filename, err)
-    char *filename;
-    int err;
+static void HandleUnopenableFile(
+    char *filename,
+    int err)
 {
     if (IdentifyFromUPRList(filename)) return;
 
@@ -1555,9 +1560,9 @@ static void HandleUnopenableFile(filename, err)
 }
 
 
-static void HandleUnidentifiableFile(filename, file)
-    char *filename;
-    FILE *file;
+static void HandleUnidentifiableFile(
+    char *filename,
+    FILE *file)
 {
     if (IdentifyFromUPRList(filename)) return;
 
@@ -1580,7 +1585,7 @@ typedef struct {
     int   keyLength;
     char *key2;
     int	  key2Length;
-    void (*proc)(/* FILE *file, char *fileName */);
+    void (*proc)(FILE * /* file */, char * /* fileName */);
 } ResourceKey;
 
 static ResourceKey resourceTypes[] = {
@@ -1592,9 +1597,9 @@ static ResourceKey resourceTypes[] = {
   {NULL,		 0, NULL}
 };
 
-static void ProcessFile (fileName, filePath)
-  char *fileName;
-  char  *filePath;
+static void ProcessFile (
+  char *fileName,
+  char *filePath)
 {
   FILE   *file;
   ResourceKey *resourceType;
@@ -1640,9 +1645,9 @@ static void ProcessFile (fileName, filePath)
   fclose (file);
 }
 
-static void ProcessUPRFile (fileName, filePath)
-  char *fileName;
-  char  *filePath;
+static void ProcessUPRFile (
+  char *fileName,
+  char *filePath)
 {
   int len;
 
@@ -1657,10 +1662,10 @@ static void ProcessUPRFile (fileName, filePath)
 }
 
 
-static void ProcessDirectory (directoryName, top, fileFunction)
-  char *directoryName;
-  int top;
-  void (*fileFunction)();
+static void ProcessDirectory (
+  char *directoryName,
+  int top,
+  void (*fileFunction)(char *fileName, char *filePath) )
 {
   DIR    *directory;
   struct dirent *directoryEntry;
@@ -1706,7 +1711,7 @@ static void ProcessDirectory (directoryName, top, fileFunction)
 }
 
 
-void GenerateEntriesFromUPRList()
+static void GenerateEntriesFromUPRList(void)
 {
   Category *category;
   Resource *resource;
@@ -1810,7 +1815,7 @@ NEXT_UPR:	;
 }
 
 
-static char *ExtractDirectoryPrefix()
+static char *ExtractDirectoryPrefix(void)
 {
   Category *category;
   Resource *resource;
@@ -1910,9 +1915,9 @@ static char *ExtractDirectoryPrefix()
 }
 
 
-static void OutputChar(file, c)
-    FILE *file;
-    char c;
+static void OutputChar(
+    FILE *file,
+    char c)
 {
     static int len;	/* Rely upon being 0 initially */
 
@@ -1928,17 +1933,17 @@ static void OutputChar(file, c)
     putc(c, file);
 }
 
-static void OutputString(file, s)
-    FILE *file;
-    char *s;
+static void OutputString(
+    FILE *file,
+    char *s)
 {
     while (*s != '\0') OutputChar(file, *s++);
 }
 
 
-static void PrintResourceDirectory (directoryName, file)
-  char *directoryName;
-  FILE *file;
+static void PrintResourceDirectory (
+  char *directoryName,
+  FILE *file)
 {
   Category *category;
   Resource *resource;
@@ -2024,7 +2029,7 @@ static void PrintResourceDirectory (directoryName, file)
 }
 
 
-void Usage()
+static void Usage(void)
 {
     fprintf(stderr,
 	   "Usage: %s [-o outputfile] [-f inputfile]... [-dir directory]...\n",
@@ -2036,7 +2041,7 @@ void Usage()
 
 int stdinDirectories = false;
 
-void ReadStdinDirectories()
+static void ReadStdinDirectories(void)
 {
     char buf[256];
 
@@ -2059,9 +2064,9 @@ void ReadStdinDirectories()
     }
 }
 
-void ProcessArglist(argc, argv)
-    int argc;
-    char *argv[];
+static void ProcessArglist(
+    int argc,
+    char *argv[])
 {
     int i = 1, j;
 
@@ -2166,8 +2171,8 @@ void ProcessArglist(argc, argv)
 }
 
 
-void CheckBackup(filename)
-    char *filename;
+static void CheckBackup(
+    char *filename)
 {
     char *backupname;
 
@@ -2205,7 +2210,7 @@ void CheckBackup(filename)
 }
 
 
-void IssueDuplicateWarnings()
+static void IssueDuplicateWarnings(void)
 {
     int headerIssued = false;
     Category *category;
@@ -2231,9 +2236,9 @@ void IssueDuplicateWarnings()
 }
 
 int
-main (argc, argv)
-  int argc;
-  char *argv[];
+main (
+  int argc,
+  char *argv[])
 {
   FILE   *outputFile;
   int     i, len;
@@ -2276,6 +2281,7 @@ main (argc, argv)
   {
       int i, biggestBucket, emptyCount;
       static int count[11];
+
       emptyCount = biggestBucket = 0;
       for (i = 0; i < HASHSIZE; i++) {
 	  if (bucketCount[i] == 0) emptyCount++;

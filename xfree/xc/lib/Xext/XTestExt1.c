@@ -1,4 +1,3 @@
-/* $Xorg: XTestExt1.c,v 1.4 2001/02/09 02:03:49 xorgcvs Exp $ */
 /*
  *	File:  xtestext1lib.c
  *
@@ -51,7 +50,7 @@ Telephone and Telegraph Company or of the Regents of the
 University of California.
 
 */
-/* $XFree86: xc/lib/Xext/XTestExt1.c,v 1.4 2001/12/14 19:55:01 dawes Exp $ */
+/* $XFree86: xc/lib/Xext/XTestExt1.c,v 1.5 2005/01/27 02:28:59 dawes Exp $ */
 
 /******************************************************************************
  * include files
@@ -113,14 +112,19 @@ static unsigned long	action_count = 0;
  * function declarations
  *****************************************************************************/
 
-static int	XTestWireToEvent();
-static int	XTestCheckExtInit();
-static Bool	XTestIdentifyMyEvent();
-static int	XTestInitExtension();
-static int	XTestKeyOrButton();
-static int	XTestCheckDelay();
-static int	XTestPackInputAction();
-static int	XTestWriteInputActions();
+static int XTestCheckExtInit(Display *dpy);
+static int XTestInitExtension(Display *dpy);
+static Bool XTestWireToEvent(Display *dpy, XEvent *reTemp, xEvent *eventTemp);
+static int XTestKeyOrButton(Display *display, int device_id,
+			    unsigned long delay, unsigned int code,
+			    unsigned int action);
+static int XTestPackInputAction(Display *display, CARD8 *action_addr,
+				int action_size);
+static int XTestCheckDelay(Display *display, unsigned long *delay_addr);
+static int XTestWriteInputActions(Display *display, char *action_list_addr,
+				  int action_list_size, int ack_flag);
+static	Bool XTestIdentifyMyEvent(Display *display, XEvent *event_ptr,
+				  char *args);
 
 /******************************************************************************
  *
@@ -130,24 +134,8 @@ static int	XTestWriteInputActions();
  *	to the server by this extension.
  */
 int
-XTestFakeInput(dpy, action_list_addr, action_list_size, ack_flag)
-/*
- * the connection to the X server
- */
-register Display	*dpy;
-/*
- * the address of a list of input actions to be sent to the server
- */
-char			*action_list_addr;
-/*
- * the size (in bytes) of the list of input actions
- */
-int			action_list_size;
-/*
- * specifies whether the server needs to send an event to indicate that its
- * input action buffer is empty
- */
-int			ack_flag;
+XTestFakeInput(Display *dpy, char *action_list_addr, int action_list_size,
+	       int ack_flag)
 {	
 	/*
 	 * pointer to xTestFakeInputReq structure
@@ -224,15 +212,7 @@ int			ack_flag;
  *	to be sent to the client that called this function.
  */
 int
-XTestGetInput(dpy, action_handling)
-/*
- * the connection to the X server
- */
-register Display	*dpy;
-/*
- * tells the server what to do with the user input actions
- */
-int			action_handling;
+XTestGetInput(Display *dpy, int action_handling)
 {	
 	/*
 	 * pointer to xTestGetInputReq structure
@@ -286,11 +266,7 @@ int			action_handling;
  *	into events.
  */
 int
-XTestStopInput(dpy)
-/*
- * the connection to the X server
- */
-register Display	*dpy;
+XTestStopInput(Display *dpy)
 {	
 	/*
 	 * pointer to xTestStopInputReq structure
@@ -340,11 +316,7 @@ register Display	*dpy;
  *	back to its initial state.
  */
 int
-XTestReset(dpy)
-/*
- * the connection to the X server
- */
-register Display	*dpy;
+XTestReset(Display *dpy)
 {	
 	/*
 	 * pointer to xTestReset structure
@@ -393,16 +365,7 @@ register Display	*dpy;
  *	Returns the number of input actions in the server's input action buffer.
  */
 int
-XTestQueryInputSize(dpy, size_return)
-/*
- * the connection to the X server
- */
-register Display	*dpy;
-/*
- * the address of the place to put the number of input actions in the
- * server's input action buffer
- */
-unsigned long		*size_return;
+XTestQueryInputSize(Display *dpy, unsigned long *size_return)
 {	
 	/*
 	 * pointer to xTestQueryInputSize structure
@@ -463,11 +426,7 @@ unsigned long		*size_return;
  *	Check to see if the XTest extension is installed in the server.
  */
 static int
-XTestCheckExtInit(dpy)
-/*
- * the connection to the X server
- */
-register Display	*dpy;
+XTestCheckExtInit(Display *dpy)
 {
 	/*
 	 * if the extension has not been initialized, then do so
@@ -487,11 +446,7 @@ register Display	*dpy;
  *	succeeds, -1 if it does not succeed.
  */
 static int
-XTestInitExtension(dpy)
-/*
- * the connection to the X server
- */
-register Display	*dpy;
+XTestInitExtension(Display *dpy)
 {
 	/*
 	 * loop index
@@ -548,20 +503,7 @@ register Display	*dpy;
  *	Reformat a wire event into an XEvent structure of the right type.
  */
 static Bool
-XTestWireToEvent(dpy, reTemp, eventTemp)
-/*
- * the connection to the X server
- */
-Display	*dpy;
-/*
- * a pointer to where a host formatted event should be stored
- * with the information copied to it
- */
-XEvent	*reTemp;
-/*
- * a pointer to the wire event
- */
-xEvent	*eventTemp;
+XTestWireToEvent(Display *dpy, XEvent *reTemp, xEvent *eventTemp)
 {
 	XTestInputActionEvent *re    = (XTestInputActionEvent *) reTemp;
 	xTestInputActionEvent *event = (xTestInputActionEvent *) eventTemp;
@@ -632,12 +574,8 @@ xEvent	*eventTemp;
  *	that the specified key on the keyboard was moved as specified.
  */
 int
-XTestPressKey(display, device_id, delay, keycode, key_action)
-Display		*display;
-int		device_id;
-unsigned long	delay;
-unsigned int	keycode;
-unsigned int	key_action;
+XTestPressKey(Display *display, int device_id, unsigned long delay,
+	      unsigned int keycode, unsigned int key_action)
 {
 	/*
 	 * bounds check the key code
@@ -664,12 +602,8 @@ unsigned int	key_action;
  *	that the specified button on the mouse was moved as specified.
  */
 int
-XTestPressButton(display, device_id, delay, button_number, button_action)
-Display		*display;
-int		device_id;
-unsigned long	delay;
-unsigned int	button_number;
-unsigned int	button_action;
+XTestPressButton(Display *display, int device_id, unsigned long delay,
+		 unsigned int button_number, unsigned int button_action)
 {
 	/*
 	 * bounds check the button number
@@ -696,12 +630,8 @@ unsigned int	button_action;
  *	that the specified key/button was moved as specified.
  */
 static int
-XTestKeyOrButton(display, device_id, delay, code, action)
-Display		*display;
-int		device_id;
-unsigned long	delay;
-unsigned int	code;
-unsigned int	action;
+XTestKeyOrButton(Display *display, int device_id, unsigned long delay,
+		 unsigned int code, unsigned int action)
 {
 	/*
 	 * holds a key input action to be filled out and sent to the server
@@ -877,13 +807,8 @@ unsigned int	action;
  *	that the mouse was moved as specified.
  */
 int
-XTestMovePointer(display, device_id, delay, x, y, count)
-Display		*display;
-int		device_id;
-unsigned long	delay[];
-int		x[];
-int		y[];
-unsigned int	count;
+XTestMovePointer(Display *display, int device_id, unsigned long *delay,
+		 int *x, int *y, unsigned int count)
 {
 	/*
 	 * holds a motion input action to be filled out and sent to the server
@@ -1039,9 +964,7 @@ unsigned int	count;
  *	will fit in a normal input action, then send a delay input action.
  */
 static int
-XTestCheckDelay(display, delay_addr)
-Display		*display;
-unsigned long	*delay_addr;
+XTestCheckDelay(Display *display, unsigned long *delay_addr)
 {
 	/*
 	 * holds a delay input action to be filled out and sent to the server
@@ -1084,10 +1007,7 @@ unsigned long	*delay_addr;
  *	then send the input actions to the server using XTestFakeInput.
  */
 static int
-XTestPackInputAction(display, action_addr, action_size)
-Display	*display;
-CARD8	*action_addr;
-int	action_size;
+XTestPackInputAction(Display *display, CARD8 *action_addr, int action_size)
 {
 	/*
 	 * loop index
@@ -1184,11 +1104,8 @@ int	action_size;
  *	Send input actions to the server.
  */
 static int
-XTestWriteInputActions(display, action_list_addr, action_list_size, ack_flag)
-Display	*display;
-char	*action_list_addr;
-int	action_list_size;
-int	ack_flag;
+XTestWriteInputActions(Display *display, char *action_list_addr,
+		       int action_list_size, int ack_flag)
 {
 	/*
 	 * Holds an event.  Used while waiting for an acknowledge event
@@ -1197,7 +1114,7 @@ int	ack_flag;
 	/*
 	 * points to XTestIdentifyMyEvent
 	 */
-	Bool	(*func_ptr)();
+	Bool	(*func_ptr)(Display *, XEvent *, char *);
 
 	/*
 	 * write the input actions to the server
@@ -1256,16 +1173,7 @@ int	ack_flag;
  *	it is of XTestFakeAckType.
  */
 static	Bool
-XTestIdentifyMyEvent(display, event_ptr, args)
-Display	*display;
-/*
- * Holds the event that this routiine is supposed to look at.
- */
-XEvent	*event_ptr;
-/*
- * this points to any user-specified arguments (ignored)
- */
-char	*args;
+XTestIdentifyMyEvent(Display *display, XEvent *event_ptr, char *args)
 {
 	/*
 	 * if the event if of the correct type, return the Bool True,
@@ -1288,8 +1196,7 @@ char	*args;
  *	Send any input actions in the input action buffer to the server.
  */
 int
-XTestFlush(display)
-Display	*display;
+XTestFlush(Display *display)
 {
 	/*
 	 * acknowledge flag

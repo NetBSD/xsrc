@@ -1,7 +1,7 @@
 
 // based on a keyboard map from an 'xkb/symbols/dk' file
 //
-// $XFree86: xc/programs/xkbcomp/symbols/pc/dvorak,v 1.6 2004/01/03 16:38:26 herrb Exp $
+// $XFree86: xc/programs/xkbcomp/symbols/pc/dvorak,v 1.7 2004/04/03 13:43:42 pascal Exp $
 
 partial default alphanumeric_keys
 xkb_symbols "basic" {
@@ -275,4 +275,80 @@ xkb_symbols "pl_altquotes" {
     include "pc/dvorak(pl_basic)"
 
     key <AE01> { [	    1,	exclam, doublelowquotemark, rightdoublequotemark	]	};
+};
+
+// German Dvorak
+partial alphanumeric_keys 
+xkb_symbols "de" {
+    include "pc/dvorak(basic)"
+
+    key <TLDE> { [	dead_circumflex,	degree,		notsign,	notsign		]	};
+    key <AE01> { [	1,			exclam,		onesuperior			]	};
+    key <AE02> { [	2,			quotedbl,	twosuperior			]	};
+    key <AE03> { [	3,			section,	threesuperior,	sterling	]	};
+    key <AE04> { [	4,			dollar,		onequarter,	currency	]	};
+    key <AE05> { [	5,			percent,	onehalf				]	};
+    key <AE06> { [	6,			ampersand,	threequarters			]	};
+    key <AE07> { [	7,			slash,		braceleft			]	};
+    key <AE08> { [	8,			parenleft,	bracketleft			]	};
+    key <AE09> { [	9,			parenright,	bracketright,	plusminus	]	};
+    key <AE10> { [	0,			equal,		braceright,	degree		]	};
+    key <AE11> { [	ssharp,			question,	backslash,	questiondown	]	};
+    key <AE12> { [	dead_acute,		dead_grave,	dead_cedilla,	dead_ogonek	]	};
+    key <AB02> { [	q,			Q,		at				]	};
+    key <AD08> { [	c,			C,		cent				]	};
+    key <AC03> { [	e,			E,		EuroSign			]	};
+    key <AC02> { [	o,			O,		oslash				]	};
+    key <AD11> { [	udiaeresis,		Udiaeresis,	dead_diaeresis	 		]	};
+    key <AD12> { [      plus,			asterisk,	dead_tilde,	dead_macron	]	};
+    key <AD01> { [ 	odiaeresis,		Odiaeresis,	dead_doubleacute		]	};
+    key <AB01> { [ 	adiaeresis,		Adiaeresis,	dead_circumflex			]	};
+    key <LSGT> { [      less,			greater,	bar				]	};
+    key <AD05> { [	y,			Y,		guillemotleft,	less		]	};
+    key <AB07> { [	m,			M,		mu				]	};
+    key <AD02> { [	comma,			semicolon					]	};
+    key <AD03> { [	period,			colon,		periodcentered,	division	]	};
+    key <BKSL> { [	numbersign,		apostrophe,	dead_grave			]	};
+};
+
+partial alphanumeric_keys
+xkb_symbols "de_nodeadkeys" {
+
+    // modify the German layout to not have any dead keys
+
+    include "pc/dvorak(de)"
+
+    key <TLDE>  { [asciicircum,    degree,      notsign,      notsign ] };
+    key <AE12>  { [     acute,      grave,      cedilla,      cedilla ] };
+    key <AD11>  { [udiaeresis, Udiaeresis,    diaeresis,    diaeresis ] };
+    key <AD12>  { [      plus,   asterisk,   asciitilde,       macron ] };
+    key <AD01>  { [odiaeresis, Odiaeresis,  doubleacute,  doubleacute ] };
+    key <AB01>  { [adiaeresis, Adiaeresis,  asciicircum,  asciicircum ] };
+    key <BKSL>  { [numbersign, apostrophe,        grave,        grave ] };
+    key <AC11>  { [     minus, underscore, dead_belowdot,    abovedot ] };
+};
+
+partial alphanumeric_keys
+xkb_symbols "de_deadgraveacute" {
+    // modify the German layout to have only acute and grave
+    // as dead keys (tilde and circumflex are needed as spacing characters
+    // in many programming languages)
+
+    include "pc/dvorak(de)"
+
+    key <TLDE>  { [asciicircum,    degree,      notsign,      notsign ] };
+    key <AD12>  { [      plus,   asterisk,   asciitilde,  dead_macron ] };
+    key <BKSL>  { [numbersign, apostrophe,        grave,        grave ] };
+};
+
+partial alphanumeric_keys
+xkb_symbols "de_deadacute" {
+    // modify the German layout to have only acute as
+    // dead keys (ASCII grave, tilde and circumflex are needed as
+    // spacing characters in many programming languages and text formatters)
+
+    include "pc/dvorak(de_deadgraveacute)"
+
+    key <AE12>  { [dead_acute,      grave, dead_cedilla,  dead_ogonek ] };
+    key <BKSL>  { [numbersign, apostrophe,   dead_grave,   dead_grave ] };
 };

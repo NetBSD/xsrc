@@ -20,7 +20,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  *
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/hurd/hurd_mouse.c,v 1.8 2000/11/14 18:20:37 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/hurd/hurd_mouse.c,v 1.9 2005/02/03 03:32:53 dawes Exp $ */
 
 #define NEED_EVENTS
 #include "X.h"
@@ -119,6 +119,7 @@ OsMouseProc(DeviceIntPtr pPointer, int what)
 				   NUMEVENTS * sizeof(kd_event));
 	    if (!pMse->buffer) {
 		xfree(pMse);
+		pInfo->private = NULL;
 		xf86CloseSerial(pInfo->fd);
 		pInfo->fd = -1;
 	    } else {
@@ -224,6 +225,7 @@ OsMousePreInit(InputInfoPtr pInfo, const char *protocol, int flags)
 	else {
 	    xf86Msg(X_ERROR, "%s: cannot open input device\n", pInfo->name);
 	    xfree(pMse);
+	    pInfo->private = NULL;
 	    return FALSE;
 	}
     }

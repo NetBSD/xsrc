@@ -1,6 +1,6 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/loader/fontsym.c,v 1.15 2004/02/13 23:58:45 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/loader/fontsym.c,v 1.16 2004/09/15 15:01:26 dawes Exp $ */
 /*
- * Copyright (c) 1998-2002 by The XFree86 Project, Inc.
+ * Copyright (c) 1998-2004 by The XFree86 Project, Inc.
  * All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining
@@ -99,6 +99,7 @@ LOOKUP fontLookupTab[] = {
     SYMFUNC(DestroyFontRec)
     SYMFUNC(GetGlyphs)
     SYMFUNC(QueryGlyphExtents)
+    SYMFUNC(AllocateFontPrivateIndex)
 
     SYMVAR(FontFileBitmapSources)
 

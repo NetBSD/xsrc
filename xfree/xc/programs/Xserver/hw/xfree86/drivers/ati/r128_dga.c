@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/r128_dga.c,v 1.10 2003/11/10 18:41:20 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/r128_dga.c,v 1.11 2004/12/07 15:59:18 tsi Exp $ */
 /*
  * Authors:
  *   Ove Kåven <ovek@transgaming.com>,
@@ -19,8 +19,9 @@
 #include "r128_common.h"
 #endif
 
-static Bool R128_OpenFramebuffer(ScrnInfoPtr, char **, unsigned char **,
-					int *, int *, int *);
+static Bool R128_OpenFramebuffer(ScrnInfoPtr, char **, unsigned int *,
+				 unsigned int *, unsigned int *,
+				 unsigned int *);
 static Bool R128_SetMode(ScrnInfoPtr, DGAModePtr);
 static int  R128_GetViewport(ScrnInfoPtr);
 static void R128_SetViewport(ScrnInfoPtr, int, int, int);
@@ -380,18 +381,18 @@ static Bool
 R128_OpenFramebuffer(
    ScrnInfoPtr pScrn,
    char **name,
-   unsigned char **mem,
-   int *size,
-   int *offset,
-   int *flags
+   unsigned int *mem,
+   unsigned int *size,
+   unsigned int *offset,
+   unsigned int *flags
 ){
     R128InfoPtr info = R128PTR(pScrn);
 
     *name = NULL;               /* no special device */
-    *mem = (unsigned char*)info->LinearAddr;
+    *mem = info->LinearAddr;
     *size = info->FbMapSize;
     *offset = 0;
-    *flags = /* DGA_NEED_ROOT */ 0; /* don't need root, just /dev/mem access */
+    *flags = 0;
 
     return TRUE;
 }

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/vga/generic.c,v 1.65 2003/10/30 17:37:15 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/vga/generic.c,v 1.68 2004/11/26 11:50:22 tsi Exp $ */
 /*
  * Copyright (C) 1998 The XFree86 Project, Inc.  All Rights Reserved.
  *
@@ -125,6 +125,7 @@ static const char *vgahwSymbols[] =
     "vgaHWGetIOBase",
     "vgaHWGetIndex",
     "vgaHWHandleColormaps",
+    "vgaHWHBlankKGA",
     "vgaHWInit",
     "vgaHWLock",
     "vgaHWMapMem",
@@ -134,6 +135,7 @@ static const char *vgahwSymbols[] =
     "vgaHWSaveScreen",
     "vgaHWUnlock",
     "vgaHWUnmapMem",
+    "vgaHWVBlankKGA",
     NULL
 };
 
@@ -818,13 +820,14 @@ GenericSetMode(ScrnInfoPtr pScreenInfo, DisplayModePtr pMode)
     vgaHWPtr pvgaHW = VGAHWPTR(pScreenInfo);
     GenericPtr pGenericPriv = GenericGetRec(pScreenInfo);
 
+    pvgaHW->Flags |= VGA_FIX_SYNC_PULSES;
     if (!vgaHWInit(pScreenInfo, pMode))
 	return FALSE;
     if (pGenericPriv->KGAUniversal)
     {
 #define KGA_FLAGS (KGA_FIX_OVERSCAN | KGA_BE_TOT_DEC)
 	vgaHWHBlankKGA(pMode, &pvgaHW->ModeReg, 0, KGA_FLAGS);
-	vgaHWHBlankKGA(pMode, &pvgaHW->ModeReg, 0, KGA_FLAGS);
+	vgaHWVBlankKGA(pMode, &pvgaHW->ModeReg, 0, KGA_FLAGS);
 #undef KGA_FLAGS
     }
 
@@ -1419,9 +1422,9 @@ GenericScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 				      pScreenInfo->bitsPerPixel);
 		if (!Inited)
 		    break;
-#ifdef RENDER
+
 		fbPictureInit (pScreen, 0, 0);
-#endif
+
 		ShadowFBInit(pScreen, GenericRefreshArea1bpp);
 	    }
 	    else
@@ -1451,9 +1454,9 @@ GenericScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 				      pScreenInfo->bitsPerPixel);
 		if (!Inited)
 		    break;
-#ifdef RENDER
+
 		fbPictureInit (pScreen, 0, 0);
-#endif
+
 		ShadowFBInit(pScreen, GenericRefreshArea4bpp);
 	    }
 	    else
@@ -1471,9 +1474,11 @@ GenericScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 				  pScreenInfo->xDpi, pScreenInfo->yDpi,
 				  pScreenInfo->displayWidth,
 				  pScreenInfo->bitsPerPixel);
-#ifdef RENDER
+	    if (!Inited)
+		break;
+
 	    fbPictureInit (pScreen, 0, 0);
-#endif
+
 	    break;
 	default:
 	    xf86DrvMsg(pScreenInfo->scrnIndex, X_ERROR,

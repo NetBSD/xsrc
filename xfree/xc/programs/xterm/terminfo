@@ -1,3 +1,5 @@
+# $XTermId: terminfo,v 1.105 2005/02/06 18:53:07 tom Exp $
+#
 # $Xorg: terminfo,v 1.3 2000/08/17 19:55:10 cpqbld Exp $
 #
 # meml locks memory above the cursor; memu unlocks (ala HP terminals)
@@ -5,7 +7,7 @@
 # XFree86 updates/notes/new entries (including xterm-8bit, xterm-16color)
 # - Thomas E. Dickey
 #
-# $XFree86: xc/programs/xterm/terminfo,v 3.49 2003/10/27 01:07:57 dickey Exp $
+# $XFree86: xc/programs/xterm/terminfo,v 3.55 2005/02/06 21:42:38 dickey Exp $
 #
 # Special Capabilities:
 # --------------------
@@ -101,7 +103,7 @@
 # PageUp and PageDown, which correspond to terminfo kIC, kEND, kPRV and kNXT
 # respectively.
 #
-xterm-xfree86|xterm-new|xterm terminal emulator (XFree86),
+xterm-new|modern xterm terminal emulator,
 	npc,
 	indn=\E[%p1%dS,
 	kDC=\E[3;2~,
@@ -120,6 +122,16 @@ xterm-xfree86|xterm-new|xterm terminal emulator (XFree86),
 	kcuu1=\EOA,
 	kend=\EOF,
 	kent=\EOM,
+	khome=\EOH,
+	kich1=\E[2~,
+	kmous=\E[M,
+	knp=\E[6~,
+	kpp=\E[5~,
+	rin=\E[%p1%dT,
+	use=xterm+pcfkeys,
+	use=xterm-basic,
+#
+xterm+pcfkeys|fragment for PC-style keys,
 	kf1=\EOP,
 	kf10=\E[21~,
 	kf11=\E[23~,
@@ -163,21 +175,29 @@ xterm-xfree86|xterm-new|xterm terminal emulator (XFree86),
 	kf46=\E[21;6~,
 	kf47=\E[23;6~,
 	kf48=\E[24;6~,
+	kf49=\EO3P,
 	kf5=\E[15~,
+	kf50=\EO3Q,
+	kf51=\EO3R,
+	kf52=\EO3S,
+	kf53=\E[15;3~,
+	kf54=\E[17;3~,
+	kf55=\E[18;3~,
+	kf56=\E[19;3~,
+	kf57=\E[20;3~,
+	kf58=\E[21;3~,
+	kf59=\E[23;3~,
 	kf6=\E[17~,
+	kf60=\E[24;3~,
+	kf61=\EO4P,
+	kf62=\EO4Q,
+	kf63=\EO4R,
 	kf7=\E[18~,
 	kf8=\E[19~,
 	kf9=\E[20~,
-	khome=\EOH,
-	kich1=\E[2~,
-	kmous=\E[M,
-	knp=\E[6~,
-	kpp=\E[5~,
-	rin=\E[%p1%dT,
-	use=xterm-basic,
 #
 # This chunk is used for building the VT220/Sun/PC keyboard variants.
-xterm-basic|xterm terminal emulator - common (XFree86),
+xterm-basic|modern xterm terminal emulator - common,
 	am,
 	bce,
 	km,
@@ -218,7 +238,6 @@ xterm-basic|xterm terminal emulator - common (XFree86),
 	ed=\E[J,
 	el=\E[K,
 	el1=\E[1K,
-	enacs=\E(B\E)0,
 	flash=\E[?5h$<100/>\E[?5l,
 	home=\E[H,
 	hpa=\E[%i%p1%dG,
@@ -241,7 +260,7 @@ xterm-basic|xterm terminal emulator - common (XFree86),
 	rc=\E8,
 	rev=\E[7m,
 	ri=\EM,
-	rmacs=^O,
+	rmacs=\E(B,
 	rmam=\E[?7l,
 	rmcup=\E[?1049l,
 	rmir=\E[4l,
@@ -255,9 +274,9 @@ xterm-basic|xterm terminal emulator - common (XFree86),
 	setaf=\E[3%p1%dm,
 	setb=\E[4%?%p1%{1}%=%t4%e%p1%{3}%=%t6%e%p1%{4}%=%t1%e%p1%{6}%=%t3%e%p1%d%;m,
 	setf=\E[3%?%p1%{1}%=%t4%e%p1%{3}%=%t6%e%p1%{4}%=%t1%e%p1%{6}%=%t3%e%p1%d%;m,
-	sgr=\E[0%?%p6%t;1%;%?%p2%t;4%;%?%p1%p3%|%t;7%;%?%p4%t;5%;%?%p7%t;8%;m%?%p9%t\016%e\017%;,
-	sgr0=\E[m\017,
-	smacs=^N,
+	sgr=\E[0%?%p6%t;1%;%?%p2%t;4%;%?%p1%p3%|%t;7%;%?%p4%t;5%;%?%p7%t;8%;m%?%p9%t\E(0%e\E(B%;,
+	sgr0=\E[m\E(B,
+	smacs=\E(0,
 	smam=\E[?7h,
 	smcup=\E[?1049h,
 	smir=\E[4h,
@@ -271,7 +290,7 @@ xterm-basic|xterm terminal emulator - common (XFree86),
 	u9=\E[c,
 	vpa=\E[%i%p1%dd,
 #
-# The xterm-xfree86 description has all of the features, but is not completely
+# The xterm-new description has all of the features, but is not completely
 # compatible with vt220.  If you are using a Sun or PC keyboard, set the
 # sunKeyboard resource to true:
 #	+ maps the editing keypad
@@ -284,10 +303,10 @@ xterm-basic|xterm terminal emulator - common (XFree86),
 # keys by using the shift-modifier in the translations resource.  However, that
 # interferes with the DECUDK functionality.
 #	  
-xterm-vt220|XFree86 xterm emulating vt220,
+xterm-vt220|xterm emulating vt220,
 	ka1=\EOw,
 	ka3=\EOy,
-	kbeg=\EOu,
+	kb2=\EOu,
 	kc1=\EOq,
 	kc3=\EOs,
 	kcbt=\E[Z,
@@ -324,7 +343,7 @@ xterm-vt220|XFree86 xterm emulating vt220,
 	kpp=\E[5~,
 	use=xterm-basic,
 #
-xterm-vt52|XFree86 xterm emulating dec vt52,
+xterm-vt52|xterm emulating dec vt52,
 	cols#80,
 	it#8,
 	lines#24,
@@ -353,7 +372,7 @@ xterm-vt52|XFree86 xterm emulating dec vt52,
 	smacs=\EF,
 #
 # kf30-kf45 are keysyms XK_R1 through XK_R15 on the Sun keyboard.
-xterm-sun|XFree86 xterm with sun function keys,
+xterm-sun|xterm with sun function keys,
 	kb2=\E[218z,
 	kcpy=\E[197z,
 	kcub1=\EOD,
@@ -402,7 +421,7 @@ xterm-sun|XFree86 xterm with sun function keys,
 	kund=\E[195z,
 	use=xterm-basic,
 #
-xterm-hp|XFree86 xterm with hpterm function keys,
+xterm-hp|xterm with hpterm function keys,
 	kclr=\EJ,
 	kcub1=\ED,
 	kcud1=\EB,
@@ -423,7 +442,7 @@ xterm-hp|XFree86 xterm with hpterm function keys,
 	knp=\ES,
 	kpp=\ET,
 	use=xterm-basic,
-xterm-sco|XFree86 xterm with SCO function keys,
+xterm-sco|xterm with SCO function keys,
 	kcub1=\E[D,
 	kcud1=\E[B,
 	kcuf1=\E[C,
@@ -566,14 +585,14 @@ xterm-ic|xterm-vi|xterm with insert character instead of insert mode,
 # to ncurses).
 xterm-xmc|xterm with magic-cookie glitch,
 	xmc#1,
-	use=xterm-xfree86,
+	use=xterm-new,
 #
 # This one also is primarily for testing ncurses; while the ISO 6429 defines
 # the REP control, none of the DEC VTxxx terminals (VT52 through VT420) support
 # it.
 xterm-rep|xterm with repeat-character control,
 	rep=%p1%c\E[%p2%{1}%-%db,
-	use=xterm-xfree86,
+	use=xterm-new,
 #
 # This is mainly for testing xterm; the real VT220 will not let you switch
 # character sets without first altering the keyboard language in the setup
@@ -583,7 +602,7 @@ xterm-rep|xterm with repeat-character control,
 xterm-nrc|xterm with VT220 national replacement character sets,
 	csnm=%?%p1%{1}%=%tNorth American%e%p1%{2}%=%tBritish%e%p1%{3}%=%tFlemish%e%p1%{4}%=%tFrench Canadian%e%p1%{5}%=%tDanish%e%p1%{6}%=%tFinnish%e%p1%{7}%=%tGerman%e%p1%{8}%=%tDutch%e%p1%{9}%=%tItalian%e%p1%{10}%=%tSwiss (French)%e%p1%{11}%=%tSwiss (German)%e%p1%{12}%=%tSwedish%e%p1%{13}%=%tNorwegian%e%p1%{14}%=%tFrench/Belgian%e%p1%{15}%=%tSpanish%;,
 	scs=%?%p1%{1}%=%t\E(B%e%p1%{2}%=%t\E(A%e%p1%{3}%=%t\E(R%e%p1%{4}%=%t\E(9%e%p1%{5}%=%t\E(E%e%p1%{6}%=%t\E(5%e%p1%{7}%=%t\E(K%e%p1%{8}%=%t\E(4%e%p1%{9}%=%t\E(Y%e%p1%{10}%=%t\E(=%e%p1%{11}%=%t\E(=%e%p1%{12}%=%t\E(7%e%p1%{13}%=%t\E(E%e%p1%{14}%=%t\E(R%e%p1%{15}%=%t\E(Z%;,
-	use=xterm-xfree86,
+	use=xterm-new,
 #
 # Foreground 0-15 maps (with toggles) into 30-37 & 90-97
 # Background 0-15 maps (with toggles) into 40-47 & 100-107
@@ -603,25 +622,25 @@ xterm-16color|xterm with 16 colors,
 	setaf=\E[%?%p1%{8}%<%t%p1%{30}%+%e%p1%{82}%+%;%dm,
 	setb=%p1%{8}%/%{6}%*%{4}%+\E[%d%p1%{8}%m%Pa%?%ga%{1}%=%t4%e%ga%{3}%=%t6%e%ga%{4}%=%t1%e%ga%{6}%=%t3%e%ga%d%;m,
 	setf=%p1%{8}%/%{6}%*%{3}%+\E[%d%p1%{8}%m%Pa%?%ga%{1}%=%t4%e%ga%{3}%=%t6%e%ga%{4}%=%t1%e%ga%{6}%=%t3%e%ga%d%;m,
-	use=xterm-xfree86,
+	use=xterm-new,
 #
-# OPT_PC_MODE should be settable with OSC, and the init for this
-# should turn it off; then ncv could be 0.
 # This uses RGB values 0..1000
+#
+# 256 colors should give 65536 pairs, but terminfo stores numbers in a signed
+# short.  Most people will not notice problems with only 32767 pairs.
 xterm-256color|xterm with 256 colors,
 	ccc,
 	colors#256,
-	ncv#32,
-	pairs#256,
+	pairs#32767,
 	initc=\E]4;%p1%d;rgb\:%p2%{255}%*%{1000}%/%2.2X/%p3%{255}%*%{1000}%/%2.2X/%p4%{255}%*%{1000}%/%2.2X\E\\,
 	setab=\E[48;5;%p1%dm,
 	setaf=\E[38;5;%p1%dm,
 	setb=\E[48;5;%p1%dm,
 	setf=\E[38;5;%p1%dm,
-	use=xterm-xfree86,
+	use=xterm-new,
 xterm-88color|xterm with 88 colors,
 	colors#88,
-	pairs#88,
+	pairs#7744,
 	use=xterm-256color,
 #
 # This is an 8-bit version of xterm, which emulates DEC vt220 with ANSI color.
@@ -675,7 +694,6 @@ xterm-8bit|xterm terminal emulator with 8-bit controls (X Window System),
 	ed=\233J,
 	el=\233K,
 	el1=\2331K,
-	enacs=\E(B\E)0,
 	flash=\233?5h$<100/>\233?5l,
 	home=\233H,
 	hpa=\233%i%p1%dG,
@@ -736,7 +754,7 @@ xterm-8bit|xterm terminal emulator with 8-bit controls (X Window System),
 	rc=\E8,
 	rev=\2337m,
 	ri=\215,
-	rmacs=^O,
+	rmacs=\E(B,
 	rmam=\233?7l,
 	rmcup=\233?1049l,
 	rmir=\2334l,
@@ -750,9 +768,9 @@ xterm-8bit|xterm terminal emulator with 8-bit controls (X Window System),
 	setaf=\2333%p1%dm,
 	setb=\2334%?%p1%{1}%=%t4%e%p1%{3}%=%t6%e%p1%{4}%=%t1%e%p1%{6}%=%t3%e%p1%d%;m,
 	setf=\2333%?%p1%{1}%=%t4%e%p1%{3}%=%t6%e%p1%{4}%=%t1%e%p1%{6}%=%t3%e%p1%d%;m,
-	sgr=\2330%?%p6%t;1%;%?%p2%t;4%;%?%p1%p3%|%t;7%;%?%p4%t;5%;%?%p7%t;8%;m%?%p9%t\016%e\017%;,
-	sgr0=\233m^O,
-	smacs=^N,
+	sgr=\2330%?%p6%t;1%;%?%p2%t;4%;%?%p1%p3%|%t;7%;%?%p4%t;5%;%?%p7%t;8%;m%?%p9%t\E(0%e\E(B%;,
+	sgr0=\233m\E(B,
+	smacs=\E(0,
 	smam=\233?7h,
 	smcup=\233?1049h,
 	smir=\2334h,
@@ -966,9 +984,13 @@ xterm-r5|xterm R5 version,
 	u8=\E[?1;2c,
 	u9=\E[c,
 #
+# Customization begins here.
+xterm-xfree86|xterm terminal emulator (XFree86),
+	use=xterm-new,
+#
 # This is the only entry which you should have to customize, since "xterm"
 # is widely used for a variety of incompatible terminal emulations including
 # color_xterm and rxvt.
 xterm|X11 terminal emulator,
-	use=xterm-xfree86,
+	use=xterm-new,
 #	use=xterm-r6,

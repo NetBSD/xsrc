@@ -26,12 +26,11 @@
  *          Dirk H. Hohndel (hohndel@suse.de),
  *          Portions: the GGI project & confidential CYRIX databooks.
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/cyrix/cyrix_accel.c,v 1.5 2002/11/06 11:38:59 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/cyrix/cyrix_accel.c,v 1.6 2004/03/29 16:25:16 tsi Exp $ */
 
 #include "vgaHW.h"
 #include "xf86.h"
 #include "xf86_ansic.h"
-#include "xaalocal.h"
 #include "cyrix.h"
 #include "miline.h"
 #include "xf86_libc.h"

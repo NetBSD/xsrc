@@ -1,6 +1,6 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/aticonsole.c,v 1.23 2004/01/05 16:42:01 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/aticonsole.c,v 1.25 2004/12/31 16:07:06 tsi Exp $ */
 /*
- * Copyright 1997 through 2004 by Marc Aurele La France (TSI @ UQV), tsi@xfree86.org
+ * Copyright 1997 through 2005 by Marc Aurele La France (TSI @ UQV), tsi@xfree86.org
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -202,17 +202,7 @@ ATILeaveGraphics
     ATILock(pATI);
 
     /* Unmap apertures */
-
-#ifdef AVOID_DGA
-
-    if (!pATI->Closeable)
-
-#else /* AVOID_DGA */
-
     if (!pATI->Closeable || !pATI->nDGAMode)
-
-#endif /* AVOID_DGA */
-
         ATIUnmapApertures(pScreenInfo->scrnIndex, pATI);
 
     SetTimeSinceLastInputEvent();
@@ -352,13 +342,7 @@ ATIFreeScreen
 #endif /* AVOID_CPIO */
 
     xfree(pATI->pShadow);
-
-#ifndef AVOID_DGA
-
     xfree(pATI->pDGAMode);
-
-#endif /* AVOID_DGA */
-
     xfree(pATI);
     pScreenInfo->driverPrivate = NULL;
 }

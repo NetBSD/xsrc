@@ -4,7 +4,7 @@
 //  Rules descriptions for XFree86
 //  Copyright 1996 by Joseph Moss
 //
-//  $XFree86: xc/programs/xkbcomp/rules/xfree86.lst,v 3.81 2004/01/17 14:59:36 pascal Exp $
+//  $XFree86: xc/programs/xkbcomp/rules/xfree86.lst,v 3.87 2005/02/25 18:25:36 dawes Exp $
 
 ! model
   pc101		Generic 101-key PC
@@ -19,7 +19,8 @@
   winbook	Winbook Model XP5
   jp106		Japanese 106-key
   pc98		PC-98xx Series
-  abnt2		Brazilian ABNT2
+  abnt2_104	Brazilian ABNT2 with 104 keys
+  abnt2_107	Brazilian ABNT2 with 107 keys
   airkey	Acer AirKey V
   acpi		ACPI Standard
   azonaRF2300	Azona RF2300 wireless Internet Keyboard
@@ -48,6 +49,7 @@
   ennyah_dkb1008 Ennyah DKB-1008
   genius	Genius Comfy KB-16M / Genius MM Keyboard KWD-910
   geniuscomfy2	Genius Comfy KB-21e-Scroll
+  genius_kb12e	Genius KB-12e
   hpi6		Hewlett-Packard Internet Keyboard
   hp2501	Hewlett-Packard SK-2501 Multimedia Keyboard
   hp2505	Hewlett-Packard SK-2505 Internet Keyboard
@@ -82,7 +84,7 @@
   microsoftinet	Microsoft Internet Keyboard
   microsoftpro	Microsoft Natural Keyboard Pro / Microsoft Internet Keyboard Pro
   microsoftprooem Microsoft Natural Keyboard Pro OEM
-  microsoftprose Microsoft Internet Keyboard Pro, Swedish
+  microsoftprousb Microsoft Internet Keyboard Pro USB
   microsoftoffice Microsoft Office Keyboard
   microsoftmult Microsoft Wireless Multimedia Keyboard
   oretec	Oretec MCK-800 MM/Internet keyboard
@@ -154,8 +156,10 @@
   jp		Japanese
   kan		Kannada
   ko		Korean
+  ky		Kyrgyz
   lo		Lao
   la		Latin America
+  lat		Classical Latin
   lt		Lithuanian qwerty "numeric"
   lt_std	Lithuanian azerty standard
   lv		Latvian
@@ -177,9 +181,11 @@
   se_SE		Northern Saami (Sweden)
   sr		Serbian (Cyrillic)
   yu		Serbian (Latin)
+  sin		Sinhala (Sri Lanka)
   si		Slovenian
   sk		Slovak
   sk_qwerty	Slovak (qwerty)
+  hsb		Upper/Lower Sorbian
   es		Spanish
   se		Swedish
   fr_CH		Swiss French
@@ -195,6 +201,7 @@
   tr_f		Turkish (F)
   ua		Ukrainian 
   gb		United Kingdom
+  ur_PK		Urdu
   uz            Uzbek
   vn		Vietnamese
   nec/jp	PC-98xx Series

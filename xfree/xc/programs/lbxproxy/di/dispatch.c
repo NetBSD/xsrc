@@ -21,19 +21,20 @@
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  */
-/* $XFree86: xc/programs/lbxproxy/di/dispatch.c,v 1.7 2003/11/17 22:20:48 dawes Exp $ */
+/* $XFree86: xc/programs/lbxproxy/di/dispatch.c,v 1.8 2004/04/03 22:38:53 tsi Exp $ */
 
 #include <stdio.h>
 #include "assert.h"
 #include "lbx.h"
+#include "gfx.h"
 #include "wire.h"
 #include "swap.h"
 #include "lbxext.h"
 #include "util.h"
 #include "resource.h"
 #include "pm.h"
-
-extern int (* InitialVector[3]) ();
+#include "utils.h"
+#include "zeropad.h"
 
 static void KillAllClients(
     void
@@ -53,10 +54,6 @@ Bool lbxUseLbx = TRUE;
 Bool lbxCompressImages = TRUE;
 Bool lbxDoAtomShortCircuiting = TRUE;
 Bool lbxDoLbxGfx = TRUE;
-
-extern Bool lbxWinAttr;
-extern Bool lbxDoCmapGrabbing;
-extern char *atomsFile;
 
 #define MAJOROP ((xReq *)client->requestBuffer)->reqType
 #define MINOROP ((xReq *)client->requestBuffer)->data
@@ -281,8 +278,8 @@ NextAvailableClient(ospriv, connect_fd)
 }
 
 int
-ProcInitialConnection(client)
-    register ClientPtr client;
+ProcInitialConnection(
+    register ClientPtr client)
 {
     REQUEST(xReq);
     register xConnClientPrefix *prefix;
@@ -308,8 +305,8 @@ ProcInitialConnection(client)
 }
 
 int
-ProcEstablishConnection(client)
-    register ClientPtr client;
+ProcEstablishConnection(
+    register ClientPtr client)
 {
     register xConnClientPrefix *prefix;
     register int i;
@@ -439,15 +436,12 @@ KillAllClients()
     }
 }
 
-extern void (*ZeroPadReqVector[128]) ();
-
 int
-ProcStandardRequest (client)
-    ClientPtr	client;
+ProcStandardRequest (
+    ClientPtr	client)
 {
     REQUEST(xReq);
-    void (*zeroPadProc)();
-    extern int lbxZeroPad;
+    ZPREQ_T zeroPadProc;
 
     if (lbxZeroPad &&
 	(MAJOROP < 128) && (zeroPadProc = ZeroPadReqVector[MAJOROP]))
@@ -459,8 +453,8 @@ ProcStandardRequest (client)
 
 /* ARGSUSED */
 int
-ProcBadRequest (client)
-    ClientPtr	client;
+ProcBadRequest (
+    ClientPtr	client)
 {
     return BadRequest;
 }

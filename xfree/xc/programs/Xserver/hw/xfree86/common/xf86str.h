@@ -1,7 +1,7 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86str.h,v 1.98 2004/02/13 23:58:39 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86str.h,v 1.106 2005/02/26 01:07:12 dawes Exp $ */
 
 /*
- * Copyright (c) 1997-2003 by The XFree86 Project, Inc.
+ * Copyright (c) 1997-2005 by The XFree86 Project, Inc.
  * All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining
@@ -46,6 +46,50 @@
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
  * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+/*
+ * Copyright © 2003, 2004, 2005 David H. Dawes.
+ * Copyright © 2003, 2004, 2005 X-Oz Technologies.
+ * All rights reserved.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ * 
+ *  1. Redistributions of source code must retain the above copyright
+ *     notice, this list of conditions, and the following disclaimer.
+ *
+ *  2. Redistributions in binary form must reproduce the above
+ *     copyright notice, this list of conditions and the following
+ *     disclaimer in the documentation and/or other materials provided
+ *     with the distribution.
+ * 
+ *  3. The end-user documentation included with the redistribution,
+ *     if any, must include the following acknowledgment: "This product
+ *     includes software developed by X-Oz Technologies
+ *     (http://www.x-oz.com/)."  Alternately, this acknowledgment may
+ *     appear in the software itself, if and wherever such third-party
+ *     acknowledgments normally appear.
+ *
+ *  4. Except as contained in this notice, the name of X-Oz
+ *     Technologies shall not be used in advertising or otherwise to
+ *     promote the sale, use or other dealings in this Software without
+ *     prior written authorization from X-Oz Technologies.
+ *
+ * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESSED OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL X-OZ TECHNOLOGIES OR ITS CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+ * OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
+ * OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+ * BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+ * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+ * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * This file contains definitions of the public XFree86 data structures/types.
@@ -63,6 +107,26 @@
 #include "xf86Module.h"
 #include "xf86Opt.h"
 #include "xf86Pci.h"
+
+/*
+ * Handles for referencing opaque configuration objects.  ConfigHandle
+ * references sets of configuration data.  ConfigDataHandle references
+ * specific items of configuration data.
+ * list.
+ */
+typedef const void *ConfigHandle;
+#define DEFAULT_CONFIG NULL
+/*
+ * Special pseudo handles, currently usable only for retreiving some
+ * other portions of configuration information.
+ */
+#define CMDLINE_CONFIG ((ConfigHandle)(-1))
+#define BUILDTIME_CONFIG ((ConfigHandle)(-2))
+#define ACTIVE_CONFIG ((ConfigHandle)(-3))
+
+typedef const void *ConfigDataHandle;
+
+#define CONFIG_RESOLVE_ALL	100
 
 /*
  * memType is of the size of the addressable memory (machine size)
@@ -130,11 +194,15 @@ typedef enum {
     MODE_VSYNC_WIDE,	/* vertical sync too wide */
     MODE_VBLANK_NARROW,	/* vertical blanking too narrow */
     MODE_VBLANK_WIDE,	/* vertical blanking too wide */
-    MODE_PANEL,         /* exceeds panel dimensions */
+    MODE_PANEL,		/* exceeds panel dimensions */
     MODE_INTERLACE_WIDTH, /* width too large for interlaced mode */
-    MODE_ONE_WIDTH,     /* only one width is supported */
-    MODE_ONE_HEIGHT,    /* only one height is supported */
-    MODE_ONE_SIZE,      /* only one resolution is supported */
+    MODE_ONE_WIDTH,	/* only one width is supported */
+    MODE_ONE_HEIGHT,	/* only one height is supported */
+    MODE_ONE_SIZE,	/* only one resolution is supported */
+    MODE_REFRESH_LOW,	/* refresh rate below the target */
+    MODE_TOO_BIG,	/* larger than the preferred mode */
+    MODE_PANEL_NOSCALE,	/* won't scale to panel size */
+    MODE_ASPECT_RATIO,	/* aspect ratio is too large */
     MODE_BAD = -2,	/* unspecified reason */
     MODE_ERROR	= -1	/* error condition */
 } ModeStatus;
@@ -146,6 +214,8 @@ typedef enum {
                                /* built-in mode - configure CRTC and clock */
 # define M_T_DEFAULT 0x10	/* (VESA) default modes */
 # define M_T_USERDEF 0x20	/* One of the modes from the config file */
+# define M_T_EDID    0x40	/* Mode from EDID detailed timings data. */
+# define M_T_PREFER  0x80	/* Preferred mode from EDID data. */
 
 /* Video mode */
 typedef struct _DisplayModeRec {
@@ -211,6 +281,10 @@ typedef struct { float red, green, blue; } Gamma;
 #define GAMMA_MIN	(1.0 / GAMMA_MAX)
 #define GAMMA_ZERO	(GAMMA_MIN / 100.0)
 
+/* Monitor "flags" bits. */
+#define MON_TOLERANCES_OPTIONAL		0x01
+#define MON_PARAMETERS_SET		0x02
+
 typedef struct {
     char *		id;
     char *		vendor;
@@ -226,6 +300,12 @@ typedef struct {
     int			heightmm;
     pointer		options;
     pointer		DDC;
+    int			monitorNum;
+    int			numModeSetNames;
+    char **		modeSetNames;
+    Bool		defaultMon;
+    int			flags;
+    ConfigDataHandle	handle;
 } MonRec, *MonPtr;
 
 /* the list of clock ranges */
@@ -364,8 +444,9 @@ typedef struct {
    int				chipID;
    int				chipRev;
    pointer			options;
-   int                          irq;
-   int                          screen;         /* For multi-CRTC cards */
+   int				irq;
+   int				screen;		/* For multi-CRTC cards */
+   ConfigDataHandle		handle;
 } GDevRec, *GDevPtr;
 
 typedef int (*FindIsaDevProc)(GDevPtr dev);
@@ -375,6 +456,8 @@ typedef struct {
    char *			driver;
    pointer		 	commonOptions;
    pointer			extraOptions;
+   MessageType			from;
+   ConfigDataHandle		handle;
 } IDevRec, *IDevPtr;
 
 typedef struct {
@@ -389,16 +472,16 @@ typedef struct {
     int			class;
     int			subclass;
     int			interface;
-    memType  	        memBase[6];
-    memType  	        ioBase[6];
+    memType		memBase[6];
+    memType		ioBase[6];
     int			size[6];
     unsigned char	type[6];
-    memType   	        biosBase;
+    memType		biosBase;
     int			biosSize;
     pointer		thisCard;
-    Bool                validSize;
-    Bool                validate;
-    CARD32              listed_class;
+    Bool		validSize;
+    Bool		validate;
+    CARD32		listed_class;
 } pciVideoRec, *pciVideoPtr;
 
 typedef struct {
@@ -414,18 +497,22 @@ typedef struct {
     int			defaultVisual;
     char **		modes;
     pointer		options;
+    int			monitorNum;
+    ConfigDataHandle	handle;
 } DispRec, *DispPtr;
 
 typedef struct _confxvportrec {
     char *		identifier;
     pointer		options;
+    ConfigDataHandle	handle;
 } confXvPortRec, *confXvPortPtr;
 
 typedef struct _confxvadaptrec {
     char *		identifier;
     int			numports;
-    confXvPortPtr	ports;
+    confXvPortPtr *	xvPorts;
     pointer		options;
+    ConfigDataHandle	handle;
 } confXvAdaptorRec, *confXvAdaptorPtr;
 
 typedef struct _confscreenrec {
@@ -437,10 +524,17 @@ typedef struct _confscreenrec {
     MonPtr		monitor;
     GDevPtr		device;
     int			numdisplays;
-    DispPtr		displays;
-    int			numxvadaptors;
-    confXvAdaptorPtr	xvadaptors;
+    DispPtr *		displayList;
+    int			numXvAdaptors;
+    confXvAdaptorPtr *	xvAdaptorList;
     pointer		options;
+    int			numMonitors;
+    MonPtr *		monitors;
+    char *		deviceName;
+    char **		monitorNames;
+    int *		monitorNums;
+    char **		xvAdaptorNames;
+    ConfigDataHandle	handle;
 } confScreenRec, *confScreenPtr;
 
 typedef enum {
@@ -456,43 +550,116 @@ typedef enum {
 typedef struct _screenlayoutrec {
     confScreenPtr	screen;
     char *		topname;
-    confScreenPtr	top;
+    const confScreenRec	*top;
     char *		bottomname;
-    confScreenPtr	bottom;
+    const confScreenRec	*bottom;
     char *		leftname;
-    confScreenPtr	left;
+    const confScreenRec	*left;
     char *		rightname;
-    confScreenPtr	right;
+    const confScreenRec	*right;
     PositionType	where;
     int			x;
     int			y;
     char *		refname;
-    confScreenPtr	refscreen;
+    const confScreenRec	*refscreen;
+    char *		screenName;
+    int			screenNum;
 } screenLayoutRec, *screenLayoutPtr;
 
 typedef struct _serverlayoutrec {
     char *		id;
-    screenLayoutPtr	screens;
-    GDevPtr		inactives;
-    IDevPtr		inputs;
+    screenLayoutPtr *	screenLayouts;
+    GDevPtr *		inactiveDevs;
+    IDevPtr *		inputDevs;
     pointer		options;
+    int			numScreens;
+    int			numInactives;
+    int			numInputs;
+    char **		inputNames;
+    pointer *		inputExtraOptions;
+    char **		inactiveNames;
+    MessageType		from;
+    ConfigDataHandle	handle;
 } serverLayoutRec, *serverLayoutPtr;
 
 typedef struct _confdribufferrec {
-    int                 count;
-    int                 size;
+    int			count;
+    int			size;
     enum {
-	XF86DRI_WC_HINT = 0x0001 /* Placeholder: not implemented */
-    }                   flags;
+	XF86DRI_NO_FLAGS = 0,
+	XF86DRI_WC_HINT  = 0x0001 /* Placeholder: not implemented */
+    }			flags;
 } confDRIBufferRec, *confDRIBufferPtr;
 
 typedef struct _confdrirec {
-    int                 group;
-    int                 mode;
-    int                 bufs_count;
-    confDRIBufferRec    *bufs;
+    int			group;
+    int			mode;
+    int			bufs_count;
+    confDRIBufferPtr *	bufsList;
+    char *		groupName;
+    char *		id;
+    pointer		options;
+    ConfigDataHandle	handle;
 } confDRIRec, *confDRIPtr;
-    
+
+typedef struct _confmodeset {
+    ConfigDataHandle	handle;
+    char *		identifier;
+    DisplayModePtr	modes;
+    pointer		options;
+} confModeSetRec, *confModeSetPtr;
+
+typedef struct _conffilesrec {
+    ConfigDataHandle	handle;
+    char *		identifier;
+    char *		logFile;
+    MessageType		logFileFrom;
+    char *		rgbPath;
+    MessageType		rgbPathFrom;
+    char *		modulePath;
+    MessageType		modulePathFrom;
+    char *		fontPath;
+    MessageType		fontPathFrom;
+    char *		inputDeviceList;
+    MessageType		inputDeviceListFrom;
+    pointer		options;
+} confFilesRec, *confFilesPtr;
+
+typedef struct _confflagsrec {
+    ConfigDataHandle	handle;
+    char *		identifier;
+    pointer		options;
+} confFlagsRec, *confFlagsPtr;
+
+typedef struct _confloadmodulerec {
+    char *		name;
+    pointer		options;
+} confLoadModuleRec, *confLoadModulePtr;
+
+typedef struct _confmodulesrec {
+    ConfigDataHandle	handle;
+    char *		identifier;
+    int			numModules;
+    confLoadModulePtr * modules;
+    pointer		options;
+} confModulesRec, *confModulesPtr;
+
+typedef struct _confvendorsubrec {
+    ConfigDataHandle	handle;
+    char *		identifier;
+    char *		name;
+    pointer		options;
+} confVendorSubRec, *confVendorSubPtr;
+
+typedef struct _confvendorrec {
+    ConfigDataHandle	handle;
+    char *		identifier;
+    char *		vendorName;
+    pointer		options;
+    int			numSubs;
+    confVendorSubPtr *	subs;
+} confVendorRec, *confVendorPtr;
+
 /* These values should be adjusted when new fields are added to ScrnInfoRec */
 #define NUM_RESERVED_INTS		16
 #define NUM_RESERVED_POINTERS		15
@@ -956,10 +1123,10 @@ typedef struct {
    Bool (*OpenFramebuffer)(
 	ScrnInfoPtr pScrn, 
 	char **name,
-	unsigned char **mem, 
-	int *size,
-	int *offset,
-        int *extra
+	unsigned int *mem, 
+	unsigned int *size,
+	unsigned int *offset,
+	unsigned int *extra
    );
    void	(*CloseFramebuffer)(ScrnInfoPtr pScrn);
    Bool (*SetMode)(ScrnInfoPtr pScrn, DGAModePtr pMode);

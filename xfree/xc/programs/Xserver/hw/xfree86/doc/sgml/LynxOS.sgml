@@ -3,12 +3,12 @@
 ]>
 
 <article>
-<title>README for XFree86 &relvers; on LynxOS
+<title>README for XFree86&reg; &relvers; on LynxOS
 <author>Thomas Mueller
 <date>25 February 2000
 
 <ident>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/LynxOS.sgml,v 3.20 2000/06/17 00:27:32 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/LynxOS.sgml,v 3.21 2004/12/08 22:27:11 dawes Exp $
 </ident>
 
 <toc>

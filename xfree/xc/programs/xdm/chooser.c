@@ -26,7 +26,7 @@ in this Software without prior written authorization from The Open Group.
  * Author:  Keith Packard, MIT X Consortium
  */
 
-/* $XFree86: xc/programs/xdm/chooser.c,v 3.27 2003/11/23 22:57:31 herrb Exp $ */
+/* $XFree86: xc/programs/xdm/chooser.c,v 3.29 2004/04/03 22:26:26 dawes Exp $ */
 
 /*
  * Chooser - display a menu of names and let the user select one
@@ -74,7 +74,7 @@ in this Software without prior written authorization from The Open Group.
 #include    <X11/extensions/Xinerama.h>
 #endif
 
-#if defined(SVR4) && !defined(SCO325)
+#if defined(SVR4)
 #include    <sys/sockio.h>
 #endif
 #if defined(SVR4) && defined(PowerMAX_OS)
@@ -856,8 +856,9 @@ InitXDMCP (char **argv)
     XtAddInput (socketFD, (XtPointer) XtInputReadMask, ReceivePacket,
 		(XtPointer) &socketFD);
 #if defined(IPv6) && defined(AF_INET6)
-    XtAddInput (socket6FD, (XtPointer) XtInputReadMask, ReceivePacket,
-		(XtPointer) &socket6FD);
+    if (socket6FD > 0)
+	XtAddInput (socket6FD, (XtPointer) XtInputReadMask, ReceivePacket,
+		    (XtPointer) &socket6FD);
 #endif
     while (*argv)
     {

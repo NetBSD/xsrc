@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/rendition/rendition.c,v 1.59 2004/01/11 04:03:16 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/rendition/rendition.c,v 1.60 2004/03/19 17:00:16 tsi Exp $ */
 /*
  * Copyright (C) 1998 The XFree86 Project, Inc.  All Rights Reserved.
  *
@@ -353,9 +353,10 @@ renditionProbe(DriverPtr drv, int flags)
 		pScrn->ValidMode    =renditionValidMode;
 		foundScreen=TRUE;
 	    }
-        }
-    }
-    xfree(usedChips);
+	}
+	xfree(usedChips);
+    } else
+	xfree(devSections);
     return foundScreen;
 }
 

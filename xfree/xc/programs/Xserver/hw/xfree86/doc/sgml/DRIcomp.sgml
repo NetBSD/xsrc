@@ -13,7 +13,7 @@
     <date>21 April 2001
 
     <ident>
-    $XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/DRIcomp.sgml,v 1.20 2003/07/14 14:51:35 dawes Exp $
+    $XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/DRIcomp.sgml,v 1.21 2004/12/08 22:27:11 dawes Exp $
     </ident>
 
     <toc>
@@ -35,7 +35,7 @@
           Silicon Graphics, Inc.
           Unix is a registered trademark of The Open Group.
           The `X' device and X Window System are trademarks of The Open Group.
-          XFree86 is a trademark of The XFree86 Project.
+          XFree86 is a registered trademark of The XFree86 Project, Inc.
           Linux is a registered trademark of Linus Torvalds.
           Intel is a registered trademark of Intel Corporation.
           3Dlabs, GLINT, and Oxygen are either registered trademarks or

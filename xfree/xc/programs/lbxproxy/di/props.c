@@ -46,7 +46,7 @@ in this Software without prior written authorization from The Open Group.
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  */
-/* $XFree86: xc/programs/lbxproxy/di/props.c,v 1.7 2003/10/24 20:38:12 tsi Exp $ */
+/* $XFree86: xc/programs/lbxproxy/di/props.c,v 1.8 2004/04/03 22:38:54 tsi Exp $ */
 
 /*
  * property handling
@@ -65,8 +65,14 @@ in this Software without prior written authorization from The Open Group.
 #include	"proxyopts.h"
 #include	"atomcache.h"
 
-static Bool GetLbxChangePropertyReply();
-static Bool GetLbxGetPropertyReply();
+static Bool GetLbxChangePropertyReply(
+    ClientPtr   client,
+    ReplyStuffPtr nr,
+    char       *data);
+static Bool GetLbxGetPropertyReply(
+    ClientPtr   client,
+    ReplyStuffPtr nr,
+    char       *data);
 
 /*
  * wrapper for tags
@@ -75,12 +81,12 @@ static Bool GetLbxGetPropertyReply();
  * tag cache
  */
 static Bool
-propTagStoreData(server, tid, dlen, swapit, ptdp)
-    XServerPtr	server;
-    XID         tid;
-    unsigned long dlen;
-    Bool	swapit;
-    PropertyTagDataPtr ptdp;
+propTagStoreData(
+    XServerPtr	server,
+    XID         tid,
+    unsigned long dlen,
+    Bool	swapit,
+    PropertyTagDataPtr ptdp)
 {
     PropertyTagDataPtr new;
 
@@ -208,10 +214,10 @@ ProcLBXChangeProperty(client)
 }
 
 static Bool
-GetLbxChangePropertyReply(client, nr, data)
-    ClientPtr   client;
-    ReplyStuffPtr nr;
-    char       *data;
+GetLbxChangePropertyReply(
+    ClientPtr   client,
+    ReplyStuffPtr nr,
+    char       *data)
 {
     xLbxChangePropertyReply *rep;
     PropertyTagDataPtr ptdp;
@@ -279,10 +285,10 @@ ProcLBXGetProperty(client)
 }
 
 static Bool
-GetLbxGetPropertyReply(client, nr, data)
-    ClientPtr   client;
-    ReplyStuffPtr nr;
-    char       *data;
+GetLbxGetPropertyReply(
+    ClientPtr   client,
+    ReplyStuffPtr nr,
+    char       *data)
 {
     xLbxGetPropertyReply *rep;
     unsigned long len;

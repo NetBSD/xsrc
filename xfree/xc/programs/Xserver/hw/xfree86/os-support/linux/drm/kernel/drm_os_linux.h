@@ -16,6 +16,7 @@
 /** Current process ID */
 #define DRM_CURRENTPID			current->pid
 #define DRM_UDELAY(d)			udelay(d)
+#if LINUX_VERSION_CODE <= KERNEL_VERSION(2,6,8)
 /** Read a byte from a MMIO region */
 #define DRM_READ8(map, offset)		readb(((unsigned long)(map)->handle) + (offset))
 /** Read a dword from a MMIO region */
@@ -24,6 +25,20 @@
 #define DRM_WRITE8(map, offset, val)	writeb(val, ((unsigned long)(map)->handle) + (offset))
 /** Write a dword into a MMIO region */
 #define DRM_WRITE32(map, offset, val)	writel(val, ((unsigned long)(map)->handle) + (offset))
+#else
+/** Read a byte from a MMIO region */
+#define DRM_READ8(map, offset)		readb((map)->handle + (offset))
+/** Read a word from a MMIO region */
+#define DRM_READ16(map, offset)		readw((map)->handle + (offset))
+/** Read a dword from a MMIO region */
+#define DRM_READ32(map, offset)		readl((map)->handle + (offset))
+/** Write a byte into a MMIO region */
+#define DRM_WRITE8(map, offset, val)	writeb(val, (map)->handle + (offset))
+/** Write a word into a MMIO region */
+#define DRM_WRITE16(map, offset, val)	writew(val, (map)->handle + (offset))
+/** Write a dword into a MMIO region */
+#define DRM_WRITE32(map, offset, val)	writel(val, (map)->handle + (offset))
+#endif
 /** Read memory barrier */
 #define DRM_READMEMORYBARRIER()		rmb()
 /** Write memory barrier */

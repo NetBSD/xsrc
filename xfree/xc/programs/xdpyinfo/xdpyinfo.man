@@ -23,9 +23,9 @@
 .\" other dealings in this Software without prior written authorization
 .\" from The Open Group.
 .\"
-.\" $XFree86: xc/programs/xdpyinfo/xdpyinfo.man,v 3.8 2001/12/14 20:01:30 dawes Exp $
+.\" $XFree86: xc/programs/xdpyinfo/xdpyinfo.man,v 3.9 2005/02/11 03:03:18 dawes Exp $
 .\"
-.TH XDPYINFO 1 __xorgversion__
+.TH XDPYINFO 1 __vendorversion__
 .SH NAME
 xdpyinfo \- display information utility for X
 .SH SYNOPSIS

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/shared/sigiostubs.c,v 1.5 2004/02/13 23:58:48 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/shared/sigiostubs.c,v 1.6 2004/12/15 01:26:50 tsi Exp $ */
 /*
  * Copyright (c) 1999-2003 by The XFree86 Project, Inc.
  * All rights reserved.
@@ -47,21 +47,10 @@
  */
 
 #ifdef XFree86Server
-#ifdef __UNIXOS2__
-# define I_NEED_OS2_H
-#endif
-# include "X.h"
-# include "xf86.h"
-# include "xf86drm.h"
-# include "xf86Priv.h"
-# include "xf86_OSlib.h"
-# include "xf86drm.h"
-#else
-# include <unistd.h>
-# include <signal.h>
-# include <fcntl.h>
-# include <sys/time.h>
-# include <errno.h>
+# ifdef __UNIXOS2__
+#  define I_NEED_OS2_H
+# endif
+# include "misc.h"
 #endif
 
 int
@@ -88,11 +77,11 @@ xf86UnblockSIGIO (int wasset)
 }
 
 #ifdef XFree86Server
+
 void
 xf86AssertBlockedSIGIO (char *where)
 {
 }
-#endif
 
 /* XXX This is a quick hack for the benefit of xf86SetSilkenMouse() */
 Bool
@@ -101,3 +90,4 @@ xf86SIGIOSupported ()
     return FALSE;
 }
 
+#endif

@@ -2,7 +2,7 @@ XCOMM $Xorg: minix.cf,v 1.3 2000/08/17 19:41:47 cpqbld Exp $
 
 
 
-XCOMM platform:  $XFree86: xc/config/cf/minix.cf,v 3.6 2001/01/17 16:22:32 dawes Exp $
+XCOMM $XFree86: xc/config/cf/minix.cf,v 3.7 2004/04/23 20:48:06 tsi Exp $
 
 
 /*
@@ -54,8 +54,8 @@ XCOMM platform:  $XFree86: xc/config/cf/minix.cf,v 3.6 2001/01/17 16:22:32 dawes
 #define HasPutenv		YES	/* for xsm */
 
 #ifndef AssembleObject
-#define AssembleObject(flags) $(RM) $@                                    @@\
-	$(CPP) AsmDefines $(DEFINES) $(INCLUDES) flags $*.S | \           @@\
+#define AssembleObject(flags) $(RM) $@ $*.i.s                             @@\
+	$(CPP) CPPAsmOptions AsmDefines $(DEFINES) $(INCLUDES) flags $*.S | \ @@\
 	    grep -v '^\#' > $*.i.s                                        @@\
 	$(AS) -o $*.o $*.i.s                                              @@\
 	$(RM) $*.i.s

@@ -1,7 +1,7 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/nsc/nsc_driver.c,v 1.5 2003/04/23 21:51:41 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/nsc/nsc_driver.c,v 1.6 2004/06/10 17:26:38 tsi Exp $ */
 /*
  * $Workfile: nsc_driver.c $
- * $Revision: 1.1.1.2 $
+ * $Revision: 1.1.1.3 $
  * $Author: tron $
  *
  * File Contents: This is the main module configures the interfacing 
@@ -325,11 +325,10 @@ OptionInfoRec GeodeOptions[] = {
 const char *nscVgahwSymbols[] = {
    "vgaHWGetHWRec",
    "vgaHWUnlock",
-   "vgaHWInit",
    "vgaHWSave",
    "vgaHWRestore",
-   "vgaHWProtect",
    "vgaHWGetIOBase",
+   "vgaHWGetIndex",
    "vgaHWMapMem",
    "vgaHWLock",
    "vgaHWFreeHWRec",

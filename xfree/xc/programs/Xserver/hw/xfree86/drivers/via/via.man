@@ -1,4 +1,4 @@
-.\" $XFree86: xc/programs/Xserver/hw/xfree86/drivers/via/via.man,v 1.4 2003/12/19 22:00:46 dawes Exp $
+.\" $XFree86: xc/programs/Xserver/hw/xfree86/drivers/via/via.man,v 1.6 2005/02/01 02:25:08 dawes Exp $
 .\" shorthand for double quote that works everywhere.
 .ds q \N'34'
 .TH VIA __drivermansuffix__ __vendorversion__
@@ -32,8 +32,8 @@ details.  This section only covers configuration details specific to this
 driver.
 .PP
 The following driver
-.B options
-are supported
+.B Options
+are supported:
 .TP
 .BI "Option \*qNoAccel\*q \*q" boolean \*q
 Disable or enable acceleration. Default: acceleration is enabled.
@@ -115,9 +115,6 @@ Perform field swapping on capture port 0.
 .TP
 .BI "Option \*qDRIXINERAMA\*q \*q" boolean \*q
 Set DRI Xinerama mode. Currently unsupported.
-.TP
-.BI "Option \*qNoDDCValue\*q \*q" boolean \*q
-Disable the use of DDC to set the horizontal sync and vertical refresh.
 .SH "SEE ALSO"
 XFree86(1), XF86Config(__filemansuffix__), xf86config(1), Xserver(1), X(__miscmansuffix__)
 .SH AUTHORS

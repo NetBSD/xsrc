@@ -1,5 +1,3 @@
-/* $Xorg: XSndExEv.c,v 1.4 2001/02/09 02:03:51 xorgcvs Exp $ */
-
 /************************************************************
 
 Copyright 1989, 1998  The Open Group
@@ -45,7 +43,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ********************************************************/
-/* $XFree86: xc/lib/Xi/XSndExEv.c,v 3.4 2002/10/16 00:37:29 dawes Exp $ */
+/* $XFree86: xc/lib/Xi/XSndExEv.c,v 3.5 2005/01/27 02:28:59 dawes Exp $ */
 
 /***********************************************************************
  *
@@ -60,7 +58,7 @@ SOFTWARE.
 #include <X11/extensions/extutil.h>
 #include "XIint.h"
 
-extern Status _XiEventToWire();
+typedef Status (*eventProcPtr)(Display *, XEvent *, xEvent **, int *);
 
 Status
 XSendExtensionEvent (dpy, dev, dest, prop, count, list, event)
@@ -76,7 +74,7 @@ XSendExtensionEvent (dpy, dev, dest, prop, count, list, event)
     int				ev_size;
     xSendExtensionEventReq 	*req;
     xEvent 			*ev;
-    register Status 		(**fp)();
+    eventProcPtr 		fp;
     Status 			status;
     XExtDisplayInfo *info = XInput_find_display (dpy);
 
@@ -86,10 +84,10 @@ XSendExtensionEvent (dpy, dev, dest, prop, count, list, event)
 
     /* call through display to find proper conversion routine */
 
-    fp = &dpy->wire_vec[event->type & 0177];
-    if (*fp == NULL) 
-	*fp = _XiEventToWire;
-    status = (**fp)(dpy, event, &ev, &num_events);
+    fp = (eventProcPtr)dpy->wire_vec[event->type & 0177];
+    if (fp == NULL) 
+	fp = _XiEventToWire;
+    status = (*fp)(dpy, event, &ev, &num_events);
 
     if (status) 
 	{

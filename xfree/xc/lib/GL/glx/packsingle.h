@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/glx/packsingle.h,v 1.6 2003/10/23 15:30:09 tsi Exp $ */
+/* $XFree86: xc/lib/GL/glx/packsingle.h,v 1.8 2004/04/22 13:58:39 tsi Exp $ */
 #ifndef __GLX_packsingle_h__
 #define __GLX_packsingle_h__
 
@@ -173,22 +173,22 @@ extern float gl_ntoh_double(GLubyte *);
 #endif
 	  
 /* Get an array of typed data */
-#define __GLX_SINGLE_GET_VOID_ARRAY(a,alen) \
+#define __GLX_SINGLE_GET_VOID_ARRAY(a,alen)	\
 {						\
     GLint slop = alen*__GLX_SIZE_INT8 & 3;	\
-    _XRead(dpy,(char *)a,alen*__GLX_SIZE_INT8);  	\
+    _XRead(dpy,(char *)a,alen*__GLX_SIZE_INT8);	\
     if (slop) _XEatData(dpy,4-slop);		\
 }
 
-#define __GLX_SINGLE_GET_CHAR_ARRAY(a,alen) \
+#define __GLX_SINGLE_GET_CHAR_ARRAY(a,alen)	\
 {						\
     GLint slop = alen*__GLX_SIZE_INT8 & 3;	\
-    _XRead(dpy,(char *)a,alen*__GLX_SIZE_INT8);  	\
+    _XRead(dpy,(char *)a,alen*__GLX_SIZE_INT8);	\
     if (slop) _XEatData(dpy,4-slop);		\
 }
 					
 
-#define __GLX_SINGLE_GET_SHORT_ARRAY(a,alen) \
+#define __GLX_SINGLE_GET_SHORT_ARRAY(a,alen)	\
 {						\
     GLint slop = (alen*__GLX_SIZE_INT16) & 3;	\
     _XRead(dpy,(char *)a,alen*__GLX_SIZE_INT16);\

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/dix/property.c,v 3.13 2003/07/16 01:38:37 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/dix/property.c,v 3.14 2004/10/23 15:29:27 dawes Exp $ */
 /***********************************************************
 
 Copyright 1987, 1998  The Open Group
@@ -554,7 +554,7 @@ ProcGetProperty(client)
 	{
 	    case SecurityErrorOperation:
 		client->errorValue = stuff->property;
-		return BadAtom;;
+		return BadAtom;
 	    case SecurityIgnoreOperation:
 		return NullPropertyReply(client, pProp->type, pProp->format,
 					 &reply);
@@ -724,7 +724,7 @@ ProcDeleteProperty(client)
     {
 	case SecurityErrorOperation:
 	    client->errorValue = stuff->property;
-	    return BadAtom;;
+	    return BadAtom;
 	case SecurityIgnoreOperation:
 	    return Success;
     }

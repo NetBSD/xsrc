@@ -1,4 +1,4 @@
-.\" $XFree86: xc/programs/Xserver/hw/xfree86/drivers/chips/chips.man,v 1.5 2002/01/04 21:22:27 tsi Exp $
+.\" $XFree86: xc/programs/Xserver/hw/xfree86/drivers/chips/chips.man,v 1.7 2005/02/01 02:25:07 dawes Exp $
 .\" shorthand for double quote that works everywhere.
 .ds q \N'34'
 .TH CHIPS __drivermansuffix__ __vendorversion__
@@ -109,42 +109,42 @@ Disable or enable acceleration.  Default: acceleration is enabled.
 .TP
 .BI "Option \*qNoLinear\*q \*q" boolean \*q
 Disables linear addressing in cases where it is enabled by default.
-Default: off
+Default: off.
 .TP
 .BI "Option \*qLinear\*q \*q" boolean \*q
 Enables linear addressing in cases where it is disabled by default.
-Default: off
+Default: off.
 .TP
 .BI "Option \*qHWCursor\*q \*q" boolean \*q
 Enable or disable the HW cursor.  Default: on.
 .TP
 .BI "Option \*qSWCursor\*q \*q" boolean \*q
-Enable or disable the HW cursor.  Default: off.
+Enable or disable the SW cursor.  Default: off.
 .TP
 .BI "Option \*qSTN\*q \*q" boolean \*q
 Force detection of STN screen type. Default: off.
 .TP
 .BI "Option \*qUseModeline\*q \*q" boolean \*q
-Reprogram flat panel timings with values from the modeline. Default: off
+Reprogram flat panel timings with values from the modeline. Default: off.
 .TP
 .BI "Option \*qFixPanelSize\*q \*q" boolean \*q
-Reprogram flat panel size with values from the modeline. Default: off
+Reprogram flat panel size with values from the modeline. Default: off.
 .TP
 .BI "Option \*qNoStretch\*q \*q" boolean \*q
 This option disables the stretching on a mode on a flat panel to fill the
-screen. Default: off
+screen. Default: off.
 .TP
 .BI "Option \*qLcdCenter\*q \*q" boolean \*q
-Center the mode displayed on the flat panel on the screen. Default: off
+Center the mode displayed on the flat panel on the screen. Default: off.
 .TP
 .BI "Option \*qHWclocks\*q \*q" boolean \*q
 Force the use of fixed hardware clocks on chips that support both fixed
-and programmable clocks. Default: off
+and programmable clocks. Default: off.
 .TP
 .BI "Option \*qUseVclk1\*q \*q" boolean \*q
 Use the Vclk1 programmable clock on
 .B HiQV
-chipsets instead of Vclk2. Default: off
+chipsets instead of Vclk2. Default: off.
 .TP
 .BI "Option \*qFPClock8\*q \*q" float \*q
 .TP
@@ -154,17 +154,17 @@ chipsets instead of Vclk2. Default: off
 .TP
 .BI "Option \*qFPClock32\*q \*q" float \*q
 Force the use of a particular video clock speed for use with the 
-flat panel at a specified depth
+flat panel at a specified depth.
 .TP
 .BI "Option \*qMMIO\*q \*q" boolean \*q
-Force the use of memory mapped IO for acceleration registers. Default: off
+Force the use of memory mapped IO for acceleration registers. Default: off.
 .TP
 .BI "Option \*qFullMMIO\*q \*q" boolean \*q
-Force the use of memory mapped IO where it can be used. Default: off
+Force the use of memory mapped IO where it can be used. Default: off.
 .TP
 .BI "Option \*qSuspendHack\*q \*q" boolean \*q
 Force driver to leave centering and stretching registers alone. This
-can fix some laptop suspend/resume problems. Default: off
+can fix some laptop suspend/resume problems. Default: off.
 .TP
 .BI "Option \*qOverlay\*q"
 Enable 8+24 overlay mode.  Only appropriate for depth 24.  Default: off.
@@ -186,7 +186,7 @@ Enable or disable combining the sync signals with the green signal.
 Default: off.
 .TP
 .BI "Option \*qShowCache\*q \*q" boolean \*q
-Enable or disable viewing offscreen memory. Used for debugging only
+Enable or disable viewing offscreen memory. Used for debugging only.
 Default: off.
 .TP
 .BI "Option \*q18bitBus\*q \*q" boolean \*q

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/r128_accel.c,v 1.18 2003/11/10 18:41:20 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/r128_accel.c,v 1.21 2005/01/24 16:58:35 tsi Exp $ */
 /*
  * Copyright 1999, 2000 ATI Technologies Inc., Markham, Ontario,
  *                      Precision Insight, Inc., Cedar Park, Texas, and
@@ -86,6 +86,7 @@
 #include "r128_sarea.h"
 #define _XF86DRI_SERVER_
 #include "r128_dri.h"
+#include "r128_common.h"
 #endif
 
 				/* Line support */
@@ -211,6 +212,9 @@ void R128WaitForIdle(ScrnInfoPtr pScrn)
 		   INREG(R128_GUI_PROBE)));
 	xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
 		   "Idle timed out, resetting engine...\n");
+#ifdef XF86DRI
+	R128CCE_STOP(pScrn, info);
+#endif
 	R128EngineReset(pScrn);
 #ifdef XF86DRI
 	R128CCE_RESET(pScrn, info);

@@ -32,7 +32,7 @@ THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  *
  ***************************************************************************/
-/* $XFree86: xc/lib/XvMC/hw/i810/I810XvMC.h,v 1.4 2002/11/19 09:35:49 alanh Exp $ */
+/* $XFree86: xc/lib/XvMC/hw/i810/I810XvMC.h,v 1.5 2004/12/10 16:06:58 alanh Exp $ */
 
 
 #ifndef I810XVMC_H
@@ -86,7 +86,7 @@ typedef struct _i810OverlayRec {
 // i810XvMCDrmMap: Holds the data about the DRM maps
 ***************************************************************************/
 typedef struct _i810XvMCDrmMap {
-  drmHandle offset;
+  drm_handle_t offset;
   drmAddress address;
   unsigned int size;
 } i810XvMCDrmMap, *i810XvMCDrmMapPtr;
@@ -100,7 +100,7 @@ typedef struct _i810XvMCContext {
   i810XvMCDrmMap overlay;
   i810XvMCDrmMap surfaces;
   drmBufMapPtr dmabufs;  /* Data structure to hold available dma buffers */
-  drmContext drmcontext;
+  drm_context_t drmcontext;
   unsigned int last_render;
   unsigned int last_flip;
   unsigned short ref;
@@ -144,7 +144,7 @@ typedef struct _i810XvMCSurface {
   unsigned int last_flip;
   unsigned int second_field; /* Flags a surface that is only half done */
   drmAddress data;
-  drmHandle offset;
+  drm_handle_t offset;
   unsigned int offsets[3];
   i810XvMCContext *privContext;
 } i810XvMCSurface;
@@ -164,7 +164,7 @@ typedef struct _i810XvMCSubpicture {
   unsigned int last_render;
   unsigned int last_flip;
   drmAddress data;
-  drmHandle offset;
+  drm_handle_t offset;
   unsigned int offsets[1];
   unsigned char palette[3][16];
   i810XvMCContext *privContext;

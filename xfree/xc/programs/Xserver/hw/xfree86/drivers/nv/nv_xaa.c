@@ -37,10 +37,9 @@
 |*                                                                           *|
  \***************************************************************************/
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/nv/nv_xaa.c,v 1.34 2003/10/15 20:28:31 mvojkovi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/nv/nv_xaa.c,v 1.36 2004/03/29 16:25:18 tsi Exp $ */
 
 #include "nv_include.h"
-#include "xaalocal.h"
 #include "miline.h"
 #include "nv_dma.h"
 
@@ -149,6 +148,19 @@ NVDmaWait (
        } else 
            pNv->dmaFree = dmaGet - pNv->dmaCurrent - 1;
     }
+}
+
+void
+NVWaitVSync(NVPtr pNv)
+{
+    NVDmaStart(pNv, 0x0000A12C, 1);
+    NVDmaNext (pNv, 0);
+    NVDmaStart(pNv, 0x0000A134, 1);
+    NVDmaNext (pNv, pNv->CRTCnumber);
+    NVDmaStart(pNv, 0x0000A100, 1);
+    NVDmaNext (pNv, 0);
+    NVDmaStart(pNv, 0x0000A130, 1);
+    NVDmaNext (pNv, 0);
 }
 
 /* 

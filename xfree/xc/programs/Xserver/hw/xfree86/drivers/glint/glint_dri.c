@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/glint/glint_dri.c,v 1.38 2003/11/12 17:56:35 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/glint/glint_dri.c,v 1.40 2005/01/26 05:31:49 dawes Exp $ */
 /**************************************************************************
 
 Copyright 1998-1999 Precision Insight, Inc., Cedar Park, Texas.
@@ -54,7 +54,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 static char GLINTKernelDriverName[] = "gamma";
 static char GLINTClientDriverName[] = "gamma";
 
-static void GLINTDestroyContext(ScreenPtr pScreen, drmContext hwContext,
+static void GLINTDestroyContext(ScreenPtr pScreen, drm_context_t hwContext,
                                 DRIContextType contextStore);
 
 
@@ -166,7 +166,7 @@ GLINTInitVisualConfigs(ScreenPtr pScreen)
                } else {
                   pConfigs[i].visualRating	= GLX_NONE_EXT;
 	       }
-               pConfigs[i].transparentPixel	= 0;
+               pConfigs[i].transparentPixel	= GLX_NONE;
                pConfigs[i].transparentRed	= 0;
                pConfigs[i].transparentGreen	= 0;
                pConfigs[i].transparentBlue	= 0;
@@ -259,7 +259,7 @@ GLINTInitVisualConfigs(ScreenPtr pScreen)
                } else {
                   pConfigs[i].visualRating	= GLX_NONE_EXT;
 	       }
-               pConfigs[i].transparentPixel	= 0;
+               pConfigs[i].transparentPixel	= GLX_NONE;
                pConfigs[i].transparentRed	= 0;
                pConfigs[i].transparentGreen	= 0;
                pConfigs[i].transparentBlue	= 0;
@@ -483,11 +483,15 @@ GLINTDRIScreenInit(ScreenPtr pScreen)
     /* setup device info */
     pDRIInfo->drmDriverName = GLINTKernelDriverName;
     pDRIInfo->clientDriverName = GLINTClientDriverName;
-    pDRIInfo->busIdString = xalloc(64); /* Freed in DRIDestroyInfoRec */
-    sprintf(pDRIInfo->busIdString, "PCI:%d:%d:%d",
-	    ((pciConfigPtr)pGlint->PciInfo->thisCard)->busnum,
-	    ((pciConfigPtr)pGlint->PciInfo->thisCard)->devnum,
-	    ((pciConfigPtr)pGlint->PciInfo->thisCard)->funcnum);
+    if (xf86LoaderCheckSymbol("DRICreatePCIBusID")) {
+	pDRIInfo->busIdString = DRICreatePCIBusID(pGlint->PciInfo);
+    } else {
+	pDRIInfo->busIdString = xalloc(64); /* Freed in DRIDestroyInfoRec */
+	sprintf(pDRIInfo->busIdString, "PCI:%d:%d:%d",
+		((pciConfigPtr)pGlint->PciInfo->thisCard)->busnum,
+		((pciConfigPtr)pGlint->PciInfo->thisCard)->devnum,
+		((pciConfigPtr)pGlint->PciInfo->thisCard)->funcnum);
+    }
     pDRIInfo->ddxDriverMajorVersion = GLINT_MAJOR_VERSION;
     pDRIInfo->ddxDriverMinorVersion = GLINT_MINOR_VERSION;
     pDRIInfo->ddxDriverPatchVersion = GLINT_PATCHLEVEL;
@@ -635,7 +639,7 @@ GLINTDRIScreenInit(ScreenPtr pScreen)
     /* pci region 0: control regs, first 4k page, priveledged writes */
     pGlintDRI->registers0.size = 0x1000;
     if (drmAddMap( pGlint->drmSubFD,
-		   (drmHandle)pGlint->IOAddress,
+		   (drm_handle_t)pGlint->IOAddress,
 		   pGlintDRI->registers0.size,
 		   DRM_REGISTERS, DRM_READ_ONLY,
 		   &pGlintDRI->registers0.handle) < 0)
@@ -650,7 +654,7 @@ GLINTDRIScreenInit(ScreenPtr pScreen)
     /* pci region 0: control regs, following region, client access */
     pGlintDRI->registers1.size = 0xf000;
     if (drmAddMap( pGlint->drmSubFD,
-		   (drmHandle)(pGlint->IOAddress + 0x1000),
+		   (drm_handle_t)(pGlint->IOAddress + 0x1000),
 		   pGlintDRI->registers1.size,
 		   DRM_REGISTERS, 0,
 		   &pGlintDRI->registers1.handle) < 0)
@@ -665,7 +669,7 @@ GLINTDRIScreenInit(ScreenPtr pScreen)
     /* pci region 0: control regs, second MX, first 4k page */
     pGlintDRI->registers2.size = 0x1000;
     if (drmAddMap( pGlint->drmSubFD,
-		   (drmHandle)(pGlint->IOAddress + 0x10000),
+		   (drm_handle_t)(pGlint->IOAddress + 0x10000),
 		   pGlintDRI->registers2.size,
 		   DRM_REGISTERS, DRM_READ_ONLY,
 		   &pGlintDRI->registers2.handle) < 0)
@@ -680,7 +684,7 @@ GLINTDRIScreenInit(ScreenPtr pScreen)
     /* pci region 0: control regs, second MX, following region */
     pGlintDRI->registers3.size = 0xf000;
     if (drmAddMap( pGlint->drmSubFD,
-		   (drmHandle)(pGlint->IOAddress + 0x11000),
+		   (drm_handle_t)(pGlint->IOAddress + 0x11000),
 		   pGlintDRI->registers3.size,
 		   DRM_REGISTERS, 0,
 		   &pGlintDRI->registers3.handle) < 0)
@@ -704,18 +708,18 @@ GLINTDRIScreenInit(ScreenPtr pScreen)
 	
 	    for (i = 0; i < xf86ConfigDRI.bufs_count; i++) {
 	    	if ((bufs = drmAddBufs(pGlint->drmSubFD,
-				   xf86ConfigDRI.bufs[i].count,
-				   xf86ConfigDRI.bufs[i].size,
+				   xf86ConfigDRI.bufsList[i]->count,
+				   xf86ConfigDRI.bufsList[i]->size,
 				   0,
 				   0 /* flags */)) <= 0) {
 		    xf86DrvMsg(pScrn->scrnIndex, X_ERROR, 
 			   "[drm] failure adding %d %d byte DMA buffers\n",
-			   xf86ConfigDRI.bufs[i].count,
-			   xf86ConfigDRI.bufs[i].size);
+			   xf86ConfigDRI.bufsList[i]->count,
+			   xf86ConfigDRI.bufsList[i]->size);
 	    	} else {
 		    xf86DrvMsg(pScrn->scrnIndex, X_ERROR, 
 			   "[drm] added %d %d byte DMA buffers\n",
-			   bufs, xf86ConfigDRI.bufs[i].size);
+			   bufs, xf86ConfigDRI.bufsList[i]->size);
 		    dmabufs += bufs;
 	    	}
 	    }
@@ -824,7 +828,7 @@ GLINTDRICloseScreen(ScreenPtr pScreen)
 Bool
 GLINTCreateContext(ScreenPtr pScreen,
                    VisualPtr visual,
-                   drmContext hwContext,
+                   drm_context_t hwContext,
                    void *pVisualConfigPriv,
 		   DRIContextType contextStore)
 {
@@ -855,7 +859,7 @@ GLINTCreateContext(ScreenPtr pScreen,
 
 static void
 GLINTDestroyContext(ScreenPtr pScreen,
-                    drmContext hwContext,
+                    drm_context_t hwContext,
                     DRIContextType contextStore)
 {
 }

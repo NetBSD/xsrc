@@ -1,4 +1,3 @@
-
 /*
  * Leo (ZX) framebuffer driver.
  *
@@ -21,7 +20,7 @@
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sunleo/leo_driver.c,v 1.9 2003/10/30 17:37:12 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sunleo/leo_driver.c,v 1.12 2005/02/18 02:55:10 dawes Exp $ */
 
 #include "xf86.h"
 #include "xf86_OSproc.h"
@@ -58,8 +57,6 @@ static void	LeoFreeScreen(int scrnIndex, int flags);
 static ModeStatus LeoValidMode(int scrnIndex, DisplayModePtr mode,
 			       Bool verbose, int flags);
 
-void LeoSync(ScrnInfoPtr pScrn);
-
 #define VERSION 4000
 #define LEO_NAME "SUNLEO"
 #define LEO_DRIVER_NAME "sunleo"
@@ -67,7 +64,7 @@ void LeoSync(ScrnInfoPtr pScrn);
 #define LEO_MINOR_VERSION 0
 #define LEO_PATCHLEVEL 0
 
-/* 
+/*
  * This contains the functions needed by the server after loading the driver
  * module.  It must be supplied, and gets passed back by the SetupProc
  * function in the dynamic case.  In the static case, a reference to this
@@ -118,7 +115,7 @@ static XF86ModuleVersionInfo sunleoVersRec =
 
 XF86ModuleData sunleoModuleData = { &sunleoVersRec, leoSetup, NULL };
 
-pointer
+static pointer
 leoSetup(pointer module, pointer opts, int *errmaj, int *errmin)
 {
     static Bool setupDone = FALSE;
@@ -239,7 +236,7 @@ LeoProbe(DriverPtr drv, int flags)
     numUsed = xf86MatchSbusInstances(LEO_NAME, SBUS_DEVICE_LEO,
 		   devSections, numDevSections,
 		   drv, &usedChips);
-				    
+
     xfree(devSections);
     if (numUsed <= 0)
 	return FALSE;
@@ -254,7 +251,7 @@ LeoProbe(DriverPtr drv, int flags)
 	 */
 	if(pEnt->active) {
 	    ScrnInfoPtr pScrn;
-	    
+
 	    /* Allocate a ScrnInfoRec and claim the slot */
 	    pScrn = xf86AllocateScreen(drv, 0);
 
@@ -265,8 +262,8 @@ LeoProbe(DriverPtr drv, int flags)
 	    pScrn->Probe	 = LeoProbe;
 	    pScrn->PreInit	 = LeoPreInit;
 	    pScrn->ScreenInit	 = LeoScreenInit;
-  	    pScrn->SwitchMode	 = LeoSwitchMode;
-  	    pScrn->AdjustFrame	 = LeoAdjustFrame;
+	    pScrn->SwitchMode	 = LeoSwitchMode;
+	    pScrn->AdjustFrame	 = LeoAdjustFrame;
 	    pScrn->EnterVT	 = LeoEnterVT;
 	    pScrn->LeaveVT	 = LeoLeaveVT;
 	    pScrn->FreeScreen	 = LeoFreeScreen;
@@ -296,7 +293,7 @@ LeoPreInit(ScrnInfoPtr pScrn, int flags)
      * not at the start of each server generation.  This means that
      * only things that are persistent across server generations can
      * be initialised here.  xf86Screens[] is (pScrn is a pointer to one
-     * of these).  Privates allocated using xf86AllocateScrnInfoPrivateIndex()  
+     * of these).  Privates allocated using xf86AllocateScrnInfoPrivateIndex()
      * are too, and should be used for data that must persist across
      * server generations.
      *
@@ -309,7 +306,7 @@ LeoPreInit(ScrnInfoPtr pScrn, int flags)
 	return FALSE;
     }
     pLeo = GET_LEO_FROM_SCRN(pScrn);
-    
+
     /* Set pScrn->monitor */
     pScrn->monitor = pScrn->confScreen->monitor;
 
@@ -331,7 +328,7 @@ LeoPreInit(ScrnInfoPtr pScrn, int flags)
     /*********************
     deal with depth
     *********************/
-    
+
     if (!xf86SetDepthBpp(pScrn, 32, 0, 32, Support32bppFb)) {
 	return FALSE;
     } else {
@@ -355,7 +352,7 @@ LeoPreInit(ScrnInfoPtr pScrn, int flags)
 	return FALSE;
     memcpy(pLeo->Options, LeoOptions, sizeof(LeoOptions));
     xf86ProcessOptions(pScrn->scrnIndex, pScrn->options, pLeo->Options);
-    
+
     /*
      * This must happen after pScrn->display has been set because
      * xf86SetWeight references it.
@@ -397,7 +394,7 @@ LeoPreInit(ScrnInfoPtr pScrn, int flags)
     from = X_DEFAULT;
 
     /* determine whether we use hardware or software cursor */
-    
+
     pLeo->HWCursor = TRUE;
     if (xf86GetOptValBool(pLeo->Options, OPTION_HW_CURSOR, &pLeo->HWCursor))
 	from = X_CONFIG;
@@ -405,7 +402,7 @@ LeoPreInit(ScrnInfoPtr pScrn, int flags)
 	from = X_CONFIG;
 	pLeo->HWCursor = FALSE;
     }
-    
+
     xf86DrvMsg(pScrn->scrnIndex, from, "Using %s cursor\n",
 		pLeo->HWCursor ? "HW" : "SW");
 
@@ -413,7 +410,7 @@ LeoPreInit(ScrnInfoPtr pScrn, int flags)
 	pLeo->NoAccel = TRUE;
 	xf86DrvMsg(pScrn->scrnIndex, X_CONFIG, "Acceleration disabled\n");
     }
-        
+
     if (xf86LoadSubModule(pScrn, "cfb32") == NULL) {
 	LeoFreeRec(pScrn);
 	return FALSE;
@@ -427,7 +424,7 @@ LeoPreInit(ScrnInfoPtr pScrn, int flags)
     /*********************
     set up clock and mode stuff
     *********************/
-    
+
     pScrn->progClock = TRUE;
 
     if(pScrn->display->virtualX || pScrn->display->virtualY) {
@@ -456,23 +453,43 @@ LeoScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 {
     ScrnInfoPtr pScrn;
     LeoPtr pLeo;
+    sbusDevicePtr psdp;
     int ret;
     VisualPtr visual;
-    extern Bool LeoAccelInit(ScreenPtr pScreen, LeoPtr pLeo);
 
-    /* 
-     * First get the ScrnInfoRec
-     */
     pScrn = xf86Screens[pScreen->myNum];
-
     pLeo = GET_LEO_FROM_SCRN(pScrn);
+    psdp = pLeo->psdp;
 
-    /* Map the Leo memory */
-    pLeo->fb =
-	xf86MapSbusMem (pLeo->psdp, LEO_FB0_VOFF, 0x803000);
+    /* Map Leo memory areas */
+    pLeo->fb = xf86MapSbusMem(psdp, LEO_FB0_VOFF, 0x00400000);
+    pLeo->lc0 = xf86MapSbusMem(psdp, LEO_LC0_VOFF, sizeof(*pLeo->lc0));
+    pLeo->ld0 = xf86MapSbusMem(psdp, LEO_LD0_VOFF, sizeof(*pLeo->ld0));
+    pLeo->dac = xf86MapSbusMem(psdp, LEO_LX0_CURSOR_VOFF, sizeof(*pLeo->ld0));
 
-    if (! pLeo->fb)
+    if (!pLeo->fb || !pLeo->lc0 || !pLeo->ld0 || !pLeo->dac) {
+	if (pLeo->fb) {
+	    xf86UnmapSbusMem(psdp, pLeo->fb, 0x00400000);
+	    pLeo->fb = NULL;
+	}
+
+	if (pLeo->lc0) {
+	    xf86UnmapSbusMem(psdp, pLeo->lc0, sizeof(*pLeo->lc0));
+	    pLeo->lc0 = NULL;
+	}
+
+	if (pLeo->ld0) {
+	    xf86UnmapSbusMem(psdp, pLeo->ld0, sizeof(*pLeo->ld0));
+	    pLeo->ld0 = NULL;
+	}
+
+	if (pLeo->dac) {
+	    xf86UnmapSbusMem(psdp, pLeo->dac, sizeof(*pLeo->dac));
+	    pLeo->dac = NULL;
+	}
+
 	return FALSE;
+    }
 
     /* Darken the screen for aesthetic reasons and set the viewport */
     LeoSaveScreen(pScreen, SCREEN_SAVER_ON);
@@ -533,22 +550,20 @@ LeoScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 	return FALSE;
 
     if (!pLeo->NoAccel)
-	xf86Msg(X_INFO, "%s: Using acceleration\n", pLeo->psdp->device);
+	xf86Msg(X_INFO, "%s: Using acceleration\n", psdp->device);
 
     /* Initialise cursor functions */
-    miDCInitialize (pScreen, xf86GetPointerScreenFuncs());
+    miDCInitialize(pScreen, xf86GetPointerScreenFuncs());
 
-    /* Initialize HW cursor layer. 
+    /* Initialize HW cursor layer.
        Must follow software cursor initialization*/
-    if (pLeo->HWCursor) { 
-	extern Bool LeoHWCursorInit(ScreenPtr pScreen);
-
+    if (pLeo->HWCursor) {
 	if(!LeoHWCursorInit(pScreen)) {
-	    xf86DrvMsg(pScrn->scrnIndex, X_ERROR, 
+	    xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
 		       "Hardware cursor initialization failed\n");
 	    return(FALSE);
 	}
-	xf86SbusHideOsHwCursor(pLeo->psdp);
+	xf86SbusHideOsHwCursor(psdp);
     }
 
     /* Initialise default colourmap */
@@ -585,14 +600,12 @@ LeoSwitchMode(int scrnIndex, DisplayModePtr mode, int flags)
  * displayed location in the video memory.
  */
 /* Usually mandatory */
-static void 
+static void
 LeoAdjustFrame(int scrnIndex, int x, int y, int flags)
 {
     /* we don't support virtual desktops */
     return;
 }
-
-extern void LeoVtChange (ScreenPtr pScreen, int enter);
 
 /*
  * This is called when VT switching back to the X server.  Its job is
@@ -607,9 +620,9 @@ LeoEnterVT(int scrnIndex, int flags)
     LeoPtr pLeo = GET_LEO_FROM_SCRN(pScrn);
 
     pLeo->vtSema = FALSE;
-    LeoVtChange (pScrn->pScreen, TRUE);
+    LeoVtChange(pScrn->pScreen, TRUE);
     if (pLeo->HWCursor)
-	xf86SbusHideOsHwCursor (pLeo->psdp);
+	xf86SbusHideOsHwCursor(pLeo->psdp);
     return TRUE;
 }
 
@@ -625,7 +638,7 @@ LeoLeaveVT(int scrnIndex, int flags)
     ScrnInfoPtr pScrn = xf86Screens[scrnIndex];
     LeoPtr pLeo = GET_LEO_FROM_SCRN(pScrn);
 
-    LeoVtChange (pScrn->pScreen, FALSE);
+    LeoVtChange(pScrn->pScreen, FALSE);
     pLeo->vtSema = TRUE;
 }
 
@@ -641,12 +654,16 @@ LeoCloseScreen(int scrnIndex, ScreenPtr pScreen)
 {
     ScrnInfoPtr pScrn = xf86Screens[scrnIndex];
     LeoPtr pLeo = GET_LEO_FROM_SCRN(pScrn);
+    sbusDevicePtr psdp = pLeo->psdp;
 
     pScrn->vtSema = FALSE;
-    xf86UnmapSbusMem(pLeo->psdp, pLeo->fb, 0x803000);
+    xf86UnmapSbusMem(psdp, pLeo->fb, 0x00400000);
+    xf86UnmapSbusMem(psdp, pLeo->lc0, sizeof(*pLeo->lc0));
+    xf86UnmapSbusMem(psdp, pLeo->ld0, sizeof(*pLeo->ld0));
+    xf86UnmapSbusMem(psdp, pLeo->dac, sizeof(*pLeo->dac));
 
     if (pLeo->HWCursor)
-	xf86SbusHideOsHwCursor (pLeo->psdp);
+	xf86SbusHideOsHwCursor(psdp);
 
     pScreen->CloseScreen = pLeo->CloseScreen;
     return (*pScreen->CloseScreen)(scrnIndex, pScreen);
@@ -671,7 +688,7 @@ static ModeStatus
 LeoValidMode(int scrnIndex, DisplayModePtr mode, Bool verbose, int flags)
 {
     if (mode->Flags & V_INTERLACE)
-	return(MODE_BAD);
+	return(MODE_NO_INTERLACE);
 
     return(MODE_OK);
 }
@@ -686,13 +703,4 @@ LeoSaveScreen(ScreenPtr pScreen, int mode)
        used for much though */
 {
     return TRUE;
-}
-
-/*
- * This is the implementation of the Sync() function.
- */
-void
-LeoSync(ScrnInfoPtr pScrn)
-{
-    return;
 }

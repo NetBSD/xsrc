@@ -25,7 +25,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/Xmu/RdBitF.c,v 3.13 2002/05/31 18:45:45 dawes Exp $ */
+/* $XFree86: xc/lib/Xmu/RdBitF.c,v 3.14 2004/10/23 15:29:26 dawes Exp $ */
 
 /*
  * This file contains miscellaneous utility routines and is not part of the
@@ -171,7 +171,7 @@ XmuReadBitmapData(FILE *fstream, unsigned int *width, unsigned int *height,
 
     while (fgets(line, MAX_SIZE, fstream)) {
 	if (strlen(line) == MAX_SIZE-1) {
-	    RETURN (BitmapFileInvalid);
+	    RETURN (BitmapFileInvalid)
 	}
 	if (sscanf(line,"#define %s %d",name_and_type,&value) == 2) {
 	    if (!(type = strrchr(name_and_type, '_')))
@@ -212,7 +212,7 @@ XmuReadBitmapData(FILE *fstream, unsigned int *width, unsigned int *height,
 	  continue;
     
 	if (!ww || !hh)
-	  RETURN (BitmapFileInvalid);
+	  RETURN (BitmapFileInvalid)
 
 	if ((ww % 16) && ((ww % 16) < 9) && version10p)
 	  padding = 1;
@@ -224,7 +224,7 @@ XmuReadBitmapData(FILE *fstream, unsigned int *width, unsigned int *height,
 	size = bytes_per_line * hh;
 	data = (unsigned char *) Xmalloc ((unsigned int) size);
 	if (!data) 
-	  RETURN (BitmapNoMemory);
+	  RETURN (BitmapNoMemory)
 
 	if (version10p) {
 	    unsigned char *ptr;
@@ -232,7 +232,7 @@ XmuReadBitmapData(FILE *fstream, unsigned int *width, unsigned int *height,
 
 	    for (bytes=0, ptr=data; bytes<size; (bytes += 2)) {
 		if ((value = NextInt(fstream)) < 0)
-		  RETURN (BitmapFileInvalid);
+		  RETURN (BitmapFileInvalid)
 		*(ptr++) = value;
 		if (!padding || ((bytes+2) % bytes_per_line))
 		  *(ptr++) = value >> 8;
@@ -243,7 +243,7 @@ XmuReadBitmapData(FILE *fstream, unsigned int *width, unsigned int *height,
 
 	    for (bytes=0, ptr=data; bytes<size; bytes++, ptr++) {
 		if ((value = NextInt(fstream)) < 0) 
-		  RETURN (BitmapFileInvalid);
+		  RETURN (BitmapFileInvalid)
 		*ptr=value;
 	    }
 	}
@@ -251,7 +251,7 @@ XmuReadBitmapData(FILE *fstream, unsigned int *width, unsigned int *height,
     }					/* end while */
 
     if (data == NULL) {
-	RETURN (BitmapFileInvalid);
+	RETURN (BitmapFileInvalid)
     }
 
     *datap = data;
@@ -261,7 +261,7 @@ XmuReadBitmapData(FILE *fstream, unsigned int *width, unsigned int *height,
     if (x_hot) *x_hot = hx;
     if (y_hot) *y_hot = hy;
 
-    RETURN (BitmapSuccess);
+    RETURN (BitmapSuccess)
 }
 
 #if defined(WIN32)

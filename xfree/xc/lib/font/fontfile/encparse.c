@@ -20,7 +20,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-/* $XFree86: xc/lib/font/fontfile/encparse.c,v 1.21 2004/02/20 21:35:13 tsi Exp $ */
+/* $XFree86: xc/lib/font/fontfile/encparse.c,v 1.23 2004/10/23 15:29:26 dawes Exp $ */
 
 /* Parser for encoding files */
 
@@ -32,7 +32,7 @@ THE SOFTWARE.
 #include <string.h>
 #include <stdio.h>
 
-#ifdef SCO325
+#ifdef __SCO__
 #include <strings.h>
 #endif
 
@@ -579,8 +579,6 @@ parseEncodingFile(FontFilePtr f, int headerOnly)
         } else {                /* unknown mapping type -- ignore */
             goto skipmapping;
         }
-        /* NOTREACHED */
-        goto error;
     default: goto no_mapping;   /* ignore unknown lines */
     }
 

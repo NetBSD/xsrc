@@ -26,7 +26,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/xdm/util.c,v 3.21 2003/11/22 04:09:26 dawes Exp $ */
+/* $XFree86: xc/programs/xdm/util.c,v 3.22 2004/04/03 22:26:26 dawes Exp $ */
 
 /*
  * xdm - display manager daemon
@@ -244,7 +244,7 @@ CleanUpChild (void)
 	setsid();
 #else
 #if defined(SYSV) || defined(SVR4) || defined(__CYGWIN__)
-#if !(defined(SVR4) && defined(i386)) || defined(SCO325)
+#if !(defined(SVR4) && defined(i386)) || defined(__SCO__)
 	setpgrp ();
 #endif
 #else

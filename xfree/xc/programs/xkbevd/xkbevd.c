@@ -24,7 +24,7 @@
  THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
  ********************************************************/
-/* $XFree86: xc/programs/xkbevd/xkbevd.c,v 3.9 2001/07/25 15:05:25 dawes Exp $ */
+/* $XFree86: xc/programs/xkbevd/xkbevd.c,v 3.11 2004/12/17 16:38:03 tsi Exp $ */
 
 #define	DEBUG_VAR xkbevdDebug
 #include <X11/Xosdefs.h>
@@ -445,7 +445,9 @@ main(int argc, char *argv[])
 FILE 	*	file;
 static char 	buf[1024];
 XkbEvent	ev;
+#if 0
 Bool		ok;
+#endif
 
 
     yyin = stdin;
@@ -499,7 +501,9 @@ Bool		ok;
     dpy= GetDisplay(argv[0],dpyName,&xkbOpcode,&xkbEventCode);
     if (!dpy)
 	goto BAILOUT;
+#if 0
     ok= True;
+#endif
     setScanState(cfgFileName,1);
     CFGParseFile(file);
     if (!config) {
@@ -542,8 +546,10 @@ Bool		ok;
 	}
     }
 
+#if 0
     XCloseDisplay(dpy);
     return (ok==0);
+#endif
 BAILOUT:
     uAction("Exiting\n");
     if (dpy!=NULL)

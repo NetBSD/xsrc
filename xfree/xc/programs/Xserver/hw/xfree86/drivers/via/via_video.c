@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/via/via_video.c,v 1.17 2004/02/04 04:15:09 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/via/via_video.c,v 1.18 2004/03/29 16:25:22 tsi Exp $ */
 /*
  * Copyright 1998-2003 VIA Technologies, Inc. All Rights Reserved.
  * Copyright 2001-2003 S3 Graphics, Inc. All Rights Reserved.
@@ -45,7 +45,6 @@
 #include "xf86xv.h"
 #include "Xv.h"
 #include "xaa.h"
-#include "xaalocal.h"
 #include "dixstruct.h"
 #include "via_xvpriv.h"
 #include "via_swov.h"
@@ -484,36 +483,6 @@ viaSetupImageVideoG(ScreenPtr pScreen)
     } /* End of for */
     viaResetVideo(pScrn);
     return adaptPtr[0];
-}
-
-
-static Bool
-RegionsEqual(RegionPtr A, RegionPtr B)
-{
-    int *dataA, *dataB;
-    int num;
-
-    num = REGION_NUM_RECTS(A);
-    if(num != REGION_NUM_RECTS(B))
-        return FALSE;
-
-    if((A->extents.x1 != B->extents.x1) ||
-       (A->extents.x2 != B->extents.x2) ||
-       (A->extents.y1 != B->extents.y1) ||
-       (A->extents.y2 != B->extents.y2))
-        return FALSE;
-
-    dataA = (int*)REGION_RECTS(A);
-    dataB = (int*)REGION_RECTS(B);
-
-    while(num--) {
-        if((dataA[0] != dataB[0]) || (dataA[1] != dataB[1]))
-           return FALSE;
-        dataA += 2; 
-        dataB += 2;
-    }
- 
-    return TRUE;
 }
 
 
@@ -1112,7 +1081,7 @@ viaPutImageG(
                      && (pPriv->old_src_w == src_w) && (pPriv->old_src_h == src_h)
                      && (pVia->old_dwUseExtendedFIFO == dwUseExtendedFIFO)
                      && (pVia->Video.VideoStatus & SW_VIDEO_ON) &&
-                     RegionsEqual(&pPriv->clip, clipBoxes))
+                     REGION_EQUAL(pScrn->pScreen, &pPriv->clip, clipBoxes))
                 {
                     return Success;
                 }
@@ -1129,7 +1098,7 @@ viaPutImageG(
                 pPriv->old_src_h = src_h;
 
                 /*  BitBlt: Draw the colorkey rectangle */
-                if(!RegionsEqual(&pPriv->clip, clipBoxes)) {
+                if(!REGION_EQUAL(pScrn->pScreen, &pPriv->clip, clipBoxes)) {
                     REGION_COPY(pScrn->pScreen, &pPriv->clip, clipBoxes);
                     
                     xf86XVFillKeyHelper(pScrn->pScreen, pPriv->colorKey, clipBoxes);
@@ -1236,11 +1205,9 @@ viaPutVideo(ScrnInfoPtr pScrn,
 
 
     /*  BitBlt: Color fill */
-    if(!RegionsEqual(&pPriv->clip, clipBoxes)) {
+    if(!REGION_EQUAL(pScrn->pScreen, &pPriv->clip, clipBoxes)) {
         REGION_COPY(pScrn->pScreen, &pPriv->clip, clipBoxes);
-        XAAFillSolidRects(pScrn,pPriv->colorKey,GXcopy, ~0,
-                          REGION_NUM_RECTS(clipBoxes),
-                          REGION_RECTS(clipBoxes));
+        xf86XVFillKeyHelper(pScrn->pScreen, pPriv->colorKey, clipBoxes);
     }
 
     switch ( pPriv->xv_portnum )

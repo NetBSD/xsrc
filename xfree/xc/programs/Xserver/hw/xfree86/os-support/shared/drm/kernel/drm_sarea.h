@@ -32,6 +32,16 @@
 #ifndef _DRM_SAREA_H_
 #define _DRM_SAREA_H_
 
+/* SAREA area needs to be at least a page */
+#if defined(__alpha__)
+#define SAREA_MAX                       0x2000
+#elif defined(__ia64__)
+#define SAREA_MAX                       0x10000         /* 64kB */
+#else
+/* Intel 830M driver needs at least 8k SAREA */
+#define SAREA_MAX                       0x2000
+#endif
+
 /** Maximum number of drawables in the SAREA */
 #define SAREA_MAX_DRAWABLES 		256
 

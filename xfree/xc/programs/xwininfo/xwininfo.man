@@ -23,9 +23,9 @@
 .\" other dealings in this Software without prior written authorization
 .\" from The Open Group.
 .\"
-.\" $XFree86: xc/programs/xwininfo/xwininfo.man,v 1.9 2004/01/12 21:43:20 herrb Exp $
+.\" $XFree86: xc/programs/xwininfo/xwininfo.man,v 1.10 2005/02/11 03:03:22 dawes Exp $
 .\"
-.TH XWININFO 1 __xorgversion__
+.TH XWININFO 1 __vendorversion__
 .SH NAME
 xwininfo \- window information utility for X
 .SH SYNOPSIS

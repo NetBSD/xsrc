@@ -7,7 +7,7 @@
 <date>2001 October 01
 
 <ident>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/Solaris.sgml,v 1.4 2003/01/04 04:20:23 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/Solaris.sgml,v 1.6 2004/11/26 19:09:23 tsi Exp $
 </ident>
 
 <!-- Table of contents -->
@@ -157,10 +157,9 @@ Under Solaris x86 2.5 and later, there's a system driver (<tt>/dev/xsvc</tt>)
 that provides this functionality.
 It will be detected automatically by the server, so you don't need to install
 the aperture driver.<p>
-For older Solaris x86 and for Solaris SPARC releases, the source for this
-driver is included in
-<tt>xc/programs/Xserver/hw/xfree86/etc/apSolaris.shar</tt> of the source
-distribution.
+For older Solaris x86 and for any SPARC release, the source for this driver is
+included in <tt>xc/programs/Xserver/hw/xfree86/etc/apSolaris.shar</tt> of the
+source distribution.
 This file can usually also be found in the <tt>/usr/X11R6/lib/X11/etc</tt>
 directory when XFree86 is installed.
 Building, and installing the driver is relatively straight forward. Please read
@@ -210,6 +209,11 @@ There is no known work around.<p>
 The SPARC port is still quite new, so instability is to be expected (and
 reported!).
 It might even have broken some aspects of the x86 port.<p>
+<item>
+On SPARC, xload should be updated to deal with both 32-bit and 64-bit SunOS
+kernels.
+It currently is compiled as a 32-bit binary and cannot handle a 64-bit
+kernel.<p>
 </enum>
 <sect>Bug Notification<p>
 Bug reports should be sent to <email>XFree86@XFree86.org</email>.

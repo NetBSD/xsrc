@@ -29,13 +29,13 @@ Copyright 1987, 1988 by Digital Equipment Corporation, Maynard, Massachusetts.
 
                         All Rights Reserved
 
-Permission to use, copy, modify, and distribute this software and its 
-documentation for any purpose and without fee is hereby granted, 
+Permission to use, copy, modify, and distribute this software and its
+documentation for any purpose and without fee is hereby granted,
 provided that the above copyright notice appear in all copies and that
-both that copyright notice and this permission notice appear in 
+both that copyright notice and this permission notice appear in
 supporting documentation, and that the name of Digital not be
 used in advertising or publicity pertaining to distribution of the
-software without specific, written prior permission.  
+software without specific, written prior permission.
 
 DIGITAL DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING
 ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO EVENT SHALL
@@ -46,11 +46,11 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/lib/Xt/TranslateI.h,v 1.4 2003/04/21 16:34:29 herrb Exp $ */
+/* $XFree86: xc/lib/Xt/TranslateI.h,v 1.5 2004/05/05 00:07:03 dickey Exp $ */
 
-/* 
+/*
  * TranslateI.h - Header file private to translation management
- * 
+ *
  * Author:	Gabe Beged-Dov, HP
  *
  * Former Author:	Charles Haynes
@@ -159,7 +159,7 @@ typedef struct _TMSimpleStateTreeRec{
     TMShortCard		unused;	     /* to ensure same alignment */
     TMBranchHeadRec	*branchHeadTbl;
     XrmQuark		*quarkTbl;  /* table of quarkified rhs*/
-}TMSimpleStateTreeRec, *TMSimpleStateTree;    
+}TMSimpleStateTreeRec, *TMSimpleStateTree;
 
 /* NOTE: elements of this structure must match those of
  * TMSimpleStateTreeRec and TMParseStateTreeRec.
@@ -175,7 +175,7 @@ typedef struct _TMComplexStateTreeRec{
     TMBranchHeadRec	*branchHeadTbl;
     XrmQuark		*quarkTbl;  /* table of quarkified rhs*/
     StatePtr		*complexBranchHeadTbl;
-}TMComplexStateTreeRec, *TMComplexStateTree;    
+}TMComplexStateTreeRec, *TMComplexStateTree;
 
 /* NOTE: elements of this structure must match those of
  * TMSimpleStateTreeRec and TMComplexStateTreeRec.
@@ -198,7 +198,7 @@ typedef struct _TMParseStateTreeRec{
     TMShortCard		quarkTblSize; /*total size of quarkTbl */
     TMShortCard		complexBranchHeadTblSize;
     StatePtr		head;
-}TMParseStateTreeRec, *TMParseStateTree;    
+}TMParseStateTreeRec, *TMParseStateTree;
 
 typedef union _TMStateTreeRec{
     TMSimpleStateTreeRec	simple;
@@ -242,13 +242,13 @@ typedef struct _TranslationData{
 }TranslationData;
 
 /*
- * ATranslations is returned by GetValues for translations that contain 
+ * ATranslations is returned by GetValues for translations that contain
  * accelerators.  The TM can differentiate between this and TranslationData
  * (that don't have a bindTbl) by looking at the first field (hasBindings)
- * of either structure.  All ATranslationData structures associated with a 
- * widget are chained off the BindData record of the widget. 
+ * of either structure.  All ATranslationData structures associated with a
+ * widget are chained off the BindData record of the widget.
  */
-typedef struct _ATranslationData{ 
+typedef struct _ATranslationData{
     unsigned char		hasBindings;	/* must be first */
     unsigned char		operation;
     struct _TranslationData	*xlations;  /* actual translations */
@@ -371,7 +371,7 @@ extern TMGlobalRec _XtGlobalTM;
     if (pd->keysyms == NULL) \
         _XtBuildKeysymTables(dpy, pd)
 
-/* 
+/*
  * Internal Functions
  */
 
@@ -498,6 +498,10 @@ extern Boolean _XtCvtMergeTranslations(
     XtPointer*	/* closure_ret */
 );
 
+void _XtRemoveStateTreeByIndex(
+    XtTranslations	/* xlations */,
+    TMShortCard	/* i */);
+
 void _XtFreeTranslations(
     XtAppContext	/* app */,
     XrmValuePtr		/* toVal */,
@@ -509,7 +513,7 @@ void _XtFreeTranslations(
 extern TMShortCard _XtGetModifierIndex(
     Event*	/* event */
 );
-   
+
 extern TMShortCard _XtGetQuarkIndex(
     TMParseStateTree	/* stateTreePtr */,
     XrmQuark		/* quark */
@@ -558,6 +562,10 @@ extern String _XtPrintActions(
     XrmQuark*	/* quarkTbl */
 );
 
+extern String _XtPrintState(
+    TMStateTree	/* stateTree */,
+    TMBranchHead /* branchHead */);
+
 extern String _XtPrintEventSeq(
     EventSeqPtr	/* eventSeq */,
     Display*	/* dpy */
@@ -567,10 +575,10 @@ typedef Boolean (*_XtTraversalProc)(
     StatePtr	/* state */,
     XtPointer	/* data */
 );
-				    
+
 extern void _XtTraverseStateTree(
     TMStateTree		/* tree */,
-    _XtTraversalProc	/* func */,				 
+    _XtTraversalProc	/* func */,
     XtPointer		/* data */
 );
 

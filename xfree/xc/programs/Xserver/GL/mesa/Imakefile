@@ -1,14 +1,29 @@
-XCOMM $XFree86: xc/programs/Xserver/GL/mesa/Imakefile,v 1.6 2002/02/25 00:45:41 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/GL/mesa/Imakefile,v 1.9 2004/12/10 16:07:00 alanh Exp $
 
 #define IHaveModules
-#include <Server.tmpl>
 
 #define IHaveSubdirs
+      SUBDIRS = main math array_cache shader swrast swrast_setup tnl X GLcore
 
-      SUBDIRS = src GLcore
+#include <Server.tmpl>
+
+
+#define NeedAllMesaSrc
+#define NeedToLinkMesaSrc
+#define MesaBuildDir /**/
+#include "../../../../lib/GL/mesa/Imakefile.inc"
+
+     INCLUDES = -I$(INCLUDESRC) -I$(XINCLUDESRC) -I$(EXTINCSRC) \
+		-I$(MESASRCDIR)/include -I$(GLXLIBSRC)/include \
+		-I$(MESASRCDIR)/src/mesa \
+		-I$(SERVERSRC)/include
+
       DEFINES = $(GLX_DEFINES)
+
+ModuleObjectRule()
 
 MakeSubdirs($(SUBDIRS))
 DependSubdirs($(SUBDIRS))
-MakeLintLibSubdirs($(SUBDIRS))
-LintSubdirs($(SUBDIRS))
+
+DependTarget()
+

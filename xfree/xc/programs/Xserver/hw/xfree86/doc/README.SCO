@@ -30,9 +30,9 @@ the following conditions must be met:
      <URL:ftp://ftp.sco.com/pub/openserver5/opensrc>.
 
    o To compile XFree86, you must use the SCO-supported version of the GNU C
-     Compiler.  It is possible that Skunkware versions of the compiler will
-     work too, but this has not been tested.  The ``GNU Development System''
-     is available for all releases from (and including) SCO OpenServer
+     Compiler.  It is possible that the Skunkware versions of the compiler
+     will work too, but this has not been tested.  The ``GNU Development Sys-
+     tem'' is available for all releases from (and including) SCO OpenServer
      Release 5.0.5.  It is provided with the operating system in all versions
      from Release 5.0.7, although you need to run ``custom'' to install it
      from the media.  You can always download the latest latest version of
@@ -78,9 +78,9 @@ the compilation, perform the following steps:
      make World BOOTSTRAPCFLAGS=-DSCO5 2>&1 | tee world.log.  This will do a
      full build, and send all of the build results to the file world.log.
 
-   o If the build succeeded, install the new server by executing the command
-     make install 2>&1 | tee install.log as root.  This will send the install
-     results to the file install.log.
+   o If the build has succeeded, install the new server by executing the com-
+     mand make install 2>&1 | tee install.log as root.  This will send the
+     install results to the file install.log.
 
    o If you want to install the manual pages, execute the command make
      install.man 2>&1 | tee -a install.log as root.
@@ -100,17 +100,19 @@ ing trouble getting your mouse to work using the XFree86 mouse drivers.
 4.  Switching Consoles
 
 XFree86 uses similar console switching keys as the SCO R4 and R5 servers.
-That is, Ctrl-PrntScr takes you to the next console along from the one X is
-running on.  If this is the last console it will take you to console 1. Ctrl-
-Alt-FXX, where XX is a function key between F1 and F12 will switch you to the
-console number assigned to that function key. F1 corresponds to tty01 (or
+Ctrl-PrntScr takes you to the next console along from the one X is running
+on.  If this is the last console it will take you to console 1.  Ctrl-Alt-
+FXX, where XX is a function key between F1 and F12 will switch you to the
+console number assigned to that function key.  F1 corresponds to tty01 (or
 console 1), F2 corresponds to tty02 (or console 2) etc.
 
-Unlike the SCO X server, the "kill me now" key is Alt+Ctrl+Backspace.  This
-does not ask for confirmation, it simply kills the X server as immediately as
-possible.  Use with extreme caution.  This may cause applications to termi-
-nate in an unpredictable way.  You can set the DontZap option in the Server-
-Flags section of your XF86Config file to disable this.
+Unlike the SCO X server, the XFree86 "kill me now" key is Alt+Ctrl+Backspace.
+This does not ask for confirmation, it simply kills the X server as quickly
+as possible and so use wisely and this may cause applications to terminate in
+an unpredictable way.
+
+You can set the DontZap option in the ServerFlags section of your XF86Config
+file to disable this feature.
 
 5.  Setting up Man Pages
 
@@ -120,18 +122,18 @@ MANPATH in /etc/default/man. The line should look similar to:
 
          MANPATH=/usr/man:/usr/gnu/man:/usr/X11R6/man:/usr/local/man
 
-This allows all users to view the X man pages.  You may change your own MAN-
-PATH environment variable if you do not want everyone to access the man
-pages.
+and allows all users to view the X man pages.  You can change the MANPATH
+environment variable if you do not want everyone to access the man pages.
 
 By default the man pages are compressed using ``compress'' to conserve space.
-If you do not want to compress the man pages change CompressManPages to NO in
-your ``host.def'' file.  Those using the binary distribution can use ``uncom-
-press'' to uncompress the man pages.  Binary distributions contain pre-for-
-matted versions of all man pages.  If you are compiling the server yourself,
-you need to have the GNU Tools package installed to get groff, the GNU nroff
-replacement, to format the man pages.  Use the manroff script to format the
-manual pages yourself.
+If you do not want the man pages compressed change CompressManPages to NO in
+your ``host.def'' file.
+
+Those using the binary distribution can use ``uncompress'' to uncompress the
+man pages.  Binary distributions also contain pre-formatted versions of all
+man pages.  If you are compiling the server yourself, you need the GNU Tools
+package installed to get groff, the GNU nroff replacement, to format the man
+pages.  Use the manroff script to format the manual pages.
 
 6.  Using SCO binaries/servers.
 
@@ -140,7 +142,7 @@ server will also accept connections from XFree86 binaries. This means you may
 mix and match the two if you have ODT.  For example you may still use the
 Panning Motif window manager (pmwm) if you prefer.
 
-     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/SCO.sgml,v 3.23 dawes Exp $
+     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/SCO.sgml,v 3.24 dawes Exp $
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.SCO,v 3.36 2003/12/19 04:36:40 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.SCO,v 3.37 2005/02/15 01:47:38 dawes Exp $

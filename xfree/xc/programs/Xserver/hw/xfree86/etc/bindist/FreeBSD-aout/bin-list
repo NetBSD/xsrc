@@ -31,9 +31,10 @@ lib/libXt.so.6.0
 lib/libXtst.so.6.1
 lib/libXv.so.1.0
 lib/libXvMC.so.1.0
-lib/libXxf86dga.so.1.0
+lib/libXxf86dga.so.1.1
 lib/libXxf86misc.so.1.1
 lib/libXxf86vm.so.1.0
+lib/libdmx.so.1.0
 lib/libdps.so.1.0
 lib/libdpstk.so.1.0
 lib/libexpat.so.4.0

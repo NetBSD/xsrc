@@ -6,7 +6,7 @@
  *      (c) 1998 Gerd Knorr <kraxel@cs.tu-berlin.de>
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/i2c/xf86i2c.c,v 1.15 2003/08/29 21:08:06 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/i2c/xf86i2c.c,v 1.16 2004/09/11 01:33:06 dawes Exp $ */
 
 #if 1
 #include "misc.h"
@@ -818,6 +818,7 @@ xf86I2CBusInit(I2CBusPtr b)
 	    if (b->I2CPutByte == NULL ||
 	        b->I2CGetByte == NULL ||
 	        b->I2CAddress == NULL ||
+	        b->I2CStart   == NULL ||
 	        b->I2CStop    == NULL)
 	        return FALSE;
         } else { 
@@ -825,6 +826,7 @@ xf86I2CBusInit(I2CBusPtr b)
 	    b->I2CGetByte = I2CGetByte;
 	    b->I2CAddress = I2CAddress;
 	    b->I2CStop    = I2CStop;
+	    b->I2CStart   = I2CStart;
         }
      }
 

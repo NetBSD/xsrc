@@ -57,7 +57,7 @@ in this Software without prior written authorization from The Open Group.
  * or other dealings in this Software without prior written authorization
  * from said copyright holders.
  */
-/* $XFree86: xc/programs/Xserver/Xprint/ps/PsGC.c,v 1.7 2003/10/29 22:11:55 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/Xprint/ps/PsGC.c,v 1.8 2004/10/23 15:29:27 dawes Exp $ */
 
 /*******************************************************************
 **
@@ -191,7 +191,6 @@ PsUpdateDrawableGC(
     case DRAWABLE_PIXMAP:
       /* we don't support pixmaps yet! */
       return FALSE;
-      break;
     case DRAWABLE_WINDOW: 
       if( pGC )
       {

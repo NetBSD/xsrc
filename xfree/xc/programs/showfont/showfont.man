@@ -1,6 +1,6 @@
 .\" $XConsortium: showfont.man,v 1.3 94/04/11 14:29:57 gildea Exp $
-.\" $XFree86: xc/programs/showfont/showfont.man,v 1.4 2001/01/27 18:21:06 dawes Exp $
-.TH SHOWFONT 1 __xorgversion__
+.\" $XFree86: xc/programs/showfont/showfont.man,v 1.5 2005/02/11 03:03:15 dawes Exp $
+.TH SHOWFONT 1 __vendorversion__
 .SH NAME
 showfont \- font dumper for X font server
 .SH SYNOPSIS

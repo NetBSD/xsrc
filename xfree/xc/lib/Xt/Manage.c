@@ -6,13 +6,13 @@ Copyright 1993 by Sun Microsystems, Inc. Mountain View, CA.
 
                         All Rights Reserved
 
-Permission to use, copy, modify, and distribute this software and its 
-documentation for any purpose and without fee is hereby granted, 
+Permission to use, copy, modify, and distribute this software and its
+documentation for any purpose and without fee is hereby granted,
 provided that the above copyright notice appear in all copies and that
-both that copyright notice and this permission notice appear in 
+both that copyright notice and this permission notice appear in
 supporting documentation, and that the names of Digital or Sun not be
 used in advertising or publicity pertaining to distribution of the
-software without specific, written prior permission.  
+software without specific, written prior permission.
 
 DIGITAL DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING
 ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO EVENT SHALL
@@ -32,7 +32,7 @@ OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
 THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/lib/Xt/Manage.c,v 3.11 2003/08/27 21:39:38 tsi Exp $ */
+/* $XFree86: xc/lib/Xt/Manage.c,v 3.12 2004/05/05 00:07:03 dickey Exp $ */
 
 /*
 
@@ -112,7 +112,7 @@ static void UnmanageChildren(
 	} else
         if (child->core.managed) {
             (*num_unique_children)++;
-	    CALLGEOTAT(_XtGeoTrace(child,"Child \"%s\" is marked unmanaged\n", 
+	    CALLGEOTAT(_XtGeoTrace(child,"Child \"%s\" is marked unmanaged\n",
 			   XtName(child)));
 	    child->core.managed = FALSE;
             if (XtIsWidget(child)
@@ -137,16 +137,16 @@ static void UnmanageChildren(
     if (call_change_managed && *num_unique_children != 0 &&
 	change_managed != NULL && parent_realized) {
 	CALLGEOTAT(_XtGeoTrace((Widget)parent,
-		       "Call parent: \"%s\"[%d,%d]'s changemanaged proc\n", 
+		       "Call parent: \"%s\"[%d,%d]'s changemanaged proc\n",
 		       XtName((Widget)parent),
 		       parent->core.width,parent->core.height));
 	(*change_managed) (parent);
     }
 } /* UnmanageChildren */
 
-void XtUnmanageChildren (children, num_children)
-    WidgetList children;
-    Cardinal num_children;
+void XtUnmanageChildren (
+    WidgetList children,
+    Cardinal num_children)
 {
     Widget parent, hookobj;
     Cardinal ii;
@@ -170,7 +170,7 @@ void XtUnmanageChildren (children, num_children)
 	UNLOCK_APP(app);
 	return;
     }
-    UnmanageChildren(children, num_children, parent, &ii, 
+    UnmanageChildren(children, num_children, parent, &ii,
 		     (Boolean)True, XtNxtUnmanageChildren);
     hookobj = XtHooksOfDisplay(XtDisplayOfObject(children[0]));
     if (XtHasCallbacks(hookobj, XtNchangeHook) == XtCallbackHasSome) {
@@ -180,15 +180,15 @@ void XtUnmanageChildren (children, num_children)
 	call_data.widget = parent;
 	call_data.event_data = (XtPointer) children;
 	call_data.num_event_data = num_children;
-	XtCallCallbackList(hookobj, 
-		((HookObject)hookobj)->hooks.changehook_callbacks, 
+	XtCallCallbackList(hookobj,
+		((HookObject)hookobj)->hooks.changehook_callbacks,
 		(XtPointer)&call_data);
     }
     UNLOCK_APP(app);
 } /* XtUnmanageChildren */
 
-void XtUnmanageChild(child)
-    Widget child;
+void XtUnmanageChild(
+    Widget child)
 {
     XtUnmanageChildren(&child, (Cardinal)1);
 } /* XtUnmanageChild */
@@ -260,7 +260,7 @@ static void ManageChildren(
 	} else if (! child->core.managed && !child->core.being_destroyed) {
 	    unique_children[num_unique_children++] = child;
 	    CALLGEOTAT(_XtGeoTrace(child,
-			   "Child \"%s\"[%d,%d] is marked managed\n", 
+			   "Child \"%s\"[%d,%d] is marked managed\n",
 			   XtName(child),
 			   child->core.width,child->core.height));
 	    child->core.managed = TRUE;
@@ -271,8 +271,8 @@ static void ManageChildren(
 	/* Compute geometry of new managed set of children. */
 	if (change_managed != NULL) {
 	    CALLGEOTAT(_XtGeoTrace((Widget)parent,
-			   "Call parent: \"%s\"[%d,%d]'s changemanaged\n", 
-			   XtName((Widget)parent), 
+			   "Call parent: \"%s\"[%d,%d]'s changemanaged\n",
+			   XtName((Widget)parent),
 			   parent->core.width,parent->core.height));
 	    (*change_managed) ((Widget)parent);
 	}
@@ -301,9 +301,9 @@ static void ManageChildren(
     if (unique_children != cache) XtFree((char *) unique_children);
 } /* ManageChildren */
 
-void XtManageChildren(children, num_children)
-    WidgetList children;
-    Cardinal num_children;
+void XtManageChildren(
+    WidgetList children,
+    Cardinal num_children)
 {
     Widget parent, hookobj;
 #ifdef XTHREADS
@@ -326,7 +326,7 @@ void XtManageChildren(children, num_children)
 	UNLOCK_APP(app);
 	return;
     }
-    ManageChildren(children, num_children, parent, (Boolean)False, 
+    ManageChildren(children, num_children, parent, (Boolean)False,
 		   XtNxtManageChildren);
     hookobj = XtHooksOfDisplay(XtDisplayOfObject(children[0]));
     if (XtHasCallbacks(hookobj, XtNchangeHook) == XtCallbackHasSome) {
@@ -336,15 +336,15 @@ void XtManageChildren(children, num_children)
 	call_data.widget = parent;
 	call_data.event_data = (XtPointer) children;
 	call_data.num_event_data = num_children;
-	XtCallCallbackList(hookobj, 
-		((HookObject)hookobj)->hooks.changehook_callbacks, 
+	XtCallCallbackList(hookobj,
+		((HookObject)hookobj)->hooks.changehook_callbacks,
 		(XtPointer)&call_data);
     }
     UNLOCK_APP(app);
 } /* XtManageChildren */
 
-void XtManageChild(child)
-    Widget child;
+void XtManageChild(
+    Widget child)
 {
     XtManageChildren(&child, (Cardinal) 1);
 } /* XtManageChild */
@@ -371,8 +371,8 @@ void XtSetMappedWhenManaged(
 	call_data.type = XtHsetMappedWhenManaged;
 	call_data.widget = widget;
 	call_data.event_data = (XtPointer) (unsigned long) mapped_when_managed;
-	XtCallCallbackList(hookobj, 
-		((HookObject)hookobj)->hooks.changehook_callbacks, 
+	XtCallCallbackList(hookobj,
+		((HookObject)hookobj)->hooks.changehook_callbacks,
 		(XtPointer)&call_data);
     }
 
@@ -454,7 +454,7 @@ void XtChangeManagedSet(
 	    call_out = True;
     }
 
-    UnmanageChildren(unmanage_children, num_unmanage, parent, 
+    UnmanageChildren(unmanage_children, num_unmanage, parent,
 		     &some_unmanaged, call_out, XtNxtChangeManagedSet);
 
     hookobj = XtHooksOfDisplay(XtDisplay(parent));
@@ -463,12 +463,12 @@ void XtChangeManagedSet(
 	call_data.widget = parent;
 	call_data.event_data = (XtPointer) unmanage_children;
 	call_data.num_event_data = num_unmanage;
-	XtCallCallbackList(hookobj, 
-		((HookObject)hookobj)->hooks.changehook_callbacks, 
+	XtCallCallbackList(hookobj,
+		((HookObject)hookobj)->hooks.changehook_callbacks,
 		(XtPointer) &call_data);
     }
 
-    if (do_change_proc) 
+    if (do_change_proc)
 	(*do_change_proc)(parent, unmanage_children, &num_unmanage,
 			  manage_children, &num_manage, client_data);
 
@@ -480,8 +480,8 @@ void XtChangeManagedSet(
 	call_data.type = XtHmanageSet;
 	call_data.event_data = (XtPointer) manage_children;
 	call_data.num_event_data = num_manage;
-	XtCallCallbackList(hookobj, 
-		((HookObject)hookobj)->hooks.changehook_callbacks, 
+	XtCallCallbackList(hookobj,
+		((HookObject)hookobj)->hooks.changehook_callbacks,
 		(XtPointer) &call_data);
     }
     UNLOCK_APP(app);

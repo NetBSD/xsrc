@@ -1,4 +1,5 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sis/sis310_accel.c,v 1.41 2004/02/25 17:45:11 twini Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sis/sis310_accel.c,v 1.43 2004/06/21 00:43:22 twini Exp $ */
+/* $XdotOrg$ */
 /*
  * 2D Acceleration for SiS 315 and 330 series
  *
@@ -40,7 +41,6 @@
 #include "xf86Pci.h"
 #include "compiler.h"
 #include "xaa.h"
-#include "xaalocal.h"
 #include "xaarop.h"
 
 #include "sis.h"
@@ -197,6 +197,8 @@ CARD32 SiSTextureFormats[2]      = { PICT_a8r8g8b8, 0 };
 static void SiSRestoreAccelState(ScrnInfoPtr pScrn);
 #endif
 
+CARD32 dummybuf;
+
 static void
 SiSInitializeAccelerator(ScrnInfoPtr pScrn)
 {
@@ -263,7 +265,8 @@ SiS315AccelInit(ScreenPtr pScreen)
 	infoPtr->SubsequentSolidFillRect = SiSSubsequentSolidFillRect;
 #ifdef TRAP
 	if((pSiS->Chipset != PCI_CHIP_SIS660) &&
-	   (pSiS->Chipset != PCI_CHIP_SIS330)) {
+	   (pSiS->Chipset != PCI_CHIP_SIS330) &&
+	   (pSiS->Chipset != PCI_CHIP_SIS340)) {
 	   infoPtr->SubsequentSolidFillTrap = SiSSubsequentSolidFillTrap;
 	}
 #endif
@@ -287,7 +290,8 @@ SiS315AccelInit(ScreenPtr pScreen)
 	infoPtr->SubsequentMono8x8PatternFillRect = SiSSubsequentMonoPatternFill;
 #ifdef TRAP
         if((pSiS->Chipset != PCI_CHIP_SIS660) &&
-	   (pSiS->Chipset != PCI_CHIP_SIS330)) {
+	   (pSiS->Chipset != PCI_CHIP_SIS330) &&
+	   (pSiS->Chipset != PCI_CHIP_SIS340)) {
 	   infoPtr->SubsequentMono8x8PatternFillTrap = SiSSubsequentMonoPatternFillTrap;
 	}
 #endif
@@ -358,7 +362,8 @@ SiS315AccelInit(ScreenPtr pScreen)
 #ifndef SISVRAMQ
         if((pSiS->Chipset != PCI_CHIP_SIS650) &&
 	   (pSiS->Chipset != PCI_CHIP_SIS660) &&
-	   (pSiS->Chipset != PCI_CHIP_SIS330)) {
+	   (pSiS->Chipset != PCI_CHIP_SIS330) &&
+	   (pSiS->Chipset != PCI_CHIP_SIS340)) {
 	   pSiS->ColorExpandBufferNumber = 16;
 	   pSiS->ColorExpandBufferCountMask = 0x0F;
 	   pSiS->PerColorExpandBufferSize = ((pScrn->virtualX + 31)/32) * 4;
@@ -569,9 +574,9 @@ static void SiSSubsequentScreenToScreenCopy(ScrnInfoPtr pScrn,
                                 int src_x, int src_y, int dst_x, int dst_y,
                                 int width, int height)
 {
-	SISPtr  pSiS = SISPTR(pScrn);
-	long srcbase, dstbase;
-	int mymin, mymax;
+	SISPtr pSiS = SISPTR(pScrn);
+	CARD32 srcbase, dstbase;
+	int    mymin, mymax;
 
 	PDEBUG(ErrorF("Subsequent ScreenCopy(%d,%d, %d,%d, %d,%d)\n",
 			  src_x, src_y, dst_x, dst_y, width, height));
@@ -688,8 +693,8 @@ static void
 SiSSubsequentSolidFillRect(ScrnInfoPtr pScrn,
                         int x, int y, int w, int h)
 {
-	SISPtr  pSiS = SISPTR(pScrn);
-	long dstbase;
+	SISPtr pSiS = SISPTR(pScrn);
+	CARD32 dstbase;
 
 	PDEBUG(ErrorF("Subsequent SolidFillRect(%d, %d, %d, %d)\n",
 					x, y, w, h));
@@ -734,8 +739,8 @@ SiSSubsequentSolidFillTrap(ScrnInfoPtr pScrn, int y, int h,
 	       int left,  int dxL, int dyL, int eL,
 	       int right, int dxR, int dyR, int eR )
 {
-	SISPtr  pSiS = SISPTR(pScrn);
-	long dstbase;
+	SISPtr pSiS = SISPTR(pScrn);
+	CARD32 dstbase;
 
 	dstbase = 0;
 	if(y >= 2048) {
@@ -807,7 +812,7 @@ static void
 SiSSetupForSolidLine(ScrnInfoPtr pScrn, int color, int rop,
                                      unsigned int planemask)
 {
-	SISPtr  pSiS = SISPTR(pScrn);
+	SISPtr pSiS = SISPTR(pScrn);
 
 	PDEBUG(ErrorF("Setup SolidLine(0x%x, 0x%x, 0x%x)\n",
 					color, rop, planemask));
@@ -834,8 +839,9 @@ static void
 SiSSubsequentSolidTwoPointLine(ScrnInfoPtr pScrn,
                         int x1, int y1, int x2, int y2, int flags)
 {
-	SISPtr  pSiS = SISPTR(pScrn);
-	long dstbase,miny,maxy;
+	SISPtr pSiS = SISPTR(pScrn);
+	CARD32 dstbase;
+	int    miny,maxy;
 
 	PDEBUG(ErrorF("Subsequent SolidLine(%d, %d, %d, %d, 0x%x)\n",
 					x1, y1, x2, y2, flags));
@@ -874,8 +880,8 @@ static void
 SiSSubsequentSolidHorzVertLine(ScrnInfoPtr pScrn,
                                 int x, int y, int len, int dir)
 {
-	SISPtr  pSiS = SISPTR(pScrn);
-	long dstbase;
+	SISPtr pSiS = SISPTR(pScrn);
+	CARD32 dstbase;
 
 	PDEBUG(ErrorF("Subsequent SolidHorzVertLine(%d, %d, %d, %d)\n",
 					x, y, len, dir));
@@ -960,7 +966,7 @@ SiSSubsequentDashedTwoPointLine(ScrnInfoPtr pScrn,
                                 int flags, int phase)
 {
 	SISPtr pSiS = SISPTR(pScrn);
-	long dstbase,miny,maxy;
+	CARD32 dstbase,miny,maxy;
 
 	PDEBUG(ErrorF("Subsequent DashedLine(%d,%d, %d,%d, 0x%x,0x%x)\n",
 			x1, y1, x2, y2, flags, phase));
@@ -1042,7 +1048,7 @@ SiSSubsequentMonoPatternFill(ScrnInfoPtr pScrn,
                                 int x, int y, int w, int h)
 {
 	SISPtr pSiS = SISPTR(pScrn);
-	long dstbase;
+	CARD32 dstbase;
 
 	PDEBUG(ErrorF("Subsequent MonoPatFill(0x%x,0x%x, %d,%d, %d,%d)\n",
 							patx, paty, x, y, w, h));
@@ -1085,8 +1091,8 @@ SiSSubsequentMonoPatternFillTrap(ScrnInfoPtr pScrn,
 	       int left, int dxL, int dyL, int eL,
 	       int right, int dxR, int dyR, int eR)
 {
-	SISPtr  pSiS = SISPTR(pScrn);
-	long dstbase;
+	SISPtr pSiS = SISPTR(pScrn);
+	CARD32 dstbase;
 
 	PDEBUG(ErrorF("Subsequent Mono8x8PatternFillTrap(%d, %d, %d - %d %d/%d %d/%d)\n",
 					y, h, left, right, dxL, dxR, eL, eR));
@@ -1186,8 +1192,8 @@ static void
 SiSSubsequentColor8x8PatternFillRect(ScrnInfoPtr pScrn, int patternx,
 			int patterny, int x, int y, int w, int h)
 {
-	SISPtr  pSiS = SISPTR(pScrn);
-	long dstbase;
+	SISPtr pSiS = SISPTR(pScrn);
+	CARD32 dstbase;
 
 #ifdef ACCELDEBUG
 	xf86DrvMsg(0, X_INFO, "Subsequent Color8x8FillRect(%d, %d, %d, %d)\n",
@@ -1266,7 +1272,7 @@ SiSSubsequentCPUToScreenColorExpandFill(
 {
 	SISPtr pSiS = SISPTR(pScrn);
 	int _x0, _y0, _x1, _y1;
-	long srcbase, dstbase;
+	CARD32 srcbase, dstbase;
 
 	srcbase = pSiS->ColorExpandBase;
 
@@ -1377,7 +1383,7 @@ SiSSubsequentScanlineCPUToScreenColorExpandFill(
 {
 	SISPtr pSiS = SISPTR(pScrn);
 	int _x0, _y0, _x1, _y1;
-	long dstbase;
+	CARD32 dstbase;
 
 	dstbase = 0;
 	if(y >= 2048) {
@@ -1422,7 +1428,7 @@ static void
 SiSSubsequentColorExpandScanline(ScrnInfoPtr pScrn, int bufno)
 {
 	SISPtr pSiS = SISPTR(pScrn);
-	long cbo;
+	CARD32 cbo;
 
 	cbo = pSiS->ColorExpandBufferScreenOffset[bufno];
 #ifdef SISDUALHEAD
@@ -1533,7 +1539,7 @@ SiSSubsequentScreenToScreenColorExpand(ScrnInfoPtr pScrn,
                                 int srcx, int srcy, int skipleft)
 {
 	SISPtr pSiS = SISPTR(pScrn);
-        long srcbase, dstbase;
+        CARD32 srcbase, dstbase;
 #if 0
 	int _x0, _y0, _x1, _y1;
 #endif
@@ -1849,7 +1855,7 @@ SiSSubsequentCPUToScreenTexture(ScrnInfoPtr pScrn,
     			int width, int height)
 {
     	SISPtr pSiS = SISPTR(pScrn);
-	long srcbase, dstbase;
+	CARD32 srcbase, dstbase;
 
 	srcbase = pSiS->AccelLinearScratch->offset << 1;
 	if(pScrn->bitsPerPixel == 32) srcbase <<= 1;

@@ -51,7 +51,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/Xt/VarGet.c,v 1.8 2001/12/14 19:56:32 dawes Exp $ */
+/* $XFree86: xc/lib/Xt/VarGet.c,v 1.9 2004/05/05 00:07:03 dickey Exp $ */
 
 #include "IntrinsicI.h"
 #include "VarargsI.h"
@@ -79,17 +79,17 @@ XtVaGetSubresources(
     va_start(var, num_resources);
     _XtCountVaList(var, &total_count, &typed_count);
     va_end(var);
-	 
+
     va_start(var, num_resources);
-	      
+
     _XtVaToTypedArgList(var, total_count, &args, &num_args);
 
-    _XtGetSubresources(widget, base, name, class, resources, num_resources, 
+    _XtGetSubresources(widget, base, name, class, resources, num_resources,
 	NULL, 0, args, num_args);
 
     if (num_args != 0) {
 	XtFree((XtPointer)args);
-    }    
+    }
 
     va_end(var);
     UNLOCK_APP(app);
@@ -100,8 +100,8 @@ void
 XtVaGetApplicationResources(Widget widget, XtPointer base, XtResourceList resources, Cardinal num_resources, ...)
 {
     va_list                 var;
-    XtTypedArgList          args; 
-    Cardinal                num_args; 
+    XtTypedArgList          args;
+    Cardinal                num_args;
     int			    total_count, typed_count;
     WIDGET_TO_APPCON(widget);
 
@@ -109,34 +109,34 @@ XtVaGetApplicationResources(Widget widget, XtPointer base, XtResourceList resour
     va_start(var,num_resources);
     _XtCountVaList(var, &total_count, &typed_count);
     va_end(var);
-	
-    va_start(var,num_resources); 
+
+    va_start(var,num_resources);
 
     _XtVaToTypedArgList(var, total_count, &args, &num_args);
-                                
-    _XtGetApplicationResources(widget, base, resources, num_resources, 
-	NULL, 0, args, num_args); 
+
+    _XtGetApplicationResources(widget, base, resources, num_resources,
+	NULL, 0, args, num_args);
 
     if (num_args != 0) {
 	XtFree((XtPointer)args);
-    }    
+    }
 
-    va_end(var);         
+    va_end(var);
     UNLOCK_APP(app);
-} 
+}
 
 
 static void
-GetTypedArg(widget, typed_arg, resources, num_resources)
-    Widget              widget;
-    XtTypedArgList	typed_arg;
-    XtResourceList      resources;
-    Cardinal            num_resources;
+GetTypedArg(
+    Widget              widget,
+    XtTypedArgList	typed_arg,
+    XtResourceList      resources,
+    Cardinal            num_resources)
 {
     String              from_type = NULL;
     Cardinal		from_size = 0;
     XrmValue            from_val, to_val;
-    register int        i;
+    register Cardinal   i;
     Arg			arg;
     XtPointer		value;
 
@@ -148,7 +148,7 @@ GetTypedArg(widget, typed_arg, resources, num_resources)
 	    from_size = resources[i].resource_size;
             break;
         }
-    }    
+    }
 
     if (i == num_resources) {
 	XtAppWarningMsg(XtWidgetToApplicationContext(widget),
@@ -170,7 +170,7 @@ GetTypedArg(widget, typed_arg, resources, num_resources)
 
     if (!XtConvertAndStore(widget, from_type, &from_val,
 			   typed_arg->type, &to_val)) {
-	if (to_val.size > typed_arg->size) {
+	if (to_val.size > (unsigned) typed_arg->size) {
 	    String params[2];
 	    Cardinal num_params = 2;
 	    params[0] = typed_arg->type;
@@ -196,15 +196,15 @@ GetTypedArg(widget, typed_arg, resources, num_resources)
 }
 
 static int
-GetNestedArg(widget, avlist, args, resources, num_resources)
-    Widget              widget;
-    XtTypedArgList	avlist;
-    ArgList             args;
-    XtResourceList      resources;
-    Cardinal            num_resources;
+GetNestedArg(
+    Widget              widget,
+    XtTypedArgList	avlist,
+    ArgList             args,
+    XtResourceList      resources,
+    Cardinal            num_resources)
 {
     int         count = 0;
- 
+
     for (; avlist->name != NULL; avlist++) {
         if (avlist->type != NULL) {
 	    GetTypedArg(widget, avlist, resources, num_resources);
@@ -216,8 +216,8 @@ GetNestedArg(widget, avlist, args, resources, num_resources)
             (args+count)->value = avlist->value;
             ++count;
         }
-    }   
- 
+    }
+
     return(count);
 }
 
@@ -239,7 +239,7 @@ XtVaGetValues(Widget widget, ...)
     _XtCountVaList(var, &total_count, &typed_count);
 
     if (total_count != typed_count) {
-        args = (ArgList)__XtMalloc((unsigned)((total_count - typed_count) 
+        args = (ArgList)__XtMalloc((unsigned)((total_count - typed_count)
 				* sizeof(Arg)));
     }
     else args = NULL;		/* for lint; really unused */
@@ -274,8 +274,8 @@ XtVaGetValues(Widget widget, ...)
     }
     va_end(var);
 
-    if (resources != (XtResourceList)NULL) { 
-	XtFree((XtPointer)resources); 
+    if (resources != (XtResourceList)NULL) {
+	XtFree((XtPointer)resources);
     }
 
     if (total_count != typed_count) {
@@ -291,7 +291,7 @@ XtVaGetSubvalues(XtPointer base,XtResourceList  resources, Cardinal num_resource
     va_list	var;
     ArgList    	args;
     Cardinal   	num_args;
-    int		total_count, typed_count;		
+    int		total_count, typed_count;
 
     va_start(var,num_resources);
 
@@ -310,5 +310,5 @@ XtVaGetSubvalues(XtPointer base,XtResourceList  resources, Cardinal num_resource
 
     if (num_args != 0) {
         XtFree((XtPointer)args);
-    }    
+    }
 }

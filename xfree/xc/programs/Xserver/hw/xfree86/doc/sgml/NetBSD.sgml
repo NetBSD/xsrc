@@ -3,7 +3,7 @@
 ]>
 
 <article>
-<title>README for XFree86 &relvers; on NetBSD
+<title>README for XFree86&reg; &relvers; on NetBSD
 <author>Rich  Murphey,
 David Dawes,
 Marc  Wandschneider,
@@ -12,7 +12,7 @@ Matthieu Herrb
 <Date>Last modified on: 9 November 2002
 
 <ident>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/NetBSD.sgml,v 3.68 2003/02/16 17:21:11 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/NetBSD.sgml,v 3.69 2004/12/08 22:27:11 dawes Exp $
 </ident>
 <toc>
 

@@ -31,7 +31,7 @@
 ** published by SGI, but has not been independently verified as being
 ** compliant with the OpenGL(R) version 1.2.1 Specification.
 */
-/* $XFree86: xc/extras/ogl-sample/main/gfx/lib/glu/libnurbs/internals/simplemath.h,v 1.2 2002/11/20 23:00:36 dawes Exp $ */
+/* $XFree86: xc/extras/ogl-sample/main/gfx/lib/glu/libnurbs/internals/simplemath.h,v 1.3 2004/04/03 22:26:20 dawes Exp $ */
 
 /*
  * simplemath.h
@@ -50,7 +50,7 @@ max( int x, int y ) { return ( x < y ) ? y : x; }
 inline REAL 
 min( REAL x, REAL y ) { return ( x > y ) ? y : x; }
 
-#ifdef _SCO_DS
+#if defined(_SCO_DS) || defined(__SCO__)
 #define abs __gluabs
 #endif
 inline REAL 

@@ -1,5 +1,5 @@
 XCOMM platform:  $Xorg: Amoeba.cf,v 1.3 2000/08/17 19:41:45 cpqbld Exp $
-XCOMM platform:  $XFree86: xc/config/cf/Amoeba.cf,v 3.11 2002/11/14 21:01:13 tsi Exp $
+XCOMM platform:  $XFree86: xc/config/cf/Amoeba.cf,v 3.12 2004/03/25 03:36:20 dawes Exp $
 
 /*  The presence of this configuration file in the X distribution
  *  does not imply full support for the system it describes.
@@ -280,13 +280,13 @@ LintLibReferences(varname,libname,libsource)
 
 #ifndef InstallLibrary
 #define	InstallLibrary(libname,dest)					@@\
-install:: Concat(lib,libname.a)						@@\
+install::								@@\
 	@echo '** TODO: Install Library ' Concat(lib,libname.a)
 #endif /* InstallLibrary */
 
 #ifndef MergeIntoInstalledLibrary
 #define MergeIntoInstalledLibrary(tolib,fromlib)			@@\
-install::  fromlib							@@\
+install::								@@\
 	@echo '** TODO: merge ' fromlib into tolib
 #endif /* MergeIntoInstalledLibrary */
 
@@ -298,19 +298,19 @@ install::								@@\
 
 #ifndef InstallLintLibrary
 #define	InstallLintLibrary(libname,dest)				@@\
-install.ln:: Concat(llib-l,libname.ln)					@@\
+install.ln::								@@\
 	@echo '** TODO: Install lintlib ' Concat(llib-l,libname.ln)
 #endif /* InstallLintLibrary */
 
 #ifndef InstallManPageLong
 #define	InstallManPageLong(file,destdir,dest)				@@\
-install.man:: file.man							@@\
+install.man::								@@\
 	@echo '** TODO: Install man page ' file.man
 #endif /* InstallManPageLong */
 
 #ifndef InstallGenManPageLong
 #define	InstallGenManPageLong(file,destdir,dest,suffix)			@@\
-install.man:: file.man							@@\
+install.man::								@@\
 	@echo '** TODO: Install man page ' file.man
 #endif /* InstallGenManPageLong */
 
@@ -340,46 +340,46 @@ install.man::								@@\
 
 #ifndef InstallNamedNonExec
 #define	InstallNamedNonExec(srcname,dstname,dest)			@@\
-install:: srcname							@@\
+install::								@@\
 	$(MKXDIRHIER) $(DESTDIR)dest					@@\
 	$(TOB) srcname $(DESTDIR)dest/dstname
 #endif /* InstallNamedNonExec */
 
 #ifndef InstallNonExecFile
 #define	InstallNonExecFile(file,dest)					@@\
-install:: file								@@\
+install::								@@\
 	$(MKXDIRHIER) dest						@@\
 	$(TOB) file dest/file
 #endif /* InstallNonExecFile */
 
 #ifndef InstallNonExec
 #define	InstallNonExec(file,dest)					@@\
-install:: file								@@\
+install::								@@\
 	$(TOB) file dest/file
 #endif /* InstallNonExec */
 
 #ifndef InstallProgramWithFlags
 #define InstallProgramWithFlags(program,dest,flags)			@@\
-install:: program							@@\
+install::								@@\
 	$(MKXDIRHIER) dest/program					@@\
 	$(AINSTALL) $(AINSTALLFLAGS) program dest/program/pd.$(ARCH)
 #endif /* InstallProgramWithFlags */
 
 #ifndef InstallScript
 #define	InstallScript(program,dest)					@@\
-install:: program.script						@@\
+install::								@@\
 	$(TOB) program.script dest/program
 #endif /* InstallScript */
 
 #ifndef InstallNamedScript
 #define	InstallNamedScript(srcname,dstname,dest)			@@\
-install:: srcname							@@\
+install::								@@\
 	$(TOB) srcname dest/dstname
 #endif /* InstallNamedScript */
 
 #ifndef InstallNamedProg
 #define	InstallNamedProg(srcname,dstname,dest)				@@\
-install:: srcname							@@\
+install::								@@\
 	$(MKXDIRHIER) $(DESTDIR)dest/dstname				@@\
 	$(AINSTALL) $(AINSTALLFLAGS) srcname $(DESTDIR)dest/dstname/pd.$(ARCH)
 #endif /* InstallNamedProg */
@@ -396,7 +396,7 @@ step:: list								@@\
 
 #ifndef InstallMultipleProg
 #define InstallMultipleProg(list,dest)					@@\
-install:: list								@@\
+install::								@@\
 	@case '${MFLAGS}' in *[i]*) set +e;; esac; \			@@\
 	for i in list; do \						@@\
 	    (set -x; \ 							@@\
@@ -408,7 +408,7 @@ install:: list								@@\
 #ifndef InstallAppDefaults
 #if InstallAppDefFiles
 #define	InstallAppDefaults(class)					@@\
-install:: class.ad							@@\
+install::								@@\
 	$(MKXDIRHIER) $(XAPPLOADDIR)					@@\
 	$(TOB) class.ad $(DESTDIR)$(XAPPLOADDIR)/class
 #else
@@ -419,7 +419,7 @@ install:: class.ad							@@\
 #ifndef InstallAppDefaultsLong
 #if InstallAppDefFiles
 #define	InstallAppDefaultsLong(file,class)				@@\
-install:: file.ad							@@\
+install::								@@\
 	$(MKXDIRHIER) $(DESTDIR)$(XAPPLOADDIR)				@@\
 	$(TOB) file.ad $(DESTDIR)$(XAPPLOADDIR)/class
 #else

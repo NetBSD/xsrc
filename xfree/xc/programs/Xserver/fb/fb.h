@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/programs/Xserver/fb/fb.h,v 1.37 2003/11/03 05:11:00 tsi Exp $
+ * $XFree86: xc/programs/Xserver/fb/fb.h,v 1.39 2004/06/10 17:28:10 tsi Exp $
  *
  * Copyright © 1998 Keith Packard
  *
@@ -42,6 +42,7 @@
 #include "picturestr.h"
 #else
 #include "picture.h"
+#include "render.h"
 #endif
 
 /*
@@ -101,7 +102,8 @@
 # ifdef WIN32
 typedef unsigned __int64    FbBits;
 # else
-#  if defined(__alpha__) || defined(__alpha) || \
+#  if defined(_LP64) || \
+      defined(__alpha__) || defined(__alpha) ||	\
       defined(ia64) || defined(__ia64__) || \
       defined(__sparc64__) || \
       defined(__s390x__) || \
@@ -1563,6 +1565,13 @@ Bool
 fbPictureInit (ScreenPtr pScreen,
 	       PictFormatPtr formats,
 	       int nformats);
+
+Bool
+fbPictureSetSubpixelOrder(ScreenPtr pScreen,
+			  int subpixel);
+
+int
+fbPictureGetSubpixelOrder(ScreenPtr pScreen);
 
 /*
  * fbpixmap.c

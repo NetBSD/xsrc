@@ -45,7 +45,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/programs/lbxproxy/os/io.c,v 1.11 2003/11/17 22:20:49 dawes Exp $ */
+/* $XFree86: xc/programs/lbxproxy/os/io.c,v 1.13 2004/04/26 00:23:37 tsi Exp $ */
 /*****************************************************************
  * i/o functions
  *
@@ -65,6 +65,7 @@ SOFTWARE.
 #include <X11/Xpoll.h>
 #include "osdep.h"
 #include "lbx.h"
+#include "io.h"
 
 #ifdef BIGREQS
 #include "bigreqstr.h"
@@ -83,7 +84,6 @@ SOFTWARE.
 #endif
 #endif
 
-extern void MarkClientException();
 static int timesThisConnection = 0;
 static ConnectionInputPtr FreeInputs = (ConnectionInputPtr)NULL;
 static ConnectionOutputPtr FreeOutputs = (ConnectionOutputPtr)NULL;
@@ -315,9 +315,9 @@ StandardReadRequestFromClient(client)
 	    if (needed > oci->size)
 	    {
 		/* make buffer bigger to accomodate request */
-		char *ibuf;
+		unsigned char *ibuf;
 
-		ibuf = (char *)xrealloc(oci->buffer, needed);
+		ibuf = (unsigned char *)xrealloc(oci->buffer, needed);
 		if (!ibuf)
 		{
 		    YieldControlDeath();
@@ -332,7 +332,7 @@ StandardReadRequestFromClient(client)
 
 	if (oc->trans_conn)
 	    result = _LBXPROXYTransRead(oc->trans_conn, 
-					oci->buffer + oci->bufcnt,
+					(char *)oci->buffer + oci->bufcnt,
 				        oci->size - oci->bufcnt);
 	else
 	    /*
@@ -357,9 +357,9 @@ StandardReadRequestFromClient(client)
 	if ((oci->size > BUFWATERMARK) &&
 	    (oci->bufcnt < BUFSIZE) && (needed < BUFSIZE))
 	{
-	    char *ibuf;
+	    unsigned char *ibuf;
 
-	    ibuf = (char *)xrealloc(oci->buffer, BUFSIZE);
+	    ibuf = (unsigned char *)xrealloc(oci->buffer, BUFSIZE);
 	    if (ibuf)
 	    {
 		oci->size = BUFSIZE;
@@ -576,9 +576,9 @@ InsertFakeRequest(client, data, count)
     gotnow = oci->bufcnt + oci->buffer - oci->bufptr;
     if ((gotnow + count) > oci->size)
     {
-	char *ibuf;
+	unsigned char *ibuf;
 
-	ibuf = (char *)xrealloc(oci->buffer, gotnow + count);
+	ibuf = (unsigned char *)xrealloc(oci->buffer, gotnow + count);
 	if (!ibuf)
 	    return(FALSE);
 	oci->size = gotnow + count;
@@ -829,9 +829,9 @@ StandardFlushClient(who, oc, extraBuf, extraCount)
 }
 
 static int
-ExpandOutputBuffer(oco, len)
-    ConnectionOutputPtr oco;
-    int len;
+ExpandOutputBuffer(
+    ConnectionOutputPtr oco,
+    int len)
 {
     unsigned char *obuf;
 
@@ -849,11 +849,11 @@ ExpandOutputBuffer(oco, len)
 }
 
 int
-LbxFlushClient(who, oc, extraBuf, extraCount)
-    ClientPtr who;
-    OsCommPtr oc;
-    char *extraBuf;
-    int extraCount; /* do not modify... returned below */
+LbxFlushClient(
+    ClientPtr who,
+    OsCommPtr oc,
+    char *extraBuf,
+    int extraCount) /* do not modify... returned below */
 {
     ConnectionOutputPtr obuf;
     register ConnectionOutputPtr oco;
@@ -1122,7 +1122,7 @@ AllocateInputBuffer()
     oci = (ConnectionInputPtr)xalloc(sizeof(ConnectionInput));
     if (!oci)
 	return (ConnectionInputPtr)NULL;
-    oci->buffer = (char *)xalloc(BUFSIZE);
+    oci->buffer = (unsigned char *)xalloc(BUFSIZE);
     if (!oci->buffer)
     {
 	xfree(oci);

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/dummylib/xalloc.c,v 1.2 2002/11/09 09:00:13 herrb Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/dummylib/xalloc.c,v 1.3 2004/11/24 21:54:39 dawes Exp $ */
 
 #include "X.h"
 #include "os.h"
@@ -88,5 +88,18 @@ Xstrdup(const char *s)
     sd = (char *)Xalloc(strlen(s) + 1);
     if (sd != NULL)
 	strcpy(sd, s);
+    return sd;
+}
+
+char *
+XNFstrdup(const char *s)
+{
+    char *sd;
+
+    if (s == NULL)
+	return NULL;
+
+    sd = (char *)XNFalloc(strlen(s) + 1);
+    strcpy(sd, s);
     return sd;
 }

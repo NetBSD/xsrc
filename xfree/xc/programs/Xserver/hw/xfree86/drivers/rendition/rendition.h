@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/rendition/rendition.h,v 1.7 2001/05/16 06:48:10 keithp Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/rendition/rendition.h,v 1.8 2004/03/29 16:25:18 tsi Exp $ */
 
 #ifndef __RENDITION_H__
 #define __RENDITION_H__
@@ -57,7 +57,6 @@
 
 /* Drivers using the XAA interface ... */
 #include "xaa.h"
-#include "xaalocal.h"
 #include "xf86fbman.h"
 
 /* HW-cursor definitions */

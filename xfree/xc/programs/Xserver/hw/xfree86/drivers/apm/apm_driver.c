@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/apm/apm_driver.c,v 1.66 2003/10/30 18:37:20 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/apm/apm_driver.c,v 1.68 2005/02/18 02:55:05 dawes Exp $ */
 
 #include "apm.h"
 #include "xf86cmap.h"
@@ -1560,11 +1560,13 @@ ApmModeInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
     if (pScrn->progClock)
 	mode->ClockIndex = 2;
 
+    hwp = VGAHWPTR(pScrn);
+    hwp->Flags |= VGA_FIX_SYNC_PULSES;
+
     /* prepare standard VGA register contents */
     if (!vgaHWInit(pScrn, mode))
 	return FALSE;
     pScrn->vtSema = TRUE;
-    hwp = VGAHWPTR(pScrn);
 
     hwp->writeMiscOut(hwp, pApm->MiscOut | 0x0F);
 
@@ -1617,44 +1619,25 @@ ApmModeInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
     /* Set banking register to zero. */
     ApmReg->EX[XRC0] = 0;
 
-    /* Handle the CRTC overflow bits. */
-    {
-	unsigned char val;
-	/* Vertical Overflow. */
-	val = 0;
-	if ((mode->CrtcVTotal - 2) & 0x400)
-	    val |= 0x01;
-	if ((mode->CrtcVDisplay - 1) & 0x400)
-	    val |= 0x02;
-	/* VBlankStart is equal to VSyncStart + 1. */
-	if (mode->CrtcVSyncStart & 0x400)
-	    val |= 0x04;
-	/* VRetraceStart is equal to VSyncStart + 1. */
-	if (mode->CrtcVSyncStart & 0x400)
-	    val |= 0x08;
-	ApmReg->CRT[0x1A] = val;
+    /* Vertical Overflow. */
+    ApmReg->CRT[0x1A] = (((mode->CrtcVTotal - 2) & 0x400) >> 10)
+	| (((mode->CrtcVDisplay - 1) & 0x400) >> 9)
+	| (((mode->CrtcVBlankStart - 1) & 0x400) >> 8)
+	| (((mode->CrtcVSyncStart - 1) & 0x400) >> 7) | 0x10;
 
-	/* Horizontal Overflow. */
-	val = 0;
-	if ((mode->CrtcHTotal / 8 - 5) & 0x100)
-	    val |= 1;
-	if ((mode->CrtcHDisplay / 8 - 1) & 0x100)
-	    val |= 2;
-	/* HBlankStart is equal to HSyncStart - 1. */
-	if ((mode->CrtcHSyncStart / 8 - 1) & 0x100)
-	    val |= 4;
-	/* HRetraceStart is equal to HSyncStart. */
-	if ((mode->CrtcHSyncStart / 8) & 0x100)
-	    val |= 8;
-	ApmReg->CRT[0x1B] = val;
+    /* Horizontal Overflow. */
+    ApmReg->CRT[0x1B] = ((((mode->CrtcHTotal >> 3) - 5) & 0x100) >> 8)
+	| ((((mode->CrtcHDisplay >> 3) - 1) & 0x100) >> 7)
+	| ((((mode->CrtcHBlankStart >> 3) - 1) & 0x100) >> 6)
+	| ((((mode->CrtcHSyncStart >> 3) - 1) & 0x100) >> 5);
 
-	/* Assume the CRTC is not KGA (see vgaHWInit) */
-	hwp->ModeReg.CRTC[3] = (hwp->ModeReg.CRTC[3] & 0xE0) |
-				(((mode->CrtcHBlankEnd >> 3) - 1) & 0x1F);
-	hwp->ModeReg.CRTC[5]  = ((((mode->CrtcHBlankEnd >> 3) - 1) & 0x20) << 2)
-				| (hwp->ModeReg.CRTC[5] & 0x7F);
-	hwp->ModeReg.CRTC[22] = (mode->CrtcVBlankEnd - 1) & 0xFF;
-    }
+    /* Assume the CRTC is not KGA (see vgaHWInit) */
+    hwp->ModeReg.CRTC[3] = (hwp->ModeReg.CRTC[3] & 0xE0)
+	| (((mode->CrtcHBlankEnd >> 3) - 1) & 0x1F);
+    hwp->ModeReg.CRTC[5]  = (hwp->ModeReg.CRTC[5] & 0x7F)
+	| ((((mode->CrtcHBlankEnd >> 3) - 1) & 0x20) << 2);
+    hwp->ModeReg.CRTC[22] = (mode->CrtcVBlankEnd - 1) & 0xFF;
+
     ApmReg->CRT[0x1E] = 1;          /* disable autoreset feature */
 
     /* Program clock select. */
@@ -2281,7 +2264,7 @@ static ModeStatus
 ApmValidMode(int scrnIndex, DisplayModePtr mode, Bool verbose, int flags)
 {
     if (mode->Flags & V_INTERLACE)
-	return(MODE_BAD);
+	return(MODE_NO_INTERLACE);
 
     return(MODE_OK);
 }

@@ -7,7 +7,7 @@
 <author>Precision Insight, Inc.
 <date>18 February 1999
 <ident>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/i740.sgml,v 1.3 2000/03/04 00:26:30 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/i740.sgml,v 1.4 2005/03/04 03:23:52 dawes Exp $
 </ident>
 <toc>
 
@@ -136,9 +136,8 @@ if it is incorrectly detected.
 <sect>Author
 <p>
 <itemize>
-   <item>Original version by Kevin E Martin
-	<email>kevin@precisioninsight.com</email>
-   <item>Daryll Strauss <email>daryll@precisioninsight.com</email>
+   <item>Original version by Kevin E Martin.
+   <item>Daryll Strauss
 </itemize>
 
 This driver was donated to The XFree86 Project by:
@@ -147,9 +146,5 @@ This driver was donated to The XFree86 Project by:
     Cedar Park, TX
     USA
 </verb>
-
-<htmlurl name="http://www.precisioninsight.com"
-          url="http://www.precisioninsight.com">
-
 
 </article>

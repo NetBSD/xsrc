@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/os2/os2_VTsw.c,v 3.14 2004/02/14 00:10:17 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/os2/os2_VTsw.c,v 3.15 2004/05/06 00:54:37 dawes Exp $ */
 /*
  * Copyright 1993 by David Wexelblat <dwex@goblin.org>
  * Modified 1996 by Sebastien Marineau <marineau@genie.uottawa.ca>
@@ -131,7 +131,7 @@ void * arg;
 	  if(NotifyType==1){
 /* Notify os2PseudoSelect() that we are back */
 			rc=DosPostEventSem(hSwitchToSem);
-			if (rc) xf86Msg(X_ERROR,"Post SwitchToSem returned %d\n");
+			if (rc) xf86Msg(X_ERROR,"Post SwitchToSem returned %d\n",rc);
 /* Sanity check */
 		if (!SwitchedToWPS) {
 			xf86Msg(X_ERROR,

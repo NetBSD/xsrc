@@ -25,7 +25,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 **************************************************************************/
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/i740/i740_driver.c,v 1.50 2003/11/03 05:11:16 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/i740/i740_driver.c,v 1.53 2005/02/18 02:55:07 dawes Exp $ */
 
 /*
  * Authors:
@@ -217,7 +217,9 @@ static const char *vgahwSymbols[] = {
     "vgaHWFreeHWRec",
     "vgaHWSaveScreen",
     "vgaHWHandleColormaps",
-    0
+    "vgaHWHBlankKGA",
+    "vgaHWVBlankKGA",
+    NULL
 };
 
 #ifdef XFree86LOADER
@@ -1409,8 +1411,8 @@ I740SetMode(ScrnInfoPtr pScrn, DisplayModePtr mode) {
   /* Calculate the extended CRTC regs */
   i740Reg->ExtVertTotal = (mode->CrtcVTotal - 2) >> 8;
   i740Reg->ExtVertDispEnd = (mode->CrtcVDisplay - 1) >> 8;
-  i740Reg->ExtVertSyncStart = mode->CrtcVSyncStart >> 8;
-  i740Reg->ExtVertBlankStart = mode->CrtcVBlankStart >> 8;
+  i740Reg->ExtVertSyncStart = (mode->CrtcVSyncStart - 1) >> 8;
+  i740Reg->ExtVertBlankStart = (mode->CrtcVBlankStart - 1) >> 8;
   i740Reg->ExtHorizTotal = ((mode->CrtcHTotal >> 3) - 5) >> 8;
   /*
    * the KGA fix in vgaHW.c results in the first
@@ -1476,6 +1478,7 @@ I740ModeInit(ScrnInfoPtr pScrn, DisplayModePtr mode_src)
       mode->CrtcHSyncEnd  +=16;
     }
 
+  hwp->Flags |= VGA_FIX_SYNC_PULSES;
   if (!vgaHWInit(pScrn, mode)) return FALSE;
 
   pScrn->vtSema = TRUE;
@@ -1845,7 +1848,7 @@ I740ValidMode(int scrnIndex, DisplayModePtr mode, Bool verbose, int flags) {
 		 "Removing interlaced mode \"%s\"\n",
 		 mode->name);
     }
-    return MODE_BAD;
+    return MODE_NO_INTERLACE;
   }
   return MODE_OK;
 }

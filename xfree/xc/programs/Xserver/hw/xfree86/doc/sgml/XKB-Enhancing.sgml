@@ -6,7 +6,7 @@
 <date>25 November 2002
 
 <ident>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/XKB-Enhancing.sgml,v 1.2 2003/02/25 19:31:02 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/XKB-Enhancing.sgml,v 1.3 2005/02/06 22:41:40 dawes Exp $
 </ident>
 
 <abstract>
@@ -198,7 +198,7 @@ If you are about to define some European symbol map extension, you might
 want to use on of four predefined latin alphabet layouts.
 <!--
     TODO: more details
-    TODO: something similiar for phonetic layouts
+    TODO: something similar for phonetic layouts
     TODO: what are pc/pc layouts good for???
 -->
 <p>

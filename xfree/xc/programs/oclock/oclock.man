@@ -23,9 +23,9 @@
 .\" other dealings in this Software without prior written authorization
 .\" from The Open Group.
 .\"
-.\" $XFree86: xc/programs/oclock/oclock.man,v 1.9 2002/10/12 16:06:45 herrb Exp $
+.\" $XFree86: xc/programs/oclock/oclock.man,v 1.10 2005/02/11 03:03:14 dawes Exp $
 .\"
-.TH OCLOCK 1 __xorgversion__
+.TH OCLOCK 1 __vendorversion__
 .SH NAME
 oclock \- round X clock
 .SH SYNOPSIS

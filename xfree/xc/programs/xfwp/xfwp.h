@@ -25,7 +25,7 @@ not be used in advertising or otherwise to promote the sale, use or
 other dealings in this Software without prior written authorization
 from The Open Group.
 */
-/* $XFree86: xc/programs/xfwp/xfwp.h,v 1.10 2001/12/14 20:01:44 dawes Exp $ */
+/* $XFree86: xc/programs/xfwp/xfwp.h,v 1.11 2004/12/31 02:56:03 tsi Exp $ */
 
 #ifndef _XFWP_H
 #define _XFWP_H
@@ -233,8 +233,8 @@ extern int SitePolicyPermit;
  * Compute the number of bytes for a STRING representation
  */
 
-#define STRING_BYTES(_str) (2 + (_str ? strlen (_str) : 0) + \
-		     PAD64 (2 + (_str ? strlen (_str) : 0)))
+#define STRING_BYTES(_str) (2 + strlen (_str) + PAD64 (2 + strlen (_str)))
+#define STRING_NULL (2 + PAD64 (2))
 
 
 
@@ -259,14 +259,17 @@ extern int SitePolicyPermit;
 
 #define STORE_STRING(_pBuf, _string) \
 { \
-    int _len = _string ? strlen (_string) : 0; \
+    int _len = strlen (_string); \
     STORE_CARD16 (_pBuf, _len); \
-    if (_len) { \
-        memcpy (_pBuf, _string, _len); \
-        _pBuf += _len; \
-    } \
-    if (PAD64 (2 + _len)) \
-        _pBuf += PAD64 (2 + _len); \
+    memcpy (_pBuf, _string, _len); \
+    _pBuf += _len; \
+    _pBuf += PAD64 (2 + _len); \
+}
+
+#define STORE_NULL(_pBuf) \
+{ \
+    STORE_CARD16 (_pBuf, 0); \
+    _pBuf += PAD64 (2); \
 }
 
 
@@ -290,8 +293,7 @@ extern int SitePolicyPermit;
     memcpy (_string, _pBuf, _len); \
     _string[_len] = '\0'; \
     _pBuf += _len; \
-    if (PAD64 (2 + _len)) \
-        _pBuf += PAD64 (2 + _len); \
+    _pBuf += PAD64 (2 + _len); \
 }
 
 

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/sco/sco_init.c,v 3.14 2002/11/20 23:00:44 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/sco/sco_init.c,v 3.15 2004/04/03 22:26:25 dawes Exp $ */
 /*
  * Copyright 2001 by J. Kean Johnston <jkj@sco.com>
  *
@@ -118,20 +118,33 @@ xf86OpenConsole()
 
     ErrorF("(using VT%02d device %s)\n\n", VTnum, vtdevice);
 
+    /*
+     * If we are using XDM, which should use the -crt option on startup
+     * to specify where to run, we will not have stdin and stdout open.
+     * If the server was started with startx, we will. The easiest way
+     * to deal with this is to always close fd 0 and 1, open the console
+     * device (yielding fd 0 or stdin) and then to dup it onto fd 1.
+     */
+
     if ((xf86Info.consoleFd = open(vtdevice, O_RDWR | O_NDELAY, 0)) < 0) {
       FatalError("xf86OpenConsole: Cannot open %s (%s)\n", vtdevice,
 		       strerror(errno));
     }
 
-    /* Dispose of stdin and stdout */
-    if (freopen(vtdevice, "r+", stdin) == (FILE *) NULL) {
-      FatalError("xf86OpenConsole: Cannot reopen stdin as %s (%s)\n",
-          vtdevice, strerror(errno));
+    if (xf86Info.consoleFd != 0) {
+      close (0);
+      if (dup2 (xf86Info.consoleFd, 0) == -1) {
+        FatalError("xf86OpenConsole: Cannot reopen stdin as %s (%s)\n",
+                   vtdevice, strerror(errno));
+      }
     }
 
-    if (freopen(vtname, "r+", stdout) == (FILE *) NULL) {
-      FatalError("xf86OpenConsole: Cannot reopen stdout as %s (%s)\n",
-          vtdevice, strerror(errno));
+    if (xf86Info.consoleFd != 1) {
+      close (1);
+      if (dup2 (xf86Info.consoleFd, 1) == -1) {
+        FatalError("xf86OpenConsole: Cannot reopen stdout as %s (%s)\n",
+                   vtdevice, strerror(errno));
+      }
     }
 
     /*

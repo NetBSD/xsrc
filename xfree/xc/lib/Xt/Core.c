@@ -6,13 +6,13 @@ Copyright 1993 by Sun Microsystems, Inc. Mountain View, CA
 
                         All Rights Reserved
 
-Permission to use, copy, modify, and distribute this software and its 
-documentation for any purpose and without fee is hereby granted, 
+Permission to use, copy, modify, and distribute this software and its
+documentation for any purpose and without fee is hereby granted,
 provided that the above copyright notice appear in all copies and that
-both that copyright notice and this permission notice appear in 
+both that copyright notice and this permission notice appear in
 supporting documentation, and that the names of Digital or Sun not be
 used in advertising or publicity pertaining to distribution of the
-software without specific, written prior permission.  
+software without specific, written prior permission.
 
 DIGITAL DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING
 ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO EVENT SHALL
@@ -79,7 +79,7 @@ in this Software without prior written authorization from The Open Group.
 
 externaldef(xtinherittranslations) int _XtInheritTranslations = 0;
 extern String XtCXtToolkitError; /* from IntrinsicI.h */
-static void XtCopyScreen();
+static void XtCopyScreen(Widget, int, XrmValue *);
 
 static XtResource resources[] = {
     {XtNscreen, XtCScreen, XtRScreen, sizeof(Screen*),
@@ -115,12 +115,12 @@ parameter is not passed through to the XtRCallProc routines */
         XtRTranslationTable, (XtPointer)NULL}
     };
 
-static void CoreInitialize();
-static void CoreClassPartInitialize();
-static void CoreDestroy();
-static void CoreRealize();
-static Boolean CoreSetValues();
-static void CoreSetValuesAlmost();
+static void CoreInitialize(Widget, Widget, ArgList, Cardinal *);
+static void CoreClassPartInitialize(WidgetClass);
+static void CoreDestroy(Widget);
+static void CoreRealize(Widget, XtValueMask *, XSetWindowAttributes *);
+static Boolean CoreSetValues(Widget, Widget, Widget, ArgList, Cardinal *);
+static void CoreSetValuesAlmost(Widget, Widget, XtWidgetGeometry *, XtWidgetGeometry *);
 
 static RectObjClassRec unNamedObjClassRec = {
   {
@@ -131,7 +131,7 @@ static RectObjClassRec unNamedObjClassRec = {
     /* class_part_initialize*/	NULL,
     /* class_inited       */	FALSE,
     /* initialize	  */	NULL,
-    /* initialize_hook    */	NULL,		
+    /* initialize_hook    */	NULL,
     /* realize		  */	(XtProc)XtInheritRealize,
     /* actions		  */	NULL,
     /* num_actions	  */	0,
@@ -146,9 +146,9 @@ static RectObjClassRec unNamedObjClassRec = {
     /* resize		  */	NULL,
     /* expose		  */	NULL,
     /* set_values	  */	NULL,
-    /* set_values_hook    */	NULL,			
-    /* set_values_almost  */	XtInheritSetValuesAlmost,  
-    /* get_values_hook    */	NULL,			
+    /* set_values_hook    */	NULL,
+    /* set_values_almost  */	XtInheritSetValuesAlmost,
+    /* get_values_hook    */	NULL,
     /* accept_focus	  */	NULL,
     /* version		  */	XtVersion,
     /* callback_offsets   */    NULL,
@@ -202,10 +202,10 @@ externaldef (WidgetClass) WidgetClass coreWidgetClass = &widgetClassRec;
 
 
 /*ARGSUSED*/
-static void XtCopyScreen(widget, offset, value)
-    Widget      widget;
-    int		offset;
-    XrmValue    *value;
+static void XtCopyScreen(
+    Widget      widget,
+    int		offset,
+    XrmValue    *value)
 {
     value->addr = (XPointer)(&widget->core.screen);
 }
@@ -214,8 +214,8 @@ static void XtCopyScreen(widget, offset, value)
  * Start of Core methods
  */
 
-static void CoreClassPartInitialize(wc)
-    register WidgetClass wc;
+static void CoreClassPartInitialize(
+    register WidgetClass wc)
 {
     /* We don't need to check for null super since we'll get to object
        eventually, and it had better define them!  */
@@ -232,7 +232,7 @@ static void CoreClassPartInitialize(wc)
     }
 
     if (wc->core_class.display_accelerator == XtInheritDisplayAccelerator) {
-	wc->core_class.display_accelerator = 
+	wc->core_class.display_accelerator =
 		super->core_class.display_accelerator;
     }
 
@@ -249,7 +249,7 @@ static void CoreClassPartInitialize(wc)
 
 	if (wc->core_class.version == XtVersionDontCheck)
 	    inPlace = True;
-	else  
+	else
 	    inPlace = (wc->core_class.version < XtVersion) ? False : True;
 
 	/* Compile the action table into a more efficient form */
@@ -259,11 +259,11 @@ static void CoreClassPartInitialize(wc)
     UNLOCK_PROCESS;
 }
 /* ARGSUSED */
-static void CoreInitialize(requested_widget, new_widget, args, num_args)
-    Widget   requested_widget;
-    register Widget new_widget;
-    ArgList args;
-    Cardinal *num_args;
+static void CoreInitialize(
+    Widget   requested_widget,
+    register Widget new_widget,
+    ArgList args,
+    Cardinal *num_args)
 {
     XtTranslations save1, save2;
     new_widget->core.event_table = NULL;
@@ -283,17 +283,17 @@ static void CoreInitialize(requested_widget, new_widget, args, num_args)
 	_XtMergeTranslations(new_widget, save2, save2->operation);
 }
 
-static void CoreRealize(widget, value_mask, attributes)
-    Widget		 widget;
-    XtValueMask		 *value_mask;
-    XSetWindowAttributes *attributes;
+static void CoreRealize(
+    Widget		 widget,
+    XtValueMask		 *value_mask,
+    XSetWindowAttributes *attributes)
 {
     XtCreateWindow(widget, (unsigned int) InputOutput,
 	(Visual *) CopyFromParent, *value_mask, attributes);
 } /* CoreRealize */
 
-static void CoreDestroy (widget)
-     Widget    widget;
+static void CoreDestroy (
+     Widget    widget)
 {
     _XtFreeEventTable(&widget->core.event_table);
     _XtDestroyTMData(widget);
@@ -305,10 +305,10 @@ static void CoreDestroy (widget)
 } /* CoreDestroy */
 
 /* ARGSUSED */
-static Boolean CoreSetValues(old, reference, new, args, num_args)
-    Widget old, reference, new;
-    ArgList args;
-    Cardinal *num_args;
+static Boolean CoreSetValues(
+    Widget old, Widget reference, Widget new,
+    ArgList args,
+    Cardinal *num_args)
 {
     Boolean redisplay;
     Mask    window_mask;
@@ -320,7 +320,7 @@ static Boolean CoreSetValues(old, reference, new, args, num_args)
 	save = new->core.tm.translations;
 	new->core.tm.translations = old->core.tm.translations;
 	_XtMergeTranslations(new, save, XtTableReplace);
-    }       
+    }
 
     /* Check everything that depends upon window being realized */
     if (XtIsRealized(old)) {
@@ -331,7 +331,7 @@ static Boolean CoreSetValues(old, reference, new, args, num_args)
 	   attributes.background_pixel  = new->core.background_pixel;
 	   window_mask |= CWBackPixel;
 	   redisplay = TRUE;
-	}	
+	}
 	if (old->core.background_pixmap != new->core.background_pixmap) {
 	   if (new->core.background_pixmap == XtUnspecifiedPixmap) {
 	       window_mask |= CWBackPixel;
@@ -343,7 +343,7 @@ static Boolean CoreSetValues(old, reference, new, args, num_args)
 	       window_mask |= CWBackPixmap;
 	   }
 	   redisplay = TRUE;
-	}	
+	}
 	if (old->core.border_pixel != new->core.border_pixel
 	    && new->core.border_pixmap == XtUnspecifiedPixmap) {
 	   attributes.border_pixel  = new->core.border_pixel;
@@ -380,18 +380,18 @@ static Boolean CoreSetValues(old, reference, new, args, num_args)
 	    Boolean mapped_when_managed = new->core.mapped_when_managed;
 	    new->core.mapped_when_managed = !mapped_when_managed;
 	    XtSetMappedWhenManaged(new, mapped_when_managed);
-	} 
+	}
     } /* if realized */
 
     return redisplay;
 } /* CoreSetValues */
 
 /*ARGSUSED*/
-static void CoreSetValuesAlmost(old, new, request, reply)
-    Widget		old;
-    Widget		new;
-    XtWidgetGeometry    *request;
-    XtWidgetGeometry    *reply;
+static void CoreSetValuesAlmost(
+    Widget		old,
+    Widget		new,
+    XtWidgetGeometry    *request,
+    XtWidgetGeometry    *reply)
 {
     *request = *reply;
 }

@@ -34,7 +34,7 @@
  **
  ******************************************************************************
  *****************************************************************************/
-/* $XFree86: xc/lib/Xp/XpExtUtil.c,v 1.8 2003/11/21 05:13:21 dawes Exp $ */
+/* $XFree86: xc/lib/Xp/XpExtUtil.c,v 1.9 2004/10/23 15:29:26 dawes Exp $ */
 
 #define NEED_EVENTS
 #define NEED_REPLIES
@@ -257,7 +257,6 @@ XpWireToEvent (dpy, re, event)
 	    ev->detail		= (int) ev2->detail;
 
 	    return (ENQUEUE_EVENT);
-	    break;
 	    }
 
 	case XPAttributeNotify:
@@ -271,7 +270,6 @@ XpWireToEvent (dpy, re, event)
 	    ev->detail		= (int) ev2->detail;
 
 	    return (ENQUEUE_EVENT);
-	    break;
 	    }
 
 	default:

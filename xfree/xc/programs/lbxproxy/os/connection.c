@@ -60,7 +60,7 @@ SOFTWARE.
  *      socket ids aren't small nums (0 - 2^8)
  *
  *****************************************************************/
-/* $XFree86: xc/programs/lbxproxy/os/connection.c,v 1.19 2003/11/17 22:20:49 dawes Exp $ */
+/* $XFree86: xc/programs/lbxproxy/os/connection.c,v 1.20 2004/04/03 22:38:55 tsi Exp $ */
 
 #include "misc.h"
 #include <X11/Xtrans.h>
@@ -107,6 +107,7 @@ SOFTWARE.
 #include "util.h"
 #include "pm.h"
 #include "wire.h"
+#include "stream.h"
 
 #ifdef X_NOT_POSIX
 #define Pid_t int
@@ -155,8 +156,6 @@ static int             ListenTransCount = 0;
 
 unsigned long raw_stream_out;	/* out to server, in from client */
 unsigned long raw_stream_in;	/* in from server, out to client */
-extern unsigned long  stream_out_plain;
-extern unsigned long  stream_in_plain;
 
 static void ErrorConnMax(
     XtransConnInfo /* trans_conn */
@@ -164,8 +163,8 @@ static void ErrorConnMax(
 
 
 static Bool
-PickNewListenDisplay (displayP)
-    char **displayP;
+PickNewListenDisplay (
+    char **displayP)
 {
     static char newDisplay[16];
     sprintf (newDisplay, "%d", atoi (*displayP) + 1);
@@ -178,8 +177,8 @@ PickNewListenDisplay (displayP)
 }
 
 static XtransConnInfo
-lookup_trans_conn (fd)
-    int fd;
+lookup_trans_conn (
+    int fd)
 {
     if (ListenTransFds)
     {
@@ -196,7 +195,7 @@ lookup_trans_conn (fd)
 /* Set MaxClients and lastfdesc, and allocate ConnectionTranslation */
 
 void
-InitConnectionLimits()
+InitConnectionLimits(void)
 {
     lastfdesc = -1;
 
@@ -245,8 +244,8 @@ InitConnectionLimits()
  * Create the socket(s) that clients will used for one server.
  */
 void
-CreateServerSockets(fds)
-    int		fds[];
+CreateServerSockets(
+    int		fds[])
 {
     int			done = 0;
     int			partial;
@@ -343,7 +342,7 @@ CreateServerSockets(fds)
 }
 
 void
-CloseServerSockets()
+CloseServerSockets(void)
 {
     int i;
 
@@ -358,7 +357,7 @@ CloseServerSockets()
  *    requested.
  *****************/
 void
-CreateWellKnownSockets()
+CreateWellKnownSockets(void)
 {
     int		i;
 
@@ -402,14 +401,14 @@ CreateWellKnownSockets()
 }
 
 void
-ListenToProxyManager ()
+ListenToProxyManager (void)
 {
     if (proxy_manager_fd >= 0)
 	FD_SET(proxy_manager_fd, &AllSockets);
 }
 
 void
-ListenWellKnownSockets ()
+ListenWellKnownSockets (void)
 {
     XFD_ORSET (&AllSockets, &AllSockets, &WellKnownConnections);
 }
@@ -425,10 +424,10 @@ AvailableClientInput (client)
 }
 
 static int
-ClientRead (fd, buf, len)
-    int fd;
-    char *buf;
-    int len;
+ClientRead (
+    int fd,
+    unsigned char *buf,
+    int len)
 {
     int n;
     n = read(fd, buf, len);
@@ -438,10 +437,10 @@ ClientRead (fd, buf, len)
 }
 
 static int
-ClientWritev(fd, iov, iovcnt)
-    int fd;
-    struct iovec *iov;
-    int iovcnt;
+ClientWritev(
+    int fd,
+    struct iovec *iov,
+    int iovcnt)
 {
     int n;
     n = writev(fd, iov, iovcnt);
@@ -451,10 +450,10 @@ ClientWritev(fd, iov, iovcnt)
 }
 
 static int
-ServerRead (fd, buf, len)
-    int fd;
-    char *buf;
-    int len;
+ServerRead (
+    int fd,
+    unsigned char *buf,
+    int len)
 {
     int n;
     n = read(fd, buf, len);
@@ -464,10 +463,10 @@ ServerRead (fd, buf, len)
 }
 
 static int
-ServerWritev(fd, iov, iovcnt)
-    int fd;
-    struct iovec *iov;
-    int iovcnt;
+ServerWritev(
+    int fd,
+    struct iovec *iov,
+    int iovcnt)
 {
     int n;
     n = writev(fd, iov, iovcnt);
@@ -477,11 +476,11 @@ ServerWritev(fd, iov, iovcnt)
 }
 
 ClientPtr
-AllocNewConnection (fd, connect_fd, to_server, trans_conn)
-    int	    		fd;
-    int     		connect_fd;
-    Bool    		to_server;
-    XtransConnInfo	trans_conn;
+AllocNewConnection (
+    int	    		fd,
+    int     		connect_fd,
+    Bool    		to_server,
+    XtransConnInfo	trans_conn)
 {
     OsCommPtr	oc;
     ClientPtr	client;
@@ -533,10 +532,10 @@ AllocNewConnection (fd, connect_fd, to_server, trans_conn)
 }
 
 void
-SwitchConnectionFuncs (client, Read, Writev)
-    ClientPtr	client;
-    int		(*Read)();
-    int		(*Writev)();
+SwitchConnectionFuncs (
+    ClientPtr	client,
+    int		(*Read)(int fd, unsigned char *buf, int buflen),
+    int		(*Writev)(int fd, struct iovec *iov, int iovcnt) )
 {
     OsCommPtr	oc = (OsCommPtr) client->osPrivate;
 
@@ -545,10 +544,10 @@ SwitchConnectionFuncs (client, Read, Writev)
 }
 
 void
-StartOutputCompression(client, CompressOn, CompressOff)
-    ClientPtr	client;
-    void	(*CompressOn)();
-    void	(*CompressOff)();
+StartOutputCompression(
+    ClientPtr	client,
+    void	(*CompressOn)(int fd),
+    void	(*CompressOff)(int fd) )
 {
     OsCommPtr	oc = (OsCommPtr) client->osPrivate;
 
@@ -566,9 +565,9 @@ StartOutputCompression(client, CompressOn, CompressOff)
 
 /*ARGSUSED*/
 Bool
-EstablishNewConnections(clientUnused, closure)
-    ClientPtr clientUnused;
-    pointer closure;
+EstablishNewConnections(
+    ClientPtr clientUnused,
+    pointer closure)
 {
     fd_set readyconnections;      /* set of listeners that are ready */
     int curconn;                  /* fd of listener that's ready */
@@ -624,8 +623,8 @@ EstablishNewConnections(clientUnused, closure)
  ************/
 
 static void
-ErrorConnMax(trans_conn)
-XtransConnInfo trans_conn;
+ErrorConnMax(
+        XtransConnInfo trans_conn)
 {
     register int fd = _LBXPROXYTransGetConnectionNumber (trans_conn);
     xConnSetupPrefix csp;
@@ -676,8 +675,8 @@ XtransConnInfo trans_conn;
  ************/
 
 void
-CloseDownFileDescriptor(client)
-    ClientPtr	client;
+CloseDownFileDescriptor(
+    ClientPtr	client)
 {
     register OsCommPtr oc = (OsCommPtr) client->osPrivate;
     int connection = oc->fd;
@@ -716,7 +715,7 @@ CloseDownFileDescriptor(client)
  *****************/
 
 void
-CheckConnections()
+CheckConnections(void)
 {
     fd_mask		mask;
     fd_set		tmask; 
@@ -752,8 +751,8 @@ CheckConnections()
  *****************/
 
 void
-CloseDownConnection(client)
-    ClientPtr client;
+CloseDownConnection(
+    ClientPtr client)
 {
     OsCommPtr oc = (OsCommPtr)client->osPrivate;
 
@@ -779,8 +778,8 @@ CloseDownConnection(client)
  *****************/
 
 void
-OnlyListenToOneClient(client)
-    ClientPtr client;
+OnlyListenToOneClient(
+    ClientPtr client)
 {
     OsCommPtr oc = (OsCommPtr)client->osPrivate;
     int connection = oc->fd;
@@ -814,7 +813,7 @@ OnlyListenToOneClient(client)
  ****************/
 
 void
-ListenToAllClients()
+ListenToAllClients(void)
 {
     if (GrabInProgress)
     {
@@ -832,8 +831,8 @@ ListenToAllClients()
  ****************/
 
 void
-IgnoreClient (client)
-    ClientPtr	client;
+IgnoreClient (
+    ClientPtr	client)
 {
     OsCommPtr oc = (OsCommPtr)client->osPrivate;
     int connection = oc->fd;
@@ -868,8 +867,8 @@ IgnoreClient (client)
  ****************/
 
 void
-AttendClient (client)
-    ClientPtr	client;
+AttendClient (
+    ClientPtr	client)
 {
     OsCommPtr oc = (OsCommPtr)client->osPrivate;
     int connection = oc->fd;
@@ -895,8 +894,8 @@ AttendClient (client)
 /* make client impervious to grabs; assume only executing client calls this */
 
 void
-MakeClientGrabImpervious(client)
-    ClientPtr client;
+MakeClientGrabImpervious(
+    ClientPtr client)
 {
     OsCommPtr oc = (OsCommPtr)client->osPrivate;
     int connection = oc->fd;
@@ -907,8 +906,8 @@ MakeClientGrabImpervious(client)
 /* make client pervious to grabs; assume only executing client calls this */
 
 void
-MakeClientGrabPervious(client)
-    ClientPtr client;
+MakeClientGrabPervious(
+    ClientPtr client)
 {
     OsCommPtr oc = (OsCommPtr)client->osPrivate;
     int connection = oc->fd;

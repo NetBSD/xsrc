@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sunffb/ffb_dri.c,v 1.9 2001/05/02 15:06:10 dawes Exp $
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sunffb/ffb_dri.c,v 1.11 2004/12/10 16:07:03 alanh Exp $
  * Acceleration for the Creator and Creator3D framebuffer - DRI/DRM support.
  *
  * Copyright (C) 2000 David S. Miller (davem@redhat.com)
@@ -57,9 +57,9 @@ static char FFBKernelDriverName[] = "ffb";
 static char FFBClientDriverName[] = "ffb";
 
 /* Forward declarations. */
-static Bool FFBDRICreateContext(ScreenPtr, VisualPtr, drmContext,
+static Bool FFBDRICreateContext(ScreenPtr, VisualPtr, drm_context_t,
 				void *, DRIContextType);
-static void FFBDRIDestroyContext(ScreenPtr, drmContext, DRIContextType);
+static void FFBDRIDestroyContext(ScreenPtr, drm_context_t, DRIContextType);
 
 static void FFBDRIInitBuffers(WindowPtr, RegionPtr, CARD32);
 static void FFBDRIMoveBuffers(WindowPtr, DDXPointRec, RegionPtr, CARD32);
@@ -123,8 +123,8 @@ FFBDRIInitVisualConfigs(ScreenPtr pScreen)
 	pConfigs->stencilSize = 0;
 	pConfigs->auxBuffers = 0;
 	pConfigs->level = 0;
-	pConfigs->visualRating = 0;
-	pConfigs->transparentPixel = 0;
+	pConfigs->visualRating = GLX_NONE;
+	pConfigs->transparentPixel = GLX_NONE;
 	pConfigs->transparentRed = 0;
 	pConfigs->transparentGreen = 0;
 	pConfigs->transparentBlue = 0;
@@ -321,7 +321,7 @@ FFBDRIScreenInit(ScreenPtr pScreen)
 	pFfbDRI->mFbcRegs = 0;
 
 	xf86DrvMsg(pScreen->myNum, X_INFO,
-		   "[drm] FBC Register handle = 0x%08x\n",
+		   "[drm] FBC Register handle = 0x%08lx\n",
 		   pFfbDRI->hFbcRegs);
 
 	if (drmAddMap(pFfb->drmSubFD,
@@ -334,7 +334,7 @@ FFBDRIScreenInit(ScreenPtr pScreen)
 	pFfbDRI->mDacRegs = 0;
 
 	xf86DrvMsg(pScreen->myNum, X_INFO,
-		   "[drm] DAC Register handle = 0x%08x\n",
+		   "[drm] DAC Register handle = 0x%08lx\n",
 		   pFfbDRI->hDacRegs);
 
 	/* Now add maps for the "Smart" views of the framebuffer. */
@@ -348,7 +348,7 @@ FFBDRIScreenInit(ScreenPtr pScreen)
 	pFfbDRI->mSfb8r = 0;
 
 	xf86DrvMsg(pScreen->myNum, X_INFO,
-		   "[drm] SFB8R handle = 0x%08x\n",
+		   "[drm] SFB8R handle = 0x%08lx\n",
 		   pFfbDRI->hSfb8r);
 
 	if (drmAddMap(pFfb->drmSubFD,
@@ -361,7 +361,7 @@ FFBDRIScreenInit(ScreenPtr pScreen)
 	pFfbDRI->mSfb32 = 0;
 
 	xf86DrvMsg(pScreen->myNum, X_INFO,
-		   "[drm] SFB32 handle = 0x%08x\n",
+		   "[drm] SFB32 handle = 0x%08lx\n",
 		   pFfbDRI->hSfb32);
 
 	if (drmAddMap(pFfb->drmSubFD,
@@ -374,7 +374,7 @@ FFBDRIScreenInit(ScreenPtr pScreen)
 	pFfbDRI->mSfb64 = 0;
 
 	xf86DrvMsg(pScreen->myNum, X_INFO,
-		   "[drm] SFB64 handle = 0x%08x\n",
+		   "[drm] SFB64 handle = 0x%08lx\n",
 		   pFfbDRI->hSfb64);
 
 	/* Setup visual configurations. */
@@ -416,7 +416,7 @@ FFBDRICloseScreen(ScreenPtr pScreen)
 }
 
 static Bool
-FFBDRICreateContext(ScreenPtr pScreen, VisualPtr visual, drmContext hwContext,
+FFBDRICreateContext(ScreenPtr pScreen, VisualPtr visual, drm_context_t hwContext,
 		 void *pVisualConfigPriv, DRIContextType context)
 {
 	/* Nothing to do... */
@@ -424,7 +424,7 @@ FFBDRICreateContext(ScreenPtr pScreen, VisualPtr visual, drmContext hwContext,
 }
 
 static void
-FFBDRIDestroyContext(ScreenPtr pScreen, drmContext hwContext, DRIContextType context)
+FFBDRIDestroyContext(ScreenPtr pScreen, drm_context_t hwContext, DRIContextType context)
 {
 	/* Nothing to do... */
 }

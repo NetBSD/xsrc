@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/Xext/xf86bigfont.c,v 1.18 2003/11/17 22:20:27 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/Xext/xf86bigfont.c,v 1.19 2004/04/03 22:26:22 dawes Exp $ */
 /*
  * BIGFONT extension for sharing font metrics between clients (if possible)
  * and for transmitting font metrics to clients in a compressed form.
@@ -47,7 +47,7 @@
 #ifdef SVR4
 #include <sys/sysmacros.h>
 #endif
-#if defined(ISC) || defined(__CYGWIN__) || defined(SCO) || defined(SCO325)
+#if defined(ISC) || defined(__CYGWIN__) || defined(__SCO__)
 #include <sys/param.h>
 #include <sys/sysmacros.h>
 #endif

@@ -46,7 +46,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/lib/X11/GetDflt.c,v 3.23 2003/11/17 22:20:07 dawes Exp $ */
+/* $XFree86: xc/lib/X11/GetDflt.c,v 3.24 2004/03/30 10:34:05 eich Exp $ */
 
 #include "Xlibint.h"
 #include <X11/Xos.h>
@@ -239,8 +239,9 @@ XGetDefault(
 	 */
 	LockDisplay(dpy);
 	if (dpy->db == NULL) {
-		dpy->db = InitDefaults(dpy);
-		}
+	    dpy->db = InitDefaults(dpy);
+	    dpy->flags |= XlibDisplayDfltRMDB;
+	}
 	UnlockDisplay(dpy);
 
 	names[0] = XrmStringToName(progname);

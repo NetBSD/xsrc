@@ -27,7 +27,7 @@ in this Software without prior written authorization from The Open Group.
  * The X Window System is a Trademark of The Open Group.
  *
  */
-/* $XFree86: xc/include/Xos.h,v 3.42 2003/12/31 01:18:41 tsi Exp $ */
+/* $XFree86: xc/include/Xos.h,v 3.43 2004/04/03 22:26:20 dawes Exp $ */
 
 /* This is a collection of things to try and minimize system dependencies
  * in a "signficant" number of source files.
@@ -61,7 +61,7 @@ in this Software without prior written authorization from The Open Group.
 #endif /* USG */
 
 #ifndef sgi
-#if defined(SCO325) || defined(__USLC__)
+#if defined(__SCO__) || defined(__USLC__)
 #include <stdint.h>
 #endif
 #endif
@@ -91,7 +91,7 @@ in this Software without prior written authorization from The Open Group.
 #ifndef X_NOT_STDC_ENV
 
 #include <string.h>
-#ifdef SCO325
+#ifdef __SCO__
 #include <strings.h>
 #else
 #ifdef __STDC__

@@ -45,7 +45,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/programs/lbxproxy/os/osdep.h,v 1.11 2002/05/31 18:46:08 dawes Exp $ */
+/* $XFree86: xc/programs/lbxproxy/os/osdep.h,v 1.13 2004/04/26 00:23:37 tsi Exp $ */
 
 #define BOTIMEOUT 200 /* in milliseconds */
 #define BUFSIZE 4096
@@ -109,9 +109,9 @@ SOFTWARE.
 
 typedef struct _connectionInput {
     struct _connectionInput *next;
-    char *buffer;               /* contains current client input */
-    char *bufptr;               /* pointer to current start of data */
-    int  bufcnt;                /* count of bytes in buffer */
+    unsigned char *buffer;      /* contains current client input */
+    unsigned char *bufptr;      /* pointer to current start of data */
+    int bufcnt;                 /* count of bytes in buffer */
     int lenLastReq;
     int size;
 } ConnectionInput, *ConnectionInputPtr;
@@ -124,20 +124,21 @@ typedef struct _connectionOutput {
     Bool nocompress;
 } ConnectionOutput, *ConnectionOutputPtr;
 
-typedef struct _osComm {
+typedef struct _osComm OsCommRec, *OsCommPtr;
+struct _osComm {
     int fd;
     ConnectionInputPtr input;
     ConnectionOutputPtr output;
     ConnectionOutputPtr ofirst;
     ConnectionOutputPtr olast;
-    void (*Close) ();
-    int  (*Writev) ();
-    int  (*Read) ();
-    int  (*flushClient) ();
-    void (*compressOff) ();
-    void (*compressOn) ();
+    void (*Close) (ClientPtr /*client*/);
+    int  (*Writev) (int fd, struct iovec *iov, int iovcnt);
+    int  (*Read) (int fd, unsigned char *buf, int buflen);
+    int  (*flushClient) (ClientPtr /*who*/, OsCommPtr /*oc*/, char * /*extraBuf*/, int /*extraCount*/);
+    void (*compressOff) (int fd);
+    void (*compressOn) (int fd);
     struct _XtransConnInfo *trans_conn; /* transport connection object */
-} OsCommRec, *OsCommPtr;
+};
 
 #define FlushClient(who, oc, extraBuf, extraCount) \
     (*((OsCommPtr)((who)->osPrivate))->flushClient)(who, oc, extraBuf, extraCount)

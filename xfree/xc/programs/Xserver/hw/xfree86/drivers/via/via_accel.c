@@ -21,7 +21,7 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/via/via_accel.c,v 1.11 2004/01/29 03:13:24 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/via/via_accel.c,v 1.13 2004/04/03 21:39:55 dawes Exp $ */
 
 /*************************************************************************
  *
@@ -31,7 +31,6 @@
  ************************************************************************/
 
 #include "Xarch.h"
-#include "xaalocal.h"
 #include "xaarop.h"
 #include "miline.h"
 
@@ -348,7 +347,7 @@ VIAInitAccel(ScreenPtr pScreen)
     XAAInfoRecPtr   xaaptr;
     BoxRec 	    AvailFBArea;
     unsigned long   cacheEnd;
-    unsigned long   cacheEndDRI;
+    unsigned long   cacheEndTmp;
 
     pVia->VQStart = 0;
     if (((pVia->FBFreeEnd - pVia->FBFreeStart) >= VIA_VQ_SIZE) &&
@@ -499,35 +498,24 @@ VIAInitAccel(ScreenPtr pScreen)
     /* We reserve space for pixel cache */
     
     cacheEnd = pVia->FBFreeEnd / pVia->Bpl;
-    cacheEndDRI = (pVia->FBFreeStart + VIA_PIXMAP_CACHE_SIZE + pVia->Bpl-1) / pVia->Bpl;
+    cacheEndTmp = (pVia->FBFreeStart + VIA_PIXMAP_CACHE_SIZE + pVia->Bpl-1) 
+	/ pVia->Bpl;
     
     /*
-     *	Old DRI has some assumptions here that we need to work through
-     *  and fix
-     *  UPDATE: These assumptions are that pVia->FBFreestart should
-     *  point to a free region in the framebuffer where it can place it's
-     *  allocator.
+     *	Use only requested pixmap size if it is less than available
+     *  offscreen memory.
      */
-    if(cacheEnd > cacheEndDRI)
-    {
-        xf86DrvMsg(pScrn->scrnIndex, X_INFO,
-        	"Clipping pixmap cache for old DRI/DRM module.\n");
-        cacheEnd = cacheEndDRI;
-    }
     
+    if(cacheEnd > cacheEndTmp)
+        cacheEnd = cacheEndTmp;
     /*
      *	Clip to the blitter limit
      */
-    pVia->ScissB = cacheEnd;;
 
-    if (pVia->ScissB > 2047)
-        pVia->ScissB = 2047;
+    if (cacheEnd > VIA_MAX_ACCEL_Y)
+	cacheEnd = VIA_MAX_ACCEL_Y;
 
-    /*
-     * The free start IS where the cache Ends. We should not add here.
-     */ 
-
-    pVia->FBFreeStart = (pVia->ScissB + 1) *pVia->Bpl;
+    pVia->FBFreeStart = (cacheEnd + 1) *pVia->Bpl;
 
     /*
      * Finally, we set up the video memory space available to the pixmap
@@ -537,13 +525,7 @@ VIAInitAccel(ScreenPtr pScreen)
     AvailFBArea.x1 = 0;
     AvailFBArea.y1 = 0;
     AvailFBArea.x2 = pScrn->displayWidth;
-    AvailFBArea.y2 = pVia->ScissB;
-
-    /*
-     * The pixmap cache must stay within the lowest 2048 lines due
-     * to hardware blitting limits. The rest is available for offscreen
-     * allocations unless DRI stole it.
-     */
+    AvailFBArea.y2 = cacheEnd;
      
     xf86InitFBManager(pScreen, &AvailFBArea);
     DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO,
@@ -553,31 +535,6 @@ VIAInitAccel(ScreenPtr pScreen)
     return XAAInit(pScreen, xaaptr);
 }
 
-void VIAInitLinear(ScreenPtr pScreen)
-{
-    ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
-    VIAPtr pVia = VIAPTR(pScrn);
-#ifdef XFREE86_44	
-    /*
-     * In the 44 path we must take care not to truncate offset and size so
-     * that we get overlaps. If there is available memory below line 2048
-     * we use it.
-     */ 
-    unsigned long offset = (pVia->FBFreeStart + pVia->Bpp - 1 ) / pVia->Bpp; 
-    unsigned long size = pVia->FBFreeEnd / pVia->Bpp - offset;
-    if (size > 0) xf86InitFBManagerLinear(pScreen, offset, size);
-#else
-    /*
-     * In the 43 path we don't have to care about truncation. just use
-     * all available memory, also below line 2048. The drm module uses 
-     * pVia->FBFreeStart as offscreen available start. We do it to. 
-     */
-    unsigned long offset = pVia->FBFreeStart; 
-    unsigned long size = pVia->FBFreeEnd - offset;
-    if (size > 0 ) VIAInitPool(pVia, offset, size);
-#endif	
-}
-    
 
 
 /* The sync function for the GE */

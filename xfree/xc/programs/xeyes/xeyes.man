@@ -1,8 +1,8 @@
 .\" $XConsortium: xeyes.man,v 1.12 94/04/17 20:45:24 gildea Exp $
 .\"
-.\" $XFree86: xc/programs/xeyes/xeyes.man,v 1.4 2003/05/29 21:48:11 herrb Exp $
+.\" $XFree86: xc/programs/xeyes/xeyes.man,v 1.5 2005/02/11 03:03:18 dawes Exp $
 .\"
-.TH XEYES 1 __xorgversion__
+.TH XEYES 1 __vendorversion__
 .SH NAME
 xeyes \- a follow the mouse X demo
 .SH SYNOPSIS

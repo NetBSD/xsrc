@@ -8,6 +8,7 @@ EXPORTS
  constraintClassRec DATA
  constraintWidgetClass DATA
  coreWidgetClass DATA
+ colorConvertArgs DATA
  hookObjClassRec DATA
  hookObjectClass DATA
  objectClass DATA
@@ -31,11 +32,19 @@ EXPORTS
  widgetClassRec DATA
  wmShellClassRec DATA
  wmShellWidgetClass DATA
+ _XtAddCallback
+ _XtAllocError
  _XtCheckSubclassFlag
  _XtCopyFromArg
+ _XtCountVaList
  _XtInherit
  _XtInheritTranslations
  _XtIsSubclassOf
+ _XtPrintXlations
+ _XtRemoveAllCallbacks
+ _XtRemoveCallback
+ _XtVaToArgList
+ _XtWaitForSomething
  XtAddActions
  XtAddCallback
  XtAddCallbacks
@@ -338,15 +347,5 @@ EXPORTS
  XtWindow
  XtWindowOfObject
  XtWindowToWidget
- _XtWaitForSomething
-#ifdef __UNIXOS2__
- _XtAddCallback
- _XtRemoveCallback
- _XtRemoveAllCallbacks
- _XtPrintXlations
- _XtAllocError
- _XtCountVaList
- _XtVaToArgList
-#endif
 /* $Xorg: Xt-def.cpp,v 1.3 2000/08/17 19:46:20 cpqbld Exp $ */
-/* $XFree86: xc/lib/Xt/Xt-def.cpp,v 1.4 2003/11/06 03:25:41 dawes Exp $ */
+/* $XFree86: xc/lib/Xt/Xt-def.cpp,v 1.5 2004/05/06 00:56:22 dawes Exp $ */

@@ -80,9 +80,9 @@ However, if you have problems with auto-detection, you can specify:
 
 The XFree86 4 driver was ported from XFree86 3.3.x and enhanced by:
 
-   o Rickard E. (Rik) Faith <faith@precisioninsight.com>
+   o Rickard E. (Rik) Faith
 
-   o Kevin E. Martin <kevin@precisioninsight.com>
+   o Kevin E. Martin
 
 The XFree86 4 driver was funded by ATI and was donated to The XFree86 Project
 by:
@@ -93,9 +93,9 @@ by:
 
 The XFree86 3.3.x driver used for the port was written by:
 
-   o Rickard E. (Rik) Faith <faith@precisioninsight.com>
+   o Rickard E. (Rik) Faith
 
-   o Kevin E. Martin <kevin@precisioninsight.com>
+   o Kevin E. Martin
 
 The XFree86 3.3.x driver was funded by ATI and was donated to The XFree86
 Project by Precision Insight, Inc.  It was based in part on an earlier driver
@@ -112,11 +112,7 @@ This early driver was funded and donated to The XFree86 Project by:
          90443 Nuernberg
          Germany
 
-http://www.precisioninsight.com
-
-http://www.suse.com
-
-     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/r128.sgml,v 1.8 dawes Exp $
+     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/r128.sgml,v 1.9 dawes Exp $
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.r128,v 1.15 2003/07/15 02:28:31 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.r128,v 1.16 2005/03/04 03:25:46 dawes Exp $

@@ -20,7 +20,7 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/via/via_tuner.c,v 1.2 2004/01/02 18:23:36 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/via/via_tuner.c,v 1.3 2004/12/15 01:26:50 tsi Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -35,7 +35,6 @@
 #include "via_capture.h"
 #include "via.h"
 #include "ddmpeg.h"
-#include "xf86drm.h"
 
 #include "via_overlay.h"
 #include "via_driver.h"

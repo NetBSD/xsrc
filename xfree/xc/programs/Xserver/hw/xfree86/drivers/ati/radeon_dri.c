@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/radeon_dri.c,v 1.40 2003/11/10 18:41:22 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/radeon_dri.c,v 1.41 2004/12/10 16:07:01 alanh Exp $ */
 /*
  * Copyright 2000 ATI Technologies Inc., Markham, Ontario,
  *                VA Linux Systems Inc., Fremont, California.
@@ -56,15 +56,7 @@
 #include "sarea.h"
 #include "radeon_sarea.h"
 
-/* HACK - for now, put this here... */
-/* Alpha - this may need to be a variable to handle UP1x00 vs TITAN */
-#if defined(__alpha__)
-# define DRM_PAGE_SIZE 8192
-#elif defined(__ia64__)
-# define DRM_PAGE_SIZE getpagesize()
-#else
-# define DRM_PAGE_SIZE 4096
-#endif
+static size_t radeon_drm_page_size;
 
 
 static Bool RADEONDRICloseFullScreen(ScreenPtr pScreen);
@@ -172,7 +164,7 @@ static Bool RADEONInitVisualConfigs(ScreenPtr pScreen)
 		    pConfigs[i].stencilSize    = 0;
 		pConfigs[i].auxBuffers         = 0;
 		pConfigs[i].level              = 0;
-		if (accum) {
+		if (accum || stencil) {
 		   pConfigs[i].visualRating    = GLX_SLOW_CONFIG;
 		} else {
 		   pConfigs[i].visualRating    = GLX_NONE;
@@ -284,7 +276,7 @@ static Bool RADEONInitVisualConfigs(ScreenPtr pScreen)
 
 /* Create the Radeon-specific context information */
 static Bool RADEONCreateContext(ScreenPtr pScreen, VisualPtr visual,
-				drmContext hwContext, void *pVisualConfigPriv,
+				drm_context_t hwContext, void *pVisualConfigPriv,
 				DRIContextType contextStore)
 {
 #ifdef PER_CONTEXT_SAREA
@@ -321,7 +313,7 @@ static Bool RADEONCreateContext(ScreenPtr pScreen, VisualPtr visual,
 }
 
 /* Destroy the Radeon-specific context information */
-static void RADEONDestroyContext(ScreenPtr pScreen, drmContext hwContext,
+static void RADEONDestroyContext(ScreenPtr pScreen, drm_context_t hwContext,
 				 DRIContextType contextStore)
 {
 #ifdef PER_CONTEXT_SAREA
@@ -692,11 +684,11 @@ static void RADEONDRIInitGARTValues(RADEONInfoPtr info)
 
 				/* Initialize the CP ring buffer data */
     info->ringStart       = info->gartOffset;
-    info->ringMapSize     = info->ringSize*1024*1024 + DRM_PAGE_SIZE;
+    info->ringMapSize     = info->ringSize*1024*1024 + radeon_drm_page_size;
     info->ringSizeLog2QW  = RADEONMinBits(info->ringSize*1024*1024/8)-1;
 
     info->ringReadOffset  = info->ringStart + info->ringMapSize;
-    info->ringReadMapSize = DRM_PAGE_SIZE;
+    info->ringReadMapSize = radeon_drm_page_size;
 
 				/* Reserve space for vertex/indirect buffers */
     info->bufStart        = info->ringReadOffset + info->ringReadMapSize;
@@ -1024,12 +1016,10 @@ static int RADEONDRIKernelInit(RADEONInfoPtr info, ScreenPtr pScreen)
 
     memset(&drmInfo, 0, sizeof(drmRadeonInit));
 
-    if ((info->ChipFamily == CHIP_FAMILY_R200) ||
-	(info->ChipFamily == CHIP_FAMILY_RV250) ||
-	(info->ChipFamily == CHIP_FAMILY_RV280) )
-       drmInfo.func             = DRM_RADEON_INIT_R200_CP;
+    if ( info->ChipFamily >= CHIP_FAMILY_R200 )
+       drmInfo.func		= DRM_RADEON_INIT_R200_CP;
     else
-       drmInfo.func             = DRM_RADEON_INIT_CP;
+       drmInfo.func		= DRM_RADEON_INIT_CP;
 
     drmInfo.sarea_priv_offset   = sizeof(XF86DRISAREARec);
     drmInfo.is_pci              = info->IsPCI;
@@ -1227,6 +1217,8 @@ Bool RADEONDRIScreenInit(ScreenPtr pScreen)
 	break;
     }
 
+    radeon_drm_page_size = getpagesize();
+
     /* Create the DRI data structure, and fill it in before calling the
      * DRIScreenInit().
      */
@@ -1235,19 +1227,21 @@ Bool RADEONDRIScreenInit(ScreenPtr pScreen)
     info->pDRIInfo                       = pDRIInfo;
     pDRIInfo->drmDriverName              = RADEON_DRIVER_NAME;
 
-    if ( (info->ChipFamily == CHIP_FAMILY_R200) ||
-	 (info->ChipFamily == CHIP_FAMILY_RV250) ||
-	 (info->ChipFamily == CHIP_FAMILY_RV280) )
-       pDRIInfo->clientDriverName        = R200_DRIVER_NAME;
+    if ( info->ChipFamily >= CHIP_FAMILY_R200 )
+       pDRIInfo->clientDriverName	 = R200_DRIVER_NAME;
     else
-       pDRIInfo->clientDriverName        = RADEON_DRIVER_NAME;
+       pDRIInfo->clientDriverName	 = RADEON_DRIVER_NAME;
 
-    pDRIInfo->busIdString                = xalloc(64);
-    sprintf(pDRIInfo->busIdString,
-	    "PCI:%d:%d:%d",
-	    info->PciInfo->bus,
-	    info->PciInfo->device,
-	    info->PciInfo->func);
+    if (xf86LoaderCheckSymbol("DRICreatePCIBusID")) {
+	pDRIInfo->busIdString = DRICreatePCIBusID(info->PciInfo);
+    } else {
+	pDRIInfo->busIdString            = xalloc(64);
+	sprintf(pDRIInfo->busIdString,
+		"PCI:%d:%d:%d",
+		info->PciInfo->bus,
+		info->PciInfo->device,
+		info->PciInfo->func);
+    }
     pDRIInfo->ddxDriverMajorVersion      = RADEON_VERSION_MAJOR;
     pDRIInfo->ddxDriverMinorVersion      = RADEON_VERSION_MINOR;
     pDRIInfo->ddxDriverPatchVersion      = RADEON_VERSION_PATCH;
@@ -1362,9 +1356,10 @@ Bool RADEONDRIScreenInit(ScreenPtr pScreen)
     if (version) {
 	int req_minor, req_patch;
 
-	if ((info->ChipFamily == CHIP_FAMILY_R200) ||
-	    (info->ChipFamily == CHIP_FAMILY_RV250) ||
-	    (info->ChipFamily == CHIP_FAMILY_RV280)) {
+	if (info->IsIGP) {
+	    req_minor = 10;
+	    req_patch = 0;
+	} else if (info->ChipFamily >= CHIP_FAMILY_R200) {
 	    req_minor = 5;
 	    req_patch = 0;
 	} else {
@@ -1414,23 +1409,19 @@ Bool RADEONDRIScreenInit(ScreenPtr pScreen)
 
 				/* Initialize AGP */
     if (!info->IsPCI && !RADEONDRIAgpInit(info, pScreen)) {
-#if defined(__alpha__) || defined(__powerpc__)
-	info->IsPCI = TRUE;
-	xf86DrvMsg(pScreen->myNum, X_WARNING,
-		   "[agp] AGP failed to initialize "
-		   "-- falling back to PCI mode.\n");
-	xf86DrvMsg(pScreen->myNum, X_WARNING,
-		   "[agp] If this is an AGP card, you may want to make sure "
-		   "the agpgart\nkernel module is loaded before the radeon "
-		   "kernel module.\n");
-#else
+	xf86DrvMsg(pScreen->myNum, X_ERROR,
+		   "[agp] AGP failed to initialize. Disabling the DRI.\n" );
+	xf86DrvMsg(pScreen->myNum, X_INFO,
+		   "[agp] You may want to make sure the agpgart kernel "
+		   "module\nis loaded before the radeon kernel module.\n");
 	RADEONDRICloseScreen(pScreen);
 	return FALSE;
-#endif
     }
 
 				/* Initialize PCI */
     if (info->IsPCI && !RADEONDRIPciInit(info, pScreen)) {
+	xf86DrvMsg(pScreen->myNum, X_ERROR,
+		   "[pci] PCI failed to initialize. Disabling the DRI.\n" );
 	RADEONDRICloseScreen(pScreen);
 	return FALSE;
     }
@@ -1889,6 +1880,10 @@ static void RADEONDRITransitionTo2d(ScreenPtr pScreen)
     ScrnInfoPtr         pScrn      = xf86Screens[pScreen->myNum];
     RADEONInfoPtr       info       = RADEONPTR(pScrn);
     RADEONSAREAPrivPtr  pSAREAPriv = DRIGetSAREAPrivate(pScreen);
+
+    /* Try flipping back to the front page if necessary */
+    if (pSAREAPriv->pfCurrentPage == 1)
+	drmCommandNone(info->drmFD, DRM_RADEON_FLIP);
 
     /* Shut down shadowing if we've made it back to the front page */
     if (pSAREAPriv->pfCurrentPage == 0) {

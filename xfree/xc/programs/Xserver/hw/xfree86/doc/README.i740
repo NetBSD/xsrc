@@ -163,9 +163,9 @@ detected.
 
 8.  Author
 
-   o Original version by Kevin E Martin <kevin@precisioninsight.com>
+   o Original version by Kevin E Martin.
 
-   o Daryll Strauss <daryll@precisioninsight.com>
+   o Daryll Strauss
 
 This driver was donated to The XFree86 Project by:
 
@@ -173,9 +173,7 @@ This driver was donated to The XFree86 Project by:
          Cedar Park, TX
          USA
 
-http://www.precisioninsight.com
-
-     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/i740.sgml,v 1.3 dawes Exp $
+     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/i740.sgml,v 1.4 dawes Exp $
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.i740,v 1.10 2003/07/15 02:28:31 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.i740,v 1.11 2005/03/04 03:25:46 dawes Exp $

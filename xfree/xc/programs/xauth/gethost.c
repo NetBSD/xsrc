@@ -26,7 +26,7 @@ in this Software without prior written authorization from The Open Group.
  * Author:  Jim Fulton, MIT X Consortium
  */
 
-/* $XFree86: xc/programs/xauth/gethost.c,v 3.21 2003/08/02 15:30:10 herrb Exp $ */
+/* $XFree86: xc/programs/xauth/gethost.c,v 3.22 2004/04/03 22:26:25 dawes Exp $ */
 
 /* sorry, streams support does not really work yet */
 #if defined(STREAMSCONN) && defined(SVR4)
@@ -58,9 +58,9 @@ in this Software without prior written authorization from The Open Group.
 #include <arpa/inet.h>
 #ifdef SYSV
 #ifdef i386
-#if !defined(sco) && !defined(sun)
+#if !defined(__SCO__) && !defined(sun)
 #include <net/errno.h>
-#endif /* !sco && !sun */
+#endif /* !__SCO__ && !sun */
 #endif /* i386 */
 #endif /* SYSV */
 #endif /* !STREAMSCONN */

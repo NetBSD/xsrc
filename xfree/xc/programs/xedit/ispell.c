@@ -27,7 +27,7 @@
  * Author: Paulo César Pereira de Andrade
  */
 
-/* $XFree86: xc/programs/xedit/ispell.c,v 1.20 2003/12/19 02:05:39 dawes Exp $ */
+/* $XFree86: xc/programs/xedit/ispell.c,v 1.21 2004/10/23 15:29:32 dawes Exp $ */
 
 #include "xedit.h"
 #include <stdlib.h>
@@ -824,7 +824,7 @@ IspellConvertHtmlAmp(char *buf)
 	else if (*buf == '#') {
 	    char *tmp;
 
-	    if (len == 1);
+	    if (len == 1)
 		return ('?');
 	    ch = strtol(&buf[1], &tmp, 10);
 	    if (*tmp)

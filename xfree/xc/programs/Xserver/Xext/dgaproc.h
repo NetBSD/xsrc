@@ -1,27 +1,31 @@
-/* $XFree86: xc/programs/Xserver/Xext/dgaproc.h,v 1.22 2003/07/16 01:38:29 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/Xext/dgaproc.h,v 1.23 2004/12/07 15:59:16 tsi Exp $ */
 
 #ifndef __DGAPROC_H
 #define __DGAPROC_H
 
-#include "Xproto.h"
+#undef _XF86DGA_SERVER_
+#define _XF86DGA_SERVER_
+#include <X11/extensions/xf86dga.h>
+#include <X11/Xproto.h>
 #include "pixmap.h"
 
-#define DGA_CONCURRENT_ACCESS	0x00000001
-#define DGA_FILL_RECT		0x00000002
-#define DGA_BLIT_RECT		0x00000004
-#define DGA_BLIT_RECT_TRANS	0x00000008
-#define DGA_PIXMAP_AVAILABLE	0x00000010
+/* Compatibility #define's */
+#define DGA_CONCURRENT_ACCESS	XDGAConcurrentAccess
+#define DGA_FILL_RECT		XDGASolidFillRect
+#define DGA_BLIT_RECT		XDGABlitRect
+#define DGA_BLIT_RECT_TRANS	XDGABlitTransRect
+#define DGA_PIXMAP_AVAILABLE	XDGAPixmap
 
-#define DGA_INTERLACED		0x00010000
-#define DGA_DOUBLESCAN		0x00020000
+#define DGA_INTERLACED		XDGAInterlaced
+#define DGA_DOUBLESCAN		XDGADoublescan
 
-#define DGA_FLIP_IMMEDIATE	0x00000001
-#define DGA_FLIP_RETRACE	0x00000002
+#define DGA_FLIP_IMMEDIATE	XDGAFlipImmediate
+#define DGA_FLIP_RETRACE	XDGAFlipRetrace
+
+#define DGA_NEED_ROOT		XDGANeedRoot
 
 #define DGA_COMPLETED		0x00000000
 #define DGA_PENDING		0x00000001
-
-#define DGA_NEED_ROOT		0x00000001
 
 typedef struct {
    int num;		/* A unique identifier for the mode (num > 0) */
@@ -127,8 +131,10 @@ Bool DGAIsDgaEvent (xEvent *e);
 
 Bool DGADeliverEvent (ScreenPtr pScreen, xEvent *e);
 	    
-Bool DGAOpenFramebuffer(int Index, char **name, unsigned char **mem, 
-			int *size, int *offset, int *flags);
+#define NEW_DGAOPENFRAMEBUFFER 1
+Bool DGAOpenFramebuffer(int Index, char **name, unsigned int *mem, 
+			unsigned int *size, unsigned int *offset,
+			unsigned int *flags);
 void DGACloseFramebuffer(int Index);
 Bool DGAChangePixmapMode(int Index, int *x, int *y, int mode);
 int DGACreateColormap(int Index, ClientPtr client, int id, int mode, 

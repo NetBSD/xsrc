@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/input/mouse/pnp.c,v 1.21 2003/11/03 05:11:49 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/input/mouse/pnp.c,v 1.22 2004/06/01 01:30:22 dawes Exp $ */
 /*
  * Copyright 1998 by Kazutaka YOKOTA <yokota@zodiac.mech.utsunomiya-u.ac.jp>
  *
@@ -70,6 +70,7 @@ static symtab_t pnpprod[] = {
     { "KYE0001",  PROT_MS },		/* Genius PnP Mouse */
     { "KYE0002",  PROT_MS },		/* MouseSystem (Genius?) SmartScroll */
     { "KYE0003",  PROT_IMSERIAL },	/* Genius NetMouse */
+    { "KYE0004",  PROT_IMSERIAL },	/* Genius NetScroll+ (serial) */
     { "LGI800C",  PROT_IMSERIAL },	/* Logitech MouseMan (4 button model) */
     { "LGI8033",  PROT_IMSERIAL },	/* Logitech Cordless MouseMan Wheel */
     { "LGI8050",  PROT_IMSERIAL },	/* Logitech MouseMan+ */

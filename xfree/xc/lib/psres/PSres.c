@@ -35,7 +35,7 @@
  * 
  * Author:  Adobe Systems Incorporated
  */
-/* $XFree86: xc/lib/psres/PSres.c,v 1.5 2003/05/27 22:26:51 tsi Exp $ */
+/* $XFree86: xc/lib/psres/PSres.c,v 1.7 2004/10/23 15:29:26 dawes Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -79,7 +79,6 @@
 #define MST size_t
 
 #define MAXLEN 256
-typedef int (*ReadContentsFunction)();
 
 char *PSResFontOutline = "FontOutline",
      *PSResFontPrebuilt = "FontPrebuilt",
@@ -92,6 +91,7 @@ char *PSResFontOutline = "FontOutline",
      *PSResEncoding = "Encoding",
      *PSResProcSet = "ProcSet";
 
+/* structure types */
 typedef struct _ResourceNameStruct {
     char *name;
     char *file;
@@ -132,6 +132,13 @@ typedef struct {
     int done;
 } EnumeratorStruct;
 
+/* function types */
+typedef int (*ReadContentsFunction)(
+    FILE *f,
+    ResourceDirectory rd,
+    char *data);
+
+
 static ResourceDirectory resDir = NULL, lastResDir;
 static char *savedPathOverride = NULL, *savedDefaultPath = NULL;
 static PSResourceSavePolicy currentPolicy = PSSaveByType;
@@ -142,8 +149,8 @@ static char nullStr = '\0';
 
 /* Wrappers */
 
-static char *mymalloc(size)
-    int size;
+static char *mymalloc(
+    int size)
 {
     char *ret;
 
@@ -165,9 +172,9 @@ static char *mymalloc(size)
 PSResMallocProc PSResMalloc = mymalloc;
 #define MALLOC (*PSResMalloc)
 
-static char *myrealloc(ptr, size)
-    char *ptr;
-    int size;
+static char *myrealloc(
+    char *ptr,
+    int size)
 {
     char *ret;
 
@@ -194,8 +201,8 @@ static char *myrealloc(ptr, size)
 PSResReallocProc PSResRealloc = myrealloc;
 #define REALLOC (*PSResRealloc)
 
-static void myfree(ptr)
-    char *ptr;
+static void myfree(
+    char *ptr)
 {
 #ifdef NO_VOID_STAR
     if (ptr != NULL) free(ptr);
@@ -209,9 +216,9 @@ PSResFreeProc PSResFree = myfree;
 
 #define NewString(str) ((char *) strcpy(MALLOC((int) (strlen(str)+1)),(str)))
 
-static void FileWarningHandler(file, extraInfo)
-    char *file;
-    char *extraInfo;
+static void FileWarningHandler(
+    char *file,
+    char *extraInfo)
 {
     fprintf(stderr,
 	    "Syntax error found in PostScript resource file %s:\n  %s\n",
@@ -224,10 +231,10 @@ PSResFileWarningHandlerProc PSResFileWarningHandler = FileWarningHandler;
    skips trailing white space, skips blank lines, and chops lines longer
    than size */
 
-static char *myfgets(buf, size, f)
-    char *buf;
-    register int size;
-    FILE *f;
+static char *myfgets(
+    char *buf,
+    register int size,
+    FILE *f)
 {
     register int ch;
     register int count = 0;
@@ -237,7 +244,7 @@ static char *myfgets(buf, size, f)
 	       buf[count] = '\0';
 #define RETURN_BUF \
         if (buf[0] != '\0') return buf; \
-	else return myfgets(buf, size, f);
+	else return myfgets(buf, size, f)
 
     if (size == 0) return buf;
     size--;
@@ -282,9 +289,9 @@ static char *myfgets(buf, size, f)
 #undef STRIP_BLANKS
 }
 
-static int Dequote(buf, dontDequote)
-    char *buf;
-    char dontDequote;
+static int Dequote(
+    char *buf,
+    char dontDequote)
 {
     char *dst = buf, *src = buf;
 
@@ -307,12 +314,12 @@ static int Dequote(buf, dontDequote)
    separator character is doubled, doubleSep is set to 1 and only one
    of the separators is installed */
 
-static int DequoteAndBreak(buf, sep, bchar, dontDequote, doubleSep)
-    char *buf;
-    char **sep;
-    char bchar;
-    char dontDequote;
-    int *doubleSep;
+static int DequoteAndBreak(
+    char *buf,
+    char **sep,
+    char bchar,
+    char dontDequote,
+    int *doubleSep)
 {
     char *dst = buf, *src = buf;
 
@@ -339,9 +346,9 @@ static int DequoteAndBreak(buf, sep, bchar, dontDequote, doubleSep)
     return 0;
 }
 
-static float ParseVersion(f, excl)
-    FILE *f;
-    int *excl;
+static float ParseVersion(
+    FILE *f,
+    int *excl)
 {
     char inBuf[MAXLEN];
     float version = 0.0;
@@ -364,9 +371,9 @@ static float ParseVersion(f, excl)
     return 0.0;
 }
 
-static int ParseResourceTypes(f, dir)
-    FILE *f;
-    ResourceDirectory dir;
+static int ParseResourceTypes(
+    FILE *f,
+    ResourceDirectory dir)
 {
     char inBuf[MAXLEN];
     char typebuf[MAXLEN];
@@ -428,10 +435,10 @@ static int ParseResourceTypes(f, dir)
     return 0;
 }
 
-static int ParseFilePrefix(f, dir, dirName)
-    FILE *f;
-    ResourceDirectory dir;
-    char *dirName;
+static int ParseFilePrefix(
+    FILE *f,
+    ResourceDirectory dir,
+    char *dirName)
 {
     char inBuf[MAXLEN];
     int continued;
@@ -477,9 +484,10 @@ static int ParseFilePrefix(f, dir, dirName)
     }
 }
 
-static ResourceDirectory ParseHeader(f, dirName, fileName)
-    FILE *f;
-    char *dirName, *fileName;
+static ResourceDirectory ParseHeader(
+    FILE *f,
+    char *dirName,
+    char *fileName)
 {
     ResourceDirectory dir;
     float version;
@@ -509,8 +517,8 @@ static ResourceDirectory ParseHeader(f, dirName, fileName)
 
 /* Store away old name buffer so pointers to it do not become invalid */
 
-static void CacheOldNames(type)
-    ResourceType type;
+static void CacheOldNames(
+    ResourceType type)
 {
     type->oldNameCount++;
     type->oldNameBuffers = (char **) REALLOC((char *) type->oldNameBuffers,
@@ -521,9 +529,9 @@ static void CacheOldNames(type)
 
 /* Verify that the name matches the name in the file */
 
-static int VerifyName(f, name)
-    FILE *f;
-    char *name;
+static int VerifyName(
+    FILE *f,
+    char *name)
 {
     char inBuf[MAXLEN];
     int continued = 0;
@@ -545,9 +553,9 @@ static int VerifyName(f, name)
     return 0;
 }
 
-static int LookupResourceInList(type, name)
-    ResourceType type;
-    char *name;
+static int LookupResourceInList(
+    ResourceType type,
+    char *name)
 {
     int i;
 
@@ -557,8 +565,8 @@ static int LookupResourceInList(type, name)
     return 0;
 }
 
-static int CheckInsertPrefix(type)
-    char *type;
+static int CheckInsertPrefix(
+    char *type)
 {
    /* Insert the prefix unless one of these special values */
 
@@ -577,8 +585,8 @@ static int CheckInsertPrefix(type)
 static int linebuflen = 0;
 static char *inputline = NULL;
 
-static char *ReadFullLine(f)
-    FILE *f;
+static char *ReadFullLine(
+    FILE *f)
 {
     char readbuf[MAXLEN];
     int start = 0;
@@ -600,7 +608,7 @@ static char *ReadFullLine(f)
     return inputline;
 }
 
-static void FreeLineBuf()
+static void FreeLineBuf(void)
 {
     if (inputline != NULL) FREE(inputline);
     inputline = NULL;
@@ -609,11 +617,11 @@ static void FreeLineBuf()
 
 /* Assumes being correctly positioned in the file */
 
-static int ReadResourceSection(f, dir, type, name)
-    FILE *f;
-    ResourceDirectory dir;
-    ResourceType type;
-    char *name;		/* If NULL, enumerate */
+static int ReadResourceSection(
+    FILE *f,
+    ResourceDirectory dir,
+    ResourceType type,
+    char *name)		/* If NULL, enumerate */
 {
 #define GROW 1000
     char *linein;
@@ -720,11 +728,11 @@ static int ReadResourceSection(f, dir, type, name)
 
 /* Assumes being correctly positioned in the file */
 
-static int SkipResourceSection(f, dir, type, checkName)
-    FILE *f;
-    ResourceDirectory dir;
-    ResourceType type;
-    int checkName;
+static int SkipResourceSection(
+    FILE *f,
+    ResourceDirectory dir,
+    ResourceType type,
+    int checkName)
 {
     char inBuf[MAXLEN];
     int i;
@@ -754,12 +762,12 @@ static int SkipResourceSection(f, dir, type, checkName)
 
 /* Assumes being correctly positioned in the file */
 
-static int ParseResourceSection(f, dir, type, name, checkName)
-    FILE *f;
-    ResourceDirectory dir;
-    ResourceType type;
-    char *name;		/* If NULL, enumerate */
-    int checkName;
+static int ParseResourceSection(
+    FILE *f,
+    ResourceDirectory dir,
+    ResourceType type,
+    char *name,		/* If NULL, enumerate */
+    int checkName)
 {
     if (checkName && VerifyName(f, type->type) != 0) return 1;
 
@@ -770,8 +778,8 @@ static int ParseResourceSection(f, dir, type, name, checkName)
     return ReadResourceSection(f, dir, type, name);
 }
 
-void FreePSResourceStorage(everything)
-    int everything;
+void FreePSResourceStorage(
+    int everything)
 {
     ResourceDirectory d;
     ResourceType t;
@@ -811,11 +819,12 @@ void FreePSResourceStorage(everything)
     savedDefaultPath = NULL;
 }
 
-static ResourceDirectory ReadAndStoreFile(dir, name, len, readFunc, data)
-    char *dir, *name;
-    int len;
-    ReadContentsFunction readFunc;
-    char *data;
+static ResourceDirectory ReadAndStoreFile(
+    char *dir,
+    char *name,
+    int len,
+    ReadContentsFunction readFunc,
+    char *data)
 {
     ResourceDirectory rd = NULL;
     FILE *f;
@@ -845,10 +854,10 @@ static ResourceDirectory ReadAndStoreFile(dir, name, len, readFunc, data)
     return rd;
 }
 
-static time_t ReadFilesInDirectory(dirName, readFunc, data)
-    char *dirName;
-    ReadContentsFunction readFunc;
-    char *data;
+static time_t ReadFilesInDirectory(
+    char *dirName,
+    ReadContentsFunction readFunc,
+    char *data)
 {
     DIR *dir;
 #ifdef USE_POSIX
@@ -887,9 +896,9 @@ static time_t ReadFilesInDirectory(dirName, readFunc, data)
 
 /* Returns nonzero if current paths different from saved ones */
 
-static int SetUpSavedPaths(pathOverride, defaultPath)
-    char *pathOverride;
-    char *defaultPath;
+static int SetUpSavedPaths(
+    char *pathOverride,
+    char *defaultPath)
 {
     if (pathOverride == NULL) pathOverride = &nullStr;
     if (defaultPath == NULL) defaultPath = &nullStr;
@@ -910,9 +919,9 @@ static int SetUpSavedPaths(pathOverride, defaultPath)
 
 /* Like SetUpSavedPaths, but never affects saved state */
 
-static int CheckSavedPaths(pathOverride, defaultPath)
-    char *pathOverride;
-    char *defaultPath;
+static int CheckSavedPaths(
+    char *pathOverride,
+    char *defaultPath)
 {
     if (pathOverride == NULL) pathOverride = &nullStr;
     if (defaultPath == NULL) defaultPath = &nullStr;
@@ -923,10 +932,10 @@ static int CheckSavedPaths(pathOverride, defaultPath)
     else return 0;
 }
 
-static time_t ReadFilesInPath(string, readFunc, data)
-    char *string;
-    ReadContentsFunction readFunc;
-    char *data;
+static time_t ReadFilesInPath(
+    char *string,
+    ReadContentsFunction readFunc,
+    char *data)
 {
     char *pathChar;
     char pathBuf[MAXLEN];
@@ -970,8 +979,8 @@ static time_t ReadFilesInPath(string, readFunc, data)
     return latestTime;
 }	
 
-static time_t MaxTimeInPath(string)
-    char *string;
+static time_t MaxTimeInPath(
+    char *string)
 {
     char *pathChar;
     char pathBuf[MAXLEN];
@@ -1016,7 +1025,7 @@ static time_t MaxTimeInPath(string)
     return latestTime;
 }	
 
-static char *GetPath()
+static char *GetPath(void)
 {
     static char defaultEnvironmentPath[] = "::";
     static char *environmentPath = NULL;
@@ -1033,10 +1042,10 @@ static char *GetPath()
     return environmentPath;
 }
 
-void SetPSResourcePolicy(policy, willList, resourceTypes)
-    PSResourceSavePolicy policy;
-    int willList;
-    char **resourceTypes;
+void SetPSResourcePolicy(
+    PSResourceSavePolicy policy,
+    int willList,
+    char **resourceTypes)
 {
     currentPolicy = policy;
 
@@ -1074,8 +1083,8 @@ void SetPSResourcePolicy(policy, willList, resourceTypes)
     }
 }
 
-int InSavedList(type)
-    char *type;
+static int InSavedList(
+    char *type)
 {
     char **cp = currentResourceTypes;;
 
@@ -1088,10 +1097,10 @@ int InSavedList(type)
 }
 
 /* ARGSUSED */
-static int ReadEverything(f, rd, data)
-    FILE *f;
-    ResourceDirectory rd;
-    char *data;
+static int ReadEverything(
+    FILE *f,
+    ResourceDirectory rd,
+    char *data)
 {
     int i;
     ResourceType t;
@@ -1145,10 +1154,10 @@ static int ReadEverything(f, rd, data)
     return 0;
 }
 
-static int ReadType(f, rd, type)
-    FILE *f;
-    ResourceDirectory rd;
-    char *type;
+static int ReadType(
+    FILE *f,
+    ResourceDirectory rd,
+    char *type)
 {
     int i;
     ResourceType t;
@@ -1208,10 +1217,10 @@ static int ReadType(f, rd, type)
     return 0;
 }
 
-static int ReadName(f, rd, data)
-    FILE *f;
-    ResourceDirectory rd;
-    char *data;
+static int ReadName(
+    FILE *f,
+    ResourceDirectory rd,
+    char *data)
 {
     TypeName *tn = (TypeName *) data;
     int i;
@@ -1276,9 +1285,9 @@ static int ReadName(f, rd, data)
     return 0;
 }
 
-static void ReadHeadersAndData(resourceType, resourceName)
-    char *resourceType;
-    char *resourceName;
+static void ReadHeadersAndData(
+    char *resourceType,
+    char *resourceName)
 {
     TypeName t;
 
@@ -1300,9 +1309,9 @@ static void ReadHeadersAndData(resourceType, resourceName)
     }
 }
 
-static void UpdateData(resourceType, resourceName)
-    char *resourceType;
-    char *resourceName;
+static void UpdateData(
+    char *resourceType,
+    char *resourceName)
 {
     ResourceDirectory rd;
     ResourceType rt;
@@ -1353,12 +1362,11 @@ static void UpdateData(resourceType, resourceName)
     }
 }
 
-static int FindData(resourceType, resourceName,
-		    resourceNamesReturn, resourceFilesReturn)
-    char *resourceType;
-    char *resourceName;
-    char ***resourceNamesReturn;
-    char ***resourceFilesReturn;
+static int FindData(
+    char *resourceType,
+    char *resourceName,
+    char ***resourceNamesReturn,
+    char ***resourceFilesReturn)
 {
     ResourceDirectory rd;
     ResourceType rt;
@@ -1408,15 +1416,13 @@ static int FindData(resourceType, resourceName,
     return nameCount;
 }
 
-extern int ListPSResourceFiles(psResourcePathOverride, defaultPath,
-			       resourceType, resourceName,
-			       resourceNamesReturn, resourceFilesReturn)
-    char *psResourcePathOverride;
-    char *defaultPath;
-    char *resourceType;
-    char *resourceName;
-    char ***resourceNamesReturn;
-    char ***resourceFilesReturn;
+extern int ListPSResourceFiles(
+    char *psResourcePathOverride,
+    char *defaultPath,
+    char *resourceType,
+    char *resourceName,
+    char ***resourceNamesReturn,
+    char ***resourceFilesReturn)
 {
     if (SetUpSavedPaths(psResourcePathOverride, defaultPath)) {
 	ReadHeadersAndData(resourceType, resourceName);
@@ -1425,10 +1431,10 @@ extern int ListPSResourceFiles(psResourcePathOverride, defaultPath,
 		    resourceNamesReturn, resourceFilesReturn);
 }
 
-int ListPSResourceTypes(pathOverride, defaultPath, typesReturn)
-    char *pathOverride;
-    char *defaultPath;
-    char ***typesReturn;
+int ListPSResourceTypes(
+    char *pathOverride,
+    char *defaultPath,
+    char ***typesReturn)
 {
 #define GROW 5
 #define START 15
@@ -1479,12 +1485,12 @@ int ListPSResourceTypes(pathOverride, defaultPath, typesReturn)
 
 /* Assumes being correctly positioned in the file */
 
-static int EnumerateResourceSection(f, dir, type, s, checkName)
-    FILE *f;
-    ResourceDirectory dir;
-    ResourceType type;
-    EnumeratorStruct *s;
-    int checkName;
+static int EnumerateResourceSection(
+    FILE *f,
+    ResourceDirectory dir,
+    ResourceType type,
+    EnumeratorStruct *s,
+    int checkName)
 {
 #define GROW 1000
     char *linein;
@@ -1567,10 +1573,10 @@ static int EnumerateResourceSection(f, dir, type, s, checkName)
 #undef GROW
 }
 
-static int Enumerate(f, rd, data)
-    FILE *f;
-    ResourceDirectory rd;
-    char *data;
+static int Enumerate(
+    FILE *f,
+    ResourceDirectory rd,
+    char *data)
 {
     EnumeratorStruct *s = (EnumeratorStruct *) data;
     int i;

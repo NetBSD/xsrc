@@ -6,13 +6,13 @@ Copyright 1993 by Sun Microsystems, Inc. Mountain View, CA.
 
                         All Rights Reserved
 
-Permission to use, copy, modify, and distribute this software and its 
-documentation for any purpose and without fee is hereby granted, 
+Permission to use, copy, modify, and distribute this software and its
+documentation for any purpose and without fee is hereby granted,
 provided that the above copyright notice appear in all copies and that
-both that copyright notice and this permission notice appear in 
+both that copyright notice and this permission notice appear in
 supporting documentation, and that the names of Digital or Sun not be
 used in advertising or publicity pertaining to distribution of the
-software without specific, written prior permission.  
+software without specific, written prior permission.
 
 DIGITAL DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING
 ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO EVENT SHALL
@@ -58,7 +58,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/Xt/Object.c,v 1.6 2001/12/14 19:56:26 dawes Exp $ */
+/* $XFree86: xc/lib/Xt/Object.c,v 1.7 2004/05/05 00:07:03 dickey Exp $ */
 
 #define OBJECT
 #include "IntrinsicI.h"
@@ -70,9 +70,9 @@ static XtResource resources[] = {
 	 XtRCallback, (XtPointer)NULL}
     };
 
-static void ObjectClassPartInitialize();
-static Boolean ObjectSetValues();
-static void ObjectDestroy();
+static void ObjectClassPartInitialize(WidgetClass);
+static Boolean ObjectSetValues(Widget, Widget, Widget, ArgList, Cardinal *);
+static void ObjectDestroy(Widget);
 
 externaldef(objectclassrec) ObjectClassRec objectClassRec = {
   {
@@ -83,7 +83,7 @@ externaldef(objectclassrec) ObjectClassRec objectClassRec = {
     /* class_part_initialize*/	ObjectClassPartInitialize,
     /* class_inited       */	FALSE,
     /* initialize	  */	NULL,
-    /* initialize_hook    */	NULL,		
+    /* initialize_hook    */	NULL,
     /* pad                */    NULL,
     /* pad		  */	NULL,
     /* pad       	  */	0,
@@ -98,9 +98,9 @@ externaldef(objectclassrec) ObjectClassRec objectClassRec = {
     /* pad		  */	NULL,
     /* pad		  */	NULL,
     /* set_values	  */	ObjectSetValues,
-    /* set_values_hook    */	NULL,			
+    /* set_values_hook    */	NULL,
     /* pad                */    NULL,
-    /* get_values_hook    */	NULL,			
+    /* get_values_hook    */	NULL,
     /* pad                */    NULL,
     /* version		  */	XtVersion,
     /* callback_offsets   */    NULL,
@@ -119,8 +119,8 @@ externaldef(objectClass) WidgetClass objectClass
  */
 
 
-static void ConstructCallbackOffsets(widgetClass)
-    WidgetClass widgetClass;
+static void ConstructCallbackOffsets(
+    WidgetClass widgetClass)
 {
     static XrmQuark QCallback = NULLQUARK;
     register int i;
@@ -145,7 +145,7 @@ static void ConstructCallbackOffsets(widgetClass)
 	    ((ObjectClass) objectClass->object_class.superclass)->
 		object_class.callback_private;
 	tableSize = (int)(long) superTable[0];
-    } else { 
+    } else {
 	superTable = (CallbackTable) NULL;
 	tableSize = 0;
     }
@@ -155,7 +155,7 @@ static void ConstructCallbackOffsets(widgetClass)
     for (i = objectClass->object_class.num_resources; --i >= 0; resourceList++)
 	if (resourceList->xrm_type == QCallback)
 	    tableSize++;
-	
+
     /*
      * Allocate and load the table.  Make sure that the new callback
      * offsets occur in the table ahead of the superclass callback
@@ -163,7 +163,7 @@ static void ConstructCallbackOffsets(widgetClass)
      */
     newTable = (CallbackTable)
 	__XtMalloc(sizeof(XrmResource *) * (tableSize + 1));
-	
+
     newTable[0] = (XrmResource *)(long) tableSize;
 
     if (superTable)
@@ -179,12 +179,12 @@ static void ConstructCallbackOffsets(widgetClass)
 	for (tableSize = (int)(long) *superTable++;
 	    --tableSize >= 0; superTable++)
 	    newTable[i++] = *superTable;
-    
+
     objectClass->object_class.callback_private = (XtPointer) newTable;
 }
 
-static void InheritObjectExtensionMethods(widget_class)
-    WidgetClass widget_class;
+static void InheritObjectExtensionMethods(
+    WidgetClass widget_class)
 {
     ObjectClass oc = (ObjectClass) widget_class;
     ObjectClassExtension ext, super_ext = NULL;
@@ -192,14 +192,14 @@ static void InheritObjectExtensionMethods(widget_class)
     ext = (ObjectClassExtension)
 	XtGetClassExtension(widget_class,
 		    XtOffsetOf(ObjectClassRec, object_class.extension),
-			    NULLQUARK, XtObjectExtensionVersion, 
+			    NULLQUARK, XtObjectExtensionVersion,
 			    sizeof(ObjectClassExtensionRec));
 
     if (oc->object_class.superclass)
 	super_ext = (ObjectClassExtension)
 	    XtGetClassExtension(oc->object_class.superclass,
 			XtOffsetOf(ObjectClassRec, object_class.extension),
-				NULLQUARK, XtObjectExtensionVersion, 
+				NULLQUARK, XtObjectExtensionVersion,
 				sizeof(ObjectClassExtensionRec));
     LOCK_PROCESS;
     if (ext) {
@@ -209,7 +209,7 @@ static void InheritObjectExtensionMethods(widget_class)
 	    ext->deallocate = (super_ext ? super_ext->deallocate : NULL);
     } else if (super_ext) {
 	/* Be careful to inherit only what is appropriate */
-	ext = (ObjectClassExtension) 
+	ext = (ObjectClassExtension)
 	    __XtCalloc(1, sizeof(ObjectClassExtensionRec));
 	ext->next_extension = oc->object_class.extension;
 	ext->record_type = NULLQUARK;
@@ -222,8 +222,8 @@ static void InheritObjectExtensionMethods(widget_class)
     UNLOCK_PROCESS;
 }
 
-static void ObjectClassPartInitialize(wc)
-    register WidgetClass wc;
+static void ObjectClassPartInitialize(
+    register WidgetClass wc)
 {
    ObjectClass oc = (ObjectClass)wc;
 
@@ -241,10 +241,12 @@ static void ObjectClassPartInitialize(wc)
 
 
 /*ARGSUSED*/
-static Boolean ObjectSetValues(old, request, widget, args, num_args)
-    Widget	old, request, widget;
-    ArgList args;
-    Cardinal *num_args;
+static Boolean ObjectSetValues(
+    Widget	old,
+    Widget	request,
+    Widget	widget,
+    ArgList	args,
+    Cardinal *	num_args)
 {
     register CallbackTable offsets;
     register int i;
@@ -271,8 +273,8 @@ static Boolean ObjectSetValues(old, request, widget, args, num_args)
 }
 
 
-static void ObjectDestroy (widget)
-    register Widget    widget;
+static void ObjectDestroy (
+    register Widget    widget)
 {
     register CallbackTable offsets;
     register int i;
@@ -290,5 +292,3 @@ static void ObjectDestroy (widget)
     }
     UNLOCK_PROCESS;
 } /* ObjectDestroy */
-
-

@@ -48,7 +48,7 @@ from The Open Group.
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  */
-/* $XFree86: xc/programs/lbxproxy/di/cmaputil.c,v 1.12 2003/10/24 20:38:12 tsi Exp $ */
+/* $XFree86: xc/programs/lbxproxy/di/cmaputil.c,v 1.13 2004/04/03 22:38:53 tsi Exp $ */
 
 #include	<stdio.h>
 #include	"misc.h"
@@ -60,6 +60,7 @@ from The Open Group.
 #include	"wire.h"
 #define  XK_LATIN1
 #include 	"keysymdef.h"
+#include        "utils.h"
 
 typedef struct {
     Colormap    mid;
@@ -136,9 +137,10 @@ GetVisual(vid)
  */
 
 static void
-CopyISOLatin1Lowered(dest, source, length)
-    register unsigned char *dest, *source;
-    int length;
+CopyISOLatin1Lowered(
+    register unsigned char *dest,
+    register unsigned char *source,
+    int length)
 {
     register int i;
 
@@ -223,8 +225,6 @@ lookup(char *name, int len, Bool create)
   return entry;
 }
 
-extern char *rgbPath;
-
 static Bool have_rgb_db = FALSE;
 
 Bool
@@ -291,10 +291,12 @@ InitColors()
 
 
 static Bool
-OsLookupColor(name, len, pred, pgreen, pblue)
-    char	   *name;
-    unsigned	   len;
-    unsigned short *pred, *pgreen, *pblue;
+OsLookupColor(
+    char	   *name,
+    unsigned	   len,
+    unsigned short *pred,
+    unsigned short *pgreen,
+    unsigned short *pblue)
 
 {
   dbEntryPtr entry;
@@ -316,9 +318,9 @@ OsLookupColor(name, len, pred, pgreen, pblue)
 
 
 static int
-Hash(name, len)
-    char       *name;
-    int         len;
+Hash(
+    char       *name,
+    int         len)
 {
     int         hash = 0;
 
@@ -438,14 +440,14 @@ DestroyColormap(client, value, id)
 /* ------------------------------------------------------------------------- */
 
 static int
-find_matching_pixel(pent, num, channels, red, green, blue, pe)
-    Entry      *pent;
-    int         num;
-    int		channels;
+find_matching_pixel(
+    Entry      *pent,
+    int         num,
+    int		channels,
     CARD32      red,
-                green,
-                blue;
-    Entry     **pe;
+    CARD32      green,
+    CARD32      blue,
+    Entry     **pe)
 {
     int         i;
 
@@ -563,10 +565,10 @@ FindPixel(client, pmap, red, green, blue, pent)
 }
 
 static int
-AddPixel(pclient, pmap, pixel)
-    ClientPtr   pclient;
-    ColormapPtr pmap;
-    Pixel pixel;
+AddPixel(
+    ClientPtr   pclient,
+    ColormapPtr pmap,
+    Pixel pixel)
 {
     colorResource *pcr;
     int         npix;
@@ -762,9 +764,9 @@ StorePixel (client, pmap, red, green, blue, pixel, from_server)
 
 /* ARGSUSED */
 static void
-FreeCell(pent, pixel)
-    Entry      *pent;
-    Pixel       pixel;
+FreeCell(
+    Entry      *pent,
+    Pixel       pixel)
 {
     pent = &pent[pixel];
     if (pent->status == PIXEL_PRIVATE) {
@@ -779,9 +781,9 @@ FreeCell(pent, pixel)
 }
 
 static void
-FreeServerCell(pent, pixel)
-    Entry      *pent;
-    Pixel       pixel;
+FreeServerCell(
+    Entry      *pent,
+    Pixel       pixel)
 {
     pent = &pent[pixel];
     if (pent->status == PIXEL_PRIVATE && pent->server_ref)
@@ -870,13 +872,13 @@ FreeClientPixels(client, value, id)
 		(bits) += ((bits) & ~(mask))
 
 static void
-FreeCells(client, pmap, num, pixels, mask, channels)
-    ClientPtr   client;
-    ColormapPtr pmap;
-    int         num;
-    Pixel       *pixels;
-    Pixel	mask;
-    int		channels;
+FreeCells(
+    ClientPtr   client,
+    ColormapPtr pmap,
+    int         num,
+    Pixel       *pixels,
+    Pixel	mask,
+    int		channels)
 {
     Pixel       pix, base, bits, cmask;
     int         i, zapped, npix, npixnew, offset;

@@ -26,6 +26,15 @@ fs1	{
 		primary		ISO8859-6:GR
 	}
 }
+XCOMM 	fs2 class 
+fs2	{
+	charset	{
+		name		ISO8859-6:GL
+	}
+	font	{
+		primary		ISO8859-6:GL
+	}
+}
 END XLC_FONTSET
 
 XCOMM 

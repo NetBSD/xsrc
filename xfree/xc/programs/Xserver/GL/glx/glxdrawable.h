@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/GL/glx/glxdrawable.h,v 1.4 2003/09/28 20:15:43 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/GL/glx/glxdrawable.h,v 1.5 2004/12/10 16:06:59 alanh Exp $ */
 #ifndef _GLX_drawable_h_
 #define _GLX_drawable_h_
 
@@ -40,7 +40,7 @@
 typedef struct {
 
     DrawablePtr pDraw;
-    __GLXvisualConfig *pGlxVisual;
+    __GLcontextModes *modes;
     __GLXscreenInfo *pGlxScreen;
     ScreenPtr pScreen;
     Bool idExists;
@@ -69,11 +69,12 @@ struct __GLXdrawablePrivateRec {
     /*
     ** Configuration of the visual to which this drawable was created.
     */
-    __GLXvisualConfig *pGlxVisual;
+    __GLcontextModes *modes;
 
     /*
     ** cached drawable size and origin
     */
+
     GLint xorigin, yorigin;
     GLint width, height;
 

@@ -3,7 +3,7 @@ XCOMM $Xorg: Imakefile,v 1.3 2000/08/18 04:05:44 coskrey Exp $
 
 
 
-XCOMM $XFree86: xc/include/extensions/Imakefile,v 3.56 2003/04/21 18:56:47 sven Exp $
+XCOMM $XFree86: xc/include/extensions/Imakefile,v 3.59 2004/07/07 03:46:22 martin Exp $
 
 #if BuildScreenSaverExt || BuildScreenSaverLibrary
 SCREENSAVERHEADERS = saver.h saverproto.h scrnsaver.h
@@ -36,7 +36,7 @@ XF86RUSHHEADERS = xf86rush.h xf86rushstr.h
 FONTCACHEHEADERS = fontcache.h fontcacheP.h fontcachstr.h
 #endif
 #if BuildXinerama || BuildXineramaLibrary
-XINERAMAHEADERS = panoramiXext.h panoramiXproto.h Xinerama.h
+XINERAMAHEADERS = panoramiXext.h panoramiXproto.h panoramiXwrap.h Xinerama.h
 #endif
 #if BuildRender || BuildXftLibrary
 RENDERHEADERS = render.h renderproto.h
@@ -51,12 +51,15 @@ XTRAPHEADERS = xtrapbits.h xtrapddmi.h xtrapdi.h xtrapemacros.h xtraplib.h \
 #if BuildXResExt || BuildXResLibrary
 XRESHEADERS = XRes.h XResproto.h
 #endif
+#if BuildDmx || BuildDmxLibrary
+XDMXHEADERS = dmxext.h dmxproto.h
+#endif
 
 EXTRAHEADERS = $(SCREENSAVERHEADERS) $(XF86MISCHEADERS) $(XF86BIGFONTHEADERS) \
 	       $(XF86VIDMODEHEADERS) $(XF86DGAHEADERS) $(XINERAMAHEADERS) \
 	       $(LBXHEADERS) $(XVHEADERS) $(XVMCHEADERS) $(XF86RUSHHEADERS) \
 	       $(FONTCACHEHEADERS) $(RENDERHEADERS) $(RANDRHEADERS) \
-	       $(XTRAPHEADERS) $(XRESHEADERS)
+	       $(XTRAPHEADERS) $(XRESHEADERS) $(XDMXHEADERS)
 
 
 

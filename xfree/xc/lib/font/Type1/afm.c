@@ -15,7 +15,7 @@
  * The Original Software is CID font code that was developed by Silicon
  * Graphics, Inc.
  */
-/* $XFree86: xc/lib/font/Type1/afm.c,v 1.3 2001/08/27 19:49:52 dawes Exp $ */
+/* $XFree86: xc/lib/font/Type1/afm.c,v 1.4 2004/10/23 15:29:26 dawes Exp $ */
 
 #ifdef BUILDCID
 #ifndef FONTMODULE
@@ -181,7 +181,9 @@ int CIDAFM(FILE *fd, FontInfo **pfi) {
         }
     } 
     
+#if 0
     xfree(afmbuf);
     return(1);
+#endif
 }
 #endif

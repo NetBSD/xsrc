@@ -27,7 +27,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/font/util/miscutil.c,v 1.8 2001/12/14 19:56:57 dawes Exp $ */
+/* $XFree86: xc/lib/font/util/miscutil.c,v 1.9 2005/01/11 23:01:12 tsi Exp $ */
 
 #include <X11/Xosdefs.h>
 #include <stdlib.h>
@@ -44,16 +44,31 @@ long serverGeneration = 1;
 void *
 Xalloc (unsigned long m)
 {
+#if defined(WORD64) || defined(LONG64)
+    if (m & ~((unsigned long)(unsigned int)(-1))) return NULL;
+#endif
     return malloc (m);
 }
 
 void *
 Xrealloc (void *n, unsigned long m)
 {
+#if defined(WORD64) || defined(LONG64)
+    if (m & ~((unsigned long)(unsigned int)(-1))) return NULL;
+#endif
     if (!n)
 	return malloc (m);
     else
 	return realloc (n, m);
+}
+
+void *
+Xcalloc (unsigned long m)
+{
+#if defined(WORD64) || defined(LONG64)
+    if (m & ~((unsigned long)(unsigned int)(-1))) return NULL;
+#endif
+    return calloc (m, 1);
 }
 
 void
@@ -63,11 +78,30 @@ Xfree (void *n)
 	free (n);
 }
 
+#if !defined(WORD64) && !defined(LONG64)
+
 void *
-Xcalloc (unsigned long n)
+Xllalloc(unsigned long long m)
 {
-    return calloc (n, 1);
+    if (m & ~((unsigned long long)(unsigned long)(-1L))) return NULL;
+    return Xalloc(m);
 }
+
+void *
+Xllrealloc(void *n, unsigned long long m)
+{
+    if (m & ~((unsigned long long)(unsigned long)(-1L))) return NULL;
+    return Xrealloc(n, m);
+}
+
+void *
+Xllcalloc(unsigned long long m)
+{
+    if (m & ~((unsigned long long)(unsigned long)(-1L))) return NULL;
+    return Xcalloc(m);
+}
+
+#endif
 
 void
 CopyISOLatin1Lowered (char *dst, char *src, int len)

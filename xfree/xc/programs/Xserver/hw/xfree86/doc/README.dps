@@ -1,6 +1,6 @@
-                               XFree86 and DPS
+                              XFree86® and DPS
 
-                    Juliusz Chroboczek, <jch@xfree86.org>
+                  Juliusz Chroboczek, <jch@pps.jussieu.fr>
 
                               27 February 2001
 
@@ -12,7 +12,7 @@ send executable code from client to server.  Thus, a DPS client does not
 request that a line should be rendered; instead, it uploads code to the
 server which, when executed, causes a line to be drawn.
 
-This document does not aim at teaching programming with DPS; it is only a
+This document does not aim at teaching programming with DPS; as it is only a
 summary description of the DPS support code included with XFree86.  More
 information about DPS, including a DPS bibliography, is available from the
 DPS extension site <URL:http://dps.sourceforge.net>.
@@ -21,9 +21,9 @@ DPS extension site <URL:http://dps.sourceforge.net>.
      Adobe Systems Incorporated which may be registered in certain
      jurisdictions.
 
-As all X11 extensions, DPS consists of client-side and server-side compo-
-nents.  The DPS client side consists of a number of libraries and a number of
-tools for programming and configuration.  The DPS server side may consist
+As with all X11 extensions, DPS consists of client-side and server-side com-
+ponents.  The DPS client side consists of a number of libraries and a number
+of tools for programming and configuration.  The DPS server side may consist
 either of an X server extension, or of a client-side process known as the
 ``DPS agent.''  In this latter case, the term ``server-side'' is somewhat
 misleading.
@@ -113,8 +113,8 @@ more information, please see the GNUstep site <URL:http://www.gnustep.org>.
 
 3.  The DPS server side
 
-In order to use DPS clients, you need to install a DPS server side, which can
-be either a server extension (a ``DPS/X extension''), or a separate process
+To use DPS clients, you need to install a DPS server side, which can be
+either a server extension (a ``DPS/X extension''), or a separate process
 (referred to, variously, either as a ``DPS/NX agent'' or, rather confusingly,
 as ``Client-Side DPS'' (CSDPS).
 
@@ -164,7 +164,7 @@ Developers. 15 April 1993.
 
 [PSWRAP] Display PostScript System. pswrap Reference Manual. 15 April 1993.
 
-     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/dps.sgml,v 1.2 dawes Exp $
+     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/dps.sgml,v 1.5 dawes Exp $
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.dps,v 1.6 2003/10/19 19:57:14 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.dps,v 1.9 2005/03/04 03:25:45 dawes Exp $

@@ -1,4 +1,4 @@
-XCOMM platform:  $XFree86: xc/config/cf/DGUX.cf,v 1.6 2001/01/12 19:28:20 dawes Exp $
+XCOMM platform:  $XFree86: xc/config/cf/DGUX.cf,v 1.8 2005/01/16 00:09:45 dawes Exp $
 /* Copyright Takis Psarogiannakopoulos <takis@pmms.cam.ac.uk>
  * This is the DG/ux configuration file of X11R6.3 
  */
@@ -102,7 +102,7 @@ XCOMM platform:  $XFree86: xc/config/cf/DGUX.cf,v 1.6 2001/01/12 19:28:20 dawes 
 #endif
 
 #ifndef DefaultCCOptions
-#define DefaultCCOptions     /* -ansi -pedantic */
+#define DefaultCCOptions     /* -ansi */
 #endif
 #define OptimizedCDebugFlags -O2  /* Add -g -mstandard for full debuging info */
 #define OptimizedCplusplusDebugFlags
@@ -145,7 +145,7 @@ XCOMM platform:  $XFree86: xc/config/cf/DGUX.cf,v 1.6 2001/01/12 19:28:20 dawes 
 
 
 #ifndef ServerOSDefines
-#define ServerOSDefines -DDDXTIME XFree86ServerOSDefines
+#define ServerOSDefines XFree86ServerOSDefines
 #endif
 #ifndef BuildDynamicLoading
 #define BuildDynamicLoading NO

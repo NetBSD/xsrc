@@ -27,7 +27,7 @@
  * Author: Paulo César Pereira de Andrade
  */
 
-/* $XFree86: xc/programs/xedit/lisp/bytecode.c,v 1.18 2003/05/28 14:13:11 tsi Exp $ */
+/* $XFree86: xc/programs/xedit/lisp/bytecode.c,v 1.19 2004/03/14 00:05:05 tsi Exp $ */
 
 
 /*
@@ -2864,7 +2864,7 @@ ExecuteBytecode(register unsigned char *stream)
 
     long fixnum = 0;
 
-#if defined(__GNUC__) && !defined(ANSI_SOURCE)
+#if defined(__GNUC__) && !defined(__STRICT_ANSI__)
 #define ALLOW_GOTO_ADDRESS
 #endif
 

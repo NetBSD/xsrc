@@ -24,7 +24,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/X11/Xlib.h,v 3.26 2003/12/18 16:38:35 dawes Exp $ */
+/* $XFree86: xc/lib/X11/Xlib.h,v 3.27 2004/04/03 22:26:20 dawes Exp $ */
 
 
 /*
@@ -52,7 +52,7 @@ in this Software without prior written authorization from The Open Group.
 #endif
 #endif /* USG */
 
-#if defined(SCO325) || defined(__USLC__)
+#if defined(__SCO__) || defined(__USLC__)
 #include <stdint.h>
 #endif
 
@@ -64,10 +64,8 @@ in this Software without prior written authorization from The Open Group.
 
 #ifndef X_WCHAR
 #ifdef X_NOT_STDC_ENV
-#ifndef SCO324
 #ifndef ISC
 #define X_WCHAR
-#endif
 #endif
 #endif
 #endif

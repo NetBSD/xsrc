@@ -1,7 +1,7 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86.h,v 3.174 2004/02/13 23:58:35 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86.h,v 3.185 2005/02/26 18:31:48 dawes Exp $ */
 
 /*
- * Copyright (c) 1997-2003 by The XFree86 Project, Inc.
+ * Copyright (c) 1997-2005 by The XFree86 Project, Inc.
  * All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining
@@ -39,6 +39,50 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
  * IN NO EVENT SHALL THE XFREE86 PROJECT, INC OR ITS CONTRIBUTORS BE
  * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+ * OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
+ * OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+ * BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+ * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+ * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+/*
+ * Copyright © 2003, 2004, 2005 David H. Dawes.
+ * Copyright © 2003, 2004, 2005 X-Oz Technologies.
+ * All rights reserved.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ * 
+ *  1. Redistributions of source code must retain the above copyright
+ *     notice, this list of conditions, and the following disclaimer.
+ *
+ *  2. Redistributions in binary form must reproduce the above
+ *     copyright notice, this list of conditions and the following
+ *     disclaimer in the documentation and/or other materials provided
+ *     with the distribution.
+ * 
+ *  3. The end-user documentation included with the redistribution,
+ *     if any, must include the following acknowledgment: "This product
+ *     includes software developed by X-Oz Technologies
+ *     (http://www.x-oz.com/)."  Alternately, this acknowledgment may
+ *     appear in the software itself, if and wherever such third-party
+ *     acknowledgments normally appear.
+ *
+ *  4. Except as contained in this notice, the name of X-Oz
+ *     Technologies shall not be used in advertising or otherwise to
+ *     promote the sale, use or other dealings in this Software without
+ *     prior written authorization from X-Oz Technologies.
+ *
+ * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESSED OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL X-OZ TECHNOLOGIES OR ITS CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
  * OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
  * OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
  * BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
@@ -97,7 +141,11 @@ extern Bool xf86inSuspend;
 	   } \
 	while (0)
 
+/* Some macros for messages. */
 #define BOOLTOSTRING(b) ((b) ? "TRUE" : "FALSE")
+#define PLURAL(n) ((n) == 1 ? "" : "s")
+#define EMPTYIFNULL(s) ((s) ? (s) : "")
+
 
 #define PIX24TOBPP(p) (((p) == Pix24Use24) ? 24 : \
 			(((p) == Pix24Use32) ? 32 : 0))
@@ -145,6 +193,7 @@ resPtr xf86DupResList(const resPtr rlist);
 void xf86FreeResList(resPtr rlist);
 void xf86ClaimFixedResources(resList list, int entityIndex);
 Bool xf86DriverHasEntities(DriverPtr drvp);
+void xf86ClearDriverEntities(DriverPtr drvp);
 void xf86AddEntityToScreen(ScrnInfoPtr pScrn, int entityIndex);
 void xf86SetEntityInstanceForScreen(ScrnInfoPtr pScrn, int entityIndex,
 				    int instance);
@@ -204,6 +253,135 @@ void xf86ClearPrimInitDone(int entityIndex);
 int xf86AllocateEntityPrivateIndex(void);
 DevUnion *xf86GetEntityPrivate(int entityIndex, int privIndex);
 
+/* xf86Config.c */
+void xf86ConfFreeScreenData(confScreenPtr pConfScreen);
+void xf86ConfFreeGraphicsDeviceData(GDevPtr pGDev);
+void xf86ConfFreeInputDeviceData(IDevPtr pIDev);
+void xf86ConfFreeMonitorData(MonPtr pMonitor);
+void xf86ConfFreeModeData(DisplayModePtr pMode);
+void xf86ConfFreeModeSetData(confModeSetPtr pModeSet);
+void xf86ConfFreeModeList(DisplayModePtr pModes);
+void xf86ConfFreeDisplayData(DispPtr pDisplay);
+void xf86ConfFreeXvAdaptorData(confXvAdaptorPtr pAdaptor);
+void xf86ConfFreeXvPortData(confXvPortPtr pPort);
+void xf86ConfFreeScreenLayoutData(screenLayoutPtr pScreenLayout);
+void xf86ConfFreeServerLayoutData(serverLayoutPtr pServerLayout);
+void xf86ConfFreeFilesData(confFilesPtr pFiles);
+void xf86ConfFreeServerFlagsData(confFlagsPtr pFlags);
+void xf86ConfFreeLoadModuleData(confLoadModulePtr pLoad);
+void xf86ConfFreeModulesData(confModulesPtr pModules);
+void xf86ConfFreeDRIData(confDRIPtr pDri);
+void xf86ConfFreeDRIBufferData(confDRIBufferPtr pDriBuf);
+void xf86ConfFreeVendorData(confVendorPtr pVendor);
+void xf86ConfFreeVendorSubData(confVendorSubPtr pVendorSub);
+confScreenPtr xf86ConfAllocScreen(void);
+GDevPtr xf86ConfAllocGraphicsDevice(void);
+IDevPtr xf86ConfAllocInputDevice(void);
+MonPtr xf86ConfAllocMonitor(void);
+DisplayModePtr xf86ConfAllocMode(void);
+confModeSetPtr xf86ConfAllocModeSet(void);
+DisplayModePtr xf86ConfAllocModeList(int n);
+DispPtr xf86ConfAllocDisplay(void);
+confXvAdaptorPtr xf86ConfAllocXvAdaptor(void);
+confXvPortPtr xf86ConfAllocXvPort(void);
+screenLayoutPtr xf86ConfAllocScreenLayout(void);
+serverLayoutPtr xf86ConfAllocServerLayout(void);
+confFilesPtr xf86ConfAllocFiles(void);
+confFlagsPtr xf86ConfAllocServerFlags(void);
+confLoadModulePtr xf86ConfAllocLoadModule(void);
+confModulesPtr xf86ConfAllocModules(void);
+confDRIPtr xf86ConfAllocDRI(void);
+confDRIBufferPtr xf86ConfAllocDRIBuffer(void);
+confVendorPtr xf86ConfAllocVendor(void);
+confVendorSubPtr xf86ConfAllocVendorSub(void);
+confScreenPtr xf86ConfDupScreen(const confScreenRec *pConfScreen, int depth);
+GDevPtr xf86ConfDupGraphicsDevice(const GDevRec *pGDev);
+IDevPtr xf86ConfDupInputDevice(const IDevRec *pIDev, int depth);
+MonPtr xf86ConfDupMonitor(const MonRec *pMonitor, int depth);
+DisplayModePtr xf86ConfDupMode(const DisplayModeRec *pMode, int depth);
+confModeSetPtr xf86ConfDupModeSet(const confModeSetRec *pModeSet, int depth);
+DisplayModePtr xf86ConfDupModeList(const DisplayModeRec *pModes, int depth);
+DispPtr xf86ConfDupDisplay(const DispRec *pDisplay);
+confXvAdaptorPtr xf86ConfDupXvAdaptor(const confXvAdaptorRec *pAdaptor);
+confXvPortPtr xf86ConfDupXvPort(const confXvPortRec *pPort);
+screenLayoutPtr xf86ConfDupScreenLayout(const screenLayoutRec *pScreenLayout,
+					int depth);
+serverLayoutPtr xf86ConfDupServerLayout(const serverLayoutRec *pServerLayout,
+					int depth);
+confFilesPtr xf86ConfDupFiles(const confFilesRec *pFiles);
+confFlagsPtr xf86ConfDupServerFlags(const confFlagsRec *pFlags);
+confLoadModulePtr xf86ConfDupLoadModule(const confLoadModuleRec *pLoad);
+confModulesPtr xf86ConfDupModules(const confModulesRec *pModules);
+confDRIPtr xf86ConfDupDRI(const confDRIRec *pDri);
+confDRIBufferPtr xf86ConfDupDRIBuffer(const confDRIBufferRec *pDriBuffer);
+confVendorPtr xf86ConfDupVendor(const confVendorRec *pVendor);
+confVendorSubPtr xf86ConfDupVendorSub(const confVendorSubRec *pVendorSub);
+serverLayoutPtr xf86ConfResolveServerLayout(ConfigHandle handle,
+					    serverLayoutPtr pServerLayout,
+					    int depth);
+int xf86ConfCheckResolvedServerLayout(const serverLayoutRec *pServerLayout,
+				      int depth, Bool strict);
+serverLayoutPtr xf86ConfGetServerLayoutByName(ConfigHandle handle,
+					      const char *name, int depth);
+serverLayoutPtr xf86ConfGetNextServerLayout(ConfigHandle handle,
+					    ConfigDataHandle prevLayoutHandle,
+					    int depth);
+confScreenPtr xf86ConfResolveScreen(ConfigHandle handle,
+				    confScreenPtr pConfScreen, int depth);
+int xf86ConfCheckResolvedScreen(const confScreenRec *pConfScreen, int depth,
+				Bool strict);
+confScreenPtr xf86ConfGetScreenByName(ConfigHandle handle, const char *name,
+				      int depth);
+confScreenPtr xf86ConfGetNextScreen(ConfigHandle handle,
+				    ConfigDataHandle prevScreenHandle,
+				    int depth);
+MonPtr xf86ConfResolveMonitor(ConfigHandle handle, MonPtr pMonitor);
+int xf86ConfCheckResolvedMonitor(const MonRec *pMonitor, int depth,
+				 Bool strict);
+MonPtr xf86ConfGetMonitorByName(ConfigHandle handle, const char *name,
+				int depth);
+MonPtr xf86ConfGetNextMonitor(ConfigHandle handle,
+			      ConfigDataHandle prevMonitorHandle, int depth);
+confModeSetPtr xf86ConfGetModeSetByName(ConfigHandle handle, const char *name);
+confModeSetPtr xf86ConfGetNextModeSet(ConfigHandle handle,
+				      ConfigDataHandle prevModeSetHandle);
+GDevPtr xf86ConfGetGraphicsDeviceByName(ConfigHandle handle, const char *name);
+GDevPtr xf86ConfGetNextGraphicsDevice(ConfigHandle handle,
+				      ConfigDataHandle prevDeviceHandle);
+IDevPtr xf86ConfGetInputDeviceByName(ConfigHandle handle, const char *name);
+IDevPtr xf86ConfGetNextInputDevice(ConfigHandle handle,
+				   ConfigDataHandle prevIDevHandle, int depth);
+IDevPtr xf86ConfGetInputDeviceByDriver(ConfigHandle handle, const char *driver);
+IDevPtr xf86ConfGetInputDeviceByOption(ConfigHandle handle, const char *option);
+confXvAdaptorPtr xf86ConfGetXvAdaptorByName(ConfigHandle handle,
+					    const char *name);
+confXvAdaptorPtr xf86ConfGetNextXvAdaptor(ConfigHandle handle,
+					  ConfigDataHandle prevAdaptorHandle);
+confFilesPtr xf86ConfGetFilesByName(ConfigHandle handle, const char *name);
+confFilesPtr xf86ConfGetNextFiles(ConfigHandle handle,
+				  ConfigDataHandle prevFilesHandle);
+confFilesPtr xf86ConfCombineFilesData(const confFilesRec *src1, MessageType m1,
+				      const confFilesRec *src2, MessageType m2);
+confModulesPtr xf86ConfGetModulesByName(ConfigHandle handle, const char *name);
+confModulesPtr xf86ConfGetNextModules(ConfigHandle handle,
+				      ConfigDataHandle prevModulesHandle);
+confModulesPtr xf86ConfCombineModulesData(const confModulesRec *src1,
+					  const confModulesRec *src2);
+confFlagsPtr xf86ConfGetServerFlagsByName(ConfigHandle handle,
+					  const char *name);
+confFlagsPtr xf86ConfGetNextServerFlags(ConfigHandle handle,
+					ConfigDataHandle prevFilesHandle);
+confFlagsPtr xf86ConfCombineServerFlagsData(const confFlagsRec *src1,
+					    const confFlagsRec *src2);
+confDRIPtr xf86ConfGetDRIByName(ConfigHandle handle, const char *name);
+confDRIPtr xf86ConfGetNextDRI(ConfigHandle handle,
+			      ConfigDataHandle prevDRIHandle);
+confVendorPtr xf86ConfGetVendorByName(ConfigHandle handle, const char *name);
+confVendorPtr xf86ConfGetVendorByVendorName(ConfigHandle handle,
+					    const char *vname);
+confVendorPtr xf86ConfGetNextVendor(ConfigHandle handle,
+				    ConfigDataHandle prevVendorHandle);
+
 /* xf86Configure.c */
 GDevPtr xf86AddBusDeviceToConfigure(const char *driver, BusType bus,
 				    void *busData, int chipset);
@@ -245,13 +423,18 @@ void xf86ProcessActionEvent(ActionEvent action, void *arg);
 
 /* xf86Helper.c */
 
-#ifdef printf
-#define printf_defined
-#undef printf
+/* XXX Need to check which GCC versions have the format(printf) attribute. */
+#if (!defined(printf) || defined(printf_is_xf86printf)) && \
+    defined(__GNUC__) && \
+    ((__GNUC__ > 2) || ((__GNUC__ == 2) && (__GNUC_MINOR__ > 4)))
+# define _printf_attribute(a,b) __attribute((format(printf,a,b)))
+# undef printf
+#else
+# define _printf_attribute(a,b) /**/
 #endif
 
 void xf86AddDriver(DriverPtr driver, pointer module, int flags);
-void xf86DeleteDriver(int drvIndex);
+void xf86DeleteDriver(int drvIndex, Bool deferUnload);
 ScrnInfoPtr xf86AllocateScreen(DriverPtr drv, int flags);
 void xf86DeleteScreen(int scrnIndex, int flags);
 int xf86AllocateScrnInfoPrivateIndex(void);
@@ -377,15 +560,19 @@ int  xf86RegisterRootWindowProperty(int ScrnIndex, Atom	property, Atom type,
 				    int format, unsigned long len,
 				    pointer value);
 Bool xf86IsUnblank(int mode);
+MonPtr xf86GetMonitorByNumber(const ScrnInfoRec *pScrn, int monNum);
+DispPtr xf86GetDisplayByMonitorNum(const ScrnInfoRec *pScrn, int monNum);
+Bool xf86GetNextMonitor(const ScrnInfoRec *pScrn, MonPtr *pMonitor,
+			DispPtr *pDisplay);
 
 #ifdef XFree86LOADER
 void xf86AddModuleInfo(ModuleInfoPtr info, pointer module);
 void xf86DeleteModuleInfo(int idx);
 #endif
 
-#ifdef printf_defined
+#undef _printf_attribute
+#if defined(printf_is_xf86printf) && !defined(printf)
 #define printf xf86printf
-#undef printf_defined
 #endif
 
 /* xf86Debug.c */
@@ -419,6 +606,7 @@ int xf86GetBppFromDepth(ScrnInfoPtr pScrn, int depth);
 int xf86GetNearestClock(ScrnInfoPtr scrp, int freq, Bool allowDiv2,
 			int DivFactor, int MulFactor, int *divider);
 const char *xf86ModeStatusToString(ModeStatus status);
+const char *xf86ModeTypeToString(int mType);
 ModeStatus xf86LookupMode(ScrnInfoPtr scrp, DisplayModePtr modep,
 			  ClockRangePtr clockRanges, LookupModeFlags strategy);
 ModeStatus xf86CheckModeForMonitor(DisplayModePtr mode, MonPtr monitor);
@@ -429,6 +617,9 @@ ModeStatus xf86InitialCheckModeForDriver(ScrnInfoPtr scrp, DisplayModePtr mode,
 					 int virtualY);
 ModeStatus xf86CheckModeForDriver(ScrnInfoPtr scrp, DisplayModePtr mode,
 				  int flags);
+Bool xf86SetMonitorParameters(ScrnInfoPtr pScrn, MonPtr monitor,
+			      int hSize, int vSize, int refresh);
+Bool xf86AddEDIDModes(ScrnInfoPtr pScrn, MonPtr monitor, int flags);
 int xf86ValidateModes(ScrnInfoPtr scrp, DisplayModePtr availModes,
 		      char **modeNames, ClockRangePtr clockRanges,
 		      int *linePitches, int minPitch, int maxPitch,
@@ -440,6 +631,12 @@ void xf86PruneDriverModes(ScrnInfoPtr scrp);
 void xf86SetCrtcForModes(ScrnInfoPtr scrp, int adjustFlags);
 void xf86PrintModes(ScrnInfoPtr scrp);
 void xf86ShowClockRanges(ScrnInfoPtr scrp, ClockRangePtr clockRanges);
+Bool xf86ModeIsPresent(const char *modeName, const DisplayModeRec *modeList,
+		       int inclTypeMask, int exclTypeMask);
+void xf86AddModeAfter(DisplayModePtr *ppOld, DisplayModePtr pNew);
+void xf86AddModeBefore(DisplayModePtr *ppOld, DisplayModePtr pNew);
+void xf86AddModeToMonitor(MonPtr pMonitor, DisplayModePtr pNew);
+
 
 /* xf86Option.c */
 

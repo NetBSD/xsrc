@@ -1,5 +1,5 @@
 .\"
-.\" $XFree86: xc/doc/man/Xi/XSeBMap.man,v 1.3 2003/04/28 22:18:15 herrb Exp $
+.\" $XFree86: xc/doc/man/Xi/XSeBMap.man,v 1.4 2005/02/11 03:03:03 dawes Exp $
 .\"
 .\"
 .\" Copyright ([\d,\s]*) by Hewlett-Packard Company, Ardent Computer, 
@@ -13,7 +13,7 @@
 .\" 
 .\" $Xorg: XSeBMap.man,v 1.3 2000/08/17 19:41:57 cpqbld Exp $
 .ds xL Programming With Xlib
-.TH XSetDeviceButtonMapping 3X11 __xorgversion__ "X FUNCTIONS"
+.TH XSetDeviceButtonMapping 3X11 __vendorversion__ "X FUNCTIONS"
 .SH NAME
 XSetDeviceButtonMapping, XGetDeviceButtonMapping \- query or change device button mappings
 .SH SYNTAX

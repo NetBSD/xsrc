@@ -23,9 +23,9 @@
 .\" other dealings in this Software without prior written authorization
 .\" from The Open Group.
 .\"
-.\" $XFree86: xc/programs/xmag/xmag.man,v 1.7 2001/12/14 20:02:12 dawes Exp $
+.\" $XFree86: xc/programs/xmag/xmag.man,v 1.8 2005/02/11 03:03:20 dawes Exp $
 .\"
-.TH XMAG 1 __xorgversion__
+.TH XMAG 1 __vendorversion__
 .SH NAME
 xmag \- magnify parts of the screen
 .SH SYNOPSIS

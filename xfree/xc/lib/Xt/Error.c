@@ -6,13 +6,13 @@ Copyright 1993 by Sun Microsystems, Inc. Mountain View, CA.
 
                         All Rights Reserved
 
-Permission to use, copy, modify, and distribute this software and its 
-documentation for any purpose and without fee is hereby granted, 
+Permission to use, copy, modify, and distribute this software and its
+documentation for any purpose and without fee is hereby granted,
 provided that the above copyright notice appear in all copies and that
-both that copyright notice and this permission notice appear in 
+both that copyright notice and this permission notice appear in
 supporting documentation, and that the names of Digital or Sun not be
 used in advertising or publicity pertaining to distribution of the
-software without specific, written prior permission.  
+software without specific, written prior permission.
 
 DIGITAL DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING
 ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO EVENT SHALL
@@ -32,7 +32,7 @@ OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
 THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/lib/Xt/Error.c,v 3.14 2003/05/27 22:26:42 tsi Exp $ */
+/* $XFree86: xc/lib/Xt/Error.c,v 3.15 2004/05/05 00:07:03 dickey Exp $ */
 
 /*
 
@@ -72,12 +72,14 @@ in this Software without prior written authorization from The Open Group.
 #define GLOBALERRORS 1
 #endif
 
-static void InitErrorHandling();
+static void InitErrorHandling(XrmDatabase *);
 #if GLOBALERRORS
 static XrmDatabase errorDB = NULL;
 static Boolean error_inited = FALSE;
-void _XtDefaultErrorMsg(), _XtDefaultWarningMsg(), 
-	_XtDefaultError(), _XtDefaultWarning();
+void _XtDefaultErrorMsg(String, String, String, String, String*, Cardinal*);
+void _XtDefaultWarningMsg(String, String, String, String, String*, Cardinal*);
+void _XtDefaultError(String);
+void _XtDefaultWarning(String);
 static XtErrorMsgHandler errorMsgHandler = _XtDefaultErrorMsg;
 static XtErrorMsgHandler warningMsgHandler = _XtDefaultWarningMsg;
 static XtErrorHandler errorHandler = _XtDefaultError;
@@ -97,8 +99,8 @@ XrmDatabase *XtGetErrorDatabase(void)
     return retval;
 }
 
-XrmDatabase *XtAppGetErrorDatabase(app)
-	XtAppContext app;
+XrmDatabase *XtAppGetErrorDatabase(
+	XtAppContext app)
 {
     XrmDatabase* retval;
 #if GLOBALERRORS
@@ -182,7 +184,7 @@ void XtAppGetErrorDatabaseText(
     } else (void) XrmGetResource(db, str_name, str_class, &type_str, &result);
     if (result.addr) {
         (void) strncpy (buffer, result.addr, nbytes);
-        if (result.size > nbytes) buffer[nbytes-1] = 0;
+        if (result.size > (unsigned) nbytes) buffer[nbytes-1] = 0;
     } else {
 	int len = strlen(defaultp);
 	if (len >= nbytes) len = nbytes-1;
@@ -200,8 +202,8 @@ void XtAppGetErrorDatabaseText(
 #endif
 }
 
-static void InitErrorHandling (db)
-    XrmDatabase *db;
+static void InitErrorHandling (
+    XrmDatabase *db)
 {
     XrmDatabase errordb;
 
@@ -209,12 +211,15 @@ static void InitErrorHandling (db)
     XrmMergeDatabases(errordb, db);
 }
 
-static void DefaultMsg (name,type,class,defaultp,params,num_params,error,fn)
-    String name,type,class,defaultp;
-    String* params;
-    Cardinal* num_params;
-    Bool error;
-    void (*fn)(_Xconst _XtString);
+static void DefaultMsg (
+    String name,
+    String type,
+    String class,
+    String defaultp,
+    String* params,
+    Cardinal* num_params,
+    Bool error,
+    void (*fn)(_Xconst _XtString))
 {
 #define BIGBUF 1024
 #ifdef notyet /* older versions don't, might want to wait until more do */
@@ -233,10 +238,10 @@ static void DefaultMsg (name,type,class,defaultp,params,num_params,error,fn)
 	if ((error && errorHandler == _XtDefaultError) ||
 	    (!error && warningHandler == _XtDefaultWarning)) {
 	    /*
-	     * if it's just going to go to stderr anyway, then we'll 
+	     * if it's just going to go to stderr anyway, then we'll
 	     * fprintf to stderr ourselves and skip the insecure sprintf.
 	     */
-	    int i = *num_params;
+	    Cardinal i = *num_params;
 	    String par[10];
 	    if (i > 10) i = 10;
 	    (void) memmove((char*)par, (char*)params, i * sizeof(String) );
@@ -267,20 +272,20 @@ program as a non-root user or by removing the suid bit on the executable.");
     else {
 	/*
 	 * If you have snprintf the worst thing that could happen is you'd
-	 * lose some information. Without snprintf you're probably going to 
+	 * lose some information. Without snprintf you're probably going to
 	 * scramble your heap and perhaps SEGV -- sooner or later.
 	 * If it hurts when you go like this then don't go like this! :-)
 	 */
-	int i = *num_params;
+	Cardinal i = *num_params;
 	String par[10];
 	if (i > 10) i = 10;
 	(void) memmove((char*)par, (char*)params, i * sizeof(String) );
 	bzero( &par[i], (10-i) * sizeof(String) );
 	if (i != *num_params)
 	    XtWarning( "Some arguments in following message were lost" );
-	/* 
+	/*
 	 * resist any temptation you might have to make `message' a
-	 * local buffer on the stack. Doing so is a security hole 
+	 * local buffer on the stack. Doing so is a security hole
 	 * in programs executing as root. Error and Warning
 	 * messages shouldn't be called frequently enough for this
 	 * to be a performance issue.
@@ -288,11 +293,11 @@ program as a non-root user or by removing the suid bit on the executable.");
 	if ((message = __XtMalloc (BIGBUF))) {
 #ifndef USE_SNPRINTF
 	    message[BIGBUF-1] = 0;
-	    (void) sprintf (message, buffer, 
+	    (void) sprintf (message, buffer,
 #else
 	    (void) snprintf (message, BIGBUF, buffer,
 #endif
-			    par[0], par[1], par[2], par[3], par[4], 
+			    par[0], par[1], par[2], par[3], par[4],
 			    par[5], par[6], par[7], par[8], par[9]);
 #ifndef USE_SNPRINTF
 	    if (message[BIGBUF-1] != '\0')
@@ -307,18 +312,24 @@ program as a non-root user or by removing the suid bit on the executable.");
     }
 }
 
-void _XtDefaultErrorMsg (name,type,class,defaultp,params,num_params)
-    String name,type,class,defaultp;
-    String* params;
-    Cardinal* num_params;
+void _XtDefaultErrorMsg (
+    String name,
+    String type,
+    String class,
+    String defaultp,
+    String* params,
+    Cardinal* num_params)
 {
     DefaultMsg (name,type,class,defaultp,params,num_params,True,XtError);
 }
 
-void _XtDefaultWarningMsg (name,type,class,defaultp,params,num_params)
-    String name,type,class,defaultp;
-    String* params;
-    Cardinal* num_params;
+void _XtDefaultWarningMsg (
+    String name,
+    String type,
+    String class,
+    String defaultp,
+    String* params,
+    Cardinal* num_params)
 {
     DefaultMsg (name,type,class,defaultp,params,num_params,False,XtWarning);
 }
@@ -403,8 +414,8 @@ void XtAppWarningMsg(
 #endif /* GLOBALERRORS */
 }
 
-void XtSetErrorMsgHandler(handler)
-    XtErrorMsgHandler handler;
+void XtSetErrorMsgHandler(
+    XtErrorMsgHandler handler)
 {
 #if GLOBALERRORS
     LOCK_PROCESS;
@@ -437,8 +448,8 @@ XtErrorMsgHandler XtAppSetErrorMsgHandler(
     return old;
 }
 
-void XtSetWarningMsgHandler(handler)
-    XtErrorMsgHandler handler;
+void XtSetWarningMsgHandler(
+    XtErrorMsgHandler handler)
 {
 #if GLOBALERRORS
     LOCK_PROCESS;
@@ -471,19 +482,17 @@ XtErrorMsgHandler XtAppSetWarningMsgHandler(
     return old;
 }
 
-void _XtDefaultError(message)
-    String message;
+void _XtDefaultError(String message)
 {
     if (message && *message)
 	(void)fprintf(stderr, "%sError: %s\n", XTERROR_PREFIX, message);
     exit(1);
 }
 
-void _XtDefaultWarning(message)
-    String message;
+void _XtDefaultWarning(String message)
 {
     if (message && *message)
-       (void)fprintf(stderr, "%sWarning: %s\n", XTWARNING_PREFIX, message); 
+       (void)fprintf(stderr, "%sWarning: %s\n", XTWARNING_PREFIX, message);
     return;
 }
 
@@ -607,9 +616,11 @@ XtErrorHandler XtAppSetWarningHandler(
     return old;
 }
 
-void _XtSetDefaultErrorHandlers(errMsg, warnMsg, err, warn)
-    XtErrorMsgHandler *errMsg, *warnMsg;
-    XtErrorHandler *err, *warn;
+void _XtSetDefaultErrorHandlers(
+    XtErrorMsgHandler *errMsg,
+    XtErrorMsgHandler *warnMsg,
+    XtErrorHandler *err,
+    XtErrorHandler *warn)
 {
 #ifndef GLOBALERRORS
     LOCK_PROCESS;

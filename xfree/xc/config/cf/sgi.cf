@@ -1,5 +1,5 @@
 XCOMM platform:  $Xorg: sgi.cf,v 1.4 2000/08/17 19:41:48 cpqbld Exp $
-XCOMM $XFree86: xc/config/cf/sgi.cf,v 1.13 2003/10/21 17:41:44 tsi Exp $
+XCOMM $XFree86: xc/config/cf/sgi.cf,v 1.21 2005/01/30 17:48:43 tsi Exp $
 
 #ifndef OSName
 # define OSName		DefaultOSName
@@ -46,6 +46,9 @@ XCOMM operating system: OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVer
 #ifndef ExtraLoadFlags
 #define ExtraLoadFlags -Wl,-rpath,$(USRLIBDIRPATH)
 #endif
+#ifndef ExtraSharedLibraryLoadFlags
+#define ExtraSharedLibraryLoadFlags /* */
+#endif
 #endif
 
 /*
@@ -66,16 +69,16 @@ XCOMM operating system: OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVer
 # define BuildLibPathVar	_RLD_ROOT=/dev/null LD_LIBRARY64_PATH
 # define SystemBuildLibPath	/usr/lib64:/lib64
 # define LdCmd			ld -64
-# define AsCmd			as -64
+# define AsCmd			as -64 -mips3
 #elif defined(MipsN32Architecture)
 # define BuildLibPathVar	_RLD_ROOT=/dev/null LD_LIBRARYN32_PATH
 # define SystemBuildLibPath	/usr/lib32:/lib32
 # define LdCmd			ld -n32
-# define AsCmd			as -n32
+# define AsCmd			as -n32 -mips3
 #else
 # define BuildLibPathVar	_RLD_ROOT=/dev/null LD_LIBRARY_PATH
 # define SystemBuildLibPath	/usr/lib:/lib
-# define LdCmd			ld -32
+# define LdCmd			ld -32 -allow_jump_at_eop
 # define AsCmd			as -32
 #endif
 #define HasCplusplus		YES
@@ -85,6 +88,7 @@ XCOMM operating system: OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVer
 #define HasNdbm			YES
 #define HasPoll                 YES
 #define ExpandManNames          YES
+#define LexCmd			flex -l
 #define LexLib			/* Not needed */
 #ifndef BuildXInputExt
 #define BuildXInputExt		YES
@@ -159,17 +163,15 @@ XCOMM operating system: OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVer
 #define BuildIPv6	NO
 #endif
 
-#undef  BuildXF86DRM
 #undef  BuildXF86DRI
-#define BuildXF86DRM	NO
 #define BuildXF86DRI	NO
 
 #if !HasGcc
 #if !defined(OptimizedCDebugFlags)
 #if defined(MipsN32Architecture) || defined(Mips64Architecture)
-#define OptimizedCDebugFlags -O -OPT:Olimit=0
+#define OptimizedCDebugFlags -O -OPT:Olimit=4096
 #else
-#define OptimizedCDebugFlags -O -Olimit 2048
+#define OptimizedCDebugFlags -O -Olimit 4096
 #endif
 #endif
 #if !defined(RawCppCmd)
@@ -216,14 +218,16 @@ XCOMM operating system: OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVer
 #define DefaultUserPath :/usr/sbin:/usr/bsd:/usr/bin:/bin:$(BINDIR):/etc:/usr/etc
 #define DefaultSystemPath /usr/sbin:/usr/bsd:/bin:/etc:/usr/bin:/usr/etc:$(BINDIR)
 
-#define ServerOSDefines		-DDDXTIME XFree86ServerOSDefines
+#define ServerOSDefines		XFree86ServerOSDefines
 
+#ifndef ServerExtraDefines
 #ifndef Mips64Architecture
 #define ServerExtraDefines	-DNEED_LINEHELPER AllocateLocalDefines \
 				XFree86ServerDefines
 #else
 #define ServerExtraDefines	-DNEED_LINEHELPER AllocateLocalDefines \
 				XFree86ServerDefines -D_XSERVER64
+#endif
 #endif
 
 /* Changed to a single shell command for pmake/smake */

@@ -160,20 +160,14 @@
     </model>
     <model>
       <configItem>
-        <name>abnt2</name>
-        <description>Brazilian ABNT2</description>
-        <description xml:lang="bg">бразилска ABNT2</description>
-        <description xml:lang="cs">Brazilské ABNT2</description>
-        <description xml:lang="da">Brasiliansk ABNT2</description>
-        <description xml:lang="fr">Brézilien ABNT2</description>
-        <description xml:lang="hu">brazil ABNT2</description>
-        <description xml:lang="nl">Braziliaans ABNT2</description>
-        <description xml:lang="ru">ABNT2</description>
-        <description xml:lang="sk">Brazílska ABNT2</description>
-        <description xml:lang="sr">бразилски ABNT2</description>
-        <description xml:lang="tr">Brazilya dili ABNT2</description>
-        <description xml:lang="uk">Бразильська ABTN2</description>
-        <description xml:lang="zh_CN">巴西 ABNT2</description>
+        <name>abnt2_104</name>
+        <description>Brazilian ABNT2 with 104 keys</description>
+      </configItem>
+    </model>
+    <model>
+      <configItem>
+        <name>abnt2_107</name>
+        <description>Brazilian ABNT2 with 107 keys</description>
       </configItem>
     </model>
     <model>
@@ -1100,7 +1094,7 @@
             <description xml:lang="cs">Eliminovat mrtvé klávesy</description>
             <description xml:lang="da">Slå døde taster fra</description>
             <description xml:lang="fr">éliminer des clés mortes</description>
-            <description xml:lang="hu">Halott billentyűk tiltása</description>
+            <description xml:lang="hu">Holtbillentyűk tiltása</description>
             <description xml:lang="nl">Dode toetsen niet doen</description>
             <description xml:lang="ru">Исключить специальные клавиши (dead keys)</description>
             <description xml:lang="sk">Eliminovať mrtvé kláves</description>
@@ -1124,7 +1118,7 @@
         <description xml:lang="cs">Anglické (US) s mrtvými klávesami</description>
         <description xml:lang="da">U.S. Engelsk m. døde taster</description>
         <description xml:lang="fr">Anglais U.S. w/ clés mortes</description>
-        <description xml:lang="hu">amerikai angol halott billentyűkkel</description>
+        <description xml:lang="hu">amerikai angol holtbillentyűkkel</description>
         <description xml:lang="nl">Amerikaans-Engels met dode toetsen</description>
         <description xml:lang="ru">Английская (США) со специальными клавишами (dead keys)</description>
         <description xml:lang="sk">Anglické (US) s mŕtvymi klávesmi</description>
@@ -1420,7 +1414,7 @@
             <description xml:lang="cs">Eliminovat mrtvé klávesy</description>
             <description xml:lang="da">Slå døde taster fra</description>
             <description xml:lang="fr">éliminer des clés mortes</description>
-            <description xml:lang="hu">Halott billentyűk tiltása</description>
+            <description xml:lang="hu">Holtbillentyűk tiltása</description>
             <description xml:lang="nl">Dode toetsen niet doen</description>
             <description xml:lang="ru">Исключить специальные клавиши (dead keys)</description>
             <description xml:lang="sk">Eliminovať mrtvé kláves</description>
@@ -1437,7 +1431,7 @@
             <description xml:lang="cs">Mrtvé klávesy Sun</description>
             <description xml:lang="da">Sun døde taster</description>
             <description xml:lang="fr">clés mortes Sun</description>
-            <description xml:lang="hu">Sun halott billentyűk</description>
+            <description xml:lang="hu">Sun holtbillentyűk</description>
             <description xml:lang="nl">Sun dode toetsen</description>
             <description xml:lang="ru">Специальные клавиши (dead keys) Sun</description>
             <description xml:lang="sk">Mŕtve klávesy Sun</description>
@@ -1526,7 +1520,7 @@
             <description xml:lang="cs">Eliminovat mrtvé klávesy</description>
             <description xml:lang="da">Slå døde taster fra</description>
             <description xml:lang="fr">éliminer des clés mortes</description>
-            <description xml:lang="hu">Halott billentyűk tiltása</description>
+            <description xml:lang="hu">Holtbillentyűk tiltása</description>
             <description xml:lang="nl">Dode toetsen niet doen</description>
             <description xml:lang="ru">Исключить специальные клавиши (dead keys)</description>
             <description xml:lang="sk">Eliminovať mrtvé kláves</description>
@@ -1647,7 +1641,7 @@
             <description xml:lang="cs">Eliminovat mrtvé klávesy</description>
             <description xml:lang="da">Slå døde taster fra</description>
             <description xml:lang="fr">éliminer des clés mortes</description>
-            <description xml:lang="hu">Halott billentyűk tiltása</description>
+            <description xml:lang="hu">Holtbillentyűk tiltása</description>
             <description xml:lang="nl">Dode toetsen niet doen</description>
             <description xml:lang="ru">Исключить специальные клавиши (dead keys)</description>
             <description xml:lang="sk">Eliminovať mrtvé kláves</description>
@@ -1664,7 +1658,7 @@
             <description xml:lang="cs">Mrtvé klávesy Sun</description>
             <description xml:lang="da">Sun døde taster</description>
             <description xml:lang="fr">clés mortes Sun</description>
-            <description xml:lang="hu">Sun halott billentyűk</description>
+            <description xml:lang="hu">Sun holtbillentyűk</description>
             <description xml:lang="nl">Sun dode toetsen</description>
             <description xml:lang="ru">Специальные клавиши (dead keys) Sun</description>
             <description xml:lang="sk">Mŕtve klávesy Sun</description>
@@ -1719,7 +1713,7 @@
             <description xml:lang="cs">Mrtvé klávesy Sun</description>
             <description xml:lang="da">Sun døde taster</description>
             <description xml:lang="fr">clés mortes Sun</description>
-            <description xml:lang="hu">Sun halott billentyűk</description>
+            <description xml:lang="hu">Sun holtbillentyűk</description>
             <description xml:lang="nl">Sun dode toetsen</description>
             <description xml:lang="ru">Специальные клавиши (dead keys) Sun</description>
             <description xml:lang="sk">Mŕtve klávesy Sun</description>
@@ -1886,7 +1880,7 @@
             <description xml:lang="cs">Eliminovat mrtvé klávesy</description>
             <description xml:lang="da">Slå døde taster fra</description>
             <description xml:lang="fr">éliminer des clés mortes</description>
-            <description xml:lang="hu">Halott billentyűk tiltása</description>
+            <description xml:lang="hu">Holtbillentyűk tiltása</description>
             <description xml:lang="nl">Dode toetsen niet doen</description>
             <description xml:lang="ru">Исключить специальные клавиши (dead keys)</description>
             <description xml:lang="sk">Eliminovať mrtvé kláves</description>
@@ -2072,7 +2066,7 @@
             <description xml:lang="cs">Eliminovat mrtvé klávesy</description>
             <description xml:lang="da">Slå døde taster fra</description>
             <description xml:lang="fr">éliminer des clés mortes</description>
-            <description xml:lang="hu">Halott billentyűk tiltása</description>
+            <description xml:lang="hu">Holtbillentyűk tiltása</description>
             <description xml:lang="nl">Dode toetsen niet doen</description>
             <description xml:lang="ru">Исключить специальные клавиши (dead keys)</description>
             <description xml:lang="sk">Eliminovať mrtvé kláves</description>
@@ -2127,7 +2121,7 @@
             <description xml:lang="cs">Eliminovat mrtvé klávesy</description>
             <description xml:lang="da">Slå døde taster fra</description>
             <description xml:lang="fr">éliminer des clés mortes</description>
-            <description xml:lang="hu">Halott billentyűk tiltása</description>
+            <description xml:lang="hu">Holtbillentyűk tiltása</description>
             <description xml:lang="nl">Dode toetsen niet doen</description>
             <description xml:lang="ru">Исключить специальные клавиши (dead keys)</description>
             <description xml:lang="sk">Eliminovať mrtvé kláves</description>
@@ -2209,7 +2203,7 @@
             <description xml:lang="cs">Eliminovat mrtvé klávesy</description>
             <description xml:lang="da">Slå døde taster fra</description>
             <description xml:lang="fr">éliminer des clés mortes</description>
-            <description xml:lang="hu">Halott billentyűk tiltása</description>
+            <description xml:lang="hu">Holtbillentyűk tiltása</description>
             <description xml:lang="nl">Dode toetsen niet doen</description>
             <description xml:lang="ru">Исключить специальные клавиши (dead keys)</description>
             <description xml:lang="sk">Eliminovať mrtvé kláves</description>
@@ -2226,13 +2220,32 @@
             <description xml:lang="cs">Mrtvé klávesy Sun</description>
             <description xml:lang="da">Sun døde taster</description>
             <description xml:lang="fr">clés mortes Sun</description>
-            <description xml:lang="hu">Sun halott billentyűk</description>
+            <description xml:lang="hu">Sun holtbillentyűk</description>
             <description xml:lang="nl">Sun dode toetsen</description>
             <description xml:lang="ru">Специальные клавиши (dead keys) Sun</description>
             <description xml:lang="sk">Mŕtve klávesy Sun</description>
             <description xml:lang="sr">Sun-ови акценти</description>
             <description xml:lang="tr">Sun ölü tuşlar</description>
             <description xml:lang="zh_CN">Sun 死键</description>
+          </configItem>
+        </variant>
+        <variant>
+          <configItem>
+            <name>fr_pl</name>
+            <description>Polish signs with AltGr (€ on AltGr-$)</description>
+            <description xml:lang="bg">полска (€=AltGr-$)</description>
+            <description xml:lang="cs">Polské (€=AltGr-$)</description>
+            <description xml:lang="da">Polsk (€=AltGr-$)</description>
+            <description xml:lang="fr">Caractères polonais par AltGr (€=AltGr-$)</description>
+            <description xml:lang="hu">lengyel (€=AltGr-$)</description>
+            <description xml:lang="nl">Pools (€=AltGr-$)</description>
+            <description xml:lang="pl">Polskie znaki z AltGr (€=AltGr-$)</description>
+            <description xml:lang="ru">Польские буквы с AltGr (€=AltGr-$)</description>
+            <description xml:lang="sk">Poľské (€=AltGr-$)</description>
+            <description xml:lang="sr">пољски (€=AltGr-$)</description>
+            <description xml:lang="tr">Polonez (€=AltGr-$)</description>
+            <description xml:lang="uk">Польська (€=AltGr-$)</description>
+            <description xml:lang="zh_CN">波兰 (€=AltGr-$)</description>
           </configItem>
         </variant>
       </variantList>
@@ -2266,7 +2279,7 @@
             <description xml:lang="cs">Eliminovat mrtvé klávesy</description>
             <description xml:lang="da">Slå døde taster fra</description>
             <description xml:lang="fr">éliminer des clés mortes</description>
-            <description xml:lang="hu">Halott billentyűk tiltása</description>
+            <description xml:lang="hu">Holtbillentyűk tiltása</description>
             <description xml:lang="nl">Dode toetsen niet doen</description>
             <description xml:lang="ru">Исключить специальные клавиши (dead keys)</description>
             <description xml:lang="sk">Eliminovať mrtvé kláves</description>
@@ -2283,7 +2296,7 @@
             <description xml:lang="cs">Mrtvé klávesy Sun</description>
             <description xml:lang="da">Sun døde taster</description>
             <description xml:lang="fr">clés mortes Sun</description>
-            <description xml:lang="hu">Sun halott billentyűk</description>
+            <description xml:lang="hu">Sun holtbillentyűk</description>
             <description xml:lang="nl">Sun dode toetsen</description>
             <description xml:lang="ru">Специальные клавиши (dead keys) Sun</description>
             <description xml:lang="sk">Mŕtve klávesy Sun</description>
@@ -2420,7 +2433,7 @@
             <description xml:lang="cs">Eliminovat mrtvé klávesy</description>
             <description xml:lang="da">Slå døde taster fra</description>
             <description xml:lang="fr">éliminer des clés mortes</description>
-            <description xml:lang="hu">Halott billentyűk tiltása</description>
+            <description xml:lang="hu">Holtbillentyűk tiltása</description>
             <description xml:lang="nl">Dode toetsen niet doen</description>
             <description xml:lang="ru">Исключить специальные клавиши (dead keys)</description>
             <description xml:lang="sk">Eliminovať mrtvé kláves</description>
@@ -2481,7 +2494,7 @@
             <description xml:lang="cs">Eliminovat mrtvé klávesy</description>
             <description xml:lang="da">Slå døde taster fra</description>
             <description xml:lang="fr">éliminer des clés mortes</description>
-            <description xml:lang="hu">Halott billentyűk tiltása</description>
+            <description xml:lang="hu">Holtbillentyűk tiltása</description>
             <description xml:lang="nl">Dode toetsen niet doen</description>
             <description xml:lang="ru">Исключить специальные клавиши (dead keys)</description>
             <description xml:lang="sk">Eliminovať mrtvé kláves</description>
@@ -2710,7 +2723,7 @@
             <description xml:lang="cs">Eliminovat mrtvé klávesy</description>
             <description xml:lang="da">Slå døde taster fra</description>
             <description xml:lang="fr">éliminer des clés mortes</description>
-            <description xml:lang="hu">Halott billentyűk tiltása</description>
+            <description xml:lang="hu">Holtbillentyűk tiltása</description>
             <description xml:lang="nl">Dode toetsen niet doen</description>
             <description xml:lang="ru">Исключить специальные клавиши (dead keys)</description>
             <description xml:lang="sk">Eliminovať mrtvé kláves</description>
@@ -2741,7 +2754,7 @@
             <description xml:lang="cs">Mrtvé klávesy Sun</description>
             <description xml:lang="da">Sun døde taster</description>
             <description xml:lang="fr">clés mortes Sun</description>
-            <description xml:lang="hu">Sun halott billentyűk</description>
+            <description xml:lang="hu">Sun holtbillentyűk</description>
             <description xml:lang="nl">Sun dode toetsen</description>
             <description xml:lang="ru">Специальные клавиши (dead keys) Sun</description>
             <description xml:lang="sk">Mŕtve klávesy Sun</description>
@@ -2924,7 +2937,7 @@
             <description xml:lang="cs">Mrtvé klávesy Sun</description>
             <description xml:lang="da">Sun døde taster</description>
             <description xml:lang="fr">clés mortes Sun</description>
-            <description xml:lang="hu">Sun halott billentyűk</description>
+            <description xml:lang="hu">Sun holtbillentyűk</description>
             <description xml:lang="nl">Sun dode toetsen</description>
             <description xml:lang="ru">Специальные клавиши (dead keys) Sun</description>
             <description xml:lang="sk">Mŕtve klávesy Sun</description>
@@ -2941,7 +2954,7 @@
             <description xml:lang="cs">Eliminovat mrtvé klávesy</description>
             <description xml:lang="da">Slå døde taster fra</description>
             <description xml:lang="fr">éliminer des clés mortes</description>
-            <description xml:lang="hu">Halott billentyűk tiltása</description>
+            <description xml:lang="hu">Holtbillentyűk tiltása</description>
             <description xml:lang="nl">Dode toetsen niet doen</description>
             <description xml:lang="ru">Исключить специальные клавиши (dead keys)</description>
             <description xml:lang="sk">Eliminovať mrtvé kláves</description>
@@ -3044,7 +3057,7 @@
             <description xml:lang="cs">Eliminovat mrtvé klávesy</description>
             <description xml:lang="da">Slå døde taster fra</description>
             <description xml:lang="fr">éliminer des clés mortes</description>
-            <description xml:lang="hu">Halott billentyűk tiltása</description>
+            <description xml:lang="hu">Holtbillentyűk tiltása</description>
             <description xml:lang="nl">Dode toetsen niet doen</description>
             <description xml:lang="ru">Исключить специальные клавиши (dead keys)</description>
             <description xml:lang="sk">Eliminovať mrtvé kláves</description>
@@ -3141,7 +3154,7 @@
             <description xml:lang="cs">Eliminovat mrtvé klávesy</description>
             <description xml:lang="da">Slå døde taster fra</description>
             <description xml:lang="fr">éliminer des clés mortes</description>
-            <description xml:lang="hu">Halott billentyűk tiltása</description>
+            <description xml:lang="hu">Holtbillentyűk tiltása</description>
             <description xml:lang="nl">Dode toetsen niet doen</description>
             <description xml:lang="ru">Исключить специальные клавиши (dead keys)</description>
             <description xml:lang="sk">Eliminovať mrtvé kláves</description>
@@ -3158,7 +3171,7 @@
             <description xml:lang="cs">Mrtvé klávesy Sun</description>
             <description xml:lang="da">Sun døde taster</description>
             <description xml:lang="fr">clés mortes Sun</description>
-            <description xml:lang="hu">Sun halott billentyűk</description>
+            <description xml:lang="hu">Sun holtbillentyűk</description>
             <description xml:lang="nl">Sun dode toetsen</description>
             <description xml:lang="ru">Специальные клавиши (dead keys) Sun</description>
             <description xml:lang="sk">Mŕtve klávesy Sun</description>
@@ -3168,6 +3181,13 @@
           </configItem>
         </variant>
       </variantList>
+    </layout>
+    <layout>
+      <configItem>
+        <name>lat</name>
+        <description>Classical Latin</description>
+      </configItem>
+      <variantList/>
     </layout>
     <layout>
       <configItem>
@@ -3251,7 +3271,7 @@
             <description xml:lang="cs">Eliminovat mrtvé klávesy</description>
             <description xml:lang="da">Slå døde taster fra</description>
             <description xml:lang="fr">éliminer des clés mortes</description>
-            <description xml:lang="hu">Halott billentyűk tiltása</description>
+            <description xml:lang="hu">Holtbillentyűk tiltása</description>
             <description xml:lang="nl">Dode toetsen niet doen</description>
             <description xml:lang="ru">Исключить специальные клавиши (dead keys)</description>
             <description xml:lang="sk">Eliminovať mrtvé kláves</description>
@@ -3268,7 +3288,7 @@
             <description xml:lang="cs">Mrtvé klávesy Sun</description>
             <description xml:lang="da">Sun døde taster</description>
             <description xml:lang="fr">clés mortes Sun</description>
-            <description xml:lang="hu">Sun halott billentyűk</description>
+            <description xml:lang="hu">Sun holtbillentyűk</description>
             <description xml:lang="nl">Sun dode toetsen</description>
             <description xml:lang="ru">Специальные клавиши (dead keys) Sun</description>
             <description xml:lang="sk">Mŕtve klávesy Sun</description>
@@ -3301,7 +3321,32 @@
         <description xml:lang="uk">Латишська</description>
         <description xml:lang="zh_CN">拉脱维亚</description>
       </configItem>
-      <variantList/>
+      <variantList>
+        <variant>
+          <configItem>
+            <name>basic</name>
+            <description>Latvian Basic (RALT) variant</description>
+          </configItem>
+        </variant>
+        <variant>
+          <configItem>
+            <name>apostrophe</name>
+            <description>Latvian Apostrophe (') variant</description>
+          </configItem>
+        </variant>
+        <variant>
+          <configItem>
+            <name>tilde</name>
+            <description>Latvian Tilde (~) variant</description>
+          </configItem>
+        </variant>
+        <variant>
+          <configItem>
+            <name>fkey</name>
+            <description>Latvian F-letter (F) variant</description>
+          </configItem>
+        </variant>
+      </variantList>
     </layout>
     <layout>
       <configItem>
@@ -3477,7 +3522,7 @@
             <description xml:lang="cs">Eliminovat mrtvé klávesy</description>
             <description xml:lang="da">Slå døde taster fra</description>
             <description xml:lang="fr">éliminer des clés mortes</description>
-            <description xml:lang="hu">Halott billentyűk tiltása</description>
+            <description xml:lang="hu">Holtbillentyűk tiltása</description>
             <description xml:lang="nl">Dode toetsen niet doen</description>
             <description xml:lang="ru">Исключить специальные клавиши (dead keys)</description>
             <description xml:lang="sk">Eliminovať mrtvé kláves</description>
@@ -3629,7 +3674,7 @@
             <description xml:lang="cs">Eliminovat mrtvé klávesy</description>
             <description xml:lang="da">Slå døde taster fra</description>
             <description xml:lang="fr">éliminer des clés mortes</description>
-            <description xml:lang="hu">Halott billentyűk tiltása</description>
+            <description xml:lang="hu">Holtbillentyűk tiltása</description>
             <description xml:lang="nl">Dode toetsen niet doen</description>
             <description xml:lang="ru">Исключить специальные клавиши (dead keys)</description>
             <description xml:lang="sk">Eliminovať mrtvé kláves</description>
@@ -3646,7 +3691,7 @@
             <description xml:lang="cs">Mrtvé klávesy Sun</description>
             <description xml:lang="da">Sun døde taster</description>
             <description xml:lang="fr">clés mortes Sun</description>
-            <description xml:lang="hu">Sun halott billentyűk</description>
+            <description xml:lang="hu">Sun holtbillentyűk</description>
             <description xml:lang="nl">Sun dode toetsen</description>
             <description xml:lang="ru">Специальные клавиши (dead keys) Sun</description>
             <description xml:lang="sk">Mŕtve klávesy Sun</description>
@@ -3866,6 +3911,14 @@
     </layout>
     <layout>
       <configItem>
+        <name>sin</name>
+        <shortDescription>Sin</shortDescription>
+        <description>Sinhala</description>
+      </configItem>
+      <variantList/>
+    </layout>
+    <layout>
+      <configItem>
         <name>si</name>
         <shortDescription>Svn</shortDescription>
         <shortDescription xml:lang="ru">Cловен</shortDescription>
@@ -4011,7 +4064,7 @@
             <description xml:lang="cs">Eliminovat mrtvé klávesy</description>
             <description xml:lang="da">Slå døde taster fra</description>
             <description xml:lang="fr">éliminer des clés mortes</description>
-            <description xml:lang="hu">Halott billentyűk tiltása</description>
+            <description xml:lang="hu">Holtbillentyűk tiltása</description>
             <description xml:lang="nl">Dode toetsen niet doen</description>
             <description xml:lang="ru">Исключить специальные клавиши (dead keys)</description>
             <description xml:lang="sk">Eliminovať mrtvé kláves</description>
@@ -4028,7 +4081,7 @@
             <description xml:lang="cs">Mrtvé klávesy Sun</description>
             <description xml:lang="da">Sun døde taster</description>
             <description xml:lang="fr">clés mortes Sun</description>
-            <description xml:lang="hu">Sun halott billentyűk</description>
+            <description xml:lang="hu">Sun holtbillentyűk</description>
             <description xml:lang="nl">Sun dode toetsen</description>
             <description xml:lang="ru">Специальные клавиши (dead keys) Sun</description>
             <description xml:lang="sk">Mŕtve klávesy Sun</description>
@@ -4088,7 +4141,7 @@
             <description xml:lang="cs">Eliminovat mrtvé klávesy</description>
             <description xml:lang="da">Slå døde taster fra</description>
             <description xml:lang="fr">éliminer des clés mortes</description>
-            <description xml:lang="hu">Halott billentyűk tiltása</description>
+            <description xml:lang="hu">Holtbillentyűk tiltása</description>
             <description xml:lang="nl">Dode toetsen niet doen</description>
             <description xml:lang="ru">Исключить специальные клавиши (dead keys)</description>
             <description xml:lang="sk">Eliminovať mrtvé kláves</description>
@@ -4130,7 +4183,7 @@
             <description xml:lang="cs">Eliminovat mrtvé klávesy</description>
             <description xml:lang="da">Slå døde taster fra</description>
             <description xml:lang="fr">éliminer des clés mortes</description>
-            <description xml:lang="hu">Halott billentyűk tiltása</description>
+            <description xml:lang="hu">Holtbillentyűk tiltása</description>
             <description xml:lang="nl">Dode toetsen niet doen</description>
             <description xml:lang="ru">Исключить специальные клавиши (dead keys)</description>
             <description xml:lang="sk">Eliminovať mrtvé kláves</description>
@@ -4147,7 +4200,7 @@
             <description xml:lang="cs">Mrtvé klávesy Sun</description>
             <description xml:lang="da">Sun døde taster</description>
             <description xml:lang="fr">clés mortes Sun</description>
-            <description xml:lang="hu">Sun halott billentyűk</description>
+            <description xml:lang="hu">Sun holtbillentyűk</description>
             <description xml:lang="nl">Sun dode toetsen</description>
             <description xml:lang="ru">Специальные клавиши (dead keys) Sun</description>
             <description xml:lang="sk">Mŕtve klávesy Sun</description>
@@ -4191,7 +4244,7 @@
             <description xml:lang="cs">Eliminovat mrtvé klávesy</description>
             <description xml:lang="da">Slå døde taster fra</description>
             <description xml:lang="fr">éliminer des clés mortes</description>
-            <description xml:lang="hu">Halott billentyűk tiltása</description>
+            <description xml:lang="hu">Holtbillentyűk tiltása</description>
             <description xml:lang="nl">Dode toetsen niet doen</description>
             <description xml:lang="ru">Исключить специальные клавиши (dead keys)</description>
             <description xml:lang="sk">Eliminovať mrtvé kláves</description>
@@ -4208,7 +4261,7 @@
             <description xml:lang="cs">Mrtvé klávesy Sun</description>
             <description xml:lang="da">Sun døde taster</description>
             <description xml:lang="fr">clés mortes Sun</description>
-            <description xml:lang="hu">Sun halott billentyűk</description>
+            <description xml:lang="hu">Sun holtbillentyűk</description>
             <description xml:lang="nl">Sun dode toetsen</description>
             <description xml:lang="ru">Специальные клавиши (dead keys) Sun</description>
             <description xml:lang="sk">Mŕtve klávesy Sun</description>
@@ -4812,7 +4865,7 @@
             <description xml:lang="cs">Eliminovat mrtvé klávesy</description>
             <description xml:lang="da">Slå døde taster fra</description>
             <description xml:lang="fr">éliminer des clés mortes</description>
-            <description xml:lang="hu">Halott billentyűk tiltása</description>
+            <description xml:lang="hu">Holtbillentyűk tiltása</description>
             <description xml:lang="nl">Dode toetsen niet doen</description>
             <description xml:lang="ru">Исключить специальные клавиши (dead keys)</description>
             <description xml:lang="sk">Eliminovať mrtvé kláves</description>

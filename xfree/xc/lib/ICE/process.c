@@ -26,7 +26,7 @@ in this Software without prior written authorization from The Open Group.
 
 Author: Ralph Mor, X Consortium
 ******************************************************************************/
-/* $XFree86: xc/lib/ICE/process.c,v 3.10 2003/10/23 21:31:49 tsi Exp $ */
+/* $XFree86: xc/lib/ICE/process.c,v 3.11 2004/10/23 15:29:25 dawes Exp $ */
 
 #include <X11/ICE/ICElib.h>
 #include "ICElibint.h"
@@ -60,11 +60,11 @@ Author: Ralph Mor, X Consortium
        return (0); \
     }
 
-#define BAIL_STRING(_iceConn, _opcode, _pStart) {\
+#define BAIL_STRING(_iceConn, _opcode, _pStart) \
     _IceErrorBadLength (_iceConn, 0, _opcode, IceFatalToConnection);\
     IceDisposeCompleteMessage (_iceConn, _pStart);\
-    return (0);\
-}
+    return (0)
+
 
 /*
  * IceProcessMessages:

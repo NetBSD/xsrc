@@ -4,74 +4,22 @@
 
 
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/chips/util/dRegs.c,v 1.9 2001/11/16 21:13:34 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/chips/util/dRegs.c,v 1.11 2004/11/28 02:13:46 tsi Exp $ */
 
-#ifdef __NetBSD__
-#  include <sys/types.h>
-#  include <machine/pio.h>
-#  include <machine/sysarch.h>
-#else
-#  if defined(SVR4) && defined(i386)
-#    include <sys/types.h>
-#    ifdef NCR
-       /* broken NCR <sys/sysi86.h> */
-#      define __STDC
-#      include <sys/sysi86.h>
-#      undef __STDC
-#    else
-#      include <sys/sysi86.h>
-#    endif
-#    ifdef SVR4
-#      if !defined(sun)
-#        include <sys/seg.h>
-#      endif
-#    endif
-#    include <sys/v86.h>
-#    if defined(sun)
-#      include <sys/psw.h>
-#    endif
-#  endif
-#  include "AsmMacros.h"
-#endif /* NetBSD */
-
-#include <unistd.h>
-#include <stdio.h>
-#include <stdlib.h>
-
-#ifdef __NetBSD__
-#  define SET_IOPL() i386_iopl(3)
-#  define RESET_IOPL() i386_iopl(0)
-#else
-#  if defined(SVR4) && defined(i386)
-#    ifndef SI86IOPL
-#      define SET_IOPL() sysi86(SI86V86,V86SC_IOPL,PS_IOPL)
-#      define RESET_IOPL() sysi86(SI86V86,V86SC_IOPL,0)
-#    else
-#      define SET_IOPL() sysi86(SI86IOPL,3)
-#      define RESET_IOPL() sysi86(SI86IOPL,0)
-#    endif
-#  else
-#    ifdef linux
-#      define SET_IOPL() iopl(3)
-#      define RESET_IOPL() iopl(0)
-#    else
-#      define SET_IOPL() (void)0
-#      define RESET_IOPL() (void)0
-#    endif
-#  endif
-#endif
+#include "compiler.h"
+#include "xf86_OSproc.h"
 
 int main(void)
 {
-    int i, HTotal, HDisplay, HSyncStart, HSyncEnd, 
+    int i, HTotal, HDisplay, HSyncStart, HSyncEnd,
     VTotal, VDisplay, VSyncStart, VSyncEnd;
     unsigned char storeReg, bpp, shift, IOSS = 0, MSS = 0, again = 0;
     unsigned short port;
     int isHiQV = 0;
     int is69030 = 0;
 
-    SET_IOPL();
-    
+    xf86EnableIO();
+
     printf("0x3C6\t0x%X\n",inw(0x3C6));
 
 /* Check to see if the Chip is HiQV */
@@ -98,7 +46,7 @@ int main(void)
 	printf("Pipeline A:\n");
       }
     }
-        
+
  again:
     printf("port 0x3D6 (C&T)\n");
     storeReg = inb(0x3D6);
@@ -114,7 +62,7 @@ int main(void)
 	}
 	outb(0x3D6,0xE2);
 	bpp = inb(0x3D7)&0xF0;
-    } else {	
+    } else {
 	outb(0x3D6, 0x70);
 	outw(0x3D6, (inw(0x3D6) | 0x8070));
 	outw(0x46E8,0x0016);	/*setup mode*/
@@ -133,7 +81,7 @@ int main(void)
 	outb(0x3D6,0x2B);
 	bpp = inb(0x3D7)&0xF0;
     }
-    
+
     switch(bpp){
       case 0x20:
 	bpp = 4;
@@ -175,14 +123,14 @@ int main(void)
 	    printf("MR 0x%2.2X\t0x%2.2X\n",i,inb(0x3D3)&0xFF);
 	}
 	outb(0x3D3,storeReg);
-    } else {	
+    } else {
 	for(i = 0;i < 0x40;i++){
 	    outb(0x3D4,i);
 	    printf("CR 0x%2.2X\t0x%2.2X\n",i,inb(0x3D5)&0xFF);
 	}
 	outb(0x3D4,storeReg);
     }
-    
+
 
     printf("port 0x3CE (GC)\n");
     storeReg = inb(0x3CE);
@@ -242,45 +190,55 @@ int main(void)
 	printf("0x102\t0x%8X\n",inl(0x102));
 	printf("0x103\t0x%8X\n",inl(0x103));
 
-    }    
+    }
 
     storeReg = inb(0x3D4);
     {
+	unsigned char tmp;
+
 	outb(0x3D4,0);
 	HTotal = ((inb(0x3D5)&0xFF) + 5) << shift;
 	outb(0x3D4,1);
 	HDisplay = ((inb(0x3D5)&0xFF) + 1) << shift;
 	outb(0x3D4,4);
-	HSyncStart = ((inb(0x3D5)&0xFF) + 1) << shift;
+	HSyncStart = inb(0x3D5)&0xFF;
 	outb(0x3D4,5);
 	HSyncEnd = inb(0x3D5)&0x1F;
-	outb(0x3D4,5);
-	HSyncEnd += HSyncStart >> shift;
+	HSyncEnd |= HSyncStart & ~0x1F;
+	if (HSyncStart > HSyncEnd)
+	    HSyncEnd += (0x1F + 1);
+	HSyncStart++;
+	HSyncEnd++;
+	HSyncStart <<= shift;
 	HSyncEnd <<= shift;
-	
+
 	outb(0x3D4,6);
 	VTotal = inb(0x3D5)&0xFF;
 	outb(0x3D4,7);
-	VTotal |= (inb(0x3D5)&0x1) << 8;
-	VTotal |= (inb(0x3D5)&0x20) << 4;
+	tmp = inb(0x3D5)&0xFF;
+	VTotal |= (tmp&0x1) << 8;
+	VTotal |= (tmp&0x20) << 4;
 	VTotal += 2;
-	VDisplay = (inb(0x3D5)&0x2) << 7;
-	VDisplay |= (inb(0x3D5)&0x40) << 3;
-	VSyncStart = (inb(0x3D5)&0x4) << 6;
-	VSyncStart |= (inb(0x3D5)&0x80) << 2;
+	VDisplay = (tmp&0x2) << 7;
+	VDisplay |= (tmp&0x40) << 3;
+	VSyncStart = (tmp&0x4) << 6;
+	VSyncStart |= (tmp&0x80) << 2;
 	outb(0x3D4,0x12);
-	    VDisplay |= inb(0x3D5)&0xFF;
+	VDisplay |= inb(0x3D5)&0xFF;
 	VDisplay += 1;
 	outb(0x3D4,0x10);
 	VSyncStart |= inb(0x3D5)&0xFF;
-	
 	outb(0x3D4,0x11);
 	VSyncEnd = inb(0x3D5)&0xF;
-	VSyncEnd += VSyncStart;
-	
+	VSyncEnd |= VSyncStart & ~0xF;
+	if (VSyncStart > VSyncEnd)
+	    VSyncEnd += (0xF + 1);
+	VSyncStart++;
+	VSyncEnd++;
+
     }
     outb(0x3D4,storeReg);
-    
+
     printf("\nModeLine with port 0x3D4 (CRTC) %d %d %d %d %d %d %d %d\n",
 	   HDisplay, HSyncStart, HSyncEnd, HTotal,
 	   VDisplay, VSyncStart, VSyncEnd, VTotal);
@@ -300,6 +258,8 @@ int main(void)
 	printf("0x3CD\t0x%X  (IOSS)\n",inb(0x3CD)&0xFF);
       }
     }
-    RESET_IOPL();
+    xf86DisableIO();
     return 0;
 }
+
+#include "xf86getpagesize.c"

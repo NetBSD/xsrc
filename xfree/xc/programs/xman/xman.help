@@ -69,7 +69,7 @@ There are two ways to activate the menus.  The first is to click any
 pointer button in the menu button corresponding to the menu you want to
 activate.  The second method is to hold down the "Control" key and click
 the left pointer button for the Options menu or the middle pointer
-button for the Sections menu.  Reguardless of how the menu was
+button for the Sections menu.  Regardless of how the menu was
 activated, selecting items is the same.
 
 Once a menu is activated, continue to hold down the pointer button and
@@ -95,8 +95,8 @@ Search			Pop up a dialogue box that allows the entire
 			also available through this dialogue box.
 
 Show Both Screens	Split the manual page display window to display
-			both the current manual page and the directory. 
-Show One Screen		Return to a single screen display of either a 
+			both the current manual page and the directory.
+Show One Screen		Return to a single screen display of either a
 			manual page or directory listing.
 
 Remove This Man Page	Remove this manual page, do not quit.
@@ -106,7 +106,7 @@ Open New Man Page	Pop up a new manual page browser window.
 Show Version		Print the current version of xman to the
 			information display window.  Please include the
 			version number when reporting bugs.
- 
+
 Quit			Close all xman windows and quit xman.
 
 
@@ -164,7 +164,7 @@ KEYBOARD ACCELERATORS
 Xman contains a set of preinstalled keyboard accelerators.  These are a
 set of key bindings that perform many of the same operations as the menu
 items.  Since it is not necessary to pull down the menu,  these actions
-can be performed more quickly, hence the name accelerators.  
+can be performed more quickly, hence the name accelerators.
 
 The default key bindings for xman are:
 
@@ -174,7 +174,7 @@ Anywhere:
 	Control - h		Create the help window
 	Control - n		Create a new man page
 	Control - q		Exit xman
-	Control - s             Create a search popup 
+	Control - s             Create a search popup
 
 In a manual page, directory, or help window:
 
@@ -184,7 +184,9 @@ In a manual page, directory, or help window:
 In a manual page or directory:
 
 	Control - d		Display Directory
+				Repeat to toggle the directory-layout.
 	Control - m		Display Man Page
+				Repeat to show the man page's filename.
 
 In a manual page only:
 
@@ -226,3 +228,4 @@ Copyright 1988, 1989 X Consortium
 Edited by Donna Converse and Dave Sternlicht
 
 
+$XFree86: xc/programs/xman/xman.help,v 1.3 2004/04/22 14:15:05 tsi Exp $

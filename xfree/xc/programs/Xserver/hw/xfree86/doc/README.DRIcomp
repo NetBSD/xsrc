@@ -18,15 +18,15 @@ copies.
 
 OpenGL is a registered trademark and SGI is a trademark of Silicon Graphics,
 Inc.  Unix is a registered trademark of The Open Group.  The `X' device and X
-Window System are trademarks of The Open Group.  XFree86 is a trademark of
-The XFree86 Project.  Linux is a registered trademark of Linus Torvalds.
-Intel is a registered trademark of Intel Corporation.  3Dlabs, GLINT, and
-Oxygen are either registered trademarks or trademarks of 3Dlabs Inc. Ltd.
-3dfx, Voodoo3, Voodoo4, and Voodoo5 are registered trademarks of 3dfx Inter-
-active, Incorporated.  Matrox is a registered trademark of Matrox Electronic
-Systems Ltd.  ATI Rage and Radeon is a registered trademark of ATI Technolo-
-gies, Inc.  All other trademarks mentioned are the property of their respec-
-tive owners.
+Window System are trademarks of The Open Group.  XFree86 is a registered
+trademark of The XFree86 Project, Inc.  Linux is a registered trademark of
+Linus Torvalds.  Intel is a registered trademark of Intel Corporation.
+3Dlabs, GLINT, and Oxygen are either registered trademarks or trademarks of
+3Dlabs Inc. Ltd.  3dfx, Voodoo3, Voodoo4, and Voodoo5 are registered trade-
+marks of 3dfx Interactive, Incorporated.  Matrox is a registered trademark of
+Matrox Electronic Systems Ltd.  ATI Rage and Radeon is a registered trademark
+of ATI Technologies, Inc.  All other trademarks mentioned are the property of
+their respective owners.
 
 2.  Introduction
 
@@ -374,8 +374,8 @@ a 2.4.x kernel, you should add the following:
 
                  #define MesaUseSSE YES
 
-If you want to build the DRM kernel modules as part of the full build pro-
-cess, add the following:
+If you want to build the DRM kernel modules as part of the full build
+process, add the following:
 
                  #define BuildXF86DRM YES
 
@@ -551,7 +551,7 @@ At this point your X server should be up and running with hardware-acceler-
 ated direct rendering.  Please read the DRI User Guide for information about
 trouble shooting and how to use the DRI-enabled X server for 3D applications.
 
-     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/DRIcomp.sgml,v 1.20 dawes Exp $
+     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/DRIcomp.sgml,v 1.21 dawes Exp $
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.DRIcomp,v 3.17 2003/07/15 02:28:28 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.DRIcomp,v 3.19 2004/12/08 22:32:06 dawes Exp $

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/linux/int10/vm86/linux_vm86.c,v 1.3 2003/11/03 05:36:33 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/linux/int10/vm86/linux_vm86.c,v 1.4 2005/02/07 01:15:54 tsi Exp $ */
 
 #include "xf86.h"
 #include "xf86_OSproc.h"
@@ -268,27 +268,46 @@ vm86_rep(struct vm86_struct *ptr)
     int __res;
 
 #ifdef __PIC__
-    /* When compiling with -fPIC, we can't use asm constraint "b" because
-       %ebx is already taken by gcc. */
-    __asm__ __volatile__("pushl %%ebx\n\t"
-			 "movl %2,%%ebx\n\t"
-			 "movl %1,%%eax\n\t"
-			 "int $0x80\n\t"
-			 "popl %%ebx"
-			 :"=a" (__res)
-			 :"n" ((int)113), "r" ((struct vm86_struct *)ptr));
+    /*
+     * When compiling with -fPIC, we can't use asm constraint "b" because
+     * %ebx is already taken by gcc.
+     */
+    __asm__ __volatile__
+    (
+	"pushl %%ebx\n\t"
+	"push %%gs\n\t"
+	"movl %2,%%ebx\n\t"
+	"movl %1,%%eax\n\t"
+	"int $0x80\n\t"
+	"pop %%gs\n\t"
+	"popl %%ebx"
+	: "=a" (__res)
+	: "n" ((int)113),
+	  "r" ((struct vm86_struct *)ptr)
+	: "memory"
+    );
 #else
-    __asm__ __volatile__("int $0x80\n\t"
-			 :"=a" (__res):"a" ((int)113),
-			 "b" ((struct vm86_struct *)ptr));
+    __asm__ __volatile__
+    (
+	"push %%gs\n\t"
+	"int $0x80\n\t"
+	"pop %%gs"
+	: "=a" (__res)
+	: "a" ((int)113),
+	  "b" ((struct vm86_struct *)ptr)
+	: "memory"
+    );
 #endif
 
-	    if (__res < 0) {
-		errno = -__res;
-		__res = -1;
-	    }
-	    else errno = 0;
-	    return __res;
+    if (__res < 0) {
+	errno = -__res;
+	__res = -1;
+    }
+    else
+    {
+	errno = 0;
+    }
+    return __res;
 }
 
 #endif

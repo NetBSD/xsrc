@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/tdfx/tdfx_dga.c,v 1.6 2001/03/21 17:02:26 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/tdfx/tdfx_dga.c,v 1.7 2004/12/07 15:59:20 tsi Exp $ */
 
 #include "xf86.h"
 #include "xf86_OSproc.h"
@@ -8,8 +8,9 @@
 #include "tdfx.h"
 #include "vgaHW.h"
 
-static Bool TDFX_OpenFramebuffer(ScrnInfoPtr, char **, unsigned char **, 
-				 int *, int *, int *);
+static Bool TDFX_OpenFramebuffer(ScrnInfoPtr, char **, unsigned int *, 
+				 unsigned int *, unsigned int *,
+				 unsigned int *);
 static Bool TDFX_SetMode(ScrnInfoPtr, DGAModePtr);
 static int  TDFX_GetViewport(ScrnInfoPtr);
 static void TDFX_SetViewport(ScrnInfoPtr, int, int, int);
@@ -193,18 +194,18 @@ static Bool
 TDFX_OpenFramebuffer(
    ScrnInfoPtr pScrn, 
    char **name,
-   unsigned char **mem,
-   int *size,
-   int *offset,
-   int *flags
+   unsigned int *mem,
+   unsigned int *size,
+   unsigned int *offset,
+   unsigned int *flags
 ){
     TDFXPtr pTDFX = TDFXPTR(pScrn);
 
     *name = NULL; 		/* no special device */
-    *mem = (unsigned char*)pTDFX->LinearAddr[0] + pTDFX->fbOffset;
+    *mem = pTDFX->LinearAddr[0] + pTDFX->fbOffset;
     *size = pTDFX->FbMapSize;
     *offset = /* pTDFX->fbOffset */ 0 ;  /* DGA is broken */
-    *flags = DGA_NEED_ROOT;
+    *flags = 0;
 
     return TRUE;
 }

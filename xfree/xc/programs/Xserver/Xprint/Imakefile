@@ -3,22 +3,9 @@ XCOMM $Xorg: Imakefile,v 1.4 2001/03/14 18:44:11 pookie Exp $
 
 
 
-XCOMM $XFree86: xc/programs/Xserver/Xprint/Imakefile,v 1.20 2003/07/16 01:38:33 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/Xprint/Imakefile,v 1.21 2005/01/31 22:54:46 tsi Exp $
 
 #include <Server.tmpl>
-
-#ifndef XpRasterDDX
-#define XpRasterDDX YES
-#endif
-#ifndef XpColorPclDDX
-#define XpColorPclDDX YES
-#endif
-#ifndef XpMonoPclDDX
-#define XpMonoPclDDX NO
-#endif
-#ifndef XpPostScriptDDX
-#define XpPostScriptDDX YES
-#endif
 
 SRCS1 =	Init.c Quarks.c attributes.c Util.c mediaSizes.c \
 	Oid.c AttrValid.c

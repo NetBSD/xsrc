@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/sco/sco_mouse.c,v 3.13 2002/11/20 23:07:50 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/sco/sco_mouse.c,v 3.14 2005/02/03 03:32:54 dawes Exp $ */
 /*
  * Copyright 2001 by J. Kean Johnston <jkj@sco.com>
  *
@@ -20,8 +20,6 @@
  * OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
-
-/* $XConsortium$ */
 
 #include "X.h"
 #include "compiler.h"
@@ -229,6 +227,7 @@ OsMousePreInit(InputInfoPtr pInfo, const char *protocol, int flags)
       xf86Msg(X_ERROR, "%s: cannot open event manager (%s)\n",
           pInfo->name, evtErrStr(pInfo->fd));
       xfree(pMse);
+      pInfo->private = NULL;
       return FALSE;
     }
   }

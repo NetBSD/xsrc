@@ -34,7 +34,7 @@
  * with <TAB> characters expanded at 8-column intervals.
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/i810/i830_dga.c,v 1.3 2003/02/26 04:11:23 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/i810/i830_dga.c,v 1.6 2004/12/07 15:59:19 tsi Exp $ */
 
 #include "xf86.h"
 #include "xf86_OSproc.h"
@@ -42,14 +42,14 @@
 #include "xf86Pci.h"
 #include "xf86PciInfo.h"
 #include "xaa.h"
-#include "xaalocal.h"
 #include "i830.h"
 #include "i810_reg.h"
 #include "dgaproc.h"
 #include "vgaHW.h"
 
-static Bool I830_OpenFramebuffer(ScrnInfoPtr, char **, unsigned char **,
-				 int *, int *, int *);
+static Bool I830_OpenFramebuffer(ScrnInfoPtr, char **, unsigned int *,
+				 unsigned int *, unsigned int *,
+				 unsigned int *);
 static Bool I830_SetMode(ScrnInfoPtr, DGAModePtr);
 static void I830_Sync(ScrnInfoPtr);
 static int I830_GetViewport(ScrnInfoPtr);
@@ -273,17 +273,25 @@ I830_BlitTransRect(ScrnInfoPtr pScrn,
 static Bool
 I830_OpenFramebuffer(ScrnInfoPtr pScrn,
 		     char **name,
-		     unsigned char **mem, int *size, int *offset, int *flags)
+		     unsigned int *mem,
+		     unsigned int *size,
+		     unsigned int *offset,
+		     unsigned int *flags)
 {
    I830Ptr pI830 = I830PTR(pScrn);
 
    MARKER();
 
    *name = NULL;			/* no special device */
-   *mem = (unsigned char *)(pI830->LinearAddr + pScrn->fbOffset);
-   *size = pI830->FrontBuffer.Size;
+   *mem = pI830->LinearAddr + pScrn->fbOffset;
+   if (pI830->init == 0)
+      *size = pI830->FrontBuffer.Size;
+   else {
+      I830Ptr pI8301 = I830PTR(pI830->entityPrivate->pScrn_1);
+      *size = pI8301->FrontBuffer2.Size;
+   }
    *offset = 0;
-   *flags = DGA_NEED_ROOT;
+   *flags = 0;
 
    DPRINTF(PFX,
 	   " mem == 0x%.8x (pI830->LinearAddr)\n"

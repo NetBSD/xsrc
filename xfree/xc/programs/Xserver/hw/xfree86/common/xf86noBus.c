@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86noBus.c,v 1.3 2004/02/13 23:58:39 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86noBus.c,v 1.4 2004/06/07 22:23:02 dawes Exp $ */
 
 /*
  * Copyright (c) 2000-2002 by The XFree86 Project, Inc.
@@ -77,7 +77,7 @@ xf86ClaimNoSlot(DriverPtr drvp, int chipset, GDevPtr dev, Bool active)
     num = xf86AllocateEntity();
     p = xf86Entities[num];
     p->driver = drvp;
-    p->chipset = 0;
+    p->chipset = chipset;
     p->busType = BUS_NONE;
     p->active = active;
     p->inUse = FALSE;
