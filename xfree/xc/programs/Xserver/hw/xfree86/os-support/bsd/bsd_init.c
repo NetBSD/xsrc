@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bsd/bsd_init.c,v 3.16 2001/02/03 19:33:05 herrb Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bsd/bsd_init.c,v 3.18 2001/11/08 22:33:50 herrb Exp $ */
 /*
  * Copyright 1992 by Rich Murphey <Rich@Rice.edu>
  * Copyright 1993 by David Wexelblat <dwex@goblin.org>
@@ -32,6 +32,9 @@
 #include "xf86.h"
 #include "xf86Priv.h"
 #include "xf86_OSlib.h"
+
+#include <sys/utsname.h>
+#include <stdlib.h>
 
 static Bool KeepTty = FALSE;
 static int devConsoleFd = -1;
@@ -144,6 +147,7 @@ xf86OpenConsole()
 {
     int i, fd = -1;
     int result;
+    struct utsname uts;
     xf86ConsOpen_t *driver;
 #if defined (SYSCONS_SUPPORT) || defined (PCVT_SUPPORT)
     vtmode_t vtmode;
@@ -225,6 +229,16 @@ xf86OpenConsole()
 #endif
 #if defined (SYSCONS_SUPPORT) || defined (PCVT_SUPPORT)
 	case SYSCONS:
+	    /* as of FreeBSD 2.2.8, syscons driver does not need the #1 vt
+	     * switching anymore. Here we check for FreeBSD 3.1 and up.
+	     * Add cases for other *BSD that behave the same.
+	    */
+	    uname (&uts);
+	    if (strcmp(uts.sysname, "FreeBSD") == 0) {
+		i = atof(uts.release) * 100;
+		if (i >= 310) goto acquire_vt;
+	    }
+	    /* otherwise fall through */
 	case PCVT:
 	    /*
 	     * First activate the #1 VT.  This is a hack to allow a server
@@ -240,7 +254,8 @@ xf86OpenConsole()
 		}
 		sleep(1);
 	    }
-	   
+
+acquire_vt:
 	    /*
 	     * now get the VT
 	     */
@@ -582,7 +597,11 @@ xf86OpenWScons()
 
     /* XXX Is this ok? */
     for (i = 0; i < 8; i++) {
+#if defined(__NetBSD__)
 	sprintf(ttyname, "/dev/ttyE%d", i);
+#elif defined(__OpenBSD__)
+	sprintf(ttyname, "/dev/ttyC%d", i);
+#endif
 	if ((fd = open(ttyname, 2)) != -1)
 	    break;
     }

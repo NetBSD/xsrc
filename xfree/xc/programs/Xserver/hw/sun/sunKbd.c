@@ -39,12 +39,13 @@ OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
 THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ********************************************************/
-/* $XFree86: xc/programs/Xserver/hw/sun/sunKbd.c,v 1.5 2001/01/17 22:36:50 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/sun/sunKbd.c,v 1.8 2001/10/28 03:33:11 tsi Exp $ */
 
 #define NEED_EVENTS
 #include "sun.h"
 #include "keysym.h"
 #include "Sunkeysym.h"
+#include "mi.h"
 
 #ifdef XKB
 #include <X11/extensions/XKB.h>
@@ -286,6 +287,7 @@ static KeyCode LookupKeyCode (keysym, keysymsrec)
 	for (ii = 0; ii < keysymsrec->mapWidth; ii++)
 	    if (keysymsrec->map[index++] == keysym)
 		return i;
+    return 0;
 }
 
 static void pseudoKey(device, down, keycode)
@@ -412,7 +414,7 @@ static void sunKbdCtrl (device, ctrl)
     	if (ioctl (pPriv->fd, KIOCCMD, &kbdClickCmd) == -1)
  	    Error("Failed to set keyclick");
     }
-    if (pPriv->type == KB_SUN4 && pPriv->leds != ctrl->leds & 0x0f)
+    if ((pPriv->type == KB_SUN4) && (pPriv->leds != (ctrl->leds & 0x0f)))
 	DoLEDs(device, ctrl, pPriv);
 }
 
@@ -714,7 +716,7 @@ int sunKbdProc (device, what)
 	 */
 	if (sunChangeKbdTranslation(pPriv->fd,TRUE) == -1)
 	    FatalError("Can't set keyboard translation\n");
-	(void) AddEnabledDevice(pPriv->fd);
+	AddEnabledDevice(pPriv->fd);
 	pKeyboard->on = TRUE;
 	break;
 

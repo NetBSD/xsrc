@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/doc/man/X11/Imakefile,v 1.2 2000/11/28 18:49:09 dawes Exp $
+XCOMM $XFree86: xc/doc/man/X11/Imakefile,v 1.4 2001/12/17 03:04:40 dawes Exp $
 
 MANDIR = $(LIBMANDIR)
 MANSUFFIX = $(LIBMANSUFFIX)
@@ -241,7 +241,7 @@ InstallManPageAliases(XSetScreenSaver,$(MANDIR),XForceScreenSaver XActivateScree
 InstallManPageLong(XSeSelOwn,$(MANDIR),XSetSelectionOwner)
 InstallManPageAliases(XSetSelectionOwner,$(MANDIR),XGetSelectionOwner XConvertSelection)
 InstallManPageLong(XSeState,$(MANDIR),XSetState)
-InstallManPageAliases(XSetState,$(MANDIR),XSetFunction XSetPlanemask XSetForeground XSetBackground)
+InstallManPageAliases(XSetState,$(MANDIR),XSetFunction XSetPlaneMask XSetForeground XSetBackground)
 InstallManPageLong(XSeTFHint,$(MANDIR),XSetTransientForHint)
 InstallManPageAliases(XSetTransientForHint,$(MANDIR),XGetTransientForHint)
 InstallManPageLong(XSeTProp,$(MANDIR),XSetTextProperty)
@@ -285,7 +285,7 @@ InstallManPageLong(XUmapEven,$(MANDIR),XUnmapEvent)
 InstallManPageLong(XUnmapWin,$(MANDIR),XUnmapWindow)
 InstallManPageAliases(XUnmapWindow,$(MANDIR),XUnmapSubwindows)
 InstallManPageLong(XVCNList,$(MANDIR),XVaCreateNestedList)
-InstallManPageLong(XVEvent,$(MANDIR),XVisibilityNotifyEvent)
+InstallManPageLong(XVEvent,$(MANDIR),XVisibilityEvent)
 InstallManPageLong(XWarpPntr,$(MANDIR),XWarpPointer)
 InstallManPageLong(Xcms3CoC,$(MANDIR),XcmsCCCOfColormap)
 InstallManPageAliases(XcmsCCCOfColormap,$(MANDIR),XcmsSetCCCOfColormap)

@@ -28,19 +28,16 @@ other dealings in this Software without prior written authorization
 from the X Consortium.
 
 */
-/* $XFree86: xc/programs/xman/ScrollByL.c,v 1.4 2000/09/26 15:57:26 tsi Exp $ */
+/* $XFree86: xc/programs/xman/ScrollByL.c,v 1.6 2001/10/28 03:34:36 tsi Exp $ */
 
-#if ( !defined(lint) && !defined(SABER))
+#if !defined(lint) && !defined(SABER) && 0
   static char rcs_version[] = "$Athena: ScrollByL.c,v 4.5 88/12/19 13:46:04 kit Exp $";
 #endif
 
 #include <stdio.h>
 #include <ctype.h>
-
 #include <X11/Xos.h>
-#ifndef X_NOT_STDC_ENV
 #include <stdlib.h>
-#endif
 
 #include <X11/IntrinsicP.h>
 #include <sys/stat.h>		/* depends on IntrinsicP.h */

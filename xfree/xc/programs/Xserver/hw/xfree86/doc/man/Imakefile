@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/doc/man/Imakefile,v 3.5 2000/03/04 01:07:33 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/doc/man/Imakefile,v 3.6 2001/11/01 23:35:32 dawes Exp $
 
 MANDIR = $(LIBMANDIR)
 MANSUFFIX = $(LIBMANSUFFIX)
@@ -26,6 +26,6 @@ InstallManPageAliases(XF86Misc,$(MANDIR),XF86MiscQueryExtension XF86MiscQueryVer
 /* XXX Check if this is up to date */
 InstallManPageLong(XF86VM,$(MANDIR),XF86VidMode)
 #if ExpandManNames
-InstallManPageAliases(XF86VidMode,$(MANDIR),XF86VidModeQueryExtension XF86VidModeQueryVersion XF86VidModeGetModeLine XF86VidModeGetAllModeLines XF86VidModeDeleteModeLine XF86VidModeModModeLine XF86VidModeSwitchMode XF86VidModeSwitchToMode XF86VidModeLockModeSwitch XF86VidModeGetMonitor XF86VidModeGetViewPort XF86VidModeSetViewPort)
+InstallManPageAliases(XF86VidMode,$(MANDIR),XF86VidModeQueryExtension XF86VidModeQueryVersion XF86VidModeGetModeLine XF86VidModeGetAllModeLines XF86VidModeDeleteModeLine XF86VidModeModModeLine XF86VidModeSwitchMode XF86VidModeSwitchToMode XF86VidModeLockModeSwitch XF86VidModeGetMonitor XF86VidModeGetViewPort XF86VidModeSetViewPort XF86VidModeValidateModeLine)
 #endif
 

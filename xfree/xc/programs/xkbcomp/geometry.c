@@ -24,6 +24,7 @@
  THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
  ********************************************************/
+/* $XFree86: xc/programs/xkbcomp/geometry.c,v 1.3 2001/12/19 21:30:30 dawes Exp $ */
 
 #include "xkbcomp.h"
 #include "tokens.h"
@@ -2598,13 +2599,8 @@ DoodadInfo	new;
 VarDef *	var;
     
     if (def->common.stmtType==StmtIndicatorMapDef) {
-	IndicatorMapDef *imap= (IndicatorMapDef *)def;
-	Atom		name= imap->name;
-	VarDef *	body= imap->body;
 	def->common.stmtType= StmtDoodadDef;
 	def->type= XkbIndicatorDoodad;
-	def->name= name;
-	def->body= body;
     }
     InitDoodadInfo(&new,def->type,si,info);
     new.name= XkbInternAtom(info->dpy,XkbAtomGetString(NULL,def->name),False);
@@ -3066,7 +3062,7 @@ VerifyDoodadInfo(di,info)
 	    return False;
 	}
     }
-    if (di->defs.defined&_GD_Priority==0) {
+    if ((di->defs.defined & _GD_Priority) == 0) {
 	/* calculate priority -- should be just above previous doodad/row */
     }
     switch (di->type) {

@@ -1,9 +1,13 @@
-/* $Xorg: colormap.h,v 1.3 2000/08/17 19:53:57 cpqbld Exp $ */
+/* $Xorg: colormap.h,v 1.4 2001/02/09 02:05:32 xorgcvs Exp $ */
 /*
 
 Copyright 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -42,6 +46,7 @@ in this Software without prior written authorization from The Open Group.
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  * 
  */
+/* $XFree86: xc/programs/lbxproxy/include/colormap.h,v 1.6 2001/12/14 20:00:55 dawes Exp $ */
 
 #ifndef COLORMAP_H_
 #define COLORMAP_H_
@@ -177,6 +182,47 @@ extern Entry * FindBestPixel(
 #endif
 );
 
+extern void ReleaseCmap(
+#if NeedFunctionPrototypes
+    ClientPtr	/* client */,
+    ColormapPtr	/* pmap */
+#endif
+);
+
+extern int CreateColormap(
+#if NeedFunctionPrototypes
+    ClientPtr /*client*/,
+    Colormap /*cmap*/,
+    VisualID /*visual*/
+#endif
+);
+
+extern int FreeColormap(
+#if NeedFunctionPrototypes
+    ClientPtr /*client*/,
+    Colormap /*cmap*/
+#endif
+);
+
+extern int CreateVisual(
+#if NeedFunctionPrototypes
+    int /*depth*/,
+    xVisualType * /*vis*/
+#endif
+);
+
+extern LbxVisualPtr GetVisual(
+#if NeedFunctionPrototypes
+     VisualID /*vid*/
+#endif
+);
+
+extern Bool InitColors(
+#if NeedFunctionPrototypes
+    void
+#endif
+);
+
 extern RGBEntryPtr FindColorName(
 #if NeedFunctionPrototypes
     XServerPtr /*server*/,
@@ -195,16 +241,17 @@ extern Bool AddColorName(
 #endif
 );
 
-extern int CreateVisual(
+extern void FreeColors(
 #if NeedFunctionPrototypes
-    int /*depth*/,
-    xVisualType * /*vis*/
+    void
 #endif
 );
 
-extern LbxVisualPtr GetVisual(
+extern int DestroyColormap(
 #if NeedFunctionPrototypes
-     VisualID /*vid*/
+    ClientPtr /*client*/,
+    pointer /*pmap*/,
+    XID /*id*/
 #endif
 );
 
@@ -216,26 +263,6 @@ extern int FindPixel(
     CARD32 /*green*/,
     CARD32 /*blue*/,
     Entry ** /*pent*/
-#endif
-);
-
-extern int StorePixel(
-#if NeedFunctionPrototypes
-    ClientPtr /*client*/,
-    ColormapPtr /*pmap*/,
-    CARD32 /*red*/,
-    CARD32 /*green*/,
-    CARD32 /*blue*/,
-    Pixel /*pixel*/,
-    Bool /*from_server*/
-#endif
-);
-
-extern int FreeClientPixels(
-#if NeedFunctionPrototypes
-    ClientPtr /*client*/,
-    pointer /*pcr*/,
-    XID /*id*/
 #endif
 );
 
@@ -256,6 +283,41 @@ extern int AllocCell(
 #endif
 );
 
+extern int StorePixel(
+#if NeedFunctionPrototypes
+    ClientPtr /*client*/,
+    ColormapPtr /*pmap*/,
+    CARD32 /*red*/,
+    CARD32 /*green*/,
+    CARD32 /*blue*/,
+    Pixel /*pixel*/,
+    Bool /*from_server*/
+#endif
+);
+
+extern void GotServerFreeCellsEvent(
+#if NeedFunctionPrototypes
+    ColormapPtr	/* pmap */,
+    Pixel	/* pixel_start */,
+    Pixel	/* pixel_end */
+#endif
+);
+
+extern void FreeAllClientPixels(
+#if NeedFunctionPrototypes
+    ColormapPtr /* pmap */,
+    int         /* client */
+#endif
+);
+
+extern int FreeClientPixels(
+#if NeedFunctionPrototypes
+    ClientPtr /*client*/,
+    pointer /*pcr*/,
+    XID /*id*/
+#endif
+);
+
 extern int FreePixels(
 #if NeedFunctionPrototypes
     ClientPtr /*client*/,
@@ -263,43 +325,6 @@ extern int FreePixels(
     int /*num*/,
     Pixel * /*pixels*/,
     Pixel /*mask*/
-#endif
-);
-
-extern int CreateColormap(
-#if NeedFunctionPrototypes
-    ClientPtr /*client*/,
-    Colormap /*cmap*/,
-    VisualID /*visual*/
-#endif
-);
-
-extern int DestroyColormap(
-#if NeedFunctionPrototypes
-    ClientPtr /*client*/,
-    pointer /*pmap*/,
-    XID /*id*/
-#endif
-);
-
-extern int FreeColormap(
-#if NeedFunctionPrototypes
-    ClientPtr /*client*/,
-    Colormap /*cmap*/
-#endif
-);
-
-extern int CopyAndFreeColormap(
-#if NeedFunctionPrototypes
-    ClientPtr /*client*/,
-    Colormap /*new*/,
-    Colormap /*old*/
-#endif
-);
-
-extern void FreeColors(
-#if NeedFunctionPrototypes
-    void
 #endif
 );
 

@@ -1,4 +1,4 @@
-/* $Xorg: utils.c,v 1.3 2000/08/17 19:54:23 cpqbld Exp $ */
+/* $Xorg: utils.c,v 1.4 2001/02/09 02:05:45 xorgcvs Exp $ */
 /*
  * misc os utilities
  */
@@ -6,7 +6,11 @@
  
 Copyright 1990, 1991, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -42,13 +46,11 @@ in this Software without prior written authorization from The Open Group.
  * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
  * THIS SOFTWARE.
  */
-/* $XFree86: xc/programs/xfs/os/utils.c,v 3.13 2001/02/13 19:19:18 dawes Exp $ */
+/* $XFree86: xc/programs/xfs/os/utils.c,v 3.18 2002/01/07 20:38:30 dawes Exp $ */
 
 #include	<stdio.h>
 #include	<X11/Xos.h>
-#ifndef X_NOT_STDC_ENV
 #include	<stdlib.h>
-#endif
 #include	"misc.h"
 #include	"globals.h"
 #include	<signal.h>
@@ -59,6 +61,7 @@ in this Software without prior written authorization from The Open Group.
 #include	<unistd.h>
 #include	<pwd.h>
 #include	<grp.h>
+#include	<errno.h>
 #include	<sys/types.h>
 
 #ifndef X_NOT_POSIX
@@ -85,14 +88,7 @@ in this Software without prior written authorization from The Open Group.
 #define SIGNALS_RESET_WHEN_CAUGHT
 #endif
 
-#ifdef X_NOT_STDC_ENV
-char *realloc();
-#else
-#ifdef abs
-#undef abs
-#endif
 #include <stdlib.h>
-#endif
 
 extern char *configfilename;
 static Bool dropPriv = FALSE; /* whether or not to drop root privileges */
@@ -109,13 +105,20 @@ Bool        portFromCmdline = FALSE;
 OldListenRec *OldListen = NULL;
 int 	     OldListenCount = 0;
 
+#ifdef STDERR_FILENO
+# define WRITES write(STDERR_FILENO, s, strlen(s))
+#else
+# define WRITES write(fileno(stderr), s, strlen(s))
+#endif
+
 /* ARGSUSED */
 SIGVAL
 AutoResetServer(int n)
 {
+    int olderrno = errno;
 
 #ifdef DEBUG
-    fprintf(stderr, "got a reset signal\n");
+    WRITES("got a reset signal\n");
 #endif
 
     dispatchException |= DE_RESET;
@@ -124,28 +127,31 @@ AutoResetServer(int n)
 #ifdef SIGNALS_RESET_WHEN_CAUGHT
     signal(SIGHUP, AutoResetServer);
 #endif
+    errno = olderrno;
 }
 
 /* ARGSUSED */
 SIGVAL
 GiveUp(int n)
 {
-
+    int olderrno = errno;
 #ifdef DEBUG
-    fprintf(stderr, "got a TERM signal\n");
+    WRITES("got a TERM signal\n");
 #endif
 
     dispatchException |= DE_TERMINATE;
     isItTimeToYield = TRUE;
+    errno = olderrno;
 }
 
 /* ARGSUSED */
 SIGVAL
 ServerReconfig(int n)
 {
+    int olderrno = errno;
 
 #ifdef DEBUG
-    fprintf(stderr, "got a re-config signal\n");
+    WRITES("got a re-config signal\n");
 #endif
 
     dispatchException |= DE_RECONFIG;
@@ -154,15 +160,17 @@ ServerReconfig(int n)
 #ifdef SIGNALS_RESET_WHEN_CAUGHT
     signal(SIGUSR1, ServerReconfig);
 #endif
+    errno = olderrno;
 }
 
 /* ARGSUSED */
 SIGVAL
 ServerCacheFlush(int n)
 {
+    int olderrno = errno;
 
 #ifdef DEBUG
-    fprintf(stderr, "got a flush signal\n");
+    WRITES("got a flush signal\n");
 #endif
 
     dispatchException |= DE_FLUSH;
@@ -171,15 +179,17 @@ ServerCacheFlush(int n)
 #ifdef SIGNALS_RESET_WHEN_CAUGHT
     signal(SIGUSR2, ServerCacheFlush);
 #endif
+    errno = olderrno;
 }
 
 /* ARGSUSED */
 SIGVAL
 CleanupChild(int n)
 {
+    int olderrno = errno;
 
 #ifdef DEBUG
-    fprintf(stderr, "got a child signal\n");
+    WRITES("got a child signal\n");
 #endif
 
     wait(NULL);
@@ -187,6 +197,7 @@ CleanupChild(int n)
 #ifdef SIGNALS_RESET_WHEN_CAUGHT
     signal(SIGCHLD, CleanupChild);
 #endif
+    errno = olderrno;
 }
 
 long
@@ -474,6 +485,7 @@ SetUserId(void)
 		ErrorF("fatal: couldn't set groupid to xfs user's group\n");
 		exit(1);
 	    }
+#ifndef QNX4
 #ifndef __CYGWIN__
 	    if (setgroups(0, NULL)) {
 		ErrorF("fatal: couldn't drop supplementary groups\n");
@@ -484,6 +496,7 @@ SetUserId(void)
 		ErrorF("fatal: couldn't init supplementary groups\n");
 		exit(1);
 	    }
+#endif /* QNX4 */
 	    if (setuid(pwent->pw_uid)) {
 		ErrorF("fatal: couldn't set userid to %s user\n", user);
 		exit(1);

@@ -1,4 +1,5 @@
 /* $XConsortium: page.c,v 1.5 91/07/26 00:40:20 keith Exp $ */
+/* $XFree86: xc/programs/xditview/page.c,v 1.4 2001/08/27 23:35:12 dawes Exp $ */
 
 /*
  * page.c
@@ -13,14 +14,8 @@
 #include <ctype.h>
 #include "DviP.h"
 
-#ifdef X_NOT_STDC_ENV
-extern long	ftell();
-#endif
-
 static DviFileMap *
-MapPageNumberToFileMap (dw, number)
-	DviWidget	dw;
-	int		number;
+MapPageNumberToFileMap (DviWidget dw, int number)
 {
 	DviFileMap	*m;
 
@@ -30,6 +25,7 @@ MapPageNumberToFileMap (dw, number)
 	return m;
 }
 
+void
 DestroyFileMap (m)
 	DviFileMap	*m;
 {
@@ -41,6 +37,7 @@ DestroyFileMap (m)
 	}
 }
 
+void
 ForgetPagePositions (dw)
 	DviWidget	dw;
 {
@@ -48,6 +45,7 @@ ForgetPagePositions (dw)
 	dw->dvi.file_map = 0;
 }
 
+void
 RememberPagePosition(dw, number)
 	DviWidget	dw;
 	int		number;
@@ -66,6 +64,7 @@ RememberPagePosition(dw, number)
 		m->position = ftell (dw->dvi.file);
 }
 
+long
 SearchPagePosition (dw, number)
 	DviWidget	dw;
 	int		number;
@@ -77,6 +76,7 @@ SearchPagePosition (dw, number)
 	return m->position;
 }
 
+void
 FileSeek(dw, position)
 DviWidget	dw;
 long		position;

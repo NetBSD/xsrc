@@ -95,5 +95,5 @@ an edge only if the implementation is unable to distinguish which side of
 the edge the vertex lies on. Two edges are merged only when both endpoints
 are identical.
 .SH SEE ALSO
-\%\f3gluGetTessProperty\fP,
-\%\f3gluNewTess\fP
+\%\f3gluGetTessProperty(3G)\fP,
+\%\f3gluNewTess(3G)\fP

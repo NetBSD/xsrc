@@ -27,11 +27,11 @@ OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
 THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ********************************************************/
-/* $XFree86: xc/programs/Xserver/hw/sun/kbd_mode.c,v 3.8 2001/01/17 22:36:49 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/sun/kbd_mode.c,v 3.10 2001/10/28 03:33:10 tsi Exp $ */
 
-#ifndef lint
+/*
 static  char sccsid[] = "@(#)kbd_mode.c 7.1 87/04/13";
-#endif
+ */
 
 /*
  * Copyright 1986 by Sun Microsystems, Inc.
@@ -62,15 +62,17 @@ static  char sccsid[] = "@(#)kbd_mode.c 7.1 87/04/13";
 #endif
 #endif
 #include <stdio.h>
+#include <unistd.h>
 
 static void         die(), usage();
 static int          kbd_fd;
 
+int
 main(argc, argv)
     int    argc;
     char** argv;
 {
-    int    code, translate, direct = -1;
+    int    code = 0, translate, direct = -1;
     char   led;
     int    click;
 

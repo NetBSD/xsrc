@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xaa.h,v 1.35 2000/11/18 19:37:24 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xaa.h,v 1.36 2001/06/03 19:47:59 mvojkovi Exp $ */
 
 #ifndef _XAA_H
 #define _XAA_H
@@ -196,10 +196,12 @@
 
 /* render flags */
 
+#define XAA_RENDER_POWER_OF_2_TILE_ONLY	0x00000008
 #define XAA_RENDER_NO_SRC_ALPHA		0x00000004
 #define XAA_RENDER_IMPRECISE_ONLY	0x00000002	
 #define XAA_RENDER_NO_TILE		0x00000001		
 
+#define XAA_RENDER_REPEAT		0x00000001
 
 typedef void (* ValidateGCProcPtr)(
    GCPtr         pGC,

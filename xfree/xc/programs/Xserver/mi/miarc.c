@@ -1,9 +1,13 @@
-/* $XFree86: xc/programs/Xserver/mi/miarc.c,v 3.8 2001/01/17 22:37:05 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/mi/miarc.c,v 3.13 2002/01/12 22:20:33 dawes Exp $ */
 /***********************************************************
 
 Copyright 1987, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -41,7 +45,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $Xorg: miarc.c,v 1.3 2000/08/17 19:53:36 cpqbld Exp $ */
+/* $Xorg: miarc.c,v 1.4 2001/02/09 02:05:20 xorgcvs Exp $ */
 /* Author: Keith Packard and Bob Scheifler */
 /* Warning: this code is toxic, do not dally very long here. */
 
@@ -64,12 +68,11 @@ SOFTWARE.
 #include "mifillarc.h"
 #include "Xfuncproto.h"
 
-static double miDsin(), miDcos(), miDasin(), miDatan2();
-double	cbrt(
-#if NeedFunctionPrototypes
-	     double
-#endif
-);
+static double miDsin(double a);
+static double miDcos(double a);
+static double miDasin(double v);
+static double miDatan2(double dy, double dx);
+double	cbrt(double);
 
 #ifdef ICEILTEMPDECL
 ICEILTEMPDECL
@@ -98,7 +101,7 @@ ICEILTEMPDECL
 #undef max
 #undef min
 
-#if defined (__GNUC__) && defined (__STDC__) && !defined (__STRICT_ANSI__)
+#if defined (__GNUC__) && !defined (__STRICT_ANSI__)
 #define USE_INLINE
 #endif
 
@@ -116,13 +119,13 @@ inline static const int min (const int x, const int y)
 #else
 
 static int
-max (x, y)
+max (int x, int y)
 {
 	return x>y? x:y;
 }
 
 static int
-min (x, y)
+min (int x, int y)
 {
 	return x<y? x:y;
 }
@@ -239,12 +242,27 @@ typedef struct _miPolyArc {
 				 GCLineWidth | GCCapStyle | GCJoinStyle)
 static CARD32 gcvals[6];
 
-static void fillSpans(), newFinalSpan();
-static void drawArc(), drawQuadrant(), drawZeroArc();
-static void miArcJoin(), miArcCap(), miRoundCap(), miFreeArcs();
-static int computeAngleFromPath();
-static miPolyArcPtr miComputeArcs ();
-static int miGetArcPts();
+static void fillSpans(DrawablePtr pDrawable, GCPtr pGC);
+static void newFinalSpan(int y, register int xmin, register int xmax);
+static void drawArc(xArc *tarc, int l, int a0, int a1, miArcFacePtr right,
+		    miArcFacePtr left);
+static void drawZeroArc(DrawablePtr pDraw, GCPtr pGC, xArc *tarc, int lw,
+			miArcFacePtr left, miArcFacePtr right);
+static void miArcJoin(DrawablePtr pDraw, GCPtr pGC, miArcFacePtr pLeft,
+		      miArcFacePtr pRight, int xOrgLeft, int yOrgLeft,
+		      double xFtransLeft, double yFtransLeft,
+		      int xOrgRight, int yOrgRight,
+		      double xFtransRight, double yFtransRight);
+static void miArcCap(DrawablePtr pDraw, GCPtr pGC, miArcFacePtr pFace,
+		     int end, int xOrg, int yOrg, double xFtrans,
+		     double yFtrans);
+static void miRoundCap(DrawablePtr pDraw, GCPtr pGC, SppPointRec pCenter,
+		       SppPointRec pEnd, SppPointRec pCorner,
+		       SppPointRec pOtherCorner, int fLineEnd,
+		       int xOrg, int yOrg, double xFtrans, double yFtrans);
+static void miFreeArcs(miPolyArcPtr arcs, GCPtr pGC);
+static miPolyArcPtr miComputeArcs(xArc *parcs, int narcs, GCPtr pGC);
+static int miGetArcPts(SppArcPtr parc, int cpt, SppPointPtr *ppPts);
 
 # define CUBED_ROOT_2	1.2599210498948732038115849718451499938964
 # define CUBED_ROOT_4	1.5874010519681993173435330390930175781250
@@ -254,11 +272,12 @@ static int miGetArcPts();
  */
 
 static void
-miArcSegment(pDraw, pGC, tarc, right, left)
-    DrawablePtr   pDraw;
-    GCPtr         pGC;
-    xArc          tarc;
-    miArcFacePtr	right, left;
+miArcSegment(
+    DrawablePtr   pDraw,
+    GCPtr         pGC,
+    xArc          tarc,
+    miArcFacePtr	right,
+    miArcFacePtr	left)
 {
     int l = pGC->lineWidth;
     int a0, a1, startAngle, endAngle;
@@ -394,6 +413,10 @@ typedef struct {
 
 #define CACHESIZE 25
 
+static void drawQuadrant(struct arc_def *def, struct accelerators *acc,
+			 int a0, int a1, int mask, miArcFacePtr right,
+			 miArcFacePtr left, miArcSpanData *spdata);
+
 static arcCacheRec arcCache[CACHESIZE];
 static unsigned long lrustamp;
 static arcCacheRec *lastCacheHit = &arcCache[0];
@@ -430,18 +453,18 @@ miFreeArcCache (data, id)
 }
 
 static void
-miComputeCircleSpans(lw, parc, spdata)
-    int lw;
-    xArc *parc;
-    miArcSpanData *spdata;
+miComputeCircleSpans(
+    int lw,
+    xArc *parc,
+    miArcSpanData *spdata)
 {
     register miArcSpan *span;
     int doinner;
     register int x, y, e;
     int xk, yk, xm, ym, dx, dy;
     register int slw, inslw;
-    int inx, iny, ine;
-    int inxk, inyk, inxm, inym;
+    int inx = 0, iny, ine = 0;
+    int inxk = 0, inyk = 0, inxm = 0, inym = 0;
 
     doinner = -lw;
     slw = parc->width - doinner;
@@ -498,15 +521,15 @@ miComputeCircleSpans(lw, parc, spdata)
 }
 
 static void
-miComputeEllipseSpans(lw, parc, spdata)
-    int lw;
-    xArc *parc;
-    miArcSpanData *spdata;
+miComputeEllipseSpans(
+    int lw,
+    xArc *parc,
+    miArcSpanData *spdata)
 {
     register miArcSpan *span;
     double w, h, r, xorg;
     double Hs, Hf, WH, K, Vk, Nk, Fk, Vr, N, Nc, Z, rs;
-    double A, T, b, d, x, y, t, inx, outx, hepp, hepm;
+    double A, T, b, d, x, y, t, inx, outx = 0.0, hepp, hepm;
     int flip, solution;
 
     w = (double)parc->width / 2.0;
@@ -691,11 +714,11 @@ miComputeEllipseSpans(lw, parc, spdata)
 }
 
 static double
-tailX(K, def, bounds, acc)
-    double K;
-    struct arc_def *def;
-    struct arc_bound *bounds;
-    struct accelerators *acc;
+tailX(
+    double K,
+    struct arc_def *def,
+    struct arc_bound *bounds,
+    struct accelerators *acc)
 {
     double w, h, r;
     double Hs, Hf, WH, Vk, Nk, Fk, Vr, N, Nc, Z, rs;
@@ -832,10 +855,10 @@ tailX(K, def, bounds, acc)
 }
 
 static miArcSpanData *
-miComputeWideEllipse(lw, parc, mustFree)
-    int		   lw;
-    register xArc *parc;
-    Bool	  *mustFree;
+miComputeWideEllipse(
+    int		   lw,
+    register xArc *parc,
+    Bool	  *mustFree)
 {
     register miArcSpanData *spdata;
     register arcCacheRec *cent, *lruent;
@@ -911,10 +934,10 @@ miComputeWideEllipse(lw, parc, mustFree)
 }
 
 static void
-miFillWideEllipse(pDraw, pGC, parc)
-    DrawablePtr	pDraw;
-    GCPtr	pGC;
-    xArc	*parc;
+miFillWideEllipse(
+    DrawablePtr	pDraw,
+    GCPtr	pGC,
+    xArc	*parc)
 {
     DDXPointPtr points;
     register DDXPointPtr pts;
@@ -1054,8 +1077,8 @@ miPolyArc(pDraw, pGC, narcs, parcs)
     register int		i;
     xArc			*parc;
     int				xMin, xMax, yMin, yMax;
-    int				pixmapWidth, pixmapHeight;
-    int				xOrg, yOrg;
+    int				pixmapWidth = 0, pixmapHeight = 0;
+    int				xOrg = 0, yOrg = 0;
     int				width;
     Bool			fTricky;
     DrawablePtr			pDrawTo;
@@ -1274,8 +1297,7 @@ miPolyArc(pDraw, pGC, narcs, parcs)
 }
 
 static double
-angleBetween (center, point1, point2)
-	SppPointRec	center, point1, point2;
+angleBetween (SppPointRec center, SppPointRec point1, SppPointRec point2)
 {
 	double	a1, a2, a;
 	
@@ -1294,10 +1316,12 @@ angleBetween (center, point1, point2)
 }
 
 static void
-translateBounds (b, x, y, fx, fy)
-miArcFacePtr	b;
-int		x, y;
-double		fx, fy;
+translateBounds (
+	miArcFacePtr	b,
+	int		x,
+	int		y,
+	double		fx,
+	double		fy)
 {
 	fx += x;
 	fy += y;
@@ -1310,16 +1334,11 @@ double		fx, fy;
 }
 
 static void
-miArcJoin (pDraw, pGC, pLeft, pRight,
-	   xOrgLeft, yOrgLeft, xFtransLeft, yFtransLeft,
-	   xOrgRight, yOrgRight, xFtransRight, yFtransRight)
-	DrawablePtr	pDraw;
-	GCPtr		pGC;
-	miArcFacePtr	pRight, pLeft;
-	int		xOrgRight, yOrgRight;
-	double		xFtransRight, yFtransRight;
-	int		xOrgLeft, yOrgLeft;
-	double		xFtransLeft, yFtransLeft;
+miArcJoin(DrawablePtr pDraw, GCPtr pGC, miArcFacePtr pLeft,
+	  miArcFacePtr pRight, int xOrgLeft, int yOrgLeft,
+	  double xFtransLeft, double yFtransLeft,
+	  int xOrgRight, int yOrgRight,
+	  double xFtransRight, double yFtransRight)
 {
 	SppPointRec	center, corner, otherCorner;
 	SppPointRec	poly[5], e;
@@ -1327,7 +1346,7 @@ miArcJoin (pDraw, pGC, pLeft, pRight,
 	int		cpt;
 	SppArcRec	arc;
 	miArcFaceRec	Right, Left;
-	int		polyLen;
+	int		polyLen = 0;
 	int		xOrg, yOrg;
 	double		xFtrans, yFtrans;
 	double		a;
@@ -1425,13 +1444,15 @@ miArcJoin (pDraw, pGC, pLeft, pRight,
 
 /*ARGSUSED*/
 static void
-miArcCap (pDraw, pGC, pFace, end, xOrg, yOrg, xFtrans, yFtrans)
-	DrawablePtr	pDraw;
-	GCPtr		pGC;
-	miArcFacePtr	pFace;
-	int		end;
-	int		xOrg, yOrg;
-	double		xFtrans, yFtrans;
+miArcCap (
+	DrawablePtr	pDraw,
+	GCPtr		pGC,
+	miArcFacePtr	pFace,
+	int		end,
+	int		xOrg,
+	int		yOrg,
+	double		xFtrans,
+	double		yFtrans)
 {
 	SppPointRec	corner, otherCorner, center, endPoint, poly[5];
 
@@ -1476,18 +1497,21 @@ miArcCap (pDraw, pGC, pFace, end, xOrg, yOrg, xFtrans, yFtrans)
  */
 /*ARGSUSED*/
 static void
-miRoundCap(pDraw, pGC, pCenter, pEnd, pCorner, pOtherCorner, fLineEnd,
-     xOrg, yOrg, xFtrans, yFtrans)
-    DrawablePtr	pDraw;
-    GCPtr	pGC;
-    SppPointRec	pCenter, pEnd;
-    SppPointRec	pCorner, pOtherCorner;
-    int		fLineEnd, xOrg, yOrg;
-    double	xFtrans, yFtrans;
+miRoundCap(
+    DrawablePtr	pDraw,
+    GCPtr	pGC,
+    SppPointRec	pCenter,
+    SppPointRec	pEnd,
+    SppPointRec	pCorner,
+    SppPointRec	pOtherCorner,
+    int		fLineEnd,
+    int		xOrg,
+    int		yOrg,
+    double	xFtrans,
+    double	yFtrans)
 {
     int		cpt;
     double	width;
-    double	miDatan2 ();
     SppArcRec	arc;
     SppPointPtr	pArcPts;
 
@@ -1533,8 +1557,7 @@ miRoundCap(pDraw, pGC, pCenter, pEnd, pCorner, pOtherCorner, fLineEnd,
 # define mod(a,b)	((a) >= 0 ? (a) % (b) : (b) - (-a) % (b))
 
 static double
-miDcos (a)
-double	a;
+miDcos (double a)
 {
 	int	i;
 
@@ -1551,8 +1574,7 @@ double	a;
 }
 
 static double
-miDsin (a)
-double	a;
+miDsin (double a)
 {
 	int	i;
 
@@ -1569,8 +1591,7 @@ double	a;
 }
 
 static double
-miDasin (v)
-double	v;
+miDasin (double v)
 {
     if (v == 0)
 	return 0.0;
@@ -1582,8 +1603,7 @@ double	v;
 }
 
 static double
-miDatan2 (dy, dx)
-double	dy, dx;
+miDatan2 (double dy, double dx)
 {
     if (dy == 0) {
 	if (dx >= 0)
@@ -1621,10 +1641,10 @@ double	dy, dx;
  * count on xrealloc() to handle the null pointer correctly.
  */
 static int
-miGetArcPts(parc, cpt, ppPts)
-    SppArcPtr	parc;	/* points to an arc */
-    int		cpt;	/* number of points already in arc list */
-    SppPointPtr	*ppPts; /* pointer to pointer to arc-list -- modified */
+miGetArcPts(
+    SppArcPtr	parc,	/* points to an arc */
+    int		cpt,	/* number of points already in arc list */
+    SppPointPtr	*ppPts) /* pointer to pointer to arc-list -- modified */
 {
     double 	st,	/* Start Theta, start angle */
                 et,	/* End Theta, offset from start theta */
@@ -1716,10 +1736,12 @@ struct arcData {
 # define ADD_REALLOC_STEP	20
 
 static void
-addCap (capsp, ncapsp, sizep, end, arcIndex)
-	miArcCapPtr	*capsp;
-	int		*ncapsp, *sizep;
-	int		end, arcIndex;
+addCap (
+	miArcCapPtr	*capsp,
+	int		*ncapsp,
+	int		*sizep,
+	int		end,
+	int		arcIndex)
 {
 	int newsize;
 	miArcCapPtr	cap;
@@ -1741,10 +1763,16 @@ addCap (capsp, ncapsp, sizep, end, arcIndex)
 }
 
 static void
-addJoin (joinsp, njoinsp, sizep, end0, index0, phase0, end1, index1, phase1)
-	miArcJoinPtr	*joinsp;
-	int		*njoinsp, *sizep;
-	int		end0, index0, phase0, end1, index1, phase1;
+addJoin (
+	miArcJoinPtr	*joinsp,
+	int		*njoinsp,
+	int		*sizep,
+	int		end0,
+	int		index0,
+	int		phase0,
+	int		end1,
+	int		index1,
+	int		phase1)
 {
 	int newsize;
 	miArcJoinPtr	join;
@@ -1770,10 +1798,11 @@ addJoin (joinsp, njoinsp, sizep, end0, index0, phase0, end1, index1, phase1)
 }
 
 static miArcDataPtr
-addArc (arcsp, narcsp, sizep, xarc)
-	miArcDataPtr	*arcsp;
-	int		*narcsp, *sizep;
-	xArc		*xarc;
+addArc (
+	miArcDataPtr	*arcsp,
+	int		*narcsp,
+	int		*sizep,
+	xArc		*xarc)
 {
 	int newsize;
 	miArcDataPtr	arc;
@@ -1795,9 +1824,9 @@ addArc (arcsp, narcsp, sizep, xarc)
 }
 
 static void
-miFreeArcs(arcs, pGC)
-    miPolyArcPtr arcs;
-    GCPtr pGC;
+miFreeArcs(
+    miPolyArcPtr arcs,
+    GCPtr pGC)
 {
 	int iphase;
 
@@ -1834,13 +1863,16 @@ typedef struct {
 	double	map[DASH_MAP_SIZE];
 } dashMap;
 
+static int computeAngleFromPath(int startAngle, int endAngle, dashMap *map,
+				int *lenp, int backwards);
+
 static void
-computeDashMap (arcp, map)
-	xArc	*arcp;
-	dashMap	*map;
+computeDashMap (
+	xArc	*arcp,
+	dashMap	*map)
 {
 	int	di;
-	double	a, x, y, prevx, prevy, dist;
+	double	a, x, y, prevx = 0.0, prevy = 0.0, dist;
 
 	for (di = 0; di < DASH_MAP_SIZE; di++) {
 		a = dashIndexToAngle (di);
@@ -1862,15 +1894,15 @@ typedef enum {HORIZONTAL, VERTICAL, OTHER} arcTypes;
 /* this routine is a bit gory */
 
 static miPolyArcPtr
-miComputeArcs (parcs, narcs, pGC)
-	xArc	*parcs;
-	int	narcs;
-	GCPtr	pGC;
+miComputeArcs (
+	xArc	*parcs,
+	int	narcs,
+	GCPtr	pGC)
 {
 	int		isDashed, isDoubleDash;
 	int		dashOffset;
 	miPolyArcPtr	arcs;
-	int		start, i, j, k, nexti, nextk;
+	int		start, i, j, k = 0, nexti, nextk = 0;
 	int		joinSize[2];
 	int		capSize[2];
 	int		arcSize[2];
@@ -1879,13 +1911,13 @@ miComputeArcs (parcs, narcs, pGC)
 	struct arcData	*data;
 	miArcDataPtr	arc;
 	xArc		xarc;
-	int		iphase, prevphase, joinphase;
+	int		iphase, prevphase = 0, joinphase;
 	int		arcsJoin;
 	int		selfJoin;
 
-	int		iDash, dashRemaining;
-	int		iDashStart, dashRemainingStart, iphaseStart;
-	int		startAngle, spanAngle, endAngle, backwards;
+	int		iDash = 0, dashRemaining;
+	int		iDashStart = 0, dashRemainingStart = 0, iphaseStart;
+	int		startAngle, spanAngle, endAngle, backwards = 0;
 	int		prevDashAngle, dashAngle;
 	dashMap		map;
 
@@ -2257,9 +2289,9 @@ arcfail:
 }
 
 static double
-angleToLength (angle, map)
-	int	angle;
-	dashMap	*map;
+angleToLength (
+	int	angle,
+	dashMap	*map)
 {
 	double	len, excesslen, sidelen = map->map[DASH_MAP_SIZE - 1], totallen;
 	int	di;
@@ -2307,9 +2339,9 @@ angleToLength (angle, map)
  */
 
 static int
-lengthToAngle (len, map)
-	double	len;
-	dashMap	*map;
+lengthToAngle (
+	double	len,
+	dashMap	*map)
 {
 	double	sidelen = map->map[DASH_MAP_SIZE - 1];
 	int	angle, angleexcess;
@@ -2379,11 +2411,12 @@ lengthToAngle (len, map)
  */
 
 static int
-computeAngleFromPath (startAngle, endAngle, map, lenp, backwards)
-	int	startAngle, endAngle;	/* normalized absolute angles in *64 degrees */
-	dashMap	*map;
-	int	*lenp;
-	int	backwards;
+computeAngleFromPath (
+	int	startAngle,
+	int	endAngle,	/* normalized absolute angles in *64 degrees */
+	dashMap	*map,
+	int	*lenp,
+	int	backwards)
 {
 	int	a0, a1, a;
 	double	len0;
@@ -2424,14 +2457,15 @@ computeAngleFromPath (startAngle, endAngle, map, lenp, backwards)
  */
 
 static void
-drawZeroArc (pDraw, pGC, tarc, lw, left, right)
-    DrawablePtr   pDraw;
-    GCPtr         pGC;
-    xArc          *tarc;
-    int		  lw;
-    miArcFacePtr	right, left;
+drawZeroArc (
+    DrawablePtr   pDraw,
+    GCPtr         pGC,
+    xArc          *tarc,
+    int		  lw,
+    miArcFacePtr	left,
+    miArcFacePtr	right)
 {
-	double	x0, y0, x1, y1, w, h, x, y;
+	double	x0 = 0.0, y0 = 0.0, x1 = 0.0, y1 = 0.0, w, h, x, y;
 	double	xmax, ymax, xmin, ymin;
 	int	a0, a1;
 	double	a, startAngle, endAngle;
@@ -2558,9 +2592,9 @@ drawZeroArc (pDraw, pGC, tarc, lw, left, right)
  */
 
 static void
-tailEllipseY (def, acc)
-	struct arc_def		*def;
-	struct accelerators	*acc;
+tailEllipseY (
+	struct arc_def		*def,
+	struct accelerators	*acc)
 {
 	double		t;
 
@@ -2587,46 +2621,50 @@ tailEllipseY (def, acc)
  */
 
 static double
-outerXfromXY (x, y, def, acc)
-	double			x, y;
-	struct arc_def		*def;
-	struct accelerators	*acc;
+outerXfromXY (
+	double			x,
+	double			y,
+	struct arc_def		*def,
+	struct accelerators	*acc)
 {
 	return x + (x * acc->h2l) / sqrt (x*x * acc->h4 + y*y * acc->w4);
 }
 
 static double
-outerYfromXY (x, y, def, acc)
-	double		x, y;
-	struct arc_def		*def;
-	struct accelerators	*acc;
+outerYfromXY (
+	double		x,
+	double		y,
+	struct arc_def		*def,
+	struct accelerators	*acc)
 {
 	return y + (y * acc->w2l) / sqrt (x*x * acc->h4 + y*y * acc->w4);
 }
 
 static double
-innerXfromXY (x, y, def, acc)
-	double			x, y;
-	struct arc_def		*def;
-	struct accelerators	*acc;
+innerXfromXY (
+	double			x,
+	double			y,
+	struct arc_def		*def,
+	struct accelerators	*acc)
 {
 	return x - (x * acc->h2l) / sqrt (x*x * acc->h4 + y*y * acc->w4);
 }
 
 static double
-innerYfromXY (x, y, def, acc)
-	double			x, y;
-	struct arc_def		*def;
-	struct accelerators	*acc;
+innerYfromXY (
+	double			x,
+	double			y,
+	struct arc_def		*def,
+	struct accelerators	*acc)
 {
 	return y - (y * acc->w2l) / sqrt (x*x * acc->h4 + y*y * acc->w4);
 }
 
 static double
-innerYfromY (y, def, acc)
-	double	y;
-	struct arc_def		*def;
-	struct accelerators	*acc;
+innerYfromY (
+	double	y,
+	struct arc_def		*def,
+	struct accelerators	*acc)
 {
 	double	x;
 
@@ -2636,9 +2674,12 @@ innerYfromY (y, def, acc)
 }
 
 static void
-computeLine (x1, y1, x2, y2, line)
-	double		x1, y1, x2, y2;
-	struct line	*line;
+computeLine (
+	double		x1,
+	double		y1,
+	double		x2,
+	double		y2,
+	struct line	*line)
 {
 	if (y1 == y2)
 		line->valid = 0;
@@ -2656,11 +2697,11 @@ computeLine (x1, y1, x2, y2, line)
  */
 
 static void
-computeAcc (tarc, lw, def, acc)
-	xArc			*tarc;
-	int			lw;
-	struct arc_def		*def;
-	struct accelerators	*acc;
+computeAcc (
+	xArc			*tarc,
+	int			lw,
+	struct arc_def		*def,
+	struct accelerators	*acc)
 {
 	def->w = ((double) tarc->width) / 2.0;
 	def->h = ((double) tarc->height) / 2.0;
@@ -2686,11 +2727,12 @@ computeAcc (tarc, lw, def, acc)
  */
 
 static void
-computeBound (def, bound, acc, right, left)
-	struct arc_def		*def;
-	struct arc_bound	*bound;
-	struct accelerators	*acc;
-	miArcFacePtr		right, left;
+computeBound (
+	struct arc_def		*def,
+	struct arc_bound	*bound,
+	struct accelerators	*acc,
+	miArcFacePtr		right,
+	miArcFacePtr		left)
 {
 	double		t;
 	double		innerTaily;
@@ -2826,11 +2868,11 @@ computeBound (def, bound, acc, right, left)
  */
 
 static double
-hookEllipseY (scan_y, bound, acc, left)
-	double			scan_y;
-	struct arc_bound	*bound;
-	struct accelerators	*acc;
-	int			left;
+hookEllipseY (
+	double			scan_y,
+	struct arc_bound	*bound,
+	struct accelerators	*acc,
+	int			left)
 {
 	double	ret;
 
@@ -2852,12 +2894,12 @@ hookEllipseY (scan_y, bound, acc, left)
  */
 
 static double
-hookX (scan_y, def, bound, acc, left)
-	double			scan_y;
-	struct arc_def		*def;
-	struct arc_bound	*bound;
-	struct accelerators	*acc;
-	int			left;
+hookX (
+	double			scan_y,
+	struct arc_def		*def,
+	struct arc_bound	*bound,
+	struct accelerators	*acc,
+	int			left)
 {
 	double	ellipse_y, x;
 	double	maxMin;
@@ -2909,16 +2951,16 @@ hookX (scan_y, def, bound, acc, left)
  */
 
 static void
-arcSpan (y, lx, lw, rx, rw, def, bounds, acc, mask)
-	int			y;
-	int			lx;
-	int			lw;
-	int			rx;
-	int			rw;
-	struct arc_def		*def;
-	struct arc_bound	*bounds;
-	struct accelerators	*acc;
-	int			mask;
+arcSpan (
+	int			y,
+	int			lx,
+	int			lw,
+	int			rx,
+	int			rw,
+	struct arc_def		*def,
+	struct arc_bound	*bounds,
+	struct accelerators	*acc,
+	int			mask)
 {
 	int linx, loutx, rinx, routx;
 	double x, altx;
@@ -2979,15 +3021,15 @@ arcSpan (y, lx, lw, rx, rw, def, bounds, acc, mask)
 }
 
 static void
-arcSpan0 (lx, lw, rx, rw, def, bounds, acc, mask)
-	int			lx;
-	int			lw;
-	int			rx;
-	int			rw;
-	struct arc_def		*def;
-	struct arc_bound	*bounds;
-	struct accelerators	*acc;
-	int			mask;
+arcSpan0 (
+	int			lx,
+	int			lw,
+	int			rx,
+	int			rw,
+	struct arc_def		*def,
+	struct arc_bound	*bounds,
+	struct accelerators	*acc,
+	int			mask)
 {
     double x;
 
@@ -3007,14 +3049,14 @@ arcSpan0 (lx, lw, rx, rw, def, bounds, acc, mask)
 }
 
 static void
-tailSpan (y, lw, rw, def, bounds, acc, mask)
-	int			y;
-	int			lw;
-	int			rw;
-	struct arc_def		*def;
-	struct arc_bound	*bounds;
-	struct accelerators	*acc;
-	int			mask;
+tailSpan (
+	int			y,
+	int			lw,
+	int			rw,
+	struct arc_def		*def,
+	struct arc_bound	*bounds,
+	struct accelerators	*acc,
+	int			mask)
 {
     double yy, xalt, x, lx, rx;
     int n;
@@ -3116,7 +3158,7 @@ realAllocSpan ()
 }
 
 static void
-disposeFinalSpans ()
+disposeFinalSpans (void)
 {
 	struct finalSpanChunk	*chunk, *next;
 
@@ -3131,9 +3173,9 @@ disposeFinalSpans ()
 }
 
 static void
-fillSpans (pDrawable, pGC)
-    DrawablePtr	pDrawable;
-    GCPtr	pGC;
+fillSpans (
+    DrawablePtr	pDrawable,
+    GCPtr	pGC)
 {
 	register struct finalSpan	*span;
 	register DDXPointPtr		xSpan;
@@ -3183,8 +3225,7 @@ fillSpans (pDrawable, pGC)
 			  realFindSpan (y))
 
 static struct finalSpan **
-realFindSpan (y)
-    int y;
+realFindSpan (int y)
 {
 	struct finalSpan	**newSpans;
 	int			newSize, newMiny, newMaxy;
@@ -3235,9 +3276,10 @@ realFindSpan (y)
 }
 
 static void
-newFinalSpan (y, xmin, xmax)
-    int		y;
-    register int	xmin, xmax;
+newFinalSpan (
+    int		y,
+    register int	xmin,
+    register int	xmax)
 {
 	register struct finalSpan	*x;
 	register struct finalSpan	**f;
@@ -3292,9 +3334,9 @@ newFinalSpan (y, xmin, xmax)
 }
 
 static void
-mirrorSppPoint (quadrant, sppPoint)
-	int		quadrant;
-	SppPointPtr	sppPoint;
+mirrorSppPoint (
+	int		quadrant,
+	SppPointPtr	sppPoint)
 {
 	switch (quadrant) {
 	case 0:
@@ -3325,17 +3367,20 @@ mirrorSppPoint (quadrant, sppPoint)
  */
 
 static void
-drawArc (tarc, l, a0, a1, right, left)
-	xArc *tarc;
-	int	l, a0, a1;
-	miArcFacePtr	right, left;	/* save end line points */
+drawArc (
+	xArc *tarc,
+	int	l,
+	int	a0,
+	int	a1,
+	miArcFacePtr	right,
+	miArcFacePtr	left)	/* save end line points */
 {
 	struct arc_def		def;
 	struct accelerators	acc;
 	int			startq, endq, curq;
-	int			rightq, leftq, righta, lefta;
+	int			rightq, leftq = 0, righta = 0, lefta = 0;
 	miArcFacePtr		passRight, passLeft;
-	int			q0, q1, mask;
+	int			q0 = 0, q1 = 0, mask;
 	struct band {
 		int	a0, a1;
 		int	mask;
@@ -3564,13 +3609,15 @@ drawArc (tarc, l, a0, a1, right, left)
 }
 
 static void
-drawQuadrant (def, acc, a0, a1, mask, right, left, spdata)
-	struct arc_def		*def;
-	struct accelerators	*acc;
-	int			a0, a1;
-	int			mask;
-	miArcFacePtr		right, left;
-	miArcSpanData		*spdata;
+drawQuadrant (
+	struct arc_def		*def,
+	struct accelerators	*acc,
+	int			a0,
+	int			a1,
+	int			mask,
+	miArcFacePtr		right,
+	miArcFacePtr		left,
+	miArcSpanData		*spdata)
 {
 	struct arc_bound	bound;
 	double			yy, x, xalt;

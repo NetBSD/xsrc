@@ -35,12 +35,13 @@
  * 
  * Author:  Adobe Systems Incorporated
  */
-/* $XFree86: xc/lib/dps/dpsXpriv.c,v 1.4 2001/04/01 14:00:03 tsi Exp $ */
+/* $XFree86: xc/lib/dps/dpsXpriv.c,v 1.6 2001/11/16 16:47:52 dawes Exp $ */
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <errno.h>
 #include <string.h>
+#include <sys/time.h>
 
 #ifdef GC
 #undef GC
@@ -71,6 +72,10 @@
 
 #ifdef ISC
 #include <sys/bsdtypes.h>
+#endif
+
+#ifdef __QNX__
+#include <sys/select.h>
 #endif
 
 #if defined(hpux) || defined(AIXV3)

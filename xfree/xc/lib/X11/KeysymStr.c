@@ -1,10 +1,14 @@
-/* $Xorg: KeysymStr.c,v 1.4 2000/08/17 19:44:39 cpqbld Exp $ */
+/* $Xorg: KeysymStr.c,v 1.5 2001/02/09 02:03:34 xorgcvs Exp $ */
 
 /*
 
 Copyright 1990, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -21,7 +25,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/X11/KeysymStr.c,v 3.6 2001/01/17 19:41:38 dawes Exp $ */
+/* $XFree86: xc/lib/X11/KeysymStr.c,v 3.8 2001/12/14 19:54:02 dawes Exp $ */
 
 #include "Xlibint.h"
 #include <X11/Xresource.h>
@@ -29,19 +33,13 @@ in this Software without prior written authorization from The Open Group.
 
 #include <stdio.h> /* sprintf */
 
-#ifdef __STDC__
-#define Const const
-#else
-#define Const /**/
-#endif
-
 typedef unsigned long Signature;
 
 #define NEEDVTABLE
 #include "ks_tables.h"
 
 extern XrmDatabase _XInitKeysymDB();
-extern Const unsigned char _XkeyTable[];
+extern const unsigned char _XkeyTable[];
 
 
 typedef struct _GRNData {
@@ -87,7 +85,7 @@ char *XKeysymToString(ks)
     register int i, n;
     int h;
     register int idx;
-    Const unsigned char *entry;
+    const unsigned char *entry;
     unsigned char val1, val2;
     XrmDatabase keysymdb;
 

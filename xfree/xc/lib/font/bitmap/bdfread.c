@@ -1,4 +1,4 @@
-/* $Xorg: bdfread.c,v 1.3 2000/08/17 19:46:34 cpqbld Exp $ */
+/* $Xorg: bdfread.c,v 1.5 2001/02/09 02:04:01 xorgcvs Exp $ */
 
 /************************************************************************
 Copyright 1989 by Digital Equipment Corporation, Maynard, Massachusetts.
@@ -27,7 +27,11 @@ SOFTWARE.
 
 Copyright 1994, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included
 in all copies or substantial portions of the Software.
@@ -46,7 +50,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/font/bitmap/bdfread.c,v 1.9 2001/01/17 19:43:26 dawes Exp $ */
+/* $XFree86: xc/lib/font/bitmap/bdfread.c,v 1.11 2001/12/14 19:56:45 dawes Exp $ */
 
 #ifndef FONTMODULE
 #include <ctype.h>
@@ -90,8 +94,10 @@ bdfReadBitmap(CharInfoPtr pCI, FontFilePtr file, int bit, int byte,
     widthBytes = BYTES_PER_ROW(widthBits, glyph);
     if (widthBytes * height > 0) {
 	picture = (unsigned char *) xalloc(widthBytes * height);
-	if (!picture)
+	if (!picture) {
+          bdfError("Couldn't allocate picture (%d*%d)\n", widthBytes, height);        
 	    goto BAILOUT;
+      }
     } else
 	picture = NULL;
     pCI->bits = (char *) picture;
@@ -791,8 +797,10 @@ bdfReadFont(FontPtr pFont, FontFilePtr file,
 	goto BAILOUT;
 
     bitmapFont = (BitmapFontPtr) xalloc(sizeof(BitmapFontRec));
-    if (!bitmapFont)
+    if (!bitmapFont) {
+      bdfError("Couldn't allocate bitmapFontRec (%d)\n", sizeof(BitmapFontRec));
 	goto BAILOUT;
+    }
     bzero((char *)bitmapFont, sizeof(BitmapFontRec));
 
     pFont->fontPrivate = (pointer) bitmapFont;
@@ -803,8 +811,10 @@ bdfReadFont(FontPtr pFont, FontFilePtr file,
     bitmapFont->pDefault = NULL;
 
     bitmapFont->bitmapExtra = (BitmapExtraPtr) xalloc(sizeof(BitmapExtraRec));
-    if (!bitmapFont->bitmapExtra)
+    if (!bitmapFont->bitmapExtra) {
+      bdfError("Couldn't allocate bitmapExtra (%d)\n", sizeof(BitmapExtraRec));
         goto BAILOUT;
+    }
     bzero((char *)bitmapFont->bitmapExtra, sizeof(BitmapExtraRec));
     
     bitmapFont->bitmapExtra->glyphNames = 0;
@@ -844,8 +854,12 @@ bdfReadFont(FontPtr pFont, FontFilePtr file,
     FontComputeInfoAccelerators(&pFont->info);
     if (bitmapFont->bitmapExtra)
 	FontComputeInfoAccelerators(&bitmapFont->bitmapExtra->info);
-    if (pFont->info.constantMetrics)
-	bitmapAddInkMetrics(pFont);
+    if (pFont->info.constantMetrics) {
+      if (!bitmapAddInkMetrics(pFont)) {
+        bdfError("Failed to add bitmap ink metrics\n");
+        goto BAILOUT;
+      }
+    }    
     if (bitmapFont->bitmapExtra)
 	bitmapFont->bitmapExtra->info.inkMetrics = pFont->info.inkMetrics;
 
@@ -920,8 +934,10 @@ bdfPadToTerminal(FontPtr pFont)
 
     for (i = 0; i < bitmapFont->num_chars; i++) {
 	new.bits = (char *) xalloc(new_size);
-	if (!new.bits)
+	if (!new.bits) {
+          bdfError("Couldn't allocate bits (%d)\n", new_size);
 	    return FALSE;
+      }
 	FontCharReshape(pFont, &bitmapFont->metrics[i], &new);
         new.metrics.attributes = bitmapFont->metrics[i].metrics.attributes;
 	xfree(bitmapFont->metrics[i].bits);

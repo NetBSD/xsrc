@@ -1,4 +1,4 @@
-/* $Xorg: Display.c,v 1.4 2000/08/17 19:46:10 cpqbld Exp $ */
+/* $Xorg: Display.c,v 1.6 2001/02/09 02:03:54 xorgcvs Exp $ */
 
 /***********************************************************
 Copyright 1987, 1988 by Digital Equipment Corporation, Maynard, Massachusetts,
@@ -32,13 +32,17 @@ OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
 THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/lib/Xt/Display.c,v 3.10 2001/01/17 19:43:04 dawes Exp $ */
+/* $XFree86: xc/lib/Xt/Display.c,v 3.13 2001/12/14 19:56:11 dawes Exp $ */
 
 /*
 
 Copyright 1987, 1988, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -61,11 +65,7 @@ in this Software without prior written authorization from The Open Group.
 #include "ResConfigP.h"
 #endif
 
-#ifndef X_NOT_STDC_ENV
 #include <stdlib.h>
-#else
-extern char* getenv();
-#endif
 
 #ifdef XTHREADS
 void (*_XtProcessLock)() = NULL;
@@ -74,10 +74,6 @@ void (*_XtInitAppLock)() = NULL;
 #endif
 
 static String XtNnoPerDisplay = "noPerDisplay";
-
-extern void _XtHeapInit();
-extern void _XtHeapFree();
-extern XrmDatabase _XtPreparseCommandLine();
 
 ProcessContext _XtGetProcessContext()
 {
@@ -174,7 +170,6 @@ static XtPerDisplay InitPerDisplay(dpy, app, name, classname)
     String name;
     String classname;
 {
-    extern void _XtAllocTMContext();
     XtPerDisplay pd;
 
     AddToAppContext(dpy, app);
@@ -265,10 +260,11 @@ Display *XtOpenDisplay(app, displayName, applName, className,
 	LOCK_APP(app);
 	LOCK_PROCESS;
 	/* parse the command line for name, display, and/or language */
-	db = _XtPreparseCommandLine(urlist, num_urs, *argc, argv, &applName,
-				    (displayName ? NULL : &displayName),
-				    (app->process->globalLangProcRec.proc ?
-				     &language : NULL));
+	db = _XtPreparseCommandLine(urlist, num_urs, *argc, argv,
+				(String *)&applName,
+				(String *)(displayName ? NULL : &displayName),
+				(app->process->globalLangProcRec.proc ?
+				&language : NULL));
 	UNLOCK_PROCESS;
 	d = XOpenDisplay(displayName);
 
@@ -592,11 +588,8 @@ PerDisplayTablePtr _XtperDisplayList = NULL;
 XtPerDisplay _XtSortPerDisplayList(dpy)
 	Display *dpy;
 {
-	register PerDisplayTablePtr pd, opd;
+	register PerDisplayTablePtr pd, opd = NULL;
 
-#ifdef lint
-	opd = NULL;
-#endif
 	LOCK_PROCESS;
 	for (pd = _XtperDisplayList;
 	     pd != NULL && pd->dpy != dpy;
@@ -634,13 +627,10 @@ static void CloseDisplay(dpy)
 	Display *dpy;
 {
         register XtPerDisplay xtpd;
-	register PerDisplayTablePtr pd, opd;
+	register PerDisplayTablePtr pd, opd = NULL;
 	XrmDatabase db;
 	int i;
 	
-#ifdef lint
-	opd = NULL;
-#endif
 	XtDestroyWidget(XtHooksOfDisplay(dpy));
 
 	LOCK_PROCESS;
@@ -662,7 +652,6 @@ static void CloseDisplay(dpy)
 	xtpd = &(pd->perDpy);
 
         if (xtpd != NULL) {
-	    extern void _XtGClistFree();
 	    if (xtpd->destroy_callbacks != NULL) {
 		XtCallCallbackList((Widget) NULL,
 				   (XtCallbackList)xtpd->destroy_callbacks,

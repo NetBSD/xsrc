@@ -22,6 +22,7 @@
  * used in advertising or otherwise to promote the sale, use or other dealings
  * in this Software without prior written authorization from GROUPE BULL.
  */
+/* $XFree86: xc/extras/Xpm/sxpm/sxpm.c,v 1.3 2001/10/28 03:32:13 tsi Exp $ */
 
 /*****************************************************************************\
 * sxpm.c:                                                                     *
@@ -126,6 +127,7 @@ static XrmOptionDescRec options[] = {
     {"-icon", ".icon", XrmoptionSepArg, (XtPointer) NULL},
 };
 
+int
 main(argc, argv)
     int argc;
     char **argv;
@@ -549,6 +551,9 @@ main(argc, argv)
 	XtMainLoop();
     }
     Punt(0);
+
+    /* Muffle gcc */
+    return 0;
 }
 
 void
@@ -686,7 +691,6 @@ GetNumbers(num, format_return, libmajor_return, libminor_return)
 void
 VersionInfo()
 {
-    int num;
     int format, libmajor;
     char libminor;
 

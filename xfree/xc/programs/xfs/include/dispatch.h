@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/programs/xfs/include/dispatch.h,v 1.2 1999/03/07 11:41:00 dawes Exp $
+ * $XFree86: xc/programs/xfs/include/dispatch.h,v 1.3 2001/08/28 23:44:54 paulo Exp $
  */
 
 /************************************************************
@@ -36,7 +36,14 @@ extern ClientPtr currentClient;
 extern void Dispatch (void);
 extern int ProcInitialConnection (ClientPtr client);
 extern int ProcEstablishConnection (ClientPtr client);
-extern void SendErrToClient (ClientPtr client, int error, pointer data);
+#ifdef DEBUG
+#define SendErrToClient(client, error, data)	\
+	fprintf(stderr, "SendErrToClient %s %d\n", __FILE__, __LINE__),\
+	DoSendErrToClient(client, error, data)
+#else
+#define SendErrToClient DoSendErrToClient
+#endif
+extern void DoSendErrToClient (ClientPtr client, int error, pointer data);
 extern int ProcBadRequest (ClientPtr client);
 extern int ProcNoop (ClientPtr client);
 extern int ProcListCatalogues (ClientPtr client);

@@ -1,4 +1,4 @@
-/* $Xorg: mivaltree.c,v 1.3 2000/08/17 19:53:39 cpqbld Exp $ */
+/* $Xorg: mivaltree.c,v 1.4 2001/02/09 02:05:22 xorgcvs Exp $ */
 /*
  * mivaltree.c --
  *	Functions for recalculating window clip lists. Main function
@@ -7,7 +7,11 @@
 
 Copyright 1987, 1988, 1989, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -69,7 +73,7 @@ in this Software without prior written authorization from The Open Group.
 *                                                               *
 *****************************************************************/
 
-/* $XFree86: xc/programs/Xserver/mi/mivaltree.c,v 1.7 2001/01/17 22:37:07 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/mi/mivaltree.c,v 1.9 2001/12/14 20:00:27 dawes Exp $ */
 
  /* 
   * Aug '86: Susan Angebranndt -- original code
@@ -177,12 +181,12 @@ miShapedWindowIn (pScreen, universe, bounding, rect, x, y)
  *-----------------------------------------------------------------------
  */
 static void
-miComputeClips (pParent, pScreen, universe, kind, exposed)
-    register WindowPtr	pParent;
-    register ScreenPtr	pScreen;
-    register RegionPtr	universe;
-    VTKind		kind;
-    RegionPtr		exposed; /* for intermediate calculations */
+miComputeClips (
+    register WindowPtr	pParent,
+    register ScreenPtr	pScreen,
+    register RegionPtr	universe,
+    VTKind		kind,
+    RegionPtr		exposed ) /* for intermediate calculations */
 {
     int			dx,
 			dy;
@@ -500,8 +504,8 @@ miComputeClips (pParent, pScreen, universe, kind, exposed)
 }
 
 static void
-miTreeObscured(pParent)
-    register WindowPtr pParent;
+miTreeObscured(
+    register WindowPtr pParent )
 {
     register WindowPtr pChild;
     register int    oldVis;

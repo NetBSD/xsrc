@@ -1,9 +1,13 @@
 /*
- * $Xorg: cfbsolid.c,v 1.3 2000/08/17 19:48:15 cpqbld Exp $
+ * $Xorg: cfbsolid.c,v 1.4 2001/02/09 02:04:38 xorgcvs Exp $
  *
 Copyright 1990, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -21,7 +25,7 @@ in this Software without prior written authorization from The Open Group.
  *
  * Author:  Keith Packard, MIT X Consortium
  */
-/* $XFree86: xc/programs/Xserver/cfb/cfbsolid.c,v 3.5 2001/01/17 22:36:37 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/cfb/cfbsolid.c,v 3.7 2001/12/14 19:59:25 dawes Exp $ */
 
 
 #include "X.h"
@@ -116,14 +120,15 @@ RROP_NAME(cfbFillRectSolid) (pDrawable, pGC, nBox, pBox)
     register int    m;
     register CfbBits   *pdst;
     RROP_DECLARE
-    register CfbBits   leftMask, rightMask;
     CfbBits   *pdstBase, *pdstRect;
     int		    nmiddle;
     int		    h;
     int		    w;
     int		    widthDst;
 #if PSZ == 24
-    int leftIndex, rightIndex, xOffset;
+    int		    leftIndex, rightIndex;
+#else
+    register CfbBits   leftMask, rightMask;
 #endif
 
     cfbGetLongWidthAndPointer (pDrawable, widthDst, pdstBase)
@@ -765,7 +770,6 @@ RROP_NAME(cfbSolidSpans) (pDrawable, pGC, nInit, pptInit, pwidthInit, fSorted)
     
     register CfbBits  *pdst;
     register int	    nlmiddle;
-    register CfbBits  startmask, endmask;
     register int	    w;
     int			    x;
     
@@ -777,7 +781,9 @@ RROP_NAME(cfbSolidSpans) (pDrawable, pGC, nInit, pptInit, pwidthInit, fSorted)
     int		    *pwidth;
     cfbPrivGCPtr    devPriv;
 #if PSZ == 24
-    int leftIndex, rightIndex, xOffset;
+    int		    leftIndex, rightIndex;
+#else
+    register CfbBits  startmask, endmask;
 #endif
 
     devPriv = cfbGetGCPrivate(pGC);

@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/programs/Xserver/miext/shadow/shplanar.c,v 1.2 2000/09/19 03:33:33 keithp Exp $
+ * $XFree86: xc/programs/Xserver/miext/shadow/shplanar.c,v 1.4 2001/10/28 03:34:16 tsi Exp $
  *
  * Copyright © 2000 Keith Packard
  *
@@ -82,30 +82,31 @@
 #endif
 
 void
-shadowUpdatePlanar4 (ScreenPtr	pScreen,
-		     PixmapPtr	pShadow,
-		     RegionPtr	damage)
+shadowUpdatePlanar4 (ScreenPtr	    pScreen,
+		     shadowBufPtr   pBuf)
 {
-    shadowScrPriv(pScreen);
+    RegionPtr	damage = &pBuf->damage;
+    PixmapPtr	pShadow = pBuf->pPixmap;
     int		nbox = REGION_NUM_RECTS (damage);
     BoxPtr	pbox = REGION_RECTS (damage);
     CARD32	*shaBase, *shaLine, *sha;
     FbStride	shaStride;
     int		scrBase, scrLine, scr;
     int		shaBpp;
+    int		shaXoff, shaYoff;   /* XXX assumed to be zero */
     int		x, y, w, h, width;
     int         i;
-    CARD32	*winBase, *winLine, *win;
+    CARD32	*winBase = NULL, *win;
     CARD32	winSize;
     int		plane;
     CARD32	m,m5,m6;
     CARD8	s1, s2, s3, s4;
 
-    fbGetStipDrawable (&pShadow->drawable, shaBase, shaStride, shaBpp);
+    fbGetStipDrawable (&pShadow->drawable, shaBase, shaStride, shaBpp, shaXoff, shaYoff);
     while (nbox--)
     {
-	x = pbox->x1 * shaBpp;
-	y = pbox->y1;
+	x = (pbox->x1) * shaBpp;
+	y = (pbox->y1);
 	w = (pbox->x2 - pbox->x1) * shaBpp;
 	h = pbox->y2 - pbox->y1;
 
@@ -129,11 +130,12 @@ shadowUpdatePlanar4 (ScreenPtr	pScreen,
 		    i = scrBase + winSize - scr;
 		    if (i <= 0 || scr < scrBase)
 		    {
-			winBase = (CARD32 *) (*pScrPriv->window) (pScreen,
-								  y,
-								  (scr << 4) | (plane),
-								  SHADOW_WINDOW_WRITE,
-								  &winSize);
+			winBase = (CARD32 *) (*pBuf->window) (pScreen,
+							      y,
+							      (scr << 4) | (plane),
+							      SHADOW_WINDOW_WRITE,
+							      &winSize,
+							      pBuf->closure);
 			if(!winBase)
 			return;
 			winSize >>= 2;

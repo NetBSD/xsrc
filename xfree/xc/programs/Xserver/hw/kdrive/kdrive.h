@@ -21,7 +21,7 @@
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
-/* $XFree86: xc/programs/Xserver/hw/kdrive/kdrive.h,v 1.13 2001/03/30 02:15:20 keithp Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/kdrive/kdrive.h,v 1.21 2001/10/12 06:33:07 keithp Exp $ */
 
 #include <stdio.h>
 #include "X.h"
@@ -102,6 +102,7 @@ typedef struct _KdScreenInfo {
     KdCardInfo	*card;
     ScreenPtr	pScreen;
     void	*driver;
+    int		rotation;
     int		width;
     int		height;
     int		rate;
@@ -110,6 +111,7 @@ typedef struct _KdScreenInfo {
     Bool        dumb;
     Bool        softCursor;
     int		mynum;
+    DDXPointRec	origin;
     KdFrameBuffer   fb[KD_MAX_FB];
 } KdScreenInfo;
 
@@ -139,6 +141,8 @@ typedef struct _KdCardFuncs {
 
     void        (*getColors) (ScreenPtr, int, int, xColorItem *);
     void        (*putColors) (ScreenPtr, int, int, xColorItem *);
+
+    Bool	(*finishInitScreen) (ScreenPtr pScreen);
 } KdCardFuncs;
 
 #define KD_MAX_PSEUDO_DEPTH 8
@@ -163,27 +167,55 @@ typedef struct {
 #endif
 } KdPrivScreenRec, *KdPrivScreenPtr;
 
+typedef enum _kdMouseState {
+    start,
+    button_1_pend,
+    button_1_down,
+    button_2_down,
+    button_3_pend,
+    button_3_down,
+    synth_2_down_13,
+    synth_2_down_3,
+    synth_2_down_1,
+    num_input_states
+} KdMouseState;
+
+#define KD_MAX_BUTTON  7
+
+typedef struct _KdMouseInfo {
+    struct _KdMouseInfo	*next;
+    void		*driver;
+    void		*closure;
+    char		*name;
+    char		*prot;
+    char		map[KD_MAX_BUTTON];
+    int			nbutton;
+    Bool		emulateMiddleButton;
+    unsigned long	emulationTimeout;
+    Bool		timeoutPending;
+    KdMouseState	mouseState;
+    Bool		eventHeld;
+    xEvent		heldEvent;
+    unsigned char	buttonState;
+    int			emulationDx, emulationDy;
+} KdMouseInfo;
+
+extern KdMouseInfo	*kdMouseInfo;
+
+KdMouseInfo *KdMouseInfoAdd (void);
+void	    KdParseMouse (char *);
+
 typedef struct _KdMouseFuncs {
     int		    (*Init) (void);
-    void	    (*Read) (int);
-    void	    (*Fini) (int);
+    void	    (*Fini) (void);
 } KdMouseFuncs;
-
-#ifdef TOUCHSCREEN
-typedef struct _KdTsFuncs {
-    int		    (*Init) (void);
-    void	    (*Read) (int);
-    void	    (*Fini) (int);
-} KdTsFuncs;
-#endif
 
 typedef struct _KdKeyboardFuncs {
     void	    (*Load) (void);
     int		    (*Init) (void);
-    void	    (*Read) (int);
     void	    (*Leds) (int);
     void	    (*Bell) (int, int, int);
-    void	    (*Fini) (int);
+    void	    (*Fini) (void);
     int		    LockLed;
 } KdKeyboardFuncs;
 
@@ -225,6 +257,33 @@ typedef struct _KdMouseMatrix {
     int	    matrix[2][3];
 } KdMouseMatrix;
 
+typedef struct _KaaScreenPriv {
+    Bool	(*PrepareSolid) (DrawablePtr	pDrawable,
+				 int		alu,
+				 Pixel		planemask,
+				 Pixel		fg);
+    void	(*Solid) (int x1, int y1, int x2, int y2);
+    void	(*DoneSolid) (void);
+
+    Bool	(*PrepareCopy) (DrawablePtr	pSrcDrawable,
+				DrawablePtr	pDstDrawable,
+				Bool		upsidedown,
+				Bool		reverse,
+				int		alu,
+				Pixel		planemask);
+    void	(*Copy) (int	srcX,
+			 int	srcY,
+			 int	dstX,
+			 int	dstY,
+			 int	width,
+			 int	height);
+    void	(*DoneCopy) (void);
+} KaaScreenPrivRec, *KaaScreenPrivPtr;
+
+Bool
+KaaInit (ScreenPtr	    pScreen,
+	 KaaScreenPrivPtr   pScreenPriv);
+
 /*
  * This is the only completely portable way to
  * compute this info.
@@ -262,6 +321,17 @@ extern KdOsFuncs	*kdOsFuncs;
 }
 
 #define KdMarkSync(s)	(KdGetScreenPriv(s)->card->needSync = TRUE)
+
+/* kaa.c */
+Bool
+kaaDrawInit (ScreenPtr		pScreen,
+	     KaaScreenPrivPtr	pScreenPriv);
+
+void
+kaaWrapGC (GCPtr pGC);
+
+void
+kaaUnwrapGC (GCPtr pGC);
 
 /* kasync.c */
 void
@@ -434,11 +504,23 @@ void
 KdEnableScreens (void);
 
 void
+KdSuspend (void);
+
+void
+KdResume (void);
+
+void
 KdProcessSwitch (void);
 
 void
 KdParseScreen (KdScreenInfo *screen,
 	       char	    *arg);
+
+char *
+KdSaveString (char *str);
+
+void
+KdParseMouse (char *arg);
 
 void
 KdOsInit (KdOsFuncs *pOsFuncs);
@@ -501,9 +583,18 @@ KdScreenInfoDispose (KdScreenInfo *si);
 void
 KdInitInput(KdMouseFuncs *, KdKeyboardFuncs *);
 
+int
+KdAllocInputType (void);
+
+Bool
+KdRegisterFd (int type, int fd, void (*read) (int fd, void *closure), void *closure);
+
+void
+KdUnregisterFds (int type, Bool do_close);
+
 #ifdef TOUCHSCREEN
 void
-KdInitTouchScreen(KdTsFuncs *pTsFuncs);
+KdInitTouchScreen(KdMouseFuncs *pTsFuncs);
 #endif
 
 void
@@ -513,13 +604,15 @@ KdEnqueueKeyboardEvent(unsigned char	scan_code,
 #define KD_BUTTON_1	0x01
 #define KD_BUTTON_2	0x02
 #define KD_BUTTON_3	0x04
+#define KD_BUTTON_4	0x08
+#define KD_BUTTON_5	0x10
 #define KD_MOUSE_DELTA	0x80000000
 
 void
-KdEnqueueMouseEvent(unsigned long flags, int x, int y);
+KdEnqueueMouseEvent(KdMouseInfo *mi, unsigned long flags, int x, int y);
 
 void
-KdEnqueueMotionEvent (int x, int y);
+KdEnqueueMotionEvent (KdMouseInfo *mi, int x, int y);
 
 void
 KdReleaseAllKeys (void);
@@ -551,10 +644,12 @@ KdEnableInput (void);
 void
 ProcessInputEvents ();
 
+extern KdMouseFuncs	LinuxMouseFuncs;
 extern KdMouseFuncs	Ps2MouseFuncs;
 extern KdMouseFuncs	BusMouseFuncs;
+extern KdMouseFuncs	MsMouseFuncs;
 #ifdef TOUCHSCREEN
-extern KdTsFuncs	TsFuncs;
+extern KdMouseFuncs	TsFuncs;
 #endif
 extern KdKeyboardFuncs	LinuxKeyboardFuncs;
 extern KdOsFuncs	LinuxFuncs;

@@ -3,7 +3,11 @@
 
 Copyright 1989, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -48,7 +52,7 @@ in this Software without prior written authorization from The Open Group.
 
 /***********************************************************************
  *
- * $Xorg: resize.c,v 1.4 2000/08/17 19:54:07 cpqbld Exp $
+ * $Xorg: resize.c,v 1.5 2001/02/09 02:05:37 xorgcvs Exp $
  *
  * window resizing borrowed from the "wm" window manager
  *
@@ -56,7 +60,7 @@ in this Software without prior written authorization from The Open Group.
  *
  ***********************************************************************/
 
-/* $XFree86: xc/programs/twm/resize.c,v 1.7 2001/01/17 23:45:07 dawes Exp $ */
+/* $XFree86: xc/programs/twm/resize.c,v 1.8 2001/12/14 20:01:09 dawes Exp $ */
 
 #include <stdio.h>
 #include "twm.h"

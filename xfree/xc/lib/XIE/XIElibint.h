@@ -1,9 +1,13 @@
-/* $Xorg: XIElibint.h,v 1.4 2000/08/17 19:45:25 cpqbld Exp $ */
+/* $Xorg: XIElibint.h,v 1.5 2001/02/09 02:03:41 xorgcvs Exp $ */
 /*
 
 Copyright 1993, 1994, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included
 in all copies or substantial portions of the Software.
@@ -22,7 +26,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/XIE/XIElibint.h,v 3.4 2001/01/17 19:42:21 dawes Exp $ */
+/* $XFree86: xc/lib/XIE/XIElibint.h,v 3.6 2001/12/14 19:54:32 dawes Exp $ */
 
 #ifndef _XIELIBINT_H_
 #define _XIELIBINT_H_
@@ -153,7 +157,7 @@ typedef struct _XieExtInfo
  * Request names and opcodes.
  */
 
-#if (defined(__STDC__) && !defined(UNIXCPP)) || defined(ANSICPP)
+#if !defined(UNIXCPP) || defined(ANSICPP)
 #define REQNAME(_name_) xie##_name_##Req
 #define REQOPCODE(_name_) X_ie##_name_
 #define REQSIZE(_name_) sz_xie##_name_##Req

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Configure.c,v 3.55 2001/05/07 21:38:51 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Configure.c,v 3.68 2002/01/07 21:39:18 dawes Exp $ */
 /*
  * Copyright 2000 by Alan Hourihane, Sychdyn, North Wales.
  *
@@ -26,6 +26,10 @@
 
 #include <ctype.h>
 #include <stdlib.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 #include "X.h"
 #include "Xmd.h"
 #include "os.h"
@@ -36,6 +40,7 @@
 #include "xf86Config.h"
 #include "xf86Priv.h"
 #include "xf86PciInfo.h"
+#define IN_XSERVER
 #include "xf86Parser.h"
 #include "xf86tokens.h"
 #include "Configint.h"
@@ -63,12 +68,20 @@ xf86MonPtr ConfiguredMonitor;
 Bool xf86DoConfigurePass1 = TRUE;
 Bool foundMouse = FALSE;
 
-#ifndef __EMX__
-static char *DFLT_MOUSE_DEV = "/dev/mouse";
-static char *DFLT_MOUSE_PROTO = "auto";
-#else
+#if defined(__EMX__)
 #define DFLT_MOUSE_DEV "mouse$"
 #define DFLT_MOUSE_PROTO "OS2Mouse"
+#elif defined(SCO)
+static char *DFLT_MOUSE_PROTO = "OSMouse";
+#elif defined(QNX4)
+static char *DFLT_MOUSE_PROTO = "OSMouse";
+static char *DFLT_MOUSE_DEV = "/dev/mouse";
+#elif defined(__QNXNTO__)
+static char *DFLT_MOUSE_PROTO = "OSMouse";
+static char *DFLT_MOUSE_DEV = "/dev/devi/mouse0";
+#else
+static char *DFLT_MOUSE_DEV = "/dev/mouse";
+static char *DFLT_MOUSE_PROTO = "auto";
 #endif
 
 static void
@@ -297,11 +310,15 @@ configureInputSection (void)
 	}
 #endif
 
+#ifndef SCO
 	fd = open(DFLT_MOUSE_DEV, 0);
 	if (fd != -1) {
 	    foundMouse = TRUE;
 	    close(fd);
 	}
+#else
+	foundMouse = TRUE;
+#endif
     }
 
     mouse = xf86confmalloc(sizeof(XF86ConfInputRec));
@@ -310,8 +327,10 @@ configureInputSection (void)
     mouse->inp_driver = "mouse";
     mouse->inp_option_lst = 
 		xf86addNewOption(mouse->inp_option_lst, "Protocol", DFLT_MOUSE_PROTO);
+#ifndef SCO
     mouse->inp_option_lst = 
 		xf86addNewOption(mouse->inp_option_lst, "Device", DFLT_MOUSE_DEV);
+#endif
     ptr = (XF86ConfInputPtr)xf86addListItem((glp)ptr, (glp)mouse);
     return ptr;
 }
@@ -319,9 +338,13 @@ configureInputSection (void)
 static XF86ConfDRIPtr
 configureDRISection (void)
 {
+#ifdef NOTYET
     parsePrologue (XF86ConfDRIPtr, XF86ConfDRIRec)
 
     return ptr;
+#else
+    return NULL;
+#endif
 }
 
 static XF86ConfVendorPtr
@@ -366,7 +389,7 @@ configureScreenSection (int screennum)
     return ptr;
 }
 
-static char* 
+static const char* 
 optionTypeToSting(OptionValueType type)
 {
     switch (type) {
@@ -395,7 +418,9 @@ configureDeviceSection (int screennum)
     char identifier[16];
     OptionInfoPtr p;
     int i = 0;
+#ifdef DO_FBDEV_PROBE
     Bool foundFBDEV = FALSE;
+#endif
     parsePrologue (XF86ConfDevicePtr, XF86ConfDeviceRec)
 
     /* Move device info to parser structure */
@@ -426,29 +451,48 @@ configureDeviceSection (int screennum)
     /* Make sure older drivers don't segv */
     if (DevToConfig[screennum].GDev.options) {
     	/* Fill in the available driver options for people to use */
-    	ptr->dev_comment = xnfalloc(240 + 1);
-    	strcpy(ptr->dev_comment, "Available Driver options are:-\n");
-    	strcat(ptr->dev_comment, "        ### Values: <i>: integer, <f>: "
-	                         "float, <bool>: \"True\"/\"False\",\n"
-                                 "        ### <string>: \"String\", "
-                                 "<freq>: \"<f> Hz/kHz/MHz\"\n");
-	strcat(ptr->dev_comment, "        ### [arg]: arg optional\n");
-    	for (p = DevToConfig[screennum].GDev.options; p->name != NULL; p++) {
-	    char *optname = xnfalloc(strlen(p->name) + 6);
-	    char *p_e; 
-    	    ptr->dev_comment = xrealloc(ptr->dev_comment, 
-			strlen(ptr->dev_comment) + 80 + 1);
-	    p_e = ptr->dev_comment + strlen(ptr->dev_comment);
-	    sprintf(optname,"\"%s\"",p->name);
-	    sprintf(p_e, "        #Option     %-20s \t# %s\n",
-                    optname, optionTypeToSting(p->type));
-	    xfree(optname);
+	const char *descrip =
+	    "        ### Available Driver options are:-\n"
+	    "        ### Values: <i>: integer, <f>: float, "
+			"<bool>: \"True\"/\"False\",\n"
+	    "        ### <string>: \"String\", <freq>: \"<f> Hz/kHz/MHz\"\n"
+	    "        ### [arg]: arg optional\n";
+	ptr->dev_comment = xstrdup(descrip);
+	if (ptr->dev_comment) {
+    	    for (p = DevToConfig[screennum].GDev.options;
+		 p->name != NULL; p++) {
+		char *p_e;
+		const char *prefix = "        #Option     ";
+		const char *middle = " \t# ";
+		const char *suffix = "\n";
+		const char *opttype = optionTypeToSting(p->type);
+		char *optname;
+		int len = strlen(ptr->dev_comment) + strlen(prefix) +
+			  strlen(middle) + strlen(suffix) + 1;
+		
+		optname = xalloc(strlen(p->name) + 2 + 1);
+		if (!optname)
+		    break;
+		sprintf(optname, "\"%s\"", p->name);
+
+		len += max(20, strlen(optname));
+		len += strlen(opttype);
+
+		ptr->dev_comment = xrealloc(ptr->dev_comment, len);
+		if (!ptr->dev_comment)
+		    break;
+		p_e = ptr->dev_comment + strlen(ptr->dev_comment);
+		sprintf(p_e, "%s%-20s%s%s%s", prefix, optname, middle,
+			opttype, suffix);
+		xfree(optname);
+	    }
     	}
     }
 
+#ifdef DO_FBDEV_PROBE
     /* Crude mechanism to auto-detect fbdev (os dependent) */
     /* Skip it for now. Options list it anyway, and we can't
-     * determine which screen/driver this belongs too anyway.
+     * determine which screen/driver this belongs too anyway. */
     {
 	int fd;
 
@@ -469,7 +513,7 @@ configureDeviceSection (int screennum)
 	ptr->dev_option_lst = (XF86OptionPtr)xf86addListItem(
 					(glp)ptr->dev_option_lst, (glp)fbdev);
     }
-    */
+#endif
 
     return ptr;
 }
@@ -477,8 +521,6 @@ configureDeviceSection (int screennum)
 static XF86ConfLayoutPtr
 configureLayoutSection (void)
 {
-    pciVideoPtr xf86PciCard;
-    int i = 0;
     int scrnum = 0;
     parsePrologue (XF86ConfLayoutPtr, XF86ConfLayoutRec)
 
@@ -540,9 +582,13 @@ configureLayoutSection (void)
 static XF86ConfModesPtr
 configureModesSection (void)
 {
+#ifdef NOTYET
     parsePrologue (XF86ConfModesPtr, XF86ConfModesRec)
 
     return ptr;
+#else
+    return NULL;
+#endif
 }
 
 static XF86ConfVideoAdaptorPtr
@@ -574,6 +620,10 @@ configureModuleSection (void)
 	"extensions",
 	NULL
     };
+    const char *fsubdirs[] = {
+	"fonts",
+	NULL
+    };
 #endif
     parsePrologue (XF86ConfModulePtr, XF86ConfModuleRec)
 
@@ -588,6 +638,29 @@ configureModuleSection (void)
     	    module->load_name = *el;
 	    /* HACK, remove GLcore, glx, loads it as a submodule */
 	    if (strcmp(*el, "GLcore"))
+	    	ptr->mod_load_lst = (XF86LoadPtr)xf86addListItem(
+					(glp)ptr->mod_load_lst, (glp)module);
+    	}
+	xfree(elist);
+    }
+
+    /* Process list of font backends separately to include only required ones */
+    elist = LoaderListDirs(fsubdirs, NULL);
+    if (elist) {
+	for (el = elist; *el; el++) {
+	    XF86LoadPtr module;
+
+    	    module = xf86confmalloc(sizeof(XF86LoadRec));
+    	    memset((XF86LoadPtr)module,0,sizeof(XF86LoadRec));
+    	    module->load_name = *el;
+
+            /* Add only those font backends which are referenced by fontpath */
+            /* 'strstr(dFP,"/dir")' is meant as 'dFP =~ m(/dir\W)' */
+    	    if (defaultFontPath && (
+    	        (strcmp(*el, "type1")  == 0 &&
+		 strstr(defaultFontPath, "/Type1")) ||
+    	        (strcmp(*el, "speedo") == 0 &&
+		 strstr(defaultFontPath, "/Speedo"))))
 	    	ptr->mod_load_lst = (XF86LoadPtr)xf86addListItem(
 					(glp)ptr->mod_load_lst, (glp)module);
     	}
@@ -632,6 +705,11 @@ static XF86ConfMonitorPtr
 configureDDCMonitorSection (int screennum)
 {
     int i = 0;
+    int len, mon_width, mon_height;
+#define displaySizeMaxLen 80
+    char displaySize_string[displaySizeMaxLen];
+    int displaySizeLen;
+
     parsePrologue (XF86ConfMonitorPtr, XF86ConfMonitorRec)
 
     ptr->mon_identifier = xf86confmalloc(19);
@@ -639,6 +717,35 @@ configureDDCMonitorSection (int screennum)
     ptr->mon_vendor = strdup(ConfiguredMonitor->vendor.name);
     ptr->mon_modelname = xf86confmalloc(12);
     sprintf(ptr->mon_modelname, "%x", ConfiguredMonitor->vendor.prod_id);
+
+    /* features in centimetres, we want millimetres */
+    mon_width  = 10 * ConfiguredMonitor->features.hsize ;
+    mon_height = 10 * ConfiguredMonitor->features.vsize ;
+
+#ifdef CONFIGURE_DISPLAYSIZE
+    ptr->mon_width  = mon_width;
+    ptr->mon_height = mon_height;
+#else
+    if (mon_width && mon_height) {
+      /* when values available add DisplaySize option AS A COMMENT */
+
+      displaySizeLen = snprintf(displaySize_string, displaySizeMaxLen,
+				"\t#DisplaySize\t%5d %5d\t# mm\n",
+				mon_width, mon_height);
+
+      if (displaySizeLen>0 && displaySizeLen<displaySizeMaxLen) {
+	if (ptr->mon_comment) {
+	  len = strlen(ptr->mon_comment);
+	} else {
+	  len = 0;
+	}
+	if ((ptr->mon_comment =
+	     xrealloc(ptr->mon_comment, len+strlen(displaySize_string)))) {
+	  strcpy(ptr->mon_comment + len, displaySize_string);
+	}
+      }
+    }
+#endif /* def CONFIGURE_DISPLAYSIZE */
 
     for (i=0;i<4;i++) {
 	switch (ConfiguredMonitor->det_mon[i].type) {
@@ -653,20 +760,14 @@ configureDDCMonitorSection (int screennum)
 	      break;
 	    case DS_ASCII_STR:
 	    case DS_SERIAL:
-		break;
 	    case DS_RANGES:
-    		ptr->mon_n_hsync = 1;
-    		ptr->mon_hsync[0].lo = 
-			ConfiguredMonitor->det_mon[i].section.ranges.min_h;
-    		ptr->mon_hsync[0].hi = 
-			ConfiguredMonitor->det_mon[i].section.ranges.max_h;
-    		ptr->mon_n_vrefresh = 1;
-    		ptr->mon_vrefresh[0].lo = 
-			ConfiguredMonitor->det_mon[i].section.ranges.min_v;
-    		ptr->mon_vrefresh[0].hi = 
-			ConfiguredMonitor->det_mon[i].section.ranges.max_v;
+	    default:
 		break;
 	}
+    }
+
+    if (ConfiguredMonitor->features.dpms) {
+      ptr->mon_option_lst = xf86addNewOption(ptr->mon_option_lst, "DPMS", NULL);
     }
 
     return ptr;
@@ -749,9 +850,9 @@ DoConfigure()
     xf86config->conf_modules = configureModuleSection();
     xf86config->conf_flags = configureFlagsSection();
     xf86config->conf_videoadaptor_lst = configureVideoAdaptorSection();
-/*    xf86config->conf_modes_lst = configureModesSection(); */
+    xf86config->conf_modes_lst = configureModesSection();
     xf86config->conf_vendor_lst = configureVendorSection();
-/*    xf86config->conf_dri = configureDRISection(); */
+    xf86config->conf_dri = configureDRISection();
     xf86config->conf_input_lst = configureInputSection();
     xf86config->conf_layout_lst = configureLayoutSection();
 
@@ -760,6 +861,9 @@ DoConfigure()
     {
 #ifdef __EMX__
 #define PATH_MAX 2048
+#endif
+#if defined(SCO) || defined(SCO325)
+#define PATH_MAX 1024
 #endif
         const char* configfile = XF86CONFIGFILE".new";
     	char homebuf[PATH_MAX];
@@ -773,7 +877,12 @@ DoConfigure()
 
       	if (home[0] == '/' && home[1] == '\0')
             home[0] = '\0';
-      	sprintf(filename, "%s/%s", home,configfile);
+#ifndef QNX4
+	sprintf(filename, "%s/%s", home,configfile);
+#else
+	sprintf(filename, "//%d%s/%s", getnid(),home,configfile);
+#endif
+	
     }
 
     xf86writeConfigFile(filename, xf86config);
@@ -877,17 +986,23 @@ DoConfigure()
 
     ErrorF("\n");
 
+#ifdef SCO
+    ErrorF("\nXFree86 is using the kernel event driver to access the mouse.\n"
+	    "If you wish to use the internal XFree86 mouse drivers, please\n"
+	    "edit the file and correct the Device.\n");
+#else /* !SCO */
     if (!foundMouse) {
 	ErrorF("\nXFree86 is not able to detect your mouse.\n"
 		"Edit the file and correct the Device.\n");
     } else {
-#ifndef __EMX__ /* OS/2 definitely has a mouse */
+#ifndef __EMX__  /* OS/2 definitely has a mouse */
 	ErrorF("\nXFree86 detected your mouse at device %s.\n"
 		"Please check your config if the mouse is still not\n"
 		"operational, as by default XFree86 tries to autodetect\n"
 		"the protocol.\n",DFLT_MOUSE_DEV);
 #endif
     }
+#endif /* !SCO */
 
     if (xf86NumScreens > 1) {
 	ErrorF("\nXFree86 has configured a multihead system, please check your config.\n");

@@ -26,7 +26,7 @@
 !!
 !! Author: Paulo César Pereira de Andrade <pcpa@conectiva.com.br>
 !!
-!! $XFree86: xc/programs/Xserver/hw/xfree86/xf86cfg/XF86Cfg.ad,v 1.13 2001/05/15 18:22:23 paulo Exp $
+!! $XFree86: xc/programs/Xserver/hw/xfree86/xf86cfg/XF86Cfg.ad,v 1.14 2001/06/23 01:45:56 paulo Exp $
 !!
 
 *Form.background:			gray85
@@ -469,6 +469,8 @@ XF86Cfg.translations:	#override \
 <Message>WM_PROTOCOLS:	error-cancel()
 .xf86cfg.force.translations:	#override \
 <Message>WM_PROTOCOLS:	addmode-cancel()
+.xf86cfg.addMode.translations:	#override \
+<Message>WM_PROTOCOLS:	addmode-cancel()
 .xf86cfg.accessx.translations:	#override \
 <Message>WM_PROTOCOLS:	accessx-close()
 .xf86cfg.test.translations:	#override \
@@ -818,6 +820,16 @@ Press ESC if your monitor goes out of sync.
 .xf86cfg.force.maxHeight:		58
 .xf86cfg.force.?.label:			There is already a modeline with the\n\
 specified identifier. Add anyway?
+
+.xf86cfg.addMode.geometry:		350x80
+.xf86cfg.addMode.minWidth:		350
+.xf86cfg.addMode.maxWidth:		350
+.xf86cfg.addMode.minHeight:		80
+.xf86cfg.addMode.maxHeight:		80
+.xf86cfg.addMode.?.label:		XF86VidModeAddModeLine returned True,\n\
+but no modeline was added to the current Screen.\n\
+Do you want to add it to the Monitor section?
+
 .xf86cfg.test.?.label:			\        Testing modeline...\n\n\
 Press ESC or stop button to quit.
 .xf86cfg.test.geometry:			250x72

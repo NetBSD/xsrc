@@ -1,14 +1,31 @@
 #!/bin/sh
-# $Xorg: xon.sh,v 1.3 2000/08/17 19:54:04 cpqbld Exp $
+# $Xorg: xon.sh,v 1.4 2000/12/20 16:50:07 pookie Exp $
 # start up xterm (or any other X command) on the specified host
 # Usage: xon host [arguments] [command]
-case $# in
-0)
-	echo "Usage: $0 <hostname> [-user user] [-name window-name] [-debug]"
-	echo "[-screen screen-number] [command ...]"
-	exit 1
-	;;
-esac
+
+usage() {
+    if [ -n "$1" ]
+    then
+	echo "`basename $0`: $1"
+    fi
+    echo ""
+    echo "Usage:  `basename $0` hostname [options] [command ...]"
+    echo ""
+    echo "where options include:"
+    echo "    -access         add remote host to local host access list"
+    echo "    -debug          enable error messages from remote execution"
+    echo "    -name name      set alternate application name and window title"
+    echo "    -nols           do not pass -ls option to remote xterm"
+    echo "    -screen screen  change remote screen number to specified screen"
+    echo "    -user user      run remote command as the specified user"
+    exit 1
+}
+
+if [ $# -eq 0 ]
+then
+    usage
+fi
+
 target=$1
 shift
 label=$target
@@ -33,7 +50,7 @@ case $DISPLAY in
 		fullname=`hostname -f`
 		;;
 	*)
-		fullname=`hostname`
+	fullname=`uname -n`
 		;;
 	esac
 	hostname=`echo $fullname | sed 's/\..*$//'`
@@ -64,6 +81,12 @@ while $continue; do
 	case $1 in
 	-user)
 		shift
+
+		if [ $# -eq 0 ]
+		then
+			usage "-user option requires an argument"
+		fi
+
 		username="-l $1"
 		label="$target $1"
 		rcmd="$rsh $target $username -n"
@@ -87,6 +110,12 @@ while $continue; do
 		;;
 	-name)
 		shift
+
+		if [ $# -eq 0 ]
+		then
+			usage "-name option requires an argument"
+		fi
+
 		label="$1"
 		resource="$1"
 		shift
@@ -101,6 +130,12 @@ while $continue; do
 		;;
 	-screen)
 		shift
+
+		if [ $# -eq 0 ]
+		then
+			usage "-screen option requires an argument"
+		fi
+
 		DISPLAY=`echo $DISPLAY | sed 's/:\\([0-9][0-9]*\\)\\.[0-9]/:\1/'`.$1
 		shift
 		;;
@@ -123,7 +158,7 @@ x*)
 	sess_mangr="SESSION_MANAGER=$SESSION_MANAGER "
 	;;
 esac
-vars="$xpath$xauth$sess_mangr"DISPLAY="$DISPLAY"
+vars='PATH=$PATH:/usr/X11R6/bin '"$xpath$xauth$sess_mangr"DISPLAY="$DISPLAY"
 case $# in
 0)
 	$rcmd 'sh -c '"'$vars"' xterm '$ls' -name "'"$resource"'" -T "'"$label"'" -n "'"$label"'" '"$redirect'"

@@ -1,5 +1,5 @@
 XCOMM! /bin/sh
-XCOMM $Xorg: client.cpp,v 1.3 2000/08/17 19:54:01 cpqbld Exp $
+XCOMM $Xorg: client.cpp,v 1.4 2000/12/20 16:41:43 pookie Exp $
 XCOMM
 
 XCOMM Copyright (c) 1993 Quarterdeck Office Systems
@@ -24,6 +24,28 @@ XCOMM PROFITS, EVEN IF ADVISED OF THE POSSIBILITY THEREOF, AND REGARDLESS
 XCOMM OF WHETHER IN AN ACTION IN CONTRACT, TORT OR NEGLIGENCE, ARISING OUT
 XCOMM OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
+usage() {
+    if [ -n "$1" ]
+    then
+	echo "`basename $0`: $1"
+    fi
+
+    echo ""
+    echo "Usage:  `basename $0` [options] hostname command args ..."
+    echo ""
+    echo "where options include:"
+    echo "    -c context    run command in the specified context"
+    echo "    -g            interpret command as a generic command"
+    echo "    -l username   run command as the specified user"
+    echo "    -v            enable verbose output"
+    exit 1
+}
+
+if [ $# -eq 0 ]
+then
+    usage
+fi
+
 context=X
 verbose=DETACH
 name=
@@ -33,6 +55,11 @@ while :
 do
 	case $1 in
 	-c)
+		if [ $# -lt 2 ]
+		then
+			usage "-c option requires an argument"
+		fi
+
 		context=$2
 		shift; shift
 		;;
@@ -41,6 +68,11 @@ do
 		shift
 		;;
 	-l)
+		if [ $# -lt 2 ]
+		then
+			usage "-l option requires an argument"
+		fi
+
 		name="-l $2"
 		shift; shift
 		;;
@@ -49,12 +81,22 @@ do
 		shift
 		;;
 	*)
+		if [ $# -eq 0 ]
+		then
+			usage "missing host name"
+		fi
+
 		host=$1
 		shift
 		break
 		;;
 	esac
 done
+
+if [ $# -eq 0 ]
+then
+	usage "missing command"
+fi
 
 case $verbose in
 DETACH)
@@ -63,7 +105,7 @@ DETACH)
 esac
 
 case "$DISPLAY" in
-:*)	disp="`hostname`$DISPLAY"
+:*)	disp="`uname -n`$DISPLAY"
 	echo expanded $DISPLAY to $disp
 	;;
 *)	disp="$DISPLAY"

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/cfb/cfbmskbits.h,v 3.12 2001/01/17 22:36:36 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/cfb/cfbmskbits.h,v 3.13 2001/10/28 03:33:01 tsi Exp $ */
 /************************************************************
 Copyright 1987 by Sun Microsystems, Inc. Mountain View, CA.
 
@@ -817,9 +817,7 @@ if ((x) + (w) <= PPW) {\
  */
 #define getstipplepixels24(psrcstip,xt,ones,psrcpix,destpix,stipindex) \
 { \
-    PixelGroup q, srcpix, srcstip; \
-    CfbBits src; \
-    register unsigned int stipidx; \
+    PixelGroup q; \
     q = *(psrcstip) >> (xt); \
     q = ((ones) ? q : ~q) & 1; \
     *(destpix) = (*(psrcpix)) & QuartetPixelMaskTable[q]; \
@@ -840,13 +838,12 @@ if ((x) + (w) <= PPW) {\
 }
 #if PSZ == 24
 # if 0
-#define getstipplepixels24( psrcstip,xt,w,ones,psrcpix,destpix,stipindex,srcindex,dstindex) \
+#define getstipplepixels24(psrcstip,xt,w,ones,psrcpix,destpix,stipindex,srcindex,dstindex) \
 { \
-    PixelGroup q, srcpix, srcstip; \
+    PixelGroup q; \
     CfbBits src; \
     register unsigned int sidx; \
     register unsigned int didx; \
-    register unsigned int stipidx; \
     sidx = ((srcindex) & 3)<<1; \
     didx = ((dstindex) & 3)<<1; \
     q = *(psrcstip) >> (xt); \
@@ -878,9 +875,7 @@ if ((x) + (w) <= PPW) {\
 # else
 #define getstipplepixels24(psrcstip,xt,ones,psrcpix,destpix,stipindex) \
 { \
-    PixelGroup q, srcpix, srcstip; \
-    CfbBits src; \
-    register unsigned int stipidx; \
+    PixelGroup q; \
     q = *(psrcstip) >> (xt); \
     q = ((ones) ? q : ~q) & 1; \
     *(destpix) = (*(psrcpix)) & QuartetPixelMaskTable[q]; \

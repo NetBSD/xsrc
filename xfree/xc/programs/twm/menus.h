@@ -3,7 +3,11 @@
 
 Copyright 1989,1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -44,12 +48,12 @@ in this Software without prior written authorization from The Open Group.
 /**    TORTIOUS ACTION, ARISING OUT OF OR IN  CONNECTION  WITH  THE  USE    **/
 /**    OR PERFORMANCE OF THIS SOFTWARE.                                     **/
 /*****************************************************************************/
-/* $XFree86: xc/programs/twm/menus.h,v 1.4 2001/01/17 23:45:07 dawes Exp $ */
+/* $XFree86: xc/programs/twm/menus.h,v 1.6 2001/12/14 20:01:09 dawes Exp $ */
 
 
 /***********************************************************************
  *
- * $Xorg: menus.h,v 1.3 2000/08/17 19:54:07 cpqbld Exp $
+ * $Xorg: menus.h,v 1.4 2001/02/09 02:05:37 xorgcvs Exp $
  *
  * twm menus include file
  *
@@ -144,6 +148,9 @@ extern int ConstMoveXL;
 extern int ConstMoveXR;
 extern int ConstMoveYT;
 extern int ConstMoveYB;
+extern int menuFromFrameOrWindowOrTitlebar;
+extern int ResizeOrigX;
+extern int ResizeOrigY;
 
 #define MAXMENUDEPTH	10	/* max number of nested menus */
 extern int MenuDepth;
@@ -185,7 +192,6 @@ extern void FocusOnRoot ( void );
 extern void DeIconify ( TwmWindow *tmp_win );
 extern void Iconify ( TwmWindow *tmp_win, int def_x, int def_y );
 extern void SetMapStateProp ( TwmWindow *tmp_win, int state );
-extern Bool GetWMState ( Window w, int *statep, Window *iwp );
 extern void WarpToScreen ( int n, int inc );
 extern void BumpWindowColormap ( TwmWindow *tmp, int inc );
 extern void HideIconManager ( void );

@@ -19,7 +19,7 @@
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  *
- * $XFree86: xc/programs/Xserver/hw/xfree86/os-support/nto/nto_ioperm.c,v 1.2 1999/12/27 00:45:45 robin Exp $
+ * $XFree86: xc/programs/Xserver/hw/xfree86/os-support/nto/nto_ioperm.c,v 1.3 2001/11/16 16:47:56 dawes Exp $
  */
 
 /* I/O functions to enable access to I/O ports under Neutrino */
@@ -27,38 +27,17 @@
 #include <sys/neutrino.h>
 #include <errno.h>
 
-void xf86ClearIOPortList(ScreenNum)
-int ScreenNum;
-{
-	return;
-}
 
-/* ARGSUSED */
-void xf86AddIOPorts(ScreenNum, NumPorts, Ports)
-int ScreenNum;
-int NumPorts;
-unsigned *Ports;
+void xf86EnableIO()
 {
-	return;
-}
-
-void xf86EnableIOPorts(ScreenNum)
-int ScreenNum;
-{
-	ErrorF("xf86EnableIOPorts: enabling I/O access\n");
+	ErrorF("xf86EnableIO: enabling I/O access\n");
 	if(ThreadCtl(_NTO_TCTL_IO, 0)) {
-		ErrorF("xf86EnableIOPorts: could not set I/O privilege, errno %d\n",errno);
+		ErrorF("xf86EnableIO: could not set I/O privilege, errno %d\n",errno);
 	}
 	return;
 }
 
-void xf86DisableIOPorts(ScreenNum)
-int ScreenNum;
-{
-	return;
-}
-
-void xf86DisableIOPrivs()
+void xf86DisableIO()
 {
 	return;
 }

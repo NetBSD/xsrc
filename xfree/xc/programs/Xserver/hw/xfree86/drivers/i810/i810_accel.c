@@ -25,7 +25,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 **************************************************************************/
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/i810/i810_accel.c,v 1.11 2000/09/15 23:25:48 mvojkovi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/i810/i810_accel.c,v 1.12 2001/10/04 18:28:21 alanh Exp $ */
 
 /*
  * Authors:
@@ -213,7 +213,6 @@ I810AccelInit( ScreenPtr pScreen )
 
    return XAAInit(pScreen, infoPtr);
 }
-
 
 int
 I810WaitLpRing( ScrnInfoPtr pScrn, int n, int timeout_millis )
@@ -650,4 +649,397 @@ I810EmitInvarientState(ScrnInfoPtr pScrn)
 /*     OUT_RING( pI810->DepthBuffer.Start | pI810->auxPitchBits); */
 
    ADVANCE_LP_RING();      
+}
+
+/* I830 Accel Functions */
+
+static void I830SetupForMono8x8PatternFill(ScrnInfoPtr pScrn, 
+					   int pattx, int patty,
+					   int fg, int bg, int rop,
+					   unsigned int planemask);
+static void I830SubsequentMono8x8PatternFillRect(ScrnInfoPtr pScrn, 
+						 int pattx, int patty,
+						 int x, int y, int w, int h);
+
+static void I830SetupForScanlineCPUToScreenColorExpandFill(ScrnInfoPtr pScrn,
+							   int fg, int bg,
+							   int rop,
+							   unsigned int mask);
+
+static void I830SubsequentScanlineCPUToScreenColorExpandFill(ScrnInfoPtr pScrn,
+							     int x, int y, 
+							     int w, int h,
+							     int skipleft );
+
+static void I830SubsequentColorExpandScanline(ScrnInfoPtr pScrn, int bufno);
+
+
+/* The following function sets up the supported acceleration. Call it
+ * from the FbInit() function in the SVGA driver, or before ScreenInit
+ * in a monolithic server.
+ */
+Bool
+I830AccelInit(ScreenPtr pScreen)
+{
+   XAAInfoRecPtr infoPtr;
+   ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
+   I810Ptr pI810 = I810PTR(pScrn);
+
+   if (I810_DEBUG & DEBUG_VERBOSE_ACCEL) ErrorF("I830AccelInit\n");
+
+   pI810->AccelInfoRec = infoPtr = XAACreateInfoRec();
+   if (!infoPtr) return FALSE;
+
+   pI810->bufferOffset = 0;
+   infoPtr->Flags = LINEAR_FRAMEBUFFER | OFFSCREEN_PIXMAPS | PIXMAP_CACHE;
+
+   /* Use the same sync function as the I810.
+    */
+   infoPtr->Sync = I810Sync;
+
+   /* Everything else is different enough to justify different functions */
+   {
+      infoPtr->SolidFillFlags = NO_PLANEMASK;
+      infoPtr->SetupForSolidFill = I830SetupForSolidFill;
+      infoPtr->SubsequentSolidFillRect = I830SubsequentSolidFillRect;
+   }
+
+   {
+      infoPtr->ScreenToScreenCopyFlags = (NO_PLANEMASK | NO_TRANSPARENCY);
+
+      infoPtr->SetupForScreenToScreenCopy = I830SetupForScreenToScreenCopy;
+      infoPtr->SubsequentScreenToScreenCopy = I830SubsequentScreenToScreenCopy;
+   }
+
+   {
+      infoPtr->SetupForMono8x8PatternFill = I830SetupForMono8x8PatternFill;
+      infoPtr->SubsequentMono8x8PatternFillRect =
+	 I830SubsequentMono8x8PatternFillRect;
+
+      infoPtr->Mono8x8PatternFillFlags = (HARDWARE_PATTERN_PROGRAMMED_BITS |
+					  HARDWARE_PATTERN_SCREEN_ORIGIN |
+					  HARDWARE_PATTERN_PROGRAMMED_ORIGIN |
+					  BIT_ORDER_IN_BYTE_MSBFIRST |
+					  NO_PLANEMASK);
+
+   }
+
+   if(pI810->Scratch.Size != 0) {
+      int i;
+      int width = ((pScrn->displayWidth + 31) & ~31) / 8; 
+      int nr_buffers = pI810->Scratch.Size / width;
+      unsigned char *ptr = pI810->FbBase + pI810->Scratch.Start;
+      
+      pI810->NumScanlineColorExpandBuffers = nr_buffers;
+      pI810->ScanlineColorExpandBuffers = (unsigned char **) 
+	 xnfcalloc( nr_buffers,  sizeof (unsigned char *) );
+       
+      for (i = 0 ; i < nr_buffers ; i++, ptr += width)
+	 pI810->ScanlineColorExpandBuffers[i] = ptr;
+       
+      infoPtr->ScanlineCPUToScreenColorExpandFillFlags = 
+	(NO_PLANEMASK |
+	 ROP_NEEDS_SOURCE |
+	 BIT_ORDER_IN_BYTE_MSBFIRST);
+
+      infoPtr->ScanlineColorExpandBuffers = (unsigned char **) 
+	 xnfcalloc( 1,  sizeof (unsigned char *) );
+      infoPtr->NumScanlineColorExpandBuffers = 1;
+
+      infoPtr->ScanlineColorExpandBuffers[0] = 
+	 pI810->ScanlineColorExpandBuffers[0];
+      pI810->nextColorExpandBuf = 0;
+
+      infoPtr->SetupForScanlineCPUToScreenColorExpandFill =
+	 I830SetupForScanlineCPUToScreenColorExpandFill;
+
+      infoPtr->SubsequentScanlineCPUToScreenColorExpandFill =
+	 I830SubsequentScanlineCPUToScreenColorExpandFill;
+       
+      infoPtr->SubsequentColorExpandScanline = 
+	 I830SubsequentColorExpandScanline;	  
+   }
+
+   I810SelectBuffer(pScrn, I810_FRONT);
+
+   return XAAInit(pScreen, infoPtr);
+}
+
+void
+I830SetupForSolidFill(ScrnInfoPtr pScrn, int color, int rop,
+		      unsigned int planemask)
+{
+   I810Ptr pI810 = I810PTR(pScrn);
+
+   if (I810_DEBUG & DEBUG_VERBOSE_ACCEL)
+      ErrorF( "I830SetupForFillRectSolid color: %x rop: %x mask: %x\n", 
+	      color, rop, planemask);
+
+   pI810->BR[13] = ((i810PatternRop[rop] << 16) |
+		    (pScrn->displayWidth * pI810->cpp));
+
+   pI810->BR[16] = color;
+
+   switch (pScrn->bitsPerPixel) {
+   case 8: break;
+   case 16: pI810->BR[13] |= (1<<24); break;
+   case 32: pI810->BR[13] |= ((1<<25)|(1<<24)); break;
+   }
+}
+
+void
+I830SubsequentSolidFillRect(ScrnInfoPtr pScrn, int x, int y, int w, int h)
+{
+   I810Ptr pI810 = I810PTR(pScrn);
+
+   if (I810_DEBUG & DEBUG_VERBOSE_ACCEL)
+      ErrorF( "I830SubsequentFillRectSolid %d,%d %dx%d\n",
+	      x,y,w,h);
+
+   {
+      BEGIN_LP_RING(6);
+
+      if(pScrn->bitsPerPixel == 32) {
+	 OUT_RING(COLOR_BLT_CMD | COLOR_BLT_WRITE_ALPHA | COLOR_BLT_WRITE_RGB);
+      } else {
+	 OUT_RING(COLOR_BLT_CMD);
+      }
+      OUT_RING(pI810->BR[13]);
+      OUT_RING((h << 16) | (w * pI810->cpp));
+      OUT_RING(pI810->bufferOffset + (y * pScrn->displayWidth + x) * 
+	       pI810->cpp);
+      OUT_RING(pI810->BR[16]);
+      OUT_RING(0);
+
+      ADVANCE_LP_RING();
+   }
+}
+
+void
+I830SetupForScreenToScreenCopy(ScrnInfoPtr pScrn, int xdir, int ydir, int rop,
+			       unsigned int planemask, int transparency_color)
+{
+   I810Ptr pI810 = I810PTR(pScrn);
+
+   if (I810_DEBUG & DEBUG_VERBOSE_ACCEL)
+      ErrorF( "I830SetupForScreenToScreenCopy %d %d %x %x %d\n",
+	      xdir, ydir, rop, planemask, transparency_color);
+
+   pI810->BR[13] = (pScrn->displayWidth * pI810->cpp);
+   pI810->BR[13] |= i810Rop[rop] << 16;
+
+   switch (pScrn->bitsPerPixel) {
+   case 8: break;
+   case 16: pI810->BR[13] |= (1<<24); break;
+   case 32: pI810->BR[13] |= ((1<<25)|(1<<24)); break;
+   }
+
+}
+
+void
+I830SubsequentScreenToScreenCopy(ScrnInfoPtr pScrn, int src_x1, int src_y1, 
+				 int dst_x1, int dst_y1, int w, int h) 
+{
+   I810Ptr pI810 = I810PTR(pScrn);
+   int dst_x2, dst_y2;
+
+   if (I810_DEBUG & DEBUG_VERBOSE_ACCEL)
+      ErrorF( "I830SubsequentScreenToScreenCopy %d,%d - %d,%d %dx%d\n",
+	     src_x1,src_y1,dst_x1,dst_y1,w,h);
+
+   dst_x2 = dst_x1 + w;
+   dst_y2 = dst_y1 + h;
+
+   {
+      BEGIN_LP_RING(8);
+
+      if(pScrn->bitsPerPixel == 32) {
+	 OUT_RING(XY_SRC_COPY_BLT_CMD | XY_SRC_COPY_BLT_WRITE_ALPHA | 
+		  XY_SRC_COPY_BLT_WRITE_RGB);
+      } else {
+	 OUT_RING(XY_SRC_COPY_BLT_CMD);
+      }
+      OUT_RING(pI810->BR[13]);
+      OUT_RING((dst_y1 << 16) | (dst_x1 & 0xffff));
+      OUT_RING((dst_y2 << 16) | (dst_x2 & 0xffff));
+      OUT_RING(pI810->bufferOffset);
+      OUT_RING((src_y1 << 16) | (src_x1 & 0xffff));
+      OUT_RING(pI810->BR[13] & 0xFFFF);
+      OUT_RING(pI810->bufferOffset);
+
+      ADVANCE_LP_RING();
+   }
+}
+
+static void
+I830SetupForMono8x8PatternFill(ScrnInfoPtr pScrn, int pattx, int patty,
+			       int fg, int bg, int rop,
+			       unsigned int planemask)
+{
+   I810Ptr pI810 = I810PTR(pScrn);
+
+   if (I810_DEBUG & DEBUG_VERBOSE_ACCEL)
+      ErrorF( "I830SetupFor8x8PatternColorExpand\n");
+
+   pI810->BR[16] = pattx;
+   pI810->BR[17] = patty;
+   pI810->BR[18] = bg;
+   pI810->BR[19] = fg;
+
+   pI810->BR[13] = (pScrn->displayWidth * pI810->cpp); /* In bytes */
+   pI810->BR[13] |= i810PatternRop[rop] << 16;
+   if (bg == -1) pI810->BR[13] |= (1<<28);
+
+   switch (pScrn->bitsPerPixel) {
+   case 8: break;
+   case 16: pI810->BR[13] |= (1<<24); break;
+   case 32: pI810->BR[13] |= ((1<<25)|(1<<24)); break;
+   }
+   
+}
+
+static void
+I830SubsequentMono8x8PatternFillRect(ScrnInfoPtr pScrn, int pattx, int patty, 
+				     int x, int y, int w, int h) 
+{
+   I810Ptr pI810 = I810PTR(pScrn);
+   int x1, x2, y1, y2;
+
+   x1 = x;
+   x2 = x + w;
+   y1 = y;
+   y2 = y + h;
+
+   if (I810_DEBUG & DEBUG_VERBOSE_ACCEL)
+      ErrorF( "I830Subsequent8x8PatternColorExpand\n");
+
+   {
+      BEGIN_LP_RING( 10 );
+
+      if(pScrn->bitsPerPixel == 32) {
+	 OUT_RING(XY_MONO_PAT_BLT_CMD | XY_MONO_PAT_BLT_WRITE_ALPHA | 
+		  XY_MONO_PAT_BLT_WRITE_RGB | 
+		  ((patty << 8) & XY_MONO_PAT_VERT_SEED) |
+		  ((pattx << 12) & XY_MONO_PAT_HORT_SEED));
+      } else {
+	 OUT_RING(XY_MONO_PAT_BLT_CMD |
+		  ((patty << 8) & XY_MONO_PAT_VERT_SEED) |
+		  ((pattx << 12) & XY_MONO_PAT_HORT_SEED));
+      }
+      OUT_RING(pI810->BR[13]);
+      OUT_RING((y1 << 16) | x1);
+      OUT_RING((y2 << 16) | x2);
+      OUT_RING(pI810->bufferOffset);
+      OUT_RING(pI810->BR[18]);          /* bg */
+      OUT_RING(pI810->BR[19]);          /* fg */
+      OUT_RING(pI810->BR[16]);		/* pattern data */
+      OUT_RING(pI810->BR[17]);
+      OUT_RING(0);
+      ADVANCE_LP_RING();
+   }
+}
+
+static void 
+I830GetNextScanlineColorExpandBuffer(ScrnInfoPtr pScrn)
+{
+   I810Ptr pI810 = I810PTR(pScrn);
+   XAAInfoRecPtr infoPtr = pI810->AccelInfoRec;
+
+   if (pI810->nextColorExpandBuf == pI810->NumScanlineColorExpandBuffers) 
+      I810Sync( pScrn );
+   
+   infoPtr->ScanlineColorExpandBuffers[0] = 
+      pI810->ScanlineColorExpandBuffers[pI810->nextColorExpandBuf];
+
+   if (I810_DEBUG & DEBUG_VERBOSE_ACCEL)
+      ErrorF( "using color expand buffer %d\n",
+	      pI810->nextColorExpandBuf);
+
+   pI810->nextColorExpandBuf++;
+}
+
+static void
+I830SetupForScanlineCPUToScreenColorExpandFill(ScrnInfoPtr pScrn,
+					       int fg, int bg, int rop,
+					       unsigned int planemask)
+{
+   I810Ptr pI810 = I810PTR(pScrn);
+
+   if (I810_DEBUG & DEBUG_VERBOSE_ACCEL)
+      ErrorF("I830SetupForScanlineScreenToScreenColorExpand %d %d %x %x\n",
+	      fg,bg,rop,planemask);
+
+   /* Fill out register values */
+   pI810->BR[13] = (pScrn->displayWidth * pI810->cpp);
+   pI810->BR[13] |= i810Rop[rop] << 16;
+   if (bg == -1) pI810->BR[13] |= (1<<29);
+
+   switch (pScrn->bitsPerPixel) {
+   case 8: break;
+   case 16: pI810->BR[13] |= (1<<24); break;
+   case 32: pI810->BR[13] |= ((1<<25)|(1<<24)); break;
+   }
+
+   pI810->BR[18] = bg;
+   pI810->BR[19] = fg;
+
+   I830GetNextScanlineColorExpandBuffer( pScrn );
+}
+
+static void 
+I830SubsequentScanlineCPUToScreenColorExpandFill(ScrnInfoPtr pScrn,
+						 int x, int y, 
+						 int w, int h,
+						 int skipleft)
+{
+   I810Ptr pI810 = I810PTR(pScrn);
+
+   if (I810_DEBUG & DEBUG_VERBOSE_ACCEL)
+      ErrorF("I830SubsequentScanlineCPUToScreenColorExpandFill "
+	      "%d,%d %dx%x %d\n", 
+	      x,y,w,h,skipleft);
+
+   /* Fill out register values */
+   pI810->BR[9] = (pI810->bufferOffset + 
+		   (y * pScrn->displayWidth + x) * pI810->cpp);
+   pI810->BR[11] = ((1 << 16) | w);
+}
+
+static void 
+I830SubsequentColorExpandScanline(ScrnInfoPtr pScrn, int bufno)
+{
+   I810Ptr pI810 = I810PTR(pScrn);
+
+   pI810->BR[12] = (pI810->AccelInfoRec->ScanlineColorExpandBuffers[0] - 
+		    pI810->FbBase);
+
+   if (I810_DEBUG & DEBUG_VERBOSE_ACCEL)
+      ErrorF( "I830SubsequentColorExpandScanline %d (addr %x)\n",
+	      bufno,
+	      pI810->BR[12]);
+
+   {
+      BEGIN_LP_RING( 8 );
+
+      if(pScrn->bitsPerPixel == 32) {
+	 OUT_RING(XY_MONO_SRC_BLT_CMD | XY_MONO_SRC_BLT_WRITE_ALPHA | 
+		  XY_MONO_SRC_BLT_WRITE_RGB);
+      } else {
+	 OUT_RING(XY_MONO_SRC_BLT_CMD);
+      }
+      OUT_RING(pI810->BR[13]);
+      OUT_RING(0); /* x1 = 0, y1 = 0 */
+      OUT_RING(pI810->BR[11]); /* x2 = w, y2 = 1 */
+      OUT_RING(pI810->BR[9]);  /* dst addr */
+      OUT_RING(pI810->BR[12]); /* src addr */
+      OUT_RING( pI810->BR[18]); /* bg */
+      OUT_RING( pI810->BR[19]); /* fg */
+
+      ADVANCE_LP_RING();
+   }
+
+   /* Advance to next scanline.
+    */
+   pI810->BR[9] += pScrn->displayWidth * pI810->cpp;
+   I830GetNextScanlineColorExpandBuffer( pScrn );
 }

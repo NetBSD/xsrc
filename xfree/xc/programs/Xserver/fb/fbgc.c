@@ -21,7 +21,7 @@
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
-/* $XFree86: xc/programs/Xserver/fb/fbgc.c,v 1.11 2000/10/19 18:08:22 keithp Exp $ */
+/* $XFree86: xc/programs/Xserver/fb/fbgc.c,v 1.12 2001/05/29 04:54:09 keithp Exp $ */
 
 #include "fb.h"
 #ifdef IN_MODULE
@@ -165,6 +165,7 @@ fbCanEvenStipple (PixmapPtr pStipple, int bpp)
     FbBits  *bits;
     int	    stride;
     int	    stip_bpp;
+    int	    stipXoff, stipYoff;
     int	    h;
 
     /* can't even stipple 24bpp drawables */
@@ -173,7 +174,7 @@ fbCanEvenStipple (PixmapPtr pStipple, int bpp)
     /* make sure the stipple width is a multiple of the even stipple width */
     if (pStipple->drawable.width % len != 0)
 	return FALSE;
-    fbGetDrawable (&pStipple->drawable, bits, stride, stip_bpp);
+    fbGetDrawable (&pStipple->drawable, bits, stride, stip_bpp, stipXoff, stipYoff);
     h = pStipple->drawable.height;
     /* check to see that the stipple repeats horizontally */
     while (h--)

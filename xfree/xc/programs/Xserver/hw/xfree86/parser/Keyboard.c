@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/parser/Keyboard.c,v 1.10 2000/10/20 14:59:02 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/parser/Keyboard.c,v 1.12 2001/08/06 20:51:13 dawes Exp $ */
 /* 
  * 
  * Copyright (c) 1997  Metro Link Incorporated
@@ -87,25 +87,28 @@ xf86parseKeyboardSection (void)
 {
 	char *s, *s1, *s2;
 	int l;
-	int ntoken;
+	int token, ntoken;
 	parsePrologue (XF86ConfInputPtr, XF86ConfInputRec)
 
 	while ((token = xf86getToken (KeyboardTab)) != ENDSECTION)
 	{
 		switch (token)
 		{
+		case COMMENT:
+			ptr->inp_comment = xf86addComment(ptr->inp_comment, val.str);
+			break;
 		case KPROTOCOL:
-			if (xf86getToken (NULL) != STRING)
+			if (xf86getSubToken (&(ptr->inp_comment)) != STRING)
 				Error (QUOTE_MSG, "Protocol");
 			ptr->inp_option_lst = xf86addNewOption(ptr->inp_option_lst,
 												xf86configStrdup("Protocol"),
 												val.str);
 			break;
 		case AUTOREPEAT:
-			if (xf86getToken (NULL) != NUMBER)
+			if (xf86getSubToken (&(ptr->inp_comment)) != NUMBER)
 				Error (AUTOREPEAT_MSG, NULL);
 			s1 = xf86uLongToString(val.num);
-			if (xf86getToken (NULL) != NUMBER)
+			if (xf86getSubToken (&(ptr->inp_comment)) != NUMBER)
 				Error (AUTOREPEAT_MSG, NULL);
 			s2 = xf86uLongToString(val.num);
 			l = strlen(s1) + 1 + strlen(s2) + 1;
@@ -117,11 +120,11 @@ xf86parseKeyboardSection (void)
 												xf86configStrdup("AutoRepeat"), s);
 			break;
 		case XLEDS:
-			if (xf86getToken (NULL) != NUMBER)
+			if (xf86getSubToken (&(ptr->inp_comment)) != NUMBER)
 				Error (XLEDS_MSG, NULL);
 			s = xf86uLongToString(val.num);
 			l = strlen(s) + 1;
-			while ((token = xf86getToken (NULL)) == NUMBER)
+			while ((token = xf86getSubToken (&(ptr->inp_comment))) == NUMBER)
 			{
 				s1 = xf86uLongToString(val.num);
 				l += (1 + strlen(s1));
@@ -156,7 +159,7 @@ xf86parseKeyboardSection (void)
 			}
 			break;
 		case VTINIT:
-			if (xf86getToken (NULL) != STRING)
+			if (xf86getSubToken (&(ptr->inp_comment)) != STRING)
 				Error (QUOTE_MSG, "VTInit");
 			xf86parseWarning(MOVED_TO_FLAGS_MSG, "VTInit");
 			break;
@@ -169,77 +172,77 @@ xf86parseKeyboardSection (void)
 												NULL);
 			break;
 		case XKBKEYMAP:
-			if (xf86getToken (NULL) != STRING)
+			if (xf86getSubToken (&(ptr->inp_comment)) != STRING)
 				Error (QUOTE_MSG, "XKBKeymap");
 			ptr->inp_option_lst = xf86addNewOption(ptr->inp_option_lst,
 												xf86configStrdup("XkbKeymap"),
 												val.str);
 			break;
 		case XKBCOMPAT:
-			if (xf86getToken (NULL) != STRING)
+			if (xf86getSubToken (&(ptr->inp_comment)) != STRING)
 				Error (QUOTE_MSG, "XKBCompat");
 			ptr->inp_option_lst = xf86addNewOption(ptr->inp_option_lst,
 												xf86configStrdup("XkbCompat"),
 												val.str);
 			break;
 		case XKBTYPES:
-			if (xf86getToken (NULL) != STRING)
+			if (xf86getSubToken (&(ptr->inp_comment)) != STRING)
 				Error (QUOTE_MSG, "XKBTypes");
 			ptr->inp_option_lst = xf86addNewOption(ptr->inp_option_lst,
 												xf86configStrdup("XkbTypes"),
 												val.str);
 			break;
 		case XKBKEYCODES:
-			if (xf86getToken (NULL) != STRING)
+			if (xf86getSubToken (&(ptr->inp_comment)) != STRING)
 				Error (QUOTE_MSG, "XKBKeycodes");
 			ptr->inp_option_lst = xf86addNewOption(ptr->inp_option_lst,
 												xf86configStrdup("XkbKeycodes"),
 												val.str);
 			break;
 		case XKBGEOMETRY:
-			if (xf86getToken (NULL) != STRING)
+			if (xf86getSubToken (&(ptr->inp_comment)) != STRING)
 				Error (QUOTE_MSG, "XKBGeometry");
 			ptr->inp_option_lst = xf86addNewOption(ptr->inp_option_lst,
 												xf86configStrdup("XkbGeometry"),
 												val.str);
 			break;
 		case XKBSYMBOLS:
-			if (xf86getToken (NULL) != STRING)
+			if (xf86getSubToken (&(ptr->inp_comment)) != STRING)
 				Error (QUOTE_MSG, "XKBSymbols");
 			ptr->inp_option_lst = xf86addNewOption(ptr->inp_option_lst,
 												xf86configStrdup("XkbSymbols"),
 												val.str);
 			break;
 		case XKBRULES:
-			if (xf86getToken (NULL) != STRING)
+			if (xf86getSubToken (&(ptr->inp_comment)) != STRING)
 				Error (QUOTE_MSG, "XKBRules");
 			ptr->inp_option_lst = xf86addNewOption(ptr->inp_option_lst,
 												xf86configStrdup("XkbRules"),
 												val.str);
 			break;
 		case XKBMODEL:
-			if (xf86getToken (NULL) != STRING)
+			if (xf86getSubToken (&(ptr->inp_comment)) != STRING)
 				Error (QUOTE_MSG, "XKBModel");
 			ptr->inp_option_lst = xf86addNewOption(ptr->inp_option_lst,
 												xf86configStrdup("XkbModel"),
 												val.str);
 			break;
 		case XKBLAYOUT:
-			if (xf86getToken (NULL) != STRING)
+			if (xf86getSubToken (&(ptr->inp_comment)) != STRING)
 				Error (QUOTE_MSG, "XKBLayout");
 			ptr->inp_option_lst = xf86addNewOption(ptr->inp_option_lst,
 												xf86configStrdup("XkbLayout"),
 												val.str);
 			break;
 		case XKBVARIANT:
-			if (xf86getToken (NULL) != STRING)
+			if (xf86getSubToken (&(ptr->inp_comment)) != STRING)
 				Error (QUOTE_MSG, "XKBVariant");
 			ptr->inp_option_lst = xf86addNewOption(ptr->inp_option_lst,
 												xf86configStrdup("XkbVariant"),
 												val.str);
 			break;
 		case XKBOPTIONS:
-			if (xf86getToken (NULL) != STRING)
+			if (xf86getSubToken (&(ptr->inp_comment)) != STRING)
 				Error (QUOTE_MSG, "XKBOptions");
 			ptr->inp_option_lst = xf86addNewOption(ptr->inp_option_lst,
 												xf86configStrdup("XkbOptions"),

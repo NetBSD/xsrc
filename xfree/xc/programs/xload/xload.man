@@ -1,13 +1,13 @@
 .\" $XConsortium: xload.man,v 1.29 94/04/17 20:43:44 matt Exp $
 .\"
-.\" $XFree86: xc/programs/xload/xload.man,v 1.3 2001/01/27 18:21:17 dawes Exp $
+.\" $XFree86: xc/programs/xload/xload.man,v 1.4 2001/08/13 19:35:01 dawes Exp $
 .\"
 .TH XLOAD 1 __xorgversion__
 .SH NAME
 xload \- system load average display for X
 .SH SYNOPSIS
 .ta 6n
-\fBxload\fP	[-\fItoolkitoption\fP ...] [-scale \fIinteger\fP] [-update \fIseconds\fP] [-hl \fIcolor\fP] [-highlight \fIcolor\fP] 
+\fBxload\fP	[-\fItoolkitoption\fP ...] [-scale \fIinteger\fP] [-update \fIseconds\fP] [-hl \fIcolor\fP] [-highlight \fIcolor\fP]  [-remote \fIhost\fP]
 .br
 	[-jumpscroll \fIpixels\fP] [-label \fIstring\fP] [-nolabel] [-lights]
 .SH DESCRIPTION
@@ -55,6 +55,9 @@ use fewer than this number.  The default is 1.
 This option specifies the interval in seconds at which \fIxload\fP
 updates its display.  The minimum amount of time allowed between updates
 is 1 second.  The default is 10.
+.TP 8
+.B \-remote \fIhost\fP
+This option tells \fIxload\fP to display the load of \fIhost\fP instead of \fIlocalhost\fP. \fIXload\fP gets the information from the \fIrwhod\fP database and consequently requires \fIrwhod\fP to be executing both on \fIlocalhost\fP and \fIhost\fP.
 .SH RESOURCES
 In addition to the resources available to each of the widgets used by 
 \fIxload\fP there is one resource defined by the application itself.

@@ -1,10 +1,14 @@
-/* $Xorg: sunCursor.c,v 1.3 2000/08/17 19:48:29 cpqbld Exp $ */
+/* $Xorg: sunCursor.c,v 1.4 2001/02/09 02:04:43 xorgcvs Exp $ */
 /*
 
 Copyright 1988  Sun Microsystems, Inc.
 Copyright 1993, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included
 in all copies or substantial portions of the Software.
@@ -23,7 +27,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/Xserver/hw/sun/sunCursor.c,v 3.2 2001/01/17 22:36:50 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/sun/sunCursor.c,v 3.5 2001/12/14 19:59:43 dawes Exp $ */
 
 /*-
  * sunCursor.c --
@@ -33,6 +37,8 @@ from The Open Group.
 
 #define NEED_EVENTS
 #include    "sun.h"
+#include    "cfb.h"
+#include    "mfb.h"
 
 #ifdef FBIOGCURMAX  /* has hardware cursor kernel support */
 
@@ -74,15 +80,9 @@ sunCursorRepad (pScreen, bits, src_bits, dst_bits, ptSrc, w, h)
     DDXPointPtr	    ptSrc;
     int		    w, h;
 {
-    SetupCursor(pScreen);
     PixmapPtr	src, dst;
     BoxRec	box;
     RegionRec	rgnDst;
-#ifndef LOWMEMFTPT
-    extern int mfbDoBitblt();
-#else
-    extern int cfbDoBitblt();
-#endif /* ifndef LOWMEMFTPT */
 
     if (!(src = GetScratchPixmapHeader(pScreen, bits->width, bits->height,
 				       /*bpp*/ 1, /*depth*/ 1,
@@ -100,9 +100,10 @@ sunCursorRepad (pScreen, bits, src_bits, dst_bits, ptSrc, w, h)
     box.y2 = h;
     REGION_INIT(pScreen, &rgnDst, &box, 1);
 #ifndef LOWMEMFTPT
-    mfbDoBitblt(src, dst, GXcopy, &rgnDst, ptSrc);
+    mfbDoBitblt(&src->drawable, &dst->drawable, GXcopy, &rgnDst, ptSrc);
 #else
-    cfbDoBitblt(src, dst, GXcopy, &rgnDst, ptSrc, 0xFFFFFFFF);
+    cfbDoBitblt(&src->drawable, &dst->drawable, GXcopy, &rgnDst, ptSrc,
+	0xFFFFFFFF);
 #endif /* ifndef LOWMEMFTPT */
     REGION_UNINIT(pScreen, &rgnDst);
     FreeScratchPixmapHeader(src);
@@ -186,7 +187,6 @@ sunMoveCursor (pScreen, x, y)
     ScreenPtr	pScreen;
     int		x, y;
 {
-    SetupCursor(pScreen);
     struct fbcurpos pos;
 
     pos.x = x;

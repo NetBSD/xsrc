@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/X11/lcUniConv/jisx0212.h,v 1.3 2000/11/29 17:40:33 dawes Exp $ */
+/* $XFree86: xc/lib/X11/lcUniConv/jisx0212.h,v 1.4 2001/08/09 19:14:08 dawes Exp $ */
 
 /*
  * JISX0212.1990-0
@@ -895,10 +895,10 @@ static const unsigned short jisx0212_2uni_page30[5801] = {
 static int
 jisx0212_mbtowc (conv_t conv, ucs4_t *pwc, const unsigned char *s, int n)
 {
-  unsigned char c1 = s[0];
+  unsigned char c1 = (s[0] & 0x7F);
   if ((c1 == 0x22) || (c1 >= 0x26 && c1 <= 0x27) || (c1 >= 0x29 && c1 <= 0x2b) || (c1 >= 0x30 && c1 <= 0x6d)) {
     if (n >= 2) {
-      unsigned char c2 = s[1];
+      unsigned char c2 = (s[1] & 0x7F);
       if (c2 >= 0x21 && c2 < 0x7f) {
         unsigned int i = 94 * (c1 - 0x21) + (c2 - 0x21);
         unsigned short wc = 0xfffd;

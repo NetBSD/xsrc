@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/lib/Xft/xftglyphs.c,v 1.13 2001/05/16 10:32:54 keithp Exp $
+ * $XFree86: xc/lib/Xft/xftglyphs.c,v 1.14 2001/11/17 08:22:45 keithp Exp $
  *
  * Copyright © 2000 Keith Packard, member of The XFree86 Project, Inc.
  *
@@ -124,7 +124,7 @@ XftGlyphLoad (Display		*dpy,
 	}
 	else
 	    glyphindex = (FT_UInt) charcode;
-	error = FT_Load_Glyph (font->face, glyphindex, 0/*|FT_LOAD_NO_HINTING */);
+	error = FT_Load_Glyph (font->face, glyphindex, FT_LOAD_NO_BITMAP);
 	if (error)
 	    continue;
 

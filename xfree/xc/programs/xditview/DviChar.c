@@ -6,6 +6,7 @@
  * Map DVI (ditrof output) character names to
  * font indexes and back
  */
+/* $XFree86: xc/programs/xditview/DviChar.c,v 1.3 2001/08/28 16:48:09 tsi Exp $ */
 
 # include   <X11/Intrinsic.h>
 # include   "DviChar.h"
@@ -20,9 +21,10 @@ struct map_list {
 static struct map_list	*world;
 
 static int	standard_maps_loaded = 0;
-static void	load_standard_maps ();
-static int	hash_name ();
-static void	dispose_hash(), compute_hash();
+static void	load_standard_maps (void);
+static int	hash_name (char *name);
+static void	dispose_hash(DviCharNameMap *map);
+static void	compute_hash(DviCharNameMap *map);
 
 DviCharNameMap *
 DviFindMap (encoding)

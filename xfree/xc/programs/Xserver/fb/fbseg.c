@@ -21,7 +21,7 @@
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
-/* $XFree86: xc/programs/Xserver/fb/fbseg.c,v 1.7 2001/01/17 07:40:02 keithp Exp $ */
+/* $XFree86: xc/programs/Xserver/fb/fbseg.c,v 1.8 2001/05/29 04:54:09 keithp Exp $ */
 
 #include "fb.h"
 #include "miline.h"
@@ -47,15 +47,16 @@ fbBresSolid (DrawablePtr    pDrawable,
     FbStip	*dst;
     FbStride	dstStride;
     int		dstBpp;
+    int		dstXoff, dstYoff;
     FbGCPrivPtr	pPriv = fbGetGCPrivate (pGC);
     FbStip	and = (FbStip) pPriv->and;
     FbStip	xor = (FbStip) pPriv->xor;
     FbStip	mask, mask0;
     FbStip	bits;
     
-    fbGetStipDrawable (pDrawable, dst, dstStride, dstBpp);
-    dst += (y1 * dstStride);
-    x1 *= dstBpp;
+    fbGetStipDrawable (pDrawable, dst, dstStride, dstBpp, dstXoff, dstYoff);
+    dst += ((y1 + dstYoff) * dstStride);
+    x1 = (x1 + dstXoff) * dstBpp;
     dst += x1 >> FB_STIP_SHIFT;
     x1 &= FB_STIP_MASK;
     mask0 = FbStipMask(0, dstBpp);
@@ -128,6 +129,7 @@ fbBresDash (DrawablePtr	pDrawable,
     FbStip	*dst;
     FbStride	dstStride;
     int		dstBpp;
+    int		dstXoff, dstYoff;
     FbGCPrivPtr	pPriv = fbGetGCPrivate (pGC);
     FbStip	and = (FbStip) pPriv->and;
     FbStip	xor = (FbStip) pPriv->xor;
@@ -139,13 +141,13 @@ fbBresDash (DrawablePtr	pDrawable,
     Bool	even;
     Bool	doOdd;
     
-    fbGetStipDrawable (pDrawable, dst, dstStride, dstBpp);
+    fbGetStipDrawable (pDrawable, dst, dstStride, dstBpp, dstXoff, dstYoff);
     doOdd = pGC->lineStyle == LineDoubleDash;
 
     FbDashInit (pGC, pPriv, dashOffset, dashlen, even);
     
-    dst += (y1 * dstStride);
-    x1 *= dstBpp;
+    dst += ((y1 + dstYoff) * dstStride);
+    x1 = (x1 + dstXoff) * dstBpp;
     dst += x1 >> FB_STIP_SHIFT;
     x1 &= FB_STIP_MASK;
     mask0 = FbStipMask(0, dstBpp);
@@ -337,6 +339,7 @@ fbBresSolid24RRop (DrawablePtr  pDrawable,
     FbStip	*dst;
     FbStride	dstStride;
     int		dstBpp;
+    int		dstXoff, dstYoff;
     FbGCPrivPtr	pPriv = fbGetGCPrivate (pGC);
     FbStip	and = pPriv->and;
     FbStip	xor = pPriv->xor;
@@ -347,9 +350,9 @@ fbBresSolid24RRop (DrawablePtr  pDrawable,
     int		rot;
     FbStip	andT, xorT;
     
-    fbGetStipDrawable (pDrawable, dst, dstStride, dstBpp);
-    dst += (y1 * dstStride);
-    x1 *= 24;
+    fbGetStipDrawable (pDrawable, dst, dstStride, dstBpp, dstXoff, dstYoff);
+    dst += ((y1 + dstYoff) * dstStride);
+    x1 = (x1 + dstXoff) * 24;
     if (signdy < 0)
 	dstStride = -dstStride;
     signdx *= 24;
@@ -410,6 +413,7 @@ fbBresDash24RRop (DrawablePtr	pDrawable,
     FbStip	*dst;
     FbStride	dstStride;
     int		dstBpp;
+    int		dstXoff, dstYoff;
     FbGCPrivPtr	pPriv = fbGetGCPrivate (pGC);
     FbStip	andT, xorT;
     FbStip	fgand = pPriv->and;
@@ -426,14 +430,14 @@ fbBresDash24RRop (DrawablePtr	pDrawable,
     Bool	even;
     Bool	doOdd;
     
-    fbGetStipDrawable (pDrawable, dst, dstStride, dstBpp);
+    fbGetStipDrawable (pDrawable, dst, dstStride, dstBpp, dstXoff, dstYoff);
     doOdd = pGC->lineStyle == LineDoubleDash;
 
     /* compute current dash position */
     FbDashInit(pGC, pPriv, dashOffset, dashlen, even);
     
-    dst += (y1 * dstStride);
-    x1 *= 24;
+    dst += ((y1 + dstYoff) * dstStride);
+    x1 = (x1 + dstXoff) * 24;
     if (signdy < 0)
 	dstStride = -dstStride;
     signdx *= 24;

@@ -1,11 +1,15 @@
-/* $Xorg: xieperf.c,v 1.3 2000/08/17 19:54:29 cpqbld Exp $ */
+/* $Xorg: xieperf.c,v 1.4 2001/02/09 02:05:48 xorgcvs Exp $ */
 
 /**** module xieperf.c ****/
 /****************************************************************************
 
 Copyright 1993, 1994, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -67,7 +71,7 @@ terms and conditions:
 	Syd Logan -- AGE Logic, Inc.
   
 *****************************************************************************/
-/* $XFree86: xc/programs/xieperf/xieperf.c,v 3.6 2001/01/23 20:38:30 herrb Exp $ */
+/* $XFree86: xc/programs/xieperf/xieperf.c,v 3.8 2001/12/14 20:01:53 dawes Exp $ */
 
 #include <X11/Xos.h>
 #include <stdio.h>
@@ -78,14 +82,8 @@ terms and conditions:
 #include "xieperf.h"
 #include <X11/Xmu/SysUtil.h>
 #include <X11/Xmu/StdCmap.h>
-#ifdef X_NOT_STDC_ENV
-extern int errno;
-#define Time_t long
-extern Time_t time ();
-#else
 #include <time.h>
 #define Time_t time_t
-#endif
 #ifndef O_BINARY
 #define O_BINARY 0
 #endif

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xaaInit.c,v 1.33 2001/05/15 18:22:23 paulo Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xaaInit.c,v 1.35 2001/07/19 18:50:16 mvojkovi Exp $ */
 
 #include "misc.h"
 #include "xf86.h"
@@ -87,6 +87,10 @@ XAAInit(ScreenPtr pScreen, XAAInfoRecPtr infoRec)
 #ifdef RENDER
     PictureScreenPtr    ps = GetPictureScreenIfSet(pScreen);
 #endif
+
+    /* Return successfully if no acceleration wanted */
+    if (!infoRec)
+	return TRUE;
     
     if (XAAGeneration != serverGeneration) {
 	if (	((XAAScreenIndex = AllocateScreenPrivateIndex()) < 0) ||
@@ -535,6 +539,7 @@ XAACreatePixmap(ScreenPtr pScreen, int w, int h, int depth)
 
 	pPriv->flags = OFFSCREEN;
 	pPriv->offscreenArea = area;
+ 	pPriv->freeData = FALSE;
 	    
 	pLink->next = infoRec->OffscreenPixmaps;
 	pLink->pPix = pPix;
@@ -550,6 +555,7 @@ BAILOUT:
        pPriv = XAA_GET_PIXMAP_PRIVATE(pPix);
        pPriv->flags = 0;
        pPriv->offscreenArea = NULL;
+       pPriv->freeData = FALSE;
        if(!w || !h) /* either scratch or shared memory */
 	    pPriv->flags |= SHARED_PIXMAP;
     }
@@ -565,22 +571,35 @@ XAADestroyPixmap(PixmapPtr pPix)
     XAAPixmapPtr pPriv = XAA_GET_PIXMAP_PRIVATE(pPix);
     Bool ret;
 
-    if((pPix->refcnt == 1) && (pPriv->flags & OFFSCREEN)) {
-	if(pPriv->flags & DGA_PIXMAP)
-	    xfree(pPriv->offscreenArea);
-        else {
-	    FBAreaPtr area = pPriv->offscreenArea;
-	    if(!area) { 
+    if(pPix->refcnt == 1) {
+        if(pPriv->flags & OFFSCREEN) {
+	    if(pPriv->flags & DGA_PIXMAP)
+	        xfree(pPriv->offscreenArea);
+            else {
+	        FBAreaPtr area = pPriv->offscreenArea;
 		PixmapLinkPtr pLink = infoRec->OffscreenPixmaps;
-		while(pLink->pPix != pPix)
+	        PixmapLinkPtr prev = NULL;
+
+		while(pLink->pPix != pPix) {
+		    prev = pLink;
 		    pLink = pLink->next;
-		xfree(pPix->devPrivate.ptr);
-		area = pLink->area;
-	    }
-	    xf86FreeOffscreenArea(area);
-	    pPriv->offscreenArea = NULL;
-	    DELIST_OFFSCREEN_PIXMAP(pPix);
-	} 
+		}
+
+	        if(prev) prev->next = pLink->next;
+		else infoRec->OffscreenPixmaps = pLink->next;
+
+	        if(!area) area = pLink->area;
+
+	        xf86FreeOffscreenArea(area);
+	        pPriv->offscreenArea = NULL;
+	        xfree(pLink);
+	    } 
+        }
+
+        if(pPriv->freeData) { /* pixmaps that were once in video ram */
+	    xfree(pPix->devPrivate.ptr);
+	    pPix->devPrivate.ptr = NULL;
+	}
     }
     
     XAA_SCREEN_PROLOGUE (pScreen, DestroyPixmap);

@@ -2,13 +2,17 @@
  * cfb copy area
  */
 
-/* $XFree86: xc/programs/Xserver/cfb/cfbbitblt.c,v 1.12 2001/01/17 22:36:34 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/cfb/cfbbitblt.c,v 1.14 2001/12/14 19:59:21 dawes Exp $ */
 
 /*
 
 Copyright 1989, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -27,7 +31,7 @@ in this Software without prior written authorization from The Open Group.
 Author: Keith Packard
 
 */
-/* $Xorg: cfbbitblt.c,v 1.3 2000/08/17 19:48:13 cpqbld Exp $ */
+/* $Xorg: cfbbitblt.c,v 1.4 2001/02/09 02:04:37 xorgcvs Exp $ */
 
 #include	"X.h"
 #include	"Xmd.h"
@@ -76,7 +80,7 @@ cfbBitBlt (pSrcDrawable, pDstDrawable,
     void (*doBitBlt)();
     unsigned long bitPlane;
 {
-    RegionPtr prgnSrcClip;	/* may be a new region, or just a copy */
+    RegionPtr prgnSrcClip = NULL; /* may be a new region, or just a copy */
     Bool freeSrcClip = FALSE;
 
     RegionPtr prgnExposed;
@@ -413,8 +417,8 @@ cfbCopyPlane1to8 (pSrcDrawable, pDstDrawable, rop, prgnDst, pptSrc, planemask, b
     CfbBits endmask;		/* right edge pixel mask */
     register int nlMiddle;   /* number of words in middle of the row to draw */
     register int nl;
-    int firstoff;
-    int secondoff;
+    int firstoff = 0;
+    int secondoff = 0;
     CfbBits src;
     int nbox;		/* number of boxes in region to copy */
     BoxPtr  pbox;	/* steps thru boxes in region */
@@ -757,7 +761,9 @@ cfbCopyPlane1to32 (pSrcDrawable, pDstDrawable, rop, prgnDst, pptSrc,
     register unsigned int  bits, tmp;
     register unsigned int  fgpixel, bgpixel;
     register unsigned int  src;
+#if PSZ == 24
     register unsigned int  dst;
+#endif
     register int  leftShift, rightShift;
     register int  i, nl;
     int nbox;
@@ -1069,10 +1075,10 @@ RegionPtr cfbCopyPlane(pSrcDrawable, pDstDrawable,
     unsigned long	bitPlane;
 {
     RegionPtr	ret;
-    extern RegionPtr    miHandleExposures();
-    void		(*doBitBlt)();
 
 #if IMAGE_BYTE_ORDER == LSBFirst
+
+    void		(*doBitBlt)();
 
     if (pSrcDrawable->bitsPerPixel == 1 && pDstDrawable->bitsPerPixel == PSZ)
     {

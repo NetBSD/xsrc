@@ -21,7 +21,12 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-/* $XFree86: xc/lib/font/FreeType/ft.h,v 1.13 2000/11/14 16:54:42 dawes Exp $ */
+/* $XFree86: xc/lib/font/FreeType/ft.h,v 1.16 2001/08/13 21:46:46 dawes Exp $ */
+
+#ifndef _FT_H_
+#define _FT_H_
+
+#include <X11/Xfuncproto.h>
 
 #undef DEBUG_TRUETYPE
 
@@ -64,8 +69,7 @@ struct ttf_mapping
   int has_cmap;
   TT_CharMap cmap;
   int base;
-  struct font_encoding *encoding;
-  struct font_encoding_mapping *mapping;
+  struct _FontMap *mapping;     /* allow inclusion without fontenc.h */
 };
 
 /* Prototypes */
@@ -88,3 +92,6 @@ int FTtoXReturnCode(int);
 int ttf_GetEnglishName(TT_Face, char *, int);
 int ttf_checkForTTCName(char*, char**, int*);
 
+extern void ErrorF(const char*, ...);
+
+#endif /* _FT_H_ */

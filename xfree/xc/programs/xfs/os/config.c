@@ -1,8 +1,12 @@
-/* $Xorg: config.c,v 1.3 2000/08/17 19:54:22 cpqbld Exp $ */
+/* $Xorg: config.c,v 1.4 2001/02/09 02:05:44 xorgcvs Exp $ */
 /*
 Copyright 1987, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -43,10 +47,12 @@ in this Software without prior written authorization from The Open Group.
  * $NCDXorg: @(#)config.c,v 4.6 1991/07/09 14:08:09 lemke Exp $
  *
  */
-/* $XFree86: xc/programs/xfs/os/config.c,v 3.10 2001/01/17 23:45:32 dawes Exp $ */
+/* $XFree86: xc/programs/xfs/os/config.c,v 3.14 2001/12/14 20:01:40 dawes Exp $ */
 
 #include	<stdio.h>
+#include	<stdlib.h>
 #include	<ctype.h>
+#include	<X11/Xtrans.h>
 #include	<X11/Xos.h>
 #include	"misc.h"
 #include	"configstr.h"
@@ -55,8 +61,11 @@ in this Software without prior written authorization from The Open Group.
 #include	"access.h"
 #include	"difsutils.h"
 #ifdef FONTCACHE
-#include	"fontcacheP.h"
+#include	<X11/extensions/fontcacheP.h>
 #endif
+#include	"fontutil.h"
+#include	"difs.h"
+#include	"snfstr.h"
 
 extern int portFromCmdline;
 

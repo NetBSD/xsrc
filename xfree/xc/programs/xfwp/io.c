@@ -1,16 +1,13 @@
-/* $Xorg: io.c,v 1.3 2000/08/17 19:54:23 cpqbld Exp $ */
+/* $Xorg: io.c,v 1.4 2001/02/09 02:05:45 xorgcvs Exp $ */
 /*
 
-Copyright "1986-1997 The Open Group All Rights Reserved
+Copyright "1986-1997, 1998 The Open Group
 
-Permission is hereby granted, free of charge, to any person
-obtaining a copy of this software and associated documentation
-files (the "Software"), to use the Software without restriction,
-including, without limitation, the rights to copy, modify,
-merge, publish, distribute and sublicense the Software, to make,
-have made, license and distribute derivative works thereof, and
-to permit persons to whom the Software is furnished to do so,
-subject to the following conditions:
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and the following permission notice
 shall be included in all copies of the Software:
@@ -32,7 +29,7 @@ authorization from The Open Group.
 X Window System is a trademark of The Open Group.
 
 */
-/* $XFree86: xc/programs/xfwp/io.c,v 1.9 2001/01/17 23:45:34 dawes Exp $ */
+/* $XFree86: xc/programs/xfwp/io.c,v 1.11 2001/12/14 20:01:43 dawes Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -55,9 +52,6 @@ X Window System is a trademark of The Open Group.
 #include "transport.h"
 #include "io.h"
 
-#ifdef X_NOT_STDC_ENV
-extern int errno;
-#endif
 
 /*
  * Error messages returned to clients who are denied access

@@ -1,10 +1,14 @@
-/* $Xorg: fontmisc.h,v 1.3 2000/08/17 19:46:38 cpqbld Exp $ */
+/* $Xorg: fontmisc.h,v 1.4 2001/02/09 02:04:04 xorgcvs Exp $ */
 
 /*
 
 Copyright 1991, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -21,7 +25,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/font/include/fontmisc.h,v 3.13 2001/01/17 19:43:32 dawes Exp $ */
+/* $XFree86: xc/lib/font/include/fontmisc.h,v 3.16 2001/12/14 19:56:54 dawes Exp $ */
 
 /*
  * Author:  Keith Packard, MIT X Consortium
@@ -32,12 +36,7 @@ in this Software without prior written authorization from The Open Group.
 
 #ifndef FONTMODULE
 #include <X11/Xfuncs.h>
-
-#ifndef X_NOT_STDC_ENV
 #include <stdlib.h>
-#else
-extern int rand();
-#endif
 #include <stdio.h>
 
 #ifndef X_NOT_POSIX
@@ -69,10 +68,12 @@ extern Atom MakeAtom ( char *string, unsigned len, int makeit );
 extern int ValidAtom ( Atom atom );
 extern char *NameForAtom (Atom atom);
 
+#ifndef OS_H
 extern pointer Xalloc(unsigned long);
 extern pointer Xrealloc(pointer, unsigned long);
 extern void Xfree(pointer);
 extern pointer Xcalloc(unsigned long);
+#endif
 extern int f_strcasecmp(const char *s1, const char *s2);
 
 #ifndef xalloc

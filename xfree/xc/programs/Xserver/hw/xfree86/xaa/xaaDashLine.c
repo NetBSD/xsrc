@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xaaDashLine.c,v 1.3 1999/05/30 03:03:30 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xaaDashLine.c,v 1.4 2001/10/28 03:34:04 tsi Exp $ */
 
 #include "X.h"
 #include "misc.h"
@@ -109,6 +109,8 @@ XAAPolyLinesDashed(
 	    len = dmaj;
 	    dmin <<= 1;
 	    dmaj <<= 1;
+	} else {	/* Muffle compiler */
+	    dmin = dmaj = e = octant = len = 0;
 	}
 
 	while(nbox--) {

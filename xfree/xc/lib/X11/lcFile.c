@@ -1,4 +1,4 @@
-/* $Xorg: lcFile.c,v 1.4 2000/08/17 19:45:17 cpqbld Exp $ */
+/* $Xorg: lcFile.c,v 1.5 2000/12/12 12:44:05 coskrey Exp $ */
 /*
  *
  * Copyright IBM Corporation 1993
@@ -23,7 +23,7 @@
  * SOFTWARE.
  *
 */
-/* $XFree86: xc/lib/X11/lcFile.c,v 3.23 2001/05/18 23:35:28 dawes Exp $ */
+/* $XFree86: xc/lib/X11/lcFile.c,v 3.25 2001/11/19 15:33:38 tsi Exp $ */
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -382,4 +382,60 @@ _XlcResolveI18NPath(buf, buf_len)
 	xlocaledir(buf, buf_len);
     }
     return 1;
+}
+
+char *
+_XlcLocaleDirName(dir_name, lc_name)
+     char *dir_name;
+     char *lc_name;
+{
+  char dir[PATH_MAX], buf[PATH_MAX], *name = NULL;
+  int i, n;
+  char *args[NUM_LOCALEDIR];
+  static char locale_alias[] = LOCALE_ALIAS;
+  char *target_name = (char*)0;
+  char *target_dir = (char*)0;
+
+  xlocaledir (dir, PATH_MAX);
+  n = _XlcParsePath(dir, args, 256);
+  for (i = 0; i < n; ++i){
+    if ((2 + (args[i] ? strlen(args[i]) : 0) + 
+	 strlen(locale_alias)) < PATH_MAX) {
+      sprintf (buf, "%s/%s", args[i], locale_alias);
+      name = resolve_name(lc_name, buf, LtoR);
+    }
+
+    /* If name is not an alias, use lc_name for locale.dir search */
+    if (name == NULL)
+      name = lc_name;
+
+    /* look at locale.dir */
+
+    target_dir = args[i];
+    if (!target_dir) {
+      /* something wrong */
+      continue;
+    }
+    if ((1 + (target_dir ? strlen (target_dir) : 0) +
+	 strlen("locale.dir")) < PATH_MAX) {
+      sprintf(buf, "%s/locale.dir", target_dir);
+      target_name = resolve_name(name, buf, RtoL);
+    }
+    if (target_name != NULL) {
+      char *p = 0;
+      if ((p = strstr(target_name, "/XLC_LOCALE"))) {
+	*p = '\0';
+	break;
+      }
+    }
+  }
+  if (target_name == NULL) {
+    /* vendor locale name == Xlocale name, no expansion of alias */
+    target_dir = args[0];
+    target_name = lc_name;
+  }
+  strcpy(dir_name, target_dir);
+  strcat(dir_name, "/");
+  strcat(dir_name, target_name);
+  return dir_name;
 }

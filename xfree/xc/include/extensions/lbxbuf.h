@@ -38,8 +38,14 @@
 
 typedef struct _zlibbuffer  *ZlibBufferPtr;
 
+#include <X11/Xfuncproto.h>
+
+_XFUNCPROTOBEGIN
+
 extern int  InitZlibBuffer(ZlibBufferPtr b, int size);
 extern void FreeZlibBuffer(ZlibBufferPtr b);
 extern char *ReserveOutBuf(ZlibBufferPtr outbuf, int outlen);
+
+_XFUNCPROTOEND
 
 #endif	/* _BUFFER_H_ */

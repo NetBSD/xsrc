@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xf8_32bpp/cfbpntwin.c,v 1.4 2000/02/29 00:17:16 mvojkovi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xf8_32bpp/cfbpntwin.c,v 1.5 2001/10/01 13:44:15 eich Exp $ */
 
 #include "X.h"
 
@@ -52,7 +52,7 @@ cfb8_32PaintWindow(
 		}
 	    }
 #endif
-	    cfb32FillBoxTileOddCopy ((DrawablePtr)pWin,
+	    cfb32FillBoxTileOddGeneral ((DrawablePtr)pWin,
 			(int)REGION_NUM_RECTS(pRegion), REGION_RECTS(pRegion),
 			pWin->background.pixmap, xorg, yorg, GXcopy, 
 			(pWin->drawable.depth == 24) ? 0x00ffffff : 0xff000000);
@@ -100,7 +100,7 @@ cfb8_32PaintWindow(
 		}
 	    }
 #endif
-	    cfb32FillBoxTileOddCopy ((DrawablePtr)pWin,
+	    cfb32FillBoxTileOddGeneral ((DrawablePtr)pWin,
 			(int)REGION_NUM_RECTS(pRegion), REGION_RECTS(pRegion),
 			pWin->border.pixmap, xorg, yorg, GXcopy, 
 			(pWin->drawable.depth == 24) ? 0x00ffffff : 0xff000000);

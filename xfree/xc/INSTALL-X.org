@@ -7,7 +7,7 @@
 
 
 
-		   Building and Installing X11R6.5.1
+		    Building and Installing X11R6.6
 
 
 
@@ -15,14 +15,13 @@
 
 
 
-			   Kaleb S. KEITHLEY
 
 
 
 
 
 
-			    August 20, 2000
+			     April 4, 2001
 
 
 
@@ -30,14 +29,13 @@
 
 
 
-Copyright (C) 1999,2000 Compaq Computer Corporation
-Copyright (C) 1999,2000 Hewlett-Packard Company
-Copyright (C) 1999,2000 IBM Corporation
-Copyright (C) 1999,2000 Hummingbird Communications Ltd.
-Copyright (C) 1999,2000 Silicon Graphics, Inc.
-Copyright (C) 1999,2000 Sun Microsystems, Inc.
-Copyright (C) 1999,2000 The Open Group
-Copyright (C) 1998 The Open Group
+Copyright (C) 1999,2000,2001 Compaq Computer Corporation
+Copyright (C) 1999,2000,2001 Hewlett-Packard Company
+Copyright (C) 1999,2000,2001 IBM Corporation
+Copyright (C) 1999,2000,2001 Hummingbird Communications Ltd.
+Copyright (C) 1999,2000,2001 Silicon Graphics, Inc.
+Copyright (C) 1999,2000,2001 Sun Microsystems, Inc.
+Copyright (C) 1998,1999,2000,2001 The Open Group
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Soft-
@@ -70,14 +68,13 @@ X Window System is a trademark of The Open Group.
 1.  Introduction
 
 This document is the installation notes that were provided with X.Org's
-X11R6.5.1 release.  If you're building XFree86, it can be used as a
-rough guide.  Be aware that most of the details are not targetted
-specifically at the current XFree86 source tree.  XFree86-specific docu-
-mentation can be found in the xc/programs/Xserver/hw/xfree86/doc direc-
-tory and on-line at http://www.xfree86.org/current/.  Some of the docu-
-mentation there is out of date, so also be aware of that.  There is cur-
-rently no up to date document specifically targetted at building XFree86
-from source.
+X11R6.6 release.  If you're building XFree86, it can be used as a rough
+guide.	Be aware that most of the details are not targeted specifically
+at the current XFree86 source tree.  XFree86-specific documentation can
+be found in the xc/programs/Xserver/hw/xfree86/doc directory and on-line
+at http://www.xfree86.org/current/.  Some of the documentation there is
+out of date, so also be aware of that.	There is currently no up to date
+document specifically targeted at building XFree86 from source.
 
 
 2.  Easy Build Instructions
@@ -86,17 +83,22 @@ This quick summary is no substitute for reading the full build instruc-
 tions later in this document.
 
 Edit xc/config/cf/site.def for local preferences.  If you want to
-install somewhere other than /usr/X11R6.5.1, change ProjectRoot. (Do not
-use DESTDIR.)  If you want to build with gcc uncomment the HasGcc2 line.
-If you have gcc, but not cc, please read the full build instructions.
+install and use the installation from somewhere other than /usr, change
+ProjectRoot. (Do not use DESTDIR.)
 
-If some time has elapsed since the initial release of R6.5.1, check to
-see if any public patches have been released. The source tar files may
-have been updated -- check the patch-level line in the bug-report tem-
-plate. If the source in the tar files has not been updated then get all
-the patches and apply them, following the instructions at the top of
-each patch. Ignore the rebuild steps in the patch application instruc-
-tions.
+If you are cross compiling you will want to use DESTDIR to specify where
+the installation should take place. Failure to do so will corrupt your
+native installation of X.
+
+If you want to build with gcc uncomment the HasGcc2 line.  If you have
+gcc, but not cc, please read the full build instructions.
+
+If some time has elapsed since the initial release of R6.6, check to see
+if any public patches have been released. The source tar files may have
+been updated -- check the patch-level line in the bug-report template.
+If the source in the tar files has not been updated then get all the
+patches and apply them, following the instructions at the top of each
+patch. Ignore the rebuild steps in the patch application instructions.
 
 Check the appropriate vendor-specific .cf file in xc/config/cf/ to make
 sure that OSMajorVersion, OSMinorVersion, and OSTeenyVersion are set
@@ -134,12 +136,12 @@ installation instructions.
 
 
 
-3.  Building and Installing R6.5.1
+3.  Building and Installing R6.6
 
 
-Historically the MIT X Consortium and The X Consortium, Inc., sample
-implementation releases have always been source-code-only releases, and
-this release is no different.
+Historically the MIT X Consortium, The X Consortium, Inc., and X.Org
+sample implementation releases have always been source-code-only
+releases, and this release is no different.
 
 
 3.1.  Introduction
@@ -147,22 +149,22 @@ this release is no different.
 
 Every release of X has been progressively easier to configure, build,
 and install than the preceding releases -- and we believe this release
-is the easiest release to build yet. That not withstanding, if things do
+is the easiest release to build yet. That notwithstanding, if things do
 go amiss during the build we assume that you have the basic skills nec-
 essary, and the willingness, to debug any errors that may occur in the
 build process. When you install, if you're going to use xdm or replace
 your system's old X, we assume you have a basic understanding of your
 system's initialization process. For Remote Execution (RX, embedding) we
-assume you that you understand the fundamentals of HTTP, CGI, and HTML.
-If these assumptions are not correct then you should consider finding
-someone who has proficiency in these areas to do the build and install
-for you.
+assume that you understand the fundamentals of HTTP, CGI, and HTML. If
+these assumptions are not correct then you should consider finding some-
+one who has proficiency in these areas to do the build and install for
+you.
 
 After the release has been out for a while more up to date information
 about any newly-discovered problems may be found in the Frequently Asked
-Questions posting appearing monthly on the Usenet newsgroup comp.win-
-dows.x and xpert mailing list. The FAQ is also available via anonymous
-FTP from ftp://ftp.x.org/ in the file ftp://ftp.x.org/con-
+Questions posting, which appears monthly on the Usenet newsgroup
+comp.windows.x and xpert mailing list. The FAQ is also available via
+anonymous FTP from ftp://ftp.x.org/ in the file ftp://ftp.x.org/con-
 trib/faqs/FAQ.Z, or possibly on one of X mirror sites.
 
 
@@ -170,7 +172,7 @@ trib/faqs/FAQ.Z, or possibly on one of X mirror sites.
 
 
 The source is distributed in four gzip compressed UNIX Tape ARchive
-(tar) files. You will need about 200 Mb of disk space in order to unpack
+(tar) files. You will need about 230 Mb of disk space in order to unpack
 and build the release. Installing requires an additional 30-50 Mb assum-
 ing you have shared libraries (80-100 Mb without).
 
@@ -178,7 +180,7 @@ On non-UNIX systems you'll need a utility that can extract gzip com-
 pressed tar files to extract the sources. There are several to chose
 from, we do not make recommendations about which one you should use.
 
-Release 6.5.1 sources are distributed among the tar files as follows:
+Release 6.6 sources are distributed among the tar files as follows:
 
 
      xorg-1.tar     contains everything in xc/ that isn't in the other tar files
@@ -192,7 +194,7 @@ to unpack xorg-1.tar to build. If you build fonts, then you will also
 need xorg-2.tar to build. If you already have the fonts from prior
 releases you can use those instead of downloading them again. We presume
 that you know how to copy or move them from your old source tree to the
-R6.5.1 source tree.
+R6.6 source tree.
 
 
 3.3.  Unpacking the Distribution
@@ -217,13 +219,12 @@ or if you have GNU's tar (FreeBSD, NetBSD, OpenBSD, or Linux too)
 3.4.  Applying Patches
 
 
-If some time has elapsed since the initial release of R6.5.1, check to
-see if any public patches have been released. The source tar files may
-have been updated -- check the patch-level line in the bug-report tem-
-plate. If the source in the tar files has not been updated then get all
-the patches and apply them, following the instructions at the top of
-each patch. Ignore the rebuild steps in the patch application instruc-
-tions.
+If some time has elapsed since the initial release of R6.6, check to see
+if any public patches have been released. The source tar files may have
+been updated -- check the patch-level line in the bug-report template.
+If the source in the tar files has not been updated then get all the
+patches and apply them, following the instructions at the top of each
+patch. Ignore the rebuild steps in the patch application instructions.
 
 See the section "Public Patches" later in this document.
 
@@ -323,7 +324,7 @@ InstallServerSetUID
      Some systems require the X server to run as root to access the
      devices it needs. If you are on such a system and will not be using
      xdm, you may set this variable to YES to install the X server
-     setuid to root; however the X Project Team strongly recommends that
+     setuid to root; however the X.Org Group strongly recommends that
      you not install your server suid-root, but that you use xdm
      instead. Talk to your system manager before setting this variable
      to YES.
@@ -352,8 +353,7 @@ bsd.cf, convex.cf, DGUX.cf, luna.cf, macII.cf, Mips.cf, moto.cf, Oki.cf,
 pegasus.cf, x386.cf.  Amoeba.cf is known to require additional patches.
 
 The file xc/lib/Xdmcp/Wraphelp.c, for XDM-AUTHORIZATION-1, is not
-included in this release. See ftp://ftp.x.org/pub/R6.5.1/xdm-
-auth/README.
+included in this release. See ftp://ftp.x.org/pub/R6.6/xdm-auth/README.
 
 
 3.6.  System Build Notes
@@ -393,19 +393,19 @@ to edit xc/config/imake/Makefile.ini to specify gcc instead of cc.
 
 Use of the GNU BinUtils assembler, as, and linker, ld, is not supported
 -- period! If you have them installed on your system you must rename or
-remove them for the duration of the R6.5.1 build.  (You can restore them
+remove them for the duration of the R6.6 build.  (You can restore them
 afterwards.)
 
-The system-supplied make works just fine for building R6.5.1 and that's
+The system-supplied make works just fine for building R6.6 and that's
 what we suggest you use. If you've replaced your system's make with GNU
 make then we recommend that you restore the system make for the duration
-of your R6.5.1 build. After R6.5.1 is done building you can revert to
-GNU make. GNU make on most systems (except Linux, where it is the
-default make) is not a supported build configuration. GNU make may work
-for you, and if it does, great; but if it doesn't we do not consider it
-a bug in R6.5.1. If, after this admonition, you still use GNU make and
-your build fails, reread the above, and retry the build with the sys-
-tem's make before you file a bug-report.
+of your R6.6 build. After R6.6 is done building you can revert to GNU
+make. GNU make on most systems (except Linux, where it is the default
+make) is not a supported build configuration. GNU make may work for you,
+and if it does, great; but if it doesn't we do not consider it a bug in
+R6.6. If, after this admonition, you still use GNU make and your build
+fails, reread the above, and retry the build with the system's make
+before you file a bug-report.
 
 
 3.6.3.	IBM AIX 4.x
@@ -552,10 +552,10 @@ You can install the manual pages by typing the following as root:
 3.9.  Shared Libraries
 
 
-The version number of some of the the shared libraries has been changed.
-On SunOS 4, which supports minor version numbers for shared libraries,
-programs linked with the R6.5.1 libraries will use the new libraries
-with no special action required.
+The version number of some of the shared libraries has been changed.  On
+SunOS 4, which supports minor version numbers for shared libraries, pro-
+grams linked with the R6.6 libraries will use the new libraries with no
+special action required.
 
 On most other modern operating systems the version portion of the
 library name, i.e. "6.1" portion of "libX11.so.6.1" is a string. Even if
@@ -690,7 +690,7 @@ entries from /etc/inetd.conf and /etc/services before adding xfs to the
 run-level files.
 
 
-3.11.4.  On SystemV-based systems
+3.11.4.  On Unix System V-based systems
 
 
 On systems with a /etc/inittab file, you can edit this file to add the
@@ -788,12 +788,11 @@ target, e.g., "make icccm.txt".
 4.  Public Patches
 
 
-The Open Group X Project Team may from time to time issue public patches
-for this release to fix any serious problems that are discovered. Such
-fixes are a subset of fixes available to X Project Team members. Public
-patches are available via anonymous FTP from
-ftp://ftp.x.org/pub/R6.5.1/fixes, or from your local X mirror site.
-Check the site closest to you first.
+The X.Org Group may from time to time issue public patches for this
+release to fix any serious problems that are discovered. Such fixes are
+a subset of fixes available to X.Org members. Public patches are avail-
+able via anonymous FTP from ftp://ftp.x.org/pub/R6.6/fixes, or from your
+local X mirror site.  Check the site closest to you first.
 
 You can determine which public patches have already been applied to your
 source tree by examining the "VERSION" line of xc/bug-report. The source

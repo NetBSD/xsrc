@@ -1,7 +1,7 @@
 S3 ViRGE 4.0 devel notes
 
 rev: 
-3 Jan 2001 KJB
+10 Jan 2002 KJB
 
 
 Function		Implemented
@@ -23,6 +23,55 @@ S3VRestore		X
 
 Status
 ------
+1/10/02
+Ver 1.8.3
+DGA fix, buffer pointer used wrong value.  Submitted for 4.2.0 (late).
+
+Ver 1.8.2
+DPMS testing (display DPMS status, disable MX LCD panel), DGA testing.
+
+11/11/01 KJB
+Ver 1.8.1
+ViRGE MX (& GX2) fix to CR63 for problems with modes < 1024x768 from 
+max <sunmax@libero.it>. Submitted for 4.2.0.
+
+11/5/01 KJB
+Ver 1.8.0
+ViRGE MX & GX2 XVideo changes.  Fix overlap/color keying on MX, fix
+and enable GX2 XVideo.
+Submitted for 4.2.0.
+
+11/4/01 KJB
+Ver 1.7.0
+Bump version for 4.2.0.  Update man and README.
+
+11/3/01 KJB
+Ver 1.6.16
+Pre-4.2.0 patch.  cr3a fix, virge mx xvideo support, xvideo disable option
+(helps with high res modes on dx and screen noise), remove accel solid
+fill rect for trio3d, bring over some trio3d and mx fixes from 4.0.3 test
+drivers.  Includes VERBLEV bump to 5 to remove register dumps in log file.
+
+Ver 1.6.15
+Experimental - Scanline color expand - GX2
+
+9/21/01 KJB
+Ver 1.6.14
+ModeInit - cr3a for MX/GX2, don't clear reserved bit 0x40 (revert change).
+Back out previous cr3a patch for testing.
+
+9/18/01 KJB
+Ver 1.6.13
+Option "xvideo" added.  Add patch provided by Sven Menke
+<Menke@SLAC.Stanford.EDU> for XV support on MX (slight changes to logic).
+
+Ver 1.6.12
+Adam J. Richter's cr3a fix (possibly temporary).
+
+5/30/01 KJB
+Ver 1.6.10
+Disable MaxHValue & MaxVValue setting.
+
 1/03/01 KJB
 Ver 1.6.0
 Revert ViRGE to pre-Xv changes.  ViRGE DX still supports Xv, but changes
@@ -264,4 +313,4 @@ the new config. management stuff may help here.
 
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/drivers/s3virge/TODO_NOTES,v 1.19 2001/02/09 03:23:29 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/drivers/s3virge/TODO_NOTES,v 1.21 2002/01/14 18:02:58 dawes Exp $

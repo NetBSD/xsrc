@@ -1,4 +1,4 @@
-
+/* $XFree86: xc/extras/Mesa/src/aatriangle.c,v 1.3 2001/12/11 09:18:54 alanh Exp $ */
 /*
  * Mesa 3-D graphics library
  * Version:  3.3
@@ -37,6 +37,7 @@
 #include "span.h"
 #include "types.h"
 #include "vb.h"
+#include "mmath.h"
 #endif
 
 

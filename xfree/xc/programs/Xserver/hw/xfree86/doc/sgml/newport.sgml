@@ -4,39 +4,56 @@
 
 <article>
 <title>Information for newport Users
-<author>Guido Guenther
-<date>1 August 2000
+<author>Guido Günther
+<date>16 January 2002
 <ident>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/newport.sgml,v 1.2 2000/12/12 18:54:29 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/newport.sgml,v 1.4 2002/01/16 18:21:04 dawes Exp $
 </ident>
 <toc>
 
 <sect>Supported Hardware
 <p>
 This is an unaccelerated driver for the SGI Indy's newport cards. Both the
- 8bit and 24bit versions are tested and working with some limitations(see below). 
-The 24bit newport additionally works in 8bit mode only.
+ 8bit and 24bit versions are tested and working.
+
+
+<sect>Features
+<p>
+<itemize>
+  <item> support for 8 and 24 bit pixel depths
+</itemize>
 
 <sect>Notes
 <p>
 <itemize>
   <item>X -configure does not generate a XF86Config file
+  <item>Restoration of the console fails on some variants of the newport
+  (Cmap revision C)
+  <item>There's only a 1280x1024 mode
 </itemize>
 
 
 <sect>Configuration
 <p>
-The following Section "Device" options are supported by the newport driver:
-<itemize>
-  <item>Option "bitplanes" "x"
-	Gives the maximum number of bitplanes your card supports (8 or 24).
-</itemize>
+The driver auto-detects all device information necessary to
+initialize the card.  The only lines you need in the "Device"
+section of your XF86Config file are:
+<verb>
+       Section "Device"
+           Identifier "SGI newport"
+           Driver     "newport"
+       EndSection
+</verb>
 
+However, if you have problems with auto-detection, you can specify:
+<itemize>
+  <item>bitplanes - number of physical bitplanes (8 or 24)
+</itemize>
 
 <sect>Authors
 <p>
 <itemize>
-  <item>Guido Guenther <email>guido.guenther@gmx.net</email>
+  <item>Guido Guenther <email>agx@sigxcpu.org</email>
 </itemize>
 
 
@@ -45,8 +62,8 @@ The following Section "Device" options are supported by the newport driver:
 <itemize>
   <item>Gleb O. Raiko <email>raiko@niisi.msk.ru</email> for getting the beast to build
   <item>Ralf Baechle <email>ralf@oss.sgi.com</email> for his patience...
-  <item>Ulf Carlsson <email>ulfc@calypso.engr.sgi.com</email> for comments and the dynamic loader code
-  <item>Nina A. Podolskaya <email>nap@niisi.msk.ru</email> for dynamic loader code
+  <item>Ulf Carlsson <email>ulfc@calypso.engr.sgi.com</email> for comments and elf loader code
+  <item>Nina A. Podolskaya <email>nap@niisi.msk.ru</email> for elf loader code
   <item>all the guys who wrote the newport_con linux kernel code
 </itemize>
 

@@ -21,7 +21,7 @@
  *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  */
  
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/glint/pm2_video.c,v 1.19 2001/05/04 19:05:38 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/glint/pm2_video.c,v 1.22 2001/08/18 11:41:44 alanh Exp $ */
 
 #include "xf86.h"
 #include "xf86_OSproc.h"
@@ -501,7 +501,7 @@ EncVS[2][14] =
 };
 
 /* Forward */
-static void StopVideoStream(PortPrivPtr pPPriv, Bool exit);
+static void StopVideoStream(PortPrivPtr pPPriv, Bool shutdown);
 static void RestoreVideoStd(AdaptorPrivPtr pAPriv);
 static Bool xvipcHandshake(PortPrivPtr pPPriv, int op, Bool block);
 
@@ -1298,7 +1298,7 @@ TimerCallback(OsTimerPtr pTim, CARD32 now, pointer p)
  */
 
 static void
-StopVideoStream(PortPrivPtr pPPriv, Bool exit)
+StopVideoStream(PortPrivPtr pPPriv, Bool shutdown)
 {
     AdaptorPrivPtr pAPriv = pPPriv->pAdaptor;
     GLINTPtr pGlint = GLINTPTR(pAPriv->pScrn);
@@ -1317,7 +1317,7 @@ StopVideoStream(PortPrivPtr pPPriv, Bool exit)
 
 	pPPriv->StreamOn = FALSE;
 
-	if (exit)
+	if (shutdown)
 	    FreeCookies(pPPriv);
 
 	if (VideoOn > VIDEO_OFF && pGlint->NoAccel)
@@ -1350,12 +1350,12 @@ StopVideoStream(PortPrivPtr pPPriv, Bool exit)
     }
 
     if (!pAPriv->Port[0].StreamOn && !pAPriv->Port[1].StreamOn) {
-	if (exit)
+	if (shutdown)
 	    xf86I2CWriteByte(&pAPriv->Port[1].I2CDev, 0x61, 0xC2);
 	xf86I2CWriteByte(&pAPriv->Port[0].I2CDev, 0x11, 0x00);
     }
 
-    if (exit) {
+    if (shutdown) {
 	FreeBuffers(pPPriv);
 	FreeCookies(pPPriv);
 	
@@ -1972,16 +1972,16 @@ Permedia2PutImage(ScrnInfoPtr pScrn,
 }
 
 static void
-Permedia2StopVideo(ScrnInfoPtr pScrn, pointer data, Bool exit)
+Permedia2StopVideo(ScrnInfoPtr pScrn, pointer data, Bool shutdown)
 {
     PortPrivPtr pPPriv = (PortPrivPtr) data;  
     AdaptorPrivPtr pAPriv = pPPriv->pAdaptor;
     GLINTPtr pGlint = GLINTPTR(pScrn);
 
     DEBUG(xf86DrvMsgVerb(pScrn->scrnIndex, X_INFO, 3,
-	"StopVideo port=%d, exit=%d\n", PORTNUM(pPPriv), exit));
+	"StopVideo port=%d, shutdown=%d\n", PORTNUM(pPPriv), shutdown));
 
-    if (exit) {
+    if (shutdown) {
 	if (PORTNUM(pPPriv) < 2) {
 	    StopVideoStream(pPPriv, TRUE);
 	    RestoreVideoStd(pAPriv);

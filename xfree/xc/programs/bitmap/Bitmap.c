@@ -1,9 +1,13 @@
-/* $Xorg: Bitmap.c,v 1.3 2000/08/17 19:53:49 cpqbld Exp $ */
+/* $Xorg: Bitmap.c,v 1.4 2001/02/09 02:05:28 xorgcvs Exp $ */
 /*
 
 Copyright 1989, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included
 in all copies or substantial portions of the Software.
@@ -22,7 +26,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/bitmap/Bitmap.c,v 1.3 2001/01/17 23:44:50 dawes Exp $ */
+/* $XFree86: xc/programs/bitmap/Bitmap.c,v 1.5 2001/12/26 21:39:34 paulo Exp $ */
 
 /*
  * Author:  Davor Matic, MIT X Consortium
@@ -33,6 +37,7 @@ from The Open Group.
 #include <X11/Xaw/XawInit.h>
 #include <X11/Xmu/CharSet.h>
 #include <X11/Xmu/Drawing.h>
+#include <X11/Xmu/SysUtil.h>
 #include <X11/Xatom.h>
 #include <X11/Xfuncs.h>
 #include <X11/Xos.h>
@@ -1023,7 +1028,7 @@ BWUnparseStatus(Widget w)
 {
     BitmapWidget BW = (BitmapWidget) w;
     
-    sprintf(BW->bitmap.status, 
+    XmuSnprintf(BW->bitmap.status, sizeof(BW->bitmap.status),
 	    "Filename: %s  Basename: %s  Size: %dx%d",
 	    (strcmp(BW->bitmap.filename, "") ? BW->bitmap.filename : "<none>"),
 	    (strcmp(BW->bitmap.basename, "") ? BW->bitmap.basename : "<none>"),

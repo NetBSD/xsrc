@@ -1,10 +1,14 @@
-/* $Xorg: AsciiSink.c,v 1.3 2000/08/17 19:45:30 cpqbld Exp $ */
+/* $Xorg: AsciiSink.c,v 1.4 2001/02/09 02:03:42 xorgcvs Exp $ */
 
 /***********************************************************
 
 Copyright 1987, 1988, 1994, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -42,9 +46,10 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/lib/Xaw/AsciiSink.c,v 1.23 2001/01/17 19:42:24 dawes Exp $ */
+/* $XFree86: xc/lib/Xaw/AsciiSink.c,v 1.27 2002/01/04 23:04:17 paulo Exp $ */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <X11/IntrinsicP.h>
 #include <X11/StringDefs.h>
 #include <X11/Xatom.h>
@@ -206,7 +211,6 @@ XawAsciiSinkClassPartInitialize(WidgetClass wc)
 {
 #ifndef OLDXAW
     AsciiSinkObjectClass cclass = (AsciiSinkObjectClass)wc;
-    TextSinkObjectClass super = (TextSinkObjectClass)cclass->object_class.superclass;
     XrmQuark record_type = XrmPermStringToQuark("TextSink");
     TextSinkExt ext = cclass->text_sink_class.extension;
 
@@ -442,6 +446,9 @@ AsciiPreparePaint(Widget w, int y, int line,
     XawTextBlock block;
     XFontStruct *font;
     XawTextPaintStruct *paint;
+
+    if (!sink->ascii_sink.echo)
+	return;
 
     /* pass 1: calculate ascent/descent values and x coordinate */
     /* XXX the MAX ascent/descent value should be in the line table XXX */
@@ -730,9 +737,12 @@ AsciiDoPaint(Widget w)
     XmuScanline *scan;
     XmuSegment *seg;
     XawTextPaintList *list = sink->text_sink.paint;
-    XawTextPaintStruct *base, *head, *paint = list->paint;
+#if 0
+    XawTextPaintStruct *base, *head;
+#endif
+    XawTextPaintStruct *paint = list->paint;
     XawTextProperty *property;
-    XFontStruct *font;
+    XFontStruct *font = NULL;
     XRectangle *rects;
     int n_rects, i_rects;
     GC gc;
@@ -756,7 +766,8 @@ AsciiDoPaint(Widget w)
     /* pass 2: optimize drawing list to avoid too much GC change requests */
     /* XXX this assumes there will not exist entities drawn over other
 	   entities. */
-    /*while (paint) {
+#if 0
+    while (paint) {
 	base = paint;
 	head = paint->next;
 	while (head) {
@@ -770,7 +781,8 @@ AsciiDoPaint(Widget w)
 	    head = head->next;
 	}
 	paint = paint->next;
-    }*/
+    }
+#endif
     if (paint && paint->next) {
 	XawTextPaintStruct **paints;
 	int i = 0, n_paints = 0;
@@ -1270,8 +1282,6 @@ InsertCursor(Widget w, int x, int y, XawTextInsertState state)
     TextWidget ctx = (TextWidget)XtParent(w);
     XawTextPosition position = XawTextGetInsertionPoint((Widget)ctx);
     Boolean overflow = (x & 0xffff8000) != 0;
-    GC gc;
-    int ascent;
 #ifndef OLDXAW
     XawTextAnchor *anchor;
     XawTextEntity *entity;
@@ -1283,6 +1293,36 @@ InsertCursor(Widget w, int x, int y, XawTextInsertState state)
 	XawTextBlock block;
 	XawTextPosition selection_start, selection_end;
 	Boolean has_selection;
+
+	if (!sink->ascii_sink.echo) {
+	    if (sink->ascii_sink.laststate != state) {
+		int width = CharWidth(sink, font, 0, ' ') - 1;
+
+		x = ctx->text.margin.left;
+		y = ctx->text.margin.top;
+		font = sink->ascii_sink.font;
+		fheight = font->ascent + font->descent;
+		if (state == XawisOn) {
+		    if (ctx->text.hasfocus)
+		    XFillRectangle(XtDisplay(ctx), XtWindow(ctx),
+				   sink->ascii_sink.xorgc, x, y,
+				   width + 1, fheight + 1);
+		    else
+			XDrawRectangle(XtDisplay(ctx), XtWindow(ctx),
+				       sink->ascii_sink.xorgc, x, y,
+				       width, fheight);
+
+		}
+		else
+		    _XawTextSinkClearToBackground(w, x, y,
+						  width + 1, fheight + 1);
+	    }
+	    sink->ascii_sink.cursor_x = x;
+	    sink->ascii_sink.cursor_y = y;
+	    sink->ascii_sink.laststate = state;
+	    return;
+	}
+
 
 	XawTextGetSelectionPos((Widget)ctx, &selection_start, &selection_end);
 	has_selection = selection_start != selection_end;

@@ -2,10 +2,10 @@
  *	$Xorg: ptyx.h,v 1.3 2000/08/17 19:55:09 cpqbld Exp $
  */
 
-/* $XFree86: xc/programs/xterm/ptyx.h,v 3.86 2001/04/12 01:02:50 dickey Exp $ */
+/* $XFree86: xc/programs/xterm/ptyx.h,v 3.91 2002/01/05 22:05:03 dickey Exp $ */
 
 /*
- * Copyright 1999-2000 by Thomas E. Dickey
+ * Copyright 1999,2000,2001,2002 by Thomas E. Dickey
  *
  *                         All Rights Reserved
  *
@@ -303,6 +303,11 @@ typedef Char **ScrnBuf;
 #define	NPARAM	30			/* Max. parameters		*/
 
 typedef struct {
+	char *opt;
+	char *desc;
+} OptionHelp;
+
+typedef struct {
 	unsigned char	a_type;
 	unsigned char	a_pintro;
 	unsigned char	a_final;
@@ -383,12 +388,8 @@ typedef struct {
 	{RES_NAME(name), RES_CLASS(class), XtRBoolean, sizeof(Boolean), \
 	 RES_OFFSET(offset), XtRImmediate, (XtPointer) value}
 
-#define Cres(name,offset,value) \
-	{RES_NAME(name), XtCForeground, XtRPixel, sizeof(Pixel), \
-	 RES_OFFSET(offset), XtRString, value}
-
-#define Dres(name,offset,value) \
-	{RES_NAME(name), XtCBackground, XtRPixel, sizeof(Pixel), \
+#define Cres(name,class,offset,value) \
+	{RES_NAME(name), RES_CLASS(class), XtRPixel, sizeof(Pixel), \
 	 RES_OFFSET(offset), XtRString, value}
 
 #define Ires(name,class,offset,value) \
@@ -421,6 +422,10 @@ typedef struct {
 
 #ifndef OPT_CLIP_BOLD
 #define OPT_CLIP_BOLD	1 /* true if xterm uses clipping to avoid bold-trash */
+#endif
+
+#ifndef OPT_COLOR_CLASS
+#define OPT_COLOR_CLASS 1 /* true if xterm uses separate color-resource classes */
 #endif
 
 #ifndef OPT_COLOR_RES
@@ -551,14 +556,6 @@ typedef struct {
 #define OPT_ZICONBEEP   1 /* true if xterm supports "-ziconbeep" option */
 #endif
 
-#ifndef OPT_USE_UTF8_API
-#define OPT_USE_UTF8_API 1
-#endif
-#ifndef X_HAVE_UTF8_STRING
-#undef OPT_USE_UTF8_API
-#define OPT_USE_UTF8_API 0
-#endif
-
 /***====================================================================***/
 
 #if OPT_AIX_COLORS && !OPT_ISO_COLORS
@@ -671,10 +668,18 @@ typedef struct {
 # define if_OPT_ISO_TRADITIONAL_COLORS(screen, code) /*nothing*/
 #endif
 
-#if OPT_COLOR_RES
-#define COLOR_RES(name,offset,value) Sres(name, XtCForeground, offset.resource, value)
+#define COLOR_RES_NAME(root) "color" root
+
+#if OPT_COLOR_CLASS
+#define COLOR_RES_CLASS(root) "Color" root
 #else
-#define COLOR_RES(name,offset,value) Cres(name, offset, value)
+#define COLOR_RES_CLASS(root) XtCForeground
+#endif
+
+#if OPT_COLOR_RES
+#define COLOR_RES(root,offset,value) Sres(COLOR_RES_NAME(root), COLOR_RES_CLASS(root), offset.resource, value)
+#else
+#define COLOR_RES(root,offset,value) Cres(COLOR_RES_NAME(root), COLOR_RES_CLASS(root), offset, value)
 #endif
 
 /***====================================================================***/
@@ -809,8 +814,17 @@ typedef struct {
 #ifndef TRACE
 #define TRACE(p) /*nothing*/
 #endif
+#ifndef TRACE_ARGV
+#define TRACE_ARGV(tag,argv) /*nothing*/
+#endif
 #ifndef TRACE_CHILD
 #define TRACE_CHILD /*nothing*/
+#endif
+#ifndef TRACE_OPTS
+#define TRACE_OPTS(opts,ress,lens) /*nothing*/
+#endif
+#ifndef TRACE_TRANS
+#define TRACE_TRANS(name,w) /*nothing*/
 #endif
 #endif
 
@@ -949,6 +963,17 @@ typedef struct {
 #endif
 } SavedCursor;
 
+typedef struct {
+	int		width;		/* if > 0, width of scrollbar,	*/
+					/* and scrollbar is showing	*/
+	Boolean		rv_cached;	/* see ScrollBarReverseVideo	*/
+	int		rv_active;	/* ...current reverse-video	*/
+	Pixel		bg;		/* ...cached background color	*/
+	Pixel		fg;		/* ...cached foreground color	*/
+	Pixel		bdr;		/* ...cached border color	*/
+	Pixmap		bdpix;		/* ...cached border pixmap	*/
+} SbInfo;
+
 struct _vtwin {
 	Window		window;		/* X window id			*/
 	int		width;		/* width of columns		*/
@@ -959,8 +984,7 @@ struct _vtwin {
 	int		f_height;	/* height of fonts in pixels	*/
 	int		f_ascent;	/* ascent of font in pixels	*/
 	int		f_descent;	/* descent of font in pixels	*/
-	int		scrollbar;	/* if > 0, width of scrollbar,	*/
-					/* and scrollbar is showing	*/
+	SbInfo		sb_info;
 	GC		normalGC;	/* normal painting		*/
 	GC		reverseGC;	/* reverse painting		*/
 	GC		normalboldGC;	/* normal painting, bold font	*/
@@ -1085,11 +1109,12 @@ typedef struct {
 
 	Boolean		fnt_prop;	/* true if proportional fonts	*/
 	Boolean		fnt_boxes;	/* true if font has box-chars	*/
-	Boolean		force_box_chars; /* true if we assume that	*/
+	Boolean		force_box_chars;/* true if we assume that	*/
 	Dimension	fnt_wide;
 	Dimension	fnt_high;
 	XFontStruct	*fnt_norm;	/* normal font of terminal	*/
 	XFontStruct	*fnt_bold;	/* bold font of terminal	*/
+	Boolean		free_bold_box;	/* same_font_size's austerity	*/
 #if OPT_WIDE_CHARS
 	XFontStruct	*fnt_dwd;	/* wide font of terminal	*/
 	XFontStruct	*fnt_dwdb;	/* wide bold font of terminal	*/
@@ -1255,6 +1280,10 @@ typedef struct {
 	XftFont		*renderFontBold;
 	XftDraw		*renderDraw;
 #endif
+#ifdef OPT_INPUT_METHOD
+	XFontSet	fs;		/* fontset for XIM preedit */
+	int		fs_ascent;	/* ascent of fs */
+#endif
 } TScreen;
 
 typedef struct _TekPart {
@@ -1289,6 +1318,9 @@ typedef struct
 {
     xtermKeyboardType type;
     unsigned	flags;
+#if OPT_INITIAL_ERASE
+    int	reset_DECBKM;		/* reset should set DECBKM */
+#endif
 } TKeyboard;
 
 typedef struct _Misc {
@@ -1299,6 +1331,9 @@ typedef struct _Misc {
 #if OPT_WIDE_CHARS
     char *f_w;
     char *f_wb;
+#endif
+#if OPT_INPUT_METHOD
+    char *f_x;
 #endif
     int limit_resize;
 #ifdef ALLOWLOGGING
@@ -1321,6 +1356,7 @@ typedef struct _Misc {
     Boolean useRight;
 #endif
     Boolean titeInhibit;
+    Boolean tiXtraScroll;
     Boolean appcursorDefault;
     Boolean appkeypadDefault;
 #if OPT_INPUT_METHOD
@@ -1481,9 +1517,9 @@ typedef struct _TekWidgetRec {
 #define ISO_PROTECT 2
 
 #ifdef SCROLLBAR_RIGHT
-#define OriginX(screen) (((term->misc.useRight)?0:Scrollbar(screen)) + screen->border)
+#define OriginX(screen) (((term->misc.useRight)?0:ScrollbarWidth(screen)) + screen->border)
 #else
-#define OriginX(screen) (Scrollbar(screen) + screen->border)
+#define OriginX(screen) (ScrollbarWidth(screen) + screen->border)
 #endif
 
 #define CursorX(screen,col) ((col) * FontWidth(screen) + OriginX(screen))
@@ -1506,7 +1542,7 @@ typedef struct _TekWidgetRec {
 						: (screen)->whichVwin->f_ascent)
 #define FontDescent(screen)	(IsIcon(screen) ? (screen)->fnt_icon->descent \
 						: (screen)->whichVwin->f_descent)
-#define Scrollbar(screen)	((screen)->whichVwin->scrollbar)
+#define ScrollbarWidth(screen)	((screen)->whichVwin->sb_info.width)
 #define NormalGC(screen)	((screen)->whichVwin->normalGC)
 #define ReverseGC(screen)	((screen)->whichVwin->reverseGC)
 #define NormalBoldGC(screen)	((screen)->whichVwin->normalboldGC)
@@ -1532,7 +1568,7 @@ typedef struct _TekWidgetRec {
 #define FontHeight(screen)	((screen)->fullVwin.f_height)
 #define FontAscent(screen)	((screen)->fullVwin.f_ascent)
 #define FontDescent(screen)	((screen)->fullVwin.f_descent)
-#define Scrollbar(screen)	((screen)->fullVwin.scrollbar)
+#define ScrollbarWidth(screen)	((screen)->fullVwin.sb_info.width)
 #define NormalGC(screen)	((screen)->fullVwin.normalGC)
 #define ReverseGC(screen)	((screen)->fullVwin.reverseGC)
 #define NormalBoldGC(screen)	((screen)->fullVwin.normalboldGC)

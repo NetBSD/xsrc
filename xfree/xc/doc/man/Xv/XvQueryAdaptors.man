@@ -1,5 +1,5 @@
 .TH XvQueryAdaptors 3X  __vendorversion__
-.\" $XFree86: xc/doc/man/Xv/XvQueryAdaptors.man,v 1.5 2001/01/27 18:20:36 dawes Exp $
+.\" $XFree86: xc/doc/man/Xv/XvQueryAdaptors.man,v 1.6 2001/08/17 13:27:50 dawes Exp $
 .SH Name
 XvQueryAdaptors \- return adaptor information for a screen
 .\"
@@ -86,7 +86,7 @@ A visual-id supported for the given depth by the adaptor.
 .\"
 .SH Returned Values
 .IP [Success] 8
-Returns True if XvQueryAdaptors(3X) completed successfully.
+Returned if XvQueryAdaptors(3X) completed successfully.
 .IP [XvBadExtension] 8
 Returned if the Xv extension is unavailable.
 .IP [XvBadAlloc] 8

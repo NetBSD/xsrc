@@ -1,10 +1,14 @@
-/* $Xorg: TextAction.c,v 1.3 2000/08/17 19:45:40 cpqbld Exp $ */
+/* $Xorg: TextAction.c,v 1.4 2001/02/09 02:03:46 xorgcvs Exp $ */
 
 /*
 
 Copyright 1989, 1994, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -21,7 +25,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/Xaw/TextAction.c,v 3.41 2001/02/23 21:25:06 paulo Exp $ */
+/* $XFree86: xc/lib/Xaw/TextAction.c,v 3.44 2002/01/04 23:04:17 paulo Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -2868,6 +2872,21 @@ TextFocusIn(Widget w, XEvent *event, String *p, Cardinal *n)
     if (event->xfocus.detail == NotifyPointer)
 	return;
 
+    if (event->xfocus.send_event) {
+	Window root, child;
+	int rootx, rooty, x, y;
+	unsigned int mask;
+
+	if (ctx->text.hasfocus)
+	    return;
+
+	if (XQueryPointer(XtDisplay(w), XtWindow(w), &root, &child,
+			  &rootx, &rooty, &x, &y, &mask)) {
+	    if (child)
+		return;
+	}
+    }
+
     /* Let the input method know focus has arrived. */
     _XawImSetFocusValues(w, NULL, 0);
 
@@ -3139,6 +3158,7 @@ InsertChar(Widget w, XEvent *event, String *p, Cardinal *n)
 	XawTextPosition insertPos = ctx->text.insertPos, pos, tmp, last;
 	char left, right = text.ptr[0];
 	int level = 0;
+	XtAppContext app_context = XtWidgetToApplicationContext(w);
 
 	left = right == ')' ? '(' : right == ']' ? '[' : '{';
 
@@ -3169,8 +3189,14 @@ InsertChar(Widget w, XEvent *event, String *p, Cardinal *n)
 	EndAction(ctx);
 
 	XSync(XtDisplay(w), False);
-	while (XtAppPending(XtWidgetToApplicationContext(w)) & XtIMXEvent)
-	    XtAppProcessEvent(XtWidgetToApplicationContext(w), XtIMXEvent);
+	while (XtAppPending(app_context) & XtIMXEvent) {
+	    XEvent ev;
+	    if (! XtAppPeekEvent(app_context, &ev))
+		break;
+	    if (ev.type == KeyPress || ev.type == ButtonPress)
+		break;
+	    XtAppProcessEvent(app_context, XtIMXEvent);
+	}
 	FD_ZERO(&fds);
 	FD_SET(ConnectionNumber(XtDisplay(w)), &fds);
 	(void)select(FD_SETSIZE, &fds, NULL, NULL, &tmval);

@@ -21,7 +21,7 @@
  * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  */
-/* $XFree86: xc/lib/GL/mesa/src/drv/common/mm.c,v 1.2 2000/06/22 16:59:23 tsi Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/common/mm.c,v 1.3 2001/08/18 02:51:03 dawes Exp $ */
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -106,6 +106,8 @@ static TMemBlock* SliceBlock(TMemBlock *p,
   /* break left */
   if (startofs > p->ofs) {
     newblock = (TMemBlock*) calloc(1,sizeof(TMemBlock));
+    if (!newblock)
+       return NULL;
     newblock->ofs = startofs;
     newblock->size = p->size - (startofs - p->ofs);
     newblock->free = 1;
@@ -118,6 +120,8 @@ static TMemBlock* SliceBlock(TMemBlock *p,
   /* break right */
   if (size < p->size) {
     newblock = (TMemBlock*) calloc(1,sizeof(TMemBlock));
+    if (!newblock)
+       return NULL;
     newblock->ofs = startofs + size;
     newblock->size = p->size - size;
     newblock->free = 1;

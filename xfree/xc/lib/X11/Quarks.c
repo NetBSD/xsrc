@@ -1,4 +1,4 @@
-/* $Xorg: Quarks.c,v 1.4 2000/08/17 19:44:51 cpqbld Exp $ */
+/* $Xorg: Quarks.c,v 1.5 2001/02/09 02:03:35 xorgcvs Exp $ */
 
 /***********************************************************
 Copyright 1987, 1988, 1990 by Digital Equipment Corporation, Maynard,
@@ -26,7 +26,11 @@ SOFTWARE.
 
 Copyright 1987, 1988, 1990, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included
 in all copies or substantial portions of the Software.
@@ -45,7 +49,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/X11/Quarks.c,v 1.3 2001/01/17 19:41:42 dawes Exp $ */
+/* $XFree86: xc/lib/X11/Quarks.c,v 1.5 2001/12/14 19:54:04 dawes Exp $ */
 
 #include "Xlibint.h"
 #include <X11/Xresource.h>
@@ -108,8 +112,7 @@ static XrmQuark nextUniq = -1;	/* next quark from XrmUniqueQuark */
 static char *neverFreeTable = NULL;
 static int  neverFreeTableSize = 0;
 
-static char *permalloc(length)
-    register unsigned int length;
+static char *permalloc(unsigned int length)
 {
     char *ret;
 
@@ -133,10 +136,9 @@ typedef struct {char a; unsigned long b;} TestType2;
 #endif
 
 #ifdef XTHREADS
-static char *_Xpermalloc();
+static char *_Xpermalloc(unsigned int length);
 
-char *Xpermalloc(length)
-    unsigned int length;
+char *Xpermalloc(unsigned int length)
 {
     char *p;
 
@@ -149,8 +151,7 @@ char *Xpermalloc(length)
 
 static
 #endif /* XTHREADS */
-char *Xpermalloc(length)
-    unsigned int length;
+char *Xpermalloc(unsigned int length)
 {
     int i;
 
@@ -173,7 +174,7 @@ char *Xpermalloc(length)
 }
 
 static Bool
-ExpandQuarkTable()
+ExpandQuarkTable(void)
 {
     unsigned long oldmask, newmask;
     register char c, *s;

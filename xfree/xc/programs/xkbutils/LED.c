@@ -24,7 +24,7 @@
  THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
  ********************************************************/
-/* $XFree86: xc/programs/xkbutils/LED.c,v 1.4 2001/01/17 23:46:13 dawes Exp $ */
+/* $XFree86: xc/programs/xkbutils/LED.c,v 1.5 2001/07/25 15:05:25 dawes Exp $ */
 
 #include <X11/IntrinsicP.h>
 #include <X11/StringDefs.h>
@@ -35,13 +35,8 @@
 #include <X11/Xmu/Drawing.h>
 #include <stdio.h>
 #include <ctype.h>
-
 /* needed for abs() */
-#ifndef X_NOT_STDC_ENV
 #include <stdlib.h>
-#else
-int abs();
-#endif
 
 #define streq(a,b) (strcmp( (a), (b) ) == 0)
 

@@ -1,10 +1,14 @@
 /*
- * $Xorg: process.c,v 1.4 2000/08/17 19:53:53 cpqbld Exp $
+ * $Xorg: process.c,v 1.5 2001/02/09 02:05:31 xorgcvs Exp $
  *
  * 
 Copyright 1989, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -24,17 +28,13 @@ in this Software without prior written authorization from The Open Group.
  * Modified into "iceauth"    : Ralph Mor, X Consortium
  */
 
-/* $XFree86: xc/programs/iceauth/process.c,v 3.3 2001/01/17 23:44:54 dawes Exp $ */
+/* $XFree86: xc/programs/iceauth/process.c,v 3.7 2001/12/14 20:00:49 dawes Exp $ */
 
 #include "iceauth.h"
 #include <ctype.h>
 #include <errno.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#ifdef X_NOT_STDC_ENV
-extern int errno;
-#endif
-
 #include <signal.h>
 
 #define SECURERPC "SUN-DES-1"
@@ -498,12 +498,15 @@ static Bool dieing = False;
 #define _signal_t void
 #endif
 
+/* poor man's puts(), for under signal handlers */
+#define WRITES(fd, S) (void)write((fd), (S), strlen((S)))
+
 /* ARGSUSED */
 static _signal_t die (sig)
     int sig;
 {
     dieing = True;
-    exit (auth_finalize ());
+    _exit (auth_finalize ());
     /* NOTREACHED */
 #ifdef SIGNALRETURNSINT
     return -1;				/* for picky compilers */
@@ -516,7 +519,15 @@ static _signal_t catchsig (sig)
 #ifdef SYSV
     if (sig > 0) signal (sig, die);	/* re-establish signal handler */
 #endif
-    if (verbose && iceauth_modified) printf ("\r\n");
+    /*
+     * fileno() might not be reentrant, avoid it if possible, and use
+     * stderr instead of stdout
+     */
+#ifdef STDERR_FILENO
+    if (verbose && iceauth_modified) WRITES(STDERR_FILENO, "\r\n");
+#else
+    if (verbose && iceauth_modified) WRITES(fileno(stderr), "\r\n");
+#endif
     die (sig);
     /* NOTREACHED */
 #ifdef SIGNALRETURNSINT
@@ -672,8 +683,20 @@ int auth_finalize ()
     if (iceauth_modified) {
 	if (dieing) {
 	    if (verbose) {
-		printf ("Aborting changes to authority file %s\n",
-			iceauth_filename);
+		/*
+		 * called from a signal handler -- printf is *not* reentrant; also
+		 * fileno() might not be reentrant, avoid it if possible, and use
+		 * stderr instead of stdout
+		 */
+#ifdef STDERR_FILENO
+		WRITES(STDERR_FILENO, "\nAborting changes to authority file ");
+		WRITES(STDERR_FILENO, iceauth_filename);
+		WRITES(STDERR_FILENO, "\n");
+#else
+		WRITES(fileno(stderr), "\nAborting changes to authority file ");
+		WRITES(fileno(stderr), iceauth_filename);
+		WRITES(fileno(stderr), "\n");
+#endif
 	    }
 	} else if (!iceauth_allowed) {
 	    fprintf (stderr, 

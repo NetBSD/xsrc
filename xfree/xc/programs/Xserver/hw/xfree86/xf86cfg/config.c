@@ -26,7 +26,7 @@
  *
  * Author: Paulo César Pereira de Andrade <pcpa@conectiva.com.br>
  *
- * $XFree86: xc/programs/Xserver/hw/xfree86/xf86cfg/config.c,v 1.6 2000/12/08 21:51:04 paulo Exp $
+ * $XFree86: xc/programs/Xserver/hw/xfree86/xf86cfg/config.c,v 1.7 2001/10/01 13:44:15 eich Exp $
  */
 
 #include "config.h"
@@ -116,7 +116,7 @@ StartConfig(void)
     /* Read initial configuration */
     if ((filename = xf86openConfigFile(getuid() == 0 ? CONFPATH : USER_CONFPATH,
 				       XF86Config_path, NULL)) == NULL) {
-	fprintf(stderr, "Cannot to open config file.\n");
+	fprintf(stderr, "Cannot open config file.\n");
 	exit(1);
     }
     XF86Config_path = (char *)filename;

@@ -1,9 +1,13 @@
-/* $Xorg: Xlib.h,v 1.5 2000/08/17 19:45:06 cpqbld Exp $ */
+/* $Xorg: Xlib.h,v 1.6 2001/02/09 02:03:38 xorgcvs Exp $ */
 /* 
 
 Copyright 1985, 1986, 1987, 1991, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -20,7 +24,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/X11/Xlib.h,v 3.19 2001/01/17 19:41:50 dawes Exp $ */
+/* $XFree86: xc/lib/X11/Xlib.h,v 3.22 2001/12/14 19:54:08 dawes Exp $ */
 
 
 /*
@@ -4615,6 +4619,12 @@ extern char *XGetIMValues(
 #endif
 );
 
+extern char *XSetIMValues(
+#if NeedVarargsPrototypes
+    XIM /* im */, ...
+#endif
+);
+
 extern Display *XDisplayOfIM(
 #if NeedFunctionPrototypes
     XIM /* im */
@@ -4805,6 +4815,26 @@ extern void XSetAuthorization(
     int				/* namelen */, 
     char *			/* data */,
     int				/* datalen */
+#endif
+);
+
+extern int _Xmbtowc(
+#if NeedFunctionPrototypes
+    wchar_t *			/* wstr */,
+#ifdef ISC
+    char const *		/* str */,
+    size_t			/* len */
+#else
+    char *			/* str */,
+    int				/* len */
+#endif
+#endif
+);
+
+extern int _Xwctomb(
+#if NeedFunctionPrototypes
+    char *			/* str */,
+    wchar_t			/* wc */
 #endif
 );
 

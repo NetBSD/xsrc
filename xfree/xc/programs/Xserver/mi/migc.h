@@ -1,9 +1,13 @@
-/* $Xorg: migc.h,v 1.3 2000/08/17 19:53:38 cpqbld Exp $ */
+/* $Xorg: migc.h,v 1.4 2001/02/09 02:05:21 xorgcvs Exp $ */
 /*
 
 Copyright 1993, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included
 in all copies or substantial portions of the Software.
@@ -23,66 +27,48 @@ from The Open Group.
 
 */
 
-/* $XFree86: xc/programs/Xserver/mi/migc.h,v 1.6 2001/01/17 22:37:06 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/mi/migc.h,v 1.8 2001/12/14 20:00:23 dawes Exp $ */
 
 extern void miChangeGC(
-#if NeedFunctionPrototypes
     GCPtr  /*pGC*/,
     unsigned long /*mask*/
-#endif
 );
 
 extern void miDestroyGC(
-#if NeedFunctionPrototypes
     GCPtr  /*pGC*/
-#endif
 );
 
 extern GCOpsPtr miCreateGCOps(
-#if NeedFunctionPrototypes
     GCOpsPtr /*prototype*/
-#endif
 );
 
 extern void miDestroyGCOps(
-#if NeedFunctionPrototypes
     GCOpsPtr /*ops*/
-#endif
 );
 
 extern void miDestroyClip(
-#if NeedFunctionPrototypes
     GCPtr /*pGC*/
-#endif
 );
 
 extern void miChangeClip(
-#if NeedFunctionPrototypes
     GCPtr   /*pGC*/,
     int     /*type*/,
     pointer /*pvalue*/,
     int     /*nrects*/
-#endif
 );
 
 extern void miCopyClip(
-#if NeedFunctionPrototypes
     GCPtr /*pgcDst*/,
     GCPtr /*pgcSrc*/
-#endif
 );
 
 extern void miCopyGC(
-#if NeedFunctionPrototypes
     GCPtr /*pGCSrc*/,
     unsigned long /*changes*/,
     GCPtr /*pGCDst*/
-#endif
 );
 
 extern void miComputeCompositeClip(
-#if NeedFunctionPrototypes
     GCPtr       /*pGC*/,
     DrawablePtr /*pDrawable*/
-#endif
 );

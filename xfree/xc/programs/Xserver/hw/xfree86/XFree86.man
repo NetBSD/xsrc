@@ -1,4 +1,4 @@
-.\" $XFree86: xc/programs/Xserver/hw/xfree86/XFree86.man,v 3.52 2001/04/05 19:29:41 dawes Exp $ 
+.\" $XFree86: xc/programs/Xserver/hw/xfree86/XFree86.man,v 3.54 2002/01/17 17:10:37 dawes Exp $ 
 .TH XFree86 1 __vendorversion__
 .SH NAME
 XFree86 - X11R6 X server
@@ -202,14 +202,13 @@ Use the XF86Config(__filemansuffix__) file
 .B InputDevice
 section called
 .I keyboard-name
-as the core keyboard.
-By default the core keyboard input device referenced by the default
+as the core keyboard.  This option is ignored when the
 .B Layout
-section are used, or the first relevant
+section specifies a core keyboard.
+In the absence of both a Layout section and this option,
+the first relevant
 .B InputDevice
-section when there are no
-.B Layout
-sections.
+section is used for the core keyboard.
 .TP 8
 .B \-layout \fIlayout-name\fP
 Use the XF86Config(__filemansuffix__) file
@@ -273,14 +272,13 @@ Use the XF86Config(__filemansuffix__) file
 .B InputDevice
 section called
 .I pointer-name
-as the core pointer.
-By default the core pointer input device referenced by the default
+as the core pointer.  This option is ignored when the
 .B Layout
-section are used, or the first relevant
+section specifies a core pointer.
+In the absence of both a Layout section and this option,
+the first relevant
 .B InputDevice
-section when there are no
-.B Layout
-sections.
+section is used for the core pointer.
 .TP 8
 .B \-probeonly
 Causes the server to exit after the device probing stage.  The XF86Config
@@ -337,7 +335,7 @@ value isn't supplied, each occurrance of this option increments the
 verbosity level.  When the
 .I n
 value is supplied, the verbosity level is set to that value.  The default
-verbosity level is 1.
+verbosity level is 0.
 .TP 8
 .B \-version
 Print out the server version, patchlevel, release date, the operating

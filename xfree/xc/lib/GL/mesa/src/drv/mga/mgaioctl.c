@@ -25,7 +25,7 @@
  *    Keith Whitwell <keithw@valinux.com>
  *    Gareth Hughes <gareth@valinux.com>
  */
-/* $XFree86: xc/lib/GL/mesa/src/drv/mga/mgaioctl.c,v 1.11 2001/04/10 16:07:50 dawes Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/mga/mgaioctl.c,v 1.12 2001/10/31 22:50:24 tsi Exp $ */
 
 #include <stdio.h>
 
@@ -296,8 +296,8 @@ void mgaSwapBuffers( mgaContextPtr mmesa )
 	 wait++;
 	 fprintf( stderr, "   last: head=0x%06x wrap=%d\n",
 		  last_frame, last_wrap );
-	 fprintf( stderr, "   head: head=0x%06x wrap=%d\n",
-		  MGA_READ( MGAREG_PRIMADDRESS ) - mmesa->primary_offset,
+	 fprintf( stderr, "   head: head=0x%06lx wrap=%d\n",
+		  (long)(MGA_READ( MGAREG_PRIMADDRESS ) - mmesa->primary_offset),
 		  mmesa->sarea->last_wrap );
       }
       UPDATE_LOCK( mmesa, DRM_LOCK_FLUSH );

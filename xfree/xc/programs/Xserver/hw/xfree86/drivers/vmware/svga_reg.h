@@ -1,8 +1,8 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/vmware/svga_reg.h,v 1.3 2001/04/25 16:44:58 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/vmware/svga_reg.h,v 1.4 2001/09/13 08:36:24 alanh Exp $ */
 /* **********************************************************
  * Copyright (C) 1998-2001 VMware, Inc.
  * All Rights Reserved
- * Id: svga_reg.h,v 1.9 2001/03/02 02:06:47 bhlim Exp $
+ * $Id: svga_reg.h,v 1.1.1.2 2002/01/19 15:11:16 tron Exp $
  * **********************************************************/
 
 /*
@@ -75,6 +75,12 @@
 /* This port is deprecated, but retained because of old drivers. */
 #define SVGA_LEGACY_ACCEL_PORT	0x3
 
+/* Legal values for the SVGA_REG_CURSOR_ON register in cursor bypass mode */
+#define SVGA_CURSOR_ON_HIDE               0x0    /* Must be 0 to maintain backward compatibility */
+#define SVGA_CURSOR_ON_SHOW               0x1    /* Must be 1 to maintain backward compatibility */
+#define SVGA_CURSOR_ON_REMOVE_FROM_FB     0x2    /* Remove the cursor from the framebuffer because we need to see what's under it */
+#define SVGA_CURSOR_ON_RESTORE_TO_FB      0x3    /* Put the cursor back in the framebuffer so the user can see it */
+
 /*
  * Registers
  */
@@ -87,7 +93,7 @@ enum {
    SVGA_REG_MAX_WIDTH = 4,
    SVGA_REG_MAX_HEIGHT = 5,
    SVGA_REG_DEPTH = 6,
-   SVGA_REG_BITS_PER_PIXEL = 7,
+   SVGA_REG_BITS_PER_PIXEL = 7,     /* Current bpp in the guest */
    SVGA_REG_PSEUDOCOLOR = 8,
    SVGA_REG_RED_MASK = 9,
    SVGA_REG_GREEN_MASK = 10,
@@ -109,10 +115,11 @@ enum {
    SVGA_REG_CURSOR_X = 25,	   /* Set cursor X position */
    SVGA_REG_CURSOR_Y = 26,	   /* Set cursor Y position */
    SVGA_REG_CURSOR_ON = 27,	   /* Turn cursor on/off */
+   SVGA_REG_HOST_BITS_PER_PIXEL = 28, /* Current bpp in the host */
 
-   SVGA_REG_TOP = 28,		   /* Must be 1 greater than the last register */
+   SVGA_REG_TOP = 30,		   /* Must be 1 greater than the last register */
 
-   SVGA_PALETTE_BASE = 1024	   /* Base of SVGA color map */
+   SVGA_PALETTE_BASE = 1024	   /* Base of SVGA color map */ 
 };
 
 
@@ -127,29 +134,35 @@ enum {
 #define	SVGA_CAP_RASTER_OP	 0x0010
 #define	SVGA_CAP_CURSOR		 0x0020
 #define	SVGA_CAP_CURSOR_BYPASS	 0x0040
+#define	SVGA_CAP_CURSOR_BYPASS_2 0x0080
+#define	SVGA_CAP_8BIT_EMULATION  0x0100
+#define SVGA_CAP_ALPHA_CURSOR    0x0200
 
 
 /*
- *  Raster op codes (same encoding as X)
+ *  Raster op codes (same encoding as X) used by FIFO drivers.
  */
 
-#define	SVGA_ROP_CLEAR		0x00
-#define	SVGA_ROP_AND		0x01
-#define	SVGA_ROP_AND_REVERSE	0x02
-#define	SVGA_ROP_COPY		0x03
-#define	SVGA_ROP_AND_INVERTED	0x04
-#define	SVGA_ROP_NOOP		0x05
-#define	SVGA_ROP_XOR		0x06
-#define	SVGA_ROP_OR		0x07
-#define	SVGA_ROP_NOR		0x08
-#define	SVGA_ROP_EQUIV		0x09
-#define	SVGA_ROP_INVERT		0x0a
-#define	SVGA_ROP_OR_REVERSE	0x0b
-#define	SVGA_ROP_COPY_INVERTED	0x0c
-#define	SVGA_ROP_OR_INVERTED	0x0d
-#define	SVGA_ROP_NAND		0x0e
-#define	SVGA_ROP_SET		0x0f
+#define SVGA_ROP_CLEAR          0x00     /* 0 */
+#define SVGA_ROP_AND            0x01     /* src AND dst */
+#define SVGA_ROP_AND_REVERSE    0x02     /* src AND NOT dst */
+#define SVGA_ROP_COPY           0x03     /* src */
+#define SVGA_ROP_AND_INVERTED   0x04     /* NOT src AND dst */
+#define SVGA_ROP_NOOP           0x05     /* dst */
+#define SVGA_ROP_XOR            0x06     /* src XOR dst */
+#define SVGA_ROP_OR             0x07     /* src OR dst */
+#define SVGA_ROP_NOR            0x08     /* NOT src AND NOT dst */
+#define SVGA_ROP_EQUIV          0x09     /* NOT src XOR dst */
+#define SVGA_ROP_INVERT         0x0a     /* NOT dst */
+#define SVGA_ROP_OR_REVERSE     0x0b     /* src OR NOT dst */
+#define SVGA_ROP_COPY_INVERTED  0x0c     /* NOT src */
+#define SVGA_ROP_OR_INVERTED    0x0d     /* NOT src OR dst */
+#define SVGA_ROP_NAND           0x0e     /* NOT src OR NOT dst */
+#define SVGA_ROP_SET            0x0f     /* 1 */
+#define SVGA_ROP_UNSUPPORTED    0x10
 
+#define SVGA_NUM_SUPPORTED_ROPS   16
+#define SVGA_ROP_ALL            0x0000ffff
 
 /*
  *  Memory area offsets (viewed as an array of 32-bit words)
@@ -279,6 +292,11 @@ enum {
 	/* FIFO layout:
 	   X, Y */
 
-#define	SVGA_CMD_MAX			  22
+#define SVGA_CMD_DEFINE_ALPHA_CURSOR      22
+	/* FIFO layout:
+	   ID, Hotspot X, Hotspot Y, Width, Height,
+	   <scanlines> */
+
+#define	SVGA_CMD_MAX			  23
 
 #endif

@@ -41,6 +41,7 @@
  **
  ******************************************************************************
  *****************************************************************************/
+/* $XFree86: xc/lib/Xp/XpNotifyPdm.c,v 1.5 2001/10/28 03:32:39 tsi Exp $ */
 
 #include "Print.h"
 #include "X11/Xlibint.h"
@@ -212,7 +213,6 @@ XpGetPdmStartParams (
     int             *nelements			/* return value */
 )
 {
-    Display       *sel_display;
     XTextProperty text_prop;
     int           status;
     char          str1[128], str2[128], str3[128];
@@ -241,14 +241,14 @@ XpGetPdmStartParams (
      *    locale_hint
      */
     list[0] = XDisplayString( video_display );
-    sprintf( str1, "0x%x", video_window );
+    sprintf( str1, "0x%lx", (long)video_window );
     list[1] = str1;
 
     list[2] = XDisplayString( print_display );
-    sprintf( str2, "0x%x", print_window );
+    sprintf( str2, "0x%lx", (long)print_window );
     list[3] = str2;
 
-    sprintf( str3, "0x%x", print_context );
+    sprintf( str3, "0x%lx", (long)print_context );
     list[4] = str3;
 
     list[5] = XpGetLocaleNetString();
@@ -469,13 +469,14 @@ XpGetAuthParams (
 	/*
 	 * Error - cannot determine or establish a selection_display.
 	 */
-	return( (Status) NULL );
+	return (Status)0;
     }
 
     /*
      * Create property and transfer data to.
      */
     *sel_target_atom = XInternAtom( *sel_display, "PDM_MBOX", False );
+    return (Status)1;
 }
 
 

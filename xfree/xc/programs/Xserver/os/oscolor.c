@@ -1,9 +1,13 @@
-/* $XFree86: xc/programs/Xserver/os/oscolor.c,v 3.5 2001/01/17 22:37:11 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/os/oscolor.c,v 3.7 2001/12/14 20:00:35 dawes Exp $ */
 /***********************************************************
 
 Copyright 1987, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -41,7 +45,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $Xorg: oscolor.c,v 1.3 2000/08/17 19:53:41 cpqbld Exp $ */
+/* $Xorg: oscolor.c,v 1.4 2001/02/09 02:05:23 xorgcvs Exp $ */
 
 #ifndef USE_RGB_TXT
 
@@ -172,7 +176,7 @@ lookup(name, len, create)
      Bool create;
 {
   unsigned int h = 0, g;
-  dbEntryPtr   entry, *prev;
+  dbEntryPtr   entry, *prev = NULL;
   char         *str = name;
 
   if (!(name = (char*)ALLOCATE_LOCAL(len +1))) return NULL;
@@ -186,7 +190,7 @@ lookup(name, len, create)
   }
   h %= HASHSIZE;
 
-  if ( entry = hashTab[h] )
+  if ( (entry = hashTab[h]) )
     {
       for( ; entry; prev = (dbEntryPtr*)entry, entry = entry->link )
 	if (! strcmp(name, entry->name) ) break;
@@ -251,7 +255,7 @@ OsInitColors()
 		  green >= 0 && green <= 0xff &&
 		  blue >= 0  && blue <= 0xff)
 		{
-		  if (entry = lookup(name, strlen(name), TRUE))
+		  if ((entry = lookup(name, strlen(name), TRUE)))
 		    {
 		      entry->red   = (red * 65535)   / 255;
 		      entry->green = (green * 65535) / 255;
@@ -286,7 +290,7 @@ OsLookupColor(screen, name, len, pred, pgreen, pblue)
 {
   dbEntryPtr entry;
 
-  if (entry = lookup(name, len, FALSE))
+  if ((entry = lookup(name, len, FALSE)))
     {
       *pred   = entry->red;
       *pgreen = entry->green;

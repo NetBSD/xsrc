@@ -1,4 +1,4 @@
-/* $Xorg: SetLocale.c,v 1.3 2000/08/17 19:44:54 cpqbld Exp $ */
+/* $Xorg: SetLocale.c,v 1.4 2001/02/09 02:03:36 xorgcvs Exp $ */
 
 /*
  * Copyright 1990, 1991 by OMRON Corporation, NTT Software Corporation,
@@ -32,7 +32,11 @@
 
 Copyright 1987,1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included
 in all copies or substantial portions of the Software.
@@ -51,7 +55,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/X11/SetLocale.c,v 3.13 2001/01/17 19:41:43 dawes Exp $ */
+/* $XFree86: xc/lib/X11/SetLocale.c,v 3.16 2001/12/14 19:54:06 dawes Exp $ */
 
 #include "Xlibint.h"
 #include "Xlcint.h"
@@ -63,10 +67,6 @@ from The Open Group.
 #ifdef X_LOCALE
 
 /* alternative setlocale() for when the OS does not provide one */
-
-#ifdef X_NOT_STDC_ENV
-extern char *getenv();
-#endif
 
 #if NeedFunctionPrototypes
 char *
@@ -212,7 +212,7 @@ _XlcMapOSLocaleName(osname, siname)
 # elif defined (STARTSTR)
 	start += strlen(STARTSTR);
 # endif
-	if (end = strchr (start, ENDCHAR)) {
+	if ((end = strchr (start, ENDCHAR))) {
 	    len = end - start;
 	    if (len >= MAXLOCALE)
 		len = MAXLOCALE - 1;

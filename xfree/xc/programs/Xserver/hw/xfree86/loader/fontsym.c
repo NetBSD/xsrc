@@ -1,9 +1,12 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/loader/fontsym.c,v 1.6 2000/02/13 06:15:41 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/loader/fontsym.c,v 1.9 2001/11/17 16:05:59 dawes Exp $ */
 
 #include "font.h"
 #include "sym.h"
 #include "fntfilst.h"
 #include "fontenc.h"
+#ifdef FONTENC_COMPATIBILITY
+#include "fontencc.h"
+#endif
 #include "fntfilio.h"
 #include "fntfil.h"
 #include "fontutil.h"
@@ -33,14 +36,30 @@ LOOKUP fontLookupTab[] = {
   SYMFUNC(BitOrderInvert)
   SYMFUNC(FontFileMatchRenderer)
   SYMFUNC(RepadBitmap)
-  SYMFUNC(font_encoding_name)
-  SYMFUNC(font_encoding_recode)
-  SYMFUNC(font_encoding_find)
-  SYMFUNC(font_encoding_from_xlfd)
+  SYMFUNC(FontEncName)
+  SYMFUNC(FontEncRecode)
+  SYMFUNC(FontEncFind)
+  SYMFUNC(FontMapFind)
+  SYMFUNC(FontEncMapFind)
+  SYMFUNC(FontEncFromXLFD)
+  SYMFUNC(FontEncDirectory)
+  SYMFUNC(FontMapReverse)
+  SYMFUNC(FontMapReverseFree)
   SYMFUNC(CreateFontRec)
   SYMFUNC(DestroyFontRec)
+  SYMFUNC(GetGlyphs)
+  SYMFUNC(QueryGlyphExtents)
   
   SYMVAR(FontFileBitmapSources)
+
+#ifdef FONTENC_COMPATIBILITY
+  /* Obsolete backwards compatibility symbols -- fontencc.c */
+  SYMFUNC(font_encoding_from_xlfd)
+  SYMFUNC(font_encoding_find)
+  SYMFUNC(font_encoding_recode)
+  SYMFUNC(font_encoding_name)
+  SYMFUNC(identifyEncodingFile)
+#endif
 
   /* fontcache.c */
   SYMFUNC(FontCacheGetSettings)

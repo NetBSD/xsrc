@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/parser/xf86Parser.h,v 1.27 2000/12/06 15:35:33 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/parser/xf86Parser.h,v 1.29 2001/07/02 15:38:34 paulo Exp $ */
 /* 
  * 
  * Copyright (c) 1997  Metro Link Incorporated
@@ -58,12 +58,14 @@ typedef struct
 	int load_type;
 	char *load_name;
 	XF86OptionPtr load_opt;
+	char *load_comment;
 }
 XF86LoadRec, *XF86LoadPtr;
 
 typedef struct
 {
 	XF86LoadPtr mod_load_lst;
+	char *mod_comment;
 }
 XF86ConfModuleRec, *XF86ConfModulePtr;
 
@@ -101,6 +103,7 @@ typedef struct
 	int ml_vscan;
 	int ml_flags;
 	int ml_hskew;
+	char *ml_comment;
 }
 XF86ConfModeLineRec, *XF86ConfModeLinePtr;
 
@@ -109,6 +112,7 @@ typedef struct
 	GenericListRec list;
 	char *vp_identifier;
 	XF86OptionPtr vp_option_lst;
+	char *vp_comment;
 }
 XF86ConfVideoPortRec, *XF86ConfVideoPortPtr;
 
@@ -123,6 +127,7 @@ typedef struct
 	XF86OptionPtr va_option_lst;
 	XF86ConfVideoPortPtr va_port_lst;
 	char *va_fwdref;
+	char *va_comment;
 }
 XF86ConfVideoAdaptorRec, *XF86ConfVideoAdaptorPtr;
 
@@ -146,6 +151,7 @@ typedef struct
 	GenericListRec list;
 	char *modes_identifier;
 	XF86ConfModeLinePtr mon_modeline_lst;
+	char *modes_comment;
 }
 XF86ConfModesRec, *XF86ConfModesPtr;
 
@@ -240,6 +246,7 @@ XF86ConfDisplayRec, *XF86ConfDisplayPtr;
 typedef struct
 {
 	XF86OptionPtr flg_option_lst;
+	char *flg_comment;
 }
 XF86ConfFlagsRec, *XF86ConfFlagsPtr;
 
@@ -345,6 +352,7 @@ typedef struct
 	char *vs_name;
 	char *vs_identifier;
 	XF86OptionPtr vs_option_lst;
+	char *vs_comment;
 }
 XF86ConfVendSubRec, *XF86ConfVendSubPtr;
 
@@ -364,6 +372,7 @@ typedef struct
 	int buf_count;
 	int buf_size;
 	char *buf_flags;
+	char *buf_comment;
 }
 XF86ConfBuffersRec, *XF86ConfBuffersPtr;
 
@@ -373,6 +382,7 @@ typedef struct
 	int dri_group;
 	int dri_mode;
 	XF86ConfBuffersPtr dri_buffers_lst;
+	char *dri_comment;
 }
 XF86ConfDRIRec, *XF86ConfDRIPtr;
 
@@ -390,6 +400,7 @@ typedef struct
 	XF86ConfLayoutPtr conf_layout_lst;
 	XF86ConfVendorPtr conf_vendor_lst;
 	XF86ConfDRIPtr conf_dri;
+	char *conf_comment;
 }
 XF86ConfigRec, *XF86ConfigPtr;
 
@@ -427,5 +438,6 @@ int xf86itemNotSublist(GenericListPtr list_1, GenericListPtr list_2);
 
 int xf86pathIsAbsolute(const char *path);
 int xf86pathIsSafe(const char *path);
+char *xf86addComment(char *cur, char *add);
 
 #endif /* _xf86Parser_h_ */

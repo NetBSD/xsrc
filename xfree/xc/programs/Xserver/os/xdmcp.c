@@ -1,4 +1,4 @@
-/* $Xorg: xdmcp.c,v 1.3 2000/08/17 19:53:42 cpqbld Exp $ */
+/* $Xorg: xdmcp.c,v 1.4 2001/01/31 13:37:19 pookie Exp $ */
 /*
  * Copyright 1989 Network Computing Devices, Inc., Mountain View, California.
  *
@@ -13,7 +13,7 @@
  * without express or implied warranty.
  *
  */
-/* $XFree86: xc/programs/Xserver/os/xdmcp.c,v 3.15 2001/05/01 07:53:47 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/os/xdmcp.c,v 3.20 2001/11/19 20:44:18 tsi Exp $ */
 
 #ifdef WIN32
 /* avoid conflicting definitions */
@@ -31,7 +31,7 @@
 
 #include "Xos.h"
 
-#if !defined(MINIX) && !defined(WIN32)
+#if !defined(WIN32)
 #ifndef Lynx
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -40,17 +40,8 @@
 #endif
 #include <netinet/in.h>
 #include <netdb.h>
-#else
-#if defined(MINIX)
-#include <net/hton.h>
-#include <net/netlib.h>
-#include <net/gen/netdb.h>
-#include <net/gen/udp.h>
-#include <net/gen/udp_io.h>
-#include <sys/nbio.h>
-#include <sys/ioctl.h>
 #endif
-#endif
+
 #include <stdio.h>
 #include "X.h"
 #include "Xmd.h"
@@ -74,11 +65,11 @@
 
 #ifdef XDMCP
 #undef REQUEST
-#include "Xdmcp.h"
+#include <X11/Xdmcp.h>
 
-extern char *display;
-extern fd_set EnabledDevices;
-extern fd_set AllClients;
+#define X_INCLUDE_NETDB_H
+#include <X11/Xos_r.h>
+
 extern char *defaultDisplayClass;
 
 static int		    xdmcpSocket, sessionSocket;
@@ -257,15 +248,6 @@ void XdmcpRegisterManufacturerDisplayID(
 #endif
 );
 
-#ifdef MINIX
-static void read_cb(
-#if NeedFunctionPrototypes
-    nbio_ref_t	/*ref*/,
-    int		/*res*/,
-    int		/*err*/
-#endif
-);
-#endif
 
 static short	xdm_udp_port = XDM_UDP_PORT;
 static Bool	OneSession = FALSE;
@@ -1021,51 +1003,9 @@ get_xdmcp_sock(void)
  
     freenetconfigent(nconf);
 #else
-#ifndef _MINIX
     int soopts = 1;
 
     if ((xdmcpSocket = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
-#else /* MINIX */
-    char *udp_device;
-    int r, s_errno;
-    nwio_udpopt_t udpopt;
-    nbio_ref_t ref;
-
-    udp_device= getenv("UDP_DEVICE");
-    if (udp_device == NULL)
-    	udp_device= UDP_DEVICE;
-    xdmcpSocket= open(udp_device, O_RDWR);
-    if (xdmcpSocket != -1)
-    {
-    	udpopt.nwuo_flags= NWUO_COPY | NWUO_LP_SEL | NWUO_EN_LOC | 
-    		NWUO_DI_BROAD | NWUO_RP_ANY | NWUO_RA_ANY | NWUO_RWDATALL |
-    		NWUO_DI_IPOPT;
-    	r= ioctl(xdmcpSocket, NWIOSUDPOPT, &udpopt);
-    	if (r == -1)
-    	{
-    		s_errno= errno;
-    		close(xdmcpSocket);
-    		xdmcpSocket= -1;
-    		errno= s_errno;
-    	}
-    	ioctl(xdmcpSocket, NWIOGUDPOPT, &udpopt);
-    	ErrorF("0x%x, 0x%x, 0x%x, 0x%x, 0x%x\n", 
-    		udpopt.nwuo_flags,
-    		udpopt.nwuo_locport,
-    		udpopt.nwuo_remport,
-    		udpopt.nwuo_locaddr,
-    		udpopt.nwuo_remaddr);
-    }
-    if (xdmcpSocket != -1)
-    {
-	fcntl(xdmcpSocket, F_SETFD, fcntl(xdmcpSocket, F_GETFD) | 
-    								FD_ASYNCHIO);
-	nbio_register(xdmcpSocket);
-	ref.ref_int= xdmcpSocket;
-	nbio_setcallback(xdmcpSocket, ASIO_READ, read_cb, ref);
-    }
-    if (xdmcpSocket == -1)
-#endif /* !MINIX */
 	XdmcpWarning("UDP socket creation failed");
 #ifdef SO_BROADCAST
     else if (setsockopt(xdmcpSocket, SOL_SOCKET, SO_BROADCAST, (char *)&soopts,
@@ -1423,22 +1363,21 @@ get_manager_by_name(
     int	    i)
 {
     struct hostent *hep;
+#ifdef XTHREADS_NEEDS_BYNAMEPARAMS
+    _Xgethostbynameparams hparams;
+#endif
 
     if (i == argc)
     {
 	ErrorF("Xserver: missing host name in command line\n");
 	exit(1);
     }
-    if (!(hep = gethostbyname(argv[i])))
+    if (!(hep = _XGethostbyname(argv[i], hparams)))
     {
 	ErrorF("Xserver: unknown host: %s\n", argv[i]);
 	exit(1);
     }
-#ifndef _MINIX
     if (hep->h_length == sizeof (struct in_addr))
-#else
-    if (hep->h_length == sizeof (ipaddr_t))
-#endif
     {
 	memmove(&ManagerAddress.sin_addr, hep->h_addr, hep->h_length);
 #ifdef BSD44SOCKETS
@@ -1461,22 +1400,21 @@ get_fromaddr_by_name(
     int	    i)
 {
     struct hostent *hep;
+#ifdef XTHREADS_NEEDS_BYNAMEPARAMS
+    _Xgethostbynameparams hparams;
+#endif
 
     if (i == argc)
     {
 	ErrorF("Xserver: missing -from host name in command line\n");
 	exit(1);
     }
-    if (!(hep = gethostbyname(argv[i])))
+    if (!(hep = _XGethostbyname(argv[i], hparams)))
     {
 	ErrorF("Xserver: unknown host: %s\n", argv[i]);
 	exit(1);
     }
-#ifndef _MINIX
     if (hep->h_length == sizeof (struct in_addr))
-#else
-    if (hep->h_length == sizeof (ipaddr_t))
-#endif
     {
 	memset(&FromAddress, 0, sizeof(FromAddress));
 	memmove(&FromAddress.sin_addr, hep->h_addr, hep->h_length);
@@ -1493,65 +1431,6 @@ get_fromaddr_by_name(
     }
     xdm_from = argv[i];
 }
-
-#ifdef MINIX
-static char read_buffer[XDM_MAX_MSGLEN+sizeof(udp_io_hdr_t)];
-static int read_inprogress;
-static int read_size;
-
-int
-XdmcpFill (
-int             fd,
-XdmcpBufferPtr  buffer,
-XdmcpNetaddr    from,       /* return */
-int             *fromlen)   /* return */
-{
-	int r;
-
-	if (read_inprogress)
-		return 0;
-
-	if (read_size != 0)
-	{
-		r= read_size;
-		read_size= 0;
-		return MNX_XdmcpFill(fd, buffer, from, fromlen, read_buffer,
-			r);
-	}
-
-	r= read(fd, read_buffer, sizeof(read_buffer));
-	if (r > 0)
-	{
-		return MNX_XdmcpFill(fd, buffer, from, fromlen, read_buffer,
-			r);
-	}
-	else if (r == -1 && errno == EINPROGRESS)
-	{
-		read_inprogress= 1;
-		nbio_inprogress(fd, ASIO_READ, 1 /* read */, 0 /* write */,
-			0 /* except */);
-		return 0;
-	}
-	else
-		FatalError("XdmcpFill: read failed: %s\n",
-			r == 0 ? "EOF" : strerror(errno));
-	return 0;
-}
-
-static void read_cb(ref, res, err)
-nbio_ref_t ref;
-int res;
-int err;
-{
-	if (res <= 0)
-	{
-		FatalError("xdmcp'read_cb: read failed: %s\n",
-			res == 0 ? "EOF" : strerror(err));
-	}
-	read_inprogress= 0;
-	read_size= res;
-}
-#endif
 
 #else
 static int xdmcp_non_empty; /* avoid complaint by ranlib */

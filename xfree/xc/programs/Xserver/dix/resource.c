@@ -2,7 +2,11 @@
 
 Copyright 1987, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -41,7 +45,7 @@ SOFTWARE.
 
 ********************************************************/
 
-/* $Xorg: resource.c,v 1.4 2000/08/17 19:48:19 cpqbld Exp $ */
+/* $Xorg: resource.c,v 1.5 2001/02/09 02:04:40 xorgcvs Exp $ */
 
 
 /* $TOG: resource.c /main/41 1998/02/09 14:20:31 kaleb $ */
@@ -68,7 +72,7 @@ SOFTWARE.
  *      1, and an otherwise arbitrary ID in the low 22 bits, we can create a
  *      resource "owned" by the client.
  */
-/* $XFree86: xc/programs/Xserver/dix/resource.c,v 3.8 2001/02/16 13:24:07 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/dix/resource.c,v 3.10 2001/12/14 19:59:33 dawes Exp $ */
 
 #define NEED_EVENTS
 #include "X.h"
@@ -822,7 +826,7 @@ SecurityLookupIDByClass(client, id, classes, mode)
     Mask mode;
 {
     int    cid;
-    register    ResourcePtr res;
+    register ResourcePtr res = NULL;
     pointer retval = NULL;
 
     assert(client == NullClient ||

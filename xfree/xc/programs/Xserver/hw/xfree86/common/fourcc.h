@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/fourcc.h,v 1.2 2000/06/14 18:20:33 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/fourcc.h,v 1.3 2001/12/03 22:13:24 mvojkovi Exp $ */
 
 /*
    This header file contains listings of STANDARD guids for video formats.
@@ -87,3 +87,44 @@
 	  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}, \
 	XvTopToBottom \
    }
+
+#define FOURCC_IA44 0x34344149
+#define XVIMAGE_IA44 \
+   { \
+        FOURCC_IA44, \
+        XvYUV, \
+        LSBFirst, \
+        {'I','A','4','4', \
+          0x00,0x00,0x00,0x10,0x80,0x00,0x00,0xAA,0x00,0x38,0x9B,0x71}, \
+        8, \
+        XvPacked, \
+        1, \
+        0, 0, 0, 0, \
+        8, 8, 8, \
+        1, 1, 1, \
+        1, 1, 1, \
+        {'A','I', \
+          0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}, \
+        XvTopToBottom \
+   }
+
+#define FOURCC_AI44 0x34344941
+#define XVIMAGE_AI44 \
+   { \
+        FOURCC_AI44, \
+        XvYUV, \
+        LSBFirst, \
+        {'A','I','4','4', \
+          0x00,0x00,0x00,0x10,0x80,0x00,0x00,0xAA,0x00,0x38,0x9B,0x71}, \
+        8, \
+        XvPacked, \
+        1, \
+        0, 0, 0, 0, \
+        8, 8, 8, \
+        1, 1, 1, \
+        1, 1, 1, \
+        {'I','A', \
+          0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}, \
+        XvTopToBottom \
+   }
+

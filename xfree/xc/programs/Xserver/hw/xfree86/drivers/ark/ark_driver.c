@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ark/ark_driver.c,v 1.14 2001/05/10 16:48:12 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ark/ark_driver.c,v 1.19 2001/10/28 03:33:22 tsi Exp $ */
 /*
  *	Copyright 2000	Ani Joshi <ajoshi@unixbox.com>
  *
@@ -113,29 +113,30 @@ static const OptionInfoRec ARKOptions[] = {
 };
 
 static const char *fbSymbols[] = {
+	"fbPictureInit",
 	"fbScreenInit",
 	NULL
 };
 
 static const char *vgaHWSymbols[] = {
-	"vgaHWGetHWRec",
 	"vgaHWFreeHWRec",
+	"vgaHWGetHWRec",
 	"vgaHWGetIOBase",
-	"vgaHWSave",
+	"vgaHWGetIndex",
+	"vgaHWInit",
+	"vgaHWLock",
 	"vgaHWProtect",
 	"vgaHWRestore",
-	"vgaHWMapMem",
-	"vgaHWUnmapMem",
+	"vgaHWSave",
 	"vgaHWSaveScreen",
-	"vgaHWLock",
+	"vgaHWUnlock",
+	"vgaHWUnmapMem",
 	NULL
 };
 
 static const char *xaaSymbols[] = {
 	"XAACreateInfoRec",
-	"XAADestroyInfoRec",
 	"XAAInit",
-	"XAAScreenIndex",
 	NULL
 };
 
@@ -203,7 +204,7 @@ static const OptionInfoRec * ARKAvailableOptions(int chipid, int busid)
 
 static void ARKIdentify(int flags)
 {
-	xf86PrintChipsets("ark", "driver (version " DRIVER_VERSION " for ARK Logic chipset",
+	xf86PrintChipsets("ARK", "driver (version " DRIVER_VERSION " for ARK Logic chipset",
 			  ARKChipsets);
 }
 
@@ -483,11 +484,18 @@ static Bool ARKPreInit(ScrnInfoPtr pScrn, int flags)
 	xf86PrintModes(pScrn);
 	xf86SetDpi(pScrn, 0, 0);
 
-	xf86LoadSubModule(pScrn, "fb");
-	xf86LoaderReqSymbols("fbScreenInit", NULL);
+	if (!xf86LoadSubModule(pScrn, "fb")) {
+	    ARKFreeRec(pScrn);
+	    return FALSE;
+	}
+
+	xf86LoaderReqSymLists(fbSymbols, NULL);
 
 	if (!pARK->NoAccel) {
-		xf86LoadSubModule(pScrn, "xaa");
+		if (!xf86LoadSubModule(pScrn, "xaa")) {
+			ARKFreeRec(pScrn);
+			return FALSE;
+		}
 		xf86LoaderReqSymLists(xaaSymbols, NULL);
 	}
 
@@ -509,7 +517,7 @@ static Bool ARKScreenInit(int scrnIndex, ScreenPtr pScreen, int argc,
 
 	ARKSave(pScrn);
 
-/*	vgaHWBlankScreen(pScrn, TRUE); */
+	vgaHWBlankScreen(pScrn, TRUE);
 
 	if (!ARKModeInit(pScrn, pScrn->currentMode))
 		return FALSE;
@@ -536,8 +544,6 @@ static Bool ARKScreenInit(int scrnIndex, ScreenPtr pScreen, int argc,
 			  pScrn->displayWidth, pScrn->bitsPerPixel))
 		return FALSE;
 
-	fbPictureInit (pScreen, 0, 0);
-
 	xf86SetBlackWhitePixels(pScreen);
 
 	if (pScrn->bitsPerPixel > 8) {
@@ -556,6 +562,9 @@ static Bool ARKScreenInit(int scrnIndex, ScreenPtr pScreen, int argc,
 		}
 	}
 
+	/* must be after RGB order fixed */
+
+	fbPictureInit (pScreen, 0, 0);
 
 	miInitializeBackingStore(pScreen);
 	xf86SetBackingStore(pScreen);
@@ -580,7 +589,7 @@ static Bool ARKScreenInit(int scrnIndex, ScreenPtr pScreen, int argc,
 				 CMAP_RELOAD_ON_MODE_SWITCH))
 		return FALSE;
 
-/*	vgaHWBlankScreen(pScrn, TRUE); */
+	vgaHWBlankScreen(pScrn, FALSE);
 
 	pScreen->SaveScreen = ARKSaveScreen;
 	pARK->CloseScreen = pScreen->CloseScreen;
@@ -707,12 +716,9 @@ static Bool ARKModeInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
 
 	offset = (pScrn->displayWidth * (pScrn->bitsPerPixel / 8)) >> 3;
 	pVga->CRTC[0x13] = offset;
-	pVga->Attribute[0x11] = 0x00;
 	new->cr41 = (offset & 0x100) >> 5;
 
-	pVga->MiscOutReg |= 0x0c;
-
-	new->sr11 = rdinx(0x3c4, 0x11) & ~0x0f;
+	new->sr11 = 0x90;
 	switch (pScrn->bitsPerPixel) {
 		case 8:
 			new->sr11 |= 0x06;
@@ -819,7 +825,6 @@ static Bool ARKModeInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
 	/* set display FIFO threshold */
 	{
 		int threshold;
-		unsigned char tmp;
 		int bandwidthused, percentused;
 
 		/* mostly guesses here as I would need to know more about
@@ -876,9 +881,6 @@ static Bool ARKModeInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
 		if (pScrn->bitsPerPixel == 24)
 			new->dac_command = 0xe0;
 	}
-
-	/* hrmm... */
-	new->dac_command |= 0x02;
 
 #if 0
 	/* hw cursor regs */
@@ -950,7 +952,7 @@ static void ARKWriteMode(ScrnInfoPtr pScrn, vgaRegPtr pVga, ARKRegPtr new)
 	 * restoration can suceed
 	 */
 	wrinx(0x3c4, 0x10, new->sr10);
-	modinx(0x3c4, 0x11, 0x3f, new->sr11);
+	wrinx(0x3c4, 0x11, new->sr11);
 	wrinx(0x3c4, 0x12, new->sr12);
 	wrinx(0x3c4, 0x13, new->sr13);
 	wrinx(0x3c4, 0x14, new->sr14);
@@ -999,9 +1001,6 @@ static void ARKWriteMode(ScrnInfoPtr pScrn, vgaRegPtr pVga, ARKRegPtr new)
 		vgaHWRestore(pScrn, pVga, VGA_SR_ALL);
 	else
 		vgaHWRestore(pScrn, pVga, VGA_SR_MODE);
-
-	inb(0x3c8);
-	outb(0x3c6, 0xff);
 
 	vgaHWProtect(pScrn, FALSE);
 
@@ -1067,6 +1066,7 @@ static void ARKUnmapMem(ScrnInfoPtr pScrn)
 {
 	ARKPtr pARK = ARKPTR(pScrn);
 
+	/* XXX vgaHWMapMem() isn't called explicitly, so is this correct? */
 	vgaHWUnmapMem(pScrn);
 
 	xf86UnMapVidMem(pScrn->scrnIndex, (pointer)pARK->FBBase,
@@ -1091,6 +1091,8 @@ Bool ARKCloseScreen(int scrnIndex, ScreenPtr pScreen)
 
 	pScrn->vtSema = FALSE;
 	pScreen->CloseScreen = pARK->CloseScreen;
+
+	/* XXX Shouldn't XAADestroyInfoRec() be called? */
 
 	return (*pScreen->CloseScreen)(scrnIndex, pScreen);
 }

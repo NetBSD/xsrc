@@ -25,7 +25,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 **************************************************************************/
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/i740/i740_driver.c,v 1.30 2001/05/15 10:19:38 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/i740/i740_driver.c,v 1.35 2002/01/04 21:22:31 tsi Exp $ */
 
 /*
  * Authors:
@@ -197,39 +197,36 @@ static const OptionInfoRec I740Options[] = {
 };
 
 static const char *vgahwSymbols[] = {
-    "vgaHWGetHWRec",
-    "vgaHWSave", /* Added */
-    "vgaHWRestore", /* Added */
-    "vgaHWProtect",
-    "vgaHWInit",
-    "vgaHWMapMem",
-    "vgaHWSetMmioFuncs",
-    "vgaHWGetIOBase",
-    "vgaHWLock",
-    "vgaHWUnlock",
     "vgaHWFreeHWRec",
+    "vgaHWGetHWRec",
+    "vgaHWGetIOBase",
+    "vgaHWGetIndex",
+    "vgaHWHBlankKGA",
+    "vgaHWInit",
+    "vgaHWLock",
+    "vgaHWMapMem",
+    "vgaHWProtect",
+    "vgaHWRestore",
+    "vgaHWSave",
     "vgaHWSaveScreen",
-    "vgaHWHandleColormaps",
+    "vgaHWSetMmioFuncs",
+    "vgaHWUnlock",
+    "vgaHWUnmapMem",
+    "vgaHWVBlankKGA",
     0
 };
 
-static const char *fbSymbols[] = {
-#ifdef USE_FB
-    "fbScreenInit",
-    "fbPictureInit",
-#else
+static const char *cfbSymbols[] = {
     "cfbScreenInit",
     "cfb16ScreenInit",
     "cfb24ScreenInit",
     "cfb32ScreenInit",
-#endif
-    "cfb8_32ScreenInit",
-    "cfb24_32ScreenInit",
     NULL
 };
 
-static const char *xf8_32bppSymbols[] = {
-    "xf86Overlay8Plus32Init",
+static const char *fbSymbols[] = {
+    "fbScreenInit",
+    "fbPictureInit",
     NULL
 };
 
@@ -237,23 +234,20 @@ static const char *xaaSymbols[] = {
     "XAADestroyInfoRec",
     "XAACreateInfoRec",
     "XAAInit",
-    "XAAStippleScanlineFuncLSBFirst",
-    "XAAOverlayFBfuncs",
-    "XAACachePlanarMonoStipple",
-    "XAAScreenIndex",
     NULL
 };
 
 static const char *ramdacSymbols[] = {
-    "xf86InitCursor",
     "xf86CreateCursorInfoRec",
     "xf86DestroyCursorInfoRec",
+    "xf86InitCursor",
     NULL
 };
 
 static const char *vbeSymbols[] = {
     "VBEInit",
     "vbeDoEDID",
+    "vbeFree",
     NULL
 };
 
@@ -298,9 +292,8 @@ i740Setup(pointer module, pointer opts, int *errmaj, int *errmin)
 	 * might refer to.
 	 */
 	LoaderRefSymLists(vgahwSymbols, fbSymbols, xaaSymbols, 
-			  xf8_32bppSymbols, ramdacSymbols, vbeSymbols,
-			  NULL /* ddcsymbols */, NULL /* i2csymbols */, NULL /* shadowSymbols */,
-			  NULL /* fbdevsymbols */, NULL);
+			  cfbSymbols, ramdacSymbols, vbeSymbols,
+			  NULL);
 
 	/*
 	 * The return value must be non-NULL on success even though there
@@ -459,6 +452,7 @@ I740ProbeDDC(ScrnInfoPtr pScrn, int index)
     if (xf86LoadSubModule(pScrn, "vbe")) {
 	pVbe = VBEInit(NULL,index);
 	ConfiguredMonitor = vbeDoEDID(pVbe, NULL);
+	vbeFree(pVbe);
     }
 }
 
@@ -540,6 +534,22 @@ I740PreInit(ScrnInfoPtr pScrn, int flags) {
   }
   xf86PrintDepthBpp(pScrn);
 
+  /* Process the options */
+  xf86CollectOptions(pScrn, NULL);
+  if (!(pI740->Options = xalloc(sizeof(I740Options))))
+    return FALSE;
+  memcpy(pI740->Options, I740Options, sizeof(I740Options));
+  xf86ProcessOptions(pScrn->scrnIndex, pScrn->options, pI740->Options);
+
+  /* 6-BIT dac isn't reasonable for modes with > 8bpp */
+  if (xf86ReturnOptValBool(pI740->Options, OPTION_DAC_6BIT, FALSE) &&
+      pScrn->bitsPerPixel>8) {
+    OptionInfoPtr ptr;
+    ptr=xf86TokenToOptinfo(pI740->Options, OPTION_DAC_6BIT);
+    ptr->found=FALSE;
+  }
+
+	    
   pScrn->rgbBits=8;
   if (xf86ReturnOptValBool(pI740->Options, OPTION_DAC_6BIT, FALSE))
     pScrn->rgbBits=6;
@@ -558,26 +568,11 @@ I740PreInit(ScrnInfoPtr pScrn, int flags) {
     }
   }
 
-  /* We use a programamble clock */
+  /* We use a programmable clock */
   pScrn->progClock = TRUE;
 
   hwp = VGAHWPTR(pScrn);
   pI740->cpp = pScrn->bitsPerPixel/8;
-
-  /* Process the options */
-  xf86CollectOptions(pScrn, NULL);
-  if (!(pI740->Options = xalloc(sizeof(I740Options))))
-    return FALSE;
-  memcpy(pI740->Options, I740Options, sizeof(I740Options));
-  xf86ProcessOptions(pScrn->scrnIndex, pScrn->options, pI740->Options);
-
-  /* 6-BIT dac isn't reasonable for modes with > 8bpp */
-  if (xf86ReturnOptValBool(pI740->Options, OPTION_DAC_6BIT, FALSE) &&
-      pScrn->bitsPerPixel>8) {
-    OptionInfoPtr ptr;
-    ptr=xf86TokenToOptinfo(pI740->Options, OPTION_DAC_6BIT);
-    ptr->found=FALSE;
-  }
 
   /* We have to use PIO to probe, because we haven't mappend yet */
   I740SetPIOAccess(pI740);
@@ -773,7 +768,7 @@ I740PreInit(ScrnInfoPtr pScrn, int flags) {
     I740FreeRec(pScrn);
     return FALSE;
   }
-  xf86LoaderReqSymbols("fbScreenInit","fbPictureInit", NULL);
+  xf86LoaderReqSymLists(fbSymbols, NULL);
 #else
   switch (pScrn->bitsPerPixel) {
   case 8:
@@ -805,6 +800,7 @@ I740PreInit(ScrnInfoPtr pScrn, int flags) {
       I740FreeRec(pScrn);
       return FALSE;
     }
+    xf86LoaderReqSymLists(xaaSymbols, NULL);
   }
 
   if (!xf86ReturnOptValBool(pI740->Options, OPTION_SW_CURSOR, FALSE)) {
@@ -1533,9 +1529,6 @@ I740ScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv) {
 	       pScrn->bitsPerPixel);
     return FALSE;
   }
-#ifdef USE_FB
-  fbPictureInit(pScreen,0,0);
-#endif
 
   xf86SetBlackWhitePixels(pScreen);
 
@@ -1553,6 +1546,10 @@ I740ScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv) {
     }
   }
 
+#ifdef USE_FB
+  /* must be after RGB ordering set */
+  fbPictureInit(pScreen,0,0);
+#endif
   miInitializeBackingStore(pScreen);
   xf86SetBackingStore(pScreen);
   xf86SetSilkenMouse(pScreen);

@@ -1,10 +1,14 @@
-/* $Xorg: bufio.h,v 1.3 2000/08/17 19:46:38 cpqbld Exp $ */
+/* $Xorg: bufio.h,v 1.4 2001/02/09 02:04:04 xorgcvs Exp $ */
 
 /*
 
 Copyright 1993, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included
 in all copies or substantial portions of the Software.
@@ -23,7 +27,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/font/include/bufio.h,v 1.5 2001/01/17 19:43:31 dawes Exp $ */
+/* $XFree86: xc/lib/font/include/bufio.h,v 1.7 2001/12/14 19:56:53 dawes Exp $ */
 
 #ifndef ___BUFIO_H___
 #define ___BUFIO_H___ 1
@@ -74,7 +78,7 @@ extern int BufFileWrite ( BufFilePtr, char*, int );
 extern void BufFileFree ( BufFilePtr );
 
 #define BufFileGet(f)	((f)->left-- ? *(f)->bufp++ : ((f)->eof = (*(f)->input) (f)))
-#define BufFilePut(c,f)	(--(f)->left ? *(f)->bufp++ = (c) : (*(f)->output) (c,f))
+#define BufFilePut(c,f)	(--(f)->left ? *(f)->bufp++ = ((unsigned char)(c)) : (*(f)->output) ((unsigned char)(c),f))
 #define BufFileSkip(f,c)    ((f)->eof = (*(f)->skip) (f, c))
 
 #ifndef TRUE

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Resources.h,v 1.11.4.1 2001/05/28 14:23:37 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Resources.h,v 1.13 2001/06/01 18:43:49 tsi Exp $ */
 
 #ifndef _XF86_RESOURCES_H
 
@@ -80,16 +80,16 @@
 	{ResShrIoSparse | ResBios | ResBus, 0x02E8, 0x03F8}
 
 /* predefined resources */
-extern const resRange resVgaExclusive[];
-extern const resRange resVgaShared[];
-extern const resRange resVgaIoShared[];
-extern const resRange resVgaMemShared[];
-extern const resRange resVgaUnusedExclusive[];
-extern const resRange resVgaUnusedShared[];
-extern const resRange resVgaSparseExclusive[];
-extern const resRange resVgaSparseShared[];
-extern const resRange res8514Exclusive[];
-extern const resRange res8514Shared[];
+extern resRange resVgaExclusive[];
+extern resRange resVgaShared[];
+extern resRange resVgaIoShared[];
+extern resRange resVgaMemShared[];
+extern resRange resVgaUnusedExclusive[];
+extern resRange resVgaUnusedShared[];
+extern resRange resVgaSparseExclusive[];
+extern resRange resVgaSparseShared[];
+extern resRange res8514Exclusive[];
+extern resRange res8514Shared[];
 
 /* Less misleading aliases for xf86SetOpratingState() */
 #define resVgaMem resVgaMemShared

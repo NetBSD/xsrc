@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bus/xf86Pci.h,v 1.27 2001/05/15 10:19:42 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bus/xf86Pci.h,v 1.30 2001/10/28 03:34:01 tsi Exp $ */
 /*
  * Copyright 1998 by Concurrent Computer Corporation
  *
@@ -334,8 +334,13 @@
 #define PCI_PPB_MEMLIMIT_EXTRACT(x)     (((x) <<  0) & 0xFFFF0000)
 
 #define PCI_PCI_BRIDGE_CONTROL_REG         0x3E
+#define PCI_PCI_BRIDGE_PARITY_EN           0x01
+#define PCI_PCI_BRIDGE_SERR_EN             0x02
 #define PCI_PCI_BRIDGE_ISA_EN              0x04
 #define PCI_PCI_BRIDGE_VGA_EN              0x08
+#define PCI_PCI_BRIDGE_MASTER_ABORT_EN     0x20
+#define PCI_PCI_BRIDGE_SECONDARY_RESET     0x40
+#define PCI_PCI_BRIDGE_FAST_B2B_EN         0x80
 
 /* Subsystem identification register */
 #define PCI_SUBSYSTEM_ID_REG		0x2c
@@ -349,7 +354,8 @@
  */
 
 /* Primitive Types */
-typedef unsigned long ADDRESS;		/* Memory/PCI address */
+typedef unsigned long ADDRESS;    /* Memory/PCI address */
+typedef unsigned long IOADDRESS;  /* Must be large enough for a pointer */
 typedef unsigned long PCITAG;
 
 /*
@@ -625,6 +631,13 @@ typedef enum {
 #define pci_user_config_2	      cfgspc.regs.devspf.bytes[2]
 #define pci_user_config_3	      cfgspc.regs.devspf.bytes[3]
 
+typedef enum {
+  PCI_BIOS_PC = 0,
+  PCI_BIOS_OPEN_FIRMARE,
+  PCI_BIOS_HP_PA_RISC,
+  PCI_BIOS_OTHER
+} PciBiosType;
+
 /* Public PCI access functions */
 void          pciInit(void);
 PCITAG        pciFindFirst(CARD32 id, CARD32 mask);
@@ -647,12 +660,12 @@ pointer       xf86MapPciMem(int ScreenNum, int Flags, PCITAG Tag,
 				ADDRESS Base, unsigned long Size);
 int           xf86ReadPciBIOS(unsigned long Offset, PCITAG Tag, int basereg,
 				unsigned char *Buf, int Len);
+int           xf86ReadPciBIOSByType(unsigned long Offset, PCITAG Tag, 
+				    int basereg, unsigned char *Buf, 
+				    int Len, PciBiosType Type);
+int           xf86GetAvailablePciBIOSTypes(PCITAG Tag, int basereg, 
+					   PciBiosType *Buf);
 pciConfigPtr *xf86scanpci(int flags);
-
-/* Old sytle PCI access functions (for compatibility) */
-#if 0
-void          xf86writepci(int, int, int, int, int, CARD32, CARD32);
-#endif
 
 extern int pciNumBuses;
 
@@ -669,5 +682,3 @@ typedef enum {
 } romBaseSource;
 
 #endif /* _XF86PCI_H */
-
-

@@ -3,14 +3,14 @@ XCOMM $XConsortium: Imakefile /main/16 1996/10/28 05:13:04 kaleb $
 
 
 
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/Imakefile,v 3.71.2.1 2001/06/01 18:09:48 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/Imakefile,v 3.78 2001/11/15 18:12:50 dawes Exp $
 
 #include <Server.tmpl>
 #include <lnxdoc.rules>
 
-/* Set this to YES if the RELNOTES file is up to date */
+/* Set this to YES if the RELNOTES file is up to date (and during devel) */
 #ifndef BuildRelnotes
-#define BuildRelnotes NO
+#define BuildRelnotes YES
 #endif
 
 #if BuildRelnotes
@@ -23,7 +23,7 @@ MANSGMLDEPENDS = mdefs.ent
 	      DESIGN.sgml Versions.sgml \
 	      mouse.sgml fonts.sgml DRI.sgml DRIcomp.sgml dps.sgml \
 	      Darwin.sgml isc.sgml LynxOS.sgml NetBSD.sgml OpenBSD.sgml \
-	      OS2note.sgml \
+	      OS2Notes.sgml \
               apm.sgml ati.sgml chips.sgml cyrix.sgml DECtga.sgml \
 	      I128.sgml i740.sgml i810.sgml newport.sgml \
 	      r128.sgml rendition.sgml s3virge.sgml SiS.sgml
@@ -46,9 +46,14 @@ LinuxDocReadmeTarget(OpenBSD)
 #ifdef OUTOFDATE
 LinuxDocReadmeTarget(OS2)
 #endif
-LinuxDocTargetLong(OS2note.sgml,OS2.Notes,OS2Notes)
+LinuxDocTargetLong(OS2Notes.sgml,OS2.Notes,OS2Notes)
 #ifdef OUTOFDATE
 LinuxDocReadmeTarget(SCO)
+#endif
+#ifdef NOTYET
+LinuxDocReadmeTarget(Solaris)
+#endif
+#ifdef OUTOFDATE
 LinuxDocReadmeTarget(SOLX86)
 LinuxDocReadmeTarget(SVR4)
 #endif
@@ -103,15 +108,15 @@ LinuxDocReadmeTarget(WstDig)
 #endif
 
 /* Main docs */
-#ifdef OUTOFDATE
 LinuxDocTarget(BUILD)
+#ifdef OUTOFDATE
 LinuxDocReadmeTarget(Config)
 #endif
 LinuxDocTarget(DESIGN)
 LinuxDocTarget(Install)
 LinuxDocTarget(LICENSE)
 #ifdef OUTOFDATE
-LinuxDocTargetLong(QStart.sgml,QuickStart.doc,QuickStart)
+LinuxDocTargetLong(QuickStart.sgml,QuickStart.doc,QuickStart)
 #endif
 LinuxDocTarget(README)
 #if BuildRelnotes
@@ -124,7 +129,7 @@ LinuxDocReadmeTarget(fonts)
 LinuxDocReadmeTarget(mouse)
 LinuxDocTarget(Versions)
 #ifdef OUTOFDATE
-LinuxDocTargetLong(VidModes.sgml,VideoModes.doc,VideoModes)
+LinuxDocTargetLong(VideoModes.sgml,VideoModes.doc,VideoModes)
 LinuxDocTarget(xinput)
 #endif
 LinuxDocReadmeTarget(DRI)

@@ -1,4 +1,4 @@
-
+/* $XFree86: xc/extras/Mesa/src/X/xmesa4.c,v 1.10 2001/12/11 09:18:55 alanh Exp $ */
 /*
  * Mesa 3-D graphics library
  * Version:  3.4
@@ -36,6 +36,7 @@
 #include "glxheader.h"
 #include "depth.h"
 #include "macros.h"
+#include "mmath.h"
 #include "vb.h"
 #include "types.h"
 #include "xmesaP.h"
@@ -47,6 +48,7 @@
 /***                   Triangle rendering                           ***/
 /**********************************************************************/
 
+#if 0
 /*
  * Render a triangle into a pixmap, any pixel format, flat shaded and
  * no raster ops.
@@ -85,6 +87,7 @@ static void flat_pixmap_triangle( GLcontext *ctx,
    XMesaFillPolygon( xmesa->display, xmesa->xm_buffer->buffer, gc,
 		     p, 3, Convex, CoordModeOrigin );
 }
+#endif
 
 
 /*
@@ -1364,7 +1367,7 @@ static void flat_LOOKUP8_triangle( GLcontext *ctx, GLuint v0, GLuint v1,
 
 
 
-
+#if 0
 /*
  * This function is called if we're about to render triangles into an
  * X window/pixmap.  It sets the polygon stipple pattern if enabled.
@@ -1437,6 +1440,7 @@ static void setup_x_polygon_options( GLcontext *ctx )
    XMesaSetFillStyle( xmesa->display, xmesa->xm_buffer->gc1, fill_type );
    XMesaSetFillStyle( xmesa->display, xmesa->xm_buffer->gc2, fill_type );
 }
+#endif
 
 
 #ifdef DEBUG
@@ -1524,8 +1528,10 @@ _xmesa_print_triangle_func( triangle_func triFunc )
       printf("flat_DITHER8_triangle\n");
    else if (triFunc ==flat_LOOKUP8_triangle)
       printf("flat_LOOKUP8_triangle\n");
+#if 0
    else if (triFunc ==flat_pixmap_triangle)
       printf("flat_pixmap_triangle\n");
+#endif
    else
       printf("???\n");
 }

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/parser/write.c,v 1.13 2001/03/08 21:32:35 anderson Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/parser/write.c,v 1.15 2001/07/25 15:05:08 dawes Exp $ */
 /* 
  * 
  * Copyright (c) 1997  Metro Link Incorporated
@@ -39,7 +39,7 @@
 #include <signal.h>
 #include <errno.h>
 
-#if (defined(X_NOT_STDC_ENV) || (defined(sun) && !defined(SVR4)) || defined(macII)) && !defined(__GLIBC__)
+#if ((defined(sun) && !defined(SVR4)) || defined(macII)) && !defined(__GLIBC__)
 #ifndef strerror
 extern char *sys_errlist[];
 extern int sys_nerr;
@@ -71,6 +71,9 @@ doWriteConfigFile (const char *filename, XF86ConfigPtr cptr)
 	{
 		return 0;
 	}
+
+	if (cptr->conf_comment)
+		fprintf (cf, "%s\n", cptr->conf_comment);
 
 	xf86printLayoutSection (cf, cptr->conf_layout_lst);
 

@@ -24,7 +24,7 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  * 
- * $XFree86: xc/lib/GL/dri/dri_tmm.c,v 1.2 2000/02/23 04:46:34 martin Exp $
+ * $XFree86: xc/lib/GL/dri/dri_tmm.c,v 1.3 2001/08/27 17:40:57 dawes Exp $
  * 
  *
  * DESCRIPTION
@@ -39,7 +39,7 @@
  */
 
 #include <unistd.h>
-#include <Xlibint.h>
+#include <X11/Xlibint.h>
 #include "xf86drm.h"
 
 #include "dri_tmm.h"

@@ -1,9 +1,13 @@
-/* $Xorg: dispatch.c,v 1.4 2000/08/17 19:48:17 cpqbld Exp $ */
+/* $Xorg: dispatch.c,v 1.5 2001/02/09 02:04:40 xorgcvs Exp $ */
 /************************************************************
 
 Copyright 1987, 1989, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -64,7 +68,7 @@ SOFTWARE.
 *                                                               *
 *****************************************************************/
 
-/* $XFree86: xc/programs/Xserver/dix/dispatch.c,v 3.23 2001/01/17 22:36:42 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/dix/dispatch.c,v 3.26 2001/12/14 19:59:30 dawes Exp $ */
 
 #ifdef PANORAMIX_DEBUG
 #include <stdio.h>
@@ -103,6 +107,9 @@ int ProcInitialConnection();
 #define XKB_IN_SERVER
 #include "inputstr.h"
 #include "XKBsrv.h"
+#endif
+#ifdef LBX
+#include "lbxserve.h"
 #endif
 
 #define mskcnt ((MAXCLIENTS + 31) / 32)
@@ -276,9 +283,8 @@ SmartScheduleClient (int *clientReady, int nready)
     ClientPtr	pClient;
     int		i;
     int		client;
-    int		bestPrio, best;
+    int		bestPrio, best = 0;
     int		bestRobin, robin;
-    int		prio;
     long	now = SmartScheduleTime;
     long	idle;
 
@@ -2118,7 +2124,7 @@ DoGetImage(client, format, drawable, x, y, width, height, planemask, im_return)
     int			nlines, linesPerBuf;
     register int	linesDone;
     long		widthBytesLine, length;
-    Mask		plane;
+    Mask		plane = 0;
     char		*pBuf;
     xGetImageReply	xgi;
     RegionPtr pVisibleRegion = NULL;
@@ -3357,7 +3363,7 @@ extern int GetHosts();
     xListHostsReply reply;
     int	len, nHosts, result;
     pointer	pdata;
-    REQUEST(xListHostsReq);
+    /* REQUEST(xListHostsReq); */
 
     REQUEST_SIZE_MATCH(xListHostsReq);
 #ifdef XCSECURITY
@@ -3482,7 +3488,7 @@ ProcGetFontPath(client)
     xGetFontPathReply reply;
     int stringLens, numpaths;
     unsigned char *bufferStart;
-    REQUEST (xReq);
+    /* REQUEST (xReq); */
 
     REQUEST_SIZE_MATCH(xReq);
     bufferStart = GetFontPath(&numpaths, &stringLens);
@@ -3908,7 +3914,6 @@ SendConnSetup(client, reason)
     if (reason)
     {
 	xConnSetupPrefix csp;
-	char pad[3];
 
 	csp.success = xFalse;
 	csp.lengthReason = strlen(reason);

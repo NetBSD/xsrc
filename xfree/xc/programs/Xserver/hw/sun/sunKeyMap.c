@@ -27,7 +27,7 @@ OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
 THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ********************************************************/
-/* $XFree86: xc/programs/Xserver/hw/sun/sunKeyMap.c,v 1.3 2001/01/17 22:36:50 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/sun/sunKeyMap.c,v 1.4 2001/10/28 03:33:12 tsi Exp $ */
 
 #include	"sun.h"
 #define		XK_KATAKANA
@@ -259,12 +259,12 @@ static KeySym US2Keymap[] = {
 };
 
 static SunModmapRec US2Modmap[] = {
-	99,	ShiftMask,
-	110,	ShiftMask,
-	76,	ControlMask,
-	120,	Meta_Mask,
-	122,	Meta_Mask,
-	0,	0
+	{  99,	ShiftMask },
+	{ 110,	ShiftMask },
+	{  76,	ControlMask },
+	{ 120,	Meta_Mask },
+	{ 122,	Meta_Mask },
+	{   0,	0 }
 };
 
 #else
@@ -407,13 +407,13 @@ static KeySym US3Keymap[] = {
 };
 
 static SunModmapRec US3Modmap[] = {
-	99,	ShiftMask,
-	110,	ShiftMask,
-	76,	ControlMask,
-	119,	LockMask,
-	120,	Meta_Mask,
-	122,	Meta_Mask,
-	0,	0
+	{  99,	ShiftMask },
+	{ 110,	ShiftMask },
+	{  76,	ControlMask },
+	{ 119,	LockMask },
+	{ 120,	Meta_Mask },
+	{ 122,	Meta_Mask },
+	{   0,	0 }
 };
 
 #else
@@ -424,12 +424,12 @@ static SunModmapRec US3Modmap[] = {
 #endif /* US3 */
 
 KeySymsRec sunKeySyms[] = {
-    /*	map	   minKeyCode	maxKC	width */
-    (KeySym *)NULL,	0,	0,	0,
-    (KeySym *)NULL,	0,	0,	0,
-    US2Keymap,		1,	0x7a,	2,
-    US3Keymap,		1,	0x7a,	2,
-    (KeySym *)NULL,	1,	0x7d,	4,
+    /*	map	    minKeyCode	maxKC	width */
+    { (KeySym *)NULL,	0,	0,	0 },
+    { (KeySym *)NULL,	0,	0,	0 },
+    { US2Keymap,	1,	0x7a,	2 },
+    { US3Keymap,	1,	0x7a,	2 },
+    { (KeySym *)NULL,	1,	0x7d,	4 }
 };
 
 SunModmapRec *sunModMaps[] = {
@@ -441,31 +441,31 @@ SunModmapRec *sunModMaps[] = {
 };
 
 static SunModmapRec Generic5Modmap[] = {
-	99,	ShiftMask,
-	110,	ShiftMask,
-	119,	LockMask,
-	76,	ControlMask,
-	120,	Meta_Mask,
-	122,	Meta_Mask,
-	13,	Mode_switch_Mask,
-	98,	Num_Lock_Mask,
-	19,	Alt_Mask,
-	0,	0
+	{  99,	ShiftMask },
+	{ 110,	ShiftMask },
+	{ 119,	LockMask },
+	{  76,	ControlMask },
+	{ 120,	Meta_Mask },
+	{ 122,	Meta_Mask },
+	{  13,	Mode_switch_Mask },
+	{  98,	Num_Lock_Mask },
+	{  19,	Alt_Mask },
+	{   0,	0}
 };
 
 #if defined(DEN4) || defined(SWEDFIN4) || defined(SWFR4) || defined(SWGE4)
 
 static SunModmapRec DenSwedFinSw4Modmap[] = {
-        99,     ShiftMask,
-        110,    ShiftMask,
-        76,     LockMask,
-        119,    ControlMask,
-        120,    Meta_Mask,
-        122,    Meta_Mask,
-        67,     Mode_switch_Mask,
-        98,     Num_Lock_Mask,
-        19,     Alt_Mask,
-        0,      0
+        {  99,	ShiftMask },
+        { 110,	ShiftMask },
+        {  76,	LockMask },
+        { 119,	ControlMask },
+        { 120,	Meta_Mask },
+        { 122,	Meta_Mask },
+        {  67,	Mode_switch_Mask },
+        {  98,	Num_Lock_Mask },
+        {  19,	Alt_Mask },
+        {   0,	0 }
 };
 
 #endif
@@ -473,16 +473,16 @@ static SunModmapRec DenSwedFinSw4Modmap[] = {
 #if defined(FRBE4) || defined(NETH4)
 
 static SunModmapRec FrBeNeth4Modmap[] = {
-	99,	ShiftMask,
-	110,	ShiftMask,
-	13,	LockMask,
-	76,	ControlMask,
-	120,	Meta_Mask,
-	122,	Meta_Mask,
-	119,	Mode_switch_Mask,
-	98,	Num_Lock_Mask,
-	19,	Alt_Mask,
-	0,	0
+	{  99,	ShiftMask },
+	{ 110,	ShiftMask },
+	{  13,	LockMask },
+	{  76,	ControlMask },
+	{ 120,	Meta_Mask },
+	{ 122,	Meta_Mask },
+	{ 119,	Mode_switch_Mask },
+	{  98,	Num_Lock_Mask },
+	{  19,	Alt_Mask },
+	{   0,	0 }
 };
 
 #endif
@@ -490,16 +490,16 @@ static SunModmapRec FrBeNeth4Modmap[] = {
 #if defined(ITALY4) || defined(NORW4) || defined(PORT4) || defined(SPAINLATAM4)
 
 static SunModmapRec ItNorPortSp4Modmap[] = {
-	99,	ShiftMask,
-	110,	ShiftMask,
-	76,	LockMask,
-	119,	ControlMask,
-	120,	Meta_Mask,
-	122,	Meta_Mask,
-	13,	Mode_switch_Mask,
-	98,	Num_Lock_Mask,
-	19,	Alt_Mask,
-	0,	0
+	{  99,	ShiftMask },
+	{ 110,	ShiftMask },
+	{  76,	LockMask },
+	{ 119,	ControlMask },
+	{ 120,	Meta_Mask },
+	{ 122,	Meta_Mask },
+	{  13,	Mode_switch_Mask },
+	{  98,	Num_Lock_Mask },
+	{  19,	Alt_Mask },
+	{   0,	0 }
 };
 
 #endif
@@ -635,16 +635,16 @@ static KeySym Canada4Keymap[] = {
 };
 
 static SunModmapRec Canada4Modmap[] = {
-	99,	ShiftMask,
-	110,	ShiftMask,
-	76,	LockMask,
-	13,	ControlMask,
-	120,	Meta_Mask,
-	122,	Meta_Mask,
-	119,	Mode_switch_Mask,
-	98,	Num_Lock_Mask,
-	19,	Alt_Mask,
-	0,	0
+	{  99,	ShiftMask },
+	{ 110,	ShiftMask },
+	{  76,	LockMask },
+	{  13,	ControlMask },
+	{ 120,	Meta_Mask },
+	{ 122,	Meta_Mask },
+	{ 119,	Mode_switch_Mask },
+	{  98,	Num_Lock_Mask },
+	{  19,	Alt_Mask },
+	{   0,	0}
 };
 
 #else
@@ -1485,16 +1485,16 @@ static KeySym Germany4Keymap[] = {
 };
 
 static SunModmapRec Germany4Modmap[] = {
-	99,	ShiftMask,
-	110,	ShiftMask,
-	76,	LockMask,
-	119,	ControlMask,
-	120,	Meta_Mask,
-	122,	Meta_Mask,
-	19,	Mode_switch_Mask,
-	98,	Num_Lock_Mask,
-	13,	Alt_Mask,
-	0,	0
+	{  99,	ShiftMask },
+	{ 110,	ShiftMask },
+	{  76,	LockMask },
+	{ 119,	ControlMask },
+	{ 120,	Meta_Mask },
+	{ 122,	Meta_Mask },
+	{  19,	Mode_switch_Mask },
+	{  98,	Num_Lock_Mask },
+	{  13,	Alt_Mask },
+	{   0,	0 }
 };
 
 #else
@@ -2336,16 +2336,16 @@ static KeySym Korea4Keymap[] = {
 };
 
 static SunModmapRec Korea4Modmap[] = {
-	99,	ShiftMask,
-	110,	ShiftMask,
-	119,	LockMask,
-	76,	ControlMask,
-	120,	Meta_Mask,
-	122,	Meta_Mask,
-	111,	Mode_switch_Mask,
-	98,	Num_Lock_Mask,
-	19,	Alt_Mask,
-	0,	0
+	{  99,	ShiftMask },
+	{ 110,	ShiftMask },
+	{ 119,	LockMask },
+	{  76,	ControlMask },
+	{ 120,	Meta_Mask },
+	{ 122,	Meta_Mask },
+	{ 111,	Mode_switch_Mask },
+	{  98,	Num_Lock_Mask },
+	{  19,	Alt_Mask },
+	{   0,	0 }
 };
 
 #else
@@ -5147,14 +5147,14 @@ static KeySym US101AKeymap[] = {
 };
 
 static SunModmapRec US101AModmap[] = {
-	99,	ShiftMask,
-	110,	ShiftMask,
-	119,	LockMask,
-	76,	ControlMask,
-	122,	Meta_Mask,
-	98,	Num_Lock_Mask,
-	120,	Alt_Mask,
-	0,	0
+	{  99,	ShiftMask },
+	{ 110,	ShiftMask },
+	{ 119,	LockMask },
+	{  76,	ControlMask },
+	{ 122,	Meta_Mask },
+	{  98,	Num_Lock_Mask },
+	{ 120,	Alt_Mask },
+	{   0,	0 }
 };
 
 #else
@@ -5693,7 +5693,7 @@ KeySym *sunType4KeyMaps[] = {
 	CanadaFr5Keymap,	/* 97 */
 };
 
-int sunMaxLayout = sizeof sunType4KeyMaps / sizeof sunType4KeyMaps[0];
+int sunMaxLayout = sizeof(sunType4KeyMaps) / sizeof(sunType4KeyMaps[0]);
 
 SunModmapRec *sunType4ModMaps[] = {
 	US4Modmap,		/* 0 */

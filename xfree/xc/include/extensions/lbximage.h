@@ -1,10 +1,14 @@
-/* $Xorg: lbximage.h,v 1.3 2000/08/18 04:05:45 coskrey Exp $ */
+/* $Xorg: lbximage.h,v 1.4 2001/02/09 02:03:24 xorgcvs Exp $ */
 
 /******************************************************************************
 
 Copyright 1994, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -21,9 +25,14 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 ******************************************************************************/
+/* $XFree86: xc/include/extensions/lbximage.h,v 1.4 2001/12/20 19:28:54 tsi Exp $ */
 
 #ifndef _LBX_IMAGE_H_
 #define _LBX_IMAGE_H_
+
+#include <X11/Xfuncproto.h>
+
+_XFUNCPROTOBEGIN
 
 typedef struct _LbxBitmapCompMethod {
 
@@ -106,7 +115,6 @@ typedef struct _LbxPixmapCompMethod {
 } LbxPixmapCompMethod;
 
 
-
 extern int LbxImageEncodePackBits (
 #if NeedFunctionPrototypes
 char *			/* inbuf */,
@@ -153,6 +161,7 @@ int			/* reverse_bits */
 #endif
 );
 
+_XFUNCPROTOEND
 
 #define LBX_IMAGE_COMPRESS_SUCCESS		0
 #define LBX_IMAGE_COMPRESS_NO_SUPPORT		1

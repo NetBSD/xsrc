@@ -26,7 +26,7 @@
  *
  *	Id: fontcache.h,v 1.12 1999/01/09 06:24:30 akiyama Exp $
  */
-/* $XFree86: xc/lib/font/fontcache/fontcache.h,v 1.4 2001/04/06 17:44:58 dawes Exp $ */
+/* $XFree86: xc/lib/font/fontcache/fontcache.h,v 1.5 2001/08/01 00:44:43 tsi Exp $ */
 
 #ifndef _FONTCACHE_H_
 #define _FONTCACHE_H_
@@ -34,6 +34,7 @@
 #include "fontmisc.h"
 #include "fontstruct.h"
 #include "fcqueue.h"
+#include <X11/extensions/fontcacheP.h>
 
 /* constant declarations */
 
@@ -96,35 +97,12 @@ struct fcmemhash {
     struct fcmem_head head[FC_MEM_HASH_SIZE];
 };
 
-struct fc_cache_settings {
-    long	himark;
-    long	lowmark;
-    long	balance;
-};
-
-struct fc_cache_stat {
-    long	hits;
-    long	misshits;
-    long	purged;
-    long	usage;
-};
-
-struct fc_cache_statistics {
-    long			purge_runs;
-    long			purge_stat;
-    long			balance;
-    struct fc_cache_stat	f;
-    struct fc_cache_stat	v;
-};
-
 typedef struct fcbitmap FontCacheBitmap, *FontCacheBitmapPtr;
 typedef struct cache_entry FontCacheEntry, *FontCacheEntryPtr;
 typedef struct fchash_head FontCacheHead, *FontCacheHeadPtr;
 typedef struct fcmem_head FontCacheBitmapHead, *FontCacheBitmapHeadPtr;
 typedef struct fchash FCCB, *FCCBPtr;
 typedef struct fcmemhash FCBCB, *FCBCBPtr;
-typedef struct fc_cache_settings FontCacheSettings, *FontCacheSettingsPtr;
-typedef struct fc_cache_statistics FontCacheStatistics, *FontCacheStatisticsPtr;
 
 /* Function prototypes */
 
@@ -138,9 +116,5 @@ int			FontCacheInsertEntry(FCCBPtr /* this */, int /* key */,
 					     FontCacheEntryPtr /* entry */);
 int			FontCacheGetBitmap(FontCacheEntryPtr /* entry */,
 					   int /* size */);
-
-int		FontCacheChangeSettings(FontCacheSettingsPtr /* cinfo */);
-void		FontCacheGetSettings(FontCacheSettingsPtr /* cinfo */);
-void		FontCacheGetStatistics(FontCacheStatisticsPtr /* cstats */);
 
 #endif /* _FONTCACHE_H_ */

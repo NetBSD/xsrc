@@ -1,10 +1,14 @@
-/* $Xorg: fontutil.c,v 1.3 2000/08/17 19:46:39 cpqbld Exp $ */
+/* $Xorg: fontutil.c,v 1.4 2001/02/09 02:04:04 xorgcvs Exp $ */
 
 /*
 
 Copyright 1991, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included
 in all copies or substantial portions of the Software.
@@ -23,7 +27,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/font/util/fontutil.c,v 3.5 2001/01/17 19:43:33 dawes Exp $ */
+/* $XFree86: xc/lib/font/util/fontutil.c,v 3.7 2001/12/14 19:56:56 dawes Exp $ */
 
 /*
  * Author:  Keith Packard, MIT X Consortium
@@ -230,8 +234,8 @@ add_range(fsRange *newrange,
 {
     int first, last, middle;
     unsigned long keymin, keymax;
-    unsigned long ptrmin, ptrmax;
-    fsRange *ptr, *ptr1, *ptr2, *endptr;
+    unsigned long ptrmin = 0, ptrmax = 0;
+    fsRange *ptr = NULL, *ptr1, *ptr2, *endptr;
 
     /* There are two different ways to treat ranges:
 
@@ -249,7 +253,7 @@ add_range(fsRange *newrange,
     /* If newrange covers multiple rows; break up the rows */
     if (!charset_subset && newrange->min_char_high != newrange->max_char_high)
     {
-	int i, err;
+	int i, err = 0;
 	fsRange temprange;
 	for (i = newrange->min_char_high;
 	     i <= newrange->max_char_high;

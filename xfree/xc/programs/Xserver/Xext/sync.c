@@ -1,9 +1,13 @@
-/* $Xorg: sync.c,v 1.3 2000/08/17 19:47:59 cpqbld Exp $ */
+/* $Xorg: sync.c,v 1.4 2001/02/09 02:04:33 xorgcvs Exp $ */
 /*
 
 Copyright 1991, 1993, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included
 in all copies or substantial portions of the Software.
@@ -46,7 +50,7 @@ OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 PERFORMANCE OF THIS SOFTWARE.
 
 */
-/* $XFree86: xc/programs/Xserver/Xext/sync.c,v 3.8 2001/01/17 22:13:18 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/Xext/sync.c,v 3.11 2001/12/14 19:58:51 dawes Exp $ */
 
 #define NEED_REPLIES
 #define NEED_EVENTS
@@ -67,7 +71,7 @@ PERFORMANCE OF THIS SOFTWARE.
 #include "xf86_ansic.h"
 #else
 #include <stdio.h>
-#if !defined(WIN32) && !defined(MINIX) && !defined(Lynx)
+#if !defined(WIN32) && !defined(Lynx)
 #include <sys/time.h>
 #endif
 #endif
@@ -320,7 +324,6 @@ static DISPATCH_PROC(ProcSyncDispatch);
 static DISPATCH_PROC(ProcSyncGetPriority);
 static DISPATCH_PROC(ProcSyncInitialize);
 static DISPATCH_PROC(ProcSyncListSystemCounters);
-static DISPATCH_PROC(ProcSyncListSystemCounters);
 static DISPATCH_PROC(ProcSyncQueryAlarm);
 static DISPATCH_PROC(ProcSyncQueryCounter);
 static DISPATCH_PROC(ProcSyncSetCounter);
@@ -332,7 +335,6 @@ static DISPATCH_PROC(SProcSyncCreateAlarm);
 static DISPATCH_PROC(SProcSyncCreateCounter);
 static DISPATCH_PROC(SProcSyncDestroyAlarm);
 static DISPATCH_PROC(SProcSyncDestroyCounter);
-static DISPATCH_PROC(SProcSyncDispatch);
 static DISPATCH_PROC(SProcSyncDispatch);
 static DISPATCH_PROC(SProcSyncGetPriority);
 static DISPATCH_PROC(SProcSyncInitialize);
@@ -1413,7 +1415,7 @@ ProcSyncListSystemCounters(client)
 {
     xSyncListSystemCountersReply  rep;
     int i, len;
-    xSyncSystemCounter *list, *walklist;
+    xSyncSystemCounter *list = NULL, *walklist = NULL;
     
     REQUEST_SIZE_MATCH(xSyncListSystemCountersReq);
 

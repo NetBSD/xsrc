@@ -27,5 +27,5 @@ This object must be referred to when calling
 NURBS rendering and control functions. A return value of
 0 means that there is not enough memory to allocate the object.
 .SH SEE ALSO
-\%\f3gluBeginCurve\fP, \%\f3gluBeginSurface\fP, \%\f3gluBeginTrim\fP, \%\f3gluDeleteNurbsRenderer\fP, \%\f3gluNurbsCallback\fP, \%\f3gluNurbsProperty\fP
+\%\f3gluBeginCurve(3G)\fP, \%\f3gluBeginSurface(3G)\fP, \%\f3gluBeginTrim(3G)\fP, \%\f3gluDeleteNurbsRenderer(3G)\fP, \%\f3gluNurbsCallback(3G)\fP, \%\f3gluNurbsProperty(3G)\fP
 

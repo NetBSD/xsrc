@@ -24,7 +24,7 @@ OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
 THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ********************************************************/
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86XKB.c,v 3.9 2000/05/23 04:47:41 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86XKB.c,v 3.10 2001/07/23 13:15:47 dawes Exp $ */
 
 #include <stdio.h>
 #define	NEED_EVENTS 1
@@ -44,18 +44,6 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include "xf86_OSlib.h"
 
 #include "XKBsrv.h"
-
-#ifdef AMOEBA
-#define LED_CAP	IOP_LED_CAP
-#define LED_NUM	IOP_LED_NUM
-#define LED_SCR	IOP_LED_SCROLL
-#endif
-
-#ifdef MINIX
-#define LED_CAP KBD_LEDS_CAPS
-#define LED_NUM KBD_LEDS_NUM
-#define LED_SCR KBD_LEDS_SCROLL
-#endif
 
 void
 xf86InitXkb(void)

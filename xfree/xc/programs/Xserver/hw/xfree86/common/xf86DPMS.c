@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86DPMS.c,v 1.6 2001/05/10 10:17:39 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86DPMS.c,v 1.7 2001/10/28 03:33:18 tsi Exp $ */
 
 /*
  * Copyright (c) 1997-1998 by The XFree86 Project, Inc.
@@ -101,7 +101,7 @@ DPMSClose(int i, ScreenPtr pScreen)
  *	the DPMS mode is to be changed.
  */
 void
-DPMSSet(CARD16 level)
+DPMSSet(int level)
 {
     int i;
     DPMSPtr pDPMS;
@@ -146,7 +146,6 @@ DPMSSupported(void)
 }
 
 
-#if 0
 /*
  * DPMSGet --
  *	Device dependent DPMS mode getting hook.  This returns the current
@@ -161,11 +160,10 @@ DPMSSupported(void)
  *	 2. It isn't clear that this function is ever used or what it should
  *	    return.
  */
-CARD16
-DPMSGet(CARD16 *level)
+int
+DPMSGet(int *level)
 {
     return DPMSPowerLevel;
 }
-#endif
 
 #endif /* DPMSExtension */

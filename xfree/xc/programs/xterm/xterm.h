@@ -1,8 +1,8 @@
-/* $XFree86: xc/programs/xterm/xterm.h,v 3.70 2001/04/12 01:02:51 dickey Exp $ */
+/* $XFree86: xc/programs/xterm/xterm.h,v 3.78 2002/01/07 21:02:44 dawes Exp $ */
 
 /************************************************************
 
-Copyright 1999-2000 by Thomas E. Dickey
+Copyright 1999,2000,2001,2002 by Thomas E. Dickey
 
                         All Rights Reserved
 
@@ -53,6 +53,11 @@ authorization.
 
 #ifndef HAVE_CONFIG_H
 
+#ifdef CSRG_BASED
+/* Get definition of BSD */
+#include <sys/param.h>
+#endif
+
 #ifndef HAVE_X11_DECKEYSYM_H
 #define HAVE_X11_DECKEYSYM_H 1
 #endif
@@ -71,13 +76,8 @@ authorization.
 #define HAVE_UNISTD_H 1
 #endif
 
-#ifndef X_NOT_STDC_ENV
 #define HAVE_STDLIB_H 1
 #define DECL_ERRNO 1
-#else
-#define size_t int
-#define time_t long
-#endif
 
 #if defined(CSRG_BASED) || defined(__GNU__)
 #define USE_POSIX_TERMIOS 1
@@ -127,7 +127,7 @@ authorization.
 #define USE_LASTLOG
 #endif
 
-#if defined(AMOEBA) || defined(SCO) || defined(SVR4) || defined(_POSIX_SOURCE) || defined(__QNX__) || defined(__hpux) || (defined(BSD) && (BSD >= 199103))
+#if defined(AMOEBA) || defined(SCO) || defined(SVR4) || defined(_POSIX_SOURCE) || defined(__QNX__) || defined(__hpux) || (defined(BSD) && (BSD >= 199103)) || defined(__CYGWIN__)
 #define USE_POSIX_WAIT
 #endif
 
@@ -137,6 +137,10 @@ authorization.
 
 #if defined(__GNU__) || defined(__MVS__) || defined(__osf__)
 #define USE_TTY_GROUP
+#endif
+
+#if defined(__CYGWIN__)
+#define HAVE_NCURSES_TERM_H 1
 #endif
 
 #ifdef __osf__
@@ -159,7 +163,7 @@ authorization.
 /***====================================================================***/
 
 /* if compiling with gcc -ansi -pedantic, we must fix POSIX definitions */
-#if defined(__GNUC__) && defined(SVR4) && defined(sun)
+#if defined(SVR4) && defined(sun)
 #ifndef __EXTENSIONS__
 #define __EXTENSIONS__ 1
 #endif
@@ -268,31 +272,11 @@ extern int errno;
 #define XtNc132			"c132"
 #define XtNcacheDoublesize	"cacheDoublesize"
 #define XtNcharClass		"charClass"
-#define XtNcolor0		"color0"
-#define XtNcolor1		"color1"
-#define XtNcolor10		"color10"
-#define XtNcolor11		"color11"
-#define XtNcolor12		"color12"
-#define XtNcolor13		"color13"
-#define XtNcolor14		"color14"
-#define XtNcolor15		"color15"
-#define XtNcolor2		"color2"
-#define XtNcolor3		"color3"
-#define XtNcolor4		"color4"
-#define XtNcolor5		"color5"
-#define XtNcolor6		"color6"
-#define XtNcolor7		"color7"
-#define XtNcolor8		"color8"
-#define XtNcolor9		"color9"
 #define XtNcolorAttrMode	"colorAttrMode"
-#define XtNcolorBD		"colorBD"
 #define XtNcolorBDMode		"colorBDMode"
-#define XtNcolorBL		"colorBL"
 #define XtNcolorBLMode		"colorBLMode"
 #define XtNcolorMode		"colorMode"
-#define XtNcolorRV		"colorRV"
 #define XtNcolorRVMode		"colorRVMode"
-#define XtNcolorUL		"colorUL"
 #define XtNcolorULMode		"colorULMode"
 #define XtNctrlFKeys		"ctrlFKeys"
 #define XtNcurses		"curses"
@@ -312,6 +296,8 @@ extern int errno;
 #define XtNfaceSize		"faceSize"
 #define XtNfontDoublesize	"fontDoublesize"
 #define XtNfontStyle		"fontStyle"
+#define XtNforceBoxChars	"forceBoxChars"
+#define XtNfreeBoldBox		"freeBoldBox"
 #define XtNhighlightColor	"highlightColor"
 #define XtNhighlightSelection	"highlightSelection"
 #define XtNhpLowerleftBugCompat	"hpLowerleftBugCompat"
@@ -358,6 +344,7 @@ extern int errno;
 #define XtNtekInhibit		"tekInhibit"
 #define XtNtekSmall		"tekSmall"
 #define XtNtekStartup		"tekStartup"
+#define XtNtiXtraScroll		"tiXtraScroll"
 #define XtNtiteInhibit		"titeInhibit"
 #define XtNtrimSelection	"trimSelection"
 #define XtNunderLine		"underLine"
@@ -366,6 +353,7 @@ extern int errno;
 #define XtNwideBoldFont		"wideBoldFont"
 #define XtNwideChars		"wideChars"
 #define XtNwideFont		"wideFont"
+#define XtNximFont		"ximFont"
 #define XtNxmcAttributes	"xmcAttributes"
 #define XtNxmcGlitch		"xmcGlitch"
 #define XtNxmcInline		"xmcInline"
@@ -444,6 +432,7 @@ extern int errno;
 #define XtCTekInhibit		"TekInhibit"
 #define XtCTekSmall		"TekSmall"
 #define XtCTekStartup		"TekStartup"
+#define XtCTiXtraScroll		"TiXtraScroll"
 #define XtCTiteInhibit		"TiteInhibit"
 #define XtCTrimSelection	"TrimSelection"
 #define XtCUnderLine		"UnderLine"
@@ -452,6 +441,7 @@ extern int errno;
 #define XtCWideBoldFont		"WideBoldFont"
 #define XtCWideChars		"WideChars"
 #define XtCWideFont		"WideFont"
+#define XtCXimFont		"XimFont"
 #define XtCXmcAttributes	"XmcAttributes"
 #define XtCXmcGlitch		"XmcGlitch"
 #define XtCXmcInline		"XmcInline"
@@ -462,13 +452,14 @@ extern int errno;
 #define XtCGeometry		"Geometry"
 #endif
 
-#ifdef VMS
-#define XtCbackground		"background"
-#define XtCbordercolor		"borderColor"
-#define XtCborderwidth		"borderWidth"
-#define XtCforeground		"foreground"
-#define XtCfont			"font"
-#define XtCiconic		"iconic"
+#if OPT_COLOR_CLASS
+#define XtCCursorColor		"CursorColor"
+#define XtCPointerColor		"PointerColor"
+#define XtCHighlightColor	"HighlightColor"
+#else
+#define XtCCursorColor		XtCForeground
+#define XtCPointerColor		XtCForeground
+#define XtCHighlightColor	XtCForeground
 #endif
 
 /***====================================================================***/
@@ -494,7 +485,6 @@ extern void dorefresh (void);
 
 /* button.c */
 extern Boolean SendMousePosition (Widget w, XEvent* event);
-extern int SetCharacterClassRange (int low, int high, int value);
 extern void DiredButton               PROTO_XT_ACTIONS_ARGS;
 extern void DisownSelection (XtermWidget termw);
 extern void HandleGINInput            PROTO_XT_ACTIONS_ARGS;
@@ -583,6 +573,7 @@ extern GC xterm_DoubleGC(unsigned chrset, unsigned flags, GC old_gc);
 extern Boolean xtermDeleteIsDEL (void);
 extern void Input (TKeyboard *keyboard, TScreen *screen, XKeyEvent *event, Bool eightbit);
 extern void StringInput (TScreen *screen, Char *string, size_t nbytes);
+extern void xtermAddInput(Widget w);
 
 #if OPT_NUM_LOCK
 extern void VTInitModifiers(void);
@@ -785,12 +776,12 @@ extern void ClearCurBackground (TScreen *screen, int top, int left, unsigned hei
 #define xtermColorPair() makeColorPair(term->sgr_foreground, term->sgr_background)
 
 #define getXtermForeground(flags, color) \
-	(((flags) & FG_COLOR) && ((color) >= 0) \
+	(((flags) & FG_COLOR) && ((color) >= 0 && (color) < MAXCOLORS) \
 			? GET_COLOR_RES(term->screen.Acolors[color]) \
 			: term->screen.foreground)
 
 #define getXtermBackground(flags, color) \
-	(((flags) & BG_COLOR) && ((color) >= 0) \
+	(((flags) & BG_COLOR) && ((color) >= 0 && (color) < MAXCOLORS) \
 			? GET_COLOR_RES(term->screen.Acolors[color]) \
 			: term->core.background_pixel)
 

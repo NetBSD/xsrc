@@ -54,7 +54,7 @@
  *
  * Author: Adobe Systems Incorporated and Donna Converse, MIT X Consortium
  */
-/* $XFree86: xc/lib/dps/dpsXcmu.c,v 1.4 2000/09/26 15:56:59 tsi Exp $ */
+/* $XFree86: xc/lib/dps/dpsXcmu.c,v 1.5 2001/07/25 15:04:54 dawes Exp $ */
 
 #include <X11/X.h>
 #include <X11/Xlib.h>
@@ -72,9 +72,7 @@
 /* Defines for standard colormap routines */
 
 #define PrivSort qsort
-#ifndef NULL
-#define NULL 0
-#endif /* NULL */
+#include <stddef.h>
 
 static char redsName[] = "reds";
 static char greensName[] = "greens";

@@ -1,5 +1,5 @@
 /* $XConsortium: command.c,v 2.49 95/04/05 19:59:06 kaleb Exp $ */
-/* $XFree86: xc/programs/xmh/command.c,v 3.5 1998/12/13 07:37:52 dawes Exp $ */
+/* $XFree86: xc/programs/xmh/command.c,v 3.8 2001/12/09 15:48:36 herrb Exp $ */
 
 /*
  *			  COPYRIGHT 1987, 1989
@@ -114,7 +114,7 @@ static void ReadStderr(closure, fd, id)
 }
 
 
-static int childdone;		/* Gets nonzero when the child process
+static volatile int childdone;		/* Gets nonzero when the child process
 				   finishes. */
 /* ARGSUSED */
 static void
@@ -138,7 +138,7 @@ static int _DoCommandToFileOrPipe(argv, inputfd, outputfd, bufP, lenP)
 {
     XtAppContext appCtx = XtWidgetToApplicationContext(toplevel);
     int return_status;
-    int old_stdin, old_stdout, old_stderr;
+    int old_stdin = 0, old_stdout = 0, old_stderr = 0;
     int pid;
     fd_set readfds, fds;
     Boolean output_to_pipe = False;
@@ -420,7 +420,7 @@ static void FreeStatus( w, closure, call_data )
 /* Execute the given command, waiting until it's finished.  Put the output
    in the specified file path.  Returns 0 if stderr empty, -1 otherwise */
 
-DoCommand(argv, inputfile, outputfile)
+int DoCommand(argv, inputfile, outputfile)
   char **argv;			/* The command to execute, and its args. */
   char *inputfile;		/* Input file for command. */
   char *outputfile;		/* Output file for command. */

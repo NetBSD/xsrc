@@ -23,7 +23,7 @@
  * 
  * Trident Blade3D accelerated options.
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/trident/blade_accel.c,v 1.15 2001/02/15 17:59:07 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/trident/blade_accel.c,v 1.17 2001/10/28 03:33:51 tsi Exp $ */
 
 #include "xf86.h"
 #include "xf86_OSproc.h"
@@ -41,6 +41,7 @@
 #include "xaalocal.h"
 
 static void BladeSync(ScrnInfoPtr pScrn);
+#if 0
 static void BladeSetupForSolidLine(ScrnInfoPtr pScrn, int color,
 				int rop, unsigned int planemask);
 static void BladeSubsequentSolidBresenhamLine(ScrnInfoPtr pScrn,
@@ -54,6 +55,7 @@ static void BladeSetupForDashedLine(ScrnInfoPtr pScrn, int fg, int bg,
 static void BladeSubsequentDashedTwoPointLine( ScrnInfoPtr pScrn,
         			int x1, int y1, int x2, int y2, int flags,
 				int phase); 
+#endif
 static void BladeSetupForFillRectSolid(ScrnInfoPtr pScrn, int color,
 				int rop, unsigned int planemask);
 static void BladeSubsequentFillRectSolid(ScrnInfoPtr pScrn, int x,
@@ -85,12 +87,14 @@ static void BladeSetupForMono8x8PatternFill(ScrnInfoPtr pScrn,
 static void BladeSubsequentMono8x8PatternFillRect(ScrnInfoPtr pScrn, 
 				int patternx, int patterny, int x, int y, 
 				int w, int h);
+#if 0
 static void BladeSetupForColor8x8PatternFill(ScrnInfoPtr pScrn, 
 				int patternx, int patterny, 
 				int rop, unsigned int planemask, int trans_col);
 static void BladeSubsequentColor8x8PatternFillRect(ScrnInfoPtr pScrn, 
 				int patternx, int patterny, int x, int y, 
 				int w, int h);
+#endif
 static void BladeSetupForImageWrite(ScrnInfoPtr pScrn, int rop,
    				unsigned int planemask, int transparency_color,
    				int bpp, int depth);
@@ -146,6 +150,18 @@ BladeAccelInit(ScreenPtr pScreen)
     ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
     TRIDENTPtr pTrident = TRIDENTPTR(pScrn);
     BoxRec AvailFBArea;
+
+    AvailFBArea.x1 = 0;
+    AvailFBArea.y1 = 0;
+    AvailFBArea.x2 = pScrn->displayWidth;
+    AvailFBArea.y2 = (pTrident->FbMapSize - 4096) / (pScrn->displayWidth *
+					    pScrn->bitsPerPixel / 8);
+    if (AvailFBArea.y2 > 2047) AvailFBArea.y2 = 2047;
+
+    xf86InitFBManager(pScreen, &AvailFBArea);
+
+    if (pTrident->NoAccel)
+	return FALSE;
 
     pTrident->AccelInfoRec = infoPtr = XAACreateInfoRec();
     if (!infoPtr) return FALSE;
@@ -236,15 +252,6 @@ BladeAccelInit(ScreenPtr pScreen)
 				SYNC_AFTER_IMAGE_WRITE;
     infoPtr->ImageWriteBase = pTrident->IOBase + 0x10000;
     infoPtr->ImageWriteRange = 0x10000;
-
-    AvailFBArea.x1 = 0;
-    AvailFBArea.y1 = 0;
-    AvailFBArea.x2 = pScrn->displayWidth;
-    AvailFBArea.y2 = (pTrident->FbMapSize - 4096) / (pScrn->displayWidth *
-					    pScrn->bitsPerPixel / 8);
-    if (AvailFBArea.y2 > 2047) AvailFBArea.y2 = 2047;
-
-    xf86InitFBManager(pScreen, &AvailFBArea);
 
     return(XAAInit(pScreen, infoPtr));
 }
@@ -337,6 +344,7 @@ BladeDisableClipping(ScrnInfoPtr pScrn)
     pTrident->Clipping = FALSE;
 }
     
+#if 0
 static void
 BladeSetupForSolidLine(ScrnInfoPtr pScrn, int color,
 					 int rop, unsigned int planemask)
@@ -392,7 +400,6 @@ BladeSubsequentSolidBresenhamLine( ScrnInfoPtr pScrn,
     BLADE_OUT(0x2144, D<<30 | (((dmaj-dmin)&0xfff) << 16) | (-dmin&0xfff));
     BLADE_OUT(0x2148, ((-(dmin+e)&0xfff) << 16));
 }
-
 
 static void 
 BladeSubsequentSolidTwoPointLine( ScrnInfoPtr pScrn,
@@ -462,6 +469,7 @@ BladeSubsequentDashedTwoPointLine( ScrnInfoPtr pScrn,
     if (flags & OMIT_LAST)
 	BladeDisableClipping(pScrn);
 }
+#endif
 
 static void
 BladeSetupForFillRectSolid(ScrnInfoPtr pScrn, int color, 
@@ -620,6 +628,7 @@ BladeSubsequentMono8x8PatternFillRect(ScrnInfoPtr pScrn,
     BLADE_OUT(0x210C, ((y+h-1)&0xfff)<<16 | ((x+w-1)&0xfff));
 }
 
+#if 0
 static void 
 BladeSetupForColor8x8PatternFill(ScrnInfoPtr pScrn, 
 					   int patternx, int patterny, 
@@ -657,6 +666,7 @@ BladeSubsequentColor8x8PatternFillRect(ScrnInfoPtr pScrn,
     TGUI_COMMAND(GE_BLT);
     CHECKCLIPPING;
 }
+#endif
 
 static void BladeSetupForImageWrite(	
    ScrnInfoPtr pScrn,

@@ -26,7 +26,7 @@
  *
  * Author: Paulo César Pereira de Andrade <pcpa@conectiva.com.br>
  *
- * $XFree86: xc/programs/Xserver/hw/xfree86/xf86cfg/help.c,v 1.4 2001/05/15 18:22:23 paulo Exp $
+ * $XFree86: xc/programs/Xserver/hw/xfree86/xf86cfg/help.c,v 1.6 2001/10/28 03:34:06 tsi Exp $
  */
 
 #include <X11/IntrinsicP.h>
@@ -42,9 +42,7 @@
 #include <X11/Xaw/TextSrcP.h>
 #include <X11/Xmu/SysUtil.h>
 #include <X11/Xmu/Xmu.h>
-#ifndef X_NOT_STDC_ENV
 #include <stdlib.h>		/* for bsearch() */
-#endif
 #include <ctype.h>
 #include "help.h"
 #include "options.h"
@@ -1242,9 +1240,9 @@ Html_Puts(Html_Parser *parser, char *str)
 static void
 Html_FormatTag(Html_Parser *parser)
 {
-    int ch, sz = 0;
+    int ch = 0, sz = 0;
     char buf[32];
-    Html_TagInfo *info;
+    Html_TagInfo *info = NULL;
 
     switch (Html_Peek(parser)) {
 	case '!':
@@ -1686,7 +1684,7 @@ Html_FontArgs(Html_Parser *parser, Html_Item *item)
 	    }
 	}
 	else if (strcmp(name, "size") == 0) {
-	    int size, sign;
+	    int size, sign = 0;
 
 	    if (isalnum(*value)) {
 		size = atoi(value);

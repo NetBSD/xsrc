@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/parser/Input.c,v 1.6 2001/02/21 23:37:04 paulo Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/parser/Input.c,v 1.10 2001/08/06 20:51:13 dawes Exp $ */
 /* 
  * 
  * Copyright (c) 1997  Metro Link Incorporated
@@ -38,7 +38,6 @@ extern LexRec val;
 static
 xf86ConfigSymTabRec InputTab[] =
 {
-	{COMMENT, "###"},
 	{ENDSECTION, "endsection"},
 	{IDENTIFIER, "identifier"},
 	{OPTION, "option"},
@@ -52,6 +51,7 @@ XF86ConfInputPtr
 xf86parseInputSection (void)
 {
 	int has_ident = FALSE;
+	int token;
 	parsePrologue (XF86ConfInputPtr, XF86ConfInputRec)
 
 	while ((token = xf86getToken (InputTab)) != ENDSECTION)
@@ -59,12 +59,10 @@ xf86parseInputSection (void)
 		switch (token)
 		{
 		case COMMENT:
-			if (xf86getToken (NULL) != STRING)
-				Error (QUOTE_MSG, "###");
-			ptr->inp_comment = val.str;
+			ptr->inp_comment = xf86addComment(ptr->inp_comment, val.str);
 			break;
 		case IDENTIFIER:
-			if (xf86getToken (NULL) != STRING)
+			if (xf86getSubToken (&(ptr->inp_comment)) != STRING)
 				Error (QUOTE_MSG, "Identifier");
 			if (has_ident == TRUE)
 				Error (MULTIPLE_MSG, "Identifier");
@@ -72,28 +70,12 @@ xf86parseInputSection (void)
 			has_ident = TRUE;
 			break;
 		case DRIVER:
-			if (xf86getToken (NULL) != STRING)
+			if (xf86getSubToken (&(ptr->inp_comment)) != STRING)
 				Error (QUOTE_MSG, "Driver");
 			ptr->inp_driver = val.str;
 			break;
 		case OPTION:
-			{
-				char *name;
-				if ((token = xf86getToken (NULL)) != STRING)
-					Error (BAD_OPTION_MSG, NULL);
-				name = val.str;
-				if ((token = xf86getToken (NULL)) == STRING)
-				{
-					ptr->inp_option_lst = xf86addNewOption (ptr->inp_option_lst,
-														name, val.str);
-				}
-				else
-				{
-					ptr->inp_option_lst = xf86addNewOption (ptr->inp_option_lst,
-														name, NULL);
-					xf86unGetToken (token);
-				}
-			}
+			ptr->inp_option_lst = xf86parseOption(ptr->inp_option_lst);
 			break;
 		case EOF_TOKEN:
 			Error (UNEXPECTED_EOF_MSG, NULL);
@@ -119,24 +101,16 @@ xf86parseInputSection (void)
 void
 xf86printInputSection (FILE * cf, XF86ConfInputPtr ptr)
 {
-	XF86OptionPtr optr;
-
 	while (ptr)
 	{
 		fprintf (cf, "Section \"InputDevice\"\n");
 		if (ptr->inp_comment)
-			fprintf (cf, "\t###         \"%s\"\n", ptr->inp_comment);
+			fprintf (cf, "%s", ptr->inp_comment);
 		if (ptr->inp_identifier)
 			fprintf (cf, "\tIdentifier  \"%s\"\n", ptr->inp_identifier);
 		if (ptr->inp_driver)
 			fprintf (cf, "\tDriver      \"%s\"\n", ptr->inp_driver);
-		for (optr = ptr->inp_option_lst; optr; optr = optr->list.next)
-		{
-			fprintf (cf, "\tOption      \"%s\"", optr->opt_name);
-			if (optr->opt_val)
-				fprintf (cf, " \"%s\"", optr->opt_val);
-			fprintf (cf, "\n");
-		}
+		xf86printOptionList(cf, ptr->inp_option_lst, 1);
 		fprintf (cf, "EndSection\n\n");
 		ptr = ptr->list.next;
 	}
@@ -151,6 +125,7 @@ xf86freeInputList (XF86ConfInputPtr ptr)
 	{
 		TestFree (ptr->inp_identifier);
 		TestFree (ptr->inp_driver);
+		TestFree (ptr->inp_comment);
 		xf86optionListFree (ptr->inp_option_lst);
 
 		prev = ptr;

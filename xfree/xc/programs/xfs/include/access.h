@@ -1,8 +1,12 @@
-/* $Xorg: access.h,v 1.3 2000/08/17 19:54:20 cpqbld Exp $ */
+/* $Xorg: access.h,v 1.4 2001/02/09 02:05:43 xorgcvs Exp $ */
 /*
 Copyright 1987, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -43,7 +47,7 @@ in this Software without prior written authorization from The Open Group.
  * @(#)access.h	4.1	91/05/02
  *
  */
-/* $XFree86: xc/programs/xfs/include/access.h,v 1.4 2001/01/17 23:45:30 dawes Exp $ */
+/* $XFree86: xc/programs/xfs/include/access.h,v 1.5 2001/12/14 20:01:36 dawes Exp $ */
 
 #ifndef _ACCESS_H_
 #define _ACCESS_H_

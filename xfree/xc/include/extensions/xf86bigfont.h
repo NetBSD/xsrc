@@ -1,4 +1,4 @@
-/* $XFree86: xc/include/extensions/xf86bigfont.h,v 1.1 2000/02/08 17:18:25 dawes Exp $ */
+/* $XFree86: xc/include/extensions/xf86bigfont.h,v 1.2 2001/08/01 00:44:35 tsi Exp $ */
 /*
  * Declarations for the BIGFONT extension.
  *
@@ -20,11 +20,15 @@
 
 #define XF86BigfontNumberErrors		0
 
-#ifndef _XF86BIGFONT_SERVER_
+#ifdef _XF86BIGFONT_SERVER_
 
 _XFUNCPROTOBEGIN
 
-/* No function prototypes for now. */
+#include "font.h"
+
+extern void XFree86BigfontExtensionInit(void);
+extern void XF86BigfontFreeFontShm(FontPtr);
+extern void XF86BigfontCleanup(void);
 
 _XFUNCPROTOEND
 

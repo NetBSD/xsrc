@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/afb/afbgc.c,v 3.2 1999/06/20 15:02:46 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/afb/afbgc.c,v 3.3 2001/10/28 03:32:58 tsi Exp $ */
 /***********************************************************
 
 Copyright (c) 1987  X Consortium
@@ -156,7 +156,6 @@ afbValidateGC(pGC, changes, pDrawable)
 	int mask;		/* stateChanges */
 	int index;		/* used for stepping through bitfields */
 	int xrot, yrot;		/* rotations for tile and stipple pattern */
-	int rrop;		/* reduced rasterop */
 				/* flags for changing the proc vector
 				   and updating things in devPriv
 				*/
@@ -621,8 +620,6 @@ afbComputeCompositeClip(pGC, pDrawable)
 	GCPtr pGC;
 	DrawablePtr pDrawable;
 {
-	ScreenPtr pScreen = pGC->pScreen;
-
 	if (pDrawable->type == DRAWABLE_WINDOW) {
 		WindowPtr pWin = (WindowPtr) pDrawable;
 		RegionPtr pregWin;
@@ -646,7 +643,7 @@ afbComputeCompositeClip(pGC, pDrawable)
 	 */
 	if (pGC->clientClipType == CT_NONE) {
 		if (freeCompClip)
-			REGION_DESTROY(pScreen, pGC->pCompositeClip);
+			REGION_DESTROY(pGC->pScreen, pGC->pCompositeClip);
 			pGC->pCompositeClip = pregWin;
 			pGC->freeCompClip = freeTmpClip;
 		} else {
@@ -659,7 +656,7 @@ afbComputeCompositeClip(pGC, pDrawable)
 			 * clip. if neither is real, create a new region.
 			 */
 
-			REGION_TRANSLATE(pScreen, pGC->clientClip,
+			REGION_TRANSLATE(pGC->pScreen, pGC->clientClip,
 			pDrawable->x + pGC->clipOrg.x,
 			pDrawable->y + pGC->clipOrg.y);
 
@@ -667,17 +664,17 @@ afbComputeCompositeClip(pGC, pDrawable)
 				REGION_INTERSECT(pGC->pScreen, pGC->pCompositeClip, pregWin,
 									  pGC->clientClip);
 				if (freeTmpClip)
-					REGION_DESTROY(pScreen, pregWin);
+					REGION_DESTROY(pGC->pScreen, pregWin);
 			} else if (freeTmpClip) {
-				REGION_INTERSECT(pScreen, pregWin, pregWin, pGC->clientClip);
+				REGION_INTERSECT(pGC->pScreen, pregWin, pregWin, pGC->clientClip);
 				pGC->pCompositeClip = pregWin;
 			} else {
-				pGC->pCompositeClip = REGION_CREATE(pScreen, NullBox, 0);
-				REGION_INTERSECT(pScreen, pGC->pCompositeClip,
+				pGC->pCompositeClip = REGION_CREATE(pGC->pScreen, NullBox, 0);
+				REGION_INTERSECT(pGC->pScreen, pGC->pCompositeClip,
 				pregWin, pGC->clientClip);
 			}
 			pGC->freeCompClip = TRUE;
-			REGION_TRANSLATE(pScreen, pGC->clientClip,
+			REGION_TRANSLATE(pGC->pScreen, pGC->clientClip,
 			-(pDrawable->x + pGC->clipOrg.x),
 			-(pDrawable->y + pGC->clipOrg.y));
 		}
@@ -692,18 +689,18 @@ afbComputeCompositeClip(pGC, pDrawable)
 		pixbounds.y2 = pDrawable->height;
 
 		if (pGC->freeCompClip) {
-			REGION_RESET(pScreen, pGC->pCompositeClip, &pixbounds);
+			REGION_RESET(pGC->pScreen, pGC->pCompositeClip, &pixbounds);
 		} else {
 			pGC->freeCompClip = TRUE;
-			pGC->pCompositeClip = REGION_CREATE(pScreen, &pixbounds, 1);
+			pGC->pCompositeClip = REGION_CREATE(pGC->pScreen, &pixbounds, 1);
 		}
 
 		if (pGC->clientClipType == CT_REGION) {
-			REGION_TRANSLATE(pScreen, pGC->pCompositeClip, -pGC->clipOrg.x,
+			REGION_TRANSLATE(pGC->pScreen, pGC->pCompositeClip, -pGC->clipOrg.x,
 								  -pGC->clipOrg.y);
-			REGION_INTERSECT(pScreen, pGC->pCompositeClip,
+			REGION_INTERSECT(pGC->pScreen, pGC->pCompositeClip,
 								  pGC->pCompositeClip, pGC->clientClip);
-			REGION_TRANSLATE(pScreen, pGC->pCompositeClip, pGC->clipOrg.x,
+			REGION_TRANSLATE(pGC->pScreen, pGC->pCompositeClip, pGC->clipOrg.x,
 								  pGC->clipOrg.y);
 		}
 	}	/* end of composite clip for pixmap */

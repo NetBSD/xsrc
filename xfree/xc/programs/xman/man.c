@@ -28,7 +28,7 @@ other dealings in this Software without prior written authorization
 from the X Consortium.
 
 */
-/* $XFree86: xc/programs/xman/man.c,v 1.5 2000/08/01 18:53:07 dawes Exp $ */
+/* $XFree86: xc/programs/xman/man.c,v 1.6 2001/11/01 23:35:35 dawes Exp $ */
 
 
 #include "globals.h"
@@ -107,6 +107,10 @@ Man(void)
     if (!ReadManConfig(manpath + strlen(manpath)))
 #endif
     {
+#ifdef MANCONF
+      if (manpath[strlen(manpath) - 1] != ':')
+	strcat(manpath, ":");
+#endif
       strcat(manpath, SYSMANPATH);
 #ifdef LOCALMANPATH
       strcat(manpath, ":");
@@ -965,7 +969,7 @@ DumpManual(int number)
 
 #ifdef MANCONF
 
-#if defined(__FreeBSD__)
+#if defined(MANCONFIGSTYLE_FreeBSD)
 
 /*    Function Name: ReadManConfig
  *    Description: Reads man.conf file used by FreeBSD man
@@ -1010,7 +1014,7 @@ ReadManConfig(char manpath[])
 }
 
 
-#elif defined(linux) /* not __FreeBSD__ */
+#elif defined(MANCONFIGSTYLE_Linux) /* not FreeBSD */
 
 /*    Function Name: ReadManConfig
  *    Description: Reads man.conf file used by Linux man
@@ -1050,7 +1054,7 @@ ReadManConfig(char manpath[])
   return(!firstpath);
 }
 
-#elif defined(__OpenBSD__) || defined(__NetBSD__)
+#elif defined(MANCONFIGSTYLE_OpenBSD) /* not FreeBSD or Linux */
 
 /*    Function Name: ReadManConfig
  *    Description: Reads man.conf file used by Open/NetBSD
@@ -1106,12 +1110,7 @@ ReadManConfig(char manpath[])
     return(!firstpath);
 }
 
-#elif defined(BSD)
-
-/*    Keep this ever AFTER linux, {Free,Net,Open}BSD and any other system in
- *    which "BSD" is defined but whose man.conf doesn't follows the original
- *    BSD 4.4 format.
- */
+#elif defined(MANCONFIGSTYLE_BSD) /* not FreeBSD, Linux, or OpenBSD */
 
 /*    Function Name: ReadManConfig
  *    Description: Reads man.conf file used by BSD 4.4
@@ -1156,6 +1155,6 @@ char  manpath[];
 
 #error "MANCONF defined (in vendor.h) for unknown operating system."
 
-#endif /* __FreeBSD__ ... BSD */
+#endif /* MANCONFIGSTYLE == FreeBSD ... BSD */
 
 #endif /* MANCONF */

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xaaWideLine.c,v 1.7 1999/10/31 23:52:57 mvojkovi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xaaWideLine.c,v 1.10 2001/11/16 16:47:56 dawes Exp $ */
 
 /*
 
@@ -15,7 +15,7 @@ Original mi code written by Keith Packard.
 */
 
 #ifndef XFree86LOADER
-#ifdef _XOPEN_SOURCE
+#if defined(_XOPEN_SOURCE) || defined(__QNXNTO__)
 #include <math.h>
 #else
 #define _XOPEN_SOURCE	/* to get prototype for hypot on some systems */
@@ -149,14 +149,19 @@ XAAFillPolyHelper (
     BoxPtr extents = infoRec->ClipBox;
     int left_x, left_e, left_stepx, left_signdx, left_dy, left_dx;
     int right_x, right_e, right_stepx, right_signdx, right_dy, right_dx;
-    int	height;
-    int	left_height = 0;
-    int right_height = 0;
-    int	xorg = 0;
+    int	height, left_height, right_height;
+    int	xorg;
     Bool hardClip;
 
     if((y >= extents->y2) || ((y + overall_height) <= extents->y1))
 	return;
+
+    /* Muffle compiler */
+    left_x = left_e = left_stepx = left_signdx = left_dy = left_dx = 0;
+    right_x = right_e = right_stepx = right_signdx = right_dy = right_dx = 0;
+
+    left_height = right_height = 0;
+    xorg = 0;
 
     hardClip = (infoRec->ClippingFlags & HARDWARE_CLIP_SOLID_FILL);
     
@@ -189,32 +194,22 @@ XAAFillPolyHelper (
 	left_height -= height;
 	right_height -= height;
 
-	if(infoRec->SubsequentSolidFillTrap && (height > 6)) {
-	    int right_DX, left_DX, left_box, right_box;
+	if(hardClip && infoRec->SubsequentSolidFillTrap && (height > 6)) {
+	    int right_DX, left_DX;
 
     	    right_DX = (right_dx * right_signdx) + (right_stepx * right_dy);
 	    left_DX = (left_dx * left_signdx) + (left_stepx * left_dy);
-	    if(!hardClip) {
-		left_box = (left_DX < 0) ? (left_x + left_DX) : left_x;
-		right_box = (right_DX < 0) ? right_x : (right_x + right_DX);
-	    }
 
-	    if(hardClip || ((left_box >= extents->x1) && 
-			    (right_box < extents->x2) &&
-			    (y >= extents->y1) && 
-			    ((y + height) < extents->y2))){
-
-	    	(*infoRec->SubsequentSolidFillTrap)(infoRec->pScrn, y, height, 
+	    (*infoRec->SubsequentSolidFillTrap)(infoRec->pScrn, y, height, 
 			left_x, left_DX, left_dy, left_e, 
 			right_x - 1, right_DX, right_dy, right_e);
 
-	    	FixError(left_x, left_dx, left_dy, left_e, left_signdx, 
+	    FixError(left_x, left_dx, left_dy, left_e, left_signdx, 
 			left_stepx, height);
-	    	FixError(right_x, right_dx, right_dy, right_e, right_signdx,
+	    FixError(right_x, right_dx, right_dy, right_e, right_signdx,
 			right_stepx, height);
-	    	y += height;
-	    	continue;
-	    }	
+	    y += height;
+	    continue;
 	}
 
 	while (height--) {
@@ -268,7 +263,7 @@ XAAWideSegment (
     Bool	hardClip = (infoRec->ClippingFlags & HARDWARE_CLIP_SOLID_FILL);
 
     /* draw top-to-bottom always */
-    if (y2 < y1 || y2 == y1 && x2 < x1) {
+    if ((y2 < y1) || ((y2 == y1) && (x2 < x1))) {
 	x = x1;
 	x1 = x2;
 	x2 = x;
@@ -301,7 +296,6 @@ XAAWideSegment (
     rightFace->y = y2;
     rightFace->dx = -dx;
     rightFace->dy = -dy;
-
 
     if (!dy) {
 	rightFace->xa = 0;
@@ -356,10 +350,8 @@ XAAWideSegment (
 	ya = -r * dx;
 	xa = r * dy;
 
-	if (projectLeft | projectRight) {
-	    projectXoff = -ya;
-	    projectYoff = xa;
-	}
+	projectXoff = -ya;
+	projectYoff = xa;
 
     	/* xa * dy - ya * dx */
 	k = l * L;
@@ -624,6 +616,8 @@ XAALineArc (
     if (isInt) {
 	xorgi = leftFace ? leftFace->x : rightFace->x;
 	yorgi = leftFace ? leftFace->y : rightFace->y;
+    } else {	/* Muffle compiler */
+        xorgi = yorgi = 0;
     }
     edgey1 = 65536;
     edgey2 = 65536;
@@ -635,8 +629,8 @@ XAALineArc (
     edgeleft2 = FALSE;
 
     if ((pGC->lineWidth > 2) &&
-	(pGC->capStyle == CapRound && pGC->joinStyle != JoinRound ||
-	 pGC->joinStyle == JoinRound && pGC->capStyle == CapButt)) {
+	((pGC->capStyle == CapRound && pGC->joinStyle != JoinRound) ||
+	 (pGC->joinStyle == JoinRound && pGC->capStyle == CapButt))) {
 	if (isInt) {
 	    xorg = (double) xorgi;
 	    yorg = (double) yorgi;
@@ -673,8 +667,8 @@ XAALineJoin (
     LineFacePtr     pLeft,
     LineFacePtr     pRight )
 {
-    double	    mx, my;
-    double	    denom;
+    double	    mx = 0, my = 0;
+    double	    denom = 0;
     PolyVertexRec   vertices[4];
     PolySlopeRec    slopes[4];
     int		    edgecount;

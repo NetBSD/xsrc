@@ -10,10 +10,10 @@
     <author>
         <htmlurl url="http://www.valinux.com/"
           name="VA Linux Systems, Inc."> Professional Services - Graphics.
-    <date>3 May 2001
+    <date>15 June 2001
 
     <ident>
-    $XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/DRI.sgml,v 1.24 2001/05/19 00:42:22 dawes Exp $
+    $XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/DRI.sgml,v 1.27 2002/01/07 22:05:57 dawes Exp $
     </ident>
 
     <toc>
@@ -67,11 +67,11 @@
         includes XFree86 4.0 or that you're an experienced Linux developer
         who has compiled the DRI for himself.
         DRI download, compilation and installation instructions can be found
-        at <htmlurl url="http://dri.sourceforge.net/DRIcompile.html"
+        at <htmlurl url="http://dri.sourceforge.net/doc/DRIcompile.html"
            name="http://dri.sourceforge.net/DRIcompile.html">
       <p>
         Edits, corrections and updates to this document may be mailed
-        to brianp@valinux.com.
+        to <email>brian@tungstengrahpics.com</email>.
 
     <sect>Supported Architectures & Hardware
 <p>
@@ -129,7 +129,7 @@
               <item>i810-dc100
               <item>i810e
             </itemize>
-	  <item>ATI Rage 128, supported on Intel x86 and AMD:
+	  <item>ATI Rage 128, supported on Intel x86, AMD and Alpha:
             <itemize>
               <item>Rage Fury
               <item>Rage Magnum
@@ -137,13 +137,15 @@
               <item>XPERT 128
 	      <item>XPERT 99
 	      <item>All-in-Wonder 128
+              <item>Rage 128 PCI (Alpha-based systems)
             </itemize>
 	    Note that both PCI and AGP versions of Rage 128 based cards
 	    are supported at this time.
-	  <item>ATI Radeon, supported on Intel x86 and AMD:
+	  <item>ATI Radeon, supported on Intel x86, AMD and Alpha:
             <itemize>
               <item>Radeon SDR AGP
               <item>Radeon DDR AGP
+              <item>Radeon 32MB SDR PCI (Alpha-based systems)
             </itemize>
           <item>3Dlabs, supported on Intel x86 and AMD:
             <itemize>
@@ -193,7 +195,7 @@
       XFree86 4.0.1 added automatic kernel module loading to the X server.
       On Linux, the X server uses modprobe to load kernel modules.
       In Linux 2.4.x the DRM kernel modules should be kept in
-      <tt>/lib/modules/2.4.x/kernel/driver/char/drm/</tt> for automatic
+      <tt>/lib/modules/2.4.x/kernel/drivers/char/drm/</tt> for automatic
       loading to work.
       <p>
       Optionally, DRM kernel modules can be loaded manually with insmod
@@ -746,7 +748,7 @@
 
           <p>
             The kernel module for 3dfx hardware is named <tt>tdfx.o</tt> and
-	    should be installed in /lib/modules/2.4.x/kernel/driver/char/drm/.
+	    should be installed in /lib/modules/2.4.x/kernel/drivers/char/drm/.
             It will be automatically loaded by the Xserver if needed.
           <p>
 	    The DRI 3D driver for 3dfx hardware should be in
@@ -937,7 +939,7 @@
             </verb>
           <p>
             The kernel module for the i810 is named <tt>i810.o</tt> and
-	    should be installed in /lib/modules/2.4.x/kernel/driver/char/drm/.
+	    should be installed in /lib/modules/2.4.x/kernel/drivers/char/drm/.
             It will be automatically loaded by the Xserver if needed.
           <p>
 	    The DRI 3D driver for the i810 should be in
@@ -1034,7 +1036,7 @@
 
           <p>
             The kernel module for the G200/G400 is named <tt>mga.o</tt> and
-	    should be installed in /lib/modules/2.4.x/kernel/driver/char/drm/.
+	    should be installed in /lib/modules/2.4.x/kernel/drivers/char/drm/.
             It will be automatically loaded by the Xserver if needed.
           <p>
 	    The DRI 3D driver for the G200/G400 should be in
@@ -1177,7 +1179,7 @@
             </verb>
           <p>
             The kernel module for the Rage 128 is named <tt>r128.o</tt> and
-	    should be installed in /lib/modules/2.4.x/kernel/driver/char/drm/.
+	    should be installed in /lib/modules/2.4.x/kernel/drivers/char/drm/.
             It will be automatically loaded by the Xserver if needed.
           <p>
 	    The DRI 3D driver for the Rage 128 should be in
@@ -1203,7 +1205,8 @@
           The following OpenGL features are implemented in software and
           will be slow:
           <itemize>
-            <item>Stencil buffer and accumulation buffer operations
+            <item>accumulation buffer operations
+            <item>stencil, when using a 16bpp screen
             <item>Blend subtract, min/max and logic op blend modes
             <item>GL_SEPARATE_SPECULAR_COLOR lighting mode
             <item>glDrawBuffer(GL_FRONT_AND_BACK)
@@ -1259,7 +1262,7 @@
             </verb>
           <p>
             The kernel module for the Radeon is named <tt>radeon.o</tt> and
-	    should be installed in /lib/modules/2.4.x/kernel/driver/char/drm/.
+	    should be installed in /lib/modules/2.4.x/kernel/drivers/char/drm/.
             It will be automatically loaded by the Xserver if needed.
           <p>
 	    The DRI 3D driver for the Radeon should be in

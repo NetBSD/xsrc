@@ -1,9 +1,13 @@
-/* $Xorg: charinfo.c,v 1.3 2000/08/17 19:54:20 cpqbld Exp $ */
+/* $Xorg: charinfo.c,v 1.4 2001/02/09 02:05:42 xorgcvs Exp $ */
 /*
  
 Copyright 1990, 1991, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -45,11 +49,12 @@ in this Software without prior written authorization from The Open Group.
  * This file was once on the other side of
  * the font library interface as util/fsfuncs.c.
  */
-/* $XFree86: xc/programs/xfs/difs/charinfo.c,v 1.9 2001/01/17 23:45:28 dawes Exp $ */
+/* $XFree86: xc/programs/xfs/difs/charinfo.c,v 1.12 2001/12/14 20:01:33 dawes Exp $ */
 
 #include <X11/Xos.h>
 #include "misc.h"
 #include "fontstruct.h"
+#include "fontutil.h"
 #include "clientstr.h"
 #define FSMD_H
 #include "FSproto.h"
@@ -72,7 +77,9 @@ extern void FourByteSwap(unsigned char *, int);
 #define n2dChars(pfi)   (((pfi)->lastRow - (pfi)->firstRow + 1) * \
                          ((pfi)->lastCol - (pfi)->firstCol + 1))
 
+#if 0
 static CharInfoRec  junkDefault;
+#endif
 
 typedef int (*MetricsFunc)(FontPtr, unsigned long, unsigned char *, 
 			   FontEncoding, unsigned long *, CharInfoPtr *);
@@ -168,9 +175,11 @@ getCharInfos (
 		    fsfree (xchars);
 		    return err;
 		}
-/*		if (glyphCount != 1 || 
+#if 0
+		if (glyphCount != 1 || 
 		   (*xci == defaultPtr && defaultCh != ((r<<8)+c)))
-		    *xci = &junkDefault;*/
+		    *xci = &junkDefault;
+#endif
 		xci++;
 	    }
 	}

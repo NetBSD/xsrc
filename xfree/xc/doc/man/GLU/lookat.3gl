@@ -98,4 +98,4 @@ glMultMatrixf(M);
 glTranslated (-eyex, -eyey, -eyez);
 .Ee
 .SH SEE ALSO
-\f3glFrustum\fP, \%\f3gluPerspective\fP
+\f3glFrustum(3G)\fP, \%\f3gluPerspective(3G)\fP

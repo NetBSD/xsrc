@@ -1,11 +1,15 @@
 /*
-$Xorg: XRecord.c,v 1.3 2000/08/17 19:46:23 cpqbld Exp $
+$Xorg: XRecord.c,v 1.4 2001/02/09 02:04:00 xorgcvs Exp $
 
 XRecord.c - client-side library for RECORD extension
 
 Copyright 1995, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be
 included in all copies or substantial portions of the Software.
@@ -46,6 +50,7 @@ from The Open Group.
 /*
  * By Stephen Gildea, X Consortium, and Martha Zimet, NCD.
  */
+/* $XFree86: xc/lib/Xtst/XRecord.c,v 1.4 2001/12/14 19:56:39 dawes Exp $ */
 
 #include <stdio.h>
 #include <assert.h>
@@ -735,7 +740,7 @@ parse_reply_call_callback(dpy, info, rep, reply, callback, closure)
     XPointer		 closure;
 {
     int current_index;
-    int datum_bytes;
+    int datum_bytes = 0;
     XRecordInterceptData *data;
 
     /* call the callback for each protocol element in the reply */
@@ -924,7 +929,6 @@ record_async_handler(dpy, rep, buf, len, adata)
     register record_async_state *state = (record_async_state *)adata;
     struct reply_buffer *reply;
     enum parser_return status;
-    extern void _XGetAsyncData();
 
     if (dpy->last_request_read != state->enable_seq)
     {
@@ -953,7 +957,7 @@ record_async_handler(dpy, rep, buf, len, adata)
 	    return False;
 	}
 	
-	_XGetAsyncData(dpy, reply->buf, buf, len,
+	_XGetAsyncData(dpy, (char *)reply->buf, buf, len,
 		       SIZEOF(xRecordEnableContextReply),
 		       rep->generic.length << 2, 0);
     } else {

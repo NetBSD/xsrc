@@ -1,9 +1,13 @@
-/* $Xorg: lbxserve.h,v 1.3 2000/08/17 19:53:31 cpqbld Exp $ */
+/* $Xorg: lbxserve.h,v 1.4 2001/02/09 02:05:17 xorgcvs Exp $ */
 /*
 
 Copyright 1996, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -41,9 +45,13 @@ in this Software without prior written authorization from The Open Group.
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  */
-/* $XFree86: xc/programs/Xserver/lbx/lbxserve.h,v 1.3 2001/01/17 22:37:00 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/lbx/lbxserve.h,v 1.5 2001/12/14 20:00:00 dawes Exp $ */
 
 #ifndef _LBXSERVE_H_
+
+#include "colormap.h"
+#include "property.h"
+
 #define _LBXSERVE_H_
 #define _XLBX_SERVER_
 #include "lbxstr.h"
@@ -135,9 +143,10 @@ extern void LbxForceOutput ( LbxProxyPtr proxy );
 extern void SwitchClientInput ( ClientPtr client, Bool pending );
 extern int PrepareLargeReqBuffer ( ClientPtr client );
 extern Bool AppendFakeRequest ( ClientPtr client, char *data, int count );
-extern int LbxFreeOsBuffers ( LbxProxyPtr proxy );
+extern void LbxFreeOsBuffers ( LbxProxyPtr proxy );
 extern Bool AllocateLargeReqBuffer ( ClientPtr client, int size );
 extern Bool AddToLargeReqBuffer ( ClientPtr client, char *data, int size );
+extern void LbxPrimeInput ( ClientPtr client, LbxProxyPtr proxy );
 
 /* lbxcmap.c */
 extern int LbxCmapInit ( void );

@@ -6,7 +6,7 @@
 // uses the punctuation keys configurations common on PC 
 // keyboards (e.g. key <ABO9> is { [ period greater ] })
 
-// $XFree86: xc/programs/xkbcomp/symbols/us,v 3.10 2001/01/17 23:45:59 dawes Exp $
+// $XFree86: xc/programs/xkbcomp/symbols/us,v 3.11 2001/08/17 13:27:58 dawes Exp $
 
 partial hidden alphanumeric_keys modifier_keys 
 xkb_symbols "basic" {
@@ -220,15 +220,15 @@ xkb_symbols "pc102compose" {
 // definition for the extra keys on 104-key "Windows95" keyboards
 xkb_symbols "pc104" {
     include "us(generic101)"
-    key <LALT> {	[ 	Alt_L		]	};
-    key <RALT> {	[	Alt_R		]	};
-    key <LWIN> {	[	Meta_L		]	};
-    key <RWIN> {	[	Multi_key	]	};
-    key <MENU> {	[	Menu		]	};
+    key <LALT> {	[ 	Alt_L,	Meta_L		]	};
+    key <RALT> {	[	Alt_R,	Meta_R		]	};
+    key <LWIN> {	[	Super_L			]	};
+    key <RWIN> {	[	Super_R			]	};
+    key <MENU> {	[	Menu			]	};
 
     // modifier mappings
-    modifier_map Mod1   { Alt_L, Alt_R };
-    modifier_map Mod4   { Meta_L, Meta_R };
+    modifier_map Mod1   { Alt_L, Alt_R, Meta_L, Meta_R };
+    modifier_map Mod4   { Super_L, Super_R };
 };
 
 // definition of Euro-style, Right "logo" key == [Mode_switch, Multi_key]

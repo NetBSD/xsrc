@@ -7,7 +7,7 @@
 
 1.  Introduction
 
-With the release of XFree86 version 4.1.0, the Chips and Technologies driver
+With the release of XFree86 version 4.2.0, the Chips and Technologies driver
 has been extensively rewritten and contains many new features.  This driver
 must be considered work in progress, and those users wanting stability are
 encouraged to use the older XFree86 3.3.x versions. However this version of
@@ -548,7 +548,13 @@ include.
 
           Modeline "800x600@8bpp"    30.150  800  896  960 1056   600  600  604  628
           Options: "FixPanelSize", "UseModeline"
-          Test on a Zeos Meridan 850c (800x600 DSTN, 65545, 1Mbyte)
+          Tested on a Zeos Meridan 850c (800x600 DSTN, 65545, 1Mbyte)
+
+The IBM PC110  works best with a 15MHz clock (Thanks to Alan Cox):
+
+          Modeline "640x480"        15.00   640  672  728  816   480  489  496  526
+          Options: "TextClockFreq" "15.00"
+          IBM PC110 (65535, Citizen L6481L-FF DSTN)
 
 The NEC Versa 4080 just needs the "FixPanelSize" option. To the best of my
 knowledge no machine with a HiQV needs the "UseModeline" or "FixPanelSize"
@@ -924,7 +930,7 @@ cause damage.
             colour depths.  However, 8 and 24 bit colour depths seem to work
             fine.
 
-      My ct69030 machine locks up when starting XFree
+      My ct69030 machine locks up when starting XFree86
             The ct69030 chipset introduced a new dual channel architecture.
             In its current form, XFree86 can not take advantage of this sec-
             ond display channel. In fact if the video BIOS on the machine
@@ -950,7 +956,7 @@ cause damage.
 
                         startx -- -depth 24 -fbbpp 32   8-8-8 RGB truecolor
 
-            however as XFree86 version 4.1.0 allows 32bpp pixmaps to be used
+            however as XFree86 version 4.2.0 allows 32bpp pixmaps to be used
             with framebuffers operating in 24bpp, this mode of operating will
             cost performance for no gain in functionality.
 
@@ -1021,7 +1027,7 @@ Contributors (In no particular order)
 We also thank the many people on the net who have contributed by reporting
 bugs and extensively testing this server.
 
-     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/chips.sgml,v 3.36 2001/05/19 00:35:42 dawes Exp $
+     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/chips.sgml,v 3.38 2001/10/01 13:44:02 eich Exp $
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.chips,v 3.36.2.1 2001/06/01 18:26:44 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.chips,v 3.38 2001/11/15 17:37:22 dawes Exp $

@@ -1,4 +1,4 @@
-/* $Xorg: spfile.c,v 1.3 2000/08/17 19:46:27 cpqbld Exp $ */
+/* $Xorg: spfile.c,v 1.4 2001/02/09 02:04:00 xorgcvs Exp $ */
 /*
  * Copyright 1990, 1991 Network Computing Devices;
  * Portions Copyright 1987 by Digital Equipment Corporation
@@ -26,7 +26,11 @@
 
 Copyright 1987, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included
 in all copies or substantial portions of the Software.
@@ -45,7 +49,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/font/Speedo/spfile.c,v 1.12 2001/01/17 19:43:20 dawes Exp $ */
+/* $XFree86: xc/lib/font/Speedo/spfile.c,v 1.14 2001/12/14 19:56:41 dawes Exp $ */
 
 #include "fntfilst.h"
 #include "fontenc.h"
@@ -171,9 +175,9 @@ sp_load_char_data(fix31 file_offset, fix15 num, fix15 cb_offset)
 }
 
 struct speedo_encoding {
-  char *name;
-  int *enc;
-  int enc_size;
+    char *name;
+    int *enc;
+    int enc_size;
 };
 
 /* Takes care of caching encodings already referenced */
@@ -181,104 +185,98 @@ static int
 find_encoding(const char *fontname, const char *filename,
 		int **enc, int *enc_size)
 {
-  static struct speedo_encoding *known_encodings=0;
-  static int number_known_encodings=0;
-  static int known_encodings_size=0;
-
-  char *encoding_name;
-  int iso8859_1;
-  struct font_encoding *encoding;
-  struct font_encoding_mapping *mapping;
-  int i, j, k, size;
-  struct speedo_encoding *temp;
-  int *new_enc;
-  char *new_name;
-      
-  iso8859_1=0;
-
-  encoding_name=font_encoding_from_xlfd(fontname, strlen(fontname));
-  if(!encoding_name) {
-    encoding_name="iso8859-1";
-    iso8859_1=1;
-  }
-  /* We don't go through the font library if asked for Latin-1 */
-  iso8859_1=iso8859_1||!strcmp(encoding_name, "iso8859-1");
-
-  for(i=0; i<number_known_encodings; i++) {
-    if(!strcmp(encoding_name, known_encodings[i].name)) {
-      *enc=known_encodings[i].enc;
-      *enc_size=known_encodings[i].enc_size;
-      return Successful;
+    static struct speedo_encoding *known_encodings=0;
+    static int number_known_encodings=0;
+    static int known_encodings_size=0;
+    
+    char *encoding_name;
+    int iso8859_1;
+    FontMapPtr mapping;
+    int i, j, k, size;
+    struct speedo_encoding *temp;
+    int *new_enc;
+    char *new_name;
+    
+    iso8859_1 = 0;
+    
+    encoding_name = FontEncFromXLFD(fontname, strlen(fontname));
+    if(!encoding_name) {
+        encoding_name="iso8859-1";
+        iso8859_1=1;
     }
-  }
-
-  /* it hasn't been cached yet, need to compute it */
-  
-  /* ensure we've got enough storage first */
-  
-  if(known_encodings==0) {
-    if((known_encodings=
-        (struct speedo_encoding*)xalloc(2*sizeof(struct speedo_encoding)))
-       ==0)
-      return AllocError;
-    number_known_encodings=0;
-    known_encodings_size=2;
-  }
-  
-  if(number_known_encodings >= known_encodings_size) {
-    if((temp=
-        (struct speedo_encoding*)xrealloc(known_encodings,
-                                          2*sizeof(struct speedo_encoding)*
-                                          known_encodings_size))==0)
-      return AllocError;
-    known_encodings=temp;
-    known_encodings_size*=2;
-  }
-
-  encoding=0;
-  mapping=0;
-  if(!iso8859_1) {
-    encoding=font_encoding_find(encoding_name, filename);
-    if(encoding) {
-      for(mapping=encoding->mappings; mapping; mapping=mapping->next) {
-        if(mapping->type==FONT_ENCODING_UNICODE)
-          break;
-      }
+    /* We don't go through the font library if asked for Latin-1 */
+    iso8859_1 = iso8859_1 || !strcmp(encoding_name, "iso8859-1");
+    
+    for(i=0; i<number_known_encodings; i++) {
+        if(!strcmp(encoding_name, known_encodings[i].name)) {
+            *enc=known_encodings[i].enc;
+            *enc_size=known_encodings[i].enc_size;
+            return Successful;
+        }
     }
-  }
+    
+    /* it hasn't been cached yet, need to compute it */
+    
+    /* ensure we've got enough storage first */
+  
+    if(known_encodings==0) {
+        if((known_encodings=
+            (struct speedo_encoding*)xalloc(2*sizeof(struct speedo_encoding)))
+           ==0)
+            return AllocError;
+        number_known_encodings=0;
+        known_encodings_size=2;
+    }
+  
+    if(number_known_encodings >= known_encodings_size) {
+        if((temp=
+            (struct speedo_encoding*)xrealloc(known_encodings,
+                                              2*sizeof(struct speedo_encoding)*
+                                              known_encodings_size))==0)
+            return AllocError;
+        known_encodings=temp;
+        known_encodings_size*=2;
+    }
+
+    mapping=0;
+    if(!iso8859_1) {
+        mapping = FontEncMapFind(encoding_name, 
+                                 FONT_ENCODING_UNICODE, -1, -1,
+                                 filename);
+    }
 #define SPEEDO_RECODE(c) \
   (mapping? \
-   unicode_to_bics(font_encoding_recode(c, encoding, mapping)): \
+   unicode_to_bics(FontEncRecode(c, mapping)): \
    unicode_to_bics(c))
         
-  if((new_name=(char*)xalloc(strlen(encoding_name)))==0)
-    return AllocError;
-  strcpy(new_name, encoding_name);
-  
-  /* For now, we limit ourselves to 256 glyphs */
-  size=0;
-  for(i=0; i<(encoding?encoding->size:256) && i<256; i++)
-    if(SPEEDO_RECODE(i)>=0)
-      size++;
-  new_enc=(int*)xalloc(2*size*sizeof(int));
-  if(!new_enc) {
-    xfree(new_name);
-    return AllocError;
-  }
-  for(i=j=0; i<(encoding?encoding->size:256) && i<256; i++)
-    if((k=SPEEDO_RECODE(i))>=0) {
-      new_enc[2*j]=i;
-      new_enc[2*j+1]=k;
-      j++;
+    if((new_name = (char*)xalloc(strlen(encoding_name)))==0)
+        return AllocError;
+    strcpy(new_name, encoding_name);
+    
+    /* For now, we limit ourselves to 256 glyphs */
+    size=0;
+    for(i=0; i < (mapping?mapping->encoding->size:256) && i < 256; i++)
+        if(SPEEDO_RECODE(i)>=0)
+            size++;
+    new_enc = (int*)xalloc(2*size*sizeof(int));
+    if(!new_enc) {
+        xfree(new_name);
+        return AllocError;
     }
-  known_encodings[number_known_encodings].name=new_name;
-  known_encodings[number_known_encodings].enc=new_enc;
-  known_encodings[number_known_encodings].enc_size=size;
-  number_known_encodings++;
-  
-  *enc=new_enc;
-  *enc_size=size;
-  return Successful;
+    for(i=j=0; i < (mapping?mapping->encoding->size:256) && i < 256; i++)
+        if((k = SPEEDO_RECODE(i))>=0) {
+            new_enc[2*j] = i;
+            new_enc[2*j+1] = k;
+            j++;
+        }
+    known_encodings[number_known_encodings].name = new_name;
+    known_encodings[number_known_encodings].enc = new_enc;
+    known_encodings[number_known_encodings].enc_size = size;
+    number_known_encodings++;
+    
+    *enc = new_enc;
+    *enc_size = size;
+    return Successful;
 #undef SPEEDO_RECODE
 }
 

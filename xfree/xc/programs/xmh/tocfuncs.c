@@ -24,6 +24,7 @@
  * used in advertising or publicity pertaining to distribution of the software
  * without specific, written prior permission.
  */
+/* $XFree86: xc/programs/xmh/tocfuncs.c,v 1.3 2001/10/28 03:34:39 tsi Exp $ */
 
 /* tocfuncs.c -- action procedures concerning things in the toc widget. */
 
@@ -71,7 +72,7 @@ static void NextAndPreviousView(scrn, next)
 {
     Toc		toc = scrn->toc;
     MsgList	mlist;
-    FateType	fate;
+    FateType	fate = Fignore;
     Msg		msg;
 
     if (toc == NULL) return;
@@ -287,7 +288,7 @@ void XmhUseAsComposition(w, event, params, num_params)
 
 /* Utility: change the fate of a set of messages. */
 
-static MarkMessages(scrn, fate, skip)
+static void MarkMessages(scrn, fate, skip)
 Scrn scrn;
 FateType fate;
 int skip;
@@ -889,7 +890,7 @@ void XmhOpenSequence(w, event, params, num_params)
     /* In case the action was given the name of a sequence to open. */
     if (*num_params) {
 	Toc	toc = scrn->toc;
-	if (selected_sequence = TocGetSeqNamed(toc, params[0])) {
+	if ((selected_sequence = TocGetSeqNamed(toc, params[0]))) {
 	    TocSetSelectedSequence(toc, selected_sequence);
 	    TocChangeViewedSeq(toc, selected_sequence);
 	}
@@ -936,7 +937,7 @@ void XmhOpenSequence(w, event, params, num_params)
 
 typedef enum {ADD, REMOVE, DELETE} TwiddleOperation;
 
-static TwiddleSequence(scrn, op)
+static void TwiddleSequence(scrn, op)
 Scrn scrn;
 TwiddleOperation op;
 {

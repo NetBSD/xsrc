@@ -24,6 +24,8 @@ Display:
 - "Rotate" " cw "|" ccw "  Rotate the screen CW - clockwise or CCW - counter
     clockwise.  Disables HW Acceleration and HW Cursor, uses ShadowFB.
     Default: no rotation.
+- "XVideo"  Disable XVideo support by using the off option.  This changes FIFO
+    settings which prevent screen noise for high-res modes.  Default: on
 
 Video memory:
 
@@ -82,6 +84,8 @@ ViRGE MX LCD options:
 Debug:
 - "ShowCache"  Enable or disable viewing offscreen cache memory.  A
     development debug option.  Default: off.
+- "mx_cr3a_fix"  Enable or disable a cr3a fix added for ViRGE MX.
+    Default: on.
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/drivers/s3virge/README,v 1.9 2000/06/14 21:57:54 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/drivers/s3virge/README,v 1.10 2001/11/21 22:43:00 dawes Exp $

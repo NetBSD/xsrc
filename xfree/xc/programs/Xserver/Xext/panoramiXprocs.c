@@ -26,7 +26,7 @@ Equipment Corporation.
 
 /* Massively rewritten by Mark Vojkovich <markv@valinux.com> */
 
-/* $XFree86: xc/programs/Xserver/Xext/panoramiXprocs.c,v 3.28 2001/01/17 22:13:15 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/Xext/panoramiXprocs.c,v 3.31 2001/08/23 13:01:36 alanh Exp $ */
 
 #include <stdio.h>
 #include "X.h"
@@ -52,27 +52,14 @@ Equipment Corporation.
                               CWDontPropagate | CWOverrideRedirect | CWCursor )
 
 extern ScreenInfo *GlobalScrInfo;
-extern WindowPtr *WindowTable;
 extern char *ConnectionInfo;
 extern int connBlockScreenStart;
 
-extern WindowPtr *WindowTable;
-extern void Swap32Write();
-
-extern int (* InitialVector[3]) ();
-extern int (* ProcVector[256]) ();
-extern int (* SwappedProcVector[256]) ();
 extern int (* SavedProcVector[256]) ();
 extern void (* EventSwapVector[128]) ();
-extern void (* ReplySwapVector[256]) ();
 extern void Swap32Write(), SLHostsExtend(), SQColorsExtend(), 
 WriteSConnectionInfo();
 extern void WriteSConnSetupPrefix();
-extern char *ClientAuthorized();
-extern Bool InsertFakeRequest();
-extern void ProcessWorkQueue();
-
-extern char isItTimeToYield;
 
 /* Various of the DIX function interfaces were not designed to allow
  * the client->errorValue to be set on BadValue and other errors.
@@ -81,11 +68,6 @@ extern char isItTimeToYield;
  */
 extern XID clientErrorValue;   /* XXX this is a kludge */
 
-
-
-extern int Ones();
-
-
 int PanoramiXCreateWindow(ClientPtr client)
 {
     PanoramiXRes *parent, *newWin;
@@ -93,8 +75,8 @@ int PanoramiXCreateWindow(ClientPtr client)
     PanoramiXRes *bordPix = NULL;
     PanoramiXRes *cmap    = NULL;
     REQUEST(xCreateWindowReq);
-    int pback_offset, pbord_offset, cmap_offset;
-    int result, len, j;
+    int pback_offset = 0, pbord_offset = 0, cmap_offset = 0;
+    int result = 0, len, j;
     int orig_x, orig_y;
     XID orig_visual, tmp;
     Bool parentIsRoot;
@@ -173,7 +155,7 @@ int PanoramiXCreateWindow(ClientPtr client)
 	if (cmap)
 	    *((CARD32 *) &stuff[1] + cmap_offset) = cmap->info[j].id;
 	if ( orig_visual != CopyFromParent ) 
-	    stuff->visual = PanoramiXVisualTable[orig_visual][j];
+	    stuff->visual = PanoramiXVisualTable[(orig_visual*MAXSCREENS) + j];
         result = (*SavedProcVector[X_CreateWindow])(client);
         if(result != Success) break;
     }
@@ -194,8 +176,8 @@ int PanoramiXChangeWindowAttributes(ClientPtr client)
     PanoramiXRes *bordPix = NULL;
     PanoramiXRes *cmap    = NULL;
     REQUEST(xChangeWindowAttributesReq);
-    int pback_offset, pbord_offset, cmap_offset;
-    int result, len, j;
+    int pback_offset = 0, pbord_offset = 0, cmap_offset = 0;
+    int result = 0, len, j;
     XID tmp;
 
     REQUEST_AT_LEAST_SIZE(xChangeWindowAttributesReq);
@@ -259,7 +241,7 @@ int PanoramiXChangeWindowAttributes(ClientPtr client)
 int PanoramiXDestroyWindow(ClientPtr client)
 {
     PanoramiXRes *win;
-    int         result, j;
+    int         result = 0, j;
     REQUEST(xResourceReq);
 
     REQUEST_SIZE_MATCH(xResourceReq);
@@ -284,7 +266,7 @@ int PanoramiXDestroyWindow(ClientPtr client)
 int PanoramiXDestroySubwindows(ClientPtr client)
 {
     PanoramiXRes *win;
-    int         result, j;
+    int         result = 0, j;
     REQUEST(xResourceReq);
 
     REQUEST_SIZE_MATCH(xResourceReq);
@@ -309,7 +291,7 @@ int PanoramiXDestroySubwindows(ClientPtr client)
 int PanoramiXChangeSaveSet(ClientPtr client)
 {
     PanoramiXRes *win;
-    int         result, j;
+    int         result = 0, j;
     REQUEST(xChangeSaveSetReq);
 
     REQUEST_SIZE_MATCH(xChangeSaveSetReq);
@@ -331,7 +313,7 @@ int PanoramiXChangeSaveSet(ClientPtr client)
 int PanoramiXReparentWindow(ClientPtr client)
 {
     PanoramiXRes *win, *parent;
-    int         result, j;
+    int         result = 0, j;
     int		x, y;
     Bool	parentIsRoot;
     REQUEST(xReparentWindowReq);
@@ -367,7 +349,7 @@ int PanoramiXReparentWindow(ClientPtr client)
 int PanoramiXMapWindow(ClientPtr client)
 {
     PanoramiXRes *win;
-    int         result, j;
+    int         result = 0, j;
     REQUEST(xResourceReq);
 
     REQUEST_SIZE_MATCH(xResourceReq);
@@ -389,7 +371,7 @@ int PanoramiXMapWindow(ClientPtr client)
 int PanoramiXMapSubwindows(ClientPtr client)
 {
     PanoramiXRes *win;
-    int         result, j;
+    int         result = 0, j;
     REQUEST(xResourceReq);
 
     REQUEST_SIZE_MATCH(xResourceReq);
@@ -411,7 +393,7 @@ int PanoramiXMapSubwindows(ClientPtr client)
 int PanoramiXUnmapWindow(ClientPtr client)
 {
     PanoramiXRes *win;
-    int         result, j;
+    int         result = 0, j;
     REQUEST(xResourceReq);
 
     REQUEST_SIZE_MATCH(xResourceReq);
@@ -433,7 +415,7 @@ int PanoramiXUnmapWindow(ClientPtr client)
 int PanoramiXUnmapSubwindows(ClientPtr client)
 {
     PanoramiXRes *win;
-    int         result, j;
+    int         result = 0, j;
     REQUEST(xResourceReq);
 
     REQUEST_SIZE_MATCH(xResourceReq);
@@ -457,7 +439,7 @@ int PanoramiXConfigureWindow(ClientPtr client)
     PanoramiXRes *win;
     PanoramiXRes *sib = NULL;
     WindowPtr   pWin;
-    int         result, j, len, sib_offset, x, y;
+    int         result = 0, j, len, sib_offset = 0, x = 0, y = 0;
     int		x_offset = -1;
     int		y_offset = -1;
     REQUEST(xConfigureWindowReq);
@@ -519,7 +501,7 @@ int PanoramiXConfigureWindow(ClientPtr client)
 int PanoramiXCirculateWindow(ClientPtr client)
 {
     PanoramiXRes *win;
-    int         result, j;
+    int         result = 0, j;
     REQUEST(xCirculateWindowReq);
 
     REQUEST_SIZE_MATCH(xCirculateWindowReq);
@@ -627,7 +609,9 @@ int PanoramiXTranslateCoords(ClientPtr client)
 		 */
 		&& (!wBoundingShape(pWin) ||
 		    POINT_IN_REGION(pWin->drawable.pScreen, 
-					&pWin->borderSize, x, y, &box))
+					wBoundingShape(pWin), 
+					x - pWin->drawable.x, 
+					y - pWin->drawable.y, &box))
 #endif
 		)
             {
@@ -651,7 +635,7 @@ int PanoramiXTranslateCoords(ClientPtr client)
 int PanoramiXCreatePixmap(ClientPtr client)
 {
     PanoramiXRes *refDraw, *newPix;
-    int result, j;
+    int result = 0, j;
     REQUEST(xCreatePixmapReq);
 
     REQUEST_SIZE_MATCH(xCreatePixmapReq);
@@ -689,7 +673,7 @@ int PanoramiXCreatePixmap(ClientPtr client)
 int PanoramiXFreePixmap(ClientPtr client)
 {
     PanoramiXRes *pix;
-    int         result, j;
+    int         result = 0, j;
     REQUEST(xResourceReq);
 
     REQUEST_SIZE_MATCH(xResourceReq);
@@ -721,8 +705,8 @@ int PanoramiXCreateGC(ClientPtr client)
     PanoramiXRes *tile = NULL;
     PanoramiXRes *clip = NULL;
     REQUEST(xCreateGCReq);
-    int tile_offset, stip_offset, clip_offset;
-    int result, len, j;
+    int tile_offset = 0, stip_offset = 0, clip_offset = 0;
+    int result = 0, len, j;
     XID tmp;
 
     REQUEST_AT_LEAST_SIZE(xCreateGCReq);
@@ -797,8 +781,8 @@ int PanoramiXChangeGC(ClientPtr client)
     PanoramiXRes *tile = NULL;
     PanoramiXRes *clip = NULL;
     REQUEST(xChangeGCReq);
-    int tile_offset, stip_offset, clip_offset;
-    int result, len, j;
+    int tile_offset = 0, stip_offset = 0, clip_offset = 0;
+    int result = 0, len, j;
     XID tmp;
 
     REQUEST_AT_LEAST_SIZE(xChangeGCReq);
@@ -856,7 +840,7 @@ int PanoramiXChangeGC(ClientPtr client)
 int PanoramiXCopyGC(ClientPtr client)
 {
     PanoramiXRes *srcGC, *dstGC;
-    int         result, j;
+    int         result = 0, j;
     REQUEST(xCopyGCReq);
 
     REQUEST_SIZE_MATCH(xCopyGCReq);
@@ -883,7 +867,7 @@ int PanoramiXCopyGC(ClientPtr client)
 int PanoramiXSetDashes(ClientPtr client)
 {
     PanoramiXRes *gc;
-    int         result, j;
+    int         result = 0, j;
     REQUEST(xSetDashesReq);
 
     REQUEST_FIXED_SIZE(xSetDashesReq, stuff->nDashes);
@@ -905,7 +889,7 @@ int PanoramiXSetDashes(ClientPtr client)
 int PanoramiXSetClipRectangles(ClientPtr client)
 {
     PanoramiXRes *gc;
-    int         result, j;
+    int         result = 0, j;
     REQUEST(xSetClipRectanglesReq);
 
     REQUEST_AT_LEAST_SIZE(xSetClipRectanglesReq);
@@ -927,7 +911,7 @@ int PanoramiXSetClipRectangles(ClientPtr client)
 int PanoramiXFreeGC(ClientPtr client)
 {
     PanoramiXRes *gc;
-    int         result, j;
+    int         result = 0, j;
     REQUEST(xResourceReq);
 
     REQUEST_SIZE_MATCH(xResourceReq);
@@ -952,7 +936,7 @@ int PanoramiXFreeGC(ClientPtr client)
 int PanoramiXClearToBackground(ClientPtr client)
 {
     PanoramiXRes *win;
-    int         result, j, x, y;
+    int         result = 0, j, x, y;
     Bool	isRoot;
     REQUEST(xClearAreaReq);
 
@@ -991,7 +975,7 @@ int PanoramiXClearToBackground(ClientPtr client)
 
 int PanoramiXCopyArea(ClientPtr client)
 {
-    int			j, result, srcx, srcy, dstx, dsty;
+    int			j, result = 0, srcx, srcy, dstx, dsty;
     PanoramiXRes	*gc, *src, *dst;
     Bool		srcIsRoot = FALSE;
     Bool		dstIsRoot = FALSE;
@@ -1067,8 +1051,8 @@ int PanoramiXCopyArea(ClientPtr client)
 
 	result = Success;
     } else {
-	DrawablePtr pDst, pSrc;
-	GCPtr pGC;
+	DrawablePtr pDst = NULL, pSrc = NULL;
+	GCPtr pGC = NULL;
 	RegionPtr pRgn[MAXSCREENS];
 
 	FOR_NSCREENS_BACKWARD(j) {
@@ -1143,8 +1127,8 @@ int PanoramiXCopyPlane(ClientPtr client)
     Bool		srcIsRoot = FALSE;
     Bool		dstIsRoot = FALSE;
     Bool		srcShared, dstShared;
-    DrawablePtr 	psrcDraw, pdstDraw;
-    GCPtr 		pGC;
+    DrawablePtr 	psrcDraw, pdstDraw = NULL;
+    GCPtr 		pGC = NULL;
     RegionPtr 		pRgn[MAXSCREENS];
     REQUEST(xCopyPlaneReq);
 
@@ -1245,7 +1229,7 @@ int PanoramiXCopyPlane(ClientPtr client)
 int PanoramiXPolyPoint(ClientPtr client)
 {
     PanoramiXRes *gc, *draw;
-    int 	  result, npoint, j;
+    int 	  result = 0, npoint, j;
     xPoint 	  *origPts;
     Bool	  isRoot;
     REQUEST(xPolyPointReq);
@@ -1304,7 +1288,7 @@ int PanoramiXPolyPoint(ClientPtr client)
 int PanoramiXPolyLine(ClientPtr client)
 {
     PanoramiXRes *gc, *draw;
-    int 	  result, npoint, j;
+    int 	  result = 0, npoint, j;
     xPoint 	  *origPts;
     Bool	  isRoot;
     REQUEST(xPolyLineReq);
@@ -1362,7 +1346,7 @@ int PanoramiXPolyLine(ClientPtr client)
 
 int PanoramiXPolySegment(ClientPtr client)
 {
-    int		  result, nsegs, i, j;
+    int		  result = 0, nsegs, i, j;
     PanoramiXRes *gc, *draw;
     xSegment 	  *origSegs;
     Bool	  isRoot;
@@ -1424,7 +1408,7 @@ int PanoramiXPolySegment(ClientPtr client)
 
 int PanoramiXPolyRectangle(ClientPtr client)
 {
-    int 	  result, nrects, i, j;
+    int 	  result = 0, nrects, i, j;
     PanoramiXRes *gc, *draw;
     Bool	  isRoot;
     xRectangle 	  *origRecs;
@@ -1486,7 +1470,7 @@ int PanoramiXPolyRectangle(ClientPtr client)
 
 int PanoramiXPolyArc(ClientPtr client)
 {
-    int 	  result, narcs, i, j;
+    int 	  result = 0, narcs, i, j;
     PanoramiXRes *gc, *draw;
     Bool	  isRoot;
     xArc	  *origArcs;
@@ -1545,7 +1529,7 @@ int PanoramiXPolyArc(ClientPtr client)
 
 int PanoramiXFillPoly(ClientPtr client)
 {
-    int 	  result, count, j;
+    int 	  result = 0, count, j;
     PanoramiXRes *gc, *draw;
     Bool	  isRoot;
     DDXPointPtr	  locPts;
@@ -1605,7 +1589,7 @@ int PanoramiXFillPoly(ClientPtr client)
 
 int PanoramiXPolyFillRectangle(ClientPtr client)
 {
-    int 	  result, things, i, j;
+    int 	  result = 0, things, i, j;
     PanoramiXRes *gc, *draw;
     Bool	  isRoot;
     xRectangle	  *origRects;
@@ -1667,7 +1651,7 @@ int PanoramiXPolyFillArc(ClientPtr client)
 {
     PanoramiXRes *gc, *draw;
     Bool	  isRoot;
-    int 	  result, narcs, i, j;
+    int 	  result = 0, narcs, i, j;
     xArc	  *origArcs;
     REQUEST(xPolyFillArcReq);
 
@@ -1727,7 +1711,7 @@ int PanoramiXPutImage(ClientPtr client)
 {
     PanoramiXRes *gc, *draw;
     Bool	  isRoot;
-    int		  j, result, orig_x, orig_y;
+    int		  j, result = 0, orig_x, orig_y;
     REQUEST(xPutImageReq);
 
     REQUEST_AT_LEAST_SIZE(xPutImageReq);
@@ -1771,7 +1755,7 @@ int PanoramiXGetImage(ClientPtr client)
     Bool		isRoot;
     char		*pBuf;
     int         	i, x, y, w, h, format;
-    Mask		plane, planemask;
+    Mask		plane = 0, planemask;
     int			linesDone, nlines, linesPerBuf;
     long		widthBytesLine, length;
 
@@ -1919,7 +1903,7 @@ PanoramiXPolyText8(ClientPtr client)
 {
     PanoramiXRes *gc, *draw;
     Bool	  isRoot;
-    int 	  result, j;
+    int 	  result = 0, j;
     int	 	  orig_x, orig_y;
     REQUEST(xPolyTextReq);
 
@@ -1959,7 +1943,7 @@ PanoramiXPolyText16(ClientPtr client)
 {
     PanoramiXRes *gc, *draw;
     Bool	  isRoot;
-    int 	  result, j;
+    int 	  result = 0, j;
     int	 	  orig_x, orig_y;
     REQUEST(xPolyTextReq);
 
@@ -1997,7 +1981,7 @@ PanoramiXPolyText16(ClientPtr client)
 
 int PanoramiXImageText8(ClientPtr client)
 {
-    int 	  result, j;
+    int 	  result = 0, j;
     PanoramiXRes *gc, *draw;
     Bool	  isRoot;
     int		  orig_x, orig_y;
@@ -2037,7 +2021,7 @@ int PanoramiXImageText8(ClientPtr client)
 
 int PanoramiXImageText16(ClientPtr client)
 {
-    int 	  result, j;
+    int 	  result = 0, j;
     PanoramiXRes *gc, *draw;
     Bool	  isRoot;
     int		  orig_x, orig_y;
@@ -2079,7 +2063,7 @@ int PanoramiXImageText16(ClientPtr client)
 int PanoramiXCreateColormap(ClientPtr client)
 {
     PanoramiXRes	*win, *newCmap;
-    int 		result, j, orig_visual;
+    int 		result = 0, j, orig_visual;
     REQUEST(xCreateColormapReq);
 
     REQUEST_SIZE_MATCH(xCreateColormapReq);
@@ -2103,7 +2087,7 @@ int PanoramiXCreateColormap(ClientPtr client)
     FOR_NSCREENS_BACKWARD(j){
 	stuff->mid = newCmap->info[j].id;
 	stuff->window = win->info[j].id;
-	stuff->visual = PanoramiXVisualTable[orig_visual][j];
+	stuff->visual = PanoramiXVisualTable[(orig_visual * MAXSCREENS) + j];
 	result = (* SavedProcVector[X_CreateColormap])(client);
 	if(result != Success) break;
     }
@@ -2120,7 +2104,7 @@ int PanoramiXCreateColormap(ClientPtr client)
 int PanoramiXFreeColormap(ClientPtr client)
 {
     PanoramiXRes *cmap;
-    int          result, j;
+    int          result = 0, j;
     REQUEST(xResourceReq);
 
     REQUEST_SIZE_MATCH(xResourceReq);
@@ -2148,7 +2132,7 @@ int
 PanoramiXCopyColormapAndFree(ClientPtr client)
 {
     PanoramiXRes *cmap, *newCmap;
-    int          result, j;
+    int          result = 0, j;
     REQUEST(xCopyColormapAndFreeReq);
 
     REQUEST_SIZE_MATCH(xCopyColormapAndFreeReq);
@@ -2187,7 +2171,7 @@ PanoramiXCopyColormapAndFree(ClientPtr client)
 int PanoramiXInstallColormap(ClientPtr client)
 {
     REQUEST(xResourceReq);
-    int 	result, j;
+    int 	result = 0, j;
     PanoramiXRes *cmap;
 
     REQUEST_SIZE_MATCH(xResourceReq);
@@ -2210,7 +2194,7 @@ int PanoramiXInstallColormap(ClientPtr client)
 int PanoramiXUninstallColormap(ClientPtr client)
 {
     REQUEST(xResourceReq);
-    int 	result, j;
+    int 	result = 0, j;
     PanoramiXRes *cmap;
 
     REQUEST_SIZE_MATCH(xResourceReq);
@@ -2232,7 +2216,7 @@ int PanoramiXUninstallColormap(ClientPtr client)
 
 int PanoramiXAllocColor(ClientPtr client)
 {
-    int           result, j;
+    int           result = 0, j;
     PanoramiXRes *cmap;
     REQUEST(xAllocColorReq);
 
@@ -2255,7 +2239,7 @@ int PanoramiXAllocColor(ClientPtr client)
 
 int PanoramiXAllocNamedColor(ClientPtr client)
 {
-    int           result, j;
+    int           result = 0, j;
     PanoramiXRes  *cmap;
     REQUEST(xAllocNamedColorReq);
 
@@ -2278,7 +2262,7 @@ int PanoramiXAllocNamedColor(ClientPtr client)
 
 int PanoramiXAllocColorCells(ClientPtr client)
 {
-    int           result, j;
+    int           result = 0, j;
     PanoramiXRes  *cmap;
     REQUEST(xAllocColorCellsReq);
 
@@ -2301,7 +2285,7 @@ int PanoramiXAllocColorCells(ClientPtr client)
 
 int PanoramiXAllocColorPlanes(ClientPtr client)
 {
-    int           result, j;
+    int           result = 0, j;
     PanoramiXRes  *cmap;
     REQUEST(xAllocColorPlanesReq);
 
@@ -2325,7 +2309,7 @@ int PanoramiXAllocColorPlanes(ClientPtr client)
 
 int PanoramiXFreeColors(ClientPtr client)
 {
-    int           result, j;
+    int           result = 0, j;
     PanoramiXRes  *cmap;
     REQUEST(xFreeColorsReq);
 
@@ -2348,7 +2332,7 @@ int PanoramiXFreeColors(ClientPtr client)
 
 int PanoramiXStoreColors(ClientPtr client)
 {
-    int           result, j;
+    int           result = 0, j;
     PanoramiXRes  *cmap;
     REQUEST(xStoreColorsReq);
 
@@ -2371,7 +2355,7 @@ int PanoramiXStoreColors(ClientPtr client)
 
 int PanoramiXStoreNamedColor(ClientPtr client)
 {
-    int           result, j;
+    int           result = 0, j;
     PanoramiXRes  *cmap;
     REQUEST(xStoreNamedColorReq);
 

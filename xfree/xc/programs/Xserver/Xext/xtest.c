@@ -1,9 +1,13 @@
-/* $Xorg: xtest.c,v 1.3 2000/08/17 19:47:59 cpqbld Exp $ */
+/* $Xorg: xtest.c,v 1.4 2001/02/09 02:04:33 xorgcvs Exp $ */
 /*
 
 Copyright 1992, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included
 in all copies or substantial portions of the Software.
@@ -22,7 +26,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/Xserver/Xext/xtest.c,v 3.4 2001/01/17 22:13:19 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/Xext/xtest.c,v 3.7 2001/12/14 19:58:51 dawes Exp $ */
 
 #include "X.h"
 #define NEED_EVENTS
@@ -35,6 +39,7 @@ from The Open Group.
 #include "inputstr.h"
 #include "scrnintstr.h"
 #include "dixevents.h"
+#include "sleepuntil.h"
 #define _XTEST_SERVER_
 #include "XTest.h"
 #include "xteststr.h"
@@ -161,12 +166,12 @@ ProcXTestFakeInput(client)
     int nev;
     int	n;
     xEvent *ev;
-    DeviceIntPtr dev;
+    DeviceIntPtr dev = NULL;
     WindowPtr root;
     int type;
 #ifdef XINPUT
     Bool extension = FALSE;
-    deviceValuator *dv;
+    deviceValuator *dv = NULL;
     int base;
     int *values;
 #endif /* XINPUT */

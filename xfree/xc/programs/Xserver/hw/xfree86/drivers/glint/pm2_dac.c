@@ -28,7 +28,7 @@
  * this work is sponsored by S.u.S.E. GmbH, Fuerth, Elsa GmbH, Aachen and
  * Siemens Nixdorf Informationssysteme
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/glint/pm2_dac.c,v 1.23.2.1 2001/05/24 20:12:48 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/glint/pm2_dac.c,v 1.26 2001/12/06 15:16:40 tsi Exp $ */
 
 #include "Xarch.h"
 #include "xf86.h"
@@ -477,4 +477,30 @@ Permedia2I2CGetBits(I2CBusPtr b, int *scl, int *sda)
 
     *scl = (v & ClkIn) > 0;
     *sda = (v & DataIn) > 0;
+}
+
+void
+Permedia2PreInit(ScrnInfoPtr pScrn)
+{
+#if defined(__alpha__)
+    GLINTPtr pGlint = GLINTPTR(pScrn);
+
+    /*
+     * On Alpha, we have to init secondary PM2 cards, since
+     * int10 cannot be run on the OEMed cards with VGA disable
+     * jumpers.
+     */
+    if (!xf86IsPrimaryPci(pGlint->PciInfo)) {
+	if ( IS_GLORIASYNERGY ) {
+
+	    /* PM2DAC_CalculateMNPCForClock(80000, 14318, &m, &n, &p); */
+	    Permedia2OutIndReg(pScrn, PM2DACIndexMemClockM, 0x00, 0x7b);
+	    Permedia2OutIndReg(pScrn, PM2DACIndexMemClockN, 0x00, 0x0b);
+	    Permedia2OutIndReg(pScrn, PM2DACIndexMemClockP, 0x00, 0x09);
+
+	    GLINT_SLOW_WRITE_REG( 0x20, PMBootAddress);
+	    GLINT_SLOW_WRITE_REG( 0xe6002021, PMMemConfig);
+	}
+    }
+#endif /* __alpha__ */
 }

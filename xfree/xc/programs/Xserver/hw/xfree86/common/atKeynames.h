@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/atKeynames.h,v 3.17 2001/05/18 16:03:10 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/atKeynames.h,v 3.18 2001/09/29 20:40:30 herrb Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  *
@@ -194,6 +194,7 @@
 #define KEY_F17          /* F17                   0x72  */  114
 #define KEY_KP_DEC       /* KP_DEC                0x73  */  115
 #define KEY_BSlash2      /* \           _         0x73  */  115
+#define KEY_KP_Equal	 /* Equal (Keypad)        0x76  */  118
 #define KEY_XFER         /* Kanji Transfer        0x79  */  121
 #define KEY_NFER         /* No Kanji Transfer     0x7b  */  123
 #define KEY_Yen          /* Yen                   0x7d  */  125

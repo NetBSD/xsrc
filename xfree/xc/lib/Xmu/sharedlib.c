@@ -1,10 +1,14 @@
-/* $Xorg: sharedlib.c,v 1.3 2000/08/17 19:46:05 cpqbld Exp $ */
+/* $Xorg: sharedlib.c,v 1.4 2001/02/09 02:03:53 xorgcvs Exp $ */
 
 /*
 
 Copyright 1991, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -21,7 +25,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/Xmu/sharedlib.c,v 3.3 2001/01/17 19:42:58 dawes Exp $ */
+/* $XFree86: xc/lib/Xmu/sharedlib.c,v 3.5 2001/12/14 19:56:00 dawes Exp $ */
 
 #if defined(SUNSHLIB) && !defined(SHAREDCODE)
 
@@ -32,7 +36,7 @@ struct _AtomRec {
     struct _DisplayRec* head;
 };
 
-#if (defined(__STDC__) && !defined(UNIXCPP)) || defined(ANSICPP)
+#if !defined(UNIXCPP) || defined(ANSICPP)
 #define DeclareAtom(atom) \
 extern struct _AtomRec __##atom; \
 AtomPtr _##atom = &__##atom;

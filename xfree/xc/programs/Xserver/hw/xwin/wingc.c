@@ -27,10 +27,11 @@
  *
  * Authors:	Harold L Hunt II
  */
-/* $XFree86: xc/programs/Xserver/hw/xwin/wingc.c,v 1.2 2001/04/19 12:56:03 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xwin/wingc.c,v 1.10 2001/10/30 15:39:09 alanh Exp $ */
 
 #include "win.h"
 
+#if 0
 /* GC Handling Routines */
 const GCFuncs winGCFuncs = {
   winValidateGCNativeGDI,
@@ -41,6 +42,17 @@ const GCFuncs winGCFuncs = {
   winDestroyClipNativeGDI,
   winCopyClipNativeGDI,
 };
+#else
+const GCFuncs winGCFuncs = {
+  winValidateGCNativeGDI,
+  winChangeGCNativeGDI,
+  winCopyGCNativeGDI,
+  winDestroyGCNativeGDI,
+  miChangeClip,
+  miDestroyClip,
+  miCopyClip,
+};
+#endif
 
 /* Drawing Primitives */
 const GCOps winGCOps = {
@@ -69,14 +81,18 @@ const GCOps winGCOps = {
 #endif
 };
 
+
 /* See Porting Layer Definition - p. 45 */
 /* See mfb/mfbgc.c - mfbCreateGC() */
 /* See Strategies for Porting - pp. 15, 16 */
 Bool
 winCreateGCNativeGDI (GCPtr pGC)
 {
-  fprintf (stderr, "\nwinCreateGC () depth: %d\n\n",
-	   pGC->depth);
+  winPrivGCPtr		pGCPriv = NULL;
+  winPrivScreenPtr	pScreenPriv = NULL;
+
+  ErrorF ("winCreateGCNativeGDI () depth: %d\n",
+	  pGC->depth);
 
   pGC->clientClip = NULL;
   pGC->clientClipType = CT_NONE;
@@ -84,204 +100,270 @@ winCreateGCNativeGDI (GCPtr pGC)
   pGC->ops = (GCOps *) &winGCOps;
   pGC->funcs = (GCFuncs *) &winGCFuncs;
 
-  pGC->miTranslate = 0;
+  /* 
+   * Setting miTranslate to 1 causes the coordinates passed to
+   * FillSpans, GetSpans, and SetSpans to be screen relative, rather
+   * than drawable relative.
+   *
+   * miTranslate was set to 0 prior to 2001-08-17.
+   */
+  pGC->miTranslate = 1;
 
-  /*
-    winGetRotatedPixmapNativeGDI(pGC) = 0;
-    winGetExposeNativeGDI(pGC) = 1;
-    winGetFreeCompClipNativeGDI(pGC) = 0;
-    winGetCompositeClipNativeGDI(pGC) = 0;
-    winGetGCPrivateNativeGDI(pGC)->bpp = BitsPerPixel (pGC->depth);
-  */
+  /* Allocate privates for this GC */
+  pGCPriv = winGetGCPriv (pGC);
+  if (pGCPriv == NULL)
+    {
+      ErrorF ("winCreateGCNativeGDI () - Privates pointer was NULL\n");
+      return FALSE;
+    }
+
+  /* Copy the screen DC to the local privates */
+  pScreenPriv = winGetScreenPriv (pGC->pScreen);
+  pGCPriv->hdc = pScreenPriv->hdcScreen;
+
+  /* Allocate a memory DC for the GC */
+  pGCPriv->hdcMem = CreateCompatibleDC (pGCPriv->hdc);
+
   return TRUE;
 }
+
 
 /* See Porting Layer Definition - p. 45 */
 void
 winChangeGCNativeGDI (GCPtr pGC, unsigned long ulChanges)
 {
-
+#if CYGDEBUG
+  ErrorF ("winChangeGCNativeGDI () - Doing nothing\n");
+#endif
 }
 
-/* See Porting Layer Definition - pp. 45-46 */
-/* See mfb/mfbgc.c - mfbValidateGC() */
-/* See Strategies for Porting - pp. 15, 16 */
+
 void
 winValidateGCNativeGDI (GCPtr pGC,
-			unsigned long dwChanges,
+			unsigned long ulChanges,
 			DrawablePtr pDrawable)
 {
-#if 0
-  PixmapPtr		pPixmap;
-  int			nIndex, iResult;
-  unsigned long		dwMask = dwChanges;
-  HPEN			hPen;
-  HBRUSH		hBrush;
-  HBITMAP		hBitmap;
+  winGCPriv(pGC);
+  HBITMAP		hbmpOrig = NULL;
+  PixmapPtr		pPixmap = NULL;
+  winPrivPixmapPtr	pPixmapPriv = NULL;
+  RGBQUAD		rgbColors[2] = {{0, 0, 0, 0}, {0, 0, 0, 0}};
+  PixmapPtr		pStipple = NULL;
+  winPrivPixmapPtr	pStipplePriv = NULL;
+  int			i;
   DEBUG_FN_NAME("winValidateGC");
   DEBUGVARS;
-  //DEBUGPROC_MSG;
+  DEBUGPROC_MSG;
 
-  fprintf (stderr, "winValidateGC - pDrawable: %08x, pGC: %08x\n",
-	   pDrawable, pGC);
-
+  /* Branch on drawable type */
   switch (pDrawable->type)
     {
     case DRAWABLE_PIXMAP:
-      /* I can handle drawable pixmaps, no problem */
-      pPixmap = (PixmapPtr) pDrawable;
-
-      fprintf (stderr, "winValidateGC - pPixmap->devPrivate.ptr: %08x\n",
-	       pPixmap->devPrivate.ptr);
-
-      /* Select the bitmap into the memory device context.
-	 NOTE: A bitmap can only be selected into a single
-	 memory device context at a time.
-      */
-      SelectObject (g_hdcMem, pPixmap->devPrivate.ptr);
-
-      /* Sync the DC settings with the GC settings */
+      /* Branch on the fill style */
       switch (pGC->fillStyle)
 	{
 	case FillSolid:
+	  ErrorF ("winValidateGC - DRAWABLE_PIXMAP - FillSolid\n");
+
 	  /* Select a stock pen */
 	  if (pDrawable->depth == 1 && pGC->fgPixel)
 	    {
-	      SelectObject (g_hdcMem, GetStockObject (WHITE_PEN));
+	      ErrorF ("winValidateGC - Selecting WHITE_PEN\n");
+	      SelectObject (pGCPriv->hdcMem, GetStockObject (WHITE_PEN));
 	    }
 	  else if (pDrawable->depth == 1 && !pGC->fgPixel)
 	    {
-	      SelectObject (g_hdcMem, GetStockObject (BLACK_PEN));
+	      ErrorF ("winValidateGC - Selecting BLACK_PEN\n");
+	      SelectObject (pGCPriv->hdcMem, GetStockObject (BLACK_PEN));
 	    }
 	  else if (pGC->fgPixel)
 	    {
-	      SelectObject (g_hdcMem, CreatePen (PS_SOLID, 0, pGC->fgPixel));
+	      ErrorF ("winValidateGC - Selecting custom pen: %d\n",
+		      pGC->fgPixel);
+	      /*
+	       * FIXME: So far I've only seen a white pen selected here.
+	       */
+#if 1	     
+	      SelectObject (pGCPriv->hdcMem, GetStockObject (WHITE_PEN));
+#else
+	      /* FIXME: This leaks a pen */
+	      SelectObject (pGCPriv->hdcMem, 
+			    CreatePen (PS_SOLID, 0, pGC->fgPixel));
+#endif
 	    }
 	  else
 	    {
-	      SelectObject (g_hdcMem, GetStockObject (BLACK_PEN));
+	      ErrorF ("winValidateGC - Selecting BLACK_PEN\n");
+	      SelectObject (pGCPriv->hdcMem, GetStockObject (BLACK_PEN));
 	    }
 	  break;
+	  
 	case FillStippled:
+	  ErrorF ("winValidateGC - DRAWABLE_PIXMAP - FillStippled\n");
+	  /*
+	   * NOTE: Setting the brush color has no effect on DIB fills.
+	   * You need to set the stipple bitmap's color table instead.
+	   */
+#if 1
+	  /* Pick the white color index */
+	  if (pGC->fgPixel)
+	    i = 1;
+	  else
+	    i = 0;
+
+	  /* Set the white color, black is default */
+	  rgbColors[i].rgbRed = 255;
+	  rgbColors[i].rgbGreen = 255;
+	  rgbColors[i].rgbBlue = 255;
+	  
+	  /* Get stipple and privates pointers */
+	  pStipple = pGC->stipple;
+	  pStipplePriv = winGetPixmapPriv (pStipple);
+
+	  /* Select the stipple bitmap */
+	  hbmpOrig = SelectObject (pGCPriv->hdcMem, pStipplePriv->hBitmap);
+
+	  /* Set the stipple color table */
+	  SetDIBColorTable (pGCPriv->hdcMem, 0, 2, rgbColors);
+
+	  /* Pop the stipple out of the hdc */
+	  SelectObject (pGCPriv->hdcMem, hbmpOrig);
+	  
+#else
+	  /* Set the foreground color for the stipple fill */
+	  if (pGC->fgPixel == 0x1)
+	    {
+	      SetTextColor (pGCPriv->hdcMem, RGB(0x00, 0x00, 0x00));
+	    }
+	  else if (pGC->fgPixel == 0xFFFF)
+	    {
+	      SetTextColor (pGCPriv->hdcMem, RGB(0xFF, 0xFF, 0xFF));
+	    }
+	  else
+	    {
+	      SetTextColor (pGCPriv->hdcMem, RGB(0x00, 0x00, 0x00));
+	    }
+	  SetBkColor (pGCPriv->hdcMem, RGB(0x00, 0x00, 0x00));
+#endif
 	  break;
+	  
+	case FillOpaqueStippled:
+	  FatalError ("winValidateGC - DRAWABLE_PIXMAP - "
+		      "FillOpaqueStippled\n");
+	  break;
+
+	case FillTiled:
+	  FatalError ("winValidateGC - DRAWABLE_PIXMAP - FillTiled\n");
+	  break;
+
 	default:
+	  FatalError ("winValidateGC - DRAWABLE_PIXMAP - Unknown fill "
+		      "style\n");
 	  break;
 	}
-      
       break;
+
     case DRAWABLE_WINDOW:
+      /* Branch on the fill style */
       switch (pGC->fillStyle)
 	{
 	case FillTiled:
-	  /* Need to select the tile into the memory DC */
-	  SelectObject (g_hdcMem, pGC->tile.pixmap->devPrivate.ptr);
+	  ErrorF ("winValidateGC - DRAWABLE_WINDOW - FillTiled\n");
+	  /* 
+	   * Do nothing here for now.  Select the tile bitmap into the
+	   * appropriate DC in the drawing function.
+	   */
+
+	  /*
+	   * BEGIN REMOVE - Visual verification only.
+	   */
+	  /* Get pixmap and privates pointers for the tile */
+	  pPixmap = pGC->tile.pixmap;
+	  pPixmapPriv = winGetPixmapPriv (pPixmap);
+
+	  /* Push the tile into the GC's DC */
+	  hbmpOrig = SelectObject (pGCPriv->hdcMem, pPixmapPriv->hBitmap);
+	  if (hbmpOrig == NULL)
+	    FatalError ("winValidateGC - DRAWABLE_WINDOW - FillTiled - "
+			"SelectObject () failed on pPixmapPriv->hBitmap\n");
 
 	  /* Blit the tile to a remote area of the screen */
-	  BitBlt (g_hdc, 64, 64,
+	  BitBlt (pGCPriv->hdc, 
+		  64, 64,
 		  pGC->tile.pixmap->drawable.width,
 		  pGC->tile.pixmap->drawable.height,
-		  g_hdcMem,
-		  0, 0, SRCCOPY);
-	  DEBUG_MSG("Blitted the tile to a remote area of the screen");
+		  pGCPriv->hdcMem,
+		  0, 0, 
+		  SRCCOPY);
+	  DEBUG_MSG ("Blitted the tile to a remote area of the screen");
+	  
+	  /* Pop the tile out of the GC's DC */
+	  SelectObject (pGCPriv->hdcMem, hbmpOrig);
+	  /*
+	   * END REMOVE - Visual verification only.
+	   */
 	  break;
-	case FillStippled:
-	case FillSolid:
-	default:
-	  break;
-	}
-      break;
-    case UNDRAWABLE_WINDOW:
-      break;
-    case DRAWABLE_BUFFER:
-      break;
-    default:
-      break;
-    }
 
-#if 0
-  /* Inspect changes to the GC */
-  while (dwMask)
-    {
-      /* This peels off one change at a time */
-      nIndex = lowbit (dwMask);
-      dwMask &= ~nIndex;
-      
-      switch (nIndex)
-	{
-	case GCFunction:
-	  /* mfb falls through to GCForeground */
-	  fprintf (stderr, "winValidateGC - GCFunction\n");
+	case FillStippled:
+	  FatalError ("winValidateGC - DRAWABLE_WINDOW - FillStippled\n");
 	  break;
-	case GCForeground:
-	  fprintf (stderr, "winValidateGC - GCForeground\n");
+
+	case FillOpaqueStippled:
+	  FatalError ("winValidateGC - DRAWABLE_WINDOW - "
+		      "FillOpaqueStippled\n");
 	  break;
-	case GCPlaneMask:
-	  fprintf (stderr, "winValidateGC - GCPlaneMask\n");
+
+	case FillSolid:
+	  ErrorF ("winValidateGC - DRAWABLE_WINDOW - FillSolid\n");
+
+	  /* Select a stock pen */
+	  if (pDrawable->depth == 1 && pGC->fgPixel)
+	    {
+	      ErrorF ("winValidateGC - Selecting WHITE_PEN\n");
+	      SelectObject (pGCPriv->hdc, GetStockObject (WHITE_PEN));
+	    }
+	  else if (pDrawable->depth == 1 && !pGC->fgPixel)
+	    {
+	      ErrorF ("winValidateGC - Selecting BLACK_PEN\n");
+	      SelectObject (pGCPriv->hdc, GetStockObject (BLACK_PEN));
+	    }
+	  else if (pGC->fgPixel)
+	    {
+	      ErrorF ("winValidateGC - Selecting custom pen: %d\n",
+		      pGC->fgPixel);
+	      /*
+	       * FIXME: So far I've only seen a white pen selected here.
+	       */
+	      SelectObject (pGCPriv->hdc, GetStockObject (WHITE_PEN));
+	    }
+	  else
+	    {
+	      ErrorF ("winValidateGC - Selecting BLACK_PEN\n");
+	      SelectObject (pGCPriv->hdc, GetStockObject (BLACK_PEN));
+	    }
 	  break;
-	case GCBackground:
-	  fprintf (stderr, "winValidateGC - GCBackground\n");
-	  break;
-	case GCLineStyle:
-	case GCLineWidth:
-	case GCJoinStyle:
-	  fprintf (stderr, "winValidateGC - GCLineStyle, etc.\n");
-	  break;
-	case GCCapStyle:
-	  fprintf (stderr, "winValidateGC - GCCapStyle\n");
-	  break;
-	case GCFillStyle:
-	  fprintf (stderr, "winValidateGC - GCFillStyle\n");
-	  break;
-	case GCFillRule:
-	  fprintf (stderr, "winValidateGC - GCFillRule\n");
-	  break;
-	case GCTile:
-	  fprintf (stderr, "winValidateGC - GCTile\n");
-	  break;
-	case GCStipple:
-	  fprintf (stderr, "winValidateGC - GCStipple\n");
-	  break;
-	case GCTileStipXOrigin:
-	  fprintf (stderr, "winValidateGC - GCTileStipXOrigin\n");
-	  break;
-	case GCTileStipYOrigin:
-	  fprintf (stderr, "winValidateGC - GCTileStipYOrigin\n");
-	  break;
-	case GCFont:
-	  fprintf (stderr, "winValidateGC - GCFont\n");
-	  break;
-	case GCSubwindowMode:
-	  fprintf (stderr, "winValidateGC - GCSubwindowMode\n");
-	  break;
-	case GCGraphicsExposures:
-	  fprintf (stderr, "winValidateGC - GCGraphicsExposures\n");
-	  break;
-	case GCClipXOrigin:
-	  fprintf (stderr, "winValidateGC - GCClipXOrigin\n");
-	  break;
-	case GCClipYOrigin:
-	  fprintf (stderr, "winValidateGC - GCClipYOrigin\n");
-	  break;
-	case GCClipMask:
-	  fprintf (stderr, "winValidateGC - GCClipMask\n");
-	  break;
-	case GCDashOffset:
-	  fprintf (stderr, "winValidateGC - GCDashOffset\n");
-	  break;
-	case GCDashList:
-	  fprintf (stderr, "winValidateGC - GCDashList\n");
-	  break;
-	case GCArcMode:
-	  fprintf (stderr, "winValidateGC - GCArcMode\n");
-	  break;
+
 	default:
-	  fprintf (stderr, "winValidateGC - default\n");
+	  FatalError ("winValidateGC - DRAWABLE_WINDOW - Unknown fill "
+		      "style\n");
 	  break;
 	}
+      break;
+
+    case UNDRAWABLE_WINDOW:
+      ErrorF ("\nwinValidateGC - UNDRAWABLE_WINDOW\n\n");
+      break;
+
+    case DRAWABLE_BUFFER:
+      FatalError ("winValidateGC - DRAWABLE_BUFFER\n");
+      break;
+
+    default:
+      FatalError ("winValidateGC - Unknown drawable type\n");
+      break;
     }
-#endif
-#endif
 }
+
 
 /* See Porting Layer Definition - p. 46 */
 void
@@ -290,12 +372,27 @@ winCopyGCNativeGDI (GCPtr pGCsrc, unsigned long ulMask, GCPtr pGCdst)
 
 }
 
+
 /* See Porting Layer Definition - p. 46 */
 void
 winDestroyGCNativeGDI (GCPtr pGC)
 {
+  winGCPriv(pGC);
 
+  /* Free the memory DC */
+  if (pGCPriv->hdcMem != NULL)
+    {
+      DeleteDC (pGCPriv->hdcMem);
+      pGCPriv->hdcMem = NULL;
+    }
+
+  /* Invalidate the screen DC pointer */
+  pGCPriv->hdc = NULL;
+
+  /* Invalidate the GC privates pointer */
+  winSetGCPriv (pGC, NULL);
 }
+
 
 /* See Porting Layer Definition - p. 46 */
 void
@@ -304,12 +401,14 @@ winChangeClipNativeGDI (GCPtr pGC, int nType, pointer pValue, int nRects)
 
 }
 
+
 /* See Porting Layer Definition - p. 47 */
 void
 winDestroyClipNativeGDI (GCPtr pGC)
 {
 
 }
+
 
 /* See Porting Layer Definition - p. 47 */
 void

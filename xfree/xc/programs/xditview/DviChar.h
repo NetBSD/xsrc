@@ -9,6 +9,12 @@
  * case insensitive, a dash seperating the
  * CharSetRegistry from the CharSetEncoding
  */
+/* $XFree86: xc/programs/xditview/DviChar.h,v 1.2 2001/08/01 00:45:03 tsi Exp $ */
+
+#ifndef _DVICHAR_H_
+#define _DVICHAR_H_
+
+#include "Dvi.h"
 
 # define DVI_MAX_SYNONYMS	10
 # define DVI_MAP_SIZE		256
@@ -29,13 +35,15 @@ typedef struct _dviCharNameMap {
     DviCharNameHash	*buckets[DVI_HASH_SIZE];
 } DviCharNameMap;
 
-extern DviCharNameMap	*DviFindMap ( /* char *encoding */ );
-extern void		DviRegisterMap ( /* DviCharNameMap *map */ );
+extern DviCharNameMap	*DviFindMap (char *);
+extern void		DviRegisterMap (DviCharNameMap *);
 #ifdef NOTDEF
-extern char		*DviCharName ( /* DviCharNameMap *map, int index, int synonym */ );
+extern char		*DviCharName (DviCharNameMap *, int, int);
 #else
 #define DviCharName(map,index,synonym)	((map)->dvi_names[index][synonym])
 #endif
-extern int		DviCharIndex ( /* DviCharNameMap *map, char *name */ );
-extern unsigned char	*DviCharIsLigature ( /* DviCharNameMap *map, char *name */ );
-extern void		ResetFonts ( /* DviWidget dw */ );
+extern int		DviCharIndex (DviCharNameMap *, char *);
+extern unsigned char	*DviCharIsLigature (DviCharNameMap *, char *);
+extern void		ResetFonts (DviWidget);
+
+#endif

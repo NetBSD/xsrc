@@ -1,4 +1,4 @@
-/* $Xorg: xkbAccessX.c,v 1.3 2000/08/17 19:53:47 cpqbld Exp $ */
+/* $Xorg: xkbAccessX.c,v 1.4 2001/02/05 18:50:20 coskrey Exp $ */
 /************************************************************
 Copyright (c) 1993 by Silicon Graphics Computer Systems, Inc.
 
@@ -24,7 +24,7 @@ OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
 THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ********************************************************/
-/* $XFree86: xc/programs/Xserver/xkb/xkbAccessX.c,v 1.7 2001/02/12 18:26:00 paulo Exp $ */
+/* $XFree86: xc/programs/Xserver/xkb/xkbAccessX.c,v 1.9 2001/08/23 14:33:25 alanh Exp $ */
 
 #include <stdio.h>
 #include <math.h>
@@ -143,9 +143,6 @@ AccessXKeyboardEvent(keybd,type,keyCode,isRepeat)
 #endif
 {
 xEvent		xE;
-#ifdef XINPUT
-extern int	DeviceKeyPress;
-#endif
     
     xE.u.u.type = type;
     xE.u.u.detail = keyCode;
@@ -586,6 +583,11 @@ KeySym *	sym = XkbKeySymsPtr(xkbi->desc,key);
      */
     if (ctrls->enabled_ctrls & XkbSlowKeysMask) {
 	xkbAccessXNotify	ev;
+	/* If key was already pressed, ignore subsequent press events
+	 * from the server's autorepeat
+	 */
+	if(xkbi->slowKey == key)
+	    return TRUE;
 	ev.detail= XkbAXN_SKPress;
 	ev.keycode= key;
 	ev.slowKeysDelay= ctrls->slow_keys_delay;

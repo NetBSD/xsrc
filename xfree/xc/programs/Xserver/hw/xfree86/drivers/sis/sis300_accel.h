@@ -26,7 +26,7 @@
  *           David Thomas <davtom@dream.org.uk>. 
  *           Xavier Ducoin <x.ducoin@lectra.com>
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sis/sis300_accel.h,v 1.3 2001/04/19 12:40:33 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sis/sis300_accel.h,v 1.5 2002/01/11 15:37:33 dawes Exp $ */
 
 
 /* Definitions for the SIS engine communication. */
@@ -75,19 +75,24 @@
 
 /* Macros to do useful things with the SIS BitBLT engine */
 
-/* 
+/*
    bit 31 2D engine: 1 is idle,
    bit 30 3D engine: 1 is idle,
    bit 29 Command queue: 1 is empty
 */
 
-int     CmdQueLen;
+/* TW: BR(16)+2 = 0x8242 */
+
+static int     CmdQueLen;
 
 #define SiSIdle \
+  { \
   while( (MMIO_IN16(pSiS->IOBase, BR(16)+2) & 0xE000) != 0xE000){}; \
   while( (MMIO_IN16(pSiS->IOBase, BR(16)+2) & 0xE000) != 0xE000){}; \
-  CmdQueLen=MMIO_IN16(pSiS->IOBase, 0x8240);
-        
+  while( (MMIO_IN16(pSiS->IOBase, BR(16)+2) & 0xE000) != 0xE000){}; \
+  CmdQueLen=MMIO_IN16(pSiS->IOBase, 0x8240); \
+  }
+/* TW: (do three times, because 2D engine seems quite unsure about whether or not it's idle) */
 
 #define SiSSetupSRCBase(base) \
                 if (CmdQueLen <= 0)  SiSIdle;\

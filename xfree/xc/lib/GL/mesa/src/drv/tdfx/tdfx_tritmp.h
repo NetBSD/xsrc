@@ -23,7 +23,7 @@
  * OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-/* $XFree86: xc/lib/GL/mesa/src/drv/tdfx/tdfx_tritmp.h,v 1.1 2001/03/21 16:14:28 dawes Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/tdfx/tdfx_tritmp.h,v 1.2 2001/08/18 02:51:07 dawes Exp $ */
 
 /*
  * Original rewrite:
@@ -39,6 +39,7 @@ static __inline void TAG(triangle)( GLcontext *ctx,
 				    GLuint e0, GLuint e1, GLuint e2,
 				    GLuint pv )
 {
+   tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
    struct vertex_buffer *VB = ctx->VB;
    tdfxVertexPtr fxverts = TDFX_DRIVER_DATA(VB)->verts;
    tdfxVertex *v[3];
@@ -50,10 +51,6 @@ static __inline void TAG(triangle)( GLcontext *ctx,
 
 #if (IND & (TDFX_TWOSIDE_BIT | TDFX_FLAT_BIT))
    GLuint c[3];
-#endif
-
-#if (IND & TDFX_CLIPRECT_BIT)
-   tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
 #endif
 
    v[0] = &fxverts[e0];
@@ -126,10 +123,10 @@ static __inline void TAG(triangle)( GLcontext *ctx,
 
 #if (IND & TDFX_CLIPRECT_BIT)
    BEGIN_CLIP_LOOP_LOCKED( fxMesa );
-   grDrawTriangle( v[0], v[1], v[2] );
+   fxMesa->Glide.grDrawTriangle( v[0], v[1], v[2] );
    END_CLIP_LOOP_LOCKED( fxMesa );
 #else
-   grDrawTriangle( v[0], v[1], v[2] );
+   fxMesa->Glide.grDrawTriangle( v[0], v[1], v[2] );
 #endif
 
 #if (IND & TDFX_OFFSET_BIT)
@@ -152,6 +149,7 @@ static __inline void TAG(quad)( GLcontext *ctx, GLuint e0,
 				GLuint e1, GLuint e2, GLuint e3,
 				GLuint pv )
 {
+   tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
    struct vertex_buffer *VB = ctx->VB;
    tdfxVertexPtr fxverts = TDFX_DRIVER_DATA(VB)->verts;
    tdfxVertex *v[4];
@@ -164,11 +162,6 @@ static __inline void TAG(quad)( GLcontext *ctx, GLuint e0,
 #if (IND & (TDFX_TWOSIDE_BIT | TDFX_FLAT_BIT))
    GLuint c[4];
 #endif
-
-#if (IND & TDFX_CLIPRECT_BIT)
-    tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
-#endif
-
 
    v[0] = &fxverts[e0];
    v[1] = &fxverts[e1];
@@ -253,13 +246,13 @@ static __inline void TAG(quad)( GLcontext *ctx, GLuint e0,
 #if (IND & TDFX_CLIPRECT_BIT)
    BEGIN_CLIP_LOOP_LOCKED( fxMesa );
 /*     grDrawVertexArray( GR_TRIANGLE_FAN, 4, v );  */
-   grDrawTriangle( v[0], v[1], v[3] );
-   grDrawTriangle( v[1], v[2], v[3] );
+   fxMesa->Glide.grDrawTriangle( v[0], v[1], v[3] );
+   fxMesa->Glide.grDrawTriangle( v[1], v[2], v[3] );
    END_CLIP_LOOP_LOCKED( fxMesa );
 #else
 /*     grDrawVertexArray( GR_TRIANGLE_FAN, 4, v );  */
-   grDrawTriangle( v[0], v[1], v[3] );
-   grDrawTriangle( v[1], v[2], v[3] );
+   fxMesa->Glide.grDrawTriangle( v[0], v[1], v[3] );
+   fxMesa->Glide.grDrawTriangle( v[1], v[2], v[3] );
 #endif
 
 #if (IND & TDFX_OFFSET_BIT)

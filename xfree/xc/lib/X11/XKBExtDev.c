@@ -24,7 +24,7 @@ OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
 THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ********************************************************/
-/* $XFree86: xc/lib/X11/XKBExtDev.c,v 3.3 2001/01/17 19:41:48 dawes Exp $ */
+/* $XFree86: xc/lib/X11/XKBExtDev.c,v 3.4 2001/10/28 03:32:33 tsi Exp $ */
 
 #include <stdio.h>
 #define NEED_REPLIES
@@ -771,7 +771,7 @@ XkbSetDeviceInfo(dpy,which,devi)
 #endif
 {
     register xkbSetDeviceInfoReq *req;
-    Status		     	ok;
+    Status		     	ok = 0;
     int				size,nLeds;
     XkbInfoPtr 			xkbi;
     XkbDeviceChangesRec		changes;
@@ -833,7 +833,7 @@ XkbChangeDeviceInfo(dpy,devi,changes)
 #endif
 {
     register xkbSetDeviceInfoReq *req;
-    Status		     	ok;
+    Status		     	ok = 0;
     int				size,nLeds;
     XkbInfoPtr 			xkbi;
     SetLedStuff			lstuff;
@@ -909,7 +909,7 @@ XkbSetDeviceButtonActions(dpy,devi,first,nBtns)
 #endif
 {
     register xkbSetDeviceInfoReq *req;
-    Status		     	ok;
+    Status		     	ok = 0;
     int				size,nLeds;
     XkbInfoPtr 			xkbi;
     XkbDeviceChangesRec		changes;

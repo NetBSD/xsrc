@@ -35,7 +35,7 @@
  * 
  * Author:  Adobe Systems Incorporated
  */
-/* $XFree86: xc/lib/dps/dpsprintf.c,v 1.3 2000/09/26 15:57:00 tsi Exp $ */
+/* $XFree86: xc/lib/dps/dpsprintf.c,v 1.4 2001/07/25 15:04:54 dawes Exp $ */
 
 #include <stdio.h>
 #include <string.h>
@@ -53,11 +53,7 @@ void DPSPrintf(DPSContext ctxt, char *fmt, ...)
 {
     va_list args;
 
-#if defined(__STDC__) || defined(AIXV3) || defined(ultrix)
     va_start(args, fmt);
-#else
-    va_start(args);
-#endif
 
 #ifdef USE_DOPRINT
     DPSdoprint(ctxt, fmt, &args);

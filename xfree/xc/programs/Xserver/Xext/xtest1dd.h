@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/Xext/xtest1dd.h,v 3.1 1999/03/14 03:21:30 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/Xext/xtest1dd.h,v 3.2 2001/08/01 00:44:44 tsi Exp $ */
 /************************************************************
 
 Copyright 1996 by Thomas E. Dickey <dickey@clark.net>
@@ -120,6 +120,31 @@ extern void
 return_input_array_size(
 #if NeedFunctionPrototypes
 	ClientPtr              /* client */
+#endif
+);
+
+extern void XTestGenerateEvent(
+#if NeedFunctionPrototypes
+	int                    /* dev_type */,
+	int                    /* keycode */,
+	int                    /* keystate */,
+	int                    /* mousex */,
+	int                    /* mousey */
+#endif
+);
+
+extern void XTestGetPointerPos(
+#if NeedFunctionPrototypes
+	short *                /* fmousex */,
+	short *                /* fmousey */
+#endif
+);
+
+extern void XTestJumpPointer(
+#if NeedFunctionPrototypes
+	int                    /* jx */,
+	int                    /* jy */,
+	int                    /* dev_type */
 #endif
 );
 

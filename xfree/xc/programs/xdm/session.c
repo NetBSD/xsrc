@@ -1,9 +1,13 @@
-/* $Xorg: session.c,v 1.7 2000/08/17 19:54:15 cpqbld Exp $ */
+/* $Xorg: session.c,v 1.8 2001/02/09 02:05:40 xorgcvs Exp $ */
 /*
 
 Copyright 1988, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included
 in all copies or substantial portions of the Software.
@@ -22,7 +26,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/xdm/session.c,v 3.27.2.1 2001/05/25 18:50:13 dawes Exp $ */
+/* $XFree86: xc/programs/xdm/session.c,v 3.33 2001/12/14 20:01:23 dawes Exp $ */
 
 /*
  * xdm - display manager daemon
@@ -62,17 +66,9 @@ from The Open Group.
 #endif
 #endif
 
-#ifdef CSRG_BASED
-#include <sys/param.h>
-#ifdef HAS_SETUSERCONTEXT
-#include <login_cap.h>
-#include <pwd.h>
-#endif
-#endif
-
 static	int	runAndWait (char **args, char **environ);
 
-#if defined(CSRG_BASED) || defined(__osf__) || defined(__DARWIN__)
+#if defined(CSRG_BASED) || defined(__osf__) || defined(__DARWIN__) || defined(__QNXNTO__)
 #include <sys/types.h>
 #include <grp.h>
 #else
@@ -154,10 +150,6 @@ static	struct dlfuncs	dlfuncs = {
 #endif
 	};
 
-#ifdef X_NOT_STDC_ENV
-extern int errno;
-#endif
-
 static Bool StartClient(
     struct verify_info	*verify,
     struct display	*d,
@@ -204,12 +196,9 @@ static void
 AbortClient (int pid)
 {
     int	sig = SIGTERM;
-#ifdef __STDC__
     volatile int	i;
-#else
-    int	i;
-#endif
     int	retId;
+
     for (i = 0; i < 4; i++) {
 	if (killpg (pid, sig) == -1) {
 	    switch (errno) {
@@ -286,7 +275,11 @@ ManageSession (struct display *d)
     Debug ("ManageSession %s\n", d->name);
     (void)XSetIOErrorHandler(IOErrorHandler);
     (void)XSetErrorHandler(ErrorHandler);
+#ifndef HAS_SETPROCTITLE
     SetTitle(d->name, (char *) 0);
+#else
+    setproctitle("%s", d->name);
+#endif
     /*
      * Load system default Resources
      */
@@ -606,9 +599,6 @@ StartClient (
 #endif   /* QNX4 doesn't support multi-groups, no initgroups() */
 #ifdef USE_PAM
 	if (thepamh()) {
-	    int i;
-	    char **pam_env;
-
 	    pam_setcred(thepamh(), PAM_ESTABLISH_CRED);
 	}
 #endif

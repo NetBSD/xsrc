@@ -4,7 +4,7 @@
 /*                                                                         */
 /*    Mac FOND support.  Written by just@letterror.com.                    */
 /*                                                                         */
-/*  Copyright 1996-2000 by                                                 */
+/*  Copyright 1996-2001 by                                                 */
 /*  Just van Rossum, David Turner, Robert Wilhelm, and Werner Lemberg.     */
 /*                                                                         */
 /*  This file is part of the FreeType project, and may only be used,       */
@@ -66,11 +66,12 @@
 #include <Resources.h>
 #include <Fonts.h>
 #include <Errors.h>
+#include <Files.h>
+#include <TextUtils.h>
 
 #include <ctype.h>  /* for isupper() and isalnum() */
 
 #include FT_MAC_H
-
 
 
   /* Set PREFER_LWFN to 1 if LWFN (Type 1) is preferred over
@@ -81,11 +82,10 @@
 #endif
 
 
-
   /* Quick'n'dirty Pascal string to C string converter.
      Warning: this call is not thread safe! Use with caution. */
-  static
-  char*  p2c_str( unsigned char*  pstr )
+  static char*
+  p2c_str( unsigned char*  pstr )
   {
     static char  cstr[256];
 
@@ -97,9 +97,9 @@
 
 
   /* Given a pathname, fill in a file spec. */
-  static
-  int file_spec_from_path( const char*  pathname,
-                           FSSpec*      spec )
+  static int
+  file_spec_from_path( const char*  pathname,
+                       FSSpec*      spec )
   {
     Str255    p_path;
     FT_ULong  path_len;
@@ -120,8 +120,8 @@
 
 
   /* Return the file type of the file specified by spec. */
-  static
-  OSType  get_file_type( FSSpec*  spec )
+  static OSType
+  get_file_type( FSSpec*  spec )
   {
     FInfo  finfo;
 
@@ -133,10 +133,29 @@
   }
 
 
+  /* is this a Mac OS X .dfont file */
+  static Boolean
+  is_dfont( FSSpec*  spec )
+  {
+    int nameLen = spec->name[0];
+
+
+    if ( spec->name[nameLen - 5] == '.' &&
+         spec->name[nameLen - 4] == 'd' &&
+         spec->name[nameLen - 3] == 'f' &&
+         spec->name[nameLen - 2] == 'o' &&
+         spec->name[nameLen - 1] == 'n' &&
+         spec->name[nameLen    ] == 't'  )
+      return true;
+    else
+      return false;
+  }
+
+
   /* Given a PostScript font name, create the Macintosh LWFN file name. */
-  static
-  void create_lwfn_name( char*   ps_name,
-                         Str255  lwfn_file_name )
+  static void
+  create_lwfn_name( char*   ps_name,
+                    Str255  lwfn_file_name )
   {
     int       max = 5, count = 0;
     FT_Byte*  p = lwfn_file_name;
@@ -166,11 +185,11 @@
 
   /* Given a file reference, answer its location as a vRefNum
      and a dirID. */
-  static
-  FT_Error get_file_location( short           ref_num,
-                              short*          v_ref_num,
-                              long*           dir_id,
-                              unsigned char*  file_name )
+  static FT_Error
+  get_file_location( short           ref_num,
+                     short*          v_ref_num,
+                     long*           dir_id,
+                     unsigned char*  file_name )
   {
     FCBPBRec  pb;
     OSErr     error;
@@ -193,10 +212,10 @@
 
   /* Make a file spec for an LWFN file from a FOND resource and
      a file name. */
-  static
-  FT_Error make_lwfn_spec( Handle          fond,
-                           unsigned char*  file_name,
-                           FSSpec*         spec )
+  static FT_Error
+  make_lwfn_spec( Handle          fond,
+                  unsigned char*  file_name,
+                  FSSpec*         spec )
   {
     FT_Error  error;
     short     ref_num, v_ref_num;
@@ -218,14 +237,20 @@
 
 
   /* Look inside the FOND data, answer whether there should be an SFNT
-     resource, and answer the name of a possible LWFN Type 1 file. */
-  static
-  void parse_fond(  char*   fond_data,
-                    short*  have_sfnt,
-                    short*  sfnt_id,
-                    Str255  lwfn_file_name )
+     resource, and answer the name of a possible LWFN Type 1 file.
+
+     Thanks to Paul Miller (paulm@profoundeffects.com) for the fix
+     to load a face OTHER than the first one in the FOND!
+  */
+  static void
+  parse_fond( char*   fond_data,
+              short*  have_sfnt,
+              short*  sfnt_id,
+              Str255  lwfn_file_name,
+              short   face_index )
   {
     AsscEntry*  assoc;
+    AsscEntry*  base_assoc;
     FamRec*     fond;
 
 
@@ -233,13 +258,22 @@
     *have_sfnt        = 0;
     lwfn_file_name[0] = 0;
 
-    fond = (FamRec*)fond_data;
-    assoc = (AsscEntry*)( fond_data + sizeof ( FamRec ) + 2 );
+    fond       = (FamRec*)fond_data;
+    assoc      = (AsscEntry*)( fond_data + sizeof ( FamRec ) + 2 );
+    base_assoc = assoc;
+    assoc     += face_index;        /* add on the face_index! */
 
+    /* if the face at this index is not scalable,
+       fall back to the first one (old behavior) */
     if ( assoc->fontSize == 0 )
     {
       *have_sfnt = 1;
-      *sfnt_id = assoc->fontID;
+      *sfnt_id   = assoc->fontID;
+    }
+    else if ( base_assoc->fontSize == 0 )
+    {
+      *have_sfnt = 1;
+      *sfnt_id   = base_assoc->fontID;
     }
 
     if ( fond->ffStylOff )
@@ -272,8 +306,8 @@
         unsigned char*  suffixes = names[style->indexes[0] - 1];
 
 
-        for ( i=1; i<=suffixes[0]; i++ )
-          strcat( ps_name, p2c_str( names[suffixes[i] - 1 ] ) );
+        for ( i = 1; i <= suffixes[0]; i++ )
+          strcat( ps_name, p2c_str( names[suffixes[i] - 1] ) );
       }
       create_lwfn_name( ps_name, lwfn_file_name );
     }
@@ -285,11 +319,11 @@
      PFB parser wants the ASCII header as one chunk, and the LWFN
      chunks are often not organized that way, so we'll glue chunks
      of the same type together. */
-  static
-  FT_Error read_lwfn( FT_Memory  memory,
-                      FSSpec*    lwfn_spec,
-                      FT_Byte**  pfb_data,
-                      FT_ULong*  size )
+  static FT_Error
+  read_lwfn( FT_Memory  memory,
+             FSSpec*    lwfn_spec,
+             FT_Byte**  pfb_data,
+             FT_ULong*  size )
   {
     FT_Error       error = FT_Err_Ok;
     short          res_ref, res_id;
@@ -351,7 +385,6 @@
 
       if ( code != last_code )
       {
-
         if ( last_code != -1 )
         {
           /* we're done adding a chunk, fill in the size field */
@@ -394,8 +427,8 @@
 
   /* Finalizer for a memory stream; gets called by FT_Done_Face().
      It frees the memory it uses. */
-  static
-  void  memory_stream_close( FT_Stream  stream )
+  static void
+  memory_stream_close( FT_Stream  stream )
   {
     FT_Memory  memory = stream->memory;
 
@@ -409,12 +442,12 @@
 
 
   /* Create a new memory stream from a buffer and a size. */
-  static
-  FT_Error new_memory_stream( FT_Library       library,
-                              FT_Byte*         base,
-                              FT_ULong         size,
-                              FT_Stream_Close  close,
-                              FT_Stream*       astream )
+  static FT_Error
+  new_memory_stream( FT_Library       library,
+                     FT_Byte*         base,
+                     FT_ULong         size,
+                     FT_Stream_Close  close,
+                     FT_Stream*       astream )
   {
       FT_Error   error;
       FT_Memory  memory;
@@ -447,13 +480,13 @@
 
 
   /* Create a new FT_Face given a buffer and a driver name. */
-  static
-  FT_Error open_face_from_buffer( FT_Library  library,
-                                  FT_Byte*    base,
-                                  FT_ULong    size,
-                                  FT_Long     face_index,
-                                  char*       driver_name,
-                                  FT_Face*    aface )
+  static FT_Error
+  open_face_from_buffer( FT_Library  library,
+                         FT_Byte*    base,
+                         FT_ULong    size,
+                         FT_Long     face_index,
+                         char*       driver_name,
+                         FT_Face*    aface )
   {
     FT_Open_Args  args;
     FT_Error      error;
@@ -493,11 +526,11 @@
 
 
   /* Create a new FT_Face from a file spec to an LWFN file. */
-  static
-  FT_Error  FT_New_Face_From_LWFN( FT_Library  library,
-                                   FSSpec*     spec,
-                                   FT_Long     face_index,
-                                   FT_Face*    aface )
+  static FT_Error
+  FT_New_Face_From_LWFN( FT_Library  library,
+                         FSSpec*     spec,
+                         FT_Long     face_index,
+                         FT_Face*    aface )
   {
     FT_Byte*   pfb_data;
     FT_ULong   pfb_size;
@@ -536,11 +569,11 @@
 
 
   /* Create a new FT_Face from an SFNT resource, specified by res ID. */
-  static
-  FT_Error  FT_New_Face_From_SFNT( FT_Library  library,
-                                   short       sfnt_id,
-                                   FT_Long     face_index,
-                                   FT_Face*    aface )
+  static FT_Error
+  FT_New_Face_From_SFNT( FT_Library  library,
+                         short       sfnt_id,
+                         FT_Long     face_index,
+                         FT_Face*    aface )
   {
     Handle     sfnt = NULL;
     FT_Byte*   sfnt_data;
@@ -576,11 +609,11 @@
 
 
   /* Create a new FT_Face from a file spec to a suitcase file. */
-  static
-  FT_Error  FT_New_Face_From_Suitcase( FT_Library  library,
-                                       FSSpec*     spec,
-                                       FT_Long     face_index,
-                                       FT_Face*    aface )
+  static FT_Error
+  FT_New_Face_From_Suitcase( FT_Library  library,
+                             FSSpec*     spec,
+                             FT_Long     face_index,
+                             FT_Face*    aface )
   {
     FT_Error  error = FT_Err_Ok;
     short     res_ref, res_index;
@@ -616,12 +649,60 @@
   }
 
 
+  /* Create a new FT_Face from a file spec to a suitcase file. */
+  static FT_Error
+  FT_New_Face_From_dfont( FT_Library  library,
+                          FSSpec*     spec,
+                          FT_Long     face_index,
+                          FT_Face*    aface )
+  {
+    FT_Error  error = FT_Err_Ok;
+    short     res_ref, res_index;
+    Handle    fond;
+    FSRef     hostContainerRef;
+
+
+    error = FSpMakeFSRef( spec, &hostContainerRef );
+    if ( error == noErr )
+      error = FSOpenResourceFile( &hostContainerRef,
+                                  0, NULL, fsRdPerm, &res_ref );
+
+    if ( error != noErr )
+      return FT_Err_Cannot_Open_Resource;
+
+    UseResFile( res_ref );
+
+    /* face_index may be -1, in which case we
+       just need to do a sanity check */
+    if ( face_index < 0 )
+      res_index = 1;
+    else
+    {
+      res_index = (short)( face_index + 1 );
+      face_index = 0;
+    }
+    fond = Get1IndResource( 'FOND', res_index );
+    if ( ResError() )
+    {
+      error = FT_Err_Cannot_Open_Resource;
+      goto Error;
+    }
+
+    error = FT_New_Face_From_FOND( library, fond, face_index, aface );
+
+  Error:
+    CloseResFile( res_ref );
+    return error;
+  }
+
+
   /* documentation in ftmac.h */
 
-  FT_EXPORT_DEF( FT_Error )  FT_New_Face_From_FOND( FT_Library  library,
-                                                    Handle      fond,
-                                                    FT_Long     face_index,
-                                                    FT_Face    *aface )
+  FT_EXPORT_DEF( FT_Error )
+  FT_New_Face_From_FOND( FT_Library  library,
+                         Handle      fond,
+                         FT_Long     face_index,
+                         FT_Face    *aface )
   {
     short     sfnt_id, have_sfnt, have_lwfn = 0;
     Str255    lwfn_file_name;
@@ -632,12 +713,12 @@
     FT_Error  error = FT_Err_Unknown_File_Format;
 
 
-    GetResInfo(fond, &fond_id, &fond_type, fond_name);
+    GetResInfo( fond, &fond_id, &fond_type, fond_name );
     if ( ResError() != noErr || fond_type != 'FOND' )
       return FT_Err_Invalid_File_Format;
 
     HLock( fond );
-    parse_fond( *fond, &have_sfnt, &sfnt_id, lwfn_file_name );
+    parse_fond( *fond, &have_sfnt, &sfnt_id, lwfn_file_name, face_index );
     HUnlock( fond );
 
     if ( lwfn_file_name[0] )
@@ -663,6 +744,92 @@
   }
 
 
+  /* documentation in ftmac.h */
+
+  FT_EXPORT_DEF( FT_Error )
+  FT_GetFile_From_Mac_Name( char*     fontName,
+                            FSSpec*   pathSpec,
+                            FT_Long*  face_index )
+  {
+    OptionBits            options = kFMUseGlobalScopeOption;
+
+    FMFontFamilyIterator  famIter;
+    OSStatus              status = FMCreateFontFamilyIterator( NULL, NULL,
+                                                               options,
+                                                               &famIter );
+    FMFont                the_font = NULL;
+    FMFontFamily          family   = NULL;
+
+
+    *face_index = 0;
+    while ( status == 0 && !the_font )
+    {
+      status = FMGetNextFontFamily( &famIter, &family );
+      if ( status == 0 )
+      {
+        int                           stat2;
+        FMFontFamilyInstanceIterator  instIter;
+        Str255                        famNameStr;
+        char                          famName[256];
+
+
+        /* get the family name */
+        FMGetFontFamilyName( family, famNameStr );
+        CopyPascalStringToC( famNameStr, famName );
+
+        /* iterate through the styles */
+        FMCreateFontFamilyInstanceIterator( family, &instIter );
+
+        *face_index = 0;
+        stat2 = 0;
+        while ( stat2 == 0 && !the_font )
+        {
+          FMFontStyle  style;
+          FMFontSize   size;
+          FMFont       font;
+
+
+          stat2 = FMGetNextFontFamilyInstance( &instIter, &font,
+                                               &style, &size );
+          if ( stat2 == 0 && size == 0 )
+          {
+            char fullName[256];
+
+
+            /* build up a complete face name */
+            strcpy( fullName, famName );
+            if ( style & bold )
+              strcat( fullName, " Bold" );
+            if ( style & italic )
+              strcat( fullName, " Italic" );
+
+            /* compare with the name we are looking for */
+            if ( strcmp( fullName, fontName ) == 0 )
+            {
+              /* found it! */
+              the_font = font;
+            }
+            else
+               ++(*face_index);
+          }
+        }
+
+        FMDisposeFontFamilyInstanceIterator( &instIter );
+      }
+    }
+
+    FMDisposeFontFamilyIterator( &famIter );
+
+    if ( the_font )
+    {
+      FMGetFontContainer( the_font, pathSpec );
+      return FT_Err_Ok;
+    }
+    else
+      return FT_Err_Unknown_File_Format;
+  }
+
+
   /*************************************************************************/
   /*                                                                       */
   /* <Function>                                                            */
@@ -674,10 +841,11 @@
   /*    accepts pathnames to Mac suitcase files.  For further              */
   /*    documentation see the original FT_New_Face() in freetype.h.        */
   /*                                                                       */
-  FT_EXPORT_DEF( FT_Error )  FT_New_Face( FT_Library   library,
-                                          const char*  pathname,
-                                          FT_Long      face_index,
-                                          FT_Face     *aface )
+  FT_EXPORT_DEF( FT_Error )
+  FT_New_Face( FT_Library   library,
+               const char*  pathname,
+               FT_Long      face_index,
+               FT_Face     *aface )
   {
     FT_Open_Args  args;
     FSSpec        spec;
@@ -696,7 +864,9 @@
       return FT_New_Face_From_Suitcase( library, &spec, face_index, aface );
     else if ( file_type == 'LWFN' )
       return FT_New_Face_From_LWFN( library, &spec, face_index, aface );
-    else
+    else if ( is_dfont( &spec ) )
+      return FT_New_Face_From_dfont( library, &spec, face_index, aface );
+    else  /* let it fall through to normal loader (.ttf, .otf, etc.) */
     {
       args.flags    = ft_open_pathname;
       args.pathname = (char*)pathname;

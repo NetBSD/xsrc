@@ -1,4 +1,4 @@
-// $XFree86: xc/programs/xkbcomp/symbols/inet,v 1.13 2001/04/06 02:16:26 dawes Exp $
+// $XFree86: xc/programs/xkbcomp/symbols/inet,v 1.16 2001/12/28 16:03:30 dawes Exp $
 
 partial alphanumeric_keys 
 xkb_symbols "hp" {
@@ -47,6 +47,43 @@ xkb_symbols "itouch" {
     key <I6C>	{	[ XF86Mail		]	};
     key <I65>	{	[ XF86Search		]	};
     key <I66>	{	[ XF86Start		]	};
+};
+
+partial alphanumeric_keys 
+xkb_symbols "logiinetnav" {
+
+    // Describes the extra keys on a newer Logitech iTouch keyboard.
+
+    name[Group1]= "LogiInternetNavigator";
+
+    // Media keys
+    key <I20>	{	[ XF86AudioMute		]	};
+    key <I6D>	{	[ XF86AudioMedia	]	};
+    key <I2E>	{	[ XF86AudioLowerVolume	]	};
+    key <I30>	{	[ XF86AudioRaiseVolume	]	};
+    key <I22>	{	[ XF86AudioPlay		]	};
+    key <I24>	{	[ XF86AudioStop		]	};
+    key <I10>	{	[ XF86AudioPrev		]	};
+    key <I19>	{	[ XF86AudioNext		]	};
+
+    // Left side
+    key <I5F>	{	[ XF86Standby		]	};
+    key <I13>	{	[ XF86Finance		]	};
+    key <I14>	{	[ XF86Favorites		]	};
+    key <I15>	{	[ XF86Community		]	};
+    key <I66>	{	[ XF86Start		]	};
+
+    // Right side
+    key <I12>	{	[ XF86VendorHome	]	};
+    key <I6C>	{	[ XF86Mail		]	};
+    key <I32>	{	[ XF86HomePage		]	};
+    key <I11>	{	[ XF86Shop		]	};
+    key <I65>	{	[ XF86Search		]	};
+
+    // Wheel buttons
+    key <I6A>	{	[ XF86Back		]	};
+    key <I69>	{	[ XF86Forward		]	};
+
 };
 
 partial alphanumeric_keys
@@ -240,4 +277,19 @@ xkb_symbols "chicony" {
     key <I26>	{	[ XF86LaunchB		]	};
     key <I2E>	{	[ XF86LaunchC		]	};
 };
+
+
+partial alphanumeric_keys
+xkb_symbols "dell" {
+
+    // From <liblit@acm.org>
+    // Describes the extra keys on a Dell Internet keyboard.
+
+    name[Group1]= "Dell";
+    key <I12>	{	[ XF86Mail		]	};
+    key <I26>	{	[ XF86HomePage		]	};
+    key <I1E>	{	[ XF86Search		]	};
+    key <I5F>	{	[ XF86Standby		]	};
+};
+
 

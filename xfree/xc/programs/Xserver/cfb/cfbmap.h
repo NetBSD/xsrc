@@ -1,9 +1,13 @@
 /*
- * $Xorg: cfbmap.h,v 1.3 2000/08/17 19:48:14 cpqbld Exp $
+ * $Xorg: cfbmap.h,v 1.4 2001/02/09 02:04:38 xorgcvs Exp $
  *
 Copyright 1991, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -22,7 +26,7 @@ in this Software without prior written authorization from The Open Group.
  * Author:  Keith Packard, MIT X Consortium
  */
 
-/* $XFree86: xc/programs/Xserver/cfb/cfbmap.h,v 3.9 2001/01/17 22:36:35 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/cfb/cfbmap.h,v 3.11 2001/12/14 19:59:23 dawes Exp $ */
 
 /*
  * Map names around so that multiple depths can be supported simultaneously
@@ -154,7 +158,7 @@ in this Software without prior written authorization from The Open Group.
 #if PSZ != 8
 
 #if PSZ == 32
-#if (defined(__STDC__) && !defined(UNIXCPP)) || defined(ANSICPP)
+#if !defined(UNIXCPP) || defined(ANSICPP)
 #define CFBNAME(subname) cfb32##subname
 #else
 #define CFBNAME(subname) cfb32/**/subname
@@ -162,7 +166,7 @@ in this Software without prior written authorization from The Open Group.
 #endif
 
 #if PSZ == 24
-#if (defined(__STDC__) && !defined(UNIXCPP)) || defined(ANSICPP)
+#if !defined(UNIXCPP) || defined(ANSICPP)
 #define CFBNAME(subname) cfb24##subname
 #else
 #define CFBNAME(subname) cfb24/**/subname
@@ -170,7 +174,7 @@ in this Software without prior written authorization from The Open Group.
 #endif
 
 #if PSZ == 16
-#if (defined(__STDC__) && !defined(UNIXCPP)) || defined(ANSICPP)
+#if !defined(UNIXCPP) || defined(ANSICPP)
 #define CFBNAME(subname) cfb16##subname
 #else
 #define CFBNAME(subname) cfb16/**/subname
@@ -178,7 +182,7 @@ in this Software without prior written authorization from The Open Group.
 #endif
 
 #if PSZ == 4
-#if (defined(__STDC__) && !defined(UNIXCPP)) || defined(ANSICPP)
+#if !defined(UNIXCPP) || defined(ANSICPP)
 #define CFBNAME(subname) cfb4##subname
 #else
 #define CFBNAME(subname) cfb4/**/subname
@@ -191,7 +195,7 @@ cfb can not hack PSZ yet
 
 #undef CATNAME
 
-#if (defined(__STDC__) && !defined(UNIXCPP)) || defined(ANSICPP)
+#if !defined(UNIXCPP) || defined(ANSICPP)
 #define CATNAME(prefix,subname) prefix##subname
 #else
 #define CATNAME(prefix,subname) prefix/**/subname

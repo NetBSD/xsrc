@@ -21,7 +21,7 @@
  *
  * Authors:  Alan Hourihane, <alanh@fairlite.demon.co.uk>
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sis/sis_dga.c,v 1.2 2001/04/19 12:40:33 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sis/sis_dga.c,v 1.3 2002/01/10 19:05:45 eich Exp $ */
 
 #include "xf86.h"
 #include "xf86_OSproc.h"
@@ -43,8 +43,10 @@ static int  SIS_GetViewport(ScrnInfoPtr);
 static void SIS_SetViewport(ScrnInfoPtr, int, int, int);
 static void SIS_FillRect(ScrnInfoPtr, int, int, int, int, unsigned long);
 static void SIS_BlitRect(ScrnInfoPtr, int, int, int, int, int, int);
+#if 0
 static void SIS_BlitTransRect(ScrnInfoPtr, int, int, int, int, int, int, 
                     unsigned long);
+#endif
 
 static
 DGAFunctionRec SISDGAFuncs = {
@@ -180,17 +182,18 @@ SIS_SetMode(
             OldDisplayWidth[index] = pScrn->displayWidth;
 
             pSIS->DGAactive = TRUE;
+    	}
+
+    	pScrn->displayWidth = pMode->bytesPerScanline /
+      				(pMode->bitsPerPixel >> 3);
+
+    	(*pScrn->SwitchMode)(index, pMode->mode, 0);
     }
 
-    pScrn->displayWidth = pMode->bytesPerScanline / 
-      (pMode->bitsPerPixel >> 3);
-
-    (*pScrn->SwitchMode)(index, pMode->mode, 0);
-    }
     return TRUE;
 }
 
-static int  
+static int
 SIS_GetViewport(
   ScrnInfoPtr pScrn
 ){
@@ -258,7 +261,7 @@ SIS_BlitRect(
     }
 }
 
-
+#if 0
 static void 
 SIS_BlitTransRect(
    ScrnInfoPtr pScrn, 
@@ -270,7 +273,7 @@ SIS_BlitTransRect(
   /* this one should be separate since the XAA function would
      prohibit usage of ~0 as the key */
 }
-
+#endif
 
 static Bool 
 SIS_OpenFramebuffer(
@@ -285,7 +288,7 @@ SIS_OpenFramebuffer(
 
     *name = NULL;       /* no special device */
     *mem = (unsigned char*)pSIS->FbAddress;
-    *size = pSIS->FbMapSize;
+    *size = pSIS->maxxfbmem;
     *offset = 0;
     *flags = DGA_NEED_ROOT;
 

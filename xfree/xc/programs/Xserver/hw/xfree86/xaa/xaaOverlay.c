@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xaaOverlay.c,v 1.12 2000/09/28 20:48:01 mvojkovi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xaaOverlay.c,v 1.13 2001/10/28 03:34:04 tsi Exp $ */
 
 #include "misc.h"
 #include "xf86.h"
@@ -108,7 +108,7 @@ XAAPaintWindow8_32(
     BoxPtr pBox = REGION_RECTS(prgn);
     PixmapPtr pPix = NULL;
     int depth = pWin->drawable.depth;
-    int fg, pm;
+    int fg = 0, pm;
 
     if(!infoRec->pScrn->vtSema) goto BAILOUT;	
 

@@ -23,7 +23,7 @@
  * OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-/* $XFree86: xc/lib/GL/mesa/src/drv/tdfx/tdfx_dd.c,v 1.4 2001/05/02 15:06:04 dawes Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/tdfx/tdfx_dd.c,v 1.5 2001/08/18 02:51:06 dawes Exp $ */
 
 /*
  * Original rewrite:
@@ -167,8 +167,10 @@ static GLboolean get_occlusion_result( GLcontext *ctx )
       }
       else {
 	 FxI32 zfail, in;
-	 zfail = FX_grGetInteger_NoLock(GR_STATS_PIXELS_DEPTHFUNC_FAIL);
-	 in = FX_grGetInteger_NoLock(GR_STATS_PIXELS_IN);
+         fxMesa->Glide.grGet(GR_STATS_PIXELS_DEPTHFUNC_FAIL, 4, &zfail);
+	 /*zfail = FX_grGetInteger_NoLock(GR_STATS_PIXELS_DEPTHFUNC_FAIL);*/
+         fxMesa->Glide.grGet(GR_STATS_PIXELS_IN, 4, &in);
+	 /*in = FX_grGetInteger_NoLock(GR_STATS_PIXELS_IN);*/
 	 if (in == zfail)
 	    result = GL_FALSE; /* geom was completely occluded */
 	 else
@@ -180,7 +182,7 @@ static GLboolean get_occlusion_result( GLcontext *ctx )
    }
 
    /* reset results now */
-   grReset(GR_STATS_PIXELS);
+   fxMesa->Glide.grReset(GR_STATS_PIXELS);
    ctx->OcclusionResult = GL_FALSE;
    ctx->OcclusionResultSaved = GL_FALSE;
 

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/i810/i810_dri.c,v 1.21 2001/05/19 00:26:44 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/i810/i810_dri.c,v 1.25 2001/12/21 21:04:36 dawes Exp $ */
 
 #include "xf86.h"
 #include "xf86_OSproc.h"
@@ -82,6 +82,8 @@ Bool I810InitDma(ScrnInfoPtr pScrn)
    info.front_offset = 0;
    info.back_offset = pI810->BackBuffer.Start;
    info.depth_offset = pI810->DepthBuffer.Start;
+   info.overlay_offset = pI810->OverlayStart;
+   info.overlay_physical = pI810->OverlayPhysical;
    info.w = pScrn->virtualX;
    info.h = pScrn->virtualY;
    info.pitch = pI810->auxPitch;
@@ -337,11 +339,11 @@ Bool I810DRIScreenInit(ScreenPtr pScreen)
       drmVersionPtr version = drmGetVersion(pI810->drmSubFD);
       if (version) {
          if (version->version_major != 1 ||
-             version->version_minor < 1) {
+             version->version_minor < 2) {
             /* incompatible drm version */
             xf86DrvMsg(pScreen->myNum, X_ERROR,
                        "[dri] I810DRIScreenInit failed because of a version mismatch.\n"
-                       "[dri] i810.o kernel module version is %d.%d.%d but version 1.0.x is needed.\n"
+                       "[dri] i810.o kernel module version is %d.%d.%d but version 1.2 or greater is needed.\n"
                        "[dri] Disabling DRI.\n",
                        version->version_major,
                        version->version_minor,
@@ -367,6 +369,7 @@ Bool I810DRIScreenInit(ScreenPtr pScreen)
    pI810->backHandle = 0;
    pI810->zHandle = 0;
    pI810->cursorHandle = 0;
+   pI810->xvmcHandle = 0;
    pI810->sysmemHandle = 0;
    pI810->agpAcquired = FALSE;
    pI810->dcacheHandle = 0;
@@ -429,6 +432,26 @@ Bool I810DRIScreenInit(ScreenPtr pScreen)
    }
    else {
       sysmem_size = sysmem_size - 2*back_size;
+   }
+
+    /* Max size is 48 without XvMC, 41 with 6 surfaces, 40 with 7 surfaces */
+   if(pI810->numSurfaces && (pI810->numSurfaces == 6)) {
+         if(sysmem_size > (pI810->FbMapSize - 7*1024*1024)) {
+            sysmem_size = (pI810->FbMapSize - 7*1024*1024);
+            xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+               "User requested more memory then fits in the agp aperture\n"
+               "Truncating to %d bytes of memory\n",
+               sysmem_size);
+         }
+   }
+   if(pI810->numSurfaces && (pI810->numSurfaces == 7)) {
+        if(sysmem_size > (pI810->FbMapSize - 8*1024*1024)) {
+           sysmem_size = (pI810->FbMapSize - 8*1024*1024);
+           xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+               "User requested more memory then fits in the agp aperture\n"
+               "Truncating to %d bytes of memory\n",
+               sysmem_size);
+        }
    }
 
    if(sysmem_size > pI810->FbMapSize) {
@@ -543,6 +566,55 @@ Bool I810DRIScreenInit(ScreenPtr pScreen)
       return FALSE;
    }
 
+/* Allocate 7 or 8MB for XvMC this is setup as follows to best use tiled
+   regions and required surface pitches. (Numbers are adjusted if the
+   AGP region is only 32MB
+   For numSurfaces == 6
+   44 - 48MB = 4MB Fence, 8 Tiles wide
+   43 - 44MB = 1MB Fence, 8 Tiles wide
+   42 - 43MB = 1MB Fence, 4 Tiles wide
+   41 - 42MB = 1MB Fence, 4 Tiles wide
+   For numSurfaces == 7
+   44 - 48MB   = 4MB Fence, 8 Tiles wide
+   43 - 44MB   = 1MB Fence, 8 Tiles wide
+   42.5 - 43MB = 0.5MB Fence, 8 Tiles wide
+   42 - 42.5MB = 0.5MB Fence, 4 Tiles wide
+   40 - 42MB   = 2MB Fence, 4 Tiles wide
+ */
+   if(pI810->numSurfaces) {
+      if(pI810->numSurfaces == 6) {
+         pI810->MC.Size = 7*1024*1024;
+         pI810->MC.Start = pI810->FbMapSize - 7*1024*1024;
+
+      }
+      if(pI810->numSurfaces == 7) {
+         pI810->MC.Size = 8*1024*1024;
+         pI810->MC.Start = pI810->FbMapSize - 8*1024*1024;
+      }
+      drmAgpAlloc(pI810->drmSubFD, pI810->MC.Size, 0, NULL, &agpHandle);
+      pI810->xvmcHandle = agpHandle;
+
+      if (agpHandle != 0) {
+         if (drmAgpBind(pI810->drmSubFD, agpHandle, pI810->MC.Start) == 0) {
+            xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+                       "GART: Allocated 7MB for HWMC\n");
+            pI810->MC.End = pI810->MC.Start + pI810->MC.Size;
+         }
+         else {
+            xf86DrvMsg(pScrn->scrnIndex, X_INFO, "GART: HWMC bind failed\n");
+            pI810->MC.Start = 0;
+            pI810->MC.Size = 0;
+            pI810->MC.End = 0;
+         }
+      } else {
+         xf86DrvMsg(pScrn->scrnIndex, X_INFO, "GART: HWMC alloc failed\n");
+         pI810->MC.Start = 0;
+         pI810->MC.Size = 0;
+         pI810->MC.End = 0;
+      }
+      pI810->xvmcContext = 0;
+   }
+
    drmAgpAlloc(pI810->drmSubFD, 4096, 2,
 	       (unsigned long *)&pI810->CursorPhysical, &agpHandle);
    pI810->cursorHandle = agpHandle;
@@ -566,13 +638,11 @@ Bool I810DRIScreenInit(ScreenPtr pScreen)
       pI810->CursorPhysical = 0;
    }
 
-   /* Steal some of the excess cursor space for the overlay regs,
-    * then allocate 202*2 pages for the overlay buffers.
+   /* Steal some of the excess cursor space for the overlay regs.
     */
     pI810->OverlayPhysical = pI810->CursorPhysical + 1024;
     pI810->OverlayStart = pI810->CursorStart + 1024;
 
-    /* drmAddMap happens later to preserve index order */
 
 
 
@@ -585,6 +655,57 @@ Bool I810DRIScreenInit(ScreenPtr pScreen)
 		      pI810->BackBuffer.Start,
 		      i810_pitches[pitch_idx],
 		      8*1024*1024);
+
+
+   /* These are for HWMC surfaces */
+   if(pI810->numSurfaces == 6) {
+      I810SetTiledMemory(pScrn, 3,
+                    pI810->MC.Start,
+                    512,
+                    1024*1024);
+
+      I810SetTiledMemory(pScrn, 4,
+                    pI810->MC.Start + 1024*1024,
+                    512,
+                    1024*1024);
+
+      I810SetTiledMemory(pScrn, 5,
+                    pI810->MC.Start + 1024*1024*2,
+                    1024,
+                    1024*1024);
+
+      I810SetTiledMemory(pScrn, 6,
+                    pI810->MC.Start + 1024*1024*3,
+                    1024,
+                    4*1024*1024);
+   }
+   if(pI810->numSurfaces == 7) {
+      I810SetTiledMemory(pScrn, 3,
+                      pI810->MC.Start,
+                      512,
+                      2*1024*1024);
+
+      I810SetTiledMemory(pScrn, 4,
+                      pI810->MC.Start + 2*1024*1024,
+                      512,
+                      512*1024);
+
+      I810SetTiledMemory(pScrn, 5,
+                      pI810->MC.Start + 2*1024*1024 + 512*1024,
+                      1024,
+                      512*1024);
+
+      I810SetTiledMemory(pScrn, 6,
+                      pI810->MC.Start + 3*1024*1024,
+                      1024,
+                      1*1024*1024);
+
+      I810SetTiledMemory(pScrn, 7,
+                      pI810->MC.Start + 4*1024*1024,
+                      1024,
+                      4*1024*1024);
+
+   }
 
    pI810->auxPitch = i810_pitches[pitch_idx];
    pI810->auxPitchBits = i810_pitch_flags[pitch_idx];
@@ -774,6 +895,7 @@ I810DRICloseScreen(ScreenPtr pScreen)
    if(pI810->backHandle) drmAgpFree(pI810->drmSubFD, pI810->backHandle);
    if(pI810->zHandle) drmAgpFree(pI810->drmSubFD, pI810->zHandle);
    if(pI810->cursorHandle) drmAgpFree(pI810->drmSubFD, pI810->cursorHandle);
+   if(pI810->xvmcHandle) drmAgpFree(pI810->drmSubFD, pI810->xvmcHandle);
    if(pI810->sysmemHandle) drmAgpFree(pI810->drmSubFD, pI810->sysmemHandle);
 
    if(pI810->agpAcquired == TRUE) drmAgpRelease(pI810->drmSubFD);
@@ -781,6 +903,7 @@ I810DRICloseScreen(ScreenPtr pScreen)
    pI810->backHandle = 0;
    pI810->zHandle = 0;
    pI810->cursorHandle = 0;
+   pI810->xvmcHandle = 0;
    pI810->sysmemHandle = 0;
    pI810->agpAcquired = FALSE;
    pI810->dcacheHandle = 0;
@@ -835,8 +958,6 @@ I810DRISwapContext(ScreenPtr pScreen, DRISyncType syncType,
        oldContextType == DRI_2D_CONTEXT &&
        newContextType == DRI_2D_CONTEXT)
    {
-      ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
-
       if (I810_DEBUG & DEBUG_VERBOSE_DRI)
 	 ErrorF("I810DRISwapContext (in)\n");
 

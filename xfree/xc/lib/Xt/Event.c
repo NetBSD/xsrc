@@ -1,4 +1,4 @@
-/* $Xorg: Event.c,v 1.4 2000/08/17 19:46:11 cpqbld Exp $ */
+/* $Xorg: Event.c,v 1.5 2001/02/09 02:03:54 xorgcvs Exp $ */
 
 /***********************************************************
 Copyright 1987, 1988 by Digital Equipment Corporation, Maynard, Massachusetts,
@@ -37,7 +37,11 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 Copyright 1987, 1988, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -54,16 +58,11 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
+/* $XFree86: xc/lib/Xt/Event.c,v 3.10 2001/12/14 19:56:11 dawes Exp $ */
 
 #include "IntrinsicI.h"
 #include "Shell.h"
 #include "StringDefs.h"
-
-#ifdef __STDC__
-#define Const const
-#else
-#define Const /**/
-#endif
 
 typedef struct _XtEventRecExt {
     int type;
@@ -265,7 +264,7 @@ AddEventHandler(widget, select_data, type, has_type_specifier, other, proc,
     XtListPosition  position;
 {
     register XtEventRec *p, **pp;
-    EventMask oldMask, eventMask;
+    EventMask oldMask = 0, eventMask = 0;
 
     if (!has_type_specifier) {
 	eventMask = *(EventMask*)select_data & ~NonMaskableMask;
@@ -579,7 +578,7 @@ typedef struct _WWTable {
     WWPair pairs;		/* bogus entries */
 } *WWTable;
 
-static Const WidgetRec WWfake;	/* placeholder for deletions */
+static const WidgetRec WWfake;	/* placeholder for deletions */
 
 #define WWHASH(tab,win) ((win) & tab->mask)
 #define WWREHASHVAL(tab,win) ((((win) % tab->rehash) + 2) | 1)
@@ -1235,7 +1234,7 @@ char * arg;
     return(FALSE);
 }
 
-static EventMask Const masks[] = {
+static EventMask const masks[] = {
 	0,			    /* Error, should never see  */
 	0,			    /* Reply, should never see  */
 	KeyPressMask,		    /* KeyPress			*/
@@ -1310,11 +1309,12 @@ static Widget LookupSpringLoaded(grabList)
     XtGrabList	gl;
 
     for (gl = grabList; gl != NULL; gl = gl->next) {
-	if (gl->spring_loaded)
+	if (gl->spring_loaded) {
 	  if (XtIsSensitive(gl->widget))
 	    return gl->widget;
 	  else
 	    return NULL;
+	}
 	if (gl->exclusive) break;
     }
     return NULL;
@@ -1334,10 +1334,10 @@ static Boolean DispatchEvent(event, widget)
 	    if (nextEvent.type == LeaveNotify &&
 		event->xcrossing.window == nextEvent.xcrossing.window &&
 		nextEvent.xcrossing.mode == NotifyNormal &&
-		(event->xcrossing.detail != NotifyInferior &&
-		 nextEvent.xcrossing.detail != NotifyInferior ||
-		 event->xcrossing.detail == NotifyInferior &&
-		 nextEvent.xcrossing.detail == NotifyInferior)) {
+		((event->xcrossing.detail != NotifyInferior &&
+		 nextEvent.xcrossing.detail != NotifyInferior) ||
+		 (event->xcrossing.detail == NotifyInferior &&
+		 nextEvent.xcrossing.detail == NotifyInferior))) {
 		/* skip the enter/leave pair */
 		XNextEvent(event->xcrossing.display, &nextEvent);
 		return False;
@@ -1428,8 +1428,6 @@ Boolean _XtDefaultDispatcher(event)
 	EventMask	mask = _XtConvertTypeToMask(event->type);
 	Widget		dspWidget;
 	Boolean		was_filtered = False;
-	extern Widget	_XtFindRemapWidget();
-	extern void	_XtUngrabBadGrabs();
 
 	dspWidget = _XtFindRemapWidget(event, widget, mask, pdi);
 	    

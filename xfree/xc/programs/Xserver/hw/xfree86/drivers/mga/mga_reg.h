@@ -2,7 +2,7 @@
 
 
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/mga/mga_reg.h,v 1.17 2001/04/25 14:23:00 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/mga/mga_reg.h,v 1.18 2001/09/26 12:59:18 alanh Exp $ */
 
 
 
@@ -317,6 +317,7 @@
 #define MGA1064_CUR_YHI		0x0f
 
 /* MGA1064 indirect registers */
+#define MGA1064_DVI_PIPE_CTL    0x03
 #define MGA1064_CURSOR_BASE_ADR_LOW	0x04
 #define MGA1064_CURSOR_BASE_ADR_HI	0x05
 #define MGA1064_CURSOR_CTL	0x06
@@ -403,6 +404,8 @@
 #define MGA1064_DISP_CTL        0x8a
 #define MGA1064_SYNC_CTL        0x8b
 #define MGA1064_PWR_CTL         0xa0
+#define MGA1064_PAN_CTL         0xa2
+
 /* Using crtc2 */
 #define MGAREG2_C2CTL            0x10
 #define MGAREG2_C2HPARAM         0x14

@@ -21,7 +21,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/programs/Xserver/Xext/xvdisp.c,v 1.19 2001/03/07 19:37:51 mvojkovi Exp $ */
+/* $XFree86: xc/programs/Xserver/Xext/xvdisp.c,v 1.25 2001/11/18 23:55:48 mvojkovi Exp $ */
 
 /*
 ** File: 
@@ -349,7 +349,7 @@ static int
 ProcXvQueryExtension(ClientPtr client)
 {
   xvQueryExtensionReply rep;
-  REQUEST(xvQueryExtensionReq);
+  /* REQUEST(xvQueryExtensionReq); */
   REQUEST_SIZE_MATCH(xvQueryExtensionReq);
 
   rep.type = X_Reply;
@@ -1206,6 +1206,9 @@ ProcXvShmPutImage(ClientPtr client)
 }
 #endif
 
+#ifdef XvMCExtension
+XvImagePtr XvMCFindXvImage(XvPortPtr pPort, CARD32 id);
+#endif
 
 static int 
 ProcXvQueryImageAttributes(ClientPtr client)
@@ -1233,6 +1236,11 @@ ProcXvQueryImageAttributes(ClientPtr client)
 	  break;
       }
   }
+
+#ifdef XvMCExtension
+  if(!pImage)
+     pImage = XvMCFindXvImage(pPort, stuff->id);
+#endif
 
   if(!pImage)
      return BadMatch;
@@ -2109,6 +2117,8 @@ void XineramifyXv(void)
    int i, j, k, l;
 
    XvXRTPort = CreateNewResourceType(XineramaDeleteResource);
+
+   if(!xvsp0) return;
    
    for(i = 0; i < xvsp0->nAdaptors; i++) {
       refAdapt = xvsp0->pAdaptors + i;
@@ -2152,7 +2162,7 @@ void XineramifyXv(void)
 	 /* prefer overlay/overlay non-overlay/non-overlay pairing */
 	 for(k = 0; k < xvsp->nAdaptors; k++) {
 	    pAdapt = xvsp->pAdaptors + k;
-	    if((pAdapt->type & XvImageMask) & (pAdapt->nImages > 0)) {
+	    if((pAdapt->type & XvImageMask) && (pAdapt->nImages > 0)) {
 	      hasOverlay = FALSE;
               for(l = 0; l < pAdapt->nAttributes; l++) {
 	         if(!strcmp(pAdapt->name, "XV_COLORKEY")) {
@@ -2177,7 +2187,7 @@ void XineramifyXv(void)
 	 	 
 	 for(k = 0; k < xvsp->nAdaptors; k++) {
 	    pAdapt = xvsp->pAdaptors + k;
-	    if((pAdapt->type & XvImageMask) & (pAdapt->nImages > 0)) {
+	    if((pAdapt->type & XvImageMask) && (pAdapt->nImages > 0)) {
 	      	 MatchingAdaptors[j] = pAdapt;
 		 break;
 	    }

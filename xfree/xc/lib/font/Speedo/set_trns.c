@@ -21,7 +21,7 @@ INCIDENTAL OR CONSEQUENTIAL DAMAGES, ARISING OUT OF OR IN ANY WAY CONNECTED
 WITH THE SPEEDO SOFTWARE OR THE BITSTREAM CHARTER OUTLINE FONT.
 
 */
-/* $XFree86: xc/lib/font/Speedo/set_trns.c,v 1.3 2001/01/17 19:43:18 dawes Exp $ */
+/* $XFree86: xc/lib/font/Speedo/set_trns.c,v 1.4 2001/08/27 19:49:50 dawes Exp $ */
 
 
 
@@ -1167,15 +1167,15 @@ fix15    i, j, k, l, n;
 ufix8    format;
 ufix8    format_copy;
 ufix8    tmpufix8;
-fix15    start_orus;
+fix15    start_orus = 0;
 ufix8    edge_org;
 ufix8    edge;
 ufix16   adj_factor;
 fix15    adj_orus;
-fix15    end_orus;
+fix15    end_orus = 0;
 fix31    zone_orus;
-fix15    start_pix;
-fix15    end_pix;
+fix15    start_pix = 0;
+fix15    end_pix = 0;
 
 
 #if INCL_PLAID_OUT               /* Plaid data monitoring included? */

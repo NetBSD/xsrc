@@ -1,17 +1,20 @@
 .TH XvQueryExtension 3X __vendorversion__
-.\" $XFree86: xc/doc/man/Xv/XvQueryExtension.man,v 1.5 2001/01/27 18:20:36 dawes Exp $
+.\" $XFree86: xc/doc/man/Xv/XvQueryExtension.man,v 1.6 2001/08/17 13:27:50 dawes Exp $
 .SH Name
 XvQueryExtension \- return version and release of extension
 .\"
 .SH Syntax
 .B #include <X11/extensions/Xvlib.h> 
 .sp 1l
-\fBXvQueryExtension(\fIp_version, p_release, 
+\fBXvQueryExtension(\fIdpy, p_version, p_release, 
 .br
 	p_request_base, p_event_base, p_error_base\fR)
 .sp 1l
-\fBunsigned int *p_version, *p_release;
-\fBunsigned int *p_request_base, *p_event_base, *p_error_base;
+\fBDisplay \fI*dpy\fR;
+.br
+\fBunsigned int \fI*p_version, *p_release\fR;
+.br
+\fBunsigned int \fI*p_request_base, *p_event_base, *p_error_base\fR;
 .\"
 .SH Arguments
 .\"
@@ -38,7 +41,7 @@ base are also returned.
 .\"
 .SH Returned Values
 .IP [Success] 8
-Returns True if XvQueryExtension(3X) completed successfully.
+Returned if XvQueryExtension(3X) completed successfully.
 .IP [XvBadExtension] 8
 Returned if the Xv video extension is not available for 
 the named display.

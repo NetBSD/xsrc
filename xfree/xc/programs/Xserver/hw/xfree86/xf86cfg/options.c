@@ -26,7 +26,7 @@
  *
  * Author: Paulo César Pereira de Andrade <pcpa@conectiva.com.br>
  *
- * $XFree86: xc/programs/Xserver/hw/xfree86/xf86cfg/options.c,v 1.6.2.2 2001/05/25 21:45:01 paulo Exp $
+ * $XFree86: xc/programs/Xserver/hw/xfree86/xf86cfg/options.c,v 1.12 2001/11/03 20:32:31 paulo Exp $
  */
 
 #include "options.h"
@@ -41,6 +41,7 @@
 #include <X11/Xaw/SimpleMenP.h>
 #include <X11/Xaw/SmeBSB.h>
 #include <X11/Xaw/Viewport.h>
+#include <ctype.h>
 
 /*
  * Prototypes
@@ -57,6 +58,8 @@ static void SelectModuleCallback(Widget, XtPointer, XtPointer);
 static void SelectModuleOptionCallback(Widget, XtPointer, XtPointer);
 static void ModuleOptionsPopdown(Widget, XtPointer, XtPointer);
 #endif
+static Bool EnumDatabase(XrmDatabase*, XrmBindingList, XrmQuarkList,
+			 XrmRepresentation*, XrmValue*, XPointer);
 
 /*
  * Initialization
@@ -67,7 +70,11 @@ static Widget add, remov, update, list, name, value;
 static char *option_str;
 static int option_index, popped = False;
 static char *Options = "lib/X11/Options";
-static XrmDatabase xrm;
+XrmDatabase options_xrm;
+struct {
+    char *string;
+    int offset;
+} rebuild_xrm;
 #ifdef USE_MODULES
 static Widget modList, optList, desc, modOptionsShell, labelType;
 static char *module_sel;
@@ -242,7 +249,7 @@ OptionsPopup(XF86OptionPtr *opts)
     option_str = NULL;
     options = opts;
     if (first) {
-	Widget pane, form, viewport, bottom, popdown, command;
+	Widget pane, form, viewport, bottom, popdown;
 
 	first = 0;
 
@@ -264,6 +271,8 @@ OptionsPopup(XF86OptionPtr *opts)
 	XtAddCallback(update, XtNcallback, UpdateOption, NULL);
 #ifdef USE_MODULES
 	if (!nomodules) {
+	    Widget command;
+
 	    command = XtCreateManagedWidget("help", commandWidgetClass,
 					    form, NULL, 0);
 	    XtAddCallback(command, XtNcallback, ModuleOptionsPopup, NULL);
@@ -552,6 +561,10 @@ SelectModuleCallback(Widget w, XtPointer user_data, XtPointer call_data)
 
 	XtVaSetValues(desc, XtNstring, "", NULL);
 	XawListUnhighlight(optList);
+
+	/* force relayout */
+	XtUnmanageChild(optList);
+	XtManageChild(optList);
     }
 }
 
@@ -579,7 +592,7 @@ SelectModuleOptionCallback(Widget w, XtPointer user_data, XtPointer call_data)
 	OptionInfoPtr opts = mod->option;
 
 	while (opts && opts->name) {
-	    if (strcmp(info->string, opts->name) == 0)
+	    if (strcasecmp(opts->name, info->string) == 0)
 		break;
 	    ++opts;
 	}
@@ -644,25 +657,131 @@ UpdateOption(Widget w, XtPointer user_data, XtPointer call_data)
     XtSetSensitive(update, True);
 }
 
-char *
-GetOptionDescription(char *module, char *option)
+/*ARGUSED*/
+static Bool
+EnumDatabase(XrmDatabase *db, XrmBindingList bindings, XrmQuarkList quarks,
+	     XrmRepresentation *type, XrmValue *value, XPointer closure)
 {
-    static int first = 1;
-    char *type;
-    XrmValue value;
-    char query[256];
+    char *module = XrmQuarkToString(quarks[0]),
+	 *option = XrmQuarkToString(quarks[1]);
 
-    if (first) {
-	first = 0;
-	XrmInitialize();
-	if ((xrm = XrmGetFileDatabase(Options)) == (XrmDatabase)0) {
-	    fprintf(stderr, "Cannot open '%s' database.\n", Options);
-	    return (NULL);
+    /* handle *.Option: value */
+    if (module && option == NULL) {
+	option = module;
+	module = "*";
+    }
+
+    /*
+     * NOTE: If the Options file is changed to support any other format than
+     *
+     *		Module.Option: description text
+     *
+     * this code will also need to be updated.
+     */
+
+    if (module) {
+	XrmValue xrm;
+	char *type, *value, query[256];
+
+	XmuSnprintf(query, sizeof(query), "%s.%s", module, option);
+	if (XrmGetResource(options_xrm, query, "Module.Option", &type, &xrm))
+	    value = (char*)xrm.addr;
+	else
+	    value = NULL;
+
+	if (value) {
+	    char *norm;
+	    unsigned char *ptr;
+	    int position;
+	    int length = strlen(module) + strlen(option) + strlen(value) + 4;
+
+	    rebuild_xrm.string = XtRealloc(rebuild_xrm.string,
+					   rebuild_xrm.offset + length);
+	    position = rebuild_xrm.offset +
+		       sprintf(rebuild_xrm.string + rebuild_xrm.offset, "%s.%s:",
+			       module, option);
+
+	    /* removes underlines and spaces */
+	    norm = strchr(rebuild_xrm.string + rebuild_xrm.offset, '.') + 1;
+	    for (; *norm; norm++) {
+		if (*norm == '_' || *norm == ' ' || *norm == '\t') {
+		    memmove(norm, norm + 1, strlen(norm) + 1);
+		    --position;
+		    --length;
+		}
+	    }
+
+	    for (ptr = (unsigned char*)rebuild_xrm.string + rebuild_xrm.offset;
+		 *ptr; ptr++)
+		*ptr = tolower(*ptr);
+	    sprintf(rebuild_xrm.string + position, "%s\n", value);
+	    rebuild_xrm.offset += length - 1;
 	}
     }
 
+    return (False);
+}
+
+Bool
+InitializeOptionsDatabase(void)
+{
+    static int first = 1;
+    static Bool result = True;
+
+    if (first) {
+	XrmQuark names[2];
+	XrmQuark classes[2];
+
+	first = 0;
+	XrmInitialize();
+	if ((options_xrm = XrmGetFileDatabase(Options)) == (XrmDatabase)0) {
+	    fprintf(stderr, "Cannot open '%s' database.\n", Options);
+	    return (False);
+	}
+
+	/* rebuild database, using only lowercase characters */
+	names[0] = classes[0] = names[1] = classes[1] = NULLQUARK;
+	(void)XrmEnumerateDatabase(options_xrm, (XrmNameList)&names,
+				   (XrmClassList)&classes, XrmEnumAllLevels,
+				   EnumDatabase, NULL);
+
+	/* free previous database, as it is not guaranteed to be
+         * "case insensitive" */
+	XrmDestroyDatabase(options_xrm);
+
+	/* create case insensitive database by making everything lowercase */
+	if (rebuild_xrm.string == NULL ||
+	    (options_xrm = XrmGetStringDatabase(rebuild_xrm.string)) ==
+	    (XrmDatabase)0) {
+	    fprintf(stderr, "Cannot rebuild '%s' database.\n", Options);
+	    XtFree(rebuild_xrm.string);
+	    return (False);
+	}
+	XtFree(rebuild_xrm.string);
+    }
+
+    return (result);
+}
+
+char *
+GetOptionDescription(char *module, char *option)
+{
+    char *type;
+    XrmValue value;
+    char query[256];
+    unsigned char *ptr;
+
+    InitializeOptionsDatabase();
+
     XmuSnprintf(query, sizeof(query), "%s.%s", module, option);
-    if (XrmGetResource(xrm, query, "Module.Option", &type, &value))
+    ptr = (unsigned char*)strchr(query, '.') + 1;
+    for (; *ptr; ptr++) {
+	if (*ptr == '_' || *ptr == ' ' || *ptr == '\t')
+	    memmove(ptr, ptr + 1, strlen((char*)ptr) + 1);
+    }
+    for (ptr = (unsigned char*)query; *ptr; ptr++)
+	*ptr = tolower(*ptr);
+    if (XrmGetResource(options_xrm, query, "Module.Option", &type, &value))
 	return ((char*)value.addr);
 
     return (NULL);

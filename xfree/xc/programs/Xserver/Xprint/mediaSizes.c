@@ -1,4 +1,4 @@
-/* $Xorg: mediaSizes.c,v 1.3 2000/08/17 19:48:07 cpqbld Exp $ */
+/* $Xorg: mediaSizes.c,v 1.4 2001/03/14 18:44:37 pookie Exp $ */
 /*
 (c) Copyright 1996 Hewlett-Packard Company
 (c) Copyright 1996 International Business Machines Corp.
@@ -30,7 +30,7 @@ not be used in advertising or otherwise to promote the sale, use or other
 dealings in this Software without prior written authorization from said
 copyright holders.
 */
-/* $XFree86: xc/programs/Xserver/Xprint/mediaSizes.c,v 1.4 2001/01/17 22:36:28 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/Xprint/mediaSizes.c,v 1.5 2001/12/21 21:02:05 dawes Exp $ */
 
 /*******************************************************************
 **
@@ -208,6 +208,44 @@ XpGetContentOrientation(XpContextPtr pContext)
 	XpOidListDelete(content_orientations_supported);
     }
     return orientation;
+}
+
+/*
+ * XpGetAvailableCompression determines the available-compression as
+ * determined by the passed context. The page and document pools are
+ * queried in turn for a specified content-orientation attribute. If none
+ * is found the first available-compression in the
+ * avaiable-compressions-supported printer attribute is taken as the
+ * default.
+ *
+ * Note: This routine assumes the values found in the passed context's
+ *       attributes pools have been validated.
+ */
+XpOid
+XpGetAvailableCompression(
+			XpContextPtr pContext)
+{
+    XpOid compression;
+
+    compression = XpGetOidAttr(pContext, XPPageAttr,
+			       xpoid_att_available_compression,
+			       (XpOidList*)NULL);
+    if(xpoid_none == compression)
+	compression = XpGetOidAttr(pContext, XPDocAttr,
+				   xpoid_att_available_compression,
+				   (XpOidList*)NULL);
+    if(xpoid_none == compression)
+    {
+	XpOidList* available_compressions_supported;
+
+	available_compressions_supported =
+	    XpGetListAttr(pContext, XPPrinterAttr,
+			  xpoid_att_available_compressions_supported,
+			  (XpOidList*)NULL);
+	compression = XpOidListGetOid(available_compressions_supported, 0);
+	XpOidListDelete(available_compressions_supported);
+    }
+    return compression;
 }
 
 /*

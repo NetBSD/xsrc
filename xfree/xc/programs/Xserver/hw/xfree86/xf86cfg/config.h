@@ -26,7 +26,7 @@
  *
  * Author: Paulo César Pereira de Andrade <pcpa@conectiva.com.br>
  *
- * $XFree86: xc/programs/Xserver/hw/xfree86/xf86cfg/config.h,v 1.10.2.1 2001/05/21 22:24:02 paulo Exp $
+ * $XFree86: xc/programs/Xserver/hw/xfree86/xf86cfg/config.h,v 1.15 2001/08/17 22:08:15 tsi Exp $
  */
 
 #include <X11/IntrinsicP.h>
@@ -37,14 +37,11 @@
 #include <dirent.h>
 #include <string.h>
 #include <unistd.h>
-
-#if NeedVarargsPrototypes
-#include <stdarg.h>
-#define Va_start(a,b) va_start(a,b)
-#else
-#include <varargs.h>
-#define Va_start(a,b) va_start(a)
+#if defined(sun) && defined(SVR4)
+#include <strings.h>
 #endif
+
+#include <stdarg.h>
 
 #ifdef __EMX__
 #define strcasecmp stricmp
@@ -93,6 +90,12 @@
 
 #define	UNUSED			0
 #define	USED			1
+
+#define CONFIG_LAYOUT	0
+#define CONFIG_SCREEN	1
+#define CONFIG_MODELINE	2
+#define CONFIG_ACCESSX	3
+extern int config_mode;
 
 #define CONFPATH	"%A," "%R," \
 			"/etc/X11/%R," "%P/etc/X11/%R," \
@@ -217,6 +220,8 @@ extern xf86cfgComputer computer;
 extern Atom wm_delete_window;
 extern Display *DPY;
 extern Pixmap menuPixmap;
-extern Bool nomodules;
+#ifdef USE_MODULES
+extern int nomodules;
+#endif
 
 #endif /* _xf86cfg_config_h */

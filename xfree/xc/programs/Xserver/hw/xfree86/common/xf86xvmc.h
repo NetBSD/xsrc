@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86xvmc.h,v 1.4 2001/04/08 23:00:27 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86xvmc.h,v 1.5 2001/11/14 21:54:39 mvojkovi Exp $ */
 
 #ifndef _XF86XVMC_H
 #define _XF86XVMC_H
@@ -14,7 +14,7 @@ typedef struct {
 typedef struct {
   int surface_type_id;  /* Driver generated.  Must be unique on the port */
   int chroma_format;
-  int color_description;
+  int color_description;  /* no longer used */
   unsigned short max_width;       
   unsigned short max_height;   
   unsigned short subpicture_max_width;

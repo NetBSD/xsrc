@@ -43,7 +43,7 @@ not be used in advertising or otherwise to promote the sale, use or other
 dealings in this Software without prior written authorization from said
 copyright holders.
 */
-/* $XFree86: xc/programs/Xserver/Xprint/pcl/PclPrint.c,v 1.6 2001/01/17 22:36:30 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/Xprint/pcl/PclPrint.c,v 1.7 2001/10/28 03:32:55 tsi Exp $ */
 
 #include <stdio.h>
 #include <string.h>
@@ -72,8 +72,6 @@ PclStartJob(
 {
     PclContextPrivPtr pConPriv = 
       (PclContextPrivPtr)pCon->devPrivates[PclContextPrivateIndex].ptr;
-    char *jobHeader;
-    char s[40];
     PclPaletteMap *pal;
     
     /*
@@ -140,7 +138,7 @@ PclEndJob(
     char *fileName, *trailer;
     struct stat statBuf;
     int n;
-    PclPaletteMapPtr p, t;
+    PclPaletteMapPtr p;
 
     trailer = "\033%-12345X@PJL RESET\n";
 
@@ -250,7 +248,6 @@ PclStartPage(
      XpContextPtr pCon,
      WindowPtr pWin)
 {
-    register WindowPtr pChild;
     PclContextPrivPtr pConPriv = (PclContextPrivPtr)
       pCon->devPrivates[PclContextPrivateIndex].ptr;
     PclWindowPrivPtr pWinPriv =
@@ -258,9 +255,7 @@ PclStartPage(
     xRectangle repro;
     char t[80];
     XpOid orient, plex, tray, medium;
-    unsigned short wid, ht;
     int dir, plexNum, num;
-    xEvent event;
     
     /*
      * Put a pointer to the context in the window private structure
@@ -493,8 +488,6 @@ PclEndPage(
 {
     PclContextPrivPtr pConPriv = (PclContextPrivPtr)
       pCon->devPrivates[PclContextPrivateIndex].ptr;
-    PclWindowPrivPtr    pWinPriv =
-      (PclWindowPrivPtr)pWin->devPrivates[PclWindowPrivateIndex].ptr;
 
     struct stat statBuf;
 

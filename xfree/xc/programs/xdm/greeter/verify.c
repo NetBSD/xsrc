@@ -1,9 +1,13 @@
-/* $Xorg: verify.c,v 1.3 2000/08/17 19:54:17 cpqbld Exp $ */
+/* $Xorg: verify.c,v 1.4 2001/02/09 02:05:41 xorgcvs Exp $ */
 /*
 
 Copyright 1988, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included
 in all copies or substantial portions of the Software.
@@ -22,7 +26,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/xdm/greeter/verify.c,v 3.13.2.1 2001/05/25 18:50:14 dawes Exp $ */
+/* $XFree86: xc/programs/xdm/greeter/verify.c,v 3.21 2001/12/14 20:01:29 dawes Exp $ */
 
 /*
  * xdm - display manager daemon
@@ -43,17 +47,10 @@ from The Open Group.
 # ifdef USESHADOW
 #  include	<shadow.h>
 #  include	<errno.h>
-#  ifdef X_NOT_STDC_ENV
-extern int errno;
-#  endif
 # endif
 #endif
 
 # include	"greet.h"
-
-#ifdef X_NOT_STDC_ENV
-char *getenv();
-#endif
 
 #ifdef QNX4
 extern char *crypt(const char *, const char *);
@@ -124,35 +121,42 @@ static int PAM_conv (int num_msg,
 #endif
 		     struct pam_response **resp,
 		     void *appdata_ptr) {
-	int replies = 0;
+	int count = 0, replies = 0;
 	struct pam_response *reply = NULL;
+	size_t size = sizeof(struct pam_response);
 
-	reply = malloc(sizeof(struct pam_response));
-	if (!reply) return PAM_CONV_ERR;
-#define COPY_STRING(s) (s) ? strdup(s) : NULL
+#define GET_MEM \
+	if (reply) realloc(reply, size); \
+	else reply = (struct pam_response*)malloc(size); \
+	if (!reply) return PAM_CONV_ERR; \
+	size += sizeof(struct pam_response)
+#define COPY_STRING(s) (s) ? strdup(s) : (char*)NULL
 
-	for (replies = 0; replies < num_msg; replies++) {
-		switch (msg[replies]->msg_style) {
+	for (count = 0; count < num_msg; count++) {
+		switch (msg[count]->msg_style) {
+		case PAM_PROMPT_ECHO_ON:
+			/* user name given to PAM already */
+			return PAM_CONV_ERR;
 		case PAM_PROMPT_ECHO_OFF:
 			/* wants password */
+			GET_MEM;
 			reply[replies].resp_retcode = PAM_SUCCESS;
 			reply[replies].resp = COPY_STRING(PAM_password);
+			/* PAM frees resp */
 			break;
 		case PAM_TEXT_INFO:
 			/* ignore the informational mesage */
 			break;
-		case PAM_PROMPT_ECHO_ON:
-			/* user name given to PAM already */
-			/* fall through */
 		default:
 			/* unknown or PAM_ERROR_MSG */
-			free (reply);
+			if (reply) free (reply);
 			return PAM_CONV_ERR;
 		}
 	}
 
 #undef COPY_STRING
-	*resp = reply;
+#undef GET_MEM
+	if (reply) *resp = reply;
 	return PAM_SUCCESS;
 }
 
@@ -162,6 +166,115 @@ static struct pam_conv PAM_conversation = {
 };
 #endif /* USE_PAM */
 
+#ifdef USE_BSDAUTH
+int
+Verify (struct display *d, struct greet_info *greet, struct verify_info *verify)
+{
+	struct passwd	*p;
+	login_cap_t	*lc;
+	auth_session_t	*as;
+	char		*style, *shell, *home, *s, **argv;
+	char		path[MAXPATHLEN];
+	int		authok;
+
+	/* User may have specified an authentication style. */
+	if ((style = strchr(greet->name, ':')) != NULL)
+		*style++ = '\0';
+
+	Debug ("Verify %s, style %s ...\n", greet->name,
+	    style ? style : "default");
+
+	p = getpwnam (greet->name);
+	endpwent();
+
+	if (!p || strlen (greet->name) == 0) {
+		Debug("getpwnam() failed.\n");
+		bzero(greet->password, strlen(greet->password));
+		return 0;
+	}
+
+	if ((lc = login_getclass(p->pw_class)) == NULL) {
+		Debug("login_getclass() failed.\n");
+		bzero(greet->password, strlen(greet->password));
+		return 0;
+	}
+	if ((style = login_getstyle(lc, style, "xdm")) == NULL) {
+		Debug("login_getstyle() failed.\n");
+		bzero(greet->password, strlen(greet->password));
+		return 0;
+	}
+	if ((as = auth_open()) == NULL) {
+		Debug("auth_open() failed.\n");
+		login_close(lc);
+		bzero(greet->password, strlen(greet->password));
+		return 0;
+	}
+	if (auth_setoption(as, "login", "yes") == -1) {
+		Debug("auth_setoption() failed.\n");
+		login_close(lc);
+		bzero(greet->password, strlen(greet->password));
+		return 0;
+	}
+
+	/* Set up state for no challenge, just check a response. */
+	auth_setstate(as, 0);
+	auth_setdata(as, "", 1);
+	auth_setdata(as, greet->password, strlen(greet->password) + 1);
+
+	/* Build path of the auth script and call it */
+	snprintf(path, sizeof(path), _PATH_AUTHPROG "%s", style);
+	auth_call(as, path, style, "-s", "response", greet->name, NULL);
+	authok = auth_getstate(as);
+
+	if ((authok & AUTH_ALLOW) == 0) {
+		Debug("password verify failed\n");
+		bzero(greet->password, strlen(greet->password));
+		auth_close(as);
+		login_close(lc);
+		return 0;
+	}
+	/* Run the approval script */
+	if (!auth_approval(as, lc, greet->name, "auth-xdm")) {
+		Debug("login not approved\n");
+		bzero(greet->password, strlen(greet->password));
+		auth_close(as);
+		login_close(lc);
+		return 0;
+	}
+	auth_close(as);
+	login_close(lc);
+	/* Check empty passwords against allowNullPasswd */
+	if (!greet->allow_null_passwd && strlen(greet->password) == 0) {
+		Debug("empty password not allowed\n");
+		return 0;
+	}
+	/* Only accept root logins if allowRootLogin resource is set */
+	if (p->pw_uid == 0 && !greet->allow_root_login) {
+		Debug("root logins not allowed\n");
+		bzero(greet->password, strlen(greet->password));
+		return 0;
+	}
+
+	/*
+	 * Shell must be in /etc/shells 
+	 */
+	for (;;) {
+		s = getusershell();
+		if (s == NULL) {
+			/* did not found the shell in /etc/shells 
+			   -> failure */
+			Debug("shell not in /etc/shells\n");
+			bzero(greet->password, strlen(greet->password));
+			endusershell();
+			return 0;
+		}
+		if (strcmp(s, p->pw_shell) == 0) {
+			/* found the shell in /etc/shells */
+			endusershell();
+			break;
+		}
+	} 
+#else /* !USE_BSDAUTH */
 int
 Verify (struct display *d, struct greet_info *greet, struct verify_info *verify)
 {
@@ -172,16 +285,17 @@ Verify (struct display *d, struct greet_info *greet, struct verify_info *verify)
 #ifdef USESHADOW
 	struct spwd	*sp;
 #endif
+	char		*user_pass = NULL;
 #endif
 #ifdef __OpenBSD__
 	char            *s;
 	struct timeval  tp;
 #endif
-	char		*user_pass = NULL;
 	char		*shell, *home;
 	char		**argv;
 
 	Debug ("Verify %s ...\n", greet->name);
+#ifndef USE_PAM
 	p = getpwnam (greet->name);
 	endpwent();
 
@@ -190,7 +304,6 @@ Verify (struct display *d, struct greet_info *greet, struct verify_info *verify)
 		bzero(greet->password, strlen(greet->password));
 		return 0;
 	} else {
-#ifndef USE_PAM
 #ifdef linux
 	    if (p->pw_passwd[0] == '!' || p->pw_passwd[0] == '*') {
 		Debug ("The account is locked, no login allowed.\n");
@@ -198,9 +311,9 @@ Verify (struct display *d, struct greet_info *greet, struct verify_info *verify)
 		return 0;
 	    }
 #endif
-#endif
 	    user_pass = p->pw_passwd;
 	}
+#endif
 #ifdef KERBEROS
 	if(strcmp(greet->name, "root") != 0){
 		char name[ANAME_SZ];
@@ -265,7 +378,9 @@ Verify (struct display *d, struct greet_info *greet, struct verify_info *verify)
 			return 0;
 		} /* else: null passwd okay */
 	}
+#ifdef KERBEROS
 done:
+#endif
 #ifdef __OpenBSD__
 	/*
 	 * Only accept root logins if allowRootLogin resource is set
@@ -318,10 +433,10 @@ done:
 
 #else /* USE_PAM */
 #define PAM_BAIL	\
-	if (pam_error != PAM_SUCCESS) { pam_end(*pamhp, 0); return 0; }
+	if (pam_error != PAM_SUCCESS) goto pam_failed;
 
 	PAM_password = greet->password;
-	pam_error = pam_start("xdm", p->pw_name, &PAM_conversation, pamhp);
+	pam_error = pam_start("xdm", greet->name, &PAM_conversation, pamhp);
 	PAM_BAIL;
 	pam_error = pam_set_item(*pamhp, PAM_TTY, d->name);
 	PAM_BAIL;
@@ -334,8 +449,24 @@ done:
 	PAM_BAIL;
 	pam_error = pam_setcred(*pamhp, 0);
 	PAM_BAIL;
+	p = getpwnam (greet->name);
+	endpwent();
+
+	if (!p || strlen (greet->name) == 0) {
+		Debug ("getpwnam() failed.\n");
+		bzero(greet->password, strlen(greet->password));
+		return 0;
+	}
+
+	if (pam_error != PAM_SUCCESS) {
+	pam_failed:
+		pam_end(*pamhp, PAM_SUCCESS);
+		*pamhp = NULL;
+		return 0;
+	}
 #undef PAM_BAIL
 #endif /* USE_PAM */
+#endif /* USE_BSDAUTH */
 
 	Debug ("verify succeeded\n");
 	/* The password is passed to StartClient() for use by user-based

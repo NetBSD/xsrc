@@ -26,7 +26,7 @@
  *
  * Author: Paulo César Pereira de Andrade <pcpa@conectiva.com.br>
  *
- * $XFree86: xc/programs/Xserver/hw/xfree86/xf86cfg/keyboard-cfg.c,v 1.14 2001/03/29 16:54:30 paulo Exp $
+ * $XFree86: xc/programs/Xserver/hw/xfree86/xf86cfg/keyboard-cfg.c,v 1.17 2001/11/30 12:12:04 eich Exp $
  */
 
 #include "xf86config.h"
@@ -771,7 +771,9 @@ WriteXKBConfiguration(char *filename, XkbConfigRtrnPtr conf)
 		conf->mk_max_speed);
     fprintf(fp, "MouseKeysCurve		 =	%d\n", conf->mk_curve);
 
-    fprintf(fp, "AccessXTimeout		 =	%d\n", conf->ax_timeout);
+    if (conf->ax_timeout)
+	fprintf(fp, "AccessXTimeout		 =	%d\n",
+		conf->ax_timeout);
     if (conf->initial_ctrls != 0) {
 	fprintf(fp, "Controls		%c=	",
 		conf->replace_initial_ctrls ? ' ' : '+');
@@ -979,7 +981,7 @@ KeyboardRulesCallback(Widget w, XtPointer user_data, XtPointer call_data)
 	model = xkb_info->defs.model = omodel;
 	layout = xkb_info->defs.layout = olayout;
 	variant = xkb_info->defs.variant = ovariant;
-	options = xkb_info->defs.options = ooptions;
+	options = XtNewString(xkb_info->defs.options = ooptions);
 	xkb_rules = oxkb_rules;
 	rules = xkb_rules->rules;
 
@@ -1160,7 +1162,7 @@ UpdateRulesPopups(void)
 {
     int i;
     char *optname;
-    Widget sme, optpopup, optparent;
+    Widget sme, optpopup = NULL, optparent;
 
     /* MODEL */
     if (modelp)

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/radeon_cursor.c,v 1.5 2001/03/03 22:26:10 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/radeon_cursor.c,v 1.9 2001/11/23 19:50:45 dawes Exp $ */
 /*
  * Copyright 2000 ATI Technologies Inc., Markham, Ontario, and
  *                VA Linux Systems Inc., Fremont, California.
@@ -72,9 +72,18 @@ static void RADEONSetCursorColors(ScrnInfoPtr pScrn, int bg, int fg)
     RADEONInfoPtr info        = RADEONPTR(pScrn);
     unsigned char *RADEONMMIO = info->MMIO;
 
+    if(info->IsSecondary)
+    {
+        OUTREG(RADEON_CUR2_CLR0, bg);
+        OUTREG(RADEON_CUR2_CLR1, fg);
+    }
+    else
+    {
     OUTREG(RADEON_CUR_CLR0, bg);
     OUTREG(RADEON_CUR_CLR1, fg);
+    }
 }
+
 
 /* Set cursor position to (x,y) with offset into cursor bitmap at
    (xorigin,yorigin). */
@@ -94,13 +103,38 @@ static void RADEONSetCursorPosition(ScrnInfoPtr pScrn, int x, int y)
     if (xorigin >= cursor->MaxWidth)  xorigin = cursor->MaxWidth - 1;
     if (yorigin >= cursor->MaxHeight) yorigin = cursor->MaxHeight - 1;
 
-    OUTREG(RADEON_CUR_HORZ_VERT_OFF,  (RADEON_CUR_LOCK
+#if 0
+    /* This test is NOT needed, and is the cause of jerky behavior
+     * as the mouse approaches the left edge of the screen, especially
+     * at high acceleration.
+     *
+     * Nowhere below is x (or y) used when they are negative!
+     */
+    if(x >= 0)
+#endif
+    {
+        if(!info->IsSecondary)
+        {
+            OUTREG(RADEON_CUR_HORZ_VERT_OFF,  (RADEON_CUR_LOCK
 				       | (xorigin << 16)
 				       | yorigin));
-    OUTREG(RADEON_CUR_HORZ_VERT_POSN, (RADEON_CUR_LOCK
+            OUTREG(RADEON_CUR_HORZ_VERT_POSN, (RADEON_CUR_LOCK
 				       | ((xorigin ? 0 : x) << 16)
 				       | (yorigin ? 0 : y)));
-    OUTREG(RADEON_CUR_OFFSET,         info->cursor_start + yorigin * 16);
+            OUTREG(RADEON_CUR_OFFSET, info->cursor_start + yorigin * 16);
+        }
+        else
+        {
+            OUTREG(RADEON_CUR2_HORZ_VERT_OFF,  (RADEON_CUR2_LOCK
+				       | (xorigin << 16)
+				       | yorigin));
+            OUTREG(RADEON_CUR2_HORZ_VERT_POSN, (RADEON_CUR2_LOCK
+				       | ((xorigin ? 0 : x) << 16)
+				       | (yorigin ? 0 : y)));
+            OUTREG(RADEON_CUR2_OFFSET,         
+			info->cursor_start + pScrn->fbOffset + yorigin * 16);
+        }
+    }
 }
 
 /* Copy cursor image from `image' to video memory.  RADEONSetCursorPosition
@@ -114,8 +148,16 @@ static void RADEONLoadCursorImage(ScrnInfoPtr pScrn, unsigned char *image)
     int           y;
     CARD32        save;
 
+    if(!info->IsSecondary)
+    {
     save = INREG(RADEON_CRTC_GEN_CNTL);
-    OUTREG(RADEON_CRTC_GEN_CNTL, save & (CARD32)~RADEON_CRTC_CUR_EN);
+        OUTREG(RADEON_CRTC_GEN_CNTL, save & (CARD32)~RADEON_CRTC_CUR_EN);
+    }
+    else
+    { 
+        save = INREG(RADEON_CRTC2_GEN_CNTL);
+        OUTREG(RADEON_CRTC2_GEN_CNTL, save & (CARD32)~RADEON_CRTC2_CUR_EN);
+    }
 
 #if X_BYTE_ORDER == X_BIG_ENDIAN
     switch(info->CurrentLayout.pixel_bytes) {
@@ -170,7 +212,11 @@ static void RADEONLoadCursorImage(ScrnInfoPtr pScrn, unsigned char *image)
 	*d++ = 0x00000000;
     }
 
+    if(!info->IsSecondary)
     OUTREG(RADEON_CRTC_GEN_CNTL, save);
+    else
+        OUTREG(RADEON_CRTC2_GEN_CNTL, save);
+
 }
 
 /* Hide hardware cursor. */
@@ -179,7 +225,11 @@ static void RADEONHideCursor(ScrnInfoPtr pScrn)
     RADEONInfoPtr info        = RADEONPTR(pScrn);
     unsigned char *RADEONMMIO = info->MMIO;
 
+     if(info->IsSecondary)
+        OUTREGP(RADEON_CRTC2_GEN_CNTL, 0, ~RADEON_CRTC2_CUR_EN);
+     else
     OUTREGP(RADEON_CRTC_GEN_CNTL, 0, ~RADEON_CRTC_CUR_EN);
+
 }
 
 /* Show hardware cursor. */
@@ -188,7 +238,16 @@ static void RADEONShowCursor(ScrnInfoPtr pScrn)
     RADEONInfoPtr info        = RADEONPTR(pScrn);
     unsigned char *RADEONMMIO = info->MMIO;
 
-    OUTREGP(RADEON_CRTC_GEN_CNTL, RADEON_CRTC_CUR_EN, ~RADEON_CRTC_CUR_EN);
+    if(info->IsSecondary)
+    {
+         OUTREGP(RADEON_CRTC2_GEN_CNTL, RADEON_CRTC2_CUR_EN,
+               ~RADEON_CRTC2_CUR_EN);
+    }
+    else
+    {
+         OUTREGP(RADEON_CRTC_GEN_CNTL, RADEON_CRTC_CUR_EN,
+              ~RADEON_CRTC_CUR_EN);
+    }
 }
 
 /* Determine if hardware cursor is in use. */

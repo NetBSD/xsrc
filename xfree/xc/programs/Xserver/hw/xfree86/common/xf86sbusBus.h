@@ -20,10 +20,12 @@
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86sbusBus.h,v 3.3 2000/06/30 17:15:11 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86sbusBus.h,v 3.4 2001/10/28 03:33:19 tsi Exp $ */
 
 #ifndef _XF86_SBUSBUS_H
 #define _XF86_SBUSBUS_H
+
+#include "xf86str.h"
 
 #define SBUS_DEVICE_BW2		0x0001
 #define SBUS_DEVICE_CG2		0x0002
@@ -77,6 +79,14 @@ void xf86UnmapSbusMem(sbusDevicePtr psdp, pointer addr, unsigned long size);
 void xf86SbusHideOsHwCursor(sbusDevicePtr psdp);
 void xf86SbusSetOsHwCursorCmap(sbusDevicePtr psdp, int bg, int fg);
 Bool xf86SbusHandleColormaps(ScreenPtr pScreen, sbusDevicePtr psdp);
+
+int promRootNode;
+
+int promGetSibling(int node);
+int promGetChild(int node);
+char * promGetProperty(const char *prop, int *lenp);
+int promGetBool(const char *prop);
+
 int sparcPromInit(void);
 void sparcPromClose(void);
 char * sparcPromGetProperty(sbusPromNodePtr pnode, const char *prop, int *lenp);

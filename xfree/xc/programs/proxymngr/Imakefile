@@ -3,7 +3,7 @@ XCOMM $Xorg: Imakefile,v 1.3 2000/08/17 19:53:59 cpqbld Exp $
 
 
 
-XCOMM $XFree86: xc/programs/proxymngr/Imakefile,v 1.8 2001/01/17 23:45:02 dawes Exp $
+XCOMM $XFree86: xc/programs/proxymngr/Imakefile,v 1.11 2001/10/08 16:36:49 alanh Exp $
 
          DEFINES = StrcasecmpDefines
 
@@ -16,9 +16,7 @@ XCOMM $XFree86: xc/programs/proxymngr/Imakefile,v 1.8 2001/01/17 23:45:02 dawes 
                    
            OBJS1 = main.o pmdb.o config.o
 
-          PROGS1 = ProgramTargetName(proxymngr)
-
-        PROGRAMS = $(PROGS1)
+        PROGRAMS = proxymngr
 
         LBXPROXY = $(BINDIR)/lbxproxy
 

@@ -146,15 +146,15 @@ ftp.ee.lbl.gov (pbmplus*.tar.Z).  Unfortunately PBMPLUS is not nearly as
 portable as the JPEG software is; you are likely to have difficulty making it
 work on any non-Unix machine.
 
-If you are using X Windows you might want to use the xv or xloadimage viewers
-to save yourself the trouble of converting PPM to some other format.  Both of
-these can be found in the contrib directory at export.lcs.mit.edu.  Actually,
-xv version 2.00 and up incorporates our software and thus can read and write
-JPEG files directly.  (NOTE: since xv internally reduces all images to 8
-bits/pixel, a JPEG file written by xv will not be very high quality; and xv
-cannot fully exploit a 24-bit display.  These problems are expected to go away
-in the next xv release, planned for early 1993.  In the meantime, use
-xloadimage for 24-bit displays.)
+If you are using the X Window System you might want to use the xv or
+xloadimage viewers to save yourself the trouble of converting PPM to some other
+format.  Both of these can be found in the contrib directory at
+export.lcs.mit.edu.  Actually, xv version 2.00 and up incorporates our software
+and thus can read and write JPEG files directly.  (NOTE: since xv internally
+reduces all images to 8 bits/pixel, a JPEG file written by xv will not be very
+high quality; and xv cannot fully exploit a 24-bit display.  These problems are
+expected to go away in the next xv release, planned for early 1993.  In the
+meantime, use xloadimage for 24-bit displays.)
 
 For DOS machines, Lee Crocker's free Piclab program is a useful companion to
 the JPEG software.  The latest version, currently 1.91, is available by FTP

@@ -1,4 +1,4 @@
-/* $Xorg: XTest.c,v 1.4 2000/08/17 19:46:23 cpqbld Exp $ */
+/* $Xorg: XTest.c,v 1.5 2001/02/09 02:04:00 xorgcvs Exp $ */
 /*
 Copyright 1990, 1991 by UniSoft Group Limited
 */
@@ -7,7 +7,11 @@ Copyright 1990, 1991 by UniSoft Group Limited
 
 Copyright 1992, 1993, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included
 in all copies or substantial portions of the Software.
@@ -26,7 +30,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/Xtst/XTest.c,v 1.3 2001/01/17 19:43:16 dawes Exp $ */
+/* $XFree86: xc/lib/Xtst/XTest.c,v 1.5 2001/12/14 19:56:40 dawes Exp $ */
 
 #define NEED_REPLIES
 #include "Xlibint.h"
@@ -163,6 +167,7 @@ XTestCompareCurrentCursorWithWindow(dpy, window)
     return XTestCompareCursorWithWindow(dpy, window, XTestCurrentCursor);
 }
 
+int
 XTestFakeKeyEvent(dpy, keycode, is_press, delay)
     Display *dpy;
     unsigned int keycode;
@@ -186,6 +191,7 @@ XTestFakeKeyEvent(dpy, keycode, is_press, delay)
     return 1;
 }
 
+int
 XTestFakeButtonEvent(dpy, button, is_press, delay)
     Display *dpy;
     unsigned int button;
@@ -209,6 +215,7 @@ XTestFakeButtonEvent(dpy, button, is_press, delay)
     return 1;
 }
 
+int
 XTestFakeMotionEvent(dpy, screen, x, y, delay)
     Display *dpy;
     int screen;
@@ -238,6 +245,7 @@ XTestFakeMotionEvent(dpy, screen, x, y, delay)
     return 1;
 }
 
+int
 XTestFakeRelativeMotionEvent(dpy, dx, dy, delay)
     Display *dpy;
     int dx, dy;
@@ -307,6 +315,7 @@ send_axes(dpy, info, req, dev, first_axis, axes, n_axes)
     }
 }
 
+int
 XTestFakeDeviceKeyEvent(dpy, dev, keycode, is_press, axes, n_axes, delay)
     Display *dpy;
     XDevice *dev;
@@ -337,6 +346,7 @@ XTestFakeDeviceKeyEvent(dpy, dev, keycode, is_press, axes, n_axes, delay)
     return 1;
 }
 
+int
 XTestFakeDeviceButtonEvent(dpy, dev, button, is_press, axes, n_axes, delay)
     Display *dpy;
     XDevice *dev;
@@ -367,6 +377,7 @@ XTestFakeDeviceButtonEvent(dpy, dev, button, is_press, axes, n_axes, delay)
     return 1;
 }
 
+int
 XTestFakeProximityEvent(dpy, dev, in_prox, axes, n_axes, delay)
     Display *dpy;
     XDevice *dev;
@@ -395,6 +406,7 @@ XTestFakeProximityEvent(dpy, dev, in_prox, axes, n_axes, delay)
     return 1;
 }
 
+int
 XTestFakeDeviceMotionEvent(dpy, dev, is_relative,
 			   first_axis, axes, n_axes, delay)
     Display *dpy;
@@ -424,6 +436,7 @@ XTestFakeDeviceMotionEvent(dpy, dev, is_relative,
     return 1;
 }
 
+int
 XTestGrabControl(dpy, impervious)
     Display *dpy;
     Bool impervious;

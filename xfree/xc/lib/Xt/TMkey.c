@@ -1,4 +1,4 @@
-/* $Xorg: TMkey.c,v 1.3 2000/08/17 19:46:18 cpqbld Exp $ */
+/* $Xorg: TMkey.c,v 1.4 2001/02/09 02:03:58 xorgcvs Exp $ */
 /*LINTLIBRARY*/
 
 /***********************************************************
@@ -38,7 +38,11 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 Copyright 1987, 1988, 1994, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -55,6 +59,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
+/* $XFree86: xc/lib/Xt/TMkey.c,v 3.10 2001/12/14 19:56:30 dawes Exp $ */
 
 #define XK_MISCELLANY
 #define XK_LATIN1
@@ -64,11 +69,8 @@ in this Software without prior written authorization from The Open Group.
 
 #include "IntrinsicI.h"
 #include <X11/keysymdef.h>
-
-#ifdef __STDC__
-#define Const const
-#else
-#define Const /**/
+#ifdef XKB
+#include <X11/XKBlib.h>
 #endif
 
 #define FLUSHKEYCACHE(ctx) \
@@ -82,7 +84,7 @@ in this Software without prior written authorization from The Open Group.
  */
 
 #define FM(i) i >> (8 - TMKEYCACHELOG2)
-static Const unsigned char modmix[256] = {
+static const unsigned char modmix[256] = {
 FM(0x0f), FM(0x8f), FM(0x4f), FM(0xcf), FM(0x2f), FM(0xaf), FM(0x6f), FM(0xef),
 FM(0x1f), FM(0x9f), FM(0x5f), FM(0xdf), FM(0x3f), FM(0xbf), FM(0x7f), FM(0xff),
 FM(0x07), FM(0x87), FM(0x47), FM(0xc7), FM(0x27), FM(0xa7), FM(0x67), FM(0xe7),
@@ -215,8 +217,7 @@ void _XtAllocTMContext(pd)
     pd->tm_context = ctx;
 }
 
-static unsigned int num_bits(mask)
-    unsigned long mask;
+static unsigned int num_bits(unsigned long mask)
 {
     register unsigned long y;
 
@@ -597,9 +598,7 @@ void XtTranslateKey(dpy, keycode, modifiers,
 }
 #else
 {
-    XkbLookupKeySym(dpy, keycode, modifiers, modifiers_return, 
-						    keysym_return);
-    return;
+    XkbLookupKeySym(dpy, keycode, modifiers, modifiers_return, keysym_return);
 }
 #endif
 
@@ -688,7 +687,7 @@ void XtKeysymToKeycodeList(dpy, keysym, keycodes_return, keycount_return)
     KeySym lsym, usym;
     unsigned maxcodes = 0;
     unsigned ncodes = 0;
-    KeyCode *keycodes, *codeP;
+    KeyCode *keycodes, *codeP = NULL;
     DPY_TO_APPCON(dpy);
 
     LOCK_APP(app);

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/savage/savage_bci.h,v 1.1 2000/12/02 01:16:11 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/savage/savage_bci.h,v 1.2 2001/10/01 13:44:09 eich Exp $ */
 
 #ifndef _S3BCI_H_
 #define _S3BCI_H_
@@ -77,12 +77,12 @@
 #define BCI_BD_GET_STRIDE(bd)        ((bd) & 0xFFFF)
 #define BCI_BD_SET_STRIDE(bd, st)    ((bd) |= ((st) & 0xFFFF))
 
-#define BCI_W_H(w, h)                (((h) << 16) | ((w) & 0xFFF))
-#define BCI_X_Y(x, y)                (((y) << 16) | ((x) & 0xFFF))
-#define BCI_X_W(x, y)                (((w) << 16) | ((x) & 0xFFF))
-#define BCI_CLIP_LR(l, r)            (((r) << 16) | ((l) & 0xFFF))
-#define BCI_CLIP_TL(t, l)            (((t) << 16) | ((l) & 0xFFF))
-#define BCI_CLIP_BR(b, r)            (((b) << 16) | ((r) & 0xFFF))
+#define BCI_W_H(w, h)                ((((h) << 16) | (w)) & 0x0FFF0FFF)
+#define BCI_X_Y(x, y)                ((((y) << 16) | (x)) & 0x0FFF0FFF)
+#define BCI_X_W(x, y)                ((((w) << 16) | (x)) & 0x0FFF0FFF)
+#define BCI_CLIP_LR(l, r)            ((((r) << 16) | (l)) & 0x0FFF0FFF)
+#define BCI_CLIP_TL(t, l)            ((((t) << 16) | (l)) & 0x0FFF0FFF)
+#define BCI_CLIP_BR(b, r)            ((((b) << 16) | (r)) & 0x0FFF0FFF)
 
 #define BCI_LINE_X_Y(x, y)           (((y) << 16) | ((x) & 0xFFFF))
 #define BCI_LINE_STEPS(diag, axi)    (((axi) << 16) | ((diag) & 0xFFFF))

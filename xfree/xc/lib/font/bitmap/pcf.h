@@ -1,10 +1,14 @@
-/* $Xorg: pcf.h,v 1.3 2000/08/17 19:46:35 cpqbld Exp $ */
+/* $Xorg: pcf.h,v 1.4 2001/02/09 02:04:02 xorgcvs Exp $ */
 
 /*
 
 Copyright 1991, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included
 in all copies or substantial portions of the Software.
@@ -23,7 +27,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/font/bitmap/pcf.h,v 1.3 2001/01/17 19:43:27 dawes Exp $ */
+/* $XFree86: xc/lib/font/bitmap/pcf.h,v 1.4 2001/12/14 19:56:47 dawes Exp $ */
 
 /*
  * Author:  Keith Packard, MIT X Consortium

@@ -2,12 +2,52 @@
 // using the group(switch) map, the right alt key temporarily chooses 
 // the second keyboard group (until it is released).
 //
-// $XFree86: xc/programs/xkbcomp/symbols/group,v 3.5 2001/01/17 23:45:58 dawes Exp $
+// $XFree86: xc/programs/xkbcomp/symbols/group,v 3.6 2001/08/17 13:27:58 dawes Exp $
 partial modifier_keys 
 xkb_symbols "switch" {
     key <RALT>	{ 	
 	symbols[Group1]= [	Mode_switch, Multi_key 	],
 	virtualMods= AltGr
+    };
+};
+
+// using the group(win_switch) map, both Windows'logo keys temporarily
+// choose the second keyboard group (until release).  If you use this
+// map, you would declare you keyboard as pc101 or pc102 instead of
+// pc104 or pc105.
+partial modifier_keys
+xkb_symbols "win_switch" {
+  key <LWIN> {
+    symbols[Group1] = [ Mode_switch, Multi_key ],
+    virtualMods= AltGr
+    };
+  key <RWIN> {
+    symbols[Group1] = [ Mode_switch, Multi_key ],
+    virtualMods= AltGr
+    };
+};
+
+// using the group(lwin_switch) map, the left Windows' logo key
+// temporarily chooses the second keyboard group (until it is
+// released).  If you use this map, you would declare you keyboard as
+// pc101 or pc102 instead of pc104 or pc105.
+partial modifier_keys
+xkb_symbols "lwin_switch" {
+  key <LWIN> {
+    symbols[Group1] = [ Mode_switch, Multi_key ],
+    virtualMods= AltGr
+    };
+};
+
+// using the group(rwin_switch) map, the right Windows' logo key
+// temporarily chooses the second keyboard group (until it is
+// released).  If you use this map, you would declare you keyboard as
+// pc101 or pc102 instead of pc104 or pc105.
+partial modifier_keys
+xkb_symbols "rwin_switch" {
+  key <RWIN> {
+    symbols[Group1] = [ Mode_switch, Multi_key ],
+    virtualMods= AltGr
     };
 };
 
@@ -117,4 +157,28 @@ xkb_symbols "alt_shift_toggle" {
 partial modifier_keys
 xkb_symbols "menu_toggle" {
     key	<MENU> {	[  ISO_Next_Group,	 Menu	]	};
+};
+
+// using the group(lwin_toggle) map, pressing the left Windows' logo key
+// toggles groups.  If you use this map, you would declare you keyboard
+// as pc101 or pc102 instead of pc104 or pc105.
+partial modifier_keys
+xkb_symbols "lwin_toggle" {
+  virtual_modifiers AltGr;
+  key <LWIN> {
+    virtualMods= AltGr,
+    symbols[Group1] = [ ISO_Next_Group ]
+    };
+};
+
+// using the group(rwin_toggle) map, pressing the right Windows' logo key
+// toggles groups.  If you use this map, you would declare you keyboard
+// as pc101 or pc102 instead of pc104 or pc105.
+partial modifier_keys
+xkb_symbols "rwin_toggle" {
+  virtual_modifiers AltGr;
+  key <RWIN> {
+    virtualMods= AltGr,
+    symbols[Group1] = [ ISO_Next_Group ]
+    };
 };

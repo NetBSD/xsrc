@@ -2,7 +2,7 @@
  *  Copyright (C) 1998 Itai Nahshon, Michael Schimek
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/i2c/xf86i2c.h,v 1.7 2001/01/22 21:09:40 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/i2c/xf86i2c.h,v 1.8 2001/07/19 14:19:40 tsi Exp $ */
 #ifndef _XF86I2C_H
 #define _XF86I2C_H
 
@@ -66,6 +66,7 @@ typedef struct _I2CDevRec {
     I2CSlaveAddr	SlaveAddr;
     I2CBusPtr		pI2CBus;
     I2CDevPtr		NextDev;
+    DevUnion		DriverPrivate;
 } I2CDevRec;
 
 I2CDevPtr 	xf86CreateI2CDevRec(void);

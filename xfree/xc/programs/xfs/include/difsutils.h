@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/programs/xfs/include/difsutils.h,v 1.3 1999/08/21 13:48:51 dawes Exp $
+ * $XFree86: xc/programs/xfs/include/difsutils.h,v 1.4 2001/06/25 20:40:18 paulo Exp $
  */
 
 /************************************************************
@@ -45,16 +45,20 @@ extern Bool ClientSleep (ClientPtr client, Bool (*function) (ClientPtr, pointer)
 extern Bool QueueWorkProc (DifsWorkFunc function, ClientPtr client, pointer data);
 extern Bool RegisterBlockAndWakeupHandlers (BlockHandlerProcPtr blockHandler, DifsWakeupFunc wakeupHandler, pointer blockData);
 extern Bool ValidHost (HostList list, HostAddress *addr);
+#if 0
 extern Bool XpClientIsBitmapClient (ClientPtr client);
 extern Bool XpClientIsPrintClient (ClientPtr client, FontPathElementPtr fpe);
-#if 0
 extern FontResolutionPtr GetClientResolutions (int *num);
 #endif
 extern int AddHost (HostList *list, HostAddress *addr);
+#if 0
 extern int GetDefaultPointSize (void);
+#endif
 extern int RemoveHost (HostList *list, HostAddress *addr);
 extern int SetDefaultResolutions (char *str);
+#if 0
 extern int client_auth_generation (ClientPtr client);
+#endif
 extern int set_font_authorizations (char **authorizations, int *authlen, ClientPtr client);
 extern int strncmpnocase (char *first, char *second, int n);
 extern pointer Xalloc (unsigned long m);

@@ -3,7 +3,7 @@ XCOMM $Xorg: Imakefile,v 1.3 2000/08/17 19:54:14 cpqbld Exp $
 
 
 
-XCOMM $XFree86: xc/programs/xdm/Imakefile,v 3.43 2001/03/06 17:31:39 dawes Exp $
+XCOMM $XFree86: xc/programs/xdm/Imakefile,v 3.45 2001/08/29 17:11:56 alanh Exp $
 
 #define IHaveSubdirs
 #define PassCDebugFlags 'CDEBUGFLAGS=$(CDEBUGFLAGS)'
@@ -82,6 +82,10 @@ PAM_LIBRARIES = PamLibraries
 PAM_DEFINES = -DUSE_PAM
 #endif
 
+#if HasBSDAuth
+BSDAUTH_DEFINES = -DUSE_BSDAUTH
+#endif
+
 #if SystemV4 || HasShadowPasswd
 #if !LinuxShadowSuite
 PWD_DEFINES = -DUSESHADOW
@@ -141,7 +145,12 @@ XKB_CLIENT_DEFINES = XkbClientDefines
 
 #if HasSetUserContext
 USER_CONTEXT_DEFINES = -DHAS_SETUSERCONTEXT
+# XXX - only FreeBSD has this in libutil
 SYS_LIBRARIES1 = -lutil
+#endif
+
+#if HasSetProcTitle
+PROCTITLE_DEFINES = -DHAS_SETPROCTITLE
 #endif
 
   SYS_LIBRARIES = $(SYS_LIBRARIES1) $(SYS_LIBRARIES2) $(SYS_LIBRARIES3)
@@ -174,8 +183,8 @@ LOCAL_LIBRARIES = $(XPMLIB) $(XMULIB) $(XTOOLLIB) $(XLIB) $(XAUTHLIB) \
           SRCS3 = chooser.c
           OBJS3 = chooser.o
        DEPLIBS3 = XawClientDepLibs XkbClientDepLibs $(DEPXDMCPLIB) \
-		  $(DEPXINERAMALIB)
-          LIBS3 = XawClientLibs XkbClientLibs $(XDMCPLIB) $(XINERAMALIB)
+		  $(XINDEPLIBS)
+          LIBS3 = XawClientLibs XkbClientLibs $(XDMCPLIB) $(XINLIBS)
 #endif
 
           SRCS4 = sessreg.c
@@ -205,14 +214,14 @@ LOCAL_LIBRARIES = $(XPMLIB) $(XMULIB) $(XTOOLLIB) $(XLIB) $(XAUTHLIB) \
  OSMINORVERSION = OSMinorVersion
    CONN_DEFINES = $(CONNECTION_FLAGS)
         DEFINES = -DBINDIR=\"$(BINDIR)\" -DXDMDIR=\"$(XDMDIR)\" \
-		$(SIGNAL_DEFINES) $(CRYPT_DEFINES) \
+		$(SIGNAL_DEFINES) $(CRYPT_DEFINES) $(BSDAUTH_DEFINES) \
 		$(XDMAUTH_DEFINES) $(RPC_DEFINES) $(KRB5_DEFINES) \
 		$(PWD_DEFINES) $(PAM_DEFINES) $(CONN_DEFINES) \
 		$(GREET_DEFINES) $(FRAGILE_DEFINES) $(RANDOM_DEFINES) \
 		-DOSMAJORVERSION=$(OSMAJORVERSION) \
 		-DOSMINORVERSION=$(OSMINORVERSION) \
 		$(XKB_CLIENT_DEFINES) $(USER_CONTEXT_DEFINES) \
-		$(XPM_DEFINES) $(XINERAMA_DEFINES)
+		$(XPM_DEFINES) $(XINERAMA_DEFINES) $(PROCTITLE_DEFINES)
 
 XCOMM
 XCOMM Special definitions for compiling default resources; these parameters

@@ -21,7 +21,7 @@
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sunleo/leo_driver.c,v 1.7 2001/05/18 16:03:13 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sunleo/leo_driver.c,v 1.8 2001/10/01 13:44:10 eich Exp $ */
 
 #include "xf86.h"
 #include "xf86_OSproc.h"
@@ -332,7 +332,7 @@ LeoPreInit(ScrnInfoPtr pScrn, int flags)
     deal with depth
     *********************/
     
-    if (!xf86SetDepthBpp(pScrn, 0, 0, 0, Support32bppFb)) {
+    if (!xf86SetDepthBpp(pScrn, 32, 0, 32, Support32bppFb)) {
 	return FALSE;
     } else {
 	/* Check that the returned depth is one we support */

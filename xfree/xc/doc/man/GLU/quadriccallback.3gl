@@ -48,4 +48,4 @@ is of type GLenum, and it indicates the specific error that occurred.
 Character strings describing these errors can be retrieved with the
 \%\f3gluErrorString\fP call.
 .SH SEE ALSO
-\%\f3gluErrorString\fP, \%\f3gluNewQuadric\fP
+\%\f3gluErrorString(3G)\fP, \%\f3gluNewQuadric(3G)\fP

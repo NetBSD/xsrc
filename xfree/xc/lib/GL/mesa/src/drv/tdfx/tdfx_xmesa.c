@@ -23,7 +23,7 @@
  * OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-/* $XFree86: xc/lib/GL/mesa/src/drv/tdfx/tdfx_xmesa.c,v 1.12 2001/03/21 16:14:28 dawes Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/tdfx/tdfx_xmesa.c,v 1.13 2001/08/18 02:51:07 dawes Exp $ */
 
 /*
  * Original rewrite:
@@ -237,8 +237,8 @@ XMesaSwapBuffers( __DRIdrawablePrivate *driDrawPriv )
          if (!fxMesa)
             return;
 	 LOCK_HARDWARE( fxMesa );
-	 grSstSelect( fxMesa->Glide.Board );
-	 grGlideSetState( (GrState *) fxMesa->Glide.State );
+	 fxMesa->Glide.grSstSelect( fxMesa->Glide.Board );
+	 fxMesa->Glide.grGlideSetState( (GrState *) fxMesa->Glide.State );
       }
    }
 
@@ -247,7 +247,7 @@ XMesaSwapBuffers( __DRIdrawablePrivate *driDrawPriv )
       int stalls;
       static int prevStalls = 0;
 
-      stalls = grFifoGetStalls();
+      stalls = fxMesa->Glide.grFifoGetStalls();
 
       fprintf( stderr, "%s:\n", __FUNCTION__ );
       if ( stalls != prevStalls ) {
@@ -265,18 +265,19 @@ XMesaSwapBuffers( __DRIdrawablePrivate *driDrawPriv )
 
    if (fxMesa->scissoredClipRects) {
       /* restore clip rects without scissor box */
-      grDRIPosition( driDrawPriv->x, driDrawPriv->y,
-                     driDrawPriv->w, driDrawPriv->h,
-                     driDrawPriv->numClipRects, driDrawPriv->pClipRects );
+      fxMesa->Glide.grDRIPosition( driDrawPriv->x, driDrawPriv->y,
+                                   driDrawPriv->w, driDrawPriv->h,
+                                   driDrawPriv->numClipRects,
+                                   driDrawPriv->pClipRects );
    }
 
-   grDRIBufferSwap( fxMesa->Glide.SwapInterval );
+   fxMesa->Glide.grDRIBufferSwap( fxMesa->Glide.SwapInterval );
 
    if (fxMesa->scissoredClipRects) {
       /* restore clip rects WITH scissor box */
-      grDRIPosition( driDrawPriv->x, driDrawPriv->y,
-                     driDrawPriv->w, driDrawPriv->h,
-                     fxMesa->numClipRects, fxMesa->pClipRects );
+      fxMesa->Glide.grDRIPosition( driDrawPriv->x, driDrawPriv->y,
+                                   driDrawPriv->w, driDrawPriv->h,
+                                   fxMesa->numClipRects, fxMesa->pClipRects );
    }
 
 
@@ -294,8 +295,8 @@ XMesaSwapBuffers( __DRIdrawablePrivate *driDrawPriv )
    if (ctx) {
       if (ctx->DriverCtx != fxMesa) {
          fxMesa = TDFX_CONTEXT(ctx);
-	 grSstSelect( fxMesa->Glide.Board );
-	 grGlideSetState( (GrState *) fxMesa->Glide.State );
+	 fxMesa->Glide.grSstSelect( fxMesa->Glide.Board );
+	 fxMesa->Glide.grGlideSetState( (GrState *) fxMesa->Glide.State );
       }
       UNLOCK_HARDWARE( fxMesa );
    }
@@ -352,8 +353,8 @@ XMesaMakeCurrent( __DRIcontextPrivate *driContextPriv,
       } else {
 	 LOCK_HARDWARE( fxMesa );
 
-	 grSstSelect( fxMesa->Glide.Board );
-	 grGlideSetState( fxMesa->Glide.State );
+	 fxMesa->Glide.grSstSelect( fxMesa->Glide.Board );
+	 fxMesa->Glide.grGlideSetState( fxMesa->Glide.State );
 
          tdfxUpdateClipping(ctx);
          tdfxUploadClipping(fxMesa);

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/afb/afbclip.c,v 3.1 1999/06/13 13:47:37 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/afb/afbclip.c,v 3.2 2001/10/28 03:32:57 tsi Exp $ */
 /***********************************************************
 
 Copyright (c) 1987  X Consortium
@@ -94,18 +94,18 @@ RegionPtr
 afbPixmapToRegion(pPix)
 	PixmapPtr		pPix;
 {
-	register RegionPtr		pReg;
-	register PixelType		*pw, w;
+	register RegionPtr	pReg;
+	register PixelType	*pw, w;
 	register int		ib;
-	int						width, h, base, rx1, crects;
-	PixelType				*pwLineEnd;
-	int						irectPrevStart, irectLineStart;
+	int			width, h, base, rx1 = 0, crects;
+	PixelType		*pwLineEnd;
+	int			irectPrevStart, irectLineStart;
 	register BoxPtr		prectO, prectN;
-	BoxPtr				FirstRect, rects, prectLineStart;
-	Bool				fInBox, fSame;
-	register PixelType		mask0 = mask[0];
-	PixelType				*pwLine;
-	int						nWidth;
+	BoxPtr			FirstRect, rects, prectLineStart;
+	Bool			fInBox, fSame;
+	register PixelType	mask0 = mask[0];
+	PixelType		*pwLine;
+	int			nWidth;
 
 	pReg = REGION_CREATE(pPix->drawable.pScreen, NULL, 1);
 	if(!pReg)

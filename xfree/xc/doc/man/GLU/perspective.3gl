@@ -91,5 +91,5 @@ roughly $log sub 2 r$ bits of depth buffer precision are lost.
 Because $r$ approaches infinity as \f2zNear\fP approaches 0,
 \f2zNear\fP must never be set to 0.
 .SH SEE ALSO
-\f3glFrustum\fP, \f3glLoadIdentity\fP,
-\f3glMultMatrix\fP, \%\f3gluOrtho2D\fP
+\f3glFrustum(3G)\fP, \f3glLoadIdentity(3G)\fP,
+\f3glMultMatrix(3G)\fP, \%\f3gluOrtho2D(3G)\fP

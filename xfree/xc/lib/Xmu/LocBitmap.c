@@ -1,10 +1,14 @@
-/* $Xorg: LocBitmap.c,v 1.6 2000/08/17 19:46:02 cpqbld Exp $ */
+/* $Xorg: LocBitmap.c,v 1.7 2001/02/09 02:03:52 xorgcvs Exp $ */
 
 /*
  
 Copyright 1989, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -21,17 +25,15 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/Xmu/LocBitmap.c,v 3.6 2001/01/17 19:42:56 dawes Exp $ */
+/* $XFree86: xc/lib/Xmu/LocBitmap.c,v 3.9 2001/12/14 19:55:47 dawes Exp $ */
 
 /*
  * Author:  Jim Fulton, MIT X Consortium
  */
 
 #include <X11/Xlib.h>
-#ifndef X_NOT_STDC_ENV
 #include <stdlib.h>
 #include <string.h>
-#endif
 #include <X11/Xresource.h>
 #include <X11/Xutil.h>
 #include <X11/Xmu/CvtCache.h>
@@ -104,7 +106,9 @@ XmuLocatePixmapFile(Screen *screen, _Xconst char *name,
     XmuCvtCache *cache = _XmuCCLookupDisplay (dpy);
     char **file_paths = (char **) NULL;
     char filename[PATH_MAX];
+#if 0
     char* bitmapdir = BITMAPDIR;
+#endif
     unsigned int width, height;
     int xhot, yhot;
     int i;

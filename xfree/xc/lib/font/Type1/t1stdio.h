@@ -27,7 +27,7 @@
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
  * SOFTWARE.
  */
-/* $XFree86: xc/lib/font/Type1/t1stdio.h,v 1.9 2001/01/17 19:43:24 dawes Exp $ */
+/* $XFree86: xc/lib/font/Type1/t1stdio.h,v 1.10 2001/07/25 15:04:55 dawes Exp $ */
 /* T1IO FILE structure and related stuff */
 #ifdef XFree86LOADER
 #undef FILE
@@ -53,8 +53,9 @@ typedef struct F_FILE {
 #define FIOERROR  (0x40)
  
 #ifndef NULL
-#define NULL 0       /* null pointer */
+#include <stddef.h>
 #endif
+
 #define EOF (-1)     /* end of file */
 #define F_BUFSIZ (512)
 

@@ -1,10 +1,14 @@
-/* $Xorg: events.c,v 1.3 2000/08/17 19:54:25 cpqbld Exp $ */
+/* $Xorg: events.c,v 1.4 2001/02/09 02:05:47 xorgcvs Exp $ */
 /**** module events.c ****/
 /******************************************************************************
 
 Copyright 1993, 1994, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -66,7 +70,7 @@ terms and conditions:
 	Syd Logan -- AGE Logic, Inc.
   
 *****************************************************************************/
-/* $XFree86: xc/programs/xieperf/events.c,v 3.7 2001/01/17 23:45:37 dawes Exp $ */
+/* $XFree86: xc/programs/xieperf/events.c,v 3.9 2001/12/14 20:01:49 dawes Exp $ */
 
 #ifdef WIN32
 #define _WILLWINSOCK_
@@ -75,11 +79,6 @@ terms and conditions:
 #include <ctype.h>
 #include <X11/Xpoll.h>
 #include "xieperf.h"
-
-#ifdef MINIX
-#include <sys/nbio.h>
-#define select(n,r,w,x,t) nbio_select(n,r,w,x,t)
-#endif
 
 static XieExtensionInfo *xieInfo=NULL;
 static int timeout = 60;        /* in seconds */
@@ -194,14 +193,9 @@ WaitForXIEEvent(XParms xp, int which, XiePhotoflo flo_id,
 			tv.tv_sec = delta;  
 			tv.tv_usec = 0L;
 			XFlush( xp->d );
-#ifndef AMOEBA
 			FD_ZERO(&rd);
 			FD_SET(Xsocket, &rd);
 			Select( Xsocket + 1, &rd, NULL, NULL, &tv );
-#else  /* AMOEBA */
-			(void) _X11TransAmSelect(ConnectionNumber(xp->d),
-						 delta * 1000);
-#endif /* AMOEBA */
 			continue;
 		}	
 		xie_event = event.type - xieInfo->first_event;

@@ -1,9 +1,13 @@
 /*
- * $Xorg: cfbrrop.h,v 1.3 2000/08/17 19:48:15 cpqbld Exp $
+ * $Xorg: cfbrrop.h,v 1.4 2001/02/09 02:04:38 xorgcvs Exp $
  *
 Copyright 1989, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -22,7 +26,7 @@ in this Software without prior written authorization from The Open Group.
  * Author:  Keith Packard, MIT X Consortium
  */
 
-/* $XFree86: xc/programs/Xserver/cfb/cfbrrop.h,v 3.8 2001/01/30 22:06:15 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/cfb/cfbrrop.h,v 3.10 2001/12/14 19:59:24 dawes Exp $ */
 
 #ifndef GXcopy
 #include "X.h"
@@ -316,7 +320,7 @@ in this Software without prior written authorization from The Open Group.
     }
 #endif
 
-#if (defined(__STDC__) && !defined(UNIXCPP)) || defined(ANSICPP)
+#if !defined(UNIXCPP) || defined(ANSICPP)
 #define RROP_NAME_CAT(prefix,suffix)	prefix##suffix
 #else
 #define RROP_NAME_CAT(prefix,suffix)	prefix/**/suffix

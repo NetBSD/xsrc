@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/gamma/gamma_gl.c,v 1.9 2001/02/07 13:26:16 alanh Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/gamma/gamma_gl.c,v 1.10 2001/08/18 02:51:04 dawes Exp $ */
 /**************************************************************************
 
 Copyright 1998-1999 Precision Insight, Inc., Cedar Park, Texas.
@@ -64,32 +64,32 @@ void gamma_error( GLenum error, const char *s )
 #endif
 
    if (debug) {
-      char errstr[1000];
+      const char *errstr;
 
       switch (error) {
 	 case GL_NO_ERROR:
-	    strcpy( errstr, "GL_NO_ERROR" );
+	    errstr = "GL_NO_ERROR";
 	    break;
 	 case GL_INVALID_VALUE:
-	    strcpy( errstr, "GL_INVALID_VALUE" );
+	    errstr = "GL_INVALID_VALUE";
 	    break;
 	 case GL_INVALID_ENUM:
-	    strcpy( errstr, "GL_INVALID_ENUM" );
+	    errstr = "GL_INVALID_ENUM";
 	    break;
 	 case GL_INVALID_OPERATION:
-	    strcpy( errstr, "GL_INVALID_OPERATION" );
+	    errstr = "GL_INVALID_OPERATION";
 	    break;
 	 case GL_STACK_OVERFLOW:
-	    strcpy( errstr, "GL_STACK_OVERFLOW" );
+	    errstr = "GL_STACK_OVERFLOW";
 	    break;
 	 case GL_STACK_UNDERFLOW:
-	    strcpy( errstr, "GL_STACK_UNDERFLOW" );
+	    errstr = "GL_STACK_UNDERFLOW";
 	    break;
 	 case GL_OUT_OF_MEMORY:
-	    strcpy( errstr, "GL_OUT_OF_MEMORY" );
+	    errstr = "GL_OUT_OF_MEMORY";
 	    break;
 	 default:
-	    strcpy( errstr, "unknown" );
+	    errstr = "unknown";
 	    break;
       }
       fprintf( stderr, "Mesa user error: %s in %s\n", errstr, s );

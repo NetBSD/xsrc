@@ -35,13 +35,13 @@ lib/libXaw.so.6.1
 lib/libXaw.so.7.0
 lib/libXfont.a
 lib/libXfont.so
-lib/libXfont.so.1.3
+lib/libXfont.so.1.4
 lib/libXft.a
 lib/libXft.so
-lib/libXft.so.1.0
+lib/libXft.so.1.1
 lib/libfreetype.a
 lib/libfreetype.so
-lib/libfreetype.so.6.0
+lib/libfreetype.so.6.2
 man/man1/XFree86.1x
 man/man4/XF86Config.4
 man/man7/nv.7

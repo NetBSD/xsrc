@@ -15,6 +15,7 @@
  *
  *
  ******************************************************************/
+/* $XFree86: xc/extras/FreeType/lib/ttcmap.h,v 1.2 2001/10/28 03:32:05 tsi Exp $ */
 
 #ifndef TTCMAP_H
 #define TTCMAP_H
@@ -135,7 +136,7 @@
   typedef struct TCMapTable_  TCMapTable;
   typedef TCMapTable*         PCMapTable;
 
-
+#if !defined(FTXCMAP_H) && !defined(FTXSBIT_H)
 
   /* Load character mappings directory when face is loaded. */
   /* The mappings themselves are only loaded on demand.     */
@@ -156,6 +157,8 @@
   LOCAL_DEF
   UShort  CharMap_Index( PCMapTable  cmap,
                          UShort      charCode );
+
+#endif /* !FTXCMAP_H && !FTXSBIT_H */
 
   /* NOTE: The PFace type isn't defined at this point */
 

@@ -5,7 +5,7 @@
  * 
  * This driver is based on the newport.c & newport_con.c kernel code
  *
- * (c) 2000 Guido Guenther <guido.guenther@gmx.net>
+ * (c) 2000,2001 Guido Guenther <agx@sigxcpu.org>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -30,7 +30,7 @@
  * Project.
  *
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/newport/newport_driver.c,v 1.10 2001/05/16 06:48:09 keithp Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/newport/newport_driver.c,v 1.19 2002/01/04 21:22:33 tsi Exp $ */
 
 /* function prototypes, common data structures & generic includes */
 #include "newport.h"
@@ -53,11 +53,11 @@
 #include "Xv.h"
 
 #define VERSION			4000
-#define NEWPORT_NAME		"Newport"
+#define NEWPORT_NAME		"NEWPORT"
 #define NEWPORT_DRIVER_NAME	"newport"
 #define NEWPORT_MAJOR_VERSION	0
 #define NEWPORT_MINOR_VERSION	1	
-#define NEWPORT_PATCHLEVEL	1
+#define NEWPORT_PATCHLEVEL	3
 
 
 /* Prototypes ------------------------------------------------------- */
@@ -101,10 +101,8 @@ static SymTabRec NewportChipsets[] = {
 /* List of Symbols from other modules that this module references */
 
 static const char *fbSymbols[] = {
-	"fbScreenInit",
-#ifdef RENDER
 	"fbPictureInit",
-#endif
+	"fbScreenInit",
 	NULL
 };	
 
@@ -298,6 +296,7 @@ NewportPreInit(ScrnInfoPtr pScrn, int flags)
 	switch( pScrn->depth ) {
 			/* check if the returned depth is one we support */
 		case 8:
+		case 24:
 			/* OK */
 			break;
 		default: 
@@ -345,7 +344,7 @@ NewportPreInit(ScrnInfoPtr pScrn, int flags)
 	pNewport = NEWPORTPTR(pScrn);
 	pNewport->busID = busID;
 
-	/* We use a programamble clock */
+	/* We use a programmable clock */
 	pScrn->progClock = TRUE;
 
 	/* Fill in pScrn->options) */
@@ -366,7 +365,7 @@ NewportPreInit(ScrnInfoPtr pScrn, int flags)
 
 	from=X_PROBED;
 	xf86DrvMsg(pScrn->scrnIndex, from,
-		"Newport Graphics Revisions: Board: %d, Rex3: %d, Cmap: %c, Xmap9: %d\n",
+		"Newport Graphics Revisions: Board: %d, Rex3: %c, Cmap: %c, Xmap9: %c\n",
 		pNewport->board_rev, pNewport->rex3_rev, 
 		pNewport->cmap_rev, pNewport->xmap9_rev);
 
@@ -388,7 +387,8 @@ NewportPreInit(ScrnInfoPtr pScrn, int flags)
 	}
 	
 	/* Set up clock ranges that are alway ok */
-	/* XXX: Should use the correct data from the specs(which specs?) here */
+	
+	/* XXX: Use information from VC2 here */
 	clockRanges = xnfalloc(sizeof(ClockRange));
 	clockRanges->next = NULL;
 	clockRanges->minClock = 10000;
@@ -491,10 +491,6 @@ NewportScreenInit(int index, ScreenPtr pScreen, int argc, char **argv)
 	if(!ret)
 		return FALSE;
 
-#ifdef RENDER
-	fbPictureInit (pScreen, 0, 0);
-#endif
-
 	/* we need rgb ordering if bitsPerPixel > 8 */
 	if (pScrn->bitsPerPixel > 8) {
 		for (i = 0, visual = pScreen->visuals;
@@ -510,6 +506,8 @@ NewportScreenInit(int index, ScreenPtr pScreen, int argc, char **argv)
 		}
 	}
 
+	/* must be after RGB ordering fixed */
+	fbPictureInit (pScreen, 0, 0);
 
 	miInitializeBackingStore(pScreen);
 	xf86SetBackingStore(pScreen);
@@ -530,7 +528,8 @@ NewportScreenInit(int index, ScreenPtr pScreen, int argc, char **argv)
 		return FALSE;
 
 	/* Initialise shadow frame buffer */
-	ShadowFBInit(pScreen, &NewportRefreshArea8);
+	ShadowFBInit(pScreen, (pNewport->Bpp == 1) ? &NewportRefreshArea8 :
+				&NewportRefreshArea24);
 
 #ifdef XvExtension
 	{
@@ -636,29 +635,76 @@ NewportModeInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
 	if (width != 1280 || height != 1024) {
 		xf86DrvMsg(pScrn->scrnIndex, X_ERROR, \
 		"Width = %d and height = %d is not supported by by this driver\n", width, height);
+		return FALSE;
 	}
 
-	pScrn->vtSema=TRUE;
+	pScrn->vtSema = TRUE;
 	/* first backup the necessary registers... */
-	pNewport->txt_drawmode1 = pNewportRegs->set.drawmode1;
+	NewportBackupRex3(pScrn);
 	pNewport->txt_vc2ctrl = NewportVc2Get( pNewportRegs, VC2_IREG_CONTROL);
 	NewportBackupPalette(pScrn);
-
+	if( pNewport->Bpp == 3) { /* at 24bpp we have to backup some more registers */
+		NewportBackupXmap9s( pScrn );
+	}
 	/* ...then  setup the hardware */
-	/*
-	 * XXX: set the frambuffer layout to either 24 or 8 bpp here - more specs needed
-	 * XXX: Lazy mode on: simply rely on the prom since it does such a good job
-	 */
-	if( pNewport->Bpp == 1) {
-		pNewport->drawmode1 = pNewport->txt_drawmode1;
-	} 
-	
+	pNewport->drawmode1 = DM1_RGBPLANES | 
+				NPORT_DMODE1_CCLT | 
+				NPORT_DMODE1_CCEQ | 
+				NPORT_DMODE1_CCGT | 
+				NPORT_DMODE1_LOSRC;
+	if( pNewport->Bpp == 1) { /* 8bpp */
+		pNewport->drawmode1 |=  NPORT_DMODE1_DD8 | 
+					NPORT_DMODE1_HD8 | 
+					NPORT_DMODE1_RWPCKD;
+	} else { /* 24bpp */
+		CARD32 mode = 0L;
+
+		/* tell the xmap9s that we are using 24bpp */
+		NewportBfwait(pNewport->pNewportRegs);
+		pNewportRegs->set.dcbmode = (DCB_XMAP_ALL | R_DCB_XMAP9_PROTOCOL |
+				XM9_CRS_CONFIG | NPORT_DMODE_W1 );
+		pNewportRegs->set.dcbdata0.bytes.b3 &= ~(XM9_8_BITPLANES | XM9_PUPMODE);
+		NewportBfwait(pNewport->pNewportRegs);
+		/* set up the mode register for 24bpp */
+		mode = XM9_MREG_PIX_SIZE_24BPP | XM9_MREG_PIX_MODE_RGB1
+				| XM9_MREG_GAMMA_BYPASS;
+		NewportXmap9SetModeRegister( pNewportRegs , 0, mode);
+		/* select the set up mode register */
+		NewportBfwait(pNewport->pNewportRegs);
+		pNewportRegs->set.dcbmode = (DCB_XMAP_ALL | W_DCB_XMAP9_PROTOCOL |
+				XM9_CRS_MODE_REG_INDEX | NPORT_DMODE_W1 );
+		pNewportRegs->set.dcbdata0.bytes.b3 = 0;
+
+		pNewport->drawmode1 |= 
+					/* set drawdepth to 24 bit */
+					NPORT_DMODE1_DD24 |
+					/* turn on RGB mode */	
+					NPORT_DMODE1_RGBMD | 
+					/* turn on 8888 = RGBA pixel packing */
+					NPORT_DMODE1_HD32 | NPORT_DMODE1_RWPCKD; 
+	}
+	/* blank the framebuffer */
+	NewportWait(pNewportRegs);
+	pNewportRegs->set.drawmode0 = (NPORT_DMODE0_DRAW | NPORT_DMODE0_DOSETUP |
+					NPORT_DMODE0_STOPX | NPORT_DMODE0_STOPY |
+					NPORT_DMODE0_BLOCK);
+	pNewportRegs->set.drawmode1 = pNewport->drawmode1 |
+					NPORT_DMODE1_FCLR |
+					NPORT_DMODE1_RGBMD;
+	pNewportRegs->set.colorvram = 0;
+	pNewportRegs->set.xystarti = 0;
+	pNewportRegs->go.xyendi = ( (1279+64) << 16) | 1023;
+
+	/* default drawmode */
+	NewportWait(pNewportRegs);
+	pNewportRegs->set.drawmode1 = pNewport->drawmode1;
+
 	return TRUE;
 }
 
 
 /* 
- * This will acutally restore the saved state 
+ * This will actually restore the saved state 
  * (either when switching back to a VT or when the server is going down)
  * Closing is true if the X server is really going down 
  */
@@ -669,9 +715,12 @@ NewportRestore(ScrnInfoPtr pScrn, Bool Closing)
 	NewportRegsPtr pNewportRegs = pNewport->pNewportRegs;
 
 	/* Restore backed up registers */
-	pNewportRegs->set.drawmode1 = pNewport->txt_drawmode1;
-	NewportVc2Set( pNewportRegs, VC2_IREG_CONTROL, pNewport->txt_vc2ctrl);
-	NewportRestorePalette(pScrn);
+	NewportRestoreRex3( pScrn );
+	NewportVc2Set( pNewportRegs, VC2_IREG_CONTROL, pNewport->txt_vc2ctrl );
+	NewportRestorePalette( pScrn );
+	if( pNewport->Bpp == 3) {
+		NewportRestoreXmap9s( pScrn);
+	}
 }
 
 
@@ -683,14 +732,15 @@ NewportHWProbe(unsigned probedIDs[])
 	FILE* cpuinfo;		
 	char line[80];
 	unsigned hasNewport = 0;
-	cpuinfo = fopen("/proc/cpuinfo","r");
-	while(fgets(line,80,cpuinfo) != NULL) {	
-		if(strstr(line, "SGI Indy") != NULL) {
-			hasNewport = 1;
-			break;
+	if ((cpuinfo = fopen("/proc/cpuinfo", "r"))) {
+		while(fgets(line, 80, cpuinfo) != NULL) {	
+			if(strstr(line, "SGI Indy") != NULL) {
+				hasNewport = 1;
+				break;
+			}
 		}
+		fclose(cpuinfo);	
 	}
-	fclose(cpuinfo);	
 
 	probedIDs[0] = 0;
 	return hasNewport;	
@@ -711,12 +761,13 @@ static Bool NewportProbeCardInfo(ScrnInfoPtr pScrn)
 	pNewport->bitplanes = ((pNewport->board_rev > 1) && (tmp & 0x80)) ? 8 : 24;
 	cmap_rev = tmp & 7;
 	pNewport->cmap_rev = (char)('A'+(cmap_rev ? (cmap_rev+1):0));
-	pNewport->rex3_rev = (pNewportRegs->cset.ustat) & 7;
+	pNewport->rex3_rev = (char)('A'+(pNewportRegs->cset.ustat & 7));
 
 	pNewportRegs->set.dcbmode = (DCB_XMAP0 | R_DCB_XMAP9_PROTOCOL |
 					XM9_CRS_REVISION | NPORT_DMODE_W1);
-	pNewport->xmap9_rev = (pNewportRegs->set.dcbdata0.bytes.b3) & 7;
+	pNewport->xmap9_rev = (char)('A'+(pNewportRegs->set.dcbdata0.bytes.b3 & 7));
 	
+	/* XXX: read possible modes from VC2 here */
 	return TRUE;
 }
 

@@ -44,20 +44,21 @@ copyright holders.
 **    *********************************************************
 ** 
 ********************************************************************/
-/* $XFree86: xc/programs/Xserver/Xprint/attributes.c,v 1.12 2001/01/17 22:36:28 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/Xprint/attributes.c,v 1.17 2001/12/19 21:55:57 dawes Exp $ */
 
-#include <Xproto.h>
+#include <X11/Xproto.h>
 #include <string.h>
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <pwd.h>
+#if defined(sun) && defined(SVR4)
+#include <wchar.h>
+#endif
 
-#include <scrnintstr.h>
+#include "scrnintstr.h"
 
-#define _XP_PRINT_SERVER_
-#include "extensions/Printstr.h"
-#undef _XP_PRINT_SERVER_
+#include <X11/extensions/Printstr.h>
 
 #include "attributes.h"
 #include "Xrm.c"
@@ -302,7 +303,7 @@ BuildPrinterAttrs(
 
     if(systemAttributes.printers != (XrmDatabase)NULL)
     {
-        char *dirName, *fileName;
+        char *fileName;
         XrmDatabase modelDB = (XrmDatabase)NULL;
         XrmName xrm_name[5], xrm_class[2];
         XrmRepresentation rep_type;
@@ -602,7 +603,6 @@ XpGetOneAttribute(
 {
     ContextAttrPtr pCtxtAttrs;
     XrmDatabase db = (XrmDatabase)NULL;
-    char *retVal;
     XrmName xrm_name[3];
     XrmRepresentation rep_type;
     XrmValue value;
@@ -853,7 +853,6 @@ XpGetAttributes(
 {
     ContextAttrPtr pCtxtAttrs;
     XrmDatabase db = (XrmDatabase)NULL;
-    char *retVal;
     StringDbStruct enumStruct;
     XrmQuark empty = NULLQUARK;
 
@@ -1136,8 +1135,6 @@ SendFileToCommand(
     }
     else
     {
-	int res;
-
 	(void) close(pipefd[0]);
 
  	outPipe = fdopen(pipefd[1], "w");
@@ -1157,7 +1154,6 @@ SendFileToCommand(
  * store for the supplied print context.  The ReplaceAnyString utility
  * routine is used to perform the actual replacements.
  */
-extern char *ReplaceAnyString(char *, char *, char *);
 
 static char *
 ReplaceAllKeywords(
@@ -1206,7 +1202,16 @@ ReplaceAllKeywords(
 #define toascii( c ) ((unsigned)(c) & 0x007f)
 #endif
 
-#if defined(CSRG_BASED) || defined(linux) || defined(__CYGWIN__) || (defined(sun) && !defined(SVR4)) || (defined(SVR4) && !defined(sun) && !defined(USL)) || defined(__EMX__) || defined(ISC) || defined(Lynx) || defined(__QNX__) || defined(__DARWIN__)
+#if defined(CSRG_BASED) || \
+    defined(linux) || \
+    defined(__CYGWIN__) || \
+    (defined(sun) && !defined(SVR4)) || \
+    (defined(SVR4) && !defined(sun) && !defined(USL)) || \
+    defined(__EMX__) || \
+    defined(ISC) || \
+    defined(Lynx) || \
+    defined(__QNX__) || \
+    defined(__DARWIN__)
 #define iswspace(c) (isascii(c) && isspace(toascii(c)))
 #endif
 
@@ -1360,8 +1365,8 @@ VectorizeCommand(
     char ***pVector,
     XpContextPtr pContext)
 {
-    char *cmdName, *curTok;
-    int i, numChars;
+    char *cmdName;
+    int numChars;
 
     if(command == (char *)NULL)
 	return (char *)NULL;
@@ -1387,7 +1392,7 @@ XpSubmitJob(
      char *fileName,
      XpContextPtr pContext)
 {
-    char **vector, *cmdNam, *cmdOpt, *command, *userName;
+    char **vector, *cmdNam, *command, *userName;
     int i;
 
     command = XpGetOneAttribute(pContext, XPPrinterAttr, "xp-spooler-command");
@@ -1498,7 +1503,6 @@ XpGetTrayMediumFromContext(XpContextPtr pCon,
 {
     char *defMedium, *defTray;
     char *t, *m;
-    char *pS, *pE, *pLast;
     
     defMedium = XpGetOneAttribute( pCon, XPPageAttr, 
 				  "default-medium" );

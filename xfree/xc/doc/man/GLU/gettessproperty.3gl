@@ -45,6 +45,6 @@ are interpreted and rendered. See the
 \%\f3gluTessProperty\fP reference page for information about the 
 properties and what they do.
 .SH SEE ALSO
-\%\f3gluNewTess\fP, 
-\%\f3gluTessProperty\fP
+\%\f3gluNewTess(3G)\fP, 
+\%\f3gluTessProperty(3G)\fP
 

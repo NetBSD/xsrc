@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/tseng/tseng_dga.c,v 1.1 2000/12/06 15:35:24 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/tseng/tseng_dga.c,v 1.2 2001/10/01 13:44:11 eich Exp $ */
 /*
  * Copyright 2000 by Rainer Keller, <Rainer.Keller@studmail.uni-stuttgart.de>.
  *
@@ -73,7 +73,6 @@ TsengDGAInit(ScreenPtr pScreen)
       return FALSE;
   
   if (!pTseng->DGAnumModes) {
-    ErrorF("DGAINIT\n");
     pMode = firstMode = pScrn->modes;
     while (pMode) {
       newmodes = xrealloc(modes, (num + 1) * sizeof (DGAModeRec));

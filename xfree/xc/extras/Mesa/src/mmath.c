@@ -1,4 +1,4 @@
-
+/* $XFree86: xc/extras/Mesa/src/mmath.c,v 1.5 2001/12/11 09:18:54 alanh Exp $ */
 /*
  * Mesa 3-D graphics library
  * Version:  3.3
@@ -28,6 +28,7 @@
 #include "all.h"
 #else
 #include "glheader.h"
+#include "macros.h"
 #include "mmath.h"
 #endif
 

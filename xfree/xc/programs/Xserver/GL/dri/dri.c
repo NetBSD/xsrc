@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/GL/dri/dri.c,v 1.31 2001/04/10 16:07:54 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/GL/dri/dri.c,v 1.34 2001/12/10 19:07:19 dawes Exp $ */
 /**************************************************************************
 
 Copyright 1998-1999 Precision Insight, Inc., Cedar Park, Texas.
@@ -66,7 +66,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "mi.h"
 #include "mipointer.h"
 
-#if defined(XFree86LOADER) || defined(PANORAMIX)
+#if defined(XFree86LOADER) && !defined(PANORAMIX)
 extern Bool noPanoramiXExtension;
 #endif
 
@@ -91,6 +91,7 @@ static void    DRIDestroyDummyContext(ScreenPtr pScreen, Bool hasCtxPriv);
 				   This will make it easy to turn off some
 				   messages later, based on verbosity
 				   level. */
+
 /*
  * Since we're already referencing things from the XFree86 common layer in
  * this file, we'd might as well just call xf86VDrvMsgVerb, and have
@@ -111,11 +112,12 @@ DRIDrvMsg(int scrnIndex, MessageType type, const char *format, ...)
 Bool
 DRIScreenInit(ScreenPtr pScreen, DRIInfoPtr pDRIInfo, int *pDRMFD)
 {
-    DRIScreenPrivPtr 	pDRIPriv;
+    DRIScreenPrivPtr    pDRIPriv;
     drmContextPtr       reserved;
     int                 reserved_count;
-    int	                i, fd, drmWasAvailable;
+    int                 i, fd, drmWasAvailable;
     Bool                xineramaInCore = FALSE;
+    int                 err = 0;
 
     if (DRIGeneration != serverGeneration) {
 	if ((DRIScreenPrivIndex = AllocateScreenPrivateIndex()) < 0)
@@ -147,7 +149,7 @@ DRIScreenInit(ScreenPtr pScreen, DRIInfoPtr pDRIInfo, int *pDRMFD)
     drmWasAvailable = drmAvailable();
 
     /* Note that drmOpen will try to load the kernel module, if needed. */
-    fd = drmOpen(pDRIInfo->drmDriverName, NULL /*pDRIInfo->busIdString*/);
+    fd = drmOpen(pDRIInfo->drmDriverName, NULL );
     if (fd < 0) {
         /* failed to open DRM */
         pScreen->devPrivates[DRIScreenPrivIndex].ptr = NULL;
@@ -159,7 +161,7 @@ DRIScreenInit(ScreenPtr pScreen, DRIInfoPtr pDRIInfo, int *pDRMFD)
     if (!drmWasAvailable) {
        /* drmOpen loaded the kernel module, print a message to say so */
        DRIDrvMsg(pScreen->myNum, X_INFO,
-                 "[drm] loaded kernel module \"%s\"\n",
+                 "[drm] loaded kernel module for \"%s\" driver\n",
                  pDRIInfo->drmDriverName);
     }
 
@@ -179,13 +181,13 @@ DRIScreenInit(ScreenPtr pScreen, DRIInfoPtr pDRIInfo, int *pDRMFD)
     pDRIPriv->createDummyCtx     = pDRIInfo->createDummyCtx;
     pDRIPriv->createDummyCtxPriv = pDRIInfo->createDummyCtxPriv;
 
-    if (drmSetBusid(pDRIPriv->drmFD, pDRIPriv->pDriverInfo->busIdString) < 0) {
+    if ((err = drmSetBusid(pDRIPriv->drmFD, pDRIPriv->pDriverInfo->busIdString)) < 0) {
 	pDRIPriv->directRenderingSupport = FALSE;
 	pScreen->devPrivates[DRIScreenPrivIndex].ptr = NULL;
 	drmClose(pDRIPriv->drmFD);
         DRIDrvMsg(pScreen->myNum, X_INFO,
-                  "[drm] drmSetBusid failed (%d, %s)\n",
-                  pDRIPriv->drmFD, pDRIPriv->pDriverInfo->busIdString);
+                  "[drm] drmSetBusid failed (%d, %s), %s\n",
+                  pDRIPriv->drmFD, pDRIPriv->pDriverInfo->busIdString, strerror(-err));
 	return FALSE;
     }
 
@@ -474,6 +476,7 @@ DRICloseScreen(ScreenPtr pScreen)
 	}
 
 	drmClose(pDRIPriv->drmFD);
+
 	xfree(pDRIPriv);
 	pScreen->devPrivates[DRIScreenPrivIndex].ptr = NULL;
     }

@@ -3,7 +3,7 @@ XCOMM
 XCOMM
 XCOMM
 XCOMM
-XCOMM $XFree86: xc/config/makedepend/Imakefile,v 3.8 2001/01/17 16:38:57 dawes Exp $
+XCOMM $XFree86: xc/config/makedepend/Imakefile,v 3.11 2001/10/09 21:40:21 alanh Exp $
 
     SRCS = include.c main.c parse.c pr.c cppsetup.c ifparser.c 
     OBJS = include.o main.o parse.o pr.o cppsetup.o ifparser.o 
@@ -29,7 +29,12 @@ STDINC_DEFINES = -DINCLUDEDIR=\"$(STDINCDIR)\"
 POSTINCDIR = PostIncDir
 POSTINC_DEFINES = -DPOSTINCDIR=\"$(POSTINCDIR)\"
 #endif
-INC_DEFINES = $(PREINC_DEFINES) $(STDINC_DEFINES) $(POSTINC_DEFINES)
+#ifdef ExtraIncDir
+EXTRAINCDIR = ExtraIncDir
+EXTRAINC_DEFINES = -DEXTRAINCDIR=\"$(EXTRAINCDIR)\"
+#endif
+INC_DEFINES = $(PREINC_DEFINES) $(STDINC_DEFINES) $(POSTINC_DEFINES) \
+	      $(EXTRAINC_DEFINES)
 OSUF = .Osuf
 OSUF_DEFINES = -DOBJSUFFIX=\"$(OSUF)\"
 MAIN_DEFINES = $(INC_DEFINES) $(SIGNAL_DEFINES) $(OSUF_DEFINES)
@@ -41,7 +46,7 @@ INCLUDES = -I$(IMAKESRC) -I$(TOP)/include $(TOP_X_INCLUDES)/X11
  XBSDLIB = /**/
 #endif
 
-AllTarget(ProgramTargetName(makedepend))
+AllTarget(HostProgramTargetName(makedepend))
 
 /*
  * bootstrapping: want to build the real makedepend

@@ -25,22 +25,14 @@ dealings in this Software without prior written authorization from
 Pascal Haible.
 */
 
-/* $XFree86: xc/programs/Xserver/os/xalloc.c,v 3.28 2000/11/14 18:20:38 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/os/xalloc.c,v 3.32 2001/10/10 19:06:37 herrb Exp $ */
 
 /* Only used if INTERNAL_MALLOC is defined
  * - otherwise xalloc() in utils.c is used
  */
 #ifdef INTERNAL_MALLOC
 
-#if defined(__STDC__) || defined(AMOEBA)
-#ifndef NOSTDHDRS
 #include <stdlib.h>	/* for malloc() etc. */
-#endif
-#else
-extern char *malloc();
-extern char *calloc();
-extern char *realloc();
-#endif
 
 #include "Xos.h"
 #include "misc.h"
@@ -187,7 +179,9 @@ extern Bool Must_have_memory;
 #endif
 
 #if defined(__alpha__) || defined(__alpha) || \
-    defined(__ia64__) || defined(ia64)
+    defined(__ia64__) || defined(ia64) || \
+    defined(__sparc64__) || \
+    defined(__s390x__)
 #define MAGIC			0x1404196414071968
 #define MAGIC_FREE              0x1506196615061966
 #define MAGIC2			0x2515207525182079
@@ -298,9 +292,6 @@ static int pagesize;
 #ifdef MMAP_DEV_ZERO
 static int devzerofd = -1;
 #include <errno.h>
-#ifdef X_NOT_STDC_ENV
-extern int errno;
-#endif
 #endif
 
 /*
@@ -342,7 +333,8 @@ Xalloc (unsigned long amount)
     defined(__mips__) || \
     defined(__powerpc__) || \
     defined(__arm32__) || \
-    defined(__ia64__) || defined(ia64)
+    defined(__ia64__) || defined(ia64) || \
+    defined(__s390x__) || defined(__s390__)
     amount = (amount + (sizeof(long)-1)) & ~(sizeof(long)-1);
 #endif
 

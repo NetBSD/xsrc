@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bus/linuxPci.c,v 1.3.6.1 2001/05/29 16:38:00 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bus/linuxPci.c,v 1.4 2001/05/28 18:20:49 tsi Exp $ */
 /*
  * Copyright 1998 by Concurrent Computer Corporation
  *

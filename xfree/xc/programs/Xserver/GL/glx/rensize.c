@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/GL/glx/rensize.c,v 1.3 2001/03/21 16:29:37 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/GL/glx/rensize.c,v 1.4 2001/10/31 22:50:27 tsi Exp $ */
 /*
 ** License Applicability. Except to the extent portions of this file are
 ** made subject to an alternative license as permitted in the SGI Free
@@ -680,7 +680,6 @@ int __glXPrioritizeTexturesReqSize(GLbyte *pc, Bool swap )
 int __glXTexSubImage1DReqSize(GLbyte *pc, Bool swap )
 {
     __GLXdispatchTexSubImageHeader *hdr = (__GLXdispatchTexSubImageHeader *) pc;
-    GLenum target = hdr->target;
     GLenum format = hdr->format;
     GLenum type = hdr->type;
     GLint w = hdr->width;
@@ -702,7 +701,6 @@ int __glXTexSubImage1DReqSize(GLbyte *pc, Bool swap )
 int __glXTexSubImage2DReqSize(GLbyte *pc, Bool swap )
 {
     __GLXdispatchTexSubImageHeader *hdr = (__GLXdispatchTexSubImageHeader *) pc;
-    GLenum target = hdr->target;
     GLenum format = hdr->format;
     GLenum type = hdr->type;
     GLint w = hdr->width;

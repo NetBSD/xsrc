@@ -1,4 +1,4 @@
-
+/* $XFree86: xc/extras/Mesa/src/lnaatemp.h,v 1.14 2001/12/11 09:18:54 alanh Exp $ */
 /*
  * Mesa 3-D graphics library
  * Version:  3.3
@@ -65,14 +65,14 @@
 #define FixedToDepth(F)  ((F) >> fixedToDepthShift)
 #ifdef INTERP_RGBA
    GLfixed fr, fg, fb, fa;      /* fixed-pt RGBA */
-   GLfixed dfr, dfg, dfb, dfa;  /* fixed-pt RGBA deltas */
+   GLfixed dfr = 0, dfg = 0, dfb = 0, dfa = 0;  /* fixed-pt RGBA deltas */
 #endif
 #ifdef INTERP_SPEC
    GLfixed fsr, fsg, fsb;      /* fixed-pt specular RGBA */
-   GLfixed dfsr, dfsg, dfsb;   /* fixed-pt specular RGBA deltas */
+   GLfixed dfsr = 0, dfsg = 0, dfsb = 0; /* fixed-pt specular RGBA deltas */
 #endif
 #ifdef INTERP_INDEX
-   GLfixed fi, dfi;
+   GLfixed fi, dfi = 0;
 #endif
 #if defined(INTERP_STUV0) || defined(INTERP_STUV1)
    GLfloat invw0 = VB->Win.data[vert0][3];
@@ -95,6 +95,17 @@
    GLfloat hu01 = 0, dhu1 = 0;
    GLfloat hv01 = invw0, dhv1 = invw1 - invw0;
 #endif
+
+   /* Cull primitives with malformed coordinates.
+    */
+   {
+      float tmp = VB->Win.data[vert0][0] + 
+	          VB->Win.data[vert0][1] + 
+		  VB->Win.data[vert1][0] + 
+		  VB->Win.data[vert1][1];
+      if (IS_INF_OR_NAN(tmp))
+	 return;
+   }
 
    if (dx == 0 && dy == 0)
       return;

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/int10/generic.c,v 1.22.2.1 2001/05/28 14:23:39 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/int10/generic.c,v 1.23 2001/05/28 14:21:56 eich Exp $ */
 /*
  *                   XFree86 int10 module
  *   execute BIOS int 10h calls in x86 real mode environment
@@ -51,6 +51,7 @@ static void MapVRam(xf86Int10InfoPtr pInt);
 static void UnmapVRam(xf86Int10InfoPtr pInt);
 
 static void *sysMem = NULL;
+
 
 xf86Int10InfoPtr
 xf86InitInt10(int entityIndex)

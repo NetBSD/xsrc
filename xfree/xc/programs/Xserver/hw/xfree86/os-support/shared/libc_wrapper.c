@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/shared/libc_wrapper.c,v 1.75 2001/05/18 20:22:30 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/shared/libc_wrapper.c,v 1.83 2002/01/14 18:34:34 dawes Exp $ */
 /*
  * Copyright 1997 by The XFree86 Project, Inc.
  *
@@ -23,6 +23,9 @@
  *
  */
 
+#if defined(linux) && !defined(__GLIBC__)
+#undef __STRICT_ANSI__
+#endif
 #include <X.h>
 #include <Xmd.h>
 #include <Xos.h>
@@ -34,11 +37,13 @@
 #endif
 #include <sys/time.h>
 #include <math.h>
+#ifdef sun
+#include <ieeefp.h>
+#endif
 #include <stdarg.h>
 #include <fcntl.h>
 #include "Xfuncproto.h"
 #include "os.h"
-#include <stdarg.h>
 #include <ctype.h>
 #include <unistd.h>
 #include <string.h>
@@ -75,11 +80,6 @@ extern int mmapFd;
 #endif
 #if !defined(ISC)
 #include <stdlib.h>
-#endif
-
-#ifdef __CYGWIN__
-#define vsscanf sscanf
-#define vfscanf fscanf
 #endif
 
 #define NEED_XF86_TYPES
@@ -133,7 +133,7 @@ typedef struct dirent DIRENTRY;
 #include <sys/wait.h>
 #undef _POSIX_SOURCE
 #else
-#if defined(MINIX) || defined(AMOEBA) || (defined(ISC) && defined(_POSIX_SOURCE)) || defined(Lynx) || (defined (__alpha__) && defined(linux))
+#if (defined(ISC) && defined(_POSIX_SOURCE)) || defined(Lynx) || (defined (__alpha__) && defined(linux))
 #include <sys/types.h>
 #endif
 #include <sys/wait.h>
@@ -399,7 +399,9 @@ xf86open(const char *path, int flags, ...)
     va_start(ap, flags);
     flags = xfToOsOpenFlags(flags);
     if (flags & O_CREAT) {
-	mode_t mode = va_arg(ap, mode_t);
+	/* can't request a mode_t directly on systems where mode_t 
+	   is an unsigned short */
+	mode_t mode = (mode_t)va_arg(ap, unsigned int);
 	fd = open(path, flags, mode);
     } else {
 	fd = open(path, flags);
@@ -1171,18 +1173,13 @@ xf86bsearch(const void *key, const void *base, xf86size_t nmemb,
 	return bsearch(key, base, (size_t)nmemb, (size_t)size, compar);
 }
 
-/*VARARGS1*/
 int
 xf86execl(const char *pathname, const char *arg, ...)
 {
 #ifndef __EMX__
     int i;
     pid_t pid;
-#ifdef MACH386
-    union wait exit_status;
-#else
     int exit_status;
-#endif
     char *arglist[5];
     va_list args;
     va_start(args, arg);
@@ -1206,7 +1203,7 @@ xf86execl(const char *pathname, const char *arg, ...)
 	xf86DisableIO();
 #endif
         setuid(getuid());
-#if !defined(SELF_CONTAINED_WRAPPER) && !defined(AMOEBA) && !defined(MINIX)
+#if !defined(SELF_CONTAINED_WRAPPER)
         /* set stdin, stdout to the consoleFD, and leave stderr alone */
         for (i = 0; i < 2; i++)
         {
@@ -1538,6 +1535,17 @@ double
 xf86fabs(double x)
 {
         return(fabs(x));
+}
+
+int 
+xf86finite(double x)
+{
+#ifndef QNX4
+	return(finite(x));
+#else
+	/* XXX Replace this with something that really works. */
+	return 1;
+#endif
 }
 
 double

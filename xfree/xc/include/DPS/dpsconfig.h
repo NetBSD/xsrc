@@ -35,7 +35,7 @@
  * 
  * Author:  Adobe Systems Incorporated
  */
-/* $XFree86: xc/include/DPS/dpsconfig.h,v 1.3 2000/08/31 19:03:54 tsi Exp $ */
+/* $XFree86: xc/include/DPS/dpsconfig.h,v 1.5 2001/11/01 23:35:26 dawes Exp $ */
 
 #ifndef	DPSCONFIG_H
 #define	DPSCONFIG_H
@@ -87,7 +87,8 @@
 #endif /* _IBMR2 */
 
 #if defined(__alpha) || defined(__alpha__) || \
-    defined(__ia64__) || defined(ia64)
+    defined(__ia64__) || defined(ia64) || \
+    defined(__s390x__)
 #define IEEEFLOAT 1
 #endif /* __alpha */
 
@@ -118,7 +119,7 @@
  * when manipulating external binary representations.
  *
  * SWAPBITS should be true (1) for:
- *	Alpha, VAX, i80x86 series, MIPS little-endian (e.g. DEC version)
+ *	Alpha, VAX, i80x86 series, ia64, MIPS little-endian (e.g. DEC version)
  * SWAPBITS should be false (0) for:
  *	mc680x0 series, IBM R6000, MIPS big-endian (e.g. SGI version), SPARC,
  *	HPPA
@@ -127,7 +128,7 @@
 #ifndef SWAPBITS
 
 #if defined(__alpha) || defined(__alpha__) || \
-    defined(__ia64__) || defined(ia64)
+    defined(__ia64__) || defined(ia64) 
 #define SWAPBITS 1
 #endif /* __alpha */
 
@@ -151,6 +152,10 @@
 #define SWAPBITS 0
 #endif /* mc68000 */
 
+#if defined(__s390x__) || defined (__s390__)
+#define SWAPBITS 0
+#endif /* s390 and s390x */
+
 #if (defined(_IBMR2) || defined(_POWER)) && defined(AIXV3)
 #define SWAPBITS 0
 #endif /* _IBMR2 */
@@ -172,7 +177,7 @@
  * MIN_POINTER_ALIGN.  MIN_POINTER_ALIGN must be a power of 2.
  *
  * MIN_POINTER_ALIGN must be 8 on
- *	Alpha, IA-64
+ *	Alpha, IA-64, hppa64 (aka hppa2.0 in wide mode)
  * MIN_POINTER_ALIGN must be 4 on
  *	VAX, i80x86 series, MIPS, mc680x0 series, IBM R6000, SPARC, HPPA
  */
@@ -180,9 +185,18 @@
 #ifndef MIN_POINTER_ALIGN
  
 #if defined(__alpha) || defined(__alpha__) || \
-    defined(__ia64__) || defined(ia64)
+    defined(__ia64__) || defined(ia64) || \
+    defined(__s390x__)
 #define MIN_POINTER_ALIGN 8
 #endif /* __alpha */
+
+#if defined(__hppa__)
+#if defined(__LP64__)
+#define MIN_POINTER_ALIGN 8
+#else
+#define MIN_POINTER_ALIGN 4
+#endif
+#endif
 
 #ifdef vax
 #define MIN_POINTER_ALIGN 4

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sis/sis300_accel.c,v 1.7 2001/04/19 12:40:33 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sis/sis300_accel.c,v 1.11 2002/01/11 15:37:32 dawes Exp $ */
 
 /*
  *
@@ -60,6 +60,7 @@ static void SiSSetupForMonoPatternFill(ScrnInfoPtr pScrn,
 static void SiSSubsequentMonoPatternFill(ScrnInfoPtr pScrn,
                                 int patx, int paty,
                                 int x, int y, int w, int h);
+#if 0
 static void SiSSetupForColorPatternFill(ScrnInfoPtr pScrn,
                                 int patx, int paty, int rop,
                                 unsigned int planemask,
@@ -78,7 +79,7 @@ static void SiSSetupForScreenToScreenColorExpand(ScrnInfoPtr pScrn,
 static void SiSSubsequentScreenToScreenColorExpand(ScrnInfoPtr pScrn,
                                 int x, int y, int w, int h,
                                 int srcx, int srcy, int skipleft);
-
+#endif
 static void SiSSetupForScanlineCPUToScreenColorExpandFill(ScrnInfoPtr pScrn, 
                                 int fg, int bg, int rop, 
                                 unsigned int planemask);
@@ -86,13 +87,13 @@ static void SiSSubsequentScanlineCPUToScreenColorExpandFill(ScrnInfoPtr pScrn,
                                 int x, int y, int w, int h, 
                                 int skipleft);
 static void SiSSubsequentColorExpandScanline(ScrnInfoPtr pScrn, int bufno);
-
+#if 0
 static void SiSSetupForImageWrite(ScrnInfoPtr pScrn, int rop, 
                                 unsigned int planemask, int trans_color, 
                                 int bpp, int depth);
 static void SiSSubsequentImageWriteRect(ScrnInfoPtr pScrn, int x, int y, 
                                 int w, int h, int skipleft);
-
+#endif
 static void
 SiSInitializeAccelerator(ScrnInfoPtr pScrn)
 {
@@ -107,6 +108,7 @@ SiS300AccelInit(ScreenPtr pScreen)
 	XAAInfoRecPtr   infoPtr;
 	ScrnInfoPtr     pScrn = xf86Screens[pScreen->myNum];
 	SISPtr          pSiS = SISPTR(pScrn);
+	int		topFB;
 	int             reservedFbSize;
 	int             UsableFbSize;
 	unsigned char   *AvailBufBase;
@@ -165,36 +167,32 @@ SiS300AccelInit(ScreenPtr pScreen)
 #if 0
 	/* 8x8 color pattern fill ---seems not useful by xaa */
 	infoPtr->SetupForColor8x8PatternFill =
-							SiSSetupForColorPatternFill;
+	    SiSSetupForColorPatternFill;
 	infoPtr->SubsequentColor8x8PatternFillRect =
-							SiSSubsequentColorPatternFill;
+	    SiSSubsequentColorPatternFill;
 	infoPtr->Color8x8PatternFillFlags = NO_PLANEMASK |
-							HARDWARE_PATTERN_SCREEN_ORIGIN |
-							HARDWARE_PATTERN_PROGRAMMED_BITS ;
-#endif
+	    HARDWARE_PATTERN_SCREEN_ORIGIN |
+	    HARDWARE_PATTERN_PROGRAMMED_BITS ;
 
-#if 0
 	/* Screen To Screen Color Expand */
 	infoPtr->SetupForScreenToScreenColorExpandFill =
-							SiSSetupForScreenToScreenColorExpand;
+	    SiSSetupForScreenToScreenColorExpand;
 	infoPtr->SubsequentScreenToScreenColorExpandFill =
-							SiSSubsequentScreenToScreenColorExpand;
-#endif
+	    SiSSubsequentScreenToScreenColorExpand;
 	
-#if 0
 	/* CPU To Screen Color Expand ---implement another instead of this one! */
 	infoPtr->SetupForCPUToScreenColorExpandFill =
-							SiSSetupForCPUToScreenColorExpand;
+	    SiSSetupForCPUToScreenColorExpand;
 	infoPtr->SubsequentCPUToScreenColorExpandFill =
-							SiSSubsequentCPUToScreenColorExpand;
+	    SiSSubsequentCPUToScreenColorExpand;
 	infoPtr->ColorExpandRange = PATREGSIZE;
 	infoPtr->ColorExpandBase = pSiS->IOBase+PBR(0);
 	infoPtr->CPUToScreenColorExpandFillFlags = NO_PLANEMASK |
-							BIT_ORDER_IN_BYTE_MSBFIRST |
-							NO_TRANSPARENCY |
-							SYNC_AFTER_COLOR_EXPAND |
-							HARDWARE_PATTERN_SCREEN_ORIGIN |
-							HARDWARE_PATTERN_PROGRAMMED_BITS ;
+	    BIT_ORDER_IN_BYTE_MSBFIRST |
+	    NO_TRANSPARENCY |
+	    SYNC_AFTER_COLOR_EXPAND |
+	    HARDWARE_PATTERN_SCREEN_ORIGIN |
+	    HARDWARE_PATTERN_PROGRAMMED_BITS ;
 #endif
 
 	/* per-scanline color expansion*/
@@ -207,11 +205,11 @@ SiS300AccelInit(ScreenPtr pScreen)
 	infoPtr->SubsequentScanlineCPUToScreenColorExpandFill = SiSSubsequentScanlineCPUToScreenColorExpandFill;
 	infoPtr->SubsequentColorExpandScanline = SiSSubsequentColorExpandScanline;
 	infoPtr->ScanlineCPUToScreenColorExpandFillFlags =
-									NO_PLANEMASK |
-									CPU_TRANSFER_PAD_DWORD |
-									SCANLINE_PAD_DWORD |
-									BIT_ORDER_IN_BYTE_MSBFIRST |
-									LEFT_EDGE_CLIPPING;
+	    NO_PLANEMASK |
+	    CPU_TRANSFER_PAD_DWORD |
+	    SCANLINE_PAD_DWORD |
+	    BIT_ORDER_IN_BYTE_MSBFIRST |
+	    LEFT_EDGE_CLIPPING;
 	
 #if 0
 	divider = ((pScrn->virtualX*pScrn->bitsPerPixel)/8)+8;
@@ -219,41 +217,58 @@ SiS300AccelInit(ScreenPtr pScreen)
 	infoPtr->SetupForImageWrite = SiSSetupForImageWrite;
 	infoPtr->SubsequentImageWriteRect = SiSSubsequentImageWriteRect;
 	infoPtr->ImageWriteFlags = CPU_TRANSFER_PAD_DWORD |
-									SCANLINE_PAD_DWORD |
-									LEFT_EDGE_CLIPPING |    
-									NO_PLANEMASK|
-									NO_TRANSPARENCY |
-									NO_GXCOPY |
-									SYNC_AFTER_IMAGE_WRITE;
+	    SCANLINE_PAD_DWORD |
+	    LEFT_EDGE_CLIPPING |    
+	    NO_PLANEMASK|
+	    NO_TRANSPARENCY |
+	    NO_GXCOPY |
+	    SYNC_AFTER_IMAGE_WRITE;
 #endif
 
 	/* init Frame Buffer Manager */
-	reservedFbSize = 0;
-	if (pSiS->TurboQueue) reservedFbSize += 1024*512;
-	if (pSiS->HWCursor)  reservedFbSize += 4096;
-	reservedFbSize += (pSiS->ColorExpandBufferNumber * pSiS->PerColorExpandBufferSize);
-	UsableFbSize = pSiS->FbMapSize - reservedFbSize;
+
+        /* TW: check if maxxfbmem must contain TurboQueue and HWCursor */
+	topFB = pSiS->maxxfbmem;
+	if ((topFB)
+	    >= (pSiS->FbMapSize)
+	    - ((pSiS->TurboQueue) ? (1024*512) : 0)
+	       - ((pSiS->HWCursor) ? 4096 : 0))  {
+	    topFB = pSiS->FbMapSize;
+	    /* TurboQueue len is always 512k */
+	    if (pSiS->TurboQueue) topFB -= 1024*512;  
+            /* HWCursor len is always 4096 */
+	    if (pSiS->HWCursor)  topFB -= 4096;
+	}
+	reservedFbSize = (pSiS->ColorExpandBufferNumber
+			   * pSiS->PerColorExpandBufferSize);
+        /* TW: New for MaxXFBmem Option */
+	UsableFbSize = topFB - reservedFbSize; 
+	/* Layout:
+	 * |--------------++++++++++++++++++++^******==========~~~~~~~~~~~~|
+	 *   UsableFbSize  ColorExpandBuffers | Heap  HWCursor  TurboQueue
+	 *                                 topFB
+	 */
 	AvailBufBase = pSiS->FbBase + UsableFbSize;
 	for (i = 0; i < pSiS->ColorExpandBufferNumber; i++) {
 		pSiS->ColorExpandBufferAddr[i] = AvailBufBase + 
-						i * pSiS->PerColorExpandBufferSize;
-		pSiS->ColorExpandBufferScreenOffset[i] = UsableFbSize + 
-						i * pSiS->PerColorExpandBufferSize;
+		    i * pSiS->PerColorExpandBufferSize;
+		pSiS->ColorExpandBufferScreenOffset[i] = UsableFbSize +
+		    i * pSiS->PerColorExpandBufferSize;
 	}
-
 	Avail.x1 = 0;
 	Avail.y1 = 0;
 	Avail.x2 = pScrn->displayWidth;
-	Avail.y2 = UsableFbSize / (pScrn->displayWidth * pScrn->bitsPerPixel/8) - 1;
-	if (Avail.y2 < 0) 
+	Avail.y2 = UsableFbSize
+	    / (pScrn->displayWidth * pScrn->bitsPerPixel/8) - 1;
+	if (Avail.y2 < 0)
 		Avail.y2 = 32767;
 	
 	xf86DrvMsg(pScrn->scrnIndex, X_INFO,
-							"Frame Buffer From (%d,%d) To (%d,%d)\n",
-							Avail.x1, Avail.y1, Avail.x2, Avail.y2);
+		   "Frame Buffer From (%d,%d) To (%d,%d)\n",
+		   Avail.x1, Avail.y1, Avail.x2, Avail.y2);
 	
 	xf86InitFBManager(pScreen, &Avail);
-
+	
 	return(XAAInit(pScreen, infoPtr));
 }
 
@@ -496,7 +511,7 @@ SiSSubsequentSolidHorzVertLine(ScrnInfoPtr pScrn,
 
 	PDEBUG(ErrorF("Subsequent SolidHorzVertLine(%d, %d, %d, %d)\n",
 					x, y, len, dir));
-
+	len--; /* starting point is included! */
 	dstbase = 0;
 	if ((y >= 2048) || ((y + len) >= 2048)) { 
 		dstbase = pSiS->scrnOffset * y;
@@ -606,6 +621,7 @@ SiSSubsequentMonoPatternFill(ScrnInfoPtr pScrn,
 	SiSDoCMD
 }
 
+#if 0
 static void
 SiSSetupForColorPatternFill(ScrnInfoPtr pScrn,
                                 int patx, int paty, int rop,
@@ -696,7 +712,6 @@ SiSSubsequentCPUToScreenColorExpand(ScrnInfoPtr pScrn,
 	pSiS->DoColorExpand = TRUE;
 }
 
-#if 0
 static void
 SiSSetupForScreenToScreenColorExpand(ScrnInfoPtr pScrn,
                                 int fg, int bg,
@@ -759,8 +774,8 @@ SiSSetupForScanlineCPUToScreenColorExpandFill(ScrnInfoPtr pScrn, int fg, int bg,
 	};
 }
 
-int     srcpitch;
-int     xcurrent, ycurrent;     
+static int     srcpitch;
+static int     xcurrent, ycurrent;     
 static void SiSSubsequentScanlineCPUToScreenColorExpandFill(
                         ScrnInfoPtr pScrn, int x, int y, int w, 
                         int h, int skipleft)
@@ -812,6 +827,7 @@ static void SiSSubsequentColorExpandScanline(ScrnInfoPtr pScrn, int bufno)
 	}
 }
 
+#if 0
 static void SiSSetupForImageWrite(ScrnInfoPtr pScrn, int rop, 
             unsigned int planemask, int trans_color, int bpp, int depth)
 {
@@ -823,7 +839,7 @@ static void SiSSubsequentImageWriteRect(ScrnInfoPtr pScrn,
 {
 	return;
 }
-
+#endif
 
 #ifdef DEBUG
 static void

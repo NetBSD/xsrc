@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/lib/Xrender/Picture.c,v 1.7 2000/12/07 23:55:56 keithp Exp $
+ * $XFree86: xc/lib/Xrender/Picture.c,v 1.8 2001/12/16 18:27:55 keithp Exp $
  *
  * Copyright © 2000 SuSE, Inc.
  *
@@ -30,7 +30,7 @@ static void
 _XRenderProcessPictureAttributes (Display		    *dpy,
 				  xRenderChangePictureReq   *req,
 				  unsigned long		    valuemask,
-				  XRenderPictureAttributes  *attributes)
+				  _Xconst XRenderPictureAttributes  *attributes)
 {
     unsigned long values[32];
     register unsigned long *value = values;
@@ -72,9 +72,9 @@ _XRenderProcessPictureAttributes (Display		    *dpy,
 Picture
 XRenderCreatePicture (Display			*dpy,
 		      Drawable			drawable,
-		      XRenderPictFormat		*format,
+		      _Xconst XRenderPictFormat		*format,
 		      unsigned long		valuemask,
-		      XRenderPictureAttributes	*attributes)
+		      _Xconst XRenderPictureAttributes	*attributes)
 {
     XExtDisplayInfo	    *info = XRenderFindDisplay (dpy);
     Picture		    pid;
@@ -102,7 +102,7 @@ void
 XRenderChangePicture (Display                   *dpy,
 		      Picture			picture,
 		      unsigned long             valuemask,
-		      XRenderPictureAttributes  *attributes)
+		      _Xconst XRenderPictureAttributes  *attributes)
 {
     XExtDisplayInfo	    *info = XRenderFindDisplay (dpy);
     xRenderChangePictureReq *req;
@@ -128,7 +128,7 @@ _XRenderSetPictureClipRectangles (Display	    *dpy,
 				  Picture	    picture,
 				  int		    xOrigin,
 				  int		    yOrigin,
-				  XRectangle	    *rects,
+				  _Xconst XRectangle	    *rects,
 				  int		    n)
 {
     xRenderSetPictureClipRectanglesReq	*req;
@@ -151,7 +151,7 @@ XRenderSetPictureClipRectangles (Display	*dpy,
 				 Picture	picture,
 				 int		xOrigin,
 				 int		yOrigin,
-				 XRectangle	*rects,
+				 _Xconst XRectangle	*rects,
 				 int		n)
 {
     XExtDisplayInfo	    *info = XRenderFindDisplay (dpy);

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/input/mouse/mousePriv.h,v 1.5 2000/05/31 07:15:06 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/input/mouse/mousePriv.h,v 1.6 2001/11/30 12:12:03 eich Exp $ */
 /*
  * Copyright (c) 1997-1999 by The XFree86 Project, Inc.
  */
@@ -16,6 +16,10 @@ typedef struct {
     const char **	defaults;
     MouseProtocolID	id;
 } MouseProtocolRec, *MouseProtocolPtr;
+
+typedef struct {
+    int state;
+} ps2PrivRec, *ps2PrivPtr;
 
 /* mouse proto flags */
 #define MPF_NONE		0x00

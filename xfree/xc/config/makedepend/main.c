@@ -1,9 +1,13 @@
-/* $Xorg: main.c,v 1.3 2000/08/17 19:41:51 cpqbld Exp $ */
+/* $Xorg: main.c,v 1.5 2001/02/09 02:03:16 xorgcvs Exp $ */
 /*
 
 Copyright (c) 1993, 1994, 1998 The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -20,7 +24,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/config/makedepend/main.c,v 3.20 2001/04/29 23:25:02 tsi Exp $ */
+/* $XFree86: xc/config/makedepend/main.c,v 3.27 2001/12/20 16:14:06 tsi Exp $ */
 
 #include "def.h"
 #ifdef hpux
@@ -41,9 +45,7 @@ in this Software without prior written authorization from The Open Group.
 #endif
 #endif
 
-#if NeedVarargsPrototypes
 #include <stdarg.h>
-#endif
 
 #ifdef MINIX
 #define USE_CHMOD	1
@@ -100,11 +102,6 @@ boolean	show_where_not = FALSE;
 boolean warn_multiple = FALSE;	/* Warn on multiple includes of same file */
 
 static void redirect(char *line, char *makefile);
-#if !NeedVarargsPrototypes
-void fatalerr();
-void warning();
-void warning1();
-#endif
 
 static
 #ifdef SIGNALRETURNSINT
@@ -118,7 +115,7 @@ catch (int sig)
 	fatalerr ("got signal %d\n", sig);
 }
 
-#if defined(USG) || (defined(i386) && defined(SYSV)) || defined(WIN32) || defined(__EMX__) || defined(Lynx_22)
+#if defined(USG) || (defined(i386) && defined(SYSV)) || defined(WIN32) || defined(__EMX__) || defined(Lynx_22) || defined(__CYGWIN__)
 #define USGISH
 #endif
 
@@ -369,6 +366,12 @@ main(int argc, char *argv[])
 	    *incp++ = INCLUDEDIR;
 #endif
 
+#ifdef EXTRAINCDIR
+	    if (incp >= includedirs + MAXDIRS)
+		fatalerr("Too many -I flags.\n");
+	    *incp++ = EXTRAINCDIR;
+#endif
+
 #ifdef POSTINCDIR
 	    if (incp >= includedirs + MAXDIRS)
 		fatalerr("Too many -I flags.\n");
@@ -556,39 +559,68 @@ char *getnextline(struct filepointer *filep)
 	lineno = filep->f_line;
 
 	for(bol = p--; ++p < eof; ) {
-		if (*p == '/' && *(p+1) == '*') { /* consume comments */
-			*p++ = ' ', *p++ = ' ';
-			while (*p) {
-				if (*p == '*' && *(p+1) == '/') {
-					*p++ = ' ', *p = ' ';
+		if (*p == '/' && (p+1) < eof && *(p+1) == '*') {
+			/* Consume C comments */
+			*(p++) = ' ';
+			*(p++) = ' ';
+			while (p < eof && *p) {
+				if (*p == '*' && (p+1) < eof && *(p+1) == '/') {
+					*(p++) = ' ';
+					*(p++) = ' ';
 					break;
 				}
-				else if (*p == '\n')
+				if (*p == '\n')
 					lineno++;
-				*p++ = ' ';
+				*(p++) = ' ';
 			}
-			continue;
+			--p;
 		}
-		else if (*p == '/' && *(p+1) == '/') { /* consume comments */
-			*p++ = ' ', *p++ = ' ';
-			while (*p && *p != '\n')
-				*p++ = ' ';
-			if (*p == '\n') --p;
-			continue;
-		}
-		else if (*p == '\\') {
-			if (*(p+1) == '\n') {
-				*p = ' ';
-				*(p+1) = ' ';
-				lineno++;
+		else if (*p == '/' && (p+1) < eof && *(p+1) == '/') {
+			/* Consume C++ comments */
+			*(p++) = ' ';
+			*(p++) = ' ';
+			while (p < eof && *p) {
+				if (*p == '\\' && (p+1) < eof &&
+				    *(p+1) == '\n') {
+					*(p++) = ' ';
+					lineno++;
+				}
+				else if (*p == '?' && (p+3) < eof &&
+					 *(p+1) == '?' && 
+					 *(p+2) == '/' &&
+					 *(p+3) == '\n') {
+					*(p++) = ' ';
+					*(p++) = ' ';
+					*(p++) = ' ';
+					lineno++;
+				}
+				else if (*p == '\n')
+					break;	/* to process end of line */
+				*(p++) = ' ';
 			}
+			--p;
+		}
+		else if (*p == '\\' && (p+1) < eof && *(p+1) == '\n') {
+			/* Consume backslash line terminations */
+			*(p++) = ' ';
+			*p = ' ';
+			lineno++;
+		}
+		else if (*p == '?' && (p+3) < eof &&
+			 *(p+1) == '?' && *(p+2) == '/' && *(p+3) == '\n') {
+			/* Consume trigraph'ed backslash line terminations */
+			*(p++) = ' ';
+			*(p++) = ' ';
+			*(p++) = ' ';
+			*p = ' ';
+			lineno++;
 		}
 		else if (*p == '\n') {
 			lineno++;
 			if (*bol == '#') {
 				char *cp;
 
-				*p++ = '\0';
+				*(p++) = '\0';
 				/* punt lines with just # (yacc generated) */
 				for (cp = bol+1; 
 				     *cp && (*cp == ' ' || *cp == '\t'); cp++);
@@ -670,12 +702,12 @@ redirect(char *line, char *makefile)
 		fatalerr("cannot open \"%s\"\n", makefile);
 	sprintf(backup, "%s.bak", makefile);
 	unlink(backup);
-#if defined(WIN32) || defined(__EMX__)
+#if defined(WIN32) || defined(__EMX__) || defined(__CYGWIN__)
 	fclose(fdin);
 #endif
 	if (rename(makefile, backup) < 0)
 		fatalerr("cannot rename %s to %s\n", makefile, backup);
-#if defined(WIN32) || defined(__EMX__)
+#if defined(WIN32) || defined(__EMX__) || defined(__CYGWIN__)
 	if ((fdin = fopen(backup, "r")) == NULL)
 		fatalerr("cannot open \"%s\"\n", backup);
 #endif
@@ -706,65 +738,31 @@ redirect(char *line, char *makefile)
 }
 
 void
-#if NeedVarargsPrototypes
 fatalerr(char *msg, ...)
-#else
-/*VARARGS*/
-fatalerr(msg,x1,x2,x3,x4,x5,x6,x7,x8,x9)
-    char *msg;
-#endif
 {
-#if NeedVarargsPrototypes
 	va_list args;
-#endif
 	fprintf(stderr, "%s: error:  ", ProgramName);
-#if NeedVarargsPrototypes
 	va_start(args, msg);
 	vfprintf(stderr, msg, args);
 	va_end(args);
-#else
-	fprintf(stderr, msg,x1,x2,x3,x4,x5,x6,x7,x8,x9);
-#endif
 	exit (1);
 }
 
 void
-#if NeedVarargsPrototypes
 warning(char *msg, ...)
-#else
-/*VARARGS0*/
-warning(msg,x1,x2,x3,x4,x5,x6,x7,x8,x9)
-    char *msg;
-#endif
 {
-#if NeedVarargsPrototypes
 	va_list args;
-#endif
 	fprintf(stderr, "%s: warning:  ", ProgramName);
-#if NeedVarargsPrototypes
 	va_start(args, msg);
 	vfprintf(stderr, msg, args);
 	va_end(args);
-#else
-	fprintf(stderr, msg,x1,x2,x3,x4,x5,x6,x7,x8,x9);
-#endif
 }
 
 void
-#if NeedVarargsPrototypes
 warning1(char *msg, ...)
-#else
-/*VARARGS0*/
-warning1(msg,x1,x2,x3,x4,x5,x6,x7,x8,x9)
-    char *msg;
-#endif
 {
-#if NeedVarargsPrototypes
 	va_list args;
 	va_start(args, msg);
 	vfprintf(stderr, msg, args);
 	va_end(args);
-#else
-	fprintf(stderr, msg,x1,x2,x3,x4,x5,x6,x7,x8,x9);
-#endif
 }

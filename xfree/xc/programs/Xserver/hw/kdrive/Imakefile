@@ -1,5 +1,5 @@
 XCOMM $XConsortium: Imakefile /main/10 1996/12/02 10:20:33 lehors $
-XCOMM $XFree86: xc/programs/Xserver/hw/kdrive/Imakefile,v 1.6 2001/03/30 02:15:19 keithp Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/kdrive/Imakefile,v 1.8 2001/05/29 04:54:10 keithp Exp $
 KDRIVE=.
 #include "Kdrive.tmpl"
 
@@ -13,10 +13,14 @@ XVSRCS=kxv.c
 XVOBJS=kxv.o 
 #endif
 
-SRCS = kcmap.c kcolor.c kdrive.c kinfo.c kinput.c kmap.c knoop.c ktest.c \
+#if XipaqServer
+DEFINES = -DXIPAQ
+#endif
+
+SRCS = kaa.c kcmap.c kcolor.c kdrive.c kinfo.c kinput.c kmap.c knoop.c ktest.c \
 	vga.c kasync.c kmode.c kcurscol.c kshadow.c $(RENDERSRCS) $(XVSRCS)
 
-OBJS = kcmap.o kcolor.o kdrive.o kinfo.o kinput.o kmap.o knoop.o ktest.o \
+OBJS = kaa.o kcmap.o kcolor.o kdrive.o kinfo.o kinput.o kmap.o knoop.o ktest.o \
 	vga.o kasync.o kmode.o kcurscol.o kshadow.o $(RENDEROBJS) $(XVOBJS)
 
 INCLUDES = $(KDINCS)

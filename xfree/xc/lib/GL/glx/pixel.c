@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/glx/pixel.c,v 1.4 2001/03/21 16:04:39 dawes Exp $ */
+/* $XFree86: xc/lib/GL/glx/pixel.c,v 1.5 2001/10/28 03:32:27 tsi Exp $ */
 /*
 ** License Applicability. Except to the extent portions of this file are
 ** made subject to an alternative license as permitted in the SGI Free
@@ -199,7 +199,6 @@ static void FillBitmap(__GLXcontext *gc, GLint width, GLint height,
 		       GLubyte *destImage)
 {
     GLint rowLength = gc->state.storeUnpack.rowLength;
-    GLint imageHeight = gc->state.storeUnpack.imageHeight;
     GLint alignment = gc->state.storeUnpack.alignment;
     GLint skipPixels = gc->state.storeUnpack.skipPixels;
     GLint skipRows = gc->state.storeUnpack.skipRows;
@@ -277,7 +276,6 @@ void __glFillImage(__GLXcontext *gc, GLint dim, GLint width, GLint height,
 {
     GLint rowLength = gc->state.storeUnpack.rowLength;
     GLint imageHeight = gc->state.storeUnpack.imageHeight;
-    GLint imageDepth = gc->state.storeUnpack.imageDepth;
     GLint alignment = gc->state.storeUnpack.alignment;
     GLint skipPixels = gc->state.storeUnpack.skipPixels;
     GLint skipRows = gc->state.storeUnpack.skipRows;
@@ -507,13 +505,12 @@ void __glEmptyImage(__GLXcontext *gc, GLint dim, GLint width, GLint height,
 {
     GLint rowLength = gc->state.storePack.rowLength;
     GLint imageHeight = gc->state.storePack.imageHeight;
-    GLint imageDepth = gc->state.storePack.imageDepth;
     GLint alignment = gc->state.storePack.alignment;
     GLint skipPixels = gc->state.storePack.skipPixels;
     GLint skipRows = gc->state.storePack.skipRows;
     GLint skipImages = gc->state.storePack.skipImages;
     GLint components, elementSize, rowSize, padding, groupsPerRow, groupSize;
-    GLint elementsPerRow, sourceRowSize, sourcePadding, g, h, i;
+    GLint elementsPerRow, sourceRowSize, sourcePadding, h, i;
     GLint imageSize, rowsPerImage;
     GLubyte *start, *iter, *itera;
 

@@ -24,7 +24,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 **************************************************************************/
-/* $XFree86: xc/lib/GL/mesa/src/drv/sis/sis_mesa.c,v 1.5 2000/09/26 15:56:48 tsi Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/sis/sis_mesa.c,v 1.6 2001/10/31 22:50:25 tsi Exp $ */
 
 /*
  * Authors:
@@ -1045,8 +1045,8 @@ void sis_set_render_pos(GLcontext * ctx, GLubyte *base, GLuint pitch)
   assert (base != NULL);
 
   if (SIS_VERBOSE&VERBOSE_SIS_BUFFER){
-    fprintf(stderr, "set drawing position: base=%x, pitch=%lu\n", 
-            (unsigned long)base, pitch);
+    fprintf(stderr, "set drawing position: base=%lx, pitch=%lu\n", 
+            (long)base, (long)pitch);
   }
 
   /* software render */

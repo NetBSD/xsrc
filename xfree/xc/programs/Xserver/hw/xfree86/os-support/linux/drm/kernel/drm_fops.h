@@ -47,6 +47,8 @@ int DRM(open_helper)(struct inode *inode, struct file *filp, drm_device_t *dev)
 	DRM_DEBUG("pid = %d, minor = %d\n", current->pid, minor);
 
 	priv		    = DRM(alloc)(sizeof(*priv), DRM_MEM_FILES);
+	if(!priv) return -ENOMEM;
+
 	memset(priv, 0, sizeof(*priv));
 	filp->private_data  = priv;
 	priv->uid	    = current->euid;
@@ -123,21 +125,31 @@ ssize_t DRM(read)(struct file *filp, char *buf, size_t count, loff_t *off)
 	int	      avail;
 	int	      send;
 	int	      cur;
+	DECLARE_WAITQUEUE(wait, current);
 
 	DRM_DEBUG("%p, %p\n", dev->buf_rp, dev->buf_wp);
 
+	add_wait_queue(&dev->buf_readers, &wait);
+	set_current_state(TASK_INTERRUPTIBLE);
 	while (dev->buf_rp == dev->buf_wp) {
 		DRM_DEBUG("  sleeping\n");
 		if (filp->f_flags & O_NONBLOCK) {
+			remove_wait_queue(&dev->buf_readers, &wait);
+			set_current_state(TASK_RUNNING);
 			return -EAGAIN;
 		}
-		interruptible_sleep_on(&dev->buf_readers);
+		schedule(); /* wait for dev->buf_readers */
 		if (signal_pending(current)) {
 			DRM_DEBUG("  interrupted\n");
+			remove_wait_queue(&dev->buf_readers, &wait);
+			set_current_state(TASK_RUNNING);
 			return -ERESTARTSYS;
 		}
 		DRM_DEBUG("  awake\n");
+		set_current_state(TASK_INTERRUPTIBLE);
 	}
+	remove_wait_queue(&dev->buf_readers, &wait);
+	set_current_state(TASK_RUNNING);
 
 	left  = (dev->buf_rp + DRM_BSZ - dev->buf_wp) % DRM_BSZ;
 	avail = DRM_BSZ - left;
@@ -189,24 +201,8 @@ int DRM(write_string)(drm_device_t *dev, const char *s)
 		send -= count;
 	}
 
-#if LINUX_VERSION_CODE < 0x020315 && !defined(KILLFASYNCHASTHREEPARAMETERS)
-	/* The extra parameter to kill_fasync was added in 2.3.21, and is
-           _not_ present in _stock_ 2.2.14 and 2.2.15.  However, some
-           distributions patch 2.2.x kernels to add this parameter.  The
-           Makefile.linux attempts to detect this addition and defines
-           KILLFASYNCHASTHREEPARAMETERS if three parameters are found. */
-	if (dev->buf_async) kill_fasync(dev->buf_async, SIGIO);
-#else
-
-				/* Parameter added in 2.3.21. */
-#if LINUX_VERSION_CODE < 0x020400
-	if (dev->buf_async) kill_fasync(dev->buf_async, SIGIO, POLL_IN);
-#else
-				/* Type of first parameter changed in
-                                   Linux 2.4.0-test2... */
 	if (dev->buf_async) kill_fasync(&dev->buf_async, SIGIO, POLL_IN);
-#endif
-#endif
+
 	DRM_DEBUG("waking\n");
 	wake_up_interruptible(&dev->buf_readers);
 	return 0;

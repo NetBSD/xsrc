@@ -1,9 +1,13 @@
-/* $XFree86: xc/programs/Xserver/include/misc.h,v 3.26 2001/05/06 06:28:46 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/include/misc.h,v 3.28 2001/12/14 19:59:55 dawes Exp $ */
 /***********************************************************
 
 Copyright 1987, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -62,7 +66,7 @@ TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE
 OF THIS SOFTWARE.
 
 ******************************************************************/
-/* $Xorg: misc.h,v 1.4 2000/08/17 19:53:29 cpqbld Exp $ */
+/* $Xorg: misc.h,v 1.5 2001/02/09 02:05:15 xorgcvs Exp $ */
 #ifndef MISC_H
 #define MISC_H 1
 /*
@@ -81,11 +85,7 @@ extern unsigned long serverGeneration;
 
 #ifndef IN_MODULE
 #ifndef NULL
-#ifndef X_NOT_STDC_ENV
 #include <stddef.h>
-#else
-#define NULL            ((void *)0)
-#endif
 #endif
 #endif
 
@@ -146,16 +146,10 @@ typedef struct _xReq *xReqPtr;
 #define min(a, b) (((a) < (b)) ? (a) : (b))
 #define max(a, b) (((a) > (b)) ? (a) : (b))
 #ifndef IN_MODULE
-#ifdef X_NOT_STDC_ENV
-#ifndef abs
-#define abs(a) ((a) > 0 ? (a) : -(a))
-#endif
-#else
 /* abs() is a function, not a macro; include the file declaring
  * it in case we haven't done that yet.
  */  
 #include <stdlib.h>
-#endif /* X_NOT_STDC_ENV */
 #endif /* IN_MODULE */
 #ifndef Fabs
 #define Fabs(a) ((a) > 0.0 ? (a) : -(a))	/* floating absolute value */

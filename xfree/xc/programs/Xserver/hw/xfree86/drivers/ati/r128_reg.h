@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/r128_reg.h,v 1.11 2001/04/10 16:07:59 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/r128_reg.h,v 1.13 2001/10/02 11:44:16 alanh Exp $ */
 /*
  * Copyright 1999, 2000 ATI Technologies Inc., Markham, Ontario,
  *                      Precision Insight, Inc., Cedar Park, Texas, and
@@ -322,6 +322,8 @@
 #       define R128_CRTC_VSYNC_DIS        (1 <<  9)
 #       define R128_CRTC_DISPLAY_DIS      (1 << 10)
 #       define R128_CRTC_CRT_ON           (1 << 15)
+#       define R128_FP_OUT_EN             (1 << 22)
+#       define R128_FP_ACTIVE             (1 << 23)
 #define R128_CRTC_EXT_CNTL_DPMS_BYTE      0x0055
 #       define R128_CRTC_HSYNC_DIS_BYTE   (1 <<  0)
 #       define R128_CRTC_VSYNC_DIS_BYTE   (1 <<  1)
@@ -556,13 +558,17 @@
 #define R128_FP_CRTC_V_TOTAL_DISP         0x0254
 #define R128_FP_GEN_CNTL                  0x0284
 #       define R128_FP_FPON                  (1 << 0)
+#       define R128_FP_BLANK_DIS             (1 << 1)
 #       define R128_FP_TDMS_EN               (1 <<  2)
 #       define R128_FP_DETECT_SENSE          (1 <<  8)
 #       define R128_FP_SEL_CRTC2             (1 << 13)
 #       define R128_FP_CRTC_DONT_SHADOW_VPAR (1 << 16)
+#       define R128_FP_CRTC_DONT_SHADOW_HEND (1 << 17)
 #       define R128_FP_CRTC_USE_SHADOW_VEND  (1 << 18)
+#       define R128_FP_CRTC_USE_SHADOW_ROWCUR (1 << 19)
 #       define R128_FP_CRTC_HORZ_DIV2_EN     (1 << 20)
 #       define R128_FP_CRTC_HOR_CRT_DIV2_DIS (1 << 21)
+#       define R128_FP_CRT_SYNC_SEL          (1 << 23)
 #       define R128_FP_USE_SHADOW_EN         (1 << 24)
 #define R128_FP_H_SYNC_STRT_WID           0x02c4
 #define R128_FP_HORZ_STRETCH              0x028c
@@ -571,6 +577,7 @@
 #       define R128_HORZ_STRETCH_RATIO_MAX   4096
 #       define R128_HORZ_PANEL_SIZE          (0xff   << 16)
 #       define R128_HORZ_PANEL_SHIFT         16
+#       define R128_AUTO_HORZ_RATIO          (0      << 24)
 #       define R128_HORZ_STRETCH_PIXREP      (0      << 25)
 #       define R128_HORZ_STRETCH_BLEND       (1      << 25)
 #       define R128_HORZ_STRETCH_ENABLE      (1      << 26)
@@ -913,6 +920,9 @@
 #define R128_TEST_DEBUG_MUX               0x0124
 #define R128_TEST_DEBUG_OUT               0x012c
 #define R128_TMDS_CRC                     0x02a0
+#define R128_TMDS_TRANSMITTER_CNTL        0x02a4
+#       define R128_TMDS_PLLEN            (1 << 0)
+#       define R128_TMDS_PLLRST           (1 << 1)
 #define R128_TRAIL_BRES_DEC               0x1614
 #define R128_TRAIL_BRES_ERR               0x160c
 #define R128_TRAIL_BRES_INC               0x1610
@@ -1483,5 +1493,13 @@
 #define R128_CCE_VC_CNTL_PRIM_WALK_LIST          0x00000020
 #define R128_CCE_VC_CNTL_PRIM_WALK_RING          0x00000030
 #define R128_CCE_VC_CNTL_NUM_SHIFT               16
+
+/* hmm copyed blindly (no specs) from radeon.h ... */
+#define R128_RE_TOP_LEFT                  0x26c0
+#       define R128_RE_LEFT_SHIFT         0
+#       define R128_RE_TOP_SHIFT          16
+#define R128_RE_WIDTH_HEIGHT              0x1c44
+#       define R128_RE_WIDTH_SHIFT        0
+#       define R128_RE_HEIGHT_SHIFT       16
 
 #endif

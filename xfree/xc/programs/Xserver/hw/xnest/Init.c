@@ -12,7 +12,7 @@ the suitability of this software for any purpose.  It is provided "as
 is" without express or implied warranty.
 
 */
-/* $XFree86: xc/programs/Xserver/hw/xnest/Init.c,v 3.21 2001/03/04 17:40:13 herrb Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xnest/Init.c,v 3.23 2001/08/01 00:44:57 tsi Exp $ */
 
 #include "X.h"
 #include "Xproto.h"
@@ -22,6 +22,8 @@ is" without express or implied warranty.
 #include "scrnintstr.h"
 #include "windowstr.h"
 #include "servermd.h"
+#include "mi.h"
+#include "fontstruct.h"
 
 #include "Xnest.h"
 
@@ -35,15 +37,6 @@ is" without express or implied warranty.
 #include "Drawable.h"
 #include "XNGC.h"
 #include "XNFont.h"
-
-#ifdef XFree86Server
-/*
- * when building the loader, we add some code that tries to 
- * switch bit ordering based on xf86bpp; since Xnest doesn't
- * use that, we have to add this dummy here
- */
-int xf86bpp = 8;
-#endif
 
 Bool xnestDoFullGeneration = True;
 
@@ -94,7 +87,7 @@ void InitInput(argc, argv)
      int argc;
      char *argv[];
 {
-  DeviceIntPtr ptr, kbd;
+  pointer ptr, kbd;
 
   ptr = AddInputDevice(xnestPointerProc, TRUE);
   kbd = AddInputDevice(xnestKeyboardProc, TRUE);

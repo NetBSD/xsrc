@@ -1,10 +1,14 @@
-/* $Xorg: misc.h,v 1.3 2000/08/17 19:53:57 cpqbld Exp $ */
+/* $Xorg: misc.h,v 1.4 2001/02/09 02:05:32 xorgcvs Exp $ */
 
 /*
 
 Copyright 1995, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be
 included in all copies or substantial portions of the Software.
@@ -23,13 +27,13 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
+/* $XFree86: xc/programs/lbxproxy/include/misc.h,v 1.7 2001/12/14 20:00:55 dawes Exp $ */
 
 #ifndef MISC_H
 #define MISC_H 1
 
 #define NEED_EVENTS
 #define NEED_REPLIES
-#define _XLBX_SERVER_
 #include <X11/X.h>
 #include <X11/Xproto.h>
 #include <X11/Xmd.h>
@@ -39,21 +43,15 @@ from The Open Group.
 #include "Xalloca.h"
 #include "Xfuncs.h"
 #include "Xfuncproto.h"
+#include "lbxstr.h"
 
-typedef void *pointer;
-#ifndef _BOOL_ALREADY_DEFINED_
-typedef int Bool;
-#endif
 #ifndef TRUE
 #define FALSE 0
 #define TRUE 1
 #endif
-typedef struct _Client *ClientPtr;
 typedef struct _XServer *XServerPtr;
 
-#ifndef NULL
-#define NULL 0
-#endif
+#include <stddef.h>
 #define DE_RESET     1
 #define DE_TERMINATE 2
 #define MILLI_PER_SECOND (1000)

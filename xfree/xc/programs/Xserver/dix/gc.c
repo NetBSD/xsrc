@@ -1,9 +1,13 @@
-/* $XFree86: xc/programs/Xserver/dix/gc.c,v 3.7 2001/04/23 20:31:06 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/dix/gc.c,v 3.9 2001/12/14 19:59:32 dawes Exp $ */
 /***********************************************************
 
 Copyright 1987, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -42,7 +46,7 @@ SOFTWARE.
 
 ******************************************************************/
 
-/* $Xorg: gc.c,v 1.3 2000/08/17 19:48:18 cpqbld Exp $ */
+/* $Xorg: gc.c,v 1.4 2001/02/09 02:04:40 xorgcvs Exp $ */
 
 #include "X.h"
 #include "Xmd.h"
@@ -404,8 +408,8 @@ dixChangeGC(client, pGC, mask, pC32, pUnion)
 		break;
 	    case GCClipMask:
 	    {
-		Pixmap pid;
-		int    clipType;
+		Pixmap pid = 0;
+		int    clipType = 0;
 
 		if (pUnion)
 		{
@@ -564,9 +568,9 @@ DoChangeGC(pGC, mask, pval, fPointer)
 {
     if (fPointer)
     /* XXX might be a problem on 64 bit big-endian servers */
-	dixChangeGC(NullClient, pGC, mask, NULL, (ChangeGCValPtr)pval);
+	return dixChangeGC(NullClient, pGC, mask, NULL, (ChangeGCValPtr)pval);
     else
-	dixChangeGC(NullClient, pGC, mask, pval, NULL);
+	return dixChangeGC(NullClient, pGC, mask, pval, NULL);
 }
 
 

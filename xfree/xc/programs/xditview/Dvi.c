@@ -28,7 +28,7 @@ other dealings in this Software without prior written authorization
 from the X Consortium.
 
 */
-/* $XFree86: xc/programs/xditview/Dvi.c,v 1.2 2000/12/03 05:20:53 keithp Exp $ */
+/* $XFree86: xc/programs/xditview/Dvi.c,v 1.4 2001/08/27 23:35:12 dawes Exp $ */
 
 
 /*
@@ -45,6 +45,8 @@ from the X Consortium.
 #include <X11/StringDefs.h>
 #include <X11/Xmu/Converters.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
 #include <ctype.h>
 #include "DviP.h"
 
@@ -124,12 +126,19 @@ static XtResource resources[] = {
 
 #undef offset
 
-static void		ClassInitialize ();
-static void		Initialize(), Realize (), Destroy (), Redisplay ();
-static Boolean		SetValues (), SetValuesHook ();
-static XtGeometryResult	QueryGeometry ();
-static void		ShowDvi ();
-static void		CloseFile (), OpenFile ();
+static void		ClassInitialize(void);
+static void		Initialize(Widget, Widget, ArgList, Cardinal *);
+static void		Realize(Widget, XtValueMask *, XSetWindowAttributes *);
+static void		Destroy(Widget);
+static void		Redisplay(Widget, XEvent *, Region);
+static Boolean		SetValues(Widget, Widget, Widget, ArgList , Cardinal *);
+static Boolean		SetValuesHook(Widget, ArgList, Cardinal	*);
+static XtGeometryResult	QueryGeometry(Widget,
+				      XtWidgetGeometry *, XtWidgetGeometry *);
+static void		RequestDesiredSize(DviWidget);
+static void		ShowDvi(DviWidget);
+static void		CloseFile(DviWidget);
+static void		OpenFile(DviWidget);
 
 #define SuperClass ((SimpleWidgetClass)&simpleClassRec)
 
@@ -178,7 +187,8 @@ DviClassRec dviClassRec = {
 
 WidgetClass dviWidgetClass = (WidgetClass) &dviClassRec;
 
-static void ClassInitialize ()
+static void
+ClassInitialize (void)
 {
   int len1 = strlen(default_font_map_1);
   int len2 = strlen(default_font_map_2);
@@ -199,7 +209,8 @@ static void ClassInitialize ()
  ****************************************************************/
 
 /* ARGSUSED */
-static void Initialize(request, new, args, num_args)
+static void
+Initialize(request, new, args, num_args)
 	Widget request, new;
 	ArgList args;
 	Cardinal *num_args;
@@ -231,7 +242,7 @@ static void Initialize(request, new, args, num_args)
 }
 
 static void
-Realize (w, valueMask, attrs)
+Realize(w, valueMask, attrs)
 	Widget			w;
 	XtValueMask		*valueMask;
 	XSetWindowAttributes	*attrs;
@@ -298,7 +309,9 @@ Redisplay(w, event, region)
 	Region region;
 {
 	DviWidget	dw = (DviWidget) w;
+#ifndef USE_XFT
 	XRectangle	extents;
+#endif
 	
 #ifdef USE_XFT
 	XClearArea (XtDisplay (dw),
@@ -318,6 +331,7 @@ Redisplay(w, event, region)
 	ShowDvi (dw);
 }
 
+static void
 RequestDesiredSize (dw)
     DviWidget	dw;
 {
@@ -420,7 +434,8 @@ SetValuesHook (widget, args, num_argsp)
 	return FALSE;
 }
 
-static void CloseFile (dw)
+static void
+CloseFile (dw)
 	DviWidget	dw;
 {
     if (dw->dvi.tmpFile)
@@ -428,7 +443,8 @@ static void CloseFile (dw)
     ForgetPagePositions (dw);
 }
 
-static void OpenFile (dw)
+static void
+OpenFile (dw)
 	DviWidget	dw;
 {
     char	tmpName[sizeof ("/tmp/dviXXXXXX")];
@@ -471,6 +487,7 @@ QueryGeometry (w, request, geometry_return)
 	return ret;
 }
 
+void
 SetDeviceResolution (dw, resolution)
 	DviWidget   dw;
 	int	    resolution;

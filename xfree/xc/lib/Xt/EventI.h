@@ -1,11 +1,15 @@
-/* $Xorg: EventI.h,v 1.3 2000/08/17 19:46:11 cpqbld Exp $ */
+/* $Xorg: EventI.h,v 1.4 2001/02/09 02:03:54 xorgcvs Exp $ */
 /* $oHeader: EventI.h,v 1.3 88/08/24 09:21:11 asente Exp $ */
 
 /***********************************************************
 
 Copyright 1987, 1988, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -43,6 +47,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
+/* $XFree86: xc/lib/Xt/EventI.h,v 1.3 2001/12/14 19:56:12 dawes Exp $ */
 
 /* 
  * Event.h - exported types and functions for toolkit event handler
@@ -57,6 +62,8 @@ SOFTWARE.
 #define _Event_h_
 
 typedef struct _XtGrabRec  *XtGrabList;
+
+#include "PassivGraI.h"
 
 extern void _XtEventInitialize(
 #if NeedFunctionPrototypes
@@ -119,5 +126,17 @@ extern EventMask _XtConvertTypeToMask(
     int		/* eventType */
 #endif
 );
+
+/* EventUtil.c */
+extern Widget _XtFindRemapWidget(XEvent *event, Widget widget,
+				 EventMask mask, XtPerDisplayInput pdi);
+extern void _XtUngrabBadGrabs(XEvent *event, Widget widget,
+				 EventMask mask, XtPerDisplayInput pdi);
+extern void _XtFillAncestorList(Widget **listPtr, int *maxElemsPtr,
+				int *numElemsPtr, Widget start,
+				Widget breakWidget);
+
+/* NextEvent.c */
+extern Boolean XtAppPeekEvent_SkipTimer;
 
 #endif /* _Event_h_ */

@@ -1,4 +1,4 @@
-/* $Xorg: OidDefs.h,v 1.3 2000/08/17 19:48:06 cpqbld Exp $ */
+/* $Xorg: OidDefs.h,v 1.4 2001/03/14 18:45:13 pookie Exp $ */
 /*
 (c) Copyright 1996 Hewlett-Packard Company
 (c) Copyright 1996 International Business Machines Corp.
@@ -67,6 +67,8 @@ typedef enum {
     xpoid_att_job_attributes_supported,
     xpoid_att_locale,
     xpoid_att_multiple_documents_supported,
+    xpoid_att_available_compression,
+    xpoid_att_available_compressions_supported,
     xpoid_val_content_orientation_portrait,
     xpoid_val_content_orientation_landscape,
     xpoid_val_content_orientation_reverse_portrait,
@@ -149,5 +151,13 @@ typedef enum {
     xpoid_val_xp_setup_ok,
     xpoid_val_xp_setup_incomplete,
     xpoid_val_xp_list_glyph_fonts,
-    xpoid_val_xp_list_internal_printer_fonts
+    xpoid_val_xp_list_internal_printer_fonts,
+    xpoid_val_available_compressions_0,
+    xpoid_val_available_compressions_01,
+    xpoid_val_available_compressions_02,
+    xpoid_val_available_compressions_03,
+    xpoid_val_available_compressions_012,
+    xpoid_val_available_compressions_013,
+    xpoid_val_available_compressions_023,
+    xpoid_val_available_compressions_0123
 } XpOid;

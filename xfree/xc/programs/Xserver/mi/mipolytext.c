@@ -1,8 +1,13 @@
+/* $XFree86: xc/programs/Xserver/mi/mipolytext.c,v 1.3 2001/12/14 20:00:26 dawes Exp $ */
 /*******************************************************************
 
 Copyright 1987, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -40,7 +45,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ************************************************************************/
-/* $Xorg: mipolytext.c,v 1.3 2000/08/17 19:53:38 cpqbld Exp $ */
+/* $Xorg: mipolytext.c,v 1.4 2001/02/09 02:05:21 xorgcvs Exp $ */
 /*
  * mipolytext.c - text routines
  *
@@ -57,6 +62,7 @@ SOFTWARE.
 #include	"gcstruct.h"
 #include	"fontstruct.h"
 #include	"dixfontstr.h"
+#include	"mi.h"
 
 int
 miPolyText(pDraw, pGC, x, y, count, chars, fontEncoding)

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xaaStipple.c,v 1.10 2000/09/01 05:49:45 mvojkovi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xaaStipple.c,v 1.11 2001/10/28 03:34:04 tsi Exp $ */
 
 #include "xaa.h"
 #include "xaalocal.h"
@@ -131,6 +131,8 @@ EXPNAME(XAAFillColorExpandRects)(
 	  funcNo = 0;
     } 
     StippleFunc = stipple_scanline_func[funcNo];
+    SecondFunc = stipple_scanline_func[funcNo];
+    FirstFunc = stipple_scanline_func[funcNo + 3];
 
 #ifdef TRIPLE_BITS
     if((bg == -1) || 
@@ -149,8 +151,6 @@ EXPNAME(XAAFillColorExpandRects)(
     } else {
 	/* gotta do two passes */
 	TwoPass = TRUE;
-	SecondFunc = stipple_scanline_func[funcNo];
-	FirstFunc = stipple_scanline_func[funcNo + 3];
     }
 
     if(!TwoPass)
@@ -266,6 +266,8 @@ EXPNAME(XAAFillColorExpandSpans)(
 	  funcNo = 0;
     } 
     StippleFunc = stipple_scanline_func[funcNo];
+    SecondFunc = stipple_scanline_func[funcNo];
+    FirstFunc = stipple_scanline_func[funcNo + 3];
 
 #ifdef TRIPLE_BITS
     if((bg == -1) || 
@@ -285,8 +287,6 @@ EXPNAME(XAAFillColorExpandSpans)(
     } else {
 	/* gotta do two passes */
 	TwoPass = TRUE;
-	SecondFunc = stipple_scanline_func[funcNo];
-	FirstFunc = stipple_scanline_func[funcNo + 3];
     }
 
     if(!TwoPass)
@@ -377,6 +377,8 @@ EXPNAME(XAAFillScanlineColorExpandRects)(
 	  funcNo = 0;
     } 
     StippleFunc = stipple_scanline_func[funcNo];
+    SecondFunc = stipple_scanline_func[funcNo];
+    FirstFunc = stipple_scanline_func[funcNo + 3];
 
 #ifdef TRIPLE_BITS
     if((bg == -1) || 
@@ -395,8 +397,6 @@ EXPNAME(XAAFillScanlineColorExpandRects)(
     } else {
 	/* gotta do two passes */
 	TwoPass = TRUE;
-	SecondFunc = stipple_scanline_func[funcNo];
-	FirstFunc = stipple_scanline_func[funcNo + 3];
     }
 
     if(!TwoPass)
@@ -490,6 +490,8 @@ EXPNAME(XAAFillScanlineColorExpandSpans)(
 	  funcNo = 0;
     } 
     StippleFunc = stipple_scanline_func[funcNo];
+    SecondFunc = stipple_scanline_func[funcNo];
+    FirstFunc = stipple_scanline_func[funcNo + 3];
 
 #ifdef TRIPLE_BITS
     if((bg == -1) || 
@@ -509,8 +511,6 @@ EXPNAME(XAAFillScanlineColorExpandSpans)(
     } else {
 	/* gotta do two passes */
 	TwoPass = TRUE;
-	SecondFunc = stipple_scanline_func[funcNo];
-	FirstFunc = stipple_scanline_func[funcNo + 3];
     }
 
     if(!TwoPass)

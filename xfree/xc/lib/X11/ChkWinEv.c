@@ -1,9 +1,13 @@
-/* $Xorg: ChkWinEv.c,v 1.3 2000/08/17 19:44:31 cpqbld Exp $ */
+/* $Xorg: ChkWinEv.c,v 1.4 2001/02/09 02:03:31 xorgcvs Exp $ */
 /*
 
 Copyright 1985, 1987, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -20,16 +24,12 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
+/* $XFree86: xc/lib/X11/ChkWinEv.c,v 3.6 2001/12/14 19:53:58 dawes Exp $ */
 
 #define NEED_EVENTS
 #include "Xlibint.h"
 
-#ifdef __STDC__
-#define Const const
-#else
-#define Const /**/
-#endif
-extern long Const _Xevent_to_mask[];
+extern long const _Xevent_to_mask[];
 #define AllPointers (PointerMotionMask|PointerMotionHintMask|ButtonMotionMask)
 #define AllButtons (Button1MotionMask|Button2MotionMask|Button3MotionMask|\
 		    Button4MotionMask|Button5MotionMask)
@@ -47,7 +47,7 @@ Bool XCheckWindowEvent (dpy, w, mask, event)
 	register XEvent *event;	/* XEvent to be filled in. */
 {
  	register _XQEvent *prev, *qelt;
-	unsigned long qe_serial;
+	unsigned long qe_serial = 0;
 	int n;			/* time through count */
 
         LockDisplay(dpy);

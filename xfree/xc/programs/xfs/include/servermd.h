@@ -1,8 +1,12 @@
-/* $Xorg: servermd.h,v 1.4 2000/08/17 19:54:22 cpqbld Exp $ */
+/* $Xorg: servermd.h,v 1.6 2001/02/09 02:05:44 xorgcvs Exp $ */
 /* 
 Copyright 1987, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -40,15 +44,17 @@ in this Software without prior written authorization from The Open Group.
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+/* $XFree86: xc/programs/xfs/include/servermd.h,v 1.5 2001/12/19 21:37:35 dawes Exp $ */
+
 #ifndef _SERVERMD_H_
 #define _SERVERMD_H_
 
 #ifndef VENDOR_RELEASE
-#define VENDOR_RELEASE 6510
+#define VENDOR_RELEASE 6600
 #endif
 
 #ifndef VENDOR_STRING
-#define VENDOR_STRING "The X.Org Group"
+#define VENDOR_STRING "The XFree86 Project (experimental version)"
 #endif
 
 #ifndef DEFAULT_FS_PORT

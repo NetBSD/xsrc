@@ -1,4 +1,4 @@
-/* $Xorg: Callback.c,v 1.3 2000/08/17 19:46:08 cpqbld Exp $ */
+/* $Xorg: Callback.c,v 1.4 2001/02/09 02:03:54 xorgcvs Exp $ */
 
 /***********************************************************
 Copyright 1987, 1988 by Digital Equipment Corporation, Maynard, Massachusetts,
@@ -37,7 +37,11 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 Copyright 1987, 1988, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -54,7 +58,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/Xt/Callback.c,v 1.6 2001/01/17 19:43:03 dawes Exp $ */
+/* $XFree86: xc/lib/Xt/Callback.c,v 1.8 2001/12/14 19:56:08 dawes Exp $ */
 
 #include "IntrinsicI.h"
 
@@ -67,9 +71,9 @@ static String XtNxtCallCallback = "xtCallCallback";
 /* However it doesn't contain a final NULL record */
 #define ToList(p) ((XtCallbackList) ((p)+1))
 
-static InternalCallbackList* FetchInternalList(widget, name)
-    Widget	widget;
-    String	name;
+static InternalCallbackList* FetchInternalList(
+    Widget	widget,
+    _Xconst char *name)
 {
     XrmQuark quark;
     int n;
@@ -187,10 +191,10 @@ void XtAddCallback(widget, name, callback, closure)
 } /* XtAddCallback */
 
 /* ARGSUSED */
-static void AddCallbacks(widget, callbacks, newcallbacks)
-    Widget		    widget;
-    InternalCallbackList   *callbacks;
-    XtCallbackList	    newcallbacks;
+static void AddCallbacks(
+    Widget		    widget,
+    InternalCallbackList   *callbacks,
+    XtCallbackList	    newcallbacks)
 {
     register InternalCallbackList icl;
     register int i, j;

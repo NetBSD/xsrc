@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/linux/drm/xf86drmI810.c,v 1.5 2001/04/10 16:08:04 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/linux/drm/xf86drmI810.c,v 1.7 2001/09/27 08:25:04 alanh Exp $ */
 
 #ifdef XFree86Server
 # include "xf86.h"
@@ -28,7 +28,7 @@
 extern int xf86InstallSIGIOHandler(int fd, void (*f)(int, void *), void *);
 extern int xf86RemoveSIGIOHandler(int fd);
 # else
-#  include <Xlibint.h>
+#  include <X11/Xlibint.h>
 #  define _DRM_MALLOC Xmalloc
 #  define _DRM_FREE   Xfree
 # endif
@@ -76,6 +76,8 @@ Bool drmI810InitDma(int driSubFD, drmI810Init *info)
    init.front_offset = info->front_offset;
    init.back_offset = info->back_offset;
    init.depth_offset = info->depth_offset;
+   init.overlay_offset = info->overlay_offset;
+   init.overlay_physical = info->overlay_physical;
    init.w = info->w;
    init.h = info->h;
    init.pitch = info->pitch;

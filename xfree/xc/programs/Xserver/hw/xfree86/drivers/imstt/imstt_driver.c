@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/imstt/imstt_driver.c,v 1.15 2001/05/16 06:48:09 keithp Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/imstt/imstt_driver.c,v 1.18 2001/11/08 04:15:31 tsi Exp $ */
 
 /*
  *	Copyright 2000	Ani Joshi <ajoshi@unixbox.com>
@@ -147,39 +147,33 @@ static const OptionInfoRec IMSTTOptions[] =
 };
 
 static const char *fbSymbols[] = {
-	"fbScreenInit",
-#ifdef RENDER
 	"fbPictureInit",
-#endif
+	"fbScreenInit",
 	NULL
 };
 
 static const char *xaaSymbols[] = {
-	"XAADestroyInfoRec",
 	"XAACreateInfoRec",
 	"XAAInit",
-	"XAAScreenIndex",
 	NULL
 };
 
 
 static const char *fbdevHWSymbols[] = {
-	"fbdevHWInit",
-	"fbdevHWUseBuildinMode",
-	"fbdevHWGetDepth",
-	"fbdevHWGetVidmem",
-	"fbdevHWLoadPalette",
-	"fbdevHWSwitchMode",
 	"fbdevHWAdjustFrame",
 	"fbdevHWEnterVT",
+	"fbdevHWGetVidmem",
+	"fbdevHWInit",
 	"fbdevHWLeaveVT",
-	"fbdevHWValidMode",
-	"fbdevHWRestore",
+	"fbdevHWLoadPalette",
+	"fbdevHWMapVidmem",
 	"fbdevHWModeInit",
+	"fbdevHWSave",
+	"fbdevHWSwitchMode",
 	"fbdevHWUnmapMMIO",
 	"fbdevHWUnmapVidmem",
-	"fbdevHWMapMMIO",
-	"fbdevHWMapVidmem",
+	"fbdevHWUseBuildinMode",
+	"fbdevHWValidMode",
 	NULL
 };
 
@@ -260,7 +254,7 @@ static const OptionInfoRec * IMSTTAvailableOptions(int chipid, int busid)
 
 static void IMSTTIdentify(int flags)
 {
-	xf86PrintChipsets("imstt", "driver (version " DRIVER_VERSION " for IMS TwinTurbo chipsets ",
+	xf86PrintChipsets("IMSTT", "driver (version " DRIVER_VERSION " for IMS TwinTurbo chipsets ",
 			  IMSTTChipsets);
 }
 
@@ -551,7 +545,9 @@ static Bool IMSTTPreInit(ScrnInfoPtr pScrn, int flags)
 	xf86PrintModes(pScrn);
 	xf86SetDpi(pScrn, 0, 0);
 
-	xf86LoadSubModule(pScrn, "fb");
+	if (!xf86LoadSubModule(pScrn, "fb"))
+		return FALSE;
+
 	xf86LoaderReqSymLists(fbSymbols, NULL);
 
 	if (!xf86LoadSubModule(pScrn, "xaa"))
@@ -798,10 +794,6 @@ static Bool IMSTTScreenInit(int scrnIndex, ScreenPtr pScreen,
 		return FALSE;
 	}
 
-#ifdef RENDER
-	fbPictureInit (pScreen, 0, 0);
-#endif
-
 	if (pScrn->bitsPerPixel > 8) {
 		visual = pScreen->visuals + pScreen->numVisuals;
 		while (--visual >= pScreen->visuals) {
@@ -815,6 +807,8 @@ static Bool IMSTTScreenInit(int scrnIndex, ScreenPtr pScreen,
 			}
 		}
 	}
+
+	fbPictureInit (pScreen, 0, 0);
 
 	xf86SetBlackWhitePixels(pScreen);
 	miInitializeBackingStore(pScreen);

@@ -372,7 +372,7 @@ static void affine_textured_triangle( GLcontext *ctx, GLuint v0, GLuint v1,
    GLint filter = obj->MinFilter;                                       \
    GLint envmode = unit->EnvMode;                                       \
    GLint comp, tbytesline, tsize;                                       \
-   GLfixed er, eg, eb, ea;                                              \
+   GLfixed er = 0, eg = 0, eb = 0, ea = 0;                              \
    GLint tr, tg, tb, ta;                                                \
    if (!texture) {							\
       if (!_mesa_get_teximages_from_driver(ctx, obj))			\
@@ -666,7 +666,7 @@ static void persp_textured_triangle( GLcontext *ctx, GLuint v0, GLuint v1,
    GLint envmode = unit->EnvMode;                                       \
    GLfloat sscale, tscale;                                              \
    GLint comp, tbytesline, tsize;                                       \
-   GLfixed er, eg, eb, ea;                                              \
+   GLfixed er = 0, eg = 0, eb = 0, ea = 0;                              \
    GLint tr, tg, tb, ta;                                                \
    if (!texture) {							\
       if (!_mesa_get_teximages_from_driver(ctx, obj))			\
@@ -891,7 +891,7 @@ static void general_textured_triangle( GLcontext *ctx, GLuint v0, GLuint v1,
 #define INTERP_STUV 1
 #define SETUP_CODE						\
    GLboolean flat_shade = (ctx->Light.ShadeModel==GL_FLAT);	\
-   GLint r, g, b, a;						\
+   GLint r = 0, g = 0, b = 0, a = 0;				\
    if (flat_shade) {						\
       r = VB->ColorPtr->data[pv][0];				\
       g = VB->ColorPtr->data[pv][1];				\
@@ -977,7 +977,7 @@ static void general_textured_spec_triangle1( GLcontext *ctx, GLuint v0,
 #define INTERP_STUV 1
 #define SETUP_CODE						\
    GLboolean flat_shade = (ctx->Light.ShadeModel==GL_FLAT);	\
-   GLint r, g, b, a, sr, sg, sb;				\
+   GLint r = 0, g = 0, b = 0, a = 0, sr = 0, sg = 0, sb = 0;	\
    if (flat_shade) {						\
       r = VB->ColorPtr->data[pv][0];				\
       g = VB->ColorPtr->data[pv][1];				\
@@ -1098,7 +1098,7 @@ static void lambda_textured_triangle1( GLcontext *ctx, GLuint v0, GLuint v1,
    const GLfloat twidth = (GLfloat) texImage->Width;			\
    const GLfloat theight = (GLfloat) texImage->Height;			\
    const GLboolean flat_shade = (ctx->Light.ShadeModel==GL_FLAT);	\
-   GLint r, g, b, a;							\
+   GLint r = 0, g = 0, b = 0, a = 0;					\
    if (flat_shade) {							\
       r = VB->ColorPtr->data[pv][0];					\
       g = VB->ColorPtr->data[pv][1];					\
@@ -1195,7 +1195,7 @@ static void lambda_textured_spec_triangle1( GLcontext *ctx, GLuint v0,
    const GLfloat twidth = (GLfloat) texImage->Width;			\
    const GLfloat theight = (GLfloat) texImage->Height;			\
    const GLboolean flat_shade = (ctx->Light.ShadeModel==GL_FLAT);	\
-   GLint r, g, b, a, sr, sg, sb;					\
+   GLint r = 0, g = 0, b = 0, a = 0, sr = 0, sg = 0, sb = 0;		\
    if (flat_shade) {							\
       r = VB->ColorPtr->data[pv][0];					\
       g = VB->ColorPtr->data[pv][1];					\
@@ -1304,7 +1304,7 @@ static void lambda_multitextured_triangle1( GLcontext *ctx, GLuint v0,
    const struct gl_texture_image *texImage0, *texImage1;		\
    GLfloat twidth0, theight0, twidth1, theight1;			\
    const GLboolean flat_shade = (ctx->Light.ShadeModel==GL_FLAT);	\
-   GLint r, g, b, a;							\
+   GLint r = 0, g = 0, b = 0, a = 0;					\
    if (obj0) {								\
       texImage0 = obj0->Image[obj0->BaseLevel];				\
       twidth0 = texImage0->Width;					\

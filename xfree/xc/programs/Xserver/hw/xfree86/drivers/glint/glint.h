@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/glint/glint.h,v 1.48.2.1 2001/05/24 20:12:47 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/glint/glint.h,v 1.54 2001/12/08 16:01:52 alanh Exp $ */
 /*
  * Copyright 1997-2001 by Alan Hourihane <alanh@fairlite.demon.co.uk>
  *
@@ -35,6 +35,7 @@
 #include "xf86cmap.h"
 #include "xf86i2c.h"
 #include "xf86DDC.h"
+#include "xf86xv.h"
 #ifdef XF86DRI
 #include "xf86drm.h"
 #include "sarea.h"
@@ -162,6 +163,11 @@ typedef struct {
     CARD32		PM3_AreaStippleMode;
     CARD32		PM3_VideoControl;
     int			InFifoSpace;
+#ifdef XvExtension
+    void		(*VideoTimerCallback)(ScrnInfoPtr, Time);
+    XF86VideoAdaptorPtr adaptor;
+    int                 videoKey;
+#endif
 #ifdef XF86DRI
     Bool		directRenderingEnabled;
     DRIInfoPtr		pDRIInfo;
@@ -173,6 +179,7 @@ typedef struct {
     GLINTRegRec		DRContextRegs;
 #endif
     OptionInfoPtr	Options;
+    Bool		PM3_UsingSGRAM;
 } GLINTRec, *GLINTPtr;
 
 /* Defines for PCI data */
@@ -189,6 +196,10 @@ typedef struct {
 			((PCI_VENDOR_3DLABS << 16) | PCI_CHIP_PERMEDIA2V)
 #define PCI_VENDOR_3DLABS_CHIP_PERMEDIA3	\
 			((PCI_VENDOR_3DLABS << 16) | PCI_CHIP_PERMEDIA3)
+#define PCI_VENDOR_3DLABS_CHIP_PERMEDIA4	\
+			((PCI_VENDOR_3DLABS << 16) | PCI_CHIP_PERMEDIA4)
+#define PCI_VENDOR_3DLABS_CHIP_R4		\
+			((PCI_VENDOR_3DLABS << 16) | PCI_CHIP_R4)
 #define PCI_VENDOR_3DLABS_CHIP_300SX	\
 			((PCI_VENDOR_3DLABS << 16) | PCI_CHIP_300SX)
 #define PCI_VENDOR_3DLABS_CHIP_500TX	\
@@ -197,6 +208,8 @@ typedef struct {
 			((PCI_VENDOR_3DLABS << 16) | PCI_CHIP_MX)
 #define PCI_VENDOR_3DLABS_CHIP_GAMMA	\
 			((PCI_VENDOR_3DLABS << 16) | PCI_CHIP_GAMMA)
+#define PCI_VENDOR_3DLABS_CHIP_GAMMA2	\
+			((PCI_VENDOR_3DLABS << 16) | PCI_CHIP_GAMMA2)
 #define PCI_VENDOR_3DLABS_CHIP_DELTA	\
 			((PCI_VENDOR_3DLABS << 16) | PCI_CHIP_DELTA)
 
@@ -211,6 +224,7 @@ void Permedia2RestoreDACValues(ScrnInfoPtr pScrn);
 void Permedia2Restore(ScrnInfoPtr pScrn, GLINTRegPtr glintReg);
 void Permedia2Save(ScrnInfoPtr pScrn, GLINTRegPtr glintReg);
 Bool Permedia2Init(ScrnInfoPtr pScrn, DisplayModePtr mode);
+void Permedia2PreInit(ScrnInfoPtr pScrn);
 Bool Permedia2AccelInit(ScreenPtr pScreen);
 void Permedia2Sync(ScrnInfoPtr pScrn);
 void Permedia2InitializeEngine(ScrnInfoPtr pScrn);
@@ -237,6 +251,7 @@ void Permedia3InitializeEngine(ScrnInfoPtr pScrn);
 void Permedia3EnableOffscreen(ScreenPtr pScreen);
 void Permedia3Sync(ScrnInfoPtr pScrn);
 void DualPermedia3Sync(ScrnInfoPtr pScrn);
+void Permedia3InitVideo(ScreenPtr pScreen);
 
 void TXRestore(ScrnInfoPtr pScrn, GLINTRegPtr glintReg);
 void TXSave(ScrnInfoPtr pScrn, GLINTRegPtr glintReg);
@@ -319,6 +334,7 @@ Bool GLINTSwitchMode(int scrnIndex, DisplayModePtr mode, int flags);
 void GLINTAdjustFrame(int scrnIndex, int x, int y, int flags);
 
 extern int partprodPermedia[];
+extern const char *GLINTint10Symbols[];
 
 Bool GLINTDGAInit(ScreenPtr pScreen);
 

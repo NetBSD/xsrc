@@ -28,7 +28,7 @@
  * 
  * GLINT 300SX accelerated options.
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/glint/sx_accel.c,v 1.6.2.1 2001/05/29 11:32:23 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/glint/sx_accel.c,v 1.8 2001/10/28 03:33:30 tsi Exp $ */
 
 #include "xf86.h"
 #include "xf86_OSproc.h"
@@ -63,13 +63,11 @@ static void SXSetupForScreenToScreenCopy(ScrnInfoPtr pScrn, int xdir, int ydir,
 				    		int transparency_color);
 static void SXSubsequentScreenToScreenCopy(ScrnInfoPtr pScrn, int x1, int y1,
 						int x2, int y2, int w, int h);
+#if 0
 static void SXWriteBitmap(ScrnInfoPtr pScrn, int x, int y, int w, int h,
     				unsigned char *src, int srcwidth,
 				int skipleft, int fg, int bg, int rop,
     				unsigned int planemask);
-static void SXSetClippingRectangle(ScrnInfoPtr pScrn, int x1, int y1, 
-						int x2,int y2);
-static void SXDisableClipping(ScrnInfoPtr pScrn);
 static void SXWritePixmap(ScrnInfoPtr pScrn, int x, int y, int w, int h,
    				unsigned char *src, int srcwidth, int rop,
    				unsigned int planemask, int trans,
@@ -79,6 +77,10 @@ static void SXSetupForScanlineCPUToScreenColorExpandFill(ScrnInfoPtr pScrn, int 
 static void SXSubsequentScanlineCPUToScreenColorExpandFill(ScrnInfoPtr pScrn, int x,
 				int y, int w, int h, int skipleft);
 static void SXSubsequentColorExpandScanline(ScrnInfoPtr pScrn, int bufno);
+#endif
+static void SXSetClippingRectangle(ScrnInfoPtr pScrn, int x1, int y1, 
+						int x2,int y2);
+static void SXDisableClipping(ScrnInfoPtr pScrn);
 static void SXLoadCoord(ScrnInfoPtr pScrn, int x, int y, int w, int h,
 				int a, int d);
 static void SXSetupForSolidLine(ScrnInfoPtr pScrn, int color, int rop,
@@ -422,6 +424,7 @@ SXSubsequentScreenToScreenCopy(
     GLINT_WRITE_REG(PrimitiveTrapezoid, Render);
 }
 
+#if 0
 static void
 SXSetupForScanlineCPUToScreenColorExpandFill(
 	ScrnInfoPtr pScrn,
@@ -511,6 +514,7 @@ SXSubsequentColorExpandScanline(ScrnInfoPtr pScrn, int bufno)
 	}
     }
 }
+#endif
 
 void SXSetupForMono8x8PatternFill(
 	ScrnInfoPtr pScrn,
@@ -571,6 +575,7 @@ SXSubsequentMono8x8PatternFillRect(
     GLINT_WRITE_REG(AreaStippleEnable | PrimitiveTrapezoid, Render);
 }
 
+#if 0
 static void 
 SXWriteBitmap(ScrnInfoPtr pScrn,
     int x, int y, int w, int h,
@@ -767,6 +772,7 @@ SXWritePixmap(
     CHECKCLIPPING;
     SET_SYNC_FLAG(infoRec);
 }
+#endif
 
 static void 
 SXPolylinesThinSolidWrapper(

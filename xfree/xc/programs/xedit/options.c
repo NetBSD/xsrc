@@ -27,12 +27,10 @@
  * Author: Paulo César Pereira de Andrade
  */
 
-/* $XFree86: xc/programs/xedit/options.c,v 1.8 2000/09/26 15:57:24 tsi Exp $ */
+/* $XFree86: xc/programs/xedit/options.c,v 1.11 2001/08/31 19:00:03 paulo Exp $ */
 
 #include <stdio.h>
-#ifndef X_NOT_STDC_ENV
 #include <stdlib.h>
-#endif
 #include "xedit.h"
 
 #include <X11/Xaw/SmeBSB.h>
@@ -68,8 +66,6 @@ static void DoSetTextProperties(xedit_flist_item*, property_info*);
  */
 extern void C_ModeStart(Widget);
 extern void C_ModeEnd(Widget);
-
-extern void _XawTextBuildLineTable(TextWidget, XawTextPosition, _XtBoolean);
 
 /*
  * Initialization
@@ -361,16 +357,33 @@ EditCallback(Widget sme, XtPointer client_data, XtPointer call_data)
     Arg args[1];
     Boolean auto_fill;
     XawTextScrollMode scroll;
+    xedit_flist_item *item = FindTextSource(XawTextGetSource(textwindow), NULL);
+    Bool foreach = False;
 
     switch ((long)client_data) {
 	case WRAP_NEVER:
 	    XtSetArg(args[0], XtNwrap, XawtextWrapNever);
+	    if (item) {
+		item->flags |= WRAP_BIT;
+		item->wrap = XawtextWrapNever;
+		foreach = True;
+	    }
 	    break;
 	case WRAP_LINE:
 	    XtSetArg(args[0], XtNwrap, XawtextWrapLine);
+	    if (item) {
+		item->flags |= WRAP_BIT;
+		item->wrap = XawtextWrapLine;
+		foreach = True;
+	    }
 	    break;
 	case WRAP_WORD:
 	    XtSetArg(args[0], XtNwrap, XawtextWrapWord);
+	    if (item) {
+		item->flags |= WRAP_BIT;
+		item->wrap = XawtextWrapWord;
+		foreach = True;
+	    }
 	    break;
 	case AUTO_FILL:
 	    XtSetArg(args[0], XtNautoFill, &auto_fill);
@@ -403,7 +416,14 @@ EditCallback(Widget sme, XtPointer client_data, XtPointer call_data)
 	    break;
     }
 
-    XtSetValues(textwindow, args, 1);
+    if (foreach) {
+	int i;
+ 
+	for (i = 0; i < 3; i++)
+	    XtSetValues(texts[i], args, 1);
+    }
+    else
+	XtSetValues(textwindow, args, 1);
 }
 
 static void

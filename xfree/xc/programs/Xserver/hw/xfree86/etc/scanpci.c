@@ -21,7 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/etc/scanpci.c,v 3.81 2001/01/06 20:19:12 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/etc/scanpci.c,v 3.83 2002/01/04 22:28:06 tsi Exp $ */
 
 #include "X.h"
 #include "os.h"
@@ -50,14 +50,14 @@ extern int optind, opterr;
 
 pciVideoPtr *xf86PciVideoInfo = NULL;
 
-void usage(void);
-void identify_card(pciConfigPtr pcr, int verbose);
-void print_default_class(pciConfigPtr pcr);
-void print_bridge_pci_class(pciConfigPtr pcr);
-void print_bridge_class(pciConfigPtr pcr);
-void print_mach64(pciConfigPtr pcr);
-void print_i128(pciConfigPtr pcr);
-void print_pcibridge(pciConfigPtr pcr);
+static void usage(void);
+static void identify_card(pciConfigPtr pcr, int verbose);
+static void print_default_class(pciConfigPtr pcr);
+static void print_bridge_pci_class(pciConfigPtr pcr);
+static void print_mach64(pciConfigPtr pcr);
+static void print_i128(pciConfigPtr pcr);
+static void print_pcibridge(pciConfigPtr pcr);
+static void print_apb(pciConfigPtr pcr);
 
 typedef struct {
     unsigned int Vendor;
@@ -67,55 +67,60 @@ typedef struct {
     } Device[MAX_DEV_PER_VENDOR];
 } pciVendorDevFuncInfo;
 
-pciVendorDevFuncInfo vendorDeviceFuncInfo[] = {
-    { 0x1002, {
-	{ 0x4354, print_mach64 },
-	{ 0x4358, print_mach64 },
-	{ 0x4554, print_mach64 },
-	{ 0x4742, print_mach64 },
-	{ 0x4744, print_mach64 },
-	{ 0x4749, print_mach64 },
-	{ 0x474C, print_mach64 },
-	{ 0x474D, print_mach64 },
-	{ 0x474E, print_mach64 },
-	{ 0x474F, print_mach64 },
-	{ 0x4750, print_mach64 },
-	{ 0x4751, print_mach64 },
-	{ 0x4752, print_mach64 },
-	{ 0x4753, print_mach64 },
-	{ 0x4754, print_mach64 },
-	{ 0x4755, print_mach64 },
-	{ 0x4756, print_mach64 },
-	{ 0x4757, print_mach64 },
-	{ 0x4758, print_mach64 },
-	{ 0x475A, print_mach64 },
-	{ 0x4C42, print_mach64 },
-	{ 0x4C44, print_mach64 },
-	{ 0x4C47, print_mach64 },
-	{ 0x4C49, print_mach64 },
-	{ 0x4C4D, print_mach64 },
-	{ 0x4C4E, print_mach64 },
-	{ 0x4C50, print_mach64 },
-	{ 0x4C52, print_mach64 },
-	{ 0x4C53, print_mach64 },
-	{ 0x5654, print_mach64 },
-	{ 0x5655, print_mach64 },
-	{ 0x5656, print_mach64 },
+static pciVendorDevFuncInfo vendorDeviceFuncInfo[] = {
+    { PCI_VENDOR_ATI, {
+	{ PCI_CHIP_MACH64CT, print_mach64 },
+	{ PCI_CHIP_MACH64CX, print_mach64 },
+	{ PCI_CHIP_MACH64ET, print_mach64 },
+	{ PCI_CHIP_MACH64GB, print_mach64 },
+	{ PCI_CHIP_MACH64GD, print_mach64 },
+	{ PCI_CHIP_MACH64GI, print_mach64 },
+	{ PCI_CHIP_MACH64GL, print_mach64 },
+	{ PCI_CHIP_MACH64GM, print_mach64 },
+	{ PCI_CHIP_MACH64GN, print_mach64 },
+	{ PCI_CHIP_MACH64GO, print_mach64 },
+	{ PCI_CHIP_MACH64GP, print_mach64 },
+	{ PCI_CHIP_MACH64GQ, print_mach64 },
+	{ PCI_CHIP_MACH64GR, print_mach64 },
+	{ PCI_CHIP_MACH64GS, print_mach64 },
+	{ PCI_CHIP_MACH64GT, print_mach64 },
+	{ PCI_CHIP_MACH64GU, print_mach64 },
+	{ PCI_CHIP_MACH64GV, print_mach64 },
+	{ PCI_CHIP_MACH64GW, print_mach64 },
+	{ PCI_CHIP_MACH64GX, print_mach64 },
+	{ PCI_CHIP_MACH64GY, print_mach64 },
+	{ PCI_CHIP_MACH64GZ, print_mach64 },
+	{ PCI_CHIP_MACH64LB, print_mach64 },
+	{ PCI_CHIP_MACH64LD, print_mach64 },
+	{ PCI_CHIP_MACH64LG, print_mach64 },
+	{ PCI_CHIP_MACH64LI, print_mach64 },
+	{ PCI_CHIP_MACH64LM, print_mach64 },
+	{ PCI_CHIP_MACH64LN, print_mach64 },
+	{ PCI_CHIP_MACH64LP, print_mach64 },
+	{ PCI_CHIP_MACH64LQ, print_mach64 },
+	{ PCI_CHIP_MACH64LR, print_mach64 },
+	{ PCI_CHIP_MACH64LS, print_mach64 },
+	{ PCI_CHIP_MACH64VT, print_mach64 },
+	{ PCI_CHIP_MACH64VU, print_mach64 },
+	{ PCI_CHIP_MACH64VV, print_mach64 },
 	{ 0x0000,  NULL } } },
-    { 0x105D, {
-	{ 0x2309, print_i128 },
-	{ 0x2339, print_i128 },
-	{ 0x493D, print_i128 },
-	{ 0x5348, print_i128 },
+    { PCI_VENDOR_DIGITAL, {
+	{ PCI_CHIP_DC21050, print_pcibridge},
 	{ 0x0000, NULL } } },
-    { 0x1011, {
-	{ 0x0001, print_pcibridge},
+    { PCI_VENDOR_NUMNINE, {
+	{ PCI_CHIP_I128, print_i128 },
+	{ PCI_CHIP_I128_2, print_i128 },
+	{ PCI_CHIP_I128_T2R, print_i128 },
+	{ PCI_CHIP_I128_T2R4, print_i128 },
+	{ 0x0000, NULL } } },
+    { PCI_VENDOR_SUN, {
+	{ PCI_CHIP_SIMBA, print_apb },
 	{ 0x0000, NULL } } },
     { 0x0000, {
 	{ 0x0000, NULL } } }
 };
 
-void
+static void
 usage(void)
 {
     printf("Usage: scanpci [-v12OfV]\n");
@@ -192,7 +197,7 @@ main(int argc, char *argv[])
     exit(0);
 }
 
-void
+static void
 identify_card(pciConfigPtr pcr, int verbose)
 {
 
@@ -207,7 +212,8 @@ identify_card(pciConfigPtr pcr, int verbose)
     
     xf86SetupScanPci(&pvnd,&pvd,&pvc);
     
-    printf("\npci bus 0x%x cardnum 0x%02x function 0x%04x: vendor 0x%04x device 0x%04x\n",
+    printf("\npci bus 0x%04x cardnum 0x%02x function 0x%02x:"
+	   " vendor 0x%04x device 0x%04x\n",
 	   pcr->busnum, pcr->devnum, pcr->funcnum,
 	   pcr->pci_vendor, pcr->pci_device);
     
@@ -239,7 +245,7 @@ identify_card(pciConfigPtr pcr, int verbose)
 		if (vdf[i].Vendor == pcr->pci_vendor) {
 		    for (j = 0;  vdf[i].Device[j].DeviceID;  j++) {
 			if (vdf[i].Device[j].DeviceID == pcr->pci_device) {
-			    vdf[i].Device[j].func(pcr);
+			    (*vdf[i].Device[j].func)(pcr);
 			    return;
 			}
 		    }
@@ -263,7 +269,9 @@ identify_card(pciConfigPtr pcr, int verbose)
 	    }
         }
 
-        for (i = 0; pvc[i].VendorID && pvc[i].VendorID != pcr->pci_subsys_vendor; i++)
+        for (i = 0;
+	     pvc[i].VendorID && pvc[i].VendorID != pcr->pci_subsys_vendor;
+	     i++)
 	    ;
         if (pvc[i].VendorID) {
 	    for (j = 0;  pvc[i].Device[j].CardName;  j++) {
@@ -292,29 +300,20 @@ identify_card(pciConfigPtr pcr, int verbose)
 	    printf("  CLASS     0x%02x 0x%02x 0x%02x  REVISION 0x%02x\n",
 		   pcr->pci_base_class, pcr->pci_sub_class, pcr->pci_prog_if,
 		   pcr->pci_rev_id);
-	switch (pcr->pci_base_class) {
-	case PCI_CLASS_BRIDGE:
-	    switch (pcr->pci_sub_class) {
-	    case PCI_SUBCLASS_BRIDGE_PCI:
-		print_bridge_pci_class(pcr);
-		break;
-	    default:
-		print_bridge_class(pcr);
-		break;
-	    }
-	    break;
-	default:
+	if ((pcr->pci_base_class == PCI_CLASS_BRIDGE) &&
+	    (pcr->pci_sub_class == PCI_SUBCLASS_BRIDGE_PCI))
+	    print_bridge_pci_class(pcr);
+	else
 	    print_default_class(pcr);
-	    break;
-	}
     }
 }
 
-void
+static void
 print_default_class(pciConfigPtr pcr)
 {
     if (pcr->pci_bist_header_latency_cache)
-	printf("  BIST      0x%02x  HEADER 0x%02x  LATENCY 0x%02x  CACHE 0x%02x\n",
+	printf("  BIST      0x%02x  HEADER 0x%02x"
+               "  LATENCY 0x%02x  CACHE 0x%02x\n",
 	       pcr->pci_bist, pcr->pci_header_type, pcr->pci_latency_timer,
 	       pcr->pci_cache_line_size);
     if (pcr->pci_base0)
@@ -370,11 +369,13 @@ print_default_class(pciConfigPtr pcr)
 	       (int)pcr->pci_baserom, (int)(pcr->pci_baserom & 0xFFFF8000),
 	       pcr->pci_baserom & 0x1 ? "" : "not-");
     if (pcr->pci_max_min_ipin_iline)
-	printf("  MAX_LAT   0x%02x  MIN_GNT 0x%02x  INT_PIN 0x%02x  INT_LINE 0x%02x\n",
+	printf("  MAX_LAT   0x%02x  MIN_GNT 0x%02x"
+               "  INT_PIN 0x%02x  INT_LINE 0x%02x\n",
 	       pcr->pci_max_lat, pcr->pci_min_gnt, 
 	       pcr->pci_int_pin, pcr->pci_int_line);
     if (pcr->pci_user_config)
-	printf("  BYTE_0    0x%02x  BYTE_1  0x%02x  BYTE_2  0x%02x  BYTE_3  0x%02x\n",
+	printf("  BYTE_0    0x%02x  BYTE_1  0x%02x"
+               "  BYTE_2  0x%02x  BYTE_3  0x%02x\n",
 	       (int)pcr->pci_user_config_0, (int)pcr->pci_user_config_1, 
 	       (int)pcr->pci_user_config_2, (int)pcr->pci_user_config_3);
 }
@@ -384,9 +385,10 @@ print_default_class(pciConfigPtr pcr)
 #define PCI_B_M_ABORT  0x20
 #define PCI_B_VGA_EN   0x08
 #define PCI_B_ISA_EN   0x04
+#define PCI_B_SERR_EN  0x02
 #define PCI_B_P_ERR    0x01
 
-void
+static void
 print_bridge_pci_class(pciConfigPtr pcr)
 {
     if (pcr->pci_bist_header_latency_cache)
@@ -404,24 +406,17 @@ print_bridge_pci_class(pciConfigPtr pcr)
 	   pcr->pci_prefetch_mem_base << 16,
 	   (pcr->pci_prefetch_mem_limit << 16) | 0xfffff);
     printf("  %sFAST_B2B %sSEC_BUS_RST %sM_ABRT %sVGA_EN %sISA_EN"
-	   " %sPERR_EN\n",
+	   " %sSERR_EN %sPERR_EN\n",
 	   (pcr->pci_bridge_control & PCI_B_FAST_B_B) ? "" : "NO_",
 	   (pcr->pci_bridge_control & PCI_B_SB_RESET) ? "" : "NO_",
 	   (pcr->pci_bridge_control & PCI_B_M_ABORT) ? "" : "NO_",
 	   (pcr->pci_bridge_control & PCI_B_VGA_EN) ? "" : "NO_",
 	   (pcr->pci_bridge_control & PCI_B_ISA_EN) ? "" : "NO_",
+	   (pcr->pci_bridge_control & PCI_B_SERR_EN) ? "" : "NO_",
 	   (pcr->pci_bridge_control & PCI_B_P_ERR) ? "" : "NO_");
 }
 
-void
-print_bridge_class(pciConfigPtr pcr)
-{
-    if (pcr->pci_bist_header_latency_cache)
-        printf("  HEADER    0x%02x  LATENCY 0x%02x\n",
-	       pcr->pci_header_type, pcr->pci_latency_timer);
-}
-
-void
+static void
 print_mach64(pciConfigPtr pcr)
 {
     CARD32 sparse_io = 0;
@@ -433,9 +428,11 @@ print_mach64(pciConfigPtr pcr)
             pcr->pci_status, pcr->pci_command);
     if (pcr->pci_class_revision)
         printf("  CLASS     0x%02x 0x%02x 0x%02x  REVISION 0x%02x\n",
-            pcr->pci_base_class, pcr->pci_sub_class, pcr->pci_prog_if, pcr->pci_rev_id);
+            pcr->pci_base_class, pcr->pci_sub_class,
+            pcr->pci_prog_if, pcr->pci_rev_id);
     if (pcr->pci_bist_header_latency_cache)
-        printf("  BIST      0x%02x  HEADER 0x%02x  LATENCY 0x%02x  CACHE 0x%02x\n",
+        printf("  BIST      0x%02x  HEADER 0x%02x"
+	    "  LATENCY 0x%02x  CACHE 0x%02x\n",
             pcr->pci_bist, pcr->pci_header_type, pcr->pci_latency_timer,
             pcr->pci_cache_line_size);
     if (pcr->pci_base0)
@@ -458,8 +455,10 @@ print_mach64(pciConfigPtr pcr)
 	       (int)pcr->pci_baserom, (int)(pcr->pci_baserom & 0xFFFF8000),
 				    pcr->pci_baserom & 0x1 ? "" : "not-");
     if (pcr->pci_max_min_ipin_iline)
-        printf("  MAX_LAT   0x%02x  MIN_GNT 0x%02x  INT_PIN 0x%02x  INT_LINE 0x%02x\n",
-            pcr->pci_max_lat, pcr->pci_min_gnt, pcr->pci_int_pin, pcr->pci_int_line);
+        printf("  MAX_LAT   0x%02x  MIN_GNT 0x%02x"
+	    "  INT_PIN 0x%02x  INT_LINE 0x%02x\n",
+            pcr->pci_max_lat, pcr->pci_min_gnt,
+            pcr->pci_int_pin, pcr->pci_int_line);
     switch (pcr->pci_user_config_0 & 0x03) {
     case 0:
 	sparse_io = 0x2ec;
@@ -476,7 +475,7 @@ print_mach64(pciConfigPtr pcr)
 	    pcr->pci_user_config_0 & 0x08 ? "Dis" : "En");
 }
 
-void
+static void
 print_i128(pciConfigPtr pcr)
 {
     printf(" CardVendor 0x%04x card 0x%04x\n",
@@ -486,9 +485,11 @@ print_i128(pciConfigPtr pcr)
             pcr->pci_status, pcr->pci_command);
     if (pcr->pci_class_revision)
         printf("  CLASS     0x%02x 0x%02x 0x%02x  REVISION 0x%02x\n",
-            pcr->pci_base_class, pcr->pci_sub_class, pcr->pci_prog_if, pcr->pci_rev_id);
+            pcr->pci_base_class, pcr->pci_sub_class, pcr->pci_prog_if,
+            pcr->pci_rev_id);
     if (pcr->pci_bist_header_latency_cache)
-        printf("  BIST      0x%02x  HEADER 0x%02x  LATENCY 0x%02x  CACHE 0x%02x\n",
+        printf("  BIST      0x%02x  HEADER 0x%02x"
+	    "  LATENCY 0x%02x  CACHE 0x%02x\n",
             pcr->pci_bist, pcr->pci_header_type, pcr->pci_latency_timer,
             pcr->pci_cache_line_size);
     printf("  MW0_AD    0x%08x  addr 0x%08x  %spre-fetchable\n",
@@ -509,11 +510,13 @@ print_i128(pciConfigPtr pcr)
         (int)pcr->pci_baserom, (int)(pcr->pci_baserom & 0xFFFF8000),
         pcr->pci_baserom & 0x1 ? "" : "not-");
     if (pcr->pci_max_min_ipin_iline)
-        printf("  MAX_LAT   0x%02x  MIN_GNT 0x%02x  INT_PIN 0x%02x  INT_LINE 0x%02x\n",
-            pcr->pci_max_lat, pcr->pci_min_gnt, pcr->pci_int_pin, pcr->pci_int_line);
+        printf("  MAX_LAT   0x%02x  MIN_GNT 0x%02x"
+	    "  INT_PIN 0x%02x  INT_LINE 0x%02x\n",
+            pcr->pci_max_lat, pcr->pci_min_gnt,
+            pcr->pci_int_pin, pcr->pci_int_line);
 }
 
-void
+static void
 print_pcibridge(pciConfigPtr pcr)
 {
     if (pcr->pci_status_command)
@@ -521,9 +524,11 @@ print_pcibridge(pciConfigPtr pcr)
             pcr->pci_status, pcr->pci_command);
     if (pcr->pci_class_revision)
         printf("  CLASS     0x%02x 0x%02x 0x%02x  REVISION 0x%02x\n",
-            pcr->pci_base_class, pcr->pci_sub_class, pcr->pci_prog_if, pcr->pci_rev_id);
+            pcr->pci_base_class, pcr->pci_sub_class, pcr->pci_prog_if,
+            pcr->pci_rev_id);
     if (pcr->pci_bist_header_latency_cache)
-        printf("  BIST      0x%02x  HEADER 0x%02x  LATENCY 0x%02x  CACHE 0x%02x\n",
+        printf("  BIST      0x%02x  HEADER 0x%02x"
+	    "  LATENCY 0x%02x  CACHE 0x%02x\n",
             pcr->pci_bist, pcr->pci_header_type, pcr->pci_latency_timer,
             pcr->pci_cache_line_size);
     printf("  PRIBUS    0x%02x  SECBUS 0x%02x  SUBBUS 0x%02x  SECLT 0x%02x\n",
@@ -541,9 +546,72 @@ print_pcibridge(pciConfigPtr pcr)
         (int)pcr->pci_baserom, (int)(pcr->pci_baserom & 0xFFFF8000),
         pcr->pci_baserom & 0x1 ? "" : "not-");
     if (pcr->pci_max_min_ipin_iline)
-        printf("  MAX_LAT   0x%02x  MIN_GNT 0x%02x  INT_PIN 0x%02x  INT_LINE 0x%02x\n",
-            pcr->pci_max_lat, pcr->pci_min_gnt, pcr->pci_int_pin, pcr->pci_int_line);
+        printf("  MAX_LAT   0x%02x  MIN_GNT 0x%02x"
+	    "  INT_PIN 0x%02x  INT_LINE 0x%02x\n",
+            pcr->pci_max_lat, pcr->pci_min_gnt,
+            pcr->pci_int_pin, pcr->pci_int_line);
+}
+
+static void
+print_apb(pciConfigPtr pcr)
+{
+    int   i;
+    CARD8 io, mem;
+
+    printf("  STATUS    0x%04x  COMMAND 0x%04x\n",
+	   pcr->pci_status, pcr->pci_command);
+    printf("  CLASS     0x%02x 0x%02x 0x%02x  REVISION 0x%02x\n",
+	   pcr->pci_base_class, pcr->pci_sub_class, pcr->pci_prog_if,
+	   pcr->pci_rev_id);
+    printf("  HEADER    0x%02x  LATENCY 0x%02x  CACHE 0x%02x\n",
+	   pcr->pci_header_type, pcr->pci_latency_timer,
+	   pcr->pci_cache_line_size);
+    printf("  PRIBUS    0x%02x  SECBUS 0x%02x  SUBBUS 0x%02x  SECLT 0x%02x\n",
+           pcr->pci_primary_bus_number, pcr->pci_secondary_bus_number,
+	   pcr->pci_subordinate_bus_number, pcr->pci_secondary_latency_timer);
+    printf("  SECSTATUS 0x%04x\n",
+	   pcr->pci_secondary_status);
+    printf("  %sFAST_B2B %sSEC_BUS_RST %sM_ABRT %sVGA_EN %sISA_EN"
+	   " %sSERR_EN %sPERR_EN\n",
+	   (pcr->pci_bridge_control & PCI_B_FAST_B_B) ? "" : "NO_",
+	   (pcr->pci_bridge_control & PCI_B_SB_RESET) ? "" : "NO_",
+	   (pcr->pci_bridge_control & PCI_B_M_ABORT) ? "" : "NO_",
+	   (pcr->pci_bridge_control & PCI_B_VGA_EN) ? "" : "NO_",
+	   (pcr->pci_bridge_control & PCI_B_ISA_EN) ? "" : "NO_",
+	   (pcr->pci_bridge_control & PCI_B_SERR_EN) ? "" : "NO_",
+	   (pcr->pci_bridge_control & PCI_B_P_ERR) ? "" : "NO_");
+    printf("  TICK      0x%08lx         SECCNTL 0x%02x\n", (long)
+	   pciReadLong(pcr->tag, 0x00b0), pciReadByte(pcr->tag, 0x00dd));
+    printf("  MASTER RETRIES:  PRIMARY 0x%02x,  SECONDARY 0x%02x\n",
+	   pciReadByte(pcr->tag, 0x00c0), pciReadByte(pcr->tag, 0x00dc));
+    printf("  TARGET RETRIES:  PIO     0x%02x,  DMA       0x%02x\n",
+	   pciReadByte(pcr->tag, 0x00d8), pciReadByte(pcr->tag, 0x00da));
+    printf("  TARGET LATENCY:  PIO     0x%02x,  DMA       0x%02x\n",
+	   pciReadByte(pcr->tag, 0x00d9), pciReadByte(pcr->tag, 0x00db));
+    printf("  DMA AFSR  0x%08lx%08lx    AFAR 0x%08lx%08lx\n",
+	   (long)pciReadLong(pcr->tag, 0x00cc),
+	   (long) pciReadLong(pcr->tag, 0x00c8),
+	   (long)pciReadLong(pcr->tag, 0x00d4),
+	   (long)pciReadLong(pcr->tag, 0x00d0));
+    printf("  PIO AFSR  0x%08lx%08lx    AFAR 0x%08lx%08lx\n",
+	   (long)pciReadLong(pcr->tag, 0x00ec),
+	   (long)pciReadLong(pcr->tag, 0x00e8),
+	   (long)pciReadLong(pcr->tag, 0x00f4),
+	   (long)pciReadLong(pcr->tag, 0x00f0));
+    printf("  PCI CNTL  0x%08lx%08lx    DIAG 0x%08lx%08lx\n",
+	   (long)pciReadLong(pcr->tag, 0x00e4),
+	   (long)pciReadLong(pcr->tag, 0x00e0),
+	   (long)pciReadLong(pcr->tag, 0x00fc),
+	   (long)pciReadLong(pcr->tag, 0x00f8));
+    printf("  MAPS:            I/O     0x%02x,  MEM       0x%02x\n",
+	   (io  = pciReadByte(pcr->tag, 0x00de)),
+	   (mem = pciReadByte(pcr->tag, 0x00df)));
+    for (i = 0;  i < 8;  i++)
+	if (io & (1 << i))
+	    printf("  BUS I/O  0x%06x-0x%06x\n", i << 21, ((i + 1) << 21) - 1);
+    for (i = 0;  i < 8;  i++)
+	if (mem & (1 << i))
+	    printf("  BUS MEM  0x%08x-0x%08x\n", i << 29, ((i + 1) << 29) - 1);
 }
 
 #include "xf86getpagesize.c"
-

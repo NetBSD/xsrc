@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/xf86_libc.h,v 3.50 2001/04/10 16:08:03 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/xf86_libc.h,v 3.51 2001/12/31 18:13:37 herrb Exp $ */
 
 
 
@@ -229,6 +229,8 @@ typedef int xf86jmp_buf[20];
 #define fgetpos(FP,fpp)		xf86fgetpos(FP,fpp)
 #undef fgets
 #define fgets(cp,i,FP)		xf86fgets(cp,i,FP)
+#undef finite
+#define finite(d)		xf86finite(d)
 #undef floor
 #define floor(d)		xf86floor(d)
 #undef fmod

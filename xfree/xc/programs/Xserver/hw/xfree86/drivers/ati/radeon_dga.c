@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/radeon_dga.c,v 1.5 2000/11/21 23:10:35 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/radeon_dga.c,v 1.8 2001/12/04 17:30:46 tsi Exp $ */
 /*
  * Copyright 2000 ATI Technologies Inc., Markham, Ontario, and
  *                VA Linux Systems Inc., Fremont, California.
@@ -57,27 +57,8 @@ static int  RADEON_GetViewport(ScrnInfoPtr);
 static void RADEON_SetViewport(ScrnInfoPtr, int, int, int);
 static void RADEON_FillRect(ScrnInfoPtr, int, int, int, int, unsigned long);
 static void RADEON_BlitRect(ScrnInfoPtr, int, int, int, int, int, int);
-#if 0
 static void RADEON_BlitTransRect(ScrnInfoPtr, int, int, int, int, int, int,
 				 unsigned long);
-#endif
-
-static
-DGAFunctionRec RADEON_DGAFuncs = {
-    RADEON_OpenFramebuffer,
-    NULL,
-    RADEON_SetMode,
-    RADEON_SetViewport,
-    RADEON_GetViewport,
-    RADEONWaitForIdle,
-    RADEON_FillRect,
-    RADEON_BlitRect,
-#if 0
-    RADEON_BlitTransRect
-#else
-    NULL
-#endif
-};
 
 
 static DGAModePtr RADEONSetupDGAMode(ScrnInfoPtr pScrn,
@@ -95,64 +76,68 @@ static DGAModePtr RADEONSetupDGAMode(ScrnInfoPtr pScrn,
     RADEONInfoPtr  info            = RADEONPTR(pScrn);
     DGAModePtr     newmodes        = NULL, currentMode;
     DisplayModePtr pMode, firstMode;
-    int            otherPitch, Bpp = bitsPerPixel >> 3;
-    Bool           oneMore;
-
-    pMode = firstMode = pScrn->modes;
-
-    while (pMode) {
-	otherPitch = secondPitch ? secondPitch : pMode->HDisplay;
-
-	if (pMode->HDisplay != otherPitch) {
-	    newmodes = xrealloc(modes, (*num + 2) * sizeof(DGAModeRec));
-	    oneMore  = TRUE;
-	} else {
-	    newmodes = xrealloc(modes, (*num + 1) * sizeof(DGAModeRec));
-	    oneMore  = FALSE;
-	}
-
-	if (!newmodes) {
-	    xfree(modes);
-	    return NULL;
-	}
-	modes = newmodes;
+    unsigned int   size;
+    int            pitch, Bpp = bitsPerPixel >> 3;
 
 SECOND_PASS:
 
-	currentMode = modes + *num;
-	(*num)++;
+    pMode = firstMode = pScrn->modes;
 
-	currentMode->mode           = pMode;
-	/* FIXME: is concurrent access really possible? */
-	currentMode->flags          = DGA_CONCURRENT_ACCESS;
-	if (pixmap)
-	    currentMode->flags     |= DGA_PIXMAP_AVAILABLE;
-	if (info->accel)
-	    currentMode->flags     |= DGA_FILL_RECT | DGA_BLIT_RECT;
-	if (pMode->Flags & V_DBLSCAN)
-	    currentMode->flags     |= DGA_DOUBLESCAN;
-	if (pMode->Flags & V_INTERLACE)
-	    currentMode->flags     |= DGA_INTERLACED;
-	currentMode->byteOrder      = pScrn->imageByteOrder;
-	currentMode->depth          = depth;
-	currentMode->bitsPerPixel   = bitsPerPixel;
-	currentMode->red_mask       = red;
-	currentMode->green_mask     = green;
-	currentMode->blue_mask      = blue;
-	currentMode->visualClass    = visualClass;
-	currentMode->viewportWidth  = pMode->HDisplay;
-	currentMode->viewportHeight = pMode->VDisplay;
-	currentMode->xViewportStep  = 8;
-	currentMode->yViewportStep  = 1;
-	currentMode->viewportFlags  = DGA_FLIP_RETRACE;
-	currentMode->offset         = 0;
-	currentMode->address        = (unsigned char*)info->LinearAddr;
+    while (1) {
+	pitch = pScrn->displayWidth;
+	size = pitch * Bpp * pMode->VDisplay;
 
-	if (oneMore) { /* first one is narrow width */
-	    currentMode->bytesPerScanline = (((pMode->HDisplay * Bpp) + 3)
-					     & ~3L);
-	    currentMode->imageWidth   = pMode->HDisplay;
-	    currentMode->imageHeight  = pMode->VDisplay;
+	if ((!secondPitch || (pitch != secondPitch)) &&
+	    (size <= info->FbMapSize)) {
+
+	    if (secondPitch)
+		pitch = secondPitch;
+
+	    if (!(newmodes = xrealloc(modes, (*num + 1) * sizeof(DGAModeRec))))
+	        break;
+	   
+	    modes = newmodes;
+	    currentMode = modes + *num;
+
+	    currentMode->mode           = pMode;
+	    currentMode->flags          = DGA_CONCURRENT_ACCESS;
+
+	    if (pixmap)
+	        currentMode->flags     |= DGA_PIXMAP_AVAILABLE;
+
+	    if (info->accel) {
+	      if (info->accel->SetupForSolidFill &&
+		  info->accel->SubsequentSolidFillRect)
+		 currentMode->flags     |= DGA_FILL_RECT;
+	      if (info->accel->SetupForScreenToScreenCopy &&
+		  info->accel->SubsequentScreenToScreenCopy)
+		 currentMode->flags     |= DGA_BLIT_RECT | DGA_BLIT_RECT_TRANS;
+	      if (currentMode->flags &
+		  (DGA_PIXMAP_AVAILABLE | DGA_FILL_RECT |
+		   DGA_BLIT_RECT | DGA_BLIT_RECT_TRANS))
+		  currentMode->flags &= ~DGA_CONCURRENT_ACCESS;
+	    }
+	    if (pMode->Flags & V_DBLSCAN)
+		currentMode->flags     |= DGA_DOUBLESCAN;
+	    if (pMode->Flags & V_INTERLACE)
+	        currentMode->flags     |= DGA_INTERLACED;
+	    currentMode->byteOrder      = pScrn->imageByteOrder;
+	    currentMode->depth          = depth;
+	    currentMode->bitsPerPixel   = bitsPerPixel;
+	    currentMode->red_mask       = red;
+	    currentMode->green_mask     = green;
+	    currentMode->blue_mask      = blue;
+	    currentMode->visualClass    = visualClass;
+	    currentMode->viewportWidth  = pMode->HDisplay;
+	    currentMode->viewportHeight = pMode->VDisplay;
+	    currentMode->xViewportStep  = 8;
+	    currentMode->yViewportStep  = 1;
+	    currentMode->viewportFlags  = DGA_FLIP_RETRACE;
+	    currentMode->offset         = 0;
+	    currentMode->address        = (unsigned char*)info->LinearAddr;
+	    currentMode->bytesPerScanline = pitch * Bpp;
+	    currentMode->imageWidth   = pitch;
+	    currentMode->imageHeight  = info->FbMapSize / currentMode->bytesPerScanline;
 	    currentMode->pixmapWidth  = currentMode->imageWidth;
 	    currentMode->pixmapHeight = currentMode->imageHeight;
 	    currentMode->maxViewportX = currentMode->imageWidth -
@@ -160,24 +145,17 @@ SECOND_PASS:
 	    /* this might need to get clamped to some maximum */
 	    currentMode->maxViewportY = (currentMode->imageHeight -
 					 currentMode->viewportHeight);
-	    oneMore = FALSE;
-	    goto SECOND_PASS;
-	} else {
-	    currentMode->bytesPerScanline = ((otherPitch * Bpp) + 3) & ~3L;
-	    currentMode->imageWidth       = otherPitch;
-	    currentMode->imageHeight      = pMode->VDisplay;
-	    currentMode->pixmapWidth      = currentMode->imageWidth;
-	    currentMode->pixmapHeight     = currentMode->imageHeight;
-	    currentMode->maxViewportX     = (currentMode->imageWidth -
-					     currentMode->viewportWidth);
-	    /* this might need to get clamped to some maximum */
-	    currentMode->maxViewportY     = (currentMode->imageHeight -
-					     currentMode->viewportHeight);
+	    (*num)++;
 	}
 
 	pMode = pMode->next;
 	if (pMode == firstMode)
 	    break;
+    }
+
+    if (secondPitch) {
+	secondPitch = 0;
+	goto SECOND_PASS;
     }
 
     return modes;
@@ -239,7 +217,30 @@ Bool RADEONDGAInit(ScreenPtr pScreen)
     info->numDGAModes = num;
     info->DGAModes    = modes;
 
-    return DGAInit(pScreen, &RADEON_DGAFuncs, modes, num);
+    info->DGAFuncs.OpenFramebuffer       = RADEON_OpenFramebuffer;
+    info->DGAFuncs.CloseFramebuffer      = NULL;
+    info->DGAFuncs.SetMode               = RADEON_SetMode;
+    info->DGAFuncs.SetViewport           = RADEON_SetViewport;
+    info->DGAFuncs.GetViewport           = RADEON_GetViewport;
+
+    info->DGAFuncs.Sync                  = NULL;
+    info->DGAFuncs.FillRect              = NULL;
+    info->DGAFuncs.BlitRect              = NULL;
+    info->DGAFuncs.BlitTransRect         = NULL;
+
+    if (info->accel) {
+	info->DGAFuncs.Sync              = RADEONWaitForIdle;
+	if (info->accel->SetupForSolidFill &&
+	    info->accel->SubsequentSolidFillRect)
+	    info->DGAFuncs.FillRect      = RADEON_FillRect;
+	if (info->accel->SetupForScreenToScreenCopy &&
+	    info->accel->SubsequentScreenToScreenCopy) {
+	    info->DGAFuncs.BlitRect      = RADEON_BlitRect;
+	    info->DGAFuncs.BlitTransRect = RADEON_BlitTransRect;
+	}
+    }
+
+    return DGAInit(pScreen, &info->DGAFuncs, modes, num);
 }
 
 static Bool RADEON_SetMode(ScrnInfoPtr pScrn, DGAModePtr pMode)
@@ -303,11 +304,11 @@ static void RADEON_FillRect(ScrnInfoPtr pScrn,
 {
     RADEONInfoPtr info = RADEONPTR(pScrn);
 
-    if (info->accel) {
-	(*info->accel->SetupForSolidFill)(pScrn, color, GXcopy, (CARD32)(~0));
-	(*info->accel->SubsequentSolidFillRect)(pScrn, x, y, w, h);
+    (*info->accel->SetupForSolidFill)(pScrn, color, GXcopy, (CARD32)(~0));
+    (*info->accel->SubsequentSolidFillRect)(pScrn, x, y, w, h);
+
+    if (pScrn->bitsPerPixel == info->CurrentLayout.bitsPerPixel)
 	SET_SYNC_FLAG(info->accel);
-    }
 }
 
 static void RADEON_BlitRect(ScrnInfoPtr pScrn,
@@ -315,28 +316,39 @@ static void RADEON_BlitRect(ScrnInfoPtr pScrn,
 			    int dstx, int dsty)
 {
     RADEONInfoPtr info = RADEONPTR(pScrn);
+    int xdir = ((srcx < dstx) && (srcy == dsty)) ? -1 : 1;
+    int ydir = (srcy < dsty) ? -1 : 1;
 
-    if (info->accel) {
-	int xdir = ((srcx < dstx) && (srcy == dsty)) ? -1 : 1;
-	int ydir = (srcy < dsty) ? -1 : 1;
+    (*info->accel->SetupForScreenToScreenCopy)(pScrn, xdir, ydir,
+					       GXcopy, (CARD32)(~0), -1);
+    (*info->accel->SubsequentScreenToScreenCopy)(pScrn, srcx, srcy,
+						 dstx, dsty, w, h);
 
-	(*info->accel->SetupForScreenToScreenCopy)(pScrn, xdir, ydir,
-						   GXcopy, (CARD32)(~0), -1);
-	(*info->accel->SubsequentScreenToScreenCopy)(pScrn, srcx, srcy,
-						     dstx, dsty, w, h);
+    if (pScrn->bitsPerPixel == info->CurrentLayout.bitsPerPixel)
 	SET_SYNC_FLAG(info->accel);
-    }
 }
 
-#if 0
 static void RADEON_BlitTransRect(ScrnInfoPtr pScrn,
 				 int srcx, int srcy, int w, int h,
 				 int dstx, int dsty, unsigned long color)
 {
-    /* this one should be separate since the XAA function would prohibit
-       usage of ~0 as the key */
+    RADEONInfoPtr info = RADEONPTR(pScrn);
+    int xdir = ((srcx < dstx) && (srcy == dsty)) ? -1 : 1;
+    int ydir = (srcy < dsty) ? -1 : 1;
+
+    info->XAAForceTransBlit = TRUE;
+
+    (*info->accel->SetupForScreenToScreenCopy)(pScrn, xdir, ydir,
+					       GXcopy, (CARD32)(~0), color);
+
+    info->XAAForceTransBlit = FALSE;
+
+    (*info->accel->SubsequentScreenToScreenCopy)(pScrn, srcx, srcy,
+						 dstx, dsty, w, h);
+
+    if (pScrn->bitsPerPixel == info->CurrentLayout.bitsPerPixel)
+	SET_SYNC_FLAG(info->accel);
 }
-#endif
 
 static Bool RADEON_OpenFramebuffer(ScrnInfoPtr pScrn,
 				   char **name,

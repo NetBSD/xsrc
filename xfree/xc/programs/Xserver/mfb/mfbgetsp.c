@@ -1,9 +1,14 @@
+/* $XFree86: xc/programs/Xserver/mfb/mfbgetsp.c,v 1.3 2001/12/14 20:00:08 dawes Exp $ */
 /* Combined Purdue/PurduePlus patches, level 2.0, 1/17/89 */
 /***********************************************************
 
 Copyright 1987, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -41,7 +46,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $Xorg: mfbgetsp.c,v 1.3 2000/08/17 19:53:35 cpqbld Exp $ */
+/* $Xorg: mfbgetsp.c,v 1.4 2001/02/09 02:05:19 xorgcvs Exp $ */
 #include "X.h"
 #include "Xmd.h"
 
@@ -81,7 +86,7 @@ mfbGetSpans(pDrawable, wMax, ppt, pwidth, nspans, pchardstStart)
     register DDXPointPtr pptLast;	/* one past last point to get */
     int         	xEnd;		/* last pixel to copy from */
     register int	nstart; 
-    int	 		nend; 
+    int	 		nend = 0; 
     int	 		srcStartOver; 
     PixelType 		startmask, endmask;
     unsigned int	srcBit;

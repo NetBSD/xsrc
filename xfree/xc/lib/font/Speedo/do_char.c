@@ -21,7 +21,7 @@ INCIDENTAL OR CONSEQUENTIAL DAMAGES, ARISING OUT OF OR IN ANY WAY CONNECTED
 WITH THE SPEEDO SOFTWARE OR THE BITSTREAM CHARTER OUTLINE FONT.
 
 */
-/* $XFree86: xc/lib/font/Speedo/do_char.c,v 1.3 2001/01/17 19:43:17 dawes Exp $ */
+/* $XFree86: xc/lib/font/Speedo/do_char.c,v 1.4 2001/08/27 19:49:50 dawes Exp $ */
 
 /***************************** D O - C H A R . C *****************************
  *                                                                           *
@@ -146,16 +146,16 @@ fix15  point_size)     /* Point size (units of whole points) */
  */
 {
 ufix8 FONTFAR   *pointer;      /* Pointer to character data */
-fix15    no_tracks;    /* Number of kerning tracks in font */
-ufix8    format;       /* Track kerning format byte */
-fix15    i;            /* Track counter */
-fix15    min_pt_size;  /* Minimum point size for track */
-fix15    max_pt_size;  /* Maximum point size for track */
-fix15    min_adj;      /* Adjustment for min point size */
-fix15    max_adj;      /* Adjustment for max point size */
-fix31    delta_pt_size;/* Max point size - min point size */
-fix31    delta_adj;    /* Min adjustment - max adjustment */
-fix15    adj = 0;      /* Interpolated adjustment */
+fix15    no_tracks;            /* Number of kerning tracks in font */
+ufix8    format;               /* Track kerning format byte */
+fix15    i;                    /* Track counter */
+fix15    min_pt_size = 0;      /* Minimum point size for track */
+fix15    max_pt_size = 0;      /* Maximum point size for track */
+fix15    min_adj = 0;          /* Adjustment for min point size */
+fix15    max_adj = 0;          /* Adjustment for max point size */
+fix31    delta_pt_size;        /* Max point size - min point size */
+fix31    delta_adj;            /* Min adjustment - max adjustment */
+fix15    adj = 0;              /* Interpolated adjustment */
 
 if (track == 0)                  /* Track zero selected? */
     {
@@ -236,7 +236,7 @@ fix15    nn;           /* Number of kern pairs in first partition */
 fix15    base;         /* Index to first record in rem kern pairs */
 fix15    i;            /* Index to kern pair being tested */
 fix31    adj = 0;      /* Returned value of adjustment */
-fix15    adj_base;     /* Adjustment base for relative adjustments */
+fix15    adj_base = 0; /* Adjustment base for relative adjustments */
 
 if (!sp_globals.specs_valid)                /* Font specs not defined? */
     {

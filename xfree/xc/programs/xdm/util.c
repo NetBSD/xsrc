@@ -1,9 +1,13 @@
-/* $Xorg: util.c,v 1.3 2000/08/17 19:54:15 cpqbld Exp $ */
+/* $Xorg: util.c,v 1.4 2001/02/09 02:05:41 xorgcvs Exp $ */
 /*
 
 Copyright 1989, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included
 in all copies or substantial portions of the Software.
@@ -22,7 +26,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/xdm/util.c,v 3.17 2001/02/28 18:58:54 dawes Exp $ */
+/* $XFree86: xc/programs/xdm/util.c,v 3.19 2001/12/14 20:01:24 dawes Exp $ */
 
 /*
  * xdm - display manager daemon
@@ -51,7 +55,7 @@ from The Open Group.
 #undef _POSIX_SOURCE
 #endif
 #endif
-#if defined(__osf__) || defined(linux) || defined(MINIX) || defined(__QNXNTO__) || defined(__GNU__)
+#if defined(__osf__) || defined(linux) || defined(__QNXNTO__) || defined(__GNU__)
 #define setpgrp setpgid
 #endif
 
@@ -245,15 +249,7 @@ CleanUpChild (void)
 #endif
 #else
 	setpgrp (0, getpid ());
-#ifdef MINIX /* actually POSIX */
-	{
-		sigset_t ss; 
-		sigemptyset(&ss);
-		sigprocmask(SIG_SETMASK, &ss, NULL);
-	}
-#else
 	sigsetmask (0);
-#endif
 #endif
 #endif
 #ifdef SIGCHLD

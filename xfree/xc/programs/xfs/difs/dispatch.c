@@ -1,4 +1,4 @@
-/* $Xorg: dispatch.c,v 1.5 2000/08/17 19:54:20 cpqbld Exp $ */
+/* $Xorg: dispatch.c,v 1.6 2001/02/09 02:05:42 xorgcvs Exp $ */
 /*
  * protocol dispatcher
  */
@@ -6,7 +6,11 @@
  
 Copyright 1990, 1991, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -42,7 +46,7 @@ in this Software without prior written authorization from The Open Group.
  * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
  * THIS SOFTWARE.
  */
-/* $XFree86: xc/programs/xfs/difs/dispatch.c,v 3.9 2001/04/01 14:00:20 tsi Exp $ */
+/* $XFree86: xc/programs/xfs/difs/dispatch.c,v 3.12 2001/12/14 20:01:33 dawes Exp $ */
 
 #include	<stdlib.h>
 #include	"dispatch.h"
@@ -141,8 +145,10 @@ Dispatch(void)
 		    op = MAJOROP;
 		    if (op >= NUM_PROC_VECTORS)
 			result = ProcBadRequest (client);
-		    else
+		    else if (*client->requestVector[op] != NULL)
 			result = (*client->requestVector[op]) (client);
+		    else
+			result = FSBadRequest;
 		}
 		if (result != FSSuccess) {
 		    if (client->noClientException != FSSuccess)
@@ -202,8 +208,12 @@ ProcInitialConnection(ClientPtr client)
 	return (client->noClientException = -2);
     if (((*(char *) &whichbyte) && (prefix->byteOrder == 'B')) ||
 	    (!(*(char *) &whichbyte) && (prefix->byteOrder == 'l'))) {
+	int status;
+
 	client->swapped = TRUE;
-	SwapConnClientPrefix(prefix);
+	status = SwapConnClientPrefix(client, prefix);
+	if (status != FSSuccess)
+	    return (status);
     }
     client->major_version = prefix->major_version;
     client->minor_version = prefix->minor_version;
@@ -247,6 +257,12 @@ ProcEstablishConnection(ClientPtr client)
 
     /* build up a list of the stuff */
     for (i = 0, ad = auth_data; i < (int)prefix->num_auths; i++) {
+	if (ad - (char *)auth_data > (stuff->length << 2) - 4) {
+	    int lengthword = stuff->length;
+
+	    SendErrToClient(client, FSBadLength, (pointer)&lengthword);
+	    return (FSBadLength);
+	}
 	/* copy carefully in case wire data is not aligned */
 	client_auth[i].namelen = (((unsigned char *)ad)[0] << 8) +
 				 ((unsigned char *)ad)[1];
@@ -259,6 +275,15 @@ ProcEstablishConnection(ClientPtr client)
 	client_auth[i].data = (char *) ad;
 	ad += client_auth[i].datalen;
     }
+    if (!(int)prefix->num_auths)
+	ad += 4;
+    if (ad - (char *)auth_data > (stuff->length << 2)) {
+	int lengthword = stuff->length;
+
+	SendErrToClient(client, FSBadLength, (pointer)&lengthword);
+	return (FSBadLength);
+    }
+
     num_alts = ListAlternateServers(&altservers);
     for (i = 0, altlen = 0; i < num_alts; i++) {
 	/* subset + len + namelen + pad */
@@ -370,7 +395,7 @@ ProcEstablishConnection(ClientPtr client)
  */
 
 void
-SendErrToClient(
+DoSendErrToClient(
     ClientPtr   client,
     int         error,
     pointer     data)		/* resource id, format, resolution, etc */
@@ -573,7 +598,15 @@ ProcCreateAC(ClientPtr client)
     	}
     }
     /* build up a list of the stuff */
-    for (i = 0, ad = (char *)stuff + SIZEOF(fsCreateACReq); i < (int)stuff->num_auths; i++) {
+    for (i = 0, ad = (char *)stuff + SIZEOF(fsCreateACReq);
+         i < (int)stuff->num_auths; i++) {
+	if (ad - (char *)stuff + SIZEOF(fsCreateACReq) >
+	    (stuff->length << 2) - 4) {
+	    int lengthword = stuff->length;
+
+	    SendErrToClient(client, FSBadLength, (pointer)&lengthword);
+	    return (FSBadLength);
+	}
 	/* copy carefully in case data is not aligned */
 	acp[i].namelen = (((unsigned char *)ad)[0] << 8) +
 			 ((unsigned char *)ad)[1];
@@ -585,6 +618,14 @@ ProcCreateAC(ClientPtr client)
 	ad += acp[i].namelen;
 	acp[i].data = (char *) ad;
 	ad += acp[i].datalen;
+    }
+    if (!(int)stuff->num_auths)
+	ad += 4;
+    if (ad - (char *)stuff > (stuff->length << 2)) {
+	int lengthword = stuff->length;
+
+	SendErrToClient(client, FSBadLength, (pointer)&lengthword);
+	return (FSBadLength);
     }
 
 /* XXX needs work for AuthContinue */
@@ -702,6 +743,13 @@ ProcSetResolution(ClientPtr client)
     REQUEST(fsSetResolutionReq);
     REQUEST_AT_LEAST_SIZE(fsSetResolutionReq);
 
+    if ((stuff->length << 2) - SIZEOF(fsSetResolutionReq) <
+        stuff->num_resolutions * SIZEOF(fsResolution)) {
+	int lengthword = stuff->length;
+
+	SendErrToClient(client, FSBadLength, &lengthword);
+	return FSBadLength;
+    }
     new_res = (fsResolution *)
 	fsalloc(SIZEOF(fsResolution) * stuff->num_resolutions);
     if (!new_res) {
@@ -725,6 +773,13 @@ ProcGetResolution(ClientPtr client)
     REQUEST(fsReq);
     REQUEST_AT_LEAST_SIZE(fsReq);
 
+    if ((stuff->length << 2) - SIZEOF(fsResolution) < client->num_resolutions *
+	sizeof(fsResolution)) {
+	int lengthword = stuff->length;
+
+	SendErrToClient(client, FSBadLength, &lengthword);
+	return FSBadLength;
+    }
     reply.type = FS_Reply;
     reply.num_resolutions = client->num_resolutions;
     reply.sequenceNumber = client->sequence;
@@ -944,7 +999,7 @@ ProcCloseFont(ClientPtr client)
 }
 
 void
-CloseDownClient(ClientPtr client)
+DoCloseDownClient(ClientPtr client)
 {
     if (client->clientGone != CLIENT_GONE) {
 	DeleteClientFontStuff(client);

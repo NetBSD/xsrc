@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/shared/ioperm_noop.c,v 3.3 1998/07/25 16:57:00 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/shared/ioperm_noop.c,v 3.4 2001/07/23 13:15:48 dawes Exp $ */
 /*
  * Copyright 1993 by David Wexelblat <dwex@XFree86.org>
  *
@@ -24,7 +24,7 @@
 /* $XConsortium: ioperm_noop.c /main/3 1996/02/21 17:53:39 kaleb $ */
 
 /*
- * Amoeba, Minix and 386BSD don't bother with I/O permissions, 
+ * Some platforms don't bother with I/O permissions, 
  * or the permissions are implicit with opening/enabling the console.
  */
 

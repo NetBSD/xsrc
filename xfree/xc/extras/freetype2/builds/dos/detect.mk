@@ -40,7 +40,7 @@ ifeq ($(PLATFORM),ansi)
       # substring `MDOS\COMMAND'
       #
       ifeq ($(is_dos),)
-	is_dos := $(findstring MDOS\COMMAND,$(COMSPEC))
+        is_dos := $(findstring MDOS\COMMAND,$(COMSPEC))
       endif
     endif # test COMSPEC
 
@@ -53,8 +53,6 @@ ifeq ($(PLATFORM),ansi)
 endif # test PLATFORM ansi
 
 ifeq ($(PLATFORM),dos)
-  DELETE   := del
-  COPY     := copy
 
   # Use DJGPP (i.e. gcc) by default.
   #
@@ -82,14 +80,6 @@ ifeq ($(PLATFORM),dos)
     .PHONY: watcom
   endif
 
-  ifneq ($(findstring borlandc16,$(MAKECMDGOALS)),) # Borland C/C++ 16-bit
-    CONFIG_FILE := dos-bcc.mk
-    SEP         := $(BACKSLASH)
-    CC          := bcc
-    borlandc16: setup
-    .PHONY: borlandc16
-  endif
-
   ifneq ($(findstring borlandc,$(MAKECMDGOALS)),)   # Borland C/C++ 32-bit
     CONFIG_FILE := dos-bcc.mk
     SEP         := $(BACKSLASH)
@@ -98,7 +88,23 @@ ifeq ($(PLATFORM),dos)
     .PHONY: borlandc
   endif
 
-  setup: dos_setup
+  ifneq ($(findstring borlandc16,$(MAKECMDGOALS)),) # Borland C/C++ 16-bit
+    CONFIG_FILE := dos-bcc.mk
+    SEP         := $(BACKSLASH)
+    CC          := bcc
+    borlandc16: setup
+    .PHONY: borlandc16
+  endif
+
+  ifneq ($(findstring bash,$(SHELL)),)              # check for bash
+    DELETE := rm
+    COPY   := cp
+    setup: std_setup
+  else
+    DELETE := del
+    COPY   := copy
+    setup: dos_setup
+  endif
 
 endif     # test PLATFORM dos
 

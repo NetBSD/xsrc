@@ -28,7 +28,7 @@ other dealings in this Software without prior written authorization
 from the X Consortium.
 
 */
-/* $XFree86: xc/programs/xeyes/xeyes.c,v 1.3 2000/02/17 14:00:35 dawes Exp $ */
+/* $XFree86: xc/programs/xeyes/xeyes.c,v 1.4 2001/08/27 23:35:13 dawes Exp $ */
 
 #include <X11/Intrinsic.h>
 #include <X11/StringDefs.h>
@@ -41,7 +41,8 @@ from the X Consortium.
 
 /* Exit with message describing command line format */
 
-void usage()
+static void
+usage(void)
 {
     fprintf(stderr,
 "usage: xeyes\n");
@@ -70,11 +71,8 @@ static XrmOptionDescRec options[] = {
 static Atom wm_delete_window;
 
 /*ARGSUSED*/
-static void quit(w, event, params, num_params)
-    Widget w;
-    XEvent *event;
-    String *params;
-    Cardinal *num_params;
+static void
+quit(Widget w, XEvent *event, String *params, Cardinal *num_params)
 {
     if (event->type == ClientMessage && 
 	event->xclient.data.l[0] != wm_delete_window) {
@@ -90,9 +88,7 @@ static XtActionsRec actions[] = {
 };
 
 int
-main(argc, argv)
-    int argc;
-    char **argv;
+main(int argc, char **argv)
 {
     XtAppContext app_context;
     Widget toplevel;

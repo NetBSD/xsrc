@@ -36,7 +36,7 @@
 ** Author: Eric Veach, July 1994.
 **
 */
-/* $XFree86: xc/extras/ogl-sample/main/gfx/lib/glu/libtess/tess.c,v 1.2 2001/04/03 02:18:40 dawes Exp $ */
+/* $XFree86: xc/extras/ogl-sample/main/gfx/lib/glu/libtess/tess.c,v 1.3 2001/10/28 03:32:22 tsi Exp $ */
 
 #include "gluos.h"
 #include <stddef.h>
@@ -168,6 +168,8 @@ static void GotoState( GLUtesselator *tess, enum TessState newState )
 	CALL_ERROR_OR_ERROR_DATA( GLU_TESS_MISSING_BEGIN_CONTOUR );
 	gluTessBeginContour( tess );
 	break;
+      default:
+	break;
       }
     } else {
       switch( tess->state ) {
@@ -179,6 +181,8 @@ static void GotoState( GLUtesselator *tess, enum TessState newState )
 	CALL_ERROR_OR_ERROR_DATA( GLU_TESS_MISSING_END_POLYGON );
 	/* gluTessEndPolygon( tess ) is too much work! */
 	MakeDormant( tess );
+	break;
+      default:
 	break;
       }
     }

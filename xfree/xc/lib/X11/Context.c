@@ -1,4 +1,4 @@
-/* $Xorg: Context.c,v 1.4 2000/08/17 19:44:31 cpqbld Exp $ */
+/* $Xorg: Context.c,v 1.5 2001/02/09 02:03:31 xorgcvs Exp $ */
 
 /***********************************************************
 Copyright 1987, 1988, 1990 by Digital Equipment Corporation, Maynard,
@@ -27,7 +27,11 @@ SOFTWARE.
 
 Copyright 1987, 1988, 1990, 1994, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included
 in all copies or substantial portions of the Software.
@@ -46,7 +50,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/X11/Context.c,v 1.3 2001/01/17 19:41:33 dawes Exp $ */
+/* $XFree86: xc/lib/X11/Context.c,v 1.5 2001/12/14 19:53:58 dawes Exp $ */
 
 /* This module implements a simple sparse array.
 
@@ -97,8 +101,7 @@ static DB NullDB = (DB)0;
 
 /* Resize the given db */
 
-static void ResizeTable(db)
-    register DB db;
+static void ResizeTable(DB db)
 {
     TableEntry *otable;
     register TableEntry entry, next, *pold, *head;
@@ -125,8 +128,7 @@ static void ResizeTable(db)
     Xfree((char *) otable);
 }
 
-static void _XFreeContextDB(display)
-    Display *display;
+static void _XFreeContextDB(Display *display)
 {
     register DB db;
     register int i;

@@ -24,7 +24,7 @@
  * used in advertising or otherwise to promote the sale, use or other dealings
  * in this Software without prior written authorization from Sebastien Marineau.
  *
- * $XFree86: xc/programs/Xserver/hw/xfree86/os-support/nto/nto_init.c,v 1.2 1999/12/27 00:45:45 robin Exp $
+ * $XFree86: xc/programs/Xserver/hw/xfree86/os-support/nto/nto_init.c,v 1.3 2001/11/16 16:47:56 dawes Exp $
  */
 
 /* This module contains the NTO-specific functions used at server init.
@@ -73,7 +73,6 @@ xf86OpenConsole()
 
 
 	ThreadCtl(_NTO_TCTL_IO, 0);
-	if (serverGeneration == 1) xf86Config(FALSE);  /* Read in xf86Config file */
 
 	if((NTO_con_fd = open("/dev/con1", O_RDWR)) == -1) {
 		ErrorF("Unable to open console\n");

@@ -25,7 +25,7 @@
  *       Mitani Hiroshi <hmitani@drl.mei.co.jp>
  *       David Thomas <davtom@dream.org.uk>.
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sis/sis_cursor.c,v 1.5 2001/05/07 21:59:07 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sis/sis_cursor.c,v 1.6 2001/09/28 07:47:22 alanh Exp $ */
 
 #include "xf86.h"
 #include "xf86PciInfo.h"
@@ -95,10 +95,18 @@ SiSSetCursorPosition(ScrnInfoPtr pScrn, int x, int y)
         x_preset = (-x);
         x = 0;
     }
+
     if (y < 0) {
         y_preset = (-y);
         y = 0;
     }
+
+    /* are we in interlaced/doublescan mode? */
+    if (pScrn->currentMode->Flags & V_INTERLACE)
+        y /= 2;
+    else if (pScrn->currentMode->Flags & V_DBLSCAN)
+        y *= 2;
+
     outw(VGA_SEQ_INDEX, (x&0xFF)<<8 | 0x1A);
     outw(VGA_SEQ_INDEX, (x&0xFF00)  | 0x1B);
     outw(VGA_SEQ_INDEX, (y&0xFF)<<8 | 0x1D);
@@ -125,6 +133,13 @@ SiS300SetCursorPosition(ScrnInfoPtr pScrn, int x, int y)
         y_preset = (-y);
         y = 0;
     }
+
+    /* are we in interlaced/doublescan mode? */
+    if (pScrn->currentMode->Flags & V_INTERLACE)
+        y /= 2;
+    else if (pScrn->currentMode->Flags & V_DBLSCAN)
+        y *= 2;
+
     sis300SetCursorPositionX(x, x_preset)
     sis300SetCursorPositionY(y, y_preset)
     if (pSiS->VBFlags & CRT2_ENABLE)  {
@@ -215,8 +230,6 @@ SiS300LoadCursorImage(ScrnInfoPtr pScrn, unsigned char *src)
     else
         cursor_addr = pScrn->videoRam - 1;  /* 1K boundary */
 
-	ErrorF("cursor_addr value: %x\n");
-
     memcpy((unsigned char *)pSiS->FbBase + cursor_addr * 1024, src, 1024);
     sis300SetCursorAddress(cursor_addr)
     sis300SetCursorPatternSelect(0)
@@ -259,7 +272,7 @@ SiSHWCursorInit(ScreenPtr pScreen)
     PDEBUG(ErrorF("HW Cursor Init\n"));
     infoPtr = xf86CreateCursorInfoRec();
     if(!infoPtr) 
-		return FALSE;
+        return FALSE;
 
     pSiS->CursorInfoPtr = infoPtr;
 
@@ -282,7 +295,7 @@ SiSHWCursorInit(ScreenPtr pScreen)
             HARDWARE_CURSOR_AND_SOURCE_WITH_MASK |
             HARDWARE_CURSOR_SWAP_SOURCE_AND_MASK |
             HARDWARE_CURSOR_SOURCE_MASK_INTERLEAVE_64;
-		break;
+        break;
     default:
         infoPtr->SetCursorPosition = SiSSetCursorPosition;
         infoPtr->ShowCursor = SiSShowCursor;

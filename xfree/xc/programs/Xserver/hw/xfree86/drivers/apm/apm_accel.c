@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/apm/apm_accel.c,v 1.16.2.1 2001/05/23 20:21:52 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/apm/apm_accel.c,v 1.18 2001/10/28 03:33:21 tsi Exp $ */
 
 
 #define COMPILER_H_EXTRAS
@@ -147,6 +147,7 @@ ApmCacheMonoStipple(ScrnInfoPtr pScrn, PixmapPtr pPix)
     return &pCache->apmStippleCache;
 }
 
+#if 0
 extern GCOps XAAPixmapOps;
 static RegionPtr (*SaveCopyAreaPixmap)(DrawablePtr, DrawablePtr, GC *, int, int, int, int, int, int);
 
@@ -203,6 +204,7 @@ ApmCopyAreaPixmap(DrawablePtr pSrcDrawable, DrawablePtr pDstDrawable, GC *pGC,
 					width, height,
 					dstx, dsty);
 }
+#endif
 
 void ApmAccelReserveSpace(ApmPtr pApm)
 {

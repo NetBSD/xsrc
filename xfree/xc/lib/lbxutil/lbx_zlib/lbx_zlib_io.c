@@ -22,7 +22,7 @@
  *
  * Author:  Dale Tonogai, Network Computing Devices
  */
-/* $XFree86: xc/lib/lbxutil/lbx_zlib/lbx_zlib_io.c,v 1.11 2001/01/17 19:43:36 dawes Exp $ */
+/* $XFree86: xc/lib/lbxutil/lbx_zlib/lbx_zlib_io.c,v 1.12 2001/07/25 15:04:57 dawes Exp $ */
 
 #ifdef WIN32
 #define _WILLWINSOCK_
@@ -30,9 +30,6 @@
 #include <X11/Xos.h>
 #include <X11/Xfuncs.h>
 #include <errno.h>
-#ifdef X_NOT_STDC_ENV
-extern int errno;
-#endif
 #if !defined(WIN32) && !defined(Lynx)
 #include <sys/param.h>
 #endif
@@ -40,9 +37,7 @@ extern int errno;
 #include "lbx_zlib.h"
 #include "os.h"
 
-#ifndef NULL
-#define NULL		0
-#endif
+#include <stddef.h>
 
 
 /*

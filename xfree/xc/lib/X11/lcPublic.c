@@ -1,4 +1,4 @@
-/* $Xorg: lcPublic.c,v 1.3 2000/08/17 19:45:19 cpqbld Exp $ */
+/* $Xorg: lcPublic.c,v 1.4 2000/12/12 12:44:05 coskrey Exp $ */
 /*
  * Copyright 1992, 1993 by TOSHIBA Corp.
  *
@@ -23,7 +23,7 @@
  * Author: Katsuhisa Yano	TOSHIBA Corp.
  *			   	mopi@osa.ilab.toshiba.co.jp
  */
-/* $XFree86: xc/lib/X11/lcPublic.c,v 1.9 2001/01/17 19:41:55 dawes Exp $ */
+/* $XFree86: xc/lib/X11/lcPublic.c,v 1.11 2001/11/16 00:52:28 dawes Exp $ */
 
 #include <stdio.h>
 #include "Xlibint.h"
@@ -151,10 +151,18 @@ initialize_core(
 	methods->map_modifiers = core->map_modifiers;
 
     if (methods->open_om == NULL)
+#ifdef USE_DYNAMIC_LC
+	_XInitDefaultOM(lcd);
+#else
 	_XInitOM(lcd);
+#endif
 
     if (methods->open_im == NULL)
+#ifdef USE_DYNAMIC_LC
+	_XInitDefaultIM(lcd);
+#else
 	_XInitIM(lcd);
+#endif
 
     if (methods->init_parse_info == NULL)
 	methods->init_parse_info = core->init_parse_info;
@@ -194,7 +202,7 @@ initialize(
     XLCdPublicMethodsPart *pub_methods = &publicMethods.pub;
     XLCdPublicPart *pub = XLC_PUBLIC_PART(lcd);
     char *name;
-#if !defined(X_NOT_STDC_ENV) && !defined(X_LOCALE)
+#if !defined(X_LOCALE)
     int len;
     char sinamebuf[256];
     char* siname;
@@ -207,7 +215,7 @@ initialize(
 	return False;
 
     name = lcd->core->name;
-#if !defined(X_NOT_STDC_ENV) && !defined(X_LOCALE)
+#if !defined(X_LOCALE)
     /* 
      * _XlMapOSLocaleName will return the same string or a substring 
      * of name, so strlen(name) is okay 
@@ -222,12 +230,12 @@ initialize(
 #endif
     /* _XlcResolveLocaleName will lookup the SI's name for the locale */
     if (_XlcResolveLocaleName(name, pub) == 0) {
-#if !defined(X_NOT_STDC_ENV) && !defined(X_LOCALE)
+#if !defined(X_LOCALE)
 	if (siname != sinamebuf) Xfree (siname);
 #endif
 	return False;
     }
-#if !defined(X_NOT_STDC_ENV) && !defined(X_LOCALE)
+#if !defined(X_LOCALE)
     if (siname != sinamebuf)
         Xfree (siname);
 #endif

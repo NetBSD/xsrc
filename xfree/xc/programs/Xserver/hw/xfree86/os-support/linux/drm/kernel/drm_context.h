@@ -27,6 +27,10 @@
  * Authors:
  *    Rickard E. (Rik) Faith <faith@valinux.com>
  *    Gareth Hughes <gareth@valinux.com>
+ * ChangeLog:
+ *  2001-11-16	Torsten Duwe <duwe@caldera.de>
+ *		added context constructor/destructor hooks,
+ *		needed by SiS driver's memory management.
  */
 
 #define __NO_VERSION__
@@ -70,13 +74,20 @@ int DRM(ctxbitmap_next)( drm_device_t *dev )
 		if((bit+1) > dev->max_context) {
 			dev->max_context = (bit+1);
 			if(dev->context_sareas) {
-				dev->context_sareas = DRM(realloc)(
-					dev->context_sareas,
-					(dev->max_context - 1) * 
-					sizeof(*dev->context_sareas),
-					dev->max_context * 
-					sizeof(*dev->context_sareas),
-					DRM_MEM_MAPS);
+				drm_map_t **ctx_sareas;
+
+				ctx_sareas = DRM(realloc)(dev->context_sareas,
+						(dev->max_context - 1) * 
+						sizeof(*dev->context_sareas),
+						dev->max_context * 
+						sizeof(*dev->context_sareas),
+						DRM_MEM_MAPS);
+				if(!ctx_sareas) {
+					clear_bit(bit, dev->ctx_bitmap);
+					up(&dev->struct_sem);
+					return -1;
+				}
+				dev->context_sareas = ctx_sareas;
 				dev->context_sareas[bit] = NULL;
 			} else {
 				/* max_context == 1 at this point */
@@ -84,6 +95,11 @@ int DRM(ctxbitmap_next)( drm_device_t *dev )
 						dev->max_context * 
 						sizeof(*dev->context_sareas),
 						DRM_MEM_MAPS);
+				if(!dev->context_sareas) {
+					clear_bit(bit, dev->ctx_bitmap);
+					up(&dev->struct_sem);
+					return -1;
+				}
 				dev->context_sareas[bit] = NULL;
 			}
 		}
@@ -148,7 +164,7 @@ int DRM(getsareactx)(struct inode *inode, struct file *filp,
 		return -EFAULT;
 
 	down(&dev->struct_sem);
-	if ((int)request.ctx_id >= dev->max_context) {
+	if (dev->max_context < 0 || request.ctx_id >= (unsigned) dev->max_context) {
 		up(&dev->struct_sem);
 		return -EINVAL;
 	}
@@ -169,7 +185,7 @@ int DRM(setsareactx)(struct inode *inode, struct file *filp,
 	drm_device_t	*dev	= priv->dev;
 	drm_ctx_priv_map_t request;
 	drm_map_t *map = NULL;
-	drm_map_list_t *r_list;
+	drm_map_list_t *r_list = NULL;
 	struct list_head *list;
 
 	if (copy_from_user(&request,
@@ -181,22 +197,20 @@ int DRM(setsareactx)(struct inode *inode, struct file *filp,
 	list_for_each(list, &dev->maplist->head) {
 		r_list = (drm_map_list_t *)list;
 		if(r_list->map &&
-		   r_list->map->handle == request.handle) break;
+		   r_list->map->handle == request.handle)
+			goto found;
 	}
-	if (list == &(dev->maplist->head)) {
-		up(&dev->struct_sem);
-		return -EINVAL;
-	}
-	map = r_list->map;
+bad:
 	up(&dev->struct_sem);
+	return -EINVAL;
 
-	if (!map) return -EINVAL;
-
-	down(&dev->struct_sem);
-	if ((int)request.ctx_id >= dev->max_context) {
-		up(&dev->struct_sem);
-		return -EINVAL;
-	}
+found:
+	map = r_list->map;
+	if (!map) goto bad;
+	if (dev->max_context < 0)
+		goto bad;
+	if (request.ctx_id >= (unsigned) dev->max_context)
+		goto bad;
 	dev->context_sareas[request.ctx_id] = map;
 	up(&dev->struct_sem);
 	return 0;
@@ -306,6 +320,10 @@ int DRM(addctx)( struct inode *inode, struct file *filp,
 				/* Should this return -EBUSY instead? */
 		return -ENOMEM;
 	}
+#ifdef DRIVER_CTX_CTOR
+	if ( ctx.handle != DRM_KERNEL_CONTEXT )
+		DRIVER_CTX_CTOR(ctx.handle); /* XXX: also pass dev ? */
+#endif
 
 	if ( copy_to_user( (drm_ctx_t *)arg, &ctx, sizeof(ctx) ) )
 		return -EFAULT;
@@ -380,6 +398,9 @@ int DRM(rmctx)( struct inode *inode, struct file *filp,
 		priv->remove_auth_on_close = 1;
 	}
 	if ( ctx.handle != DRM_KERNEL_CONTEXT ) {
+#ifdef DRIVER_CTX_DTOR
+		DRIVER_CTX_DTOR(ctx.handle); /* XXX: also pass dev ? */
+#endif
 		DRM(ctxbitmap_free)( dev, ctx.handle );
 	}
 

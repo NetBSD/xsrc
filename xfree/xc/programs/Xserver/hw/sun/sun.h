@@ -13,7 +13,7 @@
  * express or implied warranty.
  */
 
-/* $XFree86: xc/programs/Xserver/hw/sun/sun.h,v 3.11 2001/01/17 22:36:49 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/sun/sun.h,v 3.12 2001/07/25 15:05:01 dawes Exp $ */
 
 #ifndef _SUN_H_ 
 #define _SUN_H_
@@ -69,9 +69,6 @@ extern char *getenv();
 #include <memory.h>
 #include <signal.h>
 
-#ifdef X_NOT_STDC_ENV
-extern int errno;
-#endif
 
 /* 
  * Sun specific headers Sun moved in Solaris, and are different for NetBSD.

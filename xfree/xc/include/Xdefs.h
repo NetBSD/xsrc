@@ -1,4 +1,4 @@
-/* $XFree86: xc/include/Xdefs.h,v 1.2 1999/08/22 06:21:20 dawes Exp $ */
+/* $XFree86: xc/include/Xdefs.h,v 1.3 2001/07/24 08:32:53 alanh Exp $ */
 
 /***********************************************************
 
@@ -31,7 +31,7 @@ authorization from The XFree86 Project Inc..
 #define _XDEFS_H
 
 #ifdef _XSERVER64
-#include <Xmd.h>
+#include <X11/Xmd.h>
 #endif 
 
 #ifndef _XTYPEDEF_ATOM

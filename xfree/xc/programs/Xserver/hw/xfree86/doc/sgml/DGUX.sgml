@@ -85,7 +85,7 @@ July 25, 1999<p>
 
 <sect> GENERAL:          <p>
 
-  Get from ftp.xfree86.org the XFree 3.3.x source code:
+  Get from ftp.xfree86.org the XFree86 3.3.x source code:
 <verb>
   ftp ftp.xfree86.org
   login: ftp
@@ -373,7 +373,7 @@ July 25, 1999<p>
   And in another xterm  give cd xc
   tail -f Build-dg.log to watch the building progress. 
 <p>
-  To install X11R6.3 XFree version 3.3.5 after the build
+  To install X11R6.3 XFree86 version 3.3.5 after the build
   you must have a filesystem say usr_X11R6.3  mounted to
   the directory /usr/X11R6 size 350000 blocks. 
   (or whatever you choose to be your ProjectRoot, if you
@@ -783,7 +783,7 @@ July 25, 1999<p>
 
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/DGUX.sgml,v 1.1 2000/02/24 20:43:23 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/DGUX.sgml,v 1.2 2001/08/10 16:38:11 dawes Exp $
 </verb>
 
 </article>

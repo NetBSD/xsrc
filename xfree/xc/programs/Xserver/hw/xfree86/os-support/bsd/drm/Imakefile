@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bsd/drm/Imakefile,v 1.5 2001/04/10 18:42:58 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bsd/drm/Imakefile,v 1.9 2001/12/16 19:45:01 alanh Exp $
 XCOMM $PI: xc/programs/Xserver/hw/xfree86/os-support/linux/drm/Imakefile,v 1.7 1999/09/14 19:55:15 faith Exp $
 
 #define IHaveModules
@@ -19,6 +19,7 @@ MTRR_DEFINES = -DHAS_MTRR_SUPPORT
 	xf86drmRandom.c \
 	xf86drmSL.c \
 	xf86drmI810.c \
+	xf86drmI830.c \
 	xf86drmMga.c \
 	xf86drmR128.c \
 	xf86drmRadeon.c \
@@ -30,6 +31,7 @@ MTRR_DEFINES = -DHAS_MTRR_SUPPORT
 	xf86drmRandom.o \
 	xf86drmSL.o \
 	xf86drmI810.o \
+	xf86drmI830.o \
 	xf86drmMga.o \
 	xf86drmR128.o \
 	xf86drmRadeon.o \
@@ -61,6 +63,7 @@ LinkSourceFile(drmmodule.c,$(XF86OSSRC)/linux/drm)
 LinkSourceFile(xf86drm.c,$(XF86OSSRC)/linux/drm)
 LinkSourceFile(xf86drmHash.c,$(XF86OSSRC)/linux/drm)
 LinkSourceFile(xf86drmI810.c,$(XF86OSSRC)/linux/drm)
+LinkSourceFile(xf86drmI830.c,$(XF86OSSRC)/linux/drm)
 LinkSourceFile(xf86drmMga.c,$(XF86OSSRC)/linux/drm)
 LinkSourceFile(xf86drmR128.c,$(XF86OSSRC)/linux/drm)
 LinkSourceFile(xf86drmRandom.c,$(XF86OSSRC)/linux/drm)

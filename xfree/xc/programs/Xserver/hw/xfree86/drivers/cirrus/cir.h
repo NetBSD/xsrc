@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/cirrus/cir.h,v 1.19 2001/05/04 19:05:35 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/cirrus/cir.h,v 1.20 2002/01/04 21:26:54 tsi Exp $ */
 
 /* (c) Itai Nahshon */
 
@@ -15,54 +15,54 @@ struct lgRec;
 struct alpRec;
 
 typedef struct {
-	ScrnInfoPtr			pScrn;
-        CARD32              properties;
-        pciVideoPtr			PciInfo;
-	PCITAG				PciTag;
+	ScrnInfoPtr		pScrn;
+	CARD32			properties;
+	pciVideoPtr		PciInfo;
+	PCITAG			PciTag;
     union {
-	struct lgRec *lg;
-	struct alpRec *alp;
+	struct lgRec		*lg;
+	struct alpRec		*alp;
     } chip;
-        EntityInfoPtr		pEnt;
-	int					Chipset;
-	int					ChipRev;
-	int					Rounding;
-	int					BppShift;
-	Bool				HasFBitBlt;
-	CARD32				IOAddress;
-	CARD32				FbAddress;
+	EntityInfoPtr		pEnt;
+	int			Chipset;
+	int			ChipRev;
+	int			Rounding;
+	int			BppShift;
+	Bool			HasFBitBlt;
+	CARD32			IOAddress;
+	CARD32			FbAddress;
 	unsigned char *		IOBase;
 	unsigned char *		FbBase;
-	long				FbMapSize;
-	long				IoMapSize;
-	int					MinClock;
-	int   				MaxClock;
-	Bool				NoAccel;
-	Bool				HWCursor;
-	Bool				UseMMIO;
+	long			FbMapSize;
+	long			IoMapSize;
+	int			MinClock;
+	int			MaxClock;
+	Bool			NoAccel;
+	Bool			HWCursor;
+	Bool			UseMMIO;
 	XAAInfoRecPtr		AccelInfoRec;
 	xf86CursorInfoPtr	CursorInfoRec;
-        int                             DGAnumModes;
-	DGAModePtr			DGAModes;
-        Bool                            DGAactive;
-  Bool                                  (*DGAModeInit)(ScrnInfoPtr, DisplayModePtr);
-        int                             DGAViewportStatus;
-	I2CBusPtr			I2CPtr1;
-	I2CBusPtr			I2CPtr2;
+	int			DGAnumModes;
+	DGAModePtr		DGAModes;
+	Bool			DGAactive;
+	Bool			(*DGAModeInit)(ScrnInfoPtr, DisplayModePtr);
+	int			DGAViewportStatus;
+	I2CBusPtr		I2CPtr1;
+	I2CBusPtr		I2CPtr2;
 	CloseScreenProcPtr	CloseScreen;
 
-	Bool				CursorIsSkewed;
-        Bool                    shadowFB;
-        int                     rotate;
-        int                     ShadowPitch;
-        unsigned char *         ShadowPtr;
-        void	                (*PointerMoved)(int index, int x, int y);
-        int                     pitch;
+	Bool			CursorIsSkewed;
+	Bool			shadowFB;
+	int			rotate;
+	int			ShadowPitch;
+	unsigned char *		ShadowPtr;
+	void			(*PointerMoved)(int index, int x, int y);
+	int			pitch;
 
-        unsigned char **        ScanlineColorExpandBuffers;
-        void                    (* InitAccel)(ScrnInfoPtr);
-        int                     offscreen_size;
-        int                     offscreen_offset;
+	unsigned char **	ScanlineColorExpandBuffers;
+	void			(*InitAccel)(ScrnInfoPtr);
+	int			offscreen_size;
+	int			offscreen_offset;
 	OptionInfoPtr		Options;
 } CirRec, *CirPtr;
 

@@ -7,7 +7,9 @@
 */
 
 /* Find the max of two numbers */
+#ifndef max
 #define max(x,y) (((x)>(y))?(x):(y))
+#endif
 
 #ifndef TRUE
 #define TRUE 1

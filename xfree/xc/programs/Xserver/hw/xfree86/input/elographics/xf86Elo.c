@@ -22,7 +22,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/input/elographics/xf86Elo.c,v 1.13 2001/04/01 14:00:13 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/input/elographics/xf86Elo.c,v 1.14 2001/08/17 13:27:56 dawes Exp $ */
 
 /*
  *******************************************************************************
@@ -1670,13 +1670,13 @@ xf86EloInit(InputDriverPtr	drv,
   xf86Msg(X_CONFIG, "Elographics untouch delay: %d ms\n", priv->untouch_delay*10);
   priv->report_delay = xf86SetIntOption(local->options, "ReportDelay", ELO_REPORT_DELAY);
   xf86Msg(X_CONFIG, "Elographics report delay: %d ms\n", priv->report_delay*10);
-  priv->max_x = xf86SetIntOption(local->options, "MaximumXPosition", 3000);
+  priv->max_x = xf86SetIntOption(local->options, "MaxX", 3000);
   xf86Msg(X_CONFIG, "Elographics maximum x position: %d\n", priv->max_x);
-  priv->min_x = xf86SetIntOption(local->options, "MinimumXPosition", 0);
+  priv->min_x = xf86SetIntOption(local->options, "MinX", 0);
   xf86Msg(X_CONFIG, "Elographics minimum x position: %d\n", priv->min_x);
-  priv->max_y = xf86SetIntOption(local->options, "MaximumYPosition", 3000);
+  priv->max_y = xf86SetIntOption(local->options, "MaxY", 3000);
   xf86Msg(X_CONFIG, "Elographics maximum y position: %d\n", priv->max_y);
-  priv->min_y = xf86SetIntOption(local->options, "MinimumYPosition", 0);
+  priv->min_y = xf86SetIntOption(local->options, "MinY", 0);
   xf86Msg(X_CONFIG, "Elographics minimum y position: %d\n", priv->min_y);
   priv->swap_axes = xf86SetBoolOption(local->options, "SwapXY", 0);
   if (priv->swap_axes) {

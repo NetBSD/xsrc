@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/nv/nv_type.h,v 1.24 2001/05/09 00:39:51 mvojkovi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/nv/nv_type.h,v 1.29 2001/12/07 00:09:56 mvojkovi Exp $ */
 
 #ifndef __NV_STRUCT_H__
 #define __NV_STRUCT_H__
@@ -98,10 +98,6 @@ typedef struct {
     CARD32		BgColor;
     int			Rotate;
     NVFBLayout		CurrentLayout;
-    GCPtr		CurrentGC;
-#ifdef NV_USE_FB
-    DrawablePtr		CurrentDrawable;
-#endif    
     /* Cursor */
     unsigned short      curFg, curBg;
     unsigned int        curImage[MAX_CURS*2];
@@ -129,11 +125,11 @@ void NVRefreshArea16(ScrnInfoPtr pScrn, int num, BoxPtr pbox);
 void NVRefreshArea32(ScrnInfoPtr pScrn, int num, BoxPtr pbox);
 void NVPointerMoved(int index, int x, int y);
 
+int RivaGetConfig(NVPtr);
+
 #define NV_CHIP_RIVA128    ((PCI_VENDOR_NVIDIA_SGS << 16)| PCI_CHIP_RIVA128)
 #define NV_CHIP_TNT        ((PCI_VENDOR_NVIDIA     << 16)| PCI_CHIP_TNT)
 #define NV_CHIP_TNT2       ((PCI_VENDOR_NVIDIA     << 16)| PCI_CHIP_TNT2)
-#define NV_CHIP_TNT2_A     ((PCI_VENDOR_NVIDIA     << 16)| PCI_CHIP_TNT2_A)
-#define NV_CHIP_TNT2_B     ((PCI_VENDOR_NVIDIA     << 16)| PCI_CHIP_TNT2_B)
 #define NV_CHIP_UTNT2      ((PCI_VENDOR_NVIDIA     << 16)| PCI_CHIP_UTNT2)
 #define NV_CHIP_VTNT2      ((PCI_VENDOR_NVIDIA     << 16)| PCI_CHIP_VTNT2)
 #define NV_CHIP_UVTNT2     ((PCI_VENDOR_NVIDIA     << 16)| PCI_CHIP_UVTNT2)
@@ -143,6 +139,17 @@ void NVPointerMoved(int index, int x, int y);
 #define NV_CHIP_QUADRO     ((PCI_VENDOR_NVIDIA     << 16)| PCI_CHIP_QUADRO)
 #define NV_CHIP_GEFORCE2MX      ((PCI_VENDOR_NVIDIA  << 16) | PCI_CHIP_GEFORCE2MX)
 #define NV_CHIP_GEFORCE2MXDDR    ((PCI_VENDOR_NVIDIA  << 16) | PCI_CHIP_GEFORCE2MXDDR)
+#define NV_CHIP_IGEFORCE2    ((PCI_VENDOR_NVIDIA  << 16) | PCI_CHIP_IGEFORCE2)
+#define NV_CHIP_0x0170    ((PCI_VENDOR_NVIDIA  << 16) | PCI_CHIP_0x0170)
+#define NV_CHIP_0x0171    ((PCI_VENDOR_NVIDIA  << 16) | PCI_CHIP_0x0171)
+#define NV_CHIP_0x0172    ((PCI_VENDOR_NVIDIA  << 16) | PCI_CHIP_0x0172)
+#define NV_CHIP_0x0173    ((PCI_VENDOR_NVIDIA  << 16) | PCI_CHIP_0x0173)
+#define NV_CHIP_0x0174    ((PCI_VENDOR_NVIDIA  << 16) | PCI_CHIP_0x0174)
+#define NV_CHIP_0x0175    ((PCI_VENDOR_NVIDIA  << 16) | PCI_CHIP_0x0175)
+#define NV_CHIP_0x0178    ((PCI_VENDOR_NVIDIA  << 16) | PCI_CHIP_0x0178)
+#define NV_CHIP_0x017A    ((PCI_VENDOR_NVIDIA  << 16) | PCI_CHIP_0x017A)
+#define NV_CHIP_0x017B    ((PCI_VENDOR_NVIDIA  << 16) | PCI_CHIP_0x017B)
+#define NV_CHIP_0x017C    ((PCI_VENDOR_NVIDIA  << 16) | PCI_CHIP_0x017C)
 #define NV_CHIP_QUADRO2MXR      ((PCI_VENDOR_NVIDIA  << 16) | PCI_CHIP_QUADRO2MXR)
 #define NV_CHIP_GEFORCE2GO      ((PCI_VENDOR_NVIDIA  << 16) | PCI_CHIP_GEFORCE2GO)
 #define NV_CHIP_GEFORCE2GTS     ((PCI_VENDOR_NVIDIA  << 16) | PCI_CHIP_GEFORCE2GTS)
@@ -152,6 +159,8 @@ void NVPointerMoved(int index, int x, int y);
 #define NV_CHIP_GEFORCE3     ((PCI_VENDOR_NVIDIA  << 16) | PCI_CHIP_GEFORCE3)
 #define NV_CHIP_GEFORCE3_1   ((PCI_VENDOR_NVIDIA  << 16) | PCI_CHIP_GEFORCE3_1)
 #define NV_CHIP_GEFORCE3_2   ((PCI_VENDOR_NVIDIA  << 16) | PCI_CHIP_GEFORCE3_2)
-#define NV_CHIP_GEFORCE3_3   ((PCI_VENDOR_NVIDIA  << 16) | PCI_CHIP_GEFORCE3_3)
+#define NV_CHIP_QUADRO_DDC   ((PCI_VENDOR_NVIDIA  << 16) | PCI_CHIP_QUADRO_DDC)
+#define NV_CHIP_0x0250    ((PCI_VENDOR_NVIDIA  << 16) | PCI_CHIP_0x0250)
+#define NV_CHIP_0x0258    ((PCI_VENDOR_NVIDIA  << 16) | PCI_CHIP_0x0258)
 
 #endif /* __NV_STRUCT_H__ */

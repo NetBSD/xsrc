@@ -47,7 +47,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/programs/xfontsel/ULabel.c,v 1.1 2000/02/13 03:26:23 dawes Exp $ */
+/* $XFree86: xc/programs/xfontsel/ULabel.c,v 1.3 2001/10/28 03:34:32 tsi Exp $ */
 
 /*
  * ULabel.c - UCSLabel widget
@@ -63,13 +63,8 @@ SOFTWARE.
 #include <X11/Xmu/Drawing.h>
 #include <stdio.h>
 #include <ctype.h>
-
 /* needed for abs() */
-#ifndef X_NOT_STDC_ENV
 #include <stdlib.h>
-#else
-int abs();
-#endif
 
 #define streq(a,b) (strcmp( (a), (b) ) == 0)
 
@@ -246,7 +241,6 @@ static void _XawLabelDrawUCS(dpy, d, gc, x, y, str, n)
     char *str;
     int n;
 {
-    int i;
     char *ep;
     unsigned short codepoint;
     XChar2b *ptr;
@@ -285,7 +279,6 @@ static int _XawLabelWidthUCS(fs, str, n)
     char *str;
     int	n;
 {
-    int i;
     char *ep;
     unsigned short codepoint;
     XChar2b *ptr;
@@ -571,9 +564,7 @@ static void Redisplay(gw, event, region)
     XEvent *event;
     Region region;
 {
-    extern WidgetClass commandWidgetClass;
     UCSLabelWidget w = (UCSLabelWidget) gw;
-    UCSLabelWidgetClass lwclass = (UCSLabelWidgetClass) XtClass (gw);
     GC gc;
 
     /*

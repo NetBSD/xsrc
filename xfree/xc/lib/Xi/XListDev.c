@@ -1,10 +1,14 @@
-/* $Xorg: XListDev.c,v 1.4 2000/08/17 19:45:56 cpqbld Exp $ */
+/* $Xorg: XListDev.c,v 1.5 2001/02/09 02:03:51 xorgcvs Exp $ */
 
 /************************************************************
 
 Copyright 1989, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -41,7 +45,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ********************************************************/
-/* $XFree86: xc/lib/Xi/XListDev.c,v 3.2 2001/01/17 19:42:50 dawes Exp $ */
+/* $XFree86: xc/lib/Xi/XListDev.c,v 3.4 2001/12/14 19:55:19 dawes Exp $ */
 
 /***********************************************************************
  *
@@ -67,8 +71,8 @@ XDeviceInfo
     int				size;
     xListInputDevicesReq 	*req;
     xListInputDevicesReply	rep;
-    xDeviceInfo 		*list, *slist;
-    XDeviceInfo 		*sclist;
+    xDeviceInfo 		*list, *slist = NULL;
+    XDeviceInfo 		*sclist = NULL;
     XDeviceInfo 		*clist = NULL;
     xAnyClassPtr 		any, sav_any;
     XAnyClassPtr 		Any;

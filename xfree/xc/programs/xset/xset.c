@@ -1,12 +1,16 @@
 /* 
- * $Xorg: xset.c,v 1.5 2000/08/17 19:55:03 cpqbld Exp $
+ * $Xorg: xset.c,v 1.6 2001/02/09 02:05:58 xorgcvs Exp $
  */
 
 /*
 
 Copyright 1985, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -23,18 +27,13 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/programs/xset/xset.c,v 3.21 2001/01/17 23:46:27 dawes Exp $ */
+/* $XFree86: xc/programs/xset/xset.c,v 3.25 2001/12/14 20:02:22 dawes Exp $ */
 /* Modified by Stephen so keyboard rate is set using XKB extensions */
 
 #include <stdio.h>
 #include <ctype.h>
 #include <stdarg.h>
-
-#ifndef X_NOT_STDC_ENV
 #include <stdlib.h>
-#else
-char *malloc();
-#endif
 #include <X11/Xos.h>
 #include <X11/Xfuncs.h>
 #include <X11/Xlib.h>
@@ -83,7 +82,11 @@ char *malloc();
 #include <X11/XKBlib.h>
 #endif
 #ifdef FONTCACHE
+#include <X11/extensions/fontcache.h>
 #include <X11/extensions/fontcacheP.h>
+
+static Status set_font_cache(Display *, long, long, long);
+static void query_cache_status(Display *dpy);
 #endif
 
 #define ON 1
@@ -687,7 +690,7 @@ for (i = 1; i < argc; ) {
     }
 #if defined(XF86MISC) || defined(XKB)
     else if (strcmp(arg, "rate") == 0) {       /*  ...or this one. */
-      int delay, rate;
+      int delay = 0, rate = 0;
       int rate_set = 0;
 #ifdef XF86MISC
       if (XF86MiscQueryVersion(dpy, &major, &minor)) {
@@ -1178,6 +1181,7 @@ set_lock(Display *dpy, Bool onoff)
 }
 
 #ifdef FONTCACHE
+static Status
 set_font_cache(dpy, himark, lowmark, balance)
     Display *dpy;
     long himark;
@@ -1185,7 +1189,7 @@ set_font_cache(dpy, himark, lowmark, balance)
     long balance;
 {
     FontCacheSettings cs;
-    int status;
+    Status status;
 
     cs.himark = himark * 1024;
     cs.lowmark = lowmark * 1024;
@@ -1384,13 +1388,10 @@ return;
  *  This is the information-getting function for telling the user what the
  *  current settings and statistics are.
  */
-
+static void
 query_cache_status(dpy)
     Display *dpy;
 {
-    int scr = DefaultScreen (dpy);
-    int i, j;
-
     int dummy;
     FontCacheSettings cs;
     FontCacheStatistics cstats;
@@ -1407,25 +1408,23 @@ query_cache_status(dpy)
 	}
 	if (FontCacheGetCacheStatistics(dpy, &cstats)) {
 	    printf("font cache statistics:\n");
-	    printf("   cache purged: %d\n", cstats.purge_runs);
-	    printf("   cache status: %d\n", cstats.purge_stat);
-	    printf("  cache balance: %d\n", cstats.balance);
+	    printf("   cache purged: %ld\n", cstats.purge_runs);
+	    printf("   cache status: %ld\n", cstats.purge_stat);
+	    printf("  cache balance: %ld\n", cstats.balance);
 	    printf("font cache entry statistics:\n");
-	    printf("      hits: %d\n", cstats.f.hits);
-	    printf("  misshits: %d\n", cstats.f.misshits);
-	    printf("    purged: %d\n", cstats.f.purged);
-	    printf("     usage: %d\n", cstats.f.usage);
+	    printf("      hits: %ld\n", cstats.f.hits);
+	    printf("  misshits: %ld\n", cstats.f.misshits);
+	    printf("    purged: %ld\n", cstats.f.purged);
+	    printf("     usage: %ld\n", cstats.f.usage);
 	    printf("large bitmap cache entry statistics:\n");
-	    printf("      hits: %d\n", cstats.v.hits);
-	    printf("  misshits: %d\n", cstats.v.misshits);
-	    printf("    purged: %d\n", cstats.v.purged);
-	    printf("     usage: %d\n", cstats.v.usage);
+	    printf("      hits: %ld\n", cstats.v.hits);
+	    printf("  misshits: %ld\n", cstats.v.misshits);
+	    printf("    purged: %ld\n", cstats.v.purged);
+	    printf("     usage: %ld\n", cstats.v.usage);
 	}
     } else {
 	printf("Server does not have the FontCache Extension\n");
     }
-
-    return 0;
 }
 #endif
 

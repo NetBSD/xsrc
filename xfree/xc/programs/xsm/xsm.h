@@ -1,9 +1,13 @@
-/* $Xorg: xsm.h,v 1.3 2000/08/17 19:55:06 cpqbld Exp $ */
+/* $Xorg: xsm.h,v 1.4 2001/02/09 02:06:01 xorgcvs Exp $ */
 /******************************************************************************
 
 Copyright 1993, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -19,7 +23,10 @@ Except as contained in this notice, the name of The Open Group shall not be
 used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 ******************************************************************************/
-/* $XFree86: xc/programs/xsm/xsm.h,v 1.4 2001/01/17 23:46:31 dawes Exp $ */
+/* $XFree86: xc/programs/xsm/xsm.h,v 1.8 2001/12/14 20:02:27 dawes Exp $ */
+
+#ifndef _XSM_H_
+#define _XSM_H_
 
 #include <X11/Xos.h>
 #include <X11/Xfuncs.h>
@@ -53,9 +60,7 @@ in this Software without prior written authorization from The Open Group.
 #endif
 
 #include <ctype.h>
-#ifndef X_NOT_STDC_ENV
 #include <stdlib.h>
-#endif
 
 #include <X11/StringDefs.h>
 #include <X11/Intrinsic.h>
@@ -181,11 +186,7 @@ extern int strbw(char *a, char *b);
 extern void nomem(void);
 
 
-#ifndef X_NOT_STDC_ENV
 #define Strstr strstr
-#else
-extern char *Strstr();
-#endif
 
 /* Fix ISC brain damage.  When using gcc fdopen isn't declared in <stdio.h>. */
 #if defined(ISC) && __STDC__
@@ -207,9 +208,11 @@ extern void remote_start(char *restart_protocol, char *restart_machine,
 extern void sig_child_handler(void);
 extern void sig_term_handler(void);
 extern void sig_usr1_handler(void);
-extern void register_signals(void);
+extern void register_signals(XtAppContext);
 extern int execute_system_command(char *s);
 
 #ifdef XKB
 #include <X11/extensions/XKBbells.h>
 #endif
+
+#endif /* _XSM_H_ */

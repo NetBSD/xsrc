@@ -23,6 +23,7 @@
  * used in advertising or publicity pertaining to distribution of the software
  * without specific, written prior permission.
  */
+/* $XFree86: xc/programs/xmh/main.c,v 1.2 2001/08/01 00:45:06 tsi Exp $ */
 
 #define MAIN 1			/* Makes global.h actually declare vars */
 #include "xmh.h"
@@ -90,7 +91,7 @@ static void CheckMail(client_data, id)
 Boolean ExitLoop = FALSE;
 #endif
 
-main(argc, argv)
+int main(argc, argv)
 int argc;
 char **argv;
 {
@@ -141,6 +142,6 @@ char **argv;
     }
 #ifdef DEBUG_CLEANUP
     XtDestroyApplicationContext(appCtx);
-    exit(0);
 #endif    
+    exit(0);
 }

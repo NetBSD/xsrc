@@ -1,9 +1,13 @@
-/* $XFree86: xc/programs/Xserver/dix/events.c,v 3.38 2001/02/16 13:24:07 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/dix/events.c,v 3.44 2001/12/16 18:29:45 keithp Exp $ */
 /************************************************************
 
 Copyright 1987, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -64,7 +68,7 @@ SOFTWARE.
 *                                                               *
 *****************************************************************/
 
-/* $Xorg: events.c,v 1.3 2000/08/17 19:48:18 cpqbld Exp $ */
+/* $Xorg: events.c,v 1.4 2001/02/09 02:04:40 xorgcvs Exp $ */
 
 #include "X.h"
 #include "misc.h"
@@ -107,8 +111,6 @@ extern Bool XkbFilterEvents();
 #include "dispatch.h"
 
 extern WindowPtr *WindowTable;
-
-extern void (* EventSwapVector[128]) ();
 
 #define EXTENSION_EVENT_BASE  64
 
@@ -605,7 +607,7 @@ XineramaChangeToCursor(CursorPtr cursor)
 
 #endif  /* PANORAMIX */
 
-Mask
+static Mask
 GetNextEventMask()
 {
     lastEventMask <<= 1;
@@ -814,7 +816,7 @@ CheckVirtualMotion(qe, pWin)
     ROOT = WindowTable[sprite.hot.pScreen->myNum];
 }
 
-void
+static void
 ConfineCursorToWindow(pWin, generateEvents, confineToScreen)
     WindowPtr pWin;
     Bool generateEvents;
@@ -1189,6 +1191,24 @@ playmore:
 			      TRUE, FALSE);
     PostNewCursor();
 }
+
+#ifdef RANDR
+void
+ScreenRestructured (ScreenPtr pScreen)
+{
+    GrabPtr grab;
+
+    if ((grab = inputInfo.pointer->grab) && grab->confineTo)
+    {
+	if (grab->confineTo->drawable.pScreen != sprite.hotPhys.pScreen)
+	    sprite.hotPhys.x = sprite.hotPhys.y = 0;
+	ConfineCursorToWindow(grab->confineTo, TRUE, TRUE);
+    }
+    else
+	ConfineCursorToWindow(WindowTable[sprite.hotPhys.pScreen->myNum],
+			      TRUE, FALSE);
+}
+#endif
 
 void
 CheckGrabForSyncs(thisDev, thisMode, otherMode)
@@ -1616,7 +1636,7 @@ DeliverEventsToWindow(pWin, pEvents, count, filter, grab, mskidx)
     int attempt;
     register InputClients *other;
     ClientPtr client = NullClient;
-    Mask deliveryMask; 	/* If a grab occurs due to a button press, then
+    Mask deliveryMask = 0; /* If a grab occurs due to a button press, then
 		              this mask is the mask of the grab. */
     int type = pEvents->u.u.type;
 
@@ -2517,7 +2537,7 @@ CheckDeviceGrabs(device, xE, checkFirst, count)
     int count;
 {
     register int i;
-    register WindowPtr pWin;
+    register WindowPtr pWin = NULL;
     register FocusClassPtr focus = device->focus;
 
     if ((xE->u.u.type == ButtonPress
@@ -2878,7 +2898,8 @@ ProcessPointerEvent (xE, mouse, count)
 	{
 	case ButtonPress: 
 	    mouse->valuator->motionHintWindow = NullWindow;
-	    butc->buttonsDown++;
+	    if (!(*kptr & bit))
+		butc->buttonsDown++;
 	    butc->motionMask = ButtonMotionMask;
 	    *kptr |= bit;
 #if !defined(XFree86Server) || !defined(XINPUT)
@@ -2895,7 +2916,9 @@ ProcessPointerEvent (xE, mouse, count)
 	    break;
 	case ButtonRelease: 
 	    mouse->valuator->motionHintWindow = NullWindow;
-	    if (!--butc->buttonsDown)
+	    if (*kptr & bit)
+		--butc->buttonsDown;
+	    if (!butc->buttonsDown)
 		butc->motionMask = 0;
 	    *kptr &= ~bit;
 #if !defined(XFree86Server) || !defined(XINPUT)
@@ -3660,7 +3683,7 @@ ProcGetInputFocus(client)
     ClientPtr client;
 {
     xGetInputFocusReply rep;
-    REQUEST(xReq);
+    /* REQUEST(xReq); */
     FocusClassPtr focus = inputInfo.keyboard->focus;
 
     REQUEST_SIZE_MATCH(xReq);

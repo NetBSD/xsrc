@@ -1,4 +1,4 @@
-/* $Xorg: fontinfo.c,v 1.3 2000/08/17 19:54:20 cpqbld Exp $ */
+/* $Xorg: fontinfo.c,v 1.4 2001/02/09 02:05:42 xorgcvs Exp $ */
 /*
  * font data query
  */
@@ -6,7 +6,11 @@
  
 Copyright 1990, 1991, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -42,7 +46,7 @@ in this Software without prior written authorization from The Open Group.
  * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
  * THIS SOFTWARE.
  */
-/* $XFree86: xc/programs/xfs/difs/fontinfo.c,v 1.8 2001/01/17 23:45:29 dawes Exp $ */
+/* $XFree86: xc/programs/xfs/difs/fontinfo.c,v 1.10 2001/12/14 20:01:34 dawes Exp $ */
 
 #include        "FS.h"
 #include        "FSproto.h"
@@ -54,6 +58,7 @@ in this Software without prior written authorization from The Open Group.
 #include        "closestr.h"
 #include        "globals.h"
 #include	"difs.h"
+#include	"dispatch.h"
 #include	<swapreq.h>
 #include	<swaprep.h>
 

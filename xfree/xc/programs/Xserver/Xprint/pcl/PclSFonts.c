@@ -45,7 +45,7 @@ not be used in advertising or otherwise to promote the sale, use or other
 dealings in this Software without prior written authorization from said
 copyright holders.
 */
-/* $XFree86: xc/programs/Xserver/Xprint/pcl/PclSFonts.c,v 1.5 2001/01/17 22:36:30 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/Xprint/pcl/PclSFonts.c,v 1.6 2001/10/28 03:32:55 tsi Exp $ */
 
 
 #include <stdio.h>
@@ -152,7 +152,7 @@ PclFontHead8Ptr  pfh8,  pfh8_next;
 PclFontHead16Ptr pfh16, pfh16_next;
 PclInternalFontPtr pin, pin_next;
 unsigned char nindex_row, nindex_col;
-int i, j;
+int i;
 
     if ( pSoftFontInfo == (PclSoftFontInfoPtr) NULL )
 	return;

@@ -22,7 +22,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  *
  */
-/* $XFree86: xc/programs/Xserver/hw/sunLynx/sunLyIo.c,v 3.4.2.1 2001/05/25 18:50:08 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/sunLynx/sunLyIo.c,v 3.5 2001/05/25 18:40:59 dawes Exp $ */
 
  /*
  *

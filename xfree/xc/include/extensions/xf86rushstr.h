@@ -1,4 +1,4 @@
-/* $XFree86: xc/include/extensions/xf86rushstr.h,v 1.4 2000/02/29 03:09:02 dawes Exp $ */
+/* $XFree86: xc/include/extensions/xf86rushstr.h,v 1.5 2001/08/01 00:44:36 tsi Exp $ */
 /*
 
 Copyright (c) 1998  Daryll Strauss
@@ -8,7 +8,7 @@ Copyright (c) 1998  Daryll Strauss
 #ifndef _XF86RUSHSTR_H_
 #define _XF86RUSHSTR_H_
 
-#include "xf86rush.h"
+#include <X11/extensions/xf86rush.h>
 
 #define XF86RUSHNAME "XFree86-Rush"
 

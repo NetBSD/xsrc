@@ -35,8 +35,10 @@
  * 
  * Author:  Adobe Systems Incorporated
  */
+/* $XFree86: xc/lib/psres/PSres.c,v 1.4 2001/10/28 03:32:46 tsi Exp $ */
 
 #include <stdio.h>
+#include <stdlib.h>
 
 #ifdef XENVIRONMENT
 #include <X11/Xos.h>
@@ -71,12 +73,6 @@
 #ifndef SEEK_SET
 #define SEEK_SET 0
 #endif /* SEEK_SET */
-
-void	free();
-void	*malloc();
-void	*realloc();
-void	exit();
-char	*getenv();
 
 /* MT is the right pointer type to pass to memcpy, MST the size type */
 #define MT void *
@@ -605,7 +601,7 @@ static char *ReadFullLine(f)
     return inputline;
 }
 
-static FreeLineBuf()
+static void FreeLineBuf()
 {
     if (inputline != NULL) FREE(inputline);
     inputline = NULL;

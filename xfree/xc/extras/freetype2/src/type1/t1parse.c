@@ -4,7 +4,7 @@
 /*                                                                         */
 /*    Type 1 parser (body).                                                */
 /*                                                                         */
-/*  Copyright 1996-2000 by                                                 */
+/*  Copyright 1996-2001 by                                                 */
 /*  David Turner, Robert Wilhelm, and Werner Lemberg.                      */
 /*                                                                         */
 /*  This file is part of the FreeType project, and may only be used,       */
@@ -37,9 +37,11 @@
 #include FT_INTERNAL_DEBUG_H
 #include FT_INTERNAL_CALC_H
 #include FT_INTERNAL_STREAM_H
-#include FT_INTERNAL_TYPE1_ERRORS_H
 #include FT_INTERNAL_POSTSCRIPT_AUX_H
+
 #include "t1parse.h"
+
+#include "t1errors.h"
 
 #include <string.h>     /* for strncmp() */
 
@@ -93,10 +95,10 @@
   };
 
 
-  static
-  FT_Error  read_pfb_tag( FT_Stream   stream,
-                          FT_UShort*  tag,
-                          FT_Long*    size )
+  static FT_Error
+  read_pfb_tag( FT_Stream   stream,
+                FT_UShort*  tag,
+                FT_Long*    size )
   {
     FT_Error  error;
     PFB_Tag   head;
@@ -116,11 +118,11 @@
   }
 
 
-  FT_LOCAL_DEF
-  FT_Error  T1_New_Parser( T1_ParserRec*     parser,
-                           FT_Stream         stream,
-                           FT_Memory         memory,
-                           PSAux_Interface*  psaux )
+  FT_LOCAL_DEF FT_Error
+  T1_New_Parser( T1_ParserRec*     parser,
+                 FT_Stream         stream,
+                 FT_Memory         memory,
+                 PSAux_Interface*  psaux )
   {
     FT_Error   error;
     FT_UShort  tag;
@@ -207,7 +209,7 @@
                       "%!FontType", 10 )              )  )
       {
         FT_TRACE2(( "[not a Type1 font]\n" ));
-        error = FT_Err_Unknown_File_Format;
+        error = T1_Err_Unknown_File_Format;
       }
       else
       {
@@ -225,8 +227,8 @@
   }
 
 
-  FT_LOCAL_DEF
-  void  T1_Finalize_Parser( T1_ParserRec*  parser )
+  FT_LOCAL_DEF void
+  T1_Finalize_Parser( T1_ParserRec*  parser )
   {
     FT_Memory   memory = parser->root.memory;
 
@@ -243,8 +245,8 @@
 
 
   /* return the value of an hexadecimal digit */
-  static
-  int  hexa_value( char  c )
+  static int
+  hexa_value( char  c )
   {
     unsigned int  d;
 
@@ -265,9 +267,9 @@
   }
 
 
-  FT_LOCAL_DEF
-  FT_Error  T1_Get_Private_Dict( T1_ParserRec*     parser,
-                                 PSAux_Interface*  psaux )
+  FT_LOCAL_DEF FT_Error
+  T1_Get_Private_Dict( T1_ParserRec*     parser,
+                       PSAux_Interface*  psaux )
   {
     FT_Stream  stream = parser->stream;
     FT_Memory  memory = parser->root.memory;
@@ -321,7 +323,7 @@
         error = read_pfb_tag( stream, &tag, &size );
         if ( error || tag != 0x8002 )
         {
-          error = FT_Err_Ok;
+          error = T1_Err_Ok;
           break;
         }
 
@@ -434,7 +436,7 @@
             break;
 
           /* otherwise, store byte */
-          *write++ = ( hex1 << 4 ) | hexa_value( cur[1] );
+          *write++ = (FT_Byte)( ( hex1 << 4 ) | hexa_value( cur[1] ) );
           count++;
           cur++;
         }
@@ -446,7 +448,7 @@
     }
 
     /* we now decrypt the encoded binary private dictionary */
-    psaux->t1_decrypt( parser->private_dict, parser->private_len, 55665 );
+    psaux->t1_decrypt( parser->private_dict, parser->private_len, 55665U );
     parser->root.base = parser->private_dict;
     parser->root.cursor = parser->private_dict;
     parser->root.limit  = parser->root.cursor + parser->private_len;

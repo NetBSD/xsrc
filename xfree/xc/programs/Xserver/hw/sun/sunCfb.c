@@ -1,10 +1,14 @@
 
-/* $Xorg: sunCfb.c,v 1.4 2000/08/17 19:48:29 cpqbld Exp $ */
+/* $Xorg: sunCfb.c,v 1.5 2001/02/09 02:04:43 xorgcvs Exp $ */
 
 /*
 Copyright 1990, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -50,7 +54,7 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ********************************************************/
 
-/* $XFree86: xc/programs/Xserver/hw/sun/sunCfb.c,v 3.12 2001/01/17 22:36:50 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/sun/sunCfb.c,v 3.14 2001/12/14 19:59:42 dawes Exp $ */
 
 /*
  * Copyright 1987 by the Regents of the University of California
@@ -332,10 +336,7 @@ static void CG2UpdateColormap(pScreen, index, count, rmap, gmap,bmap)
     u_char	  *rmap, *gmap, *bmap;
 {
     CG2Ptr	fb = (CG2Ptr) sunFbs[pScreen->myNum].fb;
-#if __STDC__
-    volatile
-#endif
-    struct cg2statusreg *regp = &fb->regs.status.reg;
+    volatile struct cg2statusreg *regp = &fb->regs.status.reg;
 
     regp->update_cmap = 0;
     while (count--) {
@@ -368,10 +369,7 @@ static Bool CG2SaveScreen (pScreen, on)
     int    	  on;
 {
     CG2Ptr	fb = (CG2Ptr) sunFbs[pScreen->myNum].fb;
-#if __STDC__
-    volatile
-#endif
-    struct cg2statusreg *regp = &fb->regs.status.reg;
+    volatile struct cg2statusreg *regp = &fb->regs.status.reg;
 
     if (on != SCREEN_SAVER_FORCER)
 	regp->video_enab = (on == SCREEN_SAVER_ON) ? 0 : 1;

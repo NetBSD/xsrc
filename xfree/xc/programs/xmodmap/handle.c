@@ -1,9 +1,13 @@
-/* $Xorg: handle.c,v 1.5 2000/08/17 19:54:54 cpqbld Exp $ */
+/* $Xorg: handle.c,v 1.6 2001/02/09 02:05:56 xorgcvs Exp $ */
 /*
 
 Copyright 1988, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included
 in all copies or substantial portions of the Software.
@@ -22,7 +26,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/xmodmap/handle.c,v 3.5 2001/04/23 21:41:47 dawes Exp $ */
+/* $XFree86: xc/programs/xmodmap/handle.c,v 3.7 2001/12/14 20:02:13 dawes Exp $ */
 
 #include <X11/Xos.h>
 #include <X11/Xlib.h>
@@ -30,13 +34,7 @@ from The Open Group.
 #include <ctype.h>
 #include "xmodmap.h"
 #include "wq.h"
-
-#ifndef X_NOT_STDC_ENV
 #include <stdlib.h>
-#else
-char *malloc();
-char *realloc();
-#endif
 
 static XModifierKeymap *map = NULL;
 

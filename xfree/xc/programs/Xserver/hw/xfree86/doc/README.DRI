@@ -2,7 +2,7 @@
 
           VA Linux Systems, Inc. Professional Services - Graphics.
 
-                                 3 May 2001
+                                15 June 2001
 
 1.  Preamble
 
@@ -45,8 +45,8 @@ XFree86 4.0 or that you're an experienced Linux developer who has compiled
 the DRI for himself.  DRI download, compilation and installation instructions
 can be found at http://dri.sourceforge.net/DRIcompile.html
 
-Edits, corrections and updates to this document may be mailed to brianp@val-
-inux.com.
+Edits, corrections and updates to this document may be mailed to <brian@tung-
+stengrahpics.com>.
 
 3.  Supported Architectures & Hardware
 
@@ -112,7 +112,7 @@ graphics hardware:
 
         o i810e
 
-   o ATI Rage 128, supported on Intel x86 and AMD:
+   o ATI Rage 128, supported on Intel x86, AMD and Alpha:
 
         o Rage Fury
 
@@ -126,14 +126,18 @@ graphics hardware:
 
         o All-in-Wonder 128
 
+        o Rage 128 PCI (Alpha-based systems)
+
      Note that both PCI and AGP versions of Rage 128 based cards are sup-
      ported at this time.
 
-   o ATI Radeon, supported on Intel x86 and AMD:
+   o ATI Radeon, supported on Intel x86, AMD and Alpha:
 
         o Radeon SDR AGP
 
         o Radeon DDR AGP
+
+        o Radeon 32MB SDR PCI (Alpha-based systems)
 
    o 3Dlabs, supported on Intel x86 and AMD:
 
@@ -173,7 +177,7 @@ modules.
 XFree86 4.0.1 added automatic kernel module loading to the X server.  On
 Linux, the X server uses modprobe to load kernel modules.  In Linux 2.4.x the
 DRM kernel modules should be kept in /lib/modules/2.4.x/ker-
-nel/driver/char/drm/ for automatic loading to work.
+nel/drivers/char/drm/ for automatic loading to work.
 
 Optionally, DRM kernel modules can be loaded manually with insmod prior to
 starting the X server.
@@ -621,7 +625,7 @@ Or,
              EndSection
 
 The kernel module for 3dfx hardware is named tdfx.o and should be installed
-in /lib/modules/2.4.x/kernel/driver/char/drm/.  It will be automatically
+in /lib/modules/2.4.x/kernel/drivers/char/drm/.  It will be automatically
 loaded by the Xserver if needed.
 
 The DRI 3D driver for 3dfx hardware should be in /usr/X11R6/lib/mod-
@@ -779,7 +783,7 @@ The Screen section should then reference the i810 device:
              EndSection
 
 The kernel module for the i810 is named i810.o and should be installed in
-/lib/modules/2.4.x/kernel/driver/char/drm/.  It will be automatically loaded
+/lib/modules/2.4.x/kernel/drivers/char/drm/.  It will be automatically loaded
 by the Xserver if needed.
 
 The DRI 3D driver for the i810 should be in /usr/X11R6/lib/mod-
@@ -868,7 +872,7 @@ To use a 32bpp screen mode, use this Screen section instead:
              EndSection
 
 The kernel module for the G200/G400 is named mga.o and should be installed in
-/lib/modules/2.4.x/kernel/driver/char/drm/.  It will be automatically loaded
+/lib/modules/2.4.x/kernel/drivers/char/drm/.  It will be automatically loaded
 by the Xserver if needed.
 
 The DRI 3D driver for the G200/G400 should be in /usr/X11R6/lib/mod-
@@ -993,7 +997,7 @@ The Screen section should then reference the Rage 128 device:
              EndSection
 
 The kernel module for the Rage 128 is named r128.o and should be installed in
-/lib/modules/2.4.x/kernel/driver/char/drm/.  It will be automatically loaded
+/lib/modules/2.4.x/kernel/drivers/char/drm/.  It will be automatically loaded
 by the Xserver if needed.
 
 The DRI 3D driver for the Rage 128 should be in /usr/X11R6/lib/mod-
@@ -1014,7 +1018,9 @@ Note that even at 32bpp there is no alpha channel.
 
 The following OpenGL features are implemented in software and will be slow:
 
-   o Stencil buffer and accumulation buffer operations
+   o accumulation buffer operations
+
+   o stencil, when using a 16bpp screen
 
    o Blend subtract, min/max and logic op blend modes
 
@@ -1069,7 +1075,7 @@ The Screen section should then reference the Radeon device:
              EndSection
 
 The kernel module for the Radeon is named radeon.o and should be installed in
-/lib/modules/2.4.x/kernel/driver/char/drm/.  It will be automatically loaded
+/lib/modules/2.4.x/kernel/drivers/char/drm/.  It will be automatically loaded
 by the Xserver if needed.
 
 The DRI 3D driver for the Radeon should be in /usr/X11R6/lib/mod-
@@ -1231,7 +1237,7 @@ demo programs is available from http://dri.sourceforge.net/res.phtml
    o In the future there may be IHV and Linux vendor support resources for
      the DRI.
 
-     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/DRI.sgml,v 1.24 2001/05/19 00:42:22 dawes Exp $
+     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/DRI.sgml,v 1.27 2002/01/07 22:05:57 dawes Exp $
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.DRI,v 1.16.2.1 2001/06/01 18:26:43 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.DRI,v 1.19 2002/01/07 22:07:16 dawes Exp $

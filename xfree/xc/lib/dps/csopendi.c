@@ -46,6 +46,7 @@
  *  
  * Author:  Adobe Systems Incorporated and MIT X Consortium
  */
+/* $XFree86: xc/lib/dps/csopendi.c,v 1.3 2001/10/28 03:32:43 tsi Exp $ */
  
 #include <stdlib.h>
 #include <stdio.h>
@@ -90,6 +91,9 @@ static xReq _dummy_request = {
 	0, 0, 0
 };
 
+static void OutOfMemory (Display *);
+
+#ifdef XXX
 /*
  * First, a routine for setting authorization data
  */
@@ -98,9 +102,6 @@ static char *xauth_name = NULL;	 /* NULL means use default mechanism */
 static int xauth_datalen = 0;
 static char *xauth_data = NULL;	 /* NULL means get default data */
 
-static void OutOfMemory (Display *);
-
-#ifdef XXX
 void XSetAuthorization (char *name, int namelen, char *data, int datalen)
 {
     char *tmpname, *tmpdata;
@@ -152,13 +153,11 @@ DPSCAPOpenAgent(Display *dpy, char *trueDisplayName)
 	register Display *agent;
 	char *agentHost = (char *)NULL;
 	register int i;
-	int j, k;			/* random iterator indexes */
 	char display_name[256];	        /* pointer to display name */
 	char licMethBuf[256];
 	char *licMeth = licMethBuf;
 	char *fullname = NULL;
 	int idisplay;
-	int iscreen;
 	char *server_addr = NULL;
 	int server_addrlen = 0;
 	int conn_family;

@@ -1,10 +1,14 @@
 XCOMM!/bin/sh
 XCOMM
-XCOMM $Xorg: mergelib.cpp,v 1.3 2000/08/17 19:41:52 cpqbld Exp $
+XCOMM $Xorg: mergelib.cpp,v 1.4 2001/02/09 02:03:17 xorgcvs Exp $
 XCOMM 
 XCOMM Copyright (c) 1989, 1998 The Open Group
 XCOMM 
-XCOMM All Rights Reserved
+XCOMM Permission to use, copy, modify, distribute, and sell this software and 
+XCOMM its documentation for any purpose is hereby granted without fee, provided
+XCOMM that the above copyright notice appear in all copies and that both that
+XCOMM copyright notice and this permission notice appear in supporting
+XCOMM documentation.
 XCOMM 
 XCOMM The above copyright notice and this permission notice shall be included in
 XCOMM all copies or substantial portions of the Software.

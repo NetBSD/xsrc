@@ -21,7 +21,7 @@
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
-/* $XFree86: xc/programs/Xserver/fb/fbfill.c,v 1.3 2000/02/23 20:29:43 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/fb/fbfill.c,v 1.4 2001/05/29 04:54:09 keithp Exp $ */
 
 #include "fb.h"
 
@@ -36,15 +36,16 @@ fbFill (DrawablePtr pDrawable,
     FbBits	    *dst;
     FbStride	    dstStride;
     int		    dstBpp;
-    FbGCPrivPtr	pPriv = fbGetGCPrivate(pGC);
+    int		    dstXoff, dstYoff;
+    FbGCPrivPtr	    pPriv = fbGetGCPrivate(pGC);
     
-    fbGetDrawable (pDrawable, dst, dstStride, dstBpp);
+    fbGetDrawable (pDrawable, dst, dstStride, dstBpp, dstXoff, dstYoff);
 
     switch (pGC->fillStyle) {
     case FillSolid:
-	fbSolid (dst + y * dstStride, 
+	fbSolid (dst + (y + dstYoff) * dstStride, 
 		 dstStride, 
-		 x * dstBpp,
+		 (x + dstXoff) * dstBpp,
 		 dstBpp,
 		 width * dstBpp, height,
 		 pPriv->and, pPriv->xor);
@@ -61,15 +62,16 @@ fbFill (DrawablePtr pDrawable,
 	    FbBits	*stip;
 	    FbStride    stipStride;
 	    int		stipBpp;
+	    int		stipXoff, stipYoff; /* XXX assumed to be zero */
 
 	    if (pGC->fillStyle == FillStippled)
 		alu = FbStipple1Rop(pGC->alu,pGC->fgPixel);
 	    else
 		alu = FbOpaqueStipple1Rop(pGC->alu,pGC->fgPixel,pGC->bgPixel);
-	    fbGetDrawable (&pStip->drawable, stip, stipStride, stipBpp);
-	    fbTile (dst + y * dstStride,
+	    fbGetDrawable (&pStip->drawable, stip, stipStride, stipBpp, stipXoff, stipYoff);
+	    fbTile (dst + (y + dstYoff) * dstStride,
 		    dstStride,
-		    x,
+		    x + dstXoff,
 		    width, height,
 		    stip,
 		    stipStride,
@@ -87,6 +89,7 @@ fbFill (DrawablePtr pDrawable,
 	    FbStip	*stip;
 	    FbStride    stipStride;
 	    int		stipBpp;
+	    int		stipXoff, stipYoff; /* XXX assumed to be zero */
 	    FbBits	fgand, fgxor, bgand, bgxor;
 
 	    fgand = pPriv->and;
@@ -102,7 +105,7 @@ fbFill (DrawablePtr pDrawable,
 		bgxor = pPriv->bgxor;
 	    }
 
-	    fbGetStipDrawable (&pStip->drawable, stip, stipStride, stipBpp);
+	    fbGetStipDrawable (&pStip->drawable, stip, stipStride, stipBpp, stipXoff, stipYoff);
 	    fbStipple (dst + y * dstStride, 
 		       dstStride, 
 		       x * dstBpp,
@@ -127,13 +130,14 @@ fbFill (DrawablePtr pDrawable,
 	int	    tileBpp;
 	int	    tileWidth;
 	int	    tileHeight;
+	int	    tileXoff, tileYoff; /* XXX assumed to be zero */
 	
-	fbGetDrawable (&pTile->drawable, tile, tileStride, tileBpp);
+	fbGetDrawable (&pTile->drawable, tile, tileStride, tileBpp, tileXoff, tileYoff);
 	tileWidth = pTile->drawable.width;
 	tileHeight = pTile->drawable.height;
-	fbTile (dst + y * dstStride, 
+	fbTile (dst + (y + dstYoff) * dstStride, 
 		dstStride, 
-		x * dstBpp, 
+		(x + dstXoff) * dstBpp, 
 		width * dstBpp, height,
 		tile,
 		tileStride,
@@ -163,11 +167,12 @@ fbSolidBoxClipped (DrawablePtr	pDrawable,
     FbBits	*dst;
     FbStride	dstStride;
     int		dstBpp;
+    int		dstXoff, dstYoff;
     BoxPtr	pbox;
     int		nbox;
     int		partX1, partX2, partY1, partY2;
 
-    fbGetDrawable (pDrawable, dst, dstStride, dstBpp);
+    fbGetDrawable (pDrawable, dst, dstStride, dstBpp, dstXoff, dstYoff);
     
     for (nbox = REGION_NUM_RECTS(pClip), pbox = REGION_RECTS(pClip); 
 	 nbox--; 
@@ -195,9 +200,9 @@ fbSolidBoxClipped (DrawablePtr	pDrawable,
 	if (partY2 <= partY1)
 	    continue;
 	
-	fbSolid (dst + partY1 * dstStride,
+	fbSolid (dst + (partY1 + dstYoff) * dstStride,
 		 dstStride,
-		 partX1 * dstBpp,
+		 (partX1 + dstXoff) * dstBpp,
 		 dstBpp,
 
 		 (partX2 - partX1) * dstBpp,

@@ -25,7 +25,7 @@
  *           Mitani Hiroshi <hmitani@drl.mei.co.jp> 
  *           David Thomas <davtom@dream.org.uk>. 
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sis/sis_vga.c,v 1.7 2001/04/19 12:40:33 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sis/sis_vga.c,v 1.12 2002/01/17 09:57:30 eich Exp $ */
 
 #include "xf86.h"
 #include "xf86_OSproc.h"
@@ -44,7 +44,7 @@
 #define Pidx    3
 #define PSNidx  4
 #define Fref 14318180
-/* stability constraints for internal VCO -- MAX_VCO also determines 
+/* stability constraints for internal VCO -- MAX_VCO also determines
  * the maximum Video pixel clock */
 #define MIN_VCO Fref
 #define MAX_VCO 135000000
@@ -82,10 +82,12 @@ SISInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
 
     (*pSiS->SiSSave)(pScrn, pReg);
 
-    outw(VGA_SEQ_INDEX, 0x8605);
-
     pSiS->scrnOffset = pScrn->displayWidth * pScrn->bitsPerPixel / 8;
 
+    outw(VGA_SEQ_INDEX, 0x8605);
+
+    pReg->sisRegs3C4[0x06] &= 0x01;
+    
     if ((mode->Flags & V_INTERLACE)==0)  {
         offset = pScrn->displayWidth >> 3;
         pReg->sisRegs3C4[0x06] &= 0xDF;
@@ -201,7 +203,7 @@ SISInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
 
 
     /* Set vclk */  
-    if (compute_vclk(clock, &num, &denum, &div, &sbit, &scale)) {
+    if (SiScompute_vclk(clock, &num, &denum, &div, &sbit, &scale)) {
         switch  (pSiS->Chipset)  {
             case PCI_CHIP_SIS5597:
             case PCI_CHIP_SIS6326:
@@ -220,7 +222,7 @@ SISInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
         }
     }
     else  {
-    /* if compute_vclk cannot handle the request clock try sisCalcClock! */
+    /* if SiScompute_vclk cannot handle the request clock try sisCalcClock! */
         SiSCalcClock(pScrn, clock, 2, vclk);
         switch (pSiS->Chipset)  {
             case PCI_CHIP_SIS5597:
@@ -390,6 +392,13 @@ SISInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
     return(TRUE);
 }
 
+/* TW: Initialize various regs for mode. This is done to
+ *     structure, not hardware. (SiSRestore would write
+ *     structure to hardware registers.)
+ *     This function is not used on SiS300, 540, 630 (unless
+ *     VESA is used for mode switching); on these chips,
+ *     the BIOS emulation (sis_bioc.s) does the job.
+ */
 Bool
 SIS300Init(ScrnInfoPtr pScrn, DisplayModePtr mode)
 {
@@ -398,7 +407,7 @@ SIS300Init(ScrnInfoPtr pScrn, DisplayModePtr mode)
     vgaRegPtr   vgaReg = &VGAHWPTR(pScrn)->ModeReg;
     int vgaIOBase;
     unsigned short  temp;
-    int offset;
+    int offset=0;
     int clock = mode->Clock;
     unsigned int    vclk[5];
 
@@ -416,8 +425,11 @@ SIS300Init(ScrnInfoPtr pScrn, DisplayModePtr mode)
 
     (*pSiS->SiSSave)(pScrn, pReg);
 
+    pSiS->scrnOffset = pScrn->displayWidth * ((pScrn->bitsPerPixel+7)/8);
+
     outw(VGA_SEQ_INDEX, 0x8605);
 
+    /* TW: The following MUST be done even with VESA */
     pReg->sisRegs3C4[6] &= ~GENMASK(4:2);
 
     switch (pScrn->bitsPerPixel) {
@@ -443,36 +455,34 @@ SIS300Init(ScrnInfoPtr pScrn, DisplayModePtr mode)
             break;
     }
 
-    pSiS->scrnOffset = pScrn->displayWidth * ((pScrn->bitsPerPixel+7)/8);
+    if (!pSiS->UseVESA) {	/* TW: Don't do the following when using VESA (NEW) */
+    	pReg->sisRegs3D4[0x19] = 0;
+    	pReg->sisRegs3D4[0x1A] &= 0xFC;
 
-    pReg->sisRegs3D4[0x19] = 0;
-    pReg->sisRegs3D4[0x1A] &= 0xFC;
+	if (mode->Flags & V_INTERLACE)  {
+	        offset = pSiS->scrnOffset >> 2;
+	        pReg->sisRegs3C4[0x06] |= 0x20;
+	        if (pSiS->Chipset != PCI_CHIP_SIS300)  {
+            	temp = (mode->CrtcHSyncStart >> 3) -
+	                (mode->CrtcHTotal >> 3)/2;
+            	pReg->sisRegs3D4[0x19] = GETVAR8(temp);
+            	pReg->sisRegs3D4[0x1A] |= GETBITS(temp, 9:8);
+        	}
+    	} else  {
+	        offset = pSiS->scrnOffset >> 3;
+	        pReg->sisRegs3C4[0x06] &= ~0x20;
+    	}
 
-    if (mode->Flags & V_INTERLACE)  {
-        offset = pSiS->scrnOffset >> 2;
-        pReg->sisRegs3C4[0x06] |= 0x20;
-        if (pSiS->Chipset != PCI_CHIP_SIS300)  {
-            temp = (mode->CrtcHSyncStart >> 3) -
-                (mode->CrtcHTotal >> 3)/2;
-            pReg->sisRegs3D4[0x19] = GETVAR8(temp);
-            pReg->sisRegs3D4[0x1A] |= GETBITS(temp, 9:8);
-        }
-    } else  {
-        offset = pSiS->scrnOffset >> 3;
-        pReg->sisRegs3C4[0x06] &= ~0x20;
-    }
+    	pReg->sisRegs3C4[0x07] |= 0x10;     	/* enable High Speed DAC */
+    	pReg->sisRegs3C4[0x07] &= 0xFC;
+    	if (clock < 100000)
+        	pReg->sisRegs3C4[0x07] |= 0x03;
+    	else if (clock < 200000)
+        	pReg->sisRegs3C4[0x07] |= 0x02;
+    	else if (clock < 250000)
+        	pReg->sisRegs3C4[0x07] |= 0x01;
 
-    pReg->sisRegs3C4[0x07] |= 0x10;     /* enable High Speed DAC */
-    pReg->sisRegs3C4[0x07] &= 0xFC;
-    if (clock < 100000)
-        pReg->sisRegs3C4[0x07] |= 0x03;
-    else if (clock < 200000)
-        pReg->sisRegs3C4[0x07] |= 0x02;
-    else if (clock < 250000)
-        pReg->sisRegs3C4[0x07] |= 0x01;
-
-    /* Extended Vertical Overflow */
-    pReg->sisRegs3C4[0x0A] = 
+	pReg->sisRegs3C4[0x0A] = 			/* Extended Vertical Overflow */
             GETBITSTR(mode->CrtcVTotal     -2, 10:10, 0:0) |
             GETBITSTR(mode->CrtcVDisplay   -1, 10:10, 1:1) |
             GETBITSTR(mode->CrtcVBlankStart  , 10:10, 2:2) |
@@ -480,129 +490,191 @@ SIS300Init(ScrnInfoPtr pScrn, DisplayModePtr mode)
             GETBITSTR(mode->CrtcVBlankEnd    ,   8:8, 4:4) |
             GETBITSTR(mode->CrtcVSyncEnd     ,   4:4, 5:5) ;
 
-    /* Extended Horizontal Overflow */
-    pReg->sisRegs3C4[0x0B] = 
+    	pReg->sisRegs3C4[0x0B] = 			/* Extended Horizontal Overflow */
             GETBITSTR((mode->CrtcHTotal      >> 3) - 5, 9:8, 1:0) |
             GETBITSTR((mode->CrtcHDisplay    >> 3) - 1, 9:8, 3:2) |
             GETBITSTR((mode->CrtcHBlankStart >> 3)    , 9:8, 5:4) |
             GETBITSTR((mode->CrtcHSyncStart  >> 3)    , 9:8, 7:6) ;
 
-    pReg->sisRegs3C4[0x0C] &= 0xF8;
-    pReg->sisRegs3C4[0x0C] |= 
+    	pReg->sisRegs3C4[0x0C] &= 0xF8;
+    	pReg->sisRegs3C4[0x0C] |=
             GETBITSTR(mode->CrtcHBlankEnd >> 3, 7:6, 1:0) |
             GETBITSTR(mode->CrtcHSyncEnd  >> 3, 5:5, 2:2) ;
 
-    /* Screen Offset */
-    vgaReg->CRTC[0x13] = GETVAR8(offset);
-    pReg->sisRegs3C4[0x0E] &= 0xF0;
-    pReg->sisRegs3C4[0x0E] |= GETBITS(offset, 11:8);
 
-    /* line compare */
-    if (mode->CrtcHDisplay > 0)
-        pReg->sisRegs3C4[0x0F] |= 0x08;
-    else
-        pReg->sisRegs3C4[0x0F] &= 0xF7;
+    	vgaReg->CRTC[0x13] = GETVAR8(offset);	/* Screen Offset */
+    	pReg->sisRegs3C4[0x0E] &= 0xF0;
+    	pReg->sisRegs3C4[0x0E] |= GETBITS(offset, 11:8);
 
-    pReg->sisRegs3C4[0x10] = 
+    	if (mode->CrtcHDisplay > 0)		/* line compare */
+        	pReg->sisRegs3C4[0x0F] |= 0x08;
+    	else
+        	pReg->sisRegs3C4[0x0F] &= 0xF7;
+
+    	pReg->sisRegs3C4[0x10] =
         ((mode->CrtcHDisplay *((pScrn->bitsPerPixel+7)/8) + 63) >> 6)+1;
+    }	/* VESA */
 
-    /* Enable Linear */
-    pReg->sisRegs3C4[0x20] |= 0x81;
+/* TW: Enable PCI adressing (0x80) & MMIO enable (0x1) & ? (0x20) */
+    pReg->sisRegs3C4[0x20] = 0xA1;
+/* TW: Enable 3D accelerator & ? */
+/* TW: 0x42 enables 2D accellerator (done below), 0x18 enables 3D engine */
+/*  pReg->sisRegs3C4[0x1E] = 0x18; */
+/* TW: !!! now done according to NoAccel setting !!! */
 
-    /* Set vclk */  
-    if (compute_vclk(clock, &num, &denum, &div, &sbit, &scale)) {
-        pReg->sisRegs3C4[0x2B] = (num -1) & 0x7f;
-        if (div == 2)
-            pReg->sisRegs3C4[0x2B] |= 0x80;
-        pReg->sisRegs3C4[0x2C] = ((denum -1) & 0x1f);
-        pReg->sisRegs3C4[0x2C] |= (((scale-1)&3) << 5);
-        if (sbit)
-            pReg->sisRegs3C4[0x2C] |= 0x80;
-        pReg->sisRegs3C4[0x2D] = 0x80;
-    }
-    else  {
-    /* if compute_vclk cannot handle the request clock try sisCalcClock! */
-        SiSCalcClock(pScrn, clock, 2, vclk);
-        pReg->sisRegs3C4[0x2B] = (vclk[Midx] - 1) & 0x7f ;
-        pReg->sisRegs3C4[0x2B] |= ((vclk[VLDidx] == 2 ) ? 1 : 0 ) << 7 ;
+    if (!pSiS->UseVESA) {	/* TW: clocks have surely been set by VESA, so don't touch them now */
+   	if (SiScompute_vclk(clock, &num, &denum, &div, &sbit, &scale)) {  /* Set vclk */
+        	pReg->sisRegs3C4[0x2B] = (num -1) & 0x7f;
+        	if (div == 2)
+            		pReg->sisRegs3C4[0x2B] |= 0x80;
+        	pReg->sisRegs3C4[0x2C] = ((denum -1) & 0x1f);
+        	pReg->sisRegs3C4[0x2C] |= (((scale-1)&3) << 5);
+        	if (sbit)
+            		pReg->sisRegs3C4[0x2C] |= 0x80;
+        	pReg->sisRegs3C4[0x2D] = 0x80;
+    	}
+    	else  {
+    		/* if SiScompute_vclk cannot handle the request clock try sisCalcClock! */
+        	SiSCalcClock(pScrn, clock, 2, vclk);
+        	pReg->sisRegs3C4[0x2B] = (vclk[Midx] - 1) & 0x7f ;
+        	pReg->sisRegs3C4[0x2B] |= ((vclk[VLDidx] == 2 ) ? 1 : 0 ) << 7 ;
 
-        /* bits [4:0] contain denumerator -MC */
-        pReg->sisRegs3C4[0x2C] = (vclk[Nidx] -1) & 0x1f ;
+        	/* bits [4:0] contain denumerator -MC */
+        	pReg->sisRegs3C4[0x2C] = (vclk[Nidx] -1) & 0x1f ;
 
-        if (vclk[Pidx] <= 4)  {
-        /* postscale 1,2,3,4 */
-            pReg->sisRegs3C4[0x2C] |= (vclk[Pidx] -1 ) << 5 ;
-            pReg->sisRegs3C4[0x2C] &= 0x7F;
-        } else  {
-        /* postscale 6,8 */
-            pReg->sisRegs3C4[0x2C] |= ((vclk[Pidx] / 2) -1 ) << 5 ;
-            pReg->sisRegs3C4[0x2C] |= 0x80;
-        }
-        pReg->sisRegs3C4[0x2D] = 0x80;
-    } /* end of set vclk */
+        	if (vclk[Pidx] <= 4)  {
+        	/* postscale 1,2,3,4 */
+            		pReg->sisRegs3C4[0x2C] |= (vclk[Pidx] -1 ) << 5 ;
+            		pReg->sisRegs3C4[0x2C] &= 0x7F;
+        	} else  {
+        	/* postscale 6,8 */
+            		pReg->sisRegs3C4[0x2C] |= ((vclk[Pidx] / 2) -1 ) << 5 ;
+            		pReg->sisRegs3C4[0x2C] |= 0x80;
+        	}
+        	pReg->sisRegs3C4[0x2D] = 0x80;
+    	} /* end of set vclk */
 
-    if (clock > 150000)  {  /* enable two-pixel mode */
-        pReg->sisRegs3C4[0x07] |= 0x80;
-        pReg->sisRegs3C4[0x32] |= 0x08;
-    } else  {
-        pReg->sisRegs3C4[0x07] &= 0x7F;
-        pReg->sisRegs3C4[0x32] &= 0xF7;
-    }
+    	if (clock > 150000)  {  			/* enable two-pixel mode */
+        	pReg->sisRegs3C4[0x07] |= 0x80;
+        	pReg->sisRegs3C4[0x32] |= 0x08;
+    	} else  {
+        	pReg->sisRegs3C4[0x07] &= 0x7F;
+        	pReg->sisRegs3C4[0x32] &= 0xF7;
+    	}
 
-    pReg->sisRegs3C2 = inb(0x3CC) | 0x0C; /* Programmable Clock */
+    	pReg->sisRegs3C2 = inb(0x3CC) | 0x0C; 	/* Programmable Clock */
+    }  /* VESA */
 
+/* TW: Now initialize TurboQueue. TB is always located at the very top of
+       the videoRAM (notably NOT the x framebuffer memory, which can/should
+       be limited when using DRI)
+*/
     if (!pSiS->NoAccel) {
-        pReg->sisRegs3C4[0x1E] |= 0x42;
-        if (pSiS->TurboQueue)  {    /* set Turbo Queue as 512k */
-            temp = ((pScrn->videoRam/64)-4);
+        pReg->sisRegs3C4[0x1E] |= 0x42;  /* TW: Enable 2D accellerator */
+	pReg->sisRegs3C4[0x1E] |= 0x18;  /* TW: Enable 3D accellerator */
+        if (pSiS->TurboQueue)  {    		/* set Turbo Queue as 512k */
+	    temp = ((pScrn->videoRam/64)-8);    /* TW: 8=512k, 4=256k, 2=128k, 1=64k */
             pReg->sisRegs3C4[0x26] = temp & 0xFF;
-            pReg->sisRegs3C4[0x27] = ((temp >> 8) & 3) || 0xF0;
-        }
+	    pReg->sisRegs3C4[0x27] =
+		(pReg->sisRegs3C4[0x27] & 0xfc) | (((temp >> 8) & 3) | 0xF0);
+        }	/* TW: line above new for saving D2&3 of state register */
     }
 
-    /* set threshold value */
-    (*pSiS->SetThreshold)(pScrn, mode, &Threshold_Low, &Threshold_High);
-    pReg->sisRegs3C4[0x08] = GETBITSTR(Threshold_Low, 3:0, 7:4) | 0xF;
-    pReg->sisRegs3C4[0x0F] &= ~GENMASK(5:5);
-    pReg->sisRegs3C4[0x0F] |= GETBITSTR(Threshold_Low, 4:4, 5:5);
-    pReg->sisRegs3C4[0x09] &= ~GENMASK(3:0);
-    pReg->sisRegs3C4[0x09] |= GETBITS(Threshold_High, 3:0);
+    if (!pSiS->UseVESA) {
+	/* set threshold value */
+    	(*pSiS->SetThreshold)(pScrn, mode, &Threshold_Low, &Threshold_High);
+    	pReg->sisRegs3C4[0x08] = GETBITSTR(Threshold_Low, 3:0, 7:4) | 0xF;
+    	pReg->sisRegs3C4[0x0F] &= ~GENMASK(5:5);
+    	pReg->sisRegs3C4[0x0F] |= GETBITSTR(Threshold_Low, 4:4, 5:5);
+    	pReg->sisRegs3C4[0x09] &= ~GENMASK(3:0);
+    	pReg->sisRegs3C4[0x09] |= GETBITS(Threshold_High, 3:0);
+    }
 
     return(TRUE);
 }
 
+/* TW: Detect video bridge and set VBFlags accordingly */
 void SISVGAPreInit(ScrnInfoPtr pScrn)
 {
     SISPtr  pSiS = SISPTR(pScrn);
     int     temp;
-    unsigned short usOffsetHigh, usOffsetLow, vBiosVersion;
+    char    BIOSversion[]="x.xx.xx\0";
+    unsigned short usOffsetHigh, usOffsetLow, vBiosRevision;
     unsigned long   ROMAddr  = (unsigned long) SISPTR(pScrn)->BIOS;
 
-    usOffsetHigh = *((unsigned char *)(ROMAddr+0x08)) - 0x30;     
-    usOffsetLow  = *((unsigned char *)(ROMAddr+0x09)) - 0x30;     
-    vBiosVersion = usOffsetHigh << 4 | usOffsetLow;
-    if (vBiosVersion < 0x02) {
+    for (temp = 0; temp < 7; temp++) {
+        BIOSversion[temp] = *((unsigned char *)(ROMAddr+temp+0x06));
+    }
+
+    xf86DrvMsg(pScrn->scrnIndex, X_PROBED, "Video BIOS version %s detected\n", BIOSversion);
+
+    usOffsetHigh = *((unsigned char *)(ROMAddr+0x08)) - 0x30;
+    usOffsetLow  = *((unsigned char *)(ROMAddr+0x09)) - 0x30;
+    vBiosRevision = usOffsetHigh << 4 | usOffsetLow;
+#if 0	/* TW: What's this good for? Check the BIOS revision???? That can't be correct! */
+    if (vBiosRevision < 0x02) {
         outSISIDXREG(pSiS->RelIO+CROFFSET, 0x37, 0);
         inSISIDXREG(pSiS->RelIO+CROFFSET, 0x36, temp);
         temp &= 0x07;
         outSISIDXREG(pSiS->RelIO+CROFFSET, 0x36, temp);
     }
+#endif
     outb(SISPART4, 0x00);
     temp = inb(SISPART4+1) & 0x0F;
     pSiS->VBFlags = 0; /*reset*/
-    if (temp == 1) 
-        pSiS->VBFlags|=VB_301;  /*301*/
-    else if (temp == 2)
+    if (temp == 1) {
+	outb(SISPART4, 0x01);	/* TW: new for 301b; support is yet incomplete */
+	temp = inb(SISPART4+1) & 0xff;
+	if (temp >= 0xB0) {
+	        pSiS->VBFlags|=VB_301B;  /* TW: 301b */
+    		xf86DrvMsg(pScrn->scrnIndex, X_PROBED, "Detected SiS301B video bridge\n");
+	} else {
+	        pSiS->VBFlags|=VB_301;   /*301*/
+		xf86DrvMsg(pScrn->scrnIndex, X_PROBED, "Detected SiS301 video bridge\n");
+	}
+	outb(SISPART4, 0x23);	/* TW: new */
+	temp = inb(SISPART4+1) & 0xff;
+	if (!(temp & 0x02))  {
+	        pSiS->VBFlags|=VB_NOLCD; /* TW: flag yet unused */
+		xf86DrvMsg(pScrn->scrnIndex, X_PROBED, "[SiS301: NoLCD flag detected]\n");
+	}
+    }
+    else if (temp == 2) {
         pSiS->VBFlags|=VB_302;  /*302*/
-    else if (temp == 3)
+    	xf86DrvMsg(pScrn->scrnIndex, X_PROBED, "Detected SiS302(B) video bridge\n");
+	outb(SISPART4, 0x38);	/* TW: new; LCDA (?) support - yet incomplete */
+	temp = inb(SISPART4+1) & 0xff;
+	if (temp == 0x03) {
+		pSiS->VBFlags|=VB_LCDA; /* TW: flag yet unused */
+		xf86DrvMsg(pScrn->scrnIndex, X_PROBED,
+		         "[SiS302: LCDA flag detected]\n");
+	}
+    }
+    else if (temp == 3) {
         pSiS->VBFlags|=VB_303;  /*303*/
+    	xf86DrvMsg(pScrn->scrnIndex, X_PROBED, "Detected SiS303 video bridge\n");
+    }
     else {
         outb(SISCR, 0x37);
         temp = ((inb(SISCR+1))>>1) & 0x07;
-        if ((temp == 2) || (temp == 3) || (temp == 4))
+	if ((temp == 2) || (temp == 3) || (temp == 4)) {
             pSiS->VBFlags |= VB_LVDS;
-        if (temp == 4)
+    	    xf86DrvMsg(pScrn->scrnIndex, X_PROBED,
+	             "Detected LVDS video bridge (Type %d)\n", temp);
+	}
+        if ((temp == 4) || (temp == 5))  {
             pSiS->VBFlags |= VB_CHRONTEL;
+    	    xf86DrvMsg(pScrn->scrnIndex, X_PROBED,
+	             "Detected CHRONTEL 7500 VGA->TV converter (Type %d)\n", temp);
+	}
+	if (temp == 3) {
+            xf86DrvMsg(pScrn->scrnIndex, X_PROBED,
+	             "Detected TRUMPION TV converter. This device is not supported yet.\n");
+	}
+	if ((temp < 2) || (temp > 5)) {
+	    xf86DrvMsg(pScrn->scrnIndex, X_PROBED,
+	             "Detected unknown bridge type (%d)\n", temp);
+	}
     }
 
     switch (pSiS->Chipset) {

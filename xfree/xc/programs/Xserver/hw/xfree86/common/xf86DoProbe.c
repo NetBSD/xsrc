@@ -1,5 +1,5 @@
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86DoProbe.c,v 1.9 2000/03/01 16:00:51 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86DoProbe.c,v 1.10 2001/10/28 03:33:18 tsi Exp $ */
 /*
  * finish setting up the server
  * Load the driver modules and call their probe functions.
@@ -55,6 +55,8 @@ DoProbe()
     for (i = 0; i < xf86NumDrivers; i++) {
 	if (xf86DriverList[i]->Probe == NULL) continue;
 
+	xf86MsgVerb(X_INFO, 3, "Probing in driver %s\n",
+	    xf86DriverList[i]->driverName);
 	probeResult =
 	    (*xf86DriverList[i]->Probe)(xf86DriverList[i], PROBE_DETECT);
 	ErrorF("Probe in driver `%s' returns %s\n",

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/linux/lnx_pci.c,v 3.6.2.1 2001/06/01 20:03:52 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/linux/lnx_pci.c,v 3.7 2001/06/01 20:03:05 dawes Exp $ */
 
 #include <stdio.h>
 #include "X.h"

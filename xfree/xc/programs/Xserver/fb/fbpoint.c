@@ -21,7 +21,7 @@
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
-/* $XFree86: xc/programs/Xserver/fb/fbpoint.c,v 1.7 2000/09/22 05:58:01 keithp Exp $ */
+/* $XFree86: xc/programs/Xserver/fb/fbpoint.c,v 1.8 2001/05/29 04:54:09 keithp Exp $ */
 
 #include "fb.h"
 
@@ -114,6 +114,7 @@ fbPolyPoint (DrawablePtr    pDrawable,
     FbBits	*dst;
     FbStride	dstStride;
     int		dstBpp;
+    int		dstXoff, dstYoff;
     FbDots	dots;
     FbBits	and, xor;
     xPoint	*ppt;
@@ -134,7 +135,7 @@ fbPolyPoint (DrawablePtr    pDrawable,
 	    ppt->y += (ppt-1)->y;
 	}
     }
-    fbGetDrawable (pDrawable, dst, dstStride, dstBpp);
+    fbGetDrawable (pDrawable, dst, dstStride, dstBpp, dstXoff, dstYoff);
     and = pPriv->and;
     xor = pPriv->xor;
     dots = fbDots;
@@ -151,5 +152,5 @@ fbPolyPoint (DrawablePtr    pDrawable,
     for (nBox = REGION_NUM_RECTS (pClip), pBox = REGION_RECTS (pClip);
 	 nBox--; pBox++)
 	(*dots) (dst, dstStride, dstBpp, pBox, pptInit, nptInit, 
-		 pDrawable->x, pDrawable->y, and, xor);
+		 pDrawable->x + dstXoff, pDrawable->y + dstYoff, and, xor);
 }

@@ -1,6 +1,6 @@
 /*
  * $XConsortium: saver.c,v 1.12 94/04/17 20:59:36 dpw Exp $
- * $XFree86: xc/programs/Xserver/Xext/saver.c,v 3.3 2000/04/05 18:13:29 dawes Exp $
+ * $XFree86: xc/programs/Xserver/Xext/saver.c,v 3.4 2001/08/23 13:01:36 alanh Exp $
  *
 Copyright (c) 1992  X Consortium
 
@@ -116,8 +116,6 @@ static void ScreenSaverResetProc (
 	ExtensionEntry * /* extEntry */
 #endif
 	);
-
-extern WindowPtr    *WindowTable;
 
 /*
  * each screen has a list of clients requesting
@@ -539,7 +537,6 @@ CreateSaverWindow (pScreen)
     WindowPtr			pWin;
     int				result;
     unsigned long		mask;
-    extern int			GrabInProgress;
     Colormap			*installedMaps;
     int				numInstalled;
     int				i;
@@ -678,7 +675,7 @@ ScreenSaverHandle (pScreen, xstate, force)
     int		xstate;
     Bool	force;
 {
-    int				state;
+    int				state = 0;
     Bool			ret = FALSE;
     ScreenSaverScreenPrivatePtr	pPriv;
 

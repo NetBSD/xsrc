@@ -2,12 +2,12 @@
 
 
 
-# $XFree86: xc/Makefile,v 3.21 2001/03/03 22:03:43 tsi Exp $
+# $XFree86: xc/Makefile,v 3.22 2001/12/19 21:37:26 dawes Exp $
 
 # Luna users will need to either run make as "make MAKE=make"
 # or add "MAKE = make" to this file.
 
-RELEASE = "Release 6.5"
+RELEASE = "Release 6.6"
 SHELL = /bin/sh
 RM = rm -f
 MV = mv

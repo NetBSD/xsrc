@@ -43,7 +43,7 @@
  **
  ******************************************************************************
  *****************************************************************************/
-/* $XFree86: xc/include/extensions/Printstr.h,v 1.4 2001/01/17 17:53:16 dawes Exp $ */
+/* $XFree86: xc/include/extensions/Printstr.h,v 1.6 2001/08/23 12:46:11 alanh Exp $ */
 
 
 #ifndef _XpPrintstr_H_
@@ -662,9 +662,8 @@ extern XPHinterProc  _xp_hinter_proc;
 extern char         *_xp_hinter_desc;
 extern int           _xp_hinter_init;
 
-#endif /* _XP_PRINT_SERVER_ */
+#else /* _XP_PRINT_SERVER_ */
 
-#ifdef _XP_PRINT_SERVER_
 /***********************************************************************
  *
  * Server-only definitions shared between the extension and DDX layers.
@@ -775,7 +774,7 @@ extern int XpAllocateContextPrivateIndex(void);
 extern int XpRehashPrinterList(void);
 extern void XpSetFontResFunc(ClientPtr);
 extern void XpUnsetFontResFunc(ClientPtr);
-
+extern void XpRegisterInitFunc(ScreenPtr, char *, int (*)(struct _XpContext *));
 
 #endif /* _XP_PRINT_SERVER_ */
 

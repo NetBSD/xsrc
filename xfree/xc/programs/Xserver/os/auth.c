@@ -1,9 +1,13 @@
-/* $Xorg: auth.c,v 1.3 2000/08/17 19:53:40 cpqbld Exp $ */
+/* $Xorg: auth.c,v 1.5 2001/02/09 02:05:23 xorgcvs Exp $ */
 /*
 
 Copyright 1988, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included
 in all copies or substantial portions of the Software.
@@ -22,7 +26,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/Xserver/os/auth.c,v 1.6 2001/01/17 22:37:10 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/os/auth.c,v 1.10 2001/12/14 20:00:33 dawes Exp $ */
 
 /*
  * authorization hooks for the server
@@ -32,8 +36,8 @@ from The Open Group.
 #ifdef K5AUTH
 # include   <krb5/krb5.h>
 #endif
-# include   "X.h"
-# include   "Xauth.h"
+# include   <X11/X.h>
+# include   <X11/Xauth.h>
 # include   "misc.h"
 # include   "osdep.h"
 # include   "dixstruct.h"
@@ -204,8 +208,10 @@ CheckAuthorization (
 
     if (!authorization_file || stat(authorization_file, &buf))
     {
-	lastmod = 0;
-	ShouldLoadAuth = TRUE;	/* stat lost, so force reload */
+	if (lastmod != 0) {
+	    lastmod = 0;
+	    ShouldLoadAuth = TRUE;	/* stat lost, so force reload */
+	}
     }
     else if (buf.st_mtime > lastmod)
     {
@@ -219,14 +225,16 @@ CheckAuthorization (
 	else
 	    EnableLocalHost ();
     }
-    if (name_length)
+    if (name_length) {
 	for (i = 0; i < NUM_AUTHORIZATION; i++) {
 	    if (protocols[i].name_length == name_length &&
 		memcmp (protocols[i].name, name, (int) name_length) == 0)
 	    {
 		return (*protocols[i].Check) (data_length, data, client, reason);
 	    }
+	    *reason = "Protocol not supported by server\n";
 	}
+    } else *reason = "No protocol specified\n";
     return (XID) ~0L;
 }
 

@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/programs/Xserver/render/mipict.h,v 1.5 2001/01/21 21:19:39 tsi Exp $
+ * $XFree86: xc/programs/Xserver/render/mipict.h,v 1.8 2001/07/19 04:42:10 keithp Exp $
  *
  * Copyright © 2000 SuSE, Inc.
  *
@@ -27,6 +27,41 @@
 #define _MIPICT_H_
 
 #include "picturestr.h"
+
+#define MI_MAX_INDEXED	256 /* XXX depth must be <= 8 */
+
+#if MI_MAX_INDEXED <= 256
+typedef CARD8 miIndexType;
+#endif
+
+typedef struct _miIndexed {
+    Bool	color;
+    CARD32	rgba[MI_MAX_INDEXED];
+    miIndexType	ent[32768];
+} miIndexedRec, *miIndexedPtr;
+
+#define miCvtR8G8B8to15(s) ((((s) >> 3) & 0x001f) | \
+			     (((s) >> 6) & 0x03e0) | \
+			     (((s) >> 9) & 0x7c00))
+#define miIndexToEnt15(mif,rgb15) ((mif)->ent[rgb15])
+#define miIndexToEnt24(mif,rgb24) miIndexToEnt15(mif,miCvtR8G8B8to15(rgb24))
+
+/*
+ * Standard NTSC luminance conversions:
+ *
+ *  y = r * 0.299 + g * 0.587 + b * 0.114
+ *
+ * Approximate this for a bit more speed:
+ *
+ *  y = (r * 153 + g * 301 + b * 58) / 512
+ *
+ * This gives 17 bits of luminance; to get 15 bits, lop the low two
+ */
+
+#define miCvtR8G8B8toY15(s)	(((((s) >> 16) & 0xff) * 153 + \
+				  (((s) >>  8) & 0xff) * 301 + \
+				  (((s)      ) & 0xff) * 58) >> 2)
+#define miIndexToEntY24(mif,rgb24) ((mif)->ent[miCvtR8G8B8toY15(rgb24)])
 
 int
 miCreatePicture (PicturePtr pPicture);
@@ -110,5 +145,19 @@ miCompositeRects (CARD8		op,
 		  xRenderColor  *color,
 		  int		nRect,
 		  xRectangle    *rects);
+
+Bool
+miInitIndexed (ScreenPtr	pScreen,
+	       PictFormatPtr	pFormat);
+
+void
+miCloseIndexed (ScreenPtr	pScreen,
+		PictFormatPtr	pFormat);
+
+void
+miUpdateIndexed (ScreenPtr	pScreen,
+		 PictFormatPtr	pFormat,
+		 int		ndef,
+		 xColorItem	*pdef);
 
 #endif /* _MIPICT_H_ */

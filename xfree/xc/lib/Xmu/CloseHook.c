@@ -1,9 +1,13 @@
-/* $Xorg: CloseHook.c,v 1.3 2000/08/17 19:45:59 cpqbld Exp $ */
+/* $Xorg: CloseHook.c,v 1.4 2001/02/09 02:03:51 xorgcvs Exp $ */
 
 /* 
 Copyright 1989, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -20,7 +24,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/Xmu/CloseHook.c,v 3.4 2001/01/17 19:42:53 dawes Exp $ */
+/* $XFree86: xc/lib/Xmu/CloseHook.c,v 3.6 2001/12/14 19:55:35 dawes Exp $ */
 
 /*
  * CloseDisplayHook package - provide callback on XCloseDisplay
@@ -54,12 +58,7 @@ in this Software without prior written authorization from The Open Group.
 #include <X11/Xos.h>
 #include <X11/Xlib.h>
 #include <X11/Xmu/CloseHook.h>
-
-#ifdef X_NOT_STDC_ENV
-extern char *malloc();					/* should be void * */
-#else
 #include <stdlib.h>
-#endif
 
 /*
  *				 Private data

@@ -26,7 +26,7 @@ PERFORMANCE OF THIS SOFTWARE.
                                fujiwara@a80.tech.yk.fujitsu.co.jp
 
 ******************************************************************/
-/* $XFree86: xc/lib/X11/imInt.c,v 3.9 2001/01/17 19:41:51 dawes Exp $ */
+/* $XFree86: xc/lib/X11/imInt.c,v 3.10 2001/11/16 00:52:27 dawes Exp $ */
 
 #include <X11/Xatom.h>
 #include <X11/Xlib.h>
@@ -209,7 +209,7 @@ _XimMakeImName(lcd)
     return ret;
 }
 
-Private XIM
+Public XIM
 #if NeedFunctionPrototypes
 _XimOpenIM(
     XLCd		 lcd,

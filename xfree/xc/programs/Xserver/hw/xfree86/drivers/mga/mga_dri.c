@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/mga/mga_dri.c,v 1.21 2001/05/02 15:06:09 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/mga/mga_dri.c,v 1.22 2001/09/26 12:59:17 alanh Exp $ */
 
 /*
  * Copyright 2000 VA Linux Systems Inc., Fremont, California.
@@ -817,6 +817,7 @@ static Bool MGADRIKernelInit( ScreenPtr pScreen )
    init.sarea_priv_offset = sizeof(XF86DRISAREARec);
 
    switch ( pMga->Chipset ) {
+   case PCI_CHIP_MGAG550:
    case PCI_CHIP_MGAG400:
       init.chipset = MGA_CARD_TYPE_G400;
       break;
@@ -898,7 +899,8 @@ Bool MGADRIScreenInit( ScreenPtr pScreen )
    MGADRIPtr pMGADRI;
    MGADRIServerPrivatePtr pMGADRIServer;
 
-   switch ( pMga->Chipset ) {
+   switch(pMga->Chipset) {
+   case PCI_CHIP_MGAG550:
    case PCI_CHIP_MGAG400:
    case PCI_CHIP_MGAG200:
 #if 0
@@ -906,8 +908,7 @@ Bool MGADRIScreenInit( ScreenPtr pScreen )
 #endif
       break;
    default:
-      xf86DrvMsg( pScrn->scrnIndex, X_ERROR,
-		  "[drm] Direct rendering only supported with AGP G200/G400 cards!\n" );
+      xf86DrvMsg(pScrn->scrnIndex, X_ERROR, "[drm] Direct rendering only supported with G200/G400/G550 AGP\n");
       return FALSE;
    }
 
@@ -1156,7 +1157,8 @@ Bool MGADRIFinishScreenInit( ScreenPtr pScreen )
       return FALSE;
    }
 
-   switch ( pMga->Chipset ) {
+   switch(pMga->Chipset) {
+   case PCI_CHIP_MGAG550:
    case PCI_CHIP_MGAG400:
       pMGADRI->chipset = MGA_CARD_TYPE_G400;
       break;

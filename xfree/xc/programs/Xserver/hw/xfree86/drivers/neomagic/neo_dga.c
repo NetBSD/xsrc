@@ -21,7 +21,7 @@
  *
  * Authors:  Alan Hourihane, <alanh@fairlite.demon.co.uk>
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/neomagic/neo_dga.c,v 1.3 2000/10/17 21:36:15 mvojkovi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/neomagic/neo_dga.c,v 1.4 2001/10/01 13:44:07 eich Exp $ */
 
 #include "xf86.h"
 #include "xf86_OSproc.h"
@@ -76,7 +76,7 @@ NEODGAInit(ScreenPtr pScreen)
    imlines =  (pScrn->videoRam * 1024) /
       (pScrn->displayWidth * (pScrn->bitsPerPixel >> 3));
 
-   pixlines = (imlines > 1024) ? 1024 : imlines;
+   pixlines = (imlines > 1024 && !pNEO->noAccel)  ? 1024 : imlines;
 
    pMode = firstMode = pScrn->modes;
 
@@ -95,7 +95,8 @@ NEODGAInit(ScreenPtr pScreen)
 
 	currentMode->mode = pMode;
 	currentMode->flags = DGA_CONCURRENT_ACCESS | DGA_PIXMAP_AVAILABLE;
-	currentMode->flags |= DGA_FILL_RECT | DGA_BLIT_RECT;
+	if (!pNEO->noAccel)
+	    currentMode->flags |= (DGA_FILL_RECT | DGA_BLIT_RECT);
 	if(pMode->Flags & V_DBLSCAN)
 	   currentMode->flags |= DGA_DOUBLESCAN;
 	if(pMode->Flags & V_INTERLACE)

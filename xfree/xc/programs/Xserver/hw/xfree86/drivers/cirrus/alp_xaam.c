@@ -1,6 +1,6 @@
 /* (c) Itai Nahshon */
-
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/cirrus/alp_xaam.c,v 1.6 2001/02/15 17:39:27 eich Exp $ */
+#define DEBUG
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/cirrus/alp_xaam.c,v 1.7 2001/10/01 13:44:05 eich Exp $ */
 
 #include "xf86.h"
 #include "xf86_OSproc.h"
@@ -18,23 +18,23 @@
 
 #ifdef DEBUG
 #define minb(p) \
-        ErrorF("minb(%X)\n", p),\
-        MMIO_IN8(pCir->chip.alp->BLTBase, (p))
+        (ErrorF("minb(%X)\n", p),\
+        MMIO_IN8(pCir->chip.alp->BLTBase, (p)))
 #define moutb(p,v) \
-        ErrorF("moutb(%X)\n", p),\
-	MMIO_OUT8(pCir->chip.alp->BLTBase, (p),(v))
+        (ErrorF("moutb(%X, %X)\n", p,v),\
+	MMIO_OUT8(pCir->chip.alp->BLTBase, (p),(v)))
 #define vga_minb(p) \
-        ErrorF("minb(%X)\n", p),\
-        MMIO_IN8(hwp->MMIOBase, (hwp->MMIOOffset + (p)))
+        (ErrorF("minb(%X)\n", p),\
+        MMIO_IN8(hwp->MMIOBase, (hwp->MMIOOffset + (p))))
 #define vga_moutb(p,v) \
-        ErrorF("moutb(%X)\n", p),\
-	MMIO_OUT8(pCir->MMIOBase, (hwp->MMIOOffset + (p)),(v))
+        { ErrorF("moutb(%X, %X)\n", p,v);\
+	MMIO_OUT8(hwp->MMIOBase, (hwp->MMIOOffset + (p)),(v));}
 #define minl(p) \
-        ErrorF("minl(%X)\n", p),\
-        MMIO_IN32(pCir->chip.alp->BLTBase, (p))
+        (ErrorF("minl(%X)\n", p),\
+        MMIO_IN32(pCir->chip.alp->BLTBase, (p)))
 #define moutl(p,v) \
-        ErrorF("moutl(%X)\n", p),\
-	MMIO_OUT32(pCir->chip.alp->BLTBase, (p),(v))
+        (ErrorF("moutl(%X, %X)\n", p,v),\
+	MMIO_OUT32(pCir->chip.alp->BLTBase, (p),(v)))
 #else
 #define minb(p) MMIO_IN8(pCir->chip.alp->BLTBase, (p))
 #define moutb(p,v) MMIO_OUT8(pCir->chip.alp->BLTBase, (p),(v))
@@ -65,9 +65,7 @@ static const CARD8 translated_rop[] =
 };
 
 #define WAIT while(minl(0x40) & pCir->chip.alp->waitMsk){};
-#define WAIT_1 while(minl(0x40) & 0x1){};
-
-#define SetupForRop(rop) moutb(0x1A, translated_rop[rop])
+#define WAIT_1 while((minl(0x40)) & 0x1){};
 
 static void AlpSync(ScrnInfoPtr pScrn)
 {
@@ -88,8 +86,8 @@ AlpSetupForScreenToScreenCopy(ScrnInfoPtr pScrn, int xdir, int ydir, int rop,
 
 	WAIT;
 
-  	SetupForRop(rop); 
-
+	pCir->chip.alp->transRop = translated_rop[rop] << 16;
+	
 #ifdef ALP_DEBUG
 	ErrorF("AlpSetupForScreenToScreenCopy xdir=%d ydir=%d rop=%x planemask=%x trans_color=%x\n",
 			xdir, ydir, rop, planemask, trans_color);
@@ -124,7 +122,7 @@ AlpSubsequentScreenToScreenCopy(ScrnInfoPtr pScrn, int x1, int y1, int x2,
     moutl(0x08, (hh << 16) | ww);
     /* source */
     moutl(0x14, source & 0x3fffff);
-    moutl(0x18, 0x0d0000 | decrement);
+    moutl(0x18, pCir->chip.alp->transRop | decrement);
     
     /* dest */
     write_mem_barrier();
@@ -153,8 +151,6 @@ AlpSetupForSolidFill(ScrnInfoPtr pScrn, int color, int rop,
 
     WAIT;
 
-      SetupForRop(rop); 
-
 #ifdef ALP_DEBUG
     ErrorF("AlpSetupForSolidFill color=%x rop=%x planemask=%x\n",
 	   color, rop, planemask);
@@ -164,7 +160,9 @@ AlpSetupForSolidFill(ScrnInfoPtr pScrn, int color, int rop,
 
     /* Set dest pitch */
     moutl(0x0C, pitch & 0x1fff);
-    moutl(0x18, (0xC0|((pScrn->bitsPerPixel - 8) << 1)) | 0x040d0000);
+    moutl(0x18, (((pScrn->bitsPerPixel - 8) << 1))
+	  | translated_rop[rop] << 16
+	  | 0x040000C0);
 }
 
 static void
@@ -249,6 +247,7 @@ AlpXAAInitMMIO(ScreenPtr pScreen)
 
 	switch (pCir->Chipset) {
 	  case PCI_CHIP_GD5480:
+	  case PCI_CHIP_GD5446:
 	      pCir->chip.alp->BLTBase = pCir->IOBase + 0x100;
 	      break;
 	  default:

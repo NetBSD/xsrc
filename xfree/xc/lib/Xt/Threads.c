@@ -1,4 +1,4 @@
-/* $Xorg: Threads.c,v 1.3 2000/08/17 19:46:19 cpqbld Exp $ */
+/* $Xorg: Threads.c,v 1.4 2001/02/09 02:03:59 xorgcvs Exp $ */
 
 /************************************************************
 Copyright 1993 by Sun Microsystems, Inc. Mountain View, CA.
@@ -32,7 +32,11 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 Copyright 1994, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -49,6 +53,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
+/* $XFree86: xc/lib/Xt/Threads.c,v 3.6 2001/12/14 19:56:31 dawes Exp $ */
 
 #include "IntrinsicI.h"
 
@@ -89,7 +94,7 @@ typedef struct _LockRec {
 static LockPtr process_lock = NULL;
 
 static void
-InitProcessLock()
+InitProcessLock(void)
 {
     if(!process_lock) {
     	process_lock = XtNew(LockRec);
@@ -105,7 +110,7 @@ InitProcessLock()
 }
 
 static void 
-ProcessLock()
+ProcessLock(void)
 {
 #ifdef _XMUTEX_NESTS
     xmutex_lock(process_lock->mutex);
@@ -137,7 +142,7 @@ ProcessLock()
 }
 
 static void 
-ProcessUnlock()
+ProcessUnlock(void)
 {
 #ifdef _XMUTEX_NESTS
     process_lock->level--;
@@ -209,7 +214,9 @@ AppUnlock(app)
     app_lock->level--;
     xmutex_unlock(app_lock->mutex);
 #else
-    xthread_t self = xthread_self();
+    xthread_t self;
+
+    self = xthread_self();
     xmutex_lock(app_lock->mutex);
     assert(xthread_equal(app_lock->holder, self));
     if (app_lock->level != 0) {

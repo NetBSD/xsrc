@@ -22,7 +22,7 @@ RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF
 CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
 CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 **********************************************************************/
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/neomagic/neo_2090.c,v 1.4 2000/09/25 23:57:08 mvojkovi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/neomagic/neo_2090.c,v 1.5 2001/10/01 13:44:07 eich Exp $ */
 
 /*
  * The original Precision Insight driver for
@@ -132,7 +132,7 @@ Neo2090AccelInit(ScreenPtr pScreen)
     infoPtr->SubsequentSolidFillRect = 
 	Neo2090SubsequentSolidFillRect;
 
-    if (nPtr->NeoChipset == PCI_CHIP_NM2093) {
+    if (nPtr->NeoChipset == PCI_CHIP_NM2093 && !nPtr->strangeLockups) {
 	/*
 	 * We do CPUToScreenColorExpand (ab)using the Scanline functions:
 	 * the neo chipsets need byte padding however we can only do dword

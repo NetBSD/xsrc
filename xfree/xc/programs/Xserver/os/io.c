@@ -2,7 +2,11 @@
 
 Copyright 1987, 1989, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -40,7 +44,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $Xorg: io.c,v 1.4 2000/08/17 19:53:41 cpqbld Exp $ */
+/* $Xorg: io.c,v 1.6 2001/02/09 02:05:23 xorgcvs Exp $ */
 /*****************************************************************
  * i/o functions
  *
@@ -48,19 +52,16 @@ SOFTWARE.
  *   InsertFakeRequest, ResetCurrentRequest
  *
  *****************************************************************/
-/* $XFree86: xc/programs/Xserver/os/io.c,v 3.26 2001/04/27 12:51:07 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/os/io.c,v 3.32 2001/12/14 20:00:34 dawes Exp $ */
 
 #ifdef WIN32
 #include <X11/Xwinsock.h>
 #endif
 #include <stdio.h>
 #include <X11/Xtrans.h>
-#ifdef X_NOT_STDC_ENV
-extern int errno;
-#endif
 #include "Xmd.h"
 #include <errno.h>
-#if !defined(AMOEBA) && !defined(MINIX) && !defined(__EMX__) && !defined(WIN32)
+#if !defined(__EMX__) && !defined(WIN32)
 #ifndef Lynx
 #include <sys/uio.h>
 #else
@@ -251,7 +252,7 @@ ReadRequestFromClient(client)
 
     if (!oci)
     {
-	if (oci = FreeInputs)
+	if ((oci = FreeInputs))
 	{
 	    FreeInputs = oci->next;
 	}
@@ -543,7 +544,7 @@ InsertFakeRequest(client, data, count)
     }
     if (!oci)
     {
-	if (oci = FreeInputs)
+	if ((oci = FreeInputs))
 	    FreeInputs = oci->next;
 	else if (!(oci = AllocateInputBuffer()))
 	    return FALSE;
@@ -588,6 +589,7 @@ InsertFakeRequest(client, data, count)
  *
  **********************/
 
+void
 ResetCurrentRequest(client)
     ClientPtr client;
 {
@@ -597,7 +599,6 @@ ResetCurrentRequest(client)
     register xReq *request;
     int gotnow, needed;
 #ifdef LBX
-    Bool part;
     LbxClientPtr lbxClient = LbxClient(client);
 
     if (lbxClient) {
@@ -916,7 +917,7 @@ WriteToClient (who, count, buf)
 
     if (!oco)
     {
-	if (oco = FreeOutputs)
+	if ((oco = FreeOutputs))
 	{
 	    FreeOutputs = oco->next;
 	}
@@ -969,8 +970,10 @@ WriteToClient (who, count, buf)
     if (oco->count + count + padBytes > oco->size)
     {
 	FD_CLR(oc->fd, &OutputPending);
-	CriticalOutputPending = FALSE;
-	NewOutputPending = FALSE;
+	if(!XFD_ANYSET(&OutputPending)) {
+	  CriticalOutputPending = FALSE;
+	  NewOutputPending = FALSE;
+	}
 	return FlushClient(who, oc, buf, count);
     }
 
@@ -1232,7 +1235,7 @@ FreeOsBuffers(oc)
 
     if (AvailableInput == oc)
 	AvailableInput = (OsCommPtr)NULL;
-    if (oci = oc->input)
+    if ((oci = oc->input))
     {
 	if (FreeInputs)
 	{
@@ -1248,7 +1251,7 @@ FreeOsBuffers(oc)
 	    oci->lenLastReq = 0;
 	}
     }
-    if (oco = oc->output)
+    if ((oco = oc->output))
     {
 	if (FreeOutputs)
 	{
@@ -1263,7 +1266,7 @@ FreeOsBuffers(oc)
 	}
     }
 #ifdef LBX
-    if (oci = oc->largereq) {
+    if ((oci = oc->largereq)) {
 	xfree(oci->buffer);
 	xfree(oci);
     }
@@ -1276,13 +1279,13 @@ ResetOsBuffers()
     register ConnectionInputPtr oci;
     register ConnectionOutputPtr oco;
 
-    while (oci = FreeInputs)
+    while ((oci = FreeInputs))
     {
 	FreeInputs = oci->next;
 	xfree(oci->buffer);
 	xfree(oci);
     }
-    while (oco = FreeOutputs)
+    while ((oco = FreeOutputs))
     {
 	FreeOutputs = oco->next;
 	xfree(oco->buf);

@@ -3,7 +3,7 @@
  *
  * accelerator functions for X
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/rendition/accelX.c,v 1.9 2001/05/16 06:48:10 keithp Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/rendition/accelX.c,v 1.10 2001/06/15 21:22:54 dawes Exp $ */
 
 
 
@@ -30,17 +30,17 @@
  * defines
  */
 
-#define waitfifo(size)  do { int c=0; \
-                          while ((c++<0xfffff)&&((verite_in8(iob+FIFOINFREE)&0x1f)<size)) /* if(!(c%0xffff))ErrorF("#1# !0x%x! -- ",verite_in8(iob+FIFOINFREE)) */; \
-                          if (c >= 0xfffff) { \
+#define waitfifo(size)  do { int _c=0; \
+                          while ((_c++<0xfffff)&&((verite_in8(iob+FIFOINFREE)&0x1f)<size)) /* if(!(_c%0xffff))ErrorF("#1# !0x%x! -- ",verite_in8(iob+FIFOINFREE)) */; \
+                          if (_c >= 0xfffff) { \
                               ErrorF("RENDITION: Input fifo full (1) FIFO in == %d\n",verite_in8(iob+FIFOINFREE)&0x1f); \
                               return; \
                           } \
                         } while (0)
 
-#define waitfifo2(size, rv) do { int c=0; \
-                          while ((c++<0xfffff)&&((verite_in8(iob+FIFOINFREE)&0x1f)<size)) /* if(!(c%0xffff))ErrorF("#2# !0x%x! -- ",verite_in8(iob+FIFOINFREE)) */; \
-                          if (c >= 0xfffff) { \
+#define waitfifo2(size, rv) do { int _c=0; \
+                          while ((_c++<0xfffff)&&((verite_in8(iob+FIFOINFREE)&0x1f)<size)) /* if(!(_c%0xffff))ErrorF("#2# !0x%x! -- ",verite_in8(iob+FIFOINFREE)) */; \
+                          if (_c >= 0xfffff) { \
                               ErrorF("RENDITION: Input fifo full (2) FIFO in ==%d\n",verite_in8(iob+FIFOINFREE)&0x1f); \
                               RENDITIONAccelNone(pScreenInfo); \
                               pRendition->board.accel=0; \

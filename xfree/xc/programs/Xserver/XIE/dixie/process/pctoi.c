@@ -1,11 +1,15 @@
-/* $Xorg: pctoi.c,v 1.3 2000/08/17 19:47:27 cpqbld Exp $ */
+/* $Xorg: pctoi.c,v 1.4 2001/02/09 02:04:21 xorgcvs Exp $ */
 /* AGE Logic - Oct 15 1995 - Larry Hare */
 /**** module pctoi.c ****/
 /******************************************************************************
 
 Copyright 1993, 1994, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -67,7 +71,7 @@ terms and conditions:
 	Dean Verheiden && Robert NC Shelley -- AGE Logic, Inc. June 1993
   
 *****************************************************************************/
-/* $XFree86: xc/programs/Xserver/XIE/dixie/process/pctoi.c,v 3.5 2001/01/17 22:12:52 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/XIE/dixie/process/pctoi.c,v 3.6 2001/12/14 19:58:05 dawes Exp $ */
 
 #define _XIEC_PCTOI
 #define _XIEC_PCI

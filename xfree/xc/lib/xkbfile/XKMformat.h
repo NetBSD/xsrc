@@ -24,12 +24,14 @@
  THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
  ********************************************************/
+/* $XFree86: xc/lib/xkbfile/XKMformat.h,v 1.2 2001/08/01 00:44:44 tsi Exp $ */
+
 #ifndef _XKMFORMAT_H_
 #define	_XKMFORMAT_H_ 1
 
 #include <X11/extensions/XKB.h>
 #include <X11/extensions/XKBproto.h>
-#include "XKM.h"
+#include <X11/extensions/XKM.h>
 
 typedef	struct _xkmFileInfo {
 	CARD8		type;

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/savage/savage_accel.c,v 1.10 2001/05/18 23:35:32 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/savage/savage_accel.c,v 1.14 2001/12/13 18:01:50 eich Exp $ */
 
 /*
  *
@@ -261,6 +261,7 @@ SavageInitialize2DEngine(ScrnInfoPtr pScrn)
 
     case S3_SAVAGE4:
     case S3_PROSAVAGE:
+    case S3_SUPERSAVAGE:
 	/* Disable BCI */
 	OUTREG(0x48C18, INREG(0x48C18) & 0x3FF0);
 	/* Program shadow status update */
@@ -435,7 +436,7 @@ SavageInitAccel(ScreenPtr pScreen)
     xaaptr->Mono8x8PatternFillFlags = 0
 	| HARDWARE_PATTERN_PROGRAMMED_BITS 
 	| HARDWARE_PATTERN_SCREEN_ORIGIN
-	| BIT_ORDER_IN_BYTE_LSBFIRST
+	| BIT_ORDER_IN_BYTE_MSBFIRST
 	;
     if( psav->Chipset == S3_SAVAGE4 )
 	xaaptr->Mono8x8PatternFillFlags |= NO_TRANSPARENCY;
@@ -508,10 +509,8 @@ SavageInitAccel(ScreenPtr pScreen)
 	| SCANLINE_PAD_DWORD
 	| BIT_ORDER_IN_BYTE_MSBFIRST
 	| LEFT_EDGE_CLIPPING
+	| ROP_NEEDS_SOURCE
 	;
-
-    if( psav->Chipset == S3_SAVAGE4 )
-	xaaptr->ScanlineCPUToScreenColorExpandFillFlags |= ROP_NEEDS_SOURCE;
 
     xaaptr->SetupForScanlineCPUToScreenColorExpandFill =
             SavageSetupForCPUToScreenColorExpandFill;
@@ -913,10 +912,10 @@ SavageSetupForMono8x8PatternFill(
     mix = XAAHelpPatternROP( pScrn, &fg, &bg, planemask, &rop );
 
     cmd = BCI_CMD_RECT | BCI_CMD_RECT_XP | BCI_CMD_RECT_YP
-        | BCI_CMD_DEST_GBD | BCI_CMD_PAT_MONO;
+        | BCI_CMD_DEST_GBD;
 
     if( mix & ROP_PAT )
-	cmd |= BCI_CMD_SEND_COLOR;
+	cmd |= BCI_CMD_SEND_COLOR | BCI_CMD_PAT_MONO;
 
     if (bg == -1)
 	cmd |= BCI_CMD_PAT_TRANSPARENT;
@@ -959,8 +958,11 @@ SavageSubsequentMono8x8PatternFillRect(
 	BCI_SEND(psav->SavedBgColor);
     BCI_SEND(BCI_X_Y(x, y));
     BCI_SEND(BCI_W_H(w, h));
-    BCI_SEND(pattern0);
-    BCI_SEND(pattern1);
+    if( psav->SavedBciCmd & BCI_CMD_PAT_MONO )
+    {
+	BCI_SEND(pattern0);
+	BCI_SEND(pattern1);
+    }
 }
 
 
@@ -1163,6 +1165,7 @@ static void SavageDisableClipping( ScrnInfoPtr pScrn )
 
 /* Routines for debugging. */
 
+
 unsigned long
 writedw( unsigned long addr, unsigned long value )
 {
@@ -1208,11 +1211,11 @@ writescan( unsigned long scan, unsigned long color )
 		*videobuffer++ = color; 
 		break;
 	    case 16: 
-		*(unsigned short*)videobuffer = color;
+		*(CARD16 *)videobuffer = color;
 		videobuffer += 2;
 		break;
 	    case 32:
-		*(unsigned long*)videobuffer = color;
+		*(CARD32 *)videobuffer = color;
 		videobuffer += 4;
 		break;
 	}

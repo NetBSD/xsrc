@@ -1,4 +1,4 @@
-/* $Xorg: FSOpenServ.c,v 1.3 2000/08/17 19:44:04 cpqbld Exp $ */
+/* $Xorg: FSOpenServ.c,v 1.4 2001/02/09 02:03:25 xorgcvs Exp $ */
 
 /* @(#)FSOpenServ.c	4.1	91/05/02
  * Copyright 1990 Network Computing Devices;
@@ -24,13 +24,17 @@
  * ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS 
  * SOFTWARE.
  */
-/* $XFree86: xc/lib/FS/FSOpenServ.c,v 1.4 2001/01/17 19:41:28 dawes Exp $ */
+/* $XFree86: xc/lib/FS/FSOpenServ.c,v 1.6 2001/12/14 19:53:33 dawes Exp $ */
 
 /*
 
 Copyright 1987, 1994, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -115,9 +119,6 @@ FSOpenServer(server)
     int         altlen;
     char       *vendor_string;
     long        setuplength;
-#ifdef X_NOT_STDC_ENV
-    extern char *getenv();
-#endif
 
     if (server == NULL || *server == '\0') {
 	if ((server = getenv("FONTSERVER")) == NULL) {

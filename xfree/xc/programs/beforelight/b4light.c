@@ -26,7 +26,7 @@ in this Software without prior written authorization from the X Consortium.
  *
  * Author:  Keith Packard, MIT X Consortium
  */
-/* $XFree86: xc/programs/beforelight/b4light.c,v 3.4 1999/02/01 11:56:04 dawes Exp $ */
+/* $XFree86: xc/programs/beforelight/b4light.c,v 3.5 2001/07/25 15:05:12 dawes Exp $ */
 
 #include <X11/Xatom.h>
 #include <X11/Intrinsic.h>
@@ -291,7 +291,7 @@ main(int argc, char *argv[])
     Atom		    kill_type;
     int			    i;
 
-#if !defined(X_NOT_POSIX) || ((__STDC__) && !defined(X_NOT_STDC_ENV))
+#if !defined(X_NOT_POSIX)
     srand((int)time((time_t *)NULL));
 #else
     srand((int)time((int *)NULL));

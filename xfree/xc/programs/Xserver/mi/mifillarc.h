@@ -1,9 +1,13 @@
-/* $XFree86: xc/programs/Xserver/mi/mifillarc.h,v 3.4 2001/01/17 22:37:06 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/mi/mifillarc.h,v 3.7 2001/12/14 20:00:22 dawes Exp $ */
 /************************************************************
 
 Copyright 1989, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -21,7 +25,10 @@ in this Software without prior written authorization from The Open Group.
 
 ********************************************************/
 
-/* $Xorg: mifillarc.h,v 1.3 2000/08/17 19:53:37 cpqbld Exp $ */
+/* $Xorg: mifillarc.h,v 1.4 2001/02/09 02:05:20 xorgcvs Exp $ */
+
+#ifndef __MIFILLARC_H__
+#define __MIFILLARC_H__
 
 #define FULLCIRCLE (360 * 64)
 
@@ -172,34 +179,25 @@ typedef struct _miArcSlice {
 			       ((slw > 1) || (ine != inxk)))
 
 extern int miFreeArcCache(
-#if NeedFunctionPrototypes
     pointer /*data*/,
     XID /*id*/
-#endif
 );
 
 extern struct finalSpan *realAllocSpan(
-#if NeedFunctionPrototypes
     void
-#endif
 );
 
 extern void miFillArcSetup(
-#if NeedFunctionPrototypes
     xArc * /*arc*/,
     miFillArcRec * /*info*/
-#endif
 );
 
 extern void miFillArcDSetup(
-#if NeedFunctionPrototypes
     xArc * /*arc*/,
     miFillArcDRec * /*info*/
-#endif
 );
 
 extern void miEllipseAngleToSlope(
-#if NeedFunctionPrototypes
     int /*angle*/,
     int /*width*/,
     int /*height*/,
@@ -207,14 +205,12 @@ extern void miEllipseAngleToSlope(
     int * /*dyp*/,
     double * /*d_dxp*/,
     double * /*d_dyp*/
-#endif
 );
 
 extern void miFillArcSliceSetup(
-#if NeedFunctionPrototypes
     xArc * /*arc*/,
     miArcSliceRec * /*slice*/,
     GCPtr /*pGC*/
-#endif
 );
 
+#endif /* __MIFILLARC_H__ */

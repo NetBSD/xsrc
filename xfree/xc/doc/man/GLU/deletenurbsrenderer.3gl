@@ -31,4 +31,4 @@ Specifies the NURBS object to be destroyed.
 Once 
 \%\f3gluDeleteNurbsRenderer\fP has been called, \f2nurb\fP cannot be used again.
 .SH SEE ALSO
-\%\f3gluNewNurbsRenderer\fP
+\%\f3gluNewNurbsRenderer(3G)\fP

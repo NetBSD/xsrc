@@ -1,44 +1,60 @@
                         Information for newport Users
 
-                               Guido Guenther
+                                Guido Günther
 
-                                1 August 2000
+                               16 January 2002
 
 1.  Supported Hardware
 
 This is an unaccelerated driver for the SGI Indy's newport cards. Both the
-8bit and 24bit versions are tested and working with some limitations(see
-below).  The 24bit newport additionally works in 8bit mode only.
+8bit and 24bit versions are tested and working.
 
-2.  Notes
+2.  Features
+
+   o  support for 8 and 24 bit pixel depths
+
+3.  Notes
 
    o X -configure does not generate a XF86Config file
 
-3.  Configuration
+   o Restoration of the console fails on some variants of the newport (Cmap
+     revision C)
 
-The following Section "Device" options are supported by the newport driver:
+   o There's only a 1280x1024 mode
 
-   o Option "bitplanes" "x" Gives the maximum number of bitplanes your card
-     supports (8 or 24).
+4.  Configuration
 
-4.  Authors
+The driver auto-detects all device information necessary to initialize the
+card.  The only lines you need in the "Device" section of your XF86Config
+file are:
 
-   o Guido Guenther <guido.guenther@gmx.net>
+            Section "Device"
+                Identifier "SGI newport"
+                Driver     "newport"
+            EndSection
 
-5.  Acknowledgements
+However, if you have problems with auto-detection, you can specify:
+
+   o bitplanes - number of physical bitplanes (8 or 24)
+
+5.  Authors
+
+   o Guido Guenther <agx@sigxcpu.org>
+
+6.  Acknowledgements
 
    o Gleb O. Raiko <raiko@niisi.msk.ru> for getting the beast to build
 
    o Ralf Baechle <ralf@oss.sgi.com> for his patience...
 
-   o Ulf Carlsson <ulfc@calypso.engr.sgi.com> for comments and the dynamic
-     loader code
+   o Ulf Carlsson <ulfc@calypso.engr.sgi.com> for comments and elf loader
+     code
 
-   o Nina A. Podolskaya <nap@niisi.msk.ru> for dynamic loader code
+   o Nina A. Podolskaya <nap@niisi.msk.ru> for elf loader code
 
    o all the guys who wrote the newport_con linux kernel code
 
-     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/newport.sgml,v 1.2 2000/12/12 18:54:29 dawes Exp $
+     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/newport.sgml,v 1.4 2002/01/16 18:21:04 dawes Exp $
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.newport,v 1.2.4.1 2001/06/01 18:26:45 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.newport,v 1.5 2002/01/16 20:51:03 dawes Exp $

@@ -1,9 +1,13 @@
 /*
- * $Xorg: cfballpriv.c,v 1.3 2000/08/17 19:48:13 cpqbld Exp $
+ * $Xorg: cfballpriv.c,v 1.4 2001/02/09 02:04:37 xorgcvs Exp $
  *
 Copyright 1991, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -21,7 +25,7 @@ in this Software without prior written authorization from The Open Group.
  *
  * Author:  Keith Packard, MIT X Consortium
  */
-/* $XFree86: xc/programs/Xserver/cfb/cfballpriv.c,v 1.11 2001/01/30 22:06:15 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/cfb/cfballpriv.c,v 1.12 2001/12/14 19:59:21 dawes Exp $ */
 
 #include "X.h"
 #include "Xmd.h"

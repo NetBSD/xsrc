@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/r128.h,v 1.13 2001/05/15 10:19:36 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/r128.h,v 1.17 2001/10/02 19:44:01 herrb Exp $ */
 /*
  * Copyright 1999, 2000 ATI Technologies Inc., Markham, Ontario,
  *                      Precision Insight, Inc., Cedar Park, Texas, and
@@ -46,6 +46,9 @@
 				/* XAA and Cursor Support */
 #include "xaa.h"
 #include "xf86Cursor.h"
+
+				/* DDC support */
+#include "xf86DDC.h"
 
 				/* Xv support */
 #include "xf86xv.h"
@@ -143,6 +146,7 @@ typedef struct {
     CARD32     fp_vert_stretch;
     CARD32     lvds_gen_cntl;
     CARD32     tmds_crc;
+    CARD32     tmds_transmitter_cntl;
 
 				/* Computed values for PLL */
     CARD32     dot_clock_freq;
@@ -211,6 +215,12 @@ typedef struct {
 				/* Computed values for FPs */
     int               PanelXRes;
     int               PanelYRes;
+    int               HOverPlus;
+    int               HSyncWidth;
+    int               HBlank;
+    int               VOverPlus;
+    int               VSyncWidth;
+    int               VBlank;
     int               PanelPwrDly;
 
     R128PLLRec        pll;
@@ -228,6 +238,12 @@ typedef struct {
     xf86CursorInfoPtr cursor;
     unsigned long     cursor_start;
     unsigned long     cursor_end;
+
+    /*
+     * XAAForceTransBlit is used to change the behavior of the XAA
+     * SetupForScreenToScreenCopy function, to make it DGA-friendly.
+     */
+    Bool              XAAForceTransBlit;
 
     int               fifo_slots;   /* Free slots in the FIFO (64 max)       */
     int               pix24bpp;     /* Depth of pixmap for 24bpp framebuffer */
@@ -257,12 +273,14 @@ typedef struct {
     int               numDGAModes;
     Bool              DGAactive;
     int               DGAViewportStatus;
+    DGAFunctionRec    DGAFuncs;
 
     R128FBLayout      CurrentLayout;
 #ifdef XF86DRI
     Bool              directRenderingEnabled;
     DRIInfoPtr        pDRIInfo;
     int               drmFD;
+    drmContext        drmCtx;
     int               numVisualConfigs;
     __GLXvisualConfig *pVisualConfigs;
     R128ConfigPrivPtr pVisualConfigsPriv;
@@ -288,7 +306,6 @@ typedef struct {
     int               CCEFifoSize;      /* Size of the CCE command FIFO */
     Bool              CCESecure;        /* CCE security enabled */
     int               CCEusecTimeout;   /* CCE timeout in usecs */
-    Bool              CCE2D;            /* CCE is used for X server 2D prims */
 
 				/* CCE ring buffer data */
     unsigned long     ringStart;        /* Offset into AGP space */
@@ -320,6 +337,10 @@ typedef struct {
     unsigned char     *agpTex;          /* Map */
     int               log2AGPTexGran;
 
+				/* CCE 2D accleration */
+    drmBufPtr         indirectBuffer;
+    int               indirectStart;
+
 				/* DRI screen private data */
     int               fbX;
     int               fbY;
@@ -344,6 +365,10 @@ typedef struct {
     CARD32            sc_right;
     CARD32            sc_top;
     CARD32            sc_bottom;
+
+    CARD32            re_top_left;
+    CARD32            re_width_height;
+
     CARD32            aux_sc_cntl;
 #endif
 
@@ -352,6 +377,12 @@ typedef struct {
     int               videoKey;
     Bool              showCache;
     OptionInfoPtr     Options;
+
+    Bool              isDFP;
+    Bool              isPro2;
+    I2CBusPtr         pI2CBus;
+    CARD32            DDCReg;
+
 } R128InfoRec, *R128InfoPtr;
 
 #define R128WaitForFifo(pScrn, entries)                                      \
@@ -389,7 +420,6 @@ do {									\
 	xf86DrvMsg(pScrn->scrnIndex, X_ERROR,				\
 		   "%s: CCE start %d\n", __FUNCTION__, _ret);		\
     }									\
-    info->CCEInUse = TRUE;						\
 } while (0)
 
 #define R128CCE_STOP(pScrn, info)					\
@@ -399,7 +429,6 @@ do {									\
 	xf86DrvMsg(pScrn->scrnIndex, X_ERROR,				\
 		   "%s: CCE stop %d\n", __FUNCTION__, _ret);		\
     }									\
-    info->CCEInUse = FALSE;						\
 } while (0)
 
 #define R128CCE_RESET(pScrn, info)					\
@@ -412,29 +441,102 @@ do {									\
 		       "%s: CCE reset %d\n", __FUNCTION__, _ret);	\
 	}								\
     }									\
-    info->CCEInUse = FALSE;						\
 } while (0)
 
-#define R128CCE_TO_MMIO(pScrn, info)					\
-do {									\
-    if (info->CCEInUse) {						\
-	R128CCE_STOP(pScrn, info);					\
-									\
-	R128WaitForFifo(pScrn, 5);					\
-	OUTREG(R128_SC_LEFT,     info->sc_left);			\
-	OUTREG(R128_SC_RIGHT,    info->sc_right);			\
-	OUTREG(R128_SC_TOP,      info->sc_top);				\
-	OUTREG(R128_SC_BOTTOM,   info->sc_bottom);			\
-	OUTREG(R128_AUX_SC_CNTL, info->aux_sc_cntl);			\
-    }									\
-} while (0)
-
-#define R128MMIO_TO_CCE(pScrn, info)					\
-do {									\
-    if (!info->CCEInUse) {						\
-	R128CCE_START(pScrn, info);					\
-    }									\
-} while (0)
 #endif
+
+#ifdef XF86DRI
+extern drmBufPtr   R128CCEGetBuffer(ScrnInfoPtr pScrn);
+#endif
+extern void        R128CCEFlushIndirect(ScrnInfoPtr pScrn);
+extern void        R128CCEReleaseIndirect(ScrnInfoPtr pScrn);
+extern void        R128CCEWaitForIdle(ScrnInfoPtr pScrn);
+
+
+#define CCE_PACKET0( reg, n )						\
+	(R128_CCE_PACKET0 | ((n) << 16) | ((reg) >> 2))
+#define CCE_PACKET1( reg0, reg1 )					\
+	(R128_CCE_PACKET1 | (((reg1) >> 2) << 11) | ((reg0) >> 2))
+#define CCE_PACKET2()							\
+	(R128_CCE_PACKET2)
+#define CCE_PACKET3( pkt, n )						\
+	(R128_CCE_PACKET3 | (pkt) | ((n) << 16))
+
+
+#define R128_VERBOSE	0
+
+#define RING_LOCALS	CARD32 *__head; int __count;
+#define RING_THRESHOLD	256
+
+#define R128CCE_REFRESH(pScrn, info)					\
+do {									\
+   if ( R128_VERBOSE ) {						\
+      xf86DrvMsg( pScrn->scrnIndex, X_INFO, "REFRESH( %d ) in %s\n",	\
+		  !info->CCEInUse , __FUNCTION__ );			\
+   }									\
+   if ( !info->CCEInUse ) {						\
+      R128CCEWaitForIdle(pScrn);       					\
+      BEGIN_RING( 6 );							\
+      OUT_RING_REG( R128_RE_TOP_LEFT,     info->re_top_left );		\
+      OUT_RING_REG( R128_RE_WIDTH_HEIGHT, info->re_width_height );	\
+      OUT_RING_REG( R128_AUX_SC_CNTL,     info->aux_sc_cntl );		\
+      ADVANCE_RING();							\
+      info->CCEInUse = TRUE;						\
+   }									\
+} while (0)
+
+#define BEGIN_RING( n ) do {						\
+   if ( R128_VERBOSE ) {						\
+      xf86DrvMsg( pScrn->scrnIndex, X_INFO,				\
+		  "BEGIN_RING( %d ) in %s\n", n, __FUNCTION__ );	\
+   }									\
+   if ( !info->indirectBuffer ) {					\
+      info->indirectBuffer = R128CCEGetBuffer( pScrn );		\
+      info->indirectStart = 0;						\
+   } else if ( info->indirectBuffer->used - info->indirectStart +	\
+	       (n) * (int)sizeof(CARD32) > RING_THRESHOLD ) {		\
+      R128CCEFlushIndirect( pScrn );					\
+   }									\
+   __head = (pointer)((char *)info->indirectBuffer->address +		\
+		       info->indirectBuffer->used);			\
+   __count = 0;								\
+} while (0)
+
+#define ADVANCE_RING() do {						\
+   if ( R128_VERBOSE ) {						\
+      xf86DrvMsg( pScrn->scrnIndex, X_INFO,				\
+		  "ADVANCE_RING() used: %d+%d=%d/%d\n",			\
+		  info->indirectBuffer->used - info->indirectStart,	\
+		  __count * sizeof(CARD32),				\
+		  info->indirectBuffer->used - info->indirectStart +	\
+		  __count * sizeof(CARD32),				\
+		  RING_THRESHOLD );					\
+   }									\
+   info->indirectBuffer->used += __count * (int)sizeof(CARD32);		\
+} while (0)
+
+#define OUT_RING( x ) do {						\
+   if ( R128_VERBOSE ) {						\
+      xf86DrvMsg( pScrn->scrnIndex, X_INFO,				\
+		  "   OUT_RING( 0x%08x )\n", (unsigned int)(x) );	\
+   }									\
+   MMIO_OUT32(&__head[__count++], 0, (x));				\
+} while (0)
+
+#define OUT_RING_REG( reg, val )					\
+do {									\
+   OUT_RING( CCE_PACKET0( reg, 0 ) );					\
+   OUT_RING( val );							\
+} while (0)
+
+#define FLUSH_RING()							\
+do {									\
+   if ( R128_VERBOSE )							\
+      xf86DrvMsg( pScrn->scrnIndex, X_INFO,				\
+		  "FLUSH_RING in %s\n", __FUNCTION__ );			\
+   if ( info->indirectBuffer ) {					\
+      R128CCEFlushIndirect( pScrn );					\
+   }									\
+} while (0)
 
 #endif

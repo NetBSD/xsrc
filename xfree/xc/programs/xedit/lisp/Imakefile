@@ -1,0 +1,77 @@
+XCOMM $XFree86: xc/programs/xedit/lisp/Imakefile,v 1.10 2002/01/04 19:24:10 paulo Exp $
+
+#include "lisp.cf"
+#include "lisp.rules"
+
+#define DoNormalLib	YES
+#define DoSharedLib	NO
+#define DoExtraLib	NO
+#define DoDebugLib	NO
+#define DoProfileLib	NO
+#define LibName		lisp
+#define LibInstall	NO
+#define LibHeaders	NO
+
+#if !HasSnprintf
+SNPRINTF_DEFS  = -DNEED_SNPRINTF
+#endif
+
+#if !HasSnprintf
+  MISC_INCLUDES = -I$(LIBSRC)/misc
+#endif
+
+#define IHaveSubdirs
+#define PassCDebugFlags CDEBUGFLAGS="$(CDEBUGFLAGS)"
+
+LIB		= LibName
+SAMP		= lsp
+SAMPSRC		= lsp.c
+SAMPOBJ		= lsp.o
+
+SUBDIRS		= modules
+
+SRCS		=\
+		core.c \
+		debugger.c \
+		format.c \
+		helper.c \
+		lisp.c \
+		string.c \
+		struct.c \
+		require.c \
+		time.c
+OBJS		=\
+		core.o \
+		debugger.o \
+		format.o \
+		helper.o \
+		lisp.o \
+		string.o \
+		struct.o \
+		require.o \
+		time.o
+
+#include <Library.tmpl>
+
+AllTarget(ProgramTargetName($(SAMP)))
+
+#if BuildSharedLispModules
+CCOPTIONS	= -fpic
+DLLIB		= DlLibrary
+LOCAL_LDFLAGS	= -Xlinker -E
+DEFINES		= -DSHARED_MODULES -DLISPDIR='"$(LISPDIR)"' $(SNPRINTF_DEFS)
+#else
+DEFINES		= -DLISPDIR='"$(LISPDIR)"' $(SNPRINTF_DEFS)
+#endif
+
+       INCLUDES = $(MISC_INCLUDES)
+LOCAL_LIBRARIES = -L. -llisp -lm $(DLLIB)
+
+NormalProgramTarget($(SAMP),$(SAMPOBJ),,$(LOCAL_LIBRARIES),)
+
+DependTarget()
+
+#ifdef IHaveSubdirs
+MakeSubdirs($(SUBDIRS))
+DependSubdirs($(SUBDIRS))
+#endif

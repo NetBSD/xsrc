@@ -4,14 +4,14 @@
 
 
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/chips/util/mRegs.c,v 1.5 2000/10/23 12:10:13 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/chips/util/mRegs.c,v 1.6 2001/11/16 21:13:34 tsi Exp $ */
 
 #ifdef __NetBSD__
 #  include <sys/types.h>
 #  include <machine/pio.h>
 #  include <machine/sysarch.h>
 #else
-#  ifdef SVR4 
+#  if defined(SVR4) && defined(i386)
 #    include <sys/types.h>
 #    ifdef NCR
        /* broken NCR <sys/sysi86.h> */
@@ -42,7 +42,7 @@
 #  define SET_IOPL() i386_iopl(3)
 #  define RESET_IOPL() i386_iopl(0)
 #else
-#  ifdef SVR4
+#  if defined(SVR4) && defined(i386)
 #    ifndef SI86IOPL
 #      define SET_IOPL() sysi86(SI86V86,V86SC_IOPL,PS_IOPL)
 #      define RESET_IOPL() sysi86(SI86V86,V86SC_IOPL,0)
@@ -51,12 +51,12 @@
 #      define RESET_IOPL() sysi86(SI86IOPL,0)
 #    endif
 #  else
-#    ifndef Lynx
+#    ifdef linux
 #      define SET_IOPL() iopl(3)
 #      define RESET_IOPL() iopl(0)
 #    else
-#      define SET_IOPL() 0
-#      define RESET_IOPL() 0
+#      define SET_IOPL() (void)0
+#      define RESET_IOPL() (void)0
 #    endif
 #  endif
 #endif
@@ -65,10 +65,10 @@ int hex2int(char* str);
 
 int main(int argc, char** argv)
 {
-    int i, value, index;
+    int i, value, index = 0;
     char c, cport;
     char* str;
-    unsigned int port, port1;
+    unsigned int port, port1 = 0;
     int query = 0;
 
     if(argc < 2) {
@@ -86,8 +86,7 @@ int main(int argc, char** argv)
 	printf("     vv is in hexadecimal or '?' for query\n");
     }    
 
-    if(SET_IOPL())
-	return -1;
+    SET_IOPL();
 
     for(i = 1; i < argc; i++){
 	value = 0;
@@ -146,7 +145,7 @@ int main(int argc, char** argv)
 	    break;
 	}
 	if ((cport != 'Z') && (cport != 'Y')) index = inb(port);
-	while (c = *str++){
+	while ((c = *str++)) {
 	    if (c == '?') {
 	      query = 1;
 	    }

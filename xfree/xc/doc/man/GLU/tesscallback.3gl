@@ -287,8 +287,8 @@ gluTessEndPolygon(tobj);
 Typically, the tessellated polygon should be stored in a display list so that
 it does not need to be retessellated every time it is rendered.
 .SH SEE ALSO
-\f3glBegin\fP, \f3glEdgeFlag\fP, \f3glVertex\fP, \%\f3gluNewTess\fP,
-\%\f3gluErrorString\fP, \%\f3gluTessVertex\fP, 
-\%\f3gluTessBeginPolygon\fP,
-\%\f3gluTessBeginContour\fP, \%\f3gluTessProperty\fP, \%\f3gluTessNormal\fP 
+\f3glBegin(3G)\fP, \f3glEdgeFlag(3G)\fP, \f3glVertex(3G)\fP, \%\f3gluNewTess(3G)\fP,
+\%\f3gluErrorString(3G)\fP, \%\f3gluTessVertex(3G)\fP, 
+\%\f3gluTessBeginPolygon(3G)\fP,
+\%\f3gluTessBeginContour(3G)\fP, \%\f3gluTessProperty(3G)\fP, \%\f3gluTessNormal(3G)\fP 
 

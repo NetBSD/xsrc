@@ -1,9 +1,13 @@
-/* $Xorg: PsWindow.c,v 1.3 2000/08/17 19:48:11 cpqbld Exp $ */
+/* $Xorg: PsWindow.c,v 1.4 2001/02/09 02:04:36 xorgcvs Exp $ */
 /*
 
 Copyright 1996, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -69,7 +73,7 @@ in this Software without prior written authorization from The Open Group.
 **    *********************************************************
 ** 
 ********************************************************************/
-/* $XFree86: xc/programs/Xserver/Xprint/ps/PsWindow.c,v 1.9 2001/01/17 22:36:32 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/Xprint/ps/PsWindow.c,v 1.12 2001/12/19 21:55:59 dawes Exp $ */
 
 #include <stdio.h>
 #include <string.h>
@@ -83,8 +87,7 @@ in this Software without prior written authorization from The Open Group.
 
 #include "Ps.h"
 
-extern WindowPtr *WindowTable;
-
+#if 0
 /*
  * The following list of strings defines the properties which will be
  * placed on the screen's root window if the property was defined in
@@ -101,7 +104,7 @@ static char *propStrings[] = {
 	DT_PRINT_PAGE_COMMAND,
 	(char *)NULL
 };
-
+#endif
 
 /*
  * PsCreateWindow - watch for the creation of the root window.
@@ -216,7 +219,6 @@ PsPaintWindow(
   RegionPtr pRegion,
   int       what)
 {
-  int       status;
   WindowPtr pRoot;
 
 #define FUNCTION        0

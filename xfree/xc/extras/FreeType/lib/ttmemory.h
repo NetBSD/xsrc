@@ -25,7 +25,7 @@
  *    'legacy' applications (all four test programs have been updated).
  *
  ******************************************************************/
-/* $XFree86: xc/extras/FreeType/lib/ttmemory.h,v 1.4 2000/02/13 05:03:53 dawes Exp $ */
+/* $XFree86: xc/extras/FreeType/lib/ttmemory.h,v 1.5 2001/10/28 03:32:05 tsi Exp $ */
 
 #ifndef TTMEMORY_H
 #define TTMEMORY_H
@@ -114,9 +114,12 @@
 
 #define Init_FontPool( x, y )  while( 0 ) { }
 
+#if !defined(FTXSBIT_H)
 
   LOCAL_DEF TT_Error  TTMemory_Init( void );
   LOCAL_DEF TT_Error  TTMemory_Done( void );
+
+#endif /* FTXSBIT_H */
 
 
 #ifdef __cplusplus

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/loader/loadmod.c,v 1.64 2001/03/27 23:42:17 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/loader/loadmod.c,v 1.66 2001/12/17 20:00:45 dawes Exp $ */
 
 /*
  *
@@ -29,9 +29,6 @@
 /* For stat() and related stuff */
 #define NO_OSLIB_PROTOTYPES
 #include "xf86_OSlib.h"
-#if defined(SVR4)
-#include <sys/stat.h>
-#endif
 #define LOADERDECLARATIONS
 #include "loaderProcs.h"
 #include "misc.h"
@@ -1198,7 +1195,7 @@ LoaderErrorMsg(const char *name, const char *modname, int errmaj, int errmin)
 		msg = "module does not exist";
 		break;
 	case LDR_NOSUBENT:
-		msg = "submodule could not be loaded";
+		msg = "a required submodule could not be loaded";
 		break;
 	case LDR_NOSPACE:
 		msg = "too many modules";

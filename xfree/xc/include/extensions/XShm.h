@@ -1,9 +1,13 @@
-/* $XFree86: xc/include/extensions/XShm.h,v 1.5 2001/01/17 17:53:19 dawes Exp $ */
+/* $XFree86: xc/include/extensions/XShm.h,v 1.8 2001/12/14 19:53:28 dawes Exp $ */
 /************************************************************
 
 Copyright 1989, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -23,7 +27,7 @@ in this Software without prior written authorization from The Open Group.
 
 /* THIS IS NOT AN X CONSORTIUM STANDARD OR AN X PROJECT TEAM SPECIFICATION */
 
-/* $Xorg: XShm.h,v 1.3 2000/08/18 04:05:45 coskrey Exp $ */
+/* $Xorg: XShm.h,v 1.4 2001/02/09 02:03:24 xorgcvs Exp $ */
 
 #ifndef _XSHM_H_
 #define _XSHM_H_
@@ -70,6 +74,12 @@ _XFUNCPROTOBEGIN
 Bool XShmQueryExtension(
 #if NeedFunctionPrototypes
     Display*            /* dpy */
+#endif
+);
+
+int XShmGetEventBase(
+#if NeedFunctionPrototypes
+    Display* 		/* dpy */
 #endif
 );
 
@@ -155,6 +165,16 @@ Pixmap XShmCreatePixmap(
 );
 
 _XFUNCPROTOEND
+
+#else /* _XSHM_SERVER_ */
+
+#include "screenint.h"
+
+extern void ShmRegisterFbFuncs(
+#if NeedFunctionPrototypes
+    ScreenPtr /* pScreen */
+#endif
+);
 
 #endif
 

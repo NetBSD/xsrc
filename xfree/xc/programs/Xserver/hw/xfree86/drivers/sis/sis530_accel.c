@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sis/sis530_accel.c,v 1.2 2001/04/19 12:40:33 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sis/sis530_accel.c,v 1.3 2002/01/10 19:05:43 eich Exp $ */
 
 /*
  *      Acceleration for SiS530 SiS620.
@@ -63,7 +63,8 @@ SiS530AccelInit(ScreenPtr pScreen)
     ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
     SISPtr pSiS = SISPTR(pScrn);
     BoxRec AvailFBArea;
-    int offset=0;
+    int offset = 0;
+    int topFB;
     int OffscreenAvailable, BLTPatternOffscreenSize;
 
     pSiS->AccelInfoPtr = infoPtr = XAACreateInfoRec();
@@ -124,15 +125,22 @@ SiS530AccelInit(ScreenPtr pScreen)
     infoPtr->SubsequentScreenToScreenColorExpandFill = 
                         SiS2SubsequentScreenToScreenColorExpandFill;
 #endif
-
-    if (pSiS->TurboQueue) offset = 32768;
-    if (pSiS->HWCursor) offset = 16384;
-    if (pSiS->HWCursor && pSiS->TurboQueue) offset = 65536;
+    {
+	/* 
+	 * |......~~~~~~~~~~~~~~~~=================| 
+	 *        0/32k TurboQueue  0/32k HWCursor
+	 */
+    	if (pSiS->HWCursor && pSiS->TurboQueue) 
+	    offset = 65536;
+	else if (pSiS->TurboQueue || pSiS->HWCursor) 
+	    offset = 32768;
+    }
+    topFB = (pSiS->maxxfbmem >= pSiS->FbMapSize - offset) ?
+	pSiS->maxxfbmem : pSiS->FbMapSize - offset;
 
     /* CPU To screen color expansion indirect method */
-    OffscreenAvailable = pSiS->FbMapSize - pScrn->displayWidth * pScrn->virtualY
-                                                   * (pScrn->bitsPerPixel / 8) ;
-    OffscreenAvailable -= offset;
+    OffscreenAvailable = topFB - pScrn->displayWidth * pScrn->virtualY
+	* (pScrn->bitsPerPixel / 8) ;
     BLTPatternOffscreenSize = 2 * (((pScrn->virtualX + 31)/32) * 4);
     if (OffscreenAvailable < BLTPatternOffscreenSize) {
       xf86DrvMsgVerb(pScrn->scrnIndex, X_WARNING, 0,
@@ -148,16 +156,14 @@ SiS530AccelInit(ScreenPtr pScreen)
                          NO_PLANEMASK;
 
       pSiS->XAAScanlineColorExpandBuffers[0] =
-        pSiS->FbBase + pSiS->FbMapSize - offset - 
-        (((pScrn->virtualX + 31)/32) * 4);
+	  pSiS->FbBase + topFB - (((pScrn->virtualX + 31)/32) * 4);
       pSiS->XAAScanlineColorExpandBuffers[1] =
-        pSiS->FbBase + pSiS->FbMapSize - offset - 
-        (((pScrn->virtualX + 31)/32) * 4)*2;
+	  pSiS->FbBase + topFB - (((pScrn->virtualX + 31)/32) * 4)*2;
 
       infoPtr->NumScanlineColorExpandBuffers = 2;
       infoPtr->ScanlineColorExpandBuffers = 
                          pSiS->XAAScanlineColorExpandBuffers;
-      offset += BLTPatternOffscreenSize;
+      topFB -= BLTPatternOffscreenSize;
 
       infoPtr->SetupForScanlineCPUToScreenColorExpandFill =
             SiS2SetupForScreenToScreenColorExpandFill;
@@ -170,8 +176,7 @@ SiS530AccelInit(ScreenPtr pScreen)
     AvailFBArea.x1 = 0;
     AvailFBArea.y1 = 0;
     AvailFBArea.x2 = pScrn->displayWidth;
-    AvailFBArea.y2 = (pSiS->FbMapSize - offset) / (pScrn->displayWidth *
-                                            pScrn->bitsPerPixel / 8);
+    AvailFBArea.y2 = topFB / (pScrn->displayWidth * pScrn->bitsPerPixel / 8);
 
     xf86InitFBManager(pScreen, &AvailFBArea);
 

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/nv/nv_include.h,v 1.10 2001/03/28 01:17:43 mvojkovi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/nv/nv_include.h,v 1.11 2001/12/07 00:09:56 mvojkovi Exp $ */
 
 #ifndef __NV_INCLUDE_H__
 #define __NV_INCLUDE_H__
@@ -35,20 +35,7 @@
 #include "dixstruct.h"
 #include "scrnintstr.h"
 
-#ifndef NV_USE_FB
-/*
- * If using cfb, cfb.h is required.  Select the others for the bpp values
- * the driver supports.
- */
-#define PSZ 8   /* needed for cfb.h */
-#include "cfb.h"
-#undef PSZ
-#include "cfb16.h"
-#include "cfb24.h"
-#include "cfb32.h"
-#else
 #include "fb.h"
-#endif
 
 #include "xaa.h"
 #include "xf86cmap.h"

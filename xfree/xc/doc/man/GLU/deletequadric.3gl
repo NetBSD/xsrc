@@ -30,5 +30,5 @@ Specifies the quadrics object to be destroyed.
 and frees any memory it uses. 
 Once \%\f3gluDeleteQuadric\fP has been called, \f2quad\fP cannot be used again.
 .SH SEE ALSO
-\%\f3gluNewQuadric\fP
+\%\f3gluNewQuadric(3G)\fP
 

@@ -1,4 +1,4 @@
-/* $Xorg: AttrValid.h,v 1.3 2000/08/17 19:48:04 cpqbld Exp $ */
+/* $Xorg: AttrValid.h,v 1.4 2001/03/14 18:43:40 pookie Exp $ */
 /*
 (c) Copyright 1996 Hewlett-Packard Company
 (c) Copyright 1996 International Business Machines Corp.
@@ -30,12 +30,12 @@ not be used in advertising or otherwise to promote the sale, use or other
 dealings in this Software without prior written authorization from said
 copyright holders.
 */
-/* $XFree86: xc/programs/Xserver/Xprint/AttrValid.h,v 1.4 2001/01/17 22:36:28 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/Xprint/AttrValid.h,v 1.7 2001/12/21 21:02:04 dawes Exp $ */
 
 #ifndef _Xp_AttrValid_h
 #define _Xp_AttrValid_h
 
-#include "Printstr.h"
+#include <X11/extensions/Printstr.h>
 #include "Oid.h"
 
 #define XpNumber(a) (sizeof(a) / sizeof(*(a)))
@@ -72,6 +72,8 @@ typedef struct
     XpOidList* valid_xp_setup_proviso;
 
     XpOidDocFmt* default_document_format;
+    XpOidList* valid_available_compressions_supported;
+    XpOidList* default_available_compressions_supported;
     
 } XpValidatePoolsRec;
 

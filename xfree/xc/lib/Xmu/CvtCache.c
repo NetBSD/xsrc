@@ -1,10 +1,14 @@
-/* $Xorg: CvtCache.c,v 1.4 2000/08/17 19:46:00 cpqbld Exp $ */
+/* $Xorg: CvtCache.c,v 1.5 2001/02/09 02:03:52 xorgcvs Exp $ */
 
 /*
  
 Copyright 1989, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -21,7 +25,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/Xmu/CvtCache.c,v 3.4 2001/01/17 19:42:54 dawes Exp $ */
+/* $XFree86: xc/lib/Xmu/CvtCache.c,v 3.7 2001/12/14 19:55:39 dawes Exp $ */
 
 /* 
  * Author:  Jim Fulton, MIT X Consortium
@@ -31,12 +35,7 @@ in this Software without prior written authorization from The Open Group.
 #include <X11/Xlib.h>
 #include <X11/Xos.h>
 #include <X11/Xmu/CvtCache.h>
-
-#ifdef X_NOT_STDC_ENV
-extern char *malloc();
-#else
 #include <stdlib.h>
-#endif
 
 /*
  * Prototypes
@@ -44,12 +43,6 @@ extern char *malloc();
 static int _CloseDisplay(XmuDisplayQueue*, XmuDisplayQueueEntry*);
 static int _FreeCCDQ(XmuDisplayQueue*);
 static void _InitializeCvtCache(XmuCvtCache*);
-
-/*
- * From LocBitmap.c
- */
-void _XmuStringToBitmapFreeCache(register XmuCvtCache*);
-void _XmuStringToBitmapInitCache(register XmuCvtCache*);
 
 /*
  * Initialization

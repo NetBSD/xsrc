@@ -4,45 +4,33 @@
 // and the corresponing letter we are able to generate the romanian characters
 //
 // Created by Cristian Gafton, <gafton@redhat.com> (C) 2000
+// Modified by Miºu Moldovan, <dumol@go.ro> (C) 2001
+// Modified by Marius Andreiana, <mandreiana@yahoo.com> (C) 2001
 // 
-// $XFree86: xc/programs/xkbcomp/symbols/ro,v 3.1.6.1 2001/05/23 18:32:19 dawes Exp $
+// $XFree86: xc/programs/xkbcomp/symbols/ro,v 3.4 2001/12/21 21:03:59 dawes Exp $
+// Diacriticele se scriu cu ALT-ul din dreapta si q,t,i,a,s (+shift eventual)
+// 
 
-partial hidden alphanumeric_keys modifier_keys
+
+default partial alphanumeric_keys
 xkb_symbols "basic" {
+
     name[Group1]= "Romanian";
 
-    key <TLDE> { [], [ acircumflex,     acircumflex	] };
-    key <AC01> { [], [ atilde,		acircumflex	] };   
-    key <AC02> { [], [ masculine,      ordfeminine     ] };
-    key <AD05> { [], [ thorn,		Thorn		] };
+    // Alphanumeric section
+    key <AD01> { [], [ acircumflex,     Acircumflex	] };
+    key <AC01> { [], [ abreve,		Abreve		] };   
+    key <AC02> { [], [ scedilla,	Scedilla	] };
+    key <AD05> { [], [ tcedilla,	Tcedilla	] };
     key <AD08> { [], [ icircumflex,	Icircumflex	] };
-};
 
-default
-xkb_symbols "pc101" {
-    key <RALT> { [ Mode_switch,  Multi_key ] };
+    key <RALT> {	[ Mode_switch,  Multi_key	]	};
+    // End alphanumeric section
 
-    include "ro(basic)"
+    // begin modifier mappings
+    modifier_map Shift  { Shift_L };
+    modifier_map Lock   { Caps_Lock };
+    modifier_map Control{ Control_L };
+    modifier_map Mod3	{ Mode_switch };
 
-    modifier_map Mod3 { Mode_switch };
-};
-
-xkb_symbols "pc104" {
-    key <RALT> { [ Mode_switch ] };
-    key <RWIN> { [ Multi_key ] };
-
-    include "ro(basic)"
-
-    modifier_map Mod3 { Mode_switch };
-};
-
-xkb_symbols "alt_is_meta" {
-    key <LALT> {  [  Meta_L ]  };
-    key <LWIN> {  [  Alt_L  ]  };
-
-    include "ro(pc104)"
-
-    // modifier mappings
-    modifier_map Mod1   { Meta_L, Meta_R };
-    modifier_map Mod4   { Alt_L,  Alt_R  };
 };

@@ -1,11 +1,15 @@
-/* $Xorg: modify.c,v 1.3 2000/08/17 19:54:27 cpqbld Exp $ */
+/* $Xorg: modify.c,v 1.4 2001/02/09 02:05:47 xorgcvs Exp $ */
 
 /**** module modify.c ****/
 /******************************************************************************
 
 Copyright 1993, 1994, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -67,7 +71,7 @@ terms and conditions:
 	Syd Logan -- AGE Logic, Inc.
   
 *****************************************************************************/
-/* $XFree86: xc/programs/xieperf/modify.c,v 3.7 2001/01/17 23:45:38 dawes Exp $ */
+/* $XFree86: xc/programs/xieperf/modify.c,v 3.9 2001/12/14 20:01:50 dawes Exp $ */
 
 #include "xieperf.h"
 #include <stdio.h>
@@ -790,12 +794,8 @@ BuildModifyLong1Flograph(XParms xp, Parms p, XiePhotoElement **flograph)
 #ifdef WIN32
 #define RAND( x, y ) ( ( rand() / ((RAND_MAX + 1) / 2.0) ) * ( y - x ) + x )
 #else
-#ifndef X_NOT_STDC_ENV
 #include <math.h>
 #include <stdlib.h>
-#else
-extern long random();
-#endif
 #if defined(SYSV) || defined(SVR4) || defined(__osf__) || defined(CSRG_BASED)
 #define random lrand48
 #endif

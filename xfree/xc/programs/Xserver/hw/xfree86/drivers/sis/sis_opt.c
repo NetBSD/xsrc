@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sis/sis_opt.c,v 1.7 2001/05/16 13:43:17 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sis/sis_opt.c,v 1.10 2002/01/17 09:57:30 eich Exp $ */
 
 #include "xf86.h"
 #include "xf86PciInfo.h"
@@ -17,7 +17,9 @@ typedef enum {
     OPTION_FORCE_CRT2TYPE,
 	OPTION_SHADOW_FB,
     OPTION_ROTATE,
-	OPTION_NOXVIDEO
+	OPTION_NOXVIDEO,
+    OPTION_VESA,
+    OPTION_MAXXFBMEM
 } SISOpts;
 
 static const OptionInfoRec SISOptions[] = {
@@ -33,6 +35,8 @@ static const OptionInfoRec SISOptions[] = {
     { OPTION_SHADOW_FB,         "ShadowFB",     OPTV_BOOLEAN,   {0}, FALSE },
     { OPTION_ROTATE,            "Rotate",       OPTV_ANYSTR,    {0}, FALSE },
     { OPTION_NOXVIDEO,          "NoXvideo",     OPTV_BOOLEAN,   {0}, FALSE },
+    { OPTION_VESA,		"Vesa",		OPTV_BOOLEAN,   {0}, FALSE },
+    { OPTION_MAXXFBMEM,         "MaxXFBMem",    OPTV_INTEGER,   {0}, -1 },
     { -1,                       NULL,           OPTV_NONE,      {0}, FALSE }
 };
 
@@ -63,7 +67,10 @@ SiSOptions(ScrnInfoPtr pScrn)
     pSiS->HWCursor = TRUE;
     pSiS->Rotate = FALSE;
     pSiS->ShadowFB = FALSE;
-	pSiS->NoXvideo = FALSE;
+    pSiS->VESA = -1;
+    pSiS->NoXvideo = FALSE;
+    pSiS->maxxfbmem = 0;
+
     switch(pSiS->Chipset) {
         case PCI_CHIP_SIS530:
             pSiS->TurboQueue = FALSE; /* FIXME ? */
@@ -138,12 +145,14 @@ SiSOptions(ScrnInfoPtr pScrn)
     strptr = (char *)xf86GetOptValString(pSiS->Options, OPTION_FORCE_CRT2TYPE);
     if (strptr != NULL)
     {
-        if (!xf86strcmp(strptr,"TV"))
+        if (!strcmp(strptr,"TV"))
             pSiS->ForceCRT2Type = CRT2_TV;
-        if (!xf86strcmp(strptr,"LCD"))
+        if (!strcmp(strptr,"LCD"))
             pSiS->ForceCRT2Type = CRT2_LCD;
-        if (!xf86strcmp(strptr,"VGA"))
+        if (!strcmp(strptr,"VGA"))
             pSiS->ForceCRT2Type = CRT2_VGA;
+        if (!strcmp(strptr,"NONE"))
+            pSiS->ForceCRT2Type = 0;
 
         if (pSiS->ForceCRT2Type != CRT2_DEFAULT)
             xf86DrvMsg(pScrn->scrnIndex, X_CONFIG,
@@ -192,6 +201,42 @@ SiSOptions(ScrnInfoPtr pScrn)
         xf86DrvMsg(pScrn->scrnIndex, X_CONFIG, "XVideo Extension Disabled\n");
     }
 
+    /* VESA */
+    /* 
+     * This option is for overriding the default behavior.
+     * By default it depends on the chipset/video bridge
+     * combination if the VESA BIOS code is used to prevent
+     * the "melting" screen effect due to lack of nowledge
+     * about programming details.
+     * You will normally not need this option.
+     */
+    {
+	Bool val;
+	
+	if (xf86GetOptValBool(pSiS->Options, OPTION_VESA, &val)) {
+	    if (val)
+		pSiS->VESA = 1;
+	    else
+		pSiS->VESA = 0;
+
+	    xf86DrvMsg(pScrn->scrnIndex, X_CONFIG, "VESA usage %s\n",
+		       val ? "enabled":"disabled");
+	}
+    }
+   /* With the option "MaxXFBMem" you can limit the amount of video memory X
+    * uses for screen and off-screen buffers. This option should be used if
+    * you intend to use DRI/DRM. The framebuffer driver required for DRM will
+    * start its memory heap at 8MB if it detects more than that. So, if you
+    * limit the amount of memory X uses, you avoid a clash between the framebuffer
+    * driver and X as regards overwriting memory portions of each other.
+    * The amount is to be specified in KB.
+    */
+    if (xf86GetOptValULong(pSiS->Options, OPTION_MAXXFBMEM,
+                                &pSiS->maxxfbmem)) {
+            xf86DrvMsg(pScrn->scrnIndex, X_CONFIG,
+                    "Framebuffer memory limited to %d KB\n", pSiS->maxxfbmem);
+	    pSiS->maxxfbmem *= 1024;
+    }
 }
 
 const OptionInfoRec *

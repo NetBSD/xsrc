@@ -1,4 +1,4 @@
-/* $Xorg: Intrinsic.c,v 1.3 2000/08/17 19:46:13 cpqbld Exp $ */
+/* $Xorg: Intrinsic.c,v 1.4 2001/02/09 02:03:55 xorgcvs Exp $ */
 
 /***********************************************************
 Copyright 1987, 1988 by Digital Equipment Corporation, Maynard, Massachusetts,
@@ -32,13 +32,17 @@ OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
 THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/lib/Xt/Intrinsic.c,v 3.17 2001/01/17 19:43:05 dawes Exp $ */
+/* $XFree86: xc/lib/Xt/Intrinsic.c,v 3.20 2001/12/14 19:56:21 dawes Exp $ */
 
 /*
 
 Copyright 1987, 1988, 1994, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -67,11 +71,7 @@ in this Software without prior written authorization from The Open Group.
 #include <sys/stat.h>
 #endif /* VMS */
 
-#ifndef X_NOT_STDC_ENV
 #include <stdlib.h>
-#else
-extern char *getenv();
-#endif
 
 String XtCXtToolkitError = "XtToolkitError";
 
@@ -579,7 +579,7 @@ static Widget SearchChildren(root, names, bindings, matchproc,
     NameMatchProc matchproc;
     int in_depth, *out_depth, *found_depth;
 {
-    Widget w1, w2;
+    Widget w1 = 0, w2;
     int d1, d2;
 
     if (XtIsComposite(root)) {
@@ -1251,7 +1251,7 @@ static char *ExtractLocaleName(lang)
 	start += strlen(STARTSTR);
 # endif
 
-	if (end = strchr (start, ENDCHAR)) {
+	if ((end = strchr (start, ENDCHAR))) {
 	    len = end - start;
 	    if (buf != NULL) XtFree (buf);
 	    buf = XtMalloc (len + 1);
@@ -1636,19 +1636,13 @@ int direction ;
 
 
 void 
-#if NeedVarargsPrototypes
 _XtGeoTrace (Widget widget, ...)
-#else
-_XtGeoTrace (widget, va_alist)
-Widget widget;
-va_dcl
-#endif
 {
     va_list args;
     char *fmt;
     int i ;
     if (IsTattled(widget)) {
-	Va_start(args, widget);
+	va_start(args, widget);
 	fmt = va_arg(args, char *);
 	for (i=0; i<n_tab; i++) printf("     ");
 	(void) vprintf(fmt, args);

@@ -1,6 +1,6 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/aticonfig.c,v 1.5 2001/03/25 05:32:07 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/aticonfig.c,v 1.9 2002/01/16 16:22:26 tsi Exp $ */
 /*
- * Copyright 2000 through 2001 by Marc Aurele La France (TSI @ UQV), tsi@xfree86.org
+ * Copyright 2000 through 2002 by Marc Aurele La France (TSI @ UQV), tsi@xfree86.org
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -23,6 +23,7 @@
 
 #include "ati.h"
 #include "atiadapter.h"
+#include "atichip.h"
 #include "aticonfig.h"
 #include "aticursor.h"
 #include "atioption.h"
@@ -34,7 +35,8 @@
 typedef enum
 {
     ATI_OPTION_DEVEL,   /* Intentionally undocumented */
-    ATI_OPTION_SYNC     /* Temporary and undocumented */
+    ATI_OPTION_SYNC,    /* Use XF86Config panel mode porches */
+    ATI_OPTION_BLEND    /* Force horizontal blending of small modes */
 } ATIPrivateOptionType;
 
 /*
@@ -53,16 +55,23 @@ ATIProcessOptions
     OptionInfoPtr PublicOption = xnfalloc(ATIPublicOptionSize);
     OptionInfoRec PrivateOption[] =
     {
-        {
-            ATI_OPTION_DEVEL,
+        {                       /* ON:   Ease exploration of loose ends */
+            ATI_OPTION_DEVEL,   /* OFF:  Fit for public consumption */
             "tsi",
             OPTV_BOOLEAN,
             {0, },
             FALSE
         },
-        {
-            ATI_OPTION_SYNC,
+        {                       /* ON:   Use XF86Config porch timings */
+            ATI_OPTION_SYNC,    /* OFF:  Use porches from mode on entry */
             "lcdsync",
+            OPTV_BOOLEAN,
+            {0, },
+            FALSE
+        },
+        {                       /* ON:   Horizontally blend most modes */
+            ATI_OPTION_BLEND,   /* OFF:  Use pixel replication more often */
+            "lcdblend",
             OPTV_BOOLEAN,
             {0, },
             FALSE
@@ -79,6 +88,7 @@ ATIProcessOptions
     (void)memcpy(PublicOption, ATIPublicOptions, ATIPublicOptionSize);
 
 #   define Accel       PublicOption[ATI_OPTION_ACCEL].value.bool
+#   define Blend       PrivateOption[ATI_OPTION_BLEND].value.bool
 #   define CRTScreen   PublicOption[ATI_OPTION_CRT].value.bool
 #   define CSync       PublicOption[ATI_OPTION_CSYNC].value.bool
 #   define Devel       PrivateOption[ATI_OPTION_DEVEL].value.bool
@@ -133,7 +143,7 @@ ATIProcessOptions
         ShadowFB = TRUE;
     }
 
-    Sync = TRUE;
+    Blend = CSync = /* Sync = */ TRUE;
 
     xf86ProcessOptions(pScreenInfo->scrnIndex, pScreenInfo->options,
         PublicOption);
@@ -155,6 +165,7 @@ ATIProcessOptions
 
     /* Move option values into driver private structure */
     pATI->OptionAccel = Accel;
+    pATI->OptionBlend = Blend;
     pATI->OptionCRT = CRTScreen;
     pATI->OptionCSync = CSync;
     pATI->OptionDevel = Devel;
@@ -171,12 +182,18 @@ ATIProcessOptions
     pATI->OptionSync = Sync;
 
     /* Validate and set cursor options */
+    pATI->Cursor = ATI_CURSOR_SOFTWARE;
     if (SWCursor || !HWCursor)
     {
-        pATI->Cursor = ATI_CURSOR_SOFTWARE;
         if (HWCursor && PublicOption[ATI_OPTION_HWCURSOR].found)
             xf86DrvMsg(pScreenInfo->scrnIndex, X_WARNING,
                 "Option \"sw_cursor\" overrides Option \"hw_cursor\".\n");
+    }
+    else if (pATI->Chip < ATI_CHIP_264CT)
+    {
+        if (HWCursor && PublicOption[ATI_OPTION_HWCURSOR].found)
+            xf86DrvMsg(pScreenInfo->scrnIndex, X_WARNING,
+                "Option \"hw_cursor\" not supported in this configuration.\n");
     }
     else
     {

@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/include/extensions/renderproto.h,v 1.6 2001/01/21 21:19:08 tsi Exp $
+ * $XFree86: xc/include/extensions/renderproto.h,v 1.9 2001/09/07 16:21:15 keithp Exp $
  *
  * Copyright © 2000 SuSE, Inc.
  *
@@ -27,7 +27,7 @@
 #define _XRENDERP_H_
 
 #include <X11/Xmd.h>
-#include "render.h"
+#include <X11/extensions/render.h>
 
 #define Window CARD32
 #define Drawable CARD32
@@ -74,7 +74,7 @@ typedef struct {
     Colormap	colormap;
 } xPictFormInfo;
 
-#define sz_xPictFormInfo    16
+#define sz_xPictFormInfo    28
 
 typedef struct {
     VisualID	visual;

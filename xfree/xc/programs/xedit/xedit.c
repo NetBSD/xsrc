@@ -24,7 +24,7 @@
  * used in advertising or publicity pertaining to distribution of the software
  * without specific, written prior permission.
  */
-/* $XFree86: xc/programs/xedit/xedit.c,v 1.10 1999/08/15 13:00:56 dawes Exp $ */
+/* $XFree86: xc/programs/xedit/xedit.c,v 1.13 2001/09/11 06:42:54 paulo Exp $ */
 
 #include <X11/IntrinsicP.h>
 #include "xedit.h"
@@ -33,12 +33,7 @@
 #include <sys/stat.h>
 #include <X11/CoreP.h>
 
-#ifdef X_NOT_STDC_ENV
-void srand(); 
-int rand(); 
-#else
 #include <stdlib.h> 
-#endif
 
 #define randomize()	srand((unsigned)time((time_t*)NULL))
 
@@ -58,6 +53,9 @@ static XtActionsRec actions[] = {
 {"other-window", OtherWindow},
 {"switch-source", SwitchSource},
 {"ispell", IspellAction},
+{"lisp-eval", XeditLispEval},
+{"xedit-print-lisp-eval", XeditPrintLispEval},
+{"xedit-keyboard-reset",XeditKeyboardReset}
 };
 
 #define DEF_HINT_INTERVAL	300	/* in seconds, 5 minutes */
@@ -71,6 +69,7 @@ Widget topwindow, textwindow, messwidget, labelwindow, filenamewindow;
 Widget scratch, hpane, vpanes[2], labels[3], texts[3], forms[3], positions[3];
 Widget options_popup, dirlabel, dirwindow;
 Boolean international;
+XawTextWrapMode wrapmodes[3];
 
 extern void ResetSourceChanged(xedit_flist_item*);
 
@@ -263,8 +262,10 @@ main(int argc, char *argv[])
 	XtConvertAndStore(flist.popup, XtRString, &from, XtRBitmap, &to);
     }
 
-  if (num_loaded == 0)
+  if (num_loaded == 0) {
       XtSetKeyboardFocus(topwindow, filenamewindow);
+      XtVaSetValues(textwindow, XtNwrap, XawtextWrapLine, NULL);
+  }
   else
       XtSetKeyboardFocus(topwindow, textwindow);
 
@@ -382,12 +383,20 @@ makeButtonsAndBoxes(Widget parent)
 
     item = AddTextSource(scratch, "*scratch*", "*scratch*",
 			 0, WRITE_OK);
+    item->wrap = XawtextWrapLine;
+    item->flags |= WRAP_BIT;
     XtAddCallback(item->source, XtNcallback, SourceChanged,
 		  (XtPointer)item);
     ResetSourceChanged(item);
+    flist.current = item;
 
     for (num_args = 0; num_args < 3; num_args++)
 	XtAddCallback(texts[num_args], XtNpositionCallback, PositionChanged, NULL);
+
+    for (num_args = 0; num_args < 3; num_args++) {
+	XtSetArg(arglist[0], XtNwrap, &wrapmodes[num_args]);
+	XtGetValues(texts[num_args], arglist, 1);
+    }
 
     XtAddCallback(dirwindow, XtNcallback, DirWindowCB, NULL);
 }

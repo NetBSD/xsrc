@@ -35,6 +35,7 @@
 * Description:  Header file for x86 register definitions.
 *
 ****************************************************************************/
+/* $XFree86: xc/extras/x86emu/include/x86emu/regs.h,v 1.3 2001/10/28 03:32:25 tsi Exp $ */
 
 #ifndef __X86EMU_REGS_H
 #define __X86EMU_REGS_H
@@ -271,8 +272,7 @@ typedef struct {
      *  Extern interrupt        1 bits
      *  Halted                  1 bits
      */
-    long                        mode;
-    u8                          intno;
+    u32                         mode;
     volatile int                intr;   /* mask of pending interrupts */
 	int                         debug;
 #ifdef DEBUG
@@ -284,6 +284,8 @@ typedef struct {
     char                        decode_buf[32]; /* encoded byte stream  */
     char                        decoded_buf[256]; /* disassembled strings */
 #endif
+    u8                          intno;
+    u8                          __pad[3];
 	} X86EMU_regs;
 
 /****************************************************************************
@@ -291,15 +293,16 @@ REMARKS:
 Structure maintaining the emulator machine state.
 
 MEMBERS:
-x86				- X86 registers
 mem_base		- Base real mode memory for the emulator
 mem_size		- Size of the real mode memory block for the emulator
+private			- private data pointer
+x86			- X86 registers
 ****************************************************************************/
 typedef struct {
-	X86EMU_regs		x86;
 	unsigned long	mem_base;
 	unsigned long	mem_size;
 	void*        	private;
+	X86EMU_regs		x86;
 	} X86EMU_sysEnv;
 
 #pragma pack()

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bus/sparcPci.c,v 1.4 2001/04/20 17:02:43 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bus/sparcPci.c,v 1.5 2001/05/28 02:42:30 tsi Exp $ */
 /*
  * Copyright 1998 by Concurrent Computer Corporation
  *
@@ -136,4 +136,30 @@ sparcPciCfgSetBits(PCITAG tag, int off, CARD32 mask, CARD32 bits)
     val = (val & ~mask) | (bits & mask);
     syscall(__NR_pciconfig_write, bus, dfn, off, 4, &val);
 }
-#endif /* Linux */
+
+#elif defined(sun)
+
+/*
+ * Obviously, these need to be fleshed out, probably using openpromio.
+ */
+static CARD32
+sparcPciCfgRead(PCITAG tag, int off)
+{
+	FatalError("sparcPciCfgRead() called\n");
+
+	return 0;	/* Gd'ole gcc... */
+}
+
+static void
+sparcPciCfgWrite(PCITAG tag, int off, CARD32 val)
+{
+	FatalError("sparcPciCfbWrite() called\n");
+}
+
+static void
+sparcPciCfgSetBits(PCITAG tag, int off, CARD32 mask, CARD32 bits)
+{
+	FatalError("sparcPciCfgSetBits() called\n");
+}
+
+#endif

@@ -1,4 +1,4 @@
-
+/* $XFree86: xc/extras/Mesa/src/X/xmesa2.c,v 1.12 2001/11/08 04:00:11 tsi Exp $ */
 /*
  * Mesa 3-D graphics library
  * Version:  3.3
@@ -4635,9 +4635,9 @@ static void read_color_span( const GLcontext *ctx,
                const GLubyte *pixelToG = xmesa->xm_visual->PixelToG;
                const GLubyte *pixelToB = xmesa->xm_visual->PixelToB;
                const GLushort *ptr2 = PIXELADDR2( source, x, y );
-               const GLuint *ptr4 = (const GLuint *) ptr2;
                GLuint i;
 #if defined(__i386__) /* word stores don't have to be on 4-byte boundaries */
+               const GLuint *ptr4 = (const GLuint *) ptr2;
                GLuint extraPixel = (n & 1);
                n -= extraPixel;
                for (i = 0; i < n; i += 2) {

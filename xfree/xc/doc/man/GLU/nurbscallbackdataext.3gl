@@ -35,4 +35,4 @@ Specifies a pointer to the user's data.
 tessellator. A copy of this pointer will be passed by the tessellator
 in the NURBS callback functions (set by \%\f3gluNurbsCallback\fP).
 .SH SEE ALSO
-\%\f3gluNurbsCallback\fP
+\%\f3gluNurbsCallback(3G)\fP

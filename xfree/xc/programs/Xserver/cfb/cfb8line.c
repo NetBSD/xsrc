@@ -1,9 +1,13 @@
 /*
- * $Xorg: cfb8line.c,v 1.3 2000/08/17 19:48:13 cpqbld Exp $
+ * $Xorg: cfb8line.c,v 1.4 2001/02/09 02:04:37 xorgcvs Exp $
  *
 Copyright 1990, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -21,7 +25,7 @@ in this Software without prior written authorization from The Open Group.
  *
  * Author:  Keith Packard, MIT X Consortium
  *
- * $XFree86: xc/programs/Xserver/cfb/cfb8line.c,v 3.15 2001/01/30 22:06:15 tsi Exp $
+ * $XFree86: xc/programs/Xserver/cfb/cfb8line.c,v 3.17 2001/12/14 19:59:20 dawes Exp $
  * Jeff Anton'x fixes: cfb8line.c   97/02/07
  */
 
@@ -271,7 +275,7 @@ FUNC_NAME(cfb8LineSS1Rect) (pDrawable, pGC, mode, npt, pptInit, pptInitOrig,
     int	npt;		/* number of points */
     DDXPointPtr pptInit, pptInitOrig;
     int	*x1p, *y1p, *x2p, *y2p;
-#endif /* POLYSEGEMENT */
+#endif /* POLYSEGMENT */
 {
     register long   e;
     register int    y1_or_e1;
@@ -293,8 +297,8 @@ FUNC_NAME(cfb8LineSS1Rect) (pDrawable, pGC, mode, npt, pptInit, pptInitOrig,
 #else
     register int    c2;
 #endif
-#ifndef ORIGIN
-    register int _x1, _y1, _x2, _y2;	/* only used for CoordModePrevious */
+#if !defined(ORIGIN) && !defined(POLYSEGMENT)
+    register int _x1 = 0, _y1 = 0, _x2 = 0, _y2 = 0;
     int extents_x1, extents_y1, extents_x2, extents_y2;
 #endif /* !ORIGIN */
 #ifndef PREVIOUS
@@ -329,7 +333,6 @@ FUNC_NAME(cfb8LineSS1Rect) (pDrawable, pGC, mode, npt, pptInit, pptInitOrig,
 #if PSZ == 24
     int xBase;     /* x of addr */
     int xOffset;   /* x of addrp */
-    int xOffset_t; /* x of t */
     PixelType   *addrLineEnd;
     char *addrb;
     int stepmajor3, stepminor3, majordx, minordx;
@@ -932,9 +935,7 @@ FUNC_NAME(cfb8LineSS1Rect) (pDrawable, pGC, mode, npt, pptInit, pptInitOrig,
 #endif /* !ORIGIN */	    
 	return ((DDXPointPtr) ppt - pptInit) - 1;
     }
-#endif /* POLYSEGMENT */
 
-#ifndef POLYSEGMENT
 # ifndef ORIGIN
 #  define C2  c2
 # else

@@ -45,7 +45,7 @@
    * Support static loading.  
 */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/glide/glide_driver.c,v 1.24 2001/05/16 06:48:08 keithp Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/glide/glide_driver.c,v 1.28 2002/01/04 21:22:30 tsi Exp $ */
 
 #include "xaa.h"
 #include "xf86Cursor.h"
@@ -213,9 +213,7 @@ static SymTabRec GLIDEChipsets[] = {
 
 static const char *fbSymbols[] = {
   "fbScreenInit",
-#ifdef RENDER
   "fbPictureInit",
-#endif
   NULL
 };
 
@@ -250,14 +248,6 @@ glideSetup(pointer module, pointer opts, int *errmaj, int *errmin)
   static Bool setupDone = FALSE;
   pointer ret;
   int errmaj2 = 0, errmin2 = 0;
-
-  /* This module should be loaded only once, but check to be sure. */
-
-  if (xf86ServerIsOnlyDetecting())
-  {
-    xf86AddDriver(&GLIDE, module, 0);
-    return (pointer)1;
-  }
     
   if (!setupDone) 
   {
@@ -299,6 +289,8 @@ glideSetup(pointer module, pointer opts, int *errmaj, int *errmin)
     }
 
     setupDone = TRUE;
+    /* This module should be loaded only once */
+    *errmaj = LDR_ONCEONLY;
     xf86AddDriver(&GLIDE, module, 0);
 
     /*
@@ -522,7 +514,7 @@ GLIDEPreInit(ScrnInfoPtr pScrn, int flags)
     }
   }
 
-  /* We use a programamble clock */
+  /* We use a programmable clock */
   pScrn->progClock = TRUE;
 
   /* Allocate the GLIDERec driverPrivate */
@@ -714,10 +706,6 @@ GLIDEScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
   if (!ret)
     return FALSE;
 
-#ifdef RENDER
-  fbPictureInit (pScreen, 0, 0);
-#endif
-
   /* Fixup RGB ordering */
   visual = pScreen->visuals + pScreen->numVisuals;
   while (--visual >= pScreen->visuals) {
@@ -730,6 +718,9 @@ GLIDEScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
         visual->blueMask = pScrn->mask.blue;
     }
   }
+
+  /* must be after RGB ordering fixed */
+  fbPictureInit (pScreen, 0, 0);
 
   miInitializeBackingStore(pScreen);
   xf86SetBlackWhitePixels(pScreen);

@@ -1,9 +1,13 @@
-/* $Xorg: def.h,v 1.3 2000/08/17 19:41:50 cpqbld Exp $ */
+/* $Xorg: def.h,v 1.4 2001/02/09 02:03:16 xorgcvs Exp $ */
 /*
 
 Copyright (c) 1993, 1994, 1998 The Open Group.
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -20,15 +24,13 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/config/makedepend/def.h,v 3.9 2001/04/29 23:25:02 tsi Exp $ */
+/* $XFree86: xc/config/makedepend/def.h,v 3.12 2001/12/17 20:52:22 dawes Exp $ */
 
 #include "Xos.h"
 #include "Xfuncproto.h"
 #include <stdlib.h>
 #include <stdio.h>
-#ifndef X_NOT_STDC_ENV
 #include <string.h>
-#endif
 #include <ctype.h>
 #if 0
 #ifndef X_NOT_POSIX
@@ -125,15 +127,10 @@ struct filepointer {
 	long	f_line;
 };
 
-#ifndef X_NOT_STDC_ENV
 #include <stdlib.h>
 #if defined(macII) && !defined(__STDC__)  /* stdlib.h fails to define these */
 char *malloc(), *realloc();
 #endif /* macII */
-#else
-char			*malloc();
-char			*realloc();
-#endif
 
 char			*copy(char *str);
 int                     match(char *str, char **list);
@@ -169,12 +166,12 @@ void                    add_include(struct filepointer *filep,
 				    char *include, int type,
 				    boolean failOK);
 
-int                     cppsetup(char *line, struct filepointer *filep, 
+int                     cppsetup(char *filename,
+				 char *line,
+				 struct filepointer *filep,
 				 struct inclist *inc);
 
 
-#if NeedVarargsPrototypes
 extern void fatalerr(char *, ...);
 extern void warning(char *, ...);
 extern void warning1(char *, ...);
-#endif

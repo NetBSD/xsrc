@@ -1,10 +1,14 @@
-/* $Xorg: TranslateI.h,v 1.3 2000/08/17 19:46:19 cpqbld Exp $ */
+/* $Xorg: TranslateI.h,v 1.4 2001/02/09 02:03:59 xorgcvs Exp $ */
 
 /***********************************************************
 
 Copyright 1987, 1988, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -42,6 +46,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
+/* $XFree86: xc/lib/Xt/TranslateI.h,v 1.3 2001/12/14 19:56:32 dawes Exp $ */
 
 /* 
  * TranslateI.h - Header file private to translation management
@@ -66,8 +71,13 @@ typedef unsigned short TMShortCard;
 typedef unsigned long TMLongCard;
 typedef short TMShortInt;
 
-typedef Boolean (*MatchProc)();
-    /* Event *parsed, TMEventPtr incoming */
+typedef struct _TMTypeMatchRec *TMTypeMatch;
+typedef struct _TMModifierMatchRec *TMModifierMatch;
+typedef struct _TMEventRec *TMEventPtr;
+
+typedef Boolean (*MatchProc)(TMTypeMatch typeMatch,
+			     TMModifierMatch modMatch,
+			     TMEventPtr eventSeq);
 
 typedef struct _ModToKeysymTable {
     Modifiers mask;
@@ -118,14 +128,14 @@ typedef struct _TMModifierMatchRec{
     TMLongCard	 modifierMask;
     LateBindingsPtr lateModifiers;
     Boolean	 standard;
-}TMModifierMatchRec, *TMModifierMatch;
+}TMModifierMatchRec;
 
 typedef struct _TMTypeMatchRec{
     TMLongCard	 eventType;
     TMLongCard	 eventCode;
     TMLongCard	 eventCodeMask;
     MatchProc	 matchEvent;
-}TMTypeMatchRec, *TMTypeMatch;
+}TMTypeMatchRec;
 
 typedef struct _TMBranchHeadRec {
     unsigned int	isSimple:1;
@@ -280,7 +290,7 @@ typedef EventSeqPtr EventPtr;
 typedef struct _TMEventRec {
     XEvent *xev;
     Event event;
-}TMEventRec,*TMEventPtr;
+}TMEventRec;
 
 typedef struct _ActionHookRec {
     struct _ActionHookRec* next; /* must remain first */
@@ -442,7 +452,16 @@ extern void _XtTranslateEvent(
 #endif
 );
 
-extern void _XtBuildKeysymTables();
+#include "CallbackI.h"
+#include "EventI.h"
+#include "HookObjI.h"
+#include "PassivGraI.h"
+#include "ThreadsI.h"
+#include "InitialI.h"
+#include "ResourceI.h"
+#include "StringDefs.h"
+
+extern void _XtBuildKeysymTables(Display *dpy, XtPerDisplay pd);
 
 #ifndef NO_MIT_HACKS
 extern void  _XtDisplayTranslations(
@@ -649,3 +668,7 @@ extern void _XtUnmergeTranslations(
     XtTranslations 	/* xlations */
 #endif
 );
+
+/* TMKey.c */
+extern void _XtAllocTMContext(XtPerDisplay pd);
+

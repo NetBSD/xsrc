@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/GL/glx/single2.c,v 1.5 2001/03/21 16:29:37 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/GL/glx/single2.c,v 1.6 2001/06/06 19:00:15 dawes Exp $ */
 /*
 ** License Applicability. Except to the extent portions of this file are
 ** made subject to an alternative license as permitted in the SGI Free
@@ -242,6 +242,12 @@ char *__glXcombine_strings(const char *cext_string, const char *sext_string)
    size_t clen, slen;
    char *combo_string, *token, *s1;
    const char *s2, *end;
+
+   /* safeguard to prevent potentially fatal errors in the string functions */
+   if (!cext_string)
+      cext_string = "";
+   if (!sext_string)
+      sext_string = "";
 
    /*
    ** String can't be longer than min(cstring, sstring)

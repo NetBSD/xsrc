@@ -35,7 +35,7 @@
  * 
  * Author:  Adobe Systems Incorporated
  */
-/* $XFree86: xc/include/DPS/dpsclient.h,v 1.3 2000/06/07 22:02:56 tsi Exp $ */
+/* $XFree86: xc/include/DPS/dpsclient.h,v 1.4 2001/08/01 00:44:34 tsi Exp $ */
 
 #ifndef DPSCLIENT_H
 #define DPSCLIENT_H
@@ -296,16 +296,6 @@ extern void DPSResetContext(DPSContext ctxt);
      the context has terminated in the server, the dps_err_invalidContext
      error will be reported via ctxt's error proc. */
   
-extern void DPSWaitContext(DPSContext ctxt);
-
-  /* Waits until the PostScript interpreter is ready for more input to
-     this context.  This is useful for synchronizing an application
-     with the DPS server.
-
-     If 'ctxt' represents an invalid context, for example because
-     the context has terminated in the server, the dps_err_invalidContext
-     error will be reported via ctxt's error proc. */
-
 extern void DPSInterruptContext(DPSContext ctxt);
 
   /* Sends a request to the server to interrupt execution of the context.

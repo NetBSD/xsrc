@@ -19,13 +19,17 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
-/* $XFree86: xc/programs/Xserver/hw/kdrive/vesa/vesa.h,v 1.7 2000/10/20 00:19:50 keithp Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/kdrive/vesa/vesa.h,v 1.12 2001/09/05 07:12:42 keithp Exp $ */
 
 #ifndef _VESA_H_
 #define _VESA_H_
 
 #include "kdrive.h"
+#include "layer.h"
 #include "vm86.h"
+#ifdef RANDR
+#include "randrstr.h"
+#endif
 
 #define VESA_TEXT_SAVE	(64*1024)
 
@@ -72,14 +76,15 @@ typedef struct _VesaMode {
 
 typedef struct _VesaCardPriv {
     int		vbe;
-    Vm86InfoPtr	vi;
     VesaModePtr modes;
     int		nmode;
+    Vm86InfoPtr	vi;
     int		vga_palette;
     int		old_vbe_mode;
     int		old_vga_mode;
     VbeInfoPtr	vbeInfo;
     char	text[VESA_TEXT_SAVE];
+    CARD8	cmap[256*4];
 } VesaCardPrivRec, *VesaCardPrivPtr;
 
 #define VESA_LINEAR	0
@@ -88,13 +93,16 @@ typedef struct _VesaCardPriv {
 #define VESA_MONO	3
 
 typedef struct _VesaScreenPriv {
-    VesaModePtr mode;
+    VesaModeRec	mode;
     Bool	shadow;
-    Bool	rotate;
+    int		rotate;
     int		mapping;
     int		origDepth;
+    int		layerKind;
     void	*fb;
     int		fb_size;
+    CARD32	fb_phys;
+    LayerPtr	pLayer;
 } VesaScreenPrivRec, *VesaScreenPrivPtr;
 
 extern int vesa_video_mode;
@@ -118,11 +126,20 @@ vesaScreenInitialize (KdScreenInfo *screen, VesaScreenPrivPtr pscr);
 Bool
 vesaScreenInit(KdScreenInfo *screen);    
 
+LayerPtr
+vesaLayerCreate (ScreenPtr pScreen);
+
 Bool
 vesaInitScreen(ScreenPtr pScreen);
 
 Bool
+vesaFinishInitScreen(ScreenPtr pScreen);
+
+Bool
 vesaEnable(ScreenPtr pScreen);
+
+Bool
+vesaDPMS (ScreenPtr pScreen, int mode);
 
 void
 vesaDisable(ScreenPtr pScreen);

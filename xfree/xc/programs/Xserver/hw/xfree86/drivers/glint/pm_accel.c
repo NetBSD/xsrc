@@ -28,7 +28,7 @@
  * 
  * Permedia accelerated options.
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/glint/pm_accel.c,v 1.21.2.2 2001/05/29 11:32:23 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/glint/pm_accel.c,v 1.23 2001/05/29 11:23:38 alanh Exp $ */
 
 #include "xf86.h"
 #include "xf86_OSproc.h"

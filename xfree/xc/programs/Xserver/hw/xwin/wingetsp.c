@@ -27,7 +27,7 @@
  *
  * Authors:	Harold L Hunt II
  */
-/* $XFree86: xc/programs/Xserver/hw/xwin/wingetsp.c,v 1.1 2001/04/05 20:13:49 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xwin/wingetsp.c,v 1.7 2001/11/01 12:19:40 alanh Exp $ */
 
 #include "win.h"
 
@@ -36,65 +36,129 @@ void
 winGetSpansNativeGDI (DrawablePtr	pDrawable, 
 		      int		nMax, 
 		      DDXPointPtr	pPoints, 
-		      int		*pWidths, 
-		      int		nSpans, 
+		      int		*piWidths, 
+		      int		iSpans, 
 		      char		*pDsts)
 {
-#if 0
-  int			iIdx;
+  PixmapPtr		pPixmap = NULL;
+  winPrivPixmapPtr	pPixmapPriv = NULL;
+  int			iSpan;
   DDXPointPtr		pPoint = NULL;
-  int			*pWidth = NULL;
+  int			*piWidth = NULL;
   char			*pDst = pDsts;
-  int			iScanlineBytes;
-  int			iBitmapBytes;
-  BITMAPINFOHEADER	bmih;
-  DEBUG_FN_NAME("winGetSpans");
-  DEBUGVARS;
-  DEBUGPROC_MSG;
+  int			iBytesToCopy;
+  HBITMAP		hbmpWindow, hbmpOrig;
+  BYTE			*pbWindow = NULL;
+  HDC			hdcMem;
+  ScreenPtr		pScreen = pDrawable->pScreen;
+  winScreenPriv(pScreen);
+  int			iByteWidth;
 
-  /* Setup the bitmap header info */
-  bmih.biSize = sizeof (bmih);
-  bmih.biWidth = pDrawable->width;
-  bmih.biHeight = pDrawable->height;
-  bmih.biPlanes = 1;
-  bmih.biBitCount = pDrawable->depth;
-  bmih.biCompression = BI_RGB;
-  bmih.biSizeImage = 0;
-  bmih.biXPelsPerMeter = 0;
-  bmih.biYPelsPerMeter = 0;
-  bmih.biClrUsed = 0;
-  bmih.biClrImportant = 0;
-
-  fprintf (stderr, "winGetSpans () - pDrawable: %08x\n",
-	   pDrawable);
-
-  /* Calculate the number of bytes in each scanline */
-  iScanlineBytes = 4 * ((pDrawable->width * pDrawable->depth + 31) / 32);
-  
-  /* Calculate the number of bytes in the bitmap */
-  iBitmapBytes = iScanlineBytes * pDrawable->height;
-
-  /*
-    fprintf (stderr, "winGetSpans () - iBitmapBytes: %d\n",
-    iBitmapBytes);
-  */
-  
-  /* Loop through spans */
-  for (iIdx = 0; iIdx < nSpans; ++iIdx)
+  /* Branch on the drawable type */
+  switch (pDrawable->type)
     {
-      pPoint = pPoints + iIdx;
-      pWidth = pWidths + iIdx;
+    case DRAWABLE_PIXMAP:
+      ErrorF ("winGetSpans - DRAWABLE_PIXMAP %08x\n",
+	      pDrawable);
 
-      /* Drawable should be in g_hdcMem */
-      GetDIBits (hdcMem, ((PixmapPtr)pDrawable)->devPrivate.ptr,
-		 pPoint->y, 1, pDst, &bmih, 0);
+      pPixmap = (PixmapPtr) pDrawable;
+      pPixmapPriv = winGetPixmapPriv (pPixmap);
 
-      fprintf (stderr, "(%dx%dx%d) (%d,%d) w: %d\n",
-	       pDrawable->width, pDrawable->height, pDrawable->depth,
-	       pPoint->x, pPoint->y, *pWidth);
+      /* Loop through spans */
+      for (iSpan = 0; iSpan < iSpans; ++iSpan)
+	{
+	  pPoint = pPoints + iSpan;
+	  piWidth = piWidths + iSpan;
+	  
+	  iBytesToCopy = PixmapBytePad (*piWidth, pDrawable->depth);
 
-      /* Calculate offset of next bit destination */
-      pDst += 4 * ((*pWidth + 31) / 32);
+	  memcpy (pDst,
+		  pPixmapPriv->pbBits
+		  + pPixmapPriv->dwScanlineBytes * pPoint->y,
+		  iBytesToCopy);
+
+	  ErrorF ("(%dx%dx%d) (%d,%d) w: %d\n",
+		  pDrawable->width, pDrawable->height, pDrawable->depth,
+		  pPoint->x, pPoint->y, *piWidth);
+
+	  /* Calculate offset of next bit destination */
+	  pDst += 4 * ((*piWidth + 31) / 32);
+	}
+      break;
+
+    case DRAWABLE_WINDOW:
+      ErrorF ("winGetSpans - DRAWABLE_WINDOW\n");
+
+      /*
+       * FIXME: Making huge assumption here that we are copying the
+       * area behind where the cursor will be displayed.  We already
+       * know the size of the cursor, so this works, for now.
+       */
+
+      /* Create a bitmap to blit the window data to */
+      hbmpWindow = winCreateDIBNativeGDI (*piWidths,
+					  *piWidths,
+					  pDrawable->depth,
+					  &pbWindow,
+					  NULL);
+
+      /* Open a memory HDC */
+      hdcMem = CreateCompatibleDC (NULL);
+
+      /* Select the window bitmap */
+      hbmpOrig = SelectObject (hdcMem, hbmpWindow);
+			       
+      /* Transfer the window bits to the window bitmap */
+      BitBlt (hdcMem,
+	      0, 0,
+	      *piWidths, *piWidths, /* FIXME: Assuming square region */
+	      pScreenPriv->hdcScreen,
+	      pPoints->x, pPoints->y,
+	      SRCCOPY);
+
+      /* Pop the window bitmap out of the HDC */
+      SelectObject (hdcMem, hbmpOrig);
+      
+      /* Delete the memory HDC */
+      DeleteDC (hdcMem);
+      hdcMem = NULL;
+
+      iByteWidth = PixmapBytePad (*piWidths, pDrawable->depth);
+
+      /* Loop through spans */
+      for (iSpan = 0; iSpan < iSpans; ++iSpan)
+	{
+	  pPoint = pPoints + iSpan;
+	  piWidth = piWidths + iSpan;
+
+	  iBytesToCopy = PixmapBytePad (*piWidth, pDrawable->depth);
+
+	  memcpy (pDst,
+		  pbWindow + iByteWidth * (pPoint->y - pPoints->y),
+		  iBytesToCopy);
+	  
+	  ErrorF ("(%dx%dx%d) (%d,%d) w: %d\n",
+		  pDrawable->width, pDrawable->height, pDrawable->depth,
+		  pPoint->x, pPoint->y, *piWidth);
+
+	  /* Calculate offset of next bit destination */
+	  pDst += 4 * ((*piWidth + 31) / 32);
+	}
+
+      /* Delete the window bitmap */
+      DeleteObject (hbmpWindow);
+      break;
+
+    case UNDRAWABLE_WINDOW:
+      FatalError ("winGetSpans - UNDRAWABLE_WINDOW\n");
+      break;
+
+    case DRAWABLE_BUFFER:
+      FatalError ("winGetSpans - DRAWABLE_BUFFER\n");
+      break;
+      
+    default:
+      FatalError ("winGetSpans - Unknown drawable type\n");
+      break;
     }
-#endif
 }

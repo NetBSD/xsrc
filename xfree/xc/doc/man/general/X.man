@@ -25,7 +25,7 @@
 .\" dealing in this Software without prior written authorization from the 
 .\" X Consortium.
 .\"
-.\" $XFree86: xc/doc/man/general/X.man,v 1.6 2001/03/28 14:35:13 dawes Exp $
+.\" $XFree86: xc/doc/man/general/X.man,v 1.7 2001/10/01 13:43:56 eich Exp $
 .\"
 .TH X __miscmansuffix__ __vendorversion__
 .SH NAME
@@ -1272,7 +1272,7 @@ the appropriate instance name can be placed before the asterisk:
 .BR xinit (1),
 .BR xkbbell (1),
 .BR xkbcomp (1),
-.BR xbkevd (1),
+.BR xkbevd (1),
 .BR xkbprint (1),
 .BR xkbvleds (1),
 .BR xkbwatch (1),

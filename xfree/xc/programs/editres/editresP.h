@@ -1,10 +1,14 @@
 
 /*
- * $Xorg: editresP.h,v 1.3 2000/08/17 19:53:51 cpqbld Exp $
+ * $Xorg: editresP.h,v 1.4 2001/02/09 02:05:29 xorgcvs Exp $
  *
 Copyright 1989, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -22,7 +26,7 @@ in this Software without prior written authorization from The Open Group.
  *
  * Author:  Chris D. Peterson, MIT X Consortium
  */
-/* $XFree86: xc/programs/editres/editresP.h,v 1.5 2001/01/17 23:44:52 dawes Exp $ */
+/* $XFree86: xc/programs/editres/editresP.h,v 1.7 2001/12/14 20:00:42 dawes Exp $ */
 
 #include <X11/Xmu/EditresP.h>
 #include <X11/Xresource.h>
@@ -53,9 +57,6 @@ in this Software without prior written authorization from The Open Group.
 #define ANY_RADIO_DATA ("the any widget")
 #define RESOURCE_BOX ("resourceBox")
 
-#ifdef X_NOT_STDC_ENV
-extern void exit();
-#endif
 
 /*
  * Retrieving ResType and Boolean is the same as retrieving a Card8 except

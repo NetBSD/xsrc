@@ -7,12 +7,10 @@ char rcsId_vmwaregc[] =
 
     "Id: vmwaregc.c,v 1.2 2001/01/26 23:32:16 yoel Exp $";
 #endif
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/vmware/vmwaregc.c,v 1.2 2001/05/16 06:48:12 keithp Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/vmware/vmwaregc.c,v 1.3 2001/09/13 08:36:24 alanh Exp $ */
 
 #include "X.h"
 #include "fb.h"
-#include "mi.h"
-#include "migc.h"
 #include "vmware.h"
 
 GCFuncs vmwareGCFuncs = {

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86xv.h,v 1.21 2001/05/07 21:59:06 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86xv.h,v 1.22 2001/06/16 21:57:42 mvojkovi Exp $ */
 
 #ifndef _XF86XV_H_
 #define _XF86XV_H_
@@ -203,6 +203,21 @@ XF86VideoAdaptorPtr xf86XVAllocateVideoAdaptorRec(ScrnInfoPtr pScrn);
 
 void xf86XVFreeVideoAdaptorRec(XF86VideoAdaptorPtr ptr);
 
+void
+xf86XVFillKeyHelper (ScreenPtr pScreen, CARD32 key, RegionPtr clipboxes);
+
+Bool
+xf86XVClipVideoHelper(
+    BoxPtr dst,
+    INT32 *xa,
+    INT32 *xb,
+    INT32 *ya,
+    INT32 *yb,
+    RegionPtr reg,
+    INT32 width,
+    INT32 height
+);
+
 /*** These are DDX layer privates ***/
 
 extern int XF86XvScreenIndex;
@@ -215,6 +230,7 @@ typedef struct {
    void                         (*AdjustFrame)(int, int, int, int);
    Bool                         (*EnterVT)(int, int);
    void                         (*LeaveVT)(int, int);
+   GCPtr			videoGC;
 } XF86XVScreenRec, *XF86XVScreenPtr;
 
 typedef struct {

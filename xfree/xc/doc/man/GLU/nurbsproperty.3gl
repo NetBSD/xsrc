@@ -195,8 +195,8 @@ The \%\f3GLU_OBJECT_PATH_LENGTH\fP and \%\f3GLU_OBJECT_PARAMETRIC_ERROR\fP
 values for the \%\f3GLU_SAMPLING_METHOD\fP property are only available if 
 the GLU version is 1.3 or greater.
 .SH SEE ALSO
-\%\f3gluGetNurbsProperty\fP,
-\%\f3gluLoadSamplingMatrices\fP,
-\%\f3gluNewNurbsRenderer\fP,
-\%\f3gluGetString\fP,
-\%\f3gluNurbsCallback\fP
+\%\f3gluGetNurbsProperty(3G)\fP,
+\%\f3gluLoadSamplingMatrices(3G)\fP,
+\%\f3gluNewNurbsRenderer(3G)\fP,
+\%\f3gluGetString(3G)\fP,
+\%\f3gluNurbsCallback(3G)\fP

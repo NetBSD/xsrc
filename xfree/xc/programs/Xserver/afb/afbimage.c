@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/afb/afbimage.c,v 3.2 1998/03/20 21:04:55 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/afb/afbimage.c,v 3.3 2001/10/28 03:32:58 tsi Exp $ */
 
 #include "X.h"
 #include "windowstr.h"
@@ -215,7 +215,7 @@ afbGetImage(pDrawable, sx, sy, width, height, format, planemask, pdstLine)
 		register int shift_step;
 		register int start_endbit;
 		int start_startbit;
-		register int end_endbit;
+		register int end_endbit = 0;
 		register int start_dstshift;
 		register int nl;
 		register int h;

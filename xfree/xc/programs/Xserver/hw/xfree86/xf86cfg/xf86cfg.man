@@ -26,7 +26,7 @@
 .\"
 .\" Author: Paulo César Pereira de Andrade <pcpa@conectiva.com.br>
 .\"
-.\" $XFree86: xc/programs/Xserver/hw/xfree86/xf86cfg/xf86cfg.man,v 1.6.2.1 2001/05/21 22:24:02 paulo Exp $
+.\" $XFree86: xc/programs/Xserver/hw/xfree86/xf86cfg/xf86cfg.man,v 1.7 2001/05/21 22:21:57 paulo Exp $
 .\"
 .TH xf86cfg 1 __vendorversion__
 .SH NAME

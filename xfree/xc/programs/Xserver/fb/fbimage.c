@@ -21,7 +21,7 @@
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
-/* $XFree86: xc/programs/Xserver/fb/fbimage.c,v 1.6 2000/05/06 21:09:33 keithp Exp $ */
+/* $XFree86: xc/programs/Xserver/fb/fbimage.c,v 1.8 2001/09/07 15:15:31 keithp Exp $ */
 
 #include "fb.h"
 #ifdef XFree86LOADER
@@ -129,11 +129,12 @@ fbPutZImage (DrawablePtr	pDrawable,
     FbStip	*dst;
     FbStride	dstStride;
     int		dstBpp;
+    int		dstXoff, dstYoff;
     int		nbox;
     BoxPtr	pbox;
     int		x1, y1, x2, y2;
 
-    fbGetStipDrawable (pDrawable, dst, dstStride, dstBpp);
+    fbGetStipDrawable (pDrawable, dst, dstStride, dstBpp, dstXoff, dstYoff);
 
     for (nbox = REGION_NUM_RECTS (pClip),
 	 pbox = REGION_RECTS(pClip);
@@ -158,9 +159,9 @@ fbPutZImage (DrawablePtr	pDrawable,
 		   srcStride,
 		   (x1 - x) * dstBpp,
 
-		   dst + y1 * dstStride,
+		   dst + (y1 + dstYoff) * dstStride,
 		   dstStride,
-		   x1 * dstBpp,
+		   (x1 + dstXoff) * dstBpp,
 
 		   (x2 - x1) * dstBpp,
 		   (y2 - y1),
@@ -192,12 +193,13 @@ fbPutXYImage (DrawablePtr	pDrawable,
     FbBits	*dst;
     FbStride	dstStride;
     int		dstBpp;
+    int		dstXoff, dstYoff;
     int		nbox;
     BoxPtr	pbox;
     int		x1, y1, x2, y2;
-    FbBits	fgand, fgxor, bgand, bgxor;
+    FbBits	fgand = 0, fgxor = 0, bgand = 0, bgxor = 0;
 
-    fbGetDrawable (pDrawable, dst, dstStride, dstBpp);
+    fbGetDrawable (pDrawable, dst, dstStride, dstBpp, dstXoff, dstYoff);
 
     if (dstBpp == 1)
     {
@@ -247,9 +249,9 @@ fbPutXYImage (DrawablePtr	pDrawable,
 		       srcStride,
 		       (x1 - x) + srcX,
 
-		       (FbStip *) (dst + y1 * dstStride),
+		       (FbStip *) (dst + (y1 + dstYoff) * dstStride),
 		       FbBitsStrideToStipStride(dstStride),
-		       x1 * dstBpp,
+		       (x1 + dstXoff) * dstBpp,
 
 		       (x2 - x1) * dstBpp,
 		       (y2 - y1),
@@ -264,9 +266,9 @@ fbPutXYImage (DrawablePtr	pDrawable,
 		      srcStride,
 		      (x1 - x) + srcX,
 
-		      dst + y1 * dstStride,
+		      dst + (y1 + dstYoff) * dstStride,
 		      dstStride,
-		      x1 * dstBpp,
+		      (x1 + dstXoff) * dstBpp,
 		      dstBpp,
 
 		      (x2 - x1) * dstBpp,
@@ -290,6 +292,7 @@ fbGetImage (DrawablePtr	    pDrawable,
     FbBits	    *src;
     FbStride	    srcStride;
     int		    srcBpp;
+    int		    srcXoff, srcYoff;
     FbStip	    *dst;
     FbStride	    dstStride;
     
@@ -309,7 +312,7 @@ fbGetImage (DrawablePtr	    pDrawable,
     }
 #endif
     
-    fbGetDrawable (pDrawable, src, srcStride, srcBpp);
+    fbGetDrawable (pDrawable, src, srcStride, srcBpp, srcXoff, srcYoff);
     
     x += pDrawable->x;
     y += pDrawable->y;
@@ -324,9 +327,9 @@ fbGetImage (DrawablePtr	    pDrawable,
 	if (pm != FB_ALLONES)
 	    memset (d, 0, dstStride * h);
 	dstStride /= sizeof (FbStip);
-	fbBltStip ((FbStip *) (src + y * srcStride), 
+	fbBltStip ((FbStip *) (src + (y + srcYoff) * srcStride), 
 		   FbBitsStrideToStipStride(srcStride),
-		   x * srcBpp,
+		   (x + srcXoff) * srcBpp,
 		   
 		   dst,
 		   dstStride,
@@ -341,9 +344,9 @@ fbGetImage (DrawablePtr	    pDrawable,
     else
     {
 	dstStride = BitmapBytePad(w) / sizeof (FbStip);
-	fbBltPlane (src + y * srcStride,
+	fbBltPlane (src + (y + srcYoff) * srcStride,
 		    srcStride, 
-		    x * srcBpp,
+		    (x + srcXoff) * srcBpp,
 		    srcBpp,
 
 		    dst,

@@ -24,7 +24,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/input/summa/xf86Summa.c,v 1.10 2001/05/15 18:22:22 paulo Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/input/summa/xf86Summa.c,v 1.11 2001/12/26 21:49:42 dawes Exp $ */
 
 static const char identification[] = "$Identification: 18 $";
 
@@ -59,8 +59,6 @@ static const char identification[] = "$Identification: 18 $";
 #include "xf86Module.h"
 #endif
 
-#undef sleep
-#define sleep(t) xf86WaitForInput(-1, 1000 * (t))
 #define wait_for_fd(fd) xf86WaitForInput((fd), 1000)
 #define tcflush(fd, n) xf86FlushInput((fd))
 #undef read
@@ -898,13 +896,13 @@ xf86SumOpen(LocalDevicePtr local)
     buffer[0] = 0;
     SYSCALL(err = write(local->fd, buffer, 1));
 
-/* wait 200 mSecs, just in case */
+/* Wait 400 mSecs, just in case.  200 ms isn't enough for the Genius EasyPen. */
 #ifndef XFREE86_V4
     timeout.tv_sec = 0;
-    timeout.tv_usec = 200000;
+    timeout.tv_usec = 400000;
     SYSCALL(err = select(0, NULL, NULL, NULL, &timeout));
 #else
-    err = xf86WaitForInput(-1, 200);
+    err = xf86WaitForInput(-1, 400000);
 #endif
     if (err == -1) {
 	Error("SummaSketch select");

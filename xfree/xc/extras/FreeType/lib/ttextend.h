@@ -19,6 +19,7 @@
  *  through a simple API.
  *
  ******************************************************************/
+/* $XFree86: xc/extras/FreeType/lib/ttextend.h,v 1.2 2001/10/28 03:32:05 tsi Exp $ */
 
 #ifndef TTEXTEND_H
 #define TTEXTEND_H
@@ -130,7 +131,7 @@
                                    PExt_Destructor   destroy );
 
 
-#ifdef TT_CONFIG_OPTION_EXTEND_ENGINE
+#if defined(TT_CONFIG_OPTION_EXTEND_ENGINE) && !defined(FTXSBIT_H)
   /* Initialize the extension component */
   LOCAL_DEF
   TT_Error  TTExtend_Init( PEngine_Instance  engine );

@@ -1,9 +1,13 @@
-/* $Xorg: xfwp.h,v 1.5 2000/08/17 19:54:24 cpqbld Exp $ */
+/* $Xorg: xfwp.h,v 1.6 2001/02/09 02:05:46 xorgcvs Exp $ */
 
 /*
 Copyright 1996, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included
 in all copies or substantial portions of the Software.
@@ -21,7 +25,7 @@ not be used in advertising or otherwise to promote the sale, use or
 other dealings in this Software without prior written authorization
 from The Open Group.
 */
-/* $XFree86: xc/programs/xfwp/xfwp.h,v 1.9 2001/01/17 23:45:35 dawes Exp $ */
+/* $XFree86: xc/programs/xfwp/xfwp.h,v 1.10 2001/12/14 20:01:44 dawes Exp $ */
 
 #ifndef _XFWP_H
 #define _XFWP_H

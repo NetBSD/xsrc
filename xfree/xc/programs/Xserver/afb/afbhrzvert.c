@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/afb/afbhrzvert.c,v 3.0 1996/08/18 01:45:38 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/afb/afbhrzvert.c,v 3.1 2001/08/01 00:44:47 tsi Exp $ */
 /* Combined Purdue/PurduePlus patches, level 2.0, 1/17/89 */
 /***********************************************************
 
@@ -62,6 +62,7 @@ SOFTWARE.
 /* horizontal solid line
    abs(len) > 1
 */
+void
 afbHorzS(pbase, nlwidth, sizeDst, depthDst, x1, y1, len, rrops)
 PixelType *pbase;		/* pointer to base of bitmap */
 register int nlwidth;		/* width in longwords of bitmap */
@@ -156,7 +157,7 @@ register unsigned char *rrops;
    better code.  sigh.  we know that len will never be 0 or 1, so
    it's OK to use it.
 */
-
+void
 afbVertS(pbase, nlwidth, sizeDst, depthDst, x1, y1, len, rrops)
 PixelType *pbase;		/* pointer to base of bitmap */
 register int nlwidth;		/* width in longwords of bitmap */

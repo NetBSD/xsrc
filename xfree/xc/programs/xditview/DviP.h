@@ -1,7 +1,7 @@
 /*
  * $XConsortium: DviP.h,v 1.10 92/02/11 01:27:15 keith Exp $
  */
-/* $XFree86: xc/programs/xditview/DviP.h,v 1.3 2000/12/04 21:01:01 dawes Exp $ */
+/* $XFree86: xc/programs/xditview/DviP.h,v 1.4 2001/08/01 00:45:03 tsi Exp $ */
 
 /* 
  * DviP.h - Private definitions for Dvi widget
@@ -202,6 +202,8 @@ typedef struct {
 	DviCharCache	cache;
 } DviPart;
 
+extern int		DviGetAndPut(DviWidget, int *);
+
 #define DviGetIn(dw,cp)\
     (dw->dvi.tmpFile ? (\
 	DviGetAndPut (dw, cp) \
@@ -245,13 +247,46 @@ typedef struct _DviRec {
     DviPart	dvi;
 } DviRec;
 
+/* draw.c */
+extern void		HorizontalMove(DviWidget, int);
+extern void		HorizontalGoto(DviWidget, int);
+extern void		VerticalMove(DviWidget, int);
+extern void		VerticalGoto(DviWidget, int);
+extern void		FlushCharCache(DviWidget);
+extern void		SetGCForDraw(DviWidget);
+extern void		DrawLine(DviWidget, int, int);
+extern void		DrawCircle(DviWidget, int);
+extern void		DrawEllipse(DviWidget, int, int);
+extern void		DrawArc(DviWidget, int, int, int, int);
+extern void		DrawSpline(DviWidget, char *, int);
+
+/* font.c */
+extern void		ParseFontMap(DviWidget);
+extern void		DestroyFontMap(DviFontMap *);
+extern void		SetFontPosition(DviWidget, int, char *, char *);
 #ifdef USE_XFT
-extern XftFont		*QueryFont ();
+extern XftFont *	QueryFont(DviWidget, int, int);
 #else
-extern XFontStruct	*QueryFont ();
+extern XFontStruct *	QueryFont(DviWidget, int, int);
 #endif
+extern DviCharNameMap *	QueryFontMap(DviWidget, int);
 
-extern DviCharNameMap	*QueryFontMap ();
+/* lex.c */
+extern char *		GetLine(DviWidget, char *, int);
+extern char *		GetWord(DviWidget, char *, int);
+extern int		GetNumber(DviWidget);
+
+/* page.c */
+extern void		DestroyFileMap(DviFileMap *);
+extern void		ForgetPagePositions(DviWidget);
+extern void		RememberPagePosition(DviWidget, int);
+extern long		SearchPagePosition(DviWidget, int);
+extern void		FileSeek(DviWidget, long);
+
+/* parse.c */
+extern int		ParseInput(DviWidget);
+
+/* Dvi.c */
+extern void		SetDeviceResolution(DviWidget, int);
+
 #endif /* _XtDviP_h */
-
-

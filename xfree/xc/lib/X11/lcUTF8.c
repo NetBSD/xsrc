@@ -24,7 +24,7 @@ ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
 OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/lib/X11/lcUTF8.c,v 1.12 2001/02/09 00:02:53 dawes Exp $ */
+/* $XFree86: xc/lib/X11/lcUTF8.c,v 1.14 2001/11/16 00:52:28 dawes Exp $ */
 
 /*
  * This file contains:
@@ -37,10 +37,12 @@ OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *         sets is an anachronism.
  *      3. For conversion from keysym to locale encoding.
  *
- * II. An UTF-8 locale loader.
+ * II. Conversion files for an UTF-8 locale loader.
  *     Supports: all locales with codeset UTF-8.
  *     How: Provides converters for UTF-8.
  *     Platforms: all systems.
+ *
+ * The loader itself is located in lcUTF8.c.
  */
 
 /*
@@ -331,9 +333,12 @@ static Utf8ConvRec all_charsets[] = {
 	cp1256_mbtowc, cp1256_wctomb
     },
     { "BIG5-0", NULLQUARK,
+    big5_mbtowc, big5_wctomb
+	},
+    { "BIG5-E0", NULLQUARK,
 	big5_0_mbtowc, big5_0_wctomb
     },
-    { "BIG5-1", NULLQUARK,
+    { "BIG5-E1", NULLQUARK,
 	big5_1_mbtowc, big5_1_wctomb
     },
 
@@ -1131,7 +1136,7 @@ _XlcAddUtf8Converters(
 }
 
 /***************************************************************************/
-/* Part II: An UTF-8 locale loader.
+/* Part II: UTF-8 locale loader conversion files
  *
  * Here we can assume that "multi-byte" is UTF-8 and that `wchar_t' is Unicode.
  */
@@ -1798,23 +1803,12 @@ open_utf8tofcs(
     return create_tofontcs_conv(from_lcd, &methods_utf8tocs);
 }
 
-XLCd
-_XlcUtf8Loader(
-    const char *name)
+/* Registers UTF-8 converters for a UTF-8 locale. */
+
+void
+_XlcAddUtf8LocaleConverters(
+    XLCd lcd)
 {
-    XLCd lcd;
-
-    lcd = _XlcCreateLC(name, _XlcGenericMethods);
-    if (lcd == (XLCd) NULL)
-	return lcd;
-
-    /* The official IANA name for UTF-8 is "UTF-8" in upper case with a dash. */
-    if (!XLC_PUBLIC_PART(lcd)->codeset ||
-	(_XlcCompareISOLatin1(XLC_PUBLIC_PART(lcd)->codeset, "UTF-8"))) {
-	_XlcDestroyLC(lcd);
-	return (XLCd) NULL;
-    }
-
     /* Register elementary converters. */
 
     _XlcSetConverter(lcd, XlcNMultiByte, lcd, XlcNWideChar, open_utf8towcs);
@@ -1843,8 +1837,4 @@ _XlcUtf8Loader(
     /* Register converters for XlcNFontCharSet */
     _XlcSetConverter(lcd, XlcNMultiByte, lcd, XlcNFontCharSet, open_utf8tofcs);
     _XlcSetConverter(lcd, XlcNWideChar, lcd, XlcNFontCharSet, open_wcstofcs);
-
-    _XlcAddUtf8Converters(lcd);
-
-    return lcd;
 }

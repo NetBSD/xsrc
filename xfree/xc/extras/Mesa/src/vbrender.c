@@ -1,4 +1,4 @@
-
+/* $XFree86: xc/extras/Mesa/src/vbrender.c,v 1.10 2001/10/28 03:32:07 tsi Exp $ */
 /*
  * Mesa 3-D graphics library
  * Version:  3.3
@@ -400,9 +400,6 @@ static void null_quad( GLcontext *ctx, GLuint v0, GLuint v1,
 {
 }
 #endif
-
-
-extern const char *gl_prim_name[];
 
 
 /*

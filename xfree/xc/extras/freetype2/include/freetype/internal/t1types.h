@@ -5,7 +5,7 @@
 /*    Basic Type1/Type2 type definitions and interface (specification      */
 /*    only).                                                               */
 /*                                                                         */
-/*  Copyright 1996-2000 by                                                 */
+/*  Copyright 1996-2001 by                                                 */
 /*  David Turner, Robert Wilhelm, and Werner Lemberg.                      */
 /*                                                                         */
 /*  This file is part of the FreeType project, and may only be used,       */
@@ -24,6 +24,7 @@
 #include<ft2build.h>
 #include FT_TYPE1_TABLES_H
 #include FT_INTERNAL_POSTSCRIPT_NAMES_H
+#include FT_INTERNAL_POSTSCRIPT_HINTS_H
 
 
 FT_BEGIN_HEADER
@@ -172,6 +173,9 @@ FT_BEGIN_HEADER
 
     /* support for Multiple Masters fonts */
     T1_Blend*      blend;
+    
+    /* since FT 2.1 - interface to PostScript hinter */
+    void*          pshinter;
 
   } T1_FaceRec;
 
@@ -184,6 +188,9 @@ FT_BEGIN_HEADER
     CID_Info    cid;
     void*       afm_data;
     CID_Subrs*  subrs;
+    
+    /* since FT 2.1 - interface to PostScript hinter */
+    void*       pshinter;
 
   } CID_FaceRec;
 

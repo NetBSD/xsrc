@@ -3,7 +3,11 @@
 
   Copyright 1993, 1998  The Open Group
 
-  All Rights Reserved.
+  Permission to use, copy, modify, distribute, and sell this software and its
+  documentation for any purpose is hereby granted without fee, provided that
+  the above copyright notice appear in all copies and that both that
+  copyright notice and this permission notice appear in supporting
+  documentation.
 
   The above copyright notice and this permission notice shall be included
   in all copies or substantial portions of the Software.
@@ -22,11 +26,12 @@
   from The Open Group.
 
 */
-/* $XFree86: xc/programs/Xserver/hw/xwin/InitInput.c,v 1.4 2001/05/02 00:45:26 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xwin/InitInput.c,v 1.9 2001/12/14 19:59:52 dawes Exp $ */
 
 #include "win.h"
 
 CARD32		g_c32LastInputEventTime = 0;
+
 
 /* Called from dix/devices.c */
 /*
@@ -36,28 +41,43 @@ CARD32		g_c32LastInputEventTime = 0;
  * An example of a modifier is mapping the A key to the Control key.
  * A has to be a legal modifier.  I think.
  */
+
 Bool
 LegalModifier (unsigned int uiKey, DevicePtr pDevice)
 {
   return TRUE;
 }
 
+
 /* Called from dix/dispatch.c */
-/* We tell mi to dequeue the events that we have sent it */
+/*
+ * Run through the Windows message queue(s) one more time.
+ * Tell mi to dequeue the events that we have sent it.
+ */
 void
 ProcessInputEvents (void)
 {
+#if CYGDEBUG
+  ErrorF ("ProcessInputEvents ()\n");
+#endif
+
   mieqProcessInputEvents ();
   miPointerUpdate ();
+
+#if CYGDEBUG
+  ErrorF ("ProcessInputEvents () - returning\n");
+#endif
 }
+
 
 int
 TimeSinceLastInputEvent ()
 {
-    if (g_c32LastInputEventTime == 0)
-        g_c32LastInputEventTime = GetTickCount ();
-    return GetTickCount () - g_c32LastInputEventTime;
+  if (g_c32LastInputEventTime == 0)
+    g_c32LastInputEventTime = GetTickCount ();
+  return GetTickCount () - g_c32LastInputEventTime;
 }
+
 
 /* See Porting Layer Definition - p. 17 */
 void
@@ -87,10 +107,20 @@ InitInput (int argc, char *argv[])
       /* Open a file descriptor for the Windows message queue */
       g_fdMessageQueue = open (WIN_MSG_QUEUE_FNAME, O_RDONLY);
       
+      if (g_fdMessageQueue == -1)
+	{
+	  FatalError ("InitInput () - Failed opening /dev/windows\n");
+	}
+
       /* Add the message queue as a device to wait for in WaitForSomething */
       AddEnabledDevice (g_fdMessageQueue);
     }
+
+#if CYGDEBUG
+  ErrorF ("InitInput () - returning\n");
+#endif
 }
+
 
 #ifdef XTESTEXT1
 void
@@ -100,11 +130,13 @@ XTestGenerateEvent (int dev_type, int keycode, int keystate,
   ErrorF ("XTestGenerateEvent ()\n");
 }
 
+
 void
 XTestGetPointerPos (short *fmousex, short *fmousey)
 {
   ErrorF ("XTestGetPointerPos ()\n");
 }
+
 
 void
 XTestJumpPointer (int jx, int jy, int dev_type)

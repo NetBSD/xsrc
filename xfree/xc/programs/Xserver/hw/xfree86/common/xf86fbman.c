@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86fbman.c,v 1.22 2001/05/10 10:17:39 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86fbman.c,v 1.24 2001/12/05 19:23:52 mvojkovi Exp $ */
 
 #include "misc.h"
 #include "xf86.h"
@@ -345,6 +345,9 @@ AllocateArea(
 	if(!link) return NULL;
 
         area = &(link->area);
+        link->next = offman->UsedAreas;
+        offman->UsedAreas = link;
+        offman->NumUsedAreas++;
 	break;
    }
 
@@ -376,8 +379,6 @@ AllocateArea(
 	   REGION_UNION(pScreen, offman->FreeBoxes, offman->FreeBoxes, &NewReg);
 	   REGION_UNINIT(pScreen, &NewReg); 
 
-	   offman->NumUsedAreas--;
-
            area = &(link->area);
 	   break;
 	}
@@ -397,10 +398,6 @@ AllocateArea(
         REGION_INIT(pScreen, &NewReg, &(area->box), 1);
 	REGION_SUBTRACT(pScreen, offman->FreeBoxes, offman->FreeBoxes, &NewReg);
 	REGION_UNINIT(pScreen, &NewReg);
-
-	link->next = offman->UsedAreas;
-	offman->UsedAreas = link;
-	offman->NumUsedAreas++;
    }
 
    return area;
@@ -1054,6 +1051,98 @@ xf86InitFBManager(
    REGION_UNINIT(pScreen, &FullRegion);
     
    return ret;
+}
+
+Bool
+xf86InitFBManagerArea(
+    ScreenPtr pScreen,
+    int PixelArea,
+    int Verbosity
+)
+{
+    ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
+    xRectangle Rect[3];
+    RegionPtr pRegion, pScreenRegion;
+    int nRect;
+    Bool ret = FALSE;
+
+    if (PixelArea < (pScrn->displayWidth * pScrn->virtualY))
+	return FALSE;
+
+    Rect[0].x = Rect[0].y = 0;
+    Rect[0].width = pScrn->displayWidth;
+    Rect[0].height = PixelArea / pScrn->displayWidth;
+    nRect = 1;
+
+    /* Add a possible partial scanline */
+    if ((Rect[1].height = Rect[1].width = PixelArea % pScrn->displayWidth)) {
+	Rect[1].x = 0;
+	Rect[1].y = Rect[0].height;
+	Rect[1].height = 1;
+	nRect++;
+    }
+
+    /* Factor out virtual resolution */
+    pRegion = RECTS_TO_REGION(pScreen, nRect, Rect, 0);
+    if (pRegion) {
+	if (!REGION_NAR(pRegion)) {
+	    Rect[2].x = Rect[2].y = 0;
+	    Rect[2].width = pScrn->virtualX;
+	    Rect[2].height = pScrn->virtualY;
+
+	    pScreenRegion = RECTS_TO_REGION(pScreen, 1, &Rect[2], 0);
+	    if (pScreenRegion) {
+		if (!REGION_NAR(pScreenRegion)) {
+		    REGION_SUBTRACT(pScreen, pRegion, pRegion, pScreenRegion);
+
+		    ret = xf86InitFBManagerRegion(pScreen, pRegion);
+
+		    if (ret && xf86GetVerbosity() >= Verbosity) {
+			int scrnIndex = pScrn->scrnIndex;
+
+			xf86DrvMsgVerb(scrnIndex, X_INFO, Verbosity,
+			    "Largest offscreen areas (with overlaps):\n");
+
+			if (Rect[2].width < Rect[0].width) {
+			    xf86DrvMsgVerb(scrnIndex, X_INFO, Verbosity,
+				"\t%d x %d rectangle at %d,0\n",
+				Rect[0].width - Rect[2].width,
+				Rect[0].height,
+				Rect[2].width);
+			}
+			if (Rect[2].width < Rect[1].width) {
+			    xf86DrvMsgVerb(scrnIndex, X_INFO, Verbosity,
+				"\t%d x %d rectangle at %d,0\n",
+				Rect[1].width - Rect[2].width,
+				Rect[0].height + Rect[1].height,
+				Rect[2].width);
+			}
+			if (Rect[2].height < Rect[0].height) {
+			    xf86DrvMsgVerb(scrnIndex, X_INFO, Verbosity,
+				"\t%d x %d rectangle at 0,%d\n",
+				Rect[0].width,
+				Rect[0].height - Rect[2].height,
+				Rect[2].height);
+			}
+			if (Rect[1].height) {
+			    xf86DrvMsgVerb(scrnIndex, X_INFO, Verbosity,
+				"\t%d x %d rectangle at 0,%d\n",
+				Rect[1].width,
+				Rect[0].height - Rect[2].height +
+				    Rect[1].height,
+				Rect[2].height);
+			}
+		    }
+		}
+
+		REGION_DESTROY(pScreen, pScreenRegion);
+	    }
+	}
+
+	REGION_DESTROY(pScreen, pRegion);
+    }
+
+    return ret;
 }
 
 Bool

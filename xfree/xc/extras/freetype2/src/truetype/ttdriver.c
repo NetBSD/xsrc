@@ -4,7 +4,7 @@
 /*                                                                         */
 /*    TrueType font driver implementation (body).                          */
 /*                                                                         */
-/*  Copyright 1996-2000 by                                                 */
+/*  Copyright 1996-2001 by                                                 */
 /*  David Turner, Robert Wilhelm, and Werner Lemberg.                      */
 /*                                                                         */
 /*  This file is part of the FreeType project, and may only be used,       */
@@ -21,8 +21,11 @@
 #include FT_INTERNAL_STREAM_H
 #include FT_INTERNAL_SFNT_H
 #include FT_TRUETYPE_IDS_H
+
 #include "ttdriver.h"
 #include "ttgload.h"
+
+#include "tterrors.h"
 
 
   /*************************************************************************/
@@ -85,11 +88,11 @@
   /*                                                                       */
   /*    They can be implemented by format-specific interfaces.             */
   /*                                                                       */
-  static
-  FT_Error  Get_Kerning( TT_Face     face,
-                         FT_UInt     left_glyph,
-                         FT_UInt     right_glyph,
-                         FT_Vector*  kerning )
+  static FT_Error
+  Get_Kerning( TT_Face     face,
+               FT_UInt     left_glyph,
+               FT_UInt     right_glyph,
+               FT_Vector*  kerning )
   {
     TT_Kern_0_Pair*  pair;
 
@@ -180,12 +183,12 @@
   /* <Return>                                                              */
   /*    FreeType error code.  0 means success.                             */
   /*                                                                       */
-  static
-  FT_Error  Set_Char_Sizes( TT_Size     size,
-                            FT_F26Dot6  char_width,
-                            FT_F26Dot6  char_height,
-                            FT_UInt     horz_resolution,
-                            FT_UInt     vert_resolution )
+  static FT_Error
+  Set_Char_Sizes( TT_Size     size,
+                  FT_F26Dot6  char_width,
+                  FT_F26Dot6  char_height,
+                  FT_UInt     horz_resolution,
+                  FT_UInt     vert_resolution )
   {
     FT_Size_Metrics*  metrics = &size->root.metrics;
     TT_Face           face    = (TT_Face)size->root.face;
@@ -204,8 +207,8 @@
     if ( ( face->header.Flags & 8 ) == 0 )
     {
       /* Compute pixel sizes in 26.6 units */
-      dim_x = ( char_width  * horz_resolution ) / 72;
-      dim_y = ( char_height * vert_resolution ) / 72;
+      dim_x = ( char_width  * horz_resolution + 36 ) / 72;
+      dim_y = ( char_height * vert_resolution + 36 ) / 72;
 
       metrics->x_scale = FT_DivFix( dim_x, face->root.units_per_EM );
       metrics->y_scale = FT_DivFix( dim_y, face->root.units_per_EM );
@@ -243,10 +246,10 @@
   /* <Return>                                                              */
   /*    FreeType error code.  0 means success.                             */
   /*                                                                       */
-  static
-  FT_Error  Set_Pixel_Sizes( TT_Size  size,
-                             FT_UInt  pixel_width,
-                             FT_UInt  pixel_height )
+  static FT_Error
+  Set_Pixel_Sizes( TT_Size  size,
+                   FT_UInt  pixel_width,
+                   FT_UInt  pixel_height )
   {
     FT_UNUSED( pixel_width );
     FT_UNUSED( pixel_height );
@@ -288,17 +291,17 @@
   /* <Return>                                                              */
   /*    FreeType error code.  0 means success.                             */
   /*                                                                       */
-  static
-  FT_Error  Load_Glyph( TT_GlyphSlot  slot,
-                        TT_Size       size,
-                        FT_UShort     glyph_index,
-                        FT_UInt       load_flags )
+  static FT_Error
+  Load_Glyph( TT_GlyphSlot  slot,
+              TT_Size       size,
+              FT_UShort     glyph_index,
+              FT_UInt       load_flags )
   {
     FT_Error  error;
 
 
     if ( !slot )
-      return TT_Err_Invalid_Glyph_Handle;
+      return TT_Err_Invalid_Slot_Handle;
 
     /* check whether we want a scaled outline or bitmap */
     if ( !size )
@@ -358,9 +361,9 @@
   /* <Return>                                                              */
   /*    Glyph index.  0 means `undefined character code'.                  */
   /*                                                                       */
-  static
-  FT_UInt  Get_Char_Index( TT_CharMap  charmap,
-                           FT_Long     charcode )
+  static FT_UInt
+  Get_Char_Index( TT_CharMap  charmap,
+                  FT_Long     charcode )
   {
     FT_Error       error;
     TT_Face        face;
@@ -403,9 +406,9 @@
   /*************************************************************************/
 
 
-  static
-  FT_Module_Interface  tt_get_interface( TT_Driver    driver,
-                                         const char*  interface )
+  static FT_Module_Interface
+  tt_get_interface( TT_Driver    driver,
+                    const char*  interface )
   {
     FT_Module        sfntd = FT_Get_Module( driver->root.root.library,
                                             "sfnt" );
@@ -496,7 +499,8 @@
   /*    format-specific interface can then be retrieved through the method */
   /*    interface->get_format_interface.                                   */
   /*                                                                       */
-  FT_EXPORT_DEF( const FT_Driver_Class* )  getDriverClass( void )
+  FT_EXPORT_DEF( const FT_Driver_Class* )
+  getDriverClass( void )
   {
     return &tt_driver_class;
   }

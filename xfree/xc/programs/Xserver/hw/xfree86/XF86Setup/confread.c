@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/confread.c,v 1.9 1999/09/04 13:04:29 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/confread.c,v 1.10 2001/07/25 15:05:05 dawes Exp $ */
 /*
  * Copyright 1999 by Joseph V. Moss <joe@XFree86.Org>
  *
@@ -41,9 +41,7 @@
 char *defaultFontPath = COMPILEDDEFAULTFONTPATH;
 char *rgbPath = RGB_DB;
 
-#if NeedVarargsPrototypes
 #include <stdarg.h>
-#endif
 #include <sys/types.h>
 #include <sys/stat.h>
 #ifdef NEED_SNPRINTF

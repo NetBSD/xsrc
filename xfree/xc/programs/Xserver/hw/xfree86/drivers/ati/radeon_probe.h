@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/radeon_probe.h,v 1.5 2001/05/07 21:59:06 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/radeon_probe.h,v 1.6 2001/07/25 08:04:43 alanh Exp $ */
 /*
  * Copyright 2000 ATI Technologies Inc., Markham, Ontario, and
  *                VA Linux Systems Inc., Fremont, California.
@@ -40,6 +40,21 @@
 #include "atiproto.h"
 
 #include "xf86str.h"
+
+typedef struct
+{
+    Bool IsDRIEnabled;
+
+    Bool HasSecondary;
+    Bool BypassSecondary;
+    /*These two registers are used to make sure the CRTC2 is
+      retored before CRTC_EXT, otherwise it could lead to blank screen.*/
+    Bool IsSecondaryRestored;
+    Bool RestorePrimary;
+
+    ScrnInfoPtr pSecondaryScrn;    
+    ScrnInfoPtr pPrimaryScrn;
+}RADEONEntRec, *RADEONEntPtr;
 
 /* radeon_probe.c */
 extern const OptionInfoRec * RADEONAvailableOptions

@@ -1,7 +1,7 @@
 /*
  * Id: newport_regs.c,v 1.3 2000/11/29 20:58:10 agx Exp $
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/newport/newport_regs.c,v 1.1 2000/12/01 19:48:01 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/newport/newport_regs.c,v 1.6 2001/12/21 15:37:23 tsi Exp $ */
 
 #include "newport.h"
 
@@ -67,3 +67,110 @@ NewportXmap9SetModeRegister(NewportRegsPtr pNewportRegs, CARD8 address, CARD32 m
 			XM9_CRS_MODE_REG_DATA | NPORT_DMODE_W4 );
 	pNewportRegs->set.dcbdata0.all = (address << 24) | ( mode & 0xffffff );
 }
+
+CARD32
+NewportXmap9GetModeRegister(NewportRegsPtr pNewportRegs, unsigned chip, CARD8 address)
+{
+	CARD32 dcbaddr, i, val, mode = 0;
+	CARD8 index = ( address << 2 );
+
+	if(chip)
+		dcbaddr = DCB_XMAP1;
+	else
+		dcbaddr = DCB_XMAP0;
+
+	/* we have to read one byte at at time */
+	for( i = 0; i < 4; i++ ) {
+		NewportXmap9FifoWait( pNewportRegs, dcbaddr);
+
+		pNewportRegs->set.dcbmode = ( dcbaddr | W_DCB_XMAP9_PROTOCOL |
+				XM9_CRS_MODE_REG_INDEX | NPORT_DMODE_W1 );
+		pNewportRegs->set.dcbdata0.bytes.b3 = (index | i);
+		pNewportRegs->set.dcbmode = ( dcbaddr | W_DCB_XMAP9_PROTOCOL |
+				XM9_CRS_MODE_REG_DATA | NPORT_DMODE_W1 );
+		val = pNewportRegs->set.dcbdata0.bytes.b3;
+		mode |= (val << ( i * 8 ) );
+	}
+	return mode;
+}
+
+void 
+NewportBackupRex3( ScrnInfoPtr pScrn)
+{
+	NewportPtr pNewport = NEWPORTPTR(pScrn);
+	NewportRegsPtr pNewportRegs = NEWPORTREGSPTR(pScrn);
+
+	pNewport->txt_drawmode0 = pNewportRegs->set.drawmode0;
+	pNewport->txt_drawmode1 = pNewportRegs->set.drawmode1;
+	pNewport->txt_wrmask = pNewportRegs->set.wrmask;
+	pNewport->txt_smask1x = pNewportRegs->cset.smask1x;
+	pNewport->txt_smask1y = pNewportRegs->cset.smask1y;
+	pNewport->txt_smask2x = pNewportRegs->cset.smask2x;
+	pNewport->txt_smask2y = pNewportRegs->cset.smask2y;
+	pNewport->txt_clipmode = pNewportRegs->cset.clipmode;
+}
+
+void
+NewportRestoreRex3( ScrnInfoPtr pScrn)
+{
+	NewportPtr pNewport = NEWPORTPTR(pScrn);
+	NewportRegsPtr pNewportRegs = NEWPORTREGSPTR(pScrn);
+
+	pNewportRegs->set.drawmode0 = pNewport->txt_drawmode0;
+	pNewportRegs->set.drawmode1 = pNewport->txt_drawmode1;
+	pNewportRegs->set.wrmask = pNewport->txt_wrmask;
+	pNewportRegs->cset.smask1x = pNewport->txt_smask1x;
+	pNewportRegs->cset.smask1y = pNewport->txt_smask1y;
+	pNewportRegs->cset.smask2x = pNewport->txt_smask2x;
+	pNewportRegs->cset.smask2y = pNewport->txt_smask2y;
+	pNewportRegs->cset.clipmode = pNewport->txt_clipmode;
+}
+
+void NewportBackupXmap9s( ScrnInfoPtr pScrn)
+{
+	NewportPtr pNewport = NEWPORTPTR(pScrn);
+	NewportRegsPtr pNewportRegs = NEWPORTREGSPTR(pScrn);
+
+	NewportBfwait(pNewport->pNewportRegs);
+	/* config of xmap0 */
+	pNewportRegs->set.dcbmode = (DCB_XMAP0 | R_DCB_XMAP9_PROTOCOL |
+			XM9_CRS_CONFIG | NPORT_DMODE_W1 );
+	pNewport->txt_xmap9_cfg0 = pNewportRegs->set.dcbdata0.bytes.b3;
+	NewportBfwait(pNewport->pNewportRegs);
+	/* config of xmap1 */
+	pNewportRegs->set.dcbmode = (DCB_XMAP1 | R_DCB_XMAP9_PROTOCOL |
+				XM9_CRS_CONFIG | NPORT_DMODE_W1 );
+	pNewport->txt_xmap9_cfg1 = pNewportRegs->set.dcbdata0.bytes.b3;
+	NewportBfwait(pNewport->pNewportRegs);
+	/* mode index register of xmap0 */
+	pNewportRegs->set.dcbmode = (DCB_XMAP0 | R_DCB_XMAP9_PROTOCOL |
+				XM9_CRS_MODE_REG_INDEX | NPORT_DMODE_W1 );
+	pNewport->txt_xmap9_mi = pNewportRegs->set.dcbdata0.bytes.b3; 
+	/* mode register 0 of xmap 0 */
+	pNewport->txt_xmap9_mod0 = NewportXmap9GetModeRegister(pNewportRegs, 0, 0);
+}
+
+void NewportRestoreXmap9s( ScrnInfoPtr pScrn)
+{
+	NewportPtr pNewport = NEWPORTPTR(pScrn);
+	NewportRegsPtr pNewportRegs = NEWPORTREGSPTR(pScrn);
+
+	/* mode register 0 */
+	NewportXmap9SetModeRegister( pNewportRegs , 0, pNewport->txt_xmap9_mod0 );
+	NewportBfwait(pNewport->pNewportRegs);
+	/* mode index register */
+	pNewportRegs->set.dcbmode = (DCB_XMAP_ALL | W_DCB_XMAP9_PROTOCOL |
+				XM9_CRS_MODE_REG_INDEX | NPORT_DMODE_W1 );
+	pNewportRegs->set.dcbdata0.bytes.b3 = pNewport->txt_xmap9_mi;
+	NewportBfwait(pNewport->pNewportRegs);
+	/* cfg xmap0 */
+	pNewportRegs->set.dcbmode = (DCB_XMAP0 | W_DCB_XMAP9_PROTOCOL |
+				XM9_CRS_CONFIG | NPORT_DMODE_W1 );
+	pNewportRegs->set.dcbdata0.bytes.b3 = pNewport->txt_xmap9_cfg0;
+	NewportBfwait(pNewport->pNewportRegs);
+	/* cfg xmap1 */
+	pNewportRegs->set.dcbmode = (DCB_XMAP1 | W_DCB_XMAP9_PROTOCOL |
+				XM9_CRS_CONFIG | NPORT_DMODE_W1 );
+	pNewportRegs->set.dcbdata0.bytes.b3 = pNewport->txt_xmap9_cfg1;
+}
+

@@ -31,7 +31,7 @@
  *
  *
  */
-/* $XFree86: xc/programs/xcmsdb/loadData.c,v 3.2 2001/01/17 23:45:19 dawes Exp $ */
+/* $XFree86: xc/programs/xcmsdb/loadData.c,v 3.3 2001/07/25 15:05:18 dawes Exp $ */
 
 /*
  *      INCLUDES
@@ -53,15 +53,7 @@
  *		files (external includes or internal includes).
  */
 
-#if defined(X_NOT_STDC_ENV) && !defined(__EMX__)
-extern char *strtok();
-extern char *strchr();
-#endif
-#ifndef X_NOT_STDC_ENV
 #include <stdlib.h>
-#else
-char *calloc();
-#endif
 
 /*
  *      LOCAL TYPEDEFS
@@ -658,7 +650,6 @@ ProcessIProfile(FILE *stream, XDCCC_Correction *pCorrection)
 			/* With tableType 1 only store the intensity. */
 			pIRec++;
 		    } else {
-#if __STDC__
 			/* Note ansi C can handle 0x preceeding hex number */
 			if (sscanf(ptoken, "%hi", &pIRec->value) != 1) {
 			    fprintf(stderr,
@@ -666,17 +657,6 @@ ProcessIProfile(FILE *stream, XDCCC_Correction *pCorrection)
 				  linenum, ptoken);
 			    return (0);
 			}
-#else
-			if (*ptoken == '0' &&
-				((*(ptoken+1) == 'x') || (*(ptoken+1) == 'X') ))
-			    ptoken += 2;
-			if (sscanf(ptoken, "%hx", &pIRec->value) != 1) {
-			    fprintf(stderr,
-			    "Line %d: invalid Intensity Profile value %s\n",
-				  linenum, ptoken);
-			    return (0);
-			}
-#endif
 			if ((ptoken = strtok(NULL, DATA_DELIMS)) == NULL) {
 			    fprintf(stderr,
 				  "Line %d: missing Intensity Profile value\n",

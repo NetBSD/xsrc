@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/GL/dri/sarea.h,v 1.9 2001/03/21 16:21:40 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/GL/dri/sarea.h,v 1.10 2001/10/04 18:28:20 alanh Exp $ */
 /**************************************************************************
 
 Copyright 1998-1999 Precision Insight, Inc., Cedar Park, Texas.
@@ -46,7 +46,8 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #elif defined(__ia64__)
 #define SAREA_MAX			0x10000		/* 64kB */
 #else
-#define SAREA_MAX			0x1000
+/* Intel 830M driver needs at least 8k SAREA */
+#define SAREA_MAX			0x2000
 #endif
 
 #define SAREA_MAX_DRAWABLES 		256

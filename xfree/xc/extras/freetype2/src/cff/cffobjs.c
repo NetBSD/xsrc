@@ -4,7 +4,7 @@
 /*                                                                         */
 /*    OpenType objects manager (body).                                     */
 /*                                                                         */
-/*  Copyright 1996-2000 by                                                 */
+/*  Copyright 1996-2001 by                                                 */
 /*  David Turner, Robert Wilhelm, and Werner Lemberg.                      */
 /*                                                                         */
 /*  This file is part of the FreeType project, and may only be used,       */
@@ -25,9 +25,11 @@
 #include FT_TRUETYPE_TAGS_H
 #include FT_INTERNAL_SFNT_H
 #include FT_INTERNAL_POSTSCRIPT_NAMES_H
+#include FT_INTERNAL_POSTSCRIPT_HINTS_H
 #include "cffobjs.h"
 #include "cffload.h"
-#include FT_INTERNAL_CFF_ERRORS_H
+
+#include "cfferrs.h"
 
 #include <string.h>         /* for strlen() */
 
@@ -42,15 +44,192 @@
 #define FT_COMPONENT  trace_cffobjs
 
 
+
+
+  /*************************************************************************/
+  /*                                                                       */
+  /*                            SIZE FUNCTIONS                             */
+  /*                                                                       */
+  /*  Note that we store the global hints in the size's "internal" root    */
+  /*  field.                                                               */
+  /*                                                                       */
+  /*************************************************************************/
+
+
+  static PSH_Globals_Funcs
+  CFF_Size_Get_Globals_Funcs( CFF_Size  size )
+  {
+    CFF_Face             face     = (CFF_Face)size->face;
+    CFF_Font*            font     = face->extra.data;
+    PSHinter_Interface*  pshinter = font->pshinter;
+    FT_Module            module;
+
+
+    module = FT_Get_Module( size->face->driver->root.library,
+                            "pshinter" );
+    return ( module && pshinter && pshinter->get_globals_funcs )
+           ? pshinter->get_globals_funcs( module )
+           : 0;
+  }
+
+
+  FT_LOCAL_DEF void
+  CFF_Size_Done( CFF_Size  size )
+  {
+    if ( size->internal )
+    {
+      PSH_Globals_Funcs  funcs;
+
+
+      funcs = CFF_Size_Get_Globals_Funcs( size );
+      if ( funcs )
+        funcs->destroy( (PSH_Globals)size->internal );
+
+      size->internal = 0;
+    }
+  }
+
+
+  FT_LOCAL_DEF FT_Error
+  CFF_Size_Init( CFF_Size  size )
+  {
+    FT_Error           error = 0;
+    PSH_Globals_Funcs  funcs = CFF_Size_Get_Globals_Funcs( size );
+
+
+    if ( funcs )
+    {
+      PSH_Globals   globals;
+      CFF_Face      face    = (CFF_Face)size->face;
+      CFF_Font*     font    = face->extra.data;
+      CFF_SubFont*  subfont = &font->top_font;
+
+      CFF_Private*  cpriv   = &subfont->private_dict;
+      T1_Private    priv;
+
+
+      /* IMPORTANT: The CFF and Type1 private dictionaries have    */
+      /*            slightly different structures; we need to      */
+      /*            synthetize a type1 dictionary on the fly here. */
+
+      {
+        FT_UInt  n, count;
+
+
+        MEM_Set( &priv, 0, sizeof ( priv ) );
+
+        count = priv.num_blue_values = cpriv->num_blue_values;
+        for ( n = 0; n < count; n++ )
+          priv.blue_values[n] = (FT_Short) cpriv->blue_values[n];
+
+        count = priv.num_other_blues = cpriv->num_other_blues;
+        for ( n = 0; n < count; n++ )
+          priv.other_blues[n] = (FT_Short) cpriv->other_blues[n];
+
+        count = priv.num_family_blues = cpriv->num_family_blues;
+        for ( n = 0; n < count; n++ )
+          priv.family_blues[n] = (FT_Short) cpriv->family_blues[n];
+
+        count = priv.num_family_other_blues = cpriv->num_family_other_blues;
+        for ( n = 0; n < count; n++ )
+          priv.family_other_blues[n] = (FT_Short) cpriv->family_other_blues[n];
+
+        priv.blue_scale = cpriv->blue_scale;
+        priv.blue_shift = cpriv->blue_shift;
+        priv.blue_fuzz  = cpriv->blue_fuzz;
+
+        priv.standard_width[0]  = (FT_UShort) cpriv->standard_width;
+        priv.standard_height[0] = (FT_UShort) cpriv->standard_height;
+
+        count = priv.num_snap_widths = cpriv->num_snap_widths;
+        for ( n = 0; n < count; n++ )
+          priv.snap_widths[n] = (FT_Short) cpriv->snap_widths[n];
+
+        count = priv.num_snap_heights = cpriv->num_snap_heights;
+        for ( n = 0; n < count; n++ )
+          priv.snap_heights[n] = (FT_Short) cpriv->snap_heights[n];
+
+        priv.force_bold     = cpriv->force_bold;
+        priv.language_group = cpriv->language_group;
+        priv.lenIV          = cpriv->lenIV;
+      }
+
+      error = funcs->create( size->face->memory, &priv, &globals );
+      if ( !error )
+        size->internal = (FT_Size_Internal)(void*)globals;
+    }
+
+    return error;
+  }
+
+
+  FT_LOCAL_DEF FT_Error
+  CFF_Size_Reset( CFF_Size  size )
+  {
+    PSH_Globals_Funcs  funcs = CFF_Size_Get_Globals_Funcs( size );
+    FT_Error           error = 0;
+
+
+    if ( funcs )
+      error = funcs->set_scale( (PSH_Globals)size->internal,
+                                 size->metrics.x_scale,
+                                 size->metrics.y_scale,
+                                 0, 0 );
+    return error;
+  }
+
+
+  /*************************************************************************/
+  /*                                                                       */
+  /*                            SLOT  FUNCTIONS                            */
+  /*                                                                       */
+  /*************************************************************************/
+
+  FT_LOCAL_DEF void
+  CFF_GlyphSlot_Done( CFF_GlyphSlot  slot )
+  {
+    slot->root.internal->glyph_hints = 0;
+  }
+
+
+  FT_LOCAL_DEF FT_Error
+  CFF_GlyphSlot_Init( CFF_GlyphSlot  slot )
+  {
+    CFF_Face             face     = (CFF_Face)slot->root.face;
+    CFF_Font*            font     = face->extra.data;
+    PSHinter_Interface*  pshinter = font->pshinter;
+
+
+    if ( pshinter )
+    {
+      FT_Module  module;
+
+
+      module = FT_Get_Module( slot->root.face->driver->root.library,
+                              "pshinter" );
+      if ( module )
+      {
+        T2_Hints_Funcs  funcs;
+
+
+        funcs = pshinter->get_t2_funcs( module );
+        slot->root.internal->glyph_hints = (void*)funcs;
+      }
+    }
+
+    return 0;
+  }
+
+
   /*************************************************************************/
   /*                                                                       */
   /*                           FACE  FUNCTIONS                             */
   /*                                                                       */
   /*************************************************************************/
 
-  static
-  FT_String*  CFF_StrCopy( FT_Memory         memory,
-                           const FT_String*  source )
+  static FT_String*
+  CFF_StrCopy( FT_Memory         memory,
+               const FT_String*  source )
   {
     FT_Error    error;
     FT_String*  result = 0;
@@ -70,10 +249,10 @@
 
   /* this function is used to build a Unicode charmap from the glyph names */
   /* in a file                                                             */
-  static
-  FT_Error  CFF_Build_Unicode_Charmap( CFF_Face            face,
-                                       FT_ULong            base_offset,
-                                       PSNames_Interface*  psnames )
+  static FT_Error
+  CFF_Build_Unicode_Charmap( CFF_Face            face,
+                             FT_ULong            base_offset,
+                             PSNames_Interface*  psnames )
   {
     CFF_Font*       font = (CFF_Font*)face->extra.data;
     FT_Memory       memory = FT_FACE_MEMORY(face);
@@ -187,9 +366,9 @@
 #endif /* 0 */
 
 
-  static
-  FT_Encoding  find_encoding( int  platform_id,
-                              int  encoding_id )
+  static FT_Encoding
+  find_encoding( int  platform_id,
+                 int  encoding_id )
   {
     typedef struct  TEncoding
     {
@@ -239,7 +418,7 @@
   /*************************************************************************/
   /*                                                                       */
   /* <Function>                                                            */
-  /*    CFF_Init_Face                                                      */
+  /*    CFF_Face_Init                                                      */
   /*                                                                       */
   /* <Description>                                                         */
   /*    Initializes a given OpenType face object.                          */
@@ -259,18 +438,19 @@
   /* <Return>                                                              */
   /*    FreeType error code.  0 means success.                             */
   /*                                                                       */
-  FT_LOCAL
-  FT_Error  CFF_Init_Face( FT_Stream      stream,
-                           CFF_Face       face,
-                           FT_Int         face_index,
-                           FT_Int         num_params,
-                           FT_Parameter*  params )
+  FT_LOCAL_DEF FT_Error
+  CFF_Face_Init( FT_Stream      stream,
+                 CFF_Face       face,
+                 FT_Int         face_index,
+                 FT_Int         num_params,
+                 FT_Parameter*  params )
   {
-    FT_Error            error;
-    SFNT_Interface*     sfnt;
-    PSNames_Interface*  psnames;
-    FT_Bool             pure_cff    = 1;
-    FT_Bool             sfnt_format = 0;
+    FT_Error             error;
+    SFNT_Interface*      sfnt;
+    PSNames_Interface*   psnames;
+    PSHinter_Interface*  pshinter;
+    FT_Bool              pure_cff    = 1;
+    FT_Bool              sfnt_format = 0;
 
 
     sfnt = (SFNT_Interface*)FT_Get_Module_Interface(
@@ -280,6 +460,9 @@
 
     psnames = (PSNames_Interface*)FT_Get_Module_Interface(
                 face->root.driver->root.library, "psnames" );
+
+    pshinter = (PSHinter_Interface*)FT_Get_Module_Interface(
+                 face->root.driver->root.library, "pshinter" );
 
     /* create input stream from resource */
     if ( FILE_Seek( 0 ) )
@@ -336,7 +519,7 @@
       /* rewind to start of file; we are going to load a pure-CFF font */
       if ( FILE_Seek( 0 ) )
         goto Exit;
-      error = FT_Err_Ok;
+      error = CFF_Err_Ok;
     }
 
     /* now load and parse the CFF table in the file */
@@ -345,23 +528,24 @@
       FT_Memory  memory = face->root.memory;
       FT_Face    root;
       FT_UInt    flags;
-      FT_ULong   base_offset;
 
 
       if ( ALLOC( cff, sizeof ( *cff ) ) )
         goto Exit;
-
-      base_offset = FILE_Pos();
 
       face->extra.data = cff;
       error = CFF_Load_Font( stream, face_index, cff );
       if ( error )
         goto Exit;
 
+      cff->pshinter = pshinter;
+
       /* Complement the root flags with some interesting information. */
       /* Note that this is only necessary for pure CFF and CEF fonts. */
 
-      root = &face->root;
+      root             = &face->root;
+      root->num_glyphs = cff->num_glyphs;
+
       if ( pure_cff )
       {
         CFF_Font_Dict*  dict = &cff->top_font.font_dict;
@@ -370,7 +554,7 @@
         /* we need the `PSNames' module for pure-CFF and CEF formats */
         if ( !psnames )
         {
-          FT_ERROR(( "CFF_Init_Face:" ));
+          FT_ERROR(( "CFF_Face_Init:" ));
           FT_ERROR(( " cannot open CFF & CEF fonts\n" ));
           FT_ERROR(( "             " ));
           FT_ERROR(( " without the `PSNames' module\n" ));
@@ -387,10 +571,11 @@
           root->num_glyphs = cff->charstrings_index.count;
 
         /* set global bbox, as well as EM size */
-        root->bbox         = dict->font_bbox;
-        root->ascender     = (FT_Short)( root->bbox.yMax >> 16 );
-        root->descender    = (FT_Short)( root->bbox.yMin >> 16 );
-        root->height       = ( ( root->ascender - root->descender ) * 12 ) / 10;
+        root->bbox      = dict->font_bbox;
+        root->ascender  = (FT_Short)( root->bbox.yMax >> 16 );
+        root->descender = (FT_Short)( root->bbox.yMin >> 16 );
+        root->height    = (FT_Short)(
+          ( ( root->ascender - root->descender ) * 12 ) / 10 );
 
         if ( dict->units_per_em )
           root->units_per_EM = dict->units_per_em;
@@ -476,8 +661,8 @@
 
 
             charmap->root.face        = (FT_Face)face;
-            charmap->root.platform_id = platform;
-            charmap->root.encoding_id = encoding;
+            charmap->root.platform_id = (FT_UShort)platform;
+            charmap->root.encoding_id = (FT_UShort)encoding;
             charmap->root.encoding    = find_encoding( platform, encoding );
 
             /* now, set root->charmap with a unicode charmap */
@@ -496,7 +681,7 @@
     return error;
 
   Bad_Format:
-    error = FT_Err_Unknown_File_Format;
+    error = CFF_Err_Unknown_File_Format;
     goto Exit;
   }
 
@@ -504,7 +689,7 @@
   /*************************************************************************/
   /*                                                                       */
   /* <Function>                                                            */
-  /*    CFF_Done_Face                                                      */
+  /*    CFF_Face_Done                                                      */
   /*                                                                       */
   /* <Description>                                                         */
   /*    Finalizes a given face object.                                     */
@@ -512,8 +697,8 @@
   /* <Input>                                                               */
   /*    face :: A pointer to the face object to destroy.                   */
   /*                                                                       */
-  FT_LOCAL
-  void  CFF_Done_Face( CFF_Face  face )
+  FT_LOCAL_DEF void
+  CFF_Face_Done( CFF_Face  face )
   {
     FT_Memory        memory = face->root.memory;
     SFNT_Interface*  sfnt   = (SFNT_Interface*)face->sfnt;
@@ -538,7 +723,7 @@
   /*************************************************************************/
   /*                                                                       */
   /* <Function>                                                            */
-  /*    CFF_Init_Driver                                                    */
+  /*    CFF_Driver_Init                                                    */
   /*                                                                       */
   /* <Description>                                                         */
   /*    Initializes a given OpenType driver object.                        */
@@ -549,8 +734,8 @@
   /* <Return>                                                              */
   /*    FreeType error code.  0 means success.                             */
   /*                                                                       */
-  FT_LOCAL_DEF
-  FT_Error  CFF_Init_Driver( CFF_Driver  driver )
+  FT_LOCAL_DEF FT_Error
+  CFF_Driver_Init( CFF_Driver  driver )
   {
     /* init extension registry if needed */
 
@@ -571,7 +756,7 @@
   /*************************************************************************/
   /*                                                                       */
   /* <Function>                                                            */
-  /*    CFF_Done_Driver                                                    */
+  /*    CFF_Driver_Done                                                    */
   /*                                                                       */
   /* <Description>                                                         */
   /*    Finalizes a given OpenType driver.                                 */
@@ -579,8 +764,8 @@
   /* <Input>                                                               */
   /*    driver :: A handle to the target OpenType driver.                  */
   /*                                                                       */
-  FT_LOCAL_DEF
-  void  CFF_Done_Driver( CFF_Driver  driver )
+  FT_LOCAL_DEF void
+  CFF_Driver_Done( CFF_Driver  driver )
   {
     /* destroy extensions registry if needed */
 

@@ -24,7 +24,7 @@ OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
 THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ********************************************************/
-/* $XFree86: xc/programs/Xserver/xkb/xkbActions.c,v 3.6 2001/02/12 18:26:00 paulo Exp $ */
+/* $XFree86: xc/programs/Xserver/xkb/xkbActions.c,v 3.7 2001/08/23 14:33:25 alanh Exp $ */
 
 #include <stdio.h>
 #include <math.h>
@@ -922,9 +922,9 @@ _XkbFilterRedirectKey(xkbi,filter,keycode,pAction)
 {
 unsigned	realMods;
 xEvent 		ev;
-int		x,y,kc;
+int		x,y;
 XkbStateRec	old;
-unsigned	mods,mask,oldCoreState,oldCorePrevState;
+unsigned	mods,mask,oldCoreState = 0,oldCorePrevState = 0;
 
     if ((filter->keycode!=0)&&(filter->keycode!=keycode))
 	return 1;

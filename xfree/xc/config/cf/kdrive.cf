@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/config/cf/kdrive.cf,v 1.9 2001/04/10 16:07:47 dawes Exp $
+XCOMM $XFree86: xc/config/cf/kdrive.cf,v 1.12 2001/06/23 17:00:03 keithp Exp $
 /*
  * This configuration file contains all of the configuration
  * information for the XFree86 based X Servers.
@@ -13,8 +13,11 @@ XCOMM $XConsortium: $
 #ifndef XTS300Server
 #define XTS300Server 	NO
 #endif
+#ifndef XipaqServer
+#define XipaqServer 	NO
+#endif
 #ifndef XfbdevServer
-#define XfbdevServer 	YES
+#define XfbdevServer 	NO
 #endif
 #ifndef XIGSServer
 #define XIGSServer 	NO
@@ -33,6 +36,9 @@ XCOMM $XConsortium: $
 #endif
 #ifndef XvesaServer
 #define XvesaServer	NO
+#endif
+#ifndef Xmach64Server
+#define Xmach64Server	NO
 #endif
 
 #if XItsyServer

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/loader/extsym.c,v 1.5 2000/11/01 22:50:04 anderson Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/loader/extsym.c,v 1.6 2001/11/17 16:05:59 dawes Exp $ */
 
 /*
  *
@@ -30,6 +30,7 @@
 #ifdef PANORAMIX
 #include "panoramiX.h"
 #endif
+#include "sleepuntil.h"
 
 #ifdef HAS_SHM
 extern int ShmCompletionCode;
@@ -51,6 +52,8 @@ extern int XineramaDeleteResource(pointer, XID);
 #endif
 
 LOOKUP extLookupTab[] = {
+
+ SYMFUNC(ClientSleepUntil)
 
 #ifdef HAS_SHM
  SYMVAR(ShmCompletionCode)

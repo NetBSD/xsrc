@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/include/dixevents.h,v 3.2 1996/12/24 02:27:27 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/include/dixevents.h,v 3.4 2001/09/04 14:03:27 dawes Exp $ */
 /************************************************************
 
 Copyright 1996 by Thomas E. Dickey <dickey@clark.net>
@@ -27,26 +27,10 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #ifndef DIXEVENTS_H
 #define DIXEVENTS_H
 
-extern Mask
-GetNextEventMask(
-#if NeedFunctionPrototypes
-	void
-#endif
-	);
-
 extern void
 SetCriticalEvent(
 #if NeedFunctionPrototypes
 	int                    /* event */
-#endif
-	);
-
-extern void
-ConfineCursorToWindow(
-#if NeedFunctionPrototypes
-	WindowPtr              /* pWin */,
-	Bool                   /* generateEvents */,
-	Bool                   /* confineToScreen */
 #endif
 	);
 
@@ -65,18 +49,6 @@ ProcAllowEvents(
 	);
 
 extern int
-TryClientEvents (
-#if NeedFunctionPrototypes
-	ClientPtr              /* client */,
-	xEvent *               /* pEvents */,
-	int                    /* count */,
-	Mask                   /* mask */,
-	Mask                   /* filter */,
-	GrabPtr                /* grab */
-#endif
-	);
-
-extern int
 MaybeDeliverEventsToClient(
 #if NeedFunctionPrototypes
 	WindowPtr              /* pWin */,
@@ -87,22 +59,6 @@ MaybeDeliverEventsToClient(
 #endif
 	);
 
-extern void
-WindowsRestructured(
-#if NeedFunctionPrototypes
-	void
-#endif
-	);
-
-extern void
-NewCurrentScreen(
-#if NeedFunctionPrototypes
-	ScreenPtr              /* newScreen */,
-	int                    /* x */,
-	int                    /* y */
-#endif
-	);
-
 extern int
 ProcWarpPointer(
 #if NeedFunctionPrototypes
@@ -110,6 +66,7 @@ ProcWarpPointer(
 #endif
 	);
 
+#if 0
 extern void
 #ifdef XKB
 CoreProcessKeyboardEvent (
@@ -135,6 +92,7 @@ ProcessPointerEvent (
 	int                    /* count */
 #endif
 	);
+#endif
 
 extern int
 EventSelectForWindow(

@@ -1,5 +1,5 @@
 /* $XConsortium: Eyes.c,v 1.28 94/04/17 20:45:22 eswu Exp $ */
-/* $XFree86: xc/programs/xeyes/Eyes.c,v 1.2 2000/02/14 19:20:59 dawes Exp $ */
+/* $XFree86: xc/programs/xeyes/Eyes.c,v 1.4 2001/08/27 23:35:13 dawes Exp $ */
 /*
 
 Copyright (c) 1991  X Consortium
@@ -46,11 +46,7 @@ from the X Consortium.
 # include <X11/extensions/shape.h>
 
 #if (defined(SVR4) || defined(SYSV) && defined(i386))
-#if __STDC__
 extern double hypot(double, double);
-#else
-extern double hypot();
-#endif
 #endif
 
 #define offset(field) XtOffsetOf(EyesRec, eyes.field)
@@ -101,7 +97,7 @@ static XtResource resources[] = {
 
 static int delays[] = { 50, 100, 200, 400, 0 };
 
-static void ClassInitialize()
+static void ClassInitialize(void)
 {
     XtAddConverter( XtRString, XtRBackingStore, XmuCvtStringToBackingStore,
 		    NULL, 0 );
@@ -110,10 +106,11 @@ static void ClassInitialize()
 WidgetClass eyesWidgetClass = (WidgetClass) &eyesClassRec;
 
 /* ARGSUSED */
-static void Initialize (greq, gnew, args, num_args)
-    Widget greq, gnew;
-    ArgList args;
-    Cardinal *num_args;
+static void Initialize (
+    Widget greq,
+    Widget gnew,
+    ArgList args,
+    Cardinal *num_args)
 {
     EyesWidget w = (EyesWidget)gnew;
     XtGCMask	valuemask;
@@ -175,11 +172,12 @@ static void Initialize (greq, gnew, args, num_args)
     w->eyes.shapeGC = 0;
 }
 
-static void eyeLiner (w, d, outgc, centergc, num)
-    EyesWidget	w;
-    Drawable	d;
-    GC		outgc, centergc;
-    int		num;
+static void eyeLiner (
+    EyesWidget	w,
+    Drawable	d,
+    GC		outgc,
+    GC		centergc,
+    int		num)
 {
 	Display *dpy = XtDisplay(w);
 
@@ -198,9 +196,9 @@ static void eyeLiner (w, d, outgc, centergc, num)
 	}
 }
 
-static TPoint computePupil (num, mouse)
-    int		num;
-    TPoint	mouse;
+static TPoint computePupil (
+    int		num,
+    TPoint	mouse)
 {
 	double	cx, cy;
 	double	dist;
@@ -237,18 +235,18 @@ static TPoint computePupil (num, mouse)
 	return ret;
 }
 
-static void computePupils (mouse, pupils)
-    TPoint	mouse;
-    TPoint	pupils[2];
+static void computePupils (
+    TPoint	mouse,
+    TPoint	pupils[2])
 {
     pupils[0] = computePupil (0, mouse);
     pupils[1] = computePupil (1, mouse);
 }
 
-static void eyeBall (w, gc, num)
-    EyesWidget	w;
-    GC	gc;
-    int	num;
+static void eyeBall (
+    EyesWidget	w,
+    GC	gc,
+    int	num)
 {
 	Display *dpy = XtDisplay(w);
 	Window win = XtWindow(w);
@@ -260,8 +258,7 @@ static void eyeBall (w, gc, num)
 		  90 * 64, 360 * 64);
 }
 
-static void repaint_window (w)
-    EyesWidget	w;
+static void repaint_window (EyesWidget w)
 {
 	if (XtIsRealized ((Widget) w)) {
 		eyeLiner (w, XtWindow (w), w->eyes.outGC, w->eyes.centerGC, 0);
@@ -273,9 +270,9 @@ static void repaint_window (w)
 }
 
 /* ARGSUSED */
-static void draw_it (client_data, id)
-     XtPointer client_data;
-     XtIntervalId *id;		/* unused */
+static void draw_it (
+     XtPointer client_data,
+     XtIntervalId *id)		/* unused */
 {
         EyesWidget	w = (EyesWidget)client_data;
 	Window		rep_root, rep_child;
@@ -327,8 +324,7 @@ static void draw_it (client_data, id)
 				delays[w->eyes.update], draw_it, (XtPointer)w);
 } /* draw_it */
 
-static void Resize (gw)
-    Widget	gw;
+static void Resize (Widget gw)
 {
     EyesWidget	w = (EyesWidget) gw;
     XGCValues	xgcv;
@@ -366,10 +362,10 @@ static void Resize (gw)
     }
 }
 
-static void Realize (gw, valueMask, attrs)
-     Widget gw;
-     XtValueMask *valueMask;
-     XSetWindowAttributes *attrs;
+static void Realize (
+     Widget gw,
+     XtValueMask *valueMask,
+     XSetWindowAttributes *attrs)
 {
     EyesWidget	w = (EyesWidget)gw;
 
@@ -385,8 +381,7 @@ static void Realize (gw, valueMask, attrs)
 			delays[w->eyes.update], draw_it, (XtPointer)gw);
 }
 
-static void Destroy (gw)
-     Widget gw;
+static void Destroy (Widget gw)
 {
      EyesWidget w = (EyesWidget)gw;
 
@@ -398,10 +393,10 @@ static void Destroy (gw)
 }
 
 /* ARGSUSED */
-static void Redisplay(gw, event, region)
-     Widget gw;
-     XEvent *event;
-     Region region;
+static void Redisplay(
+     Widget gw,
+     XEvent *event,
+     Region region)
 {
     EyesWidget	w;
 
@@ -414,10 +409,12 @@ static void Redisplay(gw, event, region)
 }
 
 /* ARGSUSED */
-static Boolean SetValues (current, request, new, args, num_args)
-    Widget current, request, new;
-    ArgList args;
-    Cardinal *num_args;
+static Boolean SetValues (
+    Widget current,
+    Widget request,
+    Widget new,
+    ArgList args,
+    Cardinal *num_args)
 {
     return( FALSE );
 }

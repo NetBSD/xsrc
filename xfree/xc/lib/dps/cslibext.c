@@ -35,6 +35,7 @@
  *
  * Author:  Adobe Systems Incorporated
  */
+/* $XFree86: xc/lib/dps/cslibext.c,v 1.3 2001/10/28 03:32:42 tsi Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -203,7 +204,9 @@ CSDPSInit(
 
     p = (xCAPConnReplyPrefix *)&reply.good;
     N_XRead(agent, (char *)p, (long)sizeof(xCAPConnReplyPrefix));
+#ifdef DPSLNKL
 skip_read:
+#endif
     if (!p->success)
         {
 	char mbuf[512];
@@ -386,7 +389,6 @@ DPSCAPChangeGC(
     XGCValues *values)
 {
     register xChangeGCReq *req;
-    register _XExtension *ext;
     unsigned long oldDirty = gc->dirty;
 
     /* ASSERT: called from within LockDisplay section */

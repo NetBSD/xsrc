@@ -1,5 +1,5 @@
 XCOMM $XConsortium: Imakefile /main/30 1996/03/09 09:37:57 kaleb $
-XCOMM $XFree86: xc/programs/xload/Imakefile,v 1.6 2001/01/15 20:56:18 dawes Exp $
+XCOMM $XFree86: xc/programs/xload/Imakefile,v 1.7 2001/08/13 19:35:01 dawes Exp $
         DEPLIBS = XawClientDepLibs
 LOCAL_LIBRARIES = XawClientLibs
 
@@ -18,8 +18,8 @@ LOCAL_LIBRARIES = XawClientLibs
 #elif defined(BSDOSArchitecture) && !defined(NetBSDArchitecture) && !defined(OpenBSDArchitecture)
   SYS_LIBRARIES = -lutil -lkvm
 #endif
-           SRCS = xload.c get_load.c
-           OBJS = xload.o get_load.o
+           SRCS = xload.c get_load.c get_rload.c
+           OBJS = xload.o get_load.o get_rload.o
  OSMAJORVERSION = OSMajorVersion
  OSMINORVERSION = OSMinorVersion
       DEFINES = -DOSMAJORVERSION=$(OSMAJORVERSION) -DOSMINORVERSION=$(OSMINORVERSION) 

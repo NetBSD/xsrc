@@ -1,4 +1,4 @@
-/* $Xorg: Manage.c,v 1.3 2000/08/17 19:46:13 cpqbld Exp $ */
+/* $Xorg: Manage.c,v 1.4 2001/02/09 02:03:55 xorgcvs Exp $ */
 
 /***********************************************************
 Copyright 1987, 1988 by Digital Equipment Corporation, Maynard, Massachusetts,
@@ -32,13 +32,17 @@ OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
 THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/lib/Xt/Manage.c,v 3.6 2001/01/17 19:43:05 dawes Exp $ */
+/* $XFree86: xc/lib/Xt/Manage.c,v 3.8 2001/12/14 19:56:26 dawes Exp $ */
 
 /*
 
 Copyright 1987, 1988, 1994, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -63,18 +67,18 @@ static String XtNxtUnmanageChildren = "xtUnmanageChildren";
 static String XtNxtManageChildren = "xtManageChildren";
 static String XtNxtChangeManagedSet = "xtChangeManagedSet";
 
-static void UnmanageChildren(children, num_children, parent, num_unique_children, call_change_managed, caller_func)
-    WidgetList children;
-    Cardinal num_children;
-    Widget parent;
-    Cardinal* num_unique_children;
-    Boolean call_change_managed;
-    String caller_func;
+static void UnmanageChildren(
+    WidgetList children,
+    Cardinal num_children,
+    Widget parent,
+    Cardinal* num_unique_children,
+    Boolean call_change_managed,
+    String caller_func)
 {
     Widget		child;
     Cardinal		i;
-    XtWidgetProc	change_managed;
-    Bool		parent_realized;
+    XtWidgetProc	change_managed = NULL;
+    Bool		parent_realized = False;
 
     *num_unique_children = 0;
 
@@ -186,20 +190,20 @@ void XtUnmanageChild(child)
 } /* XtUnmanageChild */
 
 
-static void ManageChildren(children, num_children, parent, call_change_managed, caller_func)
-    WidgetList  children;
-    Cardinal    num_children;
-    Widget	parent;
-    Boolean	call_change_managed;
-    String	caller_func;
+static void ManageChildren(
+    WidgetList  children,
+    Cardinal    num_children,
+    Widget	parent,
+    Boolean	call_change_managed,
+    String	caller_func)
 {
 #define MAXCHILDREN 100
     Widget		child;
     Cardinal		num_unique_children, i;
-    XtWidgetProc	change_managed;
+    XtWidgetProc	change_managed = NULL;
     WidgetList		unique_children;
     Widget		cache[MAXCHILDREN];
-    Bool		parent_realized;
+    Bool		parent_realized = False;
 
     if (XtIsComposite((Widget) parent)) {
 	LOCK_PROCESS;

@@ -1,5 +1,5 @@
 /*
- * $Xorg: PsAttVal.c,v 1.3 2000/08/17 19:48:09 cpqbld Exp $
+ * $Xorg: PsAttVal.c,v 1.5 2001/03/13 18:45:31 pookie Exp $
  */
 /*
 (c) Copyright 1996 Hewlett-Packard Company
@@ -32,7 +32,7 @@ not be used in advertising or otherwise to promote the sale, use or other
 dealings in this Software without prior written authorization from said
 copyright holders.
 */
-/* $XFree86: xc/programs/Xserver/Xprint/ps/PsAttVal.c,v 1.4 2001/01/17 22:36:31 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/Xprint/ps/PsAttVal.c,v 1.5 2001/12/19 21:28:44 dawes Exp $ */
 
 #include "Ps.h"
 #include "AttrValid.h"
@@ -74,7 +74,12 @@ static XpOidList DefaultPlexes = {
 
 static unsigned long ValidPrinterResolutionsCards[] = {
     300,
-    600
+    600,
+    720,
+    940,
+    1200,
+    1440,
+    2400
 };
 static XpOidCardList ValidPrinterResolutions = {
     ValidPrinterResolutionsCards, XpNumber(ValidPrinterResolutionsCards)

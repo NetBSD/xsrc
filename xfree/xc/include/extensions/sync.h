@@ -1,9 +1,13 @@
-/* $Xorg: sync.h,v 1.3 2000/08/18 04:05:46 coskrey Exp $ */
+/* $Xorg: sync.h,v 1.4 2001/02/09 02:03:24 xorgcvs Exp $ */
 /*
 
 Copyright 1991, 1993, 1994, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -44,9 +48,14 @@ OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 PERFORMANCE OF THIS SOFTWARE.
 
 ******************************************************************/
+/* $XFree86: xc/include/extensions/sync.h,v 1.4 2001/12/20 19:40:59 tsi Exp $ */
 
 #ifndef _SYNC_H_
 #define _SYNC_H_
+
+#include <X11/Xfuncproto.h>
+
+_XFUNCPROTOBEGIN
 
 #define SYNC_NAME "SYNC"
 
@@ -239,6 +248,8 @@ extern void XSyncMinValue(
 #endif
 );
 
+_XFUNCPROTOEND
+
 /*  The _XSync macros below are for library internal use only.  They exist 
  *  so that if we have to make a fix, we can change it in this one place
  *  and have both the macro and function variants inherit the fix.
@@ -390,6 +401,8 @@ typedef struct {
  *  Prototypes
  */
 
+_XFUNCPROTOBEGIN
+
 extern Status XSyncQueryExtension(
 #if NeedFunctionPrototypes
     Display* /*dpy*/,
@@ -514,5 +527,7 @@ extern Status XSyncGetPriority(
 );
 
 #endif /* _SYNC_SERVER */
+
+_XFUNCPROTOEND
 
 #endif /* _SYNC_H_ */

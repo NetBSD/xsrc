@@ -1,4 +1,4 @@
-/* $Xorg: listing.c,v 1.4 2000/08/17 19:54:32 cpqbld Exp $ */
+/* $Xorg: listing.c,v 1.5 2001/02/09 02:05:49 xorgcvs Exp $ */
 /************************************************************
  Copyright 1996 by Silicon Graphics Computer Systems, Inc.
 
@@ -28,7 +28,11 @@
 
 Copyright 1988, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -66,7 +70,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/programs/xkbcomp/listing.c,v 3.7 2001/01/17 23:45:44 dawes Exp $ */
+/* $XFree86: xc/programs/xkbcomp/listing.c,v 3.9 2001/12/14 20:01:57 dawes Exp $ */
 
 
 #include <stdio.h>
@@ -82,9 +86,7 @@ SOFTWARE.
 #define	DEBUG_VAR_NOT_LOCAL
 #define	DEBUG_VAR listingDebug
 #include "xkbcomp.h"
-#ifndef X_NOT_STDC_ENV
 #include <stdlib.h>
-#endif
 #ifndef X_NOT_POSIX
 #ifdef _POSIX_SOURCE
 #include <limits.h>

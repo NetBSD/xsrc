@@ -24,13 +24,11 @@
  THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
  ********************************************************/
-/* $XFree86: xc/lib/xkbfile/xkbtext.c,v 3.8 2001/01/17 19:43:43 dawes Exp $ */
+/* $XFree86: xc/lib/xkbfile/xkbtext.c,v 3.10 2001/10/28 03:32:47 tsi Exp $ */
 
 #include <stdio.h>
 #include <ctype.h>
-#ifndef X_NOT_STDC_ENV
 #include <stdlib.h>
-#endif
 
 #include <X11/Xos.h>
 
@@ -404,7 +402,7 @@ static char buf[32],*rtrn;
     if (sym==NoSymbol)
 	strcpy(rtrn=buf,"NoSymbol");
     else if ((rtrn=XKeysymToString(sym))==NULL)
-	sprintf(rtrn=buf,"0x%x",sym);
+	sprintf(rtrn=buf, "0x%lx", (long)sym);
     else if (format==XkbCFile) {
 	sprintf(buf,"XK_%s",rtrn);
 	rtrn= buf;
@@ -413,7 +411,7 @@ static char buf[32],*rtrn;
 #else /* def XKB_IN_SERVER */
     if (sym==NoSymbol)
 	 strcpy(rtrn=buf,"NoSymbol");
-    else sprintf(rtrn=buf,"0x%x",sym);
+    else sprintf(rtrn=buf, "0x%lx", (long)sym);
     return rtrn;
 #endif /* XKB_IN_SERVER */
 }
@@ -590,7 +588,7 @@ int			len,plen,slen;
 
 
     if ((detail&XkbAllNewKeyboardEventsMask)==0) {
-	char *	tmp;
+	char *tmp = "";
 	if (format==XkbCFile)			tmp= "0";
 	else if (format==XkbMessage)		tmp= "none";
 	buf=  tbGetBuffer(strlen(tmp)+1);
@@ -1501,7 +1499,7 @@ int	sz;
 
     if (format==XkbCFile) {
 	sprintf(buf,
-	    "{ %20s, 0x%02x, 0x%02x, 0x%02x, 0x%02x, 0x%02x, 0x%02x, 0x%02x }",
+	    "{ %20s, { 0x%02x, 0x%02x, 0x%02x, 0x%02x, 0x%02x, 0x%02x, 0x%02x } }",
 	    XkbActionTypeText(action->type,XkbCFile),
 	    action->any.data[0],action->any.data[1],action->any.data[2],
 	    action->any.data[3],action->any.data[4],action->any.data[5],

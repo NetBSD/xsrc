@@ -23,7 +23,7 @@
  * OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-/* $XFree86: xc/lib/GL/mesa/src/drv/tdfx/tdfx_tris.c,v 1.1 2001/03/21 16:14:28 dawes Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/tdfx/tdfx_tris.c,v 1.2 2001/08/18 02:51:07 dawes Exp $ */
 
 /*
  * Original rewrite:
@@ -149,8 +149,8 @@ static void tdfx_render_vb_points( struct vertex_buffer *VB,
       fxVB[i].v.x += PNT_X_OFFSET - TRI_X_OFFSET;
       fxVB[i].v.y += PNT_Y_OFFSET - TRI_Y_OFFSET;
    }
-   grDrawVertexArrayContiguous( GR_POINTS, count-start, fxVB+start,
-				sizeof(*fxVB));
+   fxMesa->Glide.grDrawVertexArrayContiguous( GR_POINTS, count-start,
+                                              fxVB+start, sizeof(*fxVB));
    /* restore point coords */
    for (i = start; i < count; i++) {
       fxVB[i].v.x -= PNT_X_OFFSET - TRI_X_OFFSET;
@@ -163,6 +163,7 @@ static void tdfx_render_vb_line_strip( struct vertex_buffer *VB,
 				      GLuint count,
 				      GLuint parity )
 {
+   tdfxContextPtr fxMesa = TDFX_CONTEXT(VB->ctx);
    tdfxVertexPtr fxVB = TDFX_DRIVER_DATA(VB)->verts;
    GLint i;
    (void) parity;
@@ -171,8 +172,8 @@ static void tdfx_render_vb_line_strip( struct vertex_buffer *VB,
       fxVB[i].v.x += LINE_X_OFFSET - TRI_X_OFFSET;
       fxVB[i].v.y += LINE_Y_OFFSET - TRI_Y_OFFSET;
    }
-   grDrawVertexArrayContiguous( GR_LINE_STRIP, count-start, fxVB+start,
-				sizeof(*fxVB));
+   fxMesa->Glide.grDrawVertexArrayContiguous( GR_LINE_STRIP, count-start,
+                                              fxVB+start, sizeof(*fxVB));
    /* restore line coords */
    for (i = start; i < count; i++) {
       fxVB[i].v.x -= LINE_X_OFFSET - TRI_X_OFFSET;
@@ -185,6 +186,7 @@ static void tdfx_render_vb_lines( struct vertex_buffer *VB,
 				      GLuint count,
 				      GLuint parity )
 {
+   tdfxContextPtr fxMesa = TDFX_CONTEXT(VB->ctx);
    tdfxVertexPtr fxVB = TDFX_DRIVER_DATA(VB)->verts;
    GLint i;
    (void) parity;
@@ -193,8 +195,8 @@ static void tdfx_render_vb_lines( struct vertex_buffer *VB,
       fxVB[i].v.x += LINE_X_OFFSET - TRI_X_OFFSET;
       fxVB[i].v.y += LINE_Y_OFFSET - TRI_Y_OFFSET;
    }
-   grDrawVertexArrayContiguous( GR_LINES, count-start, fxVB+start,
-				sizeof(*fxVB));
+   fxMesa->Glide.grDrawVertexArrayContiguous( GR_LINES, count-start,
+                                              fxVB+start, sizeof(*fxVB));
    /* restore line coords */
    for (i = start; i < count; i++) {
       fxVB[i].v.x -= LINE_X_OFFSET - TRI_X_OFFSET;
@@ -207,9 +209,10 @@ static void tdfx_render_vb_triangles( struct vertex_buffer *VB,
 				      GLuint count,
 				      GLuint parity )
 {
+   tdfxContextPtr fxMesa = TDFX_CONTEXT(VB->ctx);
    tdfxVertexPtr fxVB = TDFX_DRIVER_DATA(VB)->verts;
-   grDrawVertexArrayContiguous( GR_TRIANGLES, count-start, fxVB+start,
-				sizeof(*fxVB));
+   fxMesa->Glide.grDrawVertexArrayContiguous( GR_TRIANGLES, count-start,
+                                              fxVB+start, sizeof(*fxVB));
    (void) parity;
 }
 
@@ -219,9 +222,10 @@ static void tdfx_render_vb_tri_strip( struct vertex_buffer *VB,
 				      GLuint count,
 				      GLuint parity )
 {
+   tdfxContextPtr fxMesa = TDFX_CONTEXT(VB->ctx);
    tdfxVertexPtr fxVB = TDFX_DRIVER_DATA(VB)->verts;
-   grDrawVertexArrayContiguous( GR_TRIANGLE_STRIP, count-start, fxVB+start,
-				sizeof(*fxVB));
+   fxMesa->Glide.grDrawVertexArrayContiguous( GR_TRIANGLE_STRIP, count-start,
+                                              fxVB+start, sizeof(*fxVB));
    (void) parity;
 }
 
@@ -231,9 +235,10 @@ static void tdfx_render_vb_tri_fan( struct vertex_buffer *VB,
 				    GLuint count,
 				    GLuint parity )
 {
+   tdfxContextPtr fxMesa = TDFX_CONTEXT(VB->ctx);
    tdfxVertexPtr fxVB = TDFX_DRIVER_DATA(VB)->verts;
-   grDrawVertexArrayContiguous( GR_TRIANGLE_FAN, count-start, fxVB+start,
-				sizeof(*fxVB) );
+   fxMesa->Glide.grDrawVertexArrayContiguous( GR_TRIANGLE_FAN, count-start,
+                                              fxVB+start, sizeof(*fxVB) );
    (void) parity;
 }
 
@@ -243,9 +248,10 @@ static void tdfx_render_vb_poly( struct vertex_buffer *VB,
 				 GLuint count,
 				 GLuint parity )
 {
+   tdfxContextPtr fxMesa = TDFX_CONTEXT(VB->ctx);
    tdfxVertexPtr fxVB = TDFX_DRIVER_DATA(VB)->verts;
-   grDrawVertexArrayContiguous( GR_POLYGON, count-start, fxVB+start,
-				sizeof(*fxVB));
+   fxMesa->Glide.grDrawVertexArrayContiguous( GR_POLYGON, count-start,
+                                              fxVB+start, sizeof(*fxVB));
    (void) parity;
 }
 
@@ -256,7 +262,7 @@ do {							\
    for (i = start ; i < count ; i++) {			\
       v[elt[i]].v.x += PNT_X_OFFSET - TRI_X_OFFSET;	\
       v[elt[i]].v.y += PNT_Y_OFFSET - TRI_Y_OFFSET;	\
-      grDrawPoint(&v[elt[i]]);				\
+      fxMesa->Glide.grDrawPoint(&v[elt[i]]);		\
       v[elt[i]].v.x -= PNT_X_OFFSET - TRI_X_OFFSET;	\
       v[elt[i]].v.y -= PNT_Y_OFFSET - TRI_Y_OFFSET;	\
    }							\
@@ -268,7 +274,7 @@ do {							\
    v[elt[i0]].v.y += LINE_Y_OFFSET - TRI_Y_OFFSET;	\
    v[elt[i1]].v.x += LINE_X_OFFSET - TRI_X_OFFSET;	\
    v[elt[i1]].v.y += LINE_Y_OFFSET - TRI_Y_OFFSET;	\
-   grDrawLine( &v[elt[i0]], &v[elt[i1]] );		\
+   fxMesa->Glide.grDrawLine( &v[elt[i0]], &v[elt[i1]] );\
    v[elt[i0]].v.x -= LINE_X_OFFSET - TRI_X_OFFSET;	\
    v[elt[i0]].v.y -= LINE_Y_OFFSET - TRI_Y_OFFSET;	\
    v[elt[i1]].v.x -= LINE_X_OFFSET - TRI_X_OFFSET;	\
@@ -277,19 +283,20 @@ do {							\
 
 #define RENDER_TRI( i2, i1, i, pv, parity )				\
 do {									\
-   if (parity) grDrawTriangle( &v[elt[i1]], &v[elt[i2]], &v[elt[i]] );	\
-   else        grDrawTriangle( &v[elt[i2]], &v[elt[i1]], &v[elt[i]] );	\
+   if (parity) fxMesa->Glide.grDrawTriangle( &v[elt[i1]], &v[elt[i2]], &v[elt[i]] );	\
+   else        fxMesa->Glide.grDrawTriangle( &v[elt[i2]], &v[elt[i1]], &v[elt[i]] );	\
 } while (0)
 
 #define RENDER_QUAD( i3, i2, i1, i, pv )			\
 do {								\
-   grDrawTriangle( &v[elt[i3]], &v[elt[i2]], &v[elt[i]] );	\
-   grDrawTriangle( &v[elt[i2]], &v[elt[i1]], &v[elt[i]] );	\
+   fxMesa->Glide.grDrawTriangle( &v[elt[i3]], &v[elt[i2]], &v[elt[i]] );	\
+   fxMesa->Glide.grDrawTriangle( &v[elt[i2]], &v[elt[i1]], &v[elt[i]] );	\
 } while (0)
 
 
 #define LOCAL_VARS				\
    GLcontext *ctx = VB->ctx;			\
+   tdfxContextPtr fxMesa = TDFX_CONTEXT( ctx ); \
    const GLuint *elt = VB->EltPtr->data;        \
    tdfxVertexPtr v = TDFX_DRIVER_DATA(VB)->verts; \
    (void) v; (void) ctx;

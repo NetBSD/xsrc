@@ -26,7 +26,7 @@
  *          Dirk H. Hohndel (hohndel@suse.de),
  *          Portions: the GGI project & confidential CYRIX databooks.
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/cyrix/cyrix_driver.c,v 1.19 2001/05/04 19:05:36 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/cyrix/cyrix_driver.c,v 1.24 2002/01/04 21:22:29 tsi Exp $ */
 
 #include "fb.h"
 #include "mibank.h"
@@ -141,25 +141,31 @@ static const OptionInfoRec CYRIXOptions[] = {
 };
 
 static const char *vgahwSymbols[] = {
-    "vgaHWGetHWRec",
-    "vgaHWUnlock",
-    "vgaHWInit",
-    "vgaHWProtect",
-    "vgaHWGetIOBase",
-    "vgaHWMapMem",
-    "vgaHWLock",
     "vgaHWFreeHWRec",
+    "vgaHWGetHWRec",
+    "vgaHWGetIOBase",
+    "vgaHWGetIndex",
+    "vgaHWHandleColormaps",
+    "vgaHWInit",
+    "vgaHWLock",
+    "vgaHWMapMem",
+    "vgaHWProtect",
+    "vgaHWRestore",
+    "vgaHWSave",
     "vgaHWSaveScreen",
+    "vgaHWUnlock",
     NULL
 };
 
 static const char *fbSymbols[] = {
     "fbScreenInit",
+    "fbPictureInit",
     NULL
 };
 
-static const char *racSymbols[] = {
-    "xf86RACInit",
+static const char *xaaSymbols[] = {
+    "XAACreateInfoRec",
+    "XAADestroyInfoRec",
     NULL
 };
 
@@ -198,7 +204,7 @@ cyrixSetup(pointer module, pointer opts, int *errmaj, int *errmin)
     if (!setupDone) {
 	setupDone = TRUE;
 	xf86AddDriver(&CYRIX, module, 0);
-	LoaderRefSymLists(vgahwSymbols, fbSymbols, racSymbols, NULL);
+	LoaderRefSymLists(vgahwSymbols, fbSymbols, xaaSymbols, NULL);
 	return (pointer)TRUE;
     } 
 
@@ -309,7 +315,9 @@ CYRIXProbe(DriverPtr drv, int flags)
      */
     if ((numDevSections = xf86MatchDevice(CYRIX_DRIVER_NAME,
 						&devSections)) <= 0) {
+#ifdef DEBUG
    	xf86ErrorFVerb(3,"%s: No Device section found.\n",CYRIX_NAME);
+#endif
 	/*
 	 * There's no matching device section in the config file, so quit
 	 * now.
@@ -433,8 +441,6 @@ CYRIXPreInit(ScrnInfoPtr pScrn, int flags)
     int videoram;
     int i;
     ClockRangePtr clockRanges;
-    char *mod = NULL;
-    const char *Sym = NULL;
     CARD32 physbase, padsize;
     int CYRIXisOldChipRevision;
     int device_step, device_revision;
@@ -598,7 +604,7 @@ CYRIXPreInit(ScrnInfoPtr pScrn, int flags)
 	}
     }
 
-    /* We use a programamble clock */
+    /* We use a programmable clock */
     pScrn->progClock = TRUE;
 
     /* Allocate the CYRIXRec driverPrivate */
@@ -671,8 +677,8 @@ CYRIXPreInit(ScrnInfoPtr pScrn, int flags)
 
     xf86DrvMsg(pScrn->scrnIndex, X_PROBED, "Found %s chip\n", pScrn->chipset);
     
-    if (pScrn->memPhysBase != 0) {
-	pCyrix->FbAddress = pScrn->memPhysBase;
+    if (pCyrix->pEnt->device->MemBase != 0) {
+	pCyrix->FbAddress = pCyrix->pEnt->device->MemBase;
 	from = X_CONFIG;
     } else {
 	from = X_PROBED;
@@ -682,8 +688,8 @@ CYRIXPreInit(ScrnInfoPtr pScrn, int flags)
     xf86DrvMsg(pScrn->scrnIndex, from, "Linear framebuffer at 0x%lX\n",
 	       (unsigned long)pCyrix->FbAddress);
 
-    if (pScrn->ioBase != 0) {
-	pCyrix->IOAccelAddress = pScrn->ioBase;
+    if (pCyrix->pEnt->device->IOBase != 0) {
+	pCyrix->IOAccelAddress = pCyrix->pEnt->device->IOBase;
 	from = X_CONFIG;
     } else {
 	from = X_PROBED;
@@ -695,7 +701,7 @@ CYRIXPreInit(ScrnInfoPtr pScrn, int flags)
     /* HW bpp matches reported bpp */
     pCyrix->HwBpp = pScrn->bitsPerPixel;
 
-    if (pScrn->videoRam != 0) {
+    if (pCyrix->pEnt->device->videoRam != 0) {
 	pScrn->videoRam = pCyrix->pEnt->device->videoRam;
 	from = X_CONFIG;
     } else {
@@ -777,35 +783,24 @@ CYRIXPreInit(ScrnInfoPtr pScrn, int flags)
     /* Set display resolution */
     xf86SetDpi(pScrn, 0, 0);
 
-    /* Load bpp-specific modules */
     switch (pScrn->bitsPerPixel) {
     case 1:
     case 4:
     case 8:
 	pCyrix->EngineOperation |= 0x00;
-	mod = "fb";
-	Sym = "fbScreenInit";
 	break;
     case 16:
 	pCyrix->EngineOperation |= 0x01;
-	mod = "fb";
-	Sym = "fbScreenInit";
 	break;
     }
 
-    if (mod && xf86LoadSubModule(pScrn, mod) == NULL) {
+    /* Load fb module */
+    if (xf86LoadSubModule(pScrn, "fb") == NULL) {
 	CYRIXFreeRec(pScrn);
 	return FALSE;
     }
 
-    xf86LoaderReqSymbols(Sym, NULL);
-
-    if (!xf86LoadSubModule(pScrn, "rac")) {
-	CYRIXFreeRec(pScrn);
-	return FALSE;
-    }
-
-    xf86LoaderReqSymLists(racSymbols, NULL);
+    xf86LoaderReqSymLists(fbSymbols, NULL);
 
     /* Load XAA if needed */
     if (!pCyrix->NoAccel) {
@@ -813,6 +808,7 @@ CYRIXPreInit(ScrnInfoPtr pScrn, int flags)
 	    CYRIXFreeRec(pScrn);
 	    return FALSE;
 	}
+	xf86LoaderReqSymLists(xaaSymbols, NULL);
 
         switch (pScrn->displayWidth * pScrn->bitsPerPixel / 8) {
 	    case 512:
@@ -1017,8 +1013,6 @@ CYRIXScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
     if (!ret)
 	return FALSE;
 
-    fbPictureInit (pScreen, 0, 0);
-    
     xf86SetBlackWhitePixels(pScreen);
 
     if (pScrn->bitsPerPixel > 8) {
@@ -1038,6 +1032,9 @@ CYRIXScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 	Cyrix1bppColorMap(pScrn);
     }
 
+    /* must be after RGB ordering fixed */
+    fbPictureInit (pScreen, 0, 0);
+    
     if (pScrn->depth < 8) {
 	miBankInfoPtr pBankInfo;
 
@@ -1225,8 +1222,7 @@ CYRIXCloseScreen(int scrnIndex, ScreenPtr pScreen)
 static void
 CYRIXFreeScreen(int scrnIndex, int flags)
 {
-    if (xf86LoaderCheckSymbol("vgaHWFreeHWRec"))
-	vgaHWFreeHWRec(xf86Screens[scrnIndex]);
+    vgaHWFreeHWRec(xf86Screens[scrnIndex]);
     CYRIXFreeRec(xf86Screens[scrnIndex]);
 }
 
@@ -1257,7 +1253,6 @@ Bool enter;
     unsigned char temp;
 
     if (enter) {
-	/*VGAHW_UNLOCK(vgaIOBase);*/
     	GX_REG(DC_UNLOCK) = DC_UNLOCK_VALUE;
 
 	/* Unprotect CRTC[0-7] */
@@ -1277,7 +1272,6 @@ Bool enter;
 	/* Protect CRTC[0-7] */
 	outb(vgaIOBase + 4, 0x11); temp = inb(vgaIOBase + 5);
 	outb(vgaIOBase + 5, (temp & 0x7F) | 0x80);
-	/*VGAHW_LOCK(vgaIOBase);*/
     	GX_REG(DC_UNLOCK) = 0;
     }
 }

@@ -24,7 +24,7 @@
  * used in advertising or publicity pertaining to distribution of the software
  * without specific, written prior permission.
  */
-/* $XFree86: xc/programs/xedit/commands.c,v 1.22 2000/09/26 15:57:24 tsi Exp $ */
+/* $XFree86: xc/programs/xedit/commands.c,v 1.25 2001/09/05 17:43:25 paulo Exp $ */
 
 #include <X11/Xfuncs.h>
 #include <X11/Xos.h>
@@ -43,7 +43,6 @@
 
 void ResetSourceChanged(xedit_flist_item*);
 static void ResetDC(Widget, XtPointer, XtPointer);
-void SourceChanged(Widget, XtPointer, XtPointer);
 
 static void AddDoubleClickCallback(Widget, Bool);
 static Bool ReallyDoLoad(char*, char*);
@@ -126,8 +125,10 @@ DoQuit(Widget w, XtPointer client_data, XtPointer call_data)
 		break;
 	    }
     }
-    if(!source_changed)
+    if(!source_changed) {
+	XeditLispCleanUp();
 	exit(0);
+    }
 
     XeditPrintf("Unsaved changes. Save them, or Quit again.\n");
     Feep();
@@ -341,6 +342,8 @@ DoSave(Widget w, XtPointer client_data, XtPointer call_data)
 				   XtNeditType, XawtextEdit,
 				   NULL, NULL);
 	      ResetSourceChanged(item);
+	      XtAddCallback(scratch, XtNcallback, SourceChanged,
+			    (XtPointer)item);
 
 	      item = AddTextSource(source, name, filename, EXISTS_BIT,
 				   file_access);

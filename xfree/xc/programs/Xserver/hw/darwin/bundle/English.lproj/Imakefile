@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/programs/Xserver/hw/darwin/bundle/English.lproj/Imakefile,v 1.1.2.1 2001/05/21 04:56:07 torrey Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/darwin/bundle/English.lproj/Imakefile,v 1.2 2001/11/04 07:09:47 torrey Exp $
 
 #include <Server.tmpl>
 
@@ -6,14 +6,18 @@ INCLUDES = -I$(SERVERSRC)/include
 
 VERS = XFree86VersionString
 DATE = XFree86DateString
-XF86_DEFS = $(INCLUDES) -DXF86_VERSION=$(VERS) -DXF86_REL_DATE=$(DATE) \
-    -DXF86_COPYRIGHT='"XFree86 $(VERS)\nCopyright 2001 XFree86 Project, Inc."'
+XF86_DEFS = $(INCLUDES) -DXF86_VERSION=$(VERS) -DXF86_REL_DATE=$(DATE)
 
 AllTarget(XDarwinHelp.html)
 CppFileTarget(XDarwinHelp.html,XDarwinHelp.html.cpp,$(XF86_DEFS), \
 	NullParameter)
 
 AllTarget(InfoPlist.strings)
-CppFileTarget(InfoPlist.strings,InfoPlist.strings.cpp,$(XF86_DEFS), \
-	NullParameter)
+InfoPlist.strings: InfoPlist.strings.cpp
+	RemoveFile($@)
+	ClearmakeOSName \
+	$(CPP) CppNoLineInfoOption $(XF86_DEFS) <InfoPlist.strings.cpp | \
+	CppSedMagic | sed 's/__quote__/"/g' >$@
 
+clean::
+	RemoveFiles(InfoPlist.strings)

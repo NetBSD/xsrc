@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86fbman.h,v 1.11 2000/07/14 22:38:50 mvojkovi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86fbman.h,v 1.12 2001/08/28 16:55:09 tsi Exp $ */
 
 #ifndef _XF86FBMAN_H
 #define _XF86FBMAN_H
@@ -93,6 +93,13 @@ Bool
 xf86InitFBManagerRegion(
     ScreenPtr pScreen, 
     RegionPtr ScreenRegion
+);
+
+Bool
+xf86InitFBManagerArea(
+    ScreenPtr pScreen,
+    int PixalArea,
+    int Verbosity
 );
 
 Bool

@@ -1,9 +1,13 @@
-/* $Xorg: cfbpntwin.c,v 1.3 2000/08/17 19:48:14 cpqbld Exp $ */
+/* $Xorg: cfbpntwin.c,v 1.4 2001/02/09 02:04:38 xorgcvs Exp $ */
 /***********************************************************
 
 Copyright 1987, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -41,7 +45,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/programs/Xserver/cfb/cfbpntwin.c,v 3.4 2001/01/17 22:36:36 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/cfb/cfbpntwin.c,v 3.6 2001/12/14 19:59:24 dawes Exp $ */
 
 #include "X.h"
 
@@ -224,17 +228,18 @@ cfbFillBoxSolid (pDrawable, nBox, pBox, pixel)
     register int    h;
     register CfbBits   rrop_xor;
     register CfbBits   *pdst;
-    register CfbBits   leftMask, rightMask;
     int		    nmiddle;
-    register int    m;
     int		    w;
 #if PSZ == 24
     int leftIndex, rightIndex;
-    CfbBits piQxelArray[3], xOffset, *pdstULC; /*upper left corner*/
+    CfbBits piQxelArray[3], *pdstULC; /*upper left corner*/
 
     piQxelArray[0] = (pixel&0xFFFFFF) | ((pixel&0xFF)<<24);
     piQxelArray[1] = ((pixel&0xFFFF00)>>8) | ((pixel&0xFFFF)<<16);
     piQxelArray[2] = ((pixel&0xFFFFFF)<<8) | ((pixel&0xFF0000)>>16);
+#else
+    register CfbBits   leftMask, rightMask;
+    register int    m;
 #endif
 
     cfbGetLongWidthAndPointer(pDrawable, widthDst, pdstBase);
@@ -467,17 +472,13 @@ cfbFillBoxTile32 (pDrawable, nBox, pBox, tile)
     BoxPtr 	    pBox;	/* pointer to list of boxes to fill */
     PixmapPtr	    tile;	/* rotated, expanded tile */
 {
-    register CfbBits  rrop_xor;	
     register CfbBits  *pdst;
-    register int	    m;
     CfbBits	    *psrc;
     int			    tileHeight;
 
     int			    widthDst;
     int			    w;
     int			    h;
-    register CfbBits  leftMask;
-    register CfbBits  rightMask;
     int			    nmiddle;
     int			    y;
     int			    srcy;
@@ -485,7 +486,12 @@ cfbFillBoxTile32 (pDrawable, nBox, pBox, tile)
     CfbBits	    *pdstBase;
 #if PSZ == 24
     int			    leftIndex, rightIndex;
-    CfbBits piQxelArray[3], xOffset, *pdstULC;
+    CfbBits piQxelArray[3], *pdstULC;
+#else
+    register CfbBits  rrop_xor;	
+    register CfbBits  leftMask;
+    register CfbBits  rightMask;
+    register int      m;
 #endif
 
     tileHeight = tile->drawable.height;

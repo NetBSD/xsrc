@@ -18,17 +18,19 @@
 # The majority of entries are just a binding of a model name to a
 # chipset/server and untested.
 #
-# $XFree86: xc/programs/Xserver/hw/xfree86/xf86config/Cards,v 3.76 2001/04/01 14:00:16 tsi Exp $
+# $XFree86: xc/programs/Xserver/hw/xfree86/xf86config/Cards,v 3.78 2001/06/23 01:55:12 paulo Exp $
 
 # VGA
 
-NAME Generic VGA compatible
-CHIPSET Generic VGA
+NAME * Generic VGA compatible
 SERVER VGA16
 DRIVER vga
 
-NAME Unsupported VGA compatible
-CHIPSET Generic VGA
+NAME * Generic VESA compatible
+SERVER VGA16
+DRIVER vesa
+
+NAME * Unsupported VGA compatible
 SERVER VGA16
 DRIVER vga
 UNSUPPORTED
@@ -151,7 +153,6 @@ SEE Chips & Technologies CT64200
 
 #tested
 NAME Cirrus Logic GD542x
-CHIPSET CL-GD5420/2/4/6/8/9
 SERVER SVGA
 DRIVER vga
 UNSUPPORTED
@@ -407,7 +408,6 @@ CHIPSET CL-GD5428
 SEE Cirrus Logic GD542x
 
 NAME Octek AVGA-20
-CHIPSET CL-GD5420
 SEE Cirrus Logic GD542x
 
 # S3 801/805
@@ -550,7 +550,6 @@ SEE S3 801/805 with Chrontel 8391
 # S3 864/Trio64/Trio32/868
 
 NAME S3 864 (generic)
-CHIPSET S3 864
 SERVER S3
 DRIVER vga
 UNSUPPORTED
@@ -624,7 +623,6 @@ CLOCKCHIP icd2061a
 SEE S3 868 with ATT 20C498 or 21C498
 
 NAME S3 Trio64 (generic)
-CHIPSET S3 Trio64
 SERVER S3
 DRIVER vga
 UNSUPPORTED
@@ -634,7 +632,6 @@ NAME S3 86C764 (generic)
 SEE S3 Trio64 (generic)
 
 NAME S3 Trio64V+ (generic)
-CHIPSET S3 Trio64V+
 SERVER S3
 DRIVER vga
 UNSUPPORTED
@@ -796,7 +793,6 @@ SEE S3 Trio64V+ (generic)
 # S3 Trio64V2
 
 NAME S3 Trio64V2 (generic)
-CHIPSET S3 Trio64V2
 SERVER S3
 DRIVER vga
 UNSUPPORTED
@@ -1426,16 +1422,16 @@ SEE S3 ViRGE/MX (generic)
 # currently unsupported S3
 
 NAME S3 86C365 (Trio3D)
-SEE Unsupported VGA compatible
+SEE * Unsupported VGA compatible
 
 NAME S3 86C391 (Savage3D)
-SEE Unsupported VGA compatible
+SEE * Unsupported VGA compatible
 
 NAME S3 Trio3D
-SEE Unsupported VGA compatible
+SEE * Unsupported VGA compatible
 
 NAME S3 Savage3D
-SEE Unsupported VGA compatible
+SEE * Unsupported VGA compatible
 
 NAME S3 Savage4
 SERVER SVGA
@@ -2155,7 +2151,6 @@ DRIVER vga
 UNSUPPORTED
 
 NAME Trident 8900D (generic)
-CHIPSET TVGA8900D
 SERVER SVGA
 DRIVER vga
 UNSUPPORTED
@@ -2281,10 +2276,10 @@ DRIVER trident
 NOCLOCKPROBE
 
 NAME Trident TVGA 8800BR
-SEE Generic VGA compatible
+SEE * Generic VGA compatible
 
 NAME Trident TVGA 8800CS
-SEE Generic VGA compatible
+SEE * Generic VGA compatible
 
 NAME Trident CyberBlade (generic)
 CHIPSET CyberBlade
@@ -2301,7 +2296,7 @@ NOCLOCKPROBE
 # SiS
 
 NAME SiS 530
-CHIPSET SIS520
+CHIPSET SIS530
 SERVER SVGA
 DRIVER sis
 

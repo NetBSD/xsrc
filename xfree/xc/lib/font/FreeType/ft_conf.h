@@ -1,6 +1,6 @@
 /* ft_conf.h.  Xserver-specific version. */
 
-/* $XFree86: xc/lib/font/FreeType/ft_conf.h,v 1.9 2000/11/28 19:09:28 dawes Exp $ */
+/* $XFree86: xc/lib/font/FreeType/ft_conf.h,v 1.10 2001/07/25 15:04:55 dawes Exp $ */
 
 /* we need the following because there are some typedefs in this file */
 #ifndef FT_CONF_H
@@ -24,9 +24,7 @@
 #undef _XOPEN_SOURCE
 #endif
 /* Define if you have the <stdlib.h> header file.  */
-#ifndef X_NOT_STDC_ENV
 #define HAVE_STDLIB_H 1
-#endif
 
 #else
 

@@ -26,80 +26,45 @@
  *
  * Author: Paulo César Pereira de Andrade <pcpa@conectiva.com.br>
  *
- * $XFree86: xc/programs/Xserver/hw/xfree86/xf86cfg/loader.h,v 1.4 2001/05/18 20:22:31 tsi Exp $
+ * $XFree86: xc/programs/Xserver/hw/xfree86/xf86cfg/loader.h,v 1.7 2001/07/09 23:45:24 paulo Exp $
  */
+
 #ifdef USE_MODULES
+#ifndef LOADER_PRIVATE
 #include "config.h"
 #include "stubs.h"
+
+#else
+
+#define XFree86LOADER		/* not really */
+#define IN_LOADER
+
+#include "xf86.h"
+#include "xf86str.h"
+#include "xf86Opt.h"
+#include "xf86Module.h"
+
+#define XINPUT
+#include "xf86Xinput.h"
+
+#include "fontmod.h"
+#include "loaderProcs.h"
+
+#include <sym.h>
+#include <xf86_ansic.h>
+
+void LoaderDefaultFunc(void);
+#endif
 
 #ifndef _xf86cfg_loader_h
 #define _xf86cfg_loader_h
 
-#ifdef LOADER_PRIVATE
-#include <sym.h>
+void xf86cfgLoaderInit(void);
+void xf86cfgLoaderInitList(int);
+void xf86cfgLoaderFreeList(void);
+int xf86cfgCheckModule(void);
 
-#define XFree86LOADER		/* not really */
-#include <xf86_ansic.h>
-
-/* common/xf86Module.h */
-pointer LoadModule(const char *, const char *, const char **,
-                   const char **, pointer, const pointer *,
-                   int *, int *);
-pointer LoadSubModule(pointer, const char *, const char **,
-                      const char **, pointer, const pointer *,
-                      int *, int *);
-void UnloadSubModule(pointer);
-void LoadFont(pointer);
-void UnloadModule (pointer);
-pointer LoaderSymbol(const char *);
-char **LoaderListDirs(const char **, const char **);
-void LoaderFreeDirList(char **);
-void LoaderErrorMsg(const char *, const char *, int, int);
-void LoadExtension(pointer, Bool);
-void LoaderRefSymLists(const char **, ...);
-void LoaderRefSymbols(const char *, ...);
-void LoaderReqSymLists(const char **, ...);
-void LoaderReqSymbols(const char *, ...);
-int LoaderCheckUnresolved(int);
-void LoaderGetOS(const char **name, int *major, int *minor, int *teeny);
-
-typedef pointer (*ModuleSetupProc)(pointer, pointer, int *, int *);
-typedef void (*ModuleTearDownProc)(pointer);
-
-/* loader/loader.h */
-void LoaderDefaultFunc(void);
-
-/* loader/loaderProcs.h */
-typedef struct module_desc {
-    struct module_desc *child;
-    struct module_desc *sib;
-    struct module_desc *parent;
-    struct module_desc *demand_next;
-    char *name;
-    char *filename;
-    char *identifier;
-    XID client_id;
-    int in_use;
-    int handle;
-    ModuleSetupProc SetupProc;
-    ModuleTearDownProc TearDownProc;
-    void *TearDownData; /* returned from SetupProc */
-    const char *path;
-} ModuleDesc, *ModuleDescPtr;
-
-void LoaderInit(void);
-
-ModuleDescPtr LoadDriver(const char *, const char *, int, pointer, int *,
-                         int *);
-ModuleDescPtr DuplicateModule(ModuleDescPtr mod, ModuleDescPtr parent);
-void UnloadDriver (ModuleDescPtr);
-void FreeModuleDesc (ModuleDescPtr mod);
-ModuleDescPtr NewModuleDesc (const char *);
-ModuleDescPtr AddSibling (ModuleDescPtr head, ModuleDescPtr new);
-void LoaderSetPath(const char *path);
-void LoaderSortExtensions(void);
-#endif /* LOADER_PRIVATE */
-
+#ifndef LOADER_PRIVATE
 /* common/xf86Opt.h */
 typedef struct {
     double freq;
@@ -138,78 +103,69 @@ typedef struct {
     Bool                found;
 } OptionInfoRec, *OptionInfoPtr;
 
-#ifdef LOADER_PRIVATE
-/* common/xf86str.h */
-typedef struct _DriverRec {
-    int			driverVersion;
-    char *		driverName;
-    void		(*Identify)(int flags);
-    Bool		(*Probe)(struct _DriverRec *drv, int flags);
-    OptionInfoPtr	(*AvailableOptions)(int chipid, int bustype);
-    void *		module;
-    int			refCount;
-} DriverRec, *DriverPtr;
+/* fontmod.h */
+typedef void (*InitFont)(void);
 
-typedef struct _InputDriverRec {
-    int			    driverVersion;
-    char *		    driverName;
-    void		    (*Identify)(int flags);
-    struct _LocalDeviceRec *(*PreInit)(struct _InputDriverRec *drv,
-				       void *dev, int flags);
-    void		    (*UnInit)(struct _InputDriverRec *drv,
-				      void *pInfo,
-				      int flags);
-    pointer		    module;
-    int			    refCount;
-} InputDriverRec, *InputDriverPtr;
+typedef struct {
+    InitFont	initFunc;
+    char *	name;
+    void	*module;
+} FontModule;
 
-typedef struct _loader_item *itemPtr;
-typedef struct _loader_item {
-	char	*name ;
-	void	*address ;
-	itemPtr	next ;
-	int	handle ;
-	int	module ;
-	itemPtr	exports;
-#if defined(__powerpc__)
-	/*
-	 * PowerPC file formats require special routines in some circumstances
-	 * to assist in the linking process. See the specific loader for
-	 * more details.
-	 */
-	union {
-		unsigned short	plt[8];		/* ELF */
-		unsigned short	glink[14];	/* XCOFF */
-	} code ;
-#endif
-	} itemRec ;
+extern FontModule *FontModuleList;
 
-typedef struct _ModuleInfoRec {
-    int			moduleVersion;
-    char *		moduleName;
-    pointer		module;
-    int			refCount;
-    OptionInfoRec *	(*AvailableOptions)(void *unused);
-    pointer		unused[2];	/* leave some space for more fields */
-} ModuleInfoRec, *ModuleInfoPtr;
-#endif /* LOADER_PRIVATE */
+typedef struct {
+    int                 token;          /* id of the token */
+    const char *        name;           /* token name */
+} SymTabRec, *SymTabPtr;
+#endif	/* !LOADER_PRIVATE */
 
 typedef enum {
+    NullModule = 0,
     VideoModule,
     InputModule,
-    GenericModule
+    GenericModule,
+    FontRendererModule
 } ModuleType;
 
 typedef struct _xf86cfgModuleOptions {
     char *name;
     ModuleType type;
     OptionInfoPtr option;
+    int vendor;
+    SymTabPtr chipsets;
     struct _xf86cfgModuleOptions *next;
 } xf86cfgModuleOptions;
 
 extern xf86cfgModuleOptions *module_options;
 
-Bool LoaderInitializeOptions(void);
+/* When adding a new code to the LEGEND, also update checkerLegend
+ * in loader.c
+ */
+extern char **checkerLegend;
+extern int *checkerErrors;
+#define	CHECKER_OPTIONS_FILE_MISSING			1
+#define	CHECKER_OPTION_DESCRIPTION_MISSING		2
+#define CHECKER_LOAD_FAILED				3
+#define CHECKER_RECOGNIZED_AS				4
+#define CHECKER_NO_OPTIONS_AVAILABLE			5
+#define CHECKER_NO_VENDOR_CHIPSET			6
+#define CHECKER_CANNOT_VERIFY_CHIPSET			7
+#define	CHECKER_OPTION_UNUSED				8
+#define CHECKER_NOMATCH_CHIPSET_STRINGS			9
+#define CHECKER_CHIPSET_NOT_LISTED			10
+#define CHECKER_CHIPSET_NOT_SUPPORTED			11
+#define CHECKER_CHIPSET_NO_VENDOR			12
+#define CHECKER_NO_CHIPSETS				13
+#define CHECKER_FILE_MODULE_NAME_MISMATCH		14
+
+#define CHECKER_LAST_MESSAGE				14
+
+extern void CheckMsg(int, char*, ...);
+
+#ifndef LOADER_PRIVATE
+int LoaderInitializeOptions(void);
+#endif
 #endif /* USE_MODULES */
 
 #endif /* _xf86cfg_loader_h */

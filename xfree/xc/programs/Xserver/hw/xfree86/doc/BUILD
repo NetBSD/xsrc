@@ -1,121 +1,64 @@
-                              Building XFree86
+                 Building XFree86 from a Source Distribution
 
-                                 David Dawes
+                         David Dawes, Matthieu Herrb
 
-                                 24 May 1997
+                                 27 May 2001
 
                                   Abstract
 
      This document describes how to build XFree86 from the source dis-
-     tribution.  It covers building from the full source distribution as
-     well as from the cut-down source distribution available for build-
-     ing only the X servers.  It is designed to be used in conjunction
-     with the OS-specific README files.
-
-1.  Building XFree86 From a Source Distribution
+     tribution.  It is designed to be used in conjunction with the OS-
+     specific README files.
 
      NOTE:  Refer to the appropriate OS-specific README file before
      attempting to build XFree86.  These files contain additional infor-
      mation that you may need to successfully build under your OS.
 
-We highly recommend using GCC-2 to build XFree86.  Do not use version 2.6.0
-or 2.4.x versions prior to 2.4.5 due to bugs that cause either build or exe-
-cution failures.  (gcc-2 is available from prep.ai.mit.edu and other sites
-archiving GNU source.)
+We highly recommend using gcc to build XFree86, but it generally also builds
+with the native compiler for each platform;
 
-1.1  How to get the XFree86 3.3 source
+1.  How to get the XFree86 4.2.0 source
 
 There are a few starting points for getting the XFree86 source.  One option
-is to start directly with the XFree86 3.3 source distribution.  In this case,
-the procedure is as follows:
+is to start directly with the XFree86 4.2.0 source distribution.  In this
+case, the procedure is as follows:
 
-   o The XFree86 3.3 source is contained in files X33src-1.tgz, X33src-2.tgz
-     and X33src-3.tgz.  These can be found at
-     ftp://ftp.xfree86.org/pub/XFree86/3.3/source/ and similar locations on
-     XFree86 mirror sites.  X33src-2.tgz contains the fonts and documentation
-     source.  X33src-3.tgz contains the hardcopy documentation.  X33src-1.tgz
-     contains everything else.  If you don't need the docs or fonts you can
-     get by with only X33src-1.tgz.
+   o The XFree86 source is contained in files X420src-1.tgz, X420src-2.tgz
+     and X420src-3.tgz.  These can be found at
+     ftp://ftp.xfree86.org/pub/XFree86/4.2.0/source/ and similar locations on
+     XFree86 mirror sites.  X420src-2.tgz contains the fonts and documenta-
+     tion source.  X420src-3.tgz contains the hardcopy documentation.
+     X420src-1.tgz contains everything else.  If you don't need the docs or
+     fonts you can get by with only X420src-1.tgz.
 
    o Extract each of these files by running the following from a directory on
      a filesystem containing enough space (the full source requires around
-     130MB, and a similar amount is required in addition to this for the com-
+     270MB, and a similar amount is required in addition to this for the com-
      piled binaries):
 
-                    gzip -d < X33src-1.tgz | tar vxf -
-                    gzip -d < X33src-2.tgz | tar vxf -
-                    gzip -d < X33src-3.tgz | tar vxf -
+          gzip -d < X420src-1.tgz | tar vxf -
 
-Another option is to start with the X11R6.3 source distribution and patch it
-up to XFree86 3.3.  In this case you need to do the following:
+          gzip -d < X420src-2.tgz | tar vxf -
 
-   o Start with the X Consortium's X11R6.3 distribution with public patch 1
-     applied.  This can be obtained by following the links from the X home-
-     page <URL:http://www.x.org>.
+          gzip -d < X420src-3.tgz | tar vxf -
 
-   o Get the files R6.3pl1-3.3.diff.gz and cfont33.tgz from
-     ftp://ftp.xfree86.org/pub/XFree86/3.3/patches/ (or a similar location on
-     mirror sites).  To upgrade the source to XFree86 3.3, run the following
-     from directory containing the xc directory of the X11R6.3 pl1 source
-     tree:
+   o If the release is not a full release, it is available as a patch against
+     the previous full release in the
+     ftp://ftp.xfree86.org/pub/XFree86/4.2.0/patches/ directory. Get the
+     patch file from there and apply it by running the following command:
 
-                    gzip -d < R6.3pl1-3.3.diff.gz | patch -p0 -E
-                    gzip -d < cfont33.tgz | tar vxf -
+          cd the directory containing the xc directory
 
-     Be sure to do this with a clean unmodified source tree.  If you don't
-     some patches may fail.
+          gzip -d < file | patch -s -p0 -E
 
-If you only want to build the XFree86 X servers, you can use a cut-down ver-
-sion of the XFree86 source tree called the ``servers only'' distribution.  If
-you choose this option, do the following:
+     Look for special patching instructions in the Release Notes.
 
-   o Get the X33servonly.tgz file from
-     ftp://ftp.xfree86.org/pub/XFree86/3.3/source/ (or a similar locations on
-     mirror sites.
+Another option is to get the source by anonymous CVS or CVSup.  See
+http://www.xfree86.org/cvs/ for details on the different procedure available.
 
-   o Extract this by running the following:
+All method will produce one main source directory called xc.
 
-                    gzip -d < X33servonly.tgz | tar vxf -
-
-There is no patch to upgrade from the XFree86 3.2 source to 3.3.  The reason
-for this is the large number of changes associated with the move from X11R6.1
-to X11R6.3.
-
-XFree86 supports a small subset of the X Consortium X11R6.1 contrib distribu-
-tion.  If you wish to build this, you will need at least the following
-files/directories from that distribution:
-
-          contrib/Imakefile
-          contrib/programs/Imakefile
-          contrib/programs/ico
-          contrib/programs/listres
-          contrib/programs/showfont
-          contrib/programs/viewres
-          contrib/programs/xbiff
-          contrib/programs/xcalc
-          contrib/programs/xditview
-          contrib/programs/xedit
-          contrib/programs/xev
-          contrib/programs/xeyes
-          contrib/programs/xfontsel
-          contrib/programs/xgc
-          contrib/programs/xload
-          contrib/programs/xman
-          contrib/programs/xmessage
-
-You will also need the XFree86 patch contrib-3.3.diff.gz.  To apply the
-patch, run the following from the directory containing the contrib directory:
-
-          gzip -d < contrib-3.3.diff.gz | patch -p0 -E
-
-If you wish to build the xtest distribution, get the souce distribution
-X33test.tgz from the XFree86 source directory, and extract it by running:
-
-          gzip -d < X33test.tgz | tar vxf -
-
-Note, xtest is no longer part of the core X11 distribution (since X11R6.3).
-
-1.2  Configuring the source before building
+2.  Configuring the source before building
 
 It is recommended that you start the configuration process by going to the
 xc/config/cf directory, and copying the file xf86site.def to host.def.  Then
@@ -128,50 +71,93 @@ Unlike previous versions, imake can now automatically detect and set the var-
 ious OS*Version parameters, so you shouldn't need to enter those settings
 explicitly.
 
-If you are using just the X33src-1.tgz part of the source dist, you will need
-to define BuildFonts to NO.
+If you are using just the X420src-1.tgz part of the source dist, you will
+need to define BuildFonts to NO.
 
-If you are using the ``servers only'' distribution, you will need to define
-BuildServersOnly to YES.
+3.  Using a shadow directory of symbolic links for the build
 
-1.3  Building and installing the distribution
+A recommended practice is to use a shadow directory of symbolic links to do
+the build of XFree86. This permits to keep the source directory unmodified
+during the build, which has the following benefits:
+
+   o In the case where CVS is used to maintain the source tree up to date,
+     the update process is not disturbed by foreign files not under the con-
+     trol of CVS.
+
+   o It is possible to build XFree86 for several different Operating System
+     or architectures from the same sources, shared by NFS.
+
+   o It is possible to build XFree86 with different configuration options,
+     just by putting a real copyhost.def in each build tree and by customiz-
+     ing it separately in each build tree.
+
+To make a shadow directory of symbolic links, use the following steps:
+
+   o create the directory at the top of the build tree. It is often created
+     at the same level that the xc directory, but this is not mandatory.
+
+          cd the directory containing the xcdirectory
+
+          mkdir build
+
+   o use the lndircommand to make the shadow tree:
+
+          lndir ../xc
+
+     Note that you can refer to the xc directory with an absolute path if
+     needed.
+
+     See the lndir(1) manual page for details.
+
+If lndir is not already installed on your system, you can build it manually
+from the XFree86 sources by running the following commands:
+
+     cd xc/config/util
+
+     make -f Makefile.ini lndir
+
+     cp lndir some directory in your PATH
+
+4.  Building and installing the distribution
 
 Before building the distribution, read through the OS-specific README file in
 xc/programs/Xserver/hw/xfree86/doc that is relevant to you.  Once those OS-
-specific details have been taken care of, go the xc directory and run ``make
-World'' with the BOOTSTRAPCFLAGS set as described in the OS-specific README
-(if necessary).  It is advisable to redirect stdout and stderr to World.Log
-so that you can track down problems that might occur during the build.
+specific details have been taken care of, go your build directory (either the
+xc directory or the shadow tree created before) and run ``make World'' with
+the BOOTSTRAPCFLAGS set as described in the OS-specific README (if necessary,
+but most systems supported by XFree86 don't need BOOTSTRAPCFLAGS).  It is
+advisable to redirect stdout and stderr to World.Log so that you can track
+down problems that might occur during the build.
+
+With Bourne-like shells (Bash, the Korn shell, zsh, etc.) use a command like:
+
+     make World > World.log 2>&1
+
+Witch C-shell variants (csh, tcsh, etc), use:
+
+     make World >& World.log
+
+You can follow the progress of the build by running:
+
+     tail -f World.log
+
+ in a terminal.
 
 When the build is finished, you should check World.Log to see if there were
-any problems.  If there weren't any then you can install the binaries.  When
-using the full source distribution, the installation should be done from the
-xc directory.  When using the ``servers only'' distribution, the install
-should be done from the xc/programs/Xserver directory.  To do the install,
-run ``make install'' and ``make install.man''.  Make sure you have enough
-space in /usr/X11R6 for the install to succeed.  If you want to install on a
-filesystem other than /usr, make a symbolic link to /usr/X11R6 before
-installing.
+any problems.  If there weren't any then you can install the binaries.  To do
+the install, run ``make install'' and ``make install.man''.  Make sure you
+have enough space in /usr/X11R6 for the install to succeed.  If you want to
+install on a filesystem other than /usr, make a symbolic link to /usr/X11R6
+before installing.
 
-To install the binary LinkKit (in /usr/X11R6/lib/Server), run ``make
-install.linkkit'' from the xc directory.
-
-To build the subset of the contrib release supported by XFree86, make sure
-that you have first built and installed the core distribution.  Then go to
-the contrib directory and run ``xmkmf -a; make''.  When that is completed,
-run ``make install'' and ``make install.man'' to install it.
-
-To build/run the xtest distribution, refer to the instructions in the file
-test/xsuite/NOTES.xf86.
-
-2.  Reconfiguring the server (source distribution)
+5.  Reconfiguring the server (source distribution)
 
 To build a different set of servers or servers with a different set of
 drivers installed:
 
   1.  Make sure the source for any new drivers is in the correct place (e.g.,
-      driver source for the SVGA server should be in a subdirectory of
-      xc/programs/Xserver/hw/xfree86/vga256/drivers).
+      driver source should be in a subdirectory of xc/pro-
+      grams/Xserver/hw/xfree86/drivers).
 
   2.  Change the settings of the server defines in host.def to specify which
       servers you wish to build.  Also, change the driver lists to suit your
@@ -181,16 +167,48 @@ drivers installed:
 
                 make Makefile
                 make Makefiles
+                   make includes
                 make depend
                 make
 
-3.  Reconfiguring the server (binary distribution)
+6.  Other useful make targets
 
-If you have installed the server Binary LinkKit, it is possible to reconfig-
-ure the drivers and some of the extensions in the servers.  For details of
-how to do this, please refer to the README.LinkKit file.
+There are some other useful targets defined in the top level Makefileof
+XFree86:
 
-     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/BUILD.sgml,v 3.2 1997/05/24 13:46:34 dawes Exp $
+   o Everything after a make World, make Everythingdoes everything a make
+     World does, except the cleaning of the tree. It is a way to quickly
+     rebuild the tree after a source patch, but it is not 100% bullet proof.
+     There are cases were it is better to force a full build by using make
+     World.
+
+   o clean does a partial cleaning of the source tree. Removes object files
+     and generated manual pages, but leaves the Makefiles and the generated
+     dependencies files in place. After a make clean you need to re-run
+
+                  make includes
+                  make depend
+                  make
+
+     to rebuild the XFree86.
+
+   o distclean does a full cleaning of the source tree, removing all gener-
+     ated files. After a make distclean, make World is the only option to
+     rebuild XFree86.
+
+   o includes generates all generated header files and in-tree symbolic links
+     needed by the build. These files are removed by a make clean.
+
+   o depend recomputes the dependencies for the various targets in all Make-
+     files. Depending on the operating system, the dependencies are stored in
+     the Makefile, or as a separate file, called .depend. This target needs
+     the generated include files produced by make includes.
+
+   o VerifyOS displays the detected operating system version. If the numbers
+     shown do not match your system, you probably need to set them manually
+     in host.def and report the problem to XFree86@XFree86.org.
+
+     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/BUILD.sgml,v 3.6 2001/11/15 17:32:16 dawes Exp $
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/BUILD,v 3.4 1999/04/15 03:34:43 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/BUILD,v 3.7 2001/11/15 17:37:21 dawes Exp $

@@ -1,10 +1,14 @@
-/* $Xorg: bitmaputil.c,v 1.3 2000/08/17 19:46:35 cpqbld Exp $ */
+/* $Xorg: bitmaputil.c,v 1.5 2001/02/09 02:04:02 xorgcvs Exp $ */
 
 /*
 
 Copyright 1990, 1994, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included
 in all copies or substantial portions of the Software.
@@ -23,7 +27,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/font/bitmap/bitmaputil.c,v 1.5 2001/01/17 19:43:27 dawes Exp $ */
+/* $XFree86: xc/lib/font/bitmap/bitmaputil.c,v 1.7 2001/12/14 19:56:46 dawes Exp $ */
 
 #include "fntfilst.h"
 #include "bitmap.h"
@@ -205,8 +209,10 @@ bitmapAddInkMetrics(FontPtr pFont)
 
     bitmapFont = (BitmapFontPtr) pFont->fontPrivate;
     bitmapFont->ink_metrics = (xCharInfo *) xalloc(bitmapFont->num_chars * sizeof(xCharInfo));
-    if (!bitmapFont->ink_metrics)
+    if (!bitmapFont->ink_metrics) {
+      fprintf(stderr, "Error: Couldn't allocate ink_metrics (%d*%d)\n", bitmapFont->num_chars, sizeof(xCharInfo));
 	return FALSE;
+    }
     for (i = 0; i < bitmapFont->num_chars; i++)
 	FontCharInkMetrics(pFont, &bitmapFont->metrics[i], &bitmapFont->ink_metrics[i]);
     pFont->info.inkMetrics = TRUE;

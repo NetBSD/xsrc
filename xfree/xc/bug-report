@@ -4,12 +4,16 @@ Subjects like "xterm bug" or "bug report" are not helpful!]
 [Send to xbugs@x.org, as shown in the sample message 
 header below]
 
+[NOTE: This form is intended for reporting bugs to X.Org about X.Org releases.
+If you're reporting an XFree86-specific bug, please use the BugReport form
+in xc/programs/Xserver/hw/xfree86/doc/ and send it to xfree86@xfree86.org.]
+
 To: xbugs@x.org
 Subject: [area]: [synopsis]   [replace with actual area and short description]
 
      VERSION:
 
-R6.5.1, public-patch-1
+R6.6
 
      CLIENT MACHINE and OPERATING SYSTEM:
 

@@ -26,7 +26,7 @@
  *
  * Author: Paulo César Pereira de Andrade <pcpa@conectiva.com.br>
  *
- * $XFree86: xc/programs/Xserver/hw/xfree86/xf86cfg/cards.h,v 1.1 2000/04/04 22:36:57 dawes Exp $
+ * $XFree86: xc/programs/Xserver/hw/xfree86/xf86cfg/cards.h,v 1.2 2001/07/06 02:04:10 paulo Exp $
  */
 
 #include <stdio.h>
@@ -34,9 +34,23 @@
 #include <string.h>
 #include <ctype.h>
 #include <X11/Xfuncproto.h>
+#include <X11/Xmd.h>
+#include <X11/Intrinsic.h>
+#include <X11/Xmu/SysUtil.h>
 
 #ifndef _xf86cfg_cards_h
 #define _xf86cfg_cards_h
+
+#ifdef USE_MODULES
+#ifdef CARDS_PRIVATE
+#include "loader.h"
+
+#define SELF_CONTAINED_PCI_INFO
+#define INIT_PCI_VENDOR_NAME_INFO
+#define INIT_PCI_VENDOR_INFO
+#include "xf86PciInfo.h"
+#endif		/* CARDS_PRIVATE */
+#endif		/* USE_MODULES */
 
 /* Flags in CardsEntry */
 #define F_NOCLOCKPROBE	0x1	/* Never probe clocks of the card. */
@@ -69,5 +83,10 @@ void ReadCardsDatabase(void);
 CardsEntry *LookupCard(char*);
 char **GetCardNames(int*);
 char **FilterCardNames(char*, int*);
+#ifdef USE_MODULES
+void InitializePciInfo(void);
+typedef struct _xf86cfgModuleOptions *xf86cfgModuleOptionsPtr;
+void CheckChipsets(xf86cfgModuleOptionsPtr, int*);
+#endif
 
 #endif /* _xf86cfg_cards_h */

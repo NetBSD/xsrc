@@ -1,10 +1,14 @@
-/* $Xorg: StrDefs.ht,v 1.3 2000/08/17 19:46:22 cpqbld Exp $ */
+/* $Xorg: StrDefs.ht,v 1.4 2001/02/09 02:04:00 xorgcvs Exp $ */
 
 /***********************************************************
 
 Copyright 1987, 1988, 1994, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -42,16 +46,13 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
+/* $XFree86: xc/lib/Xt/util/StrDefs.ht,v 3.5 2001/12/14 19:56:39 dawes Exp $ */
 
 #ifndef _XtStringDefs_h_
 #define _XtStringDefs_h_
 
 #ifndef XTSTRINGDEFINES
-#ifdef __STDC__
 #define _XtStringDefs_h_Const const
-#else
-#define _XtStringDefs_h_Const /**/
-#endif
 #endif
 
 <<<STRING_TABLE_GOES_HERE>>>

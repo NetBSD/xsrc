@@ -27,15 +27,17 @@
  *
  * Authors:	Harold L Hunt II
  */
-/* $XFree86: xc/programs/Xserver/hw/xwin/winmisc.c,v 1.3 2001/05/02 00:45:26 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xwin/winmisc.c,v 1.5 2001/11/11 22:45:57 alanh Exp $ */
 
 #include "win.h"
+
 
 /* See Porting Layer Definition - p. 33 */
 /*
  * Called by clients, returns the best size for a cursor, tile, or
  * stipple, specified by class (sometimes called kind)
  */
+
 void
 winQueryBestSizeNativeGDI (int class, unsigned short *pWidth,
 			   unsigned short *pHeight, ScreenPtr pScreen)
@@ -43,9 +45,11 @@ winQueryBestSizeNativeGDI (int class, unsigned short *pWidth,
   ErrorF ("winQueryBestSize()\n");
 }
 
+
 /*
  * Count the number of one bits in a color mask.
  */
+
 CARD8
 winCountBits (DWORD dw)
 {
@@ -60,9 +64,11 @@ winCountBits (DWORD dw)
   return dwBits;
 }
 
+
 /*
  * Modify the screen pixmap to point to the new framebuffer address
  */
+
 Bool
 winUpdateFBPointer (ScreenPtr pScreen, void *pbits)
 {
@@ -71,7 +77,7 @@ winUpdateFBPointer (ScreenPtr pScreen, void *pbits)
 
   /* Location of shadow framebuffer has changed */
   pScreenInfo->pfb = pbits;
-	      
+
   /* Update the screen pixmap */
   if (!(*pScreen->ModifyPixmapHeader)(pScreen->devPrivate,
 				      pScreen->width,
@@ -85,6 +91,57 @@ winUpdateFBPointer (ScreenPtr pScreen, void *pbits)
       FatalError ("winUpdateFramebufferPointer () - Failed modifying "\
 		  "screen pixmap\n");
     }
+
+  return TRUE;
+}
+
+
+/*
+ * Paint the window background with the specified color
+ */
+
+BOOL
+winPaintBackground (HWND hwnd, COLORREF colorref)
+{
+  HDC			hdc;
+  HBRUSH		hbrush;
+  RECT			rect;
+
+  /* Create an hdc */
+  hdc = GetDC (hwnd);
+  if (hdc == NULL)
+    {
+      printf ("gdiWindowProc - GetDC failed\n");
+      exit (1);
+    }
+
+  /* Create and select blue brush */
+  hbrush = CreateSolidBrush (colorref);
+  if (hbrush == NULL)
+    {
+      printf ("gdiWindowProc - CreateSolidBrush failed\n");
+      exit (1);
+    }
+
+  /* Get window extents */
+  if (GetClientRect (hwnd, &rect) == FALSE)
+    {
+      printf ("gdiWindowProc - GetClientRect failed\n");
+      exit (1);
+    }
+
+  /* Fill window with blue brush */
+  if (FillRect (hdc, &rect, hbrush) == 0)
+    {
+      printf ("gdiWindowProc - FillRect failed\n");
+      exit (1);
+    }
+
+  /* Delete blue brush */
+  DeleteObject (hbrush);
+
+  /* Release the hdc */
+  ReleaseDC (hwnd, hdc);
 
   return TRUE;
 }

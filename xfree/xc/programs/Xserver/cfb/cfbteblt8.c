@@ -3,12 +3,16 @@
  * 8 bit displays, in Copy mode with no clipping.
  */
 
-/* $XFree86: xc/programs/Xserver/cfb/cfbteblt8.c,v 1.4 2001/01/17 22:36:37 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/cfb/cfbteblt8.c,v 1.6 2001/12/14 19:59:25 dawes Exp $ */
 /*
 
 Copyright 1989, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -25,7 +29,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 */
 
-/* $Xorg: cfbteblt8.c,v 1.3 2000/08/17 19:48:15 cpqbld Exp $ */
+/* $Xorg: cfbteblt8.c,v 1.4 2001/02/09 02:04:38 xorgcvs Exp $ */
 
 #if PSZ == 8
 
@@ -350,7 +354,10 @@ CFBTEGBLT8 (pDrawable, pGC, xInit, yInit, nglyph, ppci, pglyphBase)
     glyphPointer	oldRightChar;
     CfbBits	*pdstBase;
     glyphPointer	leftChar;
-    int			widthDst, widthLeft;
+    int			widthDst;
+#ifndef FAST_CONSTANT_OFFSET_MODE
+    int			widthLeft;
+#endif
     int			widthGlyph;
     int			h;
     int			ew;
@@ -451,8 +458,8 @@ CFBTEGBLT8 (pDrawable, pGC, xInit, yInit, nglyph, ppci, pglyphBase)
 		    leftMask = cfbendtab[xoff1];
 		    rightMask = cfbstarttab[xoff1];
 
-#define StoreBits0	StorePixels (0,dst[0] & leftMask | \
-				       GetPixelGroup(c) & rightMask);
+#define StoreBits0	StorePixels (0, (dst[0] & leftMask) | \
+					(GetPixelGroup(c) & rightMask));
 #define GetBits GetBitsNS
 
 		    SwitchEm
@@ -517,7 +524,8 @@ CFBTEGBLT8 (pDrawable, pGC, xInit, yInit, nglyph, ppci, pglyphBase)
 		leftMask = cfbendtab[xoff1];
 		rightMask = cfbstarttab[xoff1];
 
-#define StoreBits0	StorePixels (0,dst[0] & leftMask | GetPixelGroup(c) & rightMask);
+#define StoreBits0	StorePixels (0, (dst[0] & leftMask) | \
+					(GetPixelGroup(c) & rightMask));
 #define GetBits	WGetBits1S
 
 		SwitchEm

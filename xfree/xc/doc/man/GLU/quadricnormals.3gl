@@ -47,5 +47,5 @@ One normal is generated for every facet of a quadric.
 One normal is generated for every vertex of a quadric. This is the
 initial value.
 .SH SEE ALSO
-\%\f3gluNewQuadric\fP, \%\f3gluQuadricDrawStyle\fP, \%\f3gluQuadricOrientation\fP, 
-\%\f3gluQuadricTexture\fP
+\%\f3gluNewQuadric(3G)\fP, \%\f3gluQuadricDrawStyle(3G)\fP, \%\f3gluQuadricOrientation(3G)\fP, 
+\%\f3gluQuadricTexture(3G)\fP

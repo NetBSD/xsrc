@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xaaLine.c,v 1.4 1999/05/30 03:03:32 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xaaLine.c,v 1.5 2001/10/28 03:34:04 tsi Exp $ */
 
 #include "X.h"
 #include "misc.h"
@@ -187,13 +187,15 @@ XAAPolyLines(
 		len = dmaj;
 		dmin <<= 1;
 		dmaj <<= 1;
+	    } else {	/* Muffle compiler */
+		dmin = dmaj = e = octant = len = 0;
 	    }
 
 	    while(nbox--) {
 		oc1 = oc2 = 0;
 		OUTCODES(oc1, x1, y1, pbox);
 		OUTCODES(oc2, x2, y2, pbox);
-		if (!(oc1 | oc2)) {   /* uncliped */
+		if (!(oc1 | oc2)) {   /* unclipped */
 		    if(infoRec->SubsequentSolidTwoPointLine) {
 			(*infoRec->SubsequentSolidTwoPointLine)(
 				infoRec->pScrn, x1, y1, x2, y2, 

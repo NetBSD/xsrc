@@ -1,4 +1,9 @@
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/input/sample/Imakefile,v 1.4 1999/08/14 10:50:02 dawes Exp $
+/*
+ * THIS SAMPLE INPUT DRIVER IS OUT OF DATE.  DO NOT USE IT AS A TEMPLATE
+ * WHEN WRITING A NEW INPUT DRIVER.
+ */
+
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/input/sample/Imakefile,v 1.5 2002/01/15 15:32:45 dawes Exp $
 
 #define IHaveModules
 #include <Server.tmpl>

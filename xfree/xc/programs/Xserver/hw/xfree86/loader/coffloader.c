@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/loader/coffloader.c,v 1.15 2001/01/06 21:29:16 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/loader/coffloader.c,v 1.17 2001/12/17 20:00:44 dawes Exp $ */
 
 /*
  *
@@ -25,7 +25,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <stdlib.h>
-#ifdef QNX
+#ifdef __QNX__
 #include <fcntl.h>
 #else
 #include <sys/fcntl.h>
@@ -494,8 +494,6 @@ RELOC		*rel;
 	{
 #if defined(i386)
 	case R_DIR32:
-#ifdef COFFDEBUG
-#endif
 	    symval=COFFGetSymbolValue(cofffile, rel->r_symndx);
 	    if( symval ) {
 #ifdef COFFDEBUG
@@ -788,16 +786,9 @@ RELOC		*rel;
 	    break;
 #endif /* __powerpc__ */
 	default:
-#if defined(i386)
 	    ErrorF(
 		   "COFF_RelocateEntry() Unsupported relocation type %o\n",
 		   rel->r_type );
-#endif
-#if defined(__powerpc__)
-	    ErrorF(
-		   "COFF_RelocateEntry() Unsupported relocation type %o\n",
-		   rel->r_type );
-#endif
 	    break;
 	}
     return 0;

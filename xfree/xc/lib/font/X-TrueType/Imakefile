@@ -1,5 +1,5 @@
 XCOMM X-TrueType Server - TrueType rasterizer for X
-XCOMM $XFree86: xc/lib/font/X-TrueType/Imakefile,v 1.7 2000/11/28 19:09:30 dawes Exp $
+XCOMM $XFree86: xc/lib/font/X-TrueType/Imakefile,v 1.8 2001/08/27 17:40:58 dawes Exp $
 
 #define IHaveSubdirs
 #define PassCDebugFlags CDEBUGFLAGS="$(CDEBUGFLAGS)"
@@ -27,7 +27,7 @@ CCONVINSTDIR = XTrueTypeCConvIncDir
 InstallMultipleFlags($(CCONVHEADERS),$(CCONVINSTDIR),$(INSTINCFLAGS))
 #endif
 
-#if XTTInLibXFont
+#if BuildFontLib && XTTInLibXFont
 #define DoNormalLib NormalLibFont
 #define DoSharedLib SharedLibFont
 #define DoDebugLib DebugLibFont

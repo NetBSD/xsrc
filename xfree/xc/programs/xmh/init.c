@@ -25,7 +25,7 @@
  * without specific, written prior permission.
  *
  */
-/* $XFree86: xc/programs/xmh/init.c,v 1.1.1.3.18.1 2001/05/25 18:50:15 dawes Exp $ */
+/* $XFree86: xc/programs/xmh/init.c,v 1.5 2002/01/07 20:20:12 dawes Exp $ */
 
 /* Init.c - Handle start-up initialization. */
 
@@ -174,7 +174,7 @@ static XrmOptionDescRec table[] = {
 };
 
 /* Tell the user how to use this program. */
-Syntax(call)
+static void Syntax(call)
     char *call;
 {
     (void) fprintf(stderr, "usage: %s [-path <path>] [-initial <folder>]\n",
@@ -205,10 +205,9 @@ Dimension defwidth, defheight;
 }
 
 
-static _IOErrorHandler(dpy)
+static int _IOErrorHandler(dpy)
     Display *dpy;
 {
-    extern char* SysErrMsg();
     (void) fprintf (stderr,
 	     "%s:\tfatal IO error after %lu requests (%lu known processed)\n",
 		    progName,
@@ -222,6 +221,7 @@ static _IOErrorHandler(dpy)
     }
 
     Punt("Cannot continue from server error.");
+    return 0;
 }
 
 /*ARGSUSED*/
@@ -263,7 +263,7 @@ static void _Die(w, client_data, call_data)
 
 /* All the start-up initialization goes here. */
 
-InitializeWorld(argc, argv)
+void InitializeWorld(argc, argv)
 int argc;
 char **argv;
 {
@@ -416,7 +416,7 @@ char **argv;
     }
     fid = myfopen(ptr, "r");
     if (fid) {
-	while (ptr = ReadLine(fid)) {
+	while ((ptr = ReadLine(fid))) {
 	    char *cp;
 
 	    (void) strncpy(str2, ptr, 5);
@@ -432,7 +432,7 @@ char **argv;
 		(void) strcpy(str, ptr);
 	    }
 	}
-	(void) myfclose(fid);
+	myfclose(fid);
     } else {
 	(void) strcpy(str, "Mail");
     }

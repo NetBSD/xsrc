@@ -1,4 +1,4 @@
-/* $XFree86: xc/include/extensions/xf86dgastr.h,v 3.13 2000/12/20 00:19:41 mvojkovi Exp $ */
+/* $XFree86: xc/include/extensions/xf86dgastr.h,v 3.14 2001/08/01 00:44:36 tsi Exp $ */
 /*
 
 Copyright (c) 1995  Jon Tombs
@@ -9,7 +9,7 @@ Copyright (c) 1995  XFree86 Inc.
 #ifndef _XF86DGASTR_H_
 #define _XF86DGASTR_H_
 
-#include "xf86dga1str.h"
+#include <X11/extensions/xf86dga1str.h>
 
 #define XF86DGANAME "XFree86-DGA"
 

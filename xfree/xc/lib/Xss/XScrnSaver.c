@@ -26,6 +26,7 @@ in this Software without prior written authorization from the X Consortium.
  *
  * Author:  Keith Packard, MIT X Consortium
  */
+/* $XFree86: xc/lib/Xss/XScrnSaver.c,v 3.1 2001/10/28 03:32:40 tsi Exp $ */
 
 #define NEED_EVENTS
 #define NEED_REPLIES
@@ -341,7 +342,7 @@ void XScreenSaverSetAttributes (dpy, drawable, x, y, width, height,
     else
 	req->visualID = visual->visualid;
     /* abuse an Xlib internal interface - is this legal for us? */
-    if (req->mask = valuemask) 
+    if ((req->mask = valuemask)) 
         XScreenSaverProcessWindowAttributes (dpy,
 			(xChangeWindowAttributesReq *)req, 
 			valuemask, attributes);
