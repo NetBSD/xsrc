@@ -2607,6 +2607,9 @@ spawn (void)
 #ifdef USE_LASTLOG
 	struct lastlog lastlog;
 #endif	/* USE_LASTLOG */
+#ifdef USE_LASTLOGX
+	struct lastlogx lastlog;
+#endif	/* USE_LASTLOGX */
 #endif	/* HAVE_UTMP */
 
 	screen->uid = getuid();
@@ -3745,10 +3748,23 @@ spawn (void)
 #endif /* USE_HANDSHAKE */
 #endif /* USE_SYSV_UTMP */
 
+#ifdef USE_LASTLOGX
+		if (term->misc.login_shell) {
+		    bzero((char *)&lastlog, sizeof (lastlog));
+		    (void) strncpy(lastlog.ll_line,
+		        my_pty_name(ttydev),
+			sizeof (lastlog.ll_line));
+		    X_GETTIMEOFDAY(&lastlog.ll_tv); 
+		    (void) strncpy(lastlog.ll_host,
+			  XDisplayString (screen->display),
+			  sizeof (lastlog.ll_host));
+		    updlastlogx(_PATH_LASTLOGX, screen->uid, &lastlog);
+		}
+#endif
 #ifdef USE_LASTLOG
 		if (term->misc.login_shell &&
 		(i = open(etc_lastlog, O_WRONLY)) >= 0) {
-		    bzero((char *)&lastlog, sizeof (struct lastlog));
+		    bzero((char *)&lastlog, sizeof (lastlog));
 		    (void) strncpy(lastlog.ll_line,
 		        my_pty_name(ttydev),
 			sizeof (lastlog.ll_line));

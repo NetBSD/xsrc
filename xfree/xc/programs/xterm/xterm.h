@@ -83,6 +83,14 @@ authorization.
 #define USE_POSIX_TERMIOS 1
 #endif
 
+#ifdef __NetBSD__
+#include <sys/param.h>
+#if __NetBSD_Version__ >= 106030000	/* 1.6C */
+#define BSD_UTMPX 1
+#define ut_xtime ut_tv.tv_sec
+#endif
+#endif
+
 #if defined(hpux) && !defined(__hpux)
 #define __hpux 1	/* HPUX 11.0 does not define this */
 #endif
@@ -100,7 +108,7 @@ authorization.
 #define HAVE_UTMP 1
 #endif
 
-#if (defined(__MVS__) || defined(SVR4) || defined(SCO325)) && !defined(__CYGWIN__)
+#if (defined(__MVS__) || defined(SVR4) || defined(SCO325) || defined(BSD_UTMPX)) && !defined(__CYGWIN__)
 #define UTMPX_FOR_UTMP 1
 #endif
 
@@ -116,7 +124,7 @@ authorization.
 #define ut_xstatus ut_exit.e_exit
 #endif
 
-#if defined(SVR4) || defined(SCO325) || (defined(linux) && defined(__GLIBC__) && (__GLIBC__ >= 2) && !(defined(__powerpc__) && (__GLIBC__ == 2) && (__GLIBC_MINOR__ == 0)))
+#if defined(SVR4) || defined(SCO325) || defined(BSD_UTMPX) || (defined(linux) && defined(__GLIBC__) && (__GLIBC__ >= 2) && !(defined(__powerpc__) && (__GLIBC__ == 2) && (__GLIBC_MINOR__ == 0)))
 #define HAVE_UTMP_UT_XTIME 1
 #endif
 
@@ -124,14 +132,18 @@ authorization.
 #define USE_LASTLOG
 #define HAVE_LASTLOG_H
 #elif defined(BSD) && (BSD >= 199103)
+#ifdef BSD_UTMPX
+#define USE_LASTLOGX
+#else
 #define USE_LASTLOG
+#endif
 #endif
 
 #if defined(AMOEBA) || defined(SCO) || defined(SVR4) || defined(_POSIX_SOURCE) || defined(__QNX__) || defined(__hpux) || (defined(BSD) && (BSD >= 199103)) || defined(__CYGWIN__)
 #define USE_POSIX_WAIT
 #endif
 
-#if defined(AIXV3) || defined(CRAY) || defined(SCO) || defined(SVR4) || (defined(SYSV) && defined(i386)) || defined(__MVS__) || defined(__hpux) || defined(__osf__) || defined(linux) || defined(macII)
+#if defined(BSD_UTMPX) || defined(AIXV3) || defined(CRAY) || defined(SCO) || defined(SVR4) || (defined(SYSV) && defined(i386)) || defined(__MVS__) || defined(__hpux) || defined(__osf__) || defined(linux) || defined(macII)
 #define USE_SYSV_UTMP
 #endif
 
