@@ -20,8 +20,10 @@ support the follwing graphic modes:
 Amiga CustomChips Color/Monochrome (ECS/AGA)
 General Gfx Board (Dumb Chunky Framebuffer)
 GFX accelerator for the RetinaZ3 and the Altais Graphics boards
-Cirrus 5426 based Graphics Board (Picollo, Picollo SD64, Spectrum, PicassoII)
-GFX accelerator for the CV64 Graphics board
+Cirrus based Graphics Board (Picollo, Picollo SD64, Spectrum,
+    PicassoII, II+ and IV)
+GFX accelerator for the CyberVision64 Graphics board
+Dumb Chunky Framebuffer for the CyberVision64/3D Graphics board
 .PP
 .SH OPTIONS
 In addition to the normal server options described in the \fIXserver(1)\fP
@@ -45,9 +47,10 @@ put its standard input, output and error files into non-blocking mode.
 .B "\-dev \fIfn[:fn][:fn]\fP"
 This option specifies the graphics devices which the server shall use for
 displaying (e.g. /dev/grf0 for Amiga Chipset, /dev/grf2 for RetinaZ3,
-/dev/grf3 for Cirrus based boards (Picollo, Picollo SD64, Spectrum, Picasso),
-/dev/grf5 for CyberVision64, /dev/grf6 for Tseng ET4000 based boards (oMniBus,
-Domnio, Merlin)). Multiple devices must be seperated with a colon.
+/dev/grf3 for Cirrus based boards (Picollo, Picollo SD64, Spectrum,
+PicassoII, II+ and IV), /dev/grf5 for CyberVision64, /dev/grf6 for
+Tseng ET4000 based boards (oMniBus, Domnio, Merlin), /dev/grf7 for
+CyberVision64/3D). Multiple devices must be seperated with a colon.
 Default are all available devices. 
 .TP 8
 .B \-mouse \fImousedevice\fP
@@ -68,7 +71,7 @@ Similar to -emulatemiddle, except that the right mousebutton is emulated.
 .TP 8
 .B \-flipPixels
 Switch colors 0 and 1. This is to avoid the ugly white bar at the right
-on CyberVision64 boards.
+on CyberVision64 and CyberVision64/3D boards.
 .TP 8
 .B \-mono
 This option is used to force monocrome mode (not supported on gfx boards).
@@ -136,7 +139,7 @@ S3Trio64 chip.
 Set the virtual screen height to <int> pixels.
 The only limit here is the size of the graphics memory.
 
-.SH ADDITIONAL NOTES TO CYBERVISION USERS
+.SH ADDITIONAL NOTES TO CyberVision64 USERS
 .PP 
 -If you have defined a continuous range of videomodes with the same depth
 you can switch between them with "ctrl"-"alt"-"Keypad+" and
@@ -149,12 +152,11 @@ ftp.uni-regensburg.de in the /pub/NetBSD-Amiga/tools directory.
 
 .SH "SEE ALSO"
 .PP
-X(1), Xserver(1), xdm(1), xinit(1), grfconfig(8)
+X(1), Xserver(1), xdm(1), xinit(1), grfconfig(8), grfcl(4),  grfcv(4),
+grfcv3d(4),  grfet(4), grfrh(4),  grfrt(4),  grful(4)
 .SH BUGS
 .PP
-None known. Send bug reports and other suggestions to me, please.
-<teske@mail.desy.de>
-
+The Cirrus accelerator part works only in 8bit.
 .SH AUTHORS
 .TP 8
 U. C. Berkeley
