@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/PCI.h,v 3.17.2.10 1998/10/25 14:15:11 hohndel Exp $ */ 
+/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/PCI.h,v 3.17.2.11 1998/12/22 11:23:14 hohndel Exp $ */ 
 /*
  * PCI Probe
  *
@@ -234,6 +234,11 @@ void xf86writepci(
 #define PCI_CHIP_MGA2064W	0x0519
 #define PCI_CHIP_MGA1064SG	0x051A
 #define PCI_CHIP_MGA2164W	0x051B
+#define PCI_CHIP_MGA2164W_AGP	0x051F
+#define PCI_CHIP_MGAG100_PCI	0x1000
+#define PCI_CHIP_MGAG100_AGP	0x1001
+#define PCI_CHIP_MGAG200_PCI	0x0520
+#define PCI_CHIP_MGAG200_AGP	0x0521
 
 /* ATI */
 #define PCI_CHIP_MACH32		0x4158

@@ -375,7 +375,11 @@ typedef struct _MouseDevRec {
     struct _LocalDeviceRec	*local;
 #endif
   int		pBufP;
+#ifdef __NetBSD__
+  unsigned char pBuf[32];
+#else
   unsigned char pBuf[8];
+#endif
 } MouseDevRec, *MouseDevPtr;
 
 #ifdef XINPUT

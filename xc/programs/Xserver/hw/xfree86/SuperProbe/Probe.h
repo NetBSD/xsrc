@@ -26,7 +26,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/Probe.h,v 3.45.2.16 1998/10/25 14:15:14 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/Probe.h,v 3.45.2.17 1998/12/22 11:23:16 hohndel Exp $ */
 
 /*
  * Includes
@@ -347,8 +347,10 @@ extern Chip_Descriptor GLINT_Descriptor;
 #define DAC_ICS5341	52	/* ICS5341 16-bit SDAC-like DAC used on ET4000W32p */
 #define DAC_ICS5301	53	/* ICS5301 8-bit GENDAC-like DAC used on ET4000W32 */
 #define DAC_MGA1064SG	54	/* Matrox Mystique integrated DAC */
+#define DAC_MGAG100	55	/* Matrox G100 integrated DAC */
+#define DAC_MGAG200	56	/* Matrox G200 integrated DAC */
 
-#define DAC_MAX		DAC_MGA1064SG	/* UPDATE THIS! */
+#define DAC_MAX		DAC_MGAG200	/* UPDATE THIS! */
 
 #define DAC_6_8_PROGRAM	0x40	/* RAMDAC programmable for 6/8-bit tables */
 #define DAC_8BIT	0x80	/* RAMDAC with 8-bit wide lookup tables */
@@ -629,6 +631,11 @@ extern struct RamDac_Name RamDac_Names[];
 #define CHIP_MGA2064W	SVGA_TYPE(V_MATROX,2)	/* Matrox Millennium	*/
 #define CHIP_MGA1064SG	SVGA_TYPE(V_MATROX,3)	/* Matrox Mystique	*/
 #define CHIP_MGA2164W	SVGA_TYPE(V_MATROX,4)	/* Matrox Millennium II	*/
+#define CHIP_MGA2164WAGP SVGA_TYPE(V_MATROX,5)	/* Matrox Millennium II AGP */
+#define CHIP_MGAG100PCI	SVGA_TYPE(V_MATROX,6)	/* Matrox G100 PCI	*/
+#define CHIP_MGAG100AGP	SVGA_TYPE(V_MATROX,7)	/* Matrox G100 AGP	*/
+#define CHIP_MGAG200PCI	SVGA_TYPE(V_MATROX,8)	/* Matrox G200 PCI	*/
+#define CHIP_MGAG200AGP	SVGA_TYPE(V_MATROX,9)	/* Matrox G200 AGP	*/
 #define CHIP_TSENG_UNK	SVGA_TYPE(V_TSENG,0)	/* Tseng unknown	*/
 #define CHIP_ET3000	SVGA_TYPE(V_TSENG,1)	/* Tseng ET3000		*/
 #define CHIP_ET4000	SVGA_TYPE(V_TSENG,2)	/* Tseng ET4000		*/

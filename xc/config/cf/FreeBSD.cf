@@ -1,5 +1,5 @@
 XCOMM platform:  $TOG: FreeBSD.cf /main/18 1997/06/12 07:40:35 kaleb $
-XCOMM platform:  $XFree86: xc/config/cf/FreeBSD.cf,v 3.58.2.17 1998/11/08 09:06:27 dawes Exp $
+XCOMM platform:  $XFree86: xc/config/cf/FreeBSD.cf,v 3.58.2.19 1998/12/18 11:56:07 dawes Exp $
 
 #ifndef UseElfFormat
 #define UseElfFormat		DefaultToElfFormat
@@ -35,15 +35,15 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #define GccUsesGas		YES
 #define UseGas			YES
 #define GnuCpp			YES
-#define HasNdbm         	YES
-#define HasPutenv       	YES
+#define HasNdbm			YES
+#define HasPutenv		YES
 #define HasSnprintf		YES
 #define HasBSD44Sockets 	YES
 #ifndef HasLibCrypt
 # define HasLibCrypt		YES
 #endif
 #ifndef HasShm
-# define HasShm          	YES
+# define HasShm			YES
 #endif
 #define HasWChar32		YES
 
@@ -124,7 +124,7 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
  * and they can remove it from the list of directories they add to ld.so.cache 
  * in their /etc/rc file.
  */
-#if OSMajorVersion > 2 || (OsMajorVersion == 2 && OSMinorVersion >= 2)
+#if OSMajorVersion > 2 || (OSMajorVersion == 2 && OSMinorVersion >= 2)
 #ifndef ExtraLoadFlags
 #if UseElfFormat
 #define ExtraLoadFlags		-Wl,-rpath,$(USRLIBDIRPATH)
@@ -325,9 +325,9 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 # define PreIncDir	/usr/include
 #endif
 
-#define TroffCmd        groff -Tps
+#define TroffCmd	groff -Tps
 #define NroffCmd	groff -Tascii
-#define SetTtyGroup     YES
+#define SetTtyGroup	YES
 
 #ifndef ExtraFilesToClean
 # define ExtraFilesToClean *.core
@@ -345,7 +345,7 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
  * Compress manual pages
  */
 #ifndef CompressManPages
-# define CompressManPages        YES
+# define CompressManPages	YES
 #endif
 
 #if CompressManPages
@@ -356,37 +356,37 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
    COMPRESSMANCMD = CompressManCmd
 
 #ifndef InstallManPageLong
-#define InstallManPageLong(file,destdir,dest)                           @@\
-install.man:: file.man                                                  @@\
-	MakeDir($(DESTDIR)destdir)                                      @@\
-	$(RM) $(DESTDIR)destdir/dest.$(MANSUFFIX)*                      @@\
-	$(INSTALL) -c $(INSTMANFLAGS) file.man \                        @@\
-          $(DESTDIR)destdir/dest.$(MANSUFFIX)                           @@\
+#define InstallManPageLong(file,destdir,dest)				@@\
+install.man:: file.man							@@\
+	MakeDir($(DESTDIR)destdir)					@@\
+	$(RM) $(DESTDIR)destdir/dest.$(MANSUFFIX)*			@@\
+	$(INSTALL) -c $(INSTMANFLAGS) file.man \			@@\
+	  $(DESTDIR)destdir/dest.$(MANSUFFIX)				@@\
 	-$(COMPRESSMANCMD) $(DESTDIR)destdir/dest.$(MANSUFFIX)
 #endif
 
 #ifndef InstallGenManPageLong
-#define InstallGenManPageLong(file,destdir,dest,suffix)                 @@\
-install.man:: file.man                                                  @@\
-	MakeDir($(DESTDIR)destdir)                                      @@\
-	$(RM) $(DESTDIR)destdir/dest.suffix*                            @@\
-	$(INSTALL) -c $(INSTMANFLAGS) file.man \                        @@\
-          $(DESTDIR)destdir/dest.suffix                                 @@\
+#define InstallGenManPageLong(file,destdir,dest,suffix)			@@\
+install.man:: file.man							@@\
+	MakeDir($(DESTDIR)destdir)					@@\
+	$(RM) $(DESTDIR)destdir/dest.suffix*				@@\
+	$(INSTALL) -c $(INSTMANFLAGS) file.man \			@@\
+	  $(DESTDIR)destdir/dest.suffix					@@\
 	-$(COMPRESSMANCMD) $(DESTDIR)destdir/dest.suffix
 #endif
 
 #ifndef InstallMultipleMan
-#define InstallMultipleMan(list,dest)                                   @@\
-install.man:: list                                                      @@\
+#define InstallMultipleMan(list,dest)					@@\
+install.man:: list							@@\
 	MakeDir($(DESTDIR)dest)						@@\
-	@case '${MFLAGS}' in *[i]*) set +e;; esac; \                    @@\
-	for i in list; do \                                             @@\
-	        (set -x; \                                              @@\
-	        MNAME=`echo $$i | cut -f1 -d.`; \			@@\
-	        $(RM) $(DESTDIR)dest/$${MNAME}*; \                      @@\
-	        $(INSTALL) -c $(INSTMANFLAGS) $$i \                     @@\
-		  $(DESTDIR)dest/$${MNAME}.$(MANSUFFIX); \              @@\
-	        $(COMPRESSMANCMD) $(DESTDIR)dest/$${MNAME}.$(MANSUFFIX)); \  @@\
+	@case '${MFLAGS}' in *[i]*) set +e;; esac; \			@@\
+	for i in list; do \						@@\
+		(set -x; \						@@\
+		MNAME=`echo $$i | cut -f1 -d.`; \			@@\
+		$(RM) $(DESTDIR)dest/$${MNAME}*; \			@@\
+		$(INSTALL) -c $(INSTMANFLAGS) $$i \			@@\
+		  $(DESTDIR)dest/$${MNAME}.$(MANSUFFIX); \		@@\
+		$(COMPRESSMANCMD) $(DESTDIR)dest/$${MNAME}.$(MANSUFFIX)); \ @@\
 	done
 #endif
 
@@ -394,13 +394,13 @@ install.man:: list                                                      @@\
  * InstallManPageAliases - install soft links for aliases.
  */
 #ifndef InstallManPageAliases
-#define InstallManPageAliases(file,destdir,aliases)                     @@\
-install.man::                                                           @@\
+#define InstallManPageAliases(file,destdir,aliases)			@@\
+install.man::								@@\
 	@(SUFFIX=`echo $(DESTDIR)destdir/file.* | sed -e 's,.*/[^\.]*.,,'`; \ @@\
-	for i in aliases; do (set -x; \                                 @@\
-	$(RM) $(DESTDIR)destdir/$$i.*; \                                @@\
-	(cd $(DESTDIR)destdir; $(LN) file.$${SUFFIX} \                  @@\
-	$$i.$${SUFFIX})); \                                             @@\
+	for i in aliases; do (set -x; \					@@\
+	$(RM) $(DESTDIR)destdir/$$i.*; \				@@\
+	(cd $(DESTDIR)destdir; $(LN) file.$${SUFFIX} \			@@\
+	$$i.$${SUFFIX})); \						@@\
 	done)
 #endif
 
@@ -408,7 +408,7 @@ install.man::                                                           @@\
  * InstallGenManPageAliases - install soft links for aliases.
  */
 #ifndef InstallGenManPageAliases
-#define InstallGenManPageAliases(file,destdir,suffix,aliases)              @@\
+#define InstallGenManPageAliases(file,destdir,suffix,aliases)		@@\
 	InstallManPageAliases(file,destdir,aliases)
 #endif
 #endif
