@@ -64,7 +64,7 @@ SOFTWARE.
 
 ******************************************************************/
 
-/* $XFree86: xc/programs/xterm/main.c,v 3.47.2.16 1998/10/25 09:49:28 hohndel Exp $ */
+/* $XFree86: xc/programs/xterm/main.c,v 3.47.2.18 1999/05/10 13:10:03 hohndel Exp $ */
 
 
 /* main.c */
@@ -576,6 +576,8 @@ static struct jtchars d_jtc = {
 #endif /* USE_POSIX_TERMIOS */
 #endif /* USE_SYSV_TERMIO */
 
+#define VAL_INITIAL_ERASE 127
+
 /* allow use of system default characters if defined and reasonable */
 #ifndef CEOF
 #define CEOF ('D'&037)
@@ -732,6 +734,10 @@ static struct _resource {
 #if OPT_SUNPC_KBD
     Boolean sunKeyboard;
 #endif
+#if OPT_INITIAL_ERASE
+    Boolean ptyInitialErase;	/* if true, use pty's sense of erase char */
+    Boolean backarrow_is_erase;	/* override backspace/delete */ 
+#endif
     Boolean wait_for_map;
     Boolean useInsertMode;
 #if OPT_ZICONBEEP
@@ -770,6 +776,12 @@ static XtResource application_resources[] = {
 #if OPT_SUNPC_KBD
     {"sunKeyboard", "SunKeyboard", XtRBoolean, sizeof (Boolean),
 	offset(sunKeyboard), XtRString, "false"},
+#endif
+#if OPT_INITIAL_ERASE
+    {"ptyInitialErase", "PtyInitialErase", XtRBoolean, sizeof (Boolean),
+	offset(ptyInitialErase), XtRString, "false"},
+    {"backarrowKeyIsErase", "BackarrowKeyIsErase", XtRBoolean, sizeof(Boolean), 
+        offset(backarrow_is_erase), XtRString, "false"}, 
 #endif
     {"waitForMap", "WaitForMap", XtRBoolean, sizeof (Boolean),
 	offset(wait_for_map), XtRString, "false"},
@@ -837,6 +849,10 @@ static XrmOptionDescRec optionDescList[] = {
 #endif /* NO_ACTIVE_ICON */
 #if OPT_HIGHLIGHT_COLOR
 {"-hc",		"*highlightColor", XrmoptionSepArg,	(caddr_t) NULL},
+#endif
+#if OPT_INITIAL_ERASE
+{"-ie",		"*ptyInitialErase", XrmoptionNoArg,	(caddr_t) "on"},
+{"+ie",		"*ptyInitialErase", XrmoptionNoArg,	(caddr_t) "off"},
 #endif
 {"-j",		"*jumpScroll",	XrmoptionNoArg,		(caddr_t) "on"},
 {"+j",		"*jumpScroll",	XrmoptionNoArg,		(caddr_t) "off"},
@@ -947,6 +963,9 @@ static struct _options {
 #if OPT_HIGHLIGHT_COLOR
 { "-hc",		   "selection background color" },
 #endif
+#if OPT_INITIAL_ERASE 
+{ "-/+ie",		   "turn on/off initialization of 'erase' from pty" }, 
+#endif 
 { "-/+im",		   "use insert mode for TERMCAP" },
 { "-/+j",                  "turn on/off jump scroll" },
 #ifdef ALLOWLOGGING
@@ -2163,6 +2182,9 @@ spawn (void)
 #ifdef USE_HANDSHAKE
 	handshake_t handshake;
 #endif
+#if OPT_INITIAL_ERASE
+	int initial_erase = VAL_INITIAL_ERASE;
+#endif
 	int tty = -1;
 	int done;
 #ifdef USE_SYSV_TERMIO
@@ -2258,6 +2280,9 @@ spawn (void)
 			tty = -1;
 			errno = ENXIO;
 		}
+#if OPT_INITIAL_ERASE
+		initial_erase = VAL_INITIAL_ERASE;
+#endif
 		signal(SIGALRM, SIG_DFL);
 
 		/*
@@ -2329,6 +2354,23 @@ spawn (void)
 #endif /* sony */
 #endif  /* USE_POSIX_TERMIOS */
 #endif	/* USE_SYSV_TERMIO */
+
+#if OPT_INITIAL_ERASE
+			if (resource.ptyInitialErase) {
+#ifdef USE_SYSV_TERMIO
+				initial_erase = tio.c_cc[VERASE];
+#elif defined(USE_POSIX_TERMIOS)
+				initial_erase = tio.c_cc[VERASE];
+#else   /* !USE_SYSV_TERMIO && !USE_POSIX_TERMIOS */
+				initial_erase = sg.sg_erase;
+#endif	/* USE_SYSV_TERMIO */
+			}
+			if (resource.backarrow_is_erase) 
+			if (initial_erase == 0177) {	/* see input.c */
+				term->keyboard.flags &= ~MODE_DECBKM;
+			}
+#endif
+
 #ifdef MINIX
 			/* Editing shells interfere with xterms started in
 			 * the background.
@@ -2436,6 +2478,31 @@ spawn (void)
 		envnew++;
 	    }
 	}
+
+#if OPT_INITIAL_ERASE
+	if (!resource.ptyInitialErase && *newtc) {
+		char *s = strstr(newtc, "kD=");
+		TRACE(("extracting initial_erase value from termcap\n"))
+		if (s != 0) {
+			s += 3;
+			if (*s == '^') {
+				if (*++s == '?') {
+					initial_erase = 127;
+				} else {
+					initial_erase = *s & 31;
+				}
+			} else if (*s == '\\') {
+				char *d;
+				int value = strtol(s, &d, 8);
+				if (value > 0 && d != s)
+					initial_erase = value;
+			} else {
+				initial_erase = *s;
+			}
+			initial_erase &= 0xff;
+		}
+	}
+#endif
 
 #if defined(TIOCSSIZE) && (defined(sun) && !defined(SVR4))
 	/* tell tty how big window is */
@@ -2946,6 +3013,29 @@ spawn (void)
 		signal (SIGQUIT, SIG_DFL);
 		signal (SIGTERM, SIG_DFL);
 
+#if OPT_INITIAL_ERASE
+		if (! resource.ptyInitialErase
+		 && !override_tty_modes
+		 && !ttymodelist[XTTYMODE_erase].set) {
+#ifdef USE_SYSV_TERMIO
+			if(ioctl(tty, TCGETA, &tio) == -1)
+				tio = d_tio;
+			tio.c_cc[VERASE] = initial_erase;
+			ioctl(tty, TCSETA, &tio);
+#elif defined(USE_POSIX_TERMIOS)
+			if (tcgetattr(tty, &tio) == -1)
+				tio = d_tio;
+			tio.c_cc[VERASE] = initial_erase;
+			tcsetattr(tty, TCSANOW, &tio);
+#else   /* !USE_SYSV_TERMIO && !USE_POSIX_TERMIOS */
+			if(ioctl(tty, TIOCGETP, (char *)&sg) == -1)
+				sg = d_sg;
+			sg.sg_erase = initial_erase;
+			ioctl(tty, TIOCSETP, (char *)&sg);
+#endif	/* USE_SYSV_TERMIO */
+		}
+#endif
+
 		/* copy the environment before Setenving */
 		for (i = 0 ; environ [i] != NULL ; i++)
 		    ;
@@ -3331,6 +3421,12 @@ spawn (void)
 		    if(*newtc)
 			strcat (newtc, ":im=\\E[4h:ei=\\E[4l:mi:");
 		}
+#if OPT_INITIAL_ERASE
+		remove_termcap_entry (newtc, ":kD=");
+		if (*newtc) {
+		    sprintf(newtc + strlen(newtc), ":kD=\\%03o", initial_erase & 0377);
+		}
+#endif
 		if(*newtc)
 		    Setenv ("TERMCAP=", newtc);
 #endif /* USE_SYSV_ENVVARS */

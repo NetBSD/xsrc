@@ -1,5 +1,5 @@
 dnl
-dnl $XFree86: xc/programs/xterm/configure.in,v 3.1.2.6 1998/10/20 20:51:43 hohndel Exp $
+dnl $XFree86: xc/programs/xterm/configure.in,v 3.1.2.7 1999/04/21 07:21:28 hohndel Exp $
 dnl
 dnl ---------------------------------------------------------------------------
 dnl 
@@ -209,6 +209,16 @@ CF_ARG_DISABLE(doublechars,
 	[enable_doublechars=yes])
 AC_MSG_RESULT($enable_doublechars)
 test $enable_doublechars = no && AC_DEFINE(OPT_DEC_CHRSET,0)
+
+AC_MSG_CHECKING(if you want support for initial-erase setup)
+CF_ARG_DISABLE(initial-erase,
+	[  --disable-initial-erase disable setup for stty erase],
+	[enable_ie=no],
+	[enable_ie=yes])
+AC_MSG_RESULT($enable_ie)
+if test $enable_ie = no ; then
+	AC_DEFINE(OPT_INITIAL_ERASE,0)
+fi
 
 AC_MSG_CHECKING(if you want support for input-method)
 CF_ARG_DISABLE(input-method,
