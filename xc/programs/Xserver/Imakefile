@@ -429,9 +429,11 @@ XCOMM
 MFBDIR  = mfb
 CFB8DIR = cfb
 CFB16DIR = cfb16
+CFB24DIR = cfb24
 CFB32DIR = cfb32
 DDXDIR1 = hw/netbsd/mac68k
-MACDIRS = $(STDDIRS) $(MFBDIR) $(CFB8DIR) $(CFB16DIR) $(CFB32DIR) $(DDXDIR1) $(DEPDIRS)
+MACDIRS = $(STDDIRS) $(MFBDIR) $(CFB8DIR) $(CFB16DIR) $(CFB24DIR) $(CFB32DIR) \
+		$(DDXDIR1) $(DEPDIRS)
 MACOBJS = hw/netbsd/mac68k/macInit.o hw/netbsd/mac68k/macEvent.o
 MACLIBS = hw/netbsd/mac68k/libmac.a CFBLibs
 MACSYSLIBS = $(CBRT) $(SYSLIBS)
