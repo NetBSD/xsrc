@@ -138,6 +138,11 @@ Bool xf86SupportedMouseTypes[] =
 #else
 	FALSE,	/* wsmouse */
 #endif
+#if defined(__NetBSD__) && defined(__atari__)
+	TRUE,	/* sun */
+#else
+	FALSE,	/* sun */
+#endif
 };
 
 int xf86NumMouseTypes = sizeof(xf86SupportedMouseTypes) /
@@ -233,6 +238,12 @@ static unsigned char proto[][7] = {
      				       0x00,   0x00 },  /* wsmouse */
 #else
   {  0x00,   0x00, 0x00,   0x00, 0,    0x00,   0x00 },  /* wsmouse */
+#endif
+#if defined(__NetBSD__) && defined(__atari__)
+  {  0x00,   0x00, 0x00,   0x00, sizeof(Firm_event),
+     				       0x00,   0x00 },  /* sun */
+#else
+  {  0x00,   0x00, 0x00,   0x00, 0,    0x00,   0x00 },  /* sun */
 #endif
 };
 #endif /* ! MOUSE_PROTOCOL_IN_KERNEL */
@@ -576,6 +587,7 @@ MouseDevPtr mouse;
 
 #if defined(__NetBSD__)
       case P_WSMOUSE:
+      case P_SUN:
 	break;
 #endif
 
@@ -698,6 +710,7 @@ xf86MouseProtocol(device, rBuf, nBytes)
 #endif
 #if defined(__NetBSD__)
 	mouse->mseType != P_WSMOUSE &&
+	mouse->mseType != P_SUN &&
 #endif
 	((rBuf[i] & mouse->protoPara[2]) != mouse->protoPara[3] 
 	 || rBuf[i] == 0x80))
@@ -980,7 +993,37 @@ xf86MouseProtocol(device, rBuf, nBytes)
 	return;
       }
       break;
+    }
+#ifdef __atari__
+    case P_SUN: {
+      Firm_event fe;
+
+      /* copy to guarantee alignment */
+      memcpy(&fe, pBuf, sizeof(Firm_event));
+      switch(fe.id) {
+	case MS_LEFT:
+	case MS_MIDDLE:
+	case MS_RIGHT:
+	  if (fe.value == VKEY_DOWN)
+	    buttons = mouse->lastButtons | (4 >> (fe.id & 0x03));
+	  else
+	    buttons = mouse->lastButtons & ~(4 >> (fe.id & 0x03));
+	  dx = dy = 0;
+	  break;
+	case LOC_Y_DELTA:
+	  dx = 0;
+	  dy = fe.value;
+	  buttons = mouse->lastButtons;
+	  break;
+	case LOC_X_DELTA:
+	  dx = fe.value;
+	  dy = 0;
+	  buttons = mouse->lastButtons;
+	  break;
       }
+      break;
+    }
+#endif /* __atari__ */
 #endif /* defined(__NetBSD__) && __NetBSD_Version__ >= 103060000 */
 
     default: /* There's a table error */

@@ -42,20 +42,20 @@ glennlai@netcom.com
 	*ACL_FOREGROUND_RASTER_OPERATION	= \
 	    (0xf0 & W32OpTable[OP]) | 0x0a; \
 	*ACL_PATTERN_WRAP			= 0x02; \
-	*ACL_PATTERN_Y_OFFSET			= 0x3; \
-	*ACL_PATTERN_ADDRESS			= W32Pattern; \
-	*MBP0 					= W32Pattern; \
-	*(LongP)W32Buffer 			= MASK; \
+	*ACL_PATTERN_Y_OFFSET			= BYTESWAP16(0x3); \
+	*ACL_PATTERN_ADDRESS			= byteswap32(W32Pattern); \
+	*MBP0 					= byteswap32(W32Pattern); \
+	*(LongP)W32Buffer 			= byteswap32(MASK); \
     } \
-    *ACL_DESTINATION_Y_OFFSET		= DST_OFFSET; \
-    *ACL_SOURCE_ADDRESS			= W32Foreground; \
-    *MBP0				= W32Foreground; \
-    *(LongP)W32Buffer			= COLOR; \
+    *ACL_DESTINATION_Y_OFFSET		= byteswap16(DST_OFFSET); \
+    *ACL_SOURCE_ADDRESS			= byteswap32(W32Foreground); \
+    *MBP0				= byteswap32(W32Foreground); \
+    *(LongP)W32Buffer			= byteswap32(COLOR); \
     if (W32OrW32i) \
     { \
-	*(LongP)(W32Buffer + 4)		= COLOR; \
+	*(LongP)(W32Buffer + 4)		= byteswap32(COLOR); \
 	*ACL_SOURCE_WRAP		= 0x12; \
-	*ACL_SOURCE_Y_OFFSET		= 0x3; \
+	*ACL_SOURCE_Y_OFFSET		= BYTESWAP16(0x3); \
     } \
     else /* w32p */ \
 	*ACL_SOURCE_WRAP		= 0x02; \
@@ -76,7 +76,7 @@ glennlai@netcom.com
 { \
     if ((X) != 0) \
     { \
-	*ACL_X_COUNT = (X - 1) * (PSZ >> 3); \
+	*ACL_X_COUNT = byteswap16((X - 1) * (PSZ >> 3)); \
 	START_ACL(DST) \
     } \
 }

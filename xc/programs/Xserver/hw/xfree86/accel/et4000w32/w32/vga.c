@@ -278,10 +278,12 @@ vgaProbe()
       return(FALSE);
     }
 
+#if !(defined(__NetBSD__) && defined(__atari__))
   /* First do a general PCI probe (unless disabled) */
   if (!OFLG_ISSET(OPTION_NO_PCI_PROBE, &vga256InfoRec.options)) {
     vgaPCIInfo = vgaGetPCIInfo();
   }
+#endif
 
   for (i=0; Drivers[i]; i++)
   {
@@ -595,12 +597,14 @@ vgaProbe()
         }
 #endif
 
+#if !(defined(__NetBSD__) && defined(__atari__))
 	/* Free PCI information */
 	xf86cleanpci();
 	if (vgaPCIInfo) {
 	  vgaPCIInfo->ThisCard = (pciConfigPtr)NULL;
 	  vgaPCIInfo->AllCards = (pciConfigPtr *)NULL;
 	}
+#endif
 
 	return TRUE;
       }

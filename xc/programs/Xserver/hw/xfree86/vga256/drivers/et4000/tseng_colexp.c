@@ -233,7 +233,7 @@ TsengSetupForScanlineScreenToScreenColorExpand (x, y, w, h, bg, fg, rop, planema
 
   TsengSetupForScreenToScreenColorExpand (bg, fg, rop, planemask);
 
-  *ACL_MIX_Y_OFFSET = 0x0FFF;	/* see remark below */
+  *ACL_MIX_Y_OFFSET = BYTESWAP16(0x0FFF);	/* see remark below */
 
   SET_XY (w, 1);
 }
@@ -281,7 +281,7 @@ TsengSubsequentScanlineScreenToScreenColorExpand (srcaddr)
 
   wait_acl_queue ();
 
-  *ACL_MIX_ADDRESS = srcaddr;
+  *ACL_MIX_ADDRESS = byteswap32(srcaddr);
   START_ACL (ColorExpandDst);
 
   /* move to next scanline */
@@ -321,7 +321,7 @@ TsengSetupForScanlineCPUToScreenColorExpand (x, y, w, h, bg, fg, rop, planemask)
 
   TsengSetupForCPUToScreenColorExpand (bg, fg, rop, planemask);
 
-  /* *ACL_MIX_Y_OFFSET = w-1; */
+  /* *ACL_MIX_Y_OFFSET = byteswap16(w-1); */
 
   SET_XY (w, 1);
 }
@@ -499,7 +499,7 @@ TsengSubsequentCPUToScreenColorExpand (x, y, w, h, skipleft)
 /*  wait_acl_queue(); */
   WAIT_ACL;
 
-  *ACL_MIX_Y_OFFSET = w - 1;
+  *ACL_MIX_Y_OFFSET = byteswap16(w - 1);
   SET_XY (w, h);
   START_ACL (destaddr);
 }
@@ -539,8 +539,8 @@ TsengSubsequentScreenToScreenColorExpand (srcx, srcy, x, y, w, h)
   wait_acl_queue ();
 
   SET_XY (w, h);
-  *ACL_MIX_ADDRESS = mixaddr;
-  *ACL_MIX_Y_OFFSET = w - 1;
+  *ACL_MIX_ADDRESS = byteswap32(mixaddr);
+  *ACL_MIX_Y_OFFSET = byteswap16(w - 1);
 
   START_ACL (destaddr);
 }
@@ -1028,7 +1028,7 @@ TsengSubsequentScanlineScreenToScreenFillStippledRect (x, y, w, h, src, srcwidth
 
   /* setup x/y/w in the ACL engine */
   ColorExpandDst = FBADDR (x, y);
-  *ACL_MIX_Y_OFFSET = 0x0FFF;
+  *ACL_MIX_Y_OFFSET = BYTESWAP16(0x0FFF);
   SET_XY (w, 1);
 
   srcp = (srcwidth * srcy) + src;

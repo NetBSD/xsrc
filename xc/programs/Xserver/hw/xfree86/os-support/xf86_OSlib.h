@@ -246,6 +246,12 @@ extern int errno;
 # undef __386BSD__
 #endif
 
+#if defined(__NetBSD__) && defined(__atari__)
+#include <machine/grfioctl.h>
+#include <machine/kbdreg.h>
+#include <machine/vuid_event.h>
+#endif
+
 #ifdef CSRG_BASED
 # include <sys/ioctl.h>
 # if defined(__OpenBSD__) && defined(_status)

@@ -24,7 +24,9 @@ int len;
     while(len--)
     {
 	*dst++ = *src++;
+#ifndef __mc68000__
 	outb(0x80, 0x00);
+#endif
     }
 }
 

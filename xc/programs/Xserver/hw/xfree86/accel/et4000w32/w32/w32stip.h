@@ -40,20 +40,20 @@ glenn@cs.utexas.edu)
     *ACL_BACKGROUND_RASTER_OPERATION	= W32PatternOpTable[OP]; \
     *ACL_ROUTING_CONTROL		= 0x2; \
     *ACL_XY_DIRECTION			= 0; \
-    *ACL_DESTINATION_Y_OFFSET		= DST_OFFSET; \
+    *ACL_DESTINATION_Y_OFFSET		= byteswap16(DST_OFFSET); \
     *ACL_VIRTUAL_BUS_SIZE		= 0x0; \
     *ACL_SOURCE_WRAP			= 0x12; \
-    *ACL_SOURCE_Y_OFFSET		= 0x3; \
-    *ACL_SOURCE_ADDRESS			= W32Foreground; \
-    *MBP0 				= W32Foreground; \
-    *(LongP)W32Buffer	 		= FOREGROUND; \
-    *(LongP)(W32Buffer + 4) 		= FOREGROUND; \
+    *ACL_SOURCE_Y_OFFSET		= BYTESWAP16(0x3); \
+    *ACL_SOURCE_ADDRESS			= byteswap32(W32Foreground); \
+    *MBP0 				= byteswap32(W32Foreground); \
+    *(LongP)W32Buffer	 		= byteswap32(FOREGROUND); \
+    *(LongP)(W32Buffer + 4) 		= byteswap32(FOREGROUND); \
     *ACL_PATTERN_WRAP			= 0x12; \
-    *ACL_PATTERN_Y_OFFSET		= 0x3; \
-    *ACL_PATTERN_ADDRESS		= W32Background; \
-    *MBP0 				= W32Background; \
-    *(LongP)W32Buffer	 		= BACKGROUND; \
-    *(LongP)(W32Buffer + 4) 		= BACKGROUND; \
+    *ACL_PATTERN_Y_OFFSET		= BYTESWAP16(0x3); \
+    *ACL_PATTERN_ADDRESS		= byteswap32(W32Background); \
+    *MBP0 				= byteswap32(W32Background); \
+    *(LongP)W32Buffer	 		= byteswap32(BACKGROUND); \
+    *(LongP)(W32Buffer + 4) 		= byteswap32(BACKGROUND); \
 }
 
 
@@ -66,23 +66,23 @@ glenn@cs.utexas.edu)
 	*ACL_FOREGROUND_RASTER_OPERATION= \
 	    (0xf0 & W32OpTable[OP]) | 0x0a; \
 	*ACL_PATTERN_WRAP		= 0x12; \
-	*ACL_PATTERN_Y_OFFSET		= 0x3; \
-	*ACL_PATTERN_ADDRESS		= W32Pattern; \
-	*MBP0 				= W32Pattern; \
-	*(LongP)W32Buffer 		= MASK; \
-	*(LongP)(W32Buffer + 4) 	= MASK; \
+	*ACL_PATTERN_Y_OFFSET		= BYTESWAP16(0x3); \
+	*ACL_PATTERN_ADDRESS		= byteswap32(W32Pattern); \
+	*MBP0 				= byteswap32(W32Pattern); \
+	*(LongP)W32Buffer 		= byteswap32(MASK); \
+	*(LongP)(W32Buffer + 4) 	= byteswap32(MASK); \
     } \
     *ACL_BACKGROUND_RASTER_OPERATION	= 0xaa; \
     *ACL_ROUTING_CONTROL		= 0x2; \
     *ACL_XY_DIRECTION			= 0; \
-    *ACL_DESTINATION_Y_OFFSET		= DST_OFFSET; \
+    *ACL_DESTINATION_Y_OFFSET		= byteswap16(DST_OFFSET); \
     *ACL_VIRTUAL_BUS_SIZE		= 0x0; \
     *ACL_SOURCE_WRAP			= 0x12; \
-    *ACL_SOURCE_Y_OFFSET		= 0x3; \
-    *ACL_SOURCE_ADDRESS			= W32Foreground; \
-    *MBP0 				= W32Foreground; \
-    *(LongP)W32Buffer	 		= FOREGROUND; \
-    *(LongP)(W32Buffer + 4) 		= FOREGROUND; \
+    *ACL_SOURCE_Y_OFFSET		= BYTESWAP16(0x3); \
+    *ACL_SOURCE_ADDRESS			= byteswap32(W32Foreground); \
+    *MBP0 				= byteswap32(W32Foreground); \
+    *(LongP)W32Buffer	 		= byteswap32(FOREGROUND); \
+    *(LongP)(W32Buffer + 4) 		= byteswap32(FOREGROUND); \
 }
 
 
@@ -95,19 +95,19 @@ glenn@cs.utexas.edu)
     else \
       *ACL_ROUTING_CONTROL		= 0x02; \
     *ACL_XY_DIRECTION			= 0; \
-    *ACL_DESTINATION_Y_OFFSET		= DST_OFFSET; \
+    *ACL_DESTINATION_Y_OFFSET		= byteswap16(DST_OFFSET); \
     *ACL_SOURCE_WRAP			= 0x02; \
-    *ACL_SOURCE_Y_OFFSET		= 0x3; \
-    *ACL_SOURCE_ADDRESS			= W32Foreground; \
-    *MBP0 				= W32Foreground; \
-    *(LongP)W32Buffer	 		= FOREGROUND; \
+    *ACL_SOURCE_Y_OFFSET		= BYTESWAP16(0x3); \
+    *ACL_SOURCE_ADDRESS			= byteswap32(W32Foreground); \
+    *MBP0 				= byteswap32(W32Foreground); \
+    *(LongP)W32Buffer	 		= byteswap32(FOREGROUND); \
     *ACL_PATTERN_WRAP			= 0x02; \
-    *ACL_PATTERN_Y_OFFSET		= 0x3; \
-    *ACL_PATTERN_ADDRESS		= W32Pattern; \
-    *MBP0 				= W32Pattern; \
-    *(LongP)W32Buffer	 		= BACKGROUND; \
+    *ACL_PATTERN_Y_OFFSET		= BYTESWAP16(0x3); \
+    *ACL_PATTERN_ADDRESS		= byteswap32(W32Pattern); \
+    *MBP0 				= byteswap32(W32Pattern); \
+    *(LongP)W32Buffer	 		= byteswap32(BACKGROUND); \
     *ACL_MIX_ADDRESS			= 0; \
-    *ACL_MIX_Y_OFFSET 			= 31; \
+    *ACL_MIX_Y_OFFSET 			= BYTESWAP16(31); \
 }
 
 
@@ -120,10 +120,10 @@ glenn@cs.utexas.edu)
 	*ACL_FOREGROUND_RASTER_OPERATION= \
 	    (0xf0 & W32OpTable[OP]) | 0x0a; \
 	*ACL_PATTERN_WRAP		= 0x02; \
-	*ACL_PATTERN_Y_OFFSET		= 0x3; \
-	*ACL_PATTERN_ADDRESS		= W32Pattern; \
-	*MBP0 				= W32Pattern; \
-	*(LongP)W32Buffer 		= MASK; \
+	*ACL_PATTERN_Y_OFFSET		= BYTESWAP16(0x3); \
+	*ACL_PATTERN_ADDRESS		= byteswap32(W32Pattern); \
+	*MBP0 				= byteswap32(W32Pattern); \
+	*(LongP)W32Buffer 		= byteswap32(MASK); \
     } \
     *ACL_BACKGROUND_RASTER_OPERATION	= 0xaa; \
     if (W32et6000) \
@@ -131,16 +131,15 @@ glenn@cs.utexas.edu)
     else \
       *ACL_ROUTING_CONTROL		= 0x02; \
     *ACL_XY_DIRECTION			= 0; \
-    *ACL_DESTINATION_Y_OFFSET		= DST_OFFSET; \
+    *ACL_DESTINATION_Y_OFFSET		= byteswap16(DST_OFFSET); \
     *ACL_SOURCE_WRAP			= 0x02; \
-    *ACL_SOURCE_Y_OFFSET		= 0x3; \
-    *ACL_SOURCE_ADDRESS			= W32Foreground; \
-    *MBP0 				= W32Foreground; \
-    *(LongP)W32Buffer	 		= FOREGROUND; \
+    *ACL_SOURCE_Y_OFFSET		= BYTESWAP16(0x3); \
+    *ACL_SOURCE_ADDRESS			= byteswap32(W32Foreground); \
+    *MBP0 				= byteswap32(W32Foreground); \
+    *(LongP)W32Buffer	 		= byteswap32(FOREGROUND); \
     *ACL_MIX_ADDRESS			= 0; \
-    *ACL_MIX_Y_OFFSET 			= 31; \
+    *ACL_MIX_Y_OFFSET 			= BYTESWAP16(31); \
 }
-
 
 #define W32_STIPPLE \
 	    while (h--) \
@@ -153,24 +152,24 @@ glenn@cs.utexas.edu)
 		w = w32_chunks; \
 		while (w--) \
 		{ \
-		    *ACL = bits; \
-		    *ACL = bits >> 8; \
-		    *ACL = bits >> 16; \
-		    *ACL = bits >> 24; \
+		    *ACL = LowByte(bits); \
+		    *ACL = HighByteLowWord(bits); \
+		    *ACL = LowByteHighWord(bits); \
+		    *ACL = HighByte(bits); \
 	    	} \
 		switch (w32_misc) \
 		{ \
 		    case 3: \
-			*ACL = bits; \
-			*ACL = bits >> 8; \
-			*ACL = bits >> 16; \
+			*ACL = LowByte(bits); \
+			*ACL = HighByteLowWord(bits); \
+			*ACL = LowByteHighWord(bits); \
 			break; \
 		    case 2: \
-			*ACL = bits; \
-			*ACL = bits >> 8; \
+			*ACL = LowByte(bits); \
+			*ACL = HighByteLowWord(bits); \
 			break; \
 		    case 1: \
-			*ACL = bits; \
+			*ACL = LowByte(bits); \
 			break; \
 		} \
 	    }
@@ -187,24 +186,24 @@ glenn@cs.utexas.edu)
 		w = w32_chunks; \
 		while (w--) \
 		{ \
-		    *ACL = bits; \
-		    *(ACL + 1) = bits >> 8; \
-		    *(ACL + 2) = bits >> 16; \
-		    *(ACL + 3) = bits >> 24; \
+		    *ACL = LowByte(bits); \
+		    *(ACL + 1) = HighByteLowWord(bits); \
+		    *(ACL + 2) = LowByteHighWord(bits); \
+		    *(ACL + 3) = HighByte(bits); \
 	    	} \
 		switch (w32_misc) \
 		{ \
 		    case 3: \
-			*ACL = bits; \
-			*(ACL + 1) = bits >> 8; \
-			*(ACL + 2) = bits >> 16; \
+			*ACL = LowByte(bits); \
+			*(ACL + 1) = HighByteLowWord(bits); \
+			*(ACL + 2) = LowByteHighWord(bits); \
 			break; \
 		    case 2: \
-			*ACL = bits; \
-			*(ACL + 1) = bits >> 8; \
+			*ACL = LowByte(bits); \
+			*(ACL + 1) = HighByteLowWord(bits); \
 			break; \
 		    case 1: \
-			*ACL = bits; \
+			*ACL = LowByte(bits); \
 			break; \
 		} \
 	    }
@@ -214,13 +213,13 @@ glenn@cs.utexas.edu)
 	    { \
                 if (h&1) /* ping-pong between stipple buffers */ \
                 { \
-                    *ACL_MIX_ADDRESS = MixDstPong; \
-                    *MBP0 = W32MixPong; \
+                    *ACL_MIX_ADDRESS = byteswap32(MixDstPong); \
+                    *MBP0 = byteswap32(W32MixPong); \
                 } \
                 else \
                 { \
-                    *ACL_MIX_ADDRESS = MixDstPing; \
-                    *MBP0 = W32Mix; /* Ping */ \
+                    *ACL_MIX_ADDRESS = byteswap32(MixDstPing); \
+                    *MBP0 = byteswap32(W32Mix); /* Ping */ \
                 } \
 	    	bits = src[y]; \
 	    	if (++y == stippleHeight) \
@@ -229,8 +228,8 @@ glenn@cs.utexas.edu)
 		    RotBitsLeft(bits,rot); \
 		w = w32_chunks+1; \
 		while (w--) \
-		    *((LongP)W32Buffer+w) = bits; \
-		*(ACL_DESTINATION_ADDRESS)=ACLDst; \
+		    *((LongP)W32Buffer+w) = byteswap32(bits); \
+		*(ACL_DESTINATION_ADDRESS)=byteswap32(ACLDst); \
 	        ACLDst += nlwDst; \
 	    }
 

@@ -46,24 +46,24 @@ glenn@cs.utexas.edu)
     { \
 	*ACL_FOREGROUND_RASTER_OPERATION	= \
 	    (0xf0 & W32OpTable[OP]) | 0x0a; \
-	*ACL_PATTERN_ADDRESS			= W32Pattern; \
-	*MBP0 					= W32Pattern; \
-	*(LongP)W32Buffer 			= MASK; \
+	*ACL_PATTERN_ADDRESS			= byteswap32(W32Pattern); \
+	*MBP0 					= byteswap32(W32Pattern); \
+	*(LongP)W32Buffer 			= byteswap32(MASK); \
 	if (W32p || W32et6000) \
 	    *ACL_PATTERN_WRAP			= 0x02; \
 	else \
 	{ \
-	    *(LongP)(W32Buffer + 4)		= MASK; \
+	    *(LongP)(W32Buffer + 4)		= byteswap32(MASK); \
 	    *ACL_PATTERN_WRAP			= 0x12; \
-	    *ACL_PATTERN_Y_OFFSET		= 0x3; \
+	    *ACL_PATTERN_Y_OFFSET		= BYTESWAP16(0x3); \
 	} \
     } \
     i = 0; \
     if (XDIR == -1) i |= 0x1; \
     if (YDIR == -1) i |= 0x2; \
     *ACL_XY_DIRECTION			= i; \
-    *ACL_DESTINATION_Y_OFFSET		= DST_OFFSET; \
-    *ACL_SOURCE_Y_OFFSET		= SRC_OFFSET; \
+    *ACL_DESTINATION_Y_OFFSET		= byteswap16(DST_OFFSET); \
+    *ACL_SOURCE_Y_OFFSET		= byteswap16(SRC_OFFSET); \
     if (W32et6000) \
 	*ACL_MIX_CONTROL                = 0x33; \
     else \
@@ -75,7 +75,7 @@ glenn@cs.utexas.edu)
 if (((X) | (Y) != 0)) \
 { \
     SET_XY(X, Y) \
-    *(ACL_SOURCE_ADDRESS) = SRC; \
+    *(ACL_SOURCE_ADDRESS) = byteswap32(SRC); \
     START_ACL(DST) \
 }
 
@@ -88,21 +88,21 @@ if (((X) | (Y) != 0)) \
     { \
 	*ACL_FOREGROUND_RASTER_OPERATION	= \
 	    (0xf0 & W32OpTable[OP]) | 0x0a; \
-	*ACL_PATTERN_ADDRESS			= W32Pattern; \
-	*MBP0 					= W32Pattern; \
-	*(LongP)W32Buffer 			= MASK; \
+	*ACL_PATTERN_ADDRESS			= byteswap32(W32Pattern); \
+	*MBP0 					= byteswap32(W32Pattern); \
+	*(LongP)W32Buffer 			= byteswap32(MASK); \
 	if (W32p || W32et6000) \
 	    *ACL_PATTERN_WRAP			= 0x02; \
 	else \
 	{ \
-	    *(LongP)(W32Buffer + 4)		= MASK; \
+	    *(LongP)(W32Buffer + 4)		= byteswap32(MASK); \
 	    *ACL_PATTERN_WRAP			= 0x12; \
-	    *ACL_PATTERN_Y_OFFSET		= 0x3; \
+	    *ACL_PATTERN_Y_OFFSET		= BYTESWAP16(0x3); \
 	    *ACL_VIRTUAL_BUS_SIZE		= 0x2; \
 	} \
     } \
     *ACL_XY_DIRECTION			= 0; \
-    *ACL_DESTINATION_Y_OFFSET		= DST_OFFSET; \
+    *ACL_DESTINATION_Y_OFFSET		= byteswap16(DST_OFFSET); \
     *ACL_ROUTING_CONTROL 		= 0x1; \
 }
 

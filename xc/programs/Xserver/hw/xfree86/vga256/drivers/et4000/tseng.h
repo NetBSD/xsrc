@@ -126,7 +126,12 @@ void TsengHideCursor(void);
                       || (TsengRamdacType == STG1702_DAC) \
                       || (TsengRamdacType == STG1703_DAC) )
 
+#ifndef __mc68000__
 #define CHIP_SUPPORTS_LINEAR (et4000_type >= TYPE_ET4000W32I)
+#else
+/* All tseng support linear, and on m68k we only use linear memory */
+#define CHIP_SUPPORTS_LINEAR TRUE
+#endif
 
 #define Gendac_programmable_clock \
         ( (OFLG_ISSET(CLOCK_OPTION_PROGRAMABLE, &vga256InfoRec.clockOptions)) && \

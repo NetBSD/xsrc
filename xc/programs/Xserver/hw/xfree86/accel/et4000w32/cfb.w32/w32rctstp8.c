@@ -90,6 +90,19 @@ Author: Keith Packard, MIT X Consortium
 		W32P_STIPPLE  \
 	}
 
+#ifdef __mc68000__
+extern unsigned char rotate_table[];
+# define LowByte(x) rotate_table[(unsigned char)((x) >> 24)]
+# define HighByteLowWord(x) rotate_table[(unsigned char)((x) >> 16)]
+# define LowByteHighWord(x) rotate_table[(unsigned char)((x) >> 8)]
+# define HighByte(x) rotate_table[(unsigned char)((x))]
+#else
+# define LowByte(x) (x)
+# define HighByteLowWord(x) (x) >> 8
+# define LowByteHighWord(x) (x) >> 16
+# define HighByte(x) (x) >> 24
+#endif
+
 
 void
 W328FillRectOpaqueStippled32 (pDrawable, pGC, nBox, pBox)

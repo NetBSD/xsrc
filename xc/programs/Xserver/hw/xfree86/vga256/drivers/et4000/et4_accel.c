@@ -367,7 +367,7 @@ void TsengW32pSubsequentFillRectSolid(x, y, w, h)
      * here without calling the SetupFor... code again, and the
      * ACL_SOURCE_ADDRESS will be wrong.
      */
-    *ACL_SOURCE_ADDRESS = tsengFg;
+    *ACL_SOURCE_ADDRESS = byteswap32(tsengFg);
    
     SET_XYDIR(0);
 
@@ -396,7 +396,7 @@ void Tseng6KSubsequentFillRectSolid(x, y, w, h)
     wait_acl_queue();
 
     /* see comment in TsengW32pSubsequentFillRectSolid */
-    *ACL_SOURCE_ADDRESS = tsengFg;
+    *ACL_SOURCE_ADDRESS = byteswap32(tsengFg);
 
    /* if XYDIR is not reset here, drawing a hardware line in between
     * blitting, with the same ROP, color, etc will not cause a call to
@@ -475,7 +475,7 @@ transparency_color)
     Tseng_setup_screencopy(rop, planemask, transparency_color, blit_dir);   
 
     *ACL_SOURCE_WRAP = 0x77; /* no wrap */
-    *ACL_SOURCE_Y_OFFSET = tseng_line_width-1;
+    *ACL_SOURCE_Y_OFFSET = byteswap16(tseng_line_width-1);
 }
 
 /*
@@ -537,7 +537,7 @@ void TsengSubsequentScreenToScreenCopy(x1, y1, x2, y2, w, h)
     wait_acl_queue();
 
     SET_XY(w, h);
-    *ACL_SOURCE_ADDRESS = srcaddr;
+    *ACL_SOURCE_ADDRESS = byteswap32(srcaddr);
     START_ACL(destaddr);
 }
 
@@ -558,16 +558,16 @@ void TsengSetupForFill8x8Pattern(patternx, patterny, rop, planemask, transparenc
   switch(tseng_bytesperpixel)
   {
     case 1: *ACL_SOURCE_WRAP      = 0x33;   /* 8x8 wrap */
-            *ACL_SOURCE_Y_OFFSET  = 8 - 1;
+            *ACL_SOURCE_Y_OFFSET  = BYTESWAP16(8 - 1);
             break;
     case 2: *ACL_SOURCE_WRAP      = 0x34;   /* 16x8 wrap */
-            *ACL_SOURCE_Y_OFFSET  = 16 - 1;
+            *ACL_SOURCE_Y_OFFSET  = BYTESWAP16(16 - 1);
             break;
     case 3: *ACL_SOURCE_WRAP      = 0x3D;   /* 24x8 wrap --- only for ET6000 !!! */
-            *ACL_SOURCE_Y_OFFSET  = 32 - 1; /* this is no error -- see databook */
+            *ACL_SOURCE_Y_OFFSET  = BYTESWAP16(32 - 1); /* this is no error -- see databook */
             break;
     case 4: *ACL_SOURCE_WRAP      = 0x35;   /* 32x8 wrap */
-            *ACL_SOURCE_Y_OFFSET  = 32 - 1;
+            *ACL_SOURCE_Y_OFFSET  = BYTESWAP16(32 - 1);
   }
 }
 
@@ -581,7 +581,7 @@ void TsengSubsequentFill8x8Pattern(patternx, patterny, x, y, w, h)
 
   wait_acl_queue();
 
-  *ACL_SOURCE_ADDRESS = srcaddr;
+  *ACL_SOURCE_ADDRESS = byteswap32(srcaddr);
 
   SET_XY(w, h);
   START_ACL(destaddr);
@@ -632,13 +632,13 @@ void TsengSubsequentBresenhamLine(x1, y1, octant, err, e1, e2, length)
    }
 
    SET_DELTA(DeltaMinor, DeltaMajor);
-   *ACL_ERROR_TERM = ErrorTerm;
+   *ACL_ERROR_TERM = byteswap16(ErrorTerm);
 
    /* make sure colors are rendered correctly if >8bpp */
    if (octant & XDECREASING)
-      *ACL_SOURCE_ADDRESS = tsengFg + tseng_neg_x_pixel_offset;
+      *ACL_SOURCE_ADDRESS = byteswap32(tsengFg + tseng_neg_x_pixel_offset);
    else 
-      *ACL_SOURCE_ADDRESS = tsengFg;
+      *ACL_SOURCE_ADDRESS = byteswap32(tsengFg);
 
    SET_XYDIR(xydir);
    
@@ -813,7 +813,7 @@ void TsengSubsequentFillTrapezoidSolid(ytop, height, left, dxL, dyL, eL, right, 
       SetYMajorOctant(octant);
       SET_DELTA(dxL, dyL);
     }
-    *ACL_ERROR_TERM = eL;
+    *ACL_ERROR_TERM = byteswap16(eL);
 
     /* select "linedraw algorithm" (=bias) and load direction register */
     /* ErrorF(" o=%d ", octant);*/
@@ -843,7 +843,7 @@ void TsengSubsequentFillTrapezoidSolid(ytop, height, left, dxL, dyL, eL, right, 
     {
       SET_SECONDARY_DELTA(dxR, dyR);
     }
-    *ACL_SECONDARY_ERROR_TERM = eR;
+    *ACL_SECONDARY_ERROR_TERM = byteswap16(eR);
 
     /* ErrorF("%02x", sec_dir_reg);*/
     SET_SECONDARY_XYDIR(sec_dir_reg);

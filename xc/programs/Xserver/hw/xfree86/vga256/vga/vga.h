@@ -302,8 +302,10 @@ extern int vgaBitsPerPixel;
 extern int vgaBytesPerPixel;
 extern Bool vgaDAC8BitComponents;
 
+#ifndef __mc68000__
 #if !defined(S3_SERVER) && !defined(MACH32_SERVER) && !defined(MACH64_SERVER)
 #include "vgaBank.h"
+#endif
 #endif
 
 extern pointer vgaOrigVideoState;    /* buffers for all video information */

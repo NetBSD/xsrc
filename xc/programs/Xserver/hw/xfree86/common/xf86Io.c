@@ -251,6 +251,7 @@ Bool init;
       xf86SetKbdLeds(leds);
 #endif /* LED_CAP */
 
+#if !(defined(__NetBSD__) && defined(__atari__))
       if      (xf86Info.kbdDelay <= 375) rad = 0x00;
       else if (xf86Info.kbdDelay <= 625) rad = 0x20;
       else if (xf86Info.kbdDelay <= 875) rad = 0x40;
@@ -261,6 +262,7 @@ Bool init;
       else                               rad |= ((58 / xf86Info.kbdRate) - 2);
     
       xf86SetKbdRepeat(rad);
+#endif
     }
 }
 
@@ -553,6 +555,7 @@ xf86MseEvents(mouse)
 }
 #endif
 
+#if !(defined(__NetBSD__) && defined(__atari__))
 #if !defined(AMOEBA) && !(defined (sun) && defined(i386) && defined (SVR4)) && !defined(MINIX) && !defined(__mips__)
 /*
  * These are getting tossed in here until I can think of where
@@ -567,4 +570,5 @@ GetTimeInMillis()
     return(tp.tv_sec * 1000) + (tp.tv_usec / 1000);
 }
 #endif /* !AMOEBA && !(sun || SVR4) && !MINIX */
+#endif /* !(defined(__NetBSD__) && defined(__atari__)) */
 
