@@ -26,7 +26,7 @@
 //other dealings in this Software without prior written authorization
 //from the X Consortium.
 //
-// $XFree86: xc/programs/xkbcomp/keycodes/macintosh,v 1.3 2000/09/19 12:46:23 eich Exp $
+// $XFree86: xc/programs/xkbcomp/keycodes/macintosh,v 1.4 2001/10/02 19:57:00 alanh Exp $
 //
 default xkb_keycodes "macintosh" {
 
@@ -158,4 +158,130 @@ default xkb_keycodes "macintosh" {
     indicator 1 = "Caps Lock";
 
     alias <ALGR> = <RALT>;
+};
+
+xkb_keycodes "usb" {
+
+    minimum= 8;
+    maximum= 255;
+
+    <ESC>  =  49;
+    <AE01> =  38;
+    <AE02> =  39;
+    <AE03> =  40;
+    <AE04> =  41;
+    <AE05> =  42;
+    <AE06> =  43;
+    <AE07> =  44;
+    <AE08> =  45;
+    <AE09> =  46;
+    <AE10> =  47;
+    <AE11> =  53;
+    <AE12> =  54;
+    <BKSL> = 145;	// backslash JP only
+    <BKSP> =  50;	// delete
+
+    <TAB>  =  51;
+    <AD01> =  28;
+    <AD02> =  34;
+    <AD03> =  16;
+    <AD04> =  29;
+    <AD05> =  31;
+    <AD06> =  36;
+    <AD07> =  32;
+    <AD08> =  20;
+    <AD09> =  26;
+    <AD10> =  27;
+    <AD11> =  55;
+    <AD12> =  56;
+    <RTRN> =  48;
+
+    <LCTL> = 232;
+    <AC01> =  12;
+    <AC02> =  30;
+    <AC03> =  15;
+    <AC04> =  17;
+    <AC05> =  18;
+    <AC06> =  19;
+    <AC07> =  21;
+    <AC08> =  22;
+    <AC09> =  23;
+    <AC10> =  59;
+    <AC11> =  60;
+    <AC12> =  58;	// JP only
+    <RCTL> = 236;
+
+    <LFSH> = 233;
+    <AB01> =  37;
+    <AB02> =  35;
+    <AB03> =  14;
+    <AB04> =  33;
+    <AB05> =  13;
+    <AB06> =  25;
+    <AB07> =  24;
+    <AB08> =  62;
+    <AB09> =  63;
+    <AB10> =  64;
+    <AB11> = 143;	// JP only
+    <RTSH> = 237;	// Shift_R
+
+    <CAPS> =  65;
+    <LALT> = 234;
+    <LMTA> = 235;
+    <EISU> = 153;	// JP
+    <SPCE> =  52;
+    <KANA> = 152;	// JP
+    <RMTA> = 239;
+    <RALT> = 238;
+
+    <FK01> =  66;
+    <FK02> =  67;
+    <FK03> =  68;
+    <FK04> =  69;
+    <FK05> =  70;
+    <FK06> =  71;
+    <FK07> =  72;
+    <FK08> =  73;
+    <FK09> =  74;
+    <FK10> =  75;
+    <FK11> =  76;
+    <FK12> =  77;
+
+    <HELP> =  81;
+    <HOME> =  82;
+    <PGUP> =  83;
+    <DELE> =  84;
+    <END>  =  85;
+    <PGDN> =  86;
+
+    <UP>   =  90;
+    <LEFT> =  88;
+    <DOWN> =  89;
+    <RGHT> =  87;
+
+    <KPCL> =  91;
+    <KPEQ> = 111;
+    <KPDV> =  92;
+    <KPMU> =  93;
+
+    <KP7>  = 103;
+    <KP8>  = 104;
+    <KP9>  = 105;
+    <KPSU> =  94;
+
+    <KP4>  = 100;
+    <KP5>  = 101;
+    <KP6>  = 102;
+    <KPAD> =  95;
+
+    <KP1>  =  97;
+    <KP2>  =  98;
+    <KP3>  =  99;
+    <KPEN> =  96;
+
+    <KP0>  = 106;
+    <KPSP> = 141;
+    <KPDL> = 107;
+
+    indicator 1 = "Caps Lock";
 };
