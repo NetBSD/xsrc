@@ -2,10 +2,10 @@
  *	$Xorg: data.h,v 1.3 2000/08/17 19:55:08 cpqbld Exp $
  */
 
-/* $XFree86: xc/programs/xterm/data.h,v 3.28 2002/12/08 22:31:48 dickey Exp $ */
+/* $XFree86: xc/programs/xterm/data.h,v 3.30 2003/03/23 02:01:40 dickey Exp $ */
 
 /*
- * Copyright 2002 by Thomas E. Dickey
+ * Copyright 2002,2003 by Thomas E. Dickey
  *
  *                         All Rights Reserved
  *
@@ -132,13 +132,12 @@ extern EventMode eventMode;
 
 extern XtermWidget term;
 
-#ifdef NO_XKBSTDBELL
-#undef XKB
+#if defined(HAVE_XKB_BELL_EXT)
+#include <X11/XKBlib.h>		/* has the prototype */
+#include <X11/extensions/XKBbells.h>	/* has the XkbBI_xxx definitions */
 #endif
 
-#ifdef XKB
-#include <X11/extensions/XKBbells.h>
-#else
+#ifndef XkbBI_Info			
 #define	XkbBI_Info			0
 #define	XkbBI_MinorError		1
 #define	XkbBI_MajorError		2
@@ -181,6 +180,9 @@ typedef struct {
     Boolean useInsertMode;
 #if OPT_ZICONBEEP
     int zIconBeep;		/* beep level when output while iconified */
+#endif
+#if OPT_PTY_HANDSHAKE
+    Boolean ptyHandshake;	/* use pty-handshaking */
 #endif
 #if OPT_SAME_NAME
     Boolean sameName;		/* Don't change the title or icon name if it is
