@@ -119,7 +119,6 @@ void OsVendorInit(
 	signal(SIGIO, handle_sigio);
 }
 
-
 choose_best_depths()
 {
 #if 0
@@ -185,7 +184,7 @@ setup_screens(
 {
 	char	fname[128];
 	int	done = 0;
-	unsigned char	*vaddr;
+	caddr_t vaddr;
 	int	scr;
 	
 	do {
@@ -359,3 +358,26 @@ void MessageF(
 {
 	ErrorF(s);
 }
+
+void OsVendorFatalError(void)
+{
+}
+
+#ifdef DPMSExtension
+/*
+ * DPMS stubs
+ */
+void DPMSSet(int level)
+{
+}
+
+int DPMSGet(int level)
+{
+	return -1;
+}
+
+Bool DPMSSupported()
+{
+	return FALSE;
+}
+#endif /* DPMSExtension */

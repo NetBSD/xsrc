@@ -89,8 +89,15 @@ int mac68k_kdbproc (kbd, what)
 				workingKeySyms->minKeyCode += MIN_KEYCODE;
 				workingKeySyms->maxKeyCode += MIN_KEYCODE;
 			}
+#if 0
+			/*
+			 * maxKeyCode is eight bits long, MAX_KEYCODE is
+			 * 255.  This check is unneeded and gcc catches
+			 * it as a warning.
+			 */
 			if (workingKeySyms->maxKeyCode > MAX_KEYCODE)
 				workingKeySyms->maxKeyCode = MAX_KEYCODE;
+#endif
 		}
 
 		if (!workingModMap) {
