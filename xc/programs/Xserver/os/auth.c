@@ -385,6 +385,7 @@ char	**data_return;
     return -1;
 }
 
+#ifndef HAVE_ARC4RANDOM
 /* A random number generator that is more unpredictable
    than that shipped with some systems.
    This code is taken from the C standard. */
@@ -404,12 +405,26 @@ xdm_srand(seed)
 {
     next = seed;
 }
+#endif
 
 void
 GenerateRandomData (len, buf)
 int	len;
 char	*buf;
 {
+#ifdef HAVE_ARC4RANDOM
+    u_int32_t *rnd = (u_int32_t *)buf;
+    int i;
+
+    for (i = 0; i < len / 4; i++)
+    {
+	rnd[i] = arc4random();
+    }
+    for (i = 0; i < len % 4; i++)
+    {
+	buf[(len / 4) * 4 + i] = arc4random() & 0xff;
+    }
+#else
     static int seed;
     int value;
     int i;
@@ -423,6 +438,7 @@ char	*buf;
     }
 
     /* XXX add getrusage, popen("ps -ale") */
+#endif
 }
 
 #endif /* XCSECURITY */

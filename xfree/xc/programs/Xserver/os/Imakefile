@@ -111,6 +111,7 @@ BOOTSTRAPCFLAGS =
    KRB5_DEFINES = Krb5Defines
  XALLOC_DEFINES = XallocDefines
   ERROR_DEFINES = ServerErrorDefines
+ RANDOM_DEFINES = -DHAVE_ARC4RANDOM
 #if HasPam && HasPamMisc
     PAM_DEFINES = -DUSE_PAM
 #endif
@@ -144,7 +145,7 @@ alloca.o:  $(PWLIB)
 #endif /* NEED_ALLOCA_FROM_LIBPW */
 
 SpecialCObjectRule(access,$(ICONFIGFILES),$(XDMCP_DEFINES) $(SOCK_DEFINES) $(IFADDRS_DEFINES))
-SpecialCObjectRule(auth,$(ICONFIGFILES),$(XDMCP_DEFINES))
+SpecialCObjectRule(auth,$(ICONFIGFILES),$(XDMCP_DEFINES) $(RANDOM_DEFINES))
 SpecialCObjectRule(xdmauth,$(ICONFIGFILES),$(XDMCP_DEFINES))
 SpecialCObjectRule(xdmcp,$(ICONFIGFILES),$(SOCK_DEFINES) $(XDMCP_DEFINES))
 SpecialCObjectRule(connection,$(ICONFIGFILES),$(SOCK_DEFINES) $(XDMCP_DEFINES))
