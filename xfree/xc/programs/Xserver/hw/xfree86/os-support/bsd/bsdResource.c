@@ -13,7 +13,9 @@
 
 #ifdef __alpha__
 
-#include <sys/sysctl.h>
+#if defined(__FreeBSD__)
+# include <sys/sysctl.h>
+#endif
 
 resRange PciAvoid[] = {_PCI_AVOID_PC_STYLE, _END};
 

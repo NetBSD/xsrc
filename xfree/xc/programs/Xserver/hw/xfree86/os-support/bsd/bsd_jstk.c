@@ -96,7 +96,6 @@ xf86JoystickOn(char * name, int *timeout, int *centerX, int *centerY)
   if (*centerY < 0) {
     *centerY = js.y;
     xf86Msg(X_PROBED, "Joystick: CenterY set to %d\n", *centerY);
-    }
   }
 
   return status;

@@ -86,11 +86,15 @@ xf86scanpci()
         for (pcr._cardnum = 0x0; pcr._cardnum < 0x20; pcr._cardnum += 0x1) {
 	  func = 0;
 	  do { /* loop over different functions, if present */
+#ifdef USE_ALPHA_PIO
+	    pcr._device_vendor = alpha_pci_conf_read(0, pcr._cardnum, 0,  0);
+#else
 	    config_cmd = PCI_EN | (pcr._pcibuses[pcr._pcibusidx]<<16) |
                                   (pcr._cardnum<<11) | (func<<8);
 
             outpl(PCI_MODE1_ADDRESS_REG, config_cmd);         /* ioreg 0 */
             pcr._device_vendor = inpl(PCI_MODE1_DATA_REG);
+#endif
 
             if (pcr._vendor == 0xFFFF)   /* nothing there */
                 break;
@@ -101,6 +105,20 @@ xf86scanpci()
                 pcr._device);
 #endif
 
+#ifdef USE_ALPHA_PIO
+	    pcr._status_command  = alpha_pci_conf_read(0, pcr._cardnum, 0,  0x04);
+	    pcr._class_revision  = alpha_pci_conf_read(0, pcr._cardnum, 0,  0x08);
+	    pcr._bist_header_latency_cache = alpha_pci_conf_read(0, pcr._cardnum, 0,  0x0c);
+	    pcr._base0  = alpha_pci_conf_read(0, pcr._cardnum, 0,  0x10);
+	    pcr._base1  = alpha_pci_conf_read(0, pcr._cardnum, 0,  0x14);
+	    pcr._base2  = alpha_pci_conf_read(0, pcr._cardnum, 0,  0x18);
+	    pcr._base3  = alpha_pci_conf_read(0, pcr._cardnum, 0,  0x1c);
+	    pcr._base4  = alpha_pci_conf_read(0, pcr._cardnum, 0,  0x20);
+	    pcr._base5  = alpha_pci_conf_read(0, pcr._cardnum, 0,  0x24);
+	    pcr._baserom = alpha_pci_conf_read(0, pcr._cardnum, 0,  0x30);
+	    pcr._max_min_ipin_iline = alpha_pci_conf_read(0, pcr._cardnum, 0,  0x3c);
+	    pcr._user_config = alpha_pci_conf_read(0, pcr._cardnum, 0,  0x40);
+#else
             outpl(PCI_MODE1_ADDRESS_REG, config_cmd | 0x04);
 	    pcr._status_command  = inpl(PCI_MODE1_DATA_REG);
             outpl(PCI_MODE1_ADDRESS_REG, config_cmd | 0x08);
@@ -125,6 +143,7 @@ xf86scanpci()
 	    pcr._max_min_ipin_iline = inpl(PCI_MODE1_DATA_REG);
             outpl(PCI_MODE1_ADDRESS_REG, config_cmd | 0x40);
 	    pcr._user_config = inpl(PCI_MODE1_DATA_REG);
+#endif /* !USE_ALPHA_PIO */
 
 	    pcr._funcnum = func;
 

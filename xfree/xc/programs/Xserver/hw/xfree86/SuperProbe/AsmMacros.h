@@ -67,6 +67,8 @@
 #define outb(p,v) _outb((v),(p))
 #define outw(p,v) _outw((v),(p))
 #define outl(p,v) _outl((v),(p))
+#elif defined(USE_ALPHA_PIO)
+#include <machine/pio.h>
 #else
 #if defined(__sparc__)
 #ifndef ASI_PL
@@ -378,11 +380,11 @@ inl(port)
 }
 
 #endif /* GCCUSESGAS */
+#endif /* __FreeBSD__ && __alpha__ */
 #endif /* Lynx && __powerpc__ */
 #endif /* arm32 */
 #endif /* linux && __sparc__ */
 #endif /* linux && __alpha__ */
-#endif /* __FreeBSD__ && __alpha__ */
 
 #if defined(linux) || defined(__arm32__) || (defined(Lynx) && defined(__powerpc__))
 
