@@ -1,4 +1,4 @@
-! $OpenBSD: Xsystrace.ad,v 1.3 2002/06/09 16:30:30 matthieu Exp $
+! $OpenBSD: Xsystrace.ad,v 1.5 2002/09/29 21:30:34 matthieu Exp $
 !
 ! Copyright (c) 2002 Matthieu Herrb and Niels Provos
 ! All rights reserved.
@@ -137,9 +137,18 @@ lines           -1,0,0,0,0,-1
 *review-text.fromVert: review-label
 *done-button.fromVert: review-text
 !
+*wizard-help-text.fromVert: wizard-help-label
+*wizard-form.fromVert: wizard-help-form
+*wizard-form.vertDistance: 0
+*wizard-text.fromVert: wizard-label
+*wizard-ok-button.fromVert: wizard-text
+*wizard-cancel-button.fromHoriz: wizard-ok-button
+*wizard-cancel-button.fromVert: wizard-text
+!
 ! Main form
 !
 *.form.displayList:
+*.wizard-top.displayList:
 !
 ! Logo Display
 !
@@ -273,6 +282,14 @@ draw-string 60,35,"Always";
 *review-text.scrollVertical: Always
 *review-text*borderwidth: 1
 !
+*wizard-text.width: 100
+*wizard-text.height: 100
+*wizard-text.verticalList: True
+*wizard-text.forceColumns: True
+*wizard-text.defaultColumns: 1
+*wizard-text.background: white
+*wizard-text*borderwidth: 1
+!
 ! Various labels
 !
 *processInfo-label.label: Process Information
@@ -281,7 +298,7 @@ draw-string 60,35,"Always";
 *policyName-label.label: Policy Name:
 *syscallInfo-label.label: System Call Information
 *filter-label.label: Filter Expression:
-*filter-button.label: Add
+*filter-button.label: Wizard
 *status-label.label: Status:
 *kill-button.label:
 *review-button.label: Review Filter
@@ -292,6 +309,16 @@ draw-string 60,35,"Always";
 *deny-all-button.label:
 *review-label.label: Filter List
 *done-button.label: OK
+!
+*wizard-help-label.label: Systrace Notification
+*wizard-help-text.label: \
+This dialog allows the selection of default policies\n\
+for the current application. The following list \n\
+describes potential templates that can be used as \n\
+a quick start for a new policy.
+*wizard-label.label: Templates
+*wizard-ok-button.label: OK
+*wizard-cancel-button.label: Cancel
 *errorCode-label.label: Error Code:
 *errorCode-button.label:
 !

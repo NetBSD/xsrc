@@ -1,4 +1,4 @@
-/* $OpenBSD: interface.c,v 1.1 2002/06/04 21:23:41 matthieu Exp $ */
+/* $OpenBSD: interface.c,v 1.2 2002/09/29 21:30:34 matthieu Exp $ */
 /*
  * Copyright (c) 2002 Matthieu Herrb and Niels Provos
  * All rights reserved.
@@ -59,8 +59,8 @@ static String formNames[] = {
 
 XtAppContext appContext;
 Atom wm_delete_window;
-Widget errorCodeMenu, errorCodeText, filter, timeline, pName, pId, 
-	policyName, syscallName, status;
+Widget errorCodeMenu, errorCodeText, filter, wizardButton, timeline, pName, 
+	pId, policyName, syscallName, status, reviewButton;
 volatile Boolean done;
 
 Widget
@@ -121,10 +121,11 @@ makeForm(Widget parent)
 				forms[2], 
 				XtNeditType, XawtextEdit,
 				NULL, 0);
-	w = XtVaCreateManagedWidget("filter-button", commandWidgetClass,
+	wizardButton = XtVaCreateManagedWidget("filter-button", 
+				commandWidgetClass,
 				forms[2],
 				NULL, 0);
-	XtAddCallback(w, XtNcallback, on_filteradd_clicked, NULL);
+	XtAddCallback(wizardButton, XtNcallback, on_wizard_clicked, NULL);
 
 	XtVaCreateManagedWidget("status-label", labelWidgetClass,
 				forms[3],
@@ -176,10 +177,11 @@ makeForm(Widget parent)
 				NULL);
 	XtAddCallback(w, XtNcallback, on_killbutton_clicked, NULL);
 
-	w = XtVaCreateManagedWidget("review-button", commandWidgetClass,
+	reviewButton = XtVaCreateManagedWidget("review-button", 
+				commandWidgetClass,
 				forms[5],
 				NULL);
-	XtAddCallback(w, XtNcallback, on_reviewbutton_clicked, 
+	XtAddCallback(reviewButton, XtNcallback, on_reviewbutton_clicked, 
 		      (XtPointer)parent);
 
 	w = XtVaCreateManagedWidget("auto-button", commandWidgetClass,
