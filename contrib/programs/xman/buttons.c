@@ -56,7 +56,7 @@ ManpageGlobals * InitPsuedoGlobals();
 
 #define TOPARGS 5
 
-static Atom wm_delete_window;
+extern Atom wm_delete_window;	/* in main.c */
 
 Widget top;			/* needed in PopupWarning, misc.c */
 
@@ -135,8 +135,6 @@ MakeTopBox()
 /*
  * Set up ICCCM delete window.
  */
-  wm_delete_window = XInternAtom(XtDisplay(top), "WM_DELETE_WINDOW",
-				 False);
   XtOverrideTranslations
       (top, XtParseTranslationTable ("<Message>WM_PROTOCOLS: Quit()"));
   (void) XSetWMProtocols (XtDisplay(top), XtWindow(top),
