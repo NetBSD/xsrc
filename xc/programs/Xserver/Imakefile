@@ -565,6 +565,23 @@ ServerTarget(Xmacppc,$(PMACDIRS),$(PMACOBJS),$(PMACLIBS),$(SYSLIBS))
 #endif
 #endif /* XmacppcServer */
 
+#if Xarm32VIDCServer
+XCOMM
+XCOMM NetBSD/arm32 VIDC20 server (RiscPC, A7000)
+XCOMM
+MFBDIR  = mfb
+CFB8DIR = cfb
+CFB16DIR = cfb16
+DDXDIR2 = hw/netbsd/arm32vidc
+VIDCDIRS = $(STDDIRS) $(MFBDIR) $(CFB8DIR) $(CFB16DIR) $(DDXDIR2) $(DEPDIRS)
+VIDCOBJS = hw/netbsd/arm32vidc/vidc.o
+VIDCLIBS = hw/netbsd/arm32vidc/libvidc.a CFB16Libs CFB8Libs $(OTHEREXTS)
+#VIDCSYSLIBS = $(CBRT) $(SYSLIBS)
+SetUIDServerTarget(Xarm32VIDC,$(VIDCDIRS),$(VIDCOBJS),$(VIDCLIBS),$(SYSLIBS))
+#ifndef ServerToInstall
+#define ServerToInstall Xarm32VIDC
+#endif
+#endif /* Xarm32VIDCServer */
 
 #ifdef XFree86Version
 XF86INIT   = $(XF86COMSRC)/xf86Init.o $(XF86CONFIGSRC)/xf86IniExt.o
