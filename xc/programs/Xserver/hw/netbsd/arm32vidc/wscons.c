@@ -1,4 +1,4 @@
-/*	$NetBSD: wscons.c,v 1.4 2002/04/04 02:00:31 reinoud Exp $	*/
+/*	$NetBSD: wscons.c,v 1.5 2002/04/04 02:25:24 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -123,12 +123,12 @@ void wsmouse_io(void)
 		switch (wsev.type) {
 		case WSCONS_EVENT_MOUSE_UP:
 			x_event.u.u.type = ButtonRelease;
-			x_event.u.u.detail = wsev.value;
+			x_event.u.u.detail = wsev.value+1;
 			mieqEnqueue(&x_event);
 			break;
 		case WSCONS_EVENT_MOUSE_DOWN:
 			x_event.u.u.type = ButtonPress;
-			x_event.u.u.detail = wsev.value;
+			x_event.u.u.detail = wsev.value+1;
 			mieqEnqueue(&x_event);
 			break;
 		case WSCONS_EVENT_MOUSE_DELTA_X:
