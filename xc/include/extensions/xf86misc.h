@@ -54,6 +54,7 @@
 #define MTYPE_AUTOMOUSE		18
 #define MTYPE_ACECAD		19
 #define MTYPE_WSMOUSE		20
+#define MTYPE_SUN		21
 
 #define MTYPE_XQUEUE		127
 #define MTYPE_OSMOUSE		126
