@@ -146,6 +146,10 @@ static char *get_os_name ()
 	    }
 	}
 
+#ifdef __NetBSD__
+#define unix
+#endif
+
 #ifdef sun
 	return XtNewString("SunOS");
 #else
