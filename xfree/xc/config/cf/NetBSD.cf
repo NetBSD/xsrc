@@ -315,7 +315,7 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #elif defined(AMD64Architecture)
 # define ServerExtraDefines	GccGasOption XFree86ServerDefines -D_XSERVER64
 #  ifndef XFree86ConsoleDefines
-#    define XFree86ConsoleDefines -DWSCONS_SUPPORT
+#    define XFree86ConsoleDefines -DWSCONS_SUPPORT -DPCVT_SUPPORT
 #  endif
 #elif defined(SGIMipsArchitecture)
 #    define XFree86ConsoleDefines -DWSCONS_SUPPORT
