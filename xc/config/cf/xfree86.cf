@@ -826,6 +826,15 @@ XCOMM $XConsortium: xfree86.cf /main/34 1996/12/06 11:45:18 rws $
 #ifndef JoystickSupport
 #define JoystickSupport		NO
 #endif
+
+#ifndef USBSupport
+#if HasUsbLib
+#define USBSupport		YES
+#else
+#define USBSupport		NO
+#endif
+#endif
+
 #ifndef CalcompSupport
 #define CalcompSupport		YES
 #endif
@@ -919,6 +928,10 @@ XCOMM $XConsortium: xfree86.cf /main/34 1996/12/06 11:45:18 rws $
 
 #ifndef HasDlsymBug
 #define HasDlsymBug		NO
+#endif
+
+#ifndef HasUsbLib
+#define HasUsbLib		NO
 #endif
 
 /*

@@ -1,4 +1,4 @@
-XCOMM $NetBSD: NetBSD.cf,v 1.59 1999/08/11 22:00:37 veego Exp $
+XCOMM $NetBSD: NetBSD.cf,v 1.60 1999/09/02 08:58:05 augustss Exp $
 XCOMM platform:  $XConsortium: NetBSD.cf /main/16 1996/10/31 14:47:14 kaleb $
 
 
@@ -85,6 +85,15 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
      (OSMajorVersion == 1 && OSMinorVersion == 2 && OSTeenyVersion < 2))
 #  define HasDlsymBug		YES
 #endif
+
+/*
+ * The USB HID library came after 1.4
+ */
+#if ((OSMajorVersion == 1 && OSMinorVersion > 4) || \
+     (OSMajorVersion == 1 && OSMinorVersion == 4 && OSTeenyVersion > 8))
+#  define HasUsbLib		YES
+#endif
+
   
 #if OSMajorVersion >= 1
 # define LexCmd			lex -l

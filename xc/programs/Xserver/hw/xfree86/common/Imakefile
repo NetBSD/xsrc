@@ -45,6 +45,12 @@ XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/common/Imakefile,v 3.48.2.13 1999
 # if WacomSupport
          WACOM_SRC = xf86Wacom.c
 # endif
+# if USBSupport
+         USB_SRC = xf86USBtablet.c
+#   if defined(NetBSDArchitecture)
+         ARCH_USB = /usr/lib/libusb_pic.a
+#   endif
+# endif
 # if ElographicsSupport
    ELOGRAPHICS_SRC = xf86Elo.c
 # endif
@@ -67,12 +73,15 @@ XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/common/Imakefile,v 3.48.2.13 1999
         CALCOMP_SRC = xf86Calcomp.c
 # endif
 # if ! BuildDynamicLoading
-    XINPUT_DEVICES = JoystickDefines WacomDefines ElographicsDefines DynaproDefines MicroTouchDefines SummaSketchDefines AceCadDefines DialBoxDefines CalcompDefines
+    XINPUT_DEVICES = JoystickDefines WacomDefines USBDefines ElographicsDefines DynaproDefines MicroTouchDefines SummaSketchDefines AceCadDefines DialBoxDefines CalcompDefines
 #  if JoystickSupport
       JOYSTICK_OBJ = xf86Jstk.o
 #  endif
 #  if WacomSupport
          WACOM_OBJ = xf86Wacom.o
+#  endif
+#  if USBSupport
+         USB_OBJ = xf86USBtablet.o
 #  endif
 #  if ElographicsSupport
    ELOGRAPHICS_OBJ = xf86Elo.o
@@ -275,6 +284,11 @@ InstallDynamicModule(xf86Jstk.so,$(MODULEDIR))
 SpecialObjectRule(xf86Wacom.o,xf86Wacom.c,$(SHARED_CFLAGS))
 DynamicModuleTarget(xf86Wacom.so,xf86Wacom.o)
 InstallDynamicModule(xf86Wacom.so,$(MODULEDIR))
+#  endif
+#  if USBSupport
+SpecialObjectRule(xf86USBtablet.o,xf86USBtablet.c,$(SHARED_CFLAGS))
+DynamicModuleTarget(xf86USBtablet.so,xf86USBtablet.o $(ARCH_USB))
+InstallDynamicModule(xf86USBtablet.so,$(MODULEDIR))
 #  endif
 #  if ElographicsSupport
 SpecialObjectRule(xf86Elo.o,xf86Elo.c,$(SHARED_CFLAGS))
