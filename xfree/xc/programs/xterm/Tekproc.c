@@ -699,7 +699,7 @@ Tekparse(void)
 
 #if OPT_WIDE_CHARS
 	    if (screen->wide_chars
-		&& (ch > 255)) {
+		&& (c > 255)) {
 		XChar2b sbuf;
 		sbuf.byte2 = CharOf(ch);
 		sbuf.byte1 = CharOf(ch >> 8);
