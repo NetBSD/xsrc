@@ -437,7 +437,7 @@ amiga16CVValidateGC(pGC, changes, pDrawable)
         */
 	 if (pGC->clientClipType == CT_NONE) {
 	    if (freeCompClip)
-	       (*pScreen->RegionDestroy) (cfbGetCompositeClip(pGC));
+	       REGION_DESTROY(pScreen, cfbGetCompositeClip(pGC));
 	    pGC->pCompositeClip = pregWin;
 	    pGC->freeCompClip = freeTmpClip;
 	 } else {
@@ -451,26 +451,25 @@ amiga16CVValidateGC(pGC, changes, pDrawable)
 	   * if neither is real, create a new region.
 	   */
 
-	    (*pScreen->TranslateRegion) (pGC->clientClip,
+	    REGION_TRANSLATE(pScreen, pGC->clientClip,
 					 pDrawable->x + pGC->clipOrg.x,
 					 pDrawable->y + pGC->clipOrg.y);
 
 	    if (freeCompClip) {
-	       (*pGC->pScreen->Intersect) (cfbGetCompositeClip(pGC),
+	       REGION_INTERSECT(pGC->pScreen, cfbGetCompositeClip(pGC),
 					   pregWin, pGC->clientClip);
 	       if (freeTmpClip)
-		  (*pScreen->RegionDestroy) (pregWin);
+		  REGION_DESTROY(pScreen,pregWin);
 	    } else if (freeTmpClip) {
-	       (*pScreen->Intersect) (pregWin, pregWin, pGC->clientClip);
+	       REGION_INTERSECT(pScreen, pregWin, pregWin, pGC->clientClip);
 	       pGC->pCompositeClip = pregWin;
 	    } else {
-	       pGC->pCompositeClip = (*pScreen->RegionCreate) (NullBox,
-								   0);
-	       (*pScreen->Intersect) (cfbGetCompositeClip(pGC),
+	       pGC->pCompositeClip = REGION_CREATE(pScreen, NullBox,  0);
+	       REGION_INTERSECT(pScreen, cfbGetCompositeClip(pGC),
 				      pregWin, pGC->clientClip);
 	    }
 	    pGC->freeCompClip = TRUE;
-	    (*pScreen->TranslateRegion) (pGC->clientClip,
+	    REGION_TRANSLATE(pScreen, pGC->clientClip,
 					 -(pDrawable->x + pGC->clipOrg.x),
 					 -(pDrawable->y + pGC->clipOrg.y));
 
@@ -486,21 +485,20 @@ amiga16CVValidateGC(pGC, changes, pDrawable)
 	 pixbounds.x2 = pDrawable->width;
 	 pixbounds.y2 = pDrawable->height;
 
-	 if (pGC->freeCompClip)
-	    (*pScreen->RegionReset) (cfbGetCompositeClip(pGC), &pixbounds);
-	 else {
+	 if (pGC->freeCompClip) {
+	    REGION_RESET(pScreen, cfbGetCompositeClip(pGC), &pixbounds);
+	} else {
 	    pGC->freeCompClip = TRUE;
-	    pGC->pCompositeClip = (*pScreen->RegionCreate) (&pixbounds,
-								1);
+	    pGC->pCompositeClip = REGION_CREATE(pScreen, &pixbounds, 1);
 	 }
 
 	 if (pGC->clientClipType == CT_REGION) {
-	    (*pScreen->TranslateRegion) (cfbGetCompositeClip(pGC),
+	    REGION_TRANSLATE(pScreen, cfbGetCompositeClip(pGC),
 					 -pGC->clipOrg.x, -pGC->clipOrg.y);
-	    (*pScreen->Intersect) (cfbGetCompositeClip(pGC),
+	    REGION_INTERSECT(pScreen, cfbGetCompositeClip(pGC),
 				   cfbGetCompositeClip(pGC),
 				   pGC->clientClip);
-	    (*pScreen->TranslateRegion) (cfbGetCompositeClip(pGC),
+	    REGION_TRANSLATE(pScreen, cfbGetCompositeClip(pGC),
 					 pGC->clipOrg.x, pGC->clipOrg.y);
 	 }
       }				/* end of composute clip for pixmap */

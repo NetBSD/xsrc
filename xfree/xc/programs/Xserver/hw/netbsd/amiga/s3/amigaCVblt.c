@@ -303,8 +303,8 @@ amigaCVCopyArea(pSrcDrawable, pDstDrawable,
 	 fastExpose = 0;
       }
    } else {
-      (*pGC->pScreen->RegionInit) (&rgnDst, &fastBox, 1);
-      (*pGC->pScreen->Intersect) (&rgnDst, &rgnDst, prgnSrcClip);
+      REGION_INIT(pGC->pScreen, &rgnDst, &fastBox, 1);
+      REGION_INTERSECT(pGC->pScreen, &rgnDst, &rgnDst, prgnSrcClip);
    }
 
    dstx += pDstDrawable->x;
@@ -313,9 +313,9 @@ amigaCVCopyArea(pSrcDrawable, pDstDrawable,
    if (pDstDrawable->type == DRAWABLE_WINDOW) {
       if (!((WindowPtr) pDstDrawable)->realized) {
 	 if (!fastClip)
-	    (*pGC->pScreen->RegionUninit) (&rgnDst);
+	    REGION_UNINIT(pGC->pScreen, &rgnDst);
 	 if (freeSrcClip)
-	    (*pGC->pScreen->RegionDestroy) (prgnSrcClip);
+	    REGION_DESTROY(pGC->pScreen, prgnSrcClip);
 	 return NULL;
       }
    }
@@ -358,10 +358,11 @@ amigaCVCopyArea(pSrcDrawable, pDstDrawable,
 	    fastBox.y2 = pBox->y2;
 
        /* Check to see if the region is empty */
-	 if (fastBox.x1 >= fastBox.x2 || fastBox.y1 >= fastBox.y2)
-	    (*pGC->pScreen->RegionInit) (&rgnDst, NullBox, 0);
-	 else
-	    (*pGC->pScreen->RegionInit) (&rgnDst, &fastBox, 1);
+	 if (fastBox.x1 >= fastBox.x2 || fastBox.y1 >= fastBox.y2) {
+	    REGION_INIT(pGC->pScreen, &rgnDst, NullBox, 0);
+	 } else {
+	    REGION_INIT(pGC->pScreen, &rgnDst, &fastBox, 1);
+	 }
       } else {
 
        /*
@@ -369,14 +370,14 @@ amigaCVCopyArea(pSrcDrawable, pDstDrawable,
         * region.  It is intersected with the composite clip below.
         */
 	 fastClip = 0;
-	 (*pGC->pScreen->RegionInit) (&rgnDst, &fastBox, 1);
+	 REGION_INIT(pGC->pScreen, &rgnDst, &fastBox, 1);
       }
    } else {
-      (*pGC->pScreen->TranslateRegion) (&rgnDst, -dx, -dy);
+      REGION_TRANSLATE(pGC->pScreen, &rgnDst, -dx, -dy);
    }
 
    if (!fastClip) {
-      (*pGC->pScreen->Intersect) (&rgnDst, &rgnDst, cfbGetCompositeClip(pGC));
+      REGION_INTERSECT(pGC->pScreen, &rgnDst, &rgnDst, cfbGetCompositeClip(pGC));
    }
  /* Do bit blitting */
    numRects = REGION_NUM_RECTS(&rgnDst);
@@ -523,9 +524,9 @@ amigaCVCopyArea(pSrcDrawable, pDstDrawable,
 			      (int)origSource.height,
 			      origDest.x, origDest.y, 0);
    }
-   (*pGC->pScreen->RegionUninit) (&rgnDst);
+   REGION_UNINIT(pGC->pScreen, &rgnDst);
    if (freeSrcClip)
-      (*pGC->pScreen->RegionDestroy) (prgnSrcClip);
+      REGION_DESTROY(pGC->pScreen, prgnSrcClip);
    return prgnExposed;
 }
 
@@ -752,8 +753,8 @@ amigaCVCopyPlane(pSrcDrawable, pDstDrawable,
 	 fastExpose = 0;
       }
    } else {
-      (*pGC->pScreen->RegionInit) (&rgnDst, &fastBox, 1);
-      (*pGC->pScreen->Intersect) (&rgnDst, &rgnDst, prgnSrcClip);
+      REGION_INIT(pGC->pScreen, &rgnDst, &fastBox, 1);
+      REGION_INTERSECT(pGC->pScreen, &rgnDst, &rgnDst, prgnSrcClip);
    }
 
    dstx += pDstDrawable->x;
@@ -762,9 +763,9 @@ amigaCVCopyPlane(pSrcDrawable, pDstDrawable,
    if (pDstDrawable->type == DRAWABLE_WINDOW) {
       if (!((WindowPtr) pDstDrawable)->realized) {
 	 if (!fastClip)
-	    (*pGC->pScreen->RegionUninit) (&rgnDst);
+	    REGION_UNINIT(pGC->pScreen, &rgnDst);
 	 if (freeSrcClip)
-	    (*pGC->pScreen->RegionDestroy) (prgnSrcClip);
+	    REGION_DESTROY(pGC->pScreen, prgnSrcClip);
          if (pBitmap)
             (*pSrcDrawable->pScreen->DestroyPixmap)(pBitmap);
 	 return NULL;
@@ -802,24 +803,25 @@ amigaCVCopyPlane(pSrcDrawable, pDstDrawable,
 	    fastBox.y2 = pBox->y2;
 
        /* Check to see if the region is empty */
-	 if (fastBox.x1 >= fastBox.x2 || fastBox.y1 >= fastBox.y2)
-	    (*pGC->pScreen->RegionInit) (&rgnDst, NullBox, 0);
-	 else
-	    (*pGC->pScreen->RegionInit) (&rgnDst, &fastBox, 1);
+	 if (fastBox.x1 >= fastBox.x2 || fastBox.y1 >= fastBox.y2) {
+	    REGION_INIT(pGC->pScreen, &rgnDst, NullBox, 0);
+	 } else {
+	    REGION_INIT(pGC->pScreen, &rgnDst, &fastBox, 1);
+	 }
       } else {
          /*
           * We must turn off fastClip now, since we must create a full blown
           * region.  It is intersected with the composite clip below.
           */
 	 fastClip = 0;
-	 (*pGC->pScreen->RegionInit) (&rgnDst, &fastBox, 1);
+	 REGION_INIT(pGC->pScreen, &rgnDst, &fastBox, 1);
       }
    } else {
-      (*pGC->pScreen->TranslateRegion) (&rgnDst, -dx, -dy);
+      REGION_TRANSLATE(pGC->pScreen, &rgnDst, -dx, -dy);
    }
 
    if (!fastClip) {
-      (*pGC->pScreen->Intersect) (&rgnDst, &rgnDst, cfbGetCompositeClip(pGC));
+      REGION_INTERSECT(pGC->pScreen, &rgnDst, &rgnDst, cfbGetCompositeClip(pGC));
    }
 
    /* Do bit blitting */
@@ -968,9 +970,9 @@ amigaCVCopyPlane(pSrcDrawable, pDstDrawable,
 			      (int)origSource.height,
 			      origDest.x, origDest.y, 0);
    }
-   (*pGC->pScreen->RegionUninit) (&rgnDst);
+   REGION_UNINIT(pGC->pScreen, &rgnDst);
    if (freeSrcClip)
-      (*pGC->pScreen->RegionDestroy) (prgnSrcClip);
+      REGION_DESTROY(pGC->pScreen, prgnSrcClip);
    if (pBitmap)
       (*pSrcDrawable->pScreen->DestroyPixmap) (pBitmap);
    return prgnExposed;
