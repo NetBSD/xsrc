@@ -1,4 +1,4 @@
-XCOMM $NetBSD: NetBSD.cf,v 1.103 2003/01/27 02:40:11 thorpej Exp $
+XCOMM $NetBSD: NetBSD.cf,v 1.104 2003/01/27 16:29:48 tron Exp $
 XCOMM platform:  $XConsortium: NetBSD.cf /main/16 1996/10/31 14:47:14 kaleb $
 
 
@@ -120,8 +120,11 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
  * NetBSD 1.6M and newer supports POSIX Threads.
  */
 
-#define NetBSDThreads           
-#if defined(NetBSDThreads) && \
+#ifndef NetBSDThreads
+# define NetBSDThreads		YES
+#endif
+
+#if NetBSDThreads && \
     ((OSMajorVersion > 1) || \
      (OSMajorVersion == 1 && OSMinorVersion > 6) || \
      (OSMajorVersion == 1 && OSMinorVersion == 6 && OSTeenyVersion >= 13))
