@@ -34,7 +34,7 @@ in this Software without prior written authorization from The Open Group.
  * optimized already.
  */
 
-#ifdef MIPSEL
+#if X_BYTE_ORDER == X_LITTLE_ENDIAN
 # define BitsR		sll
 # define BitsL		srl
 # define BO(o)		o
@@ -104,7 +104,7 @@ cfbStippleStack:
 	lw	shift, Shift
 	li	lshift, 4			/* compute offset within */
 	subu	lshift, lshift, shift		/*  stipple of remaining bits */
-#ifdef MIPSEL
+#if X_BYTE_ORDER == X_LITTLE_ENDIAN
 	addu	shift, shift, CASE_SIZE		/* first shift for LSB */
 #else
 	addu	shift, shift, 28-CASE_SIZE	/* first shift for MSB */
