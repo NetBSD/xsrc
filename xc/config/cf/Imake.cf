@@ -190,6 +190,10 @@ XCOMM $XFree86: xc/config/cf/Imake.cf,v 3.34.2.14 1999/07/29 09:22:23 hohndel Ex
 #  define hpcmipsArchitecture
 #  undef hpcmips
 # endif
+# if defined(__next68k__) || defined(next68k)
+#  define next68kArchitecture
+#  undef next68k
+# endif
 #endif /* NetBSD */
 
 #ifdef __FreeBSD__
