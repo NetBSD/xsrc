@@ -1,5 +1,5 @@
 /* $XConsortium: waitfor.c /main/15 1996/08/30 14:22:34 kaleb $ */
-/* $XFree86: xc/programs/xfs/os/waitfor.c,v 3.5 1997/01/18 07:02:48 dawes Exp $ */
+/* $XFree86: xc/programs/xfs/os/waitfor.c,v 3.5.2.1 2000/06/15 21:58:35 dawes Exp $ */
 /*
  * waits for input
  */
@@ -212,7 +212,7 @@ WaitForSomething(pClientsReady)
 	    while (clientsReadable.fds_bits[i]) {
 		curclient = ffs(clientsReadable.fds_bits[i]) - 1;
 		conn = ConnectionTranslation[curclient + (i << 5)];
-		FD_CLR (curclient, &clientsReadable);
+		clientsReadable.fds_bits[i] &= ~(((fd_mask)1L) << curclient);
 		client = clients[conn];
 		if (!client)
 		    continue;
