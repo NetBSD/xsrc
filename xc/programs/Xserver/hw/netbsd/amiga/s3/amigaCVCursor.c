@@ -97,9 +97,9 @@ static int CursX, CursY; /* cursor save position */
 int vgar(volatile caddr_t ba, int idx)
 {
 register int erg;
-asm volatile ("movel %1, a0;\
-                movel %2,d1;
-                movel a0@(d1), %0;" :\
+asm volatile ("movel %1, %%a0;\
+                movel %2,%%d1;
+                movel %%a0@(%%d1), %0;" :\
                 "=r" (erg):\
                 "g" (ba), "d" (idx) :\
                 "a0", "d0", "d1");
