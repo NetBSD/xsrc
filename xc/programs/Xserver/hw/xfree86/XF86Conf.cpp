@@ -80,6 +80,9 @@ XCOMM This loads the module for the Joystick driver
 XCOMM
 XCOMM Load "xf86Jstk.so"
 XCOMM
+XCOMM USB tablet driver
+XCOMM Load "xf86USBtablet.so"
+XCOMM
 XCOMM EndSection
 
 XCOMM **********************************************************************
@@ -281,6 +284,17 @@ XCOMM        Mode Absolute
 XCOMM        Cursor Stylus
 XCOMM        Model Flair
 XCOMM    Endsubsection
+XCOMM
+XCOMM    SubSection "USBStylus"
+XCOMM        Port "/dev/uhid0"
+XCOMM        DeviceName "StylusCore"
+XCOMM        AlwaysCore
+XCOMM    EndSubSection
+XCOMM    SubSection "USBEraser"
+XCOMM        Port "/dev/uhid0"
+XCOMM        DeviceName "EraserCore"
+XCOMM        AlwaysCore
+XCOMM    EndSubSection
 XCOMM
 XCOMM The Mouse Subsection contains the same type of entries as the
 XCOMM standard Pointer Section (see above), with the addition of the
