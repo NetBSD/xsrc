@@ -28,7 +28,7 @@ FREETYPE_VERSION=Freetype2Version
 
 freetype-config: freetype-config.in
 	sed -e s%@prefix@%$(PROJECTROOT)% -e s%@exec_prefix@%$(PROJECTROOT)% \
-	-e s%@libdir@%$(USRLIBDIR)% -e s%@includedir@%$(INCDIR)% 	\
+	-e s%@libdir@%$(USRLIBDIR)%g -e s%@includedir@%$(INCDIR)% 	\
 	-e s%@ft_version@%$(FREETYPE_VERSION)% \
 	< freetype-config.in > $@
 
