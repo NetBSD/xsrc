@@ -165,6 +165,23 @@ XCOMM $XFree86: xc/config/cf/xf86site.def,v 3.101.2.11 1997/06/22 10:32:22 dawes
  * The following servers are supported in Intel x86 platforms
  */
 #ifdef i386Architecture
+#ifdef NetBSDArchitecture
+#define XF86SVGAServer          YES
+#define XF86VGA16Server         YES
+#define XF86VGA16DualServer	YES
+#define XF86MonoServer          YES
+#define XF86MonoDualServer	YES
+#define XF86S3Server            YES
+#define XF86S3VServer           YES
+#define XF86I8514Server         YES
+#define XF86Mach8Server         YES
+#define XF86Mach32Server        YES
+#define XF86Mach64Server        YES
+#define XF86P9000Server		YES
+#define XF86AGXServer		YES
+#define XF86W32Server		YES
+#define XF86I128Server		YES
+#else
 #define XF86SVGAServer          NO
 #define XF86VGA16Server         NO
 #define XF86VGA16DualServer	NO
@@ -180,6 +197,7 @@ XCOMM $XFree86: xc/config/cf/xf86site.def,v 3.101.2.11 1997/06/22 10:32:22 dawes
 #define XF86AGXServer		NO
 #define XF86W32Server		NO
 #define XF86I128Server		NO
+#endif /* NetBSDArchitecture */
 #endif
 
 /*
@@ -310,9 +328,9 @@ XCOMM $XFree86: xc/config/cf/xf86site.def,v 3.101.2.11 1997/06/22 10:32:22 dawes
  * Possible values are -DPCCONS_SUPPORT, -DSYSCONS_SUPPORT, -DPCVT_SUPPORT,
  * -DCODRV_SUPPORT.  The following example includes support for syscons and
  * pcvt only.
- *
-#define XFree86ConsoleDefines	-DSYSCONS_SUPPORT -DPCVT_SUPPORT
+#define XFree86ConsoleDefines	-DSYSCONS_SUPPORT -DPCCONS_SUPPORT
  */
+
 
 /*
  * If you only run the X server under xdm the X servers don't need to be
