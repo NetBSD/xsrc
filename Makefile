@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 1999/09/14 08:21:45 fredb Exp $
+#	$NetBSD: Makefile,v 1.8 1999/09/27 08:56:05 fredb Exp $
 #
 # build and install xsrc
 
@@ -13,10 +13,10 @@ all-xc:
 .endif
 
 all-contrib:
-.if !exists(contrib/Makefile)
-	@cd contrib && PATH=../xc/config/imake:$$PATH \
-	    sh ../xc/config/util/xmkmf -a ../xc ../contrib
-.endif
+	@if [ ! -f contrib/Makefile ]; then \
+	  cd contrib && PATH=../xc/config/imake:$$PATH \
+	    sh ../xc/config/util/xmkmf -a ../xc ../contrib; \
+	fi
 	@cd contrib && ${MAKE}
 
 install: install-xc install-contrib
