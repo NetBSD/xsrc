@@ -265,14 +265,10 @@ in this Software without prior written authorization from the X Consortium.
 #ifdef _CRAY
 #define DEFAULT_CPP "/lib/pcpp"
 #endif
-#if defined(__386BSD__) || defined(__NetBSD__) || defined(__OpenBSD__)
-#ifdef __sparc64__
-#define USE_CC_E
-#else
+#if defined(__386BSD__) || defined(__OpenBSD__)
 #define DEFAULT_CPP "/usr/libexec/cpp"
 #endif
-#endif
-#if defined(__FreeBSD__)
+#if defined(__FreeBSD__) || defined(__NetBSD__)
 #define USE_CC_E
 #endif
 #if defined(__sgi) && defined(__ANSI_CPP__)
