@@ -191,13 +191,6 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #endif
 
 /*
- * No shared libstdc++ on this platform yet.
- */
-#if defined(x86_64Architecture)
-# define SharedLibGlu NO
-#endif
-
-/*
  * Dynamic loading supported starting in 1.0 on a.out platforms,
  * and on all ELF platforms.
  *
