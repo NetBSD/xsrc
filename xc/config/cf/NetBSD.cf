@@ -14,6 +14,7 @@ XCOMM 		NetBSD/sparc	client/server
 XCOMM 		NetBSD/sun3	client/server
 XCOMM 		NetBSD/hp300	client
 XCOMM 		NetBSD/mac68k	client/server
+XCOMM 		NetBSD/pmax	client
 XCOMM		NetBSD/amiga	client/server
 XCOMM		NetBSD/alpha	client/server
 XCOMM		NetBSD/arm32	client
@@ -397,10 +398,28 @@ install.man:: 								@@\
  * Definition for compiling on MIPS machines
  */
 #ifdef MipsArchitecture
+#if 0 /* As distributed */
 #define PositionIndependentCFlags
 #define SharedLibraryLoadFlags -x -shared --whole-archive -soname `echo $@ | sed 's/\.[0-9]*$$//'`
 #define SharedXtReqs	$(XLIBONLY) $(SMLIB) $(ICELIB)
 #define SharedXmuReqs	$(LDPRELIB) $(XTOOLONLYLIB) $(XONLYLIB) $(EXTENSIONLIB)
+#endif /* As distributed */
+
+#ifdef XdecServer
+#undef XdecServer
+#endif
+#define XdecServer NO
+
+#ifdef BuildServer
+#undef BuildServer
+#endif
+#define BuildServer NO
+
+#ifdef UseElfFormat
+#undef UseElfFormat
+#endif
+#define UseElfFormat YES
+
 #endif
 
 /*
