@@ -1,4 +1,0 @@
-XCOMM $XFree86$
-
-InstallHardcopyDoc(xielib,xielib.PS.gz xielib.txt)
-

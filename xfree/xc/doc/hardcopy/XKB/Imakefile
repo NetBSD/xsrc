@@ -1,7 +1,0 @@
-XCOMM $XFree86$
-
-InstallHardcopyDoc(XKBlib,XKBlib.PS.gz)
-InstallHardcopyDoc(XKBproto,XKBproto.PS.gz)
-
-LinkFile(XKBlib.PS.gz,XKBlib.ps.gz)
-LinkFile(XKBproto.PS.gz,XKBproto.ps.gz)
