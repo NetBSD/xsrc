@@ -1098,14 +1098,14 @@ GetAuthorization(
 		/* Port number */
 		for (i=2; i<4; i++)
 		    xdmcp_data[j++] = ((char *)addr)[i];
-		break;
 	    } else {
 		/* Fake data to keep the data aligned. Otherwise the 
 		   the server will bail about incorrect timing data */
-		for (i = 0; i < 8; i++) {
+		for (i = 0; i < 6; i++) {
 		    xdmcp_data[j++] = 0;
 		}
 	    }
+	    break;
 	}
 #endif /* AF_INET6 */
 #ifdef AF_UNIX
