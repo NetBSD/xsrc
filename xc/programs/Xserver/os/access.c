@@ -614,8 +614,8 @@ DefineSelf (fd)
 
 #ifdef VARIABLE_IFREQ
 #define ifr_size(p) (sizeof (struct ifreq) + \
-		     (p->ifr_addr.sa_len > sizeof (p->ifr_addr) ? \
-		      p->ifr_addr.sa_len - sizeof (p->ifr_addr) : 0))
+		     ((p)->ifr_addr.sa_len > sizeof ((p)->ifr_addr) ? \
+		      (p)->ifr_addr.sa_len - sizeof ((p)->ifr_addr) : 0))
 #define ifraddr_size(a) (a.sa_len)
 #else
 #define ifr_size(p) (sizeof (struct ifreq))
@@ -633,7 +633,7 @@ DefineSelf (fd)
     unsigned char *	addr;
     int 		family;
     register HOST 	*host;
-    register struct ifreq *ifr;
+    struct ifreq	ifr0, *ifr = &ifr0;
     
 #ifdef DNETCONN
     struct dn_naddr *dnaddr = getnodeadd();
@@ -679,7 +679,15 @@ DefineSelf (fd)
     
     for (cp = (char *) IFC_IFC_REQ; cp < cplim; cp += ifr_size (ifr))
     {
-	ifr = (struct ifreq *) cp;
+	if(ifr != &ifr0)
+	    Xfree(ifr);
+	memcpy(&ifr0, cp, sizeof ifr0);
+	if(ifr_size(&ifr0) <= sizeof ifr0)
+	    ifr = &ifr0 ;
+	else {
+	    ifr = (struct ifreq *)Xcalloc(ifr_size(&ifr0));
+	    memcpy(ifr, cp, ifr_size(&ifr0));
+	}
 	len = ifraddr_size (ifr->ifr_addr);
 #ifdef DNETCONN
 	/*
@@ -762,7 +770,11 @@ DefineSelf (fd)
 	    XdmcpRegisterBroadcastAddress ((struct sockaddr_in *) &broad_addr);
 	}
 #endif
+	if(ifr != &ifr0)
+	    Xfree(ifr);
     }
+    if(ifr != &ifr0)
+	Xfree(ifr);
     /*
      * add something of FamilyLocalHost
      */
