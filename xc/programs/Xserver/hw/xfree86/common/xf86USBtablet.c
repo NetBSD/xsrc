@@ -35,7 +35,16 @@
 #include <stdio.h>
 #include <dev/usb/usb.h>
 #include <dev/usb/usbhid.h>
+
+#ifdef USB_GET_REPORT_ID
+#define USB_NEW_HID
+#endif
+
+#ifdef USB_NEW_HID
+#include <usbhid.h>
+#else
 #include <usb.h>
+#endif
 
 #include "Xos.h"
 
@@ -411,8 +420,10 @@ xf86USBTReadInput(LocalDevicePtr local)
 			break;
 		}
 	    
+#ifndef USB_NEW_HID
 		if (comm->reportId)
 			p++;
+#endif
 		ds.x = hid_get_data(p, &comm->hidX);
 		ds.y = hid_get_data(p, &comm->hidY);
 		ds.buttons = hid_get_data(p, &comm->hidBarrel_Switch) << 2;
@@ -657,6 +668,9 @@ xf86USBTOpen(LocalDevicePtr local)
 	hid_data_t     d;
 	hid_item_t     h;
 	report_desc_t rd;
+#ifdef USB_NEW_HID
+	int            r;
+#endif
     
 	DBG(1, ErrorF("opening %s\n", comm->devName));
 
@@ -667,6 +681,14 @@ xf86USBTOpen(LocalDevicePtr local)
 		return !Success;
 	}
 
+#ifdef USB_NEW_HID
+	SYSCALL(r = ioctl(local->fd, USB_GET_REPORT_ID, &comm->reportId));
+	if (r == -1) {
+		ErrorF("Error ioctl USB_GET_REPORT_ID on %s : %s\n", 
+		       comm->devName, strerror(errno));
+		return !Success;
+	}
+#endif
 
 	DBG(1, ErrorF("initializing tablet\n"));
     
@@ -685,7 +707,11 @@ xf86USBTOpen(LocalDevicePtr local)
 	memset(&comm->hidInvert, 0, sizeof (hid_item_t));
 	memset(&comm->hidTip_Pressure, 0, sizeof (hid_item_t));
 	memset(&comm->hidBarrel_Switch, 0, sizeof (hid_item_t));
+#ifdef USB_NEW_HID
+	for (d = hid_start_parse(rd, 1<<hid_input, comm->reportId); 
+#else
 	for (d = hid_start_parse(rd, 1<<hid_input); 
+#endif
 	     hid_get_item(d, &h); ) {
 		if (h.kind != hid_input || (h.flags & HIO_CONST))
 			continue;
@@ -707,7 +733,11 @@ xf86USBTOpen(LocalDevicePtr local)
 			comm->hidBarrel_Switch = h;
 	}
 	hid_end_parse(d);
+#ifdef USB_NEW_HID
+	comm->reportSize = hid_report_size(rd, hid_input, comm->reportId);
+#else
 	comm->reportSize = hid_report_size(rd, hid_input, &comm->reportId);
+#endif
 	hid_dispose_report_desc(rd);
 	if (comm->hidX.report_size == 0 ||
 	    comm->hidY.report_size == 0 ||
