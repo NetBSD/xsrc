@@ -1,10 +1,10 @@
-XCOMM $NetBSD: Imakefile,v 1.1 2004/01/18 05:21:41 rtr Exp $
+XCOMM $NetBSD: Imakefile,v 1.2 2005/02/04 18:37:26 tsutsui Exp $
 XCOMM
 XCOMM XConsortium: Imakefile,v 5.27 94/07/28 16:44:16 dpw Exp
 
 #include <Server.tmpl>
 
-SRCS = decInit.c \
+SRCS1 = decInit.c \
 	decFbs.c \
 	decIo.c \
 	decCursor.c \
@@ -13,9 +13,12 @@ SRCS = decInit.c \
 	decColormap.c \
 	decMouse.c
 
-OFILES = decInit.o
+SRCS2 = stubs.c
 
-OBJS =	decFbs.o \
+SRCS  = $(SRCS1) $(SRCS2)
+
+
+OBJS1 = decFbs.o \
 	decIo.o \
 	decCursor.o \
 	decKbd.o \
@@ -23,8 +26,13 @@ OBJS =	decFbs.o \
 	decColormap.o \
 	decMouse.o
 
-   INCLUDES = -I. -I$(SERVERSRC)/mfb -I$(SERVERSRC)/mi -I$(SERVERSRC)/cfb -I$(SERVERSRC)/mi \
-	      -I$(SERVERSRC)/include -I$(SERVERSRC)/os \
+OBJS2 = decInit.o \
+	stubs.o
+
+OBJS  = $(OBJS1)
+
+   INCLUDES = -I. -I$(SERVERSRC)/mfb -I$(SERVERSRC)/mi -I$(SERVERSRC)/cfb \
+	      -I$(SERVERSRC)/mi -I$(SERVERSRC)/include -I$(SERVERSRC)/os \
 	      -I$(XINCLUDESRC) -I$(EXTINCSRC)
 
 NormalLibraryObjectRule()
@@ -36,12 +44,13 @@ SUBDIRS = sfb cfb px mfb
 SUBDIRS += tga
 #endif
 
-all:: $(OFILES)
+all:: $(OBJS2)
 
 lintlib:
 
 NormalLibraryTarget(dec,$(OBJS))
 NormalLintTarget($(SRCS1))
+LinkSourceFile(stubs.c,../../../Xi)
 
 DependTarget()
 MakeSubdirs($(SUBDIRS))
