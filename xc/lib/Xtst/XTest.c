@@ -79,10 +79,10 @@ get_xinput_base(dpy)
     Display *dpy;
 {
     int major_opcode, first_event, first_error;
-    int *first_event = 0;	/* serious LP64 bug fixed here */
+    first_event = 0;
 
     XQueryExtension(dpy, INAME, &major_opcode, &first_event, &first_error);
-    return (XPointer)first_event;
+    return (XPointer)(long)first_event;
 }
 
 static XEXT_GENERATE_FIND_DISPLAY (find_display, xtest_info,
