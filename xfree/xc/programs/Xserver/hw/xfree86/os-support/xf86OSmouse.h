@@ -232,6 +232,7 @@ typedef struct _MouseDevRec {
     const char *	protocol;
     MouseProtocolID	protocolID;
     MouseProtocolID	oldProtocolID; /* hack */
+    int			xisbscale;	/* buffer size for 1 event */
     int			class;
     int			mseModel;
     int			baudRate;

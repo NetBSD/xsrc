@@ -511,6 +511,7 @@ wsconsPreInit(InputInfoPtr pInfo, const char *protocol, int flags)
 
     /* Setup the local input proc. */
     pInfo->read_input = wsconsReadInput;
+    pMse->xisbscale = sizeof(struct wscons_event);
 
     pInfo->flags |= XI86_CONFIGURED;
     return TRUE;
