@@ -111,6 +111,11 @@ pointer sunMemoryMap (len, off, fd)
     }
 #endif
 
+#ifndef MAP_FILE
+#define	MAP_FILE	0
+#endif
+
+#ifndef __NetBSD__
     /* 
      * try and make it private first, that way once we get it, an
      * interloper, e.g. another server, can't get this frame buffer,
@@ -118,11 +123,12 @@ pointer sunMemoryMap (len, off, fd)
      */
     if ((int)(mapaddr = (pointer) mmap (addr,
 		mapsize,
-		PROT_READ | PROT_WRITE, MAP_PRIVATE,
+		PROT_READ | PROT_WRITE, MAP_FILE | MAP_PRIVATE,
 		fd, off)) == -1)
+#endif /* __NetBSD__ */
 	mapaddr = (pointer) mmap (addr,
 		    mapsize,
-		    PROT_READ | PROT_WRITE, MAP_SHARED,
+		    PROT_READ | PROT_WRITE, MAP_FILE | MAP_SHARED,
 		    fd, off);
     if (mapaddr == (pointer) -1) {
 	Error ("mapping frame buffer memory");
