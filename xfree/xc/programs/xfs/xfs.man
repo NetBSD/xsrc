@@ -62,7 +62,7 @@ private font servers for specific sets of fonts.
 .TP 8
 .B \-config configuration_file
 Specifies the configuration file the font server will use.  If this
-parameter is not specified, the default file, \fI/usr/X11R6/lib/X11/fs/config\fR
+parameter is not specified, the default file, \fI\&DEFAULT_CONFIG_FILE\fR
 will be used.
 .TP 8
 .B \-ls listen_socket
@@ -186,9 +186,9 @@ XCOMM where to look for fonts
 XCOMM the first is a set of Speedo outlines, the second is a set of 
 XCOMM misc bitmaps and the last is a set of 100dpi bitmaps
 XCOMM
-catalogue = /usr/X11R6/lib/X11/fonts/speedo,
-	/usr/X11R6/lib/X11/fonts/misc,
-	/usr/X11R6/lib/X11/fonts/100dpi/
+catalogue = __projectroot__/lib/X11/fonts/speedo,
+	__projectroot__/lib/X11/fonts/misc,
+	__projectroot__/lib/X11/fonts/100dpi/
 
 XCOMM in 12 points, decipoints
 default-point-size = 120
