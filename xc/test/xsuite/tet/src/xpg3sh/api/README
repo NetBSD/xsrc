@@ -1,0 +1,43 @@
+The files in this directory constitute release 1.9 of the Test Environment
+Toolkit (TET) Application Programming Interface (API), Shell language binding.
+
+The files are shell scripts written for use with a Shell command interpreter
+that conforms to the sh specification in Volume 1 of the X/OPEN Portability
+Guide Issue 3.  An example of this might be a Bourne Shell that includes
+support for shell functions.  In addition certain common utilities are
+used; attempts have been made to avoid utilities and/or features that may
+vary between implementations.
+
+After running make the following files are available in the directory
+$(TET_ROOT)/lib/xpg3sh for use with applications:
+
+	tcm.sh		Shell Test Case Manager
+
+	tetapi.sh	Shell API support routines.
+
+
+Note - Signal Handling.
+The Shell API requires a configuration variable TET_NSIG which should be
+set to one greater than the highest signal that may be handled by the
+Shell.  This may be specified in the configuration file or as an
+environment variable.
+
+Since signals are specified in the Shell by means of numbers rather than
+symbolic names, it will be necessary to inspect the lists of signals
+in the makefile and check that they are correct for your implementation.
+
+In addition, it should be noted that the Shell may not know about all the
+signals that may occur in a particular implementation and attempts to
+handle unknown signals are often treated as fatal errors.  Such signal
+numbers must be added to the list of unhandled signals.
+
+
+Note - Awk.
+In order to fulfill the requirements of the Shell API Specification, the
+awk utility has been used to format lines in the Results file.  It should
+be noted that some awk implementations are limited in their capacity to
+handle long lines; if this is the case, it will limit the length of a line
+that may be passed to tet_infoline or tet_result.
+
+--
+End of README.

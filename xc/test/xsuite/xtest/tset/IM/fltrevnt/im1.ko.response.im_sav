@@ -1,0 +1,24 @@
+# Response file, im1.ko.response.im_sav, saved automatically
+VERSION 11.0
+X_RELEASE 3200
+PREEDIT_STYLE  CALLBACK
+STATUS_STYLE   CALLBACK
+
+     RESPONSE {
+         STATUS_START
+         STATUS_DRAW {
+             TYPE 0
+             DATA {
+                 LENGTH 4
+                 IS_WCHAR 0
+                 FEEDBACK {
+                     0x80 0x00 0x00 0x00 
+                 }
+                 STRING {
+                     0xa1 0xb8 0xbf 0xb5 
+                 }
+
+             }
+         }
+     }
+

@@ -1,0 +1,28 @@
+.\"Copyright 1990 Open Software Foundation (OSF
+.\"Copyright 1990 Unix International (UI)
+.\"Copyright 1990 X/Open Company Limited (X/Open)
+.TH tet_ins "1"
+.SH NAME
+tet_ins \- Provides a test suite supplied installation tool.
+.SH "SYNOPSIS"
+\fBtet_ins\fR
+.I Suite_name
+.SH "DESCRIPTION"
+The
+.B tet_ins
+utility causes the test suite provided installation tool (indicated by
+the argument
+.I Suite_name)
+to be executed. After execution, all TET required data files are
+checked to ensure that they are syntactically reasonable. Note that
+this utility does not attempt to move the test suite into the file
+system. It is the responsibility of the user to ensure that the test
+suite has been loaded under the main TET directory.
+.SH "OPTIONS"
+None.
+.SH "OPERANDS"
+.TP 15
+.I Suite_name
+The name of the test suite to be installed.
+.SH RELEASE
+1.9 (03/09/92)

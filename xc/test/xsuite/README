@@ -1,0 +1,31 @@
+$XConsortium: README /main/6 1996/02/07 17:46:30 matt $
+
+This file describes the software in X11 Release 6.1 of the
+Xlib and X Protocol Test Suite from the X Consortium.
+
+The main directories to be aware of initially are:
+
+xtest/doc - This contains the documentation. It contains a user guide,
+programmers guide and release notes. These are supplied in troff(1)
+format requiring the mm macro package, and also in PostScript format.
+You should look at the release notes and the user guide before
+attempting to install and build the test suite.
+
+xtest - This contains the tests included in the X Test Suite
+which are stored as a complete TET test suite. This includes all
+necessary configuration files and scenario files to enable you to use
+the X test suite following the instructions in the documentation.
+
+tet - This contains the source files and include files needed to build 
+the Test Environment Toolkit (TET).
+
+Please note that this test suite tests functionality up through X11R4, 
+and has not been generally upgraded to test new functionality added since
+then.  As of X11R6.1, this test suite is considered unsupported software 
+by X Consortium Inc, and no further development is planned.
+
+For those who require a more up-to-date test suite with available support, 
+X/Open Company Ltd. offers VSW5, a successor to the X Consortium Test Suite.
+VSW5 includes many bug fixes and a large number of new tests for Xt and 
+for new R5 functionality.  R6 tests are planned for the future.  Refer
+to http://www.xopen.org/public/test/vsw45.htm for more information.

@@ -1,0 +1,5 @@
+! $XConsortium: Xdefaults,v 1.2 92/06/30 17:31:57 rws Exp $
+XTest.testval31:VAL_a
+XTest.testval32:VAL_b
+XTest.testval33:VAL_c
+XTest.testval57:VAL_d

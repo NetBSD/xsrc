@@ -1,0 +1,18 @@
+XCOMM $XConsortium: Imakefile /main/4 1995/12/16 16:26:22 gildea $
+
+#if !defined(HPArchitecture) && !(defined(SunArchitecture) && defined(SVR4Architecture))
+         USLEEP = -DHAS_USLEEP
+#endif
+
+XCOMM Run with non-installed library.  This program tests the library.
+      CCENVSETUP = LD_RUN_PATH=$(BUILDLIBDIR)
+
+           SRCS = rcrdtest.c
+           OBJS = rcrdtest.o
+
+       PROGRAMS = rcrdtest
+LOCAL_LIBRARIES = $(XTESTLIB) $(XLIB)
+        DEPLIBS = $(DEPXTESTLIB) $(DEPXLIB)
+        DEFINES = $(USLEEP)
+
+ComplexProgramTarget(rcrdtest)
