@@ -111,7 +111,11 @@ BOOTSTRAPCFLAGS =
    KRB5_DEFINES = Krb5Defines
  XALLOC_DEFINES = XallocDefines
   ERROR_DEFINES = ServerErrorDefines
+#ifdef HasArc4random
  RANDOM_DEFINES = -DHAVE_ARC4RANDOM
+#else
+ RANDOM_DEFINES =
+#endif
 #if HasPam && HasPamMisc
     PAM_DEFINES = -DUSE_PAM
 #endif
