@@ -1501,8 +1501,8 @@ DbeSetupBackgroundPainter(pWin, pGC)
         case BackgroundPixmap:
             gcvalues[0] = (pointer)FillTiled;
             gcvalues[1] = (pointer)background.pixmap;
-            gcvalues[2] = (pointer)ts_x_origin;
-            gcvalues[3] = (pointer)ts_y_origin;
+            gcvalues[2] = (pointer)(long)ts_x_origin;
+            gcvalues[3] = (pointer)(long)ts_y_origin;
             gcmask = GCFillStyle|GCTile|GCTileStipXOrigin|GCTileStipYOrigin;
             break;
 
