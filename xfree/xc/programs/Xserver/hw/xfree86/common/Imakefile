@@ -49,6 +49,11 @@ XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/common/Imakefile,v 3.148 2003/02/
  XF86_XINPUT_OBJ = xf86Xinput.o xisb.o
 #endif
 
+#if BuildXF86DGA
+XF86_DGA_SRC = xf86DGA.c
+XF86_DGA_OBJ = xf86DGA.o
+#endif
+
 #if BuildRandR
  RANDRINCS = -I../../../randr
   RANDRSRC = xf86RandR.c
@@ -97,7 +102,6 @@ SRCS =	\
 	xf86IniExt.c \
 	xf86Config.c \
 	xf86Cursor.c \
-	xf86DGA.c \
 	xf86DPMS.c \
 	xf86DefModeSet.c \
 	xf86DoProbe.c \
@@ -121,6 +125,7 @@ SRCS =	\
 	$(SBUSSRC) \
 	$(XF86_XINPUT_SRC) \
 	$(XINPUT_DEV_SRCS) \
+	$(XF86_DGA_SRC) \
 	$(XKBDDXSRC) \
 	$(BETASRC) \
 	$(SERVERSRCS) \
@@ -135,7 +140,6 @@ OBJS = \
 	xf86noBus.o \
 	xf86Config.o \
 	xf86Cursor.o \
-	xf86DGA.o \
 	xf86DPMS.o \
 	xf86DefModeSet.o \
 	xf86DoProbe.o \
@@ -156,6 +160,7 @@ OBJS = \
 	$(DEBUGOBJ) \
 	$(SBUSOBJ) \
 	$(XF86_XINPUT_OBJ) \
+	$(XF86_DGA_OBJ) \
 	$(XKBDDXOBJ) \
 	$(BETAOBJ) \
 	$(KBD).o \
