@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bsd/ppc_video.c,v 1.3 2002/11/09 17:28:08 herrb Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bsd/ppc_video.c,v 1.6 2003/10/07 23:14:55 herrb Exp $ */
 /*
  * Copyright 1992 by Rich Murphey <Rich@Rice.edu>
  * Copyright 1993 by David Wexelblat <dwex@goblin.org>
@@ -44,7 +44,11 @@
 /* Video Memory Mapping section                                            */
 /***************************************************************************/
 
+#ifndef __OpenBSD__
 #define DEV_MEM "/dev/mem"
+#else
+#define DEV_MEM "/dev/xf86"
+#endif
 
 static pointer ppcMapVidMem(int, unsigned long, unsigned long, int flags);
 static void ppcUnmapVidMem(int, pointer, unsigned long);
@@ -71,9 +75,12 @@ ppcMapVidMem(int ScreenNum, unsigned long Base, unsigned long Size, int flags)
 		    Base, Size, fd);
 #endif
 
-	base = mmap(0, Size, PROT_READ|PROT_WRITE, MAP_SHARED, fd, Base);
+	base = mmap(0, Size,
+		    (flags & VIDMEM_READONLY) ?
+		     PROT_READ : (PROT_READ | PROT_WRITE),
+		    MAP_SHARED, fd, Base);
 	if (base == MAP_FAILED)
-		FatalError("%s: could not mmap screen [s=%x,a=%x] (%s)\n",
+		FatalError("%s: could not mmap screen [s=%x,a=%x] (%s)",
 			   "xf86MapVidMem", Size, Base, strerror(errno));
 
 	return base;
@@ -95,7 +102,7 @@ xf86ReadBIOS(unsigned long Base, unsigned long Offset, unsigned char *Buf,
 	if (kmem == -1) {
 		kmem = open(DEV_MEM, 2);
 		if (kmem == -1) {
-			FatalError("xf86ReadBIOS: open %s\n", DEV_MEM);
+			FatalError("xf86ReadBIOS: open %s", DEV_MEM);
 		}
 	}
 

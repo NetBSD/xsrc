@@ -31,7 +31,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/font/fc/fslibos.h,v 3.7.2.2 2003/09/01 21:05:37 herrb Exp $ */
+/* $XFree86: xc/lib/font/fc/fslibos.h,v 3.9 2003/09/01 20:50:44 herrb Exp $ */
 
 /*
  * FSlib networking & os include file

@@ -24,7 +24,7 @@
  * ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS 
  * SOFTWARE.
  */
-/* $XFree86: xc/lib/FS/FSOpenServ.c,v 1.6.4.2 2003/09/01 21:05:36 herrb Exp $ */
+/* $XFree86: xc/lib/FS/FSOpenServ.c,v 1.9 2003/12/22 17:48:02 tsi Exp $ */
 
 /*
 
@@ -163,14 +163,20 @@ FSOpenServer(server)
     _FSRead(svr, (char *) alt_data, setuplength);
     ad = alt_data;
 
+#if SIZE_MAX <= UINT_MAX
     if (prefix.num_alternates > SIZE_MAX / sizeof(AlternateServer)) {
 	errno = ENOMEM;
+	FSfree((char *) alt_data);
+	FSfree((char *) svr);
 	return (FSServer *) 0;
     }
+#endif
+
     alts = (AlternateServer *)
 	FSmalloc(sizeof(AlternateServer) * prefix.num_alternates);
     if (!alts) {
 	errno = ENOMEM;
+	FSfree((char *) alt_data);
 	FSfree((char *) svr);
 	return (FSServer *) 0;
     }
@@ -198,10 +204,11 @@ FSOpenServer(server)
     svr->num_alternates = prefix.num_alternates;
 
     setuplength = prefix.auth_len << 2;
-    if (prefix.auth_len > (SIZE_MAX>>2) 
+    if (setuplength > (SIZE_MAX>>2) 
 	|| (auth_data = (char *)
 	 (setup = FSmalloc((unsigned) setuplength))) == NULL) {
 	errno = ENOMEM;
+	FSfree((char *) alts);
 	FSfree((char *) svr);
 	return (FSServer *) NULL;
     }
@@ -210,6 +217,7 @@ FSOpenServer(server)
     if (prefix.status != AuthSuccess) {
 	fprintf(stderr, "%s: connection to \"%s\" refused by server\r\n%s: ",
 		"FSlib", server, "FSlib");
+	FSfree((char *) alts);
 	FSfree((char *) svr);
 	FSfree(setup);
 	return (FSServer *) NULL;
@@ -220,6 +228,8 @@ FSOpenServer(server)
     if ((vendor_string = (char *)
 	 FSmalloc((unsigned) conn.vendor_len + 1)) == NULL) {
 	errno = ENOMEM;
+	FSfree((char *) auth_data);
+	FSfree((char *) alts);
 	FSfree((char *) svr);
 	return (FSServer *) NULL;
     }
@@ -276,4 +286,3 @@ FSOpenServer(server)
 
     return (svr);
 }
-

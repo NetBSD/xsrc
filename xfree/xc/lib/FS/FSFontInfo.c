@@ -23,6 +23,7 @@
  * ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS 
  * SOFTWARE.
  */
+/* $XFree86: xc/lib/FS/FSFontInfo.c,v 1.6 2003/12/22 17:48:02 tsi Exp $ */
 
 /*
 
@@ -243,8 +244,10 @@ FSListFontsWithXInfo(svr, pattern, maxNames, count, info, pprops, offsets, prop_
 	pi[i]->num_offsets = local_pi.num_offsets;
 	pi[i]->data_len = local_pi.data_len;
 
+#if SIZE_MAX <= UINT_MAX
 	if (pi[i]->num_offsets > SIZE_MAX / sizeof(FSPropOffset))
 	    goto badmem;
+#endif
 
 	po[i] = (FSPropOffset *)
 	    FSmalloc(pi[i]->num_offsets * sizeof(FSPropOffset));

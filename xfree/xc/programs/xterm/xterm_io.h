@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/programs/xterm/xterm_io.h,v 1.10 2003/03/23 02:01:41 dickey Exp $
+ * $XFree86: xc/programs/xterm/xterm_io.h,v 1.13 2004/01/07 04:28:07 dawes Exp $
  */
 
 /*
@@ -68,13 +68,22 @@
 #define USE_TERMIOS
 #endif
 
+#ifdef SCO325
+#define USE_TERMIOS
+#define _SVID3
+#endif
+
 #ifdef Lynx
 #define USE_SYSV_TERMIO
 #endif
 
 #ifdef macII
-#undef SYSV				/* pretend to be bsd (sgtty.h) */
+#undef SYSV			/* pretend to be bsd (sgtty.h) */
 #endif /* macII */
+
+#if defined(__GLIBC__) && !defined(linux)
+#define USE_POSIX_TERMIOS	/* GNU/Hurd, GNU/KFreeBSD and GNU/KNetBSD */
+#endif
 
 #ifdef __MVS__
 #define SVR4

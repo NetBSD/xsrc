@@ -22,7 +22,7 @@
  *
  * Author:  	Dave Lemke, Network Computing Devices, Inc
  */
-/* $XFree86: xc/lib/font/fc/fsconvert.c,v 1.11.2.3 2003/09/01 21:05:37 herrb Exp $ */
+/* $XFree86: xc/lib/font/fc/fsconvert.c,v 1.15 2003/09/01 20:50:43 herrb Exp $ */
 /*
  * FS data conversion
  */
@@ -356,11 +356,9 @@ _fs_clean_aborted_loadglyphs(FontPtr pfont, int num_expected_ranges,
 			     fsRange *expected_ranges)
 {
     register FSFontPtr fsfont;
-    register FSFontDataRec *fsd;
     register int i;
 
     fsfont = (FSFontPtr) pfont->fontPrivate;
-    fsd = (FSFontDataRec *) pfont->fpePrivate;
     if (fsfont->encoding)
     {
 	fsRange full_range[1];
@@ -451,7 +449,6 @@ _fs_get_glyphs(FontPtr pFont, unsigned long count, unsigned char *chars,
     CharInfoPtr encoding;
     CharInfoPtr pDefault;
     FSFontDataPtr fsd = (FSFontDataPtr) pFont->fpePrivate;
-    int         itemSize;
     int         err = Successful;
 
     fsdata = (FSFontPtr) pFont->fontPrivate;
@@ -460,12 +457,6 @@ _fs_get_glyphs(FontPtr pFont, unsigned long count, unsigned char *chars,
     firstCol = pFont->info.firstCol;
     numCols = pFont->info.lastCol - firstCol + 1;
     glyphsBase = glyphs;
-
-
-    if (charEncoding == Linear8Bit || charEncoding == TwoD8Bit)
-	itemSize = 1;
-    else
-	itemSize = 2;
 
     /* In this age of glyph caching, any glyphs gotten through this
        procedure should already be loaded.  If they are not, we are
@@ -568,7 +559,6 @@ _fs_get_metrics(FontPtr pFont, unsigned long count, unsigned char *chars,
     unsigned int r;
     CharInfoPtr encoding;
     CharInfoPtr pDefault;
-    int         itemSize;
 
     fsdata = (FSFontPtr) pFont->fontPrivate;
     encoding = fsdata->inkMetrics;
@@ -583,11 +573,6 @@ _fs_get_metrics(FontPtr pFont, unsigned long count, unsigned char *chars,
 
     /* XXX - this should be much smarter */
     /* make sure the glyphs are there */
-    if (charEncoding == Linear8Bit || charEncoding == TwoD8Bit)
-	itemSize = 1;
-    else
-	itemSize = 2;
-
     switch (charEncoding) {
 
     case Linear8Bit:
