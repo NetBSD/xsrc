@@ -1,4 +1,4 @@
-/* $NetBSD: decColormap.c,v 1.1 2001/09/18 20:02:51 ad Exp $ */
+/* $NetBSD: decColormap.c,v 1.2 2002/12/29 19:57:58 ad Exp $ */
 
 /* $XConsortium: sunCfb.c,v 1.15.1.2 95/01/12 18:54:42 kaleb Exp $ */
 /* $XFree86: xc/programs/Xserver/hw/sun/sunCfb.c,v 3.2 1995/02/12 02:36:22 dawes Exp $ */
@@ -102,10 +102,8 @@ void decUpdateColormap(pScreen, dex, count, rmap, gmap, bmap)
     decCmap.green = &gmap[dex];
     decCmap.blue = &bmap[dex];
 
-    if (ioctl(decFbs[pScreen->myNum].fd, WSDISPLAYIO_PUTCMAP, &decCmap) < 0) {
-	Error("CGUpdateColormap");
-	FatalError( "CGUpdateColormap: FBIOPUTCMAP failed\n" );
-    }
+    if (ioctl(decFbs[pScreen->myNum].fd, WSDISPLAYIO_PUTCMAP, &decCmap) < 0)
+	Error("ioctl(WSDISPLAYIO_PUTCMAP) fails");
 }
 
 void decInstallColormap(cmap)
