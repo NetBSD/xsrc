@@ -81,6 +81,14 @@ static void handle_sigio(
 	mac68k_enqevents();
 }
 
+void OsVendorPreInit(
+#if NeedFunctionPrototypes
+    void
+#endif
+)
+{
+}
+
 #if MAC68K_IOHACK
 void OsVendorInit(
 #if NeedFunctionPrototypes
