@@ -1,4 +1,4 @@
-/* $XdotOrg: pre-CVS proposed fix for CESA-2004-003 alanc 7/25/2004 $ */
+/* $XdotOrg: xc/extras/Xpm/lib/parse.c,v 1.4 2004/11/25 21:19:11 herrb Exp $ */
 /*
  * Copyright (C) 1989-95 GROUPE BULL
  *
@@ -23,7 +23,7 @@
  * used in advertising or otherwise to promote the sale, use or other dealings
  * in this Software without prior written authorization from GROUPE BULL.
  */
-/* $XFree86: xc/extras/Xpm/lib/parse.c,v 1.6 2004/11/18 21:30:51 herrb Exp $ */
+/* $XFree86: xc/extras/Xpm/lib/parse.c,v 1.2 2000/09/26 15:56:43 tsi Exp $ */
 
 /*****************************************************************************\
 * parse.c:                                                                    *
@@ -34,7 +34,7 @@
 *                                                                             *
 *  Developed by Arnaud Le Hors                                                *
 \*****************************************************************************/
-/* $XFree86: xc/extras/Xpm/lib/parse.c,v 1.6 2004/11/18 21:30:51 herrb Exp $ */
+/* $XFree86$ */
 
 /*
  * The code related to FOR_MSW has been added by

@@ -31,14 +31,12 @@
 *                                                                             *
 *  Developed by Arnaud Le Hors                                                *
 \*****************************************************************************/
-/* $XFree86: xc/extras/Xpm/lib/WrFFrI.c,v 1.4 2004/11/18 21:30:51 herrb Exp $ */
+/* $XFree86$ */
 
 /*
  * The code related to AMIGA has been added by
  * Lorens Younes (d93-hyo@nada.kth.se) 4/96
  */
-
-/* October 2004, source code review by Thomas Biege <thomas@suse.de> */
 
 #include "XpmI.h"
 
@@ -128,7 +126,7 @@ XpmWriteFileFromXpmImage(filename, image, info)
 	/* let's try to make a valid C syntax name */
 	if (index(name, '.')) {
 	    strncpy(new_name, name, sizeof(new_name));
-	    new_name[sizeof(new_name)-1] = 0;
+	    new_name[sizeof(new_name)-1] = '\0';
 	    /* change '.' to '_' */
 	    name = s = new_name;
 	    while ((dot = index(s, '.'))) {
@@ -138,8 +136,7 @@ XpmWriteFileFromXpmImage(filename, image, info)
 	}
 	if (index(name, '-')) {
 	    if (name != new_name) {
-		strncpy(new_name, name, sizeof(new_name));
-		new_name[sizeof(new_name)-1] = 0;
+		strcpy(new_name, name);
 		name = new_name;
 	    }
 	    /* change '-' to '_' */
@@ -256,7 +253,7 @@ WritePixels(file, width, height, cpp, pixels, colors)
     unsigned int x, y, h;
 
     h = height - 1;
-    if (cpp != 0 && width >= (UINT_MAX - 3)/cpp)
+    if (cpp != 0 && width >= (UINT_MAX - 3)/cpp) 
 	return XpmNoMemory;    
     p = buf = (char *) XpmMalloc(width * cpp + 3);
     if (!buf)
@@ -316,11 +313,6 @@ FUNC(xpmPipeThrough, FILE*, (int fd,
 /*
  * open the given file to be written as an xpmData which is returned
  */
-#ifndef NO_ZPIPE
-	FILE *s_popen(char *cmd, const char *type);
-#else
-#	define s_popen popen
-#endif
 static int
 OpenWriteFile(filename, mdata)
     char *filename;
@@ -331,25 +323,18 @@ OpenWriteFile(filename, mdata)
 	mdata->type = XPMFILE;
     } else {
 #ifndef NO_ZPIPE
-	size_t len = strlen(filename);
-
-	if(len == 0                        ||
-	   filename[0] == '/'              ||
-	   strstr(filename, "../") != NULL ||
-	   filename[len-1] == '/')
-		return(XpmOpenFailed);
-
+	size_t len;
+#endif
+	int fd = open(filename, O_WRONLY|O_CREAT|O_TRUNC, 0644);
+	if ( fd < 0 )
+	    return(XpmOpenFailed);
+#ifndef NO_ZPIPE
+	len = strlen(filename);
 	if (len > 2 && !strcmp(".Z", filename + (len - 2))) {
-	    snprintf(buf, sizeof(buf), "compress > \"%s\"", filename);
-	    if (!(mdata->stream.file = s_popen(buf, "w")))
-		return (XpmOpenFailed);
-
+	    mdata->stream.file = xpmPipeThrough(fd, "compress", NULL, "w");
 	    mdata->type = XPMPIPE;
 	} else if (len > 3 && !strcmp(".gz", filename + (len - 3))) {
-	    snprintf(buf, sizeof(buf), "gzip -q > \"%s\"", filename);
-	    if (!(mdata->stream.file = s_popen(buf, "w")))
-		return (XpmOpenFailed);
-
+	    mdata->stream.file = xpmPipeThrough(fd, "gzip", "-q", "w");
 	    mdata->type = XPMPIPE;
 	} else
 #endif
@@ -370,16 +355,7 @@ static void
 xpmDataClose(mdata)
     xpmData *mdata;
 {
-    switch (mdata->type) {
-    case XPMFILE:
-	if (mdata->stream.file != (stdout))
-	    fclose(mdata->stream.file);
-	break;
-#ifndef NO_ZPIPE
-    case XPMPIPE:
+    if (mdata->stream.file != (stdout))
 	fclose(mdata->stream.file);
-	break;
-#endif
-    }
 }
 
