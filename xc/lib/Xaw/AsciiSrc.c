@@ -1065,7 +1065,7 @@ Boolean newString;
     }
     
     if (!src->ascii_src.is_tempfile) {
-	if ((fd = open(src->ascii_src.string, open_mode, 0666))) {
+	if ((fd = open(src->ascii_src.string, open_mode, 0666)) != -1) {
 	    if ((file = fdopen(fd, fdopen_mode)) != NULL) {
 		(void)fseek(file, 0, SEEK_END);
 		src->ascii_src.length = (XawTextPosition)ftell(file);
