@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xf86config/xf86config.c,v 3.37.2.11 1999/06/21 09:45:22 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xf86config/xf86config.c,v 3.37.2.16 1999/08/17 07:39:39 hohndel Exp $ */
 
 /*
  * This is a configuration program that will create a base XF86Config
@@ -139,9 +139,9 @@
  * may be more irritated than Unix users
  */
 #ifndef __EMX__
-#define TREEROOT "/usr/X11R6"
-#define TREEROOTLX "/usr/X11R6/lib/X11"
-#define MODULEPATH "/usr/X11R6/lib/modules"
+#define TREEROOT PROJECTROOT
+#define TREEROOTLX USRLIBDIR"/X11"
+#define MODULEPATH USRLIBDIR"/modules"
 #else
 #define TREEROOT "/XFree86"
 #define TREEROOTLX "/XFree86/lib/X11"
@@ -313,6 +313,7 @@ void getstring(s)
  *
  * (hv) OS/2 (__EMX__) only has an OS supported mouse, so user has no options
  * the server will enable a third button automatically if there is one
+ * We also do the same for QNX4, since we use the OS mouse drivers.
  */
 
 static char *mousetype_identifier[12] = {
@@ -327,7 +328,7 @@ static char *mousetype_identifier[12] = {
 	"IntelliMouse",
 	"acecad",
 	"wsmouse",
-#ifdef __EMX__
+#if defined(__EMX__) || (defined(__QNX__) && !defined(__QNXNTO__))
 	"OSMOUSE"
 #endif
 };
@@ -399,7 +400,7 @@ static char *mousemancomment_text =
 
 void mouse_configuration() {
 
-#ifndef __EMX__
+#if !defined(__EMX__) && !(defined(__QNX__) && !defined(__QNXNTO__))
 	int i;
 	char s[80];
 	printf("%s", mouseintro_text);
@@ -503,7 +504,11 @@ void mouse_configuration() {
 	config_chordmiddle = 0;       
 	config_cleardtrrts = 0;
 	config_emulate3buttons = 0;
+#ifndef __QNX__
 	config_pointerdevice = "OS2MOUSE";
+#else
+	config_pointerdevice = "QNXMOUSE";
+#endif
 #endif /* __EMX__ */
 }
 
@@ -873,8 +878,8 @@ static char *monitortype_range[NU_MONITORTYPES] = {
 	"31.5 - 48.5",
 	"31.5 - 57.0",
 	"31.5 - 64.3",
-	"31.5 - 79.0",
-	"31.5 - 82.0"
+	"31.5 - 82.0",
+	"31.5 - 95.0"
 };
 
 static char *monitortype_name[NU_MONITORTYPES] = {
@@ -886,8 +891,8 @@ static char *monitortype_name[NU_MONITORTYPES] = {
 	"Non-Interlaced SVGA, 1024x768 @ 60 Hz, 800x600 @ 72 Hz",
 	"High Frequency SVGA, 1024x768 @ 70 Hz",
 	"Monitor that can do 1280x1024 @ 60 Hz",
-	"Monitor that can do 1280x1024 @ 74 Hz",
-	"Monitor that can do 1280x1024 @ 76 Hz"
+	"Monitor that can do 1280x1024 @ 76 Hz",
+	"Monitor that can do 1280x1024 @ 85 Hz"
 };
 
 void monitor_configuration() {
@@ -1170,7 +1175,7 @@ CONFIGNAME " (vga2, vga16, svga, accel).\n"
 #ifndef __EMX__
 static char *screenlink_text =
 "The server to run is selected by changing the symbolic link 'X'. For example,\n"
-"'rm /usr/X11R6/bin/X; ln -s /usr/X11R6/bin/XF86_SVGA /usr/X11R6/bin/X' selects\n"
+"'rm " TREEROOT "/bin/X; ln -s " TREEROOT "/bin/XF86_SVGA " TREEROOT "/bin/X' selects\n"
 "the SVGA server.\n"
 "\n";
 
@@ -1521,14 +1526,35 @@ void screen_configuration() {
 			case 3 : servername = "XF86_SVGA"; break;
 			}
 		if (varlink) {
+#if !(defined(__QNX__) && !defined(__QNXNTO__))
 			system("rm -f /var/X11R6/bin/X");
-			sprintf(s, "ln -s /usr/X11R6/bin/%s /var/X11R6/bin/X",
+			sprintf(s, "ln -s " TREEROOT "/bin/%s /var/X11R6/bin/X",
 				servername);
+#else
+			/* On QNX, set link as X.nid */
+			char link_path[256];
+			sprintf(link_path, "rm -f /var/X11R6/bin/X.%d", getnid());
+			system(link_path);
+			sprintf(link_path, "/var/X11R6/bin/X.%d", getnid());
+			sprintf(s, "ln -s " TREEROOT "/bin/%s %s",
+				servername, link_path);
+#endif
+
 		}
 		else {
-			system("rm -f /usr/X11R6/bin/X");
-			sprintf(s, "ln -s /usr/X11R6/bin/%s /usr/X11R6/bin/X",
+#if !(defined(__QNX__) && !defined(__QNXNTO__))
+			system("rm -f " TREEROOT "/bin/X");
+			sprintf(s, "ln -s " TREEROOT "/bin/%s " TREEROOT "/bin/X",
 				servername);
+#else
+			/* On QNX, set link as X.nid */
+			char link_path[256];
+			sprintf(link_path, "rm -f " TREEROOT "/bin/X.%d", getnid());
+			system(link_path);
+			sprintf(link_path, TREEROOT "/bin/X.%d", getnid());
+			sprintf(s, "ln -s " TREEROOT "/bin/%s %s",
+				servername, link_path);
+#endif
 		}
 		system(s);
 	}
@@ -1866,8 +1892,13 @@ skipramdacselection:
 #endif
 		/* compose a line with the real path */
 #ifndef __EMX__
+#if !(defined(__QNX__) && !defined(__QNXNTO__))
 		sprintf(syscmdline, "X -probeonly -pn -xf86config %s 2> %s",
 			fname, d2name);
+#else
+		sprintf(syscmdline, "X.%d -probeonly -pn -xf86config %s 2> %s",
+			getnid(), fname, d2name);
+#endif /* QNX */
 #else
 		/* OS/2 does not have symlinks, so "X" does not exist,
 		 * call the real X server
@@ -2636,7 +2667,7 @@ void write_XF86Config(filename)
 	fprintf(f, "%s", pointersection_text1);
 	fprintf(f, "    Protocol    \"%s\"\n",
 		mousetype_identifier[config_mousetype]);
-#ifndef __EMX__
+#if !defined(__EMX__) && !(defined(__QNX__) && !defined(__QNXNTO__))
 	fprintf(f, "    Device      \"%s\"\n", config_pointerdevice);
 #endif
 	fprintf(f, "%s", pointersection_text2);
@@ -2950,24 +2981,58 @@ char *ask_XF86Config_location() {
 "overwrite a previously configured one.\n\n");
 
 #ifndef __EMX__
+#if !(defined(__QNX__) && !defined(__QNXNTO__))
 	if (getuid() == 0) {
+#else  /* DIsable this for now */
+	if(1) {
+#endif
 #ifdef PREFER_XF86CONFIG_IN_ETC
+#if !(defined(__QNX__) && !defined(__QNXNTO__))
 		printf("Shall I write it to /etc/XF86Config? ");
+#else
+		printf("Shall I write it to /etc/config/X11/XF86Config.%d? ", 
+			getnid());
+#endif
 		getstring(s);
 		printf("\n");
 		if (answerisyes(s))
+#if !(defined(__QNX__) && !defined(__QNXNTO__))
 			return "/etc/XF86Config";
+#else
+			/* In QNX, use XF86Config.nid for filename */
+			{
+			filename = (char *) malloc (64); /* Leave enough room */
+			sprintf(filename, "/etc/config/X11/XF86Config.%d", 
+				getnid());
+			return(filename);
+			}
+#endif
+
 #endif
 
 		printf("Please answer the following question with either 'y' or 'n'.\n");
-		printf("Shall I write it to the default location, /usr/X11R6/lib/X11/XF86Config? ");
+#if !(defined(__QNX__) && !defined(__QNXNTO__))
+		printf("Shall I write it to the default location, " TREEROOTLX "/XF86Config? ");
+#else
+		printf("Shall I write it to the default location, " TREEROOTLX "/XF86Config.%d? ", getnid());
+#endif
 		getstring(s);
 		printf("\n");
 		if (answerisyes(s))
-			return "/usr/X11R6/lib/X11/XF86Config";
-
-#ifndef PREFER_XF86CONFIG_IN_ETC
-		printf("Shall I write it to /etc/XF86Config? ");
+#if !(defined(__QNX__) && !defined(__QNXNTO__))
+			return TREEROOTLX "/XF86Config";
+#else
+			/* In QNX, use XF86Config.nid for filename */
+			{
+			filename = (char *) malloc (64); /* Leave enough room */
+			sprintf(filename, TREEROOTLX "/XF86Config.%d", 
+				getnid());
+			return(filename);
+			}
+#endif
+  
+  #ifndef PREFER_XF86CONFIG_IN_ETC
+  		printf("Shall I write it to /etc/XF86Config? ");
 		getstring(s);
 		printf("\n");
 		if (answerisyes(s))
@@ -3030,7 +3095,7 @@ static char *oldxfree86_text =
 static char *pathnote_text =	
 "Note that the X binary directory in your path may be a symbolic link.\n"
 "In that case you could modify the symbolic link to point to the new binaries.\n"
-"Example: 'rm -f /usr/bin/X11; ln -s /usr/X11R6/bin /usr/bin/X11', if the\n"
+"Example: 'rm -f /usr/bin/X11; ln -s " TREEROOT "/bin /usr/bin/X11', if the\n"
 "link is '/usr/bin/X11'.\n"
 "\n"
 "Make sure the path is OK before continuing.\n";

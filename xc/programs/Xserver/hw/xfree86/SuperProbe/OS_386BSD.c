@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/OS_386BSD.c,v 3.10.2.3 1999/06/17 16:23:59 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/OS_386BSD.c,v 3.10.2.4 1999/07/30 11:21:15 hohndel Exp $ */
 /*
  * (c) Copyright 1993,1994 by David Dawes <dawes@xfree86.org>
  *

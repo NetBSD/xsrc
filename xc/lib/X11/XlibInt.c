@@ -29,7 +29,7 @@ from the X Consortium.
 
 */
 
-/* $XFree86: xc/lib/X11/XlibInt.c,v 3.9.2.2 1998/05/18 14:08:39 dawes Exp $ */
+/* $XFree86: xc/lib/X11/XlibInt.c,v 3.9.2.3 1999/07/29 09:22:30 hohndel Exp $ */
 
 /*
  *	XlibInt.c - Internal support routines for the C subroutine
@@ -3169,7 +3169,7 @@ _XData32 (dpy, data, len)
  *       and so, you may be better off using gethostname (if it exists).
  */
 
-#if (defined(_POSIX_SOURCE) && !defined(AIXV3)) || defined(hpux) || defined(USG) || defined(SVR4)
+#if (defined(_POSIX_SOURCE) && !defined(AIXV3) && !defined(__QNX__)) || defined(hpux) || defined(USG) || defined(SVR4)
 #define NEED_UTSNAME
 #include <sys/utsname.h>
 #endif

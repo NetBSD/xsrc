@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/vga/vgaPCI.h,v 3.22.2.34 1999/07/13 07:09:55 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/vga/vgaPCI.h,v 3.22.2.38 1999/08/25 12:21:40 hohndel Exp $ */
 /*
  * PCI Probe
  *
@@ -51,6 +51,10 @@
 
 /* ATI */
 #define PCI_CHIP_MACH32		0x4158
+#define PCI_CHIP_RAGE128_RE	0x5245
+#define PCI_CHIP_RAGE128_RF	0x5246
+#define PCI_CHIP_RAGE128_RK	0x524B
+#define PCI_CHIP_RAGE128_RL	0x524C
 #define PCI_CHIP_MACH64CT	0x4354
 #define PCI_CHIP_MACH64CX	0x4358
 #define PCI_CHIP_MACH64ET	0x4554
@@ -233,6 +237,10 @@
 #define PCI_CHIP_VIRGE_MX	0x8C01
 #define PCI_CHIP_VIRGE_MXP	0x8C03
 #define PCI_CHIP_TRIO_3D	0x8904
+#define PCI_CHIP_TRIO_3D_2X	0x8A13
+#define PCI_CHIP_SAVAGE3D	0x8A20
+#define PCI_CHIP_SAVAGE3D_M	0x8A21
+#define PCI_CHIP_SAVAGE4	0x8A22
 #define PCI_CHIP_868		0x8880
 #define PCI_CHIP_928		0x88B0
 #define PCI_CHIP_864_0		0x88C0
@@ -240,6 +248,7 @@
 #define PCI_CHIP_964_0		0x88D0
 #define PCI_CHIP_964_1		0x88D1
 #define PCI_CHIP_968		0x88F0
+
 
 /* Intel */
 #define PCI_CHIP_I740_AGP	0x7800
@@ -258,7 +267,7 @@
 #define PCI_CHIP_INTERG_1682	0x1682
 
 /* Increase this as required */
-#define MAX_DEV_PER_VENDOR 32
+#define MAX_DEV_PER_VENDOR 48
 
 typedef struct vgaPCIInformation {
     int Vendor;
@@ -302,6 +311,10 @@ pciVendorDeviceInfo xf86PCIVendorInfo[] = {
 				{0x0000,		NULL}}},
     {PCI_VENDOR_ATI,	"ATI",	{
 				{PCI_CHIP_MACH32,	"Mach32"},
+				{PCI_CHIP_RAGE128_RE,   "Rage128 RE"},
+				{PCI_CHIP_RAGE128_RF,   "Rage128 RF"},
+				{PCI_CHIP_RAGE128_RK,   "Rage128 RK"},
+				{PCI_CHIP_RAGE128_RL,   "Rage128 RL"},
 				{PCI_CHIP_MACH64GX,	"Mach64 GX"},
 				{PCI_CHIP_MACH64CX,	"Mach64 CX"},
 				{PCI_CHIP_MACH64CT,	"Mach64 CT"},
@@ -393,6 +406,7 @@ pciVendorDeviceInfo xf86PCIVendorInfo[] = {
 				{PCI_CHIP_MGAG100_PCI,	"MGA G100 PCI"},
 				{PCI_CHIP_MGAG200,	"MGA G200 AGP"},
 				{PCI_CHIP_MGAG200_PCI,	"MGA G200 PCI"},
+				{PCI_CHIP_MGAG400,	"MGA G400 AGP"},
 				{0x0000,		NULL}}},
     {PCI_VENDOR_CHIPSTECH, "C&T", {
 				{PCI_CHIP_65545,	"65545"},
@@ -431,7 +445,7 @@ pciVendorDeviceInfo xf86PCIVendorInfo[] = {
 				{PCI_CHIP_TNT2,		"Riva TNT2"},
 				{PCI_CHIP_UTNT2,	"Riva Ultra TNT2"},
 				{PCI_CHIP_VTNT2,	"Riva Vanta TNT2"},
-				{PCI_CHIP_UVTNT2,   "Riva Ultra Vanta"},
+				{PCI_CHIP_UVTNT2,	"Riva Ultra Vanta"},
 				{PCI_CHIP_ITNT2,	"Riva Integrated"},
 				{0x0000,		NULL}}},
     {PCI_VENDOR_NVIDIA_SGS,	"NVidia/SGS-Thomson",	{
@@ -481,7 +495,11 @@ pciVendorDeviceInfo xf86PCIVendorInfo[] = {
 				{PCI_CHIP_VIRGE_GX2,	"ViRGE/GX2"},
 				{PCI_CHIP_VIRGE_MX,	"ViRGE/MX"},
 				{PCI_CHIP_VIRGE_MXP,	"ViRGE/MX+"},
-				{PCI_CHIP_TRIO_3D,	"Trio 3D"},
+				{PCI_CHIP_TRIO_3D,	"Trio3D"},
+				{PCI_CHIP_TRIO_3D_2X,	"Trio3D/2X"},
+				{PCI_CHIP_SAVAGE3D,	"Savage3D"},
+				{PCI_CHIP_SAVAGE3D_M,	"Savage3D (Macrovision Support)"},
+				{PCI_CHIP_SAVAGE4,	"Savage4"},
 				{PCI_CHIP_868,		"868"},
 				{PCI_CHIP_928,		"928"},
 				{PCI_CHIP_864_0,	"864"},

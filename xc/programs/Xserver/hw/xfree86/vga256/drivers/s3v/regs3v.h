@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/s3v/regs3v.h,v 1.1.2.7 1999/05/10 13:09:53 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/s3v/regs3v.h,v 1.1.2.8 1999/07/30 11:21:38 hohndel Exp $ */
 
 /* regs3v.h
  *
@@ -57,16 +57,24 @@
 
 
 #define S3_ViRGE_SERIES(chip)     ((chip&0xfff0)==0x31e0)
-#define S3_ViRGE_GX2_SERIES(chip) (chip == S3_ViRGE_GX2)
+#define S3_ViRGE_DXGX_SERIES(chip) (chip == S3_ViRGE_DXGX)
+#define S3_ViRGE_GX2_SERIES(chip) (chip == S3_ViRGE_GX2 || chip == S3_TRIO_3D_2X)
 #define S3_ViRGE_MX_SERIES(chip)  (chip == S3_ViRGE_MX || chip == S3_ViRGE_MXP)
 #define S3_ViRGE_MXP_SERIES(chip) (chip == S3_ViRGE_MXP)
 #define S3_ViRGE_VX_SERIES(chip)  ((chip&0xfff0)==0x3de0)
 #define S3_TRIO_3D_SERIES(chip)   (chip == S3_TRIO_3D)
+#define S3_TRIO_3D_2X_SERIES(chip)   (chip == S3_TRIO_3D_2X)
+#define S3_SAVAGE_3D_SERIES(chip)   (chip == PCI_CHIP_SAVAGE3D || chip == PCI_CHIP_SAVAGE3D)
 #define S3_ANY_ViRGE_SERIES(chip) (    S3_ViRGE_SERIES(chip)		\
 				    || S3_ViRGE_VX_SERIES(chip)		\
+				    || S3_ViRGE_DXGX_SERIES(chip)	\
+				    || S3_ViRGE_GX2_SERIES(chip)	\
+				    || S3_ViRGE_MX_SERIES(chip)		\
+				    || S3_SAVAGE_3D_SERIES(chip)	\
 				    || S3_TRIO_3D_SERIES(chip))
 #define S3_ANY_SERIES(chip)       (    S3_ViRGE_SERIES(chip)		\
 				    || S3_ViRGE_VX_SERIES(chip)		\
+				    || S3_SAVAGE_3D_SERIES(chip)	\
 				    || S3_TRIO_3D(chip))
 
 /* PCI data */
@@ -78,6 +86,9 @@
 #define PCI_ViRGE_MX 		0x8C01
 #define PCI_ViRGE_MXP 		0x8C03
 #define PCI_TRIO_3D		0x8904
+#define PCI_TRIO_3D_2X		0x8A13
+#define PCI_CHIP_SAVAGE3D	0x8A20
+#define PCI_CHIP_SAVAGE3D_M	0x8A21
 
 /* Chip tags */
 #define S3_UNKNOWN		 0
@@ -88,6 +99,9 @@
 #define S3_ViRGE_MX		 5
 #define S3_ViRGE_MXP		 6
 #define S3_TRIO_3D		 7
+#define S3_TRIO_3D_2X		 8
+#define S3_SAVAGE_3D		 9
+#define S3_SAVAGE_3D_M		 10
 
 /* VESA Approved Register Definitions */
 #define	DAC_MASK	0x03c6

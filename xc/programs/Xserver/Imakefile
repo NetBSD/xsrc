@@ -2,7 +2,7 @@ XCOMM $TOG: Imakefile /main/235 1997/05/25 15:12:21 kaleb $
 /*
  * Server Master Makefile
  */
-XCOMM $XFree86: xc/programs/Xserver/Imakefile,v 3.85.2.12 1999/05/25 06:55:14 hohndel Exp $
+XCOMM $XFree86: xc/programs/Xserver/Imakefile,v 3.85.2.16 1999/07/30 11:21:00 hohndel Exp $
 
 #include <Server.tmpl>
 
@@ -161,6 +161,9 @@ XPFBLIBS = dix/LibraryTargetName(xpstubs)
         SYSLIBS = $(ZLIB) MathLibrary Krb5Libraries $(EXTRASYSLIBS)
 #else
         SYSLIBS = $(ZLIB) MathLibrary Krb5Libraries DBMLibrary $(EXTRASYSLIBS)
+#endif
+#if HasPam
+	PAMLIBS = -lpam -lpam_misc -ldl
 #endif
            CBRT = mi/LibraryTargetName(cbrt)
         STDDIRS = include dix os mi $(XPDDXDIR) $(EXTDIRS)
@@ -1955,14 +1958,18 @@ XNESTDDXDIR = hw/xnest
 XNESTDDXDIR = hw
 #endif
 XNESTDIRS = $(STDDIRS) $(XNESTDDXDIR) $(DEPDIRS)
-#if !defined(LynxOSArchitecture) && !defined(Win32Architecture)
+#if !defined(LynxOSArchitecture) && !defined(Win32Architecture) && !defined(QNXArchitecture)
 XNESTOBJS = 
 #else
 XNESTOBJS = dix/main.o
 #endif
 XNEST = hw/xnest/LibraryTargetName(xnest)
 XNESTLIBS = PreFbLibs $(XNEST) NoMfbPostFbLibs $(XNEST)
+#if defined(QNXArchitecture)
+XNESTSYSLIBS = -Wl,"op undefsok" $(LDPRELIBS) $(XLIB) $(SYSLIBS)
+#else
 XNESTSYSLIBS = $(LDPRELIBS) $(XLIB) $(SYSLIBS)
+#endif
 #if HasParallelMake
 MakeMutex($(XNESTDIRS) $(XNESTOBJS) $(XNESTLIBS) $(XNESTSYSLIBS))
 #endif
@@ -2027,7 +2034,11 @@ ServerTarget(Xvfb,$(XVFBDIRS),$(XVFBOBJS),$(XVFBLIBS),$(XVFBSYSLIBS))
 
 
 #if UseXserverWrapper
+#if HasPam
+SetUIDProgramTarget(Xwrapper,os/wrapper.o,NullParameter,$(PAMLIBS),NullParameter)
+#else
 SetUIDProgramTarget(Xwrapper,os/wrapper.o,NullParameter,NullParameter,NullParameter)
+#endif
 InstallProgramWithFlags(Xwrapper,$(BINDIR),$(INSTUIDFLAGS))
 #endif
 
@@ -2037,7 +2048,7 @@ DDXDIRS = $(DDXDIR1) $(DDXDIR2) $(DDXDIR3) $(XVFBDDXDIR) $(XNESTDDXDIR)
 SUBDIRS = $(STDDIRS) $(MFBDIR) $(CFBDIRS) $(IPLANDIRS) $(ILBMDIR) $(AFBDIR) \
           $(DDXDIRS) $(NCR77C32DIR) $(MACH64DIR) $(IMSTTDIR)
 
-#if defined(ServerToInstall) && !defined(OS2Architecture)
+#if defined(ServerToInstall) && !defined(OS2Architecture) && !defined(QNXArchitecture)
 install::
 	-(cd $(DESTDIR)$(BINDIR); $(RM) X; $(LN) ServerToInstall X)
 #endif

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/s3v/s3v_misc.c,v 1.1.2.10 1999/06/18 10:36:24 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/s3v/s3v_misc.c,v 1.1.2.11 1999/07/30 11:21:40 hohndel Exp $ */
 
 /*
  *
@@ -101,6 +101,17 @@ s3vGetPCIInfo()
            case PCI_TRIO_3D:
               info.ChipType = S3_TRIO_3D;
               break;
+           case PCI_TRIO_3D_2X:
+              info.ChipType = S3_TRIO_3D_2X;
+              break;
+#if 0 /* not yet */
+           case PCI_CHIP_SAVAGE3D:
+              info.ChipType = S3_SAVAGE_3D;
+              break;
+           case PCI_CHIP_SAVAGE3D_M:
+              info.ChipType = S3_SAVAGE_3D_M;
+              break;
+#endif
 	    default:
 	       info.ChipType = S3_UNKNOWN;
 	       info.DevID = pcrp->_device;

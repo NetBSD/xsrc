@@ -1,5 +1,5 @@
 /* $XConsortium: Xtranssock.c /main/58 1996/12/04 10:22:50 lehors $ */
-/* $XFree86: xc/lib/xtrans/Xtranssock.c,v 3.25.2.9 1999/06/30 13:00:08 hohndel Exp $ */
+/* $XFree86: xc/lib/xtrans/Xtranssock.c,v 3.25.2.11 1999/07/29 09:22:32 hohndel Exp $ */
 /*
 
 Copyright (c) 1993, 1994  X Consortium
@@ -1704,7 +1704,9 @@ BytesReadable_t *pend;
 {
     PRMSG (2,"SocketBytesReadable(%x,%d,%x)\n",
 	ciptr, ciptr->fd, pend);
-
+#if defined(__QNX__) && !defined(__QNXNTO__)
+    *pend = 0L; /* FIONREAD only returns a short. Zero out upper bits */
+#endif
 #ifdef WIN32
     return ioctlsocket ((SOCKET) ciptr->fd, FIONREAD, (u_long *) pend);
 #else

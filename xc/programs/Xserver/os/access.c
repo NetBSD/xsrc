@@ -1,5 +1,5 @@
 /* $XConsortium: access.c /main/68 1996/12/15 22:57:09 rws $ */
-/* $XFree86: xc/programs/Xserver/os/access.c,v 3.18.2.6 1998/12/22 11:23:30 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/os/access.c,v 3.18.2.8 1999/07/29 09:23:01 hohndel Exp $ */
 /***********************************************************
 
 Copyright (c) 1987  X Consortium
@@ -120,7 +120,7 @@ SOFTWARE.
 
 
 #if !defined(AMOEBA)
-#ifdef hpux
+#if defined(hpux) || defined(__QNXNTO__)
 # include <sys/utsname.h>
 # ifdef HAS_IFREQ
 #  include <net/if.h>
@@ -512,7 +512,7 @@ DefineSelf (fd)
 
 #else /* WINTCP */
 
-#if !defined(SIOCGIFCONF) || (defined (hpux) && ! defined (HAS_IFREQ))
+#if !defined(SIOCGIFCONF) || (defined (hpux) && ! defined (HAS_IFREQ)) || defined(__QNXNTO__)
 void
 DefineSelf (fd)
     int fd;
@@ -618,8 +618,13 @@ DefineSelf (fd)
 		      (p)->ifr_addr.sa_len - sizeof ((p)->ifr_addr) : 0))
 #define ifraddr_size(a) (a.sa_len)
 #else
+#ifdef __QNX__ 
+#define ifr_size(p) (p->ifr_addr.sa_len + IFNAMSIZ)
+#define ifraddr_size(a) (a.sa_len)
+#else
 #define ifr_size(p) (sizeof (struct ifreq))
 #define ifraddr_size(a) (sizeof (a))
+#endif
 #endif
 
 void

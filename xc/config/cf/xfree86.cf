@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/config/cf/xfree86.cf,v 3.129.2.42 1999/06/17 16:23:46 hohndel Exp $
+XCOMM $XFree86: xc/config/cf/xfree86.cf,v 3.129.2.47 1999/08/03 09:41:30 hohndel Exp $
 /*
  * This configuration file contains all of the configuration
  * information for the XFree86 based X Servers.
@@ -76,8 +76,10 @@ XCOMM $XConsortium: xfree86.cf /main/34 1996/12/06 11:45:18 rws $
 #ifndef XF86GLINTServer
 #define XF86GLINTServer		YES
 #endif
+#if defined(LinuxArchitecture)
 #ifndef XF86FBDevServer
-#define XF86FBDevServer		NO
+#define XF86FBDevServer		YES
+#endif
 #endif
 #endif
 
@@ -112,6 +114,11 @@ XCOMM $XConsortium: xfree86.cf /main/34 1996/12/06 11:45:18 rws $
 #endif
 #ifndef XF86GLINTServer
 #define XF86GLINTServer		YES
+#endif
+#if defined(LinuxArchitecture)
+#ifndef XF86FBDevServer
+#define XF86FBDevServer                YES
+#endif
 #endif
 #ifndef XF86SvgaDrivers
 #define XF86SvgaDrivers		mga s3v
@@ -485,11 +492,19 @@ XCOMM $XConsortium: xfree86.cf /main/34 1996/12/06 11:45:18 rws $
 # elifdef arm32Architecture
 #  define XF86SvgaDrivers	chips igs generic
 # else
-#  define XF86SvgaDrivers	nv et4000 et3000 pvga1 gvga ati sis tvga8900 \
+#  if defined(LinuxArchitecture)
+#   define XF86SvgaDrivers	nv et4000 et3000 pvga1 gvga ati sis tvga8900 \
+				cirrus ncr77c22 compaq mga oak al2101 \
+				ali cl64xx video7 ark mx realtek s3_savage s3v apm \
+				s3_svga neo chips cyrix rendition p9x00 \
+				spc8110 i740 tdfx generic
+#  else
+#   define XF86SvgaDrivers	nv et4000 et3000 pvga1 gvga ati sis tvga8900 \
 				cirrus ncr77c22 compaq mga oak al2101 \
 				ali cl64xx video7 ark mx realtek s3v apm \
 				s3_svga neo chips cyrix rendition p9x00 \
 				spc8110 i740 tdfx generic
+#  endif
 # endif
 #endif
 
@@ -1189,7 +1204,7 @@ XFREE86JAPANESEDOCDIR = $(DOCDIR)/Japanese
 #endif
 
 #ifndef XFree86Version
-#define XFree86Version	334
+#define XFree86Version	335
 #endif
 
 #ifndef XVendorString
@@ -1244,6 +1259,10 @@ XFREE86JAPANESEDOCDIR = $(DOCDIR)/Japanese
 
 #ifndef DontDefineXF86Contrib
 #define XF86Contrib
+#endif
+
+#ifndef HasMktemp
+#define HasMktemp	YES
 #endif
 
 #include <xf86.rules>

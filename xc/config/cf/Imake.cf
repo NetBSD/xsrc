@@ -1,5 +1,5 @@
 XCOMM $TOG: Imake.cf /main/28 1997/06/25 08:31:36 barstow $
-XCOMM $XFree86: xc/config/cf/Imake.cf,v 3.34.2.11 1998/12/22 11:23:01 hohndel Exp $
+XCOMM $XFree86: xc/config/cf/Imake.cf,v 3.34.2.14 1999/07/29 09:22:23 hohndel Exp $
 /*
  * To add support for another platform:
  * 
@@ -616,6 +616,20 @@ XCOMM $XFree86: xc/config/cf/Imake.cf,v 3.34.2.11 1998/12/22 11:23:01 hohndel Ex
 #  define PowerPCArchitecture
 #  undef powerpc
 # endif
+# if defined(arm) || defined(__arm__)
+#   define ArmArchitecture
+#   undef arm
+#   undef __arm__
+#   if defined(__ARM_ARCH_4__)
+#     define Arm4Architecture
+#     define Arm32Architecture
+#     undef __ARM_ARCH_4__
+#   endif
+#   if defined(__ARM_ARCH_3__)
+#     define Arm3Architecture
+#     undef __ARM_ARCH_3__
+#   endif
+# endif
 #endif /* linux */
 
 #if (defined(__Lynx__) || defined(Lynx)) && (defined(i386) || defined(__i386__) || defined(__x86__) || defined(__powerpc__) || defined(__sparc__) || defined(sparc))
@@ -717,6 +731,33 @@ XCOMM $XFree86: xc/config/cf/Imake.cf,v 3.34.2.11 1998/12/22 11:23:01 hohndel Ex
 #define OS2Architecture
 #define i386Architecture
 #endif /* emxos2 */
+
+#if defined(__QNX__) && !defined(__QNXNTO__)
+#define MacroIncludeFile <QNX.cf>
+#define MacroFile QNX.cf
+#define QNXArchitecture
+#define i386Architecture
+#endif /* QNX4 */
+
+#ifdef __QNXNTO__
+#define MacroIncludeFile <nto.cf>
+#define MacroFile nto.cf
+#define NTOArchitecture
+#ifdef PPC
+# define PPCArchitecture
+# undef PPC
+#else
+#ifdef MIPS
+# define mipsArchitecture
+# undef MIPS
+#else
+#ifdef i386
+# define i386Architecture
+# undef i386
+#endif
+#endif
+#endif
+#endif /* QNX/Neutrino */
 
 #ifndef MacroIncludeFile
 XCOMM WARNING:  Imake.cf not configured; guessing at definitions!!!

@@ -25,7 +25,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from the X Consortium.
 
 */
-/* $XFree86: xc/config/imake/imakemdep.h,v 3.24.2.11 1998/12/27 13:10:09 dawes Exp $ */
+/* $XFree86: xc/config/imake/imakemdep.h,v 3.24.2.14 1999/07/29 09:22:27 hohndel Exp $ */
 
 
 /* 
@@ -185,6 +185,14 @@ in this Software without prior written authorization from the X Consortium.
 #define imake_ccflags "-DBSD43"
 #endif
 
+#if defined(__QNX__) && !defined(__QNXNTO__)
+#define imake_ccflags "-D__QNX__ -D_i386"
+#endif
+
+#if defined(__QNXNTO__)
+#define imake_ccflags "-D__QNXNTO__"
+#endif
+
 #else /* not CCIMAKE */
 #ifndef MAKEDEPEND
 /*
@@ -276,6 +284,9 @@ in this Software without prior written authorization from the X Consortium.
 #if defined(__GNU__)
 #define USE_CC_E
 #endif
+#if defined (__QNX__)
+#define DEFAULT_CPP "/usr/X11R6/bin/cpp"
+#endif 
 
 #if defined(Lynx)
 /* On LynxOS 2.4.0 imake gets built with the old "legacy"
@@ -565,6 +576,24 @@ char *cpp_argv[ARGUMENTS] = {
 	"-Demxos2",
 #endif
 
+#if defined (__QNX__) && !defined(__QNXNTO__)
+	"-traditional",
+	"-D__QNX__",
+#endif
+
+#if defined(__QNXNTO__)
+	"-traditional",
+	"-D__QNXNTO__",
+#if defined(i386)
+	"-Di386",
+#endif
+#if defined(PPC)
+	"-DPPC",
+#endif
+#if defined(MIPS)
+	"-DMIPS",
+#endif
+#endif
 };
 
 
@@ -950,6 +979,12 @@ struct symtab	predefs[] = {
 #endif
 #ifdef __EMX__
 	{"__EMX__", "1"},
+#endif
+#if defined(__QNX__) && !defined(__QNXNTO__)
+	{"__QNX__", "1"},
+#endif
+#ifdef __QNXNTO__
+	{"__QNXNTO__", "1"},
 #endif
 	/* add any additional symbols before this line */
 	{NULL, NULL}
