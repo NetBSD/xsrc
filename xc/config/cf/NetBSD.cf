@@ -1,4 +1,4 @@
-XCOMM $NetBSD: NetBSD.cf,v 1.92 2002/02/12 00:37:11 thorpej Exp $
+XCOMM $NetBSD: NetBSD.cf,v 1.93 2002/02/12 07:36:32 thorpej Exp $
 XCOMM platform:  $XConsortium: NetBSD.cf /main/16 1996/10/31 14:47:14 kaleb $
 
 
@@ -151,7 +151,11 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #if defined(UseInstalled) && (!defined(XF86LinkKit) || !XF86LinkKit)
 #define DefaultCCOptions 	/**/
 #elif defined(armArchitecture)
+#ifdef __ELF__
+#define DefaultCCOptions	-ansi -Dasm=__asm -fsigned-char
+#else
 #define DefaultCCOptions 	-ansi -Dasm=__asm -fsigned-char -fomit-frame-pointer
+#endif /* __ELF__ */
 #else
 #define DefaultCCOptions 	-ansi -Dasm=__asm
 #endif
