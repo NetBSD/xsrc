@@ -933,7 +933,7 @@ static KeySym Denmark4Keymap[] = {
 #endif /* DENMARK4 */
 
 
-#ifdef DENMK5
+#ifdef DEN5
 
 static KeySym Denmark5Keymap[] = {
 	SunXK_Stop,  	NoSymbol,  	XK_L1,		NoSymbol,	/*  1*/
