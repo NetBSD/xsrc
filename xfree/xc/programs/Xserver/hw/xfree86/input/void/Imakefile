@@ -1,0 +1,31 @@
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/input/void/Imakefile,v 1.2 2000/03/03 01:05:50 dawes Exp $
+
+#define IHaveModules
+#include <Server.tmpl>
+
+SRCS = void.c
+OBJS = void.o
+
+DRIVER = void
+
+INCLUDES = -I. -I$(XF86COMSRC) -I$(XF86SRC)/loader -I$(XF86OSSRC) \
+         -I$(SERVERSRC)/include -I$(SERVERSRC)/mi -I$(XINCLUDESRC) -I$(EXTINCSRC)
+
+#if MakeHasPosixVariableSubstitutions
+SubdirLibraryRule($(OBJS))
+#endif
+
+ModuleObjectRule()
+
+ObjectModuleTarget($(DRIVER),$(OBJS))
+
+InstallObjectModule($(DRIVER),$(MODULEDIR),input)
+
+#if !defined(XF86DriverSDK)
+CppManTarget($(DRIVER),)
+InstallModuleManPage($(DRIVER))
+#endif
+
+DependTarget()
+
+InstallDriverSDKObjectModule($(DRIVER),$(DRIVERSDKMODULEDIR),input)

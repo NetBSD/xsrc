@@ -1,0 +1,122 @@
+// $XFree86: xc/programs/xkbcomp/symbols/inet,v 1.8 2000/12/02 01:16:26 dawes Exp $
+
+partial alphanumeric_keys 
+xkb_symbols "hp" {
+
+    // Describes the extra keys on an HP "Internet" keyboard.
+
+    name[Group1]= "HP";
+    key <I12>	{	[ XF86Search		]	};
+    key <I26>	{	[ Help			]	};
+    key <I5F>	{	[ XF86Standby		]	};
+    key <I2E>	{	[ XF86AudioLowerVolume	]	};
+    key <I30>	{	[ XF86AudioRaiseVolume	]	};
+    key <I20>	{	[ XF86AudioMute		]	};
+};
+
+partial alphanumeric_keys 
+xkb_symbols "compaq" {
+
+    // Describes the extra keys on a Compaq "Internet" keyboard.
+
+    name[Group1]= "Compaq";
+    key <I1E>	{	[ XF86Mail		]	};
+    key <I23>	{	[ Help			]	};
+    key <I21>	{	[ XF86Search		]	};
+    key <I25>	{	[ XF86VendorHome	]	};
+    key <I26>	{	[ XF86HomePage		]	};
+    key <I12>	{	[ XF86LightBulb		]	};
+    key <I32>	{	[ XF86Shop		]	};
+};
+
+partial alphanumeric_keys 
+xkb_symbols "itouch" {
+
+    // Describes the extra keys on a Logitech iTouch keyboard.
+
+    name[Group1]= "iTouch";
+    key <I5F>	{	[ XF86Standby		]	};
+    key <I1F>	{	[ XF86AudioMute		]	};
+    key <I2B>	{	[ XF86AudioLowerVolume	]	};
+    key <I2D>	{	[ XF86AudioRaiseVolume	]	};
+    key <I22>	{	[ XF86AudioPlay		]	};
+    key <I24>	{	[ XF86AudioStop		]	};
+    key <I10>	{	[ XF86AudioPrev		]	};
+    key <I19>	{	[ XF86AudioNext		]	};
+    key <I32>	{	[ XF86HomePage		]	};
+    key <I6C>	{	[ XF86Mail		]	};
+    key <I65>	{	[ XF86Search		]	};
+    key <I66>	{	[ XF86Start		]	};
+};
+
+partial alphanumeric_keys
+xkb_symbols "logicordless" {
+ 
+    // Describes the extra keys on a Logitech Desktop Pro keyboard.
+ 
+    name[Group1]= "CordLess";
+    key <I5F>   {   [ XF86Standby       ]   };
+    key <I20>   {   [ XF86AudioMute     ]   };
+    key <I2E>   {   [ XF86AudioLowerVolume  ]   };
+    key <I30>   {   [ XF86AudioRaiseVolume  ]   };
+    key <I22>   {   [ XF86AudioPlay     ]   };
+    key <I24>   {   [ XF86AudioStop     ]   };
+    key <I10>   {   [ XF86AudioPrev     ]   };
+    key <I19>   {   [ XF86AudioNext     ]   };
+    key <I32>   {   [ XF86HomePage      ]   };
+    key <I6C>   {   [ XF86Mail      ]   };
+    key <I65>   {   [ XF86Search        ]   };
+    key <I66>   {   [ XF86Start     ]   };
+};
+
+
+partial alphanumeric_keys 
+xkb_symbols "microsoftpro" {
+
+    // Describes the extra keys on a Microsoft Natural Keyboard Pro
+
+    name[Group1]= "MicrosoftPro";
+    key <I6A>	{	[ XF86Back		]	};
+    key <I69>	{	[ XF86Forward		]	};
+    key <I68>	{	[ XF86Stop		]	};
+    key <I67>	{	[ XF86Refresh		]	};
+    key <I65>	{	[ XF86Search		]	};
+    key <I66>	{	[ XF86Favorites		]	};
+    key <I32>	{	[ XF86HomePage		]	};
+    key <I6C>	{	[ XF86Mail		]	};
+    key <I20>	{	[ XF86AudioMute		]	};
+    key <I2E>	{	[ XF86AudioLowerVolume	]	};
+    key <I30>	{	[ XF86AudioRaiseVolume	]	};
+    key <I22>	{	[ XF86AudioPlay, XF86AudioPause		]	};
+    key <I24>	{	[ XF86AudioStop		]	};
+    key <I10>	{	[ XF86AudioPrev		]	};
+    key <I19>	{	[ XF86AudioNext		]	};
+    key <I6D>	{	[ XF86AudioMedia	]	};
+    key <I6B>	{	[ XF86MyComputer	]	};
+    key <I21>	{	[ XF86Calculator	]	};
+    key <I5F>	{	[ XF86Standby		]	};
+};
+
+xkb_symbols "btc9000" {
+    // from <supercava@libero.it>
+    // Describes the extra keys on a BTC model 9000 keyboard
+    // found in many computers sold by Computer Discount 
+    name[Group1]= "btc9000";
+    key <I26>	{	[ XF86Refresh		]	};
+    key <I32>	{	[ XF86Search		]	};
+    key <I20>	{	[ XF86Favorites		]	};
+    key <I30>	{	[ XF86HomePage		]	};
+    key <I2E>	{	[ XF86Mail		]	};
+    key <I12>	{	[ XF86AudioMute		]	};
+    key <I25>	{	[ XF86AudioLowerVolume	]	};
+    key <I1E>	{	[ XF86AudioRaiseVolume	]	};
+    key <I19>	{	[ XF86AudioPlay, XF86AudioPause		]	};
+    key <I10>	{	[ XF86AudioStop		]	};
+    key <I22>	{	[ XF86AudioPrev		]	};
+    key <I24>	{	[ XF86AudioNext		]	};
+    key <I21>	{	[ XF86AudioMedia	]	};
+    key <I5F>	{	[ XF86Standby		]	};
+    key <I5E>   {	[ XF86PowerOff		]	};
+    key <I63>   {	[ XF86WakeUp		]	};
+};
+

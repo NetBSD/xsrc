@@ -1,0 +1,18 @@
+XCOMM $XConsortium: Imakefile,v 1.8 92/09/14 18:53:12 rws Exp $
+XCOMM $XFree86: xc/programs/xrdb/Imakefile,v 3.2 1997/09/30 04:51:05 hohndel Exp $
+#if PatheticCpp
+        CPPDEFS = -DPATHETICCPP
+#endif
+#if HasMkstemp
+        CPPDEFS = -DHAS_MKSTEMP
+#endif
+XCOMM Due to ill make parsing the cpp is passed directly in source file
+#ifdef OS2Architecture
+        DEFINES = $(CPPDEFS)
+#else
+        DEFINES = -DCPP="\"$(CPP)\"" $(CPPDEFS)
+#endif
+        DEPLIBS = $(DEPXMULIB) $(DEPXLIB)
+LOCAL_LIBRARIES = $(XMULIB) $(XLIB)
+
+SimpleProgramTarget(xrdb)

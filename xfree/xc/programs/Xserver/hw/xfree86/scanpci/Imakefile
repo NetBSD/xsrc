@@ -1,0 +1,32 @@
+
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/scanpci/Imakefile,v 1.8 2000/04/06 15:27:26 dawes Exp $
+
+#if DoLoadableServer
+#define IHaveSubdirs
+SUBDIRS = module
+#endif
+
+#include <Server.tmpl>
+
+MODPATHDEFINES = -DDEFAULT_MODULE_PATH=\"$(MODULEDIR)\"
+   INCLUDES =	-I$(XF86SRC)/common -I$(XF86OSSRC) -I$(XF86OSSRC)/bus \
+		-I$(SERVERSRC)/include -I$(SERVERSRC)/os \
+		-I$(XINCLUDESRC) -I$(SERVERSRC)/Xext -I$(EXTINCSRC) \
+		-I$(SERVERSRC)/Xi \
+		-I$(FONTLIBSRC)/include -I$(XF86PARSERSRC) \
+		-I$(XF86SRC)/loader $(VGAINCLUDES) -I$(XF86SRC)/rac
+
+SRCS = xf86ScanPci.c xf86PciData.c
+
+NormalLibraryObjectRule()
+
+NormalLibraryTarget(scanpci,xf86ScanPci.o)
+
+NormalLibraryTarget(pcidata,xf86PciData.o)
+
+#if DoLoadableServer
+MakeSubdirs($(SUBDIRS))
+DependSubdirs($(SUBDIRS))
+#endif
+
+DependTarget()

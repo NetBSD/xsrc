@@ -1,0 +1,29 @@
+// $TOG: pl /main/3 1997/06/14 06:36:45 kaleb $
+default xkb_keymap "indy" {
+    xkb_keycodes	{ include "sgi/indy(universal)"	};
+    xkb_types		{ include "default"		};
+    xkb_compatibility	{ include "default"		};
+    xkb_symbols 	{ include "us(pc_universal)+pl"	};
+    xkb_geometry	{ include "sgi/indy(pc102)"	};
+};
+xkb_keymap "indy_nodeadkeys" {
+    xkb_keycodes	{ include "sgi/indy(universal)"			};
+    xkb_types		{ include "default"				};
+    xkb_compatibility	{ include "default"				};
+    xkb_symbols 	{ include "us(pc_universal)+pl(nodeadkeys)" 	};
+    xkb_geometry	{ include "sgi/indy(pc102)"			};
+};
+xkb_keymap "indigo" {
+    xkb_keycodes	{ include "sgi/indigo(pc102)"	};
+    xkb_types		{ include "default"		};
+    xkb_compatibility	{ include "default"		};
+    xkb_symbols 	{ include "us(pc102)+pl"	};
+    xkb_geometry	{ include "sgi/indigo(pc102)"	};
+};
+xkb_keymap "indigo_nodeadkeys" {
+    xkb_keycodes	{ include "sgi/indigo(pc102)"	};
+    xkb_types		{ include "default"		};
+    xkb_compatibility	{ include "default"		};
+    xkb_symbols 	{ include "us(pc102)+pl(nodeadkeys)" };
+    xkb_geometry	{ include "sgi/indigo(pc102)"	};
+};

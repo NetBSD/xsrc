@@ -1,0 +1,105 @@
+XCOMM $XFree86: xc/config/cf/darwin.cf,v 1.2 2000/11/28 17:25:07 dawes Exp $
+
+/* Darwin / MacOS-X configuration by John Carmack <johnc@idsoftware.com> */
+
+/* imake determines the default values by parsing uname */
+#define OSName                  DefaultOSName
+#define OSMajorVersion          DefaultOSMajorVersion
+#define OSMinorVersion          DefaultOSMinorVersion
+#define OSTeenyVersion          0
+
+#define HasSnprintf             YES
+#define HasPutenv               YES
+#define HasBSD44Sockets         YES
+#define BuildGlxExt             NO
+#ifndef HasShm
+# define HasShm                 YES
+#endif
+
+/*
+ * This enables some settings for developers.
+ */
+#define XFree86Devel            NO
+
+/* we don't need -lm */
+#define MathLibrary             /**/
+
+/* we don't have a termcap library */
+#define TermcapLibrary         /**/
+
+/* we don't have a dbm library */
+#define DBMLibrary             /**/
+
+/* our cpp isn't in /lib/cpp */
+#define CppCmd                  /usr/bin/cpp
+
+/* we have a gcc compatible compiler, but its not called gcc */
+#define CcCmd                   /usr/bin/cc
+
+/* if -c isn't passed, there are problems with the cfb libs when
+ * they include an object file without any symbols
+ */
+#define RanlibCmd               ranlib -c
+
+/* uncommenting this line will get -g instead of -O, which builds
+ * a lot faster and gets debug info
+ */
+#if 0
+#define DefaultCDebugFlags      -g
+#endif
+
+/* default flags to pass to cc */
+#if XFree86Devel
+# define DefaultCCOptions       -Wall -Wpointer-arith -Wstrict-prototypes \
+                                -Wmissing-prototypes -Wmissing-declarations \
+                                -Wredundant-decls -Wnested-externs \
+                                -traditional-cpp
+#else
+# define DefaultCCOptions       -Wall -Wpointer-arith -traditional-cpp
+#endif
+
+/* a lot of xfree86 code needs __powerpc__ to avoid doing outport asm
+ *
+ * __DARWIN__ will be used for platform specific #ifdefs that can't
+ * be handled by existing X defines
+ *
+ * there is an unfortunate symbol collision with the appkit for TIFFFaxBlackCodes
+ *
+ * We need to define BSD44SOCKETS to get unix domain socket namelen calculated right
+ */
+#define StandardDefines         -D__powerpc__ -D__DARWIN__
+
+/* programs/rgb/rgb.h and others needs this */
+#define HasNdbm                 YES
+
+/* set this to NO to just build the client libs, which should work without
+ * having to write any platform specific code.
+ */
+#define BuildServer             YES
+
+/* our custom X server */
+#define XDarwinServer           YES
+
+/* pex? bah.  I'm not going to bother getting the device
+ * dependent part of this working.  If I get the time, i'll
+ * get glx working instead.
+ */
+#define BuildPexExt             NO
+
+/* no direct graphics extension */
+#define BuildXF86DGA            NO
+
+/* no extra tablets and weird input devices */
+#define BuildXInputExt          NO
+
+/* no Display Power Management extension */
+#define BuildDPMSExt            NO
+
+/* no Render extension */
+#define BuildRender             NO
+
+#define BuildXvExt              NO
+
+/* include all the xfree rules */
+/* I haven't tracked down why this is needed, but it is... */
+#include <xfree86.cf>

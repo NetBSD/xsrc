@@ -1,0 +1,48 @@
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/os-support/cygwin/Imakefile,v 1.2 2000/08/15 16:05:37 dawes Exp $
+
+
+
+
+XCOMM $XConsortium: Imakefile /main/4 1996/09/28 17:23:58 rws $
+
+#include <Server.tmpl>
+
+BIOS_MOD = bios_mmap
+
+
+SRCS = cygwin_init.c ioperm_noop.c cygwin_io.c libc_wrapper.c cygwin_video.c \
+        posix_tty.c stdPci.c $(BIOS_MOD).c  VTsw_noop.c \
+	stdResource.c sigiostubs.c std_kbdEv.c vidmem.c \
+	stdResource.c stdPci.c sigiostubs.c pm_noop.c kmod_noop.c agp_noop.c
+       
+OBJS = cygwin_init.o ioperm_noop.o cygwin_io.o libc_wrapper.o cygwin_video.o \
+       posix_tty.o stdPci.o $(BIOS_MOD).o  VTsw_noop.o \
+       stdResource.o sigiostubs.o std_kbdEv.o vidmem.o \
+       stdResource.o stdPci.o sigiostubs.o pm_noop.o kmod_noop.o agp_noop.o
+
+INCLUDES = -I$(XF86COMSRC) -I$(XF86OSSRC) -I. -I$(SERVERSRC)/include \
+           -I$(XINCLUDESRC)
+
+RESDEFINES = -DUSESTDRES
+DEFINE = $(RESDEFINES)
+
+SubdirLibraryRule($(OBJS))
+NormalLibraryObjectRule()
+NormalAsmObjectRule()
+
+LinkSourceFile(VTsw_noop.c,../shared)
+LinkSourceFile(posix_tty.c,../shared)
+LinkSourceFile(ioperm_noop.c,../shared)
+LinkSourceFile(stdPci.c,../shared)
+LinkSourceFile(libc_wrapper.c,../shared)
+LinkSourceFile(sigiostubs.c,../shared)
+LinkSourceFile(std_kbdEv.c,../shared)
+LinkSourceFile(vidmem.c,../shared)
+LinkSourceFile(stdResource.c,../shared)
+LinkSourceFile(pm_noop.c,../shared)
+LinkSourceFile(kmod_noop.c,../shared)
+LinkSourceFile(agp_noop.c,../shared)
+
+
+DependTarget()
+

@@ -1,0 +1,35 @@
+XCOMM $TOG: Imakefile /main/12 1997/08/05 09:00:09 kaleb $
+XCOMM $XFree86: xc/programs/proxymngr/Imakefile,v 1.7 2000/03/23 17:42:40 tsi Exp $
+
+         DEFINES = StrcasecmpDefines
+
+         DEPLIBS = $(DEPXTOOLLIB) $(DEPXLIB)
+ LOCAL_LIBRARIES = $(XTOOLLIB) $(XLIB)
+
+         HEADERS = PM.h PMproto.h
+
+           SRCS1 = main.c pmdb.c config.c
+                   
+           OBJS1 = main.o pmdb.o config.o
+
+          PROGS1 = ProgramTargetName(proxymngr)
+
+        PROGRAMS = $(PROGS1)
+
+        LBXPROXY = $(BINDIR)/lbxproxy
+
+     SITE_CONFIG = -DLBXPROXY=$(LBXPROXY)
+
+AllTarget(pmconfig ProgramTargetName(proxymngr))
+
+LinkConfDirectory(proxymngr,.,proxymngr,.)
+
+CppFileTarget(pmconfig,pmconfig.cpp,$(SITE_CONFIG),NullParameter)
+
+BuildIncludes($(HEADERS),X11/PM,../..)
+InstallMultipleFlags($(HEADERS),$(INCDIR)/X11/PM,$(INSTINCFLAGS))
+
+ComplexProgramTarget_1(proxymngr,$(LOCAL_LIBRARIES),NullParameter)
+SpecialCObjectRule(main,$(_NOOP_),'-DCONFIG_FILE="'$(PROXYMANAGERDIR)'/pmconfig"')
+
+InstallNonExecFile(pmconfig,$(PROXYMANAGERDIR))

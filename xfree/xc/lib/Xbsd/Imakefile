@@ -1,0 +1,11 @@
+XCOMM $XConsortium: Imakefile,v 1.6 94/11/21 18:24:13 kaleb Exp $
+XCOMM $XFree86: xc/lib/Xbsd/Imakefile,v 3.2 1999/04/17 09:08:11 dawes Exp $
+SRCS = Berklib.c
+OBJS = Berklib.o
+
+#undef _LinkBuildLibrary
+#define _LinkBuildLibrary(lib) LinkBuildLibrary(lib)
+NormalLibraryTarget(Xbsd,$(OBJS))
+InstallLibrary(Xbsd,$(USRLIBDIR))
+
+DependTarget()

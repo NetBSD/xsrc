@@ -1,0 +1,206 @@
+XCOMM $TOG: Imakefile /main/68 1997/08/28 08:08:34 kaleb $
+XCOMM
+XCOMM                         Attention xterm porters
+XCOMM
+XCOMM
+XCOMM Xterm assumes that bcopy can handle overlapping arguments.  If your
+XCOMM bcopy (or memcpy) cannot, write a routine called bcopy and link it in
+XCOMM or add -Dbcopy=mybcopy to the DEFINES list below.
+XCOMM
+XCOMM $XFree86: xc/programs/xterm/Imakefile,v 3.34 2000/11/30 16:08:22 dawes Exp $
+XCOMM
+
+/* Uncomment SCROLLBAR_RIGHT if you want the scroll bar to be on the right */
+SCROLLBAR_RIGHT = -DSCROLLBAR_RIGHT
+
+/* Define UTF8support to compile-in support for UTF-8 */
+#define UTF8support
+
+/*
+ * Fixes to allow compile with X11R5
+ */
+#ifndef XkbClientDefines
+#define XkbClientDefines /**/
+#endif
+
+#if defined(UseUtempter)
+#undef InstallXtermSetUID
+        UTMPLIB = -lutempter
+#endif
+
+#ifndef XkbClientDepLibs
+#define XkbClientDepLibs /**/
+#endif
+
+#ifndef XkbClientLibs
+#define XkbClientLibs /**/
+#endif
+
+#ifndef SpecialCObjectRule
+#define SpecialCObjectRule(module,ignore,defines) \
+module.o: ; $(CC) -c defines $(CFLAGS) module.c
+#endif
+
+#ifndef ProgramTargetName
+#define ProgramTargetName(program) program
+#endif
+
+/*
+ * add -DWTMP and -DLASTLOG if you want them; make sure that bcopy can
+ * handle overlapping copies before using it.
+ */
+#if SetTtyGroup			/* turn on in config/machine.cf */
+   TTYGROUPDEF = -DUSE_TTY_GROUP
+#endif
+#if UsePUCCPtyd			/* turn on in config/site.def */
+    PUCCPTYDDEF = -DPUCC_PTYD		/* does not need to be setuid */
+         PTYLIB = -lpucc
+#endif
+
+#if ((LinuxCLibMajorVersion == 6) && (LinuxCLibMinorVersion < 1))
+         PTYLIB = -lutil
+#endif
+
+#ifdef OS2Architecture
+/*
+ * Only used in os2main.c, see ptyx.h for OPT_I18N_SUPPORT
+ * <werner@suse.de>
+ */
+#if XtermWithI18N
+        I18NDEF = -DI18N
+      FEATURE_DEFINES = -DDEBUG -DALLOWLOGGING $(I18NDEF)
+#else
+      FEATURE_DEFINES = -DDEBUG -DALLOWLOGGING
+#endif
+#endif
+
+ OSMAJORVERSION = OSMajorVersion
+ OSMINORVERSION = OSMinorVersion
+
+#if !defined(AmoebaArchitecture) && !defined(OS2Architecture) && !defined(__GNU__)
+#if defined(UseUtempter)
+        UTMPDEF = -DUSE_UTEMPTER
+#else
+        UTMPDEF = -DUTMP
+#endif
+#endif
+
+#ifdef AmoebaArchitecture
+       EXTRASRC = ttysvr.c
+       EXTRAOBJ = ttysvr.o
+#endif
+
+#ifdef UTF8support
+    UTF8_OPTION = -DOPT_WIDE_CHARS
+        UTF8SRC = charclass.c keysym2ucs.c precompose.c wcwidth.c
+        UTF8OBJ = charclass.o keysym2ucs.o precompose.o wcwidth.o
+#endif
+#if BuildXftLibrary
+#define XRenderSupport
+#endif
+#ifdef XRenderSupport
+         XRFDEF = -DXRENDERFONT
+        XRFLIBS = XftClientLibs $(XRENDERLIB)
+     XRFDEPLIBS = XftClientDepLibs $(DEPXRENDERLIB)
+#endif
+
+   MAIN_DEFINES = $(UTMPDEF) $(TTYGROUPDEF) $(PUCCPTYDDEF) $(NOPOSIXTERMIOS) \
+		  -DOSMAJORVERSION=$(OSMAJORVERSION) \
+		  -DOSMINORVERSION=$(OSMINORVERSION)
+   MISC_DEFINES = /* -DALLOWLOGGING -DALLOWLOGFILEEXEC */
+    XKB_DEFINES = XkbClientDefines
+        DEFINES = -I. $(XKB_DEFINES) $(TERMCAPDEFINES) $(FEATURE_DEFINES) $(SCROLLBAR_RIGHT) $(UTF8_OPTION) $(XRFDEF)
+
+#ifdef OS2Architecture
+          MAINSRC = os2main.c
+          MAINOBJ = os2main.o
+#else
+          MAINSRC = main.c
+          MAINOBJ = main.o
+#endif
+          SRCS1 = button.c charproc.c charsets.c cursor.c \
+		  data.c doublechr.c fontutils.c input.c \
+		  menu.c misc.c print.c ptydata.c \
+		  screen.c scrollbar.c tabs.c util.c xstrings.c \
+		  TekPrsTbl.c Tekproc.c VTPrsTbl.c \
+		  $(MAINSRC) $(EXTRASRC) $(UTF8SRC)
+          OBJS1 = button.o charproc.o charsets.o cursor.o \
+		  data.o doublechr.o fontutils.o input.o \
+		  menu.o misc.o print.o ptydata.o \
+		  screen.o scrollbar.o tabs.o util.o xstrings.o \
+		  TekPrsTbl.o Tekproc.o VTPrsTbl.o \
+		  $(MAINOBJ) $(EXTRAOBJ) $(UTF8OBJ)
+          SRCS2 = resize.c xstrings.c
+          OBJS2 = resize.o xstrings.o
+           SRCS = $(SRCS1) $(SRCS2)
+           OBJS = $(OBJS1) $(OBJS2)
+       PROGRAMS = ProgramTargetName(resize) ProgramTargetName(xterm)
+       DEPLIBS1 = XkbClientDepLibs XawClientDepLibs $(XRFDEPLIBS)
+       DEPLIBS2 =
+
+#ifndef TermcapLibrary
+#if SystemV && !defined(MacIIArchitecture)
+#if defined(CrayArchitecture) || (defined(HPArchitecture) && (OSMajorVersion < 10)) || defined(RsArchitecture)
+#define TermcapLibrary -lcurses		/* special cases of System V */
+#else
+#define TermcapLibrary -ltermlib	/* usually in here */
+#endif
+#else
+#define TermcapLibrary -ltermcap	/* bsd puts it here */
+#endif
+#endif
+
+     TERMCAPLIB = TermcapLibrary
+
+AllTarget($(PROGRAMS))
+
+SpecialCObjectRule(main,$(_NOOP_),$(MAIN_DEFINES))
+SpecialCObjectRule(menu,$(_NOOP_),$(MISC_DEFINES))
+SpecialCObjectRule(misc,$(_NOOP_),$(MISC_DEFINES))
+SpecialCObjectRule(charproc,$(_NOOP_),$(MISC_DEFINES))
+SpecialCObjectRule(data,$(_NOOP_),$(MISC_DEFINES))
+
+#if InstallXtermSetUID
+SetUIDProgramTarget(xterm,$(OBJS1),$(DEPLIBS1),$(XRFLIBS) XkbClientLibs XawClientLibs,$(TERMCAPLIB) $(PTYLIB))
+#else
+NormalProgramTarget(xterm,$(OBJS1),$(DEPLIBS1),$(XRFLIBS) XkbClientLibs XawClientLibs,$(TERMCAPLIB) $(UTMPLIB) $(PTYLIB))
+#endif
+
+#if InstallXtermSetUID && defined(SunArchitecture) && HasSharedLibraries && (OSMajorVersion < 5)
+#if AlternateUsrLibDir
+#if ((OSMajorVersion == 4) && (OSMinorVersion >= 1))
+LDOVERRIDE = -L$(DESTDIR)$(USRLIBDIR)
+#else
+#if HasGcc
+LDOVERRIDE = -static -L$(DESTDIR)$(USRLIBDIR)
+#else
+LDOVERRIDE = -Bstatic -L$(DESTDIR)$(USRLIBDIR)
+LDRESUME = -Bdynamic
+#endif
+#endif
+#endif
+install:: ProgramTargetName(xterm)
+	MakeDir($(DESTDIR)$(BINDIR))
+	RemoveFile(ProgramTargetName(xterm.inst))
+	LinkRule(ProgramTargetName(xterm.inst),$(CDEBUGFLAGS) $(CCOPTIONS)
+	$(EXTRA_LDOPTIONS) $(LOCAL_LDFLAGS),$(OBJS1),$(LDOVERRIDE)
+	$(XRFLIBS) XawClientLibs $(LDRESUME) $(LDLIBS) $(TERMCAPLIB)
+	$(PTYLIB))
+	$(INSTALL) -c $(INSTPGMFLAGS) $(INSTUIDFLAGS) ProgramTargetName(xterm.inst) $(DESTDIR)$(BINDIR)/ProgramTargetName(xterm)
+	RemoveFile(ProgramTargetName(xterm.inst))
+#else
+#if InstallXtermSetUID
+InstallProgramWithFlags(xterm,$(BINDIR),$(INSTUIDFLAGS))
+#else
+InstallProgramWithFlags(xterm,$(BINDIR),NullParameter)
+#endif
+#endif
+
+NormalProgramTarget(resize,$(OBJS2),$(DEPLIBS2),NullParameter,$(TERMCAPLIB))
+InstallProgramWithFlags(resize,$(BINDIR),NullParameter)
+
+InstallAppDefaults(XTerm)
+InstallAppDefaultsLong(XTerm-col,XTerm-color)
+InstallManPage(xterm,$(MANDIR))
+InstallManPage(resize,$(MANDIR))
+DependTarget()

@@ -1,0 +1,29 @@
+LIBRARY psres
+DESCRIPTION "@#XFREE86:4.0#@ $XFree86: xc/lib/psres/psresos2.def,v 1.1 2000/04/05 18:13:25 dawes Exp $"
+CODE
+	PRELOAD
+DATA
+	MULTIPLE NONSHARED
+STACKSIZE 32768
+EXPORTS
+	CheckPSResourceTime @ 1
+	EnumeratePSResourceFiles @ 2
+	FreePSResourceStorage @ 3
+	InSavedList @ 4
+	ListPSResourceFiles @ 5
+	ListPSResourceTypes @ 6
+	PSResEncoding @ 7
+	PSResFileWarningHandler @ 8
+	PSResFontAFM @ 9
+	PSResFontBDF @ 10
+	PSResFontBDFSizes @ 11
+	PSResFontFamily @ 12
+	PSResFontOutline @ 13
+	PSResFontPrebuilt @ 14 
+	PSResForm @ 15
+	PSResFree @ 16
+	PSResMalloc @ 17
+	PSResPattern @ 18
+	PSResProcSet @ 19
+	PSResRealloc @ 20
+	SetPSResourcePolicy @ 21

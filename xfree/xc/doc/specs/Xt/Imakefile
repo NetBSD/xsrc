@@ -1,0 +1,15 @@
+XCOMM $TOG: Imakefile /main/6 1997/10/27 17:13:25 barstow $
+SRCS = 	strings.mit \
+	Xtk.intr.front \
+	CH[01][0123456789] \
+	appA \
+	appB \
+	appC \
+	appD \
+	appE \
+	appF \
+	postproc
+
+MakeEqnDoc(intrinsics,$(SRCS))
+
+MakeDocIndex(intr,strings.mit intr.idxmac.t)

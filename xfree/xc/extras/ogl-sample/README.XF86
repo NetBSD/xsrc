@@ -1,0 +1,14 @@
+
+This is an import of selected parts of SGI's ogl-sample distribution,
+which is available from their CVS repository at :pserver:cvs@oss.sgi.com/cvs.
+
+Currently only the GLw components have been imported.  Others may be
+imported at a later date.
+
+When importing, use the vendor tag OGL_SAMPLE, and tag OGL_SAMPLE-yyyymmdd,
+where yyyymmdd indicates the date of the snapshot from the ogl-sample
+CVS repository.
+
+
+
+$XFree86: xc/extras/ogl-sample/README.XF86,v 1.2 2000/11/06 21:57:10 dawes Exp $

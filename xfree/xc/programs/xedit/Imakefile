@@ -1,0 +1,28 @@
+XCOMM $XConsortium: Imakefile,v 1.17 93/08/17 20:49:32 rws Exp $
+XCOMM $XFree86: xc/programs/xedit/Imakefile,v 1.13 2000/02/12 02:54:46 dawes Exp $
+        DEPLIBS = XawClientDepLibs
+LOCAL_LIBRARIES = XawClientLibs
+  SYS_LIBRARIES = MathLibrary
+#if defined(LynxOSArchitecture) || defined(SVR3Architecture) || defined(LinuxArchitecture)
+        RP_SRCS = realpath.c
+        RP_OBJS = realpath.o
+     RP_DEFINES = -DNEED_REALPATH
+#endif
+#if !HasStrcasecmp
+   STRCCMP_SRCS = strcasecmp.c
+   STRCCMP_OBJS = strcasecmp.o
+STRCCMP_DEFINES = -DNEED_STRCASECMP
+#endif
+       SYS_SRCS = $(RP_SRCS) $(STRCCMP_SRCS)
+       SYS_OBJS = $(RP_OBJS) $(STRCCMP_OBJS)
+    SYS_DEFINES = $(RP_DEFINES) $(STRCCMP_DEFINES)
+        DEFINES = $(SIGNAL_DEFINES) $(SYS_DEFINES)
+
+           SRCS = xedit.c commands.c util.c $(SYS_SRCS) ispell.c options.c \
+		  hook.c c-mode.c
+           OBJS = xedit.o commands.o util.o $(SYS_OBJS) ispell.o options.o \
+		  hook.o c-mode.o
+
+ComplexProgramTarget(xedit)
+InstallAppDefaults(Xedit)
+InstallAppDefaultsLong(Xedit-color,Xedit-color)

@@ -1,0 +1,41 @@
+XCOMM $XFree86: xc/lib/font/FreeType/module/Imakefile,v 1.6 1999/08/14 10:49:17 dawes Exp $
+
+XCOMM Imakefile created for the Freetype TrueType renderer.
+XCOMM Mark Leisher <mleisher@crl.nmsu.edu>
+XCOMM Juliusz Chroboczek <jec@dcs.ed.ac.uk>
+
+#define IHaveModules
+#include <Server.tmpl>
+
+/*
+ * Note: mmap support isn't enabled here because it might not work on all
+ * architectures that might be using the portable modules.
+ *
+ * XXX It might be reasonable to allow that if MakeDllModules is set to YES.
+ */
+
+DEFINES = -DTT_MAKE_OPTION_SINGLE_OBJECT=1 -DFONTMODULE
+
+/* Much of the source is simply #included by freetype.c */
+INCLUDES = -I.. -I$(FONTINCSRC) -I../../include -I$(XTOP)/include \
+           -I$(SERVERSRC)/include -I$(FTSOURCEDIR)/lib \
+           -I$(FTSOURCEDIR)/lib/extend -I$(FTSOURCEDIR)/lib/arch/unix
+
+SRCS = ftfuncs.c ftenc.c ftutil.c freetype.c ftxcmap.c ftmodule.c
+
+OBJS = ftfuncs.o ftenc.o ftutil.o freetype.o ftxcmap.o ftmodule.o
+
+LinkSourceFile(freetype.c,$(FTSOURCEDIR)/lib/arch/unix)
+LinkSourceFile(ftxcmap.c,$(FTSOURCEDIR)/lib/extend)
+LinkSourceFile(ftenc.c,..)
+LinkSourceFile(ftfuncs.c,..)
+LinkSourceFile(ftutil.c,..)
+
+ModuleObjectRule()
+LibraryModuleTarget(freetype,$(OBJS))
+InstallLibraryModule(freetype,$(MODULEDIR),fonts)
+
+DependTarget()
+
+
+InstallDriverSDKLibraryModule(freetype,$(DRIVERSDKMODULEDIR),fonts)

@@ -1,0 +1,1153 @@
+XCOMM $TOG: Imakefile /main/249 1997/12/11 11:18:14 kaleb $
+/*
+ * Server Master Makefile
+ */
+XCOMM $XFree86: xc/programs/Xserver/Imakefile,v 3.205 2000/12/11 20:29:31 dawes Exp $
+
+#ifndef InstallXserverSetUID
+#define InstallXserverSetUID NO
+#endif
+#define InstallServerSetUID InstallXserverSetUID
+
+#include <Server.tmpl>
+
+#ifdef XFree86Version
+/* Do not strip server binaries */
+INSTPGMFLAGS = 
+#endif
+
+#define PreFbLibs $(DIX) $(OS) $(XPDDX)
+#define PreFbLibsNoFont $(DIX) $(OS)
+#define BarePostFbLibs $(MFB) $(XPFBLIBS) $(MI)
+#define PostFbLibs BarePostFbLibs $(EXTENSIONS)
+#define NoMfbBarePostFbLibs $(XPFBLIBS) $(MI)
+#ifndef BuildXinerama
+#define NoMfbPostFbLibs NoMfbBarePostFbLibs $(EXTENSIONS)
+#else
+#define NoMfbPostFbLibs $(EXTENSIONS) NoMfbBarePostFbLibs $(EXTENSIONS)
+#endif
+
+#define MFBBareLibs PreFbLibs BarePostFbLibs
+#define NoMFBBareLibs PreFbLibs NoMfbBarePostFbLibs
+#define MFBLibs PreFbLibs PostFbLibs
+#define NoMFBLibs PreFbLibs NoMfbPostFbLibs
+#define CFBLibs PreFbLibs $(CFB) PostFbLibs
+#define CFB4Libs PreFbLibs $(CFB4) PostFbLibs
+#if BuildLowMem
+#define LMFCFBLibs PreFbLibs $(LMFCFB) NoMfbBarePostFbLibs $(EXTENSIONS)
+#endif
+#define CFB8Libs PreFbLibs $(CFB8) PostFbLibs
+#define CFB16Libs PreFbLibs $(CFB16) PostFbLibs
+#define CFB24Libs PreFbLibs $(CFB24) PostFbLibs
+#define CFB32Libs PreFbLibs $(CFB32) PostFbLibs
+
+#define NoMFBCFBLibs PreFbLibs $(CFB) NoMfbPostFbLibs
+#define NoMFBCFB8Libs PreFbLibs $(CFB8) NoMfbPostFbLibs
+#define FbPostFbLibs  $(FB) NoMfbPostFbLibs
+#define FBLibs PreFbLibs FbPostFbLibs
+
+#define MiExtLibs $(SHADOW)
+
+#define AllFBLibs PreFbLibs $(FB) $(CFB) PostFbLibs
+
+#if BuildPexExt
+         PEXLIBS = PEX5/dipex/dispatch/ModuleLibraryTargetName(didipex) \
+                   PEX5/dipex/swap/ModuleLibraryTargetName(diswapex) \
+                   PEX5/dipex/objects/ModuleLibraryTargetName(diobpex) \
+                   PEX5/dipex/dispatch/ModuleLibraryTargetName(didipex) \
+                   PEX5/ddpex/mi/level4/ModuleLibraryTargetName(ddpex4) \
+                   PEX5/ddpex/mi/level3/ModuleLibraryTargetName(ddpex3) \
+                   PEX5/ddpex/mi/shared/ModuleLibraryTargetName(ddpexs) \
+                   PEX5/ddpex/mi/level2/ModuleLibraryTargetName(ddpex2) \
+                   PEX5/ddpex/mi/level1/ModuleLibraryTargetName(ddpex1) \
+		   PEX5/ospex/ModuleLibraryTargetName(ospex) 
+          PEXDIR = PEX5
+#endif
+
+#if BuildGlxExt
+#if GlxStubLib && !DoLoadableServer
+      GLXLIB = glxStub/LibraryTargetName(ServerGlx) 
+      GLXDIR = glxStub
+#else
+#if defined(GlxStaticServerLib) && !DoLoadableServer
+      GLXLIB = GlxStaticServerLib
+      GLXDIR = 
+#else
+#if BuildXF86DRI
+      DRILIB = GL/dri/ModuleLibraryTargetName(dri)
+#else
+      DRILIB = 
+#endif
+#if GlxUseSGISI
+      GLXLIB = GL/glx/ModuleLibraryTargetName(glx) \
+               GL/sgi-si/ModuleLibraryTargetName(GLcore) \
+               $(DRILIB)
+#else
+#if DoLoadableServer
+      GLXLIB = GL/glx/ModuleLibraryTargetName(glx) \
+               GL/mesa/src/ModuleLibraryTargetName(GLcore)
+#else
+      GLXLIB = GL/glx/ModuleLibraryTargetName(glx) \
+               GL/mesa/src/X/ModuleLibraryTargetName(GLcoreX) \
+               GL/mesa/src/ModuleLibraryTargetName(GLcore) \
+               $(DRILIB)
+#endif
+#endif
+      GLXDIR = GL
+      GLXEXT = $(GLXLIB)
+#endif
+#endif
+#endif
+
+#if BuildXInputExt
+      XINPUTEXT = Xi/LibraryTargetName(xinput)
+          XIDIR = Xi
+#endif
+#if BuildXIE 
+      XIEEXT = XIE/dixie/ModuleLibraryTargetName(dixie) XIE/mixie/ModuleLibraryTargetName(mixie)
+#endif
+#if BuildXIE || BuildXIElib
+      XIEDIR = XIE
+#endif
+#if BuildXKB
+      XKBEXT = xkb/LibraryTargetName(xkb)
+      XKBDIR = xkb
+#endif
+#if BuildLBX
+         LBXEXT = lbx/LibraryTargetName(lbx) \
+                  $(TOP)/lib/lbxutil/LibraryTargetName(lbxutil)
+        LBXDIRS = lbx
+#endif
+#if BuildDBE
+         DBEEXT = dbe/LibraryTargetName(dbe)
+#endif
+#if BuildDBE || BuildDBElib
+         DBEDIR = dbe
+#endif
+#if BuildRECORD
+         RECORDEXT = record/LibraryTargetName(record)
+#endif
+#if BuildRECORD || BuildRECORDlib
+         RECORDDIR = record
+#endif
+#ifdef SiteExtensionLibs
+     SITEEXTS = SiteExtensionLibs
+#endif
+#ifdef SiteExtensionDirs
+     SITEEXTDIRS = SiteExtensionDirs
+#endif
+#if DoLoadableServer && HasDlopen
+        LIBDL = DlLibrary
+#endif
+     LIBREGEX = RegexLibrary
+
+#if DoLoadableServer
+  LIBCWRAPPER = os/libcwrapper.o
+#endif
+
+#if BuildXprint
+
+#ifndef XpRasterDDX
+#define XpRasterDDX NO
+#endif
+#ifndef XpColorPclDDX
+#define XpColorPclDDX YES
+#endif
+#ifndef XpMonoPclDDX
+#define XpMonoPclDDX NO
+#endif
+#ifndef XpPostScriptDDX
+#define XpPostScriptDDX YES
+#endif
+
+#if XpRasterDDX
+XPRASTLIB = Xprint/raster/LibraryTargetName(raster)
+#endif
+#if XpColorPclDDX
+XPPCLLIB = Xprint/pcl/LibraryTargetName(pcl)
+#endif
+#if XpMonoPclDDX
+XPMPCLLIB = Xprint/pcl-mono/LibraryTargetName(pcl)
+#endif
+#if XpPostScriptDDX
+XPPSLIB = Xprint/ps/LibraryTargetName(ps)
+#endif
+
+XPDDXLIBS = Xprint/LibraryTargetName(printer) $(XPRASTLIB) $(XPPCLLIB) $(XPMPCLLIB) $(XPPSLIB)
+XPDDXFBLIBS = $(MFB) $(CFB32)
+#if !PrintOnlyServer
+      XPFBLIBS = $(XPDDXFBLIBS)
+      XPDDX = $(XPDDXLIBS)
+#endif
+      XPDDXDIR = Xprint
+#endif
+#if !BuildXprint || PrintOnlyServer
+XPFBLIBS = dix/LibraryTargetName(xpstubs)
+#endif
+
+#if BuildRender
+      RENDERDIR = render
+      RENDERLIB = $(RENDERDIR)/librender.a
+#endif
+#if DoLoadableServer
+     EXTENSIONS = $(OTHEREXTS) $(RENDERLIB)
+   LOADABLEEXTS = $(PEXLIBS) $(XIEEXT) $(MISCEXT) $(DBEEXT) $(RECORDEXT) \
+                  $(GLXEXT)
+        MISCEXT = Xext/LibraryTargetName(ext)
+      OTHEREXTS = Xext/LibraryTargetName(exts) $(XKBEXT) $(XINPUTEXT) \
+                  $(LBXEXT) $(SITEEXTS)
+#else
+     EXTENSIONS = $(OTHEREXTS) $(PEXLIBS) $(GLXEXT) $(RENDERLIB)
+      OTHEREXTS = Xext/LibraryTargetName(ext) $(XKBEXT) $(XINPUTEXT) \
+                  $(XIEEXT) $(LBXEXT) $(DBEEXT) $(RECORDEXT) $(SITEEXTS)
+#endif
+        EXTDIRS = Xext $(XKBDIR) $(XIDIR) $(XIEDIR) $(PEXDIR) $(GLXDIR) \
+                  $(LBXDIRS) $(DBEDIR) $(RECORDDIR) $(SITEEXTDIRS) $(RENDERDIR)
+         XAULIB = $(XAUTHSRC)/LibraryTargetName(Xau)
+       XDMCPLIB = $(XDMCPLIBSRC)/LibraryTargetName(Xdmcp)
+#if BuildLBX || GzipFontCompression
+           ZLIB = GzipLibrary
+#endif
+             OS = os/LibraryTargetName(os) $(XAULIB) $(XDMCPLIB)
+        BSDEMUL = $(DEPXBSDLIB)
+#if DoLoadableServer
+            MFB = mfb/ModuleLibraryTargetName(mfb)
+             FB = fb/ModuleLibraryTargetName(fb)
+            CFB = cfb/ModuleLibraryTargetName(cfb) \
+		  cfb16/ModuleLibraryTargetName(cfb16) \
+		  cfb24/ModuleLibraryTargetName(cfb24) \
+		  cfb32/ModuleLibraryTargetName(cfb32)
+           CFB8 = cfb/ModuleLibraryTargetName(cfb)
+           CFB4 = cfb/ModuleLibraryTargetName(cfb) \
+		  cfb4/ModuleLibraryTargetName(cfb4)
+          CFB16 = cfb/ModuleLibraryTargetName(cfb) \
+		  cfb16/ModuleLibraryTargetName(cfb16)
+          CFB24 = cfb/ModuleLibraryTargetName(cfb) \
+		  cfb24/ModuleLibraryTargetName(cfb24)
+          CFB32 = cfb/ModuleLibraryTargetName(cfb) \
+		  cfb32/ModuleLibraryTargetName(cfb32)
+         SHADOW = miext/shadow/ModuleLibraryTargetName(shadow)
+#else 
+            MFB = mfb/LibraryTargetName(mfb)
+             FB = fb/LibraryTargetName(fb)
+            CFB = cfb/LibraryTargetName(cfb) cfb16/LibraryTargetName(cfb16) \
+		  cfb24/LibraryTargetName(cfb24) cfb32/LibraryTargetName(cfb32)
+           CFB8 = cfb/LibraryTargetName(cfb)
+           CFB4 = cfb/LibraryTargetName(cfb) cfb4/LibraryTargetName(cfb4)
+          CFB16 = cfb/LibraryTargetName(cfb) cfb16/LibraryTargetName(cfb16)
+          CFB24 = cfb/LibraryTargetName(cfb) cfb24/LibraryTargetName(cfb24)
+          CFB32 = cfb/LibraryTargetName(cfb) cfb32/LibraryTargetName(cfb32)
+         SHADOW = miext/shadow/LibraryTargetName(shadow)
+#endif
+#if BuildLowMem
+         LMFCFB = lmfcfb/LibraryTargetName(cfb)
+#endif
+             MI = mi/LibraryTargetName(mi)
+   MIINITEXTOBJ = mi/miinitext.o
+            DIX = dix/LibraryTargetName(dix)
+       FONTBASE = $(FONTLIBSRC)/fontbase.o \
+		  $(FONTLIBSRC)/LibraryTargetName(fontbase)
+#if XserverStaticFontLib
+           FONT = $(FONTLIBSRC)/LibraryTargetName(Xfont)
+#else
+           FONT = $(LDPRELIB) $(XFONTLIB)
+#endif
+       FONTLIBS = $(FONT) $(XPFBLIBS)
+#if UsbMouseSupport 
+#if !HasLibUsb
+            USB = $(XF86OSSRC)/bsd/libusb/LibraryTargetName(usb)
+#else
+	    USB = -lusb
+#endif
+#endif
+#ifdef ServerExtraSysLibs
+   EXTRASYSLIBS = ServerExtraSysLibs
+#endif
+#if HasPam && HasPamMisc
+        PAMLIBS = PamLibraries PamMiscLibraries
+#endif
+#if !(SystemV4 || defined(SGIArchitecture) || UseRgbTxt)
+       DBMLIBS = DBMLibrary
+#endif
+        SYSLIBS = $(ZLIB) MathLibrary Krb5Libraries $(DBMLIBS) $(USB) \
+	$(PAMLIBS) $(EXTRASYSLIBS)
+           CBRT = mi/LibraryTargetName(cbrt)
+        STDDIRS = include dix os mi $(XPDDXDIR) $(EXTDIRS)
+
+XCOMM
+XCOMM This turns off the default rule for compiling .c files because
+XCOMM this makefile does not really know how to build it.  This is really
+XCOMM just a hack because of the Sun version of make and nfs.
+XCOMM
+.c.o:
+
+.s.o:
+
+/*  		  Build rule blocks, add one for each server
+ *  
+ *  If a server needs mfb, its build block should have a line like:
+ *  MFBDIR = mfb
+ *  Similarly, its build block should have:
+ *  CFB4DIR  = cfb4  (if the server needs 4 bit cfb)
+ *  CFB8DIR  = cfb   (8 bit cfb)
+ *  CFB16DIR = cfb16 (16 bit cfb)
+ *  CFB24DIR = cfb24 (24 bit cfb)
+ *  CFB32DIR = cfb32 (32 bit cfb)
+ *  
+ *  If a server does not need all of the above components, simply
+ *  omit the relevant lines from the build block.
+ *  
+ *  Additional ddx directories can be split across three variables:
+ *  DDXDIR1, DDXDIR2, and DDXDIR3.  Most servers only use DDXDIR1,
+ *  but if two servers can be built on a platform then DDXDIR1 is
+ *  typically set to the ddx directories that are shared by both
+ *  servers, DDXDIR2 is the directories unique to one of the servers,
+ *  and DDXDIR3 is the directories unique to the other server.
+ *  
+ *  If these guidelines are followed, a make at the top of the server
+ *  tree should result in each subdirectory being built only once,
+ *  even if multiple servers that share subdirectories are being built.
+ */
+
+#if BuildLowMem
+LMFCFBDIR = lmfcfb
+#endif
+
+#if XdecServer
+XCOMM
+XCOMM Digital MIPS based WS server (ultrix 4.2 and beyond)
+XCOMM
+MFBDIR  = mfb
+CFB8DIR = cfb
+DDXDIR1 = hw/dec/ws
+#if BuildLowMem
+DECDIRS = $(STDDIRS) $(LMFCFBDIR) $(DDXDIR1) $(DEPDIRS)
+#else
+DECDIRS = $(STDDIRS) $(MFBDIR) $(CFB8DIR) $(DDXDIR1) $(DEPDIRS)
+#endif
+DECOBJS = hw/dec/ws/init.o hw/dec/ws/sdepthinit.o
+#if BuildLowMem
+DECLIBS = hw/dec/ws/LibraryTargetName(dec) LMFCFBLibs
+#else
+DECLIBS = hw/dec/ws/LibraryTargetName(dec) CFB8Libs
+#endif
+ServerTarget(Xdec,$(DECDIRS),$(DECOBJS),$(DECLIBS),$(FONTLIBS) $(SYSLIBS))
+#ifndef ServerToInstall
+#define ServerToInstall Xdec
+#endif
+#endif /* XdecServer */
+
+
+#if XdecMultiDepthServer
+XCOMM
+XCOMM Digital MIPS based WS server (ultrix 4.2 and beyond)
+XCOMM Supports 8, 12, and 24 bit pixmaps
+XCOMM
+MFBDIR   = mfb
+CFB8DIR  = cfb
+CFB16DIR = cfb16
+CFB24DIR = cfb24
+CFB32DIR = cfb32
+DDXDIR1  = hw/dec/ws
+DECDIRS1 = $(STDDIRS) $(MFBDIR) $(CFB8DIR) $(CFB16DIR) $(CFB24DIR) $(CFB32DIR) $(DDXDIR1) $(DEPDIRS)
+DECOBJS1 = hw/dec/ws/init.o hw/dec/ws/mdepthinit.o
+DECLIBS1 = hw/dec/ws/LibraryTargetName(dec) CFBLibs
+ServerTarget(Xdec_md,$(DECDIRS1),$(DECOBJS1),$(DECLIBS1),$(FONTLIBS) $(SYSLIBS))
+#ifndef ServerToInstall
+#define ServerToInstall Xdec_md
+#endif
+#endif /* XdecMultiDepthServer */
+
+
+#if XsunServer
+XCOMM
+XCOMM Sun server
+XCOMM
+MFBDIR  = mfb
+CFB8DIR = cfb
+DDXDIR1 = hw/sun
+#ifndef AmoebaArchitecture
+SUNOBJS = hw/sun/sunInit.o
+#else
+SUNOBJS = hw/sun/sunInitColor.o
+#endif
+#if BuildLowMem
+SUNDIRS = $(STDDIRS) $(LMFCFBDIR) $(DDXDIR1) $(DEPDIRS)
+SUNLIBS = hw/sun/LibraryTargetName(sun) LMFCFBLibs
+#else
+SUNDIRS = $(STDDIRS) $(MFBDIR) $(CFB8DIR) $(DDXDIR1) $(DEPDIRS)
+SUNLIBS = hw/sun/LibraryTargetName(sun) CFB8Libs
+#endif
+SUNSYSLIBS = $(FONTLIBS) $(WIDECHARSYSLIB) $(SYSLIBS)
+SetUIDServerTarget(Xsun,$(SUNDIRS),$(SUNOBJS),$(SUNLIBS),$(SUNSYSLIBS))
+#ifndef ServerToInstall
+#define ServerToInstall Xsun
+#endif
+#endif /* XsunServer */
+
+
+#if Xsun24Server
+XCOMM
+XCOMM Sun multiple pixmap depth (8, 12, 24) server
+XCOMM
+MFBDIR = mfb
+CFB8DIR = cfb
+CFB16DIR = cfb16
+CFB24DIR = cfb24
+CFB32DIR = cfb32
+DDXDIR1 = hw/sun
+SUN24DIRS = $(STDDIRS) $(MFBDIR) $(CFB8DIR) $(CFB16DIR) $(CFB24DIR) $(CFB32DIR) $(DDXDIR1) $(DEPDIRS)
+SUN24OBJS = hw/sun/sunInitMulti.o
+SUN24LIBS = hw/sun/LibraryTargetName(sun) CFBLibs
+SetUIDServerTarget(Xsun24,$(SUN24DIRS),$(SUN24OBJS),$(SUN24LIBS),$(FONTLIBS) $(SYSLIBS))
+#ifndef ServerToInstall
+#define ServerToInstall Xsun24
+#endif
+#endif /* Xsun24Server */
+
+
+#if XsunMonoServer
+XCOMM
+XCOMM Sun monochrome server
+XCOMM
+MFBDIR = mfb
+DDXDIR1 = hw/sun
+SUNMDIRS = $(STDDIRS) $(MFBDIR) $(DDXDIR1) $(DEPDIRS)
+SUNMOBJS = hw/sun/sunInitMono.o hw/sun/sunInExMono.o
+SUNMLIBS = hw/sun/LibraryTargetName(sun) MFBBareLibs $(OTHEREXTS)
+SetUIDServerTarget(XsunMono,$(SUNMDIRS),$(SUNMOBJS),$(SUNMLIBS),$(FONTLIBS) $(SYSLIBS))
+#ifndef ServerToInstall
+#define ServerToInstall XsunMono
+#endif
+#endif /* XsunMonoServer */
+
+
+#if XsunAmoebaServer
+XCOMM
+XCOMM Sun server for Amoeba
+XCOMM
+MFBDIR = mfb
+CFB8DIR = cfb
+DDXDIR1 = hw/sunAmoeba
+SUNDIRS = $(STDDIRS) $(MFBDIR) $(CFB8DIR) $(DDXDIR1) $(DEPDIRS)
+SUNOBJS = hw/sunAmoeba/sunInitColor.o
+SUNLIBS = hw/sunAmoeba/LibraryTargetName(sun) CFB8Libs
+ServerTarget(Xsun,$(SUNDIRS),$(SUNOBJS),$(SUNLIBS),$(FONTLIBS) $(SYSLIBS))
+#ifndef ServerToInstall
+#define ServerToInstall Xsun
+#endif
+#endif /* XsunAmoebaServer */
+
+
+#if XsunAmoebaMonoServer
+XCOMM
+XCOMM Sun monochrome server for Amoeba
+XCOMM
+MFBDIR = mfb
+DDXDIR1 = hw/sunAmoeba
+SUNMDIRS = $(STDDIRS) $(MFBDIR) $(DDXDIR1) $(DEPDIRS)
+SUNMOBJS = hw/sunAmoeba/sunInitMono.o hw/sunAmoeba/sunInExMono.o
+SUNMLIBS = hw/sunAmoeba/LibraryTargetName(sun) MFBBareLibs $(OTHEREXTS)
+ServerTarget(XsunMono,$(SUNMDIRS),$(SUNMOBJS),$(SUNMLIBS),$(FONTLIBS) $(SYSLIBS))
+#ifndef ServerToInstall
+#define ServerToInstall XsunMono
+#endif
+#endif /* XsunAmoebaMonoServer */
+
+
+#if XsunLynxServer
+XCOMM
+XCOMM Sun server for LynxOS microSPARC 2.4.0
+XCOMM
+MFBDIR = mfb
+CFB8DIR = cfb
+DDXDIR1 = hw/sunLynx
+SUNDIRS = $(STDDIRS) $(MFBDIR) $(CFB8DIR) $(DDXDIR1) $(DEPDIRS)
+SUNOBJS = hw/sunLynx/sunLyInit.o
+SUNLIBS = hw/sunLynx/libsun.a CFB8Libs
+ServerTarget(Xsun,$(SUNDIRS),$(SUNOBJS),$(SUNLIBS),$(FONTLIBS) $(SYSLIBS))
+#ifndef ServerToInstall
+#define ServerToInstall Xsun
+#endif
+#endif /* XsunLynxServer */
+
+
+#if XsunLynxMonoServer
+XCOMM
+XCOMM Sun monochrome server for LynxOS microSPARC 2.4.0
+XCOMM
+MFBDIR = mfb
+DDXDIR1 = hw/sunLynx
+SUNMDIRS = $(STDDIRS) $(MFBDIR) $(DDXDIR1) $(DEPDIRS)
+SUNMOBJS = hw/sunLynx/sunInitMono.o hw/sunLynx/sunInExMono.o
+SUNMLIBS = hw/sunLynx/libsun.a MFBBareLibs $(OTHEREXTS)
+ServerTarget(XsunMono,$(SUNMDIRS),$(SUNMOBJS),$(SUNMLIBS),$(FONTLIBS) $(SYSLIBS))
+#ifndef ServerToInstall
+#define ServerToInstall XsunMono
+#endif
+#endif /* XsunLynxMonoServer */
+
+
+#if XibmServer
+XCOMM
+XCOMM IBM server
+XCOMM
+#if SpecialMalloc
+IBMALLOCLIB = hw/ibm/common/LibraryTargetName(ibmalloc)
+#else
+IBMALLOCLIB =
+#endif
+MFBDIR  = mfb
+CFB8DIR = cfb
+DDXDIR1 = hw/ibm
+IBMDIRS = $(STDDIRS) $(MFBDIR) $(CFB8DIR) $(DDXDIR1) $(DEPDIRS)
+IBMOBJS = hw/ibm/common/ibmcomm.o hw/ibm/common/ibmDate.o
+IBMLIBS = hw/ibm/AIX/hft.o hw/ibm/LibraryTargetName(ibm) $(IBMALLOCLIB) CFB8Libs
+ServerTarget(Xibm,$(IBMDIRS),$(IBMOBJS),$(IBMLIBS),$(FONTLIBS) $(SYSLIBS))
+#ifndef ServerToInstall
+#define ServerToInstall Xibm
+#endif
+#endif /* XibmServer */
+
+
+#if XhpServer
+XCOMM
+XCOMM Hewlett Packard CFB Server
+XCOMM
+MFBDIR  = mfb
+CFB8DIR = cfb
+CFB32DIR = cfb32
+DDXDIR1 = hw/hp
+HPOBJS = hw/hp/hp.o
+#if BuildLowMem
+HPSUBDIRS = $(STDDIRS) $(LMFCFBDIR) $(DDXDIR1) $(DEPDIRS)
+HPLIBS = LMFCFBLibs
+#else
+HPSUBDIRS = $(STDDIRS) $(MFBDIR) $(CFB8DIR) $(CFB32DIR) $(DDXDIR1) $(DEPDIRS)
+HPLIBS = CFB32Libs
+#endif
+HPSYSLIBS = $(FONTLIBS) $(CBRT) $(SYSLIBS)
+ServerTarget(Xhp,$(HPSUBDIRS),$(HPOBJS),$(HPLIBS),$(HPSYSLIBS))
+#ifndef ServerToInstall
+#define ServerToInstall Xhp
+#endif
+#endif	/* XhpServer */
+
+
+#if HasParallelMake
+XCOMM
+XCOMM force non-parallel build of XF86 servers to prevent MUTEX overrides
+XCOMM
+#if XF86Server
+XF86SERVER = XFree86
+#endif
+#if XnestServer
+XNEST = Xnest
+#endif
+#if XVirtualFramebufferServer
+XVFB = Xvfb
+#endif
+#if XWinServer && !MakeDllModules
+XWIN = XWin
+#endif
+#if defined(XF86Server) || \
+    defined(XnestServer) || \
+    defined(XVirtualFramebufferServer) || \
+    (!MakeDllModules && defined(XWinServer))
+MakeMutex($(XF86SERVER) $(XNEST) $(XVFB) $(XWIN))
+#endif
+MakeMutex($(STDDIRS) mfb fb cfb cfb16 cfb24 cfb32)
+#endif
+
+
+#if XF86Server
+XCOMM
+XCOMM XFree86 Server
+XCOMM
+FBDIR = fb
+MFBDIR  = mfb
+CFB8DIR = cfb
+CFB16DIR = cfb16
+CFB24DIR = cfb24
+CFB32DIR = cfb32
+SHADOWDIR = miext/shadow
+#if XF86AFB
+AFBDIR = afb
+#endif
+DDXDIR1  = hw/xfree86
+XF86SERVERSUBDIRS = $(STDDIRS) $(MFBDIR) $(FBDIR) $(CFB8DIR) $(CFB16DIR) $(CFB24DIR) $(CFB32DIR) $(AFBDIR) $(SHADOWDIR) $(DDXDIR1) $(DEPDIRS)
+XF86INIT   = $(XF86COMSRC)/xf86Init.o $(XF86COMSRC)/xf86IniExt.o
+XF86COMLIB = $(XF86COMSRC)/LibraryTargetName(xf86)
+XF86PARSLIB= $(XF86PARSERSRC)/LibraryTargetName(xf86config)
+XF86OSLIB  = $(XF86OSSRC)/LibraryTargetName(xf86_os)
+XF86HWLIB  = $(XF86HWSRC)/LibraryTargetName(common_hw)
+#if XF86XAA
+XF86XAALIB = $(XF86SRC)/xaa/LibraryTargetName(xaa)
+#endif
+#if XF86VgaHw
+XF86VGAHWLIB = $(XF86SRC)/vgahw/LibraryTargetName(vgahw)
+#endif
+#if XF86FBDevHw
+XF86FBDEVHWLIB = $(XF86SRC)/fbdevhw/LibraryTargetName(fbdevhw)
+#endif
+#if XF1Bpp || XF4Bpp
+XF1BPPLIB = $(XF86SRC)/xf1bpp/LibraryTargetName(xf1bpp)
+#endif
+#if XF4Bpp
+XF4BPPLIB = $(XF86SRC)/xf4bpp/LibraryTargetName(xf4bpp)
+#endif
+#if XF8_32Wid
+XF8_32WIDLIB = $(XF86SRC)/xf8_32wid/LibraryTargetName(xf8_32wid)
+#endif
+#if XF8_32Bpp
+XF8_32BPPLIB = $(XF86SRC)/xf8_32bpp/LibraryTargetName(xf8_32bpp)
+#endif
+#if XF8_16Bpp
+XF8_16BPPLIB = $(XF86SRC)/xf8_16bpp/LibraryTargetName(xf8_16bpp)
+#endif
+#if XF24_32Bpp
+XF24_32BPPLIB = $(XF86SRC)/xf24_32bpp/LibraryTargetName(xf24_32bpp)
+#endif
+#if XFShadowFB
+XFSHADOWFBLIB = $(XF86SRC)/shadowfb/LibraryTargetName(shadowfb)
+#endif
+#if XF86AFB
+AFBLIB = afb/LibraryTargetName(afb)
+#endif
+XF86DRIVERLIB = $(XF86SRC)/drivers/LibraryTargetName(driver)
+#if XF86Ramdac
+XF86RAMDACLIB = $(XF86SRC)/ramdac/LibraryTargetName(ramdac)
+#endif
+#if XF86I2C
+XF86I2CLIB = $(XF86SRC)/i2c/LibraryTargetName(i2c)
+#endif
+#if XF86DDC
+XF86DDCLIB = $(XF86SRC)/ddc/LibraryTargetName(ddc)
+#endif
+#if XF86VBE
+XF86VBELIB = $(XF86OSSRC)/vbe/vbe.o
+#endif
+#if XF86RAC
+XF86RACLIB = $(XF86SRC)/rac/LibraryTargetName(rac)
+#endif
+#if XF86INT10_BUILD > X86EMU_GENERIC
+XF86INT10LIB = $(XF86OSSRC)/LibraryTargetName(int10)
+#else
+XF86INT10LIB = $(XF86SRC)/int10/LibraryTargetName(int10)
+#endif
+XF86IDRIVERLIB = $(XF86SRC)/input/LibraryTargetName(idriver)
+#if !DoLoadableServer
+XF86DRVOBJS = $(XF86SRC)/drivers/drvConf.o
+XF86DRVLIBS = $(XF86DRIVERLIB) $(XF86RAMDACLIB) $(XF86DDCLIB) $(XF86I2CLIB) \
+              $(XF86XAALIB) $(XF86VGAHWLIB) $(XF86FBDEVHWLIB) \
+	      $(XF8_32WIDLIB) $(XF8_32BPPLIB) $(XF86VBELIB) \
+	      $(XF8_16BPPLIB) $(XF24_32BPPLIB) \
+	      $(XF4BPPLIB) $(XF1BPPLIB) $(XFSHADOWFBLIB) $(AFBLIB)
+XF86IDRVOBJS = $(XF86SRC)/input/drvConf.o
+XF86IDRVLIBS = $(XF86IDRIVERLIB)
+XF86SCANLIB = $(XF86SRC)/scanpci/LibraryTargetName(scanpci)
+XF86LIBS  = $(XF86INIT) $(XF86COMLIB) $(XF86RACLIB) $(XF86PARSLIB) \
+	    $(XF86OSLIB) $(XF86INT10LIB)
+#else
+XF86LIBS  = $(XF86INIT) $(XF86COMLIB) $(XF86PARSLIB) $(XF86OSLIB) 
+#endif
+#if DoLoadableServer
+XF86LOADERLIB = $(XF86SRC)/loader/LibraryTargetName(loader)
+XF86MAINLIBS = MiExtLibs PreFbLibsNoFont $(FONTBASE) $(OTHEREXTS) $(XF86COMLIB) \
+	       NoMfbPostFbLibs
+XF86SERVERSYSLIBS = $(SYSLIBS) $(LIBDL) $(LIBREGEX)
+#else
+XF86MAINLIBS = MiExtLibs AllFBLibs $(XF86COMLIB) $(MI)
+XF86SERVERSYSLIBS = $(FONTLIBS) $(SYSLIBS) $(LIBDL) $(LIBREGEX)
+#endif
+XF86SERVEROBJS = $(XF86DRVOBJS) $(XF86IDRVOBJS)
+XF86SERVERLIBS = $(XF86DRVLIBS) $(XF86IDRVLIBS) $(XF86LIBS) $(XF86LOADERLIB) \
+		 $(XF86COMLIB) $(XF86MAINLIBS) $(XF86SCANLIB) $(XF86OSLIB)
+#if HasParallelMake
+MakeMutex($(XF86SERVERSUBDIRS) $(XF86SERVERLIBS) $(XF86SERVERSYSLIBS))
+#endif
+#if ForceServerRemake
+$(XF86SERVERLIBS) $(XF86SERVERSYSLIBS):: $(XF86SERVERSUBDIRS)
+	@if [ -f $@ ]; then touch $@; fi
+#endif
+SetUIDServerTarget(XFree86,$(XF86SERVERSUBDIRS),$(XF86SERVEROBJS),$(XF86SERVERLIBS),$(XF86SERVERSYSLIBS))
+#if DoLoadableServer
+ServerDriverSDKTarget(XFree86)
+#endif
+#ifndef ServerToInstall
+#define ServerToInstall XFree86
+#endif
+#endif        /* XF86Server */
+
+#ifdef KDriveXServer
+XCOMM
+XCOMM Tiny X server section
+XCOMM
+
+        KDRIVE = hw/kdrive
+#ifdef LinuxArchitecture
+       KDOSDIR = $(KDRIVE)/linux
+          KDOS = $(KDOSDIR)/LibraryTargetName(linux)
+#endif
+
+#ifdef VXWORKS
+       KDOSDIR = $(KDRIVE)/vxworks
+          KDOS = $(KDOSDIR)/LibraryTargetName(vxworks)
+#endif
+
+#if BuildPseudo8
+       PSEUDO8 = $(KDRIVE)/pseudo8/LibraryTargetName(pseudo8)
+    PSEUDO8DIR = $(KDRIVE)/pseudo8
+#endif
+     SHADOWDIR = miext/shadow
+            KD = $(KDRIVE)/LibraryTargetName(kdrive)
+       KDFBDEV = $(KDRIVE)/fbdev/LibraryTargetName(fbdev)
+
+
+#define StdKdDirs $(KDRIVE) $(KDOSDIR) $(PSEUDO8DIR) fb $(DEPDIRS)
+#define StdKdSysLibs $(FONTLIBS) $(SYSLIBS)
+#define KdLibs $(KD) $(KDOS) $(PSEUDO8) MiExtLibs $(RENDERLIB) 
+
+#if XfbdevServer
+XCOMM
+XCOMM server with Keith's fbdev driver only
+XCOMM
+
+    FBDEVDIR = $(KDRIVE)/fbdev
+       FBDEV = $(FBDEVDIR)/LibraryTargetName(fbdev)
+       
+      KDDIRS = StdKdDirs
+
+     SHADOWDIR = miext/shadow
+     
+   FBDEVDIRS = $(STDDIRS) $(KDDIRS) $(FBDEVDIR) $(SHADOWDIR)
+   
+   FBDEVLIBS = PreFbLibs $(FBDEV) KdLibs FbPostFbLibs
+FBDEVSYSLIBS = StdKdSysLibs
+
+#if HasParallelMake
+MakeMutex($(FBDEVDIRS) $(FBDEVOBJS) $(FBDEVLIBS) $(FBDEVSYSLIBS))
+#endif
+#if ForceServerRemake
+$(FBDEVOBJS) $(XFBDEV) $(FBDEVLIBS) $(FBDEVSYSLIBS):: $(FBDEVDIRS)
+	@if [ -f $@ ]; then touch $@; fi
+#endif
+ServerTarget(Xfbdev,$(FBDEVDIRS),$(FBDEVOBJS),$(FBDEVLIBS),$(FBDEVSYSLIBS))
+#endif /* XFBDEVServer */
+
+#if XSavageServer
+XCOMM
+XCOMM server with Keith's S3 Savage driver
+XCOMM
+
+    SAVAGEDIR = $(KDRIVE)/savage
+       SAVAGE = $(SAVAGEDIR)/LibraryTargetName(savage)
+    
+       KDDIRS = StdKdDirs
+   
+   SAVAGEDIRS = $(STDDIRS) $(KDDIRS) $(SAVAGEDIR)
+   
+   SAVAGELIBS = PreFbLibs $(SAVAGE) KdLibs FbPostFbLibs
+SAVAGESYSLIBS = StdKdSysLibs
+
+#if HasParallelMake
+MakeMutex($(SAVAGEDIRS) $(SAVAGEOBJS) $(SAVAGELIBS) $(SAVAGESYSLIBS))
+#endif
+#if ForceServerRemake
+$(SAVAGEOBJS) $(XSAVAGE) $(SAVAGELIBS) $(SAVAGESYSLIBS):: $(SAVAGEDIRS)
+	@if [ -f $@ ]; then touch $@; fi
+#endif
+ServerTarget(Xsavage,$(SAVAGEDIRS),$(SAVAGEOBJS),$(SAVAGELIBS),$(SAVAGESYSLIBS))
+#endif /* XSAVAGEServer */
+
+#if XIgsServer
+XCOMM
+XCOMM server with Keith's S3 Igs driver
+XCOMM
+
+       IGSDIR = $(KDRIVE)/igs
+          IGS = $(IGSDIR)/LibraryTargetName(igs)
+    
+       KDDIRS = StdKdDirs
+   
+      IGSDIRS = $(STDDIRS) $(KDDIRS) $(IGSDIR)
+   
+      IGSLIBS = PreFbLibs $(IGS) KdLibs FbPostFbLibs
+   IGSSYSLIBS = StdKdSysLibs
+
+#if HasParallelMake
+MakeMutex($(IGSDIRS) $(IGSOBJS) $(IGSLIBS) $(IGSSYSLIBS))
+#endif
+#if ForceServerRemake
+$(IGSOBJS) $(XIGS) $(IGSLIBS) $(IGSSYSLIBS):: $(IGSDIRS)
+	@if [ -f $@ ]; then touch $@; fi
+#endif
+ServerTarget(Xigs,$(IGSDIRS),$(IGSOBJS),$(IGSLIBS),$(IGSSYSLIBS))
+#endif /* XIGSServer */
+
+#if XTridentServer
+XCOMM
+XCOMM server with Keith's TRIDENT Cyber9525 driver
+XCOMM
+
+      FBDEVDIR = $(KDRIVE)/fbdev
+         FBDEV = $(FBDEVDIR)/LibraryTargetName(fbdev)
+       VESADIR = $(KDRIVE)/vesa
+          VESA = $(VESADIR)/LibraryTargetName(vesa)
+     SHADOWDIR = miext/shadow
+    TRIDENTDIR = $(KDRIVE)/trident
+       TRIDENT = $(TRIDENTDIR)/LibraryTargetName(trident)
+
+        KDDIRS = StdKdDirs
+  
+   TRIDENTDIRS = $(STDDIRS) $(KDDIRS) $(FBDEVDIR) $(VESADIR) $(SHADOWDIR) $(TRIDENTDIR)
+   
+   TRIDENTLIBS = PreFbLibs $(TRIDENT) $(FBDEV) $(VESA) KdLibs FbPostFbLibs
+TRIDENTSYSLIBS = StdKdSysLibs
+
+#if HasParallelMake
+MakeMutex($(TRIDENTDIRS) $(TRIDENTLIBS) $(TRIDENTSYSLIBS))
+#endif
+#if ForceServerRemake
+$(TRIDENTOBJS) $(TRIDENTLIBS) $(TRIDENTSYSLIBS):: $(TRIDENTDIRS)
+	@if [ -f $@ ]; then touch $@; fi
+#endif
+ServerTarget(Xtrident,$(TRIDENTDIRS),$(TRIDENTOBJS),$(TRIDENTLIBS),$(TRIDENTSYSLIBS))
+#endif /* XTRIDENTServer */
+
+#if XSis530Server
+XCOMM
+XCOMM server with Keith's SiS 530 driver
+XCOMM
+
+    SIS530DIR = $(KDRIVE)/sis530
+       SIS530 = $(SIS530DIR)/LibraryTargetName(sis530)
+
+       KDDIRS = StdKdDirs
+
+   SIS530DIRS = $(STDDIRS) $(KDDIRS) $(SIS530DIR)
+   
+   SIS530LIBS = PreFbLibs $(SIS530) KdLibs FbPostFbLibs
+SIS530SYSLIBS = StdKdSysLibs
+
+#if HasParallelMake
+MakeMutex($(SIS530DIRS) $(SIS530OBJS) $(SIS530LIBS) $(SIS530SYSLIBS))
+#endif
+#if ForceServerRemake
+$(SIS530OBJS) $(SIS530LIBS) $(SIS530SYSLIBS):: $(SIS530DIRS)
+	@if [ -f $@ ]; then touch $@; fi
+#endif
+ServerTarget(Xsis530,$(SIS530DIRS),$(SIS530OBJS),$(SIS530LIBS),$(SIS530SYSLIBS))
+#endif /* XSIS530Server */
+
+#if XTrioServer
+XCOMM
+XCOMM server with Keith's S3 Trio driver
+XCOMM
+
+    TRIODIR = $(KDRIVE)/trio
+       TRIO = $(TRIODIR)/LibraryTargetName(trio)
+
+     KDDIRS = StdKdDirs
+
+   TRIODIRS = $(STDDIRS) $(KDDIRS) $(TRIODIR)
+   
+   TRIOLIBS = PreFbLibs $(TRIO) KdLibs FbPostFbLibs
+TRIOSYSLIBS = StdKdSysLibs
+
+#if HasParallelMake
+MakeMutex($(TRIODIRS) $(TRIOOBJS) $(TRIOLIBS) $(TRIOSYSLIBS))
+#endif
+#if ForceServerRemake
+$(TRIOOBJS) $(TRIOLIBS) $(TRIOSYSLIBS):: $(TRIODIRS)
+	@if [ -f $@ ]; then touch $@; fi
+#endif
+ServerTarget(Xtrio,$(TRIODIRS),$(TRIOOBJS),$(TRIOLIBS),$(TRIOSYSLIBS))
+#endif /* XTRIOServer */
+
+#if XTS300Server
+XCOMM
+XCOMM server with Keith's S3 Trio and SiS530 driver for the TS300/TS400
+XCOMM
+
+      TRIODIR = $(KDRIVE)/trio
+         TRIO = $(TRIODIR)/LibraryTargetName(trio)
+	 
+    SIS530DIR = $(KDRIVE)/sis530
+       SIS530 = $(SIS530DIR)/LibraryTargetName(sis530)
+
+     TS300DIR = $(KDRIVE)/ts300
+        TS300 = $(TS300DIR)/LibraryTargetName(ts300)
+
+       KDDIRS = StdKdDirs
+     
+    TS300DIRS = $(STDDIRS) $(KDDIRS) $(TRIODIR) $(SIS530DIR) $(TS300DIR)
+    
+    TS300LIBS = PreFbLibs $(TS300) $(TRIO) $(SIS530) KdLibs FbPostFbLibs
+ TS300SYSLIBS = StdKdSysLibs
+    
+#if HasParallelMake
+MakeMutex($(TS300DIRS) $(TS300OBJS) $(TS300LIBS) $(TS300SYSLIBS))
+#endif
+#if ForceServerRemake
+$(TS300OBJS) $(TS300LIBS) $(TS300SYSLIBS):: $(TS300DIRS)
+	@if [ -f $@ ]; then touch $@; fi
+#endif
+ServerTarget(Xts300,$(TS300DIRS),$(TS300OBJS),$(TS300LIBS),$(TS300SYSLIBS))
+#endif /* XTS300Server */
+
+#if XItsyServer
+XCOMM
+XCOMM server with Keith's FB driver only
+XCOMM
+    ITSYDIR = $(KDRIVE)/itsy
+       ITSY = $(ITSYDIR)/LibraryTargetName(itsy)
+
+     KDDIRS = StdKdDirs
+
+   ITSYDIRS = $(STDDIRS) $(KDDIRS) $(ITSYDIR)
+   
+   ITSYLIBS = PreFbLibs $(ITSY) KdLibs FbPostFbLibs
+ITSYSYSLIBS = StdKdSysLibs
+   
+#if HasParallelMake
+MakeMutex($(ITSYDIRS) $(ITSYOBJS) $(ITSYLIBS) $(ITSYSYSLIBS))
+#endif
+#if ForceServerRemake
+$(ITSYOBJS) $(ITSYLIBS) $(ITSYSYSLIBS):: $(ITSYDIRS)
+	@if [ -f $@ ]; then touch $@; fi
+#endif
+ServerTarget(Xitsy,$(ITSYDIRS),$(ITSYOBJS),$(ITSYLIBS),$(ITSYSYSLIBS))
+#endif /* XItsyServer */
+
+#if XvesaServer
+XCOMM
+XCOMM server with vesa driver only based on Keith's server
+XCOMM
+
+    VESADIR = $(KDRIVE)/vesa
+       VESA = $(VESADIR)/LibraryTargetName(vesa)
+
+      KDDIRS = StdKdDirs
+
+   SHADOWDIR = miext/shadow
+
+    VESADIRS = $(STDDIRS) $(KDDIRS) $(VESADIR) $(SHADOWDIR)
+
+   VESALIBS = PreFbLibs $(VESA) KdLibs FbPostFbLibs
+VESASYSLIBS = StdKdSysLibs
+
+#if HasParallelMake
+MakeMutex($(VESADIRS) $(VESAOBJS) $(VESALIBS) $(VESASYSLIBS))
+#endif
+#if ForceServerRemake
+$(VESAOBJS) $(XVESA) $(VESALIBS) $(VESASYSLIBS):: $(VESADIRS)
+	@if [ -f $@ ]; then touch $@; fi
+#endif
+ServerTarget(Xvesa,$(VESADIRS),$(VESAOBJS),$(VESALIBS),$(VESASYSLIBS))
+#endif /* XvesaServer */
+
+KDRIVEDIRS=$(KDDIRS) $(FBDEVDIR) $(SAVAGEDIR) $(TRIDENTDIR) $(SIS530DIR) \
+	$(TRIODIR) $(TS300DIR) $(ITSYDIR) $(IGSDIR) $(VESADIR)
+#endif	/* KDriveXServer */
+
+#if XprtServer
+XCOMM
+XCOMM Print Server
+XCOMM
+MFBDIR  = mfb
+CFB8DIR = cfb
+CFB32DIR = cfb32
+XPSUBDIRS = $(STDDIRS) $(MFBDIR) $(CFB8DIR) $(CFB32DIR) $(DEPDIRS)
+#if PrintOnlyServer
+#if BuildDPMS
+XPDPMSSTUBOBJS = Xprint/dpmsstubs.o
+#endif
+XPOBJS = Xprint/ddxInit.o Xprint/miinitext.o $(XPDPMSSTUBOBJS)
+XPLIBS = PreFbLibs $(XPDDXLIBS) $(XPDDXFBLIBS) PostFbLibs
+#else
+XPOBJS = Xprint/ddxInit.o
+XPLIBS = PreFbLibs PostFbLibs
+#endif
+#if (defined(SunArchitecture) || defined(SparcArchitecture)) && defined(SVR4Architecture)
+XPSYSLIBS = $(FONTLIBS) $(CBRT) $(SYSLIBS) -lw
+#else
+XPSYSLIBS = $(FONTLIBS) $(CBRT) $(SYSLIBS)
+#endif
+#if HasParallelMake
+MakeMutex($(XPSUBDIRS) $(XPOBJS) $(XPLIBS) $(XPSYSLIBS))
+#endif
+#if ForceServerRemake
+$(XPOBJS) $(XPLIBS) $(XPSYSLIBS):: $(XPSUBDIRS)
+	@if [ -f $@ ]; then touch $@; fi
+#endif
+ServerTarget(Xprt,$(XPSUBDIRS),$(XPOBJS),$(XPLIBS) $(LOADABLEEXTS) $(LIBCWRAPPER),$(XPSYSLIBS))
+#endif	/* XprtServer */
+
+#if XnestServer
+XCOMM
+XCOMM Server with Xlib-based ddx
+XCOMM
+#ifndef Win32Architecture
+XNESTDDXDIR = hw/xnest
+#else
+XNESTDDXDIR = hw
+#endif
+XNESTDIRS = $(STDDIRS) $(XNESTDDXDIR) $(DEPDIRS)
+#if !defined(LynxOSArchitecture) && !defined(Win32Architecture) && !defined(QNX4Architecture)
+XNESTOBJS = hw/xnest/miinitext.o
+#else
+XNESTOBJS = hw/xnest/miinitext.o dix/main.o
+#endif
+XNEST = hw/xnest/LibraryTargetName(xnest)
+#if DoLoadableServer
+XNESTLIBS = PreFbLibs $(XNEST) NoMfbPostFbLibs $(XNEST)
+#else
+XNESTLIBS = PreFbLibs $(XNEST) NoMfbPostFbLibs $(XF86OSLIB) $(XNEST)
+#endif
+XNESTSYSLIBS = $(FONTLIBS) $(LDPRELIBS) $(XLIB) $(SYSLIBS)
+#if HasParallelMake
+MakeMutex($(XNESTDIRS) $(XNESTOBJS) $(XNESTLIBS) $(XNESTSYSLIBS))
+#endif
+#if ForceServerRemake
+$(XNESTOBJS) $(XNESTLIBS) $(XNESTSYSLIBS):: $(XNESTDIRS)
+	@if [ -f $@ ]; then touch $@; fi
+#endif
+ServerTarget(Xnest,$(XNESTDIRS),$(XNESTOBJS), \
+	$(XNESTLIBS) $(LOADABLEEXTS) $(LIBCWRAPPER),$(XNESTSYSLIBS))
+#endif /* XnestServer */
+
+
+#if XnonServer
+XCOMM
+XCOMM non server, just compile sources for build test
+XCOMM
+MFBDIR   = mfb
+CFB8DIR  = cfb
+CFB16DIR = cfb16
+CFB32DIR = cfb32
+#if HasParallelMake
+MakeMutex($(STDDIRS) $(MFBDIR) $(CFB8DIR) $(CFB16DIR) $(CFB32DIR) $(DEPDIRS))
+#endif
+Xnon: $(STDDIRS) $(MFBDIR) $(CFB8DIR) $(CFB16DIR) $(CFB32DIR) $(DEPDIRS)
+#endif /* XnonServer */
+
+
+#if XVirtualFramebufferServer
+XCOMM
+XCOMM server with Virtual (malloced) framebuffer
+XCOMM
+MFBDIR   = mfb
+FBDIR  = fb
+#if defined(Win32Architecture)
+XVFBDDXDIR = hw
+#else
+XVFBDDXDIR = hw/vfb
+#endif
+XVFBDIRS = $(STDDIRS) $(MFBDIR) $(FBDIR) $(XVFBDDXDIR) $(DEPDIRS)
+#ifndef Win32Architecture
+#if BuildDPMS
+XVFBDPMSSTUBOBJS = $(XVFBDDXDIR)/dpmsstubs.o
+#endif
+XVFBOBJS = $(XVFBDDXDIR)/stubs.o $(XVFBDDXDIR)/miinitext.o $(XVFBDPMSSTUBOBJS)
+#else
+XVFBOBJS = dix/main.o hw/vfb/stubs.o hw/vfb/miinitext.o
+#endif
+XVFB = $(XVFBDDXDIR)/LibraryTargetName(vfb)
+#if DoLoadableServer
+XVFBLIBS = PreFbLibs $(XVFB) $(FB) PostFbLibs $(MI)
+#else
+XVFBLIBS = PreFbLibs $(XVFB) $(FB) PostFbLibs $(XF86OSLIB) $(MI)
+#endif
+XVFBSYSLIBS = $(FONTLIBS) $(SYSLIBS)
+#if HasParallelMake
+MakeMutex($(XVFBDIRS) $(XVFBOBJS) $(XVFB) $(XVFBLIBS) $(XVFBSYSLIBS))
+#endif
+#if ForceServerRemake
+$(XVFBOBJS) $(XVFB) $(XVFBLIBS) $(XVFBSYSLIBS):: $(XVFBDIRS)
+	@if [ -f $@ ]; then touch $@; fi
+#endif
+ServerTarget(Xvfb,$(XVFBDIRS),$(XVFBOBJS), \
+	$(XVFBLIBS) $(LOADABLEEXTS) $(LIBCWRAPPER),$(XVFBSYSLIBS))
+#endif /* XVirtualFramebufferServer */
+
+
+#if XWinServer
+XCOMM
+XCOMM server with DirectX framebuffer for Windows
+XCOMM
+MFBDIR   = mfb
+CFB8DIR  = cfb
+CFB16DIR = cfb16
+CFB24DIR = cfb24
+CFB32DIR = cfb32
+XWINDDXDIR = hw/xwin
+DDXDIR2 = $(XWINDDXDIR)
+XWINDIRS = $(STDDIRS) $(MFBDIR) $(CFB8DIR) $(CFB16DIR) $(CFB24DIR) $(CFB32DIR) $(XWINDDXDIR) $(DEPDIRS)
+#if BuildDPMS
+XWINOBJS = hw/xwin/InitInput.o hw/xwin/InitOutput.o hw/xwin/stubs.o hw/xwin/directx.o hw/xwin/dpmsstubs.o dix/main.o
+#else
+XWINOBJS = hw/xwin/InitInput.o hw/xwin/InitOutput.o hw/xwin/stubs.o hw/xwin/directx.o dix/main.o
+#endif
+XWIN = hw/xwin/LibraryTargetName(XWin)
+XWINLIBS = PreFbLibs $(XWIN) $(CFB) PostFbLibs $(MI) $(SURFLIB) 
+XWINSYSLIBS = $(FONTLIBS) $(LDPRELIBS) $(XLIB) $(SYSLIBS)
+#if HasParallelMake
+MakeMutex($(XWINDIRS) $(XWINOBJS) $(XWIN) $(XWINLIBS) $(XWINSYSLIBS))
+#endif
+#if ForceServerRemake
+$(XWINOBJS) $(XWIN) $(XWINLIBS) $(XWINSYSLIBS):: $(XWINDIRS)
+	@if [ -f $@ ]; then touch $@; fi
+#endif
+ServerTarget(XWin,$(XWINDIRS),$(XWINOBJS), \
+	$(XWINLIBS) $(LOADABLEEXTS) $(LIBCWRAPPER),$(XWINSYSLIBS)) 
+
+#ifndef ServerToInstall
+#define ServerToInstall XWin
+#endif
+#endif /* XWinServer */
+
+#if XDarwinServer 
+XCOMM
+XCOMM X Darwin server for Mac OS X / Darwin
+XCOMM
+MFBDIR  = mfb  /* mfb is needed for font stuff, even though we don't support a 1bpp screen */
+CFB8DIR = cfb
+CFB16DIR = cfb16
+CFB32DIR = cfb32
+DDXDIR1 = hw/darwin
+DARWINDIRS = $(STDDIRS) $(MFBDIR) $(CFB8DIR) $(CFB16DIR) $(CFB32DIR) $(DDXDIR1) $(DEPDIRS)
+DARWINOBJS = 
+DARWINLIBS = PreFbLibs hw/darwin/libdarwin.a $(CFB16) $(CFB32) $(CFB8) PostFbLibs ../../lib/font/libXfont.a ../../lib/font/stubs/libfntstubs.a
+
+XCOMM we need extra link flags for IOKit stuff
+EXTRA_LOAD_FLAGS = -framework IOKit
+SetUIDServerTarget(Xdarwin,$(DARWINDIRS),$(DARWINOBJS),$(DARWINLIBS),$(SYSLIBS))
+
+#define ServerToInstall Xdarwin
+
+#endif /* XDarwinServer */
+
+
+CFBDIRS = $(CFB8DIR) $(CFB16DIR) $(CFB24DIR) $(CFB32DIR)
+MIEXTDIRS = $(SHADOWDIR)
+IPLANDIRS = $(IPLAN2P2DIR) $(IPLAN2P4DIR) $(IPLAN2P8DIR)
+DDXDIRS = $(DDXDIR1) $(DDXDIR2) $(DDXDIR3) $(XVFBDDXDIR) $(XNESTDDXDIR)
+SUBDIRS = $(STDDIRS) $(MFBDIR) $(CFBDIRS) $(IPLANDIRS) $(ILBMDIR) $(AFBDIR) \
+          $(LMFCFBDIR) $(DDXDIRS) $(FBDIR) $(KDRIVEDIRS) $(MIEXTDIRS)
+
+#if defined(ServerToInstall) && !defined(OS2Architecture) && !defined(QNX4Architecture)
+install::
+	-(cd $(DESTDIR)$(BINDIR); $(RM) X; $(LN) ServerToInstall X)
+#endif
+
+#define IHaveSubdirs
+
+DependSubdirs($(SUBDIRS))
+MakeLintLibSubdirs($(SUBDIRS))
+LintSubdirs($(SUBDIRS))
+
+ForceSubdirs($(DEPDIRS) $(SUBDIRS))
+
+CppManTarget(Xserver,)
+InstallManPage(Xserver,$(MANDIR))

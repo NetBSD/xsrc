@@ -1,0 +1,19 @@
+LIBRARY XSS
+DESCRIPTION "@#XFREE86:4.0#@ $XFree86: xc/lib/Xss/Xssos2.def,v 3.2 1999/04/29 09:13:33 dawes Exp $"
+CODE
+	PRELOAD
+DATA
+	MULTIPLE NONSHARED
+STACKSIZE 4096
+EXPORTS
+	XScreenSaverQueryExtension @ 1
+	XScreenSaverQueryVersion @ 2
+	XScreenSaverAllocInfo @ 3
+	XScreenSaverQueryInfo @ 4
+	XScreenSaverSelectInput @ 5
+	XScreenSaverSetAttributes @ 6
+	XScreenSaverUnsetAttributes @ 7
+	XScreenSaverRegister @ 8
+	XScreenSaverUnregister @ 9
+	XScreenSaverGetRegistered @ 10
+

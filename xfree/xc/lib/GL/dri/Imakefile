@@ -1,0 +1,53 @@
+XCOMM $XFree86: xc/lib/GL/dri/Imakefile,v 1.5 2000/02/15 07:13:25 martin Exp $
+
+#include <Threads.tmpl>
+
+#define DoNormalLib NormalLibGlx
+#define DoSharedLib SharedLibGlx
+#define DoExtraLib SharedLibGlx
+#define DoDebugLib DebugLibGlx
+#define DoProfileLib ProfileLibGlx
+
+#if Malloc0ReturnsNull
+ALLOC_DEFINES = -DMALLOC_0_RETURNS_NULL
+#endif
+
+#if !GlxUseSGISI
+     DRI_SRCS = dri_glx.c
+     DRI_OBJS = dri_glx.o
+     DRI_INCS = -I. -I../glx -I$(TOP)/include -I$(TOP)/include/GL \
+		-I$(SERVERSRC)/GL/dri \
+		-I../mesa/include -I../mesa/src -I../mesa/src/drv/gamma
+#endif
+
+#if GlxBuiltInTdfx
+    TDFX_DEFS = -DUSE_TDFX
+#endif
+
+#if GlxUseBuiltInDRIDriver
+     GLX_DEFS = -DBUILT_IN_DRI_DRIVER
+#endif
+
+  PATHDEFINES = -DDEFAULT_DRIVER_DIR=\"$(MODULEDIR)/dri\"
+
+      DEFINES = $(ALLOC_DEFINES) GlxDefines $(TDFX_DEFS) $(GLX_DEFS) $(PATHDEFINES)
+     INCLUDES = -I$(XLIBSRC) -I$(EXTINCSRC) -I$(XF86OSSRC) $(DRI_INCS)
+         SRCS = XF86dri.c dri_tmm.c $(DRI_SRCS)
+         OBJS = XF86dri.o dri_tmm.o $(DRI_OBJS)
+
+#include <Library.tmpl>
+
+LibraryObjectRule()
+
+SubdirLibraryRule($(OBJS))
+NormalLintTarget($(SRCS))
+
+#define IHaveSubdirs
+#define PassCDebugFlags
+
+SUBDIRS = drm
+
+MakeSubdirs($(SUBDIRS))
+DependSubdirs($(SUBDIRS))
+
+DependTarget()

@@ -1,0 +1,36 @@
+XCOMM $XConsortium: Imakefile /main/6 1995/12/07 21:15:34 gildea $
+XCOMM $XFree86: xc/programs/Xserver/XIE/mixie/Imakefile,v 3.16 2000/08/24 22:20:11 tsi Exp $
+
+#define IHaveModules
+#include <Server.tmpl>
+
+#if BuildDIS
+SUBDIRS = control fax import process export
+OBJS = control/?*.o fax/?*.o import/?*.o process/?*.o export/?*.o 
+DONES = control/DONE fax/DONE import/DONE process/DONE export/DONE 
+#else
+SUBDIRS = control fax import jpeg process export
+OBJS = control/?*.o fax/?*.o import/?*.o jpeg/?*.o process/?*.o export/?*.o 
+DONES = control/DONE fax/DONE import/DONE jpeg/DONE process/DONE export/DONE 
+#endif
+
+#define	IHaveSubdirs
+
+
+#if HasParallelMake
+MakeMutex($(SUBDIRS) $(OBJS) $(DONES))
+#endif
+
+#if HasGnuMake || HasBsdMake
+$(DONES): $(SUBDIRS)
+#endif
+
+DepLibraryModuleTarget(mixie,$(SUBDIRS) $(DONES),$(OBJS))
+
+ForceSubdirs($(SUBDIRS))
+
+DependSubdirs($(SUBDIRS))
+
+MakeLintLibSubdirs($(SUBDIRS))
+LintSubdirs($(SUBDIRS))
+

@@ -1,0 +1,66 @@
+                        Information for S3 ViRGE Users
+
+                          The XFree86 Project Inc.
+
+                                 10 Jul 1999
+
+1.  Supported hardware
+
+The s3virge driver in XFree86 4.0.2 supports the S3 ViRGE, ViRGE DX, GX, MX,
+MX+, and VX chipsets.  A majority of testing is done on ViRGE DX chips, mak-
+ing them the most stable to date.  This release has improved support for
+ViRGE GX2 stability, XVideo support for ViRGE DX (tested) and ViRGE
+(untested) in depth 16 and 24, conversion to fb framebuffer rendering, and
+support for the new Render extension (untested).
+
+This driver is moderately stable, however please use caution with any new
+install.  Please report any problems to <XFree86@Xfree86.org> using the
+appropriate bug report sheet.
+
+2.  Features:
+
+   o Fully accelerated support for S3 ViRGE family video adapters
+
+   o uses linear frame buffer
+
+   o supports resolutions up to 2048x2048
+
+   o supports color depths of 8, 15, 16, 24.
+
+   o full use of video card memory for acceleration caching when visible
+     framebuffer leaves extra memory
+
+3.  Configuration:
+
+The driver auto-detects RAM size, RAMDAC and ClockChip. Do not bother putting
+these in your "Device" section.
+
+4.  Documentation:
+
+The driver has several supported options which are documented in the s3virge
+man page.  Please refer to it for additional details about XF86Config
+options.
+
+5.  Support:
+
+For support with XFree86 video drivers please refer to our web site at
+XFree86 <URL:http://www.XFree86.org>.  The web page has a FAQ and bug report-
+ing form available.  For problems not addressed in the web page please con-
+tact our support email address  <XFree86@Xfree86.org>
+
+6.  Authors
+
+   o Mark Vojkovich <mvojkovi@ucsd.edu>
+
+   o Sebastien Marineau
+
+   o Harald Koenig <koenig@tat.physik.uni-tuebingen.de>
+
+   o Matt Grossman <mattg@oz.net>
+
+   o Kevin Brosius <Cobra@compuserve.com>
+
+     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/s3virge.sgml,v 1.3 2000/11/28 20:59:17 dawes Exp $
+
+
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.s3virge,v 1.6 2000/12/01 19:47:51 dawes Exp $

@@ -1,0 +1,27 @@
+XCOMM $XFree86: xc/programs/Xserver/render/Imakefile,v 1.4 2000/11/28 22:15:31 dawes Exp $
+#include <Server.tmpl>
+
+       SRCS =   glyph.c \
+		miglyph.c \
+		mipict.c \
+		mirect.c \
+		picture.c \
+		render.c
+
+       OBJS =   glyph.o \
+		miglyph.o \
+		mipict.o \
+		mirect.o \
+		picture.o \
+		render.o
+		
+   INCLUDES = -I../include -I../mi -I../../../include/fonts \
+   		-I../fb -I../hw/kdrive -I$(EXTINCSRC) -I$(XINCLUDESRC) -I$(FONTINCSRC) 
+   LINTLIBS = ../dix/llib-ldix.ln ../os/llib-los.ln
+
+NormalLibraryTarget(render,$(OBJS))
+NormalLibraryObjectRule()
+LintLibraryTarget(render,$(SRCS))
+NormalLintTarget($(SRCS))
+
+DependTarget()

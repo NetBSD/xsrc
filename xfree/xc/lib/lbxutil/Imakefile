@@ -1,0 +1,30 @@
+XCOMM $XConsortium: Imakefile /main/8 1996/11/03 19:32:12 kaleb $
+
+
+
+
+
+XCOMM $XFree86: xc/lib/lbxutil/Imakefile,v 1.7 1999/04/17 09:08:13 dawes Exp $
+#include <Server.tmpl>
+
+#define	IHaveSubdirs
+
+SUBDIRS = lbx_zlib delta image
+
+OBJS = lbx_zlib/?*.o delta/?*.o image/?*.o
+
+DONES = lbx_zlib/DONE delta/DONE image/DONE
+
+lbx_zlib/DONE:	lbx_zlib
+delta/DONE:	delta
+image/DONE:	image
+
+#undef _LinkBuildLibrary
+#define _LinkBuildLibrary(lib) LinkBuildLibrary(lib)
+
+NormalDepLibraryTarget(lbxutil,$(SUBDIRS) $(DONES),$(OBJS))
+
+ForceSubdirs($(SUBDIRS))
+
+DependSubdirs($(SUBDIRS))
+

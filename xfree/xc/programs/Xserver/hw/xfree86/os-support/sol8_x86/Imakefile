@@ -1,0 +1,52 @@
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/os-support/sol8_x86/Imakefile,v 1.7 2000/08/15 16:05:40 dawes Exp $
+
+
+
+
+
+XCOMM $XConsortium: Imakefile /main/5 1996/09/28 17:24:30 rws $
+
+#include <Server.tmpl>
+
+#if !HasGcc
+PROWORKS_INOUT_SRC = sol8_iout.s
+PROWORKS_INOUT_OBJ = sol8_iout.o
+#endif
+
+MOUSESRC = sol8_mouse.c
+MOUSEOBJ = sol8_mouse.o
+
+SRCS = sol8_init.c sol8_vid.c sol8_bios.c sol8_kbd.c sol8_io.c \
+	VTsw_noop.c sol8_kbd.c sol8_kbdEv.c posix_tty.c $(MOUSESRC) \
+	libc_wrapper.c $(PROWORKS_INOUT_SRC) stdResource.c stdPci.c \
+        sol8_kbdgetmapping.c sol8_postkbdevents.c sigiostubs.c pm_noop.c \
+        kmod_noop.c agp_noop.c
+
+OBJS = sol8_init.o sol8_vid.o sol8_bios.o sol8_kbd.o sol8_io.o \
+	VTsw_noop.o sol8_kbd.o sol8_kbdEv.o posix_tty.o $(MOUSEOBJ) \
+	libc_wrapper.o $(PROWORKS_INOUT_OBJ) stdResource.o stdPci.o \
+        sol8_kbdgetmapping.o sol8_postkbdevents.o sigiostubs.o pm_noop.o \
+        kmod_noop.o agp_noop.o
+
+INCLUDES = -I$(XF86COMSRC) -I$(XF86OSSRC) -I. -I$(SERVERSRC)/include \
+           -I$(XINCLUDESRC) -I$(EXTINCSRC)
+
+RESDEFINES = -DUSESTDRES
+
+DEFINES = $(RESDEFINES)
+
+SubdirLibraryRule($(OBJS))
+NormalLibraryObjectRule()
+NormalAsmObjectRule()
+
+LinkSourceFile(VTsw_noop.c,../shared)
+LinkSourceFile(posix_tty.c,../shared)
+LinkSourceFile(libc_wrapper.c,../shared)
+LinkSourceFile(stdResource.c,../shared)
+LinkSourceFile(stdPci.c,../shared)
+LinkSourceFile(sigiostubs.c,../shared)
+LinkSourceFile(pm_noop.c,../shared)
+LinkSourceFile(kmod_noop.c,../shared)
+LinkSourceFile(agp_noop.c,../shared)
+
+DependTarget()

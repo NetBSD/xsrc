@@ -1,0 +1,28 @@
+<!-- $XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/defs.ent,v 1.15 2000/12/08 19:10:25 dawes Exp $ -->
+
+<!-- shared entity definitions for the XFree86 documentation -->
+
+<!-- XFree86 version string -->
+<!ENTITY relvers CDATA "4.0.2">
+<!ENTITY prevrelvers CDATA "4.0.1">
+<!ENTITY srcvers CDATA "402">
+<!ENTITY prevsrcvers CDATA "401">
+<!-- Version of the most recent 3.3.x release -->
+<!ENTITY legacyvers CDATA "3.3.6">
+
+<!-- SuperProbe version strings -->
+<!ENTITY spvers CDATA "2.23">
+<!ENTITY legacyspvers CDATA "2.21">
+
+<!-- doctools version strings -->
+<!ENTITY doctoolsvers CDATA "1.2">
+
+<!-- These should be set according to which snapshot/release this is -->
+<!ENTITY % firstsnap 'IGNORE'>
+<!ENTITY % latersnap 'INCLUDE'>
+<!ENTITY % snapshot 'IGNORE'>
+<!ENTITY % release 'INCLUDE'>
+<!ENTITY % firstrel 'IGNORE'>
+<!ENTITY % earlyrel 'INCLUDE'>
+<!ENTITY % laterrel 'INCLUDE'>
+
