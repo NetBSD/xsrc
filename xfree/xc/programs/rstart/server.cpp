@@ -1,4 +1,5 @@
 XCOMM! /bin/sh
+XCOMM $NetBSD: server.cpp,v 1.2 2004/01/02 16:36:29 lukem Exp $
 XCOMM $Xorg: server.cpp,v 1.3 2000/08/17 19:54:01 cpqbld Exp $
 XCOMM
 
@@ -26,4 +27,4 @@ XCOMM OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 XCOMM
 XCOMM $XFree86: xc/programs/rstart/server.cpp,v 3.2 2001/01/17 23:45:03 dawes Exp $
 
-exec LIBDIR/SERVERNAME.real -c LIBDIR/config
+exec BINDIR/SERVERNAME.real -c LIBDIR/config

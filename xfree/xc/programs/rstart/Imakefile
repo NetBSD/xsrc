@@ -72,7 +72,7 @@ InstallProgram($(RSERVERNAME),$(MYLIBDIR))
 SpecialCObjectRule(server,NullParameter,$(SRVDEFS) $(PEDEFS))
 
 AllTarget($(SSERVERNAME))
-CppScriptTarget($(SSERVERNAME),$(SSERVERSRC),$(OS) -DLIBDIR=$(MYLIBDIR) -DSERVERNAME=$(SERVERNAME),NullParameter)
+CppScriptTarget($(SSERVERNAME),$(SSERVERSRC),$(OS) -DLIBDIR=$(MYLIBDIR) -DSERVERNAME=$(SERVERNAME) -DBINDIR=$(MYLIBDIR),NullParameter)
 InstallNamedProg($(SSERVERNAME),$(SSERVERNAME),$(BINDIR))
 
 AllTarget($(CLIENTNAME))
