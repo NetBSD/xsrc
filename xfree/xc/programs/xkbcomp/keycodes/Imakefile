@@ -7,7 +7,7 @@ XCOMM $XFree86: xc/programs/xkbcomp/keycodes/Imakefile,v 3.16 2003/02/15 22:22:4
 
 #define IHaveSubdirs
 
-    DATAFILES = README amiga ataritt fujitsu hp ibm macintosh sony sun \
+    DATAFILES = README amiga ataritt fujitsu hp ibm macintosh sony sun x68k \
 		xfree86 xfree98 powerpcps2 aliases
       SUBDIRS = digital sgi
 

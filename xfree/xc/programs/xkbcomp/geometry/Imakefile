@@ -9,7 +9,7 @@ XCOMM $XFree86: xc/programs/xkbcomp/geometry/Imakefile,v 3.12 2003/02/15 22:22:4
 
      TESTDATA = 
     DATAFILES = README amiga ataritt dell everex fujitsu hp keytronic kinesis \
-		macintosh microsoft nec northgate pc sony sun winbook \
+		macintosh microsoft nec northgate pc sharp sony sun winbook \
 		$(TESTDATA)
       SUBDIRS = digital sgi
 

@@ -34,7 +34,7 @@ XCOMM $XFree86: xc/programs/xkbcomp/symbols/Imakefile,v 3.56 2003/02/15 22:22:44
 		 vn \
 		 yu
 
-       SUBDIRS = digital fujitsu hp macintosh nec sgi sony sun xfree68 pc
+       SUBDIRS = digital fujitsu hp macintosh nec sgi sharp sony sun xfree68 pc
 
 MakeXkbDir($(LIBDIR)/xkb,symbols)
 InstallMultiple($(DATAFILES),$(LIBDIR)/xkb/symbols)
