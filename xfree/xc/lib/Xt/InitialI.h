@@ -1,10 +1,14 @@
-/* $Xorg: InitialI.h,v 1.3 2000/08/17 19:46:12 cpqbld Exp $ */
+/* $Xorg: InitialI.h,v 1.4 2001/02/09 02:03:55 xorgcvs Exp $ */
 
 /***********************************************************
 
 Copyright 1987, 1988, 1994, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -42,6 +46,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
+/* $XFree86: xc/lib/Xt/InitialI.h,v 3.10 2001/12/14 19:56:18 dawes Exp $ */
 
 #ifndef _XtinitialI_h
 #define _XtinitialI_h
@@ -76,6 +81,7 @@ SOFTWARE.
 #endif
 #endif
 
+#include <X11/Xos.h>
 #include <X11/Xpoll.h>
 
 typedef struct _TimerEventRec {
@@ -194,6 +200,9 @@ typedef struct _XtAppStruct {
     ThreadAppProc free_lock;
 #endif
 } XtAppStruct;
+
+extern void _XtHeapInit(Heap* heap);
+extern void _XtHeapFree(Heap* heap);
 
 #ifdef XTTRACEMEMORY
 
@@ -452,5 +461,11 @@ extern void _XtFreeWWTable(
     XtPerDisplay pd
 #endif
 );
+
+extern String _XtGetUserName(String dest, int len);
+extern XrmDatabase _XtPreparseCommandLine(XrmOptionDescRec *urlist,
+			Cardinal num_urs, int argc, String *argv,
+			String *applName, String *displayName,
+			String *language);
 
 #endif /* _XtinitialI_h */

@@ -22,6 +22,7 @@
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  */
+/* $XFree86: xc/programs/lbxproxy/di/lbxfuncs.c,v 1.5 2001/10/28 03:34:22 tsi Exp $ */
 
 /*
  * top level LBX request & reply handling
@@ -243,7 +244,8 @@ get_setup_reply(client, data, len)
 	    td = TagGetTag(client->server, client->server->global_cache, 
 			   rep->tag);
 	    if (!td) {
-		fprintf(stderr, "no data for setup tag 0x%x\n", rep->tag);
+		fprintf(stderr, "no data for setup tag 0x%lx\n",
+			(long)rep->tag);
 		send_setup_reply(client, FALSE, 0, 0, "bad tag data from server", 0);
 		if (client->swapped)
 		    DEALLOCATE_LOCAL(data);
@@ -330,6 +332,8 @@ ProcLBXInternAtom(client)
 
 	return ProcStandardRequest(client);
     }
+
+    return 0;		/* ?!?!? */
 }
 
 static Bool
@@ -566,7 +570,7 @@ get_mod_map_reply(client, nr, data)
 	    tag_data = TagGetData(client->server, client->server->global_cache, 
 				  tag);
 	    if (!tag_data) {
-		fprintf(stderr, "no data for mod map tag 0x%x\n", tag);
+		fprintf(stderr, "no data for mod map tag 0x%lx\n", (long)tag);
 		WriteError(client, X_GetModifierMapping, 0, 0, BadAlloc);
 		return TRUE;
 	    }
@@ -666,7 +670,7 @@ get_key_map_reply(client, nr, data)
 	    tag_data = TagGetData(client->server, 
 				  client->server->global_cache, tag);
 	    if (!tag_data) {
-		fprintf(stderr, "no data for key map tag 0x%x\n", tag);
+		fprintf(stderr, "no data for key map tag 0x%lx\n", (long)tag);
 		WriteError(client, X_GetKeyboardMapping, 0, 0, BadAlloc);
 		return TRUE;
 	    }
@@ -892,7 +896,7 @@ get_queryfont_reply(client, nr, data)
 	} else {
 	    td = TagGetTag(client->server, client->server->global_cache, tag);
 	    if (!td) {
-		fprintf(stderr, "no data for font tag 0x%x\n", tag);
+		fprintf(stderr, "no data for font tag 0x%lx\n", (long)tag);
 		WriteError(client, X_QueryFont, 0, 0, BadAlloc);
 		return TRUE;
 	    }
@@ -1089,7 +1093,7 @@ int
 ProcLBXGetGeometry(client)
     ClientPtr   client;
 {
-    REQUEST(xResourceReq);
+    /* REQUEST(xResourceReq); */
     xGetGeometryReply reply;
     ReplyStuffPtr nr;
     char n;

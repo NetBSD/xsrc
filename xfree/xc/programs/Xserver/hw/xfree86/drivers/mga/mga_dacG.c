@@ -1,8 +1,8 @@
 /*
- * MGA-1064, MGA-G100, MGA-G200, MGA-G400 RAMDAC driver
+ * MGA-1064, MGA-G100, MGA-G200, MGA-G400, MGA-G550 RAMDAC driver
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/mga/mga_dacG.c,v 1.46 2001/04/06 16:51:19 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/mga/mga_dacG.c,v 1.49 2002/01/11 15:42:57 dawes Exp $ */
 
 /*
  * This is a first cut at a non-accelerated version to work with the
@@ -110,6 +110,7 @@ MGAGCalcClock ( ScrnInfoPtr pScrn, long f_out,
 		post_div_max = 7;
 		break;
 	case PCI_CHIP_MGAG400:
+	case PCI_CHIP_MGAG550:
 		ref_freq     = 27050.5;
 		feed_div_min = 7;
 		feed_div_max = 127;
@@ -210,8 +211,8 @@ MGAGSetPCLK( ScrnInfoPtr pScrn, long f_out )
 	/* The actual frequency output by the clock */
 	double f_pll;
 
-	if(MGAISG450(pMga)) {
-		G450SetPLLFreq(pScrn, f_out);
+	if(MGAISGx50(pMga)) {
+		MGAG450SetPLLFreq(pScrn, f_out);
 		return;
 	}
 
@@ -327,10 +328,11 @@ MGAGInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
 		pReg->Option2 = 0x0000007;
 		break;
 	case PCI_CHIP_MGAG400:
+	case PCI_CHIP_MGAG550:
 #ifdef USEMGAHAL
 	       MGA_HAL(break;);
 #endif
-	       if (MGAISG450(pMga))
+	       if (MGAISGx50(pMga))
 		       break;
 
 	       if(pMga->Dac.maxPixelClock == 360000) {  /* G400 MAX */
@@ -523,7 +525,7 @@ MGAGInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
 	if (mode->Flags & V_DBLSCAN)
 		pVga->CRTC[9] |= 0x80;
 
-	if(MGAISG450(pMga)) {
+	if(MGAISGx50(pMga)) {
 		OUTREG(MGAREG_ZORG, 0);
 	}
 
@@ -543,9 +545,9 @@ MGAGInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
         /* Writing values to crtc2[] array */
         if (pMga->SecondCrtc)
         {
-            CRTC2Get(pScrn, &ModeInfo); 
-            CRTC2GetPitch(pScrn, &ModeInfo); 
-            CRTC2GetDisplayStart(pScrn, &ModeInfo,0,0,0);
+            MGACRTC2Get(pScrn, &ModeInfo); 
+            MGACRTC2GetPitch(pScrn, &ModeInfo); 
+            MGACRTC2GetDisplayStart(pScrn, &ModeInfo,0,0,0);
         }
 	return(TRUE);
 }
@@ -573,7 +575,6 @@ MGAPaletteLoadCallback(ScrnInfoPtr pScrn)
 	}
 	pal++;
     }
-    
     pMga->PaletteLoadCallback = NULL;
 }
 
@@ -589,7 +590,7 @@ void MGAGLoadPalette(
     if((pMga->CurrentLayout.Overlay8Plus24) && (pVisual->nplanes != 8)) 
 	return;
 
-     if(pMga->Chipset == PCI_CHIP_MGAG400){ 
+     if(pMga->Chipset == PCI_CHIP_MGAG400 || pMga->Chipset == PCI_CHIP_MGAG550){ 
 	 /* load them at the retrace in the block handler instead to 
 	    work around some problems with static on the screen */
 	while(numColors--) {
@@ -672,7 +673,7 @@ MGA_NOT_HAL(
 		  (i == 0x1c) ||
 		  ((i >= 0x1f) && (i <= 0x29)) ||
 		  ((i >= 0x30) && (i <= 0x37)) ||
-		  (MGAISG450(pMga) &&
+		  (MGAISGx50(pMga) &&
 		   ((i == 0x2c) || (i == 0x2d) || (i == 0x2e) ||
 		    (i == 0x4c) || (i == 0x4d) || (i == 0x4e))))
 		 continue; 
@@ -683,14 +684,14 @@ MGA_NOT_HAL(
 	      should be correct already */
 	   optionMask = (pMga->Primary) ? OPTION1_MASK_PRIMARY : OPTION1_MASK; 
 	   
-	   if (!MGAISG450(pMga)) {
+	   if (!MGAISGx50(pMga)) {
 	      /* restore pci_option register */
 	      pciSetBitsLong(pMga->PciTag, PCI_OPTION_REG, optionMask,
 			     mgaReg->Option);
 	      if (pMga->Chipset != PCI_CHIP_MGA1064)
 		 pciSetBitsLong(pMga->PciTag, PCI_MGA_OPTION2, OPTION2_MASK,
 				mgaReg->Option2);
-	      if (pMga->Chipset == PCI_CHIP_MGAG400)
+	      if (pMga->Chipset == PCI_CHIP_MGAG400 || pMga->Chipset == PCI_CHIP_MGAG550)
 		 pciSetBitsLong(pMga->PciTag, PCI_MGA_OPTION3, OPTION3_MASK,
 				mgaReg->Option3);
 	   }
@@ -715,11 +716,12 @@ MGA_NOT_HAL(
 	   /* Second Crtc */
 	   xMODEINFO ModeInfo;
 
+MGA_NOT_HAL(
 	   /* Enable Dual Head */
-	   CRTC2Set(pScrn, &ModeInfo); 
-	   EnableSecondOutPut(pScrn, &ModeInfo); 
-	   CRTC2SetPitch(pScrn, &ModeInfo); 
-	   CRTC2SetDisplayStart(pScrn, &ModeInfo,0,0,0);
+	   MGACRTC2Set(pScrn, &ModeInfo); 
+	   MGAEnableSecondOutPut(pScrn, &ModeInfo); 
+	   MGACRTC2SetPitch(pScrn, &ModeInfo); 
+	   MGACRTC2SetDisplayStart(pScrn, &ModeInfo,0,0,0);
             
 	   for (i = 0x80; i <= 0xa0; i ++) {
                 if (i== 0x8d) {
@@ -727,8 +729,10 @@ MGA_NOT_HAL(
 		   continue;
 		}
                 outMGAdac(i,   mgaReg->dac2[ i - 0x80]);
-	   }           
-        } /* endif pMga->SecondCrtc */
+	   }
+); /* MGA_NOT_HAL */
+
+        } 
 
 #ifdef DEBUG		
 	ErrorF("Setting DAC:");
@@ -797,7 +801,7 @@ MGAGSave(ScrnInfoPtr pScrn, vgaRegPtr vgaReg, MGARegPtr mgaReg,
 	mgaReg->Option = pciReadLong(pMga->PciTag, PCI_OPTION_REG);
 
 	mgaReg->Option2 = pciReadLong(pMga->PciTag, PCI_MGA_OPTION2);
-	if (pMga->Chipset == PCI_CHIP_MGAG400)
+	if (pMga->Chipset == PCI_CHIP_MGAG400 || pMga->Chipset == PCI_CHIP_MGAG550)
 	    mgaReg->Option3 = pciReadLong(pMga->PciTag, PCI_MGA_OPTION3);
 	);	/* MGA_NOT_HAL */
 
@@ -850,6 +854,14 @@ MGAGShowCursor(ScrnInfoPtr pScrn)
     outMGAdac(MGA1064_CURSOR_CTL, 0x03);
 }
 
+static void 
+MGAGShowCursorG100(ScrnInfoPtr pScrn)
+{
+    MGAPtr pMga = MGAPTR(pScrn);
+    /* Enable cursor - X-Windows mode */
+    outMGAdac(MGA1064_CURSOR_CTL, 0x01);
+}
+
 static void
 MGAGHideCursor(ScrnInfoPtr pScrn)
 {
@@ -875,6 +887,7 @@ MGAGSetCursorPosition(ScrnInfoPtr pScrn, int x, int y)
     OUTREG8( RAMDAC_OFFSET + MGA1064_CUR_YHI, (y & 0xF00) >> 8);
 }
 
+
 static void
 MGAGSetCursorColors(ScrnInfoPtr pScrn, int bg, int fg)
 {
@@ -889,6 +902,22 @@ MGAGSetCursorColors(ScrnInfoPtr pScrn, int bg, int fg)
     outMGAdac(MGA1064_CURSOR_COL1_RED,   (fg & 0x00FF0000) >> 16);
     outMGAdac(MGA1064_CURSOR_COL1_GREEN, (fg & 0x0000FF00) >> 8);
     outMGAdac(MGA1064_CURSOR_COL1_BLUE,  (fg & 0x000000FF));
+}
+
+static void
+MGAGSetCursorColorsG100(ScrnInfoPtr pScrn, int bg, int fg)
+{
+    MGAPtr pMga = MGAPTR(pScrn);
+
+    /* Background color */
+    outMGAdac(MGA1064_CURSOR_COL1_RED,   (bg & 0x00FF0000) >> 16);
+    outMGAdac(MGA1064_CURSOR_COL1_GREEN, (bg & 0x0000FF00) >> 8);
+    outMGAdac(MGA1064_CURSOR_COL1_BLUE,  (bg & 0x000000FF));
+
+    /* Foreground color */
+    outMGAdac(MGA1064_CURSOR_COL2_RED,   (fg & 0x00FF0000) >> 16);
+    outMGAdac(MGA1064_CURSOR_COL2_GREEN, (fg & 0x0000FF00) >> 8);
+    outMGAdac(MGA1064_CURSOR_COL2_BLUE,  (fg & 0x000000FF));
 }
 
 static Bool 
@@ -998,6 +1027,7 @@ MGAG_i2cInit(ScrnInfoPtr pScrn)
 
 /*
  * MGAGRamdacInit
+ * Handle broken G100 special.
  */
 static void
 MGAGRamdacInit(ScrnInfoPtr pScrn)
@@ -1009,11 +1039,17 @@ MGAGRamdacInit(ScrnInfoPtr pScrn)
     MGAdac->CursorOffscreenMemSize = 1024;
     MGAdac->CursorMaxWidth         = 64;
     MGAdac->CursorMaxHeight        = 64;
-    MGAdac->SetCursorColors        = MGAGSetCursorColors;
     MGAdac->SetCursorPosition      = MGAGSetCursorPosition;
     MGAdac->LoadCursorImage        = MGAGLoadCursorImage;
     MGAdac->HideCursor             = MGAGHideCursor;
-    MGAdac->ShowCursor             = MGAGShowCursor;
+    if ((pMga->Chipset == PCI_CHIP_MGAG100) 
+	|| (pMga->Chipset == PCI_CHIP_MGAG100)) {
+      MGAdac->SetCursorColors        = MGAGSetCursorColorsG100;
+      MGAdac->ShowCursor             = MGAGShowCursorG100;
+    } else {
+      MGAdac->SetCursorColors        = MGAGSetCursorColors;
+      MGAdac->ShowCursor             = MGAGShowCursor;
+    }
     MGAdac->UseHWCursor            = MGAGUseHWCursor;
     MGAdac->CursorFlags            =
 #if X_BYTE_ORDER == X_LITTLE_ENDIAN
@@ -1040,6 +1076,7 @@ MGAGRamdacInit(ScrnInfoPtr pScrn)
 	        MGAdac->maxPixelClock = 220000;
 	    break;
     	case PCI_CHIP_MGAG400:
+    	case PCI_CHIP_MGAG550:
 	    /* We don't know the new pins format but we know that
 	       the maxclock / 4 is where the RamdacType was in the
 	       old pins format */

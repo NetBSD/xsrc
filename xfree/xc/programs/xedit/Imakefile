@@ -1,7 +1,21 @@
 XCOMM $XConsortium: Imakefile,v 1.17 93/08/17 20:49:32 rws Exp $
-XCOMM $XFree86: xc/programs/xedit/Imakefile,v 1.13 2000/02/12 02:54:46 dawes Exp $
-        DEPLIBS = XawClientDepLibs
-LOCAL_LIBRARIES = XawClientLibs
+XCOMM $XFree86: xc/programs/xedit/Imakefile,v 1.17 2002/01/04 19:24:10 paulo Exp $
+
+#include "lisp/lisp.cf"
+
+#if BuildSharedLispModules
+CCOPTIONS	= -fpic
+DLLIB		= DlLibrary
+LOCAL_LDFLAGS	= -Xlinker -E
+#endif
+
+#define IHaveSubdirs
+#define PassCDebugFlags CDEBUGFLAGS="$(CDEBUGFLAGS)"
+
+        SUBDIRS = lisp
+
+        DEPLIBS = XawClientDepLibs $(SUBDIRS)
+LOCAL_LIBRARIES = XawClientLibs -Llisp -llisp $(DLLIB)
   SYS_LIBRARIES = MathLibrary
 #if defined(LynxOSArchitecture) || defined(SVR3Architecture) || defined(LinuxArchitecture)
         RP_SRCS = realpath.c
@@ -19,9 +33,14 @@ STRCCMP_DEFINES = -DNEED_STRCASECMP
         DEFINES = $(SIGNAL_DEFINES) $(SYS_DEFINES)
 
            SRCS = xedit.c commands.c util.c $(SYS_SRCS) ispell.c options.c \
-		  hook.c c-mode.c
+		  hook.c c-mode.c lisp.c proto.c
            OBJS = xedit.o commands.o util.o $(SYS_OBJS) ispell.o options.o \
-		  hook.o c-mode.o
+		  hook.o c-mode.o lisp.o proto.o
+
+#ifdef IHaveSubdirs
+ForceSubdirs($(SUBDIRS))
+DependSubdirs($(SUBDIRS))
+#endif
 
 ComplexProgramTarget(xedit)
 InstallAppDefaults(Xedit)

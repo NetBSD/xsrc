@@ -1,9 +1,13 @@
-/* $Xorg: Xlcint.h,v 1.3 2000/08/17 19:45:06 cpqbld Exp $ */
+/* $Xorg: Xlcint.h,v 1.4 2001/02/09 02:03:38 xorgcvs Exp $ */
 /*
 
 Copyright 1991, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included
 in all copies or substantial portions of the Software.
@@ -22,7 +26,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/X11/Xlcint.h,v 3.8 2001/01/17 19:41:49 dawes Exp $ */
+/* $XFree86: xc/lib/X11/Xlcint.h,v 3.13 2001/12/14 19:54:08 dawes Exp $ */
 
 /*
  * Copyright 1990, 1991 by OMRON Corporation, NTT Software Corporation,
@@ -68,9 +72,11 @@ from The Open Group.
 #ifndef	_XLCINT_H_
 #define	_XLCINT_H_
 
+#ifndef _XP_PRINT_SERVER_
+
 #include <X11/Xresource.h>
 #include <X11/Xutil.h>
-#include "Xvarargs.h"
+#include <stdarg.h>
 
 typedef Bool (*XFilterEventProc)(
 #if NeedFunctionPrototypes
@@ -156,6 +162,7 @@ typedef struct {
     XICCallback		draw_callback;
 } ICStatusAttributes, *ICStatusAttributesPtr;
 
+#endif /* !_XP_PRINT_SERVER_ */
 
 /*
  * Methods for Xrm parsing
@@ -205,6 +212,7 @@ typedef struct {
 } XrmMethodsRec;
 typedef const XrmMethodsRec *XrmMethods;
 
+#ifndef _XP_PRINT_SERVER_
 
 typedef struct _XLCd *XLCd; /* need forward reference */
 
@@ -998,6 +1006,11 @@ extern void _XlcAddUtf8Converters(
     XLCd		lcd
 );
 
+/* Registers UTF-8 converters for a UTF-8 locale. */
+extern void _XlcAddUtf8LocaleConverters(
+    XLCd		lcd
+);
+
 /* The default locale loader. Assumes an ASCII encoding. */
 extern XLCd _XlcDefaultLoader(
     const char*		name
@@ -1030,11 +1043,33 @@ extern XLCd _XlcJisLoader(
     const char*		name
 );
 
+extern XLCd _XlcDynamicLoad(
+    const char*		name
+);
+
 /* The old dynamic loader. */
 extern XLCd _XlcDynamicLoader(
     const char*		name
 );
 
+extern Bool _XInitDefaultIM(
+    XLCd		lcd
+);
+
+extern Bool _XInitDefaultOM(
+    XLCd		lcd
+);
+
+extern Bool _XInitDynamicIM(
+    XLCd		lcd
+);
+
+extern Bool _XInitDynamicOM(
+    XLCd		lcd
+);
+
 _XFUNCPROTOEND
+
+#endif /* !_XP_PRINT_SERVER_ */
 
 #endif	/* _XLCINT_H_ */

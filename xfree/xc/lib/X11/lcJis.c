@@ -23,7 +23,7 @@
  * Author: Katsuhisa Yano	TOSHIBA Corp.
  *			   	mopi@osa.ilab.toshiba.co.jp
  */
-/* $XFree86: xc/lib/X11/lcJis.c,v 1.7 2001/01/17 19:41:54 dawes Exp $ */
+/* $XFree86: xc/lib/X11/lcJis.c,v 1.8 2001/07/25 15:04:45 dawes Exp $ */
 
 /*
  * A Japanese JIS locale.
@@ -38,7 +38,7 @@
 #include "XlcGeneric.h"
 #include <stdio.h>
 
-#if !defined(X_NOT_STDC_ENV) && !defined(macII) && !defined(X_LOCALE)
+#if !defined(macII) && !defined(X_LOCALE)
 #define STDCVT
 #endif
 

@@ -20,7 +20,7 @@
  * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-/* $XFree86: xc/programs/glxinfo/glxinfo.c,v 1.6 2001/04/02 22:13:18 dawes Exp $ */
+/* $XFree86: xc/programs/glxinfo/glxinfo.c,v 1.7 2001/08/17 13:27:57 dawes Exp $ */
 
 /*
  * This program is a work-alike of the IRIX glxinfo program.
@@ -642,6 +642,11 @@ main(int argc, char *argv[])
       }
       else if (strcmp(argv[i], "-b") == 0) {
          findBest = GL_TRUE;
+      }
+      else {
+         fprintf(stderr, "Usage: %s [-t] [-v] [-b] [-display <display>]\n",
+                 argv[0]);
+         return -1;
       }
    }
 

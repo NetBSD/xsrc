@@ -2,7 +2,7 @@
 
                           The XFree86 Project, Inc
 
-                          Last modified 1 May 2001
+                         Last modified 1 August 2001
 
 NOTE: This is a DRAFT document, and the interfaces described here are subject
 to change without notice.
@@ -920,6 +920,18 @@ it exists):
      void ChipAdjustFrame(int index, int x, int y, int flags)
 
           Changes the viewport for the screen identified by index;.
+
+          It should be noted that many chipsets impose restrictions
+          on where the viewport may be placed in the virtual reso-
+          lution, either for alignment reasons, or to prevent the
+          start of the viewport from being positioned within a
+          pixel (as can happen in a 24bpp mode).  After calculating
+          the value the chipset's panning registers need to be set
+          to for non-DGA modes, this function should recalculate
+          the ScrnInfoRec's frameX0, frameY0, frameX1 and frameY1
+          fields to correspond to that value.  If this is not done,
+          switching to another mode might cause the position of a
+          hardware cursor to change.
 
 5.21  VT Switching
 
@@ -2097,8 +2109,8 @@ Next, the higher level functions that most drivers would use.
           of options that isn't marked as used.  This is intended
           to show options that the driver hasn't recognised.  It
           would normally be called near the end of the Chip-
-          ScreenInit() function, but only when
-          serverGeneration == 1.
+          ScreenInit() function, but only when serverGenera-
+          tion == 1.
 
      OptionInfoPtr xf86TokenToOptinfo(const OptionInfoRec *table, int
      token)
@@ -2473,10 +2485,9 @@ use the colormap layer, a driver calls the xf86HandleColormaps() function.
           has been initialised.  The pScrn->gamma field must also
           be initialised, preferably by calling xf86SetGamma().
           maxColors is the number of entries in the palette.
-          sigRGBbits is the number of significant bits in each
-          colour component.  This would normally be the same as
-          pScrn->rgbBits.  loadPalette is a driver-provided func-
-          tion for loading a colormap into the hardware, and is
+          sigRGBbits is the size in bits of each color component in
+          the DAC's palette.  loadPalette is a driver-provided
+          function for loading a colormap into the hardware, and is
           described below.  setOverscan is an optional function
           that may be provided when the overscan color is an index
           from the standard LUT and when it needs to be adjusted to
@@ -6335,7 +6346,7 @@ eScreen() function.
          ZZZFreeRec(xf86Screens[scrnIndex]);
      }
 
-     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/DESIGN.sgml,v 1.44 2001/05/19 00:40:30 dawes Exp $
+     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/DESIGN.sgml,v 1.47 2002/01/16 20:38:44 dawes Exp $
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/DESIGN,v 1.36.2.1 2001/06/01 18:26:42 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/DESIGN,v 1.40 2002/01/16 20:51:01 dawes Exp $

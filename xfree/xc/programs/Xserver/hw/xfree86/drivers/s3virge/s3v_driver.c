@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/s3virge/s3v_driver.c,v 1.74.2.2 2001/05/28 08:40:10 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/s3virge/s3v_driver.c,v 1.81 2002/01/14 18:02:58 dawes Exp $ */
 
 /*
 Copyright (C) 1994-1999 The XFree86 Project, Inc.  All Rights Reserved.
@@ -112,10 +112,10 @@ static int pix24bpp = 0;
  
 #define S3VIRGE_NAME "S3VIRGE"
 #define S3VIRGE_DRIVER_NAME "s3virge"
-#define S3VIRGE_VERSION_NAME "1.6.0"
+#define S3VIRGE_VERSION_NAME "1.8.3"
 #define S3VIRGE_VERSION_MAJOR   1
-#define S3VIRGE_VERSION_MINOR   6
-#define S3VIRGE_PATCHLEVEL      0
+#define S3VIRGE_VERSION_MINOR   8
+#define S3VIRGE_PATCHLEVEL      3
 #define S3VIRGE_DRIVER_VERSION ((S3VIRGE_VERSION_MAJOR << 24) | \
 				(S3VIRGE_VERSION_MINOR << 16) | \
 				S3VIRGE_PATCHLEVEL)
@@ -207,11 +207,16 @@ typedef enum {
    OPTION_HWCURSOR,
    OPTION_SHADOW_FB,
    OPTION_ROTATE,
-   OPTION_FB_DRAW
+   OPTION_FB_DRAW,
+   OPTION_MX_CR3A_FIX,
+   OPTION_XVIDEO
 } S3VOpts;
 
 static const OptionInfoRec S3VOptions[] =
 {  
+  /*    int token, const char* name, OptionValueType type,
+	ValueUnion value, Bool found.
+  */
    { OPTION_SLOW_EDODRAM, 	"slow_edodram",	OPTV_BOOLEAN,	{0}, FALSE },
    { OPTION_SLOW_DRAM, 		"slow_dram",	OPTV_BOOLEAN,	{0}, FALSE },
    { OPTION_FAST_DRAM, 		"fast_dram",	OPTV_BOOLEAN,	{0}, FALSE },
@@ -233,7 +238,9 @@ static const OptionInfoRec S3VOptions[] =
    { OPTION_SWCURSOR,		"SWCursor",     OPTV_BOOLEAN,	{0}, FALSE },
    { OPTION_SHADOW_FB,          "ShadowFB",	OPTV_BOOLEAN,	{0}, FALSE },
    { OPTION_ROTATE, 	        "Rotate",	OPTV_ANYSTR,	{0}, FALSE },
-   { OPTION_FB_DRAW,            "UseFB",	OPTV_BOOLEAN,	{0}, TRUE },
+   { OPTION_FB_DRAW,            "UseFB",	OPTV_BOOLEAN,	{0}, FALSE },
+   { OPTION_MX_CR3A_FIX,        "mxcr3afix",	OPTV_BOOLEAN,	{0}, FALSE },
+   { OPTION_XVIDEO,             "XVideo",	OPTV_BOOLEAN,	{0}, FALSE },
    {-1, NULL, OPTV_NONE,	{0}, FALSE}
 };
 
@@ -245,22 +252,24 @@ static const OptionInfoRec S3VOptions[] =
  * Note that vgahwSymbols and xaaSymbols are referenced outside the
  * XFree86LOADER define in later code, so are defined outside of that
  * define here also.
- * cfbSymbols and ramdacSymbols are only referenced from within the
- * ...LOADER define.
  */
 
 static const char *vgahwSymbols[] = {
+    "vgaHWBlankScreen",
+    "vgaHWCopyReg",
     "vgaHWGetHWRec",
-    "vgaHWSetMmioFuncs",
     "vgaHWGetIOBase",
-    "vgaHWSave",
+    "vgaHWGetIndex",
+    "vgaHWInit",
+    "vgaHWLock",
+    "vgaHWMapMem",
     "vgaHWProtect",
     "vgaHWRestore",
-    "vgaHWMapMem",
-    "vgaHWUnmapMem",
-    "vgaHWInit",
+    "vgaHWSave",
     "vgaHWSaveScreen",
-    "vgaHWLock",
+    "vgaHWSetMmioFuncs",
+    "vgaHWSetStdFuncs",
+    "vgaHWUnmapMem",
    /* not used by ViRGE (at the moment :( ) */
    /*
     "vgaHWUnlock",
@@ -270,20 +279,23 @@ static const char *vgahwSymbols[] = {
 };
 
 static const char *xaaSymbols[] = {
+    "XAACopyROP",
+    "XAACopyROP_PM",
     "XAADestroyInfoRec",
     "XAACreateInfoRec",
+    "XAAFillSolidRects",
+    "XAAHelpPatternROP",
+    "XAAHelpSolidROP",
     "XAAInit",
-   /*
-    "XAAStippleScanlineFuncLSBFirst",
-    "XAAOverlayFBfuncs",
-    */
     NULL
 };
 
 static const char *ramdacSymbols[] = {
-    "xf86InitCursor",
     "xf86CreateCursorInfoRec",
+    "xf86InitCursor",
+#if 0
     "xf86DestroyCursorInfoRec",
+#endif
     NULL
 };
 
@@ -291,6 +303,7 @@ static const char *ddcSymbols[] = {
     "xf86PrintEDID",
     "xf86DoEDID_DDC1",
     "xf86DoEDID_DDC2",
+    "xf86SetDDCproperties",
     NULL
 };
 
@@ -313,13 +326,10 @@ static const char *vbeSymbols[] = {
 };
 
 static const char *fbSymbols[] = {
-  "fbScreenInit",
-  "fbBres",
   "fbPictureInit",
+  "fbScreenInit",
   NULL
 };
-
-#ifdef XFree86LOADER
 
 static const char *int10Symbols[] = {
     "xf86InitInt10",
@@ -339,6 +349,8 @@ static const char *cfbSymbols[] = {
     "cfb32BresS",
     NULL
 };
+
+#ifdef XFree86LOADER
 
 static MODULESETUPPROTO(s3virgeSetup);
 
@@ -663,7 +675,7 @@ S3VPreInit(ScrnInfoPtr pScrn, int flags)
 	}
     }
 
-    /* We use a programamble clock */
+    /* We use a programmable clock */
     pScrn->progClock = TRUE;
 
     /* Allocate the S3VRec driverPrivate */
@@ -863,6 +875,30 @@ S3VPreInit(ScrnInfoPtr pScrn, int flags)
       {
 	ps3v->UseFB = TRUE;
 	xf86DrvMsg(pScrn->scrnIndex, X_DEFAULT, "Using fb.\n");
+      }
+
+    if (xf86IsOptionSet(ps3v->Options, OPTION_MX_CR3A_FIX)) 
+      {
+	if (xf86GetOptValBool(ps3v->Options, OPTION_MX_CR3A_FIX ,&ps3v->mx_cr3a_fix))
+	  xf86DrvMsg(pScrn->scrnIndex, X_CONFIG, "%s mx_cr3a_fix.\n",
+		     ps3v->mx_cr3a_fix ? "Enabling (default)" : "Disabling");
+      }
+    else
+      {
+	ps3v->mx_cr3a_fix = TRUE;
+	xf86DrvMsg(pScrn->scrnIndex, X_DEFAULT, "mx_cr3a_fix.\n");
+      }
+
+    if (xf86IsOptionSet(ps3v->Options, OPTION_XVIDEO)) 
+      {
+	if (xf86GetOptValBool(ps3v->Options, OPTION_XVIDEO ,&ps3v->XVideo))
+	  xf86DrvMsg(pScrn->scrnIndex, X_CONFIG, "%s XVideo.\n",
+		     ps3v->XVideo ? "Enabling (default)" : "Disabling");
+      }
+    else
+      {
+	ps3v->XVideo = TRUE;
+	xf86DrvMsg(pScrn->scrnIndex, X_DEFAULT, "XVideo allowed (depends on chipset).\n");
       }
 
     /* Find the PCI slot for this screen */
@@ -1267,7 +1303,7 @@ S3VPreInit(ScrnInfoPtr pScrn, int flags)
        if (ps3v->LCDClk) {
 	  lcdclk = ps3v->LCDClk;
        } else {
-	  int n1, n2, sr12, sr13, sr29;
+	  unsigned char sr12, sr13, sr29;
           VGAOUT8(0x3c4, 0x12);
           sr12 = VGAIN8(0x3c5);
           VGAOUT8(0x3c4, 0x13);
@@ -1328,6 +1364,9 @@ S3VPreInit(ScrnInfoPtr pScrn, int flags)
      * don't exceed the chipset's limit if pScrn->maxHValue and
      * pScrn->maxVValue are set.  
      */
+
+    /* todo -  The virge limit is 2048 vertical & horizontal */
+    /* pixels, not clock register settings. */
 			 	/* true for all ViRGE? */
   pScrn->maxHValue = 2048;
   pScrn->maxVValue = 2048;
@@ -1635,6 +1674,8 @@ S3VSave (ScrnInfoPtr pScrn)
    VGAOUT8(vgaCRReg, cr66 | 0x80);
    VGAOUT8(vgaCRIndex, 0x3a);
    cr3a = VGAIN8(vgaCRReg);
+   save->CR3A = cr3a;
+
    VGAOUT8(vgaCRReg, cr3a | 0x80);
 
    /* VGA_SR_MODE saves mode info only, no fonts, no colormap */
@@ -1663,8 +1704,14 @@ S3VSave (ScrnInfoPtr pScrn)
    save->CR34 = VGAIN8(vgaCRReg);
    VGAOUT8(vgaCRIndex, 0x36);             
    save->CR36 = VGAIN8(vgaCRReg);
-   VGAOUT8(vgaCRIndex, 0x3a);             
-   save->CR3A = VGAIN8(vgaCRReg);
+
+   /* workaround cr3a corruption */
+   if( !(ps3v->mx_cr3a_fix))
+     {
+       VGAOUT8(vgaCRIndex, 0x3a);             
+       save->CR3A = VGAIN8(vgaCRReg);
+     }
+
    if (!S3_TRIO_3D_SERIES(ps3v->Chipset)) {
      VGAOUT8(vgaCRIndex, 0x40);
      save->CR40 = VGAIN8(vgaCRReg);
@@ -1710,7 +1757,7 @@ S3VSave (ScrnInfoPtr pScrn)
       VGAOUT8(vgaCRIndex, 0x86);
       save->CR86 = VGAIN8(vgaCRReg);
    }
-   if (S3_ViRGE_GX2_SERIES(ps3v->Chipset) ||
+   if ((ps3v->Chipset == S3_ViRGE_GX2) ||
        S3_ViRGE_MX_SERIES(ps3v->Chipset) ) {
       VGAOUT8(vgaCRIndex, 0x7B);
       save->CR7B = VGAIN8(vgaCRReg);
@@ -1763,7 +1810,10 @@ S3VSave (ScrnInfoPtr pScrn)
    if (S3_ViRGE_GX2_SERIES(ps3v->Chipset) || S3_ViRGE_MX_SERIES(ps3v->Chipset)) {
      VGAOUT8(0x3c4, 0x29);
      save->SR29 = VGAIN8(0x3c5);
-        /* SR 54,55,56,57 undocumented for MX & GX2.  Was this supposed to be CR? */
+   }
+        /* SR 54,55,56,57 undocumented for GX2.  Was this supposed to be CR? */
+        /* (These used to be part of the above if() */
+   if (S3_ViRGE_MX_SERIES(ps3v->Chipset)) {
      VGAOUT8(0x3c4, 0x54);
      save->SR54 = VGAIN8(0x3c5);
      VGAOUT8(0x3c4, 0x55);
@@ -1814,12 +1864,34 @@ S3VSave (ScrnInfoPtr pScrn)
 
    if (xf86GetVerbosity() > 1) {
       /* Debug */
+     /* Which chipsets? */
+     if (
+	 /* virge */
+	 ps3v->Chipset == S3_ViRGE ||
+	 /* VX */
+	 S3_ViRGE_VX_SERIES(ps3v->Chipset) ||
+	 /* DX & GX */
+	 ps3v->Chipset == S3_ViRGE_DXGX ||
+	 /* GX2 & Trio3D_2X */
+	 /* S3_ViRGE_GX2_SERIES(ps3v->Chipset) || */
+	 /* Trio3D_2X */
+	 /* S3_TRIO_3D_2X_SERIES(ps3v->Chipset) */
+	 /* MX & MX+ */
+	 /* S3_ViRGE_MX_SERIES(ps3v->Chipset) || */
+	 /* MX+ only */
+	 /* S3_ViRGE_MXP_SERIES(ps3v->Chipset) || */
+	 /* Trio3D */
+	 ps3v->Chipset == S3_TRIO_3D
+         ) 
+       { 
+
       xf86DrvMsgVerb(pScrn->scrnIndex, X_INFO, VERBLEV,
          "MMPR regs: %08x %08x %08x %08x\n",
 	     INREG(FIFO_CONTROL_REG), 
 	     INREG(MIU_CONTROL_REG), 
 	     INREG(STREAMS_TIMEOUT_REG), 
 	     INREG(MISC_TIMEOUT_REG));
+       }
 
       PVERB5("\n\nViRGE driver: saved current video mode. Register dump:\n\n");
    }
@@ -1890,7 +1962,7 @@ S3VSaveSTREAMS(ScrnInfoPtr pScrn, unsigned int *streams)
 static void
 S3VWriteMode (ScrnInfoPtr pScrn, vgaRegPtr vgaSavePtr, S3VRegPtr restore)
 {
-  unsigned char tmp, cr3a, cr66, cr67;
+  unsigned char tmp, cr3a=0, cr66, cr67;
   
   vgaHWPtr hwp = VGAHWPTR(pScrn);
   S3VPtr ps3v = S3VPTR(pScrn);
@@ -1967,10 +2039,18 @@ S3VWriteMode (ScrnInfoPtr pScrn, vgaRegPtr vgaSavePtr, S3VRegPtr restore)
    /* Other mode timing and extended regs */
    VGAOUT8(vgaCRIndex, 0x34);             
    VGAOUT8(vgaCRReg, restore->CR34);
-   if (!S3_TRIO_3D_SERIES(ps3v->Chipset)) {
-     VGAOUT8(vgaCRIndex, 0x40);             
-     VGAOUT8(vgaCRReg, restore->CR40);
-   }
+   if ( S3_ViRGE_GX2_SERIES(ps3v->Chipset) ||
+	/* S3_ViRGE_MX_SERIES(ps3v->Chipset) || CR40 reserved on MX */
+	S3_ViRGE_MXP_SERIES(ps3v->Chipset) ||
+	S3_ViRGE_VX_SERIES(ps3v->Chipset) ||
+	/* S3_TRIO_3D_2X_SERIES(ps3v->Chipset) * included in GX2 series */
+	ps3v->Chipset == S3_ViRGE_DXGX ||
+	ps3v->Chipset == S3_ViRGE 
+	)
+     {
+       VGAOUT8(vgaCRIndex, 0x40);             
+       VGAOUT8(vgaCRReg, restore->CR40);
+     }
    if (S3_ViRGE_MX_SERIES(ps3v->Chipset)) {
      VGAOUT8(vgaCRIndex, 0x41);
      VGAOUT8(vgaCRReg, restore->CR41);
@@ -2004,7 +2084,8 @@ S3VWriteMode (ScrnInfoPtr pScrn, vgaRegPtr vgaSavePtr, S3VRegPtr restore)
       VGAOUT8(vgaCRIndex, 0x86);
       VGAOUT8(vgaCRReg, restore->CR86);
    }
-   if (ps3v->Chipset == S3_ViRGE_GX2) {
+   if ( (ps3v->Chipset == S3_ViRGE_GX2) ||
+	S3_ViRGE_MX_SERIES(ps3v->Chipset) ) {
       VGAOUT8(vgaCRIndex, 0x7B);
       VGAOUT8(vgaCRReg, restore->CR7B);
       VGAOUT8(vgaCRIndex, 0x7D);
@@ -2048,6 +2129,8 @@ S3VWriteMode (ScrnInfoPtr pScrn, vgaRegPtr vgaSavePtr, S3VRegPtr restore)
    if (S3_ViRGE_GX2_SERIES(ps3v->Chipset) || S3_ViRGE_MX_SERIES(ps3v->Chipset)) {
      VGAOUT8(0x3c4, 0x29);
      VGAOUT8(0x3c5, restore->SR29);
+   }
+   if (S3_ViRGE_MX_SERIES(ps3v->Chipset)) {
      VGAOUT8(0x3c4, 0x54);
      VGAOUT8(0x3c5, restore->SR54);
      VGAOUT8(0x3c4, 0x55);
@@ -2065,6 +2148,7 @@ S3VWriteMode (ScrnInfoPtr pScrn, vgaRegPtr vgaSavePtr, S3VRegPtr restore)
    VGAOUT8(0x3c4, 0x15);
    tmp = VGAIN8(0x3c5) & ~0x21;
 
+   /* databook either 0x3 or 0x20, but not both?? */
    VGAOUT8(0x3c5, tmp | 0x03);
    VGAOUT8(0x3c5, tmp | 0x23);
    VGAOUT8(0x3c5, tmp | 0x03);
@@ -2093,8 +2177,17 @@ S3VWriteMode (ScrnInfoPtr pScrn, vgaRegPtr vgaSavePtr, S3VRegPtr restore)
    cr66 = VGAIN8(vgaCRReg);
    VGAOUT8(vgaCRReg, cr66 | 0x80);
    VGAOUT8(vgaCRIndex, 0x3a);
-   cr3a = VGAIN8(vgaCRReg);
-   VGAOUT8(vgaCRReg, cr3a | 0x80);
+
+   /* workaround cr3a corruption */
+   if( ps3v->mx_cr3a_fix )
+     {
+       VGAOUT8(vgaCRReg, restore->CR3A | 0x80);
+     }
+   else
+     {
+       cr3a = VGAIN8(vgaCRReg);
+       VGAOUT8(vgaCRReg, cr3a | 0x80);
+     }
 
    /* And finally, we init the STREAMS processor if we have CR67 indicate 24bpp
     * We also restore FIFO and TIMEOUT memory controller registers. (later...)
@@ -2157,7 +2250,13 @@ S3VWriteMode (ScrnInfoPtr pScrn, vgaRegPtr vgaSavePtr, S3VRegPtr restore)
    VGAOUT8(vgaCRIndex, 0x66);             
    VGAOUT8(vgaCRReg, cr66);
    VGAOUT8(vgaCRIndex, 0x3a);             
-   VGAOUT8(vgaCRReg, cr3a);
+
+   /* workaround cr3a corruption */
+   if( ps3v->mx_cr3a_fix )
+     VGAOUT8(vgaCRReg, restore->CR3A);
+   else
+     VGAOUT8(vgaCRReg, cr3a);
+
 
    if (xf86GetVerbosity() > 1) {
       xf86DrvMsgVerb(pScrn->scrnIndex, X_INFO, VERBLEV, 
@@ -2467,6 +2566,11 @@ S3VScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 	    }
 	}
   }
+
+  /* must be after RGB ordering fixed */
+  if (ps3v->UseFB)
+    fbPictureInit (pScreen, 0, 0);
+    
   	      				/* Initialize acceleration layer */
   if (!ps3v->NoAccel) {
     if(pScrn->bitsPerPixel == 32) {
@@ -2630,8 +2734,6 @@ S3VInternalScreenInit( int scrnIndex, ScreenPtr pScreen)
 	  ret = FALSE;
 	  break;
 	}
-      if (ret)
-	fbPictureInit (pScreen, 0, 0);
     }
   else
     {
@@ -2756,7 +2858,9 @@ S3VModeInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
        /* MXTESTME */ || S3_ViRGE_MX_SERIES(ps3v->Chipset) )
      {
      if(ps3v->pci_burst)
-        new->CR3A = (tmp & 0x38) | 0x10; /* ENH 256, PCI burst */
+       /*new->CR3A = (tmp & 0x38) | 0x10; / ENH 256, PCI burst */
+       /* Don't clear reserved bits... */
+        new->CR3A = (tmp & 0x7f) | 0x10; /* ENH 256, PCI burst */
      else 
         new->CR3A = tmp | 0x90;      /* ENH 256, no PCI burst! */
      }
@@ -2791,7 +2895,9 @@ S3VModeInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
      if( S3_ViRGE_GX2_SERIES(ps3v->Chipset) ||
 	 S3_ViRGE_MX_SERIES(ps3v->Chipset) )
        {
-	 new->CR63 = 0x08;
+	 /* Changed from 0x08 based on reports that this */
+	 /* prevents MX from running properly below 1024x768 */
+	 new->CR63 = 0x10;
        }
      else
        {
@@ -2854,7 +2960,14 @@ S3VModeInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
    new->CR65 = 0x00;		/* CR65_2 must be zero, doc seems to be wrong */
    new->CR54 = 0x00;
    
-   if (!S3_TRIO_3D_SERIES(ps3v->Chipset)) {
+   if ( S3_ViRGE_GX2_SERIES(ps3v->Chipset) ||
+	/* S3_ViRGE_MX_SERIES(ps3v->Chipset) || CR40 reserved on MX */
+	S3_ViRGE_MXP_SERIES(ps3v->Chipset) ||
+	S3_ViRGE_VX_SERIES(ps3v->Chipset) ||
+	/* S3_TRIO_3D_2X_SERIES(ps3v->Chipset) * included in GX2 series */
+	ps3v->Chipset == S3_ViRGE_DXGX ||
+	ps3v->Chipset == S3_ViRGE 
+	) {
      VGAOUT8(vgaCRIndex, 0x40);
      new->CR40 = VGAIN8(vgaCRReg) & ~0x01;
    }
@@ -3085,16 +3198,28 @@ S3VModeInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
 	 /* XV support needs STREAMS in depth 16 */
          ps3v->NeedSTREAMS = TRUE;
          S3VInitSTREAMS(pScrn, new->STREAMS, mode);
-	 /*new->MMPR0 = 0xc000;            / Adjust FIFO slots */
-         new->MMPR0 = 0x107c02;            /* Adjust FIFO slots, overlay */
+	 if( ps3v->XVideo )
+	   {
+	     new->MMPR0 = 0x107c02;            /* Adjust FIFO slots, overlay */
+	   }
+	 else
+	   {
+	     new->MMPR0 = 0xc000;            /* Adjust FIFO slots */
+	   }
          }
       else if (pScrn->bitsPerPixel == 24) { 
          new->CR67 = 0xd0 | 0x0c;
 	  					/* Flag STREAMS proc. required */
          ps3v->NeedSTREAMS = TRUE;
          S3VInitSTREAMS(pScrn, new->STREAMS, mode);
-	 /*new->MMPR0 = 0xc000;            / Adjust FIFO slots */
-         new->MMPR0 = 0x107c02;            /* Adjust FIFO slots, overlay */
+	 if( ps3v->XVideo )
+	   {
+	     new->MMPR0 = 0x107c02;            /* Adjust FIFO slots, overlay */
+	   }
+	 else
+	   {
+	     new->MMPR0 = 0xc000;            /* Adjust FIFO slots */
+	   }
          }
       else if (pScrn->bitsPerPixel == 32) { 
          new->CR67 = 0xd0 | 0x0c;
@@ -3323,6 +3448,7 @@ S3VModeInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
    new->CR68 = VGAIN8(vgaCRReg);
    new->CR69 = 0;
    
+   /* Flat panel centering and expansion registers */
    if (S3_ViRGE_MX_SERIES(ps3v->Chipset) && (ps3v->lcd_center)) {
      new->SR54 = 0x10 ;
      new->SR55 = 0x80 ;
@@ -3372,6 +3498,7 @@ S3VCloseScreen(int scrnIndex, ScreenPtr pScreen)
       vgaHWLock(hwp);
       S3VUnmapMem(pScrn);
   }
+
   if (ps3v->AccelInfoRec)
     XAADestroyInfoRec(ps3v->AccelInfoRec);
   if (ps3v->DGAModes)

@@ -1,9 +1,13 @@
-/* $Xorg: PsPrint.c,v 1.4 2000/08/17 19:48:11 cpqbld Exp $ */
+/* $Xorg: PsPrint.c,v 1.7 2001/03/14 18:28:18 pookie Exp $ */
 /*
 
 Copyright 1996, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -69,7 +73,7 @@ in this Software without prior written authorization from The Open Group.
 **    *********************************************************
 ** 
 ********************************************************************/
-/* $XFree86: xc/programs/Xserver/Xprint/ps/PsPrint.c,v 1.7 2001/01/17 22:36:32 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/Xprint/ps/PsPrint.c,v 1.11 2001/12/21 21:02:06 dawes Exp $ */
 
 #include <stdio.h>
 #include <string.h>
@@ -158,8 +162,6 @@ PsStartJob(
   Bool         sendClientData,
   ClientPtr    client)
 {
-  int                iorient, iplex, icount, ires;
-  unsigned short     iwd, iht;
   PsContextPrivPtr  pConPriv = 
       (PsContextPrivPtr)pCon->devPrivates[PsContextPrivateIndex].ptr;
 
@@ -168,17 +170,6 @@ PsStartJob(
    */
   if (!XpOpenTmpFile("w", &pConPriv->jobFileName, &pConPriv->pJobFile))
       return BadAlloc;
-
-/*
- * Write the job header to the job file.
- */
-
-  /* get document level attributes */
-  S_GetPageAttributes(pCon,&iorient,&icount,&iplex,&ires,&iwd,&iht);
-
-  pConPriv->pPsOut = PsOut_BeginFile(pConPriv->pJobFile,
-                                   iorient, icount, iplex, ires,
-                                   (int)iwd, (int)iht);
 
   return Success;
 }
@@ -274,6 +265,10 @@ PsEndJob(
   xfree(priv->jobFileName);
   priv->jobFileName = (char *)NULL;
 
+#ifdef BM_CACHE
+  PsBmClearImageCache();
+#endif
+        
   return r;
 }
 
@@ -286,13 +281,10 @@ PsStartPage(
 {
   int                iorient, iplex, icount, ires;
   unsigned short     iwd, iht;
-  register WindowPtr pChild;
   PsContextPrivPtr   pConPriv =
      (PsContextPrivPtr)pCon->devPrivates[PsContextPrivateIndex].ptr;
   PsWindowPrivPtr    pWinPriv =
      (PsWindowPrivPtr)pWin->devPrivates[PsWindowPrivateIndex].ptr;
-  char               s[80];
-  xEvent event;
 
 /*
  * Put a pointer to the context in the window private structure
@@ -305,6 +297,11 @@ PsStartPage(
   /*
    *  Start the page
    */
+  if (pConPriv->pPsOut == NULL) {
+      pConPriv->pPsOut = PsOut_BeginFile(pConPriv->pJobFile,
+				   iorient, icount, iplex, ires,
+				   (int)iwd, (int)iht, False);
+  }
   PsOut_BeginPage(pConPriv->pPsOut, iorient, icount, iplex, ires,
 		  (int)iwd, (int)iht);
 
@@ -349,6 +346,18 @@ PsEndPage(
 int
 PsStartDoc(XpContextPtr pCon, XPDocumentType type)
 {
+  int                iorient, iplex, icount, ires;
+  unsigned short     iwd, iht;
+  PsContextPrivPtr   pConPriv = 
+      (PsContextPrivPtr)pCon->devPrivates[PsContextPrivateIndex].ptr;
+
+  /* get document level attributes */
+  S_GetPageAttributes(pCon,&iorient,&icount,&iplex,&ires,&iwd,&iht);
+
+  pConPriv->pPsOut = PsOut_BeginFile(pConPriv->pJobFile,
+                                   iorient, icount, iplex, ires,
+                                   (int)iwd, (int)iht, (type == XPDocRaw));
+
   return Success;
 }
 

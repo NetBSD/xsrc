@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/programs/Xserver/render/picture.c,v 1.12 2000/12/07 23:54:04 keithp Exp $
+ * $XFree86: xc/programs/Xserver/render/picture.c,v 1.20 2001/12/13 04:35:41 keithp Exp $
  *
  * Copyright © 2000 SuSE, Inc.
  *
@@ -71,120 +71,342 @@ PictureCloseScreen (int index, ScreenPtr pScreen)
 {
     PictureScreenPtr    ps = GetPictureScreen(pScreen);
     Bool                ret;
+    int			n;
 
     pScreen->CloseScreen = ps->CloseScreen;
     ret = (*pScreen->CloseScreen) (index, pScreen);
+    for (n = 0; n < ps->nformats; n++)
+	if (ps->formats[n].type == PictTypeIndexed)
+	    (*ps->CloseIndexed) (pScreen, &ps->formats[n]);
     SetPictureScreen(pScreen, 0);
     xfree (ps->formats);
     xfree (ps);
     return ret;
 }
 
+void
+PictureStoreColors (ColormapPtr pColormap, int ndef, xColorItem *pdef)
+{
+    ScreenPtr		pScreen = pColormap->pScreen;
+    PictureScreenPtr    ps = GetPictureScreen(pScreen);
+
+    pScreen->StoreColors = ps->StoreColors;
+    (*pScreen->StoreColors) (pColormap, ndef, pdef);
+    ps->StoreColors = pScreen->StoreColors;
+    pScreen->StoreColors = PictureStoreColors;
+
+    if (pColormap->class == PseudoColor || pColormap->class == GrayScale)
+    {
+	PictFormatPtr	format = ps->formats;
+	int		nformats = ps->nformats;
+
+	while (nformats--)
+	{
+	    if (format->pColormap == pColormap)
+	    {
+		(*ps->UpdateIndexed) (pScreen, format, ndef, pdef);
+		break;
+	    }
+	    format++;
+	}
+    }
+}
+
+static int
+visualDepth (ScreenPtr pScreen, VisualPtr pVisual)
+{
+    int		d, v;
+    DepthPtr	pDepth;
+
+    for (d = 0; d < pScreen->numDepths; d++)
+    {
+	pDepth = &pScreen->allowedDepths[d];
+	for (v = 0; v < pDepth->numVids; v++)
+	    if (pDepth->vids[v] == pVisual->vid)
+		return pDepth->depth;
+    }
+    return 0;
+}
+
+typedef struct _formatInit {
+    CARD32  format;
+    CARD8   depth;
+} FormatInitRec, *FormatInitPtr;
+
+static int
+addFormat (FormatInitRec    formats[256],
+	   int		    nformat,
+	   CARD32	    format,
+	   CARD8	    depth)
+{
+    int	n;
+
+    for (n = 0; n < nformat; n++)
+	if (formats[n].format == format && formats[n].depth == depth)
+	    return nformat;
+    formats[nformat].format = format;
+    formats[nformat].depth = depth;
+    return ++nformat;
+}
+
+#define Mask(n)	((n) == 32 ? 0xffffffff : ((1 << (n))-1))
+
 PictFormatPtr
 PictureCreateDefaultFormats (ScreenPtr pScreen, int *nformatp)
 {
-    int		    nformats;
+    int		    nformats, f;
     PictFormatPtr   pFormats;
-    int		    i;
+    FormatInitRec   formats[1024];
+    CARD32	    format;
+    CARD8	    depth;
+    VisualPtr	    pVisual;
+    int		    v;
+    int		    bpp;
+    int		    type;
+    int		    r, g, b;
+    int		    d;
+    DepthPtr	    pDepth;
 
-    nformats = 7;
+    nformats = 0;
+    /* formats required by protocol */
+    formats[nformats].format = PICT_a1;
+    formats[nformats].depth = 1;
+    nformats++;
+    formats[nformats].format = PICT_a8;
+    formats[nformats].depth = 8;
+    nformats++;
+    formats[nformats].format = PICT_a4;
+    formats[nformats].depth = 4;
+    nformats++;
+    formats[nformats].format = PICT_a8r8g8b8;
+    formats[nformats].depth = 32;
+    nformats++;
+    formats[nformats].format = PICT_x8r8g8b8;
+    formats[nformats].depth = 32;
+    nformats++;
+
+    /* now look through the depths and visuals adding other formats */
+    for (v = 0; v < pScreen->numVisuals; v++)
+    {
+	pVisual = &pScreen->visuals[v];
+	depth = visualDepth (pScreen, pVisual);
+	if (!depth)
+	    continue;
+    	bpp = BitsPerPixel (depth);
+	switch (pVisual->class) {
+	case DirectColor:
+	case TrueColor:
+	    r = Ones (pVisual->redMask);
+	    g = Ones (pVisual->greenMask);
+	    b = Ones (pVisual->blueMask);
+	    type = PICT_TYPE_OTHER;
+	    /*
+	     * Current rendering code supports only two direct formats,
+	     * fields must be packed together at the bottom of the pixel
+	     * and must be either RGB or BGR
+	     */
+	    if (pVisual->offsetBlue == 0 &&
+		pVisual->offsetGreen == b &&
+		pVisual->offsetRed == b + g)
+	    {
+		type = PICT_TYPE_ARGB;
+	    }
+	    else if (pVisual->offsetRed == 0 &&
+		     pVisual->offsetGreen == r && 
+		     pVisual->offsetBlue == r + g)
+	    {
+		type = PICT_TYPE_ABGR;
+	    }
+	    if (type != PICT_TYPE_OTHER)
+	    {
+		format = PICT_FORMAT(bpp, type, 0, r, g, b);
+		nformats = addFormat (formats, nformats, format, depth);
+	    }
+	    break;
+	case StaticColor:
+	case PseudoColor:
+	    format = PICT_FORMAT (bpp, PICT_TYPE_COLOR, v, 0, 0, 0);
+	    nformats = addFormat (formats, nformats, format, depth);
+	    break;
+	case StaticGray:
+	case GrayScale:
+	    format = PICT_FORMAT (bpp, PICT_TYPE_GRAY, v, 0, 0, 0);
+	    nformats = addFormat (formats, nformats, format, depth);
+	    break;
+	}
+    }
+    /*
+     * Walk supported depths and add useful Direct formats
+     */
+    for (d = 0; d < pScreen->numDepths; d++)
+    {
+	pDepth = &pScreen->allowedDepths[d];
+	bpp = BitsPerPixel (pDepth->depth);
+	format = 0;
+	switch (bpp) {
+	case 16:
+	    /* depth 15 formats */
+	    if (pDepth->depth >= 15)
+	    {
+		nformats = addFormat (formats, nformats,
+				      PICT_x1r5g5b5, pDepth->depth);
+		nformats = addFormat (formats, nformats,
+				      PICT_x1b5g5r5, pDepth->depth);
+	    }
+	    /* depth 16 formats */
+	    if (pDepth->depth >= 16) 
+	    {
+		nformats = addFormat (formats, nformats,
+				      PICT_a1r5g5b5, pDepth->depth);
+		nformats = addFormat (formats, nformats,
+				      PICT_a1b5g5r5, pDepth->depth);
+		nformats = addFormat (formats, nformats,
+				      PICT_r5g6b5, pDepth->depth);
+		nformats = addFormat (formats, nformats,
+				      PICT_b5g6r5, pDepth->depth);
+	    }
+	    break;
+	case 24:
+	    if (pDepth->depth >= 24)
+	    {
+		nformats = addFormat (formats, nformats,
+				      PICT_r8g8b8, pDepth->depth);
+		nformats = addFormat (formats, nformats,
+				      PICT_b8g8r8, pDepth->depth);
+	    }
+	    break;
+	case 32:
+	    if (pDepth->depth >= 24)
+	    {
+		nformats = addFormat (formats, nformats,
+				      PICT_x8r8g8b8, pDepth->depth);
+		nformats = addFormat (formats, nformats,
+				      PICT_x8b8g8r8, pDepth->depth);
+	    }
+	    break;
+	}
+    }
+    
+
     pFormats = (PictFormatPtr) xalloc (nformats * sizeof (PictFormatRec));
     if (!pFormats)
 	return 0;
-    i = 0;
-    pFormats[i].id = FakeClientID (0);
-    pFormats[i].type = PictTypeDirect;
-    pFormats[i].depth = 32;
-    pFormats[i].direct.red = 16;
-    pFormats[i].direct.redMask = 0xff;
-    pFormats[i].direct.green = 8;
-    pFormats[i].direct.greenMask = 0xff;
-    pFormats[i].direct.blue = 0;
-    pFormats[i].direct.blueMask = 0xff;
-    pFormats[i].direct.alpha = 24;
-    pFormats[i].direct.alphaMask = 0xff;
-    pFormats[i].pColormap = 0;
-    i++;
-    pFormats[i].id = FakeClientID (0);
-    pFormats[i].type = PictTypeDirect;
-    pFormats[i].depth = 8;
-    pFormats[i].direct.red = 0;
-    pFormats[i].direct.redMask = 0;
-    pFormats[i].direct.green = 0;
-    pFormats[i].direct.greenMask = 0;
-    pFormats[i].direct.blue = 0;
-    pFormats[i].direct.blueMask = 0;
-    pFormats[i].direct.alpha = 0;
-    pFormats[i].direct.alphaMask = 0xff;
-    pFormats[i].pColormap = 0;
-    i++;
-    pFormats[i].id = FakeClientID (0);
-    pFormats[i].type = PictTypeDirect;
-    pFormats[i].depth = 24;
-    pFormats[i].direct.red = 16;
-    pFormats[i].direct.redMask = 0xff;
-    pFormats[i].direct.green = 8;
-    pFormats[i].direct.greenMask = 0xff;
-    pFormats[i].direct.blue = 0;
-    pFormats[i].direct.blueMask = 0xff;
-    pFormats[i].direct.alpha = 0;
-    pFormats[i].direct.alphaMask = 0x0;
-    pFormats[i].pColormap = 0;
-    i++;
-    pFormats[i].id = FakeClientID (0);
-    pFormats[i].type = PictTypeDirect;
-    pFormats[i].depth = 16;
-    pFormats[i].direct.red = 11;
-    pFormats[i].direct.redMask = 0x1f;
-    pFormats[i].direct.green = 5;
-    pFormats[i].direct.greenMask = 0x3f;
-    pFormats[i].direct.blue = 0;
-    pFormats[i].direct.blueMask = 0x1f;
-    pFormats[i].direct.alpha = 0;
-    pFormats[i].direct.alphaMask = 0x0;
-    pFormats[i].pColormap = 0;
-    i++;
-    pFormats[i].id = FakeClientID (0);
-    pFormats[i].type = PictTypeDirect;
-    pFormats[i].depth = 15;
-    pFormats[i].direct.red = 10;
-    pFormats[i].direct.redMask = 0x1f;
-    pFormats[i].direct.green = 5;
-    pFormats[i].direct.greenMask = 0x1f;
-    pFormats[i].direct.blue = 0;
-    pFormats[i].direct.blueMask = 0x1f;
-    pFormats[i].direct.alpha = 0;
-    pFormats[i].direct.alphaMask = 0x0;
-    pFormats[i].pColormap = 0;
-    i++;
-    pFormats[i].id = FakeClientID (0);
-    pFormats[i].type = PictTypeDirect;
-    pFormats[i].depth = 16;
-    pFormats[i].direct.red = 10;
-    pFormats[i].direct.redMask = 0x1f;
-    pFormats[i].direct.green = 5;
-    pFormats[i].direct.greenMask = 0x1f;
-    pFormats[i].direct.blue = 0;
-    pFormats[i].direct.blueMask = 0x1f;
-    pFormats[i].direct.alpha = 15;
-    pFormats[i].direct.alphaMask = 0x1;
-    pFormats[i].pColormap = 0;
-    i++;
-    pFormats[i].id = FakeClientID (0);
-    pFormats[i].type = PictTypeDirect;
-    pFormats[i].depth = 1;
-    pFormats[i].direct.red = 0;
-    pFormats[i].direct.redMask = 0;
-    pFormats[i].direct.green = 0;
-    pFormats[i].direct.greenMask = 0;
-    pFormats[i].direct.blue = 0;
-    pFormats[i].direct.blueMask = 0;
-    pFormats[i].direct.alpha = 0;
-    pFormats[i].direct.alphaMask = 0x1;
-    pFormats[i].pColormap = 0;
-    i++;
-    *nformatp = i;
+    memset (pFormats, '\0', nformats * sizeof (PictFormatRec));
+    for (f = 0; f < nformats; f++)
+    {
+        pFormats[f].id = FakeClientID (0);
+	pFormats[f].depth = formats[f].depth;
+	format = formats[f].format;
+	pFormats[f].format = format;
+	switch (PICT_FORMAT_TYPE(format)) {
+	case PICT_TYPE_ARGB:
+	    pFormats[f].type = PictTypeDirect;
+	    
+	    pFormats[f].direct.alphaMask = Mask(PICT_FORMAT_A(format));
+	    if (pFormats[f].direct.alphaMask)
+		pFormats[f].direct.alpha = (PICT_FORMAT_R(format) +
+					    PICT_FORMAT_G(format) +
+					    PICT_FORMAT_B(format));
+	    
+	    pFormats[f].direct.redMask = Mask(PICT_FORMAT_R(format));
+	    pFormats[f].direct.red = (PICT_FORMAT_G(format) + 
+				      PICT_FORMAT_B(format));
+	    
+	    pFormats[f].direct.greenMask = Mask(PICT_FORMAT_G(format));
+	    pFormats[f].direct.green = PICT_FORMAT_B(format);
+	    
+	    pFormats[f].direct.blueMask = Mask(PICT_FORMAT_B(format));
+	    pFormats[f].direct.blue = 0;
+	    break;
+
+	case PICT_TYPE_ABGR:
+	    pFormats[f].type = PictTypeDirect;
+	    
+	    pFormats[f].direct.alphaMask = Mask(PICT_FORMAT_A(format));
+	    if (pFormats[f].direct.alphaMask)
+		pFormats[f].direct.alpha = (PICT_FORMAT_B(format) +
+					    PICT_FORMAT_G(format) +
+					    PICT_FORMAT_R(format));
+	    
+	    pFormats[f].direct.blueMask = Mask(PICT_FORMAT_B(format));
+	    pFormats[f].direct.blue = (PICT_FORMAT_G(format) + 
+				       PICT_FORMAT_R(format));
+	    
+	    pFormats[f].direct.greenMask = Mask(PICT_FORMAT_G(format));
+	    pFormats[f].direct.green = PICT_FORMAT_R(format);
+	    
+	    pFormats[f].direct.redMask = Mask(PICT_FORMAT_R(format));
+	    pFormats[f].direct.red = 0;
+	    break;
+
+	case PICT_TYPE_A:
+	    pFormats[f].type = PictTypeDirect;
+
+	    pFormats[f].direct.alpha = 0;
+	    pFormats[f].direct.alphaMask = Mask(PICT_FORMAT_A(format));
+
+	    /* remaining fields already set to zero */
+	    break;
+	    
+	case PICT_TYPE_COLOR:
+	case PICT_TYPE_GRAY:
+	    pFormats[f].type = PictTypeIndexed;
+	    pFormats[f].format = PICT_FORMAT(PICT_FORMAT_BPP(format),
+					     PICT_FORMAT_TYPE(format),
+					     0, 0, 0, 0);
+	    pFormats[f].pVisual = &pScreen->visuals[PICT_FORMAT_A(format)];
+	    break;
+	}
+    }
+    *nformatp = nformats;
     return pFormats;
+}
+
+Bool
+PictureInitIndexedFormats (ScreenPtr pScreen)
+{
+    PictureScreenPtr    ps = GetPictureScreenIfSet(pScreen);
+    PictFormatPtr	format;
+    int			nformat;
+
+    if (!ps)
+	return FALSE;
+    format = ps->formats;
+    nformat = ps->nformats;
+    while (nformat--)
+    {
+	if (format->type == PictTypeIndexed && !format->pColormap)
+	{
+	    if (format->pVisual->vid == pScreen->rootVisual)
+		format->pColormap = (ColormapPtr) LookupIDByType(pScreen->defColormap,
+								 RT_COLORMAP);
+	    else
+	    {
+		if (CreateColormap (FakeClientID (0), pScreen,
+				    format->pVisual,
+				    &format->pColormap, AllocNone,
+				    0) != Success)
+		{
+		    return FALSE;
+		}
+	    }
+	    if (!(*ps->InitIndexed) (pScreen, format))
+		return FALSE;
+	}
+	format++;
+    }
+    return TRUE;
+}
+
+Bool
+PictureFinishInit (void)
+{
+    int	    s;
+
+    for (s = 0; s < screenInfo.numScreens; s++)
+	if (!PictureInitIndexedFormats (screenInfo.screens[s]))
+	    return FALSE;
+    return TRUE;
 }
 
 PictFormatPtr
@@ -219,7 +441,7 @@ PictureMatchVisual (ScreenPtr pScreen, int depth, VisualPtr pVisual)
 	{
 	    if (type == PictTypeIndexed)
 	    {
-		if (format->pColormap && format->pColormap->pVisual == pVisual)
+		if (format->pVisual == pVisual)
 		    return format;
 	    }
 	    else
@@ -302,7 +524,10 @@ PictureInit (ScreenPtr pScreen, PictFormatPtr formats, int nformats)
 	}
 	if (formats[n].type == PictTypeIndexed)
 	{
-	    type = PICT_TYPE_INDEX;
+	    if ((formats[n].pVisual->class | DynamicClass) == PseudoColor)
+		type = PICT_TYPE_COLOR;
+	    else
+		type = PICT_TYPE_GRAY;
 	    a = r = g = b = 0;
 	}
 	else
@@ -347,8 +572,10 @@ PictureInit (ScreenPtr pScreen, PictFormatPtr formats, int nformats)
     
     ps->CloseScreen = pScreen->CloseScreen;
     ps->DestroyWindow = pScreen->DestroyWindow;
+    ps->StoreColors = pScreen->StoreColors;
     pScreen->DestroyWindow = PictureDestroyWindow;
     pScreen->CloseScreen = PictureCloseScreen;
+    pScreen->StoreColors = PictureStoreColors;
 
     return TRUE;
 }
@@ -364,6 +591,7 @@ SetPictureToDefaults (PicturePtr    pPicture)
     pPicture->polyMode = PolyModePrecise;
     pPicture->freeCompClip = FALSE;
     pPicture->clientClipType = CT_NONE;
+    pPicture->componentAlpha = FALSE;
 
     pPicture->alphaMap = 0;
     pPicture->alphaOrigin.x = 0;
@@ -715,8 +943,8 @@ SetPictureClipRects (PicturePtr	pPicture,
     return result;
 }
 
-void
-ValidatePicture(PicturePtr pPicture)
+static void
+ValidateOnePicture (PicturePtr pPicture)
 {
     if (pPicture->serialNumber != pPicture->pDrawable->serialNumber)
     {
@@ -726,6 +954,14 @@ ValidatePicture(PicturePtr pPicture)
 	pPicture->stateChanges = 0;
 	pPicture->serialNumber = pPicture->pDrawable->serialNumber;
     }
+}
+
+void
+ValidatePicture(PicturePtr pPicture)
+{
+    ValidateOnePicture (pPicture);
+    if (pPicture->alphaMap)
+	ValidateOnePicture (pPicture->alphaMap);
 }
 
 int

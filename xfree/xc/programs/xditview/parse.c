@@ -28,7 +28,7 @@ other dealings in this Software without prior written authorization
 from the X Consortium.
 
 */
-/* $XFree86: xc/programs/xditview/parse.c,v 1.3 2000/12/04 21:01:01 dawes Exp $ */
+/* $XFree86: xc/programs/xditview/parse.c,v 1.5 2001/08/27 23:35:12 dawes Exp $ */
 
 /*
  * parse.c
@@ -44,15 +44,16 @@ from the X Consortium.
 #include "DviP.h"
 
 static int StopSeen = 0;
-static ParseDrawFunction(), ParseDeviceControl();
-static push_env(), pop_env();
-
-extern char *GetWord(), *GetLine ();
+static void ParseDrawFunction(DviWidget dw, char *buf);
+static void ParseDeviceControl(DviWidget dw);
+static void PutCharacters(DviWidget dw, unsigned char *src, int len);
+static void push_env(DviWidget dw);
+static void pop_env(DviWidget dw);
 
 #define HorizontalMove(dw, delta)	((dw)->dvi.state->x += (delta))
 
 #ifdef USE_XFT
-int
+static int
 charWidth (DviWidget dw, XftFont *font, char c)
 {
     XGlyphInfo	extents;
@@ -70,8 +71,9 @@ charWidth (DviWidget dw, XftFont *font, char c)
 )
 #endif
     
+int
 ParseInput(dw)
-    register DviWidget	dw;
+    DviWidget	dw;
 {
 	int		n, k;
 	int		c;
@@ -141,7 +143,7 @@ ParseInput(dw)
 			    }
 			    prevFont = -1;
 	    	    	    if (c == -1) {
-			    	for (i = 1; map = QueryFontMap (dw, i); i++)
+			    	for (i = 1; (map = QueryFontMap (dw, i)); i++)
 				    if (map->special)
 				    	if ((c = DviCharIndex (map, Buffer)) != -1) {
 					    prevFont = dw->dvi.state->font_number;
@@ -221,7 +223,8 @@ ParseInput(dw)
 			break;
 		case 't':	/* text */
 			GetLine(dw, Buffer, BUFSIZ);
-			PutCharacters (dw, Buffer, strlen (Buffer));
+			PutCharacters (dw, (unsigned char *)Buffer,
+				       strlen (Buffer));
 			dw->dvi.state->x = ToDevice (dw, dw->dvi.cache.x);
 			break;
 		case 'x':	/* device control */
@@ -233,13 +236,13 @@ ParseInput(dw)
 			return dw->dvi.current_page;
 		default:
 			GetLine (dw, Buffer, BUFSIZ);
-			fprintf (stderr, "Unknown command %c%s\n", Buffer);
+			fprintf (stderr, "Unknown command %s\n", Buffer);
 			break;
 		}
 	}
 }
 
-static
+static void
 push_env(dw)
 	DviWidget	dw;
 {
@@ -260,7 +263,7 @@ push_env(dw)
 	dw->dvi.state = new;
 }
 
-static
+static void
 pop_env(dw)
 	DviWidget	dw;
 {
@@ -271,9 +274,8 @@ pop_env(dw)
 	XtFree ((char *) old);
 }
 
-static
-InitTypesetter (dw)
-	DviWidget	dw;
+static void
+InitTypesetter (DviWidget dw)
 {
 	while (dw->dvi.state)
 		pop_env (dw);
@@ -282,8 +284,8 @@ InitTypesetter (dw)
 	FlushCharCache (dw);
 }
 
-SetFont (dw)
-    DviWidget	dw;
+static void
+SetFont (DviWidget dw)
 {
     dw->dvi.cache.font_size = dw->dvi.state->font_size;
     dw->dvi.cache.font_number = dw->dvi.state->font_number;
@@ -292,6 +294,7 @@ SetFont (dw)
 			  dw->dvi.cache.font_size);
 }
 
+static void
 PutCharacters (dw, src, len)
     DviWidget	    dw;
     unsigned char   *src;
@@ -323,7 +326,7 @@ PutCharacters (dw, src, len)
 #endif
 
 	if (!dw->dvi.display_enable)
-	    return FALSE;
+	    return;
 
 	if (yx != dw->dvi.cache.y ||
 	    dw->dvi.cache.char_index + len > DVI_CHAR_CACHE_SIZE)
@@ -387,12 +390,10 @@ PutCharacters (dw, src, len)
 	    if (font)
 		dw->dvi.cache.x += charWidth(dw,font,c);
 	}
-	return TRUE;
     }
-    return FALSE;
 }
 
-static
+static void
 ParseDrawFunction(dw, buf)
 	DviWidget	dw;
 	char		*buf;
@@ -436,7 +437,7 @@ ParseDrawFunction(dw, buf)
 
 extern int LastPage, CurrentPage;
 
-static
+static void
 ParseDeviceControl(dw)				/* Parse the x commands */
 	DviWidget	dw;
 {
@@ -475,5 +476,4 @@ ParseDeviceControl(dw)				/* Parse the x commands */
     while (DviGetC(dw,&c) != '\n')		/* skip rest of input line */
 	    if (c == EOF)
 		    return;
-    return;
 }

@@ -1,5 +1,5 @@
 /*
- * $Xorg: ICWrap.c,v 1.3 2000/08/17 19:44:37 cpqbld Exp $
+ * $Xorg: ICWrap.c,v 1.4 2001/02/09 02:03:33 xorgcvs Exp $
  */
 
 /*
@@ -41,7 +41,11 @@
 
 Copyright 1991, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included
 in all copies or substantial portions of the Software.
@@ -60,7 +64,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/X11/ICWrap.c,v 1.4 2001/01/17 19:41:37 dawes Exp $ */
+/* $XFree86: xc/lib/X11/ICWrap.c,v 1.7 2001/12/14 19:54:01 dawes Exp $ */
 
 #define NEED_EVENTS
 #include "Xlibint.h"
@@ -99,15 +103,8 @@ _XIMCountNestedList(args, total_count)
     }
 }
 
-#if NeedVarargsPrototypes
 static void
 _XIMCountVaList(va_list var, int *total_count)
-#else
-static void
-_XIMCountVaList(var, total_count)
-    va_list var;
-    int *total_count;
-#endif
 {
     char *attr;
 
@@ -117,22 +114,14 @@ _XIMCountVaList(var, total_count)
 	if (!strcmp(attr, XNVaNestedList)) {
 	    _XIMCountNestedList(va_arg(var, XIMArg*), total_count);
 	} else {
-	    va_arg(var, XIMArg*);
+	    (void)va_arg(var, XIMArg*);
 	    ++(*total_count);
 	}
     }
 }
 
-#if NeedVarargsPrototypes
 static void
 _XIMVaToNestedList(va_list var, int max_count, XIMArg **args_return)
-#else
-static void
-_XIMVaToNestedList(var, max_count, args_return)
-    va_list var;
-    int max_count;
-    XIMArg **args_return;
-#endif
 {
     XIMArg *args;
     char   *attr;
@@ -159,40 +148,26 @@ _XIMVaToNestedList(var, max_count, args_return)
 }
 
 /*ARGSUSED*/
-#if NeedVarargsPrototypes
 XVaNestedList
 XVaCreateNestedList(int dummy, ...)
-#else
-XVaNestedList
-XVaCreateNestedList(dummy, va_alist)
-    int dummy;
-    va_dcl
-#endif
 {
     va_list		var;
     XIMArg		*args = NULL;
     int			total_count;
 
-    Va_start(var, dummy);
+    va_start(var, dummy);
     _XIMCountVaList(var, &total_count);
     va_end(var);
 
-    Va_start(var, dummy);
+    va_start(var, dummy);
     _XIMVaToNestedList(var, total_count, &args);
     va_end(var);
 
     return (XVaNestedList)args;
 }
 
-#if NeedVarargsPrototypes
 char *
 XSetIMValues(XIM im, ...)
-#else				/* NeedVarargsPrototypes */
-char *
-XSetIMValues(im, va_alist)
-    XIM im;
-    va_dcl
-#endif				/* NeedVarargsPrototypes */
 {
     va_list var;
     int     total_count;
@@ -202,14 +177,14 @@ XSetIMValues(im, va_alist)
     /*
      * so count the stuff dangling here
      */
-    Va_start(var, im);
+    va_start(var, im);
     _XIMCountVaList(var, &total_count);
     va_end(var);
 
     /*
      * now package it up so we can send it along
      */
-    Va_start(var, im);
+    va_start(var, im);
     _XIMVaToNestedList(var, total_count, &args);
     va_end(var);
 
@@ -218,15 +193,8 @@ XSetIMValues(im, va_alist)
     return ret;
 }
 
-#if NeedVarargsPrototypes
 char *
 XGetIMValues(XIM im, ...)
-#else				/* NeedVarargsPrototypes */
-char *
-XGetIMValues(im, va_alist)
-    XIM im;
-    va_dcl
-#endif				/* NeedVarargsPrototypes */
 {
     va_list var;
     int     total_count;
@@ -236,14 +204,14 @@ XGetIMValues(im, va_alist)
     /*
      * so count the stuff dangling here
      */
-    Va_start(var, im);
+    va_start(var, im);
     _XIMCountVaList(var, &total_count);
     va_end(var);
 
     /*
      * now package it up so we can send it along
      */
-    Va_start(var, im);
+    va_start(var, im);
     _XIMVaToNestedList(var, total_count, &args);
     va_end(var);
 
@@ -257,15 +225,8 @@ XGetIMValues(im, va_alist)
  * and return a pointer to the input context.
  */
 
-#if NeedVarargsPrototypes
 XIC
 XCreateIC(XIM im, ...)
-#else
-XIC
-XCreateIC(im, va_alist)
-    XIM im;		/* specified the attached input method */
-    va_dcl		/* specified variable length argment list */
-#endif
 {
     va_list var;
     int     total_count;
@@ -275,14 +236,14 @@ XCreateIC(im, va_alist)
     /*
      * so count the stuff dangling here
      */
-    Va_start(var, im);
+    va_start(var, im);
     _XIMCountVaList(var, &total_count);
     va_end(var);
 
     /*
      * now package it up so we can send it along
      */
-    Va_start(var, im);
+    va_start(var, im);
     _XIMVaToNestedList(var, total_count, &args);
     va_end(var);
 
@@ -317,15 +278,8 @@ XDestroyIC(ic)
     Xfree ((char *) ic);
 }
 
-#if NeedVarargsPrototypes
 char *
 XGetICValues(XIC ic, ...)
-#else
-char *
-XGetICValues(ic, va_alist)
-    XIC ic;
-    va_dcl
-#endif
 { 
     va_list var;
     int     total_count;
@@ -338,14 +292,14 @@ XGetICValues(ic, va_alist)
     /*
      * so count the stuff dangling here
      */
-    Va_start(var, ic);
+    va_start(var, ic);
     _XIMCountVaList(var, &total_count);
     va_end(var);
 
     /*
      * now package it up so we can send it along
      */
-    Va_start(var, ic);
+    va_start(var, ic);
     _XIMVaToNestedList(var, total_count, &args);
     va_end(var);
 
@@ -354,15 +308,8 @@ XGetICValues(ic, va_alist)
     return ret;
 }
 
-#if NeedVarargsPrototypes
 char *
 XSetICValues(XIC ic, ...)
-#else
-char *
-XSetICValues(ic, va_alist)
-    XIC ic;
-    va_dcl
-#endif
 {
     va_list var;
     int     total_count;
@@ -375,14 +322,14 @@ XSetICValues(ic, va_alist)
     /*
      * so count the stuff dangling here
      */
-    Va_start(var, ic);
+    va_start(var, ic);
     _XIMCountVaList(var, &total_count);
     va_end(var);
 
     /*
      * now package it up so we can send it along
      */
-    Va_start(var, ic);
+    va_start(var, ic);
     _XIMVaToNestedList(var, total_count, &args);
     va_end(var);
 

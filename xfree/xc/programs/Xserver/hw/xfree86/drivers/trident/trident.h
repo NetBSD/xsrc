@@ -21,7 +21,7 @@
  *
  * Authors:  Alan Hourihane, <alanh@fairlite.demon.co.uk>
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/trident/trident.h,v 1.40 2001/05/15 10:19:41 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/trident/trident.h,v 1.51 2002/01/13 00:15:52 alanh Exp $ */
 
 #ifndef _TRIDENT_H_
 #define _TRIDENT_H_
@@ -34,6 +34,7 @@
 #include "xf86i2c.h"
 #include "xf86int10.h"
 #include "shadowfb.h"
+#include "shadow.h"
 #include "xf86xv.h"
 
 typedef struct {
@@ -136,9 +137,18 @@ typedef struct {
     XF86VideoAdaptorPtr adaptor;
     int                 videoKey;
     int			hsync;
+    int			hsync_rskew;
     int			vsync;
+    int			vsync_bskew;
+    CARD32              videoFlags;
+    int			keyOffset;
 #endif
+    int                 OverrideHsync;
+    int                 OverrideVsync;
+    int                 OverrideBskew;
+    int                 OverrideRskew;
     OptionInfoPtr	Options;
+    Bool		shadowNew;
 } TRIDENTRec, *TRIDENTPtr;
 
 typedef struct {
@@ -166,13 +176,22 @@ typedef struct {
     int mode;
 } biosMode;
 
+typedef struct {
+  int x_res;
+  int y_res;
+  CARD8 GR5a;
+  CARD8 GR5c;
+} newModes;
+
 /* Prototypes */
 
 Bool TRIDENTClockSelect(ScrnInfoPtr pScrn, int no);
 Bool TRIDENTSwitchMode(int scrnIndex, DisplayModePtr mode, int flags);
 void TRIDENTAdjustFrame(int scrnIndex, int x, int y, int flags);
 Bool TRIDENTDGAInit(ScreenPtr pScreen);
-
+Bool TRIDENTI2CInit(ScreenPtr pScreen);
+void TRIDENTInitVideo(ScreenPtr pScreen);
+void TRIDENTResetVideo(ScrnInfoPtr pScrn);
 unsigned int Tridentddc1Read(ScrnInfoPtr pScrn);
 void TVGARestore(ScrnInfoPtr pScrn, TRIDENTRegPtr tridentReg);
 void TVGASave(ScrnInfoPtr pScrn, TRIDENTRegPtr tridentReg);
@@ -206,8 +225,7 @@ int TVGA8900SetReadWrite(ScreenPtr pScreen, int bank);
 void TridentFindClock(ScrnInfoPtr pScrn, int clock);
 float CalculateMCLK(ScrnInfoPtr pScrn);
 void TRIDENTRefreshArea(ScrnInfoPtr pScrn, int num, BoxPtr pbox);
-void TRIDENTShadowUpdate (ScreenPtr pScreen, PixmapPtr pShadow, 
-			  RegionPtr damage);
+void TRIDENTShadowUpdate (ScreenPtr pScreen, shadowBufPtr pBuf);
 void TRIDENTPointerMoved(int index, int x, int y);
 void TRIDENTRefreshArea8(ScrnInfoPtr pScrn, int num, BoxPtr pbox);
 void TRIDENTRefreshArea16(ScrnInfoPtr pScrn, int num, BoxPtr pbox);
@@ -239,9 +257,9 @@ typedef enum {
     TGUI9660,
     TGUI9680,
     PROVIDIA9682,
-    PROVIDIA9685,
     CYBER9382,
     CYBER9385,
+    PROVIDIA9685,
     CYBER9388,
     CYBER9397,
     CYBER9397DVD,
@@ -257,8 +275,9 @@ typedef enum {
     CYBERBLADEAI1,
     CYBERBLADEAI1D,
     CYBERBLADEE4,
-    CYBERBLADEXP,
-    CYBERBLADEXPm
+    CYBERBLADEXPm8,
+    CYBERBLADEXPm16,
+    CYBERBLADEXPAI1
 } TRIDENTType;
 
 #define UseMMIO		(pTrident->NoMMIO == FALSE)
@@ -285,8 +304,9 @@ typedef enum {
 			 (pTrident->Chipset == CYBERBLADEAI1)  || \
 			 (pTrident->Chipset == CYBERBLADEAI1D)  || \
 			 (pTrident->Chipset == BLADE3D) || \
-			 (pTrident->Chipset == CYBERBLADEXP) || \
-			 (pTrident->Chipset == CYBERBLADEXPm))
+			 (pTrident->Chipset == CYBERBLADEXPAI1) || \
+			 (pTrident->Chipset == CYBERBLADEXPm8) || \
+			 (pTrident->Chipset == CYBERBLADEXPm16))
 
 /*
  * Trident DAC's
@@ -294,6 +314,14 @@ typedef enum {
 
 #define TKD8001		0
 #define TGUIDAC		1
+
+/* 
+ * Video Flags
+ */
+
+#define VID_ZOOM_INV 0x1
+#define VID_ZOOM_MINI 0x2
+#define VID_OFF_SHIFT_4 0x4
 
 #endif /* _TRIDENT_H_ */
 

@@ -1,8 +1,8 @@
 XCOMM!/bin/sh
 
 XCOMM $Xorg: startx.cpp,v 1.3 2000/08/17 19:54:29 cpqbld Exp $
-XCOMM 
-XCOMM This is just a sample implementation of a slightly less primitive 
+XCOMM
+XCOMM This is just a sample implementation of a slightly less primitive
 XCOMM interface than xinit.  It looks for user .xinitrc and .xserverrc
 XCOMM files, then system xinitrc and xserverrc files, else lets xinit choose
 XCOMM its default.  The system xinitrc should probably do things like check
@@ -10,8 +10,8 @@ XCOMM for .Xresources files and merge them in, startup up a window manager,
 XCOMM and pop a clock and serveral xterms.
 XCOMM
 XCOMM Site administrators are STRONGLY urged to write nicer versions.
-XCOMM 
-XCOMM $XFree86: xc/programs/xinit/startx.cpp,v 3.8 2001/04/27 11:04:53 dawes Exp $
+XCOMM
+XCOMM $XFree86: xc/programs/xinit/startx.cpp,v 3.12 2001/11/30 20:57:48 dawes Exp $
 
 #ifdef SCO
 
@@ -40,10 +40,9 @@ XCOMM Set up the XMERGE env var so that dos merge is happy under X
 
 if [ -f /usr/lib/merge/xmergeset.sh ]; then
 	. /usr/lib/merge/xmergeset.sh
-else if [ -f /usr/lib/merge/console.disp ]; then
+elif [ -f /usr/lib/merge/console.disp ]; then
 	XMERGE=`cat /usr/lib/merge/console.disp`
 	export XMERGE
-fi
 fi
 
 scoclientrc=$HOME/.startxrc
@@ -53,6 +52,8 @@ userclientrc=$HOME/.xinitrc
 userserverrc=$HOME/.xserverrc
 sysclientrc=XINITDIR/xinitrc
 sysserverrc=XINITDIR/xserverrc
+defaultclient=BINDIR/xterm
+defaultserver=BINDIR/X
 defaultclientargs=""
 defaultserverargs=""
 clientargs=""
@@ -65,9 +66,8 @@ else
 #endif
 if [ -f $userclientrc ]; then
     defaultclientargs=$userclientrc
-else if [ -f $sysclientrc ]; then
+elif [ -f $sysclientrc ]; then
     defaultclientargs=$sysclientrc
-fi
 fi
 #ifdef SCO
 fi
@@ -75,15 +75,29 @@ fi
 
 if [ -f $userserverrc ]; then
     defaultserverargs=$userserverrc
-else if [ -f $sysserverrc ]; then
+elif [ -f $sysserverrc ]; then
     defaultserverargs=$sysserverrc
 fi
-fi
 
-display=:0
 whoseargs="client"
-while [ "x$1" != "x" ]; do
+while [ x"$1" != x ]; do
     case "$1" in
+    # '' required to prevent cpp from treating "/*" as a C comment.
+    /''*|\./''*)
+	if [ "$whoseargs" = "client" ]; then
+	    if [ x"$clientargs" = x ]; then
+		client="$1"
+	    else
+		clientargs="$clientargs $1"
+	    fi
+	else
+	    if [ x"$serverargs" = x ]; then
+		server="$1"
+	    else
+		serverargs="$serverargs $1"
+	    fi
+	fi
+	;;
     --)
 	whoseargs="server"
 	;;
@@ -91,26 +105,40 @@ while [ "x$1" != "x" ]; do
 	if [ "$whoseargs" = "client" ]; then
 	    clientargs="$clientargs $1"
 	else
-	    serverargs="$serverargs $1"
-	    case "$1" in
-	    :[0-9]*)
+	    # display must be the FIRST server argument
+	    if [ x"$serverargs" = x ] && \
+		 expr "$1" : ':[0-9][0-9]*$' > /dev/null 2>&1; then
 		display="$1"
-		;;
-	    esac
+	    else
+		serverargs="$serverargs $1"
+	    fi
 	fi
 	;;
     esac
     shift
 done
 
-if [ x"$clientargs" = x ]; then
-    clientargs="$defaultclientargs"
+XCOMM process client arguments
+if [ x"$client" = x ]; then
+    # if no client arguments either, use rc file instead
+    if [ x"$clientargs" = x ]; then
+	client="$defaultclientargs"
+    else
+	client=$defaultclient
+    fi
 fi
-if [ x"$serverargs" = x ]; then
-    serverargs="$defaultserverargs"
+
+XCOMM process server arguments
+if [ x"$server" = x ]; then
+    # if no server arguments or display either, use rc file instead
+    if [ x"$serverargs" = x -a x"$display" = x ]; then
+	server="$defaultserverargs"
+    else
+	server=$defaultserver
+    fi
 fi
-    
-if [ X"$XAUTHORITY" = X ]; then
+
+if [ x"$XAUTHORITY" = x ]; then
     export XAUTHORITY=$HOME/.Xauthority
 fi
 
@@ -125,8 +153,10 @@ XCOMM set up default Xauth info for this machine
 #define HOSTNAME hostname
 #endif
 #endif
+
+authdisplay=${display:-:0}
 mcookie=`MK_COOKIE`
-for displayname in $display `HOSTNAME`$display; do
+for displayname in $authdisplay `HOSTNAME`$authdisplay; do
     if ! xauth list "$displayname" | grep "$displayname " >/dev/null 2>&1; then
 	xauth add $displayname . $mcookie
 	removelist="$displayname $removelist"
@@ -134,7 +164,7 @@ for displayname in $display `HOSTNAME`$display; do
 done
 #endif
 
-xinit $clientargs -- $serverargs
+xinit $client $clientargs -- $server $display $serverargs
 
 if [ x"$removelist" != x ]; then
     xauth remove $removelist

@@ -1,9 +1,13 @@
-/* $Xorg: pmdb.c,v 1.4 2000/08/17 19:54:00 cpqbld Exp $ */
+/* $Xorg: pmdb.c,v 1.5 2001/02/09 02:05:34 xorgcvs Exp $ */
 
 /*
 Copyright 1996, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included
 in all copies or substantial portions of the Software.
@@ -21,13 +25,14 @@ not be used in advertising or otherwise to promote the sale, use or
 other dealings in this Software without prior written authorization
 from The Open Group.
 */
-/* $XFree86: xc/programs/proxymngr/pmdb.c,v 1.5 2001/01/17 23:45:02 dawes Exp $ */
+/* $XFree86: xc/programs/proxymngr/pmdb.c,v 1.7 2001/12/14 20:01:02 dawes Exp $ */
 
 #include "pmint.h"
 #include "pmdb.h"
 #include "config.h"
 #include <assert.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <signal.h>
 
 #if defined(X_NOT_POSIX) && defined(SIGNALRETURNSINT)

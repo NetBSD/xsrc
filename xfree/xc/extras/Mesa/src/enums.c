@@ -862,6 +862,9 @@ static void sort_enums( void )
    index1 = (enum_elt **)MALLOC( Elements(all_enums) * sizeof(enum_elt *) );
    sorted = 1;
 
+   if (!index1)
+      return;  /* what else can we do? */
+
    qsort( all_enums, Elements(all_enums), sizeof(*all_enums),
 	  (cfunc) compar_name );
 

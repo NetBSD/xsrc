@@ -1,4 +1,4 @@
-/* $Xorg: connection.c,v 1.4 2000/08/17 19:54:22 cpqbld Exp $ */
+/* $Xorg: connection.c,v 1.5 2001/02/09 02:05:44 xorgcvs Exp $ */
 /*
  * handles connections
  */
@@ -6,7 +6,11 @@
  
 Copyright 1990, 1991, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -63,7 +67,7 @@ in this Software without prior written authorization from The Open Group.
  * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
  * THIS SOFTWARE.
  */
-/* $XFree86: xc/programs/xfs/os/connection.c,v 3.20 2001/01/17 23:45:32 dawes Exp $ */
+/* $XFree86: xc/programs/xfs/os/connection.c,v 3.23 2001/12/14 20:01:41 dawes Exp $ */
 
 #include	<X11/Xtrans.h>
 #include	<stdlib.h>
@@ -71,7 +75,6 @@ in this Software without prior written authorization from The Open Group.
 #include	<stdio.h>
 #include	<errno.h>
 #include	<X11/Xos.h>
-#ifndef MINIX
 #ifndef Lynx
 #include	<sys/param.h>
 #include	<sys/socket.h>
@@ -81,7 +84,6 @@ in this Software without prior written authorization from The Open Group.
 #else
 #include	<socket.h>
 #include	<uio.h>
-#endif
 #endif
 #include	<signal.h>
 
@@ -96,18 +98,9 @@ in this Software without prior written authorization from The Open Group.
 #include	"dispatch.h"
 #include	"fsevents.h"
 
-#ifdef MINIX
-#include <sys/nbio.h>
-#define select(n,r,w,x,t) nbio_select(n,r,w,x,t)
-#endif
-
 #ifdef __EMX__
 #define _NFILE OPEN_MAX
 #define select(n,r,w,x,t) os2PseudoSelect(n,r,w,x,t)
-#endif
-
-#ifdef X_NOT_STDC_ENV
-extern int errno;
 #endif
 
 

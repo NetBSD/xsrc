@@ -221,9 +221,9 @@ installed them. Nor did I install the test subtree.
 
 Well, you see, this was quite easy :-)
 
-     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/OS2note.sgml,v 3.7 2000/04/05 18:13:46 dawes Exp $
+     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/OS2Notes.sgml,v 1.1 2001/06/04 13:50:15 dawes Exp $
 
      $XConsortium: OS2note.sgml /main/1 1996/02/24 10:08:59 kaleb $
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/OS2.Notes,v 3.17.4.1 2001/06/01 18:26:43 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/OS2.Notes,v 3.19 2001/06/30 22:58:09 tsi Exp $

@@ -31,6 +31,7 @@
 *                                                                             *
 *  Developed by Arnaud Le Hors                                                *
 \*****************************************************************************/
+/* $XFree86: xc/extras/Xpm/lib/scan.c,v 1.3 2002/01/07 19:40:49 dawes Exp $ */
 
 /*
  * The code related to FOR_MSW has been added by
@@ -73,6 +74,9 @@ LFUNC(storePixel, int, (Pixel pixel, PixelsMap *pmap,
 LFUNC(storeMaskPixel, int, (Pixel pixel, PixelsMap *pmap,
 			    unsigned int *index_return));
 
+typedef int (*storeFuncPtr)(Pixel pixel, PixelsMap *pmap,
+			    unsigned int *index_return);
+
 #ifndef FOR_MSW
 # ifndef AMIGA
 LFUNC(GetImagePixels, int, (XImage *image, unsigned int width,
@@ -89,16 +93,16 @@ LFUNC(GetImagePixels8, int, (XImage *image, unsigned int width,
 
 LFUNC(GetImagePixels1, int, (XImage *image, unsigned int width,
 			     unsigned int height, PixelsMap *pmap,
-			     int (*storeFunc) ()));
+			     storeFuncPtr storeFunc));
 # else /* AMIGA */
 LFUNC(AGetImagePixels, int, (XImage *image, unsigned int width,
 			     unsigned int height, PixelsMap *pmap,
-			     int (*storeFunc) ()));
+			     storeFuncPtr storeFunc));
 # endif/* AMIGA */
 #else  /* ndef FOR_MSW */
 LFUNC(MSWGetImagePixels, int, (Display *d, XImage *image, unsigned int width,
 			       unsigned int height, PixelsMap *pmap,
-			       int (*storeFunc) ()));
+			       storeFuncPtr storeFunc));
 #endif
 LFUNC(ScanTransparentColor, int, (XpmColor *color, unsigned int cpp,
 				  XpmAttributes *attributes));
@@ -191,7 +195,7 @@ XpmCreateXpmImageFromImage(display, image, shapeimage,
     /* variables to return */
     PixelsMap pmap;
     XpmColor *colorTable = NULL;
-    int ErrorStatus;
+    int ErrorStatus = 0;
 
     /* calculation variables */
     unsigned int width = 0;
@@ -385,7 +389,7 @@ ScanTransparentColor(color, cpp, attributes)
 		((XpmColor **) attributes->colorTable)[attributes->mask_pixel];
 /* end 3.2 bc */
 	for (key = 1; key <= NKEYS; key++) {
-	    if (s = mask_defaults[key]) {
+	    if ((s = mask_defaults[key])) {
 		defaults[key] = (char *) xpmstrdup(s);
 		if (!defaults[key])
 		    return (XpmNoMemory);
@@ -423,10 +427,10 @@ ScanOtherColors(display, colors, ncolors, pixels, mask, cpp, attributes)
     XpmColor *color;
     XColor *xcolors = NULL, *xcolor;
     char *colorname, *s;
-    XpmColor *colorTable, **oldColorTable = NULL;
+    XpmColor *colorTable = NULL, **oldColorTable = NULL;
     unsigned int ancolors = 0;
-    Pixel *apixels;
-    unsigned int mask_pixel;
+    Pixel *apixels = NULL;
+    unsigned int mask_pixel = 0;
     Bool found;
 
     /* retrieve information from the XpmAttributes */
@@ -521,7 +525,7 @@ ScanOtherColors(display, colors, ncolors, pixels, mask, cpp, attributes)
 
 		found = True;
 		for (key = 1; key <= NKEYS; key++) {
-		    if (s = adefaults[key])
+		    if ((s = adefaults[key]))
 			defaults[key] = (char *) xpmstrdup(s);
 		}
 	    }
@@ -845,7 +849,7 @@ GetImagePixels1(image, width, height, pmap, storeFunc)
     unsigned int width;
     unsigned int height;
     PixelsMap *pmap;
-    int (*storeFunc) ();
+    storeFuncPtr storeFunc;
 {
     unsigned int *iptr;
     int x, y;

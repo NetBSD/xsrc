@@ -31,6 +31,7 @@
 *                                                                             *
 *  Developed by Arnaud Le Hors                                                *
 \*****************************************************************************/
+/* $XFree86: xc/extras/Xpm/lib/RdFToI.c,v 1.2 2001/10/28 03:32:09 tsi Exp $ */
 
 #include "XpmI.h"
 #include <sys/stat.h>
@@ -128,8 +129,9 @@ OpenReadFile(filename, mdata)
     xpmData *mdata;
 {
 #ifndef NO_ZPIPE
-    char *compressfile, buf[BUFSIZ];
+    char buf[BUFSIZ];
 # ifdef STAT_ZFILE
+    char *compressfile;
     struct stat status;
 # endif
 #endif

@@ -26,7 +26,7 @@
  * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
  * THIS SOFTWARE.
  */
-/* $XFree86: xc/lib/font/Type1/spaces.c,v 3.8 2001/01/17 19:43:23 dawes Exp $ */
+/* $XFree86: xc/lib/font/Type1/spaces.c,v 3.9 2001/08/27 19:49:53 dawes Exp $ */
  /* SPACES   CWEB         V0021 ********                             */
 /*
 :h1 id=spaces.SPACES Module - Handles Coordinate Spaces
@@ -321,7 +321,7 @@ static void
 ConsiderContext(struct xobject *obj,  /* object to be transformed            */
 		double M[2][2])    /* matrix (may be changed)                */
 {
-       register int context; /* index in contexts array                      */
+       register int context = 0; /* index in contexts array                  */
  
        if (obj == NULL) return;
  

@@ -11,7 +11,7 @@
 ! suitability of this software for any purpose.  It is provided "as is"
 ! without express or implied warranty.
 !
-! $XFree86: xc/lib/X11/XKeysymDB,v 3.11 2001/04/06 02:16:21 dawes Exp $
+! $XFree86: xc/lib/X11/XKeysymDB,v 3.12 2001/12/26 22:28:25 dawes Exp $
 
 hpmute_acute		:100000A8
 hpmute_grave		:100000A9
@@ -243,7 +243,9 @@ XF86OpenURL		:1008FF38
 XF86AddFavorite		:1008FF39
 XF86HotLinks		:1008FF3A
 XF86BrightnessAdjust	:1008FF3B
-! Allocate 1008FF3C-F next
+XF86Finance		:1008FF3C
+XF86Community		:1008FF3D
+! Allocate 1008FF3E-F next
 
 XF86Launch0		:1008FF40
 XF86Launch1		:1008FF41

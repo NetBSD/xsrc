@@ -4,7 +4,7 @@ XCOMM $XConsortium: Imakefile /main/24 1996/10/28 04:24:12 kaleb $
 
 
 
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/etc/Imakefile,v 3.38.2.1 2001/05/29 14:41:54 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/etc/Imakefile,v 3.40 2001/06/24 20:19:11 herrb Exp $
 #include <Server.tmpl>
 
 #if SystemV
@@ -88,7 +88,7 @@ SYS_LIBRARIES = -li386
 
 AllTarget(ProgramTargetName(scanpci))
 
-NormalProgramTarget(scanpci,scanpci.o,NullParameter,-L../os-support -lxf86_os -L../scanpci -lscanpci -L../dummylib -ldummy $(SERVEREXTRASYSLIBS),NullParameter)
+NormalProgramTarget(scanpci,scanpci.o,$(XF86OSSRC)/libxf86_os.a,-L../os-support -lxf86_os -L../scanpci -lscanpci -L../dummylib -ldummy $(SERVEREXTRASYSLIBS),NullParameter)
 InstallProgram(scanpci,$(BINDIR))
 InstallManPage(scanpci,$(MANDIR))
 #endif
@@ -105,7 +105,7 @@ InstallProgram(joycal,$(BINDIR))
         SRCS4 = pcitweak.c
 
 AllTarget(ProgramTargetName(pcitweak))
-NormalProgramTarget(pcitweak,pcitweak.o,NullParameter,-L../os-support -lxf86_os -L../dummylib -ldummy $(SERVEREXTRASYSLIBS),NullParameter)
+NormalProgramTarget(pcitweak,pcitweak.o,$(XF86OSSRC)/libxf86_os.a,-L../os-support -lxf86_os -L../dummylib -ldummy $(SERVEREXTRASYSLIBS),NullParameter)
 InstallProgram(pcitweak,$(BINDIR))
 InstallManPage(pcitweak,$(MANDIR))
 

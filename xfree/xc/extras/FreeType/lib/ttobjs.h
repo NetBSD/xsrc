@@ -14,6 +14,7 @@
  *  understand and accept it fully.
  *
  ******************************************************************/
+/* $XFree86: xc/extras/FreeType/lib/ttobjs.h,v 1.2 2001/10/28 03:32:05 tsi Exp $ */
 
 #ifndef TTOBJS_H
 #define TTOBJS_H
@@ -780,6 +781,7 @@
 
   typedef struct TFont_Input_  TFont_Input;
 
+#if !defined(FTXCMAP_H) && !defined(FTXSBIT_H)
 
   /********************************************************************/
   /*                                                                  */
@@ -862,6 +864,8 @@
 
   LOCAL_DEF TT_Error  TTObjs_Init( PEngine_Instance  engine );
   LOCAL_DEF TT_Error  TTObjs_Done( PEngine_Instance  engine );
+
+#endif /* !FTXCMAP_H && !FTXSBIT */
 
 #ifdef __cplusplus
   }

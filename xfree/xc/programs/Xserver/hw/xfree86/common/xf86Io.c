@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Io.c,v 3.42 2001/04/20 16:32:30 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Io.c,v 3.46 2001/11/08 21:49:43 herrb Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  *
@@ -70,18 +70,6 @@ xf86KbdBell(percent, pKeyboard, ctrl, unused)
 {
   xf86SoundKbdBell(percent, xf86Info.bell_pitch, xf86Info.bell_duration);
 }
-
-#ifdef AMOEBA
-#define LED_CAP	IOP_LED_CAP
-#define LED_NUM	IOP_LED_NUM
-#define LED_SCR	IOP_LED_SCROLL
-#endif
-
-#ifdef MINIX
-#define LED_CAP KBD_LEDS_CAPS
-#define LED_NUM KBD_LEDS_NUM
-#define LED_SCR KBD_LEDS_SCROLL
-#endif
 
 void
 xf86KbdLeds ()
@@ -155,7 +143,6 @@ Bool init;
   KeyClassRec     *keyc = xf86Info.pKeyboard->key;
   KeySym          *map = keyc->curKeySyms.map;
 
-#ifndef MACH386
   kevent.u.keyButtonPointer.time = GetTimeInMillis();
   kevent.u.keyButtonPointer.rootX = 0;
   kevent.u.keyButtonPointer.rootY = 0;
@@ -189,7 +176,6 @@ Bool init;
 	  (* pKeyboard->public.processInputProc)(&kevent, pKeyboard, 1);
         }
       }
-#endif /* MACH386 */
   
   xf86Info.scanPrefix      = 0;
 
@@ -369,7 +355,7 @@ xf86KbdProc (pKeyboard, what)
 	read(kbdFd, buf, 16);
     }
 
-#if !defined(__EMX__) && !defined(__CYGWIN__)  /* Under EMX, keyboard cannot be select()'ed */
+#if !defined(__EMX__) /* Under EMX, keyboard cannot be select()'ed */
     if (kbdFd != -1)
       AddEnabledDevice(kbdFd);
 #endif  /* __EMX__ */
@@ -401,46 +387,31 @@ xf86KbdProc (pKeyboard, what)
  * These are getting tossed in here until I can think of where
  * they really belong
  */
+#define HALFMONTH ((unsigned long) 1<<31)
 CARD32
 GetTimeInMillis()
 {
     struct timeval  tp;
+    register CARD32 val;
+    static CARD32 oldval = 0;
+    static CARD32 skew = 0;
 
     gettimeofday(&tp, 0);
-    return(tp.tv_sec * 1000) + (tp.tv_usec / 1000);
+    val = (tp.tv_sec * 1000) + (tp.tv_usec / 1000) + skew;
+    /* On some systems the clock is not monothonic */
+    if ((val < oldval) && ((oldval - val) < HALFMONTH)) {
+      /* if clock is not monothonic find out clock skew skew */
+        xf86MsgVerb(X_WARNING,4,"System time not monotonic!\n");
+	skew += oldval - val;
+	val = (tp.tv_sec * 1000) + (tp.tv_usec / 1000) + skew;
+    } else if (skew && ((val - oldval) < HALFMONTH)) {
+      /* try to reduce skew */
+        INT32 diff = skew - (val - oldval);
+	skew = diff < 0 ? 0 : diff;
+	val = (tp.tv_sec * 1000) + (tp.tv_usec / 1000) + skew;
+    }
+    oldval = val;
+    return val;
 }
 #endif /* DDXTIME && !QNX4 */
 
-#ifdef WSCONS_SUPPORT
-
-#define NUMEVENTS 64
-
-static void
-wsconssig(fd, closure)
-    int fd;
-    void *closure;
-{
-    static struct wscons_event events[NUMEVENTS];
-    int n, i;
-
-    n = read(fd, events, sizeof events);
-    if (n <= 0)
-	return;
-    n /= sizeof(struct wscons_event);
-    for (i = 0; i < n; i++)
-	xf86PostWSKbdEvent(&events[i]);
-}
-
-int
-xf86WSKbdProc(pKeyboard, what)
-   DeviceIntPtr pKeyboard;	/* Keyboard to manipulate */
-   int what;			/* What to do to it */
-{
-    switch (what) {
-    case DEVICE_INIT:
-	xf86FlushInput(xf86Info.kbdFd);
-	xf86InstallSIGIOHandler(xf86Info.kbdFd, wsconssig, pKeyboard);
-    }
-    return xf86KbdProc(pKeyboard, what);
-}
-#endif /* WSCONS_SUPPORT */

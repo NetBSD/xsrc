@@ -1,6 +1,6 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/mga/mga_map.h,v 1.1 1997/03/06 23:16:01 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/mga/mga_map.h,v 1.2 2001/07/25 15:05:06 dawes Exp $ */
 
-#if (defined(__STDC__) && !defined(UNIXCPP)) || defined(ANSICPP)
+#if !defined(UNIXCPP) || defined(ANSICPP)
 #define CATNAME(prefix,subname) prefix##subname
 #else
 #define CATNAME(prefix,subname) prefix/**/subname

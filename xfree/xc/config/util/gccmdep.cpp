@@ -3,7 +3,7 @@ XCOMM!/bin/sh
 XCOMM
 XCOMM makedepend which uses 'gcc -M'
 XCOMM
-XCOMM $XFree86: xc/config/util/gccmdep.cpp,v 3.8.2.1 2001/05/22 21:25:40 dawes Exp $
+XCOMM $XFree86: xc/config/util/gccmdep.cpp,v 3.9 2001/05/22 13:29:17 dawes Exp $
 XCOMM
 XCOMM Based on mdepend.cpp and code supplied by Hongjiu Lu <hjl@nynexst.com>
 XCOMM

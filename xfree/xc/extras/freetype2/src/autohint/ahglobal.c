@@ -4,7 +4,7 @@
 /*                                                                         */
 /*    Routines used to compute global metrics automatically (body).        */
 /*                                                                         */
-/*  Copyright 2000 Catharon Productions Inc.                               */
+/*  Copyright 2000-2001 Catharon Productions Inc.                          */
 /*  Author: David Turner                                                   */
 /*                                                                         */
 /*  This file is part of the Catharon Typography Project and shall only    */
@@ -20,6 +20,7 @@
 
 
 #include <ft2build.h>
+#include FT_INTERNAL_DEBUG_H
 #include "ahglobal.h"
 #include "ahglyph.h"
 
@@ -38,16 +39,16 @@
 
 
   /* simple insertion sort */
-  static
-  void  sort_values( FT_Int   count,
-                     FT_Pos*  table )
+  static void
+  sort_values( FT_Int   count,
+               FT_Pos*  table )
   {
     FT_Int  i, j, swap;
 
 
     for ( i = 1; i < count; i++ )
     {
-      for ( j = i; j > 1; j-- )
+      for ( j = i; j > 0; j-- )
       {
         if ( table[j] > table[j - 1] )
           break;
@@ -60,8 +61,8 @@
   }
 
 
-  static
-  FT_Error  ah_hinter_compute_blues( AH_Hinter*  hinter )
+  static FT_Error
+  ah_hinter_compute_blues( AH_Hinter*  hinter )
   {
     AH_Blue       blue;
     AH_Globals*   globals = &hinter->globals->design;
@@ -214,9 +215,9 @@
           } while ( next != index );
 
           /* now, set the `round' flag depending on the segment's kind */
-          round =
+          round = FT_BOOL(
             FT_CURVE_TAG( glyph->outline.tags[prev] ) != FT_Curve_Tag_On ||
-            FT_CURVE_TAG( glyph->outline.tags[next] ) != FT_Curve_Tag_On ;
+            FT_CURVE_TAG( glyph->outline.tags[next] ) != FT_Curve_Tag_On );
 
           AH_LOG(( "%c ", round ? 'r' : 'f' ));
         }
@@ -265,7 +266,7 @@
       {
         FT_Pos   ref      = *blue_ref;
         FT_Pos   shoot    = *blue_shoot;
-        FT_Bool  over_ref = ( shoot > ref );
+        FT_Bool  over_ref = FT_BOOL( shoot > ref );
 
 
         if ( AH_IS_TOP_BLUE( blue ) ^ over_ref )
@@ -284,8 +285,8 @@
   }
 
 
-  static
-  FT_Error  ah_hinter_compute_widths( AH_Hinter*  hinter )
+  static FT_Error
+  ah_hinter_compute_widths( AH_Hinter*  hinter )
   {
     /* scan the array of segments in each direction */
     AH_Outline*  outline = hinter->glyph;
@@ -383,8 +384,8 @@
   }
 
 
-  FT_LOCAL_DEF
-  FT_Error  ah_hinter_compute_globals( AH_Hinter*  hinter )
+  FT_LOCAL_DEF FT_Error
+  ah_hinter_compute_globals( AH_Hinter*  hinter )
   {
     return ah_hinter_compute_widths( hinter ) ||
            ah_hinter_compute_blues ( hinter );

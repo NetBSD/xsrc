@@ -4,7 +4,7 @@
 /*                                                                         */
 /*    The FreeType private base classes (specification).                   */
 /*                                                                         */
-/*  Copyright 1996-2000 by                                                 */
+/*  Copyright 1996-2001 by                                                 */
 /*  David Turner, Robert Wilhelm, and Werner Lemberg.                      */
 /*                                                                         */
 /*  This file is part of the FreeType project, and may only be used,       */
@@ -29,6 +29,7 @@
 
 #include <ft2build.h>
 #include FT_RENDER_H
+#include FT_SIZES_H
 #include FT_INTERNAL_MEMORY_H
 #include FT_INTERNAL_DRIVER_H
 #include FT_INTERNAL_AUTOHINT_H
@@ -128,15 +129,19 @@ FT_BEGIN_HEADER
   /*    transform_flags  :: Some flags used to classify the transform.     */
   /*                        Only used by the convenience functions.        */
   /*                                                                       */
+  /*    postscript_name  :: Postscript font name for this face.            */
+  /*                                                                       */
   typedef struct  FT_Face_InternalRec_
   {
-    FT_UShort  max_points;
-    FT_Short   max_contours;
+    FT_UShort    max_points;
+    FT_Short     max_contours;
 
-    FT_Matrix  transform_matrix;
-    FT_Vector  transform_delta;
-    FT_Int     transform_flags;
-  
+    FT_Matrix    transform_matrix;
+    FT_Vector    transform_delta;
+    FT_Int       transform_flags;
+
+    const char*  postscript_name;
+
   } FT_Face_InternalRec;
 
 
@@ -166,14 +171,18 @@ FT_BEGIN_HEADER
   /*    glyph_delta       :: The 2d translation vector corresponding to    */
   /*                         the glyph transformation, if necessary.       */
   /*                                                                       */
-  typedef struct FT_Slot_InternalRec_
+  /*    glyph_hints       :: Format-specific glyph hints management.       */
+  /*                                                                       */
+  typedef struct  FT_Slot_InternalRec_
   {
-    FT_GlyphLoader*   loader;
-    FT_Bool           glyph_transformed;
-    FT_Matrix         glyph_matrix;
-    FT_Vector         glyph_delta;
+    FT_GlyphLoader*  loader;
+    FT_Bool          glyph_transformed;
+    FT_Matrix        glyph_matrix;
+    FT_Vector        glyph_delta;
+    void*            glyph_hints;
   
   } FT_GlyphSlot_InternalRec;
+
 
   /*************************************************************************/
   /*************************************************************************/
@@ -264,8 +273,9 @@ FT_BEGIN_HEADER
   /*    You should better be familiar with FreeType internals to know      */
   /*    which module to look for, and what its interface is :-)            */
   /*                                                                       */
-  FT_BASE( const void* )  FT_Get_Module_Interface( FT_Library   library,
-                                                   const char*  mod_name );
+  FT_BASE( const void* )
+  FT_Get_Module_Interface( FT_Library   library,
+                           const char*  mod_name );
 
 
   /*************************************************************************/
@@ -297,47 +307,6 @@ FT_BEGIN_HEADER
 #define FT_FACE_SIZE( x )     FT_FACE( x )->size
 
 
-  /* this must be kept exported -- it is used by the cache manager */
-  /* even though it shouldn't be considered public for now         */
-
-  /*************************************************************************/
-  /*                                                                       */
-  /* <Function>                                                            */
-  /*    FT_New_Size                                                        */
-  /*                                                                       */
-  /* <Description>                                                         */
-  /*    Creates a new size object from a given face object.                */
-  /*                                                                       */
-  /* <Input>                                                               */
-  /*    face :: A handle to a parent face object.                          */
-  /*                                                                       */
-  /* <Output>                                                              */
-  /*    asize :: A handle to a new size object.                            */
-  /*                                                                       */
-  /* <Return>                                                              */
-  /*    FreeType error code.  0 means success.                             */
-  /*                                                                       */
-  FT_EXPORT( FT_Error )  FT_New_Size( FT_Face   face,
-                                      FT_Size*  size );
-
-
-  /*************************************************************************/
-  /*                                                                       */
-  /* <Function>                                                            */
-  /*    FT_Done_Size                                                       */
-  /*                                                                       */
-  /* <Description>                                                         */
-  /*    Discards a given size object.                                      */
-  /*                                                                       */
-  /* <Input>                                                               */
-  /*    size :: A handle to a target size object.                          */
-  /*                                                                       */
-  /* <Return>                                                              */
-  /*    FreeType error code.  0 means success.                             */
-  /*                                                                       */
-  FT_EXPORT( FT_Error )  FT_Done_Size( FT_Size  size );
-
-
   /*************************************************************************/
   /*                                                                       */
   /* <Function>                                                            */
@@ -358,8 +327,9 @@ FT_BEGIN_HEADER
   /* <Return>                                                              */
   /*    FreeType error code.  0 means success.                             */
   /*                                                                       */
-  FT_BASE( FT_Error )    FT_New_GlyphSlot( FT_Face        face,
-                                           FT_GlyphSlot  *aslot );
+  FT_BASE( FT_Error )
+  FT_New_GlyphSlot( FT_Face        face,
+                    FT_GlyphSlot  *aslot );
 
 
   /*************************************************************************/
@@ -375,7 +345,8 @@ FT_BEGIN_HEADER
   /* <Input>                                                               */
   /*    slot :: A handle to a target glyph slot.                           */
   /*                                                                       */
-  FT_BASE( void )  FT_Done_GlyphSlot( FT_GlyphSlot  slot );
+  FT_BASE( void )
+  FT_Done_GlyphSlot( FT_GlyphSlot  slot );
 
 
   /*************************************************************************/
@@ -442,33 +413,40 @@ FT_BEGIN_HEADER
   };
 
 
-  FT_BASE( FT_Error )  FT_GlyphLoader_New( FT_Memory         memory,
-                                           FT_GlyphLoader*  *aloader );
+  FT_BASE( FT_Error )
+  FT_GlyphLoader_New( FT_Memory         memory,
+                      FT_GlyphLoader*  *aloader );
 
-  FT_BASE( FT_Error )  FT_GlyphLoader_Create_Extra(
-                         FT_GlyphLoader*  loader );
+  FT_BASE( FT_Error )
+  FT_GlyphLoader_Create_Extra( FT_GlyphLoader*  loader );
 
-  FT_BASE( void )      FT_GlyphLoader_Done( FT_GlyphLoader*  loader );
+  FT_BASE( void )
+  FT_GlyphLoader_Done( FT_GlyphLoader*  loader );
 
-  FT_BASE( void )      FT_GlyphLoader_Reset( FT_GlyphLoader*  loader );
+  FT_BASE( void )
+  FT_GlyphLoader_Reset( FT_GlyphLoader*  loader );
 
-  FT_BASE( void )      FT_GlyphLoader_Rewind( FT_GlyphLoader*  loader );
+  FT_BASE( void )
+  FT_GlyphLoader_Rewind( FT_GlyphLoader*  loader );
 
-  FT_BASE( FT_Error )  FT_GlyphLoader_Check_Points(
-                         FT_GlyphLoader*  loader,
-                         FT_UInt          n_points,
-                         FT_UInt          n_contours );
+  FT_BASE( FT_Error )
+  FT_GlyphLoader_Check_Points( FT_GlyphLoader*  loader,
+                               FT_UInt          n_points,
+                               FT_UInt          n_contours );
 
-  FT_BASE( FT_Error )  FT_GlyphLoader_Check_Subglyphs(
-                         FT_GlyphLoader*  loader,
-                         FT_UInt          n_subs );
+  FT_BASE( FT_Error )
+  FT_GlyphLoader_Check_Subglyphs( FT_GlyphLoader*  loader,
+                                  FT_UInt          n_subs );
 
-  FT_BASE( void )      FT_GlyphLoader_Prepare( FT_GlyphLoader*  loader );
+  FT_BASE( void )
+  FT_GlyphLoader_Prepare( FT_GlyphLoader*  loader );
 
-  FT_BASE( void )      FT_GlyphLoader_Add( FT_GlyphLoader*  loader );
+  FT_BASE( void )
+  FT_GlyphLoader_Add( FT_GlyphLoader*  loader );
 
-  FT_BASE( FT_Error )  FT_GlyphLoader_Copy_Points( FT_GlyphLoader*  target,
-                                                   FT_GlyphLoader*  source );
+  FT_BASE( FT_Error )
+  FT_GlyphLoader_Copy_Points( FT_GlyphLoader*  target,
+                              FT_GlyphLoader*  source );
 
 
   /*************************************************************************/
@@ -647,18 +625,28 @@ FT_BEGIN_HEADER
   } FT_LibraryRec;
 
 
-  FT_BASE( FT_Renderer )  FT_Lookup_Renderer( FT_Library       library,
-                                              FT_Glyph_Format  format,
-                                              FT_ListNode*     node );
+  FT_BASE( FT_Renderer )
+  FT_Lookup_Renderer( FT_Library       library,
+                      FT_Glyph_Format  format,
+                      FT_ListNode*     node );
 
-  FT_BASE( FT_Error )  FT_Render_Glyph_Internal( FT_Library    library,
-                                                 FT_GlyphSlot  slot,
-                                                 FT_UInt       render_mode );
+  FT_BASE( FT_Error )
+  FT_Render_Glyph_Internal( FT_Library    library,
+                            FT_GlyphSlot  slot,
+                            FT_UInt       render_mode );
 
-  typedef FT_Error  (*FT_Glyph_Name_Requester)( FT_Face     face,
-                                                FT_UInt     glyph_index,
-                                                FT_Pointer  buffer,
-                                                FT_UInt     buffer_max );
+  typedef const char*
+  (*FT_PSName_Requester)( FT_Face  face );
+
+  typedef FT_Error
+  (*FT_Glyph_Name_Requester)( FT_Face     face,
+                              FT_UInt     glyph_index,
+                              FT_Pointer  buffer,
+                              FT_UInt     buffer_max );
+
+  typedef FT_UInt
+  (*FT_Name_Index_Requester)( FT_Face     face,
+                              FT_String*  glyph_name );
 
 
 #ifndef FT_CONFIG_OPTION_NO_DEFAULT_SYSTEM
@@ -680,8 +668,9 @@ FT_BEGIN_HEADER
   /* <Return>                                                              */
   /*    FreeType error code.  0 means success.                             */
   /*                                                                       */
-  FT_EXPORT( FT_Error )   FT_New_Stream( const char*  filepathname,
-                                         FT_Stream    astream );
+  FT_EXPORT( FT_Error )
+  FT_New_Stream( const char*  filepathname,
+                 FT_Stream    astream );
 
 
   /*************************************************************************/
@@ -695,7 +684,8 @@ FT_BEGIN_HEADER
   /* <Input>                                                               */
   /*    stream :: The stream to be closed and destroyed.                   */
   /*                                                                       */
-  FT_EXPORT( void )       FT_Done_Stream( FT_Stream  stream );
+  FT_EXPORT( void )
+  FT_Done_Stream( FT_Stream  stream );
 
 
   /*************************************************************************/
@@ -709,7 +699,8 @@ FT_BEGIN_HEADER
   /* <Return>                                                              */
   /*    A pointer to the new memory object.  0 in case of error.           */
   /*                                                                       */
-  FT_EXPORT( FT_Memory )  FT_New_Memory( void );
+  FT_EXPORT( FT_Memory )
+  FT_New_Memory( void );
 
 
   /*************************************************************************/
@@ -723,7 +714,8 @@ FT_BEGIN_HEADER
   /* <Input>                                                               */
   /*    memory :: A handle to the memory manager.                          */
   /*                                                                       */
-  FT_EXPORT( void )       FT_Done_Memory( FT_Memory  memory );
+  FT_EXPORT( void )
+  FT_Done_Memory( FT_Memory  memory );
 
 #endif /* !FT_CONFIG_OPTION_NO_DEFAULT_SYSTEM */
 

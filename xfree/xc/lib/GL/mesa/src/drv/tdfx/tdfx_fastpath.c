@@ -23,7 +23,7 @@
  * OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-/* $XFree86: xc/lib/GL/mesa/src/drv/tdfx/tdfx_fastpath.c,v 1.1 2001/03/21 16:14:28 dawes Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/tdfx/tdfx_fastpath.c,v 1.2 2001/08/18 02:51:06 dawes Exp $ */
 
 /*
  * Original rewrite:
@@ -58,7 +58,7 @@ struct tdfx_fast_tab {
 
 #define POINT(x)   tdfx_draw_point( fxMesa, &vert[x], psize )
 #define LINE(x,y)  tdfx_draw_line( fxMesa, &vert[x], &vert[y], lwidth )
-#define TRI(x,y,z) grDrawTriangle( &vert[x], &vert[y], &vert[z] );
+#define TRI(x,y,z) fxMesa->Glide.grDrawTriangle( &vert[x], &vert[y], &vert[z] );
 
 
 #define INDIRECT_TRI(x,y,z)						\
@@ -509,7 +509,7 @@ static void tdfx_render_elements_indirect( struct vertex_buffer *VB )
 	     ctx->Driver.MultipassFunc( VB, ++p ) );
 
    BEGIN_CLIP_LOOP( fxMesa );
-   grDrawVertexArray( GR_TRIANGLES, fxVB->last_elt, fxVB->elts );
+   fxMesa->Glide.grDrawVertexArray( GR_TRIANGLES, fxVB->last_elt, fxVB->elts );
    END_CLIP_LOOP( fxMesa );
 
    fxVB->last_elt = 0;
@@ -556,7 +556,7 @@ void tdfxDDFastPath( struct vertex_buffer *VB )
        * in the other drivers. -BP
        */
       LOCK_HARDWARE( fxMesa );
-      grGlideSetVertexLayout( fxMesa->layout[fxMesa->vertexFormat] );
+      fxMesa->Glide.grGlideSetVertexLayout( fxMesa->layout[fxMesa->vertexFormat] );
       fxMesa->dirty &= ~TDFX_UPLOAD_VERTEX_LAYOUT;
       UNLOCK_HARDWARE( fxMesa );
    }

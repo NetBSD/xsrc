@@ -3,7 +3,7 @@ XCOMM $Xorg: Imakefile,v 1.3 2000/08/17 19:54:37 cpqbld Exp $
 
 
 
-XCOMM $XFree86: xc/programs/xkbcomp/keycodes/Imakefile,v 3.12 2001/01/21 21:19:40 tsi Exp $
+XCOMM $XFree86: xc/programs/xkbcomp/keycodes/Imakefile,v 3.14 2001/09/29 20:42:07 herrb Exp $
 
 #define IHaveSubdirs
 

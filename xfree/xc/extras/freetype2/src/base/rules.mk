@@ -33,12 +33,14 @@ BASE_COMPILE := $(FT_COMPILE) $I$(SRC_)base
 #   ftsystem, ftinit, and ftdebug are handled by freetype.mk
 #
 BASE_SRC := $(BASE_)ftcalc.c   \
+            $(BASE_)fttrigon.c \
             $(BASE_)ftextend.c \
             $(BASE_)ftlist.c   \
             $(BASE_)ftobjs.c   \
             $(BASE_)ftstream.c \
             $(BASE_)ftoutln.c  \
-            $(BASE_)ftnames.c
+            $(BASE_)ftnames.c  \
+            $(BASE_)ftdbgmem.c
 
 # Base layer `extensions' sources
 #

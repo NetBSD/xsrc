@@ -1,9 +1,13 @@
-/* $Xorg: session.c,v 1.4 2000/08/17 19:54:07 cpqbld Exp $ */
+/* $Xorg: session.c,v 1.5 2001/02/09 02:05:37 xorgcvs Exp $ */
 /******************************************************************************
 
 Copyright 1994, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -21,7 +25,7 @@ in this Software without prior written authorization from The Open Group.
 
 Author:  Ralph Mor, X Consortium
 ******************************************************************************/
-/* $XFree86: xc/programs/twm/session.c,v 3.6 2001/01/17 23:45:08 dawes Exp $ */
+/* $XFree86: xc/programs/twm/session.c,v 3.8 2001/12/14 20:01:10 dawes Exp $ */
 
 #include <X11/Xos.h>
 
@@ -796,7 +800,7 @@ SmPointer clientData;
 	prop1val.value = Argv[0];
 	prop1val.length = strlen (Argv[0]);
 
-	sprintf (userId, "%d", getuid());
+	sprintf (userId, "%ld", (long)getuid());
 	prop2.name = SmUserID;
 	prop2.type = SmARRAY8;
 	prop2.num_vals = 1;

@@ -4,9 +4,10 @@
  * This version is for both Linux and FreeBSD.
  *
  * Copyright © 2000 VA Linux Systems, Inc.
+ * Copyright © 2001 The XFree86 Project, Inc.
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/linux/lnx_agp.c,v 3.5 2001/05/19 00:26:45 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/linux/lnx_agp.c,v 3.8 2001/11/26 19:02:02 dawes Exp $ */
 
 #include "X.h"
 #include "xf86.h"
@@ -17,7 +18,7 @@
 #if defined(linux)
 #include <asm/ioctl.h>
 #include <linux/agpgart.h>
-#elif defined(__FreeBSD__)
+#elif defined(__FreeBSD__) || defined(__NetBSD__)
 #include <sys/ioctl.h>
 #include <sys/agpio.h>
 #endif
@@ -55,7 +56,7 @@ xf86GARTCloseScreen(int screenNum)
  * Open /dev/agpgart.  Keep it open until xf86GARTCloseScreen is called.
  */
 static Bool
-GARTInit()
+GARTInit(int screenNum)
 {
 	struct _agp_info agpinf;
 
@@ -70,16 +71,17 @@ GARTInit()
 		return FALSE;
 
 	if (gartFd == -1) {
-		xf86Msg(X_ERROR, "Unable to open " AGP_DEVICE " (%s)\n",
-			strerror(errno));
-		return FALSE;
+	    xf86DrvMsg(screenNum, X_ERROR,
+		"GARTInit: Unable to open " AGP_DEVICE " (%s)\n",
+		strerror(errno));
+	    return FALSE;
 	}
 
 	xf86AcquireGART(-1);
 	/* Check the kernel driver version. */
 	if (ioctl(gartFd, AGPIOC_INFO, &agpinf) != 0) {
-		xf86Msg(X_ERROR, "GARTInit: AGPIOC_INFO failed (%s)\n",
-			strerror(errno));
+		xf86DrvMsg(screenNum, X_ERROR,
+			"GARTInit: AGPIOC_INFO failed (%s)\n", strerror(errno));
 		close(gartFd);
 		gartFd = -1;
 		return FALSE;
@@ -90,8 +92,8 @@ GARTInit()
 	/* Should this look for version >= rather than version == ? */
 	if (agpinf.version.major != AGPGART_MAJOR_VERSION &&
 	    agpinf.version.minor != AGPGART_MINOR_VERSION) {
-		xf86Msg(X_ERROR,
-			"Kernel agpgart driver version is not current"
+		xf86DrvMsg(screenNum, X_ERROR,
+			"GARTInit: Kernel agpgart driver version is not current"
 			" (%d.%d vs %d.%d)\n",
 			agpinf.version.major, agpinf.version.minor,
 			AGPGART_MAJOR_VERSION, AGPGART_MINOR_VERSION);
@@ -107,7 +109,7 @@ GARTInit()
 Bool
 xf86AgpGARTSupported()
 {
-	return GARTInit();
+	return GARTInit(-1);
 }
 
 AgpInfoPtr
@@ -116,12 +118,13 @@ xf86GetAGPInfo(int screenNum)
 	struct _agp_info agpinf;
 	AgpInfoPtr info;
 
-	if (!GARTInit())
+	if (!GARTInit(screenNum))
 		return NULL;
 
 
 	if ((info = xcalloc(sizeof(AgpInfo), 1)) == NULL) {
-		xf86DrvMsg(screenNum, X_ERROR, "Failed to allocate AgpInfo\n");
+		xf86DrvMsg(screenNum, X_ERROR,
+			   "xf86GetAGPInfo: Failed to allocate AgpInfo\n");
 		return NULL;
 	}
 
@@ -151,14 +154,14 @@ xf86GetAGPInfo(int screenNum)
 Bool
 xf86AcquireGART(int screenNum)
 {
-	if (screenNum != -1 && !GARTInit())
+	if (screenNum != -1 && !GARTInit(screenNum))
 		return FALSE;
 
 	if (screenNum == -1 || acquiredScreen != screenNum) {
 		if (ioctl(gartFd, AGPIOC_ACQUIRE, 0) != 0) {
 			xf86DrvMsg(screenNum, X_WARNING,
-				   "AGPIOC_ACQUIRE failed (%s)\n",
-				   strerror(errno));
+				"xf86AcquireGART: AGPIOC_ACQUIRE failed (%s)\n",
+				strerror(errno));
 			return FALSE;
 		}
 		acquiredScreen = screenNum;
@@ -169,18 +172,29 @@ xf86AcquireGART(int screenNum)
 Bool
 xf86ReleaseGART(int screenNum)
 {
-	if (screenNum != -1 && !GARTInit())
+	if (screenNum != -1 && !GARTInit(screenNum))
 		return FALSE;
 
 	if (acquiredScreen == screenNum) {
+		/*
+		 * The FreeBSD agp driver removes allocations on release.
+		 * The Linux driver doesn't.  xf86ReleaseGART() is expected
+		 * to give up access to the GART, but not to remove any
+		 * allocations.
+		 */
+#if !defined(linux)
+	    if (screenNum == -1)
+#endif
+	    {
 		if (ioctl(gartFd, AGPIOC_RELEASE, 0) != 0) {
 			xf86DrvMsg(screenNum, X_WARNING,
-				   "AGPIOC_RELEASE failed (%s)\n",
-				   strerror(errno));
+				"xf86ReleaseGART: AGPIOC_RELEASE failed (%s)\n",
+				strerror(errno));
 			return FALSE;
 		}
 		acquiredScreen = -1;
-		return TRUE;
+	    }
+	    return TRUE;
 	}
 	return FALSE;
 }
@@ -198,7 +212,7 @@ xf86AllocateGARTMemory(int screenNum, unsigned long size, int type,
 	 * memory is returned.  On error, the return value is -1.
 	 */
 
-	if (!GARTInit() || acquiredScreen != screenNum)
+	if (!GARTInit(screenNum) || acquiredScreen != screenNum)
 		return -1;
 
 	pages = (size / AGP_PAGE_SIZE);
@@ -231,12 +245,12 @@ xf86BindGARTMemory(int screenNum, int key, unsigned long offset)
 	struct _agp_bind bind;
 	int pageOffset;
 
-	if (!GARTInit() || acquiredScreen != screenNum)
+	if (!GARTInit(screenNum) || acquiredScreen != screenNum)
 		return FALSE;
 
 	if (acquiredScreen != screenNum) {
 		xf86DrvMsg(screenNum, X_ERROR,
-			   "AGP not acquired by this screen\n");
+		      "xf86BindGARTMemory: AGP not acquired by this screen\n");
 		return FALSE;
 	}
 
@@ -269,12 +283,12 @@ xf86UnbindGARTMemory(int screenNum, int key)
 {
 	struct _agp_unbind unbind;
 
-	if (!GARTInit() || acquiredScreen != screenNum)
+	if (!GARTInit(screenNum) || acquiredScreen != screenNum)
 		return FALSE;
 
 	if (acquiredScreen != screenNum) {
 		xf86DrvMsg(screenNum, X_ERROR,
-			   "AGP not acquired by this screen\n");
+		    "xf86UnbindGARTMemory: AGP not acquired by this screen\n");
 		return FALSE;
 	}
 
@@ -298,7 +312,7 @@ xf86EnableAGP(int screenNum, CARD32 mode)
 {
 	agp_setup setup;
 
-	if (!GARTInit() || acquiredScreen != screenNum)
+	if (!GARTInit(screenNum) || acquiredScreen != screenNum)
 		return FALSE;
 
 	setup.agp_mode = mode;

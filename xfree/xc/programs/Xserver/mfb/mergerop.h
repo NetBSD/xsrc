@@ -1,9 +1,13 @@
 /*
- * $Xorg: mergerop.h,v 1.3 2000/08/17 19:53:34 cpqbld Exp $
+ * $Xorg: mergerop.h,v 1.4 2001/02/09 02:05:18 xorgcvs Exp $
  *
 Copyright 1989, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -21,7 +25,7 @@ in this Software without prior written authorization from The Open Group.
  *
  * Author:  Keith Packard, MIT X Consortium
  */
-/* $XFree86: xc/programs/Xserver/mfb/mergerop.h,v 3.11 2001/01/17 22:37:02 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/mfb/mergerop.h,v 3.14 2001/12/14 20:00:03 dawes Exp $ */
 
 #ifndef _MERGEROP_H_
 #define _MERGEROP_H_
@@ -37,7 +41,7 @@ typedef struct _mergeRopBits {
 extern mergeRopRec	mergeRopBits[16];
 
 #if defined(PPW) && defined(PGSZ) && (PPW != PGSZ)	/* cfb */
-#define DeclareMergeRop() MfbBits   _ca1, _cx1, _ca2, _cx2;
+#define DeclareMergeRop() MfbBits   _ca1 = 0, _cx1 = 0, _ca2 = 0, _cx2 = 0;
 #define DeclarePrebuiltMergeRop()	MfbBits	_cca, _ccx;
 #if PSZ == 24  /* both for PGSZ == 32 and 64 */
 #define DeclareMergeRop24() \
@@ -46,7 +50,7 @@ extern mergeRopRec	mergeRopBits[16];
 #define DeclarePrebuiltMergeRop24()	MfbBits	_ccau[4], _ccxu[4];
 #endif /* PSZ == 24 */
 #else /* mfb */
-#define DeclareMergeRop() MfbBits   _ca1, _cx1, _ca2, _cx2;
+#define DeclareMergeRop() MfbBits   _ca1 = 0, _cx1 = 0, _ca2 = 0, _cx2 = 0;
 #define DeclarePrebuiltMergeRop()	MfbBits	_cca, _ccx;
 #endif
 
@@ -320,7 +324,7 @@ extern mergeRopRec	mergeRopBits[16];
 #endif
 
 #if (MROP) == (Mcopy|Mxor|MandReverse|Mor)
-#define MROP_DECLARE()	MfbBits _ca1, _cx1;
+#define MROP_DECLARE()	MfbBits _ca1 = 0, _cx1 = 0;
 #define MROP_DECLARE_REG()	register MROP_DECLARE()
 #define MROP_INITIALIZE(alu,pm)	{ \
     mergeRopPtr  _bits; \
@@ -382,7 +386,7 @@ extern mergeRopRec	mergeRopBits[16];
 #define MROP_PREBUILT_MASK24(src,dst,mask,index) MROP_MASK24(src,dst,mask,index)
 #endif
 
-#if (defined(__STDC__) && !defined(UNIXCPP)) || defined(ANSICPP)
+#if !defined(UNIXCPP) || defined(ANSICPP)
 #define MROP_NAME_CAT(prefix,suffix)	prefix##suffix
 #else
 #define MROP_NAME_CAT(prefix,suffix)	prefix/**/suffix

@@ -21,7 +21,7 @@ INCIDENTAL OR CONSEQUENTIAL DAMAGES, ARISING OUT OF OR IN ANY WAY CONNECTED
 WITH THE SPEEDO SOFTWARE OR THE BITSTREAM CHARTER OUTLINE FONT.
 
 */
-/* $XFree86: xc/lib/font/Speedo/do_trns.c,v 1.3 2001/01/17 19:43:17 dawes Exp $ */
+/* $XFree86: xc/lib/font/Speedo/do_trns.c,v 1.4 2001/08/27 19:49:50 dawes Exp $ */
 
 /**************************** D O _ T R N S . C ******************************
  *                                                                           *
@@ -75,7 +75,7 @@ boolean set_flag) /* flag to indicate whether global oru bbox should be saved */
  */
 {
 ufix8    format1;
-ufix8    format;
+ufix8    format = 0;
 fix15    i;
 point_t  P;
 

@@ -3,7 +3,7 @@ XCOMM $Xorg: Imakefile,v 1.4 2000/08/17 19:54:17 cpqbld Exp $
 
 
 
-XCOMM $XFree86: xc/programs/xdm/config/Imakefile,v 1.8 2001/01/17 23:45:24 dawes Exp $
+XCOMM $XFree86: xc/programs/xdm/config/Imakefile,v 1.9 2001/11/25 12:49:19 herrb Exp $
 
 SERVERSTYPE = XdmServersType
 
@@ -28,8 +28,14 @@ XDMPIDDIR = $(VARRUNDIR)
 XDMPIDDIR = $(XDMDIR)
 #endif
 
+#if defined(OpenBSDArchitecture) || defined(NetBSDArchitecture)
+SU = "su -m"
+#else
+SU = su
+#endif
+
 CppFileTarget(Xservers.ws,Xserv.ws.cpp,-DBINDIR=$(BINDIR) -DDEFAULTVT=$(DEFAULTVT),NullParameter)
-CppFileTarget(xdm-config,xdm-conf.cpp,-DXDMDIR=$(XDMDIR) -DXDMLOGDIR=$(XDMLOGDIR) -DXDMPIDDIR=$(XDMPIDDIR),NullParameter)
+CppFileTarget(xdm-config,xdm-conf.cpp,-DXDMDIR=$(XDMDIR) -DXDMLOGDIR=$(XDMLOGDIR) -DXDMPIDDIR=$(XDMPIDDIR) -DSU=$(SU),NullParameter)
 CppFileTarget(Xresources,Xres.cpp,$(XPM_DEFINES),NullParameter)
 
 LinkFile(Xservers,Xservers.$(SERVERSTYPE))

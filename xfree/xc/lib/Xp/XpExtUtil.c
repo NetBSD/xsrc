@@ -34,7 +34,7 @@
  **
  ******************************************************************************
  *****************************************************************************/
-/* $XFree86: xc/lib/Xp/XpExtUtil.c,v 1.4 2001/01/17 19:43:01 dawes Exp $ */
+/* $XFree86: xc/lib/Xp/XpExtUtil.c,v 1.6 2001/10/28 03:32:39 tsi Exp $ */
 
 #define NEED_EVENTS
 #define NEED_REPLIES
@@ -50,7 +50,6 @@
 static XExtensionInfo     xp_info_data;
 static XExtensionInfo     *xp_info = &xp_info_data;
 static /* const */ char   *xp_extension_name = XP_PRINTNAME;
-static /* const */ XEvent emptyevent;
 
 static int    XpClose();
 static char   *XpError();
@@ -284,7 +283,6 @@ XpEventToWire(dpy, re, event, count)
     register int *count;
 {
     XExtDisplayInfo *info = (XExtDisplayInfo *) xp_find_display (dpy);
-    int i;
 
     switch ((re->type & 0x7f) - info->codes->first_event)
         {
@@ -294,6 +292,7 @@ XpEventToWire(dpy, re, event, count)
             register XDeviceKeyEvent *ev = (XDeviceKeyEvent*) re;
             register deviceKeyButtonPointer *kev;
             register deviceValuator *vev;
+	    int i;
 
             *count = 2;
             kev = (deviceKeyButtonPointer *) Xmalloc (*count * sizeof (xEvent));
@@ -337,7 +336,6 @@ XpEventToWire(dpy, re, event, count)
 #endif /* PRINT_SomeEventExample2 */
 
         default:
-            return(_XUnknownNativeEvent(dpy, re, event));
+            return(_XUnknownNativeEvent(dpy, re, *event));
         }
 }
-

@@ -38,7 +38,7 @@ specify a closed contour (the last vertex of each contour is automatically linke
 to the first).  See the \%\f3gluTessVertex\fP reference page for more details.
 \%\f3gluTessBeginContour\fP can only be called between \%\f3gluTessBeginPolygon\fP and \%\f3gluTessEndPolygon\fP.
 .SH SEE ALSO
-\%\f3gluNewTess\fP, \%\f3gluTessBeginPolygon\fP, \%\f3gluTessVertex\fP, 
-\%\f3gluTessCallback\fP,
-\%\f3gluTessProperty\fP, \%\f3gluTessNormal\fP,
+\%\f3gluNewTess(3G)\fP, \%\f3gluTessBeginPolygon(3G)\fP, \%\f3gluTessVertex(3G)\fP, 
+\%\f3gluTessCallback(3G)\fP,
+\%\f3gluTessProperty(3G)\fP, \%\f3gluTessNormal(3G)\fP,
 \%\f3gluTessEndPolygon\fP

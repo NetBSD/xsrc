@@ -21,7 +21,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ****************************************************************************/
-/* $XFree86: xc/programs/x11perf/x11perf.c,v 3.4 2001/01/17 23:45:12 dawes Exp $ */
+/* $XFree86: xc/programs/x11perf/x11perf.c,v 3.7 2001/11/06 16:11:38 alanh Exp $ */
 
 #include <stdio.h>
 #include <ctype.h>
@@ -36,14 +36,9 @@ SOFTWARE.
 #include "x11perf.h"
 #include <X11/Xmu/SysUtil.h>
 
-#ifdef X_NOT_STDC_ENV
-#define Time_t long
-extern Time_t time ();
-#else
 #include <time.h>
 #define Time_t time_t
 #include <stdlib.h>
-#endif
 
 /* Only for working on ``fake'' servers, for hardware that doesn't exist */
 static Bool     drawToFakeServer = False;
@@ -650,6 +645,7 @@ CalibrateTest(XParms xp, Test *test, int seconds, double *usecperobj)
 	(*test->proc) (xp, &test->parms, reps);
 	HardwareSync(xp);
 	usecs = ElapsedTime(syncTime);
+	(*test->passCleanup) (xp, &test->parms);
 	(*test->cleanup) (xp, &test->parms);
 	DestroyClipWindows(xp, test->clips);
 	CheckAbort ();
@@ -746,6 +742,8 @@ DestroyPerfGCs(XParms xp)
 {
     XFreeGC(xp->d, xp->fggc);
     XFreeGC(xp->d, xp->bggc);
+    XFreeGC(xp->d, xp->ddfggc);
+    XFreeGC(xp->d, xp->ddbggc);
 }
 
 static unsigned long 
@@ -819,6 +817,8 @@ ProcessTest(XParms xp, Test *test, int func, unsigned long pm, char *label)
 	for (j = 0; j != repeat; j++) {
 	    DisplayStatus(xp->d, "Testing", label, j+1);
 	    time = DoTest(xp, test, reps);
+	    if (abortTest)
+		AbortTest ();
 	    totalTime += time;
 	    ReportTimes (time, reps * test->parms.objects,
 		    label, False);
@@ -838,23 +838,7 @@ ProcessTest(XParms xp, Test *test, int func, unsigned long pm, char *label)
     DestroyPerfGCs(xp);
 } /* ProcessTest */
 
-#ifndef X_NOT_STDC_ENV
 #define Strstr strstr
-#else
-static char *
-Strstr(char *s1, char *s2)
-{
-    int n1, n2;
-
-    n1 = strlen(s1);
-    n2 = strlen(s2);
-    for ( ; n1 >= n2; s1++, n1--) {
-	if (!strncmp(s1, s2, n2))
-	    return s1;
-    }	
-    return NULL;
-}
-#endif
 
 #define LABELP(i) (test[i].label14 && (xparms.version >= VERSION1_4) \
 		        ? test[i].label14 : test[i].label)
@@ -1327,12 +1311,17 @@ main(int argc, char *argv[])
 	} /* if doit */
     } /* ForEachTest */
 
+    XFreeGC(xparms.d, tgc);
     XDestroyWindow(xparms.d, xparms.w);
-
+    XFree(vinfolist);
+    if (drawToFakeServer)
+      XFreePixmap(xparms.d, tileToQuery);
     /* Restore ScreenSaver to original state. */
     XSetScreenSaver(xparms.d, ssTimeout, ssInterval, ssPreferBlanking,
 	ssAllowExposures);
     XCloseDisplay(xparms.d);
+    free(saveargv);
+    free(doit);
     exit(0);
 }
 

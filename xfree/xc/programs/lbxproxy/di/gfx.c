@@ -1,9 +1,13 @@
-/* $Xorg: gfx.c,v 1.3 2000/08/17 19:53:55 cpqbld Exp $ */
+/* $Xorg: gfx.c,v 1.4 2001/02/09 02:05:31 xorgcvs Exp $ */
 /*
 
 Copyright 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -42,6 +46,8 @@ in this Software without prior written authorization from The Open Group.
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  */
+/* $XFree86: xc/programs/lbxproxy/di/gfx.c,v 1.6 2001/12/14 20:00:51 dawes Exp $ */
+
 /*
  * graphics acceleration
  */
@@ -876,15 +882,15 @@ ProcLBXPutImage(client)
     char	*out;
     int         len,
 		reqlen,
-                method,
+                method = 0,
                 compBytes,
                 status;
 #ifdef LBX_STATS
     float       percentCompression;
     char	*methodName;
 #endif
-    LbxBitmapCompMethod *bcompMethod;
-    LbxPixmapCompMethod *pcompMethod;
+    LbxBitmapCompMethod *bcompMethod = NULL;
+    LbxPixmapCompMethod *pcompMethod = NULL;
     GFX_CACHE_DECLARE;
 
     status = LBX_IMAGE_COMPRESS_SUCCESS;

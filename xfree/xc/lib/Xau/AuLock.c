@@ -1,10 +1,14 @@
-/* $Xorg: AuLock.c,v 1.3 2000/08/17 19:45:29 cpqbld Exp $ */
+/* $Xorg: AuLock.c,v 1.4 2001/02/09 02:03:42 xorgcvs Exp $ */
 
 /*
 
 Copyright 1988, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -21,20 +25,14 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/Xau/AuLock.c,v 3.3 2001/01/17 19:42:24 dawes Exp $ */
+/* $XFree86: xc/lib/Xau/AuLock.c,v 3.5 2001/12/14 19:54:36 dawes Exp $ */
 
 #include <X11/Xauth.h>
 #include <X11/Xos.h>
 #include <sys/stat.h>
 #include <errno.h>
-#if defined(X_NOT_STDC_ENV)
-extern int errno;
-#define Time_t long
-extern Time_t time ();
-#else
 #include <time.h>
 #define Time_t time_t
-#endif
 #ifndef X_NOT_POSIX
 #include <unistd.h>
 #else

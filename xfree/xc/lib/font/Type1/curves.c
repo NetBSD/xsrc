@@ -29,7 +29,7 @@
 /* CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT        */
 /* OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS           */
 /* SOFTWARE.                                                         */
-/* $XFree86: xc/lib/font/Type1/curves.c,v 1.6 2001/01/17 19:43:22 dawes Exp $ */
+/* $XFree86: xc/lib/font/Type1/curves.c,v 1.7 2001/08/27 19:49:52 dawes Exp $ */
 
 /*
 :h1.CURVES Module - Stepping Beziers
@@ -172,6 +172,7 @@ StepBezierRecurse(struct bezierinfo *I, /* Region under construction or NULL */
    StepBezierRecurse(I, xABCD, yABCD, xBCD, yBCD, xCD, yCD, xD, yD);
   }
  }
+ return NULL;
  /*NOTREACHED*/
 }
  

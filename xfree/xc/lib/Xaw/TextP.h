@@ -1,5 +1,5 @@
 /*
-* $Xorg: TextP.h,v 1.3 2000/08/17 19:45:40 cpqbld Exp $
+* $Xorg: TextP.h,v 1.4 2001/02/09 02:03:46 xorgcvs Exp $
 */
 
 
@@ -7,7 +7,11 @@
 
 Copyright 1987, 1988, 1994, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -45,13 +49,17 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/lib/Xaw/TextP.h,v 3.19 2001/01/17 19:42:34 dawes Exp $ */
+/* $XFree86: xc/lib/Xaw/TextP.h,v 3.22 2001/12/19 21:37:31 dawes Exp $ */
 
 #ifndef _XawTextP_h
 #define _XawTextP_h
 
+#include <X11/Xfuncproto.h>
+
 #include <X11/Xaw/Text.h>
 #include <X11/Xaw/SimpleP.h>
+
+_XFUNCPROTOBEGIN
 
 #define MAXCUT	30000	/* Maximum number of characters that can be cut */
 
@@ -300,5 +308,14 @@ void _XawTextPosToXY
  Position		*x,
  Position		*y
  );
+
+void _XawTextNeedsUpdating
+(
+ TextWidget		ctx,
+ XawTextPosition	left,
+ XawTextPosition	right
+ );
+
+_XFUNCPROTOEND
 
 #endif /* _XawTextP_h */

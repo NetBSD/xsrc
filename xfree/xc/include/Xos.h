@@ -1,10 +1,14 @@
 /*
- * $Xorg: Xos.h,v 1.5 2000/08/18 04:05:44 coskrey Exp $
+ * $Xorg: Xos.h,v 1.6 2001/02/09 02:03:22 xorgcvs Exp $
  * 
  * 
 Copyright 1987, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -23,7 +27,7 @@ in this Software without prior written authorization from The Open Group.
  * The X Window System is a Trademark of The Open Group.
  *
  */
-/* $XFree86: xc/include/Xos.h,v 3.33 2001/04/16 20:33:08 tsi Exp $ */
+/* $XFree86: xc/include/Xos.h,v 3.36 2001/12/14 19:53:26 dawes Exp $ */
 
 /* This is a collection of things to try and minimize system dependencies
  * in a "signficant" number of source files.
@@ -47,7 +51,7 @@ in this Software without prior written authorization from The Open Group.
 #define __TYPES__
 #endif /* __TYPES__ */
 #else /* USG */
-#if defined(_POSIX_SOURCE) && (defined(MOTOROLA) || defined(AMOEBA))
+#if defined(_POSIX_SOURCE) && defined(MOTOROLA)
 #undef _POSIX_SOURCE
 #include <sys/types.h>
 #define _POSIX_SOURCE
@@ -129,7 +133,7 @@ extern int sys_nerr;
 /*
  * Get open(2) constants
  */
-#if defined(X_NOT_POSIX) && !defined(__CYGWIN__)
+#if defined(X_NOT_POSIX)
 #include <fcntl.h>
 #if defined(USL) || defined(CRAY) || defined(MOTOROLA) || (defined(i386) && (defined(SYSV) || defined(SVR4))) || defined(__sxg__)
 #include <unistd.h>
@@ -212,10 +216,7 @@ struct timeval {
     (t)->tv_sec = _gtodtmp.time; \
     (t)->tv_usec = _gtodtmp.millitm * 1000; \
 }
-#elif defined(AMOEBA)
-#include <time.h>
-#include <sys/time.h>
-#elif defined(MINIX) || defined(_SEQUENT_) || defined(Lynx)
+#elif defined(_SEQUENT_) || defined(Lynx)
 #include <time.h>
 #elif defined (__QNX__)
 typedef unsigned long fd_mask;
@@ -242,39 +243,6 @@ typedef unsigned long fd_mask;
 #endif
 #endif /* XPG4 else */
 
-#ifdef MINIX
-#include <errno.h>
-#include <net/gen/in.h>
-#include <net/gen/socket.h>
-#include <net/gen/udp.h>
-#include <net/gen/udp_hdr.h>
-
-struct sockaddr
-{
-	u16_t sa_family;
-	char sa_data[14];
-};
-
-struct sockaddr_in
-{
-	u16_t sin_family;
-	u16_t sin_port;
-	struct
-	{
-		ipaddr_t s_addr;
-	} sin_addr;
-	char sin_zero[8];
-};
-
-struct in_addr
-{
-	ipaddr_t s_addr;
-};
-
-typedef char *caddr_t;
-typedef unsigned char u_char;
-#endif /* MINIX */
-
 #ifdef __EMX__
 typedef unsigned long fd_mask;
 #include <limits.h>
@@ -300,8 +268,7 @@ typedef unsigned long fd_mask;
 
 #if defined(ISC) || \
     (defined(linux) && !defined(__GLIBC__)) || \
-    (defined(__QNX__) && !defined(UNIXCONN)) || \
-    defined(__CYGWIN__)
+    (defined(__QNX__) && !defined(UNIXCONN))
 /*
  *	Some OS's may not have this
  */

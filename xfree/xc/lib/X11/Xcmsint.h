@@ -29,7 +29,7 @@
  *		(i.e., for API internal use only)
  *
  */
-/* $XFree86: xc/lib/X11/Xcmsint.h,v 3.2 2001/01/17 19:41:49 dawes Exp $ */
+/* $XFree86: xc/lib/X11/Xcmsint.h,v 3.3 2001/07/25 15:04:44 dawes Exp $ */
 
 #ifndef _XCMSINT_H_
 #define _XCMSINT_H_
@@ -196,19 +196,11 @@ typedef struct {
 #define XCMS_SQRT(x)		_XcmsSquareRoot(x)
 #define XCMS_TAN(x)		(XCMS_SIN(x) / XCMS_COS(x))
 
-#ifdef __STDC__
 double _XcmsArcTangent(double a);
 double _XcmsCosine(double a);
 double _XcmsCubeRoot(double a);
 double _XcmsSine(double a);
 double _XcmsSquareRoot(double a);
-#else
-double _XcmsArcTangent();
-double _XcmsCosine();
-double _XcmsCubeRoot();
-double _XcmsSine();
-double _XcmsSquareRoot();
-#endif
 
 /*
  *  DEFINES FOR GAMUT COMPRESSION AND QUERY ROUTINES

@@ -1,9 +1,13 @@
-/* $Xorg: transport.c,v 1.3 2000/08/17 19:46:46 cpqbld Exp $ */
+/* $Xorg: transport.c,v 1.4 2001/02/09 02:04:07 xorgcvs Exp $ */
 /*
 
 Copyright 1993, 1994, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included
 in all copies or substantial portions of the Software.
@@ -22,7 +26,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/xtrans/transport.c,v 3.5 2001/01/17 19:43:49 dawes Exp $ */
+/* $XFree86: xc/lib/xtrans/transport.c,v 3.8 2001/12/14 19:57:07 dawes Exp $ */
 
 /* Copyright 1993, 1994 NCR Corporation - Dayton, Ohio, USA
  *
@@ -50,9 +54,7 @@ from The Open Group.
 #ifdef XSERV_t
 #include "os.h"
 #else
-#ifndef X_NOT_STDC_ENV
 #include <stdlib.h>
-#endif
 #define xalloc(_size)		malloc(_size)
 #define xcalloc(_num,_size)	calloc(_num,_size)
 #define xrealloc(_ptr,_size)	realloc(_ptr,_size)
@@ -75,12 +77,6 @@ from The Open Group.
 #endif
 #ifdef STREAMSCONN
 #include "Xtranstli.c"
-#endif
-#if defined(AMRPCCONN) || defined(AMTCPCONN)
-#include "Xtransam.c"
-#endif
-#if defined(MNX_TCPCONN)
-#include "Xtransmnx.c"
 #endif
 #include "Xtrans.c"
 #include "Xtransutil.c"

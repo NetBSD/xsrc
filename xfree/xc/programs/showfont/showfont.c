@@ -1,5 +1,4 @@
 /* $XConsortium: showfont.c,v 1.13 94/04/17 20:44:07 gildea Exp $ */
-/* $XFree86: xc/programs/showfont/showfont.c,v 1.3 2000/02/18 12:20:17 tsi Exp $ */
 /*
  * Copyright 1990 Network Computing Devices;
  * Portions Copyright 1987 by Digital Equipment Corporation and the
@@ -50,11 +49,13 @@ other dealings in this Software without prior written authorization
 from the X Consortium.
 
 */
+/* $XFree86: xc/programs/showfont/showfont.c,v 1.4 2001/08/27 17:41:01 dawes Exp $ */
+
 #include	<stdio.h>
 #include	<stdlib.h>
 #include	<string.h>
 #include	<ctype.h>
-#include	"FSlib.h"
+#include	<X11/fonts/FSlib.h>
 
 /*
  * the equivalent of showsnf
@@ -84,7 +85,7 @@ FSServer   *svr;
 int	    bitmap_format;	
 
 static      FSBitmapFormat
-make_format()
+make_format(void)
 {
     FSBitmapFormat format;
 
@@ -148,21 +149,20 @@ make_format()
     return format;
 }
 
-void
-show_char_info(ci)
-    FSXCharInfo *ci;
+static void
+show_char_info(FSXCharInfo *ci)
 {
     printf("Left: %-3d    Right: %-3d    Ascent: %-3d    Descent: %-3d    Width: %d\n",
 	   ci->left, ci->right, ci->ascent, ci->descent, ci->width);
 }
 
-void
-show_glyphs(fid, hdr, show_all, first, last)
-    Font        fid;
-    FSXFontInfoHeader *hdr;
-    Bool        show_all;
+static void
+show_glyphs(
+    Font        fid,
+    FSXFontInfoHeader *hdr,
+    Bool        show_all,
     FSChar2b    first,
-                last;
+    FSChar2b    last)
 {
     FSXCharInfo *extents;
     int         err,
@@ -271,11 +271,11 @@ show_glyphs(fid, hdr, show_all, first, last)
     }
 }
 
-void
-show_props(pi, po, pd)
-    FSPropInfo *pi;
-    FSPropOffset *po;
-    unsigned char *pd;
+static void
+show_props(
+    FSPropInfo *pi,
+    FSPropOffset *po,
+    unsigned char *pd)
 {
     int         i;
     char        buf[512];
@@ -305,12 +305,12 @@ show_props(pi, po, pd)
     }
 }
 
-void
-show_info(fid, hdr, first, last)
-    Font        fid;
-    FSXFontInfoHeader *hdr;
+static void
+show_info(
+    Font        fid,
+    FSXFontInfoHeader *hdr,
     FSChar2b   *first,
-               *last;
+    FSChar2b   *last)
 {
     FSPropInfo  pi;
     FSPropOffset *po;
@@ -342,16 +342,14 @@ show_info(fid, hdr, first, last)
 }
 
 static void
-usage()
+usage(void)
 {
     printf("%s: [-server servername] [-extents_only] [-noprops] [-lsb] [-msb] [-LSB] [-MSB] [-unit #] [-pad #] [-bitmap_pad value] [-start first_char] [-end last_char] -fn fontname\n", ProgramName);
     exit(0);
 }
 
 int
-main(argc, argv)
-    int         argc;
-    char      **argv;
+main(int argc, char **argv)
 {
     char *servername = "localhost:7100"; /* -server: font server name */
     char *fontname = NULL; /* -fn: font name */

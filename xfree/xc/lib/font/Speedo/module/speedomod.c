@@ -23,7 +23,7 @@
  * dealings in this Software without prior written authorization from the
  * XFree86 Project.
  */
-/* $XFree86: xc/lib/font/Speedo/module/speedomod.c,v 1.7 1999/01/26 05:53:46 dawes Exp $ */
+/* $XFree86: xc/lib/font/Speedo/module/speedomod.c,v 1.8 2001/09/04 13:49:16 dawes Exp $ */
 
 #include "misc.h"
 
@@ -44,7 +44,7 @@ static XF86ModuleVersionInfo VersRec =
 	MODINFOSTRING1,
 	MODINFOSTRING2,
 	XF86_VERSION_CURRENT,
-	1, 0, 0,
+	1, 0, 1,
 	ABI_CLASS_FONT,			/* A font module */
 	ABI_FONT_VERSION,
 	MOD_CLASS_FONT,

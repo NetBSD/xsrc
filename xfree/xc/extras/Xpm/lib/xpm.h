@@ -22,6 +22,7 @@
  * used in advertising or otherwise to promote the sale, use or other dealings
  * in this Software without prior written authorization from GROUPE BULL.
  */
+/* $XFree86: xc/extras/Xpm/lib/xpm.h,v 1.2 2001/08/22 23:36:44 dawes Exp $ */
 
 /*****************************************************************************\
 * xpm.h:                                                                      *
@@ -392,7 +393,7 @@ extern "C" {
     FUNC(XpmReadFileToData, int, (char *filename, char ***data_return));
     FUNC(XpmWriteFileFromData, int, (char *filename, char **data));
 
-    FUNC(XpmAttributesSize, int, ());
+    FUNC(XpmAttributesSize, int, (void));
     FUNC(XpmFreeAttributes, void, (XpmAttributes *attributes));
     FUNC(XpmFreeExtensions, void, (XpmExtension *extensions,
 				   int nextensions));
@@ -400,7 +401,7 @@ extern "C" {
     FUNC(XpmFreeXpmImage, void, (XpmImage *image));
     FUNC(XpmFreeXpmInfo, void, (XpmInfo *info));
     FUNC(XpmGetErrorString, char *, (int errcode));
-    FUNC(XpmLibraryVersion, int, ());
+    FUNC(XpmLibraryVersion, int, (void));
 
     /* XpmImage functions */
     FUNC(XpmReadFileToXpmImage, int, (char *filename,

@@ -1,9 +1,13 @@
-/* $Xorg: dm.h,v 1.3 2000/08/17 19:54:14 cpqbld Exp $ */
+/* $Xorg: dm.h,v 1.4 2001/02/09 02:05:40 xorgcvs Exp $ */
 /*
 
 Copyright 1988, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included
 in all copies or substantial portions of the Software.
@@ -22,7 +26,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/xdm/dm.h,v 3.23 2001/02/16 13:24:10 eich Exp $ */
+/* $XFree86: xc/programs/xdm/dm.h,v 3.28 2002/01/14 22:49:45 herrb Exp $ */
 
 /*
  * xdm - display manager daemon
@@ -36,12 +40,6 @@ from The Open Group.
 #ifndef _DM_H_
 #define _DM_H_ 1
 
-#ifdef MINIX
-#ifdef MNX_TCPCONN
-#define TCPCONN
-#endif
-#endif /* MINIX */
-
 #include <X11/Xos.h>
 #include <X11/Xfuncs.h>
 #include <X11/Xmd.h>
@@ -54,23 +52,11 @@ from The Open Group.
 #include <limits.h>
 #undef _POSIX_C_SOURCE
 #else
-#if defined(X_NOT_POSIX) || defined(_POSIX_SOURCE)
 #include <setjmp.h>
 #include <limits.h>
-#else
-#define _POSIX_SOURCE
-#include <setjmp.h>
-#include <limits.h>
-#undef _POSIX_SOURCE
 #endif
-#endif
-#ifdef X_NOT_STDC_ENV
-#define Time_t long
-extern Time_t time ();
-#else
 #include <time.h>
 #define Time_t time_t
-#endif
 
 /* If XDMCP symbol defined, compile to run XDMCP protocol */
 
@@ -119,6 +105,16 @@ typedef union wait	waitType;
 #include <security/pam_appl.h>
 #endif
 
+#ifdef CSRG_BASED
+#include <sys/param.h>
+#ifdef HAS_SETUSERCONTEXT
+#include <login_cap.h>
+#include <pwd.h>
+#ifdef USE_BSDAUTH
+#include <bsd_auth.h>
+#endif
+#endif
+#endif
 
 # define waitCompose(sig,core,code) ((sig) * 256 + (core) * 128 + (code))
 # define waitVal(w)	waitCompose(waitSig(w), waitCore(w), waitCode(w))
@@ -375,7 +371,9 @@ extern void BecomeOrphan (void);
 extern void CloseOnFork (void);
 extern void RegisterCloseOnFork (int fd);
 extern void StartDisplay (struct display *d);
+#ifndef HAS_SETPROCTITLE
 extern void SetTitle (char *name, ...);
+#endif
 
 /* in dpylist.c */
 extern int AnyDisplaysLeft (void);
@@ -477,11 +475,7 @@ extern void registerHostname(char *name, int namelen);
 # define CLOSE_ALWAYS	    0
 # define LEAVE_FOR_DISPLAY  1
 
-#ifndef X_NOT_STDC_ENV
 #include <stdlib.h>
-#else
-char *malloc(), *realloc();
-#endif
 
 #if defined(X_NOT_POSIX) && defined(SIGNALRETURNSINT)
 #define SIGVAL int
@@ -506,11 +500,5 @@ char *malloc(), *realloc();
 typedef SIGVAL (*SIGFUNC)(int);
 
 SIGVAL (*Signal(int, SIGFUNC Handler))(int);
-
-#ifdef MINIX
-#include <sys/nbio.h>
-void udp_read_cb(nbio_ref_t ref, int res, int err);
-void tcp_listen_cb(nbio_ref_t ref, int res, int err);
-#endif
 
 #endif /* _DM_H_ */

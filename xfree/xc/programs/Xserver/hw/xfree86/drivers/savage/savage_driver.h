@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/savage/savage_driver.h,v 1.10 2001/05/18 23:35:32 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/savage/savage_driver.h,v 1.11 2001/08/09 19:14:13 dawes Exp $ */
 
 #ifndef SAVAGE_VGAHWMMIO_H
 #define SAVAGE_VGAHWMMIO_H
@@ -95,7 +95,7 @@ typedef struct _Savage {
     unsigned char*	MapBaseDense;
     unsigned char*	FBBase;
     unsigned char*	FBStart;
-    unsigned long volatile *	ShadowVirtual;
+    CARD32 volatile *	ShadowVirtual;
 
     Bool		PrimaryVidMapped;
     int			dacSpeedBpp;

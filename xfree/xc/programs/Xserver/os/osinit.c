@@ -1,9 +1,13 @@
-/* $XFree86: xc/programs/Xserver/os/osinit.c,v 3.22 2001/05/11 08:16:55 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/os/osinit.c,v 3.25 2001/12/14 20:00:35 dawes Exp $ */
 /***********************************************************
 
 Copyright 1987, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -41,7 +45,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $Xorg: osinit.c,v 1.3 2000/08/17 19:53:41 cpqbld Exp $ */
+/* $Xorg: osinit.c,v 1.4 2001/02/09 02:05:23 xorgcvs Exp $ */
 
 #include <stdio.h>
 #include "X.h"
@@ -61,11 +65,11 @@ SOFTWARE.
 #endif
 #endif
 
-#if defined(Lynx)
+#if defined(Lynx) || defined(SCO) || defined(SCO325)
 #include <sys/wait.h>
 #endif
 
-#if !defined(SYSV) && !defined(AMOEBA) && !defined(_MINIX) && !defined(WIN32) && !defined(Lynx) && !defined(QNX4)
+#if !defined(SYSV) && !defined(WIN32) && !defined(Lynx) && !defined(QNX4)
 #include <sys/resource.h>
 #endif
 
@@ -93,7 +97,6 @@ extern void xf86WrapperInit(void);
 void
 OsInit()
 {
-#ifndef AMOEBA
     static Bool been_here = FALSE;
     static char* admpath = ADMPATH;
     static char* devnull = "/dev/null";
@@ -107,7 +110,7 @@ OsInit()
 #ifdef XFree86LOADER
 	xf86WrapperInit();
 #endif
-#if !defined(MINIX) && !defined(SCO)
+#if !defined(SCO)
 	fclose(stdin);
 	fclose(stdout);
 #endif
@@ -135,7 +138,7 @@ OsInit()
 		dup2 (fileno (err), 2);
 		fclose (err);
 	    }
-#if defined(SYSV) || defined(SVR4) || defined(MINIX) || defined(__EMX__) || defined(WIN32) || defined(__CYGWIN__)
+#if defined(SYSV) || defined(SVR4) || defined(__EMX__) || defined(WIN32) || defined(__CYGWIN__)
 	    {
 	    static char buf[BUFSIZ];
 	    setvbuf (stderr, buf, _IOLBF, BUFSIZ);
@@ -209,7 +212,6 @@ OsInit()
 #endif
 	been_here = TRUE;
     }
-#endif /* AMOEBA */
     TimerInit();
 #ifdef DDXOSINIT
     OsVendorInit();

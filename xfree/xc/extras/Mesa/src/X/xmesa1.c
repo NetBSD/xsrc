@@ -1,5 +1,4 @@
-/* $Id: xmesa1.c,v 1.1.1.2 2001/06/09 15:18:37 tron Exp $ */
-
+/* $XFree86: xc/extras/Mesa/src/X/xmesa1.c,v 1.17 2001/11/14 10:28:07 alanh Exp $ */
 /*
  * Mesa 3-D graphics library
  * Version:  3.4.2
@@ -599,6 +598,7 @@ static GLboolean alloc_shm_back_buffer( XMesaBuffer b )
  */
 void xmesa_alloc_back_buffer( XMesaBuffer b )
 {
+   (void)DitherValues;
    if (b->db_state==BACK_XIMAGE) {
       /* Deallocate the old backimage, if any */
       if (b->backimage) {
@@ -2035,6 +2035,10 @@ GLboolean XMesaMakeCurrent2( XMesaContext c, XMesaBuffer drawBuffer,
       if (drawBuffer->FXctx) {
          fxMesaMakeCurrent(drawBuffer->FXctx);
 
+         /* Disassociate drawBuffer's current context from drawBuffer */
+         if (drawBuffer->xm_context)
+            drawBuffer->xm_context->xm_buffer = NULL;
+
          /* Disassociate old buffer from this context */
          if (c->xm_buffer)
             c->xm_buffer->xm_context = NULL;
@@ -2057,9 +2061,14 @@ GLboolean XMesaMakeCurrent2( XMesaContext c, XMesaBuffer drawBuffer,
          return GL_TRUE;
       }
 
+      /* Disassociate drawBuffer's current context from drawBuffer */
+      if (drawBuffer->xm_context)
+         drawBuffer->xm_context->xm_buffer = NULL;
+ 
       /* Disassociate old buffer with this context */
       if (c->xm_buffer)
 	  c->xm_buffer->xm_context = NULL;
+
       drawBuffer->xm_context = c; /* Associate the context with this buffer */
 
       c->xm_buffer = drawBuffer;

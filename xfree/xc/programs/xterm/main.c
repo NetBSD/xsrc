@@ -1,5 +1,5 @@
 #ifndef lint
-static char *rid="$Xorg: main.c,v 1.6 2000/08/18 11:04:49 xorgcvs Exp $";
+static char *rid="$Xorg: main.c,v 1.7 2001/02/09 02:06:02 xorgcvs Exp $";
 #endif /* lint */
 
 /*
@@ -17,15 +17,42 @@ static char *rid="$Xorg: main.c,v 1.6 2000/08/18 11:04:49 xorgcvs Exp $";
 
 /***********************************************************
 
+Copyright 2002 by Thomas E. Dickey
 
-Copyright (c) 1987, 1988  X Consortium
+                        All Rights Reserved
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+Permission is hereby granted, free of charge, to any person obtaining a
+copy of this software and associated documentation files (the
+"Software"), to deal in the Software without restriction, including
+without limitation the rights to use, copy, modify, merge, publish,
+distribute, sublicense, and/or sell copies of the Software, and to
+permit persons to whom the Software is furnished to do so, subject to
+the following conditions:
+
+The above copyright notice and this permission notice shall be included
+in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+IN NO EVENT SHALL THE ABOVE LISTED COPYRIGHT HOLDER(S) BE LIABLE FOR ANY
+CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+Except as contained in this notice, the name(s) of the above copyright
+holders shall not be used in advertising or otherwise to promote the
+sale, use or other dealings in this Software without prior written
+authorization.
+
+
+Copyright 1987, 1988  The Open Group
+
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -33,13 +60,13 @@ all copies or substantial portions of the Software.
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
-X CONSORTIUM BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
+OPEN GROUP BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
 AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-Except as contained in this notice, the name of the X Consortium shall not be
+Except as contained in this notice, the name of The Open Group shall not be
 used in advertising or otherwise to promote the sale, use or other dealings
-in this Software without prior written authorization from the X Consortium.
+in this Software without prior written authorization from The Open Group.
 
 
 Copyright 1987, 1988 by Digital Equipment Corporation, Maynard.
@@ -64,7 +91,7 @@ SOFTWARE.
 
 ******************************************************************/
 
-/* $XFree86: xc/programs/xterm/main.c,v 3.130 2001/05/11 08:16:54 alanh Exp $ */
+/* $XFree86: xc/programs/xterm/main.c,v 3.145 2002/01/07 18:35:41 dawes Exp $ */
 
 
 /* main.c */
@@ -131,6 +158,10 @@ SOFTWARE.
 
 #ifdef USE_ISPTS_FLAG
 static Bool IsPts = False;
+#endif
+
+#if defined(SCO) || defined(SVR4) || defined(_POSIX_SOURCE)
+#define USE_POSIX_SIGNALS
 #endif
 
 #if defined(SYSV) && !defined(SVR4) && !defined(ISC22) && !defined(ISC30)
@@ -285,7 +316,7 @@ extern __inline__ ttyslot() {return 1;} /* yuk */
 
 #endif	/* } !SYSV */
 
-#ifdef SVR4
+#if defined(SVR4) && !defined(__CYGWIN__)
 #define HAS_SAVED_IDS_AND_SETEUID
 #endif
 
@@ -325,7 +356,6 @@ extern __inline__ ttyslot() {return 1;} /* yuk */
 
 #include <utmpx.h>
 #define setutent setutxent
-#define getutent getutxent
 #define getutid getutxid
 #define endutent endutxent
 #define pututline pututxline
@@ -595,19 +625,9 @@ struct _xttymodes {
 static int parse_tty_modes (char *s, struct _xttymodes *modelist);
 
 #ifdef USE_SYSV_UTMP
-#if (defined(X_NOT_STDC_ENV) || (defined(AIXV3) && (OSMAJORVERSION < 4))) && !(defined(getutent) || defined(getutid) || defined(getutline))
-extern struct utmp *getutent();
+#if (defined(AIXV3) && (OSMAJORVERSION < 4)) && !(defined(getutid))
 extern struct utmp *getutid();
-extern struct utmp *getutline();
-#endif /* X_NOT_STDC_ENV || AIXV3 */
-
-#ifdef X_NOT_STDC_ENV		/* could remove paragraph unconditionally? */
-extern struct passwd *getpwent();
-extern struct passwd *getpwuid();
-extern struct passwd *getpwnam();
-extern void setpwent();
-extern void endpwent();
-#endif
+#endif /* AIXV3 */
 
 #else	/* not USE_SYSV_UTMP */
 static char etc_utmp[] = UTMP_FILENAME;
@@ -780,7 +800,6 @@ static XrmOptionDescRec optionDescList[] = {
 {"-cb",		"*cutToBeginningOfLine", XrmoptionNoArg, (caddr_t) "off"},
 {"+cb",		"*cutToBeginningOfLine", XrmoptionNoArg, (caddr_t) "on"},
 {"-cc",		"*charClass",	XrmoptionSepArg,	(caddr_t) NULL},
-{"-class",	NULL,		XrmoptionSkipArg,	(caddr_t) NULL},
 {"-cm",		"*colorMode",	XrmoptionNoArg,		(caddr_t) "off"},
 {"+cm",		"*colorMode",	XrmoptionNoArg,		(caddr_t) "on"},
 {"-cn",		"*cutNewline",	XrmoptionNoArg,		(caddr_t) "off"},
@@ -790,8 +809,11 @@ static XrmOptionDescRec optionDescList[] = {
 {"+cu",		"*curses",	XrmoptionNoArg,		(caddr_t) "off"},
 {"-dc",		"*dynamicColors",XrmoptionNoArg,	(caddr_t) "off"},
 {"+dc",		"*dynamicColors",XrmoptionNoArg,	(caddr_t) "on"},
-{"-e",		NULL,		XrmoptionSkipLine,	(caddr_t) NULL},
 {"-fb",		"*boldFont",	XrmoptionSepArg,	(caddr_t) NULL},
+{"-fbb",	"*freeBoldBox", XrmoptionNoArg,		(caddr_t)"off"},
+{"+fbb",	"*freeBoldBox", XrmoptionNoArg,		(caddr_t)"on"},
+{"-fbx",	"*forceBoxChars", XrmoptionNoArg,	(caddr_t)"off"},
+{"+fbx",	"*forceBoxChars", XrmoptionNoArg,	(caddr_t)"on"},
 #ifndef NO_ACTIVE_ICON
 {"-fi",		"*iconFont",	XrmoptionSepArg,	(caddr_t) NULL},
 #endif /* NO_ACTIVE_ICON */
@@ -802,6 +824,9 @@ static XrmOptionDescRec optionDescList[] = {
 #if OPT_WIDE_CHARS
 {"-fw",		"*wideFont",	XrmoptionSepArg,	(caddr_t) NULL},
 {"-fwb",	"*wideBoldFont", XrmoptionSepArg,	(caddr_t) NULL},
+#endif
+#if OPT_INPUT_METHOD
+{"-fx",		"*ximFont",	XrmoptionSepArg,	(caddr_t) NULL},
 #endif
 #if OPT_HIGHLIGHT_COLOR
 {"-hc",		"*highlightColor", XrmoptionSepArg,	(caddr_t) NULL},
@@ -890,6 +915,11 @@ static XrmOptionDescRec optionDescList[] = {
 {"-samename",	"*sameName",	XrmoptionNoArg,		(caddr_t) "on"},
 {"+samename",	"*sameName",	XrmoptionNoArg,		(caddr_t) "off"},
 #endif
+/* options that we process ourselves */
+{"-help",	NULL,		XrmoptionSkipNArgs,	(caddr_t) NULL},
+{"-version",	NULL,		XrmoptionSkipNArgs,	(caddr_t) NULL},
+{"-class",	NULL,		XrmoptionSkipArg,	(caddr_t) NULL},
+{"-e",		NULL,		XrmoptionSkipLine,	(caddr_t) NULL},
 /* bogus old compatibility stuff for which there are
    standard XtAppInitialize options now */
 {"%",		"*tekGeometry",	XrmoptionStickyArg,	(caddr_t) NULL},
@@ -903,10 +933,7 @@ static XrmOptionDescRec optionDescList[] = {
 {"-w",		".borderWidth", XrmoptionSepArg,	(caddr_t) NULL},
 };
 
-static struct _options {
-  char *opt;
-  char *desc;
-} options[] = {
+static OptionHelp options[] = {
 { "-version",              "print the version number" },
 { "-help",                 "print out this message" },
 { "-display displayname",  "X server to contact" },
@@ -918,6 +945,8 @@ static struct _options {
 { "-bw number",            "border width in pixels" },
 { "-fn fontname",          "normal text font" },
 { "-fb fontname",          "bold text font" },
+{ "-/+fbb",                "turn on/off bold font's box checking"},
+{ "-/+fbx",                "turn off/on linedrawing characters"},
 #ifdef XRENDERFONT
 { "-fa pattern",           "FreeType font-selection pattern" },
 { "-fs size",              "FreeType font-size" },
@@ -925,6 +954,9 @@ static struct _options {
 #if OPT_WIDE_CHARS
 { "-fw fontname",          "doublewidth text font" },
 { "-fwb fontname",         "doublewidth bold text font" },
+#endif
+#if OPT_INPUT_METHOD
+{ "-fx fontname",          "XIM fontset" },
 #endif
 { "-iconic",               "start iconic" },
 { "-name string",          "client instance, icon, and title strings" },
@@ -998,10 +1030,10 @@ static struct _options {
 { "-ti termid",            "terminal identifier" },
 { "-tm string",            "terminal mode keywords and characters" },
 { "-tn name",              "TERM environment variable name" },
-{ "-/+ulc",                "turn off/on display of underline as color" },
 #if OPT_WIDE_CHARS
 { "-/+u8",                 "turn on/off UTF-8 mode (implies wide-characters)" },
 #endif
+{ "-/+ulc",                "turn off/on display of underline as color" },
 #ifdef HAVE_UTMP
 { "-/+ut",                 "turn on/off utmp inhibit" },
 #else
@@ -1030,7 +1062,7 @@ static struct _options {
 { "-ziconbeep percent",    "beep and flag icon of window having hidden output" },
 #endif
 #if OPT_SAME_NAME
-{"-/+samename",            "turn on/off the no-flicker option for title and icon name" },
+{ "-/+samename",           "turn on/off the no-flicker option for title and icon name" },
 #endif
 { NULL, NULL }};
 
@@ -1042,6 +1074,62 @@ static char *message[] = {
 "will be started.  Options that start with a plus sign (+) restore the default.",
 NULL};
 
+/*
+ * Decode a key-definition.  This combines the termcap and ttyModes, for
+ * comparison.  Note that octal escapes in ttyModes are done by the normal
+ * resource translation.  Also, ttyModes allows '^-' as a synonym for disabled.
+ */
+static int decode_keyvalue(char *string, int termcap)
+{
+    int value = -1;
+
+    TRACE(("...decode '%s'\n", string));
+    if (*string == '^') {
+	switch (*++string) {
+	case '?':
+	    value = A2E(127);
+	    break;
+	case '-':
+	    if (!termcap) {
+		errno = 0;
+#if defined(_POSIX_VDISABLE) && defined(HAVE_UNISTD_H)
+		value = _POSIX_VDISABLE;
+#endif
+#if defined(_PC_VDISABLE)
+		if (value == -1) {
+		    value = fpathconf(0, _PC_VDISABLE);
+		    if (value == -1) {
+			if (errno != 0)
+			    break;	/* skip this (error) */
+			value = 0377;
+		    }
+		}
+#elif defined(VDISABLE)
+		if (value == -1)
+		    value = VDISABLE;
+#endif
+		break;
+	    }
+	    /* FALLTHRU */
+	default:
+	    value = CONTROL(*string);
+	    break;
+	}
+    } else if (termcap && (*string == '\\')) {
+	char *d;
+	int temp = strtol(string, &d, 8);
+	if (temp > 0 && d != string)
+	    value = temp;
+    } else {
+	value = CharOf(*string);
+    }
+    return value;
+}
+
+/*
+ * If we're linked to terminfo, tgetent() will return an empty buffer.  We
+ * cannot use that to adjust the $TERMCAP variable.
+ */
 static Boolean get_termcap(char *name, char *buffer, char *resized)
 {
     register TScreen *screen = &term->screen;
@@ -1049,28 +1137,33 @@ static Boolean get_termcap(char *name, char *buffer, char *resized)
     *buffer = 0;	/* initialize, in case we're using terminfo's tgetent */
 
     if (name != 0) {
-	if (tgetent (buffer, name) == 1
-	 && *buffer) {
-	    if (!TEK4014_ACTIVE(screen)) {
-		resize (screen, buffer, resized);
+	if (tgetent (buffer, name) == 1) {
+	    TRACE(("get_termcap(%s) succeeded (%s)\n", name,
+	    	*buffer
+		? "ok:termcap, we can update $TERMCAP"
+		: "assuming this is terminfo"));
+	    if (*buffer) {
+		if (!TEK4014_ACTIVE(screen)) {
+		    resize (screen, buffer, resized);
+		}
 	    }
 	    return True;
 	} else {
-	    *buffer = 0;
+	    *buffer = 0;	/* just in case */
 	}
     }
     return False;
 }
 
-static int abbrev (char *tst, char *cmp)
+static int abbrev (char *tst, char *cmp, size_t need)
 {
 	size_t len = strlen(tst);
-	return ((len >= 2) && (!strncmp(tst, cmp, len)));
+	return ((len >= need) && (!strncmp(tst, cmp, len)));
 }
 
 static void Syntax (char *badOption)
 {
-    struct _options *opt;
+    OptionHelp *opt;
     int col;
 
     fprintf (stderr, "%s:  bad command line option \"%s\"\r\n\n",
@@ -1096,12 +1189,12 @@ static void Syntax (char *badOption)
 static void Version (void)
 {
     printf("%s(%d)\n", XFREE86_VERSION, XTERM_PATCH);
-    exit (0);
+    fflush(stdout);
 }
 
 static void Help (void)
 {
-    struct _options *opt;
+    OptionHelp *opt;
     char **cpp;
 
     fprintf (stderr, "%s(%d) usage:\n    %s [-options ...] [-e command args]\n\n",
@@ -1117,8 +1210,7 @@ static void Help (void)
 	putc ('\n', stderr);
     }
     putc ('\n', stderr);
-
-    exit (0);
+    fflush(stderr);
 }
 
 #if defined(TIOCCONS) || defined(SRIOCSREDIR)
@@ -1298,6 +1390,65 @@ ParseSccn(char *option)
 	return code;
 }
 
+#ifdef USE_SYSV_UTMP
+/*
+ * From "man utmp":
+ * xterm and other terminal emulators directly create a USER_PROCESS record
+ * and generate the ut_id by using the last two letters of /dev/ttyp%c or by
+ * using p%d for /dev/pts/%d.  If they find a DEAD_PROCESS for this id, they
+ * recycle it, otherwise they create a new entry.  If they can, they will mark
+ * it as DEAD_PROCESS on exiting and it is advised that they null ut_line,
+ * ut_time, ut_user and ut_host as well.
+ *
+ * Generally ut_id allows no more than 3 characters (plus null), even if the
+ * pty implementation allows more than 3 digits.   
+ */
+static char *
+my_utmp_id(char *device)
+{
+	static char result[PTYCHARLEN + 4];
+	char *name = my_pty_name(device);
+	char *leaf = x_basename(name);
+
+	if (name == leaf) {	/* no '/' in the name */
+		int len = strlen(leaf);
+		if (PTYCHARLEN < len)
+			leaf = leaf + (len - PTYCHARLEN);
+		strcpy(result, leaf);
+	} else {
+		sprintf(result, "p%s", leaf);
+	}
+	TRACE(("my_utmp_id  (%s) -> '%s'\n", device, result));
+	return result;
+}
+#endif
+
+#ifdef USE_POSIX_SIGNALS
+
+typedef void (*sigfunc)(int);
+
+/* make sure we sure we ignore SIGCHLD for the cases parent 
+   has just been stopped and not actually killed */
+
+static sigfunc
+posix_signal(int signo, sigfunc func)
+{
+	struct sigaction act, oact;
+
+	act.sa_handler = func;
+	sigemptyset(&act.sa_mask);
+#ifdef SA_RESTART
+	act.sa_flags = SA_NOCLDSTOP|SA_RESTART;
+#else
+	act.sa_flags = SA_NOCLDSTOP;
+#endif
+	if (sigaction(signo, &act, &oact) < 0)
+		return(SIG_ERR);
+	return (oact.sa_handler);
+}
+
+#endif /* linux && _POSIX_SOURCE */
+
 int
 main (int argc, char *argv[])
 {
@@ -1308,18 +1459,33 @@ main (int argc, char *argv[])
 
 	/* Do these first, since we may not be able to open the display */
 	ProgramName = argv[0];
+	TRACE_OPTS(options, optionDescList, XtNumber(optionDescList));
+	TRACE_ARGV("Before XtAppInitialize", argv);
 	if (argc > 1) {
 		int n;
-		if (abbrev(argv[1], "-version"))
-			Version();
-		if (abbrev(argv[1], "-help"))
-			Help();
+		int unique = 2;
+		Boolean quit = True;
+
 		for (n = 1; n < argc; n++) {
-			if (strlen(argv[n]) > 2
-			 && abbrev(argv[n], "-class"))
-				if ((my_class = argv[++n]) == 0)
+			TRACE(("parsing %s\n", argv[n]));
+			if (abbrev(argv[n], "-version", unique)) {
+				Version();
+			} else if (abbrev(argv[n], "-help", unique)) {
+				Help();
+			} else if (abbrev(argv[n], "-class", 3)) {
+				if ((my_class = argv[++n]) == 0) {
 					Help();
+				} else {
+					quit = False;
+				}
+				unique = 3;
+			} else {
+				quit = False;
+				unique = 3;
+			}
 		}
+		if (quit)
+			exit(0);
 	}
 
 	/* This dumps core on HP-UX 9.05 with X11R5 */
@@ -1717,13 +1883,18 @@ main (int argc, char *argv[])
 #endif
 
 	/* Parse the rest of the command line */
+	TRACE_ARGV("After XtAppInitialize", argv);
 	for (argc--, argv++ ; argc > 0 ; argc--, argv++) {
 	    if(**argv != '-') Syntax (*argv);
 
+	    TRACE(("parsing %s\n", argv[0]));
 	    switch(argv[0][1]) {
-	     case 'h':
-		Help ();
-		/* NOTREACHED */
+	     case 'h':	/* -help */
+		Help();
+		continue;
+	     case 'v':	/* -version */
+		Version();
+		continue;
 	     case 'C':
 #if defined(TIOCCONS) || defined(SRIOCSREDIR)
 #ifndef __sgi
@@ -1754,8 +1925,9 @@ main (int argc, char *argv[])
 		debug = TRUE;
 		continue;
 #endif	/* DEBUG */
-	     case 'c':	/* -class */
-		break;
+	     case 'c':	/* -class param */
+		argc--, argv++;
+		continue;
 	     case 'e':
 		if (argc <= 1) Syntax (*argv);
 		command_to_exec = ++argv;
@@ -1771,9 +1943,9 @@ main (int argc, char *argv[])
 	{
 	    char *s;
 
-	    if ((s = getenv("LC_ALL")) ||
-		(s = getenv("LC_CTYPE")) ||
-		(s = getenv("LANG"))) {
+	    if (((s = getenv("LC_ALL")) != 0 && *s != '\0') ||
+		((s = getenv("LC_CTYPE")) != 0 && *s != '\0') ||
+		((s = getenv("LANG")) != 0 && *s != '\0')) {
 		if (strstr(s, "UTF-8"))
 		    defaultUTF8[0] = '2';
 	    }
@@ -1831,6 +2003,11 @@ main (int argc, char *argv[])
 	      resource.icon_name = resource.title;
 	    XtSetArg (args[0], XtNtitle, resource.title);
 	    XtSetArg (args[1], XtNiconName, resource.icon_name);
+
+	    TRACE(("setting:\n\ttitle \"%s\"\n\ticon \"%s\"\n\tbased on command \"%s\"\n",
+		    resource.title,
+		    resource.icon_name,
+		    *command_to_exec));
 
 	    XtSetValues (toplevel, args, 2);
 	}
@@ -1890,8 +2067,12 @@ main (int argc, char *argv[])
 
 #ifndef VMS
 	/* Child process is out there, let's catch its termination */
-	(void) signal (SIGCHLD, reapchild);
 
+#ifdef USE_POSIX_SIGNALS
+	(void) posix_signal(SIGCHLD, reapchild);
+#else
+	(void) signal (SIGCHLD, reapchild);
+#endif
 	/* Realize procs have now been executed */
 
 #ifndef AMOEBA
@@ -2375,6 +2556,7 @@ spawn (void)
 #if OPT_INITIAL_ERASE
 	int initial_erase = VAL_INITIAL_ERASE;
 #endif
+	int rc;
 	int tty = -1;
 #ifdef USE_ANY_SYSV_TERMIO
 	struct termio tio;
@@ -2413,6 +2595,7 @@ spawn (void)
 	struct winsize ws;
 #endif	/* sun vs TIOCSWINSZ */
 	struct passwd *pw = NULL;
+	char *login_name = NULL;
 #ifdef HAVE_UTMP
 #if defined(UTMPX_FOR_UTMP)
 	struct utmpx utmp,
@@ -2456,7 +2639,7 @@ spawn (void)
 
 		signal(SIGALRM, hungtty);
 		alarm(2);		/* alarm(1) might return too soon */
-	       if (! sigsetjmp(env, 1)) {
+		if (! sigsetjmp(env, 1)) {
 			tty = open ("/dev/tty", O_RDWR, 0);
 			alarm(0);
 			tty_got_hung = False;
@@ -2475,12 +2658,16 @@ spawn (void)
 		 * necessary.  ENXIO is what is normally returned if there is
 		 * no controlling terminal, but some systems (e.g. SunOS 4.0)
 		 * seem to return EIO.  Solaris 2.3 is said to return EINVAL.
+		 * Cygwin returns ENOENT.
 		 */
 		no_dev_tty = FALSE;
 		if (tty < 0) {
 			if (tty_got_hung || errno == ENXIO || errno == EIO ||
 #ifdef ENODEV
 			    errno == ENODEV ||
+#endif
+#ifdef __CYGWIN__
+			    errno == ENOENT ||
 #endif
 			    errno == EINVAL || errno == ENOTTY || errno == EACCES) {
 				no_dev_tty = TRUE;
@@ -2521,26 +2708,32 @@ spawn (void)
 				lmode = d_lmode;
 #endif	/* TIOCLSET */
 #ifdef USE_ANY_SYSV_TERMIO
-			if(ioctl(tty, TCGETA, &tio) == -1)
+			if ((rc = ioctl(tty, TCGETA, &tio)) == -1)
 				tio = d_tio;
 #elif defined(USE_POSIX_TERMIOS)
-			if (tcgetattr(tty, &tio) == -1)
+			if ((rc = tcgetattr(tty, &tio)) == -1)
 				tio = d_tio;
 #else   /* !USE_ANY_SYSV_TERMIO && !USE_POSIX_TERMIOS */
-			if(ioctl(tty, TIOCGETP, (char *)&sg) == -1)
+			if ((rc = ioctl(tty, TIOCGETP, (char *)&sg)) == -1)
 				sg = d_sg;
-			if(ioctl(tty, TIOCGETC, (char *)&tc) == -1)
+			if (ioctl(tty, TIOCGETC, (char *)&tc) == -1)
 				tc = d_tc;
-			if(ioctl(tty, TIOCGETD, (char *)&discipline) == -1)
+			if (ioctl(tty, TIOCGETD, (char *)&discipline) == -1)
 				discipline = d_disipline;
 #ifdef sony
-			if(ioctl(tty, TIOCKGET, (char *)&jmode) == -1)
+			if (ioctl(tty, TIOCKGET, (char *)&jmode) == -1)
 				jmode = d_jmode;
-			if(ioctl(tty, TIOCKGETC, (char *)&jtc) == -1)
+			if (ioctl(tty, TIOCKGETC, (char *)&jtc) == -1)
 				jtc = d_jtc;
 #endif /* sony */
 #endif	/* USE_ANY_SYSV_TERMIO */
 
+			/*
+			 * If ptyInitialErase is set, we want to get the pty's
+			 * erase value.  Just in case that will fail, first get
+			 * the value from /dev/tty, so we will have something
+			 * at least.
+			 */
 #if OPT_INITIAL_ERASE
 			if (resource.ptyInitialErase) {
 #ifdef USE_ANY_SYSV_TERMIO
@@ -2550,12 +2743,10 @@ spawn (void)
 #else   /* !USE_ANY_SYSV_TERMIO && !USE_POSIX_TERMIOS */
 				initial_erase = sg.sg_erase;
 #endif	/* USE_ANY_SYSV_TERMIO */
+				TRACE(("%s initial_erase:%d (from /dev/tty)\n",
+					rc == 0 ? "OK" : "FAIL",
+					initial_erase));
 			}
-			TRACE(("%s @%d, ptyInitialErase:%d, backarrow_is_erase:%d, initial_erase:%d (from /dev/tty)\n",
-				__FILE__, __LINE__,
-				resource.ptyInitialErase,
-				resource.backarrow_is_erase,
-				initial_erase));
 #endif
 
 #ifdef MINIX
@@ -2569,7 +2760,6 @@ spawn (void)
 			tty = -1;
 		}
 
-		TRACE(("%s @%d, calling get_pty...\n", __FILE__, __LINE__));
 		if (get_pty (&screen->respond, XDisplayString(screen->display)))
 		{
 			/*  no ptys! */
@@ -2582,28 +2772,22 @@ spawn (void)
 		if (resource.ptyInitialErase) {
 #ifdef USE_ANY_SYSV_TERMIO
 			struct termio my_tio;
-			if(ioctl(screen->respond, TCGETA, &my_tio) == 0)
+			if ((rc = ioctl(screen->respond, TCGETA, &my_tio)) == 0)
 				initial_erase = my_tio.c_cc[VERASE];
 #elif defined(USE_POSIX_TERMIOS)
 			struct termios my_tio;
-			if (tcgetattr(screen->respond, &my_tio) == 0)
+			if ((rc = tcgetattr(screen->respond, &my_tio)) == 0)
 				initial_erase = my_tio.c_cc[VERASE];
 #else   /* !USE_ANY_SYSV_TERMIO && !USE_POSIX_TERMIOS */
 			struct sgttyb my_sg;
-			if(ioctl(screen->respond, TIOCGETP, (char *)&my_sg) == 0)
+			if ((rc = ioctl(screen->respond, TIOCGETP, (char *)&my_sg)) == 0)
 				initial_erase = my_sg.sg_erase;
 #endif	/* USE_ANY_SYSV_TERMIO */
+			TRACE(("%s initial_erase:%d (from pty)\n",
+				(rc == 0) ? "OK" : "FAIL",
+				initial_erase));
 		}
-		if (resource.backarrow_is_erase)
-		if (initial_erase == 127) {	/* see input.c */
-			term->keyboard.flags &= ~MODE_DECBKM;
-		}
-		TRACE(("%s @%d, ptyInitialErase:%d, backarrow_is_erase:%d, initial_erase:%d (from pty)\n",
-			__FILE__, __LINE__,
-			resource.ptyInitialErase,
-			resource.backarrow_is_erase,
-			initial_erase));
-#endif
+#endif	/* OPT_INITIAL_ERASE */
 	}
 
 	/* avoid double MapWindow requests */
@@ -2663,39 +2847,38 @@ spawn (void)
 	    }
 	}
 
+	/*
+	 * Check if ptyInitialErase is not set.  If so, we rely on the termcap
+	 * (or terminfo) to tell us what the erase mode should be set to.
+	 */
 #if OPT_INITIAL_ERASE
-	TRACE(("%s @%d, resource ptyInitialErase:%d, backarrow_is_erase:%d\n",
-		__FILE__, __LINE__,
-		resource.ptyInitialErase,
-		resource.backarrow_is_erase));
+	TRACE(("resource ptyInitialErase is %sset\n",
+		resource.ptyInitialErase ? "" : "not "));
 	if (!resource.ptyInitialErase) {
 		char temp[1024], *p = temp;
 		char *s = tgetstr(TERMCAP_ERASE, &p);
-		TRACE(("extracting initial_erase value from termcap\n"));
+		TRACE(("...extracting initial_erase value from termcap\n"));
 		if (s != 0) {
-			if (*s == '^') {
-				if (*++s == '?') {
-					initial_erase = 127;
-				} else {
-					initial_erase = CONTROL(*s);
-				}
-			} else if (*s == '\\') {
-				char *d;
-				int value = strtol(s, &d, 8);
-				if (value > 0 && d != s)
-					initial_erase = value;
-			} else {
-				initial_erase = *s;
-			}
-			initial_erase = CharOf(initial_erase);
-			TRACE(("... initial_erase:%d\n", initial_erase));
+			initial_erase = decode_keyvalue(s, True);
 		}
 	}
-	if (resource.backarrow_is_erase && initial_erase == 127) {
-		/* see input.c */
-		term->keyboard.flags &= ~MODE_DECBKM;
+	TRACE(("...initial_erase:%d\n", initial_erase));
+
+	TRACE(("resource backarrowKeyIsErase is %sset\n",
+		resource.backarrow_is_erase ? "" : "not "));
+	if (resource.backarrow_is_erase) { /* see input.c */
+		if (initial_erase == 127) {
+		    term->keyboard.flags &= ~MODE_DECBKM;
+		} else {
+		    term->keyboard.flags |= MODE_DECBKM;
+		    term->keyboard.reset_DECBKM = 1;
+		}
+		TRACE(("...sets DECBKM %s\n", 
+		    (term->keyboard.flags & MODE_DECBKM) ? "on" : "off"));
+	} else {
+		term->keyboard.reset_DECBKM = 2;
 	}
-#endif
+#endif	/* OPT_INITIAL_ERASE */
 
 #if defined(TIOCSSIZE) && (defined(sun) && !defined(SVR4))
 	/* tell tty how big window is */
@@ -2706,6 +2889,8 @@ spawn (void)
 		ts.ts_lines = screen->max_row + 1;
 		ts.ts_cols = screen->max_col + 1;
 	}
+	i = ioctl (screen->respond, TIOCSSIZE, &ts);
+	TRACE(("spawn TIOCSSIZE %dx%d return %d\n", ts.ts_lines, ts.ts_cols, i));
 #elif defined(TIOCSWINSZ)
 	/* tell tty how big window is */
 #if OPT_TEK4014
@@ -2722,6 +2907,8 @@ spawn (void)
 		ws.ws_xpixel = FullWidth(screen);
 		ws.ws_ypixel = FullHeight(screen);
 	}
+	i = ioctl (screen->respond, TIOCSWINSZ, (char *)&ws);
+	TRACE(("spawn TIOCSWINSZ %dx%d return %d\n", ws.ws_row, ws.ws_col, i));
 #endif	/* sun vs TIOCSWINSZ */
 
 #if defined(USE_UTEMPTER)
@@ -2737,6 +2924,7 @@ spawn (void)
 	    if (pipe(pc_pipe) || pipe(cp_pipe))
 		SysError (ERROR_FORK);
 #endif
+	    TRACE(("Forking...\n"));
 	    if ((screen->pid = fork ()) == -1)
 		SysError (ERROR_FORK);
 
@@ -3224,31 +3412,46 @@ spawn (void)
 		signal (SIGQUIT, SIG_DFL);
 		signal (SIGTERM, SIG_DFL);
 
+		/*
+		 * If we're not asked to make the parent process set the
+		 * terminal's erase mode, and if we had no ttyModes resource,
+		 * then set the terminal's erase mode from our best guess.
+		 */
 #if OPT_INITIAL_ERASE
-		TRACE(("%s @%d, ptyInitialErase:%d, overide_tty_modes:%d, XTTYMODE_erase:%d\n",
-			__FILE__, __LINE__,
+		TRACE(("check if we should set erase to %d:%s\n\tptyInitialErase:%d,\n\toveride_tty_modes:%d,\n\tXTTYMODE_erase:%d\n",
+			initial_erase,
+			(! resource.ptyInitialErase
+			 && !override_tty_modes
+			 && !ttymodelist[XTTYMODE_erase].set)
+				? "YES" : "NO",
 			resource.ptyInitialErase,
 			override_tty_modes,
 			ttymodelist[XTTYMODE_erase].set));
 		if (! resource.ptyInitialErase
 		 && !override_tty_modes
 		 && !ttymodelist[XTTYMODE_erase].set) {
+			int old_erase;
 #ifdef USE_ANY_SYSV_TERMIO
-			if(ioctl(tty, TCGETA, &tio) == -1)
+			if (ioctl(tty, TCGETA, &tio) == -1)
 				tio = d_tio;
+			old_erase = tio.c_cc[VERASE];
 			tio.c_cc[VERASE] = initial_erase;
-			ioctl(tty, TCSETA, &tio);
+			rc = ioctl(tty, TCSETA, &tio);
 #elif defined(USE_POSIX_TERMIOS)
 			if (tcgetattr(tty, &tio) == -1)
 				tio = d_tio;
+			old_erase = tio.c_cc[VERASE];
 			tio.c_cc[VERASE] = initial_erase;
-			tcsetattr(tty, TCSANOW, &tio);
+			rc = tcsetattr(tty, TCSANOW, &tio);
 #else   /* !USE_ANY_SYSV_TERMIO && !USE_POSIX_TERMIOS */
-			if(ioctl(tty, TIOCGETP, (char *)&sg) == -1)
+			if (ioctl(tty, TIOCGETP, (char *)&sg) == -1)
 				sg = d_sg;
+			old_erase = sg.sg_erase;
 			sg.sg_erase = initial_erase;
-			ioctl(tty, TIOCSETP, (char *)&sg);
+			rc = ioctl(tty, TIOCSETP, (char *)&sg);
 #endif	/* USE_ANY_SYSV_TERMIO */
+			TRACE(("%s setting erase to %d (was %d)\n",
+				rc ? "FAIL" : "OK", initial_erase, old_erase));
 		}
 #endif
 
@@ -3320,9 +3523,7 @@ spawn (void)
 #endif /* CRAY */
 		}
 
-#if defined(__QNX__)
-		tcsetpgrp( 0, pgrp /*setsid()*/ );
-#elif !defined(USE_SYSV_PGRP)
+#if !defined(USE_SYSV_PGRP)
 #ifdef TIOCSCTTY
 		setsid();
 		ioctl(0, TIOCSCTTY, 0);
@@ -3331,6 +3532,9 @@ spawn (void)
 		setpgrp(0,0);
 		close(open(ttydev, O_WRONLY, 0));
 		setpgrp (0, pgrp);
+#if defined(__QNX__)
+		tcsetpgrp( 0, pgrp /*setsid()*/ );
+#endif
 #endif /* !USE_SYSV_PGRP */
 
 #endif /* AMOEBA */
@@ -3349,8 +3553,39 @@ spawn (void)
 
 #ifdef HAVE_UTMP
 		pw = getpwuid(screen->uid);
-		if (pw && pw->pw_name)
-		    xtermSetenv ("LOGNAME=", pw->pw_name); /* for POSIX */
+		login_name = NULL;
+		if (pw && pw->pw_name) {
+#ifdef HAVE_GETLOGIN
+		    /*
+		     * If the value from getlogin() differs from the value we
+		     * get by looking in the password file, check if it does
+		     * correspond to the same uid.  If so, allow that as an
+		     * alias for the uid.
+		     *
+		     * Of course getlogin() will fail if we're started from
+		     * a window-manager, since there's no controlling terminal
+		     * to fuss with.  In that case, try to get something useful
+		     * from the user's $LOGNAME or $USER environment variables.
+		     */
+		    if (((login_name = getlogin()) != NULL
+		      || (login_name = getenv("LOGNAME")) != NULL
+		      || (login_name = getenv("USER")) != NULL)
+		     && strcmp(login_name, pw->pw_name)) {
+			struct passwd *pw2 = getpwnam(login_name);
+			if (pw2 != 0
+			 && pw->pw_uid != pw2->pw_uid) {
+			    login_name = NULL;
+			}
+		    }
+#endif
+		    if (login_name == NULL)
+			login_name = pw->pw_name;
+		    if (login_name != NULL)
+			login_name = x_strdup(login_name);
+		}
+		if (login_name != NULL) {
+		    xtermSetenv ("LOGNAME=", login_name); /* for POSIX */
+		}
 #ifdef USE_SYSV_UTMP
 		/* Set up our utmp entry now.  We need to do it here
 		** for the following reasons:
@@ -3364,13 +3599,14 @@ spawn (void)
 		(void) setutent ();
 		/* set up entry to search for */
 		bzero((char *)&utmp, sizeof(utmp));
-		(void) strncpy(utmp.ut_id, my_pty_id(ttydev), sizeof (utmp.ut_id));
+		(void) strncpy(utmp.ut_id, my_utmp_id(ttydev), sizeof (utmp.ut_id));
 
 		utmp.ut_type = DEAD_PROCESS;
 
 		/* position to entry in utmp file */
 		/* Test return value: beware of entries left behind: PSz 9 Mar 00 */
 		if (! ( utret = getutid(&utmp) ) ) {
+		    (void) setutent();
 		    utmp.ut_type = USER_PROCESS;
 		    if (! ( utret = getutid(&utmp) ) ) {
 			(void) setutent();
@@ -3378,11 +3614,11 @@ spawn (void)
 		}
 #if OPT_TRACE
 		if ( ! utret )
-		    TRACE(("getutid: NULL\n."));
+		    TRACE(("getutid: NULL\n"));
 		else
 		    TRACE(("getutid: pid=%d type=%d user=%s line=%s id=%s\n",
 			utret->ut_pid, utret->ut_type, utret->ut_user,
-			utret->ut_line, utret->ut_id ));
+			utret->ut_line, utret->ut_id));
 #endif
 
 		/* set up the new entry */
@@ -3391,11 +3627,11 @@ spawn (void)
 		utmp.ut_xstatus = 2;
 #endif
 		(void) strncpy(utmp.ut_user,
-			       (pw && pw->pw_name) ? pw->pw_name : "????",
+			       (login_name != NULL) ? login_name : "????",
 			       sizeof(utmp.ut_user));
 
 		/* why are we copying this string again?  (see above) */
-		(void) strncpy(utmp.ut_id, my_pty_id(ttydev), sizeof(utmp.ut_id));
+		(void) strncpy(utmp.ut_id, my_utmp_id(ttydev), sizeof(utmp.ut_id));
 		(void) strncpy (utmp.ut_line,
 			my_pty_name(ttydev), sizeof (utmp.ut_line));
 
@@ -3411,8 +3647,7 @@ spawn (void)
 #endif
 		(void) strncpy(utmp.ut_host, buf, sizeof(utmp.ut_host));
 #endif
-		(void) strncpy(utmp.ut_name, pw->pw_name,
-			       sizeof(utmp.ut_name));
+		(void) strncpy(utmp.ut_name, login_name, sizeof(utmp.ut_name));
 
 		utmp.ut_pid = getpid();
 #if defined(HAVE_UTMP_UT_XTIME)
@@ -3464,7 +3699,7 @@ spawn (void)
 				(void) strncpy(utmp.ut_line,
 					       my_pty_name(ttydev),
 					       sizeof(utmp.ut_line));
-				(void) strncpy(utmp.ut_name, pw->pw_name,
+				(void) strncpy(utmp.ut_name, login_name,
 					       sizeof(utmp.ut_name));
 #ifdef MINIX
 				utmp.ut_pid = getpid();
@@ -3543,7 +3778,7 @@ spawn (void)
 		(void) setgid (screen->gid);
 #ifdef HAS_BSD_GROUPS
 		if (geteuid() == 0 && pw) {
-		    if (initgroups (pw->pw_name, pw->pw_gid)) {
+		    if (initgroups (login_name, pw->pw_gid)) {
 			perror( "initgroups failed" );
 			exit (errno);
 		    }
@@ -3616,7 +3851,7 @@ spawn (void)
 		    strcpy (termcap, newtc);
 		    resize (screen, termcap, newtc);
 		}
-		if (term->misc.titeInhibit) {
+		if (term->misc.titeInhibit && !term->misc.tiXtraScroll) {
 		    remove_termcap_entry (newtc, "ti=");
 		    remove_termcap_entry (newtc, "te=");
 		}
@@ -3631,18 +3866,17 @@ spawn (void)
 		    if(*newtc)
 			strcat (newtc, ":im=\\E[4h:ei=\\E[4l:mi:");
 		}
-#if OPT_INITIAL_ERASE
 		if (*newtc) {
+#if OPT_INITIAL_ERASE
 		    unsigned len;
 		    remove_termcap_entry (newtc, TERMCAP_ERASE "=");
 		    len = strlen(newtc);
 		    if (len != 0 && newtc[len-1] == ':')
 			len--;
 		    sprintf(newtc + len, ":%s=\\%03o:", TERMCAP_ERASE, initial_erase & 0377);
-		}
 #endif
-		if(*newtc)
 		    xtermSetenv ("TERMCAP=", newtc);
+		}
 #endif /* USE_SYSV_ENVVARS */
 
 
@@ -3656,9 +3890,9 @@ spawn (void)
 #else
 		TRACE(("spawn cannot tell pty its size\n"));
 #endif	/* sun vs TIOCSWINSZ */
-
 		signal(SIGHUP, SIG_DFL);
 		if (command_to_exec) {
+			TRACE(("spawning command \"%s\"\n", *command_to_exec));
 			execvp(*command_to_exec, command_to_exec);
 			/* print error message on screen */
 			fprintf(stderr, "%s: Can't execvp %s: %s\n",
@@ -3692,7 +3926,7 @@ spawn (void)
 
 #ifdef USE_LOGIN_DASH_P
 		if (term->misc.login_shell && pw && added_utmp_entry)
-		  execl (bin_login, "login", "-p", "-f", pw->pw_name, 0);
+		  execl (bin_login, "login", "-p", "-f", login_name, 0);
 #endif
 		execlp (ptr, (term->misc.login_shell ? shname_minus : shname),
 			0);
@@ -3764,8 +3998,7 @@ spawn (void)
 			tslot = handshake.tty_slot;
 #endif	/* USE_SYSV_UTMP */
 			free(ttydev);
-			ttydev = (char *)malloc((unsigned) strlen(handshake.buffer) + 1);
-			strcpy(ttydev, handshake.buffer);
+			ttydev = x_strdup(handshake.buffer);
 			break;
 		default:
 			fprintf(stderr, "%s: unexpected handshake status %d\n",
@@ -4057,7 +4290,7 @@ static int spawn(void)
 	strcpy (termcap, newtc);
 	resize (screen, termcap, newtc);
     }
-    if (term->misc.titeInhibit) {
+    if (term->misc.titeInhibit && !term->misc.tiXtraScroll) {
 	remove_termcap_entry (newtc, "ti=");
 	remove_termcap_entry (newtc, "te=");
     }
@@ -4206,7 +4439,7 @@ Exit(int n)
 #endif /* USE_HANDSHAKE */
 	    ) {
 	    utmp.ut_type = USER_PROCESS;
-	    (void) strncpy(utmp.ut_id, my_pty_id(ttydev), sizeof(utmp.ut_id));
+	    (void) strncpy(utmp.ut_id, my_utmp_id(ttydev), sizeof(utmp.ut_id));
 	    (void) setutent();
 	    utptr = getutid(&utmp);
 	    /* write it out only if it exists, and the pid's match */
@@ -4335,6 +4568,7 @@ resize(TScreen *screen, register char *oldtc, char *newtc)
 }
 
 #endif /* ! VMS */
+
 /*
  * Does a non-blocking wait for a child process.  If the system
  * doesn't support non-blocking wait, do nothing.
@@ -4368,6 +4602,7 @@ nonblocking_wait(void)
 /* ARGSUSED */
 static SIGNAL_T reapchild (int n GCC_UNUSED)
 {
+    int olderrno = errno;
     int pid;
 
     pid = wait(NULL);
@@ -4389,6 +4624,7 @@ static SIGNAL_T reapchild (int n GCC_UNUSED)
 	}
     } while ( (pid=nonblocking_wait()) > 0);
 
+    errno = olderrno;
     SIGNAL_RETURN;
 }
 #endif /* !VMS */
@@ -4445,6 +4681,7 @@ static int parse_tty_modes (char *s, struct _xttymodes *modelist)
     int c;
     int count = 0;
 
+    TRACE(("parse_tty_modes\n"));
     while (1) {
 	while (*s && isascii(CharOf(*s)) && isspace(CharOf(*s))) s++;
 	if (!*s) return count;
@@ -4458,38 +4695,13 @@ static int parse_tty_modes (char *s, struct _xttymodes *modelist)
 	while (*s && isascii(CharOf(*s)) && isspace(CharOf(*s))) s++;
 	if (!*s) return -1;
 
-	if (*s == '^') {
-	    s++;
-	    c = ((*s == '?') ? A2E(0177) : CONTROL(*s));
-	    if (*s == '-') {
-		c = -1;
-		errno = 0;
-#if defined(_POSIX_VDISABLE) && defined(HAVE_UNISTD_H)
-		c = _POSIX_VDISABLE;
-#endif
-#if defined(_PC_VDISABLE)
-		if (c == -1) {
-		    c = fpathconf(0, _PC_VDISABLE);
-		    if (c == -1) {
-			if (errno != 0)
-			    continue;	/* skip this (error) */
-			c = 0377;
-		    }
-		}
-#elif defined(VDISABLE)
-		if (c == -1)
-		    c = VDISABLE;
-#endif
-		if (c == -1)
-		    continue;		/* ignore */
-	    }
-	} else {
-	    c = *s;
+	if ((c = decode_keyvalue(s++, False)) != -1) {
+	    mp->value = c;
+	    mp->set = 1;
+	    count++;
+	    TRACE(("...parsed #%d: %s=%#x\n", count, mp->name, c));
 	}
-	mp->value = c;
-	mp->set = 1;
-	count++;
-	s++;
+	while (*s && isascii(CharOf(*s)) && isgraph(CharOf(*s))) s++;
     }
 }
 

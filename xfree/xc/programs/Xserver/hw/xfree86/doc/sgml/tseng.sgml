@@ -575,7 +575,7 @@ cards or for ET6000 cards.
 
 <sect> Acceleration issues <p>
 
-The XFree Acceleration Architecture makes extensive use of the unused video
+The XFree86 Acceleration Architecture makes extensive use of the unused video
 memory on the VGA card. If there is not enough free video memory, some
 acceleration features will be disabled or crippled, resulting in less
 performance.
@@ -1041,7 +1041,7 @@ incomplete):
 
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/tseng.sgml,v 3.32 1999/08/23 06:38:54 dawes Exp $ 
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/tseng.sgml,v 3.33 2001/08/10 16:38:16 dawes Exp $ 
 
 
 

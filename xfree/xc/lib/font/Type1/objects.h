@@ -43,11 +43,15 @@
  * The Original Software is CID font code that was developed by Silicon
  * Graphics, Inc.
  */
-/* $XFree86: xc/lib/font/Type1/objects.h,v 1.8 2001/01/17 19:43:22 dawes Exp $ */
+/* $XFree86: xc/lib/font/Type1/objects.h,v 1.12 2001/08/27 19:49:52 dawes Exp $ */
 /*SHARED*/
  
 /*END SHARED*/
 #include <Xdefs.h>
+#include <Xfuncproto.h>
+#ifndef FONTMODULE
+#include <stdlib.h>
+#endif
 /*SHARED*/
 
 #define   Permanent(obj)    t1_Permanent(obj)
@@ -91,6 +95,15 @@ extern char *xiMalloc ( unsigned Size );
 extern void addmemory ( long *addr, long size );
 extern void delmemory ( void );
 
+#ifndef OS_H
+extern void FatalError(const char *f, ...)
+#if __GNUC__ > 2 || (__GNUC__ == 2 && __GNUC_MINOR__ > 4)
+__attribute((noreturn))
+#endif
+;
+
+extern void ErrorF(const char *f, ...);
+#endif
 
 #undef abort
 #define   abort(line)       FatalError(line)
@@ -139,7 +152,7 @@ extern struct xobject *t1_Copy ( pointer obj );
 #endif
  
 #ifndef   NULL
-#define   NULL        0
+#include <stddef.h>
 /*
 The NULL pointer is system specific.  (Most systems, however, use 0.)
 TYPE1IMAGER could have its own NULL, independent of the rest of the system,

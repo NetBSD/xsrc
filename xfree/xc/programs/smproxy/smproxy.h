@@ -1,9 +1,13 @@
-/* $Xorg: smproxy.h,v 1.3 2000/08/17 19:54:05 cpqbld Exp $ */
+/* $Xorg: smproxy.h,v 1.4 2001/02/09 02:05:36 xorgcvs Exp $ */
 /******************************************************************************
 
 Copyright 1994, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -21,7 +25,7 @@ in this Software without prior written authorization from The Open Group.
 
 Author:  Ralph Mor, X Consortium
 ******************************************************************************/
-/* $XFree86: xc/programs/smproxy/smproxy.h,v 1.4 2001/01/17 23:45:05 dawes Exp $ */
+/* $XFree86: xc/programs/smproxy/smproxy.h,v 1.6 2001/12/14 20:01:05 dawes Exp $ */
 
 #include <X11/Xosdefs.h>
 #include <X11/Xfuncs.h>
@@ -39,13 +43,7 @@ Author:  Ralph Mor, X Consortium
 #else
 #include <stdio.h>
 #endif
-
-#ifndef X_NOT_STDC_ENV
 #include <stdlib.h>
-#else
-extern char *malloc(), *calloc(), *realloc(), *getenv();
-extern void free();
-#endif
 
 #ifndef X_NOT_POSIX
 #ifdef _POSIX_SOURCE

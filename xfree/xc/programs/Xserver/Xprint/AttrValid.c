@@ -1,4 +1,4 @@
-/* $Xorg: AttrValid.c,v 1.3 2000/08/17 19:48:04 cpqbld Exp $ */
+/* $Xorg: AttrValid.c,v 1.4 2001/03/14 18:43:17 pookie Exp $ */
 /*
 (c) Copyright 1996 Hewlett-Packard Company
 (c) Copyright 1996 International Business Machines Corp.
@@ -30,7 +30,7 @@ not be used in advertising or otherwise to promote the sale, use or other
 dealings in this Software without prior written authorization from said
 copyright holders.
 */
-/* $XFree86: xc/programs/Xserver/Xprint/AttrValid.c,v 1.4 2001/01/17 22:36:27 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/Xprint/AttrValid.c,v 1.5 2001/12/21 21:02:04 dawes Exp $ */
 
 #include <scrnintstr.h>
 
@@ -421,6 +421,13 @@ XpValidatePrinterPool(XpContextPtr pContext,
     XpValidatePrinterMediaAttrs(pContext,
 				vpr->valid_input_trays,
 				vpr->valid_medium_sizes);
+    /*
+     * available-compressions-supported
+     */
+    XpValidateListAttr(pContext, XPPrinterAttr,
+		       xpoid_att_available_compressions_supported,
+		       vpr->valid_available_compressions_supported,
+		       vpr->default_available_compressions_supported);
 }
 
 
@@ -601,6 +608,20 @@ XpValidateDocOrPagePool(XpContextPtr pContext,
 			   xp_listfonts_modes_supported,
 			   (const XpOidList*)NULL);
 	XpOidListDelete(xp_listfonts_modes_supported);
+    }
+    /*
+     * available-compressions
+     */
+    if(XpOidListHasOid(attrs_supported, xpoid_att_available_compression))
+    {
+	XpOidList* available_compressions_supported;
+	available_compressions_supported =
+	    XpGetListAttr(pContext, XPPrinterAttr,
+			  xpoid_att_available_compressions_supported,
+			  vpr->valid_available_compressions_supported);
+	XpValidateOidAttr(pContext, pool, xpoid_att_available_compression,
+			  available_compressions_supported, xpoid_none);
+	XpOidListDelete(available_compressions_supported);
     }
 }
 

@@ -1,8 +1,8 @@
-                 Installation Details for XFree86[tm] 4.1.0
+                 Installation Details for XFree86[tm] 4.2.0
 
                           The XFree86 Project, Inc
 
-                                 1 June 2001
+                               16 January 2002
 
                                   Abstract
 
@@ -20,14 +20,13 @@ vide a customized version of the GNU tar utility called "extract" and an
 installation script.  We recommend that these be used to install the bina-
 ries.
 
-2.  Downloading the XFree86 4.1.0 binaries
+2.  Downloading the XFree86 4.2.0 binaries
 
-We provide XFree86 4.1.0 binaries for a range of operating systems at our ftp
-site <URL:ftp://ftp.xfree86.org/pub/XFree86/4.1.0/binaries/>.  Often during
-releases our ftp site is heavily loaded.  Instead of downloading directly
-from us we recommend that instead you use one of our mirror sites.  Another
-advantage of using our mirror sites is that some of them support http access
-(ours does not).
+We provide XFree86 4.2.0 binaries for a range of operating systems at our ftp
+site <URL:ftp://ftp.xfree86.org/pub/XFree86/4.2.0/binaries/> and our web site
+<URL:http://ftp.xfree86.org/pub/XFree86/4.2.0/binaries/>.  Often during
+releases our site is heavily loaded.  Instead of downloading directly from us
+we recommend that instead you use one of our mirror sites.
 
 Our binaries are organized by sub-directories which correspond to each of the
 OS/platforms for which we provide binaries.  First go to the sub-directory
@@ -65,6 +64,17 @@ NOTES:
    o Always use the version of the Xinstall.sh script that's provided with
      the release you're installing.  Older versions of the script may not
      install newer releases correctly.
+
+   o If the binary distribution reported by the Xinstall.sh script isn't pre-
+     sent on our site, then there are two possibilities.  The first is that
+     it hasn't been prepared and uploaded yet.  This is likely if you are
+     looking soon after the release date.  The second possibility is that we
+     won't have it available at all for this release.  This is likely if it's
+     still not there about two weeks after the release date.  Check here
+     <URL:http://www.xfree86.org/4.2.0/UPDATES.html> for information about
+     updates to our binary distributions, and here
+     <URL:http://www.xfree86.org/4.2.0/ERRATA.html> for errata related to
+     this release.
 
 Once you're run the Xinstall.sh script and found which binary distribution is
 suitable for your system, download the necessary files.  The twelve (12)
@@ -111,7 +121,7 @@ ones you want to install.
           5.   Xvfb.tgz       Virtual framebuffer X server
           6.   Xf100.tgz      100dpi fonts
           7.   Xfcyr.tgz      Cyrillic fonts
-          8.   Xfscl.tgz      Scalable fonts (Speedo and Type1)
+          8.   Xfscl.tgz      Scalable fonts (Speedo, Type1 and TrueType)
           9.   Xhtml.tgz      HTML version of the documentation
           10.  Xps.tgz        PostScript version of the documentation
           11.  Xjdoc.tgz      Documentation in Japanese
@@ -123,9 +133,9 @@ NOTES:
 If you miss some and want to install them later, go to the Manual Installa-
 tion (section 4., page 1) section.
 
-3.  Installing XFree86 4.1.0 using the Xinstall.sh script
+3.  Installing XFree86 4.2.0 using the Xinstall.sh script
 
-We strongly recommend that our XFree86 4.1.0 binaries be installed using the
+We strongly recommend that our XFree86 4.2.0 binaries be installed using the
 Xinstall.sh script that we provide.  There are a lot of steps in the manual
 installation process, and those steps can vary according to the platform and
 hardware setup.  There is a description of the manual installation process
@@ -242,7 +252,7 @@ later that you need it, you can create it easily by running:
 
 The next step is to configure the X server.  That is covered in detail in an
 as-yet unwritten document :-(.  In the meantime, there are three ways to cre-
-ate a basic X server configuration file for XFree86 4.1.0.  One is to run the
+ate a basic X server configuration file for XFree86 4.2.0.  One is to run the
 xf86config utility.  Another is to run the xf86cfg utility.  The third option
 is to use the new -configure X server option:
 
@@ -261,11 +271,13 @@ old XF86_* and/or XF98_* X server binaries from /usr/X11R6/bin.
 After the X server configuration is done, it may be advisable to reboot,
 especially if you run xdm (or equivalent) or the font server (xfs).
 
-4.  Installing XFree86 4.1.0 manually
+4.  Installing XFree86 4.2.0 manually
 
-This section describes how to manually install the XFree86 4.1.0 binary dis-
-tributions.  You should only use this method if you know what you're doing.
-The information here covers some common cases, but not every possible case.
+This section contains information about manually installing the XFree86 4.2.0
+binary distributions.  You should only use this method if you know what
+you're doing.  The information here covers some common cases, but not every
+possible case.  It also may not be complete or up to date.  Use at your own
+risk.
 
 Put all of the downloaded files into a single directory (choose some tempo-
 rary location with enough space).  Become the super user (root).  All of the
@@ -366,7 +378,7 @@ Once that's done, the main part of the installation can be done:
      /sbin/ldconfig -m /usr/X11R6/lib    # For FreeBSD, NetBSD, OpenBSD
      /usr/X11R6/bin/mkfontdir /usr/X11R6/lib/X11/fonts/misc
 
-     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/Install.sgml,v 1.11.2.2 2001/06/01 18:09:48 dawes Exp $
+     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/Install.sgml,v 1.13 2002/01/16 20:38:44 dawes Exp $
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/Install,v 1.11.2.1 2001/06/01 18:26:43 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/Install,v 1.14 2002/01/16 20:51:01 dawes Exp $

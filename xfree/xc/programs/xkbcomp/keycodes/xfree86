@@ -3,7 +3,7 @@
 
 
 
-// $XFree86: xc/programs/xkbcomp/keycodes/xfree86,v 3.16 2001/03/08 21:25:15 dawes Exp $
+// $XFree86: xc/programs/xkbcomp/keycodes/xfree86,v 3.17 2001/11/30 12:12:04 eich Exp $
 
 // "standard" XFree86 codes
 // It seems that the "default" must be the first entry in the file.
@@ -352,6 +352,7 @@ xkb_keycodes "jp106" {
 xkb_keycodes "abnt2" {
     include "xfree86(basic)"
     <BKSL> = 94;
+    <AC12> = 51;
 };
 
 

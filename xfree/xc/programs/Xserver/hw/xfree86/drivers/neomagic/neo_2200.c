@@ -22,7 +22,7 @@ RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF
 CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
 CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 **********************************************************************/
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/neomagic/neo_2200.c,v 1.13 2001/01/22 20:12:51 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/neomagic/neo_2200.c,v 1.15 2001/10/28 03:33:42 tsi Exp $ */
 /*
  * The original Precision Insight driver for
  * XFree86 v.3.3 has been sponsored by Red Hat.
@@ -54,12 +54,15 @@ static void Neo2200SetupForScreenToScreenCopy(ScrnInfoPtr pScrn, int xdir,
 					      int ydir, int rop,
 					      unsigned int planemask,
 					      int trans_color);
+#ifdef NOT_BROKEN
 static void Neo2200SubsequentScreenToScreenCopy(ScrnInfoPtr pScrn, int srcX,
 						int srcY, int dstX, int dstY,
 						int w, int h);
+#else
 static void Neo2200SubsequentScreenToScreenCopyBroken(ScrnInfoPtr pScrn, int srcX,
 						int srcY, int dstX, int dstY,
 						int w, int h);
+#endif
 static void Neo2200SetupForSolidFillRect(ScrnInfoPtr pScrn, int color, int rop,
 				  unsigned int planemask);
 static void Neo2200SubsequentSolidFillRect(ScrnInfoPtr pScrn, int x, int y,
@@ -139,7 +142,11 @@ Neo2200AccelInit(ScreenPtr pScreen)
     infoPtr->SetupForScreenToScreenCopy = 
 	Neo2200SetupForScreenToScreenCopy;
     infoPtr->SubsequentScreenToScreenCopy
+#ifdef NOT_BROKEN
+	= Neo2200SubsequentScreenToScreenCopy;
+#else
 	= Neo2200SubsequentScreenToScreenCopyBroken;
+#endif
 
     /* solid filled rectangles */
     infoPtr->SolidFillFlags = NO_PLANEMASK;
@@ -156,26 +163,28 @@ Neo2200AccelInit(ScreenPtr pScreen)
      * transfer up to 3 bytes more than it wants.
      */
 
-
-    infoPtr->ScanlineCPUToScreenColorExpandFillFlags = ( NO_PLANEMASK |
+    if (!nPtr->strangeLockups) {
+	
+	infoPtr->ScanlineCPUToScreenColorExpandFillFlags = ( NO_PLANEMASK |
 #ifdef NEO_DO_CLIPPING
-							 LEFT_EDGE_CLIPPING |
+						LEFT_EDGE_CLIPPING |
 #endif
-							 SCANLINE_PAD_DWORD |
-							 CPU_TRANSFER_PAD_DWORD |
-							 BIT_ORDER_IN_BYTE_MSBFIRST );
-    infoPtr->ScanlineColorExpandBuffers =
-	(unsigned char **)xnfalloc(sizeof(char*));
-    infoPtr->ScanlineColorExpandBuffers[0] =
-	(unsigned char *)(nPtr->NeoMMIOBase + 0x100000);
-    infoPtr->NumScanlineColorExpandBuffers = 1;
-    infoPtr->SetupForScanlineCPUToScreenColorExpandFill = 
-	Neo2200SetupForScanlineCPUToScreenColorExpandFill;
-    infoPtr->SubsequentScanlineCPUToScreenColorExpandFill = 
-	Neo2200SubsequentScanlineCPUToScreenColorExpandFill;
-    infoPtr->SubsequentColorExpandScanline =
-	Neo2200SubsequentColorExpandScanline;
-
+						SCANLINE_PAD_DWORD |
+						CPU_TRANSFER_PAD_DWORD |
+						BIT_ORDER_IN_BYTE_MSBFIRST );
+	infoPtr->ScanlineColorExpandBuffers =
+	    (unsigned char **)xnfalloc(sizeof(char*));
+	infoPtr->ScanlineColorExpandBuffers[0] =
+	    (unsigned char *)(nPtr->NeoMMIOBase + 0x100000);
+	infoPtr->NumScanlineColorExpandBuffers = 1;
+	infoPtr->SetupForScanlineCPUToScreenColorExpandFill = 
+	    Neo2200SetupForScanlineCPUToScreenColorExpandFill;
+	infoPtr->SubsequentScanlineCPUToScreenColorExpandFill = 
+	    Neo2200SubsequentScanlineCPUToScreenColorExpandFill;
+	infoPtr->SubsequentColorExpandScanline =
+	    Neo2200SubsequentColorExpandScanline;
+    }
+    
 #if 0
     /* 8x8 pattern fills */
     infoPtr->Mono8x8PatternFillFlags = NO_PLANEMASK
@@ -277,7 +286,6 @@ Neo2200SetupForScreenToScreenCopy(ScrnInfoPtr pScrn, int xdir, int ydir,
     NEOACLPtr nAcl = NEOACLPTR(pScrn);
 
     nAcl->tmpBltCntlFlags = (NEO_BC3_SKIP_MAPPING | neo2200Rop[rop]);
-    
     /* set blt control */
     WAIT_ENGINE_IDLE();
     /*OUTREG16(NEOREG_BLTMODE, nAcl->BltModeFlags);*/
@@ -287,6 +295,7 @@ Neo2200SetupForScreenToScreenCopy(ScrnInfoPtr pScrn, int xdir, int ydir,
 	   | (nAcl->Pitch & 0xffff));
 }
 
+#ifdef NOT_BROKEN
 static void
 Neo2200SubsequentScreenToScreenCopy(ScrnInfoPtr pScrn,
 				    int srcX, int srcY,
@@ -327,6 +336,8 @@ Neo2200SubsequentScreenToScreenCopy(ScrnInfoPtr pScrn,
     }
 }
 
+#else /* NOT_BROKEN */
+
 static void
 Neo2200SubsequentScreenToScreenCopyBroken(ScrnInfoPtr pScrn,
 					  int srcX, int srcY,
@@ -337,26 +348,39 @@ Neo2200SubsequentScreenToScreenCopyBroken(ScrnInfoPtr pScrn,
     NEOACLPtr nAcl = NEOACLPTR(pScrn);
 
     if ((dstY < srcY) || ((dstY == srcY) && (dstX < srcX))) {
-	if ((((dstX < 64) && ((srcX + w) == pScrn->displayWidth)) ||
+	if ((((dstX < 64) && ((srcX + w + 64) >= pScrn->displayWidth)) ||
 	    ((dstX == 0) && (w > (pScrn->displayWidth - 64)))) && (w > 64)) {
 	    
+#define COPY_64 \
+	    OUTREG(NEOREG_SRCSTARTOFF,\
+		   (srcY * nAcl->Pitch) + (srcX * nAcl->PixelWidth));\
+	    OUTREG(NEOREG_DSTSTARTOFF,\
+		   (dstY * nAcl->Pitch) + (dstX * nAcl->PixelWidth));\
+	    OUTREG(NEOREG_XYEXT, (h<<16) | (64));
+#define COPY_W \
+	    OUTREG(NEOREG_SRCSTARTOFF,\
+		   (srcY * nAcl->Pitch) + (srcX1 * nAcl->PixelWidth));\
+	    OUTREG(NEOREG_DSTSTARTOFF,\
+		   (dstY * nAcl->Pitch) + (dstX1 * nAcl->PixelWidth));\
+	    OUTREG(NEOREG_XYEXT, (h<<16) | (w & 0xffff));
+
 	    int srcX1 = srcX + 64;
 	    int dstX1 = dstX + 64;
 	    w -= 64;
 	    /* start with upper left corner */
 	    WAIT_ENGINE_IDLE();
 	    OUTREG(NEOREG_BLTCNTL, nAcl->tmpBltCntlFlags);
-	    OUTREG(NEOREG_SRCSTARTOFF,
-		   (srcY * nAcl->Pitch) + (srcX * nAcl->PixelWidth));
-	    OUTREG(NEOREG_DSTSTARTOFF,
-		   (dstY * nAcl->Pitch) + (dstX * nAcl->PixelWidth));
-	    OUTREG(NEOREG_XYEXT, (h<<16) | (64));
-	    WAIT_ENGINE_IDLE();
-	    OUTREG(NEOREG_SRCSTARTOFF,
-		   (srcY * nAcl->Pitch) + (srcX1 * nAcl->PixelWidth));
-	    OUTREG(NEOREG_DSTSTARTOFF,
-		   (dstY * nAcl->Pitch) + (dstX1 * nAcl->PixelWidth));
-	    OUTREG(NEOREG_XYEXT, (h<<16) | (w & 0xffff));
+	    if (srcX < dstX) {
+		COPY_W;
+	        WAIT_ENGINE_IDLE();
+	        COPY_64;
+	    } else {
+		COPY_64;
+	        WAIT_ENGINE_IDLE();
+		COPY_W;
+	    }
+#undef COPY_W
+#undef COPY_64
 	} else {
 	    /* start with upper left corner */
 	    WAIT_ENGINE_IDLE();
@@ -369,36 +393,47 @@ Neo2200SubsequentScreenToScreenCopyBroken(ScrnInfoPtr pScrn,
 	}
     } else {
 	if (((((dstX + w) > (pScrn->displayWidth - 64)) && (srcX == 0))
-	    || (((dstX + w) == pScrn->displayWidth)
+	    || (((dstX + w + 64) >= pScrn->displayWidth)
 		&& (w > (pScrn->displayWidth - 64)))) && (w > 64)) {
+#define COPY_64 \
+	    OUTREG(NEOREG_SRCSTARTOFF, \
+		   ((srcY+h-1) * nAcl->Pitch) + ((srcX1+64-1)  \
+						 * nAcl->PixelWidth)); \
+	    OUTREG(NEOREG_DSTSTARTOFF, \
+		   ((dstY+h-1) * nAcl->Pitch) + ((dstX1+64-1) \
+						 * nAcl->PixelWidth)); \
+	    OUTREG(NEOREG_XYEXT, (h<<16) | (64 & 0xffff)); 
+#define COPY_W \
+	    OUTREG(NEOREG_SRCSTARTOFF, \
+		   ((srcY+h-1) * nAcl->Pitch) + ((srcX + w -1)  \
+						 * nAcl->PixelWidth)); \
+	    OUTREG(NEOREG_DSTSTARTOFF, \
+		   ((dstY+h-1) * nAcl->Pitch) + ((dstX + w -1) \
+						 * nAcl->PixelWidth)); \
+	    OUTREG(NEOREG_XYEXT, (h<<16) | (w & 0xffff)); 
+
 	    int srcX1, dstX1;
 	    
 	    w -= 64;
 	    srcX1 = srcX + w;
 	    dstX1 = dstX + w;
 	    /* start with lower right corner */
-#if 1
 	    WAIT_ENGINE_IDLE();
 	    OUTREG(NEOREG_BLTCNTL, (nAcl->tmpBltCntlFlags 
 				    | NEO_BC0_X_DEC
 				    | NEO_BC0_DST_Y_DEC 
 				    | NEO_BC0_SRC_Y_DEC));
-	    OUTREG(NEOREG_SRCSTARTOFF,
-		   ((srcY+h-1) * nAcl->Pitch) + ((srcX1+64-1) 
-						 * nAcl->PixelWidth));
-	    OUTREG(NEOREG_DSTSTARTOFF,
-		   ((dstY+h-1) * nAcl->Pitch) + ((dstX1+64-1) 
-						 * nAcl->PixelWidth));
-	    OUTREG(NEOREG_XYEXT, (h<<16) | (64 & 0xffff));
-#endif
-	    WAIT_ENGINE_IDLE();
-	    OUTREG(NEOREG_SRCSTARTOFF,
-		   ((srcY+h-1) * nAcl->Pitch) + ((srcX + w -1) 
-						 * nAcl->PixelWidth));
-	    OUTREG(NEOREG_DSTSTARTOFF,
-		   ((dstY+h-1) * nAcl->Pitch) + ((dstX + w -1) 
-						 * nAcl->PixelWidth));
-	    OUTREG(NEOREG_XYEXT, (h<<16) | (w & 0xffff));
+	    if (srcX < dstX) {
+	      COPY_64;
+	      WAIT_ENGINE_IDLE();
+	      COPY_W;
+	    } else {
+	      COPY_W;
+	      WAIT_ENGINE_IDLE();
+	      COPY_64;
+	    }
+#undef COPY_W
+#undef COPY_64
 	} else {
 	    /* start with lower right corner */
 	    WAIT_ENGINE_IDLE();
@@ -417,6 +452,7 @@ Neo2200SubsequentScreenToScreenCopyBroken(ScrnInfoPtr pScrn,
     }
 }
 
+#endif /* NOT_BROKEN */
 
 static void
 Neo2200SetupForSolidFillRect(ScrnInfoPtr pScrn, int color, int rop,
@@ -505,6 +541,7 @@ Neo2200SubsequentScanlineCPUToScreenColorExpandFill(ScrnInfoPtr pScrn,
 {
     NEOPtr nPtr = NEOPTR(pScrn);
     NEOACLPtr nAcl = NEOACLPTR(pScrn);
+
 #ifdef NEO_DO_CLIPPING
         w = (w + 31) & ~31;
 #else

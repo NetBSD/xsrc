@@ -2,7 +2,7 @@
  *  video4linux Xv Driver 
  *  based on Michael Schimek's permedia 2 driver.
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/v4l/v4l.c,v 1.25 2001/05/04 19:05:49 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/v4l/v4l.c,v 1.29 2001/10/31 22:50:29 tsi Exp $ */
 
 #include "videodev.h"
 #include "xf86.h"
@@ -207,6 +207,8 @@ static void V4lQueryBestSize(ScrnInfoPtr pScrn, Bool motion,
 
 static int V4lOpenDevice(PortPrivPtr pPPriv, ScrnInfoPtr pScrn)
 {
+    static int first = 1;
+
     if (-1 == V4L_FD) {
 	V4L_FD = open(V4L_NAME, O_RDWR, 0);
 
@@ -215,7 +217,12 @@ static int V4lOpenDevice(PortPrivPtr pPPriv, ScrnInfoPtr pScrn)
 	pPPriv->rgb_fbuf.depth        = pScrn->bitsPerPixel;
 	pPPriv->rgb_fbuf.bytesperline = pScrn->displayWidth * ((pScrn->bitsPerPixel + 7)/8);
 	pPPriv->rgb_fbuf.base         = (pointer)(pScrn->memPhysBase + pScrn->fbOffset);
-	
+	if (first) {
+	    first = 0;
+	    xf86DrvMsgVerb(pScrn->scrnIndex, X_INFO, 2,
+			 "v4l: memPhysBase=%p\n", pScrn->memPhysBase);
+	}
+
 	switch (pScrn->bitsPerPixel) {
 	case 16:
 	    if (pScrn->weight.green == 5) {
@@ -459,7 +466,9 @@ V4lPutStill(ScrnInfoPtr pScrn,
     short vid_w, short vid_h, short drw_w, short drw_h,
     RegionPtr clipBoxes, pointer data)
 {
+#if 0
     PortPrivPtr pPPriv = (PortPrivPtr) data;  
+#endif
 
     DEBUG(xf86DrvMsgVerb(pScrn->scrnIndex, X_INFO, 2, "Xv/PS\n"));
 
@@ -468,7 +477,7 @@ V4lPutStill(ScrnInfoPtr pScrn,
 }
 
 static void
-V4lStopVideo(ScrnInfoPtr pScrn, pointer data, Bool exit)
+V4lStopVideo(ScrnInfoPtr pScrn, pointer data, Bool shutdown)
 {
     PortPrivPtr pPPriv = (PortPrivPtr) data;  
     int zero=0;
@@ -478,9 +487,9 @@ V4lStopVideo(ScrnInfoPtr pScrn, pointer data, Bool exit)
 	      "Xv/StopVideo called with video already off\n"));
 	return;
     }
-    DEBUG(xf86DrvMsgVerb(pScrn->scrnIndex, X_INFO, 2, "Xv/StopVideo exit=%d\n",exit));
+    DEBUG(xf86DrvMsgVerb(pScrn->scrnIndex, X_INFO, 2, "Xv/StopVideo shutdown=%d\n",shutdown));
 
-    if (!exit) {
+    if (!shutdown) {
 	/* just reclipping, we have to stop DMA transfers to the visible screen */
 	if (VIDEO_RGB == pPPriv->VideoOn) {
 	    if (-1 == ioctl(V4L_FD, VIDIOCCAPTURE, &zero))
@@ -857,6 +866,7 @@ V4LInit(ScrnInfoPtr pScrn, XF86VideoAdaptorPtr **adaptors)
 	if (!pPPriv)
 	    return FALSE;
 	memset(pPPriv,0,sizeof(PortPrivRec));
+	pPPriv->nr = d;
 
 	/* check device */
 	if (-1 == ioctl(fd,VIDIOCGCAP,&pPPriv->cap) ||

@@ -86,9 +86,9 @@ glMatrixMode(GL_MODELVIEW);
 /* Draw the scene */
 .Ee
 .SH SEE ALSO
-\f3glGet\fP,
-\f3glLoadIndentity\fP, 
-\f3glMultMatrix\fP, 
-\f3glRenderMode\fP,
-\%\f3gluPerspective\fP
+\f3glGet(3G)\fP,
+\f3glLoadIndentity(3G)\fP, 
+\f3glMultMatrix(3G)\fP, 
+\f3glRenderMode(3G)\fP,
+\%\f3gluPerspective(3G)\fP
 

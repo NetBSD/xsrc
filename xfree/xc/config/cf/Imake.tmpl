@@ -5,7 +5,7 @@ XCOMM
 XCOMM
 XCOMM
 XCOMM
-XCOMM $XFree86: xc/config/cf/Imake.tmpl,v 3.102 2001/04/26 21:09:38 dawes Exp $
+XCOMM $XFree86: xc/config/cf/Imake.tmpl,v 3.116 2002/01/15 21:22:33 keithp Exp $
 XCOMM ----------------------------------------------------------------------
 
 /*
@@ -210,6 +210,14 @@ XCOMM the platform-specific parameters - edit site.def to change
 #define BuildRman YES
 #endif
 
+#ifndef HasGperf
+#define HasGperf		NO
+#endif
+
+#ifndef GperfCmd
+#define GperfCmd		gperf
+#endif
+
 #ifndef RmanCmd
 #if BuildRman
 #ifdef UseInstalled		/* assume BINDIR in path */
@@ -339,6 +347,9 @@ XCOMM the platform-specific parameters - edit site.def to change
 #define HasVFork		YES
 #endif
 #endif
+#ifndef HasSetProcTitle
+#define HasSetProcTitle		NO
+#endif
 #ifndef HasSetUserContext
 #define HasSetUserContext	NO
 #endif
@@ -390,7 +401,7 @@ XCOMM the platform-specific parameters - edit site.def to change
 #define ByteOrder		X_LITTLE_ENDIAN
 #elif defined(ia64Architecture)
 #define ByteOrder		X_LITTLE_ENDIAN
-#elif defined(SparcArchitecture)
+#elif defined(SparcArchitecture) || defined(Sparc64Architecture)
 #define ByteOrder		X_BIG_ENDIAN
 #elif defined(AlphaArchitecture)
 #define ByteOrder		X_LITTLE_ENDIAN
@@ -400,9 +411,19 @@ XCOMM the platform-specific parameters - edit site.def to change
 #define ByteOrder		X_BIG_ENDIAN
 #elif defined(Mc88000Architecture)
 #define ByteOrder		X_BIG_ENDIAN
+#elif defined(s390Architecture)
+#define ByteOrder		X_BIG_ENDIAN
+#elif defined(s390xArchitecture)
+#define ByteOrder		X_BIG_ENDIAN
 #elif defined(Arm32Architecture)
 #define ByteOrder		X_LITTLE_ENDIAN
 #elif defined(PpcArchitecture)
+#define ByteOrder		X_BIG_ENDIAN
+#elif defined(HPArchitecture)
+#define ByteOrder		X_BIG_ENDIAN
+#elif defined(SuperHArchitecture)
+#define ByteOrder		X_LITTLE_ENDIAN
+#elif defined(SuperHebArchitecture)
 #define ByteOrder		X_BIG_ENDIAN
 #endif
 #endif /* ByteOrder */
@@ -449,6 +470,9 @@ XCOMM the platform-specific parameters - edit site.def to change
 #endif
 #ifndef HasZlib
 #define HasZlib			NO
+#endif
+#ifndef OsNeedZlibHeaders
+#define OsNeedZlibHeaders	!HasZlib
 #endif
 #if !HasZlib		/* if OS doesn't have it, we'll build it */
 #undef GzipLibrary	/* GzipLibrary was valid only if HasZlib */
@@ -616,6 +640,17 @@ TCLIBDIR = TclLibDir
 #define TclLibrary
 #endif
 #endif
+/*
+ * Libtool has two different behaviours for version numbers.
+ * On platforms which support a minor number, the library
+ * version is (version - minor).minor, on those that don't,
+ * the version if version.0.  Linux and Darwin support minor
+ * numbers; some BSDs do as well.  Set this to YES if libtool
+ * uses minor numbers on your platform.
+ */
+#ifndef LibtoolMinorVersions
+#define LibtoolMinorVersions	NO
+#endif
 #ifndef NeedConstPrototypes
 #define NeedConstPrototypes	NO
 #endif
@@ -640,6 +675,10 @@ TCLIBDIR = TclLibDir
 #endif
 #ifndef UseGccMakeDepend		/* use slowish but correct gcc -M */
 #define UseGccMakeDepend NO
+#endif
+
+#ifndef CaseSensitiveFileSystem
+#define CaseSensitiveFileSystem YES
 #endif
 
 /* DefaultUsrBin is independent of ProjectRoot.
@@ -746,6 +785,9 @@ TCLIBDIR = TclLibDir
 #endif
 #ifndef DriverManDir
 #define DriverManDir $(MANSOURCEPATH)$(DRIVERMANSUFFIX)
+#endif
+#ifndef AppLoadDefs
+#define AppLoadDefs -D__apploaddir__=$(XAPPLOADDIR)
 #endif
 #ifndef FileManDefs
 #define FileManDefs -D__filemansuffix__=$(FILEMANSUFFIX)
@@ -1086,7 +1128,10 @@ TCLIBDIR = TclLibDir
 #define RmCmd rm -f
 #endif
 
-/* Module cross-compile stuff */
+/*
+ * Module cross-compile stuff.  By default they are defined to be exactly the
+ * same as the non-module versions.
+ */
 #ifndef ModuleCcCmd
 #define ModuleCcCmd CcCmd
 #endif
@@ -1094,7 +1139,7 @@ TCLIBDIR = TclLibDir
 #define ModuleCppCmd CppCmd
 #endif
 #ifndef ModuleCFlags
-#define ModuleCFlags $(CDEBUGFLAGS) $(CCOPTIONS) $(THREAD_CFLAGS) $(ALLDEFINES)
+#define ModuleCFlags $(CFLAGS)
 #endif
 #ifndef ModuleAsCmd
 #define ModuleAsCmd AsCmd
@@ -1118,7 +1163,7 @@ TCLIBDIR = TclLibDir
 #define NeedModuleRanlib NO
 #endif
 #ifndef ModuleRanlibCmd
-#define ModuleRanlibCmd /*won't be used unless NeedModuleRanlib is YES*/
+#define ModuleRanlibCmd RanlibCmd
 #endif
 
 #ifndef StandardIncludes	/* for platform-specifics */
@@ -1165,7 +1210,11 @@ TCLIBDIR = TclLibDir
 #endif
 #ifndef LdPreLib
 #if !defined(UseInstalled)
+#if !BuildLibraries && AlternateUsrLibDir
+#define LdPreLib -L$(BUILDLIBDIR) -L$(USRLIBDIR)
+#else
 #define LdPreLib -L$(BUILDLIBDIR)
+#endif
 #else
 #if AlternateUsrLibDir
 #define LdPreLib -L$(USRLIBDIR)
@@ -1489,6 +1538,11 @@ CXXEXTRA_INCLUDES = CplusplusExtraIncludes
        CXXDEFINES = $(CXXINCLUDES) $(CXXSTD_DEFINES) $(THREADS_CXXDEFINES) $(DEFINES) $(CXXEXTRA_DEFINES)
          CXXFLAGS = $(CXXDEBUGFLAGS) $(CXXOPTIONS) $(THREADS_CXXFLAGS) $(CXXDEFINES)
 #endif
+
+#if !BuildLibraries && AlternateIncRoot
+INSTALLED_INCLUDES = -I$(INCROOT)
+#endif
+
          COMPRESS = CompressCmd
           GZIPCMD = GzipCmd
               CPP = CppCmd $(STD_CPP_DEFINES)		/* simple filters */
@@ -1524,7 +1578,7 @@ CXXEXTRA_INCLUDES = CplusplusExtraIncludes
   DRIVERMANSUFFIX = DriverManSuffix	/* suffix for driver man pages */
      MANSRCSUFFIX = ManSrcSuffix	/* suffix for man page source */
      MANNEWSUFFIX = ManNewSuffix	/* suffix for preprocessed man source */
-          MANDEFS = FileManDefs MiscManDefs DriverManDefs ProjectManDefs $(XORGMANDEFS) $(VENDORMANDEFS)
+          MANDEFS = AppLoadDefs FileManDefs MiscManDefs DriverManDefs ProjectManDefs $(XORGMANDEFS) $(VENDORMANDEFS)
 
    COMPRESSMANCMD = CompressManCmd
 
@@ -1680,7 +1734,7 @@ MODLDCOMBINEFLAGS = ModuleLdCombineFlags
  * INCLUDES contains client-specific includes set in Imakefile
  * LOCAL_LDFLAGS contains client-specific ld flags flags set in Imakefile
  */
-      ALLINCLUDES = $(INCLUDES) $(EXTRA_INCLUDES) $(TOP_INCLUDES) $(STD_INCLUDES)
+      ALLINCLUDES = $(INCLUDES) $(EXTRA_INCLUDES) $(TOP_INCLUDES) $(INSTALLED_INCLUDES) $(STD_INCLUDES)
        ALLDEFINES = $(ALLINCLUDES) $(STD_DEFINES) $(PROTO_DEFINES) $(THREADS_DEFINES) $(MODULE_DEFINES) $(DEFINES) $(EXTRA_DEFINES)
            CFLAGS = $(CDEBUGFLAGS) $(CCOPTIONS) $(THREADS_CFLAGS) $(MODULE_CFLAGS) $(ALLDEFINES)
         LINTFLAGS = $(LINTOPTS) -DLINT $(ALLDEFINES) $(DEPEND_DEFINES)

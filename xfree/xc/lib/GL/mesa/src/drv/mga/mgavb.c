@@ -24,7 +24,7 @@
  * Authors:
  *    Keith Whitwell <keithw@valinux.com>
  */
-/* $XFree86: xc/lib/GL/mesa/src/drv/mga/mgavb.c,v 1.10 2001/04/10 16:07:51 dawes Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/mga/mgavb.c,v 1.11 2001/10/31 22:50:24 tsi Exp $ */
 
 #include "mgacontext.h"
 #include "mgavb.h"
@@ -406,7 +406,7 @@ void mgaDDPartialRasterSetup( struct vertex_buffer *VB )
 void mgaDDDoRasterSetup( struct vertex_buffer *VB )
 {
    GLcontext *ctx = VB->ctx;
-   mgaContextPtr mmesa = MGA_CONTEXT( ctx );
+/*     mgaContextPtr mmesa = MGA_CONTEXT( ctx ); */
 
    /* Can't lock, won't lock
     */

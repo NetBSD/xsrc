@@ -1,11 +1,15 @@
-/* $Xorg: xprop.c,v 1.5 2000/08/17 19:54:55 cpqbld Exp $ */
+/* $Xorg: xprop.c,v 1.6 2001/02/09 02:05:56 xorgcvs Exp $ */
 /*
 
 Copyright 1990, 1998  The Open Group
 Copyright (c) 2000  The XFree86 Project, Inc.
 
-All Rights Reserved.
-
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
+  
 The above copyright notice and this permission notice shall be included
 in all copies or substantial portions of the Software.
 
@@ -23,7 +27,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/xprop/xprop.c,v 1.10 2001/01/23 20:22:19 dawes Exp $ */
+/* $XFree86: xc/programs/xprop/xprop.c,v 1.11 2001/12/14 20:02:14 dawes Exp $ */
 
 
 #include <X11/Xlib.h>

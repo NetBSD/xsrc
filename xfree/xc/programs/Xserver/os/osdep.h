@@ -1,9 +1,13 @@
-/* $XFree86: xc/programs/Xserver/os/osdep.h,v 3.11 2001/01/17 22:37:11 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/os/osdep.h,v 3.16 2001/12/14 20:00:35 dawes Exp $ */
 /***********************************************************
 
 Copyright 1987, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -41,26 +45,10 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $Xorg: osdep.h,v 1.4 2000/08/17 19:53:41 cpqbld Exp $ */
+/* $Xorg: osdep.h,v 1.5 2001/02/09 02:05:23 xorgcvs Exp $ */
 
 #ifndef _OSDEP_H_
 #define _OSDEP_H_ 1
-
-#ifdef AMOEBA
-#include <stddef.h>
-#define port am_port_t
-#include <amoeba.h>
-#include <stdio.h>
-#include <assert.h>
-#include <semaphore.h>
-#include <circbuf.h>
-#include <exception.h>
-#include <vc.h>
-#include <fault.h>
-#include <module/signals.h>
-#include <server/x11/Xamoeba.h>
-#undef  port
-#endif
 
 #define BOTIMEOUT 200 /* in milliseconds */
 #define BUFSIZE 4096
@@ -131,21 +119,7 @@ SOFTWARE.
 #define HAS_GETDTABLESIZE
 #endif
 
-#ifndef NULL
-#define NULL 0
-#endif
-
-#ifdef AMOEBA
-#include "X.h"
-#include "misc.h"
-
-#define FamilyAmoeba 33
-
-extern char             *XServerHostName;       /* X server host name */
-extern char             *XTcpServerName;        /* TCP/IP server name */
-extern int              maxClient;              /* Highest client# */
-extern int              nNewConns;              /* # of new clients */
-#endif /* AMOEBA */
+#include <stddef.h>
 
 typedef Bool (*ValidatorFunc)(ARRAY8Ptr Auth, ARRAY8Ptr Data, int packet_type);
 typedef Bool (*GeneratorFunc)(ARRAY8Ptr Auth, ARRAY8Ptr Data, int packet_type);
@@ -185,6 +159,9 @@ typedef struct _LbxProxy *OsProxyPtr;
 #endif
 
 struct _osComm;
+
+#define AuthInitArgs void
+typedef void (*AuthInitFunc) (AuthInitArgs);
 
 #define AuthAddCArgs unsigned short data_length, char *data, XID id
 typedef int (*AuthAddCFunc) (AuthAddCArgs);
@@ -308,6 +285,7 @@ extern int  XdmResetCookie    (AuthRstCArgs);
 
 /* in rpcauth.c */
 #ifdef SECURE_RPC
+extern void SecureRPCInit     (AuthInitArgs);
 extern XID  SecureRPCCheck    (AuthCheckArgs);
 extern XID  SecureRPCToID     (AuthToIDArgs);
 extern int  SecureRPCAdd      (AuthAddCArgs);
@@ -355,8 +333,7 @@ extern void XdmcpRegisterAuthentication (
 extern int XdmcpCheckAuthentication (ARRAY8Ptr Name, ARRAY8Ptr Data, int packet_type);
 extern int XdmcpAddAuthorization (ARRAY8Ptr name, ARRAY8Ptr data);
 
-#if 0
+struct sockaddr_in;
 extern void XdmcpRegisterBroadcastAddress (struct sockaddr_in *addr);
-#endif
 
 #endif /* _OSDEP_H_ */

@@ -6,10 +6,10 @@
 
 <title>Installation Details for XFree86&trade; &relvers;
 <author>The XFree86 Project, Inc
-<date>1 June 2001
+<date>16 January 2002
 
 <ident>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/Install.sgml,v 1.11.2.2 2001/06/01 18:09:48 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/Install.sgml,v 1.13 2002/01/16 20:38:44 dawes Exp $
 </ident>
 
 <abstract>
@@ -50,16 +50,24 @@ We provide XFree86 &relvers; <![ %updaterel [update ]]>binaries for a range
 of operating systems at our
 <![ %snapshot; [
 <url name="ftp site"
-url="ftp://ftp.xfree86.org/pub/XFree86/snapshots/&relvers/binaries/">.
+url="ftp://ftp.xfree86.org/pub/XFree86/snapshots/&relvers/binaries/">
 ]]>
 <![ %release; [
 <url name="ftp site"
-url="ftp://ftp.xfree86.org/pub/XFree86/&relvers/binaries/">.
+url="ftp://ftp.xfree86.org/pub/XFree86/&relvers/binaries/">
 ]]>
-Often during releases our ftp site is heavily loaded.  Instead of
-downloading directly from us we recommend that instead you use one of
-our mirror sites.  Another advantage of using our mirror sites is that
-some of them support http access (ours does not).
+and our
+<![ %snapshot; [
+<url name="web site"
+url="http://ftp.xfree86.org/pub/XFree86/snapshots/&relvers/binaries/">.
+]]>
+<![ %release; [
+<url name="web site"
+url="http://ftp.xfree86.org/pub/XFree86/&relvers/binaries/">.
+]]>
+Often during releases our site is heavily loaded.  Instead of downloading
+directly from us we recommend that instead you use one of our mirror
+sites.
 
 <p>
 Our binaries are organized by sub-directories which correspond to each
@@ -104,6 +112,19 @@ distribution.
   <item>Always use the version of the Xinstall.sh script that's provided
 	with the release you're installing.  Older versions of the script
 	may not install newer releases correctly.
+
+  <item>If the binary distribution reported by the Xinstall.sh script
+	isn't present on our site, then there are two possibilities.
+	The first is that it hasn't been prepared and uploaded yet.
+	This is likely if you are looking soon after the release date.
+	The second possibility is that we won't have it available at
+	all for this release.  This is likely if it's still not there
+	about two weeks after the release date.  Check <url name="here"
+	url="http://www.xfree86.org/&relvers;/UPDATES.html"> for
+	information about updates to our binary distributions, and <url
+	name="here" url="http://www.xfree86.org/&relvers;/ERRATA.html">
+	for errata related to this release.
+
 </itemize>
 
 Once you're run the <tt>Xinstall.sh</tt> script and found which binary
@@ -173,7 +194,7 @@ the ones you want to install.
 5.   Xvfb.tgz       Virtual framebuffer X server
 6.   Xf100.tgz      100dpi fonts
 7.   Xfcyr.tgz      Cyrillic fonts
-8.   Xfscl.tgz      Scalable fonts (Speedo and Type1)
+8.   Xfscl.tgz      Scalable fonts (Speedo, Type1 and TrueType)
 9.   Xhtml.tgz      HTML version of the documentation
 10.  Xps.tgz        PostScript version of the documentation
 11.  Xjdoc.tgz      Documentation in Japanese
@@ -357,10 +378,11 @@ especially if you run xdm (or equivalent) or the font server (xfs).
 <![ %fullrel [
 <sect>Installing XFree86 &relvers; manually<label id="manual-install">
 <p>
-This section describes how to manually install the XFree86 &relvers; binary
-distributions.  You should only use this method if you know what you're
-doing.  The information here covers some common cases, but not every
-possible case.
+This section contains information about manually installing the XFree86
+&relvers; binary distributions.  You should only use this method if you
+know what you're doing.  The information here covers some common cases,
+but not every possible case.  It also may not be complete or up to date.
+Use at your own risk.
 
 Put all of the downloaded files into a single directory (choose some
 temporary location with enough space).  Become the super user (root).

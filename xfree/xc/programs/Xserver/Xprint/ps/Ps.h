@@ -1,9 +1,12 @@
-/* $Xorg: Ps.h,v 1.3 2000/08/17 19:48:09 cpqbld Exp $ */
+/* $Xorg: Ps.h,v 1.5 2001/02/09 02:04:35 xorgcvs Exp $ */
 /*
 
 Copyright 1996, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -70,7 +73,7 @@ in this Software without prior written authorization from The Open Group.
 **    *********************************************************
 ** 
 ********************************************************************/
-/* $XFree86: xc/programs/Xserver/Xprint/ps/Ps.h,v 1.6 2001/01/17 22:36:31 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/Xprint/ps/Ps.h,v 1.13 2001/12/21 21:02:05 dawes Exp $ */
 
 #ifndef _PS_H_
 #define _PS_H_
@@ -84,24 +87,11 @@ in this Software without prior written authorization from The Open Group.
 #include "scrnintstr.h"
 #include "dix.h"
 
-/*
-#include "X.h" 
-#include "Xproto.h"
-#include "Xatom.h"
-#include "misc.h"
-#include "screenint.h"
-#include "colormapst.h"
-#include "windowstr.h"
-#include "propertyst.h"
-#include "servermd.h"*/    /* needed for IMAGE_BUFSIZE */
-
 #include "PsDef.h"
 #include "psout.h"
 
-#define _XP_PRINT_SERVER_
-#include "Print.h"
-#include "extensions/Printstr.h"
-#undef _XP_PRINT_SERVER_
+#include <X11/extensions/Print.h>
+#include <X11/extensions/Printstr.h>
 
 #include "miscstruct.h"
 #include "fontstruct.h"
@@ -119,8 +109,8 @@ typedef char *XPointer;
 #endif
 
 #include "misc.h"
-#include <Xfuncproto.h>
-#include "../Xresource.h"
+#include <X11/Xfuncproto.h>
+#include <X11/Xresource.h>
 #include "attributes.h"
 
 /*
@@ -301,7 +291,6 @@ typedef struct
 
 extern Bool InitializePsDriver(int ndx, ScreenPtr pScreen, int argc,
     char **argv);
-static Bool         PsDestroyContext(XpContextPtr pCon);
 extern XpContextPtr PsGetContextFromWindow(WindowPtr win);
 
 /*
@@ -325,9 +314,6 @@ extern int PsGetDocumentData(XpContextPtr pCon, ClientPtr client,
  */
 
 extern Bool PsCreateGC(GCPtr pGC);
-static int  PsGetDrawablePrivateStuff(DrawablePtr pDrawable, GC *gc,
-                                      unsigned long *valid, PsOutPtr *psOut,
-                                      ColormapPtr *cMap);
 extern int  PsUpdateDrawableGC(GCPtr pGC, DrawablePtr pDrawable,
                                PsOutPtr *psOut, ColormapPtr *cMap);
 extern void PsValidateGC(GCPtr pGC, unsigned long changes, DrawablePtr pDrawable);
@@ -380,6 +366,9 @@ extern void PsPutScaledImage(DrawablePtr pDrawable, GCPtr pGC, int depth,
 extern void PsPutImage(DrawablePtr pDrawable, GCPtr pGC, int depth,
                        int x, int y, int w, int h, int leftPad, int format,
                        char *pImage);
+extern void PsPutImageMask(DrawablePtr pDrawable, GCPtr pGC, int depth,
+                           int x, int y, int w, int h, int leftPad, int format,
+                           char *pImage);
 extern RegionPtr PsCopyArea(DrawablePtr pSrc, DrawablePtr pDst, GCPtr pGC,
                             int srcx, int srcy, int width, int height,
                             int dstx, int dsty);
@@ -513,5 +502,15 @@ extern void PsCopyDisplayList(PixmapPtr src, PixmapPtr dst, int xoff,
 extern PsElmPtr PsCreateFillElementList(PixmapPtr pix, int *nElms);
 extern PsElmPtr PsCloneFillElementList(int nElms, PsElmPtr elms);
 extern void PsDestroyFillElementList(int nElms, PsElmPtr elms);
+
+/*
+ *  Functions in PsCache.c
+ */
+
+#ifdef BM_CACHE
+extern int PsBmIsImageCached(int gWidth, int gHeight, char *pBuffer);
+extern int PsBmPutImageInCache(int gWidth, int gHeight, char *pBuffer);
+extern void PsBmClearImageCache(void);
+#endif
 
 #endif  /* _PS_H_ */

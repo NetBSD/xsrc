@@ -1,12 +1,12 @@
-                     README for XFree86 4.1.0 on NetBSD
+                     README for XFree86 4.2.0 on NetBSD
 
 Rich  Murphey, David Dawes, Marc  Wandschneider, Mark  Weaver, Matthieu Herrb
 
-                       Last modified on: 3 March 2001
+                      Last modified on: 16 January 2002
 
 1.  What and Where is XFree86?
 
-XFree86 is the Open Source port of X.Org's X11R6.4 release that supports sev-
+XFree86 is the Open Source port of X.Org's X11R6.6 release that supports sev-
 eral UNIX(R) and UNIX-like (such as Linux, the BSDs and Solaris x86) operat-
 ing systems on Intel and other platforms.
 
@@ -14,10 +14,10 @@ See the Copyright Notice.
 
 The sources for XFree86 are available by anonymous ftp from:
 
-ftp://ftp.XFree86.org/pub/XFree86/4.1.0
+ftp://ftp.XFree86.org/pub/XFree86/4.2.0
 
 Binaries for NetBSD 1.4 and later are available from:
-ftp://ftp.XFree86.org/pub/XFree86/4.1.0/binaries/NetBSD
+ftp://ftp.XFree86.org/pub/XFree86/4.2.0/binaries/NetBSD
 
 A list of mirror sites is provided by http://www.xfree86.org/MIRRORS.shtml
 
@@ -33,7 +33,19 @@ if you have comments or suggestions about this file and we'll revise it.
 
 3.  New OS dependent features
 
-3.1  New OS dependent features in 4.0.2
+See the Release Notes for non-OS dependent new features in XFree86 4.2.0.
+
+3.1  New OS dependent features in 4.2.0
+
+   o Support of client side on NetBSD/sparc64
+
+   o Support for in-kernel MTRR and AGP support in NetBSD 1.5Y
+
+3.2  New OS dependent features in 4.1.0
+
+   o Enable wide characters support in NetBSD 1.5P and later.
+
+3.3  New OS dependent features in 4.0.2
 
    o A fix for libXmu OS detection which was broken since unix isn't defined
      anymore by the C preprocessor.
@@ -46,22 +58,22 @@ if you have comments or suggestions about this file and we'll revise it.
 
    o Add /usr/pkg/bin to the default user path.
 
-3.2  New OS dependent features in 4.0.1
+3.4  New OS dependent features in 4.0.1
 
    o Support for NetBSD 1.5_ALPHA
 
    o The Xsun server can be built on NetBSD/sparc
 
-3.3  New OS dependent features in 4.0
+3.5  New OS dependent features in 4.0
 
    o Preliminary APM support.
 
-3.4  New OS dependent features in 3.9.18
+3.6  New OS dependent features in 3.9.18
 
    o Soft-booting secondary cards through the int10 BIOS interface is now
      possible using the x86emu real mode emulator.
 
-3.5  New OS dependent features in 3.9.17
+3.7  New OS dependent features in 3.9.17
 
    o Support for silken mouse with the wsmouse protocol has been added.
 
@@ -99,7 +111,7 @@ the xvidtune utility.
 
 5.1  About mouse configuration
 
-XFree86 4.1.0 has support for the mouse driver included in the wscons console
+XFree86 4.2.0 has support for the mouse driver included in the wscons console
 driver introduced by NetBSD 1.4. Specify ``wsmouse'' as the protocol and
 ``/dev/wsmouse0'' as the device in /etc/X11/XF86Config if you're using NetBSD
 1.4 or later with a PS/2 mouse.
@@ -217,14 +229,14 @@ By default NetBSD include the BSD 4.4 kernel security feature that disable
 access to the /dev/mem device when in multi-users mode. But XFree86 servers
 can take advantage (or require) linear access to the display memory.
 
-Most XFree86 4.1.0 card drivers require linear memory access.  There are two
+Most XFree86 4.2.0 card drivers require linear memory access.  There are two
 ways to allow XFree86 to access linear memory:
 
 The first way is to disable the kernel security feature by adding ``option
 INSECURE'' in the kernel configuration file and build a new kernel.
 
 The second way is to install the aperture driver, included in source form in
-xc/programs/Xserver/hw/xfree86/etc/apNetBSD.shar in the XFree86 4.1.0 source
+xc/programs/Xserver/hw/xfree86/etc/apNetBSD.shar in the XFree86 4.2.0 source
 distribution. Unpack it in a new directory of your choice by running:
 
        sh apNetBSD.shar
@@ -335,9 +347,6 @@ XFree86 source tree, with some local modifications. You may want to start
 with this tree to rebuild from sources.  The NetBSD xsrc source tree is
 available at: ftp://ftp.netbsd.org/pub/NetBSD/NetBSD-current/xsrc/
 
-There's an experimental patch by Tsubai Masanari to make XFree86 4.0.1 work
-on NetBSD/macppc at: ftp://nandra.iri.co.jp/pub/NetBSD/macppc/XFree86/README.
-
 9.  Building New X Clients
 
 The easiest way to build a new client (X application) is to use xmkmf if an
@@ -368,7 +377,7 @@ Many thanks to all people who contributed to make XFree86 work on *BSD, in
 particular, David Dawes, Pace Willison, Amancio Hasty, Christoph Robitschko,
 Nate Williams, Rod Grimes, Jack Velte and Michael Smith.
 
-     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/NetBSD.sgml,v 3.60.2.1 2001/06/01 18:09:48 dawes Exp $
+     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/NetBSD.sgml,v 3.63 2002/01/16 22:35:18 herrb Exp $
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.NetBSD,v 3.76.2.1 2001/06/01 18:26:44 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.NetBSD,v 3.80 2002/01/16 22:37:23 herrb Exp $

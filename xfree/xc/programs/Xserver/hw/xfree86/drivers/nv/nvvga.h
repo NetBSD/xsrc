@@ -20,14 +20,12 @@
  * SOFTWARE.
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/nv/nvvga.h,v 1.1 1999/08/01 07:21:00 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/nv/nvvga.h,v 1.2 2001/11/19 15:33:41 tsi Exp $ */
 
 #ifndef __NVVGA_H__
 #define __NVVGA_H__
 
-#ifndef __RIVA_HW_H__
 #include "riva_hw.h"
-#endif
 
 #define PALETTE_SIZE 256
 

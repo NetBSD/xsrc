@@ -21,7 +21,7 @@
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  */
-/* $XFree86: xc/programs/Xserver/lbx/lbxopts.c,v 1.5 2001/01/17 22:37:00 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/lbx/lbxopts.c,v 1.6 2001/10/28 03:34:12 tsi Exp $ */
 
 #ifdef OPTDEBUG
 #include <stdio.h>
@@ -420,8 +420,8 @@ LbxImageCompOpt (Bool	         pixmap,
     unsigned char *preplyStart = preply;
     int numMethods = *popt++;
     unsigned char *myIndices, *hisIndices;
-    unsigned *retFormats;
-    int **retDepths;
+    unsigned int *retFormats = NULL;
+    int **retDepths = NULL;
     int replyCount = 0;
     int status, i, j;
 
@@ -484,8 +484,8 @@ LbxImageCompOpt (Bool	         pixmap,
 
     for (i = 0; i < numMethods; i++)
     {
-	unsigned formatMask, newFormatMask;
-	int depthCount, *depths, len;
+	unsigned int formatMask = 0, newFormatMask = 0;
+	int depthCount, *depths = NULL, len;
 	int freeDepths;
 	char *methodName;
 

@@ -1,9 +1,13 @@
-/* $Xorg: windowstr.h,v 1.3 2000/08/17 19:53:31 cpqbld Exp $ */
+/* $Xorg: windowstr.h,v 1.4 2001/02/09 02:05:16 xorgcvs Exp $ */
 /***********************************************************
 
 Copyright 1987, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -41,16 +45,12 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/programs/Xserver/include/windowstr.h,v 1.4 2001/01/17 22:36:58 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/include/windowstr.h,v 1.6 2001/12/14 19:59:57 dawes Exp $ */
 
 #ifndef WINDOWSTRUCT_H
 #define WINDOWSTRUCT_H
 
-#ifndef __CYGWIN__
 #include "window.h"
-#else
-#include "xxwindow.h"
-#endif
 #include "pixmapstr.h"
 #include "regionstr.h"
 #include "cursor.h"

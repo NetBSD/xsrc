@@ -24,7 +24,7 @@ OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
 THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ********************************************************/
-/* $XFree86: xc/programs/Xserver/xkb/xkb.c,v 3.14 2001/01/17 22:37:14 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/xkb/xkb.c,v 3.15 2001/08/23 14:33:25 alanh Exp $ */
 
 #include <stdio.h>
 #include "X.h"
@@ -232,7 +232,7 @@ ProcXkbSelectEvents(client)
 	client->mapNotifyMask&= ~stuff->affectMap;
 	client->mapNotifyMask|= (stuff->affectMap&stuff->map);
     }
-    if (stuff->affectWhich&(~XkbMapNotifyMask)==0) 
+    if ((stuff->affectWhich&(~XkbMapNotifyMask))==0) 
 	return client->noClientException;
 
     masks = XkbFindClientResource((DevicePtr)dev,client);
@@ -1947,7 +1947,7 @@ register XkbServerMapPtr	server = xkb->server;
 register unsigned	 	i;
 unsigned			first,last;
 
-    if ((req->present&XkbKeyBehaviorsMask==0)||(req->nKeyBehaviors<1)) {
+    if (((req->present&XkbKeyBehaviorsMask)==0)||(req->nKeyBehaviors<1)) {
 	req->present&= ~XkbKeyBehaviorsMask;
 	req->nKeyBehaviors= 0;
 	return 1;
@@ -3324,9 +3324,9 @@ ProcXkbGetNamedIndicator(client)
 {
     DeviceIntPtr 		dev;
     xkbGetNamedIndicatorReply 	rep;
-    register int		i;
+    register int		i = 0;
     XkbSrvLedInfoPtr		sli;
-    XkbIndicatorMapPtr		map;
+    XkbIndicatorMapPtr		map = NULL;
     Bool			supported;
 
     REQUEST(xkbGetNamedIndicatorReq);
@@ -3437,7 +3437,7 @@ ProcXkbSetNamedIndicator(client)
     DeviceIntPtr 		dev,kbd;
     XkbIndicatorMapPtr		map;
     XkbSrvLedInfoPtr 		sli;
-    register int		led;
+    register int		led = 0;
     unsigned			extDevReason;
     unsigned			statec,namec,mapc;
     XkbEventCauseRec		cause;
@@ -6915,9 +6915,9 @@ XkbExtensionInit()
 {
     ExtensionEntry *extEntry;
 
-    if (extEntry = AddExtension(XkbName, XkbNumberEvents, XkbNumberErrors,
+    if ((extEntry = AddExtension(XkbName, XkbNumberEvents, XkbNumberErrors,
 				 ProcXkbDispatch, SProcXkbDispatch,
-				 XkbResetProc, StandardMinorOpcode)) {
+				 XkbResetProc, StandardMinorOpcode))) {
 	XkbReqCode = (unsigned char)extEntry->base;
 	XkbEventBase = (unsigned char)extEntry->eventBase;
 	XkbErrorBase = (unsigned char)extEntry->errorBase;

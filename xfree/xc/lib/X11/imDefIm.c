@@ -31,7 +31,7 @@ OF THIS SOFTWARE.
                                makoto@sm.sony.co.jp
 
 ******************************************************************/
-/* $XFree86: xc/lib/X11/imDefIm.c,v 1.8 2001/01/17 19:41:51 dawes Exp $ */
+/* $XFree86: xc/lib/X11/imDefIm.c,v 1.9 2001/10/28 03:32:34 tsi Exp $ */
 
 #include <X11/Xatom.h>
 #define NEED_EVENTS
@@ -391,7 +391,7 @@ _XimPreConnect(im)
     unsigned long   bytes_after;
     unsigned char  *prop_return;
     Atom	   *atoms;
-    Window	    im_window;
+    Window	    im_window = 0;
     register int    i;
 
     if((imserver = XInternAtom(display, XIM_SERVERS, True)) == (Atom)None)
@@ -1460,7 +1460,7 @@ _XimProtoGetIMValues(xim, arg)
     INT16		 len;
     CARD32		 reply32[BUFSIZE/4];
     char		*reply = (char *)reply32;
-    XPointer		 preply;
+    XPointer		 preply = NULL;
     int			 buf_size;
     int			 ret_code;
     char		*makeid_name;
@@ -1626,9 +1626,9 @@ _XimGetEncoding(im, buf, name, name_len, detail, detail_len)
     CARD16	 category = buf[0];
     CARD16	 idx = buf[1];
     int		 len;
-    XlcConv	 ctom_conv;
-    XlcConv	 ctow_conv;
-    XlcConv	 ctoutf8_conv;
+    XlcConv	 ctom_conv = NULL;
+    XlcConv	 ctow_conv = NULL;
+    XlcConv	 ctoutf8_conv = NULL;
     XlcConv	 conv;
     XimProtoPrivateRec *private = &im->private.proto;
 

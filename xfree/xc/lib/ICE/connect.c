@@ -1,10 +1,14 @@
-/* $Xorg: connect.c,v 1.3 2000/08/17 19:44:12 cpqbld Exp $ */
+/* $Xorg: connect.c,v 1.4 2001/02/09 02:03:26 xorgcvs Exp $ */
 /******************************************************************************
 
 
 Copyright 1993, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -22,7 +26,7 @@ in this Software without prior written authorization from The Open Group.
 
 Author: Ralph Mor, X Consortium
 ******************************************************************************/
-/* $XFree86: xc/lib/ICE/connect.c,v 3.6 2001/01/17 19:41:29 dawes Exp $ */
+/* $XFree86: xc/lib/ICE/connect.c,v 3.9 2001/12/14 19:53:35 dawes Exp $ */
 
 #include <X11/ICE/ICElib.h>
 #include "ICElibint.h"
@@ -31,23 +35,7 @@ Author: Ralph Mor, X Consortium
 
 static XtransConnInfo ConnectToPeer();
 
-#ifndef X_NOT_STDC_ENV
 #define Strstr strstr
-#else
-static char *Strstr(s1, s2)
-    char *s1, *s2;
-{
-    int n1, n2;
-
-    n1 = strlen(s1);
-    n2 = strlen(s2);
-    for ( ; n1 >= n2; s1++, n1--) {
-	if (!strncmp(s1, s2, n2))
-	    return s1;
-    }	
-    return NULL;
-}
-#endif
 
 IceConn
 IceOpenConnection (networkIdsList, context, mustAuthenticate, majorOpcodeCheck,
@@ -427,9 +415,6 @@ char 	   *errorStringRet;
 
     if (iceConn && _IceWatchProcs)
     {
-#ifdef MINIX
-    _IceTransSetOption(iceConn->trans_conn, TRANS_NONBLOCKING, 1);
-#endif
 	/*
 	 * Notify the watch procedures that an iceConn was opened.
 	 */

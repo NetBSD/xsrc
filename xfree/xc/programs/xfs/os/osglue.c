@@ -1,8 +1,12 @@
-/* $Xorg: osglue.c,v 1.3 2000/08/17 19:54:23 cpqbld Exp $ */
+/* $Xorg: osglue.c,v 1.4 2001/02/09 02:05:44 xorgcvs Exp $ */
 /*
 Copyright 1987, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -43,7 +47,7 @@ in this Software without prior written authorization from The Open Group.
  * $NCDXorg: @(#)osglue.c,v 4.6 1991/07/09 14:07:30 lemke Exp $
  *
  */
-/* $XFree86: xc/programs/xfs/os/osglue.c,v 3.10 2001/01/17 23:45:33 dawes Exp $ */
+/* $XFree86: xc/programs/xfs/os/osglue.c,v 3.15 2001/12/14 20:01:41 dawes Exp $ */
 
 /*
  * this is miscellaneous OS specific stuff.
@@ -54,6 +58,7 @@ in this Software without prior written authorization from The Open Group.
 #include <X11/Xtrans.h>
 #include "osstruct.h"
 #include <stdio.h>
+#include <stdlib.h>
 #define  XK_LATIN1
 #include <X11/keysymdef.h>
 #ifdef __EMX__

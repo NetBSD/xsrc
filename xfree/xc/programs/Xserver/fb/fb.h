@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/programs/Xserver/fb/fb.h,v 1.26 2001/03/30 02:15:19 keithp Exp $
+ * $XFree86: xc/programs/Xserver/fb/fb.h,v 1.32 2001/10/28 03:33:08 tsi Exp $
  *
  * Copyright © 1998 Keith Packard
  *
@@ -102,7 +102,9 @@
 typedef unsigned __int64    FbBits;
 # else
 #  if defined(__alpha__) || defined(__alpha) || \
-      defined(ia64) || defined(__ia64__)
+      defined(ia64) || defined(__ia64__) || \
+      defined(__sparc64__) || \
+      defined(__s390x__)
 typedef unsigned long	    FbBits;
 #  else
 typedef unsigned long long  FbBits;
@@ -456,16 +458,16 @@ extern void fbSetBits (FbStip *bits, int stride, FbStip data);
 #define FbLaneCase2(n,a,o)  ((n) == 0x03 ? \
 			     (*(CARD16 *) ((a)+FbPatternOffset(o,CARD16)) = \
 			      fgxor) : \
-			     (FbLaneCase1((n)&1,a,o), \
-			      FbLaneCase1((n)>>1,a,(o)+1)))
+			     ((void)FbLaneCase1((n)&1,a,o), \
+				    FbLaneCase1((n)>>1,a,(o)+1)))
 #define FbLaneCase4(n,a,o)  ((n) == 0x0f ? \
 			     (*(CARD32 *) ((a)+FbPatternOffset(o,CARD32)) = \
 			      fgxor) : \
-			     (FbLaneCase2((n)&3,a,o), \
-			      FbLaneCase2((n)>>2,a,(o)+2)))
-#define FbLaneCase8(n,a,o)  ((n) == 0xff ? (*(FbBits *) ((a)+(o)) = fgxor) : \
-			     (FbLaneCase4((n)&0xf,a,o), \
-			      FbLaneCase4((n)>>4,a,(o)+4)))
+			     ((void)FbLaneCase2((n)&3,a,o), \
+				    FbLaneCase2((n)>>2,a,(o)+2)))
+#define FbLaneCase8(n,a,o)  ((n) == 0x0ff ? (*(FbBits *) ((a)+(o)) = fgxor) : \
+			     ((void)FbLaneCase4((n)&15,a,o), \
+				    FbLaneCase4((n)>>4,a,(o)+4)))
 
 #if FB_SHIFT == 6
 #define FbLaneCase(n,a)   FbLaneCase8(n,(CARD8 *) (a),0)
@@ -628,13 +630,21 @@ typedef struct {
 
 #define fbGetScreenPixmap(s)	((PixmapPtr) (s)->devPrivate)
 #ifdef FB_NO_WINDOW_PIXMAPS
-#define fbGetWindowPixmap(d)	fbGetScreenPixmap((d)->pScreen)
+#define fbGetWindowPixmap(d)	fbGetScreenPixmap(((DrawablePtr) (d))->pScreen)
 #else
 #define fbGetWindowPixmap(pWin)	((PixmapPtr)\
 	((WindowPtr) (pWin))->devPrivates[fbWinPrivateIndex].ptr)
 #endif
 
-#define fbGetDrawable(pDrawable, pointer, stride, bpp) { \
+#if 0
+#define __fbPixOriginX(pPix)	((pPix)->drawable.x)
+#define __fbPixOriginY(pPix)	((pPix)->drawable.y)
+#else
+#define __fbPixOriginX(pPix)	0
+#define __fbPixOriginY(pPix)	0
+#endif
+
+#define fbGetDrawable(pDrawable, pointer, stride, bpp, xoff, yoff) { \
     PixmapPtr   _pPix; \
     if ((pDrawable)->type != DRAWABLE_PIXMAP) \
 	_pPix = fbGetWindowPixmap(pDrawable); \
@@ -643,9 +653,11 @@ typedef struct {
     (pointer) = (FbBits *) _pPix->devPrivate.ptr; \
     (stride) = ((int) _pPix->devKind) / sizeof (FbBits); \
     (bpp) = _pPix->drawable.bitsPerPixel; \
+    (xoff) = __fbPixOriginX(_pPix); \
+    (yoff) = __fbPixOriginY(_pPix); \
 }
 
-#define fbGetStipDrawable(pDrawable, pointer, stride, bpp) { \
+#define fbGetStipDrawable(pDrawable, pointer, stride, bpp, xoff, yoff) { \
     PixmapPtr   _pPix; \
     if ((pDrawable)->type != DRAWABLE_PIXMAP) \
 	_pPix = fbGetWindowPixmap(pDrawable); \
@@ -654,6 +666,8 @@ typedef struct {
     (pointer) = (FbStip *) _pPix->devPrivate.ptr; \
     (stride) = ((int) _pPix->devKind) / sizeof (FbStip); \
     (bpp) = _pPix->drawable.bitsPerPixel; \
+    (xoff) = __fbPixOriginX(_pPix); \
+    (yoff) = __fbPixOriginY(_pPix); \
 }
 
 /*
@@ -1543,23 +1557,6 @@ fbPolySegment (DrawablePtr  pDrawable,
  * fbpict.c
  */
 
-#ifdef RENDER
-void
-fbComposite (CARD8      op,
-	     PicturePtr pSrc,
-	     PicturePtr pMask,
-	     PicturePtr pDst,
-	     INT16      xSrc,
-	     INT16      ySrc,
-	     INT16      xMask,
-	     INT16      yMask,
-	     INT16      xDst,
-	     INT16      yDst,
-	     CARD16     width,
-	     CARD16     height);
-
-#endif
-
 Bool
 fbPictureInit (ScreenPtr pScreen,
 	       PictFormatPtr formats,
@@ -1687,6 +1684,14 @@ void
 fbQueryBestSize (int class, 
 		 unsigned short *width, unsigned short *height,
 		 ScreenPtr pScreen);
+
+#ifndef FB_OLD_SCREEN
+PixmapPtr
+_fbGetWindowPixmap (WindowPtr pWindow);
+
+void
+_fbSetWindowPixmap (WindowPtr pWindow, PixmapPtr pPixmap);
+#endif
 
 Bool
 fbSetupScreen(ScreenPtr	pScreen, 

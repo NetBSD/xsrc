@@ -21,37 +21,9 @@
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
-/* $XFree86: xc/programs/Xserver/hw/kdrive/fbdev/fbinit.c,v 1.6 2000/09/28 20:58:21 keithp Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/kdrive/fbdev/fbinit.c,v 1.9 2001/10/12 06:33:09 keithp Exp $ */
 
 #include <fbdev.h>
-
-KdCardFuncs	fbdevFuncs = {
-    fbdevCardInit,	    /* cardinit */
-    fbdevScreenInit,	    /* scrinit */
-    fbdevInitScreen,	    /* initScreen */
-    fbdevPreserve,	    /* preserve */
-    fbdevEnable,	    /* enable */
-    fbdevDPMS,		    /* dpms */
-    fbdevDisable,	    /* disable */
-    fbdevRestore,	    /* restore */
-    fbdevScreenFini,	    /* scrfini */
-    fbdevCardFini,	    /* cardfini */
-    
-    0,			    /* initCursor */
-    0,			    /* enableCursor */
-    0,			    /* disableCursor */
-    0,			    /* finiCursor */
-    0,			    /* recolorCursor */
-    
-    0,			    /* initAccel */
-    0,			    /* enableAccel */
-    0,			    /* syncAccel */
-    0,			    /* disableAccel */
-    0,			    /* finiAccel */
-    
-    fbdevGetColors,    	    /* getColors */
-    fbdevPutColors,	    /* putColors */
-};
 
 void
 InitCard (char *name)
@@ -70,11 +42,7 @@ InitOutput (ScreenInfo *pScreenInfo, int argc, char **argv)
 void
 InitInput (int argc, char **argv)
 {
-#ifdef __powerpc__
-    KdInitInput (&BusMouseFuncs, &LinuxKeyboardFuncs);
-#else
-    KdInitInput (&Ps2MouseFuncs, &LinuxKeyboardFuncs);
-#endif
+    KdInitInput (&LinuxMouseFuncs, &LinuxKeyboardFuncs);
 #ifdef TOUCHSCREEN
     KdInitTouchScreen (&TsFuncs);
 #endif

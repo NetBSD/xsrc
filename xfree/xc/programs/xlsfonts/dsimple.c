@@ -1,9 +1,13 @@
-/* $Xorg: dsimple.c,v 1.3 2000/08/17 19:54:53 cpqbld Exp $ */
+/* $Xorg: dsimple.c,v 1.4 2001/02/09 02:05:54 xorgcvs Exp $ */
 /*
 
 Copyright 1993, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included
 in all copies or substantial portions of the Software.
@@ -22,21 +26,15 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/xlsfonts/dsimple.c,v 3.4 2001/01/17 23:46:19 dawes Exp $ */
+/* $XFree86: xc/programs/xlsfonts/dsimple.c,v 3.6 2001/12/14 20:02:09 dawes Exp $ */
 
 #include <X11/Xos.h>
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <X11/cursorfont.h>
 #include <stdio.h>
-#ifndef X_NOT_STDC_ENV
 #include <stdlib.h>
-#else
-extern char *malloc(), *realloc();
-#endif
-#if NeedVarargsPrototypes
 #include <stdarg.h>
-#endif
 /*
  * Other_stuff.h: Definitions of routines in other_stuff.
  *
@@ -492,28 +490,14 @@ Window Window_With_Name(dpy, top, name)
  *       in code so we can tell where we are.  Outl may be invoked like
  *       printf with up to 7 arguments.
  */
-/* VARARGS1 */
 void
-outl(
-#if NeedVarargsPrototypes
-    char *msg, ...)
-#else
-msg, arg0,arg1,arg2,arg3,arg4,arg5,arg6)
-char *msg;
-char *arg0, *arg1, *arg2, *arg3, *arg4, *arg5, *arg6;
-#endif
+outl(char *msg, ...)
 {
-#if NeedVarargsPrototypes
 	va_list args;
-#endif
 	fflush(stdout);
-#if NeedVarargsPrototypes
 	va_start(args, msg);
 	vfprintf(stderr, msg, args);
 	va_end(args);
-#else
-	fprintf(stderr, msg, arg0, arg1, arg2, arg3, arg4, arg5, arg6);
-#endif
 	fprintf(stderr, "\n");
 	fflush(stderr);
 }
@@ -523,29 +507,15 @@ char *arg0, *arg1, *arg2, *arg3, *arg4, *arg5, *arg6;
  * Standard fatal error routine - call like printf but maximum of 7 arguments.
  * Does not require dpy or screen defined.
  */
-/* VARARGS1 */
-void Fatal_Error(
-#if NeedVarargsPrototypes
-    char *msg, ...)
-#else
-msg, arg0,arg1,arg2,arg3,arg4,arg5,arg6)
-char *msg;
-char *arg0, *arg1, *arg2, *arg3, *arg4, *arg5, *arg6;
-#endif
+void Fatal_Error(char *msg, ...)
 {
-#if NeedVarargsPrototypes
 	va_list args;
-#endif
 	fflush(stdout);
 	fflush(stderr);
 	fprintf(stderr, "%s: error: ", program_name);
-#if NeedVarargsPrototypes
 	va_start(args, msg);
 	vfprintf(stderr, msg, args);
 	va_end(args);
-#else
-	fprintf(stderr, msg, arg0, arg1, arg2, arg3, arg4, arg5, arg6);
-#endif
 	fprintf(stderr, "\n");
 	exit(1);
 }

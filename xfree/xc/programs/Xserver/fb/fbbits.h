@@ -21,7 +21,7 @@
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
-/* $XFree86: xc/programs/Xserver/fb/fbbits.h,v 1.10 2001/03/18 08:35:30 keithp Exp $ */
+/* $XFree86: xc/programs/Xserver/fb/fbbits.h,v 1.13 2001/11/18 05:00:25 torrey Exp $ */
 
 /*
  * This file defines functions for drawing some primitives using
@@ -83,14 +83,15 @@ BRESSOLID (DrawablePtr	pDrawable,
     FbBits	*dst;
     FbStride	dstStride;
     int		dstBpp;
+    int		dstXoff, dstYoff;
     FbGCPrivPtr	pPriv = fbGetGCPrivate (pGC);
     UNIT	*bits;
     FbStride	bitsStride;
     FbStride	majorStep, minorStep;
     BITS	xor = (BITS) pPriv->xor;
     
-    fbGetDrawable (pDrawable, dst, dstStride, dstBpp);
-    bits = ((UNIT *) (dst + (y1 * dstStride))) + x1 * MUL;
+    fbGetDrawable (pDrawable, dst, dstStride, dstBpp, dstXoff, dstYoff);
+    bits = ((UNIT *) (dst + ((y1 + dstYoff) * dstStride))) + (x1 + dstXoff) * MUL;
     bitsStride = dstStride * (sizeof (FbBits) / sizeof (UNIT));
     if (signdy < 0)
 	bitsStride = -bitsStride;
@@ -136,6 +137,7 @@ BRESDASH (DrawablePtr	pDrawable,
     FbBits	*dst;
     FbStride	dstStride;
     int		dstBpp;
+    int		dstXoff, dstYoff;
     FbGCPrivPtr	pPriv = fbGetGCPrivate (pGC);
     UNIT	*bits;
     FbStride	bitsStride;
@@ -146,14 +148,14 @@ BRESDASH (DrawablePtr	pDrawable,
     Bool	even;
     Bool	doOdd;
     
-    fbGetDrawable (pDrawable, dst, dstStride, dstBpp);
+    fbGetDrawable (pDrawable, dst, dstStride, dstBpp, dstXoff, dstYoff);
     doOdd = pGC->lineStyle == LineDoubleDash;
     xorfg = (BITS) pPriv->xor;
     xorbg = (BITS) pPriv->bgxor;
     
     FbDashInit (pGC, pPriv, dashOffset, dashlen, even);
     
-    bits = ((UNIT *) (dst + (y1 * dstStride))) + x1 * MUL;
+    bits = ((UNIT *) (dst + ((y1 + dstYoff) * dstStride))) + (x1 + dstXoff) * MUL;
     bitsStride = dstStride * (sizeof (FbBits) / sizeof (UNIT));
     if (signdy < 0)
 	bitsStride = -bitsStride;
@@ -281,14 +283,11 @@ DOTS (FbBits	    *dst,
     BITS	band = (BITS) and;
     FbStride	bitsStride = dstStride * (sizeof (FbBits) / sizeof (UNIT));
     INT32    	ul, lr;
-    INT32    	off;
     INT32    	pt;
 
-    off = coordToInt(xoff,yoff);
-    off -= (off & 0x8000) << 1;
-    ul = *((int *) &pBox->x1) - off;
-    lr = *((int *) &pBox->x2) - off - 0x00010001;
-    
+    ul = coordToInt(pBox->x1 - xoff,     pBox->y1 - yoff);
+    lr = coordToInt(pBox->x2 - xoff - 1, pBox->y2 - yoff - 1);
+
     bits += bitsStride * yoff + xoff * MUL;
     
     if (and == 0)
@@ -669,6 +668,7 @@ POLYLINE (DrawablePtr	pDrawable,
     FbBits	    *dst;
     int		    dstStride;
     int		    dstBpp;
+    int		    dstXoff, dstYoff;
     
     UNIT	    *bits, *bitsBase;
     FbStride	    bitsStride;
@@ -677,7 +677,6 @@ POLYLINE (DrawablePtr	pDrawable,
     int		    dashoffset = 0;
     
     INT32	    ul, lr;
-    INT32	    off;
     INT32	    pt1, pt2;
 
     int		    e, e1, e3, len;
@@ -687,14 +686,12 @@ POLYLINE (DrawablePtr	pDrawable,
     if (mode == CoordModePrevious)
 	fbFixCoordModePrevious (npt, ptsOrig);
     
-    fbGetDrawable (pDrawable, dst, dstStride, dstBpp);
+    fbGetDrawable (pDrawable, dst, dstStride, dstBpp, dstXoff, dstYoff);
     bitsStride = dstStride * (sizeof (FbBits) / sizeof (UNIT));
-    bitsBase = ((UNIT *) dst) + yoff * bitsStride + xoff * MUL;
-    off = coordToInt(xoff,yoff);
-    off -= (off & 0x8000) << 1;
-    ul = *((int *) &pBox->x1) - off;
-    lr = *((int *) &pBox->x2) - off - 0x00010001;
-    
+    bitsBase = ((UNIT *) dst) + (yoff + dstYoff) * bitsStride + (xoff + dstXoff) * MUL;
+    ul = coordToInt(pBox->x1 - xoff,     pBox->y1 - yoff);
+    lr = coordToInt(pBox->x2 - xoff - 1, pBox->y2 - yoff - 1);
+
     pt1 = *pts++;
     npt--;
     pt2 = *pts++;
@@ -803,6 +800,7 @@ POLYSEGMENT (DrawablePtr    pDrawable,
     FbBits	    *dst;
     int		    dstStride;
     int		    dstBpp;
+    int		    dstXoff, dstYoff;
     
     UNIT	    *bits, *bitsBase;
     FbStride	    bitsStride;
@@ -813,7 +811,6 @@ POLYSEGMENT (DrawablePtr    pDrawable,
     int		    dashoffset = 0;
     
     INT32	    ul, lr;
-    INT32	    off;
     INT32	    pt1, pt2;
 
     int		    e, e1, e3, len;
@@ -821,14 +818,12 @@ POLYSEGMENT (DrawablePtr    pDrawable,
     int		    octant;
     Bool	    capNotLast;
 
-    fbGetDrawable (pDrawable, dst, dstStride, dstBpp);
+    fbGetDrawable (pDrawable, dst, dstStride, dstBpp, dstXoff, dstYoff);
     bitsStride = dstStride * (sizeof (FbBits) / sizeof (UNIT));
-    bitsBase = ((UNIT *) dst) + yoff * bitsStride + xoff * MUL;
-    off = coordToInt(xoff,yoff);
-    off -= (off & 0x8000) << 1;
-    ul = *((int *) &pBox->x1) - off;
-    lr = *((int *) &pBox->x2) - off - 0x00010001;
-    
+    bitsBase = ((UNIT *) dst) + (yoff + dstYoff) * bitsStride + (xoff + dstXoff) * MUL;
+    ul = coordToInt(pBox->x1 - xoff,     pBox->y1 - yoff);
+    lr = coordToInt(pBox->x2 - xoff - 1, pBox->y2 - yoff - 1);
+
     bits += bitsStride * yoff + xoff * MUL;
     
     capNotLast = pGC->capStyle == CapNotLast;
@@ -876,10 +871,10 @@ POLYSEGMENT (DrawablePtr    pDrawable,
 		    if (!capNotLast)
 			x2++;
 		}
-		dstX = (x1 + xoff) * (sizeof (UNIT) * 8 * MUL);
+		dstX = (x1 + xoff + dstXoff) * (sizeof (UNIT) * 8 * MUL);
 		width = (x2 - x1) * (sizeof (UNIT) * 8 * MUL);
 		
-		dstLine = dst + (intToY(pt1) + yoff) * dstStride;
+		dstLine = dst + (intToY(pt1) + yoff + dstYoff) * dstStride;
 		dstLine += dstX >> FB_SHIFT;
 		dstX &= FB_MASK;
 		FbMaskBits (dstX, width, startmask, nmiddle, endmask);

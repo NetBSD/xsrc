@@ -1,10 +1,14 @@
-/* $Xorg: authutil.c,v 1.4 2000/08/17 19:44:12 cpqbld Exp $ */
+/* $Xorg: authutil.c,v 1.5 2001/02/09 02:03:26 xorgcvs Exp $ */
 /******************************************************************************
 
 
 Copyright 1993, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -22,7 +26,7 @@ in this Software without prior written authorization from The Open Group.
 
 Author: Ralph Mor, X Consortium
 ******************************************************************************/
-/* $XFree86: xc/lib/ICE/authutil.c,v 3.6 2001/01/17 19:41:29 dawes Exp $ */
+/* $XFree86: xc/lib/ICE/authutil.c,v 3.8 2001/12/14 19:53:35 dawes Exp $ */
 
 #include <X11/ICE/ICElib.h>
 #include "ICElibint.h"
@@ -31,18 +35,11 @@ Author: Ralph Mor, X Consortium
 #include <sys/stat.h>
 #include <errno.h>
 
-#if defined(X_NOT_STDC_ENV) && !defined(__EMX__)
-extern int errno;
-extern long time ();
-extern char *getenv();
-#define Time_t long
-#else
 #include <time.h>
 #define Time_t time_t
 #ifdef __EMX__
 extern char* getenv(const char*);
 #define link rename
-#endif
 #endif
 #ifndef X_NOT_POSIX
 #include <unistd.h>

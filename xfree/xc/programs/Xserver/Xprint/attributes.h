@@ -1,4 +1,4 @@
-/* $Xorg: attributes.h,v 1.3 2000/08/17 19:48:07 cpqbld Exp $ */
+/* $Xorg: attributes.h,v 1.4 2001/03/14 18:42:44 pookie Exp $ */
 /*
 (c) Copyright 1996 Hewlett-Packard Company
 (c) Copyright 1996 International Business Machines Corp.
@@ -30,12 +30,11 @@ not be used in advertising or otherwise to promote the sale, use or other
 dealings in this Software without prior written authorization from said
 copyright holders.
 */
-/* $XFree86: xc/programs/Xserver/Xprint/attributes.h,v 1.4 2001/01/17 22:36:28 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/Xprint/attributes.h,v 1.6 2001/12/21 21:02:05 dawes Exp $ */
 
 #ifndef _Xp_attributes_h
 #define _Xp_attributes_h 1
 
-#define _XP_PRINT_SERVER_
 #include "scrnintstr.h"
 #include "AttrValid.h"
 
@@ -85,6 +84,7 @@ int XpSubmitJob(char *fileName, XpContextPtr pContext);
  */
 int XpGetResolution(XpContextPtr pContext);
 XpOid XpGetContentOrientation(XpContextPtr pContext);
+XpOid XpGetAvailableCompression(XpContextPtr pContext);
 XpOid XpGetPlex(XpContextPtr pContext);
 XpOid XpGetPageSize(XpContextPtr pContext,
 		    XpOid* pTray,
@@ -126,7 +126,5 @@ int XpFinishDocData(ClientPtr client);
 Bool XpOpenTmpFile(char *mode,
 		   char **fname,
 		   FILE **stream);
-
-#undef _XP_PRINT_SERVER_
 
 #endif /* _Xp_attributes_h */

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/Xext/xf86vmode.c,v 3.52 2001/05/06 00:51:19 mvojkovi Exp $ */
+/* $XFree86: xc/programs/Xserver/Xext/xf86vmode.c,v 3.53 2001/08/06 20:51:03 dawes Exp $ */
 
 /*
 
@@ -221,7 +221,7 @@ XFree86VidModeExtensionInit(void)
 	VidModeErrorBase = extEntry->errorBase;
 #ifdef XF86VIDMODE_EVENTS
 	XF86VidModeEventBase = extEntry->eventBase;
-	EventSwapVector[XF86VidModeEventBase] = SXF86VidModeNotifyEvent;
+	EventSwapVector[XF86VidModeEventBase] = (EventSwapPtr)SXF86VidModeNotifyEvent;
 #endif
     }
 }

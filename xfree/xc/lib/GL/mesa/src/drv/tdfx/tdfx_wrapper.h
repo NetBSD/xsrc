@@ -39,13 +39,13 @@
  *
  * See fxapi.h for more revision/author details.
  */
-
+/* $XFree86: xc/lib/GL/mesa/src/drv/tdfx/tdfx_wrapper.h,v 1.3 2001/08/18 11:55:48 tsi Exp $ */
 
 #ifndef __FX_GLIDE_WARPER__
 #define __FX_GLIDE_WARPER__
 
-#include <glide.h>
-#include <g3ext.h>
+#include "glide.h"
+#include "g3ext.h"
 
 typedef struct tdfx_context tdfxContextRec;
 typedef struct tdfx_context *tdfxContextPtr;
@@ -207,7 +207,7 @@ GrVertex;
 
 
 
-extern FxI32 FX_grGetInteger_NoLock(FxU32 pname);
+extern FxI32 FX_grGetInteger_NoLock(tdfxContextPtr fxMesa, FxU32 pname);
 
 extern FxI32 FX_grGetInteger(tdfxContextPtr fxMesa, FxU32 pname);
 
@@ -217,25 +217,25 @@ extern const char *FX_grGetString(tdfxContextPtr fxMesa, FxU32 pname);
 #define FX_grTexDownloadTable(fxMesa, type, data)	\
   do { 							\
     LOCK_HARDWARE(fxMesa); 				\
-    grTexDownloadTable(type,data); 			\
+    fxMesa->Glide.grTexDownloadTable(type,data); 	\
     UNLOCK_HARDWARE(fxMesa); 				\
   } while (0);
 
 #define FX_grTexDownloadTable_NoLock(type, data) \
-  grTexDownloadTable(type, data)
+  fxMesa->Glide.grTexDownloadTable(type, data)
 
 
 #define FX_grFlush(fxMesa)	\
   do {				\
     LOCK_HARDWARE(fxMesa);	\
-    grFlush();			\
+    fxMesa->Glide.grFlush();	\
     UNLOCK_HARDWARE(fxMesa);	\
   } while (0)
 
 #define FX_grFinish(fxMesa)	\
   do {				\
-    LOCK_HARDWARE(fxMesa); \
-    grFinish();			\
+    LOCK_HARDWARE(fxMesa);	\
+    fxMes->Glide.grFinish();	\
     UNLOCK_HARDWARE(fxMesa);	\
   } while (0)
 
@@ -243,7 +243,7 @@ extern const char *FX_grGetString(tdfxContextPtr fxMesa, FxU32 pname);
 #define FX_grLfbWriteRegion(fxMesa,dst_buffer,dst_x,dst_y,src_format,src_width,src_height,src_stride,src_data)		\
   do {				\
     LOCK_HARDWARE(fxMesa);		\
-    grLfbWriteRegion(dst_buffer,dst_x,dst_y,src_format,src_width,src_height,FXFALSE,src_stride,src_data);	\
+    fxMesa->Glide.grLfbWriteRegion(dst_buffer,dst_x,dst_y,src_format,src_width,src_height,FXFALSE,src_stride,src_data);	\
     UNLOCK_HARDWARE(fxMesa);		\
   } while(0)
 
@@ -251,12 +251,12 @@ extern const char *FX_grGetString(tdfxContextPtr fxMesa, FxU32 pname);
 #define FX_grLfbReadRegion(fxMesa,src_buffer,src_x,src_y,src_width,src_height,dst_stride,dst_data)			\
   do {				\
     LOCK_HARDWARE(fxMesa);		\
-    grLfbReadRegion(src_buffer,src_x,src_y,src_width,src_height,dst_stride,dst_data);				\
+    fxMesa->Glide.grLfbReadRegion(src_buffer,src_x,src_y,src_width,src_height,dst_stride,dst_data);				\
     UNLOCK_HARDWARE(fxMesa);		\
   } while (0);
 
 
-#define FX_grDrawTriangle_NoLock(a,b,c) grDrawTriangle(a,b,c)
+#define FX_grDrawTriangle_NoLock(a,b,c) fxMesa->Glide.grDrawTriangle(a,b,c)
 #define FX_grDrawTriangle(fxMesa, a,b,c)	\
   do {						\
     BEGIN_CLIP_LOOP(fxMesa);			\
@@ -266,7 +266,7 @@ extern const char *FX_grGetString(tdfxContextPtr fxMesa, FxU32 pname);
 
 
 
-extern void FX_grHints_NoLock(GrHint_t hintType, FxU32 hintMask);
+extern void FX_grHints_NoLock(tdfxContextPtr fxMesa, GrHint_t hintType, FxU32 hintMask);
 extern void FX_grHints(tdfxContextPtr fxMesa, GrHint_t hintType, FxU32 hintMask);
 
 
@@ -287,7 +287,7 @@ extern FX_GrContext_t FX_grSstWinOpen(tdfxContextPtr fxMesa,
                                       int nColBuffers, int nAuxBuffers);
 
 
-#define FX_grDrawLine_NoLock(v1, v2) grDrawLine(v1, v2)
+#define FX_grDrawLine_NoLock(v1, v2) fxMesa->Glide.grDrawLine(v1, v2)
 #define FX_grDrawLine(fxMesa, v1, v2)	\
   do {					\
     BEGIN_CLIP_LOOP(fxMesa);		\
@@ -295,7 +295,7 @@ extern FX_GrContext_t FX_grSstWinOpen(tdfxContextPtr fxMesa,
     END_CLIP_LOOP(fxMesa);		\
   } while (0)
 
-#define FX_grDrawPoint_NoLock(p) grDrawPoint(p)
+#define FX_grDrawPoint_NoLock(p) fxMesa->Glide.grDrawPoint(p)
 #define FX_grDrawPoint(fxMesa, p)	\
   do {					\
     BEGIN_CLIP_LOOP(fxMesa);		\
@@ -309,92 +309,92 @@ extern void FX_grDrawPolygonVertexList(tdfxContextPtr fxMesa,
 #define FX_grDitherMode(fxMesa, m)	\
   do {					\
     LOCK_HARDWARE(fxMesa);		\
-    grDitherMode(m);			\
+    fxMesa->Glide.grDitherMode(m);	\
     UNLOCK_HARDWARE(fxMesa);		\
   } while (0)
 
 #define FX_grRenderBuffer(fxMesa, b)	\
   do {					\
     LOCK_HARDWARE(fxMesa);		\
-    grRenderBuffer(b);			\
+    fxMesa->Glide.grRenderBuffer(b);	\
     UNLOCK_HARDWARE(fxMesa);		\
   } while (0)
 
-#define FX_grRenderBuffer_NoLock(b)  grRenderBuffer(b)
+#define FX_grRenderBuffer_NoLock(b)  fxMesa->Glide.grRenderBuffer(b)
 
 #define FX_grBufferClear(fxMesa, c, a, d)	\
   do {						\
     BEGIN_CLIP_LOOP(fxMesa);			\
-    grBufferClear(c, a, d);			\
+    fxMesa->Glide.grBufferClear(c, a, d);	\
     END_CLIP_LOOP(fxMesa);			\
   } while (0)
 
-#define FX_grBufferClear_NoLock(c, a, d)  grBufferClear(c, a, d)
+#define FX_grBufferClear_NoLock(c, a, d)  fxMesa->Glide.grBufferClear(c, a, d)
 
 
-#define FX_grBufferClearExt_NoLock(c, a, d, s)  grBufferClearExtProc(c, a, d, s)
+#define FX_grBufferClearExt_NoLock(c, a, d, s)  fxMesa->Glide.grBufferClearExt(c, a, d, s)
 
 #define FX_grBufferClearExt(fxMesa, c, a, d, s)	\
   do {						\
     BEGIN_CLIP_LOOP(fxMesa);			\
-    grBufferClearExtProc(c, a, d, s);		\
+    fxMesa->Glide.grBufferClearExt(c, a, d, s);	\
     END_CLIP_LOOP(fxMesa);			\
   } while (0)
 
 #define FX_grEnable(fxMesa, m)           \
   do {				         \
     LOCK_HARDWARE(fxMesa);	         \
-    grEnable(m);                         \
+    fxMesa->Glide.grEnable(m);           \
     UNLOCK_HARDWARE(fxMesa);	         \
   } while (0)
 
-#define FX_grEnable_NoLock(m) grEnable(m)
+#define FX_grEnable_NoLock(m) fxMesa->Glide.grEnable(m)
 
 #define FX_grDisable(fxMesa, m)          \
   do {				         \
     LOCK_HARDWARE(fxMesa);	         \
-    grDisable(m);                        \
+    fxMesa->Glide.grDisable(m);          \
     UNLOCK_HARDWARE(fxMesa);	         \
   } while (0)
 
-#define FX_grDisable_NoLock(m) grDisable(m)
+#define FX_grDisable_NoLock(m) fxMesa->Glide.grDisable(m)
 
 
 #define FX_grStencilFunc(fxMesa, fnc, ref, mask)	\
   do {							\
     LOCK_HARDWARE(fxMesa);				\
-    grStencilFuncProc((fnc), (ref), (mask));		\
+    fxMesa->Glide.grStencilFunc((fnc), (ref), (mask));	\
     UNLOCK_HARDWARE(fxMesa);				\
   } while (0)
 
-#define FX_grStencilFunc_NoLock(f, r, m)  grStencilFuncProc(f, r, m)
+#define FX_grStencilFunc_NoLock(f, r, m)  fxMesa->grStencilFunc(f, r, m)
 
 #define FX_grStencilMask(fxMesa, write_mask)	\
   do {						\
     LOCK_HARDWARE(fxMesa);			\
-    grStencilMaskProc(write_mask);		\
+    fxMesa->Glide.grStencilMask(write_mask);	\
     UNLOCK_HARDWARE(fxMesa);			\
   } while (0)
 
-#define FX_grStencilMask_NoLock(m) grStencilMaskProc(m)
+#define FX_grStencilMask_NoLock(m) fxMesa->Glide.grStencilMask(m)
 
 #define FX_grStencilOp(fxMesa, stencil_fail, depth_fail, depth_pass)	\
   do {									\
     LOCK_HARDWARE(fxMesa);						\
-    grStencilOpProc((stencil_fail), (depth_fail), (depth_pass));	\
+    fxMesa->Glide.grStencilOp((stencil_fail), (depth_fail), (depth_pass));\
     UNLOCK_HARDWARE(fxMesa);						\
   } while (0)
 
-#define FX_grStencilOp_NoLock(sf, df, dp)  grStencilOpProc(sf, df, dp)
+#define FX_grStencilOp_NoLock(sf, df, dp)  fxMesa->Glide.grStencilOp(sf, df, dp)
 
 #define FX_grDepthMask(fxMesa, m)	\
   do {					\
     LOCK_HARDWARE(fxMesa);		\
-    grDepthMask(m);			\
+    fxMesa->Glide.grDepthMask(m);	\
     UNLOCK_HARDWARE(fxMesa);		\
   } while (0)
 
-#define FX_grDepthMask_NoLock(m)  grDepthMask(m)
+#define FX_grDepthMask_NoLock(m)  fxMesa->Glide.grDepthMask(m)
 
 
 extern void FX_grColorMask(GLcontext *ctx, GLboolean r, GLboolean g,
@@ -417,156 +417,156 @@ extern FxBool FX_grLfbLock(tdfxContextPtr fxMesa,
 #define FX_grLfbUnlock(fxMesa, t, b)	\
   do {					\
     LOCK_HARDWARE(fxMesa);		\
-    grLfbUnlock(t, b);			\
+    fxMesa->Glide.grLfbUnlock(t, b);	\
     UNLOCK_HARDWARE(fxMesa);		\
   } while (0)
 
 #define FX_grConstantColorValue(fxMesa, v)	\
   do {						\
     LOCK_HARDWARE(fxMesa);			\
-    grConstantColorValue(v);			\
+    fxMesa->Glide.grConstantColorValue(v);	\
     UNLOCK_HARDWARE(fxMesa);			\
   } while (0)
 
-#define FX_grConstantColorValue_NoLock grConstantColorValue
+#define FX_grConstantColorValue_NoLock fxMesa->Glide.grConstantColorValue
 
 #define FX_grAADrawTriangle(fxMesa, a, b, c, ab, bc, ca)	\
   do {								\
     BEGIN_CLIP_LOOP(fxMesa);					\
-    grAADrawTriangle(a, b, c, ab, bc, ca);			\
+    fxMesa->Glide.grAADrawTriangle(a, b, c, ab, bc, ca);	\
     END_CLIP_LOOP(fxMesa);					\
   } while (0)
 
 #define FX_grAlphaBlendFunction(rs, rd, as, ad)		\
   do {							\
     LOCK_HARDWARE(fxMesa);				\
-    grAlphaBlendFunction(rs, rd, as, ad);		\
+    fxMesa->Glide.grAlphaBlendFunction(rs, rd, as, ad);	\
     UNLOCK_HARDWARE(fxMesa);				\
   } while (0)
 
 #define FX_grAlphaCombine(func, fact, loc, oth, inv)	\
   do {							\
     LOCK_HARDWARE(fxMesa);				\
-    grAlphaCombine(func, fact, loc, oth, inv);		\
+    fxMesa->Glide.grAlphaCombine(func, fact, loc, oth, inv);		\
     UNLOCK_HARDWARE(fxMesa);				\
   } while (0)
 
-#define FX_grAlphaCombine_NoLock grAlphaCombine
+#define FX_grAlphaCombine_NoLock fxMesa->Glide.grAlphaCombine
 
 #define FX_grAlphaTestFunction(fxMesa, f)	\
   do {						\
     LOCK_HARDWARE(fxMesa);			\
-    grAlphaTestFunction(f);			\
+    fxMesa->Glide.grAlphaTestFunction(f);	\
     UNLOCK_HARDWARE(fxMesa);			\
   } while (0)
 
 #define FX_grAlphaTestReferenceValue(fxMesa, v)	\
   do {						\
     LOCK_HARDWARE(fxMesa);			\
-    grAlphaTestReferenceValue(v);		\
+    fxMesa->Glide.grAlphaTestReferenceValue(v);	\
     UNLOCK_HARDWARE(fxMesa);			\
   } while (0)
 
 #define FX_grClipWindow(fxMesa, minx, miny, maxx, maxy)	\
   do {							\
     LOCK_HARDWARE(fxMesa);				\
-    grClipWindow(minx, miny, maxx, maxy);		\
+    fxMesa->Glide.grClipWindow(minx, miny, maxx, maxy);	\
     UNLOCK_HARDWARE(fxMesa);				\
   } while (0)
 
-#define FX_grClipWindow_NoLock grClipWindow
+#define FX_grClipWindow_NoLock fxMesa->Glide.grClipWindow
 
 #define FX_grColorCombine(fxMesa, func, fact, loc, oth, inv)	\
   do {								\
     LOCK_HARDWARE(fxMesa);					\
-    grColorCombine(func, fact, loc, oth, inv);			\
+    fxMesa->Glide.grColorCombine(func, fact, loc, oth, inv);	\
     UNLOCK_HARDWARE(fxMesa);					\
   } while (0)
 
-#define FX_grColorCombine_NoLock grColorCombine
+#define FX_grColorCombine_NoLock fxMesa->Glide.grColorCombine
 
 #define FX_grCullMode(fxMesa, m)	\
   do {					\
     LOCK_HARDWARE(fxMesa);		\
-    grCullMode(m);			\
+    fxMesa->Glide.grCullMode(m);	\
     UNLOCK_HARDWARE(fxMesa);		\
   } while (0)
 
 #define FX_grDepthBiasLevel(fxMesa, lev)	\
   do {						\
     LOCK_HARDWARE(fxMesa);			\
-    grDepthBiasLevel(lev);			\
+    fxMesa->Glide.grDepthBiasLevel(lev);	\
     UNLOCK_HARDWARE(fxMesa);			\
   } while (0)
 
 #define FX_grDepthBufferFunction(fxMesa, func)	\
   do {						\
     LOCK_HARDWARE(fxMesa);			\
-    grDepthBufferFunction(func);		\
+    fxMesa->Glide.grDepthBufferFunction(func);	\
     UNLOCK_HARDWARE(fxMesa);			\
   } while (0)
 
 #define FX_grFogColorValue(fxMesa, c)	\
   do {					\
     LOCK_HARDWARE(fxMesa);		\
-    grFogColorValue(c);			\
+    fxMesa->Glide.grFogColorValue(c);	\
     UNLOCK_HARDWARE(fxMesa);		\
   } while (0)
 
 #define FX_grFogMode(fxMesa, m)	\
   do {				\
     LOCK_HARDWARE(fxMesa);	\
-    grFogMode(m);		\
+    fxMesa->Glide.grFogMode(m);	\
     UNLOCK_HARDWARE(fxMesa);	\
   } while (0)
 
 #define FX_grFogTable(fxMesa, t)\
   do {				\
     LOCK_HARDWARE(fxMesa);	\
-    grFogTable(t);		\
+    fxMesa->Glide.grFogTable(t);\
     UNLOCK_HARDWARE(fxMesa);	\
   } while (0)
 
 #define FX_grTexClampMode(fxMesa, t, sc, tc)	\
   do {						\
     LOCK_HARDWARE(fxMesa);			\
-    grTexClampMode(t, sc, tc);			\
+    fxMesa->Glide.grTexClampMode(t, sc, tc);	\
     UNLOCK_HARDWARE(fxMesa);			\
   } while (0)
 
-#define FX_grTexClampMode_NoLock grTexClampMode
+#define FX_grTexClampMode_NoLock fxMesa->Glide.grTexClampMode
 
-#define FX_grTexCombine(fxMesa, t, rfunc, rfact, afunc, afact, rinv, ainv)	\
+#define FX_grTexCombine(fxMesa, t, rfunc, rfact, afunc, afact, rinv, ainv)\
   do {									\
     LOCK_HARDWARE(fxMesa);						\
-    grTexCombine(t, rfunc, rfact, afunc, afact, rinv, ainv);		\
+    fxMesa->Glide.grTexCombine(t, rfunc, rfact, afunc, afact, rinv, ainv);\
     UNLOCK_HARDWARE(fxMesa);						\
   } while (0)
 
-#define FX_grTexCombine_NoLock grTexCombine
+#define FX_grTexCombine_NoLock fxMesa->Glide.grTexCombine
 
-#define FX_grTexDownloadMipMapLevel(fxMesa, t, sa, tlod, llod, ar, f, eo, d)	\
+#define FX_grTexDownloadMipMapLevel(fxMesa, t, sa, tlod, llod, ar, f, eo, d)\
   do {									\
     LOCK_HARDWARE(fxMesa);						\
-    grTexDownloadMipMapLevel(t, sa, tlod, llod, ar, f, eo, d);		\
+    fxMesa->Glide.grTexDownloadMipMapLevel(t, sa, tlod, llod, ar, f, eo, d);\
     UNLOCK_HARDWARE(fxMesa);						\
   } while (0)
 
 #define FX_grTexDownloadMipMapLevelPartial(fxMesa, t, sa, tlod, llod, ar, f, eo, d, s, e);	\
   do {									    \
     LOCK_HARDWARE(fxMesa);						    \
-    grTexDownloadMipMapLevelPartial(t, sa, tlod, llod, ar, f, eo, d, s, e); \
+    fxMesa->Glide.grTexDownloadMipMapLevelPartial(t, sa, tlod, llod, ar, f, eo, d, s, e); \
     UNLOCK_HARDWARE(fxMesa);						    \
   } while (0)
 
 #define FX_grTexFilterMode(fxMesa, t, minf, magf)	\
   do {							\
     LOCK_HARDWARE(fxMesa);				\
-    grTexFilterMode(t, minf, magf);			\
+    fxMesa->Glide.grTexFilterMode(t, minf, magf);	\
     UNLOCK_HARDWARE(fxMesa);				\
   } while (0)
 
-#define FX_grTexFilterMode_NoLock grTexFilterMode
+#define FX_grTexFilterMode_NoLock fxMesa->Glide.grTexFilterMode
 
 extern FxU32 FX_grTexMinAddress(tdfxContextPtr fxMesa, GrChipID_t tmu);
 extern FxU32 FX_grTexMaxAddress(tdfxContextPtr fxMesa, GrChipID_t tmu);
@@ -574,97 +574,97 @@ extern FxU32 FX_grTexMaxAddress(tdfxContextPtr fxMesa, GrChipID_t tmu);
 #define FX_grTexMipMapMode(t, m, lod)	\
   do {					\
     LOCK_HARDWARE(fxMesa);		\
-    grTexMipMapMode(t, m, lod);		\
+    fxMesa->Glide.grTexMipMapMode(t, m, lod);\
     UNLOCK_HARDWARE(fxMesa);		\
   } while (0)
 
-#define FX_grTexMipMapMode_NoLock grTexMipMapMode
+#define FX_grTexMipMapMode_NoLock fxMesa->Glide.grTexMipMapMode
 
 #define FX_grTexSource(t, sa, eo, i)	\
   do {					\
     LOCK_HARDWARE(fxMesa);		\
-    grTexSource(t, sa, eo, i);		\
+    fxMesa->Glide.grTexSource(t, sa, eo, i);\
     UNLOCK_HARDWARE(fxMesa);		\
   } while (0)
 
-#define FX_grTexSource_NoLock grTexSource
+#define FX_grTexSource_NoLock fxMesa->Glide.grTexSource
 
 extern FxU32 FX_grTexTextureMemRequired(tdfxContextPtr fxMesa,
                                         FxU32 evenOdd, GrTexInfo * info);
 
-#define FX_grTexTextureMemRequired_NoLock grTexTextureMemRequired
+#define FX_grTexTextureMemRequired_NoLock fxMesa->Glide.grTexTextureMemRequired
 
 #define FX_grGlideGetState(fxMesa, s)	\
   do {					\
     LOCK_HARDWARE(fxMesa);		\
-    grGlideGetState(s);			\
+    fxMesa->Glide.grGlideGetState(s);	\
     UNLOCK_HARDWARE(fxMesa);		\
   } while (0)
-#define FX_grGlideGetState_NoLock(s) grGlideGetState(s);
+#define FX_grGlideGetState_NoLock(s) fxMesa->Glide.grGlideGetState(s);
 
 #define FX_grDRIBufferSwap(fxMesa, i)	\
   do {					\
     LOCK_HARDWARE(fxMesa);		\
-    grDRIBufferSwap(i);			\
+    fxMesa->Glide.grDRIBufferSwap(i);	\
     UNLOCK_HARDWARE(fxMesa);		\
   } while (0)
 
 #define FX_grSstSelect(fxMesa, b)	\
   do {					\
     LOCK_HARDWARE(fxMesa);		\
-    grSstSelect(b);			\
+    fxMesa->Glide.grSstSelect(b);	\
     UNLOCK_HARDWARE(fxMesa);		\
   } while (0)
 
-#define FX_grSstSelect_NoLock grSstSelect
+#define FX_grSstSelect_NoLock fxMesa->Glide.grSstSelect
 
 #define FX_grGlideSetState(fxMesa, s)	\
   do {					\
     LOCK_HARDWARE(fxMesa);		\
-    grGlideSetState(s);			\
+    fxMesa->Glide.grGlideSetState(s);	\
     UNLOCK_HARDWARE(fxMesa);		\
   } while (0)
-#define FX_grGlideSetState_NoLock(s) grGlideSetState(s);
+#define FX_grGlideSetState_NoLock(s) fxMesa->Glide.grGlideSetState(s);
 
 #define FX_grDepthBufferMode(fxMesa, m)	\
   do {					\
     LOCK_HARDWARE(fxMesa);		\
-    grDepthBufferMode(m);		\
+    fxMesa->Glide.grDepthBufferMode(m);	\
     UNLOCK_HARDWARE(fxMesa);		\
   } while (0)
 
 #define FX_grLfbWriteColorFormat(fxMesa, f)	\
   do {						\
     LOCK_HARDWARE(fxMesa);			\
-    grLfbWriteColorFormat(f);			\
+    fxMesa->Glide.grLfbWriteColorFormat(f);	\
     UNLOCK_HARDWARE(fxMesa);			\
   } while (0)
 
 #define FX_grDrawVertexArray(fxMesa, m, c, p)	\
   do {						\
     BEGIN_CLIP_LOOP(fxMesa);			\
-    grDrawVertexArray(m, c, p);			\
+    fxMesa->Glide.grDrawVertexArray(m, c, p);	\
     END_CLIP_LOOP(fxMesa);			\
   } while (0)
 
 #define FX_grGlideShutdown(fxMesa)	\
   do {					\
     LOCK_HARDWARE(fxMesa);		\
-    grGlideShutdown();			\
+    fxMesa->Glide.grGlideShutdown();	\
     UNLOCK_HARDWARE(fxMesa);		\
   } while (0)
 
-#define FX_grTexLodBiasValue_NoLock(t, v) grTexLodBiasValue(t, v)
+#define FX_grTexLodBiasValue_NoLock(t, v) fxMesa->Glide.grTexLodBiasValue(t, v)
 
 #define FX_grTexLodBiasValue(t, v)	\
   do {					\
     LOCK_HARDWARE(fxMesa);		\
-    grTexLodBiasValue(t, v);		\
+    fxMesa->Glide.grTexLodBiasValue(t, v);\
     UNLOCK_HARDWARE(fxMesa);		\
   } while (0)
 
-#define FX_grGlideInit_NoLock grGlideInit
-#define FX_grSstWinOpen_NoLock grSstWinOpen
+#define FX_grGlideInit_NoLock fxMesa->Glide.grGlideInit
+#define FX_grSstWinOpen_NoLock fxMesa->Glide.grSstWinOpen
 
 extern int FX_getFogTableSize(tdfxContextPtr fxMesa);
 

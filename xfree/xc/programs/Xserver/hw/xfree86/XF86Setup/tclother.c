@@ -4,7 +4,7 @@
 
 
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/tclother.c,v 3.9 1996/12/27 06:54:19 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/tclother.c,v 3.10 2001/07/25 15:05:05 dawes Exp $ */
 /*
  * Copyright 1996 by Joseph V. Moss <joe@XFree86.Org>
  *
@@ -503,11 +503,7 @@ TCL_XF86Sleep(clientData, interp, argc, argv)
   Emulate a subset of the Tcl 7.5 clock command
 */
 
-#ifdef X_NOT_STDC_ENV
-extern long time();
-#else
 #include <time.h>
-#endif
 
 int
 TCL_XF86Clock(clientData, interp, argc, argv)

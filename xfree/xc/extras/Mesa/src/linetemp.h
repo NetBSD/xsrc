@@ -1,4 +1,4 @@
-
+/* $XFree86: xc/extras/Mesa/src/linetemp.h,v 1.11 2001/12/11 09:18:54 alanh Exp $ */
 /*
  * Mesa 3-D graphics library
  * Version:  3.1
@@ -179,6 +179,17 @@
       }
    }
 #endif
+
+   /* Cull primitives with malformed coordinates.
+    */
+   {
+      float tmp = VB->Win.data[vert0][0] + 
+	          VB->Win.data[vert0][1] + 
+		  VB->Win.data[vert1][0] + 
+		  VB->Win.data[vert1][1];
+      if (IS_INF_OR_NAN(tmp))
+	 return;
+   }
 
 /*
  * Despite being clipped to the view volume, the line's window coordinates

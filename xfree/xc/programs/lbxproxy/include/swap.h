@@ -22,6 +22,7 @@
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  */
+/* $XFree86: xc/programs/lbxproxy/include/swap.h,v 1.2 2001/08/01 00:45:01 tsi Exp $ */
 
 #ifndef _SWAP_H_
 #define _SWAP_H_
@@ -47,9 +48,10 @@ extern void SwapVisual(
 #endif
 );
 
-extern void SwapConnectionInfo(
+extern void WriteSConnSetupPrefix(
 #if NeedFunctionPrototypes
-    xConnSetup * /*pConnSetup*/
+    ClientPtr          /* pClient */,
+    xConnSetupPrefix * /* pcsp */
 #endif
 );
 
@@ -209,15 +211,15 @@ extern void SwapGetProperty(
 #endif
 );
 
-extern void SwapPutImage(
-#if NeedFunctionPrototypes
-    xLbxPutImageReq * /*r*/
-#endif
-);
-
 extern void SwapGetImage(
 #if NeedFunctionPrototypes
     xLbxGetImageReq * /*r*/
+#endif
+);
+
+extern void SwapInternAtoms(
+#if NeedFunctionPrototypes
+    xLbxInternAtomsReq * /* r */
 #endif
 );
 
@@ -245,9 +247,21 @@ extern void SwapLbxConnSetupPrefix(
 #endif
 );
 
-extern void SwapConnSetupPrefix(
+extern void SwapAllocColor(
 #if NeedFunctionPrototypes
-    xConnSetupPrefix * /*csp*/
+    xLbxAllocColorReq * /* r */
+#endif
+);
+
+extern void SwapGrabCmap(
+#if NeedFunctionPrototypes
+    xLbxGrabCmapReq * /* r */
+#endif
+);
+
+extern void SwapReleaseCmap(
+#if NeedFunctionPrototypes
+    xLbxReleaseCmapReq * /* r */
 #endif
 );
 

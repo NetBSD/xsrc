@@ -21,7 +21,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/programs/Xserver/Xext/xvdix.h,v 1.7 2001/05/07 21:37:51 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/Xext/xvdix.h,v 1.8 2001/07/25 15:05:00 dawes Exp $ */
 
 #ifndef XVDIX_H
 #define XVDIX_H
@@ -276,7 +276,7 @@ extern int XvdiGrabPort(ClientPtr, XvPortPtr, Time, int *);
 extern int XvdiUngrabPort( ClientPtr, XvPortPtr, Time);
 
 
-#if defined(__STDC__) && !defined(UNIXCPP)
+#if !defined(UNIXCPP)
 
 #define XVCALL(name) Xv##name
 

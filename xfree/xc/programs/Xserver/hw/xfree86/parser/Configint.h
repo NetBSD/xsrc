@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/parser/Configint.h,v 1.17 2001/02/21 23:37:04 paulo Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/parser/Configint.h,v 1.19 2001/08/06 20:51:12 dawes Exp $ */
 /*
  * 
  * Copyright (c) 1997  Metro Link Incorporated
@@ -38,6 +38,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdarg.h>
+#include <stddef.h>
 #include "xf86Parser.h"
 
 typedef struct
@@ -47,10 +48,6 @@ typedef struct
 	double realnum;		/* returned number as a real */
 }
 LexRec, *LexPtr;
-
-#ifndef NULL
-#define NULL 0
-#endif
 
 #ifndef TRUE
 #define TRUE 1
@@ -69,7 +66,7 @@ LexRec, *LexPtr;
 
 #define TestFree(a) if (a) { xf86conffree (a); a = NULL; }
 
-#define parsePrologue(typeptr,typerec) int token; typeptr ptr; \
+#define parsePrologue(typeptr,typerec) typeptr ptr; \
 if( (ptr=(typeptr)xf86confcalloc(1,sizeof(typerec))) == NULL ) { return NULL; } \
 memset(ptr,0,sizeof(typerec));
 

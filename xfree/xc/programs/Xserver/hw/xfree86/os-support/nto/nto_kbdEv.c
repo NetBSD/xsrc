@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/nto/nto_kbdEv.c,v 1.2 1999/12/27 00:45:46 robin Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/nto/nto_kbdEv.c,v 1.3 2001/11/16 16:47:56 dawes Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany
  * Copyright 1993 by David Dawes <dawes@physics.su.oz.au>
@@ -31,7 +31,6 @@
 #include "inputstr.h"
 #include "scrnintstr.h"
 
-#include "xf86Procs.h"
 #include "xf86_OSlib.h"
 
 extern int NTO_kbd_fd;

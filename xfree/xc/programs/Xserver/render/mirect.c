@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/programs/Xserver/render/mirect.c,v 1.3 2000/12/08 07:52:05 keithp Exp $
+ * $XFree86: xc/programs/Xserver/render/mirect.c,v 1.4 2001/06/08 19:36:34 keithp Exp $
  *
  * Copyright © 2000 Keith Packard, member of The XFree86 Project, Inc.
  *
@@ -30,6 +30,66 @@
 #include "picturestr.h"
 #include "mipict.h"
 
+static void
+miColorRects (PicturePtr    pDst,
+	      PicturePtr    pClipPict,
+	      xRenderColor  *color,
+	      int	    nRect,
+	      xRectangle    *rects,
+	      int	    xoff,
+	      int	    yoff)
+{
+    ScreenPtr		pScreen = pDst->pDrawable->pScreen;
+    CARD32		pixel;
+    GCPtr		pGC;
+    CARD32		tmpval[4];
+    RegionPtr		pClip;
+    unsigned long	mask;
+
+    miRenderColorToPixel (pDst->pFormat, color, &pixel);
+
+    pGC = GetScratchGC (pDst->pDrawable->depth, pScreen);
+    if (!pGC)
+	return;
+    tmpval[0] = GXcopy;
+    tmpval[1] = pixel;
+    mask = GCFunction | GCForeground;
+    if (pClipPict->clientClipType == CT_REGION)
+    {
+	tmpval[2] = pDst->clipOrigin.x - xoff;
+	tmpval[3] = pDst->clipOrigin.y - yoff;
+	mask |= CPClipXOrigin|CPClipYOrigin;
+	
+	pClip = REGION_CREATE (pScreen, NULL, 1);
+	REGION_COPY (pScreen, pClip,
+		     (RegionPtr) pClipPict->clientClip);
+	(*pGC->funcs->ChangeClip) (pGC, CT_REGION, pClip, 0);
+    }
+
+    ChangeGC (pGC, mask, tmpval);
+    ValidateGC (pDst->pDrawable, pGC);
+    if (xoff || yoff)
+    {
+	int	i;
+	for (i = 0; i < nRect; i++)
+	{
+	    rects[i].x -= xoff;
+	    rects[i].y -= yoff;
+	}
+    }
+    (*pGC->ops->PolyFillRect) (pDst->pDrawable, pGC, nRect, rects);
+    if (xoff || yoff)
+    {
+	int	i;
+	for (i = 0; i < nRect; i++)
+	{
+	    rects[i].x += xoff;
+	    rects[i].y += yoff;
+	}
+    }
+    FreeScratchGC (pGC);
+}
+
 void
 miCompositeRects (CARD8		op,
 		  PicturePtr	pDst,
@@ -38,12 +98,6 @@ miCompositeRects (CARD8		op,
 		  xRectangle    *rects)
 {
     ScreenPtr		pScreen = pDst->pDrawable->pScreen;
-    CARD32		pixel;
-    GCPtr		pGC;
-    CARD32		tmpval[4];
-    unsigned long	mask;
-    int			error;
-    RegionPtr		pClip;
     
     if (color->alpha == 0xffff)
     {
@@ -55,30 +109,12 @@ miCompositeRects (CARD8		op,
     
     if (op == PictOpSrc || op == PictOpClear)
     {
-	miRenderColorToPixel (pDst->pFormat, color, &pixel);
-
-	pGC = GetScratchGC (pDst->pDrawable->depth, pScreen);
-	if (!pGC)
-	    return;
-	tmpval[0] = GXcopy;
-	tmpval[1] = pixel;
-	mask = GCFunction | GCForeground;
-	if (pDst->clientClipType == CT_REGION)
-	{
-	    tmpval[2] = pDst->clipOrigin.x;
-	    tmpval[3] = pDst->clipOrigin.y;
-	    mask |= CPClipXOrigin|CPClipYOrigin;
-	    
-	    pClip = REGION_CREATE (pScreen, NULL, 1);
-	    REGION_COPY (pScreen, pClip,
-			 (RegionPtr) pDst->clientClip);
-	    (*pGC->funcs->ChangeClip) (pGC, CT_REGION, pClip, 0);
-	}
-
-	ChangeGC (pGC, mask, tmpval);
-	ValidateGC (pDst->pDrawable, pGC);
-	(*pGC->ops->PolyFillRect) (pDst->pDrawable, pGC, nRect, rects);
-	FreeScratchGC (pGC);
+	miColorRects (pDst, pDst, color, nRect, rects, 0, 0);
+	if (pDst->alphaMap)
+	    miColorRects (pDst->alphaMap, pDst,
+			  color, nRect, rects,
+			  pDst->alphaOrigin.x,
+			  pDst->alphaOrigin.y);
     }
     else
     {
@@ -86,6 +122,10 @@ miCompositeRects (CARD8		op,
 	PixmapPtr	pPixmap;
 	PicturePtr	pSrc;
 	xRectangle	one;
+	int		error;
+	Pixel		pixel;
+	GCPtr		pGC;
+	CARD32		tmpval[2];
 
 	rgbaFormat = PictureMatchFormat (pScreen, 32, PICT_a8r8g8b8);
 	if (!rgbaFormat)

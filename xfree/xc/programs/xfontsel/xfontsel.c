@@ -31,7 +31,7 @@ Author:	Ralph R. Swick, DEC/MIT Project Athena
 	one weekend in November, 1989
 Modified: Mark Leisher <mleisher@crl.nmsu.edu> to deal with UCS sample text.
 */
-/* $XFree86: xc/programs/xfontsel/xfontsel.c,v 1.4 2001/04/01 14:00:20 tsi Exp $ */
+/* $XFree86: xc/programs/xfontsel/xfontsel.c,v 1.7 2001/10/28 03:34:32 tsi Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -84,7 +84,7 @@ void SetCurrentFont();
 void QuitAction();
 
 XtActionsRec xfontsel_actions[] = {
-    "Quit",	    QuitAction
+    {"Quit",	    QuitAction}
 };
 
 Atom wm_delete_window;
@@ -150,7 +150,7 @@ static XrmOptionDescRec options[] = {
 {"-scaled",	"scaledFonts",	XrmoptionNoArg,		"True"},
 };
 
-Syntax(call)
+static void Syntax(call)
     char *call;
 {
     fprintf (stderr, "usage:  %s [-options ...] -fn font\n\n", call);
@@ -225,6 +225,15 @@ static XtResource menuResources[] = {
 
 
 typedef enum {ValidateCurrentField, SkipCurrentField} ValidateAction;
+
+static void EnableAllItems(int field);
+static void EnableRemainingItems(ValidateAction current_field_action);
+static void FlushXqueue(Display *dpy);
+static void MarkInvalidFonts(Boolean *set, FieldValue *val);
+static void ScheduleWork(XtProc proc, XtPointer closure, int priority);
+static void SetCurrentFontCount(void);
+static void SetNoFonts(void);
+static void SetParsingFontCount(int count);
 
 XtAppContext appCtx;
 int numFonts;
@@ -388,8 +397,7 @@ static WorkPiece workQueue = NULL;
  * Xt knows we have (background) work to do.
  */
 
-
-ScheduleWork( proc, closure, priority )
+static void ScheduleWork( proc, closure, priority )
     XtProc proc;
     XtPointer closure;
     int priority;
@@ -747,6 +755,47 @@ void FixScalables( closure )
 }
 
 
+/* A verbatim copy from xc/lib/font/fontfile/fontdir.c */
+
+/*
+ * Compare two strings just like strcmp, but preserve decimal integer
+ * sorting order, i.e. "2" < "10" or "iso8859-2" < "iso8859-10" <
+ * "iso10646-1". Strings are sorted as if sequences of digits were
+ * prefixed by a length indicator (i.e., does not ignore leading zeroes).
+ *
+ * Markus Kuhn <Markus.Kuhn@cl.cam.ac.uk>
+ */
+#define Xisdigit(c) ('\060' <= (c) && (c) <= '\071')
+
+static int strcmpn(const char *s1, const char *s2)
+{
+    int digits, predigits = 0;
+    const char *ss1, *ss2;
+
+    while (1) {
+	if (*s1 == 0 && *s2 == 0)
+	    return 0;
+	digits = Xisdigit(*s1) && Xisdigit(*s2);
+	if (digits && !predigits) {
+	    ss1 = s1;
+	    ss2 = s2;
+	    while (Xisdigit(*ss1) && Xisdigit(*ss2))
+		ss1++, ss2++;
+	    if (!Xisdigit(*ss1) && Xisdigit(*ss2))
+		return -1;
+	    if (Xisdigit(*ss1) && !Xisdigit(*ss2))
+		return 1;
+	}
+	if ((unsigned char)*s1 < (unsigned char)*s2)
+	    return -1;
+	if ((unsigned char)*s1 > (unsigned char)*s2)
+	    return 1;
+	predigits = digits;
+	s1++, s2++;
+    }
+}
+
+
 /* Order is *, (nil), rest */
 int AlphabeticSort(fval1, fval2)
     FieldValue *fval1, *fval2;
@@ -759,7 +808,7 @@ int AlphabeticSort(fval1, fval2)
 	return -1;
     if (!fval2->string)
 	return 1;
-    return strcmp(fval1->string, fval2->string);
+    return strcmpn(fval1->string, fval2->string);
 }
 
 
@@ -871,7 +920,7 @@ void MakeFieldMenu(closure)
 }
 
 
-SetNoFonts()
+static void SetNoFonts(void)
 {
     matchingFontCount = 0;
     SetCurrentFontCount();
@@ -982,7 +1031,7 @@ void AnyValue(w, closure, callData)
 }
 
 
-SetCurrentFontCount()
+static void SetCurrentFontCount(void)
 {
     char label[80];
     Arg args[1];
@@ -997,7 +1046,7 @@ SetCurrentFontCount()
 }
 
 
-SetParsingFontCount(count)
+static void SetParsingFontCount(int count)
 {
     char label[80];
     Arg args[1];
@@ -1061,7 +1110,7 @@ void SetCurrentFont(closure)
 	    currentFontNameString[pos++] = DELIM;
 	    if ((i = currentFont.value_index[f]) != -1) {
 		FieldValue *val = &fieldValues[f]->value[i];
-		if (str = val->string)
+		if ((str = val->string))
 		    len = strlen(str);
 		else {
 		    str = "";
@@ -1139,7 +1188,7 @@ void SetCurrentFont(closure)
 }
 
 
-MarkInvalidFonts( set, val )
+static void MarkInvalidFonts( set, val )
     Boolean *set;
     FieldValue *val;
 {
@@ -1159,7 +1208,7 @@ MarkInvalidFonts( set, val )
 }
 
 
-EnableRemainingItems(current_field_action)
+static void EnableRemainingItems(current_field_action)
     ValidateAction current_field_action;
 {
     if (matchingFontCount == 0 || matchingFontCount == numFonts) {
@@ -1203,7 +1252,7 @@ EnableRemainingItems(current_field_action)
 }
 
 
-EnableAllItems(field)
+static void EnableAllItems(int field)
 {
     FieldValue *value = fieldValues[field]->value;
     int count;
@@ -1242,7 +1291,6 @@ void DisableScaled(f, f1, f2)
     int i, j;
     FieldValue *v;
     int *font;
-    char *str;
 
     for (i = fieldValues[f]->count, v = fieldValues[f]->value; --i >= 0; v++) {
 	if (!v->enable || !v->string || !strcmp(v->string, "0"))
@@ -1374,7 +1422,7 @@ void EnableMenu(closure)
 }
 
 
-FlushXqueue(dpy)
+static void FlushXqueue(dpy)
     Display *dpy;
 {
     XSync(dpy, False);

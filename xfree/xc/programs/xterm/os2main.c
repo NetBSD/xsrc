@@ -5,7 +5,7 @@
 #ifndef lint
 static char *rid="$XConsortium: main.c,v 1.227.1.2 95/06/29 18:13:15 kaleb Exp $";
 #endif /* lint */
-/* $XFree86: xc/programs/xterm/os2main.c,v 3.45 2001/04/12 01:02:50 dickey Exp $ */
+/* $XFree86: xc/programs/xterm/os2main.c,v 3.49 2002/01/05 22:05:03 dickey Exp $ */
 
 /***********************************************************
 
@@ -227,6 +227,7 @@ static struct _resource {
     char *icon_name;
     char *term_name;
     char *tty_modes;
+    Boolean hold_screen;	/* true if we keep window open	*/
     Boolean utmpInhibit;
     Boolean messages;
     Boolean sunFunctionKeys;	/* %%% should be widget resource? */
@@ -267,6 +268,8 @@ static XtResource application_resources[] = {
 	offset(term_name), XtRString, (caddr_t) NULL},
     {"ttyModes", "TtyModes", XtRString, sizeof(char *),
 	offset(tty_modes), XtRString, (caddr_t) NULL},
+    {"hold", "Hold", XtRBoolean, sizeof (Boolean),
+	offset(hold_screen), XtRString, "false"},
     {"utmpInhibit", "UtmpInhibit", XtRBoolean, sizeof (Boolean),
 	offset(utmpInhibit), XtRString, "false"},
     {"messages", "Messages", XtRBoolean, sizeof (Boolean),
@@ -335,7 +338,6 @@ static XrmOptionDescRec optionDescList[] = {
 {"-cb",		"*cutToBeginningOfLine", XrmoptionNoArg, (caddr_t) "off"},
 {"+cb",		"*cutToBeginningOfLine", XrmoptionNoArg, (caddr_t) "on"},
 {"-cc",		"*charClass",	XrmoptionSepArg,	(caddr_t) NULL},
-{"-class",	NULL,		XrmoptionSkipArg,	(caddr_t) NULL},
 {"-cm",		"*colorMode",	XrmoptionNoArg,		(caddr_t) "off"},
 {"+cm",		"*colorMode",	XrmoptionNoArg,		(caddr_t) "on"},
 {"-cn",		"*cutNewline",	XrmoptionNoArg,		(caddr_t) "off"},
@@ -345,11 +347,22 @@ static XrmOptionDescRec optionDescList[] = {
 {"+cu",		"*curses",	XrmoptionNoArg,		(caddr_t) "off"},
 {"-dc",		"*dynamicColors",XrmoptionNoArg,	(caddr_t) "off"},
 {"+dc",		"*dynamicColors",XrmoptionNoArg,	(caddr_t) "on"},
-{"-e",		NULL,		XrmoptionSkipLine,	(caddr_t) NULL},
 {"-fb",		"*boldFont",	XrmoptionSepArg,	(caddr_t) NULL},
+{"-fbb",	"*freeBoldBox", XrmoptionNoArg,		(caddr_t)"off"},
+{"+fbb",	"*freeBoldBox", XrmoptionNoArg,		(caddr_t)"on"},
+{"-fbx",	"*forceBoxChars", XrmoptionNoArg,	(caddr_t)"off"},
+{"+fbx",	"*forceBoxChars", XrmoptionNoArg,	(caddr_t)"on"},
 #ifndef NO_ACTIVE_ICON
 {"-fi",		"*iconFont",	XrmoptionSepArg,	(caddr_t) NULL},
 #endif /* NO_ACTIVE_ICON */
+#ifdef XRENDERFONT
+{"-fa",		"*faceName",	XrmoptionSepArg,	(caddr_t) NULL},
+{"-fs",		"*faceSize",	XrmoptionSepArg,	(caddr_t) NULL},
+#endif
+#if OPT_WIDE_CHARS
+{"-fw",		"*wideFont",	XrmoptionSepArg,	(caddr_t) NULL},
+{"-fwb",	"*wideBoldFont", XrmoptionSepArg,	(caddr_t) NULL},
+#endif
 #if OPT_HIGHLIGHT_COLOR
 {"-hc",		"*highlightColor", XrmoptionSepArg,	(caddr_t) NULL},
 #endif
@@ -357,6 +370,8 @@ static XrmOptionDescRec optionDescList[] = {
 {"-hf",		"*hpFunctionKeys",XrmoptionNoArg,	(caddr_t) "on"},
 {"+hf",		"*hpFunctionKeys",XrmoptionNoArg,	(caddr_t) "off"},
 #endif
+{"-hold",	"*hold",	XrmoptionNoArg,		(caddr_t) "on"},
+{"+hold",	"*hold",	XrmoptionNoArg,		(caddr_t) "off"},
 {"-j",		"*jumpScroll",	XrmoptionNoArg,		(caddr_t) "on"},
 {"+j",		"*jumpScroll",	XrmoptionNoArg,		(caddr_t) "off"},
 /* parse logging options anyway for compatibility */
@@ -431,6 +446,11 @@ static XrmOptionDescRec optionDescList[] = {
 {"-samename",	"*sameName",	XrmoptionNoArg,		(caddr_t) "on"},
 {"+samename",	"*sameName",	XrmoptionNoArg,		(caddr_t) "off"},
 #endif
+/* options that we process ourselves */
+{"-help",	NULL,		XrmoptionSkipNArgs,	(caddr_t) NULL},
+{"-version",	NULL,		XrmoptionSkipNArgs,	(caddr_t) NULL},
+{"-class",	NULL,		XrmoptionSkipArg,	(caddr_t) NULL},
+{"-e",		NULL,		XrmoptionSkipLine,	(caddr_t) NULL},
 /* bogus old compatibility stuff for which there are
    standard XtAppInitialize options now */
 {"%",		"*tekGeometry",	XrmoptionStickyArg,	(caddr_t) NULL},
@@ -444,10 +464,7 @@ static XrmOptionDescRec optionDescList[] = {
 {"-w",		".borderWidth", XrmoptionSepArg,	(caddr_t) NULL},
 };
 
-static struct _options {
-  char *opt;
-  char *desc;
-} options[] = {
+static OptionHelp options[] = {
 { "-version",              "print the version number" },
 { "-help",                 "print out this message" },
 { "-display displayname",  "X server to contact" },
@@ -458,6 +475,17 @@ static struct _options {
 { "-bd color",             "border color" },
 { "-bw number",            "border width in pixels" },
 { "-fn fontname",          "normal text font" },
+{ "-fb fontname",          "bold text font" },
+{ "-/+fbb",                "turn on/off bold font's box checking"},
+{ "-/+fbx",                "turn off/on linedrawing characters"},
+#ifdef XRENDERFONT
+{ "-fa pattern",           "FreeType font-selection pattern" },
+{ "-fs size",              "FreeType font-size" },
+#endif
+#if OPT_WIDE_CHARS
+{ "-fw fontname",          "doublewidth text font" },
+{ "-fwb fontname",         "doublewidth bold text font" },
+#endif
 { "-iconic",               "start iconic" },
 { "-name string",          "client instance, icon, and title strings" },
 { "-class string",         "class string (XTerm)" },
@@ -481,13 +509,13 @@ static struct _options {
 { "-cr color",             "text cursor color" },
 { "-/+cu",                 "turn on/off curses emulation" },
 { "-/+dc",		   "turn off/on dynamic color selection" },
-{ "-fb fontname",          "bold text font" },
 #if OPT_HIGHLIGHT_COLOR
 { "-hc",		   "selection background color" },
 #endif
 #if OPT_HP_FUNC_KEYS
 { "-/+hf",                 "turn on/off HP Function Key escape codes" },
 #endif
+{ "-/+hold",		   "turn on/off logic that retains window after exit" },
 { "-/+im",		   "use insert mode for TERMCAP" },
 { "-/+j",                  "turn on/off jump scroll" },
 #ifdef ALLOWLOGGING
@@ -551,7 +579,7 @@ static struct _options {
 { "-ziconbeep percent",    "beep and flag icon of window having hidden output" },
 #endif
 #if OPT_SAME_NAME
-{"-/+samename",	           "turn on/off the no flicker option for title and icon name" },
+{ "-/+samename",           "turn on/off the no-flicker option for title and icon name" },
 #endif
 { NULL, NULL }};
 
@@ -578,15 +606,40 @@ static char *message[] = {
 "will be started.  Options that start with a plus sign (+) restore the default.",
 NULL};
 
-static int abbrev (char *tst, char *cmp)
+static Boolean get_termcap(char *name, char *buffer, char *resized)
+{
+    register TScreen *screen = &term->screen;
+
+    *buffer = 0;	/* initialize, in case we're using terminfo's tgetent */
+
+    if (name != 0) {
+	if (tgetent (buffer, name) == 1) {
+	    TRACE(("get_termcap(%s) succeeded (%s)\n", name,
+	    	*buffer
+		? "ok:termcap, we can update $TERMCAP"
+		: "assuming this is terminfo"));
+	    if (*buffer) {
+		if (!TEK4014_ACTIVE(screen)) {
+		    resize (screen, buffer, resized);
+		}
+	    }
+	    return True;
+	} else {
+	    *buffer = 0;	/* just in case */
+	}
+    }
+    return False;
+}
+
+static int abbrev (char *tst, char *cmp, size_t need)
 {
 	size_t len = strlen(tst);
-	return ((len >= 2) && (!strncmp(tst, cmp, len)));
+	return ((len >= need) && (!strncmp(tst, cmp, len)));
 }
 
 static void Syntax (char *badOption)
 {
-    struct _options *opt;
+    OptionHelp *opt;
     int col;
 
     fprintf (stderr, "%s:  bad command line option \"%s\"\r\n\n",
@@ -612,12 +665,12 @@ static void Syntax (char *badOption)
 static void Version (void)
 {
     printf("%s(%d)\n", XFREE86_VERSION, XTERM_PATCH);
-    exit (0);
+    fflush(stdout);
 }
 
 static void Help (void)
 {
-    struct _options *opt;
+    OptionHelp *opt;
     char **cpp;
 
     fprintf (stderr, "%s(%d) usage:\n    %s [-options ...] [-e command args]\n\n",
@@ -633,8 +686,7 @@ static void Help (void)
 	putc ('\n', stderr);
     }
     putc ('\n', stderr);
-
-    exit (0);
+    fflush(stderr);
 }
 
 /* ARGSUSED */
@@ -672,12 +724,12 @@ DeleteWindow(
     Cardinal *num_params GCC_UNUSED)
 {
 #if OPT_TEK4014
-  if (w == toplevel)
+  if (w == toplevel) {
     if (term->screen.Tshow)
       hide_vt_window();
     else
       do_hangup(w, (XtPointer)0, (XtPointer)0);
-  else
+  } else
     if (term->screen.Vshow)
       hide_tek_window();
     else
@@ -798,18 +850,33 @@ main (int argc, char **argv, char **envp)
 
 	/* Do these first, since we may not be able to open the display */
 	ProgramName = argv[0];
+	TRACE_OPTS(options, optionDescList, XtNumber(optionDescList));
+	TRACE_ARGV("Before XtAppInitialize", argv);
 	if (argc > 1) {
 		int n;
-		if (abbrev(argv[1], "-version"))
-			Version();
-		if (abbrev(argv[1], "-help"))
-			Help();
+		int unique = 2;
+		Boolean quit = True;
+
 		for (n = 1; n < argc; n++) {
-			if (strlen(argv[n]) > 2
-			 && abbrev(argv[n], "-class"))
-				if ((my_class = argv[++n]) == 0)
+			TRACE(("parsing %s\n", argv[n]));
+			if (abbrev(argv[n], "-version", unique)) {
+				Version();
+			} else if (abbrev(argv[n], "-help", unique)) {
+				Help();
+			} else if (abbrev(argv[n], "-class", 3)) {
+				if ((my_class = argv[++n]) == 0) {
 					Help();
+				} else {
+					quit = False;
+				}
+				unique = 3;
+			} else {
+				quit = False;
+				unique = 3;
+			}
 		}
+		if (quit)
+			exit(0);
 	}
 
 	/* XXX: for some obscure reason EMX seems to lose the value of
@@ -898,6 +965,7 @@ main (int argc, char **argv, char **envp)
 #if OPT_SAME_NAME
         sameName = resource.sameName;
 #endif
+	hold_screen = resource.hold_screen ? 1 : 0;
 	xterm_name = resource.xterm_name;
 	if (strcmp(xterm_name, "-") == 0) xterm_name = DFT_TERMTYPE;
 	if (resource.icon_geometry != NULL) {
@@ -921,14 +989,24 @@ main (int argc, char **argv, char **envp)
 	XtSetValues (toplevel, ourTopLevelShellArgs,
 		     number_ourTopLevelShellArgs);
 
+#if OPT_WIDE_CHARS
+	/* seems as good a place as any */
+	init_classtab();
+#endif
+
 	/* Parse the rest of the command line */
+	TRACE_ARGV("After XtAppInitialize", argv);
 	for (argc--, argv++ ; argc > 0 ; argc--, argv++) {
 	    if(**argv != '-') Syntax (*argv);
 
+	    TRACE(("parsing %s\n", argv[0]));
 	    switch(argv[0][1]) {
-	     case 'h':
-		Help ();
-		/* NOTREACHED */
+	     case 'h':	/* -help */
+		Help();
+		continue;
+	     case 'v':	/* -version */
+		Version();
+		continue;
 	     case 'C':
 		{
 		    struct stat sbuf;
@@ -954,8 +1032,9 @@ main (int argc, char **argv, char **envp)
 		debug = TRUE;
 		continue;
 #endif	/* DEBUG */
-	     case 'c':	/* -class */
-		break;
+	     case 'c':	/* -class param */
+		argc--, argv++;
+		continue;
 	     case 'e':
 		if (argc <= 1) Syntax (*argv);
 		command_to_exec = ++argv;
@@ -965,6 +1044,20 @@ main (int argc, char **argv, char **envp)
 	    }
 	    break;
 	}
+
+#if OPT_WIDE_CHARS
+	/* Test whether UTF-8 mode should be active by default */
+	{
+	    char *s;
+
+	    if (((s = getenv("LC_ALL")) != 0 && *s != '\0') ||
+		((s = getenv("LC_CTYPE")) != 0 && *s != '\0') ||
+		((s = getenv("LANG")) != 0 && *s != '\0')) {
+		if (strstr(s, "UTF-8"))
+		    defaultUTF8[0] = '2';
+	    }
+	}
+#endif
 
 	SetupMenus(toplevel, &form_top, &menu_top);
 
@@ -1017,6 +1110,11 @@ main (int argc, char **argv, char **envp)
 	      resource.icon_name = resource.title;
 	    XtSetArg (args[0], XtNtitle, resource.title);
 	    XtSetArg (args[1], XtNiconName, resource.icon_name);
+
+	    TRACE(("setting:\n\ttitle \"%s\"\n\ticon \"%s\"\n\tbased on command \"%s\"\n",
+		    resource.title,
+		    resource.icon_name,
+		    *command_to_exec));
 
 	    XtSetValues (toplevel, args, 2);
 	}
@@ -1387,16 +1485,7 @@ spawn (void)
 	 * the program to proceed (but not to set $TERMCAP) if the termcap
 	 * entry is not found.
 	 */
-	*ptr = 0;	/* initialize, in case we're using terminfo's tgetent */
-	TermName = NULL;
-	if (resource.term_name) {
-	    TermName = resource.term_name;
-	    if (tgetent (ptr, resource.term_name) == 1) {
-		if (*ptr)
-		    if (!TEK4014_ACTIVE(screen))
-			resize (screen, termcap, newtc);
-	    }
-	}
+	get_termcap(TermName = resource.term_name, ptr, newtc);
 
 	/*
 	 * This block is invoked only if there was no terminal name specified
@@ -1405,12 +1494,9 @@ spawn (void)
 	if (!TermName) {
 	    TermName = *envnew;
 	    while (*envnew != NULL) {
-		if(tgetent(ptr, *envnew) == 1) {
-			TermName = *envnew;
-			if (*ptr)
-			    if(!TEK4014_ACTIVE(screen))
-				resize(screen, termcap, newtc);
-			break;
+		if (get_termcap(*envnew, ptr, newtc)) {
+		    TermName = *envnew;
+		    break;
 		}
 		envnew++;
 	    }
@@ -1598,6 +1684,7 @@ opencons();*/
 			}
 
 			if (command_to_exec) {
+				TRACE(("spawning command \"%s\"\n", *command_to_exec));
 				execvpe(*command_to_exec, command_to_exec,
 					gblenvp);
 
@@ -1728,7 +1815,8 @@ static SIGNAL_T reapchild (int n GCC_UNUSED)
 #ifdef DEBUG
 	    if (debug) fputs ("Exiting\n", stderr);
 #endif
-	    Cleanup (0);
+	    if (!hold_screen)
+		Cleanup (0);
 	}
     } while ( (pid=nonblocking_wait()) > 0);
 

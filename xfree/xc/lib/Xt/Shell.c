@@ -1,4 +1,4 @@
-/* $Xorg: Shell.c,v 1.3 2000/08/17 19:46:17 cpqbld Exp $ */
+/* $Xorg: Shell.c,v 1.4 2001/02/09 02:03:58 xorgcvs Exp $ */
 
 /***********************************************************
 Copyright 1987, 1988 by Digital Equipment Corporation, Maynard, Massachusetts
@@ -32,13 +32,17 @@ OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
 THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/lib/Xt/Shell.c,v 3.9 2001/01/17 19:43:09 dawes Exp $ */
+/* $XFree86: xc/lib/Xt/Shell.c,v 3.15 2001/12/14 19:56:30 dawes Exp $ */
 
 /*
 
 Copyright 1987, 1988, 1994, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -66,12 +70,14 @@ in this Software without prior written authorization from The Open Group.
 #include "StringDefs.h"
 #include "Shell.h"
 #include "ShellP.h"
+#include "ShellI.h"
 #include "Vendor.h"
 #include "VendorP.h"
 #include <X11/Xatom.h>
 #include <X11/Xlocale.h>
 #include <X11/ICE/ICElib.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #ifdef EDITRES
 #include <X11/Xmu/Editres.h>
@@ -1084,8 +1090,6 @@ static void ApplicationInitialize(req, new, args, num_args)
 #define XtRestartStyleHintMask	(1L<<7)
 #define XtShutdownCommandMask	(1L<<8)
 
-extern char *getenv();
-
 static void JoinSession();
 static void SetSessionProperties();
 static void StopManagingSession();
@@ -1930,7 +1934,7 @@ static Bool isMine(dpy, event, arg)
 	return FALSE;
 }
 
-static _wait_for_response(w, event, request_num)
+static Boolean _wait_for_response(w, event, request_num)
 	ShellWidget	w;
 	XEvent		*event;
         unsigned long	request_num;
@@ -1982,7 +1986,7 @@ static XtGeometryResult RootGeometryManager(gw, request, reply)
     unsigned int mask = request->request_mode;
     XEvent event;
     Boolean wm;
-    register struct _OldXSizeHints *hintp;
+    register struct _OldXSizeHints *hintp = NULL;
     int oldx, oldy, oldwidth, oldheight, oldborder_width;
     unsigned long request_num;
 
@@ -2252,13 +2256,14 @@ static Boolean SetValues(old, ref, new, args, num_args)
 
 	if (! (ow->shell.client_specified & _XtShellPositionValid)) {
 	    Cardinal n;
-	    void _XtShellGetCoordinates();
 
 	    for (n = *num_args; n; n--, args++) {
 		if (strcmp(XtNx, args->name) == 0) {
-		    _XtShellGetCoordinates(ow, &ow->core.x, &ow->core.y);
+		    _XtShellGetCoordinates((Widget)ow, &ow->core.x,
+							&ow->core.y);
 		} else if (strcmp(XtNy, args->name) == 0) {
-		    _XtShellGetCoordinates(ow, &ow->core.x, &ow->core.y);
+		    _XtShellGetCoordinates((Widget)ow, &ow->core.x,
+							&ow->core.y);
 		}
 	    }
 	}
@@ -2690,7 +2695,6 @@ static void GetValuesHook(widget, args, num_args)
     Cardinal*	num_args;
 {
     ShellWidget w = (ShellWidget) widget;
-    extern void _XtCopyToArg();
 
     /* x and y resource values may be invalid after a shell resize */
     if (XtIsRealized(widget) &&
@@ -2739,13 +2743,6 @@ static void ApplicationShellInsertChild(widget)
 
 #define XtSessionCheckpoint	0
 #define XtSessionInteract	1
-
-extern String _XtGetUserName(
-#if NeedFunctionPrototypes
-    String		/* dest_dir */,
-    int			/* len */
-#endif
-);
 
 static void CallSaveCallbacks();
 static String *EditCommand();
@@ -3010,7 +3007,7 @@ static void SetSessionProperties(w, initialize, set_mask, unset_mask)
 	user_name = _XtGetUserName(nam_buf, sizeof nam_buf);
 	if (user_name)
 	    props[num_props++] = ArrayPack(SmUserID, &user_name);
-	sprintf(pid, "%d", getpid());
+	sprintf(pid, "%ld", (long)getpid());
 	props[num_props++] = ArrayPack(SmProcessID, &pidp);
 
 	if (num_props) {
@@ -3050,10 +3047,6 @@ static void GetIceEvent(client_data, source, id)
     SessionShellWidget w = (SessionShellWidget) client_data;
     IceProcessMessagesStatus status;
 
-#ifdef MINIX
-    if (!MNX_IceMessagesAvailable(SmcGetIceConnection(w->session.connection)))
-    	return;
-#endif
     status = IceProcessMessages(SmcGetIceConnection(w->session.connection),
 				NULL, NULL);
 

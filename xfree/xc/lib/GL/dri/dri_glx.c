@@ -24,7 +24,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 **************************************************************************/
-/* $XFree86: xc/lib/GL/dri/dri_glx.c,v 1.8 2001/04/10 16:07:49 dawes Exp $ */
+/* $XFree86: xc/lib/GL/dri/dri_glx.c,v 1.10 2001/08/27 17:40:57 dawes Exp $ */
 
 /*
  * Authors:
@@ -36,9 +36,9 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #ifdef GLX_DIRECT_RENDERING
 
 #include <unistd.h>
-#include <Xlibint.h>
-#include <Xext.h>
-#include <extutil.h>
+#include <X11/Xlibint.h>
+#include <X11/extensions/Xext.h>
+#include "extutil.h"
 #include "glxclient.h"
 #include "xf86dri.h"
 #include "sarea.h"
@@ -94,6 +94,7 @@ static void ErrorMessageF(const char *f, ...)
     }
 }
 
+#if 0
 static void PrintF(const char *f, ...)
 {
     va_list args;
@@ -105,6 +106,7 @@ static void PrintF(const char *f, ...)
 	va_end(args);
     }
 }
+#endif
 
 static void ErrorMessage(const char *msg)
 {
@@ -224,7 +226,7 @@ static void *OpenDriver(const char *driverName)
       if (!libDir[0])
          return NULL;
       snprintf(realDriverName, 200, "%s/%s_dri.so", libDir, driverName);
-      InfoMessageF("trying %s\n", realDriverName);
+      InfoMessageF("OpenDriver: trying %s\n", realDriverName);
       handle = dlopen(realDriverName, RTLD_NOW | RTLD_GLOBAL);
       if (handle) {
          return handle;
@@ -434,8 +436,8 @@ register_extensions_on_screen(Display *dpy, int scrNum)
       return;
    }
    else {
-      InfoMessageF("XF86DRIGetClientDriverName: %d.%d.%d %s\n", driverMajor,
-             driverMinor, driverPatch, driverName);
+      InfoMessageF("XF86DRIGetClientDriverName: %d.%d.%d %s (screen %d)\n",
+	     driverMajor, driverMinor, driverPatch, driverName, scrNum);
    }
 
    /*

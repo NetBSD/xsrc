@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/shared/vidmem.c,v 1.14 2001/05/04 19:05:51 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/shared/vidmem.c,v 1.15 2001/10/28 03:34:02 tsi Exp $ */
 /*
  * Copyright 1993-1999 by The XFree86 Project, Inc
  *
@@ -135,6 +135,29 @@ checkMtrrOption(VidMapPtr vp)
 	}
 }
 
+void
+xf86MakeNewMapping(int ScreenNum, int Flags, unsigned long Base, unsigned long Size, pointer Vbase)
+{
+	VidMapPtr vp;
+	MappingPtr mp;
+
+	vp = getVidMapRec(ScreenNum);
+	mp = newMapping(vp);
+	mp->physBase = Base;
+	mp->size = Size;
+	mp->virtBase = Vbase;
+	mp->flags = Flags;
+}
+
+void
+xf86InitVidMem(void)
+{
+	if (!vidMemInfo.initialised) {
+		memset(&vidMemInfo, 0, sizeof(VidMemInfo));
+		xf86OSInitVidMem(&vidMemInfo);
+	}
+}
+
 pointer
 xf86MapVidMem(int ScreenNum, int Flags, unsigned long Base, unsigned long Size)
 {
@@ -146,10 +169,7 @@ xf86MapVidMem(int ScreenNum, int Flags, unsigned long Base, unsigned long Size)
 	     (Flags & (VIDMEM_MMIO | VIDMEM_MMIO_32BIT))))
 	    FatalError("Mapping memory with more than one type\n");
 	    
-	if (!vidMemInfo.initialised) {
-		memset(&vidMemInfo, 0, sizeof(VidMemInfo));
-		xf86OSInitVidMem(&vidMemInfo);
-	}
+	xf86InitVidMem();
 	if (!vidMemInfo.initialised || !vidMemInfo.mapMem)
 		return NULL;
 
@@ -231,10 +251,7 @@ xf86CheckMTRR(int ScreenNum)
 Bool
 xf86LinearVidMem()
 {
-	if (!vidMemInfo.initialised) {
-		memset(&vidMemInfo, 0, sizeof(VidMemInfo));
-		xf86OSInitVidMem(&vidMemInfo);
-	}
+	xf86InitVidMem();
 	return vidMemInfo.linearSupported;
 }
 

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Helper.c,v 1.111.2.1 2001/05/24 19:43:39 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Helper.c,v 1.120 2001/12/04 17:28:58 tsi Exp $ */
 
 /*
  * Copyright (c) 1997-1998 by The XFree86 Project, Inc.
@@ -31,7 +31,7 @@
 #include "xf86Bus.h"
 
 /* For xf86GetClocks */
-#if defined(CSRG_BASED) || defined(MACH386) || defined(__GNU__)
+#if defined(CSRG_BASED) || defined(__GNU__)
 #define HAS_SETPRIORITY
 #include <sys/resource.h>
 #endif
@@ -880,7 +880,7 @@ xf86SetGamma(ScrnInfoPtr scrp, Gamma gamma)
 
 /*
  * Set the DPI from the command line option.  XXX should allow it to be
- * calculated from the witdhmm/heightmm values.
+ * calculated from the widthmm/heightmm values.
  */
 
 #undef MMPERINCH
@@ -891,10 +891,22 @@ xf86SetDpi(ScrnInfoPtr pScrn, int x, int y)
 {
     MessageType from = X_DEFAULT;
     xf86MonPtr DDC = (xf86MonPtr)(pScrn->monitor->DDC); 
+    int ddcWidthmm, ddcHeightmm;
+    int widthErr, heightErr;
 
     /* XXX Maybe there is no need for widthmm/heightmm in ScrnInfoRec */
     pScrn->widthmm = pScrn->monitor->widthmm;
     pScrn->heightmm = pScrn->monitor->heightmm;
+
+    if (DDC && (DDC->features.hsize > 0 && DDC->features.vsize > 0) ) {
+      /* DDC gives display size in mm for individual modes,
+       * but cm for monitor 
+       */
+      ddcWidthmm = DDC->features.hsize * 10; /* 10mm in 1cm */
+      ddcHeightmm = DDC->features.vsize * 10; /* 10mm in 1cm */
+    } else {
+      ddcWidthmm = ddcHeightmm = 0;
+    }
 
     if (monitorResolution > 0) {
 	pScrn->xDpi = monitorResolution;
@@ -916,15 +928,32 @@ xf86SetDpi(ScrnInfoPtr pScrn, int x, int y)
 	    pScrn->xDpi = pScrn->yDpi;
 	xf86DrvMsg(pScrn->scrnIndex, from, "Display dimensions: (%d, %d) mm\n",
 		   pScrn->widthmm, pScrn->heightmm);
-    } else if ( DDC && (DDC->features.hsize > 0 || DDC->features.vsize > 0) ) {
+
+	/* Warn if config and probe disagree about display size */
+	if ( ddcWidthmm && ddcHeightmm ) {
+	  if (pScrn->widthmm > 0) {
+	    widthErr  = abs(ddcWidthmm  - pScrn->widthmm);
+	  } else {
+	    widthErr  = 0;
+	  }
+	  if (pScrn->heightmm > 0) {
+	    heightErr = abs(ddcHeightmm - pScrn->heightmm);
+	  } else {
+	    heightErr = 0;
+	  }
+	  if (widthErr>10 || heightErr>10) {
+	    /* Should include config file name for monitor here */
+	    xf86DrvMsg(pScrn->scrnIndex, X_WARNING,
+		       "Probed monitor is %dx%d mm, using Displaysize %dx%d mm\n", 
+		       ddcWidthmm,ddcHeightmm, pScrn->widthmm,pScrn->heightmm);
+	  }
+	}
+    } else if ( ddcWidthmm && ddcHeightmm ) {
 	from = X_PROBED;
-	/* DDC gives display size in mm for individual modes,
-	 * but cm for monitor 
-	 */
-	xf86DrvMsg(pScrn->scrnIndex, from, "Display dimensions: (%d, %d) cm\n",
-		   DDC->features.hsize, DDC->features.vsize );
-	pScrn->widthmm = DDC->features.hsize * 10; /* 10mm in 1cm */
-	pScrn->heightmm = DDC->features.vsize * 10; /* 10mm in 1cm */
+	xf86DrvMsg(pScrn->scrnIndex, from, "Display dimensions: (%d, %d) mm\n",
+		   ddcWidthmm, ddcHeightmm );
+	pScrn->widthmm = ddcWidthmm;
+	pScrn->heightmm = ddcHeightmm;
 	if (pScrn->widthmm > 0) {
 	   pScrn->xDpi =
 		(int)((double)pScrn->virtualX * MMPERINCH / pScrn->widthmm);
@@ -1182,9 +1211,11 @@ VWrite(int verb, const char *f, va_list args)
     if ((verb < 0 || xf86Verbose >= verb) && len > 0)
 	fwrite(buffer, len, 1, stderr);
     if ((verb < 0 || xf86LogVerbose >= verb) && len > 0) {
-	if (logfile)
+	if (logfile) {
 	    fwrite(buffer, len, 1, logfile);
-	else {
+	    if (xf86Info.syncLog)
+		fflush(logfile);
+	} else {
 	    /*
 	     * Note, this code is used before OsInit() has been called, so
 	     * xalloc and friends can't be used.
@@ -1220,7 +1251,7 @@ xf86VDrvMsgVerb(int scrnIndex, MessageType type, int verb, const char *format,
 		va_list args)
 {
     char *s = X_UNKNOWN_STRING;
-
+    
     /* Ignore verbosity for X_ERROR */
     if (xf86Verbose >= verb || xf86LogVerbose >= verb || type == X_ERROR) {
 	switch (type) {
@@ -1367,6 +1398,7 @@ xf86LogInit()
     }
     if ((logfile = fopen(xf86LogFile, "w")) == NULL)
 	FatalError("Cannot open log file \"%s\"\n", xf86LogFile);
+    xf86LogFileWasOpened = TRUE;
     setvbuf(logfile, NULL, _IONBF, 0);
 #ifdef DDXOSVERRORF
     if (!OsVendorVErrorFProc)
@@ -1376,6 +1408,8 @@ xf86LogInit()
     /* Flush saved log information */
     if (saveBuffer && size > 0) {
 	fwrite(saveBuffer, pos, 1, logfile);
+	if (xf86Info.syncLog)
+	    fflush(logfile);
 	free(saveBuffer);	/* Note, must be free(), not xfree() */
 	saveBuffer = 0;
 	size = 0;
@@ -1940,6 +1974,10 @@ xf86MatchIsaInstances(const char *driverName, SymTabPtr chipsets,
 
     *foundEntities = NULL;
 
+#if defined(__sparc__) || defined(__powerpc__)
+    FindIsaDevice = NULL;	/* Temporary */
+#endif
+
     if (xf86DoProbe || (xf86DoConfigure && xf86DoConfigurePass1)) {
 	if (FindIsaDevice &&
 	    ((foundChip = (*FindIsaDevice)(NULL)) != -1)) {
@@ -2413,6 +2451,30 @@ xf86LoaderReqSymbols(const char *sym0, ...)
 
     va_start(ap, sym0);
     LoaderVReqSymbols(sym0, ap);
+    va_end(ap);
+#endif
+}
+
+void
+xf86LoaderRefSymLists(const char **list0, ...)
+{
+#ifdef XFree86LOADER
+    va_list ap;
+
+    va_start(ap, list0);
+    LoaderVRefSymLists(list0, ap);
+    va_end(ap);
+#endif
+}
+
+void
+xf86LoaderRefSymbols(const char *sym0, ...)
+{
+#ifdef XFree86LOADER
+    va_list ap;
+
+    va_start(ap, sym0);
+    LoaderVRefSymbols(sym0, ap);
     va_end(ap);
 #endif
 }

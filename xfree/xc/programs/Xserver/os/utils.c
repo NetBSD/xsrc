@@ -1,9 +1,13 @@
-/* $Xorg: utils.c,v 1.3 2000/08/17 19:53:41 cpqbld Exp $ */
+/* $Xorg: utils.c,v 1.5 2001/02/09 02:05:24 xorgcvs Exp $ */
 /*
 
 Copyright 1987, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included
 in all copies or substantial portions of the Software.
@@ -45,7 +49,8 @@ OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE
 OR PERFORMANCE OF THIS SOFTWARE.
 
 */
-/* $XFree86: xc/programs/Xserver/os/utils.c,v 3.69 2001/05/04 19:05:52 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/os/utils.c,v 3.81 2002/01/16 20:39:51 dawes Exp $ */
+
 #ifdef __CYGWIN__
 #include <stdlib.h>
 #include <signal.h>
@@ -59,6 +64,8 @@ OR PERFORMANCE OF THIS SOFTWARE.
 #include "misc.h"
 #include "X.h"
 #include "input.h"
+#include "dixfont.h"
+#include "osdep.h"
 #ifdef X_POSIX_C_SOURCE
 #define _POSIX_C_SOURCE X_POSIX_C_SOURCE
 #include <signal.h>
@@ -73,39 +80,20 @@ OR PERFORMANCE OF THIS SOFTWARE.
 #endif
 #endif
 #include <sys/wait.h>
-#if !defined(SYSV) && !defined(AMOEBA) && !defined(_MINIX) && !defined(WIN32) && !defined(Lynx) && !defined(QNX4)
+#if !defined(SYSV) && !defined(WIN32) && !defined(Lynx) && !defined(QNX4)
 #include <sys/resource.h>
 #endif
 #include <time.h>
 #include <sys/stat.h>
 #include <ctype.h>    /* for isspace */
-#if NeedVarargsPrototypes
 #include <stdarg.h>
-#endif
 
 #if defined(DGUX)
 #include <sys/resource.h>
 #include <netdb.h>
 #endif
 
-#ifdef AMOEBA
-#include "osdep.h"
-#include <amoeba.h>
-#include <module/mutex.h>
-
-static mutex print_lock;
-#endif
-
-#if defined(__STDC__) || defined(AMOEBA)
-/* DHD: SVR4.0 has a prototype for abs() in stdlib.h */
-/* DHD: might be better to move this include higher up? */
-#ifdef abs
-#undef abs
-#endif
-#ifndef NOSTDHDRS
 #include <stdlib.h>	/* for malloc() */
-#endif
-#endif
 
 #if defined(TCPCONN) || defined(STREAMSCONN)
 # ifndef WIN32
@@ -119,8 +107,18 @@ static mutex print_lock;
 #include "dixstruct.h"
 #endif
 
+#ifdef XKB
+#include "XKBsrv.h"
+#endif
+#ifdef XCSECURITY
+#define _SECURITY_SERVER
+#include "security.h"
+#endif
+
+#define X_INCLUDE_NETDB_H
+#include <X11/Xos_r.h>
+
 #include <errno.h>
-extern int errno;
 
 Bool CoreDump;
 Bool noTestExtensions;
@@ -155,9 +153,7 @@ extern int SelectWaitTime;
 #ifdef MEMBUG
 #define MEM_FAIL_SCALE 100000
 long Memory_fail = 0;
-#ifndef X_NOT_STDC_ENV
 #include <stdlib.h>  /* for random() */
-#endif
 #endif
 
 #ifdef sgi
@@ -209,10 +205,6 @@ OsSignal(sig, handler)
 #include <sys/param.h>
 #endif
 
-#ifdef _MINIX
-#include <limits.h>	/* For PATH_MAX */
-#endif
-
 #ifdef __EMX__
 #define link rename
 #endif
@@ -245,7 +237,6 @@ static Bool nolock = FALSE;
 void
 LockServer()
 {
-#ifndef AMOEBA
   char tmp[PATH_MAX], pid_str[12];
   int lfd, i, haslock, l_pid, t;
   char *tmppath = NULL;
@@ -300,7 +291,7 @@ LockServer()
   }
   if (lfd < 0)
     FatalError("Could not create lock file in %s\n", tmp);
-  (void) sprintf(pid_str, "%10d\n", getpid());
+  (void) sprintf(pid_str, "%10ld\n", (long)getpid());
   (void) write(lfd, pid_str, 11);
 #ifndef __EMX__
 #ifndef USE_CHMOD
@@ -374,7 +365,6 @@ LockServer()
   if (!haslock)
     FatalError("Could not create server lock file: %s\n", LockFile);
   StillLocking = FALSE;
-#endif /* !AMOEBA */
 }
 
 /*
@@ -384,7 +374,6 @@ LockServer()
 void
 UnlockServer()
 {
-#ifndef AMOEBA
   if (nolock) return;
 
   if (!StillLocking){
@@ -394,8 +383,6 @@ UnlockServer()
 #endif /* __EMX__ */
   (void) unlink(LockFile);
   }
-#endif
-
 }
 #endif /* SERVER_LOCK */
 
@@ -406,6 +393,8 @@ SIGVAL
 AutoResetServer (sig)
     int sig;
 {
+    int olderrno = errno;
+
     dispatchException |= DE_RESET;
     isItTimeToYield = TRUE;
 #ifdef GPROF
@@ -415,9 +404,7 @@ AutoResetServer (sig)
 #if defined(SYSV) && defined(X_NOT_POSIX)
     OsSignal (SIGHUP, AutoResetServer);
 #endif
-#ifdef AMOEBA
-    WakeUpMainThread();
-#endif
+    errno = olderrno;
 }
 
 /* Force connections to close and then exit on SIGTERM, SIGINT */
@@ -427,15 +414,15 @@ SIGVAL
 GiveUp(sig)
     int sig;
 {
+    int olderrno = errno;
+
     dispatchException |= DE_TERMINATE;
     isItTimeToYield = TRUE;
 #if defined(SYSV) && defined(X_NOT_POSIX)
     if (sig)
 	OsSignal(sig, SIG_IGN);
 #endif
-#ifdef AMOEBA
-    WakeUpMainThread();
-#endif
+    errno = olderrno;
 }
 
 #if __GNUC__
@@ -448,9 +435,6 @@ AbortServer()
     OsCleanup();
     AbortDDX();
     fflush(stderr);
-#ifdef AMOEBA
-    IOPCleanUp();
-#endif
     if (CoreDump)
 	abort();
     exit (1);
@@ -460,27 +444,17 @@ void
 Error(str)
     char *str;
 {
-#ifdef AMOEBA
-    mu_lock(&print_lock);
-#endif
     perror(str);
-#ifdef AMOEBA
-    mu_unlock(&print_lock);
-#endif
 }
 
 #ifndef DDXTIME
 CARD32
 GetTimeInMillis()
 {
-#ifndef AMOEBA
     struct timeval  tp;
 
     X_GETTIMEOFDAY(&tp);
     return(tp.tv_sec * 1000) + (tp.tv_usec / 1000);
-#else
-    return sys_milli();
-#endif
 }
 #endif
 
@@ -513,11 +487,7 @@ AdjustWaitForDelay (waitTime, newdelay)
 void UseMsg()
 {
 #if !defined(AIXrt) && !defined(AIX386)
-#ifndef AMOEBA
     ErrorF("use: X [:<display>] [option]\n");
-#else
-    ErrorF("use: X [[<host>]:<display>] [option]\n");
-#endif
     ErrorF("-a #                   mouse acceleration (pixels)\n");
     ErrorF("-ac                    disable access control restrictions\n");
 #ifdef MEMBUG
@@ -576,9 +546,6 @@ void UseMsg()
 #endif
     ErrorF("-su                    disable any save under support\n");
     ErrorF("-t #                   mouse threshold (pixels)\n");
-#ifdef AMOEBA
-    ErrorF("-tcp capability        specify TCP/IP server capability\n");
-#endif
     ErrorF("-terminate             terminate at server reset\n");
     ErrorF("-to #                  connection time out\n");
     ErrorF("-tst                   disable testing extensions\n");
@@ -632,10 +599,6 @@ char	*argv[];
 {
     int i, skip;
 
-#ifdef AMOEBA
-    mu_init(&print_lock);
-#endif
-
     defaultKeyboardControl.autoRepeat = TRUE;
 
 #ifdef PART_NET
@@ -660,27 +623,6 @@ char	*argv[];
                 exit(1);
             }
 	}
-#ifdef AMOEBA
-        else if (strchr(argv[i], ':') != NULL) {
-            char *p;
-
-            XServerHostName = argv[i];
-            if ((p = strchr(argv[i], ':')) != NULL) {
-                *p++ = '\0';
-                display = p;
-                if( ! VerifyDisplayName( display ) ) {
-                    ErrorF("Bad display name: %s\n", display);
-                    UseMsg();
-                    exit(1);
-                }
-            }
-        } else if (strcmp( argv[i], "-tcp") == 0) {
-            if (++i < argc)
-                XTcpServerName = argv[i];
-            else
-                UseMsg();
-        }
-#endif /* AMOEBA */
 	else if ( strcmp( argv[i], "-a") == 0)
 	{
 	    if(++i < argc)
@@ -1163,9 +1105,12 @@ pointer client;
 	char hname[1024], *hnameptr;
 	struct hostent *host;
 	int len;
+#ifdef XTHREADS_NEEDS_BYNAMEPARAMS
+	_Xgethostbynameparams hparams;
+#endif
 
 	gethostname(hname, 1024);
-	host = gethostbyname(hname);
+	host = _XGethostbyname(hname, hparams);
 	if (host == NULL)
 	    hnameptr = hname;
 	else
@@ -1208,9 +1153,6 @@ void *
 Xalloc (amount)
     unsigned long amount;
 {
-#if !defined(__STDC__) && !defined(AMOEBA)
-    char		*malloc();
-#endif
     register pointer  ptr;
 	
     if ((long)amount <= 0) {
@@ -1240,9 +1182,6 @@ void *
 XNFalloc (amount)
     unsigned long amount;
 {
-#if !defined(__STDC__) && !defined(AMOEBA)
-    char             *malloc();
-#endif
     register pointer ptr;
 
     if ((long)amount <= 0)
@@ -1302,11 +1241,6 @@ Xrealloc (ptr, amount)
     register pointer ptr;
     unsigned long amount;
 {
-#if !defined(__STDC__) && !defined(AMOEBA)
-    char *malloc();
-    char *realloc();
-#endif
-
 #ifdef MEMBUG
     if (!Must_have_memory && Memory_fail &&
 	((random() % MEM_FAIL_SCALE) < Memory_fail))
@@ -1408,13 +1342,9 @@ XNFstrdup(const char *s)
 
 void
 AuditPrefix(f)
-    char *f;
+    const char *f;
 {
-#ifdef X_NOT_STDC_ENV
-    long tm;
-#else
     time_t tm;
-#endif
     char *autime, *s;
     if (*f != ' ')
     {
@@ -1430,46 +1360,22 @@ AuditPrefix(f)
     }
 }
 
-/*VARARGS1*/
 void
-AuditF(
-#if NeedVarargsPrototypes
-    const char * f, ...)
-#else
-    f, s0, s1, s2, s3, s4, s5, s6, s7, s8, s9) /* limit of ten args */
-    char *f;
-    char *s0, *s1, *s2, *s3, *s4, *s5, *s6, *s7, *s8, *s9;
-#endif
+AuditF(const char * f, ...)
 {
-#if NeedVarargsPrototypes
     va_list args;
-#endif
 
     AuditPrefix(f);
 
-#if NeedVarargsPrototypes
     va_start(args, f);
     VErrorF(f, args);
     va_end(args);
-#else
-    ErrorF(f, s0, s1, s2, s3, s4, s5, s6, s7, s8, s9);
-#endif
 }
 
-/*VARARGS1*/
 void
-FatalError(
-#if NeedVarargsPrototypes
-    const char *f, ...)
-#else
-f, s0, s1, s2, s3, s4, s5, s6, s7, s8, s9) /* limit of ten args */
-    const char *f;
-    char *s0, *s1, *s2, *s3, *s4, *s5, *s6, *s7, *s8, *s9;
-#endif
+FatalError(const char *f, ...)
 {
-#if NeedVarargsPrototypes
     va_list args;
-#endif
     static Bool beenhere = FALSE;
 
     if (beenhere)
@@ -1477,13 +1383,9 @@ f, s0, s1, s2, s3, s4, s5, s6, s7, s8, s9) /* limit of ten args */
     else
 	ErrorF("\nFatal server error:\n");
 
-#if NeedVarargsPrototypes
     va_start(args, f);
     VErrorF(f, args);
     va_end(args);
-#else
-    ErrorF(f, s0, s1, s2, s3, s4, s5, s6, s7, s8, s9);
-#endif
     ErrorF("\n");
 #ifdef DDXOSFATALERROR
     if (!beenhere)
@@ -1500,7 +1402,6 @@ f, s0, s1, s2, s3, s4, s5, s6, s7, s8, s9) /* limit of ten args */
     /*NOTREACHED*/
 }
 
-#if NeedVarargsPrototypes
 void
 VErrorF(f, args)
     const char *f;
@@ -1532,38 +1433,14 @@ VFatalError(const char *msg, va_list args)
     AbortServer();
     /*NOTREACHED*/
 }
-#endif /* NeedVarargsPrototypes */
 
-/*VARARGS1*/
 void
-ErrorF(
-#if NeedVarargsPrototypes
-    const char * f, ...)
-#else
- f, s0, s1, s2, s3, s4, s5, s6, s7, s8, s9) /* limit of ten args */
-    char *f;
-    char *s0, *s1, *s2, *s3, *s4, *s5, *s6, *s7, *s8, *s9;
-#endif
+ErrorF(const char * f, ...)
 {
-#if NeedVarargsPrototypes
     va_list args;
     va_start(args, f);
     VErrorF(f, args);
     va_end(args);
-#else
-#ifdef AIXV3
-    if (SyncOn)
-        sync();
-#else /* not AIXV3 */
-#ifdef AMOEBA
-    mu_lock(&print_lock);
-#endif
-    fprintf( stderr, f, s0, s1, s2, s3, s4, s5, s6, s7, s8, s9);
-#ifdef AMOEBA
-    mu_unlock(&print_lock);
-#endif
-#endif /* AIXV3 */
-#endif
 }
 
 #ifdef SMART_SCHEDULE
@@ -1616,11 +1493,14 @@ SmartScheduleStartTimer (void)
 void
 SmartScheduleTimer (int sig)
 {
+    int olderrno = errno;
+
     SmartScheduleTime += SmartScheduleInterval;
     if (SmartScheduleIdle)
     {
 	SmartScheduleStopTimer ();
     }
+    errno = olderrno;
 }
 #endif
 
@@ -1629,7 +1509,6 @@ SmartScheduleInit (void)
 {
 #ifdef SMART_SCHEDULE_POSSIBLE
     struct sigaction	act;
-    struct itimerval	timer;
 
     if (SmartScheduleDisable)
 	return TRUE;
@@ -1717,6 +1596,9 @@ OsReleaseSignals (void)
  * all privs before running a command.
  *
  * This is based on the code in FreeBSD 2.2 libc.
+ *
+ * XXX It'd be good to redirect stderr so that it ends up in the log file
+ * as well.  As it is now, xkbcomp messages don't end up in the log file.
  */
 
 int
@@ -1898,6 +1780,17 @@ Pclose(iop)
 #define REMOVE_LONG_ENV 1
 #endif
 
+/*
+ * Disallow stdout or stderr as pipes?  It's possible to block the X server
+ * when piping stdout+stderr to a pipe.
+ *
+ * Don't enable this because it looks like it's going to cause problems.
+ */
+#ifndef NO_OUTPUT_PIPES
+#define NO_OUTPUT_PIPES 0
+#endif
+
+
 /* Check args and env only if running setuid (euid == 0 && euid != uid) ? */
 #ifndef CHECK_EUID
 #define CHECK_EUID 1
@@ -1928,6 +1821,7 @@ enum BadCode {
     ArgTooLong,
     UnprintableArg,
     EnvTooLong,
+    OutputIsPipe,
     InternalError
 };
 
@@ -2032,6 +1926,16 @@ CheckUserParameters(int argc, char **argv, char **envp)
 		}
 	    }
 	}
+#if NO_OUTPUT_PIPES
+	if (!bad) {
+	    struct stat buf;
+
+	    if (fstat(fileno(stdout), &buf) == 0 && S_ISFIFO(buf.st_mode))
+		bad = OutputIsPipe;
+	    if (fstat(fileno(stderr), &buf) == 0 && S_ISFIFO(buf.st_mode))
+		bad = OutputIsPipe;
+	}
+#endif
     }
     switch (bad) {
     case NotBad:
@@ -2052,6 +1956,9 @@ CheckUserParameters(int argc, char **argv, char **envp)
     case EnvTooLong:
 	ErrorF("Environment variable `%s' is too long\n", e);
 	ErrorF(ENVMSG);
+	break;
+    case OutputIsPipe:
+	ErrorF("Stdout and/or stderr is a pipe\n");
 	break;
     case InternalError:
 	ErrorF("Internal Error\n");

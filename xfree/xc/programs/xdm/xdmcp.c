@@ -1,9 +1,13 @@
-/* $Xorg: xdmcp.c,v 1.3 2000/08/17 19:54:16 cpqbld Exp $ */
+/* $Xorg: xdmcp.c,v 1.4 2001/02/09 02:05:41 xorgcvs Exp $ */
 /*
 
 Copyright 1988, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included
 in all copies or substantial portions of the Software.
@@ -22,7 +26,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/xdm/xdmcp.c,v 3.14 2001/02/26 23:04:22 dawes Exp $ */
+/* $XFree86: xc/programs/xdm/xdmcp.c,v 3.19 2001/12/14 20:01:25 dawes Exp $ */
 
 /*
  * xdm - display manager daemon
@@ -44,7 +48,6 @@ from The Open Group.
 
 # include	"dm_socket.h"
 
-#ifndef MINIX
 #ifndef X_NO_SYS_UN
 #ifndef Lynx
 #include	<sys/un.h>
@@ -52,31 +55,17 @@ from The Open Group.
 #include	<un.h>
 #endif
 #endif
+#if defined(__SVR4) && defined(__sun)
+	/*
+	 * make sure we get the resolver's version of gethostbyname
+	 * otherwise we may not get all the addresses!
+	 */
+#define gethostbyname res_gethostbyname
+#endif
 #include	<netdb.h>
-#else /* MINIX */
-#include <net/hton.h>
-#include <net/gen/netdb.h>
-#endif /* !MINIX */
 
-#ifdef X_NOT_STDC_ENV
-#define Time_t long
-extern Time_t time ();
-#else
 #include <time.h>
 #define Time_t time_t
-#endif
-
-#ifdef MINIX
-struct sockaddr_un
-{
-	u16_t   sun_family;
-	char    sun_path[62];
-};
-static char read_buffer[XDM_MAX_MSGLEN+sizeof(udp_io_hdr_t)];
-static int read_inprogress;
-static int read_size;
-#define select(n,r,w,x,t) nbio_select(n,r,w,x,t)
-#endif
 
 #define getString(name,len)	((name = malloc (len + 1)) ? 1 : 0)
 
@@ -296,45 +285,13 @@ ProcessRequestSocket (void)
     XdmcpHeader		header;
     struct sockaddr	addr;
     int			addrlen = sizeof addr;
-#ifdef MINIX
-    int			r;
-#endif
-
-#ifdef MINIX
-    if (read_inprogress) abort();
-    if (read_size == 0)
-    {
-    	r= read(xdmcpFd, read_buffer, sizeof(read_buffer));
-    	if (r == -1 && errno == EINPROGRESS)
-    	{
-    		read_inprogress= 1;
-    		nbio_inprogress(xdmcpFd, ASIO_READ, 1 /* read */,
-    			0 /* write */, 0 /* exception */);
-    	}
-    	else if (r <= 0)
-    	{
-    		LogError("read error: %s\n",
-    			r == 0 ?  "EOF" : strerror(errno));
-		return;
-	}
-    }
-#endif
 
     Debug ("ProcessRequestSocket\n");
     bzero ((char *) &addr, sizeof (addr));
-#ifdef MINIX
-    if (!MNX_XdmcpFill (xdmcpFd, &buffer, &addr, &addrlen,
-    	read_buffer, read_size))
-    {
-	return;
-    }
-    read_size= 0;
-#else
     if (!XdmcpFill (xdmcpFd, &buffer, (XdmcpNetaddr) &addr, &addrlen)) {
 	Debug ("XdmcpFill failed\n");
 	return;
     }
-#endif
     if (!XdmcpReadHeader (&buffer, &header)) {
 	Debug ("XdmcpReadHeader failed\n");
 	return;
@@ -380,17 +337,7 @@ WaitForSomething (void)
     Debug ("WaitForSomething\n");
     if (AnyWellKnownSockets () && !ChildReady) {
 	reads = WellKnownSocketsMask;
-#ifdef MINIX__NOT
-	{
-		struct timeval tv;
-		tv.tv_sec= 5;
-		tv.tv_usec= 0;
-		nready = select (WellKnownSocketsMax + 1, &reads, 0, 0, &tv);
-		ChildReady= 1;
-	}
-#else
 	nready = select (WellKnownSocketsMax + 1, &reads, 0, 0, 0);
-#endif
 	Debug ("select returns %d.  Rescan: %d  ChildReady: %d\n",
 		nready, Rescan, ChildReady);
 	if (nready > 0)
@@ -495,15 +442,7 @@ NetworkAddressToName(
 	    hostent = gethostbyaddr ((char *)data,
 				     connectionAddress->length, AF_INET);
 	    if (sourceAddress && hostent) {
-#if defined(__SVR4) && defined(__sun)
-		/*
-		 * make sure we get the resolver's version of gethostbyname
-		 * otherwise we may not get all the addresses!
-		 */
-		hostent = (struct hostent *) res_gethostbyname(hostent->h_name);
-#else
 		hostent = gethostbyname(hostent->h_name);
-#endif
 		if (hostent)
 			multiHomed = hostent->h_addr_list[1] != NULL;
 	    }
@@ -653,7 +592,7 @@ forward_respond (
 		    memmove( un_addr.sun_path, clientAddress.data, clientAddress.length);
 		    un_addr.sun_path[clientAddress.length] = '\0';
 		    client = (struct sockaddr *) &un_addr;
-#if defined(BSD44SOCKETS) && !defined(Lynx)
+#if defined(BSD44SOCKETS) && !defined(Lynx) && defined(UNIXCONN)
 		    un_addr.sun_len = strlen(un_addr.sun_path);
 		    clientlen = SUN_LEN(&un_addr);
 #else
@@ -1342,21 +1281,3 @@ CARD16Ptr   displayNumber)
 
 #endif /* XDMCP */
 
-#ifdef MINIX
-void udp_read_cb(nbio_ref_t ref, int res, int err)
-{
-	if (!read_inprogress)
-		abort();
-	if (res > 0)
-	{
-		read_size= res;
-	}
-	else
-    	{
-    		LogError("read error: %s\n",
-    			res == 0 ?  "EOF" : strerror(err));
-		read_size= 0;
-	}
-	read_inprogress= 0;
-}
-#endif

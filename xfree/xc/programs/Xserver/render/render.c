@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/programs/Xserver/render/render.c,v 1.10 2001/03/08 03:48:44 keithp Exp $
+ * $XFree86: xc/programs/Xserver/render/render.c,v 1.13 2001/12/13 04:35:41 keithp Exp $
  *
  * Copyright © 2000 SuSE, Inc.
  *
@@ -176,6 +176,8 @@ RenderExtensionInit (void)
     ExtensionEntry *extEntry;
 
     if (!PictureType)
+	return;
+    if (!PictureFinishInit ())
 	return;
     extEntry = AddExtension (RENDER_NAME, 0, RenderNumberErrors,
 			     ProcRenderDispatch, SProcRenderDispatch,
@@ -543,13 +545,25 @@ ProcRenderFreePicture (ClientPtr client)
     return(client->noClientException);
 }
 
+static Bool
+PictOpValid (CARD8 op)
+{
+    if (/*PictOpMinimum <= op && */ op <= PictOpMaximum)
+	return TRUE;
+    if (PictOpDisjointMinimum <= op && op <= PictOpDisjointMaximum)
+	return TRUE;
+    if (PictOpConjointMinimum <= op && op <= PictOpConjointMaximum)
+	return TRUE;
+    return FALSE;
+}
+
 static int
 ProcRenderComposite (ClientPtr client)
 {
     PicturePtr	pSrc, pMask, pDst;
     REQUEST(xRenderCompositeReq);
 
-    if (stuff->op > PictOpMaximum)
+    if (!PictOpValid (stuff->op))
     {
 	client->errorValue = stuff->op;
 	return BadValue;
@@ -869,6 +883,11 @@ ProcRenderCompositeGlyphs (ClientPtr client)
     case X_RenderCompositeGlyphs32: size = 4; break;
     }
 	    
+    if (!PictOpValid (stuff->op))
+    {
+	client->errorValue = stuff->op;
+	return BadValue;
+    }
     VERIFY_PICTURE (pSrc, stuff->src, client, SecurityReadAccess,
 		    RenderErrBase + BadPicture);
     VERIFY_PICTURE (pDst, stuff->dst, client, SecurityWriteAccess,
@@ -1030,7 +1049,7 @@ ProcRenderFillRectangles (ClientPtr client)
     int             things;
     REQUEST(xRenderFillRectanglesReq);
     
-    if (stuff->op > PictOpMaximum)
+    if (!PictOpValid (stuff->op))
     {
 	client->errorValue = stuff->op;
 	return BadValue;

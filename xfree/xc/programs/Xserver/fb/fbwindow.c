@@ -21,7 +21,7 @@
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
-/* $XFree86: xc/programs/Xserver/fb/fbwindow.c,v 1.7 2000/08/09 17:50:52 keithp Exp $ */
+/* $XFree86: xc/programs/Xserver/fb/fbwindow.c,v 1.9 2001/07/16 05:05:41 keithp Exp $ */
 
 #include "fb.h"
 #ifdef IN_MODULE
@@ -66,8 +66,6 @@ fbUnmapWindow(WindowPtr pWindow)
     return TRUE;
 }
 
-extern WindowPtr    *WindowTable;
-
 void
 fbCopyWindowProc (DrawablePtr	pSrcDrawable,
 		  DrawablePtr	pDstDrawable,
@@ -84,22 +82,24 @@ fbCopyWindowProc (DrawablePtr	pSrcDrawable,
     FbBits	*src;
     FbStride	srcStride;
     int		srcBpp;
+    int		srcXoff, srcYoff;
     FbBits	*dst;
     FbStride	dstStride;
     int		dstBpp;
+    int		dstXoff, dstYoff;
     
-    fbGetDrawable (pSrcDrawable, src, srcStride, srcBpp);
-    fbGetDrawable (pDstDrawable, dst, dstStride, dstBpp);
+    fbGetDrawable (pSrcDrawable, src, srcStride, srcBpp, srcXoff, srcYoff);
+    fbGetDrawable (pDstDrawable, dst, dstStride, dstBpp, dstXoff, dstYoff);
     
     while (nbox--)
     {
-	fbBlt (src + (pbox->y1 + dy) * srcStride,
+	fbBlt (src + (pbox->y1 + dy + srcYoff) * srcStride,
 	       srcStride,
-	       (pbox->x1 + dx) * srcBpp,
+	       (pbox->x1 + dx + srcXoff) * srcBpp,
     
-	       dst + (pbox->y1) * dstStride,
+	       dst + (pbox->y1 + dstYoff) * dstStride,
 	       dstStride,
-	       (pbox->x1) * dstBpp,
+	       (pbox->x1 + dstXoff) * dstBpp,
     
 	       (pbox->x2 - pbox->x1) * dstBpp,
 	       (pbox->y2 - pbox->y1),
@@ -203,16 +203,17 @@ fbFillRegionSolid (DrawablePtr	pDrawable,
     FbBits	*dst;
     FbStride	dstStride;
     int		dstBpp;
+    int		dstXoff, dstYoff;
     int		n = REGION_NUM_RECTS(pRegion);
     BoxPtr	pbox = REGION_RECTS(pRegion);
 
-    fbGetDrawable (pDrawable, dst, dstStride, dstBpp);
+    fbGetDrawable (pDrawable, dst, dstStride, dstBpp, dstXoff, dstYoff);
     
     while (n--)
     {
-	fbSolid (dst + pbox->y1 * dstStride,
+	fbSolid (dst + (pbox->y1 + dstYoff) * dstStride,
 		 dstStride,
-		 pbox->x1 * dstBpp,
+		 (pbox->x1 + dstXoff) * dstBpp,
 		 dstBpp,
 		 (pbox->x2 - pbox->x1) * dstBpp,
 		 pbox->y2 - pbox->y1,
@@ -222,6 +223,11 @@ fbFillRegionSolid (DrawablePtr	pDrawable,
     }
 }
 
+#ifdef PANORAMIX
+#include "panoramiX.h"
+#include "panoramiXsrv.h"
+#endif
+
 void
 fbFillRegionTiled (DrawablePtr	pDrawable,
 		   RegionPtr	pRegion,
@@ -230,23 +236,38 @@ fbFillRegionTiled (DrawablePtr	pDrawable,
     FbBits	*dst;
     FbStride	dstStride;
     int		dstBpp;
+    int		dstXoff, dstYoff;
     FbBits	*tile;
     FbStride	tileStride;
-    int	    tileBpp;
-    int	    tileWidth, tileHeight;
-    int	    n = REGION_NUM_RECTS(pRegion);
-    BoxPtr  pbox = REGION_RECTS(pRegion);
-
-    fbGetDrawable (pDrawable, dst, dstStride, dstBpp);
-    fbGetDrawable (&pTile->drawable, tile, tileStride, tileBpp);
+    int		tileBpp;
+    int		tileXoff, tileYoff; /* XXX assumed to be zero */
+    int		tileWidth, tileHeight;
+    int		n = REGION_NUM_RECTS(pRegion);
+    BoxPtr	pbox = REGION_RECTS(pRegion);
+    int		xRot = pDrawable->x;
+    int		yRot = pDrawable->y;
+    
+#ifdef PANORAMIX
+    if(!noPanoramiXExtension) 
+    {
+	int index = pDrawable->pScreen->myNum;
+	if(&WindowTable[index]->drawable == pDrawable) 
+	{
+	    xRot -= panoramiXdataPtr[index].x;
+	    yRot -= panoramiXdataPtr[index].y;
+	}
+    }
+#endif
+    fbGetDrawable (pDrawable, dst, dstStride, dstBpp, dstXoff, dstYoff);
+    fbGetDrawable (&pTile->drawable, tile, tileStride, tileBpp, tileXoff, tileYoff);
     tileWidth = pTile->drawable.width;
     tileHeight = pTile->drawable.height;
     
     while (n--)
     {
-	fbTile (dst + pbox->y1 * dstStride,
+	fbTile (dst + (pbox->y1 + dstYoff) * dstStride,
 		dstStride,
-		pbox->x1 * dstBpp,
+		(pbox->x1 + dstXoff) * dstBpp,
 		(pbox->x2 - pbox->x1) * dstBpp,
 		pbox->y2 - pbox->y1,
 		tile,
@@ -256,8 +277,8 @@ fbFillRegionTiled (DrawablePtr	pDrawable,
 		GXcopy,
 		FB_ALLONES,
 		dstBpp,
-		pDrawable->x * dstBpp,
-		pDrawable->y - pbox->y1);
+		xRot * dstBpp,
+		yRot - pbox->y1);
 	pbox++;
     }
 }

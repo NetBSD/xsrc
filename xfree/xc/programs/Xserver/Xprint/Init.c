@@ -1,4 +1,4 @@
-/* $Xorg: Init.c,v 1.4 2000/08/17 19:48:05 cpqbld Exp $ */
+/* $Xorg: Init.c,v 1.5 2001/03/07 17:31:33 pookie Exp $ */
 /*
 (c) Copyright 1996 Hewlett-Packard Company
 (c) Copyright 1996 International Business Machines Corp.
@@ -50,7 +50,7 @@ copyright holders.
 **    *********************************************************
 ** 
 ********************************************************************/
-/* $XFree86: xc/programs/Xserver/Xprint/Init.c,v 1.9 2001/01/17 22:36:28 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/Xprint/Init.c,v 1.13 2001/12/21 21:02:04 dawes Exp $ */
 
 #include <unistd.h>
 #include <stdlib.h>
@@ -90,11 +90,7 @@ typedef char *XPointer;
 #include "DiPrint.h"
 #include "attributes.h"
 
-extern  char    *display;		/* display number as a string */
-
 #include "os.h"
-
-extern WindowPtr *WindowTable; /* declared in dix:globals.c */
 
 static void GenericScreenInit(
     int index,
@@ -175,12 +171,11 @@ const char *LIST_QUEUES = "LANG=C lpstat -v | "
 
 static
 PixmapFormatRec	RasterPixmapFormats[] = {
-    1, 1, BITMAP_SCANLINE_PAD
+    { 1, 1, BITMAP_SCANLINE_PAD }
 };
 #define NUMRASTFORMATS	(sizeof RasterPixmapFormats)/(sizeof RasterPixmapFormats[0])
 
-extern Bool InitializeRasterDriver();
-extern XpValidatePoolsRec RasterValidatePoolsRec; /* From RasterAttVal.c */
+#include "raster/Raster.h"
 
 #endif
 
@@ -195,12 +190,6 @@ PixmapFormatRec	ColorPclPixmapFormats[] = {
 
 #define NUMCPCLFORMATS	(sizeof ColorPclPixmapFormats)/(sizeof ColorPclPixmapFormats[0])
 
-#ifdef XPPCLDDX
-extern Bool InitializeColorPclDriver(BFuncArgs);
-#endif
-
-extern XpValidatePoolsRec PclValidatePoolsRec;
-
 #endif
 
 #ifdef XPMONOPCLDDX
@@ -212,9 +201,10 @@ PixmapFormatRec	MonoPclPixmapFormats[] = {
 
 #define NUMMPCLFORMATS	(sizeof MonoPclPixmapFormats)/(sizeof MonoPclPixmapFormats[0])
 
-extern Bool InitializeMonoPclDriver();
-extern XpValidatePoolsRec PclValidatePoolsRec;
+#endif
 
+#if defined(XPPCLDDX) || defined(XPMONOPCLDDX)
+#include "pcl/Pcl.h"
 #endif
 
 #ifdef XPPSDDX
@@ -229,7 +219,6 @@ PixmapFormatRec	PSPixmapFormats[] = {
 #define NUMPSFORMATS	(sizeof PSPixmapFormats)/(sizeof PSPixmapFormats[0])
 
 #include "ps/Ps.h"
-extern XpValidatePoolsRec PsValidatePoolsRec;
 
 #endif
 
@@ -341,10 +330,6 @@ static const char configFilePath[] =
 
 static const char printServerConfigDir[] = "XPSERVERCONFIGDIR";
 
-static int printScreenPrivIndex,
-	   printWindowPrivIndex,
-	   printGCPrivIndex;
-static unsigned long printGeneration = 0;
 static char *configFileName = (char *)NULL;
 static Bool freeDefaultFontPath = FALSE;
 static char *origFontPath = (char *)NULL;
@@ -362,6 +347,10 @@ XprintOptions(
 {
     if(strcmp(argv[i], "-XpFile") == 0)
     {
+	if ((i + 1) >= argc) {
+	    ddxUseMsg ();
+	    return i + 2;
+	}
 	configFileName = argv[i + 1];
 	return i + 2;
     }
@@ -717,7 +706,6 @@ GetConfigFileName(void)
 static PrinterDbPtr
 BuildPrinterDb(void)
 {
-    char *printerList, *augmentCmd = (char *)NULL;
     Bool defaultAugment = TRUE, freeConfigFileName;
 
     if(configFileName && access(configFileName, R_OK) != 0)
@@ -1030,8 +1018,8 @@ AddToFontPath(
 static void
 AugmentFontPath(void)
 {
-    char *newPath, *modelID, **allIDs = (char **)NULL;
-    PrinterDbPtr pDb, pDbEntry;
+    char *modelID, **allIDs = (char **)NULL;
+    PrinterDbPtr pDbEntry;
     int numModels, i;
 
     if(!origFontPath)
@@ -1468,10 +1456,9 @@ GenericScreenInit(
      int argc,
      char **argv)
 {
-    int i;
     float fWidth, fHeight, maxWidth, maxHeight;
     unsigned short width, height;
-    PrinterDbPtr pDb, pDb2;
+    PrinterDbPtr pDb;
     int res, maxRes;
     
     /*
@@ -1617,7 +1604,7 @@ GetPrinterListInfo(
     int localeLen,
     char *locale)
 {
-    PrinterDbPtr pDb, pDb2;
+    PrinterDbPtr pDb;
 
     for(pDb = printerDb; pDb != (PrinterDbPtr)NULL; pDb = pDb->next)
     {
@@ -1667,7 +1654,7 @@ XpDiGetPrinterList(
     if(!nameLen || name == (char *)NULL)
     {
 	int i;
-        PrinterDbPtr pDb, pDb2;
+        PrinterDbPtr pDb;
 
         for(pDb = printerDb, i = 0; pDb != (PrinterDbPtr)NULL; 
 	    pDb = pDb->next, i++)
@@ -1717,7 +1704,6 @@ WindowPtr
 XpDiValidatePrinter(char *printerName, int printerNameLen)
 {
     PrinterDbPtr pCurEntry;
-    WindowPtr pWin;
 
     for(pCurEntry = printerDb;
 	pCurEntry != (PrinterDbPtr)NULL; pCurEntry = pCurEntry->next)

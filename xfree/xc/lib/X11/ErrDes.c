@@ -1,12 +1,16 @@
 /*
- * $Xorg: ErrDes.c,v 1.3 2000/08/17 19:44:33 cpqbld Exp $
+ * $Xorg: ErrDes.c,v 1.4 2001/02/09 02:03:32 xorgcvs Exp $
  */
 
 /***********************************************************
 
 Copyright 1987, 1988, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -44,7 +48,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/lib/X11/ErrDes.c,v 3.8 2001/01/17 19:41:34 dawes Exp $ */
+/* $XFree86: xc/lib/X11/ErrDes.c,v 3.10 2001/12/14 19:53:59 dawes Exp $ */
 
 #include "Xlibint.h"
 #include <X11/Xos.h>
@@ -55,17 +59,11 @@ SOFTWARE.
 #define ERRORDB "/usr/lib/X11/XErrorDB"
 #endif
 
-#ifdef __STDC__
-#define Const const
-#else
-#define Const /**/
-#endif
-
 /*
  * descriptions of errors in Section 4 of Protocol doc (pp. 350-351); more
  * verbose descriptions are given in the error database
  */
-static Const char * Const _XErrorList[] = {
+static const char * const _XErrorList[] = {
     /* No error	*/		"no error",
     /* BadRequest */		"BadRequest",
     /* BadValue	*/		"BadValue",

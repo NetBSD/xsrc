@@ -1,5 +1,5 @@
 /* $XConsortium: get_load.c /main/37 1996/03/09 09:38:04 kaleb $ */
-/* $XFree86: xc/programs/xload/get_load.c,v 1.8 2001/04/08 05:00:09 torrey Exp $ */
+/* $XFree86: xc/programs/xload/get_load.c,v 1.15 2002/01/07 20:38:31 dawes Exp $ */
 /*
 
 Copyright (c) 1989  X Consortium
@@ -43,18 +43,19 @@ from the X Consortium.
 #include <X11/Intrinsic.h>
 #include <X11/Xlocale.h>
 #include <stdio.h>
+#include "xload.h"
 
 #if !defined(DGUX)
-#ifdef att
+#if defined(att) || defined(QNX4)
 #define LOADSTUB
 #endif
 
 #ifndef macII
 #ifndef apollo
 #ifndef LOADSTUB
-#if !defined(linux) && !defined(AMOEBA) && !defined(__EMX__) && !defined(__GNU__)
+#if !defined(linux) && !defined(__EMX__) && !defined(__GNU__)
 #include <nlist.h>
-#endif /* linux || AMOEBA */
+#endif /* !linux && ... */
 #endif /* LOADSTUB */
 #endif /* apollo */
 #endif /* macII */
@@ -151,9 +152,8 @@ struct lavnum {
 #ifdef X_NOT_POSIX
 extern long lseek();
 #endif
-extern void exit();
 
-static xload_error(
+static void xload_error(
 #if NeedFunctionPrototypes
 char *, char *
 #endif
@@ -202,8 +202,8 @@ void InitLoadPoint()				/* Apollo version */
 /* ARGSUSED */
 void GetLoadPoint( w, closure, call_data ) 	/* Apollo version */
      Widget	w;		/* unused */
-     caddr_t	closure;	/* unused */
-     caddr_t	call_data;	/* pointer to (double) return value */
+     XtPointer	closure;	/* unused */
+     XtPointer	call_data;	/* pointer to (double) return value */
 {
      time_$clock_t  timeNow;
      double         temp;
@@ -246,7 +246,7 @@ struct nlist namelist[] = {
 static int kmem;
 static struct var v;
 static struct proc *p;
-static caddr_t first_buf, last_buf;
+static XtPointer first_buf, last_buf;
 
 void InitLoadPoint()				/* SYSV386 version */
 {
@@ -270,15 +270,15 @@ void InitLoadPoint()				/* SYSV386 version */
     if ((p=(struct proc *)malloc(v.v_proc*sizeof(*p))) == NULL)
 	xload_error("cannot allocat space for", PROC_NAME);
 	  
-    first_buf = (caddr_t) namelist[2].n_value;
+    first_buf = (XtPointer) namelist[2].n_value;
     last_buf  = first_buf + v.v_buf * sizeof(struct buf);
 }
 	
 /* ARGSUSED */
 void GetLoadPoint( w, closure, call_data )	/* SYSV386 version */
 Widget	w;		/* unused */
-caddr_t	closure;	/* unused */
-caddr_t	call_data;	/* pointer to (double) return value */
+XtPointer	closure;	/* unused */
+XtPointer	call_data;	/* pointer to (double) return value */
 {
     double *loadavg = (double *)call_data;
     static double avenrun = 0.0;
@@ -353,57 +353,6 @@ XtPointer call_data;	/* pointer to (double) return value */
 }
 #else /* not KVM_ROUTINES */
 
-#ifdef AMOEBA
-#include <amoeba.h>
-#include <cmdreg.h>
-#include <stderr.h>
-#include <ampolicy.h>
-
-static capability pooldircap;
-extern char *getenv();
-
-void
-InitLoadPoint()
-{
-    register char *s;
-
-    if ((s = getenv("XLOAD_HOST")) != NULL) {
-      /* do an xload of a single host */
-      if (host_lookup(s, &pooldircap) != STD_OK)
-          xload_error("cannot lookup run server", s);
-      if (dir_lookup(&pooldircap, "proc", &pooldircap) != STD_OK)
-          xload_error("cannot lookup run server", s);
-    } else {
-      /* Else we do an xload of a pool.
-       * Environment variable RUN_SERVER overrides the default one.
-       */
-      if ((s = getenv("RUN_SERVER")) == NULL)
-          s = DEF_RUNSVR_POOL;
-      if (name_lookup(s, &pooldircap) != STD_OK)
-          xload_error("cannot lookup run server", s);
-    }
-}
-
-/* ARGSUSED */
-void GetLoadPoint( w, closure, call_data )
-    Widget   w;              /* unused */
-    caddr_t  closure;        /* unused */
-    caddr_t  call_data;      /* pointer to (double) return value */
-{
-    long ips, loadav, mfree;
-
-    if (pro_getload(&pooldircap, &ips, &loadav, &mfree) != STD_OK) {
-      /*
-       * No run server. We don't want to crash, though:
-       * it will probably come up again.
-       */
-      InitLoadPoint();
-      loadav = 0;
-    }
-    *(double *)call_data = (double)loadav / 1024.0;
-}
-#else /* AMOEBA */
-
 #ifdef linux
 
 void InitLoadPoint()
@@ -413,8 +362,8 @@ void InitLoadPoint()
 
 void GetLoadPoint( w, closure, call_data )
      Widget   w;              /* unused */
-     caddr_t  closure;        /* unused */
-     caddr_t  call_data;      /* pointer to (double) return value */
+     XtPointer  closure;        /* unused */
+     XtPointer  call_data;      /* pointer to (double) return value */
 {
       static int fd = -1;
       int n;
@@ -476,8 +425,8 @@ void InitLoadPoint()
 /* ARGSUSED */
 void GetLoadPoint( w, closure, call_data )
      Widget	w;		/* unused */
-     caddr_t	closure;	/* unused */
-     caddr_t	call_data;	/* pointer to (double) return value */
+     XtPointer	closure;	/* unused */
+     XtPointer	call_data;	/* pointer to (double) return value */
 {
   host_t host;
   struct processor_set_basic_info info;
@@ -513,8 +462,8 @@ void InitLoadPoint()
 /* ARGSUSED */
 void GetLoadPoint( w, closure, call_data )
     Widget	w;		/* unused */
-    caddr_t	closure;	/* unused */
-    caddr_t	call_data;	/* pointer to (double) return value */
+    XtPointer	closure;	/* unused */
+    XtPointer	call_data;	/* pointer to (double) return value */
 {
     double *loadavg = (double *)call_data;
 
@@ -542,8 +491,8 @@ void InitLoadPoint()
 /* ARGSUSED */
 void GetLoadPoint( w, closure, call_data )
      Widget	w;		/* unused */
-     caddr_t	closure;	/* unused */
-     caddr_t	call_data;	/* pointer to (double) return value */
+     XtPointer	closure;	/* unused */
+     XtPointer	call_data;	/* pointer to (double) return value */
 {
 	*(double *)call_data = 1.0;
 }
@@ -559,8 +508,8 @@ void InitLoadPoint()
 /*ARGSUSED*/
 void GetLoadPoint( w, closure, call_data )
      Widget   w;              /* unused */
-     caddr_t  closure;        /* unused */
-     caddr_t  call_data;      /* pointer to (double) return value */
+     XtPointer  closure;        /* unused */
+     XtPointer  call_data;      /* pointer to (double) return value */
 {
     double *loadavg = (double *)call_data;
     struct tbl_loadavg load_data;
@@ -573,6 +522,43 @@ void GetLoadPoint( w, closure, call_data )
 }
 
 #else /* not __osf__ */
+
+#ifdef __QNXNTO__
+#include <time.h>
+#include <sys/neutrino.h>
+static _Uint64t          nto_idle = 0, nto_idle_last = 0;
+static  int       nto_idle_id;
+static  struct timespec nto_now, nto_last;
+
+void
+InitLoadPoint()
+{
+  nto_idle_id = ClockId(1, 1); /* Idle thread */
+  ClockTime(nto_idle_id, NULL, &nto_idle_last);
+  clock_gettime( CLOCK_REALTIME, &nto_last);
+}
+
+/* ARGSUSED */
+void
+GetLoadPoint( w, closure, call_data )           /* QNX NTO version */
+Widget  w;              /* unused */
+XtPointer closure;      /* unused */
+XtPointer call_data;    /* pointer to (double) return value */
+{
+    double *loadavg = (double *)call_data;
+    double timediff;
+    double temp = 0.0;
+
+    ClockTime(nto_idle_id, NULL, &nto_idle);
+    clock_gettime( CLOCK_REALTIME, &nto_now);
+    timediff = 1000000000.0 * (nto_now.tv_sec - nto_last.tv_sec)
+               + (nto_now.tv_nsec - nto_last.tv_nsec);
+    temp = 1.0 - (nto_idle-nto_idle_last)/timediff;
+    *loadavg = temp >= 0 ? temp : 0;
+    nto_idle_last = nto_idle;
+    nto_last = nto_now;
+}
+#else /* not __QNXNTO__ */
 
 #ifdef __bsdi__
 #include <kvm.h>
@@ -610,8 +596,8 @@ void InitLoadPoint()
 
 void GetLoadPoint(w, closure, call_data)
      Widget w;          /* unused */
-     caddr_t closure;   /* unused */
-     caddr_t call_data; /* ptr to (double) return value */
+     XtPointer closure;   /* unused */
+     XtPointer call_data; /* ptr to (double) return value */
 {
   double *loadavg = (double *)call_data;
   fixpt_t t;
@@ -624,8 +610,8 @@ void GetLoadPoint(w, closure, call_data)
 
   return;
 }
-#else /* not __bsdi__ */
 
+#else /* not __bsdi__ */
 #if defined(BSD) && (BSD >= 199306)
 
 void InitLoadPoint()
@@ -634,8 +620,8 @@ void InitLoadPoint()
 
 void GetLoadPoint(w, closure, call_data)
      Widget w;          /* unused */
-     caddr_t closure;   /* unused */
-     caddr_t call_data; /* ptr to (double) return value */
+     XtPointer closure;   /* unused */
+     XtPointer call_data; /* ptr to (double) return value */
 {
   double *loadavg = (double *)call_data;
 
@@ -698,10 +684,6 @@ void GetLoadPoint(w, closure, call_data)
 #if defined(sun) && defined(SVR4)
 #define KERNEL_FILE "/kernel/unix"
 #endif
-
-#ifdef MINIX
-#define KERNEL_FILE "/sys/kernel"
-#endif /* MINIX */
 
 #ifdef sgi
 #if (OSMAJORVERSION > 4)
@@ -792,10 +774,6 @@ void GetLoadPoint(w, closure, call_data)
 #        endif
 #    endif /* MOTOROLA */
 
-#    ifdef MINIX
-#      define KERNEL_LOAD_VARIABLE "_loadav"
-#    endif /* MINIX */
-
 #endif /* KERNEL_LOAD_VARIABLE */
 
 /*
@@ -832,10 +810,10 @@ static struct nlist namelist[] = {	    /* namelist for vmunix grubbing */
 };
 #endif /* macII */
 
-static kmem;
+static int kmem;
 static long loadavg_seek;
 
-InitLoadPoint()
+void InitLoadPoint()
 {
 #ifdef macII
     extern nlist();
@@ -883,7 +861,7 @@ InitLoadPoint()
     }
 #else /* sun svr4 5.5 or later */
 
-#if (!defined(SVR4) || !defined(__STDC__)) && !defined(sgi) && !defined(MOTOROLA) && !(BSD >= 199103) && !defined(MINIX)
+#if (!defined(SVR4)) && !defined(sgi) && !defined(MOTOROLA) && !(BSD >= 199103)
     extern void nlist();
 #endif
 
@@ -924,8 +902,8 @@ InitLoadPoint()
 /* ARGSUSED */
 void GetLoadPoint( w, closure, call_data )
      Widget	w;		/* unused */
-     caddr_t	closure;	/* unused */
-     caddr_t	call_data;	/* pointer to (double) return value */
+     XtPointer	closure;	/* unused */
+     XtPointer	call_data;	/* pointer to (double) return value */
 {
   	double *loadavg = (double *)call_data;
 
@@ -1073,25 +1051,7 @@ void GetLoadPoint( w, closure, call_data )
 	}
 #      endif /* mips */
 #     else /* not sony NEWSOS4 */
-#      ifdef MINIX
-      {
-/* Indices in the loadav array */
-#define LDAV_CURR     0               /* run queue lenght at this moment */
-#define LDAV_6                1               /* av. run q len over 64 ticks (1s) */
-#define LDAV_12       2               /* av. run q len over 4096 ticks */
-#define LDAV_16               3               /* av. run q len over 65536 tick */
-#define LDAV_TOT      4               /* cummulative run q lenght */
-#define LDAV_NR               5               /* size of the loadav array */
-#define LDAV_SCALE_SHFT       8               /* values are scaled by 256 */
-
-              unsigned long loadav[LDAV_NR];  /* load avarage array */
-              
-              (void) read(kmem, (char *)loadav, sizeof(loadav));
-              *loadavg = (double)loadav[LDAV_12]/0x1000;
-      }
-#       else /* !MINIX */
 	(void) read(kmem, (char *)loadavg, sizeof(double));
-#       endif /* MINIX */
 #      endif /* sony NEWOS4 */
 #     endif /* MOTOROLA else */
 #    endif /* AIXV3 else */
@@ -1102,16 +1062,16 @@ void GetLoadPoint( w, closure, call_data )
 }
 #endif /* BSD >= 199306 else */
 #endif /* __bsdi__ else */
+#endif /* __QNXNTO__ else */
 #endif /* __osf__ else */
 #endif /* LOADSTUB else */
 #endif /* __DARWIN__ else */
 #endif /* __GNU__ else */
 #endif /* linux else */
-#endif /* AMOEBA else */
 #endif /* KVM_ROUTINES else */
 #endif /* SYSV && i386 else */
 
-static xload_error(str1, str2)
+static void xload_error(str1, str2)
 char *str1, *str2;
 {
     (void) fprintf(stderr,"xload: %s %s\n", str1, str2);
@@ -1148,8 +1108,8 @@ void InitLoadPoint()
 
 void GetLoadPoint(w, closure, call_data)
      Widget w;          /* unused */
-     caddr_t closure;   /* unused */
-     caddr_t call_data; /* ptr to (double) return value */
+     XtPointer closure;   /* unused */
+     XtPointer call_data; /* ptr to (double) return value */
 {
   double *loadavg = (double *)call_data;
 

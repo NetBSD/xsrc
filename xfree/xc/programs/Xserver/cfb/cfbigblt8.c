@@ -1,9 +1,13 @@
 /*
- * $Xorg: cfbigblt8.c,v 1.3 2000/08/17 19:48:14 cpqbld Exp $
+ * $Xorg: cfbigblt8.c,v 1.4 2001/02/09 02:04:38 xorgcvs Exp $
  *
 Copyright 1990, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -22,7 +26,7 @@ in this Software without prior written authorization from The Open Group.
  * Author:  Keith Packard, MIT X Consortium
  */
 
-/* $XFree86: xc/programs/Xserver/cfb/cfbigblt8.c,v 1.4 2001/01/17 22:36:35 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/cfb/cfbigblt8.c,v 1.6 2001/12/14 19:59:23 dawes Exp $ */
 
 #include	"X.h"
 #include	"Xmd.h"
@@ -50,14 +54,8 @@ cfbImageGlyphBlt8 (pDrawable, pGC, x, y, nglyph, ppci, pglyphBase)
 {
     ExtentInfoRec info;		/* used by QueryGlyphExtents() */
     xRectangle backrect;
-    int		fillStyle;
-    int		alu;
     int		fgPixel;
-    int		rop;
-    int		xor;
-    int		and;
-    int		pm;
-    cfbPrivGC	    *priv;
+    cfbPrivGC	*priv;
 
     /*
      * We can't avoid GC validations if calling mi functions.

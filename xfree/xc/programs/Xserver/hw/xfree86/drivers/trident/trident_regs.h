@@ -21,7 +21,7 @@
  *
  * Author:  Alan Hourihane, alanh@fairlite.demon.co.uk
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/trident/trident_regs.h,v 1.19 2001/05/15 11:08:40 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/trident/trident_regs.h,v 1.22 2002/01/11 13:06:30 alanh Exp $ */
 
 #define DEBUG 1
 
@@ -61,6 +61,7 @@
 #define CRTHiOrd 0x27
 #define AddColReg 0x29
 #define InterfaceSel 0x2A
+#define HorizOverflow 0x2B
 #define GETest 0x2D
 #define Performance 0x2F
 #define GraphEngReg 0x36
@@ -106,6 +107,8 @@
 #define VertStretch  0x52
 #define HorStretch   0x53
 #define BiosMode     0x5c
+#define BiosNewMode1 0x5a
+#define BiosNewMode2 0x5c
 #define BiosReg      0x5d
 
 /* Graphics Engine for 9420/9430 */
@@ -260,6 +263,15 @@
     	OUTB(0x3CE, reg); \
     	tridentReg->tridentRegs3CE[reg] = INB(0x3CF);
 
+#define VIDEOOUT(val,reg) \
+	if (pTrident->Chipset >= CYBER9397) { 		\
+		OUTW(0x3C4, (val << 8) | reg); 		\
+	} else {					\
+		OUTB(0x83C8, reg);			\
+		OUTB(0x83C6, val);			\
+	}
+
+
 #define BLTBUSY(b) \
 	(b = MMIO_IN8(pTrident->IOBase,GER_STATUS) & GE_BUSY)
 #define OLDBLTBUSY(b) \
@@ -354,5 +366,5 @@
 #define SHADOW_RESTORE(val) \
         do {\
                OUTB(0x3CE, CyberControl); \
-	       OUTB(0x3CF,tmp); \
+	       OUTB(0x3CF,val); \
         } while (0);

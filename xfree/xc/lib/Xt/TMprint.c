@@ -1,4 +1,4 @@
-/* $Xorg: TMprint.c,v 1.3 2000/08/17 19:46:19 cpqbld Exp $ */
+/* $Xorg: TMprint.c,v 1.4 2001/02/09 02:03:58 xorgcvs Exp $ */
 
 /***********************************************************
 Copyright 1987, 1988 by Digital Equipment Corporation, Maynard, Massachusetts
@@ -37,7 +37,11 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 Copyright 1987, 1988, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -54,6 +58,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
+/* $XFree86: xc/lib/Xt/TMprint.c,v 1.6 2001/12/14 19:56:31 dawes Exp $ */
 
 /*LINTLIBRARY*/
 #include "IntrinsicI.h"
@@ -192,7 +197,7 @@ static void PrintCode(sb, mask, code)
     if (mask != 0) {
 	if (mask != (unsigned long)~0L)
 	    (void) sprintf(sb->current, "0x%lx:0x%lx", mask, code);
-	else (void) sprintf(sb->current, /*"0x%lx"*/ "%d", code);
+	else (void) sprintf(sb->current, /*"0x%lx"*/ "%d", (unsigned)code);
 	sb->current += strlen(sb->current);
     }
 }

@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/include/extensions/render.h,v 1.3 2000/11/20 07:13:09 keithp Exp $
+ * $XFree86: xc/include/extensions/render.h,v 1.4 2001/08/16 08:03:25 keithp Exp $
  *
  * Copyright © 2000 SuSE, Inc.
  *
@@ -33,7 +33,7 @@ typedef unsigned long	PictFormat;
 
 #define RENDER_NAME	"RENDER"
 #define RENDER_MAJOR	0
-#define RENDER_MINOR	1
+#define RENDER_MINOR	2
 
 #define X_RenderQueryVersion		    0
 #define X_RenderQueryPictFormats	    1
@@ -73,6 +73,7 @@ typedef unsigned long	PictFormat;
 #define PictTypeIndexed			    0
 #define PictTypeDirect			    1
 
+#define PictOpMinimum			    0
 #define PictOpClear			    0
 #define PictOpSrc			    1
 #define PictOpDst			    2
@@ -88,6 +89,39 @@ typedef unsigned long	PictFormat;
 #define PictOpAdd			    12
 #define PictOpSaturate			    13
 #define PictOpMaximum			    13
+
+/*
+ * Operators only available in version 0.2
+ */
+#define PictOpDisjointMinimum			    0x10
+#define PictOpDisjointClear			    0x10
+#define PictOpDisjointSrc			    0x11
+#define PictOpDisjointDst			    0x12
+#define PictOpDisjointOver			    0x13
+#define PictOpDisjointOverReverse		    0x14
+#define PictOpDisjointIn			    0x15
+#define PictOpDisjointInReverse			    0x16
+#define PictOpDisjointOut			    0x17
+#define PictOpDisjointOutReverse		    0x18
+#define PictOpDisjointAtop			    0x19
+#define PictOpDisjointAtopReverse		    0x1a
+#define PictOpDisjointXor			    0x1b
+#define PictOpDisjointMaximum			    0x1b
+
+#define PictOpConjointMinimum			    0x20
+#define PictOpConjointClear			    0x20
+#define PictOpConjointSrc			    0x21
+#define PictOpConjointDst			    0x22
+#define PictOpConjointOver			    0x23
+#define PictOpConjointOverReverse		    0x24
+#define PictOpConjointIn			    0x25
+#define PictOpConjointInReverse			    0x26
+#define PictOpConjointOut			    0x27
+#define PictOpConjointOutReverse		    0x28
+#define PictOpConjointAtop			    0x29
+#define PictOpConjointAtopReverse		    0x2a
+#define PictOpConjointXor			    0x2b
+#define PictOpConjointMaximum			    0x2b
 
 #define PolyEdgeSharp			    0
 #define PolyEdgeSmooth			    1

@@ -3,7 +3,11 @@
 
 Copyright 1989, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -48,14 +52,14 @@ in this Software without prior written authorization from The Open Group.
 
 /***********************************************************************
  *
- * $Xorg: twm.c,v 1.3 2000/08/17 19:54:08 cpqbld Exp $
+ * $Xorg: twm.c,v 1.5 2001/02/09 02:05:37 xorgcvs Exp $
  *
  * twm - "Tom's Window Manager"
  *
  * 27-Oct-87 Thomas E. LaStrange	File created
  * 10-Oct-90 David M. Sternlicht        Storing saved colors on root
  ***********************************************************************/
-/* $XFree86: xc/programs/twm/twm.c,v 3.7 2001/01/17 23:45:08 dawes Exp $ */
+/* $XFree86: xc/programs/twm/twm.c,v 3.12 2001/12/14 20:01:10 dawes Exp $ */
 
 #include <stdio.h>
 #include <signal.h>
@@ -95,6 +99,7 @@ ScreenInfo **ScreenList;	/* structures for each screen */
 ScreenInfo *Scr = NULL;		/* the cur and prev screens */
 int PreviousScreen;		/* last screen that we were on */
 int FirstScreen;		/* TRUE ==> first screen of display */
+volatile Bool TimeToYield = FALSE;	/* TRUE ==> exit requested */
 Bool PrintErrorMessages = False;	/* controls error messages */
 static int RedirectError;	/* TRUE ==> another window manager running */
 static int TwmErrorHandler ( Display *dpy, XErrorEvent *event );	/* for settting RedirectError */
@@ -240,6 +245,19 @@ main(int argc, char *argv[])
 #undef newhandler
 
     Home = getenv("HOME");
+    if (Home != NULL) {
+    	char *temp_p;
+
+	/*
+	 * Make a copy of Home because the string returned by getenv() can be
+	 * overwritten by some POSIX.1 and ANSI-C implementations of getenv()
+	 * when further calls to getenv() are made
+	 */
+
+	temp_p = strdup(Home);
+	Home = temp_p;
+    }
+
     if (Home == NULL)
 	Home = "./";
 
@@ -258,32 +276,12 @@ main(int argc, char *argv[])
 	exit (1);
     }
 
-#ifdef MINIX
-    { int flags;
-    	if ((flags= fcntl(ConnectionNumber(dpy), F_GETFD)) == -1)
-    	{
-		fprintf (stderr, 
-		 "%s:  unable to mark display connection as close-on-exec\n",
-			 ProgramName);
-		exit (1);
-    	}
-	if (fcntl(ConnectionNumber(dpy), F_SETFD,
-					flags | FD_CLOEXEC) == -1)
-	{
-	    fprintf (stderr, 
-		"%s:  unable to mark display connection as close-on-exec\n",
-			 ProgramName);
-	    exit (1);
-	}
-    }
-#else
     if (fcntl(ConnectionNumber(dpy), F_SETFD, 1) == -1) {
 	fprintf (stderr, 
 		 "%s:  unable to mark display connection as close-on-exec\n",
 		 ProgramName);
 	exit (1);
     }
-#endif
 
     if (restore_filename)
 	ReadWinConfigFile (restore_filename);
@@ -877,12 +875,7 @@ Time time;
 SIGNAL_T 
 Done(int sig)
 {
-    if (dpy)
-    {
-	Reborder (CurrentTime);
-	XCloseDisplay(dpy);
-    }
-    exit(0);
+    TimeToYield = True;
     SIGNAL_RETURN;
 }
 

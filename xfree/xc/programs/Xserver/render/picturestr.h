@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/programs/Xserver/render/picturestr.h,v 1.13 2001/04/05 17:42:35 dawes Exp $
+ * $XFree86: xc/programs/Xserver/render/picturestr.h,v 1.16 2001/08/01 00:45:00 tsi Exp $
  *
  * Copyright © 2000 SuSE, Inc.
  *
@@ -43,6 +43,8 @@ typedef struct _PictFormat {
     unsigned char   type;
     unsigned char   depth;
     DirectFormatRec direct;
+    void	    *indexed;	    /* opaque indexed conversion data */
+    VisualPtr	    pVisual;	    /* for indexed formats */
     ColormapPtr	    pColormap;
 } PictFormatRec;
 
@@ -121,6 +123,17 @@ typedef void	(*CompositeRectsProcPtr)    (CARD8	    op,
 					     int	    nRect,
 					     xRectangle	    *rects);
 
+typedef Bool	(*InitIndexedProcPtr)	    (ScreenPtr	    pScreen,
+					     PictFormatPtr  pFormat);
+
+typedef void	(*CloseIndexedProcPtr)	    (ScreenPtr	    pScreen,
+					     PictFormatPtr  pFormat);
+
+typedef void	(*UpdateIndexedProcPtr)	    (ScreenPtr	    pScreen,
+					     PictFormatPtr  pFormat,
+					     int	    ndef,
+					     xColorItem	    *pdef);
+
 typedef struct _PictureScreen {
     int				totalPictureSize;
     unsigned int		*PicturePrivateSizes;
@@ -144,6 +157,12 @@ typedef struct _PictureScreen {
 
     DestroyWindowProcPtr	DestroyWindow;
     CloseScreenProcPtr		CloseScreen;
+
+    StoreColorsProcPtr		StoreColors;
+
+    InitIndexedProcPtr		InitIndexed;
+    CloseIndexedProcPtr		CloseIndexed;
+    UpdateIndexedProcPtr	UpdateIndexed;
 
 } PictureScreenRec, *PictureScreenPtr;
 
@@ -192,6 +211,9 @@ PictureMatchFormat (ScreenPtr pScreen, int depth, CARD32 format);
     
 Bool
 PictureInit (ScreenPtr pScreen, PictFormatPtr formats, int nformats);
+
+Bool
+PictureFinishInit (void);
 
 void
 SetPictureToDefaults (PicturePtr pPicture);

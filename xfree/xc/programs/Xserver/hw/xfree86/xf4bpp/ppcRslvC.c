@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xf4bpp/ppcRslvC.c,v 1.4 1999/06/06 08:49:01 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xf4bpp/ppcRslvC.c,v 1.5 2001/12/17 20:00:46 dawes Exp $ */
 /************************************************************
 Copyright 1987 by Sun Microsystems, Inc. Mountain View, CA.
 
@@ -137,10 +137,10 @@ xf4bppInitializeColormap(pmap)
 
 void
 xf4bppResolveColor( pred, pgreen, pblue, pVisual )
-register unsigned short* const pred ;
-register unsigned short* const pgreen ;
-register unsigned short* const pblue ;
-register VisualPtr const pVisual ;
+register unsigned short* pred ;
+register unsigned short* pgreen ;
+register unsigned short* pblue ;
+register VisualPtr pVisual ;
 { 
     unsigned lim, maxent, shift;
 

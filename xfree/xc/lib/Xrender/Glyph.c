@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/lib/Xrender/Glyph.c,v 1.5 2000/12/02 09:38:02 keithp Exp $
+ * $XFree86: xc/lib/Xrender/Glyph.c,v 1.7 2001/12/27 01:16:00 keithp Exp $
  *
  * Copyright © 2000 SuSE, Inc.
  *
@@ -26,7 +26,7 @@
 #include "Xrenderint.h"
 
 GlyphSet
-XRenderCreateGlyphSet (Display *dpy, XRenderPictFormat *format)
+XRenderCreateGlyphSet (Display *dpy, _Xconst XRenderPictFormat *format)
 {
     XExtDisplayInfo		*info = XRenderFindDisplay (dpy);
     GlyphSet			gsid;
@@ -82,10 +82,10 @@ XRenderFreeGlyphSet (Display *dpy, GlyphSet glyphset)
 void
 XRenderAddGlyphs (Display	*dpy,
 		  GlyphSet	glyphset,
-		  Glyph		*gids,
-		  XGlyphInfo	*glyphs,
+		  _Xconst Glyph		*gids,
+		  _Xconst XGlyphInfo	*glyphs,
 		  int		nglyphs,
-		  char		*images,
+		  _Xconst char		*images,
 		  int		nbyte_images)
 {
     XExtDisplayInfo         *info = XRenderFindDisplay (dpy);
@@ -113,7 +113,7 @@ XRenderAddGlyphs (Display	*dpy,
 void
 XRenderFreeGlyphs (Display   *dpy,
 		   GlyphSet  glyphset,
-		   Glyph     *gids,
+		   _Xconst Glyph     *gids,
 		   int       nglyphs)
 {
     XExtDisplayInfo         *info = XRenderFindDisplay (dpy);
@@ -138,13 +138,13 @@ XRenderCompositeString8 (Display	    *dpy,
 			 int		    op,
 			 Picture	    src,
 			 Picture	    dst,
-			 XRenderPictFormat  *maskFormat,
+			 _Xconst XRenderPictFormat  *maskFormat,
 			 GlyphSet	    glyphset,
 			 int		    xSrc,
 			 int		    ySrc,
 			 int		    xDst,
 			 int		    yDst,
-			 char		    *string,
+			 _Xconst char	    *string,
 			 int		    nchar)
 {
     XExtDisplayInfo		*info = XRenderFindDisplay (dpy);
@@ -222,13 +222,13 @@ XRenderCompositeString16 (Display	    *dpy,
 			  int		    op,
 			  Picture	    src,
 			  Picture	    dst,
-			  XRenderPictFormat *maskFormat,
+			  _Xconst XRenderPictFormat *maskFormat,
 			  GlyphSet	    glyphset,
 			  int		    xSrc,
 			  int		    ySrc,
 			  int		    xDst,
 			  int		    yDst,
-			  unsigned short    *string,
+			  _Xconst unsigned short    *string,
 			  int		    nchar)
 {
     XExtDisplayInfo		*info = XRenderFindDisplay (dpy);
@@ -301,13 +301,13 @@ XRenderCompositeString32 (Display	    *dpy,
 			  int		    op,
 			  Picture	    src,
 			  Picture	    dst,
-			  XRenderPictFormat  *maskFormat,
+			  _Xconst XRenderPictFormat  *maskFormat,
 			  GlyphSet	    glyphset,
 			  int		    xSrc,
 			  int		    ySrc,
 			  int		    xDst,
 			  int		    yDst,
-			  unsigned int	    *string,
+			  _Xconst unsigned int	    *string,
 			  int		    nchar)
 {
     XExtDisplayInfo		*info = XRenderFindDisplay (dpy);
@@ -369,6 +369,307 @@ XRenderCompositeString32 (Display	    *dpy,
 	elt->deltax = xDst;
 	elt->deltay = yDst;
 	memcpy ((char *) (elt + 1), (char *) string, nchar * 4);
+    }
+    
+    UnlockDisplay(dpy);
+    SyncHandle();
+}
+
+void
+XRenderCompositeText8 (Display			    *dpy,
+		       int			    op,
+		       Picture			    src,
+		       Picture			    dst,
+		       _Xconst XRenderPictFormat    *maskFormat,
+		       int			    xSrc,
+		       int			    ySrc,
+		       int			    xDst,
+		       int			    yDst,
+		       _Xconst XGlyphElt8	    *elts,
+		       int			    nelt)
+{
+    XExtDisplayInfo		*info = XRenderFindDisplay (dpy);
+    xRenderCompositeGlyphs8Req	*req;
+    long			len;
+    long			elen;
+    xGlyphElt			*elt;
+    int				i;
+    _Xconst char		*chars;
+    int				nchars;
+
+    if (!nelt)
+	return;
+    
+    RenderSimpleCheckExtension (dpy, info);
+    LockDisplay(dpy);
+
+    GetReq(RenderCompositeGlyphs8, req);
+    req->reqType = info->codes->major_opcode;
+    req->renderReqType = X_RenderCompositeGlyphs8;
+    req->op = op;
+    req->src = src;
+    req->dst = dst;
+    req->maskFormat = maskFormat ? maskFormat->id : None;
+    req->glyphset = elts[0].glyphset;
+    req->xSrc = xSrc;
+    req->ySrc = ySrc;    
+
+    /*
+     * Compute the space necessary
+     */
+    len = 0;
+    
+    for (i = 0; i < nelt; i++)
+    {
+	if (elts[i].glyphset != req->glyphset)
+	    len += (SIZEOF (xGlyphElt) + 4) >> 2;
+	nchars = elts[i].nchars;
+	/*
+	 * xGlyphElt must be aligned on a 32-bit boundary; this is
+	 * easily done by filling no more than 252 glyphs in each
+	 * bucket
+	 */
+	elen = SIZEOF(xGlyphElt) * ((nchars + MAX_8-1) / MAX_8) + nchars;
+	len += (elen + 3) >> 2;
+    }
+    
+    req->length += len;
+    /* 
+     * If the entire request does not fit into the remaining space in the
+     * buffer, flush the buffer first.
+     */
+
+    if (dpy->bufptr + (len << 2) > dpy->bufmax)
+    	_XFlush (dpy);
+
+    for (i = 0; i < nelt; i++)
+    {
+	/*
+	 * Switch glyphsets
+	 */
+	if (elts[i].glyphset != req->glyphset)
+	{
+	    BufAlloc (xGlyphElt *, elt, SIZEOF (xGlyphElt));
+	    elt->len = 0xff;
+	    elt->deltax = 0;
+	    elt->deltay = 0;
+	    Data32(dpy, &elts[i].glyphset, 4);
+	}
+	nchars = elts[i].nchars;
+	xDst = elts[i].xOff;
+	yDst = elts[i].yOff;
+	chars = elts[i].chars;
+	while (nchars)
+	{
+	    BufAlloc (xGlyphElt *, elt, SIZEOF(xGlyphElt))
+	    elt->len = nchars > MAX_8 ? MAX_8 : nchars;
+	    elt->deltax = xDst;
+	    elt->deltay = yDst;
+	    xDst = 0;
+	    yDst = 0;
+	    Data (dpy, chars, elt->len);
+	    nchars -= elt->len;
+	    chars += elt->len;
+	}
+    }
+    
+    UnlockDisplay(dpy);
+    SyncHandle();
+}
+
+void
+XRenderCompositeText16 (Display			    *dpy,
+			int			    op,
+			Picture			    src,
+			Picture			    dst,
+			_Xconst XRenderPictFormat   *maskFormat,
+			int			    xSrc,
+			int			    ySrc,
+			int			    xDst,
+			int			    yDst,
+			_Xconst XGlyphElt16	    *elts,
+			int			    nelt)
+{
+    XExtDisplayInfo		*info = XRenderFindDisplay (dpy);
+    xRenderCompositeGlyphs16Req	*req;
+    long			len;
+    long			elen;
+    xGlyphElt			*elt;
+    int				i;
+    _Xconst unsigned short    	*chars;
+    int				nchars;
+
+    if (!nelt)
+	return;
+    
+    RenderSimpleCheckExtension (dpy, info);
+    LockDisplay(dpy);
+
+    GetReq(RenderCompositeGlyphs16, req);
+    req->reqType = info->codes->major_opcode;
+    req->renderReqType = X_RenderCompositeGlyphs16;
+    req->op = op;
+    req->src = src;
+    req->dst = dst;
+    req->maskFormat = maskFormat ? maskFormat->id : None;
+    req->glyphset = elts[0].glyphset;
+    req->xSrc = xSrc;
+    req->ySrc = ySrc;    
+
+    /*
+     * Compute the space necessary
+     */
+    len = 0;
+    
+    for (i = 0; i < nelt; i++)
+    {
+	if (elts[i].glyphset != req->glyphset)
+	    len += (SIZEOF (xGlyphElt) + 4) >> 2;
+	nchars = elts[i].nchars;
+	/*
+	 * xGlyphElt must be aligned on a 32-bit boundary; this is
+	 * easily done by filling no more than 254 glyphs in each
+	 * bucket
+	 */
+	elen = SIZEOF(xGlyphElt) * ((nchars + MAX_16-1) / MAX_16) + nchars * 2;
+	len += (elen + 3) >> 2;
+    }
+    
+    req->length += len;
+    /* 
+     * If the entire request does not fit into the remaining space in the
+     * buffer, flush the buffer first.
+     */
+
+    if (dpy->bufptr + (len << 2) > dpy->bufmax)
+    	_XFlush (dpy);
+
+    for (i = 0; i < nelt; i++)
+    {
+	/*
+	 * Switch glyphsets
+	 */
+	if (elts[i].glyphset != req->glyphset)
+	{
+	    BufAlloc (xGlyphElt *, elt, SIZEOF (xGlyphElt));
+	    elt->len = 0xff;
+	    elt->deltax = 0;
+	    elt->deltay = 0;
+	    Data32(dpy, &elts[i].glyphset, 4);
+	}
+	nchars = elts[i].nchars;
+	xDst = elts[i].xOff;
+	yDst = elts[i].yOff;
+	chars = elts[i].chars;
+	while (nchars)
+	{
+	    BufAlloc (xGlyphElt *, elt, SIZEOF(xGlyphElt))
+	    elt->len = nchars > MAX_16 ? MAX_16 : nchars;
+	    elt->deltax = xDst;
+	    elt->deltay = yDst;
+	    xDst = 0;
+	    yDst = 0;
+	    Data16 (dpy, chars, elt->len * 2);
+	    nchars -= elt->len;
+	    chars += elt->len;
+	}
+    }
+    
+    UnlockDisplay(dpy);
+    SyncHandle();
+}
+
+void
+XRenderCompositeText32 (Display			    *dpy,
+			int			    op,
+			Picture			    src,
+			Picture			    dst,
+			_Xconst XRenderPictFormat   *maskFormat,
+			int			    xSrc,
+			int			    ySrc,
+			int			    xDst,
+			int			    yDst,
+			_Xconst XGlyphElt32	    *elts,
+			int			    nelt)
+{
+    XExtDisplayInfo		*info = XRenderFindDisplay (dpy);
+    xRenderCompositeGlyphs32Req	*req;
+    long			len;
+    long			elen;
+    xGlyphElt			*elt;
+    int				i;
+    _Xconst unsigned int    	*chars;
+    int				nchars;
+
+    if (!nelt)
+	return;
+    
+    RenderSimpleCheckExtension (dpy, info);
+    LockDisplay(dpy);
+
+    GetReq(RenderCompositeGlyphs32, req);
+    req->reqType = info->codes->major_opcode;
+    req->renderReqType = X_RenderCompositeGlyphs32;
+    req->op = op;
+    req->src = src;
+    req->dst = dst;
+    req->maskFormat = maskFormat ? maskFormat->id : None;
+    req->glyphset = elts[0].glyphset;
+    req->xSrc = xSrc;
+    req->ySrc = ySrc;    
+
+    /*
+     * Compute the space necessary
+     */
+    len = 0;
+    
+    for (i = 0; i < nelt; i++)
+    {
+	if (elts[i].glyphset != req->glyphset)
+	    len += (SIZEOF (xGlyphElt) + 4) >> 2;
+	nchars = elts[i].nchars;
+	elen = SIZEOF(xGlyphElt) * ((nchars + MAX_32) / MAX_32) + nchars *4;
+	len += (elen + 3) >> 2;
+    }
+    
+    req->length += len;
+    /* 
+     * If the entire request does not fit into the remaining space in the
+     * buffer, flush the buffer first.
+     */
+
+    if (dpy->bufptr + (len << 2) > dpy->bufmax)
+    	_XFlush (dpy);
+
+    for (i = 0; i < nelt; i++)
+    {
+	/*
+	 * Switch glyphsets
+	 */
+	if (elts[i].glyphset != req->glyphset)
+	{
+	    BufAlloc (xGlyphElt *, elt, SIZEOF (xGlyphElt));
+	    elt->len = 0xff;
+	    elt->deltax = 0;
+	    elt->deltay = 0;
+	    Data32(dpy, &elts[i].glyphset, 4);
+	}
+	nchars = elts[i].nchars;
+	xDst = elts[i].xOff;
+	yDst = elts[i].yOff;
+	chars = elts[i].chars;
+	while (nchars)
+	{
+	    BufAlloc (xGlyphElt *, elt, SIZEOF(xGlyphElt))
+	    elt->len = nchars > MAX_32 ? MAX_32 : nchars;
+	    elt->deltax = xDst;
+	    elt->deltay = yDst;
+	    xDst = 0;
+	    yDst = 0;
+	    Data32 (dpy, chars, elt->len * 4);
+	    nchars -= elt->len;
+	    chars += elt->len;
+	}
     }
     
     UnlockDisplay(dpy);

@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/r128/r128_tex.c,v 1.9 2001/04/10 16:07:52 dawes Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/r128/r128_tex.c,v 1.10 2001/08/18 02:51:05 dawes Exp $ */
 /**************************************************************************
 
 Copyright 1999, 2000 ATI Technologies Inc. and Precision Insight, Inc.,
@@ -700,7 +700,7 @@ static void r128UploadSubImage( r128ContextPtr rmesa,
       return;
 
    image = t->tObj->Image[level];
-   if ( !image )
+   if ( !image || !image->Data )
       return;
 
    switch ( t->texelBytes ) {

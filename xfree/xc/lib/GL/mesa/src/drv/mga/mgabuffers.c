@@ -24,7 +24,7 @@
  * Authors:
  *    Keith Whitwell <keithw@valinux.com>
  */
-/* $XFree86: xc/lib/GL/mesa/src/drv/mga/mgabuffers.c,v 1.7 2001/04/10 16:07:50 dawes Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/mga/mgabuffers.c,v 1.8 2001/10/31 22:50:24 tsi Exp $ */
 
 #include <stdio.h>
 #include "mgacontext.h"
@@ -131,7 +131,6 @@ static void mgaUpdateRectsFromSarea( mgaContextPtr mmesa )
 
    mmesa->dirty_cliprects = (MGA_FRONT|MGA_BACK) & ~(sarea->exported_buffers);
 }
-#endif
 
 
 static void printSareaRects( mgaContextPtr mmesa )
@@ -200,7 +199,7 @@ static void printMmesaRects( mgaContextPtr mmesa )
 	   driDrawable->index,
 	   driScreen->pSAREA->drawableTable[driDrawable->index].stamp);
 }
-
+#endif
 
 
 void mgaUpdateRects( mgaContextPtr mmesa, GLuint buffers )

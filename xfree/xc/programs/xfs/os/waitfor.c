@@ -1,11 +1,15 @@
-/* $Xorg: waitfor.c,v 1.3 2000/08/17 19:54:23 cpqbld Exp $ */
+/* $Xorg: waitfor.c,v 1.4 2001/02/09 02:05:45 xorgcvs Exp $ */
 /*
  * waits for input
  */
 /*
 Copyright 1987, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -46,13 +50,13 @@ in this Software without prior written authorization from The Open Group.
  * $NCDXorg: @(#)waitfor.c,v 4.5 1991/06/24 11:59:20 lemke Exp $
  *
  */
-/* $XFree86: xc/programs/xfs/os/waitfor.c,v 3.12 2001/01/17 23:45:33 dawes Exp $ */
+/* $XFree86: xc/programs/xfs/os/waitfor.c,v 3.15 2001/12/14 20:01:41 dawes Exp $ */
 
 #include	<X11/Xos.h>	/* strings, time, etc */
 
 #include	<stdio.h>
 #include	<errno.h>
-#if !defined(MINIX) && !defined(Lynx)
+#if !defined(Lynx)
 #include	<sys/param.h>
 #endif
 
@@ -62,20 +66,11 @@ in this Software without prior written authorization from The Open Group.
 #include	"osdep.h"
 #include	"os.h"
 
-#ifdef MINIX
-#include <sys/nbio.h>
-#define select(n,r,w,x,t) nbio_select(n,r,w,x,t)
-#endif
-
 #ifdef __EMX__
 #define select(n,r,w,x,t) os2PseudoSelect(n,r,w,x,t)
 #endif
 
 extern WorkQueuePtr workQueue;
-
-#ifdef X_NOT_STDC_ENV
-extern int errno;
-#endif
 
 
 extern fd_set WellKnownConnections;

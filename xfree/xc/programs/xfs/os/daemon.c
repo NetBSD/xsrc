@@ -27,7 +27,7 @@ other dealings in this Software without prior written authorization
 from the X Consortium.
 
 */
-/* $XFree86: xc/programs/xfs/os/daemon.c,v 1.5 2001/04/26 20:26:31 alanh Exp $ */
+/* $XFree86: xc/programs/xfs/os/daemon.c,v 1.8 2001/11/16 16:47:58 dawes Exp $ */
 
 #include <X11/Xos.h>
 #include <stdio.h>
@@ -38,16 +38,13 @@ from the X Consortium.
 #else
 #include <sys/ioctl.h>
 #endif
-#if defined(__osf__) || defined(linux) || defined(MINIX) || defined(__GNU__) || defined(__CYGWIN__)
+#if defined(__osf__) || defined(linux) || defined(__GNU__) || defined(__CYGWIN__)
 #define setpgrp setpgid
 #endif
 #ifdef hpux
 #include <sys/ptyio.h>
 #endif
 #include <errno.h>
-#ifdef X_NOT_STDC_ENV
-extern int errno;
-#endif
 #include <sys/types.h>
 #ifdef X_NOT_POSIX
 #define Pid_t int
@@ -85,7 +82,7 @@ BecomeOrphan ()
     default:
 	/* parent */
 
-#ifndef CSRG_BASED
+#if !defined(CSRG_BASED) && !defined(__QNXNTO__)
 #if defined(SVR4)
 	stat = setpgid(child_id, child_id);
 	/* This gets error EPERM.  Why? */
@@ -94,11 +91,9 @@ BecomeOrphan ()
 	stat = 0;	/* don't know how to set child's process group */
 #else
 	stat = setpgrp(child_id, child_id);
-#ifndef MINIX
 	if (stat != 0)
 	    FatalError("setting process grp for daemon failed, errno = %d\n",
 		     errno);
-#endif /* MINIX */
 #endif
 #endif
 #endif /* !CSRG_BASED */
@@ -115,7 +110,7 @@ BecomeDaemon ()
      * Close standard file descriptors and get rid of controlling tty
      */
 
-#ifdef CSRG_BASED
+#if defined(CSRG_BASED) || defined(__QNXNTO__)
     daemon (0, 0);
 #else
 #if defined(SYSV) || defined(SVR4)
@@ -129,16 +124,6 @@ BecomeDaemon ()
     close (2);
 
 #if !defined(__EMX__) && !defined(__CYGWIN__)
-#ifdef MINIX
-#if 0
-    /* Use setsid() to get rid of our controlling tty, this requires an extra
-     * fork though.
-     */
-    setsid();
-    if (fork() > 0)
-    	_exit(0);
-#endif
-#else /* !MINIX */
 #if !((defined(SYSV) || defined(SVR4)) && defined(i386))
     if ((i = open ("/dev/tty", O_RDWR)) >= 0) {	/* did open succeed? */
 #if defined(USG) && defined(TCCLRCTTY)
@@ -155,7 +140,6 @@ BecomeDaemon ()
 	(void) close (i);
     }
 #endif /* !((SYSV || SVR4) && i386) */
-#endif /* MINIX */
 #endif /* !__EMX__ */
 
     /*
@@ -167,7 +151,7 @@ BecomeDaemon ()
 #endif /* CSRG_BASED */
 }
 
-#if defined(linux) || defined(CSRG_BASED)
+#if defined(linux) || defined(CSRG_BASED) || defined(__QNXNTO__)
 FILE *pidFilePtr;
 static int pidFd;
 char *pidFile = "/var/run/xfs.pid";
@@ -176,7 +160,7 @@ char *pidFile = "/var/run/xfs.pid";
 int
 StorePid ()
 {
-#if defined(linux) || defined(CSRG_BASED)
+#if defined(linux) || defined(CSRG_BASED) || defined(__QNXNTO__)
     int         oldpid;
 
     if (pidFile[0] != '\0') {

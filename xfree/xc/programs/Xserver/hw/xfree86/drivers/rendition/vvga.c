@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/rendition/vvga.c,v 1.10 2001/02/15 17:50:35 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/rendition/vvga.c,v 1.11 2001/10/28 03:33:44 tsi Exp $ */
 /*
  * file vvga.c
  *
@@ -46,6 +46,8 @@ static void updattr(vu8 index, vu8 value);
  * functions
  */
 
+#if 0
+#if defined(SAVEVGA) || defined(XSERVER)
 static void
 verite_resetvga(void)
 {
@@ -95,8 +97,6 @@ verite_resetvga(void)
     for (c=0; c<5; c++)
         setvgareg(0x3c4, c, mode3.seq[c]);
 }
-
-
 
 static void
 verite_loadvgafont(void)
@@ -149,8 +149,8 @@ verite_loadvgafont(void)
     /* restore the standard vga register values */
     verite_resetvga();
 }
-
-
+#endif
+#endif
 
 void
 verite_textmode(struct verite_board_t *board) 

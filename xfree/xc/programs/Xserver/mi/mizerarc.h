@@ -1,8 +1,13 @@
+/* $XFree86: xc/programs/Xserver/mi/mizerarc.h,v 1.3 2001/12/14 20:00:28 dawes Exp $ */
 /************************************************************
 
 Copyright 1989, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -20,7 +25,7 @@ in this Software without prior written authorization from The Open Group.
 
 ********************************************************/
 
-/* $Xorg: mizerarc.h,v 1.3 2000/08/17 19:53:39 cpqbld Exp $ */
+/* $Xorg: mizerarc.h,v 1.4 2001/02/09 02:05:22 xorgcvs Exp $ */
 
 typedef struct {
     int x;
@@ -117,17 +122,13 @@ typedef struct {
 /* mizerarc.c */
 
 extern Bool miZeroArcSetup(
-#if NeedFunctionPrototypes
     xArc * /*arc*/,
     miZeroArcRec * /*info*/,
     Bool /*ok360*/
-#endif
 );
 
 extern DDXPointPtr miZeroArcPts(
-#if NeedFunctionPrototypes
     xArc * /*arc*/,
     DDXPointPtr /*pts*/
-#endif
 );
 

@@ -23,7 +23,7 @@
  * used in advertising or otherwise to promote the sale, use or other dealings
  * in this Software without prior written authorization from Sebastien Marineau.
  *
- * $XFree86: xc/programs/Xserver/hw/xfree86/os-support/nto/nto_video.c,v 1.2 1999/12/27 00:45:46 robin Exp $
+ * $XFree86: xc/programs/Xserver/hw/xfree86/os-support/nto/nto_video.c,v 1.3 2001/11/16 16:47:56 dawes Exp $
  */
 
 /* This module contains the NTO-specific functions to deal with video 
@@ -69,12 +69,8 @@ int NTO_PhMem_fd = -1;
 
 
 /* Map a chunk of physical video memory, using mmap */
-
-pointer xf86MapVidMem(ScreenNum, Region, Base, Size)
-int ScreenNum;
-int Region;
-pointer Base;
-unsigned long Size;
+pointer
+xf86MapVidMem(int ScreenNum, int Flags, unsigned long Base, unsigned long Size)
 {
     int fd;
     unsigned char *base;
@@ -97,11 +93,9 @@ unsigned long Size;
     return base;
 }
 
-void xf86UnMapVidMem(ScreenNum, Region, Base, Size)
-int ScreenNum;
-int Region;
-pointer Base;
-unsigned long Size;
+/* ARGSUSED */
+void
+xf86UnMapVidMem(int ScreenNum, pointer Base, unsigned long Size)
 {
 
 	ErrorF("xf86UnmapVidMem: base %x size %x\n", Base, Size);
@@ -155,3 +149,17 @@ int Len;
 
     return Len;
 }
+
+void
+xf86MapReadSideEffects(int ScreenNum, int Flags, pointer base,
+                        unsigned long Size)
+{
+                return;
+}
+
+Bool
+xf86CheckMTRR(int s)
+{
+	return FALSE;
+}
+

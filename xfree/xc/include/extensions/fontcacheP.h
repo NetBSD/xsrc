@@ -26,34 +26,12 @@
  *
  *	Id: fontcacheP.h,v 1.6 1999/01/31 12:43:53 akiyama Exp $
  */
-/* $XFree86: xc/include/extensions/fontcacheP.h,v 1.4 2000/03/01 01:04:21 dawes Exp $ */
+/* $XFree86: xc/include/extensions/fontcacheP.h,v 1.5 2001/08/01 00:44:35 tsi Exp $ */
 
 #ifndef _FONTCACHEP_H_
 #define _FONTCACHEP_H_
 
-struct fc_cache_settings {
-    long	himark;
-    long	lowmark;
-    long	balance;
-};
-
-struct fc_cache_stat {
-    long	hits;
-    long	misshits;
-    long	purged;
-    long	usage;
-};
-
-struct fc_cache_statistics {
-    long			purge_runs;
-    long			purge_stat;
-    long			balance;
-    struct fc_cache_stat	f;
-    struct fc_cache_stat	v;
-};
-
-typedef struct fc_cache_settings FontCacheSettings, *FontCacheSettingsPtr;
-typedef struct fc_cache_statistics FontCacheStatistics, *FontCacheStatisticsPtr;
+#include <X11/extensions/fontcache.h>
 
 int	FontCacheChangeSettings(FontCacheSettingsPtr /* cinfo */);
 void	FontCacheGetSettings(FontCacheSettingsPtr /* cinfo */);

@@ -773,7 +773,7 @@ _mesa_TexParameterfv( GLenum target, GLenum pname, const GLfloat *params )
 
 
 void
-_mesa_TexParameteri( GLenum target, GLenum pname, const GLint param )
+_mesa_TexParameteri( GLenum target, GLenum pname, GLint param )
 {
    GLfloat fparam[4];
    fparam[0] = (GLfloat) param;

@@ -1,9 +1,13 @@
-/* $Xorg: XimThai.h,v 1.3 2000/08/17 19:45:05 cpqbld Exp $ */
+/* $Xorg: XimThai.h,v 1.4 2001/02/09 02:03:38 xorgcvs Exp $ */
 /***********************************************************
 
 Copyright 1993, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -41,7 +45,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/lib/X11/XimThai.h,v 1.2 2001/02/09 00:02:53 dawes Exp $ */
+/* $XFree86: xc/lib/X11/XimThai.h,v 1.5 2001/12/14 19:54:08 dawes Exp $ */
 
 /*
 **++ 
@@ -166,6 +170,7 @@ Bool THAI_isaccepted (
 #endif
 );
 
+#if 0
 Private
 void THAI_apply_write_rules (
 #if NeedFunctionPrototypes
@@ -183,6 +188,7 @@ int THAI_find_chtype (
 	int	       chtype
 #endif
 );
+#endif
 
 Private
 int THAI_apply_scm (

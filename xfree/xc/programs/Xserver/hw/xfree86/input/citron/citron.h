@@ -25,7 +25,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/input/citron/citron.h,v 1.2 2001/04/05 17:42:34 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/input/citron/citron.h,v 1.3 2001/10/28 03:33:56 tsi Exp $ */
 
 /*
  * Based, in part, on code with the following copyright notice:
@@ -496,9 +496,11 @@ cit_PrivateRec, *cit_PrivatePtr;
  *		Declarations
  *****************************************************************************/
 /*extern void ModuleInit (pointer *, INT32 *);*/
+#ifdef XFree86LOADER
 static MODULESETUPPROTO (SetupProc);
 static void TearDownProc (pointer p);
 /*static void *SetupProc (XF86OptionPtr, int *, int *);*/
+#endif
 static Bool DeviceControl (DeviceIntPtr def, int mode);
 static Bool DeviceOn (DeviceIntPtr);
 static Bool DeviceOff (DeviceIntPtr);

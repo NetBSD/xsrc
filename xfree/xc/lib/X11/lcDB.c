@@ -28,7 +28,7 @@
  *  This is source code modified by FUJITSU LIMITED under the Joint
  *  Development Agreement for the CDE/Motif PST.
  */
-/* $XFree86: xc/lib/X11/lcDB.c,v 3.13 2001/01/17 19:41:53 dawes Exp $ */
+/* $XFree86: xc/lib/X11/lcDB.c,v 3.14 2001/08/09 19:14:06 dawes Exp $ */
 
 
 
@@ -355,16 +355,16 @@ read_line(
 	   }
 	}
 #endif
-	if (!quoted) {
-	    if (cur > 1 && str[cur - 2] == SYM_BACKSLASH &&
-	       (str[cur - 1] == SYM_NEWLINE || str[cur-1] == SYM_CR)) {
-		/* the line is ended backslash followed by newline.
-		   need to concatinate the next line. */
-		cur -= 2;
-		str[cur] = '\0';
-	    } else {
-		break;
-	    }
+	if (!quoted && cur > 1 && str[cur - 2] == SYM_BACKSLASH &&
+	    (str[cur - 1] == SYM_NEWLINE || str[cur-1] == SYM_CR)) {
+	    /* the line is ended backslash followed by newline.
+	       need to concatinate the next line. */
+	    cur -= 2;
+	    str[cur] = '\0';
+	} else if (len < BUFSIZE - 1 || buf[len - 1] == SYM_NEWLINE ||
+		   buf[len - 1] == SYM_CR) {
+	    /* the line is shorter than BUFSIZE. */
+	    break;
 	}
     }
     if (quoted) {

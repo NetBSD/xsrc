@@ -1,6 +1,6 @@
 // $XConsortium: am /main/3 1997/12/18 12:40:12 rch $
 //
-// $XFree86: xc/programs/xkbcomp/symbols/am,v 1.2 2000/10/28 00:34:06 dawes Exp $
+// $XFree86: xc/programs/xkbcomp/symbols/am,v 1.3 2001/11/21 22:28:52 dawes Exp $
 
 partial default alphanumeric_keys 
 xkb_symbols "basic" {
@@ -13,106 +13,106 @@ xkb_symbols "basic" {
 
     // Alphanumeric section
     key <TLDE> {	[    grave,	asciitilde	],
-			[ Armenian_but, Armenian_exclam	]	};
-    key	<LSGT> {	[ Armenian_eternity,   greater	],
-			[  question,  Armenian_hyphen	]	};
+			[ 0x100055d, 0x100055c	]	};
+    key	<LSGT> {	[ less,   greater	],
+			[  question,  0x100058a	]	};
     key <BKSL> {        [ backslash,		bar	],
-                        [ Armenian_guillemotright, Armenian_guillemotleft ] };
+                        [ guillemotright, guillemotleft ] };
 
     key <AE01> {	[	  1,	exclam		],
-			[ Armenian_fe,  Armenian_FE	]	};
+			[ 0x1000586,  0x1000556	]	};
     key <AE02> {	[	  2,	at		],
-			[ Armenian_dza, Armenian_DZA	]	};
+			[ 0x1000571,  0x1000541	]	};
     key <AE03> {	[	  3,	numbersign	],
-			[ Armenian_en_dash, Armenian_em_dash ]	};
+			[ 0x1002013,  0x1002014 ]	};
     key <AE04> {	[	  4,	dollar		],
-			[ Armenian_comma, dollar	]	};
+			[ comma, dollar	]	};
     key <AE05> {	[         5,	percent		],
-    			[ Armenian_verjaket, Armenian_ellipsis	] };
+    			[ 0x1000589, 0x1002026	] };
     key <AE06> {	[	  6,	asciicircum	],
-			[ Armenian_question, percent	]	};
+			[ 0x100055e, percent	]	};
     key <AE07> {	[	  7,	ampersand	],
-			[ Armenian_mijaket, Armenian_ligature_ew ] };
+			[ period, 0x1000587 ] };
     key <AE08> {	[	  8,	asterisk	],
-			[ Armenian_shesht, Armenian_apostroph ] };
+			[ 0x100055b, 0x10002bc ] };
     key <AE09> {	[	  9,	parenleft	],
-			[ Armenian_parenright, Armenian_parenleft ] };
+			[ parenright, parenleft ] };
     key <AE10> {	[	  0,	parenright	],
-			[ Armenian_o,	Armenian_O	]	};
+			[ 0x1000585,	0x1000555	]	};
     key <AE11> {	[     minus,	underscore	],
-			[ Armenian_e,	Armenian_E	]	};
+			[ 0x1000567,	0x1000537	]	};
     key <AE12> {	[     equal,	plus      	],
-			[ Armenian_ghat, Armenian_GHAT	]	};
+			[ 0x1000572,	0x1000542	]	};
 
 
     key <AD01> {        [         q,    Q               ],
-			[ Armenian_tche, Armenian_TCHE	]       };
+			[ 0x1000573, 0x1000543	]       };
     key <AD02> {        [         w,    W               ],
-			[ Armenian_pyur, Armenian_PYUR	]	};
+			[ 0x1000583, 0x1000553	]	};
     key <AD03> {        [         e,    E               ],
-			[ Armenian_ben, Armenian_BEN	]       };
+			[ 0x1000562, 0x1000532	]       };
     key <AD04> {        [         r,    R               ],
-			[ Armenian_se,  Armenian_SE	]	};
+			[ 0x100057d, 0x100054d	]	};
     key <AD05> {        [         t,    T               ],
-			[ Armenian_men, Armenian_MEN	]       };
+			[ 0x1000574, 0x1000544	]       };
     key <AD06> {        [         y,    Y               ],
-			[ Armenian_vo,	Armenian_VO	]       };
+			[ 0x1000578, 0x1000548	]       };
     key <AD07> {        [         u,    U               ],
-			[ Armenian_vyun, Armenian_VYUN	]       };
+			[ 0x1000582, 0x1000552	]       };
     key <AD08> {        [         i,    I               ],
-			[ Armenian_ken, Armenian_KEN	]       };
+			[ 0x100056f, 0x100053f	]       };
     key <AD09> {        [         o,    O               ],
-			[ Armenian_at,	Armenian_AT	]       };
+			[ 0x1000568, 0x1000538	]       };
     key <AD10> {        [         p,    P               ],
-			[ Armenian_to,	Armenian_TO	]       };
+			[ 0x1000569, 0x1000539	]       };
     key <AD11> {        [ bracketleft,  braceleft       ],
-			[ Armenian_tsa, Armenian_TSA	]       };
+			[ 0x100056e, 0x100053e	]       };
     key <AD12> {        [ bracketright, braceright      ],
-			[ Armenian_tso,	Armenian_TSO	]       };
+			[ 0x1000581, 0x1000551	]       };
 
     key <AC01> {        [         a,    A               ],
-			[ Armenian_je,  Armenian_JE	]       };
+			[ 0x100057b, 0x100054b	]       };
     key <AC02> {        [         s,    S               ],
-			[ Armenian_vev, Armenian_VEV	]	};
+			[ 0x100057e, 0x100054e	]	};
     key <AC03> {        [         d,    D               ],
-			[ Armenian_gim, Armenian_GIM	]       };
+			[ 0x1000563, 0x1000533	]       };
     key <AC04> {        [         f,    F               ],
-			[ Armenian_yech, Armenian_YECH	]       };
+			[ 0x1000565, 0x1000535	]       };
     key <AC05> {        [         g,    G               ],
-			[ Armenian_ayb, Armenian_AYB	]       };
+			[ 0x1000561, 0x1000531	]       };
     key <AC06> {        [         h,    H               ],
-			[ Armenian_nu,	Armenian_NU	]	};
+			[ 0x1000576, 0x1000546	]	};
     key <AC07> {        [         j,    J               ],
-			[ Armenian_ini, Armenian_INI	]       };
+			[ 0x100056b, 0x100053b	]       };
     key <AC08> {        [         k,    K               ],
-			[ Armenian_tyun, Armenian_TYUN	]       };
+			[ 0x100057f, 0x100054f	]       };
     key <AC09> {        [         l,    L               ],
-			[ Armenian_ho,  Armenian_HO	]       };
+			[ 0x1000570, 0x1000540	]       };
     key <AC10> {        [ semicolon,    colon           ],
-			[ Armenian_pe,  Armenian_PE	]       };
+			[ 0x100057a, 0x100054a	]       };
     key <AC11> {        [ apostrophe,   quotedbl        ], 
-			[ Armenian_re,  Armenian_RE	]       };
+			[ 0x1000580, 0x1000550	]       };
 
     key <AB01> {        [         z,    Z               ],
-			[ Armenian_zhe, Armenian_ZHE	]       };
+			[ 0x100056a, 0x100053a	]       };
     key <AB02> {        [         x,    X               ],
-			[ Armenian_da,  Armenian_DA	]       };
+			[ 0x1000564, 0x1000534	]       };
     key <AB03> {        [         c,    C               ],
-			[ Armenian_cha, Armenian_CHA	]       };
+			[ 0x1000579, 0x1000549	]       };
     key <AB04> {        [         v,    V               ],
-			[ Armenian_hi,  Armenian_HI	]       };
+			[ 0x1000575, 0x1000545	]       };
     key <AB05> {        [         b,    B               ],
-			[ Armenian_za,  Armenian_ZA	]       };
+			[ 0x1000566, 0x1000536	]       };
     key <AB06> {        [         n,    N               ],
-			[ Armenian_lyun, Armenian_LYUN	]       };
+			[ 0x100056c, 0x100053c	]       };
     key <AB07> {        [         m,    M               ],
-			[ Armenian_ke,  Armenian_KE	]       };
+			[ 0x1000584, 0x1000554	]       };
     key <AB08> {        [     comma,    less            ],
-			[ Armenian_khe, Armenian_KHE	]       };
+			[ 0x100056d, 0x100053d	]       };
     key <AB09> {        [    period,    greater         ],
-			[ Armenian_sha, Armenian_SHA	]       };
+			[ 0x1000577, 0x1000547	]       };
     key <AB10> {        [     slash,    question        ],
-			[ Armenian_ra,  Armenian_RA	]       };
+			[ 0x100057c, 0x100054c	]       };
     
     // Begin modifier mappings 
 

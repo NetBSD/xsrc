@@ -21,15 +21,21 @@ DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
 OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
 THE USE OR PERFORMANCE OF THIS SOFTWARE.
 ********************************************************/
+/* $XFree86: xc/include/extensions/XEVIstr.h,v 3.5 2001/08/01 00:44:35 tsi Exp $ */
+
 #ifndef _EVISTR_H_
 #define _EVISTR_H_
-#include "XEVI.h"
+
+#include <X11/extensions/XEVI.h>
+
 #define VisualID CARD32
 #define EVINAME "Extended-Visual-Information"
 #define XEVI_MAJOR_VERSION	1	/* current version numbers */
 #define XEVI_MINOR_VERSION	0
+
 typedef CARD32 VisualID32;
 #define sz_VisualID32 4
+
 typedef struct _xExtendedVisualInfo {
     VisualID	core_visual_id B32;
     INT8	screen;
@@ -42,12 +48,14 @@ typedef struct _xExtendedVisualInfo {
     CARD16	num_colormap_conflicts B16;
 } xExtendedVisualInfo;
 #define sz_xExtendedVisualInfo 16
+
 typedef struct _XEVIQueryVersion {
     CARD8	reqType;		/* always XEVIReqCode */
     CARD8	xeviReqType;		/* always X_EVIQueryVersion */
     CARD16	length B16;
 } xEVIQueryVersionReq;
 #define sz_xEVIQueryVersionReq	4
+
 typedef struct {
     BYTE	type;			/* X_Reply */
     CARD8 	unused;
@@ -62,6 +70,7 @@ typedef struct {
     CARD32	pad4 B32;
 } xEVIQueryVersionReply;
 #define sz_xEVIQueryVersionReply	32
+
 typedef struct _XEVIGetVisualInfoReq {
     CARD8	reqType;	/* always XEVIReqCode */
     CARD8	xeviReqType;	/* always X_EVIGetVisualInfo */
@@ -69,6 +78,7 @@ typedef struct _XEVIGetVisualInfoReq {
     CARD32 	n_visual B32;
 } xEVIGetVisualInfoReq;
 #define sz_xEVIGetVisualInfoReq	8
+
 typedef struct _XEVIGetVisualInfoReply {
     BYTE	type;  /* X_Reply */
     CARD8	unused;
@@ -82,5 +92,7 @@ typedef struct _XEVIGetVisualInfoReply {
     CARD32	pad3 B32;
 } xEVIGetVisualInfoReply;
 #define sz_xEVIGetVisualInfoReply	32
+
 #undef VisualID
+
 #endif /* _EVISTR_H_ */

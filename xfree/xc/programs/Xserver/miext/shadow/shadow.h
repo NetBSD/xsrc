@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/programs/Xserver/miext/shadow/shadow.h,v 1.3 2000/09/12 19:40:13 keithp Exp $
+ * $XFree86: xc/programs/Xserver/miext/shadow/shadow.h,v 1.5 2001/07/20 19:25:02 keithp Exp $
  *
  * Copyright © 2000 Keith Packard
  *
@@ -29,9 +29,10 @@
 #include "picturestr.h"
 #endif
 
+typedef struct _shadowBuf   *shadowBufPtr;
+
 typedef void (*ShadowUpdateProc) (ScreenPtr pScreen, 
-				  PixmapPtr pShadow,
-				  RegionPtr damage);
+				  shadowBufPtr	pBuf);
 
 #define SHADOW_WINDOW_RELOCATE 1
 #define SHADOW_WINDOW_READ 2
@@ -41,7 +42,18 @@ typedef void *(*ShadowWindowProc) (ScreenPtr	pScreen,
 				   CARD32	row,
 				   CARD32	offset,
 				   int		mode,
-				   CARD32	*size);
+				   CARD32	*size,
+				   void		*closure);
+
+typedef struct _shadowBuf {
+    shadowBufPtr	pNext;
+    ShadowUpdateProc	update;
+    ShadowWindowProc	window;
+    RegionRec		damage;
+    PixmapPtr		pPixmap;
+    void		*closure;
+    int			rotate;
+} shadowBufRec;
 
 typedef struct _shadowScrPriv {
     PaintWindowBackgroundProcPtr PaintWindowBackground;
@@ -54,9 +66,7 @@ typedef struct _shadowScrPriv {
     CompositeProcPtr		Composite;
     GlyphsProcPtr		Glyphs;
 #endif    
-    ShadowUpdateProc		update;
-    ShadowWindowProc		window;
-    RegionRec			damage;
+    shadowBufPtr		pBuf;
 } shadowScrPrivRec, *shadowScrPrivPtr;
 
 extern int shadowScrPrivateIndex;
@@ -65,39 +75,84 @@ extern int shadowScrPrivateIndex;
 #define shadowScrPriv(pScr)	shadowScrPrivPtr    pScrPriv = shadowGetScrPriv(pScr)
 
 Bool
+shadowSetup (ScreenPtr pScreen);
+    
+Bool
+shadowAdd (ScreenPtr	    pScreen,
+	   PixmapPtr	    pPixmap,
+	   ShadowUpdateProc update,
+	   ShadowWindowProc window,
+	   int		    rotate,
+	   void		    *closure);
+
+void
+shadowRemove (ScreenPtr pScreen, PixmapPtr pPixmap);
+
+shadowBufPtr
+shadowFindBuf (WindowPtr pWindow);
+    
+Bool
 shadowInit (ScreenPtr pScreen, ShadowUpdateProc update, ShadowWindowProc window);
 
 void *
 shadowAlloc (int width, int height, int bpp);
 
 void
-shadowUpdatePacked (ScreenPtr pScreen,
-		    PixmapPtr pShadow,
-		    RegionPtr damage);
+shadowUpdatePacked (ScreenPtr	    pScreen,
+		    shadowBufPtr    pBuf);
 
 void
-shadowUpdatePlanar4 (ScreenPtr pScreen,
-		     PixmapPtr pShadow,
-		     RegionPtr damage);
+shadowUpdatePlanar4 (ScreenPtr	    pScreen,
+		     shadowBufPtr   pBuf);
 
 void
-shadowUpdatePlanar4x8 (ScreenPtr pScreen,
-		       PixmapPtr pShadow,
-		       RegionPtr damage);
+shadowUpdatePlanar4x8 (ScreenPtr    pScreen,
+		       shadowBufPtr pBuf);
 
 void
-shadowUpdateRotate8 (ScreenPtr pScreen,
-		     PixmapPtr pShadow,
-		     RegionPtr damage);
+shadowUpdateRotatePacked (ScreenPtr    pScreen,
+			  shadowBufPtr pBuf);
 
 void
-shadowUpdateRotate16 (ScreenPtr pScreen,
-		      PixmapPtr pShadow,
-		      RegionPtr damage);
+shadowUpdateRotate8_90 (ScreenPtr    pScreen,
+			shadowBufPtr pBuf);
 
 void
-shadowUpdateRotate32 (ScreenPtr pScreen,
-		      PixmapPtr pShadow,
-		      RegionPtr damage);
+shadowUpdateRotate16_90 (ScreenPtr    pScreen,
+			 shadowBufPtr pBuf);
 
+void
+shadowUpdateRotate32_90 (ScreenPtr    pScreen,
+			 shadowBufPtr pBuf);
+
+void
+shadowUpdateRotate8_180 (ScreenPtr    pScreen,
+			 shadowBufPtr pBuf);
+
+void
+shadowUpdateRotate16_180 (ScreenPtr    pScreen,
+			  shadowBufPtr pBuf);
+
+void
+shadowUpdateRotate32_180 (ScreenPtr    pScreen,
+			  shadowBufPtr pBuf);
+
+void
+shadowUpdateRotate8_270 (ScreenPtr    pScreen,
+			 shadowBufPtr pBuf);
+
+void
+shadowUpdateRotate16_270 (ScreenPtr    pScreen,
+			  shadowBufPtr pBuf);
+
+void
+shadowUpdateRotate32_270 (ScreenPtr    pScreen,
+			  shadowBufPtr pBuf);
+
+void
+shadowWrapGC (GCPtr pGC);
+
+void
+shadowUnwrapGC (GCPtr pGC);
+    
 #endif /* _SHADOW_H_ */

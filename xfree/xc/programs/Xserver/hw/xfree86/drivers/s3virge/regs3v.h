@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/s3virge/regs3v.h,v 1.7 2000/02/14 19:20:50 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/s3virge/regs3v.h,v 1.8 2001/07/25 15:05:06 dawes Exp $ */
 
 /*
 Copyright (C) 1994-1999 The XFree86 Project, Inc.  All Rights Reserved.
@@ -362,16 +362,6 @@ in this Software without prior written authorization from the XFree86 Project.
   } while(0)
 
       
-#if 0
-
-#ifndef NULL
-#define NULL	0
-
-#endif /* NULL */
-
-
-#endif /* 0 */
-
 
 
 

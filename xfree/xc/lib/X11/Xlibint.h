@@ -1,10 +1,14 @@
-/* $Xorg: Xlibint.h,v 1.4 2000/08/17 19:45:07 cpqbld Exp $ */
+/* $Xorg: Xlibint.h,v 1.5 2001/02/09 02:03:38 xorgcvs Exp $ */
 
 /*
 
 Copyright 1984, 1985, 1987, 1989, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included
 in all copies or substantial portions of the Software.
@@ -23,7 +27,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/X11/Xlibint.h,v 3.16 2001/01/17 19:41:50 dawes Exp $ */
+/* $XFree86: xc/lib/X11/Xlibint.h,v 3.23 2001/12/19 21:37:30 dawes Exp $ */
 
 #ifndef _XLIBINT_H_
 #define _XLIBINT_H_ 1
@@ -228,18 +232,12 @@ typedef struct _XSQEvent
 #undef dirty
 #endif
 
-#ifndef X_NOT_STDC_ENV
 #include <stdlib.h>
 #include <string.h>
-#else
-char *malloc(size_t), *realloc(char *, size_t), *calloc(size_t, size_t);
-void exit(int);
-#ifdef SYSV
-#include <string.h>
-#else
-#include <strings.h>
-#endif
-#endif
+
+#include <X11/Xfuncproto.h>
+
+_XFUNCPROTOBEGIN
 
 /*
  * The following definitions can be used for locking requests in multi-threaded
@@ -250,8 +248,6 @@ void exit(int);
  *
  * declarations for C Threads locking
  */
-
-#include <X11/Xfuncproto.h>
 
 typedef struct _LockInfoRec *LockInfoPtr;
 
@@ -360,15 +356,10 @@ extern LockInfoPtr _Xglobal_lock;
 
 #endif
 
-#ifndef NULL
-#define NULL 0
-#endif
+#include <stddef.h>
+
 #define LOCKED 1
 #define UNLOCKED 0
-
-#ifdef X_NOT_STDC_ENV
-extern int errno;			/* Internal system error number. */
-#endif
 
 #ifndef BUFSIZE
 #define BUFSIZE 2048			/* X output buffer size. */
@@ -444,7 +435,7 @@ extern int errno;			/* Internal system error number. */
  *
  */
 
-#if (defined(__STDC__) && !defined(UNIXCPP)) || defined(ANSICPP)
+#if !defined(UNIXCPP) || defined(ANSICPP)
 #define GetReq(name, req) \
         WORD64ALIGN\
 	if ((dpy->bufptr + SIZEOF(x##name##Req)) > dpy->bufmax)\
@@ -470,7 +461,7 @@ extern int errno;			/* Internal system error number. */
 /* GetReqExtra is the same as GetReq, but allocates "n" additional
    bytes after the request. "n" must be a multiple of 4!  */
 
-#if (defined(__STDC__) && !defined(UNIXCPP)) || defined(ANSICPP)
+#if !defined(UNIXCPP) || defined(ANSICPP)
 #define GetReqExtra(name, n, req) \
         WORD64ALIGN\
 	if ((dpy->bufptr + SIZEOF(x##name##Req) + n) > dpy->bufmax)\
@@ -499,7 +490,7 @@ extern int errno;			/* Internal system error number. */
  * "rid" is the name of the resource. 
  */
 
-#if (defined(__STDC__) && !defined(UNIXCPP)) || defined(ANSICPP)
+#if !defined(UNIXCPP) || defined(ANSICPP)
 #define GetResReq(name, rid, req) \
         WORD64ALIGN\
 	if ((dpy->bufptr + SIZEOF(xResourceReq)) > dpy->bufmax)\
@@ -527,7 +518,7 @@ extern int errno;			/* Internal system error number. */
  * GetEmptyReq is for those requests that have no arguments
  * at all. 
  */
-#if (defined(__STDC__) && !defined(UNIXCPP)) || defined(ANSICPP)
+#if !defined(UNIXCPP) || defined(ANSICPP)
 #define GetEmptyReq(name, req) \
         WORD64ALIGN\
 	if ((dpy->bufptr + SIZEOF(xReq)) > dpy->bufmax)\
@@ -612,12 +603,13 @@ extern void _XFlushGCCache(Display *dpy, GC gc);
  * "len" is the length of the data buffer.
  */
 #ifndef DataRoutineIsProcedure
-#define Data(dpy, data, len) \
+#define Data(dpy, data, len) {\
 	if (dpy->bufptr + (len) <= dpy->bufmax) {\
 		memcpy(dpy->bufptr, data, (int)len);\
 		dpy->bufptr += ((len) + 3) & ~3;\
 	} else\
-		_XSend(dpy, data, len)
+		_XSend(dpy, data, len);\
+	}
 #endif /* DataRoutineIsProcedure */
 
 
@@ -934,8 +926,6 @@ typedef struct _XExten {		/* private to extension mechanism */
 
 /* extension hooks */
 
-_XFUNCPROTOBEGIN
-
 #ifdef DataRoutineIsProcedure
 extern void Data(Display *dpy, char *data, long len);
 #endif
@@ -1030,6 +1020,17 @@ extern char *_XGetAsyncReply(
     Bool	/* discard */
 #endif
 );
+extern void _XGetAsyncData(
+#if NeedFunctionPrototypes
+    Display*	/* dpy */,
+    char *	/* data */,
+    char *	/* buf */,
+    int		/* len */,
+    int		/* skip */,
+    int		/* datalen */,
+    int		/* discardtotal */
+#endif
+);
 extern void _XFlush(
 #if NeedFunctionPrototypes
     Display*	/* dpy */
@@ -1088,6 +1089,27 @@ extern void _XDeq(
     _XQEvent*	/* qelt */
 #endif
 );
+
+extern Bool _XUnknownWireEvent(
+#if NeedFunctionPrototypes
+    Display*	/* dpy */,
+    XEvent*	/* re */,
+    xEvent*	/* event */
+#endif
+);
+extern Status _XUnknownNativeEvent(
+#if NeedFunctionPrototypes
+    Display*	/* dpy */,
+    XEvent*	/* re */,
+    xEvent*	/* event */
+#endif
+);
+
+extern Bool _XWireToEvent(Display *dpy, XEvent *re, xEvent *event);
+extern Bool _XDefaultWireError(Display *display, XErrorEvent *he, xError *we);
+extern Bool _XPollfdCacheInit(Display *dpy);
+extern XID _XAllocID(Display *dpy);
+extern void _XAllocIDs(Display *dpy, XID *ids, int count);
 
 extern int _XFreeExtData(
 #if NeedFunctionPrototypes
@@ -1442,6 +1464,18 @@ extern int _XAccessFile(
 #define _XOpenFile(path,flags) open(path,flags)
 #define _XFopenFile(path,mode) fopen(path,mode)
 #endif
+
+/* EvToWire.c */
+extern Status _XEventToWire(Display *dpy, XEvent *re, xEvent *event);
+
+extern int _XF86LoadQueryLocaleFont(
+#if NeedFunctionPrototypes
+    Display*		/* dpy */,
+    _Xconst char*	/* name*/,
+    XFontStruct**	/* xfp*/,
+    Font*		/* fidp */
+#endif
+);
 
 _XFUNCPROTOEND
 

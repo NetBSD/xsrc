@@ -1,9 +1,13 @@
-/* $XFree86: xc/programs/Xserver/dix/dixutils.c,v 3.6 2001/01/17 22:36:43 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/dix/dixutils.c,v 3.9 2001/12/14 19:59:31 dawes Exp $ */
 /***********************************************************
 
 Copyright 1987, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -78,7 +82,7 @@ Author:  Adobe Systems Incorporated
 
 */
 
-/* $Xorg: dixutils.c,v 1.3 2000/08/17 19:48:18 cpqbld Exp $ */
+/* $Xorg: dixutils.c,v 1.4 2001/02/09 02:04:40 xorgcvs Exp $ */
 
 #include "X.h"
 #include "Xmd.h"
@@ -323,7 +327,7 @@ AlterSaveSetForClient(client, pWin, mode)
     unsigned mode;
 {
     int numnow;
-    pointer *pTmp;
+    pointer *pTmp = NULL;
     int j;
 
     numnow = client->numSaved;
@@ -394,11 +398,7 @@ DeleteWindowFromAnySaveSet(pWin)
  * procedure to call than to check if there's a procedure 
  */
 void
-NoopDDA(
-#if NeedVarargsPrototypes
-    void* f, ...
-#endif
-)
+NoopDDA(void* f, ...)
 {
 }
 
@@ -564,7 +564,7 @@ ProcessWorkQueue()
      * they will be called again.  This must be reentrant with
      * QueueWorkProc.
      */
-    while (q = *p)
+    while ((q = *p))
     {
 	if ((*q->function) (q->client, q->closure))
 	{
@@ -586,7 +586,7 @@ ProcessWorkQueueZombies()
     WorkQueuePtr    q, *p;
 
     p = &workQueue;
-    while (q = *p)
+    while ((q = *p))
     {
 	if (q->client && q->client->clientGone)
 	{

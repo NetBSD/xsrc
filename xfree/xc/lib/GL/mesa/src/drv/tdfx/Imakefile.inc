@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/lib/GL/mesa/src/drv/tdfx/Imakefile.inc,v 1.2 2001/05/02 15:06:04 dawes Exp $
+XCOMM $XFree86: xc/lib/GL/mesa/src/drv/tdfx/Imakefile.inc,v 1.3 2001/08/18 02:51:06 dawes Exp $
 
 #ifndef MesaDrvSrcDir
 #define MesaDrvSrcDir $(GLXLIBSRC)/mesa/src/drv
@@ -16,7 +16,7 @@ ALLOC_DEFINES = -DMALLOC_0_RETURNS_NULL
 #endif
 
 #if BuildXF86DRI
-  DRI_DEFINES = GlxDefines -DFX_GLIDE3
+  DRI_DEFINES = GlxDefines
  DRI_INCLUDES = -I$(GLXLIBSRC)/dri -I$(GLXLIBSRC)/glx \
 		-I$(INCLUDESRC) -I$(INCLUDESRC)/GL \
 		-I$(GLXLIBSRC)/mesa/dri \
@@ -34,7 +34,6 @@ MESA_INCLUDES = -I$(MESASRCDIR)/src -I$(MESADRVSRCDIR)/common \
 		$(MESADRVTDFXBUILDDIR)tdfx_dd.c \
 		$(MESADRVTDFXBUILDDIR)tdfx_pixels.c \
 		$(MESADRVTDFXBUILDDIR)tdfx_fastpath.c \
-		$(MESADRVTDFXBUILDDIR)tdfx_g3ext.c \
 		$(MESADRVTDFXBUILDDIR)tdfx_lock.c \
 		$(MESADRVTDFXBUILDDIR)tdfx_pipeline.c \
 		$(MESADRVTDFXBUILDDIR)tdfx_render.c \
@@ -53,7 +52,6 @@ MESA_INCLUDES = -I$(MESASRCDIR)/src -I$(MESADRVSRCDIR)/common \
 		$(MESADRVTDFXBUILDDIR)tdfx_dd.o \
 		$(MESADRVTDFXBUILDDIR)tdfx_pixels.o \
 		$(MESADRVTDFXBUILDDIR)tdfx_fastpath.o \
-		$(MESADRVTDFXBUILDDIR)tdfx_g3ext.o \
 		$(MESADRVTDFXBUILDDIR)tdfx_lock.o \
 		$(MESADRVTDFXBUILDDIR)tdfx_pipeline.o \
 		$(MESADRVTDFXBUILDDIR)tdfx_render.o \
@@ -72,7 +70,6 @@ MESA_INCLUDES = -I$(MESASRCDIR)/src -I$(MESADRVSRCDIR)/common \
 		$(MESADRVTDFXBUILDDIR)unshared/tdfx_dd.o \
 		$(MESADRVTDFXBUILDDIR)unshared/tdfx_pixels.o \
 		$(MESADRVTDFXBUILDDIR)unshared/tdfx_fastpath.o \
-		$(MESADRVTDFXBUILDDIR)unshared/tdfx_g3ext.o \
 		$(MESADRVTDFXBUILDDIR)unshared/tdfx_lock.o \
 		$(MESADRVTDFXBUILDDIR)unshared/tdfx_pipeline.o \
 		$(MESADRVTDFXBUILDDIR)unshared/tdfx_render.o \
@@ -91,7 +88,6 @@ MESA_INCLUDES = -I$(MESASRCDIR)/src -I$(MESADRVSRCDIR)/common \
 		$(MESADRVTDFXBUILDDIR)debugger/tdfx_dd.o \
 		$(MESADRVTDFXBUILDDIR)debugger/tdfx_pixels.o \
 		$(MESADRVTDFXBUILDDIR)debugger/tdfx_fastpath.o \
-		$(MESADRVTDFXBUILDDIR)debugger/tdfx_g3ext.o \
 		$(MESADRVTDFXBUILDDIR)debugger/tdfx_lock.o \
 		$(MESADRVTDFXBUILDDIR)debugger/tdfx_pipeline.o \
 		$(MESADRVTDFXBUILDDIR)debugger/tdfx_render.o \
@@ -110,7 +106,6 @@ MESA_INCLUDES = -I$(MESASRCDIR)/src -I$(MESADRVSRCDIR)/common \
 		$(MESADRVTDFXBUILDDIR)profiled/tdfx_dd.o \
 		$(MESADRVTDFXBUILDDIR)profiled/tdfx_pixels.o \
 		$(MESADRVTDFXBUILDDIR)profiled/tdfx_fastpath.o \
-		$(MESADRVTDFXBUILDDIR)profiled/tdfx_g3ext.o \
 		$(MESADRVTDFXBUILDDIR)profiled/tdfx_lock.o \
 		$(MESADRVTDFXBUILDDIR)profiled/tdfx_pipeline.o \
 		$(MESADRVTDFXBUILDDIR)profiled/tdfx_render.o \
@@ -130,7 +125,6 @@ LinkSourceFile(tdfx_context.c, $(MESADRVSRCDIR)/tdfx)
 LinkSourceFile(tdfx_dd.c, $(MESADRVSRCDIR)/tdfx)
 LinkSourceFile(tdfx_pixels.c, $(MESADRVSRCDIR)/tdfx)
 LinkSourceFile(tdfx_fastpath.c, $(MESADRVSRCDIR)/tdfx)
-LinkSourceFile(tdfx_g3ext.c, $(MESADRVSRCDIR)/tdfx)
 LinkSourceFile(tdfx_lock.c, $(MESADRVSRCDIR)/tdfx)
 LinkSourceFile(tdfx_pipeline.c, $(MESADRVSRCDIR)/tdfx)
 LinkSourceFile(tdfx_render.c, $(MESADRVSRCDIR)/tdfx)

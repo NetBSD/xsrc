@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/dix/dispatch.h,v 3.1 1996/05/06 05:56:15 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/dix/dispatch.h,v 3.2 2001/08/01 00:44:48 tsi Exp $ */
 /************************************************************
 
 Copyright 1996 by Thomas E. Dickey <dickey@clark.net>
@@ -76,6 +76,18 @@ void SetInputCheck(
 #if NeedFunctionPrototypes
     HWEventQueuePtr /* c0 */,
     HWEventQueuePtr /* c1 */
+#endif
+);
+
+void ProcessWorkQueue(
+#if NeedFunctionPrototypes
+    void
+#endif
+);
+
+void ProcessWorkQueueZombies(
+#if NeedFunctionPrototypes
+    void
 #endif
 );
 

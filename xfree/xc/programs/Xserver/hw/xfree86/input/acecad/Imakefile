@@ -1,15 +1,16 @@
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/input/acecad/Imakefile,v 1.4 1999/08/14 10:49:59 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/input/acecad/Imakefile,v 1.5 2001/08/13 19:35:00 dawes Exp $
 
 #define IHaveModules
 #include <Server.tmpl>
 
-SRCS = xf86AceCad.c
-OBJS = xf86AceCad.o
+SRCS = acecad.c
+OBJS = acecad.o
 
-DRIVER = xf86AceCad
+DRIVER = acecad
 
 INCLUDES = -I. -I$(XF86COMSRC) -I$(XF86SRC)/loader -I$(XF86OSSRC) \
-			-I$(SERVERSRC)/include -I$(XINCLUDESRC) -I$(EXTINCSRC)
+	   -I$(SERVERSRC)/include -I$(SERVERSRC)/mi -I$(XINCLUDESRC) \
+	   -I$(EXTINCSRC)
 
 #if MakeHasPosixVariableSubstitutions
 SubdirLibraryRule($(OBJS))

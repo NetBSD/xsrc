@@ -1,9 +1,9 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xf86Version.h,v 3.472.2.5 2001/06/02 15:27:52 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xf86Version.h,v 3.487 2002/01/18 20:09:24 dawes Exp $ */
 
 #ifndef XF86_VERSION_CURRENT
 
 #define XF86_VERSION_MAJOR	4
-#define XF86_VERSION_MINOR	1
+#define XF86_VERSION_MINOR	2
 #define XF86_VERSION_PATCH	0
 #define XF86_VERSION_SNAP	0
 
@@ -24,7 +24,7 @@
 			0)
 
 
-#define XF86_DATE	"2 June 2001"
+#define XF86_DATE	"18 January 2002"
 
 #endif
 

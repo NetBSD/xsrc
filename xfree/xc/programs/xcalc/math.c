@@ -1,5 +1,5 @@
 /* $XConsortium: math.c,v 1.17 91/07/25 17:51:34 rws Exp $ 
- * $XFree86: xc/programs/xcalc/math.c,v 1.2 2000/06/15 20:50:03 dawes Exp $ 
+ * $XFree86: xc/programs/xcalc/math.c,v 1.5 2001/10/28 03:34:26 tsi Exp $ 
  *
  *  math.c  -  mathematics functions for a hand calculator under X
  *
@@ -68,7 +68,6 @@ double (*pow_p)() = pow;
 #define True	1
 #define False   0
 
-extern int	errno;
 extern int	rpn;
 extern char 	dispstr[];
 extern void draw();
@@ -109,13 +108,27 @@ static double dnum=0.0;
 #define XCALC_MEMORY 10
 static double mem[XCALC_MEMORY] = { 0.0 };
 
+static void   DrawDisplay(void);
+static void   PushOp(int op);
+static int    PopOp(void);
+static int    isopempty(void);
+#ifdef DEBUG
+static void   showstack(char *string);
+#endif
+static void   PushNum(double num);
+static double PopNum(void);
+static void   RollNum(int dir);
+static void   ClearStacks(void);
+static int    priority(int op);
+
 /*
  * The following is to deal with the unfortunate assumption that if errno
  * is non-zero then an error has occurred.  On some systems (e.g. Ultrix), 
  * sscanf will call lower level routines that will set errno.
  */
 
-void parse_double (src, fmt, dp)
+static void
+parse_double (src, fmt, dp)
     char *src;
     char *fmt;
     double *dp;
@@ -261,7 +274,8 @@ void post_op()
 #endif
 }
 /*-------------------------------------------------------------------------*/
-DrawDisplay()
+static void
+DrawDisplay(void)
 {
     if ((int) strlen(dispstr) > 12) {	 /* strip out some decimal digits */
         char tmp[32];
@@ -286,11 +300,12 @@ DrawDisplay()
 }
 
 /*-------------------------------------------------------------------------*/
+void
 numeric(keynum)
      int keynum;
 {
     char	st[2];
-    int		cell;
+    int		cell = 0;
 
   flagINV=0;
 
@@ -368,7 +383,8 @@ numeric(keynum)
   lift_enabled = 0;
 }
 
-bkspf()
+void
+bkspf(void)
 {
 
   lift_enabled = 0;
@@ -394,7 +410,8 @@ bkspf()
   DrawDisplay();
 }
 
-decf()
+void
+decf(void)
 {
   flagINV=0;
   if (clrdisp) {
@@ -415,7 +432,8 @@ decf()
   entered=1;
 }
 
-eef()
+void
+eef(void)
 {
   flagINV=0;
   if (clrdisp) {
@@ -432,7 +450,8 @@ eef()
   entered=1;
 }
 
-clearf()
+void
+clearf(void)
 {
   flagINV=0;
   if (CLR && !rpn) { /* clear all */
@@ -447,7 +466,8 @@ clearf()
   DrawDisplay();
 }
 
-negf()
+void
+negf(void)
 {
   flagINV=0;
   if (exponent) {       /* neg the exponent */
@@ -474,10 +494,9 @@ negf()
 }
 
 /* Two operand functions for infix calc */
-twoop(keynum)
+void
+twoop(int keynum)
 {
-  double PopNum();
-
   if (flagINV) {
     flagINV=0;
     DrawDisplay();
@@ -539,10 +558,9 @@ twoop(keynum)
 }                      
 
 /* Two operand functions for rpn calc */
-twof(keynum)
+void
+twof(int keynum)
 {
-  double PopNum();
-
   if (flagINV) {
     flagINV=0;
     DrawDisplay();
@@ -569,8 +587,8 @@ twof(keynum)
   dnum = acc;
 }
 
-
-entrf()
+void
+entrf(void)
 {
   flagINV=0;
   if (!entered)
@@ -587,10 +605,9 @@ entrf()
   lift_enabled = 0;
 }
 
-equf()
+void
+equf(void)
 {
-  double PopNum();
-
   flagINV=0;
   if (!entered)
     return;
@@ -631,7 +648,8 @@ equf()
   DrawDisplay();
 }
         
-lparf()
+void
+lparf(void)
 {
   flagINV=0;
   PushOp(kLPAR);
@@ -639,10 +657,9 @@ lparf()
   DrawDisplay();
 }
 
-rollf()
+void
+rollf(void)
 {
-  double PopNum();
-
   if (!entered)
     return;
   if (entered==1)
@@ -656,10 +673,9 @@ rollf()
   DrawDisplay();
 }
 
-rparf()
+void
+rparf(void)
 {
-  double PopNum();
-
   flagINV=0;
   if (!entered)
     return;
@@ -701,7 +717,8 @@ rparf()
   DrawDisplay();
 }
 
-drgf()
+void
+drgf(void)
 {
   if (flagINV) {
     if (entered==1)
@@ -733,13 +750,15 @@ drgf()
   DrawDisplay();
 }
 
-invf()
+void
+invf(void)
 {
   flagINV = ~flagINV;
   DrawDisplay();
 }
 
-memf(keynum)
+void
+memf(int keynum)
 {
     memop = keynum;
     if (entered==1)
@@ -749,7 +768,8 @@ memf(keynum)
     lift_enabled = 0;
 }
 
-oneop(keynum)
+void
+oneop(int keynum)
 {
   int i,j;
   double dtmp;
@@ -813,7 +833,8 @@ oneop(keynum)
   DrawDisplay();
 }
 
-offf()
+void
+offf(void)
 {
   /* full reset */
   int i;
@@ -837,6 +858,7 @@ static int numsp;
 
 
 /*******/
+static void
 PushOp(op)
    int op;
 /*******/
@@ -846,7 +868,8 @@ PushOp(op)
 }
 
 /*******/
-int PopOp()
+static int
+PopOp(void)
 /*******/
 {
   if (opsp==0) {
@@ -858,13 +881,15 @@ int PopOp()
 }
 
 /*******/
-int isopempty()
+static int
+isopempty(void)
 /*******/
 {
   return( opsp ? 0 : 1 );
 }
 
 #ifdef DEBUG
+static void
 showstack(string)
     char	*string;
 {
@@ -874,6 +899,7 @@ showstack(string)
 #endif
 
 /*******/
+static void
 PushNum(num)
  double num;
 /*******/
@@ -892,7 +918,8 @@ PushNum(num)
 }
 
 /*******/
-double PopNum()
+static double
+PopNum(void)
 /*******/
 {
     if (rpn) {
@@ -910,7 +937,8 @@ double PopNum()
 }
 
 /*******/
-RollNum(dir)
+static void
+RollNum(int dir)
 /*******/
 {
     double tmp;
@@ -932,7 +960,8 @@ RollNum(dir)
 
 
 /*******/
-ClearStacks()
+static void
+ClearStacks(void)
 /*******/
 {
     if (rpn)
@@ -942,7 +971,8 @@ ClearStacks()
 
 
 /*******/
-int priority(op)
+static int
+priority(op)
          int op;
 /*******/
 {
@@ -958,7 +988,8 @@ int priority(op)
 
 
 /********/
-ResetCalc()
+void
+ResetCalc(void)
 /********/
 {
     flagM=flagINV=flagPAREN=0;  drgmode=DEG;

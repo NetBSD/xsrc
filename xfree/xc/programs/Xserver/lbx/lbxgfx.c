@@ -21,7 +21,7 @@
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  */
-/* $XFree86: xc/programs/Xserver/lbx/lbxgfx.c,v 1.3 2001/01/17 22:36:59 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/lbx/lbxgfx.c,v 1.4 2001/08/23 14:46:57 alanh Exp $ */
 
 /* various bits of DIX-level mangling */
 
@@ -48,8 +48,6 @@
 
 #define DrawableCache(client)	(LbxClient(client)->drawableCache)
 #define GContextCache(client)	(LbxClient(client)->gcontextCache)
-
-extern int (*ProcVector[256])(ClientPtr);
 
 static void
 push (XID	    cache[GFX_CACHE_SIZE],
@@ -689,7 +687,7 @@ LbxDecodeGetImage (ClientPtr  client)
     REQUEST		(xLbxGetImageReq);
     xLbxGetImageReply	*reply = NULL;
     int			lbxLen, xLen, n;
-    int			method, bytes, status;
+    int			method = 0, bytes, status;
     xGetImageReply	*theImage;
 
     REQUEST_SIZE_MATCH(xLbxGetImageReq);

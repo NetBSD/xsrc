@@ -1,12 +1,15 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86PM.c,v 3.4 2000/12/08 20:13:34 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86PM.c,v 3.6 2001/11/30 12:11:55 eich Exp $ */
 
 
 #include "X.h"
 #include "xf86.h"
 #include "xf86Priv.h"
+#include "xf86Xinput.h"
 
 int (*xf86PMGetEventFromOs)(int fd,pmEvent *events,int num) = NULL;
 pmWait (*xf86PMConfirmEventToOs)(int fd,pmEvent event) = NULL;
+
+static Bool suspended = FALSE;
 
 static char *
 eventName(pmEvent event)
@@ -31,14 +34,80 @@ eventName(pmEvent event)
 }
 
 static void
-DoApmEvent(pmEvent event)
+suspend (pmEvent event, Bool undo)
+{
+    int i;
+    InputInfoPtr pInfo;
+    
+    for (i = 0; i < xf86NumScreens; i++) {
+        xf86EnableAccess(xf86Screens[i]);
+	if (xf86Screens[i]->EnableDisableFBAccess)
+	    (*xf86Screens[i]->EnableDisableFBAccess) (i, FALSE);
+    }
+#if !defined(__EMX__)
+    DisableDevice((DeviceIntPtr)xf86Info.pKeyboard);
+    pInfo = xf86InputDevs;
+    while (pInfo) {
+	DisableDevice(pInfo->dev);
+	pInfo = pInfo->next;
+    }
+#endif
+    xf86EnterServerState(SETUP);
+    for (i = 0; i < xf86NumScreens; i++) {
+        xf86EnableAccess(xf86Screens[i]);
+	if (xf86Screens[i]->PMEvent)
+	    xf86Screens[i]->PMEvent(i,event,undo);
+	else {
+	    xf86Screens[i]->LeaveVT(i, 0);
+	    xf86Screens[i]->vtSema = FALSE;
+	}
+    }
+    xf86AccessLeave();      
+    xf86AccessLeaveState(); 
+}
+
+static void
+resume(pmEvent event, Bool undo)
+{
+    int i;
+    InputInfoPtr pInfo;
+
+    xf86AccessEnter();
+    xf86EnterServerState(SETUP);
+    for (i = 0; i < xf86NumScreens; i++) {
+        xf86EnableAccess(xf86Screens[i]);
+	if (xf86Screens[i]->PMEvent)
+	    xf86Screens[i]->PMEvent(i,event,undo);
+	else {
+	    xf86Screens[i]->vtSema = TRUE;
+	    xf86Screens[i]->EnterVT(i, 0);
+	}
+    }
+    xf86EnterServerState(OPERATING);
+    for (i = 0; i < xf86NumScreens; i++) {
+        xf86EnableAccess(xf86Screens[i]);
+	if (xf86Screens[i]->EnableDisableFBAccess)
+	    (*xf86Screens[i]->EnableDisableFBAccess) (i, TRUE);
+    }
+    SaveScreens(SCREEN_SAVER_FORCER, ScreenSaverReset);
+#if !defined(__EMX__)
+    pInfo = xf86InputDevs;
+    while (pInfo) {
+	EnableDevice(pInfo->dev);
+	pInfo = pInfo->next;
+    }
+    EnableDevice((DeviceIntPtr)xf86Info.pKeyboard);
+#endif
+}
+
+static void
+DoApmEvent(pmEvent event, Bool undo)
 {
     /* 
      * we leave that as a global function for now. I don't know if 
      * this might cause problems in the future. It is a global server 
      * variable therefore it needs to be in a server info structure
      */
-    static Bool suspended;
     int i;
     
     switch(event) {
@@ -48,47 +117,19 @@ DoApmEvent(pmEvent event)
     case XF86_APM_USER_STANDBY:
     case XF86_APM_USER_SUSPEND:
 	/* should we do this ? */
-	if (!suspended) {
-	    for (i = 0; i < xf86NumScreens; i++) {
-		xf86EnableAccess(xf86Screens[i]);
-		if (xf86Screens[i]->EnableDisableFBAccess)
-		    (*xf86Screens[i]->EnableDisableFBAccess) (i, FALSE);
-	    }
-	    xf86EnterServerState(SETUP);
-	    for (i = 0; i < xf86NumScreens; i++) {
-		xf86EnableAccess(xf86Screens[i]);
-		if (xf86Screens[i]->PMEvent)
-		    xf86Screens[i]->PMEvent(i,event);
-		else
-		    xf86Screens[i]->LeaveVT(i, 0);
-	    }
-	    xf86AccessLeave();      
-	    xf86AccessLeaveState(); 
+	if (!undo && !suspended) {
+	    suspend(event,undo);
 	    suspended = TRUE;
+	} else if (undo && suspended) {
+	    resume(event,undo);
+	    suspended = FALSE;
 	}
 	break;
     case XF86_APM_STANDBY_RESUME:
     case XF86_APM_NORMAL_RESUME:
     case XF86_APM_CRITICAL_RESUME:
-    case XF86_APM_STANDBY_FAILED:
-    case XF86_APM_SUSPEND_FAILED:
 	if (suspended) {
-	    xf86AccessEnter();
-	    xf86EnterServerState(SETUP);
-	    for (i = 0; i < xf86NumScreens; i++) {
-		xf86EnableAccess(xf86Screens[i]);
-		if (xf86Screens[i]->PMEvent)
-		    xf86Screens[i]->PMEvent(i,event);
-		else
-		    xf86Screens[i]->EnterVT(i, 0);
-	    }
-	    xf86EnterServerState(OPERATING);
-	    for (i = 0; i < xf86NumScreens; i++) {
-		xf86EnableAccess(xf86Screens[i]);
-		if (xf86Screens[i]->EnableDisableFBAccess)
-		    (*xf86Screens[i]->EnableDisableFBAccess) (i, TRUE);
-	    }
-	    SaveScreens(SCREEN_SAVER_FORCER, ScreenSaverReset);
+	    resume(event,undo);
 	    suspended = FALSE;
 	}
 	break;
@@ -97,7 +138,7 @@ DoApmEvent(pmEvent event)
 	for (i = 0; i < xf86NumScreens; i++) {
 	    xf86EnableAccess(xf86Screens[i]);
 	    if (xf86Screens[i]->PMEvent)
-		xf86Screens[i]->PMEvent(i,event);
+		xf86Screens[i]->PMEvent(i,event,undo);
 	}
 	xf86EnterServerState(OPERATING);
 	break;
@@ -112,7 +153,7 @@ xf86HandlePMEvents(int fd, pointer data)
     pmEvent events[MAX_NO_EVENTS];
     int i,n;
     Bool wait = FALSE;
-    
+
     if (!xf86PMGetEventFromOs)
 	return;
 
@@ -121,12 +162,16 @@ xf86HandlePMEvents(int fd, pointer data)
 	    for (i = 0; i < n; i++) {
 		xf86MsgVerb(X_INFO,3,"PM Event received: %s\n",
 			    eventName(events[i]));
-		DoApmEvent(events[i]);
+		DoApmEvent(events[i],FALSE);
 		switch (xf86PMConfirmEventToOs(fd,events[i])) {
 		case PM_WAIT:
 		    wait = TRUE;
 		    break;
 		case PM_CONTINUE:
+		    wait = FALSE;
+		    break;
+		case PM_FAILED:
+		    DoApmEvent(events[i],TRUE);
 		    wait = FALSE;
 		    break;
 		default:

@@ -1,10 +1,10 @@
-.\" $Xorg: INSTALL.ms,v 1.3 2000/08/17 19:42:05 cpqbld Exp $
+.\" $Xorg: INSTALL.ms,v 1.5 2001/04/04 17:37:27 coskrey Exp $
 .\"
-.\" X11R6.5.1 Installation instructions. Use troff -ms macros
+.\" X11R6.6 Installation instructions. Use troff -ms macros
 .\"
 .\"
-.\" $XFree86: xc/doc/misc/INSTALL.ms,v 1.5 2001/01/22 22:26:59 dawes Exp $
-.ds Ts August 20, 2000\"
+.\" $XFree86: xc/doc/misc/INSTALL.ms,v 1.8 2001/12/21 20:59:12 dawes Exp $
+.ds Ts April 4, 2001\"
 .\"
 .ie t \{
 .nr LL 6.5i
@@ -33,13 +33,12 @@
 .ds CH \" empty center heading
 .sp 8
 .TL
-\s+2\fBBuilding and Installing X11R6.5.1\fP\s-2
+\s+2\fBBuilding and Installing X11R6.6\fP\s-2
 .AU
 .sp 6
-\fIKaleb S. KEITHLEY\fP
 .\".AI
 .\"
-.\"The Open Group X Project Team
+.\"The X.Org Group 
 .sp 6
 \*(Ts
 .LP
@@ -50,15 +49,14 @@
 .\}
 .sp 5
 .nf
-Copyright \(co 1999,2000 Compaq Computer Corporation
-Copyright \(co 1999,2000 Hewlett-Packard Company
-Copyright \(co 1999,2000 IBM Corporation
-Copyright \(co 1999,2000 Hummingbird Communications Ltd.
-Copyright \(co 1999,2000 Silicon Graphics, Inc.
-Copyright \(co 1999,2000 Sun Microsystems, Inc.
-Copyright \(co 1999,2000 The Open Group
+Copyright \(co 1999,2000,2001 Compaq Computer Corporation
+Copyright \(co 1999,2000,2001 Hewlett-Packard Company
+Copyright \(co 1999,2000,2001 IBM Corporation
+Copyright \(co 1999,2000,2001 Hummingbird Communications Ltd.
+Copyright \(co 1999,2000,2001 Silicon Graphics, Inc.
+Copyright \(co 1999,2000,2001 Sun Microsystems, Inc.
+Copyright \(co 1998,1999,2000,2001 The Open Group
 .fi
-Copyright \(co 1998 The Open Group
 .nr PS 9
 .nr VS 11
 .LP
@@ -90,8 +88,8 @@ of the copyright holder.
 X Window System is a trademark of The Open Group.
 .\"
 .if t \{
-.OH 'X Version 11, Release 6.5.1''X Window System Installation'
-.EH 'X Window System Installation Version 11, Release 6.5.1'
+.OH 'X Version 11, Release 6.6''X Window System Installation'
+.EH 'X Window System Installation Version 11, Release 6.6'
 .bp 1
 .ds CF \\n(PN
 .\}
@@ -101,13 +99,13 @@ X Window System is a trademark of The Open Group.
 .nH 1 "Introduction"
 .\"
 This document is the installation notes that were provided with X.Org's
-X11R6.5.1 release.  If you're building XFree86, it can be used as
-a rough guide.  Be aware that most of the details are not targetted
+X11R6.6 release.  If you're building XFree86, it can be used as
+a rough guide.  Be aware that most of the details are not targeted
 specifically at the current XFree86 source tree.  XFree86-specific
 documentation can be found in the \fBxc/programs/Xserver/hw/xfree86/doc\fP
 directory and on-line at http://www.xfree86.org/current/.  Some of the
 documentation there is out of date, so also be aware of that.  There is
-currently no up to date document specifically targetted at building
+currently no up to date document specifically targeted at building
 XFree86 from source.
 
 .nH 1 "Easy Build Instructions"
@@ -116,13 +114,19 @@ This quick summary is no substitute for reading the full build
 instructions later in this document.
 .LP
 Edit \fBxc/config/cf/site.def\fP for local preferences.
-If you want to install somewhere other than \fB/usr/X11R6.5.1\fP,
+If you want to install and use the installation from somewhere other than
+\fB/usr\fP,
 change \fBProjectRoot\fP. (Do \fInot\fP use \fBDESTDIR\fP.)
+.LP
+If you are cross compiling you will want to use \fBDESTDIR\fP to specify where
+the installation should take place. Failure to do so will corrupt your
+native installation of X.
+.LP
 If you want to build with \fIgcc\fP uncomment the \fBHasGcc2\fP line.
 If you have \fIgcc\fP, but not \fIcc\fP, please read the full
 build instructions.
 .LP
-If some time has elapsed since the initial release of R6.5.1, check 
+If some time has elapsed since the initial release of R6.6, check 
 to see if any public patches have been released. The source tar
 files may have been updated \(em check the patch-level line in the
 bug-report template. If the source in the tar files has not been
@@ -169,30 +173,30 @@ You can install manual pages with:
 these installation instructions.\fP
 
 
-.nH 1 "Building and Installing R6.5.1"
+.nH 1 "Building and Installing R6.6"
 
-Historically the MIT X Consortium and The X Consortium, Inc., sample
-implementation releases have always been source-code-only releases, 
-and this release is no different. 
+Historically the MIT X Consortium, The X Consortium, Inc., and X.Org
+sample implementation releases have always been source-code-only 
+releases, and this release is no different. 
 
 .nH 2 "Introduction"
 
 Every release of X has been progressively easier to configure, build,
 and install than the preceding releases \(em and we believe this 
-release is the easiest release to build yet. That not withstanding, 
+release is the easiest release to build yet. That notwithstanding, 
 if things do go amiss during the build we assume that you have the 
 basic skills necessary, and the willingness, to debug any errors 
 that may occur in the build process. When you install, if you're 
 going to use \fIxdm\fP or replace your system's old X, we assume 
 you have a basic understanding of your system's initialization 
-process. For Remote Execution (RX, embedding) we assume you that 
+process. For Remote Execution (RX, embedding) we assume that 
 you understand the fundamentals of HTTP, CGI, and HTML. If these 
 assumptions are not correct then you should consider finding someone 
 who has proficiency in these areas to do the build and install for you.
 .LP
 After the release has been out for a while more up to date information 
 about any newly-discovered problems may be found in the \fIFrequently 
-Asked Questions\fP posting appearing monthly on the Usenet newsgroup
+Asked Questions\fP posting, which appears monthly on the Usenet newsgroup
 comp.windows.x and xpert mailing list. The FAQ is also available via 
 anonymous FTP from ftp://ftp.x.org/ in the file 
 ftp://ftp.x.org/contrib/faqs/FAQ.Z, or possibly on one of X 
@@ -201,7 +205,7 @@ mirror sites.
 .nH 2 "Preparing Your Build System"
 
 The source is distributed in four gzip compressed UNIX \fBT\fPape 
-\fBAR\fPchive (tar) files. You will need about 200 Mb of disk space 
+\fBAR\fPchive (tar) files. You will need about 230 Mb of disk space 
 in order to unpack and build the release. Installing requires an 
 additional 30-50 Mb assuming you have shared libraries (80-100 Mb 
 without). 
@@ -211,7 +215,7 @@ compressed tar files to extract the sources. There are several to
 chose from, we do not make recommendations about which one you should
 use.
 .LP
-Release 6.5.1 sources are distributed among the tar files as follows:
+Release 6.6 sources are distributed among the tar files as follows:
 .LP
 .KS
 .DS
@@ -228,7 +232,7 @@ you only need to unpack xorg-1.tar to build. If you build fonts, then you
 will also need xorg-2.tar to build. If you already have the fonts from
 prior releases you can use those instead of downloading them again. We
 presume that you know how to copy or move them from your old source 
-tree to the R6.5.1 source tree.
+tree to the R6.6 source tree.
 
 .nH 2 "Unpacking the Distribution"
 
@@ -249,7 +253,7 @@ or if you have GNU's tar (FreeBSD, NetBSD, OpenBSD, or Linux too)
 
 .nH 2 "Applying Patches"
 
-If some time has elapsed since the initial release of R6.5.1, check 
+If some time has elapsed since the initial release of R6.6, check 
 to see if any public patches have been released. The source tar
 files may have been updated \(em check the patch-level line in the
 bug-report template. If the source in the tar files has not been
@@ -350,7 +354,7 @@ server in this directory.
 Some systems require the X server to run as root to access the devices
 it needs. If you are on such a system and will not be using \fIxdm\fP, 
 you may set this variable to \fBYES\fP to install the X server setuid 
-to root; however the X Project Team strongly recommends that you not 
+to root; however the X.Org Group strongly recommends that you not 
 install your server suid-root, but that you use xdm instead. Talk to 
 your system manager before setting this variable to \fBYES\fP.
 .Ip InstallXdmConfig
@@ -384,7 +388,7 @@ not been tested recently and hence probably need changes to work:
 \fBAmoeba.cf\fP is known to require additional patches.
 .LP
 The file \fBxc/lib/Xdmcp/Wraphelp.c\fP, for XDM-AUTHORIZATION-1, is not
-included in this release. See ftp://ftp.x.org/pub/R6.5.1/xdm-auth/README.
+included in this release. See ftp://ftp.x.org/pub/R6.6/xdm-auth/README.
 
 .nH 2 "System Build Notes"
 
@@ -425,17 +429,17 @@ around this is to edit \fBxc/config/imake/Makefile.ini\fP to specify
 .\"
 Use of the GNU BinUtils assembler, \fIas\fP, and linker, \fIld\fP, is 
 not supported \(em period! If you have them installed on your system 
-you must rename or remove them for the duration of the R6.5.1 build. 
+you must rename or remove them for the duration of the R6.6 build. 
 (You can restore them afterwards.)
 .LP
-The system-supplied \fImake\fP works just fine for building R6.5.1 and 
+The system-supplied \fImake\fP works just fine for building R6.6 and 
 that's what we suggest you use. If you've replaced your system's 
 \fImake\fP with GNU \fImake\fP then we recommend that you restore 
-the system \fImake\fP for the duration of your R6.5.1 build. After 
-R6.5.1 is done building you can revert to GNU make. GNU make on most 
+the system \fImake\fP for the duration of your R6.6 build. After 
+R6.6 is done building you can revert to GNU make. GNU make on most 
 systems (except Linux, where it is the default make) is not a supported 
 build configuration. GNU make may work for you, and if it does, great; 
-but if it doesn't we do not consider it a bug in R6.5.1. If, after this 
+but if it doesn't we do not consider it a bug in R6.6. If, after this 
 admonition, you still use GNU make and your build fails, reread the 
 above, and retry the build with the system's \fImake\fP before you 
 file a bug-report.
@@ -641,9 +645,9 @@ You can install the manual pages by typing the following as root:
 
 .nH 2 "Shared Libraries"
 
-The version number of some of the the shared libraries has been changed.
+The version number of some of the shared libraries has been changed.
 On SunOS 4, which supports minor version numbers for shared libraries,
-programs linked with the R6.5.1 libraries will use the new libraries with
+programs linked with the R6.6 libraries will use the new libraries with
 no special action required. 
 .LP
 On most other modern operating systems the version portion of the 
@@ -773,7 +777,7 @@ inetd to start xfs \(em you should remove the xfs entries from
 /etc/inetd.conf and /etc/services before adding xfs to the run-level 
 files.
 
-.nH 3 "On SystemV-based systems"
+.nH 3 "On Unix System V-based systems"
 
 On systems with a \fB/etc/inittab\fP file, you can edit this file to
 add the lines
@@ -864,12 +868,11 @@ extension as a \fImake\fP target, e.g., \*Qmake icccm.txt\*U.
 
 .nH 1 "Public Patches"
 
-The Open Group X Project Team may from time to time issue public 
-patches for this release to fix any serious problems that are 
-discovered. Such fixes are a subset of fixes available to X Project 
-Team members. Public patches are available via anonymous FTP from 
-ftp://ftp.x.org/pub/R6.5.1/fixes, or from your local X mirror site. 
-Check the site closest to you first.
+The X.Org Group may from time to time issue public patches for this 
+release to fix any serious problems that are discovered. Such fixes 
+are a subset of fixes available to X.Org members. Public patches are 
+available via anonymous FTP from ftp://ftp.x.org/pub/R6.6/fixes, 
+or from your local X mirror site.  Check the site closest to you first.
 .LP
 You can determine which public patches have already been applied 
 to your source tree by examining the \*QVERSION\*U line of 

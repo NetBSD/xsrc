@@ -21,7 +21,7 @@
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
-/* $XFree86: xc/programs/Xserver/hw/kdrive/fbdev/fbdev.c,v 1.11 2001/03/30 02:15:20 keithp Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/kdrive/fbdev/fbdev.c,v 1.28 2001/07/24 19:06:03 keithp Exp $ */
 
 #include "fbdev.h"
 
@@ -86,28 +86,67 @@ fbdevCardInit (KdCardInfo *card)
     return TRUE;
 }
 
+#define FBDEV_KLUDGE_FORMAT
+#ifdef FBDEV_KLUDGE_FORMAT
+static Pixel
+fbdevMakeContig (Pixel orig, Pixel others)
+{
+    Pixel   low;
+
+    low = lowbit (orig) >> 1;
+    while (low && (others & low) == 0)
+    {
+	orig |= low;
+	low >>= 1;
+    }
+    return orig;
+}
+#endif
+
 Bool
 fbdevScreenInitialize (KdScreenInfo *screen, FbdevScrPriv *scrpriv)
 {
     FbdevPriv	*priv = screen->card->driver;
     Pixel	allbits;
     int		depth;
-    Bool	rotate;
     Bool	shadow;
+    Bool	gray;
 #ifdef FAKE24_ON_16
     Bool	fake24;
 #endif
 
     depth = priv->var.bits_per_pixel;
+    gray = priv->var.grayscale;
     
     switch (priv->fix.visual) {
     case FB_VISUAL_PSEUDOCOLOR:
-	screen->fb[0].visuals = ((1 << StaticGray) |
-			   (1 << GrayScale) |
-			   (1 << StaticColor) |
-			   (1 << PseudoColor) |
-			   (1 << TrueColor) |
-			   (1 << DirectColor));
+	if (gray)
+	{
+	    screen->fb[0].visuals = (1 << StaticGray);
+	    /* could also support GrayScale, but what's the point? */
+	}
+	else
+	{
+	    screen->fb[0].visuals = ((1 << StaticGray) |
+			       (1 << GrayScale) |
+			       (1 << StaticColor) |
+			       (1 << PseudoColor) |
+			       (1 << TrueColor) |
+			       (1 << DirectColor));
+	}
+	screen->fb[0].blueMask  = 0x00;
+	screen->fb[0].greenMask = 0x00;
+	screen->fb[0].redMask   = 0x00;
+	break;
+    case FB_VISUAL_STATIC_PSEUDOCOLOR:
+	if (gray)
+	{
+	    screen->fb[0].visuals = (1 << StaticGray);
+	}
+	else
+	{
+	    screen->fb[0].visuals = (1 << StaticColor);
+	}
 	screen->fb[0].blueMask  = 0x00;
 	screen->fb[0].greenMask = 0x00;
 	screen->fb[0].redMask   = 0x00;
@@ -119,11 +158,24 @@ fbdevScreenInitialize (KdScreenInfo *screen, FbdevScrPriv *scrpriv)
 	screen->fb[0].redMask = Mask (priv->var.red.offset, priv->var.red.length);
 	screen->fb[0].greenMask = Mask (priv->var.green.offset, priv->var.green.length);
 	screen->fb[0].blueMask = Mask (priv->var.blue.offset, priv->var.blue.length);
-#ifdef ITSY
-	screen->fb[0].redMask = 0xf800;
-	screen->fb[0].greenMask = 0x07e0;
-	screen->fb[0].blueMask = 0x001f;
-#endif	
+#ifdef FBDEV_KLUDGE_FORMAT
+	/*
+	 * This is a kludge so that Render will work -- fill in the gaps
+	 * in the pixel
+	 */
+	screen->fb[0].redMask = fbdevMakeContig (screen->fb[0].redMask,
+						 screen->fb[0].greenMask|
+						 screen->fb[0].blueMask);
+
+	screen->fb[0].greenMask = fbdevMakeContig (screen->fb[0].greenMask,
+						   screen->fb[0].redMask|
+						   screen->fb[0].blueMask);
+
+	screen->fb[0].blueMask = fbdevMakeContig (screen->fb[0].blueMask,
+						  screen->fb[0].redMask|
+						  screen->fb[0].greenMask);
+
+#endif
 	allbits = screen->fb[0].redMask | screen->fb[0].greenMask | screen->fb[0].blueMask;
 	depth = 32;
 	while (depth && !(allbits & (1 << (depth - 1))))
@@ -134,15 +186,15 @@ fbdevScreenInitialize (KdScreenInfo *screen, FbdevScrPriv *scrpriv)
 	break;
     }
     screen->rate = 72;
-    scrpriv->rotate = ((priv->var.xres < priv->var.yres) != 
-		       (screen->width < screen->height));
+    scrpriv->rotation = screen->rotation;
+    
 #ifdef FAKE24_ON_16
     if (screen->fb[0].depth == 24 && screen->fb[0].bitsPerPixel == 24 &&
 	priv->var.bits_per_pixel == 16)
     {
 	fake24 = TRUE;
 	scrpriv->shadow = TRUE;
-	scrpriv->rotate = FALSE;
+	scrpriv->rotation = 0;
 	screen->fb[0].redMask = 0xff0000;
 	screen->fb[0].greenMask = 0x00ff00;
 	screen->fb[0].blueMask = 0x0000ff;
@@ -155,27 +207,13 @@ fbdevScreenInitialize (KdScreenInfo *screen, FbdevScrPriv *scrpriv)
     {
 	screen->fb[0].depth = depth;
 	screen->fb[0].bitsPerPixel = priv->var.bits_per_pixel;
-	if (!scrpriv->rotate)
-	{
-	    screen->width = priv->var.xres;
-	    screen->height = priv->var.yres;
-	    screen->fb[0].byteStride = priv->fix.line_length;
-	    screen->fb[0].pixelStride = (priv->fix.line_length * 8 / 
-					 priv->var.bits_per_pixel);
-	    screen->fb[0].frameBuffer = (CARD8 *) (priv->fb);
-	    return TRUE;
-	}
-	else
-	{
-	    screen->width = priv->var.yres;
-	    screen->height = priv->var.xres;
-	    screen->softCursor = TRUE;
-	}
+        screen->width = priv->var.xres;
+        screen->height = priv->var.yres;
+        screen->fb[0].byteStride = priv->fix.line_length;
+        screen->fb[0].pixelStride = (priv->fix.line_length * 8 / 
+    				 priv->var.bits_per_pixel);
+        screen->fb[0].frameBuffer = (CARD8 *) (priv->fb);
     }
-    if (scrpriv->rotate)
-	scrpriv->shadow = TRUE;
-    if (scrpriv->shadow)
-	return KdShadowScreenInit (screen);
     return TRUE;
 }
 
@@ -202,7 +240,8 @@ fbdevWindowLinear (ScreenPtr	pScreen,
 		   CARD32	row,
 		   CARD32	offset,
 		   int		mode,
-		   CARD32	*size)
+		   CARD32	*size,
+		   void		*closure)
 {
     KdScreenPriv(pScreen);
     FbdevPriv	    *priv = pScreenPriv->card->driver;
@@ -295,6 +334,329 @@ fbdevUpdateFake24 (ScreenPtr pScreen,
 }
 #endif /* FAKE24_ON_16 */
 
+LayerPtr
+fbdevLayerCreate (ScreenPtr pScreen)
+{
+    KdScreenPriv(pScreen);
+    KdScreenInfo	*screen = pScreenPriv->screen;
+    FbdevPriv		*priv = pScreenPriv->card->driver;
+    FbdevScrPriv	*scrpriv = screen->driver;
+    LayerPtr		pLayer;
+    ShadowUpdateProc	update;
+    ShadowWindowProc	window;
+    PixmapPtr		pPixmap;
+    int			kind;
+    KdMouseMatrix	m;
+
+    switch (scrpriv->rotation) {
+    case 0:
+	pScreen->width = screen->width;
+	pScreen->height = screen->height;
+	pScreen->mmWidth = screen->width_mm;
+	pScreen->mmHeight = screen->height_mm;
+	scrpriv->shadow = FALSE;
+	m.matrix[0][0] = 1; m.matrix[0][1] = 0; m.matrix[0][2] = 0;
+	m.matrix[1][0] = 0; m.matrix[1][1] = 1; m.matrix[1][2] = 0;
+	break;
+    case 90:
+	pScreen->width = screen->height;
+	pScreen->height = screen->width;
+	pScreen->mmWidth = screen->height_mm;
+	pScreen->mmHeight = screen->width_mm;
+	scrpriv->shadow = TRUE;
+	m.matrix[0][0] = 0; m.matrix[0][1] = -1; m.matrix[0][2] = screen->height - 1;
+	m.matrix[1][0] = 1; m.matrix[1][1] = 0; m.matrix[1][2] = 0;
+	break;
+    case 180:
+	pScreen->width = screen->width;
+	pScreen->height = screen->height;
+	pScreen->mmWidth = screen->width_mm;
+	pScreen->mmHeight = screen->height_mm;
+	scrpriv->shadow = TRUE;
+	m.matrix[0][0] = -1; m.matrix[0][1] = 0; m.matrix[0][2] = screen->width - 1;
+	m.matrix[1][0] = 0; m.matrix[1][1] = -1; m.matrix[1][2] = screen->height - 1;
+	break;
+    case 270:
+	pScreen->width = screen->height;
+	pScreen->height = screen->width;
+	pScreen->mmWidth = screen->height_mm;
+	pScreen->mmHeight = screen->width_mm;
+	scrpriv->shadow = TRUE;
+	m.matrix[0][0] = 0; m.matrix[0][1] = 1; m.matrix[0][2] = 0;
+	m.matrix[1][0] = -1; m.matrix[1][1] = 0; m.matrix[1][2] = screen->width - 1;
+	break;
+    }
+    KdSetMouseMatrix (&m);
+    
+    if (scrpriv->shadow)
+    {
+        window = fbdevWindowLinear;
+	update = 0;
+#ifdef FAKE24_ON_16
+	if (pScreenPriv->screen->fb[0].bitsPerPixel == 24 && priv->var.bits_per_pixel == 16)
+	{
+	    update = fbdevUpdateFake24;
+	}
+	else
+#endif /* FAKE24_ON_16 */
+	{
+	    if (scrpriv->rotation)
+		update = shadowUpdateRotatePacked;
+	    else
+		update = shadowUpdatePacked;
+	}
+	if (!update)
+	    abort ();
+	kind = LAYER_SHADOW;
+	pPixmap = 0;
+    }
+    else
+    {
+	kind = LAYER_FB;
+	pPixmap = LAYER_SCREEN_PIXMAP;
+	update = 0;
+	window = 0;
+    }
+    return LayerCreate (pScreen, kind, screen->fb[0].depth, 
+			pPixmap, update, window, scrpriv->rotation, 0);
+}
+
+
+#ifdef RANDR
+Bool
+fbdevRandRGetInfo (ScreenPtr pScreen, Rotation *rotations)
+{
+    KdScreenPriv(pScreen);
+    FbdevPriv		    *priv = pScreenPriv->card->driver;
+    KdScreenInfo	    *screen = pScreenPriv->screen;
+    FbdevScrPriv	    *scrpriv = screen->driver;
+    RRVisualGroupPtr	    pVisualGroup;
+    RRGroupOfVisualGroupPtr pGroupOfVisualGroup;
+    RRScreenSizePtr	    pSize;
+    Rotation		    rotateKind;
+    int			    rotation;
+    int			    n;
+    
+    *rotations = RR_Rotate_0|RR_Rotate_90|RR_Rotate_180|RR_Rotate_270;
+    
+    for (n = 0; n < pScreen->numDepths; n++)
+	if (pScreen->allowedDepths[n].numVids)
+	    break;
+    if (n == pScreen->numDepths)
+	return FALSE;
+    
+    pVisualGroup = RRCreateVisualGroup (pScreen);
+    if (!pVisualGroup)
+	return FALSE;
+    if (!RRAddDepthToVisualGroup (pScreen,
+				pVisualGroup,
+				&pScreen->allowedDepths[n]))
+    {
+	RRDestroyVisualGroup (pScreen, pVisualGroup);
+	return FALSE;
+    }
+
+    pVisualGroup = RRRegisterVisualGroup (pScreen, pVisualGroup);
+    if (!pVisualGroup)
+	return FALSE;
+    
+    pGroupOfVisualGroup = RRCreateGroupOfVisualGroup (pScreen);
+
+    if (!RRAddVisualGroupToGroupOfVisualGroup (pScreen,
+					 pGroupOfVisualGroup,
+					 pVisualGroup))
+    {
+	RRDestroyGroupOfVisualGroup (pScreen, pGroupOfVisualGroup);
+	/* pVisualGroup left until screen closed */
+	return FALSE;
+    }
+
+    pGroupOfVisualGroup = RRRegisterGroupOfVisualGroup (pScreen, pGroupOfVisualGroup);
+    if (!pGroupOfVisualGroup)
+	return FALSE;
+    
+    pSize = RRRegisterSize (pScreen,
+			    screen->width,
+			    screen->height,
+			    screen->width_mm,
+			    screen->height_mm,
+			    pGroupOfVisualGroup);
+    
+    rotation = scrpriv->rotation - screen->rotation;
+    if (rotation < 0)
+	rotation += 360;
+
+    switch (rotation)
+    {
+    case 0:
+	rotateKind = RR_Rotate_0;
+	break;
+    case 90:
+	rotateKind = RR_Rotate_90;
+	break;
+    case 180:
+	rotateKind = RR_Rotate_180;
+	break;
+    case 270:
+	rotateKind = RR_Rotate_270;
+	break;
+    }
+
+    RRSetCurrentConfig (pScreen, rotateKind, pSize, pVisualGroup);
+    
+    return TRUE;
+}
+
+int
+fbdevLayerAdd (WindowPtr pWin, pointer value)
+{
+    ScreenPtr	    pScreen = pWin->drawable.pScreen;
+    LayerPtr	    pLayer = (LayerPtr) value;
+
+    if (!LayerWindowAdd (pScreen, pLayer, pWin))
+	return WT_STOPWALKING;
+
+    return WT_WALKCHILDREN;
+}
+
+int
+fbdevLayerRemove (WindowPtr pWin, pointer value)
+{
+    ScreenPtr	    pScreen = pWin->drawable.pScreen;
+    LayerPtr	    pLayer = (LayerPtr) value;
+
+    LayerWindowRemove (pScreen, pLayer, pWin);
+
+    return WT_WALKCHILDREN;
+}
+
+fbdevRandRSetConfig (ScreenPtr		pScreen,
+		     Rotation		rotateKind,
+		     RRScreenSizePtr	pSize,
+		     RRVisualGroupPtr	pVisualGroup)
+{
+    KdScreenPriv(pScreen);
+    KdScreenInfo	*screen = pScreenPriv->screen;
+    FbdevPriv		*priv = pScreenPriv->card->driver;
+    FbdevScrPriv	*scrpriv = screen->driver;
+    int			rotation;
+    Bool		wasEnabled = pScreenPriv->enabled;
+
+    /*
+     * The only thing that can change is rotation
+     */
+    switch (rotateKind)
+    {
+    case RR_Rotate_0:
+	rotation = screen->rotation;
+	break;
+    case RR_Rotate_90:
+	rotation = screen->rotation + 90;
+	break;
+    case RR_Rotate_180:
+	rotation = screen->rotation + 180;
+	break;
+    case RR_Rotate_270:
+	rotation = screen->rotation + 270;
+	break;
+    }
+    if (rotation >= 360)
+	rotation -= 360;
+
+    if (scrpriv->rotation != rotation)
+    {
+	LayerPtr	pNewLayer;
+	int		kind;
+	int		oldrotation = scrpriv->rotation;
+	int		oldshadow = scrpriv->shadow;
+	int		oldwidth = pScreen->width;
+	int		oldheight = pScreen->height;
+	PixmapPtr	pPixmap;
+
+	if (wasEnabled)
+	    KdDisableScreen (pScreen);
+	
+	scrpriv->rotation = rotation;
+	pNewLayer = fbdevLayerCreate (pScreen);
+	if (!pNewLayer)
+	{
+	    scrpriv->shadow = oldshadow;
+	    scrpriv->rotation = oldrotation;
+	}
+	if (WalkTree (pScreen, fbdevLayerAdd, (pointer) pNewLayer) == WT_STOPWALKING)
+	{
+	    WalkTree (pScreen, fbdevLayerRemove, (pointer) pNewLayer);
+	    LayerDestroy (pScreen, pNewLayer);
+	    scrpriv->rotation = oldrotation;
+	    scrpriv->shadow = oldshadow;
+	    pScreen->width = oldwidth;
+	    pScreen->height = oldheight;
+	    if (wasEnabled)
+		KdEnableScreen (pScreen);
+	    return FALSE;
+	}
+        WalkTree (pScreen, fbdevLayerRemove, (pointer) scrpriv->pLayer);
+	LayerDestroy (pScreen, scrpriv->pLayer);
+	scrpriv->pLayer = pNewLayer;
+	if (wasEnabled)
+	    KdEnableScreen (pScreen);
+    }
+    return TRUE;
+}
+
+Bool
+fbdevRandRInit (ScreenPtr pScreen)
+{
+    rrScrPrivPtr    pScrPriv;
+    
+    if (!RRScreenInit (pScreen))
+	return FALSE;
+
+    pScrPriv = rrGetScrPriv(pScreen);
+    pScrPriv->rrGetInfo = fbdevRandRGetInfo;
+    pScrPriv->rrSetConfig = fbdevRandRSetConfig;
+    return TRUE;
+}
+#endif
+
+Bool
+fbdevCreateColormap (ColormapPtr pmap)
+{
+    ScreenPtr		pScreen = pmap->pScreen;
+    KdScreenPriv(pScreen);
+    FbdevPriv		*priv = pScreenPriv->card->driver;
+    VisualPtr		pVisual;
+    int			i;
+    int			nent;
+    xColorItem		*pdefs;
+    
+    switch (priv->fix.visual) {
+    case FB_VISUAL_STATIC_PSEUDOCOLOR:
+	pVisual = pmap->pVisual;
+	nent = pVisual->ColormapEntries;
+	pdefs = ALLOCATE_LOCAL (nent * sizeof (xColorItem));
+	if (!pdefs)
+	    return FALSE;
+	for (i = 0; i < nent; i++)
+	    pdefs[i].pixel = i;
+	fbdevGetColors (pScreen, 0, nent, pdefs);
+	for (i = 0; i < nent; i++)
+	{
+	    pmap->red[i].co.local.red = pdefs[i].red;
+	    pmap->red[i].co.local.green = pdefs[i].green;
+	    pmap->red[i].co.local.blue = pdefs[i].blue;
+	}
+	DEALLOCATE_LOCAL (pdefs);
+	return TRUE;
+    default:
+	return fbInitializeColormap (pmap);
+    }
+}
+
+#ifdef TOUCHSCREEN
+int TsFbdev = -1;
+#endif
+
 Bool
 fbdevInitScreen (ScreenPtr pScreen)
 {
@@ -304,33 +666,23 @@ fbdevInitScreen (ScreenPtr pScreen)
     ShadowUpdateProc	update;
     ShadowWindowProc	window;
 
-    if (scrpriv->shadow)
-    {
-        window = fbdevWindowLinear;
-#ifdef FAKE24_ON_16
-	if (pScreenPriv->screen->fb[0].bitsPerPixel == 24 && priv->var.bits_per_pixel == 16)
-	{
-	    update = fbdevUpdateFake24;
-	}
-	else
-#endif /* FAKE24_ON_16 */
-	{
-	    update = shadowUpdatePacked;
-	    if (scrpriv->rotate)
-	    {
-		window = fbdevWindowLinear;
-		switch (pScreenPriv->screen->fb[0].bitsPerPixel) {
-		case 8:
-		    update = shadowUpdateRotate8; break;
-		case 16:
-		    update = shadowUpdateRotate16; break;
-		case 32:
-		    update = shadowUpdateRotate32; break;
-		}
-	    }
-	}
-	return KdShadowInitScreen (pScreen, update, window);
-    }
+#ifdef TOUCHSCREEN
+    TsFbdev = pScreen->myNum;
+#endif
+
+    pScreen->CreateColormap = fbdevCreateColormap;
+
+    if (!LayerStartInit (pScreen))
+	return FALSE;
+    if (!LayerFinishInit (pScreen))
+	return FALSE;
+    scrpriv->pLayer = fbdevLayerCreate (pScreen);
+    if (!scrpriv->pLayer)
+	return FALSE;
+#ifdef RANDR
+    if (!fbdevRandRInit (pScreen))
+	return FALSE;
+#endif
     return TRUE;
 }
 
@@ -343,10 +695,10 @@ Bool
 fbdevEnable (ScreenPtr pScreen)
 {
     KdScreenPriv(pScreen);
-    FbdevPriv	*priv = pScreenPriv->card->driver;
+    KdScreenInfo	*screen = pScreenPriv->screen;
+    FbdevPriv		*priv = pScreenPriv->card->driver;
     FbdevScrPriv	*scrpriv = pScreenPriv->screen->driver;
     int			k;
-    KdMouseMatrix	m;
 
     priv->var.activate = FB_ACTIVATE_NOW|FB_CHANGE_CMAP_VBL;
     
@@ -357,16 +709,7 @@ fbdevEnable (ScreenPtr pScreen)
 	perror ("FBIOPUT_VSCREENINFO");
 	return FALSE;
     }
-    if (scrpriv->rotate)
-    {
-	m.matrix[0][0] = 0; m.matrix[0][1] = 1; m.matrix[0][2] = 0;
-	m.matrix[1][0] = -1; m.matrix[1][1] = 0; m.matrix[1][2] = pScreen->height - 1;
-    }
-    else
-    {
-	m.matrix[0][0] = 1; m.matrix[0][1] = 0; m.matrix[0][2] = 0;
-	m.matrix[1][0] = 0; m.matrix[1][1] = 1; m.matrix[1][2] = 0;
-    }
+	    
     if (priv->fix.visual == FB_VISUAL_DIRECTCOLOR)
     {
 	struct fb_cmap	cmap;
@@ -389,7 +732,6 @@ fbdevEnable (ScreenPtr pScreen)
 	cmap.transp = 0;
 	ioctl (priv->fd, FBIOPUTCMAP, &cmap);
     }
-    KdSetMouseMatrix (&m);
     return TRUE;
 }
 
@@ -398,14 +740,23 @@ fbdevDPMS (ScreenPtr pScreen, int mode)
 {
     KdScreenPriv(pScreen);
     FbdevPriv	*priv = pScreenPriv->card->driver;
+    static int oldmode = -1;
 
+    if (mode == oldmode)
+	return TRUE;
 #ifdef FBIOPUT_POWERMODE
     if (ioctl (priv->fd, FBIOPUT_POWERMODE, &mode) >= 0)
+    {
+	oldmode = mode;
 	return TRUE;
+    }
 #endif
 #ifdef FBIOBLANK
     if (ioctl (priv->fd, FBIOBLANK, mode ? mode + 1 : 0) >= 0)
+    {
+	oldmode = mode;
 	return TRUE;
+    }
 #endif
     return FALSE;
 }
@@ -424,9 +775,6 @@ void
 fbdevScreenFini (KdScreenInfo *screen)
 {
     FbdevScrPriv	*scrpriv = screen->driver;
-    
-    if (scrpriv->shadow)
-	KdShadowScreenFini (screen);
 }
 
 void
@@ -512,3 +860,32 @@ fbdevPutColors (ScreenPtr pScreen, int fb, int n, xColorItem *pdefs)
     cmap.transp = 0;
     ioctl (priv->fd, FBIOPUTCMAP, &cmap);
 }
+
+
+KdCardFuncs	fbdevFuncs = {
+    fbdevCardInit,	    /* cardinit */
+    fbdevScreenInit,	    /* scrinit */
+    fbdevInitScreen,	    /* initScreen */
+    fbdevPreserve,	    /* preserve */
+    fbdevEnable,	    /* enable */
+    fbdevDPMS,		    /* dpms */
+    fbdevDisable,	    /* disable */
+    fbdevRestore,	    /* restore */
+    fbdevScreenFini,	    /* scrfini */
+    fbdevCardFini,	    /* cardfini */
+    
+    0,			    /* initCursor */
+    0,			    /* enableCursor */
+    0,			    /* disableCursor */
+    0,			    /* finiCursor */
+    0,			    /* recolorCursor */
+    
+    0,			    /* initAccel */
+    0,			    /* enableAccel */
+    0,			    /* syncAccel */
+    0,			    /* disableAccel */
+    0,			    /* finiAccel */
+    
+    fbdevGetColors,    	    /* getColors */
+    fbdevPutColors,	    /* putColors */
+};

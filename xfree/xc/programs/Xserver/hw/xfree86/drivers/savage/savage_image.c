@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/savage/savage_image.c,v 1.4 2001/05/18 23:35:32 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/savage/savage_image.c,v 1.5 2001/08/09 19:14:13 dawes Exp $ */
 
 #include "savage_driver.h"
 #include "xaarop.h"
@@ -92,7 +92,7 @@ SavageWriteBitmapCPUToScreenColorExpand (
     BCI_GET_PTR;
     int i, j, count, reset;
     unsigned int cmd;
-    unsigned int * srcp;
+    CARD32 * srcp;
 
 /* We aren't using planemask at all here... */
 
@@ -127,10 +127,10 @@ SavageWriteBitmapCPUToScreenColorExpand (
     for (j = 0; j < h; j ++) {
         BCI_SEND(BCI_X_Y(x, y+j));
         BCI_SEND(BCI_W_H(w, 1));
-        srcp = (unsigned int*) src;
+        srcp = (CARD32 *) src;
         for (i = count; i > 0; srcp ++, i --) {
             /* We have to invert the bits in each byte. */
-            unsigned long u = *srcp;
+            CARD32 u = *srcp;
             u = ((u & 0x0f0f0f0f) << 4) | ((u & 0xf0f0f0f0) >> 4);
             u = ((u & 0x33333333) << 2) | ((u & 0xcccccccc) >> 2);
             u = ((u & 0x55555555) << 1) | ((u & 0xaaaaaaaa) >> 1);

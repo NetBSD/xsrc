@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/int10Defines.h,v 1.2 2001/01/06 20:19:14 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/int10Defines.h,v 1.3 2001/06/30 21:54:03 tsi Exp $ */
 
 #ifndef _INT10DEFINES_H_
 #define _INT10DEFINES_H_ 1
@@ -8,7 +8,7 @@
 #include <asm/vm86.h>
 
 #define CPU_R(type,name,num) \
-	(((type *)&(((struct vm86_struct *)REG->cpuRegs)->regs.##name))[num])
+	(((type *)&(((struct vm86_struct *)REG->cpuRegs)->regs.name))[num])
 #define CPU_RD(name,num) CPU_R(CARD32,name,num)
 #define CPU_RW(name,num) CPU_R(CARD16,name,num)
 #define CPU_RB(name,num) CPU_R(CARD8,name,num)

@@ -23,7 +23,7 @@
  * OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-/* $XFree86: xc/lib/GL/mesa/src/drv/tdfx/tdfx_state.c,v 1.2 2001/05/02 15:06:04 dawes Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/tdfx/tdfx_state.c,v 1.4 2001/10/02 11:44:13 alanh Exp $ */
 
 /*
  * Original rewrite:
@@ -547,14 +547,14 @@ static void tdfxUpdateFogAttrib( GLcontext *ctx )
    {
       switch( ctx->Fog.Mode ) {
       case GL_EXP:
-	 guFogGenerateExp( fxMesa->Fog.Table, ctx->Fog.Density );
+	 fxMesa->Glide.guFogGenerateExp(fxMesa->Fog.Table, ctx->Fog.Density);
 	 break;
       case GL_EXP2:
-	 guFogGenerateExp2( fxMesa->Fog.Table, ctx->Fog.Density );
+	 fxMesa->Glide.guFogGenerateExp2(fxMesa->Fog.Table, ctx->Fog.Density);
 	 break;
       case GL_LINEAR:
-	 guFogGenerateLinear( fxMesa->Fog.Table,
-			      ctx->Fog.Start, ctx->Fog.End );
+	 fxMesa->Glide.guFogGenerateLinear(fxMesa->Fog.Table,
+                                           ctx->Fog.Start, ctx->Fog.End);
 	 break;
       }
 
@@ -1151,16 +1151,18 @@ static void tdfxDDReducedPrimitiveChange( GLcontext *ctx, GLenum prim )
 
    tdfxUpdateCull(ctx);
    if ( fxMesa->dirty & TDFX_UPLOAD_CULL ) {
-      grCullMode( fxMesa->CullMode );
+      fxMesa->Glide.grCullMode( fxMesa->CullMode );
       fxMesa->dirty &= ~TDFX_UPLOAD_CULL;
    }
 
+#if defined(__linux__) || defined(__FreeBSD__)
    tdfxUpdateStipple(ctx);
    if ( fxMesa->dirty & TDFX_UPLOAD_STIPPLE ) {
-      grStipplePattern ( fxMesa->Stipple.Pattern );
-      grStippleMode ( fxMesa->Stipple.Mode );
+      fxMesa->Glide.grStipplePattern ( fxMesa->Stipple.Pattern );
+      fxMesa->Glide.grStippleMode ( fxMesa->Stipple.Mode );
       fxMesa->dirty &= ~TDFX_UPLOAD_STIPPLE;
    }
+#endif /* __linux__ || __FreeBSD__ */
 }
 
 

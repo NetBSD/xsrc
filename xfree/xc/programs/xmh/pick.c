@@ -24,6 +24,7 @@
  * used in advertising or publicity pertaining to distribution of the software
  * without specific, written prior permission.
  */
+/* $XFree86: xc/programs/xmh/pick.c,v 1.2 2001/08/01 00:45:06 tsi Exp $ */
 
 /* pick.c -- handle a pick subwidget. */
 
@@ -96,7 +97,7 @@ static FormEntry CreateWidget();
 static void DeleteWidget(), AddDetailGroup();
 
 
-InitPick()
+void InitPick(void)
 {
     TypeName[RTfrom]	= "From:";
     TypeName[RTto]	= "To:";
@@ -116,13 +117,13 @@ InitPick()
 }
 
 
-static PrepareToUpdate(form)
+static void PrepareToUpdate(form)
   FormBox form;
 {
     XawFormDoLayout(form->inner, FALSE);
 }
 
-static ExecuteUpdate(form)
+static void ExecuteUpdate(form)
   FormBox form;
 {
     XawFormDoLayout(form->inner, TRUE);
@@ -258,7 +259,7 @@ static char **argv;
 static int argvsize;
 
 
-static AppendArgv(ptr)
+static void AppendArgv(ptr)
   char *ptr;
 {
     argvsize++;
@@ -266,7 +267,7 @@ static AppendArgv(ptr)
     argv[argvsize - 1] = XtNewString(ptr);
 }
 
-static EraseLast()
+static void EraseLast(void)
 {
     argvsize--;
     XtFree((char *) argv[argvsize]);
@@ -275,7 +276,7 @@ static EraseLast()
 
 
 
-static ParseRow(row)
+static Boolean ParseRow(row)
   RowList row;
 {
     int		result = FALSE;
@@ -340,7 +341,7 @@ static ParseRow(row)
 }
 	    
 
-static ParseGroup(group)
+static Boolean ParseGroup(group)
   Group group;
 {
     int found = FALSE;
@@ -638,7 +639,7 @@ AddDetailGroup(form)
 }
 
 
-static AddGeneralGroup(form)
+static void AddGeneralGroup(form)
   FormBox form;
 {
     Group group;
@@ -733,7 +734,7 @@ Pick pick;
 }
 
 
-AddPick(scrn, toc, fromseq, toseq)
+void AddPick(scrn, toc, fromseq, toseq)
   Scrn scrn;
   Toc toc;
   char *fromseq, *toseq;

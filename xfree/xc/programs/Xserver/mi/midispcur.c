@@ -3,15 +3,18 @@
  *
  * machine independent cursor display routines
  */
-/* $XFree86: xc/programs/Xserver/mi/midispcur.c,v 1.4 2001/01/17 22:37:06 dawes Exp $ */
 
-/* $Xorg: midispcur.c,v 1.3 2000/08/17 19:53:37 cpqbld Exp $ */
+/* $Xorg: midispcur.c,v 1.4 2001/02/09 02:05:20 xorgcvs Exp $ */
 
 /*
 
 Copyright 1989, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -27,6 +30,7 @@ Except as contained in this notice, the name of The Open Group shall not be
 used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 */
+/* $XFree86: xc/programs/Xserver/mi/midispcur.c,v 1.6 2001/12/14 20:00:21 dawes Exp $ */
 
 #define NEED_EVENTS
 # include   "X.h"
@@ -42,14 +46,12 @@ in this Software without prior written authorization from The Open Group.
 # include   "misprite.h"
 # include   "gcstruct.h"
 
-extern WindowPtr    *WindowTable;
-
 /* per-screen private data */
 
 static int	miDCScreenIndex;
 static unsigned long miDCGeneration = 0;
 
-static Bool	miDCCloseScreen();
+static Bool	miDCCloseScreen(int index, ScreenPtr pScreen);
 
 typedef struct {
     GCPtr	    pSourceGC, pMaskGC;
@@ -70,10 +72,20 @@ typedef struct {
  * sprite/cursor method table
  */
 
-static Bool	miDCRealizeCursor(),	    miDCUnrealizeCursor();
-static Bool	miDCPutUpCursor(),	    miDCSaveUnderCursor();
-static Bool	miDCRestoreUnderCursor(),   miDCMoveCursor();
-static Bool	miDCChangeSave();
+static Bool	miDCRealizeCursor(ScreenPtr pScreen, CursorPtr pCursor);
+static Bool	miDCUnrealizeCursor(ScreenPtr pScreen, CursorPtr pCursor);
+static Bool	miDCPutUpCursor(ScreenPtr pScreen, CursorPtr pCursor,
+				int x, int y, unsigned long source,
+				unsigned long mask);
+static Bool	miDCSaveUnderCursor(ScreenPtr pScreen, int x, int y,
+				    int w, int h);
+static Bool	miDCRestoreUnderCursor(ScreenPtr pScreen, int x, int y,
+				       int w, int h);
+static Bool	miDCMoveCursor(ScreenPtr pScreen, CursorPtr pCursor,
+			       int x, int y, int w, int h, int dx, int dy,
+			       unsigned long source, unsigned long mask);
+static Bool	miDCChangeSave(ScreenPtr pScreen, int x, int y, int w, int h,	
+			       int dx, int dy);
 
 static miSpriteCursorFuncRec miDCFuncs = {
     miDCRealizeCursor,
@@ -165,9 +177,9 @@ miDCRealizeCursor (pScreen, pCursor)
 }
 
 static miDCCursorPtr
-miDCRealize (pScreen, pCursor)
-    ScreenPtr	pScreen;
-    CursorPtr	pCursor;
+miDCRealize (
+    ScreenPtr	pScreen,
+    CursorPtr	pCursor)
 {
     miDCCursorPtr   pPriv;
     GCPtr	    pGC;
@@ -247,13 +259,17 @@ miDCUnrealizeCursor (pScreen, pCursor)
 }
 
 static void
-miDCPutBits (pDrawable, pPriv, sourceGC, maskGC, x, y, w, h, source, mask)
-    DrawablePtr	    pDrawable;
-    GCPtr	    sourceGC, maskGC;
-    int             x, y;
-    unsigned        w, h;
-    miDCCursorPtr   pPriv;
-    unsigned long   source, mask;
+miDCPutBits (
+    DrawablePtr	    pDrawable,
+    miDCCursorPtr   pPriv,
+    GCPtr	    sourceGC,
+    GCPtr	    maskGC,
+    int             x,
+    int             y,
+    unsigned        w,
+    unsigned        h,
+    unsigned long   source,
+    unsigned long   mask)
 {
     XID	    gcvals[1];
 
@@ -278,9 +294,9 @@ miDCPutBits (pDrawable, pPriv, sourceGC, maskGC, x, y, w, h, source, mask)
 #define EnsureGC(gc,win) (gc || miDCMakeGC(&gc, win))
 
 static GCPtr
-miDCMakeGC(ppGC, pWin)
-    GCPtr	*ppGC;
-    WindowPtr	pWin;
+miDCMakeGC(
+    GCPtr	*ppGC,
+    WindowPtr	pWin)
 {
     GCPtr pGC;
     int   status;

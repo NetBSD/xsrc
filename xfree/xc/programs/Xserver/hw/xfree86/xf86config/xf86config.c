@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xf86config/xf86config.c,v 3.57 2001/04/23 17:15:58 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xf86config/xf86config.c,v 3.59 2001/10/28 03:34:09 tsi Exp $ */
 
 /*
  * This is a configuration program that will create a base XF86Config
@@ -205,6 +205,9 @@ int config_virtualx24bpp, config_virtualy24bpp;
 char *config_ramdac;
 char *config_dacspeed;
 char *config_clockchip;
+#if defined(__OpenBSD__) && defined(WSCONS_SUPPORT) && !defined(PCVT_SUPPORT)
+char *config_keyboard_dev = "/dev/wskbd0";
+#endif
 int config_xkbdisable = 0;
 char *config_xkbrules;
 char *config_xkbmodel = "pc101";
@@ -297,7 +300,8 @@ createtmpdir(void) {
 #ifndef __EMX__
        /* length of prefix + 20 (digits in 2**64) + 1 (slash) + 1 */
        temp_dir = Malloc(strlen(TEMPORARY_XF86CONFIG_DIR_PREFIX) + 22);
-       sprintf(temp_dir, "%s%d", TEMPORARY_XF86CONFIG_DIR_PREFIX, getpid());
+       sprintf(temp_dir, "%s%ld", TEMPORARY_XF86CONFIG_DIR_PREFIX,
+	       (long)getpid());
        if (mkdir(temp_dir, 0700) != 0) {
                printf("Cannot create directory %s\n", temp_dir);
                exit(-1);
@@ -590,6 +594,12 @@ static char *xkboptionstext =
 "Do you want to select additional XKB options (group switcher,\n"
 "group indicator, etc.)? ";
 
+#if defined(__OpenBSD__) && defined(WSCONS_SUPPORT) && !defined(PCVT_SUPPORT)
+static char *kbdevtext =
+"Please enter the device name for your keyboard or just press enter\n"
+"for the default of wskbd0\n\n";
+#endif
+
 static void 
 keyboard_configuration(void)
 {
@@ -598,6 +608,15 @@ keyboard_configuration(void)
         char *rulesfile;
 	int number, options[MAX_XKBOPTIONS], num_options;
         XkbRF_RulesPtr rules;
+
+#if defined(__OpenBSD__) && defined(WSCONS_SUPPORT) && !defined(PCVT_SUPPORT)
+	printf(kbdevtext);
+	getstring(s);
+	if (strlen(s) != 0) {
+	    config_keyboard_dev = Malloc(strlen(s) + 1);
+	    strcpy(config_keyboard_dev, s);
+	}
+#endif
 
 #ifdef XFREE98_XKB
 	config_xkbrules = "xfree98";	/* static */
@@ -2353,6 +2372,12 @@ write_XF86Config(char *filename)
 		fprintf(f, "#    Option \"LeftAlt\"     \"Meta\"\n");
 		fprintf(f, "#    Option \"RightAlt\"    \"ModeShift\"\n");
 	}
+#if defined(__OpenBSD__) && defined(WSCONS_SUPPORT) && !defined(PCVT_SUPPORT)
+	/* wscons keyoards need a protocol line */
+	fprintf(f, "    Option \"Protocol\" \"wskbd\"\n");
+	fprintf(f, "    Option \"Device\" \"%s\"\n", config_keyboard_dev);
+	fprintf(f, "    Option \"XkbKeycodes\" \"wscons(ppc)\"\n");
+#endif
 	fprintf(f, "%s", keyboardchunk2_text);
 
 	fprintf(f, "%s", keyboardchunk3_text);

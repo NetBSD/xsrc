@@ -1,5 +1,5 @@
 /* $XConsortium: toc.c,v 2.59 95/01/09 16:52:53 swick Exp $
- * $XFree86: xc/programs/xmh/toc.c,v 3.1 1995/01/27 04:55:00 dawes Exp $
+ * $XFree86: xc/programs/xmh/toc.c,v 3.4 2001/10/28 03:34:39 tsi Exp $
  *
  *
  *			  COPYRIGHT 1987
@@ -32,10 +32,6 @@
 #include "toc.h"
 #include "tocutil.h"
 #include <sys/stat.h>
-
-#ifdef MINIX
-#define S_IWRITE S_IWUSR
-#endif
 
 static int IsDir(name)
 char *name;
@@ -133,7 +129,7 @@ static void LoadCheckFiles()
 	int i;
 	char *ptr, *ptr2;
 
-	while (ptr = ReadLine(fid)) {
+	while ((ptr = ReadLine(fid))) {
 	    while (*ptr == ' ' || *ptr == '\t') ptr++;
 	    ptr2 = ptr;
 	    while (*ptr2 && *ptr2 != ' ' && *ptr2 != '\t') ptr2++;
@@ -165,7 +161,6 @@ void TocInit()
     Toc toc;
     char **namelist;
     int i;
-    extern alphasort();
     numFolders = ScanDir(app_resources.mail_path, &namelist, IsDir);
     if (numFolders < 0) {
 	(void) mkdir(app_resources.mail_path, 0700);
@@ -947,11 +942,11 @@ void TocCommitChanges(widget, client_data, call_data)
 {
     Toc toc = (Toc) client_data;
     Msg msg;
-    int i, cur;
-    char str[100], **argv;
+    int i, cur = 0;
+    char str[100], **argv = NULL;
     FateType curfate, fate; 
     Toc desttoc;
-    Toc curdesttoc;
+    Toc curdesttoc = NULL;
     XtCallbackRec	confirms[2];
 
     confirms[0].callback = TocCommitChanges;
@@ -996,6 +991,8 @@ void TocCommitChanges(widget, client_data, call_data)
 		    cur = 1;
 		    curdesttoc = desttoc;
 		    break;
+		  default:
+		    break;
 		}
 	    }
 	    if (curfate != Fignore &&
@@ -1028,6 +1025,8 @@ void TocCommitChanges(widget, client_data, call_data)
 		argv[cur++] = XtNewString("-src");
 		argv[cur++] = TocMakeFolderName(toc);
 		argv[cur++] = TocMakeFolderName(curdesttoc);
+		break;
+	      default:
 		break;
 	    }
 	    if (app_resources.debug) {
@@ -1094,7 +1093,7 @@ Toc toc;
     if (toc->validity == valid) {
 	fid = FOpenAndCheck(file, "r");
 	TocStopUpdate(toc);
-	while (ptr = ReadLineWithCR(fid)) {
+	while ((ptr = ReadLineWithCR(fid))) {
 	    if (atoi(ptr) > 0) {
 		msg = TUAppendToc(toc, ptr);
 		if (firstmessage == NULL) firstmessage = msg;
@@ -1104,7 +1103,7 @@ Toc toc;
 	    TocSetCurMsg(toc, firstmessage);
 	}
 	TocStartUpdate(toc);
-	(void) myfclose(fid);
+	myfclose(fid);
     }
     DeleteFileAndCheck(file);
 
@@ -1243,10 +1242,10 @@ void XmhPopSequence(w, event, params, count)
 				     MenuBoxButtons[XMH_SEQUENCE].button_name);
 	sequenceMenu = BBoxMenuOfButton(button);
 
-	if (selected = XawSimpleMenuGetActiveEntry(sequenceMenu))
+	if ((selected = XawSimpleMenuGetActiveEntry(sequenceMenu)))
 	    ToggleMenuItem(selected, False);
 
-	if (original = XtNameToWidget(sequenceMenu, seqname)) {
+	if ((original = XtNameToWidget(sequenceMenu, seqname))) {
 	    ToggleMenuItem(original, True);
 	    sequence = TocGetSeqNamed(scrn->toc, seqname);
 	    TocSetSelectedSequence(scrn->toc, sequence);

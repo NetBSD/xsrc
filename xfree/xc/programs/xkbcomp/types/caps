@@ -1,0 +1,46 @@
+// $XFree86: xc/programs/xkbcomp/types/caps,v 1.1 2001/08/13 19:39:04 dawes Exp $
+
+// CapsLock uses internal capitalization rules
+// Shift cancels CapsLock
+partial xkb_types "internal" {
+    type "ALPHABETIC" {
+	modifiers = Shift+Lock;
+	map[Shift] = Level2;
+	preserve[Lock]= Lock;
+	level_name[Level1] = "Base";
+	level_name[Level2] = "Caps";
+    };
+};
+// CapsLock uses internal capitalization rules
+// Shift doesn't cancel CapsLock
+partial xkb_types "internal_nocancel" {
+    type "ALPHABETIC" {
+	modifiers = Shift;
+	map[Shift] = Level2;
+	level_name[Level1] = "Base";
+	level_name[Level2] = "Caps";
+    };
+};
+// CapsLock acts as Shift with locking
+// Shift cancels CapsLock
+partial xkb_types "shift" {
+    type "ALPHABETIC" {
+	modifiers = Shift+Lock;
+	map[Shift] = Level2;
+	map[Lock]= Level2;
+	level_name[Level1] = "Base";
+	level_name[Level2] = "Caps";
+    };
+};
+// CapsLock acts as Shift with locking
+// Shift doesn't cancel CapsLock
+partial xkb_types "shift_nocancel" {
+    type "ALPHABETIC" {
+	modifiers = Shift+Lock;
+	map[Shift] = Level2;
+	map[Lock]= Level2;
+	map[Shift+Lock]= Level2;
+	level_name[Level1] = "Base";
+	level_name[Level2] = "Caps";
+    };
+};

@@ -21,13 +21,11 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************************/
-/* $XFree86: xc/programs/x11perf/x11perf.h,v 3.3 2001/01/17 23:45:13 dawes Exp $ */
+/* $XFree86: xc/programs/x11perf/x11perf.h,v 3.4 2001/07/25 15:05:16 dawes Exp $ */
 
 #ifndef VMS
 #include <X11/Xlib.h>
-#ifndef X_NOT_STDC_ENV
 #include <stdlib.h>
-#endif
 #include <X11/Xutil.h>
 #else
 #include <decw$include/Xlib.h>
@@ -36,9 +34,7 @@ SOFTWARE.
 #if defined(XlibSpecificationRelease) && XlibSpecificationRelease >= 5
 #include <X11/Xfuncs.h>
 #endif
-#ifndef NULL
-#define NULL 0
-#endif
+#include <stddef.h>
 
 #define POLY	     1000       /* # (small) items in poly calls	*/
 #define MAXROWS	       40       /* Max rows of items in poly calls      */

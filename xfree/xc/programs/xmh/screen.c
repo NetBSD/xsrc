@@ -24,6 +24,7 @@
  * used in advertising or publicity pertaining to distribution of the software
  * without specific, written prior permission.
  */
+/* $XFree86: xc/programs/xmh/screen.c,v 1.2 2001/10/28 03:34:39 tsi Exp $ */
 
 /* scrn.c -- management of scrns. */
 
@@ -316,6 +317,7 @@ ScrnKind kind;
 	case STtocAndView: 	MakeTocAndView(scrn); break;
 	case STview:		MakeView(scrn); break;
 	case STcomp:		MakeComp(scrn);	break;
+	default: break;
     }
 
     if (kind != STpick) {
@@ -361,6 +363,9 @@ ScrnKind kind;
 	    BBoxLockSize(scrn->viewbuttons);
 	    XtInstallAllAccelerators(scrn->viewwidget, scrn->widget);
 	    XtSetKeyboardFocus(scrn->parent, scrn->viewwidget);
+	    break;
+
+	  default:
 	    break;
 	}
 
@@ -433,7 +438,7 @@ Widget w;
 	}
     }
     Punt("ScrnFromWidget failed!");
-    /*NOTREACHED*/
+    return NULL;
 }
  
 
@@ -513,6 +518,8 @@ Scrn scrn;
 		BBoxDisable( BBoxFindButtonNamed(scrn->viewbuttons, "save"));
 		BBoxDisable( BBoxFindButtonNamed(scrn->viewbuttons, "insert"));
 	    }
+	    break;
+	  default:
 	    break;
 	}
     }

@@ -26,7 +26,7 @@ Silicon Motion shall not be used in advertising or otherwise to promote the
 sale, use or other dealings in this Software without prior written
 authorization from the XFree86 Project and Silicon Motion.
 */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/siliconmotion/smi_i2c.c,v 1.1 2000/11/28 20:59:20 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/siliconmotion/smi_i2c.c,v 1.2 2001/12/20 21:35:39 eich Exp $ */
 
 #include "xf86.h"
 #include "xf86_OSproc.h"
@@ -37,6 +37,17 @@ authorization from the XFree86 Project and Silicon Motion.
 #include "vgaHW.h"
 
 #include "smi.h"
+
+#undef VERBLEV
+#undef ENTER_PROC
+#undef DEBUG_PROC
+#undef LEAVE_PROC
+#undef DEBUG
+#define VERBLEV 2
+#define ENTER_PROC(PROCNAME)
+#define DEBUG_PROC(PROCNAME)
+#define LEAVE_PROC(PROCNAME)
+#define DEBUG(arg)
 
 static void
 SMI_I2CPutBits(I2CBusPtr b, int clock,  int data)

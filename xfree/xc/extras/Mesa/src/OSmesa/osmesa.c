@@ -1,4 +1,4 @@
-
+/* $XFree86: xc/extras/Mesa/src/OSmesa/osmesa.c,v 1.9 2002/01/02 17:49:50 tsi Exp $ */
 /*
  * Mesa 3-D graphics library
  * Version:  3.3
@@ -46,6 +46,7 @@
 #include "types.h"
 #include "vb.h"
 #include "extensions.h"
+#include "mmath.h"
 #endif
 
 

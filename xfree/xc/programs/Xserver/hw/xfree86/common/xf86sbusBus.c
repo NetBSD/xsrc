@@ -20,7 +20,7 @@
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86sbusBus.c,v 3.6 2001/03/03 22:16:35 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86sbusBus.c,v 3.7 2001/10/28 03:33:19 tsi Exp $ */
 
 #include <ctype.h>
 #include <stdio.h>
@@ -38,46 +38,9 @@
 #include "xf86sbusBus.h"
 #include "xf86Sbus.h"
 
-#define FB_DEV_PATH "/dev/fb%d"
-
 Bool sbusSlotClaimed = FALSE;
 
-sbusDevicePtr *xf86SbusInfo = NULL;
 static int xf86nSbusInfo;
-
-#ifndef FBTYPE_SUNGP3
-#define FBTYPE_SUNGP3 -1
-#endif
-#ifndef FBTYPE_MDICOLOR
-#define FBTYPE_MDICOLOR -1
-#endif
-#ifndef FBTYPE_SUNLEO
-#define FBTYPE_SUNLEO -1
-#endif
-#ifndef FBTYPE_TCXCOLOR
-#define FBTYPE_TCXCOLOR -1
-#endif
-#ifndef FBTYPE_CREATOR
-#define FBTYPE_CREATOR -1
-#endif
-
-struct sbus_devtable sbusDeviceTable[] = {
-    { SBUS_DEVICE_BW2, FBTYPE_SUN2BW, "bwtwo", "Sun Monochrome (bwtwo)" },
-    { SBUS_DEVICE_CG2, FBTYPE_SUN2COLOR, "cgtwo", "Sun Color2 (cgtwo)" },
-    { SBUS_DEVICE_CG3, FBTYPE_SUN3COLOR, "cgthree", "Sun Color3 (cgthree)" },
-    { SBUS_DEVICE_CG4, FBTYPE_SUN4COLOR, "cgfour", "Sun Color4 (cgfour)" },
-    { SBUS_DEVICE_CG6, FBTYPE_SUNFAST_COLOR, "cgsix", "Sun GX" },
-    { SBUS_DEVICE_CG8, FBTYPE_MEMCOLOR, "cgeight", "Sun CG8/RasterOps" },
-    { SBUS_DEVICE_CG12, FBTYPE_SUNGP3, "cgtwelve", "Sun GS (cgtwelve)" },
-    { SBUS_DEVICE_CG14, FBTYPE_MDICOLOR, "cgfourteen", "Sun SX" },
-    { SBUS_DEVICE_GT, FBTYPE_SUNGT, "gt", "Sun Graphics Tower" },
-    { SBUS_DEVICE_MGX, -1, "mgx", "Quantum 3D MGXplus" },
-    { SBUS_DEVICE_LEO, FBTYPE_SUNLEO, "leo", "Sun ZX or Turbo ZX" },
-    { SBUS_DEVICE_TCX, FBTYPE_TCXCOLOR, "tcx", "Sun TCX" },
-    { SBUS_DEVICE_FFB, FBTYPE_CREATOR, "ffb", "Sun FFB" },
-    { SBUS_DEVICE_FFB, FBTYPE_CREATOR, "afb", "Sun Elite3D" },
-    { 0, 0, NULL }
-};
 
 static void
 CheckSbusDevice(const char *device, int fbNum)
@@ -123,21 +86,23 @@ xf86SbusProbe(void)
     xf86SbusInfo = xalloc(sizeof(psdp));
     *xf86SbusInfo = NULL;
     for (i = 0; i < 32; i++) {
-	sprintf(fbDevName, FB_DEV_PATH, i);
+	sprintf(fbDevName, "/dev/fb%d", i);
 	CheckSbusDevice(fbDevName, i);
     }
     if (sparcPromInit() >= 0) {
 	useProm = 1;
 	sparcPromAssignNodes();
     }
-    for (psdpp = xf86SbusInfo, psdp = *psdpp; psdp; psdp = *++psdpp) {
+    for (psdpp = xf86SbusInfo; (psdp = *psdpp); psdpp++) {
 	for (i = 0; sbusDeviceTable[i].devId; i++)
 	    if (sbusDeviceTable[i].devId == psdp->devId)
 		psdp->descr = sbusDeviceTable[i].descr;
-	/* If we can use PROM information and found the PROM node for this device,
-	 * we can tell more about the card.  */
+	/*
+	 * If we can use PROM information and found the PROM node for this
+	 * device, we can tell more about the card.
+	 */
 	if (useProm && psdp->node.node) {
-	    char *prop;
+	    char *prop, *promPath;
 	    int len, chiprev, vmsize;
 
 	    switch (psdp->devId) {
@@ -169,9 +134,12 @@ xf86SbusProbe(void)
 		    psdp->descr = "Sun Single width GX"; break;
 		case 11:
 		    switch (vmsize) {
-		    case 2: psdp->descr = "Sun Turbo GX with 1M VSIMM"; break;
-		    case 4: psdp->descr = "Sun Turbo GX Plus"; break;
-		    default: psdp->descr = "Sun Turbo GX"; break;
+		    case 2:
+			psdp->descr = "Sun Turbo GX with 1M VSIMM"; break;
+		    case 4:
+			psdp->descr = "Sun Turbo GX Plus"; break;
+		    default:
+			psdp->descr = "Sun Turbo GX"; break;
 		    }
 		}
 		break;
@@ -181,8 +149,10 @@ xf86SbusProbe(void)
 		if (prop && !(len % 12) && len > 0)
 		    vmsize = *(int *)(prop + len - 4);
 		switch (vmsize) {
-		case 0x400000: psdp->descr = "Sun SX with 4M VSIMM"; break;
-		case 0x800000: psdp->descr = "Sun SX with 8M VSIMM"; break;
+		case 0x400000:
+		    psdp->descr = "Sun SX with 4M VSIMM"; break;
+		case 0x800000:
+		    psdp->descr = "Sun SX with 8M VSIMM"; break;
 		}
 		break;
 	    case SBUS_DEVICE_LEO:
@@ -207,26 +177,33 @@ xf86SbusProbe(void)
 			psdp->descr = "Sun|Elite3D-M6 Horizontal";
 		} else {
 		    switch (chiprev) {
-		    case 0x08: psdp->descr = "Sun FFB 67MHz Creator"; break;
-		    case 0x0b: psdp->descr = "Sun FFB 67MHz Creator 3D"; break;
-		    case 0x1b: psdp->descr = "Sun FFB 75MHz Creator 3D"; break;
+		    case 0x08:
+			psdp->descr = "Sun FFB 67MHz Creator"; break;
+		    case 0x0b:
+			psdp->descr = "Sun FFB 67MHz Creator 3D"; break;
+		    case 0x1b:
+			psdp->descr = "Sun FFB 75MHz Creator 3D"; break;
 		    case 0x20:
-		    case 0x28: psdp->descr = "Sun FFB2 Vertical Creator"; break;
+		    case 0x28:
+			psdp->descr = "Sun FFB2 Vertical Creator"; break;
 		    case 0x23:
-		    case 0x2b: psdp->descr = "Sun FFB2 Vertical Creator 3D"; break;
-		    case 0x30: psdp->descr = "Sun FFB2+ Vertical Creator"; break;
-		    case 0x33: psdp->descr = "Sun FFB2+ Vertical Creator 3D"; break;
+		    case 0x2b:
+			psdp->descr = "Sun FFB2 Vertical Creator 3D"; break;
+		    case 0x30:
+			psdp->descr = "Sun FFB2+ Vertical Creator"; break;
+		    case 0x33:
+			psdp->descr = "Sun FFB2+ Vertical Creator 3D"; break;
 		    case 0x40:
-		    case 0x48: psdp->descr = "Sun FFB2 Horizontal Creator"; break;
+		    case 0x48:
+			psdp->descr = "Sun FFB2 Horizontal Creator"; break;
 		    case 0x43:
-		    case 0x4b: psdp->descr = "Sun FFB2 Horizontal Creator 3D"; break;
+		    case 0x4b:
+			psdp->descr = "Sun FFB2 Horizontal Creator 3D"; break;
 		    }
 		}
 		break;
 	    }
-	}
-	if (useProm && psdp->node.node) {
-	    char *promPath;
+
 	    xf86Msg(X_PROBED, "SBUS:(0x%08x) %s", psdp->node.node, psdp->descr);
 	    promPath = sparcPromNode2Pathname (&psdp->node);
 	    if (promPath) {

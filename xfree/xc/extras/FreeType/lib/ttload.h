@@ -19,6 +19,7 @@
  *  - add function Load_TrueType_Any used by TT_Get_Font_Data
  *
  ******************************************************************/
+/* $XFree86: xc/extras/FreeType/lib/ttload.h,v 1.2 2001/10/28 03:32:05 tsi Exp $ */
 
 #ifndef TTLOAD_H
 #define TTLOAD_H
@@ -33,6 +34,8 @@
 
   EXPORT_DEF
   Long  TT_LookUp_Table( PFace  face, ULong  tag  );
+
+#if !defined(FTXSBIT_H)
 
   LOCAL_DEF TT_Error  Load_TrueType_Directory        ( PFace  face,
                                                        ULong  faceIndex );
@@ -60,6 +63,8 @@
 
   LOCAL_DEF TT_Error  Free_TrueType_Names( PFace  face );
   LOCAL_DEF TT_Error  Free_TrueType_Hdmx ( PFace  face );
+
+#endif /* !FTXSBIT_H */
 
 
 /* The following macros are defined to simplify the writing of */

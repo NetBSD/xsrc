@@ -45,7 +45,7 @@
  * The Original Software is CID font code that was developed by Silicon
  * Graphics, Inc.
  */
-/* $XFree86: xc/lib/font/Type1/fontfcn.c,v 1.10 2001/04/05 17:42:27 dawes Exp $ */
+/* $XFree86: xc/lib/font/Type1/fontfcn.c,v 1.11 2001/11/23 19:21:31 dawes Exp $ */
  
 #ifndef FONTMODULE
 #include <stdio.h>
@@ -552,6 +552,8 @@ CIDQueryFontLib(char *cidfontname, char *cmapfile, char *infoName,
     switch (dictP[N].value.type) {
        case OBJ_ARRAY:
          valueP = dictP[N].value.data.arrayP;
+         /* Just double check valueP. H.J. */
+         if (valueP == NULL) break;
          if (strcmp(infoName,"FontMatrix") == 0) {
            /* 6 elments, return them as floats      */
            for (i=0;i<6;i++) {

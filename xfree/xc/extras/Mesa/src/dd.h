@@ -1,4 +1,4 @@
-
+/* $XFree86: xc/extras/Mesa/src/dd.h,v 1.11 2001/10/28 03:32:06 tsi Exp $ */
 /*
  * Mesa 3-D graphics library
  * Version:  3.4
@@ -938,6 +938,8 @@ struct dd_function_table {
    void (*BlendFuncSeparate)( GLcontext *ctx, GLenum sfactorRGB, 
 			      GLenum dfactorRGB, GLenum sfactorA,
 			      GLenum dfactorA );
+   void (*BlendConstColor)(GLcontext *ctx, GLfloat red, GLfloat green,
+			   GLfloat blue, GLfloat alpha);
    void (*ClearDepth)(GLcontext *ctx, GLclampd d);
    void (*CullFace)(GLcontext *ctx, GLenum mode);
    void (*FrontFace)(GLcontext *ctx, GLenum mode);
@@ -953,6 +955,7 @@ struct dd_function_table {
    void (*LineStipple)(GLcontext *ctx, GLint factor, GLushort pattern );
    void (*LineWidth)(GLcontext *ctx, GLfloat width);
    void (*LogicOpcode)(GLcontext *ctx, GLenum opcode);
+   void (*PointSize)(GLcontext *ctx, GLfloat size);
    void (*PolygonMode)(GLcontext *ctx, GLenum face, GLenum mode);
    void (*PolygonStipple)(GLcontext *ctx, const GLubyte *mask );
    void (*Scissor)(GLcontext *ctx, GLint x, GLint y, GLsizei w, GLsizei h);

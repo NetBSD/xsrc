@@ -1,4 +1,4 @@
-/* $Xorg: Xrm.c,v 1.6 2000/08/17 19:45:08 cpqbld Exp $ */
+/* $Xorg: Xrm.c,v 1.7 2001/02/09 02:03:39 xorgcvs Exp $ */
 
 /***********************************************************
 Copyright 1987, 1988, 1990 by Digital Equipment Corporation, Maynard
@@ -26,7 +26,11 @@ SOFTWARE.
 
 Copyright 1987, 1988, 1990, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included
 in all copies or substantial portions of the Software.
@@ -45,7 +49,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/X11/Xrm.c,v 3.15 2001/01/17 19:41:50 dawes Exp $ */
+/* $XFree86: xc/lib/X11/Xrm.c,v 3.19 2001/12/14 19:54:10 dawes Exp $ */
 
 #include	<stdio.h>
 #include	<ctype.h>
@@ -57,17 +61,6 @@ from The Open Group.
 #endif
 #include 	"XrmI.h"
 #include	<X11/Xos.h>
-
-#ifdef __STDC__
-#define Const const
-#else
-#define Const /**/
-#endif
-#if defined(__STDC__) && !defined(NORCONST)
-#define RConst const
-#else
-#define RConst /**/
-#endif
 
 extern XrmQuark _XrmInternalStringToQuark();
 
@@ -293,7 +286,7 @@ typedef unsigned char XrmBits;
 #define is_special(bits)	((bits) & (ENDOF|BSLASH))
 
 /* parsing types */
-static XrmBits Const xrmtypes[256] = {
+static XrmBits const xrmtypes[256] = {
     EOS,0,0,0,0,0,0,0,
     0,SPACE,EOL,0,0,
 #if defined(WIN32) || defined(__EMX__) /* || defined(OS2) */
@@ -497,7 +490,11 @@ static XrmDatabase NewDatabase()
 	_XCreateMutex(&db->linfo);
 	db->table = (NTable)NULL;
 	db->mbstate = (XPointer)NULL;
+#ifdef _XP_PRINT_SERVER_
+	db->methods = NULL;
+#else
 	db->methods = _XrmInitParseInfo(&db->mbstate);
+#endif
 	if (!db->methods)
 	    db->methods = &mb_methods;
     }
@@ -2322,7 +2319,7 @@ Bool XrmQGetSearchResource(searchList, name, class, pType, pValue)
 {
     register LTable *list;
     register LTable table;
-    register VEntry entry;
+    register VEntry entry = NULL;
     int flags;
 
 /* find tight or loose entry */

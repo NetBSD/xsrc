@@ -1,7 +1,7 @@
 <!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
 <!--
  *****************************************************************************
- * Copyright 1996,1997,1998,1999,2000 by Thomas E. Dickey                    *
+ * Copyright 1996,1997,1998,1999,2000,2001,2002 by Thomas E. Dickey          *
  * All Rights Reserved.                                                      *
  *                                                                           *
  * Permission to use, copy, modify, and distribute this software and its     *
@@ -20,17 +20,17 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF   *
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.            *
  *****************************************************************************
-  $XFree86: xc/programs/xterm/xterm.log.html,v 1.69 2001/04/28 13:51:56 dickey Exp $
+  $XFree86: xc/programs/xterm/xterm.log.html,v 1.79 2002/01/05 22:05:03 dickey Exp $
   -->
 <HTML>
 <HEAD>
 <TITLE>XTERM - Change Log</TITLE>
-<LINK REV=MADE HREF="mailto:dickey@herndon4.his.com">
+<LINK REV=MADE HREF="mailto:dickey@invisible-island.net">
 </HEAD>
 <BODY>
 <HR>
-Copyright 1997,1998,1999,2000 by <A
-HREF="mailto:dickey@herndon4.his.com">Thomas E. Dickey</A>
+Copyright 1997,1998,1999,2000,2001 by <A
+HREF="mailto:dickey@invisible-island.net">Thomas E. Dickey</A>
 <HR>
 <H1>Contents</H1>
 This file contains a list of the changes that I have made for XFree86 xterm,
@@ -42,6 +42,15 @@ in the XFree86 CHANGELOG (found in the unbundled tree,
 xc/programs/Xserver/hw/xfree86).
 
 <UL>
+<LI><A HREF="#xterm_165">Patch #165 - 2002/1/5 - XFree86 4.1.0</A>
+<LI><A HREF="#xterm_164">Patch #164 - 2001/11/13 - XFree86 4.1.0</A>
+<LI><A HREF="#xterm_163">Patch #163 - 2001/11/04 - XFree86 4.1.0</A>
+<LI><A HREF="#xterm_162">Patch #162 - 2001/10/23 - XFree86 4.1.0</A>
+<LI><A HREF="#xterm_161">Patch #161 - 2001/10/10 - XFree86 4.1.0</A>
+<LI><A HREF="#xterm_160">Patch #160 - 2001/10/7 - XFree86 4.1.0</A>
+<LI><A HREF="#xterm_159">Patch #159 - 2001/9/19 - XFree86 4.1.0</A>
+<LI><A HREF="#xterm_158">Patch #158 - 2001/9/8 - XFree86 4.1.0</A>
+<LI><A HREF="#xterm_157">Patch #157 - 2001/6/18 - XFree86 4.1.0</A>
 <LI><A HREF="#xterm_156">Patch #156 - 2001/4/28 - XFree86 4.0.3</A>
 <LI><A HREF="#xterm_155">Patch #155 - 2001/4/20 - XFree86 4.0.3</A>
 <LI><A HREF="#xterm_154">Patch #154 - 2001/4/11 - XFree86 4.0.3</A>
@@ -201,6 +210,387 @@ xc/programs/Xserver/hw/xfree86).
 <LI><A HREF="#xterm_01">Patch #1 - 1996/1/6</A>
 </UL>
 
+<H1><A NAME="xterm_165">Patch #165 - 2002/01/05 - XFree86 4.1.0</A></H1>
+<ul>
+	<li>modify <code>uxterm</code> script to strip encoding part from
+	  environment variable before adding ".UTF-8" (based on Debian
+	  #125947, but using a more portable solution).
+
+	<li>add an assignment statement in VTInitialize() to make
+	  <code>awaitInput</code> resource work.
+
+	<li>use new macros init_Bres(), etc., in VTInitialize() to add trace of
+	  the initialization of resources.
+
+	<li>modify checks for $LC_ALL, related environment variables to ensure
+	  the resulting strings are nonempty (report by Markus Kuhn).
+
+	<li>add an ifdef in charproc.c for num_ptrs variable in case all
+	  configure options are disabled.
+
+	<li>modify definition of getXtermBackground() to avoid negative array
+	  index warning on Tru64 (report by Jeremie Petit).
+
+	<li>improve fix from patch #165 (still Debian #117184, report by Matt
+	  Zimmerman &lt;mdz@debian.org&gt;)
+
+	<li>correct install rule for uxterm in Makefile.in, to handle the
+	  case where building in a different directory than xterm's source
+	  (patch by Paul Gilmartin).
+
+	<li>documented ANSI.SYS-style cursor save/restore escape sequences
+	  in ctlseqs.ms, which are in xterm since X11R5.
+
+	<li>correct two entries in the default charClass table, which did not
+	  follow the manpage comment about the character number corresponding
+	  to the class (patch by Marc Bevand &lt;bevand_m@epita.fr&gt;).
+
+	<li>fix a couple of typos in comments in the app-defaults files
+	  (David Krause &lt;xfree86@davidkrause.com&gt;).
+
+	<li>resync with XFree86 CVS:
+	  <ul>
+	  <li>update language of copyrights in some files to reflect the fact
+	      that they were reassigned from X Consortium to The Open Group in
+	      1998.  Note that this xterm source is derived from the 1996
+	      version from X Consortium, does not incorporate changes made by X
+	      Consortium or The Open Group after that date, hence we do not add
+	      The Open Group's 1998 copyright date to related files.
+
+	  <li>save/restore <code>errno</code> in signal catcher (Matthieu Herrb).
+
+	  <li>modify UXTerm.ad's font5 resource so that xterm can display double
+	      width characters using a font distributed with XFree86 (Tomohiro KUBOTA).
+	  </ul>
+</ul>
+
+<H1><A NAME="xterm_164">Patch #163 - 2001/11/13 - XFree86 4.1.0</A></H1>
+<ul>
+	<li>correct a case where <code>ptyInitialErase</code> and
+	  <code>backarrowKeyIsErase</code> resources combine to set
+	  <code>DECBKM</code> mode, but a <code>reset</code> command would not
+	  reset xterm to that state, making the erase character revert to ^H
+	  (Debian #117184)
+</ul>
+
+<H1><A NAME="xterm_163">Patch #163 - 2001/11/04 - XFree86 4.1.0</A></H1>
+<ul>
+	<li>correct ifdef's for <code>__QNX__</code> and
+	  <code>USE_SYSV_PGRP</code> in main.c call to <code>tcsetpgrp</code>,
+	  which broke bash behavior around patch #140 (report/patch by Frank
+	  Liu &lt;fliu@mail.vipstage.com&gt;).
+
+	<li>modify trace.c to fix missing definition of GCC_UNUSED for
+	  compilers other than gcc when configured for trace code (report/patch
+	  by Paul Gilmartin).
+
+	<li>change format in TraceOptions() to use long rather than int, since
+	  the latter could lose precision on 64-bit machines (report/patch by
+	  Nelson Beebe).
+
+	<li>modify xterm manual page and minstall.sh to allow imake rules
+	  to define location of app-defaults directory (Debian #87611). 
+
+	<li>review/update list of conflicting preprocesor symbols to remove
+	  from $CPPFLAGS at the end of the configure script.  In particular,
+	  this allows one to configure xterm without the utempter library on
+	  Redhat 7.1 (report/patch by Adam Sulmicki).
+</ul>
+
+<H1><A NAME="xterm_162">Patch #162 - 2001/10/23 - XFree86 4.1.0</A></H1>
+<ul>
+	<li>correct logic that processes <code>-class</code> option, so that
+	  a following <code>-e</code> option is handled (Debian #116297).
+
+	<li>improve options-decoding to allow <code>-version</code> and
+	  <code>-help</code> options to be combined (Debian #110226).
+
+	<li>add a 10 millisecond delay in event loop when processing
+	  <code>-hold</code> option, to avoid using too much CPU time
+	  (Debian #116213).
+
+	<li>prefix final program execution in <code>uxterm</code> with "exec"
+	  to avoid a useless shell hanging around (Christian Weisgerber).
+</ul>
+
+<H1><A NAME="xterm_161">Patch #161 - 2001/10/10 - XFree86 4.1.0</A></H1>
+<ul>
+	<li>modify logic that resets keypad application mode to avoid doing
+	   this if there is no modifier associated with the Num_Lock keysym
+	   (report by John E Davis &lt;davis@space.mit.edu&gt; and Alan W Irwin
+	   &lt;irwin@beluga.phys.uvic.ca&gt;).
+
+	<li>add built-in translation for Control/KP_Separator to KP_Subtract,
+	   to accommodate users who wish to use xmodmap to reassign the top
+	   row of the numeric keypad.
+
+	<li>correct Imakefile install-rule for <code>uxname</code> script
+	   (reported by Nam SungHyun &lt;namsh@lge.com&gt;).
+
+	<li>resync with XFree86 CVS: correct typo in <code>&lt;ncurses/term.h&gt;</code>
+	   ifdef.
+</ul>
+
+<H1><A NAME="xterm_160">Patch #160 - 2001/10/7 - XFree86 4.1.0</A></H1>
+<ul>
+	<li>modify logic in main.c (see patch #145) to avoid generating the
+	    same identifier, for example, for /dev/tty1 and /dev/pts/1, which
+	    is used to denote an entry in the utmp file (Debian bug report
+	    #84676),  A similar fix was also sent by Jerome Borsboom
+	    &lt;borsboom@westbrabant.net&gt; in May, but I overlooked it when
+	    reviewing bug reports.
+
+	<li>add configure check for <code>&lt;ncurses/term.h&gt;</code> to get
+	    rid of hardcoded <code>__CYGWIN__</code> ifdef in resize.c
+	    <p>
+	    NOTE: The CYGWIN port should not be linking <code>resize</code>
+	    with ncurses.  It appears that the only reason it is, is because
+	    both the ncurses and termcap ports on that platform are badly
+	    misconfigured (essential pieces have been removed, etc).  Checking
+	    for <code>&lt;ncurses/term.h&gt;</code> does not hurt anything,
+	    since there are some correct installations that are set up that
+	    way.
+
+	<li>add a sample <code>uxterm</code> script, which uses the
+	    <code>UXTerm</code> application defaults for UTF-8 environments.
+
+	<li>undo change to xterm application defaults, since this introduced an
+	    unnecessary incompatibility.  The intended functionality was
+	    already addressed by the <a href="#xterm_141">UXTerm</a>
+	    app-defaults file.
+
+	<li>resync with XFree86 CVS:
+	<ul>
+	<li>Modified xterm app default to use LFD fontnames instead of old type
+	    (Michael Schroeder).
+	<li>Fix xterm when XIM is disabled - caused a segfault
+	    (Tomohiro Kubota).
+	</ul>
+</ul>
+
+<H1><A NAME="xterm_159">Patch #159 - 2001/9/19 - XFree86 4.1.0</A></H1>
+<ul>
+	<li>remove an ifdef for <code>USE_HANDSHAKE</code> added in patch
+	   #158 from the second <code>TIOCSSIZE</code> ioctl call in the
+	   initialization code.  Paul Gilmartin reports that for Solaris 2.6
+	   (sparc), stty does not show that xterm sets rows and columns unless
+	   the second ioctl is executed.
+
+	<li>correct treatment of empty parameter list for some OSC strings
+	   (report by Sami Farin &lt;sfarin@ratol.fi&gt;).
+</ul>
+
+<H1><A NAME="xterm_158">Patch #158 - 2001/9/8 - XFree86 4.1.0</A></H1>
+<ul>
+	<li>augment key translations for scrollbar widget to ensure that
+	   keystrokes intended for the text area are not lost if the mouse
+	   pointer happens to fall on the scrollbar.  This can happen, for
+	   instance, if the user's <code>app-defaults</code> or
+	   <code>.Xdefaults</code> file contains a translations resource,
+	   though it may also happen through unrelated resource settings:
+	   probably a bug in libXt (reported by Paul Fox
+	   &lt;pgf@foxharp.boston.ma.us&gt; and Dmitry Yu.  Bolkhovityanov
+	   &lt;D.Yu.Bolkhovityanov@inp.nsk.su&gt;).
+
+	<li>widen ifdef's in xterm.h to define <code>__EXTENSIONS__</code> on
+	   Solaris, for compilers other than gcc.  This was added along
+	   <code>_POSIX_C_SOURCE</code> with in <a href="#xterm_151">patch
+	   #151</a>, but is not sufficient since Sun's compiler does not define
+	   <code>__STDC__</code> by default (report by Matthias Scheler
+	   &lt;tron@zhadum.de&gt;).
+
+	<li>modify xterm to obtain the closest matching color if an exact color
+	   is not available, e.g., on 8-bit displays (patch by Steve Wall)
+
+	<li>patch by Tomohiro KUBOTA &lt;tkubota@riken.go.jp&gt; to implement
+	  "OverTheSpot" preedit type of XIM input:
+	  <ul>
+	  <li>This preedit type is a reasonable compromise between
+	    simpleness of implementation and usefulness.  "Root" preedit
+	    type is easy to implement but not useful; "OnTheSpot" preedit
+	    type is the best in the point of view of user interface but
+	    very complex.  And more, "OverTheSpot" is the preedit type
+	    which the most XIM servers support.  Thus, to achieve reasonable
+	    usability, support of "OverTheSpot" preedit type is needed.
+
+	  <li>In "OverTheSpot" preedit type, the preedit (preconversion)
+	    string is displayed at the position of the cursor.  On the
+	    other hand, it is XIM server's responsibility to display
+	    the preedit string.  Thus, it is needed for XIM client (here
+	    XTerm) to inform the XIM server of the cursor position.
+	    And more, to achieve good visual proportion, preedit string
+	    must be written using proper font.  Thus, it is XIM client's
+	    responsibility to inform the XIM server of the proper font.
+	    The font must be supplied by "fontset".  Fontset is a set of
+	    fonts with charsets which are specified by the current locale.
+	    Since XTerm uses ISO10646 fonts regardless of the current locale,
+	    the fonts for XIM must be prepared separately.  It is difficult
+	    to prepare fonts which are similar to XTerm font.  Thus, my
+	    patch uses a simple way - the default font is "*" which matches
+	    every fonts and X library will automatically choose fonts with
+	    proper charsets.  I added "-fx" command option and "ximFont"
+	    resource to override this default font setting.
+
+	  <li>changed the definition of "OverTheSpot" preedit type
+	    from XIMPreeditPosition|XIMStatusArea
+	    to XIMPreeditPosition|XIMStatusNothing.
+	    This matches the behavior of other programs such as
+	    Rxvt, Kterm, Gedit.
+
+	  <li>A tiny XIM bugfix is also included.  By calling XSetLocaleModifiers()
+	    with parameter of "", it can consier XMODIFIERS environmental
+	    variable which is a standard way for users to specify XIM server
+	    to be used.
+	  </ul>
+
+	<li>adjust configure script to accommodate repackaging of keysym2ucs.c
+	  as include-file for xutf8.c (patch by Tomohiro KUBOTA
+	  &lt;kubota@debian.org&gt;).
+
+	<li>add the <code>UXTerm</code> app-defaults file to makefile install
+	  rules (request by Juliusz Chroboczek).
+
+	<li>correct logic in <code>get_termcap()</code>, which returned false
+	  if the <code>tgetent()</code> call indicated that xterm was linked
+	  with terminfo.  Although the <code>$TERMCAP</code> variable cannot be
+	  adjusted in this case, xterm still needs information from this call
+	  to extract data to initialize the erase-mode when the
+	  <code>ptyInitialErase</code> resource is false.
+
+	<li>modify <code>ScrollbarReverseVideo()</code> function to cache the
+	  original border color, so it can restore that when an application
+	  flashes the screen (Bugzilla #38872).
+
+	<li>resync with XFree86 CVS:
+	<ul>
+	  <li>remove ifdef's for X_NOT_STDC_ENV (David Dawes).
+	  <li>add Cygwin to special errno handling case in ptydata.c (Alan Hourihane)
+	  <li>set screen size earlier in initialization, to address a race
+	    with window manager resizing its clients (Keith Packard).
+	</ul>
+</ul>
+
+<H1><A NAME="xterm_157">Patch #157 - 2001/6/18 - XFree86 4.1.0</A></H1>
+<ul>
+	<li>patch by Juliusz Chroboczek to clean up button.c and input.c.  The
+	  basic idea is to use a single set of APIs in the XTerm core, and put
+	  a set of workarounds in a separate file.  As you will notice, this
+	  drastically simplifies parts of the code; in particular, the only
+	  remaining ifdefs related to the differences between Xutf8 and legacy
+	  systems are related to the selection provider logic.
+
+	  This defines two new files, xutf8.h and xutf8.c, provide some
+	  half-hearted but fully portable emulation for the three Xutf8*
+	  functions that XTerm uses.
+
+	  Putting these in a separate file will allow people to experiment with
+	  more complex versions without making the core of XTerm more difficult
+	  to maintain.
+
+	  The functionality of the emulation is as follows.
+	  <ul>
+	  <li>Xutf8TextListToTextProperty fully handles XStringstyle and
+	  XUTF8StringStyle.  It will only generate STRING for XStdICCTextStyle,
+	  and wil only generate Latin-1 in XCompoundTextStyle (but label it as
+	  COMPOUND_TEXT, as the spec requires).  (I have hesitated to make this
+	  function fail for XStdICCTextStyle and XCompoundTextStyle; this might
+	  be a smart thing to do, in the hope that the selection requestor will
+	  try UTF8_STRING afterwards; opinions?)
+
+	  <li>Xutf8TextPropertyToTextList fully handles STRING and UTF8_STRING.
+	  It systematically fails for COMPOUND_TEXT.
+
+	  <li>Xutf8LookupString will properly handle single-keystroke input for
+	  the keysyms covered by Markus' keysym2ucs function.  It will not
+	  handle either compose key input or external input methods.
+	  </ul>
+
+	<li>add an ifdef for <code>SunXK_F36</code>, used in
+	  <code>xtermcapKeycode()</code> (patch by Mark Waggoner
+	  &lt;waggoner@ichips.intel.com&gt;).
+
+	<li>modify check for login name to try <code>getlogin()</code> and
+	  $LOGNAME, $USER environment variables to detect if the user has
+	  logged in under an alias, i.e., an account with the same user id
+	  but a different name (Debian bug report #70084).
+
+	<li>add resource <code>tiXtraScroll</code>, which can be used to
+	  preserve the screen contents in the scrollback rather than erasing
+	  it when starting a fullscreen application such as <code>vi</code>
+	  (patch by Ken Martin &lt;fletcher@catsreach.org&gt;).
+
+	<li>two patches by Denis Zaitsev &lt;zzz@cd-club.ru&gt;:
+	<ul>
+	  <li>added <code>forceBoxChars</code> resource to control the
+	    "line-drawing characters" option.
+
+	  <li>added <code>freeBoldBox</code> resource, which, when set true,
+	    suppresses check in <code>same_font_size()</code>, so xterm does
+	    not attempt to ensure that the bold font is the same size as
+	    the normal font.
+	</ul>
+
+	<li>change the color class for ANSI colors and similar ones such as
+	  bold-color, etc., to follow the convention that the classname is the
+	  instance name with a leading capital (e.g., <code>color0</code> and
+	  <code>Color0</code> rather than <code>color0</code> and
+	  <code>Foreground</code>).  There was little use for Foreground as a
+	  class other than to create occasional confusion and bug reports, most
+	  recently by Nelson Beebe who reports that it disables colors in xterm
+	  but not on Linux, which is probably due to a difference in resource
+	  evaluation order.  A configure script option (--disable-color-class)
+	  is provided for anyone who did use the older behavior.
+
+	<li>fix a signal-handling bug.  When running xterm with
+	  <code>ksh</code> or similar shell such as bash 2.05, xterm will hang
+	  and not respond to keystrokes after the user types
+	  <code>suspend</code>.  Additionally the popup menus do not respond,
+	  so it is not possible to send SIGCONT to the shell.
+	  What is happening is that the shell is sending itself SIGSTOP, and it
+	  is being stopped.  Per specification it also means that the operating
+	  system is sending SIGCHLD to parent to the bash (XTERM).
+	  Now the issue is that xterm assumes it cannot happen and it expects
+	  to receive SIGCHLD only upon <em>termination</em> of its children.
+	  This causes a deadlock with xterm waiting for the child to
+	  die, and the child waiting for SIGCONT.
+	  (report/patch by Adam Sulmicki), analysis/testing by Sven Mascheck
+	  &lt;sven.mascheck@student.uni-ulm.de&gt;).
+
+	<li>correct some inconsistent checks for <code>XtReleaseGC()</code>
+	  calls in <code>xtermLoadFont()</code> (patch by Nam SungHyun
+	  &lt;namsh@lge.com&gt;).
+
+	<li>updated wcwidth.c and keysym2ucs.c to versions dated 2001/1/12
+	  and 2001/4/18, respectively from
+		http://www.cl.cam.ac.uk/~mgk25/ucs/
+
+	<li>correction to change from patch #90, which was intended to
+	  reset the saved cursor position for normal/alternate screens
+	  on a soft reset, but actually wiped out all of the saved cursor
+	  information.  Just reset the saved position for the current screen
+	  (report by Michael Schroeder).
+
+	<li>modify ShowCursor() and HideCursor() so that if the cursor points
+	  to the second part of a wide character, make the show/hide operate on
+	  the first position of the wide character (patch by Sven Verdoolaege).
+
+	<li>scrolling in the alternate screen just before switching back to the
+	  main screen can cause extra blank lines to be inserted into the
+	  scrollback buffer (patch by Paul Vojta
+	  &lt;vojta@math.berkeley.edu&gt;).
+
+	<li>resync with XFree86 4.1.0:
+	<ul>
+	  <li>Use TermcapLibrary as -lncurses instead of -ltermcap, fixes
+	    problem building xterm/resize on Cygwin/XFree86 (Harold Hunt).
+	  <li>Install xterm.termcap and xterm.terminfo when installing xterm
+	    (Torrey T. Lyons).
+	  <li>Fix some build issues on Cygwin/XFree86 (Suhaib Siddiqi).
+	  <li>Define CBAUD, when it's missing in xterm, on LynxOS
+	    (Stuart Lissaman).
+	</ul>
+</ul>
+
 <H1><A NAME="xterm_156">Patch #156 - 2001/4/28 - XFree86 4.0.3</A></H1>
 <ul>
 	<li>change order of selection-target types to make 8-bit xterm prefer
@@ -215,7 +605,7 @@ xc/programs/Xserver/hw/xfree86).
 
 	<li>modify configure script check for freetype libraries to include
 	  <code>&lt;Xlib.h&gt;</code>, since an older version of the related
-	  headers relies on this (patch by Adam &lt;adam@cfar.umd.edu&gt;).
+	  headers relies on this (patch by Adam Sulmicki).
 </ul>
 
 <H1><A NAME="xterm_155">Patch #155 - 2001/4/20 - XFree86 4.0.3</A></H1>

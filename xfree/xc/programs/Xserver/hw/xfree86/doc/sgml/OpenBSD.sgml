@@ -6,10 +6,10 @@
 <title>README for XFree86 &relvers; on OpenBSD
 <author>
 Matthieu Herrb
-<Date>Last modified on: 3 March 2000
+<Date>Last modified on: 16 January 2002
 
 <ident>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/OpenBSD.sgml,v 1.17 2001/04/05 19:29:43 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/OpenBSD.sgml,v 1.24 2002/01/16 22:35:17 herrb Exp $
 </ident>
 
 <toc>
@@ -18,7 +18,7 @@ $XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/OpenBSD.sgml,v 1.17 2001/04/05
 <sect>What and Where is XFree86?
 
 <p>
-XFree86 is the Open Source port of X.Org's X11R6.4 release that supports
+XFree86 is the Open Source port of X.Org's X11R6.6 release that supports
 several UNIX(R) and UNIX-like (such as Linux, the BSDs and Solaris x86)
 operating systems on Intel and other platforms.
 
@@ -29,7 +29,7 @@ The sources for XFree86 &relvers; are available by anonymous ftp from:
 <htmlurl name="ftp://ftp.XFree86.org/pub/XFree86/&relvers;"
 url="ftp://ftp.XFree86.org/pub/XFree86/&relvers;">
 
-Binaries for OpenBSD/i386 2.8 and later are available from:
+Binaries for OpenBSD/i386 3.0 and later are available from:
 
 <htmlurl name="ftp://ftp.XFree86.org/pub/XFree86/&relvers;/binaries/OpenBSD"
 url="ftp://ftp.XFree86.org/pub/XFree86/&relvers;/binaries/OpenBSD">
@@ -56,6 +56,14 @@ this file and we'll revise it.
 See the <htmlurl url="RELNOTES.html" name="Release Notes"> for
 non-OS dependent new features in XFree86 &relvers;.
 
+<sect1>New OS dependent features in 4.2
+<p>
+<itemize>
+<item>Support for OpenBSD/macppc on the ATI Rage128 based
+Power Macintosh. 
+<item>Support for building clients on OpenBSD/sparc64.
+</itemize>
+
 <sect1>New OS dependent features in 4.0.3
 <p>
 <itemize>
@@ -67,7 +75,7 @@ non-OS dependent new features in XFree86 &relvers;.
 <p>
 <itemize>
 <item>Support for the OpenBSD ports tree, 
-<item>Preliminary support for the powerpc architecture (clients build
+<item>Preliminary support for the macppc architecture (clients build
 and work, the server doesn't work yet),
 <item>xdm now writes an utmp entry,
 <item>startx now creates an Xauthority magic cookie for the display. 
@@ -150,17 +158,10 @@ modes with the <tt>xvidtune</tt> utility.
 
 <p>
 XFree86 &relvers; has support for the mouse driver included in
-the new <bf/wscons/ console driver introduced by OpenBSD-current after
-2.8. Specify ``<tt/wsmouse/'' as the protocol and
+the new <bf/wscons/ console driver introduced by OpenBSD-2.9. 
+Specify ``<tt/wsmouse/'' as the protocol and
 ``<tt>/dev/wsmouse0</tt>'' as the  device in <tt>/etc/X11/XF86Config</tt>
-if you're using OpenBSD-current with a PS/2 mouse.
-<p>
-The OpenBSD pms driver  provides both ``raw'' and ``cooked''
-(translated) modes.  ``raw'' mode does not do protocol translation, so
-XFree86 would use the <bf>PS/2</bf> protocol for talking to the device
-in that mode.  ``Cooked'' mode is the old BusMouse translation.
-The driver runs in ``raw'' mode when using the <tt>/dev/psm0</tt>
-device name.
+if you're using OpenBSD-2.9 or later with a PS/2 or USB mouse.
 <p>
 See <htmlurl url="mouse.html" name="README.mouse">  for general
 instruction on mouse configuration in XFree86.
@@ -216,8 +217,8 @@ line must be in your config file in <tt>/sys/arch/i386/conf</tt>:
 
 <sect1>Console drivers
 <p>
-The server supports the two standard  OpenBSD/i386
-console drivers: pcvt and pccons. They are detected at runtime and no
+The server supports the standard  OpenBSD/i386
+console drivers: pcvt and wscons. They are detected at runtime and no
 configuration of the server itself is required.
 
 <p>
@@ -225,15 +226,15 @@ The pcvt console driver is the default in OpenBSD up to OpenBSD 2.8.
 It offers several virtual consoles and international keyboard support.
 
 <p>
-OpenBSD-current after 2.8 has switched to the wscons console
+OpenBSD 2.9 and later has switched to the wscons console
 driver. This console driver has a pcvt compatibility mode for X
 support. 
 
 <sect1>Aperture Driver
 <p>
 By default OpenBSD includes the BSD 4.4 kernel security
-feature that disable access to the <tt>/dev/mem</tt> device when in
-multi-users mode. But the XFree86 server require
+feature that disables access to the <tt>/dev/mem</tt> device when in
+multi-user mode. But the XFree86 server requires
 linear access to the display memory in most cases.
 
 OpenBSD now requires the aperture driver to be enabled for all X
@@ -242,67 +243,23 @@ I/O ports of the video boards.
 <p>
 To enable the aperture driver, once included in the kernel, set
 <tscreen><verb>
-machdep.allowaperture=1     
+machdep.allowaperture=2     
 </verb></tscreen>
-in <tt>/etc/sysctl.conf</tt>.
-
-Some drivers need a patch to the aperture driver in the kernel to work
-correctly with int10 support. If you get warning from xf86ReadBIOS
-like this one:
-<tscreen><verb>
-(II) checkDevMem: using aperture driver /dev/xf86
-(WW) xf86ReadBIOS: /dev/mem mmap[s=600,a=0,o=0] failed (Invalid argument)
-</verb></tscreen>
-you should patch your kernel and rebuild it. Until it's integrated in
-OpenBSD-current, or a better fix is found, the patch is available at 
-<htmlurl
-name="ftp://ftp.laas.fr/pub/ii/matthieu/OpenBSD/patch-kernel-xf4"
-url="ftp://ftp.laas.fr/pub/ii/matthieu/OpenBSD/patch-kernel-xf4">.
-
-I've also included it below, if you want to edit the source file by
-hand. 
-
-<tscreen><verb>
-Index: sys/arch/i386/i386/mem.c
-===================================================================
-RCS file: /cvs/src/sys/arch/i386/i386/mem.c,v
-retrieving revision 1.14
-diff -u -r1.14 mem.c
---- sys/arch/i386/i386/mem.c	1999/11/20 11:11:28	1.14
-+++ sys/arch/i386/i386/mem.c	2000/11/13 10:54:22
-@@ -269,8 +269,8 @@
- /* minor device 4 is aperture driver */
- 	case 4:
- 		if (allowaperture &&
--		    (((off >= VGA_START && off <= BIOS_END) ||
--		    (unsigned)off > (unsigned)ctob(physmem))))
-+		    (off <= BIOS_END || 
-+		     (unsigned)off > (unsigned)ctob(physmem)))
- 			return i386_btop(off);
- 		else 
- 			return -1;
-</verb></tscreen>
-
-<p>In post 2.8 OpenBSD-current, a modified version of this patch has
-been integrated. You should set 
-<tscreen><verb>machdep.allowaperture=2</verb></tscreen>
-in <tt>/etc/sysctl.conf</tt> in order to achieve this. See the xf86(4)
+in <tt>/etc/sysctl.conf</tt>.  See the
+<htmlurl name="xf86(4)" url="http://www.openbsd.org/cgi-bin/man.cgi?query=xf86&amp;apropos=0&amp;sektion=4&amp;manpath=OpenBSD+Current&amp;arch=i386&amp;format=html">
 manual page for details. 
 <p>
 Another (less recommended) way to enable linear memory and I/O ports
-access is to disable the kernel security feature by adding ``option
-INSECURE'' in your kernel configuration file and build a new kernel.
-You will also need to comment out the line
-initializing <tt/securelevel/ to 1 in <tt>/etc/rc.securelevel</tt>.
+access is to disable the kernel security feature by 
+initializing <tt/securelevel/ to -1 in <tt>/etc/rc.securelevel</tt>.
 <p>
 <quote>
 <bf/Caveat:/ the aperture driver only allows one access at a time
 (so that the system is in the same security state once X is
-launched). This means that if you run multiple servers on multiples
-VT, only the first one will have linear memory access.  Use 'option
-INSECURE' if you need more that one X server at a time.
+launched). This means that if you run multiple servers on multiple
+virtual terminals, only the first one will have linear memory access.
+Set <tt/securelevel/ to -1 if you need more that one X server at a time.
 </quote>
-
 
 <sect1>MIT-SHM
 <p>
@@ -323,13 +280,6 @@ lines:
 to your kernel config file. 
 
 <sect> Rebuilding the XFree86 Distribution
-
-<p>
-The server developer's kit allow you to rebuild just the X server with a
-minimum amount of disk space.  Just unpack it, make the appropriate
-changes to the <tt/xf86site.def/, type ``<tt>./mkmf</tt>'' and
-``<tt/make/'' to link the server.  See <tt>/usr/X11R6/lib/Server/README</tt>
-for more info.
 
 You should configure the distribution by editing
 <tt>xc/config/cf/host.def</tt>  before compiling.  To compile the
@@ -354,14 +304,13 @@ If you don't define <bf/XFree86ConsoleDefines/ in <tt/host.def/ the
 pccons and pcvt drivers will be supported by default.
 
 <p>
-Experimental native support for the wscons console driver found on
-OpenBSD/powerpc and on OpenBSD/i386 -current  can be built
+Native support for the wscons console driver found on
+OpenBSD/macppc and on OpenBSD/i386 2.9 and later is built
 by adding:
 <tscreen><verb>
  #define XFree86ConsoleDefines -DWSCONS_SUPPORT
 </verb></tscreen>
 to <tt>xc/config/host.def</tt> before rebuilding the server. 
-This has not been thoroughly tested, except on the macppc. 
 
 For the i386, you should include both pcvt and wscons support in order
 to use the pcvt compatibility mode of wscons:
@@ -373,17 +322,42 @@ to use the pcvt compatibility mode of wscons:
 <sect1>Building on other architectures<label id="otherarch">
 
 <p>
-XFree86 should also compiles on other OpenBSD architectures. However,
-please note that 3.9.x snapshots have only been tested on the i386 for 
-now. 
+XFree86  also compiles on other OpenBSD architectures. 
 
 <p> 
-Note that OpenBSD project has now its own source tree, based on
+Note that OpenBSD project now has its own source tree, based on
 the XFree86 source tree, with some local modifications. You may want
-to start with this tree to rebuild from sources.  The OpenBSD X11
+to start with this tree to rebuild from sources.  The OpenBSD XF4
 source tree is available by anoncvs from all OpenBSD anoncvs
 servers. See <htmlurl url="http://www.openbsd.org/anoncvs.html"
 name="http://www.openbsd.org/anoncvs.html"> for details on anoncvs.
+
+<sect2>XFree86 on OpenBSD/macppc
+<p>
+The XFree86 server is currently known to work on the G4 Macs and new
+iBooks with ATI Rage 128 cards running OpenBSD 3.0 or later.
+Other machines are more or less untested. Earlier OpenBSD versions
+lack some kernel support for it.
+<p>
+Use xf86config to build a /etc/X11/XF86Config file before starting 
+the server for the first time. 
+<p> 
+Tou configure the keyboard, the protocol should be specified as
+<bf/wskbd/ and the device as <tt>/dev/wskbd0</tt>.
+Using a wsmux device as the keyboard device doesn't work (yet). Use 
+<bf/macintosh/ as XkbModel. 
+<p>
+For the Titanium Powerbook G4, you can try the following mode line in
+<tt>/etc/X11/XF86Config</tt> to match the flat panel resolution:
+
+<tscreen><verb>
+Modeline "1152x768" 78.741 1152 1173 1269 1440  768 769 772 800 +HSync +VSync
+</verb></tscreen>
+<p>
+You need to set <tt/securelevel/ to -1 in the
+<tt>/etc/rc.securelevel</tt> 
+configuration file to run XFree86 on OpenBSD/macppc. 
+
 
 <sect>Building New X Clients
 

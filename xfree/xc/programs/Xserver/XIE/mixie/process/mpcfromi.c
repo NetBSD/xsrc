@@ -1,10 +1,14 @@
-/* $Xorg: mpcfromi.c,v 1.3 2000/08/17 19:47:50 cpqbld Exp $ */
+/* $Xorg: mpcfromi.c,v 1.4 2001/02/09 02:04:30 xorgcvs Exp $ */
 /**** module mpcfromi.c ****/
 /******************************************************************************
 
 Copyright 1993, 1994, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -66,7 +70,7 @@ terms and conditions:
 	Robert NC Shelley -- AGE Logic, Inc. July, 1993
   
 *****************************************************************************/
-/* $XFree86: xc/programs/Xserver/XIE/mixie/process/mpcfromi.c,v 3.4 2001/01/17 22:13:11 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/XIE/mixie/process/mpcfromi.c,v 3.5 2001/12/14 19:58:43 dawes Exp $ */
 
 #define _XIEC_MPCFROMI
 #define _XIEC_PCFROMI

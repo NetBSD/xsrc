@@ -4,7 +4,7 @@
 /*                                                                         */
 /*    Additional Mac-specific API.                                         */
 /*                                                                         */
-/*  Copyright 1996-2000 by                                                 */
+/*  Copyright 1996-2001 by                                                 */
 /*  Just van Rossum, David Turner, Robert Wilhelm, and Werner Lemberg.     */
 /*                                                                         */
 /*  This file is part of the FreeType project, and may only be used,       */
@@ -25,8 +25,8 @@
 /***************************************************************************/
 
 
-#ifndef __FT_MAC_H__
-#define __FT_MAC_H__
+#ifndef __FTMAC_H__
+#define __FTMAC_H__
 
 
 #include <ft2build.h>
@@ -85,11 +85,36 @@ FT_BEGIN_HEADER
   /*      error = FT_New_Face_From_FOND( library, fond, 0, &face );        */
   /*    }                                                                  */
   /*                                                                       */
-  FT_EXPORT( FT_Error )  FT_New_Face_From_FOND( FT_Library  library,
-                                                Handle      fond,
-                                                FT_Long     face_index,
-                                                FT_Face    *aface );
+  FT_EXPORT( FT_Error )
+  FT_New_Face_From_FOND( FT_Library  library,
+                         Handle      fond,
+                         FT_Long     face_index,
+                         FT_Face    *aface );
 
+
+  /*************************************************************************/
+  /*                                                                       */
+  /* <Function>                                                            */
+  /*    FT_GetFile_From_Mac_Name                                           */
+  /*                                                                       */
+  /* <Description>                                                         */
+  /*    Returns an FSSpec for the disk file containing the named font.     */
+  /*                                                                       */
+  /* <Input>                                                               */
+  /*    fontName   :: Mac OS name of the font (eg. Times New Roman Bold).  */
+  /*                                                                       */
+  /* <Output>                                                              */
+  /*    pathSpec   :: FSSpec to the file.  For passing to @FT_New_Face.    */
+  /*                                                                       */
+  /*    face_index :: Index of the face.  For passing to @FT_New_Face.     */
+  /*                                                                       */
+  /* <Return>                                                              */
+  /*    FreeType error code.  0 means success.                             */
+  /*                                                                       */
+  FT_EXPORT_DEF( FT_Error )
+  FT_GetFile_From_Mac_Name( char*     fontName, 
+                            FSSpec*   pathSpec,
+                            FT_Long*  face_index );
 
   /* */
 
@@ -97,7 +122,7 @@ FT_BEGIN_HEADER
 FT_END_HEADER
 
 
-#endif /* __FT_MAC_H__ */
+#endif /* __FTMAC_H__ */
 
 
 /* END */

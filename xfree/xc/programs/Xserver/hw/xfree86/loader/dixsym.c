@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/loader/dixsym.c,v 1.38 2001/04/05 17:42:34 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/loader/dixsym.c,v 1.45 2001/11/17 16:05:59 dawes Exp $ */
 
 
 /*
@@ -29,17 +29,18 @@
 #include "colormap.h"
 #include "cursor.h"
 #include "dix.h"
+#include "dixevents.h"
 #include "dixfont.h"
 #include "dixstruct.h"
 #include "misc.h"
 #include "globals.h"
 #include "os.h"
+#include "osdep.h"
 #include "resource.h"
 #include "servermd.h"
 #include "scrnintstr.h"
 #include "windowstr.h"
 #include "extension.h"
-#define EVENT_SWAP_PTR
 #define EXTENSION_PROC_ARGS void *
 #include "extnsionst.h"
 #include "swaprep.h"
@@ -55,13 +56,6 @@
 #ifdef RENDER
 #include "mipict.h"
 #endif
-
-/* XXX This should be in a header somewhere */
-extern void ClientSleepUntil(ClientPtr, TimeStamp, void(*)(ClientPtr, pointer),
-			     pointer);
-extern int ShmCompletionCode;
-extern int BadShmSegCode;
-extern RESTYPE ShmSegType;
 
 /* DIX things */
 
@@ -96,6 +90,7 @@ LOOKUP dixLookupTab[] = {
   SYMFUNC(SendErrorToClient)
   SYMFUNC(UpdateCurrentTime)
   SYMFUNC(UpdateCurrentTimeIf)
+  SYMFUNC(ProcBadRequest)
   SYMVAR(dispatchException)
   SYMVAR(isItTimeToYield)
   SYMVAR(ClientStateCallback)
@@ -167,6 +162,7 @@ LOOKUP dixLookupTab[] = {
   SYMVAR(DPMSDisabledSwitch)
   SYMVAR(defaultDPMSEnabled)
 #ifdef XV
+  /* XXX These are exported from the DDX, not DIX. */
   SYMVAR(XvScreenInitProc)
   SYMVAR(XvGetScreenIndexProc)
   SYMVAR(XvGetRTPortProc)
@@ -185,6 +181,8 @@ LOOKUP dixLookupTab[] = {
   SYMVAR(screenInfo)
   SYMVAR(serverClient)
   SYMVAR(serverGeneration)
+  /* main.c */
+  SYMFUNC(NotImplemented)
   /* pixmap.c */
   SYMFUNC(AllocatePixmap)
   SYMFUNC(GetScratchPixmapHeader)
@@ -225,6 +223,8 @@ LOOKUP dixLookupTab[] = {
   SYMFUNC(SwapColorItem)
   /* tables.c */
   SYMVAR(EventSwapVector)
+  SYMVAR(ReplySwapVector)
+  SYMVAR(ProcVector)
   /* window.c */
   SYMFUNC(ChangeWindowAttributes)
   SYMFUNC(CheckWindowOptionalNeed)
@@ -285,6 +285,8 @@ LOOKUP dixLookupTab[] = {
   SYMFUNC(AttendClient)
   SYMFUNC(AddEnabledDevice)
   SYMFUNC(RemoveEnabledDevice)
+  SYMFUNC(MakeClientGrabPervious)
+  SYMFUNC(MakeClientGrabImpervious)
   SYMVAR(GrabInProgress)
   /* utils.c */
   SYMFUNC(AdjustWaitForDelay)
@@ -292,6 +294,8 @@ LOOKUP dixLookupTab[] = {
 
   /* devices.c */
   SYMFUNC(InitPointerDeviceStruct)
+  SYMFUNC(LookupKeyboardDevice)
+  SYMFUNC(LookupPointerDevice)
 #ifdef XINPUT
   /* Xi */
   /* exevents.c */
@@ -302,17 +306,8 @@ LOOKUP dixLookupTab[] = {
 #endif
 
   /* xf86DGA.c */
+  /* XXX This is exported from the DDX, not DIX. */
   SYMVAR(XDGAEventBase)
-
-  /* libfont.a */
-  SYMFUNC(GetGlyphs)
-  SYMFUNC(QueryGlyphExtents)
-
-  /* libXext.a */
-  SYMFUNC(ClientSleepUntil)
-  SYMVAR(ShmCompletionCode)
-  SYMVAR(BadShmSegCode)
-  SYMVAR(ShmSegType)
 
   /* librender.a */
 #ifdef RENDER

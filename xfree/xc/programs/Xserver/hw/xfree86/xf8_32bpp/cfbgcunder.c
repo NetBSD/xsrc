@@ -1,9 +1,13 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xf8_32bpp/cfbgcunder.c,v 1.2 2000/02/12 05:43:24 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xf8_32bpp/cfbgcunder.c,v 1.5 2001/12/14 19:59:52 dawes Exp $ */
 /***********************************************************
 
 Copyright 1987, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -58,6 +62,7 @@ SOFTWARE.
 #include "mistruct.h"
 #include "mibstore.h"
 #include "migc.h"
+#include "mioverlay.h"
 
 #include "cfbmskbits.h"
 #include "cfb8bit.h"
@@ -400,7 +405,7 @@ cfb32ValidateGC_Underlay(
     {
 	GCOps	*newops;
 
-	if (newops = cfb32MatchCommon_Underlay (pGC, devPriv))
+	if ((newops = cfb32MatchCommon_Underlay (pGC, devPriv)))
  	{
 	    if (pGC->ops->devPrivate.val)
 		miDestroyGCOps (pGC->ops);

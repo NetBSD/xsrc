@@ -1,4 +1,4 @@
-/* $Xorg: GetResList.c,v 1.3 2000/08/17 19:46:12 cpqbld Exp $ */
+/* $Xorg: GetResList.c,v 1.4 2001/02/09 02:03:55 xorgcvs Exp $ */
 
 /***********************************************************
 Copyright 1987, 1988 by Digital Equipment Corporation, Maynard, Massachusetts,
@@ -32,13 +32,17 @@ OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
 THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/lib/Xt/GetResList.c,v 3.4 2001/01/17 19:43:05 dawes Exp $ */
+/* $XFree86: xc/lib/Xt/GetResList.c,v 3.6 2001/12/14 19:56:16 dawes Exp $ */
 
 /*
 
 Copyright 1987, 1988, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -115,8 +119,7 @@ void XtGetResourceList(widget_class, resources, num_resources)
 }
 
 
-static Boolean ClassIsSubclassOf(class, superclass)
-    WidgetClass class, superclass;
+static Boolean ClassIsSubclassOf(WidgetClass class, WidgetClass superclass)
 {
     for (; class != NULL; class = class->core_class.superclass) {
 	if (class == superclass) return True;

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Globals.c,v 1.32 2001/05/18 16:03:11 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Globals.c,v 1.36 2001/11/30 12:11:55 eich Exp $ */
 
 /*
  * Copyright (c) 1997 by The XFree86 Project, Inc.
@@ -92,6 +92,9 @@ xf86InfoRec xf86Info = {
 #if defined(SVR4) && defined(i386)
 	FALSE,		/* panix106 */
 #endif
+#if defined(__OpenBSD__) || defined(__NetBSD__)
+	0,		/* wskbdType */
+#endif
 	NULL,		/* pMouse */
 #ifdef XINPUT
 	NULL,		/* mouseLocal */
@@ -108,9 +111,6 @@ xf86InfoRec xf86Info = {
 #ifdef CSRG_BASED
 	-1,		/* screenFd */
 	-1,		/* consType */
-#endif
-#ifdef AMOEBA
-	NULL,		/* screenPtr */
 #endif
 #ifdef XKB
 	NULL,		/* xkbkeymap */
@@ -138,6 +138,7 @@ xf86InfoRec xf86Info = {
 	FALSE,		/* pc98 */
 #endif
 	TRUE,		/* pmFlag */
+	FALSE,          /* syncLog */
 	0,		/* estimateSizesAggressively */
 	FALSE           /* kbdCustomKeycodes */
 };
@@ -146,6 +147,7 @@ const char *xf86ModulePath = DEFAULT_MODULE_PATH;
 MessageType xf86ModPathFrom = X_DEFAULT;
 const char *xf86LogFile = DEFAULT_LOGPREFIX;
 MessageType xf86LogFileFrom = X_DEFAULT;
+Bool xf86LogFileWasOpened = FALSE;
 serverLayoutRec xf86ConfigLayout = {NULL, };
 confDRIRec xf86ConfigDRI = {0, };
 XF86ConfigPtr xf86configptr = NULL;

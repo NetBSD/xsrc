@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/iplan2p4/iplmergerop.h,v 3.0 1996/08/18 01:54:53 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/iplan2p4/iplmergerop.h,v 3.1 2001/07/25 15:05:09 dawes Exp $ */
 #ifndef _IPLANMERGEROP_H_
 #define _IPLANMERGEROP_H_
 
@@ -133,7 +133,7 @@ extern mergeRopRec	mergeRopBits[16];
 	INTER_MROP_MASK(src,dst,mask,dst2)
 #endif
 
-#if (__STDC__ && !defined(UNIXCPP)) || defined(ANSICPP)
+#if !defined(UNIXCPP) || defined(ANSICPP)
 #define INTER_MROP_NAME_CAT(prefix,suffix)	prefix##suffix
 #else
 #define INTER_MROP_NAME_CAT(prefix,suffix)	prefix/**/suffix

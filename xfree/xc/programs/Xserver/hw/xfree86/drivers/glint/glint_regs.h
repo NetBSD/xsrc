@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/glint/glint_regs.h,v 1.26.2.1 2001/05/24 20:12:47 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/glint/glint_regs.h,v 1.31 2001/12/08 16:01:52 alanh Exp $ */
 
 /*
  * glint register file 
@@ -29,11 +29,17 @@
 #define PCI_CHIP_3DLABS_GAMMA					0x08
 #define PCI_CHIP_3DLABS_PERMEDIA2V				0x09
 #define PCI_CHIP_3DLABS_PERMEDIA3				0x0A
+#define PCI_CHIP_3DLABS_PERMEDIA4				0x0C
+#define PCI_CHIP_3DLABS_R4					0x0D
+#define PCI_CHIP_3DLABS_GAMMA2					0x0E
 #define PCI_CHIP_TI_PERMEDIA 	  				0x3d04
 
 /* The boards we know */
 #define IS_GLORIAXXL	((pGlint->PciInfo->subsysVendor == 0x1048) && \
 			 (pGlint->PciInfo->subsysCard   == 0x0a42))
+
+#define IS_GLORIASYNERGY ((pGlint->PciInfo->subsysVendor == 0x1048) && \
+			 (pGlint->PciInfo->subsysCard   == 0x0a32))
 
 #define IS_GMX2000	((pGlint->PciInfo->subsysVendor == 0x3d3d) && \
 			 (pGlint->PciInfo->subsysCard   == 0x0106))
@@ -43,6 +49,32 @@
 
 #define IS_JPRO		((pGlint->PciInfo->subsysVendor == 0x1097) && \
 			 (pGlint->PciInfo->subsysCard   == 0x3db3))
+
+/* COMPAQ OEM VX1 PCI
+ *   subsys == 0x0121 if VGA is enabled
+ *   subsys == 0x000a if VGA has never been enabled
+ */
+#define IS_PCI_QVX1	(pGlint->PciInfo->subsysVendor == 0x3d3d &&  \
+                         ((pGlint->PciInfo->subsysCard == 0x0121) ||  \
+			  (pGlint->PciInfo->subsysCard == 0x000a)))
+
+/* COMPAQ OEM VX1 AGP
+ *   subsys == 0x0144 if VGA is enabled
+ *   subsys == 0x000c if VGA has never been enabled
+ */
+#define IS_AGP_QVX1	(pGlint->PciInfo->subsysVendor == 0x3d3d &&  \
+			 ((pGlint->PciInfo->subsysCard == 0x0144) ||  \
+			  (pGlint->PciInfo->subsysCard == 0x000c)))
+
+#define IS_QVX1		(IS_PCI_QVX1 || IS_AGP_QVX1)
+
+#define IS_ELSA_SYNERGY	((pGlint->PciInfo->subsysVendor == 0x1048) && \
+			 (pGlint->PciInfo->subsysCard   == 0x0a32))
+
+/* COMPAQ OEM Permedia 2V with VGA disable jumper - 0x13e9 ? */
+#define IS_QPM2V	((pGlint->PciInfo->subsysVendor == 0x13e9) && \
+			 ((pGlint->PciInfo->subsysCard == 0x0100) ||  \
+			  (pGlint->PciInfo->subsysCard == 0x0002)))
 
 /**********************************************
 *  GLINT 500TX Configuration Region Registers *
@@ -1240,7 +1272,8 @@ do{								\
 #define REPLICATE(r)						\
 {								\
 	if (pScrn->bitsPerPixel == 16) {			\
-		r = ((r & 0xFFFF) << 16) | (r & 0xFFFF);	\
+		r &= 0xFFFF;					\
+		r |= (r<<16);					\
 	} else							\
 	if (pScrn->bitsPerPixel == 8) { 			\
 		r &= 0xFF;					\

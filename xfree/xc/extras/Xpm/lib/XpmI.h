@@ -22,7 +22,7 @@
  * used in advertising or otherwise to promote the sale, use or other dealings
  * in this Software without prior written authorization from GROUPE BULL.
  */
-/* $XFree86: xc/extras/Xpm/lib/XpmI.h,v 1.4 2000/09/26 15:56:42 tsi Exp $ */
+/* $XFree86: xc/extras/Xpm/lib/XpmI.h,v 1.8 2002/01/07 19:40:23 dawes Exp $ */
 
 /*****************************************************************************\
 * XpmI.h:                                                                     *
@@ -56,39 +56,8 @@
 extern FILE *popen();
 #endif
 
-#if defined(SYSV) || defined(SVR4) || defined(VMS) || defined(WIN32) || defined(linux)
-#include <string.h>
-
-#ifndef index
-#define index strchr
-#endif
-
-#ifndef rindex
-#define rindex strrchr
-#endif
-
-#else  /* defined(SYSV) || defined(SVR4) || defined(VMS) */
-#include <strings.h>
-#endif
-
-
-
-#if defined(SYSV) || defined(SVR4) || defined(VMS) || defined(WIN32)
-#ifndef bcopy
-#define bcopy(source, dest, count) memcpy(dest, source, count)
-#endif
-#ifndef bzero
-#define bzero(b, len) memset(b, 0, len)
-#endif
-#endif
-
-/* the following is defined in X11R6 but not in previous versions */
-#if defined(__alpha) || defined(__alpha__) || \
-    defined(ia64) || defined(__ia64__)
-#ifndef LONG64
-#define LONG64
-#endif
-#endif
+#include <X11/Xos.h>
+#include <X11/Xfuncs.h>
 
 #ifdef VMS
 #include <unixio.h>

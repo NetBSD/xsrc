@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/tseng/tseng_ramdac.c,v 1.25 2001/02/15 17:54:56 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/tseng/tseng_ramdac.c,v 1.26 2001/10/28 03:33:53 tsi Exp $ */
 
 
 
@@ -46,8 +46,6 @@ SymTabRec TsengDacTable[] =
 #define RAMDAC_WRITE 0x3c8
 #define RAMDAC_RAM 0x3c9
 
-static unsigned char black_cmap[] =
-{0x0, 0x0, 0x0};
 static unsigned char white_cmap[] =
 {0xff, 0xff, 0xff};
 
@@ -524,9 +522,11 @@ static unsigned char CMD_ATT49x[] =
 {0x00, 0xa0, 0xc0, 0xe0, 0xe0,
     0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
 
+#if 0
 static unsigned char CMD_SC15025[] =
 {0x00, 0xa0, 0xe0, 0x60, 0xFF,
     0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
+#endif
 
 static unsigned char CMD_MU4910[] =
 {0x1C, 0xBC, 0xDC, 0xFC, 0xFF,

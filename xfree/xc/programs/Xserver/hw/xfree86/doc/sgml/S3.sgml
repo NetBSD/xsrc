@@ -822,7 +822,7 @@ this script you have to add the line
  s3MNadjust -31 255
  </verb></tscreen>
 
-to the device section in your <tt/XF86Config/ file and restart X Windows.
+to the device section in your <tt/XF86Config/ file and restart X.
 With this option (which is for testing and debugging only) you'll get
 lots of disastrous display flickering and snowing, so it should be removed
 again immediately after running the test script below.
@@ -921,7 +921,7 @@ XF86Config (see the man page on XF86Config).
 
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/S3.sgml,v 3.38 1999/08/23 06:38:52 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/S3.sgml,v 3.39 2001/11/23 19:50:45 dawes Exp $
 
 
 

@@ -1,8 +1,12 @@
-/* $Xorg: osdep.h,v 1.3 2000/08/17 19:54:23 cpqbld Exp $ */
+/* $Xorg: osdep.h,v 1.4 2001/02/09 02:05:44 xorgcvs Exp $ */
 /*
 Copyright 1987, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -43,7 +47,7 @@ in this Software without prior written authorization from The Open Group.
  * @(#)osdep.h	4.1	5/2/91
  *
  */
-/* $XFree86: xc/programs/xfs/os/osdep.h,v 3.8 2001/01/17 23:45:32 dawes Exp $ */
+/* $XFree86: xc/programs/xfs/os/osdep.h,v 3.11 2001/12/14 20:01:41 dawes Exp $ */
 
 #ifndef _OSDEP_H_
 #define	_OSDEP_H_
@@ -51,7 +55,7 @@ in this Software without prior written authorization from The Open Group.
 #define	BOTIMEOUT	200	/* in milliseconds */
 #define	BUFSIZE		4096
 #define	BUFWATERMARK	8192
-#define	MAXBUFSIZE	(1 << 18)
+#define	MAXBUFSIZE	(1 << 15)
 
 #ifndef sgi	    /* SGI defines OPEN_MAX in a useless way */
 #ifndef X_NOT_POSIX
@@ -101,9 +105,7 @@ in this Software without prior written authorization from The Open Group.
 #endif
 #endif /*__GNU__*/
 
-#ifndef NULL
-#define NULL 0
-#endif
+#include <stddef.h>
 
 typedef struct _connectionInput {
     struct _connectionInput *next;

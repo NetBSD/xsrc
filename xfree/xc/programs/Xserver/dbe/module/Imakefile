@@ -1,6 +1,6 @@
 XCOMM $XConsortium: Imakefile /main/2 1996/09/28 17:06:40 rws $
 
-XCOMM $XFree86: xc/programs/Xserver/dbe/module/Imakefile,v 1.1 2000/04/06 15:35:03 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/dbe/module/Imakefile,v 1.2 2001/12/17 20:00:39 dawes Exp $
 
 #define IHaveModules
 #include <Server.tmpl>
@@ -12,7 +12,7 @@ XCOMM $XFree86: xc/programs/Xserver/dbe/module/Imakefile,v 1.1 2000/04/06 15:35:
 
        SRCS = dbe.c midbe.c $(MSRCS)
        OBJS = dbe.o midbe.o $(MOBJS)
-   INCLUDES = -I.. -I$(SERVERSRC)/include -I$(XINCLUDESRC) -I$(EXTINCSRC) -I$(EXTRAINCLUDES)
+   INCLUDES = -I.. -I$(SERVERSRC)/include -I$(XINCLUDESRC) -I$(EXTINCSRC) $(EXTRAINCLUDES)
    LINTLIBS = ../../dix/llib-ldix.ln ../../os/llib-los.ln
 
 LinkSourceFile(dbemodule.c,..)

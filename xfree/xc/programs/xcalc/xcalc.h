@@ -28,12 +28,16 @@ other dealings in this Software without prior written authorization
 from the X Consortium.
 
 */
+/* $XFree86: xc/programs/xcalc/xcalc.h,v 1.2 2001/08/01 00:45:02 tsi Exp $ */
 
 /*
  * xcalc.h - symbolic constants for xcalc
  *
  * Author:  Donna Converse, MIT X Consortium
  */
+
+#ifndef _XCALC_H_
+#define _XCALC_H_
 
 #ifdef SIGNALRETURNSINT
 #define signal_t int
@@ -95,3 +99,25 @@ from the X Consortium.
 #define XCalc_RADIAN	3	/* radian indicator */
 #define XCalc_GRADAM	4	/* grad indicator */
 #define XCalc_PAREN	5	/* parenthesis indicator */
+
+extern void numeric(int keynum);
+extern void bkspf(void);
+extern void decf(void);
+extern void eef(void);
+extern void clearf(void);
+extern void negf(void);
+extern void twoop(int keynum);
+extern void twof(int keynum);
+extern void entrf(void);
+extern void equf(void);
+extern void lparf(void);
+extern void rollf(void);
+extern void rparf(void);
+extern void drgf(void);
+extern void invf(void);
+extern void memf(int keynum);
+extern void oneop(int keynum);
+extern void offf(void);
+extern void ResetCalc(void);
+
+#endif

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Config.c,v 3.242 2001/05/16 20:08:35 paulo Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Config.c,v 3.254 2002/01/15 01:56:55 dawes Exp $ */
 
 
 /*
@@ -699,7 +699,10 @@ typedef enum {
     FLAG_PC98,
     FLAG_ESTIMATE_SIZES_AGGRESSIVELY,
     FLAG_NOPM,
-    FLAG_XINERAMA
+    FLAG_XINERAMA,
+    FLAG_ALLOW_DEACTIVATE_GRABS,
+    FLAG_ALLOW_CLOSEDOWN_GRABS,
+    FLAG_SYNCLOG
 } FlagValues;
    
 static OptionInfoRec FlagOptions[] = {
@@ -751,10 +754,17 @@ static OptionInfoRec FlagOptions[] = {
 	{0}, FALSE },
   { FLAG_XINERAMA,		"Xinerama",			OPTV_BOOLEAN,
 	{0}, FALSE },
+  { FLAG_ALLOW_DEACTIVATE_GRABS,"AllowDeactivateGrabs",		OPTV_BOOLEAN,
+	{0}, FALSE },
+  { FLAG_ALLOW_CLOSEDOWN_GRABS, "AllowClosedownGrabs",		OPTV_BOOLEAN,
+	{0}, FALSE },
+  { FLAG_SYNCLOG,		"SyncLog",			OPTV_BOOLEAN,
+	{0}, FALSE },
   { -1,				NULL,				OPTV_NONE,
-	{0}, FALSE }
+	{0}, FALSE },
 };
 
+#if defined(i386) || defined(__i386__)
 static Bool
 detectPC98(void)
 {
@@ -771,6 +781,7 @@ detectPC98(void)
     return FALSE;
 #endif
 }
+#endif /* __i386__ */
 
 static Bool
 configServerFlags(XF86ConfFlagsPtr flagsconf, XF86OptionPtr layoutopts)
@@ -801,6 +812,11 @@ configServerFlags(XF86ConfFlagsPtr flagsconf, XF86OptionPtr layoutopts)
     xf86GetOptValBool(FlagOptions, FLAG_NOTRAPSIGNALS, &xf86Info.notrapSignals);
     xf86GetOptValBool(FlagOptions, FLAG_DONTZAP, &xf86Info.dontZap);
     xf86GetOptValBool(FlagOptions, FLAG_DONTZOOM, &xf86Info.dontZoom);
+
+    xf86GetOptValBool(FlagOptions, FLAG_ALLOW_DEACTIVATE_GRABS,
+		      &(xf86Info.grabInfo.allowDeactivate));
+    xf86GetOptValBool(FlagOptions, FLAG_ALLOW_CLOSEDOWN_GRABS,
+		      &(xf86Info.grabInfo.allowClosedown));
 
     /*
      * Set things up based on the config file information.  Some of these
@@ -846,15 +862,15 @@ configServerFlags(XF86ConfFlagsPtr flagsconf, XF86OptionPtr layoutopts)
 	xf86Info.pciFlags = PCIForceConfig2;
     if (xf86IsOptionSet(FlagOptions, FLAG_PCIOSCONFIG))
 	xf86Info.pciFlags = PCIOsConfig;
-    /*
-     * XXX This should be handled like a proper boolean option -- see further
-     * above for examples.
-     */
-    if (xf86IsOptionSet(FlagOptions, FLAG_NOPM))
-	xf86Info.pmFlag = FALSE;
-    else
-	xf86Info.pmFlag = TRUE;
-	
+
+    xf86Info.pmFlag = TRUE;
+    if (xf86GetOptValBool(FlagOptions, FLAG_NOPM, &value)) 
+	xf86Info.pmFlag = !value;
+    if (xf86GetOptValBool(FlagOptions, FLAG_SYNCLOG, &value)) {
+	xf86Msg(X_CONFIG, "SyncLog %s\n",value?"enabled":"disabled");
+	xf86Info.syncLog = value;
+    }
+    
     i = -1;
     xf86GetOptValInteger(FlagOptions, FLAG_ESTIMATE_SIZES_AGGRESSIVELY, &i);
     if (i >= 0)
@@ -986,11 +1002,7 @@ configInputKbd(IDevPtr inputp)
   s = xf86SetStrOption(inputp->commonOptions, "Protocol", "standard");
   if (xf86NameCmp(s, "standard") == 0) {
      xf86Info.kbdProc    = xf86KbdProc;
-#if defined(AMOEBA) || defined(__CYGWIN__)
-     xf86Info.kbdEvents  = NULL;
-#else
      xf86Info.kbdEvents  = xf86KbdEvents;
-#endif
      xfree(s);
   } else if (xf86NameCmp(s, "xqueue") == 0) {
 #ifdef XQUEUE
@@ -1001,13 +1013,16 @@ configInputKbd(IDevPtr inputp)
     xfree(s);
 #ifdef WSCONS_SUPPORT
   } else if (xf86NameCmp(s, "wskbd") == 0) {
-     int xf86WSKbdProc(DeviceIntPtr, int);
-
-     xf86Info.kbdProc    = xf86WSKbdProc;
-     xf86Info.kbdEvents  = xf86KbdEvents;
+     xf86Info.kbdProc    = xf86KbdProc;
+     xf86Info.kbdEvents  = xf86WSKbdEvents;
      xfree(s);
      s = xf86SetStrOption(inputp->commonOptions, "Device", NULL);
      xf86Msg(X_CONFIG, "Keyboard: Protocol: wskbd\n");
+     if (s == NULL) {
+	 xf86ConfigError("A \"device\" option is required with"
+			 " the \"wskbd\" keyboard protocol");
+	 return FALSE;
+     }
      xf86Info.kbdFd = open(s, O_RDONLY | O_NONBLOCK | O_EXCL);
      if (xf86Info.kbdFd == -1) {
        xf86ConfigError("cannot open \"%s\"", s);
@@ -1015,6 +1030,33 @@ configInputKbd(IDevPtr inputp)
        return FALSE;
      }
      xfree(s);
+     /* Find out keyboard type */
+     if (ioctl(xf86Info.kbdFd, WSKBDIO_GTYPE, &xf86Info.wsKbdType) == -1) {
+	     xf86ConfigError("cannot get keyboard type");
+	     close(xf86Info.kbdFd);
+	     return FALSE;
+     }
+     switch (xf86Info.wsKbdType) {
+     case WSKBD_TYPE_PC_XT:
+	     xf86Msg(X_PROBED, "Keyboard type: XT\n");
+	     break;
+     case WSKBD_TYPE_PC_AT:
+	     xf86Msg(X_PROBED, "Keyboard type: AT\n");
+	     break;
+     case WSKBD_TYPE_USB:
+	     xf86Msg(X_PROBED, "Keyboard type: USB\n");
+	     break;
+#ifdef WSKBD_TYPE_ADB
+     case WSKBD_TYPE_ADB:
+	     xf86Msg(X_PROBED, "Keyboard type: ADB\n");
+	     break;
+#endif
+     default:
+	     xf86ConfigError("Unsupported wskbd type \"%d\"", 
+			     xf86Info.wsKbdType);
+	     close(xf86Info.kbdFd);
+	     return FALSE;
+     }
 #endif
   } else {
     xf86ConfigError("\"%s\" is not a valid keyboard protocol name", s);
@@ -1063,7 +1105,7 @@ configInputKbd(IDevPtr inputp)
   if (noXkbExtension)
     xf86Msg(from, "XKB: disabled\n");
 
-#define NULL_IF_EMPTY(s) (s[0] ? s : (xfree(s), NULL))
+#define NULL_IF_EMPTY(s) (s[0] ? s : (xfree(s), (char *)NULL))
 
   if (!noXkbExtension && !XkbInitialMap) {
     if ((s = xf86SetStrOption(inputp->commonOptions, "XkbKeymap", NULL))) {
@@ -2019,7 +2061,8 @@ modeIsPresent(char * modename,MonPtr monitorp)
     /* all I can think of is a linear search... */
     while(knownmodes != NULL)
     {
-	if(strcmp(modename,knownmodes->name) == 0)
+	if(!strcmp(modename,knownmodes->name) &&
+	   !(knownmodes->type & M_T_DEFAULT))
 	    return TRUE;
 	knownmodes = knownmodes->next;
     }
@@ -2099,18 +2142,6 @@ xf86HandleConfigFile(void)
     xf86closeConfigFile ();
 
     /* Initialise a few things. */
-
-    /* Show what the marker symbols mean */
-    xf86ErrorF("Markers: " X_PROBE_STRING " probed, "
-			   X_CONFIG_STRING " from config file, "
-			   X_DEFAULT_STRING " default setting,\n"
-	       "         " X_CMDLINE_STRING " from command line, "
-			   X_NOTICE_STRING " notice, "
-			   X_INFO_STRING " informational,\n"
-	       "         " X_WARNING_STRING " warning, "
-			   X_ERROR_STRING " error, "
-			   X_NOT_IMPLEMENTED_STRING " not implemented, "
-			   X_UNKNOWN_STRING " unknown.\n");
 
     /*
      * now we convert part of the information contained in the parser

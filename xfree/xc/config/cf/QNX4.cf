@@ -1,15 +1,11 @@
-XCOMM platform:  $XFree86: xc/config/cf/QNX4.cf,v 1.3 2000/07/07 20:06:56 tsi Exp $
+XCOMM platform:  $XFree86: xc/config/cf/QNX4.cf,v 1.4 2002/01/07 20:38:18 dawes Exp $
 
 #define StripInstalledPrograms	NO
 #define BuildServer 		YES
 #define DoLoadableServer	NO     /* sorry, are u listenning QSSL? */
 #define BuildLBX  		YES    /* For now */
 #define ExpandManNames		YES
-XCOMM you can only one space (or tab) between ByteOrder and X_LITTLE_ENDIAN
-XCOMM or you will have -DX_BYTE_ORDER=       X_LITTLE_ENDIAN
-XCOMM instead of -DX_BYTE_ORDER=X_LITTLE_ENDIAN 
-XCOMM in the generated Makefile
-#define ByteOrder X_LITTLE_ENDIAN
+#define ByteOrder		X_LITTLE_ENDIAN
 
 #ifndef OSName
 #define OSName 			QNX4
@@ -34,7 +30,11 @@ XCOMM in the generated Makefile
 #undef ArCmd
 #define ArCmd			wlib -b -c -p=256
 #define MkdirHierCmd		mkdir -p
-#define InstallCmd		/usr/X11R6/bin/install.qnx
+#ifdef UseInstalled
+#define InstallCmd		install
+#else
+#define InstallCmd		$(SHELL) $(CONFIGSRC)/util/install.sh
+#endif
 
 #define DefaultCCOptions	-5s -Otx -Wc,-r -b -j -Wc,-ei -N128000 -zp4 -mf
 #define LibraryCCOptions	-5s -Otx -Wc,-r -b -j -Wc,-ei -zp4 -mf
@@ -43,7 +43,7 @@ XCOMM in the generated Makefile
 #define ExtraLibraries		-lsocket -lunix 
 #define CLibrary
 #define PosixLibraries
-#define ConnectionFlags 	-DTCPCONN 
+#define ConnectionFlags 	-DUNIXCONN -DTCPCONN 
 #define CppCmd			/usr/X11R6/bin/cpp
 
 #define HasShadowPasswd		YES
@@ -54,6 +54,14 @@ XCOMM in the generated Makefile
 #define HasPutenv		YES
 #define HasCbrt			NO
 #define HasVarDirectory		NO
+#define HasSnprintf		YES
+#define HasBSD44Sockets		YES
+#define HasPerl			NO
+#define LogDirectory		/usr/adm
+#define XLogFile	XFree86
+
+#define BuildHtmlManPages	NO /* We don't want HTML manpages */
+#define BuildRman		NO
 
 #define AvoidNullMakeCommand    YES
 #define CompressAllFonts        YES
@@ -68,6 +76,8 @@ XCOMM in the generated Makefile
 #define NeedWidePrototypes      NO
 #endif
 
+#define LexCmd			flex -l
+#define LexLib			-lfl
 #define TermcapLibrary		-lncurses
 #ifndef UseStaticTermcapLib
 #define UseStaticTermcapLib     NO

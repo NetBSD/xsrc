@@ -1,4 +1,4 @@
-XCOMM platform:  $XFree86: xc/config/cf/OpenBSD.cf,v 3.54 2001/04/22 16:28:18 herrb Exp $
+XCOMM platform:  $XFree86: xc/config/cf/OpenBSD.cf,v 3.66 2002/01/03 16:33:49 tsi Exp $
 XCOMM
 
 #ifndef OSName
@@ -50,15 +50,10 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #define HasShm          	YES
 #define HasWChar32		YES
 #define HasMkstemp		YES
+#define HasSetProcTitle		YES
 #define HasZlib			YES
 #ifndef HasKrbIV
 #define HasKrbIV		YES
-#endif
-#define HasDlopen		YES
-#ifndef PpcArchitecture
-#  define DlLibrary		/**/
-#else 
-#  define DlLibrary		-ldl
 #endif
 #define HasUsableFileMmap	YES
 
@@ -83,6 +78,35 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #  define HasMktemp		YES
 # else
 #  define HasMktemp		NO
+# endif
+#endif
+
+/* OpenBSD >= 2.8 has setusercontext() */
+#if OSMajorVersion > 2 || (OSMajorVersion == 2 && OSMinorVersion > 7)
+#define HasSetUserContext	YES
+#endif
+
+/* OpenBSD after 2.9 has BSD authentication */
+#if OSMajorVersion > 2 || (OSMajorVersion == 2 && OSMinorVersion >= 9)
+# define HasBSDAuth		YES
+#endif
+
+/* OpenBSD 3.0 has APM with kqueue interface */
+#if OSMajorVersion >= 3
+# define HasApmKqueue		YES
+#endif
+
+/* OpenBSD 3.0 has libusb, next versions have libusbhid */
+#if OSMajorVersion >= 3 
+# define HasLibUsb		YES
+# ifndef HasLibUsbHid
+#  if OSMajorVersion == 3 && OsMinorVersion > 0 || OSMajorVersion > 3
+#   define HasLibUsbHid		YES
+#   define UsbHidLib 		-lusbhid
+#  else
+#   define HasLibUsbHid		NO
+#   define UsbHidLib		-lusb
+#  endif
 # endif
 #endif
 
@@ -115,7 +139,8 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #define DefaultCCOptions 	/**/
 #else
 #  ifdef  PpcArchitecture
-#    define DefaultCCOptions	-ansi -fsigned-char -Dasm=__asm GccWarningOptions
+#    define DefaultCCOptions	-ansi -fsigned-char -Dasm=__asm \
+				GccWarningOptions
 #  else
 #    define DefaultCCOptions 	-ansi -Dasm=__asm GccWarningOptions
 #  endif
@@ -136,6 +161,9 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #define	AdmDir			/var/log
 
 #define HasFlex			YES
+
+/* OpenBSD doesn't have gperf in the base install */
+#define DontRebuildGperfOutput	YES
 
 /*
  * Make & install Features
@@ -302,29 +330,34 @@ install:: fonts.alias							@@\
 #ifdef AlphaArchitecture
 
 # define OptimizedCDebugFlags	-O2
-# define ServerOSDefines 	-DDDXOSINIT
-# define ServerExtraDefines	GccGasOption -D_XSERVER64 -DXFree86Server
 
 # define HasWeakSymbols		NO
 
-# if (OSMajorVersion > 2 || (OSMajorVersion == 2 && OSMinorVersion >= 9))
+# if (OSMajorVersion >= 3)
 #  define UseElfFormat		YES
-# endif
-# if 1
+# else
 #  define HasSharedLibraries	NO
 #  define SharedLibXThrStub	NO
-# else /* NOT YET */
-#  define HasSharedLibraries	YES
 # endif
-
 
 # define XF86Server		NO
 
-# define BuildDPMSLibrary	NO
-# define BuildDPMSExt		NO
+/* Definitions for building the XFree86 server */
+# if XF86Server
+#   define ServerOSDefines	XFree86ServerOSDefines -DDDXTIME -DDDXOSINIT
+#   define ServerExtraDefines	GccGasOption -D_XSERVER64 XFree86ServerDefines
+#   ifndef DoLoadableServer
+#     define DoLoadableServer	YES
+#   endif
+#   ifndef XFree86ConsoleDefines
+#     define XFree86ConsoleDefines -DWSCONS_SUPPORT
+#   endif
 
-# define BuildXF86DGALibrary	NO
-# define BuildXF86DGA		NO
+# endif /* XF86Server */
+
+/* FreeType2 don't work on 64bit machines */
+# define BuildFreetype2Library  NO
+# define BuildXftLibrary	NO
 
 # include <xfree86.cf>
 
@@ -380,7 +413,7 @@ install:: fonts.alias							@@\
 
 
 /* A hack to work around an optimization problem with gcc 2.95.2 */
-# if OSMajorVersion == 2 && OSMinorVersion >= 6 
+# if OSMajorVersion > 2 || (OSMajorVersion == 2 && OSMinorVersion >= 6)
 #  define GccOptBug295
 # endif
 
@@ -581,32 +614,34 @@ install:: fonts.alias							@@\
 # endif
 
 # ifndef XF86Server
-#   define XF86Server		NO
+#   define XF86Server		YES
 # endif
 
 /* Definitions for building the XFree86 server */
 # if XF86Server
 #   define ServerOSDefines	XFree86ServerOSDefines -DDDXTIME -DDDXOSINIT
 #   define ServerExtraDefines	GccGasOption XFree86ServerDefines
-#   if OSMajorVersion > 2 || (OSMajorVersion == 2 && OSMinorVersion >= 8)
-#     ifndef DoLoadableServer
-#       define DoLoadableServer	YES
-#     endif
-#     define DevelDrivers cirrus ati
-      /* Support for USB Mices */
-#     define UsbMouseSupport		YES
-#     include <xfree86.cf>
-
-#   else /* 2.7 and earlier */
-#     include <xf86.rules>
-#     ifndef BuildServer
-#       define BuildServer		NO
-#     endif
-
-#     define HasSharedLibraries	NO
-#     define BuildDynamicLoading	NO
+#   ifndef DoLoadableServer
+#     define DoLoadableServer	YES
 #   endif
+#   ifndef XF86CardDrivers
+#    define XF86CardDrivers	ati mga glint s3virge sis savage\
+				trident chips tdfx \
+				DevelDrivers vga \
+				XF86OSCardDrivers XF86ExtraCardDrivers
+#   endif
+#   ifndef DevelDrivers 
+#    define DevelDrivers nv
+#   endif
+
+    /* Support for USB Mices */
+#   ifndef UsbMouseSupport
+#     define UsbMouseSupport		YES
+#   endif
+
 # endif /* XF86Server */
+
+# include <xfree86.cf>
 
 #endif /* PpcArchitecture */
 
@@ -645,6 +680,32 @@ install:: fonts.alias							@@\
 # include <xfree86.cf>
 
 #endif /* SparcArchitecture */
+
+/*
+ * Definitions for the sparc64 architecture
+ */
+
+#ifdef Sparc64Architecture
+
+# define OptimizedCDebugFlags	-O2
+
+# define HasWeakSymbols		NO
+# define UseElfFormat		YES
+
+# ifndef XF86Server
+#  define XF86Server		NO
+# endif
+
+# define ServerExtraDefines	GccGasOption -D_XSERVER64 XFree86ServerDefines
+# define ServerOSDefines	XFree86ServerOSDefines -DDDXTIME
+
+/* FreeType2 don't work on 64bit machines */
+# define BuildFreetype2Library  NO
+# define BuildXftLibrary	NO
+
+# include <xfree86.cf>
+
+#endif /* Sparc64Architecture */
 
 /* End or architecture specific section */
 
@@ -743,6 +804,19 @@ install:: fonts.alias							@@\
 #  define OSBinaryType			[ELF]
 # else
 #  define OSBinaryType			/**/
+# endif
+#endif
+
+#ifndef HasDlopen
+# define HasDlopen		YES
+#endif
+
+#ifndef DlLibrary
+# if (OSMajorVersion < 3 || OSMajorVersion == 3 && OsMinorVersion == 0)\
+    && UseElfFormat
+#  define DlLibrary -ldl
+# else
+#  define DlLibrary /**/
 # endif
 #endif
 

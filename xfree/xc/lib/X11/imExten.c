@@ -26,6 +26,7 @@ PERFORMANCE OF THIS SOFTWARE.
                                fujiwara@a80.tech.yk.fujitsu.co.jp
 
 ******************************************************************/
+/* $XFree86: xc/lib/X11/imExten.c,v 1.2 2001/10/28 03:32:34 tsi Exp $ */
 
 #include <X11/Xatom.h>
 #define NEED_EVENTS
@@ -75,11 +76,12 @@ _XimIsSupportExt(idx)
     int		 n = XIMNumber(extensions) - 1;
 
     for (i = 0; i < n; i++) {
-	if (extensions[i].idx == idx)
+	if (extensions[i].idx == idx) {
 	    if (extensions[i].is_support)
 		return i;
 	    else
 		break;
+	}
     }
     return -1;
 }

@@ -24,7 +24,7 @@
  * used in advertising or otherwise to promote the sale, use or other dealings
  * in this Software without prior written authorization from Sebastien Marineau.
  *
- * $XFree86: xc/programs/Xserver/hw/xfree86/os-support/qnx4/qnx_mouse.c,v 1.3 2000/02/10 22:33:45 dawes Exp $
+ * $XFree86: xc/programs/Xserver/hw/xfree86/os-support/qnx4/qnx_mouse.c,v 1.4 2002/01/07 20:38:29 dawes Exp $
  */
 
 /* This module contains the qnx-specific functions to access the keyboard
@@ -84,7 +84,6 @@ OsMouseReadInput(InputInfoPtr pInfo)
 			buttons = events[i].buttons; 
 			pMse->PostEvent(pInfo, buttons, col, row, 0, 0);
 			}
-		xf86Info.inputPending = TRUE;
 		}
 	if (!armed) ErrorF("Drained mouse queue, armed = 0??\n");
 	QNX_mouse_event = FALSE;
@@ -180,6 +179,7 @@ int what;
 			mouse_close (QNX_mouse);
 			QNX_mouse = NULL;
 			}
+                pPointer->public.on = FALSE;
 		break;
 	}
 	return (Success);
@@ -189,7 +189,7 @@ static int
 SupportedInterfaces(void)
 {
     /* XXX Need to check this. */
-    return MSE_SERIAL | MSE_BUS | MSE_PS2 | MSE_XPS2 | MSE_AUTO;
+    return MSE_SERIAL | MSE_BUS | MSE_PS2 | MSE_XPS2 | MSE_MISC | MSE_AUTO;
 }
 
 static const char *internalNames[] = {
@@ -224,6 +224,20 @@ DefaultProtocol(void)
 static Bool
 OsMousePreInit(InputInfoPtr pInfo, const char *protocol, int flags)
 {
+    MouseDevPtr pMse;
+
+    /* This is called when the protocol is "OSMouse". */
+
+    pMse = pInfo->private;
+    pMse->protocol = protocol;
+    xf86Msg(X_CONFIG, "%s: Protocol: %s\n", pInfo->name, protocol);
+
+    /* Collect the options, and process the common options. */
+    xf86CollectInputOptions(pInfo, NULL, NULL);
+    xf86ProcessCommonOptions(pInfo, pInfo->options);
+
+    /* Process common mouse options (like Emulate3Buttons, etc). */
+    pMse->CommonOptions(pInfo);
 
     /* Setup the local procs. */
     pInfo->device_control = OsMouseProc;

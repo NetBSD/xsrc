@@ -7,7 +7,7 @@ char rcsId_vmwarecurs[] =
 
     "Id: vmwarecurs.c,v 1.5 2001/01/30 23:33:02 bennett Exp $";
 #endif
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/vmware/vmwarecurs.c,v 1.1 2001/04/05 19:29:44 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/vmware/vmwarecurs.c,v 1.3 2001/09/13 08:36:24 alanh Exp $ */
 
 #include "vmware.h"
 #include "cursorstr.h"
@@ -254,7 +254,7 @@ vmwareMoveCursor(ScreenPtr pScr,
 	    vmwareWriteReg(pVMWARE, SVGA_REG_CURSOR_ID, MOUSE_ID);
 	    vmwareWriteReg(pVMWARE, SVGA_REG_CURSOR_X, x);
 	    vmwareWriteReg(pVMWARE, SVGA_REG_CURSOR_Y, y);
-	    vmwareWriteReg(pVMWARE, SVGA_REG_CURSOR_ON, 1);
+	    vmwareWriteReg(pVMWARE, SVGA_REG_CURSOR_ON, SVGA_CURSOR_ON_SHOW);
 	} else {
 	    vmwareWriteWordToFIFO(pVMWARE, SVGA_CMD_MOVE_CURSOR);
 	    vmwareWriteWordToFIFO(pVMWARE, x);
@@ -404,7 +404,7 @@ vmwareQueryBestSize(class, pwidth, pheight, pScr)
 		*pheight = 64;
 	    break;
 	default:
-	    mfbQueryBestSize(class, pwidth, pheight, pScr);
+	    fbQueryBestSize(class, pwidth, pheight, pScr);
 	    break;
 	}
     }
@@ -418,7 +418,7 @@ vmwareCursorOff(VMWAREPtr pVMWARE)
     if (pVMWARE->cursorDefined) {
 	if (pVMWARE->vmwareCapability & SVGA_CAP_CURSOR_BYPASS) {
 	    vmwareWriteReg(pVMWARE, SVGA_REG_CURSOR_ID, MOUSE_ID);
-	    vmwareWriteReg(pVMWARE, SVGA_REG_CURSOR_ON, 0);
+	    vmwareWriteReg(pVMWARE, SVGA_REG_CURSOR_ON, SVGA_CURSOR_ON_HIDE);
 	} else {
 	    vmwareWriteWordToFIFO(pVMWARE, SVGA_CMD_DISPLAY_CURSOR);
 	    vmwareWriteWordToFIFO(pVMWARE, MOUSE_ID);

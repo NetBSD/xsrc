@@ -1,9 +1,13 @@
-/* $Xorg: ConnDis.c,v 1.7 2000/08/17 19:44:31 cpqbld Exp $ */
+/* $Xorg: ConnDis.c,v 1.8 2001/02/09 02:03:31 xorgcvs Exp $ */
 /*
  
 Copyright 1989, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -20,7 +24,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/X11/ConnDis.c,v 3.18 2001/01/17 19:41:33 dawes Exp $ */
+/* $XFree86: xc/lib/X11/ConnDis.c,v 3.24 2001/12/14 19:53:58 dawes Exp $ */
 
 /* 
  * This file contains operating system dependencies.
@@ -34,7 +38,7 @@ in this Software without prior written authorization from The Open Group.
 #include <stdio.h>
 #include <ctype.h>
 
-#if !defined(WIN32) && !defined(MINIX)
+#if !defined(WIN32)
 #ifndef Lynx
 #include <sys/socket.h>
 #else
@@ -110,7 +114,7 @@ _X11TransConnectDisplay (display_name, fullnamep, dpynump, screenp,
     char *pdpynum = NULL;		/* start of dpynum of display */
     char *pscrnum = NULL;		/* start of screen of display */
     Bool dnet = False;			/* if true, then DECnet format */
-    int idisplay;			/* required display number */
+    int idisplay = 0;			/* required display number */
     int iscreen = 0;			/* optional screen number */
     /*  int (*connfunc)(); */		/* method to create connection */
     int len, hostlen;			/* length tmp variable */
@@ -295,7 +299,9 @@ _X11TransConnectDisplay (display_name, fullnamep, dpynump, screenp,
     }
 #endif
 
+#if defined(LOCALCONN) && defined(TCPCONN)
   connect:
+#endif
     /*
      * This seems kind of backwards, but we need to put the protocol,
      * host, and port back together to pass to _X11TransOpenCOTSClient().
@@ -549,6 +555,13 @@ _XSendClientPrefix (dpy, client, auth_proto, auth_string, prefix)
 #endif
 
 #ifdef SECURE_RPC
+#if defined(sun) && defined(SVR4) /* && ????? */
+/*
+ * I'm aware this is backwards, but #define'ing PORTMAP, as suggested in the
+ * man pages, doesn't work either.
+ */
+#define authdes_seccreate authdes_create
+#endif
 #include <rpc/rpc.h>
 #ifdef ultrix
 #include <time.h>
@@ -557,13 +570,8 @@ _XSendClientPrefix (dpy, client, auth_proto, auth_string, prefix)
 #endif
 
 #ifdef HASXDMAUTH
-#ifdef X_NOT_STDC_ENV
-#define Time_t long
-extern Time_t time ();
-#else
 #include <time.h>
 #define Time_t time_t
-#endif
 #endif
 
 /*

@@ -26,7 +26,7 @@
  * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
  * THIS SOFTWARE.
  */
-/* $XFree86: xc/lib/font/Type1/regions.c,v 3.5 2001/01/17 19:43:23 dawes Exp $ */
+/* $XFree86: xc/lib/font/Type1/regions.c,v 3.7 2001/08/27 19:49:53 dawes Exp $ */
  /* REGIONS  CWEB         V0023 LOTS                                 */
 /*
 :h1 id=regions.REGIONS Module - Regions Operator Handler
@@ -139,14 +139,14 @@ set.  The flag is used to optimize some paths.
 Infinity is the complement of a null area:
 Note - removed the refcount = 1 init, replaced with references = 2 3-26-91 PNM
 */
-static struct region infinity = { REGIONTYPE,
+static struct region _infinity = { REGIONTYPE,
                            ISCOMPLEMENT(ON)+ISINFINITE(ON)+ISPERMANENT(ON)+ISIMMORTAL(ON), 2,
                            {0, 0}, {0, 0},
                            0, 0, 0, 0,
                            NULL, NULL,
                            0, 0, 0, 0, 0, NULL, NULL,
                            NULL, 0, NULL, NULL };
-struct region *TT_INFINITY = &infinity;
+struct region *TT_INFINITY = &_infinity;
  
 /*
 :h4."EmptyRegion" - A Region Structure with Zero Area
@@ -254,7 +254,7 @@ struct region *
 CopyRegion(struct region *area)        /* region to duplicate                */
 {
         register struct region *r;  /* output region built here              */
-        register struct edgelist *last;  /* loop variable                    */
+        register struct edgelist *last = NULL;  /* loop variable             */
         register struct edgelist *p,*newp;  /* loop variables                */
  
         r = (struct region *)Allocate(sizeof(struct region), area, 0);
@@ -396,7 +396,7 @@ an even number of edges; of course, we abort if we don't.
 static void
 Unwind(struct edgelist *area)   /* input area modified in place              */
 {
-       register struct edgelist *last,*next;  /* struct before and after current one */
+       register struct edgelist *last = NULL,*next;  /* struct before and after current one */
        register int y;       /* ymin of current swath                        */
        register int count,newcount;  /* winding count registers              */
  
@@ -962,7 +962,7 @@ splitedge(struct edgelist *list, /* area to split                            */
 	  pel y)             /* Y value to split list at                     */
 {
        register struct edgelist *new;  /* anchor for newly built list        */
-       register struct edgelist *last;  /* end of newly built list           */
+       register struct edgelist *last = NULL;  /* end of newly built list    */
        register struct edgelist *r;  /* temp pointer to new structure        */
        register struct edgelist *lastlist;  /* temp pointer to last 'list' value */
  
@@ -1057,7 +1057,7 @@ swathxsort(struct edgelist *before0,  /* edge before this swath              */
 {
        register struct edgelist *before;
        register struct edgelist *after;
-       register pel y;
+       register pel y = 0;
  
        before = before0;
        after = before->link;

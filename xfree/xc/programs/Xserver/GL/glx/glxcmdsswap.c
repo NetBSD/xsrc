@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/GL/glx/glxcmdsswap.c,v 1.5 2001/03/21 16:29:36 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/GL/glx/glxcmdsswap.c,v 1.7 2002/01/14 22:47:08 tsi Exp $ */
 /*
 ** License Applicability. Except to the extent portions of this file are
 ** made subject to an alternative license as permitted in the SGI Free
@@ -58,7 +58,6 @@
 
 int __glXSwapCreateContext(__GLXclientState *cl, GLbyte *pc)
 {
-    ClientPtr client = cl->client;
     xGLXCreateContextReq *req = (xGLXCreateContextReq *) pc;
     __GLX_DECLARE_SWAP_VARIABLES;
 
@@ -73,7 +72,6 @@ int __glXSwapCreateContext(__GLXclientState *cl, GLbyte *pc)
 
 int __glXSwapDestroyContext(__GLXclientState *cl, GLbyte *pc)
 {
-    ClientPtr client = cl->client;
     xGLXDestroyContextReq *req = (xGLXDestroyContextReq *) pc;
     __GLX_DECLARE_SWAP_VARIABLES;
 
@@ -85,7 +83,6 @@ int __glXSwapDestroyContext(__GLXclientState *cl, GLbyte *pc)
 
 int __glXSwapMakeCurrent(__GLXclientState *cl, GLbyte *pc)
 {
-    ClientPtr client = cl->client;
     xGLXMakeCurrentReq *req = (xGLXMakeCurrentReq *) pc;
     __GLX_DECLARE_SWAP_VARIABLES;
 
@@ -99,7 +96,6 @@ int __glXSwapMakeCurrent(__GLXclientState *cl, GLbyte *pc)
 
 int __glXSwapIsDirect(__GLXclientState *cl, GLbyte *pc)
 {
-    ClientPtr client = cl->client;
     xGLXIsDirectReq *req = (xGLXIsDirectReq *) pc;
     __GLX_DECLARE_SWAP_VARIABLES;
 
@@ -111,7 +107,6 @@ int __glXSwapIsDirect(__GLXclientState *cl, GLbyte *pc)
 
 int __glXSwapQueryVersion(__GLXclientState *cl, GLbyte *pc)
 {
-    ClientPtr client = cl->client;
     xGLXQueryVersionReq *req = (xGLXQueryVersionReq *) pc;
     __GLX_DECLARE_SWAP_VARIABLES;
 
@@ -124,7 +119,6 @@ int __glXSwapQueryVersion(__GLXclientState *cl, GLbyte *pc)
 
 int __glXSwapWaitGL(__GLXclientState *cl, GLbyte *pc)
 {
-    ClientPtr client = cl->client;
     xGLXWaitGLReq *req = (xGLXWaitGLReq *) pc;
     __GLX_DECLARE_SWAP_VARIABLES;
 
@@ -136,7 +130,6 @@ int __glXSwapWaitGL(__GLXclientState *cl, GLbyte *pc)
 
 int __glXSwapWaitX(__GLXclientState *cl, GLbyte *pc)
 {
-    ClientPtr client = cl->client;
     xGLXWaitXReq *req = (xGLXWaitXReq *) pc;
     __GLX_DECLARE_SWAP_VARIABLES;
 
@@ -148,7 +141,6 @@ int __glXSwapWaitX(__GLXclientState *cl, GLbyte *pc)
 
 int __glXSwapCopyContext(__GLXclientState *cl, GLbyte *pc)
 {
-    ClientPtr client = cl->client;
     xGLXCopyContextReq *req = (xGLXCopyContextReq *) pc;
     __GLX_DECLARE_SWAP_VARIABLES;
 
@@ -171,6 +163,7 @@ int __glXSwapGetVisualConfigs(__GLXclientState *cl, GLbyte *pc)
     unsigned int screen;
     int i, p;
     __GLX_DECLARE_SWAP_VARIABLES;
+    __GLX_DECLARE_SWAP_ARRAY_VARIABLES;
 
     __GLX_SWAP_INT(&req->screen);
     screen = req->screen;
@@ -249,7 +242,6 @@ int __glXSwapGetVisualConfigs(__GLXclientState *cl, GLbyte *pc)
 
 int __glXSwapCreateGLXPixmap(__GLXclientState *cl, GLbyte *pc)
 {
-    ClientPtr client = cl->client;
     xGLXCreateGLXPixmapReq *req = (xGLXCreateGLXPixmapReq *) pc;
     __GLX_DECLARE_SWAP_VARIABLES;
 
@@ -264,7 +256,6 @@ int __glXSwapCreateGLXPixmap(__GLXclientState *cl, GLbyte *pc)
 
 int __glXSwapDestroyGLXPixmap(__GLXclientState *cl, GLbyte *pc)
 {
-    ClientPtr client = cl->client;
     xGLXDestroyGLXPixmapReq *req = (xGLXDestroyGLXPixmapReq *) pc;
     __GLX_DECLARE_SWAP_VARIABLES;
 
@@ -276,7 +267,6 @@ int __glXSwapDestroyGLXPixmap(__GLXclientState *cl, GLbyte *pc)
 
 int __glXSwapSwapBuffers(__GLXclientState *cl, GLbyte *pc)
 {
-    ClientPtr client = cl->client;
     xGLXSwapBuffersReq *req = (xGLXSwapBuffersReq *) pc;
     __GLX_DECLARE_SWAP_VARIABLES;
 
@@ -289,7 +279,6 @@ int __glXSwapSwapBuffers(__GLXclientState *cl, GLbyte *pc)
 
 int __glXSwapUseXFont(__GLXclientState *cl, GLbyte *pc)
 {
-    ClientPtr client = cl->client;
     xGLXUseXFontReq *req = (xGLXUseXFontReq *) pc;
     __GLX_DECLARE_SWAP_VARIABLES;
 
@@ -306,7 +295,6 @@ int __glXSwapUseXFont(__GLXclientState *cl, GLbyte *pc)
 
 int __glXSwapQueryExtensionsString(__GLXclientState *cl, GLbyte *pc)
 {
-    ClientPtr client = cl->client;
     xGLXQueryExtensionsStringReq *req = NULL;
     __GLX_DECLARE_SWAP_VARIABLES;
 
@@ -318,7 +306,6 @@ int __glXSwapQueryExtensionsString(__GLXclientState *cl, GLbyte *pc)
 
 int __glXSwapQueryServerString(__GLXclientState *cl, GLbyte *pc)
 {
-    ClientPtr client = cl->client;
     xGLXQueryServerStringReq *req = (xGLXQueryServerStringReq *)pc;
     __GLX_DECLARE_SWAP_VARIABLES;
 
@@ -331,7 +318,6 @@ int __glXSwapQueryServerString(__GLXclientState *cl, GLbyte *pc)
 
 int __glXSwapClientInfo(__GLXclientState *cl, GLbyte *pc)
 {
-    ClientPtr client = cl->client;
     xGLXClientInfoReq *req = (xGLXClientInfoReq *)pc;
     __GLX_DECLARE_SWAP_VARIABLES;
 
@@ -345,7 +331,6 @@ int __glXSwapClientInfo(__GLXclientState *cl, GLbyte *pc)
 
 int __glXSwapQueryContextInfoEXT(__GLXclientState *cl, char *pc)
 {
-    ClientPtr client = cl->client;
     xGLXQueryContextInfoEXTReq *req = (xGLXQueryContextInfoEXTReq *) pc;
     __GLX_DECLARE_SWAP_VARIABLES;
 
@@ -393,6 +378,7 @@ void glxSwapQueryExtensionsStringReply(ClientPtr client,
 {
     int length = reply->length;
     __GLX_DECLARE_SWAP_VARIABLES;
+    __GLX_DECLARE_SWAP_ARRAY_VARIABLES;
     __GLX_SWAP_SHORT(&reply->sequenceNumber);
     __GLX_SWAP_INT(&reply->length);
     __GLX_SWAP_INT(&reply->n);
@@ -419,6 +405,7 @@ void __glXSwapQueryContextInfoEXTReply(ClientPtr client, xGLXQueryContextInfoEXT
 {
     int length = reply->length;
     __GLX_DECLARE_SWAP_VARIABLES;
+    __GLX_DECLARE_SWAP_ARRAY_VARIABLES;
     __GLX_SWAP_SHORT(&reply->sequenceNumber);
     __GLX_SWAP_INT(&reply->length);
     __GLX_SWAP_INT(&reply->n);
@@ -465,7 +452,7 @@ int __glXSwapRender(__GLXclientState *cl, GLbyte *pc)
     pc += sz_xGLXRenderReq;
     left = (req->length << 2) - sz_xGLXRenderReq;
     while (left > 0) {
-        __GLXrenderSizeData *entry, renderEntry;
+        __GLXrenderSizeData *entry;
         int extra;
 	void (* proc)(GLbyte *);
 
@@ -581,7 +568,7 @@ int __glXSwapRenderLarge(__GLXclientState *cl, GLbyte *pc)
     pc += sz_xGLXRenderLargeReq;
     
     if (cl->largeCmdRequestsSoFar == 0) {
-	__GLXrenderSizeData *entry, renderEntry;
+	__GLXrenderSizeData *entry;
 	int extra;
 	size_t cmdlen;
 	/*

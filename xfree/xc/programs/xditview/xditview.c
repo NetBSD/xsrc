@@ -28,7 +28,7 @@ other dealings in this Software without prior written authorization
 from the X Consortium.
 
 */
-/* $XFree86: xc/programs/xditview/xditview.c,v 1.2 2000/05/11 18:14:41 tsi Exp $ */
+/* $XFree86: xc/programs/xditview/xditview.c,v 1.4 2001/08/27 23:35:12 dawes Exp $ */
 /*
  * xditview -- 
  *
@@ -58,11 +58,7 @@ from the X Consortium.
 #include "xdit.bm"
 #include "xdit_mask.bm"
 #include <stdio.h>
-
-#ifndef sgi			/* SGI declares popen() in stdio.h */
-extern FILE *popen();
-#endif
-extern void exit();
+#include <stdlib.h>
 
 /* Command line options table.  Only resources are entered here...there is a
    pass over the remaining options after XtParseCommand is let loose. */
@@ -77,13 +73,14 @@ static XrmOptionDescRec options[] = {
 static char	current_file_name[1024];
 static FILE	*current_file;
 
+static void MakePrompt(Widget, char *, void (*)(char *), char *);
+
 /*
  * Report the syntax for calling xditview.
  */
 
-static
-Syntax(call)
-	char *call;
+static void
+Syntax(char *call)
 {
 	(void) printf ("Usage: %s [-fg <color>] [-bg <color>]\n", call);
 	(void) printf ("       [-bd <color>] [-bw <pixels>] [-help]\n");
@@ -93,10 +90,10 @@ Syntax(call)
 	exit(1);
 }
 
-static void	NewResolution ();
-static void	NewFile ();
-static void	DisplayPageNumber ();
-static void	VisitFile ();
+static void	NewResolution (char *resString);
+static void	NewFile (char *name);
+static void	DisplayPageNumber (void);
+static void	VisitFile (char *name, Boolean resetPage);
 static Widget	toplevel, paned, porthole, dvi;
 #ifdef NOTDEF
 static Widget	form, panner;
@@ -106,49 +103,60 @@ static Widget	menuBar;
 static Widget	fileMenuButton, fileMenu;
 static Widget	prevButton, pageNumber, nextButton;
 
-static void	NextPage(), PreviousPage(), SetResolution ();
-static void	OpenFile(), RevisitFile (), Quit();
+static void	NextPage(Widget entry, XtPointer name, XtPointer data);
+static void	PreviousPage(Widget entry, XtPointer name, XtPointer data);
+static void	SetResolution(Widget entry, XtPointer name, XtPointer data);
+static void	OpenFile(Widget entry, XtPointer name, XtPointer data);
+static void	RevisitFile(Widget entry, XtPointer name, XtPointer data);
+static void	Quit(Widget entry, XtPointer closure, XtPointer data);
 
 struct menuEntry {
     char    *name;
-    void    (*function)();
+    void    (*function)(Widget entry, XtPointer name, XtPointer data);
 };
 
 static struct menuEntry popupMenuEntries[] = {
-    "nextPage",	    NextPage,
-    "previousPage", PreviousPage,
-    "setResolution",SetResolution,
-    "openFile",	    OpenFile,
-    "revisitFile",  RevisitFile,
-    "quit",	    Quit,
+    { "nextPage",	    NextPage },
+    { "previousPage",	    PreviousPage },
+    { "setResolution",	    SetResolution },
+    { "openFile",	    OpenFile },
+    { "revisitFile",	    RevisitFile },
+    { "quit",		    Quit }
 };
 
 static struct menuEntry fileMenuEntries[] = {
-    "openFile",	    OpenFile,
-    "revisitFile",  RevisitFile,
-    "setResolution",SetResolution,
-    "quit",	    Quit,
+    { "openFile",	    OpenFile },
+    { "revisitFile",	    RevisitFile },
+    { "setResolution",	    SetResolution },
+    { "quit",		    Quit }
 };
 
-static void	NextPageAction(), PreviousPageAction(), SetResolutionAction();
-static void	OpenFileAction(), RevisitFileAction (), QuitAction();
-static void	AcceptAction(), CancelAction();
-static void	UpdatePageNumber (), Noop ();
+static void	NextPageAction(Widget, XEvent *, String *, Cardinal *);
+static void	PreviousPageAction(Widget, XEvent *, String *, Cardinal *);
+static void	SetResolutionAction(Widget, XEvent *, String *, Cardinal *);
+static void	OpenFileAction(Widget, XEvent *, String *, Cardinal *);
+static void	RevisitFileAction(Widget, XEvent *, String *, Cardinal *);
+static void	QuitAction(Widget, XEvent *, String *, Cardinal *);
+static void	AcceptAction(Widget, XEvent *, String *, Cardinal *);
+static void	CancelAction(Widget, XEvent *, String *, Cardinal *);
+static void	UpdatePageNumber(Widget, XEvent *, String *, Cardinal *);
+static void	Noop(Widget, XEvent *, String *, Cardinal *);
 
 XtActionsRec xditview_actions[] = {
-    "NextPage",	    NextPageAction,
-    "PreviousPage", PreviousPageAction,
-    "SetResolution",SetResolutionAction,
-    "OpenFile",	    OpenFileAction,
-    "Quit",	    QuitAction,
-    "Accept",	    AcceptAction,
-    "Cancel",	    CancelAction,
-    "SetPageNumber",UpdatePageNumber,
-    "Noop",	    Noop,
+    { "NextPage",	    NextPageAction },
+    { "PreviousPage",	    PreviousPageAction },
+    { "SetResolution",	    SetResolutionAction },
+    { "OpenFile",	    OpenFileAction },
+    { "Quit",		    QuitAction },
+    { "Accept",		    AcceptAction },
+    { "Cancel",		    CancelAction },
+    { "SetPageNumber",	    UpdatePageNumber },
+    { "Noop",		    Noop }
 };
 
 static Atom wm_delete_window;
 
+#ifdef NOTDEF
 /*	Function Name: PannerCallback
  *	Description: called when the panner has moved.
  *	Arguments: panner - the panner widget.
@@ -158,10 +166,8 @@ static Atom wm_delete_window;
  */
 
 /* ARGSUSED */
-void 
-PannerCallback(w, closure, report_ptr)
-Widget w;
-XtPointer closure, report_ptr;
+static void 
+PannerCallback(Widget w, XtPointer closure, XtPointer report_ptr)
 {
     Arg args[2];
     XawPannerReport *report = (XawPannerReport *) report_ptr;
@@ -184,10 +190,8 @@ XtPointer closure, report_ptr;
  */
 
 /* ARGSUSED */
-void 
-PortholeCallback(w, panner_ptr, report_ptr)
-Widget w;
-XtPointer panner_ptr, report_ptr;
+static void 
+PortholeCallback(Widget w, XtPointer panner_ptr, XtPointer report_ptr)
 {
     Arg args[10];
     Cardinal n = 0;
@@ -204,11 +208,10 @@ XtPointer panner_ptr, report_ptr;
     }
     XtSetValues (panner, args, n);
 }
+#endif
 
 int
-main(argc, argv)
-    int argc;
-    char **argv;
+main(int argc, char **argv)
 {
     char	    *file_name = 0;
     int		    i;
@@ -337,7 +340,7 @@ DisplayPageNumber ()
 }
 
 static void
-SetPageNumber (number)
+SetPageNumber (int number)
 {
     Arg	arg[1];
 
@@ -347,7 +350,7 @@ SetPageNumber (number)
 }
 
 static void
-UpdatePageNumber ()
+UpdatePageNumber (Widget w, XEvent *xev, String *s, Cardinal *c)
 {
     char    *string;
     Arg	    arg[1];
@@ -372,9 +375,7 @@ char	*resString;
 }
 
 static void
-VisitFile (name, resetPage)
-char	    *name;
-Boolean	    resetPage;
+VisitFile (char *name, Boolean resetPage)
 {
     Arg	    arg[3];
     char    *n;
@@ -431,8 +432,8 @@ char	*name;
 static char fileBuf[1024];
 static char resolutionBuf[1024];
 
-ResetMenuEntry (entry)
-    Widget  entry;
+static void
+ResetMenuEntry (Widget entry)
 {
     Arg	arg[1];
 
@@ -444,14 +445,14 @@ ResetMenuEntry (entry)
 static void
 NextPage (entry, name, data)
     Widget  entry;
-    caddr_t name, data;
+    XtPointer name, data;
 {
-    NextPageAction();
+    NextPageAction(entry, NULL, NULL, NULL);
     ResetMenuEntry (entry);
 }
 
 static void
-NextPageAction ()
+NextPageAction (Widget w, XEvent *xev, String *s, Cardinal *c)
 {
     Arg	args[1];
     int	number;
@@ -465,14 +466,14 @@ NextPageAction ()
 static void
 PreviousPage (entry, name, data)
     Widget  entry;
-    caddr_t name, data;
+    XtPointer name, data;
 {
-    PreviousPageAction ();
+    PreviousPageAction (entry, NULL, NULL, NULL);
     ResetMenuEntry (entry);
 }
 
 static void
-PreviousPageAction ()
+PreviousPageAction (Widget w, XEvent *xev, String *s, Cardinal *c)
 {
     Arg	args[1];
     int	number;
@@ -486,14 +487,14 @@ PreviousPageAction ()
 static void
 SetResolution (entry, name, data)
     Widget  entry;
-    caddr_t name, data;
+    XtPointer name, data;
 {
-    SetResolutionAction ();
+    SetResolutionAction (entry, NULL, NULL, NULL);
     ResetMenuEntry (entry);
 }
 
 static void
-SetResolutionAction ()
+SetResolutionAction (Widget w, XEvent *xev, String *s, Cardinal *c)
 {
     Arg	    args[1];
     int	    cur;
@@ -508,14 +509,14 @@ SetResolutionAction ()
 static void
 OpenFile (entry, name, data)
     Widget  entry;
-    caddr_t name, data;
+    XtPointer name, data;
 {
-    OpenFileAction ();
+    OpenFileAction (entry, NULL, NULL, NULL);
     ResetMenuEntry (entry);
 }
 
 static void
-OpenFileAction ()
+OpenFileAction (Widget w, XEvent *xev, String *s, Cardinal *c)
 {
     if (current_file_name[0])
 	strcpy (fileBuf, current_file_name);
@@ -528,14 +529,14 @@ OpenFileAction ()
 static void
 RevisitFile (entry, name, data)
     Widget  entry;
-    caddr_t name, data;
+    XtPointer name, data;
 {
-    RevisitFileAction ();
+    RevisitFileAction (entry, NULL, NULL, NULL);
     ResetMenuEntry (entry);
 }
 
 static void
-RevisitFileAction ()
+RevisitFileAction (Widget w, XEvent *xev, String *s, Cardinal *c)
 {
     if (current_file_name[0])
 	VisitFile (current_file_name, FALSE);
@@ -545,19 +546,19 @@ RevisitFileAction ()
 static void
 Quit (entry, closure, data)
     Widget  entry;
-    caddr_t closure, data;
+    XtPointer closure, data;
 {
-    QuitAction ();
+    QuitAction (entry, NULL, NULL, NULL);
 }
 
 static void
-QuitAction ()
+QuitAction (Widget w, XEvent *xev, String *s, Cardinal *c)
 {
     exit (0);
 }
 
 Widget	promptShell, promptDialog;
-void	(*promptfunction)();
+void	(*promptfunction)(char *);
 
 /* ARGSUSED */
 static
@@ -588,14 +589,15 @@ void AcceptAction (widget, event, params, num_params)
 }
 
 static
-void Noop ()
+void Noop (Widget w, XEvent *xev, String *s, Cardinal *c)
 {
 }
 
+static void
 MakePrompt(centerw, prompt, func, def)
 Widget	centerw;
 char *prompt;
-void (*func)();
+void (*func)(char *);
 char	*def;
 {
     static Arg dialogArgs[] = {
@@ -617,8 +619,8 @@ char	*def;
     dialogArgs[1].value = (XtArgVal)def;
     promptDialog = XtCreateManagedWidget( "promptDialog", dialogWidgetClass,
 		    promptShell, dialogArgs, XtNumber (dialogArgs));
-    XawDialogAddButton(promptDialog, "accept", NULL, (caddr_t) 0);
-    XawDialogAddButton(promptDialog, "cancel", NULL, (caddr_t) 0);
+    XawDialogAddButton(promptDialog, "accept", NULL, NULL);
+    XawDialogAddButton(promptDialog, "cancel", NULL, NULL);
     valueWidget = XtNameToWidget (promptDialog, "value");
     if (valueWidget) {
     	XtSetArg (valueArgs[0], XtNresizable, TRUE);

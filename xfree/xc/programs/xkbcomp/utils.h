@@ -27,7 +27,7 @@
    * used in advertising or publicity pertaining to distribution of the 
    * software without specific, written prior permission.
   \*/
-/* $XFree86: xc/programs/xkbcomp/utils.h,v 3.3 2001/01/17 23:45:45 dawes Exp $ */
+/* $XFree86: xc/programs/xkbcomp/utils.h,v 3.4 2001/07/25 15:05:24 dawes Exp $ */
 
 /***====================================================================***/
 
@@ -36,9 +36,7 @@
 #include	<X11/Xfuncproto.h>
 #include	<X11/Xfuncs.h>
 
-#ifndef	NULL
-#define	NULL	0
-#endif
+#include <stddef.h>
 
 #ifndef NUL
 #define	NUL	'\0'

@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/config/cf/lnxdoc.rules,v 3.22 2000/12/18 02:43:27 dawes Exp $
+XCOMM $XFree86: xc/config/cf/lnxdoc.rules,v 3.26 2001/12/19 23:07:24 dawes Exp $
 XCOMM
 XCOMM Rules for formatting Linuxdoc-SGML documentation
 XCOMM
@@ -93,22 +93,26 @@ update.docs:: textfile							@@\
 		echo "\$$XFree86\$$" >> dstdir/textfile; \		@@\
 	    else \							@@\
 		$(RM) __tmp1__ __tmp2__; \				@@\
-		grep "Generated from XFree86:" textfile > __tmp1__; \	@@\
-		grep "Generated from XFree86:" dstdir/textfile > __tmp2__; \	@@\
-		if diff __tmp1__ __tmp2__ > /dev/null 2>&1; then :; \	@@\
+		fgrep -v "\$$XFree86:" textfile > __tmp1__; \		@@\
+		fgrep -v "\$$XFree86:" dstdir/textfile > __tmp2__; \	@@\
+		if diff -B __tmp1__ __tmp2__ > /dev/null 2>&1; then :; \	@@\
 		else set -x; \						@@\
 			if [ "$(FOLLOWLINK)" = no ]; then \		@@\
 				$(RM) dstdir/textfile; \		@@\
 			fi; \						@@\
 			cp textfile dstdir/textfile ; \			@@\
 			echo "" >> dstdir/textfile; \			@@\
-			echo "\$$XFree86\$$" >> dstdir/textfile; \	@@\
+			echo "\$$XFree86"": \$$" >> dstdir/textfile; \	@@\
 		fi; \							@@\
 	    fi; \							@@\
 	fi								@@\
 	@$(RM) __tmp1__ __tmp2__
 #endif
 
+/*
+ * Avoid using LinuxDocTargetLong with base != sgmlfile because HTML
+ * index generation assumes that base == sgmlfile.
+ */
 #define LinuxDocTargetLong(sgmlfile,textfile,base)			@@\
 LinuxDocSgmlToText(sgmlfile,textfile)					@@\
 LinuxDocSgmlToHtml(sgmlfile,base)					@@\

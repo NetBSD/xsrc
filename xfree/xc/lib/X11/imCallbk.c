@@ -32,7 +32,7 @@ PERFORMANCE OF THIS SOFTWARE.
 		 	     makoto@sm.sony.co.jp
 				
 ***********************************************************************/
-/* $XFree86: xc/lib/X11/imCallbk.c,v 3.5 2001/01/17 19:41:51 dawes Exp $ */
+/* $XFree86: xc/lib/X11/imCallbk.c,v 3.7 2001/08/18 02:41:28 dawes Exp $ */
 
 #include "Xlibint.h"
 #include "Xlcint.h"
@@ -90,7 +90,6 @@ typedef XimCbStatus (*XimCb)(
 #define _XimFlushData(im) im->private.proto.flush((im))
 
 #if NeedFunctionPrototypes
-Public Bool _XimCbDispatch(Xim xim, INT16 len, XPointer data, XPointer call_data);
 Private XimCbStatus _XimGeometryCallback(Xim, Xic, char*, int);
 Private XimCbStatus _XimStrConversionCallback(Xim, Xic, char*, int);
 Private XimCbStatus _XimPreeditStartCallback(Xim, Xic, char*, int);
@@ -117,15 +116,10 @@ Private XimCbStatus _XimStatusDrawCallback();
 Private XimCbStatus _XimPreeditStateNotifyCallback();
 #endif /* NeedFunctionPrototypes */
 
-#ifdef __STDC__
-#define Const const
-#else
-#define Const /**/
-#endif
 #if defined(__STDC__) && ((defined(sun) && defined(SVR4)) || defined(WIN32))
 #define RConst /**/
 #else
-#define RConst Const
+#define RConst const
 #endif
 
 /* NOTE:

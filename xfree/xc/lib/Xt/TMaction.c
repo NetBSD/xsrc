@@ -1,4 +1,4 @@
-/* $Xorg: TMaction.c,v 1.4 2000/08/17 19:46:18 cpqbld Exp $ */
+/* $Xorg: TMaction.c,v 1.5 2001/02/09 02:03:58 xorgcvs Exp $ */
 /*LINTLIBRARY*/
 
 /***********************************************************
@@ -38,7 +38,11 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 Copyright 1987, 1988, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -55,6 +59,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
+/* $XFree86: xc/lib/Xt/TMaction.c,v 3.7 2001/12/14 19:56:30 dawes Exp $ */
 
 /* TMaction.c -- maintains the state table of actions for the translation 
  *              manager.
@@ -588,8 +593,8 @@ void _XtBindActions(widget, tm)
     int				globalUnbound = 0;
     Cardinal 			i;
     TMBindData			bindData = (TMBindData)tm->proc_table;
-    TMSimpleBindProcs		simpleBindProcs;
-    TMComplexBindProcs 		complexBindProcs;
+    TMSimpleBindProcs		simpleBindProcs = NULL;
+    TMComplexBindProcs 		complexBindProcs = NULL;
     XtActionProc		*newProcs;
     Widget			bindWidget;
 

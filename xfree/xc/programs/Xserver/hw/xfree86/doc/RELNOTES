@@ -1,23 +1,23 @@
-                     Release Notes for XFree86[tm] 4.1.0
+                     Release Notes for XFree86[tm] 4.2.0
 
                           The XFree86 Project, Inc
 
-                              17 December 2000
+                               17 January 2002
 
                                   Abstract
 
-     This document contains some information about the features present
-     in XFree86 4.1.0 and their status.
+     This document contains some information about features present in
+     XFree86 4.2.0 and their status.
 
 1.  Introduction to the 4.x Release Series
 
 XFree86 4.0 was the first official release of the new XFree86 4 series.  The
-current release (4.1.0) is the latest in that series.  XFree86 4 represents a
+current release (4.2.0) is the latest in that series.  XFree86 4 represents a
 significant redesign of the XFree86 X server.  Not all of the hardware
 drivers from 3.3.x have been ported to 4.x yet, but conversely, 4.x has some
 hardware support not present in 3.3.x.  Our Driver Status document summarizes
-how the hardware driver support compares between 3.3.6 and 4.1.0.  Please
-check there first before downloading 4.1.0.
+how the hardware driver support compares between 3.3.6 and 4.2.0.  Please
+check there first before downloading 4.2.0.
 
 The 4.0.1 release introduced a new graphical configuration tool, "xf86cfg",
 and a text mode interface was added to it for the 4.0.2 release.  It is work
@@ -28,7 +28,7 @@ built-in to the X server.  It is included in the release, and it works well
 for some hardware.  To try it out, just run (as root) "XFree86 -configure".
 Each of these configuration options will give you a reasonable starting point
 for a suitable configuration file.  We've put some effort into documenting
-the 4.1.0 config file format, and you can find that information in the
+the 4.2.0 config file format, and you can find that information in the
 XF86Config manual page. Check that, the driver manual pages and the related
 documentation for further information.
 
@@ -37,260 +37,197 @@ release, please have a quick read through the Installation Document.  It may
 save you some time and help you figure out which of the binary releases you
 need.
 
-The next section describes what is new in the latest version (4.1.0).  The
-other sections below describe some of the new features and changes between
-3.3.x and 4.0.  There are lot's of new features, and we definitely don't have
-enough space to cover them all here.
+The next section describes what is new in the latest version (4.2.0) compared
+with the previous full release (4.1.0).  The other sections below describe
+some of the new features and changes between 3.3.x and 4.0.  There are lot's
+of new features, and we definitely don't have enough space to cover them all
+here.
 
-2.  Summary of new features in 4.1.0.
+2.  Summary of new features in 4.2.0.
 
-2.1  X server
+2.1  Video Driver Enhancements
 
-   o Darwin/Mac OS X is now supported on PowerPC and Intel/x86.  The X server
-     runs from the console or in cooperation with the Mac OS X Aqua GUI.  The
-     X server for this platform is called "XDarwin", and its installation and
-     configuration is different from the "XFree86" server used on other plat-
-     forms.  Please read the XFree86 on Darwin and Mac OS X document for fur-
-     ther information.
+   o  An s3 driver is added, which provides support for many of the older
+     non-ViRGE and non-Savage S3 chipsets.
 
-   o Mesa has been updated to the 3.4 stable release.
+   o  Some vmware driver problems are fixed, and the driver is updated to
+     take advantage of VMWare Workstation 3.0 features.  These include
+     improved hardware cursor handling and support for 8 bit emulation.
 
-   o A driver for ATI Radeon adapters has been added.
+   o  Support added for Trident *BladeXP chipsets (currently not-acceler-
+     ated).
 
-   o ATI driver support for multi-head configurations and non-Intel platforms
-     has been improved.
+   o  Xv support added for Trident TGUI series chips (not 9440 though).
 
-   o The ATI driver has been changed to invoke the appropriate driver for any
-     Rage 128 and Radeon adapters that it finds in the system.
+   o  Support added for the older Trident chipsets again for ISA/VLBus (not
+     tested)
 
-   o A driver (i128) for Number Nine chipsets has been added.
+   o  Support added to the glint driver for 3DLabs Permedia4, GLINT R4 and
+     Gamma 2 chipsets.
 
-   o A driver (savage) for S3 Savage chipsets has been added.
+   o  Support added to the i810 driver for Intel i830 (tested on Linux only).
 
-   o A driver (siliconmotion) for some Silicon Motion chipsets has been
-     added.
+   o  Support added to the ATI radeon driver for Radeon 7500 (2D and 3D),
+     Radeon 8500 (2D only), and Rage128ProII.
 
-   o The driver (ark) for Ark Logic chips has been ported to 4.x.
+   o  Support added for the Matrox G550 support.  This included dual-head
+     support.
 
-   o A VESA driver has been added.
+   o  Support added for NVIDIA nForce integrated graphics.
 
-   o A driver for SGI newport cards has been added (Linux/mips).
+   o  The NVIDIA nv driver now has preliminary powerpc support for the NV11
+     and NV20.
 
-   o The trident driver has lots of fixes to the CyberBlade/Blade support,
-     XVideo support for the Image/Blade series (although scaling doesn't work
-     yet on the Image series).
+   o  Support added to the NVIDIA nv driver for interlaced modes on hardware
+     that supports this, and support for resolutions higher than 1600x1200.
 
-   o The s3virge driver has stabilized ViRGE GX2 support, includes ViRGE DX
-     and ViRGE support for XVideo YUV images, and various fixes.
+   o  Fixes for the savage driver on 64-bit platforms, XVideo support for the
+     SuperSavage, and other savage driver updates.
 
-   o The 3Dlabs (glint) driver now has Permedia3 support.
+   o  The ATI r128 driver now uses the CCE DMA engine for 2D acceleration
+     when direct rendering is enabled, which reduces context switching over-
+     head and improves stability and performance for XVideo and some 2D oper-
+     ations.
 
-   o The SiS driver has had many updates, and XVideo support for the 630 is
-     included.
+   o  The fbdev driver now supports rotation.
 
-   o The NVIDIA (nv) driver has been updated to include support for the
-     GeForce2, and line acceleration has been added.  Also, DDC support has
-     been improved, and support added for Alpha platforms (dense only).
+   o  Various updates to the apm, ark, chips (C&T), cirrus, i128, neomagic,
+     newport, s3virge, siliconmotion, sis, tdfx, tseng, vesa, and vga
+     drivers.
 
-   o The neomagic driver has had various bug fixes and extended acceleration
-     support.  DGA support has also been added.
+2.2  Input Driver Enhancements
 
-   o The Chips and Technologies driver (chips) has initial support for the
-     69030.
+   o  The mouse driver now has support for mouse wheel emulation.
 
-   o The tseng driver has multi-head fixes and DGA support has been added.
+   o  The mouse driver can now handle replug events on Linux for PS/2 mice.
 
-   o Most video drivers have been converted to use the integrated "fb" frame-
-     buffer code instead of the old "cfb" code.
+   o  The "Min/Max X/Y Position" options in the elographics and mutouch
+     drivers are changed to "Min/Max X/Y" to be consistent with the other
+     input drivers.
 
-   o DRI support has been updated for the Rage 128, 3Dfx Voodoo3 and Voodoo5,
-     Intel i810/i815 and Matrox G400.  DRI support for SiS and Sun Creator3D
-     is available.  The DRI is now also available on Alpha platforms.
+   o  Linux USB keyboard access is fixed when no PS/2 controller is present.
 
-   o An input driver (citron) for Citron Infrared Touch devices has been
-     added.
+   o  Added calcomp input driver.
 
-   o An input driver (penmount) for PenMount devices has been added.
+   o  Added DMC input driver.
 
-   o An input driver (digitaledge) for DigitalEdge devices has been added.
+   o  Added hyperpen input driver.
 
-   o Big endian problems in Xinerama have been fixed.
+2.3  X Server and Extension Updates
 
-   o The new "render" extension has been added (see below (section 4.11, page
-     1)).  The design has been extended in the following ways:
+   o  Resynced with X.Org's X11R6.6.
 
-        o A new FillRectangles request was added.
+   o  Mesa updated to the post-3.4.2 3.4 branch version as of November 2001.
 
-        o The 'mask' operand was changed to allow per-channel alphas.
+   o  DRI drivers resynced with the latest from the DRI project.
 
-     Server implementation:
+   o  Various updates to the Xft library.
 
-        o Implemented remaining code for client clip lists.
+   o  The DEC-XTRAP extension is now available.
 
-        o Fixed plenty of bugs related to text rendering.
+   o  The PEX and XIE extensions are no longer built/distributed by default.
 
-        o Complete compositing code, except for separate alpha.
+   o  A security problem related to glyph clipping for large origins is
+     fixed.
 
-     Todo:
+   o  An i810 XvMC (motion compensation) driver is now available (Linux
+     only).
 
-        o Polygons
+   o  A fatal bug XVideo Xineramification bug is fixed.
 
-        o Image scaling
+2.4  Client and Library Updates
 
-        o Separate alpha channels
+   o  FreeType2 updated to version 2.0.6.
 
-        o Support for visuals other than TrueColor.
+   o  Added libGL man pages.
 
-     Drivers with render extension support include: i128, glint, ati (r128
-     and radeon), chips, cirrus, mga, neomagic, nv, tdfx, trident, tseng,
-     vesa, s3virge.
+   o  Xload now has support for displaying the load of remote hosts.
 
-     Acceleration for the render extension:
+   o  Xterm updated to patch level 165.
 
-        o XAA infrastructure for acceleration.
+   o  SuperProbe is removed.
 
-        o Experimental MGA acceleration using XAA
+   o  Sample xtrap clients added.
 
-        o kdrive (TinyX) infrastructure
+2.5  I18N and Font Updates
 
-        o Experimental TinyX Trident 9525DVD acceleration
+   o  New Luxi scalable fonts (TrueType and Type 1) from Bigelow & Holmes.
+     These fonts are original designs by Kris Holmes and Charles Bigelow.
+     See below (section 4.22, page 1) for further information.
 
-     Xft library:
+   o  More locale/international keyboards supported.
 
-        o New font naming/access library.
+   o  Modularized I18N support in Xlib is included from X11R6.6.
 
-        o Abstraction for core/Render text.
+   o  A problem that caused bdftopcf to sometimes write corrupted fonts is
+     fixed.
 
-        o Uses FreeType2 rasterizer.
+   o  Some problem with Xlib's handling of CTEXT and multi-byte characters
+     are fixed.
 
-        o Allows anti-aliased/subpixel sampled text.
+   o  The fontenc layer is updated, and the fontenc library is now installed
+     and available for other applications.
 
-        o Gracefully falls back to core rendering.
+   o  Improvements to the input method framework in Xlib for UTF-8 locales.
 
-        o Complicated font matching mechanism.
+   o  A filter called ``luit'' is added, which provides locale and ISO 2022
+     support to any Unicode terminal, notably xterm.  Use of luit is still
+     experimental in this release.
 
-        o Uses server DPI to convert point sizes to pixel sizes, even for
-          core fonts.
+2.6  OS Support Updates
 
-     xterm:
+   o  Build problems on both QNX4 and QNX6 are fixed.
 
-        o Can use Xft, by default uses core fonts.
+   o  VT switching problems with the i810 driver on FreeBSD are worked
+     around.
 
-        o Uses new options '-fa' for family name and '-fs' for font size (in
-          points).
+   o  Problems building modules with some enhanced versions of gcc are fixed.
 
-     x11perf:
+   o  Lots of updates for Darwin/Mac OS X, including:
 
-        o Add tests for anti-aliased, subpixel sampled and aliased fonts
-          using the Xft library.
+        o  On Mac OS X, a new rootless mode is added to the XDarwin X server.
+          This allows X clients to display windows on the Aqua desktop.
 
-     xditview:
+        o  Xinerama support added to XDarwin
 
-        o When the Xft library is build, uses Xft for all font access.
+        o  With XDarwin in full screen mode, the depth, size, and refresh
+          rate can now be chosen to be different from the settings used by
+          Aqua.
 
-     Qt, Gtk, twm:
+        o  GLX support added for Darwin and Mac OS X with software rendering.
 
-        o Qt changes available here <URL:http://XFree86.org/~keithp/down-
-          load/qtkernel.tar.bz2>.
+        o  Keymap setup in XDarwin is improved, particularly for interna-
+          tional keyboards.
 
-        o Gtk changes in process.
+        o  In addition to English and Japanese, the XDarwin user interface is
+          now localized in Dutch, French, German, Spanish, and Korean.
 
-        o twm hacks should never see the light of day.
+   o  Lots of Cygwin support updates.
 
-   o xf86cfg, a new graphical configuration tool for XFree86 4.x, and can be
-     used to either write the initial configuration or make customisations to
-     the current configuration.  xf86cfg is a work in progress, and allows
-     configuration of:
+   o  Support added for OpenBSD/powerpc.
 
-        o Specific setup of monitors, cards, keyboards and mice, as well as
-          adding or removing them.
+   o  Build support added for Linux on IBM S/390.
 
-        o Server layout setup, allowing complex configuration of physical
-          monitor positions, default color depth and/or rotated monitors.
+   o  Removed stale support for Amoeba and Minix.
 
-        o Mode line editor that can be used to configure multiple monitors,
-          and allows adding a modeline specific to a monitor directly to the
-          configuration file.
+   o  Client-side support added for sparc64 on NetBSD and OpenBSD.
 
-        o AccessX configuration interface, that provides an interface to easy
-          setup of most AccessX options, including:
+   o  Support added for building the X server on Linux/m68k.
 
-             o Timeout to reset controls.
+   o  Support added for building on Linux/arm32.
 
-             o StickyKeys, for people with disabilities that cannot press two
-               keys at the same time.
+   o  Updates to Linux/mips support.
 
-             o MouseKeys, mouse control only with the keyboard.
-
-             o RepeatKeys, repeat rate and repeat delay.
-
-             o SlowKeys, to avoid pressing keys accidentally, they're only
-               accepted if pressed for some specific amount of time.
-
-             o BounceKeys, helps avoiding multiple key presses by only
-               accepting a key if it is pressed only once and not pressed
-               again in a specific amount of time.
-
-     New configuration options are being worked on, as well as correcting
-     some of the bugs in the current options.  A protocol for plugging in
-     external modules is also planned.
-
-2.2  X libraries and clients.
-
-   o Significant updates to the internationalisation support in Xlib (see
-     below (section 2.3, page 1)).
-
-   o Some xfs updates, including font path verification, and new options.
-
-   o XTerm updates.
-
-   o New "xvinfo" client for querying the XVideo extension.
-
-2.3  Fonts and Internationalisation
-
-   o Many of the "misc" bdf fonts have been updated and extended, and a wider
-     range of ISO-8859 subsets have been added.  These are now auto-generated
-     from ISO-10646 encoded master fonts.
-
-   o The ClearlyU ISO-10646 encoded fonts have been updated.
-
-   o Functions to read keyboard input in locale independent UTF-8 encoding
-     have been added to libX11: Xutf8LookupString, Xutf8ResetIC.
-
-   o Functions to output strings in locale independent UTF-8 encoding have
-     been added to libX11: Xutf8DrawString, Xutf8DrawImageString, Xutf8Tex-
-     tEscapement, Xutf8TextExtents, Xutf8TextPerCharExtents, Xutf8DrawText.
-
-   o Functions to convert between Compound Text or locale dependent encoding
-     and UTF-8 have been added to libX11: Xutf8TextListToTextProperty,
-     Xutf8TextPropertyToTextList. The converter between Compound Text and
-     UTF-8 in Xlib has been improved; a round-trip conversion now correctly
-     converts all graphic Unicode characters back and forth.
-
-   o libXaw now offers selected text using both selection targets,
-     UTF8_STRING and COMPOUND_TEXT.
-
-   o Locales with UTF-8 encodings are now supported; but the UTF-8 displaying
-     facilities are not adequate yet.
-
-   o XKB keyboard definitions have been added and updated for some countries.
-
-2.4  Platforms
-
-   o Darwin/Mac OS X.
-
-   o Greatly improved IA-64 support.
-
-   o Improved Linux/mips support.
-
-   o Support has been added for more Alpha platforms under Linux.  This now
-     includes all platforms that require sparse memory mapping.
+A more complete list of changes can be found in the CHANGELOG that is part of
+the XFree86 source tree.  It can also be viewed online at our CVSweb server
+<URL:http://cvsweb.xfree86.org/cvsweb/xc/pro-
+grams/Xserver/hw/xfree86/CHANGELOG?rev=HEAD>.
 
 3.  Drivers
 
 3.1  Video Drivers
 
-XFree86 4.1.0 includes the following video drivers:
+XFree86 4.2.0 includes the following video drivers:
 
 +--------------+--------------------------+----------------------------------+
 |Driver Name   | Description              | Further Information              |
@@ -301,7 +238,7 @@ XFree86 4.1.0 includes the following video drivers:
 |chips         | Chips & Technologies     | README.chips, chips(4)           |
 |cirrus        | Cirrus Logic             |                                  |
 |cyrix (*)     | Cyrix MediaGX            | README.cyrix                     |
-|fbdev         | Linux fbdev              | fbdev(4)                         |
+|fbdev         | Linux framebuffer device | fbdev(4)                         |
 |glide         | Glide2x (3Dfx)           | glide(4)                         |
 |glint         | 3Dlabs, TI               | glint(4)                         |
 |i128          | Number Nine              | README.I128, i128(4)             |
@@ -313,6 +250,7 @@ XFree86 4.1.0 includes the following video drivers:
 |newport (-)   | SGI Newport              | README.newport, newport(4)       |
 |nv            | NVIDIA                   | nv(4)                            |
 |rendition     | Rendition                | README.rendition, rendition(4)   |
+|s3            | S3 (not ViRGE or Savage) |                                  |
 |s3virge       | S3 ViRGE                 | README.s3virge, s3virge(4)       |
 |savage        | S3 Savage                | savage(4)                        |
 |siliconmotion | Silicon Motion           | siliconmotion(4)                 |
@@ -330,6 +268,7 @@ XFree86 4.1.0 includes the following video drivers:
 |tseng         | Tseng Labs               |                                  |
 |vesa          | VESA                     | vesa(4)                          |
 |vga           | Generic VGA              | vga(4)                           |
+|vmware        | VMWare guest OS          | vmware(4)                        |
 +--------------+--------------------------+----------------------------------+
 
 Drivers marked with (*) are present in a preliminary form in this release,
@@ -342,18 +281,20 @@ Drivers marked with (-) are for Linux/mips only.
 Darwin/Mac OS X uses IOKit drivers and does not use the module loader drivers
 listed above. Further information can be found in README.Darwin.
 
-XFree86 4.1.0 includes the following input drivers:
+XFree86 4.2.0 includes the following input drivers:
 
 3.2  Input Drivers
 
           +------------+--------------------+---------------------+
           |Driver Name | Description        | Further Information |
           +------------+--------------------+---------------------+
-          |acecad      | AceCad             |                     |
+          |calcomp     | Calcomp            |                     |
           |citron      | Citron             | citron(4)           |
           |digitaledge | DigitalEdge        |                     |
+          |dmc         | DMC                | dmc(4)              |
           |dynapro     | Dynapro            |                     |
           |elographics | EloGraphics        |                     |
+          |hyperpen    | HyperPen           |                     |
           |keyboard    | generic keyboards  | keyboard(4)         |
           |microtouch  | MicroTouch         |                     |
           |mouse       | most mouse devices | mouse(4)            |
@@ -365,15 +306,15 @@ XFree86 4.1.0 includes the following input drivers:
           |wacom       | Wacom tablets      | wacom(4)            |
           +------------+--------------------+---------------------+
 
-4.  Summary of XFree86 4.
+4.  Overview of XFree86 4.x.
 
 Unlike XFree86 3.3.x where there are multiple X server binaries, each of
-which drive different hardware, XFree86 4.1.0 has a single X server binary
+which drive different hardware, XFree86 4.2.0 has a single X server binary
 called XFree86.  This binary can either have one or more video drivers linked
 in statically, or, more usually, dynamically load the video drivers and other
 modules that are needed.
 
-XFree86 4.1.0 has X server support for most UNIX(R) and UNIX-like operating
+XFree86 4.2.0 has X server support for most UNIX(R) and UNIX-like operating
 systems on Intel/x86 platforms, plus support for Linux on Alpha, PowerPC,
 IA-64, Sparc, and Mips platforms, and for Darwin on PowerPC.  Work on support
 for additional architectures and operating systems is in progress, and is
@@ -395,7 +336,7 @@ they do not need to be recompiled for every different operating system.  In
 the future we plan to take advantage of this to provide more frequent driver
 module updates in between major releases.
 
-The loader in version 4.1.0 has support for Intel (x86), Alpha and PowerPC
+The loader in version 4.2.0 has support for Intel (x86), Alpha and PowerPC
 platforms.  It also has preliminary support for Sparc platforms.
 
 The X server makes use of modules for video drivers, X server extensions,
@@ -425,11 +366,12 @@ basic config file, that may require some manual editing.  The X server also
 has preliminary support for generating a basic config file.  This is done by
 running (as root) "XFree86 -configure".  Alternatively, the sample config
 file XF86Config.eg that is installed in /usr/X11R6/lib/X11 may be used as a
-starting point.  The XF86Setup utility is currently not usable, but work is
-continuing in this area.
+starting point.  The xf86cfg utility can also be used to create a new config-
+uration file or to edit an existing one.  The XF86Setup utility is currently
+not usable, but work is continuing in this area.
 
-The main changes are covered here, but please refer to the XF86Config manual
-page for more comprehensive information:
+The main changes are covered here, but please refer to the XF86Config(5) man-
+ual page for more comprehensive information:
 
    o The Module section is used to load server extension modules and font
      modules, but not XInput drivers.  The .so suffix should no longer be
@@ -450,8 +392,6 @@ page for more comprehensive information:
                    Load "dbe"
                    Load "record"
                    Load "glx"
-                   Load "pex5"
-                   Load "xie"
                    Load "extmod"
 
                    Load "type1"
@@ -499,6 +439,13 @@ page for more comprehensive information:
                    Option "standby time"  "20"
                    Option "suspend time"  "30"
                    Option "off time"      "40"
+
+     The new option AllowDeactivateGrabs allows deactivating any active grab
+     with the key sequence Ctrl+Alt+Keypad-Divide and the new option Allow-
+     ClosedownGrabs allows closing the conection to the grabbing client with
+     the key sequence Ctrl+Alt+Keypad-Multiply. Note that these options are
+     off by default as they allow users to remove the grab used by screen
+     saver/locker programs.
 
    o The Keyboard, Pointer and XInput sections have been replaced by a more
      general InputDevice section.  The old Keyboard and Pointer sections are
@@ -678,7 +625,7 @@ The following X server command line options have been changed since 3.3.x:
           specified multiple times to increase the verbosity level
           (as with 3.3.x), or the verbosity level may be specified
           explicitly as a number.  The default verbosity level is
-          1.
+          0.
 
      -xf86config filename
 
@@ -687,6 +634,9 @@ The following X server command line options have been changed since 3.3.x:
           search path will be used to locate the file in this case.
           This makes it possible for users to choose from multiple
           config files that the the sysadmin has provided.
+
+A more complete list of XFree86 X server command line options can be found in
+the XFree86(1) manual page.
 
 4.4  XAA
 
@@ -734,7 +684,7 @@ Known problems:
 
 4.7  DGA version 2
 
-DGA 2.0 is included in 4.1.0, but is not implemented by all drivers.  Prelim-
+DGA 2.0 is included in 4.2.0, but is not implemented by all drivers.  Prelim-
 inary documentation for the client libraries can be found in the README.DGA
 document.  A good degree of backwards compatibility with version 1.0 is pro-
 vided.
@@ -750,23 +700,24 @@ DDC is enabled by default, but can be disabled with a "Device" section entry:
 Option "NoDDC".  We have support for DDC versions 1 and 2; these can be dis-
 abled independently with Option "NoDDC1" and Option "NoDDC2".
 
-At startup the server prints out DDC information from the display, but it
-does not yet use it the determine modelines.  For some drivers, the X
-server's new -configure option uses the DDC information when generating the
-config file.
+At startup the server prints out DDC information from the display, and can
+use this information to set or warn about monitor sync limits (but not mode-
+lines yet).  For some drivers, the X server's new -configure option uses the
+DDC information when generating the config file.
 
-Changed behavior caused by DDC. Several drivers uses DDC information to set
-the screen size and pitch.  This can be overridden by explicitly resetting it
-to the and non-DDC default value 75 with the -dpi 75 command line option for
-the X server, or by specifying appropriate screen dimensions with the "Dis-
-playSize" keyword in the "Monitor" section of the config file.
+4.8.1  Changed behavior caused by DDC.
+
+Several drivers uses DDC information to set the screen size and pitch.  This
+can be overridden by explicitly resetting it to the and non-DDC default value
+75 with the -dpi 75 command line option for the X server, or by specifying
+appropriate screen dimensions with the "DisplaySize" keyword in the "Monitor"
+section of the config file.
 
 4.9  GLX and the Direct Rendering Infrastructure (DRI)
 
-Precision Insight <URL:http://www.precisioninsight.com> (now part of the Pro-
-fessional Services group at VA Linux Systems <URL:http://www.valinux.com>)
-was provided with funding and support from Red Hat <URL:http://www.red-
-hat.com>, SGI <URL:http://www.sgi.com>, 3Dfx <URL:http://www.3dfx.com>, Intel
+Precision Insight <URL:http://www.precisioninsight.com> was provided with
+funding and support from Red Hat <URL:http://www.redhat.com>, SGI
+<URL:http://www.sgi.com>, 3Dfx <URL:http://www.3dfx.com>, Intel
 <URL:http://www.intel.com>, ATI <URL:http://www.ati.com>, and Matrox
 <URL:http://www.matrox.com> to integrate the GLX extension for 3D rendering
 in an X11 window.  The 3D core rendering component is the Mesa
@@ -802,7 +753,7 @@ anti-aliased text and geometric objects as well as perform translucent image
 overlays and other image operations not possible with the core X rendering
 system.
 
-XFree86 4.1.0 provides a partial implementation of Render sufficient for
+XFree86 4.2.0 provides a partial implementation of Render sufficient for
 drawing anti-aliased text and image composition.  Still to be implemented are
 geometric primitives and affine transformation of images.
 
@@ -837,10 +788,10 @@ the Xft man page.
 
 4.11.2  FreeType support in Xft
 
-XFree86 4.1.0 includes sources for FreeType version 2.0.1, and, by default,
+XFree86 4.2.0 includes sources for FreeType version 2.0.1, and, by default,
 they are built and installed automatically.
 
-If you prefer, you can configure XFree86 4.1.0 to use an existing Freetype2
+If you prefer, you can configure XFree86 4.2.0 to use an existing Freetype2
 installation by telling XFree86 not to build the internal copy and indicating
 where that external version has been installed. Edit (or create) con-
 fig/cf/host.def to include:
@@ -857,7 +808,7 @@ the FreeType release.
 
 4.11.3  Application Support For Anti-Aliased Text
 
-Only three applications have been modified in XFree86 4.1.0 to work with the
+Only three applications have been modified in XFree86 4.2.0 to work with the
 Render extension and the Xft and FreeType libraries to provide anti-aliased
 text.  Xterm, xditview and x11perf.  Migration of other applications may
 occur in future releases.
@@ -885,9 +836,9 @@ The XFree86-VidModeExtension extension has been updated, and mostly ported to
 the new server architecture.  The area of mode validation needs further work,
 and the extension should be used with care.  This extension has support for
 changing the gamma setting at run-time, for modes where this is possible.
-The new xgamma utility makes use of this feature.  Compatibility with the
-3.3.x version of the extension is provided.  The missing parts of this exten-
-sion and some new features should be completed in a future release.
+The xgamma utility makes use of this feature.  Compatibility with the 3.3.x
+version of the extension is provided.  The missing parts of this extension
+and some new features should be completed in a future release.
 
 4.13  Xaw
 
@@ -1022,9 +973,9 @@ different re-encoding method based on loadable encoding modules.
 4.20  Large font optimisation
 
 The glyph metrics array, which all the X clients using a particular font have
-access to, is now placed in shared memory, so as to reduce redundant memory
-consumption.  For non-local clients, the glyph metrics array is transmitted
-in a compressed format.
+access to, is placed in shared memory, so as to reduce redundant memory con-
+sumption.  For non-local clients, the glyph metrics array is transmitted in a
+compressed format.
 
 4.21  Unicode/ISO 10646 support
 
@@ -1059,18 +1010,30 @@ What is included in 4.x:
    o Both the xfsft (the "freetype" module) and the X-TrueType (the "xtt"
      module) TrueType font backends support Unicode-encoded fonts.
 
-4.22  Lucidux fonts from Bigelow and Holmes
+4.22  Luxi fonts from Bigelow and Holmes
 
-XFree86 now includes the ``Lucidux'' family of professionally hinted Type 1
-fonts.  This family consists of the fonts ``Lucidux Serif'', ``Lucidux Sans''
-and ``Lucidux Mono'' in Roman and oblique variants, and includes over 370
-glyphs in each font covering among others the glyphs needed for ISO 8859-1,
-2, 3, 4, 9 and 15.  Bold variants will be included in a future release.  The
-design and font outlines were donated by Charles Bigelow and Kris Holmes from
-Bigelow and Holmes Inc., and the hinting was donated by Berthold Horn and
-Blenda Horn from Y&Y, Inc.  For more information, please contact
-<design@bigelowandholmes.com> or <sales@yandy.com>, or consult Y&Y's web site
-<URL:http://www.yandy.com>.
+XFree86 now includes the ``Luxi'' family of Type 1 fonts and TrueType fonts.
+This family consists of the fonts ``Luxi Serif'', ``Luxi Sans'' and
+``Luxi Mono'' in Roman, oblique, bold and bold oblique variants.  The True-
+Type version have glyphs covering the basic ASCII Unicode range, the Latin 1
+range, as well as the Extended Latin range and some additional punctuation
+characters.  In particular, these fonts include all the glyphs needed for
+ISO 8859 parts 1, 2, 3, 4, 9, 13 and 15, as well as all the glyphs in the
+Adobe Standard encoding and the Windows 3.1  character set.
+
+The glyph coverage of the Type 1 versions is somewhat reduced, and only cov-
+ers ISO 8859 parts 1, 2 and 15 as well as the Adobe Standard encoding.
+
+The Luxi fonts are original designs by Kris Holmes and Charles Bigelow from
+Bigelow and Holmes Inc., who developed the Luxi typeface designs in Ikarus
+digital format.  URW++ Design and Development GmbH converted the Ikarus for-
+mat fonts to TrueType and Type 1 font programs and implemented the grid-fit-
+ting "hints" and kerning tables in the Luxi fonts.
+
+The license terms for the Luxi fonts are included in the file `COPYRIGHT.BH',
+as well as in the License document.  For further information, please contact
+<design@bigelowandholmes.com> or <info@urwpp.de>, or consult the URW++ web
+site <URL:http://www.urwpp.de>.
 
 4.23  Directory rearrangements
 
@@ -1083,7 +1046,7 @@ location pointing to the new location.  Some run-time generated files are now
 located under the appropriate subdirectories of /var, again with the relevant
 symbolic links in the old location.
 
-     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/RELNOTES.sgml,v 1.60 2001/03/02 17:40:48 dawes Exp $
+     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/RELNOTES.sgml,v 1.70 2002/01/17 18:14:59 dawes Exp $
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/RELNOTES,v 3.97.2.2 2001/06/02 04:44:36 torrey Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/RELNOTES,v 3.104 2002/01/17 23:27:44 dawes Exp $

@@ -1,9 +1,13 @@
-/* $Xorg: decompress.c,v 1.3 2000/08/17 19:53:40 cpqbld Exp $ */
+/* $Xorg: decompress.c,v 1.4 2001/02/09 02:05:23 xorgcvs Exp $ */
 /*
 
 Copyright 1990, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included
 in all copies or substantial portions of the Software.
@@ -22,7 +26,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/Xserver/os/decompress.c,v 1.4 2001/01/17 22:37:10 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/os/decompress.c,v 1.7 2001/12/14 20:00:34 dawes Exp $ */
 
 /* 
  * decompress - cat a compressed file
@@ -190,6 +194,7 @@ CompressedFontFileDone (fid)
 
 #define getdcchar(file)    ((file)->stackp > (file)->de_stack ? (*--((file)->stackp)) : _filldcbuf (file))
 
+int
 _filldcbuf (file)
     CompressedFile  *file;
 {
@@ -337,6 +342,7 @@ getcode(file)
     return code;
 }
 
+int
 CompressedFontFileRead (buf, itemsize, nitems, fid)
     char	*buf;
     unsigned	itemsize;
@@ -359,11 +365,12 @@ CompressedFontFileRead (buf, itemsize, nitems, fid)
     return nitems - nbytes / itemsize;
 }
 
+int
 CompressedFontFileSkip (bytes, fid)
     unsigned	bytes;
     FID		fid;
 {
-    int	    c;
+    int	    c = 0;
 
     while (bytes-- && ((c = getdcchar((CompressedFile *)fid)) != EOF))
 	    ;

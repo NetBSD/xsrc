@@ -3,7 +3,7 @@
 
    Written by Mark Vojkovich
 */
-/* $XFree86: xc/programs/Xserver/Xext/xf86dga2.c,v 1.16 2000/06/30 19:06:54 keithp Exp $ */
+/* $XFree86: xc/programs/Xserver/Xext/xf86dga2.c,v 1.17 2001/10/28 03:32:51 tsi Exp $ */
 
 
 #define NEED_REPLIES
@@ -12,6 +12,7 @@
 #include "Xproto.h"
 #include "misc.h"
 #include "dixstruct.h"
+#include "dixevents.h"
 #include "pixmapstr.h"
 #include "extnsionst.h"
 #include "colormapst.h"

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bsd/bsd_video.c,v 3.43 2001/04/22 08:48:51 herrb Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bsd/bsd_video.c,v 3.45 2001/10/28 03:34:00 tsi Exp $ */
 /*
  * Copyright 1992 by Rich Murphey <Rich@Rice.edu>
  * Copyright 1993 by David Wexelblat <dwex@goblin.org>
@@ -73,6 +73,13 @@
 #endif
 #define X_MTRR_ID "XFree86"
 #endif
+
+#if defined(HAS_MTRR_BUILTIN) && defined(__NetBSD__)
+#include <machine/mtrr.h>
+#include <machine/sysarch.h>
+#include <sys/queue.h>
+#endif
+
 
 #ifdef __alpha__
 #include <sys/sysctl.h>
@@ -199,6 +206,12 @@ static pointer setWC(int, unsigned long, unsigned long, Bool, MessageType);
 static void undoWC(int, pointer);
 static Bool cleanMTRR(void);
 #endif
+#if defined(HAS_MTRR_BUILTIN) && defined(__NetBSD__)
+static pointer NetBSDsetWC(int, unsigned long, unsigned long, Bool,
+			   MessageType);
+static void NetBSDundoWC(int, pointer);
+#endif
+
 
 #if !defined(__powerpc__)
 /*
@@ -340,6 +353,10 @@ xf86OSInitVidMem(VidMemInfoPtr pVidMem)
 		}
 	}
 #endif
+#if defined(HAS_MTRR_BUILTIN) && defined(__NetBSD__)
+	pVidMem->setWC = NetBSDsetWC;
+	pVidMem->undoWC = NetBSDundoWC;
+#endif
 	pVidMem->initialised = TRUE;
 }
 
@@ -444,9 +461,11 @@ xf86ReadBIOS(unsigned long Base, unsigned long Offset, unsigned char *Buf,
 #endif
 	(void)memcpy(Buf, (void *)(ptr + Offset), Len);
 	(void)munmap((caddr_t)ptr, mlen);
+#ifdef DEBUG
 	xf86MsgVerb(X_INFO, 3, "xf86ReadBIOS(%x, %x, Buf, %x)"
 		"-> %02x %02x %02x %02x...\n",
 		Base, Offset, Len, Buf[0], Buf[1], Buf[2], Buf[3]);
+#endif
 	return(Len);
 }
 
@@ -666,8 +685,9 @@ xf86ReadBIOS(unsigned long Base, unsigned long Offset, unsigned char *Buf,
  		FatalError("xf86ReadBIOS: open /dev/kmem\n");
  	}
 
-
+#ifdef DEBUG
 	fprintf(stderr, "xf86ReadBIOS() %lx %lx, %x\n", Base, Offset, Len);
+#endif
 
 	if (Base < 0x80000000) {
 		fprintf(stderr, "No VGA\n");
@@ -1669,3 +1689,54 @@ int  (*xf86ReadMmio32)(pointer Base, unsigned long Offset)
      = readDense32;
 
 #endif /* __FreeBSD__ && __alpha__ */
+
+#if defined(HAS_MTRR_BUILTIN) && defined(__NetBSD__)
+static pointer
+NetBSDsetWC(int screenNum, unsigned long base, unsigned long size, Bool enable,
+	    MessageType from)
+{
+	struct mtrr *mtrrp;
+	int n;
+
+	xf86DrvMsg(screenNum, X_WARNING,
+		   "%s MTRR %lx - %lx\n", enable ? "set" : "remove",
+		   base, (base + size));
+
+	mtrrp = xnfalloc(sizeof (struct mtrr));
+	mtrrp->base = base;
+	mtrrp->len = size;
+	mtrrp->type = MTRR_TYPE_WC;
+
+	/*
+	 * MTRR_PRIVATE will make this MTRR get reset automatically
+	 * if this process exits, so we have no need for an explicit
+	 * cleanup operation when starting a new server.
+	 */
+
+	if (enable)
+		mtrrp->flags = MTRR_VALID | MTRR_PRIVATE;
+	else
+		mtrrp->flags = 0;
+	n = 1;
+
+	if (i386_set_mtrr(mtrrp, &n) < 0) {
+		xfree(mtrrp);
+		return NULL;
+	}
+	return mtrrp;
+}
+
+static void
+NetBSDundoWC(int screenNum, pointer list)
+{
+	struct mtrr *mtrrp = (struct mtrr *)list;
+	int n;
+
+	if (mtrrp == NULL)
+		return;
+	n = 1;
+	mtrrp->flags &= ~MTRR_VALID;
+	i386_set_mtrr(mtrrp, &n);
+	xfree(mtrrp);
+}
+#endif

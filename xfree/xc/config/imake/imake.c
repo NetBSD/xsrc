@@ -1,4 +1,3 @@
-/* $Id */
 
 /***************************************************************************
  *                                                                         *
@@ -8,13 +7,17 @@
  * be passed to the template file.                                         *
  *                                                                         *
  ***************************************************************************/
-/* $XFree86: xc/config/imake/imake.c,v 3.41 2001/01/17 16:38:55 dawes Exp $ */
+/* $XFree86: xc/config/imake/imake.c,v 3.48 2001/12/14 19:53:18 dawes Exp $ */
 
 /*
  * 
 Copyright (c) 1985, 1986, 1987, 1998 The Open Group  
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -44,6 +47,8 @@ in this Software without prior written authorization from The Open Group.
  * on the Makefile.
  * Options:
  *		-D	define.  Same as cpp -D argument.
+ *		-U	undefine.  Same as cpp -U argument.
+ *		-W	warning.  Same as cpp -W argument.
  *		-I	Include directory.  Same as cpp -I argument.
  *		-T	template.  Designate a template other
  *			than Imake.tmpl
@@ -149,9 +154,7 @@ in this Software without prior written authorization from The Open Group.
 #include <stdlib.h>
 #include <stdio.h>
 #include "Xosdefs.h"
-#ifndef X_NOT_STDC_ENV
 #include <string.h>
-#endif
 #include <ctype.h>
 #ifdef WIN32
 # include "Xw32defs.h"
@@ -224,27 +227,16 @@ typedef union wait	waitType;
 #  define WIFEXITED(w) waitCode(w)
 # endif
 #endif /* X_NOT_POSIX */
-#ifndef X_NOT_STDC_ENV
-# include <stdlib.h>
-#else
-char *malloc(), *realloc();
-void exit();
-#endif
+#include <stdlib.h>
 #if defined(macII) && !defined(__STDC__)  /* stdlib.h fails to define these */
 char *malloc(), *realloc();
 #endif /* macII */
-#ifdef X_NOT_STDC_ENV
-extern char	*getenv();
-#endif
 #include <errno.h>
-#ifdef X_NOT_STDC_ENV
-extern int	errno;
-#endif
 #ifdef __minix_vmd
 #define USE_FREOPEN		1
 #endif
 
-#if !(defined(X_NOT_STDC_ENV) || (defined(sun) && !defined(SVR4)) || defined(macII))
+#if !((defined(sun) && !defined(SVR4)) || defined(macII))
 #define USE_STRERROR		1
 #endif
 #ifdef __EMX__
@@ -270,11 +262,6 @@ extern int	errno;
 #include <unix.h>
 #endif
 
-/* 
- * is strstr() in <strings.h> on X_NOT_STDC_ENV? 
- * are there any X_NOT_STDC_ENV machines left in the world?
- */
-#include <string.h>
 #include "imakemdep.h"
 
 /*
@@ -294,7 +281,7 @@ extern int sys_nerr;
 #include <sys/utsname.h>
 #endif
 
-#if !(defined(Lynx) || defined(__Lynx__) || (defined(SVR4) && !defined(sun)))
+#if !(defined(Lynx) || defined(__Lynx__) || (defined(SVR4) && !defined(sun))) && !defined(__CYGWIN__)
 #define HAS_MKSTEMP
 #endif
 
@@ -318,7 +305,7 @@ int xvariables[10];
  * space instead of being deleted.  Blech.
  */
 #ifdef FIXUP_CPP_WHITESPACE
-void KludgeOutputLine(), KludgeResetRule();
+void KludgeOutputLine(char **), KludgeResetRule(void);
 #else
 # define KludgeOutputLine(arg)
 # define KludgeResetRule()
@@ -399,7 +386,7 @@ boolean	show = TRUE;
 int
 main(int argc, char *argv[])
 {
-	FILE	*tmpfd;
+	FILE	*tmpfd = NULL;
 	char	makeMacro[ BUFSIZ ];
 	char	makefileMacro[ BUFSIZ ];
 
@@ -414,7 +401,9 @@ main(int argc, char *argv[])
                 if ((tmpfd = fopen(tmpMakefile, "w+")) == NULL)
                    LogFatal("Cannot create temporary file %s.", tmpMakefile);
 	} else {
+#ifdef HAS_MKSTEMP
 	        int fd;
+#endif
 		tmpMakefile = Strdup(tmpMakefile);
 #ifndef HAS_MKSTEMP
 		if (mktemp(tmpMakefile) == NULL ||
@@ -586,6 +575,8 @@ SetOpts(int argc, char **argv)
 		} else if (argv[0][1] == 'I') {
 		    AddCppArg(argv[0]);
 		} else if (argv[0][1] == 'U') {
+		    AddCppArg(argv[0]);
+		} else if (argv[0][1] == 'W') {
 		    AddCppArg(argv[0]);
 		} else if (argv[0][1] == 'f') {
 		    if (argv[0][2])
@@ -1052,8 +1043,13 @@ get_ld_version(FILE *inFile)
     } while (c != EOF && !isdigit (c));
     ungetc (c, ldprog);
     (void) fscanf (ldprog, "%d.%d", &ldmajor, &ldminor);
+    /* Start conversion to a more rational number */
+    if ((ldmajor > 2) || ((ldmajor == 2) && (ldminor > 9)))
+	ldmajor *= 100;
+    else
+	ldmajor *= 10;
     fprintf(inFile, "#define DefaultLinuxBinUtilsMajorVersion %d\n", 
-	    ldmajor * 10 + ldminor);    
+	    ldmajor + ldminor);    
     pclose (ldprog);
   }
 }
@@ -1154,6 +1150,9 @@ get_gcc_version(FILE *inFile)
 #endif
    fprintf (inFile, "#define GccMajorVersion %d\n", __GNUC__);
    fprintf (inFile, "#define GccMinorVersion %d\n", __GNUC_MINOR__);
+#if defined(HAS_MERGE_CONSTANTS)
+   fprintf (inFile, "#define HasGccMergeConstants %d\n", HAS_MERGE_CONSTANTS);
+#endif
 }
 #endif
 
@@ -1383,7 +1382,9 @@ CleanCppInput(char *imakefile)
 		    strcmp(ptoken, "pragma") &&
 		    strcmp(ptoken, "undef")) {
 		    if (outFile == NULL) {
+#ifdef HAS_MKSTEMP
 		        int fd;
+#endif
 			tmpImakefile = Strdup(tmpImakefile);
 #ifndef HAS_MKSTEMP
 			if (mktemp(tmpImakefile) == NULL ||
@@ -1573,7 +1574,7 @@ ReadLine(FILE *tmpfd, char *tmpfname)
 		initialized = TRUE;
 	    fprintf (tmpfd, "# Makefile generated by imake - do not edit!\n");
 	    fprintf (tmpfd, "# %s\n",
-		"$Xorg: imake.c,v 1.5 2000/08/18 04:03:59 coskrey Exp $");
+		"$Xorg: imake.c,v 1.6 2001/02/09 02:03:15 xorgcvs Exp $");
 	}
 
 	for (p1 = pline; p1 < end; p1++) {

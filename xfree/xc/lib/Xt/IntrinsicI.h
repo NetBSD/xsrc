@@ -1,10 +1,14 @@
-/* $Xorg: IntrinsicI.h,v 1.3 2000/08/17 19:46:13 cpqbld Exp $ */
+/* $Xorg: IntrinsicI.h,v 1.4 2001/02/09 02:03:55 xorgcvs Exp $ */
 
 /***********************************************************
 
 Copyright 1987, 1988, 1994, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -42,7 +46,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/lib/Xt/IntrinsicI.h,v 3.5 2001/01/17 19:43:05 dawes Exp $ */
+/* $XFree86: xc/lib/Xt/IntrinsicI.h,v 3.8 2001/12/14 19:56:25 dawes Exp $ */
 
 #ifndef _XtintrinsicI_h
 #define _XtintrinsicI_h
@@ -61,14 +65,6 @@ SOFTWARE.
 
 #include "ConvertI.h"
 #include "TranslateI.h"
-#include "CallbackI.h"
-#include "EventI.h"
-#include "HookObjI.h"
-#include "PassivGraI.h"
-#include "ThreadsI.h"
-#include "InitialI.h"
-#include "ResourceI.h"
-#include "StringDefs.h"
 
 #define RectObjClassFlag	0x02
 #define WidgetClassFlag		0x04
@@ -230,16 +226,17 @@ extern void _XtAddShellToHookObj(
 #endif
 );
 
+/* GCManager.c */
+extern void _XtGClistFree(Display *dpy, XtPerDisplay pd);
+
 /** GeoTattler stuff */
 
 #ifdef XT_GEO_TATTLER
 
 extern void _XtGeoTab ();
 extern void _XtGeoTrace (
-#if NeedVarargsPrototypes
 			    Widget widget, 
 			    ...
-#endif
 );
 
 #define CALLGEOTAT(f) f

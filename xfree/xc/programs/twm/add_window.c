@@ -1,10 +1,14 @@
-/* $XFree86: xc/programs/twm/add_window.c,v 1.8 2001/01/17 23:45:05 dawes Exp $ */
+/* $XFree86: xc/programs/twm/add_window.c,v 1.10 2001/12/14 20:01:06 dawes Exp $ */
 /*****************************************************************************/
 /*
 
 Copyright 1989,1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -49,7 +53,7 @@ in this Software without prior written authorization from The Open Group.
 
 /**********************************************************************
  *
- * $Xorg: add_window.c,v 1.4 2000/08/17 19:54:05 cpqbld Exp $
+ * $Xorg: add_window.c,v 1.5 2001/02/09 02:05:36 xorgcvs Exp $
  *
  * Add a new window, put the titlbar and other stuff around
  * the window
@@ -198,7 +202,8 @@ IconMgr *iconp;
 
     XGetWindowAttributes(dpy, tmp_win->w, &tmp_win->attr);
 
-    I18N_FetchName(dpy, tmp_win->w, &name);
+    if (!I18N_FetchName(dpy, tmp_win->w, &name))
+	name = NULL;
     tmp_win->class = NoClass;
     XGetClassHint(dpy, tmp_win->w, &tmp_win->class);
     FetchWmProtocols (tmp_win);

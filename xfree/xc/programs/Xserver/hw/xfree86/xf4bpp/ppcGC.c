@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xf4bpp/ppcGC.c,v 1.6 2000/09/26 15:57:21 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xf4bpp/ppcGC.c,v 1.7 2001/10/28 03:34:06 tsi Exp $ */
 /*
 
 Copyright (c) 1987  X Consortium
@@ -142,7 +142,7 @@ static GCOps vgaGCOps = {
 #ifdef NEED_LINEHELPER
 	miMiter,		/*  void (* LineHelper)() */
 #endif
-	NULL
+	{NULL}			/* devPrivate */
 };
 
 Bool
@@ -343,8 +343,6 @@ xf4bppValidateGC( pGC, changes, pDrawable )
  	(pDrawable->serialNumber != (pGC->serialNumber & DRAWABLE_SERIAL_BITS))
  	)
      {
- 	ScreenPtr pScreen = pGC->pScreen;
-  
  	if (pWin) {
  	    RegionPtr   pregWin;
  	    Bool        freeTmpClip, freeCompClip;
@@ -368,7 +366,7 @@ xf4bppValidateGC( pGC, changes, pDrawable )
  	     */
  	    if (pGC->clientClipType == CT_NONE) {
  		if (freeCompClip)
- 		    REGION_DESTROY(pScreen, pGC->pCompositeClip);
+ 		    REGION_DESTROY(pGC->pScreen, pGC->pCompositeClip);
  		pGC->pCompositeClip = pregWin;
  		pGC->freeCompClip = freeTmpClip;
   	    }
@@ -383,7 +381,7 @@ xf4bppValidateGC( pGC, changes, pDrawable )
  		 * neither is real, create a new region. 
  		 */
   
- 		REGION_TRANSLATE(pScreen, pGC->clientClip,
+ 		REGION_TRANSLATE(pGC->pScreen, pGC->clientClip,
 				 pDrawable->x + pGC->clipOrg.x,
 				 pDrawable->y + pGC->clipOrg.y);
  						  
@@ -392,22 +390,22 @@ xf4bppValidateGC( pGC, changes, pDrawable )
  		    REGION_INTERSECT(pGC->pScreen, pGC->pCompositeClip,
 				     pregWin, pGC->clientClip);
  		    if (freeTmpClip)
- 			REGION_DESTROY(pScreen, pregWin);
+ 			REGION_DESTROY(pGC->pScreen, pregWin);
   		}
  		else if (freeTmpClip)
  		{
- 		    REGION_INTERSECT(pScreen, pregWin, pregWin,
+ 		    REGION_INTERSECT(pGC->pScreen, pregWin, pregWin,
 				     pGC->clientClip);
  		    pGC->pCompositeClip = pregWin;
   		}
  		else
  		{
- 		    pGC->pCompositeClip = REGION_CREATE(pScreen, NullBox, 0);
- 		    REGION_INTERSECT(pScreen, pGC->pCompositeClip,
+ 		    pGC->pCompositeClip = REGION_CREATE(pGC->pScreen, NullBox, 0);
+ 		    REGION_INTERSECT(pGC->pScreen, pGC->pCompositeClip,
 				     pregWin, pGC->clientClip);
  		}
  		pGC->freeCompClip = TRUE;
- 		REGION_TRANSLATE(pScreen, pGC->clientClip,
+ 		REGION_TRANSLATE(pGC->pScreen, pGC->clientClip,
 				 -(pDrawable->x + pGC->clipOrg.x),
 				 -(pDrawable->y + pGC->clipOrg.y));
  						  
@@ -423,19 +421,19 @@ xf4bppValidateGC( pGC, changes, pDrawable )
  	    pixbounds.y2 = pDrawable->height;
   
  	    if (pGC->freeCompClip) {
- 		REGION_RESET(pScreen, pGC->pCompositeClip, &pixbounds);
+ 		REGION_RESET(pGC->pScreen, pGC->pCompositeClip, &pixbounds);
   	    } else {
  		pGC->freeCompClip = TRUE;
- 		pGC->pCompositeClip = REGION_CREATE(pScreen, &pixbounds, 1);
+ 		pGC->pCompositeClip = REGION_CREATE(pGC->pScreen, &pixbounds, 1);
   	    }
   
  	    if (pGC->clientClipType == CT_REGION)
  	    {
- 		REGION_TRANSLATE(pScreen, pGC->pCompositeClip,
+ 		REGION_TRANSLATE(pGC->pScreen, pGC->pCompositeClip,
 				 -pGC->clipOrg.x, -pGC->clipOrg.y);
- 		REGION_INTERSECT(pScreen, pGC->pCompositeClip,
+ 		REGION_INTERSECT(pGC->pScreen, pGC->pCompositeClip,
 				 pGC->pCompositeClip, pGC->clientClip);
- 		REGION_TRANSLATE(pScreen, pGC->pCompositeClip,
+ 		REGION_TRANSLATE(pGC->pScreen, pGC->pCompositeClip,
 				 pGC->clipOrg.x, pGC->clipOrg.y);
  	    }
 	}			/* end of composute clip for pixmap */

@@ -23,7 +23,7 @@
  * Author: Katsuhisa Yano	TOSHIBA Corp.
  *			   	mopi@osa.ilab.toshiba.co.jp
  */
-/* $XFree86: xc/lib/X11/omTextPer.c,v 1.4 2001/01/17 19:41:57 dawes Exp $ */
+/* $XFree86: xc/lib/X11/omTextPer.c,v 1.5 2001/10/28 03:32:35 tsi Exp $ */
 
 #include "Xlibint.h"
 #include "XomGeneric.h"
@@ -48,7 +48,7 @@ _XomGenericTextPerCharExtents(oc, type, text, length, ink_buf, logical_buf,
     Bool is_xchar2b;
     XPointer args[2];
     XChar2b xchar2b_buf[BUFSIZ], *xchar2b_ptr;
-    char *xchar_ptr;
+    char *xchar_ptr = NULL;
     XCharStruct *def, *cs, overall;
     int buf_len, left, require_num;
     int logical_ascent, logical_descent;

@@ -1,3 +1,4 @@
+/* $XFree86: xc/programs/Xserver/hw/kdrive/i810/i810stub.c,v 1.3 2001/10/28 03:33:10 tsi Exp $ */
 /* COPYRIGHT AND PERMISSION NOTICE
 
 Copyright (c) 2000, 2001 Nokia Home Communications
@@ -66,7 +67,7 @@ InitOutput (ScreenInfo *pScreenInfo, int argc, char **argv)
 void
 InitInput (int argc, char **argv)
 {
-    KdInitInput (&Ps2MouseFuncs, &LinuxKeyboardFuncs);
+    KdInitInput (&LinuxMouseFuncs, &LinuxKeyboardFuncs);
 }
 
 int

@@ -22,7 +22,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  *
  */
-/* $XFree86: xc/programs/Xserver/hw/sunLynx/sunLyKbd.c,v 3.5 2001/01/17 22:36:53 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/sunLynx/sunLyKbd.c,v 3.6 2001/08/01 00:44:49 tsi Exp $ */
 
 /*-
  * Copyright 1987 by the Regents of the University of California
@@ -707,7 +707,7 @@ int sunKbdProc (device, what)
 	tty.c_cc[VMIN] = 0;
 	if (ioctl(pPriv->fd, TCSETAW, &tty) < 0)
 		perror("ioctl TCSETAW");
-	(void) AddEnabledDevice(pPriv->fd);
+	AddEnabledDevice(pPriv->fd);
 	pKeyboard->on = TRUE;
 	break;
 

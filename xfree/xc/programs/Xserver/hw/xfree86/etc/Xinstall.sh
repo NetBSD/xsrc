@@ -1,13 +1,13 @@
 #!/bin/sh
 
 #
-# $XFree86: xc/programs/Xserver/hw/xfree86/etc/Xinstall.sh,v 1.20.2.4 2001/06/01 17:16:57 dawes Exp $
+# $XFree86: xc/programs/Xserver/hw/xfree86/etc/Xinstall.sh,v 1.37 2002/01/17 20:54:23 dawes Exp $
 #
 # Copyright © 2000 by Precision Insight, Inc.
 # Copyright © 2000, 2001 by VA Linux Systems, Inc.
-# Portions Copyright © 1996-2000 by The XFree86 Project, Inc.
+# Copyright © 1996-2002 by The XFree86 Project, Inc.
 #
-# This script should be used to install XFree86 4.1.0.
+# This script should be used to install XFree86 4.2.0.
 #
 # Parts of this script are based on the old preinst.sh and postinst.sh
 # scripts.
@@ -20,11 +20,15 @@
 # Fallbacks for when the bindist version can't be auto-detected.
 # These should be updated for each release.
 
-FULLPREFIX=4.1
+FULLPREFIX=4.2
 PATCHLEVEL=0
 VERSION=$FULLPREFIX.$PATCHLEVEL
 FULLVERSION=$FULLPREFIX.0
 SCRIPTVERSION=$VERSION
+
+# XXX Could get this (and above) version info from imake...
+FreetypeCurrent=8
+FreetypeAge=2
 
 BINDISTFULLPREFIX=
 BINDISTPATCHLEVEL=
@@ -36,10 +40,26 @@ ROOTDIR=
 TESTROOT=/home1/test
 
 if [ X"$1" = "X-test" -o X"$XINST_TEST" != X ]; then
-	ROOTDIR=$TESTROOT
 	if [ X"$1" = "X-test" ]; then
 		shift
+		case "$1" in
+		/*)
+			TESTROOT="$1"
+			shift
+			;;
+		esac
+	else
+		case "$XINST_TEST" in
+		/*)
+			TESTROOT="$XINST_TEST"
+			;;
+		esac
 	fi
+	ROOTDIR=$TESTROOT
+	echo ""
+	echo "Running in test mode, with root set to $TESTROOT"
+	sleep 2
+	echo ""
 	if [ ! -d $TESTROOT ]; then
 		echo "$TESTROOT doesn't exist (for test mode)"
 		exit 1
@@ -50,8 +70,6 @@ if [ X"$1" = "X-test" -o X"$XINST_TEST" != X ]; then
 			mkdir $TESTROOT/$i
 		fi
 	done
-	echo ""
-	echo "Running in test mode"
 fi
 
 RUNDIR=$ROOTDIR/usr/X11R6
@@ -77,6 +95,10 @@ BASEDIST=" \
 	Xdoc.tgz \
 	Xfnts.tgz \
 	Xfenc.tgz \
+	"
+
+UPDDIST=" \
+	Xupd.tgz \
 	"
 
 UPDATEDIST=" \
@@ -218,7 +240,7 @@ Description()
 	Xfnon*)
 		echo "Some large fonts";;
 	Xfscl*)
-		echo "Scaled fonts (Speedo and Type1)";;
+		echo "Scaled fonts (Speedo, Type1 and TTF)";;
 	Xhtml*)
 		echo "Docs in HTML";;
 	Xjdoc*)
@@ -229,6 +251,8 @@ Description()
 		echo "a.out compatibility libraries";;
 	Xquartz*)
 		echo "Mac OS X Quartz compatible X server";;
+	Xupd.tgz)
+		echo "Post-release updates";;
 	*)
 		echo "unknown";;
 	esac
@@ -394,12 +418,28 @@ DoOsChecks()
 FindDistName()
 {
 	case "$OsName" in
+	CYGWIN*)
+		case "$OsArch" in
+		i*86)
+			DistName="Cygwin-ix86"
+			;;
+		*)
+			Message="Cygwin binaries are only available for ix86 platforms"
+			;;
+		esac
+		;;
 	Darwin)
 		case "$OsArch" in
 		Power*)
 			case "$OsVersion" in
-			1.[2-9]*)
-				DistName="Darwin-ppc"
+			1.[2-3]*)
+				DistName="Darwin-ppc-1.x"
+				;;
+			1.4.* | 5.*)
+				DistName="Darwin-ppc-5.x"
+				;;
+			[6-9].*)
+				Message="No Darwin/ppc binaries available for this OS version. Try Darwin-ppc-5.x"
 				;;
 			*)
 				Message="No Darwin/ppc binaries available for this OS version"
@@ -408,8 +448,11 @@ FindDistName()
 			;;
 		x86*)
 			case "$OsVersion" in
-			1.[3-9]*)
-				DistName="Darwin-ix86"
+			1.4.* | 5.*)
+				DistName="Darwin-ix86-5.x"
+				;;
+			[6-9].*)
+				Message="No Darwin/ix86 binaries available for this OS version. Try Darwin-ix86-5.x"
 				;;
 			*)
 				Message="No Darwin/ix86 binaries available for this OS version"
@@ -451,6 +494,9 @@ FindDistName()
 			4.*)
 				DistName="FreeBSD-4.x"
 				;;
+			5.*)
+				DistName="FreeBSD-5.x"
+				;;
 			*)
 				Message="FreeBSD/i386 binaries are not available for this version"
 				;;
@@ -463,6 +509,9 @@ FindDistName()
 				;;
 			4.*)
 				DistName="FreeBSD-alpha-4.x"
+				;;
+			5.*)
+				DistName="FreeBSD-alpha-5.x"
 				;;
 			*)
 				Message="FreeBSD/alpha binaries are not available for this version"
@@ -509,6 +558,19 @@ FindDistName()
 				;;
 			esac
 			;;
+		ppc)
+			case "$OsLibcMajor.$OsLibcMinor" in
+			6.1)
+				DistName="Linux-ppc-glibc21"
+				;;
+			6.*)
+				Message="No Linux/ppc binaries for glibc 2.$OsLibcMinor.  Try Linux-ppc-glibc21"
+				;;
+			*)
+				Message="No Linux/ppc binaries for this libc version"
+				;;
+			esac
+			;;
 		alpha)
 			case "$OsLibcMajor.$OsLibcMinor" in
 			6.1)
@@ -527,7 +589,7 @@ FindDistName()
 			6.0)
 				DistName="Linux-mips-glibc20"
 				;;
-			*)	
+			*)
 				Message="No Linux/Mips binaries for this libc version"
 				;;
 			esac
@@ -547,7 +609,7 @@ FindDistName()
 			1.[4-9]*)	# Check this
 				case "$OsObjFormat" in
 				a.out)
-					DistName="NetBSD-1.4.1"
+					DistName="NetBSD-1.4.x"
 					;;
 				*)
 					DistName="NetBSD-1.5"
@@ -568,8 +630,8 @@ FindDistName()
 		case "$OsArch" in
 		i386)
 			case "$OsVersion" in
-			2.[89]*)	# Check this
-				DistName="OpenBSD-2.8"
+			3.0*)	# Check this
+				DistName="OpenBSD-3.0"
 				;;
 			*)
 				Message="No OpenBSD/i386 binaries available for this version"
@@ -627,10 +689,13 @@ FindDistName()
 	if [ X"$DistName" != X ]; then
 		echo "Binary distribution name is '$DistName'"
 		echo ""
+		echo "If you don't find a binary distribution with this name, then"
+		echo "binaries for your platform are not available from XFree86.org."
+		echo ""
 	else
 		if [ X"$Message" = X ]; then
 			echo "Can't find which binary distribution you should use."
-			echo "Please send the output of this script to XFree86@XFree86.org"
+			echo "Please send the output of this script to XFree86@XFree86.org."
 			echo ""
 		else
 			echo "$Message"
@@ -689,7 +754,7 @@ CheckInstallType()
 			;;
 		esac
 	fi
-		
+
 	# Auto-detect based on what files are present
 
 	if [ X"$DOUPDATE" = X ]; then
@@ -774,6 +839,8 @@ InstallUpdate()
 	FreeBSD|NetBSD|OpenBSD)
 		echo ""
 		echo "Running ldconfig"
+		# Make sure the directory isn't group-writable
+		chmod g-w $RUNDIR/lib
 		/sbin/ldconfig -m $RUNDIR/lib
 		;;
 	Linux)
@@ -793,7 +860,7 @@ InstallUpdate()
 			echo ""
 		fi
 	done
-		
+
 	echo ""
 	echo "Update installation complete."
 }
@@ -838,10 +905,18 @@ GetOsInfo
 # Make OS-specific adjustments
 
 case "$OsName" in
-Darwin)
+CYGWIN*)
 	SERVDIST="Xxserv.tgz"
-	EXTRAOPTDIST="Xquartz.tgz"
+	;;
+Darwin)
 	UPDATEDIST="Xupdate.tgz Xdocupd.tgz"
+        # On Mac OS X, we require Quartz support
+        if [ -d /System/Library/Frameworks/ApplicationServices.framework ]; then
+            SERVDIST="Xxserv.tgz Xquartz.tgz"
+        else
+            SERVDIST="Xxserv.tgz"
+            EXTRAOPTDIST="Xquartz.tgz"
+        fi
 	;;
 FreeBSD|NetBSD|OpenBSD)
 	VARDIST="Xvar.tgz"
@@ -923,8 +998,16 @@ if [ X"$ExtractOK" != XYES ]; then
 fi
 
 # Link extract to gnu-tar so it can also be used as a regular tar
-rm -f gnu-tar
-ln extract gnu-tar
+case "$OsName" in
+CYGWIN*)
+	rm -f gnu-tar
+	ln -s extract.exe gnu-tar
+	;;
+*)
+	rm -f gnu-tar
+	ln extract gnu-tar
+	;;
+esac
 
 EXTRACT=$WDIR/extract
 TAR=$WDIR/gnu-tar
@@ -1212,6 +1295,22 @@ if [ X"$XKBDIR" != X -a X"$XKBDIR" != X"$RUNDIR/lib/X11/xkb/compiled" -a \
 	ln -s $XKBDBDIR $RUNDIR/lib/X11/xkb/compiled
 fi
 
+echo "Checking for post-release updates ..."
+for i in $UPDDIST; do
+	if [ -f $i ]; then
+		Echo "Do you want to install update $i (`Description $i`)? (y/n) [y] "
+		read response
+		case "$response" in
+		[nN]*)
+			: skip this one
+			;;
+		*)
+			(cd $RUNDIR; $EXTRACT $WDIR/$i)
+			;;
+		esac
+	fi
+done
+
 echo "Checking for optional components to install ..."
 for i in $OPTDIST $EXTRAOPTDIST; do
 	if [ -f $i ]; then
@@ -1228,31 +1327,6 @@ for i in $OPTDIST $EXTRAOPTDIST; do
 	fi
 done
 
-# Need to run ldconfig on some OSs
-case "$OsName" in
-FreeBSD|NetBSD|OpenBSD)
-	echo ""
-	echo "Running ldconfig"
-	/sbin/ldconfig -m $RUNDIR/lib
-	;;
-Linux)
-	echo ""
-	echo "Running ldconfig"
-	/sbin/ldconfig $RUNDIR/lib
-	;;
-esac
-
-# Run mkfontdir in the local and misc directories to make sure that
-# the fonts.dir files are up to date after the installation.
-echo ""
-for i in $FONTDIRS $EXTRAFONTDIRS; do
-	if [ -d $RUNDIR/lib/X11/fonts/$i ]; then
-		Echo "Updating the fonts.dir file in $RUNDIR/lib/X11/fonts/$i..."
-		$RUNDIR/bin/mkfontdir $RUNDIR/lib/X11/fonts/$i
-		echo ""
-	fi
-done
-		
 # Check if the system has a termcap file
 TERMCAP1DIR=$ROOTDIR/usr/share
 TERMCAP2=$ROOTDIR/etc/termcap
@@ -1305,7 +1379,7 @@ OLDTINFO=" \
 	x/xterm-old \
 	x/xterm-r5 \
 	v/vs100"
-	
+
 if [ -d $TINFODIR ]; then
 	echo ""
 	echo "You appear to have a terminfo directory: $TINFODIR"
@@ -1416,6 +1490,64 @@ if [ -f $RUNDIR/lib/libGL.so ]; then
 	esac
 fi
 
+# Create compatibility links for the freetype library on systems where the
+# major version gets incremented even though the library is compatible with
+# older versions.
+
+echo ""
+echo "Checking if compatibility links for the FreeType2 library are needed ..."
+if [ -f $RUNDIR/lib/libfreetype.so.$FreetypeCurrent ]; then
+	v=`expr $FreetypeCurrent - $FreetypeAge`
+	while [ $v != $FreetypeCurrent ]; do
+		if [ ! -f $RUNDIR/lib/libfreetype.so.$v ]; then
+			rm -f $RUNDIR/lib/libfreetype.so.$v
+			ln -s libfreetype.so.$FreetypeCurrent $RUNDIR/lib/libfreetype.so.$v
+			echo "Linking libfreetype.so.$FreetypeCurrent to $RUNDIR/lib/libfreetype.so.$v"
+		fi
+		v=`expr $v + 1`
+	done
+fi
+
+if [ -f $RUNDIR/lib/libfreetype.so.$FreetypeCurrent.0 ]; then
+	v=`expr $FreetypeCurrent - $FreetypeAge`
+	while [ $v != $FreetypeCurrent ]; do
+		if [ ! -f $RUNDIR/lib/libfreetype.so.$v.0 ]; then
+			rm -f $RUNDIR/lib/libfreetype.so.$v.0
+			ln -s libfreetype.so.$FreetypeCurrent.0 $RUNDIR/lib/libfreetype.so.$v.0
+			echo "Linking libfreetype.so.$FreetypeCurrent.0 to $RUNDIR/lib/libfreetype.so.$v".0
+		fi
+		v=`expr $v + 1`
+	done
+fi
+
+# Need to run ldconfig on some OSs
+case "$OsName" in
+FreeBSD|NetBSD|OpenBSD)
+	echo ""
+	echo "Running ldconfig"
+	# Make sure the directory isn't group-writable
+	chmod g-w $RUNDIR/lib
+	/sbin/ldconfig -m $RUNDIR/lib
+	;;
+Linux)
+	echo ""
+	echo "Running ldconfig"
+	/sbin/ldconfig $RUNDIR/lib
+	;;
+esac
+
+# Run mkfontdir in the local and misc directories to make sure that
+# the fonts.dir files are up to date after the installation.
+echo ""
+for i in $FONTDIRS $EXTRAFONTDIRS; do
+	if [ -d $RUNDIR/lib/X11/fonts/$i ]; then
+		Echo "Updating the fonts.dir file in $RUNDIR/lib/X11/fonts/$i..."
+		$RUNDIR/bin/mkfontdir $RUNDIR/lib/X11/fonts/$i
+		echo ""
+	fi
+done
+
+
 if [ -f $RUNDIR/bin/rstartd ]; then
 	echo ""
 	echo "If you are going to use rstart and $RUNDIR/bin isn't in the"
@@ -1436,6 +1568,7 @@ if [ -f $RUNDIR/bin/rstartd ]; then
 		;;
 	esac
 fi
+
 
 # Finally, check for old 3.3.x modules that will conflict with 4.x
 if [ -d $RUNDIR/lib/modules ]; then

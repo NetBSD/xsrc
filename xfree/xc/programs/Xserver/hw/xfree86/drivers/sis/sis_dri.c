@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sis/sis_dri.c,v 1.15.2.1 2001/05/22 21:25:44 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sis/sis_dri.c,v 1.20 2001/12/15 00:59:11 dawes Exp $ */
 
 /* modified from tdfx_dri.c, mga_dri.c */
 
@@ -15,14 +15,13 @@
 
 #include "sis.h"
 #include "sis_dri.h"
+#include "xf86drmSiS.h"
 
 #define BR(x)   (0x8200 | (x) << 2)
 #define SiSIdle \
   while((MMIO_IN16(pSiS->IOBase, BR(16)+2) & 0xE000) != 0xE000){}; \
   while((MMIO_IN16(pSiS->IOBase, BR(16)+2) & 0xE000) != 0xE000){}; \
   MMIO_IN16(pSiS->IOBase, 0x8240);
-
-extern Bool drmSiSAgpInit(int driSubFD, int offset, int size);
 
 extern void GlxSetVisualConfigs(
     int nconfigs,
@@ -180,6 +179,9 @@ Bool SISDRIScreenInit(ScreenPtr pScreen)
   SISPtr pSIS = SISPTR(pScrn);
   DRIInfoPtr pDRIInfo;
   SISDRIPtr pSISDRI;
+#if 000
+  drmVersionPtr version;
+#endif
 
    /* Check that the GLX, DRI, and DRM modules have been loaded by testing
     * for canonical symbols in each module. */

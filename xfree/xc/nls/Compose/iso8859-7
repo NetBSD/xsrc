@@ -3,7 +3,7 @@ XCOMM
 XCOMM ISO 8859-7 (Greek) Compose Sequence
 XCOMM
 XCOMM
-XCOMM $XFree86: xc/nls/Compose/iso8859-7,v 1.4 2001/04/26 21:09:40 dawes Exp $
+XCOMM $XFree86: xc/nls/Compose/iso8859-7,v 1.5 2001/12/24 17:15:10 dawes Exp $
 XCOMM
 XCOMM Sequence Definition
 XCOMM
@@ -107,15 +107,16 @@ XCOMM Special Character
 <Multi_key> <minus> <comma>		: "\254"	notsign
 <Multi_key> <comma> <minus>		: "\254"	notsign
 <Multi_key> <minus> <minus>		: "\255"	hyphen
-<Multi_key> <minus> <asciicircum>	: "\257"	macron
-<Multi_key> <asciicircum> <minus>	: "\257"	macron
-<Multi_key> <underscore> <asciicircum>	: "\257"	macron
-<Multi_key> <asciicircum> <underscore>	: "\257"	macron
-<Multi_key> <underscore> <underscore>	: "\257"	macron
 XCOMM should be Greek tonos but not defined in X11
 <Multi_key> <apostrophe> <apostrophe>	: "\264"	acute
 XCOMM should be Greek dialytika but not defined in X11
 <Multi_key> <quotedbl> <quotedbl>	: "\250"	diaeresis
+XCOMM special characters that don't exist in Latin-1
+<Multi_key> <less> <apostrophe>		: "\241"	leftsinglequotemark
+<Multi_key> <apostrophe> <less>		: "\241"	leftsinglequotemark
+<Multi_key> <greater> <apostrophe>	: "\242"	rightsinglequotemark
+<Multi_key> <apostrophe> <greater>	: "\242"	rightsinglequotemark
+<Multi_key> <asciitilde> <asciitilde>	: "\257"	Greek_horizbar
 
 XCOMM Accented Alphabet
 <Multi_key> <Greek_ALPHA> <apostrophe>	: "\266" Greek_ALPHAaccent
@@ -158,11 +159,18 @@ XCOMM Accented Alphabet
 <Multi_key> <Greek_upsilon> <quotedbl>	: "\373" Greek_upsilondieresis
 <Multi_key> <quotedbl> <Greek_upsilon>	: "\373" Greek_upsilondieresis
 
+<Multi_key> <apostrophe> <quotedbl> <Greek_iota>	: "\300" Greek_iotaaccentdieresis
+<Multi_key> <quotedbl> <apostrophe> <Greek_iota>	: "\300" Greek_iotaaccentdieresis
+<Multi_key> <apostrophe> <quotedbl> <Greek_upsilon>	: "\340" Greek_upsilonaccentdieresis
+<Multi_key> <quotedbl> <apostrophe> <Greek_upsilon>	: "\340" Greek_upsilonaccentdieresis
+<Multi_key> <apostrophe> <quotedbl> <space>		: "\265" Greek_accentdieresis
+<Multi_key> <quotedbl> <apostrophe> <space>		: "\265" Greek_accentdieresis
+
 XCOMM
 XCOMM
 XCOMM dead key accent keysyms
 XCOMM Special Character
-<dead_circumflex>  <slash>		: "|"	bar
+<dead_circumflex> <slash>		: "|"	bar
 <dead_grave> <space>			: "`"	grave
 <dead_acute> <space>			: "'"	apostrophe
 <dead_diaeresis> <space>		: "\250"	diaeresis
@@ -174,14 +182,11 @@ XCOMM Special Character
 <dead_abovering> <space>		: "\260"	degree
 <dead_abovering> <dead_abovering>	: "\260"	degree
 <dead_circumflex> <0>			: "\260"	degree
-<dead_circumflex> <1>			: "\271"	onesuperior
 <dead_circumflex> <2>			: "\262"	twosuperior
 <dead_circumflex> <3>			: "\263"	threesuperior
 <dead_circumflex> <period>		: "\267"	periodcentered
 <dead_circumflex> <exclam>		: "\246"	brokenbar
 <dead_cedilla> <minus>			: "\254"	notsign
-<dead_circumflex> <minus>		: "\257"	macron
-<dead_circumflex> <underscore>		: "\257"	macron
 <dead_acute> <apostrophe>		: "\264"	acute
 <dead_diaeresis> <quotedbl>		: "\250"	diaeresis
 

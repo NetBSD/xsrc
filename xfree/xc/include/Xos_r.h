@@ -1,8 +1,12 @@
-/* $Xorg: Xos_r.h,v 1.3 2000/08/18 04:05:44 coskrey Exp $ */
+/* $Xorg: Xos_r.h,v 1.4 2001/02/09 02:03:22 xorgcvs Exp $ */
 /* 
 Copyright 1996, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -18,7 +22,7 @@ Except as contained in this notice, the name of The Open Group shall not be
 used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 */
-/* $XFree86: xc/include/Xos_r.h,v 1.10 2001/03/03 09:53:00 herrb Exp $ */
+/* $XFree86: xc/include/Xos_r.h,v 1.15 2001/12/14 19:53:26 dawes Exp $ */
 
 /* 
  * Various and sundry Thread-Safe functions used by X11, Motif, and CDE.
@@ -146,7 +150,9 @@ extern void (*_XUnlockMutex_fn)(
 #   endif
 #  endif
 # elif defined(XOS_USE_XT_LOCKING)
+#  ifndef _XtThreadsI_h
 extern void (*_XtProcessLock)(void);
+#  endif
 #  ifndef _XtintrinsicP_h
 #   include <X11/Xfuncproto.h>	/* for NeedFunctionPrototypes */
 extern void XtProcessLock(
@@ -249,7 +255,7 @@ typedef struct {
  */
    
 #if defined(__NetBSD__) || defined(__FreeBSD__) || defined(__OpenBSD__)
-__inline__ void _Xpw_copyPasswd(_Xgetpwparams p)
+static __inline__ void _Xpw_copyPasswd(_Xgetpwparams p)
 {
    memcpy(&(p).pws, (p).pwp, sizeof(struct passwd));
 
@@ -309,12 +315,12 @@ __inline__ void _Xpw_copyPasswd(_Xgetpwparams p)
 #endif
 # define _XGetpwuid(u,p) \
 ( (_Xos_processLock), \
-  (((p).pwp = getpwuid((u))) ? _Xpw_copyPasswd(p) : 0), \
+  (((p).pwp = getpwuid((u))) ? _Xpw_copyPasswd(p), 0 : 0), \
   (_Xos_processUnlock), \
   (p).pwp )
 # define _XGetpwnam(u,p) \
 ( (_Xos_processLock), \
-  (((p).pwp = getpwnam((u))) ? _Xpw_copyPasswd(p) : 0), \
+  (((p).pwp = getpwnam((u))) ? _Xpw_copyPasswd(p), 0 : 0), \
   (_Xos_processUnlock), \
   (p).pwp )
 
@@ -392,6 +398,7 @@ typedef int _Xgetpwret;
  *				 _Xgetservbynameparams);
  */
 
+#undef XTHREADS_NEEDS_BYNAMEPARAMS
 #if defined(X_INCLUDE_NETDB_H) && !defined(_XOS_INCLUDED_NETDB_H) \
     && !defined(WIN32)
 # include <netdb.h>
@@ -430,6 +437,9 @@ typedef struct {
   char		 s_proto[255];
   struct servent *sptr;
 } _Xgetservbynameparams;
+
+# define XTHREADS_NEEDS_BYNAMEPARAMS
+
 # define _Xg_copyHostent(hp) \
    (memcpy(&(hp).hent, (hp).hptr, sizeof(struct hostent)), \
     strcpy((hp).h_name, (hp).hptr->h_name), \
@@ -475,6 +485,8 @@ typedef struct {
 # ifdef _POSIX_THREAD_SAFE_FUNCTIONS
 #  define X_POSIX_THREAD_SAFE_FUNCTIONS 1
 # endif
+
+# define XTHREADS_NEEDS_BYNAMEPARAMS
 
 # ifndef X_POSIX_THREAD_SAFE_FUNCTIONS
 typedef struct {
@@ -821,7 +833,8 @@ typedef struct {
 #elif !defined(XTHREADS) && !defined(X_FORCE_USE_MTSAFE_API)
 /* Use regular, unsafe API. */
 typedef int _Xstrtokparams;	/* dummy */
-# define _XStrtok(s1,s2,p)	strtok((s1),(s2))
+# define _XStrtok(s1,s2,p) \
+ ( (void)(p), strtok((s1),(s2)) )
 
 #elif !defined(XOS_USE_MTSAFE_STRINGAPI) || defined(XNO_MTSAFE_STRINGAPI)
 /* Systems with thread support but no _r API. */

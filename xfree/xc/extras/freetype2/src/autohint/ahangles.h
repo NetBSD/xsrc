@@ -5,7 +5,7 @@
 /*    A routine used to compute vector angles with limited accuracy        */
 /*    and very high speed (specification).                                 */
 /*                                                                         */
-/*  Copyright 2000 Catharon Productions Inc.                               */
+/*  Copyright 2000-2001 Catharon Productions Inc.                          */
 /*  Author: David Turner                                                   */
 /*                                                                         */
 /*  This file is part of the Catharon Typography Project and shall only    */
@@ -47,8 +47,8 @@ FT_BEGIN_HEADER
   const AH_Angle  ah_arctan[1L << AH_ATAN_BITS];
 
 
-  FT_LOCAL
-  AH_Angle  ah_angle( FT_Vector*  v );
+  FT_LOCAL AH_Angle
+  ah_angle( FT_Vector*  v );
 
 
 FT_END_HEADER

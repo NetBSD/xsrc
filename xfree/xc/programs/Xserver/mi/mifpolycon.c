@@ -1,8 +1,13 @@
+/* $XFree86: xc/programs/Xserver/mi/mifpolycon.c,v 1.3 2001/12/14 20:00:23 dawes Exp $ */
 /***********************************************************
 
 Copyright 1987, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -40,7 +45,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $Xorg: mifpolycon.c,v 1.3 2000/08/17 19:53:38 cpqbld Exp $ */
+/* $Xorg: mifpolycon.c,v 1.4 2001/02/09 02:05:21 xorgcvs Exp $ */
 #include <math.h>
 #include "X.h"
 #include "gcstruct.h"
@@ -48,7 +53,8 @@ SOFTWARE.
 #include "pixmapstr.h"
 #include "mifpoly.h"
 
-static int GetFPolyYBounds();
+static int GetFPolyYBounds(register SppPointPtr pts, int n, double yFtrans,
+			   int *by, int *ty);
 
 #ifdef ICEILTEMPDECL
 ICEILTEMPDECL
@@ -80,9 +86,9 @@ miFillSppPoly(dst, pgc, count, ptsIn, xTrans, yTrans, xFtrans, yFtrans)
 						   meet the polygon exactly.
 						 */
 {
-    double		xl, xr,		/* x vals of left and right edges */
-          		ml,       	/* left edge slope */
-          		mr,             /* right edge slope */
+    double		xl = 0.0, xr = 0.0,	/* x vals of left and right edges */
+          		ml = 0.0,      	/* left edge slope */
+          		mr = 0.0,       /* right edge slope */
           		dy,             /* delta y */
     			i;              /* loop counter */
     int			y,              /* current scanline */
@@ -157,8 +163,8 @@ miFillSppPoly(dst, pgc, count, ptsIn, xTrans, yTrans, xFtrans, yFtrans)
 
         /* add a right edge if we need to */
         if ((y > ptsIn[nextright].y + yFtrans) ||
- 	     ISEQUAL(y, ptsIn[nextright].y + yFtrans)
-	     && Marked[nextright] != 1)
+ 	     (ISEQUAL(y, ptsIn[nextright].y + yFtrans)
+	     && Marked[nextright] != 1))
 	{
 	    Marked[nextright]++;
             right = nextright--;
@@ -242,11 +248,12 @@ miFillSppPoly(dst, pgc, count, ptsIn, xTrans, yTrans, xFtrans, yFtrans)
  * smallest and largest y */
 static
 int
-GetFPolyYBounds(pts, n, yFtrans, by, ty)
-    register SppPointPtr	pts;
-    int 			n;
-    double			yFtrans;
-    int 			*by, *ty;
+GetFPolyYBounds(
+    register SppPointPtr	pts,
+    int 			n,
+    double			yFtrans,
+    int 			*by,
+    int				*ty)
 {
     register SppPointPtr	ptMin;
     double 			ymin, ymax;

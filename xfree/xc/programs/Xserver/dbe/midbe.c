@@ -30,7 +30,7 @@
  *     Machine-independent DBE code
  *
  *****************************************************************************/
-/* $XFree86: xc/programs/Xserver/dbe/midbe.c,v 3.4 2001/03/06 17:31:34 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/dbe/midbe.c,v 3.5 2001/08/23 14:19:24 alanh Exp $ */
 
 
 /* INCLUDES */
@@ -70,7 +70,6 @@
 
 static int	miDbePrivPrivGeneration  =  0;
 static int	miDbeWindowPrivPrivIndex = -1;
-static int      miDbeScreenPrivPrivIndex = -1;
 RESTYPE		dbeDrawableResType;
 RESTYPE		dbeWindowPrivResType;
 int		dbeScreenPrivIndex = -1;
@@ -308,7 +307,6 @@ miDbeSwapBuffers(client, pNumWindows, swapInfo)
     DbeScreenPrivPtr		pDbeScreenPriv;
     GCPtr		    	pGC;
     WindowPtr		    	pWin;
-    register int		i;
     MiDbeWindowPrivPrivPtr	pDbeWindowPrivPriv; 
     PixmapPtr			pTmpBuffer;
     xRectangle			clearRect;

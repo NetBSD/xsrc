@@ -6,7 +6,7 @@
 
 1.  Introduction
 
-This document describes mouse support in XFree86 4.1.0.
+This document describes mouse support in XFree86 4.2.0.
 
 Mouse configuration has often been mysterious task for novice users.  How-
 ever, once you learn several basics, it is straightforward to write the mouse
@@ -928,4 +928,4 @@ wheel's movement will be reported as the buttons 6 and 7.
      Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/mouse.sgml,v 1.11 2000/03/01 00:25:23 dawes Exp $
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.mouse,v 1.11.4.1 2001/06/01 18:26:45 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.mouse,v 1.13 2001/11/15 17:37:23 dawes Exp $

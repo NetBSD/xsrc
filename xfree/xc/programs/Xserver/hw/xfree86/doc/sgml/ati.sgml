@@ -15,7 +15,7 @@
 
 
 <ident>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/ati.sgml,v 3.37 2001/04/16 15:02:08 tsi Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/ati.sgml,v 3.39 2002/01/16 16:25:54 tsi Exp $
 </ident>
 
 <abstract>
@@ -559,7 +559,8 @@ Mach8's, 8514/A's and other clones.
 <item>Colour depth greater than 8 on non-integrated controllers, where
 permitted by the hardware.
 <item>Mach32, Mach8 and 8514/A Draw Engines.
-<item>Hardware cursors.
+<item>Hardware cursors where implemented by hardware.
+This has already been done for Mach64 integrated controllers.
 <item>TVOut, i.e. the ability to use a television screen as a monitor.
 <item>Motion Video, i.e. displaying an asynchronous data stream (TV signal,
 DVD, etc.) in a window or full-screen.
@@ -573,9 +574,11 @@ Check the server's log (usually found in /var/log/XFree86.0.log) and <htmlurl
 name="ftp://ftp.xfree86.org/pub/XFree86"
 url="ftp://ftp.xfree86.org/pub/XFree86"> if you are uncertain.<p>
 Secondly, please check XFree86's doc directory for additional information.<p>
+<!--
 Thirdly, do not forget to read <htmlurl name="http://www.xfree86.org/FAQ"
 url="http://www.xfree86.org/FAQ">.<p>
-Fourth, a scan through the comp.windows.x.i386unix and comp.os.linux.x
+-->
+Thirdly, a scan through the comp.windows.x.i386unix and comp.os.linux.x
 newsgroups using your favourite archiving service can also prove useful in
 resolving problems.<p>
 If you are still experiencing problems, you can send me <it>non-HTMLised</it>

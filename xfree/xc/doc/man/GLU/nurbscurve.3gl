@@ -95,5 +95,5 @@ gluEndCurve(nobj);
 .SH NOTES
 To define trim curves which stitch well, use \%\f3gluPwlCurve\fP.
 .SH SEE ALSO
-\%\f3gluBeginCurve\fP, \%\f3gluBeginTrim\fP, \%\f3gluNewNurbsRenderer\fP, \%\f3gluPwlCurve\fP
+\%\f3gluBeginCurve(3G)\fP, \%\f3gluBeginTrim(3G)\fP, \%\f3gluNewNurbsRenderer(3G)\fP, \%\f3gluPwlCurve(3G)\fP
 

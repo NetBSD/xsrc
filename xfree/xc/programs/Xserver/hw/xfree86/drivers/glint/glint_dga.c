@@ -21,7 +21,7 @@
  *
  * Authors:  Alan Hourihane, <alanh@fairlite.demon.co.uk>
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/glint/glint_dga.c,v 1.3 2001/04/10 20:33:30 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/glint/glint_dga.c,v 1.4 2001/12/16 21:36:50 alanh Exp $ */
 
 #include "xf86.h"
 #include "xf86_OSproc.h"
@@ -42,10 +42,6 @@ static int  GLINT_GetViewport(ScrnInfoPtr);
 static void GLINT_SetViewport(ScrnInfoPtr, int, int, int);
 static void GLINT_FillRect(ScrnInfoPtr, int, int, int, int, unsigned long);
 static void GLINT_BlitRect(ScrnInfoPtr, int, int, int, int, int, int);
-#if 0
-static void GLINT_BlitTransRect(ScrnInfoPtr, int, int, int, int, int, int, 
-					unsigned long);
-#endif
 
 static
 DGAFunctionRec GLINTDGAFuncs = {
@@ -57,11 +53,7 @@ DGAFunctionRec GLINTDGAFuncs = {
    GLINT_Sync,
    GLINT_FillRect,
    GLINT_BlitRect,
-#if 0
-   GLINT_BlitTransRect
-#else
    NULL
-#endif
 };
 
 Bool
@@ -101,7 +93,7 @@ SECOND_PASS:
 	currentMode->mode = pMode;
 	currentMode->flags = DGA_CONCURRENT_ACCESS | DGA_PIXMAP_AVAILABLE;
 	if(!pGlint->NoAccel)
-	   currentMode->flags |= DGA_FILL_RECT /*| DGA_BLIT_RECT*/;
+	   currentMode->flags |= DGA_FILL_RECT | DGA_BLIT_RECT;
 	if(pMode->Flags & V_DBLSCAN)
 	   currentMode->flags |= DGA_DOUBLESCAN;
 	if(pMode->Flags & V_INTERLACE)
@@ -259,22 +251,6 @@ GLINT_BlitRect(
 	SET_SYNC_FLAG(pGlint->AccelInfoRec);
     }
 }
-
-
-#if 0
-static void 
-GLINT_BlitTransRect(
-   ScrnInfoPtr pScrn, 
-   int srcx, int srcy, 
-   int w, int h, 
-   int dstx, int dsty,
-   unsigned long color
-){
-  /* this one should be separate since the XAA function would
-     prohibit usage of ~0 as the key */
-}
-#endif
-
 
 static Bool 
 GLINT_OpenFramebuffer(

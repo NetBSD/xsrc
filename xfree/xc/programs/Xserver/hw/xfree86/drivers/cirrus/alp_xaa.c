@@ -1,6 +1,6 @@
 /* (c) Itai Nahshon */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/cirrus/alp_xaa.c,v 1.6 2001/02/15 17:39:27 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/cirrus/alp_xaa.c,v 1.7 2001/10/01 13:44:05 eich Exp $ */
 
 #include "xf86.h"
 #include "xf86_OSproc.h"
@@ -91,16 +91,14 @@ AlpSubsequentScreenToScreenCopy(ScrnInfoPtr pScrn, int x1, int y1, int x2,
 	dest = y2 * pitch + x2 * pScrn->bitsPerPixel / 8;
 	source = y1 * pitch + x1 * pScrn->bitsPerPixel / 8;
 	if (dest > source) {
-		decrement = 1;
+		decrement = 1 << 8;
 		dest += hh * pitch + ww;
 		source += hh * pitch + ww;
 	}
 
 	WAIT;
 
-	outb(0x3CE, 0x30);
-	outb(0x3CF, decrement);
-	outb(0x3CE, 0x31);
+	outw(0x3CE, decrement | 0x30);
 
 	/* Width */
 	outw(0x3CE, ((ww << 8) & 0xff00) | 0x20);

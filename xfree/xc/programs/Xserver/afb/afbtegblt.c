@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/afb/afbtegblt.c,v 3.1 1998/03/20 21:04:57 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/afb/afbtegblt.c,v 3.2 2001/10/28 03:32:58 tsi Exp $ */
 /* $XConsortium: afbtegblt.c,v 5.14 94/04/17 20:28:35 dpw Exp $ */
 /* Combined Purdue/PurduePlus patches, level 2.0, 1/17/89 */
 /***********************************************************
@@ -371,7 +371,7 @@ afbTEGlyphBlt (pDrawable, pGC, x, y, nglyph, ppci, pglyphBase)
 # endif
 								FASTPUTBITS(~c, xoff1, widthGlyphs, dst);
 #else
-								*(dst) = (*dst) & ~startmask | ~SCRRIGHT(c, xoff1) & startmask;
+								*(dst) = ((*dst) & ~startmask) | (~SCRRIGHT(c, xoff1) & startmask);
 #endif
 								afbScanlineInc(dst, widthDst);
 							}
@@ -390,7 +390,7 @@ afbTEGlyphBlt (pDrawable, pGC, x, y, nglyph, ppci, pglyphBase)
 #endif
 								FASTPUTBITS(c, xoff1, widthGlyphs, dst);
 #else
-								*(dst) = (*dst) & ~startmask | SCRRIGHT(c, xoff1) & startmask;
+								*(dst) = ((*dst) & ~startmask) | (SCRRIGHT(c, xoff1) & startmask);
 #endif
 								afbScanlineInc(dst, widthDst);
 							}
@@ -431,10 +431,8 @@ afbTEGlyphBlt (pDrawable, pGC, x, y, nglyph, ppci, pglyphBase)
 
 							while (hTmp--) {
 								GetBits4
-								dst[0] = dst[0] & ~startmask |
-										 	~SCRRIGHT(c,xoff1) & startmask;
-								dst[1] = dst[1] & ~endmask |
-										 	~SCRLEFT(c,nfirst) & endmask;
+								dst[0] = (dst[0] & ~startmask) | (~SCRRIGHT(c,xoff1) & startmask);
+								dst[1] = (dst[1] & ~endmask) | (~SCRLEFT(c,nfirst) & endmask);
 								afbScanlineInc(dst, widthDst);
 							}
 							break;
@@ -446,10 +444,8 @@ afbTEGlyphBlt (pDrawable, pGC, x, y, nglyph, ppci, pglyphBase)
 
 							while (hTmp--) {
 								GetBits4
-								dst[0] = dst[0] & ~startmask |
-											SCRRIGHT(c,xoff1) & startmask;
-								dst[1] = dst[1] & ~endmask |
-										 	SCRLEFT(c,nfirst) & endmask;
+								dst[0] = (dst[0] & ~startmask) | (SCRRIGHT(c,xoff1) & startmask);
+								dst[1] = (dst[1] & ~endmask) | (SCRLEFT(c,nfirst) & endmask);
 								afbScanlineInc(dst, widthDst);
 							}
 							break;
@@ -507,7 +503,7 @@ afbTEGlyphBlt (pDrawable, pGC, x, y, nglyph, ppci, pglyphBase)
 							FASTPUTBITS (~c,xoff1,widthGlyph,dst);
 #else
 							GetBits1
-							(*dst) = (*dst) & ~startmask | ~SCRRIGHT(c, xoff1) & startmask;
+							(*dst) = ((*dst) & ~startmask) | (~SCRRIGHT(c, xoff1) & startmask);
 #endif
 							afbScanlineInc(dst, widthDst);
 						}
@@ -527,7 +523,7 @@ afbTEGlyphBlt (pDrawable, pGC, x, y, nglyph, ppci, pglyphBase)
 							FASTPUTBITS (c,xoff1,widthGlyph,dst);
 #else
 							GetBits1
-							(*dst) = (*dst) & ~startmask | SCRRIGHT(c, xoff1) & startmask;
+							(*dst) = ((*dst) & ~startmask) | (SCRRIGHT(c, xoff1) & startmask);
 #endif
 							afbScanlineInc(dst, widthDst);
 						}
@@ -564,20 +560,16 @@ afbTEGlyphBlt (pDrawable, pGC, x, y, nglyph, ppci, pglyphBase)
 					case RROP_INVERT:
 						while (hTmp--) {
 							GetBits1
-							dst[0] = dst[0] & ~startmask |
-									 ~SCRRIGHT(c,xoff1) & startmask;
-							dst[1] = dst[1] & ~endmask |
-									 ~SCRLEFT(c,nfirst) & endmask;
+							dst[0] = (dst[0] & ~startmask) | (~SCRRIGHT(c,xoff1) & startmask);
+							dst[1] = (dst[1] & ~endmask) | (~SCRLEFT(c,nfirst) & endmask);
 							afbScanlineInc(dst, widthDst);
 						}
 						break;
 					case RROP_COPY:
 						while (hTmp--) {
 							GetBits1
-							dst[0] = dst[0] & ~startmask |
-									 SCRRIGHT(c,xoff1) & startmask;
-							dst[1] = dst[1] & ~endmask |
-									 SCRLEFT(c,nfirst) & endmask;
+							dst[0] = (dst[0] & ~startmask) | (SCRRIGHT(c,xoff1) & startmask);
+							dst[1] = (dst[1] & ~endmask) | (SCRLEFT(c,nfirst) & endmask);
 							afbScanlineInc(dst, widthDst);
 						}
 						break;

@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/programs/Xserver/miext/shadow/shpacked.c,v 1.3 2000/09/19 03:33:33 keithp Exp $
+ * $XFree86: xc/programs/Xserver/miext/shadow/shpacked.c,v 1.5 2001/10/28 03:34:16 tsi Exp $
  *
  * Copyright © 2000 Keith Packard
  *
@@ -36,25 +36,24 @@
 #include    "fb.h"
 
 void
-shadowUpdatePacked (ScreenPtr pScreen,
-		    PixmapPtr pShadow,
-		    RegionPtr damage)
+shadowUpdatePacked (ScreenPtr	    pScreen,
+		    shadowBufPtr    pBuf)
 {
-    shadowScrPriv(pScreen);
+    RegionPtr	damage = &pBuf->damage;
+    PixmapPtr	pShadow = pBuf->pPixmap;
     int		nbox = REGION_NUM_RECTS (damage);
     BoxPtr	pbox = REGION_RECTS (damage);
     FbBits	*shaBase, *shaLine, *sha;
-    FbBits	s;
     FbStride	shaStride;
     int		scrBase, scrLine, scr;
     int		shaBpp;
+    int		shaXoff, shaYoff; /* XXX assumed to be zero */
     int		x, y, w, h, width;
     int         i;
-    FbBits	*winBase, *winLine, *win;
+    FbBits	*winBase = NULL, *win;
     CARD32      winSize;
-    int		plane;
 
-    fbGetDrawable (&pShadow->drawable, shaBase, shaStride, shaBpp);
+    fbGetDrawable (&pShadow->drawable, shaBase, shaStride, shaBpp, shaXoff, shaYoff);
     while (nbox--)
     {
 	x = pbox->x1 * shaBpp;
@@ -80,11 +79,12 @@ shadowUpdatePacked (ScreenPtr pScreen,
 		i = scrBase + winSize - scr;
 		if (i <= 0 || scr < scrBase)
 		{
-		    winBase = (FbBits *) (*pScrPriv->window) (pScreen,
-							      y,
-							      scr * sizeof (FbBits),
-							      SHADOW_WINDOW_WRITE,
-							      &winSize);
+		    winBase = (FbBits *) (*pBuf->window) (pScreen,
+							  y,
+							  scr * sizeof (FbBits),
+							  SHADOW_WINDOW_WRITE,
+							  &winSize,
+							  pBuf->closure);
 		    if(!winBase)
 			return;
 		    scrBase = scr;

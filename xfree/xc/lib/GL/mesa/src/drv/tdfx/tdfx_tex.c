@@ -23,7 +23,7 @@
  * OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-/* $XFree86: xc/lib/GL/mesa/src/drv/tdfx/tdfx_tex.c,v 1.1.2.1 2001/05/22 21:25:41 dawes Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/tdfx/tdfx_tex.c,v 1.3 2001/08/18 02:51:07 dawes Exp $ */
 
 /*
  * Original rewrite:
@@ -517,7 +517,7 @@ tdfxDDTexImage2D( GLcontext *ctx, GLenum target, GLint level,
       image->rescaled.height = dstHeight;
       image->rescaled.size = size;
 
-      _mesa_rescale_teximage2d( texFormat,
+      _mesa_rescale_teximage2d( texFormat->TexelBytes,
 				texImage->Width, texImage->Height,
 				dstWidth, dstHeight,
 				image->original.data, image->rescaled.data );
@@ -582,7 +582,7 @@ tdfxDDTexSubImage2D( GLcontext *ctx, GLenum target, GLint level,
     */
    if ( image->wScale > 1 || image->hScale > 1 ) {
       assert( image->rescaled.data );
-      _mesa_rescale_teximage2d( texImage->TexFormat,
+      _mesa_rescale_teximage2d( texImage->TexFormat->TexelBytes,
 				image->original.width, image->original.height,
 				image->rescaled.width, image->rescaled.height,
 				image->original.data, image->rescaled.data );
@@ -982,12 +982,12 @@ tdfxDDTestProxyTexImage( GLcontext *ctx, GLenum target,
       /* determine where texture will reside */
       if (t->LODblend && !tss->umaTexMemory) {
 	 /* XXX GR_MIPMAPLEVELMASK_BOTH might not be right, but works */
-	 memNeeded = FX_grTexTextureMemRequired_NoLock(
+	 memNeeded = fxMesa->Glide.grTexTextureMemRequired(
 	    GR_MIPMAPLEVELMASK_BOTH, &(t->info));
       }
       else {
 	 /* XXX GR_MIPMAPLEVELMASK_BOTH might not be right, but works */
-	 memNeeded = FX_grTexTextureMemRequired_NoLock(
+	 memNeeded = fxMesa->Glide.grTexTextureMemRequired(
 	    GR_MIPMAPLEVELMASK_BOTH, &(t->info));
       }
       /*

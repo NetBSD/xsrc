@@ -1,9 +1,13 @@
-/* $XFree86: xc/programs/Xserver/include/servermd.h,v 3.44 2001/04/12 20:10:00 torrey Exp $ */
+/* $XFree86: xc/programs/Xserver/include/servermd.h,v 3.51 2001/12/14 19:59:56 dawes Exp $ */
 /***********************************************************
 
 Copyright 1987, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -149,6 +153,20 @@ SOFTWARE.
 
 #endif /* __arm32__ */
 
+#if defined (__hppa__)
+
+#define IMAGE_BYTE_ORDER	MSBFirst
+#define BITMAP_BIT_ORDER	MSBFirst
+#define GLYPHPADBYTES		4	/* to make fb work */
+#define GETLEFTBITS_ALIGNMENT	1	/* PA forces longs to 4 */
+					/* byte boundries */
+#define AVOID_MEMORY_READ
+#define FAST_CONSTANT_OFFSET_MODE
+#define LARGE_INSTRUCTION_CACHE
+#define PLENTIFUL_REGISTERS
+
+#endif /* __hppa__ */
+
 #if defined(__powerpc__)
 
 #define IMAGE_BYTE_ORDER        MSBFirst
@@ -170,8 +188,29 @@ SOFTWARE.
 
 #endif /* PowerPC */
 
+#if defined(__sh__)
+
+#if defined(__BIG_ENDIAN__)
+# define IMAGE_BYTE_ORDER	MSBFirst
+# define BITMAP_BIT_ORDER	MSBFirst
+# define GLYPHPADBYTES		4
+# define GETLEFTBITS_ALIGNMENT	1
+#else
+# define IMAGE_BYTE_ORDER	LSBFirst
+# define BITMAP_BIT_ORDER	LSBFirst
+# define GLYPHPADBYTES		4
+# define GETLEFTBITS_ALIGNMENT	1
+#endif
+
+#define AVOID_MEMORY_READ
+#define FAST_CONSTANT_OFFSET_MODE
+#define LARGE_INSTRUCTION_CACHE
+#define PLENTIFUL_REGISTERS
+
+#endif /* SuperH */
+
+
 #if (defined(sun) && !(defined(i386) && defined(SVR4))) || \
-    (defined(AMOEBA) && (defined(sparc) || defined(mc68000))) || \
     (defined(__uxp__) && (defined(sparc) || defined(mc68000))) || \
     defined(__sparc__) || defined(__mc68000__)
 
@@ -311,6 +350,37 @@ SOFTWARE.
 
 #endif /* alpha */
 
+#if defined (linux) && defined (__s390__)
+
+#define IMAGE_BYTE_ORDER      	MSBFirst
+#define BITMAP_BIT_ORDER      	MSBFirst
+#define GLYPHPADBYTES         	4
+#define GETLEFTBITS_ALIGNMENT  1	
+
+#define BITMAP_SCANLINE_UNIT	8
+#define LARGE_INSTRUCTION_CACHE
+#define FAST_CONSTANT_OFFSET_MODE
+#define FAST_UNALIGNED_READ
+
+#define FAST_MEMCPY
+
+#endif /* linux/s390 */
+
+#if defined (linux) && defined (__s390x__)
+
+#define IMAGE_BYTE_ORDER       MSBFirst
+#define BITMAP_BIT_ORDER       MSBFirst
+#define GLYPHPADBYTES          4
+#define GETLEFTBITS_ALIGNMENT  1
+
+#define BITMAP_SCANLINE_UNIT	8
+#define LARGE_INSTRUCTION_CACHE
+#define FAST_CONSTANT_OFFSET_MODE
+#define FAST_UNALIGNED_READ
+
+#define FAST_MEMCPY
+#endif /* linux/s390x */
+
 
 #if defined(__ia64__) || defined(ia64)
 # define IMAGE_BYTE_ORDER	LSBFirst
@@ -363,16 +433,14 @@ SOFTWARE.
 
 #endif /* luna */
 
-#if	(defined(AMOEBA) && defined(i80386)) || \
-	(defined(SVR4) && defined(i386)) || \
+#if	(defined(SVR4) && defined(i386)) || \
 	defined(__alpha__) || defined(__alpha) || \
 	defined(__i386__) || \
 	defined(__EMX__) || \
 	defined(__OS2ELF__) || \
 	defined(__QNX__) || \
-	defined(MACH386) || \
-	defined(MINIX)
-
+	defined(__s390x__) || defined(__s390__)
+  
 #ifndef IMAGE_BYTE_ORDER
 #define IMAGE_BYTE_ORDER	LSBFirst
 #endif

@@ -1,6 +1,6 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/atividmem.h,v 1.7 2001/01/06 20:58:08 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/atividmem.h,v 1.8 2002/01/16 16:22:28 tsi Exp $ */
 /*
- * Copyright 1997 through 2001 by Marc Aurele La France (TSI @ UQV), tsi@xfree86.org
+ * Copyright 1997 through 2002 by Marc Aurele La France (TSI @ UQV), tsi@xfree86.org
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that

@@ -1,7 +1,7 @@
 /*
  * Id: newport_cmap.c,v 1.1 2000/11/29 20:58:10 agx Exp $
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/newport/newport_cmap.c,v 1.1 2000/12/01 19:47:59 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/newport/newport_cmap.c,v 1.2 2001/11/23 19:50:45 dawes Exp $ */
 
 #include "newport.h"
 
@@ -66,11 +66,11 @@ static void NewportCmapGetRGB( NewportRegsPtr pNewportRegs, unsigned short addr,
 	npireg_t tmp;
 
 	NewportBfwait(pNewportRegs);
-	pNewportRegs->set.dcbmode = (NPORT_DMODE_ACMALL | NCMAP_PROTOCOL |
+	pNewportRegs->set.dcbmode = (NPORT_DMODE_ACM0 | NCMAP_PROTOCOL |
 				NPORT_DMODE_SENDIAN | NPORT_DMODE_ECINC |
 				NCMAP_REGADDR_AREG | NPORT_DMODE_W2);
 	pNewportRegs->set.dcbdata0.hwords.s1 = addr;
-	pNewportRegs->set.dcbmode = (NPORT_DMODE_ACMALL | NCMAP_PROTOCOL |
+	pNewportRegs->set.dcbmode = (NPORT_DMODE_ACM0 | NCMAP_PROTOCOL |
 				 NCMAP_REGADDR_PBUF | NPORT_DMODE_W3);
 	tmp = pNewportRegs->set.dcbdata0.all;
 	color->red = (tmp >> 24) & 0xff;

@@ -1,4 +1,4 @@
-/* $Xorg: CCC.c,v 1.3 2000/08/17 19:44:30 cpqbld Exp $ */
+/* $Xorg: CCC.c,v 1.4 2001/02/09 02:03:31 xorgcvs Exp $ */
 
 /*
  * Code and supporting documentation (c) Copyright 1990 1991 Tektronix, Inc.
@@ -33,13 +33,17 @@
  *
  *
  */
-/* $XFree86: xc/lib/X11/CCC.c,v 1.3 2001/01/17 19:41:32 dawes Exp $ */
+/* $XFree86: xc/lib/X11/CCC.c,v 1.4 2001/12/14 19:53:56 dawes Exp $ */
 
 /*
 
 Copyright 1994, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included
 in all copies or substantial portions of the Software.

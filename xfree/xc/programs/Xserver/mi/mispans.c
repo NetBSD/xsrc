@@ -1,9 +1,13 @@
-/* $XFree86: xc/programs/Xserver/mi/mispans.c,v 3.2 2001/01/17 22:37:07 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/mi/mispans.c,v 3.4 2001/12/14 20:00:26 dawes Exp $ */
 /***********************************************************
 
 Copyright 1989, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -42,7 +46,7 @@ SOFTWARE.
 
 ******************************************************************/
 
-/* $Xorg: mispans.c,v 1.3 2000/08/17 19:53:39 cpqbld Exp $ */
+/* $Xorg: mispans.c,v 1.4 2001/02/09 02:05:21 xorgcvs Exp $ */
 
 #include "misc.h"
 #include "pixmapstr.h"
@@ -219,10 +223,10 @@ void miFreeSpanGroup(spanGroup)
     if (spanGroup->group != NULL) xfree(spanGroup->group);
 }
 
-static void QuickSortSpansX(points, widths, numSpans)
-    register DDXPointRec    points[];
-    register int	    widths[];
-    register int	    numSpans;
+static void QuickSortSpansX(
+    register DDXPointRec    points[],
+    register int	    widths[],
+    register int	    numSpans )
 {
     register int	    x;
     register int	    i, j, m;
@@ -306,10 +310,10 @@ static void QuickSortSpansX(points, widths, numSpans)
 } /* QuickSortSpans */
 
 
-static int UniquifySpansX(spans, newPoints, newWidths)
-    Spans		    *spans;
-    register DDXPointRec    *newPoints;
-    register int	    *newWidths;
+static int UniquifySpansX(
+    Spans		    *spans,
+    register DDXPointRec    *newPoints,
+    register int	    *newWidths )
 {
     register int newx1, newx2, oldpt, i, y;
     register DDXPointRec    *oldPoints;

@@ -41,7 +41,7 @@
 /* Hacked together from mga driver and 3.3.4 NVIDIA driver by
    Jarno Paananen <jpaana@s2.org> */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/nv/nv_xaa.c,v 1.22 2001/03/31 20:32:13 mvojkovi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/nv/nv_xaa.c,v 1.24 2001/09/19 23:40:06 mvojkovi Exp $ */
 
 #include "nv_include.h"
 #include "xaalocal.h"
@@ -551,7 +551,6 @@ NVAccelInit(ScreenPtr pScreen)
     XAAInfoRecPtr infoPtr;
     ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
     NVPtr pNv = NVPTR(pScrn);
-    BoxRec AvailFBArea;
     
     pNv->AccelInfoRec = infoPtr = XAACreateInfoRec();
     if(!infoPtr) return FALSE;
@@ -559,14 +558,6 @@ NVAccelInit(ScreenPtr pScreen)
     /* fill out infoPtr here */
     infoPtr->Flags = LINEAR_FRAMEBUFFER | PIXMAP_CACHE | OFFSCREEN_PIXMAPS;
 
-    /* Initialize pixmap cache */
-    AvailFBArea.x1 = 0;
-    AvailFBArea.y1 = 0;
-    AvailFBArea.x2 = pScrn->displayWidth;
-    AvailFBArea.y2 = (min(pNv->FbUsableSize, 32*1024*1024)) / 
-		     (pScrn->displayWidth * pScrn->bitsPerPixel / 8);
-    xf86InitFBManager(pScreen, &AvailFBArea);
-    
     /* sync */
     infoPtr->Sync = NVSync;
 
@@ -596,8 +587,12 @@ NVAccelInit(ScreenPtr pScreen)
         NVSubsequentMono8x8PatternFillRect;
 
     /* Color expansion */
-    infoPtr->ScanlineCPUToScreenColorExpandFillFlags = 
+    infoPtr->ScanlineCPUToScreenColorExpandFillFlags =
+#if X_BYTE_ORDER == X_BIG_ENDIAN
+				BIT_ORDER_IN_BYTE_MSBFIRST | 
+#else
 				BIT_ORDER_IN_BYTE_LSBFIRST | 
+#endif
 				NO_PLANEMASK | 
 				CPU_TRANSFER_PAD_DWORD |
 				LEFT_EDGE_CLIPPING | 		

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/mga/mga_video.c,v 1.24.2.1 2001/06/01 02:24:18 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/mga/mga_video.c,v 1.29 2001/12/26 14:54:04 dawes Exp $ */
 
 #include "xf86.h"
 #include "xf86_OSproc.h"
@@ -63,7 +63,7 @@ static void MGAVideoTimerCallback(ScrnInfoPtr pScrn, Time time);
 
 #define MAKE_ATOM(a) MakeAtom(a, sizeof(a) - 1, TRUE)
 
-static Atom xvBrightness, xvContrast, xvColorKey;
+static Atom xvBrightness, xvContrast, xvColorKey, xvDoubleBuffer;
 
 void MGAInitVideo(ScreenPtr pScreen)
 {
@@ -77,7 +77,8 @@ void MGAInitVideo(ScreenPtr pScreen)
        (pMga->SecondCrtc == FALSE) &&
        ((pMga->Chipset == PCI_CHIP_MGAG200) ||
         (pMga->Chipset == PCI_CHIP_MGAG200_PCI) ||
-        (pMga->Chipset == PCI_CHIP_MGAG400))) 
+        (pMga->Chipset == PCI_CHIP_MGAG400) ||
+	(pMga->Chipset == PCI_CHIP_MGAG550))) 
     {
 	if((pMga->Overlay8Plus24 || pMga->TexturedVideo) &&
 	   (pScrn->bitsPerPixel != 24))
@@ -145,13 +146,14 @@ static XF86VideoFormatRec Formats[NUM_FORMATS] =
    {15, DirectColor}, {16, DirectColor}, {24, DirectColor}
 };
 
-#define NUM_ATTRIBUTES_OVERLAY 3
+#define NUM_ATTRIBUTES_OVERLAY 4
 
 static XF86AttributeRec Attributes[NUM_ATTRIBUTES_OVERLAY] =
 {
    {XvSettable | XvGettable, 0, (1 << 24) - 1, "XV_COLORKEY"},
    {XvSettable | XvGettable, -128, 127, "XV_BRIGHTNESS"},
-   {XvSettable | XvGettable, 0, 255, "XV_CONTRAST"}
+   {XvSettable | XvGettable, 0, 255, "XV_CONTRAST"},
+   {XvSettable | XvGettable, 0, 1, "XV_DOUBLE_BUFFER"}
 };
 
 #define NUM_IMAGES 4
@@ -190,7 +192,7 @@ MGAResetVideoOverlay(ScrnInfoPtr pScrn)
 
 
 static XF86VideoAdaptorPtr
-MGAAllocAdaptor(ScrnInfoPtr pScrn)
+MGAAllocAdaptor(ScrnInfoPtr pScrn, Bool doublebuffer)
 {
     XF86VideoAdaptorPtr adapt;
     MGAPtr pMga = MGAPTR(pScrn);
@@ -215,12 +217,15 @@ MGAAllocAdaptor(ScrnInfoPtr pScrn)
     xvBrightness = MAKE_ATOM("XV_BRIGHTNESS");
     xvContrast   = MAKE_ATOM("XV_CONTRAST");
     xvColorKey   = MAKE_ATOM("XV_COLORKEY");
+    xvDoubleBuffer = MAKE_ATOM("XV_DOUBLE_BUFFER");   
 
     pPriv->colorKey = pMga->videoKey;
     pPriv->videoStatus = 0;
     pPriv->brightness = 0;
     pPriv->contrast = 128;
     pPriv->lastPort = -1;
+    pPriv->doubleBuffer = doublebuffer;       
+    pPriv->currentBuffer = 0;         
 
     pMga->adaptor = adapt;
     pMga->portPrivate = pPriv;
@@ -235,7 +240,7 @@ MGASetupImageVideoOverlay(ScreenPtr pScreen)
     MGAPtr pMga = MGAPTR(pScrn);
     XF86VideoAdaptorPtr adapt;
 
-    adapt = MGAAllocAdaptor(pScrn);
+    adapt = MGAAllocAdaptor(pScrn, TRUE);
 
     adapt->type = XvWindowMask | XvInputMask | XvImageMask;
     adapt->flags = VIDEO_OVERLAID_IMAGES | VIDEO_CLIP_TO_VIEWPORT;
@@ -246,9 +251,10 @@ MGASetupImageVideoOverlay(ScreenPtr pScreen)
     adapt->pFormats = Formats;
     adapt->nPorts = 1;
     adapt->pAttributes = Attributes;
-    if (pMga->Chipset == PCI_CHIP_MGAG400) {
+    if (pMga->Chipset == PCI_CHIP_MGAG400 || 
+	pMga->Chipset == PCI_CHIP_MGAG550) {
 	adapt->nImages = 4;
-	adapt->nAttributes = 3;
+	adapt->nAttributes = 4;
     } else {
 	adapt->nImages = 3;
 	adapt->nAttributes = 1;
@@ -281,7 +287,7 @@ MGASetupImageVideoTexture(ScreenPtr pScreen)
     XF86VideoAdaptorPtr adapt;
     MGAPtr pMga = MGAPTR(pScrn);
 
-    adapt = MGAAllocAdaptor(pScrn);
+    adapt = MGAAllocAdaptor(pScrn, FALSE);
 
     adapt->type = XvWindowMask | XvInputMask | XvImageMask;
     adapt->flags = 0;
@@ -294,7 +300,8 @@ MGASetupImageVideoTexture(ScreenPtr pScreen)
     adapt->pAttributes = NULL;
     adapt->nAttributes = 0;
     adapt->pImages = Images;
-    if (pMga->Chipset == PCI_CHIP_MGAG400)
+    if (pMga->Chipset == PCI_CHIP_MGAG400 ||
+	pMga->Chipset == PCI_CHIP_MGAG550)
 	adapt->nImages = 4;
     else
 	adapt->nImages = 3;
@@ -495,6 +502,11 @@ MGASetPortAttributeOverlay(
 	outMGAdac(0x57, (pPriv->colorKey & pScrn->mask.blue) >> 
 		    pScrn->offset.blue);
 	REGION_EMPTY(pScrn->pScreen, &pPriv->clip);   
+  } else
+  if(attribute == xvDoubleBuffer) {
+	if((value < 0) || (value > 1))
+          return BadValue;
+	pPriv->doubleBuffer = value;  
   } else return BadMatch;
 
   return Success;
@@ -515,6 +527,9 @@ MGAGetPortAttributeOverlay(
   } else
   if(attribute == xvContrast) {
 	*value = pPriv->contrast;
+  } else
+  if(attribute == xvDoubleBuffer) {
+        *value = pPriv->doubleBuffer ? 1 : 0;
   } else
   if(attribute == xvColorKey) {
 	*value = pPriv->colorKey;
@@ -681,11 +696,15 @@ MGADisplayVideoOverlay(
 
     CHECK_DMA_QUIESCENT(pMga, pScrn);
 
-    /* got 64 scanlines to do it in */
-    tmp = INREG(MGAREG_VCOUNT) + 64;
-    if(tmp > pScrn->currentMode->VDisplay)
-	tmp -= pScrn->currentMode->VDisplay;
+    /* got 48 scanlines to do it in */
+    tmp = INREG(MGAREG_VCOUNT) + 48;
+    /* FIXME always change it in vertical retrace use CrtcV ?*/
+    if(tmp > pScrn->currentMode->CrtcVTotal)
+	tmp -= 49; /* too bad */
+    else
+        tmp = pScrn->currentMode->CrtcVTotal -1;
 
+    tmp = pScrn->currentMode->VDisplay +1;
     /* enable accelerated 2x horizontal zoom when pixelclock >135MHz */
     hzoom = (pScrn->currentMode->Clock > 135000) ? 1 : 0;
 
@@ -883,8 +902,12 @@ MGAPutImage(
 	break;
    }  
 
-   if(!(pPriv->linear = MGAAllocateMemory(pScrn, pPriv->linear, new_size)))
+   if(!(pPriv->linear = MGAAllocateMemory(pScrn, pPriv->linear, 
+						pPriv->doubleBuffer ? (new_size << 1) : new_size)))
+   {
 	return BadAlloc;
+   }
+   pPriv->currentBuffer ^= 1;
 
     /* copy data */
    top = y1 >> 16;
@@ -893,6 +916,8 @@ MGAPutImage(
    left <<= 1;
 
    offset = pPriv->linear->offset * bpp;
+   if(pPriv->doubleBuffer)
+        offset += pPriv->currentBuffer * new_size * bpp;
    dst_start = pMga->FbStart + offset + left + (top * dstPitch);
 
    if(pMga->TexturedVideo && pMga->AccelInfoRec->NeedToSync &&
@@ -1212,7 +1237,7 @@ MGAInitOffscreenImages(ScreenPtr pScreen)
 {
     ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
     MGAPtr pMga = MGAPTR(pScrn);
-    int num = (pMga->Chipset == PCI_CHIP_MGAG400) ? 2 : 1;
+    int num = (pMga->Chipset == PCI_CHIP_MGAG400 || pMga->Chipset == PCI_CHIP_MGAG550) ? 2 : 1;
     XF86OffscreenImagePtr offscreenImages;
 
     /* need to free this someplace */
@@ -1230,7 +1255,7 @@ MGAInitOffscreenImages(ScreenPtr pScreen)
     offscreenImages[0].getAttribute = MGAGetSurfaceAttribute;
     offscreenImages[0].max_width = 1024;
     offscreenImages[0].max_height = 1024;
-    offscreenImages[0].num_attributes = (num == 1) ? 1 : 3;
+    offscreenImages[0].num_attributes = (num == 1) ? 1 : 4;
     offscreenImages[0].attributes = Attributes;
 
     if(num == 2) {
@@ -1245,7 +1270,7 @@ MGAInitOffscreenImages(ScreenPtr pScreen)
 	offscreenImages[1].getAttribute = MGAGetSurfaceAttribute;
 	offscreenImages[1].max_width = 1024;
 	offscreenImages[1].max_height = 1024;
-	offscreenImages[1].num_attributes = 3;
+	offscreenImages[1].num_attributes = 4;
 	offscreenImages[1].attributes = Attributes;
     }
 

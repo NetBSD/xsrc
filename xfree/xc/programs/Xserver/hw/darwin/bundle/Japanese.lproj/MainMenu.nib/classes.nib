@@ -11,16 +11,24 @@
             CLASS = Preferences; 
             LANGUAGE = ObjC; 
             OUTLETS = {
-                displayNumber = id; 
+                addToPathButton = id; 
+                addToPathField = id; 
+                button2ModifiersMatrix = id; 
+                button3ModifiersMatrix = id; 
+                depthButton = id; 
+                displayField = id; 
                 dockSwitchButton = id; 
                 fakeButton = id; 
-                keyField = id; 
                 keymapFileField = id; 
-                loadKeymapFileButton = id; 
-                pickKeymapFileButton = id; 
-                splashStartupHelpButton = id; 
+                modeMatrix = id; 
+                modeWindowButton = id; 
+                mouseAccelChangeButton = id; 
                 startupHelpButton = id; 
+                switchKeyButton = id; 
                 systemBeepButton = id; 
+                useDefaultShellMatrix = id; 
+                useOtherShellField = id; 
+                useXineramaButton = id; 
                 window = id; 
             }; 
             SUPERCLASS = NSObject; 
@@ -32,10 +40,21 @@
             SUPERCLASS = NSApplication; 
         }, 
         {
-            ACTIONS = {applicationWillResignActive = id; closeHelpAndShow = id; showAction = id; }; 
+            ACTIONS = {
+                closeHelpAndShow = id; 
+                showAction = id; 
+                startFullScreen = id; 
+                startRootless = id; 
+            }; 
             CLASS = Xserver; 
             LANGUAGE = ObjC; 
-            OUTLETS = {helpWindow = id; startupHelpButton = id; switchWindow = id; }; 
+            OUTLETS = {
+                helpWindow = id; 
+                modeWindow = id; 
+                startupHelpButton = id; 
+                startupModeButton = id; 
+                switchWindow = id; 
+            }; 
             SUPERCLASS = NSObject; 
         }
     ); 

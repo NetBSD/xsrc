@@ -1,9 +1,13 @@
-/* $XFree86: xc/programs/Xserver/Xext/mbuf.c,v 3.10 2001/01/17 22:13:15 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/Xext/mbuf.c,v 3.14 2001/12/14 19:58:49 dawes Exp $ */
 /************************************************************
 
 Copyright 1989, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -21,7 +25,7 @@ in this Software without prior written authorization from The Open Group.
 
 ********************************************************/
 
-/* $Xorg: mbuf.c,v 1.3 2000/08/17 19:47:56 cpqbld Exp $ */
+/* $Xorg: mbuf.c,v 1.4 2001/02/09 02:04:32 xorgcvs Exp $ */
 #define NEED_REPLIES
 #define NEED_EVENTS
 #include "X.h"
@@ -36,6 +40,7 @@ in this Software without prior written authorization from The Open Group.
 #include "dixstruct.h"
 #include "resource.h"
 #include "opaque.h"
+#include "sleepuntil.h"
 #define _MULTIBUF_SERVER_	/* don't want Xlib structures */
 #include "multibufst.h"
 
@@ -43,7 +48,7 @@ in this Software without prior written authorization from The Open Group.
 #include "xf86_ansic.h"
 #else
 #include <stdio.h>
-#if !defined(WIN32) && !defined(MINIX) && !defined(Lynx)
+#if !defined(WIN32) && !defined(Lynx)
 #include <sys/time.h>
 #endif
 #endif
@@ -1214,7 +1219,6 @@ PerformDisplayRequest (ppMultibuffers, pMultibuffer, nbuf)
 	    	if (pExposed)
 	    	{
 		    RegionPtr	pWinSize;
-		    ScreenPtr pScreen = pWin->drawable.pScreen;
 
 		    pWinSize = CreateUnclippedWinSize (pWin);
 		    /* pExposed is window-relative, but at this point
@@ -1222,13 +1226,13 @@ PerformDisplayRequest (ppMultibuffers, pMultibuffer, nbuf)
 		     * window-relative so that region ops involving
 		     * pExposed and pWinSize behave sensibly.
 		     */
-		    REGION_TRANSLATE(pScreen, pWinSize,
-				     -pWin->drawable.x,
-				     -pWin->drawable.y);
-		    REGION_INTERSECT(pScreen, pExposed, pExposed, pWinSize);
-		    REGION_DESTROY(pScreen, pWinSize);
+		    REGION_TRANSLATE(pWin->drawable.pScreen, pWinSize,
+				     -pWin->drawable.x, -pWin->drawable.y);
+		    REGION_INTERSECT(pWin->drawable.pScreen, pExposed,
+				     pExposed, pWinSize);
+		    REGION_DESTROY(pWin->drawable.pScreen, pWinSize);
 	    	    MultibufferExpose (pPrevMultibuffer, pExposed);
-	    	    REGION_DESTROY(pScreen, pExposed);
+	    	    REGION_DESTROY(pWin->drawable.pScreen, pExposed);
 	    	}
 	    	graphicsExpose = FALSE;
 	    	DoChangeGC (pGC, GCGraphicsExposures, &graphicsExpose, FALSE);

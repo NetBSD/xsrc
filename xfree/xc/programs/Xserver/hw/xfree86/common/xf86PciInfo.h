@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86PciInfo.h,v 1.98 2001/05/11 07:56:10 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86PciInfo.h,v 1.119 2002/01/16 02:00:43 martin Exp $ */
 /*
  * PCI Probe
  *
@@ -38,7 +38,9 @@
 #ifndef _XF86_PCIINFO_H
 #define _XF86_PCIINFO_H
 
+#ifndef SELF_CONTAINED_PCI_INFO
 #include "xf86str.h"
+#endif
 
 /* PCI Pseudo Vendor */
 #define PCI_VENDOR_GENERIC      0x00FF
@@ -93,6 +95,7 @@
 #define PCI_VENDOR_LEADTEK	0x107D
 #define PCI_VENDOR_CONTAQ	0x1080
 #define PCI_VENDOR_FOREX	0x1083
+#define PCI_VENDOR_SBS		0x108A
 #define PCI_VENDOR_OLICOM	0x108D
 #define PCI_VENDOR_SUN		0x108E
 #define PCI_VENDOR_DIAMOND	0x1092
@@ -199,6 +202,7 @@
 
 /* ATI */
 #define PCI_CHIP_MACH32		0x4158
+#define PCI_CHIP_R200_BB	0x4242
 #define PCI_CHIP_MACH64CT	0x4354
 #define PCI_CHIP_MACH64CX	0x4358
 #define PCI_CHIP_MACH64ET	0x4554
@@ -218,6 +222,7 @@
 #define PCI_CHIP_MACH64GV	0x4756
 #define PCI_CHIP_MACH64GW	0x4757
 #define PCI_CHIP_MACH64GX	0x4758
+#define PCI_CHIP_MACH64GY	0x4759
 #define PCI_CHIP_MACH64GZ	0x475A
 #define PCI_CHIP_MACH64LB	0x4C42
 #define PCI_CHIP_MACH64LD	0x4C44
@@ -228,23 +233,38 @@
 #define PCI_CHIP_MACH64LM	0x4C4D
 #define PCI_CHIP_MACH64LN	0x4C4E
 #define PCI_CHIP_MACH64LP	0x4C50
+#define PCI_CHIP_MACH64LQ	0x4C51
 #define PCI_CHIP_MACH64LR	0x4C52
 #define PCI_CHIP_MACH64LS	0x4C53
+#define PCI_CHIP_RADEON_LW	0x4C57
+#define PCI_CHIP_RADEON_LY	0x4C59
+#define PCI_CHIP_RADEON_LZ	0x4C5A
 #define PCI_CHIP_RAGE128MF	0x4D46
 #define PCI_CHIP_RAGE128ML	0x4D4C
 #define PCI_CHIP_RAGE128PD	0x5044
 #define PCI_CHIP_RAGE128PF	0x5046
+#define PCI_CHIP_RAGE128PP	0x5050
 #define PCI_CHIP_RAGE128PR	0x5052
 #define PCI_CHIP_RADEON_QD	0x5144
 #define PCI_CHIP_RADEON_QE	0x5145
 #define PCI_CHIP_RADEON_QF	0x5146
 #define PCI_CHIP_RADEON_QG	0x5147
-#define PCI_CHIP_RADEON_VE	0x5159
+#define PCI_CHIP_R200_QL	0x514C
+#define PCI_CHIP_R200_QN	0x514E
+#define PCI_CHIP_R200_QO	0x514F
+#define PCI_CHIP_RV200_QW	0x5157
+#define PCI_CHIP_RADEON_QY	0x5159
+#define PCI_CHIP_RADEON_QZ	0x515A
+#define PCI_CHIP_R200_Ql	0x516C
 #define PCI_CHIP_RAGE128RE	0x5245
 #define PCI_CHIP_RAGE128RF	0x5246
 #define PCI_CHIP_RAGE128RG	0x5247
 #define PCI_CHIP_RAGE128RK	0x524B
 #define PCI_CHIP_RAGE128RL	0x524C
+#define PCI_CHIP_RAGE128TF	0x5446
+#define PCI_CHIP_RAGE128TL	0x544C
+#define PCI_CHIP_RAGE128TR	0x5452
+#define PCI_CHIP_RAGE128SM	0x534D
 #define PCI_CHIP_MACH64VT	0x5654
 #define PCI_CHIP_MACH64VU	0x5655
 #define PCI_CHIP_MACH64VV	0x5656
@@ -330,6 +350,8 @@
 #define PCI_CHIP_8520		0x8520
 #define PCI_CHIP_8600		0x8600
 #define PCI_CHIP_8620		0x8620
+#define PCI_CHIP_8800		0x8800
+#define PCI_CHIP_8820		0x8820
 #define PCI_CHIP_9320		0x9320
 #define PCI_CHIP_9388		0x9388
 #define PCI_CHIP_9397		0x9397
@@ -358,10 +380,12 @@
 #define PCI_CHIP_MGAG200_PCI	0x0520
 #define PCI_CHIP_MGAG200	0x0521
 #define PCI_CHIP_MGAG400	0x0525
+#define PCI_CHIP_MGAG550	0x2527
 #define PCI_CHIP_IMPRESSION	0x0D10
 #define PCI_CHIP_MGAG100_PCI	0x1000
 #define PCI_CHIP_MGAG100	0x1001
 
+#define PCI_CARD_G400_TH	0x2179
 #define PCI_CARD_MILL_G200_SD	0xff00
 #define PCI_CARD_PROD_G100_SD	0xff01
 #define PCI_CARD_MYST_G200_SD	0xff02
@@ -468,6 +492,15 @@
 #define PCI_CHIP_I128_T2R	0x493D
 #define PCI_CHIP_I128_T2R4	0x5348
 
+/* Sun */
+#define PCI_CHIP_EBUS		0x1000
+#define PCI_CHIP_HAPPY_MEAL	0x1001
+#define PCI_CHIP_SIMBA		0x5000
+#define PCI_CHIP_PSYCHO		0x8000
+#define PCI_CHIP_SCHIZO		0x8001
+#define PCI_CHIP_SABRE		0xA000
+#define PCI_CHIP_HUMMINGBIRD	0xA001
+
 /* BrookTree */
 #define PCI_CHIP_BT848		0x0350
 #define PCI_CHIP_BT849		0x0351
@@ -480,8 +513,6 @@
 #define PCI_CHIP_UTNT2		0x0029
 #define PCI_CHIP_VTNT2		0x002C
 #define PCI_CHIP_UVTNT2		0x002D
-#define PCI_CHIP_TNT2_A		0x002E
-#define PCI_CHIP_TNT2_B		0x002F
 #define PCI_CHIP_ITNT2		0x00A0
 #define PCI_CHIP_GEFORCE256     0x0100
 #define PCI_CHIP_GEFORCEDDR     0x0101
@@ -494,10 +525,23 @@
 #define PCI_CHIP_GEFORCE2GTS_1  0x0151
 #define PCI_CHIP_GEFORCE2ULTRA  0x0152
 #define PCI_CHIP_QUADRO2PRO     0x0153
+#define PCI_CHIP_0x0170         0x0170
+#define PCI_CHIP_0x0171         0x0171
+#define PCI_CHIP_0x0172         0x0172
+#define PCI_CHIP_0x0173         0x0173
+#define PCI_CHIP_0x0174         0x0174
+#define PCI_CHIP_0x0175         0x0175
+#define PCI_CHIP_0x0178         0x0178
+#define PCI_CHIP_0x017A         0x017A
+#define PCI_CHIP_0x017B         0x017B
+#define PCI_CHIP_0x017C         0x017C
+#define PCI_CHIP_IGEFORCE2      0x01A0
 #define PCI_CHIP_GEFORCE3	0x0200
 #define PCI_CHIP_GEFORCE3_1	0x0201
 #define PCI_CHIP_GEFORCE3_2	0x0202
-#define PCI_CHIP_GEFORCE3_3	0x0203
+#define PCI_CHIP_QUADRO_DDC	0x0203
+#define PCI_CHIP_0x0250         0x0250
+#define PCI_CHIP_0x0258         0x0258
 
 /* NVIDIA & SGS */
 #define PCI_CHIP_RIVA128	0x0018
@@ -596,6 +640,8 @@
 #define PCI_CHIP_NM2380		0x0016
 
 /* Intel */
+#define PCI_CHIP_I830_M_BRIDGE		0x3575
+#define PCI_CHIP_I830_M			0x3577
 #define PCI_CHIP_I815_BRIDGE		0x1130
 #define PCI_CHIP_I815			0x1132
 #define PCI_CHIP_I810_BRIDGE		0x7120
@@ -672,6 +718,7 @@ static SymTabRec xf86PCIVendorNameInfoData[] = {
     {PCI_VENDOR_LEADTEK, "Leadtek"},
     {PCI_VENDOR_CONTAQ, "Contaq"},
     {PCI_VENDOR_FOREX, "FOREX"},
+    {PCI_VENDOR_SBS, "SBS Technologies"}, /* Formerly Bit 3 Computer Corp */
     {PCI_VENDOR_OLICOM, "Olicom"},
     {PCI_VENDOR_SUN, "Sun"},
     {PCI_VENDOR_DIAMOND, "Diamond"},
@@ -744,7 +791,7 @@ static SymTabRec xf86PCIVendorNameInfoData[] = {
 #endif
 
 /* Increase this as required */
-#define MAX_DEV_PER_VENDOR 64
+#define MAX_DEV_PER_VENDOR 80
 
 typedef struct {
     unsigned short VendorID;
@@ -792,6 +839,7 @@ static pciVendorDeviceInfo xf86PCIVendorInfoData[] = {
 #endif
     {PCI_VENDOR_ATI,	{
 				{PCI_CHIP_MACH32,	"Mach32",0},
+				{PCI_CHIP_R200_BB,	"Radeon 8500 BB",0},
 				{PCI_CHIP_MACH64CT,	"Mach64 CT",0},
 				{PCI_CHIP_MACH64CX,	"Mach64 CX",0},
 				{PCI_CHIP_MACH64ET,	"Mach64 ET",0},
@@ -811,6 +859,7 @@ static pciVendorDeviceInfo xf86PCIVendorInfoData[] = {
 				{PCI_CHIP_MACH64GV,	"Mach64 GV",0},
 				{PCI_CHIP_MACH64GW,	"Mach64 GW",0},
 				{PCI_CHIP_MACH64GX,	"Mach64 GX",0},
+				{PCI_CHIP_MACH64GY,	"Mach64 GY",0},
 				{PCI_CHIP_MACH64GZ,	"Mach64 GZ",0},
 				{PCI_CHIP_MACH64LB,	"Mach64 LB",0},
 				{PCI_CHIP_MACH64LD,	"Mach64 LD",0},
@@ -821,18 +870,33 @@ static pciVendorDeviceInfo xf86PCIVendorInfoData[] = {
 				{PCI_CHIP_MACH64LM,	"Mach64 LM",0},
 				{PCI_CHIP_MACH64LN,	"Mach64 LN",0},
 				{PCI_CHIP_MACH64LP,	"Mach64 LP",0},
+				{PCI_CHIP_MACH64LQ,	"Mach64 LQ",0},
 				{PCI_CHIP_MACH64LR,	"Mach64 LR",0},
 				{PCI_CHIP_MACH64LS,	"Mach64 LS",0},
 				{PCI_CHIP_RAGE128MF,	"Rage 128 Mobility MF",0},
 				{PCI_CHIP_RAGE128ML,	"Rage 128 Mobility ML",0},
 				{PCI_CHIP_RAGE128PD,	"Rage 128 Pro PD",0},
 				{PCI_CHIP_RAGE128PF,	"Rage 128 Pro PF",0},
+				{PCI_CHIP_RAGE128PP,	"Rage 128 Pro PP",0},
 				{PCI_CHIP_RAGE128PR,	"Rage 128 Pro PR",0},
+				{PCI_CHIP_RAGE128TF,	"Rage 128 Pro TF",0},
+				{PCI_CHIP_RAGE128TL,	"Rage 128 Pro TL",0},
+				{PCI_CHIP_RAGE128TR,	"Rage 128 Pro TR",0},
 				{PCI_CHIP_RADEON_QD,	"Radeon QD",0},
 				{PCI_CHIP_RADEON_QE,	"Radeon QE",0},
 				{PCI_CHIP_RADEON_QF,	"Radeon QF",0},
 				{PCI_CHIP_RADEON_QG,	"Radeon QG",0},
-				{PCI_CHIP_RADEON_VE,	"Radeon VE",0},
+				{PCI_CHIP_R200_QL,	"Radeon 8500 QL",0},
+				{PCI_CHIP_R200_QN,	"Radeon 8500 QN",0},
+				{PCI_CHIP_R200_QO,	"Radeon 8500 QO",0},
+				{PCI_CHIP_RV200_QW,	"Radeon 7500 QW",0},
+				{PCI_CHIP_RADEON_QY,	"Radeon VE QY",0},
+				{PCI_CHIP_RADEON_QZ,	"Radeon VE QZ",0},
+				{PCI_CHIP_R200_Ql,	"Radeon 8500 Ql",0},
+				{PCI_CHIP_RADEON_LW,	"Radeon Mobility M7 LW",0},
+				{PCI_CHIP_RADEON_LY,	"Radeon Mobility M6 LY",0},
+				{PCI_CHIP_RADEON_LZ,	"Radeon Mobility M6 LZ",0},
+				{PCI_CHIP_RAGE128SM,	"Rage 128 SM",0},
 				{PCI_CHIP_RAGE128RE,	"Rage 128 RE",0},
 				{PCI_CHIP_RAGE128RF,	"Rage 128 RF",0},
 				{PCI_CHIP_RAGE128RK,	"Rage 128 RK",0},
@@ -949,6 +1013,8 @@ static pciVendorDeviceInfo xf86PCIVendorInfoData[] = {
 				{PCI_CHIP_8520,		"CyberBlade/DSTN/i1",0},
 				{PCI_CHIP_8600,		"CyberBlade/Ai1",0},
 				{PCI_CHIP_8620,		"CyberBlade/DSTN/Ai1",0},
+				{PCI_CHIP_8800,		"CyberBlade/XP/Ai1",0},
+				{PCI_CHIP_8820,		"CyberBlade/XP/DSTN/Ai1",0},
 				{0x0000,		NULL,0}}},
 #ifdef VENDOR_INCLUDE_NONVIDEO
      {PCI_VENDOR_ALI, {
@@ -964,6 +1030,7 @@ static pciVendorDeviceInfo xf86PCIVendorInfoData[] = {
 				{PCI_CHIP_MGAG200_PCI,	"MGA G200 PCI",0},
 				{PCI_CHIP_MGAG200,	"MGA G200 AGP",0},
 				{PCI_CHIP_MGAG400,	"MGA G400 AGP",0},
+				{PCI_CHIP_MGAG550,	"MGA G550 AGP",0},
 				{PCI_CHIP_MGAG100_PCI,	"MGA G100 PCI",0},
 				{PCI_CHIP_MGAG100,	"MGA G100 AGP",0},
 				{0x0000,		NULL,0}}},
@@ -1122,6 +1189,11 @@ static pciVendorDeviceInfo xf86PCIVendorInfoData[] = {
     {PCI_VENDOR_FOREX, {
 				{0x0000,		NULL,0}}},
 #endif
+#ifdef VENDOR_INCLUDE_NONVIDEO
+    {PCI_VENDOR_SBS, {
+				{0x0040,		"dataBLIZZARD",0 },
+				{0x0000,		NULL,0}}},
+#endif
     {PCI_VENDOR_OLICOM, {
                                 {0x0001,		"OC-3136",0 },
 				{0x0011,		"OC-2315",0 },
@@ -1131,10 +1203,13 @@ static pciVendorDeviceInfo xf86PCIVendorInfoData[] = {
 				{0x0021,		"OC-6151",0 },
 				{0x0000,		NULL,0}}},
     {PCI_VENDOR_SUN, {
-                                {0x1000,		"EBUS",0 },
-				{0x1001,		"Happy Meal",0 },
-				{0x5000,		"Advanced PCI bridge",0 },
-				{0x8000,		"PCI Bus Module",0 },
+				{PCI_CHIP_EBUS,		"EBUS",0 },
+				{PCI_CHIP_HAPPY_MEAL,	"Happy Meal",0 },
+				{PCI_CHIP_SIMBA,	"Simba Advanced PCI bridge",0 },
+				{PCI_CHIP_PSYCHO,	"U2P PCI host bridge (Psycho)",0 },
+				{PCI_CHIP_SCHIZO,	"PCI host bridge (Schizo)",0 },
+				{PCI_CHIP_SABRE,	"UltraSPARC IIi host bridge (Sabre)",0 },
+				{PCI_CHIP_HUMMINGBIRD,	"UltraSPARC IIi host bridge (Hummingbird)",0 },
 				{0x0000,		NULL,0}}},
     {PCI_VENDOR_CMD, {
                                 {0x0640,		"640A",0 },
@@ -1235,28 +1310,40 @@ static pciVendorDeviceInfo xf86PCIVendorInfoData[] = {
     {PCI_VENDOR_NVIDIA,	{
 				{PCI_CHIP_NV1,		"NV1",0},
 				{PCI_CHIP_DAC64,	"DAC64",0},
-				{PCI_CHIP_TNT,		"Riva TNT",0},
-				{PCI_CHIP_TNT2,		"Riva TNT2",0},
-				{PCI_CHIP_UTNT2,	"Riva Ultra TNT2",0},
-				{PCI_CHIP_VTNT2,	"Riva Vanta",0},
-				{PCI_CHIP_UVTNT2,	"Riva Ultra 64",0},
-				{PCI_CHIP_TNT2_A,	"Riva TNT2 (A)",0},
-				{PCI_CHIP_TNT2_B,	"Riva TNT2 (B)",0},
-				{PCI_CHIP_ITNT2,	"Riva Integrated",0},
+				{PCI_CHIP_TNT,		"RIVA TNT",0},
+				{PCI_CHIP_TNT2,		"RIVA TNT2/TNT2 Pro",0},
+				{PCI_CHIP_UTNT2,	"RIVA TNT2 Ultra",0},
+				{PCI_CHIP_VTNT2,	"Vanta",0},
+				{PCI_CHIP_UVTNT2,	"Riva TNT2 M64",0},
+				{PCI_CHIP_ITNT2,	"Aladdin TNT2",0},
 				{PCI_CHIP_GEFORCE256,	"GeForce 256",0},
 				{PCI_CHIP_GEFORCEDDR,	"GeForce DDR",0},
 				{PCI_CHIP_QUADRO,	"Quadro",0},
-				{PCI_CHIP_GEFORCE2MX,	"GeForce2 MX",0},
-				{PCI_CHIP_GEFORCE2MXDDR,"GeForce2 MX DDR",0},
-				{PCI_CHIP_QUADRO2MXR,	"GeForce2 MXR",0},
-				{PCI_CHIP_GEFORCE2GTS,	"GeForce2 GTS",0},
-				{PCI_CHIP_GEFORCE2GTS_1,"GeForce2 GTS (rev 1)",0},
+				{PCI_CHIP_GEFORCE2MX,	"GeForce2 MX/MX 400",0},
+				{PCI_CHIP_GEFORCE2MXDDR,"GeForce2 MX 100/200",0},
+				{PCI_CHIP_GEFORCE2GO,   "GeForce2 Go", 0},
+				{PCI_CHIP_QUADRO2MXR,	"Quadro2 MXR",0},
+				{PCI_CHIP_GEFORCE2GTS,	"GeForce2 GTS/Pro",0},
+				{PCI_CHIP_GEFORCE2GTS_1,"GeForce2 Ti",0},
 				{PCI_CHIP_GEFORCE2ULTRA,"GeForce2 Ultra",0},
-				{PCI_CHIP_QUADRO2PRO,	"Quadro 2 Pro",0},
+				{PCI_CHIP_QUADRO2PRO,	"Quadro2 Pro",0},
+				{PCI_CHIP_0x0170,	"0x0170",0},
+				{PCI_CHIP_0x0171,	"0x0171",0},
+				{PCI_CHIP_0x0172,	"0x0172",0},
+				{PCI_CHIP_0x0173,	"0x0173",0},
+				{PCI_CHIP_0x0174,	"0x0174",0},
+				{PCI_CHIP_0x0175,	"0x0175",0},
+				{PCI_CHIP_0x0178,	"0x0178",0},
+				{PCI_CHIP_0x017A,	"0x017A",0},
+				{PCI_CHIP_0x017B,	"0x017B",0},
+				{PCI_CHIP_0x017C,	"0x017C",0},
+				{PCI_CHIP_IGEFORCE2,	"GeForce2 Integrated",0},
 				{PCI_CHIP_GEFORCE3,	"GeForce3",0},
-				{PCI_CHIP_GEFORCE3_1,	"GeForce3 (rev 1)",0},
-				{PCI_CHIP_GEFORCE3_2,	"GeForce3 (rev 2)",0},
-				{PCI_CHIP_GEFORCE3_3,	"GeForce3 (rev 3)",0},
+				{PCI_CHIP_GEFORCE3_1,	"GeForce3 Ti 200",0},
+				{PCI_CHIP_GEFORCE3_2,	"GeForce3 Ti 500",0},
+				{PCI_CHIP_QUADRO_DDC,	"Quadro DDC",0},
+				{PCI_CHIP_0x0250,	"0x0250",0},
+				{PCI_CHIP_0x0258,	"0x0258",0},
 				{0x0000,		NULL,0}}},
     {PCI_VENDOR_IMS, {
 				{PCI_CHIP_IMSTT128,	"TwinTurbo 128", 0},
@@ -1465,6 +1552,7 @@ static pciVendorDeviceInfo xf86PCIVendorInfoData[] = {
 				{PCI_CHIP_968,		"968",0},
 				{0x0000,		NULL,0}}},
     {PCI_VENDOR_INTEL,{
+#ifdef VENDOR_INCLUDE_NONVIDEO
                                 {0x0482, "82375EB pci-eisa bridge",0},
 				{0x0483, "82424ZX cache dram controller",0},
 				{0x0484, "82378IB/ZB pci-isa bridge",0x0601},
@@ -1504,15 +1592,18 @@ static pciVendorDeviceInfo xf86PCIVendorInfoData[] = {
 				{0x71a2, "82443GX Host (no AGP)",0},
 				{0x84C4, "P6",0},
 				{0x84C5, "82450GX20",0},
-				{PCI_CHIP_I740_AGP,	"i740 (AGP)",0},
-				{PCI_CHIP_I815_BRIDGE,	"i815 Bridge",0},
-				{PCI_CHIP_I815,		"i815",0},
 				{PCI_CHIP_I810_BRIDGE,	"i810 Bridge",0},
-				{PCI_CHIP_I810,		"i810",0},
 				{PCI_CHIP_I810_DC100_BRIDGE,	"i810-dc100 Bridge",0},
-				{PCI_CHIP_I810_DC100,	"i810-dc100",0},
 				{PCI_CHIP_I810_E_BRIDGE,"i810e Bridge",0},
+				{PCI_CHIP_I815_BRIDGE,	"i815 Bridge",0},
+				{PCI_CHIP_I830_M_BRIDGE,"i830M Bridge",0},
+#endif
+				{PCI_CHIP_I740_AGP,	"i740 (AGP)",0},
+				{PCI_CHIP_I810,		"i810",0},
+				{PCI_CHIP_I810_DC100,	"i810-dc100",0},
 				{PCI_CHIP_I810_E,	"i810e",0},
+				{PCI_CHIP_I815,		"i815",0},
+				{PCI_CHIP_I830_M,	"i830M",0},
 				{0x0000,		NULL,0}}},
     {PCI_VENDOR_ADAPTEC, {
 				{0x0010, "2940U2",0 },
@@ -1669,6 +1760,7 @@ static pciVendorCardInfo xf86PCICardInfoData[] = {
                         { 0x0127, "Permedia3 Create!",0, NF },
                         { 0x0134, "Oxygen GVX1 PCI",0, NF },
                         { 0x0136, "Oxygen GVX210 AGP",0, NF },
+			{ 0x0139, "Oxygen GVX1 Pro AGP",0, NF },
                         { 0x0140, "Oxygen VX1-16 AGP",0, NF },
                         { 0x0144, "Oxygen VX1-4X AGP",0, NF },
                         { 0x0400, "Oxygen GVX420 AGP",0, NF },
@@ -1747,8 +1839,11 @@ static pciVendorCardInfo xf86PCICardInfoData[] = {
 	{PCI_VENDOR_INTEL, {
 #ifdef VENDOR_INCLUDE_NONVIDEO
                         { 0x0009, "PCI 10/100Mb/s ethernet card",0, NF },
+                        { 0x0040, "PRO/100 S Desktop Adapter PCI 10/100Mb/s ethernet card",0, NF },
  	  /* Seattle AL440BX is 0x8080, is anything else ? */
                         { 0x8080, "motherboard",0, NF },
+                        { 0x3013, "Integrated LAN (82562ET)",0, NF },
+                        { 0x4541, "Eastern (D815EEA) motherboard",0, NF },
                         { 0x4d55, "Maui (MU) motherboard",0, NF },
 #endif
                         { 0x0000, (char *)NULL,0, NF } } },
@@ -1763,6 +1858,7 @@ static pciVendorCardInfo xf86PCICardInfoData[] = {
                         { PCI_CARD_MILL_G200_SG, "Millennium G200 SG",0, NF },
                         { PCI_CARD_MARV_G200_SD, "Marvel G200 SD",0, NF },
                         { 0x1001, "Productiva G100 SG",0, NF },
+                        { PCI_CARD_G400_TH, "G400 Twin Head",0, NF },
                         { 0x0000, (char *)NULL,0, NF } } },
 	{ PCI_VENDOR_SIS, {
                         { 0x6306, "530 based motherboard",0, NF },

@@ -24,13 +24,11 @@
  THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
  ********************************************************/
-/* $XFree86: xc/lib/xkbfile/maprules.c,v 3.12 2001/01/17 19:43:41 dawes Exp $ */
+/* $XFree86: xc/lib/xkbfile/maprules.c,v 3.14 2001/10/28 03:32:47 tsi Exp $ */
 
 #include <stdio.h>
 #include <ctype.h>
-#ifndef X_NOT_STDC_ENV
 #include <stdlib.h>
-#endif
 
 #define X_INCLUDE_STRING_H
 #define XOS_USE_NO_LOCKING
@@ -976,7 +974,7 @@ XkbRF_LoadDescriptions(file,rules)
 InputLine		line;
 XkbRF_VarDescRec	tmp;
 char			*tok;
-int			len,headingtype,extra_ndx;
+int			len,headingtype,extra_ndx = 0;
 
     bzero((char *)&tmp, sizeof(XkbRF_VarDescRec));
     headingtype = HEAD_NONE;

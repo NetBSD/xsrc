@@ -5,7 +5,7 @@
 /*    Basic Type 1/Type 2 tables definitions and interface (specification  */
 /*    only).                                                               */
 /*                                                                         */
-/*  Copyright 1996-2000 by                                                 */
+/*  Copyright 1996-2001 by                                                 */
 /*  David Turner, Robert Wilhelm, and Werner Lemberg.                      */
 /*                                                                         */
 /*  This file is part of the FreeType project, and may only be used,       */
@@ -44,7 +44,7 @@ FT_BEGIN_HEADER
   /*    including structures related to other PostScript font formats.     */
   /*                                                                       */
   /*************************************************************************/
-   
+
 
   /* Note that we separate font data in T1_FontInfo and T1_Private */
   /* structures in order to support Multiple Master fonts.         */
@@ -113,8 +113,8 @@ FT_BEGIN_HEADER
     FT_Bool    force_bold;
     FT_Bool    round_stem_up;
 
-    FT_Short   snap_widths [13];  /* reserve one place for the std */
-    FT_Short   snap_heights[13];  /* reserve one place for the std */
+    FT_Short   snap_widths [13];  /* including std width  */
+    FT_Short   snap_heights[13];  /* including std height */
 
     FT_Long    language_group;
     FT_Long    password;
@@ -136,12 +136,12 @@ FT_BEGIN_HEADER
   /*                                                                       */
   typedef enum
   {
-    /* required fields in a FontInfo blend dictionary */
+    /*# required fields in a FontInfo blend dictionary */
     t1_blend_underline_position = 0,
     t1_blend_underline_thickness,
     t1_blend_italic_angle,
 
-    /* required fields in a Private blend dictionary */
+    /*# required fields in a Private blend dictionary */
     t1_blend_blue_values,
     t1_blend_other_blues,
     t1_blend_standard_width,
@@ -154,7 +154,7 @@ FT_BEGIN_HEADER
     t1_blend_family_other_blues,
     t1_blend_force_bold,
 
-    /* never remove */
+    /*# never remove */
     t1_blend_max
 
   } T1_Blend_Flags;

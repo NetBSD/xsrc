@@ -1,10 +1,13 @@
-/* $XFree86: xc/include/extensions/XvMClib.h,v 1.3 2001/04/01 13:59:59 tsi Exp $ */
+/* $XFree86: xc/include/extensions/XvMClib.h,v 1.6 2001/11/14 21:54:37 mvojkovi Exp $ */
 
 #ifndef _XVMCLIB_H_
 #define _XVMCLIB_H_
 
+#include <X11/Xfuncproto.h>
 #include <X11/extensions/Xvlib.h>
 #include <X11/extensions/XvMC.h>
+
+_XFUNCPROTOBEGIN
 
 Bool XvMCQueryExtension (Display *display, int *eventBase, int *errBase);
 Status XvMCQueryVersion (Display *display, int *major, int *minor);
@@ -137,9 +140,70 @@ Status XvMCSyncSurface (Display *display, XvMCSurface *surface);
 Status XvMCFlushSurface (Display *display, XvMCSurface *surface);
 Status XvMCGetSurfaceStatus (Display *display, XvMCSurface *surface, int *stat);
 
+Status XvMCRenderSurface ( 
+   Display *display,
+   XvMCContext *context,
+   unsigned int picture_structure,
+   XvMCSurface *target_surface,
+   XvMCSurface *past_surface,
+   XvMCSurface *future_surface,
+   unsigned int flags,
+   unsigned int num_macroblocks,
+   unsigned int first_macroblock,
+   XvMCMacroBlockArray *macroblock_array,
+   XvMCBlockArray *blocks
+);
+
+
 Status XvMCSyncSubpicture (Display *display, XvMCSubpicture *subpicture);
 Status XvMCFlushSubpicture (Display *display, XvMCSubpicture *subpicture);
 Status
 XvMCGetSubpictureStatus (Display *display, XvMCSubpicture *subpic, int *stat);
+
+Status XvMCCreateBlocks (
+   Display *display, 
+   XvMCContext *context,
+   unsigned int num_blocks,
+   XvMCBlockArray *block
+);
+
+Status XvMCDestroyBlocks (Display *display,XvMCBlockArray *block);
+
+Status XvMCCreateMacroBlocks (
+   Display *display,
+   XvMCContext *context,
+   unsigned int num_blocks,
+   XvMCMacroBlockArray *blocks
+);
+
+Status XvMCDestroyMacroBlocks (
+   Display *display,
+   XvMCMacroBlockArray *block
+);
+
+XvAttribute *
+XvMCQueryAttributes (
+    Display *display,
+    XvMCContext *context,
+    int *number
+);
+
+Status
+XvMCSetAttribute (
+    Display *display,
+    XvMCContext *context, 
+    Atom attribute, 
+    int value
+);
+
+Status
+XvMCGetAttribute (
+    Display *display,
+    XvMCContext *context, 
+    Atom attribute, 
+    int *value
+);
+
+_XFUNCPROTOEND
 
 #endif

@@ -45,5 +45,5 @@ Quadrics are drawn with normals pointing inward.
 Note that the interpretation of \f2outward\fP and \f2inward\fP depends on the
 quadric being drawn.
 .SH SEE ALSO
-\%\f3gluNewQuadric\fP, \%\f3gluQuadricDrawStyle\fP, \%\f3gluQuadricNormals\fP, 
-\%\f3gluQuadricTexture\fP
+\%\f3gluNewQuadric(3G)\fP, \%\f3gluQuadricDrawStyle(3G)\fP, \%\f3gluQuadricNormals(3G)\fP, 
+\%\f3gluQuadricTexture(3G)\fP

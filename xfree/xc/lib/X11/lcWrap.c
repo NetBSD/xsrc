@@ -1,9 +1,13 @@
-/* $Xorg: lcWrap.c,v 1.4 2000/08/17 19:45:20 cpqbld Exp $ */
+/* $Xorg: lcWrap.c,v 1.6 2001/02/09 02:03:39 xorgcvs Exp $ */
 /*
 
 Copyright 1991, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included
 in all copies or substantial portions of the Software.
@@ -49,7 +53,7 @@ from The Open Group.
  *
  *		 Katsuhisa Yano		TOSHIBA Corp.
  */				
-/* $XFree86: xc/lib/X11/lcWrap.c,v 3.10 2001/01/17 19:41:55 dawes Exp $ */
+/* $XFree86: xc/lib/X11/lcWrap.c,v 3.13 2001/12/14 19:54:10 dawes Exp $ */
 
 #include <stdlib.h>
 #include "Xlibint.h"
@@ -243,7 +247,7 @@ _XOpenLC(
     XLCd lcd;
     XlcLoaderList loader;
     XLCdList cur;
-#if !defined(X_NOT_STDC_ENV) && !defined(X_LOCALE)
+#if !defined(X_LOCALE)
     int len;
     char sinamebuf[256];
     char* siname = sinamebuf;
@@ -252,7 +256,7 @@ _XOpenLC(
 
     if (name == NULL) {
 	name = setlocale (LC_CTYPE, (char *)NULL);
-#if !defined(X_NOT_STDC_ENV) && !defined(X_LOCALE)
+#if !defined(X_LOCALE)
         /* 
          * _XlMapOSLocaleName will return the same string or a substring 
          * of name, so strlen(name) is okay 
@@ -307,7 +311,7 @@ _XOpenLC(
 found:
     _XUnlockMutex(_Xi18n_lock);
 
-#if !defined(X_NOT_STDC_ENV) && !defined(X_LOCALE)
+#if !defined(X_LOCALE)
     if (siname != sinamebuf) Xfree(siname);
 #endif
 
@@ -542,7 +546,7 @@ _XlcCountVaList(
     int count;
 
     for (count = 0; va_arg(var, char *); count++)
-	va_arg(var, XPointer);
+	(void)va_arg(var, XPointer);
     
     *count_ret = count;
 }

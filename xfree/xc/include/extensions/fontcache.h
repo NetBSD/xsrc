@@ -27,13 +27,12 @@
  *
  *	Id: fontcache.h,v 1.6 1999/01/31 12:41:32 akiyama Exp $
  */
+/* $XFree86: xc/include/extensions/fontcache.h,v 1.3 2001/08/01 00:44:35 tsi Exp $ */
 
 /* THIS IS NOT AN X CONSORTIUM STANDARD */
 
-#ifndef _FONTCACHE_H_
-#define _FONTCACHE_H_
-
-#include <X11/Xfuncproto.h>
+#ifndef _EXT_FONTCACHE_H_
+#define _EXT_FONTCACHE_H_
 
 #define X_FontCacheQueryVersion		0
 #define X_FontCacheGetCacheSettings	1
@@ -46,16 +45,11 @@
 #define FontCacheCannotAllocMemory	1
 #define FontCacheNumberErrors		(FontCacheCannotAllocMemory + 1)
 
-#ifndef _FONTCACHE_SERVER_
-
-_XFUNCPROTOBEGIN
-
-/* XXX */
 typedef struct {
     long	himark;
     long	lowmark;
     long	balance;
-} FontCacheSettings;
+} FontCacheSettings, *FontCacheSettingsPtr;
 
 struct cacheinfo {
     long	hits;
@@ -70,8 +64,13 @@ typedef struct {
     long		balance;
     struct cacheinfo	f;
     struct cacheinfo	v;
-} FontCacheStatistics;
-/* XXX */
+} FontCacheStatistics, *FontCacheStatisticsPtr;
+
+#ifndef _FONTCACHE_SERVER_
+
+#include <X11/Xlib.h>
+
+_XFUNCPROTOBEGIN
 
 Bool FontCacheQueryVersion(
 #if NeedFunctionPrototypes
@@ -112,6 +111,6 @@ Status FontCacheGetCacheStatistics(
 
 _XFUNCPROTOEND
 
-#endif /* _FONTCACHE_SERVER_ */
+#endif /* !_FONTCACHE_SERVER_ */
 
-#endif /* _FONTCACHE_H_ */
+#endif /* _EXT_FONTCACHE_H_ */

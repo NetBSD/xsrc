@@ -1,4 +1,4 @@
-/* $Xorg: Destroy.c,v 1.3 2000/08/17 19:46:10 cpqbld Exp $ */
+/* $Xorg: Destroy.c,v 1.4 2001/02/09 02:03:54 xorgcvs Exp $ */
 
 /***********************************************************
 Copyright 1987, 1988 by Digital Equipment Corporation, Maynard, Massachusetts
@@ -37,7 +37,11 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 Copyright 1987, 1988, 1994, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -54,6 +58,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
+/* $XFree86: xc/lib/Xt/Destroy.c,v 1.3 2001/12/14 19:56:11 dawes Exp $ */
 
 #include "IntrinsicI.h"
 
@@ -184,7 +189,7 @@ static Boolean IsDescendant(widget, root)
 static void XtPhase2Destroy (widget)
     register Widget widget;
 {
-    Display	    *display;
+    Display	    *display = NULL;
     Window	    window;
     Widget          parent;
     XtAppContext    app = XtWidgetToApplicationContext(widget);
@@ -240,9 +245,6 @@ static void XtPhase2Destroy (widget)
      */
     if (XtIsShell(widget) || !XtIsWidget(widget)) {
 	window = 0;
-#ifdef lint
-	display = 0;
-#endif
     }
     else {
 	display = XtDisplay(widget);

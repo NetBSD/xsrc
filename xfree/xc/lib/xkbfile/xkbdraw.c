@@ -24,12 +24,11 @@
  THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
  ********************************************************/
+/* $XFree86: xc/lib/xkbfile/xkbdraw.c,v 1.3 2001/07/29 05:01:13 tsi Exp $ */
 
 #include <stdio.h>
 #include <ctype.h>
-#ifndef X_NOT_STDC_ENV
 #include <stdlib.h>
-#endif
 
 #include <X11/Xos.h>
 #include <X11/Xfuncs.h>

@@ -3,7 +3,7 @@ XCOMM $Xorg: Imakefile,v 1.5 2000/08/17 19:48:38 cpqbld Exp $
 
 
 
-XCOMM $XFree86: xc/programs/Xserver/hw/vfb/Imakefile,v 3.29.2.1 2001/05/31 16:14:18 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/vfb/Imakefile,v 3.30 2001/05/31 16:11:10 dawes Exp $
 
 #include <Server.tmpl>
 
@@ -35,7 +35,7 @@ INCLUDES = -I. -I$(XBUILDINCDIR) -I$(FONTINCSRC) \
 	   -I../../fb -I../../mfb -I../../mi -I../../include -I../../os  \
            -I$(EXTINCSRC) -I$(XINCLUDESRC)  -I$(SERVERSRC)/render
 
-DEFINES = $(OS_DEFINES) $(SHMDEF) $(MMAPDEF) -UXFree86LOADER -UXF86DRI
+DEFINES = $(OS_DEFINES) $(SHMDEF) $(MMAPDEF) -UXFree86LOADER
 
 
 #if BuildDPMS
@@ -58,7 +58,7 @@ LinkSourceFile(stubs.c,../../Xi)
 SpecialCObjectRule(InitInput,$(ICONFIGFILES),$(EXT_DEFINES))
 
 LinkSourceFile(miinitext.c,$(SERVERSRC)/mi)
-SpecialCObjectRule(miinitext,$(ICONFIGFILES),$(EXT_DEFINES) $(PAN_DEFINES) -DNO_HW_ONLY_EXTS -DNO_MODULE_EXTS $(EXT_MODULE_DEFINES) -UXFree86LOADER -UXF86DRI)
+SpecialCObjectRule(miinitext,$(ICONFIGFILES),$(EXT_DEFINES) $(PAN_DEFINES) -DNO_HW_ONLY_EXTS -DNO_MODULE_EXTS $(EXT_MODULE_DEFINES) -UXFree86LOADER)
 
 #if BuildDPMS
 LinkSourceFile(dpmsstubs.c,$(SERVERSRC)/Xext)

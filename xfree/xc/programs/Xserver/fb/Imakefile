@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/programs/Xserver/fb/Imakefile,v 1.13 2001/01/21 21:19:09 tsi Exp $
+XCOMM $XFree86: xc/programs/Xserver/fb/Imakefile,v 1.14 2001/07/17 15:28:58 keithp Exp $
 XCOMM 
 XCOMM 
 XCOMM Id: Imakefile,v 1.1 1999/11/02 03:54:44 keithp Exp $
@@ -82,7 +82,7 @@ OBJS =	$(XFMODOBJ) \
 	
    INCLUDES = -I. -I../mi -I../include -I$(XINCLUDESRC) \
 	      -I$(FONTINCSRC) -I$(XF86SRC)/common $(EXTRAINCLUDES) \
-	      -I../render -I$(EXTINCSRC)
+	      -I../render -I$(EXTINCSRC) -I$(SERVERSRC)/Xext
    LINTLIBS = ../dix/llib-ldix.ln ../os/llib-los.ln \
 	     ../mi/llib-lmi.ln
 

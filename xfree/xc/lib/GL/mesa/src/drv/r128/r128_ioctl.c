@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/r128/r128_ioctl.c,v 1.6 2001/04/10 16:07:52 dawes Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/r128/r128_ioctl.c,v 1.7 2001/10/31 22:50:25 tsi Exp $ */
 /**************************************************************************
 
 Copyright 1999, 2000 ATI Technologies Inc. and Precision Insight, Inc.,
@@ -318,8 +318,8 @@ static int r128WaitForFrameCompletion( r128ContextPtr rmesa )
 #endif
 
       if ( 0 )
-	 fprintf( stderr, " last=0x%08x frame=0x%08x\n",
-		  rmesa->sarea->last_frame, frame );
+	 fprintf( stderr, " last=0x%08x frame=0x%08lx\n",
+		  rmesa->sarea->last_frame, (long)frame );
 
       if ( rmesa->sarea->last_frame - frame <= R128_MAX_OUTSTANDING ) {
 	 break;

@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/programs/Xserver/GL/mesa/src/X/Imakefile,v 1.9 2001/04/26 16:54:47 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/GL/mesa/src/X/Imakefile,v 1.11 2002/01/10 21:51:47 tsi Exp $
 
 #define IHaveModules
 #include <Server.tmpl>
@@ -13,6 +13,13 @@ LinkSourceFile(compsize.c,$(LIBSRC)/GL/glx)
   DRIVER_SRCS = xmesa1.c xmesa2.c xmesa3.c xmesa4.c
   DRIVER_OBJS = xmesa1.o xmesa2.o xmesa3.o xmesa4.o
 
+#ifndef XFree86Version
+
+/* This appears to be the quickest way to build a non-XFree86 server */
+GLXSRV_DEFINES = -DXFree86Server
+
+#endif
+
      GLX_SRCS = xf86glx.c xf86glx_util.c compsize.c
      GLX_OBJS = xf86glx.o xf86glx_util.o compsize.o
 
@@ -26,7 +33,7 @@ LinkSourceFile(compsize.c,$(LIBSRC)/GL/glx)
 		-I$(SERVERSRC)/include -I$(SERVERSRC)/GL/include \
 		-I$(SERVERSRC)/GL/glx
 
-      DEFINES = $(GLX_DEFINES) /*-DUSE_X86_ASM*/
+      DEFINES = $(GLX_DEFINES) $(GLXSRV_DEFINES) /*-DUSE_X86_ASM*/
 
 #if DoLoadableServer
 ModuleObjectRule()

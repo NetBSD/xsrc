@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/lib/Xft/xftfreetype.c,v 1.13 2001/05/16 10:32:54 keithp Exp $
+ * $XFree86: xc/lib/Xft/xftfreetype.c,v 1.16 2001/12/13 17:26:00 keithp Exp $
  *
  * Copyright © 2000 Keith Packard, member of The XFree86 Project, Inc.
  *
@@ -298,11 +298,10 @@ typedef struct _XftFtGlyphSet {
     XftFontStruct	    font;
 } XftFtGlyphSet;
 
-static XftFtGlyphSet *_XftFtGlyphSets;
-
 XftFontStruct *
 XftFreeTypeOpen (Display *dpy, XftPattern *pattern)
 {
+    XftDisplayInfo  *info = _XftDisplayInfoGet (dpy);
     XftFtFile	    *file;
     FT_Face	    face;
     XftFtGlyphSet   *gs;
@@ -323,7 +322,9 @@ XftFreeTypeOpen (Display *dpy, XftPattern *pattern)
     FT_Matrix	    matrix;
     XftMatrix	    *font_matrix;
 
+#if 0
     int		    extra;
+#endif
     int		    height, ascent, descent;
     XRenderPictFormat	pf, *format;
     
@@ -452,7 +453,7 @@ XftFreeTypeOpen (Display *dpy, XftPattern *pattern)
     /*
      * Match an existing glyphset
      */
-    for (gs = _XftFtGlyphSets; gs; gs = gs->next)
+    for (gs = info->glyphSets; gs; gs = gs->next)
     {
 	if (gs->file == file &&
 	    gs->minspace == minspace &&
@@ -564,6 +565,7 @@ XftFreeTypeOpen (Display *dpy, XftPattern *pattern)
     else
     {
 	height = face->size->metrics.height >> 6;
+#if 0
 	extra = (height - (ascent + descent));
 	if (extra > 0)
 	{
@@ -572,6 +574,7 @@ XftFreeTypeOpen (Display *dpy, XftPattern *pattern)
 	}
 	else if (extra < 0)
 	    height = ascent + descent;
+#endif
     }
     font->ascent = ascent;
     font->descent = descent;
@@ -582,8 +585,8 @@ XftFreeTypeOpen (Display *dpy, XftPattern *pattern)
     else
 	font->max_advance_width = face->size->metrics.max_advance >> 6;
     
-    gs->next = _XftFtGlyphSets;
-    _XftFtGlyphSets = gs;
+    gs->next = info->glyphSets;
+    info->glyphSets = gs;
     
     font->glyphset = XRenderCreateGlyphSet (dpy, format);
 
@@ -614,8 +617,9 @@ void
 XftFreeTypeClose (Display *dpy, XftFontStruct *font)
 {
     XftFtGlyphSet   *gs, **prev;
+    XftDisplayInfo  *info = _XftDisplayInfoGet (dpy);
 
-    for (prev = &_XftFtGlyphSets; (gs = *prev); prev = &gs->next)
+    for (prev = &info->glyphSets; (gs = *prev); prev = &gs->next)
     {
 	if (&gs->font == font)
 	{

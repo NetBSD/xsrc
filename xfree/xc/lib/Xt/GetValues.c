@@ -1,4 +1,4 @@
-/* $Xorg: GetValues.c,v 1.3 2000/08/17 19:46:12 cpqbld Exp $ */
+/* $Xorg: GetValues.c,v 1.4 2001/02/09 02:03:55 xorgcvs Exp $ */
 /*LINTLIBRARY*/
 
 /***********************************************************
@@ -38,7 +38,11 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 Copyright 1987, 1988, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -55,19 +59,17 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
+/* $XFree86: xc/lib/Xt/GetValues.c,v 1.3 2001/12/14 19:56:16 dawes Exp $ */
 
 #include "IntrinsicI.h"
 #include "StringDefs.h"
 
-extern void _XtCopyToArg();
-extern XrmResourceList* _XtCreateIndirectionTable();
-
-static int GetValues(base, res, num_resources, args, num_args)
-  char*			base;		/* Base address to fetch values from */
-  XrmResourceList*      res;		/* The current resource values.      */
-  register Cardinal	num_resources;	/* number of items in resources      */
-  ArgList 		args;		/* The resource values requested     */
-  Cardinal		num_args;	/* number of items in arg list       */
+static int GetValues(
+  char*			base,		/* Base address to fetch values from */
+  XrmResourceList*      res,		/* The current resource values.      */
+  register Cardinal	num_resources,	/* number of items in resources      */
+  ArgList 		args,		/* The resource values requested     */
+  Cardinal		num_args)	/* number of items in arg list       */
 {
     register ArgList		arg;
     register int 		i;
@@ -118,11 +120,11 @@ static int GetValues(base, res, num_resources, args, num_args)
     return translation_arg_num;
 } /* GetValues */
 
-static void CallGetValuesHook(widget_class, w, args, num_args)
-    WidgetClass	  widget_class;
-    Widget	  w;
-    ArgList	  args;
-    Cardinal	  num_args;
+static void CallGetValuesHook(
+    WidgetClass	  widget_class,
+    Widget	  w,
+    ArgList	  args,
+    Cardinal	  num_args)
 {
     WidgetClass superclass;
     XtArgsProc get_values_hook;
@@ -142,11 +144,11 @@ static void CallGetValuesHook(widget_class, w, args, num_args)
 
 
 
-static void CallConstraintGetValuesHook(widget_class, w, args, num_args)
-    WidgetClass	  widget_class;
-    Widget	  w;
-    ArgList	  args;
-    Cardinal	  num_args;
+static void CallConstraintGetValuesHook(
+    WidgetClass	  widget_class,
+    Widget	  w,
+    ArgList	  args,
+    Cardinal	  num_args)
 {
     ConstraintClassExtension ext;
 

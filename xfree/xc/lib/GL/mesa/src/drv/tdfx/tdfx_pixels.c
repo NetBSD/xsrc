@@ -23,7 +23,7 @@
  * OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-/* $XFree86: xc/lib/GL/mesa/src/drv/tdfx/tdfx_pixels.c,v 1.2 2001/04/02 20:07:48 dawes Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/tdfx/tdfx_pixels.c,v 1.3 2001/08/18 02:51:06 dawes Exp $ */
 
 /*
  * Original rewrite:
@@ -459,10 +459,10 @@ tdfx_readpixels_R5G6B5(GLcontext * ctx, GLint x, GLint y,
 
       LOCK_HARDWARE( fxMesa );
       info.size = sizeof(info);
-      if (grLfbLock(GR_LFB_READ_ONLY,
-		    fxMesa->ReadBuffer,
-		    GR_LFBWRITEMODE_ANY,
-		    GR_ORIGIN_UPPER_LEFT, FXFALSE, &info)) {
+      if (fxMesa->Glide.grLfbLock(GR_LFB_READ_ONLY,
+                                  fxMesa->ReadBuffer,
+                                  GR_LFBWRITEMODE_ANY,
+                                  GR_ORIGIN_UPPER_LEFT, FXFALSE, &info)) {
 	 const GLint srcStride = (fxMesa->glCtx->Color.DrawBuffer ==
 	     GL_FRONT) ? (fxMesa->screen_width) : (info.strideInBytes / 2);
 	 const GLushort *src = (const GLushort *) info.lfbPtr
@@ -484,7 +484,7 @@ tdfx_readpixels_R5G6B5(GLcontext * ctx, GLint x, GLint y,
 	    result = GL_TRUE;
 	 }
 
-	 grLfbUnlock(GR_LFB_READ_ONLY, fxMesa->ReadBuffer);
+	 fxMesa->Glide.grLfbUnlock(GR_LFB_READ_ONLY, fxMesa->ReadBuffer);
       }
       UNLOCK_HARDWARE( fxMesa );
       return result;
@@ -519,10 +519,10 @@ tdfx_readpixels_R8G8B8A8(GLcontext * ctx, GLint x, GLint y,
 
       LOCK_HARDWARE(fxMesa);
       info.size = sizeof(info);
-      if (grLfbLock(GR_LFB_READ_ONLY,
-                    fxMesa->ReadBuffer,
-                    GR_LFBWRITEMODE_ANY,
-                    GR_ORIGIN_UPPER_LEFT, FXFALSE, &info))
+      if (fxMesa->Glide.grLfbLock(GR_LFB_READ_ONLY,
+                                  fxMesa->ReadBuffer,
+                                  GR_LFBWRITEMODE_ANY,
+                                  GR_ORIGIN_UPPER_LEFT, FXFALSE, &info))
       {
          const GLint srcStride = (fxMesa->glCtx->Color.DrawBuffer == GL_FRONT)
             ? (fxMesa->screen_width) : (info.strideInBytes / 4);
@@ -545,7 +545,7 @@ tdfx_readpixels_R8G8B8A8(GLcontext * ctx, GLint x, GLint y,
             result = GL_TRUE;
          }
 
-         grLfbUnlock(GR_LFB_READ_ONLY, fxMesa->ReadBuffer);
+         fxMesa->Glide.grLfbUnlock(GR_LFB_READ_ONLY, fxMesa->ReadBuffer);
       }
       UNLOCK_HARDWARE(fxMesa);
       return result;
@@ -604,10 +604,10 @@ tdfx_drawpixels_R8G8B8A8(GLcontext * ctx, GLint x, GLint y,
       }
 
       info.size = sizeof(info);
-      if (grLfbLock(GR_LFB_WRITE_ONLY,
-                    fxMesa->DrawBuffer,
-                    GR_LFBWRITEMODE_8888,
-                    GR_ORIGIN_UPPER_LEFT, FXTRUE, &info))
+      if (fxMesa->Glide.grLfbLock(GR_LFB_WRITE_ONLY,
+                                  fxMesa->DrawBuffer,
+                                  GR_LFBWRITEMODE_8888,
+                                  GR_ORIGIN_UPPER_LEFT, FXTRUE, &info))
       {
          const GLint dstStride = (fxMesa->glCtx->Color.DrawBuffer == GL_FRONT)
             ? (fxMesa->screen_width * 4) : (info.strideInBytes);
@@ -630,7 +630,7 @@ tdfx_drawpixels_R8G8B8A8(GLcontext * ctx, GLint x, GLint y,
             result = GL_TRUE;
          }
 
-         grLfbUnlock(GR_LFB_WRITE_ONLY, fxMesa->DrawBuffer);
+         fxMesa->Glide.grLfbUnlock(GR_LFB_WRITE_ONLY, fxMesa->DrawBuffer);
       }
       UNLOCK_HARDWARE(fxMesa);
       return result;

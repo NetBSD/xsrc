@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/lib/Xrender/Xrender.h,v 1.7 2000/12/05 03:13:30 keithp Exp $
+ * $XFree86: xc/lib/Xrender/Xrender.h,v 1.10 2001/12/27 01:16:00 keithp Exp $
  *
  * Copyright © 2000 SuSE, Inc.
  *
@@ -26,7 +26,7 @@
 #ifndef _XRENDER_H_
 #define _XRENDER_H_
 
-#include "render.h"
+#include <X11/extensions/render.h>
 
 #include <X11/Xfuncproto.h>
 #include <X11/Xosdefs.h>
@@ -124,6 +124,30 @@ typedef struct _XGlyphInfo {
     short	    yOff;
 } XGlyphInfo;
 
+typedef struct _XGlyphElt8 {
+    GlyphSet		    glyphset;
+    _Xconst char	    *chars;
+    int			    nchars;
+    int			    xOff;
+    int			    yOff;
+} XGlyphElt8;
+
+typedef struct _XGlyphElt16 {
+    GlyphSet		    glyphset;
+    _Xconst unsigned short  *chars;
+    int			    nchars;
+    int			    xOff;
+    int			    yOff;
+} XGlyphElt16;
+
+typedef struct _XGlyphElt32 {
+    GlyphSet		    glyphset;
+    _Xconst unsigned int    *chars;
+    int			    nchars;
+    int			    xOff;
+    int			    yOff;
+} XGlyphElt32;
+
 _XFUNCPROTOBEGIN
 
 Bool XRenderQueryExtension (Display *dpy, int *event_basep, int *error_basep);
@@ -135,34 +159,34 @@ Status XRenderQueryVersion (Display *dpy,
 Status XRenderQueryFormats (Display *dpy);
 
 XRenderPictFormat *
-XRenderFindVisualFormat (Display *dpy, Visual *visual);
+XRenderFindVisualFormat (Display *dpy, _Xconst Visual *visual);
 
 XRenderPictFormat *
-XRenderFindFormat (Display		*dpy,
-		   unsigned long	mask,
-		   XRenderPictFormat	*templ,
-		   int			count);
+XRenderFindFormat (Display			*dpy,
+		   unsigned long		mask,
+		   _Xconst XRenderPictFormat	*templ,
+		   int				count);
     
 Picture
-XRenderCreatePicture (Display			*dpy,
-		      Drawable			drawable,
-		      XRenderPictFormat		*format,
-		      unsigned long		valuemask,
-		      XRenderPictureAttributes	*attributes);
+XRenderCreatePicture (Display				*dpy,
+		      Drawable				drawable,
+		      _Xconst XRenderPictFormat		*format,
+		      unsigned long			valuemask,
+		      _Xconst XRenderPictureAttributes	*attributes);
 
 void
-XRenderChangePicture (Display                   *dpy,
-		      Picture			picture,
-		      unsigned long             valuemask,
-		      XRenderPictureAttributes  *attributes);
+XRenderChangePicture (Display				*dpy,
+		      Picture				picture,
+		      unsigned long			valuemask,
+		      _Xconst XRenderPictureAttributes  *attributes);
 
 void
-XRenderSetPictureClipRectangles (Display	*dpy,
-				 Picture	picture,
-				 int		xOrigin,
-				 int		yOrigin,
-				 XRectangle	*rects,
-				 int		n);
+XRenderSetPictureClipRectangles (Display	    *dpy,
+				 Picture	    picture,
+				 int		    xOrigin,
+				 int		    yOrigin,
+				 _Xconst XRectangle *rects,
+				 int		    n);
 
 void
 XRenderSetPictureClipRegion (Display	    *dpy,
@@ -189,7 +213,7 @@ XRenderComposite (Display   *dpy,
 		  unsigned int	height);
 
 GlyphSet
-XRenderCreateGlyphSet (Display *dpy, XRenderPictFormat *format);
+XRenderCreateGlyphSet (Display *dpy, _Xconst XRenderPictFormat *format);
 
 GlyphSet
 XRenderReferenceGlyphSet (Display *dpy, GlyphSet existing);
@@ -198,79 +222,118 @@ void
 XRenderFreeGlyphSet (Display *dpy, GlyphSet glyphset);
 
 void
-XRenderAddGlyphs (Display	*dpy,
-		  GlyphSet	glyphset,
-		  Glyph		*gids,
-		  XGlyphInfo	*glyphs,
-		  int		nglyphs,
-		  char		*images,
-		  int		nbyte_images);
+XRenderAddGlyphs (Display		*dpy,
+		  GlyphSet		glyphset,
+		  _Xconst Glyph		*gids,
+		  _Xconst XGlyphInfo	*glyphs,
+		  int			nglyphs,
+		  _Xconst char		*images,
+		  int			nbyte_images);
 
 void
-XRenderFreeGlyphs (Display   *dpy,
-		   GlyphSet  glyphset,
-		   Glyph     *gids,
-		   int       nglyphs);
+XRenderFreeGlyphs (Display	    *dpy,
+		   GlyphSet	    glyphset,
+		   _Xconst Glyph    *gids,
+		   int		    nglyphs);
 
 void
-XRenderCompositeString8 (Display	    *dpy,
-			 int		    op,
-			 Picture	    src,
-			 Picture	    dst,
-			 XRenderPictFormat  *maskFormat,
-			 GlyphSet	    glyphset,
-			 int		    xSrc,
-			 int		    ySrc,
-			 int		    xDst,
-			 int		    yDst,
-			 char		    *string,
-			 int		    nchar);
+XRenderCompositeString8 (Display		    *dpy,
+			 int			    op,
+			 Picture		    src,
+			 Picture		    dst,
+			 _Xconst XRenderPictFormat  *maskFormat,
+			 GlyphSet		    glyphset,
+			 int			    xSrc,
+			 int			    ySrc,
+			 int			    xDst,
+			 int			    yDst,
+			 _Xconst char		    *string,
+			 int			    nchar);
 
 void
-XRenderCompositeString16 (Display	    *dpy,
-			  int		    op,
-			  Picture	    src,
-			  Picture	    dst,
-			  XRenderPictFormat *maskFormat,
-			  GlyphSet	    glyphset,
-			  int		    xSrc,
-			  int		    ySrc,
-			  int		    xDst,
-			  int		    yDst,
-			  unsigned short    *string,
-			  int		    nchar);
+XRenderCompositeString16 (Display		    *dpy,
+			  int			    op,
+			  Picture		    src,
+			  Picture		    dst,
+			  _Xconst XRenderPictFormat *maskFormat,
+			  GlyphSet		    glyphset,
+			  int			    xSrc,
+			  int			    ySrc,
+			  int			    xDst,
+			  int			    yDst,
+			  _Xconst unsigned short    *string,
+			  int			    nchar);
 
 void
-XRenderCompositeString32 (Display	    *dpy,
-			  int		    op,
-			  Picture	    src,
-			  Picture	    dst,
-			  XRenderPictFormat *maskFormat,
-			  GlyphSet	    glyphset,
-			  int		    xSrc,
-			  int		    ySrc,
-			  int		    xDst,
-			  int		    yDst,
-			  unsigned int	    *string,
-			  int		    nchar);
+XRenderCompositeString32 (Display		    *dpy,
+			  int			    op,
+			  Picture		    src,
+			  Picture		    dst,
+			  _Xconst XRenderPictFormat *maskFormat,
+			  GlyphSet		    glyphset,
+			  int			    xSrc,
+			  int			    ySrc,
+			  int			    xDst,
+			  int			    yDst,
+			  _Xconst unsigned int	    *string,
+			  int			    nchar);
 
 void
-XRenderFillRectangle (Display	    *dpy,
-		      int	    op,
-		      Picture	    dst,
-		      XRenderColor  *color,
-		      int	    x,
-		      int	    y,
-		      unsigned int  width,
-		      unsigned int  height);
+XRenderCompositeText8 (Display			    *dpy,
+		       int			    op,
+		       Picture			    src,
+		       Picture			    dst,
+		       _Xconst XRenderPictFormat    *maskFormat,
+		       int			    xSrc,
+		       int			    ySrc,
+		       int			    xDst,
+		       int			    yDst,
+		       _Xconst XGlyphElt8	    *elts,
+		       int			    nelt);
 
 void
-XRenderFillRectangles (Display	    *dpy,
-		       int	    op,
-		       Picture	    dst,
-		       XRenderColor *color,
-		       XRectangle   *rectangles,
-		       int	    n_rects);
+XRenderCompositeText16 (Display			    *dpy,
+			int			    op,
+			Picture			    src,
+			Picture			    dst,
+			_Xconst XRenderPictFormat   *maskFormat,
+			int			    xSrc,
+			int			    ySrc,
+			int			    xDst,
+			int			    yDst,
+			_Xconst XGlyphElt16	    *elts,
+			int			    nelt);
+
+void
+XRenderCompositeText32 (Display			    *dpy,
+			int			    op,
+			Picture			    src,
+			Picture			    dst,
+			_Xconst XRenderPictFormat   *maskFormat,
+			int			    xSrc,
+			int			    ySrc,
+			int			    xDst,
+			int			    yDst,
+			_Xconst XGlyphElt32	    *elts,
+			int			    nelt);
+
+void
+XRenderFillRectangle (Display		    *dpy,
+		      int		    op,
+		      Picture		    dst,
+		      _Xconst XRenderColor  *color,
+		      int		    x,
+		      int		    y,
+		      unsigned int	    width,
+		      unsigned int	    height);
+
+void
+XRenderFillRectangles (Display		    *dpy,
+		       int		    op,
+		       Picture		    dst,
+		       _Xconst XRenderColor *color,
+		       _Xconst XRectangle   *rectangles,
+		       int		    n_rects);
 
 _XFUNCPROTOEND
 

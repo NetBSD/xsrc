@@ -31,10 +31,6 @@
 #define __NO_VERSION__
 #include "drmP.h"
 
-#if LINUX_VERSION_CODE < 0x020400
-#include "stubsupport-pre24.h"
-#endif
-
 #define DRM_STUB_MAXCARDS 16	/* Enough for one machine */
 
 static struct drm_stub_list {
@@ -70,9 +66,7 @@ static int DRM(stub_open)(struct inode *inode, struct file *filp)
 }
 
 static struct file_operations DRM(stub_fops) = {
-#if LINUX_VERSION_CODE >= 0x020400
 	owner:   THIS_MODULE,
-#endif
 	open:	 DRM(stub_open)
 };
 
@@ -84,6 +78,7 @@ static int DRM(stub_getminor)(const char *name, struct file_operations *fops,
 	if (!DRM(stub_list)) {
 		DRM(stub_list) = DRM(alloc)(sizeof(*DRM(stub_list))
 					    * DRM_STUB_MAXCARDS, DRM_MEM_STUB);
+		if(!DRM(stub_list)) return -1;
 		for (i = 0; i < DRM_STUB_MAXCARDS; i++) {
 			DRM(stub_list)[i].name = NULL;
 			DRM(stub_list)[i].fops = NULL;
@@ -121,11 +116,13 @@ static int DRM(stub_putminor)(int minor)
 	return 0;
 }
 
+
 int DRM(stub_register)(const char *name, struct file_operations *fops,
 		       drm_device_t *dev)
 {
 	struct drm_stub_info *i = NULL;
-	
+
+	DRM_DEBUG("\n");
 	if (register_chrdev(DRM_MAJOR, "drm", &DRM(stub_fops)))
 		i = (struct drm_stub_info *)inter_module_get("drm");
 
@@ -133,9 +130,11 @@ int DRM(stub_register)(const char *name, struct file_operations *fops,
 				/* Already registered */
 		DRM(stub_info).info_register   = i->info_register;
 		DRM(stub_info).info_unregister = i->info_unregister;
-	} else {
+		DRM_DEBUG("already registered\n");
+	} else if (DRM(stub_info).info_register != DRM(stub_getminor)) {
 		DRM(stub_info).info_register   = DRM(stub_getminor);
 		DRM(stub_info).info_unregister = DRM(stub_putminor);
+		DRM_DEBUG("calling inter_module_register\n");
 		inter_module_register("drm", THIS_MODULE, &DRM(stub_info));
 	}
 	if (DRM(stub_info).info_register)

@@ -23,7 +23,7 @@ shall not be used in advertising or otherwise to promote the sale, use or other
 dealings in this Software without prior written authorization from Digital
 Equipment Corporation.
 ******************************************************************/
-/* $XFree86: xc/programs/Xserver/Xext/panoramiXSwap.c,v 3.7 2001/01/17 22:13:15 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/Xext/panoramiXSwap.c,v 3.8 2001/08/23 13:01:36 alanh Exp $ */
 
 #include <stdio.h>
 #include "X.h"
@@ -53,11 +53,8 @@ Equipment Corporation.
  *	External references for data variables
  */
 
-extern WindowPtr *WindowTable;
-extern int defaultBackingStore;
 extern char *ConnectionInfo;
 extern int connBlockScreenStart;
-extern int (* ProcVector[256]) ();
 
 #if NeedFunctionPrototypes
 #define PROC_EXTERN(pfunc)      extern int pfunc(ClientPtr)

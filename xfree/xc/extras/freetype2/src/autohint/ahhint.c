@@ -4,7 +4,7 @@
 /*                                                                         */
 /*    Glyph hinter (body).                                                 */
 /*                                                                         */
-/*  Copyright 2000 Catharon Productions Inc.                               */
+/*  Copyright 2000-2001 Catharon Productions Inc.                          */
 /*  Author: David Turner                                                   */
 /*                                                                         */
 /*  This file is part of the Catharon Typography Project and shall only    */
@@ -23,6 +23,7 @@
 #include "ahhint.h"
 #include "ahglyph.h"
 #include "ahangles.h"
+#include "aherrors.h"
 #include FT_OUTLINE_H
 
 
@@ -42,10 +43,10 @@
 
   /* snap a given width in scaled coordinates to one of the */
   /* current standard widths                                */
-  static
-  FT_Pos  ah_snap_width( FT_Pos*  widths,
-                         FT_Int   count,
-                         FT_Pos   width )
+  static FT_Pos
+  ah_snap_width( FT_Pos*  widths,
+                 FT_Int   count,
+                 FT_Pos   width )
   {
     int     n;
     FT_Pos  best      = 64 + 32 + 2;
@@ -87,11 +88,11 @@
 
 
   /* align one stem edge relative to the previous stem edge */
-  static
-  void  ah_align_linked_edge( AH_Hinter*  hinter,
-                              AH_Edge*    base_edge,
-                              AH_Edge*    stem_edge,
-                              int         vertical )
+  static void
+  ah_align_linked_edge( AH_Hinter*  hinter,
+                        AH_Edge*    base_edge,
+                        AH_Edge*    stem_edge,
+                        int         vertical )
   {
     FT_Pos       dist    = stem_edge->opos - base_edge->opos;
     AH_Globals*  globals = &hinter->globals->scaled;
@@ -138,6 +139,9 @@
 
         else if ( dist < 128 )
           dist = ( dist + 42 ) & -64;
+        else
+          /* XXX: round otherwise, prevent color fringes in LCD mode */
+          dist = ( dist + 32 ) & -64;
       }
     }
 
@@ -145,10 +149,11 @@
   }
 
 
-  static
-  void  ah_align_serif_edge( AH_Hinter*  hinter,
-                             AH_Edge*    base,
-                             AH_Edge*    serif )
+  static void
+  ah_align_serif_edge( AH_Hinter*  hinter,
+                       AH_Edge*    base,
+                       AH_Edge*    serif,
+                       int         vertical )
   {
     FT_Pos  dist;
     FT_Pos  sign = 1;
@@ -166,11 +171,13 @@
     /* do not strengthen serifs */
     if ( base->flags & ah_edge_done )
     {
-      if ( dist > 64 )
-        dist = ( dist + 16 ) & -64;
+      if ( dist >= 64 )
+        dist = (dist+8) & -64;
 
-      else if ( dist <= 32 )
+      else if ( dist <= 32 && !vertical )
         dist = ( dist + 33 ) >> 1;
+      else
+        dist = 0;
     }
 
     serif->pos = base->pos + sign * dist;
@@ -189,8 +196,8 @@
 
 
   /* Another alternative edge hinting algorithm */
-  static
-  void  ah_hint_edges_3( AH_Hinter*  hinter )
+  static void
+  ah_hint_edges_3( AH_Hinter*  hinter )
   {
     AH_Edge*     edges;
     AH_Edge*     edge_limit;
@@ -204,16 +211,14 @@
     for ( dimension = 1; dimension >= 0; dimension-- )
     {
       AH_Edge*  edge;
-      AH_Edge*  before = 0;
-      AH_Edge*  after  = 0;
       AH_Edge*  anchor = 0;
       int       has_serifs = 0;
 
 
-      if ( hinter->disable_vert_edges && !dimension )
+      if ( ah_debug_disable_vert && !dimension )
         goto Next_Dimension;
 
-      if ( hinter->disable_horz_edges && dimension )
+      if ( ah_debug_disable_horz && dimension )
         goto Next_Dimension;
 
       /* we begin by aligning all stems relative to the blue zone */
@@ -258,13 +263,11 @@
 
           if ( !anchor )
             anchor = edge;
-         }
-       }
+        }
+      }
 
       /* now, we will align all stem edges, trying to maintain the */
       /* relative order of stems in the glyph..                    */
-      before = 0;
-      after  = 0;
       for ( edge = edges; edge < edge_limit; edge++ )
       {
         AH_Edge  *edge2;
@@ -346,7 +349,7 @@
 
         if ( edge->serif )
         {
-          ah_align_serif_edge( hinter, edge->serif, edge );
+          ah_align_serif_edge( hinter, edge->serif, edge, dimension );
         }
         else if ( !anchor )
         {
@@ -375,14 +378,18 @@
   }
 
 
-  FT_LOCAL_DEF
-  void  ah_hinter_hint_edges( AH_Hinter*  hinter,
-                              FT_Bool     no_horz_edges,
-                              FT_Bool     no_vert_edges )
+  FT_LOCAL_DEF void
+  ah_hinter_hint_edges( AH_Hinter*  hinter,
+                        FT_Bool     no_horz_edges,
+                        FT_Bool     no_vert_edges )
   {
-    hinter->disable_horz_edges = no_horz_edges;
-    hinter->disable_vert_edges = no_vert_edges;
-
+#if 0
+    ah_debug_disable_horz = no_horz_edges;
+    ah_debug_disable_vert = no_vert_edges;
+#else
+    FT_UNUSED( no_horz_edges );
+    FT_UNUSED( no_vert_edges );    
+#endif
     /* AH_Interpolate_Blue_Edges( hinter ); -- doesn't seem to help      */
     /* reduce the problem of the disappearing eye in the `e' of Times... */
     /* also, creates some artifacts near the blue zones?                 */
@@ -418,8 +425,8 @@
   /*************************************************************************/
   /*************************************************************************/
 
-  static
-  void  ah_hinter_align_edge_points( AH_Hinter*  hinter )
+  static void
+  ah_hinter_align_edge_points( AH_Hinter*  hinter )
   {
     AH_Outline*  outline = hinter->glyph;
     AH_Edge*     edges;
@@ -433,12 +440,7 @@
     for ( dimension = 1; dimension >= 0; dimension-- )
     {
       AH_Edge*   edge;
-      AH_Edge*   before;
-      AH_Edge*   after;
 
-
-      before = 0;
-      after  = 0;
 
       edge = edges;
       for ( ; edge < edge_limit; edge++ )
@@ -458,12 +460,12 @@
             if ( dimension )
             {
               point->y      = edge->pos;
-              point->flags |= ah_flah_touch_y;
+              point->flags |= ah_flag_touch_y;
             }
             else
             {
               point->x      = edge->pos;
-              point->flags |= ah_flah_touch_x;
+              point->flags |= ah_flag_touch_x;
             }
 
             if ( point == seg->last )
@@ -484,8 +486,8 @@
 
 
   /* hint the strong points -- this is equivalent to the TrueType `IP' */
-  static
-  void  ah_hinter_align_strong_points( AH_Hinter*  hinter )
+  static void
+  ah_hinter_align_strong_points( AH_Hinter*  hinter )
   {
     AH_Outline*  outline = hinter->glyph;
     FT_Int       dimension;
@@ -501,7 +503,7 @@
 
     edges       = outline->horz_edges;
     edge_limit  = edges + outline->num_hedges;
-    touch_flag  = ah_flah_touch_y;
+    touch_flag  = ah_flag_touch_y;
 
     for ( dimension = 1; dimension >= 0; dimension-- )
     {
@@ -522,7 +524,7 @@
 #ifndef AH_OPTION_NO_WEAK_INTERPOLATION
           /* if this point is candidate to weak interpolation, we will  */
           /* interpolate it after all strong points have been processed */
-          if ( point->flags & ah_flah_weak_interpolation )
+          if ( point->flags & ah_flag_weak_interpolation )
             continue;
 #endif
 
@@ -606,17 +608,17 @@
 
       edges      = outline->vert_edges;
       edge_limit = edges + outline->num_vedges;
-      touch_flag = ah_flah_touch_x;
+      touch_flag = ah_flag_touch_x;
     }
   }
 
 
 #ifndef AH_OPTION_NO_WEAK_INTERPOLATION
 
-  static
-  void  ah_iup_shift( AH_Point*  p1,
-                      AH_Point*  p2,
-                      AH_Point*  ref )
+  static void
+  ah_iup_shift( AH_Point*  p1,
+                AH_Point*  p2,
+                AH_Point*  ref )
   {
     AH_Point*  p;
     FT_Pos     delta = ref->u - ref->v;
@@ -630,11 +632,11 @@
   }
 
 
-  static
-  void  ah_iup_interp( AH_Point*  p1,
-                       AH_Point*  p2,
-                       AH_Point*  ref1,
-                       AH_Point*  ref2 )
+  static void
+  ah_iup_interp( AH_Point*  p1,
+                 AH_Point*  p2,
+                 AH_Point*  ref1,
+                 AH_Point*  ref2 )
   {
     AH_Point*  p;
     FT_Pos     u;
@@ -699,13 +701,11 @@
 
 
   /* interpolate weak points -- this is equivalent to the TrueType `IUP' */
-  static
-  void  ah_hinter_align_weak_points( AH_Hinter*  hinter )
+  static void
+  ah_hinter_align_weak_points( AH_Hinter*  hinter )
   {
     AH_Outline*  outline = hinter->glyph;
     FT_Int       dimension;
-    AH_Edge*     edges;
-    AH_Edge*     edge_limit;
     AH_Point*    points;
     AH_Point*    point_limit;
     AH_Point**   contour_limit;
@@ -717,9 +717,7 @@
 
     /* PASS 1: Move segment points to edge positions */
 
-    edges      = outline->horz_edges;
-    edge_limit = edges + outline->num_hedges;
-    touch_flag = ah_flah_touch_y;
+    touch_flag = ah_flag_touch_y;
 
     contour_limit = outline->contours + outline->num_contours;
 
@@ -793,7 +791,7 @@
         for ( point = points; point < point_limit; point++ )
           point->y = point->u;
 
-        touch_flag = ah_flah_touch_x;
+        touch_flag = ah_flag_touch_x;
         ah_setup_uv( outline, ah_uv_ox );
       }
       else
@@ -809,8 +807,8 @@
 #endif /* !AH_OPTION_NO_WEAK_INTERPOLATION */
 
 
-  FT_LOCAL_DEF
-  void  ah_hinter_align_points( AH_Hinter*  hinter )
+  FT_LOCAL_DEF void
+  ah_hinter_align_points( AH_Hinter*  hinter )
   {
     ah_hinter_align_edge_points( hinter );
 
@@ -836,10 +834,10 @@
 
 
   /* scale and fit the global metrics */
-  static
-  void  ah_hinter_scale_globals( AH_Hinter*  hinter,
-                                 FT_Fixed    x_scale,
-                                 FT_Fixed    y_scale )
+  static void
+  ah_hinter_scale_globals( AH_Hinter*  hinter,
+                           FT_Fixed    x_scale,
+                           FT_Fixed    y_scale )
   {
     FT_Int            n;
     AH_Face_Globals*  globals = hinter->globals;
@@ -889,8 +887,8 @@
   }
 
 
-  static
-  void  ah_hinter_align( AH_Hinter*  hinter )
+  static void
+  ah_hinter_align( AH_Hinter*  hinter )
   {
     ah_hinter_align_edge_points( hinter );
     ah_hinter_align_points( hinter );
@@ -898,8 +896,8 @@
 
 
   /* finalize a hinter object */
-  FT_LOCAL_DEF
-  void ah_hinter_done( AH_Hinter*  hinter )
+  FT_LOCAL_DEF void
+  ah_hinter_done( AH_Hinter*  hinter )
   {
     if ( hinter )
     {
@@ -921,9 +919,9 @@
 
 
   /* create a new empty hinter object */
-  FT_LOCAL_DEF
-  FT_Error  ah_hinter_new( FT_Library   library,
-                           AH_Hinter**  ahinter )
+  FT_LOCAL_DEF FT_Error
+  ah_hinter_new( FT_Library   library,
+                 AH_Hinter**  ahinter )
   {
     AH_Hinter*  hinter = 0;
     FT_Memory   memory = library->memory;
@@ -957,10 +955,10 @@
 
 
   /* create a face's autohint globals */
-  FT_LOCAL_DEF
-  FT_Error  ah_hinter_new_face_globals( AH_Hinter*   hinter,
-                                        FT_Face      face,
-                                        AH_Globals*  globals )
+  FT_LOCAL_DEF FT_Error
+  ah_hinter_new_face_globals( AH_Hinter*   hinter,
+                              FT_Face      face,
+                              AH_Globals*  globals )
   {
     FT_Error          error;
     FT_Memory         memory = hinter->memory;
@@ -989,8 +987,8 @@
 
 
   /* discard a face's autohint globals */
-  FT_LOCAL_DEF
-  void  ah_hinter_done_face_globals( AH_Face_Globals*  globals )
+  FT_LOCAL_DEF void
+  ah_hinter_done_face_globals( AH_Face_Globals*  globals )
   {
     FT_Face    face   = globals->face;
     FT_Memory  memory = face->memory;
@@ -1000,25 +998,24 @@
   }
 
 
-  static
-  FT_Error  ah_hinter_load( AH_Hinter*  hinter,
-                            FT_UInt     glyph_index,
-                            FT_UInt     load_flags,
-                            FT_UInt     depth )
+  static FT_Error
+  ah_hinter_load( AH_Hinter*  hinter,
+                  FT_UInt     glyph_index,
+                  FT_UInt     load_flags,
+                  FT_UInt     depth )
   {
     FT_Face           face     = hinter->face;
     FT_GlyphSlot      slot     = face->glyph;
     FT_Slot_Internal  internal = slot->internal;
     FT_Fixed          x_scale  = face->size->metrics.x_scale;
     FT_Fixed          y_scale  = face->size->metrics.y_scale;
-    FT_Glyph_Metrics  metrics;  /* temporary metrics */
     FT_Error          error;
     AH_Outline*       outline  = hinter->glyph;
     AH_Loader*        gloader  = hinter->loader;
-    FT_Bool           no_horz_hints =
-                        ( load_flags & AH_HINT_NO_HORZ_EDGES ) != 0;
-    FT_Bool           no_vert_hints =
-                        ( load_flags & AH_HINT_NO_VERT_EDGES ) != 0;
+    FT_Bool           no_horz_hints = FT_BOOL(
+                        ( load_flags & AH_HINT_NO_HORZ_EDGES ) != 0 );
+    FT_Bool           no_vert_hints = FT_BOOL(
+                        ( load_flags & AH_HINT_NO_VERT_EDGES ) != 0 );
 
 
     /* load the glyph */
@@ -1041,9 +1038,6 @@
       FT_Vector_Transform( &hinter->trans_delta, &imatrix );
     }
 
-    /* save current glyph metrics */
-    metrics = slot->metrics;
-
     /* set linear horizontal metrics */
     slot->linearHoriAdvance = slot->metrics.horiAdvance;
     slot->linearVertAdvance = slot->metrics.vertAdvance;
@@ -1051,13 +1045,13 @@
     switch ( slot->format )
     {
     case ft_glyph_format_outline:
-    
+
       /* translate glyph outline if we need to */
       if ( hinter->transformed )
       {
         FT_UInt     n     = slot->outline.n_points;
         FT_Vector*  point = slot->outline.points;
-        
+
 
         for ( ; n > 0; point++, n-- )
         {
@@ -1065,7 +1059,7 @@
           point->y += hinter->trans_delta.y;
         }
       }
-      
+
       /* copy the outline points in the loader's current                */
       /* extra points, which is used to keep original glyph coordinates */
       error = ah_loader_check_points( gloader, slot->outline.n_points + 2,
@@ -1120,27 +1114,23 @@
       /* we now need to hint the metrics according to the change in */
       /* width/positioning that occured during the hinting process  */
       {
-        FT_Pos    old_width, new_width;
-        FT_Pos    old_advance, new_advance;
-        FT_Pos    old_lsb, new_lsb;
+        FT_Pos    old_advance, old_rsb, old_lsb, new_lsb;
         AH_Edge*  edge1 = outline->vert_edges;     /* leftmost edge  */
         AH_Edge*  edge2 = edge1 +
                           outline->num_vedges - 1; /* rightmost edge */
 
 
-        old_width = edge2->opos - edge1->opos;
-        new_width = edge2->pos  - edge1->pos;
-
         old_advance = hinter->pp2.x;
+        old_rsb     = old_advance - edge2->opos;
         old_lsb     = edge1->opos;
         new_lsb     = edge1->pos;
 
-        new_advance = old_advance +
-                      ( new_width + new_lsb - old_width - old_lsb );
+        hinter->pp1.x = ( ( new_lsb    - old_lsb ) + 32 ) & -64;
+        hinter->pp2.x = ( ( edge2->pos + old_rsb ) + 32 ) & -64;
 
-        hinter->pp1.x = ( ( new_lsb - old_lsb ) + 32 ) & -64;
-        hinter->pp2.x = ( ( edge2->pos +
-                            ( old_advance - edge2->opos ) ) + 32 ) & -64;
+        /* try to fix certain bad advance computations */
+        if ( hinter->pp2.x + hinter->pp1.x == edge2->pos && old_rsb > 4 )
+          hinter->pp2.x += 64;
       }
 
       /* good, we simply add the glyph to our loader's base */
@@ -1150,12 +1140,11 @@
     case ft_glyph_format_composite:
       {
         FT_UInt       nn, num_subglyphs = slot->num_subglyphs;
-        FT_UInt       num_base_subgs, start_point, start_contour;
+        FT_UInt       num_base_subgs, start_point;
         FT_SubGlyph*  subglyph;
 
 
         start_point   = gloader->base.outline.n_points;
-        start_contour = gloader->base.outline.n_contours;
 
         /* first of all, copy the subglyph descriptors in the glyph loader */
         error = ah_loader_check_subglyphs( gloader, num_subglyphs );
@@ -1241,7 +1230,7 @@
             if ( start_point + k >= num_base_points          ||
                                l >= (FT_UInt)num_new_points  )
             {
-              error = FT_Err_Invalid_Composite;
+              error = AH_Err_Invalid_Composite;
               goto Exit;
             }
 
@@ -1269,7 +1258,7 @@
 
 
             dummy.points  += num_base_points;
-            dummy.n_points = num_new_points;
+            dummy.n_points = (short)num_new_points;
 
             FT_Outline_Translate( &dummy, x, y );
           }
@@ -1279,7 +1268,7 @@
 
     default:
       /* we don't support other formats (yet?) */
-      error = FT_Err_Unimplemented_Feature;
+      error = AH_Err_Unimplemented_Feature;
     }
 
   Hint_Metrics:
@@ -1307,8 +1296,16 @@
       slot->metrics.height       = bbox.yMax - bbox.yMin;
       slot->metrics.horiBearingX = bbox.xMin;
       slot->metrics.horiBearingY = bbox.yMax;
-      slot->metrics.horiAdvance  = hinter->pp2.x - hinter->pp1.x;
-      /* XXX: TO DO - slot->linearHoriAdvance */
+
+      /* for mono-width fonts (like Andale, Courier, etc.), we need */
+      /* to keep the original rounded advance width                 */
+      if ( !FT_IS_FIXED_WIDTH( slot->face ) )
+        slot->metrics.horiAdvance = hinter->pp2.x - hinter->pp1.x;
+      else
+        slot->metrics.horiAdvance = FT_MulFix( slot->metrics.horiAdvance,
+                                               x_scale );
+
+      slot->metrics.horiAdvance = ( slot->metrics.horiAdvance + 32 ) & -64;
 
       /* now copy outline into glyph slot */
       ah_loader_rewind( slot->internal->loader );
@@ -1320,18 +1317,22 @@
       slot->format  = ft_glyph_format_outline;
     }
 
+#ifdef DEBUG_HINTER
+    ah_debug_hinter = hinter;
+#endif
+
   Exit:
     return error;
   }
 
 
   /* load and hint a given glyph */
-  FT_LOCAL_DEF
-  FT_Error  ah_hinter_load_glyph( AH_Hinter*    hinter,
-                                  FT_GlyphSlot  slot,
-                                  FT_Size       size,
-                                  FT_UInt       glyph_index,
-                                  FT_Int        load_flags )
+  FT_LOCAL_DEF FT_Error
+  ah_hinter_load_glyph( AH_Hinter*    hinter,
+                        FT_GlyphSlot  slot,
+                        FT_Size       size,
+                        FT_UInt       glyph_index,
+                        FT_Int        load_flags )
   {
     FT_Face           face         = slot->face;
     FT_Error          error;
@@ -1365,7 +1366,12 @@
 
     ah_loader_rewind( hinter->loader );
 
+#if 1
+    load_flags  = FT_LOAD_NO_SCALE
+                | FT_LOAD_IGNORE_TRANSFORM ;
+#else
     load_flags |= FT_LOAD_NO_SCALE | FT_LOAD_NO_RECURSE;
+#endif
 
     error = ah_hinter_load( hinter, glyph_index, load_flags, 0 );
 
@@ -1375,11 +1381,11 @@
 
 
   /* retrieve a face's autohint globals for client applications */
-  FT_LOCAL_DEF
-  void  ah_hinter_get_global_hints( AH_Hinter*  hinter,
-                                    FT_Face     face,
-                                    void**      global_hints,
-                                    long*       global_len )
+  FT_LOCAL_DEF void
+  ah_hinter_get_global_hints( AH_Hinter*  hinter,
+                              FT_Face     face,
+                              void**      global_hints,
+                              long*       global_len )
   {
     AH_Globals*  globals = 0;
     FT_Memory    memory  = hinter->memory;
@@ -1412,9 +1418,9 @@
   }
 
 
-  FT_LOCAL_DEF
-  void  ah_hinter_done_global_hints( AH_Hinter*  hinter,
-                                     void*       global_hints )
+  FT_LOCAL_DEF void
+  ah_hinter_done_global_hints( AH_Hinter*  hinter,
+                               void*       global_hints )
   {
     FT_Memory  memory = hinter->memory;
 

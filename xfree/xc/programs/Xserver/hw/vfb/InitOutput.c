@@ -1,9 +1,13 @@
-/* $Xorg: InitOutput.c,v 1.3 2000/08/17 19:48:38 cpqbld Exp $ */
+/* $Xorg: InitOutput.c,v 1.4 2001/02/09 02:04:45 xorgcvs Exp $ */
 /*
 
 Copyright 1993, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included
 in all copies or substantial portions of the Software.
@@ -22,7 +26,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/Xserver/hw/vfb/InitOutput.c,v 3.19 2001/05/16 14:06:28 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/vfb/InitOutput.c,v 3.20 2001/12/14 19:59:45 dawes Exp $ */
 
 #if defined(WIN32)
 #include <X11/Xwinsock.h>

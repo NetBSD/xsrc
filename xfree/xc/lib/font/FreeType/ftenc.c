@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/font/FreeType/ftenc.c,v 1.16 2000/04/06 15:27:23 dawes Exp $ */
+/* $XFree86: xc/lib/font/FreeType/ftenc.c,v 1.18 2001/10/28 03:32:43 tsi Exp $ */
 
 /* 
 Copyright (c) 1998 by Juliusz Chroboczek
@@ -42,26 +42,24 @@ int
 ttf_pick_cmap(char *xlfd, int length, char *filename, TT_Face face,
               struct ttf_mapping *tm)
 {
-  struct font_encoding *encoding;
-  struct font_encoding_mapping *mapping;
+  FontEncPtr encoding;
+  FontMapPtr mapping;
   TT_CharMap cmap;
   
-
   char *encoding_name=0;
 
   if(xlfd)
-    encoding_name=font_encoding_from_xlfd(xlfd, length);
+    encoding_name=FontEncFromXLFD(xlfd, length);
   if(!encoding_name)
     encoding_name="iso8859-1";
 
   if(!strcasecmp(encoding_name, "truetype-raw")) {
     tm->has_cmap=0;
     tm->base=0;
-    tm->encoding=0;
     tm->mapping=0;
     return 0;
   } else {
-    if(encoding=font_encoding_find(encoding_name, filename)) {
+    if((encoding=FontEncFind(encoding_name, filename))) {
       for(mapping=encoding->mappings; mapping; mapping=mapping->next) {
         if(!find_cmap(mapping->type, mapping->pid, mapping->eid, face, 
                       &cmap)) {
@@ -77,7 +75,6 @@ ttf_pick_cmap(char *xlfd, int length, char *filename, TT_Face face,
               tm->base=0;
           } else
             tm->base=0;
-          tm->encoding=encoding;
           tm->mapping=mapping;
           return 0;
         }
@@ -99,7 +96,6 @@ find_cmap_default(TT_Face face, struct ttf_mapping *tm)
       tm->has_cmap=1;
       tm->cmap=cmap;
       tm->base=0;
-      tm->encoding=0;
       tm->mapping=0;
       return 0;
     }
@@ -109,7 +105,6 @@ find_cmap_default(TT_Face face, struct ttf_mapping *tm)
     tm->has_cmap=1;
     tm->cmap=cmap;
     tm->base=0;
-    tm->encoding=0;
     tm->mapping=0;
     return 0;
   }
@@ -117,7 +112,6 @@ find_cmap_default(TT_Face face, struct ttf_mapping *tm)
   /* Tough. */
   tm->has_cmap=0;
   tm->base=0;
-  tm->encoding=0;
   tm->mapping=0;
   return 0;
 }
@@ -181,8 +175,8 @@ ttf_remap(unsigned code, struct ttf_mapping *tm)
 {
   unsigned index;
 
-  if(tm->encoding) {
-    index=font_encoding_recode(code, tm->encoding, tm->mapping);
+  if(tm->mapping) {
+    index=FontEncRecode(code, tm->mapping);
   } else {
     if(code<0x100 || !tm->has_cmap)
       index=code;

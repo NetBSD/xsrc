@@ -1,9 +1,13 @@
-/* $Xorg: miclipn.c,v 1.3 2000/08/17 19:53:37 cpqbld Exp $ */
+/* $Xorg: miclipn.c,v 1.4 2001/02/09 02:05:20 xorgcvs Exp $ */
 /*
 
 Copyright 1990, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included
 in all copies or substantial portions of the Software.
@@ -22,18 +26,21 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
+/* $XFree86: xc/programs/Xserver/mi/miclipn.c,v 1.4 2001/12/14 20:00:21 dawes Exp $ */
 
 #include "X.h"
 #include "windowstr.h"
 #include "scrnintstr.h"
+#include "mi.h"
 
-static void	(*clipNotify)() = 0;
-static void	(*ClipNotifies[MAXSCREENS])();
+static void	(*clipNotify)(WindowPtr,int,int) = 0;
+static void	(*ClipNotifies[MAXSCREENS])(WindowPtr,int,int);
 
 static void
-miClipNotifyWrapper(pWin, dx, dy)
-    WindowPtr pWin;
-    int dx, dy;
+miClipNotifyWrapper(
+    WindowPtr pWin,
+    int dx, 
+    int dy )
 {
     if (clipNotify)
 	(*clipNotify)(pWin, dx, dy);
@@ -51,8 +58,12 @@ miClipNotifyWrapper(pWin, dx, dy)
 static unsigned long clipGeneration = 0;
 
 void
-miClipNotify (func)
-    void (*func)();
+miClipNotify (
+    void (*func)(
+        WindowPtr /* pWin */,
+        int /* dx */,
+        int /* dy */
+		) )
 {
     int i;
 

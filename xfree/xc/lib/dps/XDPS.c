@@ -35,6 +35,7 @@
  * 
  * Author:  Adobe Systems Incorporated
  */
+/* $XFree86: xc/lib/dps/XDPS.c,v 1.3 2001/10/28 03:32:42 tsi Exp $ */
 
 #define NEED_EVENTS
 #define NEED_REPLIES
@@ -851,8 +852,6 @@ XDPSLGiveInput(Display *xdpy, ContextXID cxid, char *data, int length)
     int dpyix;
     register Display *dpy = ShuntMap[dpyix = DPY_NUMBER(xdpy)];
     register xPSGiveInputReq *req;
-    int sendlen;
-    XDPSLIOProcs *call;
     Bool didFlush = False;
 
     if (dpy != xdpy)
@@ -1724,7 +1723,6 @@ XDPSLSync(Display *xdpy)
         XEvent event;
         DPSCAPData my;
         XExtData *extData;
-        void *next;
         XExtCodes *codes = Codes[DPY_NUMBER(xdpy)];
 
 	if (codes == NULL)
@@ -2194,7 +2192,6 @@ static Bool
 DPSCAPResumeContext(Display *xdpy, ContextXID cxid)
 {
     register DPSCAPPausedContextData *slot;
-    unsigned int ret;
     int dpyix = DPY_NUMBER(xdpy);
 
     /* Try to match cxid to list of paused contexts */

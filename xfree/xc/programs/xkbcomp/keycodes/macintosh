@@ -26,7 +26,7 @@
 //other dealings in this Software without prior written authorization
 //from the X Consortium.
 //
-// $XFree86: xc/programs/xkbcomp/keycodes/macintosh,v 1.3 2000/09/19 12:46:23 eich Exp $
+// $XFree86: xc/programs/xkbcomp/keycodes/macintosh,v 1.5 2001/10/03 07:44:22 alanh Exp $
 //
 default xkb_keycodes "macintosh" {
 

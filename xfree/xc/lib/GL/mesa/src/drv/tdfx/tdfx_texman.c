@@ -23,7 +23,7 @@
  * OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-/* $XFree86: xc/lib/GL/mesa/src/drv/tdfx/tdfx_texman.c,v 1.2.2.1 2001/05/22 21:25:41 dawes Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/tdfx/tdfx_texman.c,v 1.4 2001/08/18 02:51:07 dawes Exp $ */
 
 /*
  * Original rewrite:
@@ -258,17 +258,17 @@ void tdfxTMInit( tdfxContextPtr fxMesa )
 
       LOCK_HARDWARE( fxMesa );
 
-      extensions = grGetString( GR_EXTENSION );
+      extensions = fxMesa->Glide.grGetString( GR_EXTENSION );
 
       if ( strstr( extensions, " TEXUMA " ) ) {
 	 FxU32 start, end;
 
 	 tss->umaTexMemory = GL_TRUE;
 
-	 grEnable( GR_TEXTURE_UMA_EXT );
+	 fxMesa->Glide.grEnable( GR_TEXTURE_UMA_EXT );
 
-	 start = grTexMinAddress( 0 );
-	 end = grTexMaxAddress( 0 );
+	 start = fxMesa->Glide.grTexMinAddress( 0 );
+	 end = fxMesa->Glide.grTexMaxAddress( 0 );
 
 	 if ( TDFX_DEBUG & DEBUG_VERBOSE_TEXTURE )
 	    fprintf( stderr, "   UMA tex memory: %d\n", (int)(end - start) );
@@ -287,8 +287,8 @@ void tdfxTMInit( tdfxContextPtr fxMesa )
 	 for ( unit = 0 ; unit < fxMesa->numTMUs ; unit++ ) {
 	    FxU32 start, end;
 
-	    start = grTexMinAddress( unit );
-	    end = grTexMaxAddress( unit );
+	    start = fxMesa->Glide.grTexMinAddress( unit );
+	    end = fxMesa->Glide.grTexMaxAddress( unit );
 
 	    tss->totalTexMem[unit] = end - start;
 	    tss->freeTexMem[unit] = end - start;
@@ -596,7 +596,7 @@ void tdfxTMDownloadTextureLocked( tdfxContextPtr fxMesa,
 	 for ( l = t->minLevel ; l <= t->maxLevel && t->image[l].data ; l++ ) {
 	    GrLOD_t glideLod = t->info.largeLodLog2 - l + tObj->BaseLevel;
 
-	    grTexDownloadMipMapLevel( targetTMU,
+	    fxMesa->Glide.grTexDownloadMipMapLevel( targetTMU,
 				      t->range[targetTMU]->startAddr,
 				      glideLod,
 				      t->info.largeLodLog2,
@@ -613,7 +613,7 @@ void tdfxTMDownloadTextureLocked( tdfxContextPtr fxMesa,
 	 for ( l = t->minLevel ; l <= t->maxLevel && t->image[l].data ; l++ ) {
 	    GrLOD_t glideLod = t->info.largeLodLog2 - l + tObj->BaseLevel;
 
-	    grTexDownloadMipMapLevel( GR_TMU0,
+	    fxMesa->Glide.grTexDownloadMipMapLevel( GR_TMU0,
 				      t->range[TDFX_TMU0]->startAddr,
 				      glideLod,
 				      t->info.largeLodLog2,
@@ -622,7 +622,7 @@ void tdfxTMDownloadTextureLocked( tdfxContextPtr fxMesa,
 				      GR_MIPMAPLEVELMASK_ODD,
 				      t->image[l].data );
 
-	    grTexDownloadMipMapLevel( GR_TMU1,
+	    fxMesa->Glide.grTexDownloadMipMapLevel( GR_TMU1,
 				      t->range[TDFX_TMU1]->startAddr,
 				      glideLod,
 				      t->info.largeLodLog2,
@@ -639,7 +639,7 @@ void tdfxTMDownloadTextureLocked( tdfxContextPtr fxMesa,
 	 for ( l = t->minLevel ; l <= t->maxLevel && t->image[l].data ; l++ ) {
 	    GrLOD_t glideLod = t->info.largeLodLog2 - l + tObj->BaseLevel;
 
-	    grTexDownloadMipMapLevel( GR_TMU0,
+	    fxMesa->Glide.grTexDownloadMipMapLevel( GR_TMU0,
 				      t->range[TDFX_TMU0]->startAddr,
 				      glideLod,
 				      t->info.largeLodLog2,
@@ -648,7 +648,7 @@ void tdfxTMDownloadTextureLocked( tdfxContextPtr fxMesa,
 				      GR_MIPMAPLEVELMASK_BOTH,
 				      t->image[l].data );
 
-	    grTexDownloadMipMapLevel( GR_TMU1,
+	    fxMesa->Glide.grTexDownloadMipMapLevel( GR_TMU1,
 				      t->range[TDFX_TMU1]->startAddr,
 				      glideLod,
 				      t->info.largeLodLog2,
@@ -671,6 +671,7 @@ void tdfxTMReloadMipMapLevelLocked( GLcontext *ctx,
 				    struct gl_texture_object *tObj,
 				    GLint level )
 {
+   tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
    tdfxTexObjPtr t = TDFX_TEXTURE_DATA(tObj);
    GrLOD_t glideLod;
    FxU32 unit;
@@ -683,7 +684,7 @@ void tdfxTMReloadMipMapLevelLocked( GLcontext *ctx,
    switch ( unit ) {
    case TDFX_TMU0:
    case TDFX_TMU1:
-      grTexDownloadMipMapLevel( unit,
+      fxMesa->Glide.grTexDownloadMipMapLevel( unit,
 				t->range[unit]->startAddr,
 				glideLod,
 				t->info.largeLodLog2,
@@ -694,7 +695,7 @@ void tdfxTMReloadMipMapLevelLocked( GLcontext *ctx,
       break;
 
    case TDFX_TMU_SPLIT:
-      grTexDownloadMipMapLevel( GR_TMU0,
+      fxMesa->Glide.grTexDownloadMipMapLevel( GR_TMU0,
 				t->range[GR_TMU0]->startAddr,
 				glideLod,
 				t->info.largeLodLog2,
@@ -703,7 +704,7 @@ void tdfxTMReloadMipMapLevelLocked( GLcontext *ctx,
 				GR_MIPMAPLEVELMASK_ODD,
 				t->image[level].data );
 
-      grTexDownloadMipMapLevel( GR_TMU1,
+      fxMesa->Glide.grTexDownloadMipMapLevel( GR_TMU1,
 				t->range[GR_TMU1]->startAddr,
 				glideLod,
 				t->info.largeLodLog2,
@@ -714,7 +715,7 @@ void tdfxTMReloadMipMapLevelLocked( GLcontext *ctx,
       break;
 
    case TDFX_TMU_BOTH:
-      grTexDownloadMipMapLevel( GR_TMU0,
+      fxMesa->Glide.grTexDownloadMipMapLevel( GR_TMU0,
 				t->range[GR_TMU0]->startAddr,
 				glideLod,
 				t->info.largeLodLog2,
@@ -723,7 +724,7 @@ void tdfxTMReloadMipMapLevelLocked( GLcontext *ctx,
 				GR_MIPMAPLEVELMASK_BOTH,
 				t->image[level].data );
 
-      grTexDownloadMipMapLevel( GR_TMU1,
+      fxMesa->Glide.grTexDownloadMipMapLevel( GR_TMU1,
 				t->range[GR_TMU1]->startAddr,
 				glideLod,
 				t->info.largeLodLog2,
@@ -769,27 +770,27 @@ void tdfxTMMoveInTMLocked( tdfxContextPtr fxMesa,
    switch ( targetTMU ) {
    case TDFX_TMU0:
    case TDFX_TMU1:
-      size = grTexTextureMemRequired( GR_MIPMAPLEVELMASK_BOTH, &t->info );
+      size = fxMesa->Glide.grTexTextureMemRequired( GR_MIPMAPLEVELMASK_BOTH, &t->info );
       t->range[targetTMU] = tdfxTMAllocTexMem(fxMesa, targetTMU, size);
       break;
 
    case TDFX_TMU_SPLIT:
-      size = grTexTextureMemRequired( GR_MIPMAPLEVELMASK_ODD, &t->info );
+      size = fxMesa->Glide.grTexTextureMemRequired( GR_MIPMAPLEVELMASK_ODD, &t->info );
       t->range[TDFX_TMU0] = tdfxTMAllocTexMem( fxMesa, TDFX_TMU0, size );
       if ( t->range[TDFX_TMU0] )
 	 fxMesa->stats.memTexUpload += size;
 
-      size = grTexTextureMemRequired( GR_MIPMAPLEVELMASK_EVEN, &t->info );
+      size = fxMesa->Glide.grTexTextureMemRequired( GR_MIPMAPLEVELMASK_EVEN, &t->info );
       t->range[TDFX_TMU1] = tdfxTMAllocTexMem( fxMesa, TDFX_TMU1, size );
       break;
 
    case TDFX_TMU_BOTH:
-      size = grTexTextureMemRequired( GR_MIPMAPLEVELMASK_BOTH, &t->info );
+      size = fxMesa->Glide.grTexTextureMemRequired( GR_MIPMAPLEVELMASK_BOTH, &t->info );
       t->range[TDFX_TMU0] = tdfxTMAllocTexMem( fxMesa, TDFX_TMU0, size );
       if ( t->range[TDFX_TMU0] )
 	 fxMesa->stats.memTexUpload += size;
 
-      size = grTexTextureMemRequired( GR_MIPMAPLEVELMASK_BOTH, &t->info );
+      size = fxMesa->Glide.grTexTextureMemRequired( GR_MIPMAPLEVELMASK_BOTH, &t->info );
       t->range[TDFX_TMU1] = tdfxTMAllocTexMem( fxMesa, TDFX_TMU1, size );
       break;
 

@@ -1,9 +1,13 @@
-/* $XFree86: xc/programs/Xserver/Xi/getselev.c,v 3.4 2001/01/17 22:13:25 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/Xi/getselev.c,v 3.6 2001/12/14 19:58:57 dawes Exp $ */
 /************************************************************
 
 Copyright 1989, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -41,7 +45,7 @@ SOFTWARE.
 
 ********************************************************/
 
-/* $Xorg: getselev.c,v 1.3 2000/08/17 19:48:01 cpqbld Exp $ */
+/* $Xorg: getselev.c,v 1.4 2001/02/09 02:04:34 xorgcvs Exp $ */
 
 /***********************************************************************
  *
@@ -99,7 +103,7 @@ ProcXGetSelectedExtensionEvents(client)
     int					total_length = 0;
     xGetSelectedExtensionEventsReply	rep;
     WindowPtr				pWin;
-    XEventClass				*buf;
+    XEventClass				*buf = NULL;
     XEventClass				*tclient;
     XEventClass				*aclient;
     OtherInputMasks			*pOthers;

@@ -21,6 +21,7 @@
  * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  */
+/* $XFree86: xc/lib/GL/mesa/src/drv/i810/i810tex.c,v 1.7 2001/10/31 22:50:24 tsi Exp $ */
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -363,7 +364,6 @@ static void i810UploadTexLevel( i810TextureObjectPtr t, int level )
    {
       GLushort *dst = (GLushort *)(t->BufAddr + t->image[level].offset);
       GLubyte  *src = (GLubyte *)image->Data;
-      i810Msg(10,"  CopyRGB: %p %p\n", dst, src);      
 
       for (j = 0 ; j < image->Height ; j++, dst += (t->Pitch/2)) {
 	 for (i = 0 ; i < image->Width ; i++) {
@@ -378,7 +378,6 @@ static void i810UploadTexLevel( i810TextureObjectPtr t, int level )
    {
       GLushort *dst = (GLushort *)(t->BufAddr + t->image[level].offset);
       GLubyte  *src = (GLubyte *)image->Data;
-      i810Msg(10,"  CopyRGBA: %p %p\n", dst, src);      
 
       for (j = 0 ; j < image->Height ; j++, dst += (t->Pitch/2)) {
 	 for (i = 0 ; i < image->Width ; i++) {
@@ -393,7 +392,6 @@ static void i810UploadTexLevel( i810TextureObjectPtr t, int level )
    {
       GLushort *dst = (GLushort *)(t->BufAddr + t->image[level].offset);
       GLubyte  *src = (GLubyte *)image->Data;
-      i810Msg(10,"  CopyL: %p %p\n", dst, src);      
 
       for (j = 0 ; j < image->Height ; j++, dst += (t->Pitch/2)) {
 	 for (i = 0 ; i < image->Width ; i++) {
@@ -409,7 +407,6 @@ static void i810UploadTexLevel( i810TextureObjectPtr t, int level )
       GLushort *dst = (GLushort *)(t->BufAddr + t->image[level].offset);
       GLubyte  *src = (GLubyte *)image->Data;
       int i;
-      i810Msg(10,"  CopyI: %p %p\n", dst, src);      
 
       for (j = 0 ; j < image->Height ; j++, dst += (t->Pitch/2)) {
 	 for (i = 0 ; i < image->Width ; i++) {
@@ -424,7 +421,6 @@ static void i810UploadTexLevel( i810TextureObjectPtr t, int level )
    {
       GLushort *dst = (GLushort *)(t->BufAddr + t->image[level].offset);
       GLubyte  *src = (GLubyte *)image->Data;
-      i810Msg(10,"  CopyLA: %p %p\n", dst, src);      
 
       for (j = 0 ; j < image->Height ; j++, dst += (t->Pitch/2)) {
 	 for (i = 0 ; i < image->Width ; i++) {
@@ -439,7 +435,6 @@ static void i810UploadTexLevel( i810TextureObjectPtr t, int level )
    {
       GLushort *dst = (GLushort *)(t->BufAddr + t->image[level].offset);
       GLubyte  *src = (GLubyte *)image->Data;
-      i810Msg(10,"  CopyA: %p %p\n", dst, src);      
 
       for (j = 0 ; j < image->Height ; j++, dst += (t->Pitch/2)) {
 	 for (i = 0 ; i < image->Width ; i++) {
@@ -456,7 +451,6 @@ static void i810UploadTexLevel( i810TextureObjectPtr t, int level )
       {
 	 GLubyte *dst = (GLubyte *)(t->BufAddr + t->image[level].offset);
 	 GLubyte *src = (GLubyte *)image->Data;
-	 i810Msg(10,"  CopyIndex: %p %p\n", dst, src);      
 
 	 for (j = 0 ; j < image->Height ; j++, dst += t->Pitch) {
 	    for (i = 0 ; i < image->Width ; i++) {
@@ -1304,9 +1298,6 @@ static void i810TexImage( GLcontext *ctx,
    i810ContextPtr imesa = I810_CONTEXT( ctx );
    i810TextureObjectPtr t;
 
-   i810Msg(10,"i810TexImage(%d): level %d internalFormat %x\n", 
-	   tObj->Name, level, internalFormat);
-
    if (target != GL_TEXTURE_2D)
       return;
 
@@ -1332,10 +1323,6 @@ static void i810TexSubImage( GLcontext *ctx, GLenum target,
 {
    i810ContextPtr imesa = I810_CONTEXT( ctx );
    i810TextureObjectPtr t;
-   i810Msg(10,"i810TexSubImage():\n");
-   i810Msg(10,"  Size: %d,%d of %d,%d; Level %d\n",
-	   width, height, image->Width,image->Height,
-	   level);
 
    if ( target != GL_TEXTURE_2D ) 
       return;

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/GL/glx/glxbuf.c,v 1.6 2001/03/25 05:32:01 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/GL/glx/glxbuf.c,v 1.7 2001/10/31 22:50:26 tsi Exp $ */
 /*
 ** License Applicability. Except to the extent portions of this file are
 ** made subject to an alternative license as permitted in the SGI Free
@@ -255,7 +255,9 @@ void
 __glXFreeBuffers(__GLXdrawablePrivate *glxPriv)
 {
     __GLdrawablePrivate *glPriv = &glxPriv->glPriv;
+#if defined(__GL_MAX_AUXBUFFERS) && (__GL_MAX_AUXBUFFERS > 0)
     __GLcontextModes *modes = glPriv->modes;
+#endif
 
     if (glPriv->frontBuffer.free) {
 	(*glPriv->frontBuffer.free)(&glPriv->frontBuffer, glPriv);

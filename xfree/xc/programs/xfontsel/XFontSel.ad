@@ -32,7 +32,7 @@
 !	Ralph R. Swick, Digital Equipment Corporation/M.I.T. Project Athena
 !	one weekend in November, 1989
 !
-! $XFree86: xc/programs/xfontsel/XFontSel.ad,v 1.1 2000/02/13 03:26:24 dawes Exp $
+! $XFree86: xc/programs/xfontsel/XFontSel.ad,v 1.2 2001/08/13 21:46:51 dawes Exp $
 
 *appDefaultsVersion:	1
 
@@ -114,6 +114,8 @@ XFontSel.cursor:	left_ptr
 !*field1*menu*courier.Font:
 
 *fontName*skipAdjust:	true
+
+*sampleText*international: false
 
 *sampleText*Label: \
 Processing fonts...

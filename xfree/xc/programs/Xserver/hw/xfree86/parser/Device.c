@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/parser/Device.c,v 1.18 2001/02/21 23:37:04 paulo Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/parser/Device.c,v 1.22 2001/08/06 20:51:12 dawes Exp $ */
 /* 
  * 
  * Copyright (c) 1997  Metro Link Incorporated
@@ -38,7 +38,6 @@ extern LexRec val;
 static
 xf86ConfigSymTabRec DeviceTab[] =
 {
-	{COMMENT, "###"},
 	{ENDSECTION, "endsection"},
 	{IDENTIFIER, "identifier"},
 	{VENDOR, "vendorname"},
@@ -71,6 +70,7 @@ xf86parseDeviceSection (void)
 {
 	int i;
 	int has_ident = FALSE;
+	int token;
 	parsePrologue (XF86ConfDevicePtr, XF86ConfDeviceRec)
 
 	/* Zero is a valid value for these */
@@ -82,12 +82,10 @@ xf86parseDeviceSection (void)
 		switch (token)
 		{
 		case COMMENT:
-			if (xf86getToken (NULL) != STRING)
-				Error (QUOTE_MSG, "###");
-			ptr->dev_comment = val.str;
+			ptr->dev_comment = xf86addComment(ptr->dev_comment, val.str);
 			break;
 		case IDENTIFIER:
-			if (xf86getToken (NULL) != STRING)
+			if (xf86getSubToken (&(ptr->dev_comment)) != STRING)
 				Error (QUOTE_MSG, "Identifier");
 			if (has_ident == TRUE)
 				Error (MULTIPLE_MSG, "Identifier");
@@ -95,39 +93,39 @@ xf86parseDeviceSection (void)
 			has_ident = TRUE;
 			break;
 		case VENDOR:
-			if (xf86getToken (NULL) != STRING)
+			if (xf86getSubToken (&(ptr->dev_comment)) != STRING)
 				Error (QUOTE_MSG, "Vendor");
 			ptr->dev_vendor = val.str;
 			break;
 		case BOARD:
-			if (xf86getToken (NULL) != STRING)
+			if (xf86getSubToken (&(ptr->dev_comment)) != STRING)
 				Error (QUOTE_MSG, "Board");
 			ptr->dev_board = val.str;
 			break;
 		case CHIPSET:
-			if (xf86getToken (NULL) != STRING)
+			if (xf86getSubToken (&(ptr->dev_comment)) != STRING)
 				Error (QUOTE_MSG, "Chipset");
 			ptr->dev_chipset = val.str;
 			break;
 		case CARD:
-			if (xf86getToken (NULL) != STRING)
+			if (xf86getSubToken (&(ptr->dev_comment)) != STRING)
 				Error (QUOTE_MSG, "Card");
 			ptr->dev_card = val.str;
 			break;
 		case DRIVER:
-			if (xf86getToken (NULL) != STRING)
+			if (xf86getSubToken (&(ptr->dev_comment)) != STRING)
 				Error (QUOTE_MSG, "Driver");
 			ptr->dev_driver = val.str;
 			break;
 		case RAMDAC:
-			if (xf86getToken (NULL) != STRING)
+			if (xf86getSubToken (&(ptr->dev_comment)) != STRING)
 				Error (QUOTE_MSG, "Ramdac");
 			ptr->dev_ramdac = val.str;
 			break;
 		case DACSPEED:
 			for (i = 0; i < CONF_MAXDACSPEEDS; i++)
 				ptr->dev_dacSpeeds[i] = 0;
-			if (xf86getToken (NULL) != NUMBER)
+			if (xf86getSubToken (&(ptr->dev_comment)) != NUMBER)
 			{
 				Error (DACSPEED_MSG, CONF_MAXDACSPEEDS);
 			}
@@ -136,7 +134,7 @@ xf86parseDeviceSection (void)
 				ptr->dev_dacSpeeds[0] = (int) (val.realnum * 1000.0 + 0.5);
 				for (i = 1; i < CONF_MAXDACSPEEDS; i++)
 				{
-					if (xf86getToken (NULL) == NUMBER)
+					if (xf86getSubToken (&(ptr->dev_comment)) == NUMBER)
 						ptr->dev_dacSpeeds[i] = (int)
 							(val.realnum * 1000.0 + 0.5);
 					else
@@ -148,87 +146,71 @@ xf86parseDeviceSection (void)
 			}
 			break;
 		case VIDEORAM:
-			if (xf86getToken (NULL) != NUMBER)
+			if (xf86getSubToken (&(ptr->dev_comment)) != NUMBER)
 				Error (NUMBER_MSG, "VideoRam");
 			ptr->dev_videoram = val.num;
 			break;
 		case BIOSBASE:
-			if (xf86getToken (NULL) != NUMBER)
+			if (xf86getSubToken (&(ptr->dev_comment)) != NUMBER)
 				Error (NUMBER_MSG, "BIOSBase");
 			ptr->dev_bios_base = val.num;
 			break;
 		case MEMBASE:
-			if (xf86getToken (NULL) != NUMBER)
+			if (xf86getSubToken (&(ptr->dev_comment)) != NUMBER)
 				Error (NUMBER_MSG, "MemBase");
 			ptr->dev_mem_base = val.num;
 			break;
 		case IOBASE:
-			if (xf86getToken (NULL) != NUMBER)
+			if (xf86getSubToken (&(ptr->dev_comment)) != NUMBER)
 				Error (NUMBER_MSG, "IOBase");
 			ptr->dev_io_base = val.num;
 			break;
 		case CLOCKCHIP:
-			if (xf86getToken (NULL) != STRING)
+			if (xf86getSubToken (&(ptr->dev_comment)) != STRING)
 				Error (QUOTE_MSG, "ClockChip");
 			ptr->dev_clockchip = val.str;
 			break;
 		case CHIPID:
-			if (xf86getToken (NULL) != NUMBER)
+			if (xf86getSubToken (&(ptr->dev_comment)) != NUMBER)
 				Error (NUMBER_MSG, "ChipID");
 			ptr->dev_chipid = val.num;
 			break;
 		case CHIPREV:
-			if (xf86getToken (NULL) != NUMBER)
+			if (xf86getSubToken (&(ptr->dev_comment)) != NUMBER)
 				Error (NUMBER_MSG, "ChipRev");
 			ptr->dev_chiprev = val.num;
 			break;
 
 		case CLOCKS:
-			token = xf86getToken(NULL);
+			token = xf86getSubToken(&(ptr->dev_comment));
 			for( i = ptr->dev_clocks;
 			     token == NUMBER && i < CONF_MAXCLOCKS; i++ ) {
 				ptr->dev_clock[i] = (int)(val.realnum * 1000.0 + 0.5);
-				token = xf86getToken(NULL);
+				token = xf86getSubToken(&(ptr->dev_comment));
 			}
 			ptr->dev_clocks = i;
 			xf86unGetToken (token);
 			break;
 		case TEXTCLOCKFRQ:
-			if ((token = xf86getToken(NULL)) != NUMBER)
+			if ((token = xf86getSubToken(&(ptr->dev_comment))) != NUMBER)
 				Error (NUMBER_MSG, "TextClockFreq");
 			ptr->dev_textclockfreq = (int)(val.realnum * 1000.0 + 0.5);
 			break;
 		case OPTION:
-			{
-				char *name;
-				if ((token = xf86getToken (NULL)) != STRING)
-					Error (BAD_OPTION_MSG, NULL);
-				name = val.str;
-				if ((token = xf86getToken (NULL)) == STRING)
-				{
-					ptr->dev_option_lst = xf86addNewOption (ptr->dev_option_lst,
-														name, val.str);
-				}
-				else
-				{
-					ptr->dev_option_lst = xf86addNewOption (ptr->dev_option_lst,
-														name, NULL);
-					xf86unGetToken (token);
-				}
-			}
+			ptr->dev_option_lst = xf86parseOption(ptr->dev_option_lst);
 			break;
 		case BUSID:
-			if (xf86getToken (NULL) != STRING)
+			if (xf86getSubToken (&(ptr->dev_comment)) != STRING)
 				Error (QUOTE_MSG, "BusID");
 			ptr->dev_busid = val.str;
 			break;
 		case IRQ:
-			if (xf86getToken (NULL) != NUMBER)
+			if (xf86getSubToken (&(ptr->dev_comment)) != NUMBER)
 				Error (QUOTE_MSG, "IRQ");
 			ptr->dev_irq = val.num;
 			break;
 		case SCREEN:
-			if (xf86getToken (NULL) != NUMBER)
+			if (xf86getSubToken (&(ptr->dev_comment)) != NUMBER)
 				Error (NUMBER_MSG, "Screen");
 			ptr->dev_screen = val.num;
 			break;
@@ -256,14 +238,13 @@ xf86parseDeviceSection (void)
 void
 xf86printDeviceSection (FILE * cf, XF86ConfDevicePtr ptr)
 {
-	XF86OptionPtr optr;
 	int i;
 
 	while (ptr)
 	{
 		fprintf (cf, "Section \"Device\"\n");
 		if (ptr->dev_comment)
-			fprintf (cf, "\t### %s", ptr->dev_comment);
+			fprintf (cf, "%s", ptr->dev_comment);
 		if (ptr->dev_identifier)
 			fprintf (cf, "\tIdentifier  \"%s\"\n", ptr->dev_identifier);
 		if (ptr->dev_driver)
@@ -300,13 +281,7 @@ xf86printDeviceSection (FILE * cf, XF86ConfDevicePtr ptr)
 		if (ptr->dev_chiprev != -1)
 			fprintf (cf, "\tChipRev     0x%x\n", ptr->dev_chiprev);
 
-		for (optr = ptr->dev_option_lst; optr; optr = optr->list.next)
-		{
-			fprintf (cf, "\tOption      \"%s\"", optr->opt_name);
-			if (optr->opt_val)
-				fprintf (cf, " \"%s\"", optr->opt_val);
-			fprintf (cf, "\n");
-		}
+		xf86printOptionList(cf, ptr->dev_option_lst, 1);
 		if (ptr->dev_clocks > 0 ) {
 			fprintf (cf, "\tClocks      ");
 			for (i = 0; i < ptr->dev_clocks; i++ )
@@ -343,6 +318,7 @@ xf86freeDeviceList (XF86ConfDevicePtr ptr)
 		TestFree (ptr->dev_driver);
 		TestFree (ptr->dev_ramdac);
 		TestFree (ptr->dev_clockchip);
+		TestFree (ptr->dev_comment);
 		xf86optionListFree (ptr->dev_option_lst);
 
 		prev = ptr;

@@ -30,16 +30,12 @@
  *		Peter Busch
  *		Harold L Hunt II
  */
-/* $XFree86: xc/programs/Xserver/hw/xwin/winkeybd.c,v 1.2 2001/05/02 00:45:26 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xwin/winkeybd.c,v 1.8 2001/11/12 08:47:53 alanh Exp $ */
+
 
 #include "win.h"
 
-/*
- * Include the standard XFree86 ASCII keymap.
- *
- * This header declares a static KeySym array called 'map'.
- */
-#include "../xfree86/common/xf86Keymap.h"
+#include "winkeybd.h"
 
 /* 
  * Translate a Windows WM_[SYS]KEY(UP/DOWN) message
@@ -49,122 +45,28 @@
  * because Windows tends to munge the handling of special keys,
  * like AltGr on European keyboards.
  */
+
 void
 winTranslateKey (WPARAM wParam, LPARAM lParam, int *piScanCode)
 {
-  /* Handle non-extended keys first, to setup a default scancode */
-  switch (wParam)
-    {
-    case VK_PAUSE:
-      /* Windows give Pause the same scan code as NumLock */
-      *piScanCode = KEY_Pause + MIN_KEYCODE;
-      break;
+  int		iKeyFixup = g_iKeyMap[wParam * WIN_KEYMAP_COLS + 1];
+  int		iKeyFixupEx = g_iKeyMap[wParam * WIN_KEYMAP_COLS + 2];
 
-    default:
-      *piScanCode = LOBYTE (HIWORD (lParam)) + MIN_KEYCODE;
-      break;
-    }
-
-  /*
-   * Handle extended keys that weren't handled correctly as
-   * non-extended keys.
-   */
-  if (HIWORD (lParam) & KF_EXTENDED)
-    {
-      switch (wParam)
-	{
-	case VK_MENU:
-	  /* Windows gives Alt_R the same scan code as Alt_L */
-	  *piScanCode = KEY_AltLang + MIN_KEYCODE;
-	  break;
-
-	case VK_CONTROL:
-	  /* Windows gives Ctrl_R the same scan code as Ctrl_L */
-	  *piScanCode = KEY_RCtrl + MIN_KEYCODE;
-	  break;
-
-	case VK_SHIFT:
-	  /* Windows gives Shift_R the same scan code as Shift_R */
-	  *piScanCode = KEY_ShiftR + MIN_KEYCODE;
-	  break;
-
-	case VK_INSERT:
-	  /* Windows gives Insert the same scan code as KP_Insert */
-	  *piScanCode = KEY_Insert + MIN_KEYCODE;
-	  break;
-
-	case VK_DELETE:
-	  /* Windows gives Delete the same scan code as KP_Delete */
-	  *piScanCode = KEY_Delete + MIN_KEYCODE;
-	  break;
-
-	case VK_HOME:
-	  /* Windows gives Home the same scan code as KP_Home */
-	  *piScanCode = KEY_Home + MIN_KEYCODE;
-	  break;
-
-	case VK_END:
-	  /* Windows gives End the same scan code as KP_End */
-	  *piScanCode = KEY_End + MIN_KEYCODE;
-	  break;
-
-	case VK_PRIOR:
-	  /* Windows give Prior the same scan code as KP_Prior */
-	  *piScanCode = KEY_PgUp + MIN_KEYCODE;
-	  break;
-
-	case VK_NEXT:
-	  /* Windows gives Next the same scan code as KP_Next */
-	  *piScanCode = KEY_PgDown + MIN_KEYCODE;
-	  break;
-
-	case VK_RIGHT:
-	  /* Windows gives Right the same scan code as KP_Right */
-	  *piScanCode = KEY_Right + MIN_KEYCODE;
-	  break;
-	  
-	case VK_LEFT:
-	  /* Windows gives Left the same scan code as KP_Left */
-	  *piScanCode = KEY_Left + MIN_KEYCODE;
-	  break;
-
-	case VK_UP:
-	  /* Windows gives Up the same scan code as KP_Up */
-	  *piScanCode = KEY_Up + MIN_KEYCODE;
-	  break;
-	  
-	case VK_DOWN:
-	  /* Windows gives Down the same scan code as KP_Down */
-	  *piScanCode = KEY_Down + MIN_KEYCODE;
-	  break;
-
-	case VK_RETURN:
-	  /* Windows gives KP_Enter a messed up scan code (BackSpace?) */
-	  *piScanCode = KEY_KP_Enter + MIN_KEYCODE;
-	  break;
-
-	case VK_DIVIDE:
-	  /* Windows gives KP_Divide a totallly messed up scan code */
-	  *piScanCode = KEY_KP_Divide + MIN_KEYCODE;
-	  break;
-
-	case VK_CANCEL:
-	  /* Windows gives Ctrl + Pause/Break the incorrect scan code */
-	  *piScanCode = KEY_Break + MIN_KEYCODE;
-	  break;
-
-	case VK_SNAPSHOT:
-	  /* Windows gives Print the wrong scan code */
-	  *piScanCode = KEY_Print + MIN_KEYCODE;
-	  break;
-	}
-    }
+  /* Branch on special extended, special non-extended, or normal key */
+  if ((HIWORD (lParam) & KF_EXTENDED) && iKeyFixupEx)
+    *piScanCode = iKeyFixupEx;
+  else if (iKeyFixup)
+    *piScanCode = iKeyFixup;
+  else
+    *piScanCode = LOBYTE (HIWORD (lParam));
 }
+
 
 /*
  * We call this function from winKeybdProc when we are
  * initializing the keyboard.
  */
+
 void
 winGetKeyMappings (KeySymsPtr pKeySyms, CARD8 *pModMap)
 {
@@ -173,9 +75,7 @@ winGetKeyMappings (KeySymsPtr pKeySyms, CARD8 *pModMap)
 
   /* MAP_LENGTH is defined in Xserver/include/input.h to be 256 */
   for (i = 0; i < MAP_LENGTH; i++)
-    {
-      pModMap[i] = NoSymbol;  /* make sure it is restored */
-    }
+    pModMap[i] = NoSymbol;  /* make sure it is restored */
 
   /* Loop through all valid entries in the key symbol table */
   for (i = MIN_KEYCODE;
@@ -224,11 +124,12 @@ winGetKeyMappings (KeySymsPtr pKeySyms, CARD8 *pModMap)
 	}
     }
 
-  pKeySyms->map        = (KeySym*)map;
+  pKeySyms->map        = (KeySym *) map;
   pKeySyms->mapWidth   = GLYPHS_PER_KEY;
   pKeySyms->minKeyCode = MIN_KEYCODE;
   pKeySyms->maxKeyCode = MAX_KEYCODE;
 }
+
 
 /* Ring the keyboard bell (system speaker on PCs) */
 void
@@ -243,6 +144,7 @@ winKeybdBell (int iPercent, DeviceIntPtr pDeviceInt,
   Beep (0, 0);
 }
 
+
 /* Change some keyboard configuration parameters */
 void
 winKeybdCtrl (DeviceIntPtr pDevice, KeybdCtrl *pCtrl)
@@ -250,10 +152,12 @@ winKeybdCtrl (DeviceIntPtr pDevice, KeybdCtrl *pCtrl)
 
 }
 
+
 /* 
  * See Porting Layer Definition - p. 18
  * winKeybdProc is known as a DeviceProc.
  */
+
 int
 winKeybdProc (DeviceIntPtr pDeviceInt, int iState)
 {
@@ -284,86 +188,52 @@ winKeybdProc (DeviceIntPtr pDeviceInt, int iState)
   return Success;
 }
 
+
 /*
  * Detect current mode key states upon server startup.
  *
  * Simulate a press and release of any key that is currently
  * toggled.
  */
+
 void
 winInitializeModeKeyStates (void)
 {
-  xEvent	xCurrentEvent;
-
   /* Restore NumLock */
   if (GetKeyState (VK_NUMLOCK) & 0x0001)
     {
-      xCurrentEvent.u.u.detail = KEY_NumLock + MIN_KEYCODE;
-
-      /* Push the key */
-      xCurrentEvent.u.u.type = KeyPress;
-      xCurrentEvent.u.keyButtonPointer.time = GetTickCount ();
-      mieqEnqueue (&xCurrentEvent);
-
-      /* Release the key */
-      xCurrentEvent.u.u.type = KeyRelease;
-      xCurrentEvent.u.keyButtonPointer.time = GetTickCount ();
-      mieqEnqueue (&xCurrentEvent);
+      winSendKeyEvent (KEY_NumLock, TRUE);
+      winSendKeyEvent (KEY_NumLock, FALSE);
     }
 
   /* Restore CapsLock */
   if (GetKeyState (VK_CAPITAL) & 0x0001)
     {
-      xCurrentEvent.u.u.detail = KEY_CapsLock + MIN_KEYCODE;
-
-      /* Push the key */
-      xCurrentEvent.u.u.type = KeyPress;
-      xCurrentEvent.u.keyButtonPointer.time = GetTickCount ();
-      mieqEnqueue (&xCurrentEvent);
-
-      /* Release the key */
-      xCurrentEvent.u.u.type = KeyRelease;
-      xCurrentEvent.u.keyButtonPointer.time = GetTickCount ();
-      mieqEnqueue (&xCurrentEvent);
+      winSendKeyEvent (KEY_CapsLock, TRUE);
+      winSendKeyEvent (KEY_CapsLock, FALSE);
     }
 
   /* Restore ScrollLock */
   if (GetKeyState (VK_SCROLL) & 0x0001)
     {
-      xCurrentEvent.u.u.detail = KEY_ScrollLock + MIN_KEYCODE;
-
-      /* Push the key */
-      xCurrentEvent.u.u.type = KeyPress;
-      xCurrentEvent.u.keyButtonPointer.time = GetTickCount ();
-      mieqEnqueue (&xCurrentEvent);
-
-      /* Release the key */
-      xCurrentEvent.u.u.type = KeyRelease;
-      xCurrentEvent.u.keyButtonPointer.time = GetTickCount ();
-      mieqEnqueue (&xCurrentEvent);
+      winSendKeyEvent (KEY_ScrollLock, TRUE);
+      winSendKeyEvent (KEY_ScrollLock, FALSE);
     }
 
   /* Restore KanaLock */
   if (GetKeyState (VK_KANA) & 0x0001)
     {
-      xCurrentEvent.u.u.detail = KEY_HKTG + MIN_KEYCODE;
-
-      /* Push the key */
-      xCurrentEvent.u.u.type = KeyPress;
-      xCurrentEvent.u.keyButtonPointer.time = GetTickCount ();
-      mieqEnqueue (&xCurrentEvent);
-
-      /* Release the key */
-      xCurrentEvent.u.u.type = KeyRelease;
-      xCurrentEvent.u.keyButtonPointer.time = GetTickCount ();
-      mieqEnqueue (&xCurrentEvent);
+      winSendKeyEvent (KEY_HKTG, TRUE);
+      winSendKeyEvent (KEY_HKTG, FALSE);
     }
 }
+
 
 /*
  * We have to store the last state of each mode
  * key before we lose the keyboard focus.
  */
+
 void
 winStoreModeKeyStates (ScreenPtr pScreen)
 {
@@ -385,91 +255,64 @@ winStoreModeKeyStates (ScreenPtr pScreen)
     (GetKeyState (VK_KANA) & 0x0001) << KanaMapIndex;
 }
 
+
 /*
  * Upon regaining the keyboard focus we must
  * resynchronize our internal mode key states
  * with the actual state of the keys.
  */
+
 void
 winRestoreModeKeyStates (ScreenPtr pScreen)
 {
   winScreenPriv(pScreen);
-  xEvent		xCurrentEvent;
-  ZeroMemory (&xCurrentEvent, sizeof (xCurrentEvent));
+  DWORD			dwKeyState;
+
+  /* 
+   * NOTE: The C XOR operator, ^, will not work here because it is
+   * a bitwise operator, not a logical operator.  C does not
+   * have a logical XOR operator, so we use a macro instead.
+   */
 
   /* Has the key state changed? */
-  if ((pScreenPriv->dwModeKeyStates & NumLockMask) 
-      ^ (GetKeyState (VK_NUMLOCK) & 0x0001))
+  dwKeyState = GetKeyState (VK_NUMLOCK) & 0x0001;
+  if (WIN_XOR (pScreenPriv->dwModeKeyStates & NumLockMask, dwKeyState))
     {
-      xCurrentEvent.u.u.detail = KEY_NumLock + MIN_KEYCODE;
-
-      /* Push the key */
-      xCurrentEvent.u.u.type = KeyPress;
-      xCurrentEvent.u.keyButtonPointer.time = GetTickCount ();
-      mieqEnqueue (&xCurrentEvent);
-
-      /* Release the key */
-      xCurrentEvent.u.u.type = KeyRelease;
-      xCurrentEvent.u.keyButtonPointer.time = GetTickCount ();
-      mieqEnqueue (&xCurrentEvent);
-    }
-    
-  /* Has the key state changed? */
-  if ((pScreenPriv->dwModeKeyStates & LockMask)
-      ^ (GetKeyState (VK_CAPITAL) & 0x0001))
-    {
-      xCurrentEvent.u.u.detail = KEY_CapsLock + MIN_KEYCODE;
-
-      /* Push the key */
-      xCurrentEvent.u.u.type = KeyPress;
-      xCurrentEvent.u.keyButtonPointer.time = GetTickCount ();
-      mieqEnqueue (&xCurrentEvent);
-
-      /* Release the key */
-      xCurrentEvent.u.u.type = KeyRelease;
-      xCurrentEvent.u.keyButtonPointer.time = GetTickCount ();
-      mieqEnqueue (&xCurrentEvent);
+      winSendKeyEvent (KEY_NumLock, TRUE);
+      winSendKeyEvent (KEY_NumLock, FALSE);
     }
 
   /* Has the key state changed? */
-  if ((pScreenPriv->dwModeKeyStates & ScrollLockMask)
-      ^ (GetKeyState (VK_SCROLL) & 0x0001))
+  dwKeyState = GetKeyState (VK_CAPITAL) & 0x0001;
+  if (WIN_XOR (pScreenPriv->dwModeKeyStates & LockMask, dwKeyState))
     {
-      xCurrentEvent.u.u.detail = KEY_ScrollLock + MIN_KEYCODE;
-
-      /* Push the key */
-      xCurrentEvent.u.u.type = KeyPress;
-      xCurrentEvent.u.keyButtonPointer.time = GetTickCount ();
-      mieqEnqueue (&xCurrentEvent);
-
-      /* Release the key */
-      xCurrentEvent.u.u.type = KeyRelease;
-      xCurrentEvent.u.keyButtonPointer.time = GetTickCount ();
-      mieqEnqueue (&xCurrentEvent);
+      winSendKeyEvent (KEY_CapsLock, TRUE);
+      winSendKeyEvent (KEY_CapsLock, FALSE);
     }
 
   /* Has the key state changed? */
-  if ((pScreenPriv->dwModeKeyStates & KanaMask)
-      ^ (GetKeyState (VK_KANA) & 0x0001))
+  dwKeyState = GetKeyState (VK_SCROLL) & 0x0001;
+  if (WIN_XOR (pScreenPriv->dwModeKeyStates & ScrollLockMask, dwKeyState))
     {
-      xCurrentEvent.u.u.detail = KEY_HKTG + MIN_KEYCODE;
+      winSendKeyEvent (KEY_ScrollLock, TRUE);
+      winSendKeyEvent (KEY_ScrollLock, FALSE);
+    }
 
-      /* Push the key */
-      xCurrentEvent.u.u.type = KeyPress;
-      xCurrentEvent.u.keyButtonPointer.time = GetTickCount ();
-      mieqEnqueue (&xCurrentEvent);
-
-      /* Release the key */
-      xCurrentEvent.u.u.type = KeyRelease;
-      xCurrentEvent.u.keyButtonPointer.time = GetTickCount ();
-      mieqEnqueue (&xCurrentEvent);
+  /* Has the key state changed? */
+  dwKeyState = GetKeyState (VK_KANA) & 0x0001;
+  if (WIN_XOR (pScreenPriv->dwModeKeyStates & KanaMask, dwKeyState))
+    {
+      winSendKeyEvent (KEY_HKTG, TRUE);
+      winSendKeyEvent (KEY_HKTG, FALSE);
     }
 }
+
 
 /*
  * Look for the lovely fake Control_L press/release generated by Windows
  * when AltGr is pressed/released on a non-U.S. keyboard.
  */
+
 Bool
 winIsFakeCtrl_L (UINT message, WPARAM wParam, LPARAM lParam)
 {
@@ -511,7 +354,7 @@ winIsFakeCtrl_L (UINT message, WPARAM wParam, LPARAM lParam)
 
   /* 
    * Fake Ctrl_L releases will be followed by an Alt_R release
-   * with the same timestamp as the Ctrl_L press.
+   * with the same timestamp as the Ctrl_L release.
    */
   if ((message == WM_KEYUP || message == WM_SYSKEYUP)
       && wParam == VK_CONTROL
@@ -549,3 +392,42 @@ winIsFakeCtrl_L (UINT message, WPARAM wParam, LPARAM lParam)
 }
 
 
+/*
+ * Lift any modifier keys that are pressed
+ */
+
+void
+winKeybdReleaseModifierKeys ()
+{
+  /* Verify that the mi input system has been initialized */
+  if (g_fdMessageQueue == WIN_FD_INVALID)
+    return;
+
+  winSendKeyEvent (KEY_Alt, FALSE);
+  winSendKeyEvent (KEY_AltLang, FALSE);
+  winSendKeyEvent (KEY_LCtrl, FALSE);
+  winSendKeyEvent (KEY_RCtrl, FALSE);
+  winSendKeyEvent (KEY_ShiftL, FALSE);
+  winSendKeyEvent (KEY_ShiftR, FALSE);
+}
+
+
+/*
+ * Take a raw X key code and send an up or down event for it.
+ *
+ * Thanks to VNC for inspiration, though it is a simple function.
+ */
+
+void
+winSendKeyEvent (DWORD dwKey, Bool fDown)
+{
+  xEvent			xCurrentEvent;
+  
+  ZeroMemory (&xCurrentEvent, sizeof (xCurrentEvent));
+
+  xCurrentEvent.u.u.type = fDown ? KeyPress : KeyRelease;
+  xCurrentEvent.u.keyButtonPointer.time =
+    g_c32LastInputEventTime = GetTickCount ();
+  xCurrentEvent.u.u.detail = dwKey + MIN_KEYCODE;
+  mieqEnqueue (&xCurrentEvent);
+}

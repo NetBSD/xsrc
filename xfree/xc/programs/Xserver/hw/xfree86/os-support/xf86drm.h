@@ -26,7 +26,7 @@
  *
  * Author: Rickard E. (Rik) Faith <faith@valinux.com>
  *
- * $XFree86: xc/programs/Xserver/hw/xfree86/os-support/xf86drm.h,v 1.14.2.1 2001/06/01 02:24:18 dawes Exp $
+ * $XFree86: xc/programs/Xserver/hw/xfree86/os-support/xf86drm.h,v 1.15 2001/06/01 02:10:06 dawes Exp $
  *
  */
 

@@ -1,0 +1,229 @@
+$XFree86: xc/programs/xedit/lisp/README,v 1.5 2001/10/18 03:15:21 paulo Exp $
+
+LAST UPDATED:	$Date: 2002/01/19 15:16:01 $
+
+
+    SUMMARY
+
+  This is a small lisp interpreter for xedit. In the current implementation,
+it is just reading from stdin and writing to stdout/stderr. The code in xedit
+just wraps these and read/write from a pipe to the lisp interpreter. This
+is expected to change at some time, so that it should be possible to manage
+the xedit text buffers from lisp code.
+
+  It has a very simple method for loading shared modules, slightly based on
+the XFree86 loader code, that is currently disabled by default. To enable it,
+edit lisp.cf and change BuildSharedLispModules to YES.
+
+  Assuming you have built it with BuildSharedLispModules enabled, you can build
+a small test application can be built in this directory running "make lsp".
+Two lisp programs are available in the test directory. To test the programs
+run "./lsp hello.lsp" or "./lsp widgets.lsp".
+
+  Currently, it should be used as an helper and/or a small calculator embeded
+in xedit. For the future it should be possible to write entire interfaces
+in the xedit text buffers. The code is expected to be very stable, and by
+using it, xedit should not crash in any way (actually, it can't, as the
+lisp is running in a separate process). The lisp process is started once the
+first eval is called.
+
+
+    USAGE SUMMARY
+
+  To evaluate lisp expressions, put the text cursor just after the
+lisp expression and press:
+C-x,C-e	- will evaluate it, and print the result to the message window
+C-j	- will evaluate it, and print the result to the edit window, any
+	  errors are printed to the message window.
+C-g	- will send an SIGINT to the lisp process, and that process will
+	  stop whatever it was processing and jump to the toplevel,
+	  to wait for more input.
+
+Note that C-j currently will only work in the *scratch* buffer.
+
+
+    IMPLEMENTATION SUMMARY
+
+  The interpreter is expected to be a subset of Common Lisp, and is not
+expected to invent any new features or interfaces, just become more and
+more compatible with Common Lisp. The only non Common Lisp features, currently
+is/are:
+
+  o It has some Emacs Lisp functions, that should be removed and replaced with
+    the Common Lisp equivalent ones.
+
+
+  The currently implemented function names are in table.gperf. There are also
+functions in modules/fun.lsp, that are inplicitly loaded by xedit and the
+sample program lsp.
+
+
+    BUGS
+
+  If (print) is called with a circular list as argument, the lisp interpreter
+will crash. A code for circular list detection was written, but removed as
+it was buggy.
+  The (gc) code was slightly changed to avoid circular lists, but the code
+is not correct, so (gc) may need to be called several times to get deep enough
+on some more complex data structures, and free it. But calling (gc) explicitly
+is not required, as it will be called every time there are not enough available
+cells.
+
+
+    WHY?
+
+  I have used Emacs for a long time, and since I was working as volunteer to
+make of Xaw a better user interface, xedit seemed to need some work. For at
+least 3 years now, I don't use any other text editor than xedit, unless I
+need for some reason to work on the text console (like when debugging the
+xserver or xfs).
+
+  The lisp code was mostly written for some years, but not incorporated in
+xedit. Since the Lisp language is unlikely to change from day to night, it
+can be safely incorporated in xedit. Contrarily to this is an html
+viewer/editor to xedit I have been writing for some years. I wish I could add
+it to Xaw/xedit soon, but unfortunately it is still unstable, and not
+functional.
+
+
+    NOTE
+
+  The lisp interpreter is mean't to be usable without xedit and without Xaw.
+The xedit text buffer interface, when done will be just a module.
+  If you want to test the current implementation, subject to changes, as it
+is only for testing, create a file named "xedit.lsp", with the contents:
+--
+;; (provide "xedit")
+
+(defun point ()
+    (format t "get-point~%")
+    (read)	;; current point
+)
+
+(defun point-min ()
+    (format t "point-min~%")
+    (read)	;; minimal point value
+)
+
+(defun point-max ()
+    (format t "point-max~%")
+    (read)	;; maximal point value
+)
+
+(defun goto-char (point)
+    (format t "set-point ~D~%" point)
+    (read)	;; nil return value
+    point
+)
+
+(defun insert (str)
+    (format t "insert ~S~%" str)
+    (read)	;; nil return value
+)
+
+(defun get-background-color ()
+    (format t "get-background~%")
+    (read)	;; current background color
+)
+
+(defun set-background-color (color)
+    (format t "set-background ~S~%" color)
+    (read)	;; nil return value
+)
+
+(defun get-font ()
+    (format t "get-font~%")
+    (read)	;; current font
+)
+
+(defun set-font (font)
+    (format t "set-font ~S~%" font)
+    (read)	;; nil return value
+)
+
+(defun get-foreground-color ()
+    (format t "get-foreground~%")
+    (read)	;; current foreground color
+)
+
+(defun set-foreground-color (color)
+    (format t "set-foreground ~S~%" color)
+    (read)	;; nil return value
+)
+
+(defun other-buffer ()
+    (format t "get-other-buffer~%")
+    (read)	;; value of other buffer
+)
+--
+Note that it is printing a literal ESC.
+  After creating the file xedit.lsp, at the *scratch* buffer, type
+(load "xedit.lsp") and press Ctrl+J. After that, you should be able to use
+the defined functions. Try this:
+(set-background-color "PeachPuff")
+(set-foreground-color "Red3")
+(goto-char (point-min))
+
+
+    DEBUGGER
+
+  There is a, currently, very simple debugger implement in the interpreter.
+To use the debugger, run the lsp sample program as "./lsp -d", and optionally
+pass a second parameter, for the file to be interpreted. Once the debugger
+prompt is visible, type "help" for a summary of options. To leave the debugger
+type "continue".
+  Note that the debugger is still very simple, it won't work from xedit, and
+won't drop to the debugger on "fatal errors". It allows adding breakpoints to
+functions and watchpoints to variables. Support for changing data and going to
+the debugger on fatal errors should be added soon.
+
+
+    STRUCTURE IMPLEMENTATION OVERVIEW
+
+    Assuming structure person is created as:
+	(defstruct person age first-name last-name)
+    The interpreter will gc protect the arguments in the list DEF defined as
+	(person age first-name last-name), and create the special atoms:
+	make-person	  with structure property DEF function STRUCT_CONSTRUCTOR
+	person-p	  with structure property DEF function STRUCT_CHECK
+	person-age	  with structure property DEF function 0
+	person-first-name with structure property DEF function 1
+	person-last-name  with structure property DEF function 2
+    When an accessor function is called, as in:
+	(person-age (make-person :age 30))
+    The evaluator will internally translate the code to:
+	(xedit::struct-access 'person-age (xedit::make-struct 'make-person :age 30))
+    The function xedit::struct-access will fetch the structure property
+from the atom person-age to determine the offset, and also make sure it's
+argument is of type person. The function xedit::make-struct only checks that
+the structure property is set to the atom person, and that the age field is
+a person field name.
+    It is possible to override the setf method for structures, but a suitable
+one is constructed, for example:
+	(setf (person-first-name some-person) 'MARIA)
+    Internally, it will be evaluated as this definition where provided:
+	(defsetf person-first-name (struct) (value)
+	    `(xedit::struct-store 'person-first-name ,struct ,value))
+    And the code executed is:
+	(xedit::struct-store 'person-first-name some-person 'MARIA)
+    Type checking is also done with a single function, as the code:
+	(person-p some-person)
+    Is internally translated to:
+	(xedit::struct-type 'person-p some-person)
+    The current structure implementation, like almost everything in the
+interpreter is very simple, and calling any of the xedit::* functions
+explicitly is unsupported.
+    Structure redefinition is supported, but not encouraged, and you should
+do it only when sure no instances of the previous definition exists, previous
+access method functions are only removed if the new definition has a field
+with the same name, and calling the new methods on old objects will generate
+errors.
+
+
+    HELPING
+
+  Send comments and code to me (paulo@XFree86.Org) or to the XFree86
+mailing/patch lists.
+
+--
+Paulo

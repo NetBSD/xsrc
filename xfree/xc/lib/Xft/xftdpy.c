@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/lib/Xft/xftdpy.c,v 1.7 2001/04/29 03:21:17 keithp Exp $
+ * $XFree86: xc/lib/Xft/xftdpy.c,v 1.8 2001/12/13 17:26:00 keithp Exp $
  *
  * Copyright © 2000 Keith Packard, member of The XFree86 Project, Inc.
  *
@@ -49,7 +49,7 @@ _XftCloseDisplay (Display *dpy, XExtCodes *codes)
     return 0;
 }
 
-static XftDisplayInfo *
+XftDisplayInfo *
 _XftDisplayInfoGet (Display *dpy)
 {
     XftDisplayInfo  *info, **prev;
@@ -82,6 +82,7 @@ _XftDisplayInfoGet (Display *dpy)
     info->defaults = 0;
     info->coreFonts = 0;
     info->hasRender = XRenderFindVisualFormat (dpy, DefaultVisual (dpy, DefaultScreen (dpy))) != 0;
+    info->glyphSets = 0;
     if (_XftFontDebug () & XFT_DBG_RENDER)
     {
 	Visual		    *visual = DefaultVisual (dpy, DefaultScreen (dpy));

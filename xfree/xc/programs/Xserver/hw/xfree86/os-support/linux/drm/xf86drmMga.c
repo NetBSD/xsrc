@@ -27,7 +27,7 @@
  *   Gareth Hughes <gareth@valinux.com>
  *
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/linux/drm/xf86drmMga.c,v 1.5 2001/04/10 16:08:04 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/linux/drm/xf86drmMga.c,v 1.6 2001/08/27 17:40:59 dawes Exp $ */
 
 #ifdef XFree86Server
 # include "xf86.h"
@@ -57,7 +57,7 @@
 extern int xf86InstallSIGIOHandler(int fd, void (*f)(int, void *), void *);
 extern int xf86RemoveSIGIOHandler(int fd);
 # else
-#  include <Xlibint.h>
+#  include <X11/Xlibint.h>
 #  define _DRM_MALLOC Xmalloc
 #  define _DRM_FREE   Xfree
 # endif

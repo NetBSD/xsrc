@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/GL/glx/glxserver.h,v 1.3 2001/03/21 16:29:37 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/GL/glx/glxserver.h,v 1.4 2001/08/23 18:25:40 alanh Exp $ */
 #ifndef _GLX_server_h_
 #define _GLX_server_h_
 
@@ -161,12 +161,6 @@ extern __GLXclientState *__glXClients[];
 typedef void (*__GLXdispatchRenderProcPtr)(GLbyte *);
 typedef int (*__GLXdispatchSingleProcPtr)(__GLXclientState *, GLbyte *);
 typedef int (*__GLXdispatchVendorPrivProcPtr)(__GLXclientState *, GLbyte *);
-extern __GLXdispatchRenderProcPtr __glXRenderTable[];
-extern __GLXdispatchSingleProcPtr __glXSingleTable[];
-extern __GLXdispatchVendorPrivProcPtr __glXVendorPrivTable_EXT[];
-extern __GLXdispatchRenderProcPtr __glXSwapRenderTable[];
-extern __GLXdispatchSingleProcPtr __glXSwapSingleTable[];
-extern __GLXdispatchVendorPrivProcPtr __glXSwapVendorPrivTable_EXT[];
 
 /*
  * Dispatch for GLX commands.
@@ -200,12 +194,7 @@ extern RESTYPE __glXDrawableRes;
 ** Prototypes.
 */
 
-
 extern char *__glXcombine_strings(const char *, const char *);
-
-extern void __glXDisp_DrawArrays(GLbyte*);
-extern void __glXDispSwap_DrawArrays(GLbyte*);
-
 
 /*
 ** Routines for sending swapped replies.

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vgahw/vgaHW.c,v 1.50 2001/05/10 22:18:57 dbateman Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vgahw/vgaHW.c,v 1.53 2001/09/18 21:23:23 herrb Exp $ */
 
 /*
  *
@@ -10,9 +10,7 @@
  *
  */
 
-#if !defined(AMOEBA) && !defined(MINIX)
 #define _NEED_SYSI86
-#endif
 
 #include "X.h"
 #include "misc.h"
@@ -30,7 +28,10 @@
 #define SAVE_FONT1
 #endif
 
-#if defined(Lynx) || defined(CSRG_BASED) || defined(MACH386) || defined(linux) || defined(AMOEBA) || defined(MINIX) || defined(__QNX__) || defined(sun) || defined(__GNU__)
+/*
+ * These used to be OS-specific, which made this module have an undesirable
+ * OS dependency.  Define them by default for all platforms.
+ */
 #ifndef NEED_SAVED_CMAP
 #define NEED_SAVED_CMAP
 #endif
@@ -40,13 +41,12 @@
 #ifndef SAVE_FONT2
 #define SAVE_FONT2
 #endif
-#endif
 
 /* bytes per plane to save for text */
 #define TEXT_AMOUNT 16384
 
 /* bytes per plane to save for font data */
-#define FONT_AMOUNT 8192
+#define FONT_AMOUNT (8*8192)
 
 #if 0
 /* Override all of these for now */
@@ -652,8 +652,10 @@ vgaHWSaveScreen(ScreenPtr pScreen, int mode)
 
    on = xf86IsUnblank(mode);
 
+#if 0
    if (on)
       SetTimeSinceLastInputEvent();
+#endif
 
    if ((pScrn != NULL) && pScrn->vtSema) {
      vgaHWBlankScreen(pScrn, on);
@@ -1818,6 +1820,9 @@ vgaHWGetIOBase(vgaHWPtr hwp)
 {
     hwp->IOBase = (hwp->readMiscOut(hwp) & 0x01) ?
 				VGA_IOBASE_COLOR : VGA_IOBASE_MONO;
+    xf86DrvMsgVerb(hwp->pScrn->scrnIndex, X_INFO, 3,
+	"vgaHWGetIOBase: hwp->IOBase is 0x%04x, hwp->PIOOffset is 0x%04x\n",
+	hwp->IOBase, hwp->PIOOffset);
 }
 
 

@@ -24,7 +24,7 @@
  * Authors:
  *    Keith Whitwell <keithw@valinux.com>
  */
-/* $XFree86: xc/lib/GL/mesa/src/drv/mga/mgafastpath.c,v 1.8 2001/04/10 16:07:50 dawes Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/mga/mgafastpath.c,v 1.9 2001/08/27 21:12:19 dawes Exp $ */
 
 #include <stdio.h>
 
@@ -39,11 +39,8 @@
 #include "mgatris.h"
 #include "mgastate.h"
 #include "mgavb.h"
+#include "vbcull.h"
 
-
-extern void mgaDDResizeVB( struct vertex_buffer *VB, GLuint size );
-
-extern void gl_fast_copy_vb( struct vertex_buffer *VB );
 
 struct mga_fast_tab {
    void (*build_vertices)( struct vertex_buffer *VB, GLuint do_cliptest );

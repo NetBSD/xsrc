@@ -6,10 +6,10 @@
 
 <title>Fonts in XFree86
 <author>Juliusz Chroboczek, <email/jch@xfree86.org/
-<date>21 January 2001</date>
+<date>26 November 2001</date>
 
 <ident>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/fonts.sgml,v 1.13 2001/03/01 00:37:09 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/fonts.sgml,v 1.15 2001/12/17 19:25:36 dawes Exp $
 </ident>
 
 <toc>
@@ -463,47 +463,63 @@ and reside in the font files
 /usr/X11R6/lib/X11/fonts/Speedo/font*.spd
 </verb></tscreen>
 
-<sect1>The Bigelow &amp; Holmes Lucidux family
+<sect1>The Bigelow &amp; Holmes Luxi family
 
-<p>XFree86 includes the <it/Lucidux/ family of Type&nbsp;1 fonts.  This
-family consists of the fonts <it/Lucidux Serif/, with XLFD
+<p>XFree86 includes the <it/Luxi/ family of scalable fonts, in both
+TrueType and Type&nbsp;1 format.  This family consists of the fonts
+<it/Luxi Serif/, with XLFD
 <tscreen><verb>
--b&amp;h-lucidux serif-medium-*-normal--*-*-*-*-p-*-*-*
+-b&amp;h-luxi serif-medium-*-normal--*-*-*-*-p-*-*-*
 </verb></tscreen>
-<it/Lucidux Sans/, with XLFD
+<it/Luxi Sans/, with XLFD
 <tscreen><verb>
--b&amp;h-lucidux sans-medium-*-normal--*-*-*-*-p-*-*-*
+-b&amp;h-luxi sans-medium-*-normal--*-*-*-*-p-*-*-*
 </verb></tscreen>
-and <it/Lucidux Mono/, with XLFD
+and <it/Luxi Mono/, with XLFD
 <tscreen><verb>
--b&amp;h-lucidux mono-medium-*-normal--*-*-*-*-m-*-*-*
+-b&amp;h-luxi mono-medium-*-normal--*-*-*-*-m-*-*-*
 </verb></tscreen>
-Each of these fonts currently comes in Roman and oblique variants
-(bold variants will be included in a future release) and has 337
-glyphs covering the basic ASCII Unicode range, the Latin&nbsp;1
-range, as well as the <it/Extended Latin/ range.  In particular,
+Each of these fonts comes Roman, oblique, bold and bold oblique variants
+The TrueType version have glyphs covering the basic ASCII Unicode
+range, the Latin&nbsp;1 range, as well as the <it/Extended Latin/
+range and some additional punctuation characters.  In particular,
 these fonts include all the glyphs needed for ISO&nbsp;8859 parts 1,
-2, 3, 4, 9 and 15.
+2, 3, 4, 9, 13 and 15, as well as all the glyphs in the Adobe Standard
+encoding and the Windows 3.1  character set.
 
-The Lucidux fonts are original designs by Charles Bigelow and Kris
-Holmes.  Lucidux fonts include seriffed, sans serif, and monospaced
-styles that share the same stem weight, x-height, capital height,
-ascent and descent.  Lucidux fonts harmonise with Lucida (R) fonts of
-the same vertical proportions and weights.  The character width
-metrics of Lucidux roman fonts match those of core fonts bundled with
-several window systems.
+The glyph coverage of the Type&nbsp;1 versions is somewhat reduced,
+and only covers ISO&nbsp;8859 parts 1, 2 and 15 as well as the Adobe
+Standard encoding.
 
-Each PFA file has a copy of the license terms in PS comment lines.
-The license terms are also included in the file `<tt/COPYRIGHT.BH/'
-for convenience, as well as in the <htmlurl name="License document"
-url="LICENSE.html">.
+The Luxi fonts are original designs by Kris Holmes and Charles 
+Bigelow. Luxi fonts include seriffed, sans serif, and monospaced 
+styles, in roman and oblique, and normal and bold weights. The fonts 
+share stem weight, x-height, capital height, ascent and descent, for 
+graphical harmony.
 
-The design and font outlines were donated by Charles Bigelow and
-Kris Holmes from Bigelow and Holmes Inc., and the hinting was donated
-by Berthold Horn and Blenda Horn from Y&amp;Y, Inc.  For more information,
-please contact <email>design@bigelowandholmes.com</email> or
-<email>sales@yandy.com</email>, or consult 
-<url name="Y&amp;Y's web site" url="http://www.yandy.com">.
+The character width metrics of Luxi roman and bold fonts match those 
+of core fonts bundled with popular operating and window systems.
+
+The license terms for the Luxi fonts are included in the file
+`<tt/COPYRIGHT.BH/', as well as in the <htmlurl
+name="License document" url="LICENSE.html">.
+
+Charles Bigelow and Kris Holmes from Bigelow and Holmes Inc. 
+developed the Luxi typeface designs in Ikarus digital format.
+
+URW++ Design and Development GmbH converted the Ikarus format fonts 
+to TrueType and Type1 font programs and implemented the grid-fitting 
+"hints" and kerning tables in the Luxi fonts.
+
+For more information, please contact
+<email>design@bigelowandholmes.com</email> or 
+<email>info@urwpp.de</email>, or consult 
+<url name="the URW++ web site" url="http://www.urwpp.de">.
+
+An earlier version of the Luxi fonts was made available under the
+name <em/Lucidux/.  This name should no longer be used due to trademark
+uncertainties, and all traces of the <em/Lucidux/ name have been
+removed from this version of XFree86.
 
 <sect>Fonts and internationalisation <label id="sec:internationalisation">
 

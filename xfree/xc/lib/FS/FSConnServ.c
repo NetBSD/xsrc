@@ -1,4 +1,4 @@
-/* $Xorg: FSConnServ.c,v 1.3 2000/08/17 19:44:01 cpqbld Exp $ */
+/* $Xorg: FSConnServ.c,v 1.4 2001/02/09 02:03:25 xorgcvs Exp $ */
 
 /*
  * Copyright 1990 Network Computing Devices;
@@ -29,7 +29,11 @@
 
 Copyright 1987, 1994, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -46,7 +50,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/FS/FSConnServ.c,v 3.7 2001/01/17 19:41:28 dawes Exp $ */
+/* $XFree86: xc/lib/FS/FSConnServ.c,v 3.11 2001/12/14 19:53:32 dawes Exp $ */
 
 #include	<stdio.h>
 #include	"FSlibint.h"
@@ -64,11 +68,6 @@ in this Software without prior written authorization from The Open Group.
 #endif
 #endif
 
-#ifdef MINIX
-#include <sys/nbio.h>
-#define select(n,r,w,x,t) nbio_select(n,r,w,x,t)
-#endif
-
 /*
  * Attempts to connect to server, given server name. Returns transport
  * connection object or NULL if connection fails.
@@ -80,7 +79,7 @@ XtransConnInfo
 _FSConnectServer(server_name)
     char       *server_name;
 {
-    XtransConnInfo trans_conn;		/* transport connection object */
+    XtransConnInfo trans_conn = NULL;	/* transport connection object */
     int retry, connect_stat;
     int  madeConnection = 0;
 
@@ -140,10 +139,7 @@ _FSDisconnectServer(trans_conn)
     (void) _FSTransClose(trans_conn);
 }
 
-#ifndef __NetBSD__
-#undef NULL
-#define NULL ((char *) 0)
-#endif
+
 /*
  * This is an OS dependent routine which:
  * 1) returns as soon as the connection can be written on....
@@ -165,20 +161,7 @@ void _FSWaitForWritable(svr)
 	FD_SET(svr->fd, &w_mask);
 
 	do {
-#ifndef AMOEBA
 	    nfound = Select(svr->fd + 1, &r_mask, &w_mask, NULL, NULL);
-#else /* AMOEBA */
-	    if (_FSTransAmSelect(svr->fd, 0) > 0) {
-		BITSET(r_mask, svr->fd);
-	    } else {
-		CLEARBITS(r_mask);
-	    }
-	    /* Always immediately writable because data is enqueued to be
-	     * written by separate virtual circuit threads.
-	     */
-	    nfound = 1;
-	    BITSET(w_mask, svr->fd);
-#endif /* AMOEBA */
 	    if (nfound < 0 && !ECHECK(EINTR))
 		(*_FSIOErrorFunction) (svr);
 	} while (nfound <= 0);
@@ -235,15 +218,7 @@ void _FSWaitForReadable(svr)
     FD_ZERO(&r_mask);
     do {
 	FD_SET(svr->fd, &r_mask);
-#ifndef AMOEBA
 	result = Select(svr->fd + 1, &r_mask, NULL, NULL, NULL);
-#else
-	if ((result = _FSTransAmSelect(svr->fd, 0)) > 0) {
-	    BITSET(r_mask, svr->fd);
-	} else {
-	    CLEARBITS(r_mask);
-	}
-#endif
 	if (result == -1 && !ECHECK(EINTR))
 	    (*_FSIOErrorFunction) (svr);
     } while (result <= 0);

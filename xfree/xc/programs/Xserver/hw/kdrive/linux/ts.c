@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/programs/Xserver/hw/kdrive/linux/ts.c,v 1.2 2000/09/26 15:57:04 tsi Exp $
+ * $XFree86: xc/programs/Xserver/hw/kdrive/linux/ts.c,v 1.6 2001/12/07 02:19:04 keithp Exp $
  *
  * Derived from ps2.c by Jim Gettys
  *
@@ -33,11 +33,57 @@
 #include "kdrive.h"
 #include "Xpoll.h"
 #include <sys/ioctl.h>
+#if 1
 #include <linux/h3600_ts.h>	/* touch screen events */
+#else
+/* inline for non-arm debug builds */
+typedef struct {
+        unsigned short pressure;
+        unsigned short x;
+        unsigned short y;
+        unsigned short pad;	/* TODO TODO word boundary pad */
+} TS_EVENT;
+#endif
+
+static long lastx = 0, lasty = 0;
+int TsScreen;
+extern int TsFbdev;
+
+int
+TsReadBytes (int fd, char *buf, int len, int min)
+{
+    int		    n, tot;
+    fd_set	    set;
+    struct timeval  tv;
+
+    tot = 0;
+    while (len)
+    {
+	n = read (fd, buf, len);
+	if (n > 0)
+	{
+	    tot += n;
+	    buf += n;
+	    len -= n;
+	}
+	if (tot % min == 0)
+	    break;
+	FD_ZERO (&set);
+	FD_SET (fd, &set);
+	tv.tv_sec = 0;
+	tv.tv_usec = 100 * 1000;
+	n = select (fd + 1, &set, 0, 0, &tv);
+	if (n <= 0)
+	    break;
+    }
+    return tot;
+}
 
 void
-TsRead (int tsPort)
+TsRead (int tsPort, void *closure)
 {
+    KdMouseInfo	    *mi = closure;
+    int		    fd = (int) mi->driver;
     TS_EVENT	    event;
     long	    buf[3];
     int		    n;
@@ -46,25 +92,43 @@ TsRead (int tsPort)
     unsigned long   flags;
     unsigned long   buttons;
 
-    n = Ps2ReadBytes (tsPort, (char *) &event, 
-			 sizeof (event), sizeof (event));
+    n = TsReadBytes (tsPort, (char *) &event, sizeof (event), sizeof (event));
     if (n == sizeof (event))  
     {
 	if (event.pressure) 
 	{
-	    flags = KD_BUTTON_1;
-	    x = event.x;
-	    y = event.y;
-	}
-	else {
+	    /* 
+	     * HACK ATTACK.  (static global variables used !)
+	     * Here we test for the touch screen driver actually being on the
+	     * touch screen, if it is we send absolute coordinates. If not,
+	     * then we send delta's so that we can track the entire vga screen.
+	     */
+	    if (TsScreen == TsFbdev) {
+	    	flags = KD_BUTTON_1;
+	    	x = event.x;
+	    	y = event.y;
+	    } else {
+	    	flags = /* KD_BUTTON_1 |*/ KD_MOUSE_DELTA;
+	    	if ((lastx == 0) || (lasty == 0)) {
+	    	    x = 0;
+	    	    y = 0;
+	    	} else {
+	    	    x = event.x - lastx;
+	    	    y = event.y - lasty;
+	    	}
+	    	lastx = event.x;
+	    	lasty = event.y;
+	    }
+	} else {
 	    flags = KD_MOUSE_DELTA;
 	    x = 0;
 	    y = 0;
+	    lastx = 0;
+	    lasty = 0;
 	}
-	KdEnqueueMouseEvent (flags, x, y);
+	KdEnqueueMouseEvent (mi, flags, x, y);
     }
 }
-
 
 char	*TsNames[] = {
   "/dev/ts",	
@@ -74,31 +138,54 @@ char	*TsNames[] = {
 
 #define NUM_TS_NAMES	(sizeof (TsNames) / sizeof (TsNames[0]))
 
+int TsInputType;
+
 int
 TsInit (void)
 {
-    int	    i;
-    int	    TsPort;
+    int		i;
+    int		fd;
+    KdMouseInfo	*mi, *next;
+    int		n = 0;
 
-    for (i = 0; i < NUM_TS_NAMES; i++)    
+    if (!TsInputType)
+	TsInputType = KdAllocInputType ();
+    
+    for (mi = kdMouseInfo; mi; mi = next)
     {
-	TsPort = open (TsNames[i], 0);
-	if (TsPort >= 0) 
-	    return TsPort;
+	next = mi->next;
+	if (!mi->name)
+	{
+	    for (i = 0; i < NUM_TS_NAMES; i++)    
+	    {
+		fd = open (TsNames[i], 0);
+		if (fd >= 0) 
+		{
+		    mi->name = KdSaveString (TsNames[i]);
+		    break;
+		}
+	    }
+	}
+	else
+	    fd = open (mi->name, 0);
+	if (fd >= 0)
+	{
+	    mi->driver = (void *) fd;
+	    if (KdRegisterFd (TsInputType, fd, TsRead, (void *) mi))
+		n++;
+	}
+	else
+	    KdMouseInfoDispose (mi);
     }
-    perror("Touch screen not found.\n");
-    exit (1);
 }
 
 void
-TsFini (int tsPort)
+TsFini (void)
 {
-    if (tsPort >= 0)
-	close (tsPort);
+    KdUnregisterFds (TsInputType, TRUE);
 }
 
-KdTsFuncs TsFuncs = {
+KdMouseFuncs TsFuncs = {
     TsInit,
-    TsRead,
     TsFini
 };

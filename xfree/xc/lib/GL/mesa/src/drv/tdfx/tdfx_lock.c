@@ -23,7 +23,7 @@
  * OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-/* $XFree86: xc/lib/GL/mesa/src/drv/tdfx/tdfx_lock.c,v 1.1 2001/03/21 16:14:28 dawes Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/tdfx/tdfx_lock.c,v 1.3 2001/12/13 00:34:21 alanh Exp $ */
 
 /*
  * Original rewrite:
@@ -59,7 +59,7 @@ void tdfxGetLock( tdfxContextPtr fxMesa )
     XMESA_VALIDATE_DRAWABLE_INFO( cPriv->display, sPriv, dPriv );
 
     if ( saPriv->fifoOwner != fxMesa->hHWContext ) {
-        grDRIImportFifo( saPriv->fifoPtr, saPriv->fifoRead );
+       fxMesa->Glide.grDRIImportFifo( saPriv->fifoPtr, saPriv->fifoRead );
     }
 
     if ( saPriv->ctxOwner != fxMesa->hHWContext ) {
@@ -69,7 +69,9 @@ void tdfxGetLock( tdfxContextPtr fxMesa )
 	 * that state onto the hardware when you set the state.
 	 */
         void *state;
-        state = malloc( FX_grGetInteger_NoLock( FX_GLIDE_STATE_SIZE ) );
+        FxI32 size;
+        fxMesa->Glide.grGet( GR_GLIDE_STATE_SIZE, 4, &size );
+        state = malloc( size );
         FX_grGlideGetState_NoLock( state );
         FX_grGlideSetState_NoLock( state );
         free( state );

@@ -23,7 +23,7 @@ OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
 THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 **************************************************************************/
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/i810/i810_video.c,v 1.17 2001/04/18 14:52:41 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/i810/i810_video.c,v 1.21 2001/12/04 21:17:56 tsi Exp $ */
 
 /*
  * i810_video.c: i810 Xv driver. Based on the mga Xv driver by Mark Vojkovich.
@@ -81,8 +81,9 @@ static void I810BlockHandler(int, pointer, pointer, pointer);
 
 static Atom xvBrightness, xvContrast, xvColorKey;
 
-#define IMAGE_MAX_WIDTH		720
-#define IMAGE_MAX_HEIGHT	576
+#define IMAGE_MAX_WIDTH		1440
+#define IMAGE_FAST_WIDTH	720
+#define IMAGE_MAX_HEIGHT	1080
 #define Y_BUF_SIZE		(IMAGE_MAX_WIDTH * IMAGE_MAX_HEIGHT)
 
 #define OVERLAY_UPDATE(p)	OUTREG(0x30000, p | 0x80000000);
@@ -502,7 +503,7 @@ I810ClipVideo(
 } 
 
 static void 
-I810StopVideo(ScrnInfoPtr pScrn, pointer data, Bool exit)
+I810StopVideo(ScrnInfoPtr pScrn, pointer data, Bool shutdown)
 {
   I810PortPrivPtr pPriv = (I810PortPrivPtr)data;
   I810Ptr pI810 = I810PTR(pScrn);
@@ -511,7 +512,7 @@ I810StopVideo(ScrnInfoPtr pScrn, pointer data, Bool exit)
 
   REGION_EMPTY(pScrn->pScreen, &pPriv->clip);   
 
-  if(exit) {
+  if(shutdown) {
      if(pPriv->videoStatus & CLIENT_VIDEO_ON) {
 	overlay->OV0CMD &= 0xFFFFFFFE;
 	OVERLAY_UPDATE(pI810->OverlayPhysical);
@@ -749,6 +750,13 @@ I810DisplayVideo(
 	break;
     }
 
+    /* wide video formats (>720 pixels) are special */
+    if( swidth > IMAGE_FAST_WIDTH ) {
+	overlay->OV0CONF = 1; /* one 1440 pixel line buffer */ 
+    } else {
+	overlay->OV0CONF = 0; /* two 720 pixel line buffers */
+    }
+
     overlay->SHEIGHT = height | (height << 15);
     overlay->DWINPOS = (dstBox->y1 << 16) | dstBox->x1;
     overlay->DWINSZ = ((dstBox->y2 - dstBox->y1) << 16) | 
@@ -949,8 +957,9 @@ I810PutImage(
     I810PortPrivPtr pPriv = (I810PortPrivPtr)data;
     INT32 x1, x2, y1, y2;
     int srcPitch, dstPitch;
-    int top, left, npixels, nlines, size;
+    int top, left, npixels, nlines, size, loops;
     BoxRec dstBox;
+
 
     /* Clip */
     x1 = src_x;
@@ -1004,8 +1013,18 @@ I810PutImage(
     pPriv->VBuf1offset = pPriv->UBuf1offset + (dstPitch * height >> 1);
 
 
-    /* wait for the last rendered buffer to be flipped in */
-    while (((INREG(DOV0STA)&0x00100000)>>20) != pPriv->currentBuf);
+    /* Make sure this buffer isn't in use */
+    loops = 0;
+    while (loops < 1000000) {
+          if(((INREG(DOV0STA)&0x00100000)>>20) == pPriv->currentBuf) {
+            break;
+          }
+          loops++;
+    }
+    if(loops >= 1000000) {
+      pPriv->currentBuf = !pPriv->currentBuf;
+    }
+
 
     /* buffer swap */
     if (pPriv->currentBuf == 0)
@@ -1063,13 +1082,19 @@ I810QueryImageAttributes(
 ){
     int size, tmp;
 
-    if(*w > 720) *w = 720;
-    if(*h > 576) *h = 576;
+    if(*w > IMAGE_MAX_WIDTH) *w = IMAGE_MAX_WIDTH;
+    if(*h > IMAGE_MAX_HEIGHT) *h = IMAGE_MAX_HEIGHT;
 
     *w = (*w + 1) & ~1;
     if(offsets) offsets[0] = 0;
 
     switch(id) {
+      /* IA44 is for XvMC only */
+    case FOURCC_IA44:
+    case FOURCC_AI44:
+	if(pitches) pitches[0] = *w;
+	size = *w * *h;
+	break;
     case FOURCC_YV12:
     case FOURCC_I420:
 	*h = (*h + 1) & ~1;

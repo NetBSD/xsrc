@@ -4,7 +4,7 @@
 /*                                                                         */
 /*    Type 1 font loader (specification).                                  */
 /*                                                                         */
-/*  Copyright 1996-2000 by                                                 */
+/*  Copyright 1996-2001 by                                                 */
 /*  David Turner, Robert Wilhelm, and Werner Lemberg.                      */
 /*                                                                         */
 /*  This file is part of the FreeType project, and may only be used,       */
@@ -42,6 +42,7 @@ FT_BEGIN_HEADER
     FT_Int        num_glyphs;
     PS_Table      glyph_names;
     PS_Table      charstrings;
+    PS_Table      swap_table;      /* For moving .notdef glyph to index 0. */
 
     FT_Int        num_subrs;
     PS_Table      subrs;
@@ -50,27 +51,27 @@ FT_BEGIN_HEADER
   } T1_Loader;
 
 
-  FT_LOCAL
-  FT_Error  T1_Open_Face( T1_Face  face );
+  FT_LOCAL FT_Error
+  T1_Open_Face( T1_Face  face );
 
 #ifndef T1_CONFIG_OPTION_NO_MM_SUPPORT
 
-  FT_LOCAL
-  FT_Error  T1_Get_Multi_Master( T1_Face           face,
-                                 FT_Multi_Master*  master );
+  FT_LOCAL FT_Error
+  T1_Get_Multi_Master( T1_Face           face,
+                       FT_Multi_Master*  master );
 
-  FT_LOCAL
-  FT_Error  T1_Set_MM_Blend( T1_Face    face,
-                             FT_UInt    num_coords,
-                             FT_Fixed*  coords );
+  FT_LOCAL FT_Error
+  T1_Set_MM_Blend( T1_Face    face,
+                   FT_UInt    num_coords,
+                   FT_Fixed*  coords );
 
-  FT_LOCAL
-  FT_Error  T1_Set_MM_Design( T1_Face   face,
-                              FT_UInt   num_coords,
-                              FT_Long*  coords );
+  FT_LOCAL FT_Error
+  T1_Set_MM_Design( T1_Face   face,
+                    FT_UInt   num_coords,
+                    FT_Long*  coords );
 
-  FT_LOCAL
-  void  T1_Done_Blend( T1_Face  face );
+  FT_LOCAL void
+  T1_Done_Blend( T1_Face  face );
 
 #endif /* !T1_CONFIG_OPTION_NO_MM_SUPPORT */
 

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xaaFillRect.c,v 1.13 2000/03/28 01:21:04 mvojkovi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xaaFillRect.c,v 1.15 2001/12/13 18:01:51 eich Exp $ */
 
 #include "misc.h"
 #include "xf86.h"
@@ -156,6 +156,10 @@ XAARenderMono8x8Rects(
       pPriv = XAA_GET_PIXMAP_PRIVATE(pGC->tile.pixmap);
       fg = pPriv->fg;  bg = pPriv->bg;
       break;
+   default:	/* Muffle compiler */
+      pPriv = NULL;	/* Kaboom */
+      fg = -1;  bg = -1;
+      break;
    }
 
    (*infoRec->FillMono8x8PatternRects) (infoRec->pScrn, 
@@ -177,24 +181,24 @@ XAARenderColor8x8Rects(
 ){
    XAAInfoRecPtr infoRec = GET_XAAINFORECPTR_FROM_GC(pGC);
    XAACacheInfoPtr pCache;
-   XAAPixmapPtr pPriv;
    PixmapPtr pPix;
    int fg, bg;
 
    switch(pGC->fillStyle) {
    case FillStippled:
       pPix = pGC->stipple;
-      pPriv = XAA_GET_PIXMAP_PRIVATE(pPix);
       fg = pGC->fgPixel;  bg = -1;
       break;
    case FillOpaqueStippled:
       pPix = pGC->stipple;
-      pPriv = XAA_GET_PIXMAP_PRIVATE(pPix);
       fg = pGC->fgPixel;  bg = pGC->bgPixel;
       break;
    case FillTiled:
       pPix = pGC->tile.pixmap;
-      pPriv = XAA_GET_PIXMAP_PRIVATE(pPix);
+      fg = -1;  bg = -1;
+      break;
+   default:	/* Muffle compiler */
+      pPix = NULL;
       fg = -1;  bg = -1;
       break;
    }
@@ -226,6 +230,9 @@ XAARenderColorExpandRects(
       break;
    case FillOpaqueStippled:
       fg = pGC->fgPixel;  bg = pGC->bgPixel;
+      break;
+   default:	/* Muffle compiler */
+      fg = -1;  bg = -1;
       break;
    }
 
@@ -262,6 +269,9 @@ XAARenderCacheBltRects(
    case FillTiled:
       pCache = (*infoRec->CacheTile)(infoRec->pScrn, pGC->tile.pixmap);
       break;
+   default:	/* Muffle compiler */
+      pCache = NULL;
+      break;
    }
 
    (*infoRec->FillCacheBltRects) (infoRec->pScrn, pGC->alu, 
@@ -290,6 +300,9 @@ XAARenderCacheExpandRects(
       break;
    case FillOpaqueStippled:
       fg = pGC->fgPixel;  bg = pGC->bgPixel;
+      break;
+   default:	/* Muffle compiler */
+      fg = -1;  bg = -1;
       break;
    }
 
@@ -405,8 +418,8 @@ XAAFillMono8x8PatternRectsScreenOrigin(
    	if(!(infoRec->Mono8x8PatternFillFlags & 		
 				HARDWARE_PATTERN_PROGRAMMED_ORIGIN)){
 	    XAARotateMonoPattern(&patx, &paty, xorg, yorg,
-				(infoRec->Mono8x8PatternFillFlags & 		
-				BIT_ORDER_IN_BYTE_MSBFIRST));
+				(infoRec->Mono8x8PatternFillFlags &
+				 BIT_ORDER_IN_BYTE_MSBFIRST));
 	    xorg = patx; yorg = paty;
         }
     } else {

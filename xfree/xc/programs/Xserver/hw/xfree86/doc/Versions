@@ -2,7 +2,7 @@
 
                           The XFree86 Project, Inc
 
-                               28 January 2001
+                               16 January 2002
 
                                   Abstract
 
@@ -13,17 +13,20 @@
 1.  Releases, Development Streams and Branches
 
 As of the release of version 4.0.2 in December 2000, XFree86 has three
-release branches.  The main development stream is on the trunk of the CVS
-repository.  That is where all new development work is done.  A stable bugfix
-branch for the 4.0.2 release was created at the time of its release, and that
-branch is called "xf-4_0_2-branch".  Fixes for bugs found in the 4.0.2
-release will be added to this branch (as well as the trunk).  Similar stable
-branches will be created after each full release.
+release branches.  First is trunk of the CVS repository.  This is the main
+development stream, where all new work and work for future releases is done.
 
-Finally, there is the 3.3.x legacy branch, which is called "xf-3_3-branch".
+Second is the stable bugfix branch for the latest full release (4.2.0).  It
+is created around the time of the release.  The branch for this one is called
+"xf-4_2-branch".  Fixes for bugs found in the release will be added to this
+branch (as well as the trunk), and updates to this release (if any) will be
+cut from this branch.  Similar stable branches are present for previous full
+releases.
+
+Finally there is the 3.3.x legacy branch, which is called "xf-3_3-branch".
 While this branch is not actively being maintained, it does include some
-important post-3.3.6 bug fixes and security updates.  Security updates in
-particular are usually back-ported to this branch.
+important post-3.3.6 bug fixes and security updates.  Relevant security
+updates in particular are usually back-ported to this branch.
 
 XFree86 is planning to make full releases from the main development stream
 approximately every six months, in late May and November of each year.  The
@@ -37,12 +40,9 @@ ability of resources.  Update/bugfix releases will not be full releases, and
 will consist of source code patches, plus binary updates to be layered on top
 of the previous full release.
 
-The next full release will be version 4.1.0, scheduled for late May 2001.
-The next update release will be 4.0.3.  There is no specific schedule for
-that, but it is expected to be available some time in February 2001.  The
-next release on the legacy branch will be 3.3.7.  There is currently no
-schedule for that release.  The 3.3.7 release is likely to be the final
-release on that branch.
+The next full release will be version 4.3.0, tentatively scheduled for late
+May 2002.  There is no scheduled update release.  If there is one, the ver-
+sion will be 4.2.1.
 
 Aside from actual releases, snapshots of the active release branches are
 tagged in the CVS repository from time to time.  Each such snapshot has an
@@ -51,9 +51,9 @@ identifiable version number.
 2.  Current (new) Version Numbering Scheme
 
 Starting with the main development branch after 4.0.2, the XFree86 versions
-will be numbered according to the scheme outlined here.  Both the 4.0.2 sta-
-ble branch and the 3.3.x legacy branch will continue to use the previous
-scheme, which is outlined in the sections below.
+are numbered according to the scheme outlined here.  Both the 4.0.2 stable
+branch and the 3.3.x legacy branch continue to use the previous scheme, which
+is outlined in the sections below.
 
 The version numbering format is M.m.P.s, where M is the major version number,
 m is the minor version number, P is the patch level, and s is the snapshot
@@ -68,8 +68,8 @@ Immediately after forming a release stable branch, the patch level number for
 the main development branch is bumped to 99, and the snapshot number is
 reset.  The snapshot number is incremented for each tagged development snap-
 shot.  The CVS tag for snapshots is "xf-M_m_P_s".  When the development
-branch enters feature freeze, the snapshot number is bumped to 900, and a
-stable branch is created for the next full release.  The branch is called
+branch enters feature freeze, the snapshot number may be bumped to 900, and a
+stable branch may be created for the next full release.  The branch is called
 "xf-M_m-branch".  The snapshot number is incremented from there until the
 release is finalised.  Each of these snapshots is a "release candidate".
 When the release is finalised, the minor version is incremented, the patch
@@ -295,7 +295,50 @@ scheme, the VendorRelease value is MMmmPPsss.  That is, version M.m.P.s has
 VendorRelease set to M * 10000000 + m * 100000 + P * 1000 + s.  Note: 4.0.3
 and any other 4.0.x releases will continue with the Mmnn scheme.
 
-     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/Versions.sgml,v 1.1 2001/02/07 18:49:31 dawes Exp $
+The following is a code fragment taken from xdpyinfo.c that shows how the
+VendorRelease information can be interpreted.
+
+         if (strstr(ServerVendor(dpy), "XFree86")) {
+             int vendrel = VendorRelease(dpy);
+
+             printf("XFree86 version: ");
+             if (vendrel < 336) {
+                 /*
+                  * vendrel was set incorrectly for 3.3.4 and 3.3.5, so handle
+                  * those cases here.
+                  */
+                 printf("%d.%d.%d", vendrel / 100,
+                                   (vendrel / 10) % 10,
+                                    vendrel       % 10);
+             } else if (vendrel < 3900) {
+                 /* 3.3.x versions, other than the exceptions handled above */
+                 printf("%d.%d", vendrel / 1000,
+                                (vendrel /  100) % 10);
+                 if (((vendrel / 10) % 10) || (vendrel % 10)) {
+                     printf(".%d", (vendrel / 10) % 10);
+                     if (vendrel % 10) {
+                         printf(".%d", vendrel % 10);
+                     }
+                 }
+             } else if (vendrel < 40000000) {
+                 /* 4.0.x versions */
+                 printf("%d.%d", vendrel / 1000,
+                                (vendrel /   10) % 10);
+                 if (vendrel % 10) {
+                     printf(".%d", vendrel % 10);
+                 }
+             } else {
+                 /* post-4.0.x */
+                 printf("%d.%d.%d", vendrel / 10000000,
+                                   (vendrel /   100000) % 100,
+                                   (vendrel /     1000) % 100);
+                 if (vendrel % 1000) {
+                     printf(".%d", vendrel % 1000);
+                 }
+             }
+         }
+
+     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/Versions.sgml,v 1.2 2002/01/16 20:38:45 dawes Exp $
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/Versions,v 1.1.4.1 2001/06/01 18:26:46 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/Versions,v 1.3 2002/01/16 20:51:04 dawes Exp $

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/parser/Pointer.c,v 1.8 2000/10/20 14:59:03 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/parser/Pointer.c,v 1.10 2001/08/06 20:51:14 dawes Exp $ */
 /* 
  * 
  * Copyright (c) 1997  Metro Link Incorporated
@@ -71,21 +71,25 @@ xf86parsePointerSection (void)
 {
 	char *s, *s1, *s2;
 	int l;
+	int token;
 	parsePrologue (XF86ConfInputPtr, XF86ConfInputRec)
 
 	while ((token = xf86getToken (PointerTab)) != ENDSECTION)
 	{
 		switch (token)
 		{
+		case COMMENT:
+			ptr->inp_comment = xf86addComment(ptr->inp_comment, val.str);
+			break;
 		case PROTOCOL:
-			if (xf86getToken (NULL) != STRING)
+			if (xf86getSubToken (&(ptr->inp_comment)) != STRING)
 				Error (QUOTE_MSG, "Protocol");
 			ptr->inp_option_lst = xf86addNewOption(ptr->inp_option_lst,
 												xf86configStrdup("Protocol"),
 												val.str);
 			break;
 		case PDEVICE:
-			if (xf86getToken (NULL) != STRING)
+			if (xf86getSubToken (&(ptr->inp_comment)) != STRING)
 				Error (QUOTE_MSG, "Device");
 			ptr->inp_option_lst = xf86addNewOption(ptr->inp_option_lst,
 												xf86configStrdup("Device"),
@@ -97,7 +101,7 @@ xf86parsePointerSection (void)
 												NULL);
 			break;
 		case EM3TIMEOUT:
-			if (xf86getToken (NULL) != NUMBER || val.num < 0)
+			if (xf86getSubToken (&(ptr->inp_comment)) != NUMBER || val.num < 0)
 				Error (POSITIVE_INT_MSG, "Emulate3Timeout");
 			s = xf86uLongToString(val.num);
 			ptr->inp_option_lst = xf86addNewOption(ptr->inp_option_lst,
@@ -110,28 +114,28 @@ xf86parsePointerSection (void)
 												NULL);
 			break;
 		case PBUTTONS:
-			if (xf86getToken (NULL) != NUMBER || val.num < 0)
+			if (xf86getSubToken (&(ptr->inp_comment)) != NUMBER || val.num < 0)
 				Error (POSITIVE_INT_MSG, "Buttons");
 			s = xf86uLongToString(val.num);
 			ptr->inp_option_lst = xf86addNewOption(ptr->inp_option_lst,
 												xf86configStrdup("Buttons"), s);
 			break;
 		case BAUDRATE:
-			if (xf86getToken (NULL) != NUMBER || val.num < 0)
+			if (xf86getSubToken (&(ptr->inp_comment)) != NUMBER || val.num < 0)
 				Error (POSITIVE_INT_MSG, "BaudRate");
 			s = xf86uLongToString(val.num);
 			ptr->inp_option_lst = xf86addNewOption(ptr->inp_option_lst,
 												xf86configStrdup("BaudRate"), s);
 			break;
 		case SAMPLERATE:
-			if (xf86getToken (NULL) != NUMBER || val.num < 0)
+			if (xf86getSubToken (&(ptr->inp_comment)) != NUMBER || val.num < 0)
 				Error (POSITIVE_INT_MSG, "SampleRate");
 			s = xf86uLongToString(val.num);
 			ptr->inp_option_lst = xf86addNewOption(ptr->inp_option_lst,
 												xf86configStrdup("SampleRate"), s);
 			break;
 		case PRESOLUTION:
-			if (xf86getToken (NULL) != NUMBER || val.num < 0)
+			if (xf86getSubToken (&(ptr->inp_comment)) != NUMBER || val.num < 0)
 				Error (POSITIVE_INT_MSG, "Resolution");
 			s = xf86uLongToString(val.num);
 			ptr->inp_option_lst = xf86addNewOption(ptr->inp_option_lst,
@@ -151,7 +155,7 @@ xf86parsePointerSection (void)
 				if (val.num < 0)
 					Error (ZAXISMAPPING_MSG, NULL);
 				s1 = xf86uLongToString(val.num);
-				if (xf86getToken (NULL) != NUMBER || val.num < 0)
+				if (xf86getSubToken (&(ptr->inp_comment)) != NUMBER || val.num < 0)
 					Error (ZAXISMAPPING_MSG, NULL);
 				s2 = xf86uLongToString(val.num);
 				l = strlen(s1) + 1 + strlen(s2) + 1;

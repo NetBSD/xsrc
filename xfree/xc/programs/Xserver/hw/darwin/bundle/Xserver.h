@@ -3,29 +3,30 @@
 //
 //  Created by Andreas Monitzer on January 6, 2001.
 //
-/* $XFree86: xc/programs/Xserver/hw/darwin/bundle/Xserver.h,v 1.8 2001/05/16 06:10:08 torrey Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/darwin/bundle/Xserver.h,v 1.13 2002/01/01 23:09:00 torrey Exp $ */
 
 #import <Cocoa/Cocoa.h>
 
 #include <drivers/event_status_driver.h>	// for NXEvent
-#include <unistd.h>
-#include <stdio.h>
-#include <sys/syslimits.h>
 
 @interface Xserver : NSObject {
     // server state
-    NSLock *serverLock;
-    NSTask *clientTask;
+    NSRecursiveLock *serverLock;
     NSPort *signalPort;
     BOOL serverVisible;
+    BOOL rootlessMenuBarVisible;
     BOOL appQuitting;
     UInt32 mouseState;
+    Class windowClass;
 
     // server event queue
+    BOOL sendServerEvents;
     int eventWriteFD;
 
     // Aqua interface
-    IBOutlet NSPanel *helpWindow;
+    IBOutlet NSWindow *modeWindow;
+    IBOutlet id startupModeButton;
+    IBOutlet NSWindow *helpWindow;
     IBOutlet id startupHelpButton;
     IBOutlet NSPanel *switchWindow;
 }
@@ -33,10 +34,12 @@
 - (id)init;
 
 - (BOOL)translateEvent:(NSEvent *)anEvent;
+- (BOOL)getNXMouse:(NXEvent*)ev;
 
-- (void)getNXMouse:(NXEvent*)ev;
 + (void)append:(NSString*)value toEnv:(NSString*)name;
 
+- (void)startX;
+- (BOOL)startXClients;
 - (void)run;
 - (void)toggle;
 - (void)show;
@@ -44,11 +47,12 @@
 - (void)killServer;
 - (void)readPasteboard;
 - (void)writePasteboard;
-- (void)clientTaskDone:(NSNotification *)aNotification;
 - (void)sendNXEvent:(NXEvent*)ev;
 - (void)sendShowHide:(BOOL)show;
 
 // Aqua interface actions
+- (IBAction)startFullScreen:(id)sender;
+- (IBAction)startRootless:(id)sender;
 - (IBAction)closeHelpAndShow:(id)sender;
 - (IBAction)showAction:(id)sender;
 

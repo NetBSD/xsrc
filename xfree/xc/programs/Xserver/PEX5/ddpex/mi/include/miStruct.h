@@ -1,11 +1,15 @@
-/* $Xorg: miStruct.h,v 1.3 2000/08/17 19:47:03 cpqbld Exp $ */
+/* $Xorg: miStruct.h,v 1.4 2001/02/09 02:04:08 xorgcvs Exp $ */
 
 
 /***********************************************************
 
 Copyright 1989, 1990, 1991, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -42,7 +46,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/programs/Xserver/PEX5/ddpex/mi/include/miStruct.h,v 1.5 2001/01/17 22:12:20 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/PEX5/ddpex/mi/include/miStruct.h,v 1.7 2001/12/14 19:57:13 dawes Exp $ */
 
 #ifndef MISTRUCT_H
 #define MISTRUCT_H
@@ -61,7 +65,8 @@ typedef struct {
 	
 	/* do the following to pad to 64 bit alignment for alpha and ia64 */
 #if defined(__alpha) || defined(__alpha__) || \
-    defined(ia64) || defined(__ia64__)
+    defined(ia64) || defined(__ia64__) || \
+    defined(__s390x__)
 	ddUSHORT		unused0;
 	ddUSHORT		unused1;
 #endif

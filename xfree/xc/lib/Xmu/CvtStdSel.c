@@ -1,10 +1,14 @@
-/* $Xorg: CvtStdSel.c,v 1.3 2000/08/17 19:46:00 cpqbld Exp $ */
+/* $Xorg: CvtStdSel.c,v 1.4 2001/02/09 02:03:52 xorgcvs Exp $ */
 
 /*
  
 Copyright 1988, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -21,7 +25,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/Xmu/CvtStdSel.c,v 3.15 2001/01/17 19:42:54 dawes Exp $ */
+/* $XFree86: xc/lib/Xmu/CvtStdSel.c,v 3.20 2001/12/14 19:55:39 dawes Exp $ */
 
 /*
  * This file contains routines to handle common selection targets.
@@ -64,9 +68,7 @@ in this Software without prior written authorization from The Open Group.
 #endif
 
 #include <X11/Xos.h>
-#ifndef X_NOT_STDC_ENV
 #include <stdlib.h>
-#endif
 #include "Atoms.h"
 #include "StdSel.h"
 #include "SysUtil.h"
@@ -88,11 +90,6 @@ in this Software without prior written authorization from The Open Group.
 #endif
 #endif /*X_OS_FILE*/
 #ifdef USE_UNAME
-#ifdef ultrix
-#ifndef __STDC__
-#include <limits.h>		/* fixed in Ultrix 3.0 */
-#endif
-#endif
 #include <sys/utsname.h>
 #endif
 #endif
@@ -217,10 +214,12 @@ XmuConvertStandardSelection(Widget w, Time time, Atom *selection, Atom *target,
 	*format = 8;
 	return True;
     }
-#if defined(TCPCONN) || defined(MNX_TCPCONN)
+#if defined(TCPCONN)
     if (*target == XA_IP_ADDRESS(d)) {
 	char hostname[1024];
+#ifdef XTHREADS_NEEDS_BYNAMEPARAMS
 	_Xgethostbynameparams hparams;
+#endif
 	struct hostent *hostp;
 
 	hostname[0] = '\0';

@@ -35,6 +35,7 @@
  * 
  * Author:  Adobe Systems Incorporated
  */
+/* $XFree86: xc/lib/dps/dpsNXprops.h,v 1.3 2001/07/29 05:01:13 tsi Exp $ */
 
 #ifndef DPSNXPROPS_H
 #define DPSNXPROPS_H
@@ -75,9 +76,7 @@
 #define LICENSE_METHOD_OPEN   "_ADOBE_DPS_NX_LICENSE_OPEN_SERVICE"
 #define OPEN_LICENSE_VERSION 1
 
-#ifndef NULL
-#define NULL (void *) 0
-#endif  /* NULL */
+#include <stddef.h>
   
 
 /* ---Types--- */

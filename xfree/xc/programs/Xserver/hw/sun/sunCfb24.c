@@ -1,11 +1,14 @@
-
-/* $Xorg: sunCfb24.c,v 1.3 2000/08/17 19:48:29 cpqbld Exp $ */
+/* $Xorg: sunCfb24.c,v 1.4 2001/02/09 02:04:43 xorgcvs Exp $ */
 
 /*
 
 Copyright 1994, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in all
 copies or substantial portions of the Software.
@@ -22,6 +25,7 @@ used in advertising or otherwise to promote the sale, use or other dealings in
 this Software without prior written authorization from The Open Group.
 
 */
+/* $XFree86: xc/programs/Xserver/hw/sun/sunCfb24.c,v 1.3 2001/12/14 19:59:42 dawes Exp $ */
 
 /*
  * The CG8 is similar to the CG4 in that it has a mono plane, an enable 
@@ -68,7 +72,6 @@ static void CG24StoreColors (pmap, ndef, pdefs)
     int ndef;
     xColorItem* pdefs;
 {
-  struct fbcmap cmap;
   u_char rmap[256], gmap[256], bmap[256];
   SetupScreen (pmap->pScreen);
   VisualPtr pVisual = pmap->pVisual;

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Init.c,v 3.176.2.1 2001/05/24 19:43:39 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Init.c,v 3.185 2002/01/15 01:56:56 dawes Exp $ */
 
 /*
  * Copyright 1991-1999 by The XFree86 Project, Inc.
@@ -8,11 +8,7 @@
  *   Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  */
 
-#ifndef X_NOT_STDC_ENV
 #include <stdlib.h>
-#else
-extern int atoi();
-#endif
 
 #define NEED_EVENTS
 #include "X.h"
@@ -61,6 +57,7 @@ extern int xtest_command_key;
 /* forward declarations */
 
 static void xf86PrintBanner(void);
+static void xf86PrintMarkers(void);
 static void xf86RunVtInit(void);
 
 #ifdef DO_CHECK_BETA
@@ -241,6 +238,7 @@ InitOutput(ScreenInfo *pScreenInfo, int argc, char **argv)
 #endif
 
     xf86PrintBanner();
+    xf86PrintMarkers();
     {
 	time_t t;
 	const char *ct;
@@ -603,13 +601,6 @@ InitOutput(ScreenInfo *pScreenInfo, int argc, char **argv)
 	    xf86DeleteDriver(i);
 #endif
 
-#ifdef XFree86LOADER
-    if (LoaderCheckUnresolved(LD_RESOLV_IFDONE)) {
-	/* For now, just a warning */
-	xf86Msg(X_WARNING, "Some symbols could not be resolved!\n");
-    }
-#endif
-
     /*
      * At this stage we know how many screens there are.
      */
@@ -726,6 +717,8 @@ InitOutput(ScreenInfo *pScreenInfo, int argc, char **argv)
 #endif
     /* set up the proper access funcs */
     xf86PostPreInit();
+
+    AddCallback(&ServerGrabCallback, xf86GrabServerCallback, NULL);
     
   } else {
     /*
@@ -818,10 +811,11 @@ InitOutput(ScreenInfo *pScreenInfo, int argc, char **argv)
   for (i = 0; i < xf86NumScreens; i++) {    
    	xf86EnableAccess(xf86Screens[i]);
 	/*
-	 * Almost everything uses this default, and many of those that
-	 * don't, will wrap it.
+	 * Almost everything uses these defaults, and many of those that
+	 * don't, will wrap them.
 	 */
 	xf86Screens[i]->EnableDisableFBAccess = xf86EnableDisableFBAccess;
+	xf86Screens[i]->SetDGAMode = xf86SetDGAMode;
 	scr_index = AddScreen(xf86Screens[i]->ScreenInit, argc, argv);
       if (scr_index == i) {
 	/*
@@ -858,6 +852,14 @@ InitOutput(ScreenInfo *pScreenInfo, int argc, char **argv)
       if (!xf86Info.sharedMonitor) (xf86Screens[i]->EnterLeaveMonitor)(ENTER);
 #endif
   }
+
+#ifdef XFree86LOADER
+    if ((serverGeneration == 1) && LoaderCheckUnresolved(LD_RESOLV_IFDONE)) {
+	/* For now, just a warning */
+	xf86Msg(X_WARNING, "Some symbols could not be resolved!\n");
+    }
+#endif
+
   xf86PostScreenInit();
 
   xf86InitOrigins();
@@ -865,10 +867,8 @@ InitOutput(ScreenInfo *pScreenInfo, int argc, char **argv)
   xf86Resetting = FALSE;
   xf86Initialising = FALSE;
 
-#ifndef AMOEBA
   RegisterBlockAndWakeupHandlers((BlockHandlerProcPtr)NoopDDA, xf86Wakeup,
 				 NULL);
-#endif
 }
 
 
@@ -888,9 +888,7 @@ MatchInput(IDevPtr pDev)
 
 /*
  * InitInput --
- *      Initialize all supported input devices...what else is there
- *      besides pointer and keyboard? Two DeviceRec's are allocated and
- *      registered as the system pointer and keyboard devices.
+ *      Initialize all supported input devices.
  */
 
 void
@@ -1009,6 +1007,10 @@ InitInput(argc, argv)
 #endif
 }
 
+#ifndef SET_STDERR_NONBLOCKING
+#define SET_STDERR_NONBLOCKING 1
+#endif
+
 /*
  * OsVendorInit --
  *      OS/Vendor-specific initialisations.  Called from OsInit(), which
@@ -1031,6 +1033,33 @@ OsVendorInit()
 
   if (!beenHere)
     xf86LogInit();
+
+#if SET_STDERR_NONBLOCKING
+        /* Set stderr to non-blocking. */
+#ifndef O_NONBLOCK
+#if defined(FNDELAY)
+#define O_NONBLOCK FNDELAY
+#elif defined(O_NDELAY)
+#define O_NONBLOCK O_NDELAY
+#endif
+#endif
+
+#ifdef O_NONBLOCK
+  if (!beenHere) {
+#if !defined(__EMX__)
+    if (geteuid() == 0 && getuid() != geteuid())
+#endif
+    {
+      int status;
+
+      status = fcntl(fileno(stderr), F_GETFL, 0);
+      if (status != -1) {
+	fcntl(fileno(stderr), F_SETFL, status | O_NONBLOCK);
+      }
+    }
+  }
+#endif
+#endif
 
   beenHere = TRUE;
 }
@@ -1121,7 +1150,7 @@ OsVendorFatalError()
 {
   ErrorF("\nWhen reporting a problem related to a server crash, please send\n"
 	 "the full server output, not just the last messages.\n");
-  if (xf86LogFile)
+  if (xf86LogFile && xf86LogFileWasOpened)
     ErrorF("This can be found in the log file \"%s\".\n", xf86LogFile);
   ErrorF("Please report problems to %s.\n",BUILDERADDR);
   ErrorF("\n");
@@ -1590,7 +1619,7 @@ xf86PrintBanner()
   ErrorF("Release Date: %s\n", XF86_DATE);
   ErrorF("\tIf the server is older than 6-12 months, or if your card is\n"
 	 "\tnewer than the above date, look for a newer version before\n"
-	 "\treporting problems.  (See http://www.XFree86.Org/FAQ)\n");
+	 "\treporting problems.  (See http://www.XFree86.Org/)\n");
   ErrorF("Build Operating System:%s%s\n", OSNAME, OSVENDOR);
 #if defined(BUILDERSTRING)
   ErrorF("%s \n",BUILDERSTRING);
@@ -1601,9 +1630,24 @@ xf86PrintBanner()
 }
 
 static void
+xf86PrintMarkers()
+{
+    /* Show what the marker symbols mean */
+  ErrorF("Markers: " X_PROBE_STRING " probed, "
+		     X_CONFIG_STRING " from config file, "
+		     X_DEFAULT_STRING " default setting,\n"
+	 "         " X_CMDLINE_STRING " from command line, "
+		     X_NOTICE_STRING " notice, "
+		     X_INFO_STRING " informational,\n"
+	 "         " X_WARNING_STRING " warning, "
+		     X_ERROR_STRING " error, "
+		     X_NOT_IMPLEMENTED_STRING " not implemented, "
+		     X_UNKNOWN_STRING " unknown.\n");
+}
+
+static void
 xf86RunVtInit(void)
 {
-#if !defined(AMOEBA) && !defined(MINIX)
     int i;
 
     /*
@@ -1633,7 +1677,6 @@ xf86RunVtInit(void)
           wait(NULL);
       }
     }
-#endif /* !AMOEBA && !MINIX */
 }
 
 #ifdef XFree86LOADER

@@ -21,7 +21,7 @@ INCIDENTAL OR CONSEQUENTIAL DAMAGES, ARISING OUT OF OR IN ANY WAY CONNECTED
 WITH THE SPEEDO SOFTWARE OR THE BITSTREAM CHARTER OUTLINE FONT.
 
 */
-/* $XFree86: xc/lib/font/Speedo/set_spcs.c,v 1.3 2001/01/17 19:43:17 dawes Exp $ */
+/* $XFree86: xc/lib/font/Speedo/set_spcs.c,v 1.4 2001/08/27 19:49:50 dawes Exp $ */
 
 
 /*************************** S E T _ S P C S . C *****************************
@@ -402,7 +402,7 @@ fix31   offset;        /* Constant in transformation */
 fix15   i;             /* Loop counter */
 fix15   x, y;          /* Successive corners of bounding box in ORUs */
 fix31   pixval;        /* Successive pixel values multiplied by orus per em */
-fix15   xx, yy;        /* Bounding box corner that produces max pixel value */
+fix15   xx = 0, yy = 0;/* Bounding box corner that produces max pixel value */
 
 /* Determine numerator and denominator of largest multiplier value */
 mult = sp_globals.pspecs->xxmult >> 16;

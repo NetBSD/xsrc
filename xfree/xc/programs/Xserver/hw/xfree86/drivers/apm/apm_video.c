@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/apm/apm_video.c,v 1.8 2001/04/25 17:46:42 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/apm/apm_video.c,v 1.9 2001/06/15 21:22:45 dawes Exp $ */
 
 #if PSZ != 24
 #include "dixstruct.h"
@@ -421,7 +421,7 @@ ApmClipVideo(BoxPtr dst, INT32 *x1, INT32 *x2, INT32 *y1, INT32 *y2,
 #endif
 
 static void
-A(StopVideo)(ScrnInfoPtr pScrn, pointer data, Bool exit)
+A(StopVideo)(ScrnInfoPtr pScrn, pointer data, Bool shutdown)
 {
     ApmPortPrivPtr pPriv = (ApmPortPrivPtr)data;
     APMDECL(pScrn);
@@ -546,10 +546,10 @@ static void A(XvRemoveCB)(FBAreaPtr area)
 
 static int
 A(ReputImage)(ScrnInfoPtr pScrn, short drw_x, short drw_y,
-		RegionPtr clipBoxes, pointer data)
+		RegionPtr clipBoxes, pointer pdata)
 {
     APMDECL(pScrn);
-    ApmPortPrivPtr	pPriv = data, pPriv0, pPriv1;
+    ApmPortPrivPtr	pPriv = pdata, pPriv0, pPriv1;
     register int	fx, fy;
     CARD32	mask;
     RegionRec	Union;

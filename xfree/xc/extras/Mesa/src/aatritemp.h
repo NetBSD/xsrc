@@ -1,4 +1,4 @@
-
+/* $XFree86: xc/extras/Mesa/src/aatritemp.h,v 1.5 2001/12/11 09:18:54 alanh Exp $ */
 /*
  * Mesa 3-D graphics library
  * Version:  3.3
@@ -120,7 +120,7 @@
       const GLfloat area = majDx * botDy - botDx * majDy;
       ltor = (GLboolean) (area < 0.0F);
       /* Do backface culling */
-      if (area * bf < 0 || area * area < .0025)
+      if (area * bf < 0 || area == 0 || IS_INF_OR_NAN(area) )
 	 return;
    }
 

@@ -20,6 +20,7 @@
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  */
+/* $XFree86: xc/include/extensions/XLbx.h,v 1.2 2001/08/01 00:44:35 tsi Exp $ */
  
 #ifndef _XLBX_H_
 #define _XLBX_H_
@@ -127,7 +128,19 @@
 
 #ifndef _XLBX_SERVER_
 
+#include <X11/Xdefs.h>
+#include <X11/Xlib.h>
+
 _XFUNCPROTOBEGIN
+
+Bool XLbxQueryExtension(
+#if NeedFunctionPrototypes
+    Display*		/* dpy */,
+    int*		/* requestp */,
+    int*		/* event_basep */,
+    int*		/* error_basep */
+#endif
+);
 
 Bool XLbxQueryVersion(
 #if NeedFunctionPrototypes

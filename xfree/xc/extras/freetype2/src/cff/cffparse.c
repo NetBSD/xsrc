@@ -4,7 +4,7 @@
 /*                                                                         */
 /*    CFF token stream parser (body)                                       */
 /*                                                                         */
-/*  Copyright 1996-2000 by                                                 */
+/*  Copyright 1996-2001 by                                                 */
 /*  David Turner, Robert Wilhelm, and Werner Lemberg.                      */
 /*                                                                         */
 /*  This file is part of the FreeType project, and may only be used,       */
@@ -18,8 +18,9 @@
 
 #include <ft2build.h>
 #include "cffparse.h"
-#include FT_INTERNAL_CFF_ERRORS_H
 #include FT_INTERNAL_STREAM_H
+
+#include "cfferrs.h"
 
 
   /*************************************************************************/
@@ -30,10 +31,6 @@
   /*                                                                       */
 #undef  FT_COMPONENT
 #define FT_COMPONENT  trace_cffparse
-
-
-#define CFF_Err_Stack_Underflow  FT_Err_Invalid_Argument
-#define CFF_Err_Syntax_Error     FT_Err_Invalid_Argument
 
 
   enum
@@ -66,10 +63,10 @@
   } CFF_Field_Handler;
 
 
-  FT_LOCAL_DEF
-  void  CFF_Parser_Init( CFF_Parser*  parser,
-                         FT_UInt      code,
-                         void*        object )
+  FT_LOCAL_DEF void
+  CFF_Parser_Init( CFF_Parser*  parser,
+                   FT_UInt      code,
+                   void*        object )
   {
     MEM_Set( parser, 0, sizeof ( *parser ) );
 
@@ -80,9 +77,9 @@
 
 
   /* read an integer */
-  static
-  FT_Long  cff_parse_integer( FT_Byte*  start,
-                              FT_Byte*  limit )
+  static FT_Long
+  cff_parse_integer( FT_Byte*  start,
+                     FT_Byte*  limit )
   {
     FT_Byte*  p   = start;
     FT_Int    v   = *p++;
@@ -139,16 +136,16 @@
 
 
   /* read a real */
-  static
-  FT_Fixed  cff_parse_real( FT_Byte*  start,
-                            FT_Byte*  limit,
-                            FT_Int    power_ten )
+  static FT_Fixed
+  cff_parse_real( FT_Byte*  start,
+                  FT_Byte*  limit,
+                  FT_Int    power_ten )
   {
     FT_Byte*  p    = start;
     FT_Long   num, divider, result, exp;
     FT_Int    sign = 0, exp_sign = 0;
-    FT_Byte   nib;
-    FT_Byte   phase;
+    FT_UInt   nib;
+    FT_UInt   phase;
 
 
     result  = 0;
@@ -287,8 +284,8 @@
 
 
   /* read a number, either integer or real */
-  static
-  FT_Long  cff_parse_num( FT_Byte**  d )
+  static FT_Long
+  cff_parse_num( FT_Byte**  d )
   {
     return ( **d == 30 ? ( cff_parse_real   ( d[0], d[1], 0 ) >> 16 )
                        :   cff_parse_integer( d[0], d[1] ) );
@@ -296,8 +293,8 @@
 
 
   /* read a floating point number, either integer or real */
-  static
-  FT_Fixed  cff_parse_fixed( FT_Byte**  d )
+  static FT_Fixed
+  cff_parse_fixed( FT_Byte**  d )
   {
     return ( **d == 30 ? cff_parse_real   ( d[0], d[1], 0 )
                        : cff_parse_integer( d[0], d[1] ) << 16 );
@@ -305,16 +302,16 @@
 
   /* read a floating point number, either integer or real, */
   /* but return 1000 times the number read in.             */
-  static
-  FT_Fixed  cff_parse_fixed_thousand( FT_Byte**  d )
+  static FT_Fixed
+  cff_parse_fixed_thousand( FT_Byte**  d )
   {
     return **d ==
       30 ? cff_parse_real     ( d[0], d[1], 3 )
          : (FT_Fixed)FT_MulFix( cff_parse_integer( d[0], d[1] ) << 16, 1000 );
   }
 
-  static
-  FT_Error  cff_parse_font_matrix( CFF_Parser*  parser )
+  static FT_Error
+  cff_parse_font_matrix( CFF_Parser*  parser )
   {
     CFF_Font_Dict*  dict   = (CFF_Font_Dict*)parser->object;
     FT_Matrix*      matrix = &dict->font_matrix;
@@ -338,8 +335,7 @@
 
       temp = ABS( matrix->yy );
 
-      *upm = (FT_UShort)( FT_DivFix( 0x10000L,
-                          FT_DivFix( temp, 1000 ) ) >> 16 );
+      *upm = (FT_UShort)FT_DivFix( 0x10000L, FT_DivFix( temp, 1000 ) );
 
       if ( temp != 0x10000L )
       {
@@ -362,8 +358,8 @@
   }
 
 
-  static
-  FT_Error  cff_parse_font_bbox( CFF_Parser*  parser )
+  static FT_Error
+  cff_parse_font_bbox( CFF_Parser*  parser )
   {
     CFF_Font_Dict*  dict = (CFF_Font_Dict*)parser->object;
     FT_BBox*        bbox = &dict->font_bbox;
@@ -386,8 +382,8 @@
   }
 
 
-  static
-  FT_Error  cff_parse_private_dict( CFF_Parser*  parser )
+  static FT_Error
+  cff_parse_private_dict( CFF_Parser*  parser )
   {
     CFF_Font_Dict*  dict = (CFF_Font_Dict*)parser->object;
     FT_Byte**       data = parser->stack;
@@ -407,8 +403,8 @@
   }
 
 
-  static
-  FT_Error  cff_parse_cid_ros( CFF_Parser*  parser )
+  static FT_Error
+  cff_parse_cid_ros( CFF_Parser*  parser )
   {
     CFF_Font_Dict*  dict = (CFF_Font_Dict*)parser->object;
     FT_Byte**       data = parser->stack;
@@ -483,10 +479,10 @@
   };
 
 
-  FT_LOCAL_DEF
-  FT_Error  CFF_Parser_Run( CFF_Parser*  parser,
-                            FT_Byte*     start,
-                            FT_Byte*     limit )
+  FT_LOCAL_DEF FT_Error
+  CFF_Parser_Run( CFF_Parser*  parser,
+                  FT_Byte*     start,
+                  FT_Byte*     limit )
   {
     FT_Byte*  p     = start;
     FT_Error  error = CFF_Err_Ok;
@@ -499,7 +495,7 @@
 
     while ( p < limit )
     {
-      FT_Byte  v = *p;
+      FT_UInt  v = *p;
 
 
       if ( v >= 27 && v != 31 )

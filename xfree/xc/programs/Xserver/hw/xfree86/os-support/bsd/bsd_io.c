@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bsd/bsd_io.c,v 3.18 2000/11/06 19:24:08 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bsd/bsd_io.c,v 3.19 2001/11/08 21:49:44 herrb Exp $ */
 /*
  * Copyright 1992 by Rich Murphey <Rich@Rice.edu>
  * Copyright 1993 by David Dawes <dawes@xfree86.org>
@@ -129,6 +129,11 @@ xf86KbdInit()
 		tcgetattr(xf86Info.consoleFd, &kbdtty);
 		break;
 #endif
+#if defined WSCONS_SUPPORT
+	case WSCONS:
+		xf86FlushInput(xf86Info.kbdFd);
+		break;
+#endif
 	}
 }
 
@@ -186,4 +191,25 @@ xf86KbdOff()
 	}
 	return(xf86Info.consoleFd);
 }
+
+#ifdef WSCONS_SUPPORT
+
+#define NUMEVENTS 64
+
+void
+xf86WSKbdEvents(void)
+{
+    static struct wscons_event events[NUMEVENTS];
+    int n, i;
+
+    n = read(xf86Info.kbdFd, events, sizeof events);
+    if (n <= 0)
+	return;
+    n /= sizeof(struct wscons_event);
+    for (i = 0; i < n; i++)
+	xf86PostWSKbdEvent(&events[i]);
+}
+
+#endif /* WSCONS_SUPPORT */
+
 

@@ -4,7 +4,7 @@
 /*                                                                         */
 /*    TrueType glyph data/program tables loader (body).                    */
 /*                                                                         */
-/*  Copyright 1996-2000 by                                                 */
+/*  Copyright 1996-2001 by                                                 */
 /*  David Turner, Robert Wilhelm, and Werner Lemberg.                      */
 /*                                                                         */
 /*  This file is part of the FreeType project, and may only be used,       */
@@ -21,8 +21,10 @@
 #include FT_INTERNAL_OBJECTS_H
 #include FT_INTERNAL_STREAM_H
 #include FT_TRUETYPE_TAGS_H
+
 #include "ttpload.h"
-#include FT_INTERNAL_TRUETYPE_ERRORS_H
+
+#include "tterrors.h"
 
 
   /*************************************************************************/
@@ -52,9 +54,9 @@
   /* <Return>                                                              */
   /*    FreeType error code.  0 means success.                             */
   /*                                                                       */
-  FT_LOCAL_DEF
-  FT_Error  TT_Load_Locations( TT_Face    face,
-                               FT_Stream  stream )
+  FT_LOCAL_DEF FT_Error
+  TT_Load_Locations( TT_Face    face,
+                     FT_Stream  stream )
   {
     FT_Error   error;
     FT_Memory  memory = stream->memory;
@@ -145,9 +147,9 @@
   /* <Return>                                                              */
   /*    FreeType error code.  0 means success.                             */
   /*                                                                       */
-  FT_LOCAL_DEF
-  FT_Error  TT_Load_CVT( TT_Face    face,
-                         FT_Stream  stream )
+  FT_LOCAL_DEF FT_Error
+  TT_Load_CVT( TT_Face    face,
+               FT_Stream  stream )
   {
     FT_Error   error;
     FT_Memory  memory = stream->memory;
@@ -212,9 +214,9 @@
   /* <Return>                                                              */
   /*    FreeType error code.  0 means success.                             */
   /*                                                                       */
-  FT_LOCAL_DEF
-  FT_Error  TT_Load_Programs( TT_Face    face,
-                              FT_Stream  stream )
+  FT_LOCAL_DEF FT_Error
+  TT_Load_Programs( TT_Face    face,
+                    FT_Stream  stream )
   {
     FT_Error   error;
     FT_ULong   table_len;

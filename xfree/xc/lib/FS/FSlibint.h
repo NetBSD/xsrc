@@ -1,4 +1,4 @@
-/* $Xorg: FSlibint.h,v 1.3 2000/08/17 19:44:06 cpqbld Exp $ */
+/* $Xorg: FSlibint.h,v 1.4 2001/02/09 02:03:25 xorgcvs Exp $ */
 
 /*
  * Copyright 1990 Network Computing Devices;
@@ -29,7 +29,11 @@
 
 Copyright 1987, 1994, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -46,7 +50,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/FS/FSlibint.h,v 3.5 2001/01/17 19:41:28 dawes Exp $ */
+/* $XFree86: xc/lib/FS/FSlibint.h,v 3.7 2001/12/14 19:53:33 dawes Exp $ */
 
 /*
  * FSlib internal decls
@@ -71,14 +75,7 @@ in this Software without prior written authorization from The Open Group.
 #include	"FSproto.h"
 #include	"FSlibos.h"
 #include	<errno.h>
-
-#ifndef NULL
-#define NULL 0
-#endif
-
-#ifdef X_NOT_STDC_ENV
-extern int  errno;		/* Internal system error number. */
-#endif
+#include	<stddef.h>
 
 typedef int (* FSIOErrorHandler)(FSServer *);
 typedef int (* FSErrorHandler)(FSServer *, FSErrorEvent *);
@@ -160,7 +157,7 @@ extern FSIOErrorHandler FSSetIOErrorHandler ( FSIOErrorHandler handler );
  *
  */
 
-#if (defined(__STDC__) && !defined(UNIXCPP)) || defined(ANSICPP)
+#if !defined(UNIXCPP) || defined(ANSICPP)
 #define GetReq(name, req) \
         WORD64ALIGN\
 	if ((svr->bufptr + SIZEOF(fs##name##Req)) > svr->bufmax)\
@@ -187,7 +184,7 @@ extern FSIOErrorHandler FSSetIOErrorHandler ( FSIOErrorHandler handler );
 /* GetReqExtra is the same as GetReq, but allocates "n" additional
    bytes after the request. "n" must be a multiple of 4!  */
 
-#if (defined(__STDC__) && !defined(UNIXCPP)) || defined(ANSICPP)
+#if !defined(UNIXCPP) || defined(ANSICPP)
 #define GetReqExtra(name, n, req) \
         WORD64ALIGN\
 	if ((svr->bufptr + SIZEOF(fs##name##Req) + n) > svr->bufmax)\
@@ -216,7 +213,7 @@ extern FSIOErrorHandler FSSetIOErrorHandler ( FSIOErrorHandler handler );
  * "rid" is the name of the resource.
  */
 
-#if (defined(__STDC__) && !defined(UNIXCPP)) || defined(ANSICPP)
+#if !defined(UNIXCPP) || defined(ANSICPP)
 #define GetResReq(name, rid, req) \
         WORD64ALIGN\
 	if ((svr->bufptr + SIZEOF(fsResourceReq)) > svr->bufmax)\
@@ -245,7 +242,7 @@ extern FSIOErrorHandler FSSetIOErrorHandler ( FSIOErrorHandler handler );
  * at all.
  */
 
-#if (defined(__STDC__) && !defined(UNIXCPP)) || defined(ANSICPP)
+#if !defined(UNIXCPP) || defined(ANSICPP)
 #define GetEmptyReq(name, req) \
         WORD64ALIGN\
 	if ((svr->bufptr + SIZEOF(fsReq)) > svr->bufmax)\
@@ -355,7 +352,7 @@ extern void Data();
 				 * don't line up with proto */
 
 
-#if (defined(__STDC__) && !defined(UNIXCPP)) || defined(ANSICPP)
+#if !defined(UNIXCPP) || defined(ANSICPP)
 #define FSCat(x,y) x##_##y
 #else
 #define FSCat(x,y) x/**/_/**/y

@@ -4,7 +4,7 @@
 /*                                                                         */
 /*    Type 1 driver interface (body).                                      */
 /*                                                                         */
-/*  Copyright 1996-2000 by                                                 */
+/*  Copyright 1996-2001 by                                                 */
 /*  David Turner, Robert Wilhelm, and Werner Lemberg.                      */
 /*                                                                         */
 /*  This file is part of the FreeType project, and may only be used,       */
@@ -20,6 +20,8 @@
 #include "t1driver.h"
 #include "t1gload.h"
 #include "t1load.h"
+
+#include "t1errors.h"
 
 #ifndef T1_CONFIG_OPTION_NO_AFM
 #include "t1afm.h"
@@ -42,11 +44,11 @@
 #define FT_COMPONENT  trace_t1driver
 
 
-  static
-  FT_Error  get_t1_glyph_name( T1_Face     face,
-                               FT_UInt     glyph_index,
-                               FT_Pointer  buffer,
-                               FT_UInt     buffer_max )
+  static FT_Error
+  t1_get_glyph_name( T1_Face     face,
+                     FT_UInt     glyph_index,
+                     FT_Pointer  buffer,
+                     FT_UInt     buffer_max )
   {
     FT_String*  gname;
 
@@ -66,6 +68,50 @@
     }
 
     return T1_Err_Ok;
+  }
+
+
+  /*************************************************************************/
+  /*                                                                       */
+  /* <Function>                                                            */
+  /*    t1_get_name_index                                                  */
+  /*                                                                       */
+  /* <Description>                                                         */
+  /*    Uses the Type 1 font's `glyph_names' table to find a given glyph   */
+  /*    name's glyph index.                                                */
+  /*                                                                       */
+  /* <Input>                                                               */
+  /*    face       :: A handle to the source face object.                  */
+  /*                                                                       */
+  /*    glyph_name :: The glyph name.                                      */
+  /*                                                                       */
+  /* <Return>                                                              */
+  /*    Glyph index.  0 means `undefined character code'.                  */
+  /*                                                                       */
+  static FT_UInt
+  t1_get_name_index( T1_Face     face,
+                     FT_String*  glyph_name )
+  {
+    FT_Int      i;
+    FT_String*  gname;
+
+
+    for ( i = 0; i < face->type1.num_glyphs; i++ )
+    {
+      gname = face->type1.glyph_names[i];
+
+      if ( !strcmp( glyph_name, gname ) )
+        return (FT_UInt)i;
+    }
+
+    return 0;
+  }
+
+
+  static const char*
+  t1_get_ps_name( T1_Face    face )
+  {
+    return (const char*) face->type1.font_name;
   }
 
 
@@ -96,15 +142,21 @@
   /*    isn't available (i.e., wasn't compiled in the driver at build      */
   /*    time).                                                             */
   /*                                                                       */
-  static
-  FT_Module_Interface  Get_Interface( FT_Driver         driver,
-                                      const FT_String*  interface )
+  static FT_Module_Interface
+  Get_Interface( FT_Driver         driver,
+                 const FT_String*  interface )
   {
     FT_UNUSED( driver );
     FT_UNUSED( interface );
 
     if ( strcmp( (const char*)interface, "glyph_name" ) == 0 )
-      return (FT_Module_Interface)get_t1_glyph_name;
+      return (FT_Module_Interface)t1_get_glyph_name;
+
+    if ( strcmp( (const char*)interface, "name_index" ) == 0 )
+      return (FT_Module_Interface)t1_get_name_index;
+
+    if ( strcmp( (const char*)interface, "postscript_name" ) == 0 )
+      return (FT_Module_Interface)t1_get_ps_name;
 
 #ifndef T1_CONFIG_OPTION_NO_MM_SUPPORT
     if ( strcmp( (const char*)interface, "get_mm" ) == 0 )
@@ -154,11 +206,11 @@
   /*                                                                       */
   /*    They can be implemented by format-specific interfaces.             */
   /*                                                                       */
-  static
-  FT_Error  Get_Kerning( T1_Face     face,
-                         FT_UInt     left_glyph,
-                         FT_UInt     right_glyph,
-                         FT_Vector*  kerning )
+  static FT_Error
+  Get_Kerning( T1_Face     face,
+               FT_UInt     left_glyph,
+               FT_UInt     right_glyph,
+               FT_Vector*  kerning )
   {
     T1_AFM*  afm;
 
@@ -192,9 +244,9 @@
   /* <Return>                                                              */
   /*    Glyph index.  0 means `undefined character code'.                  */
   /*                                                                       */
-  static
-  FT_UInt  Get_Char_Index( FT_CharMap  charmap,
-                           FT_Long     charcode )
+  static FT_UInt
+  Get_Char_Index( FT_CharMap  charmap,
+                  FT_Long     charcode )
   {
     T1_Face             face;
     FT_UInt             result = 0;
@@ -279,7 +331,10 @@
   const FT_Driver_Class  t1_driver_class =
   {
     {
-      ft_module_font_driver | ft_module_driver_scalable,
+      ft_module_font_driver      |
+      ft_module_driver_scalable  | 
+      ft_module_driver_has_hinter,
+      
       sizeof( FT_DriverRec ),
 
       "type1",
@@ -288,8 +343,8 @@
 
       0,   /* format interface */
 
-      (FT_Module_Constructor)T1_Init_Driver,
-      (FT_Module_Destructor) T1_Done_Driver,
+      (FT_Module_Constructor)T1_Driver_Init,
+      (FT_Module_Destructor) T1_Driver_Done,
       (FT_Module_Requester)  Get_Interface,
     },
 
@@ -297,15 +352,15 @@
     sizeof( T1_SizeRec ),
     sizeof( T1_GlyphSlotRec ),
 
-    (FTDriver_initFace)     T1_Init_Face,
-    (FTDriver_doneFace)     T1_Done_Face,
-    (FTDriver_initSize)     0,
-    (FTDriver_doneSize)     0,
-    (FTDriver_initGlyphSlot)0,
-    (FTDriver_doneGlyphSlot)0,
+    (FTDriver_initFace)     T1_Face_Init,
+    (FTDriver_doneFace)     T1_Face_Done,
+    (FTDriver_initSize)     T1_Size_Init,
+    (FTDriver_doneSize)     T1_Size_Done,
+    (FTDriver_initGlyphSlot)T1_GlyphSlot_Init,
+    (FTDriver_doneGlyphSlot)T1_GlyphSlot_Done,
 
-    (FTDriver_setCharSizes) 0,
-    (FTDriver_setPixelSizes)0,
+    (FTDriver_setCharSizes) T1_Size_Reset,
+    (FTDriver_setPixelSizes)T1_Size_Reset,
     (FTDriver_loadGlyph)    T1_Load_Glyph,
     (FTDriver_getCharIndex) Get_Char_Index,
 
@@ -342,7 +397,8 @@
   /*    format-specific interface can then be retrieved through the method */
   /*    interface->get_format_interface.                                   */
   /*                                                                       */
-  FT_EXPORT_DEF( const FT_Driver_Class* )  getDriverClass( void )
+  FT_EXPORT_DEF( const FT_Driver_Class* )
+  getDriverClass( void )
   {
     return &t1_driver_class;
   }

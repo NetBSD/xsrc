@@ -28,7 +28,7 @@
  * in this Software without prior written authorization from Metro Link.
  *
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/input/penmount/xf86PM.c,v 1.2 2000/08/11 19:10:46 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/input/penmount/xf86PM.c,v 1.3 2001/11/26 16:25:53 dawes Exp $ */
 
 #define _PENMOUNT_C_
 
@@ -92,7 +92,7 @@ static const char *reqSymbols[] = {
 	"screenInfo",
 	"xf86AddInputDriver",
 	"xf86AllocateInput",
-	"xf86CloseSerial",				/* first one */
+	"xf86CloseSerial",
 	"xf86CollectInputOptions",
 	"xf86ErrorFVerb",
 	"xf86FindOptionValue",
@@ -101,7 +101,6 @@ static const char *reqSymbols[] = {
 	"xf86MotionHistoryAllocate",
 	"xf86NameCmp",
 	"xf86OpenSerial",
-	"xf86CloseSerial",				/* second one ? */
 	"xf86OptionListCreate",
 	"xf86OptionListMerge",
 	"xf86OptionListReport",
@@ -109,7 +108,6 @@ static const char *reqSymbols[] = {
 	"xf86PostMotionEvent",
 	"xf86PostProximityEvent",
 	"xf86ProcessCommonOptions",
-	"xf86RemoveLocalDevice",
 	"xf86ScaleAxis",
 	"xf86SetIntOption",
 	"xf86SetStrOption",

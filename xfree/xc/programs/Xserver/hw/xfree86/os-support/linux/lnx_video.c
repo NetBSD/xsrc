@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/linux/lnx_video.c,v 3.51.2.3 2001/05/29 16:38:00 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/linux/lnx_video.c,v 3.60 2001/11/01 23:35:33 dawes Exp $ */
 /*
  * Copyright 1992 by Orest Zborowski <obz@Kodak.com>
  * Copyright 1993 by David Wexelblat <dwex@goblin.org>
@@ -42,6 +42,8 @@
 #include <asm/mtrr.h>
 #endif
 
+extern int ioperm(unsigned long from, unsigned long num, int turn_on);
+
 #ifndef MAP_FAILED
 #define MAP_FAILED ((void *)-1)
 #endif
@@ -49,8 +51,22 @@
 static Bool ExtendedEnabled = FALSE;
 
 #ifdef __ia64__
+
 #include "compiler.h"
 #include <sys/io.h>
+
+#elif !defined(__powerpc__) && \
+      !defined(__mc68000__) && \
+      !defined(__sparc__) && \
+      !defined(__mips__)
+
+/*
+ * Due to conflicts with "compiler.h", don't rely on <sys/io.h> to declare
+ * these.
+ */
+extern int ioperm(unsigned long __from, unsigned long __num, int __turn_on);
+extern int iopl(int __level);
+
 #endif
 
 #ifdef __alpha__
@@ -243,52 +259,41 @@ mtrr_add_wc_region(int screenNum, unsigned long base, unsigned long size,
 	wcr->next = NULL;
 
 #if SPLIT_WC_REGIONS
-	/*********************************** by _usul ********************/
 	/*
 	 * Splits up the write-combining region if it is not aligned on a
  	 * size boundary.
 	 */
-	if (base % size) {
-		struct mtrr_wc_region *wcrc = wcr;
-		int rgs = 1;
-		unsigned long srem, sdiv, bcurr;
+
+	{
+	    unsigned long last, lbase, d_size;
+	    unsigned long n_size = size;
+	    unsigned long n_base = base;
 	    
-		xf86DrvMsgVerb(screenNum, X_INFO, 2,
-		    "WC region has to be split (0x%lx,0x%lx)\n", base, size);
-
-		bcurr = base;
-		srem = size;
-
-		do {
-			for (sdiv = (0x1 << 31); sdiv; sdiv = sdiv >> 1) {
-				while(sdiv > srem) {
-					sdiv >>= 1;
-				}
-				if (!(bcurr % sdiv)) {
-					mtrr_add_wc_region(screenNum, bcurr,
-							   sdiv, from);
-					break;
-				}
-			}
-			if (!sdiv) {
-				xf86DrvMsg(screenNum, X_ERROR,
-					"Serious error in region splitting!\n");
-			}
-			wcrc->sentry.base = bcurr;
-			wcrc->sentry.size = sdiv;
-			wcrc->sentry.type = MTRR_TYPE_WRCOMB;
-			wcrc->added = TRUE;
-			if ((srem - sdiv)) {
-				wcrc->next = xalloc(sizeof(*wcrc));
-				wcrc = wcrc->next;
-			} else {
-				wcrc->next = NULL;
-			}
-			srem -= sdiv;
-			bcurr += sdiv;
-		} while (srem);
-		return wcr;
-	}
+	    int i = 0;
+	    last = n_base + n_size - 1;
+	    for (lbase = n_base; !(lbase & 1) && (last & 1);
+		 lbase = lbase >> 1, last = last >> 1, i++)
+		if (lbase != last) {
+		    while((lbase & 1) == (last & 1)) {
+			i++;
+			lbase >>= 1;
+			last >>= 1;
+		    }
+		}
+	    d_size = 1 << i;
+#ifdef DEBUG
+	    ErrorF("WC_BASE: 0x%lx WC_END: 0x%lx\n",base,base+d_size-1);
+#endif
+	    n_base += d_size;
+	    n_size -= d_size;
+	    if (n_size) {
+		xf86DrvMsgVerb(screenNum,X_INFO,3,"Splitting WC range: "
+			       "base: 0x%lx, size: 0x%lx\n",base,size);
+		wcr->next = mtrr_add_wc_region(screenNum, n_base, n_size,from);
+	    }
+	    wcr->sentry.size = d_size;
+	} 
+	
 	/*****************************************************************/
 #endif /* SPLIT_WC_REGIONS */
 
@@ -358,7 +363,7 @@ xf86OSInitVidMem(VidMemInfoPtr pVidMem)
 #ifdef __alpha__
 	if (axpSystem == -1) {
 	  axpSystem = lnxGetAXP();
-	  if (needSparse = (_bus_base_sparse() > 0)) {
+	  if ((needSparse = (_bus_base_sparse() > 0))) {
 	    hae_thresh = xf86AXPParams[axpSystem].hae_thresh;
 	    hae_mask = xf86AXPParams[axpSystem].hae_mask;
 	    sparse_size = xf86AXPParams[axpSystem].size;
@@ -517,7 +522,7 @@ xf86EnableIO(void)
 #endif
 	}
 	close(fd);
-#elif !defined(__mc68000__) && !defined(__sparc__) && !defined(__mips__)
+#elif !defined(__mc68000__) && !defined(__sparc__) && !defined(__mips__) && !defined(__sh__) && !defined(__hppa__)
 	if (ioperm(0, 1024, 1) || iopl(3))
 		FatalError("xf86EnableIOPorts: Failed to set IOPL for I/O\n");
 # if !defined(__alpha__)
@@ -538,7 +543,7 @@ xf86DisableIO(void)
 #if defined(__powerpc__)
 	munmap(ioBase, 0x20000);
 	ioBase = NULL;
-#elif !defined(__mc68000__) && !defined(__sparc__) && !defined(__mips__)
+#elif !defined(__mc68000__) && !defined(__sparc__) && !defined(__mips__) && !defined(__sh__) && !defined(__hppa__)
 	iopl(0);
 	ioperm(0, 1024, 0);
 #endif
@@ -552,29 +557,31 @@ xf86DisableIO(void)
 /* Interrupt Handling section                                              */
 /***************************************************************************/
 
+/* XXX The #ifdefs should be made simpler. */
+
 Bool
 xf86DisableInterrupts()
 {
+#if !defined(__mc68000__) && !defined(__powerpc__) && !defined(__sparc__) && !defined(__mips__) && !defined(__ia64__) && !defined(__sh__) && !defined(__hppa__)
 	if (!ExtendedEnabled)
-#if !defined(__mc68000__) && !defined(__powerpc__) && !defined(__sparc__) && !defined(__mips__)
 	    if (iopl(3) || ioperm(0, 1024, 1))
 			return (FALSE);
 #endif
-#if defined(__alpha__) || defined(__mc68000__) || defined(__powerpc__) || defined(__sparc__) || defined(__mips__)
+#if defined(__alpha__) || defined(__mc68000__) || defined(__powerpc__) || defined(__sparc__) || defined(__mips__) || defined(__arm__) || defined(__sh__) || defined(__ia64__) || defined(__hppa__)
 #else
-#ifdef __GNUC__
-#if defined(__ia64__)
-#if 0
+# ifdef __GNUC__
+#  if defined(__ia64__)
+#   if 0
 	__asm__ __volatile__ (";; rsm psr.i;; srlz.d" ::: "memory");
-#endif
-#else
+#   endif
+#  else
       __asm__ __volatile__("cli");
-#endif
-#else
+#  endif
+# else
 	asm("cli");
+# endif
 #endif
-#endif
-#if !defined(__mc68000__) && !defined(__powerpc__) && !defined(__sparc__) && !defined(__mips__)
+#if !defined(__mc68000__) && !defined(__powerpc__) && !defined(__sparc__) && !defined(__mips__) && !defined(__sh__) && !defined(__ia64__) && !defined(__hppa__)
 	if (!ExtendedEnabled) {
 	    iopl(0);
 	    ioperm(0, 1024, 0);
@@ -587,26 +594,26 @@ xf86DisableInterrupts()
 void
 xf86EnableInterrupts()
 {
+#if !defined(__mc68000__) && !defined(__powerpc__) && !defined(__sparc__) && !defined(__mips__) && !defined(__ia64__) && !defined(__sh__) && !defined(__hppa__)
 	if (!ExtendedEnabled)
-#if !defined(__mc68000__) && !defined(__powerpc__) && !defined(__sparc__) && !defined(__mips__)
 	    if (iopl(3) || ioperm(0, 1024, 1))
 			return;
 #endif
-#if defined(__alpha__) || defined(__mc68000__) || defined(__powerpc__) || defined(__sparc__) || defined(__mips__)
+#if defined(__alpha__) || defined(__mc68000__) || defined(__powerpc__) || defined(__sparc__) || defined(__mips__) || defined(__arm__) || defined(__sh__) || defined(__ia64__) || defined(__hppa__)
 #else
-#ifdef __GNUC__
-#if defined(__ia64__)
-#if 0
+# ifdef __GNUC__
+#  if defined(__ia64__)
+#   if 0
 	__asm__ __volatile__ (";; ssm psr.i;; srlz.d" ::: "memory");
-#endif
-#else
+#   endif
+#  else
       __asm__ __volatile__("sti");
-#endif
-#else
+#  endif
+# else
 	asm("sti");
+# endif
 #endif
-#endif
-#if !defined(__mc68000__) && !defined(__powerpc__) && !defined(__sparc__) && !defined(__mips__)
+#if !defined(__mc68000__) && !defined(__powerpc__) && !defined(__sparc__) && !defined(__mips__) && !defined(__sh__) && !defined(__ia64__) && !defined(__hppa__)
 	if (!ExtendedEnabled) {
 	    iopl(0);
 	    ioperm(0, 1024, 0);
@@ -618,10 +625,6 @@ xf86EnableInterrupts()
 #if defined (__alpha__)
 
 #define vuip    volatile unsigned int *
-
-static unsigned long msb_set = 0;
-static pointer lnxSBase = 0;
-static pointer lnxBase = 0;
 
 extern int readDense8(pointer Base, register unsigned long Offset);
 extern int readDense16(pointer Base, register unsigned long Offset);
@@ -655,10 +658,17 @@ writeSparse16(int Value, pointer Base, register unsigned long Offset);
 static void
 writeSparse32(int Value, pointer Base, register unsigned long Offset);
 
+#define DENSE_BASE	0x2ff00000000UL
+#define SPARSE_BASE	0x30000000000UL
+
+static unsigned long msb_set = 0;
+
 static pointer
 mapVidMemSparse(int ScreenNum, unsigned long Base, unsigned long Size, int flags)
 {
     int fd;
+    unsigned long ret, rets = 0;
+
     static Bool was_here = FALSE;
 
     if (!was_here) {
@@ -673,34 +683,89 @@ mapVidMemSparse(int ScreenNum, unsigned long Base, unsigned long Size, int flags
       xf86ReadMmio8 = readSparse8;
       xf86ReadMmio16 = readSparse16;
       xf86ReadMmio32 = readSparse32;
-	
-      if ((fd = open(DEV_MEM, O_RDWR)) < 0) {
-	FatalError("xf86MapVidMem: failed to open " DEV_MEM " (%s)\n",
-		   strerror(errno));
-      }
-      /* This requirers linux-0.99.pl10 or above */
-      lnxBase = mmap((caddr_t)0, 0x100000000,
-		     PROT_READ | PROT_WRITE,
-		     MAP_SHARED, fd,
-		     (off_t) bus_base);
-      lnxSBase = mmap((caddr_t)0, 0x400000000,
-		      PROT_READ | PROT_WRITE,
-		      MAP_SHARED, fd,
-		      (off_t) _bus_base_sparse());
-      
-      close(fd);
-      
-      if (lnxSBase == MAP_FAILED || lnxBase == MAP_FAILED)	{
-	FatalError("xf86MapVidMem: Could not mmap framebuffer (%s)\n",
-		   strerror(errno));
-      }
     }
-    return (pointer)((unsigned long)lnxBase + Base);
+	
+    if ((fd = open(DEV_MEM, O_RDWR)) < 0) {
+        FatalError("xf86MapVidMem: failed to open " DEV_MEM " (%s)\n",
+		   strerror(errno));
+    }
+
+#if 0
+    xf86Msg(X_INFO,"mapVidMemSparse: try Base 0x%lx size 0x%lx flags 0x%x\n",
+	    Base, Size, flags);
+#endif
+
+    /* This requirers linux-0.99.pl10 or above */
+
+    /*
+     * Always do DENSE mmap, since read32/write32 currently require it.
+     */
+    ret = (unsigned long)mmap((caddr_t)(DENSE_BASE + Base), Size,
+		   PROT_READ | PROT_WRITE,
+		   MAP_SHARED, fd,
+		   (off_t) (bus_base + Base));
+
+    /*
+     * Do SPARSE mmap only when MMIO and not MMIO_32BIT, or FRAMEBUFFER
+     * and SPARSE (which should require the use of read/write macros).
+     *
+     * By not SPARSE mmapping an 8MB framebuffer, we can save approx. 256K
+     * bytes worth of pagetable (32 pages).
+     */
+    if (((flags & VIDMEM_MMIO) && !(flags & VIDMEM_MMIO_32BIT)) ||
+	((flags & VIDMEM_FRAMEBUFFER) && (flags & VIDMEM_SPARSE)))
+    {
+        rets = (unsigned long)mmap((caddr_t)(SPARSE_BASE + (Base << 5)),
+				   Size << 5, PROT_READ | PROT_WRITE,
+				   MAP_SHARED, fd,
+				   (off_t) _bus_base_sparse() + (Base << 5));
+    }
+
+    close(fd);
+      
+    if (ret == (unsigned long)MAP_FAILED || ret != (DENSE_BASE + Base)) {
+        FatalError("xf86MapVidMemSparse: Could not (dense) mmap fb (%s)\n",
+		   strerror(errno));
+    }
+
+    if (((flags & VIDMEM_MMIO) && !(flags & VIDMEM_MMIO_32BIT)) ||
+	((flags & VIDMEM_FRAMEBUFFER) && (flags & VIDMEM_SPARSE)))
+    {
+        if (rets == (unsigned long)MAP_FAILED ||
+	    rets != (SPARSE_BASE + (Base << 5)))
+	{
+	    FatalError("mapVidMemSparse: Could not (sparse) mmap fb (%s)\n",
+		       strerror(errno));
+	}
+    }
+
+#if 1
+    if (rets)
+        xf86Msg(X_INFO,"mapVidMemSparse: mapped Base 0x%lx size 0x%lx"
+		" to DENSE at 0x%lx and SPARSE at 0x%lx\n",
+		Base, Size, ret, rets);
+    else
+        xf86Msg(X_INFO,"mapVidMemSparse: mapped Base 0x%lx size 0x%lx"
+		" to DENSE only at 0x%lx\n",
+		Base, Size, ret);
+
+#endif
+    return (pointer)(DENSE_BASE + Base);
 }
 
 static void
 unmapVidMemSparse(int ScreenNum, pointer Base, unsigned long Size)
 {
+    unsigned long Offset = (unsigned long)Base - DENSE_BASE;
+#if 1
+    xf86Msg(X_INFO,"unmapVidMemSparse: unmapping Base 0x%lx Size 0x%lx\n",
+	    Base, Size);
+#endif
+    /* Unmap DENSE always. */
+    munmap((caddr_t)Base, Size);
+
+    /* Unmap SPARSE always, and ignore error in case we did not map it. */
+    munmap((caddr_t)(SPARSE_BASE + (Offset << 5)), Size << 5);
 }
 
 static int
@@ -710,7 +775,7 @@ readSparse8(pointer Base, register unsigned long Offset)
     register unsigned long msb;
 
     mem_barrier();
-    Offset += (unsigned long)Base - (unsigned long)lnxBase;
+    Offset += (unsigned long)Base - DENSE_BASE;
     shift = (Offset & 0x3) << 3;
     if (Offset >= (hae_thresh)) {
         msb = Offset & hae_mask;
@@ -722,7 +787,7 @@ readSparse8(pointer Base, register unsigned long Offset)
     }
 
     mem_barrier();
-    result = *(vuip) ((unsigned long)lnxSBase + (Offset << 5));
+    result = *(vuip) (SPARSE_BASE + (Offset << 5));
     result >>= shift;
     return 0xffUL & result;
 }
@@ -734,7 +799,7 @@ readSparse16(pointer Base, register unsigned long Offset)
     register unsigned long msb;
 
     mem_barrier();
-    Offset += (unsigned long)Base - (unsigned long)lnxBase;
+    Offset += (unsigned long)Base - DENSE_BASE;
     shift = (Offset & 0x2) << 3;
     if (Offset >= hae_thresh) {
         msb = Offset & hae_mask;
@@ -746,7 +811,7 @@ readSparse16(pointer Base, register unsigned long Offset)
     }
 
     mem_barrier();
-    result = *(vuip)((unsigned long)lnxSBase+(Offset<<5)+(1<<(5-2)));
+    result = *(vuip)(SPARSE_BASE + (Offset<<5) + (1<<(5-2)));
     result >>= shift;
     return 0xffffUL & result;
 }
@@ -754,6 +819,7 @@ readSparse16(pointer Base, register unsigned long Offset)
 static int
 readSparse32(pointer Base, register unsigned long Offset)
 {
+    /* NOTE: this is really using DENSE. */
     mem_barrier();
     return *(vuip)((unsigned long)Base+(Offset));
 }
@@ -765,7 +831,7 @@ writeSparse8(int Value, pointer Base, register unsigned long Offset)
     register unsigned int b = Value & 0xffU;
 
     write_mem_barrier();
-    Offset += (unsigned long)Base - (unsigned long)lnxBase;
+    Offset += (unsigned long)Base - DENSE_BASE;
     if (Offset >= hae_thresh) {
         msb = Offset & hae_mask;
 	Offset -= msb;
@@ -776,7 +842,7 @@ writeSparse8(int Value, pointer Base, register unsigned long Offset)
     }
 
     write_mem_barrier();
-    *(vuip) ((unsigned long)lnxSBase + (Offset << 5)) = b * 0x01010101;
+    *(vuip) (SPARSE_BASE + (Offset << 5)) = b * 0x01010101;
 }
 
 static void
@@ -786,7 +852,7 @@ writeSparse16(int Value, pointer Base, register unsigned long Offset)
     register unsigned int w = Value & 0xffffU;
 
     write_mem_barrier();
-    Offset += (unsigned long)Base - (unsigned long)lnxBase;
+    Offset += (unsigned long)Base - DENSE_BASE;
     if (Offset >= hae_thresh) {
         msb = Offset & hae_mask;
 	Offset -= msb;
@@ -797,13 +863,13 @@ writeSparse16(int Value, pointer Base, register unsigned long Offset)
     }
 
     write_mem_barrier();
-    *(vuip)((unsigned long)lnxSBase+(Offset<<5)+(1<<(5-2))) =
-      w * 0x00010001;
+    *(vuip)(SPARSE_BASE + (Offset<<5) + (1<<(5-2))) = w * 0x00010001;
 }
 
 static void
 writeSparse32(int Value, pointer Base, register unsigned long Offset)
 {
+    /* NOTE: this is really using DENSE. */
     write_mem_barrier();
     *(vuip)((unsigned long)Base + (Offset)) = Value;
     return;
@@ -815,7 +881,7 @@ writeSparseNB8(int Value, pointer Base, register unsigned long Offset)
     register unsigned long msb;
     register unsigned int b = Value & 0xffU;
 
-    Offset += (unsigned long)Base - (unsigned long)lnxBase;
+    Offset += (unsigned long)Base - DENSE_BASE;
     if (Offset >= hae_thresh) {
         msb = Offset & hae_mask;
 	Offset -= msb;
@@ -824,7 +890,7 @@ writeSparseNB8(int Value, pointer Base, register unsigned long Offset)
 	    msb_set = msb;
 	}
     }
-    *(vuip) ((unsigned long)lnxSBase + (Offset << 5)) = b * 0x01010101;
+    *(vuip) (SPARSE_BASE + (Offset << 5)) = b * 0x01010101;
 }
 
 static void
@@ -833,7 +899,7 @@ writeSparseNB16(int Value, pointer Base, register unsigned long Offset)
     register unsigned long msb;
     register unsigned int w = Value & 0xffffU;
 
-    Offset += (unsigned long)Base - (unsigned long)lnxBase;
+    Offset += (unsigned long)Base - DENSE_BASE;
     if (Offset >= hae_thresh) {
         msb = Offset & hae_mask;
 	Offset -= msb;
@@ -842,13 +908,13 @@ writeSparseNB16(int Value, pointer Base, register unsigned long Offset)
 	    msb_set = msb;
 	}
     }
-    *(vuip)((unsigned long)lnxSBase+(Offset<<5)+(1<<(5-2))) =
-      w * 0x00010001;
+    *(vuip)(SPARSE_BASE+(Offset<<5)+(1<<(5-2))) = w * 0x00010001;
 }
 
 static void
 writeSparseNB32(int Value, pointer Base, register unsigned long Offset)
 {
+    /* NOTE: this is really using DENSE. */
     *(vuip)((unsigned long)Base + (Offset)) = Value;
     return;
 }

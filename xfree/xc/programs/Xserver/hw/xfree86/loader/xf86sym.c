@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/loader/xf86sym.c,v 1.193 2001/05/19 00:26:45 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/loader/xf86sym.c,v 1.202 2002/01/14 18:16:52 dawes Exp $ */
 
 /*
  *
@@ -47,6 +47,7 @@
 #include "xf86cmap.h"
 #include "xf86fbman.h"
 #include "dgaproc.h"
+#include "dpmsproc.h"
 #include "vidmodeproc.h"
 #include "xf86miscproc.h"
 #include "loader.h"
@@ -103,6 +104,17 @@ extern long __udivdi3(long, long);
 extern long __umoddi3(long, long);
 #endif
 
+#if defined(__arm__)
+#if defined(__linux__)
+#include <sys/io.h>
+#endif
+
+extern long __divsi3(long, long);
+extern long __modsi3(long, long);
+extern long __udivsi3(long, long);
+extern long __umodsi3(long, long);
+#endif
+
 #if defined(__powerpc__) && (defined(Lynx) || defined(linux))
 void _restf14();
 void _restf17();
@@ -156,8 +168,6 @@ extern int testrg(unsigned short, unsigned char);
 extern int testinx2(unsigned short, unsigned char, unsigned char);
 extern int testinx(unsigned short, unsigned char);
 #endif
-
-extern void DPMSSet(CARD16);
 
 /* XFree86 things */
 
@@ -392,6 +402,8 @@ LOOKUP xfree86LookupTab[] = {
    SYMFUNC(xf86LoadOneModule)
    SYMFUNC(xf86UnloadSubModule)
    SYMFUNC(xf86LoaderCheckSymbol)
+   SYMFUNC(xf86LoaderRefSymLists)
+   SYMFUNC(xf86LoaderRefSymbols)
    SYMFUNC(xf86LoaderReqSymLists)
    SYMFUNC(xf86LoaderReqSymbols)
    SYMFUNC(xf86SetBackingStore)
@@ -492,6 +504,7 @@ LOOKUP xfree86LookupTab[] = {
 
    /* xf86fbman.c */
    SYMFUNC(xf86InitFBManager)
+   SYMFUNC(xf86InitFBManagerArea)
    SYMFUNC(xf86InitFBManagerRegion)
    SYMFUNC(xf86RegisterFreeBoxCallback)
    SYMFUNC(xf86FreeOffscreenArea)
@@ -519,6 +532,8 @@ LOOKUP xfree86LookupTab[] = {
    SYMFUNC(xf86XVQueryOffscreenImages)
    SYMFUNC(xf86XVAllocateVideoAdaptorRec)
    SYMFUNC(xf86XVFreeVideoAdaptorRec)
+   SYMFUNC(xf86XVFillKeyHelper)
+   SYMFUNC(xf86XVClipVideoHelper)
 
    /* xf86xvmc.c */
    SYMFUNC(xf86XvMCScreenInit)
@@ -564,6 +579,7 @@ LOOKUP xfree86LookupTab[] = {
    SYMFUNC(MiscExtGetKbdSettings)
    SYMFUNC(MiscExtGetKbdValue)
    SYMFUNC(MiscExtSetKbdValue)
+   SYMFUNC(MiscExtSetGrabKeysState)
    SYMFUNC(MiscExtCreateStruct)
    SYMFUNC(MiscExtDestroyStruct)
    SYMFUNC(MiscExtApply)
@@ -589,7 +605,9 @@ LOOKUP xfree86LookupTab[] = {
    SYMFUNC(xf86XInputSetSendCoreEvents)
 /* End merged segment */
 #endif
+   SYMFUNC(DPMSGet)
    SYMFUNC(DPMSSet)
+   SYMFUNC(DPMSSupported)
 /* xf86Debug.c */
 #ifdef BUILDDEBUG
    SYMFUNC(xf86Break1)
@@ -706,6 +724,7 @@ LOOKUP xfree86LookupTab[] = {
    SYMFUNC(xf86fgetc)
    SYMFUNC(xf86fgetpos)
    SYMFUNC(xf86fgets)
+   SYMFUNC(xf86finite)
    SYMFUNC(xf86floor)
    SYMFUNC(xf86fmod)
    SYMFUNC(xf86fopen)
@@ -976,6 +995,18 @@ LOOKUP xfree86LookupTab[] = {
    SYMFUNC(_inw)
    SYMFUNC(_inl)
 #endif
+#if defined(__arm__)
+   SYMFUNC(__divsi3)
+   SYMFUNC(__udivsi3)
+   SYMFUNC(__modsi3)
+   SYMFUNC(__umodsi3)
+   SYMFUNC(outw)
+   SYMFUNC(outb)
+   SYMFUNC(outl)
+   SYMFUNC(inb)
+   SYMFUNC(inw)
+   SYMFUNC(inl)
+#endif
 
 #ifdef __FreeBSD__
    SYMFUNC(sysctlbyname)
@@ -997,9 +1028,12 @@ LOOKUP xfree86LookupTab[] = {
    SYMVAR(xf86Screens)
    SYMVAR(byte_reversed)
    /* debugging variables */
+#ifdef BUILDDEBUG
+   SYMVAR(xf86p8bit)
    SYMVAR(xf86DummyVar1)
    SYMVAR(xf86DummyVar2)
    SYMVAR(xf86DummyVar3)
+#endif
 
    /* variables for PCI devices and cards from xf86Bus.c */
    SYMVAR(xf86PCICardInfo)
@@ -1021,7 +1055,7 @@ LOOKUP xfree86LookupTab[] = {
    SYMVAR(res8514Shared)
    SYMVAR(PciAvoid)
 
-#if defined(__powerpc__) && (!defined(NO_INLINE) || defined(Lynx)) && !defined(__OpenBSD__)
+#if defined(__powerpc__) && (!defined(NO_INLINE) || defined(Lynx))
    SYMVAR(ioBase)
 #endif
 

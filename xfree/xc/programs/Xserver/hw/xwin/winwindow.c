@@ -27,7 +27,7 @@
  *
  * Authors:	Harold L Hunt II
  */
-/* $XFree86: xc/programs/Xserver/hw/xwin/winwindow.c,v 1.1 2001/04/05 20:13:51 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xwin/winwindow.c,v 1.2 2001/06/04 13:04:41 alanh Exp $ */
 
 #include "win.h"
 
@@ -36,7 +36,7 @@
 Bool
 winCreateWindowNativeGDI (WindowPtr pWin)
 {
-  fprintf (stderr, "winCreateWindow()\n");
+  ErrorF ("winCreateWindow()\n");
   return TRUE;
 }
 
@@ -45,7 +45,7 @@ winCreateWindowNativeGDI (WindowPtr pWin)
 Bool
 winDestroyWindowNativeGDI (WindowPtr pWin)
 {
-  fprintf (stderr, "winDestroyWindow()\n");
+  ErrorF ("winDestroyWindow()\n");
   return TRUE;
 }
 
@@ -54,7 +54,7 @@ winDestroyWindowNativeGDI (WindowPtr pWin)
 Bool
 winPositionWindowNativeGDI (WindowPtr pWin, int x, int y)
 {
-  fprintf (stderr, "winPositionWindow()\n");
+  ErrorF ("winPositionWindow()\n");
   return TRUE;
 }
 
@@ -65,7 +65,7 @@ winCopyWindowNativeGDI (WindowPtr pWin,
 			DDXPointRec ptOldOrg,
 			RegionPtr prgnSrc)
 {
-  fprintf (stderr, "winCopyWindow()\n");
+  ErrorF ("winCopyWindow()\n");
 }
 
 /* See Porting Layer Definition - p. 37 */
@@ -73,7 +73,7 @@ winCopyWindowNativeGDI (WindowPtr pWin,
 Bool
 winChangeWindowAttributesNativeGDI (WindowPtr pWin, unsigned long mask)
 {
-  fprintf (stderr, "winChangeWindowAttributes()\n");
+  ErrorF ("winChangeWindowAttributes()\n");
   return TRUE;
 }
 
@@ -83,7 +83,7 @@ winChangeWindowAttributesNativeGDI (WindowPtr pWin, unsigned long mask)
 Bool
 winUnmapWindowNativeGDI (WindowPtr pWindow)
 {
-  fprintf (stderr, "winUnmapWindow()\n");
+  ErrorF ("winUnmapWindow()\n");
   /* This functions is empty in the CFB,
    * we probably won't need to do anything
    */
@@ -96,7 +96,7 @@ winUnmapWindowNativeGDI (WindowPtr pWindow)
 Bool
 winMapWindowNativeGDI (WindowPtr pWindow)
 {
-  fprintf (stderr, "winMapWindow()\n");
+  ErrorF ("winMapWindow()\n");
   /* This function is empty in the CFB,
    * we probably won't need to do anything
    */

@@ -24,7 +24,7 @@
  THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
  ********************************************************/
-/* $XFree86: xc/programs/xkbcomp/xkbcomp.c,v 3.14 2001/01/17 23:45:45 dawes Exp $ */
+/* $XFree86: xc/programs/xkbcomp/xkbcomp.c,v 3.15 2001/07/25 15:05:24 dawes Exp $ */
 
 #include <stdio.h>
 #include <ctype.h>
@@ -43,9 +43,7 @@
 #define	DEBUG_VAR_NOT_LOCAL
 #define	DEBUG_VAR debugFlags
 #include "xkbcomp.h"
-#ifndef X_NOT_STDC_ENV
 #include <stdlib.h>
-#endif
 #include "xkbpath.h"
 #include "parseutils.h"
 #include "misc.h"

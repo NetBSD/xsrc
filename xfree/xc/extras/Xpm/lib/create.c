@@ -32,6 +32,7 @@
 *                                                                             *
 *  Developed by Arnaud Le Hors                                                *
 \*****************************************************************************/
+/* $XFree86: xc/extras/Xpm/lib/create.c,v 1.3 2002/01/07 19:40:49 dawes Exp $ */
 
 /*
  * The code related to FOR_MSW has been added by
@@ -212,8 +213,7 @@ typedef struct {
 }      CloseColor;
 
 static int
-closeness_cmp(a, b)
-    Const void *a, *b;
+closeness_cmp(Const void *a, Const void *b)
 {
     CloseColor *x = (CloseColor *) a, *y = (CloseColor *) b;
 
@@ -517,7 +517,7 @@ CreateColors(display, attributes, colors, ncolors, image_pixels, mask_pixels,
     /* variables stored in the XpmAttributes structure */
     Visual *visual;
     Colormap colormap;
-    XpmColorSymbol *colorsymbols;
+    XpmColorSymbol *colorsymbols = NULL;
     unsigned int numsymbols;
     XpmAllocColorFunc allocColor;
     void *closure;
@@ -525,7 +525,7 @@ CreateColors(display, attributes, colors, ncolors, image_pixels, mask_pixels,
     char *colorname;
     unsigned int color, key;
     Bool pixel_defined;
-    XpmColorSymbol *symbol;
+    XpmColorSymbol *symbol = NULL;
     char **defaults;
     int ErrorStatus = XpmSuccess;
     char *s;
@@ -1755,7 +1755,6 @@ PutPixel1(ximage, x, y, pixel)
     register char *src;
     register char *dst;
     register int i;
-    register char *data;
     Pixel px;
     int nbytes;
 
@@ -1788,7 +1787,6 @@ PutPixel(ximage, x, y, pixel)
     register char *src;
     register char *dst;
     register int i;
-    register char *data;
     Pixel px;
     int nbytes, ibpp;
 
@@ -2186,7 +2184,7 @@ xpmParseDataAndCreate(display, data, image_return, shapeimage_return,
     /*
      * parse extensions
      */
-    if (info && (info->valuemask & XpmReturnExtensions))
+    if (info && (info->valuemask & XpmReturnExtensions)) {
 	if (extensions) {
 	    ErrorStatus = xpmParseExtensions(data, &info->extensions,
 					     &info->nextensions);
@@ -2196,7 +2194,7 @@ xpmParseDataAndCreate(display, data, image_return, shapeimage_return,
 	    info->extensions = NULL;
 	    info->nextensions = 0;
 	}
-
+    }
     /*
      * store found informations in the XpmImage structure
      */

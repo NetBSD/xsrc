@@ -24,13 +24,11 @@
  THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
  ********************************************************/
-/* $XFree86: xc/lib/xkbfile/cout.c,v 3.5 2001/01/17 19:43:40 dawes Exp $ */
+/* $XFree86: xc/lib/xkbfile/cout.c,v 3.7 2001/10/28 03:32:46 tsi Exp $ */
 
 #include <stdio.h>
 #include <ctype.h>
-#ifndef X_NOT_STDC_ENV
 #include <stdlib.h>
-#endif
 #include <X11/Xos.h>
 #include <X11/Xlib.h>
 #include <X11/XKBlib.h>
@@ -365,8 +363,8 @@ register unsigned i;
 	    if (i==0)		fprintf(file,"    ");
 	    else if ((i&3)==0)	fprintf(file,",\n    ");
 	    else			fprintf(file,", ");
-	    fprintf(file,"{ %2d, 0x%x, %3d }",map->kt_index,map->group_info,
-							 map->offset);
+	    fprintf(file, "{ %2d, 0x%x, %3d }",
+		    map->kt_index[0], map->group_info, map->offset);
 	}
 	fprintf(file,"\n};\n");
     }
@@ -497,17 +495,18 @@ XkbIndicatorMapPtr	imap;
 
     if (xkb->indicators==NULL)
 	return True;
-    fprintf(file,"static XkbIndicatorRec indicators= {\n");
-    fprintf(file,"    0x%x,\n    {\n",xkb->indicators->phys_indicators);
+    fprintf(file, "static XkbIndicatorRec indicators= {\n");
+    fprintf(file, "    0x%lx,\n    {\n",
+	    (long)xkb->indicators->phys_indicators);
     for (imap=xkb->indicators->maps,i=nNames=0;i<XkbNumIndicators;i++,imap++) {
-	fprintf(file,"%s        { 0x%02x, %s, 0x%02x, %s, %s, ",
+	fprintf(file,"%s        { 0x%02x, %s, 0x%02x, %s, { %s, ",
 			(i!=0?",\n":""),
 			imap->flags,
 			XkbIMWhichStateMaskText(imap->which_groups,XkbCFile),
 			imap->groups,
 			XkbIMWhichStateMaskText(imap->which_mods,XkbCFile),
 			XkbModMaskText(imap->mods.mask,XkbCFile));
-	fprintf(file," %s, %s, %s }",
+	fprintf(file," %s, %s }, %s }",
 			XkbModMaskText(imap->mods.real_mods,XkbCFile),
 			XkbVModMaskText(dpy,xkb,0,imap->mods.vmods,XkbCFile),
 			XkbControlsMaskText(imap->ctrls,XkbCFile));

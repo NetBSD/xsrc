@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/afb/afbtile.c,v 3.2 2000/11/22 00:58:12 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/afb/afbtile.c,v 3.3 2001/10/28 03:32:59 tsi Exp $ */
 /* Combined Purdue/PurduePlus patches, level 2.0, 1/17/89 */
 /***********************************************************
 
@@ -241,7 +241,10 @@ MROP_NAME(afbTileArea)(pDraw, nbox, pbox, alu, pTile, xOff, yOff, planemask)
 	MROP_DECLARE_REG ()
 	register int h;		/* height of current box */
 	register PixelType *pdst;		/* pointer to bits we're writing */
-	register PixelType tmpsrc, tmpdst;
+	register PixelType tmpsrc;
+#if (MROP) != Mcopy
+	register PixelType tmpdst;
+#endif
 	int sizeDst;
 	int depthDst;
 	int sizeTile;
@@ -408,7 +411,7 @@ MROP_NAME(afbOpaqueStippleAreaPPW)(pDraw, nbox, pbox, alu, ptile,
 	register PixelType *psrc;
 						/* pointer to bits in tile, if needed */
 	int tileHeight;		/* height of the tile */
-	register PixelType srcpix;
+	register PixelType srcpix = 0;
 	int nlwidth;		/* width in longwords of the drawable */
 	int w;				/* width of current box */
 	MROP_DECLARE_REG ()
@@ -627,7 +630,10 @@ MROP_NAME(afbOpaqueStippleArea)(pDraw, nbox, pbox, alu, pTile, xOff, yOff,
 	MROP_DECLARE_REG ()
 	register int h;		/* height of current box */
 	register PixelType *pdst;		/* pointer to bits we're writing */
-	register PixelType tmpsrc, tmpdst;
+	register PixelType tmpsrc = 0;
+#if (MROP) != Mcopy
+	register PixelType tmpdst;
+#endif
 	int sizeDst;
 	int depthDst;
 	int tileLine;

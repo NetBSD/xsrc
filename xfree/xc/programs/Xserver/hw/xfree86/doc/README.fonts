@@ -2,7 +2,7 @@
 
                     Juliusz Chroboczek, <jch@xfree86.org>
 
-                               21 January 2001
+                              26 November 2001
 
 1.  Introduction
 
@@ -415,43 +415,56 @@ and reside in the font files
 
      /usr/X11R6/lib/X11/fonts/Speedo/font*.spd
 
-3.4  The Bigelow & Holmes Lucidux family
+3.4  The Bigelow & Holmes Luxi family
 
-XFree86 includes the Lucidux family of Type 1 fonts.  This family consists of
-the fonts Lucidux Serif, with XLFD
+XFree86 includes the Luxi family of scalable fonts, in both TrueType and
+Type 1 format.  This family consists of the fonts Luxi Serif, with XLFD
 
-     -b&h-lucidux serif-medium-*-normal--*-*-*-*-p-*-*-*
+     -b&h-luxi serif-medium-*-normal--*-*-*-*-p-*-*-*
 
-Lucidux Sans, with XLFD
+Luxi Sans, with XLFD
 
-     -b&h-lucidux sans-medium-*-normal--*-*-*-*-p-*-*-*
+     -b&h-luxi sans-medium-*-normal--*-*-*-*-p-*-*-*
 
-and Lucidux Mono, with XLFD
+and Luxi Mono, with XLFD
 
-     -b&h-lucidux mono-medium-*-normal--*-*-*-*-m-*-*-*
+     -b&h-luxi mono-medium-*-normal--*-*-*-*-m-*-*-*
 
-Each of these fonts currently comes in Roman and oblique variants (bold vari-
-ants will be included in a future release) and has 337 glyphs covering the
-basic ASCII Unicode range, the Latin 1 range, as well as the Extended Latin
-range.  In particular, these fonts include all the glyphs needed for ISO 8859
-parts 1, 2, 3, 4, 9 and 15.
+Each of these fonts comes Roman, oblique, bold and bold oblique variants The
+TrueType version have glyphs covering the basic ASCII Unicode range, the
+Latin 1 range, as well as the Extended Latin range and some additional punc-
+tuation characters.  In particular, these fonts include all the glyphs needed
+for ISO 8859 parts 1, 2, 3, 4, 9, 13 and 15, as well as all the glyphs in the
+Adobe Standard encoding and the Windows 3.1  character set.
 
-The Lucidux fonts are original designs by Charles Bigelow and Kris Holmes.
-Lucidux fonts include seriffed, sans serif, and monospaced styles that share
-the same stem weight, x-height, capital height, ascent and descent.  Lucidux
-fonts harmonise with Lucida (R) fonts of the same vertical proportions and
-weights.  The character width metrics of Lucidux roman fonts match those of
-core fonts bundled with several window systems.
+The glyph coverage of the Type 1 versions is somewhat reduced, and only cov-
+ers ISO 8859 parts 1, 2 and 15 as well as the Adobe Standard encoding.
 
-Each PFA file has a copy of the license terms in PS comment lines.  The
-license terms are also included in the file `COPYRIGHT.BH' for convenience,
+The Luxi fonts are original designs by Kris Holmes and Charles Bigelow. Luxi
+fonts include seriffed, sans serif, and monospaced styles, in roman and
+oblique, and normal and bold weights. The fonts share stem weight, x-height,
+capital height, ascent and descent, for graphical harmony.
+
+The character width metrics of Luxi roman and bold fonts match those of core
+fonts bundled with popular operating and window systems.
+
+The license terms for the Luxi fonts are included in the file `COPYRIGHT.BH',
 as well as in the License document.
 
-The design and font outlines were donated by Charles Bigelow and Kris Holmes
-from Bigelow and Holmes Inc., and the hinting was donated by Berthold Horn
-and Blenda Horn from Y&Y, Inc.  For more information, please contact
-<design@bigelowandholmes.com> or <sales@yandy.com>, or consult Y&Y's web site
-<URL:http://www.yandy.com>.
+Charles Bigelow and Kris Holmes from Bigelow and Holmes Inc.  developed the
+Luxi typeface designs in Ikarus digital format.
+
+URW++ Design and Development GmbH converted the Ikarus format fonts to True-
+Type and Type1 font programs and implemented the grid-fitting "hints" and
+kerning tables in the Luxi fonts.
+
+For more information, please contact <design@bigelowandholmes.com> or
+<info@urwpp.de>, or consult the URW++ web site <URL:http://www.urwpp.de>.
+
+An earlier version of the Luxi fonts was made available under the name
+Lucidux.  This name should no longer be used due to trademark uncertainties,
+and all traces of the Lucidux name have been removed from this version of
+XFree86.
 
 4.  Fonts and internationalisation
 
@@ -1010,7 +1023,7 @@ The IANA RFC documents, available from a number of sites throughout the
 world, often provide interesting information about character set issues; my
 favourite is RFC 373.
 
-     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/fonts.sgml,v 1.13 2001/03/01 00:37:09 dawes Exp $
+     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/fonts.sgml,v 1.15 2001/12/17 19:25:36 dawes Exp $
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.fonts,v 1.16.2.1 2001/06/01 18:26:45 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.fonts,v 1.19 2001/12/20 00:15:41 dawes Exp $

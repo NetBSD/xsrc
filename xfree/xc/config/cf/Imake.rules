@@ -5,7 +5,7 @@ XCOMM
 XCOMM
 XCOMM
 XCOMM
-XCOMM rules:  $XFree86: xc/config/cf/Imake.rules,v 3.94 2001/04/26 21:27:48 dawes Exp $
+XCOMM rules:  $XFree86: xc/config/cf/Imake.rules,v 3.102 2001/12/17 20:00:37 dawes Exp $
 
 /*
  *		   MACHINE-INDEPENDENT RULES; DO NOT MODIFY
@@ -25,6 +25,7 @@ XCOMM rules:  $XFree86: xc/config/cf/Imake.rules,v 3.94 2001/04/26 21:27:48 dawe
  * _MUse			(a,b)
  * _MUseCat			(a,b,c)
  * ProgramTargetName		(target)
+ * HostProgramTargetName	(target)
  * RunProgram			(progvar,options)
  * RunProgramWithSetup		(setup,progvar,options)
  * RemoveFile			(file)
@@ -311,6 +312,10 @@ XCOMM special target for clearmake					@@\
 #define ProgramTargetName(target)target
 #endif
 
+#ifndef HostProgramTargetName
+#define HostProgramTargetName(target)target
+#endif
+
 #ifndef RunProgram
 #define RunProgram(progvar,options) $(progvar) options
 #endif
@@ -510,8 +515,14 @@ clean cleantc::								@@\
 #endif /* RemoveTargetProgram */
 
 #ifndef MakeDir
-#define MakeDir(dir) DirFailPrefix@if [ -d dir ]; then set +x; \	@@\
-		else (set -x; $(MKDIRHIER) dir); fi
+#define MakeDir(dir) DirFailPrefix@if [ -d dir ]; then \		@@\
+		set +x; \						@@\
+	else \								@@\
+		if [ -h dir ]; then \					@@\
+			(set -x; rm -f dir); \				@@\
+		fi; \							@@\
+		(set -x; $(MKDIRHIER) dir); \				@@\
+	fi
 #endif /* MakeDir */
 
 #ifndef BuildIncludesTop
@@ -1211,7 +1222,7 @@ InstallNamedTarget(install.man,file.$(MANNEWSUFFIX),$(INSTMANFLAGS),destdir,dest
 InstallHtmlManPageAliases(file,aliases,$(MANSUFFIX))			@@\
 									@@\
 install.man::								@@\
-	@(TMP=#tmp.$$$$; \						@@\
+	@(TMP="#tmp.$$$$"; \						@@\
 	RemoveFile($${TMP}); \						@@\
 	echo .so `basename destdir`/file.$(MANSUFFIX) > $${TMP}; \	@@\
 	for i in aliases; do (set -x; \					@@\
@@ -1246,7 +1257,7 @@ install.man:: file.$(MANNEWSUFFIX)					@@\
 InstallHtmlManPageAliases(file,aliases,suffix)				@@\
 									@@\
 install.man::								@@\
-	@(TMP=#tmp.$$$$; \						@@\
+	@(TMP="#tmp.$$$$"; \						@@\
 	RemoveFile($${TMP}); \						@@\
 	echo .so `basename destdir`/file.suffix > $${TMP}; \		@@\
 	for i in aliases; do (set -x; \					@@\
@@ -1594,10 +1605,10 @@ InstallNamedTargetNoClobber(install,srcname,$(INSTBINFLAGS),dest,dstname)
  */
 #ifndef LinkFileList
 #define LinkFileList(step,list,dir,sub)					@@\
-step:: list								@@\
+step:: 								@@\
 	@MakeFlagsToShellFlags(i,set +e); \				@@\
 	echo "	cd" dir; cd dir && \					@@\
-	for i in list; do (set -x; RemoveFile($$i); $(LN) sub/$$i .); done
+	for i in list; do (set -x; $(LN) -f sub/$$i .); done
 #endif
 
 
@@ -1615,6 +1626,15 @@ step:: list								@@\
  *
  * Since the link is used in the installation process, we need to
  * make the link relative in order to honor $(DESTDIR) if it is set.
+ *
+ * Note: The sed script used here is not completely general.  It assumes
+ * that no elements of the path are '..', and that none start with '.'
+ * that aren't just '.'.
+ *
+ * For a more general solution $(REVPATH) could be used.  Even though
+ * it was intended for something a little different, it does do what is
+ * required here.
+ *
  */
 #ifndef LinkConfDirectoryLong
 #if UseSeparateConfDir && HasSymLinks
@@ -1625,7 +1645,7 @@ install::								@@\
 	@MakeFlagsToShellFlags(i,set +e); \				@@\
 	if [ -d Concat($(DESTDIR),opath/cdir) ]; then \			@@\
 	  RELPATH=`echo opath/cdir | \					@@\
-		sed -e 's:^.::' -e 's:[^/.][^/]*:..:'g`; \		@@\
+		sed -e 's:^/::' -e 's:[^/.][^/]*:..:'g -e 's:/\.$$::'`; \ @@\
 	  cd Concat($(DESTDIR),opath/cdir); \				@@\
 	  if [ -d rdir -a ! -h rdir ]; then \ 				@@\
 	    (cd rdir; tar cf - . | \					@@\
@@ -3167,7 +3187,8 @@ AllTarget(name.$(MANNEWSUFFIX))						@@\
 									@@\
 name.$(MANNEWSUFFIX): name.$(MANSRCSUFFIX)				@@\
 	RemoveFile($@)							@@\
-	$(LN) name.$(MANSRCSUFFIX) $@					@@\
+	cd `dirname name` && \						@@\
+		$(LN) `basename name.$(MANSRCSUFFIX)` `basename $@`	@@\
 									@@\
 clean::									@@\
 	RemoveFile(name.$(MANNEWSUFFIX))

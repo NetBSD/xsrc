@@ -65,5 +65,5 @@ about trimming curves.
 To describe a trim curve that closely follows the contours of a NURBS 
 surface, call \%\f3gluNurbsCurve\fP.
 .SH SEE ALSO
-\%\f3gluBeginCurve\fP, \%\f3gluBeginTrim\fP, \%\f3gluNewNurbsRenderer\fP, \%\f3gluNurbsCurve\fP
+\%\f3gluBeginCurve(3G)\fP, \%\f3gluBeginTrim(3G)\fP, \%\f3gluNewNurbsRenderer(3G)\fP, \%\f3gluNurbsCurve(3G)\fP
 

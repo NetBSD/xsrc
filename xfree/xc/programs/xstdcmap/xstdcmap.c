@@ -1,10 +1,14 @@
 /*
- * $Xorg: xstdcmap.c,v 1.4 2000/08/17 19:55:06 cpqbld Exp $
+ * $Xorg: xstdcmap.c,v 1.5 2001/02/09 02:06:01 xorgcvs Exp $
  *
  * 
 Copyright 1989, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -22,7 +26,7 @@ in this Software without prior written authorization from The Open Group.
  * *
  * Author:  Donna Converse, MIT X Consortium
  */
-/* $XFree86: xc/programs/xstdcmap/xstdcmap.c,v 1.6 2001/04/01 14:00:24 tsi Exp $ */
+/* $XFree86: xc/programs/xstdcmap/xstdcmap.c,v 1.8 2001/12/14 20:02:30 dawes Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -32,10 +36,6 @@ in this Software without prior written authorization from The Open Group.
 #include <X11/Xresource.h>
 #include <X11/Xatom.h>
 #include <X11/Xmu/StdCmap.h>
-
-#ifdef X_NOT_STDC_ENV
-extern void exit();
-#endif
 
 #define REPLACE		1
 #define DO_NOT_REPLACE  0

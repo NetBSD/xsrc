@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/chips/ct_cursor.c,v 1.23 2001/05/15 10:19:36 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/chips/ct_cursor.c,v 1.24 2001/10/01 13:44:03 eich Exp $ */
 
 /*
  * Copyright 1994  The XFree86 Project
@@ -77,12 +77,12 @@ CHIPSShowCursor(ScrnInfoPtr pScrn)
 	    MSS = cPtr->readMSS(cPtr);
 	    cPtr->writeIOSS(cPtr, ((cPtr->storeIOSS & IOSS_MASK) |
 				   IOSS_PIPE_B));
-	    cPtr->writeMSS(cPtr, ((cPtr->storeMSS & MSS_MASK) |
-				  MSS_PIPE_B));
+	    cPtr->writeMSS(cPtr, VGAHWPTR(pScrn), ((cPtr->storeMSS &
+				  MSS_MASK) | MSS_PIPE_B));
 	    tmp = cPtr->readXR(cPtr, 0xA0);
 	    cPtr->writeXR(cPtr, 0xA0, (tmp & 0xF8) | 5);
 	    cPtr->writeIOSS(cPtr, IOSS);
-	    cPtr->writeMSS(cPtr, MSS);
+	    cPtr->writeMSS(cPtr, VGAHWPTR(pScrn), MSS);
 	}
     } else {
 	if(!cPtr->UseMMIO) {
@@ -116,12 +116,12 @@ CHIPSHideCursor(ScrnInfoPtr pScrn)
 	    MSS = cPtr->readMSS(cPtr);
 	    cPtr->writeIOSS(cPtr, ((cPtr->storeIOSS & IOSS_MASK) |
 				   IOSS_PIPE_B));
-	    cPtr->writeMSS(cPtr, ((cPtr->storeMSS & MSS_MASK) |
-				  MSS_PIPE_B));
+	    cPtr->writeMSS(cPtr, VGAHWPTR(pScrn), ((cPtr->storeMSS &
+				  MSS_MASK) | MSS_PIPE_B));
 	    tmp = cPtr->readXR(cPtr, 0xA0);
 	    cPtr->writeXR(cPtr, 0xA0, tmp & 0xF8);
 	    cPtr->writeIOSS(cPtr, IOSS);
-	    cPtr->writeMSS(cPtr, MSS);
+	    cPtr->writeMSS(cPtr, VGAHWPTR(pScrn), MSS);
 	}
     } else {
 	if(!cPtr->UseMMIO) {
@@ -164,14 +164,14 @@ CHIPSSetCursorPosition(ScrnInfoPtr pScrn, int x, int y)
 	    MSS = cPtr->readMSS(cPtr);
 	    cPtr->writeIOSS(cPtr, ((cPtr->storeIOSS & IOSS_MASK) |
 				   IOSS_PIPE_B));
-	    cPtr->writeMSS(cPtr, ((cPtr->storeMSS & MSS_MASK) |
-				  MSS_PIPE_B));
+	    cPtr->writeMSS(cPtr, VGAHWPTR(pScrn), ((cPtr->storeMSS &
+				  MSS_MASK) | MSS_PIPE_B));
 	    cPtr->writeXR(cPtr, 0xA4, x & 0xFF);
 	    cPtr->writeXR(cPtr, 0xA5, (x >> 8) & 0x87);
 	    cPtr->writeXR(cPtr, 0xA6, y & 0xFF);
 	    cPtr->writeXR(cPtr, 0xA7, (y >> 8) & 0x87);
 	    cPtr->writeIOSS(cPtr, IOSS);
-	    cPtr->writeMSS(cPtr, MSS);
+	    cPtr->writeMSS(cPtr, VGAHWPTR(pScrn), MSS);
 	}
     } else {
 	CARD32 xy;
@@ -236,8 +236,8 @@ CHIPSSetCursorColors(ScrnInfoPtr pScrn, int bg, int fg)
 	    MSS = cPtr->readMSS(cPtr);
 	    cPtr->writeIOSS(cPtr, ((cPtr->storeIOSS & IOSS_MASK) |
 				   IOSS_PIPE_B));
-	    cPtr->writeMSS(cPtr, ((cPtr->storeMSS & MSS_MASK) |
-				  MSS_PIPE_B));
+	    cPtr->writeMSS(cPtr, hwp, ((cPtr->storeMSS & MSS_MASK) |
+				   MSS_PIPE_B));
 	    /* Enable extended palette addressing */
 	    xr80 = cPtr->readXR(cPtr, 0x80);
 	    cPtr->writeXR(cPtr, 0x80, xr80 | 0x1);
@@ -267,7 +267,7 @@ CHIPSSetCursorColors(ScrnInfoPtr pScrn, int bg, int fg)
 	    /* Enable normal palette addressing */
 	    cPtr->writeXR(cPtr, 0x80, xr80);
 	    cPtr->writeIOSS(cPtr, IOSS);
-	    cPtr->writeMSS(cPtr, MSS);
+	    cPtr->writeMSS(cPtr, hwp, MSS);
 	}
     } else if (IS_Wingine(cPtr)) {
 	outl(DR(0xA), (bg & 0xFFFFFF));
@@ -351,12 +351,12 @@ CHIPSLoadCursorImage(ScrnInfoPtr pScrn, unsigned char *src)
 	    MSS = cPtr->readMSS(cPtr);
 	    cPtr->writeIOSS(cPtr, ((cPtr->storeIOSS & IOSS_MASK) |
 				   IOSS_PIPE_B));
-	    cPtr->writeMSS(cPtr, ((cPtr->storeMSS & MSS_MASK) |
-				  MSS_PIPE_B));
+	    cPtr->writeMSS(cPtr, VGAHWPTR(pScrn), ((cPtr->storeMSS &
+				  MSS_MASK) | MSS_PIPE_B));
 	    cPtr->writeXR(cPtr, 0xA2, (cAcl->CursorAddress >> 8) & 0xFF);
 	    cPtr->writeXR(cPtr, 0xA3, (cAcl->CursorAddress >> 16) & 0x3F);
 	    cPtr->writeIOSS(cPtr, IOSS);
-	    cPtr->writeMSS(cPtr, MSS);
+	    cPtr->writeMSS(cPtr, VGAHWPTR(pScrn), MSS);
 	}
     } else if (!IS_Wingine(cPtr)) {
 	if (!cPtr->UseMMIO) {

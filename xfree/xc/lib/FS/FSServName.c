@@ -1,4 +1,4 @@
-/* $Xorg: FSServName.c,v 1.3 2000/08/17 19:44:05 cpqbld Exp $ */
+/* $Xorg: FSServName.c,v 1.4 2001/02/09 02:03:25 xorgcvs Exp $ */
 
 /* @(#)FSServName.c	4.1	91/05/02
  * Copyright 1990 Network Computing Devices;
@@ -24,12 +24,17 @@
  * ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS 
  * SOFTWARE.
  */
+/* $XFree86: xc/lib/FS/FSServName.c,v 1.4 2001/12/14 19:53:33 dawes Exp $ */
 
 /*
 
 Copyright 1987, 1994, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -48,13 +53,8 @@ in this Software without prior written authorization from The Open Group.
 */
 
 #include	<stdio.h>
-
-#include <X11/Xosdefs.h>
-#ifndef X_NOT_STDC_ENV
-#include <stdlib.h>
-#else
-char       *getenv();
-#endif
+#include	<X11/Xosdefs.h>
+#include	<stdlib.h>
 
 char       *
 FSServerName(server)

@@ -1,14 +1,16 @@
-/* $XFree86: xc/programs/Xserver/Xext/panoramiXsrv.h,v 1.7 2001/01/03 02:54:17 keithp Exp $ */
+/* $XFree86: xc/programs/Xserver/Xext/panoramiXsrv.h,v 1.9 2001/08/11 21:00:06 mvojkovi Exp $ */
 
 #ifndef _PANORAMIXSRV_H_
 #define _PANORAMIXSRV_H_
+
+#include "panoramiX.h"
 
 extern int PanoramiXNumScreens;
 extern PanoramiXData *panoramiXdataPtr;
 extern int PanoramiXPixWidth;
 extern int PanoramiXPixHeight;
 extern RegionRec PanoramiXScreenRegion;
-extern XID PanoramiXVisualTable[256][MAXSCREENS];
+extern XID *PanoramiXVisualTable;
 
 extern void PanoramiXConsolidate(void);
 extern Bool PanoramiXCreateConnectionBlock(void);

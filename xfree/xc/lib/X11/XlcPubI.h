@@ -1,4 +1,4 @@
-/* $Xorg: XlcPubI.h,v 1.3 2000/08/17 19:45:06 cpqbld Exp $ */
+/* $Xorg: XlcPubI.h,v 1.4 2000/12/12 12:44:05 coskrey Exp $ */
 /*
  * Copyright 1992, 1993 by TOSHIBA Corp.
  *
@@ -23,7 +23,7 @@
  * Author: Katsuhisa Yano	TOSHIBA Corp.
  *			   	mopi@osa.ilab.toshiba.co.jp
  */
-/* $XFree86: xc/lib/X11/XlcPubI.h,v 3.8 2001/01/17 19:41:49 dawes Exp $ */
+/* $XFree86: xc/lib/X11/XlcPubI.h,v 3.9 2001/11/16 00:52:27 dawes Exp $ */
 
 #ifndef _XLCPUBLICI_H_
 #define _XLCPUBLICI_H_
@@ -212,6 +212,13 @@ extern int _XlcResolveLocaleName(
 extern int _XlcResolveI18NPath(
     char*		buf,
     int			buf_len
+);
+
+extern char *_XlcLocaleDirName(
+#if NeedFunctionPrototypes
+     char*             /* dir_name */,
+     char*             /* lc_name */
+#endif
 );
 
 extern XPointer _XlcCreateLocaleDataBase(

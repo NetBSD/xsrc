@@ -1,10 +1,14 @@
-/* $Xorg: Toggle.c,v 1.3 2000/08/17 19:45:42 cpqbld Exp $ */
+/* $Xorg: Toggle.c,v 1.4 2001/02/09 02:03:47 xorgcvs Exp $ */
 
 /*
 
 Copyright 1989, 1994, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -21,7 +25,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/Xaw/Toggle.c,v 1.7 2001/01/17 19:42:35 dawes Exp $ */
+/* $XFree86: xc/lib/Xaw/Toggle.c,v 1.9 2001/12/14 19:54:45 dawes Exp $ */
 
 /*
  * Author: Chris D. Peterson
@@ -498,11 +502,12 @@ XawToggleChangeRadioGroup(Widget w, Widget radio_group)
     if (tw->command.set && radio_group != NULL)
 	XawToggleUnsetCurrent(radio_group);
 
-    if (radio_group != NULL)
+    if (radio_group != NULL) {
 	if ((group = GetRadioGroup(radio_group)) == NULL)
 	    CreateRadioGroup(w, radio_group);
-    else
-	AddToRadioGroup(group, w);
+	else
+	    AddToRadioGroup(group, w);
+    }
 }
 
 /*

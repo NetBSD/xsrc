@@ -3,7 +3,12 @@ XCOMM $Xorg: Imakefile,v 1.3 2000/08/17 19:44:38 cpqbld Exp $
 
 
 
-XCOMM $XFree86: xc/lib/X11/Imakefile,v 3.38 2001/05/01 10:35:05 alanh Exp $
+XCOMM $XFree86: xc/lib/X11/Imakefile,v 3.43 2001/12/20 19:03:47 keithp Exp $
+#if BuildLoadableXlibI18n
+#define IHaveSubdirs
+#define PassCDebugFlags CDEBUGFLAGS="$(CDEBUGFLAGS)"
+#define NoLibSubdirs
+#endif
 
 #define DoNormalLib NormalLibX11
 #define DoSharedLib SharedLibX11
@@ -15,6 +20,10 @@ XCOMM $XFree86: xc/lib/X11/Imakefile,v 3.38 2001/05/01 10:35:05 alanh Exp $
 #define HugeLibrary YES
 #define IncSubdir X11
 
+#if BuildLoadableXlibI18n
+SUBDIRS = xlibi18n
+#endif
+
 #include <Threads.tmpl>
 
 #ifndef MotifBC
@@ -22,8 +31,14 @@ XCOMM $XFree86: xc/lib/X11/Imakefile,v 3.38 2001/05/01 10:35:05 alanh Exp $
 #endif
 
 #ifdef SharedX11Reqs
-REQUIREDLIBS = SharedX11Reqs
+REQUIREDX11LIBS = SharedX11Reqs
 #endif
+#if BuildLoadableXlibI18n
+REQUIREDI18NLIBS = DlLibrary
+#endif
+
+REQUIREDLIBS=$(REQUIREDX11LIBS) $(REQUIREDI18NLIBS)
+
 #if defined(MacIIArchitecture) || defined(SequentArchitecture) || defined(i386ScoArchitecture)
 XBSDLIB = /**/
 #endif
@@ -773,10 +788,17 @@ OBJS3 = \
 	ximtrans.o \
 	$(XKBOBJS) $(LCOBJS) $(MISCOBJS)
 
-LCSRCS = \
-	SetLocale.c \
+#if BuildLoadableXlibI18n
+LCDEPSYMSRCS = XlcDL.c XlcSL.c
+LC_DYNDEFINES = -DUSE_DYNAMIC_LC
+
+I18NSTATICSRCS = \
+        XDefaultIMIF.c XDefaultOMIF.c
+#else
+LCDEPSYMSRCS =
+
+I18NSTATICSRCS = \
 	imCallbk.c \
-	imConv.c \
 	imDefFlt.c \
 	imDefIc.c \
 	imDefIm.c \
@@ -787,7 +809,6 @@ LCSRCS = \
 	imImSw.c \
 	imInsClbk.c \
 	imInt.c \
-	imKStoUCS.c \
 	imLcFlt.c \
 	imLcGIc.c \
 	imLcIc.c \
@@ -803,26 +824,11 @@ LCSRCS = \
 	imTrX.c \
 	imTransR.c \
 	imTrans.c \
-	lcCT.c \
-	lcCharSet.c \
-	lcConv.c \
-	lcDB.c \
-	lcDefConv.c \
 	lcEuc.c \
-	lcFile.c \
 	lcGenConv.c \
-	lcGeneric.c \
-	lcInit.c \
 	lcJis.c \
-	lcPrTxt.c \
-	lcPubWrap.c \
-	lcPublic.c \
-	lcRM.c \
 	lcSjis.c \
-	lcStd.c \
-	lcTxtPr.c \
-	lcUTF8.c \
-	lcUtil.c \
+	lcUTF8Load.c \
 	omDefault.c \
 	omGeneric.c \
 	omImText.c \
@@ -831,11 +837,39 @@ LCSRCS = \
 	omTextExt.c \
 	omTextPer.c \
 	omXChar.c
+#endif
 
-LCOBJS = \
-	SetLocale.o \
+LCSRCS = \
+	SetLocale.c \
+	$(LCDEPSYMSRCS) \
+	imConv.c \
+	imKStoUCS.c \
+	lcCT.c \
+	lcCharSet.c \
+	lcConv.c \
+	lcDB.c \
+	lcDefConv.c \
+	lcFile.c \
+	lcGeneric.c \
+	lcInit.c \
+	lcPrTxt.c \
+	lcPubWrap.c \
+	lcPublic.c \
+	lcRM.c \
+	lcStd.c \
+	lcTxtPr.c \
+	lcUtil.c \
+	lcUTF8.c \
+	$(I18NSTATICSRCS)
+
+#if BuildLoadableXlibI18n
+LCDEPOBJS = XlcDL.o XlcSL.o
+I18NSTATICOBJS = \
+	XDefaultIMIF.o XDefaultOMIF.o
+#else
+LCDEPOBJS = 
+I18NSTATICOBJS = \
 	imCallbk.o \
-	imConv.o \
 	imDefFlt.o \
 	imDefIc.o \
 	imDefIm.o \
@@ -846,7 +880,6 @@ LCOBJS = \
 	imImSw.o \
 	imInsClbk.o \
 	imInt.o \
-	imKStoUCS.o \
 	imLcFlt.o \
 	imLcGIc.o \
 	imLcIc.o \
@@ -862,26 +895,11 @@ LCOBJS = \
 	imTrX.o \
 	imTransR.o \
 	imTrans.o \
-	lcCT.o \
-	lcCharSet.o \
-	lcConv.o \
-	lcDB.o \
-	lcDefConv.o \
 	lcEuc.o \
-	lcFile.o \
 	lcGenConv.o \
-	lcGeneric.o \
-	lcInit.o \
 	lcJis.o \
-	lcPrTxt.o \
-	lcPubWrap.o \
-	lcPublic.o \
-	lcRM.o \
 	lcSjis.o \
-	lcStd.o \
-	lcTxtPr.o \
-	lcUTF8.o \
-	lcUtil.o \
+	lcUTF8Load.o \
 	omDefault.o \
 	omGeneric.o \
 	omImText.o \
@@ -890,6 +908,30 @@ LCOBJS = \
 	omTextExt.o \
 	omTextPer.o \
 	omXChar.o
+#endif
+
+LCOBJS = \
+	SetLocale.o \
+	$(LCDEPOBJS) \
+	imConv.o \
+	imKStoUCS.o \
+	lcCT.o \
+	lcCharSet.o \
+	lcConv.o \
+	lcDB.o \
+	lcDefConv.o \
+	lcFile.o \
+	lcGeneric.o \
+	lcInit.o \
+	lcPrTxt.o \
+	lcPubWrap.o \
+	lcPublic.o \
+	lcRM.o \
+	lcStd.o \
+	lcTxtPr.o \
+	lcUtil.o \
+	lcUTF8.o \
+	$(I18NSTATICOBJS) 
 
 #ifdef OS2Architecture
 MISCSRCS = os2Stubs.c
@@ -900,10 +942,6 @@ MISCOBJS = os2Stubs.o
 #endif
 
 OBJS = $(OBJS1) $(OBJS2) $(OBJS3)
-
-#if UseCygIPC
-REQUIREDLIBS = -lcygipc
-#endif
 
 #if !BuildServersOnly || XnestServer || BuildGLXLibrary || BuildClients
 #include <Library.tmpl>
@@ -936,9 +974,10 @@ SpecialCLibObjectRule(imConv,$(ICONFIGFILES),$(XKB_DEFINES))
 #if HasKrb5
 SpecialCLibObjectRule(k5encode,$(_NOOP_),$(K5INCL))
 #endif
-#ifdef MinixArchitecture
-SpecialCLibObjectRule(IMWrap,$(ICONFIGFILES),-DX11_TINY_IM)
-SpecialCLibObjectRule(lcInit,$(ICONFIGFILES),-DX11_TINY_LC)
+#if BuildLoadableXlibI18n
+SpecialCLibObjectRule(lcInit,$(ICONFIGFILES),$(LC_DYNDEFINES))
+SpecialCLibObjectRule(lcGeneric,$(ICONFIGFILES),$(LC_DYNDEFINES))
+SpecialCLibObjectRule(lcPublic,$(ICONFIGFILES),$(LC_DYNDEFINES))
 #endif
 
 #if InstallXcmsTxt
@@ -968,21 +1007,34 @@ LOCAL_LDFLAGS=-F
 
 MAKEKEYS = ./makekeys
 
+#if CrossCompiling
+HOST_LDLIBS=
+#else
+HOST_LDLIBS=$(LDLIBS)
+#endif
+
 ks_tables.h: $(XINCLUDESRC)/keysymdef.h util/makekeys.c
-	RemoveFiles($@ ProgramTargetName(makekeys) makekeys.Osuf)
-	-HostLinkRule(ProgramTargetName(makekeys),$(CFLAGS) $(LOCAL_LDFLAGS),util/makekeys.c,$(LDLIBS))
+	RemoveFiles($@ HostProgramTargetName(makekeys) makekeys.Osuf)
+	-HostLinkRule(HostProgramTargetName(makekeys),$(CFLAGS) $(LOCAL_LDFLAGS),util/makekeys.c,$(HOST_LDLIBS))
 	RunProgram(MAKEKEYS,< $(XINCLUDESRC)/keysymdef.h > ks_tables_h)
 	$(MV) ks_tables_h $@
-	RemoveFiles(ProgramTargetName(makekeys) makekeys.Osuf ks_tables_h)
+	RemoveFiles(HostProgramTargetName(makekeys) makekeys.Osuf ks_tables_h)
 
 includes:: ks_tables.h
 
 depend:: ks_tables.h
 
 clean::
-	RemoveFiles(ks_tables_h ks_tables.h ProgramTargetName(makekeys))
+	RemoveFiles(ks_tables_h ks_tables.h HostProgramTargetName(makekeys))
 
 DependTarget3($(SRCS1),$(SRCS2),$(SRCS3))
+
+#if BuildLoadableXlibI18n
+MakeSubdirs($(SUBDIRS))
+DependSubdirs($(SUBDIRS))
+MakeLintLibSubdirs($(LINTSUBDIRS))
+MakeLintSubdirs($(LINTSUBDIRS),install.ln,install.ln)
+#endif
 #else
 all::
 

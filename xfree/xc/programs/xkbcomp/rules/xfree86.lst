@@ -4,7 +4,7 @@
 //  Rules descriptions for XFree86
 //  Copyright 1996 by Joseph Moss
 //
-//  $XFree86: xc/programs/xkbcomp/rules/xfree86.lst,v 3.30.2.2 2001/05/25 18:50:14 dawes Exp $
+//  $XFree86: xc/programs/xkbcomp/rules/xfree86.lst,v 3.42 2002/01/16 18:20:12 dawes Exp $
 
 ! model
   pc101		Generic 101-key PC
@@ -24,63 +24,94 @@
   itouch	Logitech iTouch
   logicordless	Logitech Cordless Desktop Pro
   logiinternet	Logitech Internet Keyboard
+  logiinetnav	Logitech Internet Navigator Keyboard
   compaq	Compaq Internet
   microsoftpro	Microsoft Natural Pro
   geniuscomfy	Genius Comfy KB-16M
   rapidaccess	IBM Rapid Access
   rapidaccess2	IBM Rapid Access II
   chicony	Chicony Internet Keyboard
+  dell		Dell Internet Keyboard
+
+
+// The entries here should be ordered as follows:
+//
+//   US entries first
+//   others in alphabetical order by the language/country name in English
 
 ! layout
   us		U.S. English
-  en_US		U.S. English w/ISO9995-3
+  en_US		U.S. English w/ ISO9995-3
   us_intl	U.S. English w/ deadkeys
+  al		Albanian
+  ar		Arabic
   am		Armenian
   az		Azerbaidjani
   by		Belarusian
   be		Belgian
+  ben		Bengali
   br		Brazilian
   bg		Bulgarian
+  mm		Burmese
   ca		Canadian
+  hr		Croatian
   cz		Czech
   cz_qwerty	Czech (qwerty)
   dk		Danish
+  nl		Dutch
   dvorak	Dvorak
   ee		Estonian
   fi		Finnish
   fr		French
   fr_CH		Swiss French
+  ge_la		Georgian (latin)
+  ge_ru		Georgian (russian)
   de		German
   de_CH		Swiss German
   el		Greek
-  hr		Croatian
+  guj		Gujarati
+  gur		Gurmukhi
+  dev		Hindi
   hu		Hungarian
   is		Icelandic
+  iu		Inuktitut
+  ir		Iranian
   il		Israeli
   it		Italian
   jp		Japanese
+  la		Latin America
   lt		Lithuanian qwerty "numeric"
   lt_std	Lithuanian azerty standard
-  lt_p		Lithuanian qwerty "programmer's"
   lv		Latvian
   mk		Macedonian
+  mt		Maltese
+  mt_us		Maltese (US layout)
   no		Norwegian
   pl		Polish
+  pl2		Polish (qwertz)
   pt		Portuguese
   ro		Romanian
   ru		Russian
+  ru_yawerty	Russian (cyrillic phonetic)
+  se_FI		Northern Saami (Finland)
+  se_NO		Northern Saami (Norway)
+  se_SE		Northern Saami (Sweden)
   sr		Serbian
   si		Slovenian
   sk		Slovak
   sk_qwerty	Slovak (qwerty)
   es		Spanish
   se		Swedish
+  tj		Tajik
+  tml		Tamil
   th		Thai
+  tr		Turkish 
+  tr_f		Turkish (F)
   ua		Ukrainian 
   gb		United Kingdom
   vn		Vietnamese
+  yu		Yugoslavian
   nec/jp	PC-98xx Series
-  tr		Turkish 
 
 ! variant
   nodeadkeys	Eliminate dead keys
@@ -88,13 +119,24 @@
 ! option
   grp			Group Shift/Lock behavior
   grp:switch		R-Alt switches group while pressed
+  grp:lwin_switch	Left Win-key switches group while pressed
+  grp:rwin_switch	Right Win-key switches group while pressed
+  grp:win_switch	Both Win-keys switch group while pressed
   grp:toggle		Right Alt key changes group
   grp:caps_toggle	Caps Lock key changes group
   grp:menu_toggle	Menu key changes group
+  grp:lwin_toggle	Left Win-key changes group
+  grp:rwin_toggle	Right Win-key changes group
   grp:shift_toggle 	Both Shift keys together change group
   grp:ctrl_shift_toggle Control+Shift changes group
   grp:ctrl_alt_toggle	Alt+Control changes group
   grp:alt_shift_toggle	Alt+Shift changes group
+  lv3			Third level choosers
+  lv3:switch		Press Right Control to choose 3rd level
+  lv3:menu_switch	Press Menu key to choose 3rd level
+  lv3:win_switch	Press any of Win-keys to choose 3rd level
+  lv3:lwin_switch	Press Left Win-key to choose 3rd level
+  lv3:rwin_switch	Press Right Win-key to choose 3rd level
   ctrl			Control Key Position
   ctrl:nocaps		Make CapsLock an additional Control
   ctrl:swapcaps		Swap Control and Caps Lock
@@ -104,4 +146,20 @@
   grp_led:num		Num_Lock LED shows alternative group
   grp_led:caps		Caps_Lock LED shows alternative group
   grp_led:scroll	Scroll_Lock LED shows alternative group
+  caps			CapsLock key behavior
+  caps:internal		uses internal capitalization. Shift cancels Caps.
+  caps:internal_nocancel uses internal capitalization. Shift doesn't cancel Cap$
+  caps:shift		acts as Shift with locking. Shift cancels Caps.
+  caps:shift_nocancel	acts as Shift with locking. Shift doesn't cancel Caps.
 
+  altwin		Alt/Win key behavior
+  altwin:menu		Add the standard behavior to Menu key.
+  altwin:meta_alt	Alt and Meta on the Alt keys (default).
+  altwin:meta_win	Meta is mapped to the Win-keys.
+  altwin:left_meta_win	Meta is mapped to the left Win-key.
+  altwin:meta_super	Super is mapped to the Win-keys (default).
+  altwin:meta_hyper	Hyper is mapped to the Win-keys.
+
+  compose:ralt		Right Alt is Compose
+  compose:rwin		Right Win-key is Compose
+  compose:menu		Menu is Compose

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/radeon_dri.c,v 1.13 2001/05/02 15:06:08 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/radeon_dri.c,v 1.14 2001/10/01 13:44:03 eich Exp $ */
 /*
  * Copyright 2000 ATI Technologies Inc., Markham, Ontario,
  *                VA Linux Systems Inc., Fremont, California.
@@ -62,6 +62,8 @@
 /* ?? Alpha - this may need to be a variable to handle UP1x00 vs TITAN */
 #if defined(__alpha__)
 # define DRM_PAGE_SIZE 8192
+#elif defined(__ia64__)
+# define DRM_PAGE_SIZE getpagesize()
 #else
 # define DRM_PAGE_SIZE 4096
 #endif

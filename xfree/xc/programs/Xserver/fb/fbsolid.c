@@ -1,5 +1,5 @@
 /*
- * Id: fbsolid.c,v 1.1 1999/11/02 03:54:45 keithp Exp $
+ * $XFree86: xc/programs/Xserver/fb/fbsolid.c,v 1.8 2001/10/28 03:33:08 tsi Exp $
  *
  * Copyright © 1998 Keith Packard
  *
@@ -21,7 +21,6 @@
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
-/* $XFree86: xc/programs/Xserver/fb/fbsolid.c,v 1.7 2000/09/22 05:58:01 keithp Exp $ */
 
 #define FbSelectPart(xor,o,t)    xor
 
@@ -94,9 +93,9 @@ fbSolid24 (FbBits   *dst,
 	   FbBits   xor)
 {
     FbBits  startmask, endmask;
-    FbBits  xor0, xor1, xor2;
-    FbBits  and0, and1, and2;
-    FbBits  xorS, andS, xorE, andE;
+    FbBits  xor0 = 0, xor1 = 0, xor2 = 0;
+    FbBits  and0 = 0, and1 = 0, and2 = 0;
+    FbBits  xorS = 0, andS = 0, xorE = 0, andE = 0;
     int	    n, nmiddle;
     int	    rotS, rot;
 

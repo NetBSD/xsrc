@@ -3,7 +3,7 @@ XCOMM $Xorg: lynx.cf,v 1.3 2000/08/17 19:41:47 cpqbld Exp $
 
 
 
-XCOMM platform:  $XFree86: xc/config/cf/lynx.cf,v 3.43 2001/04/19 19:54:43 dawes Exp $
+XCOMM platform:  $XFree86: xc/config/cf/lynx.cf,v 3.45 2002/01/03 16:33:49 tsi Exp $
 
 
 #ifndef OSName
@@ -111,7 +111,7 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #  define CcCmd			gcc
 # endif
 # if OSMajorVersion > 2 || OSMinorVersion == 5
-#  define DefaultCCOptions -ansi -pedantic -fcommon GccWarningOptions
+#  define DefaultCCOptions	-ansi -pedantic -fcommon GccWarningOptions
 # endif
 #else
 # define CplusplusCmd		g++ 

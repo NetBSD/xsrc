@@ -21,7 +21,7 @@
  * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  */
-/* $XFree86: xc/lib/GL/mesa/src/drv/i810/i810fastpath.c,v 1.5 2000/11/13 23:31:27 dawes Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/i810/i810fastpath.c,v 1.6 2001/08/27 21:12:19 dawes Exp $ */
 
 #include <stdio.h>
 
@@ -37,12 +37,9 @@
 #include "i810tris.h"
 #include "i810state.h"
 #include "i810vb.h"
+#include "vbcull.h"
 
 
-extern void i810DDResizeVB( struct vertex_buffer *VB, GLuint size );
-
-extern void gl_fast_copy_vb( struct vertex_buffer *VB );
-  
 struct i810_fast_tab {
    void (*build_vertices)( struct vertex_buffer *VB, GLuint do_cliptest );
    void (*interp)( GLfloat t, GLfloat *O, const GLfloat *I, const GLfloat *J );

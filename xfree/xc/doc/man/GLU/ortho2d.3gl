@@ -37,5 +37,5 @@ Specify the coordinates for the bottom and top horizontal clipping planes.
 This is equivalent to calling \f3glOrtho\fP with $ near ~=~ -1 $ and 
 $ far ~=~ 1 $.
 .SH SEE ALSO
-\f3glOrtho\fP, \%\f3gluPerspective\fP
+\f3glOrtho(3G)\fP, \%\f3gluPerspective(3G)\fP
 

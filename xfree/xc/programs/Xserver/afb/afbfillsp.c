@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/afb/afbfillsp.c,v 3.3 2000/11/22 00:58:12 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/afb/afbfillsp.c,v 3.4 2001/10/28 03:32:58 tsi Exp $ */
 /* Combined Purdue/PurduePlus patches, level 2.0, 1/17/89 */
 /***********************************************************
 
@@ -353,7 +353,7 @@ afbTileFS(pDrawable, pGC, nInit, pptInit, pwidthInit, fSorted)
 
 	switch(rop) {
 		case GXcopy:
-#define DoMaskCopyRop(src,dst,mask)		((dst) & ~(mask) | (src) & (mask))
+#define DoMaskCopyRop(src,dst,mask)		(((dst) & ~(mask)) | ((src) & (mask)))
 			while (n--) {
 				if (*pwidth) {
 					addrlBase = afbScanline(pBase, ppt->x, ppt->y, nlwidth);
@@ -447,7 +447,7 @@ afbOpaqueStippleFS(pDrawable, pGC, nInit, pptInit, pwidthInit, fSorted)
 	PixelType *pBase;
 	int nlwidth;				/* width in longwords of bitmap */
 	register PixelType *addrl;		/* pointer to current longword in bitmap */
-	register PixelType src;
+	register PixelType src = 0;
 	register int nlmiddle;
 	register PixelType startmask;
 	register PixelType endmask;
@@ -486,7 +486,6 @@ afbOpaqueStippleFS(pDrawable, pGC, nInit, pptInit, pwidthInit, fSorted)
 
 	switch(rop) {
 		case GXcopy:
-#define DoMaskCopyRop(src,dst,mask)		((dst) & ~(mask) | (src) & (mask))
 			while (n--) {
 				addrlBase = afbScanline(pBase, ppt->x, ppt->y, nlwidth);
 				if (*pwidth) {
@@ -902,7 +901,7 @@ afbUnnaturalOpaqueStippleFS(pDrawable, pGC, nInit, pptInit, pwidthInit, fSorted)
 	register PixelType *psrc;/* pointer to current word in tile */
 	register int nlMiddle;
 	register int d;
-	register PixelType tmpsrc;
+	register PixelType tmpsrc = 0;
 	register PixelType tmpdst;
 	register int alu, nstart;
 	register unsigned char *rropsOS;
@@ -914,7 +913,6 @@ afbUnnaturalOpaqueStippleFS(pDrawable, pGC, nInit, pptInit, pwidthInit, fSorted)
 	int *pwidthFree;				/* copies of the pointers to free */
 	DDXPointPtr pptFree;
 	int sizeDst;
-	int sizeTile;
 	int depthDst;
 
 	n = nInit * miFindMaxBand(pGC->pCompositeClip);

@@ -2,7 +2,11 @@
 
 Copyright 1990, 1994, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -19,7 +23,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/extras/freetype2/src/pcf/pcfutil.c,v 1.1.1.1 2001/05/16 03:45:34 keithp Exp $ */
+/* $XFree86: xc/extras/freetype2/src/pcf/pcfutil.c,v 1.3 2001/12/16 18:01:54 keithp Exp $ */
 
 /*
  * Author:  Keith Packard, MIT X Consortium
@@ -72,8 +76,9 @@ in this Software without prior written authorization from The Open Group.
    *  Invert bit order within each BYTE of an array.
    */
 
-  void  BitOrderInvert( unsigned char*  buf,
-                        int             nbytes )
+  void
+  BitOrderInvert( unsigned char*  buf,
+                  int             nbytes )
   {
     const unsigned char*  rev = _reverse_byte;
 
@@ -87,8 +92,9 @@ in this Software without prior written authorization from The Open Group.
    *  Invert byte order within each 16-bits of an array.
    */
 
-  void  TwoByteSwap( unsigned char*  buf,
-                     int             nbytes )
+  void
+  TwoByteSwap( unsigned char*  buf,
+               int             nbytes )
   {
     unsigned char  c;
 
@@ -105,8 +111,9 @@ in this Software without prior written authorization from The Open Group.
    *  Invert byte order within each 32-bits of an array.
    */
 
-  void  FourByteSwap( unsigned char*  buf,
-                      int             nbytes )
+  void
+  FourByteSwap( unsigned char*  buf,
+                int             nbytes )
   {
     unsigned char  c;
 
@@ -128,12 +135,13 @@ in this Software without prior written authorization from The Open Group.
    *  Repad a bitmap.
    */
 
-  int  RepadBitmap( char*         pSrc,
-                    char*         pDst, 
-                    unsigned int  srcPad,
-                    unsigned int  dstPad, 
-                    int           width,
-                    int           height )
+  int
+  RepadBitmap( char*         pSrc,
+               char*         pDst,
+               unsigned int  srcPad,
+               unsigned int  dstPad,
+               int           width,
+               int           height )
   {
     int   srcWidthBytes, dstWidthBytes;
     int   row, col;
@@ -142,7 +150,7 @@ in this Software without prior written authorization from The Open Group.
 
     switch ( srcPad )
     {
-    case 1:     
+    case 1:
       srcWidthBytes = ( width + 7 ) >> 3;
       break;
 
@@ -150,12 +158,12 @@ in this Software without prior written authorization from The Open Group.
       srcWidthBytes = ( ( width + 15 ) >> 4 ) << 1;
       break;
 
-    case 4:     
+    case 4:
       srcWidthBytes = ( ( width + 31 ) >> 5 ) << 2;
       break;
 
-    case 8:     
-      srcWidthBytes = ( ( width + 63 ) >> 6 ) << 3; 
+    case 8:
+      srcWidthBytes = ( ( width + 63 ) >> 6 ) << 3;
       break;
 
     default:
@@ -164,7 +172,7 @@ in this Software without prior written authorization from The Open Group.
 
     switch ( dstPad )
     {
-    case 1:     
+    case 1:
       dstWidthBytes = ( width + 7 ) >> 3;
       break;
 
@@ -172,12 +180,12 @@ in this Software without prior written authorization from The Open Group.
       dstWidthBytes = ( ( width + 15 ) >> 4 ) << 1;
       break;
 
-    case 4:     
+    case 4:
       dstWidthBytes = ( ( width + 31 ) >> 5 ) << 2;
       break;
 
-    case 8:     
-      dstWidthBytes = ( ( width + 63 ) >> 6 ) << 3; 
+    case 8:
+      dstWidthBytes = ( ( width + 63 ) >> 6 ) << 3;
       break;
 
     default:

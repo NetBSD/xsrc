@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/mga/mga_dga.c,v 1.14 1999/11/02 23:12:00 mvojkovi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/mga/mga_dga.c,v 1.15 2001/12/10 23:02:33 dawes Exp $ */
 
 #include "xf86.h"
 #include "xf86_OSproc.h"
@@ -278,7 +278,7 @@ MGA_SetMode(
         memcpy(&pMga->CurrentLayout, &SavedLayouts[index], sizeof(MGAFBLayout));
                 
       pScrn->currentMode = pMga->CurrentLayout.mode;
-      MGASwitchMode(index, pScrn->currentMode, 0);
+      pScrn->SwitchMode(index, pScrn->currentMode, 0);
       MGAAdjustFrame(index, pScrn->frameX0, pScrn->frameY0, 0);
       pMga->DGAactive = FALSE;
    } else {
@@ -297,7 +297,7 @@ MGA_SetMode(
       pMga->CurrentLayout.Overlay8Plus24 = FALSE;
       /* MGAModeInit() will set the mode field */
 
-      MGASwitchMode(index, pMode->mode, 0);
+      pScrn->SwitchMode(index, pMode->mode, 0);
    }
    
    return TRUE;

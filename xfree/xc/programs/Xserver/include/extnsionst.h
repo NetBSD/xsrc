@@ -1,9 +1,13 @@
-/* $Xorg: extnsionst.h,v 1.3 2000/08/17 19:53:29 cpqbld Exp $ */
+/* $Xorg: extnsionst.h,v 1.4 2001/02/09 02:05:15 xorgcvs Exp $ */
 /***********************************************************
 
 Copyright 1987, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -41,7 +45,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/programs/Xserver/include/extnsionst.h,v 3.5 2001/01/17 22:36:57 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/include/extnsionst.h,v 3.7 2001/12/14 19:59:54 dawes Exp $ */
 
 #ifndef EXTENSIONSTRUCT_H
 #define EXTENSIONSTRUCT_H 
@@ -77,14 +81,13 @@ typedef struct _ExtensionEntry {
 #endif
 } ExtensionEntry;
 
-/* any attempt to declare the types of the parameters to the functions
- * in EventSwapVector fails.  The functions take pointers to two events,
- * but the exact event types that are declared vary from one function 
- * to another.  You can't even put void *, void * (the ibm compiler
- * complains, anyway).
+/* 
+ * The arguments may be different for extension event swapping functions.
+ * Deal with this by casting when initializing the event's EventSwapVector[]
+ * entries.
  */
 typedef void (*EventSwapPtr) (
-#if NeedFunctionPrototypes && defined(EVENT_SWAP_PTR)
+#if NeedFunctionPrototypes
 	xEvent *,
 	xEvent *
 #endif
@@ -93,7 +96,7 @@ typedef void (*EventSwapPtr) (
 extern EventSwapPtr EventSwapVector[128];
 
 extern void NotImplemented (	/* FIXME: this may move to another file... */
-#if NeedFunctionPrototypes && defined(EVENT_SWAP_PTR)
+#if NeedFunctionPrototypes
 	xEvent *,
 	xEvent *
 #endif

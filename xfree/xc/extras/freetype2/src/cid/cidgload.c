@@ -4,7 +4,7 @@
 /*                                                                         */
 /*    CID-keyed Type1 Glyph Loader (body).                                 */
 /*                                                                         */
-/*  Copyright 1996-2000 by                                                 */
+/*  Copyright 1996-2001 by                                                 */
 /*  David Turner, Robert Wilhelm, and Werner Lemberg.                      */
 /*                                                                         */
 /*  This file is part of the FreeType project, and may only be used,       */
@@ -23,6 +23,8 @@
 #include FT_INTERNAL_STREAM_H
 #include FT_OUTLINE_H
 
+#include "ciderrs.h"
+
 
   /*************************************************************************/
   /*                                                                       */
@@ -34,9 +36,9 @@
 #define FT_COMPONENT  trace_cidgload
 
 
-  FT_CALLBACK_DEF
-  FT_Error  cid_load_glyph( T1_Decoder*  decoder,
-                            FT_UInt      glyph_index )
+  FT_CALLBACK_DEF( FT_Error )
+  cid_load_glyph( T1_Decoder*  decoder,
+                  FT_UInt      glyph_index )
   {
     CID_Face   face = (CID_Face)decoder->builder.face;
     CID_Info*  cid  = &face->cid;
@@ -136,9 +138,9 @@
   /*************************************************************************/
 
 
-  FT_LOCAL_DEF
-  FT_Error  CID_Compute_Max_Advance( CID_Face  face,
-                                     FT_Int*   max_advance )
+  FT_LOCAL_DEF FT_Error
+  CID_Compute_Max_Advance( CID_Face  face,
+                           FT_Int*   max_advance )
   {
     FT_Error    error;
     T1_Decoder  decoder;
@@ -156,6 +158,7 @@
                                            0, /* glyph slot */
                                            0, /* glyph names! XXX */
                                            0, /* blend == 0 */
+                                           0, /* hinting == 0 */
                                            cid_load_glyph );
     if ( error )
       return error;
@@ -175,7 +178,7 @@
 
     *max_advance = decoder.builder.advance.x;
 
-    return T1_Err_Ok;
+    return CID_Err_Ok;
   }
 
 
@@ -198,11 +201,11 @@
   /*************************************************************************/
 
 
-  FT_LOCAL_DEF
-  FT_Error  CID_Load_Glyph( CID_GlyphSlot  glyph,
-                            CID_Size       size,
-                            FT_Int         glyph_index,
-                            FT_Int         load_flags )
+  FT_LOCAL_DEF FT_Error
+  CID_Load_Glyph( CID_GlyphSlot  glyph,
+                  CID_Size       size,
+                  FT_Int         glyph_index,
+                  FT_Int         load_flags )
   {
     FT_Error    error;
     T1_Decoder  decoder;
@@ -223,8 +226,8 @@
     glyph->root.outline.n_points   = 0;
     glyph->root.outline.n_contours = 0;
 
-    hinting = ( load_flags & FT_LOAD_NO_SCALE   ) == 0 &&
-              ( load_flags & FT_LOAD_NO_HINTING ) == 0;
+    hinting = FT_BOOL( ( load_flags & FT_LOAD_NO_SCALE   ) == 0 &&
+                       ( load_flags & FT_LOAD_NO_HINTING ) == 0 );
 
     glyph->root.format = ft_glyph_format_outline;
 
@@ -235,11 +238,12 @@
                                              (FT_GlyphSlot)glyph,
                                              0, /* glyph names -- XXX */
                                              0, /* blend == 0 */
+                                             hinting,
                                              cid_load_glyph );
 
       /* set up the decoder */
-      decoder.builder.no_recurse =
-        ( ( load_flags & FT_LOAD_NO_RECURSE ) != 0 );
+      decoder.builder.no_recurse = FT_BOOL(
+        ( ( load_flags & FT_LOAD_NO_RECURSE ) != 0 ) );
 
       error = cid_load_glyph( &decoder, glyph_index );
 
@@ -263,8 +267,8 @@
       if ( load_flags & FT_LOAD_NO_RECURSE )
       {
         FT_Slot_Internal  internal = glyph->root.internal;
-        
-        
+
+
         glyph->root.metrics.horiBearingX = decoder.builder.left_bearing.x;
         glyph->root.metrics.horiAdvance  = decoder.builder.advance.x;
 
@@ -312,11 +316,12 @@
 
 
           /* First of all, scale the points */
-          for ( n = cur->n_points; n > 0; n--, vec++ )
-          {
-            vec->x = FT_MulFix( vec->x, x_scale );
-            vec->y = FT_MulFix( vec->y, y_scale );
-          }
+          if ( !hinting )
+            for ( n = cur->n_points; n > 0; n--, vec++ )
+            {
+              vec->x = FT_MulFix( vec->x, x_scale );
+              vec->y = FT_MulFix( vec->y, y_scale );
+            }
 
           FT_Outline_Get_CBox( &glyph->root.outline, &cbox );
 
@@ -326,6 +331,15 @@
 
           metrics->vertBearingX = FT_MulFix( metrics->vertBearingX, x_scale );
           metrics->vertBearingY = FT_MulFix( metrics->vertBearingY, y_scale );
+
+          if ( hinting )
+          {
+            metrics->horiAdvance = ( metrics->horiAdvance + 32 ) & -64;
+            metrics->vertAdvance = ( metrics->vertAdvance + 32 ) & -64;
+
+            metrics->vertBearingX = ( metrics->vertBearingX + 32 ) & -64;
+            metrics->vertBearingY = ( metrics->vertBearingY + 32 ) & -64;
+          }
         }
 
         /* compute the other metrics */

@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/X11/lcUniConv/gb2312.h,v 1.3 2000/11/29 17:40:28 dawes Exp $ */
+/* $XFree86: xc/lib/X11/lcUniConv/gb2312.h,v 1.4 2001/08/09 19:14:07 dawes Exp $ */
 
 /*
  * GB2312.1980-0
@@ -1063,10 +1063,10 @@ static const unsigned short gb2312_2uni_page30[6768] = {
 static int
 gb2312_mbtowc (conv_t conv, ucs4_t *pwc, const unsigned char *s, int n)
 {
-  unsigned char c1 = s[0];
+  unsigned char c1 = (s[0] & 0x7F);
   if ((c1 >= 0x21 && c1 <= 0x29) || (c1 >= 0x30 && c1 <= 0x77)) {
     if (n >= 2) {
-      unsigned char c2 = s[1];
+      unsigned char c2 = (s[1] & 0x7F);
       if (c2 >= 0x21 && c2 < 0x7f) {
         unsigned int i = 94 * (c1 - 0x21) + (c2 - 0x21);
         unsigned short wc = 0xfffd;

@@ -2,13 +2,17 @@
  * mipointer.c
  */
 
-/* $Xorg: mipointer.c,v 1.3 2000/08/17 19:53:38 cpqbld Exp $ */
+/* $Xorg: mipointer.c,v 1.4 2001/02/09 02:05:21 xorgcvs Exp $ */
 
 /*
 
 Copyright 1989, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -24,7 +28,7 @@ Except as contained in this notice, the name of The Open Group shall not be
 used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 */
-/* $XFree86: xc/programs/Xserver/mi/mipointer.c,v 3.7 2001/04/19 14:14:07 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/mi/mipointer.c,v 3.10 2001/12/14 20:00:24 dawes Exp $ */
 
 # define NEED_EVENTS
 # include   "X.h"
@@ -51,15 +55,17 @@ static unsigned long miPointerGeneration = 0;
 
 static miPointerRec miPointer;
 
-static Bool miPointerRealizeCursor (),	    miPointerUnrealizeCursor ();
-static Bool miPointerDisplayCursor ();
-static void miPointerConstrainCursor (),    miPointerPointerNonInterestBox();
-static void miPointerCursorLimits ();
-static Bool miPointerSetCursorPosition ();
-
-static Bool miPointerCloseScreen();
-
-static void miPointerMove ();
+static Bool miPointerRealizeCursor(ScreenPtr pScreen, CursorPtr pCursor);
+static Bool miPointerUnrealizeCursor(ScreenPtr pScreen, CursorPtr pCursor);
+static Bool miPointerDisplayCursor(ScreenPtr pScreen, CursorPtr pCursor);
+static void miPointerConstrainCursor(ScreenPtr pScreen, BoxPtr pBox);
+static void miPointerPointerNonInterestBox(ScreenPtr pScreen, BoxPtr pBox);
+static void miPointerCursorLimits(ScreenPtr pScreen, CursorPtr pCursor,
+				  BoxPtr pHotBox, BoxPtr pTopLeftBox);
+static Bool miPointerSetCursorPosition(ScreenPtr pScreen, int x, int y,
+				       Bool generateEvent);
+static Bool miPointerCloseScreen(int index, ScreenPtr pScreen);
+static void miPointerMove(ScreenPtr pScreen, int x, int y, unsigned long time);
 
 Bool
 miPointerInitialize (pScreen, spriteFuncs, screenFuncs, waitForUpdate)
@@ -168,8 +174,6 @@ miPointerDisplayCursor (pScreen, pCursor)
     ScreenPtr	pScreen;
     CursorPtr	pCursor;
 {
-    SetupScreen(pScreen);
-
     miPointer.pCursor = pCursor;
     miPointer.pScreen = pScreen;
     miPointerUpdate ();

@@ -42,7 +42,13 @@ Copyright (C) 1994, 1995, 1996 The XFree86 Project, Inc.  All Rights Reserved.
 
 <sect1>X コンソーシアム
 <p>
-Copyright (C) 1996 X Consortium
+Copyright 1996, 1998  The Open Group
+
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 
 無料で、誰もがこのソフトウェアと関連する文書ファイル（以降まとめて 
@@ -242,7 +248,7 @@ are met:-->
     
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/sgml/CPYRIGHT.sgml,v 3.2 1997/01/26 04:34:15 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/sgml/CPYRIGHT.sgml,v 3.3 2001/12/14 19:59:50 dawes Exp $
 </verb>
 <hrule>
 

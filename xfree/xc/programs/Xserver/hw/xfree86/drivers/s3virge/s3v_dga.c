@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/s3virge/s3v_dga.c,v 1.6 2000/03/31 20:13:31 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/s3virge/s3v_dga.c,v 1.7 2002/01/14 18:02:58 dawes Exp $ */
 
 /*
 Copyright (C) 1994-2000 The XFree86 Project, Inc.  All Rights Reserved.
@@ -350,7 +350,7 @@ S3V_OpenFramebuffer(
     S3VPtr ps3v = S3VPTR(pScrn);
 
     *name = NULL; 		/* no special device */
-    *mem = (unsigned char*)ps3v->FBBase;
+    *mem = (unsigned char*)ps3v->PciInfo->memBase[0];
     *size = ps3v->videoRambytes;
     *offset = 0;
     *flags = DGA_NEED_ROOT;

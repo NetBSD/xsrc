@@ -26,7 +26,7 @@
  * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
  * THIS SOFTWARE.
  */
-/* $XFree86: xc/lib/font/Type1/hints.c,v 1.5 2001/01/17 19:43:22 dawes Exp $ */
+/* $XFree86: xc/lib/font/Type1/hints.c,v 1.6 2001/08/27 19:49:52 dawes Exp $ */
 
  /* HINTS    CWEB         V0006 ********                             */
 /*
@@ -495,7 +495,7 @@ FixSubPaths(struct region *R)           /* anchor of region                  */
        register struct edgelist *edge;  /* current edge in region            */
        register struct edgelist *next;  /* next in subpath after 'edge'      */
        register struct edgelist *break1;  /* first break after 'next'        */
-       register struct edgelist *break2;  /* last break before 'edge'        */
+       register struct edgelist *break2 = NULL;  /* last break before 'edge' */
        register struct edgelist *prev;    /* previous edge for fixing links  */
        int left = TRUE;
  

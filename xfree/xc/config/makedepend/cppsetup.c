@@ -1,9 +1,13 @@
-/* $Xorg: cppsetup.c,v 1.3 2000/08/17 19:41:50 cpqbld Exp $ */
+/* $Xorg: cppsetup.c,v 1.5 2001/02/09 02:03:16 xorgcvs Exp $ */
 /*
 
 Copyright (c) 1993, 1994, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -20,7 +24,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/config/makedepend/cppsetup.c,v 3.9 2001/04/29 23:25:02 tsi Exp $ */
+/* $XFree86: xc/config/makedepend/cppsetup.c,v 3.11 2001/12/17 20:52:22 dawes Exp $ */
 
 #include "def.h"
 
@@ -122,6 +126,7 @@ yyerror(s)
 struct _parse_data {
     struct filepointer *filep;
     struct inclist *inc;
+    char *filename;
     const char *line;
 };
 
@@ -130,7 +135,7 @@ my_if_errors (IfParser *ip, const char *cp, const char *expecting)
 {
     struct _parse_data *pd = (struct _parse_data *) ip->data;
     int lineno = pd->filep->f_line;
-    char *filename = pd->inc->i_file;
+    char *filename = pd->filename;
     char prefix[300];
     int prefixlen;
     int i;
@@ -200,7 +205,10 @@ my_eval_variable (IfParser *ip, const char *var, int len)
 }
 
 int
-cppsetup(char *line, struct filepointer *filep, struct inclist *inc)
+cppsetup(char *filename,
+	 char *line,
+	 struct filepointer *filep,
+	 struct inclist *inc)
 {
     IfParser ip;
     struct _parse_data pd;
@@ -209,6 +217,7 @@ cppsetup(char *line, struct filepointer *filep, struct inclist *inc)
     pd.filep = filep;
     pd.inc = inc;
     pd.line = line;
+    pd.filename = filename;
     ip.funcs.handle_error = my_if_errors;
     ip.funcs.eval_defined = my_eval_defined;
     ip.funcs.eval_variable = my_eval_variable;

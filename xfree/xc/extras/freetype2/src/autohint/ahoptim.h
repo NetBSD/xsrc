@@ -4,7 +4,7 @@
 /*                                                                         */
 /*    FreeType auto hinting outline optimization (declaration).            */
 /*                                                                         */
-/*  Copyright 2000 Catharon Productions Inc.                               */
+/*  Copyright 2000-2001 Catharon Productions Inc.                          */
 /*  Author: David Turner                                                   */
 /*                                                                         */
 /*  This file is part of the Catharon Typography Project and shall only    */
@@ -113,17 +113,20 @@ FT_BEGIN_HEADER
 
 
   /* loads the outline into the optimizer */
-  int  AH_Optimizer_Init( AH_Optimizer*  optimizer,
-                          AH_Outline*    outline,
-                          FT_Memory      memory );
+  int
+  AH_Optimizer_Init( AH_Optimizer*  optimizer,
+                     AH_Outline*    outline,
+                     FT_Memory      memory );
 
 
   /* compute optimal outline */
-  void  AH_Optimizer_Compute( AH_Optimizer*  optimizer );
+  void
+  AH_Optimizer_Compute( AH_Optimizer*  optimizer );
 
 
   /* release the optimization data */
-  void AH_Optimizer_Done( AH_Optimizer*  optimizer );
+  void
+  AH_Optimizer_Done( AH_Optimizer*  optimizer );
 
 
 FT_END_HEADER

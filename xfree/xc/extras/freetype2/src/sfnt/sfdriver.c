@@ -4,7 +4,7 @@
 /*                                                                         */
 /*    High-level SFNT driver interface (body).                             */
 /*                                                                         */
-/*  Copyright 1996-2000 by                                                 */
+/*  Copyright 1996-2001 by                                                 */
 /*  David Turner, Robert Wilhelm, and Werner Lemberg.                      */
 /*                                                                         */
 /*  This file is part of the FreeType project, and may only be used,       */
@@ -36,9 +36,9 @@
 #include <string.h>     /* for strcmp() */
 
 
-  static
-  void*  get_sfnt_table( TT_Face      face,
-                         FT_Sfnt_Tag  tag )
+  static void*
+  get_sfnt_table( TT_Face      face,
+                  FT_Sfnt_Tag  tag )
   {
     void*  table;
 
@@ -84,11 +84,11 @@
 #ifdef TT_CONFIG_OPTION_POSTSCRIPT_NAMES
 
 
-  static
-  FT_Error  get_sfnt_glyph_name( TT_Face     face,
-                                 FT_UInt     glyph_index,
-                                 FT_Pointer  buffer,
-                                 FT_UInt     buffer_max )
+  static FT_Error
+  get_sfnt_glyph_name( TT_Face     face,
+                       FT_UInt     glyph_index,
+                       FT_Pointer  buffer,
+                       FT_UInt     buffer_max )
   {
     FT_String*  gname;
     FT_Error    error;
@@ -111,12 +111,61 @@
   }
 
 
+  static const char*
+  get_sfnt_postscript_name( TT_Face  face )
+  {
+    FT_Int  n;
+
+
+    /* shouldn't happen, but just in case to avoid memory leaks */
+    if ( face->root.internal->postscript_name )
+      return face->root.internal->postscript_name;
+
+    /* scan the name table to see if we have a Postscript name here, either */
+    /* in Macintosh or Windows platform encodings..                         */
+    for ( n = 0; n < face->num_names; n++ )
+    {
+      TT_NameRec*  name = face->name_table.names + n;
+
+
+      if ( name->nameID == 6 )
+      {
+        if ( ( name->platformID == 3 &&
+               name->encodingID == 1 &&
+               name->languageID == 0x409 ) ||
+
+             ( name->platformID == 1 &&
+               name->encodingID == 0 &&
+               name->languageID == 0     ) )
+        {
+          FT_UInt     len = name->stringLength;
+          FT_Error    error;
+          FT_Memory   memory = face->root.memory;
+          FT_String*  result;
+
+
+          if ( !ALLOC( result, len + 1 ) )
+          {
+            memcpy( result, name->string, len );
+            result[len] = '\0';
+
+            face->root.internal->postscript_name = result;
+          }
+          return result;
+        }
+      }
+    }
+
+    return NULL;
+  }
+
+
 #endif /* TT_CONFIG_OPTION_POSTSCRIPT_NAMES */
 
 
-  FT_CALLBACK_DEF
-  FT_Module_Interface  SFNT_Get_Interface( FT_Module    module,
-                                           const char*  interface )
+  FT_CALLBACK_DEF( FT_Module_Interface )
+  SFNT_Get_Interface( FT_Module    module,
+                      const char*  interface )
   {
     FT_UNUSED( module );
 
@@ -127,6 +176,10 @@
     if ( strcmp( interface, "glyph_name" ) == 0 )
       return (FT_Module_Interface)get_sfnt_glyph_name;
 #endif
+
+    if ( strcmp( interface, "postscript_name" ) == 0 )
+      return (FT_Module_Interface)get_sfnt_postscript_name;
+
     return 0;
   }
 

@@ -27,13 +27,14 @@
  *
  *	Id: fontcachstr.h,v 1.7 1999/01/31 14:58:40 akiyama Exp $
  */
+/* $XFree86: xc/include/extensions/fontcachstr.h,v 1.3 2001/08/01 00:44:35 tsi Exp $ */
 
 /* THIS IS NOT AN X CONSORTIUM STANDARD */
 
 #ifndef _FONTCACHESTR_H_
 #define _FONTCACHESTR_H_
 
-#include "fontcache.h"
+#include <X11/extensions/fontcache.h>
 
 #define FONTCACHENAME		"FontCache"
 

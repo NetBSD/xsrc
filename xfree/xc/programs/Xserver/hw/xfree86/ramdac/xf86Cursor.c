@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/ramdac/xf86Cursor.c,v 1.9 2001/05/18 20:22:31 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/ramdac/xf86Cursor.c,v 1.12 2001/11/08 04:15:33 tsi Exp $ */
 
 #include "xf86.h"
 #include "xf86_ansic.h"
@@ -36,7 +36,7 @@ static void xf86CursorQueryBestSize(int, unsigned short*, unsigned short*,
 static Bool xf86CursorSwitchMode(int, DisplayModePtr,int);
 static Bool xf86CursorEnterVT(int, int);
 static void xf86CursorLeaveVT(int, int);
-static int  xf86SetDGAMode(int, int, DGADevicePtr);
+static int  xf86CursorSetDGAMode(int, int, DGADevicePtr);
 
 Bool
 xf86InitCursor(
@@ -103,7 +103,7 @@ xf86InitCursor(
 	pScrn->SwitchMode = xf86CursorSwitchMode;
     pScrn->EnterVT = xf86CursorEnterVT;
     pScrn->LeaveVT = xf86CursorLeaveVT;
-    pScrn->SetDGAMode = xf86SetDGAMode;
+    pScrn->SetDGAMode = xf86CursorSetDGAMode;
 
     return TRUE;
 }
@@ -149,8 +149,10 @@ xf86CursorQueryBestSize(
 	pScreen->devPrivates[xf86CursorScreenIndex].ptr;
 
     if (class == CursorShape) {
-	*width = ScreenPriv->CursorInfoPtr->MaxWidth;
-	*height = ScreenPriv->CursorInfoPtr->MaxHeight;
+	if(*width > ScreenPriv->CursorInfoPtr->MaxWidth)
+	   *width = ScreenPriv->CursorInfoPtr->MaxWidth;
+	if(*height > ScreenPriv->CursorInfoPtr->MaxHeight)
+	   *height = ScreenPriv->CursorInfoPtr->MaxHeight;
     } else
 	(*ScreenPriv->QueryBestSize)(class, width, height, pScreen);
 }
@@ -243,7 +245,7 @@ xf86CursorLeaveVT(int index, int flags)
 }
 
 static int
-xf86SetDGAMode(int index, int num, DGADevicePtr devRet)
+xf86CursorSetDGAMode(int index, int num, DGADevicePtr devRet)
 {
     ScreenPtr pScreen = screenInfo.screens[index];
     xf86CursorScreenPtr ScreenPriv =
@@ -333,7 +335,7 @@ xf86CursorSetCursor(ScreenPtr pScreen, CursorPtr pCurs, int x, int y)
 	xf86SetCursor(pScreen, pCurs, x, y);
 	ScreenPriv->SWCursor = FALSE;
 	ScreenPriv->isUp = TRUE;
-	PointPriv->waitForUpdate = !infoPtr->pScrn->silkenMouse;
+	PointPriv->waitForUpdate = FALSE;
 	return;
     }
 

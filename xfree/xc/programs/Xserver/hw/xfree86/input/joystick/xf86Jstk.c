@@ -22,7 +22,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/input/joystick/xf86Jstk.c,v 1.4 1999/06/13 05:18:55 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/input/joystick/xf86Jstk.c,v 1.6 2001/12/26 21:51:59 dawes Exp $ */
 
 #include <xf86Version.h>
 
@@ -46,7 +46,6 @@
 #include <xf86Module.h>
 #endif
 
-#define sleep(t) xf86WaitForInput(-1, 1000 * (t))
 #define wait_for_fd(fd) xf86WaitForInput((fd), 1000)
 #define tcflush(fd, n) xf86FlushInput((fd))
 #undef read
@@ -663,8 +662,6 @@ xf86JstkUnplug(pointer	p)
     ErrorF("xf86JstckUnplug\n");
     
     xf86JstkProc(local->dev, DEVICE_OFF);
-    
-    xf86RemoveLocalDevice(local);
     
     xfree (priv);
     xfree (local);

@@ -1,9 +1,13 @@
-/* $Xorg: XUrls.c,v 1.3 2000/08/17 19:55:02 cpqbld Exp $ */
+/* $Xorg: XUrls.c,v 1.4 2001/02/09 02:05:58 xorgcvs Exp $ */
 /*
 
 Copyright 1996, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included
 in all copies or substantial portions of the Software.
@@ -22,9 +26,10 @@ other dealings in this Software without prior written authorization from
 The Open Group.
 
 */
-/* $XFree86: xc/programs/xrx/rx/XUrls.c,v 1.7 2001/01/17 23:46:25 dawes Exp $ */
+/* $XFree86: xc/programs/xrx/rx/XUrls.c,v 1.11 2001/12/14 20:02:19 dawes Exp $ */
 
 #include "RxI.h"
+#include "XUrls.h"
 #include <sys/utsname.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -33,9 +38,6 @@ The Open Group.
 #include <stdlib.h>
 #include <limits.h>		/* for MAXHOSTNAMELEN */
 #include <errno.h>
-#ifdef X_NOT_STDC_ENV
-extern int errno;
-#endif
 
 /* and in case we didn't get it from the headers above */
 #ifndef MAXHOSTNAMELEN
@@ -65,11 +67,7 @@ MyBestHostname (
   char* display_name, 
   char* dest_url)
 {
-  struct sockaddr_in local, remote;
-  struct hostent* hp;
   struct utsname host;
-  int s, rv, namelen;
-  char dest_hostname[MAXHOSTNAMELEN + 1];
 
   *myname = '\0';
 
@@ -78,6 +76,11 @@ MyBestHostname (
 
 /* for some reason this doesn't work on Solaris 2.x */
 #if !(defined(sun) && defined(SVR4))
+    struct sockaddr_in local, remote;
+    struct hostent* hp;
+    int s, rv, namelen;
+    char dest_hostname[MAXHOSTNAMELEN + 1];
+
     ParseHostname (dest_url, dest_hostname, sizeof dest_hostname);
 
     hp = gethostbyname (dest_hostname);
@@ -163,7 +166,7 @@ MyBestHostname (
 char *
 GetXUrl(char *display_name, char *auth, char* dest_url)
 {
-    char *dpy_name, *proto;
+    char *dpy_name, *proto = NULL;
     char *url, *ptr;
     char *name;
     struct hostent *host;
@@ -238,7 +241,7 @@ GetXUrl(char *display_name, char *auth, char* dest_url)
 char *
 GetXPrintUrl(char *display_name, char *printer, char *auth, char* dest_url)
 {
-    char *dpy_name, *proto;
+    char *dpy_name, *proto = NULL;
     char *url, *ptr;
     char *name;
     struct hostent *host;

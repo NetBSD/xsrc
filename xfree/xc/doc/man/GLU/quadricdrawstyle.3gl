@@ -53,5 +53,5 @@ coplanar faces will not be drawn.
 \%\f3GLU_POINT\fP
 Quadrics are rendered as a set of points.
 .SH SEE ALSO
-\%\f3gluNewQuadric\fP, \%\f3gluQuadricNormals\fP, \%\f3gluQuadricOrientation\fP,
-\%\f3gluQuadricTexture\fP
+\%\f3gluNewQuadric(3G)\fP, \%\f3gluQuadricNormals(3G)\fP, \%\f3gluQuadricOrientation(3G)\fP,
+\%\f3gluQuadricTexture(3G)\fP

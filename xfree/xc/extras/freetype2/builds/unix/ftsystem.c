@@ -4,7 +4,7 @@
 /*                                                                         */
 /*    Unix-specific FreeType low-level system interface (body).            */
 /*                                                                         */
-/*  Copyright 1996-2000 by                                                 */
+/*  Copyright 1996-2001 by                                                 */
 /*  David Turner, Robert Wilhelm, and Werner Lemberg.                      */
 /*                                                                         */
 /*  This file is part of the FreeType project, and may only be used,       */
@@ -17,7 +17,7 @@
 
 
 #include <ft2build.h>
-/* we use our special ftconfig.h file, not the standard one */
+  /* we use our special ftconfig.h file, not the standard one */
 #include <ftconfig.h>
 #include FT_INTERNAL_DEBUG_H
 #include FT_SYSTEM_H
@@ -48,8 +48,9 @@
 #else
   extern
 #endif
-  int  munmap( char*  addr,
-               int    len );
+  int
+  munmap( char*  addr,
+          int    len );
 
 #define MUNMAP_ARG_CAST  char *
 
@@ -91,9 +92,9 @@
   /* <Return>                                                              */
   /*    The address of newly allocated block.                              */
   /*                                                                       */
-  FT_CALLBACK_DEF
-  void*  ft_alloc( FT_Memory  memory,
-                   long       size )
+  FT_CALLBACK_DEF( void* )
+  ft_alloc( FT_Memory  memory,
+            long       size )
   {
     FT_UNUSED( memory );
 
@@ -121,11 +122,11 @@
   /* <Return>                                                              */
   /*    The address of the reallocated memory block.                       */
   /*                                                                       */
-  FT_CALLBACK_DEF
-  void*  ft_realloc( FT_Memory  memory,
-                     long       cur_size,
-                     long       new_size,
-                     void*      block )
+  FT_CALLBACK_DEF( void* )
+  ft_realloc( FT_Memory  memory,
+              long       cur_size,
+              long       new_size,
+              void*      block )
   {
     FT_UNUSED( memory );
     FT_UNUSED( cur_size );
@@ -147,9 +148,9 @@
   /*                                                                       */
   /*    block   :: The address of block in memory to be freed.             */
   /*                                                                       */
-  FT_CALLBACK_DEF
-  void  ft_free( FT_Memory  memory,
-                 void*      block )
+  FT_CALLBACK_DEF( void )
+  ft_free( FT_Memory  memory,
+           void*      block )
   {
     FT_UNUSED( memory );
 
@@ -189,8 +190,8 @@
   /* <Input>                                                               */
   /*    stream :: A pointer to the stream object.                          */
   /*                                                                       */
-  FT_CALLBACK_DEF
-  void  ft_close_stream( FT_Stream  stream )
+  FT_CALLBACK_DEF( void )
+  ft_close_stream( FT_Stream  stream )
   {
     munmap( (MUNMAP_ARG_CAST)stream->descriptor.pointer, stream->size );
 
@@ -202,8 +203,9 @@
 
   /* documentation is in ftobjs.h */
 
-  FT_EXPORT_DEF( FT_Error )  FT_New_Stream( const char*  filepathname,
-                                            FT_Stream    stream )
+  FT_EXPORT_DEF( FT_Error )
+  FT_New_Stream( const char*  filepathname,
+                 FT_Stream    stream )
   {
     int          file;
     struct stat  stat_buf;
@@ -220,6 +222,19 @@
       FT_ERROR(( " could not open `%s'\n", filepathname ));
       return FT_Err_Cannot_Open_Resource;
     }
+
+    /* Here we ensure that a "fork" will _not_ duplicate   */
+    /* our opened input streams on Unix.  This is critical */
+    /* since it avoids some (possible) access control      */
+    /* issues and cleans up the kernel file table a bit.   */
+    /*                                                     */
+#ifdef F_SETFD
+#ifdef FD_CLOEXEC
+    (void) fcntl( file, F_SETFD, FD_CLOEXEC );
+#else
+    (void) fcntl( file, F_SETFD, 1 );
+#endif /* FD_CLOEXEC */
+#endif /* F_SETFD */
 
     if ( fstat( file, &stat_buf ) < 0 )
     {
@@ -269,9 +284,21 @@
   }
 
 
+#ifdef FT_DEBUG_MEMORY
+
+  extern FT_Int
+  ft_mem_debug_init( FT_Memory  memory );
+  
+  extern void
+  ft_mem_debug_done( FT_Memory  memory );
+  
+#endif  
+      
+
   /* documentation is in ftobjs.h */
 
-  FT_EXPORT_DEF( FT_Memory )  FT_New_Memory( void )
+  FT_EXPORT_DEF( FT_Memory )
+  FT_New_Memory( void )
   {
     FT_Memory  memory;
 
@@ -283,6 +310,9 @@
       memory->alloc   = ft_alloc;
       memory->realloc = ft_realloc;
       memory->free    = ft_free;
+#ifdef FT_DEBUG_MEMORY
+      ft_mem_debug_init( memory );
+#endif    
     }
 
     return memory;
@@ -291,8 +321,12 @@
 
   /* documentation is in ftobjs.h */
 
-  FT_EXPORT_DEF( void )  FT_Done_Memory( FT_Memory  memory )
+  FT_EXPORT_DEF( void )
+  FT_Done_Memory( FT_Memory  memory )
   {
+#ifdef FT_DEBUG_MEMORY
+    ft_mem_debug_done( memory );
+#endif  
     memory->free( memory, memory );
   }
 

@@ -1,9 +1,13 @@
-/* $XFree86: xc/programs/Xserver/mi/miinitext.c,v 3.57 2001/05/10 10:17:39 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/mi/miinitext.c,v 3.63 2001/12/14 20:00:23 dawes Exp $ */
 /***********************************************************
 
 Copyright 1987, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -41,7 +45,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $Xorg: miinitext.c,v 1.3 2000/08/17 19:53:38 cpqbld Exp $ */
+/* $Xorg: miinitext.c,v 1.4 2001/02/09 02:05:21 xorgcvs Exp $ */
 
 #include "misc.h"
 #include "extension.h"
@@ -66,17 +70,13 @@ extern Bool noXkbExtension;
 #endif
 
 #ifndef XFree86LOADER
-#if NeedFunctionPrototypes
 #define INITARGS void
-#else
-#define INITARGS /*nothing*/
-#endif
 typedef void (*InitExtension)(INITARGS);
 #else /* XFree86Loader */
 #include "loaderProcs.h"
 #endif
 
-#include "Xlib.h"
+#include <X11/Xlib.h>
 #ifdef MITSHM
 #include "shmstr.h"
 #endif
@@ -219,6 +219,9 @@ extern void FontCacheExtensionInit(INITARGS);
 #ifdef RENDER
 extern void RenderExtensionInit(INITARGS);
 #endif
+#ifdef RANDR
+extern void RRExtensionInit(INITARGS);
+#endif
 
 #ifndef XFree86LOADER
 
@@ -331,9 +334,7 @@ InitExtensions(argc, argv)
 #if defined(XFreeXDGA)
     XFree86DGAExtensionInit();
 #endif
-#endif
 #ifdef XF86DRI
-#ifndef XPRINT	/* we don't want Glx in the Xprint server */
     XFree86DRIExtensionInit();
 #endif
 #endif
@@ -349,6 +350,9 @@ InitExtensions(argc, argv)
 #endif
 #ifdef RENDER
     RenderExtensionInit();
+#endif
+#ifdef RANDR
+    RRExtensionInit();
 #endif
 }
 
@@ -416,6 +420,7 @@ ExtensionModule extension[] =
     { NULL, "Adobe-DPS-Extension", NULL, NULL },
     { NULL, "FontCache", NULL, NULL },
     { NULL, "RENDER", NULL, NULL },
+    { NULL, "RANDR", NULL, NULL },
     { NULL, NULL, NULL, NULL }
 };
 #endif
@@ -440,9 +445,6 @@ static ExtensionModule staticExtensions[] = {
 #ifdef XIDLE
     { XIdleExtensionInit, "XIDLE", NULL, NULL, NULL },
 #endif
-#ifdef XTRAP
-    { DEC_XTRAPInit, "XTRAP", &noTestExtensions, NULL, NULL },
-#endif
 #ifdef XKB
     { XkbExtensionInit, XkbName, &noXkbExtension, NULL, NULL },
 #endif
@@ -466,6 +468,9 @@ static ExtensionModule staticExtensions[] = {
 #endif
 #ifdef RENDER
     { RenderExtensionInit, "RENDER", NULL, NULL, NULL },
+#endif
+#ifdef RANDR
+    { RRExtensionInit, "RANDR", NULL, NULL, NULL },
 #endif
     { NULL, NULL, NULL, NULL, NULL }
 };

@@ -26,7 +26,7 @@
  *
  * Author: Paulo César Pereira de Andrade <pcpa@conectiva.com.br>
  *
- * $XFree86: xc/programs/Xserver/hw/xfree86/xf86cfg/interface.c,v 1.23.2.1 2001/05/21 22:24:02 paulo Exp $
+ * $XFree86: xc/programs/Xserver/hw/xfree86/xf86cfg/interface.c,v 1.33 2001/11/30 12:12:04 eich Exp $
  */
 
 #include <X11/IntrinsicP.h>
@@ -101,7 +101,7 @@ void PopdownErrorCallback(Widget, XtPointer, XtPointer);
 static void ErrorCancelAction(Widget, XEvent*, String*, Cardinal*);
 static void QuitCancelAction(Widget, XEvent*, String*, Cardinal*);
 static void HelpCallback(Widget, XtPointer, XtPointer);
-static void UpdateMenuDeviceList(int);
+void UpdateMenuDeviceList(int);
 
 extern void AccessXConfigureStart(void);
 extern void AccessXConfigureEnd(void);
@@ -111,10 +111,12 @@ extern void CloseAccessXAction(Widget, XEvent*, String*, Cardinal*);
 extern void TextMode(void);
 #endif
 
+static void Usage(void);
+
 /*
  * Initialization
  */
-Widget toplevel, work, config, layout, layoutsme, layoutp;
+Widget toplevel, work, config, layout, layoutsme, layoutp, topMenu;
 XtAppContext appcon;
 
 Pixmap menuPixmap;
@@ -130,12 +132,16 @@ static char XF86Config_path_static[1024];
 static char XkbConfig_path_static[1024];
 Bool xf86config_set = False;
 
-Bool textmode = False, nomodules = False;
+int textmode = False;
+#ifdef USE_MODULES
+int nomodules = False;
+#endif
+int  noverify = False;
 
 xf86cfgComputer computer;
 xf86cfgDevice cpu_device;
 Cursor no_cursor;
-static Widget device, menu, layoutm, popup, commands;
+static Widget device, layoutm, popup, commands;
 static int xpos, ypos;
 int sxpos, sypos;
 static char no_cursor_data[] = { 0,0,0,0, 0,0,0,0 };
@@ -145,11 +151,7 @@ static Bool config_set = False;
 static Widget mouseSme, mouseMenu, keyboardSme, keyboardMenu,
        cardSme, cardMenu, monitorSme, monitorMenu;
 
-#define CONFIG_LAYOUT	0
-#define CONFIG_SCREEN	1
-#define CONFIG_MODELINE	2
-#define CONFIG_ACCESSX	3
-static int config_mode = CONFIG_LAYOUT;
+int config_mode = CONFIG_LAYOUT;
 
 static XtActionsRec actions[] = {
     {"filter-card", CardFilterAction},
@@ -166,7 +168,7 @@ static XtActionsRec actions[] = {
     {"options-cancel", OptionsCancelAction},
     {"error-cancel", ErrorCancelAction},
     {"quit-cancel", QuitCancelAction},
-    {"addmode-cancel", CancelForceAddModeAction},
+    {"addmode-cancel", CancelAddModeAction},
     {"accessx-close", CloseAccessXAction},
     {"testmode-cancel", CancelTestModeAction},
     {"help-close", HelpCancelAction},
@@ -198,11 +200,31 @@ static XtResource appResources[] = {
       0, XtRString, "menu10"},
 };
 
-/*
-static XrmOptionDescRec optionDescList[] = {
-    {"-xf86config",  "*xf86config",  XrmoptionSepArg,  (XtPointer)"/etc/X11/XF86Config"},
-};
-*/
+static void
+Usage(void)
+{
+    fprintf(stderr,
+"Usage:\n"
+"   xf86cfg [-option ...]\n"
+"\n"
+"Options:\n"
+"   -xf86config <XF86Config>   Alternate configuration file.\n"
+"   -modulepath <module-path>  XFree86 modules location.\n"
+"   -serverpath <server-path>  X server to start (if $DISPLAY is not defined).\n"
+"   -fontpath   <font-path>    Font path for fonts.\n"
+"   -rgbpath    <rgb-path>     Where the rgb.txt file is located.\n"
+#ifdef HAS_NCURSES
+"   -textmode                  Use this option for the text only interface.\n"
+#endif
+#ifdef USE_MODULES
+"   -nomodules                 Use this option if xf86cfg is slow to start.\n"
+"   -verbose <number>          Verbosity used in the loader (default 1).\n"
+#endif
+"   -verify                    Verify modules/options integrity.\n"
+);
+
+    exit(1);
+}
 
 /*
  * Implementation
@@ -220,14 +242,15 @@ main(int argc, char *argv[])
     char *menuPixmapPath = NULL;
     XrmValue from, to;
 
-#ifdef USE_MODULES
-    xf86Verbose = 1;
-#endif
-
     if ((XFree86Dir = getenv("XWINHOME")) == NULL)
 	XFree86Dir = DefaultXFree86Dir;
 
     chdir(XFree86Dir);
+
+#ifdef USE_MODULES
+    xf86Verbose = 1;
+#endif
+    noverify = True;
 
     for (i = 1; i < argc; i++) {
 	if (strcmp(argv[i], "-xf86config") == 0) {
@@ -252,8 +275,18 @@ main(int argc, char *argv[])
 	else if (strcmp(argv[i], "-textmode") == 0)
 	    textmode = True;
 #endif
+#ifdef USE_MODULES
 	else if (strcmp(argv[i], "-nomodules") == 0)
 	    nomodules = True;
+	else if (strcmp(argv[i], "-verbose") == 0) {
+	    if (i + 1 < argc)
+		xf86Verbose = atoi(argv[++i]);
+	}
+#endif
+	else if (strcmp(argv[i], "-verify") == 0)
+	    noverify = False;
+	else
+	    Usage();
     }
 
 #ifdef HAS_NCURSES
@@ -269,7 +302,6 @@ main(int argc, char *argv[])
     if (XkbConfig_path == NULL)
 	XkbConfig_path = XkbConfigDir XkbConfigFile;
     toplevel = XtAppInitialize(&appcon, "XF86Cfg",
-/*			       optionDescList, XtNumber(optionDescList),*/
 		    	       NULL, 0,
 			       &argc, argv,
 			       NULL, NULL, 0);
@@ -297,12 +329,12 @@ main(int argc, char *argv[])
 				 toplevel, NULL, 0);
     hpane = XtVaCreateManagedWidget("hpane", panedWidgetClass, pane,
 				    XtNorientation, XtorientHorizontal, NULL, 0);
-    menu = XtCreateManagedWidget("topM", menuButtonWidgetClass,
+    topMenu = XtCreateManagedWidget("topM", menuButtonWidgetClass,
 				 hpane, NULL, 0);
     expert = XtCreateManagedWidget("expert", commandWidgetClass, hpane, NULL, 0);
     XtAddCallback(expert, XtNcallback, ExpertCallback, NULL);
     popup = XtCreatePopupShell("menu", simpleMenuWidgetClass,
-			       menu, NULL, 0);
+			       topMenu, NULL, 0);
     sme = XtCreateManagedWidget("layout", smeBSBObjectClass,
 				popup, NULL, 0);
     XtAddCallback(sme, XtNcallback, SetConfigModeCallback,
@@ -394,19 +426,8 @@ main(int argc, char *argv[])
 				 bottom, NULL, 0);
     XtAddCallback(quit, XtNcallback, QuitCallback, NULL);
 
-    layopt = XtCreatePopupShell("options", simpleMenuWidgetClass,
-				layoutp, NULL, 0);
-    sme = XtCreateManagedWidget("default", smeBSBObjectClass,
-				layopt, NULL, 0);
-    XtAddCallback(sme, XtNcallback, DefaultLayoutCallback, NULL);
-    sme = XtCreateManagedWidget("remove", smeBSBObjectClass,
-				layopt, NULL, 0);
-    XtAddCallback(sme, XtNcallback, RemoveLayoutCallback, NULL);
-
-    XtRealizeWidget(layopt);
-
     XtRealizeWidget(toplevel);
-    XtRealizeWidget(menu);
+    XtRealizeWidget(topMenu);
 
     pixmap = XCreateBitmapFromData(XtDisplay(toplevel), XtWindow(toplevel),
 				   no_cursor_data, 8, 8);
@@ -446,26 +467,35 @@ main(int argc, char *argv[])
     UpdateMenuDeviceList(CARD);
     UpdateMenuDeviceList(MONITOR);
     XtSetSensitive(smemodeline, VideoModeInitialize());
-    ReadCardsDatabase();
 
     lay = XF86Config->conf_layout_lst;
     while (lay != NULL) {
 	sme = XtVaCreateManagedWidget("sme", smeBSBObjectClass,
 				      layoutp,
 				      XtNlabel, lay->lay_identifier,
-				      XtNmenuName, "options",
+				      XtNmenuName, lay->lay_identifier,
 				      XtNleftBitmap, menuPixmap,
 				      NULL, 0);
 	XtAddCallback(sme, XtNcallback, SelectLayoutCallback, (XtPointer)lay);
 	if (layoutsme == NULL)
 	    layoutsme = sme;
+	layopt = XtCreatePopupShell(lay->lay_identifier, simpleMenuWidgetClass,
+				    layoutp, NULL, 0);
+	sme = XtCreateManagedWidget("default", smeBSBObjectClass,
+				    layopt, NULL, 0);
+	XtAddCallback(sme, XtNcallback, DefaultLayoutCallback, NULL);
+	sme = XtCreateManagedWidget("remove", smeBSBObjectClass,
+				    layopt, NULL, 0);
+	XtAddCallback(sme, XtNcallback, RemoveLayoutCallback, NULL);
+	XtRealizeWidget(layopt);
+
 	lay = (XF86ConfLayoutPtr)(lay->list.next);
     }
     SelectLayoutCallback(layoutsme,
 			 XF86Config->conf_layout_lst, NULL);
 
+    startaccessx();
     if (startedx) {
-	startaccessx();
 	switch (fork()) {
 	    case 0: {
 		char path[PATH_MAX];
@@ -487,6 +517,9 @@ main(int argc, char *argv[])
     if (!nomodules)
 	LoaderInitializeOptions();
 #endif
+
+    /* ReadCardsDatabase() must be called after LoaderInitializeOptions() */
+    ReadCardsDatabase();
 
     if (!config_set && startedx) {
 	XtFree(XF86Config_path);
@@ -574,7 +607,7 @@ AskConfig(void)
     else {
 	Arg args[2];
 	Cardinal num_args = 0;
-	char *l, *label, *str = "";
+	char *l, *label = NULL, *str = "";
 
 	XtSetArg(args[0], XtNlabel, &l);
 	XtGetValues(dialog, args, 1);
@@ -747,23 +780,25 @@ InitializeDevices(void)
     keyboard_y = work->core.height - DEFAULT_KEYBOARD_HEIGHT;
 
     while (input != NULL) {
-	if (strcasecmp(input->inp_driver, "mouse") == 0) {
-	    device = AddDevice(MOUSE, (XtPointer)input, mouse_x, mouse_y);
-	    SetTip(device);
-	    if ((mouse_x += DEFAULT_MOUSE_WIDTH) > work->core.width) {
-		if ((mouse_y -= DEFAULT_MOUSE_HEIGHT) < (work->core.height >> 1))
-		    mouse_y = work->core.height >> 1;
-		mouse_x = work->core.width - (work->core.width >> 2);
+	if (input->inp_driver) {
+	    if (strcasecmp(input->inp_driver, "mouse") == 0) {
+		device = AddDevice(MOUSE, (XtPointer)input, mouse_x, mouse_y);
+		SetTip(device);
+		if ((mouse_x += DEFAULT_MOUSE_WIDTH) > work->core.width) {
+		    if ((mouse_y -= DEFAULT_MOUSE_HEIGHT) < (work->core.height >> 1))
+			mouse_y = work->core.height >> 1;
+		    mouse_x = work->core.width - (work->core.width >> 2);
+		}
 	    }
-	}
-	else if (strcasecmp(input->inp_driver, "keyboard") == 0) {
-	    device = AddDevice(KEYBOARD, (XtPointer)input, keyboard_x, keyboard_y);
-	    SetTip(device);
-	    if ((keyboard_x += DEFAULT_KEYBOARD_WIDTH) >
-		work->core.width - (work->core.width >> 2))  {
-		if ((keyboard_y -= DEFAULT_KEYBOARD_HEIGHT) < (work->core.height >> 1))
-		    keyboard_y = work->core.height >> 1;
-		keyboard_x = 6;
+	    else if (strcasecmp(input->inp_driver, "keyboard") == 0) {
+		device = AddDevice(KEYBOARD, (XtPointer)input, keyboard_x, keyboard_y);
+		SetTip(device);
+		if ((keyboard_x += DEFAULT_KEYBOARD_WIDTH) >
+		    work->core.width - (work->core.width >> 2))  {
+		    if ((keyboard_y -= DEFAULT_KEYBOARD_HEIGHT) < (work->core.height >> 1))
+			keyboard_y = work->core.height >> 1;
+		    keyboard_x = 6;
+		}
 	    }
 	}
 	input = (XF86ConfInputPtr)(input->list.next);
@@ -907,10 +942,15 @@ SelectLayoutCallback(Widget w, XtPointer user_data, XtPointer call_data)
     XF86ConfLayoutPtr lay = (XF86ConfLayoutPtr)user_data;
     XF86ConfInputrefPtr input;
     XF86ConfAdjacencyPtr adj;
+    Widget sme, layopt;
     Arg args[1];
     char *str;
 
-    if (lay == computer.layout)
+			       /* XXX Needs to check computer.layout,
+				* because this function should also create
+				* a new layout...
+				*/
+    if (lay == computer.layout && computer.layout)
 	return;
 
     if (computer.layout != NULL) {
@@ -1003,8 +1043,8 @@ SelectLayoutCallback(Widget w, XtPointer user_data, XtPointer call_data)
 	    l = (XF86ConfLayoutPtr)(l->list.next);
 	}
 	do {
-	    ++num_layouts;
 	    XmuSnprintf(name, sizeof(name), "Layout%d", num_layouts);
+	    ++num_layouts;
 	} while (xf86findLayout(name,
 		 XF86Config->conf_layout_lst) != NULL);
 	l = (XF86ConfLayoutPtr)XtCalloc(1, sizeof(XF86ConfLayoutRec));
@@ -1015,11 +1055,22 @@ SelectLayoutCallback(Widget w, XtPointer user_data, XtPointer call_data)
 	layoutsme = XtVaCreateManagedWidget("sme", smeBSBObjectClass,
 					    layoutp,
 					    XtNlabel, name,
-					    XtNmenuName, "options",
+					    XtNmenuName, l->lay_identifier,
 					    XtNleftBitmap, menuPixmap,
 					    NULL, 0);
 	XtAddCallback(layoutsme, XtNcallback,
 		      SelectLayoutCallback, (XtPointer)l);
+
+	layopt = XtCreatePopupShell(l->lay_identifier, simpleMenuWidgetClass,
+				    layoutp, NULL, 0);
+	sme = XtCreateManagedWidget("default", smeBSBObjectClass,
+				    layopt, NULL, 0);
+	XtAddCallback(sme, XtNcallback, DefaultLayoutCallback, NULL);
+	sme = XtCreateManagedWidget("remove", smeBSBObjectClass,
+				    layopt, NULL, 0);
+	XtAddCallback(sme, XtNcallback, RemoveLayoutCallback, NULL);
+	XtRealizeWidget(layopt);
+
 	computer.layout = l;
 	XtSetArg(args[0], XtNstring, name);
 	XtSetValues(layout, args, 1);
@@ -1082,15 +1133,14 @@ SelectLayoutCallback(Widget w, XtPointer user_data, XtPointer call_data)
 void
 DefaultLayoutCallback(Widget w, XtPointer user_data, XtPointer call_data)
 {
-    Widget sme = (Widget)(((SimpleMenuWidget)(w->core.parent->core.parent))
-			->simple_menu.entry_set);
+    Widget layopt, sme;
     int i;
     char *str;
-    Arg args[1];
     XF86ConfLayoutPtr prev, tmp, lay;
 
-    XtSetArg(args[0], XtNlabel, &str);
-    XtGetValues(sme, args, 1);
+    str = w && XtParent(w) ? XtName(XtParent(w)) : NULL;
+    if (str == NULL)
+	return;
 
     prev = XF86Config->conf_layout_lst;
     lay = xf86findLayout(str, prev);
@@ -1107,6 +1157,8 @@ DefaultLayoutCallback(Widget w, XtPointer user_data, XtPointer call_data)
 
     for (i = 1; i < ((CompositeWidget)layoutp)->composite.num_children; i++)
 	XtDestroyWidget(((CompositeWidget)layoutp)->composite.children[i]);
+    for (i = 0; i < layoutp->core.num_popups; i++)
+	XtDestroyWidget(layoutp->core.popup_list[i]);
 
     prev->list.next = lay->list.next;
     lay->list.next = XF86Config->conf_layout_lst;
@@ -1118,12 +1170,22 @@ DefaultLayoutCallback(Widget w, XtPointer user_data, XtPointer call_data)
 	sme = XtVaCreateManagedWidget("sme", smeBSBObjectClass,
 				      layoutp,
 				      XtNlabel, lay->lay_identifier,
-				      XtNmenuName, "options",
+				      XtNmenuName, lay->lay_identifier,
 				      XtNleftBitmap, menuPixmap,
 				      NULL, 0);
 	XtAddCallback(sme, XtNcallback, SelectLayoutCallback, (XtPointer)lay);
 	if (layoutsme == NULL)
 	    layoutsme = sme;
+	layopt = XtCreatePopupShell(lay->lay_identifier, simpleMenuWidgetClass,
+				    layoutp, NULL, 0);
+	sme = XtCreateManagedWidget("default", smeBSBObjectClass,
+				    layopt, NULL, 0);
+	XtAddCallback(sme, XtNcallback, DefaultLayoutCallback, NULL);
+	sme = XtCreateManagedWidget("remove", smeBSBObjectClass,
+				    layopt, NULL, 0);
+	XtAddCallback(sme, XtNcallback, RemoveLayoutCallback, NULL);
+	XtRealizeWidget(layopt);
+
 	lay = (XF86ConfLayoutPtr)(lay->list.next);
     }
     SelectLayoutCallback(layoutsme,
@@ -1135,13 +1197,15 @@ void
 RemoveLayoutCallback(Widget w, XtPointer user_data, XtPointer call_data)
 {
     XF86ConfLayoutPtr prev, tmp, lay, rem;
-    Widget sme = (Widget)(((SimpleMenuWidget)(w->core.parent->core.parent))
-			->simple_menu.entry_set);
+    Widget sme = NULL;
+    int i;
     char *str;
     Arg args[1];
 
-    XtSetArg(args[0], XtNlabel, &str);
-    XtGetValues(sme, args, 1);
+    str = w && XtParent(w) ? XtName(XtParent(w)) : NULL;
+    if (str == NULL)
+	return;
+
     prev = XF86Config->conf_layout_lst;
     lay = xf86findLayout(str, prev);
     tmp = prev;
@@ -1174,8 +1238,6 @@ RemoveLayoutCallback(Widget w, XtPointer user_data, XtPointer call_data)
 	SelectLayoutCallback(layoutsme, lay, NULL);
     }
     else {
-	int i;
-
 	computer.layout = NULL;
 	XtSetArg(args[0], XtNstring, "");
 	XtSetValues(layout, args, 1);
@@ -1185,22 +1247,30 @@ RemoveLayoutCallback(Widget w, XtPointer user_data, XtPointer call_data)
 	DrawCables();
     }
 
+    for (i = 0; i < ((CompositeWidget)layoutp)->composite.num_children; i++) {
+	XtSetArg(args[0], XtNlabel, &str);
+	XtGetValues(((CompositeWidget)layoutp)->composite.children[i], args, 1);
+	if (strcmp(rem->lay_identifier, str) == 0) {
+	    sme = ((CompositeWidget)layoutp)->composite.children[i];
+	    break;
+	}
+    }
+
     xf86removeLayout(XF86Config, rem);
-    XtDestroyWidget(sme);
+    if (sme)
+	XtDestroyWidget(sme);
 }
 
 void
 SetTip(xf86cfgDevice *device)
 {
-    XF86OptionPtr option;
+    XF86OptionPtr option = NULL;
     char *tip, buffer[4096];
     Arg args[1];
-    int len;
+    int len = 0;
 
     XtSetArg(args[0], XtNtip, &tip);
     XtGetValues(device->widget, args, 1);
-    if (tip)
-	XtFree((XtPointer)tip);
 
     switch (device->type) {
 	case MOUSE: {
@@ -1288,7 +1358,7 @@ SetTip(xf86cfgDevice *device)
 	option = (XF86OptionPtr)(option->list.next);
     }
 
-    tip = XtNewString(buffer);
+    tip = buffer;
     XtSetArg(args[0], XtNtip, tip);
     XtSetValues(device->widget, args, 1);
 }
@@ -1423,7 +1493,7 @@ void
 OptionsCallback(Widget w, XtPointer user_data, XtPointer call_data)
 {
     int i;
-    XF86OptionPtr *options;
+    XF86OptionPtr *options = NULL;
 #ifdef USE_MODULES
     xf86cfgModuleOptions *drv_opts = NULL;
 #endif
@@ -1506,7 +1576,7 @@ OptionsCallback(Widget w, XtPointer user_data, XtPointer call_data)
 #endif
     if (config_mode == CONFIG_SCREEN) {
 	XF86OptionPtr option, options;
-	int rotate;
+	int rotate = 0;
 
 	options = computer.screens[i]->screen->scrn_option_lst;
 	if ((option = xf86findOption(options, "Rotate")) != NULL) {
@@ -1736,7 +1806,7 @@ RemoveDeviceCallback(Widget w, XtPointer user_data, XtPointer call_data)
     }
 }
 
-static void
+void
 UpdateMenuDeviceList(int type)
 {
     Widget sme = NULL, menu = NULL;
@@ -2126,7 +2196,7 @@ SetConfigModeCallback(Widget w, XtPointer user_data, XtPointer call_data)
     XtSetArg(args[0], XtNlabel, &ptr);
     XtGetValues(w, args, 1);
     XtSetArg(args[0], XtNlabel, ptr);
-    XtSetValues(menu, args, 1);
+    XtSetValues(topMenu, args, 1);
 
     if (config_mode == CONFIG_LAYOUT) {
 	XtSetArg(args[0], XtNheight, &height);

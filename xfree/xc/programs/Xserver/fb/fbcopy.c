@@ -21,7 +21,7 @@
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
-/* $XFree86: xc/programs/Xserver/fb/fbcopy.c,v 1.7 2000/05/06 21:09:32 keithp Exp $ */
+/* $XFree86: xc/programs/Xserver/fb/fbcopy.c,v 1.12 2001/07/16 05:04:05 keithp Exp $ */
 
 #include "fb.h"
 #ifdef IN_MODULE
@@ -41,32 +41,35 @@ fbCopyNtoN (DrawablePtr	pSrcDrawable,
 	    Pixel	bitplane,
 	    void	*closure)
 {
-    FbGCPrivPtr	pPriv = fbGetGCPrivate(pGC);
+    CARD8	alu = pGC ? pGC->alu : GXcopy;
+    FbBits	pm = pGC ? fbGetGCPrivate(pGC)->pm : FB_ALLONES;
     FbBits	*src;
     FbStride	srcStride;
     int		srcBpp;
+    int		srcXoff, srcYoff;
     FbBits	*dst;
     FbStride	dstStride;
     int		dstBpp;
+    int		dstXoff, dstYoff;
     
-    fbGetDrawable (pSrcDrawable, src, srcStride, srcBpp);
-    fbGetDrawable (pDstDrawable, dst, dstStride, dstBpp);
+    fbGetDrawable (pSrcDrawable, src, srcStride, srcBpp, srcXoff, srcYoff);
+    fbGetDrawable (pDstDrawable, dst, dstStride, dstBpp, dstXoff, dstYoff);
     
     while (nbox--)
     {
-	fbBlt (src + (pbox->y1 + dy) * srcStride,
+	fbBlt (src + (pbox->y1 + dy + srcYoff) * srcStride,
 	       srcStride,
-	       (pbox->x1 + dx) * srcBpp,
+	       (pbox->x1 + dx + srcXoff) * srcBpp,
     
-	       dst + (pbox->y1) * dstStride,
+	       dst + (pbox->y1 + dstYoff) * dstStride,
 	       dstStride,
-	       (pbox->x1) * dstBpp,
+	       (pbox->x1 + dstXoff) * dstBpp,
     
 	       (pbox->x2 - pbox->x1) * dstBpp,
 	       (pbox->y2 - pbox->y1),
     
-	       pGC->alu,
-	       pPriv->pm,
+	       alu,
+	       pm,
 	       dstBpp,
     
 	       reverse,
@@ -92,24 +95,26 @@ fbCopy1toN (DrawablePtr	pSrcDrawable,
     FbBits	*src;
     FbStride	srcStride;
     int		srcBpp;
+    int		srcXoff, srcYoff;
     FbBits	*dst;
     FbStride	dstStride;
     int		dstBpp;
+    int		dstXoff, dstYoff;
 
-    fbGetDrawable (pSrcDrawable, src, srcStride, srcBpp);
-    fbGetDrawable (pDstDrawable, dst, dstStride, dstBpp);
+    fbGetDrawable (pSrcDrawable, src, srcStride, srcBpp, srcXoff, srcYoff);
+    fbGetDrawable (pDstDrawable, dst, dstStride, dstBpp, dstXoff, dstYoff);
 
     while (nbox--)
     {
 	if (dstBpp == 1)
 	{
-	    fbBlt (src + (pbox->y1 + dy) * srcStride,
+	    fbBlt (src + (pbox->y1 + dy + srcYoff) * srcStride,
 		   srcStride,
-		   (pbox->x1 + dx) * srcBpp,
+		   (pbox->x1 + dx + srcXoff) * srcBpp,
     
-		   dst + (pbox->y1) * dstStride,
+		   dst + (pbox->y1 + dstYoff) * dstStride,
 		   dstStride,
-		   (pbox->x1) * dstBpp,
+		   (pbox->x1 + dstXoff) * dstBpp,
     
 		   (pbox->x2 - pbox->x1) * dstBpp,
 		   (pbox->y2 - pbox->y1),
@@ -124,13 +129,13 @@ fbCopy1toN (DrawablePtr	pSrcDrawable,
 	}
 	else
 	{
-	    fbBltOne ((FbStip *) (src + (pbox->y1 + dy) * srcStride),
+	    fbBltOne ((FbStip *) (src + (pbox->y1 + dy + srcYoff) * srcStride),
 		      srcStride*(FB_UNIT/FB_STIP_UNIT),
-		      (pbox->x1 + dx),
+		      (pbox->x1 + dx + srcXoff),
     
-		      dst + (pbox->y1) * dstStride,
+		      dst + (pbox->y1 + dstYoff) * dstStride,
 		      dstStride,
-		      (pbox->x1) * dstBpp,
+		      (pbox->x1 + dstXoff) * dstBpp,
 		      dstBpp,
     
 		      (pbox->x2 - pbox->x1) * dstBpp,
@@ -162,24 +167,26 @@ fbCopyNto1 (DrawablePtr	pSrcDrawable,
     {
 	if (pDstDrawable->bitsPerPixel == 1)
 	{
-	    FbBits	    *src;
+	    FbBits	*src;
 	    FbStride    srcStride;
-	    int	    srcBpp;
+	    int		srcBpp;
+	    int		srcXoff, srcYoff;
     
-	    FbStip	    *dst;
+	    FbStip	*dst;
 	    FbStride    dstStride;
-	    int	    dstBpp;
+	    int		dstBpp;
+	    int		dstXoff, dstYoff;
 	    
-	    fbGetDrawable (pSrcDrawable, src, srcStride, srcBpp);
-	    fbGetStipDrawable (pDstDrawable, dst, dstStride, dstBpp);
-	    fbBltPlane (src + (pbox->y1+ dy) * srcStride,
+	    fbGetDrawable (pSrcDrawable, src, srcStride, srcBpp, srcXoff, srcYoff);
+	    fbGetStipDrawable (pDstDrawable, dst, dstStride, dstBpp, dstXoff, dstYoff);
+	    fbBltPlane (src + (pbox->y1+ dy + srcYoff) * srcStride,
 			srcStride,
-			(pbox->x1 + dx) * srcBpp,
+			(pbox->x1 + dx + srcXoff) * srcBpp,
 			srcBpp,
     
-			dst + (pbox->y1) * dstStride,
+			dst + (pbox->y1 + dstYoff) * dstStride,
 			dstStride,
-			(pbox->x1) * dstBpp,
+			(pbox->x1 + dstXoff) * dstBpp,
     
 			(pbox->x2 - pbox->x1) * srcBpp,
 			(pbox->y2 - pbox->y1),
@@ -190,17 +197,19 @@ fbCopyNto1 (DrawablePtr	pSrcDrawable,
 	}
 	else
 	{
-	    FbBits	    *src;
+	    FbBits	*src;
 	    FbStride    srcStride;
-	    int	    srcBpp;
-    
-	    FbBits	    *dst;
+	    int		srcBpp;
+	    int         srcXoff, srcYoff;
+
+	    FbBits	*dst;
 	    FbStride    dstStride;
-	    int	    dstBpp;
+	    int		dstBpp;
+	    int		dstXoff, dstYoff;
     
-	    FbStip	    *tmp;
+	    FbStip	*tmp;
 	    FbStride    tmpStride;
-	    int	    width, height;
+	    int		width, height;
 	    
 	    width = pbox->x2 - pbox->x1;
 	    height = pbox->y2 - pbox->y1;
@@ -210,12 +219,12 @@ fbCopyNto1 (DrawablePtr	pSrcDrawable,
 	    if (!tmp)
 		return;
 	    
-	    fbGetDrawable (pSrcDrawable, src, srcStride, srcBpp);
-	    fbGetDrawable (pDstDrawable, dst, dstStride, dstBpp);
+	    fbGetDrawable (pSrcDrawable, src, srcStride, srcBpp, srcXoff, srcYoff);
+	    fbGetDrawable (pDstDrawable, dst, dstStride, dstBpp, dstXoff, dstYoff);
 	    
-	    fbBltPlane (src + (pbox->y1+ dy) * srcStride,
+	    fbBltPlane (src + (pbox->y1+ dy + srcYoff) * srcStride,
 			srcStride,
-			(pbox->x1 + dx) * srcBpp,
+			(pbox->x1 + dx + srcXoff) * srcBpp,
 			srcBpp,
     
 			tmp,
@@ -234,9 +243,9 @@ fbCopyNto1 (DrawablePtr	pSrcDrawable,
 		      tmpStride,
 		      0,
     
-		      dst + (pbox->y1) * dstStride,
+		      dst + (pbox->y1 + dstYoff) * dstStride,
 		      dstStride,
-		      (pbox->x1) * dstBpp,
+		      (pbox->x1 + dstXoff) * dstBpp,
 		      dstBpp,
     
 		      width * dstBpp,
@@ -382,26 +391,25 @@ fbDoCopy (DrawablePtr	pSrcDrawable,
 	  Pixel		bitPlane,
 	  void		*closure)
 {
-    RegionPtr prgnSrcClip;	/* may be a new region, or just a copy */
-    Bool freeSrcClip = FALSE;
+    RegionPtr	prgnSrcClip = NULL; /* may be a new region, or just a copy */
+    Bool	freeSrcClip = FALSE;
+    RegionPtr	prgnExposed = NULL;
+    RegionRec	rgnDst;
+    int		dx;
+    int		dy;
+    int		numRects;
+    BoxRec	box;
+    Bool	fastSrc = FALSE;    /* for fast clipping with pixmap source */
+    Bool	fastDst = FALSE;    /* for fast clipping with one rect dest */
+    Bool	fastExpose = FALSE; /* for fast exposures with pixmap source */
 
-    RegionPtr prgnExposed = NULL;
-    RegionRec rgnDst;
-    register int dx;
-    register int dy;
-    xRectangle origSource;
-    DDXPointRec origDest;
-    int numRects;
-    BoxRec fastBox;
-    int fastClip = 0;		/* for fast clipping with pixmap source */
-    int fastExpose = 0;		/* for fast exposures with pixmap source */
+    /* Short cut for unmapped windows */
 
-    origSource.x = xIn;
-    origSource.y = yIn;
-    origSource.width = widthSrc;
-    origSource.height = heightSrc;
-    origDest.x = xOut;
-    origDest.y = yOut;
+    if (pDstDrawable->type == DRAWABLE_WINDOW && 
+	!((WindowPtr)pDstDrawable)->realized)
+    {
+	return NULL;
+    }
 
     if ((pSrcDrawable != pDstDrawable) &&
 	pSrcDrawable->pScreen->SourceValidate)
@@ -409,17 +417,13 @@ fbDoCopy (DrawablePtr	pSrcDrawable,
 	(*pSrcDrawable->pScreen->SourceValidate) (pSrcDrawable, xIn, yIn, widthSrc, heightSrc);
     }
 
-    xIn += pSrcDrawable->x;
-    yIn += pSrcDrawable->y;
-
-    /* clip the source */
-
+    /* Compute source clip region */
     if (pSrcDrawable->type == DRAWABLE_PIXMAP)
     {
 	if ((pSrcDrawable == pDstDrawable) && (pGC->clientClipType == CT_NONE))
 	    prgnSrcClip = fbGetCompositeClip(pGC);
 	else
-	    fastClip = 1;
+	    fastSrc = TRUE;
     }
     else
     {
@@ -427,7 +431,7 @@ fbDoCopy (DrawablePtr	pSrcDrawable,
 	{
 	    /*
 	     * XFree86 DDX empties the border clip when the
-	     * VT is inactive
+	     * VT is inactive, make sure the region isn't empty
 	     */
 	    if (!((WindowPtr) pSrcDrawable)->parent &&
 		REGION_NOTEMPTY (pSrcDrawable->pScreen,
@@ -437,10 +441,10 @@ fbDoCopy (DrawablePtr	pSrcDrawable,
 		 * special case bitblt from root window in
 		 * IncludeInferiors mode; just like from a pixmap
 		 */
-		fastClip = 1;
+		fastSrc = TRUE;
 	    }
 	    else if ((pSrcDrawable == pDstDrawable) &&
-		(pGC->clientClipType == CT_NONE))
+		     (pGC->clientClipType == CT_NONE))
 	    {
 		prgnSrcClip = fbGetCompositeClip(pGC);
 	    }
@@ -456,74 +460,56 @@ fbDoCopy (DrawablePtr	pSrcDrawable,
 	}
     }
 
-    fastBox.x1 = xIn;
-    fastBox.y1 = yIn;
-    fastBox.x2 = xIn + widthSrc;
-    fastBox.y2 = yIn + heightSrc;
-
-    /* Don't create a source region if we are doing a fast clip */
-    if (fastClip)
-    {
-	fastExpose = 1;
-	/*
-	 * clip the source; if regions extend beyond the source size,
- 	 * make sure exposure events get sent
-	 */
-	if (fastBox.x1 < pSrcDrawable->x)
-	{
-	    fastBox.x1 = pSrcDrawable->x;
-	    fastExpose = 0;
-	}
-	if (fastBox.y1 < pSrcDrawable->y)
-	{
-	    fastBox.y1 = pSrcDrawable->y;
-	    fastExpose = 0;
-	}
-	if (fastBox.x2 > pSrcDrawable->x + (int) pSrcDrawable->width)
-	{
-	    fastBox.x2 = pSrcDrawable->x + (int) pSrcDrawable->width;
-	    fastExpose = 0;
-	}
-	if (fastBox.y2 > pSrcDrawable->y + (int) pSrcDrawable->height)
-	{
-	    fastBox.y2 = pSrcDrawable->y + (int) pSrcDrawable->height;
-	    fastExpose = 0;
-	}
-    }
-    else
-    {
-	REGION_INIT(pGC->pScreen, &rgnDst, &fastBox, 1);
-	REGION_INTERSECT(pGC->pScreen, &rgnDst, &rgnDst, prgnSrcClip);
-    }
-
+    xIn += pSrcDrawable->x;
+    yIn += pSrcDrawable->y;
+    
     xOut += pDstDrawable->x;
     yOut += pDstDrawable->y;
 
-    if (pDstDrawable->type == DRAWABLE_WINDOW)
-    {
-	if (!((WindowPtr)pDstDrawable)->realized)
-	{
-	    if (!fastClip)
-		REGION_UNINIT(pGC->pScreen, &rgnDst);
-	    if (freeSrcClip)
-		REGION_DESTROY(pGC->pScreen, prgnSrcClip);
-	    return NULL;
-	}
-    }
+    box.x1 = xIn;
+    box.y1 = yIn;
+    box.x2 = xIn + widthSrc;
+    box.y2 = yIn + heightSrc;
 
     dx = xIn - xOut;
     dy = yIn - yOut;
 
-    /* Translate and clip the dst to the destination composite clip */
-    if (fastClip)
+    /* Don't create a source region if we are doing a fast clip */
+    if (fastSrc)
     {
 	RegionPtr cclip;
-
-        /* Translate the region directly */
-        fastBox.x1 -= dx;
-        fastBox.x2 -= dx;
-        fastBox.y1 -= dy;
-        fastBox.y2 -= dy;
+    
+	fastExpose = TRUE;
+	/*
+	 * clip the source; if regions extend beyond the source size,
+ 	 * make sure exposure events get sent
+	 */
+	if (box.x1 < pSrcDrawable->x)
+	{
+	    box.x1 = pSrcDrawable->x;
+	    fastExpose = FALSE;
+	}
+	if (box.y1 < pSrcDrawable->y)
+	{
+	    box.y1 = pSrcDrawable->y;
+	    fastExpose = FALSE;
+	}
+	if (box.x2 > pSrcDrawable->x + (int) pSrcDrawable->width)
+	{
+	    box.x2 = pSrcDrawable->x + (int) pSrcDrawable->width;
+	    fastExpose = FALSE;
+	}
+	if (box.y2 > pSrcDrawable->y + (int) pSrcDrawable->height)
+	{
+	    box.y2 = pSrcDrawable->y + (int) pSrcDrawable->height;
+	    fastExpose = FALSE;
+	}
+	
+	/* Translate and clip the dst to the destination composite clip */
+        box.x1 -= dx;
+        box.x2 -= dx;
+        box.y1 -= dy;
+        box.y2 -= dy;
 
 	/* If the destination composite clip is one rectangle we can
 	   do the clip directly.  Otherwise we have to create a full
@@ -534,39 +520,35 @@ fbDoCopy (DrawablePtr	pSrcDrawable,
         {
 	    BoxPtr pBox = REGION_RECTS(cclip);
 
-	    if (fastBox.x1 < pBox->x1) fastBox.x1 = pBox->x1;
-	    if (fastBox.x2 > pBox->x2) fastBox.x2 = pBox->x2;
-	    if (fastBox.y1 < pBox->y1) fastBox.y1 = pBox->y1;
-	    if (fastBox.y2 > pBox->y2) fastBox.y2 = pBox->y2;
-
-	    /* Check to see if the region is empty */
-	    if (fastBox.x1 >= fastBox.x2 || fastBox.y1 >= fastBox.y2)
-	    {
-		REGION_INIT(pGC->pScreen, &rgnDst, NullBox, 0);
-	    }
-	    else
-	    {
-		REGION_INIT(pGC->pScreen, &rgnDst, &fastBox, 1);
-	    }
+	    if (box.x1 < pBox->x1) box.x1 = pBox->x1;
+	    if (box.x2 > pBox->x2) box.x2 = pBox->x2;
+	    if (box.y1 < pBox->y1) box.y1 = pBox->y1;
+	    if (box.y2 > pBox->y2) box.y2 = pBox->y2;
+	    fastDst = TRUE;
 	}
-        else
-	{
-	    /* We must turn off fastClip now, since we must create
-	       a full blown region.  It is intersected with the
-	       composite clip below. */
-	    fastClip = 0;
-	    REGION_INIT(pGC->pScreen, &rgnDst, &fastBox,1);
-	}
+    }
+    
+    /* Check to see if the region is empty */
+    if (box.x1 >= box.x2 || box.y1 >= box.y2)
+    {
+	REGION_INIT(pGC->pScreen, &rgnDst, NullBox, 0);
     }
     else
     {
-        REGION_TRANSLATE(pGC->pScreen, &rgnDst, -dx, -dy);
+	REGION_INIT(pGC->pScreen, &rgnDst, &box, 1);
+    }
+    
+    /* Clip against complex source if needed */
+    if (!fastSrc)
+    {
+	REGION_INTERSECT(pGC->pScreen, &rgnDst, &rgnDst, prgnSrcClip);
+	REGION_TRANSLATE(pGC->pScreen, &rgnDst, -dx, -dy);
     }
 
-    if (!fastClip)
+    /* Clip against complex dest if needed */
+    if (!fastDst)
     {
-	REGION_INTERSECT(pGC->pScreen, &rgnDst,
-			 &rgnDst,
+	REGION_INTERSECT(pGC->pScreen, &rgnDst, &rgnDst,
 			 fbGetCompositeClip(pGC));
     }
 
@@ -577,12 +559,13 @@ fbDoCopy (DrawablePtr	pSrcDrawable,
 		      &rgnDst, dx, dy, copyProc, bitPlane, closure);
 
     /* Pixmap sources generate a NoExposed (we return NULL to do this) */
-    if (!fastExpose)
+    if (!fastExpose && pGC->fExpose)
 	prgnExposed = miHandleExposures(pSrcDrawable, pDstDrawable, pGC,
-					origSource.x, origSource.y,
-					(int)origSource.width,
-					(int)origSource.height,
-					origDest.x, origDest.y, 
+					xIn - pSrcDrawable->x,
+					yIn - pSrcDrawable->y,
+					widthSrc, heightSrc,
+					xOut - pDstDrawable->x,
+					yOut - pDstDrawable->y,
 					(unsigned long) bitPlane);
     REGION_UNINIT(pGC->pScreen, &rgnDst);
     if (freeSrcClip)

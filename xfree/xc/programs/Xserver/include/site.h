@@ -1,9 +1,13 @@
-/* $Xorg: site.h,v 1.4 2000/08/17 19:53:31 cpqbld Exp $ */
+/* $Xorg: site.h,v 1.6 2001/02/09 02:05:16 xorgcvs Exp $ */
 /************************************************************
 
 Copyright 1987, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -41,7 +45,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ********************************************************/
-/* $XFree86: xc/programs/Xserver/include/site.h,v 1.6 2001/01/17 22:36:58 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/include/site.h,v 1.8 2001/12/19 21:37:35 dawes Exp $ */
 
 #ifndef SITE_H
 #define SITE_H
@@ -59,7 +63,7 @@ SOFTWARE.
  * by the vendor.
  */
 #ifndef VENDOR_RELEASE
-#define VENDOR_RELEASE	6510
+#define VENDOR_RELEASE	6600
 #endif
 
 /*

@@ -21,7 +21,7 @@
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
-/* $XFree86: xc/programs/Xserver/fb/fbgetsp.c,v 1.5 2000/05/06 21:09:33 keithp Exp $ */
+/* $XFree86: xc/programs/Xserver/fb/fbgetsp.c,v 1.6 2001/05/29 04:54:09 keithp Exp $ */
 
 #include "fb.h"
 
@@ -36,6 +36,7 @@ fbGetSpans(DrawablePtr	pDrawable,
     FbBits	    *src, *dst;
     FbStride	    srcStride;
     int		    srcBpp;
+    int		    srcXoff, srcYoff;
     int		    xoff;
     
     /*
@@ -53,15 +54,15 @@ fbGetSpans(DrawablePtr	pDrawable,
     }
 #endif
     
-    fbGetDrawable (pDrawable, src, srcStride, srcBpp);
+    fbGetDrawable (pDrawable, src, srcStride, srcBpp, srcXoff, srcYoff);
     
     while (nspans--)
     {
 	xoff = (int) (((long) pchardstStart) & (FB_MASK >> 3));
 	dst = (FbBits *) (pchardstStart - xoff);
 	xoff <<= 3;
-	fbBlt (src + ppt->y * srcStride, srcStride,
-	       ppt->x * srcBpp,
+	fbBlt (src + (ppt->y + srcYoff) * srcStride, srcStride,
+	       (ppt->x + srcXoff) * srcBpp,
 	       
 	       dst,
 	       1,

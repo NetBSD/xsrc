@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/doc/man/GL/Imakefile,v 1.2 1999/06/14 07:23:27 dawes Exp $
+XCOMM $XFree86: xc/doc/man/GL/Imakefile,v 1.3 2002/01/15 01:16:28 dawes Exp $
 XCOMM The contents of this file are subject to the GLX Public License Version 1.0
 XCOMM (the "License"). You may not use this file except in compliance with the
 XCOMM License. You may obtain a copy of the License at Silicon Graphics, Inc.,
@@ -19,7 +19,7 @@ XCOMM are Copyright (c) 1991-9 Silicon Graphics, Inc. All Rights Reserved.
 #define IHaveSubdirs
 #define PassCDebugFlags 'CDEBUGFLAGS=$(CDEBUGFLAGS)'
 
-SUBDIRS = glx
+SUBDIRS = gl glx
 
 MakeSubdirs($(SUBDIRS))
 InstallManSubdirs($(SUBDIRS))

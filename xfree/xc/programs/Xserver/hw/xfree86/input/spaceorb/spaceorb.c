@@ -24,7 +24,7 @@
  * in this Software without prior written authorization from Metro Link.
  *
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/input/spaceorb/spaceorb.c,v 1.11 2001/05/15 18:22:22 paulo Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/input/spaceorb/spaceorb.c,v 1.13 2001/11/26 16:25:54 dawes Exp $ */
 
 #define _SPACEORB_C_
 /*****************************************************************************
@@ -109,7 +109,6 @@ static const char *reqSymbols[] = {
         "xf86MotionHistoryAllocate",
         "xf86NameCmp",
         "xf86OpenSerial",
-        "xf86CloseSerial",
         "xf86OptionListCreate",
         "xf86OptionListMerge",
         "xf86OptionListReport",
@@ -117,7 +116,6 @@ static const char *reqSymbols[] = {
         "xf86PostMotionEvent",
         "xf86PostProximityEvent",
         "xf86ProcessCommonOptions",
-        "xf86RemoveLocalDevice",
         "xf86ScaleAxis",
         "xf86SetIntOption",
         "xf86SetStrOption",
@@ -134,6 +132,24 @@ SPACEORBSetupProc(pointer module,
   xf86LoaderReqSymLists(reqSymbols, NULL);
   xf86AddInputDriver(&SPACEORB, module, 0);
   return (pointer) 1;
+}
+
+static void
+TearDownProc( pointer p )
+{
+  if (!xf86ServerIsOnlyDetecting()) {
+
+    InputInfoPtr pInfo = (InputInfoPtr) p;
+    SPACEORBPrivatePtr priv = (SPACEORBPrivatePtr) pInfo->private;
+
+    DeviceOff (pInfo->dev);
+  
+    xf86CloseSerial (pInfo->fd);
+    XisbFree (priv->buffer);
+    xfree (priv);
+    xfree (pInfo->name);
+    xfree (pInfo);
+  }
 }
 
 /* was before: XF86ModuleData spaceorbModuleData = { &VersionRec, SetupProc, TearDownProc }; */
@@ -242,24 +258,6 @@ SpaceorbPreInit(InputDriverPtr drv, IDevPtr dev, int flags)
 	if (priv)
                 xfree (priv);
         return (pInfo);
-}
-
-static void
-TearDownProc( pointer p )
-{
-  if (!xf86ServerIsOnlyDetecting()) {
-
-    InputInfoPtr pInfo = (InputInfoPtr) p;
-    SPACEORBPrivatePtr priv = (SPACEORBPrivatePtr) pInfo->private;
-
-    DeviceOff (pInfo->dev);
-  
-    xf86CloseSerial (pInfo->fd);
-    XisbFree (priv->buffer);
-    xfree (priv);
-    xfree (pInfo->name);
-    xfree (pInfo);
-  }
 }
 
 static Bool

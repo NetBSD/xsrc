@@ -1,9 +1,13 @@
-/* $Xorg: GetUrl.c,v 1.3 2000/08/17 19:54:57 cpqbld Exp $ */
+/* $Xorg: GetUrl.c,v 1.4 2001/02/09 02:05:57 xorgcvs Exp $ */
 /*
 
 Copyright 1996, 1998 The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included
 in all copies or substantial portions of the Software.
@@ -22,6 +26,8 @@ other dealings in this Software without prior written authorization from
 The Open Group.
 
 */
+/* $XFree86: xc/programs/xrx/helper/GetUrl.c,v 1.4 2001/12/14 20:02:16 dawes Exp $ */
+
 /*
  * This file is really split into two major parts where GetUrl is implemented
  * in two completely different ways.
@@ -89,7 +95,7 @@ GetUrl(char *url, char **reply_ret, int *len_ret)
 #include <ctype.h>
 
 /* get definitions for the HTTP protocol */
-#if (defined(__STDC__) && !defined(UNIXCPP)) || defined(ANSICPP)
+#if !defined(UNIXCPP) || defined(ANSICPP)
 #define TRANS(func) _HttpTrans##func
 #else
 #define TRANS(func) _HttpTrans/**/func

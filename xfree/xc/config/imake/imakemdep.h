@@ -1,9 +1,13 @@
-/* $Xorg: imakemdep.h,v 1.5 2000/08/17 19:41:50 cpqbld Exp $ */
+/* $Xorg: imakemdep.h,v 1.6 2001/02/09 02:03:16 xorgcvs Exp $ */
 /*
 
 Copyright (c) 1993, 1994, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -20,7 +24,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/config/imake/imakemdep.h,v 3.50 2001/04/25 16:44:54 tsi Exp $ */
+/* $XFree86: xc/config/imake/imakemdep.h,v 3.56 2001/12/14 19:53:19 dawes Exp $ */
 
 
 /* 
@@ -65,7 +69,7 @@ in this Software without prior written authorization from The Open Group.
 #ifdef imake_ccflags
 #undef imake_ccflags
 #endif
-#define imake_ccflags "-Dsco -DSYSV"
+#define imake_ccflags "-Dsco -DSYSV -DSCO -DSCO325"
 #endif
 
 #ifdef sony
@@ -292,11 +296,15 @@ in this Software without prior written authorization from The Open Group.
 #define DEFAULT_CPP "cpp"
 #endif
 #ifdef __CYGWIN__
-#define USE_CC_E
 #define DEFAULT_CC "gcc"
+#define DEFAULT_CPP "/usr/bin/cpp"
 #endif
 #if defined (__QNX__)
+#ifdef __QNXNTO__
+#define DEFAULT_CPP "/usr/bin/cpp"
+#else
 #define DEFAULT_CPP "/usr/X11R6/bin/cpp"
+#endif
 #endif
 /*
  * Step 5:  cpp_argv
@@ -352,11 +360,29 @@ char *cpp_argv[ARGUMENTS] = {
 # ifdef __arm__
 	"-D__arm__",
 # endif
+# ifdef __s390x__
+       "-D__s390x__",
+# endif
 # ifdef __sparc__
 	"-D__sparc__",
 # endif
 # ifdef __m68k__
 	"-D__m68k__",
+# endif
+# ifdef __sh__
+	"-D__sh__",
+# endif
+# ifdef __sh3__
+	"-D__sh3__",
+# endif
+# ifdef __SH3__
+	"-D__SH3__",
+# endif
+# ifdef __SH4__
+	"-D__SH4__",
+# endif
+# ifdef __SH4NOFPU__
+	"-D__SH4_NOFPU__",
 # endif
 # ifdef __GNUC__
 	"-traditional",
@@ -460,7 +486,7 @@ char *cpp_argv[ARGUMENTS] = {
 #  ifdef SCO
 	"-DSCO",
 #   ifdef _SCO_DS
-    "-DSCO325 -DSVR4",
+    "-DSCO325",
 #   endif
 #  endif
 # endif
@@ -498,7 +524,7 @@ char *cpp_argv[ARGUMENTS] = {
 # ifdef SCO
 	"-DSCO",
 #  ifdef _SCO_DS
-	"-DSCO325 -DSVR4",
+	"-DSCO325",
 #  endif
 # endif
 # ifdef ESIX
@@ -641,6 +667,9 @@ char *cpp_argv[ARGUMENTS] = {
         "-D__QNXNTO__",
 #if defined(i386)
         "-Di386",
+#endif
+#if defined(__i386__)
+        "-D__i386__",
 #endif
 #if defined(PPC)
         "-DPPC",
@@ -1119,6 +1148,21 @@ struct symtab	predefs[] = {
 # endif
 # ifdef __s390__
 	{"__s390__", "1"},
+# endif
+# ifdef __sh__
+	{"__sh__", "1"},
+# endif
+# ifdef __sh3_
+	{"__sh3__", "1"},
+# endif
+# ifdef __SH3__
+	{"__SH3__", "1"},
+# endif
+# ifdef __SH4__
+	{"__SH4__", "1"},
+# endif
+# ifdef __SH4NOFPU__
+	{"__SH4NOFPU__", "1"},
 # endif
 #if defined(__ppc__)
         {"__ppc__", "1"},

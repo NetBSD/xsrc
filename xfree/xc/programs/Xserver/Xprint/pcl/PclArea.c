@@ -44,7 +44,7 @@ not be used in advertising or otherwise to promote the sale, use or other
 dealings in this Software without prior written authorization from said
 copyright holders.
 */
-/* $XFree86: xc/programs/Xserver/Xprint/pcl/PclArea.c,v 1.8 2001/01/17 22:36:30 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/Xprint/pcl/PclArea.c,v 1.9 2001/10/28 03:32:54 tsi Exp $ */
 
 #include <stdio.h>
 #include <sys/types.h>
@@ -279,14 +279,13 @@ PclCopyArea(DrawablePtr pSrc,
 	    int dsty)
 {
     PixmapPtr pixSrc = (PixmapPtr)pSrc;
-    char t[80];
-    FILE *srcFile, *dstFile;
-    GC srcGC, dstGC;
+/*
+    FILE *srcFile;
+    GC srcGC;
+*/
+    FILE *dstFile;
+    GC dstGC;
     unsigned long valid;
-    struct stat statBuf;
-    XpContextPtr pCon;
-    xRectangle repro;
-    PclPixmapPrivPtr pPriv;
     RegionPtr drawRegion, region, whole, ret;
     BoxRec box;
     BoxPtr prect;

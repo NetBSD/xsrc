@@ -4,7 +4,7 @@
 /*                                                                         */
 /*    The FreeType glyph rasterizer interface (body).                      */
 /*                                                                         */
-/*  Copyright 1996-2000 by                                                 */
+/*  Copyright 1996-2001 by                                                 */
 /*  David Turner, Robert Wilhelm, and Werner Lemberg.                      */
 /*                                                                         */
 /*  This file is part of the FreeType project, and may only be used,       */
@@ -22,10 +22,12 @@
 #include "ftrend1.h"
 #include "ftraster.h"
 
+#include "rasterrs.h"
+
 
   /* initialize renderer -- init its raster */
-  static
-  FT_Error  ft_raster1_init( FT_Renderer  render )
+  static FT_Error
+  ft_raster1_init( FT_Renderer  render )
   {
     FT_Library  library = FT_MODULE_LIBRARY( render );
 
@@ -34,15 +36,15 @@
                                                library->raster_pool,
                                                library->raster_pool_size );
 
-    return FT_Err_Ok;
+    return Raster_Err_Ok;
   }
 
 
   /* set render-specific mode */
-  static
-  FT_Error  ft_raster1_set_mode( FT_Renderer  render,
-                                 FT_ULong     mode_tag,
-                                 FT_Pointer   data )
+  static FT_Error
+  ft_raster1_set_mode( FT_Renderer  render,
+                       FT_ULong     mode_tag,
+                       FT_Pointer   data )
   {
     /* we simply pass it to the raster */
     return render->clazz->raster_class->raster_set_mode( render->raster,
@@ -52,18 +54,18 @@
 
 
   /* transform a given glyph image */
-  static
-  FT_Error  ft_raster1_transform( FT_Renderer   render,
-                                  FT_GlyphSlot  slot,
-                                  FT_Matrix*    matrix,
-                                  FT_Vector*    delta )
+  static FT_Error
+  ft_raster1_transform( FT_Renderer   render,
+                        FT_GlyphSlot  slot,
+                        FT_Matrix*    matrix,
+                        FT_Vector*    delta )
   {
-    FT_Error error = FT_Err_Ok;
+    FT_Error error = Raster_Err_Ok;
 
 
     if ( slot->format != render->glyph_format )
     {
-      error = FT_Err_Invalid_Argument;
+      error = Raster_Err_Invalid_Argument;
       goto Exit;
     }
 
@@ -79,10 +81,10 @@
 
 
   /* return the glyph's control box */
-  static
-  void  ft_raster1_get_cbox( FT_Renderer   render,
-                             FT_GlyphSlot  slot,
-                             FT_BBox*      cbox )
+  static void
+  ft_raster1_get_cbox( FT_Renderer   render,
+                       FT_GlyphSlot  slot,
+                       FT_BBox*      cbox )
   {
     MEM_Set( cbox, 0, sizeof ( *cbox ) );
 
@@ -92,11 +94,11 @@
 
 
   /* convert a slot's glyph image into a bitmap */
-  static
-  FT_Error  ft_raster1_render( FT_Renderer   render,
-                               FT_GlyphSlot  slot,
-                               FT_UInt       mode,
-                               FT_Vector*    origin )
+  static FT_Error
+  ft_raster1_render( FT_Renderer   render,
+                     FT_GlyphSlot  slot,
+                     FT_UInt       mode,
+                     FT_Vector*    origin )
   {
     FT_Error     error;
     FT_Outline*  outline;
@@ -111,7 +113,7 @@
     /* check glyph image format */
     if ( slot->format != render->glyph_format )
     {
-      error = FT_Err_Invalid_Argument;
+      error = Raster_Err_Invalid_Argument;
       goto Exit;
     }
 
@@ -120,13 +122,13 @@
     {
       /* raster1 is only capable of producing monochrome bitmaps */
       if ( render->clazz == &ft_raster1_renderer_class )
-        return FT_Err_Cannot_Render_Glyph;
+        return Raster_Err_Cannot_Render_Glyph;
     }
     else
     {
       /* raster5 is only capable of producing 5-gray-levels bitmaps */
       if ( render->clazz == &ft_raster5_renderer_class )
-        return FT_Err_Cannot_Render_Glyph;
+        return Raster_Err_Cannot_Render_Glyph;
     }
 
     outline = &slot->outline;
@@ -191,6 +193,9 @@
 
     /* render outline into the bitmap */
     error = render->raster_render( render->raster, &params );
+    
+    FT_Outline_Translate( outline, cbox.xMin, cbox.yMin );
+    
     if ( error )
       goto Exit;
 

@@ -1,5 +1,5 @@
 /* $XConsortium: miscfuncs.c,v 1.7 94/12/01 17:15:05 kaleb Exp $ */
-/* $XFree86: xc/programs/xmh/miscfuncs.c,v 3.3 1996/12/26 01:41:01 dawes Exp $ */
+/* $XFree86: xc/programs/xmh/miscfuncs.c,v 3.6 2001/10/28 03:34:39 tsi Exp $ */
 
 #include <X11/Xos.h>
 
@@ -20,16 +20,11 @@
 #endif
 #endif
 
-#ifdef X_NOT_STDC_ENV
-char *malloc();
-char *realloc();
-#else
 #include <stdlib.h>
-#endif
 
 
 
-#if defined(SYSV) && (defined(i386) || defined(MOTOROLA)) || defined(MINIX)
+#if defined(SYSV) && (defined(i386) || defined(MOTOROLA))
 
 /* These systems don't have the ftruncate() system call, so we emulate it.
  * This emulation can only shorten, not lengthen.
@@ -86,8 +81,8 @@ int ftruncate_emu(fd, length, name)
     (void) chmod(tmp_file, stat_val.st_mode);
 
     /* Close files, delete original, rename temp file to original. */
-    (void) myclose(new_fid);
-    (void) myclose(fd);
+    myclose(new_fid);
+    myclose(fd);
     (void) unlink(name);	/* remove original */
     (void) rename(tmp_file, name); /* rename temp file */
 
@@ -142,7 +137,7 @@ ScanDir(Name, List, Selector)
 	return(-1);
 
     /* Read entries in the directory. */
-    for (i = 0; E = readdir(Dp); )
+    for (i = 0; (E = readdir(Dp)); )
 	if (!Selector || (*Selector)(E->d_name)) {
 	    /* User wants them all, or he wants this one. */
 	    if (++i >= size) {

@@ -7,7 +7,8 @@
    * Intel 810 motherboards:
 	i810, 
 	i810-dc100, 
-	i810e.
+	i810e,
+	i830m.
 
 
 2. Features
@@ -19,7 +20,9 @@
    * Support for high resolution video modes up to 1600x1200.
    * Fully programmable clock supported.
    * Robust text mode restore for VT switching.
-
+   * Xv surfaces for YUV Video display and scaling.
+   * XvMC hardware motion compensation for MPEG decoding.
+   * Hardware accelerated 3D for i830m
 
 3. Technical Notes
 
@@ -32,9 +35,7 @@
 
 4. Reported Working Video Cards
 
-   * Intel evaluation hardware - i810, i810-dc100 and i810e.
-   * Tyan Tomcat Motherboard.
-   * HappyPC set-top box.
+   * i810, i810-dc100, i810e, i815, i815e, i830m.
 
 5. Configuration
 
@@ -44,7 +45,14 @@
 
        Section "Device"
            Identifier "i810"
+	   VideoRam   16384
        EndSection
+
+   The VideoRam option is optional and determines how much system
+   memory will be used for graphics purposes. The i810 uses system
+   memory for all graphics memory due to the shared memory nature
+   of the chipset. 16-64MB is the recommended range depending on
+   available system resources.
 
    If you have problems with auto-detection, you can specify:
 
@@ -59,9 +67,18 @@
 
    Note: the i810 X server detects whether your motherboard has
 	display cache video memory.  This memory is has reduced bandwidth
-	compared to normal system memory, and isn't used by the server.  The
-	main function of this memory is for ancillary buffers (eg. z buffer)
-	in a forthcoming 3d capable server.
+	compared to normal system memory, and isn't used by the server for
+	normal operation.  The main function of this memory is for
+	ancillary buffers (eg. z buffer) in a 3d capable server.
+
+
+   In order to make use of the XvMC extension you will need to specify:
+	Option "XvMCSurfaces" "6"
+         or
+	Option "XvMCSurfaces" "7"
+   in the device section. Note that the memory for XvMC is preallocated and
+   unavailable for general graphics use. At this time there are no generally
+   available XvMC capable Mpeg decoders.
 
 
 6. Driver Options
@@ -71,7 +88,6 @@
 
 7. Known Limitations
 
-   - No 3d support in this release.
    - No 32bpp support in this driver.
    - Running Two Xservers on different VT's is not supported at this time.
 
@@ -91,3 +107,4 @@
 
 	http://support.intel.com/support/graphics/intel810/linuxinstal.htm
 
+$XFree86: xc/programs/Xserver/hw/xfree86/drivers/i810/README,v 1.4 2001/10/28 03:33:31 tsi Exp $

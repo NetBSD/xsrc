@@ -4,7 +4,7 @@
 /*                                                                         */
 /*    FreeType outline management (body).                                  */
 /*                                                                         */
-/*  Copyright 1996-2000 by                                                 */
+/*  Copyright 1996-2001 by                                                 */
 /*  David Turner, Robert Wilhelm, and Werner Lemberg.                      */
 /*                                                                         */
 /*  This file is part of the FreeType project, and may only be used,       */
@@ -44,10 +44,10 @@
 
   /* documentation is in ftoutln.h */
 
-  FT_EXPORT_DEF( FT_Error )  FT_Outline_Decompose(
-                               FT_Outline*              outline,
-                               const FT_Outline_Funcs*  interface,
-                               void*                    user )
+  FT_EXPORT_DEF( FT_Error )
+  FT_Outline_Decompose( FT_Outline*              outline,
+                        const FT_Outline_Funcs*  interface,
+                        void*                    user )
   {
 #undef SCALED
 #define SCALED( x )  ( ( (x) << shift ) - delta )
@@ -64,7 +64,7 @@
 
     FT_Int   n;         /* index of contour in outline     */
     FT_UInt  first;     /* index of first point in contour */
-    char     tag;       /* current point's state           */
+    FT_Int   tag;       /* current point's state           */
 
     FT_Int   shift;
     FT_Pos   delta;
@@ -249,11 +249,11 @@
   }
 
 
-  FT_EXPORT_DEF( FT_Error )  FT_Outline_New_Internal(
-                               FT_Memory    memory,
-                               FT_UInt      numPoints,
-                               FT_Int       numContours,
-                               FT_Outline  *anoutline )
+  FT_EXPORT_DEF( FT_Error )
+  FT_Outline_New_Internal( FT_Memory    memory,
+                           FT_UInt      numPoints,
+                           FT_Int       numContours,
+                           FT_Outline  *anoutline )
   {
     FT_Error  error;
 
@@ -284,10 +284,11 @@
 
   /* documentation is in ftoutln.h */
 
-  FT_EXPORT_DEF( FT_Error )  FT_Outline_New( FT_Library   library,
-                                             FT_UInt      numPoints,
-                                             FT_Int       numContours,
-                                             FT_Outline  *anoutline )
+  FT_EXPORT_DEF( FT_Error )
+  FT_Outline_New( FT_Library   library,
+                  FT_UInt      numPoints,
+                  FT_Int       numContours,
+                  FT_Outline  *anoutline )
   {
     if ( !library )
       return FT_Err_Invalid_Library_Handle;
@@ -299,8 +300,54 @@
 
   /* documentation is in ftoutln.h */
 
-  FT_EXPORT_DEF( FT_Error )  FT_Outline_Copy( FT_Outline*  source,
-                                              FT_Outline  *target )
+  FT_EXPORT_DEF( FT_Error )
+  FT_Outline_Check( FT_Outline*  outline )
+  {
+    if ( outline )
+    {
+      FT_Int  n_points   = outline->n_points;
+      FT_Int  n_contours = outline->n_contours;
+      FT_Int  end0, end;
+      FT_Int  n;
+
+
+      /* empty glyph? */
+      if ( n_points == 0 && n_contours == 0 )
+        return 0;
+
+      /* check point and contour counts */
+      if ( n_points <= 0 || n_contours <= 0 )
+        goto Bad;
+
+      end0 = end = -1;
+      for ( n = 0; n < n_contours; n++ )
+      {
+        end = outline->contours[n];
+
+        /* note that we don't accept empty contours */
+        if ( end <= end0 || end >= n_points )
+          goto Bad;
+
+        end0 = end;
+      }
+
+      if ( end != n_points - 1 )
+        goto Bad;
+
+      /* XXX: check the that array */
+      return 0;
+    }
+
+  Bad:
+    return FT_Err_Invalid_Argument;
+  }
+
+
+  /* documentation is in ftoutln.h */
+
+  FT_EXPORT_DEF( FT_Error )
+  FT_Outline_Copy( FT_Outline*  source,
+                   FT_Outline  *target )
   {
     FT_Int  is_owner;
 
@@ -330,8 +377,9 @@
   }
 
 
-  FT_EXPORT_DEF( FT_Error )  FT_Outline_Done_Internal( FT_Memory    memory,
-                                                       FT_Outline*  outline )
+  FT_EXPORT_DEF( FT_Error )
+  FT_Outline_Done_Internal( FT_Memory    memory,
+                            FT_Outline*  outline )
   {
     if ( outline )
     {
@@ -352,8 +400,9 @@
 
   /* documentation is in ftoutln.h */
 
-  FT_EXPORT_DEF( FT_Error )  FT_Outline_Done( FT_Library   library,
-                                              FT_Outline*  outline )
+  FT_EXPORT_DEF( FT_Error )
+  FT_Outline_Done( FT_Library   library,
+                   FT_Outline*  outline )
   {
     /* check for valid `outline' in FT_Outline_Done_Internal() */
 
@@ -366,8 +415,9 @@
 
   /* documentation is in ftoutln.h */
 
-  FT_EXPORT_DEF( void )  FT_Outline_Get_CBox( FT_Outline*  outline,
-                                              FT_BBox     *acbox )
+  FT_EXPORT_DEF( void )
+  FT_Outline_Get_CBox( FT_Outline*  outline,
+                       FT_BBox     *acbox )
   {
     FT_Pos  xMin, yMin, xMax, yMax;
 
@@ -415,9 +465,10 @@
 
   /* documentation is in ftoutln.h */
 
-  FT_EXPORT_DEF( void )  FT_Outline_Translate( FT_Outline*  outline,
-                                               FT_Pos       xOffset,
-                                               FT_Pos       yOffset )
+  FT_EXPORT_DEF( void )
+  FT_Outline_Translate( FT_Outline*  outline,
+                        FT_Pos       xOffset,
+                        FT_Pos       yOffset )
   {
     FT_UShort   n;
     FT_Vector*  vec = outline->points;
@@ -434,7 +485,8 @@
 
   /* documentation is in ftoutln.h */
 
-  FT_EXPORT_DEF( void )  FT_Outline_Reverse( FT_Outline*  outline )
+  FT_EXPORT_DEF( void )
+  FT_Outline_Reverse( FT_Outline*  outline )
   {
     FT_UShort  n;
     FT_Int     first, last;
@@ -489,9 +541,10 @@
 
   /* documentation is in ftoutln.h */
 
-  FT_EXPORT_DEF( FT_Error )  FT_Outline_Render( FT_Library         library,
-                                                FT_Outline*        outline,
-                                                FT_Raster_Params*  params )
+  FT_EXPORT_DEF( FT_Error )
+  FT_Outline_Render( FT_Library         library,
+                     FT_Outline*        outline,
+                     FT_Raster_Params*  params )
   {
     FT_Error     error;
     FT_Bool      update = 0;
@@ -514,7 +567,7 @@
     while ( renderer )
     {
       error = renderer->raster_render( renderer->raster, params );
-      if ( !error || error != FT_Err_Cannot_Render_Glyph )
+      if ( !error || FT_ERROR_BASE( error ) != FT_Err_Cannot_Render_Glyph )
         break;
 
       /* FT_Err_Cannot_Render_Glyph is returned if the render mode   */
@@ -539,9 +592,10 @@
 
   /* documentation is in ftoutln.h */
 
-  FT_EXPORT_DEF( FT_Error )  FT_Outline_Get_Bitmap( FT_Library   library,
-                                                    FT_Outline*  outline,
-                                                    FT_Bitmap   *abitmap )
+  FT_EXPORT_DEF( FT_Error )
+  FT_Outline_Get_Bitmap( FT_Library   library,
+                         FT_Outline*  outline,
+                         FT_Bitmap   *abitmap )
   {
     FT_Raster_Params  params;
 
@@ -563,8 +617,9 @@
 
   /* documentation is in ftoutln.h */
 
-  FT_EXPORT_DEF( void )  FT_Vector_Transform( FT_Vector*  vector,
-                                              FT_Matrix*  matrix )
+  FT_EXPORT_DEF( void )
+  FT_Vector_Transform( FT_Vector*  vector,
+                       FT_Matrix*  matrix )
   {
     FT_Pos xz, yz;
 
@@ -585,8 +640,9 @@
 
   /* documentation is in ftoutln.h */
 
-  FT_EXPORT_DEF( void )  FT_Outline_Transform( FT_Outline*  outline,
-                                               FT_Matrix*   matrix )
+  FT_EXPORT_DEF( void )
+  FT_Outline_Transform( FT_Outline*  outline,
+                        FT_Matrix*   matrix )
   {
     FT_Vector*  vec = outline->points;
     FT_Vector*  limit = vec + outline->n_points;

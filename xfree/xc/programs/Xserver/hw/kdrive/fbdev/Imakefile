@@ -1,7 +1,11 @@
 XCOMM $XConsortium: Imakefile /main/10 1996/12/02 10:20:33 lehors $
-XCOMM $XFree86: xc/programs/Xserver/hw/kdrive/fbdev/Imakefile,v 1.3 2000/12/01 00:01:31 keithp Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/kdrive/fbdev/Imakefile,v 1.5 2001/05/24 19:31:46 alanh Exp $
 KDRIVE=..
 #include "../Kdrive.tmpl"
+
+#if XipaqServer
+DEFINES = -DXIPAQ
+#endif
 
 SRCS = 	fbdev.c fbinit.c
 

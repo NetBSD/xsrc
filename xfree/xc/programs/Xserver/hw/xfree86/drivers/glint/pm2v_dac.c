@@ -27,7 +27,7 @@
  * this work is sponsored by S.u.S.E. GmbH, Fuerth, Elsa GmbH, Aachen and
  * Siemens Nixdorf Informationssysteme
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/glint/pm2v_dac.c,v 1.26 2001/05/16 07:56:07 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/glint/pm2v_dac.c,v 1.27 2001/11/28 21:53:01 alanh Exp $ */
 
 #include "xf86.h"
 #include "xf86_OSproc.h"
@@ -74,6 +74,30 @@ PM2VDAC_CalculateClock
     return(actualclock);
 }
 
+static void
+Permedia2VPreInitSecondary(ScrnInfoPtr pScrn)
+{
+    GLINTPtr pGlint = GLINTPTR(pScrn);
+
+    /* disable MCLK */
+    Permedia2vOutIndReg(pScrn, PM2VDACRDMClkControl, 0x00, 0); 
+
+    /* boot new mclk values */
+    Permedia2vOutIndReg(pScrn, PM2VDACRDMClkPreScale, 0x00, 0x09);
+    Permedia2vOutIndReg(pScrn, PM2VDACRDMClkFeedbackScale, 0x00, 0x58);
+    Permedia2vOutIndReg(pScrn, PM2VDACRDMClkPostScale, 0x00, 0x01);
+
+    /* re-enable MCLK */
+    Permedia2vOutIndReg(pScrn, PM2VDACRDMClkControl, 0x00, 1); 
+
+    /* spin until locked MCLK */
+    while ( (Permedia2vInIndReg(pScrn, PM2VDACRDMClkControl) & 0x2) == 0);
+
+    /* Now re-boot the SGRAM's */
+    GLINT_SLOW_WRITE_REG(0xe6002021,PMMemConfig);
+    GLINT_SLOW_WRITE_REG(0x00000020,PMBootAddress);
+}
+
 void
 Permedia2VPreInit(ScrnInfoPtr pScrn)
 {
@@ -86,24 +110,24 @@ Permedia2VPreInit(ScrnInfoPtr pScrn)
         xf86DrvMsg(pScrn->scrnIndex, X_INFO,
 	    "Appian Jeronimo Pro 4x8mb board detected and initialized.\n");
 
-	/* disable MCLK */
-	Permedia2vOutIndReg(pScrn, PM2VDACRDMClkControl, 0x00, 0); 
-
-	/* boot new mclk values */
-	Permedia2vOutIndReg(pScrn, PM2VDACRDMClkPreScale, 0x00, 0x09);
-	Permedia2vOutIndReg(pScrn, PM2VDACRDMClkFeedbackScale, 0x00, 0x58);
-	Permedia2vOutIndReg(pScrn, PM2VDACRDMClkPostScale, 0x00, 0x01);
-
-	/* re-enable MCLK */
-	Permedia2vOutIndReg(pScrn, PM2VDACRDMClkControl, 0x00, 1); 
-
-	/* spin until locked MCLK */
-        while ( (Permedia2vInIndReg(pScrn, PM2VDACRDMClkControl) & 0x2) == 0);
-
-	/* Now re-boot the SGRAM's */
-	GLINT_SLOW_WRITE_REG(0xe6002021,PMMemConfig);
-    	GLINT_SLOW_WRITE_REG(0x00000020,PMBootAddress);
+	Permedia2VPreInitSecondary(pScrn);
     }
+
+#if defined(__alpha__)
+    /*
+     * On Alpha, we have to init secondary PM2V cards, since
+     * int10 cannot be run on the OEMed cards with VGA disable
+     * jumpers.
+     */
+    if (!xf86IsPrimaryPci(pGlint->PciInfo)) {
+	if ( IS_QPM2V ) {
+
+	    xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+		       "PM2V secondary: initializing\n");
+	    Permedia2VPreInitSecondary(pScrn);
+	}
+    }
+#endif /* __alpha__ */
 }
 
 Bool
@@ -389,11 +413,26 @@ Permedia2vShowCursor(ScrnInfoPtr pScrn)
     Permedia2vOutIndReg(pScrn, PM2VDACRDCursorMode, 0x00, 0x11);
 }
 
+static void Permedia2vLoadCursorCallback(ScrnInfoPtr pScrn);
+
 static void
 Permedia2vHideCursor(ScrnInfoPtr pScrn)
 {
+    GLINTPtr pGlint = GLINTPTR(pScrn);
+
     /* Disable cursor - X11 mode */
     Permedia2vOutIndReg(pScrn, PM2VDACRDCursorMode, 0x00, 0x10);
+
+    /*
+     * For some reason, we need to clear the image as well as disable
+     * the cursor on PM2V, but not on PM3. The problem is noticeable
+     * only when running multi-head, as you can see the cursor get
+     * "left behind" on the screen it is leaving...
+     */
+    if (pGlint->Chipset == PCI_VENDOR_3DLABS_CHIP_PERMEDIA2V) {
+        memset(pGlint->HardwareCursorPattern, 0, 1024);
+	pGlint->LoadCursorCallback = Permedia2vLoadCursorCallback;
+    }
 }
 
 static void

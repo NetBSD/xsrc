@@ -1,4 +1,4 @@
-/* $Xorg: bdfutils.c,v 1.3 2000/08/17 19:46:34 cpqbld Exp $ */
+/* $Xorg: bdfutils.c,v 1.5 2001/02/09 02:04:02 xorgcvs Exp $ */
 /************************************************************************
 Copyright 1989 by Digital Equipment Corporation, Maynard, Massachusetts.
 
@@ -26,7 +26,11 @@ SOFTWARE.
 
 Copyright 1994, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included
 in all copies or substantial portions of the Software.
@@ -45,7 +49,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/font/bitmap/bdfutils.c,v 1.7 2001/01/17 19:43:27 dawes Exp $ */
+/* $XFree86: xc/lib/font/bitmap/bdfutils.c,v 1.10 2001/12/14 19:56:45 dawes Exp $ */
 
 #ifndef FONTMODULE
 #include <ctype.h>
@@ -63,7 +67,6 @@ int bdfFileLineNum;
 
 /***====================================================================***/
 
-/* VARARGS1 */
 void
 bdfError(char* message, ...)
 {
@@ -77,7 +80,6 @@ bdfError(char* message, ...)
 
 /***====================================================================***/
 
-/* VARARGS1 */
 void
 bdfWarning(char *message, ...)
 {
@@ -128,10 +130,15 @@ Atom
 bdfForceMakeAtom(char *str, int *size)
 {
     register int len = strlen(str);
+    extern Atom   MakeAtom(); /* Added this line to be consistent with X.org code */
+    Atom the_atom;
 
     if (size != NULL)
 	*size += len + 1;
-    return MakeAtom(str, len, TRUE);
+    the_atom = MakeAtom(str, len, TRUE);
+    if (the_atom == None)
+      bdfError("Atom allocation failed\n");
+    return the_atom;
 }
 
 /***====================================================================***/
@@ -167,6 +174,10 @@ bdfGetPropertyValue(char *s)
     /* quoted string: strip outer quotes and undouble inner quotes */
     s++;
     pp = p = (char *) xalloc((unsigned) strlen(s) + 1);
+    if (pp == NULL) {
+  bdfError("Couldn't allocate property value string (%d)\n", strlen(s) + 1);
+  return None;
+    }
     while (*s) {
 	if (*s == '"') {
 	    if (*(s + 1) != '"') {

@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/lib/Xft/xftcfg.c,v 1.9 2001/03/31 01:57:20 keithp Exp $
+ * $XFree86: xc/lib/Xft/xftcfg.c,v 1.10 2002/01/12 20:46:42 keithp Exp $
  *
  * Copyright © 2000 Keith Packard, member of The XFree86 Project, Inc.
  *
@@ -39,7 +39,6 @@ char		XftConfigDefaultCache[] = "~/.xftcache";
 char		*XftConfigCache = 0;
 
 static XftSubst	*XftSubsts;
-/* #define  XFT_DEBUG_EDIT */
 
 Bool
 XftConfigAddDir (char *d)
@@ -137,10 +136,11 @@ XftConfigAddEdit (XftTest *test, XftEdit *edit)
     subst->next = 0;
     subst->test = test;
     subst->edit = edit;
-#ifdef XFT_DEBUG_EDIT
-    printf ("Add Subst ");
-    XftSubstPrint (subst);
-#endif
+    if (_XftFontDebug () & XFT_DBG_EDIT)
+    {
+	printf ("Add Subst ");
+	XftSubstPrint (subst);
+    }
     num = 0;
     for (t = test; t; t = t->next)
 	num++;
@@ -485,7 +485,7 @@ _XftConfigEvaluate (XftPattern *p, XftExpr *e)
     return v;
 }
 
-static Bool
+static XftValueList *
 _XftConfigAdd (XftValueList  **head,
 	      XftValueList  *position,
 	      Bool	    append,
@@ -518,33 +518,36 @@ _XftConfigAdd (XftValueList  **head,
 	    if (*prev == position)
 		break;
 	}
-#ifdef XFT_DEBUG
-	if (!*prev)
-	    printf ("position not on list\n");
-#endif
+	if (_XftFontDebug() & XFT_DBG_EDIT)
+	{
+	    if (!*prev)
+		printf ("position not on list\n");
+	}
     }
 
-#ifdef XFT_DEBUG_EDIT
-    printf ("%s list before ", append ? "Append" : "Prepend");
-    XftValueListPrint (*head);
-    printf ("\n");
-#endif
+    if (_XftFontDebug() & XFT_DBG_EDIT)
+    {
+	printf ("%s list before ", append ? "Append" : "Prepend");
+	XftValueListPrint (*head);
+	printf ("\n");
+    }
     
     new->next = *prev;
     *prev = new;
     
-#ifdef XFT_DEBUG_EDIT
-    printf ("%s list after ", append ? "Append" : "Prepend");
-    XftValueListPrint (*head);
-    printf ("\n");
-#endif
+    if (_XftFontDebug() & XFT_DBG_EDIT)
+    {
+	printf ("%s list after ", append ? "Append" : "Prepend");
+	XftValueListPrint (*head);
+	printf ("\n");
+    }
     
-    return True;
+    return new;
     
 bail1:
     free (new);
 bail0:
-    return False;
+    return 0;
 }
 
 static void
@@ -579,18 +582,20 @@ XftConfigSubstitute (XftPattern *p)
     if (!st && XftSubstsMaxObjects)
 	return False;
 
-#ifdef XFT_DEBUG_EDIT
-    printf ("XftConfigSubstitute ");
-    XftPatternPrint (p);
-#endif
+    if (_XftFontDebug() & XFT_DBG_EDIT)
+    {
+	printf ("XftConfigSubstitute ");
+	XftPatternPrint (p);
+    }
     for (s = XftSubsts; s; s = s->next)
     {
 	for (t = s->test, i = 0; t; t = t->next, i++)
 	{
-#ifdef XFT_DEBUG_EDIT
-	    printf ("XftConfigSubstitute test ");
-	    XftTestPrint (t);
-#endif
+	    if (_XftFontDebug() & XFT_DBG_EDIT)
+	    {
+		printf ("XftConfigSubstitute test ");
+		XftTestPrint (t);
+	    }
 	    st[i].elt = XftPatternFind (p, t->field, False);
 	    if (!st[i].elt)
 	    {
@@ -605,15 +610,17 @@ XftConfigSubstitute (XftPattern *p)
 	}
 	if (t)
 	{
-#ifdef XFT_DEBUG_EDIT
-	    printf ("No match\n");
-#endif
+	    if (_XftFontDebug() & XFT_DBG_EDIT)
+	    {
+		printf ("No match\n");
+	    }
 	    continue;
 	}
-#ifdef XFT_DEBUG_EDIT
-	printf ("Substitute ");
-	XftSubstPrint (s);
-#endif
+	if (_XftFontDebug() & XFT_DBG_EDIT)
+	{
+	    printf ("Substitute ");
+	    XftSubstPrint (s);
+	}
 	for (e = s->edit; e; e = e->next)
 	{
 	    v = _XftConfigEvaluate (p, e->expr);
@@ -626,8 +633,13 @@ XftConfigSubstitute (XftPattern *p)
 	    case XftOpAssign:
 		if (t)
 		{
-		    _XftConfigAdd (&st[i].elt->values, st[i].value, True, v);
-		    _XftConfigDel (&st[i].elt->values, st[i].value);
+		    XftValueList    *new;
+		    new = _XftConfigAdd (&st[i].elt->values, st[i].value, True, v);
+		    if (new)
+		    {
+			_XftConfigDel (&st[i].elt->values, st[i].value);
+			st[i].value = new;
+		    }
 		}
 		else
 		{
@@ -651,15 +663,17 @@ XftConfigSubstitute (XftPattern *p)
 		break;
 	    }
 	}
-#ifdef XFT_DEBUG_EDIT
-	printf ("XftConfigSubstitute edit");
-	XftPatternPrint (p);
-#endif
+	if (_XftFontDebug() & XFT_DBG_EDIT)
+	{
+	    printf ("XftConfigSubstitute edit");
+	    XftPatternPrint (p);
+	}
     }
     free (st);
-#ifdef XFT_DEBUG_EDIT
-    printf ("XftConfigSubstitute done");
-    XftPatternPrint (p);
-#endif
+    if (_XftFontDebug() & XFT_DBG_EDIT)
+    {
+	printf ("XftConfigSubstitute done");
+	XftPatternPrint (p);
+    }
     return True;
 }

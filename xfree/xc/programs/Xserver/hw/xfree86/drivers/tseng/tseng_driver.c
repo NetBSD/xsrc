@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/programs/Xserver/hw/xfree86/drivers/tseng/tseng_driver.c,v 1.84 2001/05/04 19:05:48 dawes Exp $ 
+ * $XFree86: xc/programs/Xserver/hw/xfree86/drivers/tseng/tseng_driver.c,v 1.89 2002/01/04 21:22:36 tsi Exp $ 
  *
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  *
@@ -220,47 +220,51 @@ static const OptionInfoRec TsengOptions[] =
 };
 
 static const char *int10Symbols[] = {
-    "xf86InitInt10",
     "xf86FreeInt10",
+    "xf86InitInt10",
     NULL
 };
 
 static const char *vgaHWSymbols[] = {
-  "vgaHWMapMem",
-  "vgaHWUnmapMem",
+  "vgaHWFreeHWRec",
   "vgaHWGetHWRec",
   "vgaHWGetIOBase",
+  "vgaHWGetIndex",
   "vgaHWHandleColormaps",
-  "vgaHWUnlock",
-  "vgaHWLock",
-  "vgaHWSaveScreen",
   "vgaHWInit",
-  "vgaHWSave", 
-  "vgaHWRestore",
-  "vgaHWBlankScreen",
-  "vgaHWSeqReset",
+  "vgaHWLock",
+  "vgaHWMapMem",
   "vgaHWProtect",
+  "vgaHWRestore",
+  "vgaHWSave", 
+  "vgaHWSaveScreen",
+  "vgaHWUnlock",
+  "vgaHWUnmapMem",
+  NULL
+};
+
+static const char* miscfbSymbols[] = {
+  "xf1bppScreenInit",
+  "xf4bppScreenInit",
   NULL
 };
 
 static const char* fbSymbols[] = {
-  "xf1bppScreenInit",
-  "xf4bppScreenInit",
-  "fbScreenInit",
   "fbPictureInit",
+  "fbScreenInit",
   NULL
 };
 
 static const char *ramdacSymbols[] = {
-    "xf86InitCursor",
     "xf86CreateCursorInfoRec",
     "xf86DestroyCursorInfoRec",
+    "xf86InitCursor",
     NULL
 };
 
 static const char *xaaSymbols[] = {
-    "XAADestroyInfoRec",
     "XAACreateInfoRec",
+    "XAADestroyInfoRec",
     "XAAInit",
     NULL
 };
@@ -307,8 +311,8 @@ tsengSetup(pointer module, pointer opts, int *errmaj, int *errmin)
 	 * Tell the loader about symbols from other modules that this module
 	 * might refer to.
 	 */
-	LoaderRefSymLists(vgaHWSymbols, fbSymbols, xaaSymbols,
-			  ramdacSymbols,  NULL);
+	LoaderRefSymLists(vgaHWSymbols, miscfbSymbols, fbSymbols, xaaSymbols,
+			  int10Symbols, ramdacSymbols,  NULL);
 
 	/*
 	 * The return value must be non-NULL on success even though there
@@ -1100,7 +1104,9 @@ TsengLimitMem(ScrnInfoPtr pScrn, int ram)
     TsengPtr pTseng = TsengPTR(pScrn);
 
     if (pTseng->UseLinMem && pTseng->Linmem_1meg) {
-	TsengDoMemLimit(pScrn, ram, 1024, "in linear mode on this VGA board/bus configuration");
+	ram = TsengDoMemLimit(pScrn, ram, 1024,
+			      "in linear mode on "
+			      "this VGA board/bus configuration");
     }
     if (pTseng->UseAccel && pTseng->UseLinMem) {
 	if (Is_W32_any) {
@@ -1110,19 +1116,33 @@ TsengLimitMem(ScrnInfoPtr pScrn, int ram)
 	     *   2*1MB via apertures MBP0 and MBP1
 	     */
 	    if (Is_W32p_cd)
-		TsengDoMemLimit(pScrn, ram, 2048, "in linear + accelerated mode on W32p rev c and d");
+		ram = TsengDoMemLimit(pScrn, ram, 2048,
+				      "in linear + accelerated mode "
+				      "on W32p rev c and d");
 
-	    TsengDoMemLimit(pScrn, ram, 2048 + 1024, "in linear + accelerated mode on W32/W32i/W32p");
+	    ram = TsengDoMemLimit(pScrn, ram, 2048 + 1024,
+				  "in linear + accelerated mode "
+				  "on W32/W32i/W32p");
 
-	    /* upper 516kb of 4MB linear map used for "externally mapped registers" */
-	    TsengDoMemLimit(pScrn, ram, 4096 - 516, "in linear + accelerated mode on W32/W32i/W32p");
+	    /*
+	     * upper 516kb of 4MB linear map used for
+	     *  "externally mapped registers"
+	     */
+	    ram = TsengDoMemLimit(pScrn, ram, 4096 - 516,
+				  "in linear + accelerated mode "
+				  "on W32/W32i/W32p");
 	}
 	if (Is_ET6K) {
-	    /* upper 8kb used for externally mapped and memory mapped registers */
-	    TsengDoMemLimit(pScrn, ram, 4096 - 8, "in linear + accelerated mode on ET6000/6100");
+	    /*
+	     * upper 8kb used for externally mapped and
+	     * memory mapped registers
+	     */
+	    ram = TsengDoMemLimit(pScrn, ram, 4096 - 8,
+				  "in linear + accelerated mode "
+				  "on ET6000/6100");
 	}
     }
-    TsengDoMemLimit(pScrn, ram, 4096, "on any Tseng card");
+    ram = TsengDoMemLimit(pScrn, ram, 4096, "on any Tseng card");
     return ram;
 }
 
@@ -1366,11 +1386,9 @@ TsengGetLinFbAddress(ScrnInfoPtr pScrn)
 {
     MessageType from;
     TsengPtr pTseng = TsengPTR(pScrn);
-    resRange range[] = { {ResExcMemBlock,0,0},_END };
+    resRange range[] = { {ResExcMemBlock|ResBus,0,0},_END };
 
     PDEBUG("	TsengGetLinFbAddress\n");
-
-    from = X_PROBED;
 
     /* let config file override Base address */
     if (pTseng->pEnt->device->MemBase != 0) {
@@ -1410,7 +1428,7 @@ TsengGetLinFbAddress(ScrnInfoPtr pScrn)
 		pTseng->UseLinMem = FALSE;
 		return TRUE;
 	    }
-	    if (xf86RegisterResources(pTseng->pEnt->index,range,ResNone)) {
+	    if (xf86RegisterResources(pTseng->pEnt->index,NULL,ResNone)) {
 		xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
 			   "    Cannot register linear memory."
 			   " Using banked mode instead.\n");
@@ -1793,7 +1811,7 @@ TsengPreInit(ScrnInfoPtr pScrn, int flags)
 	pScrn->display->virtualX,
 	pScrn->display->virtualY,
 	pTseng->FbMapSize,
-	LOOKUP_BEST_REFRESH);	       /* LOOKUP_CLOSEST_CLOCK | LOOKUP_CLKDIV2 when no programable clock ? */
+	LOOKUP_BEST_REFRESH);	       /* LOOKUP_CLOSEST_CLOCK | LOOKUP_CLKDIV2 when no programmable clock ? */
 
     if (i == -1) {
 	TsengFreeRec(pScrn);
@@ -1847,7 +1865,7 @@ TsengPreInit(ScrnInfoPtr pScrn, int flags)
 	  TsengFreeRec(pScrn);
 	  return FALSE;
 	}
-	xf86LoaderReqSymbols("fbScreenInit", "fbPictureInit", NULL);
+	xf86LoaderReqSymLists(fbSymbols, NULL);
 	break;
     }
 
@@ -2068,8 +2086,6 @@ TsengScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 			pScrn->virtualX, pScrn->virtualY,
 			pScrn->xDpi, pScrn->yDpi,
 			pScrn->displayWidth, pScrn->bitsPerPixel);
-	if (ret)
-	  fbPictureInit(pScreen, 0, 0);
 	break;
     }
 
@@ -2077,9 +2093,6 @@ TsengScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 	return FALSE;
 
     xf86SetBlackWhitePixels(pScreen);
-
-    if (pScrn->depth >= 8)
-        TsengDGAInit(pScreen);
 
     if (pScrn->bitsPerPixel > 8) {
 	/* Fixup RGB ordering */
@@ -2095,6 +2108,13 @@ TsengScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 	    }
 	}
     }
+
+    /* must be after RGB ordering fixed */
+    if (pScrn->bitsPerPixel > 4)
+	fbPictureInit(pScreen, 0, 0);
+
+    if (pScrn->depth >= 8)
+        TsengDGAInit(pScreen);
 
     /*
      * If banking is needed, initialise an miBankInfoRec (defined in

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/apm/apm_funcs.c,v 1.13 2000/06/30 18:27:02 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/apm/apm_funcs.c,v 1.15 2001/10/01 13:44:03 eich Exp $ */
 
 #define FASTER
 #ifndef PSZ
@@ -133,7 +133,6 @@ A(WaitForFifo)(ApmPtr pApm, int slots)
     if (i == MAXLOOP) {
       unsigned int status = STATUS();
 
-      xf86Break1();
       WRXB(0x1FF, 0);
       if (!xf86ServerIsExiting())
 	  FatalError("Hung in WaitForFifo() (Status = 0x%08X)\n", status);
@@ -1338,8 +1337,6 @@ BAD_ALIGNMENT:
        int shift = ((long)src & 0x03L) << 3;
 
        if (--dwords) {
-	    int	count;
-
 	    for (count = dwords >> 2; count-- > 0; ) {
 		A(SyncBlt)(pApm);
 		*(CARD32*)pApm->BltMap = *(CARD32*)src;
@@ -1484,7 +1481,6 @@ A(Sync)(ScrnInfoPtr pScrn)
   if (i == MAXLOOP) {
     unsigned int status = STATUS();
 
-    xf86Break1();
     WRXB(0x1FF, 0);
     if (!xf86ServerIsExiting())
 	FatalError("Hung in ApmSync" APM_SUFF_24 APM_SUFF_IOP "(%d) (Status = 0x%08X)\n", pScrn->pScreen->myNum, status);
@@ -1520,7 +1516,6 @@ A(Sync6422)(ScrnInfoPtr pScrn)
   if (i == MAXLOOP) {
     unsigned int status = STATUS();
 
-    xf86Break1();
     WRXB(0x1FF, 0);
     if (!xf86ServerIsExiting())
 	FatalError("Hung in ApmSync6422() (Status = 0x%08X)\n", status);

@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/lib/GL/dri/drm/Imakefile,v 1.16 2001/04/23 19:02:11 alanh Exp $
+XCOMM $XFree86: xc/lib/GL/dri/drm/Imakefile,v 1.18 2001/10/04 18:28:21 alanh Exp $
 
 #if GlxUseBuiltInDRIDriver
 #define DoNormalLib (NormalLibGlx || SharedLibGlxWithoutPIC)
@@ -37,10 +37,6 @@ OS_SUBDIR2 = linux
 OS_SUBDIR = bsd
 OS_SUBDIR2 = linux
 #endif
-#if defined(cygwinArchitecture) && 0	/* XXX FIX ME */
-OS_SUBDIR = cygwin
-OS_SUBDIR2 = cygwin
-#endif
 
 LinkSourceFile(xf86drm.c,$(XF86OSSRC)/$(OS_SUBDIR2)/drm)
 
@@ -53,6 +49,7 @@ LinkSourceFile(xf86drmRadeon.c,$(XF86OSSRC)/$(OS_SUBDIR2)/drm)
 
 LinkSourceFile(drm.h,$(XF86OSSRC)/$(OS_SUBDIR2)/drm/kernel)
 LinkSourceFile(i810_drm.h,$(XF86OSSRC)/$(OS_SUBDIR2)/drm/kernel)
+LinkSourceFile(i830_drm.h,$(XF86OSSRC)/$(OS_SUBDIR2)/drm/kernel)
 LinkSourceFile(mga_drm.h,$(XF86OSSRC)/$(OS_SUBDIR2)/drm/kernel)
 LinkSourceFile(r128_drm.h,$(XF86OSSRC)/$(OS_SUBDIR2)/drm/kernel)
 LinkSourceFile(radeon_drm.h,$(XF86OSSRC)/$(OS_SUBDIR2)/drm/kernel)

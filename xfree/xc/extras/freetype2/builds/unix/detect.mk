@@ -16,7 +16,9 @@
 
 ifeq ($(PLATFORM),ansi)
 
-  is_unix := $(strip $(wildcard /sbin/init) $(wildcard /hurd/auth))
+  # Note: this test is duplicated in "builds/toplevel.mk".
+  #
+  is_unix := $(strip $(wildcard /sbin/init) $(wildcard /usr/sbin/init) $(wildcard /hurd/auth))
   ifneq ($(is_unix),)
 
     PLATFORM := unix

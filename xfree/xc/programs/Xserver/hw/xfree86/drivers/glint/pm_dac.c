@@ -27,7 +27,7 @@
  * this work is sponsored by S.u.S.E. GmbH, Fuerth, Elsa GmbH, Aachen and
  * Siemens Nixdorf Informationssysteme
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/glint/pm_dac.c,v 1.9.2.1 2001/05/24 20:12:48 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/glint/pm_dac.c,v 1.10 2001/05/24 19:55:05 alanh Exp $ */
 
 #include "xf86.h"
 #include "xf86_OSproc.h"

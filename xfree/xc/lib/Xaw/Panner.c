@@ -1,9 +1,13 @@
 /*
- * $Xorg: Panner.c,v 1.3 2000/08/17 19:45:36 cpqbld Exp $
+ * $Xorg: Panner.c,v 1.4 2001/02/09 02:03:45 xorgcvs Exp $
  *
 Copyright 1989, 1994, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -22,7 +26,7 @@ in this Software without prior written authorization from The Open Group.
  * Author:  Jim Fulton, MIT X Consortium
  */
 
-/* $XFree86: xc/lib/Xaw/Panner.c,v 3.6 2001/01/17 19:42:28 dawes Exp $ */
+/* $XFree86: xc/lib/Xaw/Panner.c,v 3.9 2001/12/14 19:54:41 dawes Exp $ */
 
 #include <ctype.h>
 #include <math.h>
@@ -39,9 +43,7 @@ in this Software without prior written authorization from The Open Group.
 #if defined(ISC) && __STDC__ && !defined(ISC30)
 extern double atof(char *);
 #else
-#if !defined(X_NOT_STDC_ENV) || defined(SCO)
 #include <stdlib.h>			/* for atof() */
-#endif
 #endif
 
 /*
@@ -516,9 +518,9 @@ rescale(PannerWidget pw)
     if (XtHeight(pw) <= vpad)
 	vpad = 0;
 
-    pw->panner.haspect = ((double)XtWidth(pw) - hpad)
+    pw->panner.haspect = ((double)XtWidth(pw) - hpad + .5)
 			 / (double)pw->panner.canvas_width;
-    pw->panner.vaspect = ((double)XtHeight(pw) - vpad)
+    pw->panner.vaspect = ((double)XtHeight(pw) - vpad + .5)
 			 / (double)pw->panner.canvas_height;
     scale_knob(pw, True, True);
 }

@@ -30,20 +30,21 @@
  *		Peter Busch
  *		Harold L Hunt II
  */
-/* $XFree86: xc/programs/Xserver/hw/xwin/winwakeup.c,v 1.3 2001/05/02 00:45:26 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xwin/winwakeup.c,v 1.5 2001/11/21 08:51:24 alanh Exp $ */
 
 #include "win.h"
 
 /* See Porting Layer Definition - p. 7 */
 void
-winWakeupHandler (pointer pWakeupData,
-		  int err,
+winWakeupHandler (int nScreen,
+		  pointer pWakeupData,
+		  unsigned long ulResult,
 		  pointer pReadmask)
 {
   winScreenPriv((ScreenPtr)pWakeupData);
   MSG			msg;
 
-  /* Process all message on our queue */
+  /* Process all messages on our queue */
   while (PeekMessage (&msg, pScreenPriv->hwndScreen, 0, 0, PM_REMOVE))
     {
       DispatchMessage (&msg);

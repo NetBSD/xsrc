@@ -1,9 +1,13 @@
-/* $Xorg: XlibInt.c,v 1.7 2000/08/17 19:45:07 cpqbld Exp $ */
+/* $Xorg: XlibInt.c,v 1.8 2001/02/09 02:03:38 xorgcvs Exp $ */
 /*
 
 Copyright 1985, 1986, 1987, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included
 in all copies or substantial portions of the Software.
@@ -22,7 +26,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/X11/XlibInt.c,v 3.26 2001/04/26 16:23:09 dawes Exp $ */
+/* $XFree86: xc/lib/X11/XlibInt.c,v 3.30 2001/12/14 19:54:09 dawes Exp $ */
 
 /*
  *	XlibInt.c - Internal support routines for the C subroutine
@@ -81,6 +85,9 @@ xthread_t (*_Xthread_self_fn)() = NULL;
 #ifdef WIN32
 #define ETEST() (WSAGetLastError() == WSAEWOULDBLOCK)
 #else
+#ifdef __CYGWIN__ /* Cygwin uses ENOBUFS to signal socket is full */
+#define ETEST() (errno == EAGAIN || errno == EWOULDBLOCK || errno == ENOBUFS)
+#else
 #if defined(EAGAIN) && defined(EWOULDBLOCK)
 #define ETEST() (errno == EAGAIN || errno == EWOULDBLOCK)
 #else
@@ -88,9 +95,11 @@ xthread_t (*_Xthread_self_fn)() = NULL;
 #define ETEST() (errno == EAGAIN)
 #else
 #define ETEST() (errno == EWOULDBLOCK)
-#endif
-#endif
-#endif
+#endif /* EAGAIN */
+#endif /* EAGAIN && EWOULDBLOCK */
+#endif /* __CYGWIN__ */
+#endif /* WIN32 */
+
 #ifdef WIN32
 #define ECHECK(err) (WSAGetLastError() == err)
 #define ESET(val) WSASetLastError(val)
@@ -197,8 +206,6 @@ _XWaitForWritable(dpy
     xcondition_t cv;		/* our reading condition variable */
 #endif
 {
-#if !defined(AMOEBA)
-
 #ifdef USE_POLL
     struct pollfd filedes;
 #else
@@ -331,11 +338,6 @@ _XWaitForWritable(dpy
 	    return;
 	}
     }
-#else  /* AMOEBA */
-    /* Should not happen under Amoeba */
-    printf("_XWaitForWritable called unexpectedly\n");
-    _XIOError(dpy);
-#endif /* AMOEBA */
 }
 
 
@@ -420,12 +422,11 @@ static int
 _XWaitForReadable(dpy)
   Display *dpy;
 {
-#if !defined(AMOEBA)
     int result;
     int fd = dpy->fd;
     struct _XConnectionInfo *ilist;  
-    register int saved_event_serial;
-    int in_read_events;
+    register int saved_event_serial = 0;
+    int in_read_events = 0;
     register Bool did_proc_conni = False;
 #ifdef USE_POLL
     struct pollfd *filedes;
@@ -523,13 +524,6 @@ _XWaitForReadable(dpy)
 #endif
 #endif
     return 0;
-#else  /* AMOEBA */
-    int nbytes;
-
-    /* wait max 100 msec (why?) for data to become available */
-    nbytes = _X11TransAmSelect(ConnectionNumber(dpy), 100);
-    return (nbytes > 0) ? 0 : -1;
-#endif /* AMOEBA */
 }
 
 static
@@ -581,7 +575,6 @@ static void _XFlushInt (dpy, cv)
 	register Display *dpy;
         register xcondition_t cv;
 {
-	char *nextindex;
 #endif /* XTHREADS*/
 	register long size, todo;
 	register int write_stat;

@@ -1,9 +1,13 @@
-/* $XFree86: xc/programs/Xserver/mi/miregion.c,v 1.6 2001/01/17 22:37:07 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/mi/miregion.c,v 1.8 2001/12/14 20:00:26 dawes Exp $ */
 /***********************************************************
 
 Copyright 1987, 1988, 1989, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -42,7 +46,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $Xorg: miregion.c,v 1.3 2000/08/17 19:53:38 cpqbld Exp $ */
+/* $Xorg: miregion.c,v 1.4 2001/02/09 02:05:21 xorgcvs Exp $ */
 
 /* The panoramix components contained the following notice */
 /****************************************************************
@@ -70,6 +74,8 @@ SOFTWARE.
 #include "regionstr.h"
 #include "Xprotostr.h"
 #include "gc.h"
+#include "mi.h"
+#include "mispans.h"
 
 #if defined (__GNUC__) && !defined (NO_INLINES)
 #define INLINE	__inline
@@ -399,9 +405,9 @@ miRegionBreak (pReg)
 }
 
 Bool
-miRectAlloc(pRgn, n)
-    register RegionPtr pRgn;
-    int n;
+miRectAlloc(
+    register RegionPtr pRgn,
+    int n)
 {
     RegDataPtr	data;
     
@@ -493,10 +499,10 @@ miRegionCopy(dst, src)
  *-----------------------------------------------------------------------
  */
 INLINE static int
-miCoalesce (pReg, prevStart, curStart)
-    register RegionPtr	pReg;	    	/* Region to coalesce		     */
-    int	    	  	prevStart;  	/* Index of start of previous band   */
-    int	    	  	curStart;   	/* Index of start of current band    */
+miCoalesce (
+    register RegionPtr	pReg,	    	/* Region to coalesce		     */
+    int	    	  	prevStart,  	/* Index of start of previous band   */
+    int	    	  	curStart)   	/* Index of start of current band    */
 {
     register BoxPtr	pPrevBox;   	/* Current box in previous band	     */
     register BoxPtr	pCurBox;    	/* Current box in current band       */
@@ -577,12 +583,12 @@ miCoalesce (pReg, prevStart, curStart)
  */
 
 INLINE static Bool
-miAppendNonO (pReg, r, rEnd, y1, y2)
-    register RegionPtr	pReg;
-    register BoxPtr	r;
-    BoxPtr  	  	rEnd;
-    register int  	y1;
-    register int  	y2;
+miAppendNonO (
+    register RegionPtr	pReg,
+    register BoxPtr	r,
+    BoxPtr  	  	rEnd,
+    register int  	y1,
+    register int  	y2)
 {
     register BoxPtr	pNextRect;
     register int	newRects;
@@ -617,7 +623,7 @@ miAppendNonO (pReg, r, rEnd, y1, y2)
 #define	AppendRegions(newReg, r, rEnd)					\
 {									\
     int newRects;							\
-    if (newRects = rEnd - r) {						\
+    if ((newRects = rEnd - r)) {					\
 	RECTALLOC(newReg, newRects);					\
 	memmove((char *)REGION_TOP(newReg),(char *)r, 			\
               newRects * sizeof(BoxRec));				\
@@ -653,18 +659,29 @@ miAppendNonO (pReg, r, rEnd, y1, y2)
  *
  *-----------------------------------------------------------------------
  */
+
+typedef Bool (*OverlapProcPtr)(
+    RegionPtr	pReg,
+    BoxPtr	r1,
+    BoxPtr   	r1End,
+    BoxPtr	r2,
+    BoxPtr   	r2End,
+    short    	y1,
+    short    	y2,
+    Bool	*pOverlap);
+
 static Bool
-miRegionOp(newReg, reg1, reg2, overlapFunc, appendNon1, appendNon2, pOverlap)
-    RegionPtr       newReg;		    /* Place to store result	     */
-    RegionPtr       reg1;		    /* First region in operation     */
-    RegionPtr       reg2;		    /* 2d region in operation        */
-    Bool	    (*overlapFunc)();       /* Function to call for over-
+miRegionOp(
+    RegionPtr       newReg,		    /* Place to store result	     */
+    RegionPtr       reg1,		    /* First region in operation     */
+    RegionPtr       reg2,		    /* 2d region in operation        */
+    OverlapProcPtr  overlapFunc,            /* Function to call for over-
 					     * lapping bands		     */
-    Bool	    appendNon1;		    /* Append non-overlapping bands  */
+    Bool	    appendNon1,		    /* Append non-overlapping bands  */
 					    /* in region 1 ? */
-    Bool	    appendNon2;		    /* Append non-overlapping bands  */
+    Bool	    appendNon2,		    /* Append non-overlapping bands  */
 					    /* in region 2 ? */
-    Bool	    *pOverlap;
+    Bool	    *pOverlap)
 {
     register BoxPtr r1;			    /* Pointer into first region     */
     register BoxPtr r2;			    /* Pointer into 2d region	     */
@@ -948,15 +965,15 @@ miSetExtents (pReg)
  */
 /*ARGSUSED*/
 static Bool
-miIntersectO (pReg, r1, r1End, r2, r2End, y1, y2, pOverlap)
-    register RegionPtr	pReg;
-    register BoxPtr	r1;
-    BoxPtr  	  	r1End;
-    register BoxPtr	r2;
-    BoxPtr  	  	r2End;
-    short    	  	y1;
-    short    	  	y2;
-    Bool		*pOverlap;
+miIntersectO (
+    register RegionPtr	pReg,
+    register BoxPtr	r1,
+    BoxPtr  	  	r1End,
+    register BoxPtr	r2,
+    BoxPtr  	  	r2End,
+    short    	  	y1,
+    short    	  	y2,
+    Bool		*pOverlap)
 {
     register int  	x1;
     register int  	x2;
@@ -1091,15 +1108,15 @@ miIntersect(newReg, reg1, reg2)
  *-----------------------------------------------------------------------
  */
 static Bool
-miUnionO (pReg, r1, r1End, r2, r2End, y1, y2, pOverlap)
-    register RegionPtr	pReg;
-    register BoxPtr	r1;
-	     BoxPtr  	r1End;
-    register BoxPtr	r2;
-	     BoxPtr  	r2End;
-	     short	y1;
-	     short	y2;
-	     Bool	*pOverlap;
+miUnionO (
+    register RegionPtr	pReg,
+    register BoxPtr	r1,
+	     BoxPtr  	r1End,
+    register BoxPtr	r2,
+	     BoxPtr  	r2End,
+	     short	y1,
+	     short	y2,
+	     Bool	*pOverlap)
 {
     register BoxPtr     pNextRect;
     register int        x1;     /* left and right side of current union */
@@ -1345,9 +1362,9 @@ miRegionAppend(dstrgn, rgn)
 }
 
 static void
-QuickSortRects(rects, numRects)
-    register BoxRec     rects[];
-    register int        numRects;
+QuickSortRects(
+    register BoxRec     rects[],
+    register int        numRects)
 {
     register int	y1;
     register int	x1;
@@ -1728,15 +1745,15 @@ miRectsToRegion(nrects, prect, ctype)
  */
 /*ARGSUSED*/
 static Bool
-miSubtractO (pReg, r1, r1End, r2, r2End, y1, y2, pOverlap)
-    register RegionPtr	pReg;
-    register BoxPtr	r1;
-    BoxPtr  	  	r1End;
-    register BoxPtr	r2;
-    BoxPtr  	  	r2End;
-    register int  	y1;
-             int  	y2;
-    Bool		*pOverlap;
+miSubtractO (
+    register RegionPtr	pReg,
+    register BoxPtr	r1,
+    BoxPtr  	  	r1End,
+    register BoxPtr	r2,
+    BoxPtr  	  	r2End,
+    register short  	y1,
+             short  	y2,
+    Bool		*pOverlap)
 {
     register BoxPtr	pNextRect;
     register int  	x1;
@@ -2158,9 +2175,9 @@ miTranslateRegion(pReg, x, y)
 }
 
 Bool
-miRegionDataCopy(dst, src)
-    register RegionPtr dst;
-    register RegionPtr src;
+miRegionDataCopy(
+    register RegionPtr dst,
+    register RegionPtr src)
 {
     good(dst);
     good(src);
@@ -2242,8 +2259,7 @@ miRegionNotEmpty(pReg)
 }
 
 Bool
-miRegionBroken(pReg)
-    RegionPtr pReg;
+miRegionBroken(RegionPtr pReg)
 {
     good(pReg);
     return (REGION_NAR(pReg));
@@ -2282,10 +2298,10 @@ miRegionExtents(pReg)
    so forget it.
 */
 
-static void QuickSortSpans(spans, widths, numSpans)
-    register DDXPointRec    spans[];
-    register int	    widths[];
-    register int	    numSpans;
+static void QuickSortSpans(
+    register DDXPointRec    spans[],
+    register int	    widths[],
+    register int	    numSpans)
 {
     register int	    y;
     register int	    i, j, m;
@@ -2387,14 +2403,14 @@ static void QuickSortSpans(spans, widths, numSpans)
 */
 
 int
-miClipSpans(prgnDst, ppt, pwidth, nspans, pptNew, pwidthNew, fSorted)
-    RegionPtr		    prgnDst;
-    register DDXPointPtr    ppt;
-    register int	    *pwidth;
-    int			    nspans;
-    register DDXPointPtr    pptNew;
-    int			    *pwidthNew;
-    int			    fSorted;
+miClipSpans(
+    RegionPtr		    prgnDst,
+    register DDXPointPtr    ppt,
+    register int	    *pwidth,
+    int			    nspans,
+    register DDXPointPtr    pptNew,
+    int			    *pwidthNew,
+    int			    fSorted)
 {
     register DDXPointPtr pptLast;
     int			*pwidthNewStart;	/* the vengeance of Xerox! */
@@ -2440,7 +2456,7 @@ miClipSpans(prgnDst, ppt, pwidth, nspans, pptNew, pwidthNew, fSorted)
 	} /* end for */
 
     }
-    else if (numRects = prgnDst->data->numRects)
+    else if ((numRects = prgnDst->data->numRects))
     {
 	/* Have to clip against many boxes */
 	BoxPtr		pboxBandStart, pboxBandEnd;

@@ -22,7 +22,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/i128/i128_driver.c,v 1.20 2001/05/04 19:05:39 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/i128/i128_driver.c,v 1.25 2002/01/04 21:22:31 tsi Exp $ */
 
 
 /* All drivers should typically include these */
@@ -176,11 +176,10 @@ static const char *vgahwSymbols[] = {
     "vgaHWFreeHWRec",
     "vgaHWGetHWRec",
     "vgaHWGetIOBase",  
-    "vgaHWLock",
+    "vgaHWGetIndex",  
     "vgaHWProtect",
     "vgaHWRestore",
     "vgaHWSave",
-    "vgaHWUnlock",
     NULL
 };      
 
@@ -191,27 +190,24 @@ static const char *fbSymbols[] = {
 };
 
 static const char *xaaSymbols[] = {
-    "XAADestroyInfoRec",
     "XAACreateInfoRec",
+    "XAADestroyInfoRec",
     "XAAInit",
-    "XAAStippleScanlineFuncLSBFirst",
-    "XAAOverlayFBfuncs",
-    "XAACachePlanarMonoStipple",
-    "XAAScreenIndex",
     NULL
 };
 
 static const char *ramdacSymbols[] = {
-    "xf86InitCursor",
     "xf86CreateCursorInfoRec",
     "xf86DestroyCursorInfoRec",
+    "xf86InitCursor",
     NULL
 };
 
 static const char *ddcSymbols[] = {
-    "xf86PrintEDID",
     "xf86DoEDID_DDC1",
     "xf86DoEDID_DDC2",
+    "xf86PrintEDID",
+    "xf86SetDDCproperties",
     NULL
 };
 
@@ -221,12 +217,14 @@ static const char *i2cSymbols[] = {
     NULL
 };
 
+/* XXX The vbe module isn't currently loaded. */
 static const char *vbeSymbols[] = {
     "VBEInit",
     "vbeDoEDID",
     NULL
 };
 
+/* XXX The int10 module isn't currently loaded. */
 static const char *int10Symbols[] = {
     "xf86InitInt10",
     "xf86FreeInt10",
@@ -523,7 +521,6 @@ I128PreInit(ScrnInfoPtr pScrn, int flags)
     int bytesPerPixel;
     ClockRangePtr clockRanges;
     MessageType from;
-    char *mod = NULL;
     CARD32 iobase;
     char *ramdac = NULL;
     CARD32 tmpl, tmph, tmp;
@@ -630,7 +627,7 @@ I128PreInit(ScrnInfoPtr pScrn, int flags)
 
     bytesPerPixel = pScrn->bitsPerPixel / 8;
 
-    /* We use a programamble clock */
+    /* We use a programmable clock */
     pScrn->progClock = TRUE;
 
     /* Collect all of the relevant option flags (fill in pScrn->options) */
@@ -858,7 +855,6 @@ I128PreInit(ScrnInfoPtr pScrn, int flags)
 
     /* see if we can find a flatpanel */
     if (!pI128->FlatPanel && mon) {
-	int i;
         for (i=0; i<4; i++)
     	    if (mon->det_mon[i].type == DS_NAME) {
 		if (strncmp((char *)mon->det_mon[i].section.name,
@@ -1148,16 +1144,11 @@ I128PreInit(ScrnInfoPtr pScrn, int flags)
     /* Set display resolution */
     xf86SetDpi(pScrn, 0, 0);
 
-    if (mod && xf86LoadSubModule(pScrn, mod) == NULL) {
-	I128FreeRec(pScrn);
-	return FALSE;
-    }
-
     if (!xf86LoadSubModule(pScrn, "fb")) {
 	I128FreeRec(pScrn);
 	return FALSE;
     }
-    xf86LoaderReqSymbols("fbScreenInit", "fbPictureInit", NULL);
+    xf86LoaderReqSymLists(fbSymbols, NULL);
 
     /* Load XAA if needed */
     if (!pI128->NoAccel) {
@@ -1266,6 +1257,7 @@ I128CountRam(ScrnInfoPtr pScrn)
          default: /* Unknown board... */
             break;
       }
+      break;
     case PCI_CHIP_I128_T2R:
       switch ((pI128->PciInfo->subsysCard) & 0xFFF7) {
 	 case 0x00:	/* 4MB card, no daughtercard */
@@ -1568,7 +1560,7 @@ I128ScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
     /* Initialize HW cursor layer. 
 	Must follow software cursor initialization*/
     if (pI128->HWCursor) { 
-	Bool ret = TRUE;
+	ret = TRUE;
     	switch(pI128->RamdacType) {
 	       case TI3025_DAC:
 		  ret = I128TIHWCursorInit(pScrn); break;
@@ -1984,8 +1976,7 @@ I128DisplayPowerManagementSet(ScrnInfoPtr pScrn, int PowerManagementMode,
 
     if (pI128->RamdacType == TI3025_DAC) return;
 
-    pI128->mem.rbase_g[IDXL_I] = IBMRGB_sync;				MB;
-    snc = pI128->mem.rbase_g[DATA_I];
+    snc = pI128->mem.rbase_g[CRT_1CON];
 
     switch (PowerManagementMode)
     {
@@ -2006,8 +1997,7 @@ I128DisplayPowerManagementSet(ScrnInfoPtr pScrn, int PowerManagementMode,
 	snc &= ~0x30;
 	break;
     }
-    pI128->mem.rbase_g[IDXL_I] = IBMRGB_sync;				MB;
-    pI128->mem.rbase_g[DATA_I] = snc;					MB;
+    pI128->mem.rbase_g[CRT_1CON] = snc;					MB;
 }
 
 void

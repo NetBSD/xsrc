@@ -1,19 +1,16 @@
 /*
  * transformed coordinate system objects for X
  */
-/* $XFree86: xc/programs/xeyes/transform.c,v 1.3 2000/02/17 14:00:35 dawes Exp $ */
+/* $XFree86: xc/programs/xeyes/transform.c,v 1.4 2001/08/27 23:35:13 dawes Exp $ */
 
 # include	<X11/Xos.h>
 # include	<stdlib.h>
 # include	<X11/Xlib.h>
 # include	"transform.h"
 
+#if 0
 static XPoint *
-TranslatePoints (points, n_points, t, mode)
-    TPoint	*points;
-    int	n_points;
-    Transform	*t;
-    int	mode;
+TranslatePoints (TPoint *points, int n_points, Transform *t, int mode)
 {
 	XPoint	*xpoints;
 	int	i;
@@ -33,16 +30,16 @@ TranslatePoints (points, n_points, t, mode)
 	return xpoints;
 }
 
-void
-TFillPolygon (dpy, d, gc, t, points, n_points, shape, mode)
-    Display	*dpy;
-    Drawable	d;
-    GC		gc;
-    Transform	*t;
-    TPoint	*points;
-    int		n_points;
-    int		shape;
-    int		mode;
+static void
+TFillPolygon (
+    Display	*dpy,
+    Drawable	d,
+    GC		gc,
+    Transform	*t,
+    TPoint	*points,
+    int		n_points,
+    int		shape,
+    int		mode)
 {
 	XPoint	*xpoints;
 
@@ -54,14 +51,18 @@ TFillPolygon (dpy, d, gc, t, points, n_points, shape, mode)
 	}
 }
 
-void
-TDrawArc (dpy, d, gc, t, x, y, width, height, angle1, angle2)
-    Display	*dpy;
-    Drawable	d;
-    GC		gc;
-    Transform	*t;
-    double	x, y, width, height;
-    int		angle1, angle2;
+static void
+TDrawArc (
+    Display	*dpy,
+    Drawable	d,
+    GC		gc,
+    Transform	*t,
+    double	x,
+    double	y,
+    double	width,
+    double	height,
+    int		angle1,
+    int		angle2)
 {
 	int	xx, xy, xw, xh;
 
@@ -79,6 +80,7 @@ TDrawArc (dpy, d, gc, t, x, y, width, height, angle1, angle2)
 	}
 	XDrawArc (dpy, d, gc, xx, xy, xw, xh, angle1, angle2);
 }
+#endif
 
 void
 TFillArc (dpy, d, gc, t, x, y, width, height, angle1, angle2)

@@ -22,7 +22,7 @@
  *
  * Author:  Keith Packard, SuSE, Inc.
  */
-/* $XFree86: xc/programs/Xserver/hw/kdrive/savage/s3draw.c,v 1.5 2000/08/09 17:52:41 keithp Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/kdrive/savage/s3draw.c,v 1.7 2001/10/24 20:14:52 keithp Exp $ */
 
 #include	"s3.h"
 #include	"s3draw.h"
@@ -258,6 +258,7 @@ s3Copy1toN (DrawablePtr	pSrcDrawable,
     FbStip		*psrcBase;
     FbStride		widthSrc;
     int			srcBpp;
+    int			srcXoff, srcYoff;
 
     if (args->opaque && sourceInvarient (pGC->alu))
     {
@@ -267,7 +268,7 @@ s3Copy1toN (DrawablePtr	pSrcDrawable,
     }
     
     s3SetGlobalBitmap (pDstDrawable->pScreen, s3GCMap (pGC));
-    fbGetStipDrawable (pSrcDrawable, psrcBase, widthSrc, srcBpp);
+    fbGetStipDrawable (pSrcDrawable, psrcBase, widthSrc, srcBpp, srcXoff, srcYoff);
     
     if (args->opaque)
     {
@@ -287,7 +288,7 @@ s3Copy1toN (DrawablePtr	pSrcDrawable,
 	
 	_s3Stipple (s3c,
 		    psrcBase, widthSrc, 
-		    dstx + dx, dsty + dy,
+		    dstx + dx - srcXoff, dsty + dy - srcYoff,
 		    dstx, dsty, 
 		    pbox->x2 - dstx, pbox->y2 - dsty);
 	pbox++;
@@ -412,12 +413,13 @@ s3FillBoxLargeStipple (DrawablePtr pDrawable, GCPtr pGC,
     FbStip	*stip;
     FbStride	stipStride;
     int		stipBpp;
+    int		stipXoff, stipYoff;
     int		stipWidth, stipHeight;
     int		dstX, dstY, width, height;
     
     stipWidth = pStipple->width;
     stipHeight = pStipple->height;
-    fbGetStipDrawable (pStipple, stip, stipStride, stipBpp);
+    fbGetStipDrawable (pStipple, stip, stipStride, stipBpp, stipXoff, stipYoff);
 
     s3SetGlobalBitmap (pDrawable->pScreen, s3DrawMap (pDrawable));
     if (pGC->fillStyle == FillOpaqueStippled)
@@ -443,8 +445,8 @@ s3FillBoxLargeStipple (DrawablePtr pDrawable, GCPtr pGC,
 	width = pBox->x2 - pBox->x1;
 	height = pBox->y2 - pBox->y1;
 	pBox++;
-	modulus (dstY - yRot, stipHeight, stipY);
-	modulus (dstX - xRot, stipWidth, stipX);
+	modulus (dstY - yRot - stipYoff, stipHeight, stipY);
+	modulus (dstX - xRot - stipXoff, stipWidth, stipX);
 	y = dstY;
 	while (height)
 	{
@@ -649,13 +651,14 @@ _s3FillSpanLargeStipple (DrawablePtr pDrawable, GCPtr pGC,
     FbStip	*stip;
     FbStride	stipStride;
     int		stipBpp;
+    int		stipXoff, stipYoff;
     int		stipWidth, stipHeight;
     int		dstX, dstY, width, height;
     
     s3SetGlobalBitmap (pDrawable->pScreen, s3GCMap (pGC));
     stipWidth = pStipple->width;
     stipHeight = pStipple->height;
-    fbGetStipDrawable (pStipple, stip, stipStride, stipBpp);
+    fbGetStipDrawable (pStipple, stip, stipStride, stipBpp, stipXoff, stipYoff);
     if (pGC->fillStyle == FillOpaqueStippled)
     {
 	_s3SetOpaquePlaneBlt(s3,pGC->alu,pGC->planemask,
@@ -676,8 +679,8 @@ _s3FillSpanLargeStipple (DrawablePtr pDrawable, GCPtr pGC,
 	dstY = ppt->y;
 	ppt++;
 	width = *pwidth++;
-	modulus (dstY - yRot, stipHeight, stipY);
-	modulus (dstX - xRot, stipWidth, stipX);
+	modulus (dstY - yRot - stipYoff, stipHeight, stipY);
+	modulus (dstX - xRot - stipXoff, stipWidth, stipX);
 	y = dstY;
 	x = dstX;
 	sx = stipX;
@@ -1679,14 +1682,15 @@ s3PolyTEGlyphBlt (DrawablePtr pDrawable, GCPtr pGC,
     s3ImageTEGlyphBlt (pDrawable, pGC, x, y, nglyph, ppci, (pointer) 1);
 }
 
-void
+Bool
 _s3Segment (DrawablePtr	pDrawable,
 	    GCPtr	pGC,
 	    int		x1,
 	    int		y1,
 	    int		x2,
 	    int		y2,
-	    Bool	drawLast)
+	    Bool	drawLast,
+	    Bool	s3Set)
 {
     SetupS3(pDrawable->pScreen);
     FbGCPrivPtr	pPriv = fbGetGCPrivate(pGC);
@@ -1706,19 +1710,11 @@ _s3Segment (DrawablePtr	pDrawable,
     unsigned int oc1;	/* outcode of point 1 */
     unsigned int oc2;	/* outcode of point 2 */
 
-    s3SetGlobalBitmap (pDrawable->pScreen, s3GCMap (pGC));
-    nBox = REGION_NUM_RECTS (pClip);
-    pBox = REGION_RECTS (pClip);
     CalcLineDeltas(x1, y1, x2, y2, adx, ady, signdx, signdy,
 		   1, 1, octant);
-
+    
     cmd = LASTPIX;
     
-    if (signdx > 0)
-	cmd |= INC_X;
-    if (signdy > 0)
-	cmd |= INC_Y;
-	
     if (adx > ady)
     {
 	axis = X_AXIS;
@@ -1738,8 +1734,26 @@ _s3Segment (DrawablePtr	pDrawable,
 	len = ady;
     }
 
+    /* S3 line drawing hardware has limited resolution for error terms */
+    if (len >= 4096)
+    {
+	int dashOff = 0;
+	
+	KdCheckSync (pDrawable->pScreen);
+	fbSegment (pDrawable, pGC, x1, y1, x2, y2, drawLast, &dashOff);
+	return FALSE;
+    }
+
     FIXUP_ERROR (e, octant, bias);
     
+    nBox = REGION_NUM_RECTS (pClip);
+    pBox = REGION_RECTS (pClip);
+
+    if (signdx > 0)
+	cmd |= INC_X;
+    if (signdy > 0)
+	cmd |= INC_Y;
+	
     /* we have bresenham parameters and two points.
        all we have to do now is clip and draw.
     */
@@ -1754,6 +1768,12 @@ _s3Segment (DrawablePtr	pDrawable,
 	OUTCODES(oc2, x2, y2, pBox);
 	if ((oc1 | oc2) == 0)
 	{
+	    if (!s3Set)
+	    {
+		s3SetGlobalBitmap (pDrawable->pScreen, s3GCMap (pGC));
+		_s3SetSolidFill (s3, pGC->fgPixel, pGC->alu, pGC->planemask);
+		s3Set = TRUE;
+	    }
 	    _s3SetCur (s3, x1, y1);
 	    _s3ClipLine (s3, cmd, e1, e2, e, len);
 	    break;
@@ -1798,12 +1818,19 @@ _s3Segment (DrawablePtr	pDrawable,
 		    else
 			err  += (e2 - e1) * clipdx + e1 * clipdy;
 		}
+		if (!s3Set)
+		{
+		    s3SetGlobalBitmap (pDrawable->pScreen, s3GCMap (pGC));
+		    _s3SetSolidFill (s3, pGC->fgPixel, pGC->alu, pGC->planemask);
+		    s3Set = TRUE;
+		}
 		_s3SetCur (s3, new_x1, new_y1);
 		_s3ClipLine (s3, cmd, e1, e2, err, len);
 	    }
 	    pBox++;
 	}
     } /* while (nBox--) */
+    return s3Set;
 }
 
 void
@@ -1813,11 +1840,11 @@ s3Polylines (DrawablePtr pDrawable, GCPtr pGC,
     SetupS3(pDrawable->pScreen);
     int		x, y, nx, ny;
     int		ox = pDrawable->x, oy = pDrawable->y;
+    Bool	s3Set = FALSE;
     
     if (!npt)
 	return;
     
-    _s3SetSolidFill (s3, pGC->fgPixel, pGC->alu, pGC->planemask);
     x = ppt->x + ox;
     y = ppt->y + oy;
     while (--npt)
@@ -1833,12 +1860,14 @@ s3Polylines (DrawablePtr pDrawable, GCPtr pGC,
 	    nx = ppt->x + ox;
 	    ny = ppt->y + oy;
 	}
-	_s3Segment (pDrawable, pGC, x, y, nx, ny,
-		    npt == 1 && pGC->capStyle != CapNotLast);
+	s3Set = _s3Segment (pDrawable, pGC, x, y, nx, ny,
+			    npt == 1 && pGC->capStyle != CapNotLast, 
+			    s3Set);
 	x = nx;
 	y = ny;
     }
-    MarkSyncS3 (pDrawable->pScreen);
+    if (s3Set)
+	MarkSyncS3 (pDrawable->pScreen);
 }
 
 void
@@ -1859,17 +1888,18 @@ s3PolySegment (DrawablePtr pDrawable, GCPtr pGC,
     CARD32	cmd;
     CARD32	init_cmd;
     Bool	drawLast;
+    Bool	s3Set = FALSE;
     
     drawLast = pGC->capStyle != CapNotLast;
-    _s3SetSolidFill (s3, pGC->fgPixel, pGC->alu, pGC->planemask);
     
     for (nseg = nsegInit, pSeg = pSegInit; nseg--; pSeg++)
     {
-	_s3Segment (pDrawable, pGC, pSeg->x1 + ox, pSeg->y1 + oy,
-		    pSeg->x2 + ox, pSeg->y2 + oy, drawLast);
+	s3Set = _s3Segment (pDrawable, pGC, pSeg->x1 + ox, pSeg->y1 + oy,
+			    pSeg->x2 + ox, pSeg->y2 + oy, drawLast, s3Set);
 		    
     }
-    MarkSyncS3 (pDrawable->pScreen);
+    if (s3Set)
+	MarkSyncS3 (pDrawable->pScreen);
 }
 
 /*
@@ -2827,6 +2857,7 @@ s3_24ImageGlyphBlt (DrawablePtr	pDrawable,
     FbBits	    *dst;
     FbStride	    dstStride;
     int		    dstBpp;
+    int		    dstXoff, dstYoff;
     FbBits	    depthMask;
     int		    xBack, widthBack;
     int		    yBack, heightBack;
@@ -2839,7 +2870,7 @@ s3_24ImageGlyphBlt (DrawablePtr	pDrawable,
 	KdCheckImageGlyphBlt(pDrawable, pGC, x, y, nglyph, ppciInit, pglyphBase);
 	return;
     }
-    fbGetDrawable (pDrawable, dst, dstStride, dstBpp);
+    fbGetDrawable (pDrawable, dst, dstStride, dstBpp, dstXoff, dstYoff);
     
     x += pDrawable->x;
     y += pDrawable->y;
@@ -2882,12 +2913,12 @@ s3_24ImageGlyphBlt (DrawablePtr	pDrawable,
 	    if (gWidth <= sizeof (FbStip) * 8 &&
 		fbGlyphIn (fbGetCompositeClip(pGC), gx, gy, gWidth, gHeight))
 	    {
-		fbGlyph24 (dst + gy * dstStride,
+		fbGlyph24 (dst + (gy - dstYoff) * dstStride,
 			  dstStride,
 			  dstBpp,
 			  (FbStip *) pglyph,
 			  pPriv->fg,
-			  gx,
+			  gx - dstXoff,
 			  gHeight);
 	    }
 	    else

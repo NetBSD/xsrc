@@ -28,7 +28,7 @@ other dealings in this Software without prior written authorization
 from the X Consortium.
 
 */
-/* $XFree86: xc/programs/xman/main.c,v 1.3 2000/03/03 23:16:27 dawes Exp $ */
+/* $XFree86: xc/programs/xman/main.c,v 1.4 2001/10/28 03:34:36 tsi Exp $ */
 
 /*
  * xman - X window system manual page display program.
@@ -41,7 +41,7 @@ from the X Consortium.
 #include <X11/Xaw/Cardinals.h>
 #endif /* ZERO */
 
-#if ( !defined(lint) && !defined(SABER)) /* Version can be retrieved */
+#if !defined(lint) && !defined(SABER) && 0
   static char version[] = XMAN_VERSION;  /* via strings. */
 #endif
 

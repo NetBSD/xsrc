@@ -1,10 +1,14 @@
-/* $Xorg: Atoms.c,v 1.3 2000/08/17 19:45:58 cpqbld Exp $ */
+/* $Xorg: Atoms.c,v 1.4 2001/02/09 02:03:51 xorgcvs Exp $ */
  
 /* 
 
 Copyright 1988, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -21,7 +25,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/Xmu/Atoms.c,v 3.6 2001/01/17 19:42:53 dawes Exp $ */
+/* $XFree86: xc/lib/Xmu/Atoms.c,v 3.8 2001/12/14 19:55:33 dawes Exp $ */
 
 /*
  * This file contains routines to cache atoms, avoiding multiple
@@ -56,7 +60,7 @@ struct _AtomRec {
 #define STATIC static
 #endif
 
-#if (defined(__STDC__) && !defined(UNIXCPP)) || defined(ANSICPP)
+#if !defined(UNIXCPP) || defined(ANSICPP)
 #define DeclareAtom(atom,text) \
 STATIC struct _AtomRec __##atom = { text, NULL }; \
 AtomPtr _##atom = &__##atom;

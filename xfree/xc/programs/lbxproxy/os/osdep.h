@@ -1,9 +1,13 @@
-/* $Xorg: osdep.h,v 1.3 2000/08/17 19:53:59 cpqbld Exp $ */
+/* $Xorg: osdep.h,v 1.4 2001/02/09 02:05:33 xorgcvs Exp $ */
 /***********************************************************
 
 Copyright 1987, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -41,7 +45,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/programs/lbxproxy/os/osdep.h,v 1.8 2001/01/17 23:44:59 dawes Exp $ */
+/* $XFree86: xc/programs/lbxproxy/os/osdep.h,v 1.10 2001/12/14 20:00:58 dawes Exp $ */
 
 #define BOTIMEOUT 200 /* in milliseconds */
 #define BUFSIZE 4096
@@ -101,9 +105,7 @@ SOFTWARE.
 #define HAS_GETDTABLESIZE
 #endif
 
-#ifndef NULL
-#define NULL 0
-#endif
+#include <stddef.h>
 
 typedef struct _connectionInput {
     struct _connectionInput *next;

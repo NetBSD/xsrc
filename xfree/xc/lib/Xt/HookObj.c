@@ -1,10 +1,14 @@
-/* $Xorg: HookObj.c,v 1.3 2000/08/17 19:46:12 cpqbld Exp $ */
+/* $Xorg: HookObj.c,v 1.4 2001/02/09 02:03:55 xorgcvs Exp $ */
 
 /*
 
 Copyright 1994, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -21,6 +25,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
+/* $XFree86: xc/lib/Xt/HookObj.c,v 1.3 2001/12/14 19:56:17 dawes Exp $ */
 
 #include "IntrinsicI.h"
 #include "StringDefs.h"
@@ -52,7 +57,9 @@ static XtResource resources[] = {
     XtOffsetOf(HookObjRec, hooks.num_shells), XtRImmediate, (XtPointer) 0 }
 };
 
-static void GetValuesHook(), Initialize();
+static void GetValuesHook(Widget widget, ArgList args, Cardinal *num_args);
+static void Initialize(Widget req, Widget new, ArgList args,
+			Cardinal *num_args);
 
 externaldef(hookobjclassrec) HookObjClassRec hookObjClassRec = {
   { /* Object Class Part */
@@ -97,9 +104,10 @@ externaldef(hookobjclassrec) HookObjClassRec hookObjClassRec = {
 externaldef(hookObjectClass) WidgetClass hookObjectClass = 
 	(WidgetClass)&hookObjClassRec;
 
-static void FreeShellList(w, closure, call_data)
-    Widget w;
-    XtPointer closure, call_data;
+static void FreeShellList(
+    Widget w,
+    XtPointer closure,
+    XtPointer call_data)
 {
     HookObject h = (HookObject)w;
     if (h->hooks.shells != NULL)

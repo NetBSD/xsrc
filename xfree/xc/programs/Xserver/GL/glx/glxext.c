@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/GL/glx/glxext.c,v 1.7 2001/03/21 16:29:36 dawes Exp $
+/* $XFree86: xc/programs/Xserver/GL/glx/glxext.c,v 1.8 2001/08/23 18:25:40 alanh Exp $
 ** The contents of this file are subject to the GLX Public License Version 1.0
 ** (the "License"). You may not use this file except in compliance with the
 ** License. You may obtain a copy of the License at Silicon Graphics, Inc.,
@@ -382,7 +382,6 @@ static int __glXDispatch(ClientPtr client)
     REQUEST(xGLXSingleReq);
     CARD8 opcode;
     int (*proc)(__GLXclientState *cl, GLbyte *pc);
-    __GLXcontext *cx;
     __GLXclientState *cl;
 
     opcode = stuff->glxCode;
@@ -437,7 +436,6 @@ static int __glXSwapDispatch(ClientPtr client)
     REQUEST(xGLXSingleReq);
     CARD8 opcode;
     int (*proc)(__GLXclientState *cl, GLbyte *pc);
-    __GLXcontext *cx;
     __GLXclientState *cl;
 
     opcode = stuff->glxCode;

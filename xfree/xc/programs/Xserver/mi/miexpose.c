@@ -1,9 +1,13 @@
-/* $XFree86: xc/programs/Xserver/mi/miexpose.c,v 3.7 2001/01/17 22:37:06 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/mi/miexpose.c,v 3.9 2001/12/14 20:00:22 dawes Exp $ */
 /***********************************************************
 
 Copyright 1987, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -42,7 +46,7 @@ SOFTWARE.
 
 ******************************************************************/
 
-/* $Xorg: miexpose.c,v 1.3 2000/08/17 19:53:37 cpqbld Exp $ */
+/* $Xorg: miexpose.c,v 1.4 2001/02/09 02:05:20 xorgcvs Exp $ */
 
 #include "X.h"
 #define NEED_EVENTS
@@ -62,8 +66,6 @@ SOFTWARE.
 #include "Xmd.h"
 
 #include "globals.h"
-
-extern WindowPtr *WindowTable;
 
 #ifdef PANORAMIX
 #include "panoramiX.h"
@@ -107,7 +109,7 @@ miHandleExposures(pSrcDrawable, pDstDrawable,
     int 			dstx, dsty;
     unsigned long		plane;
 {
-    register ScreenPtr pscr = pGC->pScreen;
+    register ScreenPtr pscr;
     RegionPtr prgnSrcClip;	/* drawable-relative source clip */
     RegionRec rgnSrcRec;
     RegionPtr prgnDstClip;	/* drawable-relative dest clip */
@@ -124,6 +126,8 @@ miHandleExposures(pSrcDrawable, pDstDrawable,
     BoxRec expBox;
     Bool extents;
 
+    /* This prevents warning about pscr not being used. */
+    pGC->pScreen = pscr = pGC->pScreen;
 
     /* avoid work if we can */
     if (!pGC->graphicsExposures &&
@@ -425,7 +429,7 @@ miSendExposures(pWin, pRgn, dx, dy)
     if(!noPanoramiXExtension) {
 	int scrnum = pWin->drawable.pScreen->myNum;
 	int x = 0, y = 0;
-	XID realWin;
+	XID realWin = 0;
 
 	if(!pWin->parent) {
 	    x = panoramiXdataPtr[scrnum].x;
@@ -579,9 +583,9 @@ static GCPtr	screenContext[MAXSCREENS];
 
 /*ARGSUSED*/
 static int
-tossGC (value, id)
-pointer value;
-XID id;
+tossGC (
+    pointer value,
+    XID id)
 {
     GCPtr pGC = (GCPtr)value;
     screenContext[pGC->pScreen->myNum] = (GCPtr)NULL;
@@ -589,6 +593,8 @@ XID id;
     numGCs--;
     if (!numGCs)
 	ResType = 0;
+
+    return 0;
 }
 
 

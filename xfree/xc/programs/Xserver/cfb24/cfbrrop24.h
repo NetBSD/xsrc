@@ -1,6 +1,6 @@
-/* $XFree86: xc/programs/Xserver/cfb24/cfbrrop24.h,v 3.0 1996/06/29 09:06:09 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/cfb24/cfbrrop24.h,v 3.1 2001/10/28 03:33:03 tsi Exp $ */
 
-#define RROP_DECLARE	    register unsigned long rrop_and, rrop_xor; \
+#define RROP_DECLARE \
     unsigned long piQxelAnd[3], piQxelXor[3],  spiQxelAnd[8], spiQxelXor[8];
 
 #define RROP_COPY_SETUP(ptn)  \

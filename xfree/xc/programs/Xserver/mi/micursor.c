@@ -1,8 +1,13 @@
+/* $XFree86: xc/programs/Xserver/mi/micursor.c,v 1.3 2001/12/14 20:00:21 dawes Exp $ */
 /***********************************************************
 
 Copyright 1987, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -40,10 +45,11 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $Xorg: micursor.c,v 1.3 2000/08/17 19:53:37 cpqbld Exp $ */
+/* $Xorg: micursor.c,v 1.4 2001/02/09 02:05:20 xorgcvs Exp $ */
 #include "scrnintstr.h"
 #include "cursor.h"
 #include "misc.h"
+#include "mi.h"
 
 extern Bool Must_have_memory;
 

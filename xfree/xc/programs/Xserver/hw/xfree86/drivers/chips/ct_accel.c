@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/chips/ct_accel.c,v 1.36 2001/05/09 19:57:04 dbateman Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/chips/ct_accel.c,v 1.38 2002/01/07 18:46:03 dawes Exp $ */
 /*
  * Copyright 1996, 1997, 1998 by David Bateman <dbateman@ee.uts.edu.au>
  *   Modified 1997, 1998 by Nozomi Ytow
@@ -59,7 +59,7 @@
 # define DEBUG_P(x) /**/
 #endif
 
-#if (defined(__STDC__) && !defined(UNIXCPP)) || defined(ANSICPP)
+#if !defined(UNIXCPP) || defined(ANSICPP)
 #define CATNAME(prefix,subname) prefix##subname
 #else
 #define CATNAME(prefix,subname) prefix/**/subname
@@ -1487,10 +1487,6 @@ MoveDWORDS(register CARD32* dest, register CARD32* src, register int dwords )
      }
 }
 
-#ifndef __GNUC__
-#define __inline__ /**/
-#endif
- 
 static __inline__ void 
 MoveDataFromCPU(unsigned char *src, unsigned char *dest, int srcwidth,
 	 int window, int h, int dwords)

@@ -36,12 +36,15 @@
 |*     those rights set forth herein.                                        *|
 |*                                                                           *|
  \***************************************************************************/
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/nv/riva_hw.c,v 1.13 2001/03/28 01:17:43 mvojkovi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/nv/riva_hw.c,v 1.21 2001/12/17 22:17:55 mvojkovi Exp $ */
 
 #include "nv_local.h"
+#include "compiler.h"
+#include "nv_include.h"
+#include "nvreg.h"
 #include "riva_hw.h"
 #include "riva_tbl.h"
-#include "compiler.h"
+
 /*
  * This file is an OS-agnostic file used to make RIVA 128 and RIVA TNT
  * operate identically (except TNT has more memory and better 3D quality.
@@ -1152,17 +1155,9 @@ static void CalcStateExt
     int            bpp,
     int            width,
     int            hDisplaySize,
-    int            hDisplay,
-    int            hStart,
-    int            hEnd,
-    int            hTotal,
     int            height,
-    int            vDisplay,
-    int            vStart,
-    int            vEnd,
-    int            vTotal,
     int            dotClock,
-    int		   doubleScan
+    int		   flags 
 )
 {
     int pixelDepth, VClk, m, n, p;
@@ -1188,7 +1183,7 @@ static void CalcStateExt
                                          chip);
             state->cursor0  = 0x00;
             state->cursor1  = 0x78;
-	    if (doubleScan)
+	    if (flags & V_DBLSCAN)
 		state->cursor1 |= 2;
             state->cursor2  = 0x00000000;
             state->pllsel   = 0x10010100;
@@ -1206,7 +1201,7 @@ static void CalcStateExt
                                          chip);
             state->cursor0  = 0x00;
             state->cursor1  = 0xFC;
-	    if (doubleScan)
+	    if (flags & V_DBLSCAN)
 		state->cursor1 |= 2;
             state->cursor2  = 0x00000000;
             state->pllsel   = 0x10000700;
@@ -1221,11 +1216,11 @@ static void CalcStateExt
                                          &(state->arbitration0),
                                          &(state->arbitration1),
                                           chip);
-            state->cursor0  = 0x00;
-            state->cursor1  = 0xFC;
-	    if (doubleScan)
+            state->cursor0  = 0x80 | (chip->CursorStart >> 17);
+            state->cursor1  = (chip->CursorStart >> 11) << 2;
+	    state->cursor2  = chip->CursorStart >> 24;
+	    if (flags & V_DBLSCAN)
 		state->cursor1 |= 2;
-            state->cursor2  = 0x00000000;
             state->pllsel   = 0x10000700;
             state->config   = chip->PFB[0x00000200/4];
             state->general  = bpp == 16 ? 0x00101100 : 0x00100100;
@@ -1237,13 +1232,7 @@ static void CalcStateExt
 	state->general |= 0x00000030;
 
     state->vpll     = (p << 16) | (n << 8) | m;
-    state->screen   = ((hTotal   & 0x040) >> 2)
-                    | ((vDisplay & 0x400) >> 7)
-                    | ((vStart   & 0x400) >> 8)
-                    | ((vDisplay & 0x400) >> 9)
-                    | ((vTotal   & 0x400) >> 10);
     state->repaint0 = (((width/8)*pixelDepth) & 0x700) >> 3;
-    state->horiz    = hTotal     < 260 ? 0x00 : 0x01;
     state->pixel    = pixelDepth > 2   ? 3    : pixelDepth;
     state->offset0  =
     state->offset1  =
@@ -1449,13 +1438,27 @@ static void LoadStateExt
                 chip->PGRAPH[0x00000864/4] = state->pitch3;
                 chip->PGRAPH[0x000009A4/4] = chip->PFB[0x00000200/4]; 
                 chip->PGRAPH[0x000009A8/4] = chip->PFB[0x00000204/4];
+                chip->PRAMDAC[0x0000052C/4] = 0x00000101;
+                chip->PRAMDAC[0x0000252C/4] = 0x00000001;
 	    }
+            chip->PRAMDAC[0x00000404/4] |= (1 << 25);
+            chip->PRAMDAC[0x00002404/4] |= (1 << 25);
+
 	    chip->PMC[0x00008704/4] = 1;
 	    chip->PMC[0x00008140/4] = 0;
 	    chip->PMC[0x00008920/4] = 0;
 	    chip->PMC[0x00008924/4] = 0;
 	    chip->PMC[0x00008908/4] = 0x01ffffff;
 	    chip->PMC[0x0000890C/4] = 0x01ffffff;
+
+            chip->PFB[0x00000240/4] = 0;
+            chip->PFB[0x00000244/4] = 0;
+            chip->PFB[0x00000248/4] = 0;
+            chip->PFB[0x0000024C/4] = 0;
+            chip->PFB[0x00000250/4] = 0;
+            chip->PFB[0x00000254/4] = 0;
+            chip->PFB[0x00000258/4] = 0;
+            chip->PFB[0x0000025C/4] = 0;
 
             chip->PGRAPH[0x00000B00/4] = chip->PFB[0x00000240/4];
             chip->PGRAPH[0x00000B04/4] = chip->PFB[0x00000244/4];
@@ -1537,6 +1540,7 @@ static void LoadStateExt
     /*
      * Load HW mode state.
      */
+
     VGA_WR08(chip->PCIO, 0x03D4, 0x19);
     VGA_WR08(chip->PCIO, 0x03D5, state->repaint0);
     VGA_WR08(chip->PCIO, 0x03D4, 0x1A);
@@ -1555,7 +1559,12 @@ static void LoadStateExt
     VGA_WR08(chip->PCIO, 0x03D5, state->cursor0);
     VGA_WR08(chip->PCIO, 0x03D4, 0x31);
     VGA_WR08(chip->PCIO, 0x03D5, state->cursor1);
-    chip->PRAMDAC[0x00000300/4]  = state->cursor2;
+    VGA_WR08(chip->PCIO, 0x03D4, 0x2F);
+    VGA_WR08(chip->PCIO, 0x03D5, state->cursor2);
+    VGA_WR08(chip->PCIO, 0x03D4, 0x39);
+    VGA_WR08(chip->PCIO, 0x03D5, state->interlace);
+    VGA_WR08(chip->PCIO, 0x03D4, 0x41);
+    VGA_WR08(chip->PCIO, 0x03D5, state->extra);
     chip->PRAMDAC[0x00000508/4]  = state->vpll;
     chip->PRAMDAC[0x0000050C/4]  = state->pllsel;
     chip->PRAMDAC[0x00000600/4]  = state->general;
@@ -1606,7 +1615,12 @@ static void UnloadStateExt
     state->cursor0      = VGA_RD08(chip->PCIO, 0x03D5);
     VGA_WR08(chip->PCIO, 0x03D4, 0x31);
     state->cursor1      = VGA_RD08(chip->PCIO, 0x03D5);
-    state->cursor2      = chip->PRAMDAC[0x00000300/4];
+    VGA_WR08(chip->PCIO, 0x03D4, 0x2F);
+    state->cursor2      = VGA_RD08(chip->PCIO, 0x03D5);
+    VGA_WR08(chip->PCIO, 0x03D4, 0x39);
+    state->interlace    = VGA_RD08(chip->PCIO, 0x03D5);
+    VGA_WR08(chip->PCIO, 0x03D4, 0x41);
+    state->extra        = VGA_RD08(chip->PCIO, 0x03D5);
     state->vpll         = chip->PRAMDAC[0x00000508/4];
     state->pllsel       = chip->PRAMDAC[0x0000050C/4];
     state->general      = chip->PRAMDAC[0x00000600/4];
@@ -1832,7 +1846,7 @@ static void nv3GetConfig
                 break;
         }
     }        
-    chip->CrystalFreqKHz   = (chip->PEXTDEV[0x00000000/4] & 0x00000020) ? 13500 : 14318;	/* this was reversed, not sure that it is right this way either (HCS) */
+    chip->CrystalFreqKHz   = (chip->PEXTDEV[0x00000000/4] & 0x00000040) ? 14318 : 13500;
     chip->CURSOR           = &(chip->PRAMIN[0x00008000/4 - 0x0800/4]);
     chip->CURSORPOS        = &(chip->PRAMDAC[0x0300/4]);
     chip->VBLANKENABLE     = &(chip->PGRAPH[0x0140/4]);
@@ -1915,14 +1929,26 @@ static void nv4GetConfig
 }
 static void nv10GetConfig
 (
-    RIVA_HW_INST *chip
+    NVPtr pNv
 )
 {
+    RIVA_HW_INST *chip = &pNv->riva;
+
+#if X_BYTE_ORDER == X_BIG_ENDIAN
+    /* turn on big endian register access */
+    chip->PMC[0x00000004/4] = 0x01000001;
+#endif
+
     /*
      * Fill in chip configuration.
      */
-    switch ((chip->PFB[0x0000020C/4] >> 20) & 0x000000FF)
-    {
+    if(pNv->Chipset == NV_CHIP_IGEFORCE2) {
+	int amt = pciReadLong(pciTag(0, 0, 1), 0x7C);
+
+        chip->RamAmountKBytes = (((amt >> 6) & 31) + 1) * 1024;
+    } else {
+      switch ((chip->PFB[0x0000020C/4] >> 20) & 0x000000FF)
+      {
         case 0x02:
             chip->RamAmountKBytes = 1024 * 2;
             break;
@@ -1947,6 +1973,7 @@ static void nv10GetConfig
         default:
             chip->RamAmountKBytes = 1024 * 16;
             break;
+      }
     }
     switch ((chip->PFB[0x00000000/4] >> 3) & 0x00000003)
     {
@@ -1957,8 +1984,11 @@ static void nv10GetConfig
             chip->RamBandwidthKBytesPerSec = 1000000;
             break;
     }
-    chip->CrystalFreqKHz   = (chip->PEXTDEV[0x00000000/4] & 0x00000040) ? 14318 : 13500;
-    chip->CURSOR           = &(chip->PRAMIN[0x00010000/4 - 0x0800/4]);
+    chip->CrystalFreqKHz   = (chip->PEXTDEV[0x0000/4] & (1 << 6))  ? 14318 : 
+                             (chip->PEXTDEV[0x0000/4] & (1 << 22)) ? 27000 :
+                                                                     13500;
+    chip->CursorStart      = (chip->RamAmountKBytes - 128) * 1024;
+    chip->CURSOR           = NULL;  /* can't set this here */
     chip->CURSORPOS        = &(chip->PRAMDAC[0x0300/4]);
     chip->VBLANKENABLE     = &(chip->PCRTC[0x0140/4]);
     chip->VBLANK           = &(chip->PCRTC[0x0100/4]);
@@ -1979,9 +2009,10 @@ static void nv10GetConfig
 }
 int RivaGetConfig
 (
-    RIVA_HW_INST *chip
+    NVPtr pNv
 )
 {
+    RIVA_HW_INST *chip = &pNv->riva;
     /*
      * Save this so future SW know whats it's dealing with.
      */
@@ -1999,7 +2030,7 @@ int RivaGetConfig
             break;
         case NV_ARCH_10:
         case NV_ARCH_20:
-            nv10GetConfig(chip);
+            nv10GetConfig(pNv);
             break;
         default:
             return (-1);

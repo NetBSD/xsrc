@@ -4,7 +4,7 @@ XCOMM $XConsortium: Imakefile /main/34 1996/10/27 11:05:08 kaleb $
 
 
 
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/common/Imakefile,v 3.134 2001/05/07 21:42:31 tsi Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/common/Imakefile,v 3.138 2001/10/09 19:31:05 herrb Exp $
 
 
 
@@ -18,17 +18,14 @@ XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/common/Imakefile,v 3.134 2001/05/
 #endif /* GNUMachArchitecture */
 #else
 # if defined(i386BsdArchitecture) || defined(AlphaBsdArchitecture) \
-	|| defined(OpenBSDArchitecture) && defined(PpcArchitecture)
+	|| defined(OpenBSDArchitecture) && defined(PpcArchitecture) \
+	|| defined(NetBSDArchitecture)
         KBD = xf86KbdBSD
 # else
 #  ifdef LinuxArchitecture
         KBD = xf86KbdLnx
 #  else
-#  if defined(SunArchitecture) && defined(SVR4Architecture) && OSMinorVersion >= 8
-        KBD = xf86KbdSol8
-#else
         KBD = xf86Kbd
-#  endif
 #  endif
 # endif
 #endif
@@ -49,8 +46,8 @@ XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/common/Imakefile,v 3.134 2001/05/
 #endif
 
 #if BuildXInputExt
- XF86_XINPUT_SRC = xf86Xinput.c xf86Switch.c xisb.c
- XF86_XINPUT_OBJ = xf86Xinput.o xf86Switch.o xisb.o
+ XF86_XINPUT_SRC = xf86Xinput.c xisb.c
+ XF86_XINPUT_OBJ = xf86Xinput.o xisb.o
 #endif
 
 MODPATHDEFINES = -DDEFAULT_MODULE_PATH=\"$(MODULEDIR)\"
@@ -161,7 +158,8 @@ OFILES = \
 		-I$(SERVERSRC)/mi -I$(SERVERSRC)/include -I$(SERVERSRC)/os \
 		-I$(XINCLUDESRC) -I$(SERVERSRC)/Xext -I$(EXTINCSRC) \
 		-I$(SERVERSRC)/Xi -I$(XF86SRC)/ddc -I$(XF86SRC)/i2c \
-		-I$(FONTLIBSRC)/include -I$(XF86SRC) -I$(XF86PARSERSRC) \
+		-I$(FONTLIBSRC)/include -I$(FONTINCSRC) \
+		-I$(XF86SRC) -I$(XF86PARSERSRC) \
 		-I$(XF86SRC)/loader $(VGAINCLUDES) -I$(XF86SRC)/rac \
 	        -I$(XF86SRC)/scanpci -I$(XF86OSSRC)/vbe -I$(XF86SRC)/int10 \
 		-I$(XF86SRC)/ddc

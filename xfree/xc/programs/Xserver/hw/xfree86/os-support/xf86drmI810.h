@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/xf86drmI810.h,v 3.3 2001/04/01 14:00:14 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/xf86drmI810.h,v 3.4 2001/09/27 08:25:04 alanh Exp $ */
 
 /* WARNING: If you change any of these defines, make sure to change
  * the kernel include file as well (i810_drm.h)
@@ -34,6 +34,8 @@ typedef struct _drmI810Init {
    unsigned int front_offset;
    unsigned int back_offset;
    unsigned int depth_offset;
+   unsigned int overlay_offset;
+   unsigned int overlay_physical;
    unsigned int w;
    unsigned int h;
    unsigned int pitch;

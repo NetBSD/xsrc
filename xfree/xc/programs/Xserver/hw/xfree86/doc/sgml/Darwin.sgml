@@ -4,40 +4,56 @@
 
 <article>
 <title>XFree86 on Darwin and Mac OS X
-<author>Torrey T. Lyons
-<date>25 May 2001
+<author>Torrey T. Lyons, <email>torrey@mrcla.com</email>
+<date>12 December 2001
 
 <ident>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/Darwin.sgml,v 1.4.4.2 2001/06/02 04:44:37 torrey Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/Darwin.sgml,v 1.9 2001/12/13 07:09:05 torrey Exp $
 </ident>
 
 <toc>
 
 <sect>Introduction
 <p>
-<htmlurl url="http://www.xfree86.org/" name="XFree86">, a free
-implementation of X Windows, has been ported to <htmlurl
-url="http://www.publicsource.apple.com/projects/darwin/" name="Darwin">
+<htmlurl url="http://www.xfree86.org/" name="XFree86">, a freely
+redistributable open-source implementation of the <htmlurl
+url="http://www.x.org/" name="X Window System">, has been ported to <htmlurl
+url="http://www.opensource.apple.com/projects/darwin/" name="Darwin">
 and <htmlurl url="http://www.apple.com/macosx/" name="Mac OS X">. This
 document is a collection of information for anyone
-experimenting with running X Windows on Apple's next generation operating
-system. Please send any comments on this page to
-<email/torrey@mrcla.com/.  If you are also 
-working on modifications to the Darwin X server, please let me know.
+running XFree86 on Apple's next generation operating system.
+
+<p>
+Most of the current work on XFree86 for Darwin and Mac OS&nbsp;X is centered
+around the <htmlurl url="http://sourceforge.net/projects/xonx/"
+name="XonX project"> at <htmlurl url="http://sourceforge.net"
+name="SourceForge">. If you are interested in up-to-date status, want to
+report a bug, or are interested in working on XFree86 for Darwin, stop by the
+<htmlurl url="http://sourceforge.net/projects/xonx/" name="XonX project">.
 
 <sect>Hardware Support and Configuration
 <p>
-XFree86 can be run either from the console or side by side with
-Mac OS&nbsp;X's Aqua desktop in a full screen mode. In full screen mode
-with Aqua, when the X window system is active, it takes over the entire
-screen. You can switch back to the Mac OS&nbsp;X desktop by holding down
-Command-Option-A. This key combination can be changed in the user
-preferences. From the Mac OS&nbsp;X desktop, just click on the XDarwin
-icon in the floating switch window to switch back to the X window system.
-You can change this behavior in the user preferences so that clicking on
-the XDarwin icon in the Dock switches as well. The full screen cooperative
-mode with Aqua is known as Quartz mode, named after the Quartz 2D
-compositing engine used by Aqua.
+The X window server for Darwin and Mac OS&nbsp;X provided by the <htmlurl
+url="http://www.XFree86.Org/" name="XFree86 Project, Inc."> is called
+XDarwin. XDarwin can run in three different modes. On Mac OS&nbsp;X,
+XDarwin runs in parallel with Aqua in full screen or rootless modes.
+These modes are called Quartz modes, named after the Quartz 2D compositing
+engine used by Aqua. XDarwin can also be run from the Darwin console in
+IOKit mode.
+
+<p>
+In full screen Quartz mode, when the X Window System is active, it takes
+over the entire screen. You can switch back to the Mac OS&nbsp;X desktop
+by holding down Command-Option-A. This key combination can be changed in
+the user preferences. From the Mac OS&nbsp;X desktop, click on the XDarwin
+icon in the Dock to switch back to the X window system. (You can change
+this behavior in the user preferences so that you must click the XDarwin
+icon in the floating switch window instead.)
+
+<p>In rootless mode, the X window system and Aqua share your display.
+The root window of the X11 display is the size of the screen and contains
+all the other windows. The X11 root window is not displayed in rootless
+mode as Aqua handles the desktop background.
 
 <p>
 From the console, the Darwin port of XFree86 uses the IOKit for device
@@ -45,7 +61,6 @@ driver loading and discovery, rather than the XFree86 module loader.
 Because of this, the XFree86 configuration file is not used on Darwin
 or Mac OS&nbsp;X systems. The descriptions found elsewhere of devices
 supported by XFree86 for other operating systems also do not apply.
-Running XFree86 from the text console is known as IOKit mode.
 
 <p>
 XFree86 for Darwin or Mac OS&nbsp;X will work with any video card that
@@ -54,14 +69,15 @@ typically means any card that has been shipped by Apple. If a card works
 for you with the Mac OS&nbsp;X GUI, it will work on the same machine with
 XFree86. If you have a pure Darwin installation, you may need to download
 additional third-party drivers from
-<htmlurl url="http://www.publicsource.apple.com/projects/darwin/"
+<htmlurl url="http://www.opensource.apple.com/projects/darwin/"
 name="Apple's Darwin site">. IOKit drivers are typically installed in
 <tt>/System/Library/Extensions/</tt> or <tt>/Library/Extensions/</tt>.
 
 <p>
 Multi-button and scroll wheel mouse support works well with all
-USB mice that I have tested. I have done no testing with serial
-mice.
+USB mice that I have tested. I have done no testing with ADB
+mice, but without a special driver, only a single mouse button
+will work on an ADB mouse.
 
 <sect>Getting Started
 <p>
@@ -69,24 +85,25 @@ Following are instructions for building and running your own copy of
 XFree86. The procedure for getting your X server up and running on
 Darwin and Mac OS&nbsp;X are very similar. Where there are differences
 I have noted them below. Note that to build XFree86 for yourself on
-Mac OS&nbsp;X, you will need to install the Developers' Tools.
+Mac OS&nbsp;X, you need to install the Developers' Tools.
 
 <p>
 If you don't feel the need to live on the cutting edge, you can save
 some time and effort by using the precompiled binaries available on
 the XFree86 FTP server at <url
-url="ftp://ftp.xfree86.org/pub/XFree86/&relvers;/binaries/Darwin/">.
+url="ftp://ftp.xfree86.org/pub/XFree86/&relvers;/binaries/">.
 Follow the instructions in the <htmlurl
 url="http://www.xfree86.org/&relvers;/Install.html" name="Install">
 document to install it. This will create two new directory trees,
 <tt>/usr/X11R6</tt> and <tt>/etc/X11</tt> For Mac OS&nbsp;X Quartz
-support, download the optional Xquartz.tgz tarball.
+support, download the optional Xquartz.tgz tarball. With Quartz support,
+the XDarwin application will be installed in <tt>/Applications</tt>.
 
 <p>
 If you get the precompiled binaries you can skip ahead to the section
-on <ref id="running" name="running the X window system"> On the other hand,
-if you want to build things yourself from scratch,
-follow the directions below.
+on <ref id="running" name="running the X Window System"> On the other hand,
+if you want to build things yourself from scratch, follow the directions
+below.
 
 <sect1> Get the Code 
 
@@ -133,106 +150,97 @@ sudo make install.man >& man.log
 
 <sect>Run the X Window System<label id="running">
 <p>
-You will want to add the X window executables to your path. Your path
-is the list of directories to be searched when you type a command. You
-will also want to add the man pages from XFree86 to the list of pages
-to be searched when you are looking for documentation. The way to do
-this depends on the shell you are using. With tcsh or csh add the
-following two lines to a file named
-<tt>~/Library/init/tcsh/path</tt>: (You may need to create this file and
-directory path if it does not exist already.)
-
-<tscreen><verb>
-setenv PATH "${PATH}:/usr/X11R6/bin"
-setenv MANPATH "${MANPATH}:/usr/X11R6/man" 
-</verb></tscreen>
-The next time you login or open a Terminal window, this file will be
-executed automatically.
+You need to add the X Window System executables to your path. Your path
+is the list of directories to be searched for executable commands. 
+The X11 commands are located in <tt>/usr/X11R6/bin</tt>, which needs to be
+added to your path. XDarwin does this for you by default and can also add
+additional directories where you have installed command line applications.
 
 <p>
-You are now ready to go. On Mac OS&nbsp;X, you can run XFree86 from the
-text console or in full screen mode with Aqua. To get to the text
+More experienced users will have already set their path correctly using the
+initialization files for their shell. In this case, you can inform XDarwin
+not to modify your path in the preferences. XDarwin launches the initial
+X11 clients in the user's default login shell. (An alternate shell can also
+be specified in the preferences.) The way to set the path depends on the
+shell you are using. This is described in the man page documentation for
+the shell.
+
+<p>
+In addition you may also want to add the man pages from XFree86 to the list
+of pages to be searched when you are looking for documentation. The X11 man
+pages are located in <tt>/usr/X11R6/man</tt> and the <tt>MANPATH</tt>
+environment variable contains the list of directories to search.
+
+<p>
+On Mac OS&nbsp;X, you can run XFree86 from the Darwin
+text console or in parallel with Aqua. To get to the text
 console in Mac OS&nbsp;X you need to logout and type ``&gt;console'' as
 the user name. This will shutdown Core Graphics and
 bring up the console login prompt. Login again as your user. 
 
 <p>
-From the text console you can start the X Window System by typing ``startx''.
-After a brief wait at least one terminal window should pop up for you.
-So far it probably isn't very impressive as you might not even have a
-window manager running to allow you to move windows around.
+From the text console you can start the X Window System by typing
+``exec startx''. After a brief wait at least one terminal window should
+pop up for you. So far it probably isn't very impressive as you might not
+even have a window manager running to allow you to move windows around.
 
 <p>
 When you are ready to quit XFree86 type ``exit'' in the main
 terminal window or quit with the window manager if you have one
-running. Unfortunately the X server won't shutdown correctly and you
+running. Unfortunately the X server does not shutdown correctly and if
+you did not start with ``exec startx'', you 
 will get an apparently frozen screen with only a spinning beachball
 cursor on it. Nothing you type shows up on the screen, but in fact
 your keystrokes are being received by the console. Type
 ``logout'' to return to normalcy after a brief delay. With
-Darwin this should put you back at the text console login prompt. With
+Darwin, this should put you back at the text console login prompt. With
 Mac OS&nbsp;X, Core Graphics will restart and you should be given a login
 window.
 
 <p>
 To start XFree86 in Quartz mode you can launch the XDarwin application
 in the <tt>/Applications</tt> folder, or from the command line type
-``startx -- -quartz''. When the X window system is active, it takes over
-the entire screen. You can switch back to the Mac OS&nbsp;X desktop by
-holding down Command-Option-A. This key combination can be changed in
-the user preferences. From the Mac OS&nbsp;X desktop, just click on the
-XDarwin icon in the floating switch window to switch back to the X window
-system. You can change this behavior in the user preferences so that
-clicking on the XDarwin icon in the Dock switches as well.
+``startx -- -quartz''. By default this will give you a mode picker to
+choose between full screen or rootless mode. You can change the default
+to always use a particular mode in the preferences, or you can specify
+the ``-fullscreen'' or ``-rootless'' options on the command line instead
+of ``-quartz''.
 
 <p>
-<bf/Customize X Windows/
+<bf/Customize the X Window System/
 <p>
 
-The X window system is very customizable and you will certainly want to
+The X Window System is very customizable and you will certainly want to
 change some things. There is a lot you can do to control how your windows
 look, how the windows are moved, resized, etc. You will likely want to
-get a better window manager than twm, which is included with
+get a fancier window manager than twm, which is included with
 XFree86. The <tt>.xinitrc</tt> file in your home directory controls what
-programs are run when you start the X window system. You can find a sample
+programs are run when you start the X Window System. You can find a sample
 <tt>.xinitrc</tt> file in <tt>/etc/X11/xinit/xinitrc</tt>.  
 
 <p>
-There are several window managers that have been ported to Darwin.
-The best collection of window managers and other X window clients
-is at <htmlurl
-url="http://www.darwinfo.org/ports.shtml#X Windows" name="Darwinfo's ports
-page">. Another good place to look for Darwin ports in general is at
-<htmlurl
-url="http://softrak.stepwise.com/Apps/WebObjects/Softrak" name="Stepwise's
-Softrak site">.  
+There are many window managers that have been ported to Darwin. The
+following pages contain collections of window managers and other X
+window system clients:
+
+<itemize>
+<item> <htmlurl url="http://fink.sourceforge.net/" name="Fink">: A
+package manager that will easily download, compile, and install lots
+of open source software from the Internet.
+
+<item> <htmlurl url="http://gnu-darwin.sourceforge.net/" name="GNU-Darwin">:
+A source for tons of software ported to Darwin.
+
+<item> <htmlurl url="http://softrak.stepwise.com/Apps/WebObjects/Softrak"
+name="Stepwise's Softrak site">
+
+<item> <htmlurl url="http://www.darwinfo.org/ports/"
+name="Darwinfo's ports page">
+
+</itemize>
 
 <p>
 Good luck!
-
-<sect>Outstanding Issues with the X server
-
-<p>
-There is a still a lot to be done with the X server. As always please
-let me know if you are interested in working on any of these issues.
-
-<bf/Things that are broken:/
-<itemize>
-<item>The bell does not work in IOKit mode. 
-
-<item>Server shutdown problem: After quitting the X server in IOKit mode,
-the colored beachball cursor reappears, but the screen never returns to the
-console display. The console is accepting input however, so typing
-``logout'' will return you to the login prompt.
-
-<item>Only one display is currently supported.
-
-<item>The display mode can not be changed once  the  X  server
-has started.
-
-<item>A screen saver is not supported.
-
-</itemize>
 
 </article>
 

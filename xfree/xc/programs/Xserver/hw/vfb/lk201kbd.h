@@ -2,7 +2,11 @@
 
 Copyright 1987, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -41,7 +45,7 @@ SOFTWARE.
 
 ******************************************************************/
 
-/* $Xorg: lk201kbd.h,v 1.3 2000/08/17 19:48:39 cpqbld Exp $ */
+/* $Xorg: lk201kbd.h,v 1.4 2001/02/09 02:04:45 xorgcvs Exp $ */
 
 #define MIN_LK201_KEY            86
 #define MAX_LK201_KEY           251

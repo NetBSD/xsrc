@@ -24,7 +24,7 @@ OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
 THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ********************************************************/
-/* $XFree86: xc/lib/X11/XKBGeom.c,v 1.3 2001/01/17 19:41:48 dawes Exp $ */
+/* $XFree86: xc/lib/X11/XKBGeom.c,v 1.4 2001/10/28 03:32:33 tsi Exp $ */
 
 #ifdef DEBUG
 #include <stdio.h>
@@ -174,7 +174,7 @@ register int	i;
 XkbShapePtr	shape;
 XkbRowPtr	row;
 XkbDoodadPtr	doodad;
-XkbBoundsPtr	bounds,rbounds;
+XkbBoundsPtr	bounds,rbounds=NULL;
 
     if ((!geom)||(!section))
 	return False;

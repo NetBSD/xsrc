@@ -4,7 +4,7 @@
 /*                                                                         */
 /*    Arithmetic computations (specification).                             */
 /*                                                                         */
-/*  Copyright 1996-2000 by                                                 */
+/*  Copyright 1996-2001 by                                                 */
 /*  David Turner, Robert Wilhelm, and Werner Lemberg.                      */
 /*                                                                         */
 /*  This file is part of the FreeType project, and may only be used,       */
@@ -27,8 +27,11 @@
 FT_BEGIN_HEADER
 
 
-#ifdef FT_LONG64
+/* OLD 64-bits internal API */
 
+#ifdef FT_CONFIG_OPTION_OLD_CALCS
+
+#ifdef FT_LONG64
 
   typedef FT_INT64  FT_Int64;
 
@@ -36,9 +39,8 @@ FT_BEGIN_HEADER
 #define MUL_64( x, y, z )  z = (FT_Int64)(x) * (y)
 #define DIV_64( x, y )     ( (x) / (y) )
 
-#ifdef FT_CONFIG_OPTION_OLD_CALCS
-
 #define SQRT_64( z )  FT_Sqrt64( z )
+
 
   /*************************************************************************/
   /*                                                                       */
@@ -56,12 +58,11 @@ FT_BEGIN_HEADER
   /* <Return>                                                              */
   /*    The 32-bit square-root.                                            */
   /*                                                                       */
-  FT_EXPORT( FT_Int32 )  FT_Sqrt64( FT_Int64  l );
+  FT_EXPORT( FT_Int32 )
+  FT_Sqrt64( FT_Int64  l );
 
-#endif /* FT_CONFIG_OPTION_OLD_CALCS */
 
-
-#else /* FT_LONG64 */
+#else /* !FT_LONG64 */
 
 
   typedef struct  FT_Int64_
@@ -95,9 +96,10 @@ FT_BEGIN_HEADER
   /* <Note>                                                                */
   /*    Will be wrapped by the ADD_64() macro.                             */
   /*                                                                       */
-  FT_EXPORT( void )  FT_Add64( FT_Int64*  x,
-                               FT_Int64*  y,
-                               FT_Int64  *z );
+  FT_EXPORT( void )
+  FT_Add64( FT_Int64*  x,
+            FT_Int64*  y,
+            FT_Int64  *z );
 
 
   /*************************************************************************/
@@ -118,9 +120,10 @@ FT_BEGIN_HEADER
   /* <Note>                                                                */
   /*    Will be wrapped by the MUL_64() macro.                             */
   /*                                                                       */
-  FT_EXPORT( void )  FT_MulTo64( FT_Int32   x,
-                                 FT_Int32   y,
-                                 FT_Int64  *z );
+  FT_EXPORT( void )
+  FT_MulTo64( FT_Int32   x,
+              FT_Int32   y,
+              FT_Int64  *z );
 
 
   /*************************************************************************/
@@ -142,15 +145,13 @@ FT_BEGIN_HEADER
   /* <Note>                                                                */
   /*    Will be wrapped by the DIV_64() macro.                             */
   /*                                                                       */
-  FT_EXPORT( FT_Int32 )  FT_Div64by32( FT_Int64*  x,
-                                       FT_Int32   y );
+  FT_EXPORT( FT_Int32 )
+  FT_Div64by32( FT_Int64*  x,
+                FT_Int32   y );
 
-
-#ifdef FT_CONFIG_OPTION_OLD_CALCS
-
-  FT_EXPORT( FT_Int32 )  FT_SqrtFixed( FT_Int32  x );
 
 #define SQRT_64( z )  FT_Sqrt64( &z )
+
 
   /*************************************************************************/
   /*                                                                       */
@@ -168,17 +169,23 @@ FT_BEGIN_HEADER
   /* <Return>                                                              */
   /*    The 32-bit square-root.                                            */
   /*                                                                       */
-  FT_EXPORT( FT_Int32 )  FT_Sqrt64( FT_Int64*  x );
+  FT_EXPORT( FT_Int32 )
+  FT_Sqrt64( FT_Int64*  x );
+
+
+#endif /* !FT_LONG64 */
 
 #endif /* FT_CONFIG_OPTION_OLD_CALCS */
 
 
-#endif /* FT_LONG64 */
+
+  FT_EXPORT( FT_Int32 )  FT_SqrtFixed( FT_Int32  x );
 
 
 #ifndef FT_CONFIG_OPTION_OLD_CALCS
 
 #define SQRT_32( x )  FT_Sqrt32( x )
+
 
   /*************************************************************************/
   /*                                                                       */
@@ -195,7 +202,9 @@ FT_BEGIN_HEADER
   /* <Return>                                                              */
   /*    The result of `sqrt(x)'.                                           */
   /*                                                                       */
-  FT_EXPORT( FT_Int32 )  FT_Sqrt32( FT_Int32  x );
+  FT_EXPORT( FT_Int32 )
+  FT_Sqrt32( FT_Int32  x );
+
 
 #endif /* !FT_CONFIG_OPTION_OLD_CALCS */
 

@@ -23,7 +23,7 @@
  * OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-/* $XFree86: xc/lib/GL/mesa/src/drv/tdfx/tdfx_tris.h,v 1.1 2001/03/21 16:14:28 dawes Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/tdfx/tdfx_tris.h,v 1.2 2001/08/18 02:51:07 dawes Exp $ */
 
 /*
  * Original rewrite:
@@ -61,7 +61,7 @@ static __inline void tdfx_draw_triangle( tdfxContextPtr fxMesa,
 					 tdfxVertex *v1,
 					 tdfxVertex *v2 )
 {
-   grDrawTriangle( v0, v1, v2 );
+   fxMesa->Glide.grDrawTriangle( v0, v1, v2 );
 }
 
 
@@ -75,7 +75,7 @@ static __inline void tdfx_draw_point( tdfxContextPtr fxMesa,
       GLfloat x = tmp->v.x, y = tmp->v.y;
       tmp->v.x += PNT_X_OFFSET - TRI_X_OFFSET;
       tmp->v.y += PNT_Y_OFFSET - TRI_Y_OFFSET;
-      grDrawPoint( tmp );
+      fxMesa->Glide.grDrawPoint( tmp );
       tmp->v.x = x;
       tmp->v.y = y;
    }
@@ -103,8 +103,8 @@ static __inline void tdfx_draw_point( tdfxContextPtr fxMesa,
       verts[3].v.x = xLeft;
       verts[3].v.y = yTop;
 
-      grDrawVertexArrayContiguous( GR_TRIANGLE_FAN, 4, verts,
-				   sizeof(tdfxVertex) );
+      fxMesa->Glide.grDrawVertexArrayContiguous( GR_TRIANGLE_FAN, 4, verts,
+                                                 sizeof(tdfxVertex) );
    }
 }
 
@@ -124,7 +124,7 @@ static __inline void tdfx_draw_line( tdfxContextPtr fxMesa,
       tmp0->v.y += LINE_Y_OFFSET - TRI_Y_OFFSET;
       tmp1->v.x += LINE_X_OFFSET - TRI_X_OFFSET;
       tmp1->v.y += LINE_Y_OFFSET - TRI_Y_OFFSET;
-      grDrawLine(tmp0, tmp1);
+      fxMesa->Glide.grDrawLine(tmp0, tmp1);
       tmp0->v.x = x0;
       tmp0->v.y = y0;
       tmp1->v.x = x1;
@@ -163,8 +163,8 @@ static __inline void tdfx_draw_line( tdfxContextPtr fxMesa,
       verts[3].v.x = tmp1->v.x - ix;
       verts[3].v.y = tmp1->v.y - iy;
 
-      grDrawVertexArrayContiguous( GR_TRIANGLE_FAN, 4, verts,
-				   sizeof(tdfxVertex) );
+      fxMesa->Glide.grDrawVertexArrayContiguous( GR_TRIANGLE_FAN, 4, verts,
+                                                 sizeof(tdfxVertex) );
    }
 }
 

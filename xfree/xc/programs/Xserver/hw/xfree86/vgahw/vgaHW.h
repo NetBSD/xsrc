@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vgahw/vgaHW.h,v 1.28 2001/05/10 22:18:58 dbateman Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vgahw/vgaHW.h,v 1.29 2001/12/12 00:12:48 mvojkovi Exp $ */
 
 
 /*
@@ -188,11 +188,15 @@ typedef struct _vgaHWRec {
 #define BITS_PER_GUN 6
 #define COLORMAP_SIZE 256
 
+#if defined(__powerpc__)
+#define DACDelay(hw) /* No legacy VGA support */
+#else
 #define DACDelay(hw)							     \
 	do {								     \
 	    unsigned char temp = inb((hw)->IOBase + VGA_IN_STAT_1_OFFSET);   \
 	    temp = inb((hw)->IOBase + VGA_IN_STAT_1_OFFSET);		     \
 	} while (0)
+#endif
 
 /* Function Prototypes */
 

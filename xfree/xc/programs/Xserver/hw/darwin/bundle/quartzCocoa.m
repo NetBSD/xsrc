@@ -7,15 +7,17 @@
  * that use X include files to avoid symbol collisions.
  *
  **************************************************************/
-/* $XFree86: xc/programs/Xserver/hw/darwin/bundle/quartzCocoa.m,v 1.5 2001/04/28 20:42:19 torrey Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/darwin/bundle/quartzCocoa.m,v 1.11 2001/12/22 05:28:35 torrey Exp $ */
 
 #include <Cocoa/Cocoa.h>
 
 #import "Preferences.h"
-#include "quartzShared.h"
+#include "quartzCommon.h"
+#include "pseudoramiX.h"
 
 extern void FatalError(const char *, ...);
 extern char *display;
+extern int noPanoramiXExtension;
 
 // Read the user preferences from the Cocoa front end
 void QuartzReadPreferences(void)
@@ -23,7 +25,19 @@ void QuartzReadPreferences(void)
     char *fileString;
 
     darwinFakeButtons = [Preferences fakeButtons];
+    darwinFakeMouse2Mask = [Preferences button2Mask];
+    darwinFakeMouse3Mask = [Preferences button3Mask];
+    quartzMouseAccelChange = [Preferences mouseAccelChange];
     quartzUseSysBeep = [Preferences systemBeep];
+
+    // Rootless: use PseudoramiX not Xinerama (quartzRootless already set)
+    if (quartzRootless) {
+        noPanoramiXExtension = TRUE;
+        noPseudoramiXExtension = ![Preferences xinerama];
+    } else {
+        noPanoramiXExtension = ![Preferences xinerama];
+        noPseudoramiXExtension = TRUE;
+    }
 
     if ([Preferences useKeymapFile]) {
         fileString = (char *) [[Preferences keymapFile] lossyCString];
@@ -37,10 +51,13 @@ void QuartzReadPreferences(void)
     if (! display)
         FatalError("malloc failed in QuartzReadPreferences()!\n");
     snprintf(display, 8, "%i", [Preferences display]);
+
+    darwinDesiredDepth = [Preferences depth] - 1;
 }
 
 // Write text to the Mac OS X pasteboard.
-void QuartzWriteCocoaPasteboard(char *text)
+void QuartzWriteCocoaPasteboard(
+    char *text)
 {
     NSPasteboard *pasteboard;
     NSArray *pasteboardTypes;
@@ -66,8 +83,8 @@ char *QuartzReadCocoaPasteboard(void)
     NSArray *pasteboardTypes;
     NSString *existingType;
     char *text = NULL;
-    
-    pasteboardTypes = [NSArray arrayWithObject:NSStringPboardType];    
+
+    pasteboardTypes = [NSArray arrayWithObject:NSStringPboardType];
     pasteboard = [NSPasteboard generalPasteboard];
     if (! pasteboard) return NULL;
 
@@ -84,4 +101,22 @@ char *QuartzReadCocoaPasteboard(void)
     }
 
     return text;
+}
+
+// Return whether the screen should use a QuickDraw cursor
+int QuartzFSUseQDCursor(
+    int depth)  // screen depth
+{
+    switch ([Preferences useQDCursor]) {
+        case qdCursor_Always:
+            return TRUE;
+        case qdCursor_Never:
+            return FALSE;
+        case qdCursor_Not8Bit:
+            if (depth > 8)
+                return TRUE;
+            else
+                return FALSE;
+    }
+    return TRUE;
 }

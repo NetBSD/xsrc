@@ -1,9 +1,13 @@
-/* $Xorg: XDestAssoc.c,v 1.3 2000/08/17 19:46:42 cpqbld Exp $ */
+/* $Xorg: XDestAssoc.c,v 1.4 2001/02/09 02:04:05 xorgcvs Exp $ */
 /*
 
 Copyright 1985, 1998  The Open Group.
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -20,7 +24,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/oldX/XDestAssoc.c,v 1.3 2001/01/17 19:43:38 dawes Exp $ */
+/* $XFree86: xc/lib/oldX/XDestAssoc.c,v 1.4 2001/12/14 19:57:02 dawes Exp $ */
 
 #include "Xlibint.h"
 #include "X10.h"

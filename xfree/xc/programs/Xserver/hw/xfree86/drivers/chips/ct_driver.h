@@ -22,7 +22,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/chips/ct_driver.h,v 1.32 2001/05/15 10:19:36 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/chips/ct_driver.h,v 1.33 2001/10/01 13:44:04 eich Exp $ */
 
 
 #ifndef _CT_DRIVER_H_
@@ -148,6 +148,7 @@ typedef struct {
 /* Monitor or flat panel type flags */
 #define ChipsCRT	0x0010
 #define ChipsLCD	0x1000
+#define ChipsLCDProbed	0x2000
 #define ChipsTFT	0x0100
 #define ChipsDS		0x0200
 #define ChipsDD		0x0400
@@ -163,6 +164,8 @@ typedef struct {
 #define MSS_BOTH	0x0B
 #define MSS_PIPE_A	0x02
 #define MSS_PIPE_B	0x05
+/* Aggregate value of MSS shadow bits -GHB */
+#define MSS_SHADOW  0x07
 
 /* Storage for the registers of the C&T chipsets */
 typedef struct {
@@ -241,7 +244,7 @@ typedef void (*chipsWriteFRPtr)(CHIPSPtr cPtr, CARD8 index, CARD8 value);
 typedef CARD8 (*chipsReadMRPtr)(CHIPSPtr cPtr, CARD8 index);
 typedef void (*chipsWriteMRPtr)(CHIPSPtr cPtr, CARD8 index, CARD8 value);
 typedef CARD8 (*chipsReadMSSPtr)(CHIPSPtr cPtr);
-typedef void (*chipsWriteMSSPtr)(CHIPSPtr cPtr, CARD8 value);
+typedef void (*chipsWriteMSSPtr)(CHIPSPtr cPtr, vgaHWPtr hwp, CARD8 value);
 typedef CARD8 (*chipsReadIOSSPtr)(CHIPSPtr cPtr);
 typedef void (*chipsWriteIOSSPtr)(CHIPSPtr cPtr, CARD8 value);
 
@@ -276,6 +279,8 @@ typedef struct _CHIPSRec {
     unsigned char *	FbBase;
     unsigned char *	MMIOBase;
     unsigned char *	MMIOBaseVGA;
+    unsigned char *	MMIOBasePipeA;
+    unsigned char *	MMIOBasePipeB;
     long		FbMapSize;
     unsigned char *	ShadowPtr;
     int			ShadowPitch;
@@ -440,16 +445,16 @@ void     chipsPointerMoved(int index, int x, int y);
 	    if (cPtr->SecondCrtc == TRUE) {				      \
 		cPtr->writeIOSS(cPtr, ((cPtr->storeIOSS & IOSS_MASK) |	      \
 					IOSS_PIPE_B));			      \
-		cPtr->writeMSS(cPtr, ((cPtr->storeMSS & MSS_MASK) | 	      \
-					MSS_PIPE_B));			      \
+		cPtr->writeMSS(cPtr, VGAHWPTR(pScrn), ((cPtr->storeMSS &      \
+					MSS_MASK) | MSS_PIPE_B));	      \
 		cPtrEnt->slaveOpen = TRUE;				      \
 		cPtrEnt->slaveActive = TRUE;				      \
 		cPtrEnt->masterActive = FALSE;				      \
 	    } else {							      \
 		cPtr->writeIOSS(cPtr, ((cPtr->storeIOSS & IOSS_MASK) |	      \
 					IOSS_PIPE_A));			      \
-		cPtr->writeMSS(cPtr, ((cPtr->storeMSS & MSS_MASK) | 	      \
-					MSS_PIPE_A));			      \
+		cPtr->writeMSS(cPtr, VGAHWPTR(pScrn), ((cPtr->storeMSS &      \
+					MSS_MASK) | MSS_PIPE_A));	      \
 		cPtrEnt->masterOpen = TRUE;				      \
 		cPtrEnt->masterActive = TRUE;				      \
 		cPtrEnt->slaveActive = FALSE;				      \
@@ -457,7 +462,8 @@ void     chipsPointerMoved(int index, int x, int y);
 	} else {							      \
 	    cPtr->writeIOSS(cPtr, ((cPtr->storeIOSS & IOSS_MASK) | 	      \
 					IOSS_PIPE_A));			      \
-	    cPtr->writeMSS(cPtr, ((cPtr->storeMSS & MSS_MASK) | MSS_PIPE_A)); \
+	    cPtr->writeMSS(cPtr, VGAHWPTR(pScrn), ((cPtr->storeMSS &	      \
+					MSS_MASK) | MSS_PIPE_A));	      \
 	}								      \
     }
 
@@ -468,8 +474,8 @@ void     chipsPointerMoved(int index, int x, int y);
 		if (! cPtrEnt->slaveActive) {				      \
 		    cPtr->writeIOSS(cPtr, ((cPtr->storeIOSS & IOSS_MASK) |    \
 					IOSS_PIPE_B));			      \
-		    cPtr->writeMSS(cPtr, ((cPtr->storeMSS & MSS_MASK) |	      \
-					MSS_PIPE_B));			      \
+		    cPtr->writeMSS(cPtr, VGAHWPTR(pScrn), ((cPtr->storeMSS &  \
+					MSS_MASK) | MSS_PIPE_B));	      \
 		    cPtrEnt->slaveOpen = TRUE;				      \
 		    cPtrEnt->slaveActive = TRUE;			      \
 		    cPtrEnt->masterActive = FALSE;			      \
@@ -478,8 +484,8 @@ void     chipsPointerMoved(int index, int x, int y);
 		if (! cPtrEnt->masterActive) {				      \
 		    cPtr->writeIOSS(cPtr, ((cPtr->storeIOSS & IOSS_MASK) |    \
 					IOSS_PIPE_A));			      \
-		    cPtr->writeMSS(cPtr, ((cPtr->storeMSS & MSS_MASK) |	      \
-					MSS_PIPE_A));			      \
+		    cPtr->writeMSS(cPtr, VGAHWPTR(pScrn), ((cPtr->storeMSS &  \
+					MSS_MASK) | MSS_PIPE_A));	      \
 		    cPtrEnt->masterOpen = TRUE;				      \
 		    cPtrEnt->masterActive = TRUE;			      \
 		    cPtrEnt->slaveActive = FALSE;			      \
@@ -493,18 +499,20 @@ void     chipsPointerMoved(int index, int x, int y);
 	if (! xf86IsEntityShared(pScrn->entityList[0])) {		      \
 	    cPtr->writeIOSS(cPtr, ((cPtr->storeIOSS & IOSS_MASK) |	      \
 			       IOSS_PIPE_A));				      \
-	    cPtr->writeMSS(cPtr, ((cPtr->storeMSS & MSS_MASK) | MSS_PIPE_A)); \
+	    cPtr->writeMSS(cPtr, VGAHWPTR(pScrn), ((cPtr->storeMSS &	      \
+				MSS_MASK) | MSS_PIPE_A));		      \
 	    chipsHWCursorOff(cPtr, pScrn);				      \
 	    chipsRestore(pScrn, &(VGAHWPTR(pScrn))->SavedReg,		      \
 				&cPtr->SavedReg, TRUE);			      \
 	    chipsLock(pScrn);						      \
 	    cPtr->writeIOSS(cPtr, ((cPtr->storeIOSS & IOSS_MASK) |	      \
 			       IOSS_PIPE_B));				      \
-	    cPtr->writeMSS(cPtr, ((cPtr->storeMSS & MSS_MASK) | MSS_PIPE_B)); \
+	    cPtr->writeMSS(cPtr, VGAHWPTR(pScrn), ((cPtr->storeMSS &	      \
+				MSS_MASK) | MSS_PIPE_B)); 		      \
 	    chipsHWCursorOff(cPtr, pScrn);				      \
 	    chipsRestore(pScrn, &cPtr->VgaSavedReg2, &cPtr->SavedReg2, TRUE); \
 	    cPtr->writeIOSS(cPtr, cPtr->storeIOSS);			      \
-	    cPtr->writeMSS(cPtr, cPtr->storeMSS);			      \
+	    cPtr->writeMSS(cPtr, VGAHWPTR(pScrn), cPtr->storeMSS);	      \
 	    chipsLock(pScrn);						      \
 	} else {							      \
 	    chipsHWCursorOff(cPtr, pScrn);				      \
@@ -515,7 +523,7 @@ void     chipsPointerMoved(int index, int x, int y);
 		cPtrEnt->slaveOpen = FALSE;				      \
 		if (! cPtrEnt->masterActive) {				      \
 		    cPtr->writeIOSS(cPtr, cPtr->storeIOSS);		      \
-		    cPtr->writeMSS(cPtr, cPtr->storeMSS);		      \
+		    cPtr->writeMSS(cPtr, VGAHWPTR(pScrn), cPtr->storeMSS);    \
 		    chipsLock(pScrn);					      \
 		}							      \
 	    } else {							      \
@@ -523,7 +531,7 @@ void     chipsPointerMoved(int index, int x, int y);
 		cPtrEnt->masterOpen = FALSE;				      \
 		if (! cPtrEnt->slaveActive) {				      \
 		    cPtr->writeIOSS(cPtr, cPtr->storeIOSS);		      \
-		    cPtr->writeMSS(cPtr, cPtr->storeMSS);		      \
+		    cPtr->writeMSS(cPtr, VGAHWPTR(pScrn), cPtr->storeMSS);    \
 		    chipsLock(pScrn);					      \
 		}							      \
 	    }								      \

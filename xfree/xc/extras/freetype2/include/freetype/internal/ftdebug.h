@@ -4,7 +4,7 @@
 /*                                                                         */
 /*    Debugging and logging component (specification).                     */
 /*                                                                         */
-/*  Copyright 1996-2000 by                                                 */
+/*  Copyright 1996-2001 by                                                 */
 /*  David Turner, Robert Wilhelm, and Werner Lemberg.                      */
 /*                                                                         */
 /*  This file is part of the FreeType project, and may only be used,       */
@@ -14,7 +14,7 @@
 /*  understand and accept it fully.                                        */
 /*                                                                         */
 /***************************************************************************/
-
+/* $XFree86: xc/extras/freetype2/include/freetype/internal/ftdebug.h,v 1.5 2002/01/14 17:00:59 keithp Exp $ */
 
 #ifndef __FTDEBUG_H__
 #define __FTDEBUG_H__
@@ -81,6 +81,11 @@ FT_BEGIN_HEADER
     trace_t1decode,
     trace_psobjs,
 
+    /* PostScript hinting module `pshinter' */
+    trace_pshrec,
+    trace_pshalgo1,
+    trace_pshalgo2,
+
     /* Type 2 driver components */
     trace_cffdriver,
     trace_cffgload,
@@ -146,8 +151,9 @@ FT_BEGIN_HEADER
   /*                                                                       */
   /*    level     :: The tracing level.                                    */
   /*                                                                       */
-  FT_EXPORT( void )  FT_SetTraceLevel( FT_Trace  component,
-                                       char      level );
+  FT_EXPORT( void )
+  FT_SetTraceLevel( FT_Trace  component,
+                    char      level );
 
 
 #elif defined( FT_DEBUG_LEVEL_ERROR )
@@ -181,7 +187,7 @@ FT_BEGIN_HEADER
 #if defined( FT_DEBUG_LEVEL_TRACE ) || defined( FT_DEBUG_LEVEL_ERROR )
 
 
-#include "stdio.h"  /* for vprintf() */
+#include <stdio.h>  /* for vprintf() */
 
 
 #define FT_Assert( condition )                                      \
@@ -193,10 +199,12 @@ FT_BEGIN_HEADER
           } while ( 0 )
 
   /* print a message */
-  FT_EXPORT( void )  FT_Message( const char*  fmt, ... );
+  FT_EXPORT( void )
+  FT_Message( const char*  fmt, ... );
 
   /* print a message and exit */
-  FT_EXPORT( void )  FT_Panic( const char*  fmt, ... );
+  FT_EXPORT( void )
+  FT_Panic( const char*  fmt, ... );
 
 #define FT_ERROR( varformat )  FT_Message varformat
 
@@ -220,6 +228,15 @@ FT_BEGIN_HEADER
 #define FT_TRACE5( varformat )  FT_TRACE( 5, varformat )
 #define FT_TRACE6( varformat )  FT_TRACE( 6, varformat )
 #define FT_TRACE7( varformat )  FT_TRACE( 7, varformat )
+
+
+#if defined( _MSC_VER )      /* Visual C++ (and Intel C++) */
+
+  /* we disable the warning `conditional expression is constant' here */
+  /* in order to compile cleanly with the maximum level of warnings   */
+#pragma warning( disable : 4127 )
+
+#endif /* _MSC_VER */
 
 
 FT_END_HEADER

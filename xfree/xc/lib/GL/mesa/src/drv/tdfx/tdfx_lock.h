@@ -23,7 +23,7 @@
  * OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-/* $XFree86: xc/lib/GL/mesa/src/drv/tdfx/tdfx_lock.h,v 1.1 2001/03/21 16:14:28 dawes Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/tdfx/tdfx_lock.h,v 1.2 2001/08/18 02:51:06 dawes Exp $ */
 
 /*
  * Original rewrite:
@@ -127,7 +127,7 @@ extern void tdfxGetLock( tdfxContextPtr fxMesa );
     while (_nc--) {						\
       if (fxMesa->numClipRects > 1) {				\
         int _height = fxMesa->screen_height;			\
-        grClipWindow(fxMesa->pClipRects[_nc].x1,		\
+        fxMesa->Glide.grClipWindow(fxMesa->pClipRects[_nc].x1,	\
                      _height - fxMesa->pClipRects[_nc].y2,	\
                      fxMesa->pClipRects[_nc].x2,		\
                      _height - fxMesa->pClipRects[_nc].y1);	\

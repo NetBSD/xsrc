@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/linux/lnx_io.c,v 3.19 2001/03/05 20:18:24 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/linux/lnx_io.c,v 3.22 2001/11/08 04:00:14 tsi Exp $ */
 /*
  * Copyright 1992 by Orest Zborowski <obz@Kodak.com>
  * Copyright 1993 by David Dawes <dawes@xfree86.org>
@@ -33,6 +33,8 @@
 #include "xf86.h"
 #include "xf86Priv.h"
 #include "xf86_OSlib.h"
+
+#define KBC_TIMEOUT 250        /* Timeout in ms for sending to keyboard controller */
 
 void
 xf86SoundKbdBell(int loudness, int pitch, int duration)
@@ -139,9 +141,6 @@ void xf86SetKbdRepeat(rad)
 char rad;
 #endif
 {
-  int i;
-  int         value = 0x7f;    /* Maximum delay with slowest rate */
-
 #ifdef __sparc__
   int         rate  = 500;     /* Default rate */
   int         delay = 200;     /* Default delay */
@@ -150,6 +149,10 @@ char rad;
   int         delay = 250;     /* Default delay */
 #endif
 
+#if defined(__alpha__) || defined (__i386__) || defined(__ia64__)
+  int i;
+  int timeout;
+  int         value = 0x7f;    /* Maximum delay with slowest rate */
 
   static int valid_rates[] = { 300, 267, 240, 218, 200, 185, 171, 160, 150,
 			       133, 120, 109, 100, 92, 86, 80, 75, 67,
@@ -159,7 +162,7 @@ char rad;
 
   static int valid_delays[] = { 250, 500, 750, 1000 };
 #define DELAY_COUNT (sizeof( valid_delays ) / sizeof( int ))
-
+#endif
 
   if (xf86Info.kbdRate >= 0) 
     rate = xf86Info.kbdRate * 10;
@@ -194,13 +197,21 @@ char rad;
       break;
     }
 
-  while ((inb(0x64) & 2) == 2); /* wait */
+  timeout = KBC_TIMEOUT;
+  while (((inb(0x64) & 2) == 2) && --timeout)
+       usleep(1000); /* wait */
+
+  if (timeout == 0)
+      return;
+
   outb(0x60, 0xf3);             /* set typematic rate */
-  while ((inb(0x64) & 2) == 2); /* wait */
+  while (((inb(0x64) & 2) == 2) && --timeout)
+       usleep(1000); /* wait */
+
   usleep(10000);
   outb(0x60, value);
 
-#endif /* __alpha__ || __i386__ */
+#endif /* __alpha__ || __i386__ || __ia64__ */
 }
 
 static int kbdtrans;

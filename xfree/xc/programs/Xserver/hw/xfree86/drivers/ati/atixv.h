@@ -1,6 +1,6 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/atixv.h,v 1.1 2001/05/09 03:12:04 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/atixv.h,v 1.2 2002/01/16 16:22:28 tsi Exp $ */
 /*
- * Copyright 2001 by Marc Aurele La France (TSI @ UQV), tsi@xfree86.org
+ * Copyright 2001 through 2002 by Marc Aurele La France (TSI @ UQV), tsi@xfree86.org
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that

@@ -51,5 +51,5 @@ are rendered. See the
 \%\f3gluNurbsProperty\fP reference page for information about what the 
 properties are and what they do.
 .SH SEE ALSO
-\%\f3gluNewNurbsRenderer\fP, 
-\%\f3gluNurbsProperty\fP
+\%\f3gluNewNurbsRenderer(3G)\fP, 
+\%\f3gluNurbsProperty(3G)\fP

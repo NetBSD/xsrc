@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/programs/Xserver/render/mipict.c,v 1.6.2.1 2001/06/01 01:06:35 dawes Exp $
+ * $XFree86: xc/programs/Xserver/render/mipict.c,v 1.10 2001/07/19 04:42:10 keithp Exp $
  *
  * Copyright © 1999 Keith Packard
  *
@@ -329,7 +329,6 @@ miComputeCompositeRegion (RegionPtr	pRegion,
 			  CARD16	width,
 			  CARD16	height)
 {
-    RegionPtr	pDstClip = pDst->pCompositeClip;
     int		v;
 
     pRegion->extents.x1 = xDst;
@@ -345,6 +344,16 @@ miComputeCompositeRegion (RegionPtr	pRegion,
 	REGION_UNINIT (pScreen, pRegion);
 	return FALSE;
     }
+    if (pSrc->alphaMap)
+    {
+	if (!miClipPictureSrc (pRegion, pSrc->alphaMap,
+			       xDst - (xSrc + pSrc->alphaOrigin.x),
+			       yDst - (ySrc + pSrc->alphaOrigin.y)))
+	{
+	    REGION_UNINIT (pScreen, pRegion);
+	    return FALSE;
+	}
+    }
     /* clip against mask */
     if (pMask)
     {
@@ -353,11 +362,31 @@ miComputeCompositeRegion (RegionPtr	pRegion,
 	    REGION_UNINIT (pScreen, pRegion);
 	    return FALSE;
 	}	
+	if (pMask->alphaMap)
+	{
+	    if (!miClipPictureSrc (pRegion, pMask->alphaMap,
+				   xDst - (xMask + pMask->alphaOrigin.x),
+				   yDst - (yMask + pMask->alphaOrigin.y)))
+	    {
+		REGION_UNINIT (pScreen, pRegion);
+		return FALSE;
+	    }
+	}
     }
-    if (!miClipPictureReg (pRegion, pDstClip, 0, 0))
+    if (!miClipPictureReg (pRegion, pDst->pCompositeClip, 0, 0))
     {
 	REGION_UNINIT (pScreen, pRegion);
 	return FALSE;
+    }
+    if (pDst->alphaMap)
+    {
+	if (!miClipPictureReg (pRegion, pDst->alphaMap->pCompositeClip,
+			       -pDst->alphaOrigin.x,
+			       -pDst->alphaOrigin.y))
+	{
+	    REGION_UNINIT (pScreen, pRegion);
+	    return FALSE;
+	}
     }
     return TRUE;
 }
@@ -367,8 +396,9 @@ miRenderColorToPixel (PictFormatPtr format,
 		      xRenderColor  *color,
 		      CARD32	    *pixel)
 {
-    CARD32  r, g, b, a;
-    
+    CARD32	    r, g, b, a;
+    miIndexedPtr    pIndexed;
+
     switch (format->type) {
     case PictTypeDirect:
 	r = color->red >> (16 - Ones (format->direct.redMask));
@@ -382,7 +412,21 @@ miRenderColorToPixel (PictFormatPtr format,
 	*pixel = r|g|b|a;
 	break;
     case PictTypeIndexed:
-	*pixel = 0;
+	pIndexed = (miIndexedPtr) (format->indexed);
+	if (pIndexed->color)
+	{
+	    r = color->red >> 11;
+	    g = color->green >> 11;
+	    b = color->blue >> 11;
+	    *pixel = miIndexToEnt15 (pIndexed, (r << 10) | (g << 5) | b);
+	}
+	else
+	{
+	    r = color->red >> 8;
+	    g = color->green >> 8;
+	    b = color->blue >> 8;
+	    *pixel = miIndexToEntY24 (pIndexed, (r << 16) | (g << 8) | b);
+	}
 	break;
     }
 }
@@ -403,7 +447,8 @@ miRenderPixelToColor (PictFormatPtr format,
 		      CARD32	    pixel,
 		      xRenderColor  *color)
 {
-    CARD32  r, g, b, a;
+    CARD32	    r, g, b, a;
+    miIndexedPtr    pIndexed;
     
     switch (format->type) {
     case PictTypeDirect:
@@ -417,10 +462,15 @@ miRenderPixelToColor (PictFormatPtr format,
 	color->alpha = miFillColor (r, Ones (format->direct.alphaMask));
 	break;
     case PictTypeIndexed:
-	color->red = 0;
-	color->green = 0;
-	color->blue = 0;
-	color->alpha = 0;
+	pIndexed = (miIndexedPtr) (format->indexed);
+	pixel = pIndexed->rgba[pixel & (MI_MAX_INDEXED-1)];
+	r = (pixel >> 16) & 0xff;
+	g = (pixel >>  8) & 0xff;
+	b = (pixel      ) & 0xff;
+	color->red = miFillColor (r, 8);
+	color->green = miFillColor (g, 8);
+	color->blue = miFillColor (b, 8);
+	color->alpha = 0xffff;
 	break;
     }
 }
@@ -439,5 +489,8 @@ miPictureInit (ScreenPtr pScreen, PictFormatPtr formats, int nformats)
     ps->DestroyPictureClip = miDestroyPictureClip;
     ps->ChangePicture = miChangePicture;
     ps->ValidatePicture = miValidatePicture;
+    ps->InitIndexed = miInitIndexed;
+    ps->CloseIndexed = miCloseIndexed;
+    ps->UpdateIndexed = miUpdateIndexed;
     return TRUE;
 }

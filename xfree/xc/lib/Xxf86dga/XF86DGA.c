@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/Xxf86dga/XF86DGA.c,v 3.16 1999/05/03 12:15:53 dawes Exp $ */
+/* $XFree86: xc/lib/Xxf86dga/XF86DGA.c,v 3.19 2001/08/18 02:41:30 dawes Exp $ */
 /*
 
 Copyright (c) 1995  Jon Tombs
@@ -371,10 +371,11 @@ Bool XF86DGAViewPortChanged(
 #include <sys/wait.h>
 #include <signal.h>
 #include <unistd.h>
-extern int errno;
 
 #if defined(SVR4) && !defined(sun) && !defined(SCO325)
 #define DEV_MEM "/dev/pmem"
+#elif defined(SVR4) && defined(sun)
+#define DEV_MEM "/dev/xsvc"
 #else
 #define DEV_MEM "/dev/mem"
 #endif
@@ -648,7 +649,7 @@ XF86cleanup(int sig)
 {
     ScrPtr sp;
     int i;
-    static beenhere = 0;
+    static char beenhere = 0;
 
     if (beenhere)
 	_exit(3);

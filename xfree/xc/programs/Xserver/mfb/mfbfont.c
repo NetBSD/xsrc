@@ -2,7 +2,11 @@
 
 Copyright 1987, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -40,7 +44,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 */
-/* $Xorg: mfbfont.c,v 1.3 2000/08/17 19:53:35 cpqbld Exp $ */
+/* $Xorg: mfbfont.c,v 1.4 2001/02/09 02:05:18 xorgcvs Exp $ */
 #include "X.h"
 #include "Xmd.h"
 #include "Xproto.h"

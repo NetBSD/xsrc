@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/r128/r128_context.h,v 1.8 2001/04/10 17:53:07 dawes Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/r128/r128_context.h,v 1.9 2001/10/02 11:44:13 alanh Exp $ */
 /**************************************************************************
 
 Copyright 1999, 2000 ATI Technologies Inc. and Precision Insight, Inc.,
@@ -266,12 +266,7 @@ extern r128ContextPtr r128MakeCurrent( r128ContextPtr oldCtx,
 #else
 #include <byteswap.h>
 #define LE32_OUT( x, y )	do { x = bswap_32( y ); } while (0)
-#define LE32_OUT_FLOAT( x, y )						\
-do {									\
-   GLuint __tmp;							\
-   *(GLfloat *)&__tmp = y;						\
-   x = bswap_32( __tmp );						\
-} while (0)
+#define LE32_OUT_FLOAT( x, y )	do { x = bswap_32( *(unsigned int *)&y ); } while (0)
 #endif
 
 /* ================================================================

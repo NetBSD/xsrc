@@ -1,0 +1,59 @@
+.\"
+.\" Copyright © 2001 Keith Packard, member of The XFree86 Project, Inc.
+.\"
+.\" Permission to use, copy, modify, distribute, and sell this software and its
+.\" documentation for any purpose is hereby granted without fee, provided that
+.\" the above copyright notice appear in all copies and that both that
+.\" copyright notice and this permission notice appear in supporting
+.\" documentation, and that the name of Keith Packard not be used in
+.\" advertising or publicity pertaining to distribution of the software without
+.\" specific, written prior permission.  Keith Packard makes no
+.\" representations about the suitability of this software for any purpose.  It
+.\" is provided "as is" without express or implied warranty.
+.\"
+.\" KEITH PACKARD DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE,
+.\" INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO
+.\" EVENT SHALL KEITH PACKARD BE LIABLE FOR ANY SPECIAL, INDIRECT OR
+.\" CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE,
+.\" DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
+.\" TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+.\" PERFORMANCE OF THIS SOFTWARE.
+.\"
+.\"
+.\" $XFree86: xc/programs/xrandr/xrandr.man,v 1.2 2001/06/11 01:40:14 keithp Exp $
+.\"
+.TH XRANDR 1 __vendorversion__
+.SH NAME
+xrandr \- primitive command line interface to RandR extension
+.SH SYNOPSIS
+.B "xrandr"
+[-help]  [-display \fIdisplay\fP]
+[-o \fIorientation\fP]
+[-q] [-v]
+[-s \fIsize\fP]
+.SH DESCRIPTION
+.I Xrandr
+is uses to set the screen size and/or orientation.
+The
+.I -s
+option is a small integer index used to specify which size the screen should be set to.
+To find out what sizes are available, use the
+.I -q
+option, which reports the sizes available, the current rotation, and
+the possibee rotations.
+The
+.I -o
+option is used to specify the orientation of the screen,
+and can be one of
+\f"Inormal inverted left right 0 1 2 3"\fP.
+The
+.I -help
+option prints out a usage summary.
+.SH "SEE ALSO"
+RandR(3)
+.SH AUTHORS
+Keith Packard
+XFree86 Core Team, SuSE Inc.
+.br
+Jim Gettys, 
+Compaq Computer Corporation, Cambridge Research Laboratory

@@ -4,7 +4,7 @@
 /*                                                                         */
 /*    Anti-aliasing renderer interface (body).                             */
 /*                                                                         */
-/*  Copyright 2000 by                                                      */
+/*  Copyright 2000-2001 by                                                 */
 /*  David Turner, Robert Wilhelm, and Werner Lemberg.                      */
 /*                                                                         */
 /*  This file is part of the FreeType project, and may only be used,       */
@@ -22,10 +22,12 @@
 #include "ftsmooth.h"
 #include "ftgrays.h"
 
+#include "ftsmerrs.h"
+
 
   /* initialize renderer -- init its raster */
-  static
-  FT_Error  ft_smooth_init( FT_Renderer  render )
+  static FT_Error
+  ft_smooth_init( FT_Renderer  render )
   {
     FT_Library  library = FT_MODULE_LIBRARY( render );
 
@@ -39,10 +41,10 @@
 
 
   /* sets render-specific mode */
-  static
-  FT_Error  ft_smooth_set_mode( FT_Renderer  render,
-                                FT_ULong     mode_tag,
-                                FT_Pointer   data )
+  static FT_Error
+  ft_smooth_set_mode( FT_Renderer  render,
+                      FT_ULong     mode_tag,
+                      FT_Pointer   data )
   {
     /* we simply pass it to the raster */
     return render->clazz->raster_class->raster_set_mode( render->raster,
@@ -51,18 +53,18 @@
   }
 
   /* transform a given glyph image */
-  static
-  FT_Error  ft_smooth_transform( FT_Renderer   render,
-                                 FT_GlyphSlot  slot,
-                                 FT_Matrix*    matrix,
-                                 FT_Vector*    delta )
+  static FT_Error
+  ft_smooth_transform( FT_Renderer   render,
+                       FT_GlyphSlot  slot,
+                       FT_Matrix*    matrix,
+                       FT_Vector*    delta )
   {
-    FT_Error  error = FT_Err_Ok;
+    FT_Error  error = Smooth_Err_Ok;
 
 
     if ( slot->format != render->glyph_format )
     {
-      error = FT_Err_Invalid_Argument;
+      error = Smooth_Err_Invalid_Argument;
       goto Exit;
     }
 
@@ -78,10 +80,10 @@
 
 
   /* return the glyph's control box */
-  static
-  void  ft_smooth_get_cbox( FT_Renderer   render,
-                            FT_GlyphSlot  slot,
-                            FT_BBox*      cbox )
+  static void
+  ft_smooth_get_cbox( FT_Renderer   render,
+                      FT_GlyphSlot  slot,
+                      FT_BBox*      cbox )
   {
     MEM_Set( cbox, 0, sizeof ( *cbox ) );
 
@@ -91,14 +93,14 @@
 
 
   /* convert a slot's glyph image into a bitmap */
-  static
-  FT_Error  ft_smooth_render( FT_Renderer   render,
-                              FT_GlyphSlot  slot,
-                              FT_UInt       mode,
-                              FT_Vector*    origin )
+  static FT_Error
+  ft_smooth_render( FT_Renderer   render,
+                    FT_GlyphSlot  slot,
+                    FT_UInt       mode,
+                    FT_Vector*    origin )
   {
     FT_Error     error;
-    FT_Outline*  outline;
+    FT_Outline*  outline = NULL;
     FT_BBox      cbox;
     FT_UInt      width, height, pitch;
     FT_Bitmap*   bitmap;
@@ -110,13 +112,13 @@
     /* check glyph image format */
     if ( slot->format != render->glyph_format )
     {
-      error = FT_Err_Invalid_Argument;
+      error = Smooth_Err_Invalid_Argument;
       goto Exit;
     }
 
     /* check mode */
     if ( mode != ft_render_mode_normal )
-      return FT_Err_Cannot_Render_Glyph;
+      return Smooth_Err_Cannot_Render_Glyph;
 
     outline = &slot->outline;
 
@@ -167,6 +169,9 @@
 
     /* render outline into the bitmap */
     error = render->raster_render( render->raster, &params );
+    
+    FT_Outline_Translate( outline, cbox.xMin, cbox.yMin );
+
     if ( error )
       goto Exit;
 
@@ -175,6 +180,9 @@
     slot->bitmap_top  = cbox.yMax >> 6;
 
   Exit:
+    if ( outline && origin )
+      FT_Outline_Translate( outline, -origin->x, -origin->y );
+
     return error;
   }
 

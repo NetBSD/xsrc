@@ -4,7 +4,7 @@
 /*                                                                         */
 /*    Type 1 Glyph Loader (body).                                          */
 /*                                                                         */
-/*  Copyright 1996-2000 by                                                 */
+/*  Copyright 1996-2001 by                                                 */
 /*  David Turner, Robert Wilhelm, and Werner Lemberg.                      */
 /*                                                                         */
 /*  This file is part of the FreeType project, and may only be used,       */
@@ -22,6 +22,8 @@
 #include FT_INTERNAL_STREAM_H
 #include FT_OUTLINE_H
 #include FT_INTERNAL_POSTSCRIPT_AUX_H
+
+#include "t1errors.h"
 
 #include <string.h>     /* for strcmp() */
 
@@ -53,9 +55,9 @@
   /*************************************************************************/
 
 
-  FT_CALLBACK_DEF
-  FT_Error  T1_Parse_Glyph( T1_Decoder*  decoder,
-                            FT_UInt      glyph_index )
+  FT_CALLBACK_DEF( FT_Error )
+  T1_Parse_Glyph( T1_Decoder*  decoder,
+                  FT_UInt      glyph_index )
   {
     T1_Face   face  = (T1_Face)decoder->builder.face;
     T1_Font*  type1 = &face->type1;
@@ -71,9 +73,9 @@
   }
 
 
-  FT_LOCAL_DEF
-  FT_Error  T1_Compute_Max_Advance( T1_Face  face,
-                                    FT_Int*  max_advance )
+  FT_LOCAL_DEF FT_Error
+  T1_Compute_Max_Advance( T1_Face  face,
+                          FT_Int*  max_advance )
   {
     FT_Error          error;
     T1_Decoder        decoder;
@@ -91,6 +93,7 @@
                                            0, /* glyph slot */
                                            (FT_Byte**)type1->glyph_names,
                                            face->blend,
+                                           0,
                                            T1_Parse_Glyph );
     if ( error )
       return error;
@@ -112,7 +115,7 @@
     }
 
     *max_advance = decoder.builder.advance.x;
-    return FT_Err_Ok;
+    return T1_Err_Ok;
   }
 
 
@@ -133,11 +136,11 @@
   /*************************************************************************/
 
 
-  FT_LOCAL_DEF
-  FT_Error  T1_Load_Glyph( T1_GlyphSlot  glyph,
-                           T1_Size       size,
-                           FT_Int        glyph_index,
-                           FT_Int        load_flags )
+  FT_LOCAL_DEF FT_Error
+  T1_Load_Glyph( T1_GlyphSlot  glyph,
+                 T1_Size       size,
+                 FT_Int        glyph_index,
+                 FT_Int        load_flags )
   {
     FT_Error                error;
     T1_Decoder              decoder;
@@ -159,8 +162,8 @@
     glyph->root.outline.n_points   = 0;
     glyph->root.outline.n_contours = 0;
 
-    hinting = ( load_flags & FT_LOAD_NO_SCALE   ) == 0 &&
-              ( load_flags & FT_LOAD_NO_HINTING ) == 0;
+    hinting = FT_BOOL( ( load_flags & FT_LOAD_NO_SCALE   ) == 0 &&
+                       ( load_flags & FT_LOAD_NO_HINTING ) == 0 );
 
     glyph->root.format = ft_glyph_format_outline;
 
@@ -170,11 +173,13 @@
                                  (FT_GlyphSlot)glyph,
                                  (FT_Byte**)type1->glyph_names,
                                  face->blend,
+                                 FT_BOOL( hinting ),
                                  T1_Parse_Glyph );
     if ( error )
       goto Exit;
 
-    decoder.builder.no_recurse = ( ( load_flags & FT_LOAD_NO_RECURSE ) != 0 );
+    decoder.builder.no_recurse = FT_BOOL(
+                                   ( load_flags & FT_LOAD_NO_RECURSE ) != 0 );
 
     decoder.num_subrs = type1->num_subrs;
     decoder.subrs     = type1->subrs;
@@ -205,8 +210,8 @@
       if ( load_flags & FT_LOAD_NO_RECURSE )
       {
         FT_Slot_Internal  internal = glyph->root.internal;
-        
-        
+
+
         glyph->root.metrics.horiBearingX = decoder.builder.left_bearing.x;
         glyph->root.metrics.horiAdvance  = decoder.builder.advance.x;
         internal->glyph_matrix           = font_matrix;
@@ -236,20 +241,14 @@
         if ( size && size->root.metrics.y_ppem < 24 )
           glyph->root.outline.flags |= ft_outline_high_precision;
 
-        /* apply the font matrix */
+#if 1
+        /* apply the font matrix, if any */
         FT_Outline_Transform( &glyph->root.outline, &font_matrix );
 
         FT_Outline_Translate( &glyph->root.outline,
                               font_offset.x,
                               font_offset.y );
-
-#if 0
-
-        glyph->root.outline.second_pass    = TRUE;
-        glyph->root.outline.high_precision = size->root.metrics.y_ppem < 24;
-        glyph->root.outline.dropout_mode   = 2;
-
-#endif /* 0 */
+#endif
 
         if ( ( load_flags & FT_LOAD_NO_SCALE ) == 0 )
         {
@@ -261,12 +260,13 @@
           FT_Fixed     y_scale = glyph->y_scale;
 
 
-          /* First of all, scale the points */
-          for ( n = cur->n_points; n > 0; n--, vec++ )
-          {
-            vec->x = FT_MulFix( vec->x, x_scale );
-            vec->y = FT_MulFix( vec->y, y_scale );
-          }
+          /* First of all, scale the points, if we are not hinting */
+          if ( !hinting )
+            for ( n = cur->n_points; n > 0; n--, vec++ )
+            {
+              vec->x = FT_MulFix( vec->x, x_scale );
+              vec->y = FT_MulFix( vec->y, y_scale );
+            }
 
           FT_Outline_Get_CBox( &glyph->root.outline, &cbox );
 
@@ -276,6 +276,15 @@
 
           metrics->vertBearingX = FT_MulFix( metrics->vertBearingX, x_scale );
           metrics->vertBearingY = FT_MulFix( metrics->vertBearingY, y_scale );
+
+          if ( hinting )
+          {
+            metrics->horiAdvance = ( metrics->horiAdvance + 32 ) & -64;
+            metrics->vertAdvance = ( metrics->vertAdvance + 32 ) & -64;
+
+            metrics->vertBearingX = ( metrics->vertBearingX + 32 ) & -64;
+            metrics->vertBearingY = ( metrics->vertBearingY + 32 ) & -64;
+          }
         }
 
         /* compute the other metrics */
@@ -296,7 +305,7 @@
         metrics->horiBearingX = cbox.xMin;
         metrics->horiBearingY = cbox.yMax;
       }
-      
+
       /* Set control data to the glyph charstrings.  Note that this is */
       /* _not_ zero-terminated.                                        */
       glyph->root.control_data = type1->charstrings    [glyph_index];

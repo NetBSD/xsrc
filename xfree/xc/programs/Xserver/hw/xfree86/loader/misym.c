@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/loader/misym.c,v 1.32 2000/09/20 02:05:11 keithp Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/loader/misym.c,v 1.33 2001/08/06 22:45:52 mvojkovi Exp $ */
 
 /*
  *
@@ -161,6 +161,7 @@ LOOKUP miLookupTab[] = {
    SYMFUNC(miOverlayCollectUnderlayRegions)
    SYMFUNC(miInitOverlay)
    SYMFUNC(miOverlayComputeCompositeClip)
+   SYMFUNC(miOverlayGetPrivateClips)
    SYMFUNC(miOverlaySetRootClip)
    SYMVAR(miZeroLineScreenIndex)
    SYMVAR(miSpritePointerFuncs)

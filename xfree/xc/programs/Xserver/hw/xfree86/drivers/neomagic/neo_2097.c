@@ -22,7 +22,7 @@ RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF
 CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
 CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 **********************************************************************/
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/neomagic/neo_2097.c,v 1.7 2000/10/06 12:31:02 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/neomagic/neo_2097.c,v 1.8 2001/10/01 13:44:07 eich Exp $ */
 
 /*
  * The original Precision Insight driver for
@@ -154,30 +154,32 @@ Neo2097AccelInit(ScreenPtr pScreen)
     infoPtr->SubsequentSolidFillRect = 
 	Neo2097SubsequentSolidFillRect;
 
-    /* cpu to screen color expansion */
-    /*
-     * We do CPUToScreenColorExpand (ab)using the Scanline functions:
-     * the neo chipsets need byte padding however we can only do dword
-     * padding. Fortunately the graphics engine doesn't choke if we
-     * transfer up to 3 bytes more than it wants.
-     */
-    infoPtr->ScanlineColorExpandBuffers =
-	(unsigned char **)xnfalloc(sizeof(char*));
-    infoPtr->ScanlineColorExpandBuffers[0] = (unsigned char *)(nPtr->NeoMMIOBase + 0x100000);
-    infoPtr->NumScanlineColorExpandBuffers = 1;
-    infoPtr->ScanlineCPUToScreenColorExpandFillFlags = ( NO_PLANEMASK |
+    if (!nPtr->strangeLockups) {
+	/* cpu to screen color expansion */
+	/*
+	 * We do CPUToScreenColorExpand (ab)using the Scanline functions:
+	 * the neo chipsets need byte padding however we can only do dword
+	 * padding. Fortunately the graphics engine doesn't choke if we
+	 * transfer up to 3 bytes more than it wants.
+	 */
+	infoPtr->ScanlineColorExpandBuffers =
+	    (unsigned char **)xnfalloc(sizeof(char*));
+	infoPtr->ScanlineColorExpandBuffers[0] = (unsigned char *)(nPtr->NeoMMIOBase + 0x100000);
+	infoPtr->NumScanlineColorExpandBuffers = 1;
+	infoPtr->ScanlineCPUToScreenColorExpandFillFlags = ( NO_PLANEMASK |
 #ifdef NEO_DO_CLIPPING
-							 LEFT_EDGE_CLIPPING |
+						LEFT_EDGE_CLIPPING |
 #endif
-							 CPU_TRANSFER_PAD_DWORD |
-						 BIT_ORDER_IN_BYTE_MSBFIRST );
-    infoPtr->SetupForScanlineCPUToScreenColorExpandFill = 
-	Neo2097SetupScanlineForCPUToScreenColorExpandFill;
-    infoPtr->SubsequentScanlineCPUToScreenColorExpandFill = 
-	Neo2097SubsequentScanlineCPUToScreenColorExpandFill;
-    infoPtr->SubsequentColorExpandScanline =
-	Neo2097SubsequentColorExpandScanline;
-
+						CPU_TRANSFER_PAD_DWORD |
+						BIT_ORDER_IN_BYTE_MSBFIRST );
+	infoPtr->SetupForScanlineCPUToScreenColorExpandFill = 
+	    Neo2097SetupScanlineForCPUToScreenColorExpandFill;
+	infoPtr->SubsequentScanlineCPUToScreenColorExpandFill = 
+	    Neo2097SubsequentScanlineCPUToScreenColorExpandFill;
+	infoPtr->SubsequentColorExpandScanline =
+	    Neo2097SubsequentColorExpandScanline;
+    }
+    
 #if 0
     /* 8x8 pattern fills */
     infoPtr->Mono8x8PatternFillFlags = NO_PLANEMASK
@@ -190,22 +192,24 @@ Neo2097AccelInit(ScreenPtr pScreen)
 	Neo2097SubsequentMono8x8PatternFill;
 #endif
 
-    /* image writes */
-    infoPtr->ScanlineImageWriteFlags =  CPU_TRANSFER_PAD_DWORD |
-                                        SCANLINE_PAD_DWORD |
-					NO_TRANSPARENCY |
-					NO_PLANEMASK;
+    if (nPtr->strangeLockups) {
+	/* image writes */
+	infoPtr->ScanlineImageWriteFlags =  ( CPU_TRANSFER_PAD_DWORD |
+					      SCANLINE_PAD_DWORD |
+					      NO_TRANSPARENCY |
+					      NO_PLANEMASK );
 
-    infoPtr->SetupForScanlineImageWrite = 
-                Neo2097SetupForScanlineImageWrite;
-    infoPtr->SubsequentScanlineImageWriteRect = 
-                Neo2097SubsequentScanlineImageWriteRect;
-    infoPtr->SubsequentImageWriteScanline = 
-                Neo2097SubsequentImageWriteScanline;
-    infoPtr->NumScanlineImageWriteBuffers = 1;  
-    infoPtr->ScanlineImageWriteBuffers = infoPtr->ScanlineColorExpandBuffers;
-
-
+	infoPtr->SetupForScanlineImageWrite = 
+	    Neo2097SetupForScanlineImageWrite;
+	infoPtr->SubsequentScanlineImageWriteRect = 
+	    Neo2097SubsequentScanlineImageWriteRect;
+	infoPtr->SubsequentImageWriteScanline = 
+	    Neo2097SubsequentImageWriteScanline;
+	infoPtr->NumScanlineImageWriteBuffers = 1;  
+	infoPtr->ScanlineImageWriteBuffers =
+	    infoPtr->ScanlineColorExpandBuffers;
+    }
+    
     /*
      * Setup some global variables
      */

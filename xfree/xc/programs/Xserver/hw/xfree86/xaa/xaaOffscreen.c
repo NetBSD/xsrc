@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xaaOffscreen.c,v 1.5 1999/07/04 06:39:17 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xaaOffscreen.c,v 1.6 2001/07/19 18:50:16 mvojkovi Exp $ */
 
 /*
    Copyright (c) 1999 -  The XFree86 Project Inc.
@@ -66,6 +66,7 @@ XAAMoveInOffscreenPixmaps(ScreenPtr pScreen)
 		pPix->drawable.depth, pPix->drawable.bitsPerPixel, 
 		pPix->devKind, data);
 
+	pPriv->freeData = FALSE;
 
 	pPix->drawable.x = area->box.x1;
 	pPix->drawable.y = area->box.y1;
@@ -155,4 +156,5 @@ XAAMoveOutOffscreenPixmap(PixmapPtr pPix)
     pPix->drawable.serialNumber = NEXT_SERIAL_NUMBER;
 
     pPriv->offscreenArea = NULL;
+    pPriv->freeData = TRUE;
 }

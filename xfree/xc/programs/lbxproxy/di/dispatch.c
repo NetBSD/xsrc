@@ -21,6 +21,7 @@
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  */
+/* $XFree86: xc/programs/lbxproxy/di/dispatch.c,v 1.6 2001/10/28 03:34:22 tsi Exp $ */
 
 #include <stdio.h>
 #include "assert.h"
@@ -68,7 +69,7 @@ int
 Dispatch ()
 {
     register int        *clientReady;     /* array of request ready clients */
-    register int	result;
+    register int	result = 0;
     register ClientPtr	client;
     register int	nready;
 

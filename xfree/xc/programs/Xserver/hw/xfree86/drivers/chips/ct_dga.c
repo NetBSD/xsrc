@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/chips/ct_dga.c,v 1.2 2000/12/06 15:35:12 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/chips/ct_dga.c,v 1.3 2001/10/01 13:44:04 eich Exp $ */
 
 #include "xf86.h"
 #include "xf86_OSproc.h"
@@ -112,7 +112,8 @@ SECOND_PASS:
 	currentMode->mode = pMode;
 	currentMode->flags = DGA_CONCURRENT_ACCESS | DGA_PIXMAP_AVAILABLE;
 	if(cPtr->Flags & ChipsAccelSupport)
-	   currentMode->flags |= DGA_FILL_RECT | DGA_BLIT_RECT;
+	   currentMode->flags |= (cPtr->Flags & ChipsAccelSupport) 
+	     ? (DGA_FILL_RECT | DGA_BLIT_RECT) : 0;
 	if(pMode->Flags & V_DBLSCAN)
 	   currentMode->flags |= DGA_DOUBLESCAN;
 	if(pMode->Flags & V_INTERLACE)

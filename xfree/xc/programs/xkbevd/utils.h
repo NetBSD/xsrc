@@ -27,7 +27,7 @@
    * used in advertising or publicity pertaining to distribution of the 
    * software without specific, written prior permission.
   \*/
-/* $XFree86: xc/programs/xkbevd/utils.h,v 1.4 2001/01/17 23:46:09 dawes Exp $ */
+/* $XFree86: xc/programs/xkbevd/utils.h,v 1.6 2002/01/14 18:30:11 dawes Exp $ */
 
 /***====================================================================***/
 
@@ -35,15 +35,11 @@
 #include	<X11/Xos.h>
 #include	<X11/Xfuncproto.h>
 #include	<X11/Xfuncs.h>
-#ifdef NeedVarargsPrototypes
 #include 	<stdarg.h>
-#endif
+#include	<stddef.h>
 
 _XFUNCPROTOBEGIN
 
-#ifndef	NULL
-#define	NULL	0
-#endif
 
 #ifndef NUL
 #define	NUL	'\0'
@@ -193,7 +189,7 @@ extern	char *uStringDup(
 #define	DEBUG_VAR	debugFlags
 #endif
 
-#ifdef DEBUG_VAR_NOT_LOCAL
+#ifndef DEBUG_VAR_LOCAL
 extern
 #endif
 unsigned	int	DEBUG_VAR;

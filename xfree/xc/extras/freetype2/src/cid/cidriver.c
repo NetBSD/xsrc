@@ -4,7 +4,7 @@
 /*                                                                         */
 /*    CID driver interface (body).                                         */
 /*                                                                         */
-/*  Copyright 1996-2000 by                                                 */
+/*  Copyright 1996-2001 by                                                 */
 /*  David Turner, Robert Wilhelm, and Werner Lemberg.                      */
 /*                                                                         */
 /*  This file is part of the FreeType project, and may only be used,       */
@@ -23,6 +23,8 @@
 #include FT_INTERNAL_STREAM_H
 #include FT_INTERNAL_POSTSCRIPT_NAMES_H
 
+#include "ciderrs.h"
+
 #include <string.h>         /* for strcmp() */
 
 
@@ -36,12 +38,23 @@
 #define FT_COMPONENT  trace_ciddriver
 
 
-  static
-  FT_Module_Interface  CID_Get_Interface( FT_Driver         driver,
-                                          const FT_String*  interface )
+
+  static const char*
+  cid_get_postscript_name( CID_Face  face )
+  {
+    return (const char*)face->cid.cid_font_name;
+  }
+
+
+  static FT_Module_Interface
+  CID_Get_Interface( FT_Driver         driver,
+                     const FT_String*  interface )
   {
     FT_UNUSED( driver );
     FT_UNUSED( interface );
+
+    if ( strcmp( (const char*)interface, "postscript_name" ) == 0 )
+      return (FT_Module_Interface)cid_get_postscript_name;
 
     return 0;
   }
@@ -49,11 +62,11 @@
 
 #if 0 /* unimplemented yet */
 
-  static
-  FT_Error  cid_Get_Kerning( T1_Face     face,
-                             FT_UInt     left_glyph,
-                             FT_UInt     right_glyph,
-                             FT_Vector*  kerning )
+  static FT_Error
+  cid_Get_Kerning( T1_Face     face,
+                   FT_UInt     left_glyph,
+                   FT_UInt     right_glyph,
+                   FT_Vector*  kerning )
   {
     CID_AFM*  afm;
 
@@ -65,7 +78,7 @@
     if ( afm )
       CID_Get_Kerning( afm, left_glyph, right_glyph, kerning );
 
-    return T1_Err_Ok;
+    return CID_Err_Ok;
   }
 
 
@@ -88,9 +101,9 @@
   /* <Return>                                                              */
   /*    Glyph index.  0 means `undefined character code'.                  */
   /*                                                                       */
-  static
-  FT_UInt  CID_Get_Char_Index( FT_CharMap  charmap,
-                               FT_Long     charcode )
+  static FT_UInt
+  CID_Get_Char_Index( FT_CharMap  charmap,
+                      FT_Long     charcode )
   {
     T1_Face             face;
     FT_UInt             result = 0;
@@ -177,7 +190,10 @@
   {
     /* first of all, the FT_Module_Class fields */
     {
-      ft_module_font_driver | ft_module_driver_scalable,
+      ft_module_font_driver       |
+      ft_module_driver_scalable   |
+      ft_module_driver_has_hinter ,
+      
       sizeof( FT_DriverRec ),
       "t1cid",   /* module name           */
       0x10000L,  /* version 1.0 of driver */
@@ -185,8 +201,8 @@
 
       0,
 
-      (FT_Module_Constructor)CID_Init_Driver,
-      (FT_Module_Destructor) CID_Done_Driver,
+      (FT_Module_Constructor)CID_Driver_Init,
+      (FT_Module_Destructor) CID_Driver_Done,
       (FT_Module_Requester)  CID_Get_Interface
     },
 
@@ -195,16 +211,16 @@
     sizeof( CID_SizeRec ),
     sizeof( CID_GlyphSlotRec ),
 
-    (FTDriver_initFace)     CID_Init_Face,
-    (FTDriver_doneFace)     CID_Done_Face,
+    (FTDriver_initFace)     CID_Face_Init,
+    (FTDriver_doneFace)     CID_Face_Done,
 
-    (FTDriver_initSize)     0,
-    (FTDriver_doneSize)     0,
-    (FTDriver_initGlyphSlot)0,
-    (FTDriver_doneGlyphSlot)0,
+    (FTDriver_initSize)     CID_Size_Init,
+    (FTDriver_doneSize)     CID_Size_Done,
+    (FTDriver_initGlyphSlot)CID_GlyphSlot_Init,
+    (FTDriver_doneGlyphSlot)CID_GlyphSlot_Done,
 
-    (FTDriver_setCharSizes) 0,
-    (FTDriver_setPixelSizes)0,
+    (FTDriver_setCharSizes) CID_Size_Reset,
+    (FTDriver_setPixelSizes)CID_Size_Reset,
 
     (FTDriver_loadGlyph)    CID_Load_Glyph,
     (FTDriver_getCharIndex) CID_Get_Char_Index,
@@ -238,7 +254,8 @@
   /*    format-specific interface can then be retrieved through the method */
   /*    interface->get_format_interface.                                   */
   /*                                                                       */
-  FT_EXPORT_DEF( const FT_Driver_Class* )  getDriverClass( void )
+  FT_EXPORT_DEF( const FT_Driver_Class* )
+  getDriverClass( void )
   {
     return &t1cid_driver_class;
   }

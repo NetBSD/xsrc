@@ -1,10 +1,14 @@
-/* $Xorg: fontxlfd.c,v 1.3 2000/08/17 19:46:39 cpqbld Exp $ */
+/* $Xorg: fontxlfd.c,v 1.4 2001/02/09 02:04:04 xorgcvs Exp $ */
 
 /*
 
 Copyright 1990, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included
 in all copies or substantial portions of the Software.
@@ -23,7 +27,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/font/util/fontxlfd.c,v 3.10 2001/01/17 19:43:33 dawes Exp $ */
+/* $XFree86: xc/lib/font/util/fontxlfd.c,v 3.13 2001/12/14 19:56:56 dawes Exp $ */
 
 /*
  * Author:  Keith Packard, MIT X Consortium
@@ -35,10 +39,8 @@ from The Open Group.
 #include	"fontutil.h"
 #include	<X11/Xos.h>
 #include	<math.h>
-#if !defined(X_NOT_STDC_ENV) || defined(SCO)
 #include	<stdlib.h>
-#endif
-#if defined(X_NOT_STDC_ENV) || (defined(sony) && !defined(SYSTYPE_SYSV) && !defined(_SYSTYPE_SYSV))
+#if defined(sony) && !defined(SYSTYPE_SYSV) && !defined(_SYSTYPE_SYSV)
 #define NO_LOCALE
 #endif
 #ifndef NO_LOCALE
@@ -106,19 +108,9 @@ readreal(char *ptr, double *result)
     *p2 = 0;
 
     /* Now we have something that strtod() can interpret... do it. */
-#ifndef X_NOT_STDC_ENV
     *result = strtod(buffer, &p1);
     /* Return NULL if failure, pointer past number if success */
     return (p1 == buffer) ? (char *)0 : (ptr + (p1 - buffer));
-#else
-    for (p1 = buffer; isspace(*p1); p1++)
-	;
-    if (sscanf(p1, "%lf", result) != 1)
-	return (char *)0;
-    while (!isspace(*p1))
-	p1++;
-    return ptr + (p1 - buffer);
-#endif
 }
 
 static char *
@@ -203,7 +195,8 @@ xlfd_round_double(double x)
 
 #if defined(i386) || defined(__i386__) || \
     defined(ia64) || defined(__ia64__) || \
-    defined(__alpha__) || defined(__alpha)
+    defined(__alpha__) || defined(__alpha) || \
+    defined(__hppa__)
 #if !defined(__EMX__)
 #include <float.h>
 

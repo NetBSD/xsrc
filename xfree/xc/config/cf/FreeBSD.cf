@@ -2,7 +2,7 @@ XCOMM platform:  $Xorg: FreeBSD.cf,v 1.3 2000/08/17 19:41:45 cpqbld Exp $
 XCOMM
 XCOMM
 XCOMM
-XCOMM platform:  $XFree86: xc/config/cf/FreeBSD.cf,v 3.109 2001/05/03 20:12:35 alanh Exp $
+XCOMM platform:  $XFree86: xc/config/cf/FreeBSD.cf,v 3.112 2002/01/03 16:33:49 tsi Exp $
 
 #ifndef UseElfFormat
 #define UseElfFormat		DefaultToElfFormat
@@ -505,6 +505,25 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
  
 #ifndef PamLibraries
 #define PamLibraries		-lpam DlLibrary
+#endif
+
+/*
+ * On FreeBSD, the run-time loader will use the built-in "rpath" before
+ * LD_LIBRARY_PATH.  This means that utilities like mkfontdir will load
+ * installed libraries (if they exist) in preference to the ones in the
+ * build tree, even though LD_LIBRARY_PATH points to the build tree.
+ * This can result in the build failing.  One way to avoid this is to
+ * pre-load the libraries from the build tree.
+ *
+ * There should be a better way than this hack...
+ */
+#if UseElfFormat
+#ifndef PreloadFontSetup
+#define PreloadFontSetup	LD_PRELOAD="`(cd $(XENVLIBDIR); echo libXfont*.so.?)`"
+#endif
+#ifndef PreloadSetup
+#define PreloadSetup		LD_PRELOAD="`(cd $(XENVLIBDIR); echo lib[A-f]*.so.? | grep -v Xfont)`"
+#endif
 #endif
 
 #ifndef HasCookieMaker

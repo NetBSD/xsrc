@@ -30,7 +30,7 @@
  * 
  * Permedia 2 accelerated options.
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/glint/pm2_accel.c,v 1.29.2.1 2001/05/30 11:42:22 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/glint/pm2_accel.c,v 1.31 2001/10/28 03:33:30 tsi Exp $ */
 
 #include "Xarch.h"
 #include "xf86.h"
@@ -1386,7 +1386,6 @@ Permedia2WritePixmap32bpp(
     GLINTPtr pGlint = GLINTPTR(pScrn);
     int skipleft, dwords, count;
     CARD32* srcp;
-    Bool FastTexLoad;
 
     GLINT_WAIT(3);
     DO_PLANEMASK(planemask);
@@ -1397,23 +1396,9 @@ Permedia2WritePixmap32bpp(
 	GLINT_WRITE_REG(pGlint->pprod | FBRM_DstEnable, FBReadMode);
     }
 
-	FastTexLoad = TRUE;
 	dwords = w;
-	if((rop != GXcopy) || (planemask != ~0))
-		FastTexLoad = FALSE;
 	
-	if (!FastTexLoad) {
-	  if((skipleft = (long)src & 0x03L)) {
-	    		skipleft /= (bpp>>3);
-
-	    	x -= skipleft;	     
-	    	w += skipleft;
-	
-	    	   src = (unsigned char*)((long)src & ~0x03L); 
-	  }
-	}
-	
-        if(FastTexLoad) {
+	if((rop == GXcopy) && (planemask == ~0)) {
 	  int address;
 
 	  GLINT_WAIT(1);
@@ -1452,6 +1437,15 @@ Permedia2WritePixmap32bpp(
 	  GLINT_WAIT(1);
 	  GLINT_WRITE_REG(UNIT_ENABLE, FBWriteMode);
 	} else {
+	   if((skipleft = (long)src & 0x03L)) {
+	      skipleft /= (bpp>>3);
+
+	      x -= skipleft;	     
+	      w += skipleft;
+	
+	      src = (unsigned char*)((long)src & ~0x03L); 
+	   }
+
 	   Permedia2SetClippingRectangle(pScrn,x+skipleft,y,x+w,y+h);
 
 	   GLINT_WAIT(6);

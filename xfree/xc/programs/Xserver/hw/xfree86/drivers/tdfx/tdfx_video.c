@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/tdfx/tdfx_video.c,v 1.10.2.1 2001/05/22 21:25:45 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/tdfx/tdfx_video.c,v 1.15 2001/08/01 00:44:54 tsi Exp $ */
 
 #include "xf86.h"
 #include "tdfx.h"
@@ -32,6 +32,9 @@ static Atom xvColorKey, xvFilterQuality;
 #define TDFX_MAX_OVERLAY_PORTS  1
 #define TDFX_MAX_TEXTURE_PORTS  32
 
+#define GET_PORT_PRIVATE(pScrn) \
+   (TDFXPortPrivPtr)((TDFXPTR(pScrn))->overlayAdaptor->pPortPrivates[0].ptr)
+
 /* Doesn't matter what screen we use */
 #define DummyScreen             screenInfo.screens[0]
 
@@ -61,6 +64,8 @@ static void TDFXResetVideoOverlay(ScrnInfoPtr);
 
 static void TDFXQueryBestSize(ScrnInfoPtr, Bool, short, short, short, short, unsigned int *, unsigned int *, pointer);
 static int  TDFXQueryImageAttributes(ScrnInfoPtr, int, unsigned short *, unsigned short *,  int *, int *);
+
+static void TDFXInitOffscreenImages(ScreenPtr);
 
 /*
  * ADAPTOR INFORMATION
@@ -127,13 +132,13 @@ void TDFXInitVideo(ScreenPtr pScreen)
     if(pTDFX->cpp == 1)
       return;
     
-    /* Start with the generic adaptors */
-    num_adaptors = xf86XVListGenericAdaptors(pScrn, &adaptors);
-
     if(!pTDFX->AccelInfoRec || !pTDFX->AccelInfoRec->FillSolidRects)
 	return;
 
     if (!pTDFX->TextureXvideo) {
+	/* Offscreen support for Overlay only */
+    	TDFXInitOffscreenImages(pScreen);
+
     	/* Overlay adaptor */
         newAdaptor = TDFXSetupImageVideoOverlay(pScreen);
     } else {
@@ -141,15 +146,23 @@ void TDFXInitVideo(ScreenPtr pScreen)
         newAdaptor = TDFXSetupImageVideoTexture(pScreen);
     }
 
-    /* Add the adaptor to the list */
+    num_adaptors = xf86XVListGenericAdaptors(pScrn, &adaptors);
+
     if(newAdaptor) {
-        newAdaptors = xalloc((num_adaptors + 1) * sizeof(XF86VideoAdaptorPtr*));
-        if(newAdaptors) {
-            if (num_adaptors) memcpy(newAdaptors, adaptors, num_adaptors * sizeof(XF86VideoAdaptorPtr));
-            newAdaptors[num_adaptors] = newAdaptor;
-            adaptors = newAdaptors;
-            num_adaptors++;
-        }
+	if (!num_adaptors) {
+	    num_adaptors = 1;
+	    adaptors = &newAdaptor;
+	} else {
+            newAdaptors = 
+		xalloc((num_adaptors + 1) * sizeof(XF86VideoAdaptorPtr*));
+            if(newAdaptors) {
+                memcpy(newAdaptors, adaptors, num_adaptors * 
+						sizeof(XF86VideoAdaptorPtr));
+                newAdaptors[num_adaptors] = newAdaptor;
+                adaptors = newAdaptors;
+                num_adaptors++;
+            }
+	}
     }
 
     if(num_adaptors)
@@ -994,7 +1007,7 @@ TDFXPutImageOverlay(
         buf += (top * srcPitch) + left;
         nlines = ((yb + 0xffff) >> 16) - top;
         dst_start += left;
-        TDFXCopyData(buf, dst_start, srcPitch, dstPitch, nlines, npixels << 1);
+        TDFXCopyData(buf, dst_start, srcPitch, dstPitch, nlines, npixels);
         break;
     }
 
@@ -1124,3 +1137,207 @@ TDFXAllocateMemoryLinear (ScrnInfoPtr pScrn, FBLinearPtr linear, int size)
    return new_linear;
 }
 
+/****************** Offscreen stuff ***************/
+
+typedef struct {
+  FBLinearPtr linear;
+  Bool isOn;
+} OffscreenPrivRec, * OffscreenPrivPtr;
+
+static int 
+TDFXAllocateSurface(
+    ScrnInfoPtr pScrn,
+    int id,
+    unsigned short w, 	
+    unsigned short h,
+    XF86SurfacePtr surface
+){
+    TDFXPtr pTDFX = TDFXPTR(pScrn);
+    FBLinearPtr linear;
+    int pitch, fbpitch, size, bpp;
+    OffscreenPrivPtr pPriv;
+
+    if((w > 2048) || (h > 2048))
+	return BadAlloc;
+
+    w = (w + 1) & ~1;
+    pitch = ((w << 1) + 15) & ~15;
+    bpp = pScrn->bitsPerPixel >> 3;
+    fbpitch = bpp * pScrn->displayWidth;
+    size = ((pitch * h) + bpp - 1) / bpp;
+
+    if(!(linear = TDFXAllocateMemoryLinear(pScrn, NULL, size)))
+	return BadAlloc;
+
+    surface->width = w;
+    surface->height = h;
+
+    if(!(surface->pitches = xalloc(sizeof(int)))) {
+	xf86FreeOffscreenLinear(linear);
+	return BadAlloc;
+    }
+    if(!(surface->offsets = xalloc(sizeof(int)))) {
+	xfree(surface->pitches);
+	xf86FreeOffscreenLinear(linear);
+	return BadAlloc;
+    }
+    if(!(pPriv = xalloc(sizeof(OffscreenPrivRec)))) {
+	xfree(surface->pitches);
+	xfree(surface->offsets);
+	xf86FreeOffscreenLinear(linear);
+	return BadAlloc;
+    }
+
+    pPriv->linear = linear;
+    pPriv->isOn = FALSE;
+
+    surface->pScrn = pScrn;
+    surface->id = id;   
+    surface->pitches[0] = pitch;
+    surface->offsets[0] = pTDFX->fbOffset + (linear->offset * bpp);
+    surface->devPrivate.ptr = (pointer)pPriv;
+
+    return Success;
+}
+
+static int 
+TDFXStopSurface(
+    XF86SurfacePtr surface
+){
+    OffscreenPrivPtr pPriv = (OffscreenPrivPtr)surface->devPrivate.ptr;
+
+    if(pPriv->isOn) {
+	TDFXPtr pTDFX = TDFXPTR(surface->pScrn);
+        pTDFX->ModeReg.vidcfg &= ~VIDPROCCFGMASK;
+        pTDFX->writeLong(pTDFX, VIDPROCCFG, pTDFX->ModeReg.vidcfg);
+	pPriv->isOn = FALSE;
+    }
+
+    return Success;
+}
+
+
+static int 
+TDFXFreeSurface(
+    XF86SurfacePtr surface
+){
+    OffscreenPrivPtr pPriv = (OffscreenPrivPtr)surface->devPrivate.ptr;
+
+    if(pPriv->isOn)
+	TDFXStopSurface(surface);
+    xf86FreeOffscreenLinear(pPriv->linear);
+    xfree(surface->pitches);
+    xfree(surface->offsets);
+    xfree(surface->devPrivate.ptr);
+
+    return Success;
+}
+
+static int
+TDFXGetSurfaceAttribute(
+    ScrnInfoPtr pScrn,
+    Atom attribute,
+    INT32 *value
+){
+    return TDFXGetPortAttributeOverlay(pScrn, attribute, value, 
+			(pointer)(GET_PORT_PRIVATE(pScrn)));
+}
+
+static int
+TDFXSetSurfaceAttribute(
+    ScrnInfoPtr pScrn,
+    Atom attribute,
+    INT32 value
+){
+    return TDFXSetPortAttributeOverlay(pScrn, attribute, value, 
+			(pointer)(GET_PORT_PRIVATE(pScrn)));
+}
+
+static int 
+TDFXDisplaySurface(
+    XF86SurfacePtr surface,
+    short src_x, short src_y, 
+    short drw_x, short drw_y,
+    short src_w, short src_h, 
+    short drw_w, short drw_h,
+    RegionPtr clipBoxes
+){
+    OffscreenPrivPtr pPriv = (OffscreenPrivPtr)surface->devPrivate.ptr;
+    ScrnInfoPtr pScrn = surface->pScrn;
+    TDFXPtr pTDFX = TDFXPTR(pScrn);
+    TDFXPortPrivPtr portPriv = pTDFX->overlayAdaptor->pPortPrivates[0].ptr;
+    INT32 x1, y1, x2, y2;
+    BoxRec dstBox;
+
+    x1 = src_x;
+    x2 = src_x + src_w;
+    y1 = src_y;
+    y2 = src_y + src_h;
+
+    dstBox.x1 = drw_x;
+    dstBox.x2 = drw_x + drw_w;
+    dstBox.y1 = drw_y;
+    dstBox.y2 = drw_y + drw_h;
+
+    if(!TDFXClipVideo(&dstBox, &x1, &x2, &y1, &y2, clipBoxes, 
+			surface->width, surface->height))
+    {
+	return Success;
+    }
+
+    dstBox.x1 -= pScrn->frameX0;
+    dstBox.x2 -= pScrn->frameX0;
+    dstBox.y1 -= pScrn->frameY0;
+    dstBox.y2 -= pScrn->frameY0;
+
+#if 0
+    TDFXResetVideoOverlay(pScrn);
+#endif
+
+    TDFXDisplayVideoOverlay(pScrn, surface->id, surface->offsets[0], 
+	     surface->width, surface->height, surface->pitches[0],
+	     x1, y1, x2, &dstBox, src_w, src_h, drw_w, drw_h);
+
+    (*pTDFX->AccelInfoRec->FillSolidRects)(pScrn, portPriv->colorKey,
+					   GXcopy, ~0, 
+					   REGION_NUM_RECTS(clipBoxes),
+					   REGION_RECTS(clipBoxes));
+
+    pPriv->isOn = TRUE;
+    /* we've prempted the XvImage stream so set its free timer */
+    if(portPriv->videoStatus & CLIENT_VIDEO_ON) {
+	REGION_EMPTY(pScrn->pScreen, &portPriv->clip);   
+	UpdateCurrentTime();
+	portPriv->videoStatus = FREE_TIMER;
+	portPriv->freeTime = currentTime.milliseconds + FREE_DELAY;
+	pTDFX->VideoTimerCallback = TDFXVideoTimerCallback;
+    }
+
+    return Success;
+}
+
+static void 
+TDFXInitOffscreenImages(ScreenPtr pScreen)
+{
+    XF86OffscreenImagePtr offscreenImages;
+
+    /* need to free this someplace */
+    if(!(offscreenImages = xalloc(sizeof(XF86OffscreenImageRec))))
+	return;
+
+    offscreenImages[0].image = &OverlayImages[0];
+    offscreenImages[0].flags = VIDEO_OVERLAID_IMAGES | 
+			       VIDEO_CLIP_TO_VIEWPORT;
+    offscreenImages[0].alloc_surface = TDFXAllocateSurface;
+    offscreenImages[0].free_surface = TDFXFreeSurface;
+    offscreenImages[0].display = TDFXDisplaySurface;
+    offscreenImages[0].stop = TDFXStopSurface;
+    offscreenImages[0].setAttribute = TDFXSetSurfaceAttribute;
+    offscreenImages[0].getAttribute = TDFXGetSurfaceAttribute;
+    offscreenImages[0].max_width = 2048;
+    offscreenImages[0].max_height = 2048;
+    offscreenImages[0].num_attributes = 2;
+    offscreenImages[0].attributes = OverlayAttributes;
+    
+    xf86XVRegisterOffscreenImages(pScreen, offscreenImages, 1);
+}

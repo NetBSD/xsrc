@@ -1,6 +1,6 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/atiregs.h,v 1.17 2001/04/16 15:02:10 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/atiregs.h,v 1.18 2002/01/16 16:22:28 tsi Exp $ */
 /*
- * Copyright 1994 through 2001 by Marc Aurele La France (TSI @ UQV), tsi@xfree86.org
+ * Copyright 1994 through 2002 by Marc Aurele La France (TSI @ UQV), tsi@xfree86.org
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -2041,16 +2041,16 @@
 #define LCD_LT_GIO		0x07u	/* See LT's LT_GIO (0x2f) */
 #define LCD_POWER_MANAGEMENT	0x08u	/* See LT's POWER_MANAGEMENT (0x36) */
 #define LCD_ZVGPIO		0x09u
-#define LCD_ICON_CLR0		0x0au			/* XC/XL */
-#define LCD_ICON_CLR1		0x0bu			/* XC/XL */
-#define LCD_ICON_OFFSET		0x0cu			/* XC/XL */
-#define LCD_ICON_HORZ_VERT_POSN	0x0du			/* XC/XL */
-#define LCD_ICON_HORZ_VERT_OFF	0x0eu			/* XC/XL */
-#define LCD_ICON2_CLR0		0x0fu			/* XC/XL */
-#define LCD_ICON2_CLR1		0x10u			/* XC/XL */
-#define LCD_ICON2_OFFSET	0x11u			/* XC/XL */
-#define LCD_ICON2_HORZ_VERT_POSN 0x12u			/* XC/XL */
-#define LCD_ICON2_HORZ_VERT_OFF	0x13u			/* XC/XL */
+#define LCD_ICON_CLR0		0x0au			/* Mobility */
+#define LCD_ICON_CLR1		0x0bu			/* Mobility */
+#define LCD_ICON_OFFSET		0x0cu			/* Mobility */
+#define LCD_ICON_HORZ_VERT_POSN	0x0du			/* Mobility */
+#define LCD_ICON_HORZ_VERT_OFF	0x0eu			/* Mobility */
+#define LCD_ICON2_CLR0		0x0fu			/* Mobility */
+#define LCD_ICON2_CLR1		0x10u			/* Mobility */
+#define LCD_ICON2_OFFSET	0x11u			/* Mobility */
+#define LCD_ICON2_HORZ_VERT_POSN 0x12u			/* Mobility */
+#define LCD_ICON2_HORZ_VERT_OFF	0x13u			/* Mobility */
 #define LCD_MISC_CNTL		0x14u			/* XC/XL */
 #define BL_MOD_LEVEL			0x000000fful
 #define BIAS_MOD_LEVEL			0x0000ff00ul
@@ -2063,10 +2063,15 @@
 #define FORCE_DAC_DATA_SEL_X		0x00c00000ul
 #define FORCE_DAC_DATA_X		0xff000000ul
 #define LCD_TMDS_CNTL		0x15u			/* XC/XL */
+#define LCD_SCRATCH_PAD_4M	0x15u			/* Mobility */
 #define LCD_TMDS_SYNC_CHAR_SETA 0x16u			/* XC/XL */
+#define LCD_SCRATCH_PAD_5M	0x16u			/* Mobility */
 #define LCD_TMDS_SYNC_CHAR_SETB	0x17u			/* XC/XL */
+#define LCD_SCRATCH_PAD_6M	0x17u			/* Mobility */
 #define LCD_TMDS_SRC		0x18u			/* XC/XL */
+#define LCD_SCRATCH_PAD_7M	0x18u			/* Mobility */
 #define LCD_PLTSTBLK_CNTL	0x19u			/* XC/XL */
+#define LCD_SCRATCH_PAD_8M	0x19u			/* Mobility */
 #define LCD_SYNC_GEN_CNTL	0x1au			/* XC/XL */
 #define LCD_PATTERN_GEN_SEED	0x1bu			/* XC/XL */
 #define LCD_APC_CNTL		0x1cu			/* XC/XL */
@@ -2105,9 +2110,9 @@
 #define LCD_CRC_PATTERN_RPT	0x22u			/* XC/XL */
 #define LCD_PL_TRANSMITTER_CNTL	0x23u			/* XC/XL */
 #define LCD_PL_PLL_CNTL		0x24u			/* XC/XL */
-#define LCD_ALPHA_BLENDING	0x25u			/* XC/XL */
-#define LCD_PORTRAIT_GEN_CNTL	0x26u			/* XC/XL */
-#define LCD_APC_CTRL_IO		0x27u			/* XC/XL */
+#define LCD_ALPHA_BLENDING	0x25u			/* Mobility */
+#define LCD_PORTRAIT_GEN_CNTL	0x26u			/* Mobility */
+#define LCD_APC_CTRL_IO		0x27u			/* Mobility */
 #define LCD_TEST_IO		0x28u			/* XC/XL */
 /*	?			0x29u */
 #define LCD_DP1_MEM_ACCESS	0x2au			/* XC/XL */
@@ -2119,14 +2124,19 @@
 #define LCD_DPCTRL_DEBUG_A	0x30u			/* XC/XL */
 #define LCD_DPCTRL_DEBUG_B	0x31u			/* XC/XL */
 #define LCD_MEMBLK_DEBUG	0x32u			/* XC/XL */
-#define LCD_APC_LUT_AB		0x33u			/* XC/XL */
-#define LCD_APC_LUT_CD		0x34u			/* XC/XL */
-#define LCD_APC_LUT_EF		0x35u			/* XC/XL */
-#define LCD_APC_LUT_GH		0x36u			/* XC/XL */
-#define LCD_APC_LUT_IJ		0x37u			/* XC/XL */
-#define LCD_APC_LUT_KL		0x38u			/* XC/XL */
-#define LCD_APC_LUT_MN		0x39u			/* XC/XL */
-#define LCD_APC_LUT_OP		0x3au			/* XC/XL */
+#define LCD_APC_LUT_AB		0x33u			/* Mobility */
+#define LCD_SCRATCH_PAD_4X	0x33u			/* XL/XC */
+#define LCD_APC_LUT_CD		0x34u			/* Mobility */
+#define LCD_SCRATCH_PAD_5X	0x34u			/* XL/XC */
+#define LCD_APC_LUT_EF		0x35u			/* Mobility */
+#define LCD_SCRATCH_PAD_6X	0x35u			/* XL/XC */
+#define LCD_APC_LUT_GH		0x36u			/* Mobility */
+#define LCD_SCRATCH_PAD_7X	0x36u			/* XL/XC */
+#define LCD_APC_LUT_IJ		0x37u			/* Mobility */
+#define LCD_SCRATCH_PAD_8X	0x37u			/* XL/XC */
+#define LCD_APC_LUT_KL		0x38u			/* Mobility */
+#define LCD_APC_LUT_MN		0x39u			/* Mobility */
+#define LCD_APC_LUT_OP		0x3au			/* Mobility */
 /*	?			0x3bu */
 /*	?			0x3cu */
 /*	?			0x3du */

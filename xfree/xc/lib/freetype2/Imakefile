@@ -1,7 +1,8 @@
-XCOMM $XFree86: xc/lib/freetype2/Imakefile,v 1.4 2001/05/16 03:57:27 keithp Exp $
+XCOMM $XFree86: xc/lib/freetype2/Imakefile,v 1.6 2002/01/14 17:11:47 keithp Exp $
 
 #define IHaveSubdirs
 #define PassCDebugFlags
+#define NoLibSubdirs
 
 #define DoNormalLib NormalLibFreetype2
 #define DoSharedLib SharedLibFreetype2
@@ -27,6 +28,7 @@ INCLUDES = -I. $(FREETYPE2INCLUDES)\
 	-I$(FREETYPESRC)/cff\
 	-I$(FREETYPESRC)/psnames\
 	-I$(FREETYPESRC)/psaux\
+	-I$(FREETYPESRC)/pshinter\
 	-I$(FREETYPESRC)/truetype\
 	-I$(FREETYPESRC)/type1\
 	-I$(FREETYPESRC)/cid\
@@ -74,6 +76,9 @@ OBJS_PSNAMES  = psnames.o
 SRCS_PSAUX    = psaux.c
 OBJS_PSAUX    = psaux.o
 
+SRCS_PSHINTER = pshinter.c
+OBJS_PSHINTER = pshinter.o
+
 SRCS_TRUETYPE = truetype.c
 OBJS_TRUETYPE = truetype.o
 
@@ -98,12 +103,12 @@ OBJS_PCF = pcf.o
 SRCS = $(SRCS_BASE) $(SRCS_AUTOHINT) $(SRCS_SFNT) $(SRCS_CFF) \
 	$(SRCS_PSNAMES) $(SRCS_PSAUX) $(SRCS_TRUETYPE) $(SRCS_TYPE1) \
 	$(SRCS_CID) $(SRCS_RASTER) $(SRCS_SMOOTH) $(SRCS_WINFONTS) \
-	$(SRCS_PCF)
+	$(SRCS_PCF) $(SRCS_PSHINTER)
 
 OBJS = $(OBJS_BASE) $(OBJS_AUTOHINT) $(OBJS_SFNT) $(OBJS_CFF) \
 	$(OBJS_PSNAMES) $(OBJS_PSAUX) $(OBJS_TRUETYPE) $(OBJS_TYPE1) \
 	$(OBJS_CID) $(OBJS_RASTER) $(OBJS_SMOOTH) $(OBJS_WINFONTS) \
-	$(OBJS_PCF)
+	$(OBJS_PCF) $(OBJS_PSHINTER)
 
 #include <Library.tmpl>
 
@@ -137,6 +142,7 @@ LinkSourceFile(sfnt.c,$(FREETYPESRC)/sfnt)
 LinkSourceFile(cff.c,$(FREETYPESRC)/cff)
 LinkSourceFile(psnames.c,$(FREETYPESRC)/psnames)
 LinkSourceFile(psaux.c,$(FREETYPESRC)/psaux)
+LinkSourceFile(pshinter.c,$(FREETYPESRC)/pshinter)
 LinkSourceFile(truetype.c,$(FREETYPESRC)/truetype)
 LinkSourceFile(type1.c,$(FREETYPESRC)/type1)
 LinkSourceFile(type1cid.c,$(FREETYPESRC)/cid)

@@ -25,7 +25,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 **************************************************************************/
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/i810/i810_cursor.c,v 1.2 2000/02/23 04:47:15 martin Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/i810/i810_cursor.c,v 1.4 2001/10/10 14:08:36 alanh Exp $ */
 
 /*
  * Authors:
@@ -48,8 +48,6 @@ static void I810HideCursor(ScrnInfoPtr pScrn);
 static void I810SetCursorColors(ScrnInfoPtr pScrn, int bg, int fb);
 static Bool I810UseHWCursor(ScreenPtr pScrn, CursorPtr pCurs);
 
-
-
 Bool
 I810CursorInit(ScreenPtr pScreen)
 {
@@ -69,7 +67,8 @@ I810CursorInit(ScreenPtr pScreen)
 		     HARDWARE_CURSOR_INVERT_MASK |
 		     HARDWARE_CURSOR_SWAP_SOURCE_AND_MASK |
 		     HARDWARE_CURSOR_AND_SOURCE_WITH_MASK |
-		     HARDWARE_CURSOR_SOURCE_MASK_INTERLEAVE_64);
+		     HARDWARE_CURSOR_SOURCE_MASK_INTERLEAVE_64 |
+		     0);
 
   infoPtr->SetCursorColors = I810SetCursorColors;
   infoPtr->SetCursorPosition = I810SetCursorPosition;
@@ -89,9 +88,6 @@ I810UseHWCursor(ScreenPtr pScreen, CursorPtr pCurs) {
    ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
    I810Ptr pI810 = I810PTR(pScrn);
 
-/*    if (pScrn->currentMode->Flags&V_DBLSCAN) */
-/*      return FALSE; */
-
    if (!pI810->CursorPhysical) return FALSE;
    return TRUE;
 }
@@ -101,7 +97,7 @@ I810LoadCursorImage(ScrnInfoPtr pScrn, unsigned char *src) {
   I810Ptr pI810 = I810PTR(pScrn);
   CARD8 *pcurs = (CARD8 *)(pI810->FbBase + pI810->CursorStart);
   int x, y;
-  
+
   for (y = 0; y < 64; y++) {
     for (x = 0; x < 64 / 4; x++) {
       *pcurs++ = *src++;
@@ -109,80 +105,140 @@ I810LoadCursorImage(ScrnInfoPtr pScrn, unsigned char *src) {
   }
 }
 
+#define CURACNTR 0x70080
+#define CURSORA_DISABLE 0
+#define CURSORA_MODE_64_3C (1<<2)
+#define CURSORA_MODE_64_AND_XOR ((1<<2)|(1))
+#define CURSORA_MODE_64_4C ((1<<2)|(1<<1))
+#define CURSORA_MODE_64_32BPP_AND_XOR ((1<<2)|(1<<1)|(1))
+#define CURSORA_MODE_64_32BPP_ARGB ((1<<5)|(1<<2)|(1<<1)|(1))
+#define CURSORA_RESERVED ((1<<31)|(1<<30)|(1<<29)|(1<<24)|(1<<23)|(1<<22)|(1<<21)|(1<<20)|(1<<19)|(1<<18)|(1<<17)|(1<<16)|(1<<7)|(1<<6)|(1<<4))
+#define CURABASE 0x70084
+
 void
-I810SetCursorPosition(ScrnInfoPtr pScrn, int x, int y) {
-  I810Ptr pI810 = I810PTR(pScrn);
-  int flag;
+I810SetCursorPosition(ScrnInfoPtr pScrn, int x, int y)
+{
+   I810Ptr pI810 = I810PTR(pScrn);
+   int flag;
 
-  if (I810_DEBUG & DEBUG_VERBOSE_CURSOR)
-     ErrorF( "I810SetCursorPosition %d %d\n", x, y);
+#if 0
+   DPRINTF (PFX,
+			"%s %d %d\n"
+			"--> CURACNTR == 0x%.8x\n"
+			"--> CURBCNTR == 0x%.8x\n",
+			__FUNCTION__,x,y,
+			INREG (0x70080),
+			INREG (0x700C0));
+#endif
+   /* FIXME: hack to get around disappearing cursor problems.
+	* don't know why this work though. */
+   if (IS_I830 (pI810))
+	 {
+		INREG (0x70080);
+		INREG (0x700C0);
+	 }
 
-  x += pI810->CursorOffset;
+   x += pI810->CursorOffset;
 
-  if (x >= 0) flag = CURSOR_X_POS;
-  else {
-    flag = CURSOR_X_NEG;
-    x=-x;
-  }
+   if (x >= 0) flag = CURSOR_X_POS;
+   else {
+      flag = CURSOR_X_NEG;
+      x=-x;
+   }
 
-  OUTREG8( CURSOR_X_LO, x&0xFF);
-  OUTREG8( CURSOR_X_HI, (((x >> 8) & 0x07) | flag));
+   OUTREG8( CURSOR_X_LO, x&0xFF);
+   OUTREG8( CURSOR_X_HI, (((x >> 8) & 0x07) | flag));
 
-  if (y >= 0) flag = CURSOR_Y_POS;
-  else {
-    flag = CURSOR_Y_NEG;
-    y=-y;
-  }
-  OUTREG8( CURSOR_Y_LO, y&0xFF);
-  OUTREG8( CURSOR_Y_HI, (((y >> 8) & 0x07) | flag));
+   if (y >= 0) flag = CURSOR_Y_POS;
+   else {
+      flag = CURSOR_Y_NEG;
+      y=-y;
+   }
+   OUTREG8( CURSOR_Y_LO, y&0xFF);
+   OUTREG8( CURSOR_Y_HI, (((y >> 8) & 0x07) | flag));
+
+   /* FIXME */
+   OUTREG(CURABASE, pI810->CursorPhysical);
 }
 
 static void
-I810ShowCursor(ScrnInfoPtr pScrn) {
-  I810Ptr pI810 = I810PTR(pScrn);
-  unsigned char tmp;
+I810ShowCursor(ScrnInfoPtr pScrn)
+{
+   I810Ptr pI810 = I810PTR(pScrn);
+   unsigned char tmp;
+   CARD32 temp;
 
-  OUTREG( CURSOR_BASEADDR, pI810->CursorPhysical);
-  OUTREG8( CURSOR_CONTROL, CURSOR_ORIGIN_DISPLAY | CURSOR_MODE_64_3C);
+   if(IS_I830(pI810)) {
+      temp = INREG(CURACNTR);
+      temp &= CURSORA_RESERVED;
+      temp |= CURSORA_MODE_64_AND_XOR;
+      OUTREG(CURACNTR, temp);
+      OUTREG(CURABASE, pI810->CursorPhysical);
+   } else {
+      OUTREG( CURSOR_BASEADDR, pI810->CursorPhysical);
+      OUTREG8( CURSOR_CONTROL, CURSOR_ORIGIN_DISPLAY | CURSOR_MODE_64_3C);
 
-  tmp = INREG8( PIXPIPE_CONFIG_0 );
-  tmp |= HW_CURSOR_ENABLE;
-  OUTREG8( PIXPIPE_CONFIG_0, tmp);
+      tmp = INREG8( PIXPIPE_CONFIG_0 );
+      tmp |= HW_CURSOR_ENABLE;
+      OUTREG8( PIXPIPE_CONFIG_0, tmp);
+   }
 }
 
 static void
-I810HideCursor(ScrnInfoPtr pScrn) {
-  unsigned char tmp;
-  I810Ptr pI810 = I810PTR(pScrn);
+I810HideCursor(ScrnInfoPtr pScrn)
+{
+   unsigned char tmp;
+   CARD32 temp;
+   I810Ptr pI810 = I810PTR(pScrn);
 
-  tmp=INREG8( PIXPIPE_CONFIG_0 );
-  tmp &= ~HW_CURSOR_ENABLE;
-  OUTREG8( PIXPIPE_CONFIG_0, tmp);
+   if(IS_I830(pI810)) {
+      temp = INREG(CURACNTR);
+      temp &= CURSORA_RESERVED;
+      temp |= CURSORA_DISABLE;
+      OUTREG(CURACNTR, temp);
+      OUTREG(CURABASE, pI810->CursorPhysical);
+   } else {
+      tmp=INREG8( PIXPIPE_CONFIG_0 );
+      tmp &= ~HW_CURSOR_ENABLE;
+      OUTREG8( PIXPIPE_CONFIG_0, tmp);
+   }
 }
+
+#define CURAPALET0 0x70090
+#define CURAPALET1 0x70094
+#define CURAPALET2 0x70098
+#define CURAPALET3 0x7009c
 
 static void
-I810SetCursorColors(ScrnInfoPtr pScrn, int bg, int fg) {
-  int tmp;
-  I810Ptr pI810 = I810PTR(pScrn);
+I810SetCursorColors(ScrnInfoPtr pScrn, int bg, int fg)
+{
+   int tmp;
+   I810Ptr pI810 = I810PTR(pScrn);
 
-  tmp=INREG8(PIXPIPE_CONFIG_0);
-  tmp |= EXTENDED_PALETTE;
-  OUTREG8( PIXPIPE_CONFIG_0, tmp);
+   if(IS_I830(pI810)) {
+      OUTREG(CURAPALET0, bg & 0x00ffffff);
+      OUTREG(CURAPALET1, fg & 0x00ffffff);
+      OUTREG(CURAPALET2, fg & 0x00ffffff);
+      OUTREG(CURAPALET3, bg & 0x00ffffff);
+   } else {
+      tmp=INREG8(PIXPIPE_CONFIG_0);
+      tmp |= EXTENDED_PALETTE;
+      OUTREG8( PIXPIPE_CONFIG_0, tmp);
 
-  pI810->writeStandard(pI810, DACMASK, 0xFF);
-  pI810->writeStandard(pI810, DACWX, 0x04);
+      pI810->writeStandard(pI810, DACMASK, 0xFF);
+      pI810->writeStandard(pI810, DACWX, 0x04);
 
-  pI810->writeStandard(pI810, DACDATA, (bg & 0x00FF0000) >> 16);
-  pI810->writeStandard(pI810, DACDATA, (bg & 0x0000FF00) >> 8);
-  pI810->writeStandard(pI810, DACDATA, (bg & 0x000000FF));
+      pI810->writeStandard(pI810, DACDATA, (bg & 0x00FF0000) >> 16);
+      pI810->writeStandard(pI810, DACDATA, (bg & 0x0000FF00) >> 8);
+      pI810->writeStandard(pI810, DACDATA, (bg & 0x000000FF));
 
-  pI810->writeStandard(pI810, DACDATA, (fg & 0x00FF0000) >> 16);
-  pI810->writeStandard(pI810, DACDATA, (fg & 0x0000FF00) >> 8);
-  pI810->writeStandard(pI810, DACDATA, (fg & 0x000000FF));
+      pI810->writeStandard(pI810, DACDATA, (fg & 0x00FF0000) >> 16);
+      pI810->writeStandard(pI810, DACDATA, (fg & 0x0000FF00) >> 8);
+      pI810->writeStandard(pI810, DACDATA, (fg & 0x000000FF));
 
-  tmp=INREG8( PIXPIPE_CONFIG_0 );
-  tmp &= ~EXTENDED_PALETTE;
-  OUTREG8( PIXPIPE_CONFIG_0, tmp );
+      tmp=INREG8( PIXPIPE_CONFIG_0 );
+      tmp &= ~EXTENDED_PALETTE;
+      OUTREG8( PIXPIPE_CONFIG_0, tmp );
+   }
 }
-
 

@@ -23,7 +23,7 @@
  * OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-/* $XFree86: xc/lib/GL/mesa/src/drv/tdfx/tdfx_context.h,v 1.1 2001/03/21 16:14:27 dawes Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/tdfx/tdfx_context.h,v 1.3 2001/10/02 11:44:13 alanh Exp $ */
 
 /*
  * Original rewrite:
@@ -67,7 +67,6 @@
 #include "tdfx_wrapper.h"
 #include "tdfx_screen.h"
 #include "tdfx_lock.h"
-#include "tdfx_g3ext.h"
 
 
 
@@ -578,6 +577,226 @@ struct tdfx_glide {
    FxBool HaveTexFmtExt;		/* TEXFMT */
    FxBool HaveTexUMAExt;		/* TEXUMA */
    FxBool HaveTexus2;			/* Texus 2 - FXT1 */
+
+   /* Glide library function pointers */
+   void (*grDrawPoint)( const void *pt );
+   void (*grDrawLine)( const void *v1, const void *v2 );
+   void (*grDrawTriangle)( const void *a, const void *b, const void *c );
+   void (*grVertexLayout)(FxU32 param, FxI32 offset, FxU32 mode);
+   void (*grDrawVertexArray)(FxU32 mode, FxU32 Count, void *pointers);
+   void (*grDrawVertexArrayContiguous)(FxU32 mode, FxU32 Count,
+                                       void *pointers, FxU32 stride);
+   void (*grBufferClear)( GrColor_t color, GrAlpha_t alpha, FxU32 depth );
+   void (*grBufferSwap)( FxU32 swap_interval );
+   void (*grRenderBuffer)( GrBuffer_t buffer );
+   void (*grErrorSetCallback)( GrErrorCallbackFnc_t fnc );
+   void (*grFinish)(void);
+   void (*grFlush)(void);
+   GrContext_t (*grSstWinOpen)(FxU32                hWnd,
+                               GrScreenResolution_t screen_resolution,
+                               GrScreenRefresh_t    refresh_rate,
+                               GrColorFormat_t      color_format,
+                               GrOriginLocation_t   origin_location,
+                               int                  nColBuffers,
+                               int                  nAuxBuffers);
+   void (*grSstWinClose)( GrContext_t context );
+/* Not used */
+#if 0
+   void (*grSetNumPendingBuffers)(FxI32 NumPendingBuffers);
+#endif
+   void (*grSelectContext)( GrContext_t context );
+   void (*grSstOrigin)(GrOriginLocation_t  origin);
+   void (*grSstSelect)( int which_sst );
+   void (*grAlphaBlendFunction)(GrAlphaBlendFnc_t rgb_sf,
+                                GrAlphaBlendFnc_t rgb_df,
+                                GrAlphaBlendFnc_t alpha_sf,
+                                GrAlphaBlendFnc_t alpha_df);
+   void (*grAlphaCombine)(GrCombineFunction_t function,
+                          GrCombineFactor_t factor,
+                          GrCombineLocal_t local, GrCombineOther_t other,
+                          FxBool invert);
+   void (*grAlphaControlsITRGBLighting)( FxBool enable );
+   void (*grAlphaTestFunction)( GrCmpFnc_t function );
+   void (*grAlphaTestReferenceValue)( GrAlpha_t value );
+   void (*grChromakeyMode)( GrChromakeyMode_t mode );
+   void (*grChromakeyValue)( GrColor_t value );
+   void (*grClipWindow)( FxU32 minx, FxU32 miny, FxU32 maxx, FxU32 maxy );
+   void (*grColorCombine)( GrCombineFunction_t function,
+                           GrCombineFactor_t factor,
+                           GrCombineLocal_t local,
+                           GrCombineOther_t other,
+                           FxBool invert );
+   void (*grColorMask)( FxBool rgb, FxBool a );
+   void (*grCullMode)( GrCullMode_t mode );
+   void (*grConstantColorValue)( GrColor_t value );
+   void (*grDepthBiasLevel)( FxI32 level );
+   void (*grDepthBufferFunction)( GrCmpFnc_t function );
+   void (*grDepthBufferMode)( GrDepthBufferMode_t mode );
+   void (*grDepthMask)( FxBool mask );
+   void (*grDisableAllEffects)( void );
+   void (*grDitherMode)( GrDitherMode_t mode );
+   void (*grFogColorValue)( GrColor_t fogcolor );
+   void (*grFogMode)( GrFogMode_t mode );
+   void (*grFogTable)( const GrFog_t ft[] );
+   void (*grLoadGammaTable)( FxU32 nentries, FxU32 *red, FxU32 *green, FxU32 *blue);
+   void (*grSplash)(float x, float y, float width, float height, FxU32 frame);
+   FxU32 (*grGet)( FxU32 pname, FxU32 plength, FxI32 *params );
+   const char * (*grGetString)( FxU32 pname );
+   FxI32 (*grQueryResolutions)( const GrResolution *resTemplate,
+                                GrResolution *output );
+   FxBool (*grReset)( FxU32 what );
+   GrProc (*grGetProcAddress)( char *procName );
+   void (*grEnable)( GrEnableMode_t mode );
+   void (*grDisable)( GrEnableMode_t mode );
+   void (*grCoordinateSpace)( GrCoordinateSpaceMode_t mode );
+   void (*grDepthRange)( FxFloat n, FxFloat f );
+#if defined(__linux__) || defined (__FreeBSD__)
+   void (*grStippleMode)( GrStippleMode_t mode );
+   void (*grStipplePattern)( GrStipplePattern_t mode );
+#endif /* __linux__ || __FreeBSD__ */
+   void (*grViewport)( FxI32 x, FxI32 y, FxI32 width, FxI32 height );
+   FxU32 (*grTexCalcMemRequired)(GrLOD_t lodmin, GrLOD_t lodmax,
+                                GrAspectRatio_t aspect, GrTextureFormat_t fmt);
+   FxU32 (*grTexTextureMemRequired)( FxU32 evenOdd, GrTexInfo *info );
+   FxU32 (*grTexMinAddress)( GrChipID_t tmu );
+   FxU32 (*grTexMaxAddress)( GrChipID_t tmu );
+   void (*grTexNCCTable)( GrNCCTable_t table );
+   void (*grTexSource)( GrChipID_t tmu, FxU32 startAddress,
+                        FxU32 evenOdd, GrTexInfo *info );
+   void (*grTexClampMode)( GrChipID_t tmu,
+                           GrTextureClampMode_t s_clampmode,
+                           GrTextureClampMode_t t_clampmode );
+   void (*grTexCombine)( GrChipID_t tmu,
+                         GrCombineFunction_t rgb_function,
+                         GrCombineFactor_t rgb_factor, 
+                         GrCombineFunction_t alpha_function,
+                         GrCombineFactor_t alpha_factor,
+                         FxBool rgb_invert,
+                         FxBool alpha_invert);
+   void (*grTexDetailControl)( GrChipID_t tmu, int lod_bias,
+                               FxU8 detail_scale, float detail_max );
+   void (*grTexFilterMode)( GrChipID_t tmu,
+                            GrTextureFilterMode_t minfilter_mode,
+                            GrTextureFilterMode_t magfilter_mode );
+   void (*grTexLodBiasValue)(GrChipID_t tmu, float bias );
+   void (*grTexDownloadMipMap)( GrChipID_t tmu, FxU32 startAddress,
+                                FxU32 evenOdd, GrTexInfo *info );
+   void (*grTexDownloadMipMapLevel)( GrChipID_t        tmu,
+                                     FxU32             startAddress,
+                                     GrLOD_t           thisLod,
+                                     GrLOD_t           largeLod,
+                                     GrAspectRatio_t   aspectRatio,
+                                     GrTextureFormat_t format,
+                                     FxU32             evenOdd,
+                                     void              *data );
+   FxBool (*grTexDownloadMipMapLevelPartial)( GrChipID_t        tmu,
+                                              FxU32             startAddress,
+                                              GrLOD_t           thisLod,
+                                              GrLOD_t           largeLod,
+                                              GrAspectRatio_t   aspectRatio,
+                                              GrTextureFormat_t format,
+                                              FxU32             evenOdd,
+                                              void              *data,
+                                              int               start,
+                                              int               end );
+   void (*grTexDownloadTable)( GrTexTable_t type, void *data );
+   void (*grTexDownloadTablePartial)( GrTexTable_t type, 
+                                      void *data, int start, int end );
+   void (*grTexMipMapMode)( GrChipID_t tmu, GrMipMapMode_t mode,
+                            FxBool lodBlend );
+   void (*grTexMultibase)( GrChipID_t tmu, FxBool enable );
+   void (*grTexMultibaseAddress)( GrChipID_t       tmu,
+                                  GrTexBaseRange_t range,
+                                  FxU32            startAddress,
+                                  FxU32            evenOdd,
+                                  GrTexInfo        *info );
+   FxBool (*grLfbLock)( GrLock_t type, GrBuffer_t buffer,
+                        GrLfbWriteMode_t writeMode,
+                        GrOriginLocation_t origin, FxBool pixelPipeline, 
+                        GrLfbInfo_t *info );
+   FxBool (*grLfbUnlock)( GrLock_t type, GrBuffer_t buffer );
+   void (*grLfbConstantAlpha)( GrAlpha_t alpha );
+   void (*grLfbConstantDepth)( FxU32 depth );
+   void (*grLfbWriteColorSwizzle)(FxBool swizzleBytes, FxBool swapWords);
+   void (*grLfbWriteColorFormat)(GrColorFormat_t colorFormat);
+   FxBool (*grLfbWriteRegion)( GrBuffer_t dst_buffer, 
+                               FxU32 dst_x, FxU32 dst_y, 
+                               GrLfbSrcFmt_t src_format, 
+                               FxU32 src_width, FxU32 src_height, 
+                               FxBool pixelPipeline,
+                               FxI32 src_stride, void *src_data );
+   FxBool (*grLfbReadRegion)( GrBuffer_t src_buffer,
+                              FxU32 src_x, FxU32 src_y,
+                              FxU32 src_width, FxU32 src_height,
+                              FxU32 dst_stride, void *dst_data );
+   void (*grGlideInit)( void );
+   void (*grGlideShutdown)( void );
+   void (*grGlideGetState)( void *state );
+   void (*grGlideSetState)( const void *state );
+   void (*grGlideGetVertexLayout)( void *layout );
+   void (*grGlideSetVertexLayout)( const void *layout );
+   /* Glide utility functions */
+   void (*guFogGenerateExp)( GrFog_t *fogtable, float density );
+   void (*guFogGenerateExp2)( GrFog_t *fogtable, float density );
+   void (*guFogGenerateLinear)(GrFog_t *fogtable, float nearZ, float farZ );
+   /* DRI functions */
+   void (*grDRIOpen)( char *pFB, char *pRegs, int deviceID,
+                      int width, int height,
+                      int mem, int cpp, int stride,
+                      int fifoOffset, int fifoSize,
+                      int fbOffset, int backOffset, int depthOffset,
+                      int textureOffset, int textureSize,
+                      volatile int *fifoPtr, volatile int *fifoRead );
+   void (*grDRIPosition)( int x, int y, int w, int h,
+                          int numClip, XF86DRIClipRectPtr pClip );
+   void (*grDRILostContext)( void );
+   void (*grDRIImportFifo)( int fifoPtr, int fifoRead );
+   void (*grDRIInvalidateAll)( void );
+   void (*grDRIResetSAREA)( void );
+   void (*grDRIBufferSwap)( FxU32 swapInterval );
+   /* Glide extensions */
+   /* PIXEXT extension */
+   void (*grStencilFunc)( GrCmpFnc_t func, GrStencil_t ref, GrStencil_t mask );
+   void (*grStencilMask)( GrStencil_t mask );
+   void (*grStencilOp)( GrStencilOp_t fail, GrStencilOp_t zfail,
+                        GrStencilOp_t zpass );
+   void (*grBufferClearExt)( GrColor_t color, GrAlpha_t alpha,
+                             FxU32 depth, GrStencil_t stencil );
+   void (*grColorMaskExt)( FxBool r, FxBool g, FxBool b, FxBool a );
+   /* COMBINE extension */
+   void (*grColorCombineExt)( GrCCUColor_t a, GrCombineMode_t a_mode,
+                              GrCCUColor_t b, GrCombineMode_t b_mode,
+                              GrCCUColor_t c, FxBool c_invert,
+                              GrCCUColor_t d, FxBool d_invert,
+                              FxU32 shift, FxBool invert );
+   void (*grTexColorCombineExt)( FxU32 tmu,
+                                 GrTCCUColor_t a, GrCombineMode_t a_mode,
+                                 GrTCCUColor_t b, GrCombineMode_t b_mode,
+                                 GrTCCUColor_t c, FxBool c_invert,
+                                 GrTCCUColor_t d, FxBool d_invert,
+                                 FxU32 shift, FxBool invert );
+   void (*grAlphaCombineExt)( GrACUColor_t a, GrCombineMode_t a_mode,
+                              GrACUColor_t b, GrCombineMode_t b_mode,
+                              GrACUColor_t c, FxBool c_invert,
+                              GrACUColor_t d, FxBool d_invert,
+                              FxU32 shift, FxBool invert );
+   void (*grTexAlphaCombineExt)( FxU32 tmu,
+                                 GrTACUColor_t a, GrCombineMode_t a_mode,
+                                 GrTACUColor_t b, GrCombineMode_t b_mode,
+                                 GrTACUColor_t c, FxBool c_invert,
+                                 GrTACUColor_t d, FxBool d_invert,
+                                 FxU32 shift, FxBool invert );
+   void (*grAlphaBlendFunctionExt)( GrAlphaBlendFnc_t rgb_sf,
+                                    GrAlphaBlendFnc_t rgb_df,
+                                    GrAlphaBlendOp_t rgb_op,
+                                    GrAlphaBlendFnc_t alpha_sf,
+                                    GrAlphaBlendFnc_t alpha_df,
+                                    GrAlphaBlendOp_t alpha_op );
+   void (*grConstantColorValueExt)( FxU32 tmu, GrColor_t value );
+   /* Texus 2 */
+   void (*txImgQuantize)( void *xxx_unknown_arguments );
+   void (*txImgDequantizeFXT1)( void *txMip, void *pxMip );
+   void (*txErrorSetCallback)( void *fnc );
 };
 
 
@@ -709,6 +928,8 @@ extern void tdfxDestroyContext( tdfxContextPtr fxMesa );
 
 extern GLboolean tdfxInitContext( __DRIdrawablePrivate *driDrawPriv,
 				  tdfxContextPtr fxMesa );
+
+extern GLboolean tdfxInitGlide(tdfxContextPtr tmesa);
 
 
 /* Color packing utilities

@@ -1,9 +1,13 @@
 /*
- * $Xorg: multibufst.h,v 1.3 2000/08/18 04:05:45 coskrey Exp $
+ * $Xorg: multibufst.h,v 1.4 2001/02/09 02:03:24 xorgcvs Exp $
  *
 Copyright 1989, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -20,7 +24,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
  */
 
-/* $XFree86: xc/include/extensions/multibufst.h,v 3.5 2001/01/17 17:53:22 dawes Exp $ */
+/* $XFree86: xc/include/extensions/multibufst.h,v 3.8 2001/12/19 21:37:29 dawes Exp $ */
 
 #ifndef _MULTIBUFST_H_
 #define _MULTIBUFST_H_
@@ -34,7 +38,7 @@ in this Software without prior written authorization from The Open Group.
 #include "inputstr.h"
 #endif
 
-#if (defined(__STDC__) && !defined(UNIXCPP)) || defined(ANSICPP)
+#if !defined(UNIXCPP) || defined(ANSICPP)
 #define MbufGetReq(name,req,info) GetReq (name, req); \
 	req->reqType = info->codes->major_opcode; \
 	req->mbufReqType = X_##name;
@@ -261,7 +265,11 @@ typedef struct {
     CARD16	width B16;
     CARD16	height B16;
     CARD16	borderWidth B16;  
+#if defined(__cplusplus) || defined(c_plusplus)
+    CARD16	c_class B16;
+#else
     CARD16	class B16;
+#endif
     VisualID	visual B32;
     CARD32	mask B32;
 } xMbufCreateStereoWindowReq;		/* followed by value list */
@@ -301,7 +309,7 @@ typedef struct {
     pSTRUCT2->FUNC_NAME = tmpFn;					\
 }
 
-#if (defined(__STDC__) && !defined(UNIXCPP)) || defined(ANSICPP)
+#if !defined(UNIXCPP) || defined(ANSICPP)
 #define WRAP_SCREEN_FUNC(pSCREEN,pPRIV,FUNC_NAME, PRIV_FUNC_NAME)	\
 {									\
     if ((pPRIV->funcsWrapped & FUNC_NAME##Mask) == 0)			\

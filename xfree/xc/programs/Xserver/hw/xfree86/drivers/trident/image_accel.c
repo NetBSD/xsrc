@@ -23,7 +23,7 @@
  * 
  * Trident 3DImage' accelerated options.
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/trident/image_accel.c,v 1.21.4.1 2001/05/24 09:37:41 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/trident/image_accel.c,v 1.24 2001/10/28 03:33:51 tsi Exp $ */
 
 #include "xf86.h"
 #include "xf86_OSproc.h"
@@ -42,11 +42,13 @@
 
 static void ImageSync(ScrnInfoPtr pScrn);
 static void ImageSyncClip(ScrnInfoPtr pScrn);
+#if 0
 static void ImageSetupForSolidLine(ScrnInfoPtr pScrn, int color,
 				int rop, unsigned int planemask);
 static void ImageSubsequentSolidBresenhamLine(ScrnInfoPtr pScrn,
         			int x, int y, int dmaj, int dmin, int e, 
 				int len, int octant);
+#endif
 static void ImageSetupForFillRectSolid(ScrnInfoPtr pScrn, int color,
 				int rop, unsigned int planemask);
 static void ImageSubsequentFillRectSolid(ScrnInfoPtr pScrn, int x,
@@ -67,12 +69,14 @@ static void ImageSetupForMono8x8PatternFill(ScrnInfoPtr pScrn,
 static void ImageSubsequentMono8x8PatternFillRect(ScrnInfoPtr pScrn, 
 				int patternx, int patterny, int x, int y, 
 				int w, int h);
+#if 0
 static void ImageSetupForColor8x8PatternFill(ScrnInfoPtr pScrn, 
 				int patternx, int patterny, 
 				int rop, unsigned int planemask, int trans_col);
 static void ImageSubsequentColor8x8PatternFillRect(ScrnInfoPtr pScrn, 
 				int patternx, int patterny, int x, int y, 
 				int w, int h);
+#endif
 static void ImageSetupForScanlineImageWrite(ScrnInfoPtr pScrn, int rop,
 				unsigned int planemask, int transparency_color,
 				int bpp, int depth);
@@ -131,6 +135,18 @@ ImageAccelInit(ScreenPtr pScreen)
     ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
     TRIDENTPtr pTrident = TRIDENTPTR(pScrn);
     BoxRec AvailFBArea;
+
+    AvailFBArea.x1 = 0;
+    AvailFBArea.y1 = 0;
+    AvailFBArea.x2 = pScrn->displayWidth;
+    AvailFBArea.y2 = (pTrident->FbMapSize - 4096) / (pScrn->displayWidth *
+					    pScrn->bitsPerPixel / 8);
+    if (AvailFBArea.y2 > 2047) AvailFBArea.y2 = 2047;
+
+    xf86InitFBManager(pScreen, &AvailFBArea);
+
+    if (pTrident->NoAccel)
+	return FALSE;
 
     pTrident->AccelInfoRec = infoPtr = XAACreateInfoRec();
     if (!infoPtr) return FALSE;
@@ -236,15 +252,6 @@ ImageAccelInit(ScreenPtr pScreen)
     infoPtr->ImageWriteBase = pTrident->IOBase + 0x10000;
   }
 
-    AvailFBArea.x1 = 0;
-    AvailFBArea.y1 = 0;
-    AvailFBArea.x2 = pScrn->displayWidth;
-    AvailFBArea.y2 = (pTrident->FbMapSize - 4096) / (pScrn->displayWidth *
-					    pScrn->bitsPerPixel / 8);
-    if (AvailFBArea.y2 > 2047) AvailFBArea.y2 = 2047;
-
-    xf86InitFBManager(pScreen, &AvailFBArea);
-
     return(XAAInit(pScreen, infoPtr));
 }
 
@@ -348,6 +355,7 @@ ImageDisableClipping(ScrnInfoPtr pScrn)
     pTrident->Clipping = FALSE;
 }
     
+#if 0
 static void
 ImageSetupForSolidLine(ScrnInfoPtr pScrn, int color,
 					 int rop, unsigned int planemask)
@@ -398,6 +406,7 @@ ImageSubsequentSolidBresenhamLine( ScrnInfoPtr pScrn,
     if (!pTrident->UsePCIRetry)
     	ImageSyncClip(pScrn);
 }
+#endif
 
 static void
 ImageSetupForFillRectSolid(ScrnInfoPtr pScrn, int color, 
@@ -503,6 +512,7 @@ ImageSubsequentMono8x8PatternFillRect(ScrnInfoPtr pScrn,
     	ImageSyncClip(pScrn);
 }
 
+#if 0
 static void 
 ImageSetupForColor8x8PatternFill(ScrnInfoPtr pScrn, 
 					   int patternx, int patterny, 
@@ -536,6 +546,7 @@ ImageSubsequentColor8x8PatternFillRect(ScrnInfoPtr pScrn,
     if (!pTrident->UsePCIRetry)
     	ImageSyncClip(pScrn);
 }
+#endif
 
 static void
 ImageSetupForScanlineCPUToScreenColorExpandFill(

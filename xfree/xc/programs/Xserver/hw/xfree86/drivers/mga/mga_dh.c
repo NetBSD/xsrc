@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/mga/mga_dh.c,v 1.1 2001/04/05 17:42:32 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/mga/mga_dh.c,v 1.4 2002/01/11 15:42:57 dawes Exp $ */
 /*********************************************************************
 *  	G450: This is for Dual Head. 
 *       Matrox Graphics
@@ -140,7 +140,7 @@
 /* Set CRTC 2*/
 /* Uses the mode given by xfree86 to setup the registry */
 /* Does not write to the hard yet */
-void CRTC2Get(ScrnInfoPtr pScrn, xMODEINFO *pModeInfo)
+void MGACRTC2Get(ScrnInfoPtr pScrn, xMODEINFO *pModeInfo)
 {
     
     
@@ -166,7 +166,7 @@ void CRTC2Get(ScrnInfoPtr pScrn, xMODEINFO *pModeInfo)
     CARD32 ulDispHeight = pModeInfo->ulDispHeight;
     
 #ifdef DEBUG 
-    ErrorF("ENTER CRTC2Get\n");
+    ErrorF("ENTER MGACRTC2Get\n");
 #endif
     
     tmpModeInfo = *pModeInfo;
@@ -238,14 +238,14 @@ void CRTC2Get(ScrnInfoPtr pScrn, xMODEINFO *pModeInfo)
     pReg->crtc2[MGAREG2_C2OFFSET] = ulOffset;
 
 #ifdef DEBUG
-    ErrorF("EXIT CRTC2Get\n");
+    ErrorF("EXIT MGACRTC2Get\n");
 #endif
     
 }
 
 /* Set CRTC 2*/
 /* Writes to the hardware */
-void CRTC2Set(ScrnInfoPtr pScrn, xMODEINFO *pModeInfo)
+void MGACRTC2Set(ScrnInfoPtr pScrn, xMODEINFO *pModeInfo)
 {
     
     
@@ -253,7 +253,7 @@ void CRTC2Set(ScrnInfoPtr pScrn, xMODEINFO *pModeInfo)
     MGARegPtr pReg = &pMga->ModeReg;
 
 #ifdef DEBUG
-    ErrorF("ENTER CRTC2Set\n");
+    ErrorF("ENTER MGACRTC2Set\n");
 #endif 
 
     
@@ -275,14 +275,14 @@ void CRTC2Set(ScrnInfoPtr pScrn, xMODEINFO *pModeInfo)
     
     OUTREG(MGAREG_C2OFFSET, pReg->crtc2[MGAREG2_C2VSYNC]);
 #ifdef DEBUG    
-    ErrorF("EXIT CRTC2Set\n");
+    ErrorF("EXIT MGACRTC2Set\n");
 #endif
     
 }
 
 
-    /* Set CRTC2 on Second OutPut*/
-void EnableSecondOutPut(ScrnInfoPtr pScrn, xMODEINFO *pModeInfo)
+/* Set CRTC2 on the right output */
+void MGAEnableSecondOutPut(ScrnInfoPtr pScrn, xMODEINFO *pModeInfo)
 {
     CARD8   ucByte, ucXDispCtrl;
     CARD32   ulC2CTL, ulStatusReg;
@@ -290,7 +290,7 @@ void EnableSecondOutPut(ScrnInfoPtr pScrn, xMODEINFO *pModeInfo)
     MGARegPtr pReg;
     pReg = &pMga->ModeReg;
 #ifdef DEBUG
-    ErrorF("ENTER EnableSecondOutPut\n");
+    ErrorF("ENTER MGAEnableSecondOutPut\n");
 #endif
 
 
@@ -306,7 +306,7 @@ void EnableSecondOutPut(ScrnInfoPtr pScrn, xMODEINFO *pModeInfo)
     
     ulC2CTL &= ~(C2CTL_PIXCLKSEL_MASK | C2CTL_PIXCLKSELH_MASK);
     
-      ulC2CTL |= C2CTL_PIXCLKSEL_VIDEOPLL;   
+    ulC2CTL |= C2CTL_PIXCLKSEL_VIDEOPLL; 
 
     
     OUTREG( MGAREG_C2CTL, ulC2CTL);
@@ -332,17 +332,30 @@ void EnableSecondOutPut(ScrnInfoPtr pScrn, xMODEINFO *pModeInfo)
     ucByte &= ~0x40;
     pReg->DacRegs[MGA1064_GEN_IO_DATA]= ucByte;
     outMGAdac (MGA1064_GEN_IO_DATA, ucByte);
+   
+    /* Since G550 can swap outputs at BIOS initialisation, we must check which
+     * DAC is 'logically' used as the secondary (don't assume its DAC2 anymore) */
     
+    ulC2CTL = INREG(MGAREG_C2CTL);
+    ucXDispCtrl = inMGAdac(MGA1064_DISP_CTL);
 
+    ucXDispCtrl &= ~XDISPCTRL_DAC2OUTSEL_MASK;
+    ucXDispCtrl |=  XDISPCTRL_DAC2OUTSEL_CRTC2;
 
-    /* Route Crtc2 on Dac2*/
-    ulC2CTL = INREG( MGAREG_C2CTL);
-    ucXDispCtrl = inMGAdac( MGA1064_DISP_CTL);
-
-    ucXDispCtrl    &= ~XDISPCTRL_DAC2OUTSEL_MASK;
-    ucXDispCtrl    |= XDISPCTRL_DAC2OUTSEL_CRTC2;
-
-   /* Enable CRTC2*/
+    if (!pMga->SecondOutput) {
+        /* Route Crtc2 on Output1 */
+        ucXDispCtrl &= ~XDISPCTRL_DAC2OUTSEL_MASK;
+        ucXDispCtrl |=  XDISPCTRL_DAC2OUTSEL_CRTC1;
+        ulC2CTL     |=  C2CTL_CRTCDACSEL_CRTC2; 
+    }
+    else {
+        /* Route Crtc2 on Output2*/
+        ucXDispCtrl &= ~XDISPCTRL_DAC2OUTSEL_MASK;
+        ucXDispCtrl |=  XDISPCTRL_DAC2OUTSEL_CRTC2;
+        ulC2CTL     &= ~C2CTL_CRTCDACSEL_MASK;
+    }
+    
+    /* Enable CRTC2*/
     ulC2CTL |= C2_EN_M;
 
     pReg->dac2[ MGA1064_DISP_CTL - 0x80] =  ucXDispCtrl; 
@@ -379,7 +392,7 @@ void EnableSecondOutPut(ScrnInfoPtr pScrn, xMODEINFO *pModeInfo)
 
     
 #ifdef DEBUG
-    ErrorF("EXIT EnableSecondOutPut\n");
+    ErrorF("EXIT MGAEnableSecondOutPut\n");
 #endif
 }
 
@@ -387,7 +400,7 @@ void EnableSecondOutPut(ScrnInfoPtr pScrn, xMODEINFO *pModeInfo)
 
 
 
-void CRTC2GetPitch (ScrnInfoPtr pScrn, xMODEINFO *pModeInfo)
+void MGACRTC2GetPitch (ScrnInfoPtr pScrn, xMODEINFO *pModeInfo)
 {
     CARD32 ulOffset;
     MGAPtr pMga = MGAPTR(pScrn);
@@ -395,7 +408,7 @@ void CRTC2GetPitch (ScrnInfoPtr pScrn, xMODEINFO *pModeInfo)
     
     pReg = &pMga->ModeReg;
 #ifdef DEBUG
-    ErrorF("ENTER CRTC2GetPitch\n");
+    ErrorF("ENTER MGACRTC2GetPitch\n");
 #endif
 
     
@@ -408,17 +421,20 @@ void CRTC2GetPitch (ScrnInfoPtr pScrn, xMODEINFO *pModeInfo)
         case 32:
             ulOffset = pModeInfo->ulFBPitch * 4;
             break;
+	default:	/* Muffle compiler */
+            ulOffset = pModeInfo->ulFBPitch;
+	    break;
     }
 
     pReg->crtc2[MGAREG2_C2OFFSET] = ulOffset;
     
 #ifdef DEBUG
-    ErrorF("EXIT CRTC2GetPitch\n");
+    ErrorF("EXIT MGACRTC2GetPitch\n");
 #endif
 
 }
 
-void CRTC2SetPitch (ScrnInfoPtr pScrn, xMODEINFO *pModeInfo)
+void MGACRTC2SetPitch (ScrnInfoPtr pScrn, xMODEINFO *pModeInfo)
 {
 
     MGAPtr pMga = MGAPTR(pScrn);
@@ -440,7 +456,7 @@ void CRTC2SetPitch (ScrnInfoPtr pScrn, xMODEINFO *pModeInfo)
 
     /* Set Display Start*/
     /* base in bytes*/
-void CRTC2GetDisplayStart (ScrnInfoPtr pScrn, xMODEINFO *pModeInfo, CARD32 base, CARD32 ulX, CARD32 ulY)
+void MGACRTC2GetDisplayStart (ScrnInfoPtr pScrn, xMODEINFO *pModeInfo, CARD32 base, CARD32 ulX, CARD32 ulY)
 {
 
     CARD32 ulAddress;
@@ -449,7 +465,7 @@ void CRTC2GetDisplayStart (ScrnInfoPtr pScrn, xMODEINFO *pModeInfo, CARD32 base,
     pReg = &pMga->ModeReg;
 
 #ifdef DEBUG
-    ErrorF("ENTER CRTC2GetDisplayStart\n");
+    ErrorF("ENTER MGACRTC2GetDisplayStart\n");
 #endif
 
 
@@ -469,23 +485,23 @@ void CRTC2GetDisplayStart (ScrnInfoPtr pScrn, xMODEINFO *pModeInfo, CARD32 base,
 
     pReg->crtc2[MGAREG2_C2STARTADD0] = ulAddress + base;
 #ifdef DEBUG
-    ErrorF("EXIT CRTC2GetDisplayStart\n");
+    ErrorF("EXIT MGACRTC2GetDisplayStart\n");
 #endif
     
 }
 
-void CRTC2SetDisplayStart (ScrnInfoPtr pScrn, xMODEINFO *pModeInfo, CARD32 base, CARD32 ulX, CARD32 ulY)
+void MGACRTC2SetDisplayStart (ScrnInfoPtr pScrn, xMODEINFO *pModeInfo, CARD32 base, CARD32 ulX, CARD32 ulY)
 {
     MGAPtr pMga = MGAPTR(pScrn);
     MGARegPtr pReg;
     pReg = &pMga->ModeReg;
 #ifdef DEBUG
-    ErrorF("ENTER CRTC2SetDisplayStart\n");
+    ErrorF("ENTER MGACRTC2SetDisplayStart\n");
 #endif
     
     OUTREG(MGAREG2_C2STARTADD0,  pReg->crtc2[MGAREG2_C2STARTADD0]);  
 #ifdef DEBUG
-    ErrorF("EXIT CRTC2GetDisplayStart\n");
+    ErrorF("EXIT MGACRTC2GetDisplayStart\n");
 #endif
     
 }

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/Xext/xf86misc.c,v 3.33 2000/05/03 00:43:42 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/Xext/xf86misc.c,v 3.35 2001/08/15 16:25:20 paulo Exp $ */
 
 /*
  * Copyright (c) 1995, 1996  The XFree86 Project, Inc
@@ -29,14 +29,10 @@
 #include "../os/osdep.h"
 #include <X11/Xauth.h>
 #ifndef USL
-#ifndef ESIX
 #ifndef Lynx
 #include <sys/socket.h>
 #else
 #include <socket.h>
-#endif
-#else
-#include <lan/socket.h>
 #endif
 #endif /* USL */
 #endif
@@ -59,6 +55,7 @@ static DISPATCH_PROC(ProcXF86MiscGetKbdSettings);
 static DISPATCH_PROC(ProcXF86MiscGetMouseSettings);
 static DISPATCH_PROC(ProcXF86MiscSetKbdSettings);
 static DISPATCH_PROC(ProcXF86MiscSetMouseSettings);
+static DISPATCH_PROC(ProcXF86MiscSetGrabKeysState);
 #ifdef _XF86MISC_SAVER_COMPAT_
 static DISPATCH_PROC(ProcXF86MiscGetSaver);
 static DISPATCH_PROC(ProcXF86MiscSetSaver);
@@ -69,6 +66,7 @@ static DISPATCH_PROC(SProcXF86MiscGetKbdSettings);
 static DISPATCH_PROC(SProcXF86MiscGetMouseSettings);
 static DISPATCH_PROC(SProcXF86MiscSetKbdSettings);
 static DISPATCH_PROC(SProcXF86MiscSetMouseSettings);
+static DISPATCH_PROC(SProcXF86MiscSetGrabKeysState);
 #ifdef _XF86MISC_SAVER_COMPAT_
 static DISPATCH_PROC(SProcXF86MiscGetSaver);
 static DISPATCH_PROC(SProcXF86MiscSetSaver);
@@ -381,6 +379,38 @@ ProcXF86MiscSetKbdSettings(client)
 }
 
 static int
+ProcXF86MiscSetGrabKeysState(client)
+    register ClientPtr client;
+{
+    int n, status;
+    xXF86MiscSetGrabKeysStateReply rep;
+    REQUEST(xXF86MiscSetGrabKeysStateReq);
+
+    DEBUG_P("XF86MiscSetGrabKeysState");
+
+    REQUEST_SIZE_MATCH(xXF86MiscSetGrabKeysStateReq);
+
+    if ((status = MiscExtSetGrabKeysState(client, stuff->enable)) == 0) {
+	if (xf86GetVerbosity() > 1)
+	    ErrorF("SetGrabKeysState - %s\n",
+		   stuff->enable ? "enabled" : "disabled");
+    }
+
+    rep.type = X_Reply;
+    rep.length = 0;
+    rep.sequenceNumber = client->sequence;
+    rep.status = status;
+    if (client->swapped) {
+    	swaps(&rep.sequenceNumber, n);
+    	swapl(&rep.length, n);
+    	swapl(&rep.status, n);
+    }
+    WriteToClient(client, SIZEOF(xXF86MiscSetGrabKeysStateReply), (char *)&rep);
+
+    return (client->noClientException);
+}
+
+static int
 ProcXF86MiscDispatch (client)
     register ClientPtr	client;
 {
@@ -408,6 +438,8 @@ ProcXF86MiscDispatch (client)
 		    return ProcXF86MiscSetMouseSettings(client);
 	        case X_XF86MiscSetKbdSettings:
 		    return ProcXF86MiscSetKbdSettings(client);
+		case X_XF86MiscSetGrabKeysState:
+		    return ProcXF86MiscSetGrabKeysState(client);
 	        default:
 		    return BadRequest;
 	    }
@@ -509,6 +541,18 @@ SProcXF86MiscSetKbdSettings(client)
 }
 
 static int
+SProcXF86MiscSetGrabKeysState(client)
+    ClientPtr client;
+{
+    register int n;
+    REQUEST(xXF86MiscSetGrabKeysStateReq);
+    swaps(&stuff->length, n);
+    REQUEST_SIZE_MATCH(xXF86MiscSetGrabKeysStateReq);
+    swaps(&stuff->enable, n);
+    return ProcXF86MiscSetGrabKeysState(client);
+}
+
+static int
 SProcXF86MiscDispatch (client)
     register ClientPtr	client;
 {
@@ -536,6 +580,8 @@ SProcXF86MiscDispatch (client)
 		    return SProcXF86MiscSetMouseSettings(client);
 	        case X_XF86MiscSetKbdSettings:
 		    return SProcXF86MiscSetKbdSettings(client);
+	        case X_XF86MiscSetGrabKeysState:
+		    return SProcXF86MiscSetGrabKeysState(client);
 	        default:
 		    return BadRequest;
 	    }

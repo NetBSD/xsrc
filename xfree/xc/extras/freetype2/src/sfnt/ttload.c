@@ -5,7 +5,7 @@
 /*    Load the basic TrueType tables, i.e., tables that can be either in   */
 /*    TTF or OTF fonts (body).                                             */
 /*                                                                         */
-/*  Copyright 1996-2000 by                                                 */
+/*  Copyright 1996-2001 by                                                 */
 /*  David Turner, Robert Wilhelm, and Werner Lemberg.                      */
 /*                                                                         */
 /*  This file is part of the FreeType project, and may only be used,       */
@@ -19,12 +19,14 @@
 
 #include <ft2build.h>
 #include FT_INTERNAL_DEBUG_H
-#include FT_INTERNAL_TRUETYPE_ERRORS_H
 #include FT_INTERNAL_STREAM_H
 #include FT_TRUETYPE_TAGS_H
 #include "ttload.h"
 #include "ttcmap.h"
 
+#include "sferrors.h"
+
+#include <stdlib.h>  /* for qsort */
 
   /*************************************************************************/
   /*                                                                       */
@@ -51,9 +53,9 @@
   /* <Return>                                                              */
   /*    A pointer to the table directory entry.  0 if not found.           */
   /*                                                                       */
-  FT_LOCAL_DEF
-  TT_Table*  TT_LookUp_Table( TT_Face   face,
-                              FT_ULong  tag  )
+  FT_LOCAL_DEF TT_Table*
+  TT_LookUp_Table( TT_Face   face,
+                   FT_ULong  tag  )
   {
     TT_Table*  entry;
     TT_Table*  limit;
@@ -102,11 +104,11 @@
   /* <Return>                                                              */
   /*    FreeType error code.  0 means success.                             */
   /*                                                                       */
-  FT_LOCAL_DEF
-  FT_Error  TT_Goto_Table( TT_Face    face,
-                           FT_ULong   tag,
-                           FT_Stream  stream,
-                           FT_ULong*  length )
+  FT_LOCAL_DEF FT_Error
+  TT_Goto_Table( TT_Face    face,
+                 FT_ULong   tag,
+                 FT_Stream  stream,
+                 FT_ULong*  length )
   {
     TT_Table*  table;
     FT_Error   error;
@@ -122,7 +124,7 @@
        goto Exit;
     }
     else
-      error = TT_Err_Table_Missing;
+      error = SFNT_Err_Table_Missing;
 
   Exit:
     return error;
@@ -157,11 +159,11 @@
   /*    The header will be checked whether it is valid by looking at the   */
   /*    values of `search_range', `entry_selector', and `range_shift'.     */
   /*                                                                       */
-  FT_LOCAL_DEF
-  FT_Error  TT_Load_SFNT_Header( TT_Face       face,
-                                 FT_Stream     stream,
-                                 FT_Long       face_index,
-                                 SFNT_Header*  sfnt )
+  FT_LOCAL_DEF FT_Error
+  TT_Load_SFNT_Header( TT_Face       face,
+                       FT_Stream     stream,
+                       FT_Long       face_index,
+                       SFNT_Header*  sfnt )
   {
     FT_Error   error;
     FT_ULong   format_tag;
@@ -233,7 +235,7 @@
       /* check face index */
       if ( face_index >= face->ttc_header.count )
       {
-        error = TT_Err_Bad_Argument;
+        error = SFNT_Err_Bad_Argument;
         goto Exit;
       }
 
@@ -262,7 +264,7 @@
            entry_selector * 2 <= num_tables )
       {
         FT_TRACE2(( "TT_Load_SFNT_Header: file is not SFNT!\n" ));
-        error = FT_Err_Unknown_File_Format;
+        error = SFNT_Err_Unknown_File_Format;
       }
     }
 
@@ -292,10 +294,10 @@
   /* <Note>                                                                */
   /*    The stream cursor must be at the font file's origin.               */
   /*                                                                       */
-  FT_LOCAL_DEF
-  FT_Error  TT_Load_Directory( TT_Face       face,
-                               FT_Stream     stream,
-                               SFNT_Header*  sfnt )
+  FT_LOCAL_DEF FT_Error
+  TT_Load_Directory( TT_Face       face,
+                     FT_Stream     stream,
+                     SFNT_Header*  sfnt )
   {
     FT_Error   error;
     FT_Memory  memory = stream->memory;
@@ -386,12 +388,12 @@
   /* <Return>                                                              */
   /*    FreeType error code.  0 means success.                             */
   /*                                                                       */
-  FT_LOCAL_DEF
-  FT_Error  TT_Load_Any( TT_Face    face,
-                         FT_ULong   tag,
-                         FT_Long    offset,
-                         FT_Byte*   buffer,
-                         FT_ULong*  length )
+  FT_LOCAL_DEF FT_Error
+  TT_Load_Any( TT_Face    face,
+               FT_ULong   tag,
+               FT_Long    offset,
+               FT_Byte*   buffer,
+               FT_ULong*  length )
   {
     FT_Error   error;
     FT_Stream  stream;
@@ -405,7 +407,7 @@
       table = TT_LookUp_Table( face, tag );
       if ( !table )
       {
-        error = TT_Err_Table_Missing;
+        error = SFNT_Err_Table_Missing;
         goto Exit;
       }
 
@@ -420,7 +422,7 @@
     {
       *length = size;
 
-      return TT_Err_Ok;
+      return SFNT_Err_Ok;
     }
 
     if ( length )
@@ -451,10 +453,10 @@
   /* <Return>                                                              */
   /*    FreeType error code.  0 means success.                             */
   /*                                                                       */
-  static
-  FT_Error  TT_Load_Generic_Header( TT_Face    face,
-                                    FT_Stream  stream,
-                                    FT_ULong   tag )
+  static FT_Error
+  TT_Load_Generic_Header( TT_Face    face,
+                          FT_Stream  stream,
+                          FT_ULong   tag )
   {
     FT_Error    error;
     TT_Header*  header;
@@ -499,7 +501,7 @@
     error = face->goto_table( face, tag, stream, 0 );
     if ( error )
     {
-      FT_TRACE2(( "TT_Load_Generic_Table: Font table is missing!\n" ));
+      FT_TRACE2(( "TT_Load_Generic_Header: Font table is missing!\n" ));
       goto Exit;
     }
 
@@ -510,16 +512,16 @@
 
     FT_TRACE2(( "    Units per EM: %8u\n", header->Units_Per_EM ));
     FT_TRACE2(( "    IndexToLoc:   %8d\n", header->Index_To_Loc_Format ));
-    FT_TRACE2(( "TT_Load_Generic_Table: Font table loaded.\n" ));
+    FT_TRACE2(( "TT_Load_Generic_Header: Font table loaded.\n" ));
 
   Exit:
     return error;
   }
 
 
-  FT_LOCAL_DEF
-  FT_Error  TT_Load_Header( TT_Face    face,
-                            FT_Stream  stream )
+  FT_LOCAL_DEF FT_Error
+  TT_Load_Header( TT_Face    face,
+                  FT_Stream  stream )
   {
     return TT_Load_Generic_Header( face, stream, TTAG_head );
   }
@@ -527,9 +529,9 @@
 
 #ifdef TT_CONFIG_OPTION_EMBEDDED_BITMAPS
 
-  FT_LOCAL_DEF
-  FT_Error  TT_Load_Bitmap_Header( TT_Face    face,
-                                   FT_Stream  stream )
+  FT_LOCAL_DEF FT_Error
+  TT_Load_Bitmap_Header( TT_Face    face,
+                         FT_Stream  stream )
   {
     return TT_Load_Generic_Header( face, stream, TTAG_bhed );
   }
@@ -552,9 +554,9 @@
   /* <Return>                                                              */
   /*    FreeType error code.  0 means success.                             */
   /*                                                                       */
-  FT_LOCAL_DEF
-  FT_Error  TT_Load_MaxProfile( TT_Face    face,
-                                FT_Stream  stream )
+  FT_LOCAL_DEF FT_Error
+  TT_Load_MaxProfile( TT_Face    face,
+                      FT_Stream  stream )
   {
     FT_Error        error;
     TT_MaxProfile*  maxProfile = &face->max_profile;
@@ -564,9 +566,15 @@
 #undef  FT_STRUCTURE
 #define FT_STRUCTURE  TT_MaxProfile
 
-      FT_FRAME_START( 32 ),
-        FT_FRAME_ULONG ( version ),
+      FT_FRAME_START( 6 ),
+        FT_FRAME_LONG  ( version ),
         FT_FRAME_USHORT( numGlyphs ),
+      FT_FRAME_END
+    };
+
+    const FT_Frame_Field  maxp_fields_extra[] =
+    {
+      FT_FRAME_START( 26 ),
         FT_FRAME_USHORT( maxPoints ),
         FT_FRAME_USHORT( maxContours ),
         FT_FRAME_USHORT( maxCompositePoints ),
@@ -580,7 +588,8 @@
         FT_FRAME_USHORT( maxSizeOfInstructions ),
         FT_FRAME_USHORT( maxComponentElements ),
         FT_FRAME_USHORT( maxComponentDepth ),
-      FT_FRAME_END };
+      FT_FRAME_END
+    };
 
 
     FT_TRACE2(( "Load_TT_MaxProfile: %08p\n", face ));
@@ -592,35 +601,57 @@
     if ( READ_Fields( maxp_fields, maxProfile ) )
       goto Exit;
 
-    /* XXX: an adjustment that is necessary to load certain */
-    /*      broken fonts like `Keystrokes MT' :-(           */
-    /*                                                      */
-    /*   We allocate 64 function entries by default when    */
-    /*   the maxFunctionDefs field is null.                 */
+    maxProfile->maxPoints             = 0;
+    maxProfile->maxContours           = 0;
+    maxProfile->maxCompositePoints    = 0;
+    maxProfile->maxCompositeContours  = 0;
+    maxProfile->maxZones              = 0;
+    maxProfile->maxTwilightPoints     = 0;
+    maxProfile->maxStorage            = 0;
+    maxProfile->maxFunctionDefs       = 0;
+    maxProfile->maxInstructionDefs    = 0;
+    maxProfile->maxStackElements      = 0;
+    maxProfile->maxSizeOfInstructions = 0;
+    maxProfile->maxComponentElements  = 0;
+    maxProfile->maxComponentDepth     = 0;
 
-    if ( maxProfile->maxFunctionDefs == 0 )
-      maxProfile->maxFunctionDefs = 64;
+    if ( maxProfile->version >= 0x10000L )
+    {
+      if ( READ_Fields( maxp_fields_extra, maxProfile ) )
+        goto Exit;
 
-    face->root.num_glyphs = maxProfile->numGlyphs;
+      /* XXX: an adjustment that is necessary to load certain */
+      /*      broken fonts like `Keystrokes MT' :-(           */
+      /*                                                      */
+      /*   We allocate 64 function entries by default when    */
+      /*   the maxFunctionDefs field is null.                 */
 
-    face->root.internal->max_points = MAX( maxProfile->maxCompositePoints,
-                                           maxProfile->maxPoints );
+      if ( maxProfile->maxFunctionDefs == 0 )
+        maxProfile->maxFunctionDefs = 64;
 
-    face->root.internal->max_contours = MAX( maxProfile->maxCompositeContours,
-                                             maxProfile->maxContours );
+      face->root.num_glyphs = maxProfile->numGlyphs;
 
-    face->max_components = (FT_ULong)maxProfile->maxComponentElements +
-                           maxProfile->maxComponentDepth;
+      face->root.internal->max_points =
+        (FT_UShort)MAX( maxProfile->maxCompositePoints,
+                        maxProfile->maxPoints );
 
-    /* XXX: some fonts have maxComponents set to 0; we will */
-    /*      then use 16 of them by default.                 */
-    if ( face->max_components == 0 )
-      face->max_components = 16;
+      face->root.internal->max_contours =
+        (FT_Short)MAX( maxProfile->maxCompositeContours,
+                       maxProfile->maxContours );
 
-    /* We also increase maxPoints and maxContours in order to support */
-    /* some broken fonts.                                             */
-    face->root.internal->max_points   += 8;
-    face->root.internal->max_contours += 4;
+      face->max_components = (FT_ULong)maxProfile->maxComponentElements +
+                             maxProfile->maxComponentDepth;
+
+      /* XXX: some fonts have maxComponents set to 0; we will */
+      /*      then use 16 of them by default.                 */
+      if ( face->max_components == 0 )
+        face->max_components = 16;
+
+      /* We also increase maxPoints and maxContours in order to support */
+      /* some broken fonts.                                             */
+      face->root.internal->max_points   += (FT_UShort) 8;
+      face->root.internal->max_contours += (FT_Short)  4;
+    }
 
     FT_TRACE2(( "MAXP loaded.\n" ));
 
@@ -645,10 +676,10 @@
   /* <Return>                                                              */
   /*    FreeType error code.  0 means success.                             */
   /*                                                                       */
-  static
-  FT_Error  TT_Load_Metrics( TT_Face    face,
-                             FT_Stream  stream,
-                             FT_Bool    vertical )
+  static FT_Error
+  TT_Load_Metrics( TT_Face    face,
+                   FT_Stream  stream,
+                   FT_Bool    vertical )
   {
     FT_Error   error;
     FT_Memory  memory = stream->memory;
@@ -679,7 +710,7 @@
         /* Set number_Of_VMetrics to 0! */
         FT_TRACE2(( "  no vertical header in file.\n" ));
         face->vertical.number_Of_VMetrics = 0;
-        error = TT_Err_Ok;
+        error = SFNT_Err_Ok;
         goto Exit;
       }
 
@@ -693,7 +724,7 @@
       if ( error )
       {
         FT_ERROR(( " no horizontal metrics in file!\n" ));
-        error = TT_Err_Hmtx_Table_Missing;
+        error = SFNT_Err_Hmtx_Table_Missing;
         goto Exit;
       }
 
@@ -713,8 +744,8 @@
                  vertical ? "Vertical"
                           : "Horizontal" ));
 
-      error = vertical ? TT_Err_Invalid_Vert_Metrics
-                       : TT_Err_Invalid_Horiz_Metrics;
+      error = vertical ? SFNT_Err_Invalid_Vert_Metrics
+                       : SFNT_Err_Invalid_Horiz_Metrics;
       goto Exit;
     }
 
@@ -751,7 +782,7 @@
       /* fonts usually only, nothing serious will happen        */
       if ( num_shorts > num_shorts_checked && num_shorts_checked > 0 )
       {
-        FT_Short  val = *(shorts)[num_shorts_checked - 1];
+        FT_Short  val = (*shorts)[num_shorts_checked - 1];
 
 
         limit = *shorts + num_shorts;
@@ -785,10 +816,10 @@
   /* <Return>                                                              */
   /*    FreeType error code.  0 means success.                             */
   /*                                                                       */
-  FT_LOCAL_DEF
-  FT_Error  TT_Load_Metrics_Header( TT_Face    face,
-                                    FT_Stream  stream,
-                                    FT_Bool    vertical )
+  FT_LOCAL_DEF FT_Error
+  TT_Load_Metrics_Header( TT_Face    face,
+                          FT_Stream  stream,
+                          FT_Bool    vertical )
   {
     FT_Error        error;
     TT_HoriHeader*  header;
@@ -809,11 +840,11 @@
         FT_FRAME_SHORT ( xMax_Extent ),
         FT_FRAME_SHORT ( caret_Slope_Rise ),
         FT_FRAME_SHORT ( caret_Slope_Run ),
+        FT_FRAME_SHORT ( caret_Offset ),
         FT_FRAME_SHORT ( Reserved[0] ),
         FT_FRAME_SHORT ( Reserved[1] ),
         FT_FRAME_SHORT ( Reserved[2] ),
         FT_FRAME_SHORT ( Reserved[3] ),
-        FT_FRAME_SHORT ( Reserved[4] ),
         FT_FRAME_SHORT ( metric_Data_Format ),
         FT_FRAME_USHORT( number_Of_HMetrics ),
       FT_FRAME_END
@@ -831,7 +862,7 @@
       error = face->goto_table( face, TTAG_vhea, stream, 0 );
       if ( error )
       {
-        error = TT_Err_Ok;
+        error = SFNT_Err_Ok;
         goto Exit;
       }
 
@@ -845,7 +876,7 @@
       error = face->goto_table( face, TTAG_hhea, stream, 0 );
       if ( error )
       {
-        error = TT_Err_Horiz_Header_Missing;
+        error = SFNT_Err_Horiz_Header_Missing;
         goto Exit;
       }
 
@@ -884,9 +915,9 @@
   /* <Return>                                                              */
   /*    FreeType error code.  0 means success.                             */
   /*                                                                       */
-  FT_LOCAL_DEF
-  FT_Error  TT_Load_Names( TT_Face    face,
-                           FT_Stream  stream )
+  FT_LOCAL_DEF FT_Error
+  TT_Load_Names( TT_Face    face,
+                 FT_Stream  stream )
   {
     FT_Error   error;
     FT_Memory  memory = stream->memory;
@@ -931,7 +962,7 @@
     {
       /* The name table is required so indicate failure. */
       FT_TRACE2(( "is missing!\n" ));
-      error = TT_Err_Name_Table_Missing;
+      error = SFNT_Err_Name_Table_Missing;
       goto Exit;
     }
 
@@ -1050,8 +1081,8 @@
   /* <Input>                                                               */
   /*    face :: A handle to the target face object.                        */
   /*                                                                       */
-  FT_LOCAL_DEF
-  void  TT_Free_Names( TT_Face  face )
+  FT_LOCAL_DEF void
+  TT_Free_Names( TT_Face  face )
   {
     FT_Memory      memory = face->root.driver->root.memory;
     TT_NameTable*  names  = &face->name_table;
@@ -1085,9 +1116,9 @@
   /* <Return>                                                              */
   /*    FreeType error code.  0 means success.                             */
   /*                                                                       */
-  FT_LOCAL_DEF
-  FT_Error  TT_Load_CMap( TT_Face    face,
-                          FT_Stream  stream )
+  FT_LOCAL_DEF FT_Error
+  TT_Load_CMap( TT_Face    face,
+                FT_Stream  stream )
   {
     FT_Error    error;
     FT_Memory   memory = stream->memory;
@@ -1110,10 +1141,9 @@
 #undef  FT_STRUCTURE
 #define FT_STRUCTURE  TT_CMapTable
 
-      FT_FRAME_START( 6 ),
+      FT_FRAME_START( 4 ),
         FT_FRAME_USHORT( format ),
         FT_FRAME_USHORT( length ),
-        FT_FRAME_USHORT( version ),
       FT_FRAME_END
     };
 
@@ -1123,7 +1153,7 @@
     error = face->goto_table( face, TTAG_cmap, stream, 0 );
     if ( error )
     {
-      error = TT_Err_CMap_Table_Missing;
+      error = SFNT_Err_CMap_Table_Missing;
       goto Exit;
     }
 
@@ -1200,18 +1230,18 @@
   /* <Return>                                                              */
   /*    FreeType error code.  0 means success.                             */
   /*                                                                       */
-  FT_LOCAL_DEF
-  FT_Error  TT_Load_OS2( TT_Face    face,
-                         FT_Stream  stream )
+  FT_LOCAL_DEF FT_Error
+  TT_Load_OS2( TT_Face    face,
+               FT_Stream  stream )
   {
     FT_Error  error;
     TT_OS2*   os2;
 
+    const FT_Frame_Field  os2_fields[] =
+    {
 #undef  FT_STRUCTURE
 #define FT_STRUCTURE  TT_OS2
 
-    const FT_Frame_Field  os2_fields[] =
-    {
       FT_FRAME_START( 78 ),
         FT_FRAME_USHORT( version ),
         FT_FRAME_SHORT ( xAvgCharWidth ),
@@ -1289,7 +1319,7 @@
     {
       FT_TRACE2(( "is missing!\n" ));
       face->os2.version = 0xFFFF;
-      error = TT_Err_Ok;
+      error = SFNT_Err_Ok;
       goto Exit;
     }
 
@@ -1300,6 +1330,11 @@
 
     os2->ulCodePageRange1 = 0;
     os2->ulCodePageRange2 = 0;
+    os2->sxHeight         = 0;
+    os2->sCapHeight       = 0;
+    os2->usDefaultChar    = 0;
+    os2->usBreakChar      = 0;
+    os2->usMaxContext     = 0;
 
     if ( os2->version >= 0x0001 )
     {
@@ -1337,9 +1372,9 @@
   /* <Return>                                                              */
   /*    FreeType error code.  0 means success.                             */
   /*                                                                       */
-  FT_LOCAL_DEF
-  FT_Error  TT_Load_PostScript( TT_Face    face,
-                                FT_Stream  stream )
+  FT_LOCAL_DEF FT_Error
+  TT_Load_PostScript( TT_Face    face,
+                      FT_Stream  stream )
   {
     FT_Error        error;
     TT_Postscript*  post = &face->postscript;
@@ -1367,7 +1402,7 @@
 
     error = face->goto_table( face, TTAG_post, stream, 0 );
     if ( error )
-      return TT_Err_Post_Table_Missing;
+      return SFNT_Err_Post_Table_Missing;
 
     if ( READ_Fields( post_fields, post ) )
       return error;
@@ -1376,7 +1411,7 @@
     /* module (ttpost).                                     */
     FT_TRACE2(( "loaded\n" ));
 
-    return TT_Err_Ok;
+    return SFNT_Err_Ok;
   }
 
 
@@ -1395,9 +1430,9 @@
   /* <Return>                                                              */
   /*    FreeType error code.  0 means success.                             */
   /*                                                                       */
-  FT_LOCAL_DEF
-  FT_Error  TT_Load_PCLT( TT_Face    face,
-                          FT_Stream  stream )
+  FT_LOCAL_DEF FT_Error
+  TT_Load_PCLT( TT_Face    face,
+                FT_Stream  stream )
   {
     static const FT_Frame_Field  pclt_fields[] =
     {
@@ -1434,7 +1469,7 @@
     {
       FT_TRACE2(( "missing (optional)\n" ));
       pclt->Version = 0;
-      return TT_Err_Ok;
+      return SFNT_Err_Ok;
     }
 
     if ( READ_Fields( pclt_fields, pclt ) )
@@ -1462,9 +1497,9 @@
   /* <Return>                                                              */
   /*    FreeType error code.  0 means success.                             */
   /*                                                                       */
-  FT_LOCAL_DEF
-  FT_Error  TT_Load_Gasp( TT_Face    face,
-                          FT_Stream  stream )
+  FT_LOCAL_DEF FT_Error
+  TT_Load_Gasp( TT_Face    face,
+                FT_Stream  stream )
   {
     FT_Error   error;
     FT_Memory  memory = stream->memory;
@@ -1478,7 +1513,7 @@
     /* the gasp table is optional */
     error = face->goto_table( face, TTAG_gasp, stream, 0 );
     if ( error )
-      return TT_Err_Ok;
+      return SFNT_Err_Ok;
 
     if ( ACCESS_Frame( 4L ) )
       goto Exit;
@@ -1516,6 +1551,11 @@
   }
 
 
+  FT_CALLBACK_DEF( int )
+  tt_kern_pair_compare( const void*  a,
+                        const void*  b );
+
+
   /*************************************************************************/
   /*                                                                       */
   /* <Function>                                                            */
@@ -1534,25 +1574,25 @@
   /* <Return>                                                              */
   /*    FreeType error code.  0 means success.                             */
   /*                                                                       */
-  FT_LOCAL_DEF
-  FT_Error  TT_Load_Kern( TT_Face    face,
-                          FT_Stream  stream )
+  FT_LOCAL_DEF FT_Error
+  TT_Load_Kern( TT_Face    face,
+                FT_Stream  stream )
   {
     FT_Error   error;
     FT_Memory  memory = stream->memory;
 
-    FT_UInt    n, num_tables, version;
+    FT_UInt    n, num_tables;
 
 
     /* the kern table is optional; exit silently if it is missing */
     error = face->goto_table( face, TTAG_kern, stream, 0 );
     if ( error )
-      return TT_Err_Ok;
+      return SFNT_Err_Ok;
 
     if ( ACCESS_Frame( 4L ) )
       goto Exit;
 
-    version    = GET_UShort();
+    (void)GET_UShort();         /* version */
     num_tables = GET_UShort();
 
     FORGET_Frame();
@@ -1566,7 +1606,7 @@
       if ( ACCESS_Frame( 6L ) )
         goto Exit;
 
-      version  = GET_UShort();      /* version                 */
+      (void)GET_UShort();           /* version                 */
       length   = GET_UShort() - 6;  /* substract header length */
       coverage = GET_UShort();
 
@@ -1607,6 +1647,27 @@
 
         face->num_kern_pairs   = num_pairs;
         face->kern_table_index = n;
+
+        /* ensure that the kerning pair table is sorted (yes, some */
+        /* fonts have unsorted tables!)                            */
+        {
+          FT_UInt          i;
+          TT_Kern_0_Pair*  pair0;
+
+
+          pair0 = face->kern_pairs;
+
+          for ( i = 1; i < num_pairs; i++, pair0++ )
+          {
+            if ( tt_kern_pair_compare( pair0, pair0 + 1 ) != -1 )
+            {
+              qsort( (void*)face->kern_pairs, (int)num_pairs,
+                     sizeof ( TT_Kern_0_Pair ), tt_kern_pair_compare );
+              break;
+            }
+          }
+        }
+
         goto Exit;
       }
 
@@ -1624,6 +1685,27 @@
   }
 
 
+#undef  TT_KERN_INDEX
+#define TT_KERN_INDEX( g1, g2 )  ( ( (FT_ULong)g1 << 16 ) | g2 )
+
+  FT_CALLBACK_DEF( int )
+  tt_kern_pair_compare( const void*  a,
+                        const void*  b )
+  {
+    TT_Kern_0_Pair*  pair1 = (TT_Kern_0_Pair*)a;
+    TT_Kern_0_Pair*  pair2 = (TT_Kern_0_Pair*)b;
+
+    FT_ULong  index1 = TT_KERN_INDEX( pair1->left, pair1->right );
+    FT_ULong  index2 = TT_KERN_INDEX( pair2->left, pair2->right );
+
+
+    return ( index1 < index2 ? -1 :
+           ( index1 > index2 ?  1 : 0 ));
+  }
+
+#undef TT_KERN_INDEX
+
+
   /*************************************************************************/
   /*                                                                       */
   /* <Function>                                                            */
@@ -1639,9 +1721,9 @@
   /* <Return>                                                              */
   /*    FreeType error code.  0 means success.                             */
   /*                                                                       */
-  FT_LOCAL_DEF
-  FT_Error  TT_Load_Hdmx( TT_Face    face,
-                          FT_Stream  stream )
+  FT_LOCAL_DEF FT_Error
+  TT_Load_Hdmx( TT_Face    face,
+                FT_Stream  stream )
   {
     FT_Error  error;
     FT_Memory memory = stream->memory;
@@ -1658,7 +1740,7 @@
     /* this table is optional */
     error = face->goto_table( face, TTAG_hdmx, stream, 0 );
     if ( error )
-      return TT_Err_Ok;
+      return SFNT_Err_Ok;
 
     if ( ACCESS_Frame( 8L ) )
       goto Exit;
@@ -1717,8 +1799,8 @@
   /* <Input>                                                               */
   /*    face :: A handle to the target face object.                        */
   /*                                                                       */
-  FT_LOCAL_DEF
-  void  TT_Free_Hdmx( TT_Face  face )
+  FT_LOCAL_DEF void
+  TT_Free_Hdmx( TT_Face  face )
   {
     if ( face )
     {

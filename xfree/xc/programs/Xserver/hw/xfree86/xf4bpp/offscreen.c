@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xf4bpp/offscreen.c,v 1.4 1999/10/13 20:04:26 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xf4bpp/offscreen.c,v 1.5 2001/08/01 00:44:56 tsi Exp $ */
 /*
  * Copyright 1993 Gerrit Jan Akkerman 
  *
@@ -231,8 +231,8 @@ xygetbits
 {
 	register unsigned char bits ;
 	unsigned const char *lineptr, *cptr ;
-	register shift ;
-	register wrap ;
+	register int shift ;
+	register int wrap ;
 
 	x = x % Width;
 	y = y % Height;

@@ -1,5 +1,5 @@
 /*
- * Copyright 1997 through 2001 by Marc Aurele La France (TSI @ UQV), tsi@xfree86.org
+ * Copyright 1997 through 2002 by Marc Aurele La France (TSI @ UQV), tsi@xfree86.org
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -20,7 +20,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $XFree86: xc/programs/Xserver/mi/mibank.h,v 1.7 2001/01/06 20:58:12 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/mi/mibank.h,v 1.9 2002/01/16 16:22:32 tsi Exp $ */
 
 #ifndef __MIBANK_H__
 #define __MIBANK_H__ 1
@@ -37,10 +37,8 @@
  * etc.
  */
 typedef int miBankProc(
-#if NeedFunctionPrototypes
     ScreenPtr /*pScreen*/,
     unsigned int /*iBank*/
-#endif
 );
 
 typedef miBankProc *miBankProcPtr;
@@ -90,21 +88,17 @@ typedef struct _miBankInfo
 
 Bool
 miInitializeBanking(
-#if NeedFunctionPrototypes
     ScreenPtr /*pScreen*/,
     unsigned int /*xsize*/,
     unsigned int /*ysize*/,
     unsigned int /*width*/,
     miBankInfoPtr /*pBankInfo*/
-#endif
 );
 
 Bool
 miModifyBanking(
-#if NeedFunctionPrototypes
     ScreenPtr /*pScreen*/,
     miBankInfoPtr /*pBankInfo*/
-#endif
 );
 
 /*
@@ -114,14 +108,12 @@ miModifyBanking(
  */
 int
 miScanLineWidth(
-#if NeedFunctionPrototypes
     unsigned int /*xsize*/,
     unsigned int /*ysize*/,
     unsigned int /*width*/,
     unsigned long /*BankSize*/,
     PixmapFormatRec * /*pBankFormat*/,
     unsigned int /*nWidthUnit*/
-#endif
 );
 
 #endif /* __MIBANK_H__ */

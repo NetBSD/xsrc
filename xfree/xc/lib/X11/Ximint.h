@@ -30,7 +30,7 @@ PERFORMANCE OF THIS SOFTWARE.
 			       makoto@sm.sony.co.jp
 
 ******************************************************************/
-/* $XFree86: xc/lib/X11/Ximint.h,v 3.9 2001/01/17 19:41:49 dawes Exp $ */
+/* $XFree86: xc/lib/X11/Ximint.h,v 3.10 2001/07/25 15:04:44 dawes Exp $ */
 
 #ifndef _XIMINT_H
 #define _XIMINT_H
@@ -40,12 +40,6 @@ PERFORMANCE OF THIS SOFTWARE.
 
 #define Public /**/
 #define Private static
-
-#ifdef __STDC__
-#define Const const
-#else
-#define Const /**/
-#endif
 
 typedef struct _Xim	*Xim;
 typedef struct _Xic	*Xic;
@@ -192,7 +186,7 @@ typedef struct _XimDefICValues {
 
 XPointer _XimGetLocaleCode (
 #if NeedFunctionPrototypes
-    Const char	*encoding_name
+    const char	*encoding_name
 #endif
 );
 

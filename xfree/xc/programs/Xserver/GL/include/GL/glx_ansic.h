@@ -1,7 +1,7 @@
 #ifndef _glx_ansic_h_
 #define _glx_ansic_h_
 
-/* $XFree86: xc/programs/Xserver/GL/include/GL/glx_ansic.h,v 1.5 2001/03/21 20:49:08 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/GL/include/GL/glx_ansic.h,v 1.6 2002/01/10 21:51:47 tsi Exp $ */
 /*
 ** License Applicability. Except to the extent portions of this file are
 ** made subject to an alternative license as permitted in the SGI Free
@@ -52,7 +52,9 @@
 
 #ifdef XFree86Server
 
+#ifdef XFree86LOADER
 #include "xf86_ansic.h"
+#endif
 #ifndef assert
 #define assert(a)
 #endif

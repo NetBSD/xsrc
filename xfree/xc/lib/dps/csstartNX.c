@@ -35,6 +35,7 @@
  * 
  * Author:  Adobe Systems Incorporated
  */
+/* $XFree86: xc/lib/dps/csstartNX.c,v 1.6 2001/10/28 03:32:43 tsi Exp $ */
 
 #include <sys/param.h>
 #include <X11/X.h>
@@ -53,9 +54,7 @@
 
 /* ---Defines--- */
 
-#ifndef NULL
-#define NULL (void *) 0
-#endif
+#include <stddef.h>
   
 #define DOZETIME 1              /* time to wait for agent to start up (sec) */
 
@@ -80,7 +79,6 @@ TryTCP(void)
 {
     struct sockaddr_in insock;
     int request;
-    int retry;
     unsigned short port, startPort = 0;
     struct servent *serventInfo;
     int okay;

@@ -7,7 +7,7 @@ char rcsId_vmwareblt[] =
 
     "Id: vmwareblt.c,v 1.4 2001/01/27 00:28:15 bennett Exp $";
 #endif
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/vmware/vmwareblt.c,v 1.2 2001/05/16 06:48:12 keithp Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/vmware/vmwareblt.c,v 1.3 2001/09/05 22:13:10 keithp Exp $ */
 
 #include "X.h"
 #include "fb.h"
@@ -26,7 +26,6 @@ vmwareDoBitblt(DrawablePtr  pSrc,
 	       Pixel	    bitplane,
 	       void	    *closure)
 {
-    BoxPtr pboxTmp, pboxNext, pboxBase, pboxNew1, pboxNew2;
     VMWAREPtr pVMWARE;
     CARD8   alu;
 
@@ -36,53 +35,6 @@ vmwareDoBitblt(DrawablePtr  pSrc,
     else
 	alu = GXcopy;
 
-    pboxNew1 = NULL;
-    pboxNew2 = NULL;
-    if (upsidedown) {
-	if (nbox > 1) {
-	    /* keep ordering in each band, reverse order of bands */
-	    pboxNew1 = (BoxPtr) ALLOCATE_LOCAL(sizeof(BoxRec) * nbox);
-	    if (!pboxNew1)
-		return;
-	    pboxBase = pboxNext = pbox + nbox - 1;
-	    while (pboxBase >= pbox) {
-		while ((pboxNext >= pbox) && (pboxBase->y1 == pboxNext->y1))
-		    pboxNext--;
-		pboxTmp = pboxNext + 1;
-		while (pboxTmp <= pboxBase) {
-		    *pboxNew1++ = *pboxTmp++;
-		}
-		pboxBase = pboxNext;
-	    }
-	    pboxNew1 -= nbox;
-	    pbox = pboxNew1;
-	}
-    }
-    if (reverse) {
-	if (nbox > 1) {
-	    /* reverse order of rects in each band */
-	    pboxNew2 = (BoxPtr) ALLOCATE_LOCAL(sizeof(BoxRec) * nbox);
-	    if (!pboxNew2) {
-		if (pboxNew2)
-		    DEALLOCATE_LOCAL(pboxNew2);
-		if (pboxNew1)
-		    DEALLOCATE_LOCAL(pboxNew1);
-		return;
-	    }
-	    pboxBase = pboxNext = pbox;
-	    while (pboxBase < pbox + nbox) {
-		while ((pboxNext < pbox + nbox) &&
-		    (pboxNext->y1 == pboxBase->y1)) pboxNext++;
-		pboxTmp = pboxNext;
-		while (pboxTmp != pboxBase) {
-		    *pboxNew2++ = *--pboxTmp;
-		}
-		pboxBase = pboxNext;
-	    }
-	    pboxNew2 -= nbox;
-	    pbox = pboxNew2;
-	}
-    }
     /* Send the commands */
     while (nbox--) {
 	vmwareWriteWordToFIFO(pVMWARE, SVGA_CMD_RECT_ROP_COPY);
@@ -92,14 +44,8 @@ vmwareDoBitblt(DrawablePtr  pSrc,
 	vmwareWriteWordToFIFO(pVMWARE, pbox->y1);
 	vmwareWriteWordToFIFO(pVMWARE, pbox->x2 - pbox->x1);
 	vmwareWriteWordToFIFO(pVMWARE, pbox->y2 - pbox->y1);
-	vmwareWriteWordToFIFO(pVMWARE, pGC->alu);
+	vmwareWriteWordToFIFO(pVMWARE, alu);
 	pbox++;
-    }
-    if (pboxNew2) {
-	DEALLOCATE_LOCAL(pboxNew2);
-    }
-    if (pboxNew1) {
-	DEALLOCATE_LOCAL(pboxNew1);
     }
 }
 

@@ -1,9 +1,13 @@
-/* $Xorg: cbrt.c,v 1.3 2000/08/17 19:53:36 cpqbld Exp $ */
+/* $Xorg: cbrt.c,v 1.4 2001/02/09 02:05:19 xorgcvs Exp $ */
 /*
 
 Copyright 1990, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included
 in all copies or substantial portions of the Software.
@@ -22,15 +26,20 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/Xserver/mi/cbrt.c,v 3.2 2001/01/17 22:37:05 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/mi/cbrt.c,v 3.4 2001/12/14 20:00:19 dawes Exp $ */
 
 /* simple cbrt, in case your math library doesn't have a good one */
 
-double pow();
+/*
+ * Would normally include <math.h> for this, but for the sake of compiler
+ * warnings, we don't want to get duplicate declarations for cbrt().
+ */
+
+double pow(double, double);
+double cbrt(double);
 
 double
-cbrt(x)
-    double x;
+cbrt(double x)
 {
     if (x > 0.0)
 	return pow(x, 1.0/3.0);
