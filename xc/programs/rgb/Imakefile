@@ -56,11 +56,11 @@ InstallManPage(showrgb,$(MANDIR))
 
 #if !UseRgbTxt
 $(DATADEP):  rgb rgb.txt
-	RemoveFile($(DATAFILES))
+	RemoveFiles(rgb.db rgb.dir rgb.pag)
 	./rgb rgb < rgb.txt
+#endif
 
 clean::
-	RemoveFile($(DATAFILES))
-#endif
+	RemoveFiles(rgb.db rgb.dir rgb.pag)
 
 DependTarget()
