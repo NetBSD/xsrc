@@ -315,6 +315,8 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #elif defined(SGIMipsArchitecture)
 #    define XFree86ConsoleDefines -DWSCONS_SUPPORT
 #  define ServerExtraDefines    GccGasOption XFree86ServerDefines
+#elif defined(atariArchitecture)
+#   define ServerExtraDefines GccGasOption -D__atari__ -D__mc68000__ -Dmc68020
 #else
 #  define ServerExtraDefines GccGasOption
 #endif
