@@ -849,7 +849,8 @@ void grabKeyboard(AppInfo *app)
 	    reason = "grab not viewable [this shouldn't happen]";
 	    break;
 	 }
-	 fprintf(stderr, "%s: Could not grab keyboard (%s)\n", app->appName);
+	 fprintf(stderr, "%s: Could not grab keyboard (%s)\n", app->appName,
+		 reason);
 	 exitApp(app, EXIT_STATUS_ERROR);
       }
    }
@@ -899,7 +900,8 @@ void grabPointer(AppInfo *app)
 	    reason = "grab not viewable [this shouldn't happen]";
 	    break;
 	 }
-	 fprintf(stderr, "%s: Could not grab pointer (%s)\n", app->appName);
+	 fprintf(stderr, "%s: Could not grab pointer (%s)\n", app->appName,
+		 reason);
 	 exitApp(app, EXIT_STATUS_ERROR);
       }
    }
