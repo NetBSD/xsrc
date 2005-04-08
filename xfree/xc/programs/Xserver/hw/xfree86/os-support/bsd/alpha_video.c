@@ -414,7 +414,7 @@ xf86DisableIO()
 
 #endif /* __FreeBSD__ || __OpenBSD__ */
 
-#ifdef USE_ALPHA_PIO
+#ifdef __NetBSD__
 
 void
 xf86EnableIO()
@@ -428,7 +428,44 @@ xf86DisableIO()
 	alpha_pci_io_enable(0);
 }
 
-#endif /* USE_ALPHA_PIO */
+void
+netbsd_alpha_outb(unsigned long port, unsigned char val)
+{
+	outb(port, val);
+}
+
+void
+netbsd_alpha_outw(unsigned long port, unsigned short val)
+{
+	outw(port, val);
+}
+
+void
+netbsd_alpha_outl(unsigned long port, unsigned int val)
+{
+	outl(port, val);
+}
+
+unsigned char
+netbsd_alpha_inb(unsigned long port)
+{
+	return inb(port);
+}
+
+unsigned short
+netbsd_alpha_inw(unsigned long port)
+{
+	return inw(port);
+}
+
+unsigned int
+netbsd_alpha_inl(unsigned long port)
+{
+	return inl(port);
+}
+
+
+#endif /* __NetBSD__ */
 
 /***************************************************************************/
 /* Interrupt Handling section                                              */

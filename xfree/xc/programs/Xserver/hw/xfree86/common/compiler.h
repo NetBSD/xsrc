@@ -247,7 +247,29 @@ extern unsigned int inl(unsigned int port);
 
 
 #if defined(__NetBSD__)
+#if defined(XFree86Server)
+
+/*
+ * Wrapper functions for macros defined in "machine/pio.h" which we
+ * cannot use while building a XFree86 module because of type clashes.
+ */
+
+extern void netbsd_alpha_outb(unsigned long port, unsigned char val);
+extern void netbsd_alpha_outw(unsigned long port, unsigned short val);
+extern void netbsd_alpha_outl(unsigned long port, unsigned int val);
+extern unsigned char netbsd_alpha_inb(unsigned long port);
+extern unsigned short netbsd_alpha_inw(unsigned long port);
+extern unsigned int netbsd_alpha_inl(unsigned long port);
+
+#define	outb	netbsd_alpha_outb
+#define	outw	netbsd_alpha_outw
+#define	outl	netbsd_alpha_outl
+#define	inb	netbsd_alpha_inb
+#define	inw	netbsd_alpha_inw
+#define	inl	netbsd_alpha_inl
+#else
 #include <machine/pio.h>
+#endif
 #endif /* __NetBSD__ */
 
 /*
