@@ -65,12 +65,11 @@ SHARED_CFLAGS = PositionIndependentCFlags
 
 #if defined(NetBSDArchitecture) \
     && ((OSMajorVersion == 1 && OSMinorVersion >= 1) || OSMajorVersion >= 2)
-# if defined(AlphaArchitecture)
-  IOPERMDEFINES = -DUSE_ALPHA_PIO
 # elif defined(i386Architecture)
   IOPERMDEFINES = -DUSE_I386_IOPL
 # elif !defined(ArmArchitecture) && \
-       !defined(MipsArchitecture)
+       !defined(MipsArchitecture) && \
+       !defined(AlphaArchitecture)
   IOPERM_SRC = ioperm_noop.c
   IOPERM_OBJ = ioperm_noop.o
 # endif
