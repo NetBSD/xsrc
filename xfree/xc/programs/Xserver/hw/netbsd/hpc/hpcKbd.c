@@ -1,4 +1,4 @@
-/* $NetBSD: hpcKbd.c,v 1.3 2004/07/22 18:08:59 uch Exp $	*/
+/* $NetBSD: hpcKbd.c,v 1.3.2.1 2005/04/16 10:30:50 tron Exp $	*/
 /* $XConsortium: sunKbd.c,v 5.47 94/08/16 13:45:30 dpw Exp $ */
 /*-
  * Copyright (c) 1987 by the Regents of the University of California
@@ -651,10 +651,10 @@ static void hpcInitKbdNames (XkbComponentNamesRec* names, hpcKbdPrivPtr pKbd)
     strcpy(symbolsbuf, "symbols/");
 
     /* keycodes & geometry */
-    switch (pKbd->encode) {
+    switch (KB_ENCODING(pKbd->encode)) {
     case KB_DE:
 	    strcat(names->keycodes, "xfree86");
-	    strcat(names->geometry, "pc(jp102)");
+	    strcat(names->geometry, "pc(pc102)");
 	    strcat(names->symbols, "en_US(pc105)+de");
 	    hpcPrintF(("keymap: en_US(pc105)+de\n"));
 	    break;
@@ -674,7 +674,7 @@ static void hpcInitKbdNames (XkbComponentNamesRec* names, hpcKbdPrivPtr pKbd)
 	    strcat(names->keycodes, "xfree86");
 	    strcat(names->geometry, "pc(pc102)");
 	    strcat(names->symbols, "en_US(pc105)+pt");
-	    hpcPrintF(("keymap: en_US(jp105)+pt\n"));
+	    hpcPrintF(("keymap: en_US(pc105)+pt\n"));
 	    break;
     case KB_US:
     default:
@@ -684,6 +684,8 @@ static void hpcInitKbdNames (XkbComponentNamesRec* names, hpcKbdPrivPtr pKbd)
 	    hpcPrintF(("keymap: us(pc105)\n"));
 	    break;
     }
+    if (pKbd->encode & KB_SWAPCTRLCAPS)
+	    strcat(names->symbols, "+ctrl(swapcaps)");
 }
 #endif /* XKB */
 
