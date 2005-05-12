@@ -220,7 +220,17 @@ typedef Elf64_Word Elf_Word;
 #define ELF_ST_BIND ELF64_ST_BIND
 #define ELF_ST_TYPE ELF64_ST_TYPE
 #define ELF_R_SYM ELF64_R_SYM
+
+#if !defined(__sparcv9)
 #define ELF_R_TYPE ELF64_R_TYPE
+#else
+/*
+ * bfd says: Relocations in the 64 bit SPARC ELF ABI are more complex
+ * than in standard ELF, because R_SPARC_OLO10 has secondary addend in
+ * ELF64_R_TYPE_DATA field.
+ */
+#define ELF_R_TYPE(info)	((info) & 0xff)
+#endif
 
 # if defined (__alpha__) || defined (__ia64__)
 /*
@@ -2179,6 +2189,15 @@ Elf_RelocateEntry(ELFModulePtr elffile, Elf_Word secn, Elf_Rel_t *rel,
 	dest64 = (unsigned long *)(secp + rel->r_offset);
 	*dest64 = (unsigned long)secp + rel->r_addend;
 	break;
+
+#ifdef __sparcv9
+    case R_SPARC_OLO10:		/* 33 */
+	dest32 = (unsigned int *)(secp + rel->r_offset);
+	symval += rel->r_addend
+	    + (((ELF64_R_TYPE(rel->r_info) >> 8) ^ 0x800000) - 0x800000);
+	*dest32 = (*dest32 & ~0x3ff) | (symval & 0x3ff);
+	break;
+#endif
 #endif /*__sparc__*/
 #ifdef __ia64__
     case R_IA64_NONE:
@@ -2522,8 +2541,10 @@ Elf_RelocateEntry(ELFModulePtr elffile, Elf_Word secn, Elf_Rel_t *rel,
 #endif /* (__arm__) */
 
     default:
-	ErrorF("Elf_RelocateEntry() Unsupported relocation type %d\n",
-	       (int)ELF_R_TYPE(rel->r_info));
+	ErrorF("Elf_RelocateEntry() \"%s\" Unsupported relocation "
+	       "type %d (0x%x)\n",
+	       ElfGetSymbolName(elffile, ELF_R_SYM(rel->r_info)),
+	       (int)ELF_R_TYPE(rel->r_info), (int)ELF_R_TYPE(rel->r_info));
 	break;
     }
     return 0;
