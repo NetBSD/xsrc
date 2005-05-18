@@ -71,7 +71,7 @@ STIPPLESRC = stipmips.s stipmipste.s
 STIPPLEOBJ = stipmips.o stipmipste.o
 STIPPLEDEF = -DHAS_STIPPLE_CODE
 #endif
-#ifdef SparcArchitecture
+#if defined(SparcArchitecture) && !defined(__arch64__)
 STIPPLESRC = stipsparc.s stipsparcte.s
 STIPPLEOBJ = stipsparc.o stipsparcte.o
 STIPPLEDEF = -DHAS_STIPPLE_CODE
@@ -79,7 +79,7 @@ STIPPLEDEF = -DHAS_STIPPLE_CODE
 #endif
 
 #if PixelSize == 32
-#ifdef SparcArchitecture
+#if defined(SparcArchitecture) && !defined(__arch64__)
 STIPPLESRC = stipsprc32.s stipsprcte32.s
 STIPPLEOBJ = stipsprc32.o stipsprcte32.o
 STIPPLEDEF = -DHAS_STIPPLE_CODE
