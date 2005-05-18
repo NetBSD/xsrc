@@ -11,6 +11,7 @@
         .register %g3, #scratch
         .register %g7, #scratch
 
+#define SAVESZ		128
 #define LDPTR		ldx
 #define V4F_DATA	0x00
 #define V4F_START	0x08
@@ -19,6 +20,7 @@
 #define V4F_SIZE	0x18
 #define V4F_FLAGS	0x1c
 #else
+#define SAVESZ		64
 #define LDPTR		ld
 #define V4F_DATA	0x00
 #define V4F_START	0x04
@@ -73,7 +75,7 @@ __pc_tramp:
 
 	.globl		_mesa_sparc_cliptest_points4
 _mesa_sparc_cliptest_points4:
-	save		%sp, -64, %sp
+	save		%sp, -SAVESZ, %sp
 	call		__pc_tramp
 	 sub		%o7, (. - one_dot_zero - 4), %g1
 	ld		[%g1 + 0x0], %f4
@@ -169,7 +171,7 @@ _mesa_sparc_cliptest_points4:
 
 	.globl		_mesa_sparc_cliptest_points4_np
 _mesa_sparc_cliptest_points4_np:
-	save		%sp, -64, %sp
+	save		%sp, -SAVESZ, %sp
 
 	call		__pc_tramp
 	 sub		%o7, (. - one_dot_zero - 4), %g1
