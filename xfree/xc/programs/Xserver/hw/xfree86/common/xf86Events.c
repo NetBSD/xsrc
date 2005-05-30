@@ -1638,11 +1638,13 @@ xf86PostWSKbdEvent(struct wscons_event *event)
 
     /* map the scancodes to standard XFree86 scancode */  	
     keycode = WSKbdToKeycode(value);
-    if (!down) keycode |= 0x80;
-    /* It seems better to block SIGIO there */
-    blocked = xf86BlockSIGIO();
-    xf86PostKbdEvent(keycode);
-    xf86UnblockSIGIO(blocked);
+    if ((keycode != KEY_NOTUSED) && ((keycode & 0x80) == 0)) {
+        if (!down) keycode |= 0x80;
+        /* It seems better to block SIGIO there */
+        blocked = xf86BlockSIGIO();
+        xf86PostKbdEvent(keycode);
+        xf86UnblockSIGIO(blocked);
+    }
   }
 }
 #endif /* WSCONS_SUPPORT */
