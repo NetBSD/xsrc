@@ -783,7 +783,11 @@ roll_wide:
 	 sub			%tmp3, %rightw, %curw
 
 return: return			%i7+8
+#if defined(__NetBSD__)
+	 wr			%g0, 4, %fprs
+#else
 	 wr			%g0, 0, %fprs
+#endif
 
 narrowst:
 	and			%leftw, 0x38, %tmp1
@@ -2178,7 +2182,11 @@ rroll_wide:
 	 sub			%curw, %rightw, %curw
 
 rreturn:return			%i7+8
+#if defined(__NetBSD__)
+	 wr			%g0, 4, %fprs
+#else
 	 wr			%g0, 0, %fprs
+#endif
 
 narrowstr:
 	cmp			%rightw, 64
