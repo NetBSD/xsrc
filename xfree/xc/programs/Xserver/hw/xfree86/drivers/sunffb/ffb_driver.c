@@ -1055,6 +1055,7 @@ FFBCloseScreen(int scrnIndex, ScreenPtr pScreen)
 	    FFBDRICloseScreen(pScreen);
 #endif
 
+    FFBDacCursorEnableDisable(pFfb, 0);
     /* Restore kernel ramdac state before we unmap registers. */
     FFBDacFini(pFfb);
 
