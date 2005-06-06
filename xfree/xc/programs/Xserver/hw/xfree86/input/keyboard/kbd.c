@@ -580,6 +580,8 @@ PostKbdEvent(InputInfoPtr pInfo, unsigned int scanCode, Bool down)
   /*
    * Now map the scancodes to real X-keycodes ...
    */
+  if ((scanCode == KEY_NOTUSED) || (scanCode == KEY_UNKNOWN)) return;
+  
   keycode = scanCode + MIN_KEYCODE;
   keysym = (keyc->curKeySyms.map +
 	    keyc->curKeySyms.mapWidth * 
