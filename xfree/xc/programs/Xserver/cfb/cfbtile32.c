@@ -145,7 +145,7 @@ in this Software without prior written authorization from The Open Group.
 #if (MROP == Mcopy) && defined(FAST_CONSTANT_OFFSET_MODE) && defined(SHARED_IDCACHE)
 # define Expand(left,right) {\
     int part = nlwMiddle & ((PGSZB*2)-1); \
-    nlwMiddle >>= PWSH + 1; \
+    nlwMiddle >>= 3 /*PWSH + 1*/; \
     while (h--) { \
 	srcpix = psrc[srcy]; \
 	MROP_PREBUILD(srcpix); \
