@@ -795,7 +795,7 @@ static CARD8 wsSunMap[] = {
 	/* 0x73 */ KEY_NOTUSED,
 	/* 0x74 */ KEY_NOTUSED,
 	/* 0x75 */ KEY_NOTUSED,
-	/* 0x76 */ KEY_NOTUSED,		/* help */
+	/* 0x76 */ KEY_Help,		/* help */
 	/* 0x77 */ KEY_CapsLock,
 	/* 0x78 */ KEY_LMeta,
 	/* 0x79 */ KEY_Space,
