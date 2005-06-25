@@ -305,11 +305,7 @@ uses the \fIlockf\fP library call, while on BSD it uses \fIflock.\fP
 This names a directory under which
 .I xdm
 stores authorization files while initializing the session.  The
-<<<<<<< xdm.man
-default value is \fI\&XDMAUTHDIR\fP.
-=======
 default value is \fI XDMAUTHDIR\fP.
->>>>>>> 1.1.1.8
 Can be overridden for specific displays by
 DisplayManager.\fIDISPLAY\fP.authFile.
 .IP \fBDisplayManager.autoRescan\fP
@@ -611,21 +607,12 @@ named \fIxdm-config\fP:
 
 .ta .5i 4i
 
-<<<<<<< xdm.man
 	DisplayManager.servers:	XDMDIR/Xservers
 	DisplayManager.errorLogFile:	XDMLOGDIR/xdm.log
 	DisplayManager*resources:	XDMDIR/Xresources
 	DisplayManager*startup:	XDMDIR/Xstartup
 	DisplayManager*session:	XDMDIR/Xsession
-	DisplayManager.pidFile:	XDMPIDDIR/xdm.pid
-=======
-	DisplayManager.servers:	__projectroot__/lib/X11/xdm/Xservers
-	DisplayManager.errorLogFile:	XDMLOGDIR/xdm.log
-	DisplayManager*resources:	__projectroot__/lib/X11/xdm/Xresources
-	DisplayManager*startup:	__projectroot__/lib/X11/xdm/Xstartup
-	DisplayManager*session:	__projectroot__/lib/X11/xdm/Xsession
-	DisplayManager.pidFile:	__projectroot__/lib/X11/xdm/xdm-pid
->>>>>>> 1.1.1.8
+	DisplayManager.pidFile:	XDMDIR/xdm-pid
 	DisplayManager._0.authorize:	true
 	DisplayManager*authorize:	false
 
