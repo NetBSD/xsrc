@@ -64,6 +64,7 @@ struct sbus_devtable sbusDeviceTable[] = {
     { SBUS_DEVICE_TCX, FBTYPE_TCXCOLOR, "tcx", "Sun TCX" },
     { SBUS_DEVICE_FFB, FBTYPE_CREATOR, "ffb", "Sun FFB" },
     { SBUS_DEVICE_FFB, FBTYPE_CREATOR, "afb", "Sun Elite3D" },
+    { SBUS_DEVICE_P9100, FBTYPE_P9100, "pnozz", "Weitek P9100" },
     { 0, 0, NULL }
 };
 
@@ -300,7 +301,7 @@ sparcPromAssignNodes(void)
     int n, holes = 0, i, j;
     FILE *f;
     sbusDevicePtr devicePtrs[32];
-
+    
     (void)memset(devicePtrs, 0, sizeof(devicePtrs));
     for (psdpp = xf86SbusInfo, n = 0; (psdp = *psdpp); psdpp++, n++) {
 	if (psdp->fbNum != n)

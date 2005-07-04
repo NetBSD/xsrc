@@ -104,13 +104,17 @@
 #endif
 
 #ifndef   FBTYPE_CREATOR
-# if defined(linux)
+# if defined(linux) || defined(__NetBSD__)
 #  define FBTYPE_CREATOR 22
 # elif defined(CSRG_BASED)
 #  define FBTYPE_CREATOR 30
 # elif defined(sun)
 #  define FBTYPE_CREATOR 65535	/* Larger than life ... */
 # endif
+#endif
+
+#ifndef FBTYPE_P9100
+#define FBTYPE_P9100 21
 #endif
 
 #endif /* XFree86Module */
