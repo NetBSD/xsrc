@@ -725,7 +725,7 @@ static CARD8 wsSunMap[] = {
 	/* 0x2d */ KEY_KP_Equal,
 	/* 0x2e */ KEY_KP_Divide,
 	/* 0x2f */ KEY_KP_Multiply,
-	/* 0x30 */ KEY_NOTUSED,
+	/* 0x30 */ KEY_Power,
 	/* 0x31 */ KEY_L5,		/* front */
 	/* 0x32 */ KEY_KP_Decimal,
 	/* 0x33 */ KEY_L6,		/* copy */
@@ -744,7 +744,7 @@ static CARD8 wsSunMap[] = {
 	/* 0x40 */ KEY_LBrace,
 	/* 0x41 */ KEY_RBrace,
 	/* 0x42 */ KEY_Delete,
-	/* 0x43 */ KEY_NOTUSED,		/* compose */
+	/* 0x43 */ KEY_Compose,		/* compose */
 	/* 0x44 */ KEY_KP_7,
 	/* 0x45 */ KEY_KP_8,
 	/* 0x46 */ KEY_KP_9,
