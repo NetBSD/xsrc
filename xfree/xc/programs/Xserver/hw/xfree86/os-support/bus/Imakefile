@@ -119,9 +119,9 @@ XCOMM Alpha (NetBSD) PCI driver
 PCIDRVRSRC = netbsdPci.c
 PCIDRVROBJ = netbsdPci.o
 
-#elif defined(NetBSDArchitecture) && defined(Sparc64Architecture)
+#elif defined(NetBSDArchitecture) && defined(SparcArchitecture)
 
-XCOMM Sparc64 (NetBSD) PCI driver
+XCOMM Sparc(64) (NetBSD) PCI driver
 
 PCIDRVRSRC = netbsdPci.c
 PCIDRVROBJ = netbsdPci.o
