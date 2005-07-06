@@ -524,29 +524,42 @@ SPIN(ffb_dacPtr d, int count) {
 /*  Screen save (blank) restore */
 Bool
 FFBDacSaveScreen(FFBPtr pFfb, int mode) {
-  int tmp;
+  unsigned int tmp;
   ffb_dacPtr dac;
   if(!pFfb) return FALSE;   /* Is there any way at all this could happen? */
   else dac = pFfb -> dac;
 
-  tmp = DACCFG_READ(dac, FFBDAC_CFG_TGEN);  /* Get the timing information */
+  /* 
+   * there seems to be a bug in ffb1 hardware which causes screen corruption 
+   * when (un)blanking - until we know how to deal with it I'll just disable 
+   * blanking for these boards. The criteria may be wrong though - the bug has 
+   * been observed on FFB1 boards but FFB2+ boards are unaffected so it's not 
+   * quite clear when exactly it was fixed. So for now we'll just assume all 
+   * FFB2 or newer are ok.
+   */
+   
+  if (pFfb->ffb_type >= ffb2_prototype) {
+    tmp = DACCFG_READ(dac, FFBDAC_CFG_TGEN);  /* Get the timing information */
 
-  switch(mode) {
-    case SCREEN_SAVER_ON:
-    case SCREEN_SAVER_CYCLE:
-      tmp &= ~FFBDAC_CFG_TGEN_VIDE;  /* Kill the video */
-      break;
+    switch(mode) {
+      case SCREEN_SAVER_ON:
+      case SCREEN_SAVER_CYCLE:
+        tmp &= ~FFBDAC_CFG_TGEN_VIDE;  /* Kill the video */
+        break;
 
-    case SCREEN_SAVER_OFF:
-    case SCREEN_SAVER_FORCER:
-      tmp |= FFBDAC_CFG_TGEN_VIDE;  /* Turn the video on */
-      break;
+      case SCREEN_SAVER_OFF:
+      case SCREEN_SAVER_FORCER:
+        tmp |= FFBDAC_CFG_TGEN_VIDE;  /* Turn the video on */
+        break;
 
-    default:
-      return FALSE;  /* Don't know what to do; gently fail. */
+      default:
+        return FALSE;  /* Don't know what to do; gently fail. */
+    }
+    
+    /* Restore timing register, video set as asked */
+    DACCFG_WRITE(dac, FFBDAC_CFG_TGEN, tmp);  
+    SPIN(dac, DPMS_SPIN_COUNT/10);
   }
-  DACCFG_WRITE(dac, FFBDAC_CFG_TGEN, tmp);  /* Restore timing register, video set as asked */
-  SPIN(dac, DPMS_SPIN_COUNT/10);
   return TRUE;
 }
 
