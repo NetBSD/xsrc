@@ -20,45 +20,45 @@
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-/* $NetBSD: pnozz_accel.c,v 1.1 2005/07/04 21:24:58 macallan Exp $ */
+/* $NetBSD: pnozz_accel.c,v 1.2 2005/07/07 12:23:21 macallan Exp $ */
 
 #include "pnozz.h"
 
 static CARD32 PnozzCopyROP[] = {
 	/*GXclear*/		0,
-	/*GXand*/		ROP_SRC&ROP_DST,
-	/*GXandReverse*/	ROP_SRC&(~ROP_DST),
+	/*GXand*/		ROP_SRC & ROP_DST,
+	/*GXandReverse*/	ROP_SRC & (~ROP_DST),
 	/*GXcopy*/		ROP_SRC,
-	/*GXandInverted*/	(~ROP_SRC)&ROP_DST,
+	/*GXandInverted*/	(~ROP_SRC) & ROP_DST,
 	/*GXnoop*/		ROP_DST,
-	/*GXxor*/		ROP_SRC^ROP_DST,
-	/*GXor*/		ROP_SRC|ROP_DST,
-	/*GXnor*/		(~ROP_SRC)&(~ROP_DST),
-	/*GXequiv*/		(~ROP_SRC)^ROP_DST,
+	/*GXxor*/		ROP_SRC ^ ROP_DST,
+	/*GXor*/		ROP_SRC | ROP_DST,
+	/*GXnor*/		(~ROP_SRC) & (~ROP_DST),
+	/*GXequiv*/		(~ROP_SRC) ^ ROP_DST,
 	/*GXinvert*/		(~ROP_DST),
-	/*GXorReverse*/		ROP_SRC|(~ROP_DST),
+	/*GXorReverse*/		ROP_SRC | (~ROP_DST),
 	/*GXcopyInverted*/	(~ROP_SRC),
-	/*GXorInverted*/	(~ROP_SRC)|ROP_DST,
-	/*GXnand*/		(~ROP_SRC)|(~ROP_DST),
+	/*GXorInverted*/	(~ROP_SRC) | ROP_DST,
+	/*GXnand*/		(~ROP_SRC) | (~ROP_DST),
 	/*GXset*/		ROP_SET
 };
 
 static CARD32 PnozzDrawROP[] = {
 	/*GXclear*/		0,
-	/*GXand*/		ROP_PAT&ROP_DST,
-	/*GXandReverse*/	ROP_PAT&(~ROP_DST),
+	/*GXand*/		ROP_PAT & ROP_DST,
+	/*GXandReverse*/	ROP_PAT & (~ROP_DST),
 	/*GXcopy*/		ROP_PAT,
-	/*GXandInverted*/	(~ROP_PAT)&ROP_DST,
+	/*GXandInverted*/	(~ROP_PAT) & ROP_DST,
 	/*GXnoop*/		ROP_DST,
-	/*GXxor*/		ROP_PAT^ROP_DST,
-	/*GXor*/		ROP_PAT|ROP_DST,
-	/*GXnor*/		(~ROP_PAT)&(~ROP_DST),
-	/*GXequiv*/		(~ROP_PAT)^ROP_DST,
+	/*GXxor*/		ROP_PAT ^ ROP_DST,
+	/*GXor*/		ROP_PAT | ROP_DST,
+	/*GXnor*/		(~ROP_PAT) & (~ROP_DST),
+	/*GXequiv*/		(~ROP_PAT) ^ ROP_DST,
 	/*GXinvert*/		(~ROP_DST),
-	/*GXorReverse*/		ROP_PAT|(~ROP_DST),
+	/*GXorReverse*/		ROP_PAT | (~ROP_DST),
 	/*GXcopyInverted*/	(~ROP_PAT),
-	/*GXorInverted*/	(~ROP_PAT)|ROP_DST,
-	/*GXnand*/		(~ROP_PAT)|(~ROP_DST),
+	/*GXorInverted*/	(~ROP_PAT) | ROP_DST,
+	/*GXnand*/		(~ROP_PAT) | (~ROP_DST),
 	/*GXset*/		ROP_PAT
 };
 
@@ -67,28 +67,29 @@ CARD32 MaxClip, junk;
 static void PnozzSync(ScrnInfoPtr pScrn)
 {
     PnozzPtr pPnozz = GET_PNOZZ_FROM_SCRN(pScrn);
-    while((pnozz_read_4(pPnozz,ENGINE_STATUS)&(ENGINE_BUSY|BLITTER_BUSY))!=0);
+    while((pnozz_read_4(pPnozz, ENGINE_STATUS) & 
+        (ENGINE_BUSY | BLITTER_BUSY)) !=0 );
 }
 
 static void unClip(PnozzPtr pPnozz)
 {
-	pnozz_write_4(pPnozz,WINDOW_OFFSET,0);
-	pnozz_write_4(pPnozz,WINDOW_MIN,0);
-	pnozz_write_4(pPnozz,WINDOW_MAX,MaxClip);
-	pnozz_write_4(pPnozz,BYTE_CLIP_MIN,0);
-	pnozz_write_4(pPnozz,BYTE_CLIP_MAX,MaxClip);
+	pnozz_write_4(pPnozz, WINDOW_OFFSET, 0);
+	pnozz_write_4(pPnozz, WINDOW_MIN, 0);
+	pnozz_write_4(pPnozz, WINDOW_MAX, MaxClip);
+	pnozz_write_4(pPnozz, BYTE_CLIP_MIN, 0);
+	pnozz_write_4(pPnozz, BYTE_CLIP_MAX, MaxClip);
 }
 
 static void
 PnozzInitEngine(PnozzPtr pPnozz)
 {
 	unClip(pPnozz);
-	pnozz_write_4(pPnozz,DRAW_MODE,0);
-	pnozz_write_4(pPnozz,PLANE_MASK,0xffffffff);	
-	pnozz_write_4(pPnozz,PATTERN0,0xffffffff);	
-	pnozz_write_4(pPnozz,PATTERN1,0xffffffff);	
-	pnozz_write_4(pPnozz,PATTERN2,0xffffffff);	
-	pnozz_write_4(pPnozz,PATTERN3,0xffffffff);	
+	pnozz_write_4(pPnozz, DRAW_MODE, 0);
+	pnozz_write_4(pPnozz, PLANE_MASK, 0xffffffff);	
+	pnozz_write_4(pPnozz, PATTERN0, 0xffffffff);	
+	pnozz_write_4(pPnozz, PATTERN1, 0xffffffff);	
+	pnozz_write_4(pPnozz, PATTERN2, 0xffffffff);	
+	pnozz_write_4(pPnozz, PATTERN3, 0xffffffff);	
 }
 
 static void
@@ -104,8 +105,8 @@ PnozzSetupForScreenToScreenCopy(
     PnozzPtr pPnozz = GET_PNOZZ_FROM_SCRN(pScrn);
     PnozzSync(pScrn);
     unClip(pPnozz);
-    pnozz_write_4(pPnozz,RASTER_OP,(PnozzCopyROP[rop]&0xff));
-    pnozz_write_4(pPnozz,PLANE_MASK,planemask);
+    pnozz_write_4(pPnozz, RASTER_OP, (PnozzCopyROP[rop] & 0xff));
+    pnozz_write_4(pPnozz, PLANE_MASK, planemask);
 }
 
 static void
@@ -121,20 +122,20 @@ PnozzSubsequentScreenToScreenCopy
 )
 {
     PnozzPtr pPnozz = GET_PNOZZ_FROM_SCRN(pScrn);
-    CARD32 src,dst,srcw,dstw;
+    CARD32 src, dst, srcw, dstw;
     
-    src=((xSrc&0xffff)<<16)|(ySrc&0xffff);
-    dst=((xDst&0xffff)<<16)|(yDst&0xffff);
-    srcw=(((xSrc+w-1)&0xffff)<<16)|((ySrc+h-1)&0xffff);
-    dstw=(((xDst+w-1)&0xffff)<<16)|((yDst+h-1)&0xffff);
+    src = ((xSrc & 0xffff) << 16) | (ySrc & 0xffff);
+    dst = ((xDst & 0xffff) << 16) | (yDst & 0xffff);
+    srcw = (((xSrc + w - 1) & 0xffff) << 16) | ((ySrc + h - 1) & 0xffff);
+    dstw = (((xDst + w - 1) & 0xffff) << 16) | ((yDst + h - 1) & 0xffff);
 
     PnozzSync(pScrn);
 
-    pnozz_write_4(pPnozz,ABS_XY0,src);
-    pnozz_write_4(pPnozz,ABS_XY1,srcw);
-    pnozz_write_4(pPnozz,ABS_XY2,dst);
-    pnozz_write_4(pPnozz,ABS_XY3,dstw);
-    junk=pnozz_read_4(pPnozz,COMMAND_BLIT);
+    pnozz_write_4(pPnozz, ABS_XY0, src);
+    pnozz_write_4(pPnozz, ABS_XY1, srcw);
+    pnozz_write_4(pPnozz, ABS_XY2, dst);
+    pnozz_write_4(pPnozz, ABS_XY3, dstw);
+    junk = pnozz_read_4(pPnozz, COMMAND_BLIT);
 }
 
 static void
@@ -147,26 +148,27 @@ PnozzSetupForSolidFill
 )
 {
     PnozzPtr pPnozz = GET_PNOZZ_FROM_SCRN(pScrn);
-    PnozzSync(pScrn);
     CARD32 c2;
+
+    PnozzSync(pScrn);
     unClip(pPnozz);
     switch(pPnozz->depthshift) 
     {
     	case 0:
-	    c2=(colour<<8|colour);
-	    pnozz_write_4(pPnozz,FOREGROUND_COLOR,c2<<16|c2);
+	    c2 = (colour << 8 | colour);
+	    pnozz_write_4(pPnozz, FOREGROUND_COLOR, c2 << 16 | c2);
 	    break;
     	case 1:
-	    c2=(colour<<16|colour);
-	    pnozz_write_4(pPnozz,FOREGROUND_COLOR,c2);
+	    c2 = (colour << 16 | colour);
+	    pnozz_write_4(pPnozz, FOREGROUND_COLOR, c2);
 	    break;
     	case 2:
-	    pnozz_write_4(pPnozz,FOREGROUND_COLOR,colour);
+	    pnozz_write_4(pPnozz, FOREGROUND_COLOR, colour);
 	    break;
     }
-    pnozz_write_4(pPnozz,RASTER_OP,PnozzDrawROP[rop]&0xff);
-    pnozz_write_4(pPnozz,PLANE_MASK,planemask);
-    pnozz_write_4(pPnozz,COORD_INDEX,0);
+    pnozz_write_4(pPnozz, RASTER_OP, PnozzDrawROP[rop] & 0xff);
+    pnozz_write_4(pPnozz, PLANE_MASK, planemask);
+    pnozz_write_4(pPnozz, COORD_INDEX, 0);
 }
 
 static void
@@ -181,42 +183,47 @@ PnozzSubsequentSolidFillRect
 {
     PnozzPtr pPnozz = GET_PNOZZ_FROM_SCRN(pScrn);
     PnozzSync(pScrn);
-    pnozz_write_4(pPnozz,RECT_RTW_XY,((CARD32)x<<16)|((CARD32)y&0xFFFFL));
-    pnozz_write_4(pPnozz,RECT_RTW_XY,((CARD32)(x+w)<<16)|((CARD32)(y+h)&0xFFFFL));
-    junk=pnozz_read_4(pPnozz,COMMAND_QUAD);
+    pnozz_write_4(pPnozz, RECT_RTW_XY, ((CARD32)x << 16) | 
+        ((CARD32)y & 0xFFFFL));
+    pnozz_write_4(pPnozz, RECT_RTW_XY, ((CARD32)(x + w) << 16) | 
+        ((CARD32)(y + h) & 0xFFFFL));
+    junk=pnozz_read_4(pPnozz, COMMAND_QUAD);
 }
 
 int
 PnozzAccelInit(ScrnInfoPtr pScrn)
 {
     PnozzPtr pPnozz = GET_PNOZZ_FROM_SCRN(pScrn);
-    XAAInfoRecPtr pXAAInfo=pPnozz->pXAA;
+    XAAInfoRecPtr pXAAInfo = pPnozz->pXAA;
 
     pXAAInfo->Flags = LINEAR_FRAMEBUFFER | PIXMAP_CACHE | OFFSCREEN_PIXMAPS;
-    pXAAInfo->maxOffPixWidth=pPnozz->width;
-    pXAAInfo->maxOffPixHeight=pPnozz->maxheight;
-    MaxClip=((pPnozz->scanlinesize&0xffff)<< 16)|(pPnozz->maxheight);
+    pXAAInfo->maxOffPixWidth = pPnozz->width;
+    pXAAInfo->maxOffPixHeight = pPnozz->maxheight;
+    MaxClip = ((pPnozz->scanlinesize & 0xffff) << 16) | (pPnozz->maxheight);
     
     PnozzInitEngine(pPnozz);
     
-#if 0
+#if 1
     {
 	CARD32 src, srcw, junk;
-	src=0;
-	srcw=(pPnozz->width>>1)<<16|(pPnozz->height>>1);
+	src = 0;
+	srcw = (pPnozz->width) << 16 | (pPnozz->height);
+	
+	/* Blit the screen white. For aesthetic reasons. */
+	
 	PnozzSync(pScrn);
-	pnozz_write_4(pPnozz,FOREGROUND_COLOR,0x00ffff00);
-	pnozz_write_4(pPnozz,BACKGROUND_COLOR,0x00ffffff);
-	pnozz_write_4(pPnozz,RASTER_OP,ROP_PAT);
-	pnozz_write_4(pPnozz,COORD_INDEX,0);
-	pnozz_write_4(pPnozz,RECT_RTW_XY,src);
-	pnozz_write_4(pPnozz,RECT_RTW_XY,srcw);	
-	junk=pnozz_read_4(pPnozz,COMMAND_QUAD);
+	pnozz_write_4(pPnozz, FOREGROUND_COLOR, 0xffffffff);
+	pnozz_write_4(pPnozz, BACKGROUND_COLOR, 0xffffffff);
+	pnozz_write_4(pPnozz, RASTER_OP, ROP_PAT);
+	pnozz_write_4(pPnozz, COORD_INDEX, 0);
+	pnozz_write_4(pPnozz, RECT_RTW_XY, src);
+	pnozz_write_4(pPnozz, RECT_RTW_XY, srcw);	
+	junk = pnozz_read_4(pPnozz, COMMAND_QUAD);
 	PnozzSync(pScrn);
     }
 #endif
 
-#if 1
+#if 0
     {
     	unsigned short *sptr = pPnozz->fb;
 	int i,j;
@@ -244,7 +251,7 @@ PnozzAccelInit(ScrnInfoPtr pScrn)
     /* Sync */
     pXAAInfo->Sync = PnozzSync;
     /* Screen-to-screen copy */
-    pXAAInfo->ScreenToScreenCopyFlags=NO_TRANSPARENCY;
+    pXAAInfo->ScreenToScreenCopyFlags = NO_TRANSPARENCY;
     pXAAInfo->SetupForScreenToScreenCopy = PnozzSetupForScreenToScreenCopy;
     pXAAInfo->SubsequentScreenToScreenCopy =
         PnozzSubsequentScreenToScreenCopy;
@@ -261,43 +268,6 @@ PnozzAccelInit(ScrnInfoPtr pScrn)
     pXAAInfo->SetupForMono8x8PatternFill = PnozzSetupForMono8x8PatternFill;
     pXAAInfo->SubsequentMono8x8PatternFillRect =
         PnozzSubsequentMono8x8PatternFillRect;
-
-/* XXX */
-    pXAAInfo->ScanlineCPUToScreenColorExpandFillFlags =
-        LEFT_EDGE_CLIPPING | LEFT_EDGE_CLIPPING_NEGATIVE_X |
-        CPU_TRANSFER_PAD_DWORD | SCANLINE_PAD_DWORD;
-	
-    if (pATI->XModifier != 1)
-        pXAAInfo->ScanlineCPUToScreenColorExpandFillFlags |= TRIPLE_BITS_24BPP;
-    pXAAInfo->NumScanlineColorExpandBuffers = 1;
-
-    /* Align bitmap data on a 64-byte boundary */
-    pATI->ExpansionBitmapWidth =        /* DWord size in bits */
-        ((pATI->displayWidth * pATI->XModifier) + 31) & ~31U;
-    pATI->ExpansionBitmapScanlinePtr[1] =
-        (CARD32 *)xnfalloc((pATI->ExpansionBitmapWidth >> 3) + 63);
-    pATI->ExpansionBitmapScanlinePtr[0] =
-        (pointer)(((unsigned long)pATI->ExpansionBitmapScanlinePtr[1] + 63) &
-                  ~63UL);
-    pXAAInfo->ScanlineColorExpandBuffers =
-        (CARD8 **)pATI->ExpansionBitmapScanlinePtr;
-    pXAAInfo->SetupForScanlineCPUToScreenColorExpandFill =
-        ATIMach64SetupForScanlineCPUToScreenColorExpandFill;
-    pXAAInfo->SubsequentScanlineCPUToScreenColorExpandFill =
-        ATIMach64SubsequentScanlineCPUToScreenColorExpandFill;
-    pXAAInfo->SubsequentColorExpandScanline =
-        ATIMach64SubsequentColorExpandScanline;
-
-    /* The engine does not support the following primitives for 24bpp */
-    if (pATI->XModifier != 1)
-        return ATIMach64MaxY;
-
-    /* Solid lines */
-    pXAAInfo->SetupForSolidLine = ATIMach64SetupForSolidLine;
-    pXAAInfo->SubsequentSolidHorVertLine = ATIMach64SubsequentSolidHorVertLine;
-    pXAAInfo->SubsequentSolidBresenhamLine =
-        ATIMach64SubsequentSolidBresenhamLine;
-    return PnozzMaxY;
 #endif
     return 0;
 }
