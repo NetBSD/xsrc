@@ -261,7 +261,7 @@
 #define KEY_L8           /* Paste                 0x90  */  144
 #define KEY_L9           /* Find                  0x91  */  145
 #define KEY_L10          /* Cut                   0x92  */  146
-
+#define KEY_Compose      /* Compose               0x93  */  147
 /*
  * Fake 'scancodes' in the following ranges are generated for 2-byte
  * codes not handled elsewhere.  These correspond to most extended keys
