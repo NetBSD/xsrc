@@ -33,6 +33,11 @@ XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/common/Imakefile,v 3.156 2004/06/
 #if defined(SparcArchitecture) || defined(Sparc64Architecture)
         SBUSSRC = xf86sbusBus.c
         SBUSOBJ = xf86sbusBus.o
+        KBD_DRIVER_DEF = -DUSE_MODULAR_KBD
+#endif
+
+#if defined(macppcArchitecture)
+        KBD_DRIVER_DEF = -DUSE_MODULAR_KBD
 #endif
 
 #if BuildXKB
@@ -204,7 +209,7 @@ XCONFIGDEFINES = -DPROJECTROOT='"$(PROJECTROOT)"' \
 XF86CONFIGFILE = XConfigFile
 XCONFIGUREDEFINES = -DXF86CONFIGFILE='"$(XF86CONFIGFILE)"'
 
-    DEFINES = $(CONSDEFINES) $(KBDDEFINES) $(EXT_DEFINES) $(OS_DEFINES)
+    DEFINES = $(CONSDEFINES) $(KBDDEFINES) $(EXT_DEFINES) $(OS_DEFINES) $(KBD_DRIVER_DEF)
 
 AllTarget($(OFILES))
 
