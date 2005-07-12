@@ -33,6 +33,7 @@
 #include "fb.h"
 #include "xf86cmap.h"
 #include "cg6.h"
+#include "xf86sbusBus.h"
 
 static const OptionInfoRec * CG6AvailableOptions(int chipid, int busid);
 static void	CG6Identify(int flags);
@@ -451,25 +452,35 @@ CG6ScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
     pCg6 = GET_CG6_FROM_SCRN(pScrn);
     psdp = pCg6->psdp;
 
-    /* XXX need something better here, but all GX boards have at least 1MB */
-    pCg6->vidmem=max(psdp->width * psdp->height, 1024*1024);
-    xf86DrvMsg(pScrn->scrnIndex, X_WARNING,
-		   "VRAM: %d\n",pCg6->vidmem);
-
     /* Map CG6 memory areas */
     
     pCg6->fbc = xf86MapSbusMem(psdp, CG6_FBC_VOFF, sizeof(*pCg6->fbc));
     pCg6->thc = xf86MapSbusMem(psdp, CG6_THC_VOFF, sizeof(*pCg6->thc));
-    pCg6->fb = xf86MapSbusMem(psdp, CG6_RAM_VOFF, pCg6->vidmem);
 
-    if (pCg6->fb==NULL) {
-    	/* we can't map all video RAM - fall back to width*height */
-	xf86DrvMsg(pScrn->scrnIndex, X_WARNING, 
-	    "failed to map %d bytes of VRAM, trying %d\n",
-	    pCg6->vidmem, psdp->width * psdp->height);
-	pCg6->vidmem=psdp->width * psdp->height;
+    /*
+     * XXX need something better here - we rely on the OS to allow mmap()ing 
+     * usable VRAM ONLY. Works with NetBSD, may crash and burn on other OSes.
+     */
+    pCg6->vidmem = 2 * 1024 * 1024;
+    pCg6->fb = xf86MapSbusMem(psdp, CG6_RAM_VOFF, pCg6->vidmem);
+    
+    if (pCg6->fb == NULL) {
+	/* mapping 2MB failed - try 1MB */
+	pCg6->vidmem = 1024 * 1024;
 	pCg6->fb = xf86MapSbusMem(psdp, CG6_RAM_VOFF, pCg6->vidmem);
     }
+
+    if (pCg6->fb == NULL) {
+    	/* we can't map all video RAM - fall back to width*height */
+	pCg6->vidmem = psdp->width * psdp->height;
+	pCg6->fb = xf86MapSbusMem(psdp, CG6_RAM_VOFF, pCg6->vidmem);
+    }
+    
+    if (pCg6->fb != NULL) {
+        xf86DrvMsg(pScrn->scrnIndex, X_INFO, "mapped %d KB video RAM\n", 
+	    pCg6->vidmem >> 10);
+    }
+    
     if (!pCg6->fbc || !pCg6->thc || !pCg6->fb) {
     	xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
 		   "xf86MapSbusMem failed fbc:%llx fb:%llx thc:%llx\n",
