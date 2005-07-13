@@ -400,8 +400,8 @@ static CARD8 wsUsbMap[] = {
 	/* 98 */ KEY_KP_0,	/* Keypad 0 Ins */
 	/* 99 */ KEY_KP_Decimal,	/* Keypad . Del */
 	/* 100 */ KEY_Less,	/* < > on some keyboards */
-	/* 101 */ KEY_Menu,	/* Menu */
-	/* 102 */ KEY_NOTUSED,
+	/* 101 */ KEY_Menu,	/* Menu, Compose on Sun Type 6 USB */
+	/* 102 */ KEY_Power,	/* Sun Type 6 USB */
 	/* 103 */ KEY_KP_Equal, /* Keypad = on Mac keyboards */
 	/* 104 */ KEY_NOTUSED,
 	/* 105 */ KEY_NOTUSED,
@@ -415,20 +415,21 @@ static CARD8 wsUsbMap[] = {
 	/* 113 */ KEY_NOTUSED,
 	/* 114 */ KEY_NOTUSED,
 	/* 115 */ KEY_NOTUSED,
-	/* 116 */ KEY_NOTUSED,
-	/* 117 */ KEY_NOTUSED,
-	/* 118 */ KEY_NOTUSED,
-	/* 119 */ KEY_NOTUSED,
-	/* 120 */ KEY_NOTUSED,
-	/* 121 */ KEY_NOTUSED,
-	/* 122 */ KEY_NOTUSED,
-	/* 123 */ KEY_NOTUSED,
-	/* 124 */ KEY_NOTUSED,
-	/* 125 */ KEY_NOTUSED,
-	/* 126 */ KEY_NOTUSED,
-	/* 127 */ KEY_NOTUSED,
-	/* 128 */ KEY_NOTUSED,
-	/* 129 */ KEY_NOTUSED,
+	/* the following codes are used by Sun Type 6 USB keyboards */
+	/* 116 */ KEY_L7,
+	/* 117 */ KEY_Help,
+	/* 118 */ KEY_L3,
+	/* 119 */ KEY_L5,
+	/* 120 */ KEY_L1,
+	/* 121 */ KEY_L2,
+	/* 122 */ KEY_L4,
+	/* 123 */ KEY_L10,
+	/* 124 */ KEY_L6,
+	/* 125 */ KEY_L8,
+	/* 126 */ KEY_L9,
+	/* 127 */ KEY_Mute,
+	/* 128 */ KEY_AudioRaise,
+	/* 129 */ KEY_AudioLower,
 	/* 130 */ KEY_NOTUSED,
 	/* 131 */ KEY_NOTUSED,
 	/* 132 */ KEY_NOTUSED,
