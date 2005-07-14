@@ -1113,7 +1113,7 @@ FFBSaveScreen(ScreenPtr pScreen, int mode)
        done in "ffb_dac.c" `for aesthetic reasons.'
     */
 {
-    return FFBDacSaveScreen(pScreen, GET_FFB_FROM_SCREEN(pScreen), mode);
+    return FFBDacSaveScreen(GET_FFB_FROM_SCREEN(pScreen), mode);
 }
 
 /*
