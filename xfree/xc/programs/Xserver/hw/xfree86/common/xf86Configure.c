@@ -308,7 +308,7 @@ configureInputSection (void)
     configPrologue(XF86ConfInputPtr)
 
     ptr->inp_identifier = "Keyboard0";
-#if defined(WSCONS_SUPPORT) && defined(__NetBSD__)
+#if defined(WSCONS_SUPPORT) && defined(__NetBSD__) && defined(USE_MODULAR_KBD)
     /* check for /dev/wskbd */
     {
 	int fd = open("/dev/wskbd", 0);
