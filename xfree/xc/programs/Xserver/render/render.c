@@ -1292,7 +1292,7 @@ ProcRenderCompositeGlyphs (ClientPtr client)
     glyphs = glyphsBase;
     lists = listsBase;
     while (buffer + sizeof (xGlyphElt) < end)
-    {
+    {	
 	elt = (xGlyphElt *) buffer;
 	buffer += sizeof (xGlyphElt);
 	
@@ -1300,7 +1300,7 @@ ProcRenderCompositeGlyphs (ClientPtr client)
 	{
 	    if (buffer + sizeof (GlyphSet) < end)
 	    {
-		gs = *(GlyphSet *) buffer;
+		gs = *(CARD32 *) buffer;
 		glyphSet = (GlyphSetPtr) SecurityLookupIDByType (client,
 								 gs,
 								 GlyphSetType,
