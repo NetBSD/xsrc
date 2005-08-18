@@ -523,43 +523,49 @@ SPIN(ffb_dacPtr d, int count) {
 
 /*  Screen save (blank) restore */
 Bool
-FFBDacSaveScreen(FFBPtr pFfb, int mode) {
+FFBDacSaveScreen(ScreenPtr pScreen, FFBPtr pFfb, int mode) {
   unsigned int tmp;
+  Bool redraw = FALSE;
+  ScrnInfoRec *si = xf86Screens[pScreen->myNum];
   ffb_dacPtr dac;
   if(!pFfb) return FALSE;   /* Is there any way at all this could happen? */
   else dac = pFfb -> dac;
 
   /* 
    * there seems to be a bug in ffb1 hardware which causes screen corruption 
-   * when (un)blanking - until we know how to deal with it I'll just disable 
-   * blanking for these boards. The criteria may be wrong though - the bug has 
-   * been observed on FFB1 boards but FFB2+ boards are unaffected so it's not 
-   * quite clear when exactly it was fixed. So for now we'll just assume all 
-   * FFB2 or newer are ok.
+   * when (un)blanking - so we disable/enable screen access to cause a
+   * full redraw.
    */
-   
-  if (pFfb->ffb_type >= ffb2_prototype) {
-    tmp = DACCFG_READ(dac, FFBDAC_CFG_TGEN);  /* Get the timing information */
 
-    switch(mode) {
-      case SCREEN_SAVER_ON:
-      case SCREEN_SAVER_CYCLE:
-        tmp &= ~FFBDAC_CFG_TGEN_VIDE;  /* Kill the video */
-        break;
+  tmp = DACCFG_READ(dac, FFBDAC_CFG_TGEN);  /* Get the timing information */
 
-      case SCREEN_SAVER_OFF:
-      case SCREEN_SAVER_FORCER:
-        tmp |= FFBDAC_CFG_TGEN_VIDE;  /* Turn the video on */
-        break;
+  switch(mode) {
+    case SCREEN_SAVER_ON:
+    case SCREEN_SAVER_CYCLE:
+      tmp &= ~FFBDAC_CFG_TGEN_VIDE;  /* Kill the video */
+      break;
 
-      default:
-        return FALSE;  /* Don't know what to do; gently fail. */
+    case SCREEN_SAVER_OFF:
+    case SCREEN_SAVER_FORCER:
+      tmp |= FFBDAC_CFG_TGEN_VIDE;  /* Turn the video on */
+      if (pFfb->ffb_type < ffb2_prototype)
+        redraw = TRUE;
+      break;
+
+    default:
+      return FALSE;  /* Don't know what to do; gently fail. */
     }
     
-    /* Restore timing register, video set as asked */
-    DACCFG_WRITE(dac, FFBDAC_CFG_TGEN, tmp);  
-    SPIN(dac, DPMS_SPIN_COUNT/10);
+  /* Restore timing register, video set as asked */
+  DACCFG_WRITE(dac, FFBDAC_CFG_TGEN, tmp);  
+  SPIN(dac, DPMS_SPIN_COUNT/10);
+
+  if (redraw) {
+    /* this causes a complete redraw of the screen */
+    si->EnableDisableFBAccess(pScreen->myNum, FALSE);
+    si->EnableDisableFBAccess(pScreen->myNum, TRUE);
   }
+
   return TRUE;
 }
 
