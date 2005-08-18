@@ -808,9 +808,6 @@ FFBScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 	    xf86Msg(X_INFO, "%s: ... AFB firmware is loaded\n", psdp->device);
     }
 
-    /* Darken the screen for aesthetic reasons and set the viewport */
-    FFBSaveScreen(pScreen, SCREEN_SAVER_ON);
-
     if (pFfb->NoAccel == TRUE) {
 	    if (!CreatorUnaccelWidInit(pScreen))
 		    return FALSE;
@@ -961,9 +958,6 @@ FFBScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 	xf86ShowUnusedOptions(pScrn->scrnIndex, pScrn->options);
     }
 
-    /* unblank the screen */
-    FFBSaveScreen(pScreen, SCREEN_SAVER_OFF);
-
     /* Done */
     return TRUE;
 }
@@ -1113,7 +1107,7 @@ FFBSaveScreen(ScreenPtr pScreen, int mode)
        done in "ffb_dac.c" `for aesthetic reasons.'
     */
 {
-    return FFBDacSaveScreen(GET_FFB_FROM_SCREEN(pScreen), mode);
+    return FFBDacSaveScreen(pScreen, GET_FFB_FROM_SCREEN(pScreen), mode);
 }
 
 /*
