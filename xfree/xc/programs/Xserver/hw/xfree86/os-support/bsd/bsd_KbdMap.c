@@ -24,6 +24,8 @@
 #include "xf86Keymap.h"
 #include "bsd_kbd.h"
 
+Bool ADBScanCode(InputInfoPtr, int *);
+
 #if (defined(SYSCONS_SUPPORT) || defined(PCVT_SUPPORT)) && defined(GIO_KEYMAP)
 #define KD_GET_ENTRY(i,n) \
   eascii_to_x[((keymap.key[i].spcl << (n+1)) & 0x100) + keymap.key[i].map[n]]
@@ -615,7 +617,7 @@ static CARD8 wsAdbMap[] = {
 	/* 68 */ KEY_NOTUSED,
 	/* 69 */ KEY_KP_Plus,
 	/* 70 */ KEY_NOTUSED,
-	/* 71 */ KEY_UNKNOWN,	/* Clear */
+	/* 71 */ KEY_NumLock,	/* Clear */
 	/* 72 */ KEY_NOTUSED, 
 	/* 73 */ KEY_NOTUSED,
 	/* 74 */ KEY_NOTUSED,
@@ -666,7 +668,12 @@ static CARD8 wsAdbMap[] = {
 	/* 119 */ KEY_End,
 	/* 120 */ KEY_F2,
 	/* 121 */ KEY_PgDown,
-	/* 122 */ KEY_F1
+	/* 122 */ KEY_F1,
+	/* 123 */ KEY_NOTUSED,
+	/* 124 */ KEY_NOTUSED,
+	/* 125 */ KEY_NOTUSED,
+	/* 126 */ KEY_NOTUSED,
+	/* 127 */ KEY_Power
 };
 #define WS_ADB_MAP_SIZE (sizeof(wsAdbMap)/sizeof(unsigned char))
 
@@ -1058,7 +1065,7 @@ KbdGetMapping (InputInfoPtr pInfo, KeySymsPtr pKeySyms, CARD8 *pModMap)
                     break;
 #ifdef WSKBD_TYPE_ADB	
 	       case WSKBD_TYPE_ADB:
-                    pKbd->scancodeMap = &wsAdb; 
+	            pKbd->RemapScanCode = ADBScanCode;
                     break;
 #endif
 #ifdef WSKBD_TYPE_SUN
@@ -1077,4 +1084,30 @@ KbdGetMapping (InputInfoPtr pInfo, KeySymsPtr pKeySyms, CARD8 *pModMap)
 #endif
   }
   return;
+}
+
+Bool
+ADBScanCode(InputInfoPtr pInfo, int *scanCode)
+{
+    KbdDevPtr pKbd = (KbdDevPtr) pInfo->private;
+
+    /*
+     * we abuse pKbd->scanPrefix to record each scancode so we can weed out the
+     * 0 following every caps-lock which would otherwise result in spurious 'A's
+     */
+    if (*scanCode == 0) {
+        /* drop this event when the previous one was caps-lock */
+        if (pKbd->scanPrefix == 57) {
+	    pKbd->scanPrefix = 0;
+	    return TRUE;	/* let the input handler stop right here */
+	}
+    }
+    
+    /* record the scancode */
+    pKbd->scanPrefix = (*scanCode) & 0x7f;
+    
+    /* do the normal remapping */
+    if (*scanCode >= wsAdb.begin && *scanCode < wsAdb.end)
+        *scanCode = wsAdb.map[*scanCode - wsAdb.begin];
+    return FALSE;	/* continue normal processing */
 }
