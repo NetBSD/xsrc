@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/iplan2p4/iplpixmap.c,v 3.1 2001/12/17 20:00:46 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/iplan2p4/iplpixmap.c,v 3.2 2005/09/14 15:13:51 tsi Exp $ */
 /* $XConsortium: iplpixmap.c,v 5.14 94/04/17 20:28:56 dpw Exp $ */
 /***********************************************************
 
@@ -76,8 +76,12 @@ iplCreatePixmap (pScreen, width, height, depth)
     PixmapPtr pPixmap;
     int datasize;
     int paddedWidth;
-    int ipad=INTER_PLANES*2 - 1;
+    int ipad;
 
+    if ((width > MAXSHORT) || (height > MAXSHORT))
+	return NullPixmap;
+
+    ipad = INTER_PLANES*2 - 1;
     paddedWidth = PixmapBytePad(width, depth);
     paddedWidth = (paddedWidth + ipad) & ~ipad;
     datasize = height * paddedWidth;
