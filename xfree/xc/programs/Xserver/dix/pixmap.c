@@ -126,7 +126,9 @@ AllocatePixmap(pScreen, pixDataSize)
     unsigned size;
     int i;
 
-    pPixmap = (PixmapPtr)xalloc(pScreen->totalPixmapSize + pixDataSize);
+    if (((unsigned)(-1) - pScreen->totalPixmapSize) < (unsigned)pixDataSize)
+	return NullPixmap;
+    pPixmap = xalloc(pScreen->totalPixmapSize + (unsigned)pixDataSize);
     if (!pPixmap)
 	return NullPixmap;
     ppriv = (DevUnion *)(pPixmap + 1);
@@ -144,7 +146,7 @@ AllocatePixmap(pScreen, pixDataSize)
 	    ppriv->ptr = (pointer)NULL;
     }
 #else
-    pPixmap = (PixmapPtr)xalloc(sizeof(PixmapRec) + pixDataSize);
+    pPixmap = xalloc(sizeof(PixmapRec) + (unsigned)pixDataSize);
 #endif
     return pPixmap;
 }
