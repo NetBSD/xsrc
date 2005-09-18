@@ -73,6 +73,9 @@ cfbCreatePixmap (pScreen, width, height, depth)
     int datasize;
     int paddedWidth;
 
+    if ((width > MAXSHORT) || (height > MAXSHORT))
+	return NullPixmap;
+
     paddedWidth = PixmapBytePad(width, depth);
     datasize = height * paddedWidth;
     pPixmap = AllocatePixmap(pScreen, datasize);
