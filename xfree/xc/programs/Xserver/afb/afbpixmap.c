@@ -76,6 +76,9 @@ afbCreatePixmap(pScreen, width, height, depth)
 	int datasize;
 	int paddedWidth;
 
+	if ((width > MAXSHORT) || (height > MAXSHORT))
+		return NullPixmap;
+
 	paddedWidth = BitmapBytePad(width);
 	datasize = height * paddedWidth * depth;
 	pPixmap = AllocatePixmap(pScreen, datasize);
