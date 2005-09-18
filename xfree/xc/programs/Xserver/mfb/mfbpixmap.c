@@ -75,8 +75,9 @@ mfbCreatePixmap (pScreen, width, height, depth)
     int datasize;
     int paddedWidth;
 
-    if (depth != 1)
+    if ((depth != 1) || (width > MAXSHORT) || (height > MAXSHORT))
 	return NullPixmap;
+
     paddedWidth = BitmapBytePad(width);
     datasize = height * paddedWidth;
     pPixmap = AllocatePixmap(pScreen, datasize);
