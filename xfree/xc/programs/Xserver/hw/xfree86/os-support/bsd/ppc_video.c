@@ -39,7 +39,9 @@
 #define MAP_FAILED ((caddr_t)-1)
 #endif
 
+#include <fcntl.h>
 
+/*#define DEBUG*/
 /***************************************************************************/
 /* Video Memory Mapping section                                            */
 /***************************************************************************/
@@ -52,6 +54,8 @@
 
 static pointer ppcMapVidMem(int, unsigned long, unsigned long, int flags);
 static void ppcUnmapVidMem(int, pointer, unsigned long);
+void xf86EnableIO();
+void xf86DisableIO();
 
 void
 xf86OSInitVidMem(VidMemInfoPtr pVidMem)
@@ -60,6 +64,7 @@ xf86OSInitVidMem(VidMemInfoPtr pVidMem)
 	pVidMem->mapMem = ppcMapVidMem;
 	pVidMem->unmapMem = ppcUnmapVidMem;
 	pVidMem->initialised = TRUE;
+	xf86EnableIO();
 }
 
 
@@ -71,14 +76,18 @@ ppcMapVidMem(int ScreenNum, unsigned long Base, unsigned long Size, int flags)
 	int fd = xf86Info.screenFd;
 	pointer base;
 #ifdef DEBUG
-	xf86MsgVerb(X_INFO, 3, "mapVidMem %lx, %lx, fd = %d", 
-		    Base, Size, fd);
-#endif
 
+	xf86MsgVerb(X_WARNING, 3, "mapVidMem %lx, %lx, %d fd = %d", 
+		    Base, Size, p, fd);
+#endif
 	base = mmap(0, Size,
 		    (flags & VIDMEM_READONLY) ?
 		     PROT_READ : (PROT_READ | PROT_WRITE),
-		    MAP_SHARED, fd, Base);
+		    MAP_SHARED|MAP_FILE, fd, Base);
+#ifdef DEBUG
+	xf86MsgVerb(X_INFO, 3, "mapVidMem %lx", 
+		    base);
+#endif
 	if (base == MAP_FAILED)
 		FatalError("%s: could not mmap screen [s=%x,a=%x] (%s)",
 			   "xf86MapVidMem", Size, Base, strerror(errno));
@@ -114,7 +123,6 @@ xf86ReadBIOS(unsigned long Base, unsigned long Offset, unsigned char *Buf,
 
 	lseek(kmem, Base + Offset, 0);
 	rv = read(kmem, Buf, Len);
-
 	return rv;
 }
 
@@ -135,3 +143,32 @@ xf86EnableInterrupts()
 
 	return;
 }
+
+#ifdef USE_PPC_MMAP
+
+void xf86EnableIO()
+{
+	int fd = xf86Info.screenFd;
+	
+	xf86MsgVerb(X_WARNING, 3, "xf86EnableIO %d\n", fd);
+	if (ioBase == MAP_FAILED)
+	{
+		ioBase=mmap(NULL, 0x10000, PROT_READ|PROT_WRITE, MAP_SHARED, fd,
+		    0xf2000000);
+		xf86MsgVerb(X_INFO, 3, "xf86EnableIO: %08x\n", ioBase);
+		if (ioBase == MAP_FAILED)
+			xf86MsgVerb(X_WARNING, 3, "Can't map IO space!\n");
+	}
+}
+
+void xf86DisableIO()
+{
+
+	if (ioBase != MAP_FAILED)
+	{
+		munmap(__UNVOLATILE(ioBase), 0x10000);
+		ioBase = MAP_FAILED;
+	}
+}
+
+#endif

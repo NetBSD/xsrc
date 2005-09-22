@@ -67,7 +67,10 @@ SHARED_CFLAGS = PositionIndependentCFlags
     && ((OSMajorVersion == 1 && OSMinorVersion >= 1) || OSMajorVersion >= 2)
 # if defined(i386Architecture)
   IOPERMDEFINES = -DUSE_I386_IOPL
+#elif defined(PpcArchitecture)
+  IOPERMDEFINES = -DUSE_PPC_MMAP
 # elif !defined(ArmArchitecture) && \
+       !defined(PpcArchitecture) && \
        !defined(MipsArchitecture) && \
        !defined(AlphaArchitecture)
   IOPERM_SRC = ioperm_noop.c
@@ -78,6 +81,8 @@ SHARED_CFLAGS = PositionIndependentCFlags
   IOPERMDEFINES = -DUSE_I386_IOPL
 # elif defined(AMD64Architecture)
   IOPERMDEFINES = -DUSE_AMD64_IOPL
+# elif defined(PpcArchitecture)
+  IOPERMDEFINES = -DUSE_PPC_MMAP
 # else
   IOPERM_SRC = ioperm_noop.c
   IOPERM_OBJ = ioperm_noop.o
