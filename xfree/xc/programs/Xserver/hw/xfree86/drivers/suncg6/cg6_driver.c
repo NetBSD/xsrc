@@ -94,7 +94,7 @@ static const OptionInfoRec CG6Options[] = {
     { -1,			NULL,		OPTV_NONE,	{0}, FALSE }
 };
 
-const char *xaaSymbols[] =
+static const char *xaaSymbols[] =
 {
     "XAACreateInfoRec",
     "XAADestroyInfoRec",
