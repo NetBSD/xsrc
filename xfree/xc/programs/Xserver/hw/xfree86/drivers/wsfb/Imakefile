@@ -6,8 +6,8 @@ XCOMM $OpenBSD: Imakefile,v 1.2 2002/07/20 19:24:14 matthieu Exp $
 #define IHaveModules
 #include <Server.tmpl>
 
-SRCS = wsfb_driver.c
-OBJS = wsfb_driver.o
+SRCS = wsfb_driver.c wsfb_cursor.c
+OBJS = wsfb_driver.o wsfb_cursor.o
 
 #if defined(XF86DriverSDK)
 INCLUDES = -I. -I../../include
@@ -29,7 +29,7 @@ SubdirLibraryRule($(OBJS))
 
 ModuleObjectRule()
 
-ObjectModuleTarget(wsfb,$(OBJS))
+ObjectModuleTarget(wsfb,$(OBJS),drivers)
 
 InstallObjectModule(wsfb,$(MODULEDIR),drivers)
 
