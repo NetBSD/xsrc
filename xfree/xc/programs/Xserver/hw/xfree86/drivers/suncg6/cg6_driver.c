@@ -507,9 +507,6 @@ CG6ScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 	return FALSE;
     }
 
-    /* Darken the screen for aesthetic reasons and set the viewport */
-    CG6SaveScreen(pScreen, SCREEN_SAVER_ON);
-
     /*
      * The next step is to setup the screen's visuals, and initialise the
      * framebuffer code.  In cases where the framebuffer's default
@@ -570,6 +567,9 @@ CG6ScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 
 	xf86Msg(X_INFO, "%s: Using acceleration\n", pCg6->psdp->device);
     }
+
+    /* setup DGA */
+    Cg6DGAInit(pScreen);
 
     /* Initialise cursor functions */
     miDCInitialize(pScreen, xf86GetPointerScreenFuncs());
