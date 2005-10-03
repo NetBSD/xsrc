@@ -22,6 +22,8 @@
  */
 /* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/suncg6/cg6_driver.c,v 1.12 2005/02/18 02:55:09 dawes Exp $ */
 
+/* need this for PRIxPTR macro */
+#include <machine/int_fmtio.h>
 #include "xf86.h"
 #include "xf86_OSproc.h"
 #include "xf86_ansic.h"
@@ -483,9 +485,9 @@ CG6ScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
     
     if (!pCg6->fbc || !pCg6->thc || !pCg6->fb) {
     	xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
-		   "xf86MapSbusMem failed fbc:%llx fb:%llx thc:%llx\n",
-		   (long long)pCg6->fbc, (long long)pCg6->fb, 
-		   (long long)pCg6->thc );
+		   "xf86MapSbusMem failed fbc:%" PRIxPTR " fb:%" PRIxPTR
+                   " thc:%" PRIxPTR "\n",
+		   pCg6->fbc, pCg6->fb, pCg6->thc );
     
 	if (pCg6->fbc) {
 	    xf86UnmapSbusMem(psdp, pCg6->fbc, sizeof(*pCg6->fbc));
