@@ -79,6 +79,7 @@ typedef struct {
 	unsigned char *buffers[1];
 	CARD32	scanline[1024];
 	int		words_in_scanline, scan_x, scan_y, scan_xe;
+        int		clipxa, clipxe;
 	XAAInfoRecPtr	pXAA;
 } Cg6Rec, *Cg6Ptr;
 

@@ -127,54 +127,49 @@ static DGAFunctionRec Cg6_DGAFuncs = {
 };
 
 
-/* wait until the engine is idle */
+/* 
+ * wait until the engine is idle
+ * unclip since clipping also influences framebuffer accesses 
+ */
 static void 
 Cg6Sync(ScrnInfoPtr pScrn)
 {
     Cg6Ptr pCg6 = GET_CG6_FROM_SCRN(pScrn);
     
     while (pCg6->fbc->s & GX_INPROGRESS);
+    pCg6->fbc->clipminx = 0;
+    pCg6->fbc->clipmaxx = pCg6->width;
+    pCg6->fbc->clipminy = 0;
+    pCg6->fbc->clipmaxy = pCg6->maxheight;
 }
 
-/* wait until the blitter is idle */
+#define runDraw(pCg6) { CARD32 rubbish = pCg6->fbc->draw; }
+#define runBlit(pCg6) { CARD32 rubbish = pCg6->fbc->blit; }
+#define waitReady(pCg6) while(pCg6->fbc->s & GX_FULL)
+
+/*
+ * restore clipping values set by the Xserver since we're messing with them in 
+ * CPU-to-screen colour expansion
+ */
+ 
 static void 
-Cg6SyncBlt(ScrnInfoPtr pScrn)
+unClip(Cg6Ptr pCg6)
 {
-    Cg6Ptr pCg6 = GET_CG6_FROM_SCRN(pScrn);
-    
-    while (pCg6->fbc->blit & GX_BLT_INPROGRESS);
-}
-
-/* wait until the blitter is idle */
-static void 
-Cg6SyncDraw(ScrnInfoPtr pScrn)
-{
-    Cg6Ptr pCg6 = GET_CG6_FROM_SCRN(pScrn);
-    
-    while (pCg6->fbc->draw & GX_FULL);
-}
-
-static void unClip(Cg6Ptr pCg6)
-{
-    pCg6->fbc->clipminx=0;
-    pCg6->fbc->clipminy=0;
-    pCg6->fbc->clipmaxx=pCg6->width-1;
-    pCg6->fbc->clipmaxy=pCg6->maxheight-1;
+    pCg6->fbc->clipminx = pCg6->clipxa;
+    pCg6->fbc->clipmaxx = pCg6->clipxe;
 }
 
 static void
 Cg6InitEngine(Cg6Ptr pCg6)
 {
-    unClip(pCg6);
-    pCg6->fbc->mode = GX_BLIT_NOSRC |GX_MODE_COLOR8;
-    pCg6->fbc->mode &= ~(	GX_BLIT_ALL |
-		GX_MODE_ALL | 
-		GX_DRAW_ALL |
- 		GX_BWRITE0_ALL |
-		GX_BWRITE1_ALL |
- 		GX_BREAD_ALL |
- 		GX_BDISP_ALL);
-    pCg6->fbc->mode |=	GX_BLIT_SRC |
+    pCg6->clipxa = 0;
+    pCg6->clipxe = pCg6->width;
+    pCg6->fbc->clipminx = 0;
+    pCg6->fbc->clipmaxx = pCg6->width;
+    pCg6->fbc->clipminy = 0;
+    pCg6->fbc->clipmaxy = pCg6->maxheight;
+
+    pCg6->fbc->mode = GX_BLIT_SRC |
 		GX_MODE_COLOR8 |
 		GX_DRAW_RENDER |
 		GX_BWRITE0_ENABLE |
@@ -184,11 +179,16 @@ Cg6InitEngine(Cg6Ptr pCg6)
 	
     pCg6->fbc->fg = 0xff;
     pCg6->fbc->bg = 0x00;
+    
+    /* we ignore the pixel mask anyway but for completeness... */
     pCg6->fbc->pixelm = ~0;
+    
     pCg6->fbc->s = 0;
     pCg6->fbc->clip = 0;
     pCg6->fbc->offx = 0;
     pCg6->fbc->offy = 0;
+    pCg6->fbc->incx = 0;
+    pCg6->fbc->incy = 0;
 }
 
 static void
@@ -203,32 +203,24 @@ Cg6SetupForScreenToScreenCopy(
 {
     Cg6Ptr pCg6 = GET_CG6_FROM_SCRN(pScrn);
     
-    Cg6Sync(pScrn);
+    waitReady(pCg6);
     unClip(pCg6);
-    pCg6->fbc->mode = GX_BLIT_SRC |	GX_MODE_COLOR8;
-    pCg6->fbc->mode &= ~(	GX_BLIT_ALL |
-		GX_MODE_ALL | 
-		GX_DRAW_ALL |
- 		GX_BWRITE0_ALL |
-		GX_BWRITE1_ALL |
- 		GX_BREAD_ALL |
- 		GX_BDISP_ALL);
-    pCg6->fbc->mode |=	GX_BLIT_SRC |
+    
+    pCg6->fbc->mode = GX_BLIT_SRC |
 		GX_MODE_COLOR8 |
 		GX_DRAW_RENDER |
 		GX_BWRITE0_ENABLE |
 		GX_BWRITE1_DISABLE |
 		GX_BREAD_0 |
 		GX_BDISP_0;
-    pCg6->fbc->incx = 0;
-    pCg6->fbc->incy = 0;
+                
+    /* we probably don't need the following three */
     pCg6->fbc->fg = 0xff;
     pCg6->fbc->bg = 0x00;
-    pCg6->fbc->pixelm = ~0;
     pCg6->fbc->s = 0;
+    
     pCg6->fbc->alu = Cg6BlitROP[rop];
     pCg6->fbc->pm = planemask;
-    pCg6->fbc->clip = 0;
 }
 
 static void
@@ -245,6 +237,7 @@ Cg6SubsequentScreenToScreenCopy
 {
     Cg6Ptr pCg6 = GET_CG6_FROM_SCRN(pScrn);
 
+    waitReady(pCg6);
     pCg6->fbc->x0 = xSrc;
     pCg6->fbc->y0 = ySrc;
     pCg6->fbc->x1 = xSrc + w - 1;
@@ -253,7 +246,7 @@ Cg6SubsequentScreenToScreenCopy
     pCg6->fbc->y2 = yDst;
     pCg6->fbc->x3 = xDst + w - 1;
     pCg6->fbc->y3 = yDst + h - 1;
-    Cg6SyncBlt(pScrn);
+    runBlit(pCg6);
 }
 
 static void
@@ -268,17 +261,10 @@ Cg6SetupForSolidFill
     Cg6Ptr pCg6 = GET_CG6_FROM_SCRN(pScrn);
     CARD32 c2;
 
-    Cg6Sync(pScrn);
+    waitReady(pCg6);
     unClip(pCg6);
-    pCg6->fbc->mode = GX_BLIT_NOSRC |	GX_MODE_COLOR8;
-    pCg6->fbc->mode &= ~(	GX_BLIT_ALL |
-		GX_MODE_ALL | 
-		GX_DRAW_ALL |
- 		GX_BWRITE0_ALL |
-		GX_BWRITE1_ALL |
- 		GX_BREAD_ALL |
- 		GX_BDISP_ALL);
-    pCg6->fbc->mode |=	GX_BLIT_SRC |
+
+    pCg6->fbc->mode = GX_BLIT_SRC |
 		GX_MODE_COLOR8 |
 		GX_DRAW_RENDER |
 		GX_BWRITE0_ENABLE |
@@ -286,14 +272,9 @@ Cg6SetupForSolidFill
 		GX_BREAD_0 |
 		GX_BDISP_0;
     pCg6->fbc->fg = colour;
-    pCg6->fbc->bg = 0x00;
-    pCg6->fbc->incx = 0;
-    pCg6->fbc->incy = 0;
-    pCg6->fbc->pixelm = ~0;
     pCg6->fbc->s = 0;
     pCg6->fbc->alu = Cg6DrawROP[rop];
     pCg6->fbc->pm = planemask;
-    pCg6->fbc->clip = 0;
 }
 
 static void
@@ -308,11 +289,13 @@ Cg6SubsequentSolidFillRect
 {
     Cg6Ptr pCg6 = GET_CG6_FROM_SCRN(pScrn);
 
+    waitReady(pCg6);
     pCg6->fbc->arecty = y;
     pCg6->fbc->arectx = x;
-    pCg6->fbc->arecty = y + h - 1;
-    pCg6->fbc->arectx = x + w - 1;
-    Cg6SyncDraw(pScrn);
+    /* use the relative coordinate registers - saves two additions */
+    pCg6->fbc->rrecty = h - 1;
+    pCg6->fbc->rrectx = w - 1;
+    runDraw(pCg6);
 }
 
 static void 
@@ -323,23 +306,23 @@ Cg6SetupForCPUToScreenColorExpandFill(ScrnInfoPtr pScrn,
 {
     Cg6Ptr pCg6 = GET_CG6_FROM_SCRN(pScrn);
 
-    Cg6Sync(pScrn);
+    waitReady(pCg6);
     pCg6->fbc->mode = GX_BLIT_NOSRC | GX_MODE_COLOR1;
-    unClip(pCg6);
-    if(bg==-1) {
+    
+    if(bg == -1) {
+	/* transparent */
 	pCg6->fbc->alu = Cg6StippleROP[rop] | GX_PATTERN_ONES;
 	pCg6->fbc->bg = 0xff;
     } else {
+	/* draw background */
 	pCg6->fbc->alu = Cg6OpaqueStippleROP[rop] | GX_PATTERN_ONES;
 	pCg6->fbc->bg = bg;
     }	
     pCg6->fbc->fg = fg;
     pCg6->fbc->incx = 32;
     pCg6->fbc->incy = 0;
-    pCg6->fbc->pixelm = ~0;
     pCg6->fbc->s = 0;
     pCg6->fbc->pm = planemask;
-    pCg6->fbc->clip = 0;
 }
 
 static void 
@@ -352,9 +335,11 @@ Cg6SubsequentScanlineCPUToScreenColorExpandFill(ScrnInfoPtr pScrn,
     pCg6->scan_x = x;
     pCg6->scan_xe = x + w - 1;
     pCg6->scan_y = y;
-    /* XXX no idea if patalign does The Right Thing(tm) */
-    /*pCg6->fbc->patalign = (skipleft & 0xffff) << 16;*/
-    /* Now I know it doesn't. Apparently we just need to clip (skipleft) pixels */
+    
+    /* 
+     * we need to clip the left and right margins of what we're going to draw or
+     * we'll end up with garbage left or right
+     */
     pCg6->fbc->clipminx = x + skipleft;
     pCg6->fbc->clipmaxx = x + w - 1;
     pCg6->words_in_scanline = ((w + 31) >> 5);
@@ -379,7 +364,66 @@ Cg6SubsequentColorExpandScanline(ScrnInfoPtr pScrn, int bufno)
 	pCg6->fbc->font = pCg6->scanline[i];
     }
     pCg6->scan_y++;	
-    Cg6Sync(pScrn);
+}
+
+static void 
+Cg6SetupForSolidLine(ScrnInfoPtr pScrn, int color, int rop, 
+    unsigned int planemask)
+{
+    Cg6Ptr pCg6 = GET_CG6_FROM_SCRN(pScrn);
+
+    waitReady(pCg6);
+    unClip(pCg6);
+
+    pCg6->fbc->fg = color;
+    pCg6->fbc->mode = GX_BLIT_NOSRC;
+    pCg6->fbc->s = 0;
+    pCg6->fbc->alu = Cg6DrawROP[rop];
+    pCg6->fbc->pm = planemask;
+}
+
+static void
+Cg6SubsequentSolidTwoPointLine(ScrnInfoPtr pScrn, int x1, int y1, int x2,
+    int y2, int flags)
+{
+    Cg6Ptr pCg6 = GET_CG6_FROM_SCRN(pScrn);
+
+    /* 
+     * XXX we're blatantly ignoring the flags parameter which could tell us not 
+     * to draw the last point. Xsun simply reads it from the framebuffer and 
+     * puts it back after drawing the line but that would mean we have to wait 
+     * until the line is actually drawn. On the other hand - line drawing is 
+     * pretty fast so we won't lose too much speed
+     */
+    waitReady(pCg6);
+    pCg6->fbc->aliney = y1;
+    pCg6->fbc->alinex = x1;
+    pCg6->fbc->aliney = y2;
+    pCg6->fbc->alinex = x2;
+    runDraw(pCg6);
+}      
+     
+static void
+Cg6SetClippingRectangle(ScrnInfoPtr pScrn, int left, int top, int right, 
+			 int bottom)
+{
+    Cg6Ptr pCg6 = GET_CG6_FROM_SCRN(pScrn);
+
+    pCg6->fbc->clipminx = pCg6->clipxa = left;
+    pCg6->fbc->clipminy = top;
+    pCg6->fbc->clipmaxx = pCg6->clipxe = right;
+    pCg6->fbc->clipmaxy = bottom;
+}
+
+static void
+Cg6DisableClipping(ScrnInfoPtr pScrn)
+{
+    Cg6Ptr pCg6 = GET_CG6_FROM_SCRN(pScrn);
+
+    pCg6->fbc->clipminx = pCg6->clipxa = 0;
+    pCg6->fbc->clipminy = 0;
+    pCg6->fbc->clipmaxx = pCg6->clipxe = pCg6->width;
+    pCg6->fbc->clipmaxy = pCg6->maxheight;    
 }
 
 int
@@ -394,9 +438,18 @@ CG6AccelInit(ScrnInfoPtr pScrn)
     
     Cg6InitEngine(pCg6);
     
-    /* Sync */
+    /* wait until the engine is idle and remove clipping */
     pXAAInfo->Sync = Cg6Sync;
     
+    /* clipping */
+    pXAAInfo->SetClippingRectangle = Cg6SetClippingRectangle;
+    pXAAInfo->DisableClipping = Cg6DisableClipping;
+    pXAAInfo->ClippingFlags = HARDWARE_CLIP_SCREEN_TO_SCREEN_COPY |
+        HARDWARE_CLIP_SOLID_FILL |
+        /*HARDWARE_CLIP_MONO_8x8_FILL |
+        HARDWARE_CLIP_COLOR_8x8_FILL |*/
+        HARDWARE_CLIP_SOLID_LINE;
+
     /* Screen-to-screen copy */
     pXAAInfo->ScreenToScreenCopyFlags = NO_TRANSPARENCY;
     pXAAInfo->SetupForScreenToScreenCopy = Cg6SetupForScreenToScreenCopy;
@@ -406,6 +459,8 @@ CG6AccelInit(ScrnInfoPtr pScrn)
     /* Solid fills */
     pXAAInfo->SetupForSolidFill = Cg6SetupForSolidFill;
     pXAAInfo->SubsequentSolidFillRect = Cg6SubsequentSolidFillRect;
+
+    /* TODO: add pattern fills */
 
     /* colour expansion */
     pXAAInfo->ScanlineCPUToScreenColorExpandFillFlags = 
@@ -419,6 +474,18 @@ CG6AccelInit(ScrnInfoPtr pScrn)
 	Cg6SubsequentScanlineCPUToScreenColorExpandFill;
     pXAAInfo->SubsequentColorExpandScanline =
 	Cg6SubsequentColorExpandScanline;
+    
+    /* line drawing */
+    pXAAInfo->SetupForSolidLine = Cg6SetupForSolidLine;
+    pXAAInfo->SubsequentSolidTwoPointLine = Cg6SubsequentSolidTwoPointLine;
+    pXAAInfo->SolidLineFlags = BIT_ORDER_IN_BYTE_MSBFIRST;
+    /* 
+     * apparently the hardware can't do dashed lines, only lines with patterns
+     * which isn't useful
+     */
+    
+    /* TODO: add host-to-vram colour blits */
+     
     return 0;
 }
 

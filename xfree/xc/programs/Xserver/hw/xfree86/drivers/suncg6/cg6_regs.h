@@ -98,6 +98,14 @@
 
 #define CG6_FBC_INDEX_MOD		0x00000040
 #define CG6_FBC_INDEX_MASK		0x00000030
+/* 
+ * about the mode register:
+ * do NOT attempt to read-modify-write it - the bit groups above
+ * can all be written independently, if the corresponding bits are all 0
+ * the bits in the register aren't modified.
+ * besides that the BREAD, BWRITE and BDISP flags are apparently bogus 
+ */
+
 
 /* THC definitions */
 #define CG6_THC_MISC_REV_SHIFT       16
