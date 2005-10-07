@@ -234,5 +234,6 @@ extern int  Cg6WindowPrivateIndex;
 #define GX_BLIT_ALL	    0x00300000
 
 int CG6AccelInit(ScrnInfoPtr);
+Bool Cg6DGAInit(ScreenPtr pScreen);
 
 #endif /* CG6_H */

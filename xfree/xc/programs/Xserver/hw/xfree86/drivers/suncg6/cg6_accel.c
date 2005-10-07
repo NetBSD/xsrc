@@ -23,6 +23,7 @@
 /* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/suncg6/cg6_accel.c $ */
 
 #include "cg6.h"
+#include "dgaproc.h"
 
 
 static CARD32 Cg6BlitROP[] = {
@@ -100,6 +101,31 @@ static CARD32 Cg6OpaqueStippleROP[16]={
     ROP_OSTP(GX_ROP_SET,    GX_ROP_INVERT),	/* GXnand */
     ROP_OSTP(GX_ROP_SET,    GX_ROP_SET),	/* GXset */
 };
+
+/* DGA stuff */
+
+static Bool Cg6_OpenFramebuffer(ScrnInfoPtr pScrn, char **, unsigned int *mem,
+    unsigned int *, unsigned int *, unsigned int *);
+static Bool Cg6_SetMode(ScrnInfoPtr, DGAModePtr);
+static void Cg6_SetViewport(ScrnInfoPtr, int, int, int);
+static int Cg6_GetViewport(ScrnInfoPtr);
+static void Cg6_FillRect(ScrnInfoPtr, int, int, int, int, unsigned long);
+static void Cg6_BlitRect(ScrnInfoPtr, int, int, int, int, int, int);
+
+static void Cg6Sync(ScrnInfoPtr);
+
+static DGAFunctionRec Cg6_DGAFuncs = {
+	Cg6_OpenFramebuffer,
+	NULL,
+	Cg6_SetMode,
+	Cg6_SetViewport,
+	Cg6_GetViewport,
+	Cg6Sync,
+	Cg6_FillRect,
+	Cg6_BlitRect,
+	NULL
+};
+
 
 /* wait until the engine is idle */
 static void 
@@ -327,8 +353,9 @@ Cg6SubsequentScanlineCPUToScreenColorExpandFill(ScrnInfoPtr pScrn,
     pCg6->scan_xe = x + w - 1;
     pCg6->scan_y = y;
     /* XXX no idea if patalign does The Right Thing(tm) */
-    pCg6->fbc->patalign = (skipleft & 0xffff) << 16;
-    pCg6->fbc->clipminx = x;
+    /*pCg6->fbc->patalign = (skipleft & 0xffff) << 16;*/
+    /* Now I know it doesn't. Apparently we just need to clip (skipleft) pixels */
+    pCg6->fbc->clipminx = x + skipleft;
     pCg6->fbc->clipmaxx = x + w - 1;
     pCg6->words_in_scanline = ((w + 31) >> 5);
 }
@@ -393,4 +420,111 @@ CG6AccelInit(ScrnInfoPtr pScrn)
     pXAAInfo->SubsequentColorExpandScanline =
 	Cg6SubsequentColorExpandScanline;
     return 0;
+}
+
+Bool
+Cg6DGAInit(ScreenPtr pScreen)
+{
+    ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
+    Cg6Ptr pCg6 = GET_CG6_FROM_SCRN(pScrn);
+    DGAModePtr mode;
+    int result;
+    
+    mode = xnfcalloc(sizeof(DGAModeRec), 1);
+    if (mode == NULL) {
+        xf86Msg(X_WARNING, "%s: DGA setup failed, cannot allocate memory\n",
+            pCg6->psdp->device);
+        return FALSE;
+    }
+    
+    mode->mode = pScrn->modes;
+    mode->flags = DGA_PIXMAP_AVAILABLE | DGA_CONCURRENT_ACCESS;
+    if(!pCg6->NoAccel) {
+        mode->flags |= DGA_FILL_RECT | DGA_BLIT_RECT;
+    }
+    
+    mode->imageWidth = mode->pixmapWidth = mode->viewportWidth =
+	pScrn->virtualX;
+    mode->imageHeight = mode->pixmapHeight = mode->viewportHeight =
+	pScrn->virtualY;
+
+    mode->bytesPerScanline = mode->imageWidth;
+
+    mode->byteOrder = pScrn->imageByteOrder;
+    mode->depth = 8;
+    mode->bitsPerPixel = 8;
+    mode->red_mask = pScrn->mask.red;
+    mode->green_mask = pScrn->mask.green;
+    mode->blue_mask = pScrn->mask.blue;
+    
+    mode->visualClass = PseudoColor;
+    mode->address = pCg6->fb;
+
+    result = DGAInit(pScreen, &Cg6_DGAFuncs, mode, 1);
+
+    if (result) {
+    	xf86Msg(X_INFO, "%s: DGA initialized\n",
+            pCg6->psdp->device);
+    } else {
+     	xf86Msg(X_WARNING, "%s: DGA setup failed\n",
+            pCg6->psdp->device);
+    }       
+}
+
+static Bool 
+Cg6_OpenFramebuffer(ScrnInfoPtr pScrn, char **name,
+				unsigned int *mem,
+				unsigned int *size, unsigned int *offset,
+				unsigned int *extra)
+{
+    Cg6Ptr pCg6 = GET_CG6_FROM_SCRN(pScrn);
+
+    *name = pCg6->psdp->device;
+
+    *mem = CG6_RAM_VOFF;
+    *size = pCg6->vidmem;
+    *offset = 0;
+    *extra = 0;
+
+    return TRUE;
+}
+
+static Bool
+Cg6_SetMode(ScrnInfoPtr pScrn, DGAModePtr pMode)
+{
+    /*
+     * Nothing to do, we currently only support one mode
+     * and we are always in it.
+     */
+    return TRUE;
+}
+
+static void
+Cg6_SetViewport(ScrnInfoPtr pScrn, int x, int y, int flags)
+{
+     /* We don't support viewports, so... */
+}
+
+static int
+Cg6_GetViewport(ScrnInfoPtr pScrn)
+{
+    /* No viewports, none pending... */
+    return 0;
+}
+
+static void
+Cg6_FillRect(ScrnInfoPtr pScrn, int x, int y, int w, int h, unsigned long color)
+{
+
+    Cg6SetupForSolidFill(pScrn, color, GXset, 8);
+    Cg6SubsequentSolidFillRect(pScrn, x, y, w, h);
+}
+
+static void
+Cg6_BlitRect(ScrnInfoPtr pScrn, int srcx, int srcy,
+			 int w, int h, int dstx, int dsty)
+{
+
+    Cg6SetupForScreenToScreenCopy(pScrn, 0, 0, GXcopy, 8, 0);
+    Cg6SubsequentScreenToScreenCopy(pScrn, srcx, srcy, dstx, dsty, w, h);
 }
