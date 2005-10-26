@@ -169,6 +169,14 @@ fbCompositeSolidMask_nx8x8888 (CARD8      op,
     if (src == 0)
 	return;
     
+    /* convert source colour to destination format */
+    if (PICT_FORMAT_TYPE(pDst->pFormat->format) != 
+      PICT_FORMAT_TYPE(pSrc->pFormat->format)) {
+    	CARD32 tmp = src;
+	src = (tmp & 0xff00ff00) | ((tmp & 0xff0000) >> 16) | 
+	    ((tmp & 0xff) << 16);
+    }
+    
     fbComposeGetStart (pDst, xDst, yDst, CARD32, dstStride, dstLine, 1);
     fbComposeGetStart (pMask, xMask, yMask, CARD8, maskStride, maskLine, 1);
     
@@ -228,6 +236,14 @@ fbCompositeSolidMask_nx8888x8888C (CARD8      op,
     if (src == 0)
 	return;
     
+    /* convert source colour to destination format */
+    if (PICT_FORMAT_TYPE(pDst->pFormat->format) != 
+      PICT_FORMAT_TYPE(pSrc->pFormat->format)) {
+    	CARD32 tmp = src;
+	src = (tmp & 0xff00ff00) | ((tmp & 0xff0000) >> 16) | 
+	    ((tmp & 0xff) << 16);
+    }
+
     fbComposeGetStart (pDst, xDst, yDst, CARD32, dstStride, dstLine, 1);
     fbComposeGetStart (pMask, xMask, yMask, CARD32, maskStride, maskLine, 1);
     
@@ -299,6 +315,14 @@ fbCompositeSolidMask_nx8x0888 (CARD8      op,
     srca = src >> 24;
     if (src == 0)
 	return;
+    
+    /* convert source colour to destination format */
+    if (PICT_FORMAT_TYPE(pDst->pFormat->format) != 
+      PICT_FORMAT_TYPE(pSrc->pFormat->format)) {
+    	CARD32 tmp = src;
+	src = (tmp & 0xff00ff00) | ((tmp & 0xff0000) >> 16) | 
+	    ((tmp & 0xff) << 16);
+    }
     
     fbComposeGetStart (pDst, xDst, yDst, CARD8, dstStride, dstLine, 3);
     fbComposeGetStart (pMask, xMask, yMask, CARD8, maskStride, maskLine, 1);
@@ -422,7 +446,14 @@ fbCompositeSolidMask_nx8888x0565C (CARD8      op,
     CARD32	m, n, o;
 
     fbComposeGetSolid(pSrc, src);
-    
+
+    if (PICT_FORMAT_TYPE(pDst->pFormat->format) != 
+      PICT_FORMAT_TYPE(pSrc->pFormat->format)) {
+        CARD32 tmp = src;
+        src = (tmp & 0xff00ff00) | ((tmp & 0xff0000) >> 16) | 
+	    ((tmp & 0xff) << 16);
+    }
+     
     srca = src >> 24;
     if (src == 0)
 	return;
@@ -828,19 +859,30 @@ fbCompositeSolidMask_nx1xn (CARD8      op,
     
     fbComposeGetSolid(pSrc, src);
 
-    if ((src & 0xff000000) != 0xff000000)
+    if ((src & 0xff000000) == 0xff000000)
     {
+    
 	fbCompositeGeneral  (op, pSrc, pMask, pDst,
 			     xSrc, ySrc, xMask, yMask, xDst, yDst, 
 			     width, height);
 	return;
     }
-    fbGetStipDrawable (pMask->pDrawable, maskBits, maskStride, maskBpp, maskXoff, maskYoff);
-    fbGetDrawable (pDst->pDrawable, dstBits, dstStride, dstBpp, dstXoff, dstYoff);
+        
+    fbGetStipDrawable (pMask->pDrawable, maskBits, maskStride, maskBpp, 
+        maskXoff, maskYoff);
+    fbGetDrawable (pDst->pDrawable, dstBits, dstStride, dstBpp, dstXoff, 
+        dstYoff);
 
+    /* convert source colour to destination format */
+    if (PICT_FORMAT_TYPE(pDst->pFormat->format) != 
+      PICT_FORMAT_TYPE(pSrc->pFormat->format)) {
+        CARD32 tmp = src;
+        src = (tmp & 0xff00ff00) | ((tmp & 0xff0000) >> 16) | 
+	    ((tmp & 0xff) << 16);
+    }
+    
     switch (dstBpp) {
     case 32:
-	break;
     case 24:
 	break;
     case 16:
