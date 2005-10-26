@@ -110,13 +110,14 @@ SRCS = ffb_driver.c ffb_accel.c ffb_attr.c ffb_stip.c ffb_bcopy.c \
        ffb_cplane.c ffb_fspans.c ffb_point.c ffb_seg.c ffb_plygon.c \
        ffb_line.c ffb_glyph.c ffb_frect.c ffb_circle.c ffb_checks.c \
        ffb_stubs.c ffb_gc.c ffb_gspans.c ffb_sspans.c ffb_zeroarc.c \
-       ffb_cursor.c ffb_dga.c ffb_dac.c ffb_wid.c ffb_dbe.c $(DRISRCS)
+       ffb_cursor.c ffb_dga.c ffb_dac.c ffb_wid.c ffb_dbe.c ffb_ddc.c \
+       $(DRISRCS)
 OBJS = ffb_driver.o ffb_accel.o ffb_attr.o ffb_stip.o ffb_bcopy.o \
        ffb_cplane.o ffb_fspans.o ffb_point.o ffb_seg.o ffb_plygon.o \
        ffb_line.o ffb_glyph.o ffb_frect.o ffb_circle.o ffb_checks.o \
        ffb_stubs.o ffb_gc.o ffb_gspans.o ffb_sspans.o ffb_zeroarc.o \
-       ffb_cursor.o ffb_dga.o ffb_dac.o ffb_wid.o ffb_dbe.o $(VISOBJS) \
-       $(DRIOBJS)
+       ffb_cursor.o ffb_dga.o ffb_dac.o ffb_wid.o ffb_dbe.o ffb_ddc.o \
+       $(VISOBJS) $(DRIOBJS)
 
 #if defined(XF86DriverSDK)
 INCLUDES = -I. -I../../include
@@ -124,9 +125,9 @@ INCLUDES = -I. -I../../include
 INCLUDES = -I. -I$(XF86COMSRC) -I$(XF86OSSRC) \
            -I$(SERVERSRC)/mfb -I$(SERVERSRC)/mi \
            -I$(SERVERSRC)/Xext -I$(SERVERSRC)/cfb \
-	   -I$(SERVERSRC)/dbe \
-	   -I$(XF86SRC)/xf8_32wid \
-	   -I$(XF86SRC)/ramdac \
+	   -I$(SERVERSRC)/dbe -I$(SERVERSRC)/render\
+	   -I$(XF86SRC)/xf8_32wid -I$(SERVERSRC)/fb\
+	   -I$(XF86SRC)/ramdac -I$(XF86SRC)/xaa\
 	   -I$(XF86SRC)/ddc \
 	   -I$(XF86SRC)/i2c \
            -I$(FONTINCSRC) -I$(SERVERSRC)/include -I$(XINCLUDESRC) \

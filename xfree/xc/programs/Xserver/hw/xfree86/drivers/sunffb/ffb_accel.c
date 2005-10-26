@@ -24,28 +24,19 @@
  * USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sunffb/ffb_accel.c,v 1.10 2004/12/05 23:06:37 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sunffb/ffb_accel.c,v 1.6tsi Exp $ */
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #include	"scrnintstr.h"
 #include	"pixmapstr.h"
 #include	"regionstr.h"
 #include	"mistruct.h"
-#include	"fontstruct.h"
-#include	"dixfontstr.h"
-#define PSZ 8
-#include	"cfb.h"
-#undef PSZ
-#include	"cfb32.h"
-#include	"mibstore.h"
-#include	"mifillarc.h"
-#include	"miwideline.h"
 #include	"miline.h"
-#include	"fastblt.h"
-#include	"mergerop.h"
-#include	"migc.h"
-#include	"mi.h"
-
-#include	"cfb8_32wid.h"
+#include	"fb.h"
+#include	"xaa.h"
 
 #include	"ffb.h"
 #include	"ffb_fifo.h"
@@ -55,6 +46,7 @@
 #include	"ffb_stip.h"
 #include	"ffb_gc.h"
 
+int	CreatorScreenPrivateIndex;
 int	CreatorGCPrivateIndex;
 int	CreatorWindowPrivateIndex;
 int	CreatorGeneration;
@@ -68,637 +60,14 @@ struct fastfill_parms ffb_fastfill_parms[] = {
 /*XXX*/	{  0x00c0, 0x0a00, 0x04, 0x08, 0x08, 0x50 },	/* Portrait: 1280 x 2048 XXX */
 };
 
-static Bool
-CreatorCreateWindow(WindowPtr pWin)
-{
-	ScreenPtr pScreen = pWin->drawable.pScreen;
-	FFBPtr pFfb = GET_FFB_FROM_SCREEN(pScreen);
-	CreatorPrivWinPtr pFfbPrivWin;
-	unsigned int fbc;
-	int depth = (pWin->drawable.depth == 8) ? 8 : 24;
-	int i, visual, visclass;
-
-	if (depth == 8) {
-		if (!cfbCreateWindow(pWin))
-			return FALSE;
-	} else {
-		if (!cfb32CreateWindow(pWin))
-			return FALSE;
-	}
-
-	pFfbPrivWin = xalloc(sizeof(CreatorPrivWinRec));
-	if (!pFfbPrivWin)
-		return FALSE;
-
-	fbc  = FFB_FBC_WB_A | FFB_FBC_WM_COMBINED | FFB_FBC_RB_A;
-	fbc |= FFB_FBC_WE_FORCEON;
-	fbc |= FFB_FBC_SB_BOTH;
-	fbc |= FFB_FBC_ZE_OFF | FFB_FBC_YE_OFF;
-	if (depth == 8)
-		fbc |= (FFB_FBC_RE_MASK | FFB_FBC_GE_OFF | FFB_FBC_BE_OFF);
-	else
-		fbc |= FFB_FBC_RGBE_MASK;
-	fbc |= FFB_FBC_XE_ON;
-	pFfbPrivWin->fbc_base = fbc;
-
-	visual = wVisual(pWin);
-	visclass = 0;
-	for (i = 0; i < pScreen->numVisuals; i++) {
-		if (pScreen->visuals[i].vid == visual) {
-			visclass = pScreen->visuals[i].class;
-			break;
-		}
-	}
-
-	pFfbPrivWin->wid = FFBWidAlloc(pFfb, visclass, wColormap(pWin), TRUE);
-	if (pFfbPrivWin->wid == (unsigned int) -1) {
-		xfree(pFfbPrivWin);
-		return FALSE;
-	}
-	FFBLOG(("CreatorCreateWindow: pWin %p depth %d wid %x fbc_base %x\n",
-		pWin, depth, pFfbPrivWin->wid, pFfbPrivWin->fbc_base));
-
-	pFfbPrivWin->Stipple = NULL;
-	CreatorSetWindowPrivate(pWin, pFfbPrivWin);
-
-	return TRUE;
-}
-
-static Bool
-CreatorDestroyWindow(WindowPtr pWin)
-{
-	FFBPtr pFfb = GET_FFB_FROM_SCREEN(pWin->drawable.pScreen);
-	CreatorPrivWinPtr pFfbPrivWin;
-	int depth = (pWin->drawable.depth == 8) ? 8 : 24;
-
-	FFBLOG(("CreatorDestroyWindow: pWin %p depth %d\n", pWin, depth));
-	pFfbPrivWin = CreatorGetWindowPrivate(pWin);
-	if (pFfbPrivWin->Stipple)
-		xfree(pFfbPrivWin->Stipple);
-	FFBWidFree(pFfb, pFfbPrivWin->wid);
-	xfree(pFfbPrivWin);
-
-	if (depth == 8)
-		return cfbDestroyWindow(pWin);
-	else
-		return cfb32DestroyWindow(pWin);
-}
-
-static int
-CreatorChangeWindowAttributes(WindowPtr pWin, unsigned long mask)
-{
-	FFBPtr pFfb = GET_FFB_FROM_SCREEN(pWin->drawable.pScreen);
-	CreatorPrivWinPtr pFfbPrivWin;
-	CreatorStipplePtr stipple;
-	Mask index;
-	WindowPtr pBgWin;
-	register cfbPrivWin *pPrivWin;
-	int width, depth;
-
-	FFBLOG(("CreatorChangeWindowAttributes: WIN(%p) mask(%08x)\n", pWin, mask));
-	pPrivWin = (cfbPrivWin *)(pWin->devPrivates[cfbWindowPrivateIndex].ptr);
-	pFfbPrivWin = CreatorGetWindowPrivate(pWin);
-	depth = pWin->drawable.depth;
-
-	/*
-	 * When background state changes from ParentRelative and
-	 * we had previously rotated the fast border pixmap to match
-	 * the parent relative origin, rerotate to match window
-	 */
-	if (mask & (CWBackPixmap | CWBackPixel) &&
-	    pWin->backgroundState != ParentRelative &&
-	    pPrivWin->fastBorder &&
-	    (pPrivWin->oldRotate.x != pWin->drawable.x ||
-	     pPrivWin->oldRotate.y != pWin->drawable.y)) {
-		if (depth == 8) {
-			cfbXRotatePixmap(pPrivWin->pRotatedBorder,
-					 pWin->drawable.x - pPrivWin->oldRotate.x);
-			cfbYRotatePixmap(pPrivWin->pRotatedBorder,
-					 pWin->drawable.y - pPrivWin->oldRotate.y);
-		} else {
-			cfb32XRotatePixmap(pPrivWin->pRotatedBorder,
-					   pWin->drawable.x - pPrivWin->oldRotate.x);
-			cfb32YRotatePixmap(pPrivWin->pRotatedBorder,
-					   pWin->drawable.y - pPrivWin->oldRotate.y);
-		}
-		pPrivWin->oldRotate.x = pWin->drawable.x;
-		pPrivWin->oldRotate.y = pWin->drawable.y;
-	}
-	while (mask) {
-		index = lowbit(mask);
-		mask &= ~index;
-		switch (index) {
-		case CWBackPixmap:
-			stipple = pFfbPrivWin->Stipple;
-			if (pWin->backgroundState == None ||
-			    pWin->backgroundState == ParentRelative) {
-				pPrivWin->fastBackground = FALSE;
-				if (stipple) {
-					xfree(stipple);
-					pFfbPrivWin->Stipple = NULL;
-				}
-				/* Rotate border to match parent origin */
-				if (pWin->backgroundState == ParentRelative &&
-				    pPrivWin->pRotatedBorder)  {
-					for (pBgWin = pWin->parent;
-					     pBgWin->backgroundState == ParentRelative;
-					     pBgWin = pBgWin->parent);
-					if (depth == 8) {
-						cfbXRotatePixmap(pPrivWin->pRotatedBorder,
-								 pBgWin->drawable.x - pPrivWin->oldRotate.x);
-						cfbYRotatePixmap(pPrivWin->pRotatedBorder,
-								 pBgWin->drawable.y - pPrivWin->oldRotate.y);
-					} else {
-						cfb32XRotatePixmap(pPrivWin->pRotatedBorder,
-								   pBgWin->drawable.x - pPrivWin->oldRotate.x);
-						cfb32YRotatePixmap(pPrivWin->pRotatedBorder,
-								   pBgWin->drawable.y - pPrivWin->oldRotate.y);
-					}
-					pPrivWin->oldRotate.x = pBgWin->drawable.x;
-					pPrivWin->oldRotate.y = pBgWin->drawable.y;
-				}
-				break;
-			}
-			if (!stipple) {
-				if (!pFfb->tmpstipple)
-					pFfb->tmpstipple = (CreatorStipplePtr)
-						xalloc(sizeof *pFfb->tmpstipple);
-				stipple = pFfb->tmpstipple;
-			}
-			if (stipple) {
-				int ph = FFB_FFPARMS(pFfb).pagefill_height;
-
-				if (CreatorCheckTile(pWin->background.pixmap, stipple,
-						     ((DrawablePtr)pWin)->x & 31,
-						     ((DrawablePtr)pWin)->y & 31, ph)) {
-					stipple->alu = GXcopy;
-					pPrivWin->fastBackground = FALSE;
-					if (stipple == pFfb->tmpstipple) {
-						pFfbPrivWin->Stipple = stipple;
-						pFfb->tmpstipple = 0;
-					}
-					break;
-				}
-			}
-			if ((stipple = pFfbPrivWin->Stipple) != NULL) {
-				xfree(stipple);
-				pFfbPrivWin->Stipple = NULL;
-			}
-			if (((width = (pWin->background.pixmap->drawable.width *
-				       pWin->background.pixmap->drawable.bitsPerPixel)) <= 32) &&
-			    !(width & (width - 1))) {
-				if (depth == 8) {
-					cfbCopyRotatePixmap(pWin->background.pixmap,
-							    &pPrivWin->pRotatedBackground,
-							    pWin->drawable.x,
-							    pWin->drawable.y);
-				} else {
-					cfb32CopyRotatePixmap(pWin->background.pixmap,
-							      &pPrivWin->pRotatedBackground,
-							      pWin->drawable.x,
-							      pWin->drawable.y);
-				}
-				if (pPrivWin->pRotatedBackground) {
-					pPrivWin->fastBackground = TRUE;
-					pPrivWin->oldRotate.x = pWin->drawable.x;
-					pPrivWin->oldRotate.y = pWin->drawable.y;
-				} else
-					pPrivWin->fastBackground = FALSE;
-				break;
-			}
-			pPrivWin->fastBackground = FALSE;
-			break;
-
-		case CWBackPixel:
-			pPrivWin->fastBackground = FALSE;
-			break;
-
-		case CWBorderPixmap:
-			/* don't bother with accelerator for border tiles (just lazy) */
-			if (((width = (pWin->border.pixmap->drawable.width *
-				       pWin->border.pixmap->drawable.bitsPerPixel)) <= 32) &&
-			    !(width & (width - 1))) {
-				for (pBgWin = pWin;
-				     pBgWin->backgroundState == ParentRelative;
-				     pBgWin = pBgWin->parent)
-					;
-				if (depth == 8) {
-					cfbCopyRotatePixmap(pWin->border.pixmap,
-							    &pPrivWin->pRotatedBorder,
-							    pBgWin->drawable.x,
-							    pBgWin->drawable.y);
-				} else {
-					cfb32CopyRotatePixmap(pWin->border.pixmap,
-							      &pPrivWin->pRotatedBorder,
-							      pBgWin->drawable.x,
-							      pBgWin->drawable.y);
-				}
-				if (pPrivWin->pRotatedBorder) {
-					pPrivWin->fastBorder = TRUE;
-					pPrivWin->oldRotate.x = pBgWin->drawable.x;
-					pPrivWin->oldRotate.y = pBgWin->drawable.y;
-				} else
-					pPrivWin->fastBorder = FALSE;
-			} else
-				pPrivWin->fastBorder = FALSE;
-			break;
-
-		case CWBorderPixel:
-			pPrivWin->fastBorder = FALSE;
-			break;
-		}
-	}
-	return (TRUE);
-}
-
-static void
-CreatorPaintWindow(WindowPtr pWin, RegionPtr pRegion, int what)
-{
-	FFBPtr pFfb = GET_FFB_FROM_SCREEN(pWin->drawable.pScreen);
-	ffb_fbcPtr ffb = pFfb->regs;
-	register cfbPrivWin *pPrivWin;
-	CreatorPrivWinPtr pFfbPrivWin;
-	CreatorStipplePtr stipple;
-	WindowPtr pBgWin;
-	int depth = pWin->drawable.depth;
-
-	if (pFfb->vtSema)
-		return;
-
-	FFBLOG(("CreatorPaintWindow: WIN(%p) what(%d)\n", pWin, what));
-	pPrivWin = cfbGetWindowPrivate(pWin);
-	pFfbPrivWin = CreatorGetWindowPrivate(pWin);
-	switch (what) {
-	case PW_BACKGROUND:
-		stipple = pFfbPrivWin->Stipple;
-		switch (pWin->backgroundState) {
-		case None:
-			return;
-		case ParentRelative:
-			do {
-				pWin = pWin->parent;
-			} while (pWin->backgroundState == ParentRelative);
-			(*pWin->drawable.pScreen->PaintWindowBackground)(pWin, pRegion, what);
-			return;
-		case BackgroundPixmap:
-			if (stipple) {
-				CreatorFillBoxStipple((DrawablePtr)pWin,
-						      (int)REGION_NUM_RECTS(pRegion),
-						      REGION_RECTS(pRegion),
-						      stipple);
-				return;
-			}
-			FFB_ATTR_SFB_VAR_WIN(pFfb, 0x00ffffff, GXcopy, pWin);
-			FFBWait(pFfb, ffb);
-			if (pPrivWin->fastBackground) {
-				if (depth == 8) {
-					cfbFillBoxTile32((DrawablePtr)pWin,
-							 (int)REGION_NUM_RECTS(pRegion),
-							 REGION_RECTS(pRegion),
-							 pPrivWin->pRotatedBackground);
-				} else {
-					cfb32FillBoxTile32((DrawablePtr)pWin,
-							   (int)REGION_NUM_RECTS(pRegion),
-							   REGION_RECTS(pRegion),
-							   pPrivWin->pRotatedBackground);
-				}
-			} else {
-				if (depth == 8) {
-					cfbFillBoxTileOdd((DrawablePtr)pWin,
-							  (int)REGION_NUM_RECTS(pRegion),
-							  REGION_RECTS(pRegion),
-							  pWin->background.pixmap,
-							  (int) pWin->drawable.x,
-							  (int) pWin->drawable.y);
-				} else {
-					cfb32FillBoxTileOdd((DrawablePtr)pWin,
-							    (int)REGION_NUM_RECTS(pRegion),
-							    REGION_RECTS(pRegion),
-							    pWin->background.pixmap,
-							    (int) pWin->drawable.x,
-							    (int) pWin->drawable.y);
-				}
-			}
-			return;
-		case BackgroundPixel:
-			CreatorFillBoxSolid((DrawablePtr)pWin,
-					    (int)REGION_NUM_RECTS(pRegion),
-					    REGION_RECTS(pRegion),
-					    pWin->background.pixel);
-			return;
-		}
-		break;
-	case PW_BORDER:
-		if (pWin->borderIsPixel) {
-			CreatorFillBoxSolid((DrawablePtr)pWin,
-					    (int)REGION_NUM_RECTS(pRegion),
-					    REGION_RECTS(pRegion),
-					    pWin->border.pixel);
-			return;
-		}
-		FFB_ATTR_SFB_VAR_WIN(pFfb, 0x00ffffff, GXcopy, pWin);
-		FFBWait(pFfb, ffb);
-		if (pPrivWin->fastBorder) {
-			if (depth == 8) {
-				cfbFillBoxTile32((DrawablePtr)pWin,
-						 (int)REGION_NUM_RECTS(pRegion),
-						 REGION_RECTS(pRegion),
-						 pPrivWin->pRotatedBorder);
-			} else {
-				cfb32FillBoxTile32((DrawablePtr)pWin,
-						   (int)REGION_NUM_RECTS(pRegion),
-						   REGION_RECTS(pRegion),
-						   pPrivWin->pRotatedBorder);
-			}
-		} else {
-			for (pBgWin = pWin;
-			     pBgWin->backgroundState == ParentRelative;
-			     pBgWin = pBgWin->parent)
-				;
-
-			if (depth == 8) {
-				cfbFillBoxTileOdd((DrawablePtr)pWin,
-						  (int)REGION_NUM_RECTS(pRegion),
-						  REGION_RECTS(pRegion),
-						  pWin->border.pixmap,
-						  (int) pBgWin->drawable.x,
-						  (int) pBgWin->drawable.y);
-			} else {
-				cfb32FillBoxTileOdd((DrawablePtr)pWin,
-						    (int)REGION_NUM_RECTS(pRegion),
-						    REGION_RECTS(pRegion),
-						    pWin->border.pixmap,
-						    (int) pBgWin->drawable.x,
-						    (int) pBgWin->drawable.y);
-			}
-		}
-		return;
-	}
-}
-
-static void
-CreatorCopyWindow(WindowPtr pWin, DDXPointRec ptOldOrg, RegionPtr prgnSrc)
-{
-	ScreenPtr pScreen = pWin->drawable.pScreen;
-	FFBPtr pFfb = GET_FFB_FROM_SCREEN(pScreen);
-	DDXPointPtr pptSrc;
-	DDXPointPtr ppt;
-	RegionRec rgnDst;
-	BoxPtr pbox;
-	int dx, dy;
-	int i, nbox;
-	WindowPtr pwinRoot;
-
-	if (pFfb->vtSema)
-		return;
-
-	FFBLOG(("CreatorCopyWindow: WIN(%p)\n", pWin));
-
-	REGION_NULL(pScreen, &rgnDst);
-
-	dx = ptOldOrg.x - pWin->drawable.x;
-	dy = ptOldOrg.y - pWin->drawable.y;
-	REGION_TRANSLATE(pScreen, prgnSrc, -dx, -dy);
-	REGION_INTERSECT(pScreen, &rgnDst, &pWin->borderClip, prgnSrc);
-
-	pbox = REGION_RECTS(&rgnDst);
-	nbox = REGION_NUM_RECTS(&rgnDst);
-	if(!(pptSrc = (DDXPointPtr )ALLOCATE_LOCAL(nbox * sizeof(DDXPointRec))))
-		return;
-
-	ppt = pptSrc;
-	for (i = nbox; --i >= 0; ppt++, pbox++) {
-		ppt->x = pbox->x1 + dx;
-		ppt->y = pbox->y1 + dy;
-	}
-
-	/* XXX Optimize this later to only gcopy/vcopy the 8bpp+WID plane
-	 * XXX when possible.  -DaveM
-	 */
-
-	pwinRoot = WindowTable[pScreen->myNum];
-
-	if (!pFfb->disable_vscroll && (!dx && dy)) {
-		FFBPtr pFfb = GET_FFB_FROM_SCREEN(pScreen);
-
-		FFB_ATTR_VSCROLL_WINCOPY(pFfb);
-		CreatorDoVertBitblt((DrawablePtr)pwinRoot, (DrawablePtr)pwinRoot,
-				    GXcopy, &rgnDst, pptSrc, ~0L);
-	} else {
-		FFBPtr pFfb = GET_FFB_FROM_SCREEN(pScreen);
-		ffb_fbcPtr ffb = pFfb->regs;
-
-		FFB_ATTR_SFB_VAR_WINCOPY(pFfb);
-		FFBWait(pFfb, ffb);
-		CreatorDoBitblt((DrawablePtr)pwinRoot, (DrawablePtr)pwinRoot,
-				GXcopy, &rgnDst, pptSrc, ~0L);
-	}
-	DEALLOCATE_LOCAL(pptSrc);
-	REGION_UNINIT(pScreen, &rgnDst);
-}
-
-static void
-CreatorSaveAreas(PixmapPtr pPixmap, RegionPtr prgnSave, int xorg, int yorg, WindowPtr pWin)
-{
-	ScreenPtr pScreen = pPixmap->drawable.pScreen;
-	FFBPtr pFfb = GET_FFB_FROM_SCREEN(pScreen);
-	cfb8_32WidScreenPtr pScreenPriv =
-		CFB8_32WID_GET_SCREEN_PRIVATE(pScreen);
-	ffb_fbcPtr ffb = pFfb->regs;
-	register DDXPointPtr pPt;
-	DDXPointPtr pPtsInit;
-	register BoxPtr pBox;
-	register int i;
-	PixmapPtr pScrPix;
-
-	if (pFfb->vtSema)
-		return;
-
-	FFBLOG(("CreatorSaveAreas: WIN(%p)\n", pWin));
-	i = REGION_NUM_RECTS(prgnSave);
-	pPtsInit = (DDXPointPtr)ALLOCATE_LOCAL(i * sizeof(DDXPointRec));
-	if (!pPtsInit)
-		return;
-
-	pBox = REGION_RECTS(prgnSave);
-	pPt = pPtsInit;
-	while (--i >= 0) {
-		pPt->x = pBox->x1 + xorg;
-		pPt->y = pBox->y1 + yorg;
-		pPt++;
-		pBox++;
-	}
-
-	if (pWin->drawable.bitsPerPixel == 8)
-		pScrPix = (PixmapPtr) pScreenPriv->pix8;
-	else
-		pScrPix = (PixmapPtr) pScreenPriv->pix32;
-
-	/* SRC is the framebuffer, DST is a pixmap.  The SFB_VAR attributes may
-	 * seem silly, but they are needed even in this case to handle
-	 * double-buffered windows properly.
-	 */
-	FFB_ATTR_SFB_VAR_WIN(pFfb, 0x00ffffff, GXcopy, pWin);
-	FFBWait(pFfb, ffb);
-	CreatorDoBitblt((DrawablePtr) pScrPix, (DrawablePtr)pPixmap,
-			GXcopy, prgnSave, pPtsInit, ~0L);
-
-	DEALLOCATE_LOCAL(pPtsInit);
-}
-
-static void
-CreatorRestoreAreas(PixmapPtr pPixmap, RegionPtr prgnRestore, int xorg, int yorg, WindowPtr pWin)
-{
-	FFBPtr pFfb;
-	ffb_fbcPtr ffb;
-	register DDXPointPtr pPt;
-	DDXPointPtr pPtsInit;
-	register BoxPtr pBox;
-	register int i;
-	ScreenPtr pScreen = pPixmap->drawable.pScreen;
-	cfb8_32WidScreenPtr pScreenPriv =
-		CFB8_32WID_GET_SCREEN_PRIVATE(pScreen);
-	PixmapPtr pScrPix;
-
-	pFfb = GET_FFB_FROM_SCREEN(pScreen);
-	if (pFfb->vtSema)
-		return;
-
-	FFBLOG(("CreatorRestoreAreas: WIN(%p)\n", pWin));
-	i = REGION_NUM_RECTS(prgnRestore);
-	pPtsInit = (DDXPointPtr)ALLOCATE_LOCAL(i*sizeof(DDXPointRec));
-	if (!pPtsInit)
-		return;
-
-	pBox = REGION_RECTS(prgnRestore);
-	pPt = pPtsInit;
-	while (--i >= 0) {
-		pPt->x = pBox->x1 - xorg;
-		pPt->y = pBox->y1 - yorg;
-		pPt++;
-		pBox++;
-	}
-
-	if (pWin->drawable.bitsPerPixel == 8)
-		pScrPix = (PixmapPtr) pScreenPriv->pix8;
-	else
-		pScrPix = (PixmapPtr) pScreenPriv->pix32;
-
-	pFfb = GET_FFB_FROM_SCREEN(pScreen);
-	ffb = pFfb->regs;
-
-	/* SRC is a pixmap, DST is the framebuffer */
-	FFB_ATTR_SFB_VAR_WIN(pFfb, 0x00ffffff, GXcopy, pWin);
-	FFBWait(pFfb, ffb);
-	CreatorDoBitblt((DrawablePtr)pPixmap, (DrawablePtr) pScrPix,
-			GXcopy, prgnRestore, pPtsInit, ~0L);
-
-	DEALLOCATE_LOCAL(pPtsInit);
-}
-
-static void
-CreatorGetImage(DrawablePtr pDrawable, int sx, int sy, int w, int h, unsigned int format, unsigned long planeMask, char* pdstLine)
-{
-	BoxRec box;
-	DDXPointRec ptSrc;
-	RegionRec rgnDst;
-	ScreenPtr pScreen;
-	PixmapPtr pPixmap;
-
-	FFBLOG(("CreatorGetImage: s[%08x:%08x] wh[%08x:%08x]\n", sx, sy, w, h));
-	if ((w == 0) || (h == 0))
-		return;
-	if (pDrawable->bitsPerPixel == 1) {
-		mfbGetImage(pDrawable, sx, sy, w, h, format, planeMask, pdstLine);
-		return;
-	}
-	pScreen = pDrawable->pScreen;
-	/*
-	 * XFree86 DDX empties the root borderClip when the VT is
-	 * switched away; this checks for that case
-	 */
-	if (!cfbDrawableEnabled(pDrawable))
-		return;
-	if(format == ZPixmap) {
-		FFBPtr pFfb = GET_FFB_FROM_SCREEN(pScreen);
-		ffb_fbcPtr ffb = pFfb->regs;
-
-		/* We have to have the full planemask. */
-		if (pDrawable->type == DRAWABLE_WINDOW) {
-			WindowPtr pWin = (WindowPtr) pDrawable;
-
-			FFB_ATTR_SFB_VAR_WIN(pFfb, 0x00ffffff, GXcopy, pWin);
-			FFBWait(pFfb, ffb);
-		}
-
-		if (pDrawable->bitsPerPixel == 8) {
-			if((planeMask & 0x000000ff) != 0x000000ff) {
-				cfbGetImage(pDrawable, sx, sy, w, h,
-					    format, planeMask, pdstLine);
-				return;
-			}
-		} else {
-			if((planeMask & 0x00ffffff) != 0x00ffffff) {
-				cfb32GetImage(pDrawable, sx, sy, w, h,
-					      format, planeMask, pdstLine);
-				return;
-			}
-		}
-
-		/* SRC is the framebuffer, DST is a pixmap */
-		if (pDrawable->type == DRAWABLE_WINDOW && w == 1 && h == 1) {
-			/* Benchmarks do this make sure the acceleration hardware
-			 * has completed all of it's operations, therefore I feel
-			 * it is not cheating to special case this because if
-			 * anything it gives the benchmarks more accurate results.
-			 */
-			if (pDrawable->bitsPerPixel == 32) {
-				unsigned char *sfb = (unsigned char *)pFfb->sfb32;
-				unsigned int *dstPixel = (unsigned int *)pdstLine;
-				unsigned int tmp;
-
-				tmp = *((unsigned int *)(sfb +
-							 ((sy + pDrawable->y) << 13) +
-							 ((sx + pDrawable->x) << 2)));
-				*dstPixel = (tmp & 0x00ffffff);
-			} else {
-				unsigned char *sfb = (unsigned char *)pFfb->sfb8r;
-				unsigned char *dstPixel = (unsigned char *)pdstLine;
-
-				*dstPixel = *((unsigned char *)(sfb +
-								((sy + pDrawable->y) << 11) +
-								((sx + pDrawable->x) << 0)));
-			}
-			return;
-		}
-		pPixmap = GetScratchPixmapHeader(pScreen, w, h,
-						 pDrawable->depth, pDrawable->bitsPerPixel,
-						 PixmapBytePad(w,pDrawable->depth), (pointer)pdstLine);
-		if (!pPixmap)
-			return;
-		ptSrc.x = sx + pDrawable->x;
-		ptSrc.y = sy + pDrawable->y;
-		box.x1 = 0;
-		box.y1 = 0;
-		box.x2 = w;
-		box.y2 = h;
-		REGION_INIT(pScreen, &rgnDst, &box, 1);
-		CreatorDoBitblt(pDrawable, (DrawablePtr)pPixmap, GXcopy, &rgnDst,
-				&ptSrc, planeMask);
-		REGION_UNINIT(pScreen, &rgnDst);
-		FreeScratchPixmapHeader(pPixmap);
-	} else
-		miGetImage(pDrawable, sx, sy, w, h, format, planeMask, pdstLine);
-}
-
 void
-CreatorVtChange(ScreenPtr pScreen, int enter)
+CreatorVtChange (ScreenPtr pScreen, int enter)
 {
 	FFBPtr pFfb = GET_FFB_FROM_SCREEN(pScreen);
 	ffb_fbcPtr ffb = pFfb->regs;
 
 	pFfb->rp_active = 1;
-	FFBWait(pFfb, ffb);
+	FFBWait(pFfb, ffb);     
 	pFfb->fifo_cache = -1;
 	pFfb->fbc_cache = (FFB_FBC_WB_A | FFB_FBC_WM_COMBINED |
 			   FFB_FBC_RB_A | FFB_FBC_SB_BOTH| FFB_FBC_XE_OFF |
@@ -736,8 +105,8 @@ CreatorVtChange(ScreenPtr pScreen, int enter)
 			   FFB_FBC_ZE_OFF | FFB_FBC_YE_OFF | FFB_FBC_RGBE_ON);
 	pFfb->ppc_cache &= ~FFB_PPC_XS_MASK;
 	pFfb->ppc_cache |= FFB_PPC_XS_WID;
-	pFfb->wid_cache = 0xff;
-	FFBFifo(pFfb, 8);
+	pFfb->wid_cache = (enter ? pFfb->xaa_wid : 0xff);
+	FFBFifo(pFfb, 11);
 	ffb->fbc = pFfb->fbc_cache;
 	ffb->ppc = FFB_PPC_XS_WID;
 	ffb->wid = pFfb->wid_cache;
@@ -746,6 +115,718 @@ CreatorVtChange(ScreenPtr pScreen, int enter)
 	ffb->cmp = 0x80808080;
 	ffb->matchab = 0x80808080;
 	ffb->magnab = 0x80808080;
+	ffb->blendc = (FFB_BLENDC_FORCE_ONE |
+		       FFB_BLENDC_DF_ONE_M_A |
+		       FFB_BLENDC_SF_A);
+	ffb->blendc1 = 0;
+	ffb->blendc2 = 0;
+	pFfb->rp_active = 1;
+	FFBWait(pFfb, ffb);
+
+	if (enter) {
+		pFfb->drawop_cache = FFB_DRAWOP_RECTANGLE;
+		
+		FFBFifo(pFfb, 5);
+		ffb->drawop = pFfb->drawop_cache;
+		FFB_WRITE64(&ffb->by, 0, 0);
+		FFB_WRITE64_2(&ffb->bh, pFfb->psdp->height, pFfb->psdp->width);
+		pFfb->rp_active = 1;
+		FFBWait(pFfb, ffb);
+
+		SET_SYNC_FLAG(pFfb->pXAAInfo);
+		}
+	}
+
+#ifdef DEBUG_FFB
+FILE *FDEBUG_FD = NULL;
+#endif
+
+#define FFB_ATTR_SFB_VAR_XAA(__fpriv, __pmask, __alu) \
+do {   unsigned int __ppc = FFB_PPC_ABE_DISABLE | FFB_PPC_APE_DISABLE | FFB_PPC_CS_VAR | FFB_PPC_XS_WID; \
+       unsigned int __ppc_mask = FFB_PPC_ABE_MASK | FFB_PPC_APE_MASK | FFB_PPC_CS_MASK | FFB_PPC_XS_MASK; \
+       unsigned int __rop = (FFB_ROP_EDIT_BIT | (__alu))|(FFB_ROP_NEW<<8); \
+       unsigned int __fbc = (__fpriv)->xaa_fbc; \
+       unsigned int __wid = (__fpriv)->xaa_wid; \
+       if (((__fpriv)->ppc_cache & __ppc_mask) != __ppc || \
+           (__fpriv)->fbc_cache != __fbc || \
+           (__fpriv)->wid_cache != __wid || \
+           (__fpriv)->rop_cache != __rop || \
+           (__fpriv)->pmask_cache != (__pmask)) \
+               __FFB_Attr_SFB_VAR(__fpriv, __ppc, __ppc_mask, __fbc, \
+                                  __wid, __rop, (__pmask)); \
+} while(0)
+
+#define FFB_ATTR_VSCROLL_XAA(__fpriv, __pmask) \
+do {   unsigned int __rop = (FFB_ROP_OLD | (FFB_ROP_OLD << 8)); \
+       unsigned int __fbc = (__fpriv)->xaa_fbc; \
+       if ((__fpriv)->fbc_cache != __fbc || \
+           (__fpriv)->rop_cache != __rop || \
+           (__fpriv)->pmask_cache != (__pmask) || \
+           (__fpriv)->drawop_cache != FFB_DRAWOP_VSCROLL) { \
+               ffb_fbcPtr __ffb = (__fpriv)->regs; \
+               (__fpriv)->fbc_cache = __fbc; \
+               (__fpriv)->rop_cache = __rop; \
+               (__fpriv)->pmask_cache = (__pmask); \
+               (__fpriv)->drawop_cache = FFB_DRAWOP_VSCROLL; \
+               (__fpriv)->rp_active = 1; \
+               FFBFifo(__fpriv, 4); \
+               (__ffb)->fbc = __fbc; \
+               (__ffb)->rop = __rop; \
+               (__ffb)->pmask = (__pmask); \
+               (__ffb)->drawop = FFB_DRAWOP_VSCROLL; \
+       } \
+} while(0)
+
+static CARD32 FFBAlphaTextureFormats[2] = { PICT_a8, 0 };
+static CARD32 FFBTextureFormats[2] = { PICT_a8b8g8r8, 0 };
+
+static void FFB_SetupTextureAttrs(FFBPtr pFfb)
+{
+       ffb_fbcPtr ffb = pFfb->regs;
+       unsigned int ppc = FFB_PPC_APE_DISABLE | FFB_PPC_CS_VAR | FFB_PPC_XS_VAR;
+       unsigned int ppc_mask = FFB_PPC_APE_MASK | FFB_PPC_CS_MASK | FFB_PPC_XS_MASK;
+       unsigned int rop = FFB_ROP_NEW | (FFB_ROP_NEW << 8);
+       unsigned int fbc = pFfb->xaa_fbc;
+       unsigned int wid = pFfb->xaa_wid;
+
+       ppc |= FFB_PPC_ABE_ENABLE;
+       ppc_mask |= FFB_PPC_ABE_MASK;
+
+       if ((pFfb->ppc_cache & ppc_mask) != ppc ||
+           pFfb->fbc_cache != fbc ||
+           pFfb->wid_cache != wid ||
+           pFfb->rop_cache != rop ||
+           pFfb->pmask_cache != 0xffffffff)
+               __FFB_Attr_SFB_VAR(pFfb, ppc, ppc_mask, fbc,
+                                  wid, rop, 0xffffffff);
+       FFBWait(pFfb, ffb);
+}
+
+static Bool FFB_SetupForCPUToScreenAlphaTexture(ScrnInfoPtr pScrn, int op,
+                                               CARD16 red, CARD16 green, CARD16 blue,
+                                               CARD16 alpha, int alphaType,
+                                               CARD8 *alphaPtr, int alphaPitch,
+                                               int width, int height, int flags)
+{
+       FFBPtr pFfb = GET_FFB_FROM_SCRN(pScrn);
+
+       FFBLOG(("FFB_SetupForCPUToScreenAlphaTexture: "
+               "argb[%04x:%04x:%04x:%04x] alpha[T(%x):P(%d)] "
+               "wh[%d:%d] flgs[%x]\n",
+               alpha, red, green, blue,
+               alphaType, alphaPitch,
+               width, height, flags));
+
+       FFB_SetupTextureAttrs(pFfb);
+
+       pFfb->xaa_tex = (unsigned char *) alphaPtr;
+       pFfb->xaa_tex_pitch = alphaPitch;
+       pFfb->xaa_tex_width = width;
+       pFfb->xaa_tex_height = height;
+       pFfb->xaa_tex_color = (/*((alpha >> 8) << 24) |*/
+                              ((blue >> 8) << 16) |
+                              ((green >> 8) << 8) |
+                              ((red >> 8) << 0));
+       return TRUE;
+}
+
+static void FFB_SubsequentCPUToScreenAlphaTexture(ScrnInfoPtr pScrn,
+                                                 int dstx, int dsty,
+                                                 int srcx, int srcy,
+                                                 int width, int height)
+{
+       FFBPtr pFfb = GET_FFB_FROM_SCRN(pScrn);
+       unsigned char *dst_base, *alpha_base, *sfb32;
+       unsigned int pixel_base;
+       int psz_shift = 2;
+
+       FFBLOG(("FFB_SubsequentCPUToScreenAlphaTexture: "
+               "dst[%d:%d] src[%d:%d] wh[%d:%d]\n",
+               dstx, dsty, srcx, srcy, width, height));
+
+       sfb32 = (unsigned char *) pFfb->sfb32;
+       dst_base = sfb32 + (dsty * (2048 << psz_shift)) + (dstx << psz_shift);
+       alpha_base = pFfb->xaa_tex;
+       alpha_base += srcx;
+       if (srcy)
+               alpha_base += (srcy * pFfb->xaa_tex_pitch);
+       pixel_base = pFfb->xaa_tex_color;
+       while (height--) {
+               unsigned int *dst = (unsigned int *) dst_base;
+               unsigned char *alpha = alpha_base;
+               int w = width;
+
+               while (w--) {
+                       (*dst) = (((unsigned int)*alpha << 24) | pixel_base);
+                       dst++;
+                       alpha++;
+	       }
+	       dst_base += (2048 << psz_shift);
+	       alpha_base += pFfb->xaa_tex_pitch;
+				}
+			}
+
+
+static Bool FFB_SetupForCPUToScreenTexture(ScrnInfoPtr pScrn, int op,
+                                          int texType,
+                                          CARD8 *texPtr, int texPitch,
+                                          int width, int height, int flags)
+{
+       FFBPtr pFfb = GET_FFB_FROM_SCRN(pScrn);
+
+       FFBLOG(("FFB_SetupForCPUToScreenTexture: "
+               "TEX[T(%x):P(%d)] "
+               "wh[%d:%d] flgs[%x]\n",
+               texType, texPitch,
+               width, height, flags));
+
+       FFB_SetupTextureAttrs(pFfb);
+
+       pFfb->xaa_tex = (unsigned char *) texPtr;
+       pFfb->xaa_tex_pitch = texPitch;
+       pFfb->xaa_tex_width = width;
+       pFfb->xaa_tex_height = height;
+
+       return TRUE;
+		}
+
+static void FFB_SubsequentCPUToScreenTexture(ScrnInfoPtr pScrn,
+                                            int dstx, int dsty,
+                                            int srcx, int srcy,
+                                            int width, int height)
+{
+       FFBPtr pFfb = GET_FFB_FROM_SCRN(pScrn);
+       unsigned char *dst_base, *sfb32;
+       unsigned int *tex_base;
+       int psz_shift = 2;
+
+       FFBLOG(("FFB_SubsequentCPUToScreenAlphaTexture: "
+               "dst[%d:%d] src[%d:%d] wh[%d:%d]\n",
+               dstx, dsty, srcx, srcy, width, height));
+
+       sfb32 = (unsigned char *) pFfb->sfb32;
+       dst_base = sfb32 + (dsty * (2048 << psz_shift)) + (dstx << psz_shift);
+       tex_base = (unsigned int *) pFfb->xaa_tex;
+       tex_base += srcx;
+       if (srcy)
+               tex_base += (srcy * pFfb->xaa_tex_pitch);
+       /* VISmoveImageLR? */
+       while (height--) {
+               unsigned int *dst = (unsigned int *) dst_base;
+               unsigned int *tex = tex_base;
+               int w = width;
+               while (w--) {
+                       (*dst) = *tex;
+
+                       dst++;
+                       tex++;
+               }
+               dst_base += (2048 << psz_shift);
+               tex_base += pFfb->xaa_tex_pitch;
+	}
+}
+
+static void FFB_WritePixmap(ScrnInfoPtr pScrn,
+                           int x, int y, int w, int h,
+                           unsigned char *src,
+                           int srcwidth,
+                           int rop,
+                           unsigned int planemask,
+                           int trans, int bpp, int depth)
+{
+       FFBPtr pFfb = GET_FFB_FROM_SCRN(pScrn);
+       unsigned char *dst, *sfb32;
+       int psz_shift = 2;
+	ffb_fbcPtr ffb = pFfb->regs;
+
+       FFBLOG(("FFB_WritePixmap: "
+               "x[%d] y[%d] w[%d] h[%d] srcw[%d] rop[%d] pmask[%x] "
+               "trans[%d] bpp[%d] depth[%d]\n",
+               x, y, w, h, srcwidth, rop, planemask,
+               trans, bpp, depth));
+
+       FFB_ATTR_SFB_VAR_XAA(pFfb, planemask, rop);
+       FFBWait(pFfb, ffb);
+
+       sfb32 = (unsigned char *) pFfb->sfb32;
+       dst = sfb32 + (y * (2048 << psz_shift)) + (x << psz_shift);
+       VISmoveImageLR(src, dst, w << psz_shift, h,
+                      srcwidth, (2048 << psz_shift));
+			}
+
+static void FFB_SetupForMono8x8PatternFill(ScrnInfoPtr pScrn,
+                                          int pat_word1, int pat_word2,
+                                          int fg, int bg, int rop,
+                                          unsigned int planemask)
+{
+       FFBPtr pFfb = GET_FFB_FROM_SCRN(pScrn);
+       ffb_fbcPtr ffb = pFfb->regs;
+       unsigned int ppc, ppc_mask, fbc;
+       int i;
+
+       FFBLOG(("FFB_SetupForMono8x8PatternFill: "
+               "pat[%08x:%08x] fg[%x] bg[%x] rop[%d] pmask[%x]\n",
+               pat_word1, pat_word2,
+               fg, bg, rop, planemask));
+
+       ppc = FFB_PPC_ABE_DISABLE | FFB_PPC_APE_ENABLE | FFB_PPC_CS_CONST;
+       if (bg < 0)
+               ppc |= FFB_PPC_TBE_TRANSPARENT;
+       else
+               ppc |= FFB_PPC_TBE_OPAQUE;
+       ppc_mask = FFB_PPC_ABE_MASK | FFB_PPC_APE_MASK |
+         FFB_PPC_TBE_MASK | FFB_PPC_CS_MASK;
+       fbc = pFfb->xaa_fbc;
+       rop = (rop | FFB_ROP_EDIT_BIT) | (FFB_ROP_NEW << 8);
+
+       FFB_ATTR_RAW(pFfb, ppc, ppc_mask, planemask, rop,
+                    FFB_DRAWOP_RECTANGLE, fg, fbc, pFfb->xaa_wid);
+       if (bg >= 0)
+               FFB_WRITE_BG(pFfb, ffb, bg);
+
+       FFBFifo(pFfb, 32);
+       for (i = 0; i < 32; i += 2) {
+               CARD32 val1, val2;
+               int shift = (24 - ((i % 4) * 8));
+
+               if ((i % 8) < 4) {
+                       val1 = (pat_word1 >> shift) & 0xff;
+                       val2 = (pat_word1 >> (shift + 8)) & 0xff;
+		} else {
+                       val1 = (pat_word2 >> shift) & 0xff;
+                       val2 = (pat_word2 >> (shift + 8)) & 0xff;
+		}
+               val1 |= (val1 << 8) | (val1 << 16) | (val1 << 24);
+               val2 |= (val2 << 8) | (val2 << 16) | (val2 << 24);
+               FFB_WRITE64(&ffb->pattern[i], val1, val2);
+	}
+       pFfb->rp_active = 1;
+}
+
+static void FFB_SubsequentMono8x8PatternFillRect(ScrnInfoPtr pScrn,
+                                                int pat_word1, int pat_word2,
+                                                int x, int y, int w, int h)
+{
+       FFBPtr pFfb = GET_FFB_FROM_SCRN(pScrn);
+       ffb_fbcPtr ffb = pFfb->regs;
+
+       FFBLOG(("FFB_SubsequentMono8x8PatternFillRect: "
+               "x[%d] y[%d] w[%d] h[%d]\n", x, y, w, h));
+
+       FFBFifo(pFfb, 4);
+       FFB_WRITE64(&ffb->by, y, x);
+       FFB_WRITE64_2(&ffb->bh, h, w);
+	}
+
+static void FFB_SetupForScanlineCPUToScreenColorExpandFill(ScrnInfoPtr pScrn,
+                                                          int fg, int bg,
+                                                          int rop,
+                                                          unsigned int planemask)
+{
+       FFBPtr pFfb = GET_FFB_FROM_SCRN(pScrn);
+       ffb_fbcPtr ffb = pFfb->regs;
+       unsigned int ppc, ppc_mask, fbc;
+
+       FFBLOG(("FFB_SetupForScanlineCPUToScreenColorExpandFill: "
+               "fg[%x] bg[%x] rop[%d] pmask[%x]\n",
+               fg, bg, rop, planemask));
+
+       ppc = FFB_PPC_ABE_DISABLE | FFB_PPC_APE_DISABLE | FFB_PPC_CS_CONST;
+       if (bg < 0)
+               ppc |= FFB_PPC_TBE_TRANSPARENT;
+       else
+               ppc |= FFB_PPC_TBE_OPAQUE;
+       ppc_mask = FFB_PPC_ABE_MASK | FFB_PPC_APE_MASK |
+         FFB_PPC_TBE_MASK | FFB_PPC_CS_MASK;
+       fbc = pFfb->xaa_fbc;
+       rop = (rop | FFB_ROP_EDIT_BIT) | (FFB_ROP_NEW << 8);
+
+       if ((pFfb->ppc_cache & ppc_mask) != ppc ||
+           pFfb->fg_cache != fg ||
+           pFfb->fbc_cache != fbc ||
+           pFfb->rop_cache != rop ||
+           pFfb->pmask_cache != planemask ||
+           pFfb->fontinc_cache != ((0<<16) | 32) ||
+           (bg >= 0 && pFfb->bg_cache != bg)) {
+               pFfb->ppc_cache &= ~ppc_mask;
+               pFfb->ppc_cache |= ppc;
+               pFfb->fg_cache = fg;
+               pFfb->fbc_cache = fbc;
+               pFfb->rop_cache = rop;
+               pFfb->pmask_cache = planemask;
+               pFfb->fontinc_cache = ((0<<16) | 32);
+               if (bg >= 0)
+                       pFfb->bg_cache = bg;
+               FFBFifo(pFfb, (bg >= 0 ? 7 : 6));
+               ffb->ppc = ppc;
+               ffb->fg = fg;
+               ffb->fbc = fbc;
+               ffb->rop = rop;
+               ffb->pmask = planemask;
+               ffb->fontinc = ((0 << 16) | 32);
+               if(bg >= 0)
+                       ffb->bg = bg;
+       }
+       pFfb->rp_active = 1;
+}
+
+static void FFB_SubsequentScanlineCPUToScreenColorExpandFill(ScrnInfoPtr pScrn,
+                                                            int x, int y, int w, int h,
+                                                            int skipleft)
+{
+       FFBPtr pFfb = GET_FFB_FROM_SCRN(pScrn);
+       FFBLOG(("FFB_SubsequentCPUToScreenColorExpandFill: "
+               "x[%d] y[%d] w[%d] h[%d] skipleft[%d]\n",
+               x, y, w, h, skipleft));
+
+       pFfb->xaa_scanline_x = x;
+       pFfb->xaa_scanline_y = y;
+       pFfb->xaa_scanline_w = w;
+}
+
+static void FFB_SubsequentColorExpandScanline(ScrnInfoPtr pScrn, int bufno)
+{
+       FFBPtr pFfb = GET_FFB_FROM_SCRN(pScrn);
+		ffb_fbcPtr ffb = pFfb->regs;
+       CARD32 *bits = (CARD32 *) pFfb->xaa_scanline_buffers[bufno];
+       int w;
+
+       FFBFifo(pFfb, 1);
+       ffb->fontxy = ((pFfb->xaa_scanline_y << 16) | pFfb->xaa_scanline_x);
+
+       w = pFfb->xaa_scanline_w;
+       if (w >= 32) {
+               FFB_WRITE_FONTW(pFfb, ffb, 32);
+               FFBFifo(pFfb, (w / 32));
+               do {
+                       ffb->font = *bits++;
+                       w -= 32;
+               } while (w >= 32);
+	}
+       if (w > 0) {
+               FFB_WRITE_FONTW(pFfb, ffb, w);
+               FFBFifo(pFfb, 1);
+               ffb->font = *bits++;
+}
+
+       pFfb->xaa_scanline_y++;
+}
+
+static void FFB_SetupForDashedLine(ScrnInfoPtr pScrn,
+                                  int fg, int bg, int rop,
+                                  unsigned int planemask,
+                                  int length, unsigned char *pattern)
+{
+       FFBPtr pFfb = GET_FFB_FROM_SCRN(pScrn);
+       CARD32 *pat_ptr = (CARD32 *)pattern;
+       unsigned int ppc, ppc_mask, fbc;
+
+       FFBLOG(("FFB_SetupForDashedLine: "
+               "fg[%x] bg[%x] rop[%d] pmask[%x] patlen[%d] pat[%x]\n",
+               fg, bg, rop, planemask, length, *pat_ptr));
+
+       pFfb->xaa_planemask = planemask;
+       pFfb->xaa_rop = rop;
+       pFfb->xaa_linepat = 
+               (*pat_ptr << FFB_LPAT_PATTERN_SHIFT) |
+               (1 << FFB_LPAT_SCALEVAL_SHIFT) |
+               ((length & 0xf) << FFB_LPAT_PATLEN_SHIFT);
+
+       fbc = pFfb->xaa_fbc;
+       ppc = FFB_PPC_ABE_DISABLE | FFB_PPC_APE_DISABLE | FFB_PPC_CS_CONST | FFB_PPC_XS_WID;
+       ppc_mask = FFB_PPC_ABE_MASK | FFB_PPC_APE_MASK | FFB_PPC_CS_MASK | FFB_PPC_XS_MASK;
+
+       FFB_ATTR_RAW(pFfb, ppc, ppc_mask, planemask,
+                    (FFB_ROP_EDIT_BIT | rop) | (FFB_ROP_NEW << 8),
+                    FFB_DRAWOP_BRLINEOPEN, fg, fbc, pFfb->xaa_wid);
+       pFfb->rp_active = 1;
+	}
+
+static void FFB_SubsequentDashedTwoPointLine( ScrnInfoPtr pScrn,
+                                             int x1, int y1,
+                                             int x2, int y2,
+                                             int flags, int phase)
+{
+       FFBPtr pFfb = GET_FFB_FROM_SCRN(pScrn);
+       ffb_fbcPtr ffb = pFfb->regs;
+       unsigned int linepat = pFfb->xaa_linepat;
+       unsigned int drawop;
+
+       FFBLOG(("FFB_SubsequentDashedTwoPointLine: "
+               "x1[%d] y1[%d] x2[%d] y2[%d] flgs[%x] phase[%d]\n",
+               x1, y2, x2, y2, flags, phase));
+
+       linepat |= (phase & 0xf) << FFB_LPAT_PATPTR_SHIFT;
+
+       drawop = (flags & OMIT_LAST) ?
+         FFB_DRAWOP_BRLINEOPEN : FFB_DRAWOP_BRLINECAP;
+       FFB_WRITE_DRAWOP(pFfb, ffb, drawop);
+
+       if (pFfb->has_brline_bug) {
+               FFBFifo(pFfb, 6);
+               ffb->ppc = 0;
+       } else
+               FFBFifo(pFfb, 5);
+       ffb->lpat = linepat;
+       FFB_WRITE64(&ffb->by, y1, x1);
+       FFB_WRITE64_2(&ffb->bh, y2, x2);
+}
+
+static void FFB_SetupForSolidLine(ScrnInfoPtr pScrn, 
+                                 int color, int rop, unsigned int planemask)
+{
+       FFBPtr pFfb = GET_FFB_FROM_SCRN(pScrn);
+       ffb_fbcPtr ffb = pFfb->regs;
+       unsigned int ppc, ppc_mask, fbc;
+       FFBLOG(("FFB_SetupForSolidLine: "
+               "color[%d] rop[%d] pmask[%x]\n",
+               color, rop, planemask));
+
+       pFfb->xaa_planemask = planemask;
+       pFfb->xaa_rop = rop;
+
+       fbc = pFfb->xaa_fbc;
+       ppc = FFB_PPC_ABE_DISABLE | FFB_PPC_APE_DISABLE | FFB_PPC_CS_CONST | FFB_PPC_XS_WID;
+       ppc_mask = FFB_PPC_ABE_MASK | FFB_PPC_APE_MASK | FFB_PPC_CS_MASK | FFB_PPC_XS_MASK;
+
+       FFB_ATTR_RAW(pFfb, ppc, ppc_mask, planemask,
+                    (FFB_ROP_EDIT_BIT | rop) | (FFB_ROP_NEW << 8),
+                    FFB_DRAWOP_BRLINEOPEN, color, fbc, pFfb->xaa_wid);
+       FFBFifo(pFfb, 1);
+       ffb->lpat = 0;
+       pFfb->rp_active = 1;
+}
+
+static void FFB_SubsequentSolidTwoPointLine(ScrnInfoPtr pScrn,
+                                           int x1, int y1,
+                                           int x2, int y2,
+                                           int flags)
+{
+       FFBPtr pFfb = GET_FFB_FROM_SCRN(pScrn);
+       ffb_fbcPtr ffb = pFfb->regs;
+       int drawop;
+
+       FFBLOG(("FFB_SubsequentSolidTwoPointLine: "
+               "x1[%d] y1[%d] x2[%d] y2[%d] flags[%d]\n",
+               x1, y1, x2, y2, flags));
+
+       drawop = (flags & OMIT_LAST) ?
+         FFB_DRAWOP_BRLINEOPEN : FFB_DRAWOP_BRLINECAP;
+       FFB_WRITE_DRAWOP(pFfb, ffb, drawop);
+
+       if (pFfb->has_brline_bug) {
+               FFBFifo(pFfb, 5);
+               ffb->ppc = 0;
+       } else
+               FFBFifo(pFfb, 4);
+       FFB_WRITE64(&ffb->by, y1, x1);
+       FFB_WRITE64_2(&ffb->bh, y2, x2);
+	}
+
+void FFB_SetupForSolidFill(ScrnInfoPtr pScrn,
+                          int color, int rop, unsigned int planemask)
+{
+       FFBPtr pFfb = GET_FFB_FROM_SCRN(pScrn);
+       unsigned int ppc, ppc_mask, fbc;
+
+       FFBLOG(("FFB_SetupForSolidFill: "
+               "color[%d] rop[%d] pmask[%u]\n",
+               color, rop, planemask));
+
+       pFfb->xaa_planemask = planemask;
+       pFfb->xaa_rop = rop;
+
+       fbc = pFfb->xaa_fbc;
+       if (pFfb->ffb_res == ffb_res_high)
+               fbc |= FFB_FBC_WB_B;
+       ppc = FFB_PPC_ABE_DISABLE | FFB_PPC_APE_DISABLE | FFB_PPC_CS_CONST | FFB_PPC_XS_WID;
+       ppc_mask = FFB_PPC_ABE_MASK | FFB_PPC_APE_MASK | FFB_PPC_CS_MASK | FFB_PPC_XS_MASK;
+
+       FFB_ATTR_RAW(pFfb, ppc, ppc_mask, planemask,
+                    (FFB_ROP_EDIT_BIT | rop) | (FFB_ROP_NEW << 8),
+                    FFB_DRAWOP_RECTANGLE, color, fbc, pFfb->xaa_wid);
+       pFfb->rp_active = 1;
+}
+
+void FFB_SubsequentSolidFillRect(ScrnInfoPtr pScrn,
+                                int x, int y,
+                                int w, int h)
+{
+       FFBPtr pFfb = GET_FFB_FROM_SCRN(pScrn);
+       ffb_fbcPtr ffb = pFfb->regs;
+
+       FFBLOG(("FFB_SubsequentSolidFillRect: "
+               "x[%d] y[%d] w[%d] h[%d]\n", x, y, w, h));
+
+       FFBFifo(pFfb, 4);
+       FFB_WRITE64(&ffb->by, y, x);
+       FFB_WRITE64_2(&ffb->bh, h, w);
+	}
+
+static void FFB_ScreenToScreenBitBlt(ScrnInfoPtr pScrn,
+                                    int nbox,
+                                    DDXPointPtr pptSrc,
+                                    BoxPtr pbox,
+                                    int xdir, int ydir,
+                                    int rop, unsigned int planemask)
+{
+       FFBPtr pFfb = GET_FFB_FROM_SCRN(pScrn);
+		ffb_fbcPtr ffb = pFfb->regs;
+       int use_vscroll;
+
+       FFBLOG(("FFB_ScreenToScreenBitBlt: "
+               "nbox[%d] xdir[%d] ydir[%d] rop[%d] pmask[%x]\n",
+               nbox, xdir, ydir, rop, planemask));
+
+       use_vscroll = 0;
+       if (!pFfb->disable_vscroll &&
+           rop == GXcopy) {
+               int i;
+
+               for (i = 0; i < nbox; i++)
+                       if (pptSrc[i].x != pbox[i].x1 ||
+                           pptSrc[i].y == pbox[i].y1)
+                               break;
+               if (i == nbox) {
+                       /* If/When double buffer extension is re-enabled
+                        * check buffers here.
+                        */
+                       use_vscroll = 1;
+		}
+       }
+       if (use_vscroll) {
+               FFB_ATTR_VSCROLL_XAA(pFfb, planemask);
+               while (nbox--) {
+                       FFBFifo(pFfb, 7);
+                       ffb->drawop = FFB_DRAWOP_VSCROLL;
+                       FFB_WRITE64(&ffb->by, pptSrc->y, pptSrc->x);
+                       FFB_WRITE64_2(&ffb->dy, pbox->y1, pbox->x1);
+                       FFB_WRITE64_3(&ffb->bh, (pbox->y2 - pbox->y1),
+                                     (pbox->x2 - pbox->x1));
+
+                       pbox++;
+                       pptSrc++;
+			}
+               pFfb->rp_active = 1;
+               SET_SYNC_FLAG(pFfb->pXAAInfo);
+		} else {
+               unsigned char *sfb32 = (unsigned char *) pFfb->sfb32;
+               int psz_shift = 2;
+
+               FFB_ATTR_SFB_VAR_XAA(pFfb, planemask, rop);
+               if (pFfb->use_blkread_prefetch) {
+                       unsigned int bit;
+
+                       if (xdir < 0)
+                               bit = FFB_MER_EDRA;
+                       else
+                               bit = FFB_MER_EIRA;
+                       FFBFifo(pFfb, 1);
+                       ffb->mer = bit;
+                       pFfb->rp_active = 1;
+}
+               FFBWait(pFfb, ffb);
+
+               while (nbox--) {
+                       unsigned char *src, *dst;
+                       int x1, y1, x2, y2;
+                       int width, height;
+                       int sdkind;
+
+                       x1 = pptSrc->x;
+                       y1 = pptSrc->y;
+                       x2 = pbox->x1;
+                       y2 = pbox->y1;
+                       width = (pbox->x2 - pbox->x1);
+                       height = (pbox->y2 - pbox->y1);
+
+                       src = sfb32 + (y1 * (2048 << psz_shift))
+                               + (x1 << psz_shift);
+                       dst = sfb32 + (y2 * (2048 << psz_shift))
+                               + (x2 << psz_shift);
+                       sdkind = (2048 << psz_shift);
+
+                       if (ydir < 0) {
+                               src += ((height - 1) * (2048 << psz_shift));
+                               dst += ((height - 1) * (2048 << psz_shift));
+                               sdkind = -sdkind;
+                       }
+                       width <<= psz_shift;
+                       if (xdir < 0)
+                               VISmoveImageRL(src, dst, width, height,
+                                              sdkind, sdkind);
+                       else
+                               VISmoveImageLR(src, dst, width, height,
+                                              sdkind, sdkind);
+                       pbox++;
+                       pptSrc++;
+	       }
+               if (pFfb->use_blkread_prefetch) {
+                       FFBFifo(pFfb, 1);
+                       ffb->mer = FFB_MER_DRA;
+	pFfb->rp_active = 1;
+	FFBWait(pFfb, ffb);
+               }
+       }
+}
+
+void FFB_SetupForScreenToScreenCopy(ScrnInfoPtr pScrn,
+                                   int xdir, int ydir, int rop,
+                                   unsigned int planemask,
+                                   int trans_color)
+{
+       FFBPtr pFfb = GET_FFB_FROM_SCRN(pScrn);
+       ffb_fbcPtr ffb = pFfb->regs;
+       FFBLOG(("FFB_SetupForScreenToScreenCopy: "
+               "xdir[%d] ydir[%d] rop[%d] pmask[%x] tcolor[%d]\n",
+               xdir, ydir, rop, planemask, trans_color));
+
+       pFfb->xaa_planemask = planemask;
+       pFfb->xaa_xdir = xdir;
+       pFfb->xaa_ydir = ydir;
+       pFfb->xaa_rop = rop;
+       FFB_ATTR_SFB_VAR_XAA(pFfb, planemask, rop);
+	FFBWait(pFfb, ffb);
+}
+
+void FFB_SubsequentScreenToScreenCopy(ScrnInfoPtr pScrn,
+                                     int x1, int y1,
+                                     int x2, int y2,
+                                     int width, int height)
+{
+       FFBPtr pFfb = GET_FFB_FROM_SCRN(pScrn);
+       unsigned char *src, *dst, *sfb32;
+       int psz_shift = 2;
+       int sdkind;
+
+       FFBLOG(("FFB_SubsequentScreenToScreenCopy: "
+               "x1[%d] y1[%d] x2[%d] y2[%u] w[%d] h[%d]\n",
+               x1, y1, x2, y2, width, height));
+
+       sfb32 = (unsigned char *) pFfb->sfb32;
+       src = sfb32 + (y1 * (2048 << psz_shift)) + (x1 << psz_shift);
+       dst = sfb32 + (y2 * (2048 << psz_shift)) + (x2 << psz_shift);
+       sdkind = (2048 << psz_shift);
+
+       if (pFfb->xaa_ydir < 0) {
+               src += ((height - 1) * (2048 << psz_shift));
+               dst += ((height - 1) * (2048 << psz_shift));
+               sdkind = -sdkind;
+       }
+
+       width <<= psz_shift;
+       if (pFfb->xaa_xdir < 0)
+               VISmoveImageRL(src, dst, width, height, sdkind, sdkind);
+       else
+               VISmoveImageLR(src, dst, width, height, sdkind, sdkind);
+}
+
+static void FFB_Sync(ScrnInfoPtr pScrn)
+{
+       FFBPtr pFfb = GET_FFB_FROM_SCRN(pScrn);
+       ffb_fbcPtr ffb = pFfb->regs;
+
+       FFB_ATTR_SFB_VAR_XAA(pFfb, 0xffffffff, GXcopy);
 	FFBWait(pFfb, ffb);
 }
 
@@ -764,37 +845,17 @@ static void CreatorAlignTabInit(FFBPtr pFfb)
 	}
 }
 
-static Bool
-CreatorPositionWindow(WindowPtr pWin, int x, int y)
-{
-	if (pWin->drawable.bitsPerPixel == 8)
-		return cfbPositionWindow(pWin, x, y);
-	else
-		return cfb32PositionWindow(pWin, x, y);
-}
-
-#ifdef DEBUG_FFB
-FILE *FDEBUG_FD = NULL;
-#endif
-
-BSFuncRec CreatorBSFuncRec = {
-    CreatorSaveAreas,
-    CreatorRestoreAreas,
-    (BackingStoreSetClipmaskRgnProcPtr) 0,
-    (BackingStoreGetImagePixmapProcPtr) 0,
-    (BackingStoreGetSpansPixmapProcPtr) 0,
-};
-
 Bool FFBAccelInit(ScreenPtr pScreen, FFBPtr pFfb)
 {
-	ffb_fbcPtr ffb;
+	XAAInfoRecPtr infoRec;
+	ffb_fbcPtr ffb = pFfb->regs;
 
 	if (serverGeneration != CreatorGeneration) {
+		CreatorScreenPrivateIndex = AllocateScreenPrivateIndex ();
+		if (CreatorScreenPrivateIndex == -1)
+			return FALSE;
 		CreatorGCPrivateIndex = AllocateGCPrivateIndex();
 		CreatorWindowPrivateIndex = AllocateWindowPrivateIndex();
-		if ((CreatorGCPrivateIndex < 0) ||
-		    (CreatorWindowPrivateIndex < 0))
-			return FALSE;
 		CreatorGeneration = serverGeneration;
 	}
 
@@ -803,29 +864,130 @@ Bool FFBAccelInit(ScreenPtr pScreen, FFBPtr pFfb)
 	if (!AllocateWindowPrivate(pScreen, CreatorWindowPrivateIndex, 0))
 		return FALSE;
 
-	pFfb->fifo_cache = 0;
-	ffb = pFfb->regs;
+	pScreen->devPrivates[CreatorScreenPrivateIndex].ptr = pFfb;
 
-	/* Replace various screen functions. */
-	pScreen->CreateGC = CreatorCreateGC;
-	pScreen->CreateWindow = CreatorCreateWindow;
-	pScreen->DestroyWindow = CreatorDestroyWindow;
-	pScreen->PositionWindow = CreatorPositionWindow;
-	pScreen->ChangeWindowAttributes = CreatorChangeWindowAttributes;
-	pScreen->PaintWindowBackground = CreatorPaintWindow;
-	pScreen->PaintWindowBorder = CreatorPaintWindow;
-	pScreen->GetSpans = CreatorGetSpans;
-	pScreen->CopyWindow = CreatorCopyWindow;
-	pScreen->GetImage = CreatorGetImage;
-	pScreen->BackingStoreFuncs = CreatorBSFuncRec;
+	pFfb->xaa_fbc = (FFB_FBC_WB_A | FFB_FBC_WM_COMBINED | FFB_FBC_RB_A |
+			 FFB_FBC_WE_FORCEON |
+			 FFB_FBC_SB_BOTH |
+			 FFB_FBC_ZE_OFF | FFB_FBC_YE_OFF |
+			 FFB_FBC_RGBE_MASK |
+			 FFB_FBC_XE_ON);
+	pFfb->xaa_wid = FFBWidAlloc(pFfb, TrueColor, 0, TRUE);
+	if (pFfb->xaa_wid == (unsigned int) -1)
+		return FALSE;
 
-	/* cfb8_32wid took over this to init the WID plane,
-	 * and with how our code works that is not necessary.
+	pFfb->pXAAInfo = infoRec = XAACreateInfoRec();
+	if (!infoRec) {
+		FFBWidFree(pFfb, pFfb->xaa_wid);
+		return FALSE;
+	}
+
+	pFfb->xaa_scanline_buffers[0] = xalloc(2048 * 4);
+	if (!pFfb->xaa_scanline_buffers[0]) {
+		XAADestroyInfoRec(infoRec);
+		return FALSE;
+	}
+
+	pFfb->xaa_scanline_buffers[1] = xalloc(2048 * 4);
+	if (!pFfb->xaa_scanline_buffers[1]) {
+		xfree(pFfb->xaa_scanline_buffers[0]);
+		XAADestroyInfoRec(infoRec);
+		return FALSE;
+	}
+
+	infoRec->Sync = FFB_Sync;
+
+	/* Use VIS and VSCROLL for screen to screen copies.  */
+	infoRec->ScreenToScreenCopyFlags = NO_TRANSPARENCY;
+	infoRec->SetupForScreenToScreenCopy =
+		FFB_SetupForScreenToScreenCopy;
+	infoRec->SubsequentScreenToScreenCopy =
+		FFB_SubsequentScreenToScreenCopy;
+
+	/* In order to optimize VSCROLL and prefetching properly we
+	 * have to use our own mid-layer routine.
 	 */
-	pScreen->WindowExposures = miWindowExposures;
+	infoRec->ScreenToScreenBitBltFlags = NO_TRANSPARENCY;
+	infoRec->ScreenToScreenBitBlt =
+		FFB_ScreenToScreenBitBlt;
 
-	/* Set FFB line-bias for clipping. */
+	infoRec->SolidFillFlags = 0;
+	infoRec->SetupForSolidFill =
+		FFB_SetupForSolidFill;
+	infoRec->SubsequentSolidFillRect =
+		FFB_SubsequentSolidFillRect;
+
+	infoRec->SolidLineFlags = 0;
+	infoRec->SetupForSolidLine =
+		FFB_SetupForSolidLine;
+	infoRec->SubsequentSolidTwoPointLine =
+		FFB_SubsequentSolidTwoPointLine;
 	miSetZeroLineBias(pScreen, OCTANT3 | OCTANT4 | OCTANT6 | OCTANT1);
+
+	infoRec->DashedLineFlags = (TRANSPARENCY_ONLY |
+				    LINE_PATTERN_LSBFIRST_LSBJUSTIFIED);
+	infoRec->DashPatternMaxLength = 16;
+	infoRec->SetupForDashedLine =
+		FFB_SetupForDashedLine;
+	infoRec->SubsequentDashedTwoPointLine =
+		FFB_SubsequentDashedTwoPointLine;
+
+	/* We cannot use the non-scanline color expansion mechanism on FFB
+	 * for two reasons:
+	 *
+	 * 1) A render pass can only render 32-pixels wide on FFB, XAA expects
+	 *    that arbitrary widths are possible per render pass.
+	 *
+	 * 2) The FFB accelerator FIFO is only 100 or so words deep, and
+	 *    XAA gives no way to limit the number of words it writes into
+	 *    the ColorExpandBase register per rendering pass.
+	 */
+	infoRec->ScanlineColorExpandBuffers = pFfb->xaa_scanline_buffers;
+	infoRec->NumScanlineColorExpandBuffers = 2;
+	infoRec->ScanlineCPUToScreenColorExpandFillFlags =
+		CPU_TRANSFER_PAD_DWORD |
+		SCANLINE_PAD_DWORD |
+		CPU_TRANSFER_BASE_FIXED |
+		BIT_ORDER_IN_BYTE_LSBFIRST;
+	infoRec->SetupForScanlineCPUToScreenColorExpandFill =
+		FFB_SetupForScanlineCPUToScreenColorExpandFill;
+	infoRec->SubsequentScanlineCPUToScreenColorExpandFill =
+		FFB_SubsequentScanlineCPUToScreenColorExpandFill;
+	infoRec->SubsequentColorExpandScanline =
+		FFB_SubsequentColorExpandScanline;
+
+	infoRec->Mono8x8PatternFillFlags =
+		HARDWARE_PATTERN_PROGRAMMED_BITS |
+		HARDWARE_PATTERN_SCREEN_ORIGIN |
+		BIT_ORDER_IN_BYTE_LSBFIRST;
+	infoRec->SetupForMono8x8PatternFill =
+		FFB_SetupForMono8x8PatternFill;
+	infoRec->SubsequentMono8x8PatternFillRect =
+		FFB_SubsequentMono8x8PatternFillRect;
+
+	/* Use VIS for pixmap writes.  */
+	infoRec->WritePixmap = FFB_WritePixmap;
+
+	/* RENDER optimizations.  */
+	infoRec->CPUToScreenAlphaTextureFlags =
+		XAA_RENDER_NO_TILE |
+		XAA_RENDER_NO_SRC_ALPHA;
+	infoRec->CPUToScreenAlphaTextureFormats = FFBAlphaTextureFormats;
+	infoRec->SetupForCPUToScreenAlphaTexture =
+		FFB_SetupForCPUToScreenAlphaTexture;
+	infoRec->SubsequentCPUToScreenAlphaTexture =
+		FFB_SubsequentCPUToScreenAlphaTexture;
+
+	infoRec->CPUToScreenTextureFlags =
+		XAA_RENDER_NO_TILE |
+		XAA_RENDER_NO_SRC_ALPHA;
+	infoRec->CPUToScreenTextureFormats = FFBTextureFormats;
+	infoRec->SetupForCPUToScreenTexture =
+		FFB_SetupForCPUToScreenTexture;
+	infoRec->SubsequentCPUToScreenTexture =
+		FFB_SubsequentCPUToScreenTexture;
+
+	pFfb->fifo_cache = 0;
 
 	FFB_DEBUG_init();
 	FDEBUG((FDEBUG_FD,
@@ -895,26 +1057,31 @@ Bool FFBAccelInit(ScreenPtr pScreen, FFBPtr pFfb)
 
 	pFfb->ppc_cache = (FFB_PPC_FW_DISABLE |
 			   FFB_PPC_VCE_DISABLE | FFB_PPC_APE_DISABLE | FFB_PPC_CS_CONST |
-			   FFB_PPC_XS_CONST | FFB_PPC_YS_CONST | FFB_PPC_ZS_CONST |
+			   FFB_PPC_XS_WID | FFB_PPC_YS_CONST | FFB_PPC_ZS_CONST |
 			   FFB_PPC_DCE_DISABLE | FFB_PPC_ABE_DISABLE | FFB_PPC_TBE_OPAQUE);
-
+	pFfb->wid_cache = pFfb->xaa_wid;
 	pFfb->pmask_cache = ~0;
-	pFfb->rop_cache = (FFB_ROP_ZERO | (FFB_ROP_NEW << 8));
+	pFfb->rop_cache = (FFB_ROP_NEW | (FFB_ROP_NEW << 8));
 	pFfb->drawop_cache = FFB_DRAWOP_RECTANGLE;
 	pFfb->fg_cache = pFfb->bg_cache = 0;
 	pFfb->fontw_cache = 32;
 	pFfb->fontinc_cache = (1 << 16) | 0;
-	pFfb->fbc_cache = (FFB_FBC_WB_A | FFB_FBC_WM_COMBINED |
-			   FFB_FBC_RB_A | FFB_FBC_SB_BOTH | FFB_FBC_XE_OFF |
-			   FFB_FBC_ZE_OFF | FFB_FBC_YE_OFF | FFB_FBC_RGBE_MASK);
+	pFfb->fbc_cache = (FFB_FBC_WB_A | FFB_FBC_WM_COMBINED | FFB_FBC_RB_A |
+			   FFB_FBC_WE_FORCEON |
+			   FFB_FBC_SB_BOTH |
+			   FFB_FBC_ZE_OFF | FFB_FBC_YE_OFF |
+			   FFB_FBC_RGBE_OFF |
+			   FFB_FBC_XE_ON);
 	pFfb->laststipple = NULL;
 
 	/* We will now clear the screen: we'll draw a rectangle covering all the
 	 * viewscreen, using a 'blackness' ROP.
 	 */
-	FFBFifo(pFfb, 13);
+	FFBFifo(pFfb, 22);
 	ffb->fbc = pFfb->fbc_cache;
 	ffb->ppc = pFfb->ppc_cache;
+	ffb->wid = pFfb->wid_cache;
+	ffb->xpmask = 0xff;
 	ffb->pmask = pFfb->pmask_cache;
 	ffb->rop = pFfb->rop_cache;
 	ffb->drawop = pFfb->drawop_cache;
@@ -922,30 +1089,31 @@ Bool FFBAccelInit(ScreenPtr pScreen, FFBPtr pFfb)
 	ffb->bg = pFfb->bg_cache;
 	ffb->fontw = pFfb->fontw_cache;
 	ffb->fontinc = pFfb->fontinc_cache;
+	ffb->xclip = FFB_XCLIP_TEST_ALWAYS;
+	ffb->cmp = 0x80808080;
+	ffb->matchab = 0x80808080;
+	ffb->magnab = 0x80808080;
+	ffb->blendc = (FFB_BLENDC_FORCE_ONE |
+		       FFB_BLENDC_DF_ONE_M_A |
+		       FFB_BLENDC_SF_A);
+	ffb->blendc1 = 0;
+	ffb->blendc2 = 0;
 	FFB_WRITE64(&ffb->by, 0, 0);
 	FFB_WRITE64_2(&ffb->bh, pFfb->psdp->height, pFfb->psdp->width);
 	pFfb->rp_active = 1;
 	FFBWait(pFfb, ffb);
 
-	/* Fixup the FBC/PPC caches to deal with actually using
-	 * a WID for every ROP.
-	 */
-	pFfb->fbc_cache = (FFB_FBC_WB_A | FFB_FBC_WM_COMBINED |
-			   FFB_FBC_RB_A | FFB_FBC_SB_BOTH | FFB_FBC_XE_ON |
-			   FFB_FBC_ZE_OFF | FFB_FBC_YE_OFF | FFB_FBC_RGBE_ON);
-	pFfb->ppc_cache &= ~FFB_PPC_XS_MASK;
-	pFfb->ppc_cache |= FFB_PPC_XS_WID;
-	pFfb->wid_cache = 0xff;
-	FFBFifo(pFfb, 8);
-	ffb->fbc = pFfb->fbc_cache;
-	ffb->ppc = FFB_PPC_XS_WID;
-	ffb->wid = pFfb->wid_cache;
-	ffb->xpmask = 0xff;
-	ffb->xclip = FFB_XCLIP_TEST_ALWAYS;
-	ffb->cmp = 0x80808080;
-	ffb->matchab = 0x80808080;
-	ffb->magnab = 0x80808080;
+	FFB_ATTR_SFB_VAR_XAA(pFfb, 0xffffffff, GXcopy);
 	FFBWait(pFfb, ffb);
+
+	if (!XAAInit(pScreen, infoRec)) {
+		XAADestroyInfoRec(infoRec);
+		xfree(pFfb->xaa_scanline_buffers[0]);
+		xfree(pFfb->xaa_scanline_buffers[1]);
+		pFfb->pXAAInfo = NULL;
+		FFBWidFree(pFfb, pFfb->xaa_wid);
+		return FALSE;
+	}
 
 	/* Success */
 	return TRUE;

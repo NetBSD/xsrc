@@ -36,18 +36,19 @@
 #include "Xmd.h"
 #include "gcstruct.h"
 #include "windowstr.h"
+#include "xaa.h"
 #include "ffb_regs.h"
 #include "xf86sbusBus.h"
 #include "ffb_dac.h"
-#ifdef XF86DRI
+#ifdef XF86DRI___
 #include "xf86drm.h"
 #include "ffb_drishare.h"
 #endif
 #ifndef  DPMS_SERVER
 #define  DPMS_SERVER
 #endif   /* DPMS_SERVER */
-#include "extensions/dpms.h"
-
+//#include "extensions/dpms.h"
+#include <X11/extensions/dpms.h>
 
 /* Various offsets in virtual (ie. mmap()) spaces Linux and Solaris support. */
 /* Note: do not mmap FFB_DFB8R_VOFF and following mappings using one mmap together
@@ -156,17 +157,17 @@ typedef struct {
 	unsigned int fbc_cache;
 	unsigned int wid_cache;
 	enum ffb_chip_type ffb_type;
-	CreatorStipplePtr laststipple, tmpstipple;
-	unsigned *fb;
-	unsigned *sfb32;
-	unsigned *sfb8r;
-	unsigned *sfb8x;
-	unsigned *dfb24;
-	unsigned *dfb8r;
-	unsigned *dfb8x;
+	CreatorStipplePtr laststipple;
+	void *fb;
+	void *sfb32;
+	void *sfb8r;
+	void *sfb8x;
+	void *dfb24;
+	void *dfb8r;
+	void *dfb8x;
 
 	/* Slot offset 0x0200000, used to probe board type. */
-	volatile unsigned char *strapping_bits;
+	unsigned char *strapping_bits;
 
 	/* Needed for some 3DRAM revisions and ffb1 in hires */
 	unsigned char disable_pagefill;
@@ -187,6 +188,19 @@ typedef struct {
 	unsigned char has_double_res;
 	unsigned char has_z_buffer;
 	unsigned char has_double_buffer;
+        
+	/* XAA related info */
+	XAAInfoRecPtr pXAAInfo;
+	unsigned int xaa_fbc;
+	unsigned int xaa_wid;
+	unsigned int xaa_planemask;
+	unsigned int xaa_linepat;
+	int xaa_xdir, xaa_ydir, xaa_rop;
+	unsigned char *xaa_scanline_buffers[2];
+	int xaa_scanline_x, xaa_scanline_y, xaa_scanline_w;
+	unsigned char *xaa_tex;
+	int xaa_tex_pitch, xaa_tex_width, xaa_tex_height;
+	unsigned int xaa_tex_color;
 
 	enum ffb_resolution ffb_res;
 	BoxRec ClippedBoxBuf[64];
@@ -208,7 +222,7 @@ typedef struct {
 	void *I2C;
 	struct ffb_dac_info dac_info;
 
-#ifdef XF86DRI
+#ifdef XF86DRI___
 	void *pDRIInfo;
 	int numVisualConfigs;
 	void *pVisualConfigs;
@@ -286,12 +300,15 @@ extern struct fastfill_parms ffb_fastfill_parms[];
 
 #define FFB_FFPARMS(__fpriv)	(ffb_fastfill_parms[(__fpriv)->ffb_res])
 
+extern int CreatorScreenPrivateIndex;
 extern int CreatorGCPrivateIndex;
 extern int CreatorWindowPrivateIndex;
 
 #define GET_FFB_FROM_SCRN(p)	((FFBPtr)((p)->driverPrivate))
 
-#define GET_FFB_FROM_SCREEN(s)	GET_FFB_FROM_SCRN(xf86Screens[(s)->myNum])
+/*#define GET_FFB_FROM_SCREEN(s)	GET_FFB_FROM_SCRN(xf86Screens[(s)->myNum])*/
+#define GET_FFB_FROM_SCREEN(s)                                         \
+	((FFBPtr)(s)->devPrivates[CreatorScreenPrivateIndex].ptr)
 
 #define CreatorGetGCPrivate(g)						\
 ((CreatorPrivGCPtr) (g)->devPrivates [CreatorGCPrivateIndex].ptr)
@@ -325,7 +342,8 @@ do {	fprintf __x;				\
 #endif
 
 /* Enable this to get very verbose tracing of the driver onto stderr. */
-#undef TRACE_FFB
+//#undef TRACE_FFB
+
 #ifdef TRACE_FFB
 #define FFBLOG(__x)		ErrorF __x
 #else
