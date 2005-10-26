@@ -669,7 +669,7 @@ FFBScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 	return FALSE;
 
     /* Map the board strapping bits */
-    pFfb->strapping_bits = (volatile unsigned int *)
+    pFfb->strapping_bits =
 	    xf86MapSbusMem(pFfb->psdp, FFB_EXP_VOFF, 8192);
 
     if (! pFfb->strapping_bits)
