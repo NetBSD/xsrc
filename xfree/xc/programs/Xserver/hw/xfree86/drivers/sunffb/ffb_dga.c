@@ -123,7 +123,7 @@ static Bool FFB_OpenFramebuffer(ScrnInfoPtr pScrn, char **name,
 	*name = pFfb->psdp->device;
 
 	/* We give the user the dumb frame buffer. */
-	*mem = (unsigned char *)FFB_DFB24_VOFF;
+	*mem = FFB_DFB24_VOFF;
 	*size = 0x1000000;
 	*offset = 0;
 	*extra = 0;
