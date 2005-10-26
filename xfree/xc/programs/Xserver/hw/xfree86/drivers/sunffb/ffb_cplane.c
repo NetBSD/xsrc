@@ -89,6 +89,9 @@ CreatorCopyPlane32to1(DrawablePtr pSrcDrawable, DrawablePtr pDstDrawable, int ro
 	BoxPtr			pbox;
 	int result;
 
+	extern int starttab[32], endtab[32];
+	extern unsigned int partmasks[32][32];
+
 	if (!(planemask & 1))
 		return;
 
@@ -327,6 +330,7 @@ RegionPtr CreatorCopyPlane(DrawablePtr pSrcDrawable, DrawablePtr pDstDrawable,
 						pGC, srcx, srcy, width, height, dstx, dsty, bitPlane);
 	} else if ((pSrcDrawable->bitsPerPixel == 32 || pSrcDrawable->bitsPerPixel == 8)
 		   && pDstDrawable->bitsPerPixel == 1) {
+		extern int InverseAlu[16];
 		int oldalu;
 
 		oldalu = pGC->alu;
