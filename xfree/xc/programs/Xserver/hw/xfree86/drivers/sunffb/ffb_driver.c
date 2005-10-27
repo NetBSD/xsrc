@@ -669,8 +669,7 @@ FFBScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 	return FALSE;
 
     /* Map the board strapping bits */
-    pFfb->strapping_bits =
-	    xf86MapSbusMem(pFfb->psdp, FFB_EXP_VOFF, 8192);
+    pFfb->strapping_bits = xf86MapSbusMem(pFfb->psdp, FFB_EXP_VOFF, 8192);
 
     if (! pFfb->strapping_bits)
 	return FALSE;
@@ -860,9 +859,6 @@ FFBScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
     if (serverGeneration == 1) {
 	xf86ShowUnusedOptions(pScrn->scrnIndex, pScrn->options);
     }
-
-    /* unblank the screen */
-    FFBSaveScreen(pScreen, SCREEN_SAVER_OFF);
 
     /* Done */
     return TRUE;
