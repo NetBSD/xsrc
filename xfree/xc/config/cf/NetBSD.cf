@@ -735,6 +735,7 @@ InstallManPageAliasesBase(file,destdir,aliases)
 # define XdreamcastServer	YES
 # define ServerOSDefines	XFree86ServerOSDefines
 # define ServerExtraDefines	GccGasOption XFree86ServerDefines
+# define XkbServerDefines	-DXKB_ALWAYS_USES_SOFT_REPEAT
 # define XserverNeedsSetUID	YES
 # define XVirtualFramebufferServer	NO
 
@@ -753,6 +754,7 @@ InstallManPageAliasesBase(file,destdir,aliases)
 # define XhpcServer		YES
 # define ServerOSDefines	XFree86ServerOSDefines
 # define ServerExtraDefines	GccGasOption XFree86ServerDefines
+# define XkbServerDefines	-DXKB_ALWAYS_USES_SOFT_REPEAT
 # define XserverNeedsSetUID	YES
 # define XVirtualFramebufferServer	NO
 
