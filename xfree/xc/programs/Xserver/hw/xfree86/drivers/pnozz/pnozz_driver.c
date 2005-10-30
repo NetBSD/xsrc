@@ -20,7 +20,7 @@
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-/* $NetBSD: pnozz_driver.c,v 1.2 2005/07/07 12:23:21 macallan Exp $ */
+/* $NetBSD: pnozz_driver.c,v 1.3 2005/10/30 15:57:58 macallan Exp $ */
 
 /*
  * this driver has been tested on SPARCbook 3GX and 3TX, it works fine in 8 bit
@@ -46,6 +46,8 @@
 #include "mipointer.h"
 #include "mibstore.h"
 #include "micmap.h"
+
+//#define DEBUG 1
 
 #include "fb.h"
 #include "xf86cmap.h"
@@ -77,6 +79,8 @@ void PnozzSave(PnozzPtr);
 void PnozzRestore(PnozzPtr);
 int PnozzSetDepth(PnozzPtr, int);	/* return true or false */
 void DumpSCR(unsigned int);
+
+static void PnozzLoadPalette(ScrnInfoPtr, int, int *, LOCO *, VisualPtr);
 
 #define VERSION 4000
 #define PNOZZ_NAME "p9100"
@@ -194,38 +198,47 @@ unsigned int pnozz_read_4(PnozzPtr p, int offset)
 
 void pnozz_write_dac(PnozzPtr p, int offset, unsigned char value)
 {
+	CARD32 val = ((CARD32)value) << 16;
+
 	scratch32 = pnozz_read_4(p, PWRUP_CNFG);
-	scratch32 = *(unsigned int *)(p->fb + offset);
-	 *((unsigned int *)(p->fbc + offset))=(((unsigned int)value) << 16);
+	if ((offset != DAC_INDX_DATA) && (offset != DAC_CMAP_DATA)) {
+		do {
+			pnozz_write_4(p, offset, val);
+		} while (pnozz_read_4(p, offset) != val);
+	} else {
+		pnozz_write_4(p, offset, val);
+	}
 }
 
 unsigned char pnozz_read_dac(PnozzPtr p, int offset)
 {
 	scratch32 = pnozz_read_4(p, PWRUP_CNFG);
-	scratch32 = *(unsigned int *)(p->fb + offset);
-	return ((*((unsigned int *)(p->fbc + offset)) >> 16) & 0xff);
+	//scratch32 = *(unsigned int *)(p->fb + offset);
+	return ((pnozz_read_4(p, offset) >> 16) & 0xff);
 }
 
 void pnozz_write_dac_ctl_reg(PnozzPtr p, int offset, unsigned char val)
 {
-	pnozz_write_dac(p, DAC_INDX_LO, (offset & 0xff));
+
 	pnozz_write_dac(p, DAC_INDX_HI, (offset & 0xff00) >> 8);
+	pnozz_write_dac(p, DAC_INDX_LO, (offset & 0xff));
 	pnozz_write_dac(p, DAC_INDX_DATA, val);
 }
 
 void pnozz_write_dac_ctl_reg_2(PnozzPtr p, int offset, unsigned short val)
 {
-	pnozz_write_dac(p, DAC_INDX_CTL, DAC_INDX_AUTOINCR);
-	pnozz_write_dac(p, DAC_INDX_LO, (offset & 0xff));
+
 	pnozz_write_dac(p, DAC_INDX_HI, (offset & 0xff00) >> 8);
+	pnozz_write_dac(p, DAC_INDX_LO, (offset & 0xff));
+	pnozz_write_dac(p, DAC_INDX_CTL, DAC_INDX_AUTOINCR);
 	pnozz_write_dac(p, DAC_INDX_DATA, val & 0xff);
 	pnozz_write_dac(p, DAC_INDX_DATA, (val & 0xff00) >> 8);
 }
 
 unsigned char pnozz_read_dac_ctl_reg(PnozzPtr p, int offset)
 {
-	pnozz_write_dac(p, DAC_INDX_LO, (offset & 0xff));
 	pnozz_write_dac(p, DAC_INDX_HI, (offset & 0xff00) >> 8);
+	pnozz_write_dac(p, DAC_INDX_LO, (offset & 0xff));
 	return pnozz_read_dac(p, DAC_INDX_DATA);
 }
 
@@ -235,6 +248,29 @@ void pnozz_write_dac_cmap_reg(PnozzPtr p, int offset, unsigned int val)
 	pnozz_write_dac(p, DAC_CMAP_DATA,(val & 0xff));
 	pnozz_write_dac(p, DAC_CMAP_DATA,(val & 0xff00) >> 8);
 	pnozz_write_dac(p, DAC_CMAP_DATA,(val & 0xff0000) >> 16);
+}
+
+static void
+PnozzLoadPalette(ScrnInfoPtr pScrn, int numColors, int *indices, LOCO *colors,
+    VisualPtr pVisual) 
+{
+    PnozzPtr pPnozz = GET_PNOZZ_FROM_SCRN(pScrn);
+    int i, index;
+    
+    PnozzSync(pScrn);
+    pnozz_write_dac(pPnozz, DAC_INDX_CTL, DAC_INDX_AUTOINCR);
+
+    for (i = 0; i < numColors; i++)
+    {
+    	index = indices[i];
+	if (index >= 0) {
+    	    pnozz_write_dac(pPnozz, DAC_CMAP_WRIDX, index);
+	    pnozz_write_dac(pPnozz, DAC_CMAP_DATA, colors[index].red);
+	    pnozz_write_dac(pPnozz, DAC_CMAP_DATA, colors[index].green);
+	    pnozz_write_dac(pPnozz, DAC_CMAP_DATA, colors[index].blue);
+	}
+    }
+    PnozzSync(pScrn);
 }
 
 static Bool
@@ -521,13 +557,13 @@ PnozzPreInit(ScrnInfoPtr pScrn, int flags)
 	return FALSE;
     }
 
-    if (pPnozz->HWCursor && xf86LoadSubModule(pScrn, "ramdac") == NULL) {
+    if (xf86LoadSubModule(pScrn, "ramdac") == NULL) {
 	PnozzFreeRec(pScrn);
 	return FALSE;
     }
     xf86LoaderReqSymLists(ramdacSymbols, NULL);
 
-    if (pPnozz->HWCursor && xf86LoadSubModule(pScrn, "xaa") == NULL) {
+    if (xf86LoadSubModule(pScrn, "xaa") == NULL) {
 	PnozzFreeRec(pScrn);
 	return FALSE;
     }
@@ -670,6 +706,9 @@ PnozzScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
     fbPictureInit (pScreen, 0, 0);
 #endif
 
+    /* put the DAC into autoincrement mode */
+    pnozz_write_dac(pPnozz, DAC_INDX_CTL, DAC_INDX_AUTOINCR);
+
     miInitializeBackingStore(pScreen);
     xf86SetBackingStore(pScreen);
     xf86SetSilkenMouse(pScreen);
@@ -693,6 +732,7 @@ PnozzScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 
     /* Initialize HW cursor layer. 
        Must follow software cursor initialization*/
+    xf86SbusHideOsHwCursor(pPnozz->psdp);
     if (pPnozz->HWCursor) { 
 	extern Bool PnozzHWCursorInit(ScreenPtr pScreen);
 
@@ -701,14 +741,18 @@ PnozzScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 		       "Hardware cursor initialization failed\n");
 	    return(FALSE);
 	}
-	xf86SbusHideOsHwCursor(pPnozz->psdp);
     }
 
     /* Initialise default colourmap */
     if (!miCreateDefColormap(pScreen))
 	return FALSE;
 
+#if 1
     if(!xf86SbusHandleColormaps(pScreen, pPnozz->psdp))
+#else
+    if(!xf86HandleColormaps(pScreen, 256, 8, PnozzLoadPalette, NULL, 
+        /*CMAP_PALETTED_TRUECOLOR|*/CMAP_RELOAD_ON_MODE_SWITCH))
+#endif
 	return FALSE;
 
     pPnozz->CloseScreen = pScreen->CloseScreen;
@@ -798,13 +842,14 @@ PnozzCloseScreen(int scrnIndex, ScreenPtr pScreen)
 
     pScrn->vtSema = FALSE;
     
-    PnozzRestore(pPnozz);	/* restore colour depth */
-    
     if (pPnozz->HWCursor)
     	PnozzHideCursor(pScrn);
 
+    PnozzRestore(pPnozz);	/* restore colour depth */
+    
     xf86UnmapSbusMem(pPnozz->psdp, pPnozz->fb,0x200000);
     xf86UnmapSbusMem(pPnozz->psdp, pPnozz->fbc,0x8000);
+
     /* make sure video is turned on */
     ioctl(pPnozz->psdp->fd, FBIOSVIDEO, &state);
     
@@ -1091,21 +1136,35 @@ PnozzSetDepth(PnozzPtr pPnozz, int depth)
      * clock dividers here
      */
     pnozz_write_dac_ctl_reg(pPnozz, DAC_MISC_CLK, 1/*/mcr*/);
+    pnozz_write_dac_ctl_reg(pPnozz, 3, 0);
+    pnozz_write_dac_ctl_reg(pPnozz, 4, 0);
+    
     pnozz_write_dac_ctl_reg(pPnozz, DAC_POWER_MGT, 0);
+    pnozz_write_dac_ctl_reg(pPnozz, DAC_OPERATION, 0);
+    pnozz_write_dac_ctl_reg(pPnozz, DAC_PALETTE_CTRL, 0);
+
     pnozz_write_dac_ctl_reg(pPnozz, DAC_PIXEL_FMT, pf);
     pnozz_write_dac_ctl_reg(pPnozz, DAC_8BIT_CTRL, 0);
     pnozz_write_dac_ctl_reg(pPnozz, DAC_16BIT_CTRL, 0xc6);
-    pnozz_write_dac_ctl_reg(pPnozz, DAC_32BIT_CTRL, 3);
+    pnozz_write_dac_ctl_reg(pPnozz, DAC_32BIT_CTRL, 0 /*3*/);
+    
+    pnozz_write_dac_ctl_reg(pPnozz, 0x10, 2);
+    pnozz_write_dac_ctl_reg(pPnozz, 0x11, 0);
+    pnozz_write_dac_ctl_reg(pPnozz, 0x14, 5);
+    pnozz_write_dac_ctl_reg(pPnozz, 0x08, 1);
+    pnozz_write_dac_ctl_reg(pPnozz, 0x15, 5);
+    pnozz_write_dac_ctl_reg(pPnozz, 0x16, 0x63);
+   
     /*
      * we feed data to the DAC in 64bit chunks, so if we want a higher colour 
      * depth we need to feed it faster. In theory we'd just need to program a 
      * higher pixel clock but for some reason this doesn't quite work
      */
-//    pnozz_write_dac_ctl_reg(pPnozz, DAC_PLL0, pll0);
-//    pnozz_write_dac_ctl_reg(pPnozz, DAC_VCO_DIV, vco);
+    //pnozz_write_dac_ctl_reg(pPnozz, DAC_PLL0, pll0);
+/*    pnozz_write_dac_ctl_reg(pPnozz, DAC_VCO_DIV, vco);*/
 
     /* whack the CRTC. Not sure if we need to */
-#if 0
+#if DEBUG == 0
     pnozz_write_4(pPnozz, VID_HTOTAL, 24 + (100 << pPnozz->depthshift));
     pnozz_write_4(pPnozz, VID_HSRE, 8 /*<< pPnozz->depthshift*/);
     pnozz_write_4(pPnozz, VID_HBRE, 18 /*<< pPnozz->depthshift*/);
