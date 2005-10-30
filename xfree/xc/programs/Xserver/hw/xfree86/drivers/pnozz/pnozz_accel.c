@@ -20,7 +20,7 @@
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-/* $NetBSD: pnozz_accel.c,v 1.2 2005/07/07 12:23:21 macallan Exp $ */
+/* $NetBSD: pnozz_accel.c,v 1.3 2005/10/30 15:57:58 macallan Exp $ */
 
 #include "pnozz.h"
 
@@ -64,7 +64,7 @@ static CARD32 PnozzDrawROP[] = {
 
 CARD32 MaxClip, junk;
 
-static void PnozzSync(ScrnInfoPtr pScrn)
+void PnozzSync(ScrnInfoPtr pScrn)
 {
     PnozzPtr pPnozz = GET_PNOZZ_FROM_SCRN(pScrn);
     while((pnozz_read_4(pPnozz, ENGINE_STATUS) & 
@@ -124,10 +124,10 @@ PnozzSubsequentScreenToScreenCopy
     PnozzPtr pPnozz = GET_PNOZZ_FROM_SCRN(pScrn);
     CARD32 src, dst, srcw, dstw;
     
-    src = ((xSrc & 0xffff) << 16) | (ySrc & 0xffff);
-    dst = ((xDst & 0xffff) << 16) | (yDst & 0xffff);
-    srcw = (((xSrc + w - 1) & 0xffff) << 16) | ((ySrc + h - 1) & 0xffff);
-    dstw = (((xDst + w - 1) & 0xffff) << 16) | ((yDst + h - 1) & 0xffff);
+    src = ((xSrc & 0x1fff) << 16) | (ySrc & 0x1fff);
+    dst = ((xDst & 0x1fff) << 16) | (yDst & 0x1fff);
+    srcw = (((xSrc + w - 1) & 0x1fff) << 16) | ((ySrc + h - 1) & 0x1fff);
+    dstw = (((xDst + w - 1) & 0x1fff) << 16) | ((yDst + h - 1) & 0x1fff);
 
     PnozzSync(pScrn);
 
@@ -183,11 +183,11 @@ PnozzSubsequentSolidFillRect
 {
     PnozzPtr pPnozz = GET_PNOZZ_FROM_SCRN(pScrn);
     PnozzSync(pScrn);
-    pnozz_write_4(pPnozz, RECT_RTW_XY, ((CARD32)x << 16) | 
-        ((CARD32)y & 0xFFFFL));
-    pnozz_write_4(pPnozz, RECT_RTW_XY, ((CARD32)(x + w) << 16) | 
-        ((CARD32)(y + h) & 0xFFFFL));
-    junk=pnozz_read_4(pPnozz, COMMAND_QUAD);
+    pnozz_write_4(pPnozz, RECT_RTW_XY, ((x & 0x1fff) << 16) | 
+        (y & 0x1fff));
+    pnozz_write_4(pPnozz, RECT_RTP_XY, (((w & 0x1fff) << 16) | 
+        (h & 0x1fff)));
+    junk = pnozz_read_4(pPnozz, COMMAND_QUAD);
 }
 
 int
@@ -243,7 +243,7 @@ PnozzAccelInit(ScrnInfoPtr pScrn)
 	for (i = 0; i < 400; i++) {
 	    *sptr = 0xffff;
 	    sptr++;
-	    *sptr = 0x0000;
+	    *sptr = 0xf800;
 	    sptr+=800;
 	 }
     }

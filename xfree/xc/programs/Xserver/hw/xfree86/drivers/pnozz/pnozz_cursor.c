@@ -20,7 +20,7 @@
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-/* $NetBSD: pnozz_cursor.c,v 1.1 2005/07/04 21:24:58 macallan Exp $ */
+/* $NetBSD: pnozz_cursor.c,v 1.2 2005/10/30 15:57:58 macallan Exp $ */
 
 #include "pnozz.h"
 
@@ -34,15 +34,24 @@ PnozzLoadCursorImage(ScrnInfoPtr pScrn, unsigned char *src)
     PnozzPtr pPnozz = GET_PNOZZ_FROM_SCRN(pScrn);
     int i;
 
-    pnozz_write_dac_ctl_reg(pPnozz, DAC_CURSOR_CTL,DAC_CURSOR_X11|DAC_CURSOR_64);
+    /*
+     * this DAC is funky. Sometimes it messes up the index and we end up 
+     * stomping all over the video timing registers, the result looks funny.
+     * so we're paranoid and write the index for every single byte.
+     */
+     
+    pnozz_write_dac_ctl_reg(pPnozz, DAC_CURSOR_CTL, 
+        DAC_CURSOR_X11| DAC_CURSOR_64);
 
-    pnozz_write_dac(pPnozz,DAC_INDX_CTL,DAC_INDX_AUTOINCR);
-    pnozz_write_dac(pPnozz,DAC_INDX_LO,0);
-    pnozz_write_dac(pPnozz,DAC_INDX_HI,1);
-	
     /* we use a 64x64, 2bit cursor image -> 0x400 bytes */
     for (i = 0; i < 0x400; i++)
-	pnozz_write_dac(pPnozz,DAC_INDX_DATA, src[i]);
+	pnozz_write_dac_ctl_reg(pPnozz, i + 0x100, src[i]);
+    
+    /* write the hotspot coordinates, sometimes they seem to get lost */
+    pnozz_write_dac_ctl_reg(pPnozz, DAC_CURSOR_HOT_X, 63);
+    pnozz_write_dac_ctl_reg(pPnozz, DAC_CURSOR_HOT_Y, 63);
+
+    pnozz_read_4(pPnozz, VID_DACSYNC);
 }
 
 void 
@@ -51,7 +60,10 @@ PnozzShowCursor(ScrnInfoPtr pScrn)
     PnozzPtr pPnozz = GET_PNOZZ_FROM_SCRN(pScrn);
 
     /* we use 64x64 */
-    pnozz_write_dac_ctl_reg(pPnozz, DAC_CURSOR_CTL,DAC_CURSOR_X11|DAC_CURSOR_64);
+    pnozz_write_dac_ctl_reg(pPnozz, DAC_CURSOR_CTL, 
+        DAC_CURSOR_X11 | DAC_CURSOR_64);
+    pnozz_read_4(pPnozz, VID_DACSYNC);
+    
     pPnozz->CursorEnabled = TRUE;
 }
 
@@ -60,7 +72,9 @@ PnozzHideCursor(ScrnInfoPtr pScrn)
 {
     PnozzPtr pPnozz = GET_PNOZZ_FROM_SCRN(pScrn);
 
-    pnozz_write_dac_ctl_reg(pPnozz, DAC_CURSOR_CTL,DAC_CURSOR_OFF|DAC_CURSOR_64);
+    pnozz_write_dac_ctl_reg(pPnozz, DAC_CURSOR_CTL, 
+        DAC_CURSOR_OFF);
+    
     pPnozz->CursorEnabled = FALSE;
 }
 
@@ -71,8 +85,11 @@ PnozzSetCursorPosition(ScrnInfoPtr pScrn, int x, int y)
 
     pPnozz->CursorX = x;
     pPnozz->CursorY = y;
-    pnozz_write_dac_ctl_reg_2(pPnozz,DAC_CURSOR_X,x+63);
-    pnozz_write_dac_ctl_reg_2(pPnozz,DAC_CURSOR_Y,y+63);
+    
+    pnozz_write_dac(pPnozz, DAC_INDX_CTL, DAC_INDX_AUTOINCR);
+    pnozz_write_dac_ctl_reg_2(pPnozz, DAC_CURSOR_X, min(0x3ff, max(0, x + 63)));
+    pnozz_write_dac_ctl_reg_2(pPnozz, DAC_CURSOR_Y, min(0x3ff, max(0, y + 63)));
+    pnozz_read_4(pPnozz, VID_DACSYNC);
 }
 
 static void
@@ -81,17 +98,18 @@ PnozzSetCursorColors(ScrnInfoPtr pScrn, int bg, int fg)
     PnozzPtr pPnozz = GET_PNOZZ_FROM_SCRN(pScrn);
 
     if (bg != pPnozz->CursorBg || fg != pPnozz->CursorFg) {
-	pnozz_write_dac(pPnozz,DAC_INDX_CTL,DAC_INDX_AUTOINCR);
-	pnozz_write_dac(pPnozz,DAC_INDX_LO,0x40);
-	pnozz_write_dac(pPnozz,DAC_INDX_HI,0);
-	pnozz_write_dac(pPnozz,DAC_INDX_DATA,(bg>>16)&0xff);
-	pnozz_write_dac(pPnozz,DAC_INDX_DATA,(bg>>8)&0xff);
-	pnozz_write_dac(pPnozz,DAC_INDX_DATA,(bg)&0xff);
-	pnozz_write_dac(pPnozz,DAC_INDX_DATA,(fg>>16)&0xff);
-	pnozz_write_dac(pPnozz,DAC_INDX_DATA,(fg>>8)&0xff);
-	pnozz_write_dac(pPnozz,DAC_INDX_DATA,(fg)&0xff);
+	pnozz_write_dac(pPnozz, DAC_INDX_HI, 0);
+	pnozz_write_dac(pPnozz, DAC_INDX_LO, 0x40);
+	pnozz_write_dac(pPnozz, DAC_INDX_CTL, DAC_INDX_AUTOINCR);
+	pnozz_write_dac(pPnozz, DAC_INDX_DATA, (bg >> 16) & 0xff);
+	pnozz_write_dac(pPnozz, DAC_INDX_DATA, (bg >> 8) & 0xff);
+	pnozz_write_dac(pPnozz, DAC_INDX_DATA, (bg) & 0xff);
+	pnozz_write_dac(pPnozz, DAC_INDX_DATA, (fg >> 16) & 0xff);
+	pnozz_write_dac(pPnozz, DAC_INDX_DATA, (fg >> 8) & 0xff);
+	pnozz_write_dac(pPnozz, DAC_INDX_DATA, (fg) & 0xff);
 	pPnozz->CursorBg = bg;
 	pPnozz->CursorFg = fg;
+	pnozz_read_4(pPnozz, VID_DACSYNC);
     }
 }
 
@@ -115,7 +133,8 @@ PnozzHWCursorInit(ScreenPtr pScreen)
     infoPtr->MaxWidth = 64;
     infoPtr->MaxHeight = 64;
     infoPtr->Flags = HARDWARE_CURSOR_AND_SOURCE_WITH_MASK |
-	HARDWARE_CURSOR_TRUECOLOR_AT_8BPP|HARDWARE_CURSOR_SOURCE_MASK_INTERLEAVE_1|
+	HARDWARE_CURSOR_TRUECOLOR_AT_8BPP | 
+	HARDWARE_CURSOR_SOURCE_MASK_INTERLEAVE_1 |
 	HARDWARE_CURSOR_BIT_ORDER_MSBFIRST;
 
     infoPtr->SetCursorColors = PnozzSetCursorColors;
@@ -125,8 +144,9 @@ PnozzHWCursorInit(ScreenPtr pScreen)
     infoPtr->ShowCursor = PnozzShowCursor;
     infoPtr->UseHWCursor = NULL;
 
-    pnozz_write_dac_ctl_reg(pPnozz, DAC_CURSOR_HOT_X,63);
-    pnozz_write_dac_ctl_reg(pPnozz, DAC_CURSOR_HOT_Y,63);
+    pnozz_write_dac_ctl_reg(pPnozz, DAC_CURSOR_HOT_X, 63);
+    pnozz_write_dac_ctl_reg(pPnozz, DAC_CURSOR_HOT_Y, 63);
+    pnozz_read_4(pPnozz, VID_DACSYNC);
     
     return xf86InitCursor(pScreen, infoPtr);
 }

@@ -20,7 +20,7 @@
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-/* $NetBSD: pnozz_regs.h,v 1.1 2005/07/04 21:24:58 macallan Exp $ */
+/* $NetBSD: pnozz_regs.h,v 1.2 2005/10/30 15:57:58 macallan Exp $ */
 
 #ifndef PNOZZ_REGS_H
 #define PNOZZ_REGS_H
@@ -44,6 +44,8 @@
 /* RAMDAC control registers, accessed through DAC_INDX_* */
 #define DAC_MISC_CLK	0x02
 #define DAC_POWER_MGT	0x05
+#define DAC_OPERATION	0x06
+#define DAC_PALETTE_CTRL 0x07
 #define DAC_PIXEL_FMT	0x0a
 #define DAC_8BIT_CTRL	0x0b
 #define DAC_16BIT_CTRL	0x0c
@@ -67,6 +69,7 @@
 #define DAC_CURSOR_COL_1	0x40	/* red. green and blue in subseq. registers */
 #define DAC_CURSOR_COL_2	0x43	/* red. green and blue in subseq. registers */
 #define DAC_CURSOR_COL_3	0x46	/* red. green and blue in subseq. registers */
+#define DAC_PIX_PLL			0x8e
 #define DAC_CURSOR_DATA		0x100
 
 /* main registers */
@@ -99,6 +102,21 @@
 #define VID_HBFE	0x114	/* hblank falling edge */
 #define VID_HCNTPRLD	0x118	/* hcounter preload */
 #define VID_VCOUNTER	0x11c	/* vcounter */
+#define VID_VLENGTH	0x120	/* lines, including blanks */
+#define VID_VSRE	0x124	/* vsync raising edge */
+#define VID_VBRE	0x128	/* vblank raising edge */
+#define VID_VBFE	0x12c	/* vblank falling edge */
+#define VID_VCNTPRLD	0x130	/* vcounter preload */
+#define VID_SRADDR	0x134	/* screen repaint address */
+#define VID_SRTC	0x138	/* screen repaint timing control */
+#define VID_QSFCNTR	0x13c	/* QSF counter */
+
+#define VID_MEM_CONFIG	0x184	/* memory config */
+#define VID_RFPERIOD	0x188	/* refresh period */
+#define VID_RFCOUNT	0x18c	/* refresh counter */
+#define VID_RLMAX	0x190	/* RAS low max */
+#define VID_RLCUR	0x194	/* RAS low current */
+#define VID_DACSYNC	0x198	/* read after last DAC access */
 
 #define ENGINE_STATUS	0x2000	/* drawing engine status register */
 	#define BLITTER_BUSY	0x80000000
