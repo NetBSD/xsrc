@@ -33,6 +33,7 @@ in this Software without prior written authorization from The Open Group.
  * not nearly as large.  Mostly because large areas are heavily
  * optimized already.
  */
+#include "Xarch.h"
 
 #if X_BYTE_ORDER == X_LITTLE_ENDIAN
 # define BitsR		sll
