@@ -279,12 +279,12 @@ clean::
 	$(RM) stipmipste.s
 
 stipmips.o: stipmips.s
-	$(CPP) -DX_BYTE_ORDER=$(X_BYTE_ORDER) AsmDefines \
+	$(CPP) -I$(XINCLUDESRC) -DX_BYTE_ORDER=$(X_BYTE_ORDER) AsmDefines \
 		stipmips.s | $(AS) -o $@ -
 
 stipmipste.o: stipmipste.s
-	$(CPP) -DTETEXT -DX_BYTE_ORDER=$(X_BYTE_ORDER) AsmDefines \
-		stipmipste.s | $(AS) -o $@ -
+	$(CPP) -DTETEXT -I$(XINCLUDESRC) -DX_BYTE_ORDER=$(X_BYTE_ORDER) \
+		AsmDefines stipmipste.s | $(AS) -o $@ -
 #endif
 
 #ifdef SparcArchitecture
