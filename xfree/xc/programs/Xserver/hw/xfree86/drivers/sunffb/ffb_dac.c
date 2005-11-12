@@ -88,33 +88,45 @@ FFBDacCursorEnableDisable(FFBPtr pFfb, int enable)
 	DACCUR_WRITE(dac, FFBDAC_CUR_CTRL, val);
 }
 
+#define MEMBAR __asm__("membar #MemIssue;")
+
 void
 FFBDacCursorLoadBitmap(FFBPtr pFfb, int xshift, int yshift, unsigned int *bitmap)
 {
-	ffb_dacPtr dac = pFfb->dac;
-	int i, j;
+	volatile ffb_dacPtr dac = pFfb->dac;
+	int i, j, sync[]={FFBDAC_CUR_BITMAP_P0, FFBDAC_CUR_BITMAP_P1};
 
 	dac->cur = FFBDAC_CUR_BITMAP_P0;
 	for (j = 0; j < 2; j++) {
+		dac->cur = sync[j];
+		MEMBAR;
 		bitmap += yshift * 2;
 		if (!xshift) {
-			for (i = yshift * 2; i < 128; i++)
+			for (i = yshift * 2; i < 128; i++) {
 				dac->curdata = *bitmap++;
+				MEMBAR;
+			}
 		} else if (xshift < 32) {
 			for (i = yshift; i < 64; i++, bitmap += 2) {
 				dac->curdata = (bitmap[0] << xshift) |
 					(bitmap[1] >> (32 - xshift));
+				MEMBAR;
 				dac->curdata = bitmap[1] << xshift;
+				MEMBAR;
 			}
 		} else {
 			for (i = yshift; i < 64; i++, bitmap += 2) {
 				dac->curdata = bitmap[1] << (xshift - 32);
+				MEMBAR;
 				dac->curdata = 0;
+				MEMBAR;
 			}
 		}
 
-		for (i = 0; i < yshift * 2; i++)
+		for (i = 0; i < yshift * 2; i++) {
 			dac->curdata = 0;
+			MEMBAR;
+		}
 	}
 }
 
