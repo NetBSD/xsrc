@@ -20,7 +20,7 @@
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-/* $NetBSD: pnozz_driver.c,v 1.3 2005/10/30 15:57:58 macallan Exp $ */
+/* $NetBSD: pnozz_driver.c,v 1.4 2005/11/12 23:32:12 macallan Exp $ */
 
 /*
  * this driver has been tested on SPARCbook 3GX and 3TX, it works fine in 8 bit
@@ -28,12 +28,12 @@
  * limited to screen-to-screen blits and solid fills, a hardware cursor is 
  * supported 
  */
- 
+
 #include <fcntl.h>
-#include <sys/types.h>
 #include <sys/time.h>
-#include <dev/wscons/wsconsio.h>
+#include <sys/types.h>
 #include <dev/sun/fbio.h>
+#include <dev/wscons/wsconsio.h>
 
 #include "xf86.h"
 #include "xf86_OSproc.h"
@@ -182,17 +182,17 @@ PnozzSetup(pointer module, pointer opts, int *errmaj, int *errmin)
 
 #endif /* XFree86LOADER */
 
-unsigned int scratch32;
+volatile unsigned int scratch32;
 
 void pnozz_write_4(PnozzPtr p, int offset, unsigned int value)
 {
-	scratch32 = *(unsigned int *)(p->fb + offset);
+	scratch32 = *(volatile unsigned int *)(p->fb + offset);
 	*((volatile unsigned int *)(p->fbc + offset)) = value;
 }
 
 unsigned int pnozz_read_4(PnozzPtr p, int offset)
 {
-	scratch32 = *(unsigned int *)(p->fb + offset);
+	scratch32 = *(volatile unsigned int *)(p->fb + offset);
 	return *(volatile unsigned int *)(p->fbc + offset);
 }
 
@@ -213,7 +213,7 @@ void pnozz_write_dac(PnozzPtr p, int offset, unsigned char value)
 unsigned char pnozz_read_dac(PnozzPtr p, int offset)
 {
 	scratch32 = pnozz_read_4(p, PWRUP_CNFG);
-	//scratch32 = *(unsigned int *)(p->fb + offset);
+	//scratch32 = *(volatile unsigned int *)(p->fb + offset);
 	return ((pnozz_read_4(p, offset) >> 16) & 0xff);
 }
 
@@ -806,11 +806,7 @@ PnozzEnterVT(int scrnIndex, int flags)
     ScrnInfoPtr pScrn = xf86Screens[scrnIndex];
     PnozzPtr pPnozz = GET_PNOZZ_FROM_SCRN(pScrn);
 
-    if (pPnozz->HWCursor) {
-	xf86SbusHideOsHwCursor (pPnozz->psdp);
-	pPnozz->CursorFg = 0;
-	pPnozz->CursorBg = 0;
-    }
+    xf86SbusHideOsHwCursor (pPnozz->psdp);
     return TRUE;
 }
 

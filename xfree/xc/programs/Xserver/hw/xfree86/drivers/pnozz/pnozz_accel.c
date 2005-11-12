@@ -20,7 +20,13 @@
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-/* $NetBSD: pnozz_accel.c,v 1.3 2005/10/30 15:57:58 macallan Exp $ */
+/* $NetBSD: pnozz_accel.c,v 1.4 2005/11/12 23:32:12 macallan Exp $ */
+
+#include <fcntl.h>
+#include <sys/time.h>
+#include <sys/types.h>
+#include <dev/sun/fbio.h>
+#include <dev/wscons/wsconsio.h>
 
 #include "pnozz.h"
 
