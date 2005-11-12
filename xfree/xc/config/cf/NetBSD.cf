@@ -985,3 +985,30 @@ InstallManPageAliasesBase(file,destdir,aliases)
 #ifndef UseSeparateConfDir
 #define UseSeparateConfDir NO	/* We don't want appdefs in "/etc/X11". */
 #endif
+
+/* NetBSD 1.5 has libusb, next versions have libusbhid */
+#if OSMajorVersion == 1 && OSMinorVersion >= 5 || OSMajorVersion > 1
+# ifdef HasLibUsb
+#  undef HasLibUsb
+# endif
+# define HasLibUsb		YES
+# ifndef HasLibUsbHid
+#  if OSMajorVersion == 1 && OSMinorVersion > 5 || OSMajorVersion > 1
+#   define HasLibUsbHid		YES
+#   define UsbHidLib 		-lusbhid
+#  else
+#   define HasLibUsbHid		NO
+#   define UsbHidLib		-lusb
+#  endif
+# endif
+#else
+# define HasLibUsb		NO
+#endif
+
+/* USB tablets */
+#ifndef OSXInputDrivers
+# if HasLibUsb
+#  define OSXInputDrivers	usbtablet
+# endif
+#endif
+
