@@ -20,7 +20,7 @@
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-/* $NetBSD: pnozz.h,v 1.1 2005/07/04 21:24:58 macallan Exp $ */
+/* $NetBSD: pnozz.h,v 1.2 2005/11/12 23:32:12 macallan Exp $ */
 
 #ifndef PNOZZ_H
 #define PNOZZ_H
@@ -59,10 +59,11 @@ typedef struct {
 	Bool		HWCursor;
 	Bool		NoAccel;
 	CloseScreenProcPtr CloseScreen;
+	
 	xf86CursorInfoPtr CursorInfoRec;
-	unsigned short	CursorX, CursorY;
-	int		CursorBg, CursorFg;
-	Bool		CursorEnabled;
+	struct fbcursor Cursor;
+	unsigned char pal[9];
+	
 	OptionInfoPtr	Options;
 	XAAInfoRecPtr	pXAA;
 	
