@@ -446,7 +446,7 @@ void amigaMouseEnqueueEvent (device, fe, fe_next)
 
     pPriv = (amigaPtrPrivPtr)device->public.devicePrivate;
 
-    time = xE.u.keyButtonPointer.time = TVTOMILLI(fe->time);
+    time = xE.u.keyButtonPointer.time = GetTimeInMillis();
 
     switch (fe->id) {
     case MS_LEFT:
