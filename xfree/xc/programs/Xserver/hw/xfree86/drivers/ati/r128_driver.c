@@ -2797,9 +2797,12 @@ static void R128Save(ScrnInfoPtr pScrn)
 	fbdevHWSave(pScrn);
 	return;
     }
+    
+#ifndef __powerpc__
     vgaHWUnlock(hwp);
     vgaHWSave(pScrn, &hwp->SavedReg, VGA_SR_ALL); /* save mode, fonts, cmap */
     vgaHWLock(hwp);
+#endif
 
     R128SaveMode(pScrn, save);
 
@@ -2832,9 +2835,12 @@ static void R128Restore(ScrnInfoPtr pScrn)
     OUTREG(R128_DP_DATATYPE,      restore->dp_datatype);
 
     R128RestoreMode(pScrn, restore);
+    
+#ifndef __powerpc__
     vgaHWUnlock(hwp);
     vgaHWRestore(pScrn, &hwp->SavedReg, VGA_SR_MODE | VGA_SR_FONTS );
     vgaHWLock(hwp);
+#endif
 
     R128WaitForVerticalSync(pScrn);
     R128Unblank(pScrn);
