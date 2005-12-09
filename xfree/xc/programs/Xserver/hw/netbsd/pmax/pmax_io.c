@@ -1,4 +1,4 @@
-/*	$NetBSD: pmax_io.c,v 1.1 2004/01/10 05:23:23 rtr Exp $	*/
+/*	$NetBSD: pmax_io.c,v 1.2 2005/12/09 05:44:50 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -225,7 +225,7 @@ pmaxSaveScreen(pScreen, on)
 	if (on == SCREEN_SAVER_FORCER) {
 		lastEventTime = CURRENT_TIME;
 	} else {
-		if (on == SCREEN_SAVER_ON)
+		if (on == SCREEN_SAVER_ON || on == SCREEN_SAVER_CYCLE)
 			ioctl(fdPM, QIOVIDEOOFF);
 		else
 			ioctl(fdPM, QIOVIDEOON);
