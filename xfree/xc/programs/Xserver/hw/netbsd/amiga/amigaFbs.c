@@ -150,7 +150,7 @@ Bool amigaSaveScreen (pScreen, on)
 
     if (on != SCREEN_SAVER_FORCER)
     {
-	if (on == SCREEN_SAVER_ON)
+	if (on == SCREEN_SAVER_ON || on == SCREEN_SAVER_CYCLE)
 	    state = 0;
 	else
 	    state = 1;
