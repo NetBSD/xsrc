@@ -655,7 +655,7 @@ void amigaKbdEnqueueEvent (device, fe)
 #ifdef XKB
     }
 #endif
-    xE.u.keyButtonPointer.time = TVTOMILLI(fe->time);
+    xE.u.keyButtonPointer.time = GetTimeInMillis();
     xE.u.u.type = ((fe->value == VKEY_UP) ? KeyRelease : KeyPress);
     xE.u.u.detail = keycode;
 
