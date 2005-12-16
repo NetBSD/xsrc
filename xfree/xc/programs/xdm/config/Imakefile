@@ -71,9 +71,15 @@ InstallNamedProgNoClobber(Xwilling,Xwilling,$(XDMDIR))
 #if InstallXdmConfig
 InstallNonExecFile(XdmPixmap,$(XDMDIR)/pixmaps)
 InstallNonExecFile(XdmbwPixmap,$(XDMDIR)/pixmaps)
+InstallNonExecFile(NetBSDinv.xpm,$(XDMDIR)/pixmaps)
+InstallNonExecFile(XFree86.xpm,$(XDMDIR)/pixmaps)
+InstallNonExecFile(XFree86bw.xpm,$(XDMDIR)/pixmaps)
 #else
 InstallNonExecFileNoClobber(XdmPixmap,$(XDMDIR)/pixmaps)
 InstallNonExecFileNoClobber(XdmbwPixmap,$(XDMDIR)/pixmaps)
+InstallNonExecFileNoClobber(NetBSDinv.xpm,$(XDMDIR)/pixmaps)
+InstallNonExecFileNoClobber(XFree86.xpm,$(XDMDIR)/pixmaps)
+InstallNonExecFileNoClobber(XFree86bw.xpm,$(XDMDIR)/pixmaps)
 #endif
 
 #ifdef SequentArchitecture
