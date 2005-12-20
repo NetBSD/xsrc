@@ -519,6 +519,18 @@ SessionExit (struct display *d, int status, int removeAuth)
     exit (status);
 }
 
+#ifdef HAS_SETUSERCONTEXT
+static int
+/*ARGSUSED*/
+envset(void *envp, const char *name, const char *value, int overwrite)
+{
+	struct verify_info *verify = envp;
+	verify->userEnviron = setEnv(verify->userEnviron, (char *)name, 
+	    (char *)value);
+	return 0;
+}
+#endif
+
 static Bool
 StartClient (
     struct verify_info	*verify,
@@ -531,7 +543,8 @@ StartClient (
     char	*failsafeArgv[2];
     int	pid;
 #ifdef HAS_SETUSERCONTEXT
-    struct passwd* pwd;
+    struct passwd *pwd;
+    login_cap_t *lc;
 #endif
 #ifdef USE_PAM
     pam_handle_t *pamh = thepamh ();
@@ -615,11 +628,20 @@ StartClient (
 	 */
 	pwd = getpwnam(name);
 	if (pwd) {
-	    if (setusercontext(NULL, pwd, pwd->pw_uid, LOGIN_SETALL) < 0) {
+	    lc = login_getclass(pwd->pw_class);
+	    if (lc == NULL) {
+		LogError ("login_class for \"%s\" not found\n",
+		    pwd->pw_class?pwd->pw_class:"default");
+		return (0);
+	    }
+	    if (setusercontext(lc, pwd, pwd->pw_uid, LOGIN_SETALL) < 0) {
 		LogError ("setusercontext for \"%s\" failed, errno=%d\n", name,
 		    errno);
 		return (0);
 	    }
+	    setuserpath(lc, pwd ? pwd->pw_dir : "", envset, verify);
+	    setuserenv (lc, envset, verify);
+	    login_close(lc);
 	    endpwent();
 	} else {
 	    LogError ("getpwnam for \"%s\" failed, errno=%d\n", name, errno);
