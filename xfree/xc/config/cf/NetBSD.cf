@@ -1012,3 +1012,8 @@ InstallManPageAliasesBase(file,destdir,aliases)
 # endif
 #endif
 
+/* NetBSD >= 1.5 has setusercontext() */
+#if OSMajorVersion == 1 && OSMinorVersion >= 5 || OSMajorVersion > 1
+#define HasSetUserContext       YES
+#endif
+
