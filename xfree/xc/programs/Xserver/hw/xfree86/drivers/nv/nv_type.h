@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/nv/nv_type.h,v 1.50 2004/12/09 00:21:05 mvojkovi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/nv/nv_type.h,v 1.51 2005/04/16 23:57:26 mvojkovi Exp $ */
 
 #ifndef __NV_STRUCT_H__
 #define __NV_STRUCT_H__
@@ -161,6 +161,7 @@ typedef struct {
     CARD32              fpSyncs;
     Bool                usePanelTweak;
     int                 PanelTweak;
+    Bool                LVDS;
 
     CARD32              dmaPut;
     CARD32              dmaCurrent;

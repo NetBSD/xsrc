@@ -24,7 +24,7 @@
 /* Hacked together from mga driver and 3.3.4 NVIDIA driver by Jarno Paananen
    <jpaana@s2.org> */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/nv/nv_driver.c,v 1.132 2005/02/18 02:55:09 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/nv/nv_driver.c,v 1.138 2005/09/28 17:43:27 mvojkovi Exp $ */
 
 #include "nv_include.h"
 
@@ -81,6 +81,8 @@ DriverRec NV = {
         NULL,
         0
 };
+
+/* Known cards as of 2005/09/21  */
 
 static SymTabRec NVKnownChipsets[] =
 {
@@ -200,7 +202,7 @@ static SymTabRec NVKnownChipsets[] =
 #else
   { 0x10DE0329, "0x0329" },
 #endif
-  { 0x10DE032A, "Quadro NVS 280 PCI" },
+  { 0x10DE032A, "Quadro NVS 55/280 PCI" },
   { 0x10DE032B, "Quadro FX 500/600 PCI" },
   { 0x10DE032C, "GeForce FX Go53xx Series" },
   { 0x10DE032D, "GeForce FX Go5100" },
@@ -232,44 +234,47 @@ static SymTabRec NVKnownChipsets[] =
   { 0x10DE0042, "GeForce 6800 LE" },
   { 0x10DE0043, "0x0043" },
   { 0x10DE0045, "GeForce 6800 GT" },
+  { 0x10DE0046, "GeForce 6800 GT" },
+  { 0x10DE0048, "GeForce 6800 XT" },
   { 0x10DE0049, "0x0049" },
   { 0x10DE004E, "Quadro FX 4000" },
 
   { 0x10DE00C0, "0x00C0" },
   { 0x10DE00C1, "GeForce 6800" },
   { 0x10DE00C2, "GeForce 6800 LE" },
+  { 0x10DE00C3, "GeForce 6800 XT" },
   { 0x10DE00C8, "GeForce Go 6800" },
   { 0x10DE00C9, "GeForce Go 6800 Ultra" },
   { 0x10DE00CC, "Quadro FX Go1400" },
-  { 0x10DE00CD, "0x00CD" },
+  { 0x10DE00CD, "Quadro FX 3450/4000 SDI" },
   { 0x10DE00CE, "Quadro FX 1400" },
 
   { 0x10DE0140, "GeForce 6600 GT" },
   { 0x10DE0141, "GeForce 6600" },
-  { 0x10DE0142, "0x0142" },
+  { 0x10DE0142, "GeForce 6600 LE" },
   { 0x10DE0143, "0x0143" },
   { 0x10DE0144, "GeForce Go 6600" },
   { 0x10DE0145, "GeForce 6610 XL" },
   { 0x10DE0146, "GeForce Go 6600 TE/6200 TE" },
-  { 0x10DE0147, "0x0147" },
+  { 0x10DE0147, "GeForce 6700 XL" },
   { 0x10DE0148, "GeForce Go 6600" },
-  { 0x10DE0149, "0x0149" },
+  { 0x10DE0149, "GeForce Go 6600 GT" },
   { 0x10DE014B, "0x014B" },
   { 0x10DE014C, "0x014C" },
   { 0x10DE014D, "0x014D" },
   { 0x10DE014E, "Quadro FX 540" },
   { 0x10DE014F, "GeForce 6200" },
 
-  { 0x10DE0160, "0x0160" },
+  { 0x10DE0160, "GeForce 6500" },
   { 0x10DE0161, "GeForce 6200 TurboCache(TM)" },
-  { 0x10DE0162, "0x0162" },
-  { 0x10DE0163, "0x0163" },
+  { 0x10DE0162, "GeForce 6200SE TurboCache(TM)" },
+  { 0x10DE0163, "GeForce 6200 LE" },
   { 0x10DE0164, "GeForce Go 6200" },
-  { 0x10DE0165, "0x0163" },
-  { 0x10DE0166, "GeForce Go 6250" },
+  { 0x10DE0165, "Quadro NVS 285" },
+  { 0x10DE0166, "GeForce Go 6400" },
   { 0x10DE0167, "GeForce Go 6200" },
-  { 0x10DE0168, "GeForce Go 6250" },
-  { 0x10DE0169, "0x0169" },
+  { 0x10DE0168, "GeForce Go 6400" },
+  { 0x10DE0169, "GeForce 6250" },
   { 0x10DE016B, "0x016B" },
   { 0x10DE016C, "0x016C" },
   { 0x10DE016D, "0x016D" },
@@ -281,9 +286,20 @@ static SymTabRec NVKnownChipsets[] =
   { 0x10DE0215, "GeForce 6800 GT" },
 
   { 0x10DE0220, "0x0220" },
-  { 0x10DE0221, "0x0221" },
+  { 0x10DE0221, "GeForce 6200" },
   { 0x10DE0222, "0x0222" },
   { 0x10DE0228, "0x0228" },
+
+  { 0x10DE0090, "0x0090" },
+  { 0x10DE0091, "GeForce 7800 GTX" },
+  { 0x10DE0092, "GeForce 7800 GT" },
+  { 0x10DE0093, "0x0093" },
+  { 0x10DE0094, "0x0094" },
+  { 0x10DE0098, "GeForce Go 7800" },
+  { 0x10DE0099, "GeForce Go 7800 GTX" },
+  { 0x10DE009C, "0x009C" },
+  { 0x10DE009D, "Quadro FX 4500" },
+  { 0x10DE009E, "0x009E" },
 
   {-1, NULL}
 };
@@ -682,6 +698,8 @@ NVProbe(DriverPtr drv, int flags)
                case 0x0210:
                case 0x0220:
                case 0x0230:
+               case 0x0290:
+               case 0x0390:
                    NVChipsets[numUsed].token = pciid;
                    NVChipsets[numUsed].name = "Unknown NVIDIA chip";
                    NVPciChipsets[numUsed].numChipset = pciid;
@@ -918,7 +936,7 @@ nvProbeDDC(ScrnInfoPtr pScrn, int index)
 {
     vbeInfoPtr pVbe;
 
-    if (xf86LoadSubModule(pScrn, "vbe")) {
+    if (xf86LoadVBEModule(pScrn)) {
         pVbe = VBEInit(NULL,index);
         ConfiguredMonitor = vbeDoEDID(pVbe, NULL);
 	vbeFree(pVbe);
@@ -1372,6 +1390,8 @@ NVPreInit(ScrnInfoPtr pScrn, int flags)
     case 0x0210:
     case 0x0220:
     case 0x0230:
+    case 0x0290:
+    case 0x0390:
          pNv->Architecture =  NV_ARCH_40;
          break;
     default:
@@ -1408,9 +1428,13 @@ NVPreInit(ScrnInfoPtr pScrn, int flags)
 	}
     }
 
-    pNv->FbUsableSize = pNv->FbMapSize - (128 * 1024);
+    if(pNv->Architecture >= NV_ARCH_40)
+       pNv->FbUsableSize = pNv->FbMapSize - (560 * 1024);
+    else
+       pNv->FbUsableSize = pNv->FbMapSize - (128 * 1024);
     pNv->ScratchBufferSize = (pNv->Architecture < NV_ARCH_10) ? 8192 : 16384;
     pNv->ScratchBufferStart = pNv->FbUsableSize - pNv->ScratchBufferSize;
+    pNv->CursorStart = pNv->FbUsableSize + (32 * 1024);
 
     /*
      * Setup the ClockRanges, which describe what clock ranges are available,
@@ -1702,8 +1726,6 @@ NVRestore(ScrnInfoPtr pScrn)
 
 static void NVBacklightEnable(NVPtr pNv,  Bool on)
 {
-    CARD32 fpcontrol = pNv->PRAMDAC[0x0848/4] & 0xCfffffCC;
-
     /* This is done differently on each laptop.  Here we
        define the ones we know for sure. */
 
@@ -1722,14 +1744,24 @@ static void NVBacklightEnable(NVPtr pNv,  Bool on)
       }
       pNv->PMC[0x10F0/4] = tmp_pmc;
       pNv->PCRTC0[0x081C/4] = tmp_pcrt;
-    }
+    } 
 #endif
     
-    /* cut the TMDS output */
-    if(on) fpcontrol |= pNv->fpSyncs;
-    else fpcontrol |= 0x20000022;
+    if(pNv->LVDS) {
+       if(pNv->twoHeads && ((pNv->Chipset & 0x0ff0) != 0x0110)) {
+           pNv->PMC[0x130C/4] = on ? 3 : 7; 
+       }
+    } else {
+       CARD32 fpcontrol;
 
-    pNv->PRAMDAC[0x0848/4] = fpcontrol;
+       fpcontrol = pNv->PRAMDAC[0x0848/4] & 0xCfffffCC;
+
+       /* cut the TMDS output */
+       if(on) fpcontrol |= pNv->fpSyncs;
+       else fpcontrol |= 0x20000022;
+
+       pNv->PRAMDAC[0x0848/4] = fpcontrol;
+    }
 }
 
 static void
@@ -1853,7 +1885,7 @@ NVScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
      * function.  If not, the visuals will need to be setup before calling
      * a fb ScreenInit() function and fixed up after.
      *
-     * For most PC hardware at depths >= 8, the defaults that cfb uses
+     * For most PC hardware at depths >= 8, the defaults that fb uses
      * are not appropriate.  In this driver, we fixup the visuals after.
      */
 

@@ -37,7 +37,7 @@
 |*                                                                           *|
  \***************************************************************************/
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/nv/nv_dac.c,v 1.44 2004/12/09 00:21:04 mvojkovi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/nv/nv_dac.c,v 1.45 2005/07/09 00:53:00 mvojkovi Exp $ */
 
 #include "nv_include.h"
 
@@ -312,7 +312,7 @@ NVDACSave(ScrnInfoPtr pScrn, vgaRegPtr vgaReg, NVRegPtr nvReg,
 
     /* can't read this reliably on NV11 */
     if((pNv->Chipset & 0x0ff0) == 0x0110) 
-       nvReg->crtcOwner = ((pNv->Chipset & 0x0fff) == 0x0112) ? 3 : 0;
+       nvReg->crtcOwner = pNv->CRTCnumber;
 }
 
 #define DEPTH_SHIFT(val, w) ((val << (8 - w)) | (val >> ((w << 1) - 8)))
