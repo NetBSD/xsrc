@@ -308,6 +308,9 @@ XCOMM $XFree86: xc/config/cf/Imake.cf,v 3.91 2004/04/03 22:26:20 dawes Exp $
 # if defined(__dreamcast__)
 #  define dreamcastArchitecture
 # endif
+# if defined(__ews4800mips__)
+#  define ews4800mipsArchitecture
+# endif
 # if defined(__hp300__)
 #  define hp300Architecture
 # endif
