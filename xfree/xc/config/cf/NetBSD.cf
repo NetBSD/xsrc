@@ -747,6 +747,23 @@ InstallManPageAliasesBase(file,destdir,aliases)
 # define BuildDPMSExt		NO
 #endif
 
+/* ews4800mips */
+#if defined(ews4800mipsArchitecture)
+# define BuildServer		YES
+# define Xews4800mipsServer	YES
+# define ServerOSDefines	XFree86ServerOSDefines
+# define ServerExtraDefines	GccGasOption XFree86ServerDefines
+# define XserverNeedsSetUID	YES
+# define XVirtualFramebufferServer	NO
+
+# define XF86Server		NO
+# define BuildXFree86ConfigTools	NO
+# define BuildXInputExt		NO
+# define BuildXF86DGA		NO
+# define BuildDPMS		NO
+# define BuildDPMSExt		NO
+#endif
+
 /* hpcarm, hpcmips */
 #if defined(hpcarmArchitecture) || \
     defined(hpcmipsArchitecture)
