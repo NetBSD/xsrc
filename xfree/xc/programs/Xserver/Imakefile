@@ -769,6 +769,24 @@ SetUIDServerTarget(Xdreamcast,$(DREAMCASTDIRS),$(DREAMCASTOBJS), \
 #endif
 #endif /* XdreamcastServer */
 
+#if defined(Xews4800mipsServer) && Xews4800mipsServer
+XCOMM
+XCOMM NetBSD/ews4800mips server
+XCOMM
+MFBSUBDIR  = mfb
+CFB8SUBDIR = cfb
+EWS4800MIPSDDXDIR = hw/netbsd/ews4800mips
+EWS4800MIPSDIRS = $(STDDIRS) $(MFBDIR) $(CFB8DIR) \
+		  $(EWS4800MIPSDDXDIR) $(DEPDIRS)
+EWS4800MIPSLIBS = hw/netbsd/ews4800mips/libdreamcast.a CFB8Libs
+SetUIDServerTarget(Xews4800mips,$(EWS4800MIPSDIRS),$(EWS4800MIPSOBJS), \
+	$(EWS4800MIPSLIBS) $(LOADABLEEXTS) $(LIBCWRAPPER), \
+	$(EWS4800MIPSLIBS) $(LOADABLEEXTS) $(FONTLIBS) $(SYSLIBS))
+#ifndef ServerToInstall
+#define ServerToInstall Xews4800mips
+#endif
+#endif /* Xews4800mipsServer */
+
 #if defined(XhpcServer) && XhpcServer
 XCOMM
 XCOMM NetBSD/hpcmips server
@@ -1611,6 +1629,7 @@ DDXDIRS = $(DECWSDDXDIR) $(SUNDDXDIR) $(LYNXDDXDIR) \
 	  $(ANBDDXDIR) \
 	  $(DNBDDXDIR) \
 	  $(DREAMCASTDDXDIR) \
+	  $(EWS4800MIPSDDXDIR) \
 	  $(HPCDDXDIR) \
 	  $(MACPPCDDXDIR) $(MAC68KDDXDIR) \
 	  $(VAXDDXDIR) \
