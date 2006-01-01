@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/nv/riva_include.h,v 1.1 2003/07/31 20:24:31 mvojkovi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/nv/riva_include.h,v 1.2 2005/10/14 15:16:43 tsi Exp $ */
 
 #ifndef __RIVA_INCLUDE_H__
 #define __RIVA_INCLUDE_H__
@@ -43,7 +43,7 @@
 #include "fbdevhw.h"
 
 #include "xf86xv.h"
-#include "Xv.h"
+#include <X11/extensions/Xv.h>
 
 #include "vgaHW.h"
 
