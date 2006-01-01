@@ -1,4 +1,4 @@
-/* $NetBSD: hpcScreen.c,v 1.1 2004/01/03 01:09:19 takemura Exp $	*/
+/* $NetBSD: hpcScreen.c,v 1.1.6.1 2006/01/01 23:29:34 riz Exp $	*/
 /* $XConsortium: sunFbs.c,v 1.8 94/08/16 13:45:30 dpw Exp $ */
 /*
 Copyright (c) 1990, 1993  X Consortium
@@ -144,7 +144,7 @@ hpcSaveScreen (pScreen, on)
 
     if (on != SCREEN_SAVER_FORCER)
     {
-	if (on == SCREEN_SAVER_ON)
+	if (on == SCREEN_SAVER_ON || on == SCREEN_SAVER_CYCLE)
 	    state = WSDISPLAYIO_VIDEO_OFF;
 	else
 	    state = WSDISPLAYIO_VIDEO_ON;

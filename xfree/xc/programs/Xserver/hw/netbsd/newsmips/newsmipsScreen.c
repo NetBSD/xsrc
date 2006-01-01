@@ -136,7 +136,7 @@ newsmipsSaveScreen (ScreenPtr pScreen, int on)
 	newsmipsFbPtr pFb = newsmipsGetScreenFb(pScreen);
 
 	if (on != SCREEN_SAVER_FORCER) {
-		if (on == SCREEN_SAVER_ON)
+		if (on == SCREEN_SAVER_ON || on == SCREEN_SAVER_CYCLE)
 			state = WSDISPLAYIO_VIDEO_OFF;
 		else
 			state = WSDISPLAYIO_VIDEO_ON;

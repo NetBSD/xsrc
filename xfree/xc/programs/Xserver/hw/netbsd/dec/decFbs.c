@@ -1,4 +1,4 @@
-/*	$NetBSD: decFbs.c,v 1.1 2004/01/18 05:21:41 rtr Exp $	*/
+/*	$NetBSD: decFbs.c,v 1.1.6.1 2006/01/01 23:29:34 riz Exp $	*/
 
 /* XConsortium: sunFbs.c,v 1.8 94/08/16 13:45:30 dpw Exp */
 
@@ -158,7 +158,7 @@ Bool decSaveScreen (pScreen, on)
 
     if (on != SCREEN_SAVER_FORCER)
     {
-	if (on == SCREEN_SAVER_ON)
+	if (on == SCREEN_SAVER_ON || on == SCREEN_SAVER_CYCLE)
 	    state = 0;
 	else
 	    state = 1;
