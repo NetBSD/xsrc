@@ -1,4 +1,4 @@
-/* $NetBSD: x68kFb.c,v 1.1.1.1 2004/01/07 12:51:45 minoura Exp $ */
+/* $NetBSD: x68kFb.c,v 1.1.1.1.6.1 2006/01/01 23:29:34 riz Exp $ */
 /*-------------------------------------------------------------------------
  * Copyright (c) 1996 Yasushi Yamasaki
  * All rights reserved.
@@ -161,7 +161,7 @@ Bool x68kSaveScreen(ScreenPtr pScreen, Bool on)
     static int stat = FALSE;
     static u_short r2;
 
-    if (on == SCREEN_SAVER_ON) {
+    if (on == SCREEN_SAVER_ON || on == SCREEN_SAVER_CYCLE) {
         if (!stat) {
             r2 = pPriv->reg->videoc.r2;
             pPriv->reg->videoc.r2 = 0x0000;

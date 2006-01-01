@@ -178,7 +178,7 @@ static Bool qvssSaveScreen(pScreen, on)
         lastEventTime = GetTimeInMillis();	
 	return TRUE;
     }
-    else if (on == SCREEN_SAVER_ON)
+    else if (on == SCREEN_SAVER_ON || on == SCREEN_SAVER_CYCLE)
     {
 #ifdef QIOVIDEOOFF
 	(void) ioctl(fdQVSS, QIOVIDEOOFF, (char *)NULL);
