@@ -37,7 +37,7 @@
 |*                                                                           *|
  \***************************************************************************/
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/nv/nv_setup.c,v 1.44 2004/12/09 00:21:05 mvojkovi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/nv/nv_setup.c,v 1.49 2005/09/28 17:43:27 mvojkovi Exp $ */
 
 #include "nv_include.h"
 
@@ -302,6 +302,9 @@ static void nv10GetConfig (NVPtr pNv)
         pNv->RamAmountKBytes = (pNv->PFB[0x020C/4] & 0xFFF00000) >> 10;
     }
 
+    if(pNv->RamAmountKBytes > 256*1024)
+        pNv->RamAmountKBytes = 256*1024;
+
     pNv->CrystalFreqKHz = (pNv->PEXTDEV[0x0000/4] & (1 << 6)) ? 14318 : 13500;
     
     if(pNv->twoHeads && (implementation != 0x0110))
@@ -310,7 +313,6 @@ static void nv10GetConfig (NVPtr pNv)
            pNv->CrystalFreqKHz = 27000;
     }
 
-    pNv->CursorStart      = (pNv->RamAmountKBytes - 96) * 1024;
     pNv->CURSOR           = NULL;  /* can't set this here */
     pNv->MinVClockFreqKHz = 12000;
     pNv->MaxVClockFreqKHz = pNv->twoStagePLL ? 400000 : 350000;
@@ -408,6 +410,7 @@ NVCommonSetup(ScrnInfoPtr pScrn)
     case 0x0186:
     case 0x0187:
     case 0x018D:
+    case 0x0228:
     case 0x0286:
     case 0x028C:
     case 0x0316:
@@ -431,11 +434,17 @@ NVCommonSetup(ScrnInfoPtr pScrn)
     case 0x034C:
     case 0x0160:
     case 0x0166:
+    case 0x0169:
+    case 0x016B:
+    case 0x016C:
+    case 0x016D:
     case 0x00C8:
     case 0x00CC:
     case 0x0144:
     case 0x0146:
     case 0x0148:
+    case 0x0098:
+    case 0x0099:
         mobile = TRUE;
         break;
     default:
@@ -680,5 +689,14 @@ NVCommonSetup(ScrnInfoPtr pScrn)
 
     if(!pNv->FlatPanel || (pScrn->depth != 24) || !pNv->twoHeads)
         pNv->FPDither = FALSE;
+
+    pNv->LVDS = FALSE;
+    if(pNv->FlatPanel && pNv->twoHeads) {
+        pNv->PRAMDAC0[0x08B0/4] = 0x00010004;
+        if(pNv->PRAMDAC0[0x08B4/4] & 1)
+           pNv->LVDS = TRUE;
+        xf86DrvMsg(pScrn->scrnIndex, X_INFO, "Panel is %s\n", 
+                   pNv->LVDS ? "LVDS" : "TMDS");
+    }
 }
 
