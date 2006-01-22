@@ -644,6 +644,18 @@ InstallManPageAliasesBase(file,destdir,aliases)
 # define SharedGLReqs		$(LDPRELIBS) $(XLIB) -lc
 #endif
 
+/*
+ * src/x11 reachover makefiles always build these shared libraries.
+ */
+#if (OSMajorVersion >= 2)
+# ifndef SharedLibXau
+#  define SharedLibXau		HasSharedLibraries
+# endif
+# ifndef SharedLibXdmcp
+#  define SharedLibXdmcp	HasSharedLibraries
+# endif
+#endif
+
 #if HasSharedLibraries
 #include <bsdLib.rules>
 #endif /* HasSharedLibraries */
