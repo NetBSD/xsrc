@@ -576,17 +576,24 @@ StartClient (
 	/* Do system-dependent login setup here */
 
 #ifdef USE_PAM
-	/* pass in environment variables set by libpam and modules it called */
 	if (pamh) {
 	    long i;
-	    char **pam_env = pam_getenvlist(pamh);
+	    char **pam_env;
+
+	    pam_error = pam_setcred (pamh, PAM_ESTABLISH_CRED);
+	    if (pam_error != PAM_SUCCESS) {
+		LogError ("pam_setcred for \"%s\" failed: %s\n",
+			 name, pam_strerror(pamh, pam_error));
+		return(0);
+	    }
+
+	    /* pass in environment variables set by libpam and modules it called */
+	    pam_env = pam_getenvlist(pamh);
 	    for(i = 0; pam_env && pam_env[i]; i++) {
 		verify->userEnviron = putEnv(pam_env[i], verify->userEnviron);
 	    }
 	}
 #endif
-
-
 #ifndef AIXV3
 #ifndef HAS_SETUSERCONTEXT
 	if (setgid(verify->gid) < 0) {
@@ -606,16 +613,6 @@ StartClient (
 	    return (0);
 	}
 #endif   /* QNX4 doesn't support multi-groups, no initgroups() */
-#ifdef USE_PAM
-	if (pamh) {
-	    pam_error = pam_setcred (pamh, PAM_ESTABLISH_CRED);
-	    if (pam_error != PAM_SUCCESS) {
-		LogError ("pam_setcred for \"%s\" failed: %s\n",
-			 name, pam_strerror(pamh, pam_error));
-		return(0);
-	    }
-	}
-#endif
 	if (setuid(verify->uid) < 0) {
 	    LogError ("setuid %d (user \"%s\") failed, errno=%d\n",
 		     verify->uid, name, errno);
@@ -634,12 +631,15 @@ StartClient (
 		    pwd->pw_class?pwd->pw_class:"default");
 		return (0);
 	    }
-	    if (setusercontext(lc, pwd, pwd->pw_uid, LOGIN_SETALL) < 0) {
+	    if (setusercontext(lc, pwd, pwd->pw_uid,
+	    LOGIN_SETALL & ~(LOGIN_SETPATH|LOGIN_SETENV)) < 0) {
 		LogError ("setusercontext for \"%s\" failed, errno=%d\n", name,
 		    errno);
 		return (0);
 	    }
-	    setuserpath(lc, pwd ? pwd->pw_dir : "", envset, verify);
+	    if (login_getcapstr(lc, "path", NULL, NULL)) {
+		setuserpath(lc, pwd ? pwd->pw_dir : "", envset, verify);
+	    }
 	    setuserenv (lc, envset, verify);
 	    login_close(lc);
 	    endpwent();
