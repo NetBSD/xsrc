@@ -20,7 +20,7 @@
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-/* $NetBSD: pnozz.h,v 1.2 2005/11/12 23:32:12 macallan Exp $ */
+/* $NetBSD: pnozz.h,v 1.3 2006/01/28 04:54:18 macallan Exp $ */
 
 #ifndef PNOZZ_H
 #define PNOZZ_H
@@ -66,10 +66,18 @@ typedef struct {
 	
 	OptionInfoPtr	Options;
 	XAAInfoRecPtr	pXAA;
-	
+	unsigned char	*buffers[2];
+	/*
+	 * XXX this is enough for everything a SPARCbook could do on it's
+	 * internal display but not necessarily for an external one
+	 */
+	CARD32		Buffer[1600];
+	int		words, last_word;
+
 	int		DidSave;
 	unsigned int	SvSysConf;	/* System Configuration Register */
 	unsigned int	CRTC[4];	/* CRTC values for horizontal timing */
+	unsigned int	SvMemCtl;	/* memory control register */
 	unsigned char	SvDAC_MCCR;	/* DAC Misc Clock Ctrl (0x02) */
 	unsigned char	SvDAC_PF;	/* DAC Pixel Format (0x0a) */
 	unsigned char	SvDAC_MC3;	/* DAC Misc Control 3 */
