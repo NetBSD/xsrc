@@ -20,7 +20,7 @@
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-/* $NetBSD: pnozz_accel.c,v 1.4 2005/11/12 23:32:12 macallan Exp $ */
+/* $NetBSD: pnozz_accel.c,v 1.5 2006/01/28 04:54:18 macallan Exp $ */
 
 #include <fcntl.h>
 #include <sys/time.h>
@@ -70,11 +70,33 @@ static CARD32 PnozzDrawROP[] = {
 
 CARD32 MaxClip, junk;
 
-void PnozzSync(ScrnInfoPtr pScrn)
+void
+PnozzSync(ScrnInfoPtr pScrn)
 {
     PnozzPtr pPnozz = GET_PNOZZ_FROM_SCRN(pScrn);
     while((pnozz_read_4(pPnozz, ENGINE_STATUS) & 
         (ENGINE_BUSY | BLITTER_BUSY)) !=0 );
+}
+
+static void
+pnozz_write_colour(PnozzPtr pPnozz, int reg, CARD32 colour)
+{
+    CARD32 c2;
+    
+    switch(pPnozz->depthshift) 
+    {
+    	case 0:
+	    c2 = (colour << 8 | colour);
+	    pnozz_write_4(pPnozz, reg, c2 << 16 | c2);
+	    break;
+    	case 1:
+	    c2 = (colour << 16 | colour);
+	    pnozz_write_4(pPnozz, reg, c2);
+	    break;
+    	case 2:
+	    pnozz_write_4(pPnozz, reg, colour);
+	    break;
+    }
 }
 
 static void unClip(PnozzPtr pPnozz)
@@ -110,7 +132,7 @@ PnozzSetupForScreenToScreenCopy(
 {
     PnozzPtr pPnozz = GET_PNOZZ_FROM_SCRN(pScrn);
     PnozzSync(pScrn);
-    unClip(pPnozz);
+
     pnozz_write_4(pPnozz, RASTER_OP, (PnozzCopyROP[rop] & 0xff));
     pnozz_write_4(pPnozz, PLANE_MASK, planemask);
 }
@@ -157,21 +179,8 @@ PnozzSetupForSolidFill
     CARD32 c2;
 
     PnozzSync(pScrn);
-    unClip(pPnozz);
-    switch(pPnozz->depthshift) 
-    {
-    	case 0:
-	    c2 = (colour << 8 | colour);
-	    pnozz_write_4(pPnozz, FOREGROUND_COLOR, c2 << 16 | c2);
-	    break;
-    	case 1:
-	    c2 = (colour << 16 | colour);
-	    pnozz_write_4(pPnozz, FOREGROUND_COLOR, c2);
-	    break;
-    	case 2:
-	    pnozz_write_4(pPnozz, FOREGROUND_COLOR, colour);
-	    break;
-    }
+
+    pnozz_write_colour(pPnozz, FOREGROUND_COLOR, colour);
     pnozz_write_4(pPnozz, RASTER_OP, PnozzDrawROP[rop] & 0xff);
     pnozz_write_4(pPnozz, PLANE_MASK, planemask);
     pnozz_write_4(pPnozz, COORD_INDEX, 0);
@@ -188,12 +197,146 @@ PnozzSubsequentSolidFillRect
 )
 {
     PnozzPtr pPnozz = GET_PNOZZ_FROM_SCRN(pScrn);
+    
     PnozzSync(pScrn);
     pnozz_write_4(pPnozz, RECT_RTW_XY, ((x & 0x1fff) << 16) | 
         (y & 0x1fff));
     pnozz_write_4(pPnozz, RECT_RTP_XY, (((w & 0x1fff) << 16) | 
         (h & 0x1fff)));
     junk = pnozz_read_4(pPnozz, COMMAND_QUAD);
+}
+
+static void 
+PnozzSetupForCPUToScreenColorExpandFill(ScrnInfoPtr pScrn,
+        		int fg, int bg,
+			int rop,
+			unsigned int planemask)
+{
+    PnozzPtr pPnozz = GET_PNOZZ_FROM_SCRN(pScrn);
+    
+    PnozzSync(pScrn);
+    
+    if (bg == -1) {
+    	/* transparent */
+	pnozz_write_colour(pPnozz, FOREGROUND_COLOR, fg);    
+	pnozz_write_4(pPnozz, RASTER_OP, PnozzDrawROP[rop] | ROP_PIX1_TRANS);
+    } else {
+	/* 
+	 * this doesn't make any sense to me either, but for some reason the
+	 * chip applies the foreground colour to 0 pixels and background to 1
+	 * when set to this sort of ROP. 
+	 */
+	pnozz_write_colour(pPnozz, FOREGROUND_COLOR, bg);
+	pnozz_write_colour(pPnozz, BACKGROUND_COLOR, fg);
+    
+	pnozz_write_4(pPnozz, RASTER_OP, PnozzCopyROP[rop] & 0xff);
+    }
+    
+    pnozz_write_4(pPnozz, PLANE_MASK, planemask);
+    pnozz_write_4(pPnozz, COORD_INDEX, 0);
+}
+
+static void 
+PnozzSubsequentScanlineCPUToScreenColorExpandFill(ScrnInfoPtr pScrn,
+			int x, int y, int w, int h,
+			int skipleft )
+{
+    PnozzPtr pPnozz = GET_PNOZZ_FROM_SCRN(pScrn);
+    CARD32 rest = w & 0x1f;
+    
+    pnozz_write_4(pPnozz, ABS_X0, x);
+    pnozz_write_4(pPnozz, ABS_XY1, (x << 16) | (y & 0xFFFFL));
+    pnozz_write_4(pPnozz, ABS_X2, (x + w));
+    pnozz_write_4(pPnozz, ABS_Y3, 1);
+
+    pPnozz->words = (w >> 5);	/* whole words to write */
+    
+    if (rest > 0) {
+    	pPnozz->last_word = (rest - 1) << 2;
+    } else
+    	pPnozz->last_word = -1;
+}
+
+static void
+PnozzSubsequentColorExpandScanline(ScrnInfoPtr pScrn, int bufno)
+{
+    PnozzPtr pPnozz = GET_PNOZZ_FROM_SCRN(pScrn);
+#define PIXEL_1_FULL (PIXEL_1 + (31 << 2))
+    CARD32 *buf;
+    volatile CARD32 *pix = ((volatile CARD32 *)(pPnozz->fbc + PIXEL_1_FULL));
+    int i = 0;
+
+    PnozzSync(pScrn);
+    buf = (CARD32 *)pPnozz->buffers[bufno];
+    junk = *(volatile CARD32 *)(pPnozz->fb + PIXEL_1_FULL);
+    for (i = 0; i < pPnozz->words; i++)
+	*pix = buf[i];
+    if (pPnozz->last_word >= 0)
+    	*(volatile CARD32 *)(pPnozz->fbc + PIXEL_1 + pPnozz->last_word) =
+    	    buf[i];
+}
+
+static void 
+PnozzSetupForSolidLine(ScrnInfoPtr pScrn, int color, int rop, 
+    unsigned int planemask)
+{
+    PnozzPtr pPnozz = GET_PNOZZ_FROM_SCRN(pScrn);
+
+    PnozzSync(pScrn);
+    
+    pnozz_write_colour(pPnozz, FOREGROUND_COLOR, color);    
+    pnozz_write_4(pPnozz, RASTER_OP, (PnozzDrawROP[rop] & 0xff) | ROP_OVERSIZE);
+    
+    pnozz_write_4(pPnozz, PLANE_MASK, planemask);
+    pnozz_write_4(pPnozz, COORD_INDEX, 0);
+
+}
+
+static void
+PnozzSubsequentSolidTwoPointLine(ScrnInfoPtr pScrn, int x1, int y1, int x2,
+    int y2, int flags)
+{
+    PnozzPtr pPnozz = GET_PNOZZ_FROM_SCRN(pScrn);
+
+    PnozzSync(pScrn);
+    
+    /* 
+     * XXX we're blatantly ignoring the flags parameter which could tell us not 
+     * to draw the last point. Xsun simply reads it from the framebuffer and 
+     * puts it back after drawing the line but that would mean we have to wait 
+     * until the line is actually drawn. On the other hand - line drawing is 
+     * pretty fast so we won't lose too much speed
+     */
+    pnozz_write_4(pPnozz, LINE_RTW_XY, (x1 << 16) | y1);
+    pnozz_write_4(pPnozz, LINE_RTW_XY, (x2 << 16) | y2);
+    junk = pnozz_read_4(pPnozz, COMMAND_QUAD);
+}      
+     
+static void
+PnozzSetClippingRectangle(ScrnInfoPtr pScrn, int left, int top, int right, 
+			 int bottom)
+{
+    PnozzPtr pPnozz = GET_PNOZZ_FROM_SCRN(pScrn);
+    CARD32 cmin, cmax;
+
+    cmin = (left << 16) | top;
+    cmax = (right << 16) | bottom;
+    
+/*    pnozz_write_4(pPnozz, WINDOW_MIN, 0);
+    pnozz_write_4(pPnozz, WINDOW_MAX, MaxClip);*/
+    pnozz_write_4(pPnozz, BYTE_CLIP_MIN, cmin);
+    pnozz_write_4(pPnozz, BYTE_CLIP_MAX, cmax);
+}
+
+static void
+PnozzDisableClipping(ScrnInfoPtr pScrn)
+{
+    PnozzPtr pPnozz = GET_PNOZZ_FROM_SCRN(pScrn);
+
+    pnozz_write_4(pPnozz, WINDOW_MIN, 0);
+    pnozz_write_4(pPnozz, WINDOW_MAX, MaxClip);
+    pnozz_write_4(pPnozz, BYTE_CLIP_MIN, 0);
+    pnozz_write_4(pPnozz, BYTE_CLIP_MAX, MaxClip);
 }
 
 int
@@ -231,7 +374,7 @@ PnozzAccelInit(ScrnInfoPtr pScrn)
 
 #if 0
     {
-    	unsigned short *sptr = pPnozz->fb;
+    	CARD32 *sptr = (CARD32 *)pPnozz->fb;
 	int i,j;
 	unsigned short blah;
 	/*
@@ -247,10 +390,8 @@ PnozzAccelInit(ScrnInfoPtr pScrn)
 	}
 	*/
 	for (i = 0; i < 400; i++) {
-	    *sptr = 0xffff;
-	    sptr++;
-	    *sptr = 0xf800;
-	    sptr+=800;
+	    *sptr = 0xff000000;
+	    sptr += 400;
 	 }
     }
 #endif
@@ -266,6 +407,35 @@ PnozzAccelInit(ScrnInfoPtr pScrn)
     /* Solid fills */
     pXAAInfo->SetupForSolidFill = PnozzSetupForSolidFill;
     pXAAInfo->SubsequentSolidFillRect = PnozzSubsequentSolidFillRect;
+
+    /* colour expansion */
+    pXAAInfo->ScanlineCPUToScreenColorExpandFillFlags = 
+	/*LEFT_EDGE_CLIPPING|*/SCANLINE_PAD_DWORD;
+    pXAAInfo->NumScanlineColorExpandBuffers = 2;
+    pPnozz->buffers[0] = (unsigned char *)pPnozz->Buffer;
+    pPnozz->buffers[1] = (unsigned char *)&pPnozz->Buffer[800];
+    pXAAInfo->ScanlineColorExpandBuffers = pPnozz->buffers;
+    pXAAInfo->SetupForScanlineCPUToScreenColorExpandFill = 
+	PnozzSetupForCPUToScreenColorExpandFill;
+    pXAAInfo->SubsequentScanlineCPUToScreenColorExpandFill =
+	PnozzSubsequentScanlineCPUToScreenColorExpandFill;
+    pXAAInfo->SubsequentColorExpandScanline =
+	PnozzSubsequentColorExpandScanline;
+
+    /* line drawing */
+    pXAAInfo->SetupForSolidLine = PnozzSetupForSolidLine;
+    pXAAInfo->SubsequentSolidTwoPointLine = PnozzSubsequentSolidTwoPointLine;
+    pXAAInfo->SolidLineFlags = BIT_ORDER_IN_BYTE_MSBFIRST;
+
+    /* clipping */
+    pXAAInfo->SetClippingRectangle = PnozzSetClippingRectangle;
+    pXAAInfo->DisableClipping = PnozzDisableClipping;
+    pXAAInfo->ClippingFlags = HARDWARE_CLIP_SCREEN_TO_SCREEN_COPY |
+        HARDWARE_CLIP_SOLID_FILL |
+        /*HARDWARE_CLIP_MONO_8x8_FILL |
+        HARDWARE_CLIP_COLOR_8x8_FILL |*/
+        HARDWARE_CLIP_SOLID_LINE;
+
 #if 0
     /* 8x8 mono pattern fills */
     pXAAInfo->Mono8x8PatternFillFlags = BIT_ORDER_IN_BYTE_MSBFIRST |
