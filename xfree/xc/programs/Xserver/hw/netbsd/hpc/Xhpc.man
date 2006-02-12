@@ -1,4 +1,4 @@
-.\" $NetBSD: Xhpc.man,v 1.3 2005/03/28 10:17:09 wiz Exp $
+.\" $NetBSD: Xhpc.man,v 1.4 2006/02/12 23:11:24 peter Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,18 +34,18 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd Aug 25, 2000
-.Dt Xhpc 1
-.Os NetBSD
+.Dd August 25, 2000
+.Dt XHPC 1
+.Os
 .Sh NAME
 .Nm Xhpc
-.Nd X Window System Display Server for NetBSD/hpcmips
+.Nd X Window System Display Server for the NetBSD/hpc ports
 .Sh SYNOPSIS
 .Nm
 .Sh DESCRIPTION
 .Nm
 is the server for Version 11 of the X Window System on Windows CE hardware
-running 
+running
 .Nx .
 It will normally be started by the
 .Xr xdm 1
@@ -59,16 +59,16 @@ support 8-bit or 24-bit color server.
 supports the compact type keyboards.
 The
 initial arrangement of the keys on the keyboards is configured
-as the typewriter style ( 
-.So ASCII 
-.Sc arrangement).
+as the typewriter style
+.Sq ( ASCII
+arrangement).
 Once it is started, the arrangement is freely configured with
 .Xr xmodmap 1
 or
 .Xr xkbcomp 1
 utility.
 .Pp
-The pointing device can be the touch panel, or USB mouse. 
+The pointing device can be the touch panel, or USB mouse.
 Touch panel supported on NEC mobile Gear Series.
 USB mouse supported
 on Sharp Telios.
@@ -89,20 +89,21 @@ In addition to the normal server options described in the
 .Xr Xserver 1
 manual page.
 .Sh SEE ALSO
-.Xr Xserver 1 ,
 .Xr X 1 ,
+.Xr Xserver 1 ,
 .Xr xdm 1 ,
 .Xr xinit 1 ,
-.Xr xmodmap 1 ,
-.Xr xkbcomp 1
+.Xr xkbcomp 1 ,
+.Xr xmodmap 1
 .\"
 .Sh HISTORY
 .Nm
-was originally written by TAKEMURA Shin <takemura@netbsd.org>
+was originally written by
+.An TAKEMURA Shin Aq takemura@NetBSD.org
 Officially appeared in
 .Nx 1.5 .
 3-button emulation code written by Matthew Orgass.
 .\"
 .Sh BUGS
 .Nm
-should support Monochorome screen machine.
+should support Monochrome screen machine.
