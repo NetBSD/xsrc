@@ -10,9 +10,10 @@
 # redirect errors to a file in user's home directory if we can
 for errfile in "$HOME/.xsession-errors" "${TMPDIR-/tmp}/xses-$USER" "/tmp/xses-$USER"
 do
-	if ( umask 077 && cp /dev/null "$errfile" 2> /dev/null )
+	if ef="$(mktemp "$errfile.XXXXXX" 2> /dev/null)"
 	then
-		exec > "$errfile" 2>&1
+		exec > "$ef" 2>&1
+		mv "$ef" "$errfile" 2> /dev/null
 		break
 	fi
 done
