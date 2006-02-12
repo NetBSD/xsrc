@@ -1,4 +1,4 @@
-/* $NetBSD: xf86Keymap.h,v 1.2 2004/07/22 18:08:59 uch Exp $
+/* $NetBSD: xf86Keymap.h,v 1.3 2006/02/12 23:12:25 peter Exp $ */
 /* $XConsortium: xf86Keymap.h,v 1.8 95/01/23 15:34:05 kaleb Exp $ */
 /* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Keymap.h,v 3.5 1995/01/28 17:03:33 dawes Exp $ */
 /*
