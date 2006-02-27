@@ -20,7 +20,7 @@
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-/* $NetBSD: pnozz_regs.h,v 1.2 2005/10/30 15:57:58 macallan Exp $ */
+/* $NetBSD: pnozz_regs.h,v 1.3 2006/02/27 18:19:53 macallan Exp $ */
 
 #ifndef PNOZZ_REGS_H
 #define PNOZZ_REGS_H
@@ -28,7 +28,7 @@
 /* The Tadpole 3GX Technical Reference Manual lies.  The ramdac registers
  * are map in 4 byte increments, not 8.
  */
-#define	SCRN_RPNT_CTL_1	0x0138	/* Screen Respaint Timing Control 1 */
+#define	SCRN_RPNT_CTL_1	0x0138	/* Screen Repaint Timing Control 1 */
 #define	VIDEO_ENABLED	0x00000020
 #define	PWRUP_CNFG	0x0194	/* Power Up Configuration */
 #define	DAC_CMAP_WRIDX	0x0200	/* IBM RGB528 Palette Address (Write) */
@@ -45,12 +45,27 @@
 #define DAC_MISC_CLK	0x02
 #define DAC_POWER_MGT	0x05
 #define DAC_OPERATION	0x06
+	#define	DAC_SYNC_ON_GREEN	0x08
 #define DAC_PALETTE_CTRL 0x07
 #define DAC_PIXEL_FMT	0x0a
 #define DAC_8BIT_CTRL	0x0b
+	#define	DAC8_DIRECT_COLOR	0x01
 #define DAC_16BIT_CTRL	0x0c
+	#define DAC16_INDIRECT_COLOR	0x00
+	#define DAC16_DYNAMIC_COLOR	0x40
+	#define DAC16_DIRECT_COLOR	0xc0
+	#define DAC16_BYPASS_POLARITY	0x20
+	#define DAC16_BIT_FILL_LINEAR	0x04
+	#define DAC16_555		0x00
+	#define DAC16_565		0x02
+	#define DAC16_CONTIGUOUS	0x01
 #define DAC_24BIT_CTRL	0x0d
+	#define	DAC24_DIRECT_COLOR	0x01
 #define DAC_32BIT_CTRL	0x0e
+	#define	DAC32_BYPASS_POLARITY	0x04
+	#define	DAC32_INDIRECT_COLOR	0x00
+	#define	DAC32_DYNAMIC_COLOR	0x01
+	#define	DAC32_DIRECT_COLOR	0x03
 #define DAC_VCO_DIV	0x16
 #define DAC_PLL0	0x20
 #define DAC_MISC_1	0x70
@@ -69,7 +84,7 @@
 #define DAC_CURSOR_COL_1	0x40	/* red. green and blue in subseq. registers */
 #define DAC_CURSOR_COL_2	0x43	/* red. green and blue in subseq. registers */
 #define DAC_CURSOR_COL_3	0x46	/* red. green and blue in subseq. registers */
-#define DAC_PIX_PLL			0x8e
+#define DAC_PIX_PLL		0x8e
 #define DAC_CURSOR_DATA		0x100
 
 /* main registers */
@@ -92,7 +107,6 @@
 	#define SC_16BIT	3
 	#define SC_24BIT	7
 	#define SC_32BIT	5
-	/* WEITEK.TXT says 8bit->0, 16->1, 24->2 and 32 will probably be 3 */
 	
 /* video controller registers */
 #define VID_HCOUNTER	0x104
