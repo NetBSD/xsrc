@@ -20,7 +20,7 @@
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-/* $NetBSD: pnozz_accel.c,v 1.5 2006/01/28 04:54:18 macallan Exp $ */
+/* $NetBSD: pnozz_accel.c,v 1.6 2006/02/27 18:19:53 macallan Exp $ */
 
 #include <fcntl.h>
 #include <sys/time.h>
@@ -78,6 +78,12 @@ PnozzSync(ScrnInfoPtr pScrn)
         (ENGINE_BUSY | BLITTER_BUSY)) !=0 );
 }
 
+/*
+ * Both the framebuffer and the colour registers are apparently little endian.
+ * For framebuffer accesses we can just turn on byte swapping, for the colour
+ * registers we need to juggle bytes ourselves.
+ */
+
 static void
 pnozz_write_colour(PnozzPtr pPnozz, int reg, CARD32 colour)
 {
@@ -90,11 +96,14 @@ pnozz_write_colour(PnozzPtr pPnozz, int reg, CARD32 colour)
 	    pnozz_write_4(pPnozz, reg, c2 << 16 | c2);
 	    break;
     	case 1:
-	    c2 = (colour << 16 | colour);
+    	    c2 = ((colour & 0xff) << 8) | ((colour & 0xff00) >> 8);
+	    c2 |= c2 << 16;
 	    pnozz_write_4(pPnozz, reg, c2);
 	    break;
     	case 2:
-	    pnozz_write_4(pPnozz, reg, colour);
+    	    c2 = ((colour & 0x00ff00ff) << 8) | ((colour & 0xff00ff00) >> 8);
+    	    c2 = (( c2 & 0xffff0000) >> 16) | ((c2 & 0x0000ffff) << 16);
+	    pnozz_write_4(pPnozz, reg, c2);
 	    break;
     }
 }
@@ -137,6 +146,12 @@ PnozzSetupForScreenToScreenCopy(
     pnozz_write_4(pPnozz, PLANE_MASK, planemask);
 }
 
+/*
+ * the drawing engine is weird. Even though BLIT and QUAD commands use the
+ * same registers to program coordinates there's an important difference -
+ * horizontal coordinates for QUAD commands are in pixels, for BLIT commands
+ * and the clipping registers they're IN BYTES.
+ */
 static void
 PnozzSubsequentScreenToScreenCopy
 (
@@ -152,10 +167,12 @@ PnozzSubsequentScreenToScreenCopy
     PnozzPtr pPnozz = GET_PNOZZ_FROM_SCRN(pScrn);
     CARD32 src, dst, srcw, dstw;
     
-    src = ((xSrc & 0x1fff) << 16) | (ySrc & 0x1fff);
-    dst = ((xDst & 0x1fff) << 16) | (yDst & 0x1fff);
-    srcw = (((xSrc + w - 1) & 0x1fff) << 16) | ((ySrc + h - 1) & 0x1fff);
-    dstw = (((xDst + w - 1) & 0x1fff) << 16) | ((yDst + h - 1) & 0x1fff);
+    src = (((xSrc << pPnozz->depthshift) & 0x1fff) << 16) | (ySrc & 0x1fff);
+    dst = (((xDst << pPnozz->depthshift) & 0x1fff) << 16) | (yDst & 0x1fff);
+    srcw = ((((xSrc + w) << pPnozz->depthshift) - 1) << 16) | 
+        ((ySrc + h - 1) & 0x1fff);
+    dstw = ((((xDst + w) << pPnozz->depthshift) - 1) << 16) |
+        ((yDst + h - 1) & 0x1fff);
 
     PnozzSync(pScrn);
 
@@ -224,7 +241,8 @@ PnozzSetupForCPUToScreenColorExpandFill(ScrnInfoPtr pScrn,
 	/* 
 	 * this doesn't make any sense to me either, but for some reason the
 	 * chip applies the foreground colour to 0 pixels and background to 1
-	 * when set to this sort of ROP. 
+	 * when set to this sort of ROP. The old XF 3.3 driver source claimed
+	 * that the chip doesn't support opaque colour expansion at all.
 	 */
 	pnozz_write_colour(pPnozz, FOREGROUND_COLOR, bg);
 	pnozz_write_colour(pPnozz, BACKGROUND_COLOR, fg);
@@ -319,8 +337,8 @@ PnozzSetClippingRectangle(ScrnInfoPtr pScrn, int left, int top, int right,
     PnozzPtr pPnozz = GET_PNOZZ_FROM_SCRN(pScrn);
     CARD32 cmin, cmax;
 
-    cmin = (left << 16) | top;
-    cmax = (right << 16) | bottom;
+    cmin = ((left << pPnozz->depthshift) << 16) | top;
+    cmax = ((right << pPnozz->depthshift) << 16) | bottom;
     
 /*    pnozz_write_4(pPnozz, WINDOW_MIN, 0);
     pnozz_write_4(pPnozz, WINDOW_MAX, MaxClip);*/
@@ -339,6 +357,13 @@ PnozzDisableClipping(ScrnInfoPtr pScrn)
     pnozz_write_4(pPnozz, BYTE_CLIP_MAX, MaxClip);
 }
 
+/*
+ * TODO:
+ * - pattern fills
+ * - CPU to VRAM colour blits
+ * - DGA support
+ */
+
 int
 PnozzAccelInit(ScrnInfoPtr pScrn)
 {
@@ -356,12 +381,12 @@ PnozzAccelInit(ScrnInfoPtr pScrn)
     {
 	CARD32 src, srcw, junk;
 	src = 0;
-	srcw = (pPnozz->width) << 16 | (pPnozz->height);
+	srcw = pPnozz->width << 16 | pPnozz->height;
 	
-	/* Blit the screen white. For aesthetic reasons. */
+	/* Blit the screen black. For aesthetic reasons. */
 	
 	PnozzSync(pScrn);
-	pnozz_write_4(pPnozz, FOREGROUND_COLOR, 0xffffffff);
+	pnozz_write_4(pPnozz, FOREGROUND_COLOR, 0x00000000);
 	pnozz_write_4(pPnozz, BACKGROUND_COLOR, 0xffffffff);
 	pnozz_write_4(pPnozz, RASTER_OP, ROP_PAT);
 	pnozz_write_4(pPnozz, COORD_INDEX, 0);
@@ -377,22 +402,23 @@ PnozzAccelInit(ScrnInfoPtr pScrn)
     	CARD32 *sptr = (CARD32 *)pPnozz->fb;
 	int i,j;
 	unsigned short blah;
-	/*
-	for (i = 0; i < 600; i++) {
+	for (i = 0; i < 300; i++) {
 	    for (j = 0; j < 400; j++) {
-	    	if (j & 4) {
-		    	*sptr = 0xffff;
+	    	if (j & 1) {
+		    	*sptr = 0x0000f81f;
 		} else {
 			*sptr = 0;
 		}
 		sptr++;
 	    }
 	}
-	*/
+	
+	sptr = (CARD32 *)pPnozz->fb;
 	for (i = 0; i < 400; i++) {
-	    *sptr = 0xff000000;
+	    *sptr = 0xf8000000;
 	    sptr += 400;
-	 }
+	}
+	
     }
 #endif
     /* Sync */
@@ -413,7 +439,7 @@ PnozzAccelInit(ScrnInfoPtr pScrn)
 	/*LEFT_EDGE_CLIPPING|*/SCANLINE_PAD_DWORD;
     pXAAInfo->NumScanlineColorExpandBuffers = 2;
     pPnozz->buffers[0] = (unsigned char *)pPnozz->Buffer;
-    pPnozz->buffers[1] = (unsigned char *)&pPnozz->Buffer[800];
+    pPnozz->buffers[1] = (unsigned char *)&pPnozz->Buffer[pPnozz->scanlinesize];
     pXAAInfo->ScanlineColorExpandBuffers = pPnozz->buffers;
     pXAAInfo->SetupForScanlineCPUToScreenColorExpandFill = 
 	PnozzSetupForCPUToScreenColorExpandFill;

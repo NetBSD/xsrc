@@ -1,7 +1,7 @@
 /*
  * SBus Weitek P9100 driver
  *
- * Copyright (C) 2005 Michael Lorenz
+ * Copyright (C) 2005, 2006 Michael Lorenz
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -20,13 +20,11 @@
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-/* $NetBSD: pnozz_driver.c,v 1.4 2005/11/12 23:32:12 macallan Exp $ */
+/* $NetBSD: pnozz_driver.c,v 1.5 2006/02/27 18:19:53 macallan Exp $ */
 
 /*
- * this driver has been tested on SPARCbook 3GX and 3TX, it works fine in 8 bit
- * colour. Switching to 16 or 24 bit doesn't work yet, acceleration is currently
- * limited to screen-to-screen blits and solid fills, a hardware cursor is 
- * supported 
+ * this driver has been tested on SPARCbook 3GX and 3TX, it supports full 
+ * acceleration in 8, 16 and 24 bit colour
  */
 
 #include <fcntl.h>
@@ -47,7 +45,7 @@
 #include "mibstore.h"
 #include "micmap.h"
 
-//#define DEBUG 1
+#define DEBUG 0
 
 #include "fb.h"
 #include "xf86cmap.h"
@@ -127,7 +125,13 @@ static const char *ramdacSymbols[] = {
     NULL
 };
 
-const char *xaaSymbols[] =
+static const char *fbSymbols[] = {
+    "fbScreenInit",
+    "fbPictureInit",
+    NULL
+};
+
+static const char *xaaSymbols[] =
 {
     "XAACreateInfoRec",
     "XAADestroyInfoRec",
@@ -163,7 +167,7 @@ PnozzSetup(pointer module, pointer opts, int *errmaj, int *errmin)
 	setupDone = TRUE;
 	xf86AddDriver(&PNOZZ, module, 0);
 	
-	LoaderRefSymLists(xaaSymbols, ramdacSymbols,NULL);
+	LoaderRefSymLists(xaaSymbols, ramdacSymbols, fbSymbols, NULL);
 	/*
 	 * Modules that this driver always requires can be loaded here
 	 * by calling LoadSubModule().
@@ -182,17 +186,23 @@ PnozzSetup(pointer module, pointer opts, int *errmaj, int *errmin)
 
 #endif /* XFree86LOADER */
 
-volatile unsigned int scratch32;
+static volatile unsigned int scratch32;
 
 void pnozz_write_4(PnozzPtr p, int offset, unsigned int value)
 {
-	scratch32 = *(volatile unsigned int *)(p->fb + offset);
+	if ((offset & 0xffffff80) != p->offset_mask) {
+		p->offset_mask = offset & 0xffffff80;
+		scratch32 = *(volatile unsigned int *)(p->fb + offset);
+	}
 	*((volatile unsigned int *)(p->fbc + offset)) = value;
 }
 
 unsigned int pnozz_read_4(PnozzPtr p, int offset)
 {
-	scratch32 = *(volatile unsigned int *)(p->fb + offset);
+	if ((offset & 0xffffff80) != p->offset_mask) {
+		p->offset_mask = offset & 0xffffff80;
+		scratch32 = *(volatile unsigned int *)(p->fb + offset);
+	}
 	return *(volatile unsigned int *)(p->fbc + offset);
 }
 
@@ -213,7 +223,6 @@ void pnozz_write_dac(PnozzPtr p, int offset, unsigned char value)
 unsigned char pnozz_read_dac(PnozzPtr p, int offset)
 {
 	scratch32 = pnozz_read_4(p, PWRUP_CNFG);
-	//scratch32 = *(volatile unsigned int *)(p->fb + offset);
 	return ((pnozz_read_4(p, offset) >> 16) & 0xff);
 }
 
@@ -416,6 +425,7 @@ PnozzPreInit(ScrnInfoPtr pScrn, int flags)
     PnozzPtr pPnozz;
     sbusDevicePtr psdp;
     MessageType from;
+    rgb defaultWeight = {0, 0, 0};
     int i;
 
     if (flags & PROBE_DETECT) return FALSE;
@@ -438,6 +448,9 @@ PnozzPreInit(ScrnInfoPtr pScrn, int flags)
 	return FALSE;
     }
     pPnozz = GET_PNOZZ_FROM_SCRN(pScrn);
+    
+    /* always mismatch on first access */
+    pPnozz->offset_mask = 0xffffffff;
     
     /* Set pScrn->monitor */
     pScrn->monitor = pScrn->confScreen->monitor;
@@ -470,10 +483,8 @@ PnozzPreInit(ScrnInfoPtr pScrn, int flags)
 #endif
 	switch (pScrn->depth) {
 	case 8:
-#ifdef DEBUG
 	case 16:
 	case 24:
-#endif
 	    /* OK */
 	    break;
 	default:
@@ -492,10 +503,10 @@ PnozzPreInit(ScrnInfoPtr pScrn, int flags)
     if (pScrn->depth == 8)
 	pScrn->rgbBits = 8;
 
-/*    if (pScrn->depth>8) {
+    if (pScrn->depth > 8) {
       if (!xf86SetWeight(pScrn, defaultWeight, defaultWeight))
         return FALSE;
-    }*/
+    }
 
     if (!xf86SetDefaultVisual(pScrn, -1)) {
       return FALSE;
@@ -535,7 +546,6 @@ PnozzPreInit(ScrnInfoPtr pScrn, int flags)
     from = X_DEFAULT;
 
     /* determine whether we use hardware or software cursor */
-    
     pPnozz->HWCursor = TRUE;
     if (xf86GetOptValBool(pPnozz->Options, OPTION_HW_CURSOR, &pPnozz->HWCursor))
 	from = X_CONFIG;
@@ -612,6 +622,11 @@ PnozzScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 
     pPnozz = GET_PNOZZ_FROM_SCRN(pScrn);
 
+    /*
+     * XXX
+     * figure out how much video RAM we really have - 2MB is just by far the 
+     * most common size
+     */
     pPnozz->fb =
 	xf86MapSbusMem (pPnozz->psdp, 0, 0x200000);	/* map 2MB */
     fb=(unsigned int *)pPnozz->fb;
@@ -622,13 +637,6 @@ PnozzScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
     if (! pPnozz->fbc)
 	return FALSE;
 
-    /* Darken the screen for aesthetic reasons and set the viewport */
-    /* 
-     * XXX doesn't make any friggin' sense here so we leave it out. For 
-     * aesthetic reasons
-     */
-    /* PnozzSaveScreen(pScreen, SCREEN_SAVER_ON);*/
-    
     /*
      * The next step is to setup the screen's visuals, and initialise the
      * framebuffer code.  In cases where the framebuffer's default
@@ -643,52 +651,63 @@ PnozzScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
      */
     miClearVisualTypes();
 
-    pScrn->rgbBits = 8;
-
 #ifdef DEBUG
     xf86Msg(X_ERROR, "depth: %d, bpp: %d\n", pScrn->depth, pScrn->bitsPerPixel);
 #endif    
-
+    switch (pScrn->bitsPerPixel) {
+    	case 8:
+	    pPnozz->depthshift = 0;
+	    break;    	
+    	case 16:
+	    pPnozz->depthshift = 1;
+	    break;    	
+    	case 32:
+	    pPnozz->depthshift = 2;
+	    break;    	
+	default:
+	    return FALSE;
+    }
     pPnozz->width = pScrn->virtualX;
     pPnozz->height = pScrn->virtualY;
-    pPnozz->scanlinesize = pScrn->virtualX;
-    pPnozz->depthshift = 0;
+    pPnozz->scanlinesize = pScrn->virtualX << pPnozz->depthshift;
     
     PnozzSave(pPnozz);
 
-#ifdef DEBUG
     /* 
      * ok, let's switch to whatever depth That Guy Out There wants.
      * We won't switch video mode, only colour depth - 
      */
     if(!PnozzSetDepth(pPnozz, pScrn->bitsPerPixel)) 
     	return FALSE;
-#endif    
+
     /* Setup the visuals we support. */
 
     if (!miSetVisualTypes(pScrn->depth, miGetDefaultVisualMask(pScrn->depth),
 			  pScrn->rgbBits, pScrn->defaultVisual))
 	return FALSE;
 	
-    miSetPixmapDepths ();
+    miSetPixmapDepths();
 
     /*
      * Call the framebuffer layer's ScreenInit function, and fill in other
      * pScreen fields.
      */
-
+#if DEBUG
+    xf86Msg(X_ERROR, "sls: %d\n", pPnozz->scanlinesize);
+#endif
     ret = fbScreenInit(pScreen, pPnozz->fb, pScrn->virtualX,
 		       pScrn->virtualY, pScrn->xDpi, pScrn->yDpi,
-		       pScrn->virtualX, pScrn->bitsPerPixel);
+		       pScrn->displayWidth, pScrn->bitsPerPixel);
 
     /* should be set by PnozzSetDepth() */
-    pPnozz->scanlinesize = pScrn->virtualX<<pPnozz->depthshift;
     pPnozz->maxheight = (0x200000 / pPnozz->scanlinesize) & 0xffff;
-
+#if DEBUG
+    xf86Msg(X_ERROR, "max scanlines: %d\n", pPnozz->maxheight);
+#endif
     if (!ret)
 	return FALSE;
-/*
-    if (pScrn->bitsPerPixel>8) {
+
+    if (pScrn->bitsPerPixel > 8) {
       visual = pScreen->visuals + pScreen->numVisuals;
       while (--visual >= pScreen->visuals) {
         if ((visual->class | DynamicClass) == DirectColor) {
@@ -701,13 +720,8 @@ PnozzScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
         }
       }
     }
-*/
-#ifdef RENDER
-    fbPictureInit (pScreen, 0, 0);
-#endif
 
-    /* put the DAC into autoincrement mode */
-    pnozz_write_dac(pPnozz, DAC_INDX_CTL, DAC_INDX_AUTOINCR);
+    fbPictureInit(pScreen, 0, 0);
 
     miInitializeBackingStore(pScreen);
     xf86SetBackingStore(pScreen);
@@ -730,8 +744,10 @@ PnozzScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
     /* Initialise cursor functions */
     miDCInitialize (pScreen, xf86GetPointerScreenFuncs());
 
-    /* Initialize HW cursor layer. 
-       Must follow software cursor initialization*/
+    /*
+     * Initialize HW cursor layer. 
+     * Must follow software cursor initialization
+     */
     xf86SbusHideOsHwCursor(pPnozz->psdp);
     if (pPnozz->HWCursor) { 
 	extern Bool PnozzHWCursorInit(ScreenPtr pScreen);
@@ -746,15 +762,13 @@ PnozzScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
     /* Initialise default colourmap */
     if (!miCreateDefColormap(pScreen))
 	return FALSE;
-
 #if 1
     if(!xf86SbusHandleColormaps(pScreen, pPnozz->psdp))
 #else
-    if(!xf86HandleColormaps(pScreen, 256, 8, PnozzLoadPalette, NULL, 
+    if(!xf86HandleColormaps(pScreen, 256, pScrn->rgbBits, PnozzLoadPalette, NULL, 
         /*CMAP_PALETTED_TRUECOLOR|*/CMAP_RELOAD_ON_MODE_SWITCH))
 #endif
 	return FALSE;
-
     pPnozz->CloseScreen = pScreen->CloseScreen;
     pScreen->CloseScreen = PnozzCloseScreen;
     pScreen->SaveScreen = PnozzSaveScreen;
@@ -790,7 +804,7 @@ PnozzSwitchMode(int scrnIndex, DisplayModePtr mode, int flags)
 static void 
 PnozzAdjustFrame(int scrnIndex, int x, int y, int flags)
 {
-    /* we don't support virtual desktops */
+    /* we don't support virtual desktops for now */
     return;
 }
 
@@ -940,6 +954,7 @@ PnozzSave(PnozzPtr pPnozz)
 	pPnozz->SvDAC_PF = pnozz_read_dac_ctl_reg(pPnozz, DAC_PIXEL_FMT);
 	pPnozz->SvPLL = pnozz_read_dac_ctl_reg(pPnozz, DAC_PLL0);
 	pPnozz->SvVCO = pnozz_read_dac_ctl_reg(pPnozz, DAC_VCO_DIV);
+	pPnozz->SvMemCtl = pnozz_read_4(pPnozz, VID_MEM_CONFIG);
 	for (i = 0; i < 4; i++)
 		pPnozz->CRTC[i] = pnozz_read_4(pPnozz, VID_HTOTAL + (i << 2));
 	pPnozz->DidSave = 1;
@@ -952,6 +967,7 @@ PnozzSave(PnozzPtr pPnozz)
 
 void DumpSCR(unsigned int scr)
 {
+#if DEBUG
 	int s0, s1, s2, s3, ps;
 	int width;
 	ps = (scr >> PIXEL_SHIFT) & 7;
@@ -960,7 +976,6 @@ void DumpSCR(unsigned int scr)
 	s2 = (scr >> SHIFT_2) & 7;
 	s3 = (scr >> SHIFT_3) & 3;
 	width = shift_1(s0) + shift_1(s1) + shift_1(s2) + shift_2(s3);
-#if DEBUG
 	xf86Msg(X_ERROR, "ps: %d wi: %d\n", ps, width);
 #endif
 }
@@ -993,6 +1008,11 @@ void DumpCRTC(PnozzPtr pPnozz)
         reg = pnozz_read_4(pPnozz, i);
 	xf86Msg(X_ERROR, "%x / %d ", reg, reg);
     }
+    reg = pnozz_read_4(pPnozz, VID_MEM_CONFIG);
+    xf86Msg(X_ERROR, "memcfg: %08x\n", reg);
+    xf86Msg(X_ERROR, "shiftclk:  %x\n", (reg >> 10) & 7);
+    xf86Msg(X_ERROR, "shiftmode: %x\n", (reg >> 22) & 3);
+    xf86Msg(X_ERROR, "crtc_clk:  %x\n", (reg >> 13) & 7);
 #endif
 }
 
@@ -1002,6 +1022,7 @@ PnozzRestore(PnozzPtr pPnozz)
     int i;
     if(pPnozz->DidSave == 1) {
 	pnozz_write_4(pPnozz, SYS_CONF, pPnozz->SvSysConf);
+	pnozz_write_4(pPnozz, VID_MEM_CONFIG, pPnozz->SvMemCtl);
 	for (i = 0; i < 4; i++)
 	    pnozz_write_4(pPnozz, VID_HTOTAL + (i << 2), pPnozz->CRTC[i]);
 
@@ -1027,40 +1048,42 @@ unsigned int upper_bit(unsigned int b)
 }
 
 /*
- * XXX this thing doesn't work. Yet.
+ * To switch colour depth we need to:
+ * - double or quadruple both crtc and shift clock ( for 16 or 32 bit )
+ * - double or quadruple scanline length
+ * - switch the DAC to the appropriate pixel format
+ * - tell the drawing engine about new line length / pixel size
  */
 
 int
 PnozzSetDepth(PnozzPtr pPnozz, int depth)
 {
     int new_sls;
-    unsigned int bits, scr, sscr;
-    int s0, s1, s2, s3, ps;
-    unsigned char mcr, pf, mc3, es, pll0, vco;
-    
+    unsigned int bits, scr, sscr, memctl, mem;
+    int s0, s1, s2, s3, ps, crtcline;
+    unsigned char pf, mc3, es;
+
+#if DEBUG
     DumpDAC(pPnozz);
     DumpCRTC(pPnozz);
-    
+#endif
+
     switch (depth) {
 	case 8:
 	    pPnozz->depthshift = 0;
 	    ps = 2;
-	    mcr = 1;	/* the 3GX manual says 7 here */
 	    pf = 3;
 	    mc3 = 0;
-	    es = 0;
-	    pll0 = 0x47;
-	    vco = 0x63;
+	    es = 0;	/* no swapping */
+	    memctl = 3;
 	    break;
 	case 16:
 	    pPnozz->depthshift = 1;
 	    ps = 3;
-	    mcr = 3;	/* the 3GX manual says 5 */
 	    pf = 4;
 	    mc3 = 0;
-	    es = 2;
-	    pll0 = 0x87;
-	    vco = 0xa3;
+	    es = 2;	/* swap bytes in 16bit words */
+	    memctl = 2;
 	    break;
 	case 24:
 	    /* boo */
@@ -1069,12 +1092,10 @@ PnozzSetDepth(PnozzPtr pPnozz, int depth)
 	case 32:
 	    pPnozz->depthshift = 2;
 	    ps = 5;
-	    mcr = 5;	/* the 3GX manual says 3 */
 	    pf = 6;
-	    mc3 = 0x80;
-	    es = 6;
-	    pll0 = 0xc7;
-	    vco = 0xe3;
+	    mc3 = 0;
+	    es = 6;	/* swap both half-words and bytes */
+	    memctl = 1;	/* 0 */
 	    break;
     }
     /*
@@ -1085,7 +1106,7 @@ PnozzSetDepth(PnozzPtr pPnozz, int depth)
      */
     new_sls = pPnozz->width << pPnozz->depthshift;
     pPnozz->scanlinesize = new_sls;
-    bits = /*800/*/new_sls;
+    bits = new_sls;
     s3 = upper_bit(bits);
     if (s3 > 9) {
 	bits &= ~(1 << s3);
@@ -1106,20 +1127,35 @@ PnozzSetDepth(PnozzPtr pPnozz, int depth)
         bits &= ~(1 << s0);
         s0 -= 4;
     } else s0 = 0;
+
+#if DEBUG
     xf86Msg(X_ERROR, "sls: %x sh: %d %d %d %d leftover: %x\n", new_sls, s0, s1, 
         s2, s3, bits);
+#endif
+
     /* 
      * now let's put these values into the System Config Register. No need to 
      * read it here since we (hopefully) just saved the content 
      */
-    scr = pPnozz->SvSysConf & ~((7<<SHIFT_0) | (7<<SHIFT_1) | (7<<SHIFT_2) | 
-        (3 << SHIFT_3) | (7 << PIXEL_SHIFT) | (7 << SWAP_SHIFT));
+    scr = pnozz_read_4(pPnozz, SYS_CONF);
     scr = (s0 << SHIFT_0) | (s1 << SHIFT_1) | (s2 << SHIFT_2) | 
         (s3 << SHIFT_3) | (ps << PIXEL_SHIFT) | (es << SWAP_SHIFT);
-    xf86Msg(X_ERROR, "new scr: %x DAC %x %x %x\n", scr, mcr, pf, mc3);
-
+#if DEBUG
+    xf86Msg(X_ERROR, "new scr: %x DAC %x %x\n", scr, pf, mc3);
     DumpSCR(scr);
+#endif
     
+    mem = pnozz_read_4(pPnozz, VID_MEM_CONFIG);
+#if DEBUG
+    xf86Msg(X_ERROR, "old memctl: %08x\n", mem);
+#endif
+    /* set shift and crtc clock */
+    mem &= ~(0x0000fc00);
+    mem |= (memctl << 10) | (memctl << 13);
+    pnozz_write_4(pPnozz, VID_MEM_CONFIG, mem);
+#if DEBUG
+    xf86Msg(X_ERROR, "new memctl: %08x\n", mem);
+#endif    
     /* whack the engine... */
     pnozz_write_4(pPnozz, SYS_CONF, scr);
     
@@ -1131,7 +1167,7 @@ PnozzSetDepth(PnozzPtr pPnozz, int depth)
      * despite the 3GX manual saying otherwise we don't need to mess with any
      * clock dividers here
      */
-    pnozz_write_dac_ctl_reg(pPnozz, DAC_MISC_CLK, 1/*/mcr*/);
+    pnozz_write_dac_ctl_reg(pPnozz, DAC_MISC_CLK, 1);
     pnozz_write_dac_ctl_reg(pPnozz, 3, 0);
     pnozz_write_dac_ctl_reg(pPnozz, 4, 0);
     
@@ -1140,9 +1176,13 @@ PnozzSetDepth(PnozzPtr pPnozz, int depth)
     pnozz_write_dac_ctl_reg(pPnozz, DAC_PALETTE_CTRL, 0);
 
     pnozz_write_dac_ctl_reg(pPnozz, DAC_PIXEL_FMT, pf);
+    
+    /* TODO: distinguish between 15 and 16 bit */
     pnozz_write_dac_ctl_reg(pPnozz, DAC_8BIT_CTRL, 0);
+    /* direct colour, linear, 565 */
     pnozz_write_dac_ctl_reg(pPnozz, DAC_16BIT_CTRL, 0xc6);
-    pnozz_write_dac_ctl_reg(pPnozz, DAC_32BIT_CTRL, 0 /*3*/);
+    /* direct colour */
+    pnozz_write_dac_ctl_reg(pPnozz, DAC_32BIT_CTRL, 3);
     
     pnozz_write_dac_ctl_reg(pPnozz, 0x10, 2);
     pnozz_write_dac_ctl_reg(pPnozz, 0x11, 0);
@@ -1151,23 +1191,20 @@ PnozzSetDepth(PnozzPtr pPnozz, int depth)
     pnozz_write_dac_ctl_reg(pPnozz, 0x15, 5);
     pnozz_write_dac_ctl_reg(pPnozz, 0x16, 0x63);
    
-    /*
-     * we feed data to the DAC in 64bit chunks, so if we want a higher colour 
-     * depth we need to feed it faster. In theory we'd just need to program a 
-     * higher pixel clock but for some reason this doesn't quite work
-     */
-    //pnozz_write_dac_ctl_reg(pPnozz, DAC_PLL0, pll0);
-/*    pnozz_write_dac_ctl_reg(pPnozz, DAC_VCO_DIV, vco);*/
-
-    /* whack the CRTC. Not sure if we need to */
-#if DEBUG == 0
-    pnozz_write_4(pPnozz, VID_HTOTAL, 24 + (100 << pPnozz->depthshift));
-    pnozz_write_4(pPnozz, VID_HSRE, 8 /*<< pPnozz->depthshift*/);
-    pnozz_write_4(pPnozz, VID_HBRE, 18 /*<< pPnozz->depthshift*/);
-    pnozz_write_4(pPnozz, VID_HBFE, 18 + (100 << pPnozz->depthshift));
+    /* whack the CRTC */
+    /* we always transfer 64bit in one go */
+    crtcline = pPnozz->scanlinesize >> 3;
+#if DEBUG
+    xf86Msg(X_ERROR, "crtcline: %d\n", crtcline);
 #endif
+    pnozz_write_4(pPnozz, VID_HTOTAL, (24 << pPnozz->depthshift) + crtcline);
+    pnozz_write_4(pPnozz, VID_HSRE, 8 << pPnozz->depthshift);
+    pnozz_write_4(pPnozz, VID_HBRE, 18 << pPnozz->depthshift);
+    pnozz_write_4(pPnozz, VID_HBFE, (18 << pPnozz->depthshift) + crtcline);
 
+#if DEBUG
     sscr = pnozz_read_4(pPnozz, SYS_CONF);
     xf86Msg(X_ERROR, "scr: %x\n", sscr);
+#endif
     return TRUE;
 }

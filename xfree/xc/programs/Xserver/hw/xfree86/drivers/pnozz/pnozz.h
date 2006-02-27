@@ -20,7 +20,7 @@
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-/* $NetBSD: pnozz.h,v 1.3 2006/01/28 04:54:18 macallan Exp $ */
+/* $NetBSD: pnozz.h,v 1.4 2006/02/27 18:19:53 macallan Exp $ */
 
 #ifndef PNOZZ_H
 #define PNOZZ_H
@@ -71,8 +71,9 @@ typedef struct {
 	 * XXX this is enough for everything a SPARCbook could do on it's
 	 * internal display but not necessarily for an external one
 	 */
-	CARD32		Buffer[1600];
+	CARD32		Buffer[6400];
 	int		words, last_word;
+	int		offset_mask;
 
 	int		DidSave;
 	unsigned int	SvSysConf;	/* System Configuration Register */
