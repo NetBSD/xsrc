@@ -20,7 +20,7 @@
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-/* $NetBSD: pnozz_accel.c,v 1.6 2006/02/27 18:19:53 macallan Exp $ */
+/* $NetBSD: pnozz_accel.c,v 1.7 2006/02/28 00:32:53 macallan Exp $ */
 
 #include <fcntl.h>
 #include <sys/time.h>
@@ -110,23 +110,23 @@ pnozz_write_colour(PnozzPtr pPnozz, int reg, CARD32 colour)
 
 static void unClip(PnozzPtr pPnozz)
 {
-	pnozz_write_4(pPnozz, WINDOW_OFFSET, 0);
-	pnozz_write_4(pPnozz, WINDOW_MIN, 0);
-	pnozz_write_4(pPnozz, WINDOW_MAX, MaxClip);
-	pnozz_write_4(pPnozz, BYTE_CLIP_MIN, 0);
-	pnozz_write_4(pPnozz, BYTE_CLIP_MAX, MaxClip);
+    pnozz_write_4(pPnozz, WINDOW_OFFSET, 0);
+    pnozz_write_4(pPnozz, WINDOW_MIN, 0);
+    pnozz_write_4(pPnozz, WINDOW_MAX, MaxClip);
+    pnozz_write_4(pPnozz, BYTE_CLIP_MIN, 0);
+    pnozz_write_4(pPnozz, BYTE_CLIP_MAX, MaxClip);
 }
 
 static void
 PnozzInitEngine(PnozzPtr pPnozz)
 {
-	unClip(pPnozz);
-	pnozz_write_4(pPnozz, DRAW_MODE, 0);
-	pnozz_write_4(pPnozz, PLANE_MASK, 0xffffffff);	
-	pnozz_write_4(pPnozz, PATTERN0, 0xffffffff);	
-	pnozz_write_4(pPnozz, PATTERN1, 0xffffffff);	
-	pnozz_write_4(pPnozz, PATTERN2, 0xffffffff);	
-	pnozz_write_4(pPnozz, PATTERN3, 0xffffffff);	
+    unClip(pPnozz);
+    pnozz_write_4(pPnozz, DRAW_MODE, 0);
+    pnozz_write_4(pPnozz, PLANE_MASK, 0xffffffff);	
+    pnozz_write_4(pPnozz, PATTERN0, 0xffffffff);	
+    pnozz_write_4(pPnozz, PATTERN1, 0xffffffff);	
+    pnozz_write_4(pPnozz, PATTERN2, 0xffffffff);	
+    pnozz_write_4(pPnozz, PATTERN3, 0xffffffff);	
 }
 
 static void
@@ -329,7 +329,58 @@ PnozzSubsequentSolidTwoPointLine(ScrnInfoPtr pScrn, int x1, int y1, int x2,
     pnozz_write_4(pPnozz, LINE_RTW_XY, (x2 << 16) | y2);
     junk = pnozz_read_4(pPnozz, COMMAND_QUAD);
 }      
-     
+
+static void
+PnozzSetupForMono8x8PatternFill(ScrnInfoPtr pScrn, int pat0, int pat1,
+        int fg, int bg, int rop, unsigned int planemask)
+{
+    PnozzPtr pPnozz = GET_PNOZZ_FROM_SCRN(pScrn);
+    CARD32 pat;
+    
+    PnozzSync(pScrn);
+
+    if (bg == -1) {
+	pnozz_write_4(pPnozz, RASTER_OP, 
+	    (PnozzDrawROP[rop] & 0xff) | ROP_NO_SOLID | ROP_TRANS);
+    } else {
+        pnozz_write_colour(pPnozz, COLOR_0, bg);
+        pnozz_write_4(pPnozz, RASTER_OP,
+            (PnozzDrawROP[rop] & 0xff) | ROP_NO_SOLID);
+    }
+    pnozz_write_colour(pPnozz, COLOR_1, fg);
+    pnozz_write_4(pPnozz, PLANE_MASK, planemask);
+    pat = (pat0 & 0xff000000) | ((pat0 >> 8) & 0x00ffff00) | 
+        ((pat0 >> 16) & 0x000000ff);
+    pnozz_write_4(pPnozz, PATTERN0, pat);
+    pat = ((pat0 << 8) & 0x00ffff00) | ((pat0 << 16) & 0xff000000) | 
+        (pat0 & 0x000000ff);
+    pnozz_write_4(pPnozz, PATTERN1, pat);
+    pat = (pat1 & 0xff000000) | ((pat1 >> 8) & 0x00ffff00) | 
+        ((pat1 >> 16) & 0x000000ff);
+    pnozz_write_4(pPnozz, PATTERN2, pat);
+    pat = ((pat1 << 8) & 0x00ffff00) | ((pat1 << 16) & 0xff000000) | 
+        (pat1 & 0x000000ff);
+    pnozz_write_4(pPnozz, PATTERN3, pat);
+    pnozz_write_4(pPnozz, COORD_INDEX, 0);
+}
+
+static void
+PnozzSubsequentMono8x8PatternFillRect(ScrnInfoPtr pScrn,
+        	int patx, int paty, int x, int y, int w, int h)
+{
+    PnozzPtr pPnozz = GET_PNOZZ_FROM_SCRN(pScrn);
+    
+    PnozzSync(pScrn);
+    pnozz_write_4(pPnozz, PATTERN_ORIGIN_X, patx);
+    pnozz_write_4(pPnozz, PATTERN_ORIGIN_Y, paty);
+    pnozz_write_4(pPnozz, RECT_RTW_XY, ((x & 0x1fff) << 16) | 
+        (y & 0x1fff));
+    pnozz_write_4(pPnozz, RECT_RTP_XY, (((w & 0x1fff) << 16) | 
+        (h & 0x1fff)));
+    junk = pnozz_read_4(pPnozz, COMMAND_QUAD);
+
+}
+
 static void
 PnozzSetClippingRectangle(ScrnInfoPtr pScrn, int left, int top, int right, 
 			 int bottom)
@@ -359,7 +410,6 @@ PnozzDisableClipping(ScrnInfoPtr pScrn)
 
 /*
  * TODO:
- * - pattern fills
  * - CPU to VRAM colour blits
  * - DGA support
  */
@@ -397,38 +447,14 @@ PnozzAccelInit(ScrnInfoPtr pScrn)
     }
 #endif
 
-#if 0
-    {
-    	CARD32 *sptr = (CARD32 *)pPnozz->fb;
-	int i,j;
-	unsigned short blah;
-	for (i = 0; i < 300; i++) {
-	    for (j = 0; j < 400; j++) {
-	    	if (j & 1) {
-		    	*sptr = 0x0000f81f;
-		} else {
-			*sptr = 0;
-		}
-		sptr++;
-	    }
-	}
-	
-	sptr = (CARD32 *)pPnozz->fb;
-	for (i = 0; i < 400; i++) {
-	    *sptr = 0xf8000000;
-	    sptr += 400;
-	}
-	
-    }
-#endif
     /* Sync */
     pXAAInfo->Sync = PnozzSync;
+
     /* Screen-to-screen copy */
     pXAAInfo->ScreenToScreenCopyFlags = NO_TRANSPARENCY;
     pXAAInfo->SetupForScreenToScreenCopy = PnozzSetupForScreenToScreenCopy;
     pXAAInfo->SubsequentScreenToScreenCopy =
         PnozzSubsequentScreenToScreenCopy;
-
 
     /* Solid fills */
     pXAAInfo->SetupForSolidFill = PnozzSetupForSolidFill;
@@ -458,18 +484,15 @@ PnozzAccelInit(ScrnInfoPtr pScrn)
     pXAAInfo->DisableClipping = PnozzDisableClipping;
     pXAAInfo->ClippingFlags = HARDWARE_CLIP_SCREEN_TO_SCREEN_COPY |
         HARDWARE_CLIP_SOLID_FILL |
-        /*HARDWARE_CLIP_MONO_8x8_FILL |
-        HARDWARE_CLIP_COLOR_8x8_FILL |*/
+        HARDWARE_CLIP_MONO_8x8_FILL |
+        /*HARDWARE_CLIP_COLOR_8x8_FILL |*/
         HARDWARE_CLIP_SOLID_LINE;
 
-#if 0
     /* 8x8 mono pattern fills */
-    pXAAInfo->Mono8x8PatternFillFlags = BIT_ORDER_IN_BYTE_MSBFIRST |
-	HARDWARE_PATTERN_PROGRAMMED_BITS | HARDWARE_PATTERN_SCREEN_ORIGIN;
-	
+    pXAAInfo->Mono8x8PatternFillFlags = HARDWARE_PATTERN_PROGRAMMED_BITS |
+        HARDWARE_PATTERN_SCREEN_ORIGIN | HARDWARE_PATTERN_PROGRAMMED_ORIGIN;
     pXAAInfo->SetupForMono8x8PatternFill = PnozzSetupForMono8x8PatternFill;
     pXAAInfo->SubsequentMono8x8PatternFillRect =
         PnozzSubsequentMono8x8PatternFillRect;
-#endif
     return 0;
 }

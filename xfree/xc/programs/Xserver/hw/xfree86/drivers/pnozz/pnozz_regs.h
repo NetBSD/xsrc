@@ -20,7 +20,7 @@
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-/* $NetBSD: pnozz_regs.h,v 1.3 2006/02/27 18:19:53 macallan Exp $ */
+/* $NetBSD: pnozz_regs.h,v 1.4 2006/02/28 00:32:53 macallan Exp $ */
 
 #ifndef PNOZZ_REGS_H
 #define PNOZZ_REGS_H
@@ -137,6 +137,7 @@
 	#define ENGINE_BUSY		0x40000000
 #define COMMAND_BLIT	0x2004
 #define COMMAND_QUAD	0x2008
+#define	PIXEL_8		0x200c
 #define PIXEL_1		0x2080	/* pixel data for monochrome colour expansion */
 /* apparently bits 2-6 control how many pixels we write - n+1 */
 
@@ -146,6 +147,8 @@
 
 #define FOREGROUND_COLOR	0x2200
 #define BACKGROUND_COLOR	0x2204
+#define COLOR_0			0x2200
+#define COLOR_1			0x2204
 #define PLANE_MASK		0x2208
 #define DRAW_MODE		0x220c	
 #define PATTERN_ORIGIN_X	0x2210
@@ -155,14 +158,14 @@
 	#define ROP_2BIT_PATTERN	0x04000 /* 4-colour pattern instead of mono */
 	#define ROP_PIX1_TRANS		0x08000	/* transparent background in mono */
 	#define ROP_OVERSIZE		0x10000
-	#define ROP_PATTERN			0x20000		/* the manual says pattern enable */
+//	#define ROP_PATTERN			0x20000		/* the manual says pattern enable */
 	#define ROP_TRANS			0x20000		/* but XFree86 says trans */
 	#define ROP_SRC 			0xCC
 	#define ROP_PAT				0xF0
 	#define ROP_DST 			0xAA
 	#define ROP_SET				0xff
 
-#define PIXEL_8				0x221c
+#define PIXEL_8_REG			0x221c	/* PIXEL_8 overflow data */
 #define WINDOW_MIN			0x2220
 #define WINDOW_MAX			0x2224
 
