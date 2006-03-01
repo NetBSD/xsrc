@@ -2667,6 +2667,9 @@ I830BIOSPreInit(ScrnInfoPtr pScrn, int flags)
                                  pI830->pipeDisplaySize[n].y2,
                                  60);
 
+   } else {
+        xf86SetMonitorParameters(pScrn, pScrn->monitor, 0, 0, 0);
+        xf86AddEDIDModes(pScrn, pScrn->monitor, 0);
    }
 
    /* By now, we should have had some monitor settings, but if not, we
