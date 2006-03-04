@@ -1,4 +1,4 @@
-/* $NetBSD: hpcInit.c,v 1.5 2005/03/28 10:11:21 tron Exp $	*/
+/* $NetBSD: hpcInit.c,v 1.6 2006/03/04 14:14:51 peter Exp $	*/
 
 #include    "hpc.h"
 #include    "gcstruct.h"
@@ -226,12 +226,8 @@ InitKbdMouse(argc, argv)
 		}
 	}
 
-#ifndef __arm__
 	/*
 	 * 1. use keyboards which are connected wsdisplay(ttyE*).
-	 * hpcarm's Xhpc can't use ttyE* even if WSDISPLAY_COMPAT_RAWKBD
-	 * is setted. because keyboard scancode is not compatible with
-	 * hpcsh/hpcmips. -uch
 	 */
 	if (!kbdFound) {
 		devList = GetDeviceList (argc, argv);
@@ -252,7 +248,6 @@ InitKbdMouse(argc, argv)
 			close(fd);
 		}
 	}
-#endif /* __arm__ */
 
 	/*
 	 * 2. use wskbd (multiplexer)
