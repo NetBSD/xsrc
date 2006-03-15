@@ -1,4 +1,4 @@
-/* $NetBSD: hpcInit.c,v 1.6 2006/03/04 14:14:51 peter Exp $	*/
+/* $NetBSD: hpcInit.c,v 1.7 2006/03/15 02:47:38 uwe Exp $	*/
 
 #include    "hpc.h"
 #include    "gcstruct.h"
@@ -365,6 +365,35 @@ InitOutput(pScreenInfo, argc, argv)
 }
 
 /*
+ * Helper function for InitInput
+ */
+static void
+setupAsyncIO(int *pfd, const char *descr)
+{
+    int fd;
+    char *errmsg;
+
+    fd = *pfd;
+    if (fd < 0)
+	return;
+
+    errno = 0;
+    errmsg = NULL;
+
+    if (fcntl(fd, F_SETFL, FNDELAY | FASYNC) < 0)
+	errmsg = "fcntl(F_SETFL)";
+    else if (fcntl(fd, F_SETOWN, getpid()) < 0)
+	errmsg = "fcntl(F_SETOWN)";
+
+    if (errmsg) {
+	hpcError(errmsg);
+	(void) close(fd);
+	*pfd = -1;
+	hpcFatalError(("Async %s I/O setup failed in InitInput", descr));
+    }
+}
+
+/*
  * InitInput --
  *	Initialize all supported input devices...what else is there
  *	besides pointer and keyboard?
@@ -395,25 +424,10 @@ InitInput(argc, argv)
     RegisterKeyboardDevice(k);
     miRegisterPointerDevice(screenInfo.screens[0], p);
     (void) mieqInit (k, p);
-#define SET_FLOW(fd) fcntl(fd, F_SETFL, FNDELAY | FASYNC)
     (void) OsSignal(SIGIO, SigIOHandler);
-#define WANT_SIGNALS(fd) fcntl(fd, F_SETOWN, getpid())
-    if (hpcKbdPriv.fd >= 0) {
-	if (SET_FLOW(hpcKbdPriv.fd) == -1 ||
-	    WANT_SIGNALS(hpcKbdPriv.fd) == -1) {
-	    (void) close (hpcKbdPriv.fd);
-	    hpcKbdPriv.fd = -1;
-	    hpcFatalError(("Async kbd I/O failed in InitInput"));
-	}
-    }
-    if (hpcPtrPriv.fd >= 0) {
-	if (SET_FLOW(hpcPtrPriv.fd) == -1 ||
-	    WANT_SIGNALS(hpcPtrPriv.fd) == -1) {
-	    (void) close (hpcPtrPriv.fd);
-	    hpcPtrPriv.fd = -1;
-	    hpcFatalError(("Async mouse I/O failed in InitInput"));
-	}
-    }
+
+    setupAsyncIO(&hpcKbdPriv.fd, "keyboard");
+    setupAsyncIO(&hpcPtrPriv.fd, "mouse");
 }
 
 /*#ifdef DDXOSFATALERROR*/
