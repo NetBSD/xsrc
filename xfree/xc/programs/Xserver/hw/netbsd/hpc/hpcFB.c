@@ -1,4 +1,4 @@
-/* $NetBSD: hpcFB.c,v 1.5 2004/01/03 15:20:23 uwe Exp $	*/
+/* $NetBSD: hpcFB.c,v 1.6 2006/03/15 02:11:35 uwe Exp $	*/
 /************************************************************
 Copyright 1987 by Sun Microsystems, Inc. Mountain View, CA.
 
@@ -207,21 +207,15 @@ hpcSetDisplayMode(fd, mode, prevmode)
 	int mode;
 	int *prevmode;
 {
-    if (prevmode != NULL) {
-	if (ioctl(fd, WSDISPLAYIO_GMODE, prevmode) < 0) {
-	    Error("ioctl(WSDISPLAYIO_GMODE)");
-	    return (-1);
-	}
-    }
+    if (prevmode != NULL)
+	if (ioctl(fd, WSDISPLAYIO_GMODE, prevmode) < 0)
+	    return -1;
 
-    if (prevmode == NULL || *prevmode != mode) {
-	    if (ioctl(fd, WSDISPLAYIO_SMODE, &mode) < 0) {
-		Error("ioctl(WSDISPLAYIO_SMODE)");
-		return (-1);
-	    }
-    }
+    if (prevmode == NULL || *prevmode != mode)
+	if (ioctl(fd, WSDISPLAYIO_SMODE, &mode) < 0)
+	    return -1;
 
-    return (0);
+    return 0;
 }
 
 Bool
@@ -257,8 +251,10 @@ hpcFBInit(screen, pScreen, argc, argv)
 		fbconf->hf_pixel_width,
 		fbconf->hf_offset));
 
-	    if (hpcSetDisplayMode(pFb->fd, WSDISPLAYIO_MODE_MAPPED, NULL) < 0)
+	    if (hpcSetDisplayMode(pFb->fd, WSDISPLAYIO_MODE_MAPPED, NULL) < 0) {
+		Error("ioctl(WSDISPLAYIO_SMODE)");
 		return FALSE;
+	    }
 
 	    fb = hpcMemoryMap((size_t)fbconf->hf_bytes_per_line * fbconf->hf_height,
 			      fbconf->hf_offset, pFb->fd);
