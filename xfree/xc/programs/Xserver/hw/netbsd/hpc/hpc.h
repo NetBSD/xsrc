@@ -1,4 +1,4 @@
-/* $NetBSD: hpc.h,v 1.2 2004/07/22 18:08:59 uch Exp $	*/
+/* $NetBSD: hpc.h,v 1.3 2006/03/15 01:59:32 uwe Exp $	*/
 /* $XConsortium: sun.h,v 5.39.1.1 95/01/05 19:58:43 kaleb Exp $ */
 /* $XFree86: xc/programs/Xserver/hw/sun/sun.h,v 3.2 1995/02/12 02:36:21 dawes Exp $ */
 /*-
@@ -158,25 +158,25 @@ typedef struct {
 extern Bool		noXkbExtension;
 #endif
 
-#define hpcError(str)	{ \
+#define hpcError(str)	do { \
 	int mode; \
 	hpcSetDisplayMode(fileno(stderr), WSDISPLAYIO_MODE_EMUL, &mode); \
 	Error(str); \
 	hpcSetDisplayMode(fileno(stderr), mode, NULL); \
-}
+} while (0)
 
-#define hpcErrorF(a)	{ \
+#define hpcErrorF(a)	do { \
 	int mode; \
 	hpcSetDisplayMode(fileno(stderr), WSDISPLAYIO_MODE_EMUL, &mode); \
 	ErrorF a; \
 	hpcSetDisplayMode(fileno(stderr), mode, NULL); \
-}
+} while (0)
 
-#define hpcFatalError(a)	{ \
+#define hpcFatalError(a)	do { \
 	int mode; \
 	hpcSetDisplayMode(fileno(stderr), WSDISPLAYIO_MODE_EMUL, &mode); \
 	FatalError a; \
-}
+} while (0)
 
 /* alias for verbose print */
 #define	hpcPrintF(x)	hpcErrorF(x)
