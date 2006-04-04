@@ -1,6 +1,6 @@
-/* $OpenBSD: wsfb_driver.c,v 1.18 2003/04/02 16:42:13 jason Exp $ */
+/* $NetBSD: wsfb_cursor.c,v 1.2 2006/04/04 16:41:47 macallan Exp $ */
 /*
- * Copyright (c) 2001 Matthieu Herrb
+ * Copyright (c) 2005 Michael Lorenz
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -170,8 +170,7 @@ WsfbSetupCursor(ScreenPtr pScreen)
 		xf86Msg(X_ERROR, "WSDISPLAYIO_SCURSOR: %d\n", errno);
 	
 	infoPtr->Flags = HARDWARE_CURSOR_AND_SOURCE_WITH_MASK |
-	    HARDWARE_CURSOR_TRUECOLOR_AT_8BPP| HARDWARE_CURSOR_BIT_ORDER_MSBFIRST |
-	    HARDWARE_CURSOR_NIBBLE_SWAPPED;
+	    HARDWARE_CURSOR_TRUECOLOR_AT_8BPP| HARDWARE_CURSOR_BIT_ORDER_MSBFIRST;
 
 	infoPtr->SetCursorColors = WsfbSetCursorColors;
 	infoPtr->SetCursorPosition = WsfbSetCursorPosition;
