@@ -175,6 +175,7 @@ R128RAMRec R128RAM[] = {        /* Memory Specifications
     { 4, 4, 3, 3, 2, 3, 1, 16, 12, "64-bit DDR SGRAM" },
 };
 
+#ifndef AVOID_VGAHW
 static const char *vgahwSymbols[] = {
     "vgaHWFreeHWRec",
     "vgaHWGetHWRec",
@@ -185,6 +186,7 @@ static const char *vgahwSymbols[] = {
     "vgaHWUnlock",
     NULL
 };
+#endif
 
 static const char *fbdevHWSymbols[] = {
     "fbdevHWInit",
@@ -327,7 +329,10 @@ void R128LoaderRefSymLists(void)
      * Tell the loader about symbols from other modules that this module might
      * refer to.
      */
-    xf86LoaderRefSymLists(vgahwSymbols,
+    xf86LoaderRefSymLists(
+#ifndef AVOID_VGAHW
+    			vgahwSymbols,
+#endif
 		      fbSymbols,
 		      xaaSymbols,
 		      ramdacSymbols,
@@ -1697,7 +1702,7 @@ static Bool R128PreInitAccel(ScrnInfoPtr pScrn)
 static Bool R128PreInitInt10(ScrnInfoPtr pScrn, xf86Int10InfoPtr *ppInt10)
 {
     R128InfoPtr   info = R128PTR(pScrn);
-#if 1 && !defined(__alpha__)
+#if !defined(AVOID_VGAHW) && !defined(__alpha__)
     /* int10 is broken on some Alphas */
     if (xf86LoadSubModule(pScrn, "int10")) {
 	xf86LoaderReqSymLists(int10Symbols, NULL);
@@ -1861,12 +1866,14 @@ Bool R128PreInit(ScrnInfoPtr pScrn, int flags)
 	return TRUE;
     }
 
+#ifndef AVOID_VGAHW
     if (!xf86LoadSubModule(pScrn, "vgahw")) return FALSE;
     xf86LoaderReqSymLists(vgahwSymbols, NULL);
     if (!vgaHWGetHWRec(pScrn)) {
 	R128FreeRec(pScrn);
 	return FALSE;
     }
+#endif
 
     info->PciInfo      = xf86GetPciInfoForEntity(info->pEnt->index);
     info->PciTag       = pciTag(info->PciInfo->bus,
@@ -1977,7 +1984,9 @@ Bool R128PreInit(ScrnInfoPtr pScrn, int flags)
     if (pInt10)
 	xf86FreeInt10(pInt10);
 
+#ifndef AVOID_VGAHW
     vgaHWFreeHWRec(pScrn);
+#endif
     R128FreeRec(pScrn);
     return FALSE;
 }
@@ -2790,7 +2799,9 @@ static void R128Save(ScrnInfoPtr pScrn)
     R128InfoPtr   info      = R128PTR(pScrn);
     unsigned char *R128MMIO = info->MMIO;
     R128SavePtr   save      = &info->SavedReg;
+#ifndef AVOID_VGAHW
     vgaHWPtr      hwp       = VGAHWPTR(pScrn);
+#endif
 
     R128TRACE(("R128Save\n"));
     if (info->FBDev) {
@@ -2798,7 +2809,7 @@ static void R128Save(ScrnInfoPtr pScrn)
 	return;
     }
     
-#ifndef __powerpc__
+#ifndef AVOID_VGAHW
     vgaHWUnlock(hwp);
     vgaHWSave(pScrn, &hwp->SavedReg, VGA_SR_ALL); /* save mode, fonts, cmap */
     vgaHWLock(hwp);
@@ -2819,7 +2830,9 @@ static void R128Restore(ScrnInfoPtr pScrn)
     R128InfoPtr   info      = R128PTR(pScrn);
     unsigned char *R128MMIO = info->MMIO;
     R128SavePtr   restore   = &info->SavedReg;
+#ifndef AVOID_VGAHW
     vgaHWPtr      hwp       = VGAHWPTR(pScrn);
+#endif
 
     R128TRACE(("R128Restore\n"));
     if (info->FBDev) {
@@ -2836,7 +2849,7 @@ static void R128Restore(ScrnInfoPtr pScrn)
 
     R128RestoreMode(pScrn, restore);
     
-#ifndef __powerpc__
+#ifndef AVOID_VGAHW
     vgaHWUnlock(hwp);
     vgaHWRestore(pScrn, &hwp->SavedReg, VGA_SR_MODE | VGA_SR_FONTS );
     vgaHWLock(hwp);
@@ -3575,8 +3588,10 @@ void R128FreeScreen(int scrnIndex, int flags)
     ScrnInfoPtr pScrn = xf86Screens[scrnIndex];
 
     R128TRACE(("R128FreeScreen\n"));
+#ifndef AVOID_VGAHW
     if (xf86LoaderCheckSymbol("vgaHWFreeHWRec"))
 	vgaHWFreeHWRec(pScrn);
+#endif
     R128FreeRec(pScrn);
 }
 
