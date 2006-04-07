@@ -91,13 +91,19 @@ DRIDEFINES  = $(GLX_DEFINES)
 #elif defined(SparcArchitecture) || 1
 # undef ATIAvoidCPIO    /* Clobber any previous setting */
 # define ATIAvoidCPIO YES
+# define AvoidVgaHW YES
 #endif
 
 #if defined(PpcArchitecture)
 # undef ATIAvoidNonPCI
 # define ATIAvoidNonPCI YES
+# define AvoidVgaHW YES
 #elif !defined(ATIAvoidNonPCI)
 # define ATIAvoidNonPCI NO
+#endif
+
+#ifndef AvoidVgaHW
+#define AvoidVgaHW NO
 #endif
 
 #if ATIAvoidNonPCI
@@ -105,6 +111,13 @@ DRIDEFINES  = $(GLX_DEFINES)
 NONPCIDEFINES = -DAVOID_NON_PCI
 
 #endif
+
+#if AvoidVgaHW
+
+VGAHWDEFINES = -DAVOID_VGAHW
+
+#endif
+
 
 #if ATIAvoidCPIO
 
@@ -120,7 +133,7 @@ CPIOOBJS2 = atibank.o ativga.o atiwonder.o atiwonderio.o
 
 #endif
 
-DEFINES = $(CPIODEFINES) $(NONPCIDEFINES) $(DRIDEFINES)
+DEFINES = $(CPIODEFINES) $(NONPCIDEFINES) $(DRIDEFINES) $(VGAHWDEFINES)
 
 SRCS1 = ati.c atiadapter.c atibus.c atichip.c atiident.c atioption.c \
         atiprobe.c atividmem.c $(CPIOSRCS1) $(MODSRCS1) \
