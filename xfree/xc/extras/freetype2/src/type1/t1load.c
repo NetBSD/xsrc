@@ -1783,6 +1783,9 @@
     if ( error )
       goto Exit;
 
+   /* ensure even-ness of 'num_blue_values' */
+   priv->num_blue_values &= ~1;
+
 #ifndef T1_CONFIG_OPTION_NO_MM_SUPPORT
 
     /* the following can happen for MM instances; we then treat the */
