@@ -1714,6 +1714,30 @@
     if ( error )
       goto Exit;
 
+#ifndef T1_CONFIG_OPTION_NO_MM_SUPPORT
+
+    /* the following can happen for MM instances; we then treat the */
+    /* font as a normal PS font                                     */
+    if ( face->blend                                             &&
+         ( !face->blend->num_designs || !face->blend->num_axis ) )
+      T1_Done_Blend( face );
+
+    /* another safety check */
+    if ( face->blend )
+    {
+      FT_UInt  i;
+
+
+      for ( i = 0; i < face->blend->num_axis; i++ )
+        if ( !face->blend->design_map[i].num_points )
+        {
+          T1_Done_Blend( face );
+          break;
+        }
+    }
+
+#endif /* T1_CONFIG_OPTION_NO_MM_SUPPORT */
+
     /* now, propagate the subrs, charstrings, and glyphnames tables */
     /* to the Type1 data                                            */
     type1->num_glyphs = loader.num_glyphs;
