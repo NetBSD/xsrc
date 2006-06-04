@@ -202,7 +202,7 @@ FT_BEGIN_HEADER
   FT_LOCAL( FT_Error )
   cff_slot_load( CFF_GlyphSlot  glyph,
                  CFF_Size       size,
-                 FT_Int         glyph_index,
+                 FT_UInt         glyph_index,
                  FT_Int32       load_flags );
 
 
