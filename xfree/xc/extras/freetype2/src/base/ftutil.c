@@ -51,6 +51,8 @@
             FT_Long    size,
             void*     *P )
   {
+    FT_Error	error = FT_Err_Ok;
+
     FT_ASSERT( P != 0 );
 
     if ( size > 0 )
@@ -66,6 +68,11 @@
       }
       FT_MEM_ZERO( *P, size );
     }
+    else if (size < 0)
+    {
+      /* may help catch/prevent nasty security issues */
+      error = FT_Err_Invalid_Argument;
+    }
     else
       *P = NULL;
 
@@ -73,7 +80,7 @@
     FT_TRACE7(( " size = %ld, block = 0x%08p, ref = 0x%08p\n",
                 size, *P, P ));
 
-    return FT_Err_Ok;
+    return error;
   }
 
 
@@ -94,8 +101,12 @@
     if ( !*P )
       return FT_Alloc( memory, size, P );
 
+    if (size < 0 || current < 0)
+    {
+      return FT_Err_Invalid_Argument;
+    }
+    else if ( size == 0 )
     /* if the new block if zero-sized, clear the current one */
-    if ( size <= 0 )
     {
       FT_Free( memory, P );
       return FT_Err_Ok;
