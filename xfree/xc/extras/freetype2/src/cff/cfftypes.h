@@ -84,6 +84,7 @@ FT_BEGIN_HEADER
     FT_UShort*  sids;
     FT_UShort*  cids;       /* the inverse mapping of `sids'; only needed */
                             /* for CID-keyed fonts                        */
+    FT_UInt	max_cid;
   } CFF_CharsetRec, *CFF_Charset;
 
 
