@@ -1099,7 +1099,7 @@
 #define ERRMSG1  "[line %ld] Missing \"%s\" line.\n"
 #define ERRMSG2  "[line %ld] Font header corrupted or missing fields.\n"
 #define ERRMSG3  "[line %ld] Font glyphs corrupted or missing fields.\n"
-
+#define ERRMSG4  "[line %ld] BBX too big.\n"
 
   static FT_Error
   _bdf_add_comment( bdf_font_t*    font,
@@ -1571,6 +1571,14 @@
         goto Exit;
       p->glyph_enc = _bdf_atol( p->list.field[1], 0, 10 );
 
+      /* Check that the encoding is in the range [0,65536] because        */
+      /* otherwise p->have (a bitmap with static size) overflows.         */
+      if ( p->glyph_enc >= sizeof(p->have)*8 )
+      {
+        error = BDF_Err_Invalid_File_Format;
+        goto Exit;
+      }
+
       /* Check to see whether this encoding has already been encountered. */
       /* If it has then change it to unencoded so it gets added if        */
       /* indicated.                                                       */
@@ -1821,6 +1829,9 @@
     /* And finally, gather up the bitmap. */
     if ( ft_memcmp( line, "BITMAP", 6 ) == 0 )
     {
+      unsigned long bitmap_size;
+
+
       if ( !( p->flags & _BDF_BBX ) )
       {
         /* Missing BBX field. */
@@ -1831,7 +1842,16 @@
 
       /* Allocate enough space for the bitmap. */
       glyph->bpr   = ( glyph->bbx.width * p->font->bpp + 7 ) >> 3;
-      glyph->bytes = (unsigned short)( glyph->bpr * glyph->bbx.height );
+
+      bitmap_size = glyph->bpr * glyph->bbx.height;
+      if ( bitmap_size > 0xFFFFU )
+      {
+        FT_ERROR(( "_bdf_parse_glyphs: " ERRMSG4, lineno ));
+        error = BDF_Err_Bbx_Too_Big;
+        goto Exit;
+      }
+      else
+        glyph->bytes = (unsigned short)bitmap_size;
 
       if ( FT_NEW_ARRAY( glyph->bitmap, glyph->bytes ) )
         goto Exit;
