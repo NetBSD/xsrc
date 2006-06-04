@@ -1235,7 +1235,7 @@
       }
 
       /* access element */
-      if ( off1 )
+      if ( off1 && off2 > off1 )
       {
         *pbyte_len = off2 - off1;
 
@@ -2008,6 +2008,9 @@
       if ( error )
         goto Exit;
     }
+
+      /* ensure that 'num_blue_values' is even */
+      priv->num_blue_values &= ~1;
 
     /* read the local subrs, if any */
     if ( priv->local_subrs_offset )
