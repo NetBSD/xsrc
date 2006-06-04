@@ -2281,7 +2281,7 @@
   FT_LOCAL_DEF( FT_Error )
   cff_slot_load( CFF_GlyphSlot  glyph,
                  CFF_Size       size,
-                 FT_Int         glyph_index,
+                 FT_UInt         glyph_index,
                  FT_Int32       load_flags )
   {
     FT_Error     error;
@@ -2304,6 +2304,10 @@
       glyph->x_scale = size->metrics.x_scale;
       glyph->y_scale = size->metrics.y_scale;
     }
+
+    /* return immediately if we only want the embedded bitmaps */
+    if ( load_flags & FT_LOAD_SBITS_ONLY )
+      return CFF_Err_Invalid_Argument;
 
     glyph->root.outline.n_points   = 0;
     glyph->root.outline.n_contours = 0;
