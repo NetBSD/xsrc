@@ -141,7 +141,7 @@ static unsigned long tabp[256] = {
 void
 iplUnpackLine(int planes, int longs, unsigned int *psrc, unsigned short *ipsrc)
 {
-	unsigned long temp,m;
+	unsigned long temp,m,*temp2;
 	unsigned char *t=(unsigned char *) &temp;
 	unsigned char *i=(unsigned char *) ipsrc;
 	unsigned char *s=(unsigned char *) psrc;
@@ -150,10 +150,13 @@ iplUnpackLine(int planes, int longs, unsigned int *psrc, unsigned short *ipsrc)
 	case 2:
 		for (j = 0 ; j < longs ; j++)
 		{
-			*((long *) ipsrc)++=(tabi[s[0]] >>  0) 	|
-			        	    (tabi[s[1]] >>  4) 	|
-					    (tabi[s[2]] >>  8) 	|
-				            (tabi[s[3]] >> 12);
+			temp2=(unsigned long *) ipsrc;
+			*temp2=(tabi[s[0]] >>  0) 	|
+			       (tabi[s[1]] >>  4) 	|
+			       (tabi[s[2]] >>  8) 	|
+			       (tabi[s[3]] >> 12);
+			temp2++;
+			ipsrc=(unsigned short *) temp2;
 			s+=4;
 		}
 		break;
