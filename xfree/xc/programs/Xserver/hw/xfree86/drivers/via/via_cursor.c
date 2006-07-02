@@ -55,7 +55,7 @@ VIAHWCursorInit(ScreenPtr pScreen)
     VIAPtr pVia = VIAPTR(pScrn);
     xf86CursorInfoPtr infoPtr;
 
-    DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO, "VIAHWCursorInit\n"));
+    DEBUGX(xf86DrvMsg(pScrn->scrnIndex, X_INFO, "VIAHWCursorInit\n"));
     infoPtr = xf86CreateCursorInfoRec();
     if (!infoPtr)
         return FALSE;

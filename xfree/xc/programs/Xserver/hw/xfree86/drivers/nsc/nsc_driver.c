@@ -1,8 +1,8 @@
 /* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/nsc/nsc_driver.c,v 1.6 2004/06/10 17:26:38 tsi Exp $ */
 /*
  * $Workfile: nsc_driver.c $
- * $Revision: 1.1.1.3 $
- * $Author: tron $
+ * $Revision: 1.2 $
+ * $Author: christos $
  *
  * File Contents: This is the main module configures the interfacing 
  *                with the X server. The individual modules will be 
@@ -143,7 +143,9 @@
  *
  * END_NSC_LIC_GPL */
 
-#define DEBUG(x)
+#ifndef DEBUGX
+#define DEBUGX(x)
+#endif
 #define NSC_TRACE 0
 #define CFB 0
 #define HWVGA 1

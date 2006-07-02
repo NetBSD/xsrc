@@ -184,7 +184,9 @@ do {					\
 #define PORTNUM(p) ((int)((p) - &pAPriv->Port[0]))
 #define BPPSHIFT(g) (2 - (g)->BppShift)	/* Bytes per pixel = 1 << BPPSHIFT(pGlint) */
 
-#define DEBUG(x)
+#ifndef DEBUGX
+#define DEBUGX(x)
+#endif
 
 static const Bool ColorBars = FALSE;
 
@@ -638,7 +640,7 @@ RemoveAreaCallback(FBAreaPtr pFBArea)
 {
     PortPrivPtr pPPriv = (PortPrivPtr) pFBArea->devPrivate.ptr;
     AdaptorPrivPtr pAPriv = pPPriv->pAdaptor;
-    DEBUG(ScrnInfoPtr pScrn = pAPriv->pScrn;)
+    DEBUGX(ScrnInfoPtr pScrn = pAPriv->pScrn;)
     int i;
 
     for (i = 0; i < MAX_BUFFERS && pPPriv->pFBArea[i] != pFBArea; i++);
@@ -646,7 +648,7 @@ RemoveAreaCallback(FBAreaPtr pFBArea)
     if (i >= MAX_BUFFERS)
 	return;
 
-    DEBUG(xf86DrvMsgVerb(pScrn->scrnIndex, X_INFO, 4,
+    DEBUGX(xf86DrvMsgVerb(pScrn->scrnIndex, X_INFO, 4,
 	"RemoveAreaCallback port #%d, buffer #%d, pFB=%p, off=0x%08x\n",
 	PORTNUM(pPPriv), i, pPPriv->pFBArea[i], pPPriv->BufferBase[i]));
 
@@ -676,15 +678,15 @@ RemoveableBuffers(PortPrivPtr pPPriv, Bool remove)
 static void
 FreeBuffers(PortPrivPtr pPPriv)
 {
-    DEBUG(AdaptorPrivPtr pAPriv = pPPriv->pAdaptor;)
-    DEBUG(ScrnInfoPtr pScrn = pAPriv->pScrn;)
+    DEBUGX(AdaptorPrivPtr pAPriv = pPPriv->pAdaptor;)
+    DEBUGX(ScrnInfoPtr pScrn = pAPriv->pScrn;)
     int i;
 
     RemoveableBuffers(pPPriv, FALSE);
 
     for (i = MAX_BUFFERS - 1; i >= 0; i--)
 	if (pPPriv->pFBArea[i]) {
-	    DEBUG(xf86DrvMsgVerb(pScrn->scrnIndex, X_INFO, 4,
+	    DEBUGX(xf86DrvMsgVerb(pScrn->scrnIndex, X_INFO, 4,
 		"FreeBuffers port #%d, buffer #%d, pFB=%p, off=0x%08x\n",
 		PORTNUM(pPPriv), i, pPPriv->pFBArea[i], pPPriv->BufferBase[i]));
 
@@ -728,7 +730,7 @@ AllocateBuffers(PortPrivPtr pPPriv,
 		    ((pPPriv->pFBArea[i]->box.y1 * pScrn->displayWidth) +
 		     pPPriv->pFBArea[i]->box.x1) << BPPSHIFT(pGlint);
 
-	    DEBUG(xf86DrvMsgVerb(pScrn->scrnIndex, X_INFO, 4,
+	    DEBUGX(xf86DrvMsgVerb(pScrn->scrnIndex, X_INFO, 4,
 		"New linear buffer %dx%d, rec %dx%d -> pFB=%p, off=0x%08x\n",
 		w, h, pPPriv->BufferStride, h, pPPriv->pFBArea[i], pPPriv->BufferBase[i]));
 	} else {
@@ -748,7 +750,7 @@ AllocateBuffers(PortPrivPtr pPPriv,
 			((pPPriv->pFBArea[i]->box.y1 * pScrn->displayWidth) +
 		         pPPriv->pFBArea[i]->box.x1) << BPPSHIFT(pGlint);
 
-		DEBUG(xf86DrvMsgVerb(pScrn->scrnIndex, X_INFO, 4,
+		DEBUGX(xf86DrvMsgVerb(pScrn->scrnIndex, X_INFO, 4,
 		    "New rect buffer %dx%d, stride %d, %d -> pFB=%p, off=0x%08x\n",
 		    w, h, pPPriv->BufferStride, j, pPPriv->pFBArea[i], pPPriv->BufferBase[i]));
 	    }
@@ -830,7 +832,7 @@ PutYUV(PortPrivPtr pPPriv, int BufferBase,
     CookiePtr pCookie = pPPriv->pCookies;
     int nCookies = pPPriv->nCookies;
 
-    DEBUG(xf86DrvMsgVerb(pScrn->scrnIndex, X_INFO, 5, "PutYUV %08x %08x\n",
+    DEBUGX(xf86DrvMsgVerb(pScrn->scrnIndex, X_INFO, 5, "PutYUV %08x %08x\n",
 	BufferBase, format));
 
     if (!nCookies || (GLINT_READ_REG(InFIFOSpace) < 200))
@@ -916,7 +918,7 @@ PutRGB(PortPrivPtr pPPriv, int BufferBase, int format, int bptshift, int alpha)
     CookiePtr pCookie = pPPriv->pCookies;
     int nCookies = pPPriv->nCookies;
 
-    DEBUG(xf86DrvMsgVerb(pScrn->scrnIndex, X_INFO, 5, "PutRGB %08x %08x\n",
+    DEBUGX(xf86DrvMsgVerb(pScrn->scrnIndex, X_INFO, 5, "PutRGB %08x %08x\n",
 	BufferBase, format));
 
     if (!nCookies)
@@ -989,7 +991,7 @@ BlackOut(PortPrivPtr pPPriv, RegionPtr pRegion)
     BoxPtr pBox;
     int nBox;
 
-    DEBUG(xf86DrvMsgVerb(pScrn->scrnIndex, X_INFO, 5,
+    DEBUGX(xf86DrvMsgVerb(pScrn->scrnIndex, X_INFO, 5,
 	"BlackOut %d,%d,%d,%d -- %d,%d,%d,%d\n",
 	pPPriv->vx, pPPriv->vy, pPPriv->vw, pPPriv->vh,
 	pPPriv->dx, pPPriv->dy, pPPriv->dw, pPPriv->dh));
@@ -1113,7 +1115,7 @@ GetYUV(PortPrivPtr pPPriv)
     CookiePtr pCookie = pPPriv->pCookies;
     int nCookies = pPPriv->nCookies;
 
-    DEBUG(xf86DrvMsgVerb(pScrn->scrnIndex, X_INFO, 5, "GetYUV\n"));
+    DEBUGX(xf86DrvMsgVerb(pScrn->scrnIndex, X_INFO, 5, "GetYUV\n"));
 
     if (!nCookies || (GLINT_READ_REG(InFIFOSpace) < 200))
 	return;
@@ -1505,7 +1507,7 @@ Permedia2PutVideo(ScrnInfoPtr pScrn,
     AdaptorPrivPtr pAPriv = pPPriv->pAdaptor;
     int sw, sh;
 
-    DEBUG(xf86DrvMsgVerb(pScrn->scrnIndex, X_INFO, 3,
+    DEBUGX(xf86DrvMsgVerb(pScrn->scrnIndex, X_INFO, 3,
 	"PutVideo %d,%d,%d,%d -> %d,%d,%d,%d\n",
 	vid_x, vid_y, vid_w, vid_h, drw_x, drw_y, drw_w, drw_h));
 
@@ -1549,7 +1551,7 @@ Permedia2PutStill(ScrnInfoPtr pScrn,
     GLINTPtr pGlint = GLINTPTR(pScrn);
     int sw, sh, r = Success;
 
-    DEBUG(xf86DrvMsgVerb(pScrn->scrnIndex, X_INFO, 3,
+    DEBUGX(xf86DrvMsgVerb(pScrn->scrnIndex, X_INFO, 3,
 	"PutStill %d,%d,%d,%d -> %d,%d,%d,%d\n",
 	vid_x, vid_y, vid_w, vid_h, drw_x, drw_y, drw_w, drw_h));
 
@@ -1609,7 +1611,7 @@ Permedia2GetVideo(ScrnInfoPtr pScrn,
     AdaptorPrivPtr pAPriv = pPPriv->pAdaptor;
     int sw, sh;
 
-    DEBUG(xf86DrvMsgVerb(pScrn->scrnIndex, X_INFO, 3,
+    DEBUGX(xf86DrvMsgVerb(pScrn->scrnIndex, X_INFO, 3,
 	"GetVideo %d,%d,%d,%d <- %d,%d,%d,%d\n",
 	vid_x, vid_y, vid_w, vid_h, drw_x, drw_y, drw_w, drw_h));
 
@@ -1656,7 +1658,7 @@ Permedia2GetStill(ScrnInfoPtr pScrn,
     AdaptorPrivPtr pAPriv = pPPriv->pAdaptor;
     int sw, sh;
 
-    DEBUG(xf86DrvMsgVerb(pScrn->scrnIndex, X_INFO, 3,
+    DEBUGX(xf86DrvMsgVerb(pScrn->scrnIndex, X_INFO, 3,
 	"GetStill %d,%d,%d,%d <- %d,%d,%d,%d\n",
 	vid_x, vid_y, vid_w, vid_h, drw_x, drw_y, drw_w, drw_h));
 
@@ -1767,7 +1769,7 @@ Permedia2PutImage(ScrnInfoPtr pScrn,
     GLINTPtr pGlint = GLINTPTR(pScrn);
     int i;
 
-    DEBUG(xf86DrvMsgVerb(pScrn->scrnIndex, X_INFO, 3,
+    DEBUGX(xf86DrvMsgVerb(pScrn->scrnIndex, X_INFO, 3,
 	"PutImage %d,%d,%d,%d -> %d,%d,%d,%d id=0x%08x buf=%p w=%d h=%d sync=%d\n",
 	src_x, src_y, src_w, src_h, drw_x, drw_y, drw_w, drw_h,
 	id, buf, width, height, sync));
@@ -1968,7 +1970,7 @@ Permedia2StopVideo(ScrnInfoPtr pScrn, pointer data, Bool shutdown)
     AdaptorPrivPtr pAPriv = pPPriv->pAdaptor;
     GLINTPtr pGlint = GLINTPTR(pScrn);
 
-    DEBUG(xf86DrvMsgVerb(pScrn->scrnIndex, X_INFO, 3,
+    DEBUGX(xf86DrvMsgVerb(pScrn->scrnIndex, X_INFO, 3,
 	"StopVideo port=%d, shutdown=%d\n", PORTNUM(pPPriv), shutdown));
 
     if (shutdown) {
@@ -2020,7 +2022,7 @@ RestartVideo(PortPrivPtr pPPriv, int old_VideoOn)
 	    if (pPPriv == &pAPriv->Port[1])
 		GetYUV(pPPriv);
 	} else {
-	    DEBUG(xf86DrvMsgVerb(pAPriv->pScrn->scrnIndex, X_INFO, 4,
+	    DEBUGX(xf86DrvMsgVerb(pAPriv->pScrn->scrnIndex, X_INFO, 4,
 		"RestartVideo port=%d suspend\n", PORTNUM(pPPriv)));
 	    pPPriv->VideoOn = -old_VideoOn; /* suspend (not off) */
 	}
@@ -2037,7 +2039,7 @@ Permedia2SetPortAttribute(ScrnInfoPtr pScrn,
     int VideoStd = -1, Plug = 0;
     int r;
 
-    DEBUG(xf86DrvMsgVerb(pScrn->scrnIndex, X_INFO, 3,
+    DEBUGX(xf86DrvMsgVerb(pScrn->scrnIndex, X_INFO, 3,
 	"SPA attr=%d val=%d port=%d\n",
 	attribute, value, PORTNUM(pPPriv)));
 
@@ -2229,7 +2231,7 @@ Permedia2GetPortAttribute(ScrnInfoPtr pScrn,
     else
 	return BadMatch;
 
-    DEBUG(xf86DrvMsgVerb(pScrn->scrnIndex, X_INFO, 3,
+    DEBUGX(xf86DrvMsgVerb(pScrn->scrnIndex, X_INFO, 3,
 	"GPA attr=%d val=%d port=%d\n",
 	attribute, *value, PORTNUM(pPPriv)));
 
@@ -2397,13 +2399,13 @@ xvipcHandshake(PortPrivPtr pPPriv, int op, Bool block)
 	if (brake-- <= 0)
 	    return FALSE; /* I brake for bugs. */
 
-	DEBUG(xf86MsgVerb(X_INFO, 4,
+	DEBUGX(xf86MsgVerb(X_INFO, 4,
 	    "PM2 XVIPC send op=%d bl=%d po=%d a=%d b=%d c=%d\n",
 	    xvipc.op, xvipc.block, xvipc.port, xvipc.a, xvipc.b, xvipc.c));
 
 	r = ioctl(xvipc_fd, VIDIOC_PM2_XVIPC, (void *) &xvipc);
 
-	DEBUG(xf86MsgVerb(X_INFO, 4,
+	DEBUGX(xf86MsgVerb(X_INFO, 4,
 	    "PM2 XVIPC recv op=%d bl=%d po=%d a=%d b=%d c=%d err=%d/%d\n",
 	    xvipc.op, xvipc.block, xvipc.port, xvipc.a, xvipc.b, xvipc.c, r, errno));
 
@@ -2448,7 +2450,7 @@ xvipcHandshake(PortPrivPtr pPPriv, int op, Bool block)
 		pAPriv->LFBList = pLFBArea;
 	    }
 
-	    DEBUG(xf86MsgVerb(X_INFO, 3, "PM2 XVIPC alloc addr=%d=0x%08x pFB=%p\n",
+	    DEBUGX(xf86MsgVerb(X_INFO, 3, "PM2 XVIPC alloc addr=%d=0x%08x pFB=%p\n",
 		xvipc.a, xvipc.a, pFBArea));
 
 	    goto event;
@@ -2467,7 +2469,7 @@ xvipcHandshake(PortPrivPtr pPPriv, int op, Bool block)
 	    if (!pLFBArea)
 		xvipc.a = -1;
 
-	    DEBUG(xf86MsgVerb(X_INFO, 3, "PM2 XVIPC free addr=%d=0x%08x pFB=%p\n",
+	    DEBUGX(xf86MsgVerb(X_INFO, 3, "PM2 XVIPC free addr=%d=0x%08x pFB=%p\n",
 		xvipc.a, xvipc.a, pLFBArea ? pLFBArea->pFBArea : NULL));
 
 	    if (ioctl(xvipc_fd, VIDIOC_PM2_XVIPC, (void *) &xvipc) == 0 && pLFBArea) {
@@ -2574,7 +2576,7 @@ xvipcOpen(char *name, ScrnInfoPtr pScrn)
 	return FALSE;
 
     for (;;) {
-	DEBUG(xf86DrvMsgVerb(pScrn->scrnIndex, X_INFO, 2,
+	DEBUGX(xf86DrvMsgVerb(pScrn->scrnIndex, X_INFO, 2,
 	    "XVIPC probing device %s\n", name));
 
     	if ((xvipc_fd = open(name, O_RDWR /* | O_TRUNC */, 0)) < 0)
@@ -2882,7 +2884,7 @@ Permedia2VideoEnterVT(ScrnInfoPtr pScrn)
     GLINTPtr pGlint = GLINTPTR(pScrn);
     AdaptorPrivPtr pAPriv;
 
-    DEBUG(xf86DrvMsgVerb(pScrn->scrnIndex, X_INFO, 2, "Xv enter VT\n"));
+    DEBUGX(xf86DrvMsgVerb(pScrn->scrnIndex, X_INFO, 2, "Xv enter VT\n"));
 
     for (pAPriv = AdaptorPrivList; pAPriv != NULL; pAPriv = pAPriv->Next)
 	if (pAPriv->pScrn == pScrn) {
@@ -2926,7 +2928,7 @@ Permedia2VideoLeaveVT(ScrnInfoPtr pScrn)
 	    break;
 	}
 
-    DEBUG(xf86DrvMsgVerb(pScrn->scrnIndex, X_INFO, 2, "Elvis left the building\n"));
+    DEBUGX(xf86DrvMsgVerb(pScrn->scrnIndex, X_INFO, 2, "Elvis left the building\n"));
 }
 
 void
@@ -2946,7 +2948,7 @@ Permedia2VideoUninit(ScrnInfoPtr pScrn)
 	xvipc_fd = -1;
     }
 
-    DEBUG(xf86DrvMsgVerb(pScrn->scrnIndex, X_INFO, 2, "Xv cleanup\n"));
+    DEBUGX(xf86DrvMsgVerb(pScrn->scrnIndex, X_INFO, 2, "Xv cleanup\n"));
 }
 
 void
@@ -3073,7 +3075,7 @@ Permedia2VideoInit(ScreenPtr pScreen)
 	AvailFBArea.x2 = last % pScrn->displayWidth + 1;
 	AvailFBArea.y2 = last / pScrn->displayWidth + 1;
 
-	DEBUG(xf86DrvMsgVerb(pScrn->scrnIndex, X_INFO, 2,
+	DEBUGX(xf86DrvMsgVerb(pScrn->scrnIndex, X_INFO, 2,
 	    "Using linear FB %d,%d-%d,%d pitch %d (%dk)\n",
 	    AvailFBArea.x1, AvailFBArea.y1, AvailFBArea.x2, AvailFBArea.y2,
 	    pScrn->displayWidth, (((AvailFBArea.y2 - AvailFBArea.y1)

@@ -1771,7 +1771,7 @@ Bool VIAUTGetInfo(VIABIOSInfoPtr pBIOSInfo)
     unsigned char W_Buffer[3];
     unsigned char R_Buffer[2];
 
-    DEBUG(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "VIAUTGetInfo\n"));
+    DEBUGX(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "VIAUTGetInfo\n"));
     if (pBIOSInfo->TVEncoder) {
 	dev = xf86CreateI2CDevRec();
 	dev->DevName = "TV";
@@ -1895,10 +1895,10 @@ Bool VIAUTGetInfo(VIABIOSInfoPtr pBIOSInfo)
 	    pUserSetting->DefaultSetting = TRUE;
 	} else {
 	    xf86DestroyI2CDevRec(dev, TRUE);
-	    DEBUG(xf86Msg(X_DEFAULT, "DevInit fail!\n"));
+	    DEBUGX(xf86Msg(X_DEFAULT, "DevInit fail!\n"));
 	}
     } else
-	DEBUG(xf86Msg(X_DEFAULT, "No TVEncoder Exist!\n"));
+	DEBUGX(xf86Msg(X_DEFAULT, "No TVEncoder Exist!\n"));
     return TRUE;
 }
 

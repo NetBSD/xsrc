@@ -2402,7 +2402,7 @@ SMI_InternalScreenInit(int scrnIndex, ScreenPtr pScreen)
 	 * pScreen fields.
 	 */
 
-	DEBUG((VERBLEV, "\tInitializing FB @ 0x%08X for %dx%d (%d)\n",
+	DEBUGX((VERBLEV, "\tInitializing FB @ 0x%08X for %dx%d (%d)\n",
 			pSmi->FBBase, width, height, displayWidth));
 	switch (pScrn->bitsPerPixel)
 	{
@@ -3062,7 +3062,7 @@ SMI_LoadPalette(ScrnInfoPtr pScrn, int numColors, int *indicies, LOCO *colors,
 
 	for(i = 0; i < numColors; i++)
 	{
-        DEBUG((VERBLEV, "pal[%d] = %d %d %d\n", indicies[i],
+        DEBUGX((VERBLEV, "pal[%d] = %d %d %d\n", indicies[i],
            colors[indicies[i]].red, colors[indicies[i]].green, colors[indicies[i]].blue));
 		VGAOUT8(pSmi, VGA_DAC_WRITE_ADDR, indicies[i]);
 		VGAOUT8(pSmi, VGA_DAC_DATA, colors[indicies[i]].red);

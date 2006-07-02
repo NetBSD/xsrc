@@ -90,7 +90,7 @@ int VIACheckTVExist(VIABIOSInfoPtr pBIOSInfo)
     unsigned char   W_Buffer[1];
     unsigned char   R_Buffer[1];
 
-    DEBUG(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "VIACheckTVExist\n"));
+    DEBUGX(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "VIACheckTVExist\n"));
     /* Check For TV2/TV3 */
     if (xf86I2CProbeAddress(pBIOSInfo->I2C_Port2, 0x40)) {
         dev = xf86CreateI2CDevRec();
@@ -104,19 +104,19 @@ int VIACheckTVExist(VIABIOSInfoPtr pBIOSInfo)
             xf86DestroyI2CDevRec(dev,TRUE);
             switch (R_Buffer[0]) {
                 case 2:
-                    DEBUG(xf86DrvMsg(pBIOSInfo->scrnIndex, X_PROBED,
+                    DEBUGX(xf86DrvMsg(pBIOSInfo->scrnIndex, X_PROBED,
                             "Found TVEncoder VT1621!\n"));
                     pBIOSInfo->TVEncoder = VIA_TV2PLUS;
                     pBIOSInfo->TVI2CAdd = 0x40;
                     break;
                 case 3:
-                    DEBUG(xf86DrvMsg(pBIOSInfo->scrnIndex, X_PROBED,
+                    DEBUGX(xf86DrvMsg(pBIOSInfo->scrnIndex, X_PROBED,
                             "Found TVEncoder VT1622!\n"));
                     pBIOSInfo->TVEncoder = VIA_TV3;
                     pBIOSInfo->TVI2CAdd = 0x40;
                     break;
                 case 16:
-                    DEBUG(xf86DrvMsg(pBIOSInfo->scrnIndex, X_PROBED,
+                    DEBUGX(xf86DrvMsg(pBIOSInfo->scrnIndex, X_PROBED,
                             "Found TVEncoder VT1622A!\n"));
                     pBIOSInfo->TVEncoder = VIA_VT1622A;
                     pBIOSInfo->TVI2CAdd = 0x40;
@@ -145,7 +145,7 @@ int VIACheckTVExist(VIABIOSInfoPtr pBIOSInfo)
                 xf86I2CWriteRead(dev, W_Buffer,1, R_Buffer,1);
                 xf86DestroyI2CDevRec(dev,TRUE);
                 if (R_Buffer[0] == 0x04) {
-                    DEBUG(xf86DrvMsg(pBIOSInfo->scrnIndex, X_PROBED,
+                    DEBUGX(xf86DrvMsg(pBIOSInfo->scrnIndex, X_PROBED,
                             "Found TVEncoder Philips SAA7108!\n"));
                     pBIOSInfo->TVEncoder = VIA_SAA7108;
                     pBIOSInfo->TVI2CAdd = 0x88;
@@ -173,7 +173,7 @@ int VIACheckTVExist(VIABIOSInfoPtr pBIOSInfo)
 	            xf86I2CWriteRead(dev, W_Buffer,1, R_Buffer,1);
 	            xf86DestroyI2CDevRec(dev,TRUE);
 	            if (R_Buffer[0] == 0x20) {
-    				DEBUG(xf86DrvMsg(pBIOSInfo->scrnIndex, X_PROBED,
+    				DEBUGX(xf86DrvMsg(pBIOSInfo->scrnIndex, X_PROBED,
     						"Found TVEncoder FOCUS 453/454!\n"));
                     pBIOSInfo->TVEncoder = VIA_FS454;
                     pBIOSInfo->TVI2CAdd	= 0xD4;
@@ -201,7 +201,7 @@ int VIACheckTVExist(VIABIOSInfoPtr pBIOSInfo)
 	            xf86I2CWriteRead(dev, W_Buffer,1, R_Buffer,1);
 	            xf86DestroyI2CDevRec(dev,TRUE);
 	            if (R_Buffer[0] == 0x19) {
-    				DEBUG(xf86DrvMsg(pBIOSInfo->scrnIndex, X_PROBED,
+    				DEBUGX(xf86DrvMsg(pBIOSInfo->scrnIndex, X_PROBED,
     						"Found TVEncoder Chrontel 7019!\n"));
                     pBIOSInfo->TVEncoder = VIA_CH7019;
                     pBIOSInfo->TVI2CAdd	= 0xEA;
@@ -221,12 +221,12 @@ int VIACheckTVExist(VIABIOSInfoPtr pBIOSInfo)
             VIAGPIOI2C_Read(pBIOSInfo, 0x1B, R_Buffer, 1);
             switch (R_Buffer[0]) {
                 case 16:
-                    DEBUG(xf86DrvMsg(pBIOSInfo->scrnIndex, X_PROBED,
+                    DEBUGX(xf86DrvMsg(pBIOSInfo->scrnIndex, X_PROBED,
                             "Found TVEncoder VT1623!\n"));
                     pBIOSInfo->TVEncoder = VIA_VT1623;
                     break;
                 default:
-                    DEBUG(xf86DrvMsg(pBIOSInfo->scrnIndex, X_PROBED,
+                    DEBUGX(xf86DrvMsg(pBIOSInfo->scrnIndex, X_PROBED,
                             "Unknow TVEncoder Type:%d!\n", R_Buffer[0]));
                     break;
             }
@@ -442,7 +442,7 @@ unsigned char VIASensorCH7019(VIABIOSInfoPtr pBIOSInfo)
     unsigned char   W_Buffer[2];
     unsigned char   R_Buffer[1];
 
-    DEBUG(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "VIASensorCH7019\n"));
+    DEBUGX(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "VIASensorCH7019\n"));
     dev = xf86CreateI2CDevRec();
     dev->DevName = "CH7019";
     dev->SlaveAddr = 0xEA;
@@ -503,7 +503,7 @@ unsigned char VIASensorSAA7108(VIABIOSInfoPtr pBIOSInfo)
     unsigned char   W_Buffer[2];
     unsigned char   R_Buffer[1];
 
-    DEBUG(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "VIASensorSAA7108\n"));
+    DEBUGX(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "VIASensorSAA7108\n"));
     dev = xf86CreateI2CDevRec();
     dev->DevName = "SAA7108";
     dev->SlaveAddr = 0x88;
@@ -571,7 +571,7 @@ unsigned char VIASensorSAA7108(VIABIOSInfoPtr pBIOSInfo)
             ret = 0;
             break;
         default:    /* Undefine */
-            DEBUG(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "Sense Result :%d\n", tmp));
+            DEBUGX(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "Sense Result :%d\n", tmp));
             ret = 0xFF;
             break;
     }
@@ -606,7 +606,7 @@ unsigned char VIASensorTV2(VIABIOSInfoPtr pBIOSInfo)
     unsigned char   W_Buffer[2];
     unsigned char   R_Buffer[1];
 
-    DEBUG(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "VIASensorTV2\n"));
+    DEBUGX(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "VIASensorTV2\n"));
     dev = xf86CreateI2CDevRec();
     dev->DevName = "VT1621";
     dev->SlaveAddr = 0x40;
@@ -664,7 +664,7 @@ unsigned char VIASensorTV3(VIABIOSInfoPtr pBIOSInfo)
     unsigned char   W_Buffer[2];
     unsigned char   R_Buffer[1];
 
-    DEBUG(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "VIASensorTV3\n"));
+    DEBUGX(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "VIASensorTV3\n"));
     if (pBIOSInfo->TVEncoder == VIA_VT1623) {
         VIAGPIOI2C_Initial(pBIOSInfo, 0x40);
         VIAGPIOI2C_Read(pBIOSInfo, 0x0E, R_Buffer, 1);
@@ -739,7 +739,7 @@ Bool VIASensorDVI(VIABIOSInfoPtr pBIOSInfo)
     unsigned char   W_Buffer[1];
     unsigned char   R_Buffer[1];
 
-    DEBUG(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "VIASensorDVI\n"));
+    DEBUGX(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "VIASensorDVI\n"));
 
     /* Enable DI0, DI1 */
     VGAOUT8(0x3d4, 0x6C);
@@ -813,7 +813,7 @@ Bool VIAPostDVI(VIABIOSInfoPtr pBIOSInfo)
     unsigned char   W_Buffer[2];
     unsigned char   R_Buffer[4];
 
-    DEBUG(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "VIAPostDVI\n"));
+    DEBUGX(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "VIAPostDVI\n"));
 
     /* Enable DI0, DI1 */
     VGAOUT8(0x3d4, 0x6C);
@@ -840,10 +840,10 @@ Bool VIAPostDVI(VIABIOSInfoPtr pBIOSInfo)
             W_Buffer[0] = 0x00;
             xf86I2CWriteRead(dev, W_Buffer,1, R_Buffer,4);
             if (R_Buffer[0] == 0x06 && R_Buffer[1] == 0x11) {       /* This is VT3191 */
-                DEBUG(xf86DrvMsg(pBIOSInfo->scrnIndex, X_PROBED,
+                DEBUGX(xf86DrvMsg(pBIOSInfo->scrnIndex, X_PROBED,
                                  "Found VIA LVDS Transmiter!\n"));
                 if (R_Buffer[2] == 0x91 && R_Buffer[3] == 0x31) {
-                    DEBUG(xf86DrvMsg(pBIOSInfo->scrnIndex, X_PROBED,
+                    DEBUGX(xf86DrvMsg(pBIOSInfo->scrnIndex, X_PROBED,
                                      "VIA: VT1631!\n"));
                     pBIOSInfo->LVDS = VIA_VT3191;
                     W_Buffer[0] = 0x08;
@@ -856,7 +856,7 @@ Bool VIAPostDVI(VIABIOSInfoPtr pBIOSInfo)
                     ret = TRUE;
                 }
                 else {
-                    DEBUG(xf86DrvMsg(pBIOSInfo->scrnIndex, X_PROBED,
+                    DEBUGX(xf86DrvMsg(pBIOSInfo->scrnIndex, X_PROBED,
                                      "VIA: Unknow Chip!!\n"));
                     xf86DestroyI2CDevRec(dev,TRUE);
                 }
@@ -865,7 +865,7 @@ Bool VIAPostDVI(VIABIOSInfoPtr pBIOSInfo)
                 W_Buffer[0] = 0x02;
                 xf86I2CWriteRead(dev, W_Buffer,1, R_Buffer,2);
                 if (R_Buffer[0] && R_Buffer[1]) {
-                    DEBUG(xf86DrvMsg(pBIOSInfo->scrnIndex, X_PROBED,
+                    DEBUGX(xf86DrvMsg(pBIOSInfo->scrnIndex, X_PROBED,
                                      "Found TMDS Transmiter Silicon164.\n"));
                     pBIOSInfo->TMDS = VIA_SIL164;
                     W_Buffer[0] = 0x08;
@@ -909,11 +909,11 @@ Bool VIAPostDVI(VIABIOSInfoPtr pBIOSInfo)
                 xf86I2CWriteRead(dev, W_Buffer,1, R_Buffer,4);
 
                 if (R_Buffer[0] == 0x06 && R_Buffer[1] == 0x11) {   /* This is VT3192 */
-                    DEBUG(xf86DrvMsg(pBIOSInfo->scrnIndex, X_PROBED,
+                    DEBUGX(xf86DrvMsg(pBIOSInfo->scrnIndex, X_PROBED,
                                      "Found VIA TMDS Transmiter!\n"));
                     pBIOSInfo->TMDS = VIA_VT3192;
                     if (R_Buffer[2] == 0x92 && R_Buffer[3] == 0x31) {
-                        DEBUG(xf86DrvMsg(pBIOSInfo->scrnIndex, X_PROBED,
+                        DEBUGX(xf86DrvMsg(pBIOSInfo->scrnIndex, X_PROBED,
                                          "VIA: VT1632!\n"));
                         pBIOSInfo->TMDS = VIA_VT3192;
                         W_Buffer[0] = 0x08;
@@ -930,7 +930,7 @@ Bool VIAPostDVI(VIABIOSInfoPtr pBIOSInfo)
                         ret = TRUE;
                     }
                     else {
-                        DEBUG(xf86DrvMsg(pBIOSInfo->scrnIndex, X_PROBED,
+                        DEBUGX(xf86DrvMsg(pBIOSInfo->scrnIndex, X_PROBED,
                                          "VIA: Unknow Chip!!\n"));
                         xf86DestroyI2CDevRec(dev,TRUE);
                     }
@@ -1063,12 +1063,12 @@ Bool VIAPostDVI(VIABIOSInfoPtr pBIOSInfo)
                         }
                         W_Buffer[1] = R_Buffer[0] | 0x01;
                         xf86I2CWriteRead(dev, W_Buffer,2, NULL,0);
-                        DEBUG(xf86DrvMsg(pBIOSInfo->scrnIndex, X_PROBED, "CH7019 PLL lock ok!\n"));
+                        DEBUGX(xf86DrvMsg(pBIOSInfo->scrnIndex, X_PROBED, "CH7019 PLL lock ok!\n"));
                         break;
                     }
                 }
 #endif
-                DEBUG(xf86DrvMsg(pBIOSInfo->scrnIndex, X_PROBED, "Found Chrontel LVDS Transmiter!\n"));
+                DEBUGX(xf86DrvMsg(pBIOSInfo->scrnIndex, X_PROBED, "Found Chrontel LVDS Transmiter!\n"));
                 pBIOSInfo->LVDS = VIA_CH7019LVDS;
                 /*pBIOSInfo->BusWidth = VIA_DI_12BIT;*/
                 ret = TRUE;
@@ -1088,7 +1088,7 @@ Bool VIAPostDVI(VIABIOSInfoPtr pBIOSInfo)
         if (R_Buffer[0] == 0x06 && R_Buffer[1] == 0x11) {   /* VIA LVDS */
             VIAGPIOI2C_Read(pBIOSInfo, 2, R_Buffer, 2);
             if (R_Buffer[0] == 0x91 && R_Buffer[1] == 0x31) {
-                DEBUG(xf86DrvMsg(pBIOSInfo->scrnIndex, X_PROBED,
+                DEBUGX(xf86DrvMsg(pBIOSInfo->scrnIndex, X_PROBED,
                                  "Found LVDS Transmiter VT1631.\n"));
                 pBIOSInfo->LVDS = VIA_VT3191;
                 if (pBIOSInfo->BusWidth == VIA_DI_24BIT && pBIOSInfo->LCDDualEdge)
@@ -1101,7 +1101,7 @@ Bool VIAPostDVI(VIABIOSInfoPtr pBIOSInfo)
         else if (R_Buffer[0] == 0x01 && R_Buffer[1] == 0x0) {/* Silicon TMDS */
             VIAGPIOI2C_Read(pBIOSInfo, 2, R_Buffer, 2);
             if (R_Buffer[0] && R_Buffer[1]) {
-                DEBUG(xf86DrvMsg(pBIOSInfo->scrnIndex, X_PROBED,
+                DEBUGX(xf86DrvMsg(pBIOSInfo->scrnIndex, X_PROBED,
                                  "Found TMDS Transmiter Silicon164.\n"));
                 pBIOSInfo->TMDS = VIA_SIL164;
                 if (pBIOSInfo->BusWidth == VIA_DI_24BIT) {
@@ -1123,7 +1123,7 @@ Bool VIAPostDVI(VIABIOSInfoPtr pBIOSInfo)
         if (R_Buffer[0] == 0x06 && R_Buffer[1] == 0x11) {   /* VIA TMDS */
             VIAGPIOI2C_Read(pBIOSInfo, 2, R_Buffer, 2);
             if (R_Buffer[0] == 0x92 && R_Buffer[1] == 0x31) {
-                DEBUG(xf86DrvMsg(pBIOSInfo->scrnIndex, X_PROBED,
+                DEBUGX(xf86DrvMsg(pBIOSInfo->scrnIndex, X_PROBED,
                                  "Found TMDS Transmiter VT1632.\n"));
                 pBIOSInfo->TMDS = VIA_VT3192;
                 if (pBIOSInfo->BusWidth == VIA_DI_24BIT) {
@@ -1151,7 +1151,7 @@ Bool VIAPostDVI(VIABIOSInfoPtr pBIOSInfo)
     if (pBIOSInfo->LVDS && pBIOSInfo->PanelSize == VIA_PANEL_INVALID) {
         VGAOUT8(0x3d4, 0x3F);
         pBIOSInfo->PanelSize = (int)(VGAIN8(0x3d5) >> 4);
-        DEBUG(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO,
+        DEBUGX(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO,
              "Get PanelID From Scratch Pad is %d\n", pBIOSInfo->PanelSize));
     }
 
@@ -1186,7 +1186,7 @@ unsigned char VIAGetDeviceDetect(VIABIOSInfoPtr pBIOSInfo)
 {
     unsigned char tmp, sense;
 
-    DEBUG(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "VIAGetDeviceDetect\n"));
+    DEBUGX(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "VIAGetDeviceDetect\n"));
 
     tmp = VIA_DEVICE_CRT1; /* Default assume color CRT attached */
 /*
@@ -1226,7 +1226,7 @@ unsigned char VIAGetDeviceDetect(VIABIOSInfoPtr pBIOSInfo)
                         pBIOSInfo->TVOutput = TVOUTPUT_COMPOSITE;
                     }
                 }
-                DEBUG(xf86DrvMsg(pBIOSInfo->scrnIndex, X_PROBED, "TV2 sense = %d ,TVOutput = %d\n", sense, pBIOSInfo->TVOutput));
+                DEBUGX(xf86DrvMsg(pBIOSInfo->scrnIndex, X_PROBED, "TV2 sense = %d ,TVOutput = %d\n", sense, pBIOSInfo->TVOutput));
             }
             break;
         case VIA_TV3:
@@ -1249,7 +1249,7 @@ unsigned char VIAGetDeviceDetect(VIABIOSInfoPtr pBIOSInfo)
                         pBIOSInfo->TVOutput = TVOUTPUT_SVIDEO;
                     }
                 }
-                DEBUG(xf86DrvMsg(pBIOSInfo->scrnIndex, X_PROBED, "TV3 sense = %d ,TVOutput = %d\n", sense, pBIOSInfo->TVOutput));
+                DEBUGX(xf86DrvMsg(pBIOSInfo->scrnIndex, X_PROBED, "TV3 sense = %d ,TVOutput = %d\n", sense, pBIOSInfo->TVOutput));
             }
             break;
         case VIA_CH7009:
@@ -1269,7 +1269,7 @@ unsigned char VIAGetDeviceDetect(VIABIOSInfoPtr pBIOSInfo)
                         pBIOSInfo->TVOutput = TVOUTPUT_SVIDEO;
                     }
                 }
-                DEBUG(xf86DrvMsg(pBIOSInfo->scrnIndex, X_PROBED, "CH7019 sense = %d ,TVOutput = %d\n", sense, pBIOSInfo->TVOutput));
+                DEBUGX(xf86DrvMsg(pBIOSInfo->scrnIndex, X_PROBED, "CH7019 sense = %d ,TVOutput = %d\n", sense, pBIOSInfo->TVOutput));
             }
             break;
         case VIA_SAA7108:
@@ -1299,7 +1299,7 @@ unsigned char VIAGetDeviceDetect(VIABIOSInfoPtr pBIOSInfo)
                             break;
                     }
                 }
-                DEBUG(xf86DrvMsg(pBIOSInfo->scrnIndex, X_PROBED, "SAA7108 sense = %d ,TVOutput = %d\n", sense, pBIOSInfo->TVOutput));
+                DEBUGX(xf86DrvMsg(pBIOSInfo->scrnIndex, X_PROBED, "SAA7108 sense = %d ,TVOutput = %d\n", sense, pBIOSInfo->TVOutput));
             }
             break;
         case VIA_FS454:
@@ -1314,13 +1314,13 @@ unsigned char VIAGetDeviceDetect(VIABIOSInfoPtr pBIOSInfo)
         if (VIASensorDVI(pBIOSInfo)) {
             tmp |= VIA_DEVICE_DFP;
             pBIOSInfo->DVIAttach = TRUE;
-            DEBUG(xf86DrvMsg(pBIOSInfo->scrnIndex, X_PROBED, "DVI has Attachment.\n"));
+            DEBUGX(xf86DrvMsg(pBIOSInfo->scrnIndex, X_PROBED, "DVI has Attachment.\n"));
             if (pBIOSInfo->PanelSize == VIA_PANEL_INVALID)
                 VIAGetPanelInfo(pBIOSInfo);
         }
         else {
             pBIOSInfo->DVIAttach = FALSE;
-            DEBUG(xf86DrvMsg(pBIOSInfo->scrnIndex, X_PROBED, "DVI hasn't Attachment.\n"));
+            DEBUGX(xf86DrvMsg(pBIOSInfo->scrnIndex, X_PROBED, "DVI hasn't Attachment.\n"));
         }
     }
 
@@ -1337,11 +1337,11 @@ unsigned char VIAGetDeviceDetect(VIABIOSInfoPtr pBIOSInfo)
 	if (xf86I2CProbeAddress(pBIOSInfo->I2C_Port2, 0xA0) || 
 	    xf86I2CProbeAddress(pBIOSInfo->I2C_Port2, 0xA2)) {
 	    tmp |= VIA_DEVICE_LCD;
-	    DEBUG(xf86DrvMsg(pBIOSInfo->scrnIndex, X_PROBED, "DDC/EDID response on I2C_Port2 on km400/kn400: assume hardwired panel.\n"));
+	    DEBUGX(xf86DrvMsg(pBIOSInfo->scrnIndex, X_PROBED, "DDC/EDID response on I2C_Port2 on km400/kn400: assume hardwired panel.\n"));
 	}
     }
 
-    DEBUG(xf86DrvMsg(pBIOSInfo->scrnIndex, X_PROBED, "Returning %d.\n", tmp));
+    DEBUGX(xf86DrvMsg(pBIOSInfo->scrnIndex, X_PROBED, "Returning %d.\n", tmp));
     return tmp;
 }
 
@@ -1443,7 +1443,7 @@ int VIAQueryDVIEDID(VIABIOSInfoPtr pBIOSInfo)
     unsigned char   W_Buffer[1];
     unsigned char   R_Buffer[2];
 
-    DEBUG(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "VIAQueryDVIEDID\n"));
+    DEBUGX(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "VIAQueryDVIEDID\n"));
     if (xf86I2CProbeAddress(pBIOSInfo->I2C_Port2, 0xA0)) {
         pBIOSInfo->dev = xf86CreateI2CDevRec();
         dev = pBIOSInfo->dev;
@@ -1500,14 +1500,14 @@ int VIAQueryDVIEDID(VIABIOSInfoPtr pBIOSInfo)
     if (pBIOSInfo->Chipset != VIA_CLE266) {
         VIAGPIOI2C_Initial(pBIOSInfo, 0xA0);
         VIAGPIOI2C_Read(pBIOSInfo, 0, R_Buffer, 2);
-        DEBUG(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "R_Buffer[0]=%d\n", R_Buffer[0]));
-        DEBUG(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "R_Buffer[1]=%d\n", R_Buffer[1]));
+        DEBUGX(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "R_Buffer[0]=%d\n", R_Buffer[0]));
+        DEBUGX(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "R_Buffer[1]=%d\n", R_Buffer[1]));
         if ((R_Buffer[0] == 0) && (R_Buffer[1] == 0xFF))
             return 1; /* Found EDID1 Table */
         else {
             VIAGPIOI2C_Initial(pBIOSInfo, 0xA2);
             VIAGPIOI2C_Read(pBIOSInfo, 0, R_Buffer, 1);
-            DEBUG(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "R_Buffer[0]=%d\n", R_Buffer[0]));
+            DEBUGX(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "R_Buffer[0]=%d\n", R_Buffer[0]));
             if (R_Buffer[0] == 0x20)
                 return 2; /* Found EDID2 Table */
             else
@@ -1551,7 +1551,7 @@ unsigned char VIAGetPanelSizeFromDDCv1(VIABIOSInfoPtr pBIOSInfo)
     unsigned char   W_Buffer[1];
     unsigned char   R_Buffer[1];
 
-    DEBUG(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "VIAGetPanelSizeFromDDCv1\n"));
+    DEBUGX(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "VIAGetPanelSizeFromDDCv1\n"));
     for (i = 0x23; i < 0x35; i++) {
         switch (i) {
             case 0x23:
@@ -1687,7 +1687,7 @@ unsigned char VIAGetPanelSizeFromDDCv2(VIABIOSInfoPtr pBIOSInfo)
     unsigned char   W_Buffer[1];
     unsigned char   R_Buffer[1];
 
-    DEBUG(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "VIAGetPanelSizeFromDDCv2\n"));
+    DEBUGX(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "VIAGetPanelSizeFromDDCv2\n"));
     if (pBIOSInfo->Chipset == VIA_CLE266) {
     W_Buffer[0] = 0x77;
     xf86I2CWriteRead(pBIOSInfo->dev, W_Buffer,1, R_Buffer,1);
@@ -1760,7 +1760,7 @@ unsigned char VIAGetPanelInfo(VIABIOSInfoPtr pBIOSInfo)
     VIABIOSInfoPtr  pVia = pBIOSInfo;
     unsigned char   cr6c, cr93;
 
-    DEBUG(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "VIAGetPanelInfo\n"));
+    DEBUGX(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "VIAGetPanelInfo\n"));
 
     if (pBIOSInfo->PanelSize == VIA_PANEL_INVALID) {
 
@@ -1801,7 +1801,7 @@ unsigned char VIAGetPanelInfo(VIABIOSInfoPtr pBIOSInfo)
         VGAOUT8(0x3d5, cr93);
     }
 
-    DEBUG(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "PanelSize = %d\n", pBIOSInfo->PanelSize));
+    DEBUGX(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "PanelSize = %d\n", pBIOSInfo->PanelSize));
     return (unsigned char)(pBIOSInfo->PanelSize);
 }
 
@@ -5383,10 +5383,10 @@ void VIAGetCH7019Mask(VIAModeTablePtr   pViaModeTable,
     int                 i, j, k, m;
     CARD16              tmp;
 
-    DEBUG(xf86Msg(X_INFO, "VIAGetCH7019Mask\n"));
+    DEBUGX(xf86Msg(X_INFO, "VIAGetCH7019Mask\n"));
     /* Get start of TV Mask Table */
     pRom = pTable + VIA_BIOS_TVMASKTAB_POS;
-    DEBUG(xf86Msg(X_INFO, "csTVMaskTbl: %X\n", *((CARD16 *)pRom)));
+    DEBUGX(xf86Msg(X_INFO, "csTVMaskTbl: %X\n", *((CARD16 *)pRom)));
     pRom = pBIOS + *((CARD16 *)pRom);
 
     for (i = 0, j = 0, k = 0; i < 9; i++) {
@@ -5455,13 +5455,13 @@ void VIAGetCH7019NTSC(VIAModeTablePtr  pViaModeTable,
     pCH7019Tab = NULL;
     pTVTable = NULL;
 
-    DEBUG(xf86Msg(X_INFO, "VIAGetCH7019NTSC\n"));
+    DEBUGX(xf86Msg(X_INFO, "VIAGetCH7019NTSC\n"));
     for (vScan = 0; vScan < 2; vScan++) {
         switch (vScan) {
             case VIA_TVNORMAL:
                 /* Get pointer table of all mode */
                 pRom = pTable + VIA_BIOS_TVMODETAB_POS;
-                DEBUG(xf86Msg(X_INFO, "csTVModeTbl: %X\n", *((CARD16 *)pRom)));
+                DEBUGX(xf86Msg(X_INFO, "csTVModeTbl: %X\n", *((CARD16 *)pRom)));
                 pTVTable = pBIOS + *((CARD16 *)pRom);
 
                 pCH7019Tab = pViaModeTable->ch7019Table;
@@ -5470,7 +5470,7 @@ void VIAGetCH7019NTSC(VIAModeTablePtr  pViaModeTable,
             case VIA_TVOVER:
                 /* Get pointer table of all mode */
                 pRom = pTable + VIA_BIOS_MODEOVERTAB_POS;
-                DEBUG(xf86Msg(X_INFO, "csTVModeOverTbl: %X\n", *((CARD16 *)pRom)));
+                DEBUGX(xf86Msg(X_INFO, "csTVModeOverTbl: %X\n", *((CARD16 *)pRom)));
                 pTVTable = pBIOS + *((CARD16 *)pRom);
 
                 pCH7019Tab = pViaModeTable->ch7019OverTable;
@@ -5590,7 +5590,7 @@ void VIAGetCH7019PAL(VIAModeTablePtr   pViaModeTable,
     pCH7019Tab = NULL;
     pTVTable = NULL;
 
-    DEBUG(xf86Msg(X_INFO, "VIAGetSAA7108PAL\n"));
+    DEBUGX(xf86Msg(X_INFO, "VIAGetSAA7108PAL\n"));
     for (vScan = 0; vScan < 2; vScan++) {
         switch (vScan) {
             case VIA_TVNORMAL:
@@ -5704,10 +5704,10 @@ void VIAGetSAA7108Mask(VIAModeTablePtr   pViaModeTable,
     int                 i, j, k, m;
     CARD16              tmp;
 
-    DEBUG(xf86Msg(X_INFO, "VIAGetSAA7108Mask\n"));
+    DEBUGX(xf86Msg(X_INFO, "VIAGetSAA7108Mask\n"));
     /* Get start of TV Mask Table */
     pRom = pTable + VIA_BIOS_TVMASKTAB_POS;
-    DEBUG(xf86Msg(X_INFO, "csTVMaskTbl: %X\n", *((CARD16 *)pRom)));
+    DEBUGX(xf86Msg(X_INFO, "csTVMaskTbl: %X\n", *((CARD16 *)pRom)));
     pRom = pBIOS + *((CARD16 *)pRom);
 
     for (i = 0, j = 0, k = 0; i < 11; i++) {
@@ -5776,13 +5776,13 @@ void VIAGetSAA7108NTSC(VIAModeTablePtr  pViaModeTable,
     pSAA7108Tab = NULL;
     pTVTable = NULL;
 
-    DEBUG(xf86Msg(X_INFO, "VIAGetSAA7108NTSC\n"));
+    DEBUGX(xf86Msg(X_INFO, "VIAGetSAA7108NTSC\n"));
     for (vScan = 0; vScan < 2; vScan++) {
         switch (vScan) {
             case VIA_TVNORMAL:
                 /* Get pointer table of all mode */
                 pRom = pTable + VIA_BIOS_TVMODETAB_POS;
-                DEBUG(xf86Msg(X_INFO, "csTVModeTbl: %X\n", *((CARD16 *)pRom)));
+                DEBUGX(xf86Msg(X_INFO, "csTVModeTbl: %X\n", *((CARD16 *)pRom)));
                 pTVTable = pBIOS + *((CARD16 *)pRom);
 
                 pSAA7108Tab = pViaModeTable->saa7108Table;
@@ -5791,7 +5791,7 @@ void VIAGetSAA7108NTSC(VIAModeTablePtr  pViaModeTable,
             case VIA_TVOVER:
                 /* Get pointer table of all mode */
                 pRom = pTable + VIA_BIOS_MODEOVERTAB_POS;
-                DEBUG(xf86Msg(X_INFO, "csTVModeOverTbl: %X\n", *((CARD16 *)pRom)));
+                DEBUGX(xf86Msg(X_INFO, "csTVModeOverTbl: %X\n", *((CARD16 *)pRom)));
                 pTVTable = pBIOS + *((CARD16 *)pRom);
 
                 pSAA7108Tab = pViaModeTable->saa7108OverTable;
@@ -5922,7 +5922,7 @@ void VIAGetSAA7108PAL(VIAModeTablePtr   pViaModeTable,
     pSAA7108Tab = NULL;
     pTVTable = NULL;
 
-    DEBUG(xf86Msg(X_INFO, "VIAGetSAA7108PAL\n"));
+    DEBUGX(xf86Msg(X_INFO, "VIAGetSAA7108PAL\n"));
     for (vScan = 0; vScan < 2; vScan++) {
         switch (vScan) {
             case VIA_TVNORMAL:
@@ -6058,7 +6058,7 @@ void VIAGetTV2Mask(VIAModeTablePtr   pViaModeTable,
     int                 i, j, k, m;
     CARD16              tmp;
 
-    DEBUG(xf86Msg(X_INFO, "VIAGetTV2Mask\n"));
+    DEBUGX(xf86Msg(X_INFO, "VIAGetTV2Mask\n"));
     /* Get start of TV Mask Table */
     pRom = pTable + VIA_BIOS_TVMASKTAB_POS;
     pRom = pBIOS + *((CARD16 *)pRom);
@@ -6122,10 +6122,10 @@ void VIAGetTV3Mask(VIAModeTablePtr   pViaModeTable,
     int                 i, j, k, m;
     CARD16              tmp;
 
-    DEBUG(xf86Msg(X_INFO, "VIAGetTV3Mask\n"));
+    DEBUGX(xf86Msg(X_INFO, "VIAGetTV3Mask\n"));
     /* Get start of TV Mask Table */
     pRom = pTable + VIA_BIOS_TVMASKTAB_POS;
-    DEBUG(xf86Msg(X_INFO, "csTVMaskTbl: %X\n", *((CARD16 *)pRom)));
+    DEBUGX(xf86Msg(X_INFO, "csTVMaskTbl: %X\n", *((CARD16 *)pRom)));
     pRom = pBIOS + *((CARD16 *)pRom);
 
     for (i = 0, j = 0, k = 0; i < 9; i++) {
@@ -6195,7 +6195,7 @@ void VIAGetTV2NTSC(VIAModeTablePtr pViaModeTable,
     pTV2Tab = NULL;
     pTVTable = NULL;
 
-    DEBUG(xf86Msg(X_INFO, "VIAGetTV2NTSC\n"));
+    DEBUGX(xf86Msg(X_INFO, "VIAGetTV2NTSC\n"));
     for (vScan = 0; vScan < 2; vScan++) {
         switch (vScan) {
             case VIA_TVNORMAL:
@@ -6334,7 +6334,7 @@ void VIAGetTV2PAL(VIAModeTablePtr pViaModeTable,
     pTV2Tab = NULL;
     pTVTable = NULL;
 
-    DEBUG(xf86Msg(X_INFO, "VIAGetTV2PAL\n"));
+    DEBUGX(xf86Msg(X_INFO, "VIAGetTV2PAL\n"));
     for (vScan = 0; vScan < 2; vScan++) {
         switch (vScan) {
             case VIA_TVNORMAL:
@@ -6462,13 +6462,13 @@ void VIAGetTV3NTSC(VIAModeTablePtr  pViaModeTable,
     pTV3Tab = NULL;
     pTVTable = NULL;
 
-    DEBUG(xf86Msg(X_INFO, "VIAGetTV3NTSC\n"));
+    DEBUGX(xf86Msg(X_INFO, "VIAGetTV3NTSC\n"));
     for (vScan = 0; vScan < 2; vScan++) {
         switch (vScan) {
             case VIA_TVNORMAL:
                 /* Get pointer table of all mode */
                 pRom = pTable + VIA_BIOS_TVMODETAB_POS;
-                DEBUG(xf86Msg(X_INFO, "csTVModeTbl: %X\n", *((CARD16 *)pRom)));
+                DEBUGX(xf86Msg(X_INFO, "csTVModeTbl: %X\n", *((CARD16 *)pRom)));
                 pTVTable = pBIOS + *((CARD16 *)pRom);
 
                 pTV3Tab = pViaModeTable->tv3Table;
@@ -6477,7 +6477,7 @@ void VIAGetTV3NTSC(VIAModeTablePtr  pViaModeTable,
             case VIA_TVOVER:
                 /* Get pointer table of all mode */
                 pRom = pTable + VIA_BIOS_MODEOVERTAB_POS;
-                DEBUG(xf86Msg(X_INFO, "csTVModeOverTbl: %X\n", *((CARD16 *)pRom)));
+                DEBUGX(xf86Msg(X_INFO, "csTVModeOverTbl: %X\n", *((CARD16 *)pRom)));
                 pTVTable = pBIOS + *((CARD16 *)pRom);
 
                 pTV3Tab = pViaModeTable->tv3OverTable;
@@ -6641,10 +6641,10 @@ void VIAGetFS454Mask(VIAModeTablePtr   pViaModeTable,
     int                 i, j, k, m;
     CARD16              tmp;
 
-    DEBUG(xf86Msg(X_INFO, "VIAGetFS454Mask\n"));
+    DEBUGX(xf86Msg(X_INFO, "VIAGetFS454Mask\n"));
     /* Get start of TV Mask Table */
     pRom = pTable + VIA_BIOS_TVMASKTAB_POS;
-	DEBUG(xf86Msg(X_INFO, "csTVMaskTbl: %X\n", *((CARD16 *)pRom)));
+	DEBUGX(xf86Msg(X_INFO, "csTVMaskTbl: %X\n", *((CARD16 *)pRom)));
     pRom = pBIOS + *((CARD16 *)pRom);
 
 	/* Skip Zero TV Register Mask Table */
@@ -6700,13 +6700,13 @@ void VIAGetFS454NTSC(VIAModeTablePtr  pViaModeTable,
     pFS454Tbl = NULL;
     pTVTable = NULL;
 
-    DEBUG(xf86Msg(X_INFO, "VIAGetFS454NTSC\n"));
+    DEBUGX(xf86Msg(X_INFO, "VIAGetFS454NTSC\n"));
     for (vScan = 0; vScan < 2; vScan++) {
         switch (vScan) {
             case VIA_TVNORMAL:
                 /* Get pointer table of all mode */
                 pRom = pTable + VIA_BIOS_TVMODETAB_POS;
-                DEBUG(xf86Msg(X_INFO, "csTVModeTbl: %X\n", *((CARD16 *)pRom)));
+                DEBUGX(xf86Msg(X_INFO, "csTVModeTbl: %X\n", *((CARD16 *)pRom)));
                 pTVTable = pBIOS + *((CARD16 *)pRom);
 
                 pFS454Tbl = pViaModeTable->fs454Table;
@@ -6715,7 +6715,7 @@ void VIAGetFS454NTSC(VIAModeTablePtr  pViaModeTable,
             case VIA_TVOVER:
                 /* Get pointer table of all mode */
                 pRom = pTable + VIA_BIOS_MODEOVERTAB_POS;
-                DEBUG(xf86Msg(X_INFO, "csTVModeOverTbl: %X\n", *((CARD16 *)pRom)));
+                DEBUGX(xf86Msg(X_INFO, "csTVModeOverTbl: %X\n", *((CARD16 *)pRom)));
                 pTVTable = pBIOS + *((CARD16 *)pRom);
 
                 pFS454Tbl = pViaModeTable->fs454OverTable;
@@ -6851,7 +6851,7 @@ void VIAGetTV3PAL(VIAModeTablePtr   pViaModeTable,
     pTV3Tab = NULL;
     pTVTable = NULL;
 
-    DEBUG(xf86Msg(X_INFO, "VIAGetTV3PAL\n"));
+    DEBUGX(xf86Msg(X_INFO, "VIAGetTV3PAL\n"));
     for (vScan = 0; vScan < 2; vScan++) {
         switch (vScan) {
             case VIA_TVNORMAL:
@@ -7011,7 +7011,7 @@ int VIAGetTVTabVer(VIABIOSInfoPtr   pBIOSInfo,
 {
     unsigned char       *pRom, *pTable;
 
-    DEBUG(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "VIAGetTVTabVer\n"));
+    DEBUGX(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "VIAGetTVTabVer\n"));
     /* Get the start of Table */
     pRom = pBIOS + VIA_BIOS_OFFSET_POS;
     pTable = pBIOS + *((CARD16 *)pRom);
@@ -7045,7 +7045,7 @@ Bool VIAGetBIOSTable(VIABIOSInfoPtr pBIOSInfo)
     int             i = 0, j, k, m, sum;
 
 
-    DEBUG(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "VIAGetBIOSTable\n"));
+    DEBUGX(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "VIAGetBIOSTable\n"));
 
     if (!(pBIOS=xcalloc(1, 0x10000)))  {
         ErrorF("Allocate memory fail !!\n");
@@ -7188,11 +7188,11 @@ Bool VIAGetBIOSTable(VIABIOSInfoPtr pBIOSInfo)
             pViaModeTable->powerOff[i] = powerOff[i];
         }
         pViaModeTable->modeFix = modeFix;
-        DEBUG(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "BIOS Version: %x.%x\n",
+        DEBUGX(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "BIOS Version: %x.%x\n",
                 (pViaModeTable->BIOSVer >> 8), (pViaModeTable->BIOSVer & 0xFF)));
-        DEBUG(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "BIOS Release Date: %s\n", pViaModeTable->BIOSDate));
-        DEBUG(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "Get mode table from via_mode.h\n"));
-        DEBUG(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "-- VIAGetBIOSTable Done!\n"));
+        DEBUGX(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "BIOS Release Date: %s\n", pViaModeTable->BIOSDate));
+        DEBUGX(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "Get mode table from via_mode.h\n"));
+        DEBUGX(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "-- VIAGetBIOSTable Done!\n"));
         xfree(pBIOS);
         return TRUE;
     }
@@ -7202,7 +7202,7 @@ Bool VIAGetBIOSTable(VIABIOSInfoPtr pBIOSInfo)
 
     /* Get the start of biosver structure */
     pRom = pTable + VIA_BIOS_BIOSVER_POS;
-    DEBUG(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "bcpPost: %X\n", i, *((CARD16 *)pRom)));
+    DEBUGX(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "bcpPost: %X\n", i, *((CARD16 *)pRom)));
     pRom = pBIOS + *((CARD16 *)pRom);
 
     /* The offset should be 44, but the actual image is less three char. */
@@ -7228,11 +7228,11 @@ Bool VIAGetBIOSTable(VIABIOSInfoPtr pBIOSInfo)
 
     /* Get CSTAB Tables */
     pRom = pTable + VIA_BIOS_CSTAB_POS;
-    DEBUG(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "cstabExtendEnd: %X\n", *((CARD16 *)pRom)));
+    DEBUGX(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "cstabExtendEnd: %X\n", *((CARD16 *)pRom)));
     pRom = pBIOS + *((CARD16 *)pRom);
 
     pViaModeTable->NumModes = *pRom;
-    DEBUG(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "BIOS Support Mode Numbers: %hu\n", pViaModeTable->NumModes));
+    DEBUGX(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "BIOS Support Mode Numbers: %hu\n", pViaModeTable->NumModes));
     pViaModeTable->Modes = (VIAModeEntryPtr) xcalloc(pViaModeTable->NumModes,
                                                    sizeof(VIAModeEntry));
 
@@ -7403,7 +7403,7 @@ Bool VIAGetBIOSTable(VIABIOSInfoPtr pBIOSInfo)
 
     /* Get Set Mode Regs. Init. (Standard VGA) */
     pRom = pTable + VIA_BIOS_STDVGAREGTAB_POS;
-    DEBUG(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "csVidParams: %X\n", *((CARD16 *)pRom)));
+    DEBUGX(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "csVidParams: %X\n", *((CARD16 *)pRom)));
     pRom = pBIOS + *((CARD16 *)pRom);
 
     for (i = 0; i < pViaModeTable->NumModes; i++) {
@@ -7435,7 +7435,7 @@ Bool VIAGetBIOSTable(VIABIOSInfoPtr pBIOSInfo)
 
     /* Get Commmon Ext. Regs */
     pRom = pTable + VIA_BIOS_COMMEXTREGTAB_POS;
-    DEBUG(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "Mode_XRegs: %X\n", *((CARD16 *)pRom)));
+    DEBUGX(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "Mode_XRegs: %X\n", *((CARD16 *)pRom)));
     pRom = pBIOS + *((CARD16 *)pRom);
 
     for (j = 0; *pRom != 0xFF; j++) {
@@ -7463,7 +7463,7 @@ Bool VIAGetBIOSTable(VIABIOSInfoPtr pBIOSInfo)
 
     /* Get Standard Mode-Spec. Extend Regs */
     pRom = pTable + VIA_BIOS_STDMODEXTREGTAB_POS;
-    DEBUG(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "StdMode_XRegs: %X\n", *((CARD16 *)pRom)));
+    DEBUGX(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "StdMode_XRegs: %X\n", *((CARD16 *)pRom)));
     pRom = pBIOS + *((CARD16 *)pRom);
 
     for (j = 0; *pRom != 0xFF; j++) {
@@ -7491,7 +7491,7 @@ Bool VIAGetBIOSTable(VIABIOSInfoPtr pBIOSInfo)
 
     /* Get Extended Mode-Spec. Extend Regs */
     pRom = pTable + VIA_BIOS_EXTMODEREGTAB_POS;
-    DEBUG(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "csextModeTbl: %X\n", *((CARD16 *)pRom)));
+    DEBUGX(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "csextModeTbl: %X\n", *((CARD16 *)pRom)));
     pRom = pBIOS + *((CARD16 *)pRom);
 
     while (*pRom != 0xFF) {
@@ -7543,7 +7543,7 @@ Bool VIAGetBIOSTable(VIABIOSInfoPtr pBIOSInfo)
 
     /* Get Refresh Rate Table */
     pRom = pTable + VIA_BIOS_REFRESHMODETAB_POS;
-    DEBUG(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "csModeRateTbl: %X\n", *((CARD16 *)pRom)));
+    DEBUGX(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "csModeRateTbl: %X\n", *((CARD16 *)pRom)));
     pRom = pBIOS + *((CARD16 *)pRom);
 
     for (i = 0; i < VIA_BIOS_NUM_RES; i++) {
@@ -7645,7 +7645,7 @@ Bool VIAGetBIOSTable(VIABIOSInfoPtr pBIOSInfo)
 
     /* No. of Support Panels */
     pRom += 6; /* Skip six char. - "FPANEL" */
-    DEBUG(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "numSuptPanel: %X\n", *pRom));
+    DEBUGX(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "numSuptPanel: %X\n", *pRom));
     numSuptPanel = *pRom;
 
     /* Point to LCD 640x480 Table */
@@ -7689,7 +7689,7 @@ Bool VIAGetBIOSTable(VIABIOSInfoPtr pBIOSInfo)
 
         /* Get FPconfig Table */
         pRom = pLCDTable;
-        DEBUG(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "FPconfigTbl000%d: %X\n", i, *((CARD16 *)pRom)));
+        DEBUGX(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "FPconfigTbl000%d: %X\n", i, *((CARD16 *)pRom)));
         pRom = pBIOS + *((CARD16 *)pRom);
 
         for (j = 0; *pRom != 0xFF; j++) {
@@ -7950,12 +7950,12 @@ Bool VIAGetBIOSTable(VIABIOSInfoPtr pBIOSInfo)
     /* Get start of PowerOn Seqence Table */
     if (VIAGetTVTabVer(pBIOSInfo, pBIOS) == 3) {
         pRom = pTable + VIA_BIOS_LCDPOWERON_POS;
-        DEBUG(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "LCD_POWER_ON: %X\n", *((CARD16 *)pRom)));
+        DEBUGX(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "LCD_POWER_ON: %X\n", *((CARD16 *)pRom)));
         pRom = pBIOS + *((CARD16 *)pRom);
     }
     else {
         pRom = pTable + VIA_BIOS_LCDPOWERON_POS - 2;
-        DEBUG(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "LCD_POWER_ON: %X\n", *((CARD16 *)pRom)));
+        DEBUGX(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "LCD_POWER_ON: %X\n", *((CARD16 *)pRom)));
         pRom = pBIOS + *((CARD16 *)pRom);
     }
 
@@ -7998,12 +7998,12 @@ Bool VIAGetBIOSTable(VIABIOSInfoPtr pBIOSInfo)
     /* Get start of PowerOff Seqence Table */
     if (VIAGetTVTabVer(pBIOSInfo, pBIOS) == 3) {
         pRom = pTable + VIA_BIOS_LCDPOWEROFF_POS;
-        DEBUG(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "LCD_POWER_OFF: %X\n", *((CARD16 *)pRom)));
+        DEBUGX(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "LCD_POWER_OFF: %X\n", *((CARD16 *)pRom)));
         pRom = pBIOS + *((CARD16 *)pRom);
     }
     else {
         pRom = pTable + VIA_BIOS_LCDPOWEROFF_POS - 4;
-        DEBUG(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "LCD_POWER_OFF: %X\n", *((CARD16 *)pRom)));
+        DEBUGX(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "LCD_POWER_OFF: %X\n", *((CARD16 *)pRom)));
         pRom = pBIOS + *((CARD16 *)pRom);
     }
 
@@ -8046,12 +8046,12 @@ Bool VIAGetBIOSTable(VIABIOSInfoPtr pBIOSInfo)
     /* Get start of Mode Fix Table */
     if (VIAGetTVTabVer(pBIOSInfo, pBIOS) == 3) {
         pRom = pTable + VIA_BIOS_LCDMODEFIX_POS;
-        DEBUG(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "LCD_MODEFIX: %X\n", *((CARD16 *)pRom)));
+        DEBUGX(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "LCD_MODEFIX: %X\n", *((CARD16 *)pRom)));
         pRom = pBIOS + *((CARD16 *)pRom);
     }
     else {
         pRom = pTable + VIA_BIOS_LCDMODEFIX_POS - 4;
-        DEBUG(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "LCD_MODEFIX: %X\n", *((CARD16 *)pRom)));
+        DEBUGX(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "LCD_MODEFIX: %X\n", *((CARD16 *)pRom)));
         pRom = pBIOS + *((CARD16 *)pRom);
     }
 
@@ -8106,7 +8106,7 @@ int VIAFindSupportRefreshRate(VIABIOSInfoPtr pBIOSInfo, int resIndex)
     int             needRefresh;
     const int       *supRefTab;
 
-    DEBUG(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "VIAFindSupportRefreshRate\n"));
+    DEBUGX(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "VIAFindSupportRefreshRate\n"));
     bppIndex = 0;
     supRefTab = NULL;
     needRefresh = pBIOSInfo->Refresh;
@@ -8178,7 +8178,7 @@ Bool VIAFindModeUseBIOSTable(VIABIOSInfoPtr pBIOSInfo)
     int             modeNum, tmp;
     Bool            setVirtual = FALSE;
 
-    DEBUG(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "VIAFindModeUseBIOSTable\n"));
+    DEBUGX(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "VIAFindModeUseBIOSTable\n"));
     pViaModeTable = pBIOSInfo->pModeTable;
 
     i = 0;
@@ -8503,7 +8503,7 @@ Bool VIAFindModeUseBIOSTable(VIABIOSInfoPtr pBIOSInfo)
     pBIOSInfo->offsetWidthByQWord = (pBIOSInfo->displayWidth * (pBIOSInfo->bitsPerPixel >> 3)) >> 3;
     pBIOSInfo->countWidthByQWord = (pBIOSInfo->CrtcHDisplay * (pBIOSInfo->bitsPerPixel >> 3)) >> 3;
 
-    DEBUG(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "pBISOInfo->FoundRefresh: %d\n", pBIOSInfo->FoundRefresh));
+    DEBUGX(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "pBISOInfo->FoundRefresh: %d\n", pBIOSInfo->FoundRefresh));
     return TRUE;
 }
 
@@ -8520,7 +8520,7 @@ void VIASetLCDMode(VIABIOSInfoPtr pBIOSInfo)
 
     modeNum = (CARD8)(pViaModeTable->Modes[pBIOSInfo->mode].Mode);
 
-    DEBUG(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "VIASetLCDMode\n"));
+    DEBUGX(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "VIASetLCDMode\n"));
     /* Panel Size 1600x1200 Not Supported Now*/
     if (pBIOSInfo->PanelSize == VIA_PANEL16X12) {
         xfree(pViaModeTable->BIOSDate);
@@ -9217,7 +9217,7 @@ void VIAPreSetTV2Mode(VIABIOSInfoPtr pBIOSInfo)
     I2CDevPtr       dev;
     unsigned char   R_Buffer[1];
 
-    DEBUG(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "VIAPreSetTV2Mode\n"));
+    DEBUGX(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "VIAPreSetTV2Mode\n"));
     TV = NULL;
     DotCrawl = NULL;
     Patch2 = NULL;
@@ -9334,7 +9334,7 @@ void VIAPreSetCH7019Mode(VIABIOSInfoPtr pBIOSInfo)
     I2CDevPtr       dev;
     unsigned char   R_Buffer[1];
 
-    DEBUG(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "VIAPreSetCH7019Mode\n"));
+    DEBUGX(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "VIAPreSetCH7019Mode\n"));
     DotCrawl = NULL;
     Patch2 = NULL;
     TV = NULL;
@@ -9444,7 +9444,7 @@ void VIAPreSetFS454Mode(VIABIOSInfoPtr pBIOSInfo)
     unsigned char   R_Buffer[1];
     I2CDevPtr       dev;
 
-    DEBUG(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "VIAPreSetFS454Mode\n"));
+    DEBUGX(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "VIAPreSetFS454Mode\n"));
     TV = NULL;
     DotCrawl = NULL;
     RGB = NULL;
@@ -9529,7 +9529,7 @@ void VIAPreSetSAA7108Mode(VIABIOSInfoPtr pBIOSInfo)
     int             w_bytes;
     I2CDevPtr       dev;
 
-    DEBUG(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "VIAPreSetSAA7108Mode\n"));
+    DEBUGX(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "VIAPreSetSAA7108Mode\n"));
     RGB = NULL;
     YCbCr = NULL;
     Patch2 = NULL;
@@ -9682,7 +9682,7 @@ void VIAPreSetVT1623Mode(VIABIOSInfoPtr pBIOSInfo)
     int             w_bytes;
     unsigned char   R_Buffer[1];
 
-    DEBUG(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "VIAPreSetVT1623Mode\n"));
+    DEBUGX(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "VIAPreSetVT1623Mode\n"));
     DotCrawl = NULL;
     RGB = NULL;
     YCbCr = NULL;
@@ -9815,7 +9815,7 @@ void VIAPostSetCH7019Mode(VIABIOSInfoPtr pBIOSInfo)
     Misc1 = NULL;
     Misc2 = NULL;
 
-    DEBUG(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "VIAPostSetCH7019Mode\n"));
+    DEBUGX(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "VIAPostSetCH7019Mode\n"));
 
     if (pBIOSInfo->TVType == TVTYPE_PAL) {
         switch (pBIOSInfo->TVVScan) {
@@ -10023,7 +10023,7 @@ void VIAPostSetFS454Mode(VIABIOSInfoPtr pBIOSInfo)
     CRTC1 = NULL;
     Misc1 = NULL;
 
-    DEBUG(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "VIAPostSetFS454Mode\n"));
+    DEBUGX(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "VIAPostSetFS454Mode\n"));
     switch (pBIOSInfo->TVVScan) {
         case VIA_TVNORMAL:
             CRTC1 = pViaModeTable->fs454Table[tvIndx].CRTCNTSC1;
@@ -10111,7 +10111,7 @@ void VIAPostSetSAA7108Mode(VIABIOSInfoPtr pBIOSInfo)
     Misc1 = NULL;
     Misc2 = NULL;
 
-    DEBUG(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "VIAPostSetSAA7108Mode\n"));
+    DEBUGX(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "VIAPostSetSAA7108Mode\n"));
     if (pBIOSInfo->TVType == TVTYPE_PAL) {
         switch (pBIOSInfo->TVVScan) {
             case VIA_TVNORMAL:
@@ -10321,7 +10321,7 @@ void VIAPostSetTV2Mode(VIABIOSInfoPtr pBIOSInfo)
     Misc1 = NULL;
     Misc2 = NULL;
 
-    DEBUG(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "VIAPostSetTV2Mode\n"));
+    DEBUGX(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "VIAPostSetTV2Mode\n"));
     if (pBIOSInfo->TVType == TVTYPE_PAL) {
         switch (pBIOSInfo->TVVScan) {
             case VIA_TVNORMAL:
@@ -10524,7 +10524,7 @@ void VIAPreSetTV3Mode(VIABIOSInfoPtr pBIOSInfo)
     I2CDevPtr       dev;
     unsigned char   R_Buffer[1];
 
-    DEBUG(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "VIAPreSetTV3Mode\n"));
+    DEBUGX(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "VIAPreSetTV3Mode\n"));
     DotCrawl = NULL;
     RGB = NULL;
     YCbCr = NULL;
@@ -10710,7 +10710,7 @@ void VIAPostSetTV3Mode(VIABIOSInfoPtr pBIOSInfo)
     Misc1 = NULL;
     Misc2 = NULL;
 
-    DEBUG(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "VIAPostSetTV3Mode\n"));
+    DEBUGX(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "VIAPostSetTV3Mode\n"));
 	if (pBIOSInfo->TVEncoder == VIA_TV3) {
 		TVMaskTbl = &pViaModeTable->tv3MaskTable;
         if (pBIOSInfo->TVType == TVTYPE_PAL) {
@@ -11109,7 +11109,7 @@ Bool VIASetModeUseBIOSTable(VIABIOSInfoPtr pBIOSInfo)
     resMode = pBIOSInfo->resMode;
     refresh = pBIOSInfo->refresh;
 
-    DEBUG(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "VIASetModeUseBIOSTable\n"));
+    DEBUGX(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "VIASetModeUseBIOSTable\n"));
     /* Turn off Screen */
     VGAOUT8(0x3d4, 0x17);
     tmp = VGAIN8(0x3d5);
@@ -11158,7 +11158,7 @@ Bool VIASetModeUseBIOSTable(VIABIOSInfoPtr pBIOSInfo)
     VGAOUT8(0x3d4, 0x93);
     VGAOUT8(0x3d5, 0x0);
 
-    DEBUG(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "Active Device is %d\n",
+    DEBUGX(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "Active Device is %d\n",
                      pBIOSInfo->ActiveDevice));
 
     if (pBIOSInfo->ActiveDevice & VIA_DEVICE_TV) {
@@ -11577,7 +11577,7 @@ Bool VIASetModeUseBIOSTable(VIABIOSInfoPtr pBIOSInfo)
     misc = VGAIN8(0x3da);
     VGAOUT8(0x3c0, 0x20);
 
-    DEBUG(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "-- VIASetModeUseBIOSTable Done!\n"));
+    DEBUGX(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "-- VIASetModeUseBIOSTable Done!\n"));
     return TRUE;
 }
 
@@ -11593,7 +11593,7 @@ Bool VIASetModeForMHS(VIABIOSInfoPtr pBIOSInfo)
     resMode = pBIOSInfo->resMode;
     pBIOSInfo->SetTV = FALSE;
 
-    DEBUG(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "VIASetModeForMHS\n"));
+    DEBUGX(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "VIASetModeForMHS\n"));
     /* Turn off Screen */
     VGAOUT8(0x3d4, 0x17);
     tmp = VGAIN8(0x3d5);
@@ -11788,7 +11788,7 @@ Bool VIASetModeForMHS(VIABIOSInfoPtr pBIOSInfo)
     (void) VGAIN8(0x3da);
     VGAOUT8(0x3c0, 0x20);
 
-    DEBUG(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "-- VIASetModeForMHS Done!\n"));
+    DEBUGX(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "-- VIASetModeForMHS Done!\n"));
     return TRUE;
 }
 
@@ -11796,7 +11796,7 @@ Bool VIASavePalette(ScrnInfoPtr pScrn, LOCO *colors) {
     VIAPtr pVia = VIAPTR(pScrn);
     int i, sr1a, sr1b, cr67, cr6a;
 
-    DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO, "VIASavePalette\n"));
+    DEBUGX(xf86DrvMsg(pScrn->scrnIndex, X_INFO, "VIASavePalette\n"));
     /*VGAOUT8(0x3C4, 0x16);
     sr16 = VGAIN8(0x3C5);*/
     VGAOUT8(0x3C4, 0x1A);
@@ -11834,7 +11834,7 @@ Bool VIASavePalette(ScrnInfoPtr pScrn, LOCO *colors) {
         colors[i].red = VGAIN8(0x3c9);
         colors[i].green = VGAIN8(0x3c9);
         colors[i].blue = VGAIN8(0x3c9);
-        DEBUG(xf86Msg(X_INFO, "%d, %d, %d\n", colors[i].red, colors[i].green, colors[i].blue));
+        DEBUGX(xf86Msg(X_INFO, "%d, %d, %d\n", colors[i].red, colors[i].green, colors[i].blue));
     }
     WaitIdle();
 
@@ -11862,7 +11862,7 @@ Bool VIARestorePalette(ScrnInfoPtr pScrn, LOCO *colors) {
     VIAPtr pVia = VIAPTR(pScrn);
     int i, sr1a, sr1b, cr67, cr6a, sr16;
 
-    DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO, "VIARestorePalette\n"));
+    DEBUGX(xf86DrvMsg(pScrn->scrnIndex, X_INFO, "VIARestorePalette\n"));
     VGAOUT8(0x3C4, 0x16);
     sr16 = VGAIN8(0x3C5);
     VGAOUT8(0x3C4, 0x1A);
@@ -11900,7 +11900,7 @@ Bool VIARestorePalette(ScrnInfoPtr pScrn, LOCO *colors) {
         VGAOUT8(0x3c9, colors[i].red);
         VGAOUT8(0x3c9, colors[i].green);
         VGAOUT8(0x3c9, colors[i].blue);
-        /*DEBUG(xf86Msg(X_INFO, "%d, %d, %d\n", colors[i].red, colors[i].green, colors[i].blue));*/
+        /*DEBUGX(xf86Msg(X_INFO, "%d, %d, %d\n", colors[i].red, colors[i].green, colors[i].blue));*/
     }
     WaitIdle();
     /*if (pScrn->bitsPerPixel == 8) {
@@ -11930,7 +11930,7 @@ void VIAPitchAlignmentPatch(VIABIOSInfoPtr pBIOSInfo)
     CARD32     dwScreenPitch= 0;
     CARD32     dwPitch;
 
-    DEBUG(xf86DrvMsg(pBIOSInfo->scrnIndex, X_PROBED, "VIAPitchAlignmentPatch\n"));
+    DEBUGX(xf86DrvMsg(pBIOSInfo->scrnIndex, X_PROBED, "VIAPitchAlignmentPatch\n"));
     dwPitch = pBIOSInfo->HDisplay * (pBIOSInfo->bitsPerPixel >> 3);
     if (dwPitch & 0x1F) {   /* Is 32 Byte Alignment ? */
         dwScreenPitch = ((dwPitch + 31) & ~31) >> 3;
@@ -11975,7 +11975,7 @@ void VIAEnableLCD(VIABIOSInfoPtr pBIOSInfo)
     int             i, j, k;
     int             port, offset, mask, data;
 
-    DEBUG(xf86DrvMsg(pBIOSInfo->scrnIndex, X_PROBED, "VIAEnableLCD\n"));
+    DEBUGX(xf86DrvMsg(pBIOSInfo->scrnIndex, X_PROBED, "VIAEnableLCD\n"));
     /* Enable LCD */
     VGAOUT8(0x3d4, 0x6A);
     cr6a = VGAIN8(0x3d5);
@@ -12035,12 +12035,12 @@ void VIAEnableLCD(VIABIOSInfoPtr pBIOSInfo)
                 W_Buffer[0] = 0x63;
                 W_Buffer[1] = (R_Buffer[0] | 0x40);
                 xf86I2CWriteRead(dev, W_Buffer,2, NULL,0);
-                DEBUG(xf86DrvMsg(pBIOSInfo->scrnIndex, X_PROBED, "[%d]write 0x63 = %X!\n", i+1, W_Buffer[1]));
+                DEBUGX(xf86DrvMsg(pBIOSInfo->scrnIndex, X_PROBED, "[%d]write 0x63 = %X!\n", i+1, W_Buffer[1]));
                 usleep(1);
                 W_Buffer[0] = 0x63;
                 W_Buffer[1] &= ~0x40;
                 xf86I2CWriteRead(dev, W_Buffer,2, NULL,0);
-                DEBUG(xf86DrvMsg(pBIOSInfo->scrnIndex, X_PROBED, "[%d]write 0x63 = %X!\n", i+1, W_Buffer[1]));
+                DEBUGX(xf86DrvMsg(pBIOSInfo->scrnIndex, X_PROBED, "[%d]write 0x63 = %X!\n", i+1, W_Buffer[1]));
                 usleep(100);
                 W_Buffer[0] = 0x66;
                 xf86I2CWriteRead(dev, W_Buffer,1, R_Buffer,1);
@@ -12048,7 +12048,7 @@ void VIAEnableLCD(VIABIOSInfoPtr pBIOSInfo)
                     usleep(500);
                     W_Buffer[1] = R_Buffer[0] | 0x01;
                     xf86I2CWriteRead(dev, W_Buffer,2, NULL,0);
-                    DEBUG(xf86DrvMsg(pBIOSInfo->scrnIndex, X_PROBED, "CH7019 PLL lock ok!\n"));
+                    DEBUGX(xf86DrvMsg(pBIOSInfo->scrnIndex, X_PROBED, "CH7019 PLL lock ok!\n"));
                     /* reset data path */
                     W_Buffer[0] = 0x48;
                     xf86I2CWriteRead(dev, W_Buffer,1, R_Buffer,1);
@@ -12059,8 +12059,8 @@ void VIAEnableLCD(VIABIOSInfoPtr pBIOSInfo)
                     xf86I2CWriteRead(dev, W_Buffer,2, NULL,0);
                     break;
                 }
-                DEBUG(xf86DrvMsg(pBIOSInfo->scrnIndex, X_PROBED, "[%d]CH7019 PLL lock fail!\n", i+1));
-                DEBUG(xf86DrvMsg(pBIOSInfo->scrnIndex, X_PROBED, "[%d]0x66 = %X!\n", i+1, R_Buffer[0]));
+                DEBUGX(xf86DrvMsg(pBIOSInfo->scrnIndex, X_PROBED, "[%d]CH7019 PLL lock fail!\n", i+1));
+                DEBUGX(xf86DrvMsg(pBIOSInfo->scrnIndex, X_PROBED, "[%d]0x66 = %X!\n", i+1, R_Buffer[0]));
             }
             xf86DestroyI2CDevRec(dev,TRUE);
         }
@@ -12077,7 +12077,7 @@ void VIADisableLCD(VIABIOSInfoPtr pBIOSInfo)
     int             i, j, k;
     int             port, offset, mask, data;
 
-    DEBUG(xf86DrvMsg(pBIOSInfo->scrnIndex, X_PROBED, "VIADisableLCD\n"));
+    DEBUGX(xf86DrvMsg(pBIOSInfo->scrnIndex, X_PROBED, "VIADisableLCD\n"));
     /* Patch for CH7019LVDS PLL Lock */
     if (pBIOSInfo->LVDS == VIA_CH7019LVDS) {
         dev = xf86CreateI2CDevRec();
@@ -12137,7 +12137,7 @@ unsigned char VIABIOS_GetActiveDevice(ScrnInfoPtr pScrn)
     pointer page = NULL;
     unsigned char   ret = 0x0;
 
-    DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO, "VIABIOS_GetActiveDevice\n"));
+    DEBUGX(xf86DrvMsg(pScrn->scrnIndex, X_INFO, "VIABIOS_GetActiveDevice\n"));
     page = xf86Int10AllocPages(pVia->pInt10, 1, &RealOff);
     if (!page)
         return 0xFF;
@@ -12148,7 +12148,7 @@ unsigned char VIABIOS_GetActiveDevice(ScrnInfoPtr pScrn)
     xf86ExecX86int10(pVia->pInt10);
 
     if ((pVia->pInt10->ax & 0xFF) != 0x4F) {
-        DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_ERROR, "BIOS Get Active Device fail!\n"));
+        DEBUGX(xf86DrvMsg(pScrn->scrnIndex, X_ERROR, "BIOS Get Active Device fail!\n"));
         if (page)
             xf86Int10FreePages(pVia->pInt10, page, 1);
         return 0xFF;
@@ -12166,7 +12166,7 @@ unsigned char VIABIOS_GetActiveDevice(ScrnInfoPtr pScrn)
     if (pVia->pInt10->cx & 0x20)
         ret |= VIA_DEVICE_DFP;
 
-    DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO, "Return Value Is: %u\n", ret));
+    DEBUGX(xf86DrvMsg(pScrn->scrnIndex, X_INFO, "Return Value Is: %u\n", ret));
     return ret;
 }
 
@@ -12196,7 +12196,7 @@ unsigned int VIABIOS_GetDisplayDeviceInfo(ScrnInfoPtr pScrn, unsigned char *numD
     int RealOff;
     pointer page = NULL;
 
-    DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO, "VIABIOS_GetDisplayDeviceInfo\n"));
+    DEBUGX(xf86DrvMsg(pScrn->scrnIndex, X_INFO, "VIABIOS_GetDisplayDeviceInfo\n"));
     page = xf86Int10AllocPages(pVia->pInt10, 1, &RealOff);
     if (!page)
         return 0xFFFF;
@@ -12208,7 +12208,7 @@ unsigned int VIABIOS_GetDisplayDeviceInfo(ScrnInfoPtr pScrn, unsigned char *numD
     xf86ExecX86int10(pVia->pInt10);
 
     if ((pVia->pInt10->ax & 0xFF) != 0x4F) {
-        DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_ERROR, "BIOS Get Device Info fail!\n"));
+        DEBUGX(xf86DrvMsg(pScrn->scrnIndex, X_ERROR, "BIOS Get Device Info fail!\n"));
         if (page)
             xf86Int10FreePages(pVia->pInt10, page, 1);
         return 0xFFFF;
@@ -12218,8 +12218,8 @@ unsigned int VIABIOS_GetDisplayDeviceInfo(ScrnInfoPtr pScrn, unsigned char *numD
         xf86Int10FreePages(pVia->pInt10, page, 1);
 
     *numDevice = pVia->pInt10->cx;
-    DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO, "Vertical Resolution Is: %u\n", pVia->pInt10->di & 0xFFFF));
-    DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO, "Panel ID Is: %u\n", *numDevice));
+    DEBUGX(xf86DrvMsg(pScrn->scrnIndex, X_INFO, "Vertical Resolution Is: %u\n", pVia->pInt10->di & 0xFFFF));
+    DEBUGX(xf86DrvMsg(pScrn->scrnIndex, X_INFO, "Panel ID Is: %u\n", *numDevice));
     return (pVia->pInt10->di & 0xFFFF);
 }
 
@@ -12251,7 +12251,7 @@ unsigned char VIABIOS_GetDisplayDeviceAttached(ScrnInfoPtr pScrn)
     pointer page = NULL;
     unsigned char   ret = 0;
 
-    DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO, "VIABIOS_GetDisplayDeviceAttached\n"));
+    DEBUGX(xf86DrvMsg(pScrn->scrnIndex, X_INFO, "VIABIOS_GetDisplayDeviceAttached\n"));
     page = xf86Int10AllocPages(pVia->pInt10, 1, &RealOff);
     if (!page)
         return 0xFF;
@@ -12262,7 +12262,7 @@ unsigned char VIABIOS_GetDisplayDeviceAttached(ScrnInfoPtr pScrn)
     xf86ExecX86int10(pVia->pInt10);
 
     if ((pVia->pInt10->ax & 0xFF) != 0x4F) {
-        DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_ERROR, "BIOS Get Display Device Attached fail!\n"));
+        DEBUGX(xf86DrvMsg(pScrn->scrnIndex, X_ERROR, "BIOS Get Display Device Attached fail!\n"));
         if (page)
             xf86Int10FreePages(pVia->pInt10, page, 1);
         return 0xFF;
@@ -12280,7 +12280,7 @@ unsigned char VIABIOS_GetDisplayDeviceAttached(ScrnInfoPtr pScrn)
     if (pVia->pInt10->cx & 0x20)
         ret |= VIA_DEVICE_DFP;
 
-    DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO, "Connected Device Is: %d\n", ret));
+    DEBUGX(xf86DrvMsg(pScrn->scrnIndex, X_INFO, "Connected Device Is: %d\n", ret));
     return ret;
 }
 
@@ -12291,7 +12291,7 @@ Bool VIABIOS_GetBIOSDate(ScrnInfoPtr pScrn)
     int RealOff;
     pointer page = NULL;
 
-    DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO, "VIABIOS_GetBIOSDate\n"));
+    DEBUGX(xf86DrvMsg(pScrn->scrnIndex, X_INFO, "VIABIOS_GetBIOSDate\n"));
     page = xf86Int10AllocPages(pVia->pInt10, 1, &RealOff);
     if (!page)
         return FALSE;
@@ -12304,7 +12304,7 @@ Bool VIABIOS_GetBIOSDate(ScrnInfoPtr pScrn)
     xf86ExecX86int10(pVia->pInt10);
 
     if ((pVia->pInt10->ax & 0xff) != 0x4f) {
-        DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_ERROR, "Get BIOS Date fail!\n"));
+        DEBUGX(xf86DrvMsg(pScrn->scrnIndex, X_ERROR, "Get BIOS Date fail!\n"));
         if (page)
             xf86Int10FreePages(pVia->pInt10, page, 1);
         return FALSE;
@@ -12317,7 +12317,7 @@ Bool VIABIOS_GetBIOSDate(ScrnInfoPtr pScrn)
     if (page)
         xf86Int10FreePages(pVia->pInt10, page, 1);
 
-    DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO, "BIOS Release Date Is: %d/%d/%d\n"
+    DEBUGX(xf86DrvMsg(pScrn->scrnIndex, X_INFO, "BIOS Release Date Is: %d/%d/%d\n"
      , pBIOSInfo->BIOSDateYear + 2000, pBIOSInfo->BIOSDateMonth, pBIOSInfo->BIOSDateDay));
     return TRUE;
 }
@@ -12328,7 +12328,7 @@ int VIABIOS_GetBIOSVersion(ScrnInfoPtr pScrn)
     int RealOff;
     pointer page = NULL;
 
-    DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO, "VIABIOS_GetBIOSVersion\n"));
+    DEBUGX(xf86DrvMsg(pScrn->scrnIndex, X_INFO, "VIABIOS_GetBIOSVersion\n"));
     page = xf86Int10AllocPages(pVia->pInt10, 1, &RealOff);
     if (!page)
         return 0xFFFF;
@@ -12339,7 +12339,7 @@ int VIABIOS_GetBIOSVersion(ScrnInfoPtr pScrn)
     xf86ExecX86int10(pVia->pInt10);
 
     if ((pVia->pInt10->ax & 0xff) != 0x4f) {
-        DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_ERROR, "Get BIOS Version fail!\n"));
+        DEBUGX(xf86DrvMsg(pScrn->scrnIndex, X_ERROR, "Get BIOS Version fail!\n"));
         if (page)
             xf86Int10FreePages(pVia->pInt10, page, 1);
         return 0xFFFF;
@@ -12348,7 +12348,7 @@ int VIABIOS_GetBIOSVersion(ScrnInfoPtr pScrn)
     if (page)
         xf86Int10FreePages(pVia->pInt10, page, 1);
 
-    DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO, "Return Value Is: %u\n", pVia->pInt10->bx & 0xFFFF));
+    DEBUGX(xf86DrvMsg(pScrn->scrnIndex, X_INFO, "Return Value Is: %u\n", pVia->pInt10->bx & 0xFFFF));
     return (pVia->pInt10->bx & 0xFFFF);
 }
 
@@ -12358,7 +12358,7 @@ unsigned char VIABIOS_GetFlatPanelInfo(ScrnInfoPtr pScrn)
     int RealOff;
     pointer page = NULL;
 
-    DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO, "VIABIOS_GetFlatPanelInfo\n"));
+    DEBUGX(xf86DrvMsg(pScrn->scrnIndex, X_INFO, "VIABIOS_GetFlatPanelInfo\n"));
     page = xf86Int10AllocPages(pVia->pInt10, 1, &RealOff);
     if (!page)
         return 0xFF;
@@ -12369,7 +12369,7 @@ unsigned char VIABIOS_GetFlatPanelInfo(ScrnInfoPtr pScrn)
     xf86ExecX86int10(pVia->pInt10);
 
     if ((pVia->pInt10->ax & 0xFF) != 0x4F) {
-        DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_ERROR, "BIOS Get Flat Panel Info fail!\n"));
+        DEBUGX(xf86DrvMsg(pScrn->scrnIndex, X_ERROR, "BIOS Get Flat Panel Info fail!\n"));
         if (page)
             xf86Int10FreePages(pVia->pInt10, page, 1);
         return 0xFF;
@@ -12378,7 +12378,7 @@ unsigned char VIABIOS_GetFlatPanelInfo(ScrnInfoPtr pScrn)
     if (page)
         xf86Int10FreePages(pVia->pInt10, page, 1);
 
-    DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO, "Panel ID Is: %u\n", pVia->pInt10->cx & 0x0F));
+    DEBUGX(xf86DrvMsg(pScrn->scrnIndex, X_INFO, "Panel ID Is: %u\n", pVia->pInt10->cx & 0x0F));
     return (pVia->pInt10->cx & 0x0F);
 }
 
@@ -12389,7 +12389,7 @@ unsigned short VIABIOS_GetTVConfiguration(ScrnInfoPtr pScrn, CARD16 dx)
     pointer page = NULL;
     unsigned short ret = 0;
 
-    DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO, "VIABIOS_GetTVConfiguration\n"));
+    DEBUGX(xf86DrvMsg(pScrn->scrnIndex, X_INFO, "VIABIOS_GetTVConfiguration\n"));
     page = xf86Int10AllocPages(pVia->pInt10, 1, &RealOff);
     if (!page)
         return 0xFFFF;
@@ -12401,7 +12401,7 @@ unsigned short VIABIOS_GetTVConfiguration(ScrnInfoPtr pScrn, CARD16 dx)
     xf86ExecX86int10(pVia->pInt10);
 
     if ((pVia->pInt10->ax & 0xff) != 0x4f) {
-        DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_ERROR, "Get TV Configuration fail!\n"));
+        DEBUGX(xf86DrvMsg(pScrn->scrnIndex, X_ERROR, "Get TV Configuration fail!\n"));
         if (page)
             xf86Int10FreePages(pVia->pInt10, page, 1);
         return 0xFFFF;
@@ -12412,7 +12412,7 @@ unsigned short VIABIOS_GetTVConfiguration(ScrnInfoPtr pScrn, CARD16 dx)
 
     if (pVia->pInt10->dx)
         ret = VIABIOS_GetTVConfiguration(pScrn, pVia->pInt10->dx);
-    DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO, "Return Value Is: %u\n", ret));
+    DEBUGX(xf86DrvMsg(pScrn->scrnIndex, X_INFO, "Return Value Is: %u\n", ret));
     return ret;
 }
 
@@ -12422,7 +12422,7 @@ unsigned char VIABIOS_GetTVEncoderType(ScrnInfoPtr pScrn)
     int RealOff;
     pointer page = NULL;
 
-    DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO, "VIABIOS_GetTVEncoderType\n"));
+    DEBUGX(xf86DrvMsg(pScrn->scrnIndex, X_INFO, "VIABIOS_GetTVEncoderType\n"));
     page = xf86Int10AllocPages(pVia->pInt10, 1, &RealOff);
     if (!page)
         return 0xFF;
@@ -12433,7 +12433,7 @@ unsigned char VIABIOS_GetTVEncoderType(ScrnInfoPtr pScrn)
     xf86ExecX86int10(pVia->pInt10);
 
     if ((pVia->pInt10->ax & 0xFF) != 0x4F) {
-        DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_ERROR, "Get TV Encoder Type fail!\n"));
+        DEBUGX(xf86DrvMsg(pScrn->scrnIndex, X_ERROR, "Get TV Encoder Type fail!\n"));
         if (page)
             xf86Int10FreePages(pVia->pInt10, page, 1);
         return 0xFF;
@@ -12441,7 +12441,7 @@ unsigned char VIABIOS_GetTVEncoderType(ScrnInfoPtr pScrn)
 
     if (page)
         xf86Int10FreePages(pVia->pInt10, page, 1);
-    DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO, "Return Value Is: %u\n", pVia->pInt10->cx >> 8));
+    DEBUGX(xf86DrvMsg(pScrn->scrnIndex, X_INFO, "Return Value Is: %u\n", pVia->pInt10->cx >> 8));
     return (pVia->pInt10->cx >> 8);
 }
 
@@ -12451,7 +12451,7 @@ int VIABIOS_GetVideoMemSize(ScrnInfoPtr pScrn)
     int RealOff;
     pointer page = NULL;
 
-    DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO, "VIABIOS_GetVideoMemSize\n"));
+    DEBUGX(xf86DrvMsg(pScrn->scrnIndex, X_INFO, "VIABIOS_GetVideoMemSize\n"));
     page = xf86Int10AllocPages(pVia->pInt10, 1, &RealOff);
     if (!page)
         return 0;
@@ -12465,7 +12465,7 @@ int VIABIOS_GetVideoMemSize(ScrnInfoPtr pScrn)
     xf86ExecX86int10(pVia->pInt10);
 
     if ((pVia->pInt10->ax & 0xFF) != 0x4F) {
-        DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_ERROR, "Get Video Memory Size fail!\n"));
+        DEBUGX(xf86DrvMsg(pScrn->scrnIndex, X_ERROR, "Get Video Memory Size fail!\n"));
         if (page)
             xf86Int10FreePages(pVia->pInt10, page, 1);
         return 0;
@@ -12474,7 +12474,7 @@ int VIABIOS_GetVideoMemSize(ScrnInfoPtr pScrn)
     if (page)
         xf86Int10FreePages(pVia->pInt10, page, 1);
 
-    DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO, "Return Value Is: %d\n", pVia->pInt10->si));
+    DEBUGX(xf86DrvMsg(pScrn->scrnIndex, X_INFO, "Return Value Is: %d\n", pVia->pInt10->si));
     if (pVia->pInt10->si > 1)
         return (pVia->pInt10->si);
     else
@@ -12489,7 +12489,7 @@ Bool VIABIOS_SetActiveDevice(ScrnInfoPtr pScrn)
     int RealOff;
     pointer page = NULL;
 
-    DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO, "BIOS_SetActiveDevice\n"));
+    DEBUGX(xf86DrvMsg(pScrn->scrnIndex, X_INFO, "BIOS_SetActiveDevice\n"));
     page = xf86Int10AllocPages(pVia->pInt10, 1, &RealOff);
     if (!page)
         return FALSE;
@@ -12509,12 +12509,12 @@ Bool VIABIOS_SetActiveDevice(ScrnInfoPtr pScrn)
         pVia->pInt10->cx |= 0x04;
     if (pBIOSInfo->ActiveDevice & VIA_DEVICE_DFP)
         pVia->pInt10->cx |= 0x20;
-    DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO, "Active Device: %d\n",
+    DEBUGX(xf86DrvMsg(pScrn->scrnIndex, X_INFO, "Active Device: %d\n",
                      pVia->pInt10->cx));
 
     /* Set Current mode */
     pVia->pInt10->dx = pViaModeTable->Modes[pBIOSInfo->mode].Mode;
-    DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO, "Mode Nums: %d\n",
+    DEBUGX(xf86DrvMsg(pScrn->scrnIndex, X_INFO, "Mode Nums: %d\n",
                      pVia->pInt10->dx));
 
     /* Set Current Refresh rate */
@@ -12538,14 +12538,14 @@ Bool VIABIOS_SetActiveDevice(ScrnInfoPtr pScrn)
             pVia->pInt10->di = 0;
             break;
     }
-    DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO, "Refresh Rate Index: %d\n",
+    DEBUGX(xf86DrvMsg(pScrn->scrnIndex, X_INFO, "Refresh Rate Index: %d\n",
                      pVia->pInt10->di));
 
     /* Real execution */
     xf86ExecX86int10(pVia->pInt10);
 
     if ((pVia->pInt10->ax & 0xFF) != 0x4F) {
-        DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_ERROR, "BIOS Set Active Device fail!\n"));
+        DEBUGX(xf86DrvMsg(pScrn->scrnIndex, X_ERROR, "BIOS Set Active Device fail!\n"));
         if (page)
             xf86Int10FreePages(pVia->pInt10, page, 1);
         return FALSE;

@@ -35,7 +35,6 @@
 #include "fbpict.h"
 
 #ifdef DEBUG
-#include <stdio.h>
 #include <assert.h>
 
 #define ASSERT(e)   assert(e)
@@ -940,10 +939,10 @@ PixelAlpha(xFixed	pixel_x,
 
 #ifdef DEBUG
     fprintf(stderr, "alpha (%f, %f) - (%f, %f) = ",
-	    (double) pw->p1.x / (1 << 16),
-	    (double) pw->p1.y / (1 << 16),
-	    (double) pw->p2.x / (1 << 16),
-	    (double) pw->p2.y / (1 << 16));
+	    (double) pw->p_pixel_top.x / (1 << 16),
+	    (double) pw->p_pixel_top.y / (1 << 16),
+	    (double) pw->p_trap_bottom.x / (1 << 16),
+	    (double) pw->p_trap_bottom.y / (1 << 16));
     fflush(stderr);
 #endif
 

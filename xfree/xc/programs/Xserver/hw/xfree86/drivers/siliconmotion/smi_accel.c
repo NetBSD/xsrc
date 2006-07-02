@@ -358,7 +358,7 @@ SMI_SetupForScreenToScreenCopy(ScrnInfoPtr pScrn, int xdir, int ydir, int rop,
 	SMIPtr pSmi = SMIPTR(pScrn);
 
 	ENTER_PROC("SMI_SetupForScreenToScreenCopy");
-	DEBUG((VERBLEV, "xdir=%d ydir=%d rop=%02X trans=%08X\n", xdir, ydir,
+	DEBUGX((VERBLEV, "xdir=%d ydir=%d rop=%02X trans=%08X\n", xdir, ydir,
 			rop, trans));
 
 	pSmi->AccelCmd = XAACopyROP[rop]
@@ -394,7 +394,7 @@ SMI_SubsequentScreenToScreenCopy(ScrnInfoPtr pScrn, int x1, int y1, int x2,
 	SMIPtr pSmi = SMIPTR(pScrn);
 
 	ENTER_PROC("SMI_SubsequentScreenToScreenCopy");
-	DEBUG((VERBLEV, "x1=%d y1=%d x2=%d y2=%d w=%d h=%d\n", x1, y1, x2, y2, w,
+	DEBUGX((VERBLEV, "x1=%d y1=%d x2=%d y2=%d w=%d h=%d\n", x1, y1, x2, y2, w,
 			h));
 
 	if (pSmi->AccelCmd & SMI_RIGHT_TO_LEFT)
@@ -444,7 +444,7 @@ SMI_SetupForSolidFill(ScrnInfoPtr pScrn, int color, int rop,
 	SMIPtr pSmi = SMIPTR(pScrn);
 
 	ENTER_PROC("SMI_SetupForSolidFill");
-	DEBUG((VERBLEV, "color=%08X rop=%02X\n", color, rop));
+	DEBUGX((VERBLEV, "color=%08X rop=%02X\n", color, rop));
 
 	pSmi->AccelCmd = XAAPatternROP[rop]
 				   | SMI_BITBLT
@@ -473,7 +473,7 @@ SMI_SubsequentSolidFillRect(ScrnInfoPtr pScrn, int x, int y, int w, int h)
 	SMIPtr pSmi = SMIPTR(pScrn);
 
 	ENTER_PROC("SMI_SubsequentSolidFillRect");
-	DEBUG((VERBLEV, "x=%d y=%d w=%d h=%d\n", x, y, w, h));
+	DEBUGX((VERBLEV, "x=%d y=%d w=%d h=%d\n", x, y, w, h));
 
 	if (pScrn->bitsPerPixel == 24)
 	{
@@ -506,7 +506,7 @@ SMI_SubsequentSolidHorVertLine(ScrnInfoPtr pScrn, int x, int y, int len,
 	int w, h;
 
 	ENTER_PROC("SMI_SubsequentSolidHorVertLine");
-	DEBUG((VERBLEV, "x=%d y=%d len=%d dir=%d\n", x, y, len, dir));
+	DEBUGX((VERBLEV, "x=%d y=%d len=%d dir=%d\n", x, y, len, dir));
 
 	if (dir == DEGREES_0)
 	{
@@ -549,7 +549,7 @@ SMI_SetupForCPUToScreenColorExpandFill(ScrnInfoPtr pScrn, int fg, int bg,
 	SMIPtr pSmi = SMIPTR(pScrn);
 
 	ENTER_PROC("SMI_SetupForCPUToScreenColorExpandFill");
-	DEBUG((VERBLEV, "fg=%08X bg=%08X rop=%02X\n", fg, bg, rop));
+	DEBUGX((VERBLEV, "fg=%08X bg=%08X rop=%02X\n", fg, bg, rop));
 
 	pSmi->AccelCmd = XAACopyROP[rop]
 				   | SMI_HOSTBLT_WRITE
@@ -582,7 +582,7 @@ SMI_SubsequentCPUToScreenColorExpandFill(ScrnInfoPtr pScrn, int x, int y, int w,
 	SMIPtr pSmi = SMIPTR(pScrn);
 
 	ENTER_PROC("SMI_SubsequentCPUToScreenColorExpandFill");
-	DEBUG((VERBLEV, "x=%d y=%d w=%d h=%d skipleft=%d\n", x, y, w, h, skipleft));
+	DEBUGX((VERBLEV, "x=%d y=%d w=%d h=%d skipleft=%d\n", x, y, w, h, skipleft));
 
 	if (pScrn->bitsPerPixel == 24)
 	{
@@ -635,7 +635,7 @@ SMI_SetupForMono8x8PatternFill(ScrnInfoPtr pScrn, int patx, int paty, int fg,
 	SMIPtr pSmi = SMIPTR(pScrn);
 
 	ENTER_PROC("SMI_SetupForMono8x8PatternFill");
-	DEBUG((VERBLEV, "patx=%08X paty=%08X fg=%08X bg=%08X rop=%02X\n", patx,
+	DEBUGX((VERBLEV, "patx=%08X paty=%08X fg=%08X bg=%08X rop=%02X\n", patx,
 			paty, fg, bg, rop));
 
 	pSmi->AccelCmd = XAAPatternROP[rop]
@@ -677,7 +677,7 @@ SMI_SubsequentMono8x8PatternFillRect(ScrnInfoPtr pScrn, int patx, int paty,
 	SMIPtr pSmi = SMIPTR(pScrn);
 
 	ENTER_PROC("SMI_SubsequentMono8x8PatternFillRect");
-	DEBUG((VERBLEV, "x=%d y=%d w=%d h=%d\n", x, y, w, h));
+	DEBUGX((VERBLEV, "x=%d y=%d w=%d h=%d\n", x, y, w, h));
 
 	if (pScrn->bitsPerPixel == 24)
 	{
@@ -708,7 +708,7 @@ SMI_SetupForColor8x8PatternFill(ScrnInfoPtr pScrn, int patx, int paty, int rop,
 	SMIPtr pSmi = SMIPTR(pScrn);
 
 	ENTER_PROC("SMI_SetupForColor8x8PatternFill");
-	DEBUG((VERBLEV, "patx=%d paty=%d rop=%02X trans_color=%08X\n", patx, paty,
+	DEBUGX((VERBLEV, "patx=%d paty=%d rop=%02X trans_color=%08X\n", patx, paty,
 			rop, trans_color));
 
 	pSmi->AccelCmd = XAAPatternROP[rop]
@@ -767,7 +767,7 @@ SMI_SubsequentColor8x8PatternFillRect(ScrnInfoPtr pScrn, int patx, int paty,
 	SMIPtr pSmi = SMIPTR(pScrn);
 
 	ENTER_PROC("SMI_SubsequentColor8x8PatternFillRect");
-	DEBUG((VERBLEV, "x=%d y=%d w=%d h=%d\n", x, y, w, h));
+	DEBUGX((VERBLEV, "x=%d y=%d w=%d h=%d\n", x, y, w, h));
 
 	if (pScrn->bitsPerPixel == 24)
 	{
@@ -800,7 +800,7 @@ SMI_SetupForImageWrite(ScrnInfoPtr pScrn, int rop, unsigned int planemask,
 	SMIPtr pSmi = SMIPTR(pScrn);
 
 	ENTER_PROC("SMI_SetupForImageWrite");
-	DEBUG((VERBLEV, "rop=%02X trans_color=%08X bpp=%d depth=%d\n", rop,
+	DEBUGX((VERBLEV, "rop=%02X trans_color=%08X bpp=%d depth=%d\n", rop,
 			trans_color, bpp, depth));
 
 	pSmi->AccelCmd = XAACopyROP[rop]
@@ -825,7 +825,7 @@ SMI_SubsequentImageWriteRect(ScrnInfoPtr pScrn, int x, int y, int w, int h,
 	SMIPtr pSmi = SMIPTR(pScrn);
 
 	ENTER_PROC("SMI_SubsequentImageWriteRect");
-	DEBUG((VERBLEV, "x=%d y=%d w=%d h=%d skipleft=%d\n", x, y, w, h, skipleft));
+	DEBUGX((VERBLEV, "x=%d y=%d w=%d h=%d skipleft=%d\n", x, y, w, h, skipleft));
 
 	if (pScrn->bitsPerPixel == 24)
 	{
@@ -879,7 +879,7 @@ SMI_SetClippingRectangle(ScrnInfoPtr pScrn, int left, int top, int right,
 	SMIPtr pSmi = SMIPTR(pScrn);
 
 	ENTER_PROC("SMI_SetClippingRectangle");
-	DEBUG((VERBLEV, "left=%d top=%d right=%d bottom=%d\n", left, top, right,
+	DEBUGX((VERBLEV, "left=%d top=%d right=%d bottom=%d\n", left, top, right,
 			bottom));
 
     /* CZ 26.10.2001: this code prevents offscreen pixmaps being drawn ???

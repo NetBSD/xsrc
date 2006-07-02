@@ -54,7 +54,7 @@
 void VIAFreeLinear(VIAMemPtr mem)
 {
 	VIAPtr pVia;
-	DEBUG(ErrorF("Freed %lu (pool %d)\n", mem->base, mem->pool));
+	DEBUGX(ErrorF("Freed %lu (pool %d)\n", mem->base, mem->pool));
 	switch(mem->pool)
 	{
 		case 0:
@@ -133,7 +133,7 @@ unsigned long VIAAllocLinear(VIAMemPtr mem, ScrnInfoPtr pScrn, unsigned long siz
 		
 		mem->base = mem->drm.offset;
 		mem->pool = 2;
-		DEBUG(ErrorF("Fulfilled via DRI at %lu\n", mem->base));
+		DEBUGX(ErrorF("Fulfilled via DRI at %lu\n", mem->base));
 		return 0;
 	}
 #endif
@@ -157,7 +157,7 @@ unsigned long VIAAllocLinear(VIAMemPtr mem, ScrnInfoPtr pScrn, unsigned long siz
 				mem->base = pVia->SWOVPool + pVia->SWOVSize * i;
 				mem->pVia = pVia;
 				mem->slot = i;
-				DEBUG(ErrorF("Fulfilled via pool at %lu\n", mem->base));
+				DEBUGX(ErrorF("Fulfilled via pool at %lu\n", mem->base));
 				return 0;
 			}
 		}
@@ -172,11 +172,11 @@ unsigned long VIAAllocLinear(VIAMemPtr mem, ScrnInfoPtr pScrn, unsigned long siz
 static void
 VIAInitPool(VIAPtr pVia, unsigned long offset, unsigned long size)
 {
-	DEBUG(ErrorF("VIAInitPool %lu bytes at %lu\n", size, offset));
+	DEBUGX(ErrorF("VIAInitPool %lu bytes at %lu\n", size, offset));
 	
 	size /= 4;
 
-	DEBUG(ErrorF("VIAInitPool %d pools of %lu bytes\n", MEM_BLOCKS, size));
+	DEBUGX(ErrorF("VIAInitPool %d pools of %lu bytes\n", MEM_BLOCKS, size));
 	pVia->SWOVPool = offset;
 	pVia->SWOVSize = size;
 }

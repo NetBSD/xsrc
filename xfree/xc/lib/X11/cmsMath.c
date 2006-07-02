@@ -35,6 +35,9 @@ in this Software without prior written authorization from The Open Group.
 #include "Xcmsint.h"
 
 #include <float.h>
+#ifdef DEBUG
+#include <stdio.h>
+#endif
 #ifndef DBL_EPSILON
 #define DBL_EPSILON 1e-6
 #endif

@@ -80,7 +80,9 @@
 #define WSFB_DEFAULT_DEV "/dev/ttyC0"
 #endif
 
+#ifndef DEBUG
 #define DEBUG 0
+#endif
 
 #if DEBUG
 # define TRACE_ENTER(str)       ErrorF("wsfb: " str " %d\n",pScrn->scrnIndex)

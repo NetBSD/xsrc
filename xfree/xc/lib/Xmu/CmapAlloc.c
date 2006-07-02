@@ -298,7 +298,7 @@ icbrt_with_bits(int a, int bits)
     return icbrt_with_guess(a, a>>2*bits/3);
 }
 
-#ifdef _X_ROOT_STATS
+#if defined(_X_ROOT_STATS) || defined(DEBUG)
 int icbrt_loopcount;
 #endif
 
@@ -317,7 +317,7 @@ icbrt_with_guess(int a, int guess)
 {
     register int delta;
 
-#ifdef _X_ROOT_STATS
+#if defined(_X_ROOT_STATS) || defined(DEBUG)
     icbrt_loopcount = 0;
 #endif
     if (a <= 0)
@@ -326,7 +326,7 @@ icbrt_with_guess(int a, int guess)
 	guess = 1;
 
     do {
-#ifdef _X_ROOT_STATS
+#if defined(_X_ROOT_STATS) || defined(DEBUG)
 	icbrt_loopcount++;
 #endif
 	delta = (guess - a/(guess*guess))/3;

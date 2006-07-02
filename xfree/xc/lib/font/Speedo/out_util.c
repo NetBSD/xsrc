@@ -23,8 +23,11 @@ WITH THE SPEEDO SOFTWARE OR THE BITSTREAM CHARTER OUTLINE FONT.
 */
 /* $XFree86: xc/lib/font/Speedo/out_util.c,v 1.3 2001/01/17 19:43:17 dawes Exp $ */
 
-
+#ifndef DEBUG
 #define	DEBUG	0
+#else
+#include <stdio.h>
+#endif
 
 /*************************** O U T _ U T I L . C *****************************
  *                                                                           *

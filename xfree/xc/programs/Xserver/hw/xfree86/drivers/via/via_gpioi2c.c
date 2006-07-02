@@ -45,7 +45,7 @@ static void I2C_RW_Control(VIABIOSInfoPtr pBIOSInfo, CARD8 Command, CARD8 Data);
 
 Bool VIAGPIOI2C_Initial(VIABIOSInfoPtr pBIOSInfo, CARD8 SlaveDevice)
 {
-    DEBUG(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "GPIOI2C_Initial\n"));
+    DEBUGX(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "GPIOI2C_Initial\n"));
     switch (pBIOSInfo->Chipset)
     {
         case VIA_KM400:
@@ -54,7 +54,7 @@ Bool VIAGPIOI2C_Initial(VIABIOSInfoPtr pBIOSInfo, CARD8 SlaveDevice)
             break;
         default:
             GPIOPORT = 0;
-            DEBUG(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO,
+            DEBUGX(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO,
                               "GPIOI2C initial failure!\n"));
             return FALSE;
     }
