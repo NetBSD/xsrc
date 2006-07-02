@@ -49,7 +49,9 @@
 
 #include "xaalocal.h"		/* For replacements */
 
+#ifndef DEBUG
 #define DEBUG 0
+#endif
 
 #if DEBUG
 # define TRACE_ENTER(str)       ErrorF("pm2_accel: " str " %d\n",pScrn->scrnIndex)

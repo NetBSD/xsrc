@@ -33,7 +33,9 @@ WITH THE SPEEDO SOFTWARE OR THE BITSTREAM CHARTER OUTLINE FONT.
 
 #include "spdo_prv.h"               /* General definitions for Speedo   */
 
+#ifndef DEBUG
 #define   DEBUG      0
+#endif
 #define   LOCAL      static
 #define   ABS(X)     ( (X < 0) ? -X : X)
 

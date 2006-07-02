@@ -2216,7 +2216,7 @@ dump_char_ascii(cip)
 	byte = 0;
 	for (l = 0; l <= (cip->metrics.rightSideBearing -
 			  cip->metrics.leftSideBearing); l++) {
-	    if (maskTab[l & 7] & row[l >> 3])
+	    if (maskTab[l & 7] & ((unsigned *)row)[l >> 3])
 		putchar('X');
 	    else
 		putchar('.');

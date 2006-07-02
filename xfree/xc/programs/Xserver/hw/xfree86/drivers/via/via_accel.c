@@ -528,7 +528,7 @@ VIAInitAccel(ScreenPtr pScreen)
     AvailFBArea.y2 = cacheEnd;
      
     xf86InitFBManager(pScreen, &AvailFBArea);
-    DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+    DEBUGX(xf86DrvMsg(pScrn->scrnIndex, X_INFO,
 					 "Using %d lines for offscreen memory.\n",
 					 AvailFBArea.y2 - pScrn->virtualY ));
 

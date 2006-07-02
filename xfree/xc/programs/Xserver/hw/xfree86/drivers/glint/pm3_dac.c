@@ -40,7 +40,9 @@
 #include "pm3_regs.h"
 #include "glint.h"
 
+#ifndef DEBUG
 #define DEBUG 0
+#endif
 
 #if DEBUG
 # define TRACE_ENTER(str)       ErrorF("glint: " str " %d\n",pScrn->scrnIndex)

@@ -30,7 +30,7 @@ void VIADisabledExtendedFIFO(VIABIOSInfoPtr pBIOSInfo)
     VIABIOSInfoPtr  pVia = pBIOSInfo;
     CARD32  dwGE230, dwGE298;
 
-    DEBUG(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "VIADisabledExtendedFIFO\n"));
+    DEBUGX(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "VIADisabledExtendedFIFO\n"));
     /* Cause of exit XWindow will dump back register value, others chipset no
      * need to set extended fifo value */
     if (pBIOSInfo->Chipset == VIA_CLE266 && pBIOSInfo->ChipRev < 15 &&
@@ -54,7 +54,7 @@ void VIAEnabledPrimaryExtendedFIFO(VIABIOSInfoPtr pBIOSInfo)
     CARD8   bRegTemp;
     CARD32  dwGE230, dwGE298;
 
-    DEBUG(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "VIAEnabledPrimaryExtendedFIFO\n"));
+    DEBUGX(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "VIAEnabledPrimaryExtendedFIFO\n"));
     switch (pBIOSInfo->Chipset) {
     case VIA_CLE266:
         if (pBIOSInfo->ChipRev > 14) {  /* For 3123Cx */
@@ -227,7 +227,7 @@ void VIAEnabledSecondaryExtendedFIFO(VIABIOSInfoPtr pBIOSInfo)
 {
     VIABIOSInfoPtr  pVia = pBIOSInfo;
     CARD8   bRegTemp;
-    DEBUG(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "VIAEnabledSecondaryExtendedFIFO\n"));
+    DEBUGX(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "VIAEnabledSecondaryExtendedFIFO\n"));
     switch (pBIOSInfo->Chipset) {
     case VIA_CLE266:
         if (pBIOSInfo->ChipRev > 15) {  /* for 3123Cx */
@@ -353,7 +353,7 @@ void VIAFillExpireNumber(VIABIOSInfoPtr pBIOSInfo)
     CARD8   bRegTemp;
     const VIAPanel3C522Tue*    TuneExpireNum;
 
-    DEBUG(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "VIAFillExpireNumber\n"));
+    DEBUGX(xf86DrvMsg(pBIOSInfo->scrnIndex, X_INFO, "VIAFillExpireNumber\n"));
     switch (pBIOSInfo->Chipset) {
     case VIA_CLE266:
         if (pBIOSInfo->ChipRev > 14) {

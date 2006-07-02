@@ -92,7 +92,7 @@ void SMI_RefreshArea(ScrnInfoPtr pScrn, int num, BoxPtr pbox)
 		width  = pbox->x2 - srcX;
 		height = pbox->y2 - srcY;
 
-		DEBUG((VERBLEV, "x=%d y=%d w=%d h=%d\n", srcX, srcY, width, height));
+		DEBUGX((VERBLEV, "x=%d y=%d w=%d h=%d\n", srcX, srcY, width, height));
 
 		if ((width > 0) && (height > 0))
 		{
@@ -228,7 +228,7 @@ void SMI_RefreshArea730(ScrnInfoPtr pScrn, int num, BoxPtr pbox)
 		width  = pbox->x2 - srcX;
 		height = pbox->y2 - srcY;
 
-		DEBUG((VERBLEV, "x=%d y=%d w=%d h=%d\n", srcX, srcY, width, height));
+		DEBUGX((VERBLEV, "x=%d y=%d w=%d h=%d\n", srcX, srcY, width, height));
 
 		if ((width > 0) && (height > 0))
 		{

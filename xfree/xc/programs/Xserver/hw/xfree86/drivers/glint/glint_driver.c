@@ -66,7 +66,9 @@
 #define DPMS_SERVER
 #include "extensions/dpms.h"
 
+#ifndef DEBUG
 #define DEBUG 0
+#endif
 
 #if DEBUG
 # define TRACE_ENTER(str)       ErrorF("glint: " str " %d\n",pScrn->scrnIndex)

@@ -90,7 +90,7 @@ SMI_CommonCalcClock(int scrnIndex, long freq, int min_m, int min_n1,
 		}
 	}
 
-	DEBUG((VERBLEV, "Clock parameters for %1.6f MHz: m=%d, n1=%d, n2=%d\n",
+	DEBUGX((VERBLEV, "Clock parameters for %1.6f MHz: m=%d, n1=%d, n2=%d\n",
 			((double)(best_m) / (double)(best_n1) / (1 << best_n2)) * BASE_FREQ,
 			best_m, best_n1, best_n2));
 

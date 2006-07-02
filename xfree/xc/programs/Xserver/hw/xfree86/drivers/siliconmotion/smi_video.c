@@ -631,12 +631,12 @@ SMI_InitVideo(ScreenPtr pScreen)
 
     numAdaptors = xf86XVListGenericAdaptors(pScrn, &ptrAdaptors);
 
-    DEBUG((VERBLEV, "numAdaptors=%d\n", numAdaptors));
+    DEBUGX((VERBLEV, "numAdaptors=%d\n", numAdaptors));
 
     if (psmi->rotate == 0)
     {
         newAdaptor = SMI_SetupVideo(pScreen);
-        DEBUG((VERBLEV, "newAdaptor=%p\n", newAdaptor));
+        DEBUGX((VERBLEV, "newAdaptor=%p\n", newAdaptor));
         SMI_InitOffscreenImages(pScreen);
     }
 
@@ -663,7 +663,7 @@ SMI_InitVideo(ScreenPtr pScreen)
 
     if (numAdaptors != 0)
     {
-      DEBUG((VERBLEV, "ScreenInit %i\n",numAdaptors));
+      DEBUGX((VERBLEV, "ScreenInit %i\n",numAdaptors));
         xf86XVScreenInit(pScreen, ptrAdaptors, numAdaptors);
     }
 
@@ -757,7 +757,7 @@ SetAttrSAA7111(ScrnInfoPtr pScrn, int i, int value)
 	input = pPort->input[value];
 	channel = pPort->channel[value];
 
-	DEBUG((VERBLEV, "SetAttribute XV_ENCODING: %d. norm=%d input=%d channel=%d\n",
+	DEBUGX((VERBLEV, "SetAttribute XV_ENCODING: %d. norm=%d input=%d channel=%d\n",
 	       value, norm, input, channel));
 
 	/* set video norm */
@@ -787,22 +787,22 @@ SetAttrSAA7111(ScrnInfoPtr pScrn, int i, int value)
 	switch (i) {
 
 	case XV_CAPTURE_BRIGHTNESS:
-	    DEBUG((VERBLEV, "SetAttribute XV_BRIGHTNESS: %d\n", value));
+	    DEBUGX((VERBLEV, "SetAttribute XV_BRIGHTNESS: %d\n", value));
 	    slave_adr = 0x0a;
 	    break;
 		
 	case XV_CONTRAST:
-	    DEBUG((VERBLEV, "SetAttribute XV_CONTRAST: %d\n", value));
+	    DEBUGX((VERBLEV, "SetAttribute XV_CONTRAST: %d\n", value));
 	    slave_adr = 0x0b;
 	    break;
 
 	case XV_SATURATION:
-	    DEBUG((VERBLEV, "SetAttribute XV_SATURATION: %d\n", value));
+	    DEBUGX((VERBLEV, "SetAttribute XV_SATURATION: %d\n", value));
 	    slave_adr = 0x0c;
 	    break;
 
 	case XV_HUE:
-	    DEBUG((VERBLEV, "SetAttribute XV_HUE: %d\n", value));
+	    DEBUGX((VERBLEV, "SetAttribute XV_HUE: %d\n", value));
 	    slave_adr = 0x0d;
 	    break;
 
@@ -821,10 +821,10 @@ SetAttrSAA7111(ScrnInfoPtr pScrn, int i, int value)
 	I2CByte i2c_bytes[32];
 	int i;
 	xf86I2CReadBytes(&(pPort->I2CDev), 0, i2c_bytes, 32);
-	DEBUG((VERBLEV, "SAA7111 Registers\n"));
+	DEBUGX((VERBLEV, "SAA7111 Registers\n"));
 	for (i=0; i<32; i++) {
-	    DEBUG((VERBLEV, "%02X=%02X ", i, i2c_bytes[i]));
-	    if ((i&7) == 7) DEBUG((VERBLEV, "\n"));
+	    DEBUGX((VERBLEV, "%02X=%02X ", i, i2c_bytes[i]));
+	    if ((i&7) == 7) DEBUGX((VERBLEV, "\n"));
 	}
     }
 
@@ -932,7 +932,7 @@ SMI_SetupVideo(
         LEAVE_PROC("SMI_SetupVideo");
         return(NULL);
     }
-    DEBUG((VERBLEV, "SAA7111 detected\n"));
+    DEBUGX((VERBLEV, "SAA7111 detected\n"));
 #endif
 
     smiPortPtr->I2CDev.DevName = "SAA 7111A";
@@ -951,7 +951,7 @@ SMI_SetupVideo(
 	    xvContrast   = MAKE_ATOM(XV_CONTRAST_NAME);
 	    
 	    xvInterlaced = MAKE_ATOM(XV_INTERLACED_NAME);
-	    DEBUG((VERBLEV, "SAA7111 intialized\n"));
+	    DEBUGX((VERBLEV, "SAA7111 intialized\n"));
     
 	} else { 
 	    xf86DestroyI2CDevRec(&(smiPortPtr->I2CDev),FALSE);
@@ -1055,7 +1055,7 @@ SMI_PutVideo(
 
     ENTER_PROC("SMI_PutVideo");
 
-    DEBUG((VERBLEV, "Interlaced Video %d\n", pPort->Attribute[XV_INTERLACED]));
+    DEBUGX((VERBLEV, "Interlaced Video %d\n", pPort->Attribute[XV_INTERLACED]));
 
     if (!pPort->Attribute[XV_INTERLACED]) {
 	/* no interlace: lines will be doubled */
@@ -1069,7 +1069,7 @@ SMI_PutVideo(
     /* only even values allowed (UV-phase) */
     vid_x &= ~1;
 
-    DEBUG((VERBLEV, "vid_x=%d vid_y=%d drw_x=%d drw_y=%d  "
+    DEBUGX((VERBLEV, "vid_x=%d vid_y=%d drw_x=%d drw_y=%d  "
 	   "vid_w=%d vid_h=%d drw_w=%d drw_h=%d\n",
 	   vid_x, vid_y, drw_x, drw_y, vid_w, vid_h, drw_w, drw_h));
 
@@ -1098,7 +1098,7 @@ SMI_PutVideo(
 		return(Success);
 	}
 
-    DEBUG((VERBLEV, "Clip: x1=%d y1=%d x2=%d y2=%d\n",  x1 >> 16, y1 >> 16, x2 >> 16, y2 >> 16));
+    DEBUGX((VERBLEV, "Clip: x1=%d y1=%d x2=%d y2=%d\n",  x1 >> 16, y1 >> 16, x2 >> 16, y2 >> 16));
 
 	dstBox.x1 -= pScrn->frameX0;
 	dstBox.y1 -= pScrn->frameY0;
@@ -1237,7 +1237,7 @@ SMI_PutVideo(
 	do
 	{
 		areaHeight = (vid_pitch * height + fbPitch - 1) / fbPitch;
-	DEBUG((VERBLEV, "SMI_AllocateMemory: vid_pitch=%d height=%d fbPitch=%d areaHeight=%d\n",
+	DEBUGX((VERBLEV, "SMI_AllocateMemory: vid_pitch=%d height=%d fbPitch=%d areaHeight=%d\n",
 	       vid_pitch, height, fbPitch, areaHeight));
         pPort->area = SMI_AllocateMemory(pScrn, pPort->area, areaHeight);
         if (pPort->area == NULL)
@@ -1275,7 +1275,7 @@ SMI_PutVideo(
 				}
 				else
 				{
-		    DEBUG((VERBLEV, "allocate error\n"));
+		    DEBUGX((VERBLEV, "allocate error\n"));
                     LEAVE_PROC("SMI_PutVideo");
 					return(BadAlloc);
 				}
@@ -1284,23 +1284,23 @@ SMI_PutVideo(
 	}
     while (pPort->area == NULL);
 
-    DEBUG((VERBLEV, "xscale==%d yscale=%d width=%d height=%d\n",
+    DEBUGX((VERBLEV, "xscale==%d yscale=%d width=%d height=%d\n",
 	   xscale, yscale, width, height));
 
     /* aaa whats this                     ----------------------v ?
     vid_address = (pPort->area->box.y1 * fbPitch) + ((y1 >> 16) * vid_pitch);*/
     vid_address = (pPort->area->box.y1 * fbPitch);
 
-    DEBUG((VERBLEV, "test RegionsEqual\n"));
+    DEBUGX((VERBLEV, "test RegionsEqual\n"));
 #if XF86_VERSION_CURRENT < XF86_VERSION_NUMERIC(4,3,99,0,0)
     if (!RegionsEqual(&pPort->clip, clipBoxes))
 #else
     if (!REGION_EQUAL(pScrn->pScreen, &pPort->clip, clipBoxes))
 #endif
     {
-	DEBUG((VERBLEV, "RegionCopy\n"));
+	DEBUGX((VERBLEV, "RegionCopy\n"));
         REGION_COPY(pScrn->pScreen, &pPort->clip, clipBoxes);
-	DEBUG((VERBLEV, "FillKey\n"));
+	DEBUGX((VERBLEV, "FillKey\n"));
 	xf86XVFillKeyHelper(pScrn->pScreen, pPort->Attribute[XV_COLORKEY], clipBoxes);
 
 	}
@@ -1372,7 +1372,7 @@ SMI_PutVideo(
 	WRITE_VPR(pSmi, 0x00, vpr00);
 
     pPort->videoStatus = CLIENT_VIDEO_ON;
-    DEBUG((VERBLEV, "SMI_PutVideo success\n"));
+    DEBUGX((VERBLEV, "SMI_PutVideo success\n"));
     LEAVE_PROC("SMI_PutVideo");
 	return(Success);
 }
@@ -1872,7 +1872,7 @@ SMI_ClipVideo(
 
 	ENTER_PROC("SMI_ClipVideo");
 
-    DEBUG((VERBLEV, "ClipVideo(%d): x1=%d y1=%d x2=%d y2=%d\n",  __LINE__, *x1 >> 16, *y1 >> 16, *x2 >> 16, *y2 >> 16));
+    DEBUGX((VERBLEV, "ClipVideo(%d): x1=%d y1=%d x2=%d y2=%d\n",  __LINE__, *x1 >> 16, *y1 >> 16, *x2 >> 16, *y2 >> 16));
 	/* PDR#941 */
 	extents->x1 = max(extents->x1, pScrn->frameX0);
 	extents->y1 = max(extents->y1, pScrn->frameY0);
@@ -1883,7 +1883,7 @@ SMI_ClipVideo(
 	*x1 <<= 16; *y1 <<= 16;
 	*x2 <<= 16; *y2 <<= 16;
 
-    DEBUG((VERBLEV, "ClipVideo(%d): x1=%d y1=%d x2=%d y2=%d\n",  __LINE__, *x1 >> 16, *y1 >> 16, *x2 >> 16, *y2 >> 16));
+    DEBUGX((VERBLEV, "ClipVideo(%d): x1=%d y1=%d x2=%d y2=%d\n",  __LINE__, *x1 >> 16, *y1 >> 16, *x2 >> 16, *y2 >> 16));
 
 	diff = extents->x1 - dst->x1;
 	if (diff > 0)
@@ -1913,7 +1913,7 @@ SMI_ClipVideo(
 		*y2 -= diff * vscale;
 	}
 
-    DEBUG((VERBLEV, "ClipVideo(%d): x1=%d y1=%d x2=%d y2=%d\n",  __LINE__, *x1 >> 16, *y1 >> 16, *x2 >> 16, *y2 >> 16));
+    DEBUGX((VERBLEV, "ClipVideo(%d): x1=%d y1=%d x2=%d y2=%d\n",  __LINE__, *x1 >> 16, *y1 >> 16, *x2 >> 16, *y2 >> 16));
 
 	if (*x1 < 0)
 	{
@@ -1929,7 +1929,7 @@ SMI_ClipVideo(
 		*y1 += diff * vscale;
 	}
 
-    DEBUG((VERBLEV, "ClipVideo(%d): x1=%d y1=%d x2=%d y2=%d\n",  __LINE__, *x1 >> 16, *y1 >> 16, *x2 >> 16, *y2 >> 16));
+    DEBUGX((VERBLEV, "ClipVideo(%d): x1=%d y1=%d x2=%d y2=%d\n",  __LINE__, *x1 >> 16, *y1 >> 16, *x2 >> 16, *y2 >> 16));
 
 #if 0 /* aaa was macht dieser code? */
 	delta = *x2 - (width << 16);
@@ -1949,7 +1949,7 @@ SMI_ClipVideo(
 	}
 #endif
 
-    DEBUG((VERBLEV, "ClipVideo(%d): x1=%d y1=%d x2=%d y2=%d\n",  __LINE__, *x1 >> 16, *y1 >> 16, *x2 >> 16, *y2 >> 16));
+    DEBUGX((VERBLEV, "ClipVideo(%d): x1=%d y1=%d x2=%d y2=%d\n",  __LINE__, *x1 >> 16, *y1 >> 16, *x2 >> 16, *y2 >> 16));
 
 	if ((*x1 >= *x2) || (*y1 >= *y2))
 	{
@@ -1967,7 +1967,7 @@ SMI_ClipVideo(
 		REGION_UNINIT(pScreen, &clipReg);
 	}
 
-    DEBUG((VERBLEV, "ClipVideo(%d): x1=%d y1=%d x2=%d y2=%d\n",  __LINE__, *x1 >> 16, *y1 >> 16, *x2 >> 16, *y2 >> 16));
+    DEBUGX((VERBLEV, "ClipVideo(%d): x1=%d y1=%d x2=%d y2=%d\n",  __LINE__, *x1 >> 16, *y1 >> 16, *x2 >> 16, *y2 >> 16));
 
 	LEAVE_PROC("SMI_ClipVideo");
 	return(TRUE);
@@ -2330,7 +2330,7 @@ SMI_AllocateMemory(
 		xf86QueryLargestOffscreenArea(pScreen, &maxW, &maxH, 0,
 				FAVOR_WIDTH_THEN_AREA, PRIORITY_EXTREME);
 
-	DEBUG((VERBLEV, "QueryLargestOffscreenArea maxW=%d maxH=%d displayWidth=%d numlines=%d\n",
+	DEBUGX((VERBLEV, "QueryLargestOffscreenArea maxW=%d maxH=%d displayWidth=%d numlines=%d\n",
 	       maxW, maxH, pScrn->displayWidth, numLines));
 		if ((maxW < pScrn->displayWidth) || (maxH < numLines))
 		{
@@ -2343,7 +2343,7 @@ SMI_AllocateMemory(
 				0, NULL, NULL, NULL);
 	}
 
-    DEBUG((VERBLEV, "area = %p\n", area));
+    DEBUGX((VERBLEV, "area = %p\n", area));
 	LEAVE_PROC("SMI_AllocateMemory");
 	return(area);
 }

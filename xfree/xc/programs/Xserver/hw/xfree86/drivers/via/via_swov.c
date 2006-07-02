@@ -254,7 +254,7 @@ unsigned long VIAVidCreateSurface(ScrnInfoPtr pScrn, LPDDSURFACEDESC lpDDSurface
 	    	return retCode;
 	    dwAddr = pVia->swov.SWfbMem.base;
 	    
-	    DEBUG(ErrorF("dwAddr for SWfbMem is %lu\n", dwAddr));
+	    DEBUGX(ErrorF("dwAddr for SWfbMem is %lu\n", dwAddr));
             /* fill in the SW buffer with 0x8000 (YUY2-black color) to clear FB buffer
              */
             lpTmpAddr = pVia->FBBase + dwAddr;
@@ -317,7 +317,7 @@ if (!(pVia->swov.gdwVideoFlagSW & SW_USE_HQV))
 	    	return retCode;
             
             dwAddr = pVia->swov.HQVMem.base;
-	    DEBUG(ErrorF("dwAddr for HQV is %lu\n", dwAddr));
+	    DEBUGX(ErrorF("dwAddr for HQV is %lu\n", dwAddr));
             DBG_DD(ErrorF("HQV dwAddr = 0x%x!!!! \n",dwAddr));
 
             pVia->swov.overlayRecordV1.dwHQVAddr[0] = dwAddr;

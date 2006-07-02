@@ -31,7 +31,6 @@
 
 #ifdef DEBUG  /* This code only used for debugging */
 
-
 /* Comment this out to deactivate the cycle counter.
  * NOTE: it works only on CPUs which know the 'rdtsc' command (586 or higher)
  * (hope, you don't try to debug Mesa on a 386 ;)
@@ -223,6 +222,10 @@ x -= counter_overhead;
 
 static GLfloat rnd( void )
 {
+#ifndef RAND_MAX
+/* XXX: Too hard to include <stdlib.h> here. */
+#define RAND_MAX 0x7fffffff
+#endif
    GLfloat f = (GLfloat)rand() / (GLfloat)RAND_MAX;
    GLfloat gran = (GLfloat)(1 << 13);
 

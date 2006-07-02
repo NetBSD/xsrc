@@ -28,9 +28,9 @@
 
 /* #define DEBUG_PRINT */
 #ifdef DEBUG_PRINT
-#define DEBUG(x) x
+#define DEBUGX(x) x
 #else
-#define DEBUG(x)
+#define DEBUGX(x)
 #endif
 
 #include "vgaHW.h"

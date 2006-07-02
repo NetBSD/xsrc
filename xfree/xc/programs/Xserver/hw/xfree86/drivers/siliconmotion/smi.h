@@ -268,13 +268,13 @@ typedef struct
 									"(%d)\n", __LINE__); xf86Break2()
 #	define LEAVE_PROC(PROCNAME)	xf86ErrorFVerb(VERBLEV, "LEAVE\t" PROCNAME \
 									"(%d)\n", __LINE__); xf86Break1()
-#	define DEBUG(arg)				xf86ErrorFVerb arg
+#	define DEBUGX(arg)				xf86ErrorFVerb arg
 #else
 #	define VERBLEV	4
 #	define ENTER_PROC(PROCNAME)
 #	define DEBUG_PROC(PROCNAME)
 #	define LEAVE_PROC(PROCNAME)
-#	define DEBUG(arg)
+#	define DEBUGX(arg)
 #endif
 
 /* Some Silicon Motion structs & registers */

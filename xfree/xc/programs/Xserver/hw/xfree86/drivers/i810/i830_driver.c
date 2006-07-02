@@ -3344,7 +3344,7 @@ static void I830SetCloneVBERefresh(ScrnInfoPtr pScrn, int mode, VbeCRTCInfoBlock
          clock = VBEGetPixelClock(pI830->pVbe, mode, block->PixelClock);
 #ifdef DEBUG
          ErrorF("Setting clock %.2fMHz, closest is %.2fMHz\n",
-                    (double)data->block->PixelClock / 1000000.0, 
+                    (double)block->PixelClock / 1000000.0, 
                     (double)clock / 1000000.0);
 #endif
          if (clock)
