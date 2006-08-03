@@ -1,4 +1,4 @@
-/* $NetBSD: x68kConfig.c,v 1.1.1.1 2004/01/07 12:51:46 minoura Exp $ */
+/* $NetBSD: x68kConfig.c,v 1.2 2006/08/03 20:16:39 mhitch Exp $ */
 /*-------------------------------------------------------------------------
  * Copyright (c) 1996 Yasushi Yamasaki
  * All rights reserved.
@@ -114,10 +114,10 @@ char *configFilename = NULL;
 static FILE *config;
 char modeSet = FALSE;
 
+static int parseCommand(void);
+
 int x68kConfig(void)
 {
-    static int parseCommand(void);
-    
     if (configFilename)
 	config = fopen(configFilename, "r");
     else {
