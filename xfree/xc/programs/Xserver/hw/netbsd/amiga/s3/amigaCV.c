@@ -288,7 +288,7 @@ amigaCVCopyWindow(pWin, ptOldOrg, prgnSrc)
    fbFd *inf = amigaInfo(pWin->drawable.pScreen);
    volatile caddr_t vgaBase = (volatile caddr_t) (inf->regs);
 
-   dummyGC.subWindowMode = ~IncludeInferiors;
+   dummyGC.subWindowMode = ClipByChildren;	/* ~IncludeInferiors */
 
    prgnDst = REGION_CREATE(pWin->drawable.pScreen, NULL, 1);
 
