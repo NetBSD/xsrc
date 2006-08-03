@@ -70,7 +70,7 @@ static char sccsid[] = "%W %G Copyright 1987 Sun Micro";
 #endif
 
 
-extern caddr_t mmap();
+extern void *mmap();
 static void amigaCInstallColormap ();
 static void amigaCUninstallColormap ();
 static int amigaCListInstalledColormaps ();
