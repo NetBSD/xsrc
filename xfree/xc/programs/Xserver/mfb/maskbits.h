@@ -345,8 +345,8 @@ extern PixelType mask[];
 
 #define FASTPUTBITS(src, x, w, pdst) \
     __asm ("bfins %3,%0{%1:%2}" \
-	 : "=o" (*(char *)(pdst)) \
-	 : "di" (x), "di" (w), "d" (src), "0" (*(char *) (pdst)))
+	 : "+o" (*(char *)(pdst)) \
+	 : "di" (x), "di" (w), "d" (src))
 
 #define putbits(src, x, w, pdst) FASTPUTBITS(SHR((src),32-(w)), x, w, pdst)
 
