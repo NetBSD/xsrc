@@ -223,7 +223,7 @@ static void CGStoreColors(pmap, ndef, pdefs)
 static ColormapPtr InstalledMaps[MAXSCREENS];
 
 static int
-cfbListInstalledColormaps(pScreen, pmaps)
+amigacfbListInstalledColormaps(pScreen, pmaps)
     ScreenPtr	pScreen;
     Colormap	*pmaps;
 {
@@ -235,7 +235,7 @@ cfbListInstalledColormaps(pScreen, pmaps)
 
 
 static void
-cfbInstallColormap(pmap)
+amigacfbInstallColormap(pmap)
     ColormapPtr	pmap;
 {
     int index = pmap->pScreen->myNum;
@@ -255,7 +255,7 @@ cfbInstallColormap(pmap)
 }
 
 static void
-cfbUninstallColormap(pmap)
+amigacfbUninstallColormap(pmap)
     ColormapPtr	pmap;
 {
     int index = pmap->pScreen->myNum;
@@ -298,9 +298,9 @@ void CGScreenInit (pScreen)
       static unsigned char bw[2] = { 0, 255 };
       CGUpdateColormap (pScreen, 0, 2, bw, bw, bw);
 
-      pScreen->InstallColormap = cfbInstallColormap;
-      pScreen->UninstallColormap = cfbUninstallColormap;
-      pScreen->ListInstalledColormaps = cfbListInstalledColormaps;
+      pScreen->InstallColormap = amigacfbInstallColormap;
+      pScreen->UninstallColormap = amigacfbUninstallColormap;
+      pScreen->ListInstalledColormaps = amigacfbListInstalledColormaps;
       pScreen->StoreColors = (void (*)())NoopDDA;
       if (pScreen->rootDepth > 16)
 	pScreen->backingStoreSupport = NotUseful;
