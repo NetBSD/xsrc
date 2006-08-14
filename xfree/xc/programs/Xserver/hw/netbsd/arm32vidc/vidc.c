@@ -1,4 +1,4 @@
-/*	$NetBSD: vidc.c,v 1.5 2005/04/06 08:18:35 tron Exp $	*/
+/*	$NetBSD: vidc.c,v 1.6 2006/08/14 22:12:59 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1999 Neil A. Carson & Mark Brinicombe
@@ -103,8 +103,10 @@ write_palette(int c, int r, int g, int b)
 	    private.wsdisplay_fd, c));
 	if (private.wsdisplay_fd >= 0)
 		wsdisplay_write_palette(c, r, g, b);
+#ifdef HAVE_VCONSOLE
 	else
 		rpccons_write_palette(c, r, g, b);
+#endif /* HAVE_VCONSOLE */
 }
 
 /*
@@ -405,8 +407,10 @@ static void sigio_handler(int flags)
 #endif /* HAVE_BUSMOUSE */
 	if (private.wsmouse_fd >= 0)
 		wsmouse_io();
+#ifdef HAVE_KBD
 	if (private.kbd_fd >= 0)
 		rpc_kbd_io();
+#endif
 	if (private.wskbd_fd >= 0)
 		wskbd_io();
 }
@@ -423,7 +427,9 @@ void InitInput(int argc, char *argv[])
 	private.mouse_fd = -1;
 #endif /* HAVE_BUSMOUSE */
 	private.wsmouse_fd = -1;
+#ifdef HAVE_KBD
 	private.kbd_fd = -1;
+#endif /* HAVE_KBD */
 	private.wskbd_fd = -1;
 #ifdef HAVE_BUSMOUSE
 	private.beep_fd = -1;
@@ -445,6 +451,7 @@ void InitInput(int argc, char *argv[])
 	
 	/* ... and wskbd */
 	private.wskbd_fd = wskbd_init();
+#ifdef HAVE_KBD
 	if (private.wskbd_fd == -1) {
 		/* Try and init the old rpc kbd device */
 		private.kbd_fd = rpc_init_kbd();
@@ -457,6 +464,7 @@ void InitInput(int argc, char *argv[])
 			ErrorF("Cannot open beep device\n");
 #endif /* HAVE_BEEP */
 	}
+#endif /* HAVE_KBD */
 
 	/* Add the input devices */
 	mouse = AddInputDevice((DeviceProc) vidc_mouse, TRUE);
@@ -480,8 +488,10 @@ void InitInput(int argc, char *argv[])
 #endif /* HAVE_BUSMOUSE */
 	if (private.wsmouse_fd >= 0)
 		fcntl(private.wsmouse_fd, F_SETFL, O_ASYNC | O_NONBLOCK);
+#ifdef HAVE_KBD
        	if (private.kbd_fd >= 0)
 		fcntl(private.kbd_fd, F_SETFL, O_ASYNC | O_NONBLOCK);
+#endif
        	if (private.wskbd_fd >= 0)
 		fcntl(private.wskbd_fd, F_SETFL, O_ASYNC | O_NONBLOCK);
 	signal(SIGIO, sigio_handler);
@@ -507,7 +517,9 @@ int vidc_init_screen(int index, ScreenPtr screen, int argc, char **argv)
 	private.wsdisplay_fd = -1;
 
 	if (!wsdisplay_init(screen, argc, argv))
+#ifdef HAVE_VCONSOLE
 	    if (!rpc_init_screen(screen, argc, argv))
+#endif
 		FatalError("Unabled to initialize frame buffer\n");
 
 	if ((private.vram_base = mmap(0, private.width * private.yres,
@@ -626,8 +638,10 @@ void AbortDDX(void)
 
 	if (private.wsdisplay_fd >= 0)
 		wsdisplay_closedown();
+#ifdef HAVE_VCONSOLE
 	if (private.con_fd >= 0)
 		rpc_closedown();
+#endif /* HAVE_VCONSOLE */
 
 	if (private.vram_fd != 0)
 		close(private.vram_fd);
@@ -635,9 +649,13 @@ void AbortDDX(void)
 	close(private.mouse_fd);
 #endif /* HAVE_BUSMOUSE */
 	close(private.wsmouse_fd);
+#ifdef HAVE_VCONSOLE
 	close(private.con_fd);
+#endif /* HAVE_VCONSOLE */
 	close(private.wsdisplay_fd);
+#ifdef HAVE_KBD
 	close(private.kbd_fd);
+#endif /* HAVE_KBD */
 	close(private.wskbd_fd);
 }
 

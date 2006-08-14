@@ -1,4 +1,4 @@
-/*	$NetBSD: private.h,v 1.4 2004/03/14 13:21:18 bjh21 Exp $	*/
+/*	$NetBSD: private.h,v 1.5 2006/08/14 22:12:59 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1999 Mark Brinicombe & Neil A. Carson 
@@ -34,6 +34,11 @@
  * still exist.
  */
 #include <sys/param.h>
+#if __NetBSD_Version__ < 499000100
+/* <machine/kbd.h> and <machine/vconsole.h> removed in 4.99.1 */
+#define HAVE_KBD
+#define HAVE_VCONSOLE
+#endif
 #if __NetBSD_Version__ < 106370000 /* <machine/mouse.h> removed in 1.6ZK */
 #define HAVE_BUSMOUSE
 #endif
@@ -57,7 +62,9 @@ struct _private
 	int mouse_fd;		/* File descriptor for pms/qms */
 #endif
 	int wsmouse_fd;		/* File descriptor for wsmouse */
+#ifdef HAVE_KBD
 	int kbd_fd;		/* File descriptor for kbd */
+#endif
 	int wskbd_fd;		/* File descriptor for wskbd */
 	u_int wskbd_type;	/* Keyboard type from WSKBDIO_GTYPE */
 	int con_fd;		/* File descriptor for the console */
@@ -69,7 +76,9 @@ struct _private
 	DevicePtr mouse_dev;	/* X device for mouse */
 	DevicePtr kbd_dev;	/* X device for keyboard */
 	ColormapPtr colour_map;	/* Active colour map for this screen */
+#ifdef HAVE_VCONSOLE
 	int rpc_origvc;
+#endif
 };
 
 /* Prototypes */

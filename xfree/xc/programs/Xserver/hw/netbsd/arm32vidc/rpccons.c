@@ -1,4 +1,4 @@
-/*	$NetBSD: rpccons.c,v 1.4 2004/03/14 13:21:18 bjh21 Exp $	*/
+/*	$NetBSD: rpccons.c,v 1.5 2006/08/14 22:12:59 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1999 Mark Brinicombe & Neil A. Carson 
@@ -65,12 +65,16 @@
 #include "resource.h"
 
 /* NetBSD headers RiscPC specific */
+#ifdef HAVE_VCONSOLE
 #include <arm/iomd/vidc.h>
 #include <machine/vconsole.h>
+#endif
 #ifdef HAVE_BUSMOUSE
 #include <machine/mouse.h>
 #endif /* HAVE_BUSMOUSE */
+#ifdef HAVE_KBD
 #include <machine/kbd.h>
+#endif
 #ifdef HAVE_BEEP
 #include <machine/beep.h>
 #endif /* HAVE_BEEP */
@@ -97,14 +101,19 @@
 #define QMOUSE_PATH	"/dev/qms0"		/* Mouse pointer (rpc format) */
 #define PMOUSE_PATH	"/dev/pms0"		/* Mouse pointer (rpc format) */
 #endif /* HAVE_BUSMOUSE */
+#ifdef HAVE_VCONSOLE
 #define CON_PATH	"/dev/vidcvideo0"	/* Console */
+#endif /* HAVE_VCONSOLE */
+#ifdef HAVE_KBD
 #define KBD_PATH	"/dev/kbd"		/* Keyboard (rpc format) */
+#endif
 #ifdef HAVE_BEEP
 #define BEEP_PATH	"/dev/beep"		/* Beep device */
 #endif /* HAVE_BEEP */
 
 extern struct _private private;
 
+#ifdef HAVE_VCONSOLE
 void rpccons_write_palette(c, r, g, b)
 	int	c;
 	int	r;
@@ -120,6 +129,7 @@ void rpccons_write_palette(c, r, g, b)
 	pal.blue = b;
 	ioctl(private.con_fd, CONSOLE_PALETTE, &pal);
 }
+#endif
 
 void vidc_mousectrl(DeviceIntPtr device, PtrCtrl *ctrl)
 {
@@ -219,6 +229,7 @@ void rpc_mouse_io(void)
 }
 #endif /* HAVE_BUSMOUSE */
 
+#ifdef HAVE_KBD
 void rpc_kbd_io(void)
 {
 	int was_kbd = 0;
@@ -300,6 +311,7 @@ void rpc_kbd_io(void)
 		mieqEnqueue(&x_event);
 	}
 }
+#endif /* HAVE_KBD */
 
 #ifdef HAVE_BUSMOUSE
 int rpc_init_mouse(void)
@@ -331,6 +343,7 @@ int rpc_init_mouse(void)
 }
 #endif /* HAVE_BUSMOUSE */
 
+#ifdef HAVE_KBD
 int rpc_init_kbd(void)
 {
 	int fd;
@@ -347,6 +360,7 @@ int rpc_init_kbd(void)
 
 	return fd;
 }
+#endif /* HAVE_KBD */
 
 #ifdef HAVE_BEEP
 int rpc_init_bell(void)
@@ -355,6 +369,7 @@ int rpc_init_bell(void)
 }
 #endif /* HAVE_BEEP */
 
+#ifdef HAVE_VCONSOLE
 int rpc_init_screen(ScreenPtr screen, int argc, char **argv)
 {
 	int cnt;
@@ -426,3 +441,4 @@ void rpc_closedown(void)
 			    private.rpc_origvc);
 	}
 }
+#endif /* HAVE_VCONSOLE */
