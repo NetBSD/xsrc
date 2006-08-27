@@ -1222,6 +1222,9 @@ xf86InitFBManager(
    BoxRec ScreenBox;
    Bool ret;
 
+   if (FullBox->y2 < FullBox->y1) return FALSE;
+   if (FullBox->x2 < FullBox->x1) return FALSE;
+
    ScreenBox.x1 = 0;
    ScreenBox.y1 = 0;
    ScreenBox.x2 = pScrn->virtualX;
@@ -1231,9 +1234,6 @@ xf86InitFBManager(
       (FullBox->x2 <  ScreenBox.x2) || (FullBox->y2 <  ScreenBox.y2)) {
 	return FALSE;   
    }
-
-   if (FullBox->y2 < FullBox->y1) return FALSE;
-   if (FullBox->x2 < FullBox->x2) return FALSE;
 
    REGION_INIT(pScreen, &ScreenRegion, &ScreenBox, 1); 
    REGION_INIT(pScreen, &FullRegion, FullBox, 1); 
