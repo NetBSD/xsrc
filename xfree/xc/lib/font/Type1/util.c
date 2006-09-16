@@ -97,7 +97,7 @@ vm_alloc(int bytes)
   bytes = (bytes + 7) & ~7;
  
   /* Allocate the space, if it is available */
-  if (bytes <= vm_free) {
+  if (bytes > 0 && bytes <= vm_free) {
     answer = vm_next;
     vm_free -= bytes;
     vm_next += bytes;
