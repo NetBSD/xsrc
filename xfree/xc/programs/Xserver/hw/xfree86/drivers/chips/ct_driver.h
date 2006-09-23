@@ -198,6 +198,9 @@ typedef struct {
     unsigned int ScratchAddress;
     /* 64k for color expansion and imagewrites */
     unsigned char * BltDataWindow;
+#if X_BYTE_ORDER == X_BIG_ENDIAN
+    unsigned char * BltDataWindowLE;
+#endif
     /* Hardware cursor address */
     unsigned int CursorAddress;
     Bool UseHWCursor;
@@ -279,6 +282,9 @@ typedef struct _CHIPSRec {
     unsigned int	IOBase;
     unsigned char *	FbBase;
     unsigned char *	MMIOBase;
+#if X_BYTE_ORDER == X_BIG_ENDIAN
+    unsigned char *	MMIOBaseLE;
+#endif
     unsigned char *	MMIOBaseVGA;
     unsigned char *	MMIOBasePipeA;
     unsigned char *	MMIOBasePipeB;
