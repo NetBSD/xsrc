@@ -4232,10 +4232,14 @@ CHIPSScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 		cAcl->CacheEnd = 0;
 	    }
 
-	    if (IS_HiQV(cPtr)) 
+	    if (IS_HiQV(cPtr)) {
+#if X_BYTE_ORDER == X_BIG_ENDIAN
+		cAcl->BltDataWindowLE = (unsigned char *)cPtr->MMIOBaseLE
+		    + 0x10000L;
+#endif
 		cAcl->BltDataWindow = (unsigned char *)cPtr->MMIOBase
 		    + 0x10000L;
-	    else
+	    } else
 		cAcl->BltDataWindow = cPtr->FbBase;
 	    
 	}
@@ -6994,11 +6998,17 @@ chipsMapMem(ScrnInfoPtr pScrn)
     if (cPtr->Flags & ChipsLinearSupport) {
 	if (cPtr->UseMMIO) {
 	    if (IS_HiQV(cPtr)) {
-		if (cPtr->Bus == ChipsPCI)
+		if (cPtr->Bus == ChipsPCI) {
 		    cPtr->MMIOBase = xf86MapPciMem(pScrn->scrnIndex,
 			   VIDMEM_MMIO_32BIT,cPtr->PciTag, cPtr->IOAddress,
 			   0x20000L);
-		 else 
+#if X_BYTE_ORDER == X_BIG_ENDIAN
+		    cPtr->MMIOBaseLE = xf86MapPciMem(pScrn->scrnIndex,
+			   VIDMEM_MMIO_32BIT,cPtr->PciTag, 
+			   cPtr->PciInfo->memBase[0] + 0x400000,
+			   0x20000L);
+#endif
+		 } else 
 		    cPtr->MMIOBase = xf86MapVidMem(pScrn->scrnIndex,
 			   VIDMEM_MMIO_32BIT, cPtr->IOAddress, 0x20000L);
 	    } else {
@@ -7084,6 +7094,11 @@ chipsUnmapMem(ScrnInfoPtr pScrn)
 	    if (cPtr->MMIOBase)
 		xf86UnMapVidMem(pScrn->scrnIndex, (pointer)cPtr->MMIOBase,
 				0x20000);
+#if X_BYTE_ORDER == X_BIG_ENDIAN
+	    if (cPtr->MMIOBaseLE)
+		xf86UnMapVidMem(pScrn->scrnIndex, (pointer)cPtr->MMIOBaseLE,
+				0x20000);
+#endif
 	    if (cPtr->MMIOBasePipeB)
 		xf86UnMapVidMem(pScrn->scrnIndex, (pointer)cPtr->MMIOBasePipeB,
 				0x20000);
