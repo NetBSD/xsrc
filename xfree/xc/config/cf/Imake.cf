@@ -212,7 +212,7 @@ XCOMM $XFree86: xc/config/cf/Imake.cf,v 3.91 2004/04/03 22:26:20 dawes Exp $
 #  undef alpha
 # endif
 # if defined(__arm__) || defined(arm)
-#  define armArchitecture
+#  define ArmArchitecture
 #  undef arm
 # endif
 # if defined(__hppa__) || defined(hppa)
