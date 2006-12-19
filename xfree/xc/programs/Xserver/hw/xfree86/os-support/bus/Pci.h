@@ -376,7 +376,13 @@
 #endif
 
 #ifndef ARCH_PCI_INIT
+#if defined(__NetBSD__)
+#  define ARCH_PCI_INIT netbsdPciInit
+#  define INCLUDE_XF86_MAP_PCI_MEM
+#  define INCLUDE_XF86_NO_DOMAIN
+#else
 #error No PCI support available for this architecture/OS combination
+#endif
 #endif
 
 extern void ARCH_PCI_INIT(void);
