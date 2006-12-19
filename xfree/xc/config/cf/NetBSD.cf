@@ -871,6 +871,7 @@ InstallManPageAliasesBase(file,destdir,aliases)
 # define ServerOSDefines	XFree86ServerOSDefines
 # define ServerExtraDefines	GccGasOption XFree86ServerDefines
 # define ServerExtraSysLibs	-larm
+# undef  DefaultCCOptions
 # define DefaultCCOptions	-ansi -Dasm=__asm -fsigned-char \
 					-fomit-frame-pointer -march=armv4 \
 					-mtune=strongarm -D__arm__
@@ -1050,8 +1051,6 @@ InstallManPageAliasesBase(file,destdir,aliases)
 
 /* NetBSD >= 1.5 has setusercontext() */
 #if OSMajorVersion == 1 && OSMinorVersion >= 5 || OSMajorVersion > 1
-#if !defined(sharkArchitecture)
 #define HasSetUserContext       YES
-#endif
 #endif
 
