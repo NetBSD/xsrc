@@ -18,6 +18,7 @@ XCOMM $XConsortium: Imakefile /main/9 1996/10/25 15:38:46 kaleb $
 	(defined(KNetBSDArchitecture) && defined(PpcArchitecture)) || \
 	(defined(KNetBSDArchitecture) && defined(SparcArchitecture)) || \
 	(defined(KNetBSDArchitecture) && defined(CatsArchitecture)) || \
+	(defined(KNetBSDArchitecture) && defined(ArmArchitecture)) || \
 	(defined(KNetBSDArchitecture) && defined(MipsArchitecture)) || \
 	defined(KOpenBSDArchitecture) || defined(SGIArchitecture) || \
 	(defined(LynxOSArchitecture) && defined(PpcArchitecture)) || \

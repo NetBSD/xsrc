@@ -86,6 +86,12 @@ XCOMM NetBSD/cats
 PCIDRVRSRC = netbsdPci.c
 PCIDRVROBJ = netbsdPci.o
 
+#elif defined(NetBSDArchitecture) && defined(ArmArchitecture) 
+
+XCOMM NetBSD/shark
+
+PCIDRVRSRC = netbsdPci.c
+PCIDRVROBJ = netbsdPci.o
 #elif defined(LinuxArchitecture) && \
      (defined(i386Architecture) || defined(AMD64Architecture))
 
