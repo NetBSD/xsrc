@@ -261,7 +261,8 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
  */
 #if UseElfFormat
 # if (OSMajorVersion > 0 && defined(i386Architecture)) || \
-      defined(PpcArchitecture) || defined(Sparc64Architecture)
+      defined(PpcArchitecture) || defined(Sparc64Architecture) || \
+      defined(ArmArchitecture)
 #  ifndef  DoLoadableServer
 #   define DoLoadableServer	YES
 #  endif
@@ -309,11 +310,12 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
  * MACHINE_CPU specific toolchain options
  */
 /* arm specific options */
-#ifdef armArchitecture
+#ifdef ArmArchitecture
 # undef  DefaultCCOptions
 # define DefaultCCOptions	-ansi -Dasm=__asm -fsigned-char \
-					-fomit-frame-pointer
-#endif /* armArchitecture */
+					-fomit-frame-pointer -march=armv4 \
+					-mtune=strongarm -D__arm__
+#endif /* ArmArchitecture */
 
 /* i386 specific options */
 #ifdef i386Architecture
@@ -866,9 +868,10 @@ InstallManPageAliasesBase(file,destdir,aliases)
 
 /* shark */
 #if defined(sharkArchitecture)
-# define BuildServer		NO	/* no IGS driver in XF86_4 */
+# define BuildServer		YES
 # define ServerOSDefines	XFree86ServerOSDefines
 # define ServerExtraDefines	GccGasOption XFree86ServerDefines
+# define ServerExtraSysLibs	-larm
 # ifndef XFree86ConsoleDefines
 #  if ((OSMajorVersion < 1) || \
        (OSMajorVersion == 1 && OSMinorVersion < 5))
@@ -878,6 +881,8 @@ InstallManPageAliasesBase(file,destdir,aliases)
 	-DWSCONS_SUPPORT 
 #  endif
 # endif
+# undef XF86CardDrivers
+# define XF86CardDrivers	chips wsfb igs
 #endif
 
 /* sparc */
@@ -1043,6 +1048,8 @@ InstallManPageAliasesBase(file,destdir,aliases)
 
 /* NetBSD >= 1.5 has setusercontext() */
 #if OSMajorVersion == 1 && OSMinorVersion >= 5 || OSMajorVersion > 1
+#if !defined(sharkArchitecture)
 #define HasSetUserContext       YES
+#endif
 #endif
 
