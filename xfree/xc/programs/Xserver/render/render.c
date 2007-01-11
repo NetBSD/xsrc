@@ -1069,11 +1069,14 @@ ProcRenderAddGlyphs (ClientPtr client)
     }
 
     nglyphs = stuff->nglyphs;
+    if (nglyphs > (CARD32)(-1L) / sizeof(GlyphNewRec))
+	    return BadAlloc;
+
     if (nglyphs <= NLOCALGLYPH)
 	glyphsBase = glyphsLocal;
     else
     {
-	glyphsBase = (GlyphNewPtr) ALLOCATE_LOCAL (nglyphs * sizeof (GlyphNewRec));
+	glyphsBase = (GlyphNewPtr) Xalloc (nglyphs * sizeof (GlyphNewRec));
 	if (!glyphsBase)
 	    return BadAlloc;
     }
@@ -1131,7 +1134,7 @@ ProcRenderAddGlyphs (ClientPtr client)
     }
 
     if (glyphsBase != glyphsLocal)
-	DEALLOCATE_LOCAL (glyphsBase);
+	Xfree (glyphsBase);
     return client->noClientException;
 bail:
     while (glyphs != glyphsBase)
@@ -1140,7 +1143,7 @@ bail:
 	xfree (glyphs->glyph);
     }
     if (glyphsBase != glyphsLocal)
-	DEALLOCATE_LOCAL (glyphsBase);
+	Xfree (glyphsBase);
     return err;
 }
 
