@@ -1,7 +1,7 @@
 .\" $XFree86$
 .\"
 .\" Copyright (C) 2002 The XFree86 Project, Inc.  All Rights Reserved.
-.\" 
+.\"
 .\" Permission is hereby granted, free of charge, to any person
 .\" obtaining a copy of this software and associated documentation
 .\" files (the "Software"), to deal in the Software without
@@ -9,10 +9,10 @@
 .\" modify, merge, publish, distribute, sublicense, and/or sell copies
 .\" of the Software, and to permit persons to whom the Software is
 .\" furnished to do so, subject to the following conditions:
-.\" 
+.\"
 .\" The above copyright notice and this permission notice shall be
 .\" included in all copies or substantial portions of the Software.
-.\" 
+.\"
 .\" THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
 .\" EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
 .\" MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
@@ -20,11 +20,11 @@
 .\" FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF
 .\" CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 .\" WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-.\" 
+.\"
 .\" Except as contained in this notice, the name of the XFree86 Project
 .\" shall not be used in advertising or otherwise to promote the sale,
 .\" use or other dealings in this Software without prior written
-.\" authorization from the XFree86 Project.  
+.\" authorization from the XFree86 Project.
 .\"
 .\" shorthand for double quote that works everywhere.
 .ds q \N'34'
@@ -41,7 +41,7 @@ usbtablet \- USB tablet input driver for *BSD
 .B EndSection
 .fi
 .SH DESCRIPTION
-.B usbtablet 
+.B usbtablet
 is an XFree86 input driver for USB tablet devices.
 .PP
 The
@@ -50,7 +50,7 @@ driver functions as a pointer input device, and may be used as the
 X server's core pointer.
 .SH SUPPORTED HARDWARE
 This driver supports most USB tablets like the Wacom Graphire or
-PenPartner tablets. 
+PenPartner tablets.
 .SH CONFIGURATION DETAILS
 Please refer to XF86Config(__filemansuffix__) for general configuration
 details and for options that can be used with all input drivers.  This
@@ -75,7 +75,7 @@ sets the position increment under which not to transmit coordinates.
 .TP 4
 .B Option \fI"Threshold"\fP \fI"number"\fP
 sets the pressure threshold used to generate a button 1 events of stylus
-devices. The default value is 5. 
+devices. The default value is 5.
 .TP 4
 .B Option \fI"Mode"\fP \fI"Relative"|"Absolute"\fP
 sets the mode of the device.
@@ -86,12 +86,12 @@ sets the motion history size. By default the value is zero.
 .B Option \fI"FactorX"\fP \fI"number"\fP
 Scaling factor between tablet coordinates and X screen coordinates. If
 you don't specify it, it will be calculated to match the width of your
-tablet to the width of your screen. 
+tablet to the width of your screen.
 .TP 4
 .B Option \fI"FactorY"\fP \fI"number"\fP
 Scaling factor between tablet coordinates and X screen coordinates. If
 you don't specify it, it will be calculated to match the height of your
-tablet to the height of your screen. 
+tablet to the height of your screen.
 .TP 4
 .TP 4
 .B Option \fI"DebugLevel"\fP \fInumber \fP
@@ -103,4 +103,4 @@ XFree86(1), XF86Config(__filemansuffix__), xf86config(1), Xserver(1), X(__miscma
 .SH AUTHORS
 Lennart Augustsson <augustss@netbsd.org> wrote the original version
 for XFree86 3.3.6, Matthieu Herrb <matthieu@openbsd.org> adapted it to
-XFree86 4.x. 
+XFree86 4.x.
