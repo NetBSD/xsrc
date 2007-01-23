@@ -108,6 +108,9 @@
 #ifndef __OpenBSD__
 #include "xf86sbusBus.h"
 #endif
+#ifdef USB_HID
+#include <usbhid.h>
+#endif
 #include "compiler.h"
 
 #ifndef HAS_GLIBC_SIGSETJMP
@@ -417,6 +420,24 @@ LOOKUP xfree86LookupTab[] = {
     SYMFUNC(XisbTrace)
     SYMFUNC(XisbBlockDuration)
 #endif
+#ifdef USB_HID
+    SYMFUNC(hid_get_report_desc)
+    SYMFUNC(hid_use_report_desc)
+    SYMFUNC(hid_dispose_report_desc)
+    SYMFUNC(hid_start_parse)
+    SYMFUNC(hid_end_parse)
+    SYMFUNC(hid_get_item)
+    SYMFUNC(hid_report_size)
+    SYMFUNC(hid_locate)
+    SYMFUNC(hid_usage_page)
+    SYMFUNC(hid_usage_in_page)
+    SYMFUNC(hid_parse_usage_page)
+    SYMFUNC(hid_parse_usage_in_page)
+    SYMFUNC(hid_init)
+    SYMFUNC(hid_get_data)
+    SYMFUNC(hid_set_data)
+#endif
+
 
     /* xf86Bus.c */
     SYMFUNC(xf86CheckPciSlot)
