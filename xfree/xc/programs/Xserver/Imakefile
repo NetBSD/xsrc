@@ -311,12 +311,10 @@ DMXLOADABLEEXTS = $(MISCEXT) $(RECORDEXT) $(XTRAPEXT)
 #endif
        FONTLIBS = $(FONT) $(XPFBLIBS)
   TINY_FONTLIBS = $(TINY_FONT) $(XPFBLIBS)
-#if UsbMouseSupport 
 #if !HasLibUsb
             USB = $(XF86OSSRC)/bsd/libusb/LibraryTargetName(usb)
 #else
             USB = UsbHidLib
-#endif
 #endif
 #ifdef ServerExtraSysLibs
    EXTRASYSLIBS = ServerExtraSysLibs
