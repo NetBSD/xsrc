@@ -1,4 +1,4 @@
-/* $NetBSD: wsfb_cursor.c,v 1.2 2006/04/04 16:41:47 macallan Exp $ */
+/* $NetBSD: wsfb_cursor.c,v 1.3 2007/02/08 01:45:24 macallan Exp $ */
 /*
  * Copyright (c) 2005 Michael Lorenz
  * All rights reserved.
@@ -39,6 +39,7 @@
 #include <fcntl.h>
 #include <sys/types.h>
 #include <sys/time.h>
+#include <sys/endian.h>
 #include <dev/wscons/wsconsio.h>
 #include <errno.h>
 
@@ -170,8 +171,12 @@ WsfbSetupCursor(ScreenPtr pScreen)
 		xf86Msg(X_ERROR, "WSDISPLAYIO_SCURSOR: %d\n", errno);
 	
 	infoPtr->Flags = HARDWARE_CURSOR_AND_SOURCE_WITH_MASK |
-	    HARDWARE_CURSOR_TRUECOLOR_AT_8BPP| HARDWARE_CURSOR_BIT_ORDER_MSBFIRST;
-
+	    HARDWARE_CURSOR_TRUECOLOR_AT_8BPP
+/* XXX not sure why exactly we need this */
+#if BYTE_ORDER == BIG_ENDIAN
+	    | HARDWARE_CURSOR_BIT_ORDER_MSBFIRST
+#endif
+	;
 	infoPtr->SetCursorColors = WsfbSetCursorColors;
 	infoPtr->SetCursorPosition = WsfbSetCursorPosition;
 	infoPtr->LoadCursorImage = WsfbLoadCursorImage;
