@@ -182,7 +182,11 @@ tgtr:
 	.globl			VISmoveImageLR
 	.align			32
 VISmoveImageLR:
+#ifdef __arch64__
 	save			%sp, -192, %sp				! Group 0
+#else
+	save			%sp, -96, %sp				! Group 0
+#endif
 0:	rd			%pc, %tmp3				! Group 1
 	sub			%src, %dst, %mode			! Group 7
 	brz,pn			%h, return
@@ -1150,7 +1154,11 @@ tgtr:
 	.globl			VISmoveImageRL
 	.align			32
 VISmoveImageRL:
+#ifdef __arch64__
 	save			%sp, -192, %sp				! Group 0
+#else
+	save			%sp, -96, %sp				! Group 0
+#endif
 0:	rd			%pc, %tmp3				! Group 1
 	and			%dst, 63, %leftw			! Group 7
 	mov			64, %tmp1
