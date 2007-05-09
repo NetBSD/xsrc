@@ -1,4 +1,4 @@
-/*	$NetBSD: private.h,v 1.5 2006/08/14 22:12:59 bjh21 Exp $	*/
+/*	$NetBSD: private.h,v 1.5.2.1 2007/05/09 10:33:26 ghen Exp $	*/
 
 /*
  * Copyright (c) 1999 Mark Brinicombe & Neil A. Carson 
@@ -34,7 +34,7 @@
  * still exist.
  */
 #include <sys/param.h>
-#if __NetBSD_Version__ < 499000100
+#if (__NetBSD_Version < 499000100 && __NetBSD_Version >= 499000000) || __NetBSD_Version__ < 400000001
 /* <machine/kbd.h> and <machine/vconsole.h> removed in 4.99.1 */
 #define HAVE_KBD
 #define HAVE_VCONSOLE
