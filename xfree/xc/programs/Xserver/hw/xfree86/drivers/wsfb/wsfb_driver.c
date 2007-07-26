@@ -447,18 +447,26 @@ WsfbPreInit(ScrnInfoPtr pScrn, int flags)
 	if (pScrn->depth > 8) {
 		rgb zeros = { 0, 0, 0 }, masks;
 
-		if (wstype == WSDISPLAY_TYPE_SUN24 ||
-		    wstype == WSDISPLAY_TYPE_SUNCG12 ||
-		    wstype == WSDISPLAY_TYPE_SUNCG14 ||
-		    wstype == WSDISPLAY_TYPE_SUNTCX ||
-		    wstype == WSDISPLAY_TYPE_SUNFFB) {
-			masks.red = 0x0000ff;
-			masks.green = 0x00ff00;
-			masks.blue = 0xff0000;
-		} else {
-			masks.red = 0;
-			masks.green = 0;
-			masks.blue = 0;
+		switch (wstype) {
+			case WSDISPLAY_TYPE_SUN24:
+			case WSDISPLAY_TYPE_SUNCG12:
+			case WSDISPLAY_TYPE_SUNCG14:
+		 	case WSDISPLAY_TYPE_SUNTCX:
+			case WSDISPLAY_TYPE_SUNFFB:
+				masks.red =   0x000000ff;
+				masks.green = 0x0000ff00;
+				masks.blue =  0x00ff0000;
+				break;
+			case WSDISPLAY_TYPE_CRIME:
+				/* XXX */
+				masks.red =   0xff000000;
+				masks.green = 0x00ff0000;
+				masks.blue =  0x0000ff00;
+				break;
+			default:
+				masks.red = 0;
+				masks.green = 0;
+				masks.blue = 0;
 		}
 
 		if (!xf86SetWeight(pScrn, zeros, masks))
