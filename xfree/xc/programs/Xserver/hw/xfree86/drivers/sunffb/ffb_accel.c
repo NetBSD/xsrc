@@ -157,24 +157,29 @@ do {   unsigned int __ppc = FFB_PPC_ABE_DISABLE | FFB_PPC_APE_DISABLE | FFB_PPC_
 } while(0)
 
 #define FFB_ATTR_VSCROLL_XAA(__fpriv, __pmask) \
-do {   unsigned int __rop = (FFB_ROP_OLD | (FFB_ROP_OLD << 8)); \
-       unsigned int __fbc = (__fpriv)->xaa_fbc; \
-       if ((__fpriv)->fbc_cache != __fbc || \
-           (__fpriv)->rop_cache != __rop || \
-           (__fpriv)->pmask_cache != (__pmask) || \
-           (__fpriv)->drawop_cache != FFB_DRAWOP_VSCROLL) { \
-               ffb_fbcPtr __ffb = (__fpriv)->regs; \
-               (__fpriv)->fbc_cache = __fbc; \
-               (__fpriv)->rop_cache = __rop; \
-               (__fpriv)->pmask_cache = (__pmask); \
-               (__fpriv)->drawop_cache = FFB_DRAWOP_VSCROLL; \
-               (__fpriv)->rp_active = 1; \
-               FFBFifo(__fpriv, 4); \
-               (__ffb)->fbc = __fbc; \
-               (__ffb)->rop = __rop; \
-               (__ffb)->pmask = (__pmask); \
-               (__ffb)->drawop = FFB_DRAWOP_VSCROLL; \
-       } \
+do {	unsigned int __ppc = FFB_PPC_ABE_DISABLE | FFB_PPC_APE_DISABLE | FFB_PPC_CS_VAR | FFB_PPC_XS_WID; \
+	unsigned int __ppc_mask = FFB_PPC_ABE_MASK | FFB_PPC_APE_MASK | FFB_PPC_CS_MASK | FFB_PPC_XS_MASK; \
+	unsigned int __rop = (FFB_ROP_OLD | (FFB_ROP_OLD << 8)); \
+	unsigned int __fbc = (__fpriv)->xaa_fbc; \
+	(__fpriv)->ppc_cache &= ~__ppc_mask; \
+	(__fpriv)->ppc_cache |= __ppc; \
+	(__fpriv)->regs->ppc = __ppc; \
+	if ((__fpriv)->fbc_cache != __fbc || \
+            (__fpriv)->rop_cache != __rop || \
+            (__fpriv)->pmask_cache != (__pmask) || \
+            (__fpriv)->drawop_cache != FFB_DRAWOP_VSCROLL) { \
+		ffb_fbcPtr __ffb = (__fpriv)->regs; \
+		(__fpriv)->fbc_cache = __fbc; \
+		(__fpriv)->rop_cache = __rop; \
+		(__fpriv)->pmask_cache = (__pmask); \
+		(__fpriv)->drawop_cache = FFB_DRAWOP_VSCROLL; \
+		(__fpriv)->rp_active = 1; \
+		FFBFifo(__fpriv, 4); \
+		(__ffb)->fbc = __fbc; \
+		(__ffb)->rop = __rop; \
+		(__ffb)->pmask = (__pmask); \
+		(__ffb)->drawop = FFB_DRAWOP_VSCROLL; \
+	} \
 } while(0)
 
 static CARD32 FFBAlphaTextureFormats[2] = { PICT_a8, 0 };
@@ -706,66 +711,67 @@ static void FFB_ScreenToScreenBitBlt(ScrnInfoPtr pScrn,
 
                        pbox++;
                        pptSrc++;
+		}
+		pFfb->rp_active = 1;
+		SET_SYNC_FLAG(pFfb->pXAAInfo);
+	} else {
+		unsigned char *sfb32 = (unsigned char *) pFfb->sfb32;
+		int psz_shift = 2;
+
+		FFB_ATTR_SFB_VAR_XAA(pFfb, planemask, rop);
+		if (pFfb->use_blkread_prefetch) {
+			unsigned int bit;
+
+			if (xdir < 0)
+				bit = FFB_MER_EDRA;
+			else
+				bit = FFB_MER_EIRA;
+			FFBFifo(pFfb, 1);
+			ffb->mer = bit;
+			pFfb->rp_active = 1;
+		}
+		FFBWait(pFfb, ffb);
+
+		while (nbox--) {
+			unsigned char *src, *dst;
+			int x1, y1, x2, y2;
+			int width, height;
+			int sdkind;
+
+			x1 = pptSrc->x;
+			y1 = pptSrc->y;
+			x2 = pbox->x1;
+			y2 = pbox->y1;
+			width = (pbox->x2 - pbox->x1);
+			height = (pbox->y2 - pbox->y1);
+
+			src = sfb32 + (y1 * (2048 << psz_shift))
+			    + (x1 << psz_shift);
+			dst = sfb32 + (y2 * (2048 << psz_shift))
+			    + (x2 << psz_shift);
+			sdkind = (2048 << psz_shift);
+
+			if (ydir < 0) {
+				src += ((height - 1) * (2048 << psz_shift));
+				dst += ((height - 1) * (2048 << psz_shift));
+				sdkind = -sdkind;
 			}
-               pFfb->rp_active = 1;
-               SET_SYNC_FLAG(pFfb->pXAAInfo);
-		} else {
-               unsigned char *sfb32 = (unsigned char *) pFfb->sfb32;
-               int psz_shift = 2;
-
-               FFB_ATTR_SFB_VAR_XAA(pFfb, planemask, rop);
-               if (pFfb->use_blkread_prefetch) {
-                       unsigned int bit;
-
-                       if (xdir < 0)
-                               bit = FFB_MER_EDRA;
-                       else
-                               bit = FFB_MER_EIRA;
-                       FFBFifo(pFfb, 1);
-                       ffb->mer = bit;
-                       pFfb->rp_active = 1;
-}
-               FFBWait(pFfb, ffb);
-
-               while (nbox--) {
-                       unsigned char *src, *dst;
-                       int x1, y1, x2, y2;
-                       int width, height;
-                       int sdkind;
-
-                       x1 = pptSrc->x;
-                       y1 = pptSrc->y;
-                       x2 = pbox->x1;
-                       y2 = pbox->y1;
-                       width = (pbox->x2 - pbox->x1);
-                       height = (pbox->y2 - pbox->y1);
-
-                       src = sfb32 + (y1 * (2048 << psz_shift))
-                               + (x1 << psz_shift);
-                       dst = sfb32 + (y2 * (2048 << psz_shift))
-                               + (x2 << psz_shift);
-                       sdkind = (2048 << psz_shift);
-
-                       if (ydir < 0) {
-                               src += ((height - 1) * (2048 << psz_shift));
-                               dst += ((height - 1) * (2048 << psz_shift));
-                               sdkind = -sdkind;
-                       }
-                       width <<= psz_shift;
-                       if (xdir < 0)
-                               VISmoveImageRL(src, dst, width, height,
-                                              sdkind, sdkind);
-                       else
-                               VISmoveImageLR(src, dst, width, height,
-                                              sdkind, sdkind);
-                       pbox++;
-                       pptSrc++;
-	       }
-               if (pFfb->use_blkread_prefetch) {
-                       FFBFifo(pFfb, 1);
-                       ffb->mer = FFB_MER_DRA;
-	pFfb->rp_active = 1;
-	FFBWait(pFfb, ffb);
+			width <<= psz_shift;
+			if (xdir < 0) {
+				VISmoveImageRL(src, dst, width, height, sdkind,
+				    sdkind);
+			} else {
+				VISmoveImageLR(src, dst, width, height, sdkind,
+				    sdkind);
+			}
+			pbox++;
+			pptSrc++;
+		}
+		if (pFfb->use_blkread_prefetch) {
+			FFBFifo(pFfb, 1);
+			ffb->mer = FFB_MER_DRA;
+			pFfb->rp_active = 1;
+			FFBWait(pFfb, ffb);
                }
        }
 }
