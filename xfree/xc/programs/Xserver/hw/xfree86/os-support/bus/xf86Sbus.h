@@ -117,6 +117,10 @@
 #define FBTYPE_P9100 21
 #endif
 
+#ifndef FBTYPE_AG10E
+#define FBTYPE_AG10E 24
+#endif
+
 #endif /* XFree86Module */
 
 #endif /* _XF86_SBUS_H */
