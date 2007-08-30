@@ -65,6 +65,7 @@ struct sbus_devtable sbusDeviceTable[] = {
     { SBUS_DEVICE_FFB, FBTYPE_CREATOR, "ffb", "Sun FFB" },
     { SBUS_DEVICE_FFB, FBTYPE_CREATOR, "afb", "Sun Elite3D" },
     { SBUS_DEVICE_P9100, FBTYPE_P9100, "pnozz", "Weitek P9100" },
+    { SBUS_DEVICE_AG10E, FBTYPE_AG10E, "ag10e", "Fujitsu AG-10e" },
     { 0, 0, NULL }
 };
 
