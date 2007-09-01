@@ -711,23 +711,23 @@ AG10ESaveScreen(ScreenPtr pScreen, int mode)
 {
     ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
     AG10EPtr pAG10E = GET_AG10E_FROM_SCRN(pScrn);
+    int flag;
 
-#if 0
     switch (mode)
     {
 	case SCREEN_SAVER_ON:
 	case SCREEN_SAVER_CYCLE:
-	    tmp &= ~CG6_THC_MISC_SYNC_ENAB;
+	    flag = 0;
+	    ioctl(pAG10E->psdp->fd, FBIOSVIDEO, &flag);
 	    break;
 	case SCREEN_SAVER_OFF:
 	case SCREEN_SAVER_FORCER:
-	    tmp |= CG6_THC_MISC_SYNC_ENAB;
+	    flag = 1;
+	    ioctl(pAG10E->psdp->fd, FBIOSVIDEO, &flag);
 	    break;
 	default:
 	    return FALSE;
     }
 
-    pCg6->thc->thc_misc = tmp;
-#endif
     return TRUE;
 }
