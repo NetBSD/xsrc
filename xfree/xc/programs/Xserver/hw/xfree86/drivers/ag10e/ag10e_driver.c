@@ -373,6 +373,8 @@ AG10EPreInit(ScrnInfoPtr pScrn, int flags)
 
     /*
      * The new cmap code requires this to be initialised.
+     * this card supports HW gamma correction with 10 bit resolution - maybe
+     * we should figure out how to use it
      */
 
     {
@@ -456,6 +458,7 @@ AG10EScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 {
     ScrnInfoPtr pScrn;
     AG10EPtr pAG10E;
+    struct fbtype fb;
     sbusDevicePtr psdp;
     VisualPtr visual;
     int ret;
@@ -464,15 +467,27 @@ AG10EScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
     pAG10E = GET_AG10E_FROM_SCRN(pScrn);
     psdp = pAG10E->psdp;
 
+    /*
+     * for some idiotic reason we need to check if the file descriptor is
+     * really open here
+     */
+    if (psdp->fd == -1) {
+	psdp->fd = open(psdp->device, O_RDWR);
+	if (psdp->fd == -1)
+	    return FALSE;
+    }
+
+    /* figure out how much VRAM we can map */
+    if ((ret = ioctl(pAG10E->psdp->fd, FBIOGTYPE, &fb)) != 0) {
+	xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
+	    "ioctl(FBIOGTYPE) failed with %d\n", ret);
+	return FALSE;
+    }
+    pAG10E->vidmem = fb.fb_size;
+
     /* Map AG10E memory areas */
     
-    pAG10E->regs = xf86MapSbusMem(psdp, 6 * 1024 * 1024, 0x10000);
-
-    /*
-     * XXX need something better here - we rely on the OS to allow mmap()ing 
-     * usable VRAM ONLY. Works with NetBSD, may crash and burn on other OSes.
-     */
-    pAG10E->vidmem = 6 * 1024 * 1024;
+    pAG10E->regs = xf86MapSbusMem(psdp, pAG10E->vidmem, 0x10000);
     pAG10E->fb = xf86MapSbusMem(psdp, 0, pAG10E->vidmem);
     
     if (pAG10E->fb != NULL) {
@@ -498,8 +513,8 @@ AG10EScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 	return FALSE;
     }
     pAG10E->IOOffset = 0;
-    xf86DrvMsg(pScrn->scrnIndex, X_INFO, "vram: %d\n", (1 << ((GLINT_READ_REG(FBMemoryCtl) & 
-						0xE0000000)>>29)) * 1024);
+    xf86DrvMsg(pScrn->scrnIndex, X_PROBED, "vram: %d\n",
+        (1 << ((GLINT_READ_REG(FBMemoryCtl) & 0xE0000000)>>29)) * 1024);
 
     /*
      * The next step is to setup the screen's visuals, and initialise the
