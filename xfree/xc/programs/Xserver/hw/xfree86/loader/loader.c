@@ -499,6 +499,11 @@ _LoaderFileToMem(int fd, unsigned long offset, int size, char *label)
 # else 
 # define MMAP_FLAGS     (MAP_PRIVATE | MAP_32BIT)
 # endif
+# if defined (__AMD64__) && defined(__NetBSD__)
+# define MMAP_ADDR	((void *)(1UL << 30)) 
+# else 
+# define MMAP_ADDR	NULL
+# endif
 
 # ifdef DEBUGMEM
     ErrorF("_LoaderFileToMem(%d,%u(%u),%d,%s)", fd, offset, offsetbias, size,
@@ -513,14 +518,14 @@ _LoaderFileToMem(int fd, unsigned long offset, int size, char *label)
     new_off_bias = (offset + offsetbias) - new_off;
     if ((new_off_bias + size) > new_size)
 	new_size += pagesize;
-    ret = (unsigned long)mmap(0, new_size, MMAP_PROT, MMAP_FLAGS, fd,
+    ret = (unsigned long)mmap(MMAP_ADDR, new_size, MMAP_PROT, MMAP_FLAGS, fd,
 			      new_off);
     if (ret == -1)
 	FatalError("mmap() failed: %s\n", strerror(errno));
 
     return (void *)(ret + new_off_bias);
 # else
-    ret = (unsigned long)mmap(0, size, MMAP_PROT, MMAP_FLAGS, fd,
+    ret = (unsigned long)mmap(MMAP_ADDR, size, MMAP_PROT, MMAP_FLAGS, fd,
 			      offset + offsetbias);
     if (ret == -1)
 	FatalError("mmap() failed: %s\n", strerror(errno));
@@ -1259,7 +1264,7 @@ LoaderOpen(const char *module, const char *cname, int handle,
     /*
      * OK, it's a new one. Add it.
      */
-    xf86Msg(X_INFO, "Loading %s\n", module);
+    xf86Msg(X_INFO, "Loading %s I am at %p\n", module, (void *)LoaderOpen);
     if (wasLoaded)
 	*wasLoaded = 0;
 

@@ -181,13 +181,18 @@
 # include <sys/mman.h>
 # define MergeSectionAlloc
 # define MMAP_PROT	(PROT_READ | PROT_WRITE | PROT_EXEC)
-# if !defined(linux)
+# if !defined(linux) && !defined(__NetBSD__)
 #  error    No MAP_ANON?
 # endif
 # if !defined (__AMD64__) || !defined(__linux__)
 # define MMAP_FLAGS     (MAP_PRIVATE | MAP_ANON)
 # else
 # define MMAP_FLAGS     (MAP_PRIVATE | MAP_ANON | MAP_32BIT)
+# endif
+# if defined (__AMD64__) && defined(__NetBSD__)
+# define MMAP_ADDR	((void *)(1UL << 30))
+# else
+# define MMAP_ADDR	NULL
 # endif
 # if defined (MmapPageAlign)
 #  define MMAP_ALIGN(size)    do { \
@@ -3054,8 +3059,8 @@ ELFLoadModule(loaderPtr modrec, int elffd, LOOKUP **ppLookup)
 #  endif
 # else
     MMAP_ALIGN(elffile->basesize);
-    elffile->base = mmap(0, elffile->basesize, MMAP_PROT, MMAP_FLAGS, -1,
-			 (off_t) 0);
+    elffile->base = mmap(MMAP_ADDR, elffile->basesize, MMAP_PROT, MMAP_FLAGS,
+    			 -1, (off_t) 0);
     if (elffile->base == NULL) {
 	ErrorF("Unable to mmap ELF sections\n");
 	return NULL;
