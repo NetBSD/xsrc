@@ -307,6 +307,11 @@ extern double __negdf2(double);
 
 #endif
 
+#if defined(__NetBSD__)
+extern long __stack_chk_guard[];
+extern void __stack_chk_fail(void);
+#endif
+
 #if defined(__powerpc__) && (defined(Lynx) || defined(linux))
 void _restf14();
 void _restf17();
@@ -1361,6 +1366,8 @@ LOOKUP xfree86LookupTab[] = {
 #endif
 
 #if defined(__NetBSD__)
+    SYMVAR(__stack_chk_guard)
+    SYMFUNC(__stack_chk_fail)
 #if defined(__arm__)
     SYMFUNC(IOPortBase)
     SYMFUNC(__addsf3)
