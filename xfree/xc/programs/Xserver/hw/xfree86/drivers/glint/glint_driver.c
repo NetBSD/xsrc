@@ -333,11 +333,13 @@ static const char *fbdevHWSymbols[] = {
 	NULL
 };
 
+#ifndef GLINT_AVOID_INT10
 const char *GLINTint10Symbols[] = {
     "xf86FreeInt10",
     "xf86InitInt10",
     NULL
 };
+#endif
 
 #ifdef XFree86LOADER
 
@@ -409,7 +411,10 @@ glintSetup(pointer module, pointer opts, int *errmaj, int *errmin)
 	xf86AddDriver(&GLINT, module, 0);
 	LoaderRefSymLists(fbSymbols, ddcSymbols, i2cSymbols,
 			  xaaSymbols, xf8_32bppSymbols,
-			  shadowSymbols, fbdevHWSymbols, GLINTint10Symbols,
+			  shadowSymbols, fbdevHWSymbols,
+#ifndef GLINT_AVOID_INT10
+			  GLINTint10Symbols,
+#endif
 			  vbeSymbols, ramdacSymbols,
 #ifdef XF86DRI
 			  drmSymbols, driSymbols,
@@ -1438,6 +1443,7 @@ GLINTPreInit(ScrnInfoPtr pScrn, int flags)
     }
     }
 
+#ifndef GLINT_AVOID_INT10
     /* Initialize the card through int10 interface if needed */
     if (pGlint->Chipset != PCI_VENDOR_3DLABS_CHIP_GAMMA && 
 	pGlint->Chipset != PCI_VENDOR_3DLABS_CHIP_GAMMA2 &&
@@ -1452,6 +1458,7 @@ GLINTPreInit(ScrnInfoPtr pScrn, int flags)
 	    xf86FreeInt10(pInt);
         }
     }
+#endif
 
     pGlint->FbMapSize = 0;
 
