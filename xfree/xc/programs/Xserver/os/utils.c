@@ -2114,7 +2114,7 @@ CheckUserParameters(int argc, char **argv, char **envp)
 
 #ifdef USE_PAM
 #include <security/pam_appl.h>
-#ifndef _OPENPAM
+#if !defined(_OPENPAM) && !defined(OPENPAM)
 #include <security/pam_misc.h>
 #else
 #include <security/openpam.h>
@@ -2127,7 +2127,7 @@ CheckUserAuthorization(void)
 {
 #ifdef USE_PAM
     static struct pam_conv conv = {
-#ifndef _OPENPAM
+#if !defined(_OPENPAM) && !defined(OPENPAM)
 	misc_conv,
 #else
 	openpam_ttyconv,
