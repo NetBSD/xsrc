@@ -49,7 +49,7 @@ XAACopyArea(
 	     CHECK_ROP(pGC,infoRec->WritePixmapFlags) &&
 	     CHECK_ROPSRC(pGC,infoRec->WritePixmapFlags) &&
 	     CHECK_PLANEMASK(pGC,infoRec->WritePixmapFlags) &&
-	     CHECK_NO_GXCOPY(pGC,infoRec->WritePixmapFlags)) 
+	     CHECK_NO_GXCOPY(pGC,infoRec->WritePixmapFlags))
             return (XAABitBlt( pSrcDrawable, pDstDrawable,
 		pGC, srcx, srcy, width, height, dstx, dsty,
 		XAADoImageWrite, 0L));
@@ -64,9 +64,16 @@ XAACopyArea(
             return (XAABitBlt( pSrcDrawable, pDstDrawable,
 		pGC, srcx, srcy, width, height, dstx, dsty,
 		XAADoBitBlt, 0L));
+	} else {
+	    if(infoRec->ScreenToScreenBitBlt &&
+	     CHECK_ROP(pGC,infoRec->ScreenToScreenBitBltFlags) &&
+	     CHECK_ROPSRC(pGC,infoRec->ScreenToScreenBitBltFlags) &&
+	     CHECK_PLANEMASK(pGC,infoRec->ScreenToScreenBitBltFlags))
+            return (XAABitBlt( pSrcDrawable, pDstDrawable,
+		pGC, srcx, srcy, width, height, dstx, dsty,
+		XAADoImageWrite, 0L));
 	}
     }
-
     return (XAAFallbackOps.CopyArea(pSrcDrawable, pDstDrawable, pGC,
    	    srcx, srcy, width, height, dstx, dsty));
 }
