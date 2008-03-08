@@ -341,6 +341,9 @@ XCOMM $XFree86: xc/config/cf/Imake.cf,v 3.91 2004/04/03 22:26:20 dawes Exp $
 # if defined(__news68k__)
 #  define news68kArchitecture
 # endif
+# if defined(__ofppc__)
+#  define ofppcArchitecture
+# endif
 # if defined(__pc532__)
 #  define pc532Architecture
 # endif
