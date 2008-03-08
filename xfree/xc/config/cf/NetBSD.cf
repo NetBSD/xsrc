@@ -840,6 +840,17 @@ InstallManPageAliasesBase(file,destdir,aliases)
 # endif
 #endif /* macppcArchitecture */
 
+/* ofppc */
+#if defined(ofppcArchitecture) 
+# define BuildServer            YES
+# define ServerOSDefines        XFree86ServerOSDefines -DDDXTIME
+# define ServerExtraDefines     GccGasOption XFree86ServerDefines
+# define XkbServerDefines       -DXKB_ALWAYS_USES_SOFT_REPEAT
+# ifndef  XFree86ConsoleDefines
+#  define XFree86ConsoleDefines -DWSCONS_SUPPORT
+# endif
+#endif /* ofppcArchitecture */
+
 /* pmax */
 #if defined(pmaxArchitecture)
 # define BuildServer		YES
