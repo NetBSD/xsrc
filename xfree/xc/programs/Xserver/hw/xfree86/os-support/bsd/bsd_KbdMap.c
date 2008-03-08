@@ -631,7 +631,7 @@ static CARD8 wsXtMap[] = {
 	/* 83 */ KEY_KP_Decimal,
 	/* 84 */ KEY_NOTUSED,
 	/* 85 */ KEY_NOTUSED,
-	/* 86 */ KEY_NOTUSED,
+	/* 86 */ KEY_Less,	/* backslash on uk, < on german */
 	/* 87 */ KEY_F11,
 	/* 88 */ KEY_F12,
 	/* 89 */ KEY_NOTUSED,
