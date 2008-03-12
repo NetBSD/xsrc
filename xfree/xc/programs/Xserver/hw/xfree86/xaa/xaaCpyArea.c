@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xaaCpyArea.c,v 1.13 2001/02/19 22:19:49 mvojkovi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xaaCpyArea.c,v 1.12 2000/09/28 20:47:59 mvojkovi Exp $ */
 
 #include "misc.h"
 #include "xf86.h"
@@ -30,7 +30,8 @@ XAACopyArea(
 {
     XAAInfoRecPtr infoRec = GET_XAAINFORECPTR_FROM_GC(pGC);
 
-    if(pDstDrawable->type == DRAWABLE_WINDOW) {
+    if((pDstDrawable->type == DRAWABLE_WINDOW) ||
+      IS_OFFSCREEN_PIXMAP(pDstDrawable)) {
 	if((pSrcDrawable->type == DRAWABLE_WINDOW) ||
 		IS_OFFSCREEN_PIXMAP(pSrcDrawable)){
 	    if(infoRec->ScreenToScreenBitBlt &&
@@ -49,31 +50,24 @@ XAACopyArea(
 	     CHECK_ROP(pGC,infoRec->WritePixmapFlags) &&
 	     CHECK_ROPSRC(pGC,infoRec->WritePixmapFlags) &&
 	     CHECK_PLANEMASK(pGC,infoRec->WritePixmapFlags) &&
-	     CHECK_NO_GXCOPY(pGC,infoRec->WritePixmapFlags))
+	     CHECK_NO_GXCOPY(pGC,infoRec->WritePixmapFlags)) 
             return (XAABitBlt( pSrcDrawable, pDstDrawable,
 		pGC, srcx, srcy, width, height, dstx, dsty,
 		XAADoImageWrite, 0L));
 	}
-    } else if(IS_OFFSCREEN_PIXMAP(pDstDrawable)){
-	if((pSrcDrawable->type == DRAWABLE_WINDOW) ||
-		IS_OFFSCREEN_PIXMAP(pSrcDrawable)){
-	    if(infoRec->ScreenToScreenBitBlt &&
-	     CHECK_ROP(pGC,infoRec->ScreenToScreenBitBltFlags) &&
-	     CHECK_ROPSRC(pGC,infoRec->ScreenToScreenBitBltFlags) &&
-	     CHECK_PLANEMASK(pGC,infoRec->ScreenToScreenBitBltFlags))
+    } else if((pSrcDrawable->type == DRAWABLE_WINDOW) ||
+	       IS_OFFSCREEN_PIXMAP(pSrcDrawable)) {
+	if(infoRec->ReadPixmap && (pGC->alu == GXcopy) &&
+	   (pSrcDrawable->bitsPerPixel == pDstDrawable->bitsPerPixel) &&
+	  ((pGC->planemask & infoRec->FullPlanemasks[pSrcDrawable->depth - 1])
+              == infoRec->FullPlanemasks[pSrcDrawable->depth - 1]))
+	{
             return (XAABitBlt( pSrcDrawable, pDstDrawable,
 		pGC, srcx, srcy, width, height, dstx, dsty,
-		XAADoBitBlt, 0L));
-	} else {
-	    if(infoRec->ScreenToScreenBitBlt &&
-	     CHECK_ROP(pGC,infoRec->ScreenToScreenBitBltFlags) &&
-	     CHECK_ROPSRC(pGC,infoRec->ScreenToScreenBitBltFlags) &&
-	     CHECK_PLANEMASK(pGC,infoRec->ScreenToScreenBitBltFlags))
-            return (XAABitBlt( pSrcDrawable, pDstDrawable,
-		pGC, srcx, srcy, width, height, dstx, dsty,
-		XAADoImageWrite, 0L));
+		XAADoImageRead, 0L));	
 	}
     }
+
     return (XAAFallbackOps.CopyArea(pSrcDrawable, pDstDrawable, pGC,
    	    srcx, srcy, width, height, dstx, dsty));
 }
@@ -241,11 +235,10 @@ XAADoImageRead(
     BoxPtr pbox = REGION_RECTS(prgnDst);
     int nbox = REGION_NUM_RECTS(prgnDst);
     XAAInfoRecPtr infoRec = GET_XAAINFORECPTR_FROM_GC(pGC);
-    int Bpp = pSrc->bitsPerPixel >> 3;  /* wouldn't get here unless both
-                                           src and dst have same bpp */
+    int Bpp = pSrc->bitsPerPixel >> 3; 
 
     pdstBase = (unsigned char *)((PixmapPtr)pDst)->devPrivate.ptr;
-    dstwidth = (int)((PixmapPtr)pDst)->devKind;
+    dstwidth = (int)((PixmapPtr)pSrc)->devKind;
 
     for(; nbox; pbox++, pptSrc++, nbox--) {
         dstPntr = pdstBase + (pbox->y1 * dstwidth) + (pbox->x1 * Bpp);
