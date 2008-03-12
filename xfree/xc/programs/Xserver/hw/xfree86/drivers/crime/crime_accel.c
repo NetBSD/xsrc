@@ -1,4 +1,4 @@
-/* $NetBSD: crime_accel.c,v 1.1 2008/03/12 00:39:06 macallan Exp $ */
+/* $NetBSD: crime_accel.c,v 1.2 2008/03/12 20:00:07 macallan Exp $ */
 /*
  * Copyright (c) 2008 Michael Lorenz
  * All rights reserved.
@@ -591,8 +591,14 @@ CrimeSetupForCPUToScreenTexture (
 	fPtr->us = texPitch;
 	fPtr->alpha_texture = texPtr;
 	SYNC;
-	WRITE4(CRIME_DE_MODE_SRC, DE_MODE_LIN_A | DE_MODE_BUFDEPTH_32 |
-			    DE_MODE_TYPE_ABGR | DE_MODE_PIXDEPTH_32);
+	if (texType == PICT_a8b8g8r8) {
+		WRITE4(CRIME_DE_MODE_SRC, DE_MODE_LIN_A | DE_MODE_BUFDEPTH_32 |
+				    DE_MODE_TYPE_ABGR | DE_MODE_PIXDEPTH_32);
+	} else {
+		WRITE4(CRIME_DE_MODE_SRC, DE_MODE_LIN_A | DE_MODE_BUFDEPTH_32 |
+				    DE_MODE_TYPE_RGBA | DE_MODE_PIXDEPTH_32);
+	}
+	fPtr->format = texType;
 	WRITE4(CRIME_DE_XFER_STEP_X, 4);
 	WRITE4(CRIME_DE_ALPHA_FUNC, 
 	    DE_ALPHA_ADD |
@@ -619,30 +625,80 @@ CrimeSubsequentCPUToScreenTexture (
 )
 {
 	CrimePtr fPtr = CRIMEPTR(pScrn);
-	unsigned char *aptr;
-	uint32_t *dptr, aval;
-	int i, j;
+	unsigned char *aptr, *lptr;
+	uint32_t *dptr, *sptr, aval, pixel;
+	int i, j, k, l, rep = 1, period = fPtr->uw, xoff, lcnt, xa, xe;
 	int bufnum = 0;
 
 	LOG(CRIME_DEBUG_XRENDER);
-#ifndef CRIME_DEBUG_LOUD
-	xf86Msg(X_ERROR, "%d %d %d %d %d %d\n", srcx, srcy, dstx, dsty, width, 
-	    height); 
+#ifdef CRIME_DEBUG_LOUD
+	xf86Msg(X_ERROR, "%s: %d %d %d %d %d %d\n", __func__,
+	    srcx, srcy, dstx, dsty, width, height); 
 #endif
 	aptr = fPtr->alpha_texture + (fPtr->us * srcy) + (srcx << 2);
-	for (i = 0; i < height; i++) {
-		dptr = fPtr->buffers[bufnum];
-		memcpy(dptr, aptr, fPtr->us);
-		SYNC;
-		WRITE4(CRIME_DE_XFER_ADDR_SRC, bufnum * 8192);
-		WRITE4(CRIME_DE_X_VERTEX_0, dstx << 16 | (dsty + i));
-		WBFLUSH;
-		WRITE4ST(CRIME_DE_X_VERTEX_1,
-			((dstx + width - 1) << 16) | (dsty + i));
-		bufnum++;
-		if (bufnum == 8) bufnum = 0;
-		aptr += fPtr->us;
+	lptr = aptr;
+	if ((fPtr->uw < 128) && (fPtr->uw < width)) {
+		rep = 128 / fPtr->uw;
+		period = rep * fPtr->uw;
 	}
+
+	if (fPtr->format == PICT_a8b8g8r8) {
+#ifdef CRIME_DEBUG_LOUD
+		xf86Msg(X_ERROR, "ABGR\n");
+#endif
+		for (i = 0; i < height; i++) {
+			dptr = fPtr->buffers[bufnum];
+			memcpy(dptr, aptr, fPtr->us);
+			SYNC;
+			WRITE4(CRIME_DE_XFER_ADDR_SRC, bufnum * 8192);
+			WRITE4(CRIME_DE_X_VERTEX_0, dstx << 16 | (dsty + i));
+			WBFLUSH;
+			WRITE4ST(CRIME_DE_X_VERTEX_1,
+				((dstx + width - 1) << 16) | (dsty + i));
+			bufnum++;
+			if (bufnum == 8) bufnum = 0;
+			aptr += fPtr->us;
+		}
+	} else {
+#ifdef CRIME_DEBUG_LOUD
+		xf86Msg(X_ERROR, "ARGB %08x %d\n", (uint32_t)aptr, fPtr->uw);
+#endif
+		lcnt = fPtr->uh;
+		for (i = 0; i < height; i++) {
+			dptr = fPtr->buffers[bufnum];
+			for (k = 0; k < rep; k++) {
+				sptr = (uint32_t)aptr;
+				for (j = 0; j < fPtr->uw; j++) {
+					pixel = *sptr;
+					*dptr = (pixel << 8) | (pixel >> 24);
+					dptr++;
+					sptr++;
+				}
+			}			
+			xoff = 0;
+			SYNC;
+			WRITE4(CRIME_DE_XFER_ADDR_SRC, bufnum * 8192);
+			while (xoff < width) {
+				xa = dstx + xoff;
+				xe = dstx + min(xoff + period, width) - 1;
+				SYNC;
+				WRITE4(CRIME_DE_X_VERTEX_0,
+				    xa << 16 | (dsty + i));
+				WBFLUSH;
+				WRITE4ST(CRIME_DE_X_VERTEX_1,
+					(xe << 16) | (dsty + i));
+				xoff += period;
+			}
+			bufnum++;
+			if (bufnum == 8) bufnum = 0;
+			lcnt--;
+			if (lcnt == 0) {
+				aptr = lptr;
+				lcnt = fPtr->uh;
+			} else
+				aptr += fPtr->us;
+		}
+	}	
 	DONE(CRIME_DEBUG_XRENDER);
 }
 
