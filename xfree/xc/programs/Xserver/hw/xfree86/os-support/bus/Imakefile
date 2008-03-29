@@ -154,6 +154,21 @@ PCIARCHSRC = ia64Pci.c 460gxPCI.c e8870PCI.c zx1PCI.c
 PCIARCHOBJ = ia64Pci.o 460gxPCI.o e8870PCI.o zx1PCI.o
 #endif
 
+XCOMM access the PCI bus through /dev/ttyE0 on NetBSD/sparc64 and PowerPC
+XCOMM that way we always see the console fb ( if it's a PCI device ) even if
+XCOMM it's not visible through /dev/pci0
+XCOMM we should probably do that on all archs that don't mmap PCI space via
+XCOMM /dev/mem
+
+#if defined(NetBSDArchitecture)
+
+#if defined(Sparc64Architecture) || defined(SparcArchitecture) || \
+    defined(PpcArchitecture)
+CFLAGS += -DPCI_VIA_TTYE0
+#endif
+
+#endif
+
 SRCS = Pci.c $(PCIDRVRSRC) $(SBUSDRVSRC) $(PCIARCHSRC)
 OBJS = Pci.o $(PCIDRVROBJ) $(SBUSDRVOBJ) $(PCIARCHOBJ)
 
