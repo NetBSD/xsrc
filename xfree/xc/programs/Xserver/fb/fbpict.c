@@ -170,7 +170,8 @@ fbCompositeSolidMask_nx8x8888 (CARD8      op,
 	return;
     
     /* convert source colour to destination format */
-    if (PICT_FORMAT_TYPE(pDst->pFormat->format) == PICT_TYPE_ABGR) {
+    if (PICT_FORMAT_TYPE(pDst->pFormat->format) != 
+        PICT_FORMAT_TYPE(pSrc->pFormat->format)) {
     	CARD32 tmp = src;
 	src = (tmp & 0xff00ff00) | ((tmp & 0xff0000) >> 16) | 
 	    ((tmp & 0xff) << 16);
@@ -236,7 +237,8 @@ fbCompositeSolidMask_nx8888x8888C (CARD8      op,
 	return;
     
     /* convert source colour to destination format */
-    if (PICT_FORMAT_TYPE(pDst->pFormat->format) == PICT_TYPE_ABGR) {
+    if (PICT_FORMAT_TYPE(pDst->pFormat->format) != 
+        PICT_FORMAT_TYPE(pSrc->pFormat->format)) {
     	CARD32 tmp = src;
 	src = (tmp & 0xff00ff00) | ((tmp & 0xff0000) >> 16) | 
 	    ((tmp & 0xff) << 16);
@@ -315,7 +317,8 @@ fbCompositeSolidMask_nx8x0888 (CARD8      op,
 	return;
     
     /* convert source colour to destination format */
-    if (PICT_FORMAT_TYPE(pDst->pFormat->format) == PICT_TYPE_ABGR) {
+    if (PICT_FORMAT_TYPE(pDst->pFormat->format) != 
+        PICT_FORMAT_TYPE(pSrc->pFormat->format)) {
     	CARD32 tmp = src;
 	src = (tmp & 0xff00ff00) | ((tmp & 0xff0000) >> 16) | 
 	    ((tmp & 0xff) << 16);
