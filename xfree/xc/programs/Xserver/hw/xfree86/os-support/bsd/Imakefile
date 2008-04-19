@@ -67,7 +67,7 @@ SHARED_CFLAGS = PositionIndependentCFlags
     && ((OSMajorVersion == 1 && OSMinorVersion >= 1) || OSMajorVersion >= 2)
 # if defined(i386Architecture)
   IOPERMDEFINES = -DUSE_I386_IOPL
-#elif defined(PpcArchitecture)
+#elif defined(PpcArchitecture) || defined(sharkArchitecture)
   IOPERMDEFINES = -DUSE_PPC_MMAP
 # elif !defined(ArmArchitecture) && \
        !defined(PpcArchitecture) && \
@@ -184,7 +184,7 @@ VIDEO_OBJ = i386_video.o
 #elif defined(AlphaArchitecture)
 VIDEO_SRC = alpha_video.c
 VIDEO_OBJ = alpha_video.o
-#elif defined(PpcArchitecture)
+#elif defined(PpcArchitecture) || defined(sharkArchitecture)
 VIDEO_SRC = ppc_video.c
 VIDEO_OBJ = ppc_video.o
 #elif defined(ArmArchitecture) || defined(CatsArchitecture)

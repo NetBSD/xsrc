@@ -79,7 +79,7 @@ ppcMapVidMem(int ScreenNum, unsigned long Base, unsigned long Size, int flags)
 #ifdef DEBUG
 
 	xf86MsgVerb(X_WARNING, 3, "mapVidMem %lx, %lx, %d fd = %d", 
-		    Base, Size, p, fd);
+		    Base, Size, flags, fd);
 #endif
 	base = mmap(0, Size,
 		    (flags & VIDMEM_READONLY) ?
@@ -147,6 +147,11 @@ xf86EnableInterrupts()
 
 #ifdef USE_PPC_MMAP
 
+/* XXX why the hell is this necessary?! */
+#ifdef __arm__
+unsigned int IOPortBase = (int)MAP_FAILED;
+#endif
+
 void xf86EnableIO()
 {
 	int fd = xf86Info.screenFd;
@@ -160,6 +165,9 @@ void xf86EnableIO()
 		if (ioBase == MAP_FAILED)
 			xf86MsgVerb(X_WARNING, 3, "Can't map IO space!\n");
 	}
+#ifdef __arm__
+	IOPortBase = (unsigned int)ioBase;
+#endif
 }
 
 void xf86DisableIO()
