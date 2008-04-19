@@ -113,7 +113,7 @@ netbsdPciInit()
 #else
 	/* use businfo to get the number of devs */
 	if (ioctl(devpci, PCI_IOC_BUSINFO, &pci_businfo) != 0)
-	    FatalError("netbsdPciInit: not a PCI bus device");
+		ErrorF("netbsdPciInit: not a PCI bus device");
 	netbsdPci0.numDevices = pci_businfo.maxdevs;
 #endif
 }
@@ -125,8 +125,10 @@ netbsdPciConfRead(PCITAG tag, int reg)
 	struct pciio_cfgreg cfgr;
 
 	cfgr.reg = reg;
-	if (ioctl(devpci, PCI_IOC_CFGREAD, &cfgr) == -1)
-		FatalError("netbsdPciConfRead: failed on ttyE0\n");
+	if (ioctl(devpci, PCI_IOC_CFGREAD, &cfgr) == -1) {
+		xf86Msg(X_ERROR, "netbsdPciConfRead: failed on ttyE0\n");
+		return 0;
+	}
 
 	return (cfgr.val);
 #else
