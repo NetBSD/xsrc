@@ -184,6 +184,7 @@ const OptionInfoRec RADEONOptions[] = {
     { -1,                    NULL,               OPTV_NONE,    {0}, FALSE }
 };
 
+#ifndef AVOID_VGAHW
 static const char *vgahwSymbols[] = {
     "vgaHWFreeHWRec",
     "vgaHWGetHWRec",
@@ -195,6 +196,7 @@ static const char *vgahwSymbols[] = {
     "vgaHWGetIOBase",
     NULL
 };
+#endif
 
 static const char *fbdevHWSymbols[] = {
     "fbdevHWInit",
@@ -352,7 +354,10 @@ void RADEONLoaderRefSymLists(void)
      * Tell the loader about symbols from other modules that this module might
      * refer to.
      */
-    xf86LoaderRefSymLists(vgahwSymbols,
+    xf86LoaderRefSymLists(
+#ifndef AVOID_VGAHW
+                          vgahwSymbols,
+#endif    
 			  fbSymbols,
 			  xaaSymbols,
 #if 0
@@ -3699,7 +3704,7 @@ static Bool RADEONPreInitInt10(ScrnInfoPtr pScrn, xf86Int10InfoPtr *ppInt10)
 {
     RADEONInfoPtr  info = RADEONPTR(pScrn);
 
-#if !defined(__powerpc__)
+#if !defined(__powerpc__) && !defined(__sparc__)
     if (xf86LoadSubModule(pScrn, "int10")) {
 	xf86LoaderReqSymLists(int10Symbols, NULL);
 	xf86DrvMsg(pScrn->scrnIndex,X_INFO,"initializing int10\n");
@@ -3954,6 +3959,7 @@ Bool RADEONPreInit(ScrnInfoPtr pScrn, int flags)
 	return TRUE;
     }
 
+#ifndef AVOID_VGAHW
     if (!xf86LoadSubModule(pScrn, "vgahw")) return FALSE;
     xf86LoaderReqSymLists(vgahwSymbols, NULL);
     if (!vgaHWGetHWRec(pScrn)) {
@@ -3962,6 +3968,7 @@ Bool RADEONPreInit(ScrnInfoPtr pScrn, int flags)
     }
 
     vgaHWGetIOBase(VGAHWPTR(pScrn));
+#endif
 
     xf86DrvMsg(pScrn->scrnIndex, X_INFO,
 	       "PCI bus %d card %d func %d\n",
@@ -4100,7 +4107,9 @@ fail:
     if (pInt10)
 	xf86FreeInt10(pInt10);
 
+#ifndef AVOID_VGAHW
     vgaHWFreeHWRec(pScrn);
+#endif
 
  fail2:
     if(info->MMIO) RADEONUnmapMMIO(pScrn);
@@ -5522,7 +5531,10 @@ static void RADEONSave(ScrnInfoPtr pScrn)
     RADEONInfoPtr  info       = RADEONPTR(pScrn);
     unsigned char *RADEONMMIO = info->MMIO;
     RADEONSavePtr  save       = &info->SavedReg;
+
+#ifndef AVOID_VGAHW
     vgaHWPtr       hwp        = VGAHWPTR(pScrn);
+#endif
 
     RADEONTRACE(("RADEONSave\n"));
     if (info->FBDev) {
@@ -5531,8 +5543,9 @@ static void RADEONSave(ScrnInfoPtr pScrn)
     }
 
     if (!info->IsSecondary) {
+#ifndef AVOID_VGAHW
 	vgaHWUnlock(hwp);
-#if defined(__powerpc__)
+#if defined(__powerpc__) || defined(__sparc__)
 	/* temporary hack to prevent crashing on PowerMacs when trying to
 	 * read VGA fonts and colormap, will find a better solution
 	 * in the future
@@ -5544,6 +5557,7 @@ static void RADEONSave(ScrnInfoPtr pScrn)
 						       */
 #endif
 	vgaHWLock(hwp);
+#endif
 	save->dp_datatype      = INREG(RADEON_DP_DATATYPE);
 	save->rbbm_soft_reset  = INREG(RADEON_RBBM_SOFT_RESET);
 	save->clock_cntl_index = INREG(RADEON_CLOCK_CNTL_INDEX);
@@ -5559,7 +5573,10 @@ static void RADEONRestore(ScrnInfoPtr pScrn)
     RADEONInfoPtr  info       = RADEONPTR(pScrn);
     unsigned char *RADEONMMIO = info->MMIO;
     RADEONSavePtr  restore    = &info->SavedReg;
+
+#ifndef AVOID_VGAHW
     vgaHWPtr       hwp        = VGAHWPTR(pScrn);
+#endif
 
     RADEONTRACE(("RADEONRestore\n"));
 
@@ -5602,8 +5619,9 @@ static void RADEONRestore(ScrnInfoPtr pScrn)
 #endif
 
     if (!info->IsSecondary) {
+#ifndef AVOID_VGAHW
 	vgaHWUnlock(hwp);
-#if defined(__powerpc__)
+#if defined(__powerpc__) || defined(__sparc__)
 	/* Temporary hack to prevent crashing on PowerMacs when trying to
 	 * write VGA fonts, will find a better solution in the future
 	 */
@@ -5612,17 +5630,23 @@ static void RADEONRestore(ScrnInfoPtr pScrn)
 	vgaHWRestore(pScrn, &hwp->SavedReg, VGA_SR_ALL );
 #endif
 	vgaHWLock(hwp);
+#endif
     } else {
         RADEONEntPtr pRADEONEnt = RADEONEntPriv(pScrn);
 	ScrnInfoPtr   pScrn0;
+#ifndef AVOID_VGAHW
 	vgaHWPtr      hwp0;
+#endif
 
 	pScrn0 = pRADEONEnt->pPrimaryScrn;
+#ifndef AVOID_VGAHW
 	hwp0   = VGAHWPTR(pScrn0);
 	vgaHWUnlock(hwp0);
 	vgaHWRestore(pScrn0, &hwp0->SavedReg, VGA_SR_MODE | VGA_SR_FONTS );
 	vgaHWLock(hwp0);
+#endif
     }
+
     RADEONUnblank(pScrn);
 
 #if 0
@@ -6106,7 +6130,7 @@ static Bool RADEONInitCrtcRegisters(ScrnInfoPtr pScrn, RADEONSavePtr save,
     save->disp_merge_cntl &= ~RADEON_DISP_RGB_OFFSET_EN;
 
 #if X_BYTE_ORDER == X_BIG_ENDIAN
-    /* Alhought we current onlu use aperture 0, also setting aperture 1 should not harm -ReneR */
+    /* Alhought we current only use aperture 0, also setting aperture 1 should not harm -ReneR */
     switch (pScrn->bitsPerPixel) {
     case 16:
 	save->surface_cntl |= RADEON_NONSURF_AP0_SWP_16BPP;
@@ -7077,8 +7101,11 @@ void RADEONFreeScreen(int scrnIndex, int flags)
 
     RADEONTRACE(("RADEONFreeScreen\n"));
 
+#ifndef AVOID_VGAHW
     if (xf86LoaderCheckSymbol("vgaHWFreeHWRec"))
 	vgaHWFreeHWRec(pScrn);
+#endif
+
     RADEONFreeRec(pScrn);
 }
 
