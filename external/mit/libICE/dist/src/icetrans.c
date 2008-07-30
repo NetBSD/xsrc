@@ -1,5 +1,5 @@
 /*
- * $Id: icetrans.c,v 1.1.1.1 2008/07/30 02:42:14 mrg Exp $
+ * $Id: icetrans.c,v 1.2 2008/07/30 05:26:38 mrg Exp $
  *
  * Copyright © 2003 Keith Packard
  *
@@ -26,8 +26,8 @@
 #include <config.h>
 #endif
 
-#define ICE_t
-#define TRANS_CLIENT
-#define TRANS_SERVER
+#define ICE_t 1
+#define TRANS_CLIENT 1
+#define TRANS_SERVER 1
 
 #include <X11/Xtrans/transport.c>
