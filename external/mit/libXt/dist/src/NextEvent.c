@@ -581,10 +581,10 @@ int _XtWaitForSomething(
     wf.stack = fdlist;
 #endif
 
+WaitLoop:
     app->rebuild_fdlist = TRUE;
 
     while (1) {
-WaitLoop:
 	AdjustTimes (app, block, howlong, ignoreTimers, &wt);
 
 	if (block && app->block_hook_list) {
