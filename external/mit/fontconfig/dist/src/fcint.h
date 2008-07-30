@@ -35,6 +35,21 @@
 #include <inttypes.h>
 #elif defined(HAVE_STDINT_H)
 #include <stdint.h>
+#elif defined(__INTERIX)
+
+/* limits.h has a definition for ALIGN() that conflicts with the one below */
+#  include <limits.h>
+#  undef ALIGN
+/* Interix 3.x has a gcc that shadows this. */
+#  ifndef _INTPTR_T_DEFINED
+     typedef long intptr_t;
+#  define _INTPTR_T_DEFINED
+#  endif
+#  ifndef _UINTPTR_T_DEFINED
+     typedef unsigned long uintptr_t;
+#  define _UINTPTR_T_DEFINED
+#  endif
+
 #else
 #error missing C99 integer data types
 #endif
