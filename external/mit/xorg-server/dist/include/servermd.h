@@ -130,7 +130,8 @@ SOFTWARE.
 
 #endif /* vax */
 
-#ifdef __arm32__
+/* XXX arm is not always LE */
+#if defined(__arm32__) || defined(__arm__)
 
 #define IMAGE_BYTE_ORDER        LSBFirst
 
