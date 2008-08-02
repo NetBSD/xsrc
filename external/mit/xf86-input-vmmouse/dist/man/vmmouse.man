@@ -1,0 +1,47 @@
+.\" $XFree86: xc/programs/Xserver/hw/xfree86/input/mouse/mouse.man,v 1.5 2002/12/17 20:55:21 dawes Exp $ 
+.\" shorthand for double quote that works everywhere.
+.ds q \N'34'
+.TH VMMOUSE __drivermansuffix__ __vendorversion__
+.SH NAME
+vmmouse \- VMware Mouse input driver
+.SH SYNOPSIS
+.nf
+.B "Section \*qInputDevice\*q"
+.BI "  Identifier \*q" idevname \*q
+.B  "  Driver \*qvmmouse\*q"
+\ \ ...
+.B EndSection
+.fi
+.SH DESCRIPTION
+.B vmmouse
+is an XFree86 input driver for mice.  The driver supports most available
+mouse types and interfaces.  USB mice are only supported on some OSs,
+and the level of support for PS/2 mice depends on the OS.
+.PP
+The
+.B vmmouse
+driver functions as a pointer input device, and may be used as the
+X server's core pointer.  Multiple mice are supported by multiple
+instances of this driver.
+.SH CONFIGURATION DETAILS
+Please refer to __xconfigfile__(__filemansuffix__) for general configuration
+details and for options that can be used with all input drivers.  This
+section only covers configuration details specific to this driver.
+.PP
+The driver will automatically detect if the vmmouse device is present and if
+it is not, it will load the regular
+.B mouse
+driver and attempt to fall back to it. There are no
+.B vmmouse
+specific options, but if you set
+.B mouse(__drivermansuffix__)
+options, they will be passed on.
+.PP
+See the 
+.B mouse(__drivermansuffix__)
+man page for details on these options.
+.SH "SEE ALSO"
+__xservername__(1), __xconfigfile__(__filemansuffix__), xorgconfig(1), Xserver(1), X(__miscmansuffix__),
+mouse(__drivermansuffix__)
+.SH AUTHORS
+Copyright (c) 1999-2007 VMware, Inc.
