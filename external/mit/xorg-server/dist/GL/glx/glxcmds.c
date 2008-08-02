@@ -992,6 +992,10 @@ int DoGetVisualConfigs(__GLXclientState *cl, unsigned screen,
 	buf[p++] = GLX_TRANSPARENT_INDEX_VALUE;
 	buf[p++] = modes->transparentIndex;
 
+	while (p < __GLX_TOTAL_CONFIG) {
+		buf[p++] = 0;
+	}
+
 	if ( do_swap ) {
 	    __GLX_SWAP_INT_ARRAY(buf, __GLX_TOTAL_CONFIG);
 	}
