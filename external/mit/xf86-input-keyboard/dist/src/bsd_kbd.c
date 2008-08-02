@@ -206,6 +206,7 @@ KbdOn(InputInfoPtr pInfo, int what)
 		 ioctl(pInfo->fd, KDSKBMODE, K_RAW);
 #endif
 	         break;
+        }
 #endif
 #ifdef WSCONS_SUPPORT
             case WSCONS:
@@ -220,7 +221,6 @@ KbdOn(InputInfoPtr pInfo, int what)
 		 }
 		 break;
 #endif
-        }
     }
     return Success;
 }
@@ -336,6 +336,8 @@ Bool SpecialKey(InputInfoPtr pInfo, int key, Bool down, int modifiers)
                     ioctl(xf86Info.consoleFd, VT_ACTIVATE, key - KEY_F11 + 11);
                     return TRUE;
                   }
+#else
+		;
 #endif
          }
       }
