@@ -432,6 +432,7 @@
 #define XVENDORNAME "The X.Org Foundation"
 
 /* Endian order */
+#if 0
 #define _X_BYTE_ORDER X_LITTLE_ENDIAN
 /* Deal with multiple architecture compiles on Mac OS X */
 #ifndef __APPLE_CC__
@@ -441,6 +442,7 @@
 #define X_BYTE_ORDER X_BIG_ENDIAN
 #else
 #define X_BYTE_ORDER X_LITTLE_ENDIAN
+#endif
 #endif
 #endif
 
