@@ -8,10 +8,10 @@
 #define BIGREQS 1
 
 /* Builder address */
-#define BUILDERADDR "xorg@lists.freedesktop.org"
+/* #define BUILDERADDR "xorg@lists.freedesktop.org" */
 
 /* Operating System Name */
-#define OSNAME "NetBSD 4.99.67 amd64"
+/* #define OSNAME "NetBSD 4.99.67 amd64" */
 
 /* Operating System Vendor */
 #define OSVENDOR ""
@@ -268,7 +268,7 @@
 #define PIXPRIV 1
 
 /* Overall prefix */
-#define PROJECTROOT "/usr/local"
+/* #define PROJECTROOT "/usr/local" */
 
 /* Support RANDR extension */
 #define RANDR 1
@@ -444,6 +444,8 @@
 #define X_BYTE_ORDER X_LITTLE_ENDIAN
 #endif
 #endif
+#else
+#include <X11/Xarch.h>
 #endif
 
 /* Enable GNU and other extensions to the C environment for GLIBC */
@@ -476,7 +478,7 @@
 #define NO_LIBCWRAPPER 1
 
 /* Support D-Bus */
-/* #define HAVE_DBUS 1 */
+/* #undef HAVE_DBUS */
 
 /* Support the D-Bus hotplug API */
 /* #undef CONFIG_DBUS_API */
@@ -500,7 +502,9 @@
 /* #undef XSERVER_DTRACE */
 
 /* Path to XErrorDB file */
+#ifndef XERRORDB_PATH
 #define XERRORDB_PATH "/usr/local/share/X11/XErrorDB"
+#endif
 
 /* Define to 16-bit byteswap macro */
 #define bswap_16 bswap16
