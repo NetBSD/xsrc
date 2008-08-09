@@ -24,6 +24,8 @@
 #include <xorg-config.h>
 #endif
 
+#include <string.h>
+
 #include "xf86Module.h"
 #include "xf86Opt.h"
 
