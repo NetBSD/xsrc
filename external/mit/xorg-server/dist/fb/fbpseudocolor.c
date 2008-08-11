@@ -125,9 +125,9 @@ typedef struct {
 } xxScrPrivRec, *xxScrPrivPtr;
 
 #define xxGetScrPriv(s)	((xxScrPrivPtr) \
-				 (xxScrPrivateIndex != -1) \
+				 ((xxScrPrivateIndex != -1) \
                           ? (s)->devPrivates[xxScrPrivateIndex].ptr\
-				: NULL)
+				: NULL))
 #define xxScrPriv(s)     xxScrPrivPtr pScrPriv = xxGetScrPriv(s)
 
 #define xxGetCmapPriv(s) ((xxCmapPrivPtr) \
