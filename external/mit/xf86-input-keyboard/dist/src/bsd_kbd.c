@@ -206,8 +206,6 @@ KbdOn(InputInfoPtr pInfo, int what)
 		 ioctl(pInfo->fd, KDSKBMODE, K_RAW);
 #endif
 	         break;
-        }
-#endif
 #ifdef WSCONS_SUPPORT
             case WSCONS:
                  option = WSKBD_RAW;
@@ -220,6 +218,8 @@ KbdOn(InputInfoPtr pInfo, int what)
 				    "\nin your xorg.conf(5) file\n");
 		 }
 		 break;
+#endif
+        }
 #endif
     }
     return Success;
