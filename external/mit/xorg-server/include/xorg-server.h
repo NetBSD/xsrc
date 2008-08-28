@@ -234,7 +234,7 @@
 /* Name of X server */
 #define __XSERVERNAME__ "Xorg"
 
-#if defined(__sparc64__) || defined(__x86_64__) || defined(__alpha__)
+#if defined(_LP64)
 /* Define to 1 if unsigned long is 64 bits. */
 #define _XSERVER64 1
 #endif
