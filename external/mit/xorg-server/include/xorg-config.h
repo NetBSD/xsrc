@@ -65,8 +65,10 @@
    xorg_backtrace in hw/xfree86/common/xf86Events.c */
 /* #undef HAVE_WALKCONTEXT */
 
+#if defined(_LP64)
 /* Define to 1 if unsigned long is 64 bits. */
 #define _XSERVER64 1
+#endif
 
 /* Building vgahw module */
 #define WITH_VGAHW 1
