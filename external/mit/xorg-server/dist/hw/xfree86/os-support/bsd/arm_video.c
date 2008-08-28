@@ -66,7 +66,7 @@
 #include "xf86_OSlib.h"
 #include "xf86OSpriv.h"
 
-#ifdef __arm32__
+#if defined(__arm32__) || defined(__arm__)
 #include "machine/devmap.h"
 struct memAccess
 {
@@ -89,7 +89,7 @@ struct memAccess linearMemInfo = { CONSOLE_GET_LINEAR_INFO, NULL, NULL,
 				       FALSE, FALSE };
 struct memAccess ioMemInfo = { CONSOLE_GET_IO_INFO, NULL, NULL,
 				   FALSE, FALSE };
-#endif /* __arm32__ */
+#endif /* __arm32__ || __arm__ */
 
 #if defined(__NetBSD__) && !defined(MAP_FILE)
 #define MAP_FLAGS MAP_SHARED
@@ -478,7 +478,7 @@ xf86DisableIO()
 
 #endif
 
-#if defined(USE_ARC_MMAP) || defined(__arm32__)
+#if defined(USE_ARC_MMAP) || defined(__arm32__) || defined(__arm__)
 
 Bool
 xf86EnableIO()
@@ -548,7 +548,7 @@ xf86EnableInterrupts()
  * XXX This is here for reference.  It needs to be handled differently for the
  * ND.
  */
-#if defined(USE_ARC_MMAP) || defined(__arm32__)
+#if defined(USE_ARC_MMAP) || defined(__arm32__) || defined(__arm__)
 
 #ifdef USE_ARM32_MMAP
 #define	DEV_MEM_IOBASE	0x43000000
@@ -566,7 +566,7 @@ int ScreenNum;
 	int fd;
 	pointer base;
 
-#ifdef __arm32__
+#if defined(__arm32__) || defined(__arm__)
 	struct memAccess *memInfoP;
 	int *Size;
 #endif
@@ -597,7 +597,7 @@ int ScreenNum;
 	}
 #endif
 
-#ifdef __arm32__
+#if defined(__arm32__) || defined(__arm__)
 	IOPortBase = (unsigned int)-1;
 
 	if((memInfoP = checkMapInfo(TRUE, MMIO_REGION)) != NULL)
@@ -652,13 +652,13 @@ xf86DisableIOPorts(ScreenNum)
 int ScreenNum;
 {
 	int i;
-#ifdef __arm32__
+#if defined(__arm32__) || defined(__arm__)
         struct memAccess *memInfoP;
 #endif
 
 	ScreenEnabled[ScreenNum] = FALSE;
 
-#ifdef __arm32__
+#if defined(__arm32__) || defined(__arm__)
 	if((memInfoP = checkMapInfo(FALSE, MMIO_REGION)) != NULL)
 	{
 	    xf86MapInfoUnmap(memInfoP, 0);
