@@ -898,8 +898,8 @@ static __inline__ void stw_u(unsigned long val, unsigned short *p)
 #    define mem_barrier()         /* XXX: nop for now */
 #    define write_mem_barrier()   /* XXX: nop for now */
 
-#   elif defined(__mips__) || (defined(__arm32__) && !defined(__linux__))
-#    ifdef __arm32__
+#   elif defined(__mips__) || ((defined(__arm32__) || defined(__arm__)) && !defined(__linux__))
+#    if defined(__arm32__) || defined(__arm__)
 #     define PORT_SIZE long
 #    else
 #     define PORT_SIZE short
@@ -1056,7 +1056,7 @@ xf86WriteMmio32Be(__volatile__ void *base, const unsigned long offset,
 #     endif /* !linux */
 #    endif /* __mips__ */
 
-#    if defined(__arm32__)
+#    if defined(__arm32__) || defined(__arm__)
 #     define ldq_u(p)	(*((unsigned long  *)(p)))
 #     define ldl_u(p)	(*((unsigned int   *)(p)))
 #     define ldw_u(p)	(*((unsigned short *)(p)))
@@ -1065,7 +1065,7 @@ xf86WriteMmio32Be(__volatile__ void *base, const unsigned long offset,
 #     define stw_u(v,p)	(*(unsigned short *)(p)) = (v)
 #     define mem_barrier()	/* NOP */
 #     define write_mem_barrier()	/* NOP */
-#    endif /* __arm32__ */
+#    endif /* __arm32__ || __arm__ */
 
 #   elif (defined(Lynx) || defined(linux) || defined(__OpenBSD__) || defined(__NetBSD__) || defined(__FreeBSD__)) && defined(__powerpc__)
 
