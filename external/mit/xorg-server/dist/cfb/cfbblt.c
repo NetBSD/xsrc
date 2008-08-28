@@ -37,6 +37,7 @@ Author: Keith Packard
 #endif
 
 #include <stdlib.h>
+#include <string.h>
 
 #include	<X11/X.h>
 #include	<X11/Xmd.h>
