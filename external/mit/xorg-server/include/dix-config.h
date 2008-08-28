@@ -14,7 +14,7 @@
 /* #define OSNAME "NetBSD 4.99.67 amd64" */
 
 /* Operating System Vendor */
-#define OSVENDOR ""
+/* #define OSVENDOR "" */
 
 /* Builder string */
 #define BUILDERSTRING ""
@@ -258,8 +258,10 @@
 /* Enable some debugging code */
 /* #undef DEBUG */
 
+#ifndef PACKAGE
 /* Name of package */
 #define PACKAGE "xorg-server"
+#endif
 
 /* Internal define for Xinerama */
 #define PANORAMIX 1
@@ -460,8 +462,10 @@
 /* Build Rootless code */
 /* #undef ROOTLESS */
 
+#if defined(_LP64)
 /* Define to 1 if unsigned long is 64 bits. */
 #define _XSERVER64 1
+#endif
 
 #ifndef RGB_DB
 /* Define to location of RGB database */
