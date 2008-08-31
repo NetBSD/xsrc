@@ -27,7 +27,6 @@ WITH THE SPEEDO SOFTWARE OR THE BITSTREAM CHARTER OUTLINE FONT.
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
-#define	DEBUG	0
 
 /*************************** O U T _ U T I L . C *****************************
  *                                                                           *
