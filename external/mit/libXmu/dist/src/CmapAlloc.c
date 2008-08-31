@@ -334,7 +334,10 @@ icbrt_with_guess(int a, int guess)
 #endif
 	delta = (guess - a/(guess*guess))/3;
 #ifdef DEBUG
-	printf("pass %d: guess=%d, delta=%d\n", icbrt_loopcount, guess, delta);
+#ifdef _X_ROOT_STATS
+	printf("pass %d: ", icbrt_loopcount);
+#endif
+	printf("guess=%d, delta=%d\n", guess, delta);
 #endif
 	guess -= delta;
     } while (delta != 0);
