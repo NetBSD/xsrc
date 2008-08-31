@@ -28,6 +28,10 @@ WITH THE SPEEDO SOFTWARE OR THE BITSTREAM CHARTER OUTLINE FONT.
 #include <config.h>
 #endif
 
+#ifdef DEBUG
+#include <stdio.h>
+#endif
+
 /*************************** O U T _ U T I L . C *****************************
  *                                                                           *
  * This is a utility module share by all bitmap output modules               *
