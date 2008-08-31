@@ -115,7 +115,8 @@ xf86AccResFromOS(resPtr ret)
     return ret;
 }
 
-#elif defined(__powerpc__)
+#elif defined(__powerpc__) || defined(__arm__) || defined(__mips__) || \
+      defined(__sparc__)
 
 resPtr
 xf86BusAccWindowsFromOS(void)
