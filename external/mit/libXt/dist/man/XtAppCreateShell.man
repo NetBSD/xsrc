@@ -141,6 +141,7 @@ Widget XtVaAppCreateShell(String \fIapplication_name\fP, String
 .SH ARGUMENTS
 .IP \fIapplication_name\fP 1i
 Specifies the name of the application instance.
+.ds Ac , which usually is the generic name for all instances of this application
 .IP \fIapplication_class\fP 1i
 Specifies the class name of this application\*(Ac.
 .ds Wc \ that the application top-level widget should be
