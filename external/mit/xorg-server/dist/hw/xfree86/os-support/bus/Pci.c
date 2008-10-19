@@ -1129,9 +1129,10 @@ xf86MapPciMem(int ScreenNum, int Flags, PCITAG Tag, ADDRESS Base,
 	}
 	base = xf86MapDomainMemory(ScreenNum, Flags, Tag, hostbase, Size);
 	if (!base)	{
-		FatalError("xf86MapPciMem: Could not mmap PCI memory "
+		xf86Msg(X_WARNING, "xf86MapPciMem: Could not mmap PCI memory "
 			   "[base=0x%lx,hostbase=0x%lx,size=%lx] (%s)\n",
 			   Base, hostbase, Size, strerror(errno));
+                return NULL;
 	}
 	/*
 	 * If read side-effects, do whatever might be needed to prevent
