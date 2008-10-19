@@ -28,6 +28,7 @@
 #endif
 
 #include <X11/X.h>
+#include <machine/param.h>
 #include "xf86.h"
 #include "xf86Priv.h"
 
@@ -85,8 +86,9 @@ ppcMapVidMem(int ScreenNum, unsigned long Base, unsigned long Size, int flags)
 		     PROT_READ : (PROT_READ | PROT_WRITE),
 		    MAP_SHARED, fd, Base);
 	if (base == MAP_FAILED)
-		FatalError("%s: could not mmap screen [s=%x,a=%x] (%s)",
-			   "xf86MapVidMem", Size, Base, strerror(errno));
+		xf86Msg(X_WARNING, 
+		    "%s: could not mmap screen [s=%x,a=%x] (%s)",
+		    "xf86MapVidMem", Size, Base, strerror(errno));
 
 	return base;
 }
@@ -107,7 +109,8 @@ xf86ReadBIOS(unsigned long Base, unsigned long Offset, unsigned char *Buf,
 	if (kmem == -1) {
 		kmem = open(DEV_MEM, 2);
 		if (kmem == -1) {
-			FatalError("xf86ReadBIOS: open %s", DEV_MEM);
+			xf86Msg(X_ERROR, "xf86ReadBIOS: open %s", DEV_MEM);
+			return 0;
 		}
 	}
 
@@ -149,7 +152,7 @@ Bool xf86EnableIO()
         if (ioBase == MAP_FAILED)
         {
                 ioBase=mmap(NULL, 0x10000, PROT_READ|PROT_WRITE, MAP_SHARED, fd,
-                    0xf2000000);
+                    PCI_MAGIC_IO_RANGE);
                 xf86MsgVerb(X_INFO, 3, "xf86EnableIO: %08x\n", ioBase);
                 if (ioBase == MAP_FAILED) {
                         xf86MsgVerb(X_WARNING, 3, "Can't map IO space!\n");
