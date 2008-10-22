@@ -225,7 +225,7 @@ static void r200EmitPrim( GLcontext *ctx,
 /* We could do without (most of) this ugliness if dest was always 32 bit word aligned... */
 #define EMIT_ELT(dest, offset, x) do {                          \
         int off = offset + ( ( (GLuint)dest & 0x2 ) >> 1 );     \
-        GLushort *des = (GLushort *)( (GLuint)dest & ~0x2 );    \
+        GLushort *des = (GLushort *)( (unsigned long)dest & ~0x2 );    \
         (des)[ off + 1 - 2 * ( off & 1 ) ] = (GLushort)(x);	\
 	(void)rmesa; } while (0)
 #else
