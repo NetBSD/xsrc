@@ -180,7 +180,7 @@ videoPtrToDriverName(pciVideoPtr info)
 	case 0x8086:
 	    if ((info->chipType == 0x00d1) || (info->chipType == 0x7800))
 		return "i740";
-	    else return "i810";
+	    else return "intel";
 	case 0x102b:		    return "mga";
 	case 0x10c8:		    return "neomagic";
 	case 0x105d:		    return "i128";
