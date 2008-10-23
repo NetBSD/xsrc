@@ -537,7 +537,7 @@ GenerateDriverlist(char * dirname, char * drivernames)
 {
     char **ret;
     const char *subdirs[] = { dirname, NULL };
-    static const char *patlist[] = {"(.*)_drv\\.so", "(.*)_drv\\.o", NULL};
+    static const char *patlist[] = {"(.*)_drv\\.so$", "(.*)_drv\\.o$", NULL};
     ret = LoaderListDirs(subdirs, patlist);
     
     /* fix up the probe order for video drivers */
