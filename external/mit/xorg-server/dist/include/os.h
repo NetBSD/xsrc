@@ -88,6 +88,9 @@ typedef struct _NewClientRec *NewClientPtr;
 
 #include <stdio.h>
 #include <stdarg.h>
+#include <string.h>
+#include <strings.h>
+
 
 /* have to put $(SIGNAL_DEFINES) in DEFINES in Imakefile to get this right */
 #ifdef SIGNALRETURNSINT
