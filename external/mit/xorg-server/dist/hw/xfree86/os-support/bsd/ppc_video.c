@@ -146,6 +146,7 @@ xf86EnableInterrupts()
 
 Bool xf86EnableIO()
 {
+#ifdef PCI_MAGIC_IO_RANGE
         int fd = xf86Info.screenFd;
 
         xf86MsgVerb(X_WARNING, 3, "xf86EnableIO %d\n", fd);
@@ -160,15 +161,19 @@ Bool xf86EnableIO()
 		}
         }
 	return TRUE;
+#else
+	return TRUE;
+#endif
 }
 
 void xf86DisableIO()
 {
-
+#ifdef PCI_MAGIC_IO_RANGE
         if (ioBase != MAP_FAILED)
         {
                 munmap(__UNVOLATILE(ioBase), 0x10000);
                 ioBase = MAP_FAILED;
         }
+#endif
 }
 

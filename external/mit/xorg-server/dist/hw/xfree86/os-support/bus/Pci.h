@@ -335,7 +335,7 @@
 #  define INCLUDE_XF86_MAP_PCI_MEM
 #  define INCLUDE_XF86_NO_DOMAIN
 # endif
-# if !defined(__FreeBSD__) && !defined(linux)
+# if !defined(__FreeBSD__) && !defined(linux) && !defined(__NetBSD__)
 #  define ARCH_PCI_PCI_BRIDGE sparcPciPciBridge
 # endif
 #elif defined(__amd64__) || defined(__amd64)
