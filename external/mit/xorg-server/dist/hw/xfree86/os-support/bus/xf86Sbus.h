@@ -45,12 +45,72 @@
 #include <dev/ofw/openpromio.h>
 #elif defined(__NetBSD__)
 #include <dev/sun/fbio.h>
+#include <dev/ofw/openfirmio.h>
 #else
 #include <machine/fbio.h>
 #endif
 #else
 #include <sun/fbio.h>
 #endif
+
+#ifdef __NetBSD__
+#ifndef   FBTYPE_SUN2BW
+# define  FBTYPE_SUN2BW 2
+#endif
+
+#ifndef   FBTYPE_SUN2COLOR
+# define  FBTYPE_SUN2COLOR 3
+#endif
+
+#ifndef   FBTYPE_SUN3COLOR
+# define  FBTYPE_SUN3COLOR 6
+#endif
+
+#ifndef   FBTYPE_SUNFAST_COLOR
+# define  FBTYPE_SUNFAST_COLOR 12
+#endif
+
+#ifndef   FBTYPE_SUNGP3
+# define  FBTYPE_SUNGP3 17
+#endif
+
+#ifndef   FBTYPE_SUNGT
+# define  FBTYPE_SUNGT 18
+#endif
+
+#ifndef   FBTYPE_SUNLEO
+# define  FBTYPE_SUNLEO 19
+#endif
+
+#ifndef   FBTYPE_MDICOLOR
+# ifdef CSRG_BASED
+#  define FBTYPE_MDICOLOR 28
+# else
+#  define FBTYPE_MDICOLOR 20
+# endif
+#endif
+
+#ifndef   FBTYPE_TCXCOLOR
+# ifdef CSRG_BASED
+#  define FBTYPE_TCXCOLOR 29
+# else
+#  define FBTYPE_TCXCOLOR 21
+# endif
+#endif
+
+#ifndef   FBTYPE_CREATOR
+#  define FBTYPE_CREATOR 22
+#endif
+
+#ifndef FBTYPE_P9100
+#define FBTYPE_P9100 21
+#endif
+
+#ifndef FBTYPE_AG10E
+#define FBTYPE_AG10E 24
+#endif
+
+#else /* !__NetBSD__ */
 
 #ifndef FBTYPE_SUNGP3
 #define FBTYPE_SUNGP3 -1
@@ -67,5 +127,7 @@
 #ifndef FBTYPE_CREATOR
 #define FBTYPE_CREATOR -1
 #endif
+
+#endif /* __NetBSD__ */
 
 #endif /* _XF86_SBUS_H */
