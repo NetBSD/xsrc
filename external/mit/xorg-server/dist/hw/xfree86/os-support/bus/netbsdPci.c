@@ -73,23 +73,49 @@ netbsdPciInit()
 {
 	struct pciio_businfo pci_businfo;
 
+#ifdef PCI_VIA_TTYE0
+	/* XXX we should already have this open somewhere */
+	devpci = open("/dev/ttyE0", O_RDWR);
+	if (devpci == -1) {
+		ErrorF("netbsdPciInit: can't open /dev/ttyE0\n");
+		return;
+	}
+#else
 	devpci = open("/dev/pci0", O_RDWR);
-	if (devpci == -1)
-		FatalError("netbsdPciInit: can't open /dev/pci0\n");
+	if (devpci == -1) {
+		ErrorF("netbsdPciInit: can't open /dev/pci0\n");
+		return;
+	}
+#endif
 
 	pciNumBuses    = 1;
 	pciBusInfo[0]  = &netbsdPci0;
 	pciFindFirstFP = pciGenFindFirst;
 	pciFindNextFP  = pciGenFindNext;
+#ifdef PCI_VIA_TTYE0
+	netbsdPci0.numDevices = 1;
+#else
 	/* use businfo to get the number of devs */
 	if (ioctl(devpci, PCI_IOC_BUSINFO, &pci_businfo) != 0)
-	    FatalError("netbsdPciInit: not a PCI bus device");
+		ErrorF("netbsdPciInit: not a PCI bus device");
 	netbsdPci0.numDevices = pci_businfo.maxdevs;
+#endif
 }
 
 static CARD32
 netbsdPciConfRead(PCITAG tag, int reg)
 {
+#ifdef PCI_VIA_TTYE0
+	struct pciio_cfgreg cfgr;
+
+	cfgr.reg = reg;
+	if (ioctl(devpci, PCI_IOC_CFGREAD, &cfgr) == -1) {
+		xf86Msg(X_ERROR, "netbsdPciConfRead: failed on ttyE0\n");
+		return 0;
+	}
+
+	return (cfgr.val);
+#else
 	struct pciio_bdf_cfgreg bdfr;
 
 	bdfr.bus      = PCI_BUS_FROM_TAG(tag);
@@ -102,11 +128,20 @@ netbsdPciConfRead(PCITAG tag, int reg)
 		    bdfr.bus, bdfr.device, bdfr.function);
 
 	return (bdfr.cfgreg.val);
+#endif
 }
 
 static void
 netbsdPciConfWrite(PCITAG tag, int reg, CARD32 val)
 {
+#ifdef PCI_VIA_TTYE0
+	struct pciio_cfgreg cfgr;
+
+	cfgr.reg = reg;
+	cfgr.val = val;
+	if (ioctl(devpci, PCI_IOC_CFGWRITE, &cfgr) == -1)
+		FatalError("netbsdPciConfWrite: failed on ttyE0\n");
+#else
 	struct pciio_bdf_cfgreg bdfr;
 
 	bdfr.bus      = PCI_BUS_FROM_TAG(tag);
@@ -118,6 +153,7 @@ netbsdPciConfWrite(PCITAG tag, int reg, CARD32 val)
 	if (ioctl(devpci, PCI_IOC_BDF_CFGWRITE, &bdfr) == -1)
 		FatalError("netbsdPciConfWrite: failed on %d/%d/%d\n",
 		    bdfr.bus, bdfr.device, bdfr.function);
+#endif
 }
 
 static void
