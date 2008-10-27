@@ -89,7 +89,7 @@
 #define STDC_HEADERS 1
 
 /* Build support for DRI */
-#define USE_DRI 1
+/* #undef USE_DRI */
 
 /* Build support for Exa */
 #define USE_EXA 1
