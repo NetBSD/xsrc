@@ -2459,7 +2459,7 @@ GLINTMapMem(ScrnInfoPtr pScrn)
      * We always map VGA IO registers - even if we don't need them
      */ 
     pGlint->IOBase = xf86MapPciMem(pScrn->scrnIndex, VIDMEM_MMIO_32BIT, 
-	       pGlint->PciTag, pGlint->IOAddress, 0x20000);
+	       pGlint->PciTag, pGlint->IOAddress, 0x10000);
 
     if (pGlint->IOBase == NULL)
 	return FALSE;
@@ -2503,7 +2503,7 @@ GLINTUnmapMem(ScrnInfoPtr pScrn)
     /*
      * Unmap IO registers to virtual address space
      */ 
-    xf86UnMapVidMem(pScrn->scrnIndex, (pointer)pGlint->IOBase, 0x20000);
+    xf86UnMapVidMem(pScrn->scrnIndex, (pointer)pGlint->IOBase, 0x10000);
     pGlint->IOBase = NULL;
 
     if (pGlint->FbBase != NULL)
