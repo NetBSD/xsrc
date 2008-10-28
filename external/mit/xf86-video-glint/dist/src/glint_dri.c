@@ -498,7 +498,7 @@ GLINTDRIScreenInit(ScreenPtr pScreen)
     pDRIInfo->ddxDriverMajorVersion = GLINT_MAJOR_VERSION;
     pDRIInfo->ddxDriverMinorVersion = GLINT_MINOR_VERSION;
     pDRIInfo->ddxDriverPatchVersion = GLINT_PATCHLEVEL;
-    pDRIInfo->frameBufferPhysicalAddress = pGlint->FbAddress;
+    pDRIInfo->frameBufferPhysicalAddress = (void *)pGlint->FbAddress;
     pDRIInfo->frameBufferSize = pGlint->FbMapSize;
     pDRIInfo->frameBufferStride = 
 	    pScrn->displayWidth * (pScrn->bitsPerPixel >> 3);
