@@ -33,7 +33,12 @@
 #include "pixman-private.h"
 #include "pixman-mmx.h"
 #include "pixman-vmx.h"
-#include "pixman-sse.h"
+#include "pixman-sse2.h"
+#include "pixman-combine32.h"
+
+#ifdef __GNUC__
+#   define inline __inline__ __attribute__ ((__always_inline__))
+#endif
 
 #define FbFullMask(n)   ((n) == 32 ? (uint32_t)-1 : ((((uint32_t) 1) << n) - 1))
 
@@ -47,21 +52,17 @@ typedef void (* CompositeFunc) (pixman_op_t,
 				int16_t, int16_t, int16_t, int16_t, int16_t, int16_t,
 				uint16_t, uint16_t);
 
-uint32_t
-fbOver (uint32_t x, uint32_t y)
+static inline uint32_t
+fbOver (uint32_t src, uint32_t dest)
 {
-    uint16_t  a = ~x >> 24;
-    uint16_t  t;
-    uint32_t  m,n,o,p;
+    // dest = (dest * (255 - alpha)) / 255 + src
+    uint32_t a = ~src >> 24; // 255 - alpha == 255 + (~alpha + 1) == ~alpha
+    FbByteMulAdd(dest, a, src);
 
-    m = FbOverU(x,y,0,a,t);
-    n = FbOverU(x,y,8,a,t);
-    o = FbOverU(x,y,16,a,t);
-    p = FbOverU(x,y,24,a,t);
-    return m|n|o|p;
+    return dest;
 }
 
-uint32_t
+static uint32_t
 fbOver24 (uint32_t x, uint32_t y)
 {
     uint16_t  a = ~x >> 24;
@@ -74,7 +75,7 @@ fbOver24 (uint32_t x, uint32_t y)
     return m|n|o;
 }
 
-uint32_t
+static uint32_t
 fbIn (uint32_t x, uint8_t y)
 {
     uint16_t  a = y;
@@ -1107,7 +1108,7 @@ pixman_image_composite_rect  (pixman_op_t                   op,
 			      int16_t                       dest_y,
 			      uint16_t                      width,
 			      uint16_t                      height);
-void
+static void
 fbCompositeSolidFill (pixman_op_t op,
 		      pixman_image_t * pSrc,
 		      pixman_image_t * pMask,
@@ -1394,7 +1395,7 @@ static const FastPathInfo mmx_fast_paths[] =
 #endif
 
 #ifdef USE_SSE2
-static const FastPathInfo sse_fast_paths[] =
+static const FastPathInfo sse2_fast_paths[] =
 {
     { PIXMAN_OP_OVER, PIXMAN_solid,    PIXMAN_a8,       PIXMAN_r5g6b5,   fbCompositeSolidMask_nx8x0565sse2,     0 },
     { PIXMAN_OP_OVER, PIXMAN_solid,    PIXMAN_a8,       PIXMAN_b5g6r5,   fbCompositeSolidMask_nx8x0565sse2,     0 },
@@ -1444,11 +1445,8 @@ static const FastPathInfo sse_fast_paths[] =
     { PIXMAN_OP_OVER, PIXMAN_x8b8g8r8, PIXMAN_a8b8g8r8, PIXMAN_r5g6b5,   fbCompositeSrc_8888RevNPx0565sse2,     NEED_PIXBUF },
     { PIXMAN_OP_OVER, PIXMAN_x8r8g8b8, PIXMAN_a8r8g8b8, PIXMAN_b5g6r5,   fbCompositeSrc_8888RevNPx0565sse2,     NEED_PIXBUF },
     { PIXMAN_OP_OVER, PIXMAN_x8r8g8b8, PIXMAN_a8b8g8r8, PIXMAN_b5g6r5,   fbCompositeSrc_8888RevNPx0565sse2,     NEED_PIXBUF },
-#if 0
-    /* FIXME: This code is commented out since it's apparently not actually faster than the generic code */
     { PIXMAN_OP_OVER, PIXMAN_x8r8g8b8, PIXMAN_null,     PIXMAN_x8r8g8b8, fbCompositeCopyAreasse2,               0 },
     { PIXMAN_OP_OVER, PIXMAN_x8b8g8r8, PIXMAN_null,     PIXMAN_x8b8g8r8, fbCompositeCopyAreasse2,               0 },
-#endif
 
     { PIXMAN_OP_ADD,  PIXMAN_a8,       PIXMAN_null,     PIXMAN_a8,       fbCompositeSrcAdd_8000x8000sse2,       0 },
     { PIXMAN_OP_ADD,  PIXMAN_a8r8g8b8, PIXMAN_null,     PIXMAN_a8r8g8b8, fbCompositeSrcAdd_8888x8888sse2,       0 },
@@ -1460,15 +1458,12 @@ static const FastPathInfo sse_fast_paths[] =
     { PIXMAN_OP_SRC, PIXMAN_solid,     PIXMAN_a8,       PIXMAN_a8b8g8r8, fbCompositeSolidMaskSrc_nx8x8888sse2,  0 },
     { PIXMAN_OP_SRC, PIXMAN_solid,     PIXMAN_a8,       PIXMAN_x8b8g8r8, fbCompositeSolidMaskSrc_nx8x8888sse2,  0 },
 
-#if 0
-    /* FIXME: This code is commented out since it's apparently not actually faster than the generic code */
     { PIXMAN_OP_SRC, PIXMAN_a8r8g8b8,  PIXMAN_null,     PIXMAN_a8r8g8b8, fbCompositeCopyAreasse2,               0 },
     { PIXMAN_OP_SRC, PIXMAN_a8b8g8r8,  PIXMAN_null,     PIXMAN_a8b8g8r8, fbCompositeCopyAreasse2,               0 },
     { PIXMAN_OP_SRC, PIXMAN_x8r8g8b8,  PIXMAN_null,     PIXMAN_x8r8g8b8, fbCompositeCopyAreasse2,               0 },
     { PIXMAN_OP_SRC, PIXMAN_x8b8g8r8,  PIXMAN_null,     PIXMAN_x8b8g8r8, fbCompositeCopyAreasse2,               0 },
     { PIXMAN_OP_SRC, PIXMAN_r5g6b5,    PIXMAN_null,     PIXMAN_r5g6b5,   fbCompositeCopyAreasse2,               0 },
     { PIXMAN_OP_SRC, PIXMAN_b5g6r5,    PIXMAN_null,     PIXMAN_b5g6r5,   fbCompositeCopyAreasse2,               0 },
-#endif
 
     { PIXMAN_OP_IN,  PIXMAN_a8,        PIXMAN_null,     PIXMAN_a8,       fbCompositeIn_8x8sse2,                 0 },
     { PIXMAN_OP_IN,  PIXMAN_solid,     PIXMAN_a8,       PIXMAN_a8,       fbCompositeIn_nx8x8sse2,               0 },
@@ -1708,7 +1703,7 @@ pixman_optimize_operator(pixman_op_t op, pixman_image_t *pSrc, pixman_image_t *p
 
 }
 
-#if defined(USE_SSE2) && defined (__GNUC__)
+#if defined(USE_SSE2) && defined(__GNUC__) && !defined(__x86_64__) && !defined(__amd64__)
 
 /*
  * Work around GCC bug causing crashes in Mozilla with SSE2
@@ -1719,6 +1714,9 @@ pixman_optimize_operator(pixman_op_t op, pixman_image_t *pSrc, pixman_image_t *p
  *
  * The __force_align_arg_pointer__ makes gcc generate a prologue that
  * realigns the stack pointer to 16 bytes.
+ *
+ * On x86-64 this is not necessary because the standard ABI already
+ * calls for a 16 byte aligned stack.
  *
  * See https://bugs.freedesktop.org/show_bug.cgi?id=15693
  */
@@ -1757,7 +1755,7 @@ pixman_image_composite (pixman_op_t      op,
 #endif
 
 #ifdef USE_SSE2
-    fbComposeSetupSSE();
+    fbComposeSetupSSE2();
 #endif
 
     if (srcRepeat && srcTransform &&
@@ -1817,8 +1815,8 @@ pixman_image_composite (pixman_op_t      op,
 	info = NULL;
 	
 #ifdef USE_SSE2
-	if (pixman_have_sse ())
-	    info = get_fast_path (sse_fast_paths, op, pSrc, pMask, pDst, pixbuf);
+	if (pixman_have_sse2 ())
+	    info = get_fast_path (sse2_fast_paths, op, pSrc, pMask, pDst, pixbuf);
 #endif
 
 #ifdef USE_MMX
@@ -1922,20 +1920,28 @@ pixman_bool_t pixman_have_vmx (void) {
 
 #else
 #include <signal.h>
+#include <setjmp.h>
+
+static jmp_buf jump_env;
 
 static void vmx_test(int sig, siginfo_t *si, void *unused) {
-    have_vmx = FALSE;
+    longjmp (jump_env, 1);
 }
 
 pixman_bool_t pixman_have_vmx (void) {
     struct sigaction sa, osa;
+    int jmp_result;
     if (!initialized) {
         sa.sa_flags = SA_SIGINFO;
         sigemptyset(&sa.sa_mask);
         sa.sa_sigaction = vmx_test;
         sigaction(SIGILL, &sa, &osa);
-        asm volatile ( "vor 0, 0, 0" );
+	jmp_result = setjmp (jump_env);
+	if (jmp_result == 0) {
+	    asm volatile ( "vor 0, 0, 0" );
+	}
         sigaction(SIGILL, &osa, NULL);
+	have_vmx = (jmp_result == 0);
         initialized = TRUE;
     }
     return have_vmx;
@@ -2143,19 +2149,19 @@ pixman_have_mmx (void)
 
 #ifdef USE_SSE2
 pixman_bool_t
-pixman_have_sse (void)
+pixman_have_sse2 (void)
 {
     static pixman_bool_t initialized = FALSE;
-    static pixman_bool_t sse_present;
+    static pixman_bool_t sse2_present;
 
     if (!initialized)
     {
         unsigned int features = detectCPUFeatures();
-        sse_present = (features & (MMX|MMX_Extensions|SSE|SSE2)) == (MMX|MMX_Extensions|SSE|SSE2);
+        sse2_present = (features & (MMX|MMX_Extensions|SSE|SSE2)) == (MMX|MMX_Extensions|SSE|SSE2);
         initialized = TRUE;
     }
 
-    return sse_present;
+    return sse2_present;
 }
 #endif
 

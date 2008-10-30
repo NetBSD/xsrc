@@ -42,13 +42,18 @@ am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = $(top_builddir)/config.h
 CONFIG_CLEAN_FILES =
-@HAVE_GTK_TRUE@am__EXEEXT_1 = composite-test$(EXEEXT) \
-@HAVE_GTK_TRUE@	gradient-test$(EXEEXT) region-test$(EXEEXT) \
-@HAVE_GTK_TRUE@	fetch-test$(EXEEXT)
+@HAVE_GTK_TRUE@am__EXEEXT_1 = clip-test$(EXEEXT) \
+@HAVE_GTK_TRUE@	composite-test$(EXEEXT) gradient-test$(EXEEXT) \
+@HAVE_GTK_TRUE@	region-test$(EXEEXT) fetch-test$(EXEEXT)
 PROGRAMS = $(noinst_PROGRAMS)
+clip_test_SOURCES = clip-test.c
+clip_test_OBJECTS = clip-test.$(OBJEXT)
+am__DEPENDENCIES_1 =
+@HAVE_GTK_TRUE@clip_test_DEPENDENCIES =  \
+@HAVE_GTK_TRUE@	$(top_builddir)/pixman/libpixman-1.la \
+@HAVE_GTK_TRUE@	$(am__DEPENDENCIES_1)
 composite_test_SOURCES = composite-test.c
 composite_test_OBJECTS = composite-test.$(OBJEXT)
-am__DEPENDENCIES_1 =
 @HAVE_GTK_TRUE@composite_test_DEPENDENCIES =  \
 @HAVE_GTK_TRUE@	$(top_builddir)/pixman/libpixman-1.la \
 @HAVE_GTK_TRUE@	$(am__DEPENDENCIES_1)
@@ -77,9 +82,10 @@ CCLD = $(CC)
 LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
-SOURCES = composite-test.c fetch-test.c gradient-test.c region-test.c
-DIST_SOURCES = composite-test.c fetch-test.c gradient-test.c \
+SOURCES = clip-test.c composite-test.c fetch-test.c gradient-test.c \
 	region-test.c
+DIST_SOURCES = clip-test.c composite-test.c fetch-test.c \
+	gradient-test.c region-test.c
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -104,6 +110,7 @@ DEFS = @DEFS@
 DEPDIR = @DEPDIR@
 DEP_CFLAGS = @DEP_CFLAGS@
 DEP_LIBS = @DEP_LIBS@
+DSYMUTIL = @DSYMUTIL@
 ECHO = @ECHO@
 ECHO_C = @ECHO_C@
 ECHO_N = @ECHO_N@
@@ -130,6 +137,7 @@ LT_VERSION_INFO = @LT_VERSION_INFO@
 MAKEINFO = @MAKEINFO@
 MKDIR_P = @MKDIR_P@
 MMX_CFLAGS = @MMX_CFLAGS@
+NMEDIT = @NMEDIT@
 OBJEXT = @OBJEXT@
 PACKAGE = @PACKAGE@
 PACKAGE_BUGREPORT = @PACKAGE_BUGREPORT@
@@ -147,7 +155,7 @@ RANLIB = @RANLIB@
 SED = @SED@
 SET_MAKE = @SET_MAKE@
 SHELL = @SHELL@
-SSE_CFLAGS = @SSE_CFLAGS@
+SSE2_CFLAGS = @SSE2_CFLAGS@
 STRIP = @STRIP@
 VERSION = @VERSION@
 VMX_CFLAGS = @VMX_CFLAGS@
@@ -203,6 +211,7 @@ target_alias = @target_alias@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 @HAVE_GTK_TRUE@TESTPROGRAMS = \
+@HAVE_GTK_TRUE@	clip-test		\
 @HAVE_GTK_TRUE@	composite-test		\
 @HAVE_GTK_TRUE@	gradient-test		\
 @HAVE_GTK_TRUE@	region-test		\
@@ -213,6 +222,7 @@ top_srcdir = @top_srcdir@
 @HAVE_GTK_TRUE@gradient_test_LDADD = $(top_builddir)/pixman/libpixman-1.la $(GTK_LIBS)
 @HAVE_GTK_TRUE@fetch_test_LDADD = $(top_builddir)/pixman/libpixman-1.la
 @HAVE_GTK_TRUE@region_test_LDADD = $(top_builddir)/pixman/libpixman-1.la
+@HAVE_GTK_TRUE@clip_test_LDADD = $(top_builddir)/pixman/libpixman-1.la $(GTK_LIBS)
 all: all-am
 
 .SUFFIXES:
@@ -253,6 +263,9 @@ clean-noinstPROGRAMS:
 	  echo " rm -f $$p $$f"; \
 	  rm -f $$p $$f ; \
 	done
+clip-test$(EXEEXT): $(clip_test_OBJECTS) $(clip_test_DEPENDENCIES) 
+	@rm -f clip-test$(EXEEXT)
+	$(LINK) $(clip_test_OBJECTS) $(clip_test_LDADD) $(LIBS)
 composite-test$(EXEEXT): $(composite_test_OBJECTS) $(composite_test_DEPENDENCIES) 
 	@rm -f composite-test$(EXEEXT)
 	$(LINK) $(composite_test_OBJECTS) $(composite_test_LDADD) $(LIBS)
@@ -272,6 +285,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/clip-test.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/composite-test.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fetch-test.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gradient-test.Po@am__quote@
