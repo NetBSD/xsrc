@@ -44,13 +44,13 @@
 #define PACKAGE_NAME "pixman"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "pixman 0.11.4"
+#define PACKAGE_STRING "pixman 0.12.0"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "pixman"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "0.11.4"
+#define PACKAGE_VERSION "0.12.0"
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1
@@ -59,18 +59,15 @@
 /* use MMX compiler intrinsics */
 #define USE_MMX 1
 
-/* use SSE compiler intrinsics */
-#define USE_SSE 1
-
-/* use SSE compiler intrinsics */
+/* use SSE2 compiler intrinsics */
 /* #undef USE_SSE2 */
+#endif
 
 /* use VMX compiler intrinsics */
 /* #undef USE_VMX */
-#endif
 
 /* Version number of package */
-#define VERSION "0.11.4"
+#define VERSION "0.12.0"
 
 /* Define to 1 if your processor stores words with the most significant byte
    first (like Motorola and SPARC, unlike Intel and VAX). */
@@ -79,4 +76,10 @@
 #include <sys/endian.h>
 #if _BYTE_ORDER == _BIG_ENDIAN
 #define WORDS_BIGENDIAN 1
+#endif
+
+/* Define to `__inline__' or `__inline' if that's what the C compiler
+   calls it, or to nothing if 'inline' is not supported under any name.  */
+#ifndef __cplusplus
+/* #undef inline */
 #endif
