@@ -28,6 +28,8 @@
 
 #include "pixman-private.h"
 
+#include <stdlib.h>
+
 typedef pixman_box32_t		box_type_t;
 typedef pixman_region32_data_t	region_data_type_t;
 typedef pixman_region32_t	region_type_t;
@@ -45,6 +47,7 @@ pixman_region32_copy_from_region16 (pixman_region32_t *dst,
     int n_boxes, i;
     pixman_box16_t *boxes16;
     pixman_box32_t *boxes32;
+    pixman_bool_t retval;
     
     boxes16 = pixman_region_rectangles (src, &n_boxes);
 
@@ -62,7 +65,9 @@ pixman_region32_copy_from_region16 (pixman_region32_t *dst,
     }
 
     pixman_region32_fini (dst);
-    return pixman_region32_init_rects (dst, boxes32, n_boxes);
+    retval = pixman_region32_init_rects (dst, boxes32, n_boxes);
+    free (boxes32);
+    return retval;
 }
 
 #include "pixman-region.c"

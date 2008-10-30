@@ -3,21 +3,21 @@
 
 #line 1 "combine.inc"
 
-#define COMPONENT_SIZE 8
-#define MASK 0xff
-#define ONE_HALF 0x80
+#define COMPONENT_SIZE 16
+#define MASK 0xffffULL
+#define ONE_HALF 0x8000ULL
 
-#define G_SHIFT 8
-#define B_SHIFT 8 * 2
-#define A_SHIFT 8 * 3
-#define G_MASK 0xff00
-#define B_MASK 0xff0000
-#define A_MASK 0xff000000
+#define G_SHIFT 16
+#define B_SHIFT 16 * 2
+#define A_SHIFT 16 * 3
+#define G_MASK 0xffff0000ULL
+#define B_MASK 0xffff00000000ULL
+#define A_MASK 0xffff000000000000ULL
 
-#define RB_MASK 0xff00ff
-#define AG_MASK 0xff00ff00
-#define RB_ONE_HALF 0x800080
-#define RB_MASK_PLUS_ONE 0x10000100
+#define RB_MASK 0xffff0000ffffULL
+#define AG_MASK 0xffff0000ffff0000ULL
+#define RB_ONE_HALF 0x800000008000ULL
+#define RB_MASK_PLUS_ONE 0x10000000010000ULL
 
 #define Alpha(x) ((x) >> A_SHIFT)
 
@@ -26,16 +26,16 @@
  */
 
 #define IntMult(a,b,t) ( (t) = (a) * (b) + ONE_HALF, ( ( ( (t)>>G_SHIFT ) + (t) )>>G_SHIFT ) )
-#define IntDiv(a,b)    (((uint16_t) (a) * MASK) / (b))
+#define IntDiv(a,b)    (((uint32_t) (a) * MASK) / (b))
 
-#define GetComp(v,i)   ((uint16_t) (uint8_t) ((v) >> i))
+#define GetComp(v,i)   ((uint32_t) (uint16_t) ((v) >> i))
 
 #define Add(x,y,i,t)   ((t) = GetComp(x,i) + GetComp(y,i),              \
-                        (uint32_t) ((uint8_t) ((t) | (0 - ((t) >> G_SHIFT)))) << (i))
+                        (uint64_t) ((uint16_t) ((t) | (0 - ((t) >> G_SHIFT)))) << (i))
 
 #define FbGen(x,y,i,ax,ay,t,u,v) ((t) = (IntMult(GetComp(y,i),ay,(u)) + \
 					 IntMult(GetComp(x,i),ax,(v))), \
-				  (uint32_t) ((uint8_t) ((t) |		\
+				  (uint64_t) ((uint16_t) ((t) |		\
 							 (0 - ((t) >> G_SHIFT)))) << (i))
 
 /*
@@ -47,7 +47,7 @@
   x_c = (x_c * a) / 255
 */
 #define FbByteMul(x, a) do {                                            \
-        uint32_t t = ((x & RB_MASK) * a) + RB_ONE_HALF;                  \
+        uint64_t t = ((x & RB_MASK) * a) + RB_ONE_HALF;                  \
         t = (t + ((t >> COMPONENT_SIZE) & RB_MASK)) >> COMPONENT_SIZE;  \
         t &= RB_MASK;                                                   \
                                                                         \
@@ -62,7 +62,7 @@
 */
 #define FbByteMulAdd(x, a, y) do {                                      \
         /* multiply and divide: trunc((i + 128)*257/65536) */           \
-        uint32_t t = ((x & RB_MASK) * a) + RB_ONE_HALF;                  \
+        uint64_t t = ((x & RB_MASK) * a) + RB_ONE_HALF;                  \
         t = (t + ((t >> COMPONENT_SIZE) & RB_MASK)) >> COMPONENT_SIZE;  \
         t &= RB_MASK;                                                   \
                                                                         \
@@ -94,8 +94,8 @@
   x_c = (x_c * a + y_c * b) / 255
 */
 #define FbByteAddMul(x, a, y, b) do {                                   \
-        uint32_t t;                                                      \
-        uint32_t r = (x >> A_SHIFT) * a + (y >> A_SHIFT) * b + ONE_HALF; \
+        uint64_t t;                                                      \
+        uint64_t r = (x >> A_SHIFT) * a + (y >> A_SHIFT) * b + ONE_HALF; \
         r += (r >> G_SHIFT);                                            \
         r >>= G_SHIFT;                                                  \
                                                                         \
@@ -126,7 +126,7 @@
   x_c = (x_c * a + y_c *b) / 256
 */
 #define FbByteAddMul_256(x, a, y, b) do {                               \
-        uint32_t t = (x & RB_MASK) * a + (y & RB_MASK) * b;              \
+        uint64_t t = (x & RB_MASK) * a + (y & RB_MASK) * b;              \
         t >>= G_SHIFT;                                                  \
         t &= RB_MASK;                                                   \
                                                                         \
@@ -140,8 +140,8 @@
   x_c = (x_c * a_c) / 255
 */
 #define FbByteMulC(x, a) do {                                           \
-        uint32_t t;                                                      \
-        uint32_t r = (x & MASK) * (a & MASK);                            \
+        uint64_t t;                                                      \
+        uint64_t r = (x & MASK) * (a & MASK);                            \
         r |= (x & B_MASK) * ((a >> B_SHIFT) & MASK);                    \
         r += RB_ONE_HALF;                                               \
         r = (r + ((r >> G_SHIFT) & RB_MASK)) >> G_SHIFT;                \
@@ -159,8 +159,8 @@
   x_c = (x_c * a) / 255 + y
 */
 #define FbByteMulAddC(x, a, y) do {                                     \
-        uint32_t t;                                                      \
-        uint32_t r = (x & MASK) * (a & MASK);                            \
+        uint64_t t;                                                      \
+        uint64_t r = (x & MASK) * (a & MASK);                            \
         r |= (x & B_MASK) * ((a >> B_SHIFT) & MASK);                    \
         r += RB_ONE_HALF;                                               \
         r = (r + ((r >> G_SHIFT) & RB_MASK)) >> G_SHIFT;                \
@@ -185,8 +185,8 @@
   x_c = (x_c * a_c + y_c * b) / 255
 */
 #define FbByteAddMulC(x, a, y, b) do {                                  \
-        uint32_t t;                                                      \
-        uint32_t r = (x >> A_SHIFT) * (a >> A_SHIFT) +                   \
+        uint64_t t;                                                      \
+        uint64_t r = (x >> A_SHIFT) * (a >> A_SHIFT) +                   \
                      (y >> A_SHIFT) * b;                                \
         r += (r >> G_SHIFT) + ONE_HALF;                                 \
         r >>= G_SHIFT;                                                  \
@@ -218,8 +218,8 @@
   x_c = min(x_c + y_c, 255)
 */
 #define FbByteAdd(x, y) do {                                            \
-        uint32_t t;                                                      \
-        uint32_t r = (x & RB_MASK) + (y & RB_MASK);                      \
+        uint64_t t;                                                      \
+        uint64_t r = (x & RB_MASK) + (y & RB_MASK);                      \
         r |= RB_MASK_PLUS_ONE - ((r >> G_SHIFT) & RB_MASK);             \
         r &= RB_MASK;                                                   \
                                                                         \

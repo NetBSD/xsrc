@@ -74,10 +74,7 @@ SOFTWARE.
 /*
  * Standard integers
  */
-#if defined (__SVR4) && defined (__sun)
-#  include <sys/int_types.h>
-#  include <stdint.h>
-#elif defined (__OpenBSD__) || defined (__sgi)
+#if defined (_SVR4) || defined (SVR4) || defined (__OpenBSD__) || defined (_sgi) || defined (__sun) || defined (sun)
 #  include <inttypes.h>
 #elif defined (_MSC_VER)
 typedef __int8 int8_t;
@@ -88,6 +85,8 @@ typedef __int32 int32_t;
 typedef unsigned __int32 uint32_t;
 typedef __int64 int64_t;
 typedef unsigned __int64 uint64_t;
+#elif defined (_AIX)
+#  include <sys/inttypes.h>
 #else
 #  include <stdint.h>
 #endif
@@ -513,7 +512,9 @@ typedef enum {
     PIXMAN_x8r8g8b8 =	PIXMAN_FORMAT(32,PIXMAN_TYPE_ARGB,0,8,8,8),
     PIXMAN_a8b8g8r8 =	PIXMAN_FORMAT(32,PIXMAN_TYPE_ABGR,8,8,8,8),
     PIXMAN_x8b8g8r8 =	PIXMAN_FORMAT(32,PIXMAN_TYPE_ABGR,0,8,8,8),
-    
+    PIXMAN_x2b10g10r10 = PIXMAN_FORMAT(32,PIXMAN_TYPE_ABGR,0,10,10,10),
+    PIXMAN_a2b10g10r10 = PIXMAN_FORMAT(32,PIXMAN_TYPE_ABGR,2,10,10,10),
+
 /* 24bpp formats */
     PIXMAN_r8g8b8 =	PIXMAN_FORMAT(24,PIXMAN_TYPE_ARGB,0,8,8,8),
     PIXMAN_b8g8r8 =	PIXMAN_FORMAT(24,PIXMAN_TYPE_ABGR,0,8,8,8),
