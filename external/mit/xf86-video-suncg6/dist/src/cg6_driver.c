@@ -555,9 +555,9 @@ CG6ScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
     if (!ret)
 	return FALSE;
 
-    pCg6->width=pScrn->virtualX;
-    pCg6->height=pScrn->virtualY;
-    pCg6->maxheight=(pCg6->vidmem/pCg6->width)&0xffff;
+    pCg6->width = pScrn->virtualX;
+    pCg6->height = pScrn->virtualY;
+    pCg6->maxheight = (pCg6->vidmem / pCg6->width) & 0xffff;
 
     fbPictureInit (pScreen, 0, 0);
 
