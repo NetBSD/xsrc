@@ -1,0 +1,50 @@
+.\" $NetBSD: crime.man,v 1.1 2008/11/06 22:06:47 macallan Exp $
+.\"
+.\" Copyright (c) 2008 Michael Lorenz
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\"
+.\"    - Redistributions of source code must retain the above copyright
+.\"      notice, this list of conditions and the following disclaimer.
+.\"    - Redistributions in binary form must reproduce the above
+.\"      copyright notice, this list of conditions and the following
+.\"      disclaimer in the documentation and/or other materials provided
+.\"      with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+.\" "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+.\" LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+.\" FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+.\" COPYRIGHT HOLDERS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+.\" BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+.\" LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+.\" CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+.\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.\" shorthand for double quote that works everywhere.
+.ds q \N'34'
+.TH CRIME __drivermansuffix__ __vendorversion__
+.SH NAME
+crime \- video driver for the CRIME rendering engine found in SGI O2 workstations
+.SH SYNOPSIS
+.nf
+.B "Section \*qDevice\*q"
+.BI "  Identifier \*q"  devname \*q
+.B  "  Driver \*qkcrime\*q"
+\ \ ...
+.B EndSection
+.fi
+.SH DESCRIPTION
+.B crime
+is an __xservername__ driver for NetBSD
+
+.SH SUPPORTED HARDWARE
+The
+.B crime
+driver supports only NetBSD/gimips running on any SGI O2 so far.
