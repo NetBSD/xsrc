@@ -77,7 +77,7 @@ ppcMapVidMem(int ScreenNum, unsigned long Base, unsigned long Size, int flags)
 	int fd = xf86Info.screenFd;
 	pointer base;
 #ifdef DEBUG
-	xf86MsgVerb(X_INFO, 3, "mapVidMem %lx, %lx, fd = %d", 
+	xf86MsgVerb(X_INFO, 3, "%s %lx, %lx, fd = %d", __func__, 
 		    Base, Size, fd);
 #endif
 
@@ -144,6 +144,11 @@ xf86EnableInterrupts()
 	return;
 }
 
+/* XXX why the hell is this necessary?! */
+#ifdef __arm__
+unsigned int IOPortBase = (int)MAP_FAILED;
+#endif
+
 Bool xf86EnableIO()
 {
 #ifdef PCI_MAGIC_IO_RANGE
@@ -160,6 +165,9 @@ Bool xf86EnableIO()
 			return FALSE;
 		}
         }
+#ifdef __arm__
+        IOPortBase = (unsigned int)ioBase;
+#endif
 	return TRUE;
 #else
 	return TRUE;
@@ -173,6 +181,9 @@ void xf86DisableIO()
         {
                 munmap(__UNVOLATILE(ioBase), 0x10000);
                 ioBase = MAP_FAILED;
+#ifdef __arm__
+        	IOPortBase = (unsigned int)MAP_FAILED;
+#endif
         }
 #endif
 }
