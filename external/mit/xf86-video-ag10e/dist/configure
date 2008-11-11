@@ -1,0 +1,8 @@
+#! /bin/sh
+
+# Identity of this package.
+PACKAGE_NAME='xf86-video-ag10e'
+PACKAGE_TARNAME='xf86-video-ag10e'
+PACKAGE_VERSION='0.0.1'
+PACKAGE_STRING='xf86-video-ag10e 0.0.1'
+PACKAGE_BUGREPORT='https://bugs.freedesktop.org/enter_bug.cgi?product=xorg'
