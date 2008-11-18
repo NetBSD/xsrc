@@ -6,7 +6,7 @@
 
 /* comma-separated list of strings for config file paths when not specified */
 #ifndef DEFAULT_CONFIG_FILE
-#define DEFAULT_CONFIG_FILE "/usr/local/etc/X11/fs/config"
+#define DEFAULT_CONFIG_FILE "/etc/X11/fs/config"
 #endif
 
 /* Define to 1 if you have the <inttypes.h> header file. */
