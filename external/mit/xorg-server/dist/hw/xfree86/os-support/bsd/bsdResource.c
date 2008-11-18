@@ -21,7 +21,8 @@ _X_EXPORT resRange PciAvoid[] = {_PCI_AVOID_PC_STYLE, _END};
 
 #ifdef INCLUDE_XF86_NO_DOMAIN
 
-#if defined(__alpha__) || defined(__amd64__) || defined(__powerpc__)
+#if defined(__alpha__) || defined(__amd64__) || defined(__powerpc__) || \
+    defined(__arm__) || defined(__mips__)
 
 resPtr
 xf86BusAccWindowsFromOS(void)
@@ -115,7 +116,7 @@ xf86AccResFromOS(resPtr ret)
     return ret;
 }
 
-#elif defined(__sparc__) || defined(__sparc64__) 
+#elif defined(__sparc__) || defined(__sparc64__)
 
 resPtr
 xf86BusAccWindowsFromOS(void)
@@ -126,7 +127,7 @@ xf86BusAccWindowsFromOS(void)
     RANGE(range, 0x00000000, 0xffffffff, ResExcMemBlock);
     ret = xf86AddResToList(ret, &range, -1);
 
-    RANGE(range, 0x00000000, 0x0000ffff, ResExcIoBlock);
+    RANGE(range, 0x00000000, 0xffffffff, ResExcIoBlock);
     ret = xf86AddResToList(ret, &range, -1);
     return ret;
 }
@@ -140,7 +141,7 @@ xf86PciBusAccWindowsFromOS(void)
     RANGE(range, 0x00000000, 0xffffffff, ResExcMemBlock);
     ret = xf86AddResToList(ret, &range, -1);
 
-    RANGE(range, 0x00000000, 0x0000ffff, ResExcIoBlock);
+    RANGE(range, 0x00000000, 0xffffffff, ResExcIoBlock);
     ret = xf86AddResToList(ret, &range, -1);
     return ret;
 }
