@@ -70,7 +70,7 @@ Sun Microsystems, Inc. or its licensors is granted.
 #include "XlcPublic.h"
 #include "XlcPubI.h"
 
-#if defined(_LP64)  && defined(__sparcv9)
+#if !defined(__NetBSD__) && defined(_LP64)  && defined(__sparcv9)
 # define	_MACH64_NAME		"sparcv9"
 #else
 # undef _MACH64_NAME
