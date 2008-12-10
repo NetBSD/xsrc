@@ -221,7 +221,8 @@ ATIMach64Probe
          * further.
          */
         if ((PCI_REGION_SIZE(pVideo, 2) >= (1 << 12)) &&
-            (pATI->Block0Base = PCI_REGION_BASE(pVideo, 2, REGION_MEM)))
+            (pATI->Block0Base = PCI_REGION_BASE(pVideo, 2, REGION_MEM)) &&
+	    (pATI->Block0Base != 0xfffff000))
         {
             pATI->Block0Base += 0x00000400U;
             if (ATIMach64Detect(pATI, ChipType, Chip))
@@ -238,7 +239,6 @@ ATIMach64Probe
             (pATI->Block0Base = PCI_REGION_BASE(pVideo, 0, REGION_MEM)))
         {
             pATI->MMIOInLinear = TRUE;
-
             pATI->Block0Base += 0x007FFC00U;
             if ((PCI_REGION_SIZE(pVideo, 0) >= (1 << 23)) &&
                 ATIMach64Detect(pATI, ChipType, Chip))
