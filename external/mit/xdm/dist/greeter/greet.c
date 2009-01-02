@@ -683,6 +683,9 @@ static int pamconv(int num_msg,
 	    "PAM_PROMPT_ECHO_OFF", "PAM_PROMPT_ECHO_ON",
 	    "PAM_ERROR_MSG", "PAM_TEXT_INFO" } ;
     
+#ifndef sun
+    const
+#endif		   
     struct pam_message      *m;
     struct pam_response     *r;
 
