@@ -1456,7 +1456,7 @@ The default is ``true.''
 .B "allowWindowOps (\fPclass\fB AllowWindowOps)"
 Specifies whether extended window control sequences (as used in dtterm)
 should be allowed.
-The default is ``true.''
+The default is ``false.''
 .TP 8
 .B "altIsNotMeta (\fPclass\fB AltIsNotMeta\fP)"
 If ``true'', treat the Alt-key as if it were the Meta-key.
@@ -2543,11 +2543,11 @@ or clicks one of its buttons.
 .RS
 .TP 3
 0
-never
+never.
+This is the default.
 .TP 3
 1
 the application running in \fIxterm\fP has not activated mouse mode.
-This is the default.
 .TP 3
 2
 always.
