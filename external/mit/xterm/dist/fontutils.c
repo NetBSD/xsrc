@@ -1,4 +1,4 @@
-/* $XTermId: fontutils.c,v 1.272 2008/04/17 23:23:37 tom Exp $ */
+/* $XTermId: fontutils.c,v 1.278 2008/12/30 17:32:06 tom Exp $ */
 
 /************************************************************
 
@@ -119,7 +119,7 @@ static void lookupOneFontSize(XtermWidget, int);
 #endif
 
 #if OPT_WIDE_CHARS
-static Bool
+static unsigned
 countGlyphs(XFontStruct * fp)
 {
     unsigned count = 0;
@@ -505,8 +505,8 @@ same_font_name(char *pattern, char *match)
 		return False;
 	    }
 	} else {
-	    int p = char2lower(*pattern++);
-	    int m = char2lower(*match++);
+	    int p = x_toupper(*pattern++);
+	    int m = x_toupper(*match++);
 	    if (p != m)
 		return False;
 	}
@@ -1301,9 +1301,8 @@ HandleLoadVTFonts(Widget w,
 
 	TRACE(("HandleLoadVTFonts(%d)\n", *param_count));
 	strcpy(myClass, convert);
-	if (*param_count == 1
-	    && islower(CharOf(myClass[0])))
-	    myClass[0] = toupper(CharOf(myClass[0]));
+	if (*param_count == 1)
+	    myClass[0] = x_toupper(myClass[0]);
 
 	if (xtermLoadVTFonts(xw, myName, myClass)) {
 	    /*
@@ -1335,12 +1334,16 @@ xtermSetCursorBox(TScreen * screen)
 {
     static XPoint VTbox[NBOX];
     XPoint *vp;
+    int fw = FontWidth(screen) - 1;
+    int fh = FontHeight(screen) - 1;
+    int hh = screen->cursor_underline ? 1 : fh;
 
     vp = &VTbox[1];
-    (vp++)->x = FontWidth(screen) - 1;
-    (vp++)->y = FontHeight(screen) - 1;
-    (vp++)->x = -(FontWidth(screen) - 1);
-    vp->y = -(FontHeight(screen) - 1);
+    (vp++)->x = (short) fw;
+    (vp++)->y = (short) hh;
+    (vp++)->x = (short) -fw;
+    vp->y = (short) -hh;
+
     screen->box = VTbox;
 }
 
@@ -1668,6 +1671,7 @@ xtermComputeFontInfo(XtermWidget xw,
 #endif /* OPT_RENDERWIDE */
 	}
 	if (norm == 0) {
+	    TRACE(("...no TrueType font found for number %d, disable menu entry\n", fontnum));
 	    xw->misc.render_font = False;
 	    update_font_renderfont();
 	    /* now we will fall through into the bitmap fonts */
@@ -2145,7 +2149,7 @@ xtermDrawBoxChar(XtermWidget xw,
 		 360 * 64);
     } else if (ch < (sizeof(lines) / sizeof(lines[0]))
 	       && (p = lines[ch]) != 0) {
-	int coord[4];
+	unsigned coord[4];
 	int n = 0;
 	while (*p >= 0) {
 	    coord[n++] = *p++;
@@ -2325,6 +2329,27 @@ lookupFontSizes(XtermWidget xw)
     }
 }
 
+#if OPT_RENDERFONT
+#define NMENU_RENDERFONTS (NMENUFONTS - 2)	/* no selection or escape */
+static Boolean
+useFaceSizes(XtermWidget xw)
+{
+    Boolean result = False;
+    int n;
+
+    if (UsingRenderFont(xw)) {
+	result = True;
+	for (n = 0; n < NMENU_RENDERFONTS; ++n) {
+	    if (xw->misc.face_size[n] <= 0.0) {
+		result = False;
+		break;
+	    }
+	}
+    }
+    return result;
+}
+#endif
+
 /*
  * Find the index of a larger/smaller font (according to the sign of 'relative'
  * and its magnitude), starting from the 'old' index.
@@ -2335,33 +2360,64 @@ lookupRelativeFontSize(XtermWidget xw, int old, int relative)
     TScreen *screen = TScreenOf(xw);
     int n, m = -1;
 
+    TRACE(("lookupRelativeFontSize(old=%d, relative=%d)\n", old, relative));
     if (!IsIcon(screen)) {
-	lookupFontSizes(xw);
-	if (relative != 0) {
-	    for (n = 0; n < NMENUFONTS; ++n) {
-		if (screen->menu_font_sizes[n] > 0 &&
-		    screen->menu_font_sizes[n] != screen->menu_font_sizes[old]) {
-		    int cmp_0 = ((screen->menu_font_sizes[n] >
-				  screen->menu_font_sizes[old])
-				 ? relative
-				 : -relative);
-		    int cmp_m = ((m < 0)
-				 ? 1
-				 : ((screen->menu_font_sizes[n] <
-				     screen->menu_font_sizes[m])
-				    ? relative
-				    : -relative));
-		    if (cmp_0 > 0 && cmp_m > 0) {
-			m = n;
+#if OPT_RENDERFONT
+	if (useFaceSizes(xw)) {
+	    TRACE(("...using FaceSize\n"));
+	    if (relative != 0) {
+		for (n = 0; n < NMENU_RENDERFONTS; ++n) {
+		    if (xw->misc.face_size[n] > 0 &&
+			xw->misc.face_size[n] != xw->misc.face_size[old]) {
+			int cmp_0 = ((xw->misc.face_size[n] >
+				      xw->misc.face_size[old])
+				     ? relative
+				     : -relative);
+			int cmp_m = ((m < 0)
+				     ? 1
+				     : ((xw->misc.face_size[n] <
+					 xw->misc.face_size[m])
+					? relative
+					: -relative));
+			if (cmp_0 > 0 && cmp_m > 0) {
+			    m = n;
+			}
 		    }
 		}
 	    }
-	    if (m >= 0) {
-		if (relative > 1)
-		    m = lookupRelativeFontSize(xw, m, relative - 1);
-		else if (relative < -1)
-		    m = lookupRelativeFontSize(xw, m, relative + 1);
+	} else
+#endif
+	{
+	    TRACE(("...using bitmap areas\n"));
+	    lookupFontSizes(xw);
+	    if (relative != 0) {
+		for (n = 0; n < NMENUFONTS; ++n) {
+		    if (screen->menu_font_sizes[n] > 0 &&
+			screen->menu_font_sizes[n] !=
+			screen->menu_font_sizes[old]) {
+			int cmp_0 = ((screen->menu_font_sizes[n] >
+				      screen->menu_font_sizes[old])
+				     ? relative
+				     : -relative);
+			int cmp_m = ((m < 0)
+				     ? 1
+				     : ((screen->menu_font_sizes[n] <
+					 screen->menu_font_sizes[m])
+					? relative
+					: -relative));
+			if (cmp_0 > 0 && cmp_m > 0) {
+			    m = n;
+			}
+		    }
+		}
 	    }
+	}
+	TRACE(("...new index %d\n", m));
+	if (m >= 0) {
+	    if (relative > 1)
+		m = lookupRelativeFontSize(xw, m, relative - 1);
+	    else if (relative < -1)
+		m = lookupRelativeFontSize(xw, m, relative + 1);
 	}
     }
     return m;
