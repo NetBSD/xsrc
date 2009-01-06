@@ -601,7 +601,7 @@ typedef struct {
 #endif
 
 #ifndef OPT_SHIFT_FONTS
-#define OPT_SHIFT_FONTS 1 /* true if xterm interprets fontsize-shifting */
+#define OPT_SHIFT_FONTS 0 /* true if xterm interprets fontsize-shifting */
 #endif
 
 #ifndef OPT_SUNPC_KBD
