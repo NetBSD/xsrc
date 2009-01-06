@@ -2347,9 +2347,11 @@ do_osc(XtermWidget xw, Char * oscbuf, unsigned len GCC_UNUSED, int final)
 	ChangeTitle(buf);
 	break;
 
+#ifdef notdef
     case 3:			/* change X property */
 	ChangeXprop(buf);
 	break;
+#endif
 #if OPT_ISO_COLORS
     case 4:
 	ChangeAnsiColorRequest(xw, buf, final);
@@ -2817,9 +2819,10 @@ do_dcs(XtermWidget xw, Char * dcsbuf, size_t dcslen)
 	    unparseputc(xw, okay ? '1' : '0');
 	    unparseputc(xw, '$');
 	    unparseputc(xw, 'r');
-	    if (okay)
+	    if (okay) {
 		cp = reply;
-	    unparseputs(xw, cp);
+		unparseputs(xw, cp);
+	    }
 	    unparseputc1(xw, ANSI_ST);
 	} else {
 	    unparseputc(xw, ANSI_CAN);
@@ -2897,7 +2900,9 @@ do_dcs(XtermWidget xw, Char * dcsbuf, size_t dcslen)
 	case '|':		/* DECUDK */
 	    if (params.a_param[0] == 0)
 		reset_decudk();
+#ifdef notdef
 	    parse_decudk(cp);
+#endif
 	    break;
 	case '{':		/* DECDLD (no '}' case though) */
 	    parse_decdld(&params, cp);
