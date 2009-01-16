@@ -1,7 +1,7 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <!--
  *****************************************************************************
- * Copyright 1996-2007,2008 by Thomas E. Dickey                              *
+ * Copyright 1996-2008,2009 by Thomas E. Dickey                              *
  * All Rights Reserved.                                                      *
  *                                                                           *
  * Permission to use, copy, modify, and distribute this software and its     *
@@ -20,7 +20,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF   *
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.            *
  *****************************************************************************
-  $XTermId: xterm.log.html,v 1.674 2008/04/20 22:31:01 tom Exp $
+  $XTermId: xterm.log.html,v 1.707 2009/01/09 02:02:49 tom Exp $
   -->
 <HTML>
 <HEAD>
@@ -30,7 +30,7 @@
 </HEAD>
 <BODY>
 <HR>
-Copyright &copy; 1997-2007,2008 by <A
+Copyright &copy; 1997-2008,2009 by <A
 HREF="mailto:dickey@invisible-island.net">Thomas E. Dickey</A>
 <HR>
 <H1>Contents</H1>
@@ -45,6 +45,10 @@ Most of these are summarized in the XFree86 CHANGELOG
 is the latest version of this file.
 
 <UL>
+<LI><A HREF="#xterm_239">Patch #239 - 2001/1/8</A>
+<LI><A HREF="#xterm_238">Patch #238 - 2008/12/30</A>
+<LI><A HREF="#xterm_237">Patch #237 - 2008/09/14</A>
+<LI><A HREF="#xterm_236">Patch #236 - 2008/07/27</A>
 <LI><A HREF="#xterm_235">Patch #235 - 2008/04/20</A>
 <LI><A HREF="#xterm_234">Patch #234 - 2008/03/02</A>
 <LI><A HREF="#xterm_233">Patch #233 - 2008/02/24</A>
@@ -282,6 +286,117 @@ is the latest version of this file.
 <LI><A HREF="#xterm_02">Patch #2 - 1996/1/7</A>
 <LI><A HREF="#xterm_01">Patch #1 - 1996/1/6</A>
 </UL>
+
+<H1><A NAME="xterm_239">Patch #239 - 2009/1/8</A></H1>
+<ul>
+	<li>correct a cast in input.c, which broke translation of numeric
+	    keypad codes to pageup, pagedown, etc., on 64-bit platform
+	    (Debian #511138, report by Larry Doolittle).
+</ul>
+
+<H1><A NAME="xterm_238">Patch #238 - 2008/12/30</A></H1>
+<ul>
+	<li>update configure macro CF_XOPEN_SOURCE for AIX 6.x and Mint
+	    platforms.
+
+	<li>reset the screen wrapping-flag at the end of
+	    <code>ClearRight</code> to fix an occasional case where the last
+	    character of a scrolled and wrapped line would be cleared (patch by
+	    Joe Peterson).
+
+	<li>modify to use POSIX coding for comparing resource settings such
+	    as <code>locale</code>, to work with locales such as Turkish
+	    (report by M Vefa Bicakci).
+
+	<li>turn on configure <code>paste64</code> feature by default
+	    (request by Jean-Philippe Bernardy).
+	    It is runtime enabled/disabled with <code>allowWindowOps</code>.
+
+	<li>turn on configure <code>tcap-query</code> feature by default,
+	    add resource <code>allowTcapOps</code>
+	    to make this runtime enabled/disabled.
+
+	<li>make <code>OSC 3</code> (change X property, from
+	    <a href="#xterm_110">patch #110</a>)
+	    subject to <code>allowWindowOps</code> resource.
+
+	<li>make VT220 <code>DSR</code> responses inactive in VT100-mode.
+
+	<li>make <code>DECUDK</code> feature inactive in VT100-mode.
+
+	<li>respond to incorrectly formatted <code>DECRQSS</code> with a
+	    cancel.
+
+	<li>add <code>allowFontOps</code> 
+	    resource to allow the fontsize-switching and font query/set
+	    control sequences to be enabled/disabled
+	    (prompted by Debian #510030).
+
+	<li>some code cleanup based on gcc 4.x <code>-Wconversion</code>
+	    warnings in button.c and charproc.c
+
+	<li>modify <code>tcap-query</code> feature to not return data for
+	    shifted cursor-keys when the keyboard type is set to vt220,
+	    since returning the same string for shifted/unshifted keys may
+	    confuse some applications (GenToo #212546).
+</ul>
+
+<H1><A NAME="xterm_237">Patch #237 - 2008/09/14</A></H1>
+<ul>
+	<li>improve usability of TrueType fonts by making the font-size
+	    switching for shifted keypad plus/minus use the
+	    <code>faceSize</code> resources to determine the order of fonts
+	    (when TrueType fonts are used) rather than the bitmap fonts, since
+	    their sizes may not be in the same order (report by H Merijn
+	    Brand)
+
+	<li>remove an optimization of <code>ConfigureNotify</code> events
+	    from <a href="#xterm_236">patch #236</a>
+	    which seems to interfere with passing <code>SIGWINCH</code> to 
+	    applications (GenToo #233836).
+
+	<li>modify handling of <code>altSendsEscape</code> to reset the
+	    <code>eightBitInput</code> mode, like <code>metaSendsEscape</code> 
+	    (patch by Ted Phelps).
+
+	<li>add feature to show the text-cursor as an underline rather than a
+	    box, plus command-line options <code>-uc</code> and
+	    <code>+uc</code> and resource <code>cursorUnderLine</code> to
+	    control the feature (patch by Paul Lampert).
+
+	<li>update config.guess, config.sub
+</ul>
+<H1><A NAME="xterm_236">Patch #236 - 2008/07/27</A></H1>
+<ul>
+	<li>correct memory reallocation when handling a paste of UTF-8 text
+	    from <a href="#xterm_225">patch #225</a> changes
+	    (report/patch by Max Mikhanosha).
+
+	<li>correct allocation of temporary buffer in
+	    <code>xtermFindShell</code> in case the user's <code>$PATH</code>
+	    contains no ":" (report/analysis by Victor Stinner,
+	    Freedesktop.Org Bugzilla #16790).
+
+	<li>modify CF_XOPEN_SOURCE to add case for DragonFly BSD, to fix
+	    new compile problem exposed by fix for fd_mask (patch by
+	    Hasso Tepper).
+
+	<li>add configure-check for ncurses <code>use_extended_names</code>,
+	    (report by Martin Mokrejs).
+
+	<li>correct computation for toolbar height; layout manager already
+	    takes into account <code>borderWidth</code> resource.
+
+	<li>implement VT320-style SCS (select character set) for ISO Latin-1
+	    supplemental.
+
+	<li>fixes for vt100-style character sets in UTF-8 mode (Ubuntu #230919).
+
+	<li>fix to make <code>luit</code> work with xterm's <code>-ls</code>
+	    option (report/patch by Marius Tolzmann).
+
+	<li>update config.guess, config.sub
+</ul>
 
 <H1><A NAME="xterm_235">Patch #235 - 2008/04/20</A></H1>
 <ul>
