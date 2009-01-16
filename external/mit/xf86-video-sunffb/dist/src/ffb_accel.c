@@ -151,28 +151,35 @@ do {   unsigned int __ppc = FFB_PPC_ABE_DISABLE | FFB_PPC_APE_DISABLE | FFB_PPC_
 } while(0)
 
 #define FFB_ATTR_VSCROLL_XAA(__fpriv, __pmask) \
-do {   unsigned int __rop = (FFB_ROP_OLD | (FFB_ROP_OLD << 8)); \
-       unsigned int __fbc = (__fpriv)->xaa_fbc; \
-       if ((__fpriv)->fbc_cache != __fbc || \
-           (__fpriv)->rop_cache != __rop || \
-           (__fpriv)->pmask_cache != (__pmask) || \
-           (__fpriv)->drawop_cache != FFB_DRAWOP_VSCROLL) { \
-               ffb_fbcPtr __ffb = (__fpriv)->regs; \
-               (__fpriv)->fbc_cache = __fbc; \
-               (__fpriv)->rop_cache = __rop; \
-               (__fpriv)->pmask_cache = (__pmask); \
-               (__fpriv)->drawop_cache = FFB_DRAWOP_VSCROLL; \
-               (__fpriv)->rp_active = 1; \
-               FFBFifo(__fpriv, 4); \
-               (__ffb)->fbc = __fbc; \
-               (__ffb)->rop = __rop; \
-               (__ffb)->pmask = (__pmask); \
-               (__ffb)->drawop = FFB_DRAWOP_VSCROLL; \
-       } \
+do {    unsigned int __ppc = FFB_PPC_ABE_DISABLE | FFB_PPC_APE_DISABLE | FFB_PPC_CS_VAR | FFB_PPC_XS_WID; \
+        unsigned int __ppc_mask = FFB_PPC_ABE_MASK | FFB_PPC_APE_MASK | FFB_PPC_CS_MASK | FFB_PPC_XS_MASK; \
+        unsigned int __rop = (FFB_ROP_OLD | (FFB_ROP_OLD << 8)); \
+        unsigned int __fbc = (__fpriv)->xaa_fbc; \
+        (__fpriv)->ppc_cache &= ~__ppc_mask; \
+        (__fpriv)->ppc_cache |= __ppc; \
+        (__fpriv)->regs->ppc = __ppc; \
+        if ((__fpriv)->fbc_cache != __fbc || \
+            (__fpriv)->rop_cache != __rop || \
+            (__fpriv)->pmask_cache != (__pmask) || \
+            (__fpriv)->drawop_cache != FFB_DRAWOP_VSCROLL) { \
+                ffb_fbcPtr __ffb = (__fpriv)->regs; \
+                (__fpriv)->fbc_cache = __fbc; \
+                (__fpriv)->rop_cache = __rop; \
+                (__fpriv)->pmask_cache = (__pmask); \
+                (__fpriv)->drawop_cache = FFB_DRAWOP_VSCROLL; \
+                (__fpriv)->rp_active = 1; \
+                FFBFifo(__fpriv, 4); \
+                (__ffb)->fbc = __fbc; \
+                (__ffb)->rop = __rop; \
+                (__ffb)->pmask = (__pmask); \
+                (__ffb)->drawop = FFB_DRAWOP_VSCROLL; \
+        } \
 } while(0)
+
 
 static CARD32 FFBAlphaTextureFormats[2] = { PICT_a8, 0 };
 static CARD32 FFBTextureFormats[2] = { PICT_a8b8g8r8, 0 };
+static CARD32 FFBTextureDstFormats[3] = { PICT_a8b8g8r8, PICT_x8b8g8r8, 0 };
 
 static void FFB_SetupTextureAttrs(FFBPtr pFfb)
 {
@@ -196,11 +203,21 @@ static void FFB_SetupTextureAttrs(FFBPtr pFfb)
        FFBWait(pFfb, ffb);
 }
 
-static Bool FFB_SetupForCPUToScreenAlphaTexture(ScrnInfoPtr pScrn, int op,
-                                               CARD16 red, CARD16 green, CARD16 blue,
-                                               CARD16 alpha, int alphaType,
-                                               CARD8 *alphaPtr, int alphaPitch,
-                                               int width, int height, int flags)
+static Bool FFB_SetupForCPUToScreenAlphaTexture(
+	ScrnInfoPtr	pScrn,
+	int		op,
+	CARD16		red,
+	CARD16		green,
+	CARD16		blue,
+	CARD16		alpha,
+	CARD32		maskFormat,
+	CARD32		dstFormat,
+	CARD8		*alphaPtr,
+	int		alphaPitch,
+	int		width,
+	int		height,
+	int		flags
+)
 {
        FFBPtr pFfb = GET_FFB_FROM_SCRN(pScrn);
 
@@ -208,7 +225,7 @@ static Bool FFB_SetupForCPUToScreenAlphaTexture(ScrnInfoPtr pScrn, int op,
                "argb[%04x:%04x:%04x:%04x] alpha[T(%x):P(%d)] "
                "wh[%d:%d] flgs[%x]\n",
                alpha, red, green, blue,
-               alphaType, alphaPitch,
+               maskFormat, alphaPitch,
                width, height, flags));
 
        FFB_SetupTextureAttrs(pFfb);
@@ -261,17 +278,24 @@ static void FFB_SubsequentCPUToScreenAlphaTexture(ScrnInfoPtr pScrn,
 }
 
 
-static Bool FFB_SetupForCPUToScreenTexture(ScrnInfoPtr pScrn, int op,
-                                          int texType,
-                                          CARD8 *texPtr, int texPitch,
-                                          int width, int height, int flags)
+static Bool FFB_SetupForCPUToScreenTexture(
+	ScrnInfoPtr	pScrn,
+	int		op,
+	CARD32		srcFormat,
+	CARD32		dstFormat,
+	CARD8		*texPtr,
+	int		texPitch,
+	int		width,
+	int		height,
+	int		flags
+)
 {
        FFBPtr pFfb = GET_FFB_FROM_SCRN(pScrn);
 
        FFBLOG(("FFB_SetupForCPUToScreenTexture: "
                "TEX[T(%x):P(%d)] "
                "wh[%d:%d] flgs[%x]\n",
-               texType, texPitch,
+               srcFormat, texPitch,
                width, height, flags));
 
        FFB_SetupTextureAttrs(pFfb);
@@ -950,7 +974,8 @@ Bool FFBAccelInit(ScreenPtr pScreen, FFBPtr pFfb)
 		XAA_RENDER_NO_TILE |
 		XAA_RENDER_NO_SRC_ALPHA;
 	infoRec->CPUToScreenAlphaTextureFormats = FFBAlphaTextureFormats;
-	infoRec->SetupForCPUToScreenAlphaTexture =
+	infoRec->CPUToScreenAlphaTextureDstFormats = FFBTextureDstFormats;
+	infoRec->SetupForCPUToScreenAlphaTexture2 =
 		FFB_SetupForCPUToScreenAlphaTexture;
 	infoRec->SubsequentCPUToScreenAlphaTexture =
 		FFB_SubsequentCPUToScreenAlphaTexture;
@@ -959,7 +984,8 @@ Bool FFBAccelInit(ScreenPtr pScreen, FFBPtr pFfb)
 		XAA_RENDER_NO_TILE |
 		XAA_RENDER_NO_SRC_ALPHA;
 	infoRec->CPUToScreenTextureFormats = FFBTextureFormats;
-	infoRec->SetupForCPUToScreenTexture =
+	infoRec->CPUToScreenTextureDstFormats = FFBTextureDstFormats;
+	infoRec->SetupForCPUToScreenTexture2 =
 		FFB_SetupForCPUToScreenTexture;
 	infoRec->SubsequentCPUToScreenTexture =
 		FFB_SubsequentCPUToScreenTexture;
@@ -1091,7 +1117,6 @@ Bool FFBAccelInit(ScreenPtr pScreen, FFBPtr pFfb)
 		FFBWidFree(pFfb, pFfb->xaa_wid);
 		return FALSE;
 	}
-
 	/* Success */
 	return TRUE;
 }
