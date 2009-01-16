@@ -1,4 +1,4 @@
-/* $XTermId: main.c,v 1.586 2008/02/28 00:28:00 Matthieu.Herrb Exp $ */
+/* $XTermId: main.c,v 1.588 2008/09/14 15:20:31 Paul.Lampert Exp $ */
 
 /*
  *				 W A R N I N G
@@ -1036,6 +1036,8 @@ static XrmOptionDescRec optionDescList[] = {
 {"-lcc",	"*localeFilter",XrmoptionSepArg,	(caddr_t) NULL},
 {"-en",		"*locale",	XrmoptionSepArg,	(caddr_t) NULL},
 #endif
+{"-uc",		"*cursorUnderLine", XrmoptionNoArg,	(caddr_t) "on"},
+{"+uc",		"*cursorUnderLine", XrmoptionNoArg,	(caddr_t) "off"},
 {"-ulc",	"*colorULMode",	XrmoptionNoArg,		(caddr_t) "off"},
 {"+ulc",	"*colorULMode",	XrmoptionNoArg,		(caddr_t) "on"},
 {"-ulit",       "*italicULMode", XrmoptionNoArg,        (caddr_t) "off"},
@@ -1206,6 +1208,7 @@ static OptionHelp xtermOptions[] = {
 { "-/+lc",                 "turn on/off locale mode using luit" },
 { "-lcc path",             "filename of locale converter (" DEFLOCALEFILTER ")" },
 #endif
+{ "-/+uc",                 "turn on/off underline cursor" },
 { "-/+ulc",                "turn off/on display of underline as color" },
 { "-/+ulit",               "turn off/on display of underline as italics" },
 #ifdef HAVE_UTMP
@@ -2236,7 +2239,7 @@ main(int argc, char *argv[]ENVP_ARG)
 	    c[1 + u] = "--";
 	    command_to_exec_with_luit = c;
 	} else {
-	    static char *luit[4];
+	    static char *luit[6];
 	    luit[0] = term->misc.localefilter;
 	    if (u) {
 		luit[1] = "-encoding";
@@ -4321,7 +4324,7 @@ spawnXTerm(XtermWidget xw)
 	     * there, or refuses to run.  In that case we will fall-through to
 	     * to command that the user gave anyway.
 	     */
-	    if (command_to_exec_with_luit) {
+	    if (command_to_exec_with_luit && command_to_exec) {
 		xtermSetenv("XTERM_SHELL",
 			    xtermFindShell(*command_to_exec_with_luit, False));
 		TRACE(("spawning command \"%s\"\n", *command_to_exec_with_luit));
@@ -4361,6 +4364,22 @@ spawnXTerm(XtermWidget xw)
 #ifdef USE_LOGIN_DASH_P
 	    if (xw->misc.login_shell && pw && added_utmp_entry)
 		execl(bin_login, "login", "-p", "-f", login_name, (void *) 0);
+#endif
+
+#if OPT_LUIT_PROG
+	    if (command_to_exec_with_luit) {
+		if (xw->misc.login_shell) {
+		    int u;
+		    u = (term->misc.use_encoding ? 2 : 0);
+		    command_to_exec_with_luit[u + 1] = "-argv0";
+		    command_to_exec_with_luit[u + 2] = shname_minus;
+		    command_to_exec_with_luit[u + 3] = NULL;
+		}
+		execvp(*command_to_exec_with_luit, command_to_exec_with_luit);
+		/* Exec failed. */
+		fprintf(stderr, "%s: Can't execvp %s: %s\n", ProgramName,
+			*command_to_exec_with_luit, strerror(errno));
+	    }
 #endif
 	    execlp(ptr,
 		   (xw->misc.login_shell ? shname_minus : shname),
