@@ -526,11 +526,21 @@ SPIN(ffb_dacPtr d, int count) {
 
 /*  Screen save (blank) restore */
 Bool
-FFBDacSaveScreen(FFBPtr pFfb, int mode) {
+FFBDacSaveScreen(ScreenPtr pScreen, int mode) {
+  ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
+  FFBPtr pFfb = GET_FFB_FROM_SCRN(pScrn);
   int tmp;
   ffb_dacPtr dac;
+  Bool redraw = FALSE;
+
   if(!pFfb) return FALSE;   /* Is there any way at all this could happen? */
   else dac = pFfb -> dac;
+
+  /* 
+   * there seems to be a bug in ffb1 hardware which causes screen corruption 
+   * when (un)blanking - so we disable/enable screen access to cause a
+   * full redraw.
+   */
 
   tmp = DACCFG_READ(dac, FFBDAC_CFG_TGEN);  /* Get the timing information */
 
@@ -543,13 +553,22 @@ FFBDacSaveScreen(FFBPtr pFfb, int mode) {
     case SCREEN_SAVER_OFF:
     case SCREEN_SAVER_FORCER:
       tmp |= FFBDAC_CFG_TGEN_VIDE;  /* Turn the video on */
+      if (pFfb->ffb_type < ffb2_prototype)
+        redraw = TRUE;
       break;
 
     default:
       return FALSE;  /* Don't know what to do; gently fail. */
   }
-  DACCFG_WRITE(dac, FFBDAC_CFG_TGEN, tmp);  /* Restore timing register, video set as asked */
+  /* Restore timing register, video set as asked */
+  DACCFG_WRITE(dac, FFBDAC_CFG_TGEN, tmp);  
   SPIN(dac, DPMS_SPIN_COUNT/10);
+
+  if (redraw) {
+    /* this causes a complete redraw of the screen */
+    pScrn->EnableDisableFBAccess(pScreen->myNum, FALSE);
+    pScrn->EnableDisableFBAccess(pScreen->myNum, TRUE);
+  } 
   return TRUE;
 }
 

@@ -223,7 +223,7 @@ extern Bool FFBDacInit(FFBPtr);
 extern void FFBDacFini(FFBPtr);
 extern void FFBDacEnterVT(FFBPtr);
 extern void FFBDacLeaveVT(FFBPtr);
-extern Bool FFBDacSaveScreen(FFBPtr, int);
+extern Bool FFBDacSaveScreen(ScreenPtr, int);
 extern void FFBDacDPMSMode(FFBPtr, int, int);
 
 /* Exported WID layer routines. */
