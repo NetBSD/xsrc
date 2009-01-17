@@ -36,6 +36,7 @@ xlogin*greetFace:	Serif-24:bold:italic
 xlogin*face: 		Helvetica-18
 xlogin*promptFace: 	Helvetica-18:bold
 xlogin*failFace: 	Helvetica-18:bold
+XHASHendif
 
 XHASHifdef COLOR
 xlogin*borderWidth: 1
