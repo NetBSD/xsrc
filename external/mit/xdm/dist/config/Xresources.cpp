@@ -56,7 +56,7 @@ xlogin*innerFramesWidth: 1
 xlogin*shdColor: black
 xlogin*hiColor: black
 XHASHendif
-#ifdef XPM
+XHASHifdef XPM
 XHASHif PLANES >= 8
 xlogin*logoFileName: BITMAPDIR/**//XDM_PIXMAP
 XHASHelse
@@ -64,7 +64,7 @@ xlogin*logoFileName: BITMAPDIR/**//XDM_BWPIXMAP
 XHASHendif
 xlogin*useShape: true
 xlogin*logoPadding: 10
-#endif /* XPM */
+XHASHendif
 
 XConsole.text.geometry:	480x130
 XConsole.verbose:	true
