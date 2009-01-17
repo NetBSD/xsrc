@@ -311,7 +311,9 @@ Firm_event* amigaSerGetEvents (fd, on, pNumEvents, pAgain)
 			evBuf[evnum].id = MS_MIDDLE;
 			evBuf[evnum].value = rawbuf[i] & 0x20 ?
 			    VKEY_DOWN : VKEY_UP;
-			evBuf[evnum].time = now;
+			/* firm_event still uses 32 bit time */
+			evBuf[evnum].time.tv_sec = now.tv_sec;
+			evBuf[evnum].time.tv_usec = now.tv_usec;
 			evnum++;
 			continue;
 		}
@@ -332,14 +334,18 @@ Firm_event* amigaSerGetEvents (fd, on, pNumEvents, pAgain)
 			if (amigaPtrPriv.dx) {
 				evBuf[evnum].id = LOC_X_DELTA;
 				evBuf[evnum].value = amigaPtrPriv.dx;
-				evBuf[evnum].time = now;
+				/* firm_event still uses 32 bit time */
+				evBuf[evnum].time.tv_sec = now.tv_sec;
+				evBuf[evnum].time.tv_usec = now.tv_usec;
 				evnum++;
 			}
 
 			if (amigaPtrPriv.dy) {
 				evBuf[evnum].id = LOC_Y_DELTA;
 				evBuf[evnum].value = amigaPtrPriv.dy;
-				evBuf[evnum].time = now;
+				/* firm_event still uses 32 bit time */
+				evBuf[evnum].time.tv_sec = now.tv_sec;
+				evBuf[evnum].time.tv_usec = now.tv_usec;
 				evnum++;
 			}
 
@@ -350,7 +356,9 @@ Firm_event* amigaSerGetEvents (fd, on, pNumEvents, pAgain)
 				evBuf[evnum].id = MS_RIGHT;
 				evBuf[evnum].value = amigaPtrPriv.bmask & 0x10
 				    ? VKEY_DOWN: VKEY_UP;
-				evBuf[evnum].time = now;
+				/* firm_event still uses 32 bit time */
+				evBuf[evnum].time.tv_sec = now.tv_sec;
+				evBuf[evnum].time.tv_usec = now.tv_usec;
 				evnum++;
 			}
 
@@ -359,7 +367,9 @@ Firm_event* amigaSerGetEvents (fd, on, pNumEvents, pAgain)
 				evBuf[evnum].id = MS_LEFT;
 				evBuf[evnum].value = amigaPtrPriv.bmask & 0x20
 				    ? VKEY_DOWN: VKEY_UP;
-				evBuf[evnum].time = now;
+				/* firm_event still uses 32 bit time */
+				evBuf[evnum].time.tv_sec = now.tv_sec;
+				evBuf[evnum].time.tv_usec = now.tv_usec;
 				evnum++;
 			}
 			byteno = 0;
@@ -443,6 +453,7 @@ void amigaMouseEnqueueEvent (device, fe, fe_next)
     int			bmask;	/* Temporary button mask */
     unsigned long	time;
     int			x, y;
+    time_t		time64;	/* firm_event still uses 32 bit time */
 
     pPriv = (amigaPtrPrivPtr)device->public.devicePrivate;
 
@@ -541,8 +552,9 @@ void amigaMouseEnqueueEvent (device, fe, fe_next)
 	break;
 #endif
     default:
+        time64 = fe->time.tv_sec;	/* firm_event still uses 32 bit time */
 	FatalError ("amigaMouseEnqueueEvent: unrecognized id 0x%x val 0x%x time %s\n",
-		fe->id, fe->value, ctime(&fe->time.tv_sec));
+		fe->id, fe->value, ctime(&time64));
 	break;
     }
 }
