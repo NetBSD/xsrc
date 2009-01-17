@@ -138,8 +138,9 @@ Equipment Corporation.
  *
  ******/
 
-static unsigned char _back_lsb[4] = {0x88, 0x22, 0x44, 0x11};
-static unsigned char _back_msb[4] = {0x11, 0x44, 0x22, 0x88};
+/* Set root window colour to black */
+static unsigned char _back_lsb[4] = {0x00, 0x00, 0x00, 0x00};
+static unsigned char _back_msb[4] = {0x00, 0x00, 0x00, 0x00};
 
 _X_EXPORT int screenIsSaved = SCREEN_SAVER_OFF;
 
