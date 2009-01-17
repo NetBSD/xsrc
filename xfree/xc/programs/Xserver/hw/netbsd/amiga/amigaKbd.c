@@ -569,7 +569,9 @@ static Bool DoSpecialKeys(device, xE, fe)
 	autoRepeatEvent = *xE;
 	autoRepeatFirst = TRUE;
 	autoRepeatKeyDown++;
-	autoRepeatLastKeyDownTv = fe->time;
+	/* firm_event still uses 32 bit time */
+	autoRepeatLastKeyDownTv.tv_sec = fe->time.tv_sec;
+	autoRepeatLastKeyDownTv.tv_usec = fe->time.tv_usec;
     }
 #ifdef XKB
     }
