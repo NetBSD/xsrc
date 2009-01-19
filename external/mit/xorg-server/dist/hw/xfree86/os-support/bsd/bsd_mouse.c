@@ -347,7 +347,8 @@ SetupAuto(InputInfoPtr pInfo, int *protoPara)
 {
 #ifdef WSCONS_SUPPORT
 #ifdef WSMOUSEIO_SETVERSION
-	if (ioctl(pInfo->fd, WSMOUSEIO_SETVERSION, WSMOUSE_EVENT_VERSION) == -1)
+	int version = WSMOUSE_EVENT_VERSION;
+	if (ioctl(pInfo->fd, WSMOUSEIO_SETVERSION, &version) == -1)
 	    xf86Msg(X_WARNING, "%s: cannot set version\n", pInfo->name);
 #endif
 	if (pInfo->fd != -1)
