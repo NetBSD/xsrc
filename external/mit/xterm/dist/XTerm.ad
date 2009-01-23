@@ -189,4 +189,4 @@
 !*on2Clicks: regex [[:alpha:]]+://([[:alnum:]!#+,./=?@_~-]|(%[[:xdigit:]][[:xdigit:]]))+
 
 *allowWindowOps: false
-*pointerMode: never
+*pointerMode: 0
