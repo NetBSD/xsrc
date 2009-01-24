@@ -960,12 +960,14 @@ _X_HIDDEN void *xfree86LookupTab[] = {
     SYMFUNC(_alpha_inw)
     SYMFUNC(_alpha_inl)
 # else
+#  ifndef __NetBSD__
     SYMFUNC(outw)
     SYMFUNC(outb)
     SYMFUNC(outl)
     SYMFUNC(inb)
     SYMFUNC(inw)
     SYMFUNC(inl)
+#  endif /* __NetBSD__ */
 # endif
     SYMFUNC(xf86ReadMmio32)
     SYMFUNC(xf86ReadMmio16)
