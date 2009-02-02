@@ -342,23 +342,19 @@ FindDevice(InputInfoPtr pInfo, const char *protocol, int flags)
 
 #if defined(__NetBSD__)
 
-static const char *
-SetupAuto(InputInfoPtr pInfo, int *protoPara)
+static Bool
+SetupMouse(InputInfoPtr pInfo)
 {
 #ifdef WSCONS_SUPPORT
 #ifdef WSMOUSEIO_SETVERSION
 	int version = WSMOUSE_EVENT_VERSION;
-	if (ioctl(pInfo->fd, WSMOUSEIO_SETVERSION, &version) == -1)
+	if (ioctl(pInfo->fd, WSMOUSEIO_SETVERSION, &version) == -1) {
 	    xf86Msg(X_WARNING, "%s: cannot set version\n", pInfo->name);
+	    return FALSE;
+	}
 #endif
-	if (pInfo->fd != -1)
-		return "wsmouse";
 #endif
-#ifdef USBMOUSE_SUPPORT
-	if (pInfo->fd != -1)
-		return "usb";
-#endif
-	return NULL;
+	return TRUE;
 }
 
 #endif
@@ -807,7 +803,7 @@ xf86OSMouseInit(int flags)
     p->SetMiscRes = SetMouseRes;
 #endif
 #if defined(__NetBSD__)
-    p->SetupAuto = SetupAuto;
+    p->SetupMouse = SetupMouse;
 #endif
 #if defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__OpenBSD__) || defined(__DragonFly__)
     p->FindDevice = FindDevice;

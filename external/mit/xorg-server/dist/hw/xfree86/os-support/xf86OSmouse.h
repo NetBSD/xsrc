@@ -82,6 +82,7 @@ typedef Bool (*BuiltinPreInitProc)(InputInfoPtr pInfo, const char *protocol,
 				   int flags);
 typedef const char *(*DefaultProtocolProc)(void);
 typedef const char *(*SetupAutoProc)(InputInfoPtr pInfo, int *protoPara);
+typedef Bool (*SetupMouseProc)(InputInfoPtr pInfo);
 typedef void (*SetResProc)(InputInfoPtr pInfo, const char* protocol, int rate,
 			   int res);
 typedef const char *(*FindDeviceProc)(InputInfoPtr pInfo, const char *protocol,
@@ -99,6 +100,7 @@ typedef struct {
 	BuiltinPreInitProc	PreInit;
 	DefaultProtocolProc	DefaultProtocol;
 	SetupAutoProc		SetupAuto;
+	SetupMouseProc		SetupMouse;
 	SetResProc		SetPS2Res;
 	SetResProc		SetBMRes;
 	SetResProc		SetMiscRes;
@@ -140,6 +142,8 @@ typedef struct {
  *		protocol types.
  *
  * SetBMRes:	Set the resolution and sample rate for MSE_BM protocol types.
+ *
+ * SetupMouse:	Called once after open to condition the file descriptor.
  *
  * SetMiscRes:	Set the resolution and sample rate for MSE_MISC protocol types.
  *
