@@ -2538,6 +2538,10 @@ SetupMouse(InputInfoPtr pInfo)
     Bool automatic = FALSE;
 
     pMse = pInfo->private;
+
+    if (osInfo->SetupMouse)
+	if (!osInfo->SetupMouse(pInfo))
+	    return FALSE;
     
     /* Handle the "Auto" protocol. */
     if (pMse->protocolID == PROT_AUTO) {
