@@ -957,9 +957,8 @@ FFBSaveScreen(ScreenPtr pScreen, int mode)
        done in "ffb_dac.c" `for aesthetic reasons.'
     */
 {
-    ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
 
-    return FFBDacSaveScreen(GET_FFB_FROM_SCRN(pScrn), mode);
+    return FFBDacSaveScreen(pScreen, mode);
 }
 
 static void
