@@ -697,7 +697,8 @@ FFBScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
     }
 
     /* Darken the screen for aesthetic reasons and set the viewport */
-    FFBSaveScreen(pScreen, SCREEN_SAVER_ON);
+    /* XXX can't do this yet */
+    /* FFBSaveScreen(pScreen, SCREEN_SAVER_ON);*/
 
     /*
      * The next step is to setup the screen's visuals, and initialise the
@@ -812,7 +813,8 @@ FFBScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
     }
 
     /* unblank the screen */
-    FFBSaveScreen(pScreen, SCREEN_SAVER_OFF);
+    /* XXX since we didn't blank it we don't need to unblank it here */
+    /* FFBSaveScreen(pScreen, SCREEN_SAVER_OFF); */
 
     /* Done */
     return TRUE;
