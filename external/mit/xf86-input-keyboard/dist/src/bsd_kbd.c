@@ -456,6 +456,13 @@ OpenKeyboard(InputInfoPtr pInfo)
 #ifdef WSCONS_SUPPORT
     if( prot == PROT_WSCONS) {
        pKbd->consType = WSCONS;
+#ifdef WSKBDIO_SETVERSION
+       int version = WSKBDIO_EVENT_VERSION;
+       if (ioctl(pInfo->fd, WSKBDIO_SETVERSION, &version) == -1) {
+           xf86Msg(X_WARNING, "%s: cannot set version\n", pInfo->name);
+           return FALSE;
+       }
+#endif 
        /* Find out keyboard type */
        if (ioctl(pInfo->fd, WSKBDIO_GTYPE, &(pKbd->wsKbdType)) == -1) {
            xf86Msg(X_ERROR, "%s: cannot get keyboard type", pInfo->name);
