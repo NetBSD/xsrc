@@ -580,7 +580,7 @@ else \
 
 #define FASTPUTBITS(src, x, w, pdst) \
     asm ("bfins %3,%0{%1:%2}" \
-	 : "=r" (*(char *)(pdst)) \
+	 : "=o" (*(char *)(pdst)) \
 	 : "di" (x), "di" (w), "d" (src), "0" (*(char *) (pdst)))
 
 #undef putbits
