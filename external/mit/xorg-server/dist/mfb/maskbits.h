@@ -354,7 +354,7 @@ extern PixelType mfbGetmask(int);
 
 #define FASTPUTBITS(src, x, w, pdst) \
     __asm ("bfins %3,%0{%1:%2}" \
-	 : "=r" (*(char *)(pdst)) \
+	 : "=o" (*(char *)(pdst)) \
 	 : "di" (x), "di" (w), "d" (src), "0" (*(char *) (pdst)))
 
 #define putbits(src, x, w, pdst) FASTPUTBITS(SHR((src),32-(w)), x, w, pdst)
