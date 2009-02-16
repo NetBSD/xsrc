@@ -423,9 +423,11 @@ NewportPreInit(ScrnInfoPtr pScrn, int flags)
 		pNewport->board_rev, pNewport->rex3_rev, 
 		pNewport->cmap_rev, pNewport->xmap9_rev);
 
-	if ( (xf86GetOptValInteger(pNewport->Options, OPTION_BITPLANES, &pNewport->bitplanes)))
+	if ( (xf86GetOptValInteger(pNewport->Options, OPTION_BITPLANES, 
+	    &pNewport->bitplanes)))
 	from = X_CONFIG;
-	xf86DrvMsg(pScrn->scrnIndex, from, "Newport has %d bitplanes\n", pNewport->bitplanes);
+	xf86DrvMsg(pScrn->scrnIndex, from, "Newport has %d bitplanes\n", 
+	    pNewport->bitplanes);
 
 	if ( pScrn->depth > pNewport->bitplanes ) {
 		xf86DrvMsg(pScrn->scrnIndex, X_ERROR, \
@@ -795,12 +797,15 @@ NewportModeInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
 					NPORT_DMODE1_RWPCKD;
 	} else { /* 24bpp */
 		CARD32 mode = 0L;
+		LOCO col;
+		int i;
 
 		/* tell the xmap9s that we are using 24bpp */
 		NewportBfwait(pNewport->pNewportRegs);
-		pNewportRegs->set.dcbmode = (DCB_XMAP_ALL | W_DCB_XMAP9_PROTOCOL |
-				XM9_CRS_CONFIG | NPORT_DMODE_W1 );
-		pNewportRegs->set.dcbdata0.bytes.b3 &= ~(XM9_8_BITPLANES | XM9_PUPMODE);
+		pNewportRegs->set.dcbmode = (DCB_XMAP_ALL | 
+		    W_DCB_XMAP9_PROTOCOL | XM9_CRS_CONFIG | NPORT_DMODE_W1 );
+		pNewportRegs->set.dcbdata0.bytes.b3 &= 
+		    ~(XM9_8_BITPLANES | XM9_PUPMODE);
 		NewportBfwait(pNewport->pNewportRegs);
 		/* set up the mode register for 24bpp */
 		mode = XM9_MREG_PIX_SIZE_24BPP | XM9_MREG_PIX_MODE_RGB1
@@ -822,7 +827,11 @@ NewportModeInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
 		/* After setting up XMAP9 we have to reinitialize the CMAP for
 		 * whatever reason (the docs say nothing about it). RestorePalette()
 		 * is just a lazy way to do this */
-		NewportRestorePalette( pScrn );
+		/*NewportRestorePalette( pScrn );*/
+		for (i = 0; i < 256; i++) {
+			col.red = col.green = col.blue = i;
+			NewportCmapSetRGB(NEWPORTREGSPTR(pScrn), i, col);
+		}
 	}
 	/* blank the framebuffer */
 	NewportWait(pNewportRegs);
