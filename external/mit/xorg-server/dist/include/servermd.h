@@ -120,12 +120,12 @@ SOFTWARE.
  *	Currently defined for SPARC.
  */
 
-#ifdef vax
+#if defined(vax) || defined(__vax__)
 
 #define IMAGE_BYTE_ORDER	LSBFirst        /* Values for the VAX only */
 #define BITMAP_BIT_ORDER	LSBFirst
-#define	GLYPHPADBYTES		1
-#define GETLEFTBITS_ALIGNMENT	4
+#define	GLYPHPADBYTES		4
+#define GETLEFTBITS_ALIGNMENT	1
 #define FAST_UNALIGNED_READS
 
 #endif /* vax */
