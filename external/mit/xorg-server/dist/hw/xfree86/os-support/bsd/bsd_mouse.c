@@ -55,11 +55,14 @@
 
 #define HUP_GENERIC_DESKTOP     0x0001
 #define HUP_BUTTON              0x0009
+#define HUP_CONSUMER		0x000c
 
 #define HUG_X                   0x0030
 #define HUG_Y                   0x0031
 #define HUG_Z                   0x0032
 #define HUG_WHEEL               0x0038
+
+#define HUC_AC_PAN		0x0238
 
 #define HID_USAGE2(p,u) (((p) << 16) | u)
 
@@ -430,6 +433,11 @@ wsconsReadInput(InputInfoPtr pInfo)
 	    dz = event->value;
 	    break;
 #endif
+#ifdef WSCONS_EVENT_MOUSE_DELTA_W
+	case WSCONS_EVENT_MOUSE_DELTA_W:
+	    dw = event->value;
+	    break;
+#endif
 	default:
 	    xf86Msg(X_WARNING, "%s: bad wsmouse event type=%d\n", pInfo->name,
 		    event->type);
@@ -491,6 +499,7 @@ typedef struct _UsbMseRec {
     hid_item_t loc_x;		/* x locator item */
     hid_item_t loc_y;		/* y locator item */
     hid_item_t loc_z;		/* z (wheel) locator item */
+    hid_item_t loc_w;		/* w (pan) locator item */
     hid_item_t loc_btn[MSE_MAXBUTTONS]; /* buttons locator items */
    unsigned char *buffer;
 } UsbMseRec, *UsbMsePtr;
@@ -610,6 +619,7 @@ usbReadInput(InputInfoPtr pInfo)
     dx = hid_get_data(pBuf, &pUsbMse->loc_x);
     dy = hid_get_data(pBuf, &pUsbMse->loc_y);
     dz = hid_get_data(pBuf, &pUsbMse->loc_z);
+    dw = hid_get_data(pBuf, &pUsbMse->loc_w);
 
     buttons = 0;
     for (n = 0; n < pMse->buttons; n++) {
@@ -701,6 +711,9 @@ usbPreInit(InputInfoPtr pInfo, const char *protocol, int flags)
     if (hid_locate(reportDesc, HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_WHEEL),
 		   hid_input, &pUsbMse->loc_z, pUsbMse->iid) < 0) {
     }
+    if (hid_locate(reportDesc, HID_USAGE2(HUP_CONSUMER, HUC_AC_PAN),
+		   hid_input, &pUsbMse->loc_w, pUsbMse->iid) < 0) {
+    }
 #else
     if (hid_locate(reportDesc, HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_X),
 		   hid_input, &pUsbMse->loc_x) < 0) {
@@ -712,6 +725,9 @@ usbPreInit(InputInfoPtr pInfo, const char *protocol, int flags)
     }
     if (hid_locate(reportDesc, HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_WHEEL),
 		   hid_input, &pUsbMse->loc_z) < 0) {
+    }
+    if (hid_locate(reportDesc, HID_USAGE2(HUP_CONSUMER, HUC_AC_PAN),
+		   hid_input, &pUsbMse->loc_w) < 0) {
     }
 #endif
     /* Probe for number of buttons */
