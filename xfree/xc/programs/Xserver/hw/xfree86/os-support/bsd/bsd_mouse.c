@@ -417,6 +417,22 @@ haveWSCons(void)
     return NULL;
 #endif
 }
+#if defined(__NetBSD__)
+
+static Bool
+SetupMouse(InputInfoPtr pInfo)
+{
+#ifdef WSCONS_SUPPORT
+#ifdef WSMOUSEIO_SETVERSION
+	int version = WSMOUSE_EVENT_VERSION;
+	if (ioctl(pInfo->fd, WSMOUSEIO_SETVERSION, &version) == -1) {
+	    xf86Msg(X_WARNING, "%s: cannot set version\n", pInfo->name);
+	    return FALSE;
+	}
+#endif
+#endif
+	return TRUE;
+}
 
 static const char *
 GuessProtocol(InputInfoPtr pInfo, int flags)
@@ -966,6 +982,9 @@ xf86OSMouseInit(int flags)
     p->SetupAuto = SetupAuto;
     p->SetMiscRes = SetMouseRes;
     p->GuessProtocol = GuessProtocol;
+#endif
+#if defined(__NetBSD__)
+    p->SetupMouse = SetupMouse;
 #endif
 #if defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__NetBSD__)
     p->FindDevice = FindDevice;
