@@ -434,6 +434,8 @@ SetupMouse(InputInfoPtr pInfo)
 	return TRUE;
 }
 
+#endif
+
 static const char *
 GuessProtocol(InputInfoPtr pInfo, int flags)
 {
