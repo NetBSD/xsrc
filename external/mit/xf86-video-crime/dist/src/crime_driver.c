@@ -1,4 +1,4 @@
-/* $NetBSD: crime_driver.c,v 1.1 2008/11/06 22:06:47 macallan Exp $ */
+/* $NetBSD: crime_driver.c,v 1.2 2009/02/19 20:03:30 macallan Exp $ */
 /*
  * Copyright (c) 2008 Michael Lorenz
  * All rights reserved.
@@ -284,10 +284,12 @@ crime_mmap(size_t len, off_t off, int fd, int ro)
 		mapaddr = (pointer) mmap(NULL, len,
 					 PROT_READ, MAP_SHARED,
 					 fd, off);
+		xf86Msg(X_ERROR, "mapping %08x read only\n", off);
 	} else {
 		mapaddr = (pointer) mmap(NULL, len,
 					 PROT_READ | PROT_WRITE, MAP_SHARED,
 					 fd, off);
+		xf86Msg(X_ERROR, "mapping %08x read/write\n", off);
 	}
 	if (mapaddr == (pointer) -1) {
 		mapaddr = NULL;
@@ -563,22 +565,13 @@ CrimeScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 	}
 
 	memset(fPtr->linear, 0, 0x10000);
-	fPtr->fb = crime_mmap(8192 * fPtr->info.width, 0, fPtr->fd, 1);
+	fPtr->fb = crime_mmap(8192 * fPtr->info.width, 0, fPtr->fd, 0);
 	if (fPtr->fb == NULL) {
 		xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
 			   "crime_mmap fb: %s\n", strerror(errno));
 		return FALSE;
 	}
 	
-if (0) {
-	for (i = 0x2000; i < 0x4000; i+= 16) {
-		for (j = 0; j < 16; j += 4) {
-			xf86Msg(X_ERROR, "%08x ",
-			    *(CARD32 *)(fPtr->engine + i + j));
-		}
-		xf86Msg(X_ERROR, "\n");
-	}
-}
 	CrimeSave(pScrn);
 	pScrn->vtSema = TRUE;
 
@@ -594,7 +587,6 @@ if (0) {
 	height = pScrn->virtualY;
 	width = pScrn->virtualX;
 
-#if 1
 	ret = fbScreenInit(pScreen,
 			   fPtr->fb,
 			   width, height,
@@ -604,8 +596,7 @@ if (0) {
 
 	if (!ret)
 		return FALSE;
-#endif
-#if 1
+
 	/* Fixup RGB ordering */
 	visual = pScreen->visuals + pScreen->numVisuals;
 	while (--visual >= pScreen->visuals) {
@@ -623,12 +614,11 @@ if (0) {
 			    visual->greenMask, visual->blueMask);
 		}
 	}
-#endif
-#if 1
+
 	if (!fbPictureInit(pScreen, NULL, 0))
 		xf86DrvMsg(pScrn->scrnIndex, X_WARNING,
 			   "RENDER extension initialisation failed.");
-#endif
+
 	xf86SetBlackWhitePixels(pScreen);
 	miInitializeBackingStore(pScreen);
 	xf86SetBackingStore(pScreen);

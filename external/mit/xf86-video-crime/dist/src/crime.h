@@ -1,4 +1,4 @@
-/* $NetBSD: crime.h,v 1.1 2008/11/06 22:06:47 macallan Exp $ */
+/* $NetBSD: crime.h,v 1.2 2009/02/19 20:03:30 macallan Exp $ */
 /*
  * Copyright (c) 2008 Michael Lorenz
  * All rights reserved.
@@ -56,7 +56,7 @@
 #define CRIME_DEBUG_SYNC		0x00000040
 #define CRIME_DEBUG_XRENDER		0x00000080
 #define CRIME_DEBUG_ALL			0xffffffff
-#define CRIME_DEBUG_MASK (/*CRIME_DEBUG_XRENDER*/0)
+#define CRIME_DEBUG_MASK (/*CRIME_DEBUG_IMAGEWRITE*/0)
 
 #ifdef CRIME_DEBUG
 #define LOG(x) if (x & CRIME_DEBUG_MASK) xf86Msg(X_ERROR, "%s\n", __func__)
