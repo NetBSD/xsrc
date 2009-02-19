@@ -1,4 +1,4 @@
-/* $NetBSD: crime_accel.c,v 1.1 2008/11/06 22:06:47 macallan Exp $ */
+/* $NetBSD: crime_accel.c,v 1.2 2009/02/19 20:03:30 macallan Exp $ */
 /*
  * Copyright (c) 2008 Michael Lorenz
  * All rights reserved.
@@ -320,7 +320,7 @@ CrimeSubsequentImageWriteScanline(ScrnInfoPtr pScrn, int bufno)
 	CrimePtr fPtr = CRIMEPTR(pScrn);
 
 	LOG(CRIME_DEBUG_IMAGEWRITE);
-	READY;
+	SYNC;
 
 	WRITE4(CRIME_DE_XFER_ADDR_SRC, (bufno << 13)  + (fPtr->start << 2));
 	WRITE4(CRIME_DE_X_VERTEX_0, (fPtr->ux << 16) | fPtr->uy);
@@ -1579,7 +1579,70 @@ CrimeValidatePolyPoint(
 	} else
 		xf86Msg(X_ERROR, "boo\n");	
 }
+static void
+CrimePolyArc(DrawablePtr pDraw,
+               GCPtr pGC,
+               int narcs,
+               xArc *parcs)
+{
+    xArc *arc;
+    BoxRec box;
+    int i, x2, y2;
+    RegionPtr cclip;
 
+    cclip = pGC->pCompositeClip;
+
+    if(!REGION_NUM_RECTS(cclip))
+	return;
+
+    for (arc = parcs, i = narcs; --i >= 0; arc++) {
+	if (miCanZeroArc(arc)) {
+	    box.x1 = arc->x + pDraw->x;
+	    box.y1 = arc->y + pDraw->y;
+ 	    x2 = box.x1 + (int)arc->width + 1;
+ 	    box.x2 = x2;
+ 	    y2 = box.y1 + (int)arc->height + 1;
+ 	    box.y2 = y2;
+ 	    if ( (x2 <= SHRT_MAX) && (y2 <= SHRT_MAX) &&
+ 		    (RECT_IN_REGION(pDraw->pScreen, cclip, &box) == rgnIN) )
+		miZeroPolyArc(pDraw, pGC, 1, arc);
+	}
+	else
+	    miPolyArc(pDraw, pGC, 1, arc);
+    }
+}
+
+static void
+CrimeValidatePolyArc(GCPtr pGC,
+                       unsigned long changes,
+                       DrawablePtr pDraw)
+{
+	if ((pDraw->type == DRAWABLE_WINDOW) ||
+	    IS_OFFSCREEN_PIXMAP(pDraw)) {
+		pGC->ops->PolyPoint = CrimePolyPoint;
+		/*pGC->ops->PolyArc = miPolyArc;*/
+		pGC->ops->PolyArc = CrimePolyArc;
+	} else
+	{
+		pGC->ops->PolyPoint = XAAGetFallbackOps()->PolyPoint;
+		pGC->ops->PolyArc = XAAGetFallbackOps()->PolyArc;
+	}
+}
+
+static void 
+CrimeReadPixmap(ScrnInfoPtr pScrn, 
+                     int x, 
+		     int y, 
+		     int w, 
+		     int h,
+		     unsigned char *dst, 
+		     int dstwidth, 
+		     int bpp, 
+		     int depth)
+{
+	/* dummy for now */
+	LOG(CRIME_DEBUG_IMAGEWRITE);
+}
 int
 CrimeAccelInit(ScrnInfoPtr pScrn)
 {
@@ -1612,7 +1675,7 @@ CrimeAccelInit(ScrnInfoPtr pScrn)
 	    fPtr->info.width << 16 | fPtr->info.height);
 	SYNC;
 	
-	pXAAInfo->Flags = LINEAR_FRAMEBUFFER | PIXMAP_CACHE | OFFSCREEN_PIXMAPS;
+	pXAAInfo->Flags = /*LINEAR_FRAMEBUFFER |*/ PIXMAP_CACHE | OFFSCREEN_PIXMAPS;
 	pXAAInfo->maxOffPixWidth = fPtr->info.width;
 	pXAAInfo->maxOffPixHeight = 2048;
 	
@@ -1644,6 +1707,12 @@ CrimeAccelInit(ScrnInfoPtr pScrn)
 		CrimeSubsequentImageWriteRect;
 	pXAAInfo->SubsequentImageWriteScanline =
 		CrimeSubsequentImageWriteScanline;
+
+	/* read pixmap */
+	pXAAInfo->ReadPixmapFlags = 0
+	                             | CPU_TRANSFER_PAD_DWORD
+				     ;
+	pXAAInfo->ReadPixmap = CrimeReadPixmap;
 
 	/* colour expansion */
 	pXAAInfo->ScanlineCPUToScreenColorExpandFillFlags = 
@@ -1695,6 +1764,8 @@ CrimeAccelInit(ScrnInfoPtr pScrn)
 #endif
 	pXAAInfo->ValidatePolyPoint = CrimeValidatePolyPoint;
 	pXAAInfo->PolyPointMask = GCFunction;
+	pXAAInfo->ValidatePolyArc = CrimeValidatePolyArc;
+	pXAAInfo->PolyArcMask = GCFunction | GCLineWidth;
 
 	return -1;
 }
