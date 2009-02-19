@@ -1,4 +1,4 @@
-.\" $NetBSD: crime.man,v 1.1 2008/11/06 22:06:47 macallan Exp $
+.\" $NetBSD: crime.man,v 1.2 2009/02/19 20:28:11 jmcneill Exp $
 .\"
 .\" Copyright (c) 2008 Michael Lorenz
 .\" All rights reserved.
@@ -47,4 +47,4 @@ is an __xservername__ driver for NetBSD
 .SH SUPPORTED HARDWARE
 The
 .B crime
-driver supports only NetBSD/gimips running on any SGI O2 so far.
+driver supports only NetBSD/sgimips running on any SGI O2 so far.
