@@ -602,6 +602,17 @@ XAAFillImageWriteRects(
     PixmapPtr pPix
 );
 
+void 
+XAAFillScanlineImageWriteRects(
+    ScrnInfoPtr pScrn,
+    int rop,
+    unsigned int planemask,
+    int nBox,
+    BoxPtr pBox,
+    int xorg, int yorg,
+    PixmapPtr pPix
+);
+
 void
 XAAPolyFillRect(
     DrawablePtr pDraw,
