@@ -35,6 +35,7 @@
 /* register definitions of the Newport card */
 #include "newport_regs.h"
 
+#define NEWPORT_REGISTERS   0xf0000
 #define NEWPORT_BASE_ADDR0  0x1f0f0000
 #define NEWPORT_BASE_OFFSET 0x00400000
 #define NEWPORT_MAX_BOARDS 4

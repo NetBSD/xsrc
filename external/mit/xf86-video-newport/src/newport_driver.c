@@ -36,6 +36,12 @@
 #include "config.h"
 #endif
 
+#if defined(__NetBSD__)
+#include <fcntl.h>
+#include <dev/wscons/wsconsio.h>
+#include <sys/ioctl.h>
+#endif
+
 /* function prototypes, common data structures & generic includes */
 #include "newport.h"
 
@@ -253,9 +259,9 @@ NewportProbe(DriverPtr drv, int flags)
 	resRange range[] = { {ResExcMemBlock ,0,0}, _END };
 	unsigned probedIDs[NEWPORT_MAX_BOARDS];
 	memType base;
-
 	if ((numDevSections = xf86MatchDevice(NEWPORT_DRIVER_NAME, &devSections)) <= 0) 
                 return FALSE;
+
 	numUsed = NewportHWProbe(probedIDs);
 	if ( numUsed <= 0 ) 
 		return FALSE;
@@ -507,6 +513,12 @@ NewportPreInit(ScrnInfoPtr pScrn, int flags)
 	}
 	xf86LoaderReqSymLists(shadowSymbols, NULL);
 
+	/* Load XAA module */
+	if (!xf86LoadSubModule(pScrn, "xaa")) {
+		NewportFreeRec(pScrn);
+		return FALSE;
+	}
+	xf86LoaderReqSymLists(xaaSymbols, NULL);
 	return TRUE;
 }
 
@@ -860,10 +872,22 @@ NewportRestore(ScrnInfoPtr pScrn, Bool Closing)
 static unsigned
 NewportHWProbe(unsigned probedIDs[])
 {
-	FILE* cpuinfo;
-	char line[80];
 	unsigned hasNewport = 0;
 
+#if defined(__NetBSD__)
+	int fd, type, i;
+
+	probedIDs[0] = 0;
+
+	fd = open("/dev/ttyE0", O_RDONLY, 0);
+	i = ioctl(fd, WSDISPLAYIO_GTYPE, &type);
+	close(fd);
+
+	if ( (i == 0) && ( type == WSDISPLAY_TYPE_NEWPORT) )
+		hasNewport = 1;
+#else
+	FILE* cpuinfo;
+	char line[80];
 	if ((cpuinfo = fopen("/proc/cpuinfo", "r"))) {
 		while(fgets(line, 80, cpuinfo) != NULL) {
 			if(strstr(line, "SGI Indy") != NULL) {
@@ -879,6 +903,7 @@ NewportHWProbe(unsigned probedIDs[])
 		}
 		fclose(cpuinfo);
 	}
+#endif
 	return hasNewport;
 }
 
@@ -914,12 +939,19 @@ NewportMapRegs(ScrnInfoPtr pScrn)
 {
 	NewportPtr pNewport = NEWPORTPTR(pScrn);
 
+#if defined(__NetBSD__)
+	pNewport->pNewportRegs = xf86MapVidMem(pScrn->scrnIndex,
+			VIDMEM_MMIO, NEWPORT_REGISTERS, sizeof(NewportRegs));
+#else
 	pNewport->pNewportRegs = xf86MapVidMem(pScrn->scrnIndex, 
 			VIDMEM_MMIO,
-			NEWPORT_BASE_ADDR0 + pNewport->busID * NEWPORT_BASE_OFFSET,
-			 sizeof(NewportRegs));
-	if ( ! pNewport->pNewportRegs ) 
+			NEWPORT_BASE_ADDR0 + pNewport->busID * 
+			    NEWPORT_BASE_OFFSET, sizeof(NewportRegs));
+#endif
+	if ( ! pNewport->pNewportRegs ) {
+		xf86Msg(X_ERROR, "can't map registers\n");
 		return FALSE;
+	}
 	return TRUE;
 }
 
