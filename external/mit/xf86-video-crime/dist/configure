@@ -1,0 +1,8 @@
+#! /bin/sh
+
+# Identity of this package.
+PACKAGE_NAME='xf86-video-crime'
+PACKAGE_TARNAME='xf86-video-crime'
+PACKAGE_VERSION='0.0.1'
+PACKAGE_STRING='xf86-video-crime 0.0.1'
+PACKAGE_BUGREPORT='https://bugs.freedesktop.org/enter_bug.cgi?product=xorg'
