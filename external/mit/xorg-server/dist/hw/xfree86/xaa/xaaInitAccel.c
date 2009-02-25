@@ -821,6 +821,19 @@ XAAInitAccel(ScreenPtr pScreen, XAAInfoRecPtr infoRec)
 	infoRec->FillImageWriteRectsFlags = infoRec->ImageWriteFlags;     
     }
 
+    /**** FillScanlineImageWriteRects ****/
+
+    if(!infoRec->FillImageWriteRects) {
+        if(HaveScanlineImageWriteRect && 
+               (infoRec->ScanlineImageWriteFlags &
+                LEFT_EDGE_CLIPPING_NEGATIVE_X) &&
+               (infoRec->ScanlineImageWriteFlags & LEFT_EDGE_CLIPPING)) {
+           infoRec->FillImageWriteRects = XAAFillScanlineImageWriteRects;
+           infoRec->FillImageWriteRectsFlags = 
+               infoRec->ScanlineImageWriteFlags;
+       }
+    }
+
     /**** WriteBitmap ****/
 
     if(infoRec->WriteBitmap && 
