@@ -1,4 +1,4 @@
-/* $NetBSD: crime_accel.c,v 1.3.2.3 2009/02/25 20:32:03 snj Exp $ */
+/* $NetBSD: crime_accel.c,v 1.3.2.4 2009/02/26 07:28:24 snj Exp $ */
 /*
  * Copyright (c) 2008 Michael Lorenz
  * All rights reserved.
@@ -564,22 +564,38 @@ CrimeSetupForCPUToScreenAlphaTexture (
 
 	fPtr->alpha_color = ((red & 0xff00) << 16) |
 			    ((green & 0xff00) << 8) |
-			     (blue & 0xff00);
+			    (blue & 0xff00);
 	fPtr->uw = width;
 	fPtr->uh = height;
 	fPtr->us = alphaPitch;
 	fPtr->alpha_texture = alphaPtr;
+	fPtr->format = alphaType;
+	if (alphaType != PICT_a8) {
+		xf86Msg(X_ERROR, "ARGB mask %08x %d\n", (uint32_t)alphaPtr,
+		    alphaPitch);
+		
+	}
 	SYNC;
 	/* XXX this register is not where it's supposed to be */
 	WRITE4(CRIME_DE_ALPHA_COLOR, fPtr->alpha_color);
-	if (fPtr->alpha_color == 0) {
-		WRITE4(CRIME_DE_MODE_SRC, DE_MODE_LIN_A | DE_MODE_BUFDEPTH_8 |
+	if (alphaType == PICT_a8) {
+		if (fPtr->alpha_color == 0) {
+			WRITE4(CRIME_DE_MODE_SRC, DE_MODE_LIN_A | DE_MODE_BUFDEPTH_8 |
 				    DE_MODE_TYPE_RGBA | DE_MODE_PIXDEPTH_32);
-		WRITE4(CRIME_DE_XFER_STEP_X, 1);
-		WRITE4(CRIME_DE_ALPHA_FUNC, 
-		    DE_ALPHA_ADD |
-		    (DE_ALPHA_OP_ZERO << DE_ALPHA_OP_SRC_SHIFT) |
-		    (DE_ALPHA_OP_1_MINUS_SRC_ALPHA << DE_ALPHA_OP_DST_SHIFT));
+			WRITE4(CRIME_DE_XFER_STEP_X, 1);
+			WRITE4(CRIME_DE_ALPHA_FUNC, 
+			    DE_ALPHA_ADD |
+			    (DE_ALPHA_OP_ZERO << DE_ALPHA_OP_SRC_SHIFT) |
+			    (DE_ALPHA_OP_1_MINUS_SRC_ALPHA << DE_ALPHA_OP_DST_SHIFT));
+		} else {
+			WRITE4(CRIME_DE_MODE_SRC, DE_MODE_LIN_A | DE_MODE_BUFDEPTH_32 |
+				    DE_MODE_TYPE_RGBA | DE_MODE_PIXDEPTH_32);
+			WRITE4(CRIME_DE_XFER_STEP_X, 4);
+			WRITE4(CRIME_DE_ALPHA_FUNC, 
+			    DE_ALPHA_ADD |
+			    (DE_ALPHA_OP_SRC_ALPHA << DE_ALPHA_OP_SRC_SHIFT) |
+			    (DE_ALPHA_OP_1_MINUS_SRC_ALPHA << DE_ALPHA_OP_DST_SHIFT));
+		}
 	} else {
 		WRITE4(CRIME_DE_MODE_SRC, DE_MODE_LIN_A | DE_MODE_BUFDEPTH_32 |
 				    DE_MODE_TYPE_RGBA | DE_MODE_PIXDEPTH_32);
@@ -588,7 +604,7 @@ CrimeSetupForCPUToScreenAlphaTexture (
 		    DE_ALPHA_ADD |
 		    (DE_ALPHA_OP_SRC_ALPHA << DE_ALPHA_OP_SRC_SHIFT) |
 		    (DE_ALPHA_OP_1_MINUS_SRC_ALPHA << DE_ALPHA_OP_DST_SHIFT));
-	}
+	}	
 	WRITE4(CRIME_DE_DRAWMODE,
 	    DE_DRAWMODE_BYTEMASK | DE_DRAWMODE_ALPHA_BLEND |
 	    DE_DRAWMODE_XFER_EN);
@@ -631,6 +647,53 @@ CrimeSubsequentCPUToScreenAlphaTexture (
 				*dptr = aval | fPtr->alpha_color;
 				dptr++;
 			}
+		}
+		READY;
+		WRITE4(CRIME_DE_XFER_ADDR_SRC, bufnum * 8192);
+		WRITE4(CRIME_DE_X_VERTEX_0, dstx << 16 | (dsty + i));
+		WBFLUSH;
+		WRITE4ST(CRIME_DE_X_VERTEX_1,
+			((dstx + width - 1) << 16) | (dsty + i));
+		bufnum++;
+		if (bufnum == 8) bufnum = 0;
+		aptr += fPtr->us;
+	}
+	DONE(CRIME_DEBUG_XRENDER);
+}
+
+void
+CrimeSubsequentCPUToScreenAlphaTexture32 (
+    ScrnInfoPtr	pScrn,
+    int		dstx,
+    int		dsty,
+    int		srcx,
+    int		srcy,
+    int		width,
+    int		height
+)
+{
+	CrimePtr fPtr = CRIMEPTR(pScrn);
+	uint8_t *aptr;
+	uint32_t *dptr, *sptr;
+	int i, j;
+	int bufnum = 0;
+
+	LOG(CRIME_DEBUG_XRENDER);
+#ifndef CRIME_DEBUG_LOUD
+	xf86Msg(X_ERROR, "%d %d %d %d %d %d\n",srcx, srcy, dstx, dsty, width, 
+	    height); 
+#endif
+	aptr = fPtr->alpha_texture + (fPtr->us * srcy) + (srcx << 2);
+	for (i = 0; i < height; i++) {
+		dptr = (uint32_t *)fPtr->buffers[bufnum];
+		sptr = (uint32_t *)aptr;
+		for (j = 0; j < width; j++) {
+			*dptr = (*sptr >> 24) | fPtr->alpha_color;
+#ifdef CRIME_DEBUG_LOUD
+			xf86Msg(X_ERROR, "%08x %08x\n", *sptr, *dptr);
+#endif
+			sptr++;
+			dptr++;
 		}
 		READY;
 		WRITE4(CRIME_DE_XFER_ADDR_SRC, bufnum * 8192);
@@ -1098,12 +1161,14 @@ CrimeDoCPUToScreenComposite(
 		CARD16 red, green, blue, alpha;
 		CARD32 pixel =
 		    *((CARD32*)(((PixmapPtr)(pSrc->pDrawable))->devPrivate.ptr));
+#ifdef CRIME_DEBUG_LOUD
 		if(pMask->componentAlpha) {
 			xf86Msg(X_ERROR, "%s: alpha component mask\n", 
 			    __func__);
-	    		return;
+			xf86Msg(X_ERROR, "src: %d x %d\n", pSrc->pDrawable->width,
+			    pSrc->pDrawable->height);
 		}
- 
+#endif 
 		if ((pSrc->pDrawable->width == 1) &&
 		    (pSrc->pDrawable->height == 1)) {
 
@@ -1171,7 +1236,8 @@ CrimeDoCPUToScreenComposite(
 				DONE(CRIME_DEBUG_XRENDER);
 				return;
 			}
-			if(pMask->format == PICT_a8) {
+			if((pMask->format == PICT_a8) ||
+			   (pMask->format == PICT_a8r8g8b8)) {
 
 				w = pMask->pDrawable->width;
 				h = pMask->pDrawable->height;
@@ -1203,22 +1269,29 @@ CrimeDoCPUToScreenComposite(
 				xMask -= xDst;
 				yMask -= yDst;
 
-				while(nbox--) {
-					CrimeSubsequentCPUToScreenAlphaTexture(
-					    infoRec->pScrn,
-					    pbox->x1, pbox->y1, pbox->x1 + xMask,
-					    pbox->y1 + yMask, pbox->x2 - pbox->x1,
-					    pbox->y2 - pbox->y1);
-					pbox++;
+				if (pMask->format != PICT_a8) {
+					while(nbox--) {
+						CrimeSubsequentCPUToScreenAlphaTexture32(
+						    infoRec->pScrn,
+						    pbox->x1, pbox->y1, pbox->x1 + xMask,
+						    pbox->y1 + yMask, pbox->x2 - pbox->x1,
+						    pbox->y2 - pbox->y1);
+						pbox++;
+					}
+				} else {
+					while(nbox--) {
+						CrimeSubsequentCPUToScreenAlphaTexture(
+						    infoRec->pScrn,
+						    pbox->x1, pbox->y1, pbox->x1 + xMask,
+						    pbox->y1 + yMask, pbox->x2 - pbox->x1,
+						    pbox->y2 - pbox->y1);
+						pbox++;
+					}
 				}
-
 				SET_SYNC_FLAG(infoRec);
 				REGION_UNINIT(pScreen, &region);
 				DONE(CRIME_DEBUG_XRENDER);
 				return;
-			}
-			if (pMask->format == PICT_a8r8g8b8) {
-				xf86Msg(X_ERROR, "ARGB mask with solid source\n");
 			} else {
 				xf86Msg(X_ERROR, "unknown mask %x\n", pMask->format);
 			}
