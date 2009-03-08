@@ -596,7 +596,7 @@ InstallManPageAliasesBase(file,destdir,aliases)
 # define BuildXInputLib          YES
 #endif
 
-#if defined(i386Architecture) || defined(Arm32Architecture) || defined(AlphaArchitecture) || defined(PpcArchitecture) || defined(AMD64Architecture)
+#if !defined(SparcArchitecture)
 # include <xorg.cf>
 #endif
 
