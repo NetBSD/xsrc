@@ -248,11 +248,11 @@ static int _default_exterror (Display *dpy, char *ext_name, char *reason)
  * requested extension is referenced.  This should eventually move into Xlib.
  */
 
-extern int (*_XExtensionErrorFunction)(Display*, char *, char * );
+extern XextErrorHandler _XExtensionErrorFunction;
 
-int (*XSetExtensionErrorHandler(int (*handler)(Display*, char *, char * )))(Display*, char *, char * )
+XextErrorHandler XSetExtensionErrorHandler (XextErrorHandler handler)
 {
-    int (*oldhandler)(Display*, char *, char * ) = _XExtensionErrorFunction;
+    XextErrorHandler oldhandler = _XExtensionErrorFunction;
 
     _XExtensionErrorFunction = (handler ? handler :
 				_default_exterror);
