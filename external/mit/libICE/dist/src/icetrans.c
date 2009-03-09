@@ -1,6 +1,4 @@
 /*
- * $Id: icetrans.c,v 1.2 2008/07/30 05:26:38 mrg Exp $
- *
  * Copyright © 2003 Keith Packard
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
