@@ -107,28 +107,4 @@ endif
 
 endif
 
-if BUILD_XAW8
-
-lib_LTLIBRARIES += libXaw8.la
-
-libXaw8_la_CFLAGS =			\
-	$(COMMON_CFLAGS)		\
-	$(XAW8_CFLAGS)
-
-libXaw8_la_SOURCES = \
-	$(COMMON_SOURCES) \
-	PrintShell.c \
-	Tip.c
-
-libXaw8_la_LDFLAGS = -version-info 8:0:0 -no-undefined
-libXaw8_la_LIBADD = $(XAW8_LIBS)
-
-if !PLATFORM_WIN32
-install-exec-hook::
-	-rm -f $(DESTDIR)$(libdir)/libXaw.so.8
-	(cd $(DESTDIR)$(libdir) && ln -s libXaw8.so.8 libXaw.so.8)
-endif
-
-endif
-
 EXTRA_DIST = sharedlib.c
