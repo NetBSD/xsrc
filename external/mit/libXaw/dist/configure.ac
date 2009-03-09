@@ -3,7 +3,7 @@ dnl Process this file with autoconf to create configure.
 AC_PREREQ([2.57])
 
 AC_INIT([libXaw],
-	1.0.4,
+	1.0.5,
 	[https://bugs.freedesktop.org/enter_bug.cgi?product=xorg],
 	libXaw)
 
@@ -22,21 +22,18 @@ PKG_PROG_PKG_CONFIG
 #
 # fix libtool to set SONAME to libXaw.so.$major
 #
-AC_MSG_CHECKING([hacks in libtool for libXaw SONAME])
-if grep "xorglibxawname" libtool > /dev/null ; then
-	AC_MSG_RESULT([already done])
-else
-	ed libtool << \EOF
-/^soname_spec/i
-# X.Org hack to match monolithic Xaw SONAME
+AC_PROG_SED
+AC_CONFIG_COMMANDS([libtool_hack], [
+	cp -f libtool libtool_
+	test -z "$SED" && SED=sed
+	$SED '1,/^soname_spec/{
+/^soname_spec/i\
+# X.Org hack to match monolithic Xaw SONAME\
 xorglibxawname="libXaw"
-.
 /^soname_spec/s/libname/xorglibxawname/
-w
-q
-EOF
-	AC_MSG_RESULT([fixed])
-fi
+}' libtool_ > libtool
+	rm -f libtool_
+])
 
 # Win32 DLL rules are different.
 case $host_os in
@@ -77,34 +74,8 @@ if test "x$build_v7" = xyes; then
 fi
 
 
-# Whether to build Xaw8
-
-AC_ARG_ENABLE(xaw8, AC_HELP_STRING([--disable-xaw8],
-				[Disable building of libXaw.so.8]),
-			[build_v8=$enableval], [build_v8=auto])
-
-if test "x$build_v8" = xyes || test "x$build_v8" = xauto; then
-   PKG_CHECK_MODULES(XPRINT, xp, xprint_found=yes, xprint_found=no)
-
-   if test "x$xprint_found" = xno; then
-      if test "x$build_v8" = xyes; then
-          AC_ERROR([
-	    Xprint is required to build libXaw.so.8. You can disable
-	    building of libXaw.so.8 by passing --disable-xaw8 to
-	    configure])
-      fi
-      build_v8=no
-   else
-       PKG_CHECK_MODULES(XAW8, xproto x11 xext xextproto xt xmu xpm xp printproto xau)
-       AC_SUBST(XAW8_CFLAGS)
-       AC_SUBST(XAW8_LIBS)
-       build_v8=yes
-   fi
-fi
-
 AM_CONDITIONAL(BUILD_XAW6, [test x$build_v6 = xyes])
 AM_CONDITIONAL(BUILD_XAW7, [test x$build_v7 = xyes])
-AM_CONDITIONAL(BUILD_XAW8, [test x$build_v8 = xyes])
 
 # Checks for header files.
 AC_HEADER_STDC
@@ -135,8 +106,4 @@ fi
 
 if test "x$build_v7" = xyes; then
    AC_OUTPUT(xaw7.pc)
-fi
-
-if test "x$build_v8" = xyes; then
-   AC_OUTPUT(xaw8.pc)
 fi
