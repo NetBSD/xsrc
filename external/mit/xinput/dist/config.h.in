@@ -1,5 +1,8 @@
 /* config.h.in.  Generated from configure.ac by autoheader.  */
 
+/* XInput Version 2 Enabled */
+#undef HAVE_XI2
+
 /* Name of package */
 #undef PACKAGE
 
