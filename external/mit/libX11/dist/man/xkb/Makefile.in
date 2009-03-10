@@ -78,9 +78,12 @@ BIGFONT_CFLAGS = @BIGFONT_CFLAGS@
 BIGFONT_LIBS = @BIGFONT_LIBS@
 CC = @CC@
 CCDEPMODE = @CCDEPMODE@
+CC_FOR_BUILD = @CC_FOR_BUILD@
 CFLAGS = @CFLAGS@
+CHANGELOG_CMD = @CHANGELOG_CMD@
 CPP = @CPP@
 CPPFLAGS = @CPPFLAGS@
+CWARNFLAGS = @CWARNFLAGS@
 CXX = @CXX@
 CXXCPP = @CXXCPP@
 CXXDEPMODE = @CXXDEPMODE@
@@ -88,8 +91,10 @@ CXXFLAGS = @CXXFLAGS@
 CYGPATH_W = @CYGPATH_W@
 DEFS = @DEFS@
 DEPDIR = @DEPDIR@
+DOLT_BASH = @DOLT_BASH@
 DRIVER_MAN_DIR = @DRIVER_MAN_DIR@
 DRIVER_MAN_SUFFIX = @DRIVER_MAN_SUFFIX@
+DSYMUTIL = @DSYMUTIL@
 ECHO = @ECHO@
 ECHO_C = @ECHO_C@
 ECHO_N = @ECHO_N@
@@ -119,6 +124,8 @@ LINT = @LINT@
 LINTLIB = @LINTLIB@
 LINT_FLAGS = @LINT_FLAGS@
 LN_S = @LN_S@
+LTCOMPILE = @LTCOMPILE@
+LTCXXCOMPILE = @LTCXXCOMPILE@
 LTLIBOBJS = @LTLIBOBJS@
 MAINT = @MAINT@
 MAKEINFO = @MAKEINFO@
@@ -126,6 +133,7 @@ MALLOC_ZERO_CFLAGS = @MALLOC_ZERO_CFLAGS@
 MISC_MAN_DIR = @MISC_MAN_DIR@
 MISC_MAN_SUFFIX = @MISC_MAN_SUFFIX@
 MKDIR_P = @MKDIR_P@
+NMEDIT = @NMEDIT@
 OBJEXT = @OBJEXT@
 PACKAGE = @PACKAGE@
 PACKAGE_BUGREPORT = @PACKAGE_BUGREPORT@
@@ -166,10 +174,8 @@ XMALLOC_ZERO_CFLAGS = @XMALLOC_ZERO_CFLAGS@
 XPROTO_CFLAGS = @XPROTO_CFLAGS@
 XPROTO_LIBS = @XPROTO_LIBS@
 XTHREADLIB = @XTHREADLIB@
-XTHREADS = @XTHREADS@
 XTHREAD_CFLAGS = @XTHREAD_CFLAGS@
 XTMALLOC_ZERO_CFLAGS = @XTMALLOC_ZERO_CFLAGS@
-XUSE_MTSAFE_API = @XUSE_MTSAFE_API@
 abs_builddir = @abs_builddir@
 abs_srcdir = @abs_srcdir@
 abs_top_builddir = @abs_top_builddir@
@@ -191,6 +197,7 @@ build_vendor = @build_vendor@
 builddir = @builddir@
 datadir = @datadir@
 datarootdir = @datarootdir@
+distcleancheck_listfiles = @distcleancheck_listfiles@
 docdir = @docdir@
 dvidir = @dvidir@
 exec_prefix = @exec_prefix@
@@ -643,9 +650,8 @@ uninstall-am: uninstall-libmanDATA
 	uninstall uninstall-am uninstall-libmanDATA
 
 
-# Allow people to comment out lines by starting them with '##'
 .pre:
-	$(SED) -e '/^\#\#/d' $< | $(RAWCPP) $(RAWCPPFLAGS) $(CPP_FILES_FLAGS) | $(CPP_SED_MAGIC) > $@
+	$(RAWCPP) $(RAWCPPFLAGS) $(CPP_FILES_FLAGS) < $< | $(CPP_SED_MAGIC) > $@
 
 .man.$(LIB_MAN_SUFFIX):
 	$(RAWCPP) $(RAWCPPFLAGS) $(CPP_MAN_FLAGS) < $< | $(CPP_SED_MAGIC) > $@
