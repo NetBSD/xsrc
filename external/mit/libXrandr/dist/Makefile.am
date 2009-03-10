@@ -1,6 +1,4 @@
 # 
-#  $Id: Makefile.am,v 1.1.1.1 2008/07/30 02:55:53 mrg Exp $
-# 
 #  Copyright © 2003 Keith Packard, Noah Levitt
 # 
 #  Permission to use, copy, modify, distribute, and sell this software and its
@@ -23,9 +21,15 @@
 
 SUBDIRS = src man 
 
-AM_CFLAGS = $(RANDR_CFLAGS) $(X_CFLAGS)
-
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = xrandr.pc
 
-EXTRA_DIST = xrandr.pc.in autogen.sh
+EXTRA_DIST = xrandr.pc.in ChangeLog
+MAINTAINERCLEANFILES = ChangeLog
+
+.PHONY: ChangeLog
+
+ChangeLog:
+	$(CHANGELOG_CMD)
+
+dist-hook: ChangeLog

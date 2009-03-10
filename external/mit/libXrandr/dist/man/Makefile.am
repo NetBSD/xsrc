@@ -1,4 +1,3 @@
-# $Id: Makefile.am,v 1.1.1.1 2008/07/30 02:55:58 mrg Exp $
 #
 # Copyright 2005 Sun Microsystems, Inc.  All rights reserved.
 # 
@@ -71,8 +70,6 @@ Xrandr_shadows =                            \
     XRRConfigCurrentConfiguration           \
     XRRConfigCurrentRate                    \
     XRRRootToScreen                         \
-    XRRScreenConfig                         \
-    XRRConfig                               \
     XRRSelectInput
 
 shadows.DONE:
