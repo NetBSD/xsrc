@@ -95,7 +95,7 @@ _XcmsCubeRoot(double a)
 #endif
     return cur_guess;
 }
-	
+
 
 
 /* for square roots, x^2 - a = 0,  x_new = x - 1/2 (x - a/x) */
@@ -139,4 +139,4 @@ _XcmsSquareRoot(double a)
 #endif
     return cur_guess;
 }
-	
+
