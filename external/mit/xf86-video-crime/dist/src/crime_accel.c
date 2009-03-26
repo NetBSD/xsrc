@@ -1,4 +1,4 @@
-/* $NetBSD: crime_accel.c,v 1.4 2009/03/18 23:24:51 macallan Exp $ */
+/* $NetBSD: crime_accel.c,v 1.5 2009/03/26 04:09:49 macallan Exp $ */
 /*
  * Copyright (c) 2008 Michael Lorenz
  * All rights reserved.
@@ -59,8 +59,10 @@ uint32_t regcache[0x1000];
         }
 #else
 #define SYNC do {} while ((*CRIMEREG(0x4000) & CRIME_DE_IDLE) == 0)
+#define SYNCMTE do {} while ((*CRIMEREG(0x4000) & CRIME_DE_MTE_IDLE) == 0)
 #endif
-#define READY do {} while ((*CRIMEREG(0x4000) & 0x0e000000) != 0x0e000000)
+#define MAKE_ROOM(x) do {} while ((16 - \
+				   CRIME_PIPE_LEVEL(*CRIMEREG(0x4000))) < x);
 
 CARD32 CrimeAlphaTextureFormats[] = {PICT_a8, 0};
 CARD32 CrimeTextureFormats[] = {PICT_a8b8g8r8, PICT_a8r8g8b8, 0};
@@ -91,7 +93,7 @@ CrimeSetupForScreenToScreenCopy(
 	CrimePtr fPtr = CRIMEPTR(pScrn);
 
 	LOG(CRIME_DEBUG_BITBLT);
-	SYNC;
+	MAKE_ROOM(9);
 #if 0
 	if ((rop == GXcopy) && (planemask == 0xffffffff) && (xdir > 0)) {
 		/* use the MTE */
@@ -112,7 +114,6 @@ CrimeSetupForScreenToScreenCopy(
 #endif
 		fPtr->use_mte = 0;
 
-	SYNC;
 	WRITE4(CRIME_DE_XFER_STEP_X, 1);
 	WRITE4(CRIME_DE_PLANEMASK, planemask);
 	WRITE4(CRIME_DE_ROP, rop);
@@ -121,8 +122,11 @@ CrimeSetupForScreenToScreenCopy(
 	    DE_DRAWMODE_ROP | DE_DRAWMODE_XFER_EN);
 	WRITE4(CRIME_DE_MODE_SRC, DE_MODE_TLB_A | DE_MODE_BUFDEPTH_32 |
 		    DE_MODE_TYPE_RGBA | DE_MODE_PIXDEPTH_32);
+	WRITE4(CRIME_DE_MODE_DST, DE_MODE_TLB_A | DE_MODE_BUFDEPTH_32 |
+			    DE_MODE_TYPE_RGBA | DE_MODE_PIXDEPTH_32);
 	fPtr->xdir = xdir;
 	fPtr->ydir = ydir;
+	SYNC;
 	DONE(CRIME_DEBUG_BITBLT);
 }
 
@@ -168,11 +172,10 @@ CrimeSubsequentScreenToScreenCopy
 		rxd = xDst << 2;
 		rxde = ((xDst + w) << 2) - 1;
 		oreg = *CRIMEREG(0x4000);
-		READY;
+		MAKE_ROOM(4);
 		WRITE4(CRIME_MTE_SRC0, (rxa << 16) | rya);
 		WRITE4(CRIME_MTE_SRC1, (rxe << 16) | rye);
 		WRITE4(CRIME_MTE_DST0, (rxd << 16) | ryd);
-		WBFLUSH;
 		WRITE4ST(CRIME_MTE_DST1, (rxde << 16) | ryde);
 		reg = *CRIMEREG(0x4000);
 
@@ -203,11 +206,10 @@ CrimeSubsequentScreenToScreenCopy
 			rys = ySrc;
 		}
 
-		READY;
+		MAKE_ROOM(4);
 		WRITE4(CRIME_DE_PRIMITIVE, prim);
 		WRITE4(CRIME_DE_XFER_ADDR_SRC,(rxs << 16) | (rys & 0xffff));
 		WRITE4(CRIME_DE_X_VERTEX_0, (rxa << 16) | (rya & 0xffff));
-		WBFLUSH;
 		WRITE4ST(CRIME_DE_X_VERTEX_1, (rxe << 16) | (rye & 0xffff));
 	}
 	DONE(CRIME_DEBUG_BITBLT);
@@ -225,8 +227,8 @@ CrimeSetupForSolidFill
 	CrimePtr fPtr = CRIMEPTR(pScrn);
 	int i;
 
-	SYNC;
 	LOG(CRIME_DEBUG_RECTFILL);
+	MAKE_ROOM(7);
 	WRITE4(CRIME_DE_PLANEMASK, planemask);
 	WRITE4(CRIME_DE_ROP, rop);
 	WRITE4(CRIME_DE_FG, colour << 8);
@@ -237,6 +239,9 @@ CrimeSetupForSolidFill
 		DE_PRIM_RECTANGLE | DE_PRIM_LR | DE_PRIM_TB);
 	WRITE4(CRIME_DE_MODE_SRC, DE_MODE_TLB_A | DE_MODE_BUFDEPTH_32 |
 			    DE_MODE_TYPE_RGBA | DE_MODE_PIXDEPTH_32);
+	WRITE4(CRIME_DE_MODE_DST, DE_MODE_TLB_A | DE_MODE_BUFDEPTH_32 |
+			    DE_MODE_TYPE_RGBA | DE_MODE_PIXDEPTH_32);
+	SYNC;
 	DONE(CRIME_DEBUG_RECTFILL);
 }
 
@@ -253,9 +258,8 @@ CrimeSubsequentSolidFillRect
 	CrimePtr fPtr = CRIMEPTR(pScrn);
 
 	LOG(CRIME_DEBUG_RECTFILL);
-	READY;
+	MAKE_ROOM(2);
 	WRITE4(CRIME_DE_X_VERTEX_0, (x << 16) | (y & 0xffff));
-	WBFLUSH;
 	WRITE4ST(CRIME_DE_X_VERTEX_1,
 	    ((x + w - 1) << 16) | ((y + h - 1) & 0xffff));
 	DONE(CRIME_DEBUG_RECTFILL);
@@ -269,13 +273,15 @@ CrimeSetupForScanlineImageWrite(ScrnInfoPtr pScrn, int rop,
 	CrimePtr fPtr = CRIMEPTR(pScrn);
 
 	LOG(CRIME_DEBUG_IMAGEWRITE);
-	SYNC;
 #ifdef CRIME_DEBUG_LOUD
 	if ((bpp == 24) || (depth == 24))
 	xf86Msg(X_ERROR, "%s: %d %d \n", __func__, bpp, depth);
 #endif
+	MAKE_ROOM(7);
 	WRITE4(CRIME_DE_MODE_SRC, DE_MODE_LIN_A | DE_MODE_BUFDEPTH_32 |
 			    DE_MODE_TYPE_RGB | DE_MODE_PIXDEPTH_32);
+	WRITE4(CRIME_DE_MODE_DST, DE_MODE_TLB_A | DE_MODE_BUFDEPTH_32 |
+			    DE_MODE_TYPE_RGBA | DE_MODE_PIXDEPTH_32);
 	WRITE4(CRIME_DE_PLANEMASK, planemask);
 	WRITE4(CRIME_DE_XFER_STEP_X, 4);
 	WRITE4(CRIME_DE_ROP, rop);
@@ -284,6 +290,7 @@ CrimeSetupForScanlineImageWrite(ScrnInfoPtr pScrn, int rop,
 	    DE_DRAWMODE_XFER_EN);
 	WRITE4(CRIME_DE_PRIMITIVE,
 		DE_PRIM_RECTANGLE | DE_PRIM_LR | DE_PRIM_TB);
+	SYNC;
 	DONE(CRIME_DEBUG_IMAGEWRITE);
 }
 
@@ -321,11 +328,13 @@ CrimeSubsequentImageWriteScanline(ScrnInfoPtr pScrn, int bufno)
 	CrimePtr fPtr = CRIMEPTR(pScrn);
 
 	LOG(CRIME_DEBUG_IMAGEWRITE);
+	/*
+	 * we need to sync here, otherwise we might queue up more copy
+	 * commands than we have buffers
+	 */
 	SYNC;
-
 	WRITE4(CRIME_DE_XFER_ADDR_SRC, (bufno << 13)  + (fPtr->start << 2));
 	WRITE4(CRIME_DE_X_VERTEX_0, (fPtr->ux << 16) | fPtr->uy);
-	WBFLUSH;
 	WRITE4ST(CRIME_DE_X_VERTEX_1,
 		((fPtr->ux + fPtr->uw - 1) << 16) | (fPtr->uy));
 	fPtr->uy++;
@@ -341,7 +350,9 @@ CrimeSetupForCPUToScreenColorExpandFill(ScrnInfoPtr pScrn,
 	CrimePtr fPtr = CRIMEPTR(pScrn);
 
 	LOG(CRIME_DEBUG_COLOUREXPAND);
-	SYNC;
+	MAKE_ROOM(7);
+	WRITE4(CRIME_DE_MODE_DST, DE_MODE_TLB_A | DE_MODE_BUFDEPTH_32 |
+			    DE_MODE_TYPE_RGBA | DE_MODE_PIXDEPTH_32);
 	WRITE4(CRIME_DE_PLANEMASK, planemask);
 	WRITE4(CRIME_DE_ROP, rop);
 	WRITE4(CRIME_DE_FG, fg << 8);
@@ -359,6 +370,7 @@ CrimeSetupForCPUToScreenColorExpandFill(ScrnInfoPtr pScrn,
 	}
 	WRITE4(CRIME_DE_PRIMITIVE,
 		DE_PRIM_RECTANGLE | DE_PRIM_LR | DE_PRIM_TB);
+	SYNC;
 	DONE(CRIME_DEBUG_COLOUREXPAND);
 }
 
@@ -387,13 +399,12 @@ CrimeSubsequentColorExpandScanline(ScrnInfoPtr pScrn, int bufno)
 	int idx = fPtr->uw, x = fPtr->ux;
 	
 	LOG(CRIME_DEBUG_COLOUREXPAND);
-	READY;
 
+	MAKE_ROOM(5);
 	WRITE4(CRIME_DE_STIPPLE_MODE, 0x001f0000 | (fPtr->start << 24));
 	WRITE4(CRIME_DE_STIPPLE_PAT, *boo);
 	boo++;
 	WRITE4(CRIME_DE_X_VERTEX_0, (x + fPtr->start << 16) | fPtr->uy);
-	WBFLUSH;
 	WRITE4ST(CRIME_DE_X_VERTEX_1,
 		((x + min(idx, 32) - 1) << 16) | (fPtr->uy));
 	idx -= 32;
@@ -401,10 +412,10 @@ CrimeSubsequentColorExpandScanline(ScrnInfoPtr pScrn, int bufno)
 	WRITE4(CRIME_DE_STIPPLE_MODE, 0x001f0000);
 	
 	while (idx > 0) {
+		MAKE_ROOM(3);
 		WRITE4(CRIME_DE_STIPPLE_PAT, *boo);
 		boo++;
 		WRITE4(CRIME_DE_X_VERTEX_0, (x << 16) | fPtr->uy);
-		WBFLUSH;
 		WRITE4ST(CRIME_DE_X_VERTEX_1,
 			((x + min(idx, 32) - 1) << 16) | (fPtr->uy));
 		idx -= 32;
@@ -422,13 +433,16 @@ CrimeSetupForSolidLine(ScrnInfoPtr pScrn, int color, int rop,
 
 	LOG(CRIME_DEBUG_LINES);
 
-	SYNC;
+	MAKE_ROOM(5);
+	WRITE4(CRIME_DE_MODE_DST, DE_MODE_TLB_A | DE_MODE_BUFDEPTH_32 |
+			    DE_MODE_TYPE_RGBA | DE_MODE_PIXDEPTH_32);
 	WRITE4(CRIME_DE_PLANEMASK, planemask);
 	WRITE4(CRIME_DE_ROP, rop);
 	WRITE4(CRIME_DE_FG, color << 8);
 	WRITE4(CRIME_DE_DRAWMODE,
 		    DE_DRAWMODE_PLANEMASK | DE_DRAWMODE_BYTEMASK |
 		    DE_DRAWMODE_ROP | DE_DRAWMODE_SCISSOR_EN);
+	SYNC;
 	DONE(CRIME_DEBUG_LINES);
 }
 
@@ -439,7 +453,7 @@ CrimeSubsequentSolidTwoPointLine(ScrnInfoPtr pScrn, int x1, int y1, int x2,
 	CrimePtr fPtr = CRIMEPTR(pScrn);
 
 	LOG(CRIME_DEBUG_LINES);
-	READY;
+	MAKE_ROOM(3);
 	if (flags & OMIT_LAST) {
 		WRITE4(CRIME_DE_PRIMITIVE,
 			DE_PRIM_LINE | DE_PRIM_LINE_SKIP_END | 2);
@@ -448,7 +462,6 @@ CrimeSubsequentSolidTwoPointLine(ScrnInfoPtr pScrn, int x1, int y1, int x2,
 			DE_PRIM_LINE | 2);
 	}
 	WRITE4(CRIME_DE_X_VERTEX_0, (x1 << 16) | y1);
-	WBFLUSH;
 	WRITE4ST(CRIME_DE_X_VERTEX_1, (x2 << 16) | y2);
 	DONE(CRIME_DEBUG_LINES);
 }      
@@ -462,9 +475,11 @@ CrimeSetupForDashedLine(ScrnInfoPtr pScrn,
 	uint32_t pat;
 
 	LOG(CRIME_DEBUG_LINES);
-	SYNC;
 
 	fPtr->uw = length;
+	MAKE_ROOM(7);
+	WRITE4(CRIME_DE_MODE_DST, DE_MODE_TLB_A | DE_MODE_BUFDEPTH_32 |
+			    DE_MODE_TYPE_RGBA | DE_MODE_PIXDEPTH_32);
 	WRITE4(CRIME_DE_PLANEMASK, planemask);
 	WRITE4(CRIME_DE_ROP, rop);
 	WRITE4(CRIME_DE_FG, fg << 8);
@@ -487,6 +502,7 @@ CrimeSetupForDashedLine(ScrnInfoPtr pScrn,
 	 */
 	memcpy(&pat, pattern, 4);
 	WRITE4(CRIME_DE_STIPPLE_PAT, pat);
+	SYNC;
 	DONE(CRIME_DEBUG_LINES);
 }
 
@@ -498,7 +514,7 @@ CrimeSubsequentDashedTwoPointLine( ScrnInfoPtr pScrn,
 	uint32_t stipmode;
 
 	LOG(CRIME_DEBUG_LINES);
-	READY;
+	MAKE_ROOM(4);
 
 	if (flags & OMIT_LAST) {
 		WRITE4(CRIME_DE_PRIMITIVE,
@@ -511,7 +527,6 @@ CrimeSubsequentDashedTwoPointLine( ScrnInfoPtr pScrn,
 	stipmode = ((fPtr->uw - 1) << 16) | (phase << 24);
 	WRITE4(CRIME_DE_STIPPLE_MODE, stipmode);
 	WRITE4(CRIME_DE_X_VERTEX_0, (x1 << 16) | y1);
-	WBFLUSH;
 	WRITE4ST(CRIME_DE_X_VERTEX_1, (x2 << 16) | y2);
 	DONE(CRIME_DEBUG_LINES);
 }
@@ -523,9 +538,10 @@ CrimeSetClippingRectangle ( ScrnInfoPtr pScrn,
 	CrimePtr fPtr = CRIMEPTR(pScrn);
 
 	LOG(CRIME_DEBUG_CLIPPING);
+	MAKE_ROOM(2);
 	WRITE4(CRIME_DE_SCISSOR, (left << 16) | top);
 	WRITE4(CRIME_DE_SCISSOR + 4, ((right + 1) << 16) | (bottom + 1));
-
+	SYNC;
 	DONE(CRIME_DEBUG_CLIPPING);
 }
 
@@ -535,10 +551,10 @@ CrimeDisableClipping (ScrnInfoPtr pScrn)
 	CrimePtr fPtr = CRIMEPTR(pScrn);
 
 	LOG(CRIME_DEBUG_CLIPPING);
-	SYNC;
-
+	MAKE_ROOM(2);
 	WRITE4(CRIME_DE_SCISSOR, 0);
 	WRITE4(CRIME_DE_SCISSOR + 4, 0x3fff3fff);
+	SYNC;
 	DONE(CRIME_DEBUG_CLIPPING);
 }
 
@@ -580,7 +596,9 @@ CrimeSetupForCPUToScreenAlphaTexture (
 		    alphaPitch);
 		
 	}
-	SYNC;
+	MAKE_ROOM(7);
+	WRITE4(CRIME_DE_MODE_DST, DE_MODE_TLB_A | DE_MODE_BUFDEPTH_32 |
+			    DE_MODE_TYPE_RGBA | DE_MODE_PIXDEPTH_32);
 	/* XXX this register is not where it's supposed to be */
 	WRITE4(CRIME_DE_ALPHA_COLOR, fPtr->alpha_color);
 	if (alphaType == PICT_a8) {
@@ -615,6 +633,7 @@ CrimeSetupForCPUToScreenAlphaTexture (
 	    DE_DRAWMODE_XFER_EN);
 	WRITE4(CRIME_DE_PRIMITIVE,
 		DE_PRIM_RECTANGLE | DE_PRIM_LR | DE_PRIM_TB);
+	SYNC;
 	DONE(CRIME_DEBUG_XRENDER);
 	return TRUE;
 }
@@ -653,10 +672,9 @@ CrimeSubsequentCPUToScreenAlphaTexture (
 				dptr++;
 			}
 		}
-		READY;
+		MAKE_ROOM(3);
 		WRITE4(CRIME_DE_XFER_ADDR_SRC, bufnum * 8192);
 		WRITE4(CRIME_DE_X_VERTEX_0, dstx << 16 | (dsty + i));
-		WBFLUSH;
 		WRITE4ST(CRIME_DE_X_VERTEX_1,
 			((dstx + width - 1) << 16) | (dsty + i));
 		bufnum++;
@@ -684,7 +702,7 @@ CrimeSubsequentCPUToScreenAlphaTexture32 (
 	int bufnum = 0;
 
 	LOG(CRIME_DEBUG_XRENDER);
-#ifndef CRIME_DEBUG_LOUD
+#ifdef CRIME_DEBUG_LOUD
 	xf86Msg(X_ERROR, "%d %d %d %d %d %d\n",srcx, srcy, dstx, dsty, width, 
 	    height); 
 #endif
@@ -700,10 +718,9 @@ CrimeSubsequentCPUToScreenAlphaTexture32 (
 			sptr++;
 			dptr++;
 		}
-		READY;
+		MAKE_ROOM(3);
 		WRITE4(CRIME_DE_XFER_ADDR_SRC, bufnum * 8192);
 		WRITE4(CRIME_DE_X_VERTEX_0, dstx << 16 | (dsty + i));
-		WBFLUSH;
 		WRITE4ST(CRIME_DE_X_VERTEX_1,
 			((dstx + width - 1) << 16) | (dsty + i));
 		bufnum++;
@@ -738,7 +755,9 @@ CrimeSetupForCPUToScreenTexture (
 	fPtr->uh = height;
 	fPtr->us = texPitch;
 	fPtr->alpha_texture = texPtr;
-	SYNC;
+	MAKE_ROOM(6);
+	WRITE4(CRIME_DE_MODE_DST, DE_MODE_TLB_A | DE_MODE_BUFDEPTH_32 |
+			    DE_MODE_TYPE_RGBA | DE_MODE_PIXDEPTH_32);
 	if (texType == PICT_a8b8g8r8) {
 		WRITE4(CRIME_DE_MODE_SRC, DE_MODE_LIN_A | DE_MODE_BUFDEPTH_32 |
 				    DE_MODE_TYPE_ABGR | DE_MODE_PIXDEPTH_32);
@@ -757,6 +776,7 @@ CrimeSetupForCPUToScreenTexture (
 	    DE_DRAWMODE_XFER_EN);
 	WRITE4(CRIME_DE_PRIMITIVE,
 		DE_PRIM_RECTANGLE | DE_PRIM_LR | DE_PRIM_TB);
+	SYNC;
 	DONE(CRIME_DEBUG_XRENDER);
 	return TRUE;
 }
@@ -803,10 +823,9 @@ CrimeSubsequentCPUToScreenTexture (
 		for (i = 0; i < height; i++) {
 			dptr = (uint32_t *)fPtr->buffers[bufnum];
 			memcpy(dptr, aptr, fPtr->us);
-			READY;
+			MAKE_ROOM(3);
 			WRITE4(CRIME_DE_XFER_ADDR_SRC, bufnum * 8192);
 			WRITE4(CRIME_DE_X_VERTEX_0, dstx << 16 | (dsty + i));
-			WBFLUSH;
 			WRITE4ST(CRIME_DE_X_VERTEX_1,
 				((dstx + width - 1) << 16) | (dsty + i));
 			bufnum++;
@@ -830,15 +849,14 @@ CrimeSubsequentCPUToScreenTexture (
 				}
 			}			
 			xoff = 0;
-			READY;
+			MAKE_ROOM(1);
 			WRITE4(CRIME_DE_XFER_ADDR_SRC, bufnum * 8192);
 			while (xoff < width) {
 				xa = dstx + xoff;
 				xe = dstx + min(xoff + period, width) - 1;
-				READY;
+				MAKE_ROOM(2);
 				WRITE4(CRIME_DE_X_VERTEX_0,
 				    xa << 16 | (dsty + i));
-				WBFLUSH;
 				WRITE4ST(CRIME_DE_X_VERTEX_1,
 					(xe << 16) | (dsty + i));
 				xoff += period;
@@ -890,9 +908,11 @@ CrimeSetupForCPUToScreenTextureMask(
 	fPtr->src = (uint8_t *)srcPtr;
 	fPtr->texture_depth = PICT_FORMAT_BPP(texType);
 
-	SYNC;
+	MAKE_ROOM(6);
 	/* always expect ARGB for now */
 	WRITE4(CRIME_DE_MODE_SRC, DE_MODE_LIN_A | DE_MODE_BUFDEPTH_32 |
+			    DE_MODE_TYPE_RGBA | DE_MODE_PIXDEPTH_32);
+	WRITE4(CRIME_DE_MODE_DST, DE_MODE_TLB_A | DE_MODE_BUFDEPTH_32 |
 			    DE_MODE_TYPE_RGBA | DE_MODE_PIXDEPTH_32);
 	fPtr->format = texType;
 	WRITE4(CRIME_DE_ALPHA_FUNC, 
@@ -905,6 +925,7 @@ CrimeSetupForCPUToScreenTextureMask(
 	    DE_DRAWMODE_XFER_EN);
 	WRITE4(CRIME_DE_PRIMITIVE,
 		DE_PRIM_RECTANGLE | DE_PRIM_LR | DE_PRIM_TB);
+	SYNC;
 	DONE(CRIME_DEBUG_XRENDER);
 	return TRUE;
 }
@@ -986,15 +1007,14 @@ CrimeSubsequentCPUToScreenTextureMask32(
 			}
 		}			
 		xoff = 0;
-		READY;
+		MAKE_ROOM(1);
 		WRITE4(CRIME_DE_XFER_ADDR_SRC, bufnum * 8192);
 		while (xoff < width) {
 			xa = dstx + xoff;
 			xe = dstx + min(xoff + period, width) - 1;
-			READY;
+			MAKE_ROOM(2);
 			WRITE4(CRIME_DE_X_VERTEX_0,
 			    xa << 16 | (dsty + i));
-			WBFLUSH;
 			WRITE4ST(CRIME_DE_X_VERTEX_1,
 				(xe << 16) | (dsty + i));
 			xoff += period;
@@ -1093,15 +1113,14 @@ CrimeSubsequentCPUToScreenTextureMask8(
 			}
 		}			
 		xoff = 0;
-		SYNC;
+		MAKE_ROOM(1);
 		WRITE4(CRIME_DE_XFER_ADDR_SRC, bufnum * 8192);
 		while (xoff < width) {
 			xa = dstx + xoff;
 			xe = dstx + min(xoff + period, width) - 1;
-			READY;
+			MAKE_ROOM(2);
 			WRITE4(CRIME_DE_X_VERTEX_0,
 			    xa << 16 | (dsty + i));
-			WBFLUSH;
 			WRITE4ST(CRIME_DE_X_VERTEX_1,
 				(xe << 16) | (dsty + i));
 			xoff += period;
@@ -1490,8 +1509,10 @@ CrimeDoScreenToScreenComposite(
 		return;
 	}
 
-	SYNC;
+	MAKE_ROOM(6);
 	WRITE4(CRIME_DE_MODE_SRC, DE_MODE_TLB_A | DE_MODE_BUFDEPTH_32 |
+			    DE_MODE_TYPE_RGBA | DE_MODE_PIXDEPTH_32);
+	WRITE4(CRIME_DE_MODE_DST, DE_MODE_TLB_A | DE_MODE_BUFDEPTH_32 |
 			    DE_MODE_TYPE_RGBA | DE_MODE_PIXDEPTH_32);
 	WRITE4(CRIME_DE_XFER_STEP_X, 1);
 	WRITE4(CRIME_DE_ALPHA_FUNC, 
@@ -1503,7 +1524,7 @@ CrimeDoScreenToScreenComposite(
 	    DE_DRAWMODE_XFER_EN);
 	WRITE4(CRIME_DE_PRIMITIVE,
 		DE_PRIM_RECTANGLE | DE_PRIM_LR | DE_PRIM_TB);
-
+	SYNC;
 	xSrc -= xDst;
 	ySrc -= yDst;
 
@@ -1515,10 +1536,9 @@ CrimeDoScreenToScreenComposite(
 		yd = pbox->y1;
 		w = pbox->x2 - pbox->x1;
 		h = pbox->y2 - pbox->y1;
-		READY;
+		MAKE_ROOM(3);
 		WRITE4(CRIME_DE_XFER_ADDR_SRC,(xs << 16) | (ys & 0xffff));
 		WRITE4(CRIME_DE_X_VERTEX_0, (xd << 16) | (yd & 0xffff));
-		WBFLUSH;
 		WRITE4ST(CRIME_DE_X_VERTEX_1,
 		    ((xd + w - 1) << 16) | ((yd + h - 1) & 0xffff));
 		pbox++;
@@ -1614,13 +1634,16 @@ CrimePolyPoint(
 			ppt->y += (ppt-1)->y;
 		}
 	}
-	SYNC;
+	MAKE_ROOM(6);
+	WRITE4(CRIME_DE_MODE_DST, DE_MODE_TLB_A | DE_MODE_BUFDEPTH_32 |
+			    DE_MODE_TYPE_RGBA | DE_MODE_PIXDEPTH_32);
 	WRITE4(CRIME_DE_FG, pGC->fgPixel << 8);
 	WRITE4(CRIME_DE_ROP, pGC->alu);
 	WRITE4(CRIME_DE_PLANEMASK, pGC->planemask);
 	WRITE4(CRIME_DE_DRAWMODE,
 	    DE_DRAWMODE_PLANEMASK | DE_DRAWMODE_BYTEMASK | DE_DRAWMODE_ROP);
 	WRITE4(CRIME_DE_PRIMITIVE, DE_PRIM_POINT);
+	SYNC;
 	for (nBox = REGION_NUM_RECTS (pGC->pCompositeClip),
 	    pBox = REGION_RECTS (pGC->pCompositeClip);
 	    nBox--; pBox++) {
@@ -1635,7 +1658,7 @@ CrimePolyPoint(
 			y = pts->y + pDraw->y;
 			if (x1 <= x && x < x2 && y1 <= y && y < y2) {
 
-		 		READY;
+		 		MAKE_ROOM(1);
 				WRITE4ST(CRIME_DE_X_VERTEX_0,
 					(x << 16) | y);
 			}
@@ -1707,6 +1730,16 @@ CrimeValidatePolyArc(GCPtr pGC,
 	}
 }
 
+static void copyRGBAtoARGB(uint32_t *dest, uint32_t *src, int len)
+{
+	while (len > 0) {
+		*dest = *src >> 8;
+		dest++;
+		src++;
+		len--;
+	}
+}
+
 static void 
 CrimeReadPixmap(ScrnInfoPtr pScrn, 
                      int x, 
@@ -1718,8 +1751,61 @@ CrimeReadPixmap(ScrnInfoPtr pScrn,
 		     int bpp, 
 		     int depth)
 {
-	/* dummy for now */
-	LOG(CRIME_DEBUG_IMAGEWRITE);
+	CrimePtr fPtr = CRIMEPTR(pScrn);
+	int bufno = 0;
+	int nextbuf, i, len = w << 2;
+	int mx = x << 2, offset;
+
+	offset = mx & 0x3f;
+	mx &= ~0x3f;
+	len = (len + offset + 0x3f) & ~0x3f;
+
+	LOG(CRIME_DEBUG_IMAGEREAD);
+
+#ifdef CRIME_DEBUG_LOUD
+	xf86Msg(X_ERROR, "%s: %d %d %d %d\n", __func__, x, y, w, h);
+#endif
+
+	MAKE_ROOM(3);
+
+	/*
+	 * apparently all MTE coordinates are in bytes, not pixels
+	 * also, the MTE has some crazy alignment requirements - if
+	 * we don't do as above the thing will deadlock sooner or later
+	 * We use the MTE here because I couldn't get the rendering engine
+	 * to actually transfer anything into a linear buffer. The other
+	 * way around works just fine though. Shouldn't make much of a
+	 * difference, transfer times should be dominated by copying
+	 * data in and out of the DMA buffer anyway
+	 */
+	WRITE4(CRIME_MTE_MODE, (MTE_TLB_LIN_A << MTE_DST_TLB_SHIFT) |
+			 (MTE_TLB_A << MTE_SRC_TLB_SHIFT) |
+			 (MTE_DEPTH_8 << MTE_DEPTH_SHIFT) |
+			 MTE_MODE_DST_ECC | MTE_MODE_COPY);
+	WRITE4(CRIME_MTE_SRC_Y_STEP, 1);
+	WRITE4(CRIME_MTE_DST_Y_STEP, 1);
+	SYNCMTE;
+	WRITE4(CRIME_MTE_SRC0, (mx << 16) | y);
+	WRITE4(CRIME_MTE_SRC1, ((mx + len) << 16) | y);
+	WRITE4(CRIME_MTE_DST0, (bufno << 13));
+	WRITE4ST(CRIME_MTE_DST1, (bufno << 13) + len);
+	for (i = y + 1; i < y + h; i++) {
+		nextbuf = (bufno + 1) & 7;
+		SYNCMTE;
+		WRITE4(CRIME_MTE_SRC0, (mx << 16) | i);
+		WRITE4(CRIME_MTE_SRC1, ((mx + len) << 16) | i);
+		WRITE4(CRIME_MTE_DST0, (nextbuf << 13));
+		WRITE4ST(CRIME_MTE_DST1, (nextbuf << 13) + len);
+		copyRGBAtoARGB((uint32_t *)dst,
+			       (uint32_t *)(fPtr->buffers[bufno] + offset), w);
+		dst += dstwidth;
+		bufno = nextbuf;
+	}
+	SYNCMTE;
+	copyRGBAtoARGB((uint32_t *)dst,
+		       (uint32_t *)(fPtr->buffers[bufno] + offset), w);
+	DONE(CRIME_DEBUG_IMAGEREAD);
+
 }
 int
 CrimeAccelInit(ScrnInfoPtr pScrn)
@@ -1735,12 +1821,13 @@ CrimeAccelInit(ScrnInfoPtr pScrn)
 			    DE_MODE_TYPE_RGBA | DE_MODE_PIXDEPTH_32);
 
 	WRITE4(CRIME_DE_XFER_STEP_Y, 1);
-	WRITE4(CRIME_DE_XFER_STRD_DST, 0);
+	WRITE4(CRIME_DE_XFER_STRD_DST, 4);
 	WRITE4(CRIME_DE_XFER_STRD_SRC, 1);
 
 	WRITE4(CRIME_MTE_BYTEMASK, 0xffffffff);
 	WRITE4(CRIME_MTE_SRC_Y_STEP, 4);
 	WRITE4(CRIME_MTE_DST_Y_STEP, 4);
+	SYNC;
 
 	/* blit the screen black */
 	WRITE4(CRIME_DE_DRAWMODE,
