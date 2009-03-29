@@ -40,6 +40,8 @@
 
 #include <string.h>
 #include <stdio.h>
+#include <sys/types.h>
+#include <sys/mman.h>
 
 				/* Driver data structures */
 #include "radeon.h"
@@ -973,7 +975,7 @@ static Bool RADEONDRIPciInit(RADEONInfoPtr info, ScreenPtr pScreen)
 	return FALSE;
     }
     xf86DrvMsg(pScreen->myNum, X_INFO,
-	       "[pci] %d kB allocated with handle 0x%08x\n",
+	       "[pci] %d kB allocated with handle 0x%08lx\n",
 	       info->gartSize*1024, info->pciMemHandle);
 
     RADEONDRIInitGARTValues(info);
@@ -985,11 +987,11 @@ static Bool RADEONDRIPciInit(RADEONInfoPtr info, ScreenPtr pScreen)
 	return FALSE;
     }
     xf86DrvMsg(pScreen->myNum, X_INFO,
-	       "[pci] ring handle = 0x%08x\n", info->ringHandle);
+	       "[pci] ring handle = 0x%08lx, size = 0x%08lx\n", info->ringHandle, info->ringMapSize);
 
-    if (drmMap(info->drmFD, info->ringHandle, info->ringMapSize,
-	       &info->ring) < 0) {
-	xf86DrvMsg(pScreen->myNum, X_ERROR, "[pci] Could not map ring\n");
+    if ((ret = drmMap(info->drmFD, info->ringHandle, info->ringMapSize,
+	       &info->ring)) < 0) {
+	xf86DrvMsg(pScreen->myNum, X_ERROR, "[pci] Could not map ring: ret %d\n", ret);
 	return FALSE;
     }
     xf86DrvMsg(pScreen->myNum, X_INFO,
@@ -1006,7 +1008,7 @@ static Bool RADEONDRIPciInit(RADEONInfoPtr info, ScreenPtr pScreen)
 	return FALSE;
     }
     xf86DrvMsg(pScreen->myNum, X_INFO,
- 	       "[pci] ring read ptr handle = 0x%08x\n",
+ 	       "[pci] ring read ptr handle = 0x%08lx\n",
 	       info->ringReadPtrHandle);
 
     if (drmMap(info->drmFD, info->ringReadPtrHandle, info->ringReadMapSize,
@@ -1029,7 +1031,7 @@ static Bool RADEONDRIPciInit(RADEONInfoPtr info, ScreenPtr pScreen)
 	return FALSE;
     }
     xf86DrvMsg(pScreen->myNum, X_INFO,
- 	       "[pci] vertex/indirect buffers handle = 0x%08x\n",
+ 	       "[pci] vertex/indirect buffers handle = 0x%08lx\n",
 	       info->bufHandle);
 
     if (drmMap(info->drmFD, info->bufHandle, info->bufMapSize,
@@ -1052,7 +1054,7 @@ static Bool RADEONDRIPciInit(RADEONInfoPtr info, ScreenPtr pScreen)
 	return FALSE;
     }
     xf86DrvMsg(pScreen->myNum, X_INFO,
- 	       "[pci] GART texture map handle = 0x%08x\n",
+ 	       "[pci] GART texture map handle = 0x%08lx\n",
 	       info->gartTexHandle);
 
     if (drmMap(info->drmFD, info->gartTexHandle, info->gartTexMapSize,
@@ -1080,7 +1082,7 @@ static Bool RADEONDRIMapInit(RADEONInfoPtr info, ScreenPtr pScreen)
 	return FALSE;
     }
     xf86DrvMsg(pScreen->myNum, X_INFO,
-	       "[drm] register handle = 0x%08x\n", info->registerHandle);
+	       "[drm] register handle = 0x%08lx\n", info->registerHandle);
 
     return TRUE;
 }
