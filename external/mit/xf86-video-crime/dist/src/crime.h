@@ -1,4 +1,4 @@
-/* $NetBSD: crime.h,v 1.3 2009/03/26 04:09:49 macallan Exp $ */
+/* $NetBSD: crime.h,v 1.4 2009/03/31 15:57:34 macallan Exp $ */
 /*
  * Copyright (c) 2008 Michael Lorenz
  * All rights reserved.
@@ -92,6 +92,7 @@ typedef struct {
 	int			format;
 	int			use_mte;
 	uint32_t		expand[2048];
+	uint32_t		pattern[8];
 	uint32_t		alpha_color;
 	int			texture_depth;
 	unsigned char		*alpha_texture;
