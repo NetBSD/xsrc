@@ -1,4 +1,4 @@
-/* $NetBSD: crime.h,v 1.2.2.3 2009/02/25 20:32:03 snj Exp $ */
+/* $NetBSD: crime.h,v 1.2.2.4 2009/04/01 03:13:54 snj Exp $ */
 /*
  * Copyright (c) 2008 Michael Lorenz
  * All rights reserved.
@@ -55,6 +55,7 @@
 #define CRIME_DEBUG_CLIPPING		0x00000020
 #define CRIME_DEBUG_SYNC		0x00000040
 #define CRIME_DEBUG_XRENDER		0x00000080
+#define CRIME_DEBUG_IMAGEREAD		0x00000100
 #define CRIME_DEBUG_ALL			0xffffffff
 #define CRIME_DEBUG_MASK (/*CRIME_DEBUG_IMAGEWRITE*/0)
 
