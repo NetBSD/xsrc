@@ -1,4 +1,4 @@
-/* $NetBSD: crime_accel.c,v 1.3.2.7 2009/04/01 03:18:07 snj Exp $ */
+/* $NetBSD: crime_accel.c,v 1.3.2.8 2009/04/01 21:29:14 snj Exp $ */
 /*
  * Copyright (c) 2008 Michael Lorenz
  * All rights reserved.
@@ -1933,6 +1933,8 @@ CrimeAccelInit(ScrnInfoPtr pScrn)
 	
 	/* Sync */
 	pXAAInfo->Sync = CrimeSync;
+
+	CrimeDisableClipping(pScrn);
 
 	/* Screen-to-screen copy */
 	pXAAInfo->ScreenToScreenCopyFlags = NO_TRANSPARENCY;
