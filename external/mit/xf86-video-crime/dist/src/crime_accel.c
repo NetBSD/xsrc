@@ -1,4 +1,4 @@
-/* $NetBSD: crime_accel.c,v 1.3.2.6 2009/04/01 03:13:54 snj Exp $ */
+/* $NetBSD: crime_accel.c,v 1.3.2.7 2009/04/01 03:18:07 snj Exp $ */
 /*
  * Copyright (c) 2008 Michael Lorenz
  * All rights reserved.
@@ -237,8 +237,6 @@ CrimeSetupForSolidFill
 	    DE_DRAWMODE_SCISSOR_EN);
 	WRITE4(CRIME_DE_PRIMITIVE,
 		DE_PRIM_RECTANGLE | DE_PRIM_LR | DE_PRIM_TB);
-	WRITE4(CRIME_DE_MODE_SRC, DE_MODE_TLB_A | DE_MODE_BUFDEPTH_32 |
-			    DE_MODE_TYPE_RGBA | DE_MODE_PIXDEPTH_32);
 	WRITE4(CRIME_DE_MODE_DST, DE_MODE_TLB_A | DE_MODE_BUFDEPTH_32 |
 			    DE_MODE_TYPE_RGBA | DE_MODE_PIXDEPTH_32);
 	SYNC;
@@ -265,7 +263,95 @@ CrimeSubsequentSolidFillRect
 	DONE(CRIME_DEBUG_RECTFILL);
 }
 
-void
+static void
+CrimeSetupForMono8x8PatternFill(ScrnInfoPtr pScrn, int patx, int paty,
+        int fg, int bg, int rop, unsigned int planemask)
+{
+	CrimePtr fPtr = CRIMEPTR(pScrn);
+	uint32_t pat;
+
+	LOG(CRIME_DEBUG_RECTFILL);
+	MAKE_ROOM(7);
+	WRITE4(CRIME_DE_PLANEMASK, planemask);
+	WRITE4(CRIME_DE_ROP, rop);
+	WRITE4(CRIME_DE_FG, fg << 8);
+	if (bg == -1) {
+		WRITE4(CRIME_DE_DRAWMODE,
+		    DE_DRAWMODE_PLANEMASK | DE_DRAWMODE_BYTEMASK |
+		    DE_DRAWMODE_ROP | DE_DRAWMODE_POLY_STIP |
+		    DE_DRAWMODE_SCISSOR_EN);
+	} else {
+		WRITE4(CRIME_DE_BG, bg << 8);
+		WRITE4(CRIME_DE_DRAWMODE,
+		    DE_DRAWMODE_PLANEMASK | DE_DRAWMODE_BYTEMASK | 
+		    DE_DRAWMODE_ROP | DE_DRAWMODE_POLY_STIP | 
+		    DE_DRAWMODE_OPAQUE_STIP | DE_DRAWMODE_SCISSOR_EN);
+	}
+	WRITE4(CRIME_DE_PRIMITIVE,
+		DE_PRIM_RECTANGLE | DE_PRIM_LR | DE_PRIM_TB);
+	WRITE4(CRIME_DE_MODE_DST, DE_MODE_TLB_A | DE_MODE_BUFDEPTH_32 |
+			    DE_MODE_TYPE_RGBA | DE_MODE_PIXDEPTH_32);
+
+	/*
+	 * we need to store the pattern so we can just hammer it into the
+	 * stipple register later on
+	 */
+	pat = patx & 0xff000000;
+	pat |= pat >> 8;
+	fPtr->pattern[0] = pat | (pat >> 16);
+	pat = patx & 0x00ff0000;
+	pat |= pat << 8;
+	fPtr->pattern[1] = pat | (pat >> 16);
+	pat = patx & 0x0000ff00;
+	pat |= pat >> 8;
+	fPtr->pattern[2] = pat | (pat << 16);
+	pat = patx & 0x000000ff;
+	pat |= pat << 8;
+	fPtr->pattern[3] = pat | (pat << 16);
+
+	pat = paty & 0xff000000;
+	pat |= pat >> 8;
+	fPtr->pattern[4] = pat | (pat >> 16);
+	pat = paty & 0x00ff0000;
+	pat |= pat << 8;
+	fPtr->pattern[5] = pat | (pat >> 16);
+	pat = paty & 0x0000ff00;
+	pat |= pat >> 8;
+	fPtr->pattern[6] = pat | (pat << 16);
+	pat = paty & 0x000000ff;
+	pat |= pat << 8;
+	fPtr->pattern[7] = pat | (pat << 16);
+	SYNC;
+	DONE(CRIME_DEBUG_RECTFILL);
+}
+
+static void
+CrimeSubsequentMono8x8PatternFillRect( ScrnInfoPtr pScrn,
+        	int patx, int paty, int x, int y, int w, int h)
+{
+	CrimePtr fPtr = CRIMEPTR(pScrn);
+	int i, pat;
+
+	LOG(CRIME_DEBUG_RECTFILL);
+
+	/* first setup the stipple stuff */
+	
+	MAKE_ROOM(1);
+	WRITE4(CRIME_DE_STIPPLE_MODE, 0x001f0000 | (patx << 24));
+	pat = paty;
+	
+	for (i = 0; i < h; i++) {
+		MAKE_ROOM(3);
+		WRITE4(CRIME_DE_STIPPLE_PAT, fPtr->pattern[pat]);
+		WRITE4(CRIME_DE_X_VERTEX_0, (x << 16) | ((y + i) & 0xffff));
+		WRITE4ST(CRIME_DE_X_VERTEX_1,
+		    ((x + w - 1) << 16) | ((y + i) & 0xffff));
+		pat = (pat + 1) & 7;
+	}
+	DONE(CRIME_DEBUG_RECTFILL);
+}
+
+static void
 CrimeSetupForScanlineImageWrite(ScrnInfoPtr pScrn, int rop, 
                                 unsigned int planemask, int trans_color, 
                                 int bpp, int depth)
@@ -294,7 +380,7 @@ CrimeSetupForScanlineImageWrite(ScrnInfoPtr pScrn, int rop,
 	DONE(CRIME_DEBUG_IMAGEWRITE);
 }
 
-void
+static void
 CrimeSubsequentImageWriteRect(ScrnInfoPtr pScrn, 
                                 int x, int y, int w, int h, int skipleft)
 {
@@ -322,7 +408,7 @@ CrimeSubsequentImageWriteRect(ScrnInfoPtr pScrn,
 	DONE(CRIME_DEBUG_IMAGEWRITE);
 }
 
-void
+static void
 CrimeSubsequentImageWriteScanline(ScrnInfoPtr pScrn, int bufno)
 {
 	CrimePtr fPtr = CRIMEPTR(pScrn);
@@ -591,11 +677,12 @@ CrimeSetupForCPUToScreenAlphaTexture (
 	fPtr->us = alphaPitch;
 	fPtr->alpha_texture = alphaPtr;
 	fPtr->format = alphaType;
+#ifdef CRIME_DEBUG_LOUD
 	if (alphaType != PICT_a8) {
 		xf86Msg(X_ERROR, "ARGB mask %08x %d\n", (uint32_t)alphaPtr,
 		    alphaPitch);
-		
 	}
+#endif
 	MAKE_ROOM(7);
 	WRITE4(CRIME_DE_MODE_DST, DE_MODE_TLB_A | DE_MODE_BUFDEPTH_32 |
 			    DE_MODE_TYPE_RGBA | DE_MODE_PIXDEPTH_32);
@@ -1057,7 +1144,7 @@ CrimeSubsequentCPUToScreenTextureMask8(
 	int sr, sg, sb, sa, rr, gg, bb, aa;
 
 	LOG(CRIME_DEBUG_XRENDER);
-#ifndef CRIME_DEBUG_LOUD
+#ifdef CRIME_DEBUG_LOUD
 	xf86Msg(X_ERROR, "%s: %d %d %d %d %d %d\n", __func__,
 	    srcx, srcy, dstx, dsty, width, height); 
 #endif
@@ -1894,7 +1981,8 @@ CrimeAccelInit(ScrnInfoPtr pScrn)
 
 	/* clipping */
 	pXAAInfo->ClippingFlags = HARDWARE_CLIP_SCREEN_TO_SCREEN_COPY |
-		HARDWARE_CLIP_SOLID_FILL | HARDWARE_CLIP_SOLID_LINE;
+		HARDWARE_CLIP_SOLID_FILL | HARDWARE_CLIP_SOLID_LINE |
+		HARDWARE_CLIP_MONO_8x8_FILL | HARDWARE_CLIP_DASHED_LINE;
 	pXAAInfo->SetClippingRectangle = CrimeSetClippingRectangle;
 	pXAAInfo->DisableClipping = CrimeDisableClipping;
 
@@ -1902,7 +1990,7 @@ CrimeAccelInit(ScrnInfoPtr pScrn)
 	pXAAInfo->SetupForSolidLine = CrimeSetupForSolidLine;
 	pXAAInfo->SubsequentSolidTwoPointLine = 
 	    CrimeSubsequentSolidTwoPointLine;
-	pXAAInfo->SolidLineFlags = BIT_ORDER_IN_BYTE_MSBFIRST;
+	pXAAInfo->SolidLineFlags = 0;
 
 	/* dashed line drawing */
 	pXAAInfo->SetupForDashedLine = CrimeSetupForDashedLine;
@@ -1910,6 +1998,13 @@ CrimeAccelInit(ScrnInfoPtr pScrn)
 	    CrimeSubsequentDashedTwoPointLine;
 	pXAAInfo->DashedLineFlags = LINE_PATTERN_MSBFIRST_MSBJUSTIFIED;
 	pXAAInfo->DashPatternMaxLength = 32;
+
+	/* mono pattern fills */
+	pXAAInfo->Mono8x8PatternFillFlags = HARDWARE_PATTERN_PROGRAMMED_BITS |
+	    HARDWARE_PATTERN_PROGRAMMED_ORIGIN | BIT_ORDER_IN_BYTE_MSBFIRST;
+	pXAAInfo->SetupForMono8x8PatternFill = CrimeSetupForMono8x8PatternFill;
+	pXAAInfo->SubsequentMono8x8PatternFillRect =
+	    CrimeSubsequentMono8x8PatternFillRect;
 
 	/* XRender acceleration */
 #ifdef RENDER
