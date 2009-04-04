@@ -352,7 +352,7 @@
     FT_Stream  stream  = zip->source;
     FT_ULong   size;
 
-
+#undef read	/* XXX: for SSP */
     if ( stream->read )
     {
       size = stream->read( stream, stream->pos, zip->input,
