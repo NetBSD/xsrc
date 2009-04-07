@@ -1,4 +1,4 @@
-/* $NetBSD: crime_accel.c,v 1.7 2009/04/01 14:58:03 macallan Exp $ */
+/* $NetBSD: crime_accel.c,v 1.8 2009/04/07 23:11:44 macallan Exp $ */
 /*
  * Copyright (c) 2008 Michael Lorenz
  * All rights reserved.
@@ -94,7 +94,6 @@ CrimeSetupForScreenToScreenCopy(
 
 	LOG(CRIME_DEBUG_BITBLT);
 	MAKE_ROOM(9);
-#if 0
 	if ((rop == GXcopy) && (planemask == 0xffffffff) && (xdir > 0)) {
 		/* use the MTE */
 		WRITE4(CRIME_MTE_MODE, MTE_MODE_DST_ECC |
@@ -111,7 +110,6 @@ CrimeSetupForScreenToScreenCopy(
 			WRITE4(CRIME_MTE_SRC_Y_STEP, -1);
 		}		
 	} else
-#endif
 		fPtr->use_mte = 0;
 
 	WRITE4(CRIME_DE_XFER_STEP_X, 1);
@@ -144,7 +142,6 @@ CrimeSubsequentScreenToScreenCopy
 {
 	CrimePtr fPtr = CRIMEPTR(pScrn);
 	uint32_t prim = DE_PRIM_RECTANGLE;
-	volatile uint32_t reg, oreg;
 	uint32_t rxa, rya, rxe, rye, rxs, rys, rxd, ryd, rxde, ryde;
 
 	LOG(CRIME_DEBUG_BITBLT);
@@ -152,8 +149,8 @@ CrimeSubsequentScreenToScreenCopy
 	xf86Msg(X_ERROR, "%s: %d, %d; %d x %d -> %d %d\n", __func__,
 	    xSrc, ySrc, w, h, xDst, yDst);
 #endif
-
-	if ((fPtr->use_mte) && (w > 64) && ((w & 3) == 0) && ((xSrc & 3) == 0) && ((xDst & 3) == 0)) {
+	if ((fPtr->use_mte) && (w > 64) && /*((w & 3) == 0) &&*/
+	   ((xSrc & 15) == (xDst & 15))) {
 		if (fPtr->ydir == -1) {
 			/* bottom to top */
 			rye = ySrc;
@@ -171,13 +168,12 @@ CrimeSubsequentScreenToScreenCopy
 		rxe = ((xSrc + w) << 2) - 1;
 		rxd = xDst << 2;
 		rxde = ((xDst + w) << 2) - 1;
-		oreg = *CRIMEREG(0x4000);
 		MAKE_ROOM(4);
 		WRITE4(CRIME_MTE_SRC0, (rxa << 16) | rya);
 		WRITE4(CRIME_MTE_SRC1, (rxe << 16) | rye);
 		WRITE4(CRIME_MTE_DST0, (rxd << 16) | ryd);
 		WRITE4ST(CRIME_MTE_DST1, (rxde << 16) | ryde);
-		reg = *CRIMEREG(0x4000);
+		//xf86Msg(X_ERROR, "MTE");
 
 #ifdef CRIME_DEBUG_LOUD
 		xf86Msg(X_ERROR, "reg: %08x %08x\n", oreg, reg);
@@ -228,18 +224,32 @@ CrimeSetupForSolidFill
 	int i;
 
 	LOG(CRIME_DEBUG_RECTFILL);
-	MAKE_ROOM(7);
-	WRITE4(CRIME_DE_PLANEMASK, planemask);
-	WRITE4(CRIME_DE_ROP, rop);
-	WRITE4(CRIME_DE_FG, colour << 8);
-	WRITE4(CRIME_DE_DRAWMODE,
-	    DE_DRAWMODE_PLANEMASK | DE_DRAWMODE_BYTEMASK | DE_DRAWMODE_ROP |
-	    DE_DRAWMODE_SCISSOR_EN);
-	WRITE4(CRIME_DE_PRIMITIVE,
-		DE_PRIM_RECTANGLE | DE_PRIM_LR | DE_PRIM_TB);
-	WRITE4(CRIME_DE_MODE_DST, DE_MODE_TLB_A | DE_MODE_BUFDEPTH_32 |
-			    DE_MODE_TYPE_RGBA | DE_MODE_PIXDEPTH_32);
-	SYNC;
+	if (rop == GXcopy) {
+		fPtr->use_mte = 1;
+		MAKE_ROOM(3);
+		WRITE4(CRIME_MTE_MODE, MTE_MODE_DST_ECC |
+		    MTE_TLB_A << MTE_DST_TLB_SHIFT |
+		    MTE_TLB_A << MTE_SRC_TLB_SHIFT |
+		    MTE_DEPTH_32 << MTE_DEPTH_SHIFT);
+		WRITE4(CRIME_MTE_DST_Y_STEP, 1);
+		WRITE4(CRIME_MTE_BG, colour << 8);
+		SYNCMTE;
+	} else {
+		fPtr->use_mte = 0;
+		MAKE_ROOM(7);
+		WRITE4(CRIME_DE_PLANEMASK, planemask);
+		WRITE4(CRIME_DE_ROP, rop);
+		WRITE4(CRIME_DE_FG, colour << 8);
+		WRITE4(CRIME_DE_DRAWMODE,
+		    DE_DRAWMODE_PLANEMASK | DE_DRAWMODE_BYTEMASK | 	
+		    DE_DRAWMODE_ROP |\
+		    DE_DRAWMODE_SCISSOR_EN);
+		WRITE4(CRIME_DE_PRIMITIVE,
+		    DE_PRIM_RECTANGLE | DE_PRIM_LR | DE_PRIM_TB);
+		WRITE4(CRIME_DE_MODE_DST, DE_MODE_TLB_A | DE_MODE_BUFDEPTH_32 |
+		    DE_MODE_TYPE_RGBA | DE_MODE_PIXDEPTH_32);
+		SYNC;
+	}
 	DONE(CRIME_DEBUG_RECTFILL);
 }
 
@@ -256,10 +266,17 @@ CrimeSubsequentSolidFillRect
 	CrimePtr fPtr = CRIMEPTR(pScrn);
 
 	LOG(CRIME_DEBUG_RECTFILL);
-	MAKE_ROOM(2);
-	WRITE4(CRIME_DE_X_VERTEX_0, (x << 16) | (y & 0xffff));
-	WRITE4ST(CRIME_DE_X_VERTEX_1,
-	    ((x + w - 1) << 16) | ((y + h - 1) & 0xffff));
+	if (fPtr->use_mte) {
+		MAKE_ROOM(2);
+		WRITE4(CRIME_MTE_DST0, (x << 18) | (y & 0xffff));
+		WRITE4ST(CRIME_MTE_DST1,
+	 	   ((((x + w) << 2) - 1 ) << 16) | ((y + h - 1) & 0xffff));
+	} else {
+		MAKE_ROOM(2);
+		WRITE4(CRIME_DE_X_VERTEX_0, (x << 16) | (y & 0xffff));
+		WRITE4ST(CRIME_DE_X_VERTEX_1,
+		    ((x + w - 1) << 16) | ((y + h - 1) & 0xffff));
+	}
 	DONE(CRIME_DEBUG_RECTFILL);
 }
 
