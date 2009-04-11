@@ -1,4 +1,4 @@
-/* $NetBSD: crime_accel.c,v 1.8 2009/04/07 23:11:44 macallan Exp $ */
+/* $NetBSD: crime_accel.c,v 1.9 2009/04/11 20:43:04 macallan Exp $ */
 /*
  * Copyright (c) 2008 Michael Lorenz
  * All rights reserved.
@@ -63,6 +63,9 @@ uint32_t regcache[0x1000];
 #endif
 #define MAKE_ROOM(x) do {} while ((16 - \
 				   CRIME_PIPE_LEVEL(*CRIMEREG(0x4000))) < x);
+
+#define MAX(a, b) (a > b ? a : b)
+#define MIN(a, b) (a < b ? a : b)
 
 CARD32 CrimeAlphaTextureFormats[] = {PICT_a8, 0};
 CARD32 CrimeTextureFormats[] = {PICT_a8b8g8r8, PICT_a8r8g8b8, 0};
@@ -264,13 +267,25 @@ CrimeSubsequentSolidFillRect
 )
 {
 	CrimePtr fPtr = CRIMEPTR(pScrn);
+	int xa, xe, ya, ye;
 
 	LOG(CRIME_DEBUG_RECTFILL);
 	if (fPtr->use_mte) {
-		MAKE_ROOM(2);
-		WRITE4(CRIME_MTE_DST0, (x << 18) | (y & 0xffff));
-		WRITE4ST(CRIME_MTE_DST1,
-	 	   ((((x + w) << 2) - 1 ) << 16) | ((y + h - 1) & 0xffff));
+		
+		/*
+		 * the MTE doesn't support clipping so we have to do it
+		 * ourselves - luckily it's trivial with rectangles
+		 */
+		xa = MAX(fPtr->cxa, x);
+		ya = MAX(fPtr->cya, y);
+		xe = MIN(fPtr->cxe, x + w);
+		ye = MIN(fPtr->cye, y + h);
+		if ((xa < xe) && (ya < ye)) {
+			MAKE_ROOM(2);
+			WRITE4(CRIME_MTE_DST0, (xa << 18) | (ya & 0xffff));
+			WRITE4ST(CRIME_MTE_DST1,
+		 	   (((xe << 2) - 1 ) << 16) | ((ye - 1) & 0xffff));
+		}
 	} else {
 		MAKE_ROOM(2);
 		WRITE4(CRIME_DE_X_VERTEX_0, (x << 16) | (y & 0xffff));
@@ -644,6 +659,10 @@ CrimeSetClippingRectangle ( ScrnInfoPtr pScrn,
 	MAKE_ROOM(2);
 	WRITE4(CRIME_DE_SCISSOR, (left << 16) | top);
 	WRITE4(CRIME_DE_SCISSOR + 4, ((right + 1) << 16) | (bottom + 1));
+	fPtr->cxa = left;
+	fPtr->cxe = right;
+	fPtr->cya = top;
+	fPtr->cye = bottom;
 	SYNC;
 	DONE(CRIME_DEBUG_CLIPPING);
 }
@@ -657,6 +676,10 @@ CrimeDisableClipping (ScrnInfoPtr pScrn)
 	MAKE_ROOM(2);
 	WRITE4(CRIME_DE_SCISSOR, 0);
 	WRITE4(CRIME_DE_SCISSOR + 4, 0x3fff3fff);
+	fPtr->cxa = 0;
+	fPtr->cxe = 2047;
+	fPtr->cya = 0;
+	fPtr->cye = 2047;
 	SYNC;
 	DONE(CRIME_DEBUG_CLIPPING);
 }
@@ -2000,7 +2023,8 @@ CrimeAccelInit(ScrnInfoPtr pScrn)
 
 	/* clipping */
 	pXAAInfo->ClippingFlags = HARDWARE_CLIP_SCREEN_TO_SCREEN_COPY |
-		HARDWARE_CLIP_SOLID_FILL | HARDWARE_CLIP_SOLID_LINE |
+		HARDWARE_CLIP_SOLID_FILL | 
+		HARDWARE_CLIP_SOLID_LINE |
 		HARDWARE_CLIP_MONO_8x8_FILL | HARDWARE_CLIP_DASHED_LINE;
 	pXAAInfo->SetClippingRectangle = CrimeSetClippingRectangle;
 	pXAAInfo->DisableClipping = CrimeDisableClipping;
