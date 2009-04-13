@@ -1,5 +1,5 @@
 /*
- * Copyright 2007, 2008  Luc Verhaegen <lverhaegen@novell.com>
+ * Copyright 2007, 2008  Luc Verhaegen <libv@exsuse.de>
  * Copyright 2007, 2008  Matthias Hopf <mhopf@novell.com>
  * Copyright 2007, 2008  Egbert Eich   <eich@novell.com>
  * Copyright 2007, 2008  Advanced Micro Devices, Inc.
@@ -116,6 +116,18 @@ getSetPixelClockParameters(struct rhdPLL *PLL, struct atomPixelClockConfig *Conf
 		    break;
 		case RHD_OUTPUT_UNIPHYB:
 		    Config->u.v3.OutputType = atomOutputUniphyB;
+		    break;
+		case RHD_OUTPUT_UNIPHYC:
+		    Config->u.v3.OutputType = atomOutputUniphyC;
+		    break;
+		case RHD_OUTPUT_UNIPHYD:
+		    Config->u.v3.OutputType = atomOutputUniphyD;
+		    break;
+		case RHD_OUTPUT_UNIPHYE:
+		    Config->u.v3.OutputType = atomOutputUniphyE;
+		    break;
+		case RHD_OUTPUT_UNIPHYF:
+		    Config->u.v3.OutputType = atomOutputUniphyF;
 		    break;
 		case RHD_OUTPUT_DVO:
 		    Config->u.v3.OutputType = atomOutputDvo;

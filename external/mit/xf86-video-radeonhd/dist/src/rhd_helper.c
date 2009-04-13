@@ -1,5 +1,5 @@
 /*
- * Copyright 2007  Luc Verhaegen <lverhaegen@novell.com>
+ * Copyright 2007  Luc Verhaegen <libv@exsuse.de>
  * Copyright 2007  Matthias Hopf <mhopf@novell.com>
  * Copyright 2007  Egbert Eich   <eich@novell.com>
  * Copyright 2007  Advanced Micro Devices, Inc.
@@ -42,7 +42,6 @@
 #endif
 
 #if SEGV_ON_ASSERT
-# include <sys/types.h>
 # include <signal.h>
 #endif
 
@@ -115,6 +114,70 @@ RhdGetOptValString(const OptionInfoRec *table, int token,
 	optp->set = TRUE;
 }
 
+/*
+ *
+ */
+enum rhdOptStatus
+RhdParseBooleanOption(struct RHDOpt *Option, char *Name)
+{
+    unsigned int i;
+    char* c;
+    char* str = strdup(Name);
+
+    const char* off[] = {
+	"false",
+	"off",
+	"no",
+	"0"
+    };
+    const char* on[] = {
+	"true",
+	"on",
+	"yes",
+	"1"
+    };
+
+    /* first fixup the name to match the randr names */
+    for (c = str; *c; c++)
+	if (isspace(*c))
+	    *c='_';
+
+    if (Option->set) {
+	char *ptr = Option->val.string;
+	while (*ptr != '\0') {
+	    while (isspace(*ptr))
+		ptr++;
+	    if (*ptr == '\0')
+		break;
+
+	    if (!strncasecmp(str,ptr,strlen(str)) || !strncasecmp("all",ptr,3)) {
+		if(!strncasecmp("all",ptr,3))
+		    ptr += 3;
+		else
+		    ptr += strlen(str);
+		xfree(str);
+
+		if (isspace(*ptr) || *ptr == '=') {
+		    ptr++;
+		}
+
+		for(i=0; i<sizeof(on)/sizeof(char*); i++)
+		    if (!strncasecmp(on[i],ptr,strlen(on[i])))
+			return RHD_OPTION_OFF;
+
+		for(i=0; i<sizeof(off)/sizeof(char*); i++)
+		    if (!strncasecmp(off[i],ptr,strlen(off[i])))
+			return RHD_OPTION_ON;
+
+		return RHD_OPTION_DEFAULT;
+	    } else
+		while (*ptr != '\0' && !isspace(*ptr))
+		    ptr++;
+	}
+    }
+    xfree(str);
+    return RHD_OPTION_NOT_SET;
+}
 
 void
 RhdDebugDump(int scrnIndex, unsigned char *start, int size)

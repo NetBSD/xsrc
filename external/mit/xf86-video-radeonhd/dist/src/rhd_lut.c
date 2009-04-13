@@ -1,8 +1,7 @@
 /*
- * Copyright 2007  Luc Verhaegen <lverhaegen@novell.com>
- * Copyright 2007  Matthias Hopf <mhopf@novell.com>
- * Copyright 2007  Egbert Eich   <eich@novell.com>
- * Copyright 2007  Advanced Micro Devices, Inc.
+ * Copyright 2007-2008  Luc Verhaegen <libv@exsuse.de>
+ * Copyright 2007-2008  Matthias Hopf <mhopf@novell.com>
+ * Copyright 2007-2008  Egbert Eich   <eich@novell.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -33,6 +32,8 @@
 #include "rhd_lut.h"
 #include "rhd_regs.h"
 
+#include <compiler.h>
+
 #define RHD_REGOFFSET_LUTA 0x000
 #define RHD_REGOFFSET_LUTB 0x800
 
@@ -45,7 +46,7 @@ LUTxSave(struct rhdLUT *LUT)
     CARD16 RegOff;
     int i;
     RHDFUNC(LUT);
-    
+
     if (LUT->Id == RHD_LUT_A)
 	RegOff = RHD_REGOFFSET_LUTA;
     else
@@ -125,7 +126,9 @@ LUTxSet(struct rhdLUT *LUT, int numColors, int *indices, LOCO *colors)
 {
     ScrnInfoPtr pScrn = xf86Screens[LUT->scrnIndex];
     CARD16 RegOff;
-    int i, index;
+    int i, index, hw_index;
+
+    LUT->Initialised = TRUE; /* thank you RandR */
 
     if (LUT->Id == RHD_LUT_A)
 	RegOff = RHD_REGOFFSET_LUTA;
@@ -150,39 +153,64 @@ LUTxSet(struct rhdLUT *LUT, int numColors, int *indices, LOCO *colors)
     RHDRegWrite(LUT, DC_LUT_RW_MODE, 0); /* table */
     RHDRegWrite(LUT, DC_LUT_WRITE_EN_MASK, 0x0000003F);
 
+    /* DC_LUT_RW_INDEX is incremented automatically when DC_LUT_30_COLOR
+     * is accessed; hw_index is used to track the value of DC_LUT_RW_INDEX
+     * so that we can properly handle the very unlikely case that the input
+     * table indexes are not monotonically increasing
+     */
     switch (pScrn->depth) {
     case 8:
     case 24:
     case 32:
+        RHDRegWrite(LUT, DC_LUT_RW_INDEX, 0);
+        hw_index = 0;
 	for (i = 0; i < numColors; i++) {
-	    index = indices[i];
-	    RHDRegWrite(LUT, DC_LUT_RW_INDEX, index);
-	    RHDRegWrite(LUT, DC_LUT_30_COLOR, (colors[index].red << 22) |
-			(colors[index].green << 12) | (colors[index].blue << 2));
+            index = indices[i];
+            if (hw_index != index) {
+                RHDRegWrite(LUT, DC_LUT_RW_INDEX, index);
+                hw_index = index;
+            }
+	    RHDRegWrite(LUT, DC_LUT_30_COLOR, (colors[index].red << 20) |
+			(colors[index].green << 10) | (colors[index].blue));
+            hw_index++;
 	}
 	break;
     case 16:
+        RHDRegWrite(LUT, DC_LUT_RW_INDEX, 0);
+        hw_index = 0;
 	for (i = 0; i < numColors; i++) {
 	    int j;
 
 	    index = indices[i];
-	    RHDRegWrite(LUT, DC_LUT_RW_INDEX, 4 * index);
+            if (hw_index != 4 * index) {
+                RHDRegWrite(LUT, DC_LUT_RW_INDEX, 4 * index);
+                hw_index = 4 * index;
+            }
 
-	    for (j = 0; j < 4; j++)
-		RHDRegWrite(LUT, DC_LUT_30_COLOR, (colors[index/2].red << 24) |
-			    (colors[index].green << 14) | (colors[index/2].blue << 4));
+	    for (j = 0; j < 4; j++) {
+		RHDRegWrite(LUT, DC_LUT_30_COLOR, (colors[index/2].red << 20) |
+			    (colors[index].green << 10) | (colors[index/2].blue));
+                hw_index++;
+            }
 	}
 	break;
     case 15:
+        RHDRegWrite(LUT, DC_LUT_RW_INDEX, 0);
+        hw_index = 0;
 	for (i = 0; i < numColors; i++) {
 	    int j;
 
 	    index = indices[i];
-	    RHDRegWrite(LUT, DC_LUT_RW_INDEX, 8 * index);
+            if (hw_index != 8 * index) {
+                RHDRegWrite(LUT, DC_LUT_RW_INDEX, 8 * index);
+                hw_index = 8 * index;
+            }
 
-	    for (j = 0; j < 8; j++)
-		RHDRegWrite(LUT, DC_LUT_30_COLOR, (colors[index].red << 25) |
-			    (colors[index].green << 15) | (colors[index].blue << 5));
+	    for (j = 0; j < 8; j++) {
+		RHDRegWrite(LUT, DC_LUT_30_COLOR, (colors[index].red << 20) |
+			    (colors[index].green << 10) | (colors[index].blue));
+                hw_index++;
+            }
 	}
 	break;
     }
@@ -298,4 +326,73 @@ RHDLUTsDestroy(RHDPtr rhdPtr)
     xfree(rhdPtr->LUT[0]);
     xfree(rhdPtr->LUT[1]);
     xfree(rhdPtr->LUTStore);
+}
+
+/*
+ * Workaround for missing RandR functionality. Initialise this
+ * LUT with the content of the other LUT.
+ */
+void
+RHDLUTCopyForRR(struct rhdLUT *LUT)
+{
+    int indices[0x100];
+    LOCO colors[0x100];
+    CARD32 entry;
+    int i;
+
+    RHDDebug(LUT->scrnIndex, "%s: %s\n", __func__, LUT->Name);
+
+    RHDRegWrite(LUT, DC_LUT_RW_MODE, 0); /* Table */
+
+    if (LUT->Id == RHD_LUT_A)
+	RHDRegWrite(LUT, DC_LUT_READ_PIPE_SELECT, 1);
+    else
+	RHDRegWrite(LUT, DC_LUT_READ_PIPE_SELECT, 0);
+
+    switch (xf86Screens[LUT->scrnIndex]->depth) {
+    case 8:
+    case 24:
+    case 32:
+	RHDRegWrite(LUT, DC_LUT_RW_INDEX, 0);
+
+	for (i = 0; i < 0x100; i++) {
+	    indices[i] = i;
+
+	    entry = RHDRegRead(LUT, DC_LUT_30_COLOR);
+
+	    colors[i].red = (entry >> 20) & 0x3FF;
+	    colors[i].green = (entry >> 10) & 0x3FF;
+	    colors[i].blue = (entry) & 0x3FF;
+	}
+	LUT->Set(LUT, 0x100, indices, colors);
+	break;
+    case 16:
+	for (i = 0; i < 0x40; i++) {
+	    indices[i] = i;
+
+	    RHDRegWrite(LUT, DC_LUT_RW_INDEX, 4 * i);
+
+	    entry = RHDRegRead(LUT, DC_LUT_30_COLOR);
+
+	    colors[i / 2].red = (entry >> 20) & 0x3FF;
+	    colors[i].green = (entry >> 10) & 0x3FF;
+	    colors[i / 2].blue = (entry) & 0x3FF;
+	}
+	LUT->Set(LUT, 0x40, indices, colors);
+	break;
+    case 15:
+	for (i = 0; i < 0x20; i++) {
+	    indices[i] = i;
+
+	    RHDRegWrite(LUT, DC_LUT_RW_INDEX, 8 * i);
+
+	    entry = RHDRegRead(LUT, DC_LUT_30_COLOR);
+
+	    colors[i].red = (entry >> 20) & 0x3FF;
+	    colors[i].green = (entry >> 10) & 0x3FF;
+	    colors[i].blue = (entry) & 0x3FF;
+	}
+	LUT->Set(LUT, 0x20, indices, colors);
+	break;
+    }
 }

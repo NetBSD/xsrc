@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2008  Luc Verhaegen <lverhaegen@novell.com>
+ * Copyright 2004-2008  Luc Verhaegen <libv@exsuse.de>
  * Copyright 2007, 2008 Matthias Hopf <mhopf@novell.com>
  * Copyright 2007, 2008 Egbert Eich   <eich@novell.com>
  * Copyright 2007, 2008 Advanced Micro Devices, Inc.
@@ -38,6 +38,10 @@ typedef enum rhdOutputType {
     RHD_OUTPUT_KLDSKP_LVTMA,
     RHD_OUTPUT_UNIPHYA,
     RHD_OUTPUT_UNIPHYB,
+    RHD_OUTPUT_UNIPHYC,
+    RHD_OUTPUT_UNIPHYD,
+    RHD_OUTPUT_UNIPHYE,
+    RHD_OUTPUT_UNIPHYF,
     RHD_OUTPUT_TMDSB = RHD_OUTPUT_NONE,
     RHD_OUTPUT_LVDS = RHD_OUTPUT_NONE,
     RHD_OUTPUT_LVTMB = RHD_OUTPUT_NONE
@@ -54,7 +58,13 @@ typedef enum rhdSensedOutput {
 
 enum rhdOutputProperty {
     RHD_OUTPUT_BACKLIGHT,
-    RHD_OUTPUT_COHERENT
+    RHD_OUTPUT_COHERENT,
+    RHD_OUTPUT_HDMI
+};
+
+enum rhdOutputAllocation {
+    RHD_OUTPUT_ALLOC,
+    RHD_OUTPUT_FREE
 };
 
 char *rhdPowerString[4];
@@ -89,6 +99,7 @@ struct rhdOutput {
     void (*Destroy) (struct rhdOutput *Output);
     Bool (*Property) (struct rhdOutput *Output,
 		      enum rhdPropertyAction Action, enum rhdOutputProperty Property, union rhdPropertyData *val);
+    Bool (*AllocFree) (struct rhdOutput *Output, enum rhdOutputAllocation Alloc);
     /* Driver Private data */
     rhdOutputDriverPrivate *OutputDriverPrivate;
     /* Output Private data */
@@ -103,6 +114,7 @@ void RHDOutputsSave(RHDPtr rhdPtr);
 void RHDOutputsRestore(RHDPtr rhdPtr);
 void RHDOutputsDestroy(RHDPtr rhdPtr);
 void RHDOutputPrintSensedType(struct rhdOutput *Output);
+void RHDOutputAttachConnector(struct rhdOutput *Output, struct rhdConnector *Connector);
 
 /* output local functions. */
 struct rhdOutput *RHDDACAInit(RHDPtr rhdPtr);
