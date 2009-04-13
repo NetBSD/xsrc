@@ -1,5 +1,5 @@
 /*
- * Copyright 2007  Luc Verhaegen <lverhaegen@novell.com>
+ * Copyright 2007  Luc Verhaegen <libv@exsuse.de>
  * Copyright 2007  Matthias Hopf <mhopf@novell.com>
  * Copyright 2007  Egbert Eich   <eich@novell.com>
  * Copyright 2007  Advanced Micro Devices, Inc.
@@ -32,9 +32,11 @@
 #ifndef _RHD_RANDR_H
 #define _RHD_RANDR_H
 
-Bool RHDRandrPreInit(ScrnInfoPtr pScrn);
-Bool RHDRandrScreenInit(ScreenPtr pScreen);
-Bool RHDRandrModeInit(ScrnInfoPtr pScrn);
-Bool RHDRandrSwitchMode(ScrnInfoPtr pScrn, DisplayModePtr mode);
+extern Bool RHDRandrPreInit(ScrnInfoPtr pScrn);
+extern Bool RHDRandrScreenInit(ScreenPtr pScreen);
+extern Bool RHDRandrModeInit(ScrnInfoPtr pScrn);
+extern Bool RHDRandrSwitchMode(ScrnInfoPtr pScrn, DisplayModePtr mode);
+extern void RHDRRFreeShadow(ScrnInfoPtr pScrn);
+extern Bool RHDRRInitCursor(ScreenPtr pScreen);
 
 #endif
