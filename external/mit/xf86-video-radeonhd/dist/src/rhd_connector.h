@@ -1,5 +1,5 @@
 /*
- * Copyright 2007  Luc Verhaegen <lverhaegen@novell.com>
+ * Copyright 2007  Luc Verhaegen <libv@exsuse.de>
  * Copyright 2007  Matthias Hopf <mhopf@novell.com>
  * Copyright 2007  Egbert Eich   <eich@novell.com>
  * Copyright 2007  Advanced Micro Devices, Inc.
@@ -44,6 +44,7 @@ typedef enum _rhdDDC {
     RHD_DDC_1,
     RHD_DDC_2,
     RHD_DDC_3,
+    RHD_DDC_4,
     RHD_DDC_MAX,
     RHD_DDC_NONE  = 0xFF,
     RHD_DDC_GPIO = RHD_DDC_NONE
@@ -85,5 +86,6 @@ Bool RHDConnectorsInit(RHDPtr rhdPtr, struct rhdCard *Card);
 void RHDHPDSave(RHDPtr rhdPtr);
 void RHDHPDRestore(RHDPtr rhdPtr);
 void RHDConnectorsDestroy(RHDPtr rhdPtr);
+Bool RHDConnectorEnableHDMI(struct rhdConnector *Connector);
 
 #endif /* _RHD_CONNECTOR_H */
