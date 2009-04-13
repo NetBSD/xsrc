@@ -1,5 +1,5 @@
 /*
- * Copyright 2007, 2008  Luc Verhaegen <lverhaegen@novell.com>
+ * Copyright 2007, 2008  Luc Verhaegen <libv@exsuse.de>
  * Copyright 2007, 2008  Matthias Hopf <mhopf@novell.com>
  * Copyright 2007, 2008  Egbert Eich   <eich@novell.com>
  * Copyright 2007, 2008  Advanced Micro Devices, Inc.
@@ -45,6 +45,7 @@
 #include "rhd_atombios.h"
 #include "rhd_atomout.h"
 #include "rhd_biosscratch.h"
+#include "rhd_hdmi.h"
 
 #if defined (ATOM_BIOS) && defined (ATOM_BIOS_PARSER)
 struct rhdAtomOutputPrivate {
@@ -77,6 +78,7 @@ struct rhdAtomOutputPrivate {
 
     Bool   Coherent;
     DisplayModePtr Mode;
+    struct rhdHdmi *Hdmi;
 
     int    BlLevel;
 };
@@ -120,6 +122,8 @@ rhdSetEncoderTransmitterConfig(struct rhdOutput *Output, int PixelClock)
 		case atomDFP2:
 		case atomLCD2:
 		case atomDFP3:
+		case atomDFP4:
+		case atomDFP5:
 		    EncoderConfig->u.dvo.digital = TRUE;
 		    /* @@@ no digital attributes, yet */
 		    break;
@@ -203,6 +207,10 @@ rhdSetEncoderTransmitterConfig(struct rhdOutput *Output, int PixelClock)
 	case RHD_OUTPUT_KLDSKP_LVTMA:
 	case RHD_OUTPUT_UNIPHYA:
 	case RHD_OUTPUT_UNIPHYB:
+	case RHD_OUTPUT_UNIPHYC:
+	case RHD_OUTPUT_UNIPHYD:
+	case RHD_OUTPUT_UNIPHYE:
+	case RHD_OUTPUT_UNIPHYF:
 	    if (Output->Connector && PixelClock > 0) {
 		if (Output->Connector->Type == RHD_CONNECTOR_DVI
 #if 0
@@ -250,6 +258,10 @@ atomSetBacklightFromBIOSScratch(struct rhdOutput *Output)
 	case RHD_OUTPUT_KLDSKP_LVTMA:
 	case RHD_OUTPUT_UNIPHYA:
 	case RHD_OUTPUT_UNIPHYB:
+	case RHD_OUTPUT_UNIPHYC:
+	case RHD_OUTPUT_UNIPHYD:
+	case RHD_OUTPUT_UNIPHYE:
+	case RHD_OUTPUT_UNIPHYF:
 	    rhdSetEncoderTransmitterConfig(Output, Private->PixelClock);
 	    if (!rhdAtomDigTransmitterControl(rhdPtr->atomBIOS, Private->TransmitterId,
 					      atomTransLcdBlBrightness, &Private->TransmitterConfig))
@@ -266,13 +278,14 @@ atomSetBacklightFromBIOSScratch(struct rhdOutput *Output)
  *
  */
 static void
-atomSetBacklight(struct rhdOutput *Output, int value)
+atomSetBacklight(struct rhdOutput *Output)
 {
     RHDPtr rhdPtr = RHDPTRI(Output);
+    struct rhdAtomOutputPrivate *Private = (struct rhdAtomOutputPrivate *) Output->Private;
 
     RHDFUNC(Output);
 
-    RHDAtomBIOSScratchBlLevel(rhdPtr, rhdBIOSScratchBlSet, &value);
+    RHDAtomBIOSScratchBlLevel(rhdPtr, rhdBIOSScratchBlSet, &Private->BlLevel);
 
     atomSetBacklightFromBIOSScratch(Output);
 }
@@ -315,7 +328,11 @@ rhdAtomOutputSet(struct rhdOutput *Output, DisplayModePtr Mode)
     switch (Output->Id) {
 	case RHD_OUTPUT_UNIPHYA:
 	case RHD_OUTPUT_UNIPHYB:
-#if 0
+ 	case RHD_OUTPUT_UNIPHYC:
+ 	case RHD_OUTPUT_UNIPHYD:
+ 	case RHD_OUTPUT_UNIPHYE:
+ 	case RHD_OUTPUT_UNIPHYF:
+#if 1
 	    rhdAtomDigTransmitterControl(rhdPtr->atomBIOS, Private->TransmitterId, atomTransInit,
 					 &Private->TransmitterConfig);
 #endif
@@ -330,6 +347,64 @@ rhdAtomOutputSet(struct rhdOutput *Output, DisplayModePtr Mode)
     rhdAtomSelectCrtcSource(rhdPtr->atomBIOS, Output->Crtc->Id ? atomCrtc2 : atomCrtc1, &CrtcSourceConfig);
     data.Address = NULL;
     RHDAtomBiosFunc(Output->scrnIndex, rhdPtr->atomBIOS, ATOM_SET_REGISTER_LIST_LOCATION, &data);
+    RHDHdmiSetMode(Private->Hdmi, Mode);
+}
+
+/*
+ *
+ */
+static Bool
+atomIsHdmiEnabled(struct rhdOutput *Output)
+{
+    struct rhdAtomOutputPrivate *Private = (struct rhdAtomOutputPrivate *) Output->Private;
+    switch(Output->Id) {
+	case RHD_OUTPUT_TMDSA:
+	case RHD_OUTPUT_LVTMA:
+	    return Private->EncoderConfig.u.lvds2.Hdmi;
+
+	case RHD_OUTPUT_UNIPHYA:
+	case RHD_OUTPUT_UNIPHYB:
+	case RHD_OUTPUT_UNIPHYC:
+	case RHD_OUTPUT_UNIPHYD:
+	case RHD_OUTPUT_UNIPHYE:
+	case RHD_OUTPUT_UNIPHYF:
+	case RHD_OUTPUT_KLDSKP_LVTMA:
+	    return Private->TransmitterConfig.Mode == atomHDMI &&
+		Private->EncoderConfig.u.dig.EncoderMode == atomHDMI;
+
+	default:
+	    return FALSE;
+    }
+}
+
+/*
+ *
+ */
+static void
+atomSetHdmiEnabled(struct rhdOutput *Output, Bool value)
+{
+    struct rhdAtomOutputPrivate *Private = (struct rhdAtomOutputPrivate *) Output->Private;
+    switch(Output->Id) {
+	case RHD_OUTPUT_TMDSA:
+	case RHD_OUTPUT_LVTMA:
+	    Private->EncoderConfig.u.lvds2.Hdmi = value;
+	    break;
+
+	case RHD_OUTPUT_UNIPHYA:
+	case RHD_OUTPUT_UNIPHYB:
+	case RHD_OUTPUT_UNIPHYC:
+	case RHD_OUTPUT_UNIPHYD:
+	case RHD_OUTPUT_UNIPHYE:
+	case RHD_OUTPUT_UNIPHYF:
+	case RHD_OUTPUT_KLDSKP_LVTMA:
+	    Private->TransmitterConfig.Mode =
+		Private->EncoderConfig.u.dig.EncoderMode =
+		value ? atomHDMI : atomDVI;
+	    break;
+
+	default:
+	    break;
+    }
 }
 
 /*
@@ -358,6 +433,10 @@ rhdAtomOutputPower(struct rhdOutput *Output, int Power)
 		case RHD_OUTPUT_KLDSKP_LVTMA:
 		case RHD_OUTPUT_UNIPHYA:
 		case RHD_OUTPUT_UNIPHYB:
+		case RHD_OUTPUT_UNIPHYC:
+		case RHD_OUTPUT_UNIPHYD:
+		case RHD_OUTPUT_UNIPHYE:
+		case RHD_OUTPUT_UNIPHYF:
 		    if (!rhdAtomDigTransmitterControl(rhdPtr->atomBIOS, Private->TransmitterId,
 						      atomTransEnable, &Private->TransmitterConfig)) {
 			ERROR_MSG("rhdAtomDigTransmitterControl(atomTransEnable)");
@@ -372,6 +451,7 @@ rhdAtomOutputPower(struct rhdOutput *Output, int Power)
 			ERROR_MSG("rhdAtomOutputControl(atomOutputEnable)");
 		    break;
 	    }
+	    RHDHdmiEnable(Private->Hdmi, atomIsHdmiEnabled(Output));
 	    break;
 	case RHD_POWER_RESET:
 	    RHDDebug(Output->scrnIndex, "RHD_POWER_RESET\n");
@@ -379,6 +459,10 @@ rhdAtomOutputPower(struct rhdOutput *Output, int Power)
 		case RHD_OUTPUT_KLDSKP_LVTMA:
 		case RHD_OUTPUT_UNIPHYA:
 		case RHD_OUTPUT_UNIPHYB:
+		case RHD_OUTPUT_UNIPHYC:
+		case RHD_OUTPUT_UNIPHYD:
+		case RHD_OUTPUT_UNIPHYE:
+		case RHD_OUTPUT_UNIPHYF:
 		    if (!rhdAtomDigTransmitterControl(rhdPtr->atomBIOS, Private->TransmitterId,
 						      atomTransDisableOutput, &Private->TransmitterConfig))
 			ERROR_MSG("rhdAtomDigTransmitterControl(atomTransDisableOutput)");
@@ -395,6 +479,12 @@ rhdAtomOutputPower(struct rhdOutput *Output, int Power)
 		case RHD_OUTPUT_KLDSKP_LVTMA:
 		case RHD_OUTPUT_UNIPHYA:
 		case RHD_OUTPUT_UNIPHYB:
+		case RHD_OUTPUT_UNIPHYC:
+		case RHD_OUTPUT_UNIPHYD:
+		case RHD_OUTPUT_UNIPHYE:
+		case RHD_OUTPUT_UNIPHYF:
+		    if (Private->EncoderId == atomEncoderNone)
+			break;
 		    if (!rhdAtomDigTransmitterControl(rhdPtr->atomBIOS, Private->TransmitterId,
 						      atomTransDisableOutput, &Private->TransmitterConfig)) {
 			ERROR_MSG("rhdAtomDigTransmitterControl(atomTransDisableOutput)");
@@ -409,8 +499,10 @@ rhdAtomOutputPower(struct rhdOutput *Output, int Power)
 			ERROR_MSG("rhdAtomOutputControl(atomOutputDisable)");
 		    break;
 	    }
-	    if (!rhdAtomEncoderControl(rhdPtr->atomBIOS, Private->EncoderId, atomEncoderOff, &Private->EncoderConfig))
-		ERROR_MSG("rhdAtomEncoderControl(atomEncoderOff)");
+	    if (Private->EncoderId != atomEncoderNone)
+		if (!rhdAtomEncoderControl(rhdPtr->atomBIOS, Private->EncoderId, atomEncoderOff, &Private->EncoderConfig))
+		    ERROR_MSG("rhdAtomEncoderControl(atomEncoderOff)");
+	    RHDHdmiEnable(Private->Hdmi, FALSE);
 	    break;
     }
 
@@ -424,6 +516,8 @@ rhdAtomOutputPower(struct rhdOutput *Output, int Power)
 static inline void
 rhdAtomOutputSave(struct rhdOutput *Output)
 {
+     struct rhdAtomOutputPrivate *Private = (struct rhdAtomOutputPrivate *) Output->Private;
+     RHDHdmiSave(Private->Hdmi);
 }
 
 /*
@@ -440,6 +534,7 @@ rhdAtomOutputRestore(struct rhdOutput *Output)
      RHDAtomBiosFunc(Output->scrnIndex, rhdPtr->atomBIOS, ATOM_RESTORE_REGISTERS, &data);
      if (Output->Connector && Output->Connector->Type == RHD_CONNECTOR_PANEL)
 	 atomSetBacklightFromBIOSScratch(Output);
+     RHDHdmiRestore(Private->Hdmi);
 }
 
 /*
@@ -448,14 +543,11 @@ rhdAtomOutputRestore(struct rhdOutput *Output)
 static ModeStatus
 rhdAtomOutputModeValid(struct rhdOutput *Output, DisplayModePtr Mode)
 {
-    RHDFUNC(Output);
 
-    if (Mode->Flags & V_INTERLACE)
-	return MODE_NO_INTERLACE;
+    RHDFUNC(Output);
 
     if (Mode->Clock < 25000)
 	return MODE_CLOCK_LOW;
-
 
     if (Output->Connector->Type == RHD_CONNECTOR_DVI_SINGLE
 #if 0
@@ -548,7 +640,6 @@ TMDSInfoRetrieve(RHDPtr rhdPtr, struct rhdAtomOutputPrivate *Private)
     Private->TemporalDither = FALSE;
     Private->SpatialDither = FALSE;
     Private->GreyLevel = 0;
-    Private->Coherent = FALSE;
     Private->BlLevel = -1;
 
     return TRUE;
@@ -590,7 +681,16 @@ atomLVDSPropertyControl(struct rhdOutput *Output,
 		return FALSE;
 	    switch (Property) {
 		case RHD_OUTPUT_BACKLIGHT:
-		    atomSetBacklight(Output, val->integer);
+		    Private->BlLevel = val->integer;
+		    return TRUE;
+		default:
+		    return FALSE;
+	    }
+	    break;
+	case rhdPropertyCommit:
+	    switch (Property) {
+		case RHD_OUTPUT_BACKLIGHT:
+		    atomSetBacklight(Output);
 		    return TRUE;
 		default:
 		    return FALSE;
@@ -612,16 +712,20 @@ atomTMDSPropertyControl(struct rhdOutput *Output,
     RHDFUNC(Output);
     switch (Action) {
 	case rhdPropertyCheck:
-	switch (Property) {
-	    case RHD_OUTPUT_COHERENT:
+	    switch (Property) {
+		case RHD_OUTPUT_COHERENT:
+		case RHD_OUTPUT_HDMI:
 		    return TRUE;
-	    default:
-		return FALSE;
-	}
+		default:
+		    return FALSE;
+	    }
 	case rhdPropertyGet:
 	    switch (Property) {
 		case RHD_OUTPUT_COHERENT:
 		    val->Bool =  Private->Coherent;
+		    return TRUE;
+		case RHD_OUTPUT_HDMI:
+		    val->Bool = atomIsHdmiEnabled(Output);
 		    return TRUE;
 		default:
 		    return FALSE;
@@ -631,6 +735,18 @@ atomTMDSPropertyControl(struct rhdOutput *Output,
 	    switch (Property) {
 		case RHD_OUTPUT_COHERENT:
 		    Private->Coherent = val->Bool;
+		    break;
+		case RHD_OUTPUT_HDMI:
+		    atomSetHdmiEnabled(Output, val->Bool);
+		    break;
+		default:
+		    return FALSE;
+	    }
+	    break;
+	case rhdPropertyCommit:
+	    switch (Property) {
+		case RHD_OUTPUT_COHERENT:
+		case RHD_OUTPUT_HDMI:
 		    Output->Mode(Output, Private->Mode);
 		    Output->Power(Output, RHD_POWER_ON);
 		    break;
@@ -648,13 +764,93 @@ atomTMDSPropertyControl(struct rhdOutput *Output,
 static void
 rhdAtomOutputDestroy(struct rhdOutput *Output)
 {
+    struct rhdAtomOutputPrivate *Private = (struct rhdAtomOutputPrivate *) Output->Private;
     RHDFUNC(Output);
-    if (((struct rhdAtomOutputPrivate *)(Output->Private))->Save)
-	xfree(((struct rhdAtomOutputPrivate *)(Output->Private))->Save);
-    if (Output->Private)
-	xfree(Output->Private);
+    if (Private->Save)
+	xfree(Private->Save);
+    RHDHdmiDestroy(Private->Hdmi);
+
+    if (Private)
+	xfree(Private);
     Output->Private = NULL;
     xfree(Output->Name);
+}
+
+/*
+ *
+ */
+static Bool
+RHDAtomOutputAllocFree(struct rhdOutput *Output, enum rhdOutputAllocation Alloc)
+{
+    struct rhdAtomOutputPrivate *Private = (struct rhdAtomOutputPrivate *) Output->Private;
+    struct atomTransmitterConfig *TransmitterConfig = &Private->TransmitterConfig;
+    RHDPtr rhdPtr = RHDPTRI(Output);
+    char *TransmitterName;
+
+    RHDFUNC(rhdPtr);
+
+    switch (Output->Id) {
+	case RHD_OUTPUT_KLDSKP_LVTMA:
+	    TransmitterName = "KLDSKP_LVTMA";
+	    break;
+	case RHD_OUTPUT_UNIPHYA:
+	    TransmitterName = "KLDSKP_UNIPHYA";
+	    break;
+	case RHD_OUTPUT_UNIPHYB:
+	    TransmitterName = "KLDSKP_UNIPHYB";
+	    break;
+	case RHD_OUTPUT_UNIPHYC:
+	    TransmitterName = "KLDSKP_UNIPHYC";
+	    break;
+	case RHD_OUTPUT_UNIPHYD:
+	    TransmitterName = "KLDSKP_UNIPHYD";
+	    break;
+	case RHD_OUTPUT_UNIPHYE:
+	    TransmitterName = "KLDSKP_UNIPHYE";
+	    break;
+	case RHD_OUTPUT_UNIPHYF:
+	    TransmitterName = "KLDSKP_UNIPHYF";
+	    break;
+	default:
+	    return TRUE;
+    }
+
+    switch (Alloc) {
+	case RHD_OUTPUT_ALLOC:
+	    /*
+	     * LVTMA can only use DIG2. Thus exclude
+	     * DIG1 for LVTMA and prefer it for the
+	     * UNIPHYs.
+	     */
+	    if (Private->EncoderId != atomEncoderNone)
+		return TRUE;
+	    if (Output->Id != RHD_OUTPUT_KLDSKP_LVTMA
+		&& !rhdPtr->DigEncoderOutput[0]) {
+		rhdPtr->DigEncoderOutput[0] = Output;
+		TransmitterConfig->Encoder = Private->EncoderId = atomEncoderDIG1;
+		xf86DrvMsg(Output->scrnIndex, X_INFO, "Mapping DIG1 encoder to %s\n",TransmitterName);
+		return TRUE;
+	    } else if (!rhdPtr->DigEncoderOutput[1]) {
+		rhdPtr->DigEncoderOutput[1] = Output;
+		TransmitterConfig->Encoder = Private->EncoderId = atomEncoderDIG2;
+		xf86DrvMsg(Output->scrnIndex, X_INFO, "Mapping DIG2 encoder to %s\n",TransmitterName);
+		return TRUE;
+	    } else
+		return FALSE;
+	case RHD_OUTPUT_FREE:
+		TransmitterConfig->Encoder = Private->EncoderId = atomEncoderNone;
+	    if (rhdPtr->DigEncoderOutput[0] == Output) {
+		rhdPtr->DigEncoderOutput[0] = NULL;
+		return TRUE;
+	    } else if (rhdPtr->DigEncoderOutput[1] == Output) {
+		rhdPtr->DigEncoderOutput[1] = NULL;
+		return TRUE;
+	    } else
+		return FALSE;
+	    break;
+	default:
+	    return FALSE;
+    }
 }
 
 /*
@@ -699,6 +895,18 @@ RHDAtomOutputInit(RHDPtr rhdPtr, rhdConnectorType ConnectorType,
 	case RHD_OUTPUT_UNIPHYB:
 	    OutputName = "UniphyB";
 	    break;
+	case RHD_OUTPUT_UNIPHYC:
+	    OutputName = "UniphyC";
+	    break;
+	case RHD_OUTPUT_UNIPHYD:
+	    OutputName = "UniphyD";
+	    break;
+	case RHD_OUTPUT_UNIPHYE:
+	    OutputName = "UniphyE";
+	    break;
+	case RHD_OUTPUT_UNIPHYF:
+	    OutputName = "UniphyF";
+	    break;
     }
 
     Output = xnfcalloc(sizeof(struct rhdOutput), 1);
@@ -725,11 +933,13 @@ RHDAtomOutputInit(RHDPtr rhdPtr, rhdConnectorType ConnectorType,
 	    Output->Sense = RHDBIOSScratchDACSense;
 	    Private->EncoderId = atomEncoderDACA;
 	    Private->OutputControlId = atomDAC1Output;
+	    Private->Hdmi = NULL;
 	    break;
 	case RHD_OUTPUT_DACB:
 	    Output->Sense = RHDBIOSScratchDACSense;
 	    Private->EncoderId = atomEncoderDACB;
 	    Private->OutputControlId = atomDAC2Output;
+	    Private->Hdmi = NULL;
 	    break;
 	case RHD_OUTPUT_TMDSA:
 	case RHD_OUTPUT_LVTMA:
@@ -755,6 +965,10 @@ RHDAtomOutputInit(RHDPtr rhdPtr, rhdConnectorType ConnectorType,
 	    else
 		Private->DualLink = FALSE;
 
+	    if (ConnectorType != RHD_CONNECTOR_PANEL)
+		Private->Hdmi = RHDHdmiInit(rhdPtr, Output);
+	    else
+		Private->Hdmi = NULL;
 
 	    Private->EncoderVersion = rhdAtomEncoderControlVersion(rhdPtr->atomBIOS, Private->EncoderId);
 	    switch (Private->EncoderVersion.cref) {
@@ -825,9 +1039,9 @@ RHDAtomOutputInit(RHDPtr rhdPtr, rhdConnectorType ConnectorType,
 	    }
 	    break;
 	case RHD_OUTPUT_KLDSKP_LVTMA:
-	    Private->EncoderId = atomEncoderDIG2;
 	    Private->EncoderVersion = rhdAtomEncoderControlVersion(rhdPtr->atomBIOS,
 								   Private->EncoderId);
+	    Output->AllocFree = RHDAtomOutputAllocFree;
 	    EncoderConfig->u.dig.Link = atomTransLinkA;
 	    EncoderConfig->u.dig.Transmitter = Private->TransmitterId = atomTransmitterLVTMA;
 
@@ -838,23 +1052,63 @@ RHDAtomOutputInit(RHDPtr rhdPtr, rhdConnectorType ConnectorType,
 	    if (ConnectorType == RHD_CONNECTOR_PANEL) {
 		TransmitterConfig->Mode = EncoderConfig->u.dig.EncoderMode = atomLVDS;
 		LVDSInfoRetrieve(rhdPtr, Private);
+		Private->Hdmi = NULL;
 	    } else {
 		TransmitterConfig->Mode = EncoderConfig->u.dig.EncoderMode = atomDVI;
 		TMDSInfoRetrieve(rhdPtr, Private);
+		Private->Coherent = FALSE;
+		Private->Hdmi = RHDHdmiInit(rhdPtr, Output);
 	    }
 	    break;
 
 	case RHD_OUTPUT_UNIPHYA:
-	    Private->EncoderId = atomEncoderDIG1;
-	    EncoderConfig->u.dig.Link = atomTransLinkA;
+	case RHD_OUTPUT_UNIPHYB:
+	case RHD_OUTPUT_UNIPHYC:
+	case RHD_OUTPUT_UNIPHYD:
+	case RHD_OUTPUT_UNIPHYE:
+	case RHD_OUTPUT_UNIPHYF:
+	    Output->AllocFree = RHDAtomOutputAllocFree;
 	    if (RHDIsIGP(rhdPtr->ChipSet))
 		EncoderConfig->u.dig.Transmitter = Private->TransmitterId = atomTransmitterPCIEPHY;
-	    else
-		EncoderConfig->u.dig.Transmitter = Private->TransmitterId = atomTransmitterUNIPHY;
+	    else {
+		switch (OutputType) {
+		    case RHD_OUTPUT_UNIPHYA:
+		    case RHD_OUTPUT_UNIPHYB:
+			EncoderConfig->u.dig.Transmitter = Private->TransmitterId = atomTransmitterUNIPHY;
+			break;
+		    case RHD_OUTPUT_UNIPHYC:
+		    case RHD_OUTPUT_UNIPHYD:
+			EncoderConfig->u.dig.Transmitter = Private->TransmitterId = atomTransmitterUNIPHY1;
+			break;
+		    case RHD_OUTPUT_UNIPHYE:
+		    case RHD_OUTPUT_UNIPHYF:
+			EncoderConfig->u.dig.Transmitter = Private->TransmitterId = atomTransmitterUNIPHY2;
+			break;
+		    default:
+			xfree(Private);
+			xfree(Output);
+			return NULL;
+		}
+	    }
 
 	    TransmitterConfig = &Private->TransmitterConfig;
-	    TransmitterConfig->Link = atomTransLinkA;
-	    TransmitterConfig->Encoder =  Private->EncoderId;
+	    TransmitterConfig->Encoder =  Private->EncoderId = atomEncoderNone;
+	    switch (OutputType) {
+		case RHD_OUTPUT_UNIPHYA:
+		case RHD_OUTPUT_UNIPHYC:
+		case RHD_OUTPUT_UNIPHYE:
+		    TransmitterConfig->Link = EncoderConfig->u.dig.Link = atomTransLinkA;
+		    break;
+		case RHD_OUTPUT_UNIPHYB:
+		case RHD_OUTPUT_UNIPHYD:
+		case RHD_OUTPUT_UNIPHYF:
+		    TransmitterConfig->Link = EncoderConfig->u.dig.Link = atomTransLinkB;
+		    break;
+		default:
+		    xfree(Private);
+		    xfree(Output);
+		    return NULL;
+	    }
 
 	    if (RHDIsIGP(rhdPtr->ChipSet)) {
 		AtomBiosArgRec data;
@@ -879,54 +1133,10 @@ RHDAtomOutputInit(RHDPtr rhdPtr, rhdConnectorType ConnectorType,
 		case RHD_CONNECTOR_DVI:
 		case RHD_CONNECTOR_DVI_SINGLE:
 		    TransmitterConfig->Mode = EncoderConfig->u.dig.EncoderMode = atomDVI;
+		    Private->Hdmi = RHDHdmiInit(rhdPtr, Output);
 		    break;
-#if 0
-		case RHD_CONNECTOR_DP:
-		case RHD_CONNECTOR_DP_DUAL:
-		    TransmitterConfig->Mode = EncoderConfig->u.dig.EncoderMode = atomDP;
-		    break;
-		case RHD_CONNECTOR_HDMI_A:
-		case RHD_CONNECTOR_HDMI_B:
-		    TransmitterConfig->Mode = EncoderConfig->u.dig.EncoderMode = atomHDMI;
-		    break;
-#endif
-		default:
-		    xf86DrvMsg(rhdPtr->scrnIndex, X_ERROR, "%s: Unknown connector type\n",__func__);
-		    xfree(Output);
-		    xfree(Private);
-		    return NULL;
-	    }
-	    break;
-	case RHD_OUTPUT_UNIPHYB:
-	    Private->EncoderId = atomEncoderDIG2;
-	    EncoderConfig->u.dig.Link = atomTransLinkB;
-	    if (RHDIsIGP(rhdPtr->ChipSet))
-		EncoderConfig->u.dig.Transmitter = Private->TransmitterId = atomTransmitterPCIEPHY;
-	    else
-		EncoderConfig->u.dig.Transmitter = Private->TransmitterId = atomTransmitterUNIPHY;
-
-	    TransmitterConfig = &Private->TransmitterConfig;
-	    TransmitterConfig->Link = atomTransLinkB;
-	    TransmitterConfig->Encoder =  Private->EncoderId;
-
-	    if (RHDIsIGP(rhdPtr->ChipSet)) {
-		AtomBiosArgRec data;
-		data.val = 1;
-		if (RHDAtomBiosFunc(rhdPtr->scrnIndex, rhdPtr->atomBIOS, ATOM_GET_PCIE_LANES,
-				    &data) == ATOM_SUCCESS)
-		    TransmitterConfig->Lanes = data.pcieLanes.Chassis;
-		/* only do 'chassis' for now */
-		else {
-		    xfree(Private);
-		    xfree(Output);
-		    return NULL;
-		}
-	    }
-
-	    switch (ConnectorType) {
-		case RHD_CONNECTOR_DVI:
-		case RHD_CONNECTOR_DVI_SINGLE:
-		    TransmitterConfig->Mode = EncoderConfig->u.dig.EncoderMode = atomDVI;
+		case RHD_CONNECTOR_PANEL:
+		    TransmitterConfig->Mode = EncoderConfig->u.dig.EncoderMode = atomLVDS;
 		    break;
 #if 0
 		case RHD_CONNECTOR_DP:
@@ -980,17 +1190,69 @@ RhdAtomSetupBacklightControlProperty(struct rhdOutput *Output,
 				     Bool (**PropertyFunc)(struct rhdOutput *Output,
 							   enum rhdPropertyAction Action,
 							   enum rhdOutputProperty Property,
-							   union rhdPropertyData *val))
+							   union rhdPropertyData *val), void **PrivatePtr)
 {
     RHDPtr rhdPtr = RHDPTRI(Output);
     int BlLevel;
+    struct rhdAtomOutputPrivate *Private;
+    struct atomTransmitterConfig *TransmitterConfig;
 
     RHDFUNC(Output);
 
+    Private = xnfcalloc(sizeof(struct rhdAtomOutputPrivate), 1);
+
+    switch (Output->Id) {
+	case RHD_OUTPUT_KLDSKP_LVTMA:
+	case RHD_OUTPUT_UNIPHYE:
+	case RHD_OUTPUT_UNIPHYF:
+	    /* We set up a those parameters although they may never be needed for BL control */
+	    TransmitterConfig = &Private->TransmitterConfig;
+	    switch (Output->Id) {
+		case RHD_OUTPUT_KLDSKP_LVTMA:
+		    Private->TransmitterId = atomTransmitterLVTMA;
+		    break;
+		case RHD_OUTPUT_UNIPHYE:
+		    Private->TransmitterId = atomTransmitterUNIPHY2;
+		    TransmitterConfig->Link = atomTransLinkA;
+		    break;
+		case RHD_OUTPUT_UNIPHYF:
+		    Private->TransmitterId = atomTransmitterUNIPHY2;
+		    TransmitterConfig->Link = atomTransLinkB;
+		    break;
+		default:
+		    return 0;  /* never get here */
+	    }
+	    TransmitterConfig = &Private->TransmitterConfig;
+	    TransmitterConfig->Mode = atomLVDS;
+	    if (rhdPtr->DigEncoderOutput[0] == Output)
+		TransmitterConfig->Encoder =  Private->EncoderId = atomEncoderDIG1;
+	    else if (rhdPtr->DigEncoderOutput[1] == Output)
+		TransmitterConfig->Encoder =  Private->EncoderId = atomEncoderDIG2;
+	    else
+		TransmitterConfig->Encoder =  Private->EncoderId = atomEncoderNone;
+	    LVDSInfoRetrieve(rhdPtr, Private);
+	    Private->PixelClock = 0;
+	    Private->Hdmi = NULL;
+	    break;
+	case RHD_OUTPUT_LVTMA:
+	    Private->OutputControlId = atomLCDOutput;
+	    break;
+	default:
+	    xfree(Private);
+	    return 0;
+    }
     *PropertyFunc = atomLVDSPropertyControl;
+    *PrivatePtr = Private;
     RHDAtomBIOSScratchBlLevel(rhdPtr, rhdBIOSScratchBlGet, &BlLevel);
 
     return BlLevel;
+}
+
+void
+RhdAtomDestroyBacklightControlProperty(struct rhdOutput *Output, void *PrivatePtr)
+{
+    if (PrivatePtr)
+	xfree(PrivatePtr);
 }
 
 #endif /* ATOM_BIOS && ATOM_BIOS_PARSER */

@@ -1,5 +1,5 @@
 /*
- * Copyright 2007  Luc Verhaegen <lverhaegen@novell.com>
+ * Copyright 2007  Luc Verhaegen <libv@exsuse.de>
  * Copyright 2007  Matthias Hopf <mhopf@novell.com>
  * Copyright 2007  Egbert Eich   <eich@novell.com>
  * Copyright 2007  Advanced Micro Devices, Inc.
@@ -62,5 +62,11 @@ void rhdHideCursor(ScrnInfoPtr);
 void rhdReloadCursor(ScrnInfoPtr pScrn);
 void rhdSaveCursor(ScrnInfoPtr pScrn);
 void rhdRestoreCursor(ScrnInfoPtr pScrn);
+
+void rhdCrtcShowCursor(struct rhdCrtc *Crtc);      /* */
+void rhdCrtcHideCursor(struct rhdCrtc *Crtc);      /* */
+void rhdCrtcLoadCursorARGB(struct rhdCrtc *Crtc, CARD32 *Image);  /* */
+void rhdCrtcSetCursorColors(struct rhdCrtc *Crtc, int bg, int fg);
+void rhdCrtcSetCursorPosition(struct rhdCrtc *Crtc, int x, int y);
 
 #endif
