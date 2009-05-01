@@ -739,7 +739,7 @@ ConstructCommand(cmdbuf, path, filename, tempfile)
             filter = GRAP;
             break;
          case 'p':
-            filter = PIC;
+            filter = XMAN_PIC;
             break;
          case 't':
             filter = TBL;
