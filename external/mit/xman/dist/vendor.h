@@ -187,8 +187,7 @@ from the X Consortium.
 # define EQN		"eqn"
 # define TBL		"tbl"
 # define GRAP		"grap"
-# undef PIC	/* we don't care about position independent code */
-# define PIC		"pic"
+# define XMAN_PIC	"pic"
 # define VGRIND		"vgrind"
 # define REFER		"refer"
 # if defined(CSRG_BASED)
