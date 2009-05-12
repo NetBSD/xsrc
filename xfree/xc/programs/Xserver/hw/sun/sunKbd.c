@@ -833,7 +833,8 @@ static Bool DoSpecialKeys(device, xE, fe)
 	autoRepeatEvent = *xE;
 	autoRepeatFirst = TRUE;
 	autoRepeatKeyDown++;
-	autoRepeatLastKeyDownTv = fe->time;
+	autoRepeatLastKeyDownTv.tv_sec = fe->time.tv_sec;
+	autoRepeatLastKeyDownTv.tv_usec = fe->time.tv_usec;
     }
     return FALSE;
 }
