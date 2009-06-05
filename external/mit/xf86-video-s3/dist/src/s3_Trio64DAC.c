@@ -24,7 +24,6 @@
  *
  *
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/s3/s3_Trio64DAC.c,v 1.7tsi Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -36,6 +35,7 @@
 #include "compiler.h"
 
 #include "s3.h"
+#include "s3_reg.h"
 
 /* this is really quite dumb */
 Bool S3Trio64DACProbe(ScrnInfoPtr pScrn)
@@ -233,33 +233,30 @@ static void S3TrioSetPLL(ScrnInfoPtr pScrn, int clk, unsigned char m,
 
 		outb(0x3c4, 0x08);
 		outb(0x3c5, 0x06);	/* unlock extended CR9-18 */
+		
+		outb(0x3c4, 0x12);      /* write N1 and N2 to DCLK PLL */
+		outb(0x3c5, n);
+		outb(0x3c4, 0x13);      /* write M to DCLK PLL */
+		outb(0x3c5, m);
 
-		if (clk != 10) {
-			outb(0x3c4, 0x12);
-			outb(0x3c5, n);
-			outb(0x3c4, 0x13);
-			outb(0x3c5, m);
-
-			outb(0x3c4, 0x15);
-			tmp = inb(0x3c5) & ~0x21;
-			outb(0x3c5, tmp | 0x02);
-			outb(0x3c5, tmp | 0x22);
-			outb(0x3c5, tmp | 0x02);
-		} else {
-			outb(0x3c4, 0x10);
-			outb(0x3c5, n);
-			outb(0x3c4, 0x11);
-			outb(0x3c5, m);
-			outb(0x3c4, 0x1a);
-			outb(0x3c5, n);
-
-			outb(0x3c4, 0x15);
-			tmp = inb(0x3c5) & ~0x21;
-			outb(0x3c5, tmp | 0x01);
-			outb(0x3c5, tmp | 0x21);
-			outb(0x3c5, tmp | 0x01);
-			outb(0x3c5, tmp);
-		}
+#if 0
+/* this code was in previous driver version but it was never called. 
+   So I decide to comment it. */
+		outb(0x3c4, 0x10);     
+		outb(0x3c5, n);
+		outb(0x3c4, 0x11);
+		outb(0x3c5, m); */
+			
+		outb(0x3c4, 0x1a);
+		outb(0x3c5, n);
+#endif
+		/* Toggle cr15_5 by sequence 0->1->0 to immediately apply 
+		   new PLL parameters */
+		outb(0x3c4, 0x15);
+		tmp = inb(0x3c5) & ~0x20;
+		outb(0x3c5, tmp);
+		outb(0x3c5, tmp | 0x20);
+		outb(0x3c5, tmp);
 
 		outb(0x3c4, 0x08);
 		outb(0x3c5, 0x00);	/* lock em */
@@ -327,23 +324,22 @@ void S3Trio64DAC_Init(ScrnInfoPtr pScrn, DisplayModePtr mode)
 			       135000, 270000);
 	else if (pS3->Chipset == PCI_CHIP_TRIO64V2_DXGX)
 		S3TrioSetClock(pScrn, mode->Clock, 2, 1, 1, 31, 0, 3, 2,
-			       170000, 270000);
+			       170000, 340000);
 	else
 		S3TrioSetClock(pScrn, mode->Clock, 2, 1, 1, 31, 0, 3, 2,
 			       135000, 270000);
 
-
-	outb(0x3c4, 1);
+	outb(0x3c4, 0x01);
 	blank = inb(0x3c5);
 	outb(0x3c5, blank | 0x20);	/* blank the screen */
 
 	outb(0x3c4, 0x08);
 	sr8 = inb(0x3c5);
-	outb(0x3c5, 0x06);
+	outb(0x3c5, 0x06);       /* unlock extended sequenser register */
 
-	outb(0x3c4, 0x0d0);
-	tmp = inb(0x3c5) & ~1;
-	outb(0x3c5, tmp);
+	outb(0x3c4, 0x0d);
+	tmp = inb(0x3c5) & ~0x01;
+	outb(0x3c5, tmp);       /* VCLK, HSYNC, VSYNC are outputs */
 
 	outb(0x3c4, 0x15);
 	sr15 = inb(0x3c5) & ~0x10;
@@ -352,11 +348,6 @@ void S3Trio64DAC_Init(ScrnInfoPtr pScrn, DisplayModePtr mode)
 	sr18 = inb(0x3c5) & ~0x80;
 	outb(pS3->vgaCRIndex, 0x33);
 	cr33 = inb(pS3->vgaCRReg) & ~0x28;
-
-	if (pS3->Chipset == PCI_CHIP_TRIO64V2_DXGX)
-	{
-	  cr33 |= 0x20;
-	}
 
 	/* ! pixmux */
 	switch (pScrn->depth) {
@@ -370,6 +361,7 @@ void S3Trio64DAC_Init(ScrnInfoPtr pScrn, DisplayModePtr mode)
 		cr33 |= 0x08;
 		pixmux = 0x50;
 		break;
+	case 24:
 	case 32:
 		pixmux = 0xd0;
 		break;
@@ -378,6 +370,7 @@ void S3Trio64DAC_Init(ScrnInfoPtr pScrn, DisplayModePtr mode)
 	outb(pS3->vgaCRReg, cr33);
 
 	outb(pS3->vgaCRIndex, 0x67);
+	WaitVSync();
 	outb(pS3->vgaCRReg, pixmux | invert_vclk);
 
 	outb(0x3c4, 0x15);
@@ -393,6 +386,6 @@ void S3Trio64DAC_Init(ScrnInfoPtr pScrn, DisplayModePtr mode)
 	outb(0x3c4, 0x08);
 	outb(0x3c5, sr8);
 
-	outb(0x3c4, 1);
+	outb(0x3c4, 0x01);
 	outb(0x3c5, blank);	/* unblank the screen */
 }
