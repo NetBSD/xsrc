@@ -169,10 +169,10 @@ typedef struct _S3Rec {
 
 
 #define DRIVER_NAME     "s3"
-#define DRIVER_VERSION  "0.6.1"
-#define VERSION_MAJOR   0
-#define VERSION_MINOR   6
-#define PATCHLEVEL      1
+#define DRIVER_VERSION  PACKAGE_VERSION
+#define VERSION_MAJOR   PACKAGE_VERSION_MAJOR
+#define VERSION_MINOR   PACKAGE_VERSION_MINOR
+#define PATCHLEVEL      PACKAGE_VERSION_PATCHLEVEL
 #define S3_VERSION     ((VERSION_MAJOR << 24) | \
                         (VERSION_MINOR << 16) | PATCHLEVEL)
 
