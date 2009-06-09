@@ -31,8 +31,6 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/xf86drm.h,v 1.26 2003/08/16 19:26:37 dawes Exp $ */
-
 #ifndef _XF86DRM_H_
 #define _XF86DRM_H_
 
@@ -42,6 +40,7 @@
 #else
 #include <sys/types.h>
 #endif
+#include <stdint.h>
 #include <drm.h>
 
 				/* Defaults, if nothing set in xf86config */
@@ -54,6 +53,7 @@
 
 #define DRM_DIR_NAME  "/dev/dri"
 #define DRM_DEV_NAME  "%s/card%d"
+#define DRM_CONTROL_DEV_NAME  "%s/controlD%d"
 #define DRM_PROC_NAME "/proc/dri/" /* For backward Linux compatibility */
 
 #define DRM_ERR_NO_DEVICE  (-1001)
@@ -79,6 +79,7 @@ typedef struct drmHashEntry {
     void     *tagTable;
 } drmHashEntry;
 
+extern int drmIoctl(int fd, unsigned long request, void *arg);
 extern void *drmGetHashTable(void);
 extern drmHashEntry *drmGetEntry(int fd);
 
@@ -274,6 +275,7 @@ typedef struct _drmTextureRegion {
 typedef enum {
     DRM_VBLANK_ABSOLUTE = 0x0,	/**< Wait for specific vblank sequence number */
     DRM_VBLANK_RELATIVE = 0x1,	/**< Wait for given number of vblanks */
+    DRM_VBLANK_FLIP = 0x8000000,	/**< Scheduled buffer swap should flip */
     DRM_VBLANK_NEXTONMISS = 0x10000000,	/**< If missed, wait for next vblank */
     DRM_VBLANK_SECONDARY = 0x20000000,	/**< Secondary display controller */
     DRM_VBLANK_SIGNAL   = 0x40000000	/* Send signal instead of blocking */
@@ -332,28 +334,28 @@ typedef struct _drmSetVersion {
 
 #elif defined(__alpha__)
 
-#define	DRM_CAS(lock, old, new, ret) 		\
- 	do {					\
- 		int old32;                      \
- 		int cur32;			\
- 		__asm__ __volatile__(		\
- 		"       mb\n"			\
- 		"       zap   %4, 0xF0, %0\n"   \
- 		"       ldl_l %1, %2\n"		\
- 		"       zap   %1, 0xF0, %1\n"   \
-                "       cmpeq %0, %1, %1\n"	\
-                "       beq   %1, 1f\n"		\
- 		"       bis   %5, %5, %1\n"	\
-                "       stl_c %1, %2\n"		\
-                "1:     xor   %1, 1, %1\n"	\
-                "       stl   %1, %3"		\
-                : "=r" (old32),                 \
-		  "=&r" (cur32),		\
-                   "=m" (__drm_dummy_lock(lock)),\
-                   "=m" (ret)			\
- 		: "r" (old),			\
- 		  "r" (new));			\
- 	} while(0)
+#define	DRM_CAS(lock, old, new, ret)		\
+	do {					\
+		int tmp, old32;			\
+		__asm__ __volatile__(		\
+		"	addl	$31, %5, %3\n"	\
+		"1:	ldl_l	%0, %2\n"	\
+		"	cmpeq	%0, %3, %1\n"	\
+		"	beq	%1, 2f\n"	\
+		"	mov	%4, %0\n"	\
+		"	stl_c	%0, %2\n"	\
+		"	beq	%0, 3f\n"	\
+		"	mb\n"			\
+		"2:	cmpeq	%1, 0, %1\n"	\
+		".subsection 2\n"		\
+		"3:	br	1b\n"		\
+		".previous"			\
+		: "=&r"(tmp), "=&r"(ret),	\
+		  "=m"(__drm_dummy_lock(lock)),	\
+		  "=&r"(old32)			\
+		: "r"(new), "r"(old)		\
+		: "memory");			\
+	} while (0)
 
 #elif defined(__sparc__)
 
@@ -436,7 +438,9 @@ do {	register unsigned int __old __asm("o0");		\
 #define DRM_CAS(lock,old,new,ret) do { ret=1; } while (0) /* FAST LOCK FAILS */
 #endif
 
-#if defined(__alpha__) || defined(__powerpc__)
+#if defined(__alpha__)
+#define DRM_CAS_RESULT(_result)		long _result
+#elif defined(__powerpc__)
 #define DRM_CAS_RESULT(_result)		int _result
 #else
 #define DRM_CAS_RESULT(_result)		char _result
@@ -517,6 +521,7 @@ do {	register unsigned int __old __asm("o0");		\
 /* General user-level programmer's API: unprivileged */
 extern int           drmAvailable(void);
 extern int           drmOpen(const char *name, const char *busid);
+extern int drmOpenControl(int minor);
 extern int           drmClose(int fd);
 extern drmVersionPtr drmGetVersion(int fd);
 extern drmVersionPtr drmGetLibVersion(int fd);
@@ -666,7 +671,9 @@ extern int  drmSLLookupNeighbors(void *l, unsigned long key,
 
 extern int drmOpenOnce(void *unused, const char *BusID, int *newlyopened);
 extern void drmCloseOnce(int fd);
+extern void drmMsg(const char *format, ...);
 
-#include "xf86mm.h"
+extern int drmSetMaster(int fd);
+extern int drmDropMaster(int fd);
 
 #endif
