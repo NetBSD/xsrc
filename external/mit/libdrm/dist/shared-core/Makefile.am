@@ -25,14 +25,17 @@
 klibdrmincludedir = ${includedir}/drm
 klibdrminclude_HEADERS = \
                          drm.h \
+                         drm_mode.h \
                          drm_sarea.h \
                          i915_drm.h \
                          mach64_drm.h \
                          mga_drm.h \
+                         nouveau_drm.h \
                          r128_drm.h \
                          radeon_drm.h \
                          savage_drm.h \
                          sis_drm.h \
                          via_drm.h \
                          r300_reg.h \
-                         via_3d_reg.h
+                         via_3d_reg.h \
+			 xgi_drm.h
