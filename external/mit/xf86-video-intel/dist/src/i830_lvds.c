@@ -35,6 +35,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <dirent.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 
@@ -57,12 +58,6 @@ enum pfit_mode {
 };
 
 struct i830_lvds_priv {
-    /* The BIOS's fixed timings for the LVDS */
-    DisplayModePtr panel_fixed_mode;
-    
-    /* The panel needs dithering enabled */
-    Bool	    panel_wants_dither;
-
     /* The panel is in DPMS off */
     Bool           dpmsoff;
 
@@ -89,6 +84,7 @@ static char *backlight_interfaces[] = {
     "acpi_video1",
     "acpi_video0",
     "fujitsu-laptop",
+    "sony",
     NULL,
 };
 
@@ -101,6 +97,15 @@ static char *backlight_interfaces[] = {
 #define BACKLIGHT_VALUE_LEN 10
 
 static int backlight_index;
+
+enum lid_status {
+    LID_UNKNOWN = -1,
+    LID_OPEN,
+    LID_CLOSE,
+};
+
+#define ACPI_BUTTON "/proc/acpi/button/"
+#define ACPI_LID "/proc/acpi/button/lid/"
 
 static Bool
 i830_kernel_backlight_available(xf86OutputPtr output)
@@ -382,6 +387,107 @@ out_err:
 }
 
 /**
+ *  Get lid state from ACPI button driver
+ */
+static int
+i830_lvds_acpi_lid_open(xf86OutputPtr output)
+{
+    ScrnInfoPtr pScrn = output->scrn;
+    I830Ptr pI830 = I830PTR(pScrn);
+    int fd;
+    DIR *button_dir;
+    DIR *lid_dir;
+    struct dirent *lid_dent;
+    char *state_name;
+    char state[64];
+    enum lid_status ret = LID_UNKNOWN;
+
+    if (pI830->quirk_flag & QUIRK_BROKEN_ACPI_LID)
+	goto out;
+
+    button_dir = opendir(ACPI_BUTTON);
+    /* If acpi button driver is not loaded, bypass ACPI check method */
+    if (button_dir == NULL)
+	goto out;
+    closedir(button_dir);
+
+    lid_dir = opendir(ACPI_LID);
+
+    /* no acpi lid object found */
+    if (lid_dir == NULL)
+	goto out;
+
+    while (1) {
+	lid_dent = readdir(lid_dir);
+	if (lid_dent == NULL) {
+	    /* no LID object */
+	    closedir(lid_dir);
+	    goto out;
+	}
+	if (strcmp(lid_dent->d_name, ".") &&
+		strcmp(lid_dent->d_name, "..")) {
+	    break;
+	}
+    }
+    state_name = malloc(strlen(ACPI_LID) + strlen(lid_dent->d_name) + 7);
+    memset(state_name, 0, sizeof(state_name));
+    strcat(state_name, ACPI_LID);
+    strcat(state_name, lid_dent->d_name);
+    strcat(state_name, "/state");
+
+    closedir(lid_dir);
+
+    if ((fd = open(state_name, O_RDONLY)) == -1) {
+	free(state_name);
+	goto out;
+    }
+    free(state_name);
+    if (read(fd, state, 64) == -1) {
+	close(fd);
+	goto out;
+    }
+    close(fd);
+    if (strstr(state, "open"))
+	ret = LID_OPEN;
+    else if (strstr(state, "closed"))
+	ret = LID_CLOSE;
+    else /* "unsupported" */
+	ret = LID_UNKNOWN;
+
+out:
+    if (pI830->debug_modes && (ret != LID_UNKNOWN))
+	xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+		"LID switch detect %s with ACPI button\n",
+		ret ? "closed" : "open");
+
+    return ret;
+}
+
+/**
+ * Get LID switch close state from SWF
+ */
+static Bool
+i830_lvds_swf_lid_close(xf86OutputPtr output)
+{
+    ScrnInfoPtr pScrn = output->scrn;
+    I830Ptr pI830 = I830PTR(pScrn);
+    uint32_t swf14 = INREG(SWF14);
+    Bool ret;
+
+    if (swf14 & SWF14_LID_SWITCH_EN)
+	ret = TRUE;
+    else
+	ret = FALSE;
+
+    if (pI830->debug_modes)
+	xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+		"LID switch detect %s with SWF14 0x%8x\n",
+		ret ? "closed" : "open", swf14);
+
+    return ret;
+}
+
+/**
  * Sets the power state for the panel.
  */
 static void
@@ -406,7 +512,8 @@ i830SetLVDSPanelPower(xf86OutputPtr output, Bool on)
 	 * they'll always re-maximize the brightness.
 	 */
 	if (!(INREG(PP_CONTROL) & POWER_TARGET_ON) &&
-	    dev_priv->backlight_duty_cycle == 0)
+	    dev_priv->backlight_duty_cycle == 0 &&
+	    pI830->backlight_control_method < BCM_KERNEL)
 	    dev_priv->backlight_duty_cycle = dev_priv->backlight_max;
 
 	OUTREG(PP_CONTROL, INREG(PP_CONTROL) | POWER_TARGET_ON);
@@ -455,10 +562,10 @@ i830_lvds_save (xf86OutputPtr output)
 
     if (IS_I965GM(pI830) || IS_GM45(pI830))
 	pI830->saveBLC_PWM_CTL2 = INREG(BLC_PWM_CTL2);
-    pI830->savePP_ON = INREG(LVDSPP_ON);
-    pI830->savePP_OFF = INREG(LVDSPP_OFF);
+    pI830->savePP_ON = INREG(PP_ON_DELAYS);
+    pI830->savePP_OFF = INREG(PP_OFF_DELAYS);
     pI830->savePP_CONTROL = INREG(PP_CONTROL);
-    pI830->savePP_CYCLE = INREG(PP_CYCLE);
+    pI830->savePP_DIVISOR = INREG(PP_DIVISOR);
     pI830->saveBLC_PWM_CTL = INREG(BLC_PWM_CTL);
     if ((INREG(PP_CONTROL) & POWER_TARGET_ON) && !dev_priv->dpmsoff) 
 	dev_priv->backlight_duty_cycle = dev_priv->get_backlight(output);
@@ -473,9 +580,9 @@ i830_lvds_restore(xf86OutputPtr output)
     if (IS_I965GM(pI830) || IS_GM45(pI830))
 	OUTREG(BLC_PWM_CTL2, pI830->saveBLC_PWM_CTL2);
     OUTREG(BLC_PWM_CTL, pI830->saveBLC_PWM_CTL);
-    OUTREG(LVDSPP_ON, pI830->savePP_ON);
-    OUTREG(LVDSPP_OFF, pI830->savePP_OFF);
-    OUTREG(PP_CYCLE, pI830->savePP_CYCLE);
+    OUTREG(PP_ON_DELAYS, pI830->savePP_ON);
+    OUTREG(PP_OFF_DELAYS, pI830->savePP_OFF);
+    OUTREG(PP_DIVISOR, pI830->savePP_DIVISOR);
     OUTREG(PP_CONTROL, pI830->savePP_CONTROL);
     if (pI830->savePP_CONTROL & POWER_TARGET_ON)
 	i830SetLVDSPanelPower(output, TRUE);
@@ -486,9 +593,9 @@ i830_lvds_restore(xf86OutputPtr output)
 static int
 i830_lvds_mode_valid(xf86OutputPtr output, DisplayModePtr pMode)
 {
-    I830OutputPrivatePtr    intel_output = output->driver_private;
-    struct i830_lvds_priv   *dev_priv = intel_output->dev_priv;
-    DisplayModePtr	    pFixedMode = dev_priv->panel_fixed_mode;
+    ScrnInfoPtr	pScrn = output->scrn;
+    I830Ptr	pI830 = I830PTR(pScrn);
+    DisplayModePtr	    pFixedMode = pI830->lvds_fixed_mode;
 
     if (pFixedMode)
     {
@@ -536,7 +643,7 @@ i830_lvds_mode_fixup(xf86OutputPtr output, DisplayModePtr mode,
     }
 
     /* If we don't have a panel mode there's not much we can do */
-    if (dev_priv->panel_fixed_mode == NULL)
+    if (pI830->lvds_fixed_mode == NULL)
 	return TRUE;
 
     /* If we have timings from the BIOS for the panel, put them in
@@ -544,19 +651,19 @@ i830_lvds_mode_fixup(xf86OutputPtr output, DisplayModePtr mode,
      * with the panel scaling set up to source from the H/VDisplay
      * of the original mode.
      */
-    adjusted_mode->HDisplay = dev_priv->panel_fixed_mode->HDisplay;
-    adjusted_mode->HSyncStart = dev_priv->panel_fixed_mode->HSyncStart;
-    adjusted_mode->HSyncEnd = dev_priv->panel_fixed_mode->HSyncEnd;
-    adjusted_mode->HTotal = dev_priv->panel_fixed_mode->HTotal;
-    adjusted_mode->VDisplay = dev_priv->panel_fixed_mode->VDisplay;
-    adjusted_mode->VSyncStart = dev_priv->panel_fixed_mode->VSyncStart;
-    adjusted_mode->VSyncEnd = dev_priv->panel_fixed_mode->VSyncEnd;
-    adjusted_mode->VTotal = dev_priv->panel_fixed_mode->VTotal;
-    adjusted_mode->Clock = dev_priv->panel_fixed_mode->Clock;
+    adjusted_mode->HDisplay = pI830->lvds_fixed_mode->HDisplay;
+    adjusted_mode->HSyncStart = pI830->lvds_fixed_mode->HSyncStart;
+    adjusted_mode->HSyncEnd = pI830->lvds_fixed_mode->HSyncEnd;
+    adjusted_mode->HTotal = pI830->lvds_fixed_mode->HTotal;
+    adjusted_mode->VDisplay = pI830->lvds_fixed_mode->VDisplay;
+    adjusted_mode->VSyncStart = pI830->lvds_fixed_mode->VSyncStart;
+    adjusted_mode->VSyncEnd = pI830->lvds_fixed_mode->VSyncEnd;
+    adjusted_mode->VTotal = pI830->lvds_fixed_mode->VTotal;
+    adjusted_mode->Clock = pI830->lvds_fixed_mode->Clock;
     xf86SetModeCrtc(adjusted_mode, INTERLACE_HALVE_V);
 
     /* Make sure pre-965s set dither correctly */
-    if (!IS_I965G(pI830) && dev_priv->panel_wants_dither)
+    if (!IS_I965G(pI830) && pI830->lvds_dither)
 	pfit_control |= PANEL_8TO6_DITHER_ENABLE;
 
     /* Native modes don't need fitting */
@@ -597,12 +704,12 @@ i830_lvds_mode_fixup(xf86OutputPtr output, DisplayModePtr mode,
 	 * LVDS borders are enabled (see i830_display.c).
 	 */
 	left_border =
-	    (dev_priv->panel_fixed_mode->HDisplay - mode->HDisplay) / 2;
+	    (pI830->lvds_fixed_mode->HDisplay - mode->HDisplay) / 2;
 	right_border = left_border;
 	if (mode->HDisplay & 1)
 	    right_border++;
 	top_border =
-	    (dev_priv->panel_fixed_mode->VDisplay - mode->VDisplay) / 2;
+	    (pI830->lvds_fixed_mode->VDisplay - mode->VDisplay) / 2;
 	bottom_border = top_border;
 	if (mode->VDisplay & 1)
 	    bottom_border++;
@@ -661,7 +768,7 @@ i830_lvds_mode_fixup(xf86OutputPtr output, DisplayModePtr mode,
 		    HORIZ_INTERP_BILINEAR;
 
 		/* Pillar will have left/right borders */
-		left_border =  (dev_priv->panel_fixed_mode->HDisplay -
+		left_border =  (pI830->lvds_fixed_mode->HDisplay -
 				scaled_width) / 2;
 		right_border = left_border;
 		if (mode->HDisplay & 1) /* odd resolutions */
@@ -684,7 +791,7 @@ i830_lvds_mode_fixup(xf86OutputPtr output, DisplayModePtr mode,
 		    HORIZ_INTERP_BILINEAR;
 
 		/* Letterbox will have top/bottom borders */
-		top_border = (dev_priv->panel_fixed_mode->VDisplay -
+		top_border = (pI830->lvds_fixed_mode->VDisplay -
 			      scaled_height) / 2;
 		bottom_border = top_border;
 		if (mode->VDisplay & 1)
@@ -770,15 +877,57 @@ i830_lvds_mode_set(xf86OutputPtr output, DisplayModePtr mode,
 
 /**
  * Detect the LVDS connection.
- *
- * This always returns OUTPUT_STATUS_CONNECTED.  This output should only have
- * been set up if the LVDS was actually connected anyway.
  */
 static xf86OutputStatus
 i830_lvds_detect(xf86OutputPtr output)
 {
+    /* Fallback to origin, mark LVDS always connected.
+     * From wider tests, we have seen both broken cases with
+     * ACPI lid and SWF bit. So disable them for now until we
+     * get a reliable way for LVDS detect.
+     */
+    return XF86OutputStatusConnected;
+
+    enum lid_status lid;
+
+    lid = i830_lvds_acpi_lid_open(output);
+    if (lid == LID_OPEN)
+	return XF86OutputStatusConnected;
+    else if (lid == LID_CLOSE)
+	return XF86OutputStatusDisconnected;
+
+    if (i830_lvds_swf_lid_close(output))
+	return XF86OutputStatusDisconnected;
+
     return XF86OutputStatusConnected;
 }
+
+static void fill_detailed_block(struct detailed_monitor_section *det_mon,
+                                DisplayModePtr mode)
+{
+    struct detailed_timings *timing = &det_mon->section.d_timings;
+    det_mon->type = DT;
+    timing->clock = mode->Clock * 1000;
+    timing->h_active = mode->HDisplay;
+    timing->h_blanking = mode->HTotal - mode->HDisplay;
+    timing->v_active = mode->VDisplay;
+    timing->v_blanking = mode->VTotal - mode->VDisplay;
+    timing->h_sync_off = mode->HSyncStart - mode->HDisplay;
+    timing->h_sync_width = mode->HSyncEnd - mode->HSyncStart;
+    timing->v_sync_off = mode->VSyncStart - mode->VDisplay;
+    timing->v_sync_width = mode->VSyncEnd - mode->VSyncStart;
+
+    if (mode->Flags & V_PVSYNC)
+        timing->misc |= 0x02;
+
+    if (mode->Flags & V_PHSYNC)
+        timing->misc |= 0x01;
+}
+
+/* X Server pre-1.5 compatibility */
+#ifndef DS_VENDOR
+#define DS_VENDOR 0x101
+#endif
 
 /**
  * Return the list of DDC modes if available, or the BIOS fixed mode otherwise.
@@ -786,14 +935,45 @@ i830_lvds_detect(xf86OutputPtr output)
 static DisplayModePtr
 i830_lvds_get_modes(xf86OutputPtr output)
 {
+    ScrnInfoPtr	pScrn = output->scrn;
+    I830Ptr	pI830 = I830PTR(pScrn);
     I830OutputPrivatePtr    intel_output = output->driver_private;
-    struct i830_lvds_priv   *dev_priv = intel_output->dev_priv;
     xf86MonPtr		    edid_mon;
     DisplayModePtr	    modes;
 
     edid_mon = xf86OutputGetEDID (output, intel_output->pDDCBus);
+
+    /* Our LVDS scaler can hit any size, so mark the EDID data as
+     * supporting continuous timings
+     */
+    if (edid_mon) {
+	int i, j = -1;
+	edid_mon->features.msc |= 0x1;
+
+	/* Either find a DS_RANGES block, or replace a DS_VENDOR block,
+	 * smashing it into a DS_RANGES block with wide open refresh to
+	 * match all default modes
+	 */
+	for (i = 0; i < sizeof (edid_mon->det_mon) / sizeof (edid_mon->det_mon[0]); i++)
+	{
+	    if (edid_mon->det_mon[i].type >= DS_VENDOR && j == -1)
+		j = i;
+	    if (edid_mon->det_mon[i].type == DS_RANGES) {
+		j = i;
+		break;
+	    }
+	}
+	if (j != -1) {
+	    struct monitor_ranges   *ranges = &edid_mon->det_mon[j].section.ranges;
+	    edid_mon->det_mon[j].type = DS_RANGES;
+	    ranges->min_v = 0;
+	    ranges->max_v = 200;
+	    ranges->min_h = 0;
+	    ranges->max_h = 200;
+	}
+    }
     xf86OutputSetEDID (output, edid_mon);
-    
+
     modes = xf86OutputGetEDIDModes (output);
     if (modes != NULL)
 	return modes;
@@ -803,21 +983,41 @@ i830_lvds_get_modes(xf86OutputPtr output)
 	edid_mon = xcalloc (1, sizeof (xf86Monitor));
 	if (edid_mon)
 	{
+	    struct detailed_monitor_section *det_mon = edid_mon->det_mon;
+	    /*support DPM, instead of DPMS*/
+	    edid_mon->features.dpms |= 0x1;
+	    /*defaultly support RGB color display*/
+	    edid_mon->features.display_type |= 0x1;
+	    /*defaultly display support continuous-freqencey*/
+	    edid_mon->features.msc |= 0x1;
+	    /*defaultly  the EDID version is 1.4 */
+	    edid_mon->ver.version = 1;
+	    edid_mon->ver.revision = 4;
+
+	    if (pI830->lvds_fixed_mode != NULL) {
+		/* now we construct new EDID monitor,
+		 *  so filled one detailed timing block
+		 */
+		fill_detailed_block(det_mon, pI830->lvds_fixed_mode);
+		/* the filed timing block should be set preferred*/
+		edid_mon->features.msc |= 0x2;
+		det_mon = det_mon + 1;
+	    }
+
 	    /* Set wide sync ranges so we get all modes
 	     * handed to valid_mode for checking
 	     */
-	    edid_mon->det_mon[0].type = DS_RANGES;
-	    edid_mon->det_mon[0].section.ranges.min_v = 0;
-	    edid_mon->det_mon[0].section.ranges.max_v = 200;
-	    edid_mon->det_mon[0].section.ranges.min_h = 0;
-	    edid_mon->det_mon[0].section.ranges.max_h = 200;
-	    
+	    det_mon->type = DS_RANGES;
+	    det_mon->section.ranges.min_v = 0;
+	    det_mon->section.ranges.max_v = 200;
+	    det_mon->section.ranges.min_h = 0;
+	    det_mon->section.ranges.max_h = 200;
 	    output->MonInfo = edid_mon;
 	}
     }
 
-    if (dev_priv->panel_fixed_mode != NULL)
-	return xf86DuplicateMode(dev_priv->panel_fixed_mode);
+    if (pI830->lvds_fixed_mode != NULL)
+	return xf86DuplicateMode(pI830->lvds_fixed_mode);
 
     return NULL;
 }
@@ -825,15 +1025,13 @@ i830_lvds_get_modes(xf86OutputPtr output)
 static void
 i830_lvds_destroy (xf86OutputPtr output)
 {
+    ScrnInfoPtr	pScrn = output->scrn;
+    I830Ptr	pI830 = I830PTR(pScrn);
     I830OutputPrivatePtr    intel_output = output->driver_private;
 
+    xf86DeleteMode (&pI830->lvds_fixed_mode, pI830->lvds_fixed_mode);
     if (intel_output)
-    {
-	struct i830_lvds_priv	*dev_priv = intel_output->dev_priv;
-	
-        xf86DeleteMode (&dev_priv->panel_fixed_mode, dev_priv->panel_fixed_mode);
 	xfree (intel_output);
-    }
 }
 
 #ifdef RANDR_12_INTERFACE
@@ -868,7 +1066,7 @@ static Atom panel_fitting_name_atoms[NUM_PANEL_FITTING_TYPES];
 
 
 static int
-i830_backlight_control_lookup(char *name)
+i830_backlight_control_lookup(const char *name)
 {
     int i;
 
@@ -925,7 +1123,7 @@ i830_lvds_set_backlight_control(xf86OutputPtr output)
 }
 
 static int
-i830_panel_fitting_lookup(char *name)
+i830_panel_fitting_lookup(const char *name)
 {
     int i;
 
@@ -1006,8 +1204,8 @@ i830_lvds_create_resources(xf86OutputPtr output)
      * Panel fitting control
      */
 
-    /* XXX Disable panel fitting setting on pre-915. */
-    if (!IS_I9XX(pI830))
+    /* Disable panel fitting setting on untested pre-915 chips */
+    if (!IS_I9XX(pI830) && !(pI830->quirk_flag & QUIRK_PFIT_SAFE))
 	return;
 
     panel_fitting_atom = MakeAtom(PANEL_FITTING_NAME,
@@ -1067,7 +1265,7 @@ i830_lvds_set_property(xf86OutputPtr output, Atom property,
     } else if (property == backlight_control_atom) {
 	INT32		    	backlight_range[2];
 	Atom			atom;
-	char			*name;
+	const char		*name;
 	int			ret, data;
 
 	if (value->type != XA_ATOM || value->format != 32 || value->size != 1)
@@ -1109,7 +1307,7 @@ i830_lvds_set_property(xf86OutputPtr output, Atom property,
 	return TRUE;
     } else if (property == panel_fitting_atom) {
 	Atom			atom;
-	char			*name;
+	const char		*name;
 	int			ret;
 
 	if (value->type != XA_ATOM || value->format != 32 || value->size != 1)
@@ -1121,6 +1319,9 @@ i830_lvds_set_property(xf86OutputPtr output, Atom property,
 	ret = i830_panel_fitting_lookup(name);
 	if (ret < 0)
 	    return FALSE;
+
+	if (dev_priv->fitting_mode == ret)
+	    return TRUE;
 
 	dev_priv->fitting_mode = ret;
 
@@ -1217,8 +1418,16 @@ i830_lvds_init(ScrnInfoPtr pScrn)
     I830Ptr		    pI830 = I830PTR(pScrn);
     xf86OutputPtr	    output;
     I830OutputPrivatePtr    intel_output;
-    DisplayModePtr	    modes, scan, bios_mode;
+    DisplayModePtr	    modes, scan;
+    DisplayModePtr	    lvds_ddc_mode = NULL;
     struct i830_lvds_priv   *dev_priv;
+
+    if (!pI830->integrated_lvds) {
+	if (pI830->debug_modes)
+	    xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+		   "Skipping LVDS from driver feature BDB's LVDS config info.\n");
+	return;
+    }
 
     if (pI830->quirk_flag & QUIRK_IGNORE_LVDS)
 	return;
@@ -1244,17 +1453,27 @@ i830_lvds_init(ScrnInfoPtr pScrn)
 
     dev_priv = (struct i830_lvds_priv *) (intel_output + 1);
     intel_output->dev_priv = dev_priv;
+    
+    /*
+     * Mode detection algorithms for LFP:
+     *  1) if EDID present, use it, done
+     *  2) if VBT present, use it, done
+     *  3) if current mode is programmed, use it, done
+     *  4) check for Mac mini & other quirks
+     *  4) fail, assume no LFP
+     */
 
     /* Set up the LVDS DDC channel.  Most panels won't support it, but it can
      * be useful if available.
      */
     I830I2CInit(pScrn, &intel_output->pDDCBus, GPIOC, "LVDSDDC_C");
 
-    if (!pI830->lvds_fixed_mode) {
+    if (pI830->skip_panel_detect) {
 	xf86DrvMsg(pScrn->scrnIndex, X_INFO,
 		   "Skipping any attempt to determine panel fixed mode.\n");
-	goto skip_panel_fixed_mode_setup;
+	goto found_mode;
     }
+
     xf86DrvMsg(pScrn->scrnIndex, X_INFO,
 	       "Attempting to determine panel fixed mode.\n");
 
@@ -1274,77 +1493,47 @@ i830_lvds_init(ScrnInfoPtr pScrn)
 	    scan->prev = scan->next;
 	if (scan->next != NULL)
 	    scan->next = scan->prev;
-	dev_priv->panel_fixed_mode = scan;
+	lvds_ddc_mode = scan;
     }
     /* Delete the mode list */
     while (modes != NULL)
 	xf86DeleteMode(&modes, modes);
 
-    /* If we didn't get EDID, try checking if the panel is already turned on.
-     * If so, assume that whatever is currently programmed is the correct mode.
-     */
-    if (dev_priv->panel_fixed_mode == NULL) {
-	uint32_t lvds = INREG(LVDS);
-	int pipe = (lvds & LVDS_PIPEB_SELECT) ? 1 : 0;
-	xf86CrtcConfigPtr xf86_config = XF86_CRTC_CONFIG_PTR(pScrn);
-	xf86CrtcPtr crtc = xf86_config->crtc[pipe];
-
-	if (lvds & LVDS_PORT_EN) {
-	    dev_priv->panel_fixed_mode = i830_crtc_mode_get(pScrn, crtc);
-	    if (dev_priv->panel_fixed_mode != NULL)
-		dev_priv->panel_fixed_mode->type |= M_T_PREFERRED;
-	}
+    if (lvds_ddc_mode) {
+	    pI830->lvds_fixed_mode = lvds_ddc_mode;
+	    goto found_mode;
     }
 
     /* Get the LVDS fixed mode out of the BIOS.  We should support LVDS with
      * the BIOS being unavailable or broken, but lack the configuration options
      * for now.
      */
-    bios_mode = i830_bios_get_panel_mode(pScrn, &dev_priv->panel_wants_dither);
-    if (bios_mode != NULL) {
-	if (dev_priv->panel_fixed_mode != NULL) {
-	    /* Fixup for a 1280x768 panel with the horizontal trimmed
-	     * down to 1024 for text mode.
-	     */
-	    if (!xf86ModesEqual(dev_priv->panel_fixed_mode, bios_mode) &&
-		dev_priv->panel_fixed_mode->HDisplay == 1024 &&
-		dev_priv->panel_fixed_mode->HSyncStart == 1200 &&
-		dev_priv->panel_fixed_mode->HSyncEnd == 1312 &&
-		dev_priv->panel_fixed_mode->HTotal == 1688 &&
-		dev_priv->panel_fixed_mode->VDisplay == 768)
-	    {
-		dev_priv->panel_fixed_mode->HDisplay = 1280;
-		dev_priv->panel_fixed_mode->HSyncStart = 1328;
-		dev_priv->panel_fixed_mode->HSyncEnd = 1440;
-		dev_priv->panel_fixed_mode->HTotal = 1688;
-	    }
+    if (pI830->lvds_fixed_mode)
+	    goto found_mode;
 
-	    if (pI830->debug_modes &&
-		!xf86ModesEqual(dev_priv->panel_fixed_mode, bios_mode))
-	    {
-		xf86DrvMsg(pScrn->scrnIndex, X_WARNING,
-			   "BIOS panel mode data doesn't match probed data, "
-			   "continuing with probed.\n");
-		xf86DrvMsg(pScrn->scrnIndex, X_INFO, "BIOS mode:\n");
-		xf86PrintModeline(pScrn->scrnIndex, bios_mode);
-		xf86DrvMsg(pScrn->scrnIndex, X_INFO, "probed mode:\n");
-		xf86PrintModeline(pScrn->scrnIndex, dev_priv->panel_fixed_mode);
-		xfree(bios_mode->name);
-		xfree(bios_mode);
+    /* If we *still* don't have a mode, try checking if the panel is already
+     * turned on.  If so, assume that whatever is currently programmed is the
+     * correct mode.
+     */
+    if (!pI830->lvds_fixed_mode) {
+	uint32_t lvds = INREG(LVDS);
+	int pipe = (lvds & LVDS_PIPEB_SELECT) ? 1 : 0;
+	xf86CrtcConfigPtr xf86_config = XF86_CRTC_CONFIG_PTR(pScrn);
+	xf86CrtcPtr crtc = xf86_config->crtc[pipe];
+
+	if (lvds & LVDS_PORT_EN) {
+	    pI830->lvds_fixed_mode = i830_crtc_mode_get(pScrn, crtc);
+	    if (pI830->lvds_fixed_mode != NULL) {
+		pI830->lvds_fixed_mode->type |= M_T_PREFERRED;
+		goto found_mode;
 	    }
-	}  else {
-	    dev_priv->panel_fixed_mode = bios_mode;
 	}
-    } else {
-	xf86DrvMsg(pScrn->scrnIndex, X_WARNING,
-		   "Couldn't detect panel mode.  Disabling panel\n");
-	goto disable_exit;
     }
 
-    /* Update pI830 w/SSC info, if any */
-    i830_bios_get_ssc(pScrn);
+    if (!pI830->lvds_fixed_mode)
+	    goto disable_exit;
 
- skip_panel_fixed_mode_setup:
+found_mode:
 
     /* Blacklist machines with BIOSes that list an LVDS panel without actually
      * having one.
@@ -1359,9 +1548,9 @@ i830_lvds_init(ScrnInfoPtr pScrn)
 	 * display.
 	 */
 
-	if (dev_priv->panel_fixed_mode != NULL &&
-		dev_priv->panel_fixed_mode->HDisplay == 800 &&
-		dev_priv->panel_fixed_mode->VDisplay == 600)
+	if (pI830->lvds_fixed_mode != NULL &&
+		pI830->lvds_fixed_mode->HDisplay == 800 &&
+		pI830->lvds_fixed_mode->VDisplay == 600)
 	{
 	    xf86DrvMsg(pScrn->scrnIndex, X_INFO,
 		    "Suspected Mac Mini, ignoring the LVDS\n");
@@ -1400,11 +1589,9 @@ i830_lvds_init(ScrnInfoPtr pScrn)
     dev_priv->backlight_duty_cycle = dev_priv->get_backlight(output);
 
     /*
-     * Default to filling the whole screen if the mode is less than the
-     * native size. (Change default to origin FULL mode, i8xx can only work
-     * in that mode for now.)
+     * Avoid munging the aspect ratio by default.
      */
-    dev_priv->fitting_mode = FULL;
+    dev_priv->fitting_mode = FULL_ASPECT;
 
     return;
 
