@@ -1084,7 +1084,7 @@ static Bool RADEONDRIPciInit(RADEONInfoPtr info, ScreenPtr pScreen)
     }
     xf86DrvMsg(pScreen->myNum, X_INFO,
 	       "[pci] %d kB allocated with handle 0x%08lx\n",
-	       info->gartSize*1024, info->pciMemHandle);
+	       info->dri->gartSize*1024, info->dri->pciMemHandle);
 
     RADEONDRIInitGARTValues(info);
 
@@ -1097,7 +1097,7 @@ static Bool RADEONDRIPciInit(RADEONInfoPtr info, ScreenPtr pScreen)
     xf86DrvMsg(pScreen->myNum, X_INFO,
 	       "[pci] ring handle = 0x%08lx, size = 0x%08lx\n", info->dri->ringHandle, info->dri->ringMapSize);
 
-    if ((ret = drmMap(info->drmFD, info->dri->ringHandle, info->dri->ringMapSize,
+    if ((ret = drmMap(info->dri->drmFD, info->dri->ringHandle, info->dri->ringMapSize,
 	       &info->dri->ring)) < 0) {
 	xf86DrvMsg(pScreen->myNum, X_ERROR, "[pci] Could not map ring: ret %d\n", ret);
 	return FALSE;
@@ -1117,7 +1117,7 @@ static Bool RADEONDRIPciInit(RADEONInfoPtr info, ScreenPtr pScreen)
     }
     xf86DrvMsg(pScreen->myNum, X_INFO,
  	       "[pci] ring read ptr handle = 0x%08lx\n",
-	       info->ringReadPtrHandle);
+	       info->dri->ringReadPtrHandle);
 
     if (drmMap(info->dri->drmFD, info->dri->ringReadPtrHandle, info->dri->ringReadMapSize,
 	       &info->dri->ringReadPtr) < 0) {
@@ -1140,7 +1140,7 @@ static Bool RADEONDRIPciInit(RADEONInfoPtr info, ScreenPtr pScreen)
     }
     xf86DrvMsg(pScreen->myNum, X_INFO,
  	       "[pci] vertex/indirect buffers handle = 0x%08lx\n",
-	       info->bufHandle);
+	       info->dri->bufHandle);
 
     if (drmMap(info->dri->drmFD, info->dri->bufHandle, info->dri->bufMapSize,
 	       &info->dri->buf) < 0) {
