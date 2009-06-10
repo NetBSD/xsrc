@@ -152,6 +152,7 @@ static void ASTSubsequentScreenToScreenColorExpandFill(ScrnInfoPtr pScrn,
 static void ASTSetClippingRectangle(ScrnInfoPtr pScrn,
                                     int left, int top, int right, int bottom);
 static void ASTDisableClipping(ScrnInfoPtr pScrn); 
+static void ASTSetHWClipping(ScrnInfoPtr pScrn, int delta_y);
 
 Bool
 ASTAccelInit(ScreenPtr pScreen)
@@ -256,7 +257,6 @@ ASTAccelInit(ScreenPtr pScreen)
         infoPtr->ClippingFlags = HARDWARE_CLIP_SCREEN_TO_SCREEN_COPY 	|
                 		 HARDWARE_CLIP_MONO_8x8_FILL		|
                 		 HARDWARE_CLIP_COLOR_8x8_FILL	 	|
-                		 HARDWARE_CLIP_SOLID_FILL		|     
                 		 HARDWARE_CLIP_SOLID_LINE 		| 
                 		 HARDWARE_CLIP_DASHED_LINE 		| 
                 		 HARDWARE_CLIP_SOLID_LINE; 
@@ -317,6 +317,10 @@ static void ASTSetupForScreenToScreenCopy(ScrnInfoPtr pScrn,
         ASTSetupSRCPitch(pSingleCMD, pAST->VideoModeInfo.ScreenPitch);  
         pSingleCMD++;
         ASTSetupDSTPitchHeight(pSingleCMD, pAST->VideoModeInfo.ScreenPitch, -1);
+        
+        /* Update Write Pointer */
+        mUpdateWritePointer;
+        
     }
     else
     {
@@ -335,84 +339,99 @@ ASTSubsequentScreenToScreenCopy(ScrnInfoPtr pScrn, int x1, int y1, int x2,
     PKT_SC *pSingleCMD;
     int src_x, src_y, dst_x, dst_y;
     ULONG srcbase, dstbase, cmdreg;
+    int delta_y = 0;
 /*
     xf86DrvMsg(pScrn->scrnIndex, X_INFO, "ASTSubsequentScreenToScreenCopy\n");
 */
 
-    /* Modify Reg. Value */
-    cmdreg = pAST->ulCMDReg;
-    if (pAST->EnableClip)
-        cmdreg |= CMD_ENABLE_CLIP;
-    srcbase = dstbase = 0;
+    if ((width != 0) && (height != 0))
+    {    	
+        /* Modify Reg. Value */
+        cmdreg = pAST->ulCMDReg;
+        if (pAST->EnableClip)
+            cmdreg |= CMD_ENABLE_CLIP;
+        else
+            cmdreg &= ~CMD_ENABLE_CLIP;        
+        srcbase = dstbase = 0;
 
-    if (y1 >= MAX_SRC_Y)
-    {       
-        srcbase=pAST->VideoModeInfo.ScreenPitch*y1;
-        y1=0;
-    }       
+        if (x1 < x2)
+            cmdreg |= CMD_X_DEC;     	
+
+        if (y1 < y2)
+            cmdreg |= CMD_Y_DEC;     	
     
-    if (y2 >= pScrn->virtualY) 
-    {   
-        dstbase=pAST->VideoModeInfo.ScreenPitch*y2;
-        y2=0;
-    }
-          
-    if (x1 < x2)
-    {
-    	src_x = x1 + width - 1;
-    	dst_x = x2 + width - 1;
-    	cmdreg |= CMD_X_DEC;     	
-    }
-    else
-    {
-        src_x = x1;
-        dst_x = x2;	
-    }
- 
-    if (y1 < y2)
-    {
-    	src_y = y1 + height - 1;
-    	dst_y = y2 + height - 1;
-    	cmdreg |= CMD_Y_DEC;     	
-    }
-    else
-    {
-        src_y = y1;
-        dst_y = y2;	
-    }
+        if ((y1 + height) >= MAX_SRC_Y)
+        {       
+            srcbase=pAST->VideoModeInfo.ScreenPitch*y1;
+            y1 = 0;
+        }       
         
-    if (!pAST->MMIO2D)        
-    {
-        /* Write to CMDQ */
-        pSingleCMD = (PKT_SC *) pjRequestCMDQ(pAST, PKT_SINGLE_LENGTH*6);
-      
-        ASTSetupSRCBase(pSingleCMD, srcbase);
-        pSingleCMD++;       
-        ASTSetupDSTBase(pSingleCMD, dstbase);
-        pSingleCMD++;    
-        ASTSetupDSTXY(pSingleCMD, dst_x, dst_y);    
-        pSingleCMD++;    
-        ASTSetupSRCXY(pSingleCMD, src_x, src_y);    
-        pSingleCMD++;    
-        ASTSetupRECTXY(pSingleCMD, width, height);    
-        pSingleCMD++;    
-        ASTSetupCMDReg(pSingleCMD, cmdreg);       
-                                  
-        /* Update Write Pointer */
-        mUpdateWritePointer;
-    
-    }
-    else
-    {
-        ASTSetupSRCBase_MMIO(srcbase);
-        ASTSetupDSTBase_MMIO(dstbase);
-        ASTSetupDSTXY_MMIO(dst_x, dst_y);    
-        ASTSetupSRCXY_MMIO(src_x, src_y);    
-        ASTSetupRECTXY_MMIO(width, height);    
-        ASTSetupCMDReg_MMIO(cmdreg);       
-            	
-        vWaitEngIdle(pScrn, pAST);
-    }
+        if ((y2 + height) >= pScrn->virtualY) 
+        {  
+            delta_y = y2;
+            dstbase=pAST->VideoModeInfo.ScreenPitch*y2;
+            y2 = 0;
+        }
+              
+        if (cmdreg & CMD_X_DEC)
+        {
+            src_x = x1 + width - 1;
+            dst_x = x2 + width - 1;
+        }
+        else
+        {
+            src_x = x1;
+            dst_x = x2;	
+        }
+     
+        if (cmdreg & CMD_Y_DEC)
+        {        	
+            src_y = y1 + height - 1;
+            dst_y = y2 + height - 1;
+        }
+        else
+        {
+            src_y = y1;
+            dst_y = y2;	
+        }
+        
+        if (pAST->EnableClip)                    
+            ASTSetHWClipping(pScrn, delta_y);
+            
+        if (!pAST->MMIO2D)        
+        {
+            /* Write to CMDQ */
+            pSingleCMD = (PKT_SC *) pjRequestCMDQ(pAST, PKT_SINGLE_LENGTH*6);
+          
+            ASTSetupSRCBase(pSingleCMD, srcbase);
+            pSingleCMD++;       
+            ASTSetupDSTBase(pSingleCMD, dstbase);
+            pSingleCMD++;    
+            ASTSetupDSTXY(pSingleCMD, dst_x, dst_y);    
+            pSingleCMD++;    
+            ASTSetupSRCXY(pSingleCMD, src_x, src_y);    
+            pSingleCMD++;    
+            ASTSetupRECTXY(pSingleCMD, width, height);    
+            pSingleCMD++;    
+            ASTSetupCMDReg(pSingleCMD, cmdreg);       
+                                      
+            /* Update Write Pointer */
+            mUpdateWritePointer;
+        
+        }
+        else
+        {
+            ASTSetupSRCBase_MMIO(srcbase);
+            ASTSetupDSTBase_MMIO(dstbase);
+            ASTSetupDSTXY_MMIO(dst_x, dst_y);    
+            ASTSetupSRCXY_MMIO(src_x, src_y);    
+            ASTSetupRECTXY_MMIO(width, height);    
+            ASTSetupCMDReg_MMIO(cmdreg);       
+                	
+            vWaitEngIdle(pScrn, pAST);
+        }
+        
+    } /* width & height check */
 
 } /* end of ASTSubsequentScreenToScreenCopy */
 
@@ -454,7 +473,11 @@ ASTSetupForSolidFill(ScrnInfoPtr pScrn,
 
         ASTSetupDSTPitchHeight(pSingleCMD, pAST->VideoModeInfo.ScreenPitch, -1);
         pSingleCMD++;
-        ASTSetupFG(pSingleCMD, color);        
+        ASTSetupFG(pSingleCMD, color);
+        
+        /* Update Write Pointer */
+        mUpdateWritePointer;
+                
     }
     else
     {
@@ -471,50 +494,62 @@ ASTSubsequentSolidFillRect(ScrnInfoPtr pScrn,
 {
     ASTRecPtr pAST = ASTPTR(pScrn);
     PKT_SC *pSingleCMD;
-    ULONG dstbase, cmdreg;        
+    ULONG dstbase, cmdreg; 
+    int delta_y = 0;
+           
 /*            
     xf86DrvMsg(pScrn->scrnIndex, X_INFO, "ASTSubsequentSolidFillRect\n");
 */
 
-    /* Modify Reg. Value */
-    cmdreg = pAST->ulCMDReg;
-    if (pAST->EnableClip)
-        cmdreg |= CMD_ENABLE_CLIP;    
-    dstbase = 0;
+    if ((width != 0) && (height != 0))
+    {
+        /* Modify Reg. Value */
+        cmdreg = pAST->ulCMDReg;
+        if (pAST->EnableClip)
+            cmdreg |= CMD_ENABLE_CLIP;
+        else
+            cmdreg &= ~CMD_ENABLE_CLIP;            
+        dstbase = 0;
+        
+        if (dst_y >= pScrn->virtualY) 
+        {
+            delta_y = dst_y;	   
+            dstbase=pAST->VideoModeInfo.ScreenPitch*dst_y;
+            dst_y=0;
+        }
 
-    if (dst_y >= pScrn->virtualY) 
-    {   
-        dstbase=pAST->VideoModeInfo.ScreenPitch*dst_y;
-        dst_y=0;
-    }
-                  
-    if (!pAST->MMIO2D)                    
-    {                  
-        /* Write to CMDQ */    
-        pSingleCMD = (PKT_SC *) pjRequestCMDQ(pAST, PKT_SINGLE_LENGTH*4);
-
-        ASTSetupDSTBase(pSingleCMD, dstbase);
-        pSingleCMD++;    
-        ASTSetupDSTXY(pSingleCMD, dst_x, dst_y);
-        pSingleCMD++;    
-        ASTSetupRECTXY(pSingleCMD, width, height);
-        pSingleCMD++;    
-        ASTSetupCMDReg(pSingleCMD, cmdreg);        
-      
-        /* Update Write Pointer */
-        mUpdateWritePointer;
-                
-    }
-    else
-    {                  
-        ASTSetupDSTBase_MMIO(dstbase);
-        ASTSetupDSTXY_MMIO(dst_x, dst_y);
-        ASTSetupRECTXY_MMIO(width, height);
-        ASTSetupCMDReg_MMIO(cmdreg);        
- 
-        vWaitEngIdle(pScrn, pAST);
-      
-    }
+        if (pAST->EnableClip)                    
+            ASTSetHWClipping(pScrn, delta_y);
+                                  
+        if (!pAST->MMIO2D)                    
+        {                  
+            /* Write to CMDQ */    
+            pSingleCMD = (PKT_SC *) pjRequestCMDQ(pAST, PKT_SINGLE_LENGTH*4);
+        
+            ASTSetupDSTBase(pSingleCMD, dstbase);
+            pSingleCMD++;    
+            ASTSetupDSTXY(pSingleCMD, dst_x, dst_y);
+            pSingleCMD++;    
+            ASTSetupRECTXY(pSingleCMD, width, height);
+            pSingleCMD++;    
+            ASTSetupCMDReg(pSingleCMD, cmdreg);        
+          
+            /* Update Write Pointer */
+            mUpdateWritePointer;
+                    
+        }
+        else
+        {                  
+            ASTSetupDSTBase_MMIO(dstbase);
+            ASTSetupDSTXY_MMIO(dst_x, dst_y);
+            ASTSetupRECTXY_MMIO(width, height);
+            ASTSetupCMDReg_MMIO(cmdreg);        
+        
+            vWaitEngIdle(pScrn, pAST);
+          
+        }
+        
+    } /* width & height check */
 
 
 } /* end of ASTSubsequentSolidFillRect */
@@ -560,6 +595,9 @@ static void ASTSetupForSolidLine(ScrnInfoPtr pScrn,
         pSingleCMD++;
         ASTSetupBG(pSingleCMD, 0);
         
+        /* Update Write Pointer */
+        mUpdateWritePointer;        
+        
     }
     else
     {
@@ -580,59 +618,68 @@ static void ASTSubsequentSolidHorVertLine(ScrnInfoPtr pScrn,
     PKT_SC *pSingleCMD;
     ULONG dstbase, cmdreg;   
     int width, height;
+    int delta_y = 0;
 /*                    
     xf86DrvMsg(pScrn->scrnIndex, X_INFO, "ASTSubsequentSolidHorVertLine\n");
 */
-            
-    /* Modify Reg. Value */
-    cmdreg = (pAST->ulCMDReg & (~CMD_MASK)) | CMD_BITBLT;
-    if (pAST->EnableClip)
-        cmdreg |= CMD_ENABLE_CLIP;    
-    dstbase = 0;
-    
-    if(dir == DEGREES_0) {			/* horizontal */
-        width  = len;
-        height = 1;	
-    } else {					/* vertical */
-        width  = 1;
-        height = len;	    	
-    }
-              
-    if ((y + height) >= pScrn->virtualY) 
-    {   
-        dstbase=pAST->VideoModeInfo.ScreenPitch*y;
-        y=0;
-    }
-              
-    
-    if (!pAST->MMIO2D)                    
-    {                  
-        /* Write to CMDQ */    
-        pSingleCMD = (PKT_SC *) pjRequestCMDQ(pAST, PKT_SINGLE_LENGTH*4);
 
-        ASTSetupDSTBase(pSingleCMD, dstbase);
-        pSingleCMD++;    
-        ASTSetupDSTXY(pSingleCMD, x, y);
-        pSingleCMD++;    
-        ASTSetupRECTXY(pSingleCMD, width, height);
-        pSingleCMD++;    
-        ASTSetupCMDReg(pSingleCMD, cmdreg);        
-      
-        /* Update Write Pointer */
-        mUpdateWritePointer;
-               
-    }
-    else
-    {                  
-        ASTSetupDSTBase_MMIO(dstbase);
-        ASTSetupDSTXY_MMIO(x, y);
-        ASTSetupRECTXY_MMIO(width, height);
-        ASTSetupCMDReg_MMIO(cmdreg);        
- 
-        vWaitEngIdle(pScrn, pAST);
-      
-    }
-
+    if (len != 0)
+    {
+        /* Modify Reg. Value */
+        cmdreg = (pAST->ulCMDReg & (~CMD_MASK)) | CMD_BITBLT;
+        if (pAST->EnableClip)
+            cmdreg |= CMD_ENABLE_CLIP;
+        else
+            cmdreg &= ~CMD_ENABLE_CLIP;            
+        dstbase = 0;
+        
+        if(dir == DEGREES_0) {			/* horizontal */
+            width  = len;
+            height = 1;	
+        } else {					/* vertical */
+            width  = 1;
+            height = len;	    	
+        }
+                  
+        if ((y + height) >= pScrn->virtualY) 
+        { 
+            delta_y = y;	  
+            dstbase=pAST->VideoModeInfo.ScreenPitch*y;
+            y=0;
+        }
+                  
+        if (pAST->EnableClip)                    
+            ASTSetHWClipping(pScrn, delta_y);
+                                          
+        if (!pAST->MMIO2D)                    
+        {                  
+            /* Write to CMDQ */    
+            pSingleCMD = (PKT_SC *) pjRequestCMDQ(pAST, PKT_SINGLE_LENGTH*4);
+        
+            ASTSetupDSTBase(pSingleCMD, dstbase);
+            pSingleCMD++;    
+            ASTSetupDSTXY(pSingleCMD, x, y);
+            pSingleCMD++;    
+            ASTSetupRECTXY(pSingleCMD, width, height);
+            pSingleCMD++;    
+            ASTSetupCMDReg(pSingleCMD, cmdreg);        
+          
+            /* Update Write Pointer */
+            mUpdateWritePointer;
+                   
+        }
+        else
+        {                  
+            ASTSetupDSTBase_MMIO(dstbase);
+            ASTSetupDSTXY_MMIO(x, y);
+            ASTSetupRECTXY_MMIO(width, height);
+            ASTSetupCMDReg_MMIO(cmdreg);        
+        
+            vWaitEngIdle(pScrn, pAST);
+          
+        }
+        
+    } /* len check */
             
 } /* end of ASTSubsequentSolidHorVertLine */
 
@@ -647,6 +694,8 @@ static void ASTSubsequentSolidTwoPointLine(ScrnInfoPtr pScrn,
     ULONG 	dstbase, ulCommand;
     ULONG	miny, maxy;         
     USHORT      usXM;
+    int delta_y = 0;
+    
 /*
     xf86DrvMsg(pScrn->scrnIndex, X_INFO, "ASTSubsequentSolidTwoPointLine\n");
 */    
@@ -659,15 +708,18 @@ static void ASTSubsequentSolidTwoPointLine(ScrnInfoPtr pScrn,
         ulCommand &= ~CMD_NOT_DRAW_LAST_PIXEL;
     if (pAST->EnableClip)
         ulCommand |= CMD_ENABLE_CLIP;
+    else
+        ulCommand &= ~CMD_ENABLE_CLIP;        
     dstbase = 0;
     miny = (y1 > y2) ? y2 : y1;
     maxy = (y1 > y2) ? y1 : y2;
     if(maxy >= pScrn->virtualY) {
+    	delta_y = miny;
         dstbase = pAST->VideoModeInfo.ScreenPitch * miny;
         y1 -= miny;
         y2 -= miny;
     }
-    
+       
     LineInfo.X1 = x1;
     LineInfo.Y1 = y1;
     LineInfo.X2 = x2;
@@ -681,6 +733,9 @@ static void ASTSubsequentSolidTwoPointLine(ScrnInfoPtr pScrn,
         ulCommand |= CMD_Y_DEC;             
         
     usXM = (dsLineParam.dwLineAttributes & LINEPARAM_XM) ? 1:0;    
+
+    if (pAST->EnableClip)                    
+        ASTSetHWClipping(pScrn, delta_y);
        
     if (!pAST->MMIO2D)                    
     {                  
@@ -703,6 +758,9 @@ static void ASTSubsequentSolidTwoPointLine(ScrnInfoPtr pScrn,
               
         /* Update Write Pointer */
         mUpdateWritePointer;                
+
+        /* Patch KDE pass abnormal point, ycchen@052507 */
+        vWaitEngIdle(pScrn, pAST);
         
     }
     else
@@ -773,7 +831,10 @@ ASTSetupForDashedLine(ScrnInfoPtr pScrn,
         pSingleCMD++;
         ASTSetupLineStyle1(pSingleCMD, *pattern);
         pSingleCMD++;
-        ASTSetupLineStyle2(pSingleCMD, *(pattern+4));                   
+        ASTSetupLineStyle2(pSingleCMD, *(pattern+4));
+        
+        /* Update Write Pointer */
+        mUpdateWritePointer;                           
                        
     }
     else
@@ -802,6 +863,8 @@ ASTSubsequentDashedTwoPointLine(ScrnInfoPtr pScrn,
     ULONG 	dstbase, ulCommand; 
     ULONG	miny, maxy;  
     USHORT      usXM;
+    int delta_y = 0;
+    
 /*
     xf86DrvMsg(pScrn->scrnIndex, X_INFO, "ASTSubsequentDashedTwoPointLine\n");
 */   
@@ -814,15 +877,18 @@ ASTSubsequentDashedTwoPointLine(ScrnInfoPtr pScrn,
         ulCommand &= ~CMD_NOT_DRAW_LAST_PIXEL;
     if (pAST->EnableClip)
         ulCommand |= CMD_ENABLE_CLIP;
+    else
+        ulCommand &= ~CMD_ENABLE_CLIP;        
     dstbase = 0;        
     miny = (y1 > y2) ? y2 : y1;
     maxy = (y1 > y2) ? y1 : y2;
     if(maxy >= pScrn->virtualY) {
+    	delta_y = miny;
         dstbase = pAST->VideoModeInfo.ScreenPitch * miny;
         y1 -= miny;
         y2 -= miny;
     }
-
+   
     LineInfo.X1 = x1;
     LineInfo.Y1 = y1;
     LineInfo.X2 = x2;
@@ -836,6 +902,9 @@ ASTSubsequentDashedTwoPointLine(ScrnInfoPtr pScrn,
         ulCommand |= CMD_Y_DEC;             
         
     usXM = (dsLineParam.dwLineAttributes & LINEPARAM_XM) ? 1:0;    
+
+    if (pAST->EnableClip)                    
+        ASTSetHWClipping(pScrn, delta_y);
        
     if (!pAST->MMIO2D)                    
     {                  
@@ -858,6 +927,9 @@ ASTSubsequentDashedTwoPointLine(ScrnInfoPtr pScrn,
               
         /* Update Write Pointer */
         mUpdateWritePointer;
+
+        /* Patch KDE pass abnormal point, ycchen@052507 */
+        vWaitEngIdle(pScrn, pAST);
               
     }
     else
@@ -922,7 +994,11 @@ ASTSetupForMonoPatternFill(ScrnInfoPtr pScrn,
         pSingleCMD++;
         ASTSetupMONO1(pSingleCMD, patx);  
         pSingleCMD++;
-        ASTSetupMONO2(pSingleCMD, paty);                           
+        ASTSetupMONO2(pSingleCMD, paty);
+        
+        /* Update Write Pointer */
+        mUpdateWritePointer;
+                                           
     }
     else
     {
@@ -943,7 +1019,9 @@ ASTSubsequentMonoPatternFill(ScrnInfoPtr pScrn,
 {
     ASTRecPtr pAST = ASTPTR(pScrn);
     PKT_SC *pSingleCMD;
-    ULONG dstbase, cmdreg;        
+    ULONG dstbase, cmdreg;
+    int delta_y = 0;
+            
 /*            
     xf86DrvMsg(pScrn->scrnIndex, X_INFO, "ASTSubsequentMonoPatternFill\n");
 */    
@@ -951,15 +1029,21 @@ ASTSubsequentMonoPatternFill(ScrnInfoPtr pScrn,
     /* Modify Reg. Value */
     cmdreg = pAST->ulCMDReg;
     if (pAST->EnableClip)
-        cmdreg |= CMD_ENABLE_CLIP;    
+        cmdreg |= CMD_ENABLE_CLIP;
+    else
+        cmdreg &= ~CMD_ENABLE_CLIP;            
     dstbase = 0;
 
     if (dst_y >= pScrn->virtualY) 
     {   
+    	delta_y = dst_y;
         dstbase=pAST->VideoModeInfo.ScreenPitch*dst_y;
         dst_y=0;
     }
-                  
+
+    if (pAST->EnableClip)                    
+        ASTSetHWClipping(pScrn, delta_y);
+                         
     if (!pAST->MMIO2D)                    
     {                  
         /* Write to CMDQ */    
@@ -1039,7 +1123,11 @@ ASTSetupForColor8x8PatternFill(ScrnInfoPtr pScrn, int patx, int paty,
                 ASTSetupPatReg(pSingleCMD, (i*j + j) , (*(CARD32 *) (pataddr++)));
                 pSingleCMD++;                	
             }	
-        }                
+        }
+        
+        /* Update Write Pointer */
+        mUpdateWritePointer;
+                        
     }
     else
     {    	
@@ -1062,7 +1150,9 @@ ASTSubsequentColor8x8PatternFillRect(ScrnInfoPtr pScrn, int patx, int paty,
 {
     ASTRecPtr pAST = ASTPTR(pScrn);
     PKT_SC *pSingleCMD;
-    ULONG dstbase, cmdreg;        
+    ULONG dstbase, cmdreg;
+    int delta_y = 0;
+            
 /*            
     xf86DrvMsg(pScrn->scrnIndex, X_INFO, "ASTSubsequentColor8x8PatternFillRect\n");
 */
@@ -1070,14 +1160,20 @@ ASTSubsequentColor8x8PatternFillRect(ScrnInfoPtr pScrn, int patx, int paty,
     /* Modify Reg. Value */
     cmdreg = pAST->ulCMDReg;
     if (pAST->EnableClip)
-        cmdreg |= CMD_ENABLE_CLIP;    
+        cmdreg |= CMD_ENABLE_CLIP;
+    else
+        cmdreg &= ~CMD_ENABLE_CLIP;            
     dstbase = 0;
 
     if (dst_y >= pScrn->virtualY) 
     {   
+    	delta_y = dst_y;
         dstbase=pAST->VideoModeInfo.ScreenPitch*dst_y;
         dst_y=0;
     }
+
+    if (pAST->EnableClip)                    
+        ASTSetHWClipping(pScrn, delta_y);
                   
     if (!pAST->MMIO2D)                    
     {                  
@@ -1155,6 +1251,9 @@ ASTSetupForCPUToScreenColorExpandFill(ScrnInfoPtr pScrn,
         ASTSetupFG(pSingleCMD, fg);  
         pSingleCMD++;
         ASTSetupBG(pSingleCMD, bg); 
+
+        /* Update Write Pointer */
+        mUpdateWritePointer;
        
     }
     else
@@ -1176,6 +1275,7 @@ ASTSubsequentCPUToScreenColorExpandFill(ScrnInfoPtr pScrn,
     ASTRecPtr pAST = ASTPTR(pScrn);
     PKT_SC *pSingleCMD;
     ULONG dstbase, cmdreg;
+    int delta_y = 0;
 
 /*           
     xf86DrvMsg(pScrn->scrnIndex, X_INFO, "ASTSubsequentCPUToScreenColorExpandFill\n");
@@ -1184,15 +1284,21 @@ ASTSubsequentCPUToScreenColorExpandFill(ScrnInfoPtr pScrn,
     /* Modify Reg. Value */
     cmdreg = pAST->ulCMDReg;
     if (pAST->EnableClip)
-        cmdreg |= CMD_ENABLE_CLIP;    
+        cmdreg |= CMD_ENABLE_CLIP;
+    else
+        cmdreg &= ~CMD_ENABLE_CLIP;            
     dstbase = 0;
 
     if (dst_y >= pScrn->virtualY) 
     {   
+    	delta_y = dst_y;
         dstbase=pAST->VideoModeInfo.ScreenPitch*dst_y;
         dst_y=0;
     }
-                  
+
+    if (pAST->EnableClip)                    
+        ASTSetHWClipping(pScrn, delta_y);
+                                    
     if (!pAST->MMIO2D)                    
     {                  
         /* Write to CMDQ */    
@@ -1277,6 +1383,9 @@ ASTSetupForScreenToScreenColorExpandFill(ScrnInfoPtr pScrn,
         ASTSetupFG(pSingleCMD, fg);  
         pSingleCMD++;
         ASTSetupBG(pSingleCMD, bg); 
+
+        /* Update Write Pointer */
+        mUpdateWritePointer;
        
     }
     else
@@ -1300,6 +1409,7 @@ ASTSubsequentScreenToScreenColorExpandFill(ScrnInfoPtr pScrn,
     PKT_SC *pSingleCMD;
     ULONG srcbase, dstbase, cmdreg;
     USHORT srcpitch;
+    int delta_y = 0;
 
 /*           
     xf86DrvMsg(pScrn->scrnIndex, X_INFO, "ASTSubsequentScreenToScreenColorExpandFill\n");
@@ -1308,15 +1418,21 @@ ASTSubsequentScreenToScreenColorExpandFill(ScrnInfoPtr pScrn,
     /* Modify Reg. Value */
     cmdreg = pAST->ulCMDReg;
     if (pAST->EnableClip)
-        cmdreg |= CMD_ENABLE_CLIP;    
+        cmdreg |= CMD_ENABLE_CLIP;
+    else
+        cmdreg &= ~CMD_ENABLE_CLIP;            
     dstbase = 0;
     if (dst_y >= pScrn->virtualY) 
     {   
+    	delta_y = dst_y;
         dstbase=pAST->VideoModeInfo.ScreenPitch*dst_y;
         dst_y=0;
     }
     srcbase = pAST->VideoModeInfo.ScreenPitch*src_y + ((pScrn->bitsPerPixel+1)/8)*src_x;            
     srcpitch = (pScrn->displayWidth+7)/8;
+
+    if (pAST->EnableClip)                    
+        ASTSetHWClipping(pScrn, delta_y);
     
     if (!pAST->MMIO2D)                    
     {                  
@@ -1357,6 +1473,33 @@ ASTSubsequentScreenToScreenColorExpandFill(ScrnInfoPtr pScrn,
 	  
 /* Clipping */
 static void
+ASTSetHWClipping(ScrnInfoPtr pScrn, int delta_y)
+{
+    ASTRecPtr pAST = ASTPTR(pScrn);
+    PKT_SC *pSingleCMD;
+
+    if (!pAST->MMIO2D)                    
+    {
+        /* Write to CMDQ */
+        pSingleCMD = (PKT_SC *) pjRequestCMDQ(pAST, PKT_SINGLE_LENGTH*2);
+
+        ASTSetupCLIP1(pSingleCMD, pAST->clip_left, pAST->clip_top - delta_y);
+        pSingleCMD++;
+        ASTSetupCLIP2(pSingleCMD, pAST->clip_right + 1, pAST->clip_bottom - delta_y + 1);
+        
+        /* Update Write Pointer */
+        mUpdateWritePointer;
+                         
+    }
+    else
+    {
+        ASTSetupCLIP1_MMIO(pAST->clip_left, pAST->clip_top - delta_y);
+        ASTSetupCLIP2_MMIO(pAST->clip_right + 1, pAST->clip_bottom - delta_y + 1);                   	
+    }
+	
+}	
+
+static void
 ASTSetClippingRectangle(ScrnInfoPtr pScrn,
                         int left, int top, int right, int bottom)
 {
@@ -1368,20 +1511,10 @@ ASTSetClippingRectangle(ScrnInfoPtr pScrn,
 */            
     pAST->EnableClip = TRUE;
             
-    if (!pAST->MMIO2D)                    
-    {
-        /* Write to CMDQ */
-        pSingleCMD = (PKT_SC *) pjRequestCMDQ(pAST, PKT_SINGLE_LENGTH*2);
-
-        ASTSetupCLIP1(pSingleCMD, left, top);
-        pSingleCMD++;
-        ASTSetupCLIP2(pSingleCMD, right, bottom);                 
-    }
-    else
-    {
-        ASTSetupCLIP1_MMIO(left, top);
-        ASTSetupCLIP2_MMIO(right, bottom);                   	
-    }
+    pAST->clip_left   = left;
+    pAST->clip_top    = top;
+    pAST->clip_right  = right;
+    pAST->clip_bottom = bottom;
     
 }
 
@@ -1395,5 +1528,4 @@ ASTDisableClipping(ScrnInfoPtr pScrn)
     pAST->EnableClip = FALSE;
 }
 
-                                         
 #endif	/* end of Accel_2D */

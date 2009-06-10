@@ -25,6 +25,12 @@
 #define VIDEOMEM_SIZE_16M	0x01000000
 #define VIDEOMEM_SIZE_32M	0x02000000
 #define VIDEOMEM_SIZE_64M	0x04000000
+#define VIDEOMEM_SIZE_128M	0x08000000
+
+#define DRAMTYPE_512Mx16	0
+#define DRAMTYPE_1Gx16		1
+#define DRAMTYPE_512Mx32	2
+#define DRAMTYPE_1Gx32		3
 
 #define AR_PORT_WRITE		(pAST->RelocateIO + 0x40)
 #define MISC_PORT_WRITE		(pAST->RelocateIO + 0x42)
@@ -34,6 +40,7 @@
 #define GR_PORT			(pAST->RelocateIO + 0x4E)
 #define CRTC_PORT 		(pAST->RelocateIO + 0x54)
 #define INPUT_STATUS1_READ	(pAST->RelocateIO + 0x5A)
+#define MISC_PORT_READ		(pAST->RelocateIO + 0x4C)
 
 #define GetReg(base)				inb(base)
 #define SetReg(base,val)			outb(base,val)
@@ -42,9 +49,8 @@
                       				val = inb(base+1);		\
                     				} while (0)
 #define SetIndexReg(base,index, val)		do { \
-                      				outb(base,index);	\
-                      				outb(base+1,val);   	\
-                    				} while (0)
+						outw(base, ((USHORT)(val) << 8) | index);	\
+						} while (0)
 #define GetIndexRegMask(base,index, and, val)	do {			\
                       				outb(base,index);	\
                       				val = (inb(base+1) & and);		\

@@ -130,7 +130,7 @@ VBIOS_STDTABLE_STRUCT StdTable[] = {
 };
 
 VBIOS_ENHTABLE_STRUCT  Res640x480Table[] = {
-    { 800, 640, 8, 96, 525, 480, 2, 2, VCLK28_322,	/* 60Hz */
+    { 800, 640, 8, 96, 525, 480, 2, 2, VCLK25_175,	/* 60Hz */
       (SyncNN | HBorder | VBorder | Charx8Dot), 60, 1, 0x2E },
     { 832, 640, 16, 40, 520, 480, 1, 3, VCLK31_5,	/* 72Hz */
       (SyncNN | HBorder | VBorder | Charx8Dot), 72, 2, 0x2E  },
@@ -167,7 +167,7 @@ VBIOS_ENHTABLE_STRUCT  Res1024x768Table[] = {
     {1312, 1024, 16, 96, 800, 768, 1, 3, VCLK78_75,	/* 75Hz */ 
       (SyncPP | Charx8Dot), 75, 3, 0x31 },      
     {1376, 1024, 48, 96, 808, 768, 1, 3, VCLK94_5,	/* 85Hz */ 
-      (SyncPP | Charx8Dot), 85, 4, 0x31 },  
+      (SyncPP | Charx8Dot), 84, 4, 0x31 },  
     {1376, 1024, 48, 96, 808, 768, 1, 3, VCLK94_5,	/* end */ 
       (SyncPP | Charx8Dot), 0xFF, 4, 0x31 },             
 };
@@ -187,7 +187,14 @@ VBIOS_ENHTABLE_STRUCT  Res1600x1200Table[] = {
     {2160, 1600, 64, 192, 1250, 1200, 1, 3, VCLK162,	/* 60Hz */ 
       (SyncPP | Charx8Dot), 60, 1, 0x33 }, 
     {2160, 1600, 64, 192, 1250, 1200, 1, 3, VCLK162,	/* end */ 
-      (SyncPP | Charx8Dot), 60, 1, 0x33 },         
+      (SyncPP | Charx8Dot), 0xFF, 1, 0x33 },         
+};
+
+VBIOS_ENHTABLE_STRUCT  Res1920x1200Table[] = {
+    {2080, 1920, 48, 32, 1235, 1200, 3, 6, VCLK154,	/* 60Hz */
+      (SyncNP | Charx8Dot), 60, 1, 0x34 },   		
+    {2080, 1920, 48, 32, 1235, 1200, 3, 6, VCLK154,	/* 60Hz */
+      (SyncNP | Charx8Dot), 0xFF, 1, 0x34 },   		
 };
 
 VBIOS_DCLK_INFO DCLKTable [] = {
@@ -207,6 +214,7 @@ VBIOS_DCLK_INFO DCLKTable [] = {
     {0x85, 0x24, 0x00},                        	        /* 0D: VCLK135         	*/
     {0x67, 0x22, 0x00},                        	        /* 0E: VCLK157_5       	*/
     {0x6A, 0x22, 0x00},				        /* 0F: VCLK162         	*/
+    {0x4d, 0x4c, 0x80},				        /* 10: VCLK193_25      	*/    
 };
 
 VBIOS_DAC_INFO DAC_TEXT[] = {
@@ -333,6 +341,7 @@ void vSetCRTCReg(ScrnInfoPtr pScrn, DisplayModePtr mode, PVBIOS_MODE_INFO pVGAMo
 void vSetOffsetReg(ScrnInfoPtr pScrn, DisplayModePtr mode, PVBIOS_MODE_INFO pVGAModeInfo);
 void vSetDCLKReg(ScrnInfoPtr pScrn, DisplayModePtr mode, PVBIOS_MODE_INFO pVGAModeInfo);
 void vSetExtReg(ScrnInfoPtr pScrn, DisplayModePtr mode, PVBIOS_MODE_INFO pVGAModeInfo);
+void vSetSyncReg(ScrnInfoPtr pScrn, DisplayModePtr mode, PVBIOS_MODE_INFO pVGAModeInfo);
 Bool bSetDACReg(ScrnInfoPtr pScrn, DisplayModePtr mode, PVBIOS_MODE_INFO pVGAModeInfo);
 
 Bool
@@ -355,6 +364,7 @@ ASTSetMode(ScrnInfoPtr pScrn, DisplayModePtr mode)
     vSetOffsetReg(pScrn, mode, &vgamodeinfo);    
     vSetDCLKReg(pScrn, mode, &vgamodeinfo);
     vSetExtReg(pScrn, mode, &vgamodeinfo);
+    vSetSyncReg(pScrn, mode, &vgamodeinfo);    
     bSetDACReg(pScrn, mode, &vgamodeinfo);       
     
     /* post set mode */
@@ -423,8 +433,10 @@ Bool bGetAST1000VGAModeInfo(ScrnInfoPtr pScrn, DisplayModePtr mode, PVBIOS_MODE_
          break;
     case 1600:
          pVGAModeInfo->pEnhTableEntry = (PVBIOS_ENHTABLE_STRUCT) &Res1600x1200Table[ulRefreshRateIndex];
-         break;                  
-    default:
+         break;
+    case 1920:
+         pVGAModeInfo->pEnhTableEntry = (PVBIOS_ENHTABLE_STRUCT) &Res1920x1200Table[ulRefreshRateIndex];
+         break;        default:
          return (FALSE);     
     }
 
@@ -524,6 +536,7 @@ void vSetStdReg(ScrnInfoPtr pScrn, DisplayModePtr mode, PVBIOS_MODE_INFO pVGAMod
     /* Set GR */
     for (i=0; i<9; i++)
     {
+        jReg = pStdModePtr->GR[i];
         SetIndexReg(GR_PORT,(UCHAR) i, jReg);        
           	    	
     }    
@@ -558,10 +571,10 @@ vSetCRTCReg(ScrnInfoPtr pScrn, DisplayModePtr mode, PVBIOS_MODE_INFO pVGAModeInf
     if (usTemp & 0x20) jReg05 |= 0x80;			/* HBE D[5] */
     if (usTemp & 0x40) jRegAD |= 0x01;			/* HBE D[6] */    
     SetIndexRegMask(CRTC_PORT,0x03, 0xE0, (UCHAR) (usTemp & 0x1F));
-    usTemp = (mode->CrtcHSyncStart >> 3 );
+    usTemp = (mode->CrtcHSyncStart >> 3 ) + 2;
     if (usTemp & 0x100) jRegAC |= 0x40;			/* HRS D[5] */    
     SetIndexRegMask(CRTC_PORT,0x04, 0x00, (UCHAR) (usTemp)); 
-    usTemp = (mode->CrtcHSyncEnd >> 3 ) & 0x3F;
+    usTemp = ((mode->CrtcHSyncEnd >> 3 ) + 2) & 0x3F;
     if (usTemp & 0x20) jRegAD |= 0x04;			/* HRE D[5] */    
     SetIndexRegMask(CRTC_PORT,0x05, 0x60, (UCHAR) ((usTemp & 0x1F) | jReg05));
  
@@ -633,7 +646,7 @@ void vSetDCLKReg(ScrnInfoPtr pScrn, DisplayModePtr mode, PVBIOS_MODE_INFO pVGAMo
 
     SetIndexRegMask(CRTC_PORT,0xC0, 0x00,  pDCLKPtr->Param1); 
     SetIndexRegMask(CRTC_PORT,0xC1, 0x00,  pDCLKPtr->Param2);    
-    SetIndexRegMask(CRTC_PORT,0xBB, 0xCF,  ((pDCLKPtr->Param3 & 0x03) << 4));                                                                                                       
+    SetIndexRegMask(CRTC_PORT,0xBB, 0x0F, (pDCLKPtr->Param3 & 0x80) | ((pDCLKPtr->Param3 & 0x03) << 4) );                                                                                                       
     	
 }
 
@@ -671,11 +684,33 @@ void vSetExtReg(ScrnInfoPtr pScrn, DisplayModePtr mode, PVBIOS_MODE_INFO pVGAMod
     SetIndexRegMask(CRTC_PORT,0xA8, 0xFD, (UCHAR) jRegA8);                                
 
     /* Set Threshold */
-    SetIndexReg(CRTC_PORT,0xA7, 0x2F);                                
-    SetIndexReg(CRTC_PORT,0xA6, 0x1F);                                
+    if ((pAST->jChipType == AST2100) || (pAST->jChipType == AST1100) || (pAST->jChipType == AST2200) || (pAST->jChipType == AST2150) ) 
+    {
+        SetIndexReg(CRTC_PORT,0xA7, 0x3F);
+        SetIndexReg(CRTC_PORT,0xA6, 0x2F);    	
+    }
+    else
+    {	
+        SetIndexReg(CRTC_PORT,0xA7, 0x2F);
+        SetIndexReg(CRTC_PORT,0xA6, 0x1F);
+    }    
    	
 }
 
+void vSetSyncReg(ScrnInfoPtr pScrn, DisplayModePtr mode, PVBIOS_MODE_INFO pVGAModeInfo)
+{
+    PVBIOS_ENHTABLE_STRUCT pEnhModePtr;
+    ASTRecPtr pAST;
+    UCHAR jReg;	
+        
+    pAST = ASTPTR(pScrn);
+    pEnhModePtr = pVGAModeInfo->pEnhTableEntry;
+
+    jReg  = GetReg(MISC_PORT_READ);
+    jReg |= (UCHAR) (pEnhModePtr->Flags & SyncNN);
+    SetReg(MISC_PORT_WRITE,jReg);
+	
+}
 
 Bool bSetDACReg(ScrnInfoPtr pScrn, DisplayModePtr mode, PVBIOS_MODE_INFO pVGAModeInfo)
 {
