@@ -22,9 +22,8 @@
 
 AC_PREREQ(2.57)
 
-# When the version number is modified here, also modify it in src/mga.h.
 AC_INIT([xf86-video-mga],
-        1.4.8,
+        1.4.10,
         [https://bugs.freedesktop.org/enter_bug.cgi?product=xorg],
         xf86-video-mga)
 
@@ -109,6 +108,16 @@ CFLAGS="$XORG_CFLAGS"
 AC_CHECK_DECL(XSERVER_LIBPCIACCESS,
               [XSERVER_LIBPCIACCESS=yes], [XSERVER_LIBPCIACCESS=no],
               [#include "xorg-server.h"])
+CFLAGS="$save_CFLAGS"
+
+save_CFLAGS="$CFLAGS"
+CFLAGS="$XORG_CFLAGS"
+AC_CHECK_DECL(xf86ModeBandwidth,
+	      [AC_DEFINE(HAVE_XF86MODEBANDWIDTH, 1, [Have xf86ModeBandwidth])],
+	      [],
+	      [#include <X11/extensions/randr.h>
+	       #include "xorg-server.h"
+	       #include "xf86Modes.h"])
 CFLAGS="$save_CFLAGS"
 
 if test "x$XSERVER_LIBPCIACCESS" = xyes; then

@@ -1,5 +1,3 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/mga/mga_storm.c,v 1.99tsi Exp $ */
-
 #define PSZ 8
 
 #ifdef HAVE_CONFIG_H
@@ -27,7 +25,6 @@
 #include "servermd.h"
 
 #ifdef XF86DRI
-#include "cfb.h"
 #include "GL/glxtokens.h"
 #endif
 
@@ -312,11 +309,6 @@ Bool MGASetupForCPUToScreenAlphaTextureFaked( ScrnInfoPtr pScrn, int op,
 
     CHECK_DMA_QUIESCENT(pMga, pScrn);
 
-    if(pMga->Overlay8Plus24) {
-        WAITFIFO(1);
-        SET_PLANEMASK_REPLICATED( 0x00ffffff, 0xffffffff, 32 );
-    }
-
     pitch = (width + 15) & ~15;
     sizeNeeded = pitch * height;
     if(pScrn->bitsPerPixel == 16)
@@ -400,11 +392,6 @@ MGASetupForCPUToScreenAlphaTexture (
     log2h = GetPowerOfTwo(height);
 
     CHECK_DMA_QUIESCENT(pMga, pScrn);
-
-    if(pMga->Overlay8Plus24) {
-        WAITFIFO(1);
-        SET_PLANEMASK_REPLICATED( 0x00ffffff, 0xffffffff, 32 );
-    }
 
     pitch = (width + 15) & ~15;
     sizeNeeded = (pitch * height) >> 1;
@@ -504,11 +491,6 @@ MGASetupForCPUToScreenTexture (
     log2h = GetPowerOfTwo(height);
 
     CHECK_DMA_QUIESCENT(pMga, pScrn);
-
-    if(pMga->Overlay8Plus24) {
-        WAITFIFO(1);
-        SET_PLANEMASK_REPLICATED( 0x00ffffff, 0xffffffff, 32 );
-    }
 
     pitch = (width + 15) & ~15;
     sizeNeeded = pitch * height;
@@ -1146,12 +1128,28 @@ void MGAStormEngineInit( ScrnInfoPtr pScrn )
     case PCI_CHIP_MGAG200_PCI:
     case PCI_CHIP_MGAG200_SE_A_PCI:
     case PCI_CHIP_MGAG200_SE_B_PCI:
+    case PCI_CHIP_MGAG200_WINBOND_PCI:
+    case PCI_CHIP_MGAG200_EV_PCI:
 	pMga->SrcOrg = 0;
 	OUTREG(MGAREG_SRCORG, pMga->realSrcOrg);
 	OUTREG(MGAREG_DSTORG, pMga->DstOrg);
 	break;
     default:
 	break;
+    }
+
+    if (pMga->is_G200WB)
+    {
+        CARD32 dwgctl = MGADWG_RSTR | 0x00060000 | MGADWG_SHIFTZERO |
+			MGADWG_BITBLT | MGADWG_BFCOL;
+        WAITFIFO(7);
+        OUTREG(MGAREG_DWGCTL, dwgctl);
+        OUTREG(MGAREG_SGN, 0);
+        OUTREG(MGAREG_AR5, 1);
+        OUTREG(MGAREG_AR0, 1);
+        OUTREG(MGAREG_AR3, 0);
+        OUTREG(MGAREG_FXBNDRY, (1 << 16) | (1 & 0xffff));
+        OUTREG(MGAREG_YDSTLEN + MGAREG_EXEC, (1 << 16) | 1);
     }
 
     xf86SetLastScrnFlag(pScrn->entityList[0], pScrn->scrnIndex);
