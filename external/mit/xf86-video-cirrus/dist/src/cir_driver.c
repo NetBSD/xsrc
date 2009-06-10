@@ -53,9 +53,9 @@ static Bool alp_loaded = FALSE;
 #define CIR_VERSION 4000
 #define CIR_NAME "CIRRUS"
 #define CIR_DRIVER_NAME "cirrus"
-#define CIR_MAJOR_VERSION 1
-#define CIR_MINOR_VERSION 1
-#define CIR_PATCHLEVEL 0
+#define CIR_MAJOR_VERSION PACKAGE_VERSION_MAJOR
+#define CIR_MINOR_VERSION PACKAGE_VERSION_MINOR
+#define CIR_PATCHLEVEL PACKAGE_VERSION_PATCHLEVEL
 
 /*
  * This contains the functions needed by the server after loading the
@@ -93,7 +93,7 @@ SymTabRec CIRChipsets[] = {
 };
 
 /* List of PCI chipset names */
-PciChipsets CIRPciChipsets[] = {
+_X_EXPORT PciChipsets CIRPciChipsets[] = {
 	{ PCI_CHIP_GD5430,	PCI_CHIP_GD5430,	RES_SHARED_VGA },
 	{ PCI_CHIP_GD5434_4,PCI_CHIP_GD5434_4,	RES_SHARED_VGA },
 	{ PCI_CHIP_GD5434_8,PCI_CHIP_GD5434_8,	RES_SHARED_VGA },
@@ -252,7 +252,8 @@ CIRProbe(DriverPtr drv, int flags)
 					  &devSections)) <= 0) {
 	return FALSE;
     }
-    
+
+#ifndef XSERVER_LIBPCIACCESS    
     if (xf86GetPciVideoInfo() == NULL) {
 	/*
 	 * We won't let anything in the config file override finding no
@@ -260,6 +261,7 @@ CIRProbe(DriverPtr drv, int flags)
 	 */
 	return FALSE;
     }
+#endif
   
     numUsed = xf86MatchPciInstances(CIR_NAME, PCI_VENDOR_CIRRUS,
 				    CIRChipsets, CIRPciChipsets, devSections,
@@ -278,10 +280,10 @@ CIRProbe(DriverPtr drv, int flags)
  	   own driver). */
 	pPci = xf86GetPciInfoForEntity(usedChips[i]);
 	pScrn = NULL;
- 	if (pPci && (pPci->chipType == PCI_CHIP_GD5462 ||
- 	    pPci->chipType == PCI_CHIP_GD5464 ||
- 	    pPci->chipType == PCI_CHIP_GD5464BD ||
- 	    pPci->chipType == PCI_CHIP_GD5465)) {
+ 	if (pPci && (PCI_DEV_DEVICE_ID(pPci) == PCI_CHIP_GD5462 ||
+		     PCI_DEV_DEVICE_ID(pPci) == PCI_CHIP_GD5464 ||
+		     PCI_DEV_DEVICE_ID(pPci) == PCI_CHIP_GD5464BD ||
+		     PCI_DEV_DEVICE_ID(pPci) == PCI_CHIP_GD5465)) {
  	    
  	    if (!lg_loaded) {
  		if (!xf86LoadDrvSubModule(drv, "cirrus_laguna")) 
@@ -303,7 +305,7 @@ CIRProbe(DriverPtr drv, int flags)
  	if (pScrn) {
  	    foundScreen = TRUE;
  	    /* Fill in what we can of the ScrnInfoRec */
- 	    pScrn->driverVersion = VERSION;
+ 	    pScrn->driverVersion = CIR_VERSION;
  	    pScrn->driverName	 = CIR_DRIVER_NAME;
  	    pScrn->name		 = CIR_NAME;
  	    pScrn->Probe	 = NULL;
@@ -318,7 +320,7 @@ CIRProbe(DriverPtr drv, int flags)
  * Map the framebuffer and MMIO memory.
  */
 
-Bool
+_X_EXPORT Bool
 CirMapMem(CirPtr pCir, int scrnIndex)
 {
 	int mmioFlags;
@@ -331,12 +333,27 @@ CirMapMem(CirPtr pCir, int scrnIndex)
 	 * Map the frame buffer.
 	 */
 	if (pCir->FbMapSize) {
+
+#ifndef XSERVER_LIBPCIACCESS
 	    
 	    pCir->FbBase = xf86MapPciMem(scrnIndex, VIDMEM_FRAMEBUFFER,
 					 pCir->PciTag, pCir->FbAddress,
 					 pCir->FbMapSize);
 	    if (pCir->FbBase == NULL)
 		return FALSE;
+
+#else
+	    void** result = (void**)&pCir->FbBase;
+	    int err = pci_device_map_range(pCir->PciInfo,
+					   pCir->FbAddress,
+					   pCir->FbMapSize,
+					   PCI_DEV_MAP_FLAG_WRITABLE |
+					   PCI_DEV_MAP_FLAG_WRITE_COMBINE,
+					   result);
+
+	    if (err) 
+	      return FALSE;
+#endif
 	}
 	
 #ifdef CIR_DEBUG
@@ -349,17 +366,33 @@ CirMapMem(CirPtr pCir, int scrnIndex)
 	if (pCir->IOAddress == 0) {
 		pCir->IOBase = NULL; /* Until we are ready to use MMIO */
 	} else {
+
+#ifndef XSERVER_LIBPCIACCESS
 		mmioFlags = VIDMEM_MMIO;
 		/*
 		 * For Alpha, we need to map SPARSE memory, since we need
 		 * byte/short access.  Common-level will automatically use
 		 * sparse mapping for MMIO.
 		 */
+
 		pCir->IOBase =
 		  xf86MapPciMem(scrnIndex, mmioFlags, pCir->PciTag,
 		       	        pCir->IOAddress, pCir->IoMapSize);
 		if (pCir->IOBase == NULL)
 			return FALSE;
+
+#else
+		void** result = (void**)&pCir->IOBase;
+		int err = pci_device_map_range(pCir->PciInfo,
+					       pCir->IOAddress,
+					       pCir->IoMapSize,
+					       PCI_DEV_MAP_FLAG_WRITABLE,
+					       result);
+		
+		if (err) 
+			return FALSE;
+		
+#endif
 	}
 
 #ifdef CIR_DEBUG
@@ -377,7 +410,7 @@ CirMapMem(CirPtr pCir, int scrnIndex)
  * Unmap the framebuffer and MMIO memory.
  */
 
-Bool
+_X_EXPORT Bool
 CirUnmapMem(CirPtr pCir, int scrnIndex)
 {
 #ifdef CIR_DEBUG
@@ -388,16 +421,24 @@ CirUnmapMem(CirPtr pCir, int scrnIndex)
 		/*
 		 * Unmap IO registers to virtual address space
 		 */
+#ifndef XSERVER_LIBPCIACCESS
 		xf86UnMapVidMem(scrnIndex, (pointer)pCir->IOBase, pCir->IoMapSize);
+#else
+		pci_device_unmap_range(pCir->PciInfo, (pointer)pCir->IOBase, pCir->IoMapSize);
+#endif
 		pCir->IOBase = NULL;
 	}
 
+#ifndef XSERVER_LIBPCIACCESS
 	xf86UnMapVidMem(scrnIndex, (pointer)pCir->FbBase, pCir->FbMapSize);
+#else
+	pci_device_unmap_range(pCir->PciInfo, (pointer)pCir->FbBase, pCir->FbMapSize);
+#endif
 	pCir->FbBase = NULL;
 	return TRUE;
 }
 
-void
+_X_EXPORT void
 cirProbeDDC(ScrnInfoPtr pScrn, int index)
 {
     vbeInfoPtr pVbe;
