@@ -28,7 +28,6 @@
  *	    Massimiliano Ghilardi, max@Linuz.sns.it, some fixes to the
  *				   clockchip programming code.
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/trident/trident_driver.c,v 1.190 2004/01/21 22:31:54 alanh Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -41,7 +40,6 @@
 #include "xf86.h"
 #include "xf86_OSproc.h"
 #include "xf86Resources.h"
-#include "xf86Version.h"
 #include "xf86PciInfo.h"
 #include "xf86Pci.h"
 #include "xf86cmap.h"
@@ -115,9 +113,9 @@ static int pix24bpp = 0;
 #define TRIDENT_VERSION 4000
 #define TRIDENT_NAME "TRIDENT"
 #define TRIDENT_DRIVER_NAME "trident"
-#define TRIDENT_MAJOR_VERSION 1
-#define TRIDENT_MINOR_VERSION 2
-#define TRIDENT_PATCHLEVEL 3
+#define TRIDENT_MAJOR_VERSION PACKAGE_VERSION_MAJOR
+#define TRIDENT_MINOR_VERSION PACKAGE_VERSION_MINOR
+#define TRIDENT_PATCHLEVEL PACKAGE_VERSION_PATCHLEVEL
 
 /* 
  * This contains the functions needed by the server after loading the driver
@@ -175,6 +173,7 @@ static SymTabRec TRIDENTChipsets[] = {
     { -1,				NULL }
 };
 
+#ifdef HAVE_ISA
 static IsaChipsets TRIDENTISAchipsets[] = {
     { TVGA9000,			RES_EXCLUSIVE_VGA },
     { TVGA9000i,		RES_EXCLUSIVE_VGA },
@@ -186,6 +185,7 @@ static IsaChipsets TRIDENTISAchipsets[] = {
     { TGUI9440AGi,		RES_EXCLUSIVE_VGA },
     { -1,			RES_UNDEFINED }
 };
+#endif
 
 static PciChipsets TRIDENTPciChipsets[] = {
     { CYBER9320,	PCI_CHIP_9320,	RES_SHARED_VGA },
@@ -810,6 +810,7 @@ TRIDENTClockSelect(ScrnInfoPtr pScrn, int no)
     return(TRUE);
 }
 
+#ifdef HAVE_ISA
 static int
 TridentFindIsaDevice(GDevPtr dev)
 {
@@ -900,6 +901,7 @@ TridentFindIsaDevice(GDevPtr dev)
     }
     return found;
 }
+#endif
 
 
 /* Mandatory */
@@ -937,7 +939,12 @@ TRIDENTProbe(DriverPtr drv, int flags)
      * All of the cards this driver supports are PCI, so the "probing" just
      * amounts to checking the PCI data that the server has already collected.
      */
-    if (xf86GetPciVideoInfo()) {
+#ifndef XSERVER_LIBPCIACCESS
+    if (xf86GetPciVideoInfo()== NULL) {
+	return FALSE;
+    }
+#endif
+    {
     	numUsed = xf86MatchPciInstances(TRIDENT_NAME, PCI_VENDOR_TRIDENT,
 		   TRIDENTChipsets, TRIDENTPciChipsets, devSections,
 		   numDevSections, drv, &usedChips);
@@ -971,6 +978,7 @@ TRIDENTProbe(DriverPtr drv, int flags)
 	}
     }
 
+#ifdef HAVE_ISA
     /* Isa Bus */
     numUsed = xf86MatchIsaInstances(TRIDENT_NAME,TRIDENTChipsets,
 				     TRIDENTISAchipsets,
@@ -1001,7 +1009,8 @@ TRIDENTProbe(DriverPtr drv, int flags)
 	}
 	xfree(usedChips);
     }
-    
+#endif    
+
     xfree(devSections);
     return foundScreen;
 }
@@ -1092,9 +1101,9 @@ TRIDENTPreInit(ScrnInfoPtr pScrn, int flags)
 	/* This driver can handle ISA and PCI buses */
 	if (pTrident->pEnt->location.type == BUS_PCI) {
 	    pTrident->PciInfo = xf86GetPciInfoForEntity(pTrident->pEnt->index);
-	    pTrident->PciTag = pciTag(pTrident->PciInfo->bus, 
-				  pTrident->PciInfo->device,
-				  pTrident->PciInfo->func);
+#ifndef XSERVER_LIBPCIACCESS
+	    pTrident->PciTag = PCI_DEV_TAG(pTrident->PciInfo);
+#endif
     	    pTrident->Linear = TRUE;
 	} else {
     	    pTrident->Linear = FALSE;
@@ -1491,7 +1500,7 @@ TRIDENTPreInit(ScrnInfoPtr pScrn, int flags)
 	    from = X_CONFIG;
     	} else {
     	    if (IsPciCard)
-	    	pTrident->FbAddress = pTrident->PciInfo->memBase[0]& 0xFFFFFFF0;
+	    	pTrident->FbAddress = PCI_REGION_BASE(pTrident->PciInfo, 0, REGION_MEM) & 0xFFFFFFF0;
 	    else
 	    	pTrident->FbAddress = 0xA0000;
     	}
@@ -1510,7 +1519,7 @@ TRIDENTPreInit(ScrnInfoPtr pScrn, int flags)
 	    from = X_CONFIG;
     	} else {
     	    if (IsPciCard)
-	    	pTrident->IOAddress = pTrident->PciInfo->memBase[1]& 0xFFFFC000;
+	    	pTrident->IOAddress = PCI_REGION_BASE(pTrident->PciInfo, 1, REGION_MEM) & 0xFFFFC000;
 	    else
 	    	/* FIXME - Multihead UNAWARE */
     	    	pTrident->IOAddress = 0xBF000;
@@ -1996,7 +2005,7 @@ TRIDENTPreInit(ScrnInfoPtr pScrn, int flags)
 	    pTrident->NewClockCode = TRUE;
 	    pTrident->frequency = NTSC;
 	    OUTB(0x3C4, 0x5D);
-	    if (pTrident->PciInfo->subsysVendor != 0x1023) {
+	    if (PCI_SUB_VENDOR_ID(pTrident->PciInfo) != 0x1023) {
 	    	chipset = "CyberBladeXP";
 	    	pTrident->IsCyber = TRUE;
 	    } else
@@ -2321,7 +2330,7 @@ TRIDENTPreInit(ScrnInfoPtr pScrn, int flags)
     clockRanges->maxClock = pTrident->MaxClock;
     clockRanges->clockIndex = -1;		/* programmable */
     clockRanges->interlaceAllowed = TRUE;
-    clockRanges->doubleScanAllowed = FALSE;	/* XXX check this */
+    clockRanges->doubleScanAllowed = TRUE;
 
     /*
      * xf86ValidateModes will check that the mode HTotal and VTotal values
@@ -2542,12 +2551,32 @@ TRIDENTMapMem(ScrnInfoPtr pScrn)
     if (Is3Dchip) mapsize = 0x20000;
 
     if (IsPciCard && UseMMIO)
+#ifndef XSERVER_LIBPCIACCESS
     	pTrident->IOBase = xf86MapPciMem(pScrn->scrnIndex, VIDMEM_MMIO, 
 		pTrident->PciTag, pTrident->IOAddress, mapsize);
+#else
+	{
+		void **result = (void **)&pTrident->IOBase;
+		int err = pci_device_map_range(pTrident->PciInfo,
+						pTrident->IOAddress,
+						mapsize,
+						PCI_DEV_MAP_FLAG_WRITABLE,
+						result);
+		if (err) {
+			xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
+				"Unable to map IO aperture. %s (%d)\n",
+				strerror(err), err);
+		}
+	}
+#endif
     else {
+#ifndef XSERVER_LIBPCIACCESS
     	pTrident->IOBase = xf86MapDomainMemory(pScrn->scrnIndex, VIDMEM_MMIO, 
 		pTrident->PciTag, pTrident->IOAddress, 0x1000);
     	pTrident->IOBase += 0xF00;
+#else
+	return FALSE;
+#endif
     }
 
     if (pTrident->IOBase == NULL)
@@ -2555,11 +2584,28 @@ TRIDENTMapMem(ScrnInfoPtr pScrn)
 
     if (pTrident->Linear) {
         if (pTrident->FbMapSize != 0) {
+#ifndef XSERVER_LIBPCIACCESS
 	    pTrident->FbBase = xf86MapPciMem(pScrn->scrnIndex, 
 				VIDMEM_FRAMEBUFFER,
 				 pTrident->PciTag,
 				 (unsigned long)pTrident->FbAddress,
 				 pTrident->FbMapSize);
+#else
+	    {
+		void **result = (void **)&pTrident->FbBase;
+		int err = pci_device_map_range(pTrident->PciInfo,
+						pTrident->FbAddress,
+						pTrident->FbMapSize,
+						PCI_DEV_MAP_FLAG_WRITABLE |
+						PCI_DEV_MAP_FLAG_WRITE_COMBINE,
+						result);
+		if (err) {
+			xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
+				"Unable to map VRAM aperture. %s (%d)\n",
+				strerror(err), err);
+		}
+	    }
+#endif
 	    if (pTrident->FbBase == NULL)
 		return FALSE;
     	}
@@ -2585,19 +2631,27 @@ TRIDENTUnmapMem(ScrnInfoPtr pScrn)
     /*
      * Unmap IO registers to virtual address space
      */ 
-    if (IsPciCard && UseMMIO) 
+#ifdef XSERVER_LIBPCIACCESS
+    pci_device_unmap_range(pTrident->PciInfo, (pointer)pTrident->IOBase, mapsize);
+#else
+    if (IsPciCard && UseMMIO) {
     	xf86UnMapVidMem(pScrn->scrnIndex, (pointer)pTrident->IOBase, mapsize);
-    else {
+    } else {
     	pTrident->IOBase -= 0xF00;
     	xf86UnMapVidMem(pScrn->scrnIndex, (pointer)pTrident->IOBase, 0x1000);
     }
+#endif
     pTrident->IOBase = NULL;
 
     if (pTrident->Linear) {
     	if (pTrident->FbMapSize != 0) {
+#ifdef XSERVER_LIBPCIACCESS
+	    pci_device_unmap_range(pTrident->PciInfo, (pointer)pTrident->FbBase, pTrident->FbMapSize);
+#else
     	    xf86UnMapVidMem(pScrn->scrnIndex, (pointer)pTrident->FbBase, 
 							pTrident->FbMapSize);
-    	pTrident->FbBase = NULL;
+#endif
+	    pTrident->FbBase = NULL;
         }
     }
 
@@ -2646,7 +2700,7 @@ TRIDENTModeInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
     TRIDENTPtr pTrident = TRIDENTPTR(pScrn);
     TRIDENTRegPtr tridentReg;
 
-    WAITFORVSYNC;
+    if (!xf86IsPc98()) WAITFORVSYNC;
 
     TridentFindClock(pScrn,mode->Clock);
 

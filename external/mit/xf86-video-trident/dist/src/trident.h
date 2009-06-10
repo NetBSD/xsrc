@@ -21,7 +21,6 @@
  *
  * Authors:  Alan Hourihane, <alanh@fairlite.demon.co.uk>
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/trident/trident.h,v 1.59 2003/09/05 22:07:28 alanh Exp $ */
 /*#define VBE_INFO*/
 
 #ifndef _TRIDENT_H_
@@ -30,6 +29,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
+
+#include "tridentpcirename.h"
 
 #include "exa.h"
 #include "xf86Cursor.h"
@@ -245,10 +246,6 @@ void tridentSetModeBIOS(ScrnInfoPtr pScrn, DisplayModePtr mode);
 void TridentOutIndReg(ScrnInfoPtr pScrn,
 		     CARD32 reg, unsigned char mask, unsigned char data);
 unsigned char TridentInIndReg(ScrnInfoPtr pScrn, CARD32 reg);
-void TridentWriteAddress(ScrnInfoPtr pScrn, CARD32 index);
-void TridentReadAddress(ScrnInfoPtr pScrn, CARD32 index);
-void TridentWriteData(ScrnInfoPtr pScrn, unsigned char data);
-unsigned char TridentReadData(ScrnInfoPtr pScrn);
 void TridentLoadPalette(ScrnInfoPtr pScrn, int numColors, int *indicies, LOCO *colors, VisualPtr pVisual);
 void TridentSetOverscan(ScrnInfoPtr pScrn, int overscan);
 int TGUISetRead(ScreenPtr pScreen, int bank);
@@ -325,8 +322,12 @@ typedef enum {
 
 #define IsPciCard	(pTrident->pEnt->location.type == BUS_PCI)
 
-#define IsPrimaryCard	((xf86IsPrimaryPci(pTrident->PciInfo)) || \
+#ifdef HAVE_ISA
+# define IsPrimaryCard	((xf86IsPrimaryPci(pTrident->PciInfo)) || \
 			 (xf86IsPrimaryIsa()))
+#else
+# define IsPrimaryCard	(xf86IsPrimaryPci(pTrident->PciInfo))
+#endif
 
 #define HAS_DST_TRANS	((pTrident->Chipset == PROVIDIA9682) || \
 			 (pTrident->Chipset == PROVIDIA9685) || \
