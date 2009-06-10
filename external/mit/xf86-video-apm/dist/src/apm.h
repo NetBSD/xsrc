@@ -1,5 +1,5 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/apm/apm.h,v 1.19tsi Exp $ */
 
+#include "apm_pcirename.h"
 #include <string.h>
 
 /* All drivers should typically include these */
@@ -10,9 +10,6 @@
 
 /* Everything using inb/outb, etc needs "compiler.h" */
 #include "compiler.h"
-
-/* This is used for module versioning */
-#include "xf86Version.h"
 
 /* Drivers for PCI hardware need this */
 #include "xf86PciInfo.h"
@@ -30,8 +27,12 @@
 #include "micmap.h"
 
 /* Needed for the 1 and 4 bpp framebuffers */
+#ifdef HAVE_XF1BPP
 #include "xf1bpp.h"
+#endif
+#ifdef HAVE_XF4BPP
 #include "xf4bpp.h"
+#endif
 
 #include "fb.h"
 
@@ -104,7 +105,9 @@ typedef struct {
 
 typedef struct {
     pciVideoPtr		PciInfo;
+#ifndef XSERVER_LIBPCIACCESS
     PCITAG		PciTag;
+#endif
     int			scrnIndex;
     int			Chipset;
     int			ChipRev;
@@ -121,7 +124,7 @@ typedef struct {
     unsigned char	savedSR10;
     CARD8		MiscOut;
     CARD8		c9, d9, db, Rush;
-    unsigned long	saveCmd;
+    unsigned int	saveCmd;
     pointer		FontInfo;
     Bool		hwCursor;
     Bool		noLinear;
@@ -236,8 +239,10 @@ extern void     ApmAdjustFrame(int scrnIndex, int x, int y, int flags);
 extern void	ApmHWCursorReserveSpace(ApmPtr pApm);
 extern void	ApmAccelReserveSpace(ApmPtr pApm);
 
+#ifdef XF86RUSH
 extern int	ApmPixmapIndex;
 #define APM_GET_PIXMAP_PRIVATE(pix)\
 	((ApmPixmapPtr)(((PixmapPtr)(pix))->devPrivates[ApmPixmapIndex].ptr))
+#endif
 
 #include "apm_regs.h"
