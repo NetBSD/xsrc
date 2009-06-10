@@ -1,4 +1,3 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/apm/apm_driver.c,v 1.65 2003/10/30 17:36:57 tsi Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -19,9 +18,9 @@
 #define APM_VERSION		4000
 #define APM_NAME		"APM"
 #define APM_DRIVER_NAME		"apm"
-#define APM_MAJOR_VERSION       1
-#define APM_MINOR_VERSION       1
-#define APM_PATCHLEVEL          1
+#define APM_MAJOR_VERSION       PACKAGE_VERSION_MAJOR
+#define APM_MINOR_VERSION       PACKAGE_VERSION_MINOR
+#define APM_PATCHLEVEL          PACKAGE_VERSION_PATCHLEVEL
 #ifndef PCI_CHIP_AT3D
 #define PCI_CHIP_AT3D	0x643D
 #endif
@@ -54,9 +53,10 @@ static void	ApmDisplayPowerManagementSet(ScrnInfoPtr pScrn,
 					     int flags);
 static void	ApmProbeDDC(ScrnInfoPtr pScrn, int index);
 
-
+#ifdef XF86RUSH
 int ApmPixmapIndex = -1;
 static unsigned long ApmGeneration = 0;
+#endif
 
 _X_EXPORT DriverRec APM = {
 	APM_VERSION,
@@ -82,10 +82,12 @@ static PciChipsets ApmPciChipsets[] = {
     { -1,			-1,		RES_UNDEFINED }
 };
 
+#ifdef HAVE_ISA
 static IsaChipsets ApmIsaChipsets[] = {
     { PCI_CHIP_AP6422,	RES_EXCLUSIVE_VGA},
     {-1,		RES_UNDEFINED}
 };
+#endif
 
 typedef enum {
     OPTION_SET_MCLK,
@@ -206,8 +208,12 @@ static const char *shadowSymbols[] = {
 
 #ifdef XFree86LOADER
 static const char *miscfbSymbols[] = {
+#ifdef HAVE_XF1BPP
     "xf1bppScreenInit",
+#endif
+#ifdef HAVE_XF4BPP
     "xf4bppScreenInit",
+#endif
     NULL
 };
 #endif
@@ -324,6 +330,7 @@ ApmAvailableOptions(int chipid, int busid)
     return ApmOptions;
 }
 
+#ifdef HAVE_ISA
 static int
 ApmFindIsaDevice(GDevPtr dev)
 {
@@ -372,6 +379,7 @@ ApmFindIsaDevice(GDevPtr dev)
 
     return apmChip;
 }
+#endif
 
 static void
 ApmAssignFPtr(ScrnInfoPtr pScrn)
@@ -411,9 +419,11 @@ ApmProbe(DriverPtr drv, int flags)
      * file info to override any contradictions.
      */
 
+#ifndef XSERVER_LIBPCIACCESS
     if (xf86GetPciVideoInfo() == NULL) {
 	return FALSE;
     }
+#endif
     numUsed = xf86MatchPciInstances(APM_NAME, PCI_VENDOR_ALLIANCE,
 		    ApmChipsets, ApmPciChipsets, DevSections, numDevSections,
 		    drv, &usedChips);
@@ -441,6 +451,7 @@ ApmProbe(DriverPtr drv, int flags)
 	}
     }
 
+#ifdef HAVE_ISA
     /* Check for non-PCI cards */
     numUsed = xf86MatchIsaInstances(APM_NAME, ApmChipsets,
 			ApmIsaChipsets, drv, ApmFindIsaDevice, DevSections,
@@ -461,6 +472,8 @@ ApmProbe(DriverPtr drv, int flags)
 	    }
 	}
     }
+#endif
+
     xfree(DevSections);
     return foundScreen;
 }
@@ -550,12 +563,16 @@ ApmPreInit(ScrnInfoPtr pScrn, int flags)
     pEnt = pApm->pEnt	= xf86GetEntityInfo(pScrn->entityList[0]);
     if (pEnt->location.type == BUS_PCI) {
 	pApm->PciInfo	= xf86GetPciInfoForEntity(pEnt->index);
+#ifndef XSERVER_LIBPCIACCESS
 	pApm->PciTag	= pciTag(pApm->PciInfo->bus, pApm->PciInfo->device,
 				 pApm->PciInfo->func);
+#endif
     }
     else {
 	pApm->PciInfo	= NULL;
+#ifndef XSERVER_LIBPCIACCESS
 	pApm->PciTag	= 0;
+#endif
     }
 
     if (flags & PROBE_DETECT) {
@@ -653,10 +670,15 @@ ApmPreInit(ScrnInfoPtr pScrn, int flags)
 	/* Default to 8 */
 	pScrn->rgbBits = 8;
     }
+#ifndef XSERVER_LIBPCIACCESS
+    /* you're getting a linear framebuffer with pciaccess */
     if (xf86ReturnOptValBool(pApm->Options, OPTION_NOLINEAR, FALSE)) {
 	pApm->noLinear = TRUE;
 	xf86DrvMsg(pScrn->scrnIndex, X_CONFIG, "No linear framebuffer\n");
     }
+#else
+    pApm->noLinear = FALSE;
+#endif
     from = X_DEFAULT;
     pApm->hwCursor = FALSE;
     if (xf86GetOptValBool(pApm->Options, OPTION_HW_CURSOR, &pApm->hwCursor))
@@ -778,7 +800,7 @@ ApmPreInit(ScrnInfoPtr pScrn, int flags)
     } else {
 	from = X_PROBED;
 	if (pApm->PciInfo)
-	    pApm->Chipset = pApm->PciInfo->chipType;
+	    pApm->Chipset = PCI_DEV_DEVICE_ID(pApm->PciInfo);
 	else
 	    pApm->Chipset = pEnt->chipset;
 	pScrn->chipset = (char *)xf86TokenToString(ApmChipsets, pApm->Chipset);
@@ -794,7 +816,7 @@ ApmPreInit(ScrnInfoPtr pScrn, int flags)
 	xf86DrvMsg(pScrn->scrnIndex, X_CONFIG, "ChipRev override: %d\n",
 		   pApm->ChipRev);
     } else if (pApm->PciInfo) {
-	pApm->ChipRev = pApm->PciInfo->chipRev;
+        pApm->ChipRev = PCI_DEV_REVISION(pApm->PciInfo);
     }
 
     /*
@@ -818,7 +840,7 @@ ApmPreInit(ScrnInfoPtr pScrn, int flags)
 	pApm->LinAddress = pEnt->device->MemBase;
 	from = X_CONFIG;
     } else if (pApm->PciInfo) {
-	pApm->LinAddress = pApm->PciInfo->memBase[0] & 0xFF800000;
+        pApm->LinAddress = PCI_REGION_BASE(pApm->PciInfo, 0, REGION_MEM) & 0xFF800000;
 	from = X_PROBED;
     } else {
 	/*
@@ -883,9 +905,24 @@ ApmPreInit(ScrnInfoPtr pScrn, int flags)
 	/*unsigned long		save;*/
 	volatile unsigned char	*LinMap;
 
+#ifndef XSERVER_LIBPCIACCESS
 	LinMap = xf86MapPciMem(pScrn->scrnIndex, VIDMEM_MMIO,
 				     pApm->PciTag, pApm->LinAddress,
 				     pApm->LinMapSize);
+#else
+	{
+	    void** result = (void**)&LinMap;
+	    int err = pci_device_map_range(pApm->PciInfo,
+					   pApm->LinAddress,
+					   pApm->LinMapSize,
+					   PCI_DEV_MAP_FLAG_WRITABLE,
+					   result);
+	    
+	    if (err)
+		return FALSE;
+	}
+#endif
+
 	/*save = pciReadLong(pApm->PciTag, PCI_CMD_STAT_REG);
 	pciWriteLong(pApm->PciTag, PCI_CMD_STAT_REG, save | PCI_CMD_MEM_ENABLE);*/
 	d9 = LinMap[0xFFECD9];
@@ -945,8 +982,10 @@ ApmPreInit(ScrnInfoPtr pScrn, int flags)
 	}
 	if (0 && !MonInfo)
 	    MonInfo = xf86DoEDID_DDC1(pScrn->scrnIndex,vgaHWddc1SetSpeed,ddc1Read);
-	if (MonInfo)
+	if (MonInfo) {
 	    xf86PrintEDID(MonInfo);
+	    xf86SetDDCproperties(pScrn, MonInfo);
+	}
 	pScrn->monitor->DDC = MonInfo;
     }
 
@@ -1131,14 +1170,18 @@ ApmPreInit(ScrnInfoPtr pScrn, int flags)
 
     /* Load bpp-specific modules */
     switch (pScrn->bitsPerPixel) {
+#ifdef HAVE_XF1BPP
     case 1:
 	mod = "xf1bpp";
 	req = "xf1bppScreenInit";
 	break;
+#endif
+#ifndef HAVE_XF4BPP
     case 4:
 	mod = "xf4bpp";
 	req = "xf4bppScreenInit";
 	break;
+#endif
     case 8:
     case 16:
     case 24:
@@ -1211,10 +1254,27 @@ ApmMapMem(ScrnInfoPtr pScrn)
     APMDECL(pScrn);
     vgaHWPtr	hwp = VGAHWPTR(pScrn);
 
+#ifndef XSERVER_LIBPCIACCESS
     pApm->LinMap = xf86MapPciMem(pScrn->scrnIndex, VIDMEM_FRAMEBUFFER,
 				 pApm->PciTag,
 				 (unsigned long)pApm->LinAddress,
 				 pApm->LinMapSize);
+#else
+    {
+	void** result = (void**)&pApm->LinMap;
+	int err = pci_device_map_range(pApm->PciInfo,
+				       pApm->LinAddress,
+				       pApm->LinMapSize,
+				       PCI_DEV_MAP_FLAG_WRITABLE |
+				       PCI_DEV_MAP_FLAG_WRITE_COMBINE,
+				       result);
+	
+	if (err) 
+	    return FALSE;
+    }
+#endif
+
+
     if (pApm->LinMap == NULL)
 	return FALSE;
 
@@ -1877,10 +1937,12 @@ ApmScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 
     /* Map the chip memory and MMIO areas */
     if (pApm->noLinear) {
-	pApm->saveCmd = pciReadLong(pApm->PciTag, PCI_CMD_STAT_REG);
-	pciWriteLong(pApm->PciTag, PCI_CMD_STAT_REG, pApm->saveCmd | (PCI_CMD_IO_ENABLE|PCI_CMD_MEM_ENABLE));
+	PCI_READ_LONG(pApm->PciInfo, &pApm->saveCmd, PCI_CMD_STAT_REG);
+	PCI_WRITE_LONG(pApm->PciInfo, pApm->saveCmd | (PCI_CMD_IO_ENABLE | PCI_CMD_MEM_ENABLE), PCI_CMD_STAT_REG);
+#ifndef XSERVER_LIBPCIACCESS
 	pApm->FbBase = xf86MapPciMem(pScrn->scrnIndex, VIDMEM_FRAMEBUFFER,
 				 pApm->PciTag, 0xA0000, 0x10000);
+#endif
     }
     else
 	if (!ApmMapMem(pScrn))
@@ -1946,18 +2008,22 @@ ApmScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
     miSetPixmapDepths();
 
     switch (pScrn->bitsPerPixel) {
+#ifdef HAVE_XF1BPP
     case 1:
 	ret = xf1bppScreenInit(pScreen, FbBase,
 			pScrn->virtualX, pScrn->virtualY,
 			pScrn->xDpi, pScrn->yDpi,
 			pScrn->displayWidth);
 	break;
+#endif
+#ifdef HAVE_XF4BPP
     case 4:
 	ret = xf4bppScreenInit(pScreen, FbBase,
 			pScrn->virtualX, pScrn->virtualY,
 			pScrn->xDpi, pScrn->yDpi,
 			pScrn->displayWidth);
 	break;
+#endif
     case 8:
     case 16:
     case 24:
@@ -2064,6 +2130,7 @@ ApmScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 	xf86ShowUnusedOptions(pScrn->scrnIndex, pScrn->options);
     }
 
+#ifdef XF86RUSH
     if (ApmGeneration != serverGeneration) {
 	if ((ApmPixmapIndex = AllocatePixmapPrivateIndex()) < 0)
 	    return FALSE;
@@ -2072,6 +2139,7 @@ ApmScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 
     if (!AllocatePixmapPrivate(pScreen, ApmPixmapIndex, sizeof(ApmPixmapRec)))
 	return FALSE;
+#endif
 
     /* Done */
     return TRUE;
