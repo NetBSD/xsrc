@@ -43,15 +43,14 @@
 #define PACKAGE_NAME "xf86-video-sis"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "xf86-video-sis 0.10.0"
+#define PACKAGE_STRING "xf86-video-sis 0.10.1"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "xf86-video-sis"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "0.10.0"
+#define PACKAGE_VERSION "0.10.1"
 
-#if 0
 /* Major version of this package */
 #define PACKAGE_VERSION_MAJOR 0
 
@@ -59,14 +58,13 @@
 #define PACKAGE_VERSION_MINOR 10
 
 /* Patch version of this package */
-#define PACKAGE_VERSION_PATCHLEVEL 0
-#endif
+#define PACKAGE_VERSION_PATCHLEVEL 1
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1
 
 /* Version number of package */
-#define VERSION "0.10.0"
+#define VERSION "0.10.1"
 
 /* Enable DRI driver support */
 #define XF86DRI 1
