@@ -1,5 +1,3 @@
-/* $XdotOrg: driver/xf86-input-mouse/src/mouse.c,v 1.29 2006/04/21 11:15:23 mhopf Exp $ */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/input/mouse/mouse.c,v 1.79 2003/11/03 05:11:48 tsi Exp $ */
 /*
  *
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
@@ -126,9 +124,7 @@ typedef struct _DragLockRec {
 
 
 
-#ifdef XFree86LOADER
 static const OptionInfoRec *MouseAvailableOptions(void *unused);
-#endif
 static InputInfoPtr MousePreInit(InputDriverPtr drv, IDevPtr dev, int flags);
 #if 0
 static void MouseUnInit(InputDriverPtr drv, InputInfoPtr pInfo, int flags);
@@ -217,7 +213,6 @@ typedef enum {
     OPTION_SENSITIVITY
 } MouseOpts;
 
-#ifdef XFree86LOADER
 static const OptionInfoRec mouseOptions[] = {
     { OPTION_ALWAYS_CORE,	"AlwaysCore",	  OPTV_BOOLEAN,	{0}, FALSE },
     { OPTION_SEND_CORE_EVENTS,	"SendCoreEvents", OPTV_BOOLEAN,	{0}, FALSE },
@@ -261,7 +256,6 @@ static const OptionInfoRec mouseOptions[] = {
     { OPTION_SENSITIVITY,      "Sensitivity",     OPTV_REAL,    {0}, FALSE },
     { -1,			NULL,		  OPTV_NONE,	{0}, FALSE }
 };
-#endif
 
 #define RETRY_COUNT 4
 
@@ -378,14 +372,12 @@ static MouseProtocolRec mouseProtocols[] = {
     { NULL,			MSE_NONE,	NULL,		PROT_UNKNOWN }
 };
 
-#ifdef XFree86LOADER
 /*ARGSUSED*/
 static const OptionInfoRec *
 MouseAvailableOptions(void *unused)
 {
     return (mouseOptions);
 }
-#endif
 
 /* Process options common to all mouse types. */
 static void
@@ -802,8 +794,8 @@ MouseHWOptions(InputInfoPtr pInfo)
 		pMse->resolution);
     }
 
-    if (mPriv->sensitivity 
-	= xf86SetRealOption(pInfo->options, "Sensitivity", 1.0)) {
+    if ((mPriv->sensitivity 
+	 = xf86SetRealOption(pInfo->options, "Sensitivity", 1.0))) {
 	xf86Msg(X_CONFIG, "%s: Sensitivity: %g\n", pInfo->name,
 		mPriv->sensitivity);
     }
@@ -874,7 +866,7 @@ ProtocolIDToName(MouseProtocolID id)
     }
 }
 
-const char *
+_X_EXPORT const char *
 xf86MouseProtocolIDToName(MouseProtocolID id)
 {
 	return ProtocolIDToName(id);
@@ -1003,7 +995,7 @@ MousePreInit(InputDriverPtr drv, IDevPtr dev, int flags)
     pInfo->fd = -1;
     pInfo->dev = NULL;
     pInfo->private_flags = 0;
-    pInfo->always_core_feedback = 0;
+    pInfo->always_core_feedback = NULL;
     pInfo->conf_idev = dev;
 
     /* Check if SendDragEvents has been disabled. */
@@ -1062,7 +1054,7 @@ MousePreInit(InputDriverPtr drv, IDevPtr dev, int flags)
 	    if (osInfo->CheckProtocol
 		&& osInfo->CheckProtocol(protocol)) {
 		if (!xf86CheckStrOption(dev->commonOptions, "Device", NULL) &&
-		    HAVE_FIND_DEVICE && osInfo->FindDevice) {
+		    osInfo->FindDevice) {
 		    xf86Msg(X_WARNING, "%s: No Device specified, "
 			    "looking for one...\n", pInfo->name);
 		    if (!osInfo->FindDevice(pInfo, protocol, 0)) {
@@ -1093,7 +1085,7 @@ MousePreInit(InputDriverPtr drv, IDevPtr dev, int flags)
     } while (!detected);
     
     if (!xf86CheckStrOption(dev->commonOptions, "Device", NULL) &&
-	HAVE_FIND_DEVICE && osInfo->FindDevice) {
+	osInfo->FindDevice) {
 	xf86Msg(X_WARNING, "%s: No Device specified, looking for one...\n",
 		pInfo->name);
 	if (!osInfo->FindDevice(pInfo, protocol, 0)) {
@@ -1192,12 +1184,11 @@ MouseReadInput(InputInfoPtr pInfo)
 	ErrorF("mouse byte: %2.2x\n",u);
 #endif
 
-#if 1
 	/* if we do autoprobing collect the data */
 	if (pMse->collectData && pMse->autoProbe)
 	    if (pMse->collectData(pMse,u))
 		continue;
-#endif
+
 #ifdef SUPPORT_MOUSE_RESET
 	if (mouseReset(pInfo,u)) {
 	    pBufP = 0;
@@ -1728,7 +1719,7 @@ MouseProc(DeviceIntPtr device, int what)
 				min(pMse->buttons, MSE_MAXBUTTONS),
 #if GET_ABI_MAJOR(ABI_XINPUT_VERSION) == 0
 				miPointerGetMotionEvents,
-#else
+#elif GET_ABI_MAJOR(ABI_XINPUT_VERSION) < 3
                                 GetMotionHistory,
 #endif
                                 pMse->Ctrl,
@@ -1860,8 +1851,6 @@ MouseConvert(InputInfoPtr pInfo, int first, int num, int v0, int v1, int v2,
 static void
 FlushButtons(MouseDevPtr pMse)
 {
-    int i, blocked;
-
     pMse->lastButtons = 0;
     pMse->lastMappedButtons = 0;
 }
@@ -3058,7 +3047,7 @@ mouseReset(InputInfoPtr pInfo, unsigned char val)
     ErrorF("Mouse Current: %i 0x%x\n",mousepriv->current, val);
 #endif
     
-    /* here we put the mouse specific reset detction */
+    /* here we put the mouse specific reset detection */
     /* They need to do three things:                 */
     /*  Check if byte may be a reset byte            */
     /*  If so: Set expectReset TRUE                  */
@@ -3156,6 +3145,7 @@ ps2WakeupHandler(pointer data, int i, pointer LastSelectMask)
 #  define AP_DBGC(x)
 #endif
 
+static
 MouseProtocolID hardProtocolList[] = { 	PROT_MSC, PROT_MM, PROT_LOGI, 
 					PROT_LOGIMAN, PROT_MMHIT,
 					PROT_GLIDE, PROT_IMSERIAL,
@@ -3168,6 +3158,7 @@ MouseProtocolID hardProtocolList[] = { 	PROT_MSC, PROT_MM, PROT_LOGI,
 					PROT_UNKNOWN
 };
 
+static
 MouseProtocolID softProtocolList[] = { 	PROT_MSC, PROT_MM, PROT_LOGI, 
 					PROT_LOGIMAN, PROT_MMHIT,
 					PROT_GLIDE, PROT_IMSERIAL,
@@ -3221,7 +3212,7 @@ autoOSProtocol(InputInfoPtr pInfo, int *protoPara)
 		    pInfo->name, name);
 	}
     }
-    if (!name && HAVE_GUESS_PROTOCOL && osInfo->GuessProtocol) {
+    if (!name && osInfo->GuessProtocol) {
 	name = osInfo->GuessProtocol(pInfo, 0);
 	if (name)
 	    protocolID = ProtocolNameToID(name);
@@ -3295,7 +3286,7 @@ createProtoList(MouseDevPtr pMse, MouseProtocolID *protoList)
 		    break;
 		} else {
 		    /* 
-		     * Bail ot if number of bytes per package have
+		     * Bail out if number of bytes per package have
 		     * been tested for header.
 		     * Take bytes per package of leading garbage into
 		     * account.
@@ -3371,7 +3362,7 @@ createProtoList(MouseDevPtr pMse, MouseProtocolID *protoList)
 
 
 /* This only needs to be done once */
-void **serialDefaultsList = NULL;
+static void **serialDefaultsList = NULL;
 
 /*
  * createSerialDefaultsLists() - create a list of the different default
@@ -3681,10 +3672,10 @@ checkForErraticMovements(InputInfoPtr pInfo, int dx, int dy)
 {
     MouseDevPtr pMse = pInfo->private;
     mousePrivPtr mPriv = (mousePrivPtr)pMse->mousePriv;
-#if 1
+
     if (!mPriv->goodCount)
 	return;
-#endif
+
 #if 0
     if (abs(dx - mPriv->prevDx) > 300 
 	|| abs(dy - mPriv->prevDy) > 300)
@@ -3764,7 +3755,6 @@ collectData(MouseDevPtr pMse, unsigned char u)
 
 
 
-#ifdef XFree86LOADER
 ModuleInfoRec MouseInfo = {
     1,
     "MOUSE",
@@ -3785,13 +3775,8 @@ xf86MousePlug(pointer	module,
 {
     static Bool Initialised = FALSE;
 
-    if (!Initialised) {
+    if (!Initialised)
 	Initialised = TRUE;
-#ifndef REMOVE_LOADER_CHECK_MODULE_INFO
-	if (xf86LoaderCheckSymbol("xf86AddModuleInfo"))
-#endif
-	xf86AddModuleInfo(&MouseInfo, module);
-    }
 
     xf86AddInputDriver(&MOUSE, module, 0);
 
@@ -3822,6 +3807,3 @@ _X_EXPORT XF86ModuleData mouseModuleData = {
 /*
   Look at hitachi device stuff.
 */
-#endif /* XFree86LOADER */
-
-
