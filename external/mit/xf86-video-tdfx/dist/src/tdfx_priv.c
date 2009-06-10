@@ -3,6 +3,8 @@
 #include "config.h"
 #endif
 
+#include <sys/time.h>
+
 #include "xf86.h"
 #include "xf86_OSproc.h"
 #include "xf86fbman.h"
