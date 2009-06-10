@@ -45,8 +45,6 @@
  *		Added digital screen option for first head
  */
  
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/mga/mga_driver.c,v 1.244tsi Exp $ */
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -95,8 +93,6 @@
 #include "xf86cmap.h"
 #include "shadowfb.h"
 #include "fbdevhw.h"
-
-#include "cfb8_32.h"
 
 #ifdef XF86DRI
 #include "dri.h"
@@ -157,39 +153,237 @@ static int MGAEntityIndex = -1;
 
 #include "mga_merge.h"
 
-static const struct mga_device_attributes attribs[8] = {
+static const struct mga_device_attributes attribs[] = {
     /* 2064 */
     [0] = { 1, 0, 0, 1, 0, 0, 0, 0, old_BARs,  
-	    (BLK_OPAQUE_EXPANSION | FASTBLT_BUG | USE_LINEAR_EXPANSION) },
+	    (BLK_OPAQUE_EXPANSION | FASTBLT_BUG | USE_LINEAR_EXPANSION),
+	{
+	    { 0, 0 },          /* System VCO frequencies */
+	    { 50000, 220000 }, /* Pixel VCO frequencies */
+	    { 0, 0 },          /* Video VCO frequencies */
+	    50000,             /* Memory clock */
+	    14318,             /* PLL reference frequency */
+	    0,                 /* Supports fast bitblt? */
+	    MGA_HOST_PCI       /* Host interface */
+	},
+
+	8192, 0x1000,          /* Memory probe size & offset values */
+    },
 
     /* 1064 */
     [1] = { 0, 1, 0, 0, 1, 0, 0, 0, probe_BARs,
-            (USE_LINEAR_EXPANSION) },
+            (USE_LINEAR_EXPANSION),
+	{
+	    /* There used to be code in MGARamdacInit (mga_dacG.c) that would
+	     * set this to 170000 if the chip revision was less than 3.  Is
+	     * that needed here?
+	     */
+	    { 50000, 230000 }, /* System VCO frequencies */
+	    { 50000, 230000 }, /* Pixel VCO frequencies */
+	    { 0, 0 },          /* Video VCO frequencies */
+	    50000,             /* Memory clock */
+	    14318,             /* PLL reference frequency */
+	    0,                 /* Supports fast bitblt? */
+	    MGA_HOST_PCI       /* Host interface */
+	},
 
-    /* 2164, 2164 AGP */
+	8192, 0x1000,          /* Memory probe size & offset values */
+    },
+
+    /* 2164 */
     [2] = { 1, 0, 0, 1, 0, 0, 0, 0, new_BARs,
             (BLK_OPAQUE_EXPANSION | TRANSC_SOLID_FILL | USE_RECTS_FOR_LINES
-	     | USE_LINEAR_EXPANSION) },
-    
-    /* G100 */
-    [3] = { 0, 1, 0, 0, 1, 0, 0, 0, new_BARs,
-            (MGA_NO_PLANEMASK | USE_LINEAR_EXPANSION) },
+	     | USE_LINEAR_EXPANSION),
+	{
+	    { 0, 0 },          /* System VCO frequencies */
+	    { 50000, 220000 }, /* Pixel VCO frequencies */
+	    { 0, 0 },          /* Video VCO frequencies */
+	    50000,             /* Memory clock */
+	    14318,             /* PLL reference frequency */
+	    0,                 /* Supports fast bitblt? */
+	    MGA_HOST_PCI       /* Host interface */
+	},
 
-    /* G200 */
-    [4] = { 0, 1, 0, 0, 1, 1, 1, 1, new_BARs,
-            (TRANSC_SOLID_FILL | TWO_PASS_COLOR_EXPAND | USE_LINEAR_EXPANSION) },
+	8192, 0x1000,          /* Memory probe size & offset values */
+    },
+
+    /* 2164 AGP */
+    [3] = { 1, 0, 0, 1, 0, 0, 0, 0, new_BARs,
+            (BLK_OPAQUE_EXPANSION | TRANSC_SOLID_FILL | USE_RECTS_FOR_LINES
+	     | USE_LINEAR_EXPANSION),
+	{
+	    { 0, 0 },          /* System VCO frequencies */
+	    { 50000, 220000 }, /* Pixel VCO frequencies */
+	    { 0, 0 },          /* Video VCO frequencies */
+	    50000,             /* Memory clock */
+	    14318,             /* PLL reference frequency */
+	    0,                 /* Supports fast bitblt? */
+	    MGA_HOST_AGP_1x    /* Host interface */
+	},
+
+	8192, 0x1000,          /* Memory probe size & offset values */
+    },
+
+    /* G100 PCI */
+    [4] = { 0, 1, 0, 0, 1, 0, 0, 0, new_BARs,
+            (MGA_NO_PLANEMASK | USE_LINEAR_EXPANSION),
+	{
+	    { 50000, 230000 }, /* System VCO frequencies */
+	    { 50000, 230000 }, /* Pixel VCO frequencies */
+	    { 0, 0 },          /* Video VCO frequencies */
+	    50000,             /* Memory clock */
+	    27050,             /* PLL reference frequency */
+	    0,                 /* Supports fast bitblt? */
+	    MGA_HOST_PCI       /* Host interface */
+	},
+
+	8192, 0x1000,          /* Memory probe size & offset values */
+    },
+
+    /* G100 AGP */
+    [5] = { 0, 1, 0, 0, 1, 0, 0, 0, new_BARs,
+            (MGA_NO_PLANEMASK | USE_LINEAR_EXPANSION),
+	{
+	    { 50000, 230000 }, /* System VCO frequencies */
+	    { 50000, 230000 }, /* Pixel VCO frequencies */
+	    { 0, 0 },          /* Video VCO frequencies */
+	    50000,             /* Memory clock */
+	    27050,             /* PLL reference frequency */
+	    0,                 /* Supports fast bitblt? */
+	    MGA_HOST_AGP_1x    /* Host interface */
+	},
+
+	8192, 0x1000,          /* Memory probe size & offset values */
+    },
+
+    /* G200 PCI */
+    [6] = { 0, 1, 0, 0, 1, 1, 1, 1, new_BARs,
+            (TRANSC_SOLID_FILL | TWO_PASS_COLOR_EXPAND | USE_LINEAR_EXPANSION),
+	{
+	    { 50000, 230000 }, /* System VCO frequencies */
+	    { 50000, 230000 }, /* Pixel VCO frequencies */
+	    { 0, 0 },          /* Video VCO frequencies */
+	    50000,             /* Memory clock */
+	    27050,             /* PLL reference frequency */
+	    0,                 /* Supports fast bitblt? */
+	    MGA_HOST_PCI       /* Host interface */
+	},
+
+	8192, 0x1000,          /* Memory probe size & offset values */
+    },
+
+    /* G200 AGP */
+    [7] = { 0, 1, 0, 0, 1, 1, 1, 1, new_BARs,
+            (TRANSC_SOLID_FILL | TWO_PASS_COLOR_EXPAND | USE_LINEAR_EXPANSION),
+	{
+	    { 50000, 230000 }, /* System VCO frequencies */
+	    { 50000, 230000 }, /* Pixel VCO frequencies */
+	    { 0, 0 },          /* Video VCO frequencies */
+	    50000,             /* Memory clock */
+	    27050,             /* PLL reference frequency */
+	    0,                 /* Supports fast bitblt? */
+	    MGA_HOST_AGP_2x    /* Host interface */
+	},
+
+	8192, 0x1000,          /* Memory probe size & offset values */
+    },
 
     /* G400 / G450 */
-    [5] = { 0, 1, 1, 0, 1, 1, 2, 1, new_BARs,
-            (TRANSC_SOLID_FILL | TWO_PASS_COLOR_EXPAND | USE_LINEAR_EXPANSION) },
+    [8] = { 0, 1, 1, 0, 1, 1, 2, 1, new_BARs,
+            (TRANSC_SOLID_FILL | TWO_PASS_COLOR_EXPAND | USE_LINEAR_EXPANSION),
+	{
+	    { 50000, 252000 }, /* System VCO frequencies */
+	    { 50000, 252000 }, /* Pixel VCO frequencies */
+	    { 0, 0 },          /* Video VCO frequencies */
+	    200000,            /* Memory clock */
+	    27050,             /* PLL reference frequency */
+	    0,                 /* Supports fast bitblt? */
+	    MGA_HOST_AGP_4x    /* Host interface */
+	},
+
+	32768, 0x1000,         /* Memory probe size & offset values */
+    },
 
     /* G550 */
-    [6] = { 0, 1, 1, 0, 1, 1, 2, 1, new_BARs,
-            (TRANSC_SOLID_FILL | TWO_PASS_COLOR_EXPAND | USE_LINEAR_EXPANSION) },
+    [9] = { 0, 1, 1, 0, 1, 1, 2, 1, new_BARs,
+            (TRANSC_SOLID_FILL | TWO_PASS_COLOR_EXPAND | USE_LINEAR_EXPANSION),
+	{
+	    { 256000, 600000 }, /* System VCO frequencies */
+	    { 256000, 600000 }, /* Pixel VCO frequencies */
+	    { 256000, 600000 }, /* Video VCO frequencies */
+	    284000,            /* Memory clock */
+	    27050,             /* PLL reference frequency */
+	    0,                 /* Supports fast bitblt? */
+	    MGA_HOST_AGP_4x    /* Host interface */
+	},
 
-    /* G200SE */
-    [7] = { 0, 1, 0, 0, 1, 0, 0, 1, new_BARs,
-            (TRANSC_SOLID_FILL | TWO_PASS_COLOR_EXPAND | USE_LINEAR_EXPANSION) },
+	32768, 0x1000,         /* Memory probe size & offset values */
+    },
+
+    /* G200SE A PCI */
+    [10] = { 0, 1, 0, 0, 1, 0, 0, 1, new_BARs,
+            (TRANSC_SOLID_FILL | TWO_PASS_COLOR_EXPAND | USE_LINEAR_EXPANSION),
+	{
+	    { 50000, 230000 }, /* System VCO frequencies */
+	    { 50000, 230000 }, /* Pixel VCO frequencies */
+	    { 0, 0 },          /* Video VCO frequencies */
+	    50000,            /* Memory clock */
+	    27050,             /* PLL reference frequency */
+	    0,                 /* Supports fast bitblt? */
+	    MGA_HOST_PCI       /* Host interface */
+	},
+
+	4096, 0x800,           /* Memory probe size & offset values */
+    },
+
+    /* G200SE B PCI */
+    [11] = { 0, 1, 0, 0, 1, 0, 0, 1, new_BARs,
+            (TRANSC_SOLID_FILL | TWO_PASS_COLOR_EXPAND | USE_LINEAR_EXPANSION),
+	{
+	    { 50000, 114000 }, /* System VCO frequencies */
+	    { 50000, 114000 }, /* Pixel VCO frequencies */
+	    { 0, 0 },          /* Video VCO frequencies */
+	    45000,            /* Memory clock */
+	    27050,             /* PLL reference frequency */
+	    0,                 /* Supports fast bitblt? */
+	    MGA_HOST_PCI       /* Host interface */
+	},
+
+	4096, 0x800,           /* Memory probe size & offset values */
+    },
+
+    /* G200EV */
+    [12] = { 0, 1, 0, 0, 1, 0, 0, 0, new_BARs,
+            (TRANSC_SOLID_FILL | TWO_PASS_COLOR_EXPAND | USE_LINEAR_EXPANSION),
+	{
+	    { 50000, 230000 }, /* System VCO frequencies */
+	    { 50000, 230000 }, /* Pixel VCO frequencies */
+	    { 0, 0 },          /* Video VCO frequencies */
+	    45000,            /* Memory clock */
+	    27050,             /* PLL reference frequency */
+	    0,                 /* Supports fast bitblt? */
+	    MGA_HOST_PCI       /* Host interface */
+	},
+
+	8192, 0x4000,          /* Memory probe size & offset values */
+    },
+
+    /* G200WB */
+    [13] = { 0, 1, 0, 0, 1, 0, 0, 0, new_BARs,
+            (TRANSC_SOLID_FILL | TWO_PASS_COLOR_EXPAND | USE_LINEAR_EXPANSION),
+	{
+	    { 50000, 230000 }, /* System VCO frequencies */
+	    { 50000, 203400 }, /* Pixel VCO frequencies */
+	    { 0, 0 },          /* Video VCO frequencies */
+	    45000,            /* Memory clock */
+	    27050,             /* PLL reference frequency */
+	    0,                 /* Supports fast bitblt? */
+	    MGA_HOST_PCI       /* Host interface */
+	},
+
+	8192, 0x4000,          /* Memory probe size & offset values */
+    },
+
 };
 
 #ifdef XSERVER_LIBPCIACCESS
@@ -199,19 +393,23 @@ static const struct mga_device_attributes attribs[8] = {
     { 0x102B, (d), 0x102B, (s), 0, 0, (i) }
 
 static const struct pci_id_match mga_device_match[] = {
-    MGA_DEVICE_MATCH( PCI_CHIP_MGA2064,     0 ),
-    MGA_DEVICE_MATCH( PCI_CHIP_MGA1064,     1 ),
-    MGA_DEVICE_MATCH( PCI_CHIP_MGA2164,     2 ),
-    MGA_DEVICE_MATCH( PCI_CHIP_MGA2164_AGP, 2 ),
-    MGA_DEVICE_MATCH( PCI_CHIP_MGAG100,     3 ),
-    MGA_DEVICE_MATCH( PCI_CHIP_MGAG100_PCI, 3 ),
-    MGA_DEVICE_MATCH( PCI_CHIP_MGAG200,     4 ),
-    MGA_DEVICE_MATCH( PCI_CHIP_MGAG200_PCI, 4 ),
-    MGA_DEVICE_MATCH( PCI_CHIP_MGAG400,     5 ),
-    MGA_DEVICE_MATCH( PCI_CHIP_MGAG550,     6 ),
+    MGA_DEVICE_MATCH(PCI_CHIP_MGA2064,     0),
+    MGA_DEVICE_MATCH(PCI_CHIP_MGA1064,     1),
+    MGA_DEVICE_MATCH(PCI_CHIP_MGA2164,     2),
+    MGA_DEVICE_MATCH(PCI_CHIP_MGA2164_AGP, 3),
+    MGA_DEVICE_MATCH(PCI_CHIP_MGAG100,     4),
+    MGA_DEVICE_MATCH(PCI_CHIP_MGAG100_PCI, 5),
+    MGA_DEVICE_MATCH(PCI_CHIP_MGAG200,     6),
+    MGA_DEVICE_MATCH(PCI_CHIP_MGAG200_PCI, 7),
+    MGA_DEVICE_MATCH(PCI_CHIP_MGAG400,     8),
+    MGA_DEVICE_MATCH(PCI_CHIP_MGAG550,     9),
 
-    MGA_DEVICE_MATCH( PCI_CHIP_MGAG200_SE_A_PCI, 7 ),
-    MGA_DEVICE_MATCH( PCI_CHIP_MGAG200_SE_B_PCI, 7 ),
+    MGA_DEVICE_MATCH(PCI_CHIP_MGAG200_SE_A_PCI, 10),
+    MGA_DEVICE_MATCH(PCI_CHIP_MGAG200_SE_B_PCI, 11),
+
+    MGA_DEVICE_MATCH(PCI_CHIP_MGAG200_EV_PCI, 12),
+
+    MGA_DEVICE_MATCH( PCI_CHIP_MGAG200_WINBOND_PCI, 13 ),
 
     { 0, 0, 0 },
 };
@@ -229,6 +427,8 @@ static SymTabRec MGAChipsets[] = {
     { PCI_CHIP_MGAG200_PCI,	"mgag200 PCI" },
     { PCI_CHIP_MGAG200_SE_A_PCI,	"mgag200 SE A PCI" },
     { PCI_CHIP_MGAG200_SE_B_PCI,	"mgag200 SE B PCI" },
+    { PCI_CHIP_MGAG200_EV_PCI,	"mgag200 EV Maxim" },
+    { PCI_CHIP_MGAG200_WINBOND_PCI,	"mgag200 eW Nuvoton" },
     { PCI_CHIP_MGAG400,		"mgag400" },
     { PCI_CHIP_MGAG550,		"mgag550" },
     {-1,			NULL }
@@ -246,6 +446,10 @@ static PciChipsets MGAPciChipsets[] = {
     { PCI_CHIP_MGAG200_SE_B_PCI, PCI_CHIP_MGAG200_SE_B_PCI,
 	(resRange*)RES_SHARED_VGA },
     { PCI_CHIP_MGAG200_SE_A_PCI, PCI_CHIP_MGAG200_SE_A_PCI,
+	(resRange*)RES_SHARED_VGA },
+    { PCI_CHIP_MGAG200_EV_PCI, PCI_CHIP_MGAG200_EV_PCI,
+	(resRange*)RES_SHARED_VGA },
+    { PCI_CHIP_MGAG200_WINBOND_PCI, PCI_CHIP_MGAG200_WINBOND_PCI,
 	(resRange*)RES_SHARED_VGA },
     { PCI_CHIP_MGAG400,	    PCI_CHIP_MGAG400,	(resRange*)RES_SHARED_VGA },
     { PCI_CHIP_MGAG550,	    PCI_CHIP_MGAG550,	(resRange*)RES_SHARED_VGA },
@@ -288,7 +492,6 @@ static const OptionInfoRec MGAOptions[] = {
     { OPTION_SYNC_ON_GREEN,	"SyncOnGreen",	OPTV_BOOLEAN,	{0}, FALSE },
     { OPTION_NOACCEL,		"NoAccel",	OPTV_BOOLEAN,	{0}, FALSE },
     { OPTION_SHOWCACHE,		"ShowCache",	OPTV_BOOLEAN,	{0}, FALSE },
-    { OPTION_OVERLAY,		"Overlay",	OPTV_ANYSTR,	{0}, FALSE },
     { OPTION_MGA_SDRAM,		"MGASDRAM",	OPTV_BOOLEAN,	{0}, FALSE },
     { OPTION_SHADOW_FB,		"ShadowFB",	OPTV_BOOLEAN,	{0}, FALSE },
     { OPTION_FBDEV,		"UseFBDev",	OPTV_BOOLEAN,	{0}, FALSE },
@@ -319,6 +522,7 @@ static const OptionInfoRec MGAOptions[] = {
     { OPTION_OLDDMA,		"OldDmaInit",	OPTV_BOOLEAN,	{0}, FALSE },
     { OPTION_PCIDMA,		"ForcePciDma",	OPTV_BOOLEAN,	{0}, FALSE },
     { OPTION_ACCELMETHOD,	"AccelMethod",	OPTV_ANYSTR,	{0}, FALSE },
+    { OPTION_KVM,		"KVM",		OPTV_BOOLEAN,	{0}, FALSE },
     { -1,			NULL,		OPTV_NONE,	{0}, FALSE }
 };
 
@@ -354,12 +558,6 @@ static const char *vgahwSymbols[] = {
 static const char *fbSymbols[] = {
     "fbPictureInit",
     "fbScreenInit",
-    NULL
-};
-
-static const char *xf8_32bppSymbols[] = {
-    "cfb8_32ScreenInit",
-    "xf86Overlay8Plus32Init",
     NULL
 };
 
@@ -559,9 +757,8 @@ mgaSetup(pointer module, pointer opts, int *errmaj, int *errmin)
 #ifdef USE_EXA
                           exaSymbols,
 #endif
-			  xf8_32bppSymbols, ramdacSymbols,
-			  ddcSymbols, i2cSymbols, shadowSymbols,
-			  fbdevHWSymbols, vbeSymbols,
+			  ramdacSymbols, ddcSymbols, i2cSymbols,
+			  shadowSymbols, fbdevHWSymbols, vbeSymbols,
 			  fbSymbols, int10Symbols,
 #ifdef XF86DRI
 			  drmSymbols, driSymbols,
@@ -853,31 +1050,51 @@ MGAProbe(DriverPtr drv, int flags)
                 break;
 
             case PCI_CHIP_MGA2164:
-            case PCI_CHIP_MGA2164_AGP:
                 attrib_no = 2;
                 break;
-
-            case PCI_CHIP_MGAG100:
-            case PCI_CHIP_MGAG100_PCI:
+		
+            case PCI_CHIP_MGA2164_AGP:
                 attrib_no = 3;
                 break;
 
-            case PCI_CHIP_MGAG200:
-            case PCI_CHIP_MGAG200_PCI:
+            case PCI_CHIP_MGAG100:
                 attrib_no = 4;
                 break;
 
-            case PCI_CHIP_MGAG400:
+            case PCI_CHIP_MGAG100_PCI:
                 attrib_no = 5;
                 break;
 
-            case PCI_CHIP_MGAG550:
+            case PCI_CHIP_MGAG200:
                 attrib_no = 6;
                 break;
 
-            case PCI_CHIP_MGAG200_SE_A_PCI:
-            case PCI_CHIP_MGAG200_SE_B_PCI:
+            case PCI_CHIP_MGAG200_PCI:
                 attrib_no = 7;
+                break;
+
+            case PCI_CHIP_MGAG400:
+                attrib_no = 8;
+                break;
+
+            case PCI_CHIP_MGAG550:
+                attrib_no = 9;
+                break;
+
+            case PCI_CHIP_MGAG200_SE_A_PCI:
+                attrib_no = 10;
+                break;
+
+            case PCI_CHIP_MGAG200_SE_B_PCI:
+                attrib_no = 11;
+                break;
+
+            case PCI_CHIP_MGAG200_EV_PCI:
+                attrib_no = 12;
+                break;
+
+            case PCI_CHIP_MGAG200_WINBOND_PCI:
+                attrib_no = 13;
                 break;
 
 	    default:
@@ -968,7 +1185,8 @@ static int
 MGACountRam(ScrnInfoPtr pScrn)
 {
     MGAPtr pMga = MGAPTR(pScrn);
-    int ProbeSize = 8192;
+    int ProbeSize = pMga->chip_attribs->probe_size;
+    int ProbeSizeOffset = pMga->chip_attribs->probe_offset;
     int SizeFound = 2048;
     CARD32 biosInfo = 0;
     CARD8 seq1;
@@ -1011,11 +1229,6 @@ MGACountRam(ScrnInfoPtr pScrn)
 		return 32768;
 	    }
 	}
-	ProbeSize = 32768;
-	break;
-    case PCI_CHIP_MGAG200_SE_A_PCI:
-    case PCI_CHIP_MGAG200_SE_B_PCI:
-	ProbeSize = 4096;
 	break;
     case PCI_CHIP_MGAG200:
     case PCI_CHIP_MGAG200_PCI:
@@ -1027,15 +1240,11 @@ MGACountRam(ScrnInfoPtr pScrn)
 		return 16384;
 	    }
 	}
-	ProbeSize = 8192;
 	break;
     case PCI_CHIP_MGAG100:
     case PCI_CHIP_MGAG100_PCI:
 	if(biosInfo) /* I'm not sure if the docs are correct */
 	    return (biosInfo & (1 << 12)) ? 16384 : 8192;
-    case PCI_CHIP_MGA1064:
-    case PCI_CHIP_MGA2064:
-	ProbeSize = 8192;
         break;
     default:
         break;
@@ -1053,6 +1262,17 @@ MGACountRam(ScrnInfoPtr pScrn)
 
 	base = pMga->FbBase;
 
+	if (pMga->is_G200SE)
+	    pMga->reg_1e24 = INREG(0x1e24); /* stash the model for later */
+	if (pMga->reg_1e24 == 0x01) {
+	    MGAUnmapMem(pScrn);
+	    ProbeSize = 16384;
+	    ProbeSizeOffset = 0x10000;
+	    pMga->FbMapSize = ProbeSize * 1024;
+	    MGAMapMem(pScrn);
+	    base = pMga->FbBase;
+	}
+
 	if (pMga->is_G200SE) {
 	    OUTREG8(MGAREG_SEQ_INDEX, 0x01);
 	    seq1 = INREG8(MGAREG_SEQ_DATA);
@@ -1063,13 +1283,44 @@ MGACountRam(ScrnInfoPtr pScrn)
 	    usleep(20000);
 	}
 
+        if (pMga->is_G200WB) {
+            CARD32 Option, MaxMapSize;
+
+#ifdef XSERVER_LIBPCIACCESS
+            pci_device_cfg_read_u32(pMga->PciInfo, &Option, 
+                                    PCI_OPTION_REG);
+            MaxMapSize = pMga->PciInfo->regions[0].size;
+#else
+            Option = pciReadLong(pMga->PciTag, PCI_OPTION_REG);
+            MaxMapSize = 1UL << pMga->PciInfo->size[0];
+#endif
+            Option = (Option & 0x3000000) >> 24 ;
+
+            if (Option == 2)
+                ProbeSize = 4*1024;
+            else if(Option == 1)
+                ProbeSize = 8*1024;
+            else if(Option == 0)
+                ProbeSize = 16*1024;
+
+            if (ProbeSize * 1024 > MaxMapSize)
+                xf86DrvMsg(pScrn->scrnIndex, X_ERROR, 
+                        "Fb size from config space doesn't fit option register\n");
+            else {
+                MGAUnmapMem(pScrn);
+                pMga->FbMapSize = ProbeSize * 1024;
+                MGAMapMem(pScrn);
+                base = pMga->FbBase;
+            }
+        }
+
 	/* turn MGA mode on - enable linear frame buffer (CRTCEXT3) */
 	OUTREG8(MGAREG_CRTCEXT_INDEX, 3);
 	tmp = INREG8(MGAREG_CRTCEXT_DATA);
 	OUTREG8(MGAREG_CRTCEXT_DATA, tmp | 0x80);
 
-	/* apparently the G200SE doesn't have a BIOS to read */
-	if (pMga->is_G200SE) {
+	/* apparently the G200 IP don't have a BIOS to read */
+	if (pMga->is_G200SE || pMga->is_G200EV || pMga->is_G200WB) {
 	    CARD32 MemoryAt0, MemoryAt1, Offset;
 	    CARD32 FirstMemoryVal1, FirstMemoryVal2;
 	    CARD32 SecondMemoryVal1, SecondMemoryVal2;
@@ -1083,7 +1334,7 @@ MGACountRam(ScrnInfoPtr pScrn)
 	    base[1] = 0;
 
 	    for (Offset = 0x100000; Offset < (ProbeSize * 1024);
-		    Offset += 0x1000) {
+		    Offset += ProbeSizeOffset) {
 		FirstMemoryVal1 = base[Offset];
 		FirstMemoryVal2 = base[Offset+1];
 		SecondMemoryVal1 = base[Offset+0x100];
@@ -1094,7 +1345,7 @@ MGACountRam(ScrnInfoPtr pScrn)
 		base[Offset+0x100] = 0x55;
 		base[Offset+0x101] = 0xaa;
 
-		OUTREG(MGAREG_CRTC_INDEX, 0);
+		OUTREG8(MGAREG_CRTC_INDEX, 0);
 		usleep(8);
 
 		TestMemoryLocA = base[Offset];
@@ -1562,6 +1813,8 @@ MGAPreInit(ScrnInfoPtr pScrn, int flags)
 	|| (pMga->Chipset == PCI_CHIP_MGAG550);
     pMga->is_G200SE = (pMga->Chipset == PCI_CHIP_MGAG200_SE_A_PCI)
 	|| (pMga->Chipset == PCI_CHIP_MGAG200_SE_B_PCI);
+    pMga->is_G200EV = (pMga->Chipset == PCI_CHIP_MGAG200_EV_PCI);
+    pMga->is_G200WB = (pMga->Chipset == PCI_CHIP_MGAG200_WINBOND_PCI);
 
 #ifdef USEMGAHAL
     if (pMga->chip_attribs->HAL_chipset) {
@@ -1654,30 +1907,145 @@ MGAPreInit(ScrnInfoPtr pScrn, int flags)
 #endif
     }
 
-   
-    
+    if (!(pMga->Options = xalloc(sizeof(MGAOptions))))
+	return FALSE;
+    memcpy(pMga->Options, MGAOptions, sizeof(MGAOptions));
+
+    /* ajv changes to reflect actual values. see sdk pp 3-2. */
+    /* these masks just get rid of the crap in the lower bits */
+
+    /* For the 2064 and older rev 1064, base0 is the MMIO and base1 is
+     * the framebuffer.
+     */
+
+    switch (pMga->chip_attribs->BARs) {
+    case old_BARs:
+	pMga->framebuffer_bar = 1;
+	pMga->io_bar = 0;
+	pMga->iload_bar = -1;
+	break;
+    case probe_BARs:
+	if (pMga->ChipRev < 3) {
+	    pMga->framebuffer_bar = 1;
+	    pMga->io_bar = 0;
+	    pMga->iload_bar = 2;
+	    break;
+	}
+	/* FALLTHROUGH */
+    case new_BARs:
+	pMga->framebuffer_bar = 0;
+	pMga->io_bar = 1;
+	pMga->iload_bar = 2;
+	break;
+    }
+
+#ifdef XSERVER_LIBPCIACCESS
+    pMga->FbAddress = pMga->PciInfo->regions[pMga->framebuffer_bar].base_addr;
+#else
+    pMga->FbAddress = pMga->PciInfo->memBase[pMga->framebuffer_bar] & 0xff800000;
+#endif
+
+    xf86DrvMsg(pScrn->scrnIndex, X_PROBED, "Linear framebuffer at 0x%lX\n",
+	       (unsigned long)pMga->FbAddress);
+
+#ifdef XSERVER_LIBPCIACCESS
+    xf86DrvMsg(pScrn->scrnIndex, X_PROBED, "MMIO registers at 0x%lX\n",
+	       (unsigned long) pMga->PciInfo->regions[pMga->io_bar].base_addr);
+#else
+    pMga->IOAddress = pMga->PciInfo->memBase[pMga->io_bar] & 0xffffc000;
+
+    xf86DrvMsg(pScrn->scrnIndex, from, "MMIO registers at 0x%lX\n",
+	       (unsigned long)pMga->IOAddress);
+#endif
+
+    if (pMga->iload_bar != -1) {
+#ifdef XSERVER_LIBPCIACCESS
+	xf86DrvMsg(pScrn->scrnIndex, X_PROBED,
+		   "Pseudo-DMA transfer window at 0x%lX\n",
+		   (unsigned long) pMga->PciInfo->regions[pMga->iload_bar].base_addr);
+#else
+	if (pMga->PciInfo->memBase[2] != 0) {
+	    pMga->ILOADAddress = pMga->PciInfo->memBase[2] & 0xffffc000;
+	    xf86DrvMsg(pScrn->scrnIndex, X_PROBED,
+		       "Pseudo-DMA transfer window at 0x%lX\n",
+		       (unsigned long)pMga->ILOADAddress);
+	}
+#endif
+    }
+
+#ifndef XSERVER_LIBPCIACCESS
+    /*
+     * Find the BIOS base.  Get it from the PCI config if possible.  Otherwise
+     * use the VGA default.  Allow the config file to override this.
+     */
+
+    pMga->BiosFrom = X_NONE;
+    if (pMga->device->BiosBase != 0) {
+	/* XXX This isn't used */
+	pMga->BiosAddress = pMga->device->BiosBase;
+	pMga->BiosFrom = X_CONFIG;
+    } else {
+	/* details: rombase sdk pp 4-15 */
+	if (pMga->PciInfo->biosBase != 0) {
+	    pMga->BiosAddress = pMga->PciInfo->biosBase & 0xffff0000;
+	    pMga->BiosFrom = X_PROBED;
+	} else if (pMga->Primary) {
+	    pMga->BiosAddress = 0xc0000;
+	    pMga->BiosFrom = X_DEFAULT;
+	}
+    }
+    if (pMga->BiosAddress) {
+	xf86DrvMsg(pScrn->scrnIndex, pMga->BiosFrom, "BIOS at 0x%lX\n",
+		   (unsigned long)pMga->BiosAddress);
+    }
+#endif
+
+    if (xf86RegisterResources(pMga->pEnt->index, NULL, ResExclusive)) {
+	xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
+		"xf86RegisterResources() found resource conflicts\n");
+	MGAFreeRec(pScrn);
+	return FALSE;
+    }
+
     /*
      * The first thing we should figure out is the depth, bpp, etc.
      * Our default depth is 8, so pass it to the helper function.
      * We support both 24bpp and 32bpp layouts, so indicate that.
      */
 
-    /* Prefer 24bpp fb unless the Overlay option is set, or DRI is
-     * supported.
-     */
-    flags24 = Support24bppFb | Support32bppFb | SupportConvert32to24;
-    s = xf86TokenToOptName(MGAOptions, OPTION_OVERLAY);
-#ifndef XF86DRI
-    if (!(xf86FindOption(pScrn->confScreen->options, s) ||
-	  xf86FindOption(pMga->device->options, s))) {
-	flags24 |= PreferConvert32to24;
-    }
-#endif
+    /* Prefer 32bpp */
+    flags24 = Support24bppFb | Support32bppFb | PreferConvert24to32;
 
     if (pMga->SecondCrtc)
 	flags24 = Support32bppFb;
 
-    if (pMga->is_G200SE)
+    if (xf86ReturnOptValBool(pMga->Options, OPTION_FBDEV, FALSE)) {
+	pMga->FBDev = TRUE;
+	xf86DrvMsg(pScrn->scrnIndex, X_CONFIG,
+		"Using framebuffer device\n");
+	/* check for linux framebuffer device */
+	if (!xf86LoadSubModule(pScrn, "fbdevhw"))
+	    return FALSE;
+	xf86LoaderReqSymLists(fbdevHWSymbols, NULL);
+	if (!fbdevHWInit(pScrn, pMga->PciInfo, NULL))
+	    return FALSE;
+    }
+
+    /*
+     * If the user has specified the amount of memory in the XF86Config
+     * file, we respect that setting.
+     */
+    from = X_PROBED;
+    if (pMga->device->videoRam != 0) {
+	pScrn->videoRam = pMga->device->videoRam;
+	from = X_CONFIG;
+    } else if (pMga->FBDev) {
+	pScrn->videoRam = fbdevHWGetVidmem(pScrn)/1024;
+    } else {
+	pScrn->videoRam = MGACountRam(pScrn);
+    }
+
+    if (pMga->is_G200SE && pScrn->videoRam < 2048)
 	pScrn->confScreen->defaultdepth = 16;
 
     if (!xf86SetDepthBpp(pScrn, 0, 0, 0, flags24)) {
@@ -1686,11 +2054,13 @@ MGAPreInit(ScrnInfoPtr pScrn, int flags)
 	/* Check that the returned depth is one we support */
 	switch (pScrn->depth) {
 	case 8:
-	case 15:
 	case 16:
 	case 24:
 	    /* OK */
 	    break;
+	case 15:
+	    if (pMga->Chipset != PCI_CHIP_MGAG200_SE_A_PCI)
+		break;
 	default:
 	    xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
 		       "Given depth (%d) is not supported by this driver\n",
@@ -1725,9 +2095,6 @@ MGAPreInit(ScrnInfoPtr pScrn, int flags)
     xf86CollectOptions(pScrn, NULL);
 
     /* Process the options */
-    if (!(pMga->Options = xalloc(sizeof(MGAOptions))))
-	return FALSE;
-    memcpy(pMga->Options, MGAOptions, sizeof(MGAOptions));
     xf86ProcessOptions(pScrn->scrnIndex, pScrn->options, pMga->Options);
 
     if (pMga->is_G200SE) {
@@ -1744,6 +2111,11 @@ MGAPreInit(ScrnInfoPtr pScrn, int flags)
             xf86DrvMsg(pScrn->scrnIndex, X_INFO, "Disabling MTRR support.\n");
             pScrn->options = xf86ReplaceBoolOption(pScrn->options, "MTRR", FALSE);
         }
+    }
+
+    if (pMga->is_G200WB && xf86ReturnOptValBool(pMga->Options, OPTION_KVM, TRUE)) {
+        pMga->KVM = TRUE;
+        xf86DrvMsg(pScrn->scrnIndex, X_CONFIG, "Enabling KVM\n");
     }
     
 #if !defined(__powerpc__)
@@ -1811,6 +2183,13 @@ MGAPreInit(ScrnInfoPtr pScrn, int flags)
     }
 
     /* For compatibility, accept this too (as an override) */
+    if (xf86ReturnOptValBool(pMga->Options, OPTION_SW_CURSOR, FALSE)) {
+    from = X_CONFIG;
+    pMga->HWCursor = FALSE;
+    }
+    xf86DrvMsg(pScrn->scrnIndex, from, "Using %s cursor\n",
+        pMga->HWCursor ? "HW" : "SW");
+
     if (xf86ReturnOptValBool(pMga->Options, OPTION_NOACCEL, FALSE)) {
 	pMga->NoAccel = TRUE;
 	xf86DrvMsg(pScrn->scrnIndex, X_CONFIG, "Acceleration disabled\n");
@@ -1849,27 +2228,6 @@ MGAPreInit(ScrnInfoPtr pScrn, int flags)
     if (xf86GetOptValFreq(pMga->Options, OPTION_SET_MCLK, OPTUNITS_MHZ, &real)) {
 	pMga->MemClk = (int)(real * 1000.0);
     }
-    if ((s = xf86GetOptValString(pMga->Options, OPTION_OVERLAY))) {
-      if (!*s || !xf86NameCmp(s, "8,24") || !xf86NameCmp(s, "24,8")) {
-	if(pScrn->bitsPerPixel == 32 && pMga->SecondCrtc == FALSE) {
-	    pMga->Overlay8Plus24 = TRUE;
-	    if(!xf86GetOptValInteger(
-			pMga->Options, OPTION_COLOR_KEY,&(pMga->colorKey)))
-		pMga->colorKey = TRANSPARENCY_KEY;
-	    pScrn->colorKey = pMga->colorKey;
-	    pScrn->overlayFlags = OVERLAY_8_32_PLANAR;
-	    xf86DrvMsg(pScrn->scrnIndex, X_CONFIG,
-				"PseudoColor overlay enabled\n");
-	} else {
-	    xf86DrvMsg(pScrn->scrnIndex, X_CONFIG,
-	         "Option \"Overlay\" is only supported in 32 bits per pixel on"
-		 "the first CRTC\n");
-	}
-      } else {
-	  xf86DrvMsg(pScrn->scrnIndex, X_CONFIG,
-		"\"%s\" is not a valid value for Option \"Overlay\"\n", s);
-      }
-    }
 
     if(xf86GetOptValInteger(pMga->Options, OPTION_VIDEO_KEY, &(pMga->videoKey))) {
 	xf86DrvMsg(pScrn->scrnIndex, X_CONFIG, "video key set to 0x%x\n",
@@ -1884,11 +2242,6 @@ MGAPreInit(ScrnInfoPtr pScrn, int flags)
 	pMga->NoAccel = TRUE;
 	xf86DrvMsg(pScrn->scrnIndex, X_CONFIG,
 		"Using \"Shadow Framebuffer\" - acceleration disabled\n");
-    }
-    if (xf86ReturnOptValBool(pMga->Options, OPTION_FBDEV, FALSE)) {
-	pMga->FBDev = TRUE;
-	xf86DrvMsg(pScrn->scrnIndex, X_CONFIG,
-		"Using framebuffer device\n");
     }
     if (xf86ReturnOptValBool(pMga->Options, OPTION_OVERCLOCK_MEM, FALSE)) {
 	pMga->OverclockMem = TRUE;
@@ -1933,12 +2286,6 @@ MGAPreInit(ScrnInfoPtr pScrn, int flags)
         } /* ISMGAGx50() */
     }
     if (pMga->FBDev) {
-	/* check for linux framebuffer device */
-	if (!xf86LoadSubModule(pScrn, "fbdevhw"))
-	    return FALSE;
-	xf86LoaderReqSymLists(fbdevHWSymbols, NULL);
-	if (!fbdevHWInit(pScrn, pMga->PciInfo, NULL))
-	    return FALSE;
 	pScrn->SwitchMode    = fbdevHWSwitchModeWeak();
 	pScrn->AdjustFrame   = fbdevHWAdjustFrameWeak();
 	pScrn->EnterVT       = MGAEnterVTFBDev;
@@ -1988,109 +2335,12 @@ MGAPreInit(ScrnInfoPtr pScrn, int flags)
     case PCI_CHIP_MGAG200_PCI:
     case PCI_CHIP_MGAG200_SE_A_PCI:
     case PCI_CHIP_MGAG200_SE_B_PCI:
+    case PCI_CHIP_MGAG200_WINBOND_PCI:
+    case PCI_CHIP_MGAG200_EV_PCI:
     case PCI_CHIP_MGAG400:
     case PCI_CHIP_MGAG550:
 	MGAGSetupFuncs(pScrn);
 	break;
-    }
-
-    /* ajv changes to reflect actual values. see sdk pp 3-2. */
-    /* these masks just get rid of the crap in the lower bits */
-
-    /* For the 2064 and older rev 1064, base0 is the MMIO and base1 is
-     * the framebuffer.
-     */
-
-    switch (pMga->chip_attribs->BARs) {
-    case old_BARs:
-	pMga->framebuffer_bar = 1;
-	pMga->io_bar = 0;
-	pMga->iload_bar = -1;
-	break;
-    case probe_BARs:
-	if (pMga->ChipRev < 3) {
-	    pMga->framebuffer_bar = 1;
-	    pMga->io_bar = 0;
-	    pMga->iload_bar = 2;
-	    break;
-	}
-	/* FALLTHROUGH */
-    case new_BARs:
-	pMga->framebuffer_bar = 0;
-	pMga->io_bar = 1;
-	pMga->iload_bar = 2;
-	break;
-    }
-
-
-#ifdef XSERVER_LIBPCIACCESS
-    pMga->FbAddress = pMga->PciInfo->regions[pMga->framebuffer_bar].base_addr;
-#else
-    pMga->FbAddress = pMga->PciInfo->memBase[pMga->framebuffer_bar] & 0xff800000;
-#endif
-
-    xf86DrvMsg(pScrn->scrnIndex, X_PROBED, "Linear framebuffer at 0x%lX\n",
-	       (unsigned long)pMga->FbAddress);
-
-#ifdef XSERVER_LIBPCIACCESS
-    xf86DrvMsg(pScrn->scrnIndex, X_PROBED, "MMIO registers at 0x%lX\n",
-	       (unsigned long) pMga->PciInfo->regions[pMga->io_bar].base_addr);
-#else
-    pMga->IOAddress = pMga->PciInfo->memBase[pMga->io_bar] & 0xffffc000;
-
-    xf86DrvMsg(pScrn->scrnIndex, from, "MMIO registers at 0x%lX\n",
-	       (unsigned long)pMga->IOAddress);
-#endif
-
-    if (pMga->iload_bar != -1) {
-#ifdef XSERVER_LIBPCIACCESS
-	xf86DrvMsg(pScrn->scrnIndex, X_PROBED,
-		   "Pseudo-DMA transfer window at 0x%lX\n",
-		   (unsigned long) pMga->PciInfo->regions[pMga->iload_bar].base_addr);
-#else
-	if (pMga->PciInfo->memBase[2] != 0) {
-	    pMga->ILOADAddress = pMga->PciInfo->memBase[2] & 0xffffc000;
-	    xf86DrvMsg(pScrn->scrnIndex, X_PROBED,
-		       "Pseudo-DMA transfer window at 0x%lX\n",
-		       (unsigned long)pMga->ILOADAddress);
-	}
-#endif
-    }
-
-
-#ifndef XSERVER_LIBPCIACCESS
-    /*
-     * Find the BIOS base.  Get it from the PCI config if possible.  Otherwise
-     * use the VGA default.  Allow the config file to override this.
-     */
-
-    pMga->BiosFrom = X_NONE;
-    if (pMga->device->BiosBase != 0) {
-	/* XXX This isn't used */
-	pMga->BiosAddress = pMga->device->BiosBase;
-	pMga->BiosFrom = X_CONFIG;
-    } else {
-	/* details: rombase sdk pp 4-15 */
-	if (pMga->PciInfo->biosBase != 0) {
-	    pMga->BiosAddress = pMga->PciInfo->biosBase & 0xffff0000;
-	    pMga->BiosFrom = X_PROBED;
-	} else if (pMga->Primary) {
-	    pMga->BiosAddress = 0xc0000;
-	    pMga->BiosFrom = X_DEFAULT;
-	}
-    }
-    if (pMga->BiosAddress) {
-	xf86DrvMsg(pScrn->scrnIndex, pMga->BiosFrom, "BIOS at 0x%lX\n",
-		   (unsigned long)pMga->BiosAddress);
-    }
-#endif
-
-
-    if (xf86RegisterResources(pMga->pEnt->index, NULL, ResExclusive)) {
-	xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
-		"xf86RegisterResources() found resource conflicts\n");
-	MGAFreeRec(pScrn);
-	return FALSE;
     }
 
     /*
@@ -2139,20 +2389,6 @@ MGAPreInit(ScrnInfoPtr pScrn, int flags)
      */
     if ( (!pMga->Primary && !pMga->FBDev) || xf86IsPc98() )
         MGASoftReset(pScrn);
-
-    /*
-     * If the user has specified the amount of memory in the XF86Config
-     * file, we respect that setting.
-     */
-    from = X_PROBED;
-    if (pMga->device->videoRam != 0) {
-	pScrn->videoRam = pMga->device->videoRam;
-	from = X_CONFIG;
-    } else if (pMga->FBDev) {
-	pScrn->videoRam = fbdevHWGetVidmem(pScrn)/1024;
-    } else {
-	pScrn->videoRam = MGACountRam(pScrn);
-    }
 
     if (pScrn->videoRam == 0) {
 	xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
@@ -2211,6 +2447,8 @@ MGAPreInit(ScrnInfoPtr pScrn, int flags)
 	  case PCI_CHIP_MGAG200_PCI:
 	  case PCI_CHIP_MGAG200_SE_A_PCI:
 	  case PCI_CHIP_MGAG200_SE_B_PCI:
+          case PCI_CHIP_MGAG200_WINBOND_PCI:
+	  case PCI_CHIP_MGAG200_EV_PCI:
 	    pMga->SrcOrg = 0;
 	    pMga->DstOrg = 0;
 	    break;
@@ -2272,6 +2510,9 @@ MGAPreInit(ScrnInfoPtr pScrn, int flags)
 
     /* Set the min pixel clock */
     pMga->MinClock = 17750;
+    if (pMga->is_G200WB){
+	pMga->MinClock = 18750;
+    }
     xf86DrvMsg(pScrn->scrnIndex, X_DEFAULT, "Min pixel clock is %d MHz\n",
 	       pMga->MinClock / 1000);
     /*
@@ -2384,10 +2625,16 @@ MGAPreInit(ScrnInfoPtr pScrn, int flags)
 	case PCI_CHIP_MGAG100_PCI:
 	   maxPitch = 2048;
 	   break;
+	case PCI_CHIP_MGAG200_SE_A_PCI:
+	   if (pScrn->videoRam < 2048){
+	       maxPitch = 1024;
+	   }
+	   break;
 	case PCI_CHIP_MGAG200:
 	case PCI_CHIP_MGAG200_PCI:
-	case PCI_CHIP_MGAG200_SE_A_PCI:
 	case PCI_CHIP_MGAG200_SE_B_PCI:
+        case PCI_CHIP_MGAG200_WINBOND_PCI:
+	case PCI_CHIP_MGAG200_EV_PCI:
 	case PCI_CHIP_MGAG400:
 	case PCI_CHIP_MGAG550:
 	   maxPitch = 4096;
@@ -2408,6 +2655,10 @@ MGAPreInit(ScrnInfoPtr pScrn, int flags)
 	   xfree(linePitches);
     }
 
+    /* Some X compute displayWidth from inferred virtual without
+       checking pitch limit. */
+    if(pMga->Chipset == PCI_CHIP_MGAG200_SE_A_PCI && pScrn->videoRam < 2048)
+        pScrn->displayWidth = 1024;
 
     if (i < 1 && pMga->FBDev) {
 	fbdevHWUseBuildinMode(pScrn);
@@ -2642,19 +2893,11 @@ MGAPreInit(ScrnInfoPtr pScrn, int flags)
 
 
     /* Load the required framebuffer */
-    if (pMga->Overlay8Plus24) {
-	if (!xf86LoadSubModule(pScrn, "xf8_32bpp")) {
-	    MGAFreeRec(pScrn);
-	    return FALSE;
-	}
-	xf86LoaderReqSymLists(xf8_32bppSymbols, NULL);
-    } else {
-	if (!xf86LoadSubModule(pScrn, "fb")) {
-	    MGAFreeRec(pScrn);
-	    return FALSE;
-	}
-	xf86LoaderReqSymLists(fbSymbols, NULL);
+    if (!xf86LoadSubModule(pScrn, "fb")) {
+	MGAFreeRec(pScrn);
+	return FALSE;
     }
+    xf86LoaderReqSymLists(fbSymbols, NULL);
 
 
     /* Load XAA if needed */
@@ -2710,7 +2953,6 @@ MGAPreInit(ScrnInfoPtr pScrn, int flags)
     pMga->CurrentLayout.weight.red = pScrn->weight.red;
     pMga->CurrentLayout.weight.green = pScrn->weight.green;
     pMga->CurrentLayout.weight.blue = pScrn->weight.blue;
-    pMga->CurrentLayout.Overlay8Plus24 = pMga->Overlay8Plus24;
     pMga->CurrentLayout.mode = pScrn->currentMode;
 	
 
@@ -3190,13 +3432,6 @@ MGA_HAL(
 			  pMga->FbCursorOffset >> 18);
 		outMGAdac(MGA1064_CURSOR_CTL, 0x00);
 	      }
-	      if (pMga->Overlay8Plus24 == TRUE) {
-    		  outMGAdac(MGA1064_MUL_CTL, MGA1064_MUL_CTL_32bits);
-    		  outMGAdac(MGA1064_COL_KEY_MSK_LSB,0xFF);
-    		  outMGAdac(MGA1064_COL_KEY_LSB,pMga->colorKey);
-  		  outMGAdac(MGA1064_COL_KEY_MSK_MSB,0xFF);
-  		  outMGAdac(MGA1064_COL_KEY_MSB,0xFF);
-	      }		
 	    }
     );	/* MGA_HAL */
 #endif
@@ -3222,7 +3457,10 @@ MGA_HAL(
     MGA_NOT_HAL(
 	if (pMga->is_G200SE) {
             OUTREG8(0x1FDE, 0x06);
-            OUTREG8(0x1FDF, 0x14);
+	    if (pMga->reg_1e24 == 0x01)
+		OUTREG8(0x1FDF, 0x03);
+	    else 
+		OUTREG8(0x1FDF, 0x14);
         }
     );
 
@@ -3406,7 +3644,7 @@ MGAScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
     if (pMga->is_G200SE) {
 	VRTemp = pScrn->videoRam;
 	FBTemp = pMga->FbMapSize;
-	pScrn->videoRam = 4096;
+	pScrn->videoRam = 8192;
 	pMga->FbMapSize = pScrn->videoRam * 1024;
     }
     
@@ -3584,14 +3822,8 @@ MGAScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 
     /* Setup the visuals we support. */
 
-    /* All MGA support DirectColor and can do overlays in 32bpp */
-    if(pMga->Overlay8Plus24 && (pScrn->bitsPerPixel == 32)) {
-	if (!miSetVisualTypes(8, PseudoColorMask | GrayScaleMask,
-			      pScrn->rgbBits, PseudoColor))
-		return FALSE;
-	if (!miSetVisualTypes(24, TrueColorMask, pScrn->rgbBits, TrueColor))
-		return FALSE;
-    } else if (pMga->SecondCrtc) {
+    /* All MGA support DirectColor */
+    if (pMga->SecondCrtc) {
 	/* No DirectColor on the second head */
 	if (!miSetVisualTypes(pScrn->depth, TrueColorMask, pScrn->rgbBits,
 			      TrueColor))
@@ -3637,9 +3869,8 @@ MGAScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 
 #ifdef XF86DRI
      /*
-      * Setup DRI after visuals have been established, but before cfbScreenInit
-      * is called.   cfbScreenInit will eventually call into the drivers
-      * InitGLXVisuals call back.
+      * Setup DRI after visuals have been established.
+      *
       * The DRI does not work when textured video is enabled at this time.
       */
     if (pMga->is_G200SE) {
@@ -3682,19 +3913,10 @@ MGAScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 #endif
 
 
-    if (pMga->Overlay8Plus24) {
-	ret = cfb8_32ScreenInit(pScreen, FBStart,
-			width, height,
-			pScrn->xDpi, pScrn->yDpi,
-			displayWidth);
-    } else {
-	ret = fbScreenInit(pScreen, FBStart, width, height,
-			   pScrn->xDpi, pScrn->yDpi,
-			   displayWidth, pScrn->bitsPerPixel);
-    }
-
-    if (!ret)
+    if (!fbScreenInit(pScreen, FBStart, width, height, pScrn->xDpi,
+		      pScrn->yDpi, displayWidth, pScrn->bitsPerPixel)) {
 	return FALSE;
+    }
 
 
     if (pScrn->bitsPerPixel > 8) {
@@ -3713,9 +3935,8 @@ MGAScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
     }
 
     /* must be after RGB ordering fixed */
-    if (!pMga->Overlay8Plus24)
-	fbPictureInit (pScreen, 0, 0);
-    
+    fbPictureInit (pScreen, 0, 0);
+
     xf86SetBlackWhitePixels(pScreen);
 
     pMga->BlockHandler = pScreen->BlockHandler;
@@ -3775,11 +3996,6 @@ MGAScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 	NULL, f))
 	return FALSE;
 
-    if(pMga->Overlay8Plus24) { /* Must come after colormap initialization */
-	if(!xf86Overlay8Plus32Init(pScreen))
-	    return FALSE;
-    }
-
     if(pMga->ShadowFB) {
 	RefreshAreaFuncPtr refreshArea = MGARefreshArea;
 
@@ -3809,7 +4025,7 @@ MGAScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 
 #ifdef XF86DRI
     if (pMga->directRenderingEnabled) {
-       /* Now that mi, cfb, drm and others have done their thing,
+       /* Now that mi, drm and others have done their thing,
 	* complete the DRI setup.
 	*/
        pMga->directRenderingEnabled = MGADRIFinishScreenInit(pScreen);
@@ -4276,6 +4492,28 @@ MGAFreeScreen(int scrnIndex, int flags)
 
 }
 
+#ifndef HAVE_XF86MODEBANDWIDTH
+
+#define MODE_BANDWIDTH MODE_BAD
+
+/** Calculates the memory bandwidth (in MiB/sec) of a mode. */
+static unsigned int
+xf86ModeBandwidth(DisplayModePtr mode, int depth)
+{
+    float a_active, a_total, active_percent, pixels_per_second;
+    int bytes_per_pixel = (depth + 7) / 8;
+
+    if (!mode->HTotal || !mode->VTotal || !mode->Clock)
+	return 0;
+
+    a_active = mode->HDisplay * mode->VDisplay;
+    a_total = mode->HTotal * mode->VTotal;
+    active_percent = a_active / a_total;
+    pixels_per_second = active_percent * mode->Clock * 1000.0;
+
+    return (unsigned int)(pixels_per_second * bytes_per_pixel / (1024 * 1024));
+}
+#endif
 
 /* Checks if a mode is suitable for the selected chipset. */
 
@@ -4292,6 +4530,21 @@ MGAValidMode(int scrnIndex, DisplayModePtr mode, Bool verbose, int flags)
 	    return MODE_VIRTUAL_X;
 	if (mode->VDisplay > 1200)
 	    return MODE_VIRTUAL_Y;
+	if (pMga->reg_1e24 == 0x01 &&
+	    xf86ModeBandwidth(mode, pScrn->bitsPerPixel) > 256)
+	    return MODE_BANDWIDTH;
+    } else if (pMga->is_G200WB){
+        if (mode->Flags & V_DBLSCAN)
+            return MODE_NO_DBLESCAN;
+	if (pMga->KVM && mode->HDisplay > 1280)
+	    return MODE_VIRTUAL_X;
+	if (pMga->KVM && mode->VDisplay > 1024)
+	    return MODE_VIRTUAL_Y;
+	if (xf86ModeBandwidth(mode, pScrn->bitsPerPixel) > 318.77)
+	    return MODE_BANDWIDTH;
+    } else if (pMga->is_G200EV
+	       && (xf86ModeBandwidth(mode, pScrn->bitsPerPixel) > 327)) {
+	return MODE_BANDWIDTH;
     }
 
     lace = 1 + ((mode->Flags & V_INTERLACE) != 0);
