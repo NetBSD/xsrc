@@ -10,4 +10,6 @@ macintosh microsoft nec \
 northgate pc sony thinkpad \
 sun winbook README
 
+dir_data = $(dist_geom_DATA)
+
 include $(top_srcdir)/xkbrules.am

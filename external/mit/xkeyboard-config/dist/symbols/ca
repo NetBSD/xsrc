@@ -1,4 +1,4 @@
-// $XKeyboardConfig: xkeyboard-config/symbols/ca,v 1.18 2008-04-29 20:38:44 svu Exp $
+// $XKeyboardConfig$
 
 default partial
 xkb_symbols "fr" {
@@ -479,4 +479,33 @@ xkb_symbols "olpc" {
     include "fr"
 
     key <AE03>	{ [          3,    slash,          ograve,        Ograve ] };
+};
+
+partial alphanumeric_keys 
+xkb_symbols "kut" {
+
+    //Ejective U0313  and compose accents are from shs layout
+    include "ca(shs)"
+
+    name[Group1]= "Canada - Ktunaxa";
+
+    // Alphanumeric section
+
+    // Alveolar Click
+    key <AD05> {	[ t,	T,U01C2	,U01C2	]	};
+
+    //Cent sign
+    key <AB03> {	[ c,	C,U00A2,U00A2	]	};
+
+    //Mid dot
+    key <AB09> {	[ period,     greater,U00B7   	]	};
+
+    //Glottal stop
+    key <AB10> {	[ slash,	question, U0294	]	};
+
+    //COMBINING COMMA ABOVE RIGHT
+    key <AC11> {	[ apostrophe,	quotedbl, U0315,U0315	]	};
+
+    //MODIFIER LETTER RIGHT HALF RING
+    key <AC10> {	[ semicolon,	colon,U02BE,U02BE	]	};
 };

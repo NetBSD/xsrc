@@ -1,4 +1,4 @@
-// $XKeyboardConfig: xkeyboard-config/symbols/in,v 1.20 2008-02-28 13:28:07 svu Exp $
+// $XKeyboardConfig$
 
 // This layout includes all Indian layouts, including:
 //     - Bengali
@@ -1022,15 +1022,15 @@ xkb_symbols "guru" {
 // Mainly unvoiced consonants
 
       key <AC06> { [      U0A2A, U0A2B 	]	};
-      key <AC07> { [      U0A30, U0A30 	]	};
+      key <AC07> { [      U0A30, U0A5C 	]	};
       key <AC08> { [      U0A15, U0A16 	]	};
       key <AC09> { [      U0A24, U0A25 	]	};
       key <AC10> { [      U0A1A, U0A1B 	]	};
       key <AC11> { [      U0A1F, U0A20 	]	};
       key <BKSL> { [      U005C, U007C	]	};
 
-      key <AB01> { [		  z, Z		]       };
-      key <AB02> { [      U0A02, U0A70  ]       };
+      key <AB01> { [      z, 	 U0A01	]       };
+      key <AB02> { [      U0A02, U0A70, U0A71  ]       };
       key <AB03> { [      U0A2E, U0A23  ]       };
       key <AB04> { [      U0A28, U0A28  ]       };
       key <AB05> { [      U0A35, U0A35  ]       };

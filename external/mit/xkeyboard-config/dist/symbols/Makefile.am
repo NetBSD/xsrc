@@ -32,4 +32,6 @@ za \
 altwin capslock compose ctrl eurosign group inet \
 keypad kpdl level3 level5 nbsp olpc shift srvr_ctrl
 
+dir_data = $(dist_symbols_DATA)
+
 include $(top_srcdir)/xkbrules.am
