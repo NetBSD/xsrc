@@ -1,7 +1,6 @@
 #define DEBUG_VERB 2
 /*
  * Copyright (c) 2000 by Conectiva S.A. (http://www.conectiva.com)
- * Copyright 2008 Red Hat, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -28,15 +27,8 @@
  *
  * Authors: Paulo César Pereira de Andrade <pcpa@conectiva.com.br>
  *          David Dawes <dawes@xfree86.org>
- *          Adam Jackson <ajax@redhat.com>
- */
-
-/*
- * TODO:
- * - PanelID might give us useful size hints.
- * - Port to RANDR 1.2 setup to make mode selection slightly better
- * - Port to RANDR 1.2 to drop the old-school DGA junk
- * - VBE/SCI for secondary DDC method?
+ *
+ * $XFree86: xc/programs/Xserver/hw/xfree86/drivers/vesa/vesa.c,v 1.40 2003/11/03 05:11:45 tsi Exp $
  */
 
 #ifdef HAVE_CONFIG_H
@@ -56,7 +48,6 @@
 /* Colormap handling */
 #include "micmap.h"
 #include "xf86cmap.h"
-#include "xf86Modes.h"
 
 /* DPMS */
 #define DPMS_SERVER
@@ -66,10 +57,6 @@
 static const OptionInfoRec * VESAAvailableOptions(int chipid, int busid);
 static void VESAIdentify(int flags);
 static Bool VESAProbe(DriverPtr drv, int flags);
-#ifdef XSERVER_LIBPCIACCESS
-static Bool VESAPciProbe(DriverPtr drv, int entity_num,
-     struct pci_device *dev, intptr_t match_data);
-#endif
 static Bool VESAPreInit(ScrnInfoPtr pScrn, int flags);
 static Bool VESAScreenInit(int Index, ScreenPtr pScreen, int argc,
 			   char **argv);
@@ -83,7 +70,6 @@ static Bool VESASetMode(ScrnInfoPtr pScrn, DisplayModePtr pMode);
 static void VESAAdjustFrame(int scrnIndex, int x, int y, int flags);
 static void VESAFreeScreen(int scrnIndex, int flags);
 static void VESAFreeRec(ScrnInfoPtr pScrn);
-static VESAPtr VESAGetRec(ScrnInfoPtr pScrn);
 
 static void
 VESADisplayPowerManagementSet(ScrnInfoPtr pScrn, int mode,
@@ -101,50 +87,14 @@ static void RestoreFonts(ScrnInfoPtr pScrn);
 static Bool 
 VESASaveRestore(ScrnInfoPtr pScrn, vbeSaveRestoreFunction function);
 
+static void *VESAWindowPlanar(ScreenPtr pScrn, CARD32 row, CARD32 offset,
+			      int mode, CARD32 *size, void *closure);
 static void *VESAWindowLinear(ScreenPtr pScrn, CARD32 row, CARD32 offset,
 			      int mode, CARD32 *size, void *closure);
 static void *VESAWindowWindowed(ScreenPtr pScrn, CARD32 row, CARD32 offset,
 				int mode, CARD32 *size, void *closure);
 
 static Bool VESADGAInit(ScrnInfoPtr pScrn, ScreenPtr pScreen);
-
-enum GenericTypes
-{
-    CHIP_VESA_GENERIC
-};
-
-#ifdef XSERVER_LIBPCIACCESS
-static const struct pci_id_match vesa_device_match[] = {
-    {
-	PCI_MATCH_ANY, PCI_MATCH_ANY, PCI_MATCH_ANY, PCI_MATCH_ANY,
-	0x00030000, 0x00ffffff, CHIP_VESA_GENERIC 
-    },
-
-    { 0, 0, 0 },
-};
-#endif
-    
-/* Supported chipsets */
-static SymTabRec VESAChipsets[] =
-{
-    {CHIP_VESA_GENERIC, "vesa"},
-    {-1,		 NULL}
-};
-
-#ifndef XSERVER_LIBPCIACCESS
-static PciChipsets VESAPCIchipsets[] = {
-  { CHIP_VESA_GENERIC, PCI_CHIP_VGA, RES_SHARED_VGA },
-  { -1,		-1,	   RES_UNDEFINED },
-};
-#endif
-
-#ifdef HAVE_ISA
-static IsaChipsets VESAISAchipsets[] = {
-  {CHIP_VESA_GENERIC, RES_EXCLUSIVE_VGA},
-  {-1,		0 }
-};
-#endif
-
 
 /* 
  * This contains the functions needed by the server after loading the
@@ -160,15 +110,30 @@ _X_EXPORT DriverRec VESA = {
     VESAProbe,
     VESAAvailableOptions,
     NULL,
-    0,
-    NULL,
-
-#ifdef XSERVER_LIBPCIACCESS
-    vesa_device_match,
-    VESAPciProbe
-#endif
+    0
 };
 
+enum GenericTypes
+{
+    CHIP_VESA_GENERIC
+};
+
+/* Supported chipsets */
+static SymTabRec VESAChipsets[] =
+{
+    {CHIP_VESA_GENERIC, "vesa"},
+    {-1,		 NULL}
+};
+
+static PciChipsets VESAPCIchipsets[] = {
+  { CHIP_VESA_GENERIC, PCI_CHIP_VGA, RES_SHARED_VGA },
+  { -1,		-1,	   RES_UNDEFINED },
+};
+
+static IsaChipsets VESAISAchipsets[] = {
+  {CHIP_VESA_GENERIC, RES_EXCLUSIVE_VGA},
+  {-1,		0 }
+};
 
 typedef enum {
     OPTION_SHADOW_FB,
@@ -184,7 +149,69 @@ static const OptionInfoRec VESAOptions[] = {
     { -1,		   NULL,		OPTV_NONE,	{0},	FALSE }
 };
 
+/*
+ * List of symbols from other modules that this module references.  This
+ * list is used to tell the loader that it is OK for symbols here to be
+ * unresolved providing that it hasn't been told that they haven't been
+ * told that they are essential via a call to xf86LoaderReqSymbols() or
+ * xf86LoaderReqSymLists().  The purpose is this is to avoid warnings about
+ * unresolved symbols that are not required.
+ */
 #ifdef XFree86LOADER
+static const char *miscfbSymbols[] = {
+    "xf1bppScreenInit",
+    "xf4bppScreenInit",
+#ifdef USE_AFB
+    "afbScreenInit",
+#endif
+    "mfbScreenInit",
+    NULL
+};
+#endif
+
+static const char *fbSymbols[] = {
+    "fbPictureInit",
+    "fbScreenInit",
+    NULL
+};
+
+static const char *shadowSymbols[] = {
+    "shadowInit",
+    "shadowUpdatePackedWeak",
+    "shadowUpdatePlanar4Weak",
+    "shadowUpdatePlanar4x8Weak",
+    NULL
+};
+
+static const char *vbeSymbols[] = {
+    "VBEBankSwitch",
+    "VBEExtendedInit",
+    "VBEFindSupportedDepths",
+    "VBEGetModeInfo",
+    "VBEGetVBEInfo",
+    "VBEGetVBEMode",
+    "VBEPrintModes",
+    "VBESaveRestore",
+    "VBESetDisplayStart",
+    "VBESetGetDACPaletteFormat",
+    "VBESetGetLogicalScanlineLength",
+    "VBESetGetPaletteData",
+    "VBESetModeNames",
+    "VBESetModeParameters",
+    "VBESetVBEMode",
+    "VBEValidateModes",
+    "vbeDoEDID",
+    "vbeFree",
+    NULL
+};
+
+#ifdef XFree86LOADER
+static const char *ddcSymbols[] = {
+    "xf86PrintEDID",
+    "xf86SetDDCproperties",
+    NULL
+};
+
 
 /* Module loader interface */
 static MODULESETUPPROTO(vesaSetup);
@@ -217,7 +244,13 @@ vesaSetup(pointer Module, pointer Options, int *ErrorMajor, int *ErrorMinor)
     if (!Initialised)
     {
 	Initialised = TRUE;
-	xf86AddDriver(&VESA, Module, 1);
+	xf86AddDriver(&VESA, Module, 0);
+	LoaderRefSymLists(miscfbSymbols,
+			  fbSymbols,
+			  shadowSymbols,
+			  vbeSymbols,
+			  ddcSymbols,
+			  NULL);
 	return (pointer)TRUE;
     }
 
@@ -240,169 +273,10 @@ VESAIdentify(int flags)
     xf86PrintChipsets(VESA_NAME, "driver for VESA chipsets", VESAChipsets);
 }
 
-static VESAPtr
-VESAGetRec(ScrnInfoPtr pScrn)
-{
-    if (!pScrn->driverPrivate)
-	pScrn->driverPrivate = xcalloc(sizeof(VESARec), 1);
-
-    return ((VESAPtr)pScrn->driverPrivate);
-}
-
-/* Only a little like VBESetModeParameters */
-static void
-VESASetModeParameters(vbeInfoPtr pVbe, DisplayModePtr vbemode,
-		      DisplayModePtr ddcmode)
-{
-    VbeModeInfoData *data;
-    int clock;
-
-    data = (VbeModeInfoData *)vbemode->Private;
-
-    data->block = xcalloc(sizeof(VbeCRTCInfoBlock), 1);
-    data->block->HorizontalTotal = ddcmode->HTotal;
-    data->block->HorizontalSyncStart = ddcmode->HSyncStart;
-    data->block->HorizontalSyncEnd = ddcmode->HSyncEnd;
-    data->block->VerticalTotal = ddcmode->VTotal;
-    data->block->VerticalSyncStart = ddcmode->VSyncStart;
-    data->block->VerticalSyncEnd = ddcmode->VSyncEnd;
-    data->block->Flags = ((ddcmode->Flags & V_NHSYNC) ? CRTC_NHSYNC : 0) |
-	                 ((ddcmode->Flags & V_NVSYNC) ? CRTC_NVSYNC : 0);
-    data->block->PixelClock = ddcmode->Clock * 1000;
-
-    /* ask the BIOS to figure out the real clock */
-    clock = VBEGetPixelClock(pVbe, data->mode, data->block->PixelClock);
-    if (clock)
-	data->block->PixelClock = clock;
-
-    data->mode |= (1 << 11);
-    data->block->RefreshRate = 100 * ((double)(data->block->PixelClock) /
-				(double)(ddcmode->HTotal * ddcmode->VTotal));
-}
-
-static ModeStatus
-VESAValidMode(int scrn, DisplayModePtr p, Bool flag, int pass)
-{
-    static int warned = 0;
-    int found = 0;
-    ScrnInfoPtr pScrn = xf86Screens[scrn];
-    VESAPtr pVesa = VESAGetRec(pScrn);
-    MonPtr mon = pScrn->monitor;
-    ModeStatus ret = MODE_BAD;
-    DisplayModePtr mode;
-    float v;
-
-    pVesa = VESAGetRec(pScrn);
-
-    if (pass != MODECHECK_FINAL) {
-	if (!warned) {
-	    xf86DrvMsg(scrn, X_WARNING, "VESAValidMode called unexpectedly\n");
-	    warned = 1;
-	}
-	return MODE_OK;
-    }
-
-    /*
-     * This is suboptimal.  We pass in just the barest description of a mode
-     * we can get away with to VBEValidateModes, so it can't really throw
-     * out anything we give it.  But we need to filter the list so that we
-     * don't populate the mode list with things the monitor can't do.
-     *
-     * So first off, if this isn't a mode we handed to the server (ie,
-     * M_T_BUILTIN), then we know we can't do it.
-     */
-    if (!(p->type & M_T_BUILTIN))
-	return MODE_NOMODE;
-
-    if (pVesa->strict_validation) {
-	/*
-	 * If it's our first pass at mode validation, we'll try for a strict
-	 * intersection between the VBE and DDC mode lists.
-	 */
-	if (pScrn->monitor->DDC) {
-	    for (mode = pScrn->monitor->Modes; mode; mode = mode->next) {
-		if (mode->type & M_T_DRIVER && 
-			mode->HDisplay == p->HDisplay &&
-			mode->VDisplay == p->VDisplay) {
-		    if (xf86CheckModeForMonitor(mode, mon) == MODE_OK) {
-			found = 1;
-			break;
-		    }
-		}
-		if (mode == pScrn->monitor->Last)
-		    break;
-	    }
-	    if (!found)
-		return MODE_NOMODE;
-
-	    /* having found a matching mode, stash the CRTC values aside */
-	    VESASetModeParameters(pVesa->pVbe, p, mode);
-	    return MODE_OK;
-	}
-
-	/* No DDC and no modes make Homer something something... */
-	return MODE_NOMODE;
-    }
-
-    /*
-     * Finally, walk through the vsync rates 1Hz at a time looking for a mode
-     * that will fit.  This is assuredly a terrible way to do this, but
-     * there's no obvious method for computing a mode of a given size that
-     * will pass xf86CheckModeForMonitor.  XXX this path is terrible, but
-     * then, by this point, you're well into despair territory.
-     */
-    for (v = mon->vrefresh[0].lo; v <= mon->vrefresh[0].hi; v++) {
-	mode = xf86GTFMode(p->HDisplay, p->VDisplay, v, 0, 0);
-	ret = xf86CheckModeForMonitor(mode, mon);
-	xfree(mode);
-	if (ret == MODE_OK)
-	    break;
-    }
-
-    return ret;
-}
-
-static void
-VESAInitScrn(ScrnInfoPtr pScrn)
-{
-    pScrn->driverVersion = VESA_VERSION;
-    pScrn->driverName    = VESA_DRIVER_NAME;
-    pScrn->name		 = VESA_NAME;
-    pScrn->Probe	 = VESAProbe;
-    pScrn->PreInit       = VESAPreInit;
-    pScrn->ScreenInit    = VESAScreenInit;
-    pScrn->SwitchMode    = VESASwitchMode;
-    pScrn->ValidMode     = VESAValidMode;
-    pScrn->AdjustFrame   = VESAAdjustFrame;
-    pScrn->EnterVT       = VESAEnterVT;
-    pScrn->LeaveVT       = VESALeaveVT;
-    pScrn->FreeScreen    = VESAFreeScreen;
-}
-
 /*
  * This function is called once, at the start of the first server generation to
  * do a minimal probe for supported hardware.
  */
-
-#ifdef XSERVER_LIBPCIACCESS
-static Bool
-VESAPciProbe(DriverPtr drv, int entity_num, struct pci_device *dev,
-	     intptr_t match_data)
-{
-    ScrnInfoPtr pScrn;
-    
-    pScrn = xf86ConfigPciEntity(NULL, 0, entity_num, NULL, 
-				NULL, NULL, NULL, NULL, NULL);
-    if (pScrn != NULL) {
-	VESAPtr pVesa = VESAGetRec(pScrn);
-
-	VESAInitScrn(pScrn);
-	pVesa->pciInfo = dev;
-    }
-
-    return (pScrn != NULL);
-}
-#endif
 
 static Bool
 VESAProbe(DriverPtr drv, int flags)
@@ -421,7 +295,6 @@ VESAProbe(DriverPtr drv, int flags)
 					  &devSections)) <= 0)
 	return (FALSE);
 
-#ifndef XSERVER_LIBPCIACCESS
     /* PCI BUS */
     if (xf86GetPciVideoInfo()) {
 	numUsed = xf86MatchPciInstances(VESA_NAME, PCI_VENDOR_GENERIC,
@@ -438,7 +311,17 @@ VESAProbe(DriverPtr drv, int flags)
 		    if ((pScrn = xf86ConfigPciEntity(pScrn,0,usedChips[i],
 						     VESAPCIchipsets,NULL,
 						     NULL,NULL,NULL,NULL))) {
-			VESAInitScrn(pScrn);
+			pScrn->driverVersion = VESA_VERSION;
+			pScrn->driverName    = VESA_DRIVER_NAME;
+			pScrn->name	     = VESA_NAME;
+			pScrn->Probe	     = VESAProbe;
+			pScrn->PreInit       = VESAPreInit;
+			pScrn->ScreenInit    = VESAScreenInit;
+			pScrn->SwitchMode    = VESASwitchMode;
+			pScrn->AdjustFrame   = VESAAdjustFrame;
+			pScrn->EnterVT       = VESAEnterVT;
+			pScrn->LeaveVT       = VESALeaveVT;
+			pScrn->FreeScreen    = VESAFreeScreen;
 			foundScreen = TRUE;
 		    }
 		}
@@ -446,9 +329,7 @@ VESAProbe(DriverPtr drv, int flags)
 	    xfree(usedChips);
 	}
     }
-#endif
 
-#ifdef HAVE_ISA
     /* Isa Bus */
     numUsed = xf86MatchIsaInstances(VESA_NAME,VESAChipsets,
 				    VESAISAchipsets, drv,
@@ -462,20 +343,29 @@ VESAProbe(DriverPtr drv, int flags)
 	    if ((pScrn = xf86ConfigIsaEntity(pScrn, 0,usedChips[i],
 					     VESAISAchipsets, NULL,
 					     NULL, NULL, NULL, NULL))) {
-		VESAInitScrn(pScrn);
+	    
+		pScrn->driverVersion = VESA_VERSION;
+		pScrn->driverName    = VESA_DRIVER_NAME;
+		pScrn->name	     = VESA_NAME;
+		pScrn->Probe	     = VESAProbe;
+		pScrn->PreInit       = VESAPreInit;
+		pScrn->ScreenInit    = VESAScreenInit;
+		pScrn->SwitchMode    = VESASwitchMode;
+		pScrn->AdjustFrame   = VESAAdjustFrame;
+		pScrn->EnterVT       = VESAEnterVT;
+		pScrn->LeaveVT       = VESALeaveVT;
+		pScrn->FreeScreen    = VESAFreeScreen;
 		foundScreen = TRUE;
 	    }
 	}
 	xfree(usedChips);
     }
-#endif
 
     xfree(devSections);
 
     return (foundScreen);
 }
 
-#ifdef HAVE_ISA
 static int
 VESAFindIsaDevice(GDevPtr dev)
 {
@@ -500,7 +390,15 @@ VESAFindIsaDevice(GDevPtr dev)
 #endif
     return (int)CHIP_VESA_GENERIC;
 }
-#endif
+
+static VESAPtr
+VESAGetRec(ScrnInfoPtr pScrn)
+{
+    if (!pScrn->driverPrivate)
+	pScrn->driverPrivate = xcalloc(sizeof(VESARec), 1);
+
+    return ((VESAPtr)pScrn->driverPrivate);
+}
 
 static void
 VESAFreeRec(ScrnInfoPtr pScrn)
@@ -536,22 +434,6 @@ VESAFreeRec(ScrnInfoPtr pScrn)
     pScrn->driverPrivate = NULL;
 }
 
-static int
-VESAValidateModes(ScrnInfoPtr pScrn)
-{
-    VESAPtr pVesa = VESAGetRec(pScrn);
-    DisplayModePtr mode;
-
-    for (mode = pScrn->monitor->Modes; mode; mode = mode->next)
-	mode->status = MODE_OK;
-
-    return VBEValidateModes(pScrn, NULL, pScrn->display->modes, 
-			    NULL, NULL, 0, 2048, 1, 0, 2048,
-			    pScrn->display->virtualX,
-			    pScrn->display->virtualY,
-			    pVesa->mapSize, LOOKUP_BEST_REFRESH);
-}
-
 /*
  * This function is called once for each screen at the start of the first
  * server generation to initialise the screen for all server generations.
@@ -563,13 +445,14 @@ VESAPreInit(ScrnInfoPtr pScrn, int flags)
     VbeInfoBlock *vbe;
     DisplayModePtr pMode;
     VbeModeInfoBlock *mode;
+    char *mod = NULL;
+    const char *reqSym = NULL;
     Gamma gzeros = {0.0, 0.0, 0.0};
     rgb rzeros = {0, 0, 0};
     pointer pDDCModule;
     int i;
     int flags24 = 0;
     int defaultDepth = 0;
-    int defaultBpp = 0;
     int depths = 0;
 
     if (flags & PROBE_DETECT)
@@ -577,23 +460,36 @@ VESAPreInit(ScrnInfoPtr pScrn, int flags)
 
     pVesa = VESAGetRec(pScrn);
     pVesa->pEnt = xf86GetEntityInfo(pScrn->entityList[0]);
+    pVesa->device = xf86GetDevFromEntity(pScrn->entityList[0],
+					 pScrn->entityInstanceList[0]);
+
+#if 0
+    /* Load vgahw module */
+    if (!xf86LoadSubModule(pScrn, "vgahw"))
+    	return (FALSE);
+
+    xf86LoaderReqSymLists(vgahwSymbols, NULL);
+#endif
 
     /* Load vbe module */
     if (!xf86LoadSubModule(pScrn, "vbe"))
         return (FALSE);
+
+    xf86LoaderReqSymLists(vbeSymbols, NULL);
 
     if ((pVesa->pVbe = VBEExtendedInit(NULL, pVesa->pEnt->index,
 				       SET_BIOS_SCRATCH
 				       | RESTORE_BIOS_SCRATCH)) == NULL)
         return (FALSE);
 
-#ifndef XSERVER_LIBPCIACCESS
     if (pVesa->pEnt->location.type == BUS_PCI) {
 	pVesa->pciInfo = xf86GetPciInfoForEntity(pVesa->pEnt->index);
 	pVesa->pciTag = pciTag(pVesa->pciInfo->bus, pVesa->pciInfo->device,
 			       pVesa->pciInfo->func);
+	pVesa->primary = xf86IsPrimaryPci(pVesa->pciInfo);
     }
-#endif
+    else
+	pVesa->primary = TRUE;
 
     pScrn->chipset = "vesa";
     pScrn->monitor = pScrn->confScreen->monitor;
@@ -614,29 +510,31 @@ VESAPreInit(ScrnInfoPtr pScrn, int flags)
 				    V_MODETYPE_VBE);
 
     /* Preferred order for default depth selection. */
-    if (depths & V_DEPTH_24)
-	defaultDepth = 24;
-    else if (depths & V_DEPTH_16)
+    if (depths & V_DEPTH_16)
 	defaultDepth = 16;
     else if (depths & V_DEPTH_15)
 	defaultDepth = 15;
     else if (depths & V_DEPTH_8)
 	defaultDepth = 8;
+    else if (depths & V_DEPTH_24)
+	defaultDepth = 24;
     else if (depths & V_DEPTH_4)
 	defaultDepth = 4;
     else if (depths & V_DEPTH_1)
 	defaultDepth = 1;
 
-    if (defaultDepth == 24 && !(flags24 & Support32bppFb))
-	defaultBpp = 24;
+    /*
+     * Setting this avoids a "Driver can't support depth 24" message,
+     * which could be misleading.
+     */
+    if (!flags24)
+	flags24 = Support24bppFb;
 
-    /* Prefer 32bpp because 1999 called and wants its packed pixels back */
-    if (flags24 & Support32bppFb)
-	flags24 |= SupportConvert24to32 | PreferConvert24to32;
+    /* Prefer 24bpp for fb since it potentially allows larger modes. */
     if (flags24 & Support24bppFb)
-	flags24 |= SupportConvert32to24;
+	flags24 |= SupportConvert32to24 | PreferConvert32to24;
 
-    if (!xf86SetDepthBpp(pScrn, defaultDepth, 0, defaultBpp, flags24)) {
+    if (!xf86SetDepthBpp(pScrn, defaultDepth, 0, 0, flags24)) {
         vbeFree(pVesa->pVbe);
 	return (FALSE);
     }
@@ -697,38 +595,13 @@ VESAPreInit(ScrnInfoPtr pScrn, int flags)
 
     VBESetModeNames(pScrn->modePool);
 
-    pVesa->strict_validation = TRUE;
-    i = VESAValidateModes(pScrn);
+    i = VBEValidateModes(pScrn, NULL, pScrn->display->modes, 
+			  NULL, NULL, 0, 2048, 1, 0, 2048,
+			  pScrn->display->virtualX,
+			  pScrn->display->virtualY,
+			  pVesa->mapSize, LOOKUP_BEST_REFRESH);
 
     if (i <= 0) {
-	xf86DrvMsg(pScrn->scrnIndex, X_WARNING,
-		"No valid modes left. Trying less strict filter...\n");
-	pVesa->strict_validation = FALSE;
-	i = VESAValidateModes(pScrn);
-    }
-
-    if (i <= 0) do {
-	Bool changed = FALSE;
-	/* maybe there's more modes at the bottom... */
-	if (pScrn->monitor->vrefresh[0].lo > 50) {
-	    changed = TRUE;
-	    pScrn->monitor->vrefresh[0].lo = 50;
-	}
-	if (pScrn->monitor->hsync[0].lo > 31.5) {
-	    changed = TRUE;
-	    pScrn->monitor->hsync[0].lo = 31.5;
-	}
-
-	if (!changed)
-	    break;
-
-	xf86DrvMsg(pScrn->scrnIndex, X_WARNING,
-		   "No valid modes left. Trying aggressive sync range...\n");
-	i = VESAValidateModes(pScrn);
-    } while (0);	
-
-    if (i <= 0) {
-	/* alright, i'm out of ideas */
 	xf86DrvMsg(pScrn->scrnIndex, X_ERROR, "No valid modes\n");
         vbeFree(pVesa->pVbe);
 	return (FALSE);
@@ -775,18 +648,55 @@ VESAPreInit(ScrnInfoPtr pScrn, int flags)
     if (xf86ReturnOptValBool(pVesa->Options, OPTION_DFLT_REFRESH, FALSE))
 	pVesa->defaultRefresh = TRUE;
 
-    pVesa->ModeSetClearScreen = FALSE;
     if (xf86ReturnOptValBool(pVesa->Options, OPTION_MODESET_CLEAR_SCREEN, 
-			     FALSE))
+			     TRUE))
 	pVesa->ModeSetClearScreen = TRUE;
 
-    if (!pVesa->defaultRefresh && !pVesa->strict_validation)
+    if (!pVesa->defaultRefresh)
 	VBESetModeParameters(pScrn, pVesa->pVbe);
 
     mode = ((VbeModeInfoData*)pScrn->modes->Private)->data;
     switch (mode->MemoryModel) {
+	case 0x0:	/* Text mode */
+	case 0x1:	/* CGA graphics */
+	case 0x2:	/* Hercules graphics */
+	case 0x5:	/* Non-chain 4, 256 color */
+	case 0x7:	/* YUV */
+	    xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
+		       "Unsupported Memory Model: %d", mode->MemoryModel);
+	    break;
+	case 0x3:	/* Planar */
+	    if (pVesa->shadowFB) {
+		mod = "fb";
+		pScrn->bitmapBitOrder = BITMAP_BIT_ORDER; 
+
+		xf86LoaderReqSymbols("fbPictureInit", NULL);
+	    }
+	    else {
+		switch (pScrn->bitsPerPixel) {
+		    case 1:
+			mod = "xf1bpp";
+			reqSym = "xf1bppScreenInit";
+			break;
+		    case 4:
+			mod = "xf4bpp";
+			reqSym = "xf4bppScreenInit";
+			break;
+		    default:
+#ifdef USE_AFB
+			mod = "afb";
+			reqSym = "afbScreenInit";
+			break;
+#else
+			xf86DrvMsg(pScrn->scrnIndex, X_ERROR, 
+				   "Unsupported bpp: %d", pScrn->bitsPerPixel);
+#endif
+		}
+	    }
+	    break;
 	case 0x4:	/* Packed pixel */
-	case 0x6:	/* Direct Color */
+	case 0x6:	/*  Direct Color */
+	    mod = "fb";
 	    pScrn->bitmapBitOrder = BITMAP_BIT_ORDER; 
 
 	    switch (pScrn->bitsPerPixel) {
@@ -802,24 +712,33 @@ VESAPreInit(ScrnInfoPtr pScrn, int flags)
 		    return FALSE;
 	    }
 	    break;
-	default:
-	    xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
-		       "Unsupported Memory Model: %d", mode->MemoryModel);
-	    return FALSE;
     }
 
     if (pVesa->shadowFB) {
 	xf86DrvMsg(pScrn->scrnIndex, X_CONFIG, "Using \"Shadow Framebuffer\"\n");
+	if (pScrn->depth == 1) {
+            mod = "mfb";
+	    reqSym = "mfbScreenInit";
+	}
 	if (!xf86LoadSubModule(pScrn, "shadow")) {
 	    vbeFree(pVesa->pVbe);
 	    return (FALSE);
 	}
+	xf86LoaderReqSymLists(shadowSymbols, NULL);
     }
 
-    if (xf86LoadSubModule(pScrn, "fb") == NULL) {
+    if (mod && xf86LoadSubModule(pScrn, mod) == NULL) {
 	VESAFreeRec(pScrn);
         vbeFree(pVesa->pVbe);
 	return (FALSE);
+    }
+
+    if (mod) {
+	if (reqSym) {
+	    xf86LoaderReqSymbols(reqSym, NULL);
+	} else {
+	    xf86LoaderReqSymLists(fbSymbols, NULL);
+	}
     }
 
     vbeFree(pVesa->pVbe);
@@ -842,16 +761,6 @@ vesaCreateScreenResources(ScreenPtr pScreen)
 	      pVesa->window, 0, 0);
 
     return ret;
-}
-
-static void
-vesaEnableDisableFBAccess(int scrnIndex, Bool enable)
-{
-    ScrnInfoPtr pScrn = xf86Screens[scrnIndex];
-    VESAPtr pVesa = VESAGetRec(pScrn);
-
-    pVesa->accessEnabled = enable;
-    pVesa->EnableDisableFBAccess(scrnIndex, enable);
 }
 
 static Bool
@@ -941,8 +850,42 @@ VESAScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 
     mode = ((VbeModeInfoData*)pScrn->modes->Private)->data;
     switch (mode->MemoryModel) {
+	case 0x0:	/* Text mode */
+	case 0x1:	/* CGA graphics */
+	case 0x2:	/* Hercules graphics */
+	case 0x5:	/* Non-chain 4, 256 color */
+	case 0x7:	/* YUV */
+	    xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
+		       "Unsupported Memory Model: %d", mode->MemoryModel);
+	    return (FALSE);
+	case 0x3:	/* Planar */
+		switch (pScrn->bitsPerPixel) {
+		    case 1:
+			if (!xf1bppScreenInit(pScreen, pVesa->base,
+					      pScrn->virtualX, pScrn->virtualY,
+					      pScrn->xDpi, pScrn->yDpi,
+					      pScrn->displayWidth))
+			    return (FALSE);
+			break;
+		    case 4:
+			if (!xf4bppScreenInit(pScreen, pVesa->base,
+					      pScrn->virtualX, pScrn->virtualY,
+					      pScrn->xDpi, pScrn->yDpi,
+					      pScrn->displayWidth))
+			    return (FALSE);
+			break;
+		    default:
+#ifdef USE_AFB
+			if (!afbScreenInit(pScreen, pVesa->base,
+					   pScrn->virtualX, pScrn->virtualY,
+					   pScrn->xDpi, pScrn->yDpi, pScrn->displayWidth))
+#endif
+			    return (FALSE);
+			break;
+		}
+	    break;
 	case 0x4:	/* Packed pixel */
-	case 0x6:	/* Direct Color */
+	case 0x6:	/*  Direct Color */
 	    switch (pScrn->bitsPerPixel) {
 		case 8:
 		case 16:
@@ -962,10 +905,6 @@ VESAScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 		    return (FALSE);
 	    }
 	    break;
-	default:
-	    xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
-		       "Unsupported Memory Model: %d", mode->MemoryModel);
-	    return (FALSE);
     }
 
 
@@ -989,7 +928,14 @@ VESAScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 	fbPictureInit(pScreen, 0, 0);
 
     if (pVesa->shadowFB) {
-	if (pVesa->mapPhys == 0xa0000) {	/* Windowed */
+	if (mode->MemoryModel == 3) {	/* Planar */
+	  if (pScrn->bitsPerPixel == 8)
+		pVesa->update = shadowUpdatePlanar4x8Weak();
+	    else
+		pVesa->update = shadowUpdatePlanar4Weak();
+	    pVesa->window = VESAWindowPlanar;
+	}
+	else if (pVesa->mapPhys == 0xa0000) {	/* Windowed */
 	    pVesa->update = shadowUpdatePackedWeak();
 	    pVesa->window = VESAWindowWindowed;
 	}
@@ -1003,7 +949,7 @@ VESAScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 	pVesa->CreateScreenResources = pScreen->CreateScreenResources;
 	pScreen->CreateScreenResources = vesaCreateScreenResources;
     }
-    else if (pVesa->mapPhys == 0xa0000) {
+    else if (pVesa->mapPhys == 0xa0000 && mode->MemoryModel != 0x3) {
 	unsigned int bankShift = 0;
 	while ((unsigned)(64 >> bankShift) != mode->WinGranularity)
 	    bankShift++;
@@ -1041,10 +987,6 @@ VESAScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 	pVesa->vbeInfo->Capabilities[0] & 0x01 ? 8 : 6,
 	VESALoadPalette, NULL, flags))
 	return (FALSE);
-
-    pVesa->accessEnabled = TRUE;
-    pVesa->EnableDisableFBAccess = pScrn->EnableDisableFBAccess;
-    pScrn->EnableDisableFBAccess = vesaEnableDisableFBAccess;
 
     pVesa->CloseScreen = pScreen->CloseScreen;
     pScreen->CloseScreen = VESACloseScreen;
@@ -1098,7 +1040,6 @@ VESACloseScreen(int scrnIndex, ScreenPtr pScreen)
     }
     pScrn->vtSema = FALSE;
 
-    pScrn->EnableDisableFBAccess = pVesa->EnableDisableFBAccess;
     pScreen->CreateScreenResources = pVesa->CreateScreenResources;
     pScreen->CloseScreen = pVesa->CloseScreen;
     return pScreen->CloseScreen(scrnIndex, pScreen);
@@ -1109,12 +1050,12 @@ VESASwitchMode(int scrnIndex, DisplayModePtr pMode, int flags)
 {
     ScrnInfoPtr pScrn = xf86Screens[scrnIndex];
     VESAPtr pVesa = VESAGetRec(pScrn);
-    Bool ret, disableAccess = pVesa->ModeSetClearScreen && pVesa->accessEnabled;
+    Bool ret;
 
-    if (disableAccess)
+    if (pVesa->ModeSetClearScreen) 
 	pScrn->EnableDisableFBAccess(scrnIndex,FALSE);
     ret = VESASetMode(xf86Screens[scrnIndex], pMode);
-    if (disableAccess)
+    if (pVesa->ModeSetClearScreen) 
 	pScrn->EnableDisableFBAccess(scrnIndex,TRUE);
     return ret;
 }
@@ -1130,13 +1071,7 @@ VESASetMode(ScrnInfoPtr pScrn, DisplayModePtr pMode)
     pVesa = VESAGetRec(pScrn);
 
     data = (VbeModeInfoData*)pMode->Private;
-
-    xf86DrvMsg(pScrn->scrnIndex, X_INFO,
-	       "Setting up VESA Mode 0x%X (%dx%d)\n",
-	       data->mode & 0x7FF, pMode->HDisplay, pMode->VDisplay);
-
-    /* careful, setting the bit means don't clear the screen */
-    mode = data->mode | (pVesa->ModeSetClearScreen ? 0 : (1U << 15));
+    mode = data->mode | ( pVesa->ModeSetClearScreen ?  (1U << 15)  : 0);
 
     /* enable linear addressing */
     if (pVesa->mapPhys != 0xa0000)
@@ -1168,7 +1103,7 @@ VESASetMode(ScrnInfoPtr pScrn, DisplayModePtr pMode)
 	VBESetLogicalScanline(pVesa->pVbe, pScrn->displayWidth);
 
     if (pScrn->bitsPerPixel == 8 && pVesa->vbeInfo->Capabilities[0] & 0x01 &&
-        !(data->data->MemoryModel == 0x6 || data->data->MemoryModel == 0x7)) 
+        !(data->data->MemoryModel & 0x6 || data->data->MemoryModel & 0x7)) 
 	VBESetGetDACPaletteFormat(pVesa->pVbe, 8);
 
     pScrn->vtSema = TRUE;
@@ -1201,28 +1136,6 @@ VESAMapVidMem(ScrnInfoPtr pScrn)
     pScrn->memPhysBase = pVesa->mapPhys;
     pScrn->fbOffset = pVesa->mapOff;
 
-#ifdef XSERVER_LIBPCIACCESS
-    if ((pVesa->mapPhys != 0xa0000) && (pVesa->pciInfo != NULL)) {
-	(void) pci_device_map_range(pVesa->pciInfo, pScrn->memPhysBase,
-				    pVesa->mapSize,
-				    (PCI_DEV_MAP_FLAG_WRITABLE
-				     | PCI_DEV_MAP_FLAG_WRITE_COMBINE),
-				    & pVesa->base);
-    }
-    else
-	pVesa->base = xf86MapDomainMemory(pScrn->scrnIndex, 0, pVesa->pciInfo,
-					  pScrn->memPhysBase, pVesa->mapSize);
-
-    if (pVesa->base) {
-	if (pVesa->mapPhys != 0xa0000)
-	    pVesa->VGAbase = xf86MapDomainMemory(pScrn->scrnIndex, 0,
-						 pVesa->pciInfo,
-						 0xa0000, 0x10000);
-	else
-	    pVesa->VGAbase = pVesa->base;
-
-    }
-#else
     if (pVesa->mapPhys != 0xa0000 && pVesa->pEnt->location.type == BUS_PCI)
 	pVesa->base = xf86MapPciMem(pScrn->scrnIndex, VIDMEM_FRAMEBUFFER,
 				    pVesa->pciTag, pScrn->memPhysBase,
@@ -1239,7 +1152,6 @@ VESAMapVidMem(ScrnInfoPtr pScrn)
 	else
 	    pVesa->VGAbase = pVesa->base;
     }
-#endif
 
     pVesa->ioBase = pScrn->domainIOBase;
 
@@ -1259,21 +1171,32 @@ VESAUnmapVidMem(ScrnInfoPtr pScrn)
     if (pVesa->base == NULL)
 	return;
 
-#ifdef XSERVER_LIBPCIACCESS
-    if (pVesa->mapPhys != 0xa0000) {
-	(void) pci_device_unmap_range(pVesa->pciInfo, pVesa->base,
-				      pVesa->mapSize);
-	xf86UnMapVidMem(pScrn->scrnIndex, pVesa->VGAbase, 0x10000);
-    }
-    else {
-	xf86UnMapVidMem(pScrn->scrnIndex, pVesa->base, pVesa->mapSize);
-    }
-#else
     xf86UnMapVidMem(pScrn->scrnIndex, pVesa->base, pVesa->mapSize);
     if (pVesa->mapPhys != 0xa0000)
 	xf86UnMapVidMem(pScrn->scrnIndex, pVesa->VGAbase, 0x10000);
-#endif
     pVesa->base = NULL;
+}
+
+void *
+VESAWindowPlanar(ScreenPtr pScreen, CARD32 row, CARD32 offset, int mode,
+		 CARD32 *size, void *closure)
+{
+    ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
+    VESAPtr pVesa = VESAGetRec(pScrn);
+    VbeModeInfoBlock *data = ((VbeModeInfoData*)(pScrn->currentMode->Private))->data;
+    int window;
+    int mask = 1 << (offset & 3);
+
+    outb(pVesa->ioBase + VGA_SEQ_INDEX, 2);
+    outb(pVesa->ioBase + VGA_SEQ_DATA, mask);
+    offset = (offset >> 2) + pVesa->maxBytesPerScanline * row;
+    window = offset / (data->WinGranularity * 1024);
+    pVesa->windowAoffset = window * data->WinGranularity * 1024;
+    VESABankSwitch(pScreen, window);
+    *size = data->WinSize * 1024 - (offset - pVesa->windowAoffset);
+
+    return (void *)((unsigned long)pVesa->base +
+		   (offset - pVesa->windowAoffset));
 }
 
 static void *
@@ -1414,6 +1337,13 @@ ReadGr(VESAPtr pVesa, int index)
 #define WriteCrtc(index, value)						     \
     outb(pVesa->ioBase + (VGA_IOBASE_COLOR + VGA_CRTC_INDEX_OFFSET), index); \
     outb(pVesa->ioBase + (VGA_IOBASE_COLOR + VGA_CRTC_DATA_OFFSET), value)
+
+static int
+ReadCrtc(VESAPtr pVesa, int index)
+{
+    outb(pVesa->ioBase + (VGA_IOBASE_COLOR + VGA_CRTC_INDEX_OFFSET), index);
+    return inb(pVesa->ioBase + (VGA_IOBASE_COLOR + VGA_CRTC_DATA_OFFSET));
+}
 
 static void
 SeqReset(VESAPtr pVesa, Bool start)
@@ -1671,12 +1601,44 @@ VESADisplayPowerManagementSet(ScrnInfoPtr pScrn, int mode,
                 int flags)
 {
     VESAPtr pVesa = VESAGetRec(pScrn);
+    unsigned char seq1 = 0, crtc17 = 0;
 
     if (!pScrn->vtSema)
 	return;
 
-    VBEDPMSSet(pVesa->pVbe, mode);
+    switch (mode) {
+	case DPMSModeOn:
+	    /* Screen: On; HSync: On, VSync: On */
+	    seq1 = 0x00;
+	    crtc17 = 0x80;
+	    break;
+	case DPMSModeStandby:
+	    /* Screen: Off; HSync: Off, VSync: On -- Not Supported */
+	    seq1 = 0x20;
+	    crtc17 = 0x80;
+	    break;
+	case DPMSModeSuspend:
+	    /* Screen: Off; HSync: On, VSync: Off -- Not Supported */
+	    seq1 = 0x20;
+	    crtc17 = 0x80;
+	    break;
+	case DPMSModeOff:
+	    /* Screen: Off; HSync: Off, VSync: Off */
+	    seq1 = 0x20;
+	    crtc17 = 0x00;
+	    break;
+    }
+    WriteSeq(0x00, 0x01);		  /* Synchronous Reset */
+    seq1 |= ReadSeq(pVesa, 0x01) & ~0x20;
+    WriteSeq(0x01, seq1);
+    crtc17 |= ReadCrtc(pVesa, 0x17) & ~0x80;
+    usleep(10000);
+    WriteCrtc(0x17, crtc17);
+    WriteSeq(0x00, 0x03);		  /* End Reset */
 }
+
+
+
 
 /***********************************************************************
  * DGA stuff
