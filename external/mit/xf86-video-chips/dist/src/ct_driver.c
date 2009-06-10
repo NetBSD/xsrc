@@ -1,5 +1,3 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/chips/ct_driver.c,v 1.132tsi Exp $ */
-
 /*
  * Copyright 1993 by Jon Block <block@frc.com>
  * Modified by Mike Hollick <hollick@graphics.cis.upenn.edu>
@@ -87,9 +85,6 @@
 /* Drivers that need to access the PCI config space directly need this */
 #include "xf86Pci.h"
 
-/* This is used for module versioning */
-#include "xf86Version.h"
-
 /* Standard resources are defined here */
 #include "xf86Resources.h"
 
@@ -113,8 +108,12 @@
 
 
 /* Needed for the 1 and 4 bpp framebuffers */
+#ifdef HAVE_XF1BPP
 #include "xf1bpp.h"
+#endif
+#ifdef HAVE_XF4BPP
 #include "xf4bpp.h"
+#endif
 
 /* Needed by Resources Access Control (RAC) */
 #include "xf86RAC.h"
@@ -137,7 +136,12 @@
 /* Mandatory functions */
 static const OptionInfoRec *	CHIPSAvailableOptions(int chipid, int busid);
 static void     CHIPSIdentify(int flags);
+#ifdef XSERVER_LIBPCIACCESS
+static Bool     CHIPSPciProbe(DriverPtr drv, int entity_num,
+			      struct pci_device *dev, intptr_t match_data);
+#else
 static Bool     CHIPSProbe(DriverPtr drv, int flags);
+#endif
 static Bool     CHIPSPreInit(ScrnInfoPtr pScrn, int flags);
 static Bool     CHIPSScreenInit(int Index, ScreenPtr pScreen, int argc,
                                   char **argv);
@@ -465,9 +469,28 @@ static DisplayModeRec ChipsNTSCMode = {
 #define CHIPS_VERSION 4000
 #define CHIPS_NAME "CHIPS"
 #define CHIPS_DRIVER_NAME "chips"
-#define CHIPS_MAJOR_VERSION 1
-#define CHIPS_MINOR_VERSION 1
-#define CHIPS_PATCHLEVEL 1
+#define CHIPS_MAJOR_VERSION PACKAGE_VERSION_MAJOR
+#define CHIPS_MINOR_VERSION PACKAGE_VERSION_MINOR
+#define CHIPS_PATCHLEVEL PACKAGE_VERSION_PATCHLEVEL
+
+
+#ifdef XSERVER_LIBPCIACCESS
+
+#define CHIPS_DEVICE_MATCH(d, i) \
+  { PCI_VENDOR_CHIPSTECH, (d), PCI_MATCH_ANY, PCI_MATCH_ANY, 0, 0, (i) }
+
+static const struct pci_id_match chips_device_match[] = {
+  CHIPS_DEVICE_MATCH(PCI_CHIP_65545, 0),
+  CHIPS_DEVICE_MATCH(PCI_CHIP_65548, 0),
+  CHIPS_DEVICE_MATCH(PCI_CHIP_65550, 0),
+  CHIPS_DEVICE_MATCH(PCI_CHIP_65554, 0),
+  CHIPS_DEVICE_MATCH(PCI_CHIP_65555, 0),
+  CHIPS_DEVICE_MATCH(PCI_CHIP_68554, 0),
+  CHIPS_DEVICE_MATCH(PCI_CHIP_69000, 0),
+  CHIPS_DEVICE_MATCH(PCI_CHIP_69030, 0),
+  { 0, 0, 0 },
+};
+#endif
 
 /*
  * This contains the functions needed by the server after loading the driver
@@ -481,10 +504,20 @@ _X_EXPORT DriverRec CHIPS = {
 	CHIPS_VERSION,
 	CHIPS_DRIVER_NAME,
 	CHIPSIdentify,
+#ifdef XSERVER_LIBPCIACCESS
+	NULL,
+#else
 	CHIPSProbe,
+#endif
 	CHIPSAvailableOptions,
 	NULL,
-	0
+	0,
+	NULL,
+
+#ifdef XSERVER_LIBPCIACCESS
+	chips_device_match,
+	CHIPSPciProbe,
+#endif
 };
 
 static SymTabRec CHIPSChipsets[] = {
@@ -507,6 +540,7 @@ static SymTabRec CHIPSChipsets[] = {
     { -1,			NULL }
 };
 
+
 /* Conversion PCI ID to chipset name */
 static PciChipsets CHIPSPCIchipsets[] = {
     { CHIPS_CT65545, PCI_CHIP_65545, RES_SHARED_VGA },
@@ -520,6 +554,7 @@ static PciChipsets CHIPSPCIchipsets[] = {
     { -1,	     -1,	     RES_UNDEFINED}
 };
 
+#ifdef HAVE_ISA
 static IsaChipsets CHIPSISAchipsets[] = {
     { CHIPS_CT65520,		RES_EXCLUSIVE_VGA },
     { CHIPS_CT65525,		RES_EXCLUSIVE_VGA },
@@ -539,6 +574,7 @@ static IsaChipsets CHIPSISAchipsets[] = {
     { CHIPS_CT64300,		RES_EXCLUSIVE_VGA },
     { -1,			RES_UNDEFINED }
 };
+#endif
 
 /* The options supported by the Chips and Technologies Driver */
 typedef enum {
@@ -685,8 +721,12 @@ static const char *vgahwSymbols[] = {
 
 #ifdef XFree86LOADER
 static const char *miscfbSymbols[] = {
+#ifdef HAVE_XF1BPP
     "xf1bppScreenInit",
+#endif
+#ifdef HAVE_XF4BPP
     "xf4bppScreenInit",
+#endif
     "cfb8_16ScreenInit",
     NULL
 };
@@ -854,6 +894,68 @@ CHIPSAvailableOptions(int chipid, int busid)
 }
 
 /* Mandatory */
+#ifdef XSERVER_LIBPCIACCESS
+Bool
+CHIPSPciProbe(DriverPtr drv, int entity_num, struct pci_device * dev,
+	    intptr_t match_data)
+{
+    ScrnInfoPtr pScrn = NULL;
+    EntityInfoPtr pEnt;
+    CHIPSPtr cPtr;
+
+    /* Allocate a ScrnInfoRec and claim the slot */
+    pScrn = xf86ConfigPciEntity(pScrn, 0, entity_num, CHIPSPCIchipsets, NULL,
+				NULL, NULL, NULL, NULL);
+    if (pScrn != NULL) {
+	/* Fill in what we can of the ScrnInfoRec */
+	pScrn->driverVersion	= CHIPS_VERSION;
+	pScrn->driverName	= CHIPS_DRIVER_NAME;
+	pScrn->name		= CHIPS_NAME;
+	pScrn->Probe		= NULL;
+	pScrn->PreInit		= CHIPSPreInit;
+	pScrn->ScreenInit	= CHIPSScreenInit;
+	pScrn->SwitchMode	= CHIPSSwitchMode;
+	pScrn->AdjustFrame	= CHIPSAdjustFrame;
+	pScrn->EnterVT		= CHIPSEnterVT;
+	pScrn->LeaveVT		= CHIPSLeaveVT;
+	pScrn->FreeScreen	= CHIPSFreeScreen;
+	pScrn->ValidMode	= CHIPSValidMode;
+
+	/*
+	 * For cards that can do dual head per entity, mark the entity
+	 * as sharable. 
+	 */
+	pEnt = xf86GetEntityInfo(entity_num);
+	if (pEnt->chipset == CHIPS_CT69030) {
+	    CHIPSEntPtr cPtrEnt = NULL;
+	    DevUnion *pPriv;
+
+	    xf86SetEntitySharable(entity_num);
+	    /* Allocate an entity private if necessary */
+	    if (CHIPSEntityIndex < 0)
+	      CHIPSEntityIndex = xf86AllocateEntityPrivateIndex();
+	    pPriv = xf86GetEntityPrivate(pScrn->entityList[0], CHIPSEntityIndex);
+	    if (!pPriv->ptr) {
+		pPriv->ptr = xnfcalloc(sizeof(CHIPSEntRec), 1);
+		cPtrEnt = pPriv->ptr;
+		cPtrEnt->lastInstance = -1;
+	    } else {
+		cPtrEnt = pPriv->ptr;
+	    }
+	    /*
+	     * Set the entity instance for this instance of the driver.  For
+	     * dual head per card, instance 0 is the "master" instance, driving
+	     * the primary head, and instance 1 is the "slave".
+	     */
+	    cPtrEnt->lastInstance++;
+	    xf86SetEntityInstanceForScreen(pScrn, pScrn->entityList[0],
+					   cPtrEnt->lastInstance);
+	}
+    }
+
+    return (pScrn != NULL);
+}
+#else
 static Bool
 CHIPSProbe(DriverPtr drv, int flags)
 {
@@ -939,7 +1041,8 @@ CHIPSProbe(DriverPtr drv, int flags)
 	    xfree(usedChips);
 	}
     }
-    
+
+#ifdef HAVE_ISA 
     /* Isa Bus */
     numUsed = xf86MatchIsaInstances(CHIPS_NAME,CHIPSChipsets,CHIPSISAchipsets,
 				    drv,chipsFindIsaDevice,devSections,
@@ -953,7 +1056,7 @@ CHIPSProbe(DriverPtr drv, int flags)
 						   usedChips[i],
 						   CHIPSISAchipsets,NULL,
 						   NULL,NULL,NULL,NULL))) {
-		pScrn->driverVersion = VERSION;
+		pScrn->driverVersion = CHIPS_VERSION;
 		pScrn->driverName    = CHIPS_DRIVER_NAME;
 		pScrn->name          = CHIPS_NAME;
 		pScrn->Probe         = CHIPSProbe;
@@ -970,11 +1073,14 @@ CHIPSProbe(DriverPtr drv, int flags)
 	    xfree(usedChips);
 	}
     }
+#endif
     
     xfree(devSections);
     return foundScreen;
 }
+#endif
 
+#ifdef HAVE_ISA
 static int
 chipsFindIsaDevice(GDevPtr dev)
 {
@@ -1058,6 +1164,7 @@ chipsFindIsaDevice(GDevPtr dev)
     }
     return found;
 }
+#endif
 
 /* Mandatory */
 Bool
@@ -1107,9 +1214,11 @@ CHIPSPreInit(ScrnInfoPtr pScrn, int flags)
 	if (cPtr->pEnt->location.type == BUS_PCI) {
 	    pciPtr = xf86GetPciInfoForEntity(cPtr->pEnt->index);
 	    cPtr->PciInfo = pciPtr;
+#ifndef XSERVER_LIBPCIACCESS
 	    cPtr->PciTag = pciTag(cPtr->PciInfo->bus, 
 				  cPtr->PciInfo->device,
 				  cPtr->PciInfo->func);
+#endif
 	}
     }
     /* INT10 */
@@ -1290,6 +1399,7 @@ CHIPSPreInit(ScrnInfoPtr pScrn, int flags)
 
     /* Load bpp-specific modules */
     switch (pScrn->bitsPerPixel) {
+#ifdef HAVE_XF1BPP
     case 1:
 	if (xf86LoadSubModule(pScrn, "xf1bpp") == NULL) {
 	    vbeFree(cPtr->pVbe);
@@ -1299,6 +1409,8 @@ CHIPSPreInit(ScrnInfoPtr pScrn, int flags)
 	}	
 	xf86LoaderReqSymbols("xf1bppScreenInit", NULL);
 	break;
+#endif
+#ifdef HAVE_XF4BPP
     case 4:
 	if (xf86LoadSubModule(pScrn, "xf4bpp") == NULL) {
 	    vbeFree(cPtr->pVbe);
@@ -1308,6 +1420,7 @@ CHIPSPreInit(ScrnInfoPtr pScrn, int flags)
 	}	
 	xf86LoaderReqSymbols("xf4bppScreenInit", NULL);
 	break;
+#endif
     case 16:
 	if (cPtr->Flags & ChipsOverlay8plus16) {
 	    if (xf86LoadSubModule(pScrn, "xf8_16bpp") == NULL) {
@@ -1431,11 +1544,7 @@ chipsPreInitHiQV(ScrnInfoPtr pScrn, int flags)
 
     hwp = VGAHWPTR(pScrn);
     vgaHWGetIOBase(hwp);
-#if XF86_VERSION_CURRENT > XF86_VERSION_NUMERIC(4,1,0,0,0)
     cPtr->PIOBase = hwp->PIOOffset;
-#else
-     cPtr->PIOBase = 0 ; /* for old version the IO offset is global */
-#endif
     /*
      * Must allow ensure that storage for the 2nd set of vga registers is
      * allocated for dual channel cards
@@ -1536,10 +1645,10 @@ chipsPreInitHiQV(ScrnInfoPtr pScrn, int flags)
 	    /* Tack on 0x800000 to access the big-endian aperture? */
 #if X_BYTE_ORDER == X_BIG_ENDIAN
 	    if (BE_SWAP_APRETURE(pScrn,cPtr))
-		cPtr->FbAddress =  (cPtr->PciInfo->memBase[0] & 0xff800000) + 0x800000L;
+	        cPtr->FbAddress =  (PCI_REGION_BASE(cPtr->PciInfo, 0, REGION_MEM) & 0xff800000) + 0x800000L;
 	    else
 #endif
-		cPtr->FbAddress =  cPtr->PciInfo->memBase[0] & 0xff800000;
+	        cPtr->FbAddress =  PCI_REGION_BASE(cPtr->PciInfo, 0, REGION_MEM) & 0xff800000;
 
 	    from = X_PROBED;
 	    if (xf86RegisterResources(cPtr->pEnt->index,NULL,ResNone))
@@ -3108,7 +3217,7 @@ chipsPreInit655xx(ScrnInfoPtr pScrn, int flags)
 		mask &= 0xCF;
 	}
 	if (cPtr->pEnt->location.type == BUS_PCI) {
-	    cPtr->FbAddress =  cPtr->PciInfo->memBase[0] & 0xff800000;
+	    cPtr->FbAddress =  PCI_REGION_BASE(cPtr->PciInfo, 0, REGION_MEM) & 0xff800000;
 	    if (xf86RegisterResources(cPtr->pEnt->index,NULL,ResNone))
 		useLinear = FALSE;
 		from = X_PROBED;
@@ -4014,18 +4123,22 @@ CHIPSScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
     }
 
     switch (pScrn->bitsPerPixel) {
+#ifdef HAVE_XF1BPP
     case 1:
 	ret = xf1bppScreenInit(pScreen, FBStart,
  		        width,height,
 			pScrn->xDpi, pScrn->yDpi,
 			displayWidth);
 	break;
+#endif
+#ifdef HAVE_XF4BPP
     case 4:
 	ret = xf4bppScreenInit(pScreen, FBStart,
  		        width,height,
 			pScrn->xDpi, pScrn->yDpi,
 			displayWidth);
 	break;
+#endif
     case 16:
       if (cPtr->Flags & ChipsOverlay8plus16) {
 	  ret = cfb8_16ScreenInit(pScreen, (unsigned char *)FBStart + 
@@ -7028,6 +7141,7 @@ chipsMapMem(ScrnInfoPtr pScrn)
     if (cPtr->Flags & ChipsLinearSupport) {
 	if (cPtr->UseMMIO) {
 	    if (IS_HiQV(cPtr)) {
+#ifndef XSERVER_LIBPCIACCESS
 		if (cPtr->pEnt->location.type == BUS_PCI)
 		    cPtr->MMIOBase = xf86MapPciMem(pScrn->scrnIndex,
 			   VIDMEM_MMIO_32BIT,cPtr->PciTag, cPtr->IOAddress,
@@ -7035,7 +7149,20 @@ chipsMapMem(ScrnInfoPtr pScrn)
 		 else 
 		    cPtr->MMIOBase = xf86MapVidMem(pScrn->scrnIndex,
 			   VIDMEM_MMIO_32BIT, cPtr->IOAddress, 0x20000L);
+#else
+		{
+		  void** result = (void**)&cPtr->MMIOBase;
+		  int err = pci_device_map_range(cPtr->PciInfo,
+						 cPtr->IOAddress,
+						 0x20000L,
+						 PCI_DEV_MAP_FLAG_WRITABLE,
+						 result);
+		  if (err) 
+		    return FALSE;
+		}
+#endif
 	    } else {
+#ifndef XSERVER_LIBPCIACCESS
 		if (cPtr->pEnt->location.type == BUS_PCI)
 		    cPtr->MMIOBase = xf86MapPciMem(pScrn->scrnIndex,
 			  VIDMEM_MMIO_32BIT, cPtr->PciTag, cPtr->IOAddress,
@@ -7043,6 +7170,18 @@ chipsMapMem(ScrnInfoPtr pScrn)
 		else
 		    cPtr->MMIOBase = xf86MapVidMem(pScrn->scrnIndex,
 			  VIDMEM_MMIO_32BIT, cPtr->IOAddress, 0x10000L);
+#else
+		{
+		  void** result = (void**)&cPtr->MMIOBase;
+		  int err = pci_device_map_range(cPtr->PciInfo,
+						 cPtr->IOAddress,
+						 0x10000L,
+						 PCI_DEV_MAP_FLAG_WRITABLE,
+						 result);
+		  if (err) 
+		    return FALSE;
+		}
+#endif
 	    }
 
 	    if (cPtr->MMIOBase == NULL)
@@ -7065,6 +7204,7 @@ chipsMapMem(ScrnInfoPtr pScrn)
 	    }
 	  }
 
+#ifndef XSERVER_LIBPCIACCESS
 	  if (cPtr->pEnt->location.type == BUS_PCI)
 	      cPtr->FbBase = xf86MapPciMem(pScrn->scrnIndex,VIDMEM_FRAMEBUFFER,
  			          cPtr->PciTag, Addr, Map);
@@ -7072,14 +7212,32 @@ chipsMapMem(ScrnInfoPtr pScrn)
 	  else
 	      cPtr->FbBase = xf86MapVidMem(pScrn->scrnIndex,VIDMEM_FRAMEBUFFER,
 					   Addr, Map);
+#else
+	  {
+	    void** result = (void**)&cPtr->FbBase;
+	    int err = pci_device_map_range(cPtr->PciInfo,
+					   Addr,
+					   Map,
+					   PCI_DEV_MAP_FLAG_WRITABLE |
+					   PCI_DEV_MAP_FLAG_WRITE_COMBINE,
+					   result);
+	    if (err) 
+	      return FALSE;
+	  }
+
+#endif
 
 	  if (cPtr->FbBase == NULL)
 	      return FALSE;
 	}
 	if (cPtr->Flags & ChipsFullMMIOSupport) {
+#ifndef XSERVER_LIBPCIACCESS
 		cPtr->MMIOBaseVGA = xf86MapPciMem(pScrn->scrnIndex,
 						  VIDMEM_MMIO,cPtr->PciTag,
 						  cPtr->IOAddress, 0x2000L);
+#else
+		cPtr->MMIOBaseVGA = cPtr->MMIOBase;
+#endif
 	    /* 69030 MMIO Fix.
 	     *
 	     * The hardware lets us map the PipeB data registers
@@ -7089,9 +7247,22 @@ chipsMapMem(ScrnInfoPtr pScrn)
 	     * pipe and to toggle between them as necessary. -GHB
 	     */
 	    if (cPtr->Flags & ChipsDualChannelSupport)
+#ifndef XSERVER_LIBPCIACCESS
 	       	cPtr->MMIOBasePipeB = xf86MapPciMem(pScrn->scrnIndex,
 				      VIDMEM_MMIO,cPtr->PciTag,
 				      cPtr->IOAddress + 0x800000, 0x2000L);
+#else
+	    {
+	      void** result = (void**)&cPtr->MMIOBasePipeB;
+	      int err = pci_device_map_range(cPtr->PciInfo,
+					     cPtr->IOAddress + 0x800000,
+					     0x2000L,
+					     PCI_DEV_MAP_FLAG_WRITABLE,
+					     result);
+	      if (err) 
+		return FALSE;
+	    }
+#endif
 
 	    cPtr->MMIOBasePipeA = cPtr->MMIOBaseVGA;
 	}
@@ -7115,21 +7286,39 @@ chipsUnmapMem(ScrnInfoPtr pScrn)
 
     if (cPtr->Flags & ChipsLinearSupport) {
 	if (IS_HiQV(cPtr)) {
+#ifndef XSERVER_LIBPCIACCESS
 	    if (cPtr->MMIOBase)
 		xf86UnMapVidMem(pScrn->scrnIndex, (pointer)cPtr->MMIOBase,
 				0x20000);
 	    if (cPtr->MMIOBasePipeB)
 		xf86UnMapVidMem(pScrn->scrnIndex, (pointer)cPtr->MMIOBasePipeB,
 				0x20000);
+#else
+	    if (cPtr->MMIOBase)
+	      pci_device_unmap_range(cPtr->PciInfo, cPtr->MMIOBase, 0x20000);
+	    
+	    if (cPtr->MMIOBasePipeB)
+	      pci_device_unmap_range(cPtr->PciInfo, cPtr->MMIOBasePipeB, 0x2000);
+	      
+#endif
 	    cPtr->MMIOBasePipeB = NULL;
 	} else {
+#ifndef XSERVER_LIBPCIACCESS
 	  if (cPtr->MMIOBase)
 	      xf86UnMapVidMem(pScrn->scrnIndex, (pointer)cPtr->MMIOBase,
 			      0x10000);
+#else
+	    if (cPtr->MMIOBase)
+	      pci_device_unmap_range(cPtr->PciInfo, cPtr->MMIOBase, 0x10000);
+#endif
 	}
 	cPtr->MMIOBase = NULL;
+#ifndef XSERVER_LIBPCIACCESS
 	xf86UnMapVidMem(pScrn->scrnIndex, (pointer)cPtr->FbBase, 
 			cPtr->FbMapSize);
+#else
+	pci_device_unmap_range(cPtr->PciInfo, cPtr->FbBase, cPtr->FbMapSize);
+#endif
     }
     cPtr->FbBase = NULL;
     
