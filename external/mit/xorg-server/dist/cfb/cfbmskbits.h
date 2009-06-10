@@ -819,7 +819,7 @@ if ((x) + (w) <= PPW) {\
 #else /* BITMAP_BIT_ORDER == LSB */
 
 /* this must load 32 bits worth; for most machines, thats an int */
-#define CfbFetchUnaligned(x)	ldl_u(x)
+#define CfbFetchUnaligned(x)	ldl_u((unsigned int *)x)
 
 #define getstipplepixels( psrcstip, xt, w, ones, psrcpix, destpix ) \
 { \
