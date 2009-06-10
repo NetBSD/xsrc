@@ -1,4 +1,4 @@
-# generated automatically by aclocal 1.10.1 -*- Autoconf -*-
+# generated automatically by aclocal 1.10.2 -*- Autoconf -*-
 
 # Copyright (C) 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004,
 # 2005, 2006, 2007, 2008  Free Software Foundation, Inc.
@@ -13,7 +13,7 @@
 
 m4_ifndef([AC_AUTOCONF_VERSION],
   [m4_copy([m4_PACKAGE_VERSION], [AC_AUTOCONF_VERSION])])dnl
-m4_if(AC_AUTOCONF_VERSION, [2.63],,
+m4_if(m4_defn([AC_AUTOCONF_VERSION]), [2.63],,
 [m4_warning([this file was generated for autoconf 2.63.
 You have another version of autoconf.  It may work, but is not guaranteed to.
 If you have problems, you may need to regenerate the build system entirely.
@@ -175,7 +175,7 @@ else
 fi[]dnl
 ])# PKG_CHECK_MODULES
 
-# Copyright (C) 2002, 2003, 2005, 2006, 2007  Free Software Foundation, Inc.
+# Copyright (C) 2002, 2003, 2005, 2006, 2007, 2008  Free Software Foundation, Inc.
 #
 # This file is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
@@ -190,7 +190,7 @@ AC_DEFUN([AM_AUTOMAKE_VERSION],
 [am__api_version='1.10'
 dnl Some users find AM_AUTOMAKE_VERSION and mistake it for a way to
 dnl require some minimum version.  Point them to the right macro.
-m4_if([$1], [1.10.1], [],
+m4_if([$1], [1.10.2], [],
       [AC_FATAL([Do not call $0, use AM_INIT_AUTOMAKE([$1]).])])dnl
 ])
 
@@ -204,12 +204,12 @@ m4_define([_AM_AUTOCONF_VERSION], [])
 # AM_SET_CURRENT_AUTOMAKE_VERSION
 # -------------------------------
 # Call AM_AUTOMAKE_VERSION and AM_AUTOMAKE_VERSION so they can be traced.
-# This function is AC_REQUIREd by AC_INIT_AUTOMAKE.
+# This function is AC_REQUIREd by AM_INIT_AUTOMAKE.
 AC_DEFUN([AM_SET_CURRENT_AUTOMAKE_VERSION],
-[AM_AUTOMAKE_VERSION([1.10.1])dnl
+[AM_AUTOMAKE_VERSION([1.10.2])dnl
 m4_ifndef([AC_AUTOCONF_VERSION],
   [m4_copy([m4_PACKAGE_VERSION], [AC_AUTOCONF_VERSION])])dnl
-_AM_AUTOCONF_VERSION(AC_AUTOCONF_VERSION)])
+_AM_AUTOCONF_VERSION(m4_defn([AC_AUTOCONF_VERSION]))])
 
 # AM_AUX_DIR_EXPAND                                         -*- Autoconf -*-
 
@@ -459,19 +459,28 @@ _AM_SUBST_NOTMAKE([AMDEPBACKSLASH])dnl
 
 # Generate code to set up dependency tracking.              -*- Autoconf -*-
 
-# Copyright (C) 1999, 2000, 2001, 2002, 2003, 2004, 2005
+# Copyright (C) 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2008
 # Free Software Foundation, Inc.
 #
 # This file is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
 # with or without modifications, as long as this notice is preserved.
 
-#serial 3
+#serial 4
 
 # _AM_OUTPUT_DEPENDENCY_COMMANDS
 # ------------------------------
 AC_DEFUN([_AM_OUTPUT_DEPENDENCY_COMMANDS],
-[for mf in $CONFIG_FILES; do
+[# Autoconf 2.62 quotes --file arguments for eval, but not when files
+# are listed without --file.  Let's play safe and only enable the eval
+# if we detect the quoting.
+case $CONFIG_FILES in
+*\'*) eval set x "$CONFIG_FILES" ;;
+*)   set x $CONFIG_FILES ;;
+esac
+shift
+for mf
+do
   # Strip MF so we end up with the name of the file.
   mf=`echo "$mf" | sed -e 's/:.*$//'`
   # Check whether this is an Automake generated Makefile or not.
@@ -844,13 +853,13 @@ esac
 
 # Helper functions for option handling.                     -*- Autoconf -*-
 
-# Copyright (C) 2001, 2002, 2003, 2005  Free Software Foundation, Inc.
+# Copyright (C) 2001, 2002, 2003, 2005, 2008  Free Software Foundation, Inc.
 #
 # This file is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
 # with or without modifications, as long as this notice is preserved.
 
-# serial 3
+# serial 4
 
 # _AM_MANGLE_OPTION(NAME)
 # -----------------------
@@ -867,7 +876,7 @@ AC_DEFUN([_AM_SET_OPTION],
 # ----------------------------------
 # OPTIONS is a space-separated list of Automake options.
 AC_DEFUN([_AM_SET_OPTIONS],
-[AC_FOREACH([_AM_Option], [$1], [_AM_SET_OPTION(_AM_Option)])])
+[m4_foreach_w([_AM_Option], [$1], [_AM_SET_OPTION(_AM_Option)])])
 
 # _AM_IF_OPTION(OPTION, IF-SET, [IF-NOT-SET])
 # -------------------------------------------
@@ -1100,8 +1109,9 @@ dnl of the copyright holder.
 # your configure.ac with the minimum required version, such as:
 # XORG_MACROS_VERSION(1.1)
 #
-# To force at least a version with this macro defined, also add:
-# m4_ifndef([XORG_MACROS_VERSION], [AC_FATAL([must install xorg-macros 1.1 or later before running autoconf/autogen])])
+# To ensure that this macro is defined, also add:
+# m4_ifndef([XORG_MACROS_VERSION],
+#     [m4_fatal([must install xorg-macros 1.1 or later before running autoconf/autogen])])
 #
 #
 # See the "minimum version" comment for each macro you use to see what 
@@ -1111,14 +1121,14 @@ AC_DEFUN([XORG_MACROS_VERSION],[
 	XORG_MACROS_needed_major=`echo $XORG_MACROS_needed_version | sed 's/\..*$//'`
 	XORG_MACROS_needed_minor=`echo $XORG_MACROS_needed_version | sed -e 's/^[0-9]*\.//' -e 's/\..*$//'`]
 	AC_MSG_CHECKING([if xorg-macros used to generate configure is at least ${XORG_MACROS_needed_major}.${XORG_MACROS_needed_minor}])
-	[XORG_MACROS_version=1.2.0
+	[XORG_MACROS_version=1.2.1
 	XORG_MACROS_major=`echo $XORG_MACROS_version | sed 's/\..*$//'`
 	XORG_MACROS_minor=`echo $XORG_MACROS_version | sed -e 's/^[0-9]*\.//' -e 's/\..*$//'`]
 	if test $XORG_MACROS_major -ne $XORG_MACROS_needed_major ; then
-		AC_MSG_ERROR([configure built with incompatible version of xorg-macros.m4 - requires version ${XORG_MACROS_major}.x])
+		AC_MSG_ERROR([configure built with incompatible version of xorg-macros.m4 - requires version ${XORG_MACROS_needed_major}.x])
 	fi
 	if test $XORG_MACROS_minor -lt $XORG_MACROS_needed_minor ; then
-		AC_MSG_ERROR([configure built with too old of a version of xorg-macros.m4 - requires version ${XORG_MACROS_major}.${XORG_MACROS_minor}.0 or newer])
+		AC_MSG_ERROR([configure built with too old of a version of xorg-macros.m4 - requires version ${XORG_MACROS_needed_major}.${XORG_MACROS_needed_minor}.0 or newer])
 	fi
 	AC_MSG_RESULT([yes, $XORG_MACROS_version])
 ]) # XORG_MACROS_VERSION
@@ -1511,8 +1521,8 @@ if  test "x$GCC" = xyes ; then
 -Wmissing-declarations -Wnested-externs -fno-strict-aliasing \
 -Wbad-function-cast"
     case `gcc -dumpversion` in
-    4.*)
-	CWARNFLAGS+=" -Wold-style-definition -Wdeclaration-after-statement"
+    3.4.* | 4.*)
+	CWARNFLAGS="$CWARNFLAGS -Wold-style-definition -Wdeclaration-after-statement"
 	;;
     esac
 else
@@ -1592,10 +1602,13 @@ AC_DEFUN([XORG_RELEASE_VERSION],[
 # Defines the variable CHANGELOG_CMD as the command to generate
 # ChangeLog from git.
 #
+# Arrange that distcleancheck ignores ChangeLog left over by distclean.
+#
 AC_DEFUN([XORG_CHANGELOG], [
 CHANGELOG_CMD="(GIT_DIR=\$(top_srcdir)/.git git log > .changelog.tmp && \
 mv .changelog.tmp ChangeLog) || (rm -f .changelog.tmp; touch ChangeLog; \
 echo 'git directory not found: installing possibly empty changelog.' >&2)"
 AC_SUBST([CHANGELOG_CMD])
+AC_SUBST([distcleancheck_listfiles], ['find . -type f ! -name ChangeLog -print'])
 ]) # XORG_CHANGELOG
 
