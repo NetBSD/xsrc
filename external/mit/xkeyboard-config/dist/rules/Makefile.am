@@ -20,46 +20,80 @@ install-data-hook:
 
 endif
 
-base_parts_no_compat = base.hdr.part  base.lists.part \
-HDR base.m_k.part   HDR base.l1_k.part  HDR base.l_k.part  \
+base_parts_no_compat = base.hdr.part base.lists.part \
+HDR base.m_k.part HDR base.l1_k.part HDR base.l_k.part  \
 HDR base.ml_g.part \
-HDR base.m_g.part   HDR base.mlv_s.part HDR base.ml_s.part \
+HDR base.m_g.part HDR base.mlv_s.part HDR base.ml_s.part \
 HDR base.ml1_s.part HDR \
-HDR base.l2_s.part  HDR base.l3_s.part  HDR base.l4_s.part HDR HDR HDR \
-HDR base.m_s.part   HDR base.ml_c.part  HDR base.ml1_c.part \
+HDR base.l2_s.part HDR base.l3_s.part HDR base.l4_s.part HDR HDR HDR \
+HDR base.m_s.part HDR base.ml_c.part HDR base.ml1_c.part \
 HDR base.m_t.part \
 HDR base.l1o_s.part HDR base.l2o_s.part HDR base.l3o_s.part HDR base.l4o_s.part \
-HDR base.o_s.part   HDR base.o_c.part   HDR base.o_t.part
+HDR base.o_s.part HDR base.o_c.part HDR base.o_t.part
+
+evdev_parts_no_compat = base.hdr.part base.lists.part \
+HDR evdev.m_k.part HDR base.l1_k.part HDR base.l_k.part  \
+HDR base.ml_g.part \
+HDR base.m_g.part HDR base.mlv_s.part HDR base.ml_s.part \
+HDR base.ml1_s.part HDR \
+HDR base.l2_s.part HDR base.l3_s.part HDR base.l4_s.part HDR HDR HDR \
+HDR evdev.m_s.part HDR base.ml_c.part HDR base.ml1_c.part \
+HDR base.m_t.part \
+HDR base.l1o_s.part HDR base.l2o_s.part HDR base.l3o_s.part HDR base.l4o_s.part \
+HDR base.o_s.part HDR base.o_c.part HDR base.o_t.part
 
 if USE_COMPAT_RULES
-base_parts = base.hdr.part  base.lists.part \
+base_parts = base.hdr.part base.lists.part \
 compat/base.lists.part \
-HDR base.m_k.part   HDR base.l1_k.part     \
-HDR base.l_k.part   HDR base.o_k.part      \
+HDR base.m_k.part HDR base.l1_k.part     \
+HDR base.l_k.part HDR base.o_k.part      \
 HDR base.ml_g.part \
 HDR base.m_g.part \
 HDR compat/base.mlv_s.part base.mlv_s.part \
-HDR compat/base.ml_s.part  base.ml_s.part  \
+HDR compat/base.ml_s.part base.ml_s.part  \
 HDR compat/base.ml1_s.part base.ml1_s.part \
 HDR compat/base.ml1v1_s.part \
-HDR compat/base.l2_s.part  base.l2_s.part  \
-HDR compat/base.l3_s.part  base.l3_s.part  \
-HDR compat/base.l4_s.part  base.l4_s.part  \
+HDR compat/base.l2_s.part base.l2_s.part  \
+HDR compat/base.l3_s.part base.l3_s.part  \
+HDR compat/base.l4_s.part base.l4_s.part  \
 HDR compat/base.l2v2_s.part \
 HDR compat/base.l3v3_s.part \
 HDR compat/base.l4v4_s.part \
-HDR base.m_s.part  HDR base.ml_c.part        HDR base.ml1_c.part \
+HDR base.m_s.part  HDR base.ml_c.part HDR base.ml1_c.part \
+HDR base.m_t.part \
+HDR base.lo_s.part HDR base.l1o_s.part HDR base.l2o_s.part HDR base.l3o_s.part HDR base.l4o_s.part \
+HDR compat/base.o_s.part base.o_s.part \
+HDR base.o_c.part HDR base.o_t.part
+
+evdev_parts = base.hdr.part base.lists.part \
+compat/base.lists.part \
+HDR evdev.m_k.part HDR base.l1_k.part     \
+HDR base.l_k.part HDR base.o_k.part      \
+HDR base.ml_g.part \
+HDR base.m_g.part \
+HDR compat/base.mlv_s.part base.mlv_s.part \
+HDR compat/base.ml_s.part base.ml_s.part  \
+HDR compat/base.ml1_s.part base.ml1_s.part \
+HDR compat/base.ml1v1_s.part \
+HDR compat/base.l2_s.part base.l2_s.part  \
+HDR compat/base.l3_s.part base.l3_s.part  \
+HDR compat/base.l4_s.part base.l4_s.part  \
+HDR compat/base.l2v2_s.part \
+HDR compat/base.l3v3_s.part \
+HDR compat/base.l4v4_s.part \
+HDR evdev.m_s.part  HDR base.ml_c.part HDR base.ml1_c.part \
 HDR base.m_t.part \
 HDR base.lo_s.part HDR base.l1o_s.part HDR base.l2o_s.part HDR base.l3o_s.part HDR base.l4o_s.part \
 HDR compat/base.o_s.part base.o_s.part \
 HDR base.o_c.part HDR base.o_t.part
 else
 base_parts = $(base_parts_no_compat)
+evdev_parts = $(base_parts_no_compat)
 endif
 
-rules_files = base xfree98
+rules_files = base evdev xfree98
 
-lst_files = base.lst
+lst_files = base.lst evdev.lst
 
 %.lst: %.xml
 	perl $(srcdir)/xml2lst.pl < $< > $@
@@ -67,17 +101,26 @@ lst_files = base.lst
 base: $(base_parts_no_compat)
 	HDR="$(srcdir)/HDR" $(srcdir)/merge.sh $@ $(base_parts)
 
+evdev: $(evdev_parts_no_compat)
+	HDR="$(srcdir)/HDR" $(srcdir)/merge.sh $@ $(evdev_parts)
+
 all_rules_files = $(rules_files) $(lst_files) \
 xkb.dtd README
 
 rules_DATA = $(all_rules_files)
 
-xml_in_files = base.xml.in
+xml_in_files = base.xml.in evdev.xml.in
 xml_DATA = $(xml_in_files:.xml.in=.xml) 
 
-EXTRA_DIST= $(all_rules_files) $(xml_in_files) $(base_parts) xml2lst.pl merge.sh
+evdev.xml.in: base.xml.in
+	cp $< $@
 
-DISTCLEANFILES=base.xml base.lst
+EXTRA_DIST= $(all_rules_files) $(xml_in_files) \
+            $(base_parts_no_compat) \
+            $(evdev_parts_no_compat) \
+            xml2lst.pl merge.sh
+
+DISTCLEANFILES=base.xml base.lst evdev.xml evdev.lst
 
 rulesdir = $(xkb_base)/rules
 xmldir = $(rulesdir)

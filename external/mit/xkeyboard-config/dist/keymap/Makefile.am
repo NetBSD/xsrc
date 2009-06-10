@@ -7,4 +7,6 @@ amiga ataritt macintosh \
 sony xfree86 xfree98 \
 README
 
+dir_data = $(dist_keymap_DATA)
+
 include $(top_srcdir)/xkbrules.am

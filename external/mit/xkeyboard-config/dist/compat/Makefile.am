@@ -9,5 +9,7 @@ misc mousekeys norepeat \
 olpc pc pc98 xfree86 \
 xtest README
 
+dir_data = $(dist_compat_DATA)
+
 include $(top_srcdir)/xkbrules.am
 

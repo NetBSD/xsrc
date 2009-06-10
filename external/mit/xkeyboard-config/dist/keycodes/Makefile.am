@@ -17,4 +17,6 @@ xfree86 \
 xfree98 \
 README
 
+dir_data = $(dist_keycodes_DATA)
+
 include $(top_srcdir)/xkbrules.am

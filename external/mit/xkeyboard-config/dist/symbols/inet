@@ -1,4 +1,4 @@
-// $XKeyboardConfig: xkeyboard-config/symbols/inet,v 1.82 2008-05-27 21:46:41 svu Exp $
+// $XKeyboardConfig$
 
 // $XFree86: xc/programs/xkbcomp/symbols/inet,v 1.38 2004/01/17 14:59:37 pascal Exp $
 
@@ -126,7 +126,7 @@ xkb_symbols "evdev" {
     key <I208>   {      [ XF86AudioPlay         ]       };
     key <I209>   {      [ XF86AudioPause        ]       };
     key <I210>   {      [ XF86Launch3           ]       };
-    key <AB11>   {      [ XF86Launch4           ]       };
+    key <I211>   {      [ XF86Launch4           ]       };
     key <I213>   {      [ XF86Standby           ]       };
     key <I214>   {      [ XF86Close             ]       };
     key <I215>   {      [ XF86AudioPlay         ]       };
@@ -911,7 +911,7 @@ xkb_symbols "ennyah_dkb1008" {
 partial alphanumeric_keys
 xkb_symbols "fscaa1667g" {
    include "inet(media_common)"
-   key <I32>   {       [ XF86Info              ]       };
+   key <I32>   {       [ XF86WWW               ]       };
    key <I6C>   {       [ XF86Mail              ]       };
 };
 
@@ -1266,6 +1266,12 @@ xkb_symbols "thinkpad60" {
 };
 
 
+// IBM Space Saver
+partial alphanumeric_keys
+xkb_symbols "ibm_spacesaver" {
+    key <NMLK>  { [ Num_Lock, Num_Lock ] };
+};
+
 // Logitech
 
 // Logitech common definitions
@@ -1534,6 +1540,33 @@ xkb_symbols "mx2750" {
 
 
 // Microsoft
+
+// Microsoft Natural Wireless Ergonomic Keyboard 7000
+partial alphanumeric_keys
+xkb_symbols "microsoft7000" {
+    include "inet(media_nav_common)"
+    key <I07>	{	[ Undo			]	};
+    key <I09>	{	[ XF86New		]	};
+    key <I0A>	{	[ Redo			]	};
+    key <I0E>	{	[ XF86MailForward	]	};
+    key <I21>	{	[ XF86Calculator	]	};
+    key <I2F>	{	[ XF86Close		]	};
+    key <I32>	{	[ XF86HomePage		]	};
+    key <I39>	{	[ Print			]	};
+    key <I55>	{	[ XF86Save		]	};
+    key <I5A>	{	[ XF86Send		]	};
+    key <I62>	{	[ Help			]	};
+    key <I64>	{	[ XF86Reply		]	};
+    key <I65>	{	[ XF86Search		]	};
+    key <I66>	{	[ XF86Favorites		]	};
+    key <I6C>	{	[ XF86Mail		]	};
+    key <I76>	{	[ parenleft		]	};
+    key <I7B>	{	[ parenright		]	};
+    key <K59>	{	[ KP_Equal		]	};
+    key <K64>	{	[ XF86Open		]	};
+//  Missing because of lack of support from kbd driver: Spell, Launch,
+//  and Zoom in and out buttons.
+};
 
 // Microsoft Internet Keyboard
 partial alphanumeric_keys
@@ -1910,6 +1943,14 @@ xkb_symbols "sven" {
     key <I68>	{	[ XF86Back		]	};
 };
 
+// SVEN Slim 303
+partial alphanumeric_keys
+xkb_symbols "sven303" {
+    key <I11>	{	[ XF86PowerOff		]	};
+    key <I12>	{	[ XF86Sleep		]	};
+    key <I16>	{	[ XF86WakeUp		]	};
+};
+
 
 // Symplon
 
@@ -2164,7 +2205,7 @@ xkb_symbols "logitech_g15" {
     key  <I76> {         [      XF86iTouch ] };
     key  <I77> {         [     XF86Launch3 ] };
     key  <I79> {         [    XF86ToDoList ] };
-    key  <I7B> {         [  XF86Calculater ] };
+    key  <I7B> {         [  XF86Calculator ] };
  
     key  <K5A> {         [  XF86VendorHome ] };
     key  <K5D> {         [        XF86Away ] };

@@ -1,4 +1,4 @@
-// $XKeyboardConfig: xkeyboard-config/symbols/shift,v 1.1 2007-09-26 23:43:29 svu Exp $
+// $XKeyboardConfig$
 
 partial modifier_keys 
 xkb_symbols "breaks_caps" {

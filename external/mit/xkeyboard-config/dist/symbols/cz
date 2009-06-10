@@ -1,4 +1,4 @@
-// $XKeyboardConfig: xkeyboard-config/symbols/cz,v 1.10 2008-02-16 00:53:45 svu Exp $
+// $XKeyboardConfig$
 // $XFree86: xc/programs/xkbcomp/symbols/cz,v 1.2 2002/11/22 04:02:22 dawes 
 // Exp $
 
@@ -102,4 +102,43 @@ xkb_symbols "qwerty_bksl" {
     name[Group1]= "Czechia - qwerty, extended Backslash";
 
     key <BKSL>	{ [ backslash,        bar,        slash,     NoSymbol ]	};
+};
+
+partial alphanumeric_keys alternate_group
+xkb_symbols "ucw" {
+
+    // This layout is usually used as the second group, it contains
+    // accented characters only, no 'latin' set.
+    // 2008 by Milan Vancura <mvancura@suse.cz>
+
+    name[Group1]= "Czechia - UCW layout (accented letters only)";
+
+    key <AB01> { [zcaron,      Zcaron      ] };
+    key <AB02> { [ssharp                   ] };
+    key <AB03> { [ccaron,      Ccaron      ] };
+    key <AB04> { [ccedilla,    Ccedilla    ] };
+    key <AB05> { [ntilde,      Ntilde      ] };
+    key <AB06> { [ncaron,      Ncaron      ] };
+    key <AB07> { [lacute,      Lacute      ] };
+
+    key <AC01> { [aacute,      Aacute      ] };
+    key <AC02> { [scaron,      Scaron      ] };
+    key <AC03> { [dcaron,      Dcaron      ] };
+    key <AC04> { [ediaeresis,  Ediaeresis  ] };
+    key <AC05> { [racute,      Racute      ] };
+    key <AC06> { [uacute,      Uacute      ] };
+    key <AC07> { [udiaeresis,  Udiaeresis  ] };
+    key <AC08> { [ocircumflex, Ocircumflex ] };
+    key <AC09> { [lcaron,      Lcaron      ] };
+
+    key <AD01> { [adiaeresis,  Adiaeresis  ] };
+    key <AD02> { [ecaron,      Ecaron      ] };
+    key <AD03> { [eacute,      Eacute      ] };
+    key <AD04> { [rcaron,      Rcaron      ] };
+    key <AD05> { [tcaron,      Tcaron      ] };
+    key <AD06> { [yacute,      Yacute      ] };
+    key <AD07> { [uring,       Uring       ] };
+    key <AD08> { [iacute,      Iacute      ] };
+    key <AD09> { [oacute,      Oacute      ] };
+    key <AD10> { [odiaeresis,  Odiaeresis  ] };
 };

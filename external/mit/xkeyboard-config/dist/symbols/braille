@@ -1,4 +1,4 @@
-// $XKeyboardConfig: xkeyboard-config/symbols/braille,v 1.2 2007/06/26 08:11:06 svu Exp $
+// $XKeyboardConfig$
 
 // 10-dot patterns on the home row + v and n
 partial default alphanumeric_keys
