@@ -1,4 +1,4 @@
-// $XKeyboardConfig: xkeyboard-config/symbols/group,v 1.14 2008-04-07 21:28:16 svu Exp $
+// $XKeyboardConfig$
 // $Xorg: group,v 1.3 2000/08/17 19:54:43 cpqbld Exp $
 // using the group(switch) map, the right alt key temporarily chooses 
 // the second keyboard group (until it is released).
@@ -30,14 +30,8 @@ xkb_symbols "lswitch" {
 // pc104 or pc105.
 partial modifier_keys
 xkb_symbols "win_switch" {
-  key <LWIN> {
-    symbols[Group1] = [ Mode_switch, Multi_key ],
-    virtualMods= AltGr
-    };
-  key <RWIN> {
-    symbols[Group1] = [ Mode_switch, Multi_key ],
-    virtualMods= AltGr
-    };
+    include "group(lwin_switch)"
+    include "group(rwin_switch)"
 };
 
 // using the group(lwin_switch) map, the left Windows' logo key
@@ -124,14 +118,6 @@ xkb_symbols "lctrl_lshift_toggle" {
 	symbols[Group1]= [ Shift_L,	ISO_Next_Group ]
     };
     key <LCTL>	{	[	Control_L,	ISO_Next_Group ]	};
-};
-
-// using the group(caps_toggle) map, pressing:
-//     Caps Lock toggles groups
-//     Shift+Caps Lock toggles caps lock
-partial modifier_keys
-xkb_symbols "caps_toggle" {
-    include "capslock(grouplock)"
 };
 
 // using the group(shift_caps_toggle) map, pressing:

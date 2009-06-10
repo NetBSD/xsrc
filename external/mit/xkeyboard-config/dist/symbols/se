@@ -1,7 +1,7 @@
 
 // based on a keyboard map from an 'xkb/symbols/se' file
 //
-// $XKeyboardConfig: xkeyboard-config/symbols/se,v 1.17 2007/07/15 22:12:12 svu Exp $
+// $XKeyboardConfig$
 // $XFree86: xc/programs/xkbcomp/symbols/se,v 1.5 2003/01/26 02:01:48 dawes Exp $
 
 partial default alphanumeric_keys

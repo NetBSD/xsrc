@@ -416,8 +416,8 @@ xkb_keycodes "abnt2" {
     <KPPT> = 134;
 };
 
-// IBM ThinkPad 60 series
-xkb_keycodes "thinkpad60" {
+// IBM ThinkPad Z60m/Z60t/Z61m/Z61t
+xkb_keycodes "thinkpadz60" {
     include "xfree86(xfree86)"
     <MENU> = 227;
 };

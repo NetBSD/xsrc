@@ -100,22 +100,10 @@
 ! $dvoraklayouts = br ca de ee es fr gb no pl se us
 
 ! model		=	keycodes
-  amiga		=	amiga(de)
-  ataritt	=	ataritt(de)
-  sun4		=	sun(type4_euro)
-  sun5		=	sun(type5_euro)
-  sun6		=	sun(type6_usb)
-  pc98		=	xfree98(pc98)
-  abnt2		=	xfree86(abnt2)
-  jp106		=	xfree86(jp106)
-  evdev		=	evdev
-  olpc		=	evdev
-  macintosh_hhk	=	macintosh(hhk)
-  macintosh_old	=	macintosh(old)
- $macbooks	=	macintosh+macintosh(goodmap)
- $macs   	=	macintosh
-  thinkpadz60	=	xfree86(thinkpadz60)
-  *		=	xfree86
+  pc98		=	evdev(pc98)
+  abnt2		=	evdev(abnt2)
+  jp106		=	evdev(jp106)
+  *		=	evdev
 
 ! layout[1]	=	keycodes
   $azerty       =       +aliases(azerty)
@@ -823,35 +811,7 @@
   yu		unicodeyz	=	+srp(latinunicodeyz):4
 
 ! model		=	symbols
-  benqx730      =       +inet(benqx)
-  benqx800      =       +inet(benqx)
-  dellsk8125    =       +inet(dell)
-  dellsk8135    =       +inet(dell)
-  hpnx9020      =       +inet(hp5185)
-  logicd        =       +inet(logitech_base)
-  logicd_it     =       +inet(logitech_base)
-  logicd_nav    =       +inet(logitech_base)
-  logicd_opt    =       +inet(logitech_base)
-  logiultrax    =       +inet(logitech_base)
-  logiclx300    =       +inet(logiex110)
-  logii350      =       +inet(logiex110)
-  logimel       =       +inet(logiex110)
-  vsonku306     =       +inet(microsoftprooem)
-  $inetkbds     =       +inet(%m)
-  acer_tm_800   =       +inet(acer_laptop)
-  benqx730      =       +inet(benqx)
-  benqx800      =       +inet(benqx)
-  dell8125      =       +inet(dellusbmm)
-  dell8135      =       +inet(dellusbmm)
-  ltcd          =       +inet(logicda)
-  logicdit      =       +inet(logicd)
-  logicdo       =       +inet(logicd)
-  logicdp       =       +inet(logicd)
-  logicdpa      =       +inet(logicda)
-  logiciink     =       +inet(logicink)
-  $maclaptop    =       +inet(apple)+level3(enter_switch)
-  $macs	        =       +inet(apple)
-  thinkpadz60   =       +inet(thinkpad60)
+  *     =       +inet(evdev)
 
 ! model		layout		=	compat
   pc98		nec_vndr/jp	=	pc98(basic)

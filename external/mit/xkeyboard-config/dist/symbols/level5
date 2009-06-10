@@ -1,4 +1,4 @@
-// $XKeyboardConfig: xkeyboard-config/symbols/level5,v 1.3 2006/06/13 21:16:52 svu Exp $
+// $XKeyboardConfig$
 
 // these variants assign various XKB keycodes to ISO_Level5_Shift so that
 // the third shift level can be reached
@@ -12,7 +12,7 @@ partial modifier_keys
 xkb_symbols "rctrl_switch" {
   key <RCTL> {
     type[Group1]="ONE_LEVEL",
-    symbols[Group1] = [ 0xfe11 ]
+    symbols[Group1] = [ ISO_Level5_Shift ]
     };
-  modifier_map Mod3   { 0xfe11 };
+  modifier_map Mod3   { ISO_Level5_Shift };
 };

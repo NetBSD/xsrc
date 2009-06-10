@@ -1,3 +1,166 @@
+2008-09-30  Sergey Udaltsov
+
+	* NEWS, configure.in: preparing 1.4
+
+2008-09-26  Sergey Udaltsov
+
+	* symbols/is: fixed AC11 mapping,
+	http://bugs.freedesktop.org/show_bug.cgi?id=17786
+
+2008-09-24  Sergey Udaltsov
+
+	* rules/base.xml.in: all descriptions are prefixed with underscore,
+	to make them translatable,
+	http://bugs.freedesktop.org/show_bug.cgi?id=17587
+
+2008-09-19  Sergey Udaltsov
+
+	* keycodes/evdev, symbols/inet: fixed evdev for abnt2 and jp106
+	http://bugs.freedesktop.org/show_bug.cgi?id=17656
+
+2008-09-18  Sergey Udaltsov
+
+	* rules/base.o_s.part, rules/base.xml.in: more mismatches fixed,
+	http://bugs.freedesktop.org/show_bug.cgi?id=17622
+
+2008-09-17  Sergey Udaltsov
+
+	* rules/base.o_s.part, rules/base.xml.in: fixed mismatch,
+	http://bugs.freedesktop.org/show_bug.cgi?id=17622
+
+2008-09-15  Sergey Udaltsov
+
+	* rules/base.o_s.part, rules/base.xml.in, symbols/capslock,
+	symbols/cz: added cz(ucw) and couple of options,
+	http://bugs.freedesktop.org/show_bug.cgi?id=17587
+	* rules/base.xml.in, symbols/gr: updated greek variants,
+	http://bugs.freedesktop.org/show_bug.cgi?id=17459
+
+2008-09-12  Sergey Udaltsov
+
+	* geometry/pc: added another pc geometry, with L-shaped Enter,
+	http://bugs.freedesktop.org/show_bug.cgi?id=17513
+
+2008-09-10  Sergey Udaltsov
+
+	* rules/base.lists.part, rules/base.xml.in, symbols/inet: added model
+	sven303, http://bugs.freedesktop.org/show_bug.cgi?id=17518
+
+2008-09-02  Sergey Udaltsov
+
+	* symbols/inet: fixed fscaa1667g,
+	http://bugs.freedesktop.org/show_bug.cgi?id=17389
+	* symbols/fr: fixed invalid keysym,
+	http://bugs.freedesktop.org/show_bug.cgi?id=17388
+	* rules/base.xml.in: some fixes for minor issues
+	* rules/base.xml.in, symbols/gb: added gb(dvorakukp),
+	http://bugs.freedesktop.org/show_bug.cgi?id=17370
+
+2008-08-16  Sergey Udaltsov
+
+	* rules/evdev.m_k.part, rules/evdev.m_s.part, keycodes/evdev,
+	po/POTFILES.in, po/xkeyboard-config.pot, rules/Makefile.am: implement
+	special ruleset for evdev driver
+	* added missing chars to Gurmukhi,
+	http://bugs.freedesktop.org/show_bug.cgi?id=17163
+
+2008-08-06  Sergey Udaltsov
+
+	* compat/Makefile.am, geometry/Makefile.am, keycodes/Makefile.am,
+	keymap/Makefile.am, rules/compat/Makefile.am, semantics/Makefile.am,
+	symbols/Makefile.am, types/Makefile.am, xkbrules.am: improving the
+	build, http://bugs.freedesktop.org/show_bug.cgi?id=17008
+
+2008-08-03  Sergey Udaltsov
+
+	* rules/compat/variantRename.lst: fixing compat rules for Romania,
+	http://bugs.freedesktop.org/show_bug.cgi?id=16872
+	* symbols/mt: fixed Maltese layout,
+	http://bugs.freedesktop.org/show_bug.cgi?id=16966
+	* symbols/fr: fixed fr(dvorak), making it legal
+	http://bugs.freedesktop.org/show_bug.cgi?id=15407
+
+2008-07-28  Sergey Udaltsov
+
+	* rules/base.lists.part, rules/base.xml.in, symbols/inet: added
+	ibm_spacesaver model,
+	http://bugs.freedesktop.org/show_bug.cgi?id=16767
+
+2008-07-22  Sergey Udaltsov
+
+	* rules/base.xml.in: fixed typo,
+	http://bugs.freedesktop.org/show_bug.cgi?id=16806
+
+2008-07-20  Sergey Udaltsov
+
+	* symbols/inet: fixed typo,
+	http://bugs.freedesktop.org/show_bug.cgi?id=16752
+
+2008-07-08  Sergey Udaltsov
+
+	* symbols/us: fixing us(mac),
+	https://bugs.freedesktop.org/show_bug.cgi?id=16641
+
+2008-07-01  Sergey Udaltsov
+
+	* symbols/is, rules/base.xml.in: added is(dvorak),
+	https://bugs.freedesktop.org/show_bug.cgi?id=16557
+
+2008-06-27  Sergey Udaltsov
+
+	* symbols/level5: using normal level5 keysyms
+	* rules/compat/ln_s.sh, rules/compat/lnv_s.sh, rules/compat/ml1_s.sh,
+	rules/compat/ml1v1_s.sh, rules/compat/ml1v_s.sh, rules/compat/ml_s.sh,
+	rules/compat/mlv_s.sh: fixed build process, thanks to Oswald
+	Buddenhagen
+
+2008-06-22  Sergey Udaltsov
+
+	* symbols/tj: sorted and fixed tj layout,
+	http://bugs.freedesktop.org/show_bug.cgi?id=16448
+
+2008-06-12  Sergey Udaltsov
+
+	* rules/base.o_s.part, rules/base.xml.in, symbols/keypad: added
+	keypad:phone_hex, http://bugs.freedesktop.org/show_bug.cgi?id=16298
+
+2008-06-09  Sergey Udaltsov
+
+	* rules/base.xml.in, symbols/us: added us(chr),
+	http://bugs.freedesktop.org/show_bug.cgi?id=16283
+
+2008-06-06  Sergey Udaltsov
+
+	* geometry/pc: removed unneeded space,
+	http://bugs.freedesktop.org/show_bug.cgi?id=16258
+
+2008-06-04  Sergey Udaltsov
+
+	* rules/base.xml.in, symbols/ru: added ru(sah),
+	http://bugs.freedesktop.org/show_bug.cgi?id=15872
+
+2008-06-01  Sergey Udaltsov
+
+	* rules/base.xml.in, rules/base.lists.part, symbols/inet: added
+	microsoft7000, http://bugs.freedesktop.org/show_bug.cgi?id=16087
+	* keycodes/xfree86, rules/base.m_g.part, rules/base.m_k.part,
+	rules/base.m_s.part, rules/base.xml.in: added model thinkpadz60,
+	http://bugs.freedesktop.org/show_bug.cgi?id=15999
+
+2008-05-31  Sergey Udaltsov
+
+	* symbols/gb, symbols/hu: fixed utf8
+
+2008-05-31  Sergey Udaltsov
+
+	* symbols/ru: fixed some includes, from common to winkeys (broken in
+	previous release)
+
+2008-05-30  Sergey Udaltsov
+
+	* rules/base.xml.in, symbols/ca: added ca(kut),
+	http://bugs.freedesktop.org/show_bug.cgi?id=16048
+
 2008-05-27  Sergey Udaltsov
 
 	* symbols/inet: WWW is mapped to I02, because of some changes in
@@ -2112,7 +2275,7 @@
 
 2004-09-13 22:39  svu
 
-	* symbols/tj: new local cvs keyword seems to be ok - no more $Id: ChangeLog,v 1.1.1.1 2008/08/30 09:12:09 mrg Exp $
+	* symbols/tj: new local cvs keyword seems to be ok - no more $Id: ChangeLog,v 1.1.1.2 2009/06/10 09:33:36 mrg Exp $
 
 2004-09-13 22:38  svu
 

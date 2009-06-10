@@ -2,7 +2,7 @@
 // based on keyboard map:
 // Author: Damjan Georgievski <penguinista AT mail.net.mk>
 // Revision: 1.5
-// $XKeyboardConfig: xkeyboard-config/symbols/mk,v 1.13 2007/07/15 22:12:12 svu Exp $
+// $XKeyboardConfig$
 
 partial default alphanumeric_keys
 xkb_symbols "basic" { 

@@ -147,14 +147,14 @@ default xkb_keycodes "evdev" {
 
 	<HZTG> =  93;	// Hankaku/Zenkakau toggle
 	<HKTG> = 101;	// Hiragana/Katakana toggle
-	<AB11> = 211;	// backslash/underscore
+	<AB11> = 97;	// backslash/underscore
 	<HENK> = 100;	// Henkan
 	<MUHE> = 102;	// Muhenkan
 	<AE13> = 132;	// Yen
 	<KATA> =  98;	// Katakana
 	<HIRA> =  99;	// Hiragana
 	<JPCM> = 103;	// KPJPComma
-	<RO>   =  97;	// Romaji
+	//<RO>   =  97;	// Romaji
 
 	// Keys that are generated on Korean keyboards
 
@@ -235,7 +235,7 @@ default xkb_keycodes "evdev" {
 	<I208> = 208;	// #define KEY_PLAYCD              200
 	<I209> = 209;	// #define KEY_PAUSECD             201
 	<I210> = 210;	// #define KEY_PROG3               202
-	//<I211> = 211;	// #define KEY_PROG4               203 conflicts with AB11
+	<I211> = 211;	// #define KEY_PROG4               203 conflicts with AB11
 	<I213> = 213;	// #define KEY_SUSPEND             205
 	<I214> = 214;	// #define KEY_CLOSE               206
 	<I215> = 215;	// #define KEY_PLAY                207
@@ -300,3 +300,21 @@ default xkb_keycodes "evdev" {
 
 	alias <ALGR> = <RALT>;
 };
+
+// For japanese 106 keyboard.
+xkb_keycodes "jp106" {
+    include "evdev(evdev)"
+    <HZTG> = 49;
+    <AC12> = 51;
+};
+
+// For brazilian ABNT2 keyboard.
+xkb_keycodes "abnt2" {
+    include "evdev(evdev)"
+};
+
+// PC98
+xkb_keycodes "pc98" {
+    include "evdev(evdev)"
+};
+
