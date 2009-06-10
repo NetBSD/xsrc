@@ -191,8 +191,12 @@ static Bool G80ReadPortMapping(int scrnIndex, G80Ptr pNv)
     }
 
     xf86DrvMsg(scrnIndex, X_PROBED, "Connector map:\n");
-    if(pNv->lvds.present)
-        xf86DrvMsg(scrnIndex, X_PROBED, "  [N/A] -> SOR%i (LVDS)\n", pNv->lvds.or);
+    if(pNv->lvds.present) {
+        if (pNv->lvds.i2cPort != -1)
+            xf86DrvMsg(scrnIndex, X_PROBED, "  Bus %i -> SOR%i (LVDS)\n", pNv->lvds.i2cPort, pNv->lvds.or);
+        else
+            xf86DrvMsg(scrnIndex, X_PROBED, "  [N/A] -> SOR%i (LVDS)\n", pNv->lvds.or);
+    }
     for(i = 0; i < G80_NUM_I2C_PORTS; i++) {
         if(pNv->i2cMap[i].dac != -1)
             xf86DrvMsg(scrnIndex, X_PROBED, "  Bus %i -> DAC%i\n", i, pNv->i2cMap[i].dac);
@@ -303,7 +307,11 @@ ProbeDDC(I2CBusPtr i2c)
             "Probing for EDID on I2C bus %i...\n", bus);
     pNv->reg[addr/4] = 7;
     /* Should probably use xf86OutputGetEDID here */
+#ifdef EDID_COMPLETE_RAWDATA
+    monInfo = xf86DoEEDID(pScrn->scrnIndex, i2c, TRUE);
+#else
     monInfo = xf86DoEDID_DDC2(pScrn->scrnIndex, i2c);
+#endif
     pNv->reg[addr/4] = 3;
 
     if(monInfo) {
@@ -447,7 +455,6 @@ G80CreateOutputs(ScrnInfoPtr pScrn)
         pPriv->scale = G80_SCALE_ASPECT;
 
         if(pNv->lvds.i2cPort != -1) {
-            I2CBusPtr i2c;
             char i2cName[16];
 
             snprintf(i2cName, sizeof(i2cName), "I2C%i (LVDS)", pNv->lvds.i2cPort);
