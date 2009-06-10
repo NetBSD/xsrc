@@ -21,7 +21,6 @@
  *
  * Author:  Alan Hourihane, alanh@fairlite.demon.co.uk
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/trident/trident_dac.c,v 1.79 2003/11/03 05:11:42 tsi Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -29,7 +28,6 @@
 
 #include "xf86.h"
 #include "xf86_OSproc.h"
-#include "xf86Version.h"
 #include "xf86PciInfo.h"
 #include "xf86Pci.h"
 
