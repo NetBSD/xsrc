@@ -62,7 +62,7 @@
 Bool ASTCursorInit(ScreenPtr pScreen);
 Bool bInitHWC(ScrnInfoPtr pScrn, ASTRecPtr pAST);
 static void ASTShowCursor(ScrnInfoPtr pScrn); 
-static void ASTHideCursor(ScrnInfoPtr pScrn);
+void ASTHideCursor(ScrnInfoPtr pScrn);
 static void ASTSetCursorPosition(ScrnInfoPtr pScrn, int x, int y);
 static void ASTSetCursorColors(ScrnInfoPtr pScrn, int bg, int fg);
 static void ASTLoadCursorImage(ScrnInfoPtr pScrn, UCHAR *src);
@@ -146,7 +146,7 @@ ASTShowCursor(ScrnInfoPtr pScrn)
     
 }
 
-static void
+void
 ASTHideCursor(ScrnInfoPtr pScrn)
 {
     ASTRecPtr  pAST = ASTPTR(pScrn);
@@ -200,9 +200,19 @@ static void
 ASTSetCursorColors(ScrnInfoPtr pScrn, int bg, int fg)
 {
     ASTRecPtr 	pAST = ASTPTR(pScrn);
-    
-    pAST->HWCInfo.fg = (fg & 0x0F) | (((fg>>8) & 0x0F) << 4) | (((fg>>16) & 0x0F) << 8);
-    pAST->HWCInfo.bg = (bg & 0x0F) | (((bg>>8) & 0x0F) << 4) | (((bg>>16) & 0x0F) << 8);    
+    ULONG fg1, bg1;
+        
+    fg1 = (fg & 0x0F) | (((fg>>8) & 0x0F) << 4) | (((fg>>16) & 0x0F) << 8);
+    bg1 = (bg & 0x0F) | (((bg>>8) & 0x0F) << 4) | (((bg>>16) & 0x0F) << 8);    
+
+    /* Fixed xorg bugzilla #20609, ycchen@031209 */
+    if ( (fg1 != pAST->HWCInfo.fg) || (bg1 != pAST->HWCInfo.bg) )    
+    {
+    	pAST->HWCInfo.fg = fg1;
+    	pAST->HWCInfo.bg = bg1;
+        ASTLoadCursorImage(pScrn, pAST->HWCInfo.cursorpattern);
+    }    
+
 }
 
 static void
@@ -223,6 +233,10 @@ ASTLoadCursorImage(ScrnInfoPtr pScrn, UCHAR *src)
     pAST->HWCInfo.offset_x = MAX_HWC_WIDTH - pAST->HWCInfo.width;
     pAST->HWCInfo.offset_y = MAX_HWC_HEIGHT - pAST->HWCInfo.height;
 
+    /* copy to hwc info */
+    for (i=0; i< MAX_HWC_WIDTH*MAX_HWC_HEIGHT/4; i+=4)
+       *(ULONG *) (pAST->HWCInfo.cursorpattern + i) = *(ULONG *) (src + i);
+ 
     /* copy cursor image to cache */
     pjSrcXor = src;
     pjSrcAnd = src + (MAX_HWC_WIDTH*MAX_HWC_HEIGHT/8);
@@ -235,13 +249,18 @@ ASTLoadCursorImage(ScrnInfoPtr pScrn, UCHAR *src)
        	    for (k=7; k>0; k-=2)
        	    {
                 jTempSrcAnd32 = *((UCHAR *) pjSrcAnd);
-                jTempSrcXor32 = *((UCHAR *) pjSrcXor);   
-                ulTempDstAnd32[0] = ((jTempSrcAnd32 >> k) & 0x01) ? 0x00008000L:0x00L;   
+                jTempSrcXor32 = *((UCHAR *) pjSrcXor);
+                ulTempDstAnd32[0] = ((jTempSrcAnd32 >> k) & 0x01) ? 0x00008000L:0x00L;
                 ulTempDstXor32[0] = ((jTempSrcXor32 >> k) & 0x01) ? 0x00004000L:0x00L;                   	                                  	                 
                 ulTempDstData32[0] = ((jTempSrcXor32 >> k) & 0x01) ? pAST->HWCInfo.fg:pAST->HWCInfo.bg;                   	                                  	                                                   
                 ulTempDstAnd32[1] = ((jTempSrcAnd32 >> (k-1)) & 0x01) ? 0x80000000L:0x00L;   
                 ulTempDstXor32[1] = ((jTempSrcXor32 >> (k-1)) & 0x01) ? 0x40000000L:0x00L;                   	                                  	  
                 ulTempDstData32[1] = ((jTempSrcXor32 >> (k-1)) & 0x01) ? (pAST->HWCInfo.fg << 16):(pAST->HWCInfo.bg << 16);
+                /* No inverse for X Window cursor, ycchen@111808 */
+                if (ulTempDstAnd32[0])
+                    ulTempDstXor32[0] = 0;
+                if (ulTempDstAnd32[1])
+                    ulTempDstXor32[1] = 0;                    
                 *((ULONG *) pjDstData) = ulTempDstAnd32[0] | ulTempDstXor32[0] | ulTempDstData32[0] | ulTempDstAnd32[1] | ulTempDstXor32[1] | ulTempDstData32[1];
                 ulCheckSum += *((ULONG *) pjDstData);                               
                 pjDstData += 4;
@@ -276,6 +295,9 @@ ASTLoadCursorImage(ScrnInfoPtr pScrn, UCHAR *src)
 static Bool 
 ASTUseHWCursor(ScreenPtr pScreen, CursorPtr pCurs)
 {
+    if ( (pCurs->bits->width > MAX_HWC_WIDTH) || (pCurs->bits->height > MAX_HWC_HEIGHT) )
+        return FALSE;
+        
     return TRUE;
 }
 
@@ -377,6 +399,9 @@ ASTLoadCursorARGB(ScrnInfoPtr pScrn, CursorPtr pCurs)
 static Bool 
 ASTUseHWCursorARGB(ScreenPtr pScreen, CursorPtr pCurs)
 {
+    if ( (pCurs->bits->width > MAX_HWC_WIDTH) || (pCurs->bits->height > MAX_HWC_HEIGHT) )
+        return FALSE;
+        
     return TRUE;
 }
 
