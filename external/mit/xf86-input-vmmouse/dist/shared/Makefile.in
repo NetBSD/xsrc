@@ -14,7 +14,7 @@
 
 @SET_MAKE@
 
-#  Copyright 2005 Adam Jackson.
+#  Copyright 2008 VMware, Inc.
 #
 #  Permission is hereby granted, free of charge, to any person obtaining a
 #  copy of this software and associated documentation files (the "Software"),
@@ -30,7 +30,7 @@
 #  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 #  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 #  FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.  IN NO EVENT SHALL
-#  ADAM JACKSON BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+#  VMWARE, INC. BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
 #  IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 #  CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
@@ -52,7 +52,7 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-subdir = src
+subdir = shared
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/configure.ac
@@ -61,22 +61,11 @@ am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = $(top_builddir)/config.h
 CONFIG_CLEAN_FILES =
-am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
-am__vpath_adj = case $$p in \
-    $(srcdir)/*) f=`echo "$$p" | sed "s|^$$srcdirstrip/||"`;; \
-    *) f=$$p;; \
-  esac;
-am__strip_dir = `echo $$p | sed -e 's|^.*/||'`;
-am__installdirs = "$(DESTDIR)$(@DRIVER_NAME@_drv_ladir)"
-@DRIVER_NAME@_drv_laLTLIBRARIES_INSTALL = $(INSTALL)
-LTLIBRARIES = $(@DRIVER_NAME@_drv_la_LTLIBRARIES)
-@DRIVER_NAME@_drv_la_DEPENDENCIES =  \
-	$(top_builddir)/shared/lib@DRIVER_NAME@.la
-am_@DRIVER_NAME@_drv_la_OBJECTS = @DRIVER_NAME@.lo
-@DRIVER_NAME@_drv_la_OBJECTS = $(am_@DRIVER_NAME@_drv_la_OBJECTS)
-@DRIVER_NAME@_drv_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
-	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
-	$(@DRIVER_NAME@_drv_la_LDFLAGS) $(LDFLAGS) -o $@
+LTLIBRARIES = $(noinst_LTLIBRARIES)
+lib@DRIVER_NAME@_la_LIBADD =
+am_lib@DRIVER_NAME@_la_OBJECTS = @DRIVER_NAME@_client.lo \
+	@DRIVER_NAME@_proto.lo
+lib@DRIVER_NAME@_la_OBJECTS = $(am_lib@DRIVER_NAME@_la_OBJECTS)
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
@@ -89,8 +78,8 @@ CCLD = $(CC)
 LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
-SOURCES = $(@DRIVER_NAME@_drv_la_SOURCES)
-DIST_SOURCES = $(@DRIVER_NAME@_drv_la_SOURCES)
+SOURCES = $(lib@DRIVER_NAME@_la_SOURCES)
+DIST_SOURCES = $(lib@DRIVER_NAME@_la_SOURCES)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -224,12 +213,12 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-@DRIVER_NAME@_drv_la_LTLIBRARIES = @DRIVER_NAME@_drv.la
-@DRIVER_NAME@_drv_la_LDFLAGS = -module -avoid-version
-@DRIVER_NAME@_drv_la_LIBADD = $(top_builddir)/shared/lib@DRIVER_NAME@.la
-@DRIVER_NAME@_drv_ladir = @inputdir@
-INCLUDES = -I$(top_srcdir)/shared
-@DRIVER_NAME@_drv_la_SOURCES = @DRIVER_NAME@.c xf86OSmouse.h
+INCLUDES = -I$(srcdir)
+noinst_LTLIBRARIES = lib@DRIVER_NAME@.la
+lib@DRIVER_NAME@_la_SOURCES = @DRIVER_NAME@_defs.h \
+                              @DRIVER_NAME@_client.c @DRIVER_NAME@_client.h \
+                              @DRIVER_NAME@_proto.c @DRIVER_NAME@_proto.h
+
 all: all-am
 
 .SUFFIXES:
@@ -243,9 +232,9 @@ $(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am  $(am__confi
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --gnu  src/Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --gnu  shared/Makefile'; \
 	cd $(top_srcdir) && \
-	  $(AUTOMAKE) --gnu  src/Makefile
+	  $(AUTOMAKE) --gnu  shared/Makefile
 .PRECIOUS: Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \
@@ -263,35 +252,17 @@ $(top_srcdir)/configure: @MAINTAINER_MODE_TRUE@ $(am__configure_deps)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
 $(ACLOCAL_M4): @MAINTAINER_MODE_TRUE@ $(am__aclocal_m4_deps)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
-install-@DRIVER_NAME@_drv_laLTLIBRARIES: $(@DRIVER_NAME@_drv_la_LTLIBRARIES)
-	@$(NORMAL_INSTALL)
-	test -z "$(@DRIVER_NAME@_drv_ladir)" || $(MKDIR_P) "$(DESTDIR)$(@DRIVER_NAME@_drv_ladir)"
-	@list='$(@DRIVER_NAME@_drv_la_LTLIBRARIES)'; for p in $$list; do \
-	  if test -f $$p; then \
-	    f=$(am__strip_dir) \
-	    echo " $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=install $(@DRIVER_NAME@_drv_laLTLIBRARIES_INSTALL) $(INSTALL_STRIP_FLAG) '$$p' '$(DESTDIR)$(@DRIVER_NAME@_drv_ladir)/$$f'"; \
-	    $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=install $(@DRIVER_NAME@_drv_laLTLIBRARIES_INSTALL) $(INSTALL_STRIP_FLAG) "$$p" "$(DESTDIR)$(@DRIVER_NAME@_drv_ladir)/$$f"; \
-	  else :; fi; \
-	done
 
-uninstall-@DRIVER_NAME@_drv_laLTLIBRARIES:
-	@$(NORMAL_UNINSTALL)
-	@list='$(@DRIVER_NAME@_drv_la_LTLIBRARIES)'; for p in $$list; do \
-	  p=$(am__strip_dir) \
-	  echo " $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=uninstall rm -f '$(DESTDIR)$(@DRIVER_NAME@_drv_ladir)/$$p'"; \
-	  $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=uninstall rm -f "$(DESTDIR)$(@DRIVER_NAME@_drv_ladir)/$$p"; \
-	done
-
-clean-@DRIVER_NAME@_drv_laLTLIBRARIES:
-	-test -z "$(@DRIVER_NAME@_drv_la_LTLIBRARIES)" || rm -f $(@DRIVER_NAME@_drv_la_LTLIBRARIES)
-	@list='$(@DRIVER_NAME@_drv_la_LTLIBRARIES)'; for p in $$list; do \
+clean-noinstLTLIBRARIES:
+	-test -z "$(noinst_LTLIBRARIES)" || rm -f $(noinst_LTLIBRARIES)
+	@list='$(noinst_LTLIBRARIES)'; for p in $$list; do \
 	  dir="`echo $$p | sed -e 's|/[^/]*$$||'`"; \
 	  test "$$dir" != "$$p" || dir=.; \
 	  echo "rm -f \"$${dir}/so_locations\""; \
 	  rm -f "$${dir}/so_locations"; \
 	done
-@DRIVER_NAME@_drv.la: $(@DRIVER_NAME@_drv_la_OBJECTS) $(@DRIVER_NAME@_drv_la_DEPENDENCIES) 
-	$(@DRIVER_NAME@_drv_la_LINK) -rpath $(@DRIVER_NAME@_drv_ladir) $(@DRIVER_NAME@_drv_la_OBJECTS) $(@DRIVER_NAME@_drv_la_LIBADD) $(LIBS)
+lib@DRIVER_NAME@.la: $(lib@DRIVER_NAME@_la_OBJECTS) $(lib@DRIVER_NAME@_la_DEPENDENCIES) 
+	$(LINK)  $(lib@DRIVER_NAME@_la_OBJECTS) $(lib@DRIVER_NAME@_la_LIBADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -299,7 +270,8 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/@DRIVER_NAME@.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/@DRIVER_NAME@_client.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/@DRIVER_NAME@_proto.Plo@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
@@ -405,9 +377,6 @@ check-am: all-am
 check: check-am
 all-am: Makefile $(LTLIBRARIES)
 installdirs:
-	for dir in "$(DESTDIR)$(@DRIVER_NAME@_drv_ladir)"; do \
-	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
-	done
 install: install-am
 install-exec: install-exec-am
 install-data: install-data-am
@@ -434,8 +403,8 @@ maintainer-clean-generic:
 	@echo "it deletes files that may require special tools to rebuild."
 clean: clean-am
 
-clean-am: clean-@DRIVER_NAME@_drv_laLTLIBRARIES clean-generic \
-	clean-libtool mostlyclean-am
+clean-am: clean-generic clean-libtool clean-noinstLTLIBRARIES \
+	mostlyclean-am
 
 distclean: distclean-am
 	-rm -rf ./$(DEPDIR)
@@ -453,7 +422,7 @@ info: info-am
 
 info-am:
 
-install-data-am: install-@DRIVER_NAME@_drv_laLTLIBRARIES
+install-data-am:
 
 install-dvi: install-dvi-am
 
@@ -489,25 +458,22 @@ ps: ps-am
 
 ps-am:
 
-uninstall-am: uninstall-@DRIVER_NAME@_drv_laLTLIBRARIES
+uninstall-am:
 
 .MAKE: install-am install-strip
 
-.PHONY: CTAGS GTAGS all all-am check check-am clean \
-	clean-@DRIVER_NAME@_drv_laLTLIBRARIES clean-generic \
-	clean-libtool ctags distclean distclean-compile \
-	distclean-generic distclean-libtool distclean-tags distdir dvi \
-	dvi-am html html-am info info-am install \
-	install-@DRIVER_NAME@_drv_laLTLIBRARIES install-am \
-	install-data install-data-am install-dvi install-dvi-am \
-	install-exec install-exec-am install-html install-html-am \
-	install-info install-info-am install-man install-pdf \
-	install-pdf-am install-ps install-ps-am install-strip \
-	installcheck installcheck-am installdirs maintainer-clean \
-	maintainer-clean-generic mostlyclean mostlyclean-compile \
-	mostlyclean-generic mostlyclean-libtool pdf pdf-am ps ps-am \
-	tags uninstall uninstall-@DRIVER_NAME@_drv_laLTLIBRARIES \
-	uninstall-am
+.PHONY: CTAGS GTAGS all all-am check check-am clean clean-generic \
+	clean-libtool clean-noinstLTLIBRARIES ctags distclean \
+	distclean-compile distclean-generic distclean-libtool \
+	distclean-tags distdir dvi dvi-am html html-am info info-am \
+	install install-am install-data install-data-am install-dvi \
+	install-dvi-am install-exec install-exec-am install-html \
+	install-html-am install-info install-info-am install-man \
+	install-pdf install-pdf-am install-ps install-ps-am \
+	install-strip installcheck installcheck-am installdirs \
+	maintainer-clean maintainer-clean-generic mostlyclean \
+	mostlyclean-compile mostlyclean-generic mostlyclean-libtool \
+	pdf pdf-am ps ps-am tags uninstall uninstall-am
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
