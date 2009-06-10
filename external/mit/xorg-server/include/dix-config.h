@@ -491,7 +491,7 @@
 /* #undef CONFIG_HAL */
 
 /* Use only built-in fonts */
-/* #undef BUILTIN_FONTS */
+#define BUILTIN_FONTS 1
 
 /* Avoid using font servers */
 /* #undef NOFONTSERVERACCESS */
