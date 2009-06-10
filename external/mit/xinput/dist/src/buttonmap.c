@@ -69,7 +69,6 @@ get_button_map(Display	*display,
     if (device) {
 	int		idx;
 	unsigned char	*map;
-	int		min;
 
 	map = (unsigned char *) malloc(sizeof(unsigned char) * nbuttons);
 

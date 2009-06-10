@@ -42,7 +42,7 @@ print_property(Display *dpy, XDevice* dev, Atom property)
     int                 act_format;
     unsigned long       nitems, bytes_after;
     unsigned char       *data, *ptr;
-    int                 j;
+    int                 j, done = False, size;
 
     name = XGetAtomName(dpy, property);
     printf("\t%s (%ld):\t", name, property);
@@ -51,10 +51,16 @@ print_property(Display *dpy, XDevice* dev, Atom property)
                            AnyPropertyType, &act_type, &act_format,
                            &nitems, &bytes_after, &data) == Success)
     {
-        int float_atom = XInternAtom(dpy, "FLOAT", False);
+        Atom float_atom = XInternAtom(dpy, "FLOAT", True);
 
         ptr = data;
-        printf("\t");
+
+        switch(act_format)
+        {
+            case 8: size = sizeof(char); break;
+            case 16: size = sizeof(short); break;
+            case 32: size = sizeof(long); break;
+        }
 
         for (j = 0; j < nitems; j++)
         {
@@ -64,39 +70,50 @@ print_property(Display *dpy, XDevice* dev, Atom property)
                     switch(act_format)
                     {
                         case 8:
-                            printf("%d", *((int8_t*)ptr));
+                            printf("%d", *((char*)ptr));
                             break;
                         case 16:
-                            printf("%d", *((int16_t*)ptr));
+                            printf("%d", *((short*)ptr));
                             break;
                         case 32:
-                            printf("%d", *((int32_t*)ptr));
+                            printf("%ld", *((long*)ptr));
                             break;
                     }
                     break;
                 case XA_STRING:
-                    printf("\t%s", ptr);
+                    if (act_format != 8)
+                    {
+                        printf("Unknown string format.\n");
+                        done = True;
+                        break;
+                    }
+                    printf("\"%s\"", ptr);
+                    j += strlen((char*)ptr); /* The loop's j++ jumps over the
+                                                terminating 0 */
+                    ptr += strlen((char*)ptr); /* ptr += size below jumps over
+                                                  the terminating 0 */
                     break;
                 case XA_ATOM:
-                    printf("\t%s", XGetAtomName(dpy, *(Atom*)ptr));
+                    printf("\"%s\"", XGetAtomName(dpy, *(Atom*)ptr));
                     break;
                 default:
                     if (float_atom != None && act_type == float_atom)
                     {
-                        printf("\t%f\n", *((float*)ptr));
+                        printf("%f", *((float*)ptr));
                         break;
                     }
 
-                    printf("\t\t... of unknown type %s\n",
+                    printf("\t... of unknown type %s\n",
                             XGetAtomName(dpy, act_type));
+                    done = True;
                     break;
             }
 
-            ptr += act_format/8;
+            ptr += size;
 
             if (j < nitems - 1)
                 printf(", ");
-            if (act_type == XA_STRING)
+            if (done == True)
                 break;
         }
         printf("\n");
@@ -209,19 +226,19 @@ set_int_prop(Display *dpy, int argc, char** argv, char* n, char *desc)
         return EXIT_FAILURE;
     }
 
-    data = calloc(nelements, format/8);
+    data = calloc(nelements, sizeof(long));
     for (i = 0; i < nelements; i++)
     {
         switch(format)
         {
             case 8:
-                *(((int8_t*)data) + i) = atoi(argv[3 + i]);
+                *(((char*)data) + i) = atoi(argv[3 + i]);
                 break;
             case 16:
-                *(((int16_t*)data) + i) = atoi(argv[3 + i]);
+                *(((short*)data) + i) = atoi(argv[3 + i]);
                 break;
             case 32:
-                *(((int32_t*)data) + i) = atoi(argv[3 + i]);
+                *(((long*)data) + i) = atoi(argv[3 + i]);
                 break;
         }
     }
@@ -243,7 +260,7 @@ set_float_prop(Display *dpy, int argc, char** argv, char* n, char *desc)
     char        *name;
     int          i;
     Bool         is_atom = True;
-    float       *data;
+    long        *data;
     int          nelements =  0;
     char*        endptr;
 
@@ -297,10 +314,10 @@ set_float_prop(Display *dpy, int argc, char** argv, char* n, char *desc)
 	return EXIT_FAILURE;
     }
 
-    data = calloc(nelements, 4);
+    data = calloc(nelements, sizeof(long));
     for (i = 0; i < nelements; i++)
     {
-        *(data + i) = strtod(argv[2 + i], &endptr);
+        *((float*)(data + i)) = strtod(argv[2 + i], &endptr);
 	if(endptr == argv[2 + i]){
 	    fprintf(stderr, "argument %s could not be parsed\n", argv[2 + i]);
 	    return EXIT_FAILURE;

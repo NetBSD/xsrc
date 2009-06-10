@@ -131,7 +131,7 @@ static entry drivers[] =
       "<device> <property>",
       delete_prop
     },
-    {0, 0, 0
+    {NULL, NULL, NULL
     }
 };
 
@@ -167,7 +167,7 @@ find_device_info(Display	*display,
     int		num_devices;
     int		len = strlen(name);
     Bool	is_id = True;
-    XID		id;
+    XID		id = (XID)-1;
 
     for(loop=0; loop<len; loop++) {
 	if (!isdigit(name[loop])) {
@@ -191,6 +191,7 @@ find_device_info(Display	*display,
 	                "Warning: There are multiple devices named \"%s\".\n"
 	                "To ensure the correct one is selected, please use "
 	                "the device ID instead.\n\n", name);
+		return NULL;
 	    } else {
 		found = &devices[loop];
 	    }
@@ -245,6 +246,7 @@ main(int argc, char * argv[])
 	    int	r = (*driver->func)(display, argc-2, argv+2,
 				    driver->func_name, driver->arg_desc);
 	    XSync(display, False);
+	    XCloseDisplay(display);
 	    return r;
 	}
 	driver++;
