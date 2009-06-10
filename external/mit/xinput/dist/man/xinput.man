@@ -1,5 +1,5 @@
-.\" $Id: xinput.man,v 1.1.1.2 2009/03/10 04:27:05 mrg Exp $
-.TH xinput 1 "$Date: 2009/03/10 04:27:05 $" "Frederic Lepied"
+.\" $Id: xinput.man,v 1.1.1.3 2009/06/10 00:49:01 mrg Exp $
+.TH xinput 1 "$Date: 2009/06/10 00:49:01 $" "Frederic Lepied"
 
 .SH NAME
 xinput - utility to configure and test XInput devices
@@ -63,6 +63,10 @@ Lists properties that can be set for the given device(s).
 .B xinput set-int-prop \fIdevice_name\fP \fIproperty\fP \fIformat\fP \fIvalue\fP
 Sets an integer property for the device.  Appropriate values for \fIformat\fP
 are 8, 16, or 32, depending on the property.
+.PP
+.TP 8
+.B xinput set-float-prop \fIdevice_name\fP \fIproperty\fP \fIvalue\fP
+Sets a float property for the device.
 .PP
 .TP 8
 .B xinput watch-props \fIdevice_name\fP
