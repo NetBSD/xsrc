@@ -83,7 +83,7 @@ char rcsId_vmware[] =
 #define VMWARE_DRIVER_NAME "vmware"
 #define VMWARE_MAJOR_VERSION	10
 #define VMWARE_MINOR_VERSION	16
-#define VMWARE_PATCHLEVEL	1
+#define VMWARE_PATCHLEVEL	6
 #define VMWARE_DRIVER_VERSION \
    (VMWARE_MAJOR_VERSION * 65536 + VMWARE_MINOR_VERSION * 256 + VMWARE_PATCHLEVEL)
 #define VMWARE_DRIVER_VERSION_STRING \
@@ -580,7 +580,6 @@ VMWAREPreInit(ScrnInfoPtr pScrn, int flags)
     int i;
     ClockRange* clockRanges;
     IOADDRESS domainIOBase = 0;
-    Bool useXinerama = TRUE;
 
 #ifndef BUILD_FOR_420
     domainIOBase = pScrn->domainIOBase;
@@ -895,30 +894,6 @@ VMWAREPreInit(ScrnInfoPtr pScrn, int flags)
     pScrn->videoRam = pVMWARE->videoRam / 1024;
     pScrn->memPhysBase = pVMWARE->memPhysBase;
 
-    /*
-     * Init xinerama preferences.
-     */
-    useXinerama = xf86ReturnOptValBool(options, OPTION_XINERAMA,
-                                       pVMWARE->vmwareCapability & SVGA_CAP_MULTIMON);
-    if (useXinerama && !(pVMWARE->vmwareCapability & SVGA_CAP_MULTIMON)) {
-       xf86DrvMsg(pScrn->scrnIndex, X_WARNING,
-                  "Xinerama is not safely supported by the current virtual hardware. "
-                  "Do not request resolutions that require > 16MB of framebuffer.\n");
-    }
-
-
-    if (useXinerama && xf86IsOptionSet(options, OPTION_STATIC_XINERAMA)) {
-       char *topology = xf86GetOptValString(options, OPTION_STATIC_XINERAMA);
-       if (topology) {
-          pVMWARE->xineramaState =
-             VMWAREParseTopologyString(pScrn, topology, &pVMWARE->xineramaNumOutputs);
-
-         pVMWARE->xineramaStatic = pVMWARE->xineramaState != NULL;
-
-         xfree(topology);
-       }
-    }
-
     xfree(options);
 
     {
@@ -946,6 +921,11 @@ VMWAREPreInit(ScrnInfoPtr pScrn, int flags)
     clockRanges->doubleScanAllowed = FALSE;
     clockRanges->ClockMulFactor = 1;
     clockRanges->ClockDivFactor = 1;
+   
+    /*
+     * Get the default supported modelines
+     */
+    vmwareGetSupportedModelines(&pScrn->monitor->Modes);
 
     i = xf86ValidateModes(pScrn, pScrn->monitor->Modes, pScrn->display->modes,
                           clockRanges, NULL, 256, pVMWARE->maxWidth, 32 * 32,
@@ -981,20 +961,6 @@ VMWAREPreInit(ScrnInfoPtr pScrn, int flags)
             return FALSE;
         }
         xf86LoaderReqSymLists(ramdacSymbols, NULL);
-    }
-
-    /* Initialise VMWARE_CTRL extension. */
-    VMwareCtrl_ExtInit(pScrn);
-
-    /* Initialise Xinerama extension. */
-    if (useXinerama) {
-       VMwareXinerama_ExtInit(pScrn);
-    }
-
-    if (pVMWARE->xinerama && pVMWARE->xineramaStatic) {
-       xf86DrvMsg(pScrn->scrnIndex, X_INFO, pVMWARE->xineramaState ?
-                                            "Using static Xinerama.\n" :
-                                            "Failed to configure static Xinerama.\n");
     }
 
     return TRUE;
@@ -1486,6 +1452,59 @@ VMWAREAddDisplayMode(ScrnInfoPtr pScrn,
 }
 
 
+/*
+ *-----------------------------------------------------------------------------
+ *
+ * vmwareIsRegionEqual --
+ *
+ *    This function implements REGION_EQUAL because older versions of
+ *    regionstr.h don't define it.
+ *    It is a slightly modified version of miRegionEqual from $Xorg: miregion.c
+ *
+ * Results:
+ *    TRUE if regions are equal; FALSE otherwise
+ *
+ * Side effects:
+ *    None.
+ *
+ *-----------------------------------------------------------------------------
+ */
+
+Bool
+vmwareIsRegionEqual(const RegionPtr reg1,
+                    const RegionPtr reg2)
+{
+    int i, num;
+    BoxPtr rects1, rects2;
+
+    if ((reg1->extents.x1 != reg2->extents.x1) ||
+        (reg1->extents.x2 != reg2->extents.x2) ||
+        (reg1->extents.y1 != reg2->extents.y1) ||
+        (reg1->extents.y2 != reg2->extents.y2)) {
+        return FALSE;
+    }
+
+    num = REGION_NUM_RECTS(reg1);
+    if (num != REGION_NUM_RECTS(reg2)) {
+        return FALSE;
+    }
+
+    rects1 = REGION_RECTS(reg1);
+    rects2 = REGION_RECTS(reg2);
+
+    for (i = 0; i < num; i++) {
+        if ((rects1[i].x1 != rects2[i].x1) ||
+            (rects1[i].x2 != rects2[i].x2) ||
+            (rects1[i].y1 != rects2[i].y1) ||
+            (rects1[i].y2 != rects2[i].y2)) {
+            return FALSE;
+        }
+    }
+
+    return TRUE;
+}
+
+
 #if VMWARE_DRIVER_FUNC
 static Bool
 VMWareDriverFunc(ScrnInfoPtr pScrn,
@@ -1530,16 +1549,64 @@ VMWAREScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
     ScrnInfoPtr pScrn;
     vgaHWPtr hwp;
     VMWAREPtr pVMWARE;
+    OptionInfoPtr options;
+    Bool useXinerama = TRUE;
 
     /* Get the ScrnInfoRec */
     pScrn = xf86Screens[pScreen->myNum];
     pVMWARE = VMWAREPTR(pScrn);
 
+
+    xf86CollectOptions(pScrn, NULL);
+    if (!(options = xalloc(sizeof(VMWAREOptions))))
+        return FALSE;
+    memcpy(options, VMWAREOptions, sizeof(VMWAREOptions));
+    xf86ProcessOptions(pScrn->scrnIndex, pScrn->options, options);
+
+    /*
+     * Init xinerama preferences.
+     */
+    useXinerama = xf86ReturnOptValBool(options, OPTION_XINERAMA,
+                                       pVMWARE->vmwareCapability & SVGA_CAP_MULTIMON);
+    if (useXinerama && !(pVMWARE->vmwareCapability & SVGA_CAP_MULTIMON)) {
+       xf86DrvMsg(pScrn->scrnIndex, X_WARNING,
+                  "Xinerama is not safely supported by the current virtual hardware. "
+                  "Do not request resolutions that require > 16MB of framebuffer.\n");
+    }
+
+
+    if (useXinerama && xf86IsOptionSet(options, OPTION_STATIC_XINERAMA)) {
+       char *topology = xf86GetOptValString(options, OPTION_STATIC_XINERAMA);
+       if (topology) {
+          pVMWARE->xineramaState =
+             VMWAREParseTopologyString(pScrn, topology, &pVMWARE->xineramaNumOutputs);
+
+         pVMWARE->xineramaStatic = pVMWARE->xineramaState != NULL;
+
+         xfree(topology);
+       }
+    }
+
+    xfree(options);
+
+    /* Initialise VMWARE_CTRL extension. */
+    VMwareCtrl_ExtInit(pScrn);
+
+    /* Initialise Xinerama extension. */
+    if (useXinerama) {
+       VMwareXinerama_ExtInit(pScrn);
+    }
+
+    if (pVMWARE->xinerama && pVMWARE->xineramaStatic) {
+       xf86DrvMsg(pScrn->scrnIndex, X_INFO, pVMWARE->xineramaState ?
+                                            "Using static Xinerama.\n" :
+                                            "Failed to configure static Xinerama.\n");
+    }
+
     /*
      * If using the vgahw module, its data structures and related
      * things are typically initialised/mapped here.
      */
-
     hwp = VGAHWPTR(pScrn);
     vgaHWGetIOBase(hwp);
 
@@ -1572,7 +1639,6 @@ VMWAREScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
      * acceptable.  To deal with this, call miSetVisualTypes with
      * the appropriate visual mask.
      */
-
     if (pScrn->bitsPerPixel > 8) {
         if (!miSetVisualTypes(pScrn->depth, TrueColorMask,
                               pScrn->rgbBits, pScrn->defaultVisual)) {
@@ -1681,7 +1747,6 @@ VMWAREScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
      * Install colourmap functions.  If using the vgahw module,
      * vgaHandleColormaps would usually be called here.
      */
-
     if (!fbCreateDefColormap(pScreen))
         return FALSE;
 
@@ -1719,8 +1784,7 @@ VMWAREScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
      * We will lazily add the dynamic modes as the are needed when new
      * modes are requested through the control extension.
      */
-    pVMWARE->dynMode1 = NULL;
-    pVMWARE->dynMode2 = NULL;
+    memset(&pVMWARE->dynModes, 0, sizeof pVMWARE->dynModes);
 
 #if VMWARE_DRIVER_FUNC
     pScrn->DriverFunc = VMWareDriverFunc;
