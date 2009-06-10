@@ -4,9 +4,6 @@
 /* Define to 1 if `struct sockaddr_in' has a `sin_len' member */
 #define BSD44SOCKETS 1
 
-/* Support the font caching extension */
-#define FONTCACHE 1
-
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #define HAVE_DLFCN_H 1
 
@@ -24,6 +21,9 @@
 
 /* Define to 1 if you have the <poll.h> header file. */
 #define HAVE_POLL_H 1
+
+/* Define to 1 if the system has the type `socklen_t'. */
+#define HAVE_SOCKLEN_T 1
 
 /* Define to 1 if you have the <stdint.h> header file. */
 #define HAVE_STDINT_H 1
@@ -52,11 +52,12 @@
 /* Support IPv6 for TCP connections */
 #define IPv6 1
 
-/* Support dynamically loaded font modules */
-#define LOADABLEFONTS 1
-
 /* Support os-specific local connections */
 /* #undef LOCALCONN */
+
+/* Define to the sub-directory in which libtool stores uninstalled libraries.
+   */
+#define LT_OBJDIR ".libs/"
 
 /* Name of package */
 #define PACKAGE "libXfont"
@@ -68,22 +69,22 @@
 #define PACKAGE_NAME "libXfont"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "libXfont 1.3.2"
+#define PACKAGE_STRING "libXfont 1.4.0"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "libXfont"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "1.3.2"
+#define PACKAGE_VERSION "1.4.0"
 
 /* Major version of this package */
 #define PACKAGE_VERSION_MAJOR 1
 
 /* Minor version of this package */
-#define PACKAGE_VERSION_MINOR 3
+#define PACKAGE_VERSION_MINOR 4
 
 /* Patch version of this package */
-#define PACKAGE_VERSION_PATCHLEVEL 2
+#define PACKAGE_VERSION_PATCHLEVEL 0
 
 /* Define as the return type of signal handlers (`int' or `void'). */
 #define RETSIGTYPE void
@@ -98,7 +99,7 @@
 #define UNIXCONN 1
 
 /* Version number of package */
-#define VERSION "1.3.2"
+#define VERSION "1.4.0"
 
 /* Support bdf format bitmap font files */
 #define XFONT_BDFFORMAT 1
@@ -124,11 +125,8 @@
 /* Support snf format bitmap font files */
 #define XFONT_SNFFORMAT 1
 
-/* Support Speedo font files */
-#define XFONT_SPEEDO 1
-
-/* Support IBM Type 1 rasterizer for Type1 font files */
-#define XFONT_TYPE1 1
+/* Support bzip2 for bitmap fonts */
+#define X_BZIP2_FONT_COMPRESSION 1
 
 /* Support gzip for bitmap fonts */
 #define X_GZIP_FONT_COMPRESSION 1
