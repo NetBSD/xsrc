@@ -561,8 +561,7 @@ ATIPreInit
     if (pResources)
     {
         xf86DrvMsg(pScreenInfo->scrnIndex, X_ERROR,
-            "Unable to register the following bus resources:\n");
-        xf86PrintResList(0, pResources);
+            "Unable to register bus resources\n");
         xf86FreeResList(pResources);
         return FALSE;
     }
