@@ -416,7 +416,7 @@ TGAPolySegment(
 #endif
 					  ){
     XAAInfoRecPtr infoRec = GET_XAAINFORECPTR_FROM_GC(pGC);
-#if TGA_OLDPRIV
+#if TGA_OLDPRIV || 1	/* XXX XXX XXX */
     XAAGCPtr   pGCPriv = (XAAGCPtr) (pGC)->devPrivates[XAAGetGCIndex()].ptr;
 #else
     XAAGCPtr   pGCPriv = (XAAGCPtr)dixLookupPrivate(&(pGC)->devPrivates, XAAGetGCKey());
