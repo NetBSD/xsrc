@@ -206,11 +206,8 @@ G80PreInit(ScrnInfoPtr pScrn, int flags)
     CARD32 tmp;
     memType BAR1sizeKB;
 
-    if(flags & PROBE_DETECT) {
-        xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
-                "G80 PROBE_DETECT unimplemented\n");
-        return FALSE;
-    }
+    if(flags & PROBE_DETECT)
+        return TRUE;
 
     /* Check the number of entities, and fail if it isn't one. */
     if(pScrn->numEntities != 1)
@@ -914,13 +911,6 @@ G80ScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
        Must precede creation of the default colormap */
     miDCInitialize(pScreen, xf86GetPointerScreenFuncs());
 
-    /* Initialize hardware cursor.  Must follow software cursor initialization. */
-    if(pNv->HWCursor && !G80CursorInit(pScreen)) {
-        xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
-                   "Hardware cursor initialization failed\n");
-        pNv->HWCursor = FALSE;
-    }
-
     /* Initialize default colormap */
     if(!miCreateDefColormap(pScreen))
         return FALSE;
@@ -948,6 +938,13 @@ G80ScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
     /* Initialize the display */
     if(!AcquireDisplay(pScrn))
         return FALSE;
+
+    /* Initialize hardware cursor.  Must follow software cursor initialization. */
+    if(pNv->HWCursor && !G80CursorInit(pScreen)) {
+        xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
+                   "Hardware cursor initialization failed\n");
+        pNv->HWCursor = FALSE;
+    }
 
     pScreen->SaveScreen = G80SaveScreen;
 

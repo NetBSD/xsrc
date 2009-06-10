@@ -77,11 +77,22 @@ static Bool	NVModeInit(ScrnInfoPtr pScrn, DisplayModePtr mode);
 static Bool	NVSetModeVBE(ScrnInfoPtr pScrn, DisplayModePtr pMode);
 
 #if XSERVER_LIBPCIACCESS
-/* For now, just match any NVIDIA PCI device and sort through them in the probe
- * routine */
+/* For now, just match any NVIDIA display device and sort through them in the
+ * probe routine */
+
+/*
+ * libpciaccess's masks are shifted by 8 bits compared to the ones in xf86Pci.h.
+ */
+#define LIBPCIACCESS_CLASS_SHIFT (PCI_CLASS_SHIFT - 8)
+#define LIBPCIACCESS_CLASS_MASK (PCI_CLASS_MASK >> 8)
+
 static const struct pci_id_match NVPciIdMatchList[] = {
-    { PCI_VENDOR_NVIDIA, PCI_MATCH_ANY, PCI_MATCH_ANY, PCI_MATCH_ANY, 0, 0, 0 },
-    { PCI_VENDOR_NVIDIA_SGS, PCI_MATCH_ANY, PCI_MATCH_ANY, PCI_MATCH_ANY, 0, 0, 0},
+    { PCI_VENDOR_NVIDIA, PCI_MATCH_ANY, PCI_MATCH_ANY, PCI_MATCH_ANY,
+      PCI_CLASS_DISPLAY << LIBPCIACCESS_CLASS_SHIFT, LIBPCIACCESS_CLASS_MASK, 0 },
+
+    { PCI_VENDOR_NVIDIA_SGS, PCI_MATCH_ANY, PCI_MATCH_ANY, PCI_MATCH_ANY,
+      PCI_CLASS_DISPLAY << LIBPCIACCESS_CLASS_SHIFT, LIBPCIACCESS_CLASS_MASK, 0 },
+
     { 0, 0, 0 }
 };
 #endif
@@ -113,7 +124,7 @@ _X_EXPORT DriverRec NV = {
 #endif
 };
 
-/* Known cards as of 2008/06/16 */
+/* Known cards as of 2008/08/26 */
 
 static SymTabRec NVKnownChipsets[] =
 {
@@ -292,6 +303,7 @@ static SymTabRec NVKnownChipsets[] =
   { 0x10DE0167, "GeForce Go 6200" },
   { 0x10DE0168, "GeForce Go 6400" },
   { 0x10DE0169, "GeForce 6250" },
+  { 0x10DE016A, "GeForce 7100 GS" },
 
   { 0x10DE0211, "GeForce 6800" },
   { 0x10DE0212, "GeForce 6800 LE" },
@@ -363,6 +375,7 @@ static SymTabRec NVKnownChipsets[] =
   { 0x10DE0400, "GeForce 8600 GTS" },
   { 0x10DE0401, "GeForce 8600 GT" },
   { 0x10DE0402, "GeForce 8600 GT" },
+  { 0x10DE0403, "GeForce 8600 GS" },
   { 0x10DE0404, "GeForce 8400 GS" },
   { 0x10DE0405, "GeForce 9500M GS" },
   { 0x10DE0407, "GeForce 8600M GT" },
@@ -386,6 +399,7 @@ static SymTabRec NVKnownChipsets[] =
   { 0x10DE0429, "Quadro NVS 140M" },
   { 0x10DE042A, "Quadro NVS 130M" },
   { 0x10DE042B, "Quadro NVS 135M" },
+  { 0x10DE042C, "GeForce 9400 GT" },
   { 0x10DE042D, "Quadro FX 360M" },
   { 0x10DE042E, "GeForce 9300M G" },
   { 0x10DE042F, "Quadro NVS 290" },
@@ -401,17 +415,27 @@ static SymTabRec NVKnownChipsets[] =
   { 0x10DE0610, "GeForce 9600 GSO" },
   { 0x10DE0611, "GeForce 8800 GT" },
   { 0x10DE0612, "GeForce 9800 GTX" },
+  { 0x10DE0613, "GeForce 9800 GTK+" },
+  { 0x10DE0614, "GeForce 9800 GT" },
   { 0x10DE061A, "Quadro FX 3700" },
   { 0x10DE061C, "Quadro FX 3600M" },
   { 0x10DE0622, "GeForce 9600 GT" },
+  { 0x10DE0623, "GeForce 9600 GS" },
+  { 0x10DE0628, "GeForce 9800M GTS" },
+  { 0x10DE062A, "GeForce 9700M GTS" },
+  { 0x10DE062C, "GeForce 9800M GTS" },
+  { 0x10DE0640, "GeForce 9500 GT" },
   { 0x10DE0647, "GeForce 9600M GT" },
   { 0x10DE0648, "GeForce 9600M GS" },
   { 0x10DE0649, "GeForce 9600M GT" },
   { 0x10DE064B, "GeForce 9500M G" },
+  { 0x10DE06E1, "GeForce 9300 GS" },
   { 0x10DE06E4, "GeForce 8400 GS" },
   { 0x10DE06E5, "GeForce 9300M GS" },
   { 0x10DE06E8, "GeForce 9200M GS" },
   { 0x10DE06E9, "GeForce 9300M GS" },
+  { 0x10DE06EA, "Quadro NVS 150M" },
+  { 0x10DE06EB, "Quadro NVS 160M" },
 
   {-1, NULL}
 };
