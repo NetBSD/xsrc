@@ -1,3 +1,48 @@
+commit 99db87ed49d7eca8de2ff1f7d53b580637ebb916
+Author: Alan Coopersmith <alan.coopersmith@sun.com>
+Date:   Wed Apr 29 17:32:47 2009 -0700
+
+    Version 6.8.1
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@sun.com>
+
+commit 193744b015e8f2b8c25d90094b7f0b502bc1287b
+Author: Alan Coopersmith <alan.coopersmith@sun.com>
+Date:   Wed Apr 29 17:21:53 2009 -0700
+
+    Convert to XORG_CWARNFLAGS & XORG_CHANGELOG
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@sun.com>
+
+commit d394e0b8269ea0a7d36ee8edb38947df170399c9
+Author: Alan Coopersmith <alan.coopersmith@sun.com>
+Date:   Fri Jan 30 20:41:43 2009 -0800
+
+    Add README with pointers to mailing list, bugzilla & git repos
+
+commit cab7a47477e3878cb9f1fdc5b721fc8e3aaadd5b
+Author: Paulo Cesar Pereira de Andrade <pcpa@mandriva.com.br>
+Date:   Fri Nov 28 01:09:52 2008 -0200
+
+    Remove xf86{Disable,Enable}Interrupts
+    
+      They were already a noop in most "os-support"s, and are no longer
+    available in the X Server.
+
+commit e993728f7ee618d34163c127231881aec1637ca2
+Author: Adam Jackson <ajax@redhat.com>
+Date:   Fri Oct 3 14:31:13 2008 -0400
+
+    Don't print the resource list on failure.
+    
+    If this ever happens it should be printed from the server at any rate.
+
+commit 46a0254b5a0bffe8c57322b085bcd38f893e4b27
+Author: Aaron Plattner <aplattner@nvidia.com>
+Date:   Tue Sep 9 10:32:48 2008 -0400
+
+    Make sure the screen is a mach64 screen before doing anything in ATIMach64XVInitialiseAdaptor.
+
 commit 89a9ad75f3e50e25275b803617d5e74709ead269
 Author: Yi Zhan <yi.zhan@intel.com>
 Date:   Wed Mar 26 16:13:08 2008 +1000
