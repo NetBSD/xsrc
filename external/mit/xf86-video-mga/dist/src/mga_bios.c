@@ -96,117 +96,6 @@ static __inline__ CARD32 get_u32( const CARD8 * data )
 
 
 /**
- * Initialize reasonable defaults for values that normally come form the BIOS.
- * 
- * For each generation of hardware, provide reasonable default values, based
- * on the type of hardware and chipset revision, for various values that are
- * normally read from the PInS structure in the BIOS.  This provides a backup
- * in case the PInS structure cannot be found.
- * 
- * \param pMga  Pointer to the MGA-private data.
- * \param bios  Pointer to the structure that holds values read from the BIOS.
- * 
- * \todo
- * Determine if different default values should be used for G400 and G450
- * cards.  These cards have the same PCI ID, but can be identified by a
- * different chip revision.  The G450 cards have a revision of 3 or higher.
- */
-
-static void mga_initialize_bios_values( MGAPtr pMga, 
-					struct mga_bios_values * bios )
-{
-    (void) memset( bios, 0, sizeof( *bios ) );
-
-    bios->pixel.min_freq = 50000;
-
-    switch( pMga->Chipset ) {
-    case PCI_CHIP_MGA2064:
-    case PCI_CHIP_MGA2164:
-    case PCI_CHIP_MGA2164_AGP:
-	bios->pixel.max_freq  = 220000;
-
-	bios->pll_ref_freq = 14318;
-	bios->mem_clock = 50000;
-
-	bios->host_interface = (pMga->Chipset == PCI_CHIP_MGA2164_AGP) 
-	  ? MGA_HOST_AGP_1x : MGA_HOST_PCI;
-	break;
-
-    case PCI_CHIP_MGA1064:
-	/* There used to be code in MGARamdacInit (mga_dacG.c) that would
-	 * set this to 170000 if the chip revision was less than 3.  Is that
-	 * needed here?
-	 */
-
-	bios->system.max_freq = 230000;
-	bios->pixel.max_freq  = 230000;
-
-	bios->pll_ref_freq = 14318;
-	bios->mem_clock = 50000;
-	bios->host_interface = MGA_HOST_PCI;
-	break;
-
-    case PCI_CHIP_MGAG200_SE_A_PCI:
-    case PCI_CHIP_MGAG200_SE_B_PCI:
-	bios->system.max_freq = 114000;
-	bios->system.min_freq = 50000;
-	bios->pixel.max_freq  = 114000;
-	bios->pll_ref_freq = 27050;
-	bios->mem_clock = 45000;
-	bios->host_interface = MGA_HOST_PCI;
-	break;
-
-    case PCI_CHIP_MGAG100_PCI:
-    case PCI_CHIP_MGAG100:
-    case PCI_CHIP_MGAG200_PCI:
-    case PCI_CHIP_MGAG200:
-	bios->system.max_freq = 230000;
-	bios->pixel.max_freq  = 230000;
-
-	bios->system.min_freq = 50000;
-
-	bios->pll_ref_freq = 27050;
-	bios->mem_clock = 50000;
-
-	if ( pMga->Chipset == PCI_CHIP_MGAG100 ) {
-	    bios->host_interface = MGA_HOST_AGP_1x;
-	}
-	else if ( pMga->Chipset == PCI_CHIP_MGAG200 ) {
-	    bios->host_interface = MGA_HOST_AGP_2x;
-	}
-	else {
-	    bios->host_interface = MGA_HOST_PCI;
-	}
-	break;
-
-    case PCI_CHIP_MGAG400:
-	bios->system.max_freq = 252000;
-	bios->pixel.max_freq  = 252000;
-
-	bios->system.min_freq = 50000;
-
-	bios->pll_ref_freq = 27050;
-	bios->mem_clock = 200000;
-	bios->host_interface = MGA_HOST_AGP_4x;
-	break;
-
-    case PCI_CHIP_MGAG550:
-	bios->system.min_freq = 256000;
-	bios->pixel.min_freq  = 256000;
-	bios->video.min_freq  = 256000;
-	bios->system.max_freq = 600000;
-	bios->pixel.max_freq  = 600000;
-	bios->video.max_freq  = 600000;
-
-	bios->pll_ref_freq = 27050;
-	bios->mem_clock = 284000;
-	bios->host_interface = MGA_HOST_AGP_4x;
-	break;
-    }
-}
-
-
-/**
  * Parse version 0x01XX of the BIOS PInS structure.
  * 
  * Version 0x01XX of the BIOS PInS structure is only found in Millenium cards.
@@ -437,8 +326,9 @@ Bool mga_read_and_process_bios( ScrnInfoPtr pScrn )
      * isn't found or can't be read we'll still have some reasonable values
      * to use.
      */
-
-    mga_initialize_bios_values( pMga, & pMga->bios );
+    if (pMga->chip_attribs)
+	(void) memcpy(& pMga->bios, & pMga->chip_attribs->default_bios_values,
+                      sizeof(struct mga_bios_values));
 
 
     /* If the BIOS address was probed, it was found from the PCI config space
