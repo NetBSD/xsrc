@@ -1,7 +1,5 @@
 /* include/X11/fonts/fontconf.h.  Generated from fontconf.h.in by configure.  */
 /*
- * $Id: fontconf.h,v 1.1 2008/07/30 05:42:21 mrg Exp $
- *
  * Copyright © 2005 Keith Packard
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -25,12 +23,6 @@
 
 /* Define as 1 if you have FreeType support in Xfont */
 #define XFONT_FREETYPE 1
-
-/* Define as 1 if you have Type1 font support in Xfont */
-#define XFONT_TYPE1 1
-
-/* Define as 1 if you have Speedo support in Xfont */
-#define XFONT_SPEEDO 1
 
 /* Define as 1 if you have builtin font support in Xfont */
 #define XFONT_BUILTINS 1
