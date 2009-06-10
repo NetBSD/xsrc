@@ -1,5 +1,3 @@
-/* $XdotOrg: driver/xf86-video-apm/src/apm_rush.c,v 1.7 2005/07/11 02:29:44 ajax Exp $ */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/apm/apm_rush.c,v 1.11tsi Exp $ */
 /*
  * Copyright Loïc Grenié 1999
  */
@@ -426,7 +424,7 @@ ProcXF86RushLockPixmap(register ClientPtr client)
   rep.sequenceNumber = client->sequence;
   pix = (PixmapPtr)SecurityLookupIDByType(client,
 					  stuff->pixmap, RT_PIXMAP, 
-					  SecurityReadAccess);
+					  DixReadAccess);
   rep.addr = xf86RushLockPixmap(stuff->screen, pix);
 
   WriteToClient(client, SIZEOF(xXF86RushLockPixmapReply), (char*)&rep);
@@ -445,7 +443,7 @@ ProcXF86RushUnlockPixmap(register ClientPtr client)
   REQUEST_SIZE_MATCH(xXF86RushUnlockPixmapReq);
   pix = (PixmapPtr)SecurityLookupIDByType(client,
 					  stuff->pixmap, RT_PIXMAP, 
-					  SecurityReadAccess);
+					  DixReadAccess);
   xf86RushUnlockPixmap(stuff->screen, pix);
   return client->noClientException;
 }
@@ -571,18 +569,18 @@ ProcXF86RushOverlayPixmap(ClientPtr client)
 	return (BadMatch);
     }
 
-    status = XVCALL(diMatchPort)(pPort, pDraw);
+    status = XvdiMatchPort(pPort, pDraw);
     if (status != Success)
 	return status;
 
     pPixmap = (PixmapPtr)SecurityLookupIDByType(client,
 					stuff->pixmap, RT_PIXMAP, 
-					SecurityReadAccess);
+					DixReadAccess);
     if (!pPixmap) {
 	client->errorValue = stuff->pixmap;
 	return (BadPixmap);
     }
-    status = XVCALL(diMatchPort)(pPort, (DrawablePtr)pPixmap);
+    status = XvdiMatchPort(pPort, (DrawablePtr)pPixmap);
     if (status != Success)
 	return status;
     pPriv = APM_GET_PIXMAP_PRIVATE(pPixmap);
@@ -606,7 +604,7 @@ ProcXF86RushOverlayPixmap(ClientPtr client)
 	return BadMatch;
 
     pApm->PutImageStride = pPixmap->devKind;
-    status = XVCALL(diPutImage)(client, pDraw, pPort, pGC,
+    status = XvdiPutImage(client, pDraw, pPort, pGC,
 				stuff->src_x, stuff->src_y,
 				stuff->src_w, stuff->src_h,
 				stuff->drw_x, stuff->drw_y,
