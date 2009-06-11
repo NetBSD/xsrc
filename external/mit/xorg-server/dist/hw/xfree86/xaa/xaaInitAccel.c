@@ -16,8 +16,6 @@
 #include "xf86fbman.h"
 #include "servermd.h"
 
-static const OptionInfoRec *XAAAvailableOptions(void *unused);
-
 /*
  * XAA Config options
  */
@@ -90,13 +88,11 @@ static const OptionInfoRec XAAOptions[] = {
 				OPTV_BOOLEAN,	{0}, FALSE },
     {XAAOPT_OFFSCREEN_PIXMAPS,		"XaaNoOffscreenPixmaps",
 				OPTV_BOOLEAN,	{0}, FALSE },
-    {XAAOPT_HAS_DUMB_INVERTED_OPTION_SENSE,	"XaaOffscreenPixmaps",
-				OPTV_BOOLEAN,	{0}, FALSE },
+    {XAAOPT_HAS_DUMB_INVERTED_OPTION_SENSE, "XaaOffscreenPixmaps",
+				OPTV_BOOLEAN,   {0}, FALSE },
     { -1,				NULL,
 				OPTV_NONE,	{0}, FALSE }
 };
-
-static MODULESETUPPROTO(xaaSetup);
 
 static XF86ModuleVersionInfo xaaVersRec =
 {
@@ -105,43 +101,16 @@ static XF86ModuleVersionInfo xaaVersRec =
 	MODINFOSTRING1,
 	MODINFOSTRING2,
 	XORG_VERSION_CURRENT,
-	1, 2, 0,
+	XAA_VERSION_MAJOR,
+	XAA_VERSION_MINOR,
+	XAA_VERSION_RELEASE,
 	ABI_CLASS_VIDEODRV,		/* requires the video driver ABI */
 	ABI_VIDEODRV_VERSION,
 	MOD_CLASS_NONE,
 	{0,0,0,0}
 };
 
-_X_EXPORT XF86ModuleData xaaModuleData = { &xaaVersRec, xaaSetup, NULL };
-
-ModuleInfoRec XAA = {
-    1,
-    "XAA",
-    NULL,
-    0,
-    XAAAvailableOptions,
-};
-
-/*ARGSUSED*/
-static pointer
-xaaSetup(pointer Module, pointer Options, int *ErrorMajor, int *ErrorMinor)
-{
-    static Bool Initialised = FALSE;
-
-    if (!Initialised) {
-	Initialised = TRUE;
-	xf86AddModuleInfo(&XAA, Module);
-    }
-
-    return (pointer)TRUE;
-}
-
-/*ARGSUSED*/
-static const OptionInfoRec *
-XAAAvailableOptions(void *unused)
-{
-    return (XAAOptions);
-}
+_X_EXPORT XF86ModuleData xaaModuleData = { &xaaVersRec, NULL, NULL };
 
 Bool
 XAAInitAccel(ScreenPtr pScreen, XAAInfoRecPtr infoRec)
@@ -208,7 +177,7 @@ XAAInitAccel(ScreenPtr pScreen, XAAInfoRecPtr infoRec)
 
     if(infoRec->SetupForScreenToScreenCopy &&
        infoRec->SubsequentScreenToScreenCopy &&
-       !xf86IsOptionSet(options, XAAOPT_SCREEN_TO_SCREEN_COPY)) {
+       !xf86ReturnOptValBool(options, XAAOPT_SCREEN_TO_SCREEN_COPY, FALSE)) {
 	HaveScreenToScreenCopy = TRUE;
     } else {
 	infoRec->ScreenToScreenCopyFlags = 0;
@@ -219,10 +188,10 @@ XAAInitAccel(ScreenPtr pScreen, XAAInfoRecPtr infoRec)
     /**** Solid Filled Rects ****/
 
     if(infoRec->SetupForSolidFill && infoRec->SubsequentSolidFillRect &&
-       !xf86IsOptionSet(options, XAAOPT_SOLID_FILL_RECT)) {
+       !xf86ReturnOptValBool(options, XAAOPT_SOLID_FILL_RECT, FALSE)) {
 		HaveSolidFillRect = TRUE;
 	if(infoRec->SubsequentSolidFillTrap &&
-	   !xf86IsOptionSet(options, XAAOPT_SOLID_FILL_TRAP))
+	   !xf86ReturnOptValBool(options, XAAOPT_SOLID_FILL_TRAP, FALSE))
 		HaveSolidFillTrap = TRUE;
 	else
 		infoRec->SubsequentSolidFillTrap = NULL;
@@ -237,10 +206,11 @@ XAAInitAccel(ScreenPtr pScreen, XAAInfoRecPtr infoRec)
 
     if(infoRec->SetupForSolidLine) {
 	if(infoRec->SubsequentSolidTwoPointLine &&
-		!xf86IsOptionSet(options, XAAOPT_SOLID_TWO_POINT_LINE))
+		!xf86ReturnOptValBool(options,
+		                      XAAOPT_SOLID_TWO_POINT_LINE, FALSE))
 	    HaveSolidTwoPointLine = TRUE;
 	if(infoRec->SubsequentSolidBresenhamLine &&
-		!xf86IsOptionSet(options, XAAOPT_SOLID_BRESENHAM_LINE)) {
+		!xf86ReturnOptValBool(options, XAAOPT_SOLID_BRESENHAM_LINE, FALSE)) {
 	    HaveSolidBresenhamLine = TRUE;
 
 	    if(infoRec->SolidBresenhamLineErrorTermBits)
@@ -249,7 +219,8 @@ XAAInitAccel(ScreenPtr pScreen, XAAInfoRecPtr infoRec)
 	}
 
 	if(infoRec->SubsequentSolidHorVertLine &&
-		!xf86IsOptionSet(options, XAAOPT_SOLID_HORVERT_LINE))
+		!xf86ReturnOptValBool(options,
+		                      XAAOPT_SOLID_HORVERT_LINE, FALSE))
 	    HaveSolidHorVertLine = TRUE;
 	else if(HaveSolidTwoPointLine) {
 	    infoRec->SubsequentSolidHorVertLine = 
@@ -292,10 +263,14 @@ XAAInitAccel(ScreenPtr pScreen, XAAInfoRecPtr infoRec)
 
    if(infoRec->SetupForMono8x8PatternFill &&
 		infoRec->SubsequentMono8x8PatternFillRect &&
-		!xf86IsOptionSet(options, XAAOPT_MONO_8x8_PATTERN_FILL_RECT)) {
+		!xf86ReturnOptValBool(options,
+		                      XAAOPT_MONO_8x8_PATTERN_FILL_RECT,
+		                      FALSE)) {
 	HaveMono8x8PatternFillRect = TRUE;
 	if(infoRec->SubsequentMono8x8PatternFillTrap &&
-		!xf86IsOptionSet(options, XAAOPT_MONO_8x8_PATTERN_FILL_TRAP))
+		!xf86ReturnOptValBool(options,
+		                      XAAOPT_MONO_8x8_PATTERN_FILL_TRAP,
+		                      FALSE))
 		HaveMono8x8PatternFillTrap = TRUE;
 
         if(infoRec->Mono8x8PatternFillFlags & 
@@ -345,10 +320,12 @@ XAAInitAccel(ScreenPtr pScreen, XAAInfoRecPtr infoRec)
 
     if(infoRec->SetupForDashedLine && infoRec->DashPatternMaxLength) {
 	if(infoRec->SubsequentDashedTwoPointLine &&
-		!xf86IsOptionSet(options, XAAOPT_DASHED_TWO_POINT_LINE))
+		!xf86ReturnOptValBool(options, XAAOPT_DASHED_TWO_POINT_LINE,
+		                      FALSE))
 	    HaveDashedTwoPointLine = TRUE;
 	if(infoRec->SubsequentDashedBresenhamLine &&
-		!xf86IsOptionSet(options, XAAOPT_DASHED_BRESENHAM_LINE)) {
+		!xf86ReturnOptValBool(options, XAAOPT_DASHED_BRESENHAM_LINE,
+		                      FALSE)) {
 	    HaveDashedBresenhamLine = TRUE;
 
 	    if(infoRec->DashedBresenhamLineErrorTermBits)
@@ -372,10 +349,11 @@ XAAInitAccel(ScreenPtr pScreen, XAAInfoRecPtr infoRec)
 
    if(infoRec->SetupForColor8x8PatternFill &&
       infoRec->SubsequentColor8x8PatternFillRect &&
-      !xf86IsOptionSet(options, XAAOPT_COL_8x8_PATTERN_FILL_RECT)) {
+      !xf86ReturnOptValBool(options, XAAOPT_COL_8x8_PATTERN_FILL_RECT, FALSE)) {
 	HaveColor8x8PatternFillRect = TRUE;
 	if(infoRec->SubsequentColor8x8PatternFillTrap &&
-	   !xf86IsOptionSet(options, XAAOPT_COL_8x8_PATTERN_FILL_TRAP))
+	   !xf86ReturnOptValBool(options, XAAOPT_COL_8x8_PATTERN_FILL_TRAP,
+	                         FALSE))
 		HaveColor8x8PatternFillTrap = TRUE;
 	else
 		infoRec->SubsequentColor8x8PatternFillTrap = NULL;
@@ -408,7 +386,8 @@ XAAInitAccel(ScreenPtr pScreen, XAAInfoRecPtr infoRec)
     if(infoRec->SetupForCPUToScreenColorExpandFill && 
 	infoRec->ColorExpandBase &&
        	infoRec->SubsequentCPUToScreenColorExpandFill &&
-        !xf86IsOptionSet(options, XAAOPT_CPU_TO_SCREEN_COL_EXP_FILL)) {
+        !xf86ReturnOptValBool(options, XAAOPT_CPU_TO_SCREEN_COL_EXP_FILL,
+	                      FALSE)) {
 	int dwordsNeeded = pScrn->virtualX;
 
 	infoRec->ColorExpandRange >>= 2;	/* convert to DWORDS */
@@ -433,7 +412,9 @@ XAAInitAccel(ScreenPtr pScreen, XAAInfoRecPtr infoRec)
        infoRec->SubsequentColorExpandScanline &&
        infoRec->ScanlineColorExpandBuffers && 
        (infoRec->NumScanlineColorExpandBuffers > 0) &&
-       !xf86IsOptionSet(options, XAAOPT_SCANLINE_CPU_TO_SCREEN_COL_EXP_FILL)) {
+       !xf86ReturnOptValBool(options,
+                             XAAOPT_SCANLINE_CPU_TO_SCREEN_COL_EXP_FILL,
+                             FALSE)) {
 	HaveScanlineColorExpansion = TRUE;
     } else {
 	infoRec->ScanlineCPUToScreenColorExpandFillFlags = 0;
@@ -446,7 +427,8 @@ XAAInitAccel(ScreenPtr pScreen, XAAInfoRecPtr infoRec)
 
     if(infoRec->SetupForScreenToScreenColorExpandFill &&
        infoRec->SubsequentScreenToScreenColorExpandFill &&
-       !xf86IsOptionSet(options, XAAOPT_SCREEN_TO_SCREEN_COL_EXP_FILL)) {
+       !xf86ReturnOptValBool(options, XAAOPT_SCREEN_TO_SCREEN_COL_EXP_FILL,
+                             FALSE)) {
 	HaveScreenToScreenColorExpandFill = TRUE;
 	if (!infoRec->CacheColorExpandDensity)
 	    infoRec->CacheColorExpandDensity = 1;
@@ -460,7 +442,7 @@ XAAInitAccel(ScreenPtr pScreen, XAAInfoRecPtr infoRec)
 
     if(infoRec->SetupForImageWrite && infoRec->ImageWriteBase &&
        infoRec->SubsequentImageWriteRect &&
-       !xf86IsOptionSet(options, XAAOPT_IMAGE_WRITE_RECT)) {
+       !xf86ReturnOptValBool(options, XAAOPT_IMAGE_WRITE_RECT, FALSE)) {
 
 	infoRec->ImageWriteRange >>= 2;	/* convert to DWORDS */
 	if(infoRec->ImageWriteFlags & CPU_TRANSFER_BASE_FIXED)
@@ -479,7 +461,8 @@ XAAInitAccel(ScreenPtr pScreen, XAAInfoRecPtr infoRec)
        infoRec->SubsequentImageWriteScanline &&
        infoRec->ScanlineImageWriteBuffers && 
        (infoRec->NumScanlineImageWriteBuffers > 0) &&
-       !xf86IsOptionSet(options, XAAOPT_SCANLINE_IMAGE_WRITE_RECT)) {
+       !xf86ReturnOptValBool(options, XAAOPT_SCANLINE_IMAGE_WRITE_RECT,
+                             FALSE)) {
 	HaveScanlineImageWriteRect = TRUE;
     } else {
 	infoRec->ScanlineImageWriteFlags = 0;
@@ -545,9 +528,7 @@ XAAInitAccel(ScreenPtr pScreen, XAAInfoRecPtr infoRec)
 #define XAAMSG(s) do { if (serverGeneration == 1) xf86ErrorF(s); } while (0)
 
     if((infoRec->Flags & OFFSCREEN_PIXMAPS) && HaveScreenToScreenCopy &&
-            xf86ReturnOptValBool(options,
-			XAAOPT_HAS_DUMB_INVERTED_OPTION_SENSE,
-			FALSE))
+		xf86IsOptionSet(options, XAAOPT_HAS_DUMB_INVERTED_OPTION_SENSE))
     {
 	XAAMSG("\tOffscreen Pixmaps\n");
     } else {
@@ -843,7 +824,7 @@ XAAInitAccel(ScreenPtr pScreen, XAAInfoRecPtr infoRec)
     /**** WriteBitmap ****/
 
     if(infoRec->WriteBitmap && 
-      !xf86IsOptionSet(options, XAAOPT_WRITE_BITMAP)) {
+      !xf86ReturnOptValBool(options, XAAOPT_WRITE_BITMAP, FALSE)) {
 	XAAMSG("\tDriver provided WriteBitmap replacement\n");
     } else if(HaveColorExpansion) {
 	if (infoRec->CPUToScreenColorExpandFillFlags & TRIPLE_BITS_24BPP) {
@@ -1002,7 +983,7 @@ XAAInitAccel(ScreenPtr pScreen, XAAInfoRecPtr infoRec)
     /**** WritePixmap ****/
 
     if(infoRec->WritePixmap &&
-      !xf86IsOptionSet(options, XAAOPT_WRITE_PIXMAP)) {
+      !xf86ReturnOptValBool(options, XAAOPT_WRITE_PIXMAP, FALSE)) {
 	XAAMSG("\tDriver provided WritePixmap replacement\n");
     } else if(HaveImageWriteRect) {
 	infoRec->WritePixmap = XAAWritePixmap;
@@ -1476,7 +1457,7 @@ XAAInitAccel(ScreenPtr pScreen, XAAInfoRecPtr infoRec)
     else
 	infoRec->Flags &= ~PIXMAP_CACHE;
 
-    if (xf86IsOptionSet(options, XAAOPT_PIXMAP_CACHE))
+    if (xf86ReturnOptValBool(options, XAAOPT_PIXMAP_CACHE, FALSE))
 	infoRec->Flags &= ~PIXMAP_CACHE;
 
     if(infoRec->WriteMono8x8PatternToCache) {}
