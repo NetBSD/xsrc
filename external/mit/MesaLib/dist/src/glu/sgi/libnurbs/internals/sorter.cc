@@ -35,8 +35,6 @@
 /*
  * sorter.c++
  *
- * $Date: 2008/07/29 05:10:37 $ $Revision: 1.1.1.1 $
- * $Header: /cvsroot/xsrc/external/mit/MesaLib/dist/src/glu/sgi/libnurbs/internals/Attic/sorter.cc,v 1.1.1.1 2008/07/29 05:10:37 mrg Exp $
  */
 
 #include "glimports.h"

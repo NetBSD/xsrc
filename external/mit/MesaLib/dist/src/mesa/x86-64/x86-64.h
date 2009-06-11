@@ -1,4 +1,3 @@
-/* $Id: x86-64.h,v 1.1.1.1 2008/07/29 05:10:26 mrg Exp $ */
 
 /*
  * Mesa 3-D graphics library

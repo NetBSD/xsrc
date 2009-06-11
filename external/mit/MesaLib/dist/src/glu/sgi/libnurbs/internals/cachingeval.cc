@@ -35,8 +35,6 @@
 /*
  * cachingeval.c++
  *
- * $Date: 2008/07/29 05:10:36 $ $Revision: 1.1.1.1 $
- * $Header: /cvsroot/xsrc/external/mit/MesaLib/dist/src/glu/sgi/libnurbs/internals/Attic/cachingeval.cc,v 1.1.1.1 2008/07/29 05:10:36 mrg Exp $
  */
 
 #include "cachingeval.h"

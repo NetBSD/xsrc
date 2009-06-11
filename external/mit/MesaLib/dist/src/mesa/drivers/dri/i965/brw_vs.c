@@ -73,20 +73,19 @@ static void do_vs_prog( struct brw_context *brw,
     */
    program = brw_get_program(&c.func, &program_size);
 
-   /*
-    */
-   brw->vs.prog_gs_offset = brw_upload_cache( &brw->cache[BRW_VS_PROG],
-					      &c.key,
-					      sizeof(c.key),
-					      program,
-					      program_size,
-					      &c.prog_data,
-					      &brw->vs.prog_data);
+   dri_bo_unreference(brw->vs.prog_bo);
+   brw->vs.prog_bo = brw_upload_cache( &brw->cache, BRW_VS_PROG,
+				       &c.key, sizeof(c.key),
+				       NULL, 0,
+				       program, program_size,
+				       &c.prog_data,
+				       &brw->vs.prog_data );
 }
 
 
-static void brw_upload_vs_prog( struct brw_context *brw )
+static void brw_upload_vs_prog(struct brw_context *brw)
 {
+   GLcontext *ctx = &brw->intel.ctx;
    struct brw_vs_prog_key key;
    struct brw_vertex_program *vp = 
       (struct brw_vertex_program *)brw->vertex_program;
@@ -99,24 +98,19 @@ static void brw_upload_vs_prog( struct brw_context *brw )
     * the inputs it asks for, whether they are varying or not.
     */
    key.program_string_id = vp->id;
-   key.nr_userclip = brw_count_bits(brw->attribs.Transform->ClipPlanesEnabled);
-   key.copy_edgeflag = (brw->attribs.Polygon->FrontMode != GL_FILL ||
-			brw->attribs.Polygon->BackMode != GL_FILL);
-
-   /* BRW_NEW_METAOPS
-    */
-   if (brw->metaops.active)
-      key.know_w_is_one = 1;
+   key.nr_userclip = brw_count_bits(ctx->Transform.ClipPlanesEnabled);
+   key.copy_edgeflag = (ctx->Polygon.FrontMode != GL_FILL ||
+			ctx->Polygon.BackMode != GL_FILL);
 
    /* Make an early check for the key.
     */
-   if (brw_search_cache(&brw->cache[BRW_VS_PROG], 
-			&key, sizeof(key),
-			&brw->vs.prog_data,
-			&brw->vs.prog_gs_offset))
-       return;
-
-   do_vs_prog(brw, vp, &key);
+   dri_bo_unreference(brw->vs.prog_bo);
+   brw->vs.prog_bo = brw_search_cache(&brw->cache, BRW_VS_PROG,
+				      &key, sizeof(key),
+				      NULL, 0,
+				      &brw->vs.prog_data);
+   if (brw->vs.prog_bo == NULL)
+      do_vs_prog(brw, vp, &key);
 }
 
 
@@ -125,8 +119,8 @@ static void brw_upload_vs_prog( struct brw_context *brw )
 const struct brw_tracked_state brw_vs_prog = {
    .dirty = {
       .mesa  = _NEW_TRANSFORM | _NEW_POLYGON,
-      .brw   = BRW_NEW_VERTEX_PROGRAM | BRW_NEW_METAOPS,
+      .brw   = BRW_NEW_VERTEX_PROGRAM,
       .cache = 0
    },
-   .update = brw_upload_vs_prog
+   .prepare = brw_upload_vs_prog
 };

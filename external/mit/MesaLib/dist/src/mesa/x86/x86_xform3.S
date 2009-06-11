@@ -1,4 +1,3 @@
-/* $Id: x86_xform3.S,v 1.1.1.1 2008/07/29 05:10:24 mrg Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -30,6 +29,7 @@
  * in there will break the build on some platforms.
  */
 
+#include "assyntax.h"
 #include "matypes.h"
 #include "xform_args.h"
 

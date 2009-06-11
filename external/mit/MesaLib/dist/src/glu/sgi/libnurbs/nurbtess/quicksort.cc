@@ -31,10 +31,8 @@
 ** published by SGI, but has not been independently verified as being
 ** compliant with the OpenGL(R) version 1.2.1 Specification.
 **
-** $Date: 2008/07/29 05:10:40 $ $Revision: 1.1.1.1 $
 */
 /*
-** $Header: /cvsroot/xsrc/external/mit/MesaLib/dist/src/glu/sgi/libnurbs/nurbtess/Attic/quicksort.cc,v 1.1.1.1 2008/07/29 05:10:40 mrg Exp $
 */
 
 #include <stdlib.h>
