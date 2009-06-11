@@ -7,10 +7,6 @@
  */
 
 /*
- * $Log: ugltexcyl.c,v $
- * Revision 1.1.1.1  2008/07/29 05:07:11  mrg
- * initial import of MesaDemos-7.0.3
- *
  * Revision 1.2  2001/09/10 19:21:13  brianp
  * WindML updates (Stephane Raimbault)
  *
