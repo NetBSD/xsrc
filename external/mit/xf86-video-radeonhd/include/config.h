@@ -53,7 +53,7 @@
 #define HAVE_UNISTD_H 1
 
 /* Define to 1 if you have <${sdkdir}/xf86_ansic.h>. */
-#define HAVE_XF86_ANSIC_H 1
+/* #undef HAVE_XF86_ANSIC_H */
 
 /* Define to the sub-directory in which libtool stores uninstalled libraries.
    */
