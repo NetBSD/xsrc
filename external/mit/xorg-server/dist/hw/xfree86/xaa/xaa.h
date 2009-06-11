@@ -2,6 +2,10 @@
 #ifndef _XAA_H
 #define _XAA_H
 
+#define XAA_VERSION_MAJOR   1
+#define XAA_VERSION_MINOR   2
+#define XAA_VERSION_RELEASE 1
+
 /*
 
    ******** OPERATION SPECIFIC FLAGS *********
@@ -1238,8 +1242,6 @@ typedef struct _XAAInfoRec {
 
    GetImageProcPtr GetImage;
    GetSpansProcPtr GetSpans;
-   PaintWindowBackgroundProcPtr PaintWindowBackground;
-   PaintWindowBorderProcPtr PaintWindowBorder;
    CopyWindowProcPtr CopyWindow;
    BackingStoreSaveAreasProcPtr SaveAreas;
    BackingStoreRestoreAreasProcPtr RestoreAreas;

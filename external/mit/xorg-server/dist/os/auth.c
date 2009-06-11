@@ -42,9 +42,6 @@ from The Open Group.
 # include   "dixstruct.h"
 # include   <sys/types.h>
 # include   <sys/stat.h>
-#ifdef XCSECURITY
-# include   "securitysrv.h"
-#endif
 #ifdef WIN32
 #include    <X11/Xw32defs.h>
 #endif
@@ -87,14 +84,6 @@ static struct protocol   protocols[] = {
 #ifdef XCSECURITY
 		NULL
 #endif
-},
-#endif
-#ifdef XCSECURITY
-{   (unsigned short) XSecurityAuthorizationNameLen,
-	XSecurityAuthorizationName,
-		NULL, AuthSecurityCheck, NULL,
-		NULL, NULL, NULL,
-		NULL
 },
 #endif
 };
@@ -325,41 +314,14 @@ GenerateAuthorization(
     return -1;
 }
 
-/* A random number generator that is more unpredictable
-   than that shipped with some systems.
-   This code is taken from the C standard. */
-
-static unsigned long int next = 1;
-
-static int
-xdm_rand(void)
-{
-    next = next * 1103515245 + 12345;
-    return (unsigned int)(next/65536) % 32768;
-}
-
-static void
-xdm_srand(unsigned int seed)
-{
-    next = seed;
-}
-
 void
 GenerateRandomData (int len, char *buf)
 {
-    static int seed;
-    int value;
-    int i;
+    int fd;
 
-    seed += GetTimeInMillis();
-    xdm_srand (seed);
-    for (i = 0; i < len; i++)
-    {
-	value = xdm_rand ();
-	buf[i] ^= (value & 0xff00) >> 8;
-    }
-
-    /* XXX add getrusage, popen("ps -ale") */
+    fd = open("/dev/urandom", O_RDONLY);
+    read(fd, buf, len);
+    close(fd);
 }
 
 #endif /* XCSECURITY */

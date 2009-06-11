@@ -28,7 +28,7 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 extern void SetCriticalEvent(int /* event */);
 
-extern CursorPtr GetSpriteCursor(void);
+extern CursorPtr GetSpriteCursor(DeviceIntPtr /*pDev*/);
 
 extern int ProcAllowEvents(ClientPtr /* client */);
 
@@ -40,28 +40,6 @@ extern int MaybeDeliverEventsToClient(
 	ClientPtr              /* dontClient */);
 
 extern int ProcWarpPointer(ClientPtr /* client */);
-
-#if 0
-extern void
-#ifdef XKB
-CoreProcessKeyboardEvent (
-#else
-ProcessKeyboardEvent (
-#endif
-	xEvent *               /* xE */,
-	DeviceIntPtr           /* keybd */,
-	int                    /* count */);
-
-extern void
-#ifdef XKB
-CoreProcessPointerEvent (
-#else
-ProcessPointerEvent (
-#endif
-	xEvent *               /* xE */,
-	DeviceIntPtr           /* mouse */,
-	int                    /* count */);
-#endif
 
 extern int EventSelectForWindow(
 	WindowPtr              /* pWin */,
@@ -103,7 +81,11 @@ extern int ProcUngrabButton(ClientPtr /* client */);
 extern int ProcRecolorCursor(ClientPtr /* client */);
 
 #ifdef PANORAMIX
-extern void PostSyntheticMotion(int x, int y, int screen, unsigned long time);
+extern void PostSyntheticMotion(DeviceIntPtr pDev, 
+                                int x, 
+                                int y, 
+                                int screen,
+                                unsigned long time);
 #endif
 
 #endif /* DIXEVENTS_H */

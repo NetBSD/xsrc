@@ -42,6 +42,8 @@
 #include <dix-config.h>
 #endif
 
+#include <pciaccess.h>
+
 #include "xf86str.h"
 #include "xf86Opt.h"
 #include <X11/Xfuncproto.h>
@@ -54,24 +56,26 @@
 
 /* General parameters */
 extern int xf86DoConfigure;
+extern int xf86DoShowOptions;
+extern Bool xf86DoModalias;
 extern Bool xf86DoConfigurePass1;
-extern int xf86ScreenIndex;		/* Index into pScreen.devPrivates */
-extern int xf86CreateRootWindowIndex;	/* Index into pScreen.devPrivates */
-extern int xf86PixmapIndex;
+extern DevPrivateKey xf86ScreenKey;
+extern DevPrivateKey xf86CreateRootWindowKey;
+extern DevPrivateKey xf86PixmapKey;
 extern ScrnInfoPtr *xf86Screens;	/* List of pointers to ScrnInfoRecs */
 extern const unsigned char byte_reversed[256];
 extern ScrnInfoPtr xf86CurrentScreen;
 extern Bool pciSlotClaimed;
-extern Bool isaSlotClaimed;
 extern Bool fbSlotClaimed;
 #if defined(__sparc__) || defined(__sparc)
 extern Bool sbusSlotClaimed;
 #endif
 extern confDRIRec xf86ConfigDRI;
 extern Bool xf86inSuspend;
+extern Bool xf86DRI2Enabled(void);
 
-#define XF86SCRNINFO(p) ((ScrnInfoPtr)((p)->devPrivates[xf86ScreenIndex].ptr))
-
+#define XF86SCRNINFO(p) ((ScrnInfoPtr)dixLookupPrivate(&(p)->devPrivates, \
+						       xf86ScreenKey))
 #define XF86FLIP_PIXELS() \
 	do { \
 	    if (xf86GetFlipPixels()) { \
@@ -90,32 +94,22 @@ extern Bool xf86inSuspend;
 
 /* xf86Bus.c */
 
-Bool xf86CheckPciSlot(int bus, int device, int func);
-int xf86ClaimPciSlot(int bus, int device, int func, DriverPtr drvp,
+Bool xf86CheckPciSlot( const struct pci_device * );
+int xf86ClaimPciSlot( struct pci_device *, DriverPtr drvp,
 		     int chipset, GDevPtr dev, Bool active);
 Bool xf86ParsePciBusString(const char *busID, int *bus, int *device,
 			   int *func);
 Bool xf86ComparePciBusString(const char *busID, int bus, int device, int func);
 void xf86FormatPciBusNumber(int busnum, char *buffer);
-pciVideoPtr *xf86GetPciVideoInfo(void);
-pciConfigPtr *xf86GetPciConfigInfo(void);
-void xf86SetPciVideo(pciVideoPtr, resType);
-void xf86PrintResList(int verb, resPtr list);
 resPtr xf86AddRangesToList(resPtr list, resRange *pRange, int entityIndex);
-int xf86ClaimIsaSlot(DriverPtr drvp, int chipset, GDevPtr dev, Bool active);
-int xf86GetIsaInfoForScreen(int scrnIndex);
 int  xf86GetFbInfoForScreen(int scrnIndex);
-Bool xf86ParseIsaBusString(const char *busID);
 int xf86ClaimFbSlot(DriverPtr drvp, int chipset, GDevPtr dev, Bool active);
 int xf86ClaimNoSlot(DriverPtr drvp, int chipset, GDevPtr dev, Bool active);
 void xf86EnableAccess(ScrnInfoPtr pScrn);
 void xf86SetCurrentAccess(Bool Enable, ScrnInfoPtr pScrn);
-Bool xf86IsPrimaryPci(pciVideoPtr pPci);
-Bool xf86IsPrimaryIsa(void);
+Bool xf86IsPrimaryPci(struct pci_device * pPci);
 /* new RAC */
 resPtr xf86AddResToList(resPtr rlist, resRange *Range, int entityIndex);
-resPtr xf86JoinResLists(resPtr rlist1, resPtr rlist2);
-resPtr xf86DupResList(const resPtr rlist);
 void xf86FreeResList(resPtr rlist);
 void xf86ClaimFixedResources(resList list, int entityIndex);
 Bool xf86DriverHasEntities(DriverPtr drvp);
@@ -126,37 +120,22 @@ int xf86GetNumEntityInstances(int entityIndex);
 GDevPtr xf86GetDevFromEntity(int entityIndex, int instance);
 void xf86RemoveEntityFromScreen(ScrnInfoPtr pScrn, int entityIndex);
 EntityInfoPtr xf86GetEntityInfo(int entityIndex);
-pciVideoPtr xf86GetPciInfoForEntity(int entityIndex);
-int xf86GetPciEntity(int bus, int dev, int func);
+struct pci_device * xf86GetPciInfoForEntity(int entityIndex);
 Bool xf86SetEntityFuncs(int entityIndex, EntityProc init,
 			EntityProc enter, EntityProc leave, pointer);
 void xf86DeallocateResourcesForEntity(int entityIndex, unsigned long type);
 resPtr xf86RegisterResources(int entityIndex, resList list,
 			     unsigned long Access);
-Bool xf86CheckPciMemBase(pciVideoPtr pPci, memType base);
+Bool xf86CheckPciMemBase(struct pci_device * pPci, memType base);
 void xf86SetAccessFuncs(EntityInfoPtr pEnt, xf86SetAccessFuncPtr funcs,
 			xf86SetAccessFuncPtr oldFuncs);
 Bool xf86IsEntityPrimary(int entityIndex);
-Bool xf86FixPciResource(int entityIndex, int prt, memType alignment,
-			unsigned long type);
 resPtr xf86ReallocatePciResources(int entityIndex, resPtr pRes);
 resPtr xf86SetOperatingState(resList list, int entityIndex, int mask);
 void xf86EnterServerState(xf86State state);
-resRange xf86GetBlock(unsigned long type, memType size,
-		      memType window_start, memType window_end,
-		      memType align_mask, resPtr avoid);
-resRange xf86GetSparse(unsigned long type, memType fixed_bits,
-		       memType decode_mask, memType address_mask,
-		       resPtr avoid);
-memType xf86ChkConflict(resRange *rgp, int entityIndex);
-Bool xf86IsPciDevPresent(int bus, int dev, int func);
 ScrnInfoPtr xf86FindScreenForEntity(int entityIndex);
 Bool xf86NoSharedResources(int screenIndex, resType res);
 resPtr xf86FindIntersectOfLists(resPtr l1, resPtr l2);
-pciVideoPtr xf86FindPciDeviceVendor(CARD16 vendorID, CARD16 deviceID,
-				    char n, pciVideoPtr pvp_exclude);
-pciVideoPtr xf86FindPciClass(CARD8 intf, CARD8 subClass, CARD16 class,
-			     char n, pciVideoPtr pvp_exclude);
 void xf86RegisterStateChangeNotificationCallback(xf86StateChangeNotificationCallbackFunc func, pointer arg);
 Bool xf86DeregisterStateChangeNotificationCallback(xf86StateChangeNotificationCallbackFunc func);
 
@@ -175,8 +154,6 @@ DevUnion *xf86GetEntityPrivate(int entityIndex, int privIndex);
 /* xf86Configure.c */
 GDevPtr xf86AddBusDeviceToConfigure(const char *driver, BusType bus,
 				    void *busData, int chipset);
-GDevPtr xf86AddDeviceToConfigure(const char *driver, pciVideoPtr pVideo,
-				 int chipset);
 
 /* xf86Cursor.c */
 
@@ -218,8 +195,8 @@ void xf86EnableGeneralHandler(pointer handler);
 void xf86InterceptSignals(int *signo);
 void xf86InterceptSigIll(void (*sigillhandler)(void));
 Bool xf86EnableVTSwitch(Bool new);
-Bool xf86CommonSpecialKey(int key, Bool down, int modifiers);
 void xf86ProcessActionEvent(ActionEvent action, void *arg);
+void xf86PrintBacktrace(void);
 
 /* xf86Helper.c */
 
@@ -259,10 +236,6 @@ int xf86MatchPciInstances(const char *driverName, int vendorID,
 		      SymTabPtr chipsets, PciChipsets *PCIchipsets,
 		      GDevPtr *devList, int numDevs, DriverPtr drvp,
 		      int **foundEntities);
-int xf86MatchIsaInstances(const char *driverName, SymTabPtr chipsets,
-			  IsaChipsets *ISAchipsets, DriverPtr drvp,
-			  FindIsaDevProc FindIsaDevice, GDevPtr *devList,
-			  int numDevs, int **foundEntities);
 void xf86GetClocks(ScrnInfoPtr pScrn, int num,
 		   Bool (*ClockFunc)(ScrnInfoPtr, int),
 		   void (*ProtectRegs)(ScrnInfoPtr, Bool),
@@ -291,7 +264,6 @@ Bool xf86GetModInDevEnabled(void);
 Bool xf86GetAllowMouseOpenFail(void);
 Bool xf86IsPc98(void);
 void xf86DisableRandR(void);
-CARD32 xf86GetVersion(void);
 CARD32 xorgGetVersion(void);
 CARD32 xf86GetModuleVersion(pointer module);
 pointer xf86LoadDrvSubModule(DriverPtr drv, const char *name);
@@ -314,11 +286,6 @@ ScrnInfoPtr xf86ConfigPciEntity(ScrnInfoPtr pScrn, int scrnFlag,
 				resList res, EntityProc init,
 				EntityProc enter, EntityProc leave,
 				pointer private);
-ScrnInfoPtr xf86ConfigIsaEntity(ScrnInfoPtr pScrn, int scrnFlag,
-				int entityIndex, IsaChipsets *i_chip,
-				resList res, EntityProc init,
-				EntityProc enter, EntityProc leave,
-				pointer private);
 ScrnInfoPtr xf86ConfigFbEntity(ScrnInfoPtr pScrn, int scrnFlag,
 			       int entityIndex, EntityProc init,
 			       EntityProc enter, EntityProc leave,
@@ -330,16 +297,7 @@ Bool xf86ConfigActivePciEntity(ScrnInfoPtr pScrn,
 				EntityProc enter, EntityProc leave,
 				pointer private);
 /* Obsolete! don't use */
-Bool xf86ConfigActiveIsaEntity(ScrnInfoPtr pScrn,
-				int entityIndex, IsaChipsets *i_chip,
-				resList res, EntityProc init,
-				EntityProc enter, EntityProc leave,
-				pointer private);
 void xf86ConfigPciEntityInactive(EntityInfoPtr pEnt, PciChipsets *p_chip,
-				 resList res, EntityProc init,
-				 EntityProc enter, EntityProc leave,
-				 pointer private);
-void xf86ConfigIsaEntityInactive(EntityInfoPtr pEnt, IsaChipsets *i_chip,
 				 resList res, EntityProc init,
 				 EntityProc enter, EntityProc leave,
 				 pointer private);
@@ -352,24 +310,8 @@ int  xf86RegisterRootWindowProperty(int ScrnIndex, Atom	property, Atom type,
 				    pointer value);
 Bool xf86IsUnblank(int mode);
 
-void xf86AddModuleInfo(ModuleInfoPtr info, pointer module);
-void xf86DeleteModuleInfo(int idx);
-
-/* xf86Debug.c */
-#ifdef BUILDDEBUG
-CARD8  xf86PeekFb8(CARD8  *p);
-CARD16 xf86PeekFb16(CARD16 *p);
-CARD32 xf86PeekFb32(CARD32 *p);
-void xf86PokeFb8(CARD8  *p, CARD8  v);
-void xf86PokeFb16(CARD16 *p, CARD16 v);
-void xf86PokeFb32(CARD16 *p, CARD32 v);
-CARD8  xf86PeekMmio8(pointer Base, unsigned long Offset);
-CARD16 xf86PeekMmio16(pointer Base, unsigned long Offset);
-CARD32 xf86PeekMmio32(pointer Base, unsigned long Offset);
-void xf86PokeMmio8(pointer Base, unsigned long Offset, CARD8  v);
-void xf86PokeMmio16(pointer Base, unsigned long Offset, CARD16 v);
-void xf86PokeMmio32(pointer Base, unsigned long Offset, CARD32 v);
-#endif
+_X_DEPRECATED void xf86AddModuleInfo(pointer info, pointer module);
+_X_DEPRECATED void xf86DeleteModuleInfo(int idx);
 
 /* xf86Init.c */
 
@@ -402,13 +344,14 @@ void xf86PruneDriverModes(ScrnInfoPtr scrp);
 void xf86SetCrtcForModes(ScrnInfoPtr scrp, int adjustFlags);
 void xf86PrintModes(ScrnInfoPtr scrp);
 void xf86ShowClockRanges(ScrnInfoPtr scrp, ClockRangePtr clockRanges);
-double xf86ModeHSync(DisplayModePtr mode);
-double xf86ModeVRefresh(DisplayModePtr mode);
+double xf86ModeHSync(const DisplayModeRec *mode);
+double xf86ModeVRefresh(const DisplayModeRec *mode);
 void xf86SetModeDefaultName(DisplayModePtr mode);
 void xf86SetModeCrtc(DisplayModePtr p, int adjustFlags);
-DisplayModePtr xf86DuplicateMode(DisplayModePtr pMode);
+DisplayModePtr xf86DuplicateMode(const DisplayModeRec *pMode);
 DisplayModePtr xf86DuplicateModes(ScrnInfoPtr pScrn, DisplayModePtr modeList);
-Bool xf86ModesEqual(DisplayModePtr pMode1, DisplayModePtr pMode2);
+Bool xf86ModesEqual(const DisplayModeRec *pMode1,
+		    const DisplayModeRec *pMode2);
 void xf86PrintModeline(int scrnIndex,DisplayModePtr mode);
 DisplayModePtr xf86ModesAdd(DisplayModePtr modes, DisplayModePtr new);
 
@@ -430,12 +373,6 @@ Bool xf86RandRSetNewVirtualAndDimensions(ScreenPtr pScreen,
 /* xf86VidModeExtentionInit.c */
 
 Bool VidModeExtensionInit(ScreenPtr pScreen);
-
-/* xf86Versions.c */
-CARD32 xf86GetBuiltinInterfaceVersion(BuiltinInterface iface, int flag);
-Bool xf86RegisterBuiltinInterfaceVersion(BuiltinInterface iface,
-					 CARD32 version, int flags);
-
 
 #endif /* _NO_XF86_PROTOTYPES */
 

@@ -56,16 +56,13 @@ SOFTWARE.
 #include <dix-config.h>
 #endif
 
-#include <X11/X.h>	/* for inputstr.h    */
-#include <X11/Xproto.h>	/* Request macro     */
 #include "inputstr.h"	/* DeviceIntPtr      */
 #include <X11/extensions/XI.h>
 #include <X11/extensions/XIproto.h>
 #include "XIstubs.h"
 #include "windowstr.h"	/* window structure  */
-#include "extnsionst.h"
-#include "extinit.h"	/* LookupDeviceIntRec */
 #include "exglobals.h"
+#include "exevents.h"
 
 #include "opendev.h"
 
@@ -106,27 +103,23 @@ ProcXOpenDevice(ClientPtr client)
     REQUEST(xOpenDeviceReq);
     REQUEST_SIZE_MATCH(xOpenDeviceReq);
 
-    if (stuff->deviceid == inputInfo.pointer->id ||
-	stuff->deviceid == inputInfo.keyboard->id) {
-	SendErrorToClient(client, IReqCode, X_OpenDevice, 0, BadDevice);
-	return Success;
-    }
+    status = dixLookupDevice(&dev, stuff->deviceid, client, DixUseAccess);
 
-    if ((dev = LookupDeviceIntRec(stuff->deviceid)) == NULL) {	/* not open */
+    if (status == BadDevice) {  /* not open */
 	for (dev = inputInfo.off_devices; dev; dev = dev->next)
 	    if (dev->id == stuff->deviceid)
 		break;
-	if (dev == NULL) {
-	    SendErrorToClient(client, IReqCode, X_OpenDevice, 0, BadDevice);
-	    return Success;
-	}
-    }
+	if (dev == NULL)
+	    return BadDevice;
+    } else if (status != Success)
+	return status;
+
+    if (dev->isMaster)
+        return BadDevice;
 
     OpenInputDevice(dev, client, &status);
-    if (status != Success) {
-	SendErrorToClient(client, IReqCode, X_OpenDevice, 0, status);
-	return Success;
-    }
+    if (status != Success)
+	return status;
 
     rep.repType = X_Reply;
     rep.RepType = X_OpenDevice;

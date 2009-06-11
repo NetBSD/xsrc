@@ -37,16 +37,16 @@ XInputExtensionInit(
 	void
 	);
 
+Bool
+DeviceIsPointerType(
+        DeviceIntPtr dev
+        );
+
 void
 AssignTypeAndName (
 	DeviceIntPtr           /* dev */,
 	Atom                   /* type */,
 	char *                 /* name */
-	);
-
-DeviceIntPtr
-LookupDeviceIntRec (
-	CARD8                  /* id */
 	);
 
 #endif /* EXTINIT_H */

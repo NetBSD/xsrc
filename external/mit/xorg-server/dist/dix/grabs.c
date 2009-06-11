@@ -58,6 +58,7 @@ SOFTWARE.
 #include "inputstr.h"
 #include "cursorstr.h"
 #include "dixgrabs.h"
+#include "xace.h"
 
 #define BITMASK(i) (((Mask)1) << ((i) & 31))
 #define MASKIDX(i) ((i) >> 5)
@@ -87,10 +88,10 @@ CreateGrab(
 	return (GrabPtr)NULL;
     grab->resource = FakeClientID(client);
     grab->device = device;
-    grab->coreGrab = ((device == inputInfo.keyboard) ||
-		      (device == inputInfo.pointer));
+    grab->coreGrab = (type < LASTEvent);
     grab->window = window;
     grab->eventMask = eventMask;
+    grab->deviceMask = 0;
     grab->ownerEvents = ownerEvents;
     grab->keyboardMode = keyboardMode;
     grab->pointerMode = pointerMode;
@@ -104,6 +105,8 @@ CreateGrab(
     grab->detail.pMask = NULL;
     grab->confineTo = confineTo;
     grab->cursor = cursor;
+    grab->genericMasks = NULL;
+    grab->next = NULL;
     if (cursor)
 	cursor->refcnt++;
     return grab;
@@ -238,12 +241,28 @@ GrabSupersedesSecond(GrabPtr pFirstGrab, GrabPtr pSecondGrab)
     return FALSE;
 }
 
+/**
+ * Compares two grabs and returns TRUE if the first grab matches the second
+ * grab. 
+ * 
+ * A match is when 
+ *  - the devices set for the grab are equal (this is optional).
+ *  - the event types for both grabs are equal.
+ *  - XXX
+ *
+ * @param ignoreDevice TRUE if the device settings on the grabs are to be
+ * ignored.
+ * @return TRUE if the grabs match or FALSE otherwise.
+ */
 Bool
-GrabMatchesSecond(GrabPtr pFirstGrab, GrabPtr pSecondGrab)
+GrabMatchesSecond(GrabPtr pFirstGrab, GrabPtr pSecondGrab, Bool ignoreDevice)
 {
-    if ((pFirstGrab->device != pSecondGrab->device) ||
-	(pFirstGrab->modifierDevice != pSecondGrab->modifierDevice) ||
-	(pFirstGrab->type != pSecondGrab->type))
+    if (!ignoreDevice &&
+            ((pFirstGrab->device != pSecondGrab->device) ||
+             (pFirstGrab->modifierDevice != pSecondGrab->modifierDevice)))
+            return FALSE;
+
+    if (pFirstGrab->type != pSecondGrab->type)
 	return FALSE;
 
     if (GrabSupersedesSecond(pFirstGrab, pSecondGrab) ||
@@ -306,13 +325,15 @@ GrabsAreIdentical(GrabPtr pFirstGrab, GrabPtr pSecondGrab)
  * @return Success or X error code on failure.
  */
 int
-AddPassiveGrabToList(GrabPtr pGrab)
+AddPassiveGrabToList(ClientPtr client, GrabPtr pGrab)
 {
     GrabPtr grab;
+    Mask access_mode = DixGrabAccess;
+    int rc;
 
     for (grab = wPassiveGrabs(pGrab->window); grab; grab = grab->next)
     {
-	if (GrabMatchesSecond(pGrab, grab))
+	if (GrabMatchesSecond(pGrab, grab, FALSE))
 	{
 	    if (CLIENT_BITS(pGrab->resource) != CLIENT_BITS(grab->resource))
 	    {
@@ -321,6 +342,12 @@ AddPassiveGrabToList(GrabPtr pGrab)
 	    }
 	}
     }
+
+    if (pGrab->keyboardMode == GrabModeSync||pGrab->pointerMode == GrabModeSync)
+	access_mode |= DixFreezeAccess;
+    rc = XaceHook(XACE_DEVICE_ACCESS, client, pGrab->device, access_mode);
+    if (rc != Success)
+	return rc;
 
     /* Remove all grabs that match the new one exactly */
     for (grab = wPassiveGrabs(pGrab->window); grab; grab = grab->next)
@@ -369,16 +396,16 @@ DeletePassiveGrabFromList(GrabPtr pMinuendGrab)
 	i++;
     if (!i)
 	return TRUE;
-    deletes = (GrabPtr *)ALLOCATE_LOCAL(i * sizeof(GrabPtr));
-    adds = (GrabPtr *)ALLOCATE_LOCAL(i * sizeof(GrabPtr));
-    updates = (Mask ***)ALLOCATE_LOCAL(i * sizeof(Mask **));
-    details = (Mask **)ALLOCATE_LOCAL(i * sizeof(Mask *));
+    deletes = (GrabPtr *)xalloc(i * sizeof(GrabPtr));
+    adds = (GrabPtr *)xalloc(i * sizeof(GrabPtr));
+    updates = (Mask ***)xalloc(i * sizeof(Mask **));
+    details = (Mask **)xalloc(i * sizeof(Mask *));
     if (!deletes || !adds || !updates || !details)
     {
-	if (details) DEALLOCATE_LOCAL(details);
-	if (updates) DEALLOCATE_LOCAL(updates);
-	if (adds) DEALLOCATE_LOCAL(adds);
-	if (deletes) DEALLOCATE_LOCAL(deletes);
+	if (details) xfree(details);
+	if (updates) xfree(updates);
+	if (adds) xfree(adds);
+	if (deletes) xfree(deletes);
 	return FALSE;
     }
     ndels = nadds = nups = 0;
@@ -388,7 +415,7 @@ DeletePassiveGrabFromList(GrabPtr pMinuendGrab)
 	 grab = grab->next)
     {
 	if ((CLIENT_BITS(grab->resource) != CLIENT_BITS(pMinuendGrab->resource)) ||
-	    !GrabMatchesSecond(grab, pMinuendGrab))
+	    !GrabMatchesSecond(grab, pMinuendGrab, (grab->coreGrab)))
 	    continue;
 	if (GrabSupersedesSecond(pMinuendGrab, grab))
 	{
@@ -473,10 +500,10 @@ DeletePassiveGrabFromList(GrabPtr pMinuendGrab)
 	    *updates[i] = details[i];
 	}
     }
-    DEALLOCATE_LOCAL(details);
-    DEALLOCATE_LOCAL(updates);
-    DEALLOCATE_LOCAL(adds);
-    DEALLOCATE_LOCAL(deletes);
+    xfree(details);
+    xfree(updates);
+    xfree(adds);
+    xfree(deletes);
     return ok;
 
 #undef UPDATE

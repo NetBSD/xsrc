@@ -73,25 +73,16 @@
 #define DMXEXT
 
 /* Disable the extensions that are not currently supported */
-#undef BEZIER
-#undef PEXEXT
 #undef MULTIBUFFER
 #undef XV
-#undef XIE
 #undef DBE
 #undef XF86VIDMODE
-#undef XF86MISC
 #undef XFreeXDGA
 #undef XF86DRI
-#undef MITSHM
-#undef TOGCUP
-#undef DPSEXT
-#undef MITMISC
 #undef SCREENSAVER
 #undef RANDR
 #undef XFIXES
 #undef DAMAGE
 #undef COMPOSITE
-#undef FONTCACHE
 
 #endif /* DMX_CONFIG_H */

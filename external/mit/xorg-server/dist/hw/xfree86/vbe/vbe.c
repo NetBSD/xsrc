@@ -1019,7 +1019,7 @@ VBEGetPixelClock(vbeInfoPtr pVbe, int mode, int clock)
     /*
     Input:
 	AX := 4F0Bh VBE Get Pixel Clock
-	BL := 01h Get Pixel Clock
+	BL := 00h Get Pixel Clock
 	ECX := pixel clock in units of Hz
         DX := mode number
      
@@ -1030,7 +1030,7 @@ VBEGetPixelClock(vbeInfoPtr pVbe, int mode, int clock)
 
     pVbe->pInt10->num = 0x10;
     pVbe->pInt10->ax = 0x4f0b;
-    pVbe->pInt10->bx = 0x01;
+    pVbe->pInt10->bx = 0x00;
     pVbe->pInt10->cx = clock;
     pVbe->pInt10->dx = mode;
     xf86ExecX86int10(pVbe->pInt10);
@@ -1108,7 +1108,7 @@ VBEReadPanelID(vbeInfoPtr pVbe)
 {
     int RealOff = pVbe->real_mode_base;
     pointer page = pVbe->memory;
-    unsigned char *tmp = NULL;
+    void *tmp = NULL;
     int screen = pVbe->pInt10->scrnIndex;
 
     pVbe->pInt10->ax = 0x4F11;
@@ -1129,8 +1129,8 @@ VBEReadPanelID(vbeInfoPtr pVbe)
     switch (pVbe->pInt10->ax & 0xff00) {
     case 0x0:
 	xf86DrvMsgVerb(screen,X_INFO,3,"VESA VBE PanelID read successfully\n");
-	tmp = (unsigned char *)xnfalloc(32); 
-	memcpy(tmp,page,32); 
+	tmp = xnfalloc(32); 
+	memcpy(tmp, page, 32); 
 	break;
     case 0x100:
 	xf86DrvMsgVerb(screen,X_INFO,3,"VESA VBE PanelID read failed\n");       

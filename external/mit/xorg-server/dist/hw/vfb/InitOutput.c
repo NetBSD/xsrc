@@ -179,8 +179,8 @@ ddxGiveUp()
 	    if (-1 == unlink(vfbScreens[i].mmap_file))
 	    {
 		perror("unlink");
-		ErrorF("unlink %s failed, errno %d",
-		       vfbScreens[i].mmap_file, errno);
+		ErrorF("unlink %s failed, %s",
+		       vfbScreens[i].mmap_file, strerror(errno));
 	    }
 	}
 	break;
@@ -196,7 +196,7 @@ ddxGiveUp()
 	    if (-1 == shmdt((char *)vfbScreens[i].pXWDHeader))
 	    {
 		perror("shmdt");
-		ErrorF("shmdt failed, errno %d", errno);
+		ErrorF("shmdt failed, %s", strerror(errno));
 	    }
 	}
 	break;
@@ -220,26 +220,10 @@ AbortDDX()
     ddxGiveUp();
 }
 
-#ifdef __DARWIN__
+#ifdef __APPLE__
 void
 DarwinHandleGUI(int argc, char *argv[])
 {
-}
-
-void GlxExtensionInit();
-void GlxWrapInitVisuals(void *procPtr);
-
-void
-DarwinGlxExtensionInit()
-{
-    GlxExtensionInit();
-}
-
-void
-DarwinGlxWrapInitVisuals(
-    void *procPtr)
-{
-    GlxWrapInitVisuals(procPtr);
 }
 #endif
 
@@ -280,11 +264,6 @@ ddxUseMsg()
 #ifdef HAS_SHM
     ErrorF("-shmem                 put framebuffers in shared memory\n");
 #endif
-}
-
-/* ddxInitGlobals - called by |InitGlobals| from os/util.c */
-void ddxInitGlobals(void)
-{
 }
 
 int
@@ -498,9 +477,9 @@ vfbInstallColormap(ColormapPtr pmap)
 	swapcopy32(pXWDHeader->bits_per_rgb, pVisual->bitsPerRGBValue);
 	swapcopy32(pXWDHeader->colormap_entries, pVisual->ColormapEntries);
 
-	ppix = (Pixel *)ALLOCATE_LOCAL(entries * sizeof(Pixel));
-	prgb = (xrgb *)ALLOCATE_LOCAL(entries * sizeof(xrgb));
-	defs = (xColorItem *)ALLOCATE_LOCAL(entries * sizeof(xColorItem));
+	ppix = (Pixel *)xalloc(entries * sizeof(Pixel));
+	prgb = (xrgb *)xalloc(entries * sizeof(xrgb));
+	defs = (xColorItem *)xalloc(entries * sizeof(xColorItem));
 
 	for (i = 0; i < entries; i++)  ppix[i] = i;
 	/* XXX truecolor */
@@ -515,9 +494,9 @@ vfbInstallColormap(ColormapPtr pmap)
 	}
 	(*pmap->pScreen->StoreColors)(pmap, entries, defs);
 
-	DEALLOCATE_LOCAL(ppix);
-	DEALLOCATE_LOCAL(prgb);
-	DEALLOCATE_LOCAL(defs);
+	xfree(ppix);
+	xfree(prgb);
+	xfree(defs);
     }
 }
 
@@ -598,7 +577,7 @@ vfbBlockHandler(pointer blockData, OSTimePtr pTimeout, pointer pReadmask)
 #endif
 	{
 	    perror("msync");
-	    ErrorF("msync failed, errno %d", errno);
+	    ErrorF("msync failed, %s", strerror(errno));
 	}
     }
 }
@@ -621,7 +600,7 @@ vfbAllocateMmappedFramebuffer(vfbScreenInfoPtr pvfb)
     if (-1 == (pvfb->mmap_fd = open(pvfb->mmap_file, O_CREAT|O_RDWR, 0666)))
     {
 	perror("open");
-	ErrorF("open %s failed, errno %d", pvfb->mmap_file, errno);
+	ErrorF("open %s failed, %s", pvfb->mmap_file, strerror(errno));
 	return;
     }
 
@@ -637,7 +616,7 @@ vfbAllocateMmappedFramebuffer(vfbScreenInfoPtr pvfb)
 	if (-1 == write(pvfb->mmap_fd, dummyBuffer, writeThisTime))
 	{
 	    perror("write");
-	    ErrorF("write %s failed, errno %d", pvfb->mmap_file, errno);
+	    ErrorF("write %s failed, %s", pvfb->mmap_file, strerror(errno));
 	    return;
 	}
     }
@@ -651,7 +630,7 @@ vfbAllocateMmappedFramebuffer(vfbScreenInfoPtr pvfb)
     if (-1 == (long)pvfb->pXWDHeader)
     {
 	perror("mmap");
-	ErrorF("mmap %s failed, errno %d", pvfb->mmap_file, errno);
+	ErrorF("mmap %s failed, %s", pvfb->mmap_file, strerror(errno));
 	pvfb->pXWDHeader = NULL;
 	return;
     }
@@ -675,7 +654,7 @@ vfbAllocateSharedMemoryFramebuffer(vfbScreenInfoPtr pvfb)
     if (pvfb->shmid < 0)
     {
 	perror("shmget");
-	ErrorF("shmget %d bytes failed, errno %d", pvfb->sizeInBytes, errno);
+	ErrorF("shmget %d bytes failed, %s", pvfb->sizeInBytes, strerror(errno));
 	return;
     }
 
@@ -685,7 +664,7 @@ vfbAllocateSharedMemoryFramebuffer(vfbScreenInfoPtr pvfb)
     if (-1 == (long)pvfb->pXWDHeader)
     {
 	perror("shmat");
-	ErrorF("shmat failed, errno %d", errno);
+	ErrorF("shmat failed, %s", strerror(errno));
 	pvfb->pXWDHeader = NULL; 
 	return;
     }
@@ -1043,8 +1022,3 @@ InitOutput(ScreenInfo *screenInfo, int argc, char **argv)
     }
 
 } /* end InitOutput */
-
-/* this is just to get the server to link on AIX */
-#ifdef AIXV3
-int SelectWaitTime = 10000; /* usec */
-#endif

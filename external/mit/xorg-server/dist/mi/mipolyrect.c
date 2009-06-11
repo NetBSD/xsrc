@@ -56,11 +56,7 @@ SOFTWARE.
 #include "mi.h"
 
 _X_EXPORT void
-miPolyRectangle(pDraw, pGC, nrects, pRects)
-    DrawablePtr	pDraw;
-    GCPtr	pGC;
-    int		nrects;
-    xRectangle	*pRects;
+miPolyRectangle(DrawablePtr pDraw, GCPtr pGC, int nrects, xRectangle *pRects)
 {
     int i;
     xRectangle *pR = pRects;
@@ -94,7 +90,7 @@ miPolyRectangle(pDraw, pGC, nrects, pRects)
 	offset2 = pGC->lineWidth;
 	offset1 = offset2 >> 1;
 	offset3 = offset2 - offset1;
-	tmp = (xRectangle *) ALLOCATE_LOCAL(ntmp * sizeof (xRectangle));
+	tmp = (xRectangle *) xalloc(ntmp * sizeof (xRectangle));
 	if (!tmp)
 	    return;
 	t = tmp;
@@ -162,7 +158,7 @@ miPolyRectangle(pDraw, pGC, nrects, pRects)
 	    }
 	}
 	(*pGC->ops->PolyFillRect) (pDraw, pGC, t - tmp, tmp);
-	DEALLOCATE_LOCAL ((pointer) tmp);
+	xfree ((pointer) tmp);
     }
     else
     {

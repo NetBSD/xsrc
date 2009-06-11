@@ -29,6 +29,7 @@
 #endif
 #include <mivalidate.h>
 #include <dixstruct.h>
+#include "privates.h"
 #ifdef RANDR
 #include <randrstr.h>
 #endif
@@ -66,15 +67,16 @@ KdDepths    kdDepths[] = {
 
 #define KD_DEFAULT_BUTTONS 5
 
-int                 kdScreenPrivateIndex;
-unsigned long       kdGeneration;
+static int          kdScreenPrivateKeyIndex;
+DevPrivateKey       kdScreenPrivateKey = &kdScreenPrivateKeyIndex;
+unsigned long	    kdGeneration;
 
 Bool                kdVideoTest;
 unsigned long       kdVideoTestTime;
 Bool		    kdEmulateMiddleButton;
 Bool		    kdRawPointerCoordinates;
 Bool		    kdDisableZaphod;
-Bool                kdDontZap;
+Bool                kdAllowZap;
 Bool		    kdEnabled;
 int		    kdSubpixelOrder;
 int		    kdVirtualTerminal = -1;
@@ -92,7 +94,6 @@ static Bool         kdCaughtSignal = FALSE;
  */
 
 KdOsFuncs	*kdOsFuncs;
-extern WindowPtr *WindowTable;
 
 void
 KdSetRootClip (ScreenPtr pScreen, BOOL enable)
@@ -101,10 +102,7 @@ KdSetRootClip (ScreenPtr pScreen, BOOL enable)
     WindowPtr	pChild;
     Bool	WasViewable;
     Bool	anyMarked = FALSE;
-    RegionPtr	pOldClip = 0, bsExposed;
-#ifdef DO_SAVE_UNDERS
-    Bool	dosave = FALSE;
-#endif
+    RegionPtr	pOldClip = 0;
     WindowPtr   pLayerWin;
     BoxRec	box;
 
@@ -159,12 +157,6 @@ KdSetRootClip (ScreenPtr pScreen, BOOL enable)
     
     if (WasViewable)
     {
-	if (pWin->backStorage)
-	{
-	    pOldClip = REGION_CREATE(pScreen, NullBox, 1);
-	    REGION_COPY(pScreen, pOldClip, &pWin->clipList);
-	}
-
 	if (pWin->firstChild)
 	{
 	    anyMarked |= (*pScreen->MarkOverlappedWindows)(pWin->firstChild,
@@ -177,47 +169,15 @@ KdSetRootClip (ScreenPtr pScreen, BOOL enable)
 	    anyMarked = TRUE;
 	}
 
-#ifdef DO_SAVE_UNDERS
-	if (DO_SAVE_UNDERS(pWin))
-	{
-	    dosave = (*pScreen->ChangeSaveUnder)(pLayerWin, pLayerWin);
-	}
-#endif /* DO_SAVE_UNDERS */
 
 	if (anyMarked)
 	    (*pScreen->ValidateTree)(pWin, NullWindow, VTOther);
     }
 
-    if (pWin->backStorage &&
-	((pWin->backingStore == Always) || WasViewable))
-    {
-	if (!WasViewable)
-	    pOldClip = &pWin->clipList; /* a convenient empty region */
-	bsExposed = (*pScreen->TranslateBackingStore)
-			     (pWin, 0, 0, pOldClip,
-			      pWin->drawable.x, pWin->drawable.y);
-	if (WasViewable)
-	    REGION_DESTROY(pScreen, pOldClip);
-	if (bsExposed)
-	{
-	    RegionPtr	valExposed = NullRegion;
-    
-	    if (pWin->valdata)
-		valExposed = &pWin->valdata->after.exposed;
-	    (*pScreen->WindowExposures) (pWin, valExposed, bsExposed);
-	    if (valExposed)
-		REGION_EMPTY(pScreen, valExposed);
-	    REGION_DESTROY(pScreen, bsExposed);
-	}
-    }
     if (WasViewable)
     {
 	if (anyMarked)
 	    (*pScreen->HandleExposures)(pWin);
-#ifdef DO_SAVE_UNDERS
-	if (dosave)
-	    (*pScreen->PostChangeSaveUnder)(pLayerWin, pLayerWin);
-#endif /* DO_SAVE_UNDERS */
 	if (anyMarked && pScreen->PostValidateTree)
 	    (*pScreen->PostValidateTree)(pWin, NullWindow, VTOther);
     }
@@ -235,7 +195,6 @@ KdDisableScreen (ScreenPtr pScreen)
     if (!pScreenPriv->closed)
 	KdSetRootClip (pScreen, FALSE);
     KdDisableColormap (pScreen);
-    KdOffscreenSwapOut (pScreen);
     if (!pScreenPriv->screen->dumb && pScreenPriv->card->cfuncs->disableAccel)
 	(*pScreenPriv->card->cfuncs->disableAccel) (pScreen);
     if (!pScreenPriv->screen->softCursor && pScreenPriv->card->cfuncs->disableCursor)
@@ -312,7 +271,6 @@ KdEnableScreen (ScreenPtr pScreen)
     pScreenPriv->enabled = TRUE;
     pScreenPriv->dpmsState = KD_DPMS_NORMAL;
     pScreenPriv->card->selected = pScreenPriv->screen->mynum;
-    KdOffscreenSwapIn (pScreen);    
     if (!pScreenPriv->screen->softCursor && pScreenPriv->card->cfuncs->enableCursor)
 	(*pScreenPriv->card->cfuncs->enableCursor) (pScreen);
     if (!pScreenPriv->screen->dumb && pScreenPriv->card->cfuncs->enableAccel)
@@ -609,7 +567,7 @@ KdUseMsg (void)
     ErrorF("-videoTest       Start the server, pause momentarily and exit\n");
     ErrorF("-origin X,Y      Locates the next screen in the the virtual screen (Xinerama)\n");
     ErrorF("-switchCmd       Command to execute on vt switch\n");
-    ErrorF("-nozap           Don't terminate server on Ctrl+Alt+Backspace\n");
+    ErrorF("-zap             Terminate server on Ctrl+Alt+Backspace\n");
     ErrorF("vtxx             Use virtual terminal xx instead of the next available\n");
 #ifdef PSEUDO8
     p8UseMsg ();
@@ -655,14 +613,9 @@ KdProcessArgument (int argc, char **argv, int i)
 	kdDisableZaphod = TRUE;
 	return 1;
     }
-    if (!strcmp (argv[i], "-nozap"))
+    if (!strcmp (argv[i], "-zap"))
     {
-	kdDontZap = TRUE;
-	return 1;
-    }
-    if (!strcmp (argv[i], "-nozap"))
-    {
-	kdDontZap = TRUE;
+	kdAllowZap = TRUE;
 	return 1;
     }
     if (!strcmp (argv[i], "-3button"))
@@ -784,14 +737,11 @@ KdAllocatePrivates (ScreenPtr pScreen)
     KdPrivScreenPtr	pScreenPriv;
     
     if (kdGeneration != serverGeneration)
-    {
-	kdScreenPrivateIndex = AllocateScreenPrivateIndex();
-	kdGeneration         = serverGeneration;
-    }
-    pScreenPriv = (KdPrivScreenPtr) xalloc(sizeof (*pScreenPriv));
+	kdGeneration = serverGeneration;
+
+    pScreenPriv = xcalloc(1, sizeof (*pScreenPriv));
     if (!pScreenPriv)
 	return FALSE;
-    memset (pScreenPriv, '\0', sizeof (KdPrivScreenRec));
     KdSetScreenPriv (pScreen, pScreenPriv);
     return TRUE;
 }
@@ -829,9 +779,6 @@ KdCloseScreen (int index, ScreenPtr pScreen)
         ret = (*pScreen->CloseScreen) (index, pScreen);
     else
 	ret = TRUE;
-    
-    if (screen->off_screen_base < screen->memory_size)
-	KdOffscreenFini (pScreen);
     
     if (pScreenPriv->dpmsState != KD_DPMS_NORMAL)
 	(*card->cfuncs->dpms) (pScreen, KD_DPMS_NORMAL);
@@ -1131,9 +1078,6 @@ KdScreenInit(int index, ScreenPtr pScreen, int argc, char **argv)
     if (!screen->dumb && card->cfuncs->initAccel)
 	if (!(*card->cfuncs->initAccel) (pScreen))
 	    screen->dumb = TRUE;
-
-    if (screen->off_screen_base < screen->memory_size)
-	KdOffscreenInit (pScreen);
     
 #ifdef PSEUDO8
     (void) p8Init (pScreen, PSEUDO8_USE_DEFAULT);
@@ -1427,9 +1371,14 @@ KdInitOutput (ScreenInfo    *pScreenInfo,
     signal(SIGSEGV, KdBacktrace);
 }
 
-#ifdef DPMSExtension
 void
-DPMSSet(int level)
+OsVendorFatalError(void)
+{
+}
+
+#ifdef DPMSExtension
+int
+DPMSSet(ClientPtr client, int level)
 {
 }
 
@@ -1445,6 +1394,4 @@ DPMSSupported (void)
     return FALSE;
 }
 #endif
-
-void ddxInitGlobals(void) { /* THANK YOU XPRINT */ }
 

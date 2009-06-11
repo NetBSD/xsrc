@@ -31,7 +31,6 @@
 #include "property.h"
 #include "propertyst.h"
 #include "xf86DDC.h"
-#include "xf86_ansic.h"
 
 #define EDID1_ATOM_NAME         "XFree86_DDC_EDID1_RAWDATA"
 #define EDID2_ATOM_NAME         "XFree86_DDC_EDID2_RAWDATA"
@@ -84,13 +83,18 @@ addRootWindowProperties(ScrnInfoPtr pScrn, xf86MonPtr DDC)
     }
 
     if (makeEDID1prop) {
-	if ((EDID1rawdata = xalloc(128*sizeof(CARD8)))==NULL)
+	int size = 128;
+
+	if (DDC->flags & EDID_COMPLETE_RAWDATA)
+	    size += DDC->no_sections * 128;
+
+	if ((EDID1rawdata = xalloc(size*sizeof(CARD8)))==NULL)
 	    return;
 
 	EDID1Atom = MakeAtom(EDID1_ATOM_NAME, sizeof(EDID1_ATOM_NAME) - 1, TRUE);
-	memcpy(EDID1rawdata, DDC->rawData, 128);
+	memcpy(EDID1rawdata, DDC->rawData, size);
 	xf86RegisterRootWindowProperty(scrnIndex, EDID1Atom, XA_INTEGER, 8,
-		128, (unsigned char *)EDID1rawdata);
+		size, (unsigned char *)EDID1rawdata);
     } 
 
     if (makeEDID2prop) {

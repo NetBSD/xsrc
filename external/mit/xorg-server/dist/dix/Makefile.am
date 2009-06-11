@@ -1,4 +1,4 @@
-noinst_LTLIBRARIES = libdix.la libxpstubs.la
+noinst_LTLIBRARIES = libdix.la
 
 AM_CFLAGS = $(DIX_CFLAGS) \
 	-DVENDOR_NAME=\""@VENDOR_NAME@"\" \
@@ -8,11 +8,14 @@ libdix_la_SOURCES = 	\
 	atom.c		\
 	colormap.c	\
 	cursor.c	\
+	deprecated.c	\
 	devices.c	\
 	dispatch.c	\
 	dispatch.h	\
 	dixfonts.c	\
 	dixutils.c	\
+	enterleave.c	\
+	enterleave.h	\
 	events.c	\
 	extension.c	\
 	ffs.c		\
@@ -26,19 +29,20 @@ libdix_la_SOURCES = 	\
 	pixmap.c	\
 	privates.c	\
 	property.c	\
+	ptrveloc.c	\
+	registry.c	\
 	resource.c	\
+	selection.c	\
 	swaprep.c	\
 	swapreq.c	\
 	tables.c	\
-	window.c	\
-	strcasecmp.c
+	window.c
 
-libxpstubs_la_SOURCES =	\
-	xpstubs.c
+EXTRA_DIST = buildatoms BuiltInAtoms Xserver.d Xserver-dtrace.h.in
 
-INCLUDES = -I$(top_srcdir)/Xprint
-
-EXTRA_DIST = buildatoms BuiltInAtoms CHANGES Xserver.d Xserver-dtrace.h.in
+# Install list of protocol names
+miscconfigdir = $(SERVER_MISC_CONFIG_PATH)
+dist_miscconfig_DATA = protocol.txt
 
 if XSERVER_DTRACE
 # Generate dtrace header file for C sources to include

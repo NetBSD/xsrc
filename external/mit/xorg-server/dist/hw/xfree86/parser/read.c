@@ -80,8 +80,6 @@ static xf86ConfigSymTabRec TopLevelTab[] =
 static int
 xf86validateConfig (XF86ConfigPtr p)
 {
-	if (!xf86validateDevice (p))
-		return FALSE;
 	if (!xf86validateScreen (p))
 		return FALSE;
 	if (!xf86validateInput (p))
@@ -102,7 +100,6 @@ xf86readConfigFile (void)
 	{
 		return NULL;
 	}
-	memset (ptr, 0, sizeof (XF86ConfigRec));
 
 	while ((token = xf86getToken (TopLevelTab)) != EOF_TOKEN)
 	{

@@ -36,12 +36,22 @@
 #include <stddef.h> /* For NULL */
 #include <limits.h> /* For CHAR_BIT */
 #include <assert.h>
+#ifdef __APPLE__
+//#include <X11/Xlib.h>
+#include <X11/Xatom.h>
+#include "mi.h"
+#include "pixmapstr.h"
+#include "windowstr.h"
+#include <Xplugin.h>
+//#include <X11/extensions/applewm.h>
+extern int darwinMainScreenX, darwinMainScreenY;
+#endif
+#include "fb.h"
+
+#define AppleWMNumWindowLevels 5
 
 #include "rootlessCommon.h"
 #include "rootlessWindow.h"
-
-#include "fb.h"
-
 
 #ifdef ROOTLESS_GLOBAL_COORDS
 #define SCREEN_TO_GLOBAL_X \
@@ -53,6 +63,123 @@
 #define SCREEN_TO_GLOBAL_Y 0
 #endif
 
+#define MAKE_WINDOW_ID(x)		((xp_window_id)((size_t)(x)))
+
+#define DEFINE_ATOM_HELPER(func,atom_name)                      \
+  static Atom func (void) {                                       \
+    static unsigned int generation = 0;                             \
+    static Atom atom;                                           \
+    if (generation != serverGeneration) {                       \
+      generation = serverGeneration;                          \
+      atom = MakeAtom (atom_name, strlen (atom_name), TRUE);  \
+    }                                                           \
+    return atom;                                                \
+  }
+
+DEFINE_ATOM_HELPER (xa_native_screen_origin, "_NATIVE_SCREEN_ORIGIN")
+DEFINE_ATOM_HELPER (xa_native_window_id, "_NATIVE_WINDOW_ID")
+DEFINE_ATOM_HELPER (xa_apple_no_order_in, "_APPLE_NO_ORDER_IN")
+
+static Bool no_configure_window;
+static Bool windows_hidden;
+// TODO - abstract xp functions
+
+static inline int
+configure_window (xp_window_id id, unsigned int mask,
+                  const xp_window_changes *values)
+{
+  if (!no_configure_window)
+    return xp_configure_window (id, mask, values);
+  else
+    return XP_Success;
+}
+
+/*static inline unsigned long
+current_time_in_seconds (void)
+{
+  unsigned long t = 0;
+
+  t += currentTime.milliseconds / 1000;
+  t += currentTime.months * 4294967;
+
+  return t;
+  } */
+
+static inline Bool
+rootlessHasRoot (ScreenPtr pScreen)
+{
+  return WINREC (WindowTable[pScreen->myNum]) != NULL;
+}
+
+void
+RootlessNativeWindowStateChanged (WindowPtr pWin, unsigned int state)
+{
+  RootlessWindowRec *winRec;
+
+  if (pWin == NULL) return;
+
+  winRec = WINREC (pWin);
+  if (winRec == NULL) return;
+
+  winRec->is_offscreen = ((state & XP_WINDOW_STATE_OFFSCREEN) != 0);
+  winRec->is_obscured = ((state & XP_WINDOW_STATE_OBSCURED) != 0);
+  pWin->rootlessUnhittable = winRec->is_offscreen;
+}
+
+void RootlessNativeWindowMoved (WindowPtr pWin) {
+    xp_box bounds;
+    int sx, sy, err;
+    XID vlist[2];
+    Mask mask;
+    ClientPtr pClient;
+    RootlessWindowRec *winRec;
+    
+    winRec = WINREC(pWin);
+    
+    if (xp_get_window_bounds (MAKE_WINDOW_ID(winRec->wid), &bounds) != Success) return;
+    
+    sx = dixScreenOrigins[pWin->drawable.pScreen->myNum].x + darwinMainScreenX;
+    sy = dixScreenOrigins[pWin->drawable.pScreen->myNum].y + darwinMainScreenY;
+    
+    /* Fake up a ConfigureWindow packet to resize the window to the current bounds. */
+    vlist[0] = (INT16) bounds.x1 - sx;
+    vlist[1] = (INT16) bounds.y1 - sy;
+    mask = CWX | CWY;
+    
+    /* pretend we're the owner of the window! */
+    err = dixLookupClient(&pClient, pWin->drawable.id, NullClient, DixUnknownAccess);
+    if(err != Success) {
+        ErrorF("RootlessNativeWindowMoved(): Failed to lookup window: 0x%x\n", (unsigned int)pWin->drawable.id);
+        return;
+    }
+    
+    /* Don't want to do anything to the physical window (avoids 
+     notification-response feedback loops) */
+    
+    no_configure_window = TRUE;
+    ConfigureWindow (pWin, mask, vlist, pClient);
+    no_configure_window = FALSE;
+}
+
+/* Updates the _NATIVE_SCREEN_ORIGIN property on the given root window. */
+static void
+set_screen_origin (WindowPtr pWin)
+{
+  long data[2];
+
+  if (!IsRoot (pWin))
+    return;
+
+  /* FIXME: move this to an extension? */
+
+  data[0] = (dixScreenOrigins[pWin->drawable.pScreen->myNum].x
+	     + darwinMainScreenX);
+  data[1] = (dixScreenOrigins[pWin->drawable.pScreen->myNum].y
+	     + darwinMainScreenY);
+
+  dixChangeWindowProperty(serverClient, pWin, xa_native_screen_origin(),
+			  XA_INTEGER, 32, PropModeReplace, 2, data, TRUE);
+}
 
 /*
  * RootlessCreateWindow
@@ -66,7 +193,8 @@ RootlessCreateWindow(WindowPtr pWin)
     Bool result;
     RegionRec saveRoot;
 
-    WINREC(pWin) = NULL;
+    SETWINREC(pWin, NULL);
+    dixSetPrivate(&pWin->devPrivates, rootlessWindowOldPixmapPrivateKey, NULL);
 
     SCREEN_UNWRAP(pWin->drawable.pScreen, CreateWindow);
 
@@ -107,7 +235,7 @@ RootlessDestroyFrame(WindowPtr pWin, RootlessWindowPtr winRec)
 #endif
 
     xfree(winRec);
-    WINREC(pWin) = NULL;
+    SETWINREC(pWin, NULL);
 }
 
 
@@ -133,12 +261,17 @@ RootlessDestroyWindow(WindowPtr pWin)
 }
 
 
-#ifdef SHAPE
 
 static Bool
 RootlessGetShape(WindowPtr pWin, RegionPtr pShape)
 {
     ScreenPtr pScreen = pWin->drawable.pScreen;
+
+    /* 
+     * Avoid a warning.  
+     * REGION_NULL and the other macros don't actually seem to use pScreen.
+     */
+    (void)pScreen; 
 
     if (wBoundingShape(pWin) == NULL)
         return FALSE;
@@ -213,14 +346,11 @@ RootlessSetShape(WindowPtr pWin)
     RootlessReshapeFrame(pWin);
 }
 
-#endif // SHAPE
 
 
 /* Disallow ParentRelative background on top-level windows
-   because the root window doesn't really have the right background
-   and fb will try to draw on the root instead of on the window.
-   ParentRelative prevention is also in PaintWindowBackground/Border()
-   so it is no longer really needed here. */
+   because the root window doesn't really have the right background.
+ */
 Bool
 RootlessChangeWindowAttributes(WindowPtr pWin, unsigned long vmask)
 {
@@ -316,6 +446,12 @@ RootlessInitializeFrame(WindowPtr pWin, RootlessWindowRec *winRec)
 }
 
 
+Bool
+RootlessColormapCallback (void *data, int first_color, int n_colors, uint32_t *colors)
+{
+    return (RootlessResolveColormap (data, first_color, n_colors, colors) ? XP_Success : XP_BadMatch);
+}
+
 /*
  * RootlessEnsureFrame
  *  Make sure the given window is framed. If the window doesn't have a
@@ -327,15 +463,13 @@ RootlessEnsureFrame(WindowPtr pWin)
 {
     ScreenPtr pScreen = pWin->drawable.pScreen;
     RootlessWindowRec *winRec;
-#ifdef SHAPE
     RegionRec shape;
-#endif
     RegionPtr pShape = NULL;
 
     if (WINREC(pWin) != NULL)
         return WINREC(pWin);
 
-    if (!IsTopLevel(pWin))
+    if (!IsTopLevel(pWin) && !IsRoot(pWin))
         return NULL;
 
     if (pWin->drawable.class != InputOutput)
@@ -353,13 +487,11 @@ RootlessEnsureFrame(WindowPtr pWin)
     winRec->pixmap = NULL;
     winRec->wid = NULL;
 
-    WINREC(pWin) = winRec;
+    SETWINREC(pWin, winRec);
 
-#ifdef SHAPE
     // Set the frame's shape if the window is shaped
     if (RootlessGetShape(pWin, &shape))
         pShape = &shape;
-#endif
 
     RL_DEBUG_MSG("creating frame ");
 
@@ -370,14 +502,15 @@ RootlessEnsureFrame(WindowPtr pWin)
     {
         RL_DEBUG_MSG("implementation failed to create frame!\n");
         xfree(winRec);
-        WINREC(pWin) = NULL;
+        SETWINREC(pWin, NULL);
         return NULL;
     }
 
-#ifdef SHAPE
+    if (pWin->drawable.depth == 8)
+      RootlessFlushWindowColormap(pWin);
+
     if (pShape != NULL)
         REGION_UNINIT(pScreen, &shape);
-#endif
 
     return winRec;
 }
@@ -495,7 +628,7 @@ RootlessReorderWindow(WindowPtr pWin)
 {
     RootlessWindowRec *winRec = WINREC(pWin);
 
-    if (winRec != NULL && !winRec->is_reorder_pending) {
+    if (pWin->realized && winRec != NULL && !winRec->is_reorder_pending && !windows_hidden) {
         WindowPtr newPrevW;
         RootlessWindowRec *newPrev;
         RootlessFrameID newPrevID;
@@ -566,7 +699,6 @@ RootlessRestackWindow(WindowPtr pWin, WindowPtr pOldNextSib)
 
     RL_DEBUG_MSG("restackwindow end\n");
 }
-
 
 /*
  * Specialized window copy procedures
@@ -670,7 +802,7 @@ RootlessResizeCopyWindow(WindowPtr pWin, DDXPointRec ptOldOrg,
 /*
  * RootlessCopyWindow
  *  Update *new* location of window. Old location is redrawn with
- *  PaintWindowBackground/Border. Cloned from fbCopyWindow.
+ *  miPaintWindow. Cloned from fbCopyWindow.
  *  The original always draws on the root pixmap, which we don't have.
  *  Instead, draw on the parent window's pixmap.
  */
@@ -708,13 +840,13 @@ RootlessCopyWindow(WindowPtr pWin, DDXPointRec ptOldOrg, RegionPtr prgnSrc)
         top = TopLevelParent(pWin);
         if (top == NULL) {
             RL_DEBUG_MSG("no parent\n");
-            return;
+            goto out;
         }
 
         winRec = WINREC(top);
         if (winRec == NULL) {
             RL_DEBUG_MSG("not framed\n");
-            return;
+            goto out;
         }
 
         /* Move region to window local coords */
@@ -737,6 +869,7 @@ RootlessCopyWindow(WindowPtr pWin, DDXPointRec ptOldOrg, RegionPtr prgnSrc)
         RootlessDamageRegion(pWin, prgnSrc);
     }
 
+out:
     REGION_UNINIT(pScreen, &rgnDst);
     fbValidateDrawable(&pWin->drawable);
 
@@ -1199,34 +1332,55 @@ RootlessResizeWindow(WindowPtr pWin, int x, int y,
     RegionRec saveRoot;
 
     RL_DEBUG_MSG("resizewindow start (win 0x%x) ", pWin);
+    
+    if(pWin->parent) {
+        if (winRec) {
+            oldBW = winRec->borderWidth;
+            oldX = winRec->x;
+            oldY = winRec->y;
+            oldW = winRec->width;
+            oldH = winRec->height;
 
-    if (winRec) {
-        oldBW = winRec->borderWidth;
-        oldX = winRec->x;
-        oldY = winRec->y;
-        oldW = winRec->width;
-        oldH = winRec->height;
+            newBW = oldBW;
+            newX = x;
+            newY = y;
+            newW = w + 2*newBW;
+            newH = h + 2*newBW;
 
-        newBW = oldBW;
-        newX = x;
-        newY = y;
-        newW = w + 2*newBW;
-        newH = h + 2*newBW;
+            resize_after = StartFrameResize(pWin, TRUE,
+                                            oldX, oldY, oldW, oldH, oldBW,
+                                            newX, newY, newW, newH, newBW);
+        }
 
-        resize_after = StartFrameResize(pWin, TRUE,
-                                        oldX, oldY, oldW, oldH, oldBW,
-                                        newX, newY, newW, newH, newBW);
-    }
+        HUGE_ROOT(pWin);
+        SCREEN_UNWRAP(pScreen, ResizeWindow);
+        pScreen->ResizeWindow(pWin, x, y, w, h, pSib);
+        SCREEN_WRAP(pScreen, ResizeWindow);
+        NORMAL_ROOT(pWin);
 
-    HUGE_ROOT(pWin);
-    SCREEN_UNWRAP(pScreen, ResizeWindow);
-    pScreen->ResizeWindow(pWin, x, y, w, h, pSib);
-    SCREEN_WRAP(pScreen, ResizeWindow);
-    NORMAL_ROOT(pWin);
+        if (winRec) {
+            FinishFrameResize(pWin, TRUE, oldX, oldY, oldW, oldH, oldBW,
+                              newX, newY, newW, newH, newBW, resize_after);
+        }
+    } else {
+        /* Special case for resizing the root window */
+        BoxRec box;
 
-    if (winRec) {
-        FinishFrameResize(pWin, TRUE, oldX, oldY, oldW, oldH, oldBW,
-                          newX, newY, newW, newH, newBW, resize_after);
+        pWin->drawable.x = x;
+        pWin->drawable.y = y;
+        pWin->drawable.width = w;
+        pWin->drawable.height = h;
+
+        box.x1 = x; box.y1 = y;
+        box.x2 = x + w; box.y2 = y + h;
+        REGION_UNINIT(pScreen, &pWin->winSize);
+        REGION_INIT(pScreen, &pWin->winSize, &box, 1);
+        REGION_COPY(pScreen, &pWin->borderSize, &pWin->winSize);
+        REGION_COPY(pScreen, &pWin->clipList, &pWin->winSize);
+        REGION_COPY(pScreen, &pWin->borderClip, &pWin->winSize);
+
+        miSendExposures(pWin, &pWin->borderClip,
+                        pWin->drawable.x, pWin->drawable.y);        
     }
 
     RL_DEBUG_MSG("resizewindow end\n");
@@ -1287,6 +1441,10 @@ RootlessReparentWindow(WindowPtr pWin, WindowPtr pPriorParent)
 
     pTopWin = TopLevelParent(pWin);
     assert(pTopWin != pWin);
+    
+    pWin->rootlessUnhittable = FALSE;
+    
+    DeleteProperty (serverClient, pWin, xa_native_window_id ());
 
     if (WINREC(pTopWin) != NULL) {
         /* We're screwed. */
@@ -1298,8 +1456,8 @@ RootlessReparentWindow(WindowPtr pWin, WindowPtr pPriorParent)
 
         /* Switch the frame record from one to the other. */
 
-        WINREC(pWin) = NULL;
-        WINREC(pTopWin) = winRec;
+        SETWINREC(pWin, NULL);
+        SETWINREC(pTopWin, winRec);
 
         RootlessInitializeFrame(pTopWin, winRec);
         RootlessReshapeFrame(pTopWin);
@@ -1327,94 +1485,24 @@ out:
 }
 
 
-/*
- * SetPixmapOfAncestors
- *  Set the Pixmaps on all ParentRelative windows up the ancestor chain.
- */
-static void
-SetPixmapOfAncestors(WindowPtr pWin)
-{
-    ScreenPtr pScreen = pWin->drawable.pScreen;
-    WindowPtr topWin = TopLevelParent(pWin);
-    RootlessWindowRec *topWinRec = WINREC(topWin);
-
-    while (pWin->backgroundState == ParentRelative) {
-        if (pWin == topWin) {
-            // disallow ParentRelative background state on top level
-            XID pixel = 0;
-            ChangeWindowAttributes(pWin, CWBackPixel, &pixel, serverClient);
-            RL_DEBUG_MSG("Cleared ParentRelative on 0x%x.\n", pWin);
-            break;
-        }
-
-        pWin = pWin->parent;
-        pScreen->SetWindowPixmap(pWin, topWinRec->pixmap);
-    }
-}
-
-
-/*
- * RootlessPaintWindowBackground
- */
 void
-RootlessPaintWindowBackground(WindowPtr pWin, RegionPtr pRegion, int what)
+RootlessFlushWindowColormap (WindowPtr pWin)
 {
-    ScreenPtr pScreen = pWin->drawable.pScreen;
- 
-    if (IsRoot(pWin))
-        return;
+  RootlessWindowRec *winRec = WINREC (pWin);
+  xp_window_changes wc;
 
-    RL_DEBUG_MSG("paintwindowbackground start (win 0x%x, framed %i) ",
-                 pWin, IsFramedWindow(pWin));
+  if (winRec == NULL)
+    return;
 
-    if (IsFramedWindow(pWin)) {
-        RootlessStartDrawing(pWin);
-        RootlessDamageRegion(pWin, pRegion);
+  RootlessStopDrawing (pWin, FALSE);
 
-        // For ParentRelative windows, we have to make sure the window
-        // pixmap is set correctly all the way up the ancestor chain.
-        if (pWin->backgroundState == ParentRelative) {
-            SetPixmapOfAncestors(pWin);
-        }
-    }
+  /* This is how we tell xp that the colormap may have changed. */
 
-    SCREEN_UNWRAP(pScreen, PaintWindowBackground);
-    pScreen->PaintWindowBackground(pWin, pRegion, what);
-    SCREEN_WRAP(pScreen, PaintWindowBackground);
+  wc.colormap = RootlessColormapCallback;
+  wc.colormap_data = pWin->drawable.pScreen;
 
-    RL_DEBUG_MSG("paintwindowbackground end\n");
+  configure_window (MAKE_WINDOW_ID(winRec->wid), XP_COLORMAP, &wc);
 }
-
-
-/*
- * RootlessPaintWindowBorder
- */
-void
-RootlessPaintWindowBorder(WindowPtr pWin, RegionPtr pRegion, int what)
-{
-    RL_DEBUG_MSG("paintwindowborder start (win 0x%x) ", pWin);
-
-    if (IsFramedWindow(pWin)) {
-        RootlessStartDrawing(pWin);
-        RootlessDamageRegion(pWin, pRegion);
-
-        // For ParentRelative windows with tiled borders, we have to make
-        // sure the window pixmap is set correctly all the way up the
-        // ancestor chain.
-        if (!pWin->borderIsPixel &&
-            pWin->backgroundState == ParentRelative)
-        {
-            SetPixmapOfAncestors(pWin);
-        }
-    }
-
-    SCREEN_UNWRAP(pWin->drawable.pScreen, PaintWindowBorder);
-    pWin->drawable.pScreen->PaintWindowBorder(pWin, pRegion, what);
-    SCREEN_WRAP(pWin->drawable.pScreen, PaintWindowBorder);
-
-    RL_DEBUG_MSG("paintwindowborder end\n");
-}
-
 
 /*
  * RootlessChangeBorderWidth
@@ -1467,4 +1555,139 @@ RootlessChangeBorderWidth(WindowPtr pWin, unsigned int width)
     }
 
     RL_DEBUG_MSG("change border width end\n");
+}
+
+/*
+ * RootlessOrderAllWindows
+ * Brings all X11 windows to the top of the window stack
+ * (i.e in front of Aqua windows) -- called when X11.app is given focus
+ */
+void
+RootlessOrderAllWindows (void)
+{
+    int i;
+    WindowPtr pWin;
+
+    if (windows_hidden)
+        return;    
+
+    RL_DEBUG_MSG("RootlessOrderAllWindows() ");
+    for (i = 0; i < screenInfo.numScreens; i++) {
+      if (screenInfo.screens[i] == NULL) continue;
+      pWin = WindowTable[i];
+      if (pWin == NULL) continue;
+      
+      for (pWin = pWin->firstChild; pWin != NULL; pWin = pWin->nextSib) {
+	if (!pWin->realized) continue;
+	if (RootlessEnsureFrame(pWin) == NULL) continue;
+	RootlessReorderWindow (pWin);
+      }
+    }
+    RL_DEBUG_MSG("RootlessOrderAllWindows() done");
+}
+
+void
+RootlessEnableRoot (ScreenPtr pScreen)
+{
+    WindowPtr pRoot;
+    pRoot = WindowTable[pScreen->myNum];
+    
+    RootlessEnsureFrame (pRoot);
+    (*pScreen->ClearToBackground) (pRoot, 0, 0, 0, 0, TRUE);
+    RootlessReorderWindow (pRoot);
+}
+
+void
+RootlessDisableRoot (ScreenPtr pScreen)
+{
+    WindowPtr pRoot;
+    RootlessWindowRec *winRec;
+
+    pRoot = WindowTable[pScreen->myNum];
+    winRec = WINREC (pRoot);
+
+    if (NULL == winRec)
+	return;
+           
+    RootlessDestroyFrame (pRoot, winRec);
+    /* 
+     * gstaplin: I fixed the usage of this DeleteProperty so that it would compile.
+     * QUESTION: Where is this xa_native_window_id set?
+     */
+    DeleteProperty (serverClient, pRoot, xa_native_window_id ());
+}
+
+void
+RootlessHideAllWindows (void)
+{
+    int i;
+    ScreenPtr pScreen;
+    WindowPtr pWin;
+    RootlessWindowRec *winRec;
+    xp_window_changes wc;
+    
+    if (windows_hidden)
+        return;
+    
+    windows_hidden = TRUE;
+    
+    for (i = 0; i < screenInfo.numScreens; i++)
+    {
+        pScreen = screenInfo.screens[i];
+        pWin = WindowTable[i];
+        if (pScreen == NULL || pWin == NULL)
+            continue;
+        
+        for (pWin = pWin->firstChild; pWin != NULL; pWin = pWin->nextSib)
+        {
+            if (!pWin->realized)
+                continue;
+            
+            RootlessStopDrawing (pWin, FALSE);
+            
+            winRec = WINREC (pWin);
+            if (winRec != NULL)
+            {
+                wc.stack_mode = XP_UNMAPPED;
+                wc.sibling = 0;
+                configure_window (MAKE_WINDOW_ID(winRec->wid), XP_STACKING, &wc);
+            }
+        }
+    }
+}
+
+void
+RootlessShowAllWindows (void)
+{
+    int i;
+    ScreenPtr pScreen;
+    WindowPtr pWin;
+    RootlessWindowRec *winRec;
+    
+    if (!windows_hidden)
+        return;
+    
+    windows_hidden = FALSE;
+    
+    for (i = 0; i < screenInfo.numScreens; i++)
+    {
+        pScreen = screenInfo.screens[i];
+        pWin = WindowTable[i];
+        if (pScreen == NULL || pWin == NULL)
+            continue;
+        
+        for (pWin = pWin->firstChild; pWin != NULL; pWin = pWin->nextSib)
+        {
+            if (!pWin->realized)
+                continue;
+            
+            winRec = RootlessEnsureFrame (pWin);
+            if (winRec == NULL)
+                continue;
+            
+            RootlessReorderWindow (pWin);
+        }
+        
+        RootlessScreenExpose (pScreen);
+    }
 }

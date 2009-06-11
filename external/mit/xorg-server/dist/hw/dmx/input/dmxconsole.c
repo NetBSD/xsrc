@@ -140,8 +140,7 @@ static int unscaley(myPrivate *priv, int y)
 pointer dmxConsoleCreatePrivate(DeviceIntPtr pDevice)
 {
     GETDMXLOCALFROMPDEVICE;
-    myPrivate *priv = xalloc(sizeof(*priv));
-    memset(priv, 0, sizeof(*priv));
+    myPrivate *priv = calloc(1, sizeof(*priv));
     priv->dmxLocal  = dmxLocal;
     return priv;
 }
@@ -149,7 +148,7 @@ pointer dmxConsoleCreatePrivate(DeviceIntPtr pDevice)
 /** If \a private is non-NULL, free its associated memory. */
 void dmxConsoleDestroyPrivate(pointer private)
 {
-    if (private) xfree(private);
+    if (private) free(private);
 }
 
 static void dmxConsoleDrawFineCursor(myPrivate *priv, XRectangle *rect)
@@ -612,7 +611,8 @@ static Bool dmxCloseConsoleScreen(int idx, ScreenPtr pScreen)
 {
     myPrivate *priv, *last;
 
-    for (last = priv = pScreen->devPrivates[dmxScreenPrivateIndex].ptr;
+    for (last = priv = (myPrivate *)dixLookupPrivate(&pScreen->devPrivates,
+						     dmxScreenPrivateKey);
          priv;
          priv = priv->next) dmxCloseConsole(last = priv);
     
@@ -846,13 +846,15 @@ void dmxConsoleInit(DevicePtr pDev)
 
     dmxConsoleDraw(priv, 1, 1);
 
-    if (screenInfo.screens[0]->devPrivates[dmxScreenPrivateIndex].ptr)
-        priv->next = (screenInfo.screens[0]
-                      ->devPrivates[dmxScreenPrivateIndex].ptr);
+    if (dixLookupPrivate(&screenInfo.screens[0]->devPrivates,
+			 dmxScreenPrivateKey))
+        priv->next = dixLookupPrivate(&screenInfo.screens[0]->devPrivates,
+				      dmxScreenPrivateKey);
     else 
         DMX_WRAP(CloseScreen, dmxCloseConsoleScreen,
                  priv, screenInfo.screens[0]);
-    screenInfo.screens[0]->devPrivates[dmxScreenPrivateIndex].ptr = priv;
+    dixSetPrivate(&screenInfo.screens[0]->devPrivates, dmxScreenPrivateKey,
+		  priv);
 }
 
 /** Fill in the \a info structure for the specified \a pDev.  Only used
