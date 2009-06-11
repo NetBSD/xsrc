@@ -392,16 +392,16 @@
 #define BSD44SOCKETS 1
 
 /* Support D-Bus */
-#define HAVE_DBUS 1
+/* #define HAVE_DBUS 1 */
 
 /* Use D-Bus for input hotplug */
-#define CONFIG_NEED_DBUS 1
+/* #define CONFIG_NEED_DBUS 1 */
 
 /* Support the D-Bus hotplug API */
 /* #undef CONFIG_DBUS_API */
 
 /* Support HAL for hotplug */
-#define CONFIG_HAL 1
+/* #define CONFIG_HAL 1 */
 
 /* Use only built-in fonts */
 /* #undef BUILTIN_FONTS */
