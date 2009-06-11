@@ -164,7 +164,6 @@ ProcXCalibrateSetRawMode (ClientPtr client)
   return (client->noClientException);
 }
 
-
 static int
 SProcXCalibrateSetRawMode (ClientPtr client)
 {
@@ -178,9 +177,45 @@ SProcXCalibrateSetRawMode (ClientPtr client)
   return ProcXCalibrateSetRawMode(client);
 }
 
-static void
-XCalibrateResetProc (ExtensionEntry *extEntry) 
-{ 
+static int
+ProcXCalibrateScreenToCoord (ClientPtr client)
+{
+  REQUEST(xXCalibrateScreenToCoordReq);
+  xXCalibrateScreenToCoordReply rep;
+
+  REQUEST_SIZE_MATCH (xXCalibrateScreenToCoordReq);
+
+  memset (&rep, 0, sizeof (rep));
+  rep.type = X_Reply;
+  rep.sequenceNumber = client->sequence;
+  rep.x = stuff->x;
+  rep.y = stuff->y;
+
+  KdScreenToPointerCoords(&rep.x, &rep.y);
+
+  if (client->swapped)
+    {
+      int n;
+
+      swaps (&rep.x, n);
+      swaps (&rep.y, n);
+    }
+  WriteToClient(client, sizeof (rep), (char *) &rep);
+  return (client->noClientException);
+}
+
+static int
+SProcXCalibrateScreenToCoord (ClientPtr client)
+{
+  REQUEST(xXCalibrateScreenToCoordReq);
+  int n;
+
+  REQUEST_SIZE_MATCH (xXCalibrateScreenToCoordReq);
+
+  swaps(&stuff->x, n);
+  swaps(&stuff->y, n);
+
+  return ProcXCalibrateScreenToCoord(client);
 }
 
 static int
@@ -192,6 +227,9 @@ ProcXCalibrateDispatch (ClientPtr client)
         return ProcXCalibrateQueryVersion(client);
     case X_XCalibrateRawMode:
         return ProcXCalibrateSetRawMode(client);
+    case X_XCalibrateScreenToCoord:
+        return ProcXCalibrateScreenToCoord(client);
+
     default: break;
     }
 
@@ -211,6 +249,8 @@ SProcXCalibrateDispatch (ClientPtr client)
         return SProcXCalibrateQueryVersion(client);
     case X_XCalibrateRawMode:
         return SProcXCalibrateSetRawMode(client);
+    case X_XCalibrateScreenToCoord:
+        return SProcXCalibrateScreenToCoord(client);
 
     default: break;
     }
@@ -247,7 +287,7 @@ XCalibrateExtensionInit(void)
 
   extEntry = AddExtension(XCALIBRATE_NAME, XCalibrateNumberEvents, XCalibrateNumberErrors,
 			  ProcXCalibrateDispatch, SProcXCalibrateDispatch,
-			  XCalibrateResetProc, StandardMinorOpcode);
+			  NULL, StandardMinorOpcode);
 
   if (!extEntry)
     return;

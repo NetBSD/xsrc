@@ -11,6 +11,7 @@ sdk_HEADERS =		\
 	cursor.h	\
 	cursorstr.h	\
 	dix.h		\
+	dixaccess.h	\
 	dixevents.h	\
 	dixfont.h	\
 	dixfontstr.h	\
@@ -31,10 +32,13 @@ sdk_HEADERS =		\
 	os.h		\
 	pixmap.h	\
 	pixmapstr.h	\
+	privates.h	\
 	property.h	\
 	propertyst.h	\
+	ptrveloc.h  \
 	region.h	\
 	regionstr.h	\
+	registry.h	\
 	resource.h	\
 	rgb.h		\
 	screenint.h	\
@@ -47,10 +51,16 @@ sdk_HEADERS =		\
 	validate.h	\
 	window.h	\
 	windowstr.h	\
+	xkbfile.h	\
 	xkbsrv.h	\
-	xorg-server.h
+	xkbstr.h        \
+	xkbrules.h      \
+	xserver-properties.h
+
+nodist_sdk_HEADERS = xorg-server.h
 endif
 
 AM_CFLAGS = $(DIX_CFLAGS)
 
-EXTRA_DIST = $(sdk_HEADERS) do-not-use-config.h dix-config.h xorg-config.h
+EXTRA_DIST = 	\
+	dix-config-apple-verbatim.h

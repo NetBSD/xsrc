@@ -6,7 +6,7 @@ librender_la_SOURCES =	\
 	animcur.c	\
 	filter.c	\
 	glyph.c		\
-	miglyph.c	\
+	matrix.c	\
 	miindex.c	\
 	mipict.c	\
 	mirect.c	\

@@ -50,9 +50,6 @@ SOFTWARE.
 #define OS_H
 
 #include "misc.h"
-#define ALLOCATE_LOCAL_FALLBACK(_size) Xalloc((unsigned long)(_size))
-#define DEALLOCATE_LOCAL_FALLBACK(_ptr) Xfree((pointer)(_ptr))
-#include <X11/Xalloca.h>
 #include <stdarg.h>
 
 #define NullFID ((FID) 0)
@@ -96,7 +93,6 @@ typedef struct _NewClientRec *NewClientPtr;
 #define SIGVAL void
 #endif
 
-extern Bool OsDelayInitColors;
 extern void (*OsVendorVErrorFProc)(const char *, va_list args);
 
 extern int WaitForSomething(
@@ -118,11 +114,13 @@ extern void FlushIfCriticalOutputPending(void);
 
 extern void SetCriticalOutputPending(void);
 
-extern int WriteToClient(ClientPtr /*who*/, int /*count*/, char* /*buf*/);
+extern int WriteToClient(ClientPtr /*who*/, int /*count*/, const void* /*buf*/);
 
 extern void ResetOsBuffers(void);
 
 extern void InitConnectionLimits(void);
+
+extern void NotifyParentProcess(void);
 
 extern void CreateWellKnownSockets(void);
 
@@ -155,7 +153,7 @@ extern void AddEnabledDevice(int /*fd*/);
 
 extern void RemoveEnabledDevice(int /*fd*/);
 
-extern void OnlyListenToOneClient(ClientPtr /*client*/);
+extern int OnlyListenToOneClient(ClientPtr /*client*/);
 
 extern void ListenToAllClients(void);
 
@@ -167,7 +165,9 @@ extern void MakeClientGrabImpervious(ClientPtr /*client*/);
 
 extern void MakeClientGrabPervious(ClientPtr /*client*/);
 
-extern void AvailableClientInput(ClientPtr /* client */);
+#ifdef XQUARTZ
+extern void ListenOnOpenFD(int /* fd */, int /* noxauth */);
+#endif
 
 extern CARD32 GetTimeInMillis(void);
 
@@ -209,8 +209,6 @@ extern SIGVAL GiveUp(int /*sig*/);
 
 extern void UseMsg(void);
 
-extern void InitGlobals(void);
-
 extern void ProcessCommandLine(int /*argc*/, char* /*argv*/[]);
 
 extern int set_font_authorizations(
@@ -230,8 +228,6 @@ extern pointer XNFalloc(unsigned long /*amount*/);
 extern pointer XNFcalloc(unsigned long /*amount*/);
 extern pointer XNFrealloc(pointer /*ptr*/, unsigned long /*amount*/);
 
-extern void OsInitAllocator(void);
-
 extern char *Xstrdup(const char *s);
 extern char *XNFstrdup(const char *s);
 extern char *Xprintf(const char *fmt, ...);
@@ -245,10 +241,8 @@ extern OsSigHandlerPtr OsSignal(int /* sig */, OsSigHandlerPtr /* handler */);
 
 extern int auditTrailLevel;
 
-#ifdef SERVER_LOCK
 extern void LockServer(void);
 extern void UnlockServer(void);
-#endif
 
 extern int OsLookupColor(
     int	/*screen*/,
@@ -265,8 +259,6 @@ extern void OsCleanup(Bool);
 extern void OsVendorFatalError(void);
 
 extern void OsVendorInit(void);
-
-extern int OsInitColors(void);
 
 void OsBlockSignals (void);
 
@@ -322,6 +314,24 @@ extern int InvalidHost(sockaddrPtr /*saddr*/, int /*len*/, ClientPtr client);
 extern int LocalClient(ClientPtr /* client */);
 
 extern int LocalClientCred(ClientPtr, int *, int *);
+
+#define LCC_UID_SET	(1 << 0)
+#define LCC_GID_SET	(1 << 1)
+#define LCC_PID_SET	(1 << 2)
+#define LCC_ZID_SET	(1 << 3)
+
+typedef struct {
+    int fieldsSet;	/* Bit mask of fields set */
+    int	euid;		/* Effective uid */
+    int egid;		/* Primary effective group id */
+    int nSuppGids;	/* Number of supplementary group ids */
+    int *pSuppGids;	/* Array of supplementary group ids */
+    int pid;		/* Process id */
+    int zoneid;		/* Only set on Solaris 10 & later */
+} LocalClientCredRec;
+
+extern int GetLocalClientCreds(ClientPtr, LocalClientCredRec **);
+extern void FreeLocalClientCreds(LocalClientCredRec *); 
 
 extern int ChangeAccessControl(ClientPtr /*client*/, int /*fEnabled*/);
 
@@ -386,12 +396,6 @@ extern XID GenerateAuthorization(
     unsigned int * /* data_length_return */,
     char	** /* data_return */);
 
-#ifdef COMMANDLINE_CHALLENGED_OPERATING_SYSTEMS
-extern void ExpandCommandLine(int * /*pargc*/, char *** /*pargv*/);
-#endif
-
-extern void ddxInitGlobals(void);
-
 extern int ddxProcessArgument(int /*argc*/, char * /*argv*/ [], int /*i*/);
 
 extern void ddxUseMsg(void);
@@ -419,19 +423,11 @@ extern void ddxUseMsg(void);
     (_pxReq->length ? (otherReqTypePtr)_pxReq \
 		    : (otherReqTypePtr)(((CARD32*)_pxReq)+1))
 
-/* stuff for SkippedRequestsCallback */
-extern CallbackListPtr SkippedRequestsCallback;
-typedef struct {
-    xReqPtr req;
-    ClientPtr client;
-    int numskipped;
-} SkippedRequestInfoRec;
-
 /* stuff for ReplyCallback */
 extern CallbackListPtr ReplyCallback;
 typedef struct {
     ClientPtr client;
-    pointer replyData;
+    const void *replyData;
     unsigned long dataLenBytes;
     unsigned long bytesRemaining;
     Bool startOfReply;
@@ -443,6 +439,27 @@ extern CallbackListPtr FlushCallback;
 extern void AbortDDX(void);
 extern void ddxGiveUp(void);
 extern int TimeSinceLastInputEvent(void);
+
+/* strcasecmp.c */
+#if NEED_STRCASECMP
+#define strcasecmp xstrcasecmp
+extern int xstrcasecmp(const char *s1, const char *s2);
+#endif
+
+#if NEED_STRNCASECMP
+#define strncasecmp xstrncasecmp
+extern int xstrncasecmp(const char *s1, const char *s2, size_t n);
+#endif
+
+#if NEED_STRCASESTR
+#define strcasestr xstrcasestr
+extern char *xstrcasestr(const char *s, const char *find);
+#endif
+
+#ifndef HAS_STRLCPY
+extern size_t strlcpy(char *dst, const char *src, size_t siz);
+extern size_t strlcat(char *dst, const char *src, size_t siz);
+#endif
 
 /* Logging. */
 typedef enum _LogParameter {
@@ -468,8 +485,7 @@ typedef enum {
 } MessageType;
 
 /* XXX Need to check which GCC versions have the format(printf) attribute. */
-#if defined(__GNUC__) && \
-    ((__GNUC__ > 2) || ((__GNUC__ == 2) && (__GNUC_MINOR__ > 4)))
+#if defined(__GNUC__) && (__GNUC__ > 2)
 #define _printf_attribute(a,b) __attribute((format(__printf__,a,b)))
 #else
 #define _printf_attribute(a,b) /**/
@@ -490,8 +506,7 @@ extern void FreeAuditTimer(void);
 extern void AuditF(const char *f, ...) _printf_attribute(1,2);
 extern void VAuditF(const char *f, va_list args);
 extern void FatalError(const char *f, ...) _printf_attribute(1,2)
-#if defined(__GNUC__) && \
-    ((__GNUC__ > 2) || ((__GNUC__ == 2) && (__GNUC_MINOR__ > 4)))
+#if defined(__GNUC__) && (__GNUC__ > 2)
 __attribute((noreturn))
 #endif
 ;
@@ -499,12 +514,14 @@ __attribute((noreturn))
 #ifdef DEBUG
 #define DebugF ErrorF
 #else
-#define DebugF(x, ...) /* */
+#define DebugF(...) /* */
 #endif
 
 extern void VErrorF(const char *f, va_list args);
 extern void ErrorF(const char *f, ...) _printf_attribute(1,2);
 extern void Error(char *str);
 extern void LogPrintMarkers(void);
+
+extern void xorg_backtrace(void);
 
 #endif /* OS_H */

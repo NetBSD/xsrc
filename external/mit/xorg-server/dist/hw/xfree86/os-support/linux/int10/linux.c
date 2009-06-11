@@ -1,6 +1,6 @@
 /*
  * linux specific part of the int10 module
- * Copyright 1999, 2000, 2001, 2002, 2003, 2004 Egbert Eich
+ * Copyright 1999, 2000, 2001, 2002, 2003, 2004, 2008 Egbert Eich
  */
 #ifdef HAVE_XORG_CONFIG_H
 #include <xorg-config.h>
@@ -89,7 +89,6 @@ xf86ExtendedInitInt10(int entityIndex, int Flags)
     memType cs;
     legacyVGARec vga;
     Bool videoBiosMapped = FALSE;
-    pciVideoPtr pvp;
     
     if (int10Generation != serverGeneration) {
 	counter = 0;
@@ -151,8 +150,8 @@ xf86ExtendedInitInt10(int entityIndex, int Flags)
     pInt = (xf86Int10InfoPtr)xnfcalloc(1, sizeof(xf86Int10InfoRec));
     pInt->scrnIndex = screen;
     pInt->entityIndex = entityIndex;
-    pvp = xf86GetPciInfoForEntity(entityIndex);
-    if (pvp) pInt->Tag = pciTag(pvp->bus, pvp->device, pvp->func);
+    pInt->dev = xf86GetPciInfoForEntity(entityIndex);
+
     if (!xf86Int10ExecSetup(pInt))
 	goto error0;
     pInt->mem = &linuxMem;
@@ -246,14 +245,15 @@ xf86ExtendedInitInt10(int entityIndex, int Flags)
      * 64K bytes at a time.
      */
     if (!videoBiosMapped) {
-	(void)memset((pointer)V_BIOS, 0, SYS_BIOS - V_BIOS);
+	memset((pointer)V_BIOS, 0, SYS_BIOS - V_BIOS);
 #ifdef DEBUG
 	ErrorF("Reading BIOS\n");
 #endif
 	for (cs = V_BIOS;  cs < SYS_BIOS;  cs += V_BIOS_SIZE)
 	    if (xf86ReadBIOS(cs, 0, (pointer)cs, V_BIOS_SIZE) < V_BIOS_SIZE)
 		xf86DrvMsg(screen, X_WARNING,
-			   "Unable to retrieve all of segment 0x%06lX.\n", cs);
+			   "Unable to retrieve all of segment 0x%06lX.\n",
+			   (long)cs);
 #ifdef DEBUG
 	ErrorF("done\n");
 #endif
@@ -275,19 +275,24 @@ xf86ExtendedInitInt10(int entityIndex, int Flags)
 
 	switch (location_type) {
 	case BUS_PCI: {
-	    const int pci_entity = pInt->entityIndex;
-	    
-	    if (!mapPciRom(pci_entity, (unsigned char *)(V_BIOS))) {
-	        xf86DrvMsg(screen, X_ERROR, "Cannot read V_BIOS\n");
+	    int err;
+	    struct pci_device *rom_device =
+		xf86GetPciInfoForEntity(pInt->entityIndex);
+
+#if HAVE_PCI_DEVICE_ENABLE
+	    pci_device_enable(rom_device);
+#endif
+
+	    err = pci_device_read_rom(rom_device, (unsigned char *)(V_BIOS));
+	    if (err) {
+		xf86DrvMsg(screen,X_ERROR,"Cannot read V_BIOS (%s)\n",
+			   strerror(err));
 		goto error3;
 	    }
+
 	    pInt->BIOSseg = V_BIOS >> 4;
 	    break;
 	}
-	case BUS_ISA:
-	    if (!xf86int10GetBiosSegment(pInt, NULL))
-		goto error3;
-	    break;
 	default:
 	    goto error3;
 	}
@@ -349,7 +354,10 @@ MapCurrentInt10(xf86Int10InfoPtr pInt)
 		   "shmat(low_mem) error: %s\n",strerror(errno));
 	return FALSE;
     }
-    
+    if (mprotect((void*)0, V_RAM, PROT_READ|PROT_WRITE|PROT_EXEC) != 0)
+        xf86DrvMsg(pInt->scrnIndex, X_ERROR,
+		   "Cannot set EXEC bit on low memory: %s\n", strerror(errno));
+
     if (((linuxInt10Priv*)pInt->private)->highMem >= 0) {
 	addr = shmat(((linuxInt10Priv*)pInt->private)->highMem,
 		     (char*)HIGH_MEM, 0);
@@ -360,6 +368,11 @@ MapCurrentInt10(xf86Int10InfoPtr pInt)
 		       "shmget error: %s\n",strerror(errno));
 	    return FALSE;
 	}
+	if (mprotect((void*)HIGH_MEM, HIGH_MEM_SIZE,
+		     PROT_READ|PROT_WRITE|PROT_EXEC) != 0)
+	    xf86DrvMsg(pInt->scrnIndex, X_ERROR,
+		       "Cannot set EXEC bit on high memory: %s\n",
+		       strerror(errno));
     } else {
 	if ((fd = open(DEV_MEM, O_RDWR, 0)) >= 0) {
 	    if (mmap((void *)(V_BIOS), SYS_BIOS - V_BIOS,

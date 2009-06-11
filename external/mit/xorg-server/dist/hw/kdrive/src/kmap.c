@@ -75,9 +75,6 @@ KdMapDevice (CARD32 addr, CARD32 size)
 		    strerror (errno));
     return a;
 #endif
-#ifdef VXWORKS
-    return (void *) addr;
-#endif
 }
 
 void
@@ -89,9 +86,6 @@ KdUnmapDevice (void *addr, CARD32 size)
 #endif
 #ifdef linux
     munmap (addr, size);
-#endif
-#ifdef VXWORKS
-    ;
 #endif
 }
 
@@ -132,8 +126,8 @@ KdSetMappedMode (CARD32 addr, CARD32 size, int mode)
 	sentry.type = type;
 	
 	if (ioctl (mtrr, MTRRIOC_ADD_ENTRY, &sentry) < 0)
-	    ErrorF ("MTRRIOC_ADD_ENTRY failed 0x%x 0x%x %d (errno %d)\n",
-		    base, bound - base, type, errno);
+	    ErrorF ("MTRRIOC_ADD_ENTRY failed 0x%x 0x%x %d (%s)\n",
+		    base, bound - base, type, strerror(errno));
     }
 #endif
 }
@@ -171,8 +165,8 @@ KdResetMappedMode (CARD32 addr, CARD32 size, int mode)
 	sentry.type = type;
 	
 	if (ioctl (mtrr, MTRRIOC_DEL_ENTRY, &sentry) < 0)
-	    ErrorF ("MTRRIOC_DEL_ENTRY failed 0x%x 0x%x %d (errno %d)\n",
-		    base, bound - base, type, errno);
+	    ErrorF ("MTRRIOC_DEL_ENTRY failed 0x%x 0x%x %d (%s)\n",
+		    base, bound - base, type, strerror(errno));
     }
 #endif
 }

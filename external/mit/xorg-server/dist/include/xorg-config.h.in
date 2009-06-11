@@ -18,12 +18,6 @@
 /* Current X.Org version. */
 #undef XORG_VERSION_CURRENT
 
-/* Need XFree86 libc-replacement typedefs. */
-#undef NEED_XF86_TYPES
-
-/* Need XFree86 libc-replacement functions. */
-#undef NEED_XF86_PROTOTYPES
-
 /* Name of X server. */
 #undef __XSERVERNAME__
 
@@ -54,11 +48,14 @@
 /* Building DRI-capable DDX. */
 #undef XF86DRI
 
+/* Build DRI2 extension */
+#undef DRI2
+
 /* Solaris 8 or later? */
 #undef __SOL8__
 
-/* Whether to use pixmap privates */
-#undef PIXPRIV
+/* Define to 1 if you have the <sys/kd.h> header file. */
+#undef HAVE_SYS_KD_H
 
 /* Define to 1 if you have the `walkcontext' function (used on Solaris for
    xorg_backtrace in hw/xfree86/common/xf86Events.c */
@@ -114,5 +111,14 @@
 
 /* Have execinfo.h */
 #undef HAVE_EXECINFO_H
+
+/* Have pci_system_init_dev_mem() */
+#undef HAVE_PCI_SYSTEM_INIT_DEV_MEM
+
+/* Have pci_enable_device */
+#undef HAVE_PCI_DEVICE_ENABLE
+
+/* Path to text files containing PCI IDs */
+#undef PCI_TXT_IDS_PATH
 
 #endif /* _XORG_CONFIG_H_ */

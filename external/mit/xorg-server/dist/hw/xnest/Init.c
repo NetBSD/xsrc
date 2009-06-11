@@ -45,7 +45,7 @@ is" without express or implied warranty.
 
 Bool xnestDoFullGeneration = True;
 
-xEvent *xnestEvents = NULL;
+EventList *xnestEvents = NULL;
 
 void
 InitOutput(ScreenInfo *screenInfo, int argc, char *argv[])
@@ -74,8 +74,6 @@ InitOutput(ScreenInfo *screenInfo, int argc, char *argv[])
 	break;
       }
   
-  xnestWindowPrivateIndex = AllocateWindowPrivateIndex();
-  xnestGCPrivateIndex = AllocateGCPrivateIndex();
   xnestFontPrivateIndex = AllocateFontPrivateIndex();
   
   if (!xnestNumScreens) xnestNumScreens = 1;
@@ -91,13 +89,10 @@ InitOutput(ScreenInfo *screenInfo, int argc, char *argv[])
 void
 InitInput(int argc, char *argv[])
 {
-  xnestPointerDevice = AddInputDevice(xnestPointerProc, TRUE);
-  xnestKeyboardDevice = AddInputDevice(xnestKeyboardProc, TRUE);
+  xnestPointerDevice = AddInputDevice(serverClient, xnestPointerProc, TRUE);
+  xnestKeyboardDevice = AddInputDevice(serverClient, xnestKeyboardProc, TRUE);
 
-  if (!xnestEvents)
-      xnestEvents = (xEvent *) xcalloc(sizeof(xEvent), GetMaximumEventsNum());
-  if (!xnestEvents)
-      FatalError("couldn't allocate room for events\n");
+  GetEventList(&xnestEvents);
 
   RegisterPointerDevice(xnestPointerDevice);
   RegisterKeyboardDevice(xnestKeyboardDevice);
@@ -124,26 +119,10 @@ void ddxGiveUp()
   AbortDDX();
 }
 
-#ifdef __DARWIN__
+#ifdef __APPLE__
 void
 DarwinHandleGUI(int argc, char *argv[])
 {
-}
-
-void GlxExtensionInit();
-void GlxWrapInitVisuals(void *procPtr);
-
-void
-DarwinGlxExtensionInit()
-{
-    GlxExtensionInit();
-}
-
-void
-DarwinGlxWrapInitVisuals(
-    void *procPtr)
-{
-    GlxWrapInitVisuals(procPtr);
 }
 #endif
 
@@ -161,8 +140,3 @@ void ddxBeforeReset(void)
 {
     return;
 }
-
-/* this is just to get the server to link on AIX */
-#ifdef AIXV3
-int SelectWaitTime = 10000; /* usec */
-#endif

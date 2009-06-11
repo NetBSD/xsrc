@@ -16,17 +16,16 @@ extern Bool screenSaverSuspended;
 #endif
 
 extern char *defaultFontPath;
-extern char *rgbPath;
 extern int monitorResolution;
-extern Bool loadableFonts;
 extern int defaultColorVisualClass;
 
-extern Bool Must_have_memory;
-extern WindowPtr *WindowTable;
+extern WindowPtr WindowTable[MAXSCREENS];
 extern int GrabInProgress;
 extern Bool noTestExtensions;
 
 extern DDXPointRec dixScreenOrigins[MAXSCREENS];
+
+extern char *ConnectionInfo;
 
 #ifdef DPMSExtension
 extern CARD32 defaultDPMSStandbyTime;
@@ -47,10 +46,6 @@ extern Bool DPMSCapableFlag;
 extern Bool PanoramiXExtensionDisabledHack;
 #endif
 
-#ifdef BIGREQS
-extern Bool noBigReqExtension;
-#endif
-
 #ifdef COMPOSITE
 extern Bool noCompositeExtension;
 #endif
@@ -67,14 +62,6 @@ extern Bool noDbeExtension;
 extern Bool noDPMSExtension;
 #endif
 
-#ifdef EVI
-extern Bool noEVIExtension;
-#endif
-
-#ifdef FONTCACHE
-extern Bool noFontCacheExtension;
-#endif
-
 #ifdef GLXEXT
 extern Bool noGlxExtension;
 #endif
@@ -85,10 +72,6 @@ extern Bool noScreenSaverExtension;
 
 #ifdef MITSHM
 extern Bool noMITShmExtension;
-#endif
-
-#ifdef MITMISC
-extern Bool noMITMiscExtension;
 #endif
 
 #ifdef MULTIBUFFER
@@ -103,36 +86,12 @@ extern Bool noRRExtension;
 extern Bool noRenderExtension;
 #endif
 
-#ifdef SHAPE
-extern Bool noShapeExtension;
-#endif
-
 #ifdef XCSECURITY
 extern Bool noSecurityExtension;
 #endif
 
-#ifdef XSYNC
-extern Bool noSyncExtension;
-#endif
-
-#ifdef TOGCUP
-extern Bool noXcupExtension;
-#endif
-
 #ifdef RES
 extern Bool noResExtension;
-#endif
-
-#ifdef XAPPGROUP
-extern Bool noXagExtension;
-#endif
-
-#ifdef XCMISC
-extern Bool noXCMiscExtension;
-#endif
-
-#ifdef XEVIE
-extern Bool noXevieExtension;
 #endif
 
 #ifdef XF86BIGFONT
@@ -145,10 +104,6 @@ extern Bool noXFree86DGAExtension;
 
 #ifdef XF86DRI
 extern Bool noXFree86DRIExtension;
-#endif
-
-#ifdef XF86MISC
-extern Bool noXFree86MiscExtension;
 #endif
 
 #ifdef XF86VIDMODE
@@ -168,12 +123,14 @@ extern Bool noXkbExtension;
 extern Bool noPanoramiXExtension;
 #endif
 
-#ifdef XINPUT
-extern Bool noXInputExtension;
-#endif
+#ifdef XSELINUX
+extern Bool noSELinuxExtension;
 
-#ifdef XIDLE
-extern Bool noXIdleExtension;
+#define SELINUX_MODE_DEFAULT    0
+#define SELINUX_MODE_DISABLED   1
+#define SELINUX_MODE_PERMISSIVE 2
+#define SELINUX_MODE_ENFORCING  3
+extern int selinuxEnforcingState;
 #endif
 
 #ifdef XV

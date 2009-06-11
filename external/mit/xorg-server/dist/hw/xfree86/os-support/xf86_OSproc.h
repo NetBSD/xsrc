@@ -146,18 +146,11 @@ extern void xf86MapReadSideEffects(int, int, pointer, unsigned long);
 extern int xf86ReadBIOS(unsigned long, unsigned long, unsigned char *, int);
 extern Bool xf86EnableIO(void);
 extern void xf86DisableIO(void);
-extern Bool xf86DisableInterrupts(void);
-extern void xf86EnableInterrupts(void);
 extern void xf86SetTVOut(int);
 extern void xf86SetRGBOut(void);
 extern void xf86OSRingBell(int, int, int);
-#if defined(QNX4)
-#pragma aux xf86BusToMem modify [eax ebx ecx edx esi edi];
-#pragma aux xf86MemToBus modify [eax ebx ecx edx esi edi];
-#endif
 extern void xf86BusToMem(unsigned char *, unsigned char *, int);
 extern void xf86MemToBus(unsigned char *, unsigned char *, int);
-extern void xf86IODelay(void);
 extern void xf86UDelay(long usec);
 extern void xf86SetReallySlowBcopy(void);
 extern void xf86SlowBcopy(unsigned char *, unsigned char *, int);
@@ -228,22 +221,12 @@ extern PMClose xf86OSPMOpen(void);
 #ifdef NEED_OS_RAC_PROTOS
 /* RAC-related privs */
 /* internal to os-support layer */
-resPtr xf86StdBusAccWindowsFromOS(void);
-resPtr xf86StdPciAccWindowsFromOS(void);
-resPtr xf86StdIsaAccWindowsFromOS(void);
 resPtr xf86StdAccResFromOS(resPtr ret);
 
 /* available to the common layer */
-resPtr xf86BusAccWindowsFromOS(void);
-resPtr xf86PciBusAccWindowsFromOS(void);
-#ifdef INCLUDE_UNUSED
-resPtr xf86IsaBusAccWindowsFromOS(void);
-#endif
 resPtr xf86AccResFromOS(resPtr ret);
 #endif /* NEED_OS_RAC_PROTOS */
 
-extern Bool xf86GetPciSizeFromOS(PCITAG tag, int indx, int* bits);
-extern Bool xf86GetPciOffsetFromOS(PCITAG tag, int indx, unsigned long* bases);
 extern unsigned long xf86GetOSOffsetFromPCI(PCITAG tag, int space, unsigned long base);
 
 extern void xf86MakeNewMapping(int, int, unsigned long, unsigned long, pointer);

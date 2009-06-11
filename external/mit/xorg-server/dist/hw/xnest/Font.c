@@ -44,9 +44,6 @@ xnestRealizeFont(ScreenPtr pScreen, FontPtr pFont)
 
   FontSetPrivate(pFont, xnestFontPrivateIndex, NULL);
 
-  if (requestingClient && XpClientIsPrintClient(requestingClient, NULL))
-      return True;
-
   name_atom = MakeAtom("FONT", 4, True);
   value_atom = 0L;
 

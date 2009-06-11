@@ -46,11 +46,13 @@
 #include <xkbsrv.h>
 #endif
 #include "xf86Xinput.h"
+#include "exglobals.h"
+#include "exevents.h"
 
 #include "mi.h"
 
-static unsigned long DGAGeneration = 0;
-static int DGAScreenIndex = -1;
+static int DGAScreenKeyIndex;
+static DevPrivateKey DGAScreenKey;
 static int mieq_installed = 0;
 
 static Bool DGACloseScreen(int i, ScreenPtr pScreen);
@@ -68,8 +70,8 @@ DGACopyModeInfo(
 
 _X_EXPORT int *XDGAEventBase = NULL;
 
-#define DGA_GET_SCREEN_PRIV(pScreen) \
-	((DGAScreenPtr)((pScreen)->devPrivates[DGAScreenIndex].ptr))
+#define DGA_GET_SCREEN_PRIV(pScreen) ((DGAScreenPtr) \
+    dixLookupPrivate(&(pScreen)->devPrivates, DGAScreenKey))
 
 
 typedef struct _FakedVisualList{
@@ -116,11 +118,7 @@ DGAInit(
     if(!modes || num <= 0)
 	return FALSE;
 
-    if(DGAGeneration != serverGeneration) {
-	if((DGAScreenIndex = AllocateScreenPrivateIndex()) < 0)
-	    return FALSE;
-	DGAGeneration = serverGeneration;
-    }
+    DGAScreenKey = &DGAScreenKeyIndex;
 
     if(!(pScreenPriv = (DGAScreenPtr)xalloc(sizeof(DGAScreenRec))))
 	return FALSE;
@@ -148,7 +146,7 @@ DGAInit(
 	    modes[i].flags &= ~DGA_PIXMAP_AVAILABLE;
 #endif
 
-    pScreen->devPrivates[DGAScreenIndex].ptr = (pointer)pScreenPriv;
+    dixSetPrivate(&pScreen->devPrivates, DGAScreenKey, pScreenPriv);
     pScreenPriv->CloseScreen = pScreen->CloseScreen;
     pScreen->CloseScreen = DGACloseScreen;
     pScreenPriv->DestroyColormap = pScreen->DestroyColormap;
@@ -176,7 +174,7 @@ DGAReInitModes(
     int i;
 
     /* No DGA? Ignore call (but don't make it look like it failed) */
-    if(DGAScreenIndex < 0)
+    if(DGAScreenKey == NULL)
 	return TRUE;
 	
     pScreenPriv = DGA_GET_SCREEN_PRIV(pScreen);
@@ -350,7 +348,7 @@ xf86SetDGAMode(
    DGAModePtr pMode = NULL;
 
    /* First check if DGAInit was successful on this screen */
-   if (DGAScreenIndex < 0)
+   if (DGAScreenKey == NULL)
 	return BadValue;
    pScreenPriv = DGA_GET_SCREEN_PRIV(pScreen);
    if (!pScreenPriv)
@@ -432,7 +430,7 @@ xf86SetDGAMode(
    } 
 
    if(pMode->flags & DGA_PIXMAP_AVAILABLE) {
-	if((pPix = (*pScreen->CreatePixmap)(pScreen, 0, 0, pMode->depth))) {
+	if((pPix = (*pScreen->CreatePixmap)(pScreen, 0, 0, pMode->depth, 0))) {
 	    (*pScreen->ModifyPixmapHeader)(pPix, 
 			pMode->pixmapWidth, pMode->pixmapHeight,
 			pMode->depth, pMode->bitsPerPixel, 
@@ -485,7 +483,7 @@ DGAChangePixmapMode(int index, int *x, int *y, int mode)
    DGAModePtr   pMode;
    PixmapPtr    pPix;
 
-   if(DGAScreenIndex < 0)
+   if(DGAScreenKey == NULL)
 	return FALSE;
 
    pScreenPriv = DGA_GET_SCREEN_PRIV(screenInfo.screens[index]);
@@ -535,11 +533,12 @@ DGAChangePixmapMode(int index, int *x, int *y, int mode)
 _X_EXPORT Bool
 DGAAvailable(int index) 
 {
-   if(DGAScreenIndex < 0)
+   if(DGAScreenKey == NULL)
 	return FALSE;
    
-   if (!xf86NoSharedResources(((ScrnInfoPtr)screenInfo.screens[index]->
-			 devPrivates[xf86ScreenIndex].ptr)->scrnIndex,MEM))
+   if (!xf86NoSharedResources(((ScrnInfoPtr)dixLookupPrivate(
+				   &screenInfo.screens[index]->devPrivates,
+				   xf86ScreenKey))->scrnIndex, MEM))
        return FALSE;
    
    if(DGA_GET_SCREEN_PRIV(screenInfo.screens[index]))
@@ -553,7 +552,7 @@ DGAActive(int index)
 {
    DGAScreenPtr pScreenPriv;
 
-   if(DGAScreenIndex < 0)
+   if(DGAScreenKey == NULL)
 	return FALSE;
 
    pScreenPriv = DGA_GET_SCREEN_PRIV(screenInfo.screens[index]);
@@ -574,7 +573,7 @@ DGAShutdown()
     ScrnInfoPtr pScrn;
     int i;
 
-    if(DGAScreenIndex < 0)
+    if(DGAScreenKey == NULL)
 	return;
 
     for(i = 0; i < screenInfo.numScreens; i++) {
@@ -904,7 +903,7 @@ DGAVTSwitch(void)
 
        /* Alternatively, this could send events to DGA clients */
 
-       if(DGAScreenIndex >= 0) {
+       if(DGAScreenKey) {
 	   DGAScreenPtr pScreenPriv = DGA_GET_SCREEN_PRIV(pScreen);
 
 	   if(pScreenPriv && pScreenPriv->current)
@@ -916,13 +915,16 @@ DGAVTSwitch(void)
 }
 
 Bool
-DGAStealKeyEvent(int index, int key_code, int is_down)
+DGAStealKeyEvent(DeviceIntPtr dev, int index, int key_code, int is_down)
 {
    DGAScreenPtr pScreenPriv;
    dgaEvent    de;
     
-   if(DGAScreenIndex < 0) /* no DGA */
+   if(DGAScreenKey == NULL) /* no DGA */
         return FALSE;
+
+   if (key_code < 8 || key_code > 255)
+       return FALSE;
 
    pScreenPriv = DGA_GET_SCREEN_PRIV(screenInfo.screens[index]);
 
@@ -932,7 +934,7 @@ DGAStealKeyEvent(int index, int key_code, int is_down)
     de.u.u.type = *XDGAEventBase + (is_down ? KeyPress : KeyRelease);
     de.u.u.detail = key_code;
     de.u.event.time = GetTimeInMillis();
-    mieqEnqueue (inputInfo.keyboard, (xEvent *) &de);
+    mieqEnqueue (dev, (xEvent *) &de);
 
    return TRUE;
 }  
@@ -940,12 +942,12 @@ DGAStealKeyEvent(int index, int key_code, int is_down)
 static int  DGAMouseX, DGAMouseY;
 
 Bool
-DGAStealMotionEvent(int index, int dx, int dy)
+DGAStealMotionEvent(DeviceIntPtr dev, int index, int dx, int dy)
 {
    DGAScreenPtr pScreenPriv;
     dgaEvent    de;
 
-   if(DGAScreenIndex < 0) /* no DGA */
+   if(DGAScreenKey == NULL) /* no DGA */
         return FALSE;
     
    pScreenPriv = DGA_GET_SCREEN_PRIV(screenInfo.screens[index]);
@@ -970,17 +972,17 @@ DGAStealMotionEvent(int index, int dx, int dy)
     de.u.event.dy = dy;
     de.u.event.pad1 = DGAMouseX;
     de.u.event.pad2 = DGAMouseY;
-    mieqEnqueue (inputInfo.pointer, (xEvent *) &de);
+    mieqEnqueue (dev, (xEvent *) &de);
     return TRUE;
 }
 
 Bool
-DGAStealButtonEvent(int index, int button, int is_down)
+DGAStealButtonEvent(DeviceIntPtr dev, int index, int button, int is_down)
 {
     DGAScreenPtr pScreenPriv;
     dgaEvent de;
 
-    if (DGAScreenIndex < 0)
+    if (DGAScreenKey == NULL)
         return FALSE;
     
     pScreenPriv = DGA_GET_SCREEN_PRIV(screenInfo.screens[index]);
@@ -995,7 +997,7 @@ DGAStealButtonEvent(int index, int button, int is_down)
     de.u.event.dy = 0;
     de.u.event.pad1 = DGAMouseX;
     de.u.event.pad2 = DGAMouseY;
-    mieqEnqueue (inputInfo.pointer, (xEvent *) &de);
+    mieqEnqueue (dev, (xEvent *) &de);
 
     return TRUE;
 }
@@ -1006,7 +1008,7 @@ Bool
 DGAIsDgaEvent (xEvent *e)
 {
     int	    coreEquiv;
-    if (DGAScreenIndex < 0 || XDGAEventBase == 0)
+    if (DGAScreenKey == NULL || XDGAEventBase == 0)
 	return FALSE;
     coreEquiv = e->u.u.type - *XDGAEventBase;
     if (KeyPress <= coreEquiv && coreEquiv <= MotionNotify)
@@ -1029,16 +1031,12 @@ static Mask filters[] =
 static void
 DGAProcessKeyboardEvent (ScreenPtr pScreen, dgaEvent *de, DeviceIntPtr keybd)
 {
-    int             key, bit;
-    register BYTE   *kptr;
-    register int    i;
-    register CARD8  modifiers;
-    register CARD16 mask;
     int		    coreEquiv;
-    xEvent	    core;
+    xEvent	    xi;
     KeyClassPtr	    keyc = keybd->key;
     DGAScreenPtr    pScreenPriv = DGA_GET_SCREEN_PRIV(pScreen);
-    
+    DeviceIntPtr    pointer = GetPairedDevice(keybd);
+
     coreEquiv = de->u.u.type - *XDGAEventBase;
 
     /*
@@ -1047,84 +1045,36 @@ DGAProcessKeyboardEvent (ScreenPtr pScreen, dgaEvent *de, DeviceIntPtr keybd)
     de->u.event.dx = 0;
     de->u.event.dy = 0;
     de->u.event.screen = pScreen->myNum;
-    de->u.event.state = keyc->state | (inputInfo.pointer)->button->state;
+    de->u.event.state = keyc->state | pointer->button->state;
 
-    /*
-     * Keep the core state in sync by duplicating what
-     * CoreProcessKeyboardEvent does
-     */
-    key = de->u.u.detail;
-    kptr = &keyc->down[key >> 3];
-    bit = 1 << (key & 7);
-    modifiers = keyc->modifierMap[key];
-    switch (coreEquiv)
-    {
-    case KeyPress:
-	inputInfo.pointer->valuator->motionHintWindow = NullWindow;
-	*kptr |= bit;
-	keyc->prev_state = keyc->state;
-#ifdef XKB
-	if (noXkbExtension)
-#endif
-	{
-	    
-	    for (i = 0, mask = 1; modifiers; i++, mask <<= 1)
-	    {
-		if (mask & modifiers)
-		{
-		    /* This key affects modifier "i" */
-		    keyc->modifierKeyCount[i]++;
-		    keyc->state |= mask;
-		    modifiers &= ~mask;
-		}
-	    }
-	}
-	break;
-    case KeyRelease:
-	inputInfo.pointer->valuator->motionHintWindow = NullWindow;
-	*kptr &= ~bit;
-	keyc->prev_state = keyc->state;
-#ifdef XKB
-	if (noXkbExtension)
-#endif
-	{
-	    for (i = 0, mask = 1; modifiers; i++, mask <<= 1)
-	    {
-		if (mask & modifiers) {
-		    /* This key affects modifier "i" */
-		    if (--keyc->modifierKeyCount[i] <= 0) {
-			keyc->state &= ~mask;
-			keyc->modifierKeyCount[i] = 0;
-		    }
-		    modifiers &= ~mask;
-		}
-	    }
-	}
-	break;
-    }
+    de->u.u.type = (IEventBase - 1) + coreEquiv; /* change to XI event */
+    UpdateDeviceState(keybd, (xEvent*)de, 1);
+    de->u.u.type = *XDGAEventBase + coreEquiv; /* change back */
+
     /*
      * Deliver the DGA event
      */
     if (pScreenPriv->client)
     {
 	/* If the DGA client has selected input, then deliver based on the usual filter */
-	TryClientEvents (pScreenPriv->client, (xEvent *) de, 1, 
+	TryClientEvents (pScreenPriv->client, keybd, (xEvent *) de, 1,
 			 filters[coreEquiv], pScreenPriv->input, 0);
     }
     else
     {
 	/* If the keyboard is actively grabbed, deliver a grabbed core event */
-	if (keybd->grab && !keybd->fromPassiveGrab)
+	if (keybd->deviceGrab.grab && !keybd->deviceGrab.fromPassiveGrab)
 	{
-	    core.u.u.type		    = coreEquiv;
-	    core.u.u.detail		    = de->u.u.detail;
-	    core.u.keyButtonPointer.time    = de->u.event.time;
-	    core.u.keyButtonPointer.eventX  = de->u.event.dx;
-	    core.u.keyButtonPointer.eventY  = de->u.event.dy;
-	    core.u.keyButtonPointer.rootX   = de->u.event.dx;
-	    core.u.keyButtonPointer.rootY   = de->u.event.dy;
-	    core.u.keyButtonPointer.state   = de->u.event.state;
-	    DeliverGrabbedEvent (&core, keybd, FALSE, 1);
+	    xi.u.u.type                  = (IEventBase - 1) + coreEquiv;
+	    xi.u.u.detail                = de->u.u.detail;
+	    xi.u.keyButtonPointer.time   = de->u.event.time;
+	    xi.u.keyButtonPointer.eventX = de->u.event.dx;
+	    xi.u.keyButtonPointer.eventY = de->u.event.dy;
+	    xi.u.keyButtonPointer.rootX  = de->u.event.dx;
+	    xi.u.keyButtonPointer.rootY  = de->u.event.dy;
+	    xi.u.keyButtonPointer.state  = de->u.event.state;
+	    ((deviceKeyButtonPointer*)&xi)->deviceid = keybd->id;
+	    DeliverGrabbedEvent (&xi, keybd, FALSE, 1);
 	}
     }
 }
@@ -1133,77 +1083,44 @@ static void
 DGAProcessPointerEvent (ScreenPtr pScreen, dgaEvent *de, DeviceIntPtr mouse)
 {
     ButtonClassPtr  butc = mouse->button;
-    int		    coreEquiv;    
+    int		    coreEquiv;
     DGAScreenPtr    pScreenPriv = DGA_GET_SCREEN_PRIV(pScreen);
-    xEvent	    core;
+    xEvent	    xi;
 
     coreEquiv = de->u.u.type - *XDGAEventBase;
     /*
      * Fill in remaining event state
      */
     de->u.event.screen = pScreen->myNum;
-    de->u.event.state = butc->state | inputInfo.keyboard->key->state;
-    /*
-     * Keep the core state in sync by duplicating what
-     * CoreProcessPointerEvent does
-     */
-    if (coreEquiv != MotionNotify)
-    {
-	register int  key;
-	register BYTE *kptr;
-	int           bit;
-	
-	key = de->u.u.detail;
-	kptr = &butc->down[key >> 3];
-	bit = 1 << (key & 7);
-	switch (coreEquiv)
-	{
-	case ButtonPress: 
-	    mouse->valuator->motionHintWindow = NullWindow;
-	    if (!(*kptr & bit))
-		butc->buttonsDown++;
-	    butc->motionMask = ButtonMotionMask;
-	    *kptr |= bit;
-	    if (key <= 5)
-		butc->state |= (Button1Mask >> 1) << key;
-	    break;
-	case ButtonRelease: 
-	    mouse->valuator->motionHintWindow = NullWindow;
-	    if (*kptr & bit)
-		--butc->buttonsDown;
-	    if (!butc->buttonsDown)
-		butc->motionMask = 0;
-	    *kptr &= ~bit;
-	    if (key == 0)
-		return;
-	    if (key <= 5)
-		butc->state &= ~((Button1Mask >> 1) << key);
-	    break;
-	}
-    }
+    de->u.event.state = butc->state | GetPairedDevice(mouse)->key->state;
+
+    de->u.u.type = (IEventBase - 1) + coreEquiv; /* change to XI event */
+    UpdateDeviceState(mouse, (xEvent*)de, 1);
+    de->u.u.type = *XDGAEventBase + coreEquiv; /* change back */
+
     /*
      * Deliver the DGA event
      */
     if (pScreenPriv->client)
     {
 	/* If the DGA client has selected input, then deliver based on the usual filter */
-	TryClientEvents (pScreenPriv->client, (xEvent *) de, 1, 
+	TryClientEvents (pScreenPriv->client, mouse, (xEvent *) de, 1,
 			 filters[coreEquiv], pScreenPriv->input, 0);
     }
     else
     {
 	/* If the pointer is actively grabbed, deliver a grabbed core event */
-	if (mouse->grab && !mouse->fromPassiveGrab)
+	if (mouse->deviceGrab.grab && !mouse->deviceGrab.fromPassiveGrab)
 	{
-	    core.u.u.type		    = coreEquiv;
-	    core.u.u.detail		    = de->u.u.detail;
-	    core.u.keyButtonPointer.time    = de->u.event.time;
-	    core.u.keyButtonPointer.eventX  = de->u.event.dx;
-	    core.u.keyButtonPointer.eventY  = de->u.event.dy;
-	    core.u.keyButtonPointer.rootX   = de->u.event.dx;
-	    core.u.keyButtonPointer.rootY   = de->u.event.dy;
-	    core.u.keyButtonPointer.state   = de->u.event.state;
-	    DeliverGrabbedEvent (&core, mouse, FALSE, 1);
+	    xi.u.u.type                   = (IEventBase - 1 ) + coreEquiv;
+	    xi.u.u.detail                 = de->u.u.detail;
+	    xi.u.keyButtonPointer.time    = de->u.event.time;
+	    xi.u.keyButtonPointer.eventX  = de->u.event.dx;
+	    xi.u.keyButtonPointer.eventY  = de->u.event.dy;
+	    xi.u.keyButtonPointer.rootX   = de->u.event.dx;
+	    xi.u.keyButtonPointer.rootY   = de->u.event.dy;
+	    xi.u.keyButtonPointer.state   = de->u.event.state;
+	    DeliverGrabbedEvent (&xi, mouse, FALSE, 1);
 	}
     }
 }
@@ -1275,7 +1192,7 @@ DGAHandleEvent(int screen_num, xEvent *event, DeviceIntPtr device, int nevents)
     int		    coreEquiv;
 
     /* no DGA */
-    if (DGAScreenIndex < 0 || XDGAEventBase == 0)
+    if (DGAScreenKey == NULL || XDGAEventBase == 0)
 	return;
     pScreenPriv = DGA_GET_SCREEN_PRIV(pScreen);
     
@@ -1291,10 +1208,10 @@ DGAHandleEvent(int screen_num, xEvent *event, DeviceIntPtr device, int nevents)
     switch (coreEquiv) {
     case KeyPress:
     case KeyRelease:
-	DGAProcessKeyboardEvent (pScreen, de, inputInfo.keyboard);
+	DGAProcessKeyboardEvent (pScreen, de, device);
 	break;
     default:
-	DGAProcessPointerEvent (pScreen, de, inputInfo.pointer);
+	DGAProcessPointerEvent (pScreen, de, device);
 	break;
     }
 }

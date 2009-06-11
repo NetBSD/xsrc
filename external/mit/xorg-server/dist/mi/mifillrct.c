@@ -67,11 +67,12 @@ SOFTWARE.
  * clipping to the destination
  */
 _X_EXPORT void
-miPolyFillRect(pDrawable, pGC, nrectFill, prectInit)
-    DrawablePtr	pDrawable;
-    GCPtr	pGC;
-    int		nrectFill; 	/* number of rectangles to fill */
-    xRectangle	*prectInit;  	/* Pointer to first rectangle to fill */
+miPolyFillRect(
+    DrawablePtr	pDrawable,
+    GCPtr	pGC,
+    int		nrectFill,	/* number of rectangles to fill */
+    xRectangle	*prectInit	/* Pointer to first rectangle to fill */
+    )
 {
     int i;
     int	height;
@@ -106,12 +107,12 @@ miPolyFillRect(pDrawable, pGC, nrectFill, prectInit)
 	    maxheight = max(maxheight, prect->height);
     }
 
-    pptFirst = (DDXPointPtr) ALLOCATE_LOCAL(maxheight * sizeof(DDXPointRec));
-    pwFirst = (int *) ALLOCATE_LOCAL(maxheight * sizeof(int));
+    pptFirst = (DDXPointPtr) xalloc(maxheight * sizeof(DDXPointRec));
+    pwFirst = (int *) xalloc(maxheight * sizeof(int));
     if(!pptFirst || !pwFirst)
     {
-	if (pwFirst) DEALLOCATE_LOCAL(pwFirst);
-	if (pptFirst) DEALLOCATE_LOCAL(pptFirst);
+	if (pwFirst) xfree(pwFirst);
+	if (pptFirst) xfree(pptFirst);
 	return;
     }
 
@@ -137,6 +138,6 @@ miPolyFillRect(pDrawable, pGC, nrectFill, prectInit)
 			   1);
 	prect++;
     }
-    DEALLOCATE_LOCAL(pwFirst);
-    DEALLOCATE_LOCAL(pptFirst);
+    xfree(pwFirst);
+    xfree(pptFirst);
 }

@@ -61,21 +61,34 @@
 #include "mipointer.h"
 #include "micmap.h"
 
+#undef Xmalloc
+#undef Xcalloc
+#undef Xrealloc
+#undef Xfree
+
+
 extern Bool dmxCloseScreen(int idx, ScreenPtr pScreen);
 static Bool dmxSaveScreen(ScreenPtr pScreen, int what);
 
 static unsigned long dmxGeneration;
 static unsigned long *dmxCursorGeneration;
 
-int dmxGCPrivateIndex;          /**< Private index for GCs       */
-int dmxWinPrivateIndex;         /**< Private index for Windows   */
-int dmxPixPrivateIndex;         /**< Private index for Pixmaps   */
+static int dmxGCPrivateKeyIndex;
+DevPrivateKey dmxGCPrivateKey = &dmxGCPrivateKey; /**< Private index for GCs       */
+static int dmxWinPrivateKeyIndex;
+DevPrivateKey dmxWinPrivateKey = &dmxWinPrivateKeyIndex; /**< Private index for Windows   */
+static int dmxPixPrivateKeyIndex;
+DevPrivateKey dmxPixPrivateKey = &dmxPixPrivateKeyIndex; /**< Private index for Pixmaps   */
 int dmxFontPrivateIndex;        /**< Private index for Fonts     */
-int dmxScreenPrivateIndex;      /**< Private index for Screens   */
-int dmxColormapPrivateIndex;    /**< Private index for Colormaps */
+static int dmxScreenPrivateKeyIndex;
+DevPrivateKey dmxScreenPrivateKey = &dmxScreenPrivateKeyIndex; /**< Private index for Screens   */
+static int dmxColormapPrivateKeyIndex;
+DevPrivateKey dmxColormapPrivateKey = &dmxColormapPrivateKeyIndex; /**< Private index for Colormaps */
 #ifdef RENDER
-int dmxPictPrivateIndex;        /**< Private index for Picts     */
-int dmxGlyphSetPrivateIndex;    /**< Private index for GlyphSets */
+static int dmxPictPrivateKeyIndex;
+DevPrivateKey dmxPictPrivateKey = &dmxPictPrivateKeyIndex; /**< Private index for Picts     */
+static int dmxGlyphSetPrivateKeyIndex;
+DevPrivateKey dmxGlyphSetPrivateKey = &dmxGlyphSetPrivateKeyIndex; /**< Private index for GlyphSets */
 #endif
 
 /** Initialize the parts of screen \a idx that require access to the
@@ -208,42 +221,10 @@ Bool dmxScreenInit(int idx, ScreenPtr pScreen, int argc, char *argv[])
     int                   i, j;
 
     if (dmxGeneration != serverGeneration) {
-#ifdef RENDER
-	/* Allocate picture private index */
-	dmxPictPrivateIndex = AllocatePicturePrivateIndex();
-	if (dmxPictPrivateIndex == -1)
-	    return FALSE;
-
-	/* Allocate glyph set private index */
-	dmxGlyphSetPrivateIndex = AllocateGlyphSetPrivateIndex();
-	if (dmxGlyphSetPrivateIndex == -1)
-	    return FALSE;
-#endif
-
-	/* Allocate GC private index */
-	dmxGCPrivateIndex = AllocateGCPrivateIndex();
-	if (dmxGCPrivateIndex == -1)
-	    return FALSE;
-
-	/* Allocate window private index */
-	dmxWinPrivateIndex = AllocateWindowPrivateIndex();
-	if (dmxWinPrivateIndex == -1)
-	    return FALSE;
-
-	/* Allocate pixmap private index */
-	dmxPixPrivateIndex = AllocatePixmapPrivateIndex();
-	if (dmxPixPrivateIndex == -1)
-	    return FALSE;
-
 	/* Allocate font private index */
 	dmxFontPrivateIndex = AllocateFontPrivateIndex();
 	if (dmxFontPrivateIndex == -1)
 	    return FALSE;
-
-        /* Allocate screen private index */
-        dmxScreenPrivateIndex = AllocateScreenPrivateIndex();
-        if (dmxScreenPrivateIndex == -1)
-            return FALSE;
 
 	dmxGeneration = serverGeneration;
     }
@@ -346,9 +327,6 @@ Bool dmxScreenInit(int idx, ScreenPtr pScreen, int argc, char *argv[])
 	DMX_WRAP(UnrealizeWindow, dmxUnrealizeWindow, dmxScreen, pScreen);
 	DMX_WRAP(RestackWindow, dmxRestackWindow, dmxScreen, pScreen);
 	DMX_WRAP(WindowExposures, dmxWindowExposures, dmxScreen, pScreen);
-	DMX_WRAP(PaintWindowBackground, dmxPaintWindowBackground, dmxScreen,
-		 pScreen);
-	DMX_WRAP(PaintWindowBorder, dmxPaintWindowBorder, dmxScreen, pScreen);
 	DMX_WRAP(CopyWindow, dmxCopyWindow, dmxScreen, pScreen);
 
 	DMX_WRAP(ResizeWindow, dmxResizeWindow, dmxScreen, pScreen);
@@ -375,10 +353,8 @@ Bool dmxScreenInit(int idx, ScreenPtr pScreen, int argc, char *argv[])
 	DMX_WRAP(InstallColormap, dmxInstallColormap, dmxScreen, pScreen);
 	DMX_WRAP(StoreColors, dmxStoreColors, dmxScreen, pScreen);
 
-#ifdef SHAPE
 	/* Wrap Shape functions */
 	DMX_WRAP(SetShape, dmxSetShape, dmxScreen, pScreen);
-#endif
     }
 
     if (!dmxCreateDefColormap(pScreen))
@@ -469,10 +445,8 @@ Bool dmxCloseScreen(int idx, ScreenPtr pScreen)
 	xfree(dmxScreen->shadow);
     } else {
 
-#ifdef SHAPE
 	/* Unwrap Shape functions */
 	DMX_UNWRAP(SetShape, dmxScreen, pScreen);
-#endif
 
 	/* Unwrap the pScreen functions */
 	DMX_UNWRAP(CreateGC, dmxScreen, pScreen);
@@ -485,8 +459,6 @@ Bool dmxCloseScreen(int idx, ScreenPtr pScreen)
 	DMX_UNWRAP(UnrealizeWindow, dmxScreen, pScreen);
 	DMX_UNWRAP(RestackWindow, dmxScreen, pScreen);
 	DMX_UNWRAP(WindowExposures, dmxScreen, pScreen);
-	DMX_UNWRAP(PaintWindowBackground, dmxScreen, pScreen);
-	DMX_UNWRAP(PaintWindowBorder, dmxScreen, pScreen);
 	DMX_UNWRAP(CopyWindow, dmxScreen, pScreen);
 
 	DMX_UNWRAP(ResizeWindow, dmxScreen, pScreen);
