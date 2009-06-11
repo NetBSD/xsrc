@@ -1,37 +1,32 @@
 /*
-** License Applicability. Except to the extent portions of this file are
-** made subject to an alternative license as permitted in the SGI Free
-** Software License B, Version 1.1 (the "License"), the contents of this
-** file are subject only to the provisions of the License. You may not use
-** this file except in compliance with the License. You may obtain a copy
-** of the License at Silicon Graphics, Inc., attn: Legal Services, 1600
-** Amphitheatre Parkway, Mountain View, CA 94043-1351, or at:
-** 
-** http://oss.sgi.com/projects/FreeB
-** 
-** Note that, as provided in the License, the Software is distributed on an
-** "AS IS" basis, with ALL EXPRESS AND IMPLIED WARRANTIES AND CONDITIONS
-** DISCLAIMED, INCLUDING, WITHOUT LIMITATION, ANY IMPLIED WARRANTIES AND
-** CONDITIONS OF MERCHANTABILITY, SATISFACTORY QUALITY, FITNESS FOR A
-** PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
-** 
-** Original Code. The Original Code is: OpenGL Sample Implementation,
-** Version 1.2.1, released January 26, 2000, developed by Silicon Graphics,
-** Inc. The Original Code is Copyright (c) 1991-2000 Silicon Graphics, Inc.
-** Copyright in any portions created by third parties is as indicated
-** elsewhere herein. All Rights Reserved.
-** 
-** Additional Notice Provisions: The application programming interfaces
-** established by SGI in conjunction with the Original Code are The
-** OpenGL(R) Graphics System: A Specification (Version 1.2.1), released
-** April 1, 1999; The OpenGL(R) Graphics System Utility Library (Version
-** 1.3), released November 4, 1998; and OpenGL(R) Graphics with the X
-** Window System(R) (Version 1.3), released October 19, 1998. This software
-** was created using the OpenGL(R) version 1.2.1 Sample Implementation
-** published by SGI, but has not been independently verified as being
-** compliant with the OpenGL(R) version 1.2.1 Specification.
-**
-*/
+ * SGI FREE SOFTWARE LICENSE B (Version 2.0, Sept. 18, 2008)
+ * Copyright (C) 1991-2000 Silicon Graphics, Inc. All Rights Reserved.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice including the dates of first publication and
+ * either this permission notice or a reference to
+ * http://oss.sgi.com/projects/FreeB/
+ * shall be included in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+ * SILICON GRAPHICS, INC. BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+ * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF
+ * OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ *
+ * Except as contained in this notice, the name of Silicon Graphics, Inc.
+ * shall not be used in advertising or otherwise to promote the sale, use or
+ * other dealings in this Software without prior written authorization from
+ * Silicon Graphics, Inc.
+ */
 
 #ifdef HAVE_DMX_CONFIG_H
 #include <dmx-config.h>
@@ -66,7 +61,6 @@
 
 #ifdef PANORAMIX
 #include "panoramiXsrv.h"
-extern XID *PanoramiXVisualTable;
 #endif
 
 extern __GLXFBConfig **__glXFBConfigs;
@@ -152,11 +146,10 @@ static int CreateContext(__GLXclientState *cl,
     /*
     ** Allocate memory for the new context
     */
-    glxc = (__GLXcontext *) __glXMalloc(sizeof(__GLXcontext));
+    glxc = __glXCalloc(1, sizeof(__GLXcontext));
     if (!glxc) {
 	return BadAlloc;
     }
-    memset(glxc, 0, sizeof(__GLXcontext));
 
     pScreen = screenInfo.screens[screen];
     pGlxScreen = &__glXActiveScreens[screen];
@@ -432,7 +425,7 @@ int __glXBindSwapBarrierSGIX(__GLXclientState *cl, GLbyte *pc)
     __glXWindow *pGlxWindow = NULL;
     int rc;
 
-    rc = dixLookupDrawable(&pDraw, req->drawable, client, 0, DixUnknownAccess);
+    rc = dixLookupDrawable(&pDraw, req->drawable, client, 0, DixGetAttrAccess);
     if (rc != Success) {
 	pGlxPixmap = (__GLXpixmap *) LookupIDByType(req->drawable,
 						    __glXPixmapRes);
@@ -462,7 +455,7 @@ int __glXJoinSwapGroupSGIX(__GLXclientState *cl, GLbyte *pc)
     __glXWindow *pGlxWindow = NULL;
     int rc;
 
-    rc = dixLookupDrawable(&pDraw, req->drawable, client, 0, DixUnknownAccess);
+    rc = dixLookupDrawable(&pDraw, req->drawable, client, 0, DixManageAccess);
     if (rc != Success) {
 	pGlxPixmap = (__GLXpixmap *) LookupIDByType(req->drawable,
 						    __glXPixmapRes);
@@ -482,7 +475,7 @@ int __glXJoinSwapGroupSGIX(__GLXclientState *cl, GLbyte *pc)
 
     if (req->member != None) {
 	rc = dixLookupDrawable(&pMember, req->member, client, 0,
-			       DixUnknownAccess);
+			       DixGetAttrAccess);
 	if (rc != Success) {
 	    pGlxPixmap = (__GLXpixmap *) LookupIDByType(req->member,
 							__glXPixmapRes);
@@ -781,7 +774,7 @@ static int MakeCurrent(__GLXclientState *cl,
     }
 
     if (drawId != None) {
-	rc = dixLookupDrawable(&pDraw, drawId, client, 0, DixUnknownAccess);
+	rc = dixLookupDrawable(&pDraw, drawId, client, 0, DixWriteAccess);
 	if (rc == Success) {
 	    if (pDraw->type == DRAWABLE_WINDOW) {
 		/*
@@ -888,7 +881,7 @@ static int MakeCurrent(__GLXclientState *cl,
     }
 
     if (readId != None && readId != drawId ) {
-	rc = dixLookupDrawable(&pReadDraw, readId, client, 0,DixUnknownAccess);
+	rc = dixLookupDrawable(&pReadDraw, readId, client, 0, DixReadAccess);
 	if (rc == Success) {
 	    if (pReadDraw->type == DRAWABLE_WINDOW) {
 		/*
@@ -1005,8 +998,7 @@ static int MakeCurrent(__GLXclientState *cl,
 	    prevglxc->pGlxPixmap = 0;
 	}
 
-	if (prevglxc->pGlxReadPixmap && 
-	    prevglxc->pGlxReadPixmap != prevglxc->pGlxPixmap ) {
+	if (prevglxc->pGlxReadPixmap) {
 	    /*
 	    ** The previous drawable was a glx pixmap, release it.
 	    */
@@ -1024,8 +1016,7 @@ static int MakeCurrent(__GLXclientState *cl,
 	    prevglxc->pGlxWindow = 0;   
 	}
 
-	if (prevglxc->pGlxReadWindow &&
-	    prevglxc->pGlxReadWindow != prevglxc->pGlxWindow) {
+	if (prevglxc->pGlxReadWindow) {
 	    /*
 	    ** The previous drawable was a glx window, release it.
 	    */
@@ -1043,8 +1034,7 @@ static int MakeCurrent(__GLXclientState *cl,
 	    prevglxc->pGlxPbuffer = 0;   
 	}
 
-	if (prevglxc->pGlxReadPbuffer &&
-	    prevglxc->pGlxReadPbuffer != prevglxc->pGlxPbuffer ) {
+	if (prevglxc->pGlxReadPbuffer) {
 	    /*
 	    ** The previous drawable was a glx Pbuffer, release it.
 	    */
@@ -1072,7 +1062,7 @@ static int MakeCurrent(__GLXclientState *cl,
 	    pGlxPixmap->refcnt++;
 	}
 
-	if (pReadGlxPixmap && pReadGlxPixmap != pGlxPixmap) {
+	if (pReadGlxPixmap) {
 	    pReadGlxPixmap->refcnt++;
 	}
 
@@ -1080,7 +1070,7 @@ static int MakeCurrent(__GLXclientState *cl,
 	   pGlxWindow->refcnt++;
 	}
 
-	if (pGlxReadWindow && pGlxReadWindow != pGlxWindow) {
+	if (pGlxReadWindow) {
 	   pGlxReadWindow->refcnt++;
 	}
 
@@ -1088,7 +1078,7 @@ static int MakeCurrent(__GLXclientState *cl,
 	   pGlxPbuffer->refcnt++;
 	}
 
-	if (pGlxReadPbuffer && pGlxReadPbuffer != pGlxPbuffer) {
+	if (pGlxReadPbuffer) {
 	   pGlxReadPbuffer->refcnt++;
 	}
 
@@ -1646,7 +1636,7 @@ static int CreateGLXPixmap(__GLXclientState *cl,
 #endif
 
     rc = dixLookupDrawable(&pDraw, pixmapId, client, M_DRAWABLE_PIXMAP,
-			   DixUnknownAccess);
+			   DixAddAccess);
     if (rc != Success)
 	return rc;
 
@@ -1780,7 +1770,7 @@ static int CreateGLXPixmap(__GLXclientState *cl,
 #ifdef PANORAMIX
        if (pXinDraw) {
 	   dixLookupDrawable(&pRealDraw, pXinDraw->info[s].id, client, 0,
-			     DixUnknownAccess);
+			     DixAddAccess);
        }
 #endif
 
@@ -1951,7 +1941,7 @@ int __glXDoSwapBuffers(__GLXclientState *cl, XID drawId, GLXContextTag tag)
     /*
     ** Check that the GLX drawable is valid.
     */
-    rc = dixLookupDrawable(&pDraw, drawId, client, 0, DixUnknownAccess);
+    rc = dixLookupDrawable(&pDraw, drawId, client, 0, DixWriteAccess);
     if (rc == Success) {
         from_screen = to_screen = pDraw->pScreen->myNum;
 
@@ -2105,7 +2095,7 @@ int __glXSwapBuffers(__GLXclientState *cl, GLbyte *pc)
     /*
     ** Check that the GLX drawable is valid.
     */
-    rc = dixLookupDrawable(&pDraw, drawId, client, 0, DixUnknownAccess);
+    rc = dixLookupDrawable(&pDraw, drawId, client, 0, DixWriteAccess);
     if (rc == Success) {
 	if (pDraw->type != DRAWABLE_WINDOW) {
 	    /*
@@ -2824,14 +2814,8 @@ int __glXGetFBConfigs(__GLXclientState *cl, GLbyte *pc)
 #ifdef PANORAMIX
 	   else if (!noPanoramiXExtension) {
 	      /* convert the associated visualId to the panoramix one */
-              for (v=0; v<255; v++) {
-		 if ( PanoramiXVisualTable[ v * MAXSCREENS + screen ] ==
-		      associatedVisualId ) {
-		    associatedVisualId = v;
-		    break;
-		 } 
-	      }
-	      pFBConfig->associatedVisualId = associatedVisualId;
+	      pFBConfig->associatedVisualId =
+		  PanoramiXTranslateVisualID(screen, v);
 	   }
 #endif
 	}
@@ -2900,7 +2884,7 @@ int __glXCreateWindow(__GLXclientState *cl, GLbyte *pc)
     ** Check if windowId is valid 
     */
     rc = dixLookupDrawable(&pDraw, windowId, client, M_DRAWABLE_WINDOW,
-			   DixUnknownAccess);
+			   DixAddAccess);
     if (rc != Success)
 	return rc;
 
@@ -3284,7 +3268,7 @@ int __glXGetDrawableAttributes(__GLXclientState *cl, GLbyte *pc)
 #endif
 
    if (drawId != None) {
-      rc = dixLookupDrawable(&pDraw, drawId, client, 0, DixUnknownAccess);
+      rc = dixLookupDrawable(&pDraw, drawId, client, 0, DixGetAttrAccess);
       if (rc == Success) {
 	 if (pDraw->type == DRAWABLE_WINDOW) {
 		WindowPtr pWin = (WindowPtr)pDraw;
@@ -3445,7 +3429,7 @@ int __glXChangeDrawableAttributes(__GLXclientState *cl, GLbyte *pc)
 #endif
 
    if (drawId != None) {
-      rc = dixLookupDrawable(&pDraw, drawId, client, 0, DixUnknownAccess);
+      rc = dixLookupDrawable(&pDraw, drawId, client, 0, DixSetAttrAccess);
       if (rc == Success) {
 	 if (pDraw->type == DRAWABLE_WINDOW) {
 		WindowPtr pWin = (WindowPtr)pDraw;

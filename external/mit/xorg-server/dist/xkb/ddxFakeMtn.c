@@ -53,8 +53,8 @@ XkbDDXFakePointerMotion(unsigned flags,int x,int y)
 int 		   oldX,oldY;
 ScreenPtr	   pScreen, oldScreen;
 
-    GetSpritePosition(&oldX, &oldY);
-    pScreen = oldScreen = GetSpriteWindow()->drawable.pScreen;
+    GetSpritePosition(inputInfo.pointer, &oldX, &oldY);
+    pScreen = oldScreen = GetSpriteWindow(inputInfo.pointer)->drawable.pScreen;
 
 #ifdef PANORAMIX
     if (!noPanoramiXExtension) {
@@ -107,13 +107,13 @@ ScreenPtr	   pScreen, oldScreen;
 	     oldY=  y;
 	else oldY+= y;
 
-#define GetScreenPrivate(s) ((miPointerScreenPtr) ((s)->devPrivates[miPointerScreenIndex].ptr))	
+#define GetScreenPrivate(s) ((miPointerScreenPtr)dixLookupPrivate(&(s)->devPrivates, miPointerScreenKey))
 	(*(GetScreenPrivate(oldScreen))->screenFuncs->CursorOffScreen)
 	    (&pScreen, &oldX, &oldY);
     }
 
     if (pScreen != oldScreen)
-	NewCurrentScreen(pScreen, oldX, oldY);
+	NewCurrentScreen(inputInfo.pointer, pScreen, oldX, oldY);
     if (pScreen->SetCursorPosition)
-	(*pScreen->SetCursorPosition)(pScreen, oldX, oldY, TRUE);
+	(*pScreen->SetCursorPosition)(inputInfo.pointer, pScreen, oldX, oldY, TRUE);
 }

@@ -6,7 +6,6 @@ AM_CFLAGS = $(DIX_CFLAGS) \
 DDX_SRCS = \
         ddxBeep.c \
         ddxCtrls.c \
-        ddxFakeBtn.c \
         ddxFakeMtn.c \
         ddxInit.c \
         ddxKeyClick.c \
@@ -32,7 +31,6 @@ XKBFILE_SRCS = \
         xkmread.c \
         xkbtext.c \
         xkbfmisc.c \
-        xkberrs.c \
         xkbout.c
 
 X11_SRCS = \
@@ -48,7 +46,7 @@ libxkb_la_SOURCES = $(DDX_SRCS) $(DIX_SRCS) $(XI_SRCS) $(XKBFILE_SRCS) \
                     $(X11_SRCS)
 libxkbstubs_la_SOURCES = ddxVT.c ddxPrivate.c ddxKillSrv.c
 
-EXTRA_DIST = xkb.h xkbDflts.h
+EXTRA_DIST = xkbDflts.h xkbgeom.h xkb.h
 
 xkbcompileddir = $(XKB_COMPILED_DIR)
 dist_xkbcompiled_DATA = README.compiled

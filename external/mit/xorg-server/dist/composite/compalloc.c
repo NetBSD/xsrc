@@ -82,6 +82,9 @@ compRedirectWindow (ClientPtr pClient, WindowPtr pWin, int update)
 	return Success;
     }
 
+    if (!pWin->parent)
+	return BadMatch;
+
     /*
      * Only one Manual update is allowed
      */
@@ -137,7 +140,7 @@ compRedirectWindow (ClientPtr pClient, WindowPtr pWin, int update)
 	cw->oldy = COMP_ORIGIN_INVALID;
 	cw->damageRegistered = FALSE;
 	cw->damaged = FALSE;
-	pWin->devPrivates[CompWindowPrivateIndex].ptr = cw;
+	dixSetPrivate(&pWin->devPrivates, CompWindowPrivateKey, cw);
     }
     ccw->next = cw->clients;
     cw->clients = ccw;
@@ -145,6 +148,16 @@ compRedirectWindow (ClientPtr pClient, WindowPtr pWin, int update)
 	return BadAlloc;
     if (ccw->update == CompositeRedirectManual)
     {
+	/* If the window was CompositeRedirectAutomatic, then
+	 * unmap the window so that the parent clip list will
+	 * be correctly recomputed.
+	 */
+	if (pWin->mapped) 
+	{
+	    DisableMapUnmapEvents (pWin);
+	    UnmapWindow (pWin, FALSE);
+	    EnableMapUnmapEvents (pWin);
+	}
 	if (cw->damageRegistered)
 	{
 	    DamageUnregister (&pWin->drawable, cw->damage);
@@ -212,7 +225,7 @@ compFreeClientWindow (WindowPtr pWin, XID id)
 	
 	REGION_UNINIT (pScreen, &cw->borderClip);
     
-	pWin->devPrivates[CompWindowPrivateIndex].ptr = 0;
+	dixSetPrivate(&pWin->devPrivates, CompWindowPrivateKey, NULL);
 	xfree (cw);
     }
     else if (cw->update == CompositeRedirectAutomatic &&
@@ -221,7 +234,7 @@ compFreeClientWindow (WindowPtr pWin, XID id)
 	DamageRegister (&pWin->drawable, cw->damage);
 	cw->damageRegistered = TRUE;
 	pWin->redirectDraw = RedirectDrawAutomatic;
-	DamageDamageRegion (&pWin->drawable, &pWin->borderSize);
+	DamageRegionAppend(&pWin->drawable, &pWin->borderSize);
     }
     if (wasMapped && !pWin->mapped)
     {
@@ -297,7 +310,7 @@ compRedirectSubwindows (ClientPtr pClient, WindowPtr pWin, int update)
 	}
 	csw->update = CompositeRedirectAutomatic;
 	csw->clients = 0;
-	pWin->devPrivates[CompSubwindowsPrivateIndex].ptr = csw;
+	dixSetPrivate(&pWin->devPrivates, CompSubwindowsPrivateKey, csw);
     }
     /*
      * Redirect all existing windows
@@ -312,7 +325,7 @@ compRedirectSubwindows (ClientPtr pClient, WindowPtr pWin, int update)
 	    if (!csw->clients)
 	    {
 		xfree (csw);
-		pWin->devPrivates[CompSubwindowsPrivateIndex].ptr = 0;
+		dixSetPrivate(&pWin->devPrivates, CompSubwindowsPrivateKey, 0);
 	    }
 	    xfree (ccw);
 	    return ret;
@@ -385,7 +398,7 @@ compFreeClientSubwindows (WindowPtr pWin, XID id)
      */
     if (!csw->clients)
     {
-	pWin->devPrivates[CompSubwindowsPrivateIndex].ptr = 0;
+	dixSetPrivate(&pWin->devPrivates, CompSubwindowsPrivateKey, NULL);
 	xfree (csw);
     }
 }
@@ -462,7 +475,8 @@ compNewPixmap (WindowPtr pWin, int x, int y, int w, int h)
     WindowPtr	    pParent = pWin->parent;
     PixmapPtr	    pPixmap;
 
-    pPixmap = (*pScreen->CreatePixmap) (pScreen, w, h, pWin->drawable.depth);
+    pPixmap = (*pScreen->CreatePixmap) (pScreen, w, h, pWin->drawable.depth,
+					CREATE_PIXMAP_USAGE_BACKING_PIXMAP);
 
     if (!pPixmap)
 	return 0;

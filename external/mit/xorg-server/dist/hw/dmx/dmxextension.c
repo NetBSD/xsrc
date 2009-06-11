@@ -64,6 +64,12 @@
 #include <X11/extensions/dmxproto.h>  /* For DMX_BAD_* */
 #include "cursorstr.h"
 
+#undef Xmalloc
+#undef Xcalloc
+#undef Xrealloc
+#undef Xfree
+
+
 /* The default font is declared in dix/globals.c, but is not included in
  * _any_ header files. */
 extern FontPtr  defaultFont;
@@ -1121,11 +1127,10 @@ static void dmxBERestoreRenderGlyph(pointer value, XID id, pointer n)
     }
 
     /* Now allocate the memory we need */
-    images = ALLOCATE_LOCAL(len_images*sizeof(char));
-    gids   = ALLOCATE_LOCAL(glyphSet->hash.tableEntries*sizeof(Glyph));
-    glyphs = ALLOCATE_LOCAL(glyphSet->hash.tableEntries*sizeof(XGlyphInfo));
+    images = xcalloc(len_images, sizeof(char));
+    gids   = xalloc(glyphSet->hash.tableEntries*sizeof(Glyph));
+    glyphs = xalloc(glyphSet->hash.tableEntries*sizeof(XGlyphInfo));
 
-    memset(images, 0, len_images * sizeof(char));
     pos = images;
     ctr = 0;
     
@@ -1159,9 +1164,9 @@ static void dmxBERestoreRenderGlyph(pointer value, XID id, pointer n)
 		     len_images);
 
     /* Clean up */
-    DEALLOCATE_LOCAL(len_images);
-    DEALLOCATE_LOCAL(gids);
-    DEALLOCATE_LOCAL(glyphs);    
+    xfree(len_images);
+    xfree(gids);
+    xfree(glyphs);    
 }
 #endif
 
@@ -1350,7 +1355,6 @@ int dmxAttachScreen(int idx, DMXScreenAttributesPtr attr)
  * RTContext
  * TagResType
  * StalledResType
- * RT_APPGROUP
  * SecurityAuthorizationResType
  * RTEventClient
  * __glXContextRes

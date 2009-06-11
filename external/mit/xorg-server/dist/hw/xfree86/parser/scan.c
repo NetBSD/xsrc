@@ -64,8 +64,8 @@
 #include <string.h>
 #include <unistd.h>
 #include <stdarg.h>
+#include <X11/Xfuncproto.h>
 
-#if !defined(X_NOT_POSIX)
 #if defined(_POSIX_SOURCE)
 #include <limits.h>
 #else
@@ -73,7 +73,7 @@
 #include <limits.h>
 #undef _POSIX_SOURCE
 #endif /* _POSIX_SOURCE */
-#endif /* !X_NOT_POSIX */
+
 #if !defined(PATH_MAX)
 #if defined(MAXPATHLEN)
 #define PATH_MAX MAXPATHLEN
@@ -379,11 +379,20 @@ again:
 			if (c == '0')
 				if ((configBuf[configPos] == 'x') ||
 					(configBuf[configPos] == 'X'))
+                                {
 					base = 16;
+                                        val.numType = PARSE_HEX;
+                                }
 				else
+                                {
 					base = 8;
+                                        val.numType = PARSE_OCTAL;
+                                }
 			else
+                        {
 				base = 10;
+                                val.numType = PARSE_DECIMAL;
+                        }
 
 			configRBuf[0] = c;
 			i = 1;
@@ -426,7 +435,7 @@ again:
 			i = 0;
 			do
 			{
-				configRBuf[++i] = (c = configBuf[configPos++]);;
+				configRBuf[++i] = (c = configBuf[configPos++]);
 			}
 			while ((c != ' ') && (c != '\t') && (c != '\n') && (c != '\r') && (c != '\0') && (c != '#'));
 			--configPos;
@@ -558,7 +567,6 @@ xf86pathIsSafe(const char *path)
  *    %E    config file environment ($XORGCONFIG) as an absolute path
  *    %F    config file environment ($XORGCONFIG) as a relative path
  *    %G    config file environment ($XORGCONFIG) as a safe path
- *    %D    $HOME
  *    %P    projroot
  *    %M    major version number
  *    %%    %
@@ -612,7 +620,7 @@ DoSubstitution(const char *template, const char *cmdline, const char *projroot,
 {
 	char *result;
 	int i, l;
-	static const char *env = NULL, *home = NULL;
+	static const char *env = NULL;
 	static char *hostname = NULL;
 	static char majorvers[3] = "";
 
@@ -701,14 +709,6 @@ DoSubstitution(const char *template, const char *cmdline, const char *projroot,
 					if (envUsed)
 						*envUsed = 1;
 				} else
-					BAIL_OUT;
-				break;
-			case 'D':
-				if (!home)
-					home = getenv("HOME");
-				if (home && xf86pathIsAbsolute(home))
-					APPEND_STR(home);
-				else
 					BAIL_OUT;
 				break;
 			case 'P':
@@ -948,7 +948,7 @@ StringToToken (char *str, xf86ConfigSymTabRec * tab)
  * Compare two names.  The characters '_', ' ', and '\t' are ignored
  * in the comparison.
  */
-int
+_X_EXPORT int
 xf86nameCompare (const char *s1, const char *s2)
 {
 	char c1, c2;

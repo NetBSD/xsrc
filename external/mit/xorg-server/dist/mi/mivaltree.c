@@ -103,16 +103,12 @@ Equipment Corporation.
 
 #include    "globals.h"
 
-#ifdef SHAPE
 /*
  * Compute the visibility of a shaped window
  */
-_X_EXPORT int
-miShapedWindowIn (pScreen, universe, bounding, rect, x, y)
-    ScreenPtr	pScreen;
-    RegionPtr	universe, bounding;
-    BoxPtr	rect;
-    int 	x, y;
+int
+miShapedWindowIn (ScreenPtr pScreen, RegionPtr universe, RegionPtr bounding,
+                  BoxPtr rect, int x, int y)
 {
     BoxRec  	box;
     BoxPtr	boundBox;
@@ -166,7 +162,6 @@ miShapedWindowIn (pScreen, universe, bounding, rect, x, y)
 	return rgnIN;
     return rgnOUT;
 }
-#endif
 
 static GetRedirectBorderClipProcPtr	miGetRedirectBorderClipProc;
 static SetRedirectBorderClipProcPtr	miSetRedirectBorderClipProc;
@@ -255,7 +250,11 @@ miComputeClips (
     if (pParent->redirectDraw != RedirectDrawNone)
     {
 	if (miSetRedirectBorderClipProc)
+	{
+	    if (TreatAsTransparent (pParent))
+		REGION_EMPTY (pScreen, universe);
 	    (*miSetRedirectBorderClipProc) (pParent, universe);
+	}
 	REGION_COPY(pScreen, universe, &pParent->borderSize);
     }
 #endif
@@ -268,7 +267,6 @@ miComputeClips (
 	    break;
 	case rgnPART:
 	    newVis = VisibilityPartiallyObscured;
-#ifdef SHAPE
 	    {
 		RegionPtr   pBounding;
 
@@ -288,7 +286,6 @@ miComputeClips (
 		    }
 		}
 	    }
-#endif
 	    break;
 	default:
 	    newVis = VisibilityFullyObscured;
@@ -513,18 +510,6 @@ miComputeClips (
 			       universe, &pParent->clipList);
     }
 
-    /*
-     * One last thing: backing storage. We have to try to save what parts of
-     * the window are about to be obscured. We can just subtract the universe
-     * from the old clipList and get the areas that were in the old but aren't
-     * in the new and, hence, are about to be obscured.
-     */
-    if (pParent->backStorage && !resized)
-    {
-	REGION_SUBTRACT( pScreen, exposed, &pParent->clipList, universe);
-	(* pScreen->SaveDoomedAreas)(pParent, exposed, dx, dy);
-    }
-    
     /* HACK ALERT - copying contents of regions, instead of regions */
     {
 	RegionRec   tmp;
@@ -605,11 +590,12 @@ miTreeObscured(
  */
 /*ARGSUSED*/
 int
-miValidateTree (pParent, pChild, kind)
-    WindowPtr	  	pParent;    /* Parent to validate */
-    WindowPtr	  	pChild;     /* First child of pParent that was
+miValidateTree (
+    WindowPtr		pParent,    /* Parent to validate */
+    WindowPtr		pChild,     /* First child of pParent that was
 				     * affected */
-    VTKind    	  	kind;       /* What kind of configuration caused call */
+    VTKind		kind        /* What kind of configuration caused call */
+    )
 {
     RegionRec	  	totalClip;  /* Total clipping region available to
 				     * the marked children. pParent's clipList
@@ -816,11 +802,6 @@ miValidateTree (pParent, pChild, kind)
 			       &totalClip, &pParent->clipList);
 	/* fall through */
     case VTMap:
-	if (pParent->backStorage) {
-	    REGION_SUBTRACT( pScreen, &exposed, &pParent->clipList, &totalClip);
-	    (* pScreen->SaveDoomedAreas)(pParent, &exposed, 0, 0);
-	}
-	
 	REGION_COPY( pScreen, &pParent->clipList, &totalClip);
 	pParent->drawable.serialNumber = NEXT_SERIAL_NUMBER;
 	break;

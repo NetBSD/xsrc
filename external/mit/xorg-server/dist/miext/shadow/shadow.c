@@ -36,8 +36,8 @@
 #include    "gcstruct.h"
 #include    "shadow.h"
 
-int shadowScrPrivateIndex;
-int shadowGeneration;
+static int shadowScrPrivateKeyIndex;
+DevPrivateKey shadowScrPrivateKey = &shadowScrPrivateKeyIndex;
 
 #define wrap(priv, real, mem) {\
     priv->mem = real->mem; \
@@ -116,7 +116,8 @@ static void
 shadowReportFunc(DamagePtr pDamage, RegionPtr pRegion, void *closure)
 {
     ScreenPtr pScreen = closure;
-    shadowBufPtr pBuf = pScreen->devPrivates[shadowScrPrivateIndex].ptr;
+    shadowBufPtr pBuf = (shadowBufPtr)
+	dixLookupPrivate(&pScreen->devPrivates, shadowScrPrivateKey);
 
     /* Register the damaged region, use DamageReportNone below when we
      * want to break BC below... */
@@ -137,13 +138,6 @@ shadowSetup(ScreenPtr pScreen)
 
     if (!DamageSetup(pScreen))
 	return FALSE;
-
-    if (shadowGeneration != serverGeneration) {
-	shadowScrPrivateIndex = AllocateScreenPrivateIndex();
-	if (shadowScrPrivateIndex == -1)
-	    return FALSE;
-	shadowGeneration = serverGeneration;
-    }
 
     pBuf = (shadowBufPtr) xalloc(sizeof(shadowBufRec));
     if (!pBuf)
@@ -175,7 +169,7 @@ shadowSetup(ScreenPtr pScreen)
     REGION_NULL(pScreen, &pBuf->damage); /* bc */
 #endif
 
-    pScreen->devPrivates[shadowScrPrivateIndex].ptr = (pointer) pBuf;
+    dixSetPrivate(&pScreen->devPrivates, shadowScrPrivateKey, pBuf);
     return TRUE;
 }
 
@@ -240,7 +234,7 @@ shadowInit(ScreenPtr pScreen, ShadowUpdateProc update, ShadowWindowProc window)
     PixmapPtr pPixmap;
     
     pPixmap = pScreen->CreatePixmap(pScreen, pScreen->width, pScreen->height,
-				    pScreen->rootDepth);
+				    pScreen->rootDepth, 0);
     if (!pPixmap)
 	return FALSE;
     

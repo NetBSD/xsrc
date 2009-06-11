@@ -29,13 +29,13 @@
 int
 ProcXFixesChangeSaveSet(ClientPtr client)
 {
-    Bool	toRoot, remap;
+    Bool	toRoot, map;
     int		result;
     WindowPtr	pWin;
     REQUEST(xXFixesChangeSaveSetReq);
 		  
     REQUEST_SIZE_MATCH(xXFixesChangeSaveSetReq);
-    result = dixLookupWindow(&pWin, stuff->window, client, DixReadAccess);
+    result = dixLookupWindow(&pWin, stuff->window, client, DixManageAccess);
     if (result != Success)
         return result;
     if (client->clientAsMask == (CLIENT_BITS(pWin->drawable.id)))
@@ -56,8 +56,8 @@ ProcXFixesChangeSaveSet(ClientPtr client)
 	return( BadValue );
     }
     toRoot = (stuff->target == SaveSetRoot);
-    remap = (stuff->map == SaveSetMap);
-    result = AlterSaveSetForClient(client, pWin, stuff->mode, toRoot, remap);
+    map = (stuff->map == SaveSetMap);
+    result = AlterSaveSetForClient(client, pWin, stuff->mode, toRoot, map);
     if (client->noClientException != Success)
 	return(client->noClientException);
     else
@@ -72,5 +72,5 @@ SProcXFixesChangeSaveSet(ClientPtr client)
 
     swaps(&stuff->length, n);
     swapl(&stuff->window, n);
-    return ProcXFixesChangeSaveSet(client);
+    return (*ProcXFixesVector[stuff->xfixesReqType])(client);
 }

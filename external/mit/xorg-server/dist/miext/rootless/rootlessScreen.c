@@ -42,6 +42,7 @@
 #include "propertyst.h"
 #include "mivalidate.h"
 #include "picturestr.h"
+#include "colormapst.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -61,9 +62,14 @@ extern int RootlessMiValidateTree(WindowPtr pRoot, WindowPtr pChild,
 extern Bool RootlessCreateGC(GCPtr pGC);
 
 // Initialize globals
-int rootlessGCPrivateIndex = -1;
-int rootlessScreenPrivateIndex = -1;
-int rootlessWindowPrivateIndex = -1;
+static int rootlessGCPrivateKeyIndex;
+DevPrivateKey rootlessGCPrivateKey = &rootlessGCPrivateKeyIndex;
+static int rootlessScreenPrivateKeyIndex;
+DevPrivateKey rootlessScreenPrivateKey = &rootlessScreenPrivateKeyIndex;
+static int rootlessWindowPrivateKeyIndex;
+DevPrivateKey rootlessWindowPrivateKey = &rootlessWindowPrivateKeyIndex;
+static int rootlessWindowOldPixmapPrivateKeyIndex;
+DevPrivateKey rootlessWindowOldPixmapPrivateKey = &rootlessWindowOldPixmapPrivateKeyIndex;
 
 
 /*
@@ -84,7 +90,7 @@ RootlessUpdateScreenPixmap(ScreenPtr pScreen)
 
     pPix = (*pScreen->GetScreenPixmap)(pScreen);
     if (pPix == NULL) {
-        pPix = (*pScreen->CreatePixmap)(pScreen, 0, 0, pScreen->rootDepth);
+        pPix = (*pScreen->CreatePixmap)(pScreen, 0, 0, pScreen->rootDepth, 0);
         (*pScreen->SetScreenPixmap)(pPix);
     }
 
@@ -469,6 +475,94 @@ RootlessMarkOverlappedWindows(WindowPtr pWin, WindowPtr pFirst,
     return result;
 }
 
+void expose_1 (WindowPtr pWin) {
+    WindowPtr pChild;
+    
+    if (!pWin->realized)
+        return;
+    
+    (*pWin->drawable.pScreen->PaintWindowBackground) (pWin, &pWin->borderClip,
+                                                      PW_BACKGROUND);
+    
+    /* FIXME: comments in windowstr.h indicate that borderClip doesn't
+     include subwindow visibility. But I'm not so sure.. so we may
+     be exposing too much.. */
+    
+    miSendExposures (pWin, &pWin->borderClip,
+                     pWin->drawable.x, pWin->drawable.y);
+    
+    for (pChild = pWin->firstChild; pChild != NULL; pChild = pChild->nextSib)
+        expose_1 (pChild);
+}
+
+void
+RootlessScreenExpose (ScreenPtr pScreen)
+{
+    expose_1 (WindowTable[pScreen->myNum]);
+}
+
+
+ColormapPtr
+RootlessGetColormap (ScreenPtr pScreen)
+{
+  RootlessScreenRec *s = SCREENREC (pScreen);
+
+  return s->colormap;
+}
+
+static void
+RootlessInstallColormap (ColormapPtr pMap)
+{
+  ScreenPtr pScreen = pMap->pScreen;
+  RootlessScreenRec *s = SCREENREC (pScreen);
+
+  SCREEN_UNWRAP(pScreen, InstallColormap);
+
+  if (s->colormap != pMap) {
+    s->colormap = pMap;
+    s->colormap_changed = TRUE;
+    RootlessQueueRedisplay (pScreen);
+  }
+
+  pScreen->InstallColormap (pMap);
+
+  SCREEN_WRAP (pScreen, InstallColormap);
+}
+
+static void
+RootlessUninstallColormap (ColormapPtr pMap)
+{
+  ScreenPtr pScreen = pMap->pScreen;
+  RootlessScreenRec *s = SCREENREC (pScreen);
+
+  SCREEN_UNWRAP(pScreen, UninstallColormap);
+
+  if (s->colormap == pMap)
+    s->colormap = NULL;
+
+  pScreen->UninstallColormap (pMap);
+
+  SCREEN_WRAP(pScreen, UninstallColormap);
+}
+
+static void
+RootlessStoreColors (ColormapPtr pMap, int ndef, xColorItem *pdef)
+{
+  ScreenPtr pScreen = pMap->pScreen;
+  RootlessScreenRec *s = SCREENREC (pScreen);
+
+  SCREEN_UNWRAP(pScreen, StoreColors);
+
+  if (s->colormap == pMap && ndef > 0) {
+    s->colormap_changed = TRUE;
+    RootlessQueueRedisplay (pScreen);
+  }
+
+  pScreen->StoreColors (pMap, ndef, pdef);
+
+  SCREEN_WRAP(pScreen, StoreColors);
+}
+
 
 static CARD32
 RootlessRedisplayCallback(OsTimerPtr timer, CARD32 time, void *arg)
@@ -547,28 +641,14 @@ static Bool
 RootlessAllocatePrivates(ScreenPtr pScreen)
 {
     RootlessScreenRec *s;
-    static unsigned long rootlessGeneration = 0;
-
-    if (rootlessGeneration != serverGeneration) {
-        rootlessScreenPrivateIndex = AllocateScreenPrivateIndex();
-        if (rootlessScreenPrivateIndex == -1) return FALSE;
-        rootlessGCPrivateIndex = AllocateGCPrivateIndex();
-        if (rootlessGCPrivateIndex == -1) return FALSE;
-        rootlessWindowPrivateIndex = AllocateWindowPrivateIndex();
-        if (rootlessWindowPrivateIndex == -1) return FALSE;
-        rootlessGeneration = serverGeneration;
-    }
 
     // no allocation needed for screen privates
-    if (!AllocateGCPrivate(pScreen, rootlessGCPrivateIndex,
-                           sizeof(RootlessGCRec)))
-        return FALSE;
-    if (!AllocateWindowPrivate(pScreen, rootlessWindowPrivateIndex, 0))
+    if (!dixRequestPrivate(rootlessGCPrivateKey, sizeof(RootlessGCRec)))
         return FALSE;
 
     s = xalloc(sizeof(RootlessScreenRec));
     if (! s) return FALSE;
-    SCREENREC(pScreen) = s;
+    SETSCREENREC(pScreen, s);
 
     s->pixmap_data = NULL;
     s->pixmap_data_size = 0;
@@ -583,8 +663,7 @@ RootlessAllocatePrivates(ScreenPtr pScreen)
 static void
 RootlessWrap(ScreenPtr pScreen)
 {
-    RootlessScreenRec *s = (RootlessScreenRec*)
-            pScreen->devPrivates[rootlessScreenPrivateIndex].ptr;
+    RootlessScreenRec *s = SCREENREC(pScreen);
 
 #define WRAP(a) \
     if (pScreen->a) { \
@@ -598,8 +677,6 @@ RootlessWrap(ScreenPtr pScreen)
     WRAP(CreateScreenResources);
     WRAP(CloseScreen);
     WRAP(CreateGC);
-    WRAP(PaintWindowBackground);
-    WRAP(PaintWindowBorder);
     WRAP(CopyWindow);
     WRAP(GetImage);
     WRAP(SourceValidate);
@@ -616,10 +693,11 @@ RootlessWrap(ScreenPtr pScreen)
     WRAP(MarkOverlappedWindows);
     WRAP(ValidateTree);
     WRAP(ChangeWindowAttributes);
+    WRAP(InstallColormap);
+    WRAP(UninstallColormap);
+    WRAP(StoreColors);
 
-#ifdef SHAPE
     WRAP(SetShape);
-#endif
 
 #ifdef RENDER
     {
@@ -633,7 +711,6 @@ RootlessWrap(ScreenPtr pScreen)
 #endif
 
     // WRAP(ClearToBackground); fixme put this back? useful for shaped wins?
-    // WRAP(RestoreAreas); fixme put this back?
 
 #undef WRAP
 }
@@ -651,10 +728,11 @@ Bool RootlessInit(ScreenPtr pScreen, RootlessFrameProcsPtr procs)
     if (!RootlessAllocatePrivates(pScreen))
         return FALSE;
 
-    s = (RootlessScreenRec*)
-        pScreen->devPrivates[rootlessScreenPrivateIndex].ptr;
+    s = SCREENREC(pScreen);
 
     s->imp = procs;
+    s->colormap = NULL;
+    s->redisplay_expired = FALSE;
 
     RootlessWrap(pScreen);
 
@@ -666,4 +744,19 @@ Bool RootlessInit(ScreenPtr pScreen, RootlessFrameProcsPtr procs)
     }
 
     return TRUE;
+}
+
+void RootlessUpdateRooted (Bool state) {
+    int i;
+    
+    if (!state)
+    {
+        for (i = 0; i < screenInfo.numScreens; i++)
+            RootlessDisableRoot (screenInfo.screens[i]);
+    }
+    else
+    {
+        for (i = 0; i < screenInfo.numScreens; i++)
+            RootlessEnableRoot (screenInfo.screens[i]);
+    }
 }

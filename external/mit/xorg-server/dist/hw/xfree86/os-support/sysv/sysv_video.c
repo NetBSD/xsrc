@@ -234,7 +234,7 @@ unmapVidMem(int ScreenNum, pointer Base, unsigned long Size)
 	return;
 }
 
-#if defined(SVR4) && defined(i386) && !defined(sun)
+#if defined(SVR4) && defined(__i386__) && !defined(sun)
 /*
  * For some SVR4 versions, a 32-bit read is done for the first location
  * in each page when the page is first mapped.  If this is done while
@@ -270,7 +270,7 @@ xf86OSInitVidMem(VidMemInfoPtr pVidMem)
 	pVidMem->linearSupported = linearVidMem();
 	pVidMem->mapMem = mapVidMem;
 	pVidMem->unmapMem = unmapVidMem;
-#if defined(SVR4) && defined(i386) && !defined(sun)
+#if defined(SVR4) && defined(__i386__) && !defined(sun)
 	pVidMem->readSideEffects = readSideEffects;
 #endif
 	pVidMem->initialised = TRUE;
@@ -311,57 +311,5 @@ xf86DisableIO()
 	RESET_IOPL();
 	ExtendedEnabled = FALSE;
 
-	return;
-}
-
-/***************************************************************************/
-/* Interrupt Handling section                                              */
-/***************************************************************************/
-
-_X_EXPORT Bool
-xf86DisableInterrupts()
-{
-	if (!ExtendedEnabled)
-	{
-		if (SET_IOPL() < 0)
-		{
-			return(FALSE);
-		}
-	}
-
-#ifdef __GNUC__
-	__asm__ __volatile__("cli");
-#else 
-	asm("cli");
-#endif /* __GNUC__ */
-
-	if (!ExtendedEnabled)
-	{
-		RESET_IOPL();
-	}
-	return(TRUE);
-}
-
-_X_EXPORT void
-xf86EnableInterrupts()
-{
-	if (!ExtendedEnabled)
-	{
-		if (SET_IOPL() < 0)
-		{
-			return;
-		}
-	}
-
-#ifdef __GNUC__
-	__asm__ __volatile__("sti");
-#else 
-	asm("sti");
-#endif /* __GNUC__ */
-
-	if (!ExtendedEnabled)
-	{
-		RESET_IOPL();
-	}
 	return;
 }

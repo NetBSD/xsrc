@@ -47,6 +47,7 @@ in this Software without prior written authorization from The Open Group.
 #include "gcstruct.h"
 #include "inputstr.h"
 #include "validate.h"
+#include "globals.h"
 #include <sys/time.h>
 
 #define _MULTIBUF_SERVER_	/* don't want Xlib structures */
@@ -199,8 +200,6 @@ static Bool bufChangeWindowAttributes();
 static void bufClearToBackground();
 static void bufCopyWindow();
 
-extern WindowPtr *WindowTable;
-
 static Bool
 bufMultibufferInit(pScreen, pMBScreen)
     ScreenPtr pScreen;
@@ -328,10 +327,6 @@ bufCreateBuffer(pScreen, pWin, bufferNum)
     pBuffer->prevSib    = NULL;
     pBuffer->firstChild = NULL;
     pBuffer->lastChild  = NULL;
-
-    /* XXX - Worry about backingstore later */
-    pBuffer->backStorage   = NULL;
-    pBuffer->backingStore  = NotUseful;
 
     /* XXX - Need to call pScreen->CreateWindow for tile/stipples
      *       or should I just copy the devPrivates?
@@ -505,22 +500,10 @@ bufClearImageBufferArea(pMBBuffer, x,y, w,h, generateExposures)
 
     pScreen = pBuffer->drawable.pScreen;
     REGION_INIT(pScreen, &reg, &box, 1);
-    if (pBuffer->backStorage)
-    {
-	/*
-	 * If the window has backing-store on, call through the
-	 * ClearToBackground vector to handle the special semantics
-	 * (i.e. things backing store is to be cleared out and
-	 * an Expose event is to be generated for those areas in backing
-	 * store if generateExposures is TRUE).
-	 */
-	pBSReg = (* pScreen->ClearBackingStore)(pBuffer, x, y, w, h,
-						 generateExposures);
-    }
 
     REGION_INTERSECT(pScreen, &reg, &reg, &pBuffer->clipList);
     if (pBuffer->backgroundState != None)
-	(*pScreen->PaintWindowBackground)(pBuffer, &reg, PW_BACKGROUND);
+	miPaintWindow(pBuffer, &reg, PW_BACKGROUND);
     if (generateExposures)
 	MultibufferExpose(pMBBuffer, &reg);
 #ifdef _notdef
@@ -533,7 +516,7 @@ bufClearImageBufferArea(pMBBuffer, x,y, w,h, generateExposures)
     if (generateExposures)
 	(*pScreen->WindowExposures)(pBuffer, &reg, pBSReg);
     else if (pBuffer->backgroundState != None)
-        (*pScreen->PaintWindowBackground)(pBuffer, &reg, PW_BACKGROUND);
+        miPaintWindow(pBuffer, &reg, PW_BACKGROUND);
 #endif
     REGION_UNINIT(pScreen, &reg);
     if (pBSReg)
@@ -616,9 +599,9 @@ bufDrawSelectPlane(pScreen, selectPlane, prgn, bufferNum)
 {
     DrawablePtr pDrawable;
     GCPtr pGC;
-    register int i;
-    register BoxPtr pbox;
-    register xRectangle *prect;
+    int i;
+    BoxPtr pbox;
+    xRectangle *prect;
     int numRects;
     XID	value;
 
@@ -630,7 +613,7 @@ bufDrawSelectPlane(pScreen, selectPlane, prgn, bufferNum)
     if (!pGC)
 	return;
 
-    prect = (xRectangle *)ALLOCATE_LOCAL(REGION_NUM_RECTS(prgn) *
+    prect = (xRectangle *)xalloc(REGION_NUM_RECTS(prgn) *
 					 sizeof(xRectangle));
     if (!prect)
     {
@@ -654,7 +637,7 @@ bufDrawSelectPlane(pScreen, selectPlane, prgn, bufferNum)
     prect -= numRects;
     (* pGC->ops->PolyFillRect)(pDrawable, pGC, numRects, prect);
 
-    DEALLOCATE_LOCAL(prect);
+    xfree(prect);
     FreeScratchGC (pGC);
 }
 
@@ -852,8 +835,7 @@ bufClipNotify(pWin, dx,dy)
 
 /*
  * Updates buffer's background fields when the window's changes.
- * This is necessary because pScreen->PaintWindowBackground
- * is used to paint the buffer.
+ * This is necessary because miPaintWindow is used to paint the buffer.
  *
  * XXBS - Backingstore state will have be tracked too if it is supported.
  */
@@ -899,7 +881,7 @@ bufChangeWindowAttributes(pWin, mask)
 static void 
 bufWindowExposures(pWin, prgn, other_exposed)
     WindowPtr pWin;
-    register RegionPtr prgn, other_exposed;
+    RegionPtr prgn, other_exposed;
 {
     ScreenPtr pScreen = pWin->drawable.pScreen;
     mbufWindowPtr pMBWindow = MB_WINDOW_PRIV(pWin);
@@ -943,7 +925,7 @@ bufWindowExposures(pWin, prgn, other_exposed)
 	pBuffer = (BufferPtr) pMBBuffer->pDrawable;
 
 	if (i != pMBWindow->displayedMultibuffer)
-	    (* pScreen->PaintWindowBackground)(pBuffer,&tmp_rgn,PW_BACKGROUND);
+	    miPaintWindow(pBuffer, &tmp_rgn, PW_BACKGROUND);
 	if ((pMBBuffer->otherEventMask | pMBBuffer->eventMask) & ExposureMask)
 	    MultibufferExpose(pMBBuffer, &tmp_rgn);
     }
