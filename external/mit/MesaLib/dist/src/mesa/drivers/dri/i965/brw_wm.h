@@ -34,9 +34,9 @@
 #define BRW_WM_H
 
 
+#include "shader/prog_instruction.h"
 #include "brw_context.h"
 #include "brw_eu.h"
-#include "prog_instruction.h"
 
 /* A big lookup table is used to figure out which and how many
  * additional regs will inserted before the main payload in the WM
@@ -49,8 +49,7 @@
 #define IZ_DEPTH_TEST_ENABLE_BIT    0x8
 #define IZ_STENCIL_WRITE_ENABLE_BIT 0x10
 #define IZ_STENCIL_TEST_ENABLE_BIT  0x20
-#define IZ_EARLY_DEPTH_TEST_BIT     0x40
-#define IZ_BIT_MAX                  0x80
+#define IZ_BIT_MAX                  0x40
 
 #define AA_NEVER     0
 #define AA_SOMETIMES 1
@@ -61,17 +60,20 @@ struct brw_wm_prog_key {
    GLuint aa_dest_stencil_reg:3;
    GLuint dest_depth_reg:3;
    GLuint nr_depth_regs:3;
-   GLuint projtex_mask:8;
-   GLuint shadowtex_mask:8;
    GLuint computes_depth:1;	/* could be derived from program string */
    GLuint source_depth_to_render_target:1;
    GLuint flat_shade:1;
    GLuint runtime_check_aads_emit:1;
    
-   GLuint yuvtex_mask:8;
-   GLuint pad1:24;
+   GLuint projtex_mask:16;
+   GLuint shadowtex_mask:16;
+   GLuint yuvtex_mask:16;
+   GLuint yuvtex_swap_mask:16;	/* UV swaped */
+   //   GLuint pad1:16;
 
    GLuint program_string_id:32;
+   GLuint origin_x, origin_y;
+   GLuint drawable_height;
 };
 
 
@@ -140,6 +142,8 @@ struct brw_wm_instruction {
    GLuint writemask:4;
    GLuint tex_unit:4;   /* texture unit for TEX, TXD, TXP instructions */
    GLuint tex_idx:3;    /* TEXTURE_1D,2D,3D,CUBE,RECT_INDEX source target */
+   GLuint eot:1;    	/* End of thread indicator for FB_WRITE*/
+   GLuint target:10;    /* target binding table index for FB_WRITE*/
 };
 
 
@@ -152,6 +156,7 @@ struct brw_wm_instruction {
 #define BRW_WM_MAX_PARAM 256
 #define BRW_WM_MAX_CONST 256
 #define BRW_WM_MAX_KILLS MAX_NV_FRAGMENT_PROGRAM_INSTRUCTIONS
+#define BRW_WM_MAX_SUBROUTINE 16
 
 
 
@@ -167,7 +172,8 @@ struct brw_wm_instruction {
 #define WM_CINTERP        (MAX_OPCODE + 5)
 #define WM_WPOSXY         (MAX_OPCODE + 6)
 #define WM_FB_WRITE       (MAX_OPCODE + 7)
-#define MAX_WM_OPCODE     (MAX_OPCODE + 8)
+#define WM_FRONTFACING    (MAX_OPCODE + 8)
+#define MAX_WM_OPCODE     (MAX_OPCODE + 9)
 
 #define PROGRAM_PAYLOAD   (PROGRAM_FILE_MAX)
 #define PAYLOAD_DEPTH     (FRAG_ATTRIB_MAX)
@@ -194,6 +200,8 @@ struct brw_wm_compile {
    GLuint nr_fp_insns;
    GLuint fp_temp;
    GLuint fp_interp_emitted;
+   GLuint fp_fragcolor_emitted;
+   GLuint fp_deriv_emitted;
 
    struct prog_src_register pixel_xy;
    struct prog_src_register delta_xy;
@@ -231,6 +239,18 @@ struct brw_wm_compile {
    GLuint grf_limit;
    GLuint max_wm_grf;
    GLuint last_scratch;
+
+   struct {
+	GLboolean inited;
+	struct brw_reg reg;
+   } wm_regs[PROGRAM_PAYLOAD+1][256][4];
+   struct brw_reg stack;
+   struct brw_reg emit_mask_reg;
+   GLuint reg_index;
+   GLuint tmp_regs[BRW_WM_MAX_GRF];
+   GLuint tmp_index;
+   GLuint tmp_max;
+   GLuint subroutines[BRW_WM_MAX_SUBROUTINE];
 };
 
 
@@ -258,5 +278,9 @@ void brw_wm_print_program( struct brw_wm_compile *c,
 void brw_wm_lookup_iz( GLuint line_aa,
 		       GLuint lookup,
 		       struct brw_wm_prog_key *key );
+
+GLboolean brw_wm_is_glsl(const struct gl_fragment_program *fp);
+void brw_wm_glsl_emit(struct brw_context *brw, struct brw_wm_compile *c);
+
 
 #endif

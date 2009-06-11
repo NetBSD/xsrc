@@ -29,9 +29,9 @@
   *   Keith Whitwell <keith@tungstengraphics.com>
   */
 
-#include "glheader.h"
-#include "macros.h"
-#include "enums.h"
+#include "main/glheader.h"
+#include "main/macros.h"
+#include "main/enums.h"
 
 #include "intel_batchbuffer.h"
 
@@ -119,31 +119,19 @@ static void compile_clip_prog( struct brw_context *brw,
 
    /* Upload
     */
-   brw->clip.prog_gs_offset = brw_upload_cache( &brw->cache[BRW_CLIP_PROG],
-						&c.key,
-						sizeof(c.key),
-						program,
-						program_size,
-						&c.prog_data,
-						&brw->clip.prog_data );
+   dri_bo_unreference(brw->clip.prog_bo);
+   brw->clip.prog_bo = brw_upload_cache( &brw->cache,
+					 BRW_CLIP_PROG,
+					 &c.key, sizeof(c.key),
+					 NULL, 0,
+					 program, program_size,
+					 &c.prog_data,
+					 &brw->clip.prog_data );
 }
-
-
-static GLboolean search_cache( struct brw_context *brw, 
-			       struct brw_clip_prog_key *key )
-{
-   return brw_search_cache(&brw->cache[BRW_CLIP_PROG], 
-			   key, sizeof(*key),
-			   &brw->clip.prog_data,
-			   &brw->clip.prog_gs_offset);
-}
-
-
-
 
 /* Calculate interpolants for triangle and line rasterization.
  */
-static void upload_clip_prog( struct brw_context *brw )
+static void upload_clip_prog(struct brw_context *brw)
 {
    GLcontext *ctx = &brw->intel.ctx;
    struct brw_clip_prog_key key;
@@ -157,14 +145,14 @@ static void upload_clip_prog( struct brw_context *brw )
    /* CACHE_NEW_VS_PROG */
    key.attrs = brw->vs.prog_data->outputs_written;
    /* _NEW_LIGHT */
-   key.do_flat_shading = (brw->attribs.Light->ShadeModel == GL_FLAT);
+   key.do_flat_shading = (ctx->Light.ShadeModel == GL_FLAT);
    /* _NEW_TRANSFORM */
-   key.nr_userclip = brw_count_bits(brw->attribs.Transform->ClipPlanesEnabled);
+   key.nr_userclip = brw_count_bits(ctx->Transform.ClipPlanesEnabled);
    key.clip_mode = BRW_CLIPMODE_NORMAL;
 
    /* _NEW_POLYGON */
    if (key.primitive == GL_TRIANGLES) {
-      if (brw->attribs.Polygon->CullFaceMode == GL_FRONT_AND_BACK) 
+      if (ctx->Polygon.CullFaceMode == GL_FRONT_AND_BACK) 
 	 key.clip_mode = BRW_CLIPMODE_REJECT_ALL;
       else {
 	 GLuint fill_front = CLIP_CULL;
@@ -172,69 +160,64 @@ static void upload_clip_prog( struct brw_context *brw )
 	 GLuint offset_front = 0;
 	 GLuint offset_back = 0;
 
-	 if (!brw->attribs.Polygon->CullFlag ||
-	     brw->attribs.Polygon->CullFaceMode != GL_FRONT) {
-	    switch (brw->attribs.Polygon->FrontMode) {
+	 if (!ctx->Polygon.CullFlag ||
+	     ctx->Polygon.CullFaceMode != GL_FRONT) {
+	    switch (ctx->Polygon.FrontMode) {
 	    case GL_FILL: 
 	       fill_front = CLIP_FILL; 
 	       offset_front = 0;
 	       break;
 	    case GL_LINE:
-	       key.do_unfilled = 1;
 	       fill_front = CLIP_LINE;
-	       offset_front = brw->attribs.Polygon->OffsetLine;
+	       offset_front = ctx->Polygon.OffsetLine;
 	       break;
 	    case GL_POINT:
-	       key.do_unfilled = 1;
 	       fill_front = CLIP_POINT;
-	       offset_front = brw->attribs.Polygon->OffsetPoint;
+	       offset_front = ctx->Polygon.OffsetPoint;
 	       break;
 	    }
 	 }
 
-	 if (!brw->attribs.Polygon->CullFlag ||
-	     brw->attribs.Polygon->CullFaceMode != GL_BACK) {
-	    switch (brw->attribs.Polygon->BackMode) {
+	 if (!ctx->Polygon.CullFlag ||
+	     ctx->Polygon.CullFaceMode != GL_BACK) {
+	    switch (ctx->Polygon.BackMode) {
 	    case GL_FILL: 
 	       fill_back = CLIP_FILL; 
 	       offset_back = 0;
 	       break;
 	    case GL_LINE:
-	       key.do_unfilled = 1;
 	       fill_back = CLIP_LINE;
-	       offset_back = brw->attribs.Polygon->OffsetLine;
+	       offset_back = ctx->Polygon.OffsetLine;
 	       break;
 	    case GL_POINT:
-	       key.do_unfilled = 1;
 	       fill_back = CLIP_POINT;
-	       offset_back = brw->attribs.Polygon->OffsetPoint;
+	       offset_back = ctx->Polygon.OffsetPoint;
 	       break;
 	    }
 	 }
 
-    if (brw->attribs.Polygon->BackMode != GL_FILL ||
-        brw->attribs.Polygon->FrontMode != GL_FILL)
-        key.do_unfilled = 1;
+	 if (ctx->Polygon.BackMode != GL_FILL ||
+	     ctx->Polygon.FrontMode != GL_FILL) {
+	    key.do_unfilled = 1;
 
-	 /* Most cases the fixed function units will handle.  Cases where
-	  * one or more polygon faces are unfilled will require help:
-	  */
-	 if (key.do_unfilled) {
+	    /* Most cases the fixed function units will handle.  Cases where
+	     * one or more polygon faces are unfilled will require help:
+	     */
 	    key.clip_mode = BRW_CLIPMODE_CLIP_NON_REJECTED;
 
 	    if (offset_back || offset_front) {
 	       /* _NEW_POLYGON, _NEW_BUFFERS */
-	       key.offset_units = brw->attribs.Polygon->OffsetUnits * brw->intel.polygon_offset_scale;
-	       key.offset_factor = brw->attribs.Polygon->OffsetFactor * ctx->DrawBuffer->_MRD;
+	       key.offset_units = ctx->Polygon.OffsetUnits * brw->intel.polygon_offset_scale;
+	       key.offset_factor = ctx->Polygon.OffsetFactor * ctx->DrawBuffer->_MRD;
 	    }
 
-	    switch (brw->attribs.Polygon->FrontFace) {
+	    switch (ctx->Polygon.FrontFace) {
 	    case GL_CCW:
 	       key.fill_ccw = fill_front;
 	       key.fill_cw = fill_back;
 	       key.offset_ccw = offset_front;
 	       key.offset_cw = offset_back;
-	       if (brw->attribs.Light->Model.TwoSide &&
+	       if (ctx->Light.Model.TwoSide &&
 		   key.fill_cw != CLIP_CULL) 
 		  key.copy_bfc_cw = 1;
 	       break;
@@ -243,7 +226,7 @@ static void upload_clip_prog( struct brw_context *brw )
 	       key.fill_ccw = fill_back;
 	       key.offset_cw = offset_front;
 	       key.offset_ccw = offset_back;
-	       if (brw->attribs.Light->Model.TwoSide &&
+	       if (ctx->Light.Model.TwoSide &&
 		   key.fill_ccw != CLIP_CULL) 
 		  key.copy_bfc_ccw = 1;
 	       break;
@@ -252,7 +235,12 @@ static void upload_clip_prog( struct brw_context *brw )
       }
    }
 
-   if (!search_cache(brw, &key))
+   dri_bo_unreference(brw->clip.prog_bo);
+   brw->clip.prog_bo = brw_search_cache(&brw->cache, BRW_CLIP_PROG,
+					&key, sizeof(key),
+					NULL, 0,
+					&brw->clip.prog_data);
+   if (brw->clip.prog_bo == NULL)
       compile_clip_prog( brw, &key );
 }
 
@@ -266,5 +254,5 @@ const struct brw_tracked_state brw_clip_prog = {
       .brw   = (BRW_NEW_REDUCED_PRIMITIVE),
       .cache = CACHE_NEW_VS_PROG
    },
-   .update = upload_clip_prog
+   .prepare = upload_clip_prog
 };

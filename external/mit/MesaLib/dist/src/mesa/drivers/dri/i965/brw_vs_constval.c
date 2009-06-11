@@ -30,7 +30,7 @@
   */
             
 
-#include "macros.h"
+#include "main/macros.h"
 #include "brw_context.h"
 #include "brw_vs.h"
 
@@ -168,6 +168,7 @@ static GLuint get_input_size(struct brw_context *brw,
  */
 static void calc_wm_input_sizes( struct brw_context *brw )
 {
+   GLcontext *ctx = &brw->intel.ctx;
    /* BRW_NEW_VERTEX_PROGRAM */
    struct brw_vertex_program *vp = 
       (struct brw_vertex_program *)brw->vertex_program;
@@ -179,7 +180,7 @@ static void calc_wm_input_sizes( struct brw_context *brw )
    memset(&t, 0, sizeof(t));
 
    /* _NEW_LIGHT */
-   if (brw->attribs.Light->Model.TwoSide)
+   if (ctx->Light.Model.TwoSide)
       t.twoside = 1;
 
    for (i = 0; i < VERT_ATTRIB_MAX; i++) 
@@ -218,6 +219,6 @@ const struct brw_tracked_state brw_wm_input_sizes = {
       .brw   = BRW_NEW_VERTEX_PROGRAM | BRW_NEW_INPUT_DIMENSIONS,
       .cache = 0
    },
-   .update = calc_wm_input_sizes
+   .prepare = calc_wm_input_sizes
 };
 
