@@ -62,6 +62,7 @@ extern struct sbus_devtable {
     int devId;
     int fbType;
     char *promName;
+    char *driverName;
     char *descr;
 } sbusDeviceTable[];
 
@@ -95,5 +96,6 @@ int sparcPromGetBool(sbusPromNodePtr pnode, const char *prop);
 void sparcPromAssignNodes(void);
 char * sparcPromNode2Pathname(sbusPromNodePtr pnode);
 int sparcPromPathname2Node(const char *pathName);
+char *sparcDriverName(void);
 
 #endif /* _XF86_SBUSBUS_H */

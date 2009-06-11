@@ -373,7 +373,7 @@ xf86ReadBIOS(unsigned long Base, unsigned long Offset, unsigned char *Buf,
 	    return(-1);
 	}
 
-	psize = xf86getpagesize();
+	psize = getpagesize();
 	Offset += Base & (psize - 1);
 	Base &= ~(psize - 1);
 	mlen = (Offset + Len + psize - 1) & ~(psize - 1);
@@ -437,24 +437,6 @@ xf86DisableIO()
 }
 
 #endif /* USE_ALPHA_PIO */
-
-/***************************************************************************/
-/* Interrupt Handling section                                              */
-/***************************************************************************/
-
-_X_EXPORT Bool
-xf86DisableInterrupts()
-{
-
-	return(TRUE);
-}
-
-_X_EXPORT void
-xf86EnableInterrupts()
-{
-	return;
-}
-
 
 #define vuip    volatile unsigned int *
 
