@@ -35,8 +35,6 @@
 /*
  * varray.c++
  *
- * $Date: 2008/07/29 05:10:38 $ $Revision: 1.1.1.1 $
- * $Header: /cvsroot/xsrc/external/mit/MesaLib/dist/src/glu/sgi/libnurbs/internals/Attic/varray.cc,v 1.1.1.1 2008/07/29 05:10:38 mrg Exp $
  */
 
 #include "glimports.h"

@@ -30,7 +30,7 @@
   *   Michel Dänzer <michel@tungstengraphics.com>
   */
 
-#include "macros.h"
+#include "main/macros.h"
 
 
 static GLuint minify( GLuint d )
@@ -39,3 +39,4 @@ static GLuint minify( GLuint d )
 }
 
 extern void i945_miptree_layout_2d( struct intel_context *intel, struct intel_mipmap_tree *mt );
+extern GLuint intel_compressed_alignment(GLenum);

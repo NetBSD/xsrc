@@ -1,4 +1,3 @@
-/* $Id: svgamesa32.c,v 1.1.1.1 2008/07/29 05:09:17 mrg Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -40,7 +39,7 @@
 
 #if 0
 /* this doesn't compile with GCC on RedHat 6.1 */
-static inline int RGB2BGR32(int c)
+static INLINE int RGB2BGR32(int c)
 {
 	asm("rorw  $8, %0\n"	 
 	    "rorl $16, %0\n"	 

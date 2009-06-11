@@ -35,8 +35,6 @@
 /*
  * patch.c++
  *
- * $Date: 2008/07/29 05:10:37 $ $Revision: 1.1.1.1 $
- * $Header: /cvsroot/xsrc/external/mit/MesaLib/dist/src/glu/sgi/libnurbs/internals/Attic/patch.cc,v 1.1.1.1 2008/07/29 05:10:37 mrg Exp $
  */
 
 #include <stdio.h>
