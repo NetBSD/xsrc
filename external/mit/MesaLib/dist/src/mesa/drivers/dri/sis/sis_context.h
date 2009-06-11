@@ -24,7 +24,6 @@ OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
 USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 **************************************************************************/
-/* $XFree86$ */
 
 /*
  * Authors:
@@ -35,7 +34,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #ifndef _sis_ctx_h_
 #define _sis_ctx_h_
 
-#include "context.h"
+#include "main/context.h"
 #include "dri_util.h"
 #include "drm.h"
 #include "drm_sarea.h"
@@ -405,8 +404,10 @@ struct sis_context
 #include <sys/atomic.h>
 #define MMIO_WMB() membar_sync()
 #else /* !__NetBSD__ */
-#if defined(__i386__) || defined(__amd64__)
+#if defined(__i386__) || defined(__x86_64__)
 #define MMIO_WMB()	__asm __volatile("" : : : "memory")
+#elif defined(__ia64__)
+#define MMIO_WMB()	__asm __volatile("mf" : : : "memory")
 #else
 #error platform needs WMB
 #endif
