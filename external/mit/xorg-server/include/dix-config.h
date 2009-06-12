@@ -8,7 +8,7 @@
 #define BIGREQS 1
 
 /* Builder address */
-#define BUILDERADDR "xorg@lists.freedesktop.org"
+/* #define BUILDERADDR "xorg@lists.freedesktop.org" */
 
 /* Operating System Name */
 /* #define OSNAME "NetBSD 5.0 amd64" */
