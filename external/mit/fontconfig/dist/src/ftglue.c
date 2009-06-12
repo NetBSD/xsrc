@@ -28,6 +28,8 @@ ftglue_log( const char*   format, ... )
 #define  LOG(x)  do {} while (0)
 #endif
 
+#undef read	/* XXX: SSP/FORTIFY */
+
 /* only used internally */
 static FT_Pointer
 ftglue_qalloc( FT_Memory  memory,
