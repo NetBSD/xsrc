@@ -74,6 +74,11 @@
 #define NEED_XF86_TYPES	/* for xisb.h when !XFree86LOADER */
 #endif
 
+#ifdef __NetBSD__
+#include <time.h>
+#include <dev/wscons/wsconsio.h>
+#endif
+
 #include "compiler.h"
 
 #include "xisb.h"
@@ -1751,6 +1756,13 @@ MouseProc(DeviceIntPtr device, int what)
 	if (pInfo->fd == -1)
 	    xf86Msg(X_WARNING, "%s: cannot open input device\n", pInfo->name);
 	else {
+#if defined(__NetBSD__) && defined(WSCONS_SUPPORT) && defined(WSMOUSEIO_SETVERSION)
+	    if (!strcmp(pMse->protocol, "wsmouse")) {
+	        int version = WSMOUSE_EVENT_VERSION;
+	        if (ioctl(pInfo->fd, WSMOUSEIO_SETVERSION, &version) == -1)
+	            xf86Msg(X_WARNING, "%s: cannot set version\n", pInfo->name);
+            }
+#endif
 	    if (pMse->xisbscale)
 		pMse->buffer = XisbNew(pInfo->fd, pMse->xisbscale * 4);
 	    else
