@@ -104,7 +104,6 @@
 #include "micmap.h"
 
 #include "fb.h"
-#include "cfb8_16.h"
 
 
 /* Needed for the 1 and 4 bpp framebuffers */
