@@ -836,7 +836,7 @@ void vInitDRAMReg(ScrnInfoPtr pScrn)
 Bool InitVGA(ScrnInfoPtr pScrn)
 {
    ASTRecPtr pAST;
-   ULONG ulData;
+   uint32_t ulData;
 
    pAST = ASTPTR(pScrn);
 

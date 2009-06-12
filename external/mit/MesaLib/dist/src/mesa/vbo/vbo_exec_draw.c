@@ -207,7 +207,7 @@ static void vbo_exec_bind_arrays( GLcontext *ctx )
             assert(exec->vtx.bufferobj->Pointer);  /* buf should be mapped */
             offset = (GLbyte *) data - (GLbyte *) exec->vtx.bufferobj->Pointer;
             assert(offset >= 0);
-            arrays[attr].Ptr = (void *) offset;
+            arrays[attr].Ptr = (void *) (uintptr_t) offset;
          }
          else {
             /* Ptr into ordinary app memory */

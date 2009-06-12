@@ -447,12 +447,6 @@ OpenKeyboard(InputInfoPtr pInfo)
        xfree(s);
     }
 
-#if defined (SYSCONS_SUPPORT) || defined (PCVT_SUPPORT)
-    if (pKbd->isConsole &&
-        ((pKbd->consType == SYSCONS) || (pKbd->consType == PCVT)))
-        pKbd->vtSwitchSupported = TRUE;
-#endif
-
 #ifdef WSCONS_SUPPORT
     if( prot == PROT_WSCONS) {
        pKbd->consType = WSCONS;
@@ -502,6 +496,14 @@ OpenKeyboard(InputInfoPtr pInfo)
        }
     }
 #endif
+
+#if defined (SYSCONS_SUPPORT) || defined (PCVT_SUPPORT) || defined (WSCONS_SUPPORT)
+    if (pKbd->isConsole &&
+        ((pKbd->consType == SYSCONS) || (pKbd->consType == PCVT)) ||
+	 ((pKbd->consType == WSCONS)))
+        pKbd->vtSwitchSupported = TRUE;
+#endif
+
     return TRUE;
 }
 

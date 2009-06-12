@@ -1085,8 +1085,8 @@ CoreFocusPointerRootNoneSwitch(DeviceIntPtr dev,
                 if (ptrwin && IsParent(root, ptrwin))
                     CoreFocusOutNotifyPointerEvents(dev, root, None, mode, TRUE);
             }
-            CoreFocusEvent(dev, FocusOut, mode, ((int)A) ? NotifyPointerRoot : NotifyDetailNone, root);
-            CoreFocusEvent(dev, FocusIn, mode, ((int)B) ? NotifyPointerRoot : NotifyDetailNone, root);
+            CoreFocusEvent(dev, FocusOut, mode, ((unsigned long)A) ? NotifyPointerRoot : NotifyDetailNone, root);
+            CoreFocusEvent(dev, FocusIn, mode, ((unsigned long)B) ? NotifyPointerRoot : NotifyDetailNone, root);
             if (B == PointerRootWin)
                 CoreFocusInNotifyPointerEvents(dev, root, None, mode, TRUE);
         }
@@ -1136,7 +1136,7 @@ CoreFocusToPointerRootOrNone(DeviceIntPtr dev,
         root = WindowTable[i];
         if (!HasFocus(root) && !FirstFocusChild(root))
         {
-            CoreFocusEvent(dev, FocusIn, mode, ((int)B) ? NotifyPointerRoot : NotifyDetailNone, root);
+            CoreFocusEvent(dev, FocusIn, mode, ((unsigned long)B) ? NotifyPointerRoot : NotifyDetailNone, root);
             if (B == PointerRootWin)
                 CoreFocusInNotifyPointerEvents(dev, root, None, mode, TRUE);
         }
@@ -1177,7 +1177,7 @@ CoreFocusFromPointerRootOrNone(DeviceIntPtr dev,
                 if (ptrwin)
                     CoreFocusOutNotifyPointerEvents(dev, root, None, mode, TRUE);
             }
-            CoreFocusEvent(dev, FocusOut, mode, ((int)A) ? NotifyPointerRoot : NotifyDetailNone, root);
+            CoreFocusEvent(dev, FocusOut, mode, ((unsigned long)A) ? NotifyPointerRoot : NotifyDetailNone, root);
         }
     }
 
