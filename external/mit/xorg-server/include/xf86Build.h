@@ -1,0 +1,2 @@
+#define BUILD_DATE 20090610
+#define BUILD_TIME 000000
