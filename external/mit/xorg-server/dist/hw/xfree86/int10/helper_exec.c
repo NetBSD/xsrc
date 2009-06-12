@@ -498,6 +498,12 @@ pciCfg1in(CARD16 addr, CARD32 *val)
     }
     if (addr == 0xCFC) {
 	pci_device_cfg_read_u32(pci_device_for_cfg_address(PciCfg1Addr),
+			/*
+			 * XXXMRG
+			 * this one is OK - CARD32 is "long" for 32 bit
+			 * and "int" for 64 bit
+			 */
+			(uint32_t *)
 			val, PCI_OFFSET(PciCfg1Addr));
 	if (PRINT_PORT && DEBUG_IO_TRACE())
 	    ErrorF(" cfg_inl(%#x) = %8.8x\n", PciCfg1Addr, *val);

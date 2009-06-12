@@ -308,5 +308,5 @@ _X_EXPORT DevPrivateKey miZeroLineScreenKey = &miZeroLineScreenKeyIndex;
 _X_EXPORT void
 miSetZeroLineBias(ScreenPtr pScreen, unsigned int bias)
 {
-    dixSetPrivate(&pScreen->devPrivates, miZeroLineScreenKey, (pointer)bias);
+    dixSetPrivate(&pScreen->devPrivates, miZeroLineScreenKey, (pointer)(unsigned long)bias);
 }

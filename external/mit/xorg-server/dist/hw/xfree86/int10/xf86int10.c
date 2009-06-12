@@ -782,7 +782,9 @@ int1A_handler(xf86Int10InfoPtr pInt)
 	return 1;
     case 0xb10a:
 	if ((dev = findPci(pInt, X86_EBX)) != NULL) {
-	    pci_device_cfg_read_u32(dev, & X86_ECX, X86_DI);
+	    uint32_t ecx;
+	    pci_device_cfg_read_u32(dev, & ecx, X86_DI);
+	    X86_ECX = ecx;
 	    X86_EAX = X86_AL | (SUCCESSFUL << 8);
 	    X86_EFLAGS &= ~((unsigned long)0x01); /* clear carry flag */
 	} else {

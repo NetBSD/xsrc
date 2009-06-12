@@ -225,7 +225,7 @@ do_blit_readpixels(GLcontext * ctx,
    }
 
    /* XXX 64-bit cast? */
-   dst_offset = (GLuint) _mesa_image_address(2, pack, pixels, width, height,
+   dst_offset = (GLuint) (uintptr_t)_mesa_image_address(2, pack, pixels, width, height,
                                              format, type, 0, 0, 0);
 
 
