@@ -1,4 +1,4 @@
-/* $NetBSD: wsfb_cursor.c,v 1.1 2008/11/04 22:20:39 macallan Exp $ */
+/* $NetBSD: wsfb_cursor.c,v 1.2 2009/06/12 01:53:00 mrg Exp $ */
 /*
  * Copyright (c) 2005 Michael Lorenz
  * All rights reserved.
@@ -46,7 +46,6 @@
 /* all driver need this */
 #include "xf86.h"
 #include "xf86_OSproc.h"
-#include "xf86_ansic.h"
 
 #include "wsfb.h"
 

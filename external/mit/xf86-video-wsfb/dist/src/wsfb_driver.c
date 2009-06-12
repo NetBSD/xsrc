@@ -43,12 +43,12 @@
 #include <fcntl.h>
 #include <sys/types.h>
 #include <sys/time.h>
+#include <errno.h>
 #include <dev/wscons/wsconsio.h>
 
 /* all driver need this */
 #include "xf86.h"
 #include "xf86_OSproc.h"
-#include "xf86_ansic.h"
 
 #include "mipointer.h"
 #include "mibstore.h"
@@ -59,8 +59,6 @@
 #include "dgaproc.h"
 
 /* for visuals */
-#include "xf1bpp.h"
-#include "xf4bpp.h"
 #include "fb.h"
 
 #include "xf86Resources.h"
@@ -74,9 +72,7 @@
 
 /* #include "wsconsio.h" */
 
-#ifndef XFree86LOADER
 #include <sys/mman.h>
-#endif
 
 #ifdef USE_PRIVSEP
 extern int priv_open_device(const char *);
@@ -639,14 +635,6 @@ WsfbPreInit(ScrnInfoPtr pScrn, int flags)
 
 	/* Load bpp-specific modules */
 	switch(pScrn->bitsPerPixel) {
-	case 1:
-		mod = "xf1bpp";
-		reqSym = "xf1bppScreenInit";
-		break;
-	case 4:
-		mod = "xf4bpp";
-		reqSym = "xf4bppScreenInit";
-		break;
 	default:
 		mod = "fb";
 		break;
@@ -825,18 +813,6 @@ WsfbScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 	fPtr->fbstart = fPtr->fbmem;
 
 	switch (pScrn->bitsPerPixel) {
-	case 1:
-		ret = xf1bppScreenInit(pScreen, fPtr->fbstart,
-				       pScrn->virtualX, pScrn->virtualY,
-				       pScrn->xDpi, pScrn->yDpi,
-				       pScrn->displayWidth);
-		break;
-	case 4:
-		ret = xf4bppScreenInit(pScreen, fPtr->fbstart,
-				       pScrn->virtualX, pScrn->virtualY,
-				       pScrn->xDpi, pScrn->yDpi,
-				       pScrn->displayWidth);
-		break;
 	case 8:
 	case 16:
 	case 24:
