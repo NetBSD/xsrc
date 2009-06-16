@@ -25,7 +25,7 @@
 #endif
 
 /* Miscellaneous server configuration files path */
-#define SERVER_MISC_CONFIG_PATH "/usr/local/lib/xorg"
+#define SERVER_MISC_CONFIG_PATH "/usr/X11R7/lib/xorg"
 
 /* Support Composite Extension */
 #define COMPOSITE 1
@@ -52,7 +52,7 @@
 /* #undef GLX_DRI */
 
 /* Path to DRI drivers */
-#define DRI_DRIVER_PATH "/usr/local/lib/dri"
+#define DRI_DRIVER_PATH "/usr/X11R7/lib/modules/dri"
 
 /* Support XDM-AUTH*-1 */
 #define HASXDMAUTH 1

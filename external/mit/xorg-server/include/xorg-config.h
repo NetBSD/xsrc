@@ -38,13 +38,13 @@
 #define __XCONFIGFILE__ "xorg.conf"
 
 /* Path to loadable modules. */
-#define DEFAULT_MODULE_PATH "/usr/local/lib/xorg/modules"
+#define DEFAULT_MODULE_PATH "/usr/X11R7/lib/modules"
 
 /* Path to installed libraries. */
-#define DEFAULT_LIBRARY_PATH "/usr/local/lib"
+#define DEFAULT_LIBRARY_PATH "/usr/X11R7/lib"
 
 /* Path to server log file. */
-#define DEFAULT_LOGPREFIX "/usr/local/var/log/Xorg."
+#define DEFAULT_LOGPREFIX "/var/log/Xorg."
 
 /* Building DRI-capable DDX. */
 #define XF86DRI 1
