@@ -37,7 +37,6 @@
 #include <machine/int_fmtio.h>
 #include "xf86.h"
 #include "xf86_OSproc.h"
-#include "xf86Version.h"
 #include "mipointer.h"
 #include "mibstore.h"
 #include "micmap.h"
@@ -551,9 +550,9 @@ AG10EScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
     /*if (!ret)
 	return FALSE;*/
 
-    pAG10E->width=pScrn->virtualX;
-    pAG10E->height=pScrn->virtualY;
-    pAG10E->maxheight=(pAG10E->vidmem / (pAG10E->width << 2)) & 0xffff;
+    pAG10E->width = pScrn->virtualX;
+    pAG10E->height = pScrn->virtualY;
+    pAG10E->maxheight = (pAG10E->vidmem / (pAG10E->width << 2)) & 0xffff;
 
     fbPictureInit(pScreen, 0, 0);
 
