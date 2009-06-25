@@ -1,4 +1,4 @@
-/* $NetBSD: crime_cursor.c,v 1.1 2008/11/06 22:06:47 macallan Exp $ */
+/* $NetBSD: crime_cursor.c,v 1.2 2009/06/25 00:58:46 macallan Exp $ */
 /*
  * Copyright (c) 2008 Michael Lorenz
  * All rights reserved.
@@ -46,7 +46,6 @@
 /* all driver need this */
 #include "xf86.h"
 #include "xf86_OSproc.h"
-#include "xf86_ansic.h"
 
 #include "crime.h"
 

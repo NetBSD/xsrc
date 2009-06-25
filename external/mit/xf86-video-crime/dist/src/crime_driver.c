@@ -1,4 +1,4 @@
-/* $NetBSD: crime_driver.c,v 1.2 2009/02/19 20:03:30 macallan Exp $ */
+/* $NetBSD: crime_driver.c,v 1.3 2009/06/25 00:58:46 macallan Exp $ */
 /*
  * Copyright (c) 2008 Michael Lorenz
  * All rights reserved.
@@ -36,14 +36,15 @@
 #endif
 
 #include <fcntl.h>
+#include <errno.h>
 #include <sys/types.h>
 #include <sys/time.h>
+#include <sys/mman.h>
 #include <dev/wscons/wsconsio.h>
 
 /* all driver need this */
 #include "xf86.h"
 #include "xf86_OSproc.h"
-#include "xf86_ansic.h"
 
 #include "mipointer.h"
 #include "mibstore.h"
@@ -52,8 +53,6 @@
 #include "xf86cmap.h"
 
 /* for visuals */
-#include "xf1bpp.h"
-#include "xf4bpp.h"
 #include "fb.h"
 
 #include "xf86Resources.h"
