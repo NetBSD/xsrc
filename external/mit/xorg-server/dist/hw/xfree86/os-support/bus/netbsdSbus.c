@@ -22,6 +22,10 @@
  */
 /* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bus/Sbus.c,v 1.2 2001/10/28 03:34:01 tsi Exp $ */
 
+#ifdef HAVE_XORG_CONFIG_H
+#include <xorg-config.h>
+#endif
+
 #include <fcntl.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -535,6 +539,60 @@ sparcPromPathname2Node(const char *pathName)
     i = promWalkPathname2Node(name + 1, regstr, promRootNode, 0);
     xfree(name);
     return i;
+}
+
+static char *
+promWalkGetDriverName(int node, int oldnode)
+{
+    int nextnode;
+    int len;
+    char *prop;
+    int devId, i;
+
+    prop = promGetProperty("device_type", &len);
+    if (prop && (len > 0)) do {
+	if (!strcmp(prop, "display")) {
+	    prop = promGetProperty("name", &len);
+	    if (!prop || len <= 0)
+		break;
+	    while ((*prop >= 'A' && *prop <= 'Z') || *prop == ',')
+		prop++;
+	    for (i = 0; sbusDeviceTable[i].devId; i++)
+		if (!strcmp(prop, sbusDeviceTable[i].promName))
+		    break;
+	    devId = sbusDeviceTable[i].devId;
+	    if (!devId)
+		break;
+	    if (sbusDeviceTable[i].driverName)
+	    	return sbusDeviceTable[i].driverName;
+	}
+    } while (0);
+
+    nextnode = promGetChild(node);
+    if (nextnode) {
+	char *name;
+	name = promWalkGetDriverName(nextnode, node);
+	if (name)
+	    return name;
+    }
+
+    nextnode = promGetSibling(node);
+    if (nextnode)
+	return promWalkGetDriverName(nextnode, node);
+    return NULL;
+}
+
+char *
+sparcDriverName(void)
+{
+    char *name;
+
+    if (sparcPromInit() < 0)
+	    return NULL;
+    promGetSibling(0);
+    name = promWalkGetDriverName(promRootNode, 0);
+    sparcPromClose();
+    return name;
 }
 
 pointer
