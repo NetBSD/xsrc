@@ -46,6 +46,7 @@
 #include <unistd.h>
 #include <assert.h>
 #include <pthread.h>
+#include <stddef.h>
 #include <sys/ioctl.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
