@@ -1,4 +1,4 @@
-/* $NetBSD: crime_accel.c,v 1.9 2009/04/11 20:43:04 macallan Exp $ */
+/* $NetBSD: crime_accel.c,v 1.10 2009/07/01 03:52:11 macallan Exp $ */
 /*
  * Copyright (c) 2008 Michael Lorenz
  * All rights reserved.
@@ -1336,12 +1336,6 @@ CrimeDoCPUToScreenComposite(
 				PixmapPtr pPix = (PixmapPtr)(pMask->pDrawable);
 				int skipleft;
 
-				if (alpha == 0xffff) {
-					/* actually we can but for now we don't care */
-					xf86Msg(X_ERROR,
-					   "can't colour expand with alpha\n");
-					return;
-				}
 				if (op != PictOpOver) {
 					xf86Msg(X_ERROR, "!over\n");
 					return;
