@@ -43,6 +43,13 @@
 #include "pciaccess.h"
 #include "pciaccess_private.h"
 
+#define PCIR_COMMAND    0x04
+#define PCIM_CMD_PORTEN         0x0001
+#define PCIM_CMD_MEMEN          0x0002
+#define PCIR_BIOS	0x30
+#define PCIM_BIOS_ENABLE	0x01
+#define PCIM_BIOS_ADDR_MASK	0xfffff800
+
 static int pcifd;
 
 static int
@@ -50,7 +57,8 @@ pci_read(int bus, int dev, int func, uint32_t reg, uint32_t *val)
 {
 	uint32_t rval;
 
-	if (pcibus_conf_read(pcifd, bus, dev, func, reg, &rval) == -1)
+	if (pcibus_conf_read(pcifd, (unsigned int)bus, (unsigned int)dev,
+	    (unsigned int)func, reg, &rval) == -1)
 		return (-1);
 
 	*val = rval;
@@ -61,7 +69,8 @@ pci_read(int bus, int dev, int func, uint32_t reg, uint32_t *val)
 static int
 pci_write(int bus, int dev, int func, uint32_t reg, uint32_t val)
 {
-	return pcibus_conf_write(pcifd, bus, dev, func, reg, val);
+	return pcibus_conf_write(pcifd, (unsigned int)bus, (unsigned int)dev,
+	    (unsigned int)func, reg, val);
 }
 
 static int
@@ -75,6 +84,7 @@ pci_nfuncs(int bus, int dev)
 	return (PCI_HDRTYPE_MULTIFN(hdr) ? 8 : 1);
 }
 
+/*ARGSUSED*/
 static int
 pci_device_netbsd_map_range(struct pci_device *dev,
     struct pci_device_mapping *map)
@@ -93,7 +103,8 @@ pci_device_netbsd_map_range(struct pci_device *dev,
 	fd = open("/dev/mem", O_RDWR);
 	if (fd == -1)
 		return errno;
-	map->memory = mmap(NULL, map->size, prot, MAP_SHARED, fd, map->base);
+	map->memory = mmap(NULL, map->size, prot, MAP_SHARED, fd,
+	    (off_t)map->base);
 	if (map->memory == MAP_FAILED)
 		return errno;
 
@@ -153,11 +164,12 @@ pci_device_netbsd_read(struct pci_device *dev, void *data,
 
 	*bytes_read = 0;
 	while (size > 0) {
-		int toread = MIN(size, 4 - (offset & 0x3));
+		size_t toread = MIN(size, 4 - (offset & 0x3));
 
-		reg = (offset & ~0x3);
+		reg = (u_int)(offset & ~0x3);
 
-		if ((pcibus_conf_read(pcifd, dev->bus, dev->dev, dev->func,
+		if ((pcibus_conf_read(pcifd, (unsigned int)dev->bus,
+		    (unsigned int)dev->dev, (unsigned int)dev->func,
 		    reg, &rval)) == -1)
 			return errno;
 
@@ -186,15 +198,16 @@ pci_device_netbsd_write(struct pci_device *dev, const void *data,
 
 	*bytes_written = 0;
 	while (size > 0) {
-		reg = offset;
+		reg = (u_int)offset;
 		memcpy(&val, data, 4);
 
-		if ((pcibus_conf_write(pcifd, dev->bus, dev->dev, dev->func,
+		if ((pcibus_conf_write(pcifd, (unsigned int)dev->bus,
+		    (unsigned int)dev->dev, (unsigned int)dev->func,
 		   reg, val)) == -1)
 			return errno;
 
 		offset += 4;
-		data = (char *)data + 4;
+		data = (const char *)data + 4;
 		size -= 4;
 		*bytes_written += 4;
 	}
@@ -213,7 +226,8 @@ pci_system_netbsd_destroy(void)
 static int
 pci_device_netbsd_probe(struct pci_device *device)
 {
-	struct pci_device_private *priv = (struct pci_device_private *)device;
+	struct pci_device_private *priv =
+	    (struct pci_device_private *)(void *)device;
 	struct pci_mem_region *region;
 	uint64_t reg64, size64;
 	uint32_t bar, reg, size;
@@ -239,7 +253,7 @@ pci_device_netbsd_probe(struct pci_device *device)
 			return err;
 
 		/* Probe the size of the region. */
-		err = pci_write(bus, dev, func, bar, ~0);
+		err = pci_write(bus, dev, func, bar, (unsigned int)~0);
 		if (err)
 			return err;
 		pci_read(bus, dev, func, bar, &size);
@@ -271,15 +285,19 @@ pci_device_netbsd_probe(struct pci_device *device)
 					return err;
 				reg64 |= (uint64_t)reg << 32;
 
-				err = pci_write(bus, dev, func, bar, ~0);
+				err = pci_write(bus, dev, func, bar,
+				    (unsigned int)~0);
 				if (err)
 					return err;
 				pci_read(bus, dev, func, bar, &size);
-				pci_write(bus, dev, func, bar, reg64 >> 32);
+				pci_write(bus, dev, func, bar,
+				    (unsigned int)(reg64 >> 32));
 				size64 |= (uint64_t)size << 32;
 
-				region->base_addr = PCI_MAPREG_MEM64_ADDR(reg64);
-				region->size = PCI_MAPREG_MEM64_SIZE(size64);
+				region->base_addr =
+				    (unsigned long)PCI_MAPREG_MEM64_ADDR(reg64);
+				region->size =
+				    (unsigned long)PCI_MAPREG_MEM64_SIZE(size64);
 				region++;
 				break;
 			}
@@ -289,16 +307,106 @@ pci_device_netbsd_probe(struct pci_device *device)
 	return 0;
 }
 
+/**
+ * Read a VGA rom using the 0xc0000 mapping.
+ *
+ * This function should be extended to handle access through PCI resources,
+ * which should be more reliable when available.
+ */
+static int
+pci_device_netbsd_read_rom(struct pci_device *dev, void *buffer)
+{
+    struct pci_device_private *priv = (struct pci_device_private *)(void *)dev;
+    void *bios;
+    pciaddr_t rom_base;
+    size_t rom_size;
+    uint32_t bios_val, command_val;
+    int pci_rom, memfd;
+
+    if (((priv->base.device_class >> 16) & 0xff) != PCI_CLASS_DISPLAY ||
+	((priv->base.device_class >> 8) & 0xff) != PCI_SUBCLASS_DISPLAY_VGA)
+	return ENOSYS;
+
+    if (priv->rom_base == 0) {
+#if defined(__amd64__) || defined(__i386__)
+	rom_base = 0xc0000;
+	rom_size = 0x10000;
+	pci_rom = 0;
+#else
+	return ENOSYS;
+#endif
+    } else {
+	rom_base = priv->rom_base;
+	rom_size = dev->rom_size;
+	pci_rom = 1;
+	if ((pcibus_conf_read(pcifd, (unsigned int)dev->bus,
+	    (unsigned int)dev->dev, (unsigned int)dev->func,
+	    PCIR_COMMAND, &command_val)) == -1)
+	    return errno;
+	if ((command_val & PCIM_CMD_MEMEN) == 0) {
+	    if ((pcibus_conf_write(pcifd, (unsigned int)dev->bus,
+		(unsigned int)dev->dev, (unsigned int)dev->func,
+		PCIR_COMMAND, command_val | PCIM_CMD_MEMEN)) == -1)
+		return errno;
+	}
+	if ((pcibus_conf_read(pcifd, (unsigned int)dev->bus,
+	    (unsigned int)dev->dev, (unsigned int)dev->func,
+	    PCIR_BIOS, &bios_val)) == -1)
+	    return errno;
+	if ((bios_val & PCIM_BIOS_ENABLE) == 0) {
+	    if ((pcibus_conf_write(pcifd, (unsigned int)dev->bus,
+		(unsigned int)dev->dev, (unsigned int)dev->func,
+		PCIR_BIOS, bios_val | PCIM_BIOS_ENABLE)) == -1)
+		return errno;
+	}
+    }
+
+    fprintf(stderr, "Using rom_base = 0x%lx (pci_rom=%d)\n", (long)rom_base,
+	pci_rom);
+    memfd = open("/dev/mem", O_RDONLY);
+    if (memfd == -1)
+	return errno;
+
+    bios = mmap(NULL, rom_size, PROT_READ, 0, memfd, (off_t)rom_base);
+    if (bios == MAP_FAILED) {
+	int serrno = errno;
+	close(memfd);
+	return serrno;
+    }
+
+    memcpy(buffer, bios, rom_size);
+
+    munmap(bios, rom_size);
+    close(memfd);
+
+    if (pci_rom) {
+	if ((command_val & PCIM_CMD_MEMEN) == 0) {
+	    if ((pcibus_conf_write(pcifd, (unsigned int)dev->bus,
+		(unsigned int)dev->dev, (unsigned int)dev->func,
+		PCIR_COMMAND, command_val)) == -1)
+		return errno;
+	}
+	if ((bios_val & PCIM_BIOS_ENABLE) == 0) {
+	    if ((pcibus_conf_write(pcifd, (unsigned int)dev->bus,
+		(unsigned int)dev->dev, (unsigned int)dev->func,
+		PCIR_BIOS, bios_val)) == -1)
+		return errno;
+	}
+    }
+
+    return 0;
+}
+
 static const struct pci_system_methods netbsd_pci_methods = {
-	pci_system_netbsd_destroy,
-	NULL,
-	NULL,
-	pci_device_netbsd_probe,
-	pci_device_netbsd_map_range,
-	pci_device_netbsd_unmap_range,
-	pci_device_netbsd_read,
-	pci_device_netbsd_write,
-	pci_fill_capabilities_generic
+	.destroy = pci_system_netbsd_destroy,
+	.destroy_device = NULL,
+	.read_rom = pci_device_netbsd_read_rom,
+	.probe = pci_device_netbsd_probe,
+	.map_range = pci_device_netbsd_map_range,
+	.unmap_range = pci_device_netbsd_unmap_range,
+	.read = pci_device_netbsd_read,
+	.write = pci_device_netbsd_write,
+	.fill_capabilities = pci_fill_capabilities_generic
 };
 
 int
