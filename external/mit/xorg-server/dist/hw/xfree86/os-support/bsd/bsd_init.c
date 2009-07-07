@@ -660,7 +660,9 @@ xf86CloseConsole()
     struct vt_mode   VT;
 #endif
 
+#if defined (SYSCONS_SUPPORT) || defined (PCVT_SUPPORT)
     if (ShareVTs) return;
+#endif
 
     switch (xf86Info.consType)
     {
