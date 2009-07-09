@@ -2485,13 +2485,10 @@ linux* | k*bsd*-gnu)
   # before this can be enabled.
   hardcode_into_libs=yes
 
-  # Add ABI-specific directories to the system library path.
-  sys_lib_dlsearch_path_spec="/lib64 /usr/lib64 /lib /usr/lib"
-
   # Append ld.so.conf contents to the search path
   if test -f /etc/ld.so.conf; then
     lt_ld_extra=`awk '/^include / { system(sprintf("cd /etc; cat %s 2>/dev/null", \[$]2)); skip = 1; } { if (!skip) print \[$]0; skip = 0; }' < /etc/ld.so.conf | $SED -e 's/#.*//;/^[	 ]*hwcap[	 ]/d;s/[:,	]/ /g;s/=[^=]*$//;s/=[^= ]* / /g;/^$/d' | tr '\n' ' '`
-    sys_lib_dlsearch_path_spec="$sys_lib_dlsearch_path_spec $lt_ld_extra"
+    sys_lib_dlsearch_path_spec="/lib /usr/lib $lt_ld_extra"
   fi
 
   # We used to test for /lib/ld.so.1 and disable shared libraries on
@@ -2501,6 +2498,18 @@ linux* | k*bsd*-gnu)
   # people can always --disable-shared, the test was removed, and we
   # assume the GNU/Linux dynamic linker is in use.
   dynamic_linker='GNU/Linux ld.so'
+  ;;
+
+netbsdelf*-gnu)
+  version_type=linux
+  need_lib_prefix=no
+  need_version=no
+  library_names_spec='${libname}${release}${shared_ext}$versuffix ${libname}${release}${shared_ext}$major ${libname}${shared_ext}'
+  soname_spec='${libname}${release}${shared_ext}$major'
+  shlibpath_var=LD_LIBRARY_PATH
+  shlibpath_overrides_runpath=no
+  hardcode_into_libs=yes
+  dynamic_linker='NetBSD ld.elf_so'
   ;;
 
 netbsd*)
@@ -3094,7 +3103,7 @@ linux* | k*bsd*-gnu)
   lt_cv_deplibs_check_method=pass_all
   ;;
 
-netbsd*)
+netbsd* | netbsdelf*-gnu)
   if echo __ELF__ | $CC -E - | $GREP __ELF__ > /dev/null; then
     lt_cv_deplibs_check_method='match_pattern /lib[[^/]]+(\.so\.[[0-9]]+\.[[0-9]]+|_pic\.a)$'
   else
@@ -3775,7 +3784,7 @@ m4_if([$1], [CXX], [
 	    ;;
 	esac
 	;;
-      netbsd*)
+      netbsd* | netbsdelf*-gnu)
 	;;
       *qnx* | *nto*)
         # QNX uses GNU C++, but need to define -shared option too, otherwise
@@ -4200,6 +4209,9 @@ m4_if([$1], [CXX], [
   cygwin* | mingw* | cegcc*)
     _LT_TAGVAR(export_symbols_cmds, $1)='$NM $libobjs $convenience | $global_symbol_pipe | $SED -e '\''/^[[BCDGRS]][[ ]]/s/.*[[ ]]\([[^ ]]*\)/\1 DATA/;/^.*[[ ]]__nm__/s/^.*[[ ]]__nm__\([[^ ]]*\)[[ ]][[^ ]]*/\1 DATA/;/^I[[ ]]/d;/^[[AITW]][[ ]]/s/.* //'\'' | sort | uniq > $export_symbols'
   ;;
+  linux* | k*bsd*-gnu)
+    _LT_TAGVAR(link_all_deplibs, $1)=no
+  ;;
   *)
     _LT_TAGVAR(export_symbols_cmds, $1)='$NM $libobjs $convenience | $global_symbol_pipe | $SED '\''s/.* //'\'' | sort | uniq > $export_symbols'
   ;;
@@ -4446,7 +4458,7 @@ _LT_EOF
       fi
       ;;
 
-    netbsd*)
+    netbsd* | netbsdelf*-gnu)
       if echo __ELF__ | $CC -E - | $GREP __ELF__ >/dev/null; then
 	_LT_TAGVAR(archive_cmds, $1)='$LD -Bshareable $libobjs $deplibs $linker_flags -o $lib'
 	wlarc=
@@ -4621,6 +4633,7 @@ _LT_EOF
 	if test "$aix_use_runtimelinking" = yes; then
 	  shared_flag="$shared_flag "'${wl}-G'
 	fi
+	_LT_TAGVAR(link_all_deplibs, $1)=no
       else
 	# not using gcc
 	if test "$host_cpu" = ia64; then
@@ -4859,7 +4872,7 @@ _LT_EOF
       _LT_TAGVAR(link_all_deplibs, $1)=yes
       ;;
 
-    netbsd*)
+    netbsd* | netbsdelf*-gnu)
       if echo __ELF__ | $CC -E - | $GREP __ELF__ >/dev/null; then
 	_LT_TAGVAR(archive_cmds, $1)='$LD -Bshareable -o $lib $libobjs $deplibs $linker_flags'  # a.out
       else
@@ -8036,14 +8049,16 @@ fi])
 # _PKG_CONFIG([VARIABLE], [COMMAND], [MODULES])
 # ---------------------------------------------
 m4_define([_PKG_CONFIG],
-[if test -n "$$1"; then
-    pkg_cv_[]$1="$$1"
- elif test -n "$PKG_CONFIG"; then
-    PKG_CHECK_EXISTS([$3],
-                     [pkg_cv_[]$1=`$PKG_CONFIG --[]$2 "$3" 2>/dev/null`],
-		     [pkg_failed=yes])
- else
-    pkg_failed=untried
+[if test -n "$PKG_CONFIG"; then
+    if test -n "$$1"; then
+        pkg_cv_[]$1="$$1"
+    else
+        PKG_CHECK_EXISTS([$3],
+                         [pkg_cv_[]$1=`$PKG_CONFIG --[]$2 "$3" 2>/dev/null`],
+			 [pkg_failed=yes])
+    fi
+else
+	pkg_failed=untried
 fi[]dnl
 ])# _PKG_CONFIG
 
@@ -8087,9 +8102,9 @@ See the pkg-config man page for more details.])
 if test $pkg_failed = yes; then
         _PKG_SHORT_ERRORS_SUPPORTED
         if test $_pkg_short_errors_supported = yes; then
-	        $1[]_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors "$2" 2>&1`
+	        $1[]_PKG_ERRORS=`$PKG_CONFIG --short-errors --errors-to-stdout --print-errors "$2"`
         else 
-	        $1[]_PKG_ERRORS=`$PKG_CONFIG --print-errors "$2" 2>&1`
+	        $1[]_PKG_ERRORS=`$PKG_CONFIG --errors-to-stdout --print-errors "$2"`
         fi
 	# Put the nasty error message in config.log where it belongs
 	echo "$$1[]_PKG_ERRORS" >&AS_MESSAGE_LOG_FD
@@ -8161,27 +8176,24 @@ dnl of the copyright holder.
 # your configure.ac with the minimum required version, such as:
 # XORG_MACROS_VERSION(1.1)
 #
-# To force at least a version with this macro defined, also add:
-# m4_ifndef([XORG_MACROS_VERSION], [AC_FATAL([must install xorg-macros 1.1 or later before running autoconf/autogen])])
+# To ensure that this macro is defined, also add:
+# m4_ifndef([XORG_MACROS_VERSION],
+#     [m4_fatal([must install xorg-macros 1.1 or later before running autoconf/autogen])])
 #
 #
 # See the "minimum version" comment for each macro you use to see what 
 # version you require.
-AC_DEFUN([XORG_MACROS_VERSION],[
-	[XORG_MACROS_needed_version=$1
-	XORG_MACROS_needed_major=`echo $XORG_MACROS_needed_version | sed 's/\..*$//'`
-	XORG_MACROS_needed_minor=`echo $XORG_MACROS_needed_version | sed -e 's/^[0-9]*\.//' -e 's/\..*$//'`]
-	AC_MSG_CHECKING([if xorg-macros used to generate configure is at least ${XORG_MACROS_needed_major}.${XORG_MACROS_needed_minor}])
-	[XORG_MACROS_version=1.2.1
-	XORG_MACROS_major=`echo $XORG_MACROS_version | sed 's/\..*$//'`
-	XORG_MACROS_minor=`echo $XORG_MACROS_version | sed -e 's/^[0-9]*\.//' -e 's/\..*$//'`]
-	if test $XORG_MACROS_major -ne $XORG_MACROS_needed_major ; then
-		AC_MSG_ERROR([configure built with incompatible version of xorg-macros.m4 - requires version ${XORG_MACROS_major}.x])
-	fi
-	if test $XORG_MACROS_minor -lt $XORG_MACROS_needed_minor ; then
-		AC_MSG_ERROR([configure built with too old of a version of xorg-macros.m4 - requires version ${XORG_MACROS_major}.${XORG_MACROS_minor}.0 or newer])
-	fi
-	AC_MSG_RESULT([yes, $XORG_MACROS_version])
+m4_defun([XORG_MACROS_VERSION],[
+m4_define([vers_have], [1.2.2])
+m4_define([maj_have], m4_substr(vers_have, 0, m4_index(vers_have, [.])))
+m4_define([maj_needed], m4_substr([$1], 0, m4_index([$1], [.])))
+m4_if(m4_cmp(maj_have, maj_needed), 0,,
+    [m4_fatal([xorg-macros major version ]maj_needed[ is required but ]vers_have[ found])])
+m4_if(m4_version_compare(vers_have, [$1]), -1,
+    [m4_fatal([xorg-macros version $1 or higher is required but ]vers_have[ found])])
+m4_undefine([vers_have])
+m4_undefine([maj_have])
+m4_undefine([maj_needed])
 ]) # XORG_MACROS_VERSION
 
 # XORG_PROG_RAWCPP()
@@ -8571,9 +8583,9 @@ if  test "x$GCC" = xyes ; then
     CWARNFLAGS="-Wall -Wpointer-arith -Wstrict-prototypes -Wmissing-prototypes \
 -Wmissing-declarations -Wnested-externs -fno-strict-aliasing \
 -Wbad-function-cast"
-    case `gcc -dumpversion` in
+    case `$CC -dumpversion` in
     3.4.* | 4.*)
-	CWARNFLAGS+=" -Wold-style-definition -Wdeclaration-after-statement"
+	CWARNFLAGS="$CWARNFLAGS -Wold-style-definition -Wdeclaration-after-statement"
 	;;
     esac
 else
@@ -9003,59 +9015,61 @@ _AM_SUBST_NOTMAKE([AMDEPBACKSLASH])dnl
 # gives unlimited permission to copy and/or distribute it,
 # with or without modifications, as long as this notice is preserved.
 
-#serial 4
+#serial 5
 
 # _AM_OUTPUT_DEPENDENCY_COMMANDS
 # ------------------------------
 AC_DEFUN([_AM_OUTPUT_DEPENDENCY_COMMANDS],
-[# Autoconf 2.62 quotes --file arguments for eval, but not when files
-# are listed without --file.  Let's play safe and only enable the eval
-# if we detect the quoting.
-case $CONFIG_FILES in
-*\'*) eval set x "$CONFIG_FILES" ;;
-*)   set x $CONFIG_FILES ;;
-esac
-shift
-for mf
-do
-  # Strip MF so we end up with the name of the file.
-  mf=`echo "$mf" | sed -e 's/:.*$//'`
-  # Check whether this is an Automake generated Makefile or not.
-  # We used to match only the files named `Makefile.in', but
-  # some people rename them; so instead we look at the file content.
-  # Grep'ing the first line is not enough: some people post-process
-  # each Makefile.in and add a new line on top of each file to say so.
-  # Grep'ing the whole file is not good either: AIX grep has a line
-  # limit of 2048, but all sed's we know have understand at least 4000.
-  if sed -n 's,^#.*generated by automake.*,X,p' "$mf" | grep X >/dev/null 2>&1; then
-    dirpart=`AS_DIRNAME("$mf")`
-  else
-    continue
-  fi
-  # Extract the definition of DEPDIR, am__include, and am__quote
-  # from the Makefile without running `make'.
-  DEPDIR=`sed -n 's/^DEPDIR = //p' < "$mf"`
-  test -z "$DEPDIR" && continue
-  am__include=`sed -n 's/^am__include = //p' < "$mf"`
-  test -z "am__include" && continue
-  am__quote=`sed -n 's/^am__quote = //p' < "$mf"`
-  # When using ansi2knr, U may be empty or an underscore; expand it
-  U=`sed -n 's/^U = //p' < "$mf"`
-  # Find all dependency output files, they are included files with
-  # $(DEPDIR) in their names.  We invoke sed twice because it is the
-  # simplest approach to changing $(DEPDIR) to its actual value in the
-  # expansion.
-  for file in `sed -n "
-    s/^$am__include $am__quote\(.*(DEPDIR).*\)$am__quote"'$/\1/p' <"$mf" | \
-       sed -e 's/\$(DEPDIR)/'"$DEPDIR"'/g' -e 's/\$U/'"$U"'/g'`; do
-    # Make sure the directory exists.
-    test -f "$dirpart/$file" && continue
-    fdir=`AS_DIRNAME(["$file"])`
-    AS_MKDIR_P([$dirpart/$fdir])
-    # echo "creating $dirpart/$file"
-    echo '# dummy' > "$dirpart/$file"
+[{
+  # Autoconf 2.62 quotes --file arguments for eval, but not when files
+  # are listed without --file.  Let's play safe and only enable the eval
+  # if we detect the quoting.
+  case $CONFIG_FILES in
+  *\'*) eval set x "$CONFIG_FILES" ;;
+  *)   set x $CONFIG_FILES ;;
+  esac
+  shift
+  for mf
+  do
+    # Strip MF so we end up with the name of the file.
+    mf=`echo "$mf" | sed -e 's/:.*$//'`
+    # Check whether this is an Automake generated Makefile or not.
+    # We used to match only the files named `Makefile.in', but
+    # some people rename them; so instead we look at the file content.
+    # Grep'ing the first line is not enough: some people post-process
+    # each Makefile.in and add a new line on top of each file to say so.
+    # Grep'ing the whole file is not good either: AIX grep has a line
+    # limit of 2048, but all sed's we know have understand at least 4000.
+    if sed -n 's,^#.*generated by automake.*,X,p' "$mf" | grep X >/dev/null 2>&1; then
+      dirpart=`AS_DIRNAME("$mf")`
+    else
+      continue
+    fi
+    # Extract the definition of DEPDIR, am__include, and am__quote
+    # from the Makefile without running `make'.
+    DEPDIR=`sed -n 's/^DEPDIR = //p' < "$mf"`
+    test -z "$DEPDIR" && continue
+    am__include=`sed -n 's/^am__include = //p' < "$mf"`
+    test -z "am__include" && continue
+    am__quote=`sed -n 's/^am__quote = //p' < "$mf"`
+    # When using ansi2knr, U may be empty or an underscore; expand it
+    U=`sed -n 's/^U = //p' < "$mf"`
+    # Find all dependency output files, they are included files with
+    # $(DEPDIR) in their names.  We invoke sed twice because it is the
+    # simplest approach to changing $(DEPDIR) to its actual value in the
+    # expansion.
+    for file in `sed -n "
+      s/^$am__include $am__quote\(.*(DEPDIR).*\)$am__quote"'$/\1/p' <"$mf" | \
+	 sed -e 's/\$(DEPDIR)/'"$DEPDIR"'/g' -e 's/\$U/'"$U"'/g'`; do
+      # Make sure the directory exists.
+      test -f "$dirpart/$file" && continue
+      fdir=`AS_DIRNAME(["$file"])`
+      AS_MKDIR_P([$dirpart/$fdir])
+      # echo "creating $dirpart/$file"
+      echo '# dummy' > "$dirpart/$file"
+    done
   done
-done
+}
 ])# _AM_OUTPUT_DEPENDENCY_COMMANDS
 
 
