@@ -27,6 +27,33 @@
 #include <string.h>
 
 #include "pixman-private.h"
+#include "pixman-accessor.h"
+
+/*
+ * Step across a small sample grid gap
+ */
+#define RenderEdgeStepSmall(edge) { \
+    edge->x += edge->stepx_small;   \
+    edge->e += edge->dx_small;	    \
+    if (edge->e > 0)		    \
+    {				    \
+	edge->e -= edge->dy;	    \
+	edge->x += edge->signdx;    \
+    }				    \
+}
+
+/*
+ * Step across a large sample grid gap
+ */
+#define RenderEdgeStepBig(edge) {   \
+    edge->x += edge->stepx_big;	    \
+    edge->e += edge->dx_big;	    \
+    if (edge->e > 0)		    \
+    {				    \
+	edge->e -= edge->dy;	    \
+	edge->x += edge->signdx;    \
+    }				    \
+}
 
 #ifdef PIXMAN_FB_ACCESSORS
 #define PIXMAN_RASTERIZE_EDGES pixman_rasterize_edges_accessors

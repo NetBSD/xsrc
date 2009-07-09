@@ -368,6 +368,22 @@ typedef enum
     PIXMAN_OP_CONJOINT_ATOP_REVERSE	= 0x2a,
     PIXMAN_OP_CONJOINT_XOR		= 0x2b,
 
+    PIXMAN_OP_MULTIPLY                  = 0x30,
+    PIXMAN_OP_SCREEN                    = 0x31,
+    PIXMAN_OP_OVERLAY                   = 0x32,
+    PIXMAN_OP_DARKEN                    = 0x33,
+    PIXMAN_OP_LIGHTEN                   = 0x34,
+    PIXMAN_OP_COLOR_DODGE               = 0x35,
+    PIXMAN_OP_COLOR_BURN                = 0x36,
+    PIXMAN_OP_HARD_LIGHT                = 0x37,
+    PIXMAN_OP_SOFT_LIGHT                = 0x38,
+    PIXMAN_OP_DIFFERENCE                = 0x39,
+    PIXMAN_OP_EXCLUSION                 = 0x3a,
+    PIXMAN_OP_HSL_HUE			= 0x3b,
+    PIXMAN_OP_HSL_SATURATION		= 0x3c,
+    PIXMAN_OP_HSL_COLOR			= 0x3d,
+    PIXMAN_OP_HSL_LUMINOSITY		= 0x3e,
+
     PIXMAN_OP_NONE,
     PIXMAN_OP_LAST = PIXMAN_OP_NONE
 } pixman_op_t;
@@ -597,6 +613,8 @@ typedef struct pixman_gradient_stop	pixman_gradient_stop_t;
 typedef uint32_t (* pixman_read_memory_func_t) (const void *src, int size);
 typedef void     (* pixman_write_memory_func_t) (void *dst, uint32_t value, int size);
 
+typedef void     (* pixman_image_destroy_func_t) (pixman_image_t *image, void *data);
+
 struct pixman_gradient_stop {
     pixman_fixed_t x;
     pixman_color_t color;
@@ -748,6 +766,9 @@ pixman_image_t *pixman_image_create_bits             (pixman_format_code_t      
 pixman_image_t *pixman_image_ref                     (pixman_image_t               *image);
 pixman_bool_t   pixman_image_unref                   (pixman_image_t               *image);
 
+void		pixman_image_set_destroy_function    (pixman_image_t		   *image,
+						      pixman_image_destroy_func_t   function,
+						      void			   *data);
 
 /* Set properties */
 pixman_bool_t   pixman_image_set_clip_region         (pixman_image_t               *image,

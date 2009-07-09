@@ -159,7 +159,7 @@ fbCompositeSrcAdd_8000x8000neon (
             srcLine += srcStride;
             w = width;
 
-            uint8_t *keep_dst;
+            uint8_t *keep_dst=0;
 
 #ifndef USE_GCC_INLINE_ASM
             uint8x8_t sval,dval,temp;
@@ -226,6 +226,9 @@ fbCompositeSrcAdd_8000x8000neon (
     }
     else
     {
+        const uint8_t nil = 0;
+        const uint8x8_t vnil = vld1_dup_u8(&nil);
+
         while (height--)
         {
             dst = dstLine;
@@ -233,8 +236,8 @@ fbCompositeSrcAdd_8000x8000neon (
             src = srcLine;
             srcLine += srcStride;
             w = width;
-            uint8x8_t sval, dval;
-            uint8_t *dst4, *dst2;
+            uint8x8_t sval=vnil, dval=vnil;
+            uint8_t *dst4=0, *dst2=0;
 
             if (w&4)
             {
@@ -306,7 +309,7 @@ fbCompositeSrc_8888x8888neon (
 	    srcLine += srcStride;
 	    w = width;
 
-            uint32_t *keep_dst;
+            uint32_t *keep_dst=0;
 
 #ifndef USE_GCC_INLINE_ASM
             uint8x8x4_t sval,dval,temp;
@@ -458,7 +461,7 @@ fbCompositeSrc_8888x8x8888neon (
     fbComposeGetStart (pDst, xDst, yDst, uint32_t, dstStride, dstLine, 1);
     fbComposeGetStart (pSrc, xSrc, ySrc, uint32_t, srcStride, srcLine, 1);
 
-    fbComposeGetSolid (pMask, mask, pDst->bits.format);
+    _pixman_image_get_solid (pMask, mask, pDst->bits.format);
     mask_alpha = vdup_n_u8((mask) >> 24);
 
     if (width>=8)
@@ -472,7 +475,7 @@ fbCompositeSrc_8888x8x8888neon (
             srcLine += srcStride;
             w = width;
 
-            uint32_t *keep_dst;
+            uint32_t *keep_dst=0;
 
 #ifndef USE_GCC_INLINE_ASM
             uint8x8x4_t sval,dval,temp;
@@ -629,343 +632,6 @@ fbCompositeSrc_8888x8x8888neon (
 }
 
 
-
-void
-fbCompositeSolidMask_nx8x0565neon (
-                               pixman_implementation_t * impl,
-                               pixman_op_t op,
-                               pixman_image_t * pSrc,
-                               pixman_image_t * pMask,
-                               pixman_image_t * pDst,
-                               int32_t      xSrc,
-                               int32_t      ySrc,
-                               int32_t      xMask,
-                               int32_t      yMask,
-                               int32_t      xDst,
-                               int32_t      yDst,
-                               int32_t      width,
-                               int32_t      height)
-{
-    uint32_t     src, srca;
-    uint16_t    *dstLine, *dst;
-    uint8_t     *maskLine, *mask;
-    int          dstStride, maskStride;
-    uint32_t     w;
-    uint8x8_t    sval2;
-    uint8x8x4_t  sval8;
-
-    fbComposeGetSolid(pSrc, src, pDst->bits.format);
-
-    srca = src >> 24;
-    if (src == 0)
-        return;
-
-    sval2=vreinterpret_u8_u32(vdup_n_u32(src));
-    sval8.val[0]=vdup_lane_u8(sval2,0);
-    sval8.val[1]=vdup_lane_u8(sval2,1);
-    sval8.val[2]=vdup_lane_u8(sval2,2);
-    sval8.val[3]=vdup_lane_u8(sval2,3);
-
-    fbComposeGetStart (pDst, xDst, yDst, uint16_t, dstStride, dstLine, 1);
-    fbComposeGetStart (pMask, xMask, yMask, uint8_t, maskStride, maskLine, 1);
-
-    if (width>=8)
-    {
-        // Use overlapping 8-pixel method, modified to avoid rewritten dest being reused
-        while (height--)
-        {
-            uint16_t *keep_dst;
-
-            dst = dstLine;
-            dstLine += dstStride;
-            mask = maskLine;
-            maskLine += maskStride;
-            w = width;
-
-#ifndef USE_GCC_INLINE_ASM
-            uint8x8_t alpha;
-            uint16x8_t dval, temp; 
-            uint8x8x4_t sval8temp;
-
-            alpha = vld1_u8((void*)mask);
-            dval = vld1q_u16((void*)dst);
-            keep_dst = dst;
-
-            sval8temp = neon8mul(sval8,alpha);
-            temp = pack0565(neon8qadd(sval8temp,neon8mul(unpack0565(dval),vmvn_u8(sval8temp.val[3]))));
-
-            mask += (w & 7);
-            dst += (w & 7);
-            w -= (w & 7);
-
-            while (w)
-            {
-                dval = vld1q_u16((void*)dst);
-	        alpha = vld1_u8((void*)mask);
-
-                vst1q_u16((void*)keep_dst,temp);
-                keep_dst = dst;
-
-                sval8temp = neon8mul(sval8,alpha);
-                temp = pack0565(neon8qadd(sval8temp,neon8mul(unpack0565(dval),vmvn_u8(sval8temp.val[3]))));
-
-                mask+=8;
-                dst+=8;
-                w-=8;
-            }
-            vst1q_u16((void*)keep_dst,temp);
-#else
-        asm volatile (
-                        "vdup.32      d0, %[src]\n\t"
-                        "vdup.8       d1, d0[1]\n\t"
-                        "vdup.8       d2, d0[2]\n\t"
-                        "vdup.8       d3, d0[3]\n\t"
-                        "vdup.8       d0, d0[0]\n\t"
-
-                        "vld1.8       {q12}, [%[dst]]\n\t"
-                        "vld1.8       {d31}, [%[mask]]\n\t"
-                        "mov  %[keep_dst], %[dst]\n\t"
-
-                        "and  ip, %[w], #7\n\t"
-                        "add  %[mask], %[mask], ip\n\t"
-                        "add  %[dst], %[dst], ip, LSL#1\n\t"
-                        "subs  %[w], %[w], ip\n\t"
-                        "b  9f\n\t"
-// LOOP
-                        "2:\n\t"
-
-                        "vld1.16      {q12}, [%[dst]]!\n\t"
-                        "vld1.8       {d31}, [%[mask]]!\n\t"
-                        "vst1.16      {q10}, [%[keep_dst]]\n\t"
-                        "sub  %[keep_dst], %[dst], #8*2\n\t"
-                        "subs  %[w], %[w], #8\n\t"
-                        "9:\n\t"
-// expand 0565 q12 to 8888 {d4-d7}
-                        "vmovn.u16    d4, q12\t\n"
-                        "vshr.u16     q11, q12, #5\t\n"
-                        "vshr.u16     q10, q12, #6+5\t\n"
-                        "vmovn.u16    d5, q11\t\n"
-                        "vmovn.u16    d6, q10\t\n"
-                        "vshl.u8      d4, d4, #3\t\n"
-                        "vshl.u8      d5, d5, #2\t\n"
-                        "vshl.u8      d6, d6, #3\t\n"
-                        "vsri.u8      d4, d4, #5\t\n"
-                        "vsri.u8      d5, d5, #6\t\n"
-                        "vsri.u8      d6, d6, #5\t\n"
-
-                        "vmull.u8     q10, d31, d0\n\t"
-                        "vmull.u8     q11, d31, d1\n\t"
-                        "vmull.u8     q12, d31, d2\n\t"
-                        "vmull.u8     q13, d31, d3\n\t"
-                        "vrshr.u16    q8, q10, #8\n\t"
-                        "vrshr.u16    q9, q11, #8\n\t"
-                        "vraddhn.u16  d20, q10, q8\n\t"
-                        "vraddhn.u16  d21, q11, q9\n\t"
-                        "vrshr.u16    q9, q13, #8\n\t"
-                        "vrshr.u16    q8, q12, #8\n\t"
-                        "vraddhn.u16  d23, q13, q9\n\t"
-                        "vraddhn.u16  d22, q12, q8\n\t"
-
-// duplicate in 4/2/1 & 8pix vsns
-                        "vmvn.8       d30, d23\n\t"
-                        "vmull.u8     q14, d30, d6\n\t"
-                        "vmull.u8     q13, d30, d5\n\t"
-                        "vmull.u8     q12, d30, d4\n\t"
-                        "vrshr.u16    q8, q14, #8\n\t"
-                        "vrshr.u16    q9, q13, #8\n\t"
-                        "vraddhn.u16  d6, q14, q8\n\t"
-                        "vrshr.u16    q8, q12, #8\n\t"
-                        "vraddhn.u16  d5, q13, q9\n\t"
-                        "vqadd.u8     d6, d6, d22\n\t"  // moved up
-                        "vraddhn.u16  d4, q12, q8\n\t"
-// intentionally don't calculate alpha
-// result in d4-d6
-
-//                      "vqadd.u8     d6, d6, d22\n\t"  ** moved up
-                        "vqadd.u8     d5, d5, d21\n\t"
-                        "vqadd.u8     d4, d4, d20\n\t"
-
-// pack 8888 {d20-d23} to 0565 q10
-                        "vshll.u8     q10, d6, #8\n\t"
-                        "vshll.u8     q3, d5, #8\n\t"
-                        "vshll.u8     q2, d4, #8\n\t"
-                        "vsri.u16     q10, q3, #5\t\n"
-                        "vsri.u16     q10, q2, #11\t\n"
-
-                        "bne 2b\n\t"
-
-                        "1:\n\t"
-                        "vst1.16      {q10}, [%[keep_dst]]\n\t"
-
-                        : [w] "+r" (w), [dst] "+r" (dst), [mask] "+r" (mask), [keep_dst] "=r" (keep_dst)
-                        : [src] "r" (src)
-                        : "ip", "cc", "memory", "d0","d1","d2","d3","d4","d5","d6","d7",
-                          "d16","d17","d18","d19","d20","d21","d22","d23","d24","d25","d26","d27","d28","d29",
-                          "d30","d31"
-                        );
-#endif
-        }
-    }
-    else
-    {
-        while (height--)
-        {
-            void *dst4, *dst2;
-
-            dst = dstLine;
-            dstLine += dstStride;
-            mask = maskLine;
-            maskLine += maskStride;
-            w = width;
-
-
-#ifndef USE_GCC_INLINE_ASM
-            uint8x8_t alpha;
-            uint16x8_t dval, temp;
-            uint8x8x4_t sval8temp;
-
-            if (w&4)
-            {
-                alpha = vreinterpret_u8_u32(vld1_lane_u32((void*)mask,vreinterpret_u32_u8(alpha),1));
-                dval = vreinterpretq_u16_u64(vld1q_lane_u64((void*)dst,vreinterpretq_u64_u16(dval),1));
-                dst4=dst;
-                mask+=4;
-                dst+=4;
-            }
-            if (w&2)
-            {
-                alpha = vreinterpret_u8_u16(vld1_lane_u16((void*)mask,vreinterpret_u16_u8(alpha),1));
-                dval = vreinterpretq_u16_u32(vld1q_lane_u32((void*)dst,vreinterpretq_u32_u16(dval),1));
-                dst2=dst;
-                mask+=2;
-                dst+=2;
-            }
-            if (w&1)
-            {
-                alpha = vld1_lane_u8((void*)mask,alpha,1);
-                dval = vld1q_lane_u16((void*)dst,dval,1);
-            }
-
-            sval8temp = neon8mul(sval8,alpha);
-            temp = pack0565(neon8qadd(sval8temp,neon8mul(unpack0565(dval),vmvn_u8(sval8temp.val[3]))));
-
-            if (w&1)
-                vst1q_lane_u16((void*)dst,temp,1);
-            if (w&2)
-                vst1q_lane_u32((void*)dst2,vreinterpretq_u32_u16(temp),1);
-            if (w&4)
-                vst1q_lane_u64((void*)dst4,vreinterpretq_u64_u16(temp),1);
-#else
-            asm volatile (
-                        "vdup.32      d0, %[src]\n\t"
-                        "vdup.8       d1, d0[1]\n\t"
-                        "vdup.8       d2, d0[2]\n\t"
-                        "vdup.8       d3, d0[3]\n\t"
-                        "vdup.8       d0, d0[0]\n\t"
-
-                        "tst  %[w], #4\t\n"
-                        "beq  skip_load4\t\n"
-
-                        "vld1.64      {d25}, [%[dst]]\n\t"
-                        "vld1.32      {d31[1]}, [%[mask]]\n\t"
-                        "mov  %[dst4], %[dst]\t\n"
-                        "add  %[mask], %[mask], #4\t\n"
-                        "add  %[dst], %[dst], #4*2\t\n"
-
-                        "skip_load4:\t\n"
-                        "tst  %[w], #2\t\n"
-                        "beq  skip_load2\t\n"
-                        "vld1.32      {d24[1]}, [%[dst]]\n\t"
-                        "vld1.16      {d31[1]}, [%[mask]]\n\t"
-                        "mov  %[dst2], %[dst]\t\n"
-                        "add  %[mask], %[mask], #2\t\n"
-                        "add  %[dst], %[dst], #2*2\t\n"
-
-                        "skip_load2:\t\n"
-                        "tst  %[w], #1\t\n"
-                        "beq  skip_load1\t\n"
-                        "vld1.16      {d24[1]}, [%[dst]]\n\t"
-                        "vld1.8       {d31[1]}, [%[mask]]\n\t"
-
-                        "skip_load1:\t\n"
-// expand 0565 q12 to 8888 {d4-d7}
-                        "vmovn.u16    d4, q12\t\n"
-                        "vshr.u16     q11, q12, #5\t\n"
-                        "vshr.u16     q10, q12, #6+5\t\n"
-                        "vmovn.u16    d5, q11\t\n"
-                        "vmovn.u16    d6, q10\t\n"
-                        "vshl.u8      d4, d4, #3\t\n"
-                        "vshl.u8      d5, d5, #2\t\n"
-                        "vshl.u8      d6, d6, #3\t\n"
-                        "vsri.u8      d4, d4, #5\t\n"
-                        "vsri.u8      d5, d5, #6\t\n"
-                        "vsri.u8      d6, d6, #5\t\n"
-
-                        "vmull.u8     q10, d31, d0\n\t"
-                        "vmull.u8     q11, d31, d1\n\t"
-                        "vmull.u8     q12, d31, d2\n\t"
-                        "vmull.u8     q13, d31, d3\n\t"
-                        "vrshr.u16    q8, q10, #8\n\t"
-                        "vrshr.u16    q9, q11, #8\n\t"
-                        "vraddhn.u16  d20, q10, q8\n\t"
-                        "vraddhn.u16  d21, q11, q9\n\t"
-                        "vrshr.u16    q9, q13, #8\n\t"
-                        "vrshr.u16    q8, q12, #8\n\t"
-                        "vraddhn.u16  d23, q13, q9\n\t"
-                        "vraddhn.u16  d22, q12, q8\n\t"
-
-// duplicate in 4/2/1 & 8pix vsns
-                        "vmvn.8       d30, d23\n\t"
-                        "vmull.u8     q14, d30, d6\n\t"
-                        "vmull.u8     q13, d30, d5\n\t"
-                        "vmull.u8     q12, d30, d4\n\t"
-                        "vrshr.u16    q8, q14, #8\n\t"
-                        "vrshr.u16    q9, q13, #8\n\t"
-                        "vraddhn.u16  d6, q14, q8\n\t"
-                        "vrshr.u16    q8, q12, #8\n\t"
-                        "vraddhn.u16  d5, q13, q9\n\t"
-                        "vqadd.u8     d6, d6, d22\n\t"  // moved up
-                        "vraddhn.u16  d4, q12, q8\n\t"
-// intentionally don't calculate alpha
-// result in d4-d6
-
-//                      "vqadd.u8     d6, d6, d22\n\t"  ** moved up
-                        "vqadd.u8     d5, d5, d21\n\t"
-                        "vqadd.u8     d4, d4, d20\n\t"
-
-// pack 8888 {d20-d23} to 0565 q10
-                        "vshll.u8     q10, d6, #8\n\t"
-                        "vshll.u8     q3, d5, #8\n\t"
-                        "vshll.u8     q2, d4, #8\n\t"
-                        "vsri.u16     q10, q3, #5\t\n"
-                        "vsri.u16     q10, q2, #11\t\n"
-
-                        "tst  %[w], #1\n\t"
-                        "beq skip_store1\t\n"
-                        "vst1.16      {d20[1]}, [%[dst]]\t\n"
-                        "skip_store1:\t\n"
-                        "tst  %[w], #2\n\t"
-                        "beq  skip_store2\t\n"
-                        "vst1.32      {d20[1]}, [%[dst2]]\t\n"
-                        "skip_store2:\t\n"
-                        "tst  %[w], #4\n\t"
-                        "beq skip_store4\t\n"
-                        "vst1.16      {d21}, [%[dst4]]\t\n"
-                        "skip_store4:\t\n"
-
-                        : [w] "+r" (w), [dst] "+r" (dst), [mask] "+r" (mask), [dst4] "+r" (dst4), [dst2] "+r" (dst2)
-                        : [src] "r" (src)
-                        : "ip", "cc", "memory", "d0","d1","d2","d3","d4","d5","d6","d7",
-                          "d16","d17","d18","d19","d20","d21","d22","d23","d24","d25","d26","d27","d28","d29",
-                          "d30","d31"
-                        );
-#endif
-        }
-    }
-}
-
-
-
 void
 fbCompositeSolidMask_nx8x8888neon (
                             pixman_implementation_t * impl,
@@ -992,7 +658,7 @@ fbCompositeSolidMask_nx8x8888neon (
     uint8x8_t    mask_selector=vreinterpret_u8_u64(vcreate_u64(0x0101010100000000ULL));
     uint8x8_t    alpha_selector=vreinterpret_u8_u64(vcreate_u64(0x0707070703030303ULL));
 
-    fbComposeGetSolid(pSrc, src, pDst->bits.format);
+    _pixman_image_get_solid(pSrc, src, pDst->bits.format);
 
     srca = src >> 24;
     if (src == 0)
@@ -1012,7 +678,7 @@ fbCompositeSolidMask_nx8x8888neon (
         // Use overlapping 8-pixel method, modified to avoid rewritten dest being reused
         while (height--)
         {
-            uint32_t *keep_dst;
+            uint32_t *keep_dst=0;
 
             dst = dstLine;
             dstLine += dstStride;
@@ -1197,7 +863,7 @@ fbCompositeSrcAdd_8888x8x8neon (
 
     fbComposeGetStart (pDst, xDst, yDst, uint8_t, dstStride, dstLine, 1);
     fbComposeGetStart (pMask, xMask, yMask, uint8_t, maskStride, maskLine, 1);
-    fbComposeGetSolid (pSrc, src, pDst->bits.format);
+    _pixman_image_get_solid (pSrc, src, pDst->bits.format);
     sa = vdup_n_u8((src) >> 24);
 
     if (width>=8)
@@ -1251,8 +917,8 @@ fbCompositeSrcAdd_8888x8x8neon (
             maskLine += maskStride;
             w = width;
 
-            uint8x8_t mval, dval, res;
-            uint8_t *dst4, *dst2;
+            uint8x8_t mval=sa, dval=sa, res;
+            uint8_t *dst4=0, *dst2=0;
 
             if (w&4)
             {
@@ -1834,7 +1500,6 @@ pixman_fill_neon (uint32_t *bits,
 #endif
 }
 
-#ifdef USE_GCC_INLINE_ASM
 
 // TODO: is there a more generic way of doing this being introduced?
 #define NEON_SCANLINE_BUFFER_PIXELS (1024)
@@ -1846,11 +1511,16 @@ static inline void QuadwordCopy_neon(
 	uint32_t trailerCount // of bytes
 )
 {
+	uint8_t *tDst = dst, *tSrc = src;
+
 	// Uses aligned multi-register loads to maximise read bandwidth
 	// on uncached memory such as framebuffers
 	// The accesses do not have the aligned qualifiers, so that the copy
 	// may convert between aligned-uncached and unaligned-cached memory.
 	// It is assumed that the CPU can infer alignedness from the address.
+
+#ifdef USE_GCC_INLINE_ASM
+
 	asm volatile (
 	"	cmp       %[count], #8						\n"
 	"	blt 1f    @ skip oversized fragments		\n"
@@ -1886,7 +1556,7 @@ static inline void QuadwordCopy_neon(
 	"4: @ end										\n"
 
 	// Clobbered input registers marked as input/outputs
-	: [dst] "+r" (dst), [src] "+r" (src), [count] "+r" (count)
+	: [dst] "+r" (tDst), [src] "+r" (tSrc), [count] "+r" (count)
 
 	// No unclobbered inputs
 	:
@@ -1896,33 +1566,533 @@ static inline void QuadwordCopy_neon(
 	: "q8", "q9", "q10", "q11", "q12", "q13", "q14", "q15", "cc", "memory"
 	);
 
-	if(trailerCount) {
-		uint8_t *tDst = dst, *tSrc = src;
+#else
 
-		while(trailerCount >= 4) {
+	while(count >= 8) {
+		uint8x16x4_t t1 = vld4q_u8(tSrc);
+		uint8x16x4_t t2 = vld4q_u8(tSrc + sizeof(uint8x16x4_t));
+		tSrc += sizeof(uint8x16x4_t) * 2;
+		vst4q_u8(tDst, t1);
+		vst4q_u8(tDst + sizeof(uint8x16x4_t), t2);
+		tDst += sizeof(uint8x16x4_t) * 2;
+		count -= 8;
+	}
+
+	if(count & 4) {
+		uint8x16x4_t t1 = vld4q_u8(tSrc);
+		tSrc += sizeof(uint8x16x4_t);
+		vst4q_u8(tDst, t1);
+		tDst += sizeof(uint8x16x4_t);
+	}
+
+	if(count & 2) {
+		uint8x8x4_t t1 = vld4_u8(tSrc);
+		tSrc += sizeof(uint8x8x4_t);
+		vst4_u8(tDst, t1);
+		tDst += sizeof(uint8x8x4_t);
+	}
+
+	if(count & 1) {
+		uint8x16_t t1 = vld1q_u8(tSrc);
+		tSrc += sizeof(uint8x16_t);
+		vst1q_u8(tDst, t1);
+		tDst += sizeof(uint8x16_t);
+	}
+
+#endif  // !USE_GCC_INLINE_ASM
+
+	if(trailerCount) {
+		if(trailerCount & 8) {
+			uint8x8_t t1 = vld1_u8(tSrc);
+			tSrc += sizeof(uint8x8_t);
+			vst1_u8(tDst, t1);
+			tDst += sizeof(uint8x8_t);
+		}
+
+		if(trailerCount & 4) {
 			*((uint32_t*) tDst) = *((uint32_t*) tSrc);
 			tDst += 4;
 			tSrc += 4;
-			trailerCount -= 4;
 		}
 
-		if(trailerCount >= 2) {
+		if(trailerCount & 2) {
 			*((uint16_t*) tDst) = *((uint16_t*) tSrc);
 			tDst += 2;
 			tSrc += 2;
-			trailerCount -= 2;
 		}
 
-		if(trailerCount) {
+		if(trailerCount & 1) {
 			*tDst++ = *tSrc++;
-			trailerCount--;
+		}
+	}
+}
+
+static inline void SolidOver565_8pix_neon(
+	uint32_t  glyphColour,
+	uint16_t *dest,
+	uint8_t  *inMask,
+	uint32_t  destStride,  // bytes, not elements
+	uint32_t  maskStride,
+	uint32_t  count        // 8-pixel groups
+)
+{
+	// Inner loop of glyph blitter (solid colour, alpha mask)
+
+#ifdef USE_GCC_INLINE_ASM
+
+	asm volatile (
+	"	vld4.8 {d20[],d21[],d22[],d23[]}, [%[glyphColour]]  @ splat solid colour components	\n"
+	"0:	@ loop																				\n"
+	"	vld1.16   {d0,d1}, [%[dest]]         @ load first pixels from framebuffer			\n"
+	"	vld1.8    {d17}, [%[inMask]]         @ load alpha mask of glyph						\n"
+	"	vmull.u8  q9, d17, d23               @ apply glyph colour alpha to mask				\n"
+	"	vshrn.u16 d17, q9, #8                @ reformat it to match original mask			\n"
+	"	vmvn      d18, d17                   @ we need the inverse mask for the background	\n"
+	"	vsli.u16  q3, q0, #5                 @ duplicate framebuffer blue bits				\n"
+	"	vshrn.u16 d2, q0, #8                 @ unpack red from framebuffer pixels			\n"
+	"	vshrn.u16 d4, q0, #3                 @ unpack green									\n"
+	"	vsri.u8   d2, d2, #5                 @ duplicate red bits (extend 5 to 8)			\n"
+	"	vshrn.u16 d6, q3, #2                 @ unpack extended blue (truncate 10 to 8)		\n"
+	"	vsri.u8   d4, d4, #6                 @ duplicate green bits (extend 6 to 8)			\n"
+	"	vmull.u8  q1, d2, d18                @ apply inverse mask to background red...		\n"
+	"	vmull.u8  q2, d4, d18                @ ...green...									\n"
+	"	vmull.u8  q3, d6, d18                @ ...blue										\n"
+	"	subs      %[count], %[count], #1     @ decrement/test loop counter					\n"
+	"	vmlal.u8  q1, d17, d22               @ add masked foreground red...					\n"
+	"	vmlal.u8  q2, d17, d21               @ ...green...									\n"
+	"	vmlal.u8  q3, d17, d20               @ ...blue										\n"
+	"	add %[inMask], %[inMask], %[maskStride] @ advance mask pointer, while we wait		\n"
+	"	vsri.16   q1, q2, #5                 @ pack green behind red						\n"
+	"	vsri.16   q1, q3, #11                @ pack blue into pixels						\n"
+	"	vst1.16   {d2,d3}, [%[dest]]         @ store composited pixels						\n"
+	"	add %[dest], %[dest], %[destStride]  @ advance framebuffer pointer					\n"
+	"	bne 0b                               @ next please									\n"
+
+	// Clobbered registers marked as input/outputs
+	: [dest] "+r" (dest), [inMask] "+r" (inMask), [count] "+r" (count)
+
+	// Inputs
+	: [destStride] "r" (destStride), [maskStride] "r" (maskStride), [glyphColour] "r" (&glyphColour)
+
+	// Clobbers, including the inputs we modify, and potentially lots of memory
+	: "q0", "q1", "q2", "q3", "d17", "q9", "q10", "q11", "q12", "cc", "memory"
+	);
+
+#else
+
+	uint8x8x4_t solidColour = vld4_dup_u8((uint8_t*) &glyphColour);
+
+	while(count--)
+	{
+		uint16x8_t  pixels = vld1q_u16(dest);
+		uint8x8_t   mask = vshrn_n_u16(vmull_u8(solidColour.val[3], vld1_u8(inMask)), 8);
+		uint8x8_t  iMask = vmvn_u8(mask);
+
+		uint8x8_t  tRed   = vshrn_n_u16(pixels, 8);
+		uint8x8_t  tGreen = vshrn_n_u16(pixels, 3);
+		uint8x8_t  tBlue  = vshrn_n_u16(vsli_n_u8(pixels, pixels, 5), 2);
+
+		uint16x8_t sRed   = vmull_u8(vsri_n_u8(tRed  , tRed  , 5), iMask);
+		uint16x8_t sGreen = vmull_u8(vsri_n_u8(tGreen, tGreen, 6), iMask);
+		uint16x8_t sBlue  = vmull_u8(          tBlue             , iMask);
+
+		sRed   = vmlal(sRed  , mask, solidColour.val[2]);
+		sGreen = vmlal(sGreen, mask, solidColour.val[1]);
+		sBlue  = vmlal(sBlue , mask, solidColour.val[0]);
+
+		pixels = vsri_n_u16(sRed, sGreen, 5);
+		pixels = vsri_n_u16(pixels, sBlue, 11);
+		vst1q_u16(dest, pixels);
+
+		dest += destStride;
+		mask += maskStride;
+	}
+
+#endif
+}
+
+void
+fbCompositeSolidMask_nx8x0565neon (
+	pixman_implementation_t * impl,
+	pixman_op_t op,
+	pixman_image_t * pSrc,
+	pixman_image_t * pMask,
+	pixman_image_t * pDst,
+	int32_t      xSrc,
+	int32_t      ySrc,
+	int32_t      xMask,
+	int32_t      yMask,
+	int32_t      xDst,
+	int32_t      yDst,
+	int32_t      width,
+	int32_t      height)
+{
+	uint32_t     src, srca;
+	uint16_t    *dstLine, *alignedLine;
+	uint8_t     *maskLine;
+	uint32_t     dstStride, maskStride;
+	uint32_t     kernelCount, copyCount;
+	uint8_t      kernelOffset, copyOffset;
+
+	_pixman_image_get_solid(pSrc, src, pDst->bits.format);
+
+	// bail out if fully transparent or degenerate
+	srca = src >> 24;
+	if(srca == 0)
+		return;
+	if(width == 0 || height == 0)
+		return;
+
+	if(width > NEON_SCANLINE_BUFFER_PIXELS) {
+		// split the blit, so we can use a fixed-size scanline buffer
+		// TODO: there must be a more elegant way of doing this.
+		int x;
+		for(x=0; x < width; x += NEON_SCANLINE_BUFFER_PIXELS) {
+			fbCompositeSolidMask_nx8x0565neon(impl, op, pSrc, pMask, pDst, xSrc+x, ySrc, xMask+x, yMask, xDst+x, yDst,
+											  (x+NEON_SCANLINE_BUFFER_PIXELS > width) ? width-x : NEON_SCANLINE_BUFFER_PIXELS, height);
+		}
+		return;
+	}
+
+	fbComposeGetStart (pDst, xDst, yDst, uint16_t, dstStride, dstLine, 1);
+	fbComposeGetStart (pMask, xMask, yMask, uint8_t, maskStride, maskLine, 1);
+
+	// keep within minimum number of aligned quadwords on width
+	// while also keeping the minimum number of columns to process
+	{
+		unsigned long alignedLeft = (unsigned long)(dstLine) & ~0xF;
+		unsigned long alignedRight = (((unsigned long)(dstLine + width)) + 0xF) & ~0xF;
+		unsigned long ceilingLength = (((unsigned long) width) * sizeof(*dstLine) + 0xF) & ~0xF;
+
+		// the fast copy must always be quadword aligned
+		copyOffset = dstLine - ((uint16_t*) alignedLeft);
+		alignedLine = dstLine - copyOffset;
+		copyCount = (uint32_t) ((alignedRight - alignedLeft) >> 4);
+
+		if(alignedRight - alignedLeft > ceilingLength) {
+			// unaligned routine is tightest, and will not overrun
+			kernelCount = (uint32_t) (ceilingLength >> 4);
+			kernelOffset = copyOffset;
+		} else {
+			// aligned routine is equally tight, so it is safer to align
+			kernelCount = copyCount;
+			kernelOffset = 0;
+		}
+	}
+
+	{
+		uint16_t scanLine[NEON_SCANLINE_BUFFER_PIXELS + 8]; // deliberately not initialised
+		uint8_t glyphLine[NEON_SCANLINE_BUFFER_PIXELS + 8];
+		int y = height;
+
+		// row-major order
+		// left edge, middle block, right edge
+		for( ; y--; maskLine += maskStride, alignedLine += dstStride, dstLine += dstStride) {
+			// We don't want to overrun the edges of the glyph, so realign the edge data into known buffers
+			QuadwordCopy_neon(glyphLine + copyOffset, maskLine, width >> 4, width & 0xF);
+
+			// Uncached framebuffer access is really, really slow if we do it piecemeal.
+			// It should be much faster if we grab it all at once.
+			// One scanline should easily fit in L1 cache, so this should not waste RAM bandwidth.
+			QuadwordCopy_neon(scanLine, alignedLine, copyCount, 0);
+
+			// Apply the actual filter
+			SolidOver565_8pix_neon(src, scanLine + kernelOffset, glyphLine + kernelOffset, 8 * sizeof(*dstLine), 8, kernelCount);
+
+			// Copy the modified scanline back
+			QuadwordCopy_neon(dstLine, scanLine + copyOffset, width >> 3, (width & 7) * 2);
+		}
+	}
+}
+
+#ifdef USE_GCC_INLINE_ASM
+
+static inline void PlainOver565_8pix_neon(
+	uint32_t  colour,
+	uint16_t *dest,
+	uint32_t  destStride,  // bytes, not elements
+	uint32_t  count        // 8-pixel groups
+)
+{
+	// Inner loop for plain translucent rects (solid colour without alpha mask)
+	asm volatile (
+	"	vld4.8   {d20[],d21[],d22[],d23[]}, [%[colour]]  @ solid colour load/splat \n"
+	"	vmull.u8  q12, d23, d22              @ premultiply alpha red   \n"
+	"	vmull.u8  q13, d23, d21              @ premultiply alpha green \n"
+	"	vmull.u8  q14, d23, d20              @ premultiply alpha blue  \n"
+	"	vmvn      d18, d23                   @ inverse alpha for background \n"
+	"0:	@ loop\n"
+	"	vld1.16   {d0,d1}, [%[dest]]         @ load first pixels from framebuffer	\n"
+	"	vshrn.u16 d2, q0, #8                 @ unpack red from framebuffer pixels	\n"
+	"	vshrn.u16 d4, q0, #3                 @ unpack green				\n"
+	"	vsli.u16  q3, q0, #5                 @ duplicate framebuffer blue bits		\n"
+	"	vsri.u8   d2, d2, #5                 @ duplicate red bits (extend 5 to 8)	\n"
+	"	vsri.u8   d4, d4, #6                 @ duplicate green bits (extend 6 to 8)	\n"
+	"	vshrn.u16 d6, q3, #2                 @ unpack extended blue (truncate 10 to 8)	\n"
+	"	vmov      q0, q12                    @ retrieve foreground red   \n"
+	"	vmlal.u8  q0, d2, d18                @ blend red - my kingdom for a four-operand MLA \n"
+	"	vmov      q1, q13                    @ retrieve foreground green \n"
+	"	vmlal.u8  q1, d4, d18                @ blend green               \n"
+	"	vmov      q2, q14                    @ retrieve foreground blue  \n"
+	"	vmlal.u8  q2, d6, d18                @ blend blue                \n"
+	"	subs      %[count], %[count], #1     @ decrement/test loop counter		\n"
+	"	vsri.16   q0, q1, #5                 @ pack green behind red			\n"
+	"	vsri.16   q0, q2, #11                @ pack blue into pixels			\n"
+	"	vst1.16   {d0,d1}, [%[dest]]         @ store composited pixels			\n"
+	"	add %[dest], %[dest], %[destStride]  @ advance framebuffer pointer		\n"
+	"	bne 0b                               @ next please				\n"
+
+	// Clobbered registers marked as input/outputs
+	: [dest] "+r" (dest), [count] "+r" (count)
+
+	// Inputs
+	: [destStride] "r" (destStride), [colour] "r" (&colour)
+
+	// Clobbers, including the inputs we modify, and potentially lots of memory
+	: "q0", "q1", "q2", "q3", "q9", "q10", "q11", "q12", "q13", "q14", "cc", "memory"
+	);
+}
+
+void
+fbCompositeSolid_nx0565neon (
+	pixman_implementation_t * impl,
+	pixman_op_t op,
+	pixman_image_t * pSrc,
+	pixman_image_t * pMask,
+	pixman_image_t * pDst,
+	int32_t      xSrc,
+	int32_t      ySrc,
+	int32_t      xMask,
+	int32_t      yMask,
+	int32_t      xDst,
+	int32_t      yDst,
+	int32_t      width,
+	int32_t      height)
+{
+	uint32_t     src, srca;
+	uint16_t    *dstLine, *alignedLine;
+	uint32_t     dstStride;
+	uint32_t     kernelCount, copyCount;
+	uint8_t      kernelOffset, copyOffset;
+
+	_pixman_image_get_solid(pSrc, src, pDst->bits.format);
+
+	// bail out if fully transparent
+	srca = src >> 24;
+	if(srca == 0)
+		return;
+	if(width == 0 || height == 0)
+		return;
+
+	if(width > NEON_SCANLINE_BUFFER_PIXELS) {
+		// split the blit, so we can use a fixed-size scanline buffer
+		// TODO: there must be a more elegant way of doing this.
+		int x;
+		for(x=0; x < width; x += NEON_SCANLINE_BUFFER_PIXELS) {
+			fbCompositeSolid_nx0565neon(impl, op, pSrc, pMask, pDst, xSrc+x, ySrc, xMask+x, yMask, xDst+x, yDst,
+										(x+NEON_SCANLINE_BUFFER_PIXELS > width) ? width-x : NEON_SCANLINE_BUFFER_PIXELS, height);
+		}
+		return;
+	}
+
+	fbComposeGetStart (pDst, xDst, yDst, uint16_t, dstStride, dstLine, 1);
+
+	// keep within minimum number of aligned quadwords on width
+	// while also keeping the minimum number of columns to process
+	{
+		unsigned long alignedLeft = (unsigned long)(dstLine) & ~0xF;
+		unsigned long alignedRight = (((unsigned long)(dstLine + width)) + 0xF) & ~0xF;
+		unsigned long ceilingLength = (((unsigned long) width) * sizeof(*dstLine) + 0xF) & ~0xF;
+
+		// the fast copy must always be quadword aligned
+		copyOffset = dstLine - ((uint16_t*) alignedLeft);
+		alignedLine = dstLine - copyOffset;
+		copyCount = (uint32_t) ((alignedRight - alignedLeft) >> 4);
+
+		if(alignedRight - alignedLeft > ceilingLength) {
+			// unaligned routine is tightest, and will not overrun
+			kernelCount = (uint32_t) (ceilingLength >> 4);
+			kernelOffset = copyOffset;
+		} else {
+			// aligned routine is equally tight, so it is safer to align
+			kernelCount = copyCount;
+			kernelOffset = 0;
+		}
+	}
+
+	{
+		uint16_t scanLine[NEON_SCANLINE_BUFFER_PIXELS + 8]; // deliberately not initialised
+
+		// row-major order
+		// left edge, middle block, right edge
+		for( ; height--; alignedLine += dstStride, dstLine += dstStride) {
+
+			// Uncached framebuffer access is really, really slow if we do it piecemeal.
+			// It should be much faster if we grab it all at once.
+			// One scanline should easily fit in L1 cache, so this should not waste RAM bandwidth.
+			QuadwordCopy_neon(scanLine, alignedLine, copyCount, 0);
+
+			// Apply the actual filter
+			PlainOver565_8pix_neon(src, scanLine + kernelOffset, 8 * sizeof(*dstLine), kernelCount);
+
+			// Copy the modified scanline back
+			QuadwordCopy_neon(dstLine, scanLine + copyOffset, width >> 3, (width & 7) * 2);
+		}
+	}
+}
+
+static inline void ARGB8_Over565_8pix_neon(
+	uint32_t *src,
+	uint16_t *dest,
+	uint32_t  srcStride,  // bytes, not elements
+	uint32_t  count        // 8-pixel groups
+)
+{
+	asm volatile (
+	"0:	@ loop\n"
+	"	pld   [%[src], %[srcStride]]         @ preload from next scanline	\n"
+	"	vld1.16   {d0,d1}, [%[dest]]         @ load pixels from framebuffer	\n"
+	"	vld4.8   {d20,d21,d22,d23},[%[src]]! @ load source image pixels		\n"
+	"	vsli.u16  q3, q0, #5                 @ duplicate framebuffer blue bits		\n"
+	"	vshrn.u16 d2, q0, #8                 @ unpack red from framebuffer pixels	\n"
+	"	vshrn.u16 d4, q0, #3                 @ unpack green				\n"
+	"	vmvn      d18, d23                   @ we need the inverse alpha for the background	\n"
+	"	vsri.u8   d2, d2, #5                 @ duplicate red bits (extend 5 to 8)	\n"
+	"	vshrn.u16 d6, q3, #2                 @ unpack extended blue (truncate 10 to 8)	\n"
+	"	vsri.u8   d4, d4, #6                 @ duplicate green bits (extend 6 to 8)	\n"
+	"	vmull.u8  q1, d2, d18                @ apply inverse alpha to background red...	\n"
+	"	vmull.u8  q2, d4, d18                @ ...green...				\n"
+	"	vmull.u8  q3, d6, d18                @ ...blue					\n"
+	"	subs      %[count], %[count], #1     @ decrement/test loop counter		\n"
+	"	vmlal.u8  q1, d23, d22               @ add blended foreground red...		\n"
+	"	vmlal.u8  q2, d23, d21               @ ...green...				\n"
+	"	vmlal.u8  q3, d23, d20               @ ...blue					\n"
+	"	vsri.16   q1, q2, #5                 @ pack green behind red			\n"
+	"	vsri.16   q1, q3, #11                @ pack blue into pixels			\n"
+	"	vst1.16   {d2,d3}, [%[dest]]!        @ store composited pixels			\n"
+	"	bne 0b                               @ next please				\n"
+
+	// Clobbered registers marked as input/outputs
+	: [dest] "+r" (dest), [src] "+r" (src), [count] "+r" (count)
+
+	// Inputs
+	: [srcStride] "r" (srcStride)
+
+	// Clobbers, including the inputs we modify, and potentially lots of memory
+	: "q0", "q1", "q2", "q3", "d17", "d18", "q10", "q11", "cc", "memory"
+	);
+}
+
+void
+fbCompositeOver_8888x0565neon (
+	pixman_implementation_t * impl,
+	pixman_op_t op,
+	pixman_image_t * pSrc,
+	pixman_image_t * pMask,
+	pixman_image_t * pDst,
+	int32_t      xSrc,
+	int32_t      ySrc,
+	int32_t      xMask,
+	int32_t      yMask,
+	int32_t      xDst,
+	int32_t      yDst,
+	int32_t      width,
+	int32_t      height)
+{
+	uint32_t    *srcLine;
+	uint16_t    *dstLine, *alignedLine;
+	uint32_t     dstStride, srcStride;
+	uint32_t     kernelCount, copyCount;
+	uint8_t      kernelOffset, copyOffset;
+
+	// we assume mask is opaque
+	// so the only alpha to deal with is embedded in src
+
+	if(width > NEON_SCANLINE_BUFFER_PIXELS) {
+		// split the blit, so we can use a fixed-size scanline buffer
+		int x;
+		for(x=0; x < width; x += NEON_SCANLINE_BUFFER_PIXELS) {
+			fbCompositeOver_8888x0565neon(impl, op, pSrc, pMask, pDst, xSrc+x, ySrc, xMask+x, yMask, xDst+x, yDst,
+										  (x+NEON_SCANLINE_BUFFER_PIXELS > width) ? width-x : NEON_SCANLINE_BUFFER_PIXELS, height);
+		}
+		return;
+	}
+
+	fbComposeGetStart (pDst, xDst, yDst, uint16_t, dstStride, dstLine, 1);
+	fbComposeGetStart (pSrc, xSrc, ySrc, uint32_t, srcStride, srcLine, 1);
+
+	// keep within minimum number of aligned quadwords on width
+	// while also keeping the minimum number of columns to process
+	{
+		unsigned long alignedLeft = (unsigned long)(dstLine) & ~0xF;
+		unsigned long alignedRight = (((unsigned long)(dstLine + width)) + 0xF) & ~0xF;
+		unsigned long ceilingLength = (((unsigned long) width) * sizeof(*dstLine) + 0xF) & ~0xF;
+
+		// the fast copy must always be quadword aligned
+		copyOffset = dstLine - ((uint16_t*) alignedLeft);
+		alignedLine = dstLine - copyOffset;
+		copyCount = (uint32_t) ((alignedRight - alignedLeft) >> 4);
+
+		if(alignedRight - alignedLeft > ceilingLength) {
+			// unaligned routine is tightest, and will not overrun
+			kernelCount = (uint32_t) (ceilingLength >> 4);
+			kernelOffset = copyOffset;
+		} else {
+			// aligned routine is equally tight, so it is safer to align
+			kernelCount = copyCount;
+			kernelOffset = 0;
+		}
+	}
+
+	/* Preload the first input scanline */
+	{
+		uint8_t *srcPtr = (uint8_t*) srcLine;
+		uint32_t count = (width + 15) / 16;
+
+#ifdef USE_GCC_INLINE_ASM
+		asm volatile (
+		"0: @ loop						\n"
+		"	subs    %[count], %[count], #1			\n"
+		"	pld     [%[src]]				\n"
+		"	add     %[src], %[src], #64			\n"
+		"	bgt 0b						\n"
+
+		// Clobbered input registers marked as input/outputs
+		: [src] "+r" (srcPtr), [count] "+r" (count)
+		: // no unclobbered inputs
+		: "cc"
+		);
+#else
+		do {
+			__pld(srcPtr);
+			srcPtr += 64;
+		} while(--count);
+#endif
+	}
+
+	{
+		uint16_t scanLine[NEON_SCANLINE_BUFFER_PIXELS + 8]; // deliberately not initialised
+
+		// row-major order
+		// left edge, middle block, right edge
+		for( ; height--; srcLine += srcStride, alignedLine += dstStride) {
+			// Uncached framebuffer access is really, really slow if we do it piecemeal.
+			// It should be much faster if we grab it all at once.
+			// One scanline should easily fit in L1 cache, so this should not waste RAM bandwidth.
+			QuadwordCopy_neon(scanLine, alignedLine, copyCount, 0);
+
+			// Apply the actual filter
+			ARGB8_Over565_8pix_neon(srcLine, scanLine + kernelOffset, srcStride * sizeof(*srcLine), kernelCount);
+
+			// Copy the modified scanline back
+			QuadwordCopy_neon(dstLine, scanLine + copyOffset, width >> 3, (width & 7) * 2);
 		}
 	}
 }
 
 #endif  // USE_GCC_INLINE_ASM
 
-static const FastPathInfo arm_neon_fast_path_array[] = 
+static const pixman_fast_path_t arm_neon_fast_path_array[] = 
 {
     { PIXMAN_OP_ADD,  PIXMAN_solid,    PIXMAN_a8,       PIXMAN_a8,       fbCompositeSrcAdd_8888x8x8neon,        0 },
     { PIXMAN_OP_ADD,  PIXMAN_a8,       PIXMAN_null,     PIXMAN_a8,       fbCompositeSrcAdd_8000x8000neon,       0 },
@@ -1935,6 +2105,10 @@ static const FastPathInfo arm_neon_fast_path_array[] =
 #ifdef USE_GCC_INLINE_ASM
     { PIXMAN_OP_SRC,  PIXMAN_r5g6b5,   PIXMAN_null,     PIXMAN_r5g6b5,   fbCompositeSrc_16x16neon,              0 },
     { PIXMAN_OP_SRC,  PIXMAN_b5g6r5,   PIXMAN_null,     PIXMAN_b5g6r5,   fbCompositeSrc_16x16neon,              0 },
+    { PIXMAN_OP_OVER, PIXMAN_solid,    PIXMAN_null,     PIXMAN_r5g6b5,   fbCompositeSolid_nx0565neon,           0 },
+    { PIXMAN_OP_OVER, PIXMAN_solid,    PIXMAN_null,     PIXMAN_b5g6r5,   fbCompositeSolid_nx0565neon,           0 },
+    { PIXMAN_OP_OVER, PIXMAN_a8r8g8b8, PIXMAN_null,     PIXMAN_r5g6b5,   fbCompositeOver_8888x0565neon,         0 },
+    { PIXMAN_OP_OVER, PIXMAN_a8b8g8r8, PIXMAN_null,     PIXMAN_b5g6r5,   fbCompositeOver_8888x0565neon,         0 },
 #endif
     { PIXMAN_OP_OVER, PIXMAN_a8r8g8b8, PIXMAN_null,     PIXMAN_a8r8g8b8, fbCompositeSrc_8888x8888neon,          0 },
     { PIXMAN_OP_OVER, PIXMAN_a8r8g8b8, PIXMAN_null,     PIXMAN_x8r8g8b8, fbCompositeSrc_8888x8888neon,          0 },
@@ -1949,7 +2123,7 @@ static const FastPathInfo arm_neon_fast_path_array[] =
     { PIXMAN_OP_NONE },
 };
 
-const FastPathInfo *const arm_neon_fast_paths = arm_neon_fast_path_array;
+const pixman_fast_path_t *const arm_neon_fast_paths = arm_neon_fast_path_array;
 
 static void
 arm_neon_composite (pixman_implementation_t *imp,
@@ -1996,11 +2170,8 @@ pixman_blt_neon (
 	int dst_x, int dst_y,
 	int width, int height)
 {
-
 	if(!width || !height)
 		return TRUE;
-
-#ifdef USE_GCC_INLINE_ASM
 
 	// accelerate only straight copies involving complete bytes
 	if(src_bpp != dst_bpp || (src_bpp & 7))
@@ -2024,13 +2195,6 @@ pixman_blt_neon (
 	}
 
 	return TRUE;
-
-#else /* USE_GCC_INLINE_ASM */
-
-	// TODO: intrinsic version for armcc
-	return FALSE;
-
-#endif
 }
 
 static pixman_bool_t

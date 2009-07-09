@@ -29,7 +29,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-#include <assert.h>
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -55,23 +54,20 @@ general_composite_rect  (pixman_implementation_t *imp,
 			 int32_t                  width,
 			 int32_t                  height)
 {
-    return_if_fail (src != NULL);
-    return_if_fail (dest != NULL);
-    
     uint8_t stack_scanline_buffer[SCANLINE_BUFFER_LENGTH * 3];
     const pixman_format_code_t srcFormat = src->type == BITS ? src->bits.format : 0;
     const pixman_format_code_t maskFormat = mask && mask->type == BITS ? mask->bits.format : 0;
     const pixman_format_code_t destFormat = dest->type == BITS ? dest->bits.format : 0;
-    const int srcWide = PIXMAN_FORMAT_16BPC(srcFormat);
-    const int maskWide = mask && PIXMAN_FORMAT_16BPC(maskFormat);
-    const int destWide = PIXMAN_FORMAT_16BPC(destFormat);
+    const int srcWide = PIXMAN_FORMAT_IS_WIDE(srcFormat);
+    const int maskWide = mask && PIXMAN_FORMAT_IS_WIDE(maskFormat);
+    const int destWide = PIXMAN_FORMAT_IS_WIDE(destFormat);
     const int wide = srcWide || maskWide || destWide;
     const int Bpp = wide ? 8 : 4;
     uint8_t *scanline_buffer = stack_scanline_buffer;
     uint8_t *src_buffer, *mask_buffer, *dest_buffer;
-    scanFetchProc fetchSrc = NULL, fetchMask = NULL, fetchDest = NULL;
+    fetch_scanline_t fetchSrc = NULL, fetchMask = NULL, fetchDest = NULL;
     pixman_combine_32_func_t compose;
-    scanStoreProc store;
+    store_scanline_t store;
     source_pict_class_t srcClass, maskClass;
     pixman_bool_t component_alpha;
     uint32_t *bits;
@@ -259,57 +255,9 @@ general_composite (pixman_implementation_t *	imp,
 		   int32_t			width,
 		   int32_t			height)
 {
-    pixman_bool_t srcRepeat = src->type == BITS && src->common.repeat == PIXMAN_REPEAT_NORMAL;
-    pixman_bool_t maskRepeat = FALSE;
-    pixman_bool_t srcTransform = src->common.transform != NULL;
-    pixman_bool_t maskTransform = FALSE;
-    
-    if (srcRepeat && srcTransform &&
-	src->bits.width == 1 &&
-	src->bits.height == 1)
-    {
-	srcTransform = FALSE;
-    }
-    
-    if (mask && mask->type == BITS)
-    {
-	maskRepeat = mask->common.repeat == PIXMAN_REPEAT_NORMAL;
-	
-	maskTransform = mask->common.transform != 0;
-	if (mask->common.filter == PIXMAN_FILTER_CONVOLUTION)
-	    maskTransform = TRUE;
-	
-	if (maskRepeat && maskTransform &&
-	    mask->bits.width == 1 &&
-	    mask->bits.height == 1)
-	{
-	    maskTransform = FALSE;
-	}
-    }
-    
-    /* CompositeGeneral optimizes 1x1 repeating images itself */
-    if (src->type == BITS &&
-	src->bits.width == 1 && src->bits.height == 1)
-    {
-	srcRepeat = FALSE;
-    }
-    
-    if (mask && mask->type == BITS &&
-	mask->bits.width == 1 && mask->bits.height == 1)
-    {
-	maskRepeat = FALSE;
-    }
-    
-    /* if we are transforming, repeats are handled in fbFetchTransformed */
-    if (srcTransform)
-	srcRepeat = FALSE;
-    
-    if (maskTransform)
-	maskRepeat = FALSE;
-    
     _pixman_walk_composite_region (imp, op, src, mask, dest, src_x, src_y,
 				   mask_x, mask_y, dest_x, dest_y, width, height,
-				   srcRepeat, maskRepeat, general_composite_rect);
+				   general_composite_rect);
 }
 
 static pixman_bool_t

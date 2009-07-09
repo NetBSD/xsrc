@@ -34,6 +34,7 @@
 #include <xmmintrin.h> /* for _mm_shuffle_pi16 and _MM_SHUFFLE */
 #include <emmintrin.h> /* for SSE2 intrinsics */
 #include "pixman-private.h"
+#include "pixman-combine32.h"
 
 #ifdef USE_SSE2
 
@@ -1330,7 +1331,7 @@ coreCombineSaturateUPixelsse2 (uint32_t src, uint32_t dst)
 
     if (sa > da)
     {
-        ms = pixMultiply_1x64 (ms, expandAlpha_1x64 (unpack_32_1x64 (FbIntDiv(da, sa) << 24)));
+        ms = pixMultiply_1x64 (ms, expandAlpha_1x64 (unpack_32_1x64 (IntDiv(da, sa) << 24)));
     }
 
     return pack_1x64_32 (_mm_adds_pu16 (md, ms));
@@ -2315,7 +2316,7 @@ createMask_2x32_128 (uint32_t mask0, uint32_t mask1)
 
 /* SSE2 code patch for fbcompose.c */
 
-static FASTCALL void
+static void
 sse2CombineOverU (pixman_implementation_t *imp, pixman_op_t op,
 		  uint32_t *dst, const uint32_t *src, const uint32_t *mask, int width)
 {
@@ -2323,7 +2324,7 @@ sse2CombineOverU (pixman_implementation_t *imp, pixman_op_t op,
     _mm_empty();
 }
 
-static FASTCALL void
+static void
 sse2CombineOverReverseU (pixman_implementation_t *imp, pixman_op_t op,
 			 uint32_t *dst, const uint32_t *src, const uint32_t *mask, int width)
 {
@@ -2331,7 +2332,7 @@ sse2CombineOverReverseU (pixman_implementation_t *imp, pixman_op_t op,
     _mm_empty();
 }
 
-static FASTCALL void
+static void
 sse2CombineInU (pixman_implementation_t *imp, pixman_op_t op,
 		uint32_t *dst, const uint32_t *src, const uint32_t *mask, int width)
 {
@@ -2339,7 +2340,7 @@ sse2CombineInU (pixman_implementation_t *imp, pixman_op_t op,
     _mm_empty();
 }
 
-static FASTCALL void
+static void
 sse2CombineInReverseU (pixman_implementation_t *imp, pixman_op_t op,
 		       uint32_t *dst, const uint32_t *src, const uint32_t *mask, int width)
 {
@@ -2347,7 +2348,7 @@ sse2CombineInReverseU (pixman_implementation_t *imp, pixman_op_t op,
     _mm_empty();
 }
 
-static FASTCALL void
+static void
 sse2CombineOutU (pixman_implementation_t *imp, pixman_op_t op,
 		 uint32_t *dst, const uint32_t *src, const uint32_t *mask, int width)
 {
@@ -2355,7 +2356,7 @@ sse2CombineOutU (pixman_implementation_t *imp, pixman_op_t op,
     _mm_empty();
 }
 
-static FASTCALL void
+static void
 sse2CombineOutReverseU (pixman_implementation_t *imp, pixman_op_t op,
 			uint32_t *dst, const uint32_t *src, const uint32_t *mask, int width)
 {
@@ -2363,7 +2364,7 @@ sse2CombineOutReverseU (pixman_implementation_t *imp, pixman_op_t op,
     _mm_empty();
 }
 
-static FASTCALL void
+static void
 sse2CombineAtopU (pixman_implementation_t *imp, pixman_op_t op,
 		  uint32_t *dst, const uint32_t *src, const uint32_t *mask, int width)
 {
@@ -2371,7 +2372,7 @@ sse2CombineAtopU (pixman_implementation_t *imp, pixman_op_t op,
     _mm_empty();
 }
 
-static FASTCALL void
+static void
 sse2CombineAtopReverseU (pixman_implementation_t *imp, pixman_op_t op,
 			 uint32_t *dst, const uint32_t *src, const uint32_t *mask, int width)
 {
@@ -2379,7 +2380,7 @@ sse2CombineAtopReverseU (pixman_implementation_t *imp, pixman_op_t op,
     _mm_empty();
 }
 
-static FASTCALL void
+static void
 sse2CombineXorU (pixman_implementation_t *imp, pixman_op_t op,
 		 uint32_t *dst, const uint32_t *src, const uint32_t *mask, int width)
 {
@@ -2387,7 +2388,7 @@ sse2CombineXorU (pixman_implementation_t *imp, pixman_op_t op,
     _mm_empty();
 }
 
-static FASTCALL void
+static void
 sse2CombineAddU (pixman_implementation_t *imp, pixman_op_t op,
 		 uint32_t *dst, const uint32_t *src, const uint32_t *mask, int width)
 {
@@ -2395,7 +2396,7 @@ sse2CombineAddU (pixman_implementation_t *imp, pixman_op_t op,
     _mm_empty();
 }
 
-static FASTCALL void
+static void
 sse2CombineSaturateU (pixman_implementation_t *imp, pixman_op_t op,
 		      uint32_t *dst, const uint32_t *src, const uint32_t *mask, int width)
 {
@@ -2403,7 +2404,7 @@ sse2CombineSaturateU (pixman_implementation_t *imp, pixman_op_t op,
     _mm_empty();
 }
 
-static FASTCALL void
+static void
 sse2CombineSrcC (pixman_implementation_t *imp, pixman_op_t op,
 		 uint32_t *dst, const uint32_t *src, const uint32_t *mask, int width)
 {
@@ -2411,7 +2412,7 @@ sse2CombineSrcC (pixman_implementation_t *imp, pixman_op_t op,
     _mm_empty();
 }
 
-static FASTCALL void
+static void
 sse2CombineOverC (pixman_implementation_t *imp, pixman_op_t op,
 		  uint32_t *dst, const uint32_t *src, const uint32_t *mask, int width)
 {
@@ -2419,7 +2420,7 @@ sse2CombineOverC (pixman_implementation_t *imp, pixman_op_t op,
     _mm_empty();
 }
 
-static FASTCALL void
+static void
 sse2CombineOverReverseC (pixman_implementation_t *imp, pixman_op_t op,
 			 uint32_t *dst, const uint32_t *src, const uint32_t *mask, int width)
 {
@@ -2427,7 +2428,7 @@ sse2CombineOverReverseC (pixman_implementation_t *imp, pixman_op_t op,
     _mm_empty();
 }
 
-static FASTCALL void
+static void
 sse2CombineInC (pixman_implementation_t *imp, pixman_op_t op,
 		uint32_t *dst, const uint32_t *src, const uint32_t *mask, int width)
 {
@@ -2435,7 +2436,7 @@ sse2CombineInC (pixman_implementation_t *imp, pixman_op_t op,
     _mm_empty();
 }
 
-static FASTCALL void
+static void
 sse2CombineInReverseC (pixman_implementation_t *imp, pixman_op_t op,
 		       uint32_t *dst, const uint32_t *src, const uint32_t *mask, int width)
 {
@@ -2443,7 +2444,7 @@ sse2CombineInReverseC (pixman_implementation_t *imp, pixman_op_t op,
     _mm_empty();
 }
 
-static FASTCALL void
+static void
 sse2CombineOutC (pixman_implementation_t *imp, pixman_op_t op,
 		 uint32_t *dst, const uint32_t *src, const uint32_t *mask, int width)
 {
@@ -2451,7 +2452,7 @@ sse2CombineOutC (pixman_implementation_t *imp, pixman_op_t op,
     _mm_empty();
 }
 
-static FASTCALL void
+static void
 sse2CombineOutReverseC (pixman_implementation_t *imp, pixman_op_t op,
 			uint32_t *dst, const uint32_t *src, const uint32_t *mask, int width)
 {
@@ -2459,7 +2460,7 @@ sse2CombineOutReverseC (pixman_implementation_t *imp, pixman_op_t op,
     _mm_empty();
 }
 
-static FASTCALL void
+static void
 sse2CombineAtopC (pixman_implementation_t *imp, pixman_op_t op,
 		  uint32_t *dst, const uint32_t *src, const uint32_t *mask, int width)
 {
@@ -2467,7 +2468,7 @@ sse2CombineAtopC (pixman_implementation_t *imp, pixman_op_t op,
     _mm_empty();
 }
 
-static FASTCALL void
+static void
 sse2CombineAtopReverseC (pixman_implementation_t *imp, pixman_op_t op,
 			 uint32_t *dst, const uint32_t *src, const uint32_t *mask, int width)
 {
@@ -2475,7 +2476,7 @@ sse2CombineAtopReverseC (pixman_implementation_t *imp, pixman_op_t op,
     _mm_empty();
 }
 
-static FASTCALL void
+static void
 sse2CombineXorC (pixman_implementation_t *imp, pixman_op_t op,
 		 uint32_t *dst, const uint32_t *src, const uint32_t *mask, int width)
 {
@@ -2483,7 +2484,7 @@ sse2CombineXorC (pixman_implementation_t *imp, pixman_op_t op,
     _mm_empty();
 }
 
-static FASTCALL void
+static void
 sse2CombineAddC (pixman_implementation_t *imp, pixman_op_t op,
 		 uint32_t *dst, const uint32_t *src, const uint32_t *mask, int width)
 {
@@ -2517,7 +2518,7 @@ fbCompositeSolid_nx8888sse2 (pixman_implementation_t *imp,
     __m128i xmmSrc, xmmAlpha;
     __m128i xmmDst, xmmDstLo, xmmDstHi;
 
-    fbComposeGetSolid(pSrc, src, pDst->bits.format);
+    src = _pixman_image_get_solid(pSrc, pDst->bits.format);
 
     if (src == 0)
 	return;
@@ -2604,7 +2605,7 @@ fbCompositeSolid_nx0565sse2 (pixman_implementation_t *imp,
     __m128i xmmSrc, xmmAlpha;
     __m128i xmmDst, xmmDst0, xmmDst1, xmmDst2, xmmDst3;
 
-    fbComposeGetSolid(pSrc, src, pDst->bits.format);
+    src = _pixman_image_get_solid(pSrc, pDst->bits.format);
 
     if (src == 0)
         return;
@@ -2699,7 +2700,7 @@ fbCompositeSolidMask_nx8888x8888Csse2 (pixman_implementation_t *imp,
 
     __m64 mmxSrc, mmxAlpha, mmxMask, mmxDst;
 
-    fbComposeGetSolid(pSrc, src, pDst->bits.format);
+    src = _pixman_image_get_solid(pSrc, pDst->bits.format);
 
     if (src == 0)
 	return;
@@ -2834,7 +2835,7 @@ fbCompositeSrc_8888x8x8888sse2 (pixman_implementation_t *imp,
 
     fbComposeGetStart (pDst, xDst, yDst, uint32_t, dstStride, dstLine, 1);
     fbComposeGetStart (pSrc, xSrc, ySrc, uint32_t, srcStride, srcLine, 1);
-    fbComposeGetSolid (pMask, mask, pDst->bits.format);
+    mask = _pixman_image_get_solid (pMask, pDst->bits.format);
 
     xmmMask = createMask_16_128 (mask >> 24);
 
@@ -2946,7 +2947,7 @@ fbCompositeSrc_x888xnx8888sse2 (pixman_implementation_t *imp,
 
     fbComposeGetStart (pDst, xDst, yDst, uint32_t, dstStride, dstLine, 1);
     fbComposeGetStart (pSrc, xSrc, ySrc, uint32_t, srcStride, srcLine, 1);
-    fbComposeGetSolid (pMask, mask, pDst->bits.format);
+    mask = _pixman_image_get_solid (pMask, pDst->bits.format);
 
     xmmMask = createMask_16_128 (mask >> 24);
     xmmAlpha = Mask00ff;
@@ -3223,7 +3224,7 @@ fbCompositeSolidMask_nx8x8888sse2 (pixman_implementation_t *imp,
 
     __m64 mmxSrc, mmxAlpha, mmxMask, mmxDest;
 
-    fbComposeGetSolid(pSrc, src, pDst->bits.format);
+    src = _pixman_image_get_solid(pSrc, pDst->bits.format);
 
     srca = src >> 24;
     if (src == 0)
@@ -3498,7 +3499,7 @@ fbCompositeSolidMaskSrc_nx8x8888sse2 (pixman_implementation_t *imp,
     __m128i xmmSrc, xmmDef;
     __m128i xmmMask, xmmMaskLo, xmmMaskHi;
 
-    fbComposeGetSolid(pSrc, src, pDst->bits.format);
+    src = _pixman_image_get_solid(pSrc, pDst->bits.format);
 
     srca = src >> 24;
     if (src == 0)
@@ -3636,7 +3637,7 @@ fbCompositeSolidMask_nx8x0565sse2 (pixman_implementation_t *imp,
     __m128i xmmMask, xmmMaskLo, xmmMaskHi;
     __m128i xmmDst, xmmDst0, xmmDst1, xmmDst2, xmmDst3;
 
-    fbComposeGetSolid(pSrc, src, pDst->bits.format);
+    src = _pixman_image_get_solid(pSrc, pDst->bits.format);
 
     srca = src >> 24;
     if (src == 0)
@@ -4037,7 +4038,7 @@ fbCompositeSolidMask_nx8888x0565Csse2 (pixman_implementation_t *imp,
 
     __m64 mmxSrc, mmxAlpha, mmxMask, mmxDest;
 
-    fbComposeGetSolid(pSrc, src, pDst->bits.format);
+    src = _pixman_image_get_solid(pSrc, pDst->bits.format);
 
     if (src == 0)
         return;
@@ -4186,7 +4187,7 @@ fbCompositeIn_nx8x8sse2 (pixman_implementation_t *imp,
     fbComposeGetStart (pDst, xDst, yDst, uint8_t, dstStride, dstLine, 1);
     fbComposeGetStart (pMask, xMask, yMask, uint8_t, maskStride, maskLine, 1);
 
-    fbComposeGetSolid(pSrc, src, pDst->bits.format);
+    src = _pixman_image_get_solid(pSrc, pDst->bits.format);
 
     sa = src >> 24;
     if (sa == 0)
@@ -4380,7 +4381,7 @@ fbCompositeSrcAdd_8888x8x8sse2 (pixman_implementation_t *imp,
     fbComposeGetStart (pDst, xDst, yDst, uint8_t, dstStride, dstLine, 1);
     fbComposeGetStart (pMask, xMask, yMask, uint8_t, maskStride, maskLine, 1);
 
-    fbComposeGetSolid(pSrc, src, pDst->bits.format);
+    src = _pixman_image_get_solid(pSrc, pDst->bits.format);
 
     sa = src >> 24;
     if (sa == 0)
@@ -4869,7 +4870,7 @@ fbCompositeOver_x888x8x8888sse2 (pixman_implementation_t *imp,
 }
 #endif
 
-static const FastPathInfo sse2_fast_paths[] =
+static const pixman_fast_path_t sse2_fast_paths[] =
 {
     { PIXMAN_OP_OVER, PIXMAN_solid,    PIXMAN_a8,       PIXMAN_r5g6b5,   fbCompositeSolidMask_nx8x0565sse2,     0 },
     { PIXMAN_OP_OVER, PIXMAN_solid,    PIXMAN_a8,       PIXMAN_b5g6r5,   fbCompositeSolidMask_nx8x0565sse2,     0 },
@@ -4949,9 +4950,10 @@ static const FastPathInfo sse2_fast_paths[] =
 /*
  * Work around GCC bug causing crashes in Mozilla with SSE2
  * 
- * When using SSE2 intrinsics, gcc assumes that the stack is 16 byte
- * aligned. Unfortunately some code, such as Mozilla and Mono contain
- * code that aligns the stack to 4 bytes.
+ * When using -msse, gcc generates movdqa instructions assuming that
+ * the stack is 16 byte aligned. Unfortunately some applications, such
+ * as Mozilla and Mono, end up aligning the stack to 4 bytes, which
+ * causes the movdqa instructions to fail.
  *
  * The __force_align_arg_pointer__ makes gcc generate a prologue that
  * realigns the stack pointer to 16 bytes.
@@ -4961,7 +4963,9 @@ static const FastPathInfo sse2_fast_paths[] =
  *
  * See https://bugs.freedesktop.org/show_bug.cgi?id=15693
  */
+#if defined(__GNUC__) && !defined(__x86_64__) && !defined(__amd64__)
 __attribute__((__force_align_arg_pointer__))
+#endif
 static void
 sse2_composite (pixman_implementation_t *imp,
 		pixman_op_t     op,
@@ -4995,7 +4999,9 @@ sse2_composite (pixman_implementation_t *imp,
 				      width, height);
 }
 
+#if defined(__GNUC__) && !defined(__x86_64__) && !defined(__amd64__)
 __attribute__((__force_align_arg_pointer__))
+#endif
 static pixman_bool_t
 sse2_blt (pixman_implementation_t *imp,
 	  uint32_t *src_bits,
@@ -5022,7 +5028,9 @@ sse2_blt (pixman_implementation_t *imp,
     return TRUE;
 }
 
+#if defined(__GNUC__) && !defined(__x86_64__) && !defined(__amd64__)
 __attribute__((__force_align_arg_pointer__))
+#endif
 static pixman_bool_t
 sse2_fill (pixman_implementation_t *imp,
 	   uint32_t *bits,

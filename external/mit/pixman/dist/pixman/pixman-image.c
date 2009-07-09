@@ -59,23 +59,24 @@ _pixman_init_gradient (gradient_t     *gradient,
 /*
  * By default, just evaluate the image at 32bpp and expand.  Individual image
  * types can plug in a better scanline getter if they want to. For example
- * we  could produce smoother gradients by evaluating them at higher color depth, but
- * that's a project for the future.
+ * we  could produce smoother gradients by evaluating them at higher color
+ * depth, but that's a project for the future.
  */
 void
-_pixman_image_get_scanline_64_generic (pixman_image_t * pict, int x, int y, int width,
-				       uint64_t *buffer, uint64_t *mask, uint32_t maskBits)
+_pixman_image_get_scanline_64_generic (pixman_image_t * pict, int x, int y,
+				       int width, uint32_t *buffer,
+				       const uint32_t *mask, uint32_t maskBits)
 {
     uint32_t *mask8 = NULL;
 
-    // Contract the mask image, if one exists, so that the 32-bit fetch function
-    // can use it.
+    // Contract the mask image, if one exists, so that the 32-bit fetch
+    // function can use it.
     if (mask) {
         mask8 = pixman_malloc_ab(width, sizeof(uint32_t));
 	if (!mask8)
 	    return;
 	
-        pixman_contract(mask8, mask, width);
+        pixman_contract (mask8, (uint64_t *)mask, width);
     }
 
     // Fetch the source image into the first half of buffer.
@@ -83,9 +84,9 @@ _pixman_image_get_scanline_64_generic (pixman_image_t * pict, int x, int y, int 
 				   maskBits);
 
     // Expand from 32bpp to 64bpp in place.
-    pixman_expand(buffer, (uint32_t*)buffer, PIXMAN_a8r8g8b8, width);
+    pixman_expand ((uint64_t *)buffer, buffer, PIXMAN_a8r8g8b8, width);
 
-    free(mask8);
+    free (mask8);
 }
 
 pixman_image_t *
@@ -97,10 +98,10 @@ _pixman_image_allocate (void)
     {
 	image_common_t *common = &image->common;
 
-	pixman_region32_init (&common->full_region);
 	pixman_region32_init (&common->clip_region);
-	common->src_clip = &common->full_region;
-	common->has_client_clip = FALSE;
+
+	common->have_clip_region = FALSE;
+	common->clip_sources = FALSE;
 	common->transform = NULL;
 	common->repeat = PIXMAN_REPEAT_NONE;
 	common->filter = PIXMAN_FILTER_NEAREST;
@@ -112,6 +113,9 @@ _pixman_image_allocate (void)
 	common->read_func = NULL;
 	common->write_func = NULL;
 	common->classify = NULL;
+	common->client_clip = FALSE;
+	common->destroy_func = NULL;
+	common->destroy_data = NULL;
     }
 
     return image;
@@ -131,43 +135,25 @@ _pixman_image_classify (pixman_image_t *image,
 }
 
 void
-_pixman_image_get_scanline_32 (pixman_image_t *image, int x, int y, int width,
-			       uint32_t *buffer, uint32_t *mask, uint32_t mask_bits)
+_pixman_image_get_scanline_32 (pixman_image_t *image, int x, int y, int width, uint32_t *buffer,
+			       const uint32_t *mask, uint32_t mask_bits)
 {
     image->common.get_scanline_32 (image, x, y, width, buffer, mask, mask_bits);
-}
-
-void
-_pixman_image_get_scanline_64 (pixman_image_t *image, int x, int y, int width,
-			       uint32_t *buffer, uint32_t *unused, uint32_t unused2)
-{
-    image->common.get_scanline_64 (image, x, y, width, buffer, unused, unused2);
 }
 
 /* Even thought the type of buffer is uint32_t *, the function actually expects
  * a uint64_t *buffer.
  */
-
-scanFetchProc
-_pixman_image_get_fetcher (pixman_image_t *image,
-			   int             wide)
+void
+_pixman_image_get_scanline_64 (pixman_image_t *image, int x, int y, int width, uint32_t *buffer,
+			       const uint32_t *unused, uint32_t unused2)
 {
-    assert (image->common.get_scanline_64);
-    assert (image->common.get_scanline_32);
-    
-    if (wide)
-	return image->common.get_scanline_64;
-    else
-	return image->common.get_scanline_32;
+    image->common.get_scanline_64 (image, x, y, width, buffer, unused, unused2);
 }
-
-#define WRITE_ACCESS(f) ((image->common.write_func)? f##_accessors : f)
 
 static void
 image_property_changed (pixman_image_t *image)
 {
-    
-    
     image->common.property_changed (image);
 }
 
@@ -190,8 +176,10 @@ pixman_image_unref (pixman_image_t *image)
 
     if (common->ref_count == 0)
     {
+	if (image->common.destroy_func)
+	    image->common.destroy_func (image, image->common.destroy_data);
+	
 	pixman_region32_fini (&common->clip_region);
-	pixman_region32_fini (&common->full_region);
 
 	if (common->transform)
 	    free (common->transform);
@@ -228,22 +216,22 @@ pixman_image_unref (pixman_image_t *image)
     return FALSE;
 }
 
+PIXMAN_EXPORT void
+pixman_image_set_destroy_function (pixman_image_t *image,
+				   pixman_image_destroy_func_t func,
+				   void *data)
+{
+    image->common.destroy_func = func;
+    image->common.destroy_data = data;
+}
+			       
+
 /* Constructors */
 
 void
 _pixman_image_reset_clip_region (pixman_image_t *image)
 {
-    pixman_region32_fini (&image->common.clip_region);
-
-    if (image->type == BITS)
-    {
-	pixman_region32_init_rect (&image->common.clip_region, 0, 0,
-				   image->bits.width, image->bits.height);
-    }
-    else
-    {
-	pixman_region32_init (&image->common.clip_region);
-    }
+    image->common.have_clip_region = FALSE;
 }
 
 PIXMAN_EXPORT pixman_bool_t
@@ -255,7 +243,8 @@ pixman_image_set_clip_region32 (pixman_image_t *image,
 
     if (region)
     {
-	result = pixman_region32_copy (&common->clip_region, region);
+	if ((result = pixman_region32_copy (&common->clip_region, region)))
+	    image->common.have_clip_region = TRUE;
     }
     else
     {
@@ -279,7 +268,8 @@ pixman_image_set_clip_region (pixman_image_t    *image,
 
     if (region)
     {
-	result = pixman_region32_copy_from_region16 (&common->clip_region, region);
+	if ((result = pixman_region32_copy_from_region16 (&common->clip_region, region)))
+	    image->common.have_clip_region = TRUE;
     }
     else
     {
@@ -293,15 +283,11 @@ pixman_image_set_clip_region (pixman_image_t    *image,
     return result;
 }
 
-/* Sets whether the clip region includes a clip region set by the client
- */
 PIXMAN_EXPORT void
 pixman_image_set_has_client_clip (pixman_image_t *image,
 				  pixman_bool_t	  client_clip)
 {
-    image->common.has_client_clip = client_clip;
-
-    image_property_changed (image);
+    image->common.client_clip = client_clip;
 }
 
 PIXMAN_EXPORT pixman_bool_t
@@ -393,16 +379,9 @@ pixman_image_set_filter (pixman_image_t       *image,
 
 PIXMAN_EXPORT void
 pixman_image_set_source_clipping (pixman_image_t  *image,
-				  pixman_bool_t    source_clipping)
+				  pixman_bool_t    clip_sources)
 {
-    image_common_t *common = &image->common;
-
-    if (source_clipping)
-	common->src_clip = &common->clip_region;
-    else
-	common->src_clip = &common->full_region;
-
-    image_property_changed (image);
+    image->common.clip_sources = clip_sources;
 }
 
 /* Unlike all the other property setters, this function does not
@@ -441,8 +420,8 @@ pixman_image_set_alpha_map (pixman_image_t *image,
 	    common->alpha_map = NULL;
     }
 
-    common->alpha_origin.x = x;
-    common->alpha_origin.y = y;
+    common->alpha_origin_x = x;
+    common->alpha_origin_y = y;
 
     image_property_changed (image);
 }
@@ -515,150 +494,8 @@ pixman_image_get_depth (pixman_image_t *image)
     return 0;
 }
 
-static uint32_t
-color_to_uint32 (const pixman_color_t *color)
-{
-    return
-	(color->alpha >> 8 << 24) |
-	(color->red >> 8 << 16) |
-        (color->green & 0xff00) |
-	(color->blue >> 8);
-}
-
-static pixman_bool_t
-color_to_pixel (pixman_color_t *color,
-		uint32_t       *pixel,
-		pixman_format_code_t format)
-{
-    uint32_t c = color_to_uint32 (color);
-
-    if (!(format == PIXMAN_a8r8g8b8	||
-	  format == PIXMAN_x8r8g8b8	||
-	  format == PIXMAN_a8b8g8r8	||
-	  format == PIXMAN_x8b8g8r8	||
-	  format == PIXMAN_b8g8r8a8	||
-	  format == PIXMAN_b8g8r8x8	||
-	  format == PIXMAN_r5g6b5	||
-	  format == PIXMAN_b5g6r5	||
-	  format == PIXMAN_a8))
-    {
-	return FALSE;
-    }
-
-    if (PIXMAN_FORMAT_TYPE (format) == PIXMAN_TYPE_ABGR)
-    {
-	c = ((c & 0xff000000) >>  0) |
-	    ((c & 0x00ff0000) >> 16) |
-	    ((c & 0x0000ff00) >>  0) |
-	    ((c & 0x000000ff) << 16);
-    }
-    if (PIXMAN_FORMAT_TYPE (format) == PIXMAN_TYPE_BGRA)
-    {
-	c = ((c & 0xff000000) >> 24) |
-	    ((c & 0x00ff0000) >>  8) |
-	    ((c & 0x0000ff00) <<  8) |
-	    ((c & 0x000000ff) << 24);
-    }
-
-    if (format == PIXMAN_a8)
-	c = c >> 24;
-    else if (format == PIXMAN_r5g6b5 ||
-	     format == PIXMAN_b5g6r5)
-	c = cvt8888to0565 (c);
-
-#if 0
-    printf ("color: %x %x %x %x\n", color->alpha, color->red, color->green, color->blue);
-    printf ("pixel: %x\n", c);
-#endif
-
-    *pixel = c;
-    return TRUE;
-}
-
-PIXMAN_EXPORT pixman_bool_t
-pixman_image_fill_rectangles (pixman_op_t		    op,
-			      pixman_image_t		   *dest,
-			      pixman_color_t		   *color,
-			      int			    n_rects,
-			      const pixman_rectangle16_t   *rects)
-{
-    pixman_image_t *solid;
-    pixman_color_t c;
-    int i;
-
-    if (color->alpha == 0xffff)
-    {
-	if (op == PIXMAN_OP_OVER)
-	    op = PIXMAN_OP_SRC;
-    }
-
-    if (op == PIXMAN_OP_CLEAR)
-    {
-	c.red = 0;
-	c.green = 0;
-	c.blue = 0;
-	c.alpha = 0;
-
-	color = &c;
-
-	op = PIXMAN_OP_SRC;
-    }
-
-    if (op == PIXMAN_OP_SRC)
-    {
-	uint32_t pixel;
-
-	if (color_to_pixel (color, &pixel, dest->bits.format))
-	{
-	    for (i = 0; i < n_rects; ++i)
-	    {
-		pixman_region32_t fill_region;
-		int n_boxes, j;
-		pixman_box32_t *boxes;
-
-		pixman_region32_init_rect (&fill_region, rects[i].x, rects[i].y, rects[i].width, rects[i].height);
-		if (!pixman_region32_intersect (&fill_region,
-						&fill_region,
-						&dest->common.clip_region))
-		    return FALSE;
-
-
-		boxes = pixman_region32_rectangles (&fill_region, &n_boxes);
-		for (j = 0; j < n_boxes; ++j)
-		{
-		    const pixman_box32_t *box = &(boxes[j]);
-		    pixman_fill (dest->bits.bits, dest->bits.rowstride, PIXMAN_FORMAT_BPP (dest->bits.format),
-				 box->x1, box->y1, box->x2 - box->x1, box->y2 - box->y1,
-				 pixel);
-		}
-
-		pixman_region32_fini (&fill_region);
-	    }
-	    return TRUE;
-	}
-    }
-
-    solid = pixman_image_create_solid_fill (color);
-    if (!solid)
-	return FALSE;
-
-    for (i = 0; i < n_rects; ++i)
-    {
-	const pixman_rectangle16_t *rect = &(rects[i]);
-
-	pixman_image_composite (op, solid, NULL, dest,
-				0, 0, 0, 0,
-				rect->x, rect->y,
-				rect->width, rect->height);
-    }
-
-    pixman_image_unref (solid);
-
-    return TRUE;
-}
-
 pixman_bool_t
-pixman_image_can_get_solid (pixman_image_t *image)
+_pixman_image_is_solid (pixman_image_t *image)
 {
     if (image->type == SOLID)
 	return TRUE;
@@ -670,79 +507,77 @@ pixman_image_can_get_solid (pixman_image_t *image)
 	return FALSE;
     }
 
-    if (image->common.repeat != PIXMAN_REPEAT_NORMAL)
+    if (image->common.repeat == PIXMAN_REPEAT_NONE)
 	return FALSE;
 
-    switch (image->bits.format)
+    return TRUE;
+}
+
+uint32_t
+_pixman_image_get_solid (pixman_image_t *image, pixman_format_code_t format)
+{
+    uint32_t result;
+    
+    _pixman_image_get_scanline_32 (image, 0, 0, 1, &result, NULL, 0);
+    
+    /* If necessary, convert RGB <--> BGR. */
+    if (PIXMAN_FORMAT_TYPE (format) != PIXMAN_TYPE_ARGB)
     {
-    case PIXMAN_a8r8g8b8:
-    case PIXMAN_x8r8g8b8:
-    case PIXMAN_a8b8g8r8:
-    case PIXMAN_x8b8g8r8:
-    case PIXMAN_b8g8r8a8:
-    case PIXMAN_b8g8r8x8:
-    case PIXMAN_r8g8b8:
-    case PIXMAN_b8g8r8:
-    case PIXMAN_r5g6b5:
-    case PIXMAN_b5g6r5:
-	return TRUE;
-    default:
-	return FALSE;
-    }
+	result = (((result & 0xff000000) >>  0) |
+		  ((result & 0x00ff0000) >> 16) |
+		  ((result & 0x0000ff00) >>  0) |
+		  ((result & 0x000000ff) << 16));
+    }									
+    
+    return result;							
 }
 
 pixman_bool_t
-pixman_image_is_opaque(pixman_image_t *image)
+_pixman_image_is_opaque (pixman_image_t *image)
 {
-    int i = 0;
-    int gradientNumberOfColors = 0;
+    int i;
 
-    if(image->common.alpha_map)
+    if (image->common.alpha_map)
         return FALSE;
 
-    switch(image->type)
+    switch (image->type)
     {
     case BITS:
-        if(PIXMAN_FORMAT_A(image->bits.format))
+	if (image->common.repeat == PIXMAN_REPEAT_NONE)
+	    return FALSE;
+	
+        if (PIXMAN_FORMAT_A (image->bits.format))
             return FALSE;
         break;
 
     case LINEAR:
-    case CONICAL:
     case RADIAL:
-        gradientNumberOfColors = image->gradient.n_stops;
-        i=0;
-        while(i<gradientNumberOfColors)
-        {
-            if(image->gradient.stops[i].color.alpha != 0xffff)
+	if (image->common.repeat == PIXMAN_REPEAT_NONE)
+	    return FALSE;
+	
+	for (i = 0; i < image->gradient.n_stops; ++i)
+	{
+            if (image->gradient.stops[i].color.alpha != 0xffff)
                 return FALSE;
-            i++;
         }
         break;
 
+    case CONICAL:
+	/* Conical gradients always have a transparent border */
+	return FALSE;
+	break;
+	
     case SOLID:
-         if(Alpha(image->solid.color) != 0xff)
+	if (Alpha (image->solid.color) != 0xff)
             return FALSE;
         break;
     }
 
-    /* Convolution filters can introduce translucency if the sum of the weights
-       is lower than 1. */
+    /* Convolution filters can introduce translucency if the sum of the
+     * weights is lower than 1.
+     */
     if (image->common.filter == PIXMAN_FILTER_CONVOLUTION)
          return FALSE;
-
-    if (image->common.repeat == PIXMAN_REPEAT_NONE)
-    {
-        if (image->common.filter != PIXMAN_FILTER_NEAREST)
-            return FALSE;
-
-        if (image->common.transform)
-            return FALSE;
-
-	/* Gradients do not necessarily cover the entire compositing area */
-	if (image->type == LINEAR || image->type == CONICAL || image->type == RADIAL)
-	    return FALSE;
-    }
 
      return TRUE;
 }
