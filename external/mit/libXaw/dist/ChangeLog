@@ -1,3 +1,43 @@
+commit 9d9facf604d2355842a3834664a1ddc233d4d1e1
+Author: Alan Coopersmith <alan.coopersmith@sun.com>
+Date:   Mon Feb 2 20:34:32 2009 -0800
+
+    Add README with pointers to mailing list, bugzilla & git repos
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@sun.com>
+
+commit 654fd414b7ebe3a0fccd6712bf52666d42d2a711
+Author: Paulo Cesar Pereira de Andrade <pcpa@mandriva.com.br>
+Date:   Fri Jan 9 20:24:10 2009 -0200
+
+    Changed AsciiSrc widget to use only binary selection transfers.
+    
+      Conversion from multi byte to single byte text format, and
+    vice versa, frequently doesn't do what the user want, so,
+    operate only on literal/binary selection transfers.
+
+commit 0b9de9e69e95872dd3eddbe5c1602e42c27c53e1
+Author: Paulo Cesar Pereira de Andrade <pcpa@mandriva.com.br>
+Date:   Fri Jan 9 19:18:36 2009 -0200
+
+    Compile warning fixes.
+    
+      This uses XORG_CHANGELOG macro to properly work with the "git-log"
+    to "git log" change (required to pass "make distcheck"), uses the
+    XORG_CWARNFLAGS macro. Most gcc 4.3 and sparse warnings corrected.
+
+commit 420efdba52593bf13d97c7e001b64caccd04cd5d
+Author: Jeremy Huddleston <jeremyhu@freedesktop.org>
+Date:   Sat Nov 8 16:04:23 2008 -0800
+
+    Fixed compile/install on darwin
+
+commit a48021b05693c74bd03b51b82abec4ce3ba24dc5
+Author: Peter Breitenlohner <peb@mppmu.mpg.de>
+Date:   Sat Nov 8 15:44:22 2008 +0100
+
+    xaw6 doesn't depend on xpm
+
 commit 6dab13545cd26efd46dbb58a18ae651c56c7d76d
 Author: Paulo Cesar Pereira de Andrade <pcpa@mandriva.com.br>
 Date:   Fri Nov 7 15:45:32 2008 -0200
