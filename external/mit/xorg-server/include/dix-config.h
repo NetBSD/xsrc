@@ -11,7 +11,7 @@
 /* #define BUILDERADDR "xorg@lists.freedesktop.org" */
 
 /* Operating System Name */
-/* #define OSNAME "NetBSD 5.0 amd64" */
+/* #define OSNAME "NetBSD 5.0_STABLE amd64" */
 
 /* Operating System Vendor */
 /* #define OSVENDOR "" */
@@ -333,10 +333,10 @@
 /* #undef XORG_RELEASE */
 
 /* Current Xorg version */
-#define XORG_VERSION_CURRENT (((1) * 10000000) + ((6) * 100000) + ((1) * 1000) + 901)
+#define XORG_VERSION_CURRENT (((1) * 10000000) + ((6) * 100000) + ((2) * 1000) + 0)
 
 /* Xorg release date */
-#define XORG_DATE "2009-5-8"
+#define XORG_DATE "2009-7-7"
 
 /* Build Xv Extension */
 #define XvExtension 1
