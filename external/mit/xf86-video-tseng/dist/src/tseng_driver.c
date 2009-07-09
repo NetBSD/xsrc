@@ -180,58 +180,6 @@ static const OptionInfoRec TsengOptions[] =
 	{0}, FALSE}
 };
 
-static const char *int10Symbols[] = {
-    "xf86FreeInt10",
-    "xf86InitInt10",
-    NULL
-};
-
-static const char *vgaHWSymbols[] = {
-  "vgaHWFreeHWRec",
-  "vgaHWGetHWRec",
-  "vgaHWGetIOBase",
-  "vgaHWGetIndex",
-  "vgaHWHandleColormaps",
-  "vgaHWInit",
-  "vgaHWLock",
-  "vgaHWMapMem",
-  "vgaHWProtect",
-  "vgaHWRestore",
-  "vgaHWSave", 
-  "vgaHWSaveScreen",
-  "vgaHWUnlock",
-  "vgaHWUnmapMem",
-  NULL
-};
-
-#ifdef XFree86LOADER
-static const char* miscfbSymbols[] = {
-  "xf1bppScreenInit",
-  "xf4bppScreenInit",
-  NULL
-};
-#endif
-
-static const char* fbSymbols[] = {
-  "fbPictureInit",
-  "fbScreenInit",
-  NULL
-};
-
-static const char *ramdacSymbols[] = {
-    "xf86CreateCursorInfoRec",
-    "xf86DestroyCursorInfoRec",
-    "xf86InitCursor",
-    NULL
-};
-
-static const char *xaaSymbols[] = {
-    "XAACreateInfoRec",
-    "XAADestroyInfoRec",
-    "XAAInit",
-    NULL
-};
-
 #ifdef XFree86LOADER
 
 static MODULESETUPPROTO(tsengSetup);
@@ -265,17 +213,6 @@ tsengSetup(pointer module, pointer opts, int *errmaj, int *errmin)
     if (!setupDone) {
 	setupDone = TRUE;
 	xf86AddDriver(&TSENG, module, 0);
-
-	/*
-	 * Modules that this driver always requires can be loaded here
-	 * by calling LoadSubModule().
-	 */
-	/*
-	 * Tell the loader about symbols from other modules that this module
-	 * might refer to.
-	 */
-	LoaderRefSymLists(vgaHWSymbols, miscfbSymbols, fbSymbols, xaaSymbols,
-			  int10Symbols, ramdacSymbols,  NULL);
 
 	/*
 	 * The return value must be non-NULL on success even though there
@@ -1020,7 +957,6 @@ TsengPreInit(ScrnInfoPtr pScrn, int flags)
 #if 1
     if (xf86LoadSubModule(pScrn, "int10")) {
  	xf86Int10InfoPtr pInt;
-	xf86LoaderReqSymLists(int10Symbols, NULL);
 #if 1
 	xf86DrvMsg(pScrn->scrnIndex,X_INFO,"initializing int10\n");
 	pInt = xf86InitInt10(pTseng->pEnt->index);
@@ -1031,7 +967,6 @@ TsengPreInit(ScrnInfoPtr pScrn, int flags)
     
     if (!xf86LoadSubModule(pScrn, "vgahw"))
 	return FALSE;
-    xf86LoaderReqSymLists(vgaHWSymbols, NULL);
     /*
      * Allocate a vgaHWRec
      */
@@ -1240,21 +1175,18 @@ TsengPreInit(ScrnInfoPtr pScrn, int flags)
 	  TsengFreeRec(pScrn);
 	  return FALSE;
 	}
-	xf86LoaderReqSymbols("xf1bppScreenInit", NULL);
 	break;
     case 4:
 	if (xf86LoadSubModule(pScrn, "xf4bpp") == NULL) {
 	  TsengFreeRec(pScrn);
 	  return FALSE;
 	}
-	xf86LoaderReqSymbols("xf4bppScreenInit", NULL);
 	break;
     default:
 	if (xf86LoadSubModule(pScrn, "fb") == NULL) {
 	  TsengFreeRec(pScrn);
 	  return FALSE;
 	}
-	xf86LoaderReqSymLists(fbSymbols, NULL);
 	break;
     }
 
@@ -1264,7 +1196,6 @@ TsengPreInit(ScrnInfoPtr pScrn, int flags)
 	    TsengFreeRec(pScrn);
 	    return FALSE;
 	}
-	xf86LoaderReqSymLists(xaaSymbols, NULL);
     }
     /* Load ramdac if needed */
     if (pTseng->HWCursor) {
@@ -1272,7 +1203,6 @@ TsengPreInit(ScrnInfoPtr pScrn, int flags)
 	    TsengFreeRec(pScrn);
 	    return FALSE;
 	}
-	xf86LoaderReqSymLists(ramdacSymbols, NULL);
     }
 /*    TsengLock(pScrn); */
 
