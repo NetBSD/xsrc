@@ -778,7 +778,7 @@ void
 SetMaskForEvent(int deviceid, Mask mask, int event)
 {
     int coretype;
-    if (deviceid < 0 || deviceid > MAXDEVICES)
+    if (deviceid < 0 || deviceid >= MAXDEVICES)
         FatalError("SetMaskForEvent: bogus device id");
     if ((event < LASTEvent) || (event >= 128))
 	FatalError("SetMaskForEvent: bogus event number");
@@ -4220,10 +4220,10 @@ CoreFocusEvent(DeviceIntPtr dev, int type, int mode, int detail, WindowPtr pWin)
     {
         xKeymapEvent ke;
         ClientPtr client = clients[CLIENT_ID(pWin->drawable.id)];
-        if (XaceHook(XACE_DEVICE_ACCESS, client, dev, FALSE))
-            memmove((char *)&ke.map[0], (char *)&dev->key->down[1], 31);
-        else
+        if (XaceHook(XACE_DEVICE_ACCESS, client, dev, DixReadAccess))
             bzero((char *)&ke.map[0], 31);
+        else
+            memmove((char *)&ke.map[0], (char *)&dev->key->down[1], 31);
 
         ke.type = KeymapNotify;
         (void)DeliverEventsToWindow(dev, pWin, (xEvent *)&ke, 1,
