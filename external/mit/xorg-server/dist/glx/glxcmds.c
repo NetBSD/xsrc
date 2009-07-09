@@ -748,29 +748,46 @@ int __glXDisp_QueryVersion(__GLXclientState *cl, GLbyte *pc)
 int __glXDisp_WaitGL(__GLXclientState *cl, GLbyte *pc)
 {
     xGLXWaitGLReq *req = (xGLXWaitGLReq *)pc;
+    GLXContextTag tag = req->contextTag;
+    __GLXcontext *glxc = NULL;
     int error;
+
+    if (tag) {
+	glxc = __glXLookupContextByTag(cl, tag);
+	if (!glxc)
+	    return __glXError(GLXBadContextTag);
     
-    if (!__glXForceCurrent(cl, req->contextTag, &error)) {
-	return error;
+	if (!__glXForceCurrent(cl, req->contextTag, &error))
+	    return error;
+
+	CALL_Finish( GET_DISPATCH(), () );
     }
-    CALL_Finish( GET_DISPATCH(), () );
+
+    if (glxc && glxc->drawPriv->waitGL)
+	(*glxc->drawPriv->waitGL)(glxc->drawPriv);
+
     return Success;
 }
 
 int __glXDisp_WaitX(__GLXclientState *cl, GLbyte *pc)
 {
     xGLXWaitXReq *req = (xGLXWaitXReq *)pc;
+    GLXContextTag tag = req->contextTag;
+    __GLXcontext *glxc = NULL;
     int error;
+
+    if (tag) {
+	glxc = __glXLookupContextByTag(cl, tag);
+	if (!glxc)
+	    return __glXError(GLXBadContextTag);
     
-    if (!__glXForceCurrent(cl, req->contextTag, &error)) {
-	return error;
+	if (!__glXForceCurrent(cl, req->contextTag, &error))
+	    return error;
     }
-    /*
-    ** In a multithreaded server that had separate X and GL threads, we would
-    ** have to wait for the X thread to finish before returning.  As it stands,
-    ** this sample implementation only supports singlethreaded servers, and
-    ** nothing needs to be done here.
-    */
+
+    if (glxc && glxc->drawPriv->waitGL)
+	(*glxc->drawPriv->waitGL)(glxc->drawPriv);
+
     return Success;
 }
 
@@ -1132,6 +1149,7 @@ static void
 determineTextureTarget(XID glxDrawableID, CARD32 *attribs, CARD32 numAttribs)
 {
     GLenum target = 0;
+    GLenum format = 0;
     int i;
     __GLXdrawable *pGlxDraw;
 
@@ -1148,6 +1166,9 @@ determineTextureTarget(XID glxDrawableID, CARD32 *attribs, CARD32 numAttribs)
 		break;
 	    }
 	}
+
+	if (attribs[2 * i] == GLX_TEXTURE_FORMAT_EXT)
+		format = attribs[2 * i + 1];
     }
  
     if (!target) {
@@ -1160,6 +1181,7 @@ determineTextureTarget(XID glxDrawableID, CARD32 *attribs, CARD32 numAttribs)
     }
 
     pGlxDraw->target = target;
+    pGlxDraw->format = format;
 }
 
 int __glXDisp_CreateGLXPixmap(__GLXclientState *cl, GLbyte *pc)
