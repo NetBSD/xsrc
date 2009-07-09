@@ -311,7 +311,7 @@ XawTipRealize(Widget w, Mask *mask, XSetWindowAttributes *attr)
 				XtBorderWidth(w),
 				DefaultDepthOfScreen(XtScreen(w)),
 				InputOutput,
-				CopyFromParent,
+				(Visual *)CopyFromParent,
 				*mask, attr);
 }
 

@@ -307,7 +307,7 @@ XawCvtCompoundTextToString(Display *dpy, XrmValuePtr args, Cardinal *num_args,
     if(XmbTextPropertyToTextList(dpy, &prop, &list, &count) < Success) {
 	XtAppWarningMsg(XtDisplayToApplicationContext(dpy),
 	"converter", "XmbTextPropertyToTextList", "XawError",
-	"conversion from CT to MB failed.", NULL, 0);
+	"conversion from CT to MB failed.", NULL, NULL);
 	return False;
     }
     len = strlen(*list);
