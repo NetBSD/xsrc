@@ -38,6 +38,8 @@ host_triplet = @host@
 @HAVE_GTK_TRUE@	composite-test		\
 @HAVE_GTK_TRUE@	gradient-test		\
 @HAVE_GTK_TRUE@	alpha-test		\
+@HAVE_GTK_TRUE@	screen-test		\
+@HAVE_GTK_TRUE@	convolution-test	\
 @HAVE_GTK_TRUE@	trap-test
 
 @HAVE_GTK_TRUE@noinst_PROGRAMS = $(am__EXEEXT_2)
@@ -53,9 +55,11 @@ CONFIG_HEADER = $(top_builddir)/config.h
 CONFIG_CLEAN_FILES =
 @HAVE_GTK_TRUE@am__EXEEXT_1 = clip-test$(EXEEXT) clip-in$(EXEEXT) \
 @HAVE_GTK_TRUE@	composite-test$(EXEEXT) gradient-test$(EXEEXT) \
-@HAVE_GTK_TRUE@	alpha-test$(EXEEXT) trap-test$(EXEEXT)
+@HAVE_GTK_TRUE@	alpha-test$(EXEEXT) screen-test$(EXEEXT) \
+@HAVE_GTK_TRUE@	convolution-test$(EXEEXT) trap-test$(EXEEXT)
 am__EXEEXT_2 = region-test$(EXEEXT) scaling-test$(EXEEXT) \
-	fetch-test$(EXEEXT) trap-crasher$(EXEEXT) $(am__EXEEXT_1)
+	fetch-test$(EXEEXT) oob-test$(EXEEXT) trap-crasher$(EXEEXT) \
+	$(am__EXEEXT_1)
 PROGRAMS = $(noinst_PROGRAMS)
 am__alpha_test_SOURCES_DIST = alpha-test.c utils.c utils.h
 @HAVE_GTK_TRUE@am_alpha_test_OBJECTS = alpha-test.$(OBJEXT) \
@@ -79,6 +83,11 @@ am__composite_test_SOURCES_DIST = composite-test.c utils.c utils.h
 @HAVE_GTK_TRUE@	utils.$(OBJEXT)
 composite_test_OBJECTS = $(am_composite_test_OBJECTS)
 @HAVE_GTK_TRUE@composite_test_DEPENDENCIES = $(am__DEPENDENCIES_2)
+am__convolution_test_SOURCES_DIST = convolution-test.c utils.c utils.h
+@HAVE_GTK_TRUE@am_convolution_test_OBJECTS =  \
+@HAVE_GTK_TRUE@	convolution-test.$(OBJEXT) utils.$(OBJEXT)
+convolution_test_OBJECTS = $(am_convolution_test_OBJECTS)
+@HAVE_GTK_TRUE@convolution_test_DEPENDENCIES = $(am__DEPENDENCIES_2)
 fetch_test_SOURCES = fetch-test.c
 fetch_test_OBJECTS = fetch-test.$(OBJEXT)
 fetch_test_DEPENDENCIES = $(TEST_LDADD)
@@ -87,12 +96,20 @@ am__gradient_test_SOURCES_DIST = gradient-test.c utils.c utils.h
 @HAVE_GTK_TRUE@	utils.$(OBJEXT)
 gradient_test_OBJECTS = $(am_gradient_test_OBJECTS)
 @HAVE_GTK_TRUE@gradient_test_DEPENDENCIES = $(am__DEPENDENCIES_2)
+oob_test_SOURCES = oob-test.c
+oob_test_OBJECTS = oob-test.$(OBJEXT)
+oob_test_DEPENDENCIES = $(TEST_LDADD)
 region_test_SOURCES = region-test.c
 region_test_OBJECTS = region-test.$(OBJEXT)
 region_test_DEPENDENCIES = $(TEST_LDADD)
 scaling_test_SOURCES = scaling-test.c
 scaling_test_OBJECTS = scaling-test.$(OBJEXT)
 scaling_test_DEPENDENCIES = $(TEST_LDADD)
+am__screen_test_SOURCES_DIST = screen-test.c utils.c utils.h
+@HAVE_GTK_TRUE@am_screen_test_OBJECTS = screen-test.$(OBJEXT) \
+@HAVE_GTK_TRUE@	utils.$(OBJEXT)
+screen_test_OBJECTS = $(am_screen_test_OBJECTS)
+@HAVE_GTK_TRUE@screen_test_DEPENDENCIES = $(am__DEPENDENCIES_2)
 trap_crasher_SOURCES = trap-crasher.c
 trap_crasher_OBJECTS = trap-crasher.$(OBJEXT)
 trap_crasher_DEPENDENCIES = $(TEST_LDADD)
@@ -114,14 +131,18 @@ LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
 SOURCES = $(alpha_test_SOURCES) $(clip_in_SOURCES) \
-	$(clip_test_SOURCES) $(composite_test_SOURCES) fetch-test.c \
-	$(gradient_test_SOURCES) region-test.c scaling-test.c \
-	trap-crasher.c $(trap_test_SOURCES)
+	$(clip_test_SOURCES) $(composite_test_SOURCES) \
+	$(convolution_test_SOURCES) fetch-test.c \
+	$(gradient_test_SOURCES) oob-test.c region-test.c \
+	scaling-test.c $(screen_test_SOURCES) trap-crasher.c \
+	$(trap_test_SOURCES)
 DIST_SOURCES = $(am__alpha_test_SOURCES_DIST) \
 	$(am__clip_in_SOURCES_DIST) $(am__clip_test_SOURCES_DIST) \
-	$(am__composite_test_SOURCES_DIST) fetch-test.c \
-	$(am__gradient_test_SOURCES_DIST) region-test.c scaling-test.c \
-	trap-crasher.c $(am__trap_test_SOURCES_DIST)
+	$(am__composite_test_SOURCES_DIST) \
+	$(am__convolution_test_SOURCES_DIST) fetch-test.c \
+	$(am__gradient_test_SOURCES_DIST) oob-test.c region-test.c \
+	scaling-test.c $(am__screen_test_SOURCES_DIST) trap-crasher.c \
+	$(am__trap_test_SOURCES_DIST)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -256,12 +277,13 @@ top_srcdir = @top_srcdir@
 TEST_LDADD = $(top_builddir)/pixman/libpixman-1.la
 INCLUDES = -I$(top_srcdir)/pixman -I$(top_builddir)/pixman \
 	$(am__append_2)
-TESTPROGRAMS = region-test scaling-test fetch-test trap-crasher \
-	$(am__append_1)
+TESTPROGRAMS = region-test scaling-test fetch-test oob-test \
+	trap-crasher $(am__append_1)
 fetch_test_LDADD = $(TEST_LDADD)
 region_test_LDADD = $(TEST_LDADD)
 scaling_test_LDADD = $(TEST_LDADD)
 trap_crasher_LDADD = $(TEST_LDADD)
+oob_test_LDADD = $(TEST_LDADD)
 
 # GTK using test programs
 @HAVE_GTK_TRUE@GTK_LDADD = $(TEST_LDADD) $(GTK_LIBS)
@@ -277,6 +299,10 @@ trap_crasher_LDADD = $(TEST_LDADD)
 @HAVE_GTK_TRUE@clip_in_SOURCES = clip-in.c utils.c utils.h
 @HAVE_GTK_TRUE@trap_test_LDADD = $(GTK_LDADD)
 @HAVE_GTK_TRUE@trap_test_SOURCES = trap-test.c utils.c utils.h
+@HAVE_GTK_TRUE@screen_test_LDADD = $(GTK_LDADD)
+@HAVE_GTK_TRUE@screen_test_SOURCES = screen-test.c utils.c utils.h
+@HAVE_GTK_TRUE@convolution_test_LDADD = $(GTK_LDADD)
+@HAVE_GTK_TRUE@convolution_test_SOURCES = convolution-test.c utils.c utils.h
 all: all-am
 
 .SUFFIXES:
@@ -329,18 +355,27 @@ clip-test$(EXEEXT): $(clip_test_OBJECTS) $(clip_test_DEPENDENCIES)
 composite-test$(EXEEXT): $(composite_test_OBJECTS) $(composite_test_DEPENDENCIES) 
 	@rm -f composite-test$(EXEEXT)
 	$(LINK) $(composite_test_OBJECTS) $(composite_test_LDADD) $(LIBS)
+convolution-test$(EXEEXT): $(convolution_test_OBJECTS) $(convolution_test_DEPENDENCIES) 
+	@rm -f convolution-test$(EXEEXT)
+	$(LINK) $(convolution_test_OBJECTS) $(convolution_test_LDADD) $(LIBS)
 fetch-test$(EXEEXT): $(fetch_test_OBJECTS) $(fetch_test_DEPENDENCIES) 
 	@rm -f fetch-test$(EXEEXT)
 	$(LINK) $(fetch_test_OBJECTS) $(fetch_test_LDADD) $(LIBS)
 gradient-test$(EXEEXT): $(gradient_test_OBJECTS) $(gradient_test_DEPENDENCIES) 
 	@rm -f gradient-test$(EXEEXT)
 	$(LINK) $(gradient_test_OBJECTS) $(gradient_test_LDADD) $(LIBS)
+oob-test$(EXEEXT): $(oob_test_OBJECTS) $(oob_test_DEPENDENCIES) 
+	@rm -f oob-test$(EXEEXT)
+	$(LINK) $(oob_test_OBJECTS) $(oob_test_LDADD) $(LIBS)
 region-test$(EXEEXT): $(region_test_OBJECTS) $(region_test_DEPENDENCIES) 
 	@rm -f region-test$(EXEEXT)
 	$(LINK) $(region_test_OBJECTS) $(region_test_LDADD) $(LIBS)
 scaling-test$(EXEEXT): $(scaling_test_OBJECTS) $(scaling_test_DEPENDENCIES) 
 	@rm -f scaling-test$(EXEEXT)
 	$(LINK) $(scaling_test_OBJECTS) $(scaling_test_LDADD) $(LIBS)
+screen-test$(EXEEXT): $(screen_test_OBJECTS) $(screen_test_DEPENDENCIES) 
+	@rm -f screen-test$(EXEEXT)
+	$(LINK) $(screen_test_OBJECTS) $(screen_test_LDADD) $(LIBS)
 trap-crasher$(EXEEXT): $(trap_crasher_OBJECTS) $(trap_crasher_DEPENDENCIES) 
 	@rm -f trap-crasher$(EXEEXT)
 	$(LINK) $(trap_crasher_OBJECTS) $(trap_crasher_LDADD) $(LIBS)
@@ -358,10 +393,13 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/clip-in.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/clip-test.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/composite-test.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/convolution-test.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fetch-test.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gradient-test.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/oob-test.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/region-test.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/scaling-test.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/screen-test.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/trap-crasher.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/trap-test.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/utils.Po@am__quote@

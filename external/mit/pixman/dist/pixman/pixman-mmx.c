@@ -37,6 +37,7 @@
 
 #include <mmintrin.h>
 #include "pixman-private.h"
+#include "pixman-combine32.h"
 
 #define noVERBOSE
 
@@ -435,7 +436,7 @@ combine (const uint32_t *src, const uint32_t *mask)
     return ssrc;
 }
 
-static FASTCALL void
+static void
 mmxCombineOverU (pixman_implementation_t *imp, pixman_op_t op,
 		 uint32_t *dest, const uint32_t *src, const uint32_t *mask, int width)
 {
@@ -460,7 +461,7 @@ mmxCombineOverU (pixman_implementation_t *imp, pixman_op_t op,
     _mm_empty();
 }
 
-static FASTCALL void
+static void
 mmxCombineOverReverseU (pixman_implementation_t *imp, pixman_op_t op,
 			uint32_t *dest, const uint32_t *src, const uint32_t *mask, int width)
 {
@@ -480,7 +481,7 @@ mmxCombineOverReverseU (pixman_implementation_t *imp, pixman_op_t op,
     _mm_empty();
 }
 
-static FASTCALL void
+static void
 mmxCombineInU (pixman_implementation_t *imp, pixman_op_t op,
 	       uint32_t *dest, const uint32_t *src, const uint32_t *mask, int width)
 {
@@ -501,7 +502,7 @@ mmxCombineInU (pixman_implementation_t *imp, pixman_op_t op,
     _mm_empty();
 }
 
-static FASTCALL void
+static void
 mmxCombineInReverseU (pixman_implementation_t *imp, pixman_op_t op,
 		      uint32_t *dest, const uint32_t *src, const uint32_t *mask, int width)
 {
@@ -522,7 +523,7 @@ mmxCombineInReverseU (pixman_implementation_t *imp, pixman_op_t op,
     _mm_empty();
 }
 
-static FASTCALL void
+static void
 mmxCombineOutU (pixman_implementation_t *imp, pixman_op_t op,
 		uint32_t *dest, const uint32_t *src, const uint32_t *mask, int width)
 {
@@ -544,7 +545,7 @@ mmxCombineOutU (pixman_implementation_t *imp, pixman_op_t op,
     _mm_empty();
 }
 
-static FASTCALL void
+static void
 mmxCombineOutReverseU (pixman_implementation_t *imp, pixman_op_t op,
 		       uint32_t *dest, const uint32_t *src, const uint32_t *mask, int width)
 {
@@ -566,7 +567,7 @@ mmxCombineOutReverseU (pixman_implementation_t *imp, pixman_op_t op,
     _mm_empty();
 }
 
-static FASTCALL void
+static void
 mmxCombineAtopU (pixman_implementation_t *imp, pixman_op_t op,
 		 uint32_t *dest, const uint32_t *src, const uint32_t *mask, int width)
 {
@@ -589,7 +590,7 @@ mmxCombineAtopU (pixman_implementation_t *imp, pixman_op_t op,
     _mm_empty();
 }
 
-static FASTCALL void
+static void
 mmxCombineAtopReverseU (pixman_implementation_t *imp, pixman_op_t op,
 			uint32_t *dest, const uint32_t *src, const uint32_t *mask, int width)
 {
@@ -614,7 +615,7 @@ mmxCombineAtopReverseU (pixman_implementation_t *imp, pixman_op_t op,
     _mm_empty();
 }
 
-static FASTCALL void
+static void
 mmxCombineXorU (pixman_implementation_t *imp, pixman_op_t op,
 		uint32_t *dest, const uint32_t *src, const uint32_t *mask, int width)
 {
@@ -638,7 +639,7 @@ mmxCombineXorU (pixman_implementation_t *imp, pixman_op_t op,
     _mm_empty();
 }
 
-static FASTCALL void
+static void
 mmxCombineAddU (pixman_implementation_t *imp, pixman_op_t op,
 		uint32_t *dest, const uint32_t *src, const uint32_t *mask, int width)
 {
@@ -657,7 +658,7 @@ mmxCombineAddU (pixman_implementation_t *imp, pixman_op_t op,
     _mm_empty();
 }
 
-static FASTCALL void
+static void
 mmxCombineSaturateU (pixman_implementation_t *imp, pixman_op_t op,
 		     uint32_t *dest, const uint32_t *src, const uint32_t *mask, int width)
 {
@@ -671,7 +672,7 @@ mmxCombineSaturateU (pixman_implementation_t *imp, pixman_op_t op,
         uint32_t da = ~d >> 24;
 
         if (sa > da) {
-            __m64 msa = load8888(FbIntDiv(da, sa) << 24);
+            __m64 msa = load8888(IntDiv(da, sa) << 24);
             msa = expand_alpha(msa);
             ms = pix_multiply(ms, msa);
         }
@@ -686,7 +687,7 @@ mmxCombineSaturateU (pixman_implementation_t *imp, pixman_op_t op,
 }
 
 
-static FASTCALL void
+static void
 mmxCombineSrcC (pixman_implementation_t *imp, pixman_op_t op,
 		uint32_t *dest, const uint32_t *src, const uint32_t *mask, int width)
 {
@@ -703,7 +704,7 @@ mmxCombineSrcC (pixman_implementation_t *imp, pixman_op_t op,
     _mm_empty();
 }
 
-static FASTCALL void
+static void
 mmxCombineOverC (pixman_implementation_t *imp, pixman_op_t op,
 		 uint32_t *dest, const uint32_t *src, const uint32_t *mask, int width)
 {
@@ -723,7 +724,7 @@ mmxCombineOverC (pixman_implementation_t *imp, pixman_op_t op,
     _mm_empty();
 }
 
-static FASTCALL void
+static void
 mmxCombineOverReverseC (pixman_implementation_t *imp, pixman_op_t op,
 			uint32_t *dest, const uint32_t *src, const uint32_t *mask, int width)
 {
@@ -744,7 +745,7 @@ mmxCombineOverReverseC (pixman_implementation_t *imp, pixman_op_t op,
 }
 
 
-static FASTCALL void
+static void
 mmxCombineInC (pixman_implementation_t *imp, pixman_op_t op,
 	       uint32_t *dest, const uint32_t *src, const uint32_t *mask, int width)
 {
@@ -764,7 +765,7 @@ mmxCombineInC (pixman_implementation_t *imp, pixman_op_t op,
     _mm_empty();
 }
 
-static FASTCALL void
+static void
 mmxCombineInReverseC (pixman_implementation_t *imp, pixman_op_t op,
 		      uint32_t *dest, const uint32_t *src, const uint32_t *mask, int width)
 {
@@ -784,7 +785,7 @@ mmxCombineInReverseC (pixman_implementation_t *imp, pixman_op_t op,
     _mm_empty();
 }
 
-static FASTCALL void
+static void
 mmxCombineOutC (pixman_implementation_t *imp, pixman_op_t op,
 		uint32_t *dest, const uint32_t *src, const uint32_t *mask, int width)
 {
@@ -805,7 +806,7 @@ mmxCombineOutC (pixman_implementation_t *imp, pixman_op_t op,
     _mm_empty();
 }
 
-static FASTCALL void
+static void
 mmxCombineOutReverseC (pixman_implementation_t *imp, pixman_op_t op,
 		       uint32_t *dest, const uint32_t *src, const uint32_t *mask, int width)
 {
@@ -826,7 +827,7 @@ mmxCombineOutReverseC (pixman_implementation_t *imp, pixman_op_t op,
     _mm_empty();
 }
 
-static FASTCALL void
+static void
 mmxCombineAtopC (pixman_implementation_t *imp, pixman_op_t op,
 		 uint32_t *dest, const uint32_t *src, const uint32_t *mask, int width)
 {
@@ -849,7 +850,7 @@ mmxCombineAtopC (pixman_implementation_t *imp, pixman_op_t op,
     _mm_empty();
 }
 
-static FASTCALL void
+static void
 mmxCombineAtopReverseC (pixman_implementation_t *imp, pixman_op_t op,
 			uint32_t *dest, const uint32_t *src, const uint32_t *mask, int width)
 {
@@ -872,7 +873,7 @@ mmxCombineAtopReverseC (pixman_implementation_t *imp, pixman_op_t op,
     _mm_empty();
 }
 
-static FASTCALL void
+static void
 mmxCombineXorC (pixman_implementation_t *imp, pixman_op_t op,
 		uint32_t *dest, const uint32_t *src, const uint32_t *mask, int width)
 {
@@ -896,7 +897,7 @@ mmxCombineXorC (pixman_implementation_t *imp, pixman_op_t op,
     _mm_empty();
 }
 
-static FASTCALL void
+static void
 mmxCombineAddC (pixman_implementation_t *imp, pixman_op_t op,
 		uint32_t *dest, const uint32_t *src, const uint32_t *mask, int width)
 {
@@ -940,7 +941,7 @@ fbCompositeSolid_nx8888mmx (pixman_implementation_t *imp,
 
     CHECKPOINT();
 
-    fbComposeGetSolid(pSrc, src, pDst->bits.format);
+    src = _pixman_image_get_solid(pSrc, pDst->bits.format);
 
     if (src >> 24 == 0)
 	return;
@@ -1019,7 +1020,7 @@ fbCompositeSolid_nx0565mmx (pixman_implementation_t *imp,
 
     CHECKPOINT();
 
-    fbComposeGetSolid(pSrc, src, pDst->bits.format);
+    src = _pixman_image_get_solid(pSrc, pDst->bits.format);
 
     if (src >> 24 == 0)
 	return;
@@ -1105,7 +1106,7 @@ fbCompositeSolidMask_nx8888x8888Cmmx (pixman_implementation_t *imp,
 
     CHECKPOINT();
 
-    fbComposeGetSolid(pSrc, src, pDst->bits.format);
+    src = _pixman_image_get_solid(pSrc, pDst->bits.format);
 
     srca = src >> 24;
     if (srca == 0)
@@ -1214,7 +1215,7 @@ fbCompositeSrc_8888x8x8888mmx (pixman_implementation_t *imp,
     fbComposeGetStart (pDst, xDst, yDst, uint32_t, dstStride, dstLine, 1);
     fbComposeGetStart (pSrc, xSrc, ySrc, uint32_t, srcStride, srcLine, 1);
 
-    fbComposeGetSolid (pMask, mask, pDst->bits.format);
+    mask = _pixman_image_get_solid (pMask, pDst->bits.format);
     mask = mask | mask >> 8 | mask >> 16 | mask >> 24;
     vmask = load8888 (mask);
     srca = MC(4x00ff);
@@ -1298,7 +1299,7 @@ fbCompositeSrc_x888xnx8888mmx (pixman_implementation_t *imp,
 
     fbComposeGetStart (pDst, xDst, yDst, uint32_t, dstStride, dstLine, 1);
     fbComposeGetStart (pSrc, xSrc, ySrc, uint32_t, srcStride, srcLine, 1);
-    fbComposeGetSolid (pMask, mask, pDst->bits.format);
+    mask = _pixman_image_get_solid (pMask, pDst->bits.format);
 
     mask = mask | mask >> 8 | mask >> 16 | mask >> 24;
     vmask = load8888 (mask);
@@ -1586,7 +1587,7 @@ fbCompositeSolidMask_nx8x8888mmx (pixman_implementation_t *imp,
 
     CHECKPOINT();
 
-    fbComposeGetSolid(pSrc, src, pDst->bits.format);
+    src = _pixman_image_get_solid(pSrc, pDst->bits.format);
 
     srca = src >> 24;
     if (srca == 0)
@@ -1858,7 +1859,7 @@ fbCompositeSolidMaskSrc_nx8x8888mmx (pixman_implementation_t *imp,
 
     CHECKPOINT();
 
-    fbComposeGetSolid(pSrc, src, pDst->bits.format);
+    src = _pixman_image_get_solid(pSrc, pDst->bits.format);
 
     srca = src >> 24;
     if (srca == 0)
@@ -1990,7 +1991,7 @@ fbCompositeSolidMask_nx8x0565mmx (pixman_implementation_t *imp,
 
     CHECKPOINT();
 
-    fbComposeGetSolid(pSrc, src, pDst->bits.format);
+    src = _pixman_image_get_solid(pSrc, pDst->bits.format);
 
     srca = src >> 24;
     if (srca == 0)
@@ -2343,7 +2344,7 @@ fbCompositeSolidMask_nx8888x0565Cmmx (pixman_implementation_t *imp,
 
     CHECKPOINT();
 
-    fbComposeGetSolid(pSrc, src, pDst->bits.format);
+    src = _pixman_image_get_solid(pSrc, pDst->bits.format);
 
     srca = src >> 24;
     if (srca == 0)
@@ -2454,7 +2455,7 @@ fbCompositeIn_nx8x8mmx (pixman_implementation_t *imp,
     fbComposeGetStart (pDst, xDst, yDst, uint8_t, dstStride, dstLine, 1);
     fbComposeGetStart (pMask, xMask, yMask, uint8_t, maskStride, maskLine, 1);
 
-    fbComposeGetSolid(pSrc, src, pDst->bits.format);
+    src = _pixman_image_get_solid(pSrc, pDst->bits.format);
 
     sa = src >> 24;
     if (sa == 0)
@@ -2498,15 +2499,14 @@ fbCompositeIn_nx8x8mmx (pixman_implementation_t *imp,
 	    uint16_t	tmp;
 	    uint8_t	a;
 	    uint32_t	m, d;
-	    uint32_t	r;
 
 	    a = *mask++;
 	    d = *dst;
-
-	    m = FbInU (sa, 0, a, tmp);
-	    r = FbInU (m, 0, d, tmp);
-
-	    *dst++ = r;
+	    
+	    m = IntMult (sa, a, tmp);
+	    d = IntMult (m, d, tmp);
+	    
+	    *dst++ = d;
 	}
     }
 
@@ -2568,7 +2568,7 @@ fbCompositeIn_8x8mmx (pixman_implementation_t *imp,
 	    s = *src;
 	    d = *dst;
 
-	    *dst = FbInU (s, 0, d, tmp);
+	    *dst = IntMult (s, d, tmp);
 
 	    src++;
 	    dst++;
@@ -2604,7 +2604,7 @@ fbCompositeSrcAdd_8888x8x8mmx (pixman_implementation_t *imp,
     fbComposeGetStart (pDst, xDst, yDst, uint8_t, dstStride, dstLine, 1);
     fbComposeGetStart (pMask, xMask, yMask, uint8_t, maskStride, maskLine, 1);
 
-    fbComposeGetSolid(pSrc, src, pDst->bits.format);
+    src = _pixman_image_get_solid(pSrc, pDst->bits.format);
 
     sa = src >> 24;
     if (sa == 0)
@@ -2647,8 +2647,8 @@ fbCompositeSrcAdd_8888x8x8mmx (pixman_implementation_t *imp,
 	    a = *mask++;
 	    d = *dst;
 
-	    m = FbInU (sa, 0, a, tmp);
-	    r = FbAdd (m, d, 0, tmp);
+	    m = IntMult (sa, a, tmp);
+	    r = IntAdd (m, d, tmp);
 
 	    *dst++ = r;
 	}
@@ -3018,7 +3018,7 @@ fbCompositeOver_x888x8x8888mmx (pixman_implementation_t *imp,
     _mm_empty();
 }
 
-static const FastPathInfo mmx_fast_paths[] =
+static const pixman_fast_path_t mmx_fast_paths[] =
 {
     { PIXMAN_OP_OVER, PIXMAN_solid,    PIXMAN_a8,       PIXMAN_r5g6b5,   fbCompositeSolidMask_nx8x0565mmx,     0 },
     { PIXMAN_OP_OVER, PIXMAN_solid,    PIXMAN_a8,       PIXMAN_b5g6r5,   fbCompositeSolidMask_nx8x0565mmx,     0 },

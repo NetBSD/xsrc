@@ -29,14 +29,15 @@
 #include "pixman-private.h"
 
 static void
-conical_gradient_get_scanline_32 (pixman_image_t *image, int x, int y, int width,
-				  uint32_t *buffer, uint32_t *mask, uint32_t maskBits)
+conical_gradient_get_scanline_32 (pixman_image_t *image, int x, int y,
+				  int width, uint32_t *buffer,
+				  const uint32_t *mask, uint32_t maskBits)
 {
     source_image_t *source = (source_image_t *)image;
     gradient_t *gradient = (gradient_t *)source;
     conical_gradient_t *conical = (conical_gradient_t *)image;
     uint32_t       *end = buffer + width;
-    GradientWalker  walker;
+    pixman_gradient_walker_t  walker;
     pixman_bool_t affine = TRUE;
     double cx = 1.;
     double cy = 0.;
@@ -121,8 +122,8 @@ conical_gradient_get_scanline_32 (pixman_image_t *image, int x, int y, int width
 static void
 conical_gradient_property_changed (pixman_image_t *image)
 {
-    image->common.get_scanline_32 = (scanFetchProc)conical_gradient_get_scanline_32;
-    image->common.get_scanline_64 = (scanFetchProc)_pixman_image_get_scanline_64_generic;
+    image->common.get_scanline_32 = conical_gradient_get_scanline_32;
+    image->common.get_scanline_64 = _pixman_image_get_scanline_64_generic;
 }
 
 PIXMAN_EXPORT pixman_image_t *
