@@ -412,79 +412,6 @@ static const OptionInfoRec NEOOptions[] = {
     { -1,                  NULL,           OPTV_NONE,	{0}, FALSE }
 };
 
-/*
- * List of symbols from other modules that this module references.  This
- * list is used to tell the loader that it is OK for symbols here to be
- * unresolved providing that it hasn't been told that they haven't been
- * told that they are essential via a call to xf86LoaderReqSymbols() or
- * xf86LoaderReqSymLists().  The purpose is this is to avoid warnings about
- * unresolved symbols that are not required.
- */
-
-static const char *vgahwSymbols[] = {
-    "vgaHWFreeHWRec",
-    "vgaHWGetHWRec",
-    "vgaHWGetIOBase",
-    "vgaHWGetIndex",
-    "vgaHWInit",
-    "vgaHWLock",
-    "vgaHWMapMem",
-    "vgaHWProtect",
-    "vgaHWRestore",
-    "vgaHWSave",
-    "vgaHWSaveScreenWeak",
-    "vgaHWSetStdFuncs",
-    "vgaHWUnlock",
-    "vgaHWddc1SetSpeedWeak",
-    NULL
-};
-
-static const char *fbSymbols[] = {
-    "fbPictureInit",
-    "fbScreenInit",
-    NULL
-};
-
-static const char *xaaSymbols[] = {
-    "XAACreateInfoRec",
-    "XAADestroyInfoRec",
-    "XAAInit",
-    NULL
-};
-
-static const char *ramdacSymbols[] = {
-    "xf86CreateCursorInfoRec",
-    "xf86DestroyCursorInfoRec",
-    "xf86InitCursor",
-    NULL
-};
-
-static const char *shadowSymbols[] = {
-    "shadowInit",
-    NULL
-};
-
-static const char *ddcSymbols[] = {
-    "xf86DoEDID_DDC1",
-    "xf86DoEDID_DDC2",
-    "xf86PrintEDID",
-    "xf86SetDDCproperties",
-    NULL
-};
-
-static const char *vbeSymbols[] = {
-    "VBEInit",
-    "vbeDoEDID",
-    "vbeFree",
-    NULL
-};
-
-static const char *i2cSymbols[] = {
-    "xf86CreateI2CBusRec",
-    "xf86I2CBusInit",
-    NULL
-};
-
 #ifdef XFree86LOADER
 
 static MODULESETUPPROTO(neoSetup);
@@ -518,18 +445,6 @@ neoSetup(pointer module, pointer opts, int *errmaj, int *errmin)
 	setupDone = TRUE;
         xf86AddDriver(&NEOMAGIC, module, 0);
 
-	/*
-	 * Modules that this driver always requires can be loaded here
-	 * by calling LoadSubModule().
-	 */
-
-	/*
-	 * Tell the loader about symbols from other modules that this module
-	 * might refer to.
-	 */
-	LoaderRefSymLists(vgahwSymbols, fbSymbols, xaaSymbols,
-			  ramdacSymbols, shadowSymbols,
-			  ddcSymbols, vbeSymbols, i2cSymbols, NULL);
 	/*
 	 * The return value must be non-NULL on success even though there
 	 * is no TearDownProc.
@@ -743,8 +658,6 @@ NEOPreInit(ScrnInfoPtr pScrn, int flags)
     /* The vgahw module should be loaded here when needed */
     if (!xf86LoadSubModule(pScrn, "vgahw"))
 	return FALSE;
-
-    xf86LoaderReqSymLists(vgahwSymbols, NULL);    
 
     /*
      * Allocate a vgaHWRec.
@@ -965,7 +878,6 @@ NEOPreInit(ScrnInfoPtr pScrn, int flags)
     pScrn->monitor = pScrn->confScreen->monitor;
 
     if (xf86LoadSubModule(pScrn, "ddc")) {
-        xf86LoaderReqSymLists(ddcSymbols, NULL);
 #if 1 /* for DDC1 testing */
 	if (!neoDoDDCVBE(pScrn))
 	  if (!neoDoDDC2(pScrn))
@@ -1411,25 +1323,20 @@ NEOPreInit(ScrnInfoPtr pScrn, int flags)
 	RETURN;
     }
 
-    xf86LoaderReqSymLists(fbSymbols, NULL);
-
     if (!nPtr->noLinear) {
 	if (!xf86LoadSubModule(pScrn, "xaa")) 
 	    RETURN;
-	xf86LoaderReqSymLists(xaaSymbols, NULL);
     }
 
     if (nPtr->shadowFB) {
 	if (!xf86LoadSubModule(pScrn, "shadow")) {
 	    RETURN;
 	}
-	xf86LoaderReqSymLists(shadowSymbols, NULL);
     }
     
     if (!nPtr->swCursor) {
 	if (!xf86LoadSubModule(pScrn, "ramdac"))
 	    RETURN;
-	xf86LoaderReqSymLists(ramdacSymbols, NULL);
     }
     return TRUE;
 }
@@ -3208,7 +3115,6 @@ neoDoDDC2(ScrnInfoPtr pScrn)
 
     VGAwGR(0x09,0x26);
     if (xf86LoadSubModule(pScrn, "i2c")) {
-        xf86LoaderReqSymLists(i2cSymbols, NULL);
 	if (neo_I2CInit(pScrn)) {
 	    ret = xf86SetDDCproperties(pScrn,xf86PrintEDID(xf86DoEDID_DDC2(
 					      pScrn->scrnIndex,nPtr->I2C)));
@@ -3229,7 +3135,6 @@ neoDoDDCVBE(ScrnInfoPtr pScrn)
 
     VGAwGR(0x09,0x26);
     if (xf86LoadSubModule(pScrn, "vbe")) {
-	xf86LoaderReqSymLists(vbeSymbols, NULL);
         if ((pVbe = VBEInit(NULL,nPtr->pEnt->index))) {
 	  ret = xf86SetDDCproperties(
 				     pScrn,xf86PrintEDID(vbeDoEDID(pVbe,NULL)));
