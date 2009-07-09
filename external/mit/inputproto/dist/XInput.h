@@ -156,9 +156,16 @@ SOFTWARE.
 #define NoExtensionEvent(d,type,_class) \
     { _class =  ((XDevice *) d)->device_id << 8 | _noExtensionEvent;}
 
+#if defined(__cplusplus) || defined(c_plusplus)
+extern "C" {
+#endif
+    extern int _XiGetDevicePresenceNotifyEvent(Display *);
+#if defined(__cplusplus) || defined(c_plusplus)
+}
+#endif
+
 #define DevicePresence(dpy, type, _class)                       \
     {                                                           \
-        extern int _XiGetDevicePresenceNotifyEvent(Display *);  \
         type = _XiGetDevicePresenceNotifyEvent(dpy);            \
         _class =  (0x10000 | _devicePresence);                  \
     }
