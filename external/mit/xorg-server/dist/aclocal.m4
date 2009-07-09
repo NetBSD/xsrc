@@ -9086,27 +9086,24 @@ dnl of the copyright holder.
 # your configure.ac with the minimum required version, such as:
 # XORG_MACROS_VERSION(1.1)
 #
-# To force at least a version with this macro defined, also add:
-# m4_ifndef([XORG_MACROS_VERSION], [AC_FATAL([must install xorg-macros 1.1 or later before running autoconf/autogen])])
+# To ensure that this macro is defined, also add:
+# m4_ifndef([XORG_MACROS_VERSION],
+#     [m4_fatal([must install xorg-macros 1.1 or later before running autoconf/autogen])])
 #
 #
 # See the "minimum version" comment for each macro you use to see what 
 # version you require.
-AC_DEFUN([XORG_MACROS_VERSION],[
-	[XORG_MACROS_needed_version=$1
-	XORG_MACROS_needed_major=`echo $XORG_MACROS_needed_version | sed 's/\..*$//'`
-	XORG_MACROS_needed_minor=`echo $XORG_MACROS_needed_version | sed -e 's/^[0-9]*\.//' -e 's/\..*$//'`]
-	AC_MSG_CHECKING([if xorg-macros used to generate configure is at least ${XORG_MACROS_needed_major}.${XORG_MACROS_needed_minor}])
-	[XORG_MACROS_version=1.2.0
-	XORG_MACROS_major=`echo $XORG_MACROS_version | sed 's/\..*$//'`
-	XORG_MACROS_minor=`echo $XORG_MACROS_version | sed -e 's/^[0-9]*\.//' -e 's/\..*$//'`]
-	if test $XORG_MACROS_major -ne $XORG_MACROS_needed_major ; then
-		AC_MSG_ERROR([configure built with incompatible version of xorg-macros.m4 - requires version ${XORG_MACROS_major}.x])
-	fi
-	if test $XORG_MACROS_minor -lt $XORG_MACROS_needed_minor ; then
-		AC_MSG_ERROR([configure built with too old of a version of xorg-macros.m4 - requires version ${XORG_MACROS_major}.${XORG_MACROS_minor}.0 or newer])
-	fi
-	AC_MSG_RESULT([yes, $XORG_MACROS_version])
+m4_defun([XORG_MACROS_VERSION],[
+m4_define([vers_have], [1.2.2])
+m4_define([maj_have], m4_substr(vers_have, 0, m4_index(vers_have, [.])))
+m4_define([maj_needed], m4_substr([$1], 0, m4_index([$1], [.])))
+m4_if(m4_cmp(maj_have, maj_needed), 0,,
+    [m4_fatal([xorg-macros major version ]maj_needed[ is required but ]vers_have[ found])])
+m4_if(m4_version_compare(vers_have, [$1]), -1,
+    [m4_fatal([xorg-macros version $1 or higher is required but ]vers_have[ found])])
+m4_undefine([vers_have])
+m4_undefine([maj_have])
+m4_undefine([maj_needed])
 ]) # XORG_MACROS_VERSION
 
 # XORG_PROG_RAWCPP()
@@ -9496,9 +9493,9 @@ if  test "x$GCC" = xyes ; then
     CWARNFLAGS="-Wall -Wpointer-arith -Wstrict-prototypes -Wmissing-prototypes \
 -Wmissing-declarations -Wnested-externs -fno-strict-aliasing \
 -Wbad-function-cast"
-    case `gcc -dumpversion` in
+    case `$CC -dumpversion` in
     3.4.* | 4.*)
-	CWARNFLAGS+=" -Wold-style-definition -Wdeclaration-after-statement"
+	CWARNFLAGS="$CWARNFLAGS -Wold-style-definition -Wdeclaration-after-statement"
 	;;
     esac
 else
@@ -9578,11 +9575,14 @@ AC_DEFUN([XORG_RELEASE_VERSION],[
 # Defines the variable CHANGELOG_CMD as the command to generate
 # ChangeLog from git.
 #
+# Arrange that distcleancheck ignores ChangeLog left over by distclean.
+#
 AC_DEFUN([XORG_CHANGELOG], [
 CHANGELOG_CMD="(GIT_DIR=\$(top_srcdir)/.git git log > .changelog.tmp && \
 mv .changelog.tmp ChangeLog) || (rm -f .changelog.tmp; touch ChangeLog; \
 echo 'git directory not found: installing possibly empty changelog.' >&2)"
 AC_SUBST([CHANGELOG_CMD])
+AC_SUBST([distcleancheck_listfiles], ['find . -type f ! -name ChangeLog -print'])
 ]) # XORG_CHANGELOG
 
 dnl $XdotOrg: lib/xtrans/xtrans.m4,v 1.6 2005/07/26 18:59:11 alanc Exp $
@@ -9619,10 +9619,11 @@ AC_DEFUN([XTRANS_TCP_FLAGS],[
  # SVR4 hides these in libraries other than libc
  AC_SEARCH_LIBS(socket, [socket])
  AC_SEARCH_LIBS(gethostbyname, [nsl])
+ AC_HAVE_LIBRARY([ws2_32])
 
  # Needs to come after above checks for libsocket & libnsl for SVR4 systems
  AC_ARG_ENABLE(ipv6, 
-	AC_HELP_STRING([--enable-IPv6],[Enable IPv6 support]),
+	AC_HELP_STRING([--enable-ipv6],[Enable IPv6 support]),
 	[IPV6CONN=$enableval], 
 	[AC_CHECK_FUNC(getaddrinfo,[IPV6CONN=yes],[IPV6CONN=no])])
  AC_MSG_CHECKING([if IPv6 support should be built])

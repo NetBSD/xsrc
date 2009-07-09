@@ -601,7 +601,9 @@ configFiles(XF86ConfFilesPtr fileconf)
 	    defaultFontPath = Xprintf("%s%s%s",
 				      fileconf->file_fontpath,
 				      *temp_path ? "," : "", temp_path);
-	    must_copy = FALSE;
+	    if (defaultFontPath != NULL) {
+		must_copy = FALSE;
+	    }
 	}
 	else
 	    defaultFontPath = fileconf->file_fontpath;
@@ -617,7 +619,14 @@ configFiles(XF86ConfFilesPtr fileconf)
 	!((start == temp_path || start[-1] == ',') && (!*end || *end == ','))) {
 	defaultFontPath = Xprintf("%s%sbuilt-ins",
 				  temp_path, *temp_path ? "," : "");
-	must_copy = FALSE;
+	if (must_copy == TRUE) {
+	    if (defaultFontPath != NULL) {
+		must_copy = FALSE;
+	    }
+	} else {
+	    /* already made a copy of the font path */
+	    xfree(temp_path);
+	}
     }
     /* xf86ValidateFontPath modifies its argument, but returns a copy of it. */
     temp_path = must_copy ? XNFstrdup(defaultFontPath) : defaultFontPath;
@@ -733,7 +742,7 @@ static OptionInfoRec FlagOptions[] = {
   { FLAG_DONTVTSWITCH,		"DontVTSwitch",			OPTV_BOOLEAN,
 	{0}, FALSE },
   { FLAG_DONTZAP,		"DontZap",			OPTV_BOOLEAN,
-	{0}, TRUE },
+	{0}, FALSE },
   { FLAG_DONTZOOM,		"DontZoom",			OPTV_BOOLEAN,
 	{0}, FALSE },
   { FLAG_DISABLEVIDMODE,	"DisableVidModeExtension",	OPTV_BOOLEAN,
@@ -845,8 +854,7 @@ configServerFlags(XF86ConfFlagsPtr flagsconf, XF86OptionPtr layoutopts)
 
     xf86GetOptValBool(FlagOptions, FLAG_NOTRAPSIGNALS, &xf86Info.notrapSignals);
     xf86GetOptValBool(FlagOptions, FLAG_DONTVTSWITCH, &xf86Info.dontVTSwitch);
-    if (!xf86GetOptValBool(FlagOptions, FLAG_DONTZAP, &xf86Info.dontZap))
-        xf86Info.dontZap = !party_like_its_1989;
+    xf86GetOptValBool(FlagOptions, FLAG_DONTZAP, &xf86Info.dontZap);
     xf86GetOptValBool(FlagOptions, FLAG_DONTZOOM, &xf86Info.dontZoom);
 
     xf86GetOptValBool(FlagOptions, FLAG_IGNORE_ABI, &xf86Info.ignoreABI);

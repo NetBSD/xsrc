@@ -1,3 +1,624 @@
+commit 6f1aff5a2b45bc2985081abc240a8fed37170386
+Author: Keith Packard <keithp@keithp.com>
+Date:   Mon Jul 6 14:08:31 2009 -0700
+
+    Bump to version 1.6.2
+    
+    Signed-off-by: Keith Packard <keithp@keithp.com>
+
+commit 499f9f62e408510ed4efb6f2321a3f851f535567
+Author: Keith Packard <keithp@keithp.com>
+Date:   Wed Jul 1 14:01:57 2009 -0700
+
+    dri2: Preserve compatibility with 1.6 DRI2 API/ABI
+    
+    The old DRI2 buffer allocation API wasn't great, but there's no reason to
+    make the server stop working with those drivers. This patch has the
+    X server adapting to the API provided by the driver, using the new API where
+    available and falling back to the old API as necessary. A warning will be
+    placed in the log file when the old API is in use.
+    (cherry picked from commit 2e2c5b216cc1c7a9bc26bd2c68226aaed5fc52ca)
+    
+    Signed-off-by: Keith Packard <keithp@keithp.com>
+
+commit c859b736d1d23c5dc2f53958b1e76660e6d45018
+Author: Arkadiusz Miskiewicz <arekm@maven.pl>
+Date:   Fri Jul 3 11:03:32 2009 +0200
+
+    xfree86: remove duplicate header entries in Makefile.am
+    
+    fixes https://bugs.freedesktop.org/show_bug.cgi?id=22547
+    
+    This bug was fixed in a big clean-up commit in master, which cannot be
+    backported (see commit b1dac41fb3853ca8182048ea57b88b6e84ecceb3)
+    
+    Signed-off-by: Rémi Cardona <remi@gentoo.org>
+    Signed-off-by: Keith Packard <keithp@keithp.com>
+
+commit 6f82ca0f8bfc074474407cb5ffe782c3c128f838
+Author: Alan Hourihane <alanh@vmware.com>
+Date:   Mon Feb 16 11:39:34 2009 +0000
+
+    dri2: support glXWaitGL & glXWaitX by copying fake front to front and
+    vice-versa.
+    (cherry picked from commit 2a8b8077d8f6001eb57deba60e1009fc99c28668)
+    
+    Signed-off-by: Keith Packard <keithp@keithp.com>
+
+commit d478bc948838d11b3abcf6d2cdd3a00dccb344c4
+Author: Eric Anholt <eric@anholt.net>
+Date:   Tue Feb 17 09:59:17 2009 -0800
+
+    xinerama: Put the proto version in the code instead using proto headers.
+    
+    Proto headers updating resulting in the server advertising new versions is
+    broken.  This should be applied to every extension.
+    
+    This fixes the build against slightly-older xineramaproto.
+    (cherry picked from commit b349a764e98f0d8f221190157ffa0904b91beca5)
+    
+    Signed-off-by: Keith Packard <keithp@keithp.com>
+
+commit a7a93c12f91e0de72868f17a555215f1795d9e2f
+Author: Keith Packard <keithp@keithp.com>
+Date:   Mon Jun 29 23:18:55 2009 -0700
+
+    Build against DRI_TEX_BUFFER_VERSION 1
+    
+    setTexBuffer2 isn't present in this version of the structure, so don't try
+    to call it.
+    
+    Signed-off-by: Keith Packard <keithp@keithp.com>
+
+commit 5b49aff4f8b5e4d15bc883f74509d93324f09f5f
+Author: Keith Packard <keithp@keithp.com>
+Date:   Mon Jun 29 14:40:46 2009 -0700
+
+    Bump version to 1.6.1.902
+    
+    Signed-off-by: Keith Packard <keithp@keithp.com>
+
+commit e97cabce4abdaf6b83d1a442f7972d4c45979b33
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Wed Mar 25 12:55:42 2009 +1000
+
+    xfree86: fix SWCursor check in xf86CursorSetCursor.
+    
+    Wrong check for inputInfo.pointer resulted in a SW cursor being rendered when
+    the pointer left the screen (in a Xinerama setup).
+    We must call the sprite rendering function if
+    - SW cursors are enabled, or
+    - The current device is not the VCP and not attached to the VCP.
+    
+    Backported from commit 66089e9129a821cfb1983d3d35f41b975a52de5e for
+    server-1.6-branch by Peter Hutterer
+    
+    Reported-by: Gordon Yuan <GordonYuan@viatech.com.cn>
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+    Signed-off-by: Keith Packard <keithp@keithp.com>
+
+commit 17c5b2caf01deec1d1be9fc2ac68a3d636e64c44
+Author: Julien Cristau <jcristau@debian.org>
+Date:   Mon May 18 19:01:46 2009 +0200
+
+    Change default for ExaOptimizeMigration to false
+    
+    Quoting Michel Dänzer in <1234862541.4823.541.camel@thor>:
+    
+      Unfortunately, there are still bugs left in EXA which prevent it from
+      working 100% correctly with the option enabled, see
+    
+      http://bugs.freedesktop.org/show_bug.cgi?id=16416
+    
+      http://bugs.freedesktop.org/show_bug.cgi?id=19940
+    
+    So disable it for now to avoid corruption.
+    
+    Signed-off-by: Keith Packard <keithp@keithp.com>
+
+commit 8d65439d5c950ea01ec8e1e4dd989aff0fb4c3f0
+Author: Keith Packard <keithp@keithp.com>
+Date:   Thu May 28 14:43:27 2009 -0700
+
+    Make RANDR 'set' timestamps follow client specified time. Bug 21987.
+    
+    The lastSetTime value which indicates when the configuration within the
+    server was last changed was not getting set in the appropriate RandR
+    requests.
+    
+    Signed-off-by: Keith Packard <keithp@keithp.com>
+    (cherry picked from commit 69a9545d1f8110841538410818df19fd960412c5)
+    
+    Signed-off-by: Keith Packard <keithp@keithp.com>
+
+commit d98f2792d2f523d7397eac70cc021761e9561219
+Author: Federico Mena Quintero <federico@novell.com>
+Date:   Tue Jun 9 13:28:28 2009 -0700
+
+    dix/randr: Add missing fields to SRR*NotifyEvent()
+    
+    Also, remove redundant field swaps and make others match the order in which
+    they are declared in the xRR*NotifyEvent structs.
+    
+    Signed-off-by: Federico Mena Quintero <federico@novell.com>
+    Signed-off-by: Keith Packard <keithp@keithp.com>
+    (cherry picked from commit e244a5991e2cc55f5aa2f6e5255f1dabf56f0235)
+    
+    Signed-off-by: Keith Packard <keithp@keithp.com>
+
+commit f697b6c582095aa1eec3244fa05835922249425b
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Mon May 11 12:53:56 2009 +1000
+
+    kdrive: set Activate/Deactivate grab for input devices (#21591)
+    
+    X.Org Bug 21591 <http://bugs.freedesktop.org/show_bug.cgi?id=21591>
+    (cherry picked from commit b1b5ec45c1cb650ccb8c659218f9481379c777d9)
+    
+    Signed-off-by: Keith Packard <keithp@keithp.com>
+
+commit c91accd173b5f17af771bd9f4e60b5860af15718
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Mon May 11 12:51:40 2009 +1000
+
+    dix: ensure Activate/DeactivateGrab has a valid value.
+    
+    Xephyr doesn't manually set Activate/DeactivateGrab for new devices,
+    resulting in a NULL-pointer dereference later when a grab is activated.
+    Avoid the segfault by ensuring that the pointer is always valid.
+    
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+    (cherry picked from commit 6f9e22049862ee9ac7f604411d005d8bb1b2dd1c)
+    
+    Signed-off-by: Keith Packard <keithp@keithp.com>
+
+commit bd94c7c986aed4496cd4e8141bb30c3e4412f1f4
+Author: Alan Coopersmith <alan.coopersmith@sun.com>
+Date:   Tue May 12 16:11:01 2009 -0700
+
+    Resync COPYING file with notices in code base as of xorg-server-1.6.1
+    
+    Remove notices for code no longer in tree (Xprint, Xgl, kdrive, cfb, etc.)
+    Add/update notices for new/changed code in tree
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@sun.com>
+    (cherry picked from commit b746a00cffca5c553b607a8e9c1074294a23b443)
+    
+    Signed-off-by: Keith Packard <keithp@keithp.com>
+
+commit 597747c6551cd67487069415297e5eb441038321
+Author: Jeremy Huddleston <jeremyhu@freedesktop.org>
+Date:   Sat May 9 11:42:17 2009 -0700
+
+    Fix a couple off-by-one array boundary checks.
+    
+    Error: Write outside array bounds at Xext/geext.c:406
+            in function 'GEWindowSetMask' [Symbolic analysis]
+           In array dereference of cli->nextSib[extension] with index 'extension'
+           Array size is 128 elements (of 4 bytes each), index <= 128
+    
+    Error: Buffer overflow at dix/events.c:592
+    	in function 'SetMaskForEvent' [Symbolic analysis]
+           In array dereference of filters[deviceid] with index 'deviceid'
+           Array size is 20 elements (of 512 bytes each), index >= 0 and index <= 20
+    
+    Error: Read buffer overflow at hw/xfree86/loader/loader.c:226
+    	in function 'LoaderOpen' [Symbolic analysis]
+           In array dereference of refCount[new_handle] with index 'new_handle'
+           Array size is 256 elements (of 4 bytes each), index >= 1 and index <= 256
+    
+    These bugs were found using the Parfait source code analysis tool.
+    For more information see http://research.sun.com/projects/parfait
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@sun.com>
+    Signed-off-by: Adam Jackson <ajax@redhat.com>
+    Acked-by: Peter Hutterer <peter.hutterer@who-t.net>
+    (cherry picked from commit b680bda34da130ce408783f04214771471e41e8d)
+    (cherry picked from commit 04c9e80f083659e63cffec8969fb3a0cfc551a97)
+    
+    Signed-off-by: Keith Packard <keithp@keithp.com>
+
+commit 10c06ddeefccc195e70adfed664e9488eeb53804
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Thu Apr 9 15:40:24 2009 +1000
+
+    xfree86: restore default off for DontZap
+    
+    Zapping is triggered by xkb these days, so note in the man page that it's the
+    Terminate_Server action. Since it's XKB, personal preferences towards or
+    against zapping should be achieved through xkb rulesets.
+    If Terminate_Server is not in the xkb actions, then we can't zap anyway and we
+    don't need a default of DontZap "on".
+    
+    This patch restores the old meaning of DontZap - disallow zapping altogether,
+    regardless of XKB's current keymap.
+    Ideally, this patch should be accompanied by b0f64bdab00db652e in
+    xkeyboard-config.
+    
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+    (cherry picked from commit 737b49199a05299486064e6e762cf2a2f6f95be6)
+    
+    Signed-off-by: Keith Packard <keithp@keithp.com>
+
+commit 966349f8e068fa120470549b0db9a8fcf88aca5b
+Author: Michel Dänzer <daenzer@vmware.com>
+Date:   Fri May 15 15:48:37 2009 +0200
+
+    EXA: Always damage glyph cache pixmap manually after uploading a glyph.
+    
+    Signed-off-by: Michel Dänzer <daenzer@vmware.com>
+    (cherry picked from commit 7c8327f0a75087a85864256a9cea80dd4b86def5)
+    
+    Signed-off-by: Keith Packard <keithp@keithp.com>
+
+commit cc5e4b632aa99623ff577776039287c5950d921d
+Author: Michel Dänzer <daenzer@vmware.com>
+Date:   Fri May 15 15:48:37 2009 +0200
+
+    EXA: Take GC client clip type into account for migration.
+    
+    Fixes http://bugs.freedesktop.org/show_bug.cgi?id=18950 .
+    
+    Signed-off-by: Michel Dänzer <daenzer@vmware.com>
+    (cherry picked from commit 850675d4de4373e5df95507dbf2cd9affaaf54bc)
+    
+    Signed-off-by: Keith Packard <keithp@keithp.com>
+
+commit bbe0be1e459b0d5810a0e7b916cc890c440a4e21
+Author: Tomas Janousek <tomi@nomi.cz>
+Date:   Wed May 20 15:03:01 2009 +0200
+
+    Bug #6428, #16458, #21464: Fix crash due to uninitialized VModMap fields.
+    
+    In ProcXkbGetKbdByName, mrep.firstVModMapKey, .nVModMapKeys and
+    .totalVModMapKeys were not initialized, contained random values and caused
+    accesses to unallocated and later modified memory, causing
+    XkbSizeVirtualModMap and XkbWriteVirtualModMap to see different number of
+    nonzero values, resulting in writes past the end of an array in XkbSendMap.
+    
+    This patch initializes those values sensibly and reverts commits 5c0a2088 and
+    6dd4fc46, which have been plain non-sense.
+    
+    Signed-off-by: Tomas Janousek <tomi@nomi.cz>
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+    (cherry picked from commit 525aa17f804d37d1cfcbbf6b8e6cddb45e999b20)
+    
+    Signed-off-by: Keith Packard <keithp@keithp.com>
+
+commit 6056d429e7dcc37fe706dd7bc8d3429fdb635e14
+Author: Kristian Høgsberg <krh@redhat.com>
+Date:   Wed Apr 1 17:42:33 2009 -0400
+
+    Support setTexBuffer2 in AIGLX.
+    
+    Fixes broken GLX_tfp, specifically, lets compositors ignore un-defined
+    alpha channel for pixmaps.
+    (cherry picked from commit 91b697efdefba125348dbcaf584ee51a7f8c9bf6)
+    
+    Signed-off-by: Keith Packard <keithp@keithp.com>
+
+commit 7cae08d21952b02ef664641af6588ef6bd727bf8
+Author: Adam Jackson <ajax@redhat.com>
+Date:   Mon Jun 29 11:16:16 2009 -0400
+
+    EDID: Fix timing class names to match the spec
+    (cherry picked from commit 5c1afac5eea1d8327c74342d12d082b75f0cebde)
+
+commit dbac41b624e4aa86a6a184b7ebb52bfdd367bbf0
+Author: Adam Jackson <ajax@redhat.com>
+Date:   Fri Jun 19 12:42:07 2009 -0400
+
+    pci: Dump vendor/devices ids in the printed device list
+    (cherry picked from commit eb35402d0a5290e8a73d7d1e92f173294c364cc2)
+
+commit 6be19e8f43086fb4b7fb30a47b89b5f3eed798ef
+Author: Ian Romanick <ian.d.romanick@intel.com>
+Date:   Wed Apr 8 14:54:30 2009 -0700
+
+    Use a #define instead of a magic number
+    
+    The number of buffers is likely to change in the future, so having
+    this as a define is the right way to go.
+    
+    Signed-off-by: Ian Romanick <ian.d.romanick@intel.com>
+    (cherry picked from commit 03aebed519986c4dd03e02b3b3d4af1f64595ca7)
+
+commit 540d5b87a4e24d85ec46620dfedd7bd7979180ea
+Author: Jerome Glisse <glisse@freedesktop.org>
+Date:   Mon May 11 22:52:46 2009 +0200
+
+    DRI2: update DRI2 private drawable width & height according to X drawable
+    (cherry picked from commit f250eea2e90fc50bec5214c2f41132b95edc2c46)
+
+commit ec9f1ae32474bc0507a3c66e63bdf2835d467a34
+Author: Ian Romanick <ian.d.romanick@intel.com>
+Date:   Mon Apr 27 15:11:10 2009 -0700
+
+    DRI2: Force allocation of real-front buffer for non-windows as well
+    
+    For redirected rendering we end up with pixmaps (which the app thinks are
+    windows) that are double buffered.
+    
+    Signed-off-by: Ian Romanick <ian.d.romanick@intel.com>
+    Tested-by: Pierre Willenbrock <pierre@pirsoft.de>
+    (cherry picked from commit 0d9d3f3e361f769822caedccf4c2a58cc9930ecc)
+
+commit 4fad615d689c61c6c3a000295a1fa755359737cb
+Author: Ian Romanick <ian.d.romanick@intel.com>
+Date:   Fri Apr 24 12:49:19 2009 -0700
+
+    DRI2: Implement protocol for DRI2GetBuffersWithFormat
+    
+    This change implements the protocol for DRI2GetBuffersWithFormat, but
+    the bulk of the differences are the changes to the extension / driver
+    interface to make this function work.  The old CreateBuffers and
+    DeleteBuffers routines are replaced with CreateBuffer and DeleteBuffer
+    (both singular).
+    
+    This allows drivers to allocate buffers for a drawable one at a time.
+    As a result, 3D drivers can now allocate the (fake) front-buffer for a
+    window only when it is needed.  Since 3D drivers only ask for the
+    front-buffer on demand, the real front-buffer is always created.  This
+    allows CopyRegion impelemenations of SwapBuffers to continue working.
+    As with previous version of this code, if the client asks for the
+    front-buffer for a window, we instead give it the fake front-buffer.
+    
+    Signed-off-by: Ian Romanick <ian.d.romanick@intel.com>
+    Reviewed-by: Kristian Høgsberg <krh@redhat.com>
+
+commit 98c3c21735197fbd2c8166c9bdabf055e14c9009
+Author: Ian Romanick <ian.d.romanick@intel.com>
+Date:   Fri Apr 24 12:09:21 2009 -0700
+
+    DRI2: Add interface for drivers to query DRI2 extension version
+    
+    Signed-off-by: Ian Romanick <ian.d.romanick@intel.com>
+    (cherry picked from commit 28ddfc88d8d547941c7f4713db527a3c2f9ec35a)
+
+commit 4cb4c210c365fd40ad314e0707eb38811f240a12
+Author: Ian Romanick <ian.d.romanick@intel.com>
+Date:   Thu Apr 16 12:10:34 2009 -0700
+
+    DRI2: Add missing front-buffer flush callback.
+    
+    Signed-off-by: Ian Romanick <ian.d.romanick@intel.com>
+    (cherry picked from commit d1e916d29be8b470cbc8cadcf6e83991fdbc5a9f)
+
+commit aa13faef2b1464f808e04de9826c6b8b8b91ae89
+Author: Ian Romanick <ian.d.romanick@intel.com>
+Date:   Wed Apr 15 11:13:48 2009 -0700
+
+    DRI2: Don't leave empty entries in private->buffers
+    
+    This should fix bug #21130.
+    
+    Signed-off-by: Ian Romanick <ian.d.romanick@intel.com>
+    (cherry picked from commit de1e43181bd670877b994db221ad8a04b5d63324)
+
+commit d7277296ed7aea7bd41b3489d4ceef750d400206
+Author: Ian Romanick <ian.d.romanick@intel.com>
+Date:   Thu Apr 9 14:38:24 2009 -0700
+
+    DRI2: Synchronize the contents of the real and fake front-buffers
+    
+    Signed-off-by: Ian Romanick <ian.d.romanick@intel.com>
+    (cherry picked from commit 567cf67959b30432ae30f4851ec17b3a375ab838)
+
+commit 73b786f7e7f46d40bf3b039538540c2e25f45947
+Author: Ian Romanick <ian.d.romanick@intel.com>
+Date:   Thu Apr 9 14:31:01 2009 -0700
+
+    DRI2: Do not send the real front buffer of a window to the client
+    
+    Signed-off-by: Ian Romanick <ian.d.romanick@intel.com>
+    (cherry picked from commit f1a995d1496d73741731e32f475097c44a8da972)
+
+commit 32d250a881341ece8a1f1d78359adc1b265b5174
+Author: Ian Romanick <ian.d.romanick@intel.com>
+Date:   Wed Apr 8 15:44:34 2009 -0700
+
+    DRI2: Add fake front-buffer to request list for windows
+    
+    If a front-buffer is requested for a window, add the fake front-buffer
+    to the list of requested buffers.
+    
+    Signed-off-by: Ian Romanick <ian.d.romanick@intel.com>
+    (cherry picked from commit aa2928325fe51d94a636dde9c090e8f54a311a12)
+
+commit db61eff891675aeaf2466c3529424de4621005dc
+Author: Adam Jackson <ajax@redhat.com>
+Date:   Fri May 22 12:01:55 2009 -0400
+
+    EDID: Add modes from Established Timings III descriptor to mode pool
+    
+    EDID 1.4, section 3.10.3.9
+    (cherry picked from commit 99e22b86c5f1a3653f3caaf01368a777d2b208d0)
+
+commit ebca49e0fedcc1c536f1dee7c58cae9903e74fa2
+Author: Adam Jackson <ajax@redhat.com>
+Date:   Thu May 21 10:20:48 2009 -0400
+
+    EDID: Be more cautious about finding vendor blocks.
+    
+    Many old monitors zero-fill the detailed descriptors, so check for that
+    to avoid a useless warning like:
+    
+    (WW) RADEON(0): Unknown vendor-specific block 0
+    (cherry picked from commit a2c5ee36b21c2ee5c0468f1b251e74c1412dbecb)
+
+commit c643d24cdeaade8d7839691a3113c4d2d17be61e
+Author: Adam Jackson <ajax@redhat.com>
+Date:   Fri May 29 18:07:48 2009 -0400
+
+    vfb: Fix depth setup.
+    
+    Initialize the depth corresponding to the root window before the
+    pixmap-only depths.  Otherwise you end up with the root window depth in
+    the depth list twice, which is mildly confusing for clients and
+    catastrophically confusing for PanoramiXConsolidate().
+    (cherry picked from commit 45530d16097459a756696e255ab4e72d6e51fbc4)
+
+commit 5cd5a01259ba349f1868ca4af04207cf120d69e4
+Author: Eamon Walsh <ewalsh@tycho.nsa.gov>
+Date:   Tue May 19 19:30:33 2009 -0400
+
+    xace: Fix a bad device access hook call.
+    
+    Add a proper access mode, and reverse the logic of the return value.
+    Zero ("Success") is returned on success from the hook calls.
+    
+    Signed-off-by: Eamon Walsh <ewalsh@tycho.nsa.gov>
+    (cherry picked from commit 3cea176d5abcb0f14eefbdcbe17fed0847524dd4)
+
+commit a9f85dcefbadfe44d8c58ad08430aaadb8c59d34
+Author: Eamon Walsh <ewalsh@tycho.nsa.gov>
+Date:   Mon May 11 15:27:46 2009 -0400
+
+    xselinux: Relax ownership restriction on SetSelectionUseContext.
+    
+    Instead, clients should keep track of the selection instances they use.
+    (cherry picked from commit 0952d12717031e9dda9e48123bb922d0f4e81834)
+    
+    Signed-off-by: Eamon Walsh <ewalsh@tycho.nsa.gov>
+
+commit 0fbf6f30f771e60714fb3003a9bb1a6b79e50c6e
+Author: Alan Coopersmith <alan.coopersmith@sun.com>
+Date:   Thu Mar 26 22:22:32 2009 -0700
+
+    Don't leak default font path when appending built-ins
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@sun.com>
+    (cherry picked from commit 66539cc05d0b017b9feb4a038499907810140623)
+    
+    Signed-off-by: Keith Packard <keithp@keithp.com>
+
+commit 773e4890b385a229b0919b4a249714d0bb7171a2
+Author: Alan Coopersmith <alan.coopersmith@sun.com>
+Date:   Thu Mar 26 22:25:08 2009 -0700
+
+    Don't leak canonical module name and patterns if module is built-in
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@sun.com>
+    Acked-by: Peter Hutterer <peter.hutterer@who-t.net>
+    (cherry picked from commit 1c101d75d4855b2698e3fc8d2dd662f20585812f)
+    
+    Signed-off-by: Keith Packard <keithp@keithp.com>
+
+commit 21f58a2b0d0d96492d2d7c7de1bd654ed0114279
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Wed May 6 16:55:32 2009 +1000
+
+    Xi: don't double-swap the XListDeviceProperties reply.
+    
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+    (cherry picked from commit 50cc8adafca4ba3838d468278d6eb8a4692d2488)
+    
+    Signed-off-by: Keith Packard <keithp@keithp.com>
+
+commit b575af88d0e547a03b164f6f3b2d4b268b9ffc34
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Wed May 6 22:25:28 2009 +1000
+
+    Xi: fix copy/paste error causing sizeof against wrong struct.
+    
+    This wrong check may cause BadLength to be returned to the client even if the
+    length is correct.
+    
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+    (cherry picked from commit 8b583ca2b21155359c6255f406c96599b277c762)
+    
+    Signed-off-by: Keith Packard <keithp@keithp.com>
+
+commit 9c643b1e3ddc4ec9f1a924bd25f24df8536c7ea6
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Thu Apr 16 16:17:07 2009 +1000
+
+    os: don't malloc memory in LogVMessageVerb.
+    
+    LogVWrite is limited to a buffer size of 1024, so we don't loose anything here
+    by truncating. This way we can use LogVMessageVerb (and xf86Msg and friends)
+    during signal handlers with the normal message types.
+    
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+    Acked-by: Alan Coopersmith <alan.coopersmith@sun.com>
+    (cherry picked from commit 0e0642ee9466d3268476d0084a83a9d93a4aa555)
+    
+    Signed-off-by: Keith Packard <keithp@keithp.com>
+
+commit 7cd596e0dd6b9c195d7e395c26bfb00ef544c525
+Author: Dave Airlie <airlied@linux.ie>
+Date:   Wed Apr 15 18:26:06 2009 +1000
+
+    randr12: looking up these bits if randr isn't initialised is bad.
+    
+    When xinerama is enabled we don't get randr protocol, but the
+    driver might still want randr internals
+    (cherry picked from commit faf7dfa099f5b42a703313fbd1bf8afdad07a179)
+    
+    Signed-off-by: Keith Packard <keithp@keithp.com>
+
+commit bc95f29441b3daa7b9d91bd3c2b3e502a3a8cc81
+Author: Alan Coopersmith <alan.coopersmith@sun.com>
+Date:   Thu Apr 23 08:42:38 2009 -0700
+
+    Fix byte swapping of XF86VidMode{Get,Set}GammaRamp
+    
+    Fixes OpenSolaris Bug 8315:
+    Xorg segfaults when screensaver fades in cross-endian xdmcp session
+    <http://defect.opensolaris.org/bz/show_bug.cgi?id=8315>
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@sun.com>
+    (cherry picked from commit 7d0f7518c2235a9dc783029971259ddaada2db20)
+    
+    Signed-off-by: Keith Packard <keithp@keithp.com>
+
+commit 3f0c73694b9ddc85b82a7a82a5d98fa8b18a01a8
+Author: Jon TURNEY <jon.turney@dronecode.org.uk>
+Date:   Thu Feb 12 16:03:16 2009 +0000
+
+    Remove references to rgb.txt from files section of Xserver and Xorg man pages
+    
+    The references to this file in the server code were removed in commit dda10c9066a660b647384179f82e1da8e063264f
+    
+    Signed-off-by: Jon TURNEY <jon.turney@dronecode.org.uk>
+    (cherry picked from commit d0dd649035fc3698c5b436f9d9d248116aa106a3)
+    
+    Signed-off-by: Keith Packard <keithp@keithp.com>
+
+commit 78eb366c65a953bbc059a989a92dfe28fbe1ae29
+Author: Jon TURNEY <jon.turney@dronecode.org.uk>
+Date:   Thu Feb 12 16:02:17 2009 +0000
+
+    Remove long-gone '-co' option from Xserver man page
+    
+    The '-co' option was removed in commit dda10c9066a660b647384179f82e1da8e063264f
+    
+    Signed-off-by: Jon TURNEY <jon.turney@dronecode.org.uk>
+    (cherry picked from commit b0ad9e1ced9619f37acf77764c395c57b86cf463)
+    
+    Signed-off-by: Keith Packard <keithp@keithp.com>
+
+commit 31536307703fcffa14a027ec777310c9962f816c
+Author: Alan Coopersmith <alan.coopersmith@sun.com>
+Date:   Sat May 2 00:26:18 2009 -0700
+
+    XkbSetNamedIndicator should ignore SD's without LED's
+    
+    When ProcXkbSetNamedIndicator is called on a core device, and we
+    walk the slaves to set the LED's on each of them, ignore any slaves
+    that do not have either a KbdFeedbackCtrl or LedCtrl structure.
+    
+    (This is much more critical in xserver-1.5-branch, where we walk
+     *all* devices, not just the slaves of the specified master, and
+     thus return failure when setting an LED on the Core Keyboard and
+     hit a xf86-input-mouse device with no LED's to set.)
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@sun.com>
+    Acked-by: Peter Hutterer <peter.hutterer@who-t.net>
+    (cherry picked from commit 557dbadf3be273255e8fdb12d9321f4e88bf2b65)
+    
+    Signed-off-by: Keith Packard <keithp@keithp.com>
+
 commit 01f0210b2ba34f724aa221bbe6b567a5751781a6
 Author: Keith Packard <keithp@keithp.com>
 Date:   Fri May 8 22:29:15 2009 -0700
