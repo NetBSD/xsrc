@@ -278,6 +278,7 @@ typedef enum {
     ,OPTION_AGP_SIZE
     ,OPTION_DRI
     ,OPTION_IGNORE_EDID
+    ,OPTION_AGP_FOR_XV
 } SavageOpts;
 
 
@@ -312,6 +313,7 @@ static const OptionInfoRec SavageOptions[] =
     { OPTION_AGP_MODE,	"AGPMode",	OPTV_INTEGER, {0}, FALSE },
     { OPTION_AGP_SIZE,	"AGPSize",	OPTV_INTEGER, {0}, FALSE },
     { OPTION_DRI,       "DRI",          OPTV_BOOLEAN, {0}, TRUE },
+    { OPTION_AGP_FOR_XV,   "AGPforXv",    OPTV_BOOLEAN, {0}, FALSE },
 #endif
     { -1,		NULL,		OPTV_NONE,    {0}, FALSE }
 };
@@ -335,178 +337,6 @@ _X_EXPORT DriverRec SAVAGE =
     savage_device_match,
     SavagePciProbe
 #endif
-};
-
-
-
-static const char *vgaHWSymbols[] = {
-    "vgaHWBlankScreen",
-    "vgaHWCopyReg",
-    "vgaHWGetHWRec",
-    "vgaHWGetIOBase",
-    "vgaHWGetIndex",
-    "vgaHWInit",
-    "vgaHWLock",
-    "vgaHWProtect",
-    "vgaHWRestore",
-    "vgaHWSave",
-    "vgaHWSaveScreen",
-    "vgaHWSetMmioFuncs",
-    "vgaHWSetStdFuncs",
-    "vgaHWUnmapMem",
-    "vgaHWddc1SetSpeedWeak",
-#if 0
-    "vgaHWFreeHWRec",
-    "vgaHWMapMem",
-    "vgaHWUnlock",
-#endif
-    NULL
-};
-
-#ifdef XF86DRI
-static const char *drmSymbols[] = {
-    "drmAvailable",
-    "drmAddBufs",
-    "drmAddMap",
-    "drmCtlInstHandler",
-    "drmGetInterruptFromBusID",
-    "drmFreeVersion",
-    "drmGetVersion",
-    "drmMap",
-    "drmUnmap",
-    "drmMapBufs",
-    "drmUnmapBufs",
-    "drmAgpAcquire",
-    "drmAgpRelease",
-    "drmAgpEnable",
-    "drmAgpAlloc",
-    "drmAgpFree",
-    "drmAgpBind",
-    "drmAgpUnbind",
-    "drmAgpGetMode",
-    "drmAgpBase",
-    "drmAgpSize",
-    "drmAgpVendorId",
-    "drmAgpDeviceId",
-    "drmMGAInitDMA",
-    "drmMGACleanupDMA",
-    "drmMGAFlushDMA",
-    "drmMGAEngineReset",
-    NULL
-};
-
-static const char *driSymbols[] = {
-    "DRIGetDrawableIndex",
-    "DRIFinishScreenInit",
-    "DRIDestroyInfoRec",
-    "DRICloseScreen",
-    "DRIDestroyInfoRec",
-    "DRIScreenInit",
-    "DRIDestroyInfoRec",
-    "DRICreateInfoRec",
-    "DRILock",
-    "DRIUnlock",
-    "DRIGetSAREAPrivate",
-    "DRIGetContext",
-    "DRIQueryVersion",
-    "DRIAdjustFrame",
-    "DRIOpenFullScreen",
-    "DRICloseFullScreen",
-    "GlxSetVisualConfigs",
-    NULL
-};
-#endif
-
-
-static const char *ramdacSymbols[] = {
-    "xf86CreateCursorInfoRec",
-#if 0
-    "xf86DestroyCursorInfoRec",
-#endif
-    "xf86InitCursor",
-    NULL
-};
-
-static const char *int10Symbols[] = {
-    "xf86ExecX86int10",
-    "xf86Int10AllocPages",
-    "xf86int10Addr",
-    "xf86Int10FreePages"
-};
-
-static const char *vbeSymbols[] = {
-    "VBEInit",
-    "vbeDoEDID",
-#if 0
-    "vbeFree",
-#endif
-    NULL
-};
-
-static const char *vbeOptSymbols[] = {
-    "vbeModeInit",
-    "VBESetVBEMode",
-    "VBEGetVBEInfo",
-    "VBEFreeVBEInfo",
-    NULL
-};
-
-static const char *ddcSymbols[] = {
-    "xf86DoEDID_DDC1",
-    "xf86DoEDID_DDC2",
-    "xf86PrintEDID",
-    "xf86SetDDCproperties",
-    NULL
-};
-
-static const char *i2cSymbols[] = {
-    "xf86CreateI2CBusRec",
-    "xf86I2CBusInit",
-    "xf86CreateI2CDevRec",
-    "xf86I2CDevInit",
-    "xf86I2CWriteByte",
-    "xf86I2CWriteBytes",
-    "xf86I2CReadByte",
-    "xf86I2CReadBytes",
-    "xf86I2CWriteRead",
-    "xf86DestroyI2CDevRec",
-    NULL
-};
-
-static const char *xaaSymbols[] = {
-    "XAAGetCopyROP",
-    "XAAGetCopyROP_PM",
-    "XAACreateInfoRec",
-    "XAADestroyInfoRec",
-    "XAAFillSolidRects",
-    "XAAHelpPatternROP",
-    "XAAHelpSolidROP", 
-    "XAAInit",
-    "XAAScreenIndex",
-    NULL
-};
-
-static const char *exaSymbols[] = {
-    "exaDriverAlloc",
-    "exaDriverInit",
-    "exaDriverFini",
-    "exaOffscreenAlloc",
-    "exaOffscreenFree",
-    "exaGetPixmapOffset",
-    "exaGetPixmapPitch",
-    "exaGetPixmapSize",
-    NULL
-};
-
-static const char *shadowSymbols[] = {
-    "ShadowFBInit",
-    NULL
-};
-
-static const char *fbSymbols[] = {
-    "fbPictureInit",
-    "fbScreenInit",
-    NULL
 };
 
 #ifdef XFree86LOADER
@@ -540,14 +370,6 @@ static pointer SavageSetup(pointer module, pointer opts, int *errmaj,
     if (!setupDone) {
 	setupDone = TRUE;
 	xf86AddDriver(&SAVAGE, module, 1);
-	LoaderRefSymLists(vgaHWSymbols, fbSymbols, ramdacSymbols, 
-			  xaaSymbols,
-			  exaSymbols,
-			  shadowSymbols, vbeSymbols, vbeOptSymbols,
-#ifdef XF86DRI
-                          drmSymbols, driSymbols,
-#endif
-			  int10Symbols, i2cSymbols, ddcSymbols, NULL);
 	return (pointer) 1;
     } else {
 	if (errmaj)
@@ -1050,7 +872,6 @@ static void SavageDoDDC(ScrnInfoPtr pScrn)
     /* Do the DDC dance. */ /* S3/VIA's DDC code */
     ddc = xf86LoadSubModule(pScrn, "ddc");
     if (ddc) {
-        xf86LoaderReqSymLists(ddcSymbols, NULL);
         switch( psav->Chipset ) {
             case S3_SAVAGE3D:
             case S3_SAVAGE_MX:
@@ -1072,7 +893,6 @@ static void SavageDoDDC(ScrnInfoPtr pScrn)
         if (!SavageDDC1(pScrn->scrnIndex)) {
             /* DDC1 failed,switch to DDC2 */
             if (xf86LoadSubModule(pScrn, "i2c")) {
-                xf86LoaderReqSymLists(i2cSymbols,NULL);
                 if (SavageI2CInit(pScrn)) {
                     unsigned char tmp;
                     xf86MonPtr pMon;
@@ -1274,7 +1094,6 @@ static Bool SavagePreInit(ScrnInfoPtr pScrn, int flags)
     if (!xf86LoadSubModule(pScrn, "vgahw"))
 	return FALSE;
 
-    xf86LoaderReqSymLists(vgaHWSymbols, NULL);
     if (!vgaHWGetHWRec(pScrn))
 	return FALSE;
 
@@ -1577,7 +1396,6 @@ static Bool SavagePreInit(ScrnInfoPtr pScrn, int flags)
     psav->EntityIndex = pEnt->index;
 
     if (xf86LoadSubModule(pScrn, "vbe")) {
-	xf86LoaderReqSymLists(vbeSymbols, NULL);
 	psav->pVbe = VBEInit(NULL, pEnt->index);
     }
 
@@ -1869,6 +1687,20 @@ static Bool SavagePreInit(ScrnInfoPtr pScrn, int flags)
         xf86DrvMsg(pScrn->scrnIndex, X_CONFIG,
                    "%s DVI port support (Savage4 only)\n",(psav->dvi?"Force":"Disable"));
     }
+
+    psav->AGPforXv = FALSE;
+#ifdef XF86DRI
+    if (xf86GetOptValBool(psav->Options, OPTION_AGP_FOR_XV, &psav->AGPforXv)) {
+        if (psav->AGPforXv) {
+            if (psav->agpSize == 0) {
+                psav->AGPforXv = FALSE;
+                xf86DrvMsg(pScrn->scrnIndex, X_ERROR, "AGP not available, cannot use AGP for Xv\n");
+            }
+        }
+        xf86DrvMsg(pScrn->scrnIndex, X_CONFIG,
+                   "Option: %s use of AGP buffer for Xv\n",(psav->AGPforXv?"Enable":"Disable"));
+    }
+#endif
 
     /* Add more options here. */
 
@@ -2190,10 +2022,11 @@ static Bool SavagePreInit(ScrnInfoPtr pScrn, int flags)
     /* Check LCD panel information */
 
     if(psav->DisplayType == MT_LCD)
-    {
 	SavageGetPanelInfo(pScrn);
+
+    /* DisplayType will be reset if panel is not active */
+    if(psav->DisplayType == MT_LCD)
 	SavageAddPanelMode(pScrn);
-    }
   
 #if 0
     if (psav->CrtOnly && !psav->UseBIOS) {
@@ -2296,16 +2129,11 @@ static Bool SavagePreInit(ScrnInfoPtr pScrn, int flags)
 	return FALSE;
     }
 
-    xf86LoaderReqSymLists(fbSymbols, NULL);
-
     if( !psav->NoAccel ) {
-
         char *modName = NULL;
-        const char **symNames = NULL;
 
 	if (psav->useEXA) {
 	    modName = "exa";
-	    symNames = exaSymbols;
 	    XF86ModReqInfo req;
 	    int errmaj, errmin;
 	    memset(&req, 0, sizeof(req));
@@ -2322,7 +2150,6 @@ static Bool SavagePreInit(ScrnInfoPtr pScrn, int flags)
 	    }
 	} else {
 	    modName = "xaa";
-	    symNames = xaaSymbols;
 	    if( !xf86LoadSubModule(pScrn, modName) ) {
 	    	SavageFreeRec(pScrn);
 	    	vbeFree(psav->pVbe);
@@ -2330,9 +2157,6 @@ static Bool SavagePreInit(ScrnInfoPtr pScrn, int flags)
 	    	return FALSE;
 	    } 
 	}
-
-	xf86LoaderReqSymLists(symNames, NULL );
-
     }
 
     if (psav->hwcursor) {
@@ -2342,7 +2166,6 @@ static Bool SavagePreInit(ScrnInfoPtr pScrn, int flags)
 	    psav->pVbe = NULL;
 	    return FALSE;
 	}
-	xf86LoaderReqSymLists(ramdacSymbols, NULL);
     }
 
     if (psav->shadowFB) {
@@ -2352,7 +2175,6 @@ static Bool SavagePreInit(ScrnInfoPtr pScrn, int flags)
 	    psav->pVbe = NULL;
 	    return FALSE;
 	}
-	xf86LoaderReqSymLists(shadowSymbols, NULL);
     }
     vbeFree(psav->pVbe);
 
@@ -3678,6 +3500,11 @@ static Bool SavageScreenInit(int scrnIndex, ScreenPtr pScreen,
         else
             xf86DrvMsg(pScrn->scrnIndex,X_CONFIG,"XvMC is not enabled\n");
     }
+
+    if (!psav->directRenderingEnabled && psav->AGPforXv) {
+        xf86DrvMsg(pScrn->scrnIndex,X_ERROR,"AGPforXV requires DRI to be enabled.\n");
+	psav->AGPforXv = FALSE;
+    }
 #endif
 
     if (serverGeneration == 1)
@@ -4718,7 +4545,6 @@ SavageProbeDDC(ScrnInfoPtr pScrn, int index)
     vbeInfoPtr pVbe;
     
     if (xf86LoadSubModule(pScrn, "vbe")) {
-	xf86LoaderReqSymLists(vbeSymbols, NULL);
 	pVbe = VBEInit(NULL, index);
 	ConfiguredMonitor = vbeDoEDID(pVbe, NULL);
 	vbeFree(pVbe);

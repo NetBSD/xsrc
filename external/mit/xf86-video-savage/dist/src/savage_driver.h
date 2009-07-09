@@ -136,6 +136,9 @@ typedef struct _server{
 
    /* command DMA */
    drmRegion cmdDma;
+
+   /* XVideo through AGP */
+   drmRegion agpXVideo;
 } SAVAGEDRIServerPrivateRec, *SAVAGEDRIServerPrivatePtr;
 
 #endif
@@ -486,6 +489,7 @@ typedef struct _Savage {
 
     Bool bDisableXvMC;
 
+    Bool AGPforXv;
 #endif
 
     Bool disableCOB;
