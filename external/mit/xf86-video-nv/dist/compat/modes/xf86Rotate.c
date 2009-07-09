@@ -146,6 +146,37 @@ xf86RotateCrtcRedisplay (xf86CrtcPtr crtc, RegionPtr region)
 }
 
 static void
+xf86CrtcShadowClear (xf86CrtcPtr crtc)
+{
+    PixmapPtr		dst_pixmap = crtc->rotatedPixmap;
+    ScrnInfoPtr		scrn = crtc->scrn;
+    ScreenPtr		screen = scrn->pScreen;
+    PicturePtr		dst;
+    PictFormatPtr	format = compWindowFormat (WindowTable[screen->myNum]);
+    static xRenderColor black = { 0, 0, 0, 0 };
+    xRectangle		rect;
+    int			error;
+
+    if (!dst_pixmap)
+	return;
+    dst = CreatePicture (None,
+			 &dst_pixmap->drawable,
+			 format,
+			 0L,
+			 NULL,
+			 serverClient,
+			 &error);
+    if (!dst)
+	return;
+    rect.x = 0;
+    rect.y = 0;
+    rect.width = dst_pixmap->drawable.width;
+    rect.height = dst_pixmap->drawable.height;
+    CompositeRects (PictOpSrc, dst, &black, 1, &rect);
+    FreePicture (dst, None);
+}
+
+static void
 xf86CrtcDamageShadow (xf86CrtcPtr crtc)
 {
     ScrnInfoPtr	pScrn = crtc->scrn;
@@ -313,7 +344,7 @@ xf86RotateDestroy (xf86CrtcPtr crtc)
     }
 }
 
-_X_EXPORT void
+void
 xf86RotateFreeShadow(ScrnInfoPtr pScrn)
 {
     xf86CrtcConfigPtr config = XF86_CRTC_CONFIG_PTR(pScrn);
@@ -331,7 +362,7 @@ xf86RotateFreeShadow(ScrnInfoPtr pScrn)
    }
 }
 
-_X_EXPORT void
+void
 xf86RotateCloseScreen (ScreenPtr screen)
 {
     ScrnInfoPtr		scrn = xf86Screens[screen->myNum];
@@ -371,7 +402,7 @@ xf86CrtcFitsScreen (xf86CrtcPtr crtc, struct pict_f_transform *crtc_to_fb)
 	    0 <= b.y1 && b.y2 <= pScrn->virtualY);
 }
 
-_X_EXPORT Bool
+Bool
 xf86CrtcRotate (xf86CrtcPtr crtc)
 {
     ScrnInfoPtr		pScrn = crtc->scrn;
