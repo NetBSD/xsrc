@@ -109,33 +109,6 @@ _X_EXPORT PciChipsets CIRPciChipsets[] = {
 	{ -1,				-1,					RES_UNDEFINED}
 };
 
-/*
- * List of symbols from other modules that this module references.  This
- * list is used to tell the loader that it is OK for symbols here to be
- * unresolved providing that it hasn't been told that they haven't been
- * told that they are essential via a call to xf86LoaderReqSymbols() or
- * xf86LoaderReqSymLists().  The purpose of this is to avoid warnings about
- * unresolved symbols that are not required.
- */
-
-static const char *alpSymbols[] = {
-	"AlpAvailableOptions",
-	"AlpProbe",
-	NULL
-};
-static const char *lgSymbols[] = {
-	"LgAvailableOptions",
-	"LgProbe",
-	NULL
-};
-
-static const char *vbeSymbols[] = {
-	"VBEInit",
-	"vbeDoEDID",
-	"vbeFree",
-	NULL
-};
-
 #ifdef XFree86LOADER
 
 static MODULESETUPPROTO(cirSetup);
@@ -171,7 +144,6 @@ cirSetup(pointer module, pointer opts, int *errmaj, int *errmin)
 		setupDone = TRUE;
 		xf86AddDriver(&CIRRUS, module, 0);
 
-		LoaderRefSymLists(alpSymbols, lgSymbols, vbeSymbols, NULL);
 		return (pointer)1;
 	}
 	if (errmaj) *errmaj = LDR_ONCEONLY;
@@ -236,13 +208,11 @@ CIRProbe(DriverPtr drv, int flags)
     if (flags & PROBE_DETECT) {
 	if (!lg_loaded) {
 	    if (xf86LoadDrvSubModule(drv, "cirrus_laguna")) {
-		xf86LoaderReqSymLists(lgSymbols, NULL);
 		lg_loaded = TRUE;
 	    }
 	}
 	if (!alp_loaded) {
 	    if (xf86LoadDrvSubModule(drv, "cirrus_alpine")) {
-		xf86LoaderReqSymLists(alpSymbols, NULL);
 		alp_loaded = TRUE;
 	    }
 	}
@@ -288,7 +258,6 @@ CIRProbe(DriverPtr drv, int flags)
  	    if (!lg_loaded) {
  		if (!xf86LoadDrvSubModule(drv, "cirrus_laguna")) 
 		    continue;
- 		xf86LoaderReqSymLists(lgSymbols, NULL);
  		lg_loaded = TRUE;
  	    }
 	    pScrn = LgProbe(usedChips[i]);
@@ -296,7 +265,6 @@ CIRProbe(DriverPtr drv, int flags)
  	    if (!alp_loaded) {
  		if (!xf86LoadDrvSubModule(drv, "cirrus_alpine")) 
  		    continue;
- 		xf86LoaderReqSymLists(alpSymbols, NULL);
  		alp_loaded = TRUE;
  	    }
  	    pScrn = AlpProbe(usedChips[i]);
@@ -444,7 +412,6 @@ cirProbeDDC(ScrnInfoPtr pScrn, int index)
     vbeInfoPtr pVbe;
 
     if (xf86LoadSubModule(pScrn, "vbe")) {
-	xf86LoaderReqSymLists(vbeSymbols,NULL);
         pVbe = VBEInit(NULL,index);
         ConfiguredMonitor = vbeDoEDID(pVbe, NULL);
 	vbeFree(pVbe);
