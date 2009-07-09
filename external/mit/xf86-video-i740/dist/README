@@ -150,8 +150,6 @@
          EndSection
 
 
-  or let xorgconfig do this for you.
-
   However, if you have problems with auto-detection, you can specify:
 
   +o  VideoRam - in kilobytes
@@ -203,7 +201,7 @@
 
   +o  Daryll Strauss  <daryll@precisioninsight.com>
 
-  The X11R6.8 version of this driver originally came from XFree86 4.4
+  The Xorg version of this driver originally came from XFree86 4.4
   rc2.
 
   The XFree86 version of this driver was donated to The XFree86 Project
