@@ -39,6 +39,10 @@
 /* Have 4bpp support */
 /* #undef HAVE_XF4BPP */
 
+/* Define to the sub-directory in which libtool stores uninstalled libraries.
+   */
+#define LT_OBJDIR ".libs/"
+
 /* Name of package */
 #define PACKAGE "xf86-video-tseng"
 
@@ -49,13 +53,13 @@
 #define PACKAGE_NAME "xf86-video-tseng"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "xf86-video-tseng 1.2.1"
+#define PACKAGE_STRING "xf86-video-tseng 1.2.2"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "xf86-video-tseng"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "1.2.1"
+#define PACKAGE_VERSION "1.2.2"
 
 /* Major version of this package */
 #define PACKAGE_VERSION_MAJOR 1
@@ -64,10 +68,10 @@
 #define PACKAGE_VERSION_MINOR 2
 
 /* Patch version of this package */
-#define PACKAGE_VERSION_PATCHLEVEL 1
+#define PACKAGE_VERSION_PATCHLEVEL 2
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1
 
 /* Version number of package */
-#define VERSION "1.2.1"
+#define VERSION "1.2.2"
