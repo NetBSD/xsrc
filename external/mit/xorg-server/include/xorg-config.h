@@ -17,7 +17,7 @@
 #define XORGSERVER 1
 
 /* Current X.Org version. */
-#define XORG_VERSION_CURRENT (((1) * 10000000) + ((6) * 100000) + ((1) * 1000) + 901)
+#define XORG_VERSION_CURRENT (((1) * 10000000) + ((6) * 100000) + ((2) * 1000) + 0)
 
 /* Name of X server. */
 #define __XSERVERNAME__ "Xorg"
@@ -85,8 +85,8 @@
 /* BSD /dev/io */
 /* #undef USE_DEV_IO */
 
-/* BSD i386 iopl */
 #if defined(__i386__) || defined(__x86_64__)
+/* BSD i386 iopl */
 #define USE_I386_IOPL 1
 #endif
 
