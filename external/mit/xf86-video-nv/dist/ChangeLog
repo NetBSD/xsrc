@@ -1,3 +1,64 @@
+commit c56b92149c6291e7ef96b30a4fc7bee30073b90c
+Author: Aaron Plattner <aplattner@nvidia.com>
+Date:   Thu Jul 2 12:03:13 2009 -0700
+
+    Bump to 2.1.14
+
+commit 05d2b851b96c2f1b3223f8d5f40b8ee074e5f23f
+Author: Aaron Plattner <aplattner@nvidia.com>
+Date:   Fri Jun 26 17:53:53 2009 -0700
+
+    More new chips
+
+commit 68c2914f1775541784e6cf88019960342d8433bc
+Author: Aaron Plattner <aplattner@nvidia.com>
+Date:   Fri Jun 12 17:34:43 2009 -0700
+
+    Fix modesets on certain GPUs that were broken by the previous commit.
+
+commit 36eb96854b34bee6b65a2b2d4df25f53b47194e4
+Author: Aaron Plattner <aplattner@nvidia.com>
+Date:   Wed Jun 10 18:49:32 2009 -0700
+
+    New chip support.
+    
+    Part of the G80DispPreInit change suggested by <shenyn321@hotmail.com>.
+
+commit 23ca1b0d4324ae65a0c2a39cc877d318063988b1
+Author: Adam Jackson <ajax@redhat.com>
+Date:   Thu May 28 15:11:20 2009 -0400
+
+    Remove useless loader symbol lists.
+
+commit c8d6f7aa7c99a1b71289f8e8e07becc10f61f379
+Author: Aaron Plattner <aplattner@nvidia.com>
+Date:   Fri May 15 16:24:57 2009 -0700
+
+    More chip names.
+    
+    Add support for the following previously unsupported chips:
+      * 0x0658 - Quadro FX 380
+      * 0x0659 - Quadro FX 580
+      * 0x065C - Quadro FX 770M
+
+commit 29acf7c970d12c1dfd7bf6c7a42fe2448aa7f3d7
+Author: Yinan Shen <shenyn321@gmail.com>
+Date:   Wed May 6 19:14:33 2009 -0700
+
+    G80: Fix incorrect I2C port access for ports above 3.
+
+commit bf18cd4842c33df61b03c3d4e0f00e34485fb957
+Author: Aaron Plattner <aplattner@nvidia.com>
+Date:   Tue May 5 01:29:08 2009 -0700
+
+    Fix a dumb typo in the chip name entry for the GeForce 9800 GTX+
+
+commit df87eaf191209b0f1619ea74dc9fb0314b6fd288
+Author: Adam Jackson <ajax@redhat.com>
+Date:   Tue Apr 7 13:40:36 2009 -0400
+
+    nv 2.1.13
+
 commit c0cc7d1247798867c695aeddcffe88edacbb6c7c
 Author: Adam Jackson <ajax@redhat.com>
 Date:   Tue Apr 7 13:34:26 2009 -0400
@@ -641,7 +702,7 @@ Date:   Mon Jun 4 22:38:14 2007 -0700
     Move some register writes into G80CreateSor.
 
 commit 402b1d1526f0dacd2e3a2564cc89958c32d3100e
-Merge: 1f4790a 9b8470e
+Merge: 1f4790a... 9b8470e...
 Author: Benjamin Herrenschmidt <benh@kernel.crashing.org>
 Date:   Sun Jun 3 11:18:50 2007 +1000
 
@@ -713,7 +774,7 @@ Date:   Mon Apr 16 02:23:26 2007 -0700
     No acceleration yet.
 
 commit c6e4105ce40ef053e026cc0ffe4925ab568ea700
-Merge: 5d9b75b 4ff648c
+Merge: 5d9b75b... 4ff648c...
 Author: Aaron Plattner <aplattner@nvidia.com>
 Date:   Tue Apr 24 15:43:48 2007 -0700
 
