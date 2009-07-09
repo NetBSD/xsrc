@@ -152,86 +152,6 @@ static int gd5446_MaxClocks[] = { 135100, 135100,  85500,  85500,      0 };
 static int gd5480_MaxClocks[] = { 135100, 200000, 200000, 135100, 135100 };
 static int gd7548_MaxClocks[] = {  80100,  80100,  80100,  80100,  80100 };
 
-/*
- * List of symbols from other modules that this module references.  This
- * list is used to tell the loader that it is OK for symbols here to be
- * unresolved providing that it hasn't been told that they haven't been
- * told that they are essential via a call to xf86LoaderReqSymbols() or
- * xf86LoaderReqSymLists().  The purpose is this is to avoid warnings about
- * unresolved symbols that are not required.
- */
-
-static const char *vgahwSymbols[] = {
-	"vgaHWFreeHWRec",
-	"vgaHWGetHWRec",
-	"vgaHWGetIOBase",
-	"vgaHWGetIndex",
-	"vgaHWHandleColormaps",
-	"vgaHWInit",
-	"vgaHWLock",
-	"vgaHWMapMem",
-	"vgaHWProtect",
-	"vgaHWRestore",
-	"vgaHWSave",
-	"vgaHWSaveScreen",
-	"vgaHWSetMmioFuncs",
-	"vgaHWSetStdFuncs",
-	"vgaHWUnlock",
-	NULL
-};
-
-#ifdef XFree86LOADER
-static const char *miscfbSymbols[] = {
-    "xf1bppScreenInit",
-    "xf4bppScreenInit",
-    NULL
-};
-#endif
-
-static const char *fbSymbols[] = {
-    "fbScreenInit",
-    "fbPictureInit",
-    NULL
-};
-
-static const char *xaaSymbols[] = {
-	"XAACreateInfoRec",
-	"XAADestroyInfoRec",
-	"XAAInit",
-	NULL
-};
-
-static const char *ramdacSymbols[] = {
-	"xf86CreateCursorInfoRec",
-	"xf86DestroyCursorInfoRec",
-	"xf86InitCursor",
-	NULL
-};
-
-static const char *int10Symbols[] = {
-    "xf86FreeInt10",
-    "xf86InitInt10",
-    NULL
-};
-
-static const char *shadowSymbols[] = {
-    "ShadowFBInit",
-    NULL
-};
-
-static const char *ddcSymbols[] = {
-	"xf86PrintEDID",
-	"xf86DoEDID_DDC2",
-	"xf86SetDDCproperties",
-	NULL
-};
-
-static const char *i2cSymbols[] = {
-	"xf86CreateI2CBusRec",
-	"xf86I2CBusInit",
-	NULL
-};
-
 #ifdef XFree86LOADER
 
 #define ALP_MAJOR_VERSION 1
@@ -270,9 +190,6 @@ alpSetup(pointer module, pointer opts, int *errmaj, int *errmin)
 	static Bool setupDone = FALSE;
 	if (!setupDone) {
 		setupDone = TRUE;
-		LoaderRefSymLists(vgahwSymbols, fbSymbols, xaaSymbols,
-				  miscfbSymbols, ramdacSymbols,int10Symbols,
-				  ddcSymbols, i2cSymbols, shadowSymbols, NULL);
 	}
 	return (pointer)1;
 }
@@ -549,8 +466,6 @@ AlpPreInit(ScrnInfoPtr pScrn, int flags)
 	if (!xf86LoadSubModule(pScrn, "vgahw"))
 		return FALSE;
 
-	xf86LoaderReqSymLists(vgahwSymbols, NULL);
-
 	/*
 	 * Allocate a vgaHWRec
 	 */
@@ -582,7 +497,6 @@ AlpPreInit(ScrnInfoPtr pScrn, int flags)
 			      PCI_DEV_FUNC(pCir->PciInfo));
 
     if (xf86LoadSubModule(pScrn, "int10")) {
-	xf86LoaderReqSymLists(int10Symbols,NULL);
 	xf86DrvMsg(pScrn->scrnIndex,X_INFO,"initializing int10\n");
 	pInt = xf86InitInt10(pCir->pEnt->index);
 	xf86FreeInt10(pInt);
@@ -803,13 +717,11 @@ AlpPreInit(ScrnInfoPtr pScrn, int flags)
 	 AlpFreeRec(pScrn);
  	return FALSE;
      }
-     xf86LoaderReqSymLists(i2cSymbols,NULL);
  
      if (!xf86LoadSubModule(pScrn, "ddc")) {
  	AlpFreeRec(pScrn);
  	return FALSE;
      }
-     xf86LoaderReqSymLists(ddcSymbols, NULL);
  
      if(!AlpI2CInit(pScrn)) {
          xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
@@ -1102,7 +1014,6 @@ AlpPreInit(ScrnInfoPtr pScrn, int flags)
 	        AlpFreeRec(pScrn);
 		return FALSE;
 	    } 
-	    xf86LoaderReqSymbols("xf1bppScreenInit",NULL);
 	    break;
 #endif
 #ifdef HAVE_XF4BPP
@@ -1111,7 +1022,6 @@ AlpPreInit(ScrnInfoPtr pScrn, int flags)
 	        AlpFreeRec(pScrn);
 		return FALSE;
 	    } 
-	    xf86LoaderReqSymbols("xf4bppScreenInit",NULL);	    
 	    break;
 #endif
 	case 8:
@@ -1122,7 +1032,6 @@ AlpPreInit(ScrnInfoPtr pScrn, int flags)
 	        AlpFreeRec(pScrn);
 		return FALSE;
 	    } 
-	    xf86LoaderReqSymLists(fbSymbols, NULL);
 	    break;
 	}
 
@@ -1132,7 +1041,6 @@ AlpPreInit(ScrnInfoPtr pScrn, int flags)
 			AlpFreeRec(pScrn);
 			return FALSE;
 		}
-		xf86LoaderReqSymLists(xaaSymbols, NULL);
 	}
 
 	/* Load ramdac if needed */
@@ -1141,7 +1049,6 @@ AlpPreInit(ScrnInfoPtr pScrn, int flags)
 			AlpFreeRec(pScrn);
 			return FALSE;
 		}
-		xf86LoaderReqSymLists(ramdacSymbols, NULL);
 	}
 
 	if (pCir->shadowFB) {
@@ -1149,7 +1056,6 @@ AlpPreInit(ScrnInfoPtr pScrn, int flags)
 		AlpFreeRec(pScrn);
 		return FALSE;
 	    }
-	    xf86LoaderReqSymLists(shadowSymbols, NULL);
 	}
 
 	return TRUE;

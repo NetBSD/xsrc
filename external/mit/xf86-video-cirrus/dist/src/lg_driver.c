@@ -45,6 +45,9 @@
 /* All drivers initialising the SW cursor need this */
 #include "mipointer.h"
 
+/* need this for inputInfo */
+#include "inputstr.h"
+
 /* All drivers implementing backing store need this */
 #include "mibstore.h"
 
@@ -161,80 +164,6 @@ static int LgLinePitches[4][11] = {
 	/* 32 */ { 160,  256,  320,  416,  512,  640,  832, 1024, 1280, 1664, 0 }
 };
 
-/*
- * List of symbols from other modules that this module references.  This
- * list is used to tell the loader that it is OK for symbols here to be
- * unresolved providing that it hasn't been told that they haven't been
- * told that they are essential via a call to xf86LoaderReqSymbols() or
- * xf86LoaderReqSymLists().  The purpose is this is to avoid warnings about
- * unresolved symbols that are not required.
- */
-
-static const char *vgahwSymbols[] = {
-	"vgaHWFreeHWRec",
-	"vgaHWGetHWRec",
-	"vgaHWGetIOBase",
-	"vgaHWGetIndex",
-	"vgaHWHandleColormaps",
-	"vgaHWInit",
-	"vgaHWLock",
-	"vgaHWMapMem",
-	"vgaHWProtect",
-	"vgaHWRestore",
-	"vgaHWSave",
-	"vgaHWSaveScreen",
-	"vgaHWUnlock",
-	NULL
-};
-
-static const char *fbSymbols[] = {
-	"fbScreenInit",
-	"fbPictureInit",
-	NULL
-};
-
-static const char *xaaSymbols[] = {
-	"XAACreateInfoRec",
-	"XAADestroyInfoRec",
-	"XAAInit",
-	NULL
-};
-
-static const char *ramdacSymbols[] = {
-	"xf86CreateCursorInfoRec",
-	"xf86DestroyCursorInfoRec",
-	"xf86InitCursor",
-	NULL
-};
-
-#define LGuseI2C 1
-
-static const char *ddcSymbols[] = {
-	"xf86PrintEDID",
-#if LGuseI2C
-	"xf86DoEDID_DDC2",
-#endif
-	"xf86SetDDCproperties",
-	NULL
-};
-
-static const char *i2cSymbols[] = {
-	"xf86CreateI2CBusRec",
-	"xf86I2CBusInit",
-	NULL
-};
-
-static const char *int10Symbols[] = {
-	"xf86FreeInt10",
-	"xf86InitInt10",
-	NULL
-};
-
-static const char *shadowSymbols[] = {
-    "ShadowFBInit",
-    NULL
-};
-
 #ifdef XFree86LOADER
 
 #define LG_MAJOR_VERSION 1
@@ -274,9 +203,6 @@ lgSetup(pointer module, pointer opts, int *errmaj, int *errmin)
     
     if (!setupDone) {
 	setupDone = TRUE;
-	LoaderRefSymLists(vgahwSymbols, fbSymbols, xaaSymbols,
-			  ramdacSymbols, ddcSymbols, i2cSymbols,
-			  int10Symbols, NULL);
     }
     return (pointer)1;
 }
@@ -430,8 +356,6 @@ LgPreInit(ScrnInfoPtr pScrn, int flags)
 	if (!xf86LoadSubModule(pScrn, "vgahw"))
 		return FALSE;
 
-	xf86LoaderReqSymLists(vgahwSymbols, NULL);
-
 	/*
 	 * Allocate a vgaHWRec
 	 */
@@ -463,7 +387,6 @@ LgPreInit(ScrnInfoPtr pScrn, int flags)
 
 	if (xf86LoadSubModule(pScrn, "int10")) {
 	    xf86Int10InfoPtr int10InfoPtr;
-	    xf86LoaderReqSymLists(int10Symbols, NULL);
 	    
 	    int10InfoPtr = xf86InitInt10(pCir->pEnt->index);
 
@@ -666,14 +589,12 @@ LgPreInit(ScrnInfoPtr pScrn, int flags)
 		LgFreeRec(pScrn);
 		return FALSE;
 	}
-	xf86LoaderReqSymLists(ddcSymbols, NULL);
 
 #if LGuseI2C
 	if (!xf86LoadSubModule(pScrn, "i2c")) {
 		LgFreeRec(pScrn);
 		return FALSE;
 	}
-	xf86LoaderReqSymLists(i2cSymbols, NULL);
 #endif
 
 	/* Read and print the monitor DDC information */
@@ -866,7 +787,6 @@ LgPreInit(ScrnInfoPtr pScrn, int flags)
 	         LgFreeRec(pScrn);
 		 return FALSE;
 	    }
-	    xf86LoaderReqSymLists(fbSymbols, NULL);
 	    break;
 	}
 
@@ -876,7 +796,6 @@ LgPreInit(ScrnInfoPtr pScrn, int flags)
 			LgFreeRec(pScrn);
 			return FALSE;
 		}
-		xf86LoaderReqSymLists(xaaSymbols, NULL);
 	}
 
 	/* Load ramdac if needed */
@@ -885,7 +804,6 @@ LgPreInit(ScrnInfoPtr pScrn, int flags)
 			LgFreeRec(pScrn);
 			return FALSE;
 		}
-		xf86LoaderReqSymLists(ramdacSymbols, NULL);
 	}
 
 	if (pCir->shadowFB) {
@@ -893,7 +811,6 @@ LgPreInit(ScrnInfoPtr pScrn, int flags)
 		LgFreeRec(pScrn);
 		return FALSE;
 	    }
-	    xf86LoaderReqSymLists(shadowSymbols, NULL);
 	}
 	
 	return TRUE;
