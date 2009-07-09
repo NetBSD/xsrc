@@ -1,3 +1,14 @@
+commit 66c56ab10d917e3f47f93178d7eac6430970d3c4
+Author: Ian Romanick <idr@freedesktop.org>
+Date:   Mon Apr 20 21:16:24 2009 -0700
+
+    Add protocol for DRI2GetBuffersWithFormat
+    
+    This function replaces DRI2GetBuffers.
+    
+    Signed-off-by: Ian Romanick <ian.d.romanick@intel.com>
+    Reviewed-by: Kristian Høgsberg <krh@redhat.com>
+
 commit a223ab5e6a215d86e4bf072369b331506f689f83
 Author: Kristian Høgsberg <krh@redhat.com>
 Date:   Mon Apr 20 14:08:19 2009 -0400
