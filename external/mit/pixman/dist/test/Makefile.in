@@ -42,8 +42,8 @@ host_triplet = @host@
 @HAVE_GTK_TRUE@	convolution-test	\
 @HAVE_GTK_TRUE@	trap-test
 
-@HAVE_GTK_TRUE@noinst_PROGRAMS = $(am__EXEEXT_2)
 @HAVE_GTK_TRUE@am__append_2 = $(GTK_CFLAGS)
+noinst_PROGRAMS = $(am__EXEEXT_2)
 subdir = test
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4

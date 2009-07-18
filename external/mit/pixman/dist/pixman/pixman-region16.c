@@ -44,8 +44,8 @@ typedef struct {
 
 #include "pixman-region.c"
 
-/* This function exists only to make it possible to preserve the X ABI - it should
- * go away at first opportunity.
+/* This function exists only to make it possible to preserve the X ABI -
+ * it should go away at first opportunity.
  *
  * The problem is that the X ABI exports the three structs and has used
  * them through macros. So the X server calls this function with
@@ -57,7 +57,7 @@ pixman_region_set_static_pointers (pixman_box16_t *empty_box,
 				   pixman_region16_data_t *empty_data,
 				   pixman_region16_data_t *broken_data)
 {
-    pixman_region_emptyBox = empty_box;
-    pixman_region_emptyData = empty_data;
-    pixman_brokendata = broken_data;
+    pixman_region_empty_box = empty_box;
+    pixman_region_empty_data = empty_data;
+    pixman_broken_data = broken_data;
 }
