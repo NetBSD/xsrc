@@ -1,9 +1,9 @@
 #                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 
-AC_PREREQ(2.57)
+AC_PREREQ(2.60)
 AC_INIT([libX11],
-        1.2,
+        1.2.2,
         [https://bugs.freedesktop.org/enter_bug.cgi?product=xorg],
         libX11)
 AC_CONFIG_SRCDIR([Makefile.am])
@@ -17,6 +17,11 @@ AC_CONFIG_HEADER([include/X11/XlibConf.h])
 # Require xorg-macros: XORG_CWARNFLAGS, XORG_CHANGELOG, XORG_WITH_LINT
 m4_ifndef([XORG_MACROS_VERSION], [AC_FATAL([must install xorg-macros 1.2 or later before running autoconf/autogen])])
 XORG_MACROS_VERSION(1.2)
+
+# Set common system defines for POSIX extensions, such as _GNU_SOURCE
+# Must be called before any macros that run the compiler (like AC_PROG_LIBTOOL)
+# to avoid autoconf errors.
+AC_USE_SYSTEM_EXTENSIONS
 
 # Checks for programs.
 AC_PROG_LIBTOOL
@@ -49,6 +54,7 @@ AC_SUBST(XPROTO_CFLAGS)
 case "$ac_cv_use_xcb" in
 no)
 	X11_REQUIRES="xau xcmiscproto bigreqsproto"
+	X11_EXTRA_DEPS="xau xdmcp"
 	PKG_CHECK_MODULES(XDMCP, xdmcp)
 	AC_CHECK_LIB(Xdmcp, XdmcpWrap, [xdmauth="yes"], [xdmauth="no"], [$XDMCP_LIBS])
 	AC_DEFINE(USE_XCB, 0, [Use XCB for low-level protocol implementation])
@@ -363,14 +369,6 @@ if test "x$GCC" = "xyes"; then
 	X11_CFLAGS="$GCC_WARNINGS $X11_CFLAGS"
 fi
 
-AC_TRY_COMPILE([
-#include <features.h>
-#ifndef __GLIBC__
-#error not glibc
-#endif
-], [], [AC_DEFINE(_GNU_SOURCE, 1,
-    [ Enable GNU and other extensions to the C environment for glibc])])
-
 X11_DATADIR="${datadir}/X11"
 AC_DEFINE_DIR(X11_DATADIR, X11_DATADIR, [Location of libX11 data])
 AC_SUBST(X11_DATADIR)
@@ -395,7 +393,10 @@ X11_LOCALEDATADIR="${X11_DATADIR}/locale"
 AC_DEFINE_DIR(XLOCALEDATADIR, X11_LOCALEDATADIR, [Location of libX11 locale data])
 AC_SUBST(X11_LOCALEDATADIR)
 
-X11_LOCALELIBDIR="${X11_LIBDIR}/locale"
+AC_ARG_WITH(locale-lib-dir,	AS_HELP_STRING([--with-locale-lib-dir=DIR],
+ [Directory where locale libraries files are installed (default: $libdir/X11/locale)]),
+				[ X11_LOCALELIBDIR="$withval" ],
+				[ X11_LOCALELIBDIR="${X11_LIBDIR}/locale" ])
 AC_DEFINE_DIR(XLOCALELIBDIR, X11_LOCALELIBDIR, [Location of libX11 locale libraries])
 AC_SUBST(X11_LOCALELIBDIR)
 
@@ -439,6 +440,7 @@ AC_OUTPUT([Makefile
 	   nls/C/Makefile
 	   nls/el_GR.UTF-8/Makefile
 	   nls/en_US.UTF-8/Makefile
+	   nls/fi_FI.UTF-8/Makefile
 	   nls/georgian-academy/Makefile
 	   nls/georgian-ps/Makefile
 	   nls/ibm-cp1133/Makefile
@@ -476,6 +478,7 @@ AC_OUTPUT([Makefile
 	   nls/mulelao-1/Makefile
 	   nls/nokhchi-1/Makefile
 	   nls/pt_BR.UTF-8/Makefile
+	   nls/ru_RU.UTF-8/Makefile
 	   nls/tatar-cyr/Makefile
 	   nls/th_TH/Makefile
 	   nls/th_TH.UTF-8/Makefile

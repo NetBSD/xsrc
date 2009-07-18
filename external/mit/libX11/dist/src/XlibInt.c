@@ -137,11 +137,7 @@ xthread_t (*_Xthread_self_fn)(void) = NULL;
 #define ECHECK(err) (errno == err)
 #define ESET(val)
 #else
-#ifdef ISC
-#define ECHECK(err) ((errno == err) || ETEST())
-#else
 #define ECHECK(err) (errno == err)
-#endif
 #define ESET(val) errno = val
 #endif
 #endif
@@ -299,7 +295,7 @@ _XWaitForWritable(
 	    nfound = Select (dpy->fd + 1, &r_mask, &w_mask, NULL, NULL);
 #endif
 	    InternalLockDisplay(dpy, cv != NULL);
-	    if (nfound < 0 && !ECHECK(EINTR))
+	    if (nfound < 0 && !(ECHECK(EINTR) || ETEST()))
 		_XIOError(dpy);
 	} while (nfound <= 0);
 
@@ -511,7 +507,7 @@ _XWaitForReadable(
 	result = Select(highest_fd + 1, &r_mask, NULL, NULL, NULL);
 #endif
 	InternalLockDisplay(dpy, dpy->flags & XlibDisplayReply);
-	if (result == -1 && !ECHECK(EINTR)) _XIOError(dpy);
+	if (result == -1 && !(ECHECK(EINTR) || ETEST())) _XIOError(dpy);
 	if (result <= 0)
 	    continue;
 #ifdef USE_POLL
@@ -842,7 +838,7 @@ _XEventsQueued(
 		    if (!pend)
 			pend = SIZEOF(xReply);
 		}
-		else if (result < 0 && !ECHECK(EINTR))
+		else if (result < 0 && !(ECHECK(EINTR) || ETEST()))
 		    _XIOError(dpy);
 	    }
 	}
@@ -3235,7 +3231,7 @@ void _XData32(
  *       and so, you may be better off using gethostname (if it exists).
  */
 
-#if (defined(_POSIX_SOURCE) && !defined(AIXV3) && !defined(__QNX__)) || defined(hpux) || defined(USG) || defined(SVR4)
+#if (defined(_POSIX_SOURCE) && !defined(AIXV3) && !defined(__QNX__)) || defined(hpux) || defined(SVR4)
 #define NEED_UTSNAME
 #include <sys/utsname.h>
 #endif
@@ -3286,7 +3282,7 @@ Screen *_XScreenOfWindow(Display *dpy, Window w)
 
     if (XGetGeometry (dpy, w, &root, &x, &y, &width, &height,
 		      &bw, &depth) == False) {
-	return None;
+	return NULL;
     }
     for (i = 0; i < ScreenCount (dpy); i++) {	/* find root from list */
 	if (root == RootWindow (dpy, i)) {
