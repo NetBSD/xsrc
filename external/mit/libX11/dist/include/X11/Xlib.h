@@ -38,20 +38,7 @@ in this Software without prior written authorization from The Open Group.
 
 #define XlibSpecificationRelease 6
 
-#ifdef USG
-#ifndef __TYPES__
-#include <sys/types.h>			/* forgot to protect it... */
-#define __TYPES__
-#endif /* __TYPES__ */
-#else
-#if defined(_POSIX_SOURCE) && defined(MOTOROLA)
-#undef _POSIX_SOURCE
 #include <sys/types.h>
-#define _POSIX_SOURCE
-#else
-#include <sys/types.h>
-#endif
-#endif /* USG */
 
 #if defined(__SCO__) || defined(__UNIXWARE__)
 #include <stdint.h>
@@ -62,14 +49,6 @@ in this Software without prior written authorization from The Open Group.
 /* applications should not depend on these two headers being included! */
 #include <X11/Xfuncproto.h>
 #include <X11/Xosdefs.h>
-
-#ifndef X_WCHAR
-#ifdef X_NOT_STDC_ENV
-#ifndef ISC
-#define X_WCHAR
-#endif
-#endif
-#endif
 
 #ifndef X_WCHAR
 #include <stddef.h>

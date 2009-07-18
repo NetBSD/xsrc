@@ -36,9 +36,6 @@ from The Open Group.
 #include <X11/keysymdef.h>
 #include <stdio.h>
 #include <stdlib.h>
-#if defined(macII) && !defined(__STDC__)  /* stdlib.h fails to define these */
-char *malloc();
-#endif /* macII */
 
 typedef unsigned long Signature;
 
@@ -103,12 +100,11 @@ main(int argc, char *argv[])
 		    key);
 	    continue;
 	}
-	name = malloc((unsigned)strlen(key)+1);
+	name = strdup(key);
 	if (!name) {
 	    fprintf(stderr, "makekeys: out of memory!\n");
 	    exit(1);
 	}
-	(void)strcpy(name, key);
 	info[ksnum].name = name;
 	ksnum++;
 	if (ksnum == KTNUM) {
@@ -157,6 +153,11 @@ next1:	;
     }
 
     z = best_z;
+    if (z == 0) {
+	fprintf(stderr, "makekeys: failed to find small enough hash!\n"
+		"Try increasing KTNUM in makekeys.c\n");
+	exit(1);
+    }
     printf("#ifdef NEEDKTABLE\n");
     printf("const unsigned char _XkeyTable[] = {\n");
     printf("0,\n");
@@ -237,6 +238,11 @@ next2:	;
     }
 
     z = best_z;
+    if (z == 0) {
+	fprintf(stderr, "makekeys: failed to find small enough hash!\n"
+		"Try increasing KTNUM in makekeys.c\n");
+	exit(1);
+    }
     for (i = z; --i >= 0;)
 	offsets[i] = 0;
     for (i = 0; i < ksnum; i++) {
