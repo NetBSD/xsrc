@@ -54,7 +54,7 @@ AC_PREREQ([2.57])
 
 m4_define([pixman_major], 0)
 m4_define([pixman_minor], 15)
-m4_define([pixman_micro], 14)
+m4_define([pixman_micro], 16)
 
 m4_define([pixman_version],[pixman_major.pixman_minor.pixman_micro])
 
@@ -327,7 +327,7 @@ AM_CONDITIONAL(USE_VMX, test $have_vmx_intrinsics = yes)
 
 dnl ===========================================================================
 dnl Check for ARM SIMD instructions
-ARM_SIMD_CFLAGS="-march=armv6"
+ARM_SIMD_CFLAGS="-mcpu=arm1136j-s"
 
 have_arm_simd=no
 AC_MSG_CHECKING(whether to use ARM SIMD assembler)
