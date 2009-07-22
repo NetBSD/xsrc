@@ -968,6 +968,8 @@ __glXDRIscreenProbe(ScreenPtr pScreen)
     const __DRIextension **extensions;
     int i;
 
+    memset(&framebuffer, 0, sizeof(framebuffer));
+
     if (!xf86LoaderCheckSymbol("DRIQueryDirectRenderingCapable") ||
 	!DRIQueryDirectRenderingCapable(pScreen, &isCapable) ||
 	!isCapable) {
