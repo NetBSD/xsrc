@@ -180,9 +180,14 @@ xf86AddBusDeviceToConfigure(const char *driver, BusType bus, void *busData, int 
 
 	NewDevice.GDev.busID = xnfalloc(16);
 	xf86FormatPciBusNumber(pVideo->bus, busnum);
-	sprintf(NewDevice.GDev.busID, "PCI:%s:%d:%d",
-	    busnum, pVideo->dev, pVideo->func);
-
+	if (pVideo->domain == 0) {
+		snprintf(NewDevice.GDev.busID, 16, "PCI:%s:%d:%d",
+		    busnum, pVideo->dev, pVideo->func);
+	} else {
+		snprintf(NewDevice.GDev.busID, 16, "PCI:%s@%d:%d:%d",
+		    busnum, pVideo->domain, pVideo->dev, pVideo->func);
+	}
+	
 	NewDevice.GDev.chipID = pVideo->device_id;
 	NewDevice.GDev.chipRev = pVideo->revision;
 
@@ -234,6 +239,12 @@ configureInputSection (void)
     ptr->inp_identifier = "Keyboard0";
     ptr->inp_driver = "kbd";
     ptr->list.next = NULL;
+#if defined(WSCONS_SUPPORT) && !defined(__i386__) && !defined(__amd64__)
+    ptr->inp_option_lst = xf86addNewOption(ptr->inp_option_lst,
+        xstrdup("Protocol"), "wskbd");
+    ptr->inp_option_lst = xf86addNewOption(ptr->inp_option_lst,
+        xstrdup("Device"), "/dev/wskbd");
+#endif
 
     /* Crude mechanism to auto-detect mouse (os dependent) */
     { 
