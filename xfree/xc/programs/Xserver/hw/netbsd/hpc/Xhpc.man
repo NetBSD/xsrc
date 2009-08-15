@@ -1,4 +1,4 @@
-.\" $NetBSD: Xhpc.man,v 1.5 2008/04/30 13:48:30 martin Exp $
+.\" $NetBSD: Xhpc.man,v 1.6 2009/08/15 03:58:10 uwe Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -70,9 +70,9 @@ the touch panel can emulate 3-button mouse.
 .Bl -tag -width Fl
 .It Fl "just touch"
 = click left button
-.It Fl "[win] + touch + 2 "
+.It Fl "[Menu] + touch + 2"
 = click middle button
-.It Fl "[win] + touch + 3"
+.It Fl "[Menu] + touch + 3"
 = click right button
 .El
 Also, you can use 4th and 5th button.
