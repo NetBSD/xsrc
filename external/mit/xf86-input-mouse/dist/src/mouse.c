@@ -128,9 +128,8 @@ typedef struct _DragLockRec {
 } DragLockRec, *DragLockPtr;
 
 
-#ifdef __NetBSD__
+
 static const OptionInfoRec *MouseAvailableOptions(void *unused);
-#endif
 static InputInfoPtr MousePreInit(InputDriverPtr drv, IDevPtr dev, int flags);
 #if 0
 static void MouseUnInit(InputDriverPtr drv, InputInfoPtr pInfo, int flags);
@@ -178,7 +177,6 @@ _X_EXPORT InputDriverRec MOUSE = {
 	0
 };
 
-#ifdef __NetBSD__
 typedef enum {
     OPTION_ALWAYS_CORE,
     OPTION_SEND_CORE_EVENTS,
@@ -263,7 +261,6 @@ static const OptionInfoRec mouseOptions[] = {
     { OPTION_SENSITIVITY,      "Sensitivity",     OPTV_REAL,    {0}, FALSE },
     { -1,			NULL,		  OPTV_NONE,	{0}, FALSE }
 };
-#endif
 
 #define RETRY_COUNT 4
 
@@ -380,14 +377,12 @@ static MouseProtocolRec mouseProtocols[] = {
     { NULL,			MSE_NONE,	NULL,		PROT_UNKNOWN }
 };
 
-#ifdef __NetBSD__
 /*ARGSUSED*/
 static const OptionInfoRec *
 MouseAvailableOptions(void *unused)
 {
     return (mouseOptions);
 }
-#endif
 
 /* Process options common to all mouse types. */
 static void
@@ -876,7 +871,6 @@ ProtocolIDToName(MouseProtocolID id)
     }
 }
 
-#ifdef __NetBSD__
 _X_EXPORT const char *
 xf86MouseProtocolIDToName(MouseProtocolID id)
 {
@@ -888,7 +882,6 @@ xf86MouseProtocolNameToID(const char *name)
 {
     return ProtocolNameToID(name);
 }
-#endif
 
 static int
 ProtocolIDToClass(MouseProtocolID id)
@@ -1764,11 +1757,9 @@ MouseProc(DeviceIntPtr device, int what)
 	    xf86Msg(X_WARNING, "%s: cannot open input device\n", pInfo->name);
 	else {
 #if defined(__NetBSD__) && defined(WSCONS_SUPPORT) && defined(WSMOUSEIO_SETVERSION)
-	    if (!strcasecmp(pMse->protocol, "wsmouse")) {
-	        int version = WSMOUSE_EVENT_VERSION;
-	        if (ioctl(pInfo->fd, WSMOUSEIO_SETVERSION, &version) == -1)
-	            xf86Msg(X_WARNING, "%s: cannot set version\n", pInfo->name);
-            }
+	     int version = WSMOUSE_EVENT_VERSION;
+	     if (ioctl(pInfo->fd, WSMOUSEIO_SETVERSION, &version) == -1)
+	         xf86Msg(X_WARNING, "%s: cannot set version\n", pInfo->name);
 #endif
 	    if (pMse->xisbscale)
 		pMse->buffer = XisbNew(pInfo->fd, pMse->xisbscale * 4);
@@ -3769,7 +3760,7 @@ collectData(MouseDevPtr pMse, unsigned char u)
 /**************** end of autoprobe stuff *****************/
 
 
-#ifdef __NetBSD__
+
 ModuleInfoRec MouseInfo = {
     1,
     "MOUSE",
@@ -3777,7 +3768,6 @@ ModuleInfoRec MouseInfo = {
     0,
     MouseAvailableOptions,
 };
-#endif
 
 static void
 xf86MouseUnplug(pointer	p)
