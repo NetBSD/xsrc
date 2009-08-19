@@ -2062,6 +2062,19 @@ Emulate3ButtonsSoft(InputInfoPtr pInfo)
     if (!pMse->emulate3ButtonsSoft)
 	return TRUE;
 
+#if defined(__NetBSD__) && defined(WSCONS_SUPPORT)
+   /*
+    * XXXX - check for pMse->protocolID being wsmouse? Why doesn't it
+    * have it's own ID?
+    * On NetBSD a wsmouse is a multiplexed device. Imagine a notebook
+    * with two-button mousepad, and an external USB mouse plugged in
+    * temporarily. After using button 3 on the external mouse and
+    * unplugging it again, the mousepad will still need to emulate
+    * 3 buttons.
+    */
+   return TRUE;
+#endif
+
     pMse->emulate3Buttons = FALSE;
     
     if (pMse->emulate3Pending)
