@@ -31,7 +31,10 @@
 /* All drivers should typically include these */
 #include "xf86.h"
 #include "xf86_OSproc.h"
+#if GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) < 6
 #include "xf86Resources.h"
+#include "xf86RAC.h"
+#endif
 
 #include "compiler.h"
 
@@ -52,7 +55,6 @@
 #include "micmap.h"
 
 #include "xf86DDC.h"
-#include "xf86RAC.h"
 #include "vbe.h"
 
 #include "xaa.h"
@@ -723,12 +725,14 @@ I128PreInit(ScrnInfoPtr pScrn, int flags)
     xf86DrvMsg(pScrn->scrnIndex, X_PROBED, "MMIO registers at 0x%lX\n",
 	       (unsigned long)PCI_REGION_BASE(pI128->PciInfo, 5, REGION_IO));
 
+#ifndef XSERVER_LIBPCIACCESS
     if (xf86RegisterResources(pI128->pEnt->index, NULL, ResExclusive)) {
 	xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
 		"xf86RegisterResources() found resource conflicts\n");
 	I128FreeRec(pScrn);
 	return FALSE;
     }
+#endif
 
     /* HW bpp matches reported bpp */
     pI128->bitsPerPixel = pScrn->bitsPerPixel;
