@@ -36,8 +36,10 @@
 /* This driver needs to be modified to not use vgaHW for multihead operation */
 #include "vgaHW.h"
 
+#if GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) < 6
 #include "xf86RAC.h"
 #include "xf86Resources.h"
+#endif
 
 /* All drivers initialising the SW cursor need this */
 #include "mipointer.h"
@@ -695,7 +697,8 @@ AlpPreInit(ScrnInfoPtr pScrn, int flags)
  			(unsigned long)pCir->IOAddress);
  	} else 
  	    xf86DrvMsg(pScrn->scrnIndex, from1, "Not Using MMIO\n");
-     
+
+#ifndef XSERVER_LIBPCIACCESS
      /*
       * XXX Check if this is correct
       */
@@ -712,6 +715,7 @@ AlpPreInit(ScrnInfoPtr pScrn, int flags)
 		    "xf86RegisterResources() found resource conflicts\n");
 	 return FALSE;
      }
+#endif
 
      if (!xf86LoadSubModule(pScrn, "i2c")) {
 	 AlpFreeRec(pScrn);
