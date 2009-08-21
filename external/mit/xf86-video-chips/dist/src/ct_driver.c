@@ -85,8 +85,13 @@
 /* Drivers that need to access the PCI config space directly need this */
 #include "xf86Pci.h"
 
+#if GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) < 6
 /* Standard resources are defined here */
 #include "xf86Resources.h"
+
+/* Needed by Resources Access Control (RAC) */
+#include "xf86RAC.h"
+#endif
 
 /* All drivers using the vgahw module need this */
 #include "vgaHW.h"
@@ -113,9 +118,6 @@
 #ifdef HAVE_XF4BPP
 #include "xf4bpp.h"
 #endif
-
-/* Needed by Resources Access Control (RAC) */
-#include "xf86RAC.h"
 
 /* int10 */
 #include "xf86int10.h"
@@ -479,14 +481,14 @@ static DisplayModeRec ChipsNTSCMode = {
   { PCI_VENDOR_CHIPSTECH, (d), PCI_MATCH_ANY, PCI_MATCH_ANY, 0, 0, (i) }
 
 static const struct pci_id_match chips_device_match[] = {
-  CHIPS_DEVICE_MATCH(PCI_CHIP_65545, 0),
-  CHIPS_DEVICE_MATCH(PCI_CHIP_65548, 0),
-  CHIPS_DEVICE_MATCH(PCI_CHIP_65550, 0),
-  CHIPS_DEVICE_MATCH(PCI_CHIP_65554, 0),
-  CHIPS_DEVICE_MATCH(PCI_CHIP_65555, 0),
-  CHIPS_DEVICE_MATCH(PCI_CHIP_68554, 0),
-  CHIPS_DEVICE_MATCH(PCI_CHIP_69000, 0),
-  CHIPS_DEVICE_MATCH(PCI_CHIP_69030, 0),
+  CHIPS_DEVICE_MATCH(PCI_CHIP_65545, CHIPS_CT65545),
+  CHIPS_DEVICE_MATCH(PCI_CHIP_65548, CHIPS_CT65548),
+  CHIPS_DEVICE_MATCH(PCI_CHIP_65550, CHIPS_CT65550),
+  CHIPS_DEVICE_MATCH(PCI_CHIP_65554, CHIPS_CT65554),
+  CHIPS_DEVICE_MATCH(PCI_CHIP_65555, CHIPS_CT65555),
+  CHIPS_DEVICE_MATCH(PCI_CHIP_68554, CHIPS_CT68554),
+  CHIPS_DEVICE_MATCH(PCI_CHIP_69000, CHIPS_CT69000),
+  CHIPS_DEVICE_MATCH(PCI_CHIP_69030, CHIPS_CT69030),
   { 0, 0, 0 },
 };
 #endif
@@ -690,97 +692,6 @@ static const OptionInfoRec ChipsHiQVOptions[] = {
     { -1,			NULL,		OPTV_NONE,	{0}, FALSE }
 };
 
-/*
- * List of symbols from other modules that this module references.  This
- * list is used to tell the loader that it is OK for symbols here to be
- * unresolved providing that it hasn't been told that they haven't been
- * told that they are essential via a call to xf86LoaderReqSymbols() or
- * xf86LoaderReqSymLists().  The purpose is this is to avoid warnings about
- * unresolved symbols that are not required.
- */
-
-static const char *vgahwSymbols[] = {
-    "vgaHWAllocDefaultRegs",
-    "vgaHWFreeHWRec",
-    "vgaHWGetHWRec",
-    "vgaHWGetIOBase",
-    "vgaHWGetIndex",
-    "vgaHWHBlankKGA",
-    "vgaHWInit",
-    "vgaHWLock",
-    "vgaHWMapMem",
-    "vgaHWProtect",
-    "vgaHWRestore",
-    "vgaHWSave",
-    "vgaHWUnlock",
-    "vgaHWVBlankKGA",
-    "vgaHWddc1SetSpeedWeak",
-    NULL
-};
-
-#ifdef XFree86LOADER
-static const char *miscfbSymbols[] = {
-#ifdef HAVE_XF1BPP
-    "xf1bppScreenInit",
-#endif
-#ifdef HAVE_XF4BPP
-    "xf4bppScreenInit",
-#endif
-    "cfb8_16ScreenInit",
-    NULL
-};
-#endif
-
-static const char *fbSymbols[] = {
-    "fbScreenInit",
-    "fbPictureInit",
-    NULL
-};
-
-static const char *xaaSymbols[] = {
-    "XAACreateInfoRec",
-    "XAADestroyInfoRec",
-    "XAAInit",
-    "XAAInitDualFramebufferOverlay",
-    "XAAStippleScanlineFuncMSBFirst",
-    NULL
-};
-
-static const char *ramdacSymbols[] = {
-    "xf86CreateCursorInfoRec",
-    "xf86DestroyCursorInfoRec",
-    "xf86InitCursor",
-    NULL
-};
-
-static const char *ddcSymbols[] = {
-    "xf86DoEDID_DDC1",
-    "xf86DoEDID_DDC2",
-    "xf86PrintEDID",
-    "xf86SetDDCproperties",
-    NULL
-};
-
-static const char *i2cSymbols[] = {
-    "xf86CreateI2CBusRec",
-    "xf86I2CBusInit",
-    "xf86I2CFindBus",
-    "xf86I2CProbeAddress",
-    NULL
-};
-
-static const char *shadowSymbols[] = {
-    "ShadowFBInit",
-    NULL
-};
-
-static const char *vbeSymbols[] = {
-    "VBEInit",
-    "vbeDoEDID",
-    "vbeFree",
-    NULL
-};
-
 #ifdef XFree86LOADER
 
 static MODULESETUPPROTO(chipsSetup);
@@ -812,20 +723,12 @@ chipsSetup(pointer module, pointer opts, int *errmaj, int *errmin)
 
     if (!setupDone) {
 	setupDone = TRUE;
-        xf86AddDriver(&CHIPS, module, 0);
+        xf86AddDriver(&CHIPS, module, HaveDriverFuncs);
 
 	/*
 	 * Modules that this driver always requires can be loaded here
 	 * by calling LoadSubModule().
 	 */
-
-	/*
-	 * Tell the loader about symbols from other modules that this module
-	 * might refer to.
-	 */
-	LoaderRefSymLists(vgahwSymbols, miscfbSymbols, fbSymbols, xaaSymbols,
-			  ramdacSymbols, ddcSymbols, i2cSymbols,
-			  shadowSymbols, vbeSymbols, NULL);
 
 	/*
 	 * The return value must be non-NULL on success even though there
@@ -899,7 +802,6 @@ CHIPSPciProbe(DriverPtr drv, int entity_num, struct pci_device * dev,
 	    intptr_t match_data)
 {
     ScrnInfoPtr pScrn = NULL;
-    EntityInfoPtr pEnt;
     CHIPSPtr cPtr;
 
     /* Allocate a ScrnInfoRec and claim the slot */
@@ -920,12 +822,16 @@ CHIPSPciProbe(DriverPtr drv, int entity_num, struct pci_device * dev,
 	pScrn->FreeScreen	= CHIPSFreeScreen;
 	pScrn->ValidMode	= CHIPSValidMode;
 
+	if (!CHIPSGetRec(pScrn)) {
+		return FALSE;
+	}
+	cPtr = CHIPSPTR(pScrn);
+	cPtr->Chipset = match_data;
 	/*
 	 * For cards that can do dual head per entity, mark the entity
 	 * as sharable. 
 	 */
-	pEnt = xf86GetEntityInfo(entity_num);
-	if (pEnt->chipset == CHIPS_CT69030) {
+	if (match_data == CHIPS_CT69030) {
 	    CHIPSEntPtr cPtrEnt = NULL;
 	    DevUnion *pPriv;
 
@@ -1181,7 +1087,6 @@ CHIPSPreInit(ScrnInfoPtr pScrn, int flags)
     /* The vgahw module should be loaded here when needed */
     if (!xf86LoadSubModule(pScrn, "vgahw"))
 	return FALSE;
-    xf86LoaderReqSymLists(vgahwSymbols, NULL);
 
     /* Allocate the ChipsRec driverPrivate */
     if (!CHIPSGetRec(pScrn)) {
@@ -1200,8 +1105,14 @@ CHIPSPreInit(ScrnInfoPtr pScrn, int flags)
     /* This is the general case */
     for (i = 0; i<pScrn->numEntities; i++) {
 	cPtr->pEnt = xf86GetEntityInfo(pScrn->entityList[i]);
+#ifndef XSERVER_LIBPCIACCESS
 	if (cPtr->pEnt->resources) return FALSE;
-	cPtr->Chipset = cPtr->pEnt->chipset;
+#endif
+	/* If we are using libpciaccess this is already set in CHIPSPciProbe.
+	 * If we are using something else we need to set it here.
+	 */
+	if (!cPtr->Chipset)
+		cPtr->Chipset = cPtr->pEnt->chipset;
 	pScrn->chipset = (char *)xf86TokenToString(CHIPSChipsets,
 						   cPtr->pEnt->chipset);
 	if ((cPtr->Chipset == CHIPS_CT64200) ||
@@ -1224,7 +1135,6 @@ CHIPSPreInit(ScrnInfoPtr pScrn, int flags)
 #if 0
     if (xf86LoadSubModule(pScrn, "int10")) {
  	xf86Int10InfoPtr pInt;
-	xf86LoaderReqSymLists(int10Symbols, NULL);
 #if 1
 	xf86DrvMsg(pScrn->scrnIndex,X_INFO,"initializing int10\n");
 	pInt = xf86InitInt10(cPtr->pEnt->index);
@@ -1234,7 +1144,6 @@ CHIPSPreInit(ScrnInfoPtr pScrn, int flags)
 #endif
 
     if (xf86LoadSubModule(pScrn, "vbe")) {
-	xf86LoaderReqSymLists(vbeSymbols, NULL);
 	cPtr->pVbe =  VBEInit(NULL,cPtr->pEnt->index);
     }
     
@@ -1406,7 +1315,6 @@ CHIPSPreInit(ScrnInfoPtr pScrn, int flags)
 	    CHIPSFreeRec(pScrn);
 	    return FALSE;
 	}	
-	xf86LoaderReqSymbols("xf1bppScreenInit", NULL);
 	break;
 #endif
 #ifdef HAVE_XF4BPP
@@ -1417,7 +1325,6 @@ CHIPSPreInit(ScrnInfoPtr pScrn, int flags)
 	    CHIPSFreeRec(pScrn);
 	    return FALSE;
 	}	
-	xf86LoaderReqSymbols("xf4bppScreenInit", NULL);
 	break;
 #endif
     case 16:
@@ -1428,7 +1335,6 @@ CHIPSPreInit(ScrnInfoPtr pScrn, int flags)
 	        CHIPSFreeRec(pScrn);
 		return FALSE;
 	    }	
-	    xf86LoaderReqSymbols("cfb8_16bppScreenInit", NULL);
 	    break;
 	}
     default:
@@ -1438,7 +1344,6 @@ CHIPSPreInit(ScrnInfoPtr pScrn, int flags)
 	    CHIPSFreeRec(pScrn);
 	    return FALSE;
 	}	
-	xf86LoaderReqSymLists(fbSymbols, NULL);
 	break;
     }
     
@@ -1449,7 +1354,6 @@ CHIPSPreInit(ScrnInfoPtr pScrn, int flags)
 	    CHIPSFreeRec(pScrn);
 	    return FALSE;
 	}
-	xf86LoaderReqSymLists(xaaSymbols, NULL);
     }
 
     if (cPtr->Flags & ChipsShadowFB) {
@@ -1459,7 +1363,6 @@ CHIPSPreInit(ScrnInfoPtr pScrn, int flags)
 	    CHIPSFreeRec(pScrn);
 	    return FALSE;
 	}
-	xf86LoaderReqSymLists(shadowSymbols, NULL);
     }
     
     if (cPtr->Accel.UseHWCursor) {
@@ -1469,14 +1372,16 @@ CHIPSPreInit(ScrnInfoPtr pScrn, int flags)
 	    CHIPSFreeRec(pScrn);
 	    return FALSE;
 	}
-	xf86LoaderReqSymLists(ramdacSymbols, NULL);
     }
 
+#ifndef XSERVER_LIBPCIACCESS
     if (cPtr->Flags & ChipsLinearSupport) 
  	xf86SetOperatingState(resVgaMem, cPtr->pEnt->index, ResDisableOpr);
 
     if (cPtr->MMIOBaseVGA)
  	xf86SetOperatingState(resVgaIo, cPtr->pEnt->index, ResDisableOpr);
+#endif
+
     vbeFree(cPtr->pVbe);
     cPtr->pVbe = NULL;
     return TRUE;
@@ -1501,7 +1406,9 @@ chipsPreInitHiQV(ScrnInfoPtr pScrn, int flags)
     CHIPSPanelSizePtr Size = &cPtr->PanelSize;
     CHIPSMemClockPtr MemClk = &cPtr->MemClock;
     CHIPSClockPtr SaveClk = &(cPtr->SavedReg.Clock);
+#ifndef XSERVER_LIBPCIACCESS
     resRange linearRes[] = { {ResExcMemBlock|ResBios|ResBus,0,0},_END };
+#endif
 
     /* Set pScrn->monitor */
     pScrn->monitor = pScrn->confScreen->monitor;
@@ -1650,8 +1557,10 @@ chipsPreInitHiQV(ScrnInfoPtr pScrn, int flags)
 	        cPtr->FbAddress =  PCI_REGION_BASE(cPtr->PciInfo, 0, REGION_MEM) & 0xff800000;
 
 	    from = X_PROBED;
+#ifndef XSERVER_LIBPCIACCESS
 	    if (xf86RegisterResources(cPtr->pEnt->index,NULL,ResNone))
 		cPtr->Flags &= ~ChipsLinearSupport;
+#endif
 	} else 	{
 	    if (cPtr->pEnt->device->MemBase) {
 		cPtr->FbAddress = cPtr->pEnt->device->MemBase;
@@ -1663,12 +1572,14 @@ chipsPreInitHiQV(ScrnInfoPtr pScrn, int flags)
 				    (0x80 & (cPtr->readXR(cPtr, 0x05)))) << 16;
 		from = X_PROBED;
 	    }
+#ifndef XSERVER_LIBPCIACCESS
 	    linearRes[0].rBegin = cPtr->FbAddress;
 	    linearRes[0].rEnd = cPtr->FbAddress + 0x800000;
 	    if (xf86RegisterResources(cPtr->pEnt->index,linearRes,ResNone)) {
 		cPtr->Flags &= ~ChipsLinearSupport;
 		from = X_PROBED;
 	    }
+#endif
 	}
     }
     if (cPtr->Flags & ChipsLinearSupport) {
@@ -2028,8 +1939,6 @@ chipsPreInitHiQV(ScrnInfoPtr pScrn, int flags)
 	Bool ddc_done = FALSE;
 	xf86MonPtr pMon;
 	
-	xf86LoaderReqSymLists(ddcSymbols, NULL);
-
 	if (cPtr->pVbe) {
 	    if ((pMon 
 		 = xf86PrintEDID(vbeDoEDID(cPtr->pVbe, pVbeModule))) != NULL) {
@@ -2040,8 +1949,6 @@ chipsPreInitHiQV(ScrnInfoPtr pScrn, int flags)
 
 	if (!ddc_done)
 	    if (xf86LoadSubModule(pScrn, "i2c")) {
-		xf86LoaderReqSymLists(i2cSymbols,NULL);
-	    
 		if (chips_i2cInit(pScrn)) {
 		    if ((pMon = xf86PrintEDID(xf86DoEDID_DDC2(pScrn->scrnIndex,
 						      cPtr->I2C))) != NULL)
@@ -2560,7 +2467,9 @@ chipsPreInitWingine(ScrnInfoPtr pScrn, int flags)
     CHIPSClockPtr SaveClk = &(cPtr->SavedReg.Clock);
     Bool useLinear = FALSE;
     char *s;
+#ifndef XSERVER_LIBPCIACCESS
     resRange linearRes[] = { {ResExcMemBlock|ResBios|ResBus,0,0},_END };
+#endif
 
     /* Set pScrn->monitor */
     pScrn->monitor = pScrn->confScreen->monitor;
@@ -2756,12 +2665,14 @@ chipsPreInitWingine(ScrnInfoPtr pScrn, int flags)
 	    cPtr->FbAddress |= ((mask  & (cPtr->readXR(cPtr, 0x08))) << 16);
 	    from = X_PROBED;
 	}
+#ifndef XSERVER_LIBPCIACCESS
 	linearRes[0].rBegin = cPtr->FbAddress;
 	linearRes[0].rEnd = cPtr->FbAddress + 0x800000;
 	if (xf86RegisterResources(cPtr->pEnt->index,linearRes,ResNone)) {
 	    useLinear = FALSE;
 	    from = X_PROBED;
 	}
+#endif
     }
 
     if (useLinear) {
@@ -2872,6 +2783,7 @@ chipsPreInitWingine(ScrnInfoPtr pScrn, int flags)
 	    ErrorF("DR[%X] = %X\n",i,cPtr->Regs32[i]);
 #endif
 	}
+#ifndef XSERVER_LIBPCIACCESS
 	linearRes[0].type = ResExcIoSparse | ResBios | ResBus;
 	linearRes[0].rBase = cPtr->Regs32[0];
 	linearRes[0].rMask = 0x83FC;
@@ -2889,6 +2801,7 @@ chipsPreInitWingine(ScrnInfoPtr pScrn, int flags)
 			   "Disabling HWCursor\n");
 	    }
 	}
+#endif
     }
 
     cPtr->ClockMulFactor = ((pScrn->bitsPerPixel >= 8) ? bytesPerPixel : 1);
@@ -3002,7 +2915,6 @@ chipsPreInitWingine(ScrnInfoPtr pScrn, int flags)
     }
     
     if (xf86LoadSubModule(pScrn, "ddc")) {
-	xf86LoaderReqSymLists(ddcSymbols, NULL);
 	if (cPtr->pVbe)
 	    xf86SetDDCproperties(pScrn,xf86PrintEDID(vbeDoEDID(cPtr->pVbe, NULL)));
     }
@@ -3021,7 +2933,9 @@ chipsPreInit655xx(ScrnInfoPtr pScrn, int flags)
     CHIPSClockPtr SaveClk = &(cPtr->SavedReg.Clock);
     Bool useLinear = FALSE;
     char *s;
+#ifndef XSERVER_LIBPCIACCESS
     resRange linearRes[] = { {ResExcMemBlock|ResBios|ResBus,0,0},_END };
+#endif
     
     /* Set pScrn->monitor */
     pScrn->monitor = pScrn->confScreen->monitor;
@@ -3217,9 +3131,12 @@ chipsPreInit655xx(ScrnInfoPtr pScrn, int flags)
 	}
 	if (cPtr->pEnt->location.type == BUS_PCI) {
 	    cPtr->FbAddress =  PCI_REGION_BASE(cPtr->PciInfo, 0, REGION_MEM) & 0xff800000;
-	    if (xf86RegisterResources(cPtr->pEnt->index,NULL,ResNone))
-		useLinear = FALSE;
+#ifndef XSERVER_LIBPCIACCESS
+	    if (xf86RegisterResources(cPtr->pEnt->index,NULL,ResNone)) {
+	        useLinear = FALSE;
 		from = X_PROBED;
+	    }
+#endif
 	} else {
 	    if (cPtr->pEnt->device->MemBase) {
 		cPtr->FbAddress = cPtr->pEnt->device->MemBase;
@@ -3243,12 +3160,14 @@ chipsPreInit655xx(ScrnInfoPtr pScrn, int flags)
 		}
 		from = X_PROBED;
 	    }
+#ifndef XSERVER_LIBPCIACCESS
 	    linearRes[0].rBegin = cPtr->FbAddress;
 	    linearRes[0].rEnd = cPtr->FbAddress + 0x800000;
 	    if (xf86RegisterResources(cPtr->pEnt->index,linearRes,ResNone)) {
 		useLinear = FALSE;
 		from = X_PROBED;
 	    }
+#endif
 	}
     }
     
@@ -3548,6 +3467,7 @@ chipsPreInit655xx(ScrnInfoPtr pScrn, int flags)
 	    ErrorF("DR[%X] = %X\n",i,cPtr->Regs32[i]);
 #endif
 	}
+#ifndef XSERVER_LIBPCIACCESS
 	linearRes[0].type = ResExcIoSparse | ResBios | ResBus;
 	linearRes[0].rBase = cPtr->Regs32[0];
 	linearRes[0].rMask = 0x83FC;
@@ -3565,6 +3485,7 @@ chipsPreInit655xx(ScrnInfoPtr pScrn, int flags)
 			   "Disabling HWCursor\n");
 	    }
 	}
+#endif
     }
 
     /* sync reset ignored on this chipset */
@@ -3775,7 +3696,6 @@ chipsPreInit655xx(ScrnInfoPtr pScrn, int flags)
 		       "Memory clock option not supported for this chipset\n");
     
     if (xf86LoadSubModule(pScrn, "ddc")) {
-	xf86LoaderReqSymLists(ddcSymbols, NULL);
 	if (cPtr->pVbe)
 	    xf86SetDDCproperties(pScrn,xf86PrintEDID(vbeDoEDID(cPtr->pVbe, NULL)));
     }
@@ -4482,12 +4402,14 @@ CHIPSScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 	    return FALSE;
     }
     
+#ifndef XSERVER_LIBPCIACCESS
     racflag = RAC_COLORMAP;
     if (cAcl->UseHWCursor)
         racflag |= RAC_CURSOR;
     racflag |= (RAC_FB | RAC_VIEWPORT);
     /* XXX Check if I/O and Mem flags need to be the same. */
     pScrn->racIoFlags = pScrn->racMemFlags = racflag;
+#endif
 #ifdef ENABLE_SILKEN_MOUSE
 	xf86SetSilkenMouse(pScreen);
 #endif
