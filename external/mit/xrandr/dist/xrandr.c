@@ -37,6 +37,8 @@
 #include <stdarg.h>
 #include <math.h>
 
+#include "config.h"
+
 #if RANDR_MAJOR > 1 || (RANDR_MAJOR == 1 && RANDR_MINOR >= 2)
 #define HAS_RANDR_1_2 1
 #endif
@@ -1436,6 +1438,15 @@ apply (void)
     int	    c;
     
     /*
+     * Hold the server grabbed while messing with
+     * the screen so that apps which notice the resize
+     * event and ask for xinerama information from the server
+     * receive up-to-date information
+     */
+    if (grab_server)
+	XGrabServer (dpy);
+    
+    /*
      * Turn off any crtcs which are to be disabled or which are
      * larger than the target size
      */
@@ -1481,15 +1492,6 @@ apply (void)
 	    panic (s, crtc);
     }
 
-    /*
-     * Hold the server grabbed while messing with
-     * the screen so that apps which notice the resize
-     * event and ask for xinerama information from the server
-     * receive up-to-date information
-     */
-    if (grab_server)
-	XGrabServer (dpy);
-    
     /*
      * Set the screen size
      */
@@ -1628,7 +1630,7 @@ mark_changing_crtcs (void)
 /*
  * Test whether 'crtc' can be used for 'output'
  */
-Bool
+static Bool
 check_crtc_for_output (crtc_t *crtc, output_t *output)
 {
     int		c;
@@ -2521,6 +2523,8 @@ main (int argc, char **argv)
 	if (setit && !setit_1_2)
 	    query_1 = True;
     }
+    if (version)
+	printf("xrandr program version       " VERSION "\n");
 
     dpy = XOpenDisplay (display_name);
 
