@@ -39,8 +39,10 @@
 /* This driver needs to be modified to not use vgaHW for multihead operation */
 #include "vgaHW.h"
 
+#if GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) < 6
 #include "xf86RAC.h"
 #include "xf86Resources.h"
+#endif
 
 /* All drivers initialising the SW cursor need this */
 #include "mipointer.h"
@@ -573,6 +575,7 @@ LgPreInit(ScrnInfoPtr pScrn, int flags)
 	pCir->FbMapSize = pScrn->videoRam * 1024;
 	pCir->IoMapSize = 0x4000;	/* 16K for moment,  will increase */
 
+#ifndef XSERVER_LIBPCIACCESS
 	pScrn->racIoFlags =   RAC_COLORMAP 
 #ifndef EXPERIMENTAL
 	  | RAC_VIEWPORT
@@ -586,7 +589,7 @@ LgPreInit(ScrnInfoPtr pScrn, int flags)
 			"xf86RegisterResources() found resource conflicts\n");
 		return FALSE;
 	}
-
+#endif
 	if (!xf86LoadSubModule(pScrn, "ddc")) {
 		LgFreeRec(pScrn);
 		return FALSE;
