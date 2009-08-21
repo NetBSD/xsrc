@@ -25,8 +25,10 @@
 #endif
 #include "xf86.h"
 #include "xf86_OSproc.h"
+#if GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) < 6
 #include "xf86Resources.h"
 #include "xf86RAC.h"
+#endif
 #include "xf86cmap.h"
 #include "compiler.h"
 #include "mibstore.h"
@@ -347,8 +349,10 @@ ASTPreInit(ScrnInfoPtr pScrn, int flags)
    if (pEnt->location.type != BUS_PCI)
        return FALSE;
 
+#ifndef XSERVER_LIBPCIACCESS
    if (xf86RegisterResources(pEnt->index, 0, ResExclusive))
        return FALSE;
+#endif
 
    /* The vgahw module should be loaded here when needed */
    if (!xf86LoadSubModule(pScrn, "vgahw"))
@@ -398,8 +402,10 @@ ASTPreInit(ScrnInfoPtr pScrn, int flags)
    pScrn->progClock = TRUE;
    pScrn->rgbBits = 6;
    pScrn->monitor = pScrn->confScreen->monitor; /* should be initialized before set gamma */
+#ifndef XSERVER_LIBPCIACCESS
    pScrn->racMemFlags = RAC_FB | RAC_COLORMAP | RAC_CURSOR | RAC_VIEWPORT;
    pScrn->racIoFlags = RAC_COLORMAP | RAC_CURSOR | RAC_VIEWPORT;   
+#endif
       
    /*
     * If the driver can do gamma correction, it should call xf86SetGamma()
@@ -672,9 +678,11 @@ ASTPreInit(ScrnInfoPtr pScrn, int flags)
    }    
 #endif
 
+#ifndef XSERVER_LIBPCIACCESS
    /*  We won't be using the VGA access after the probe */
    xf86SetOperatingState(resVgaIo, pAST->pEnt->index, ResUnusedOpr);
    xf86SetOperatingState(resVgaMem, pAST->pEnt->index, ResDisableOpr);
+#endif
 
    return TRUE;
 }
