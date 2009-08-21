@@ -42,8 +42,10 @@
 #include "xf86cmap.h"
 #include "shadowfb.h"
 #include "fbdevhw.h"
+#if GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) < 6
 #include "xf86RAC.h"
 #include "xf86Resources.h"
+#endif
 #include "xf86int10.h"
 #include "dixstruct.h"
 #include "vbe.h"
@@ -65,8 +67,13 @@
 #endif
 
 #include "globals.h"
+#ifdef HAVE_XEXTPROTO_71
+#include <X11/extensions/dpmsconst.h>
+#else
 #define DPMS_SERVER
 #include <X11/extensions/dpms.h>
+#endif
+
 
 #define DEBUG 0
 
@@ -929,12 +936,13 @@ GLINTPreInit(ScrnInfoPtr pScrn, int flags)
 	    return FALSE;
     }
 
+#ifndef XSERVER_LIBPCIACCESS
     xf86SetOperatingState(resVga, pGlint->pEnt->index, ResDisableOpr);
     
     /* Operations for which memory access is required. */
     pScrn->racMemFlags = RAC_FB | RAC_COLORMAP | RAC_CURSOR | RAC_VIEWPORT;
     pScrn->racIoFlags = RAC_FB | RAC_COLORMAP | RAC_CURSOR | RAC_VIEWPORT;
-
+#endif
     /* Set pScrn->monitor */
     pScrn->monitor = pScrn->confScreen->monitor;
     /*
@@ -1261,6 +1269,7 @@ GLINTPreInit(ScrnInfoPtr pScrn, int flags)
 
     pGlint->irq = pGlint->pEnt->device->irq;
 
+#ifndef XSERVER_LIBPCIACCESS
     /* Register all entities */
     for (i = 0; i < pScrn->numEntities; i++) {
 	EntityInfoPtr pEnt;
@@ -1271,7 +1280,9 @@ GLINTPreInit(ScrnInfoPtr pScrn, int flags)
 	    return FALSE;
         }
     }
+#endif
     }
+
 
 #if !defined(__sparc__)
     /* Initialize the card through int10 interface if needed */
