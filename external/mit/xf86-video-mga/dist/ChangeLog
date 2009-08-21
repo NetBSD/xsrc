@@ -1,3 +1,65 @@
+commit e29477ef4d4ae50c39ef608ad0e2344c5c68ed40
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Tue Jul 28 15:22:40 2009 +1000
+
+    mga: change to using ABI version check
+
+commit 26ca92acc58b74202ec5eacaffc8e418d878da5e
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Tue Jul 28 13:32:31 2009 +1000
+
+    mga: update for resources/RAC API removal
+
+commit c1b8e89f367510958ffa8072ccbf416a13790c96
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Thu Jul 9 13:09:42 2009 -0400
+
+    xf86-video-mga: use XORG_CHANGELOG macro to create ChangeLog. #22611
+    
+    Adding the macro in configure.ac and use it in Makefile.am
+    Refer to: https://bugs.freedesktop.org/show_bug.cgi?id=22611
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+
+commit 828b55d822f644976df40c8b835043895b7785e3
+Author: Adam Jackson <ajax@redhat.com>
+Date:   Thu May 28 15:06:19 2009 -0400
+
+    Remove useless loader symbol lists.
+
+commit afda628bf77d4c6d58de6f1b88a8fa5391f1df1a
+Author: Alan Coopersmith <alan.coopersmith@sun.com>
+Date:   Mon May 11 22:20:56 2009 -0700
+
+    Fill in COPYING file, add SubmittingPatches URL to README
+
+commit 2972b5707bbee5ac0d046b5100bcf572d82e1c4d
+Author: Adam Jackson <ajax@redhat.com>
+Date:   Wed May 6 14:12:35 2009 -0400
+
+    Do E-EDID if built against a server that supports it.
+
+commit b3fc1acaedd5d45b2c8eb2ba99b24579cf7d2a79
+Author: Adam Jackson <ajax@redhat.com>
+Date:   Wed May 6 13:02:36 2009 -0400
+
+    Normalize DDC for the second head.
+    
+    The exit path wasn't symmetric with the exit path for the first head.
+
+commit bf6aee62b891d4305cb96f8a37e625e5cf7c1504
+Author: Adam Jackson <ajax@redhat.com>
+Date:   Wed May 6 12:04:48 2009 -0400
+
+    Remove redundant MGAuseI2C macro
+
+commit 626af26098ab5d0823bf1d6c08157b4c89ec578a
+Author: Adam Jackson <ajax@redhat.com>
+Date:   Mon Apr 27 14:01:03 2009 -0400
+
+    mga 1.4.10
+
 commit d33b06038223b2b121be7e3f8c207de5f518b28c
 Author: Adam Jackson <ajax@redhat.com>
 Date:   Mon Apr 27 14:00:00 2009 -0400
@@ -338,7 +400,7 @@ Date:   Wed Sep 5 18:06:57 2007 +0200
     Bumped version to 1.4.7.
 
 commit 6fde3fd6d34e7252ee16422b19896d71b1622039
-Merge: 4bfc1e1 923176f
+Merge: 4bfc1e1... 923176f...
 Author: James Cloos <cloos@jhcloos.com>
 Date:   Mon Sep 3 06:07:32 2007 -0400
 
@@ -380,7 +442,7 @@ Date:   Mon Aug 20 15:36:57 2007 -0700
     Fix compile error introduced by merge.
 
 commit 707d3adbc7d9ee918d6c70083f51ad851ce68852
-Merge: 741c50c 489e007
+Merge: 741c50c... 489e007...
 Author: Ian Romanick <idr@us.ibm.com>
 Date:   Mon Aug 20 15:20:39 2007 -0700
 
@@ -532,7 +594,7 @@ Date:   Mon Jan 15 11:42:07 2007 -0800
     Pass the correct pointer to pci_device_cfg_write_bits.
 
 commit d5b4dbe749e860e4349607c57467f8085dc28c33
-Merge: cb103a1 876657e
+Merge: cb103a1... 876657e...
 Author: Ian Romanick <idr@us.ibm.com>
 Date:   Tue Jan 9 16:04:06 2007 -0800
 
@@ -566,7 +628,7 @@ Date:   Tue Dec 26 00:28:55 2006 +0100
     Bug #9448: Actually write the C2STARTADD0 register.
 
 commit fd91b601ec4dd48cfb6ea5495b595fec6d932ab5
-Merge: f84b138 0ce8f52
+Merge: f84b138... 0ce8f52...
 Author: Daniel Stone <daniel@fooishbar.org>
 Date:   Sun Dec 24 06:32:53 2006 +0200
 
@@ -598,14 +660,14 @@ Date:   Sat Dec 16 01:44:49 2006 +0200
     bump to 1.4.6
 
 commit cb103a18067adb3256c0b791255ce8435ff57e06
-Merge: d0e0362 4bcfca9
+Merge: d0e0362... 4bcfca9...
 Author: Ian Romanick <idr@us.ibm.com>
 Date:   Mon Dec 11 15:06:19 2006 -0800
 
     Merge branch 'master' of git+ssh://git.freedesktop.org/git/xorg/driver/xf86-video-mga into pci-rework
 
 commit d0e03622811fd94c830c0b5233ff505392c0d331
-Merge: 8fee907 1dd6e69
+Merge: 8fee907... 1dd6e69...
 Author: Ian Romanick <idr@us.ibm.com>
 Date:   Mon Dec 11 15:06:03 2006 -0800
 
@@ -758,7 +820,7 @@ Date:   Fri Oct 13 18:33:39 2006 -0400
     Bump to 1.4.3
 
 commit 8fee907cac7e5924630e3648bfb72ad9bd021ea8
-Merge: 7cecee1 2fc0ebf
+Merge: 7cecee1... 2fc0ebf...
 Author: Ian Romanick <idr@us.ibm.com>
 Date:   Tue Oct 10 11:43:52 2006 -0700
 
@@ -791,7 +853,7 @@ Date:   Wed Sep 20 20:51:36 2006 +0200
     Added a FIXME on BLK support for GXcopy instead.
 
 commit ecc155e27b6566196e56de241ae81266e03dc90e
-Merge: e7b36c6 2e73c29
+Merge: e7b36c6... 2e73c29...
 Author: Tilman Sauerbeck <tilman@code-monkey.de>
 Date:   Wed Sep 20 20:43:55 2006 +0200
 
@@ -1150,7 +1212,7 @@ Date:   Thu Aug 10 19:49:22 2006 +0200
     by myself.
 
 commit 7cecee186c889902bed9b7fa042f0bd3cc0297ef
-Merge: 160b1f7 bde5920
+Merge: 160b1f7... bde5920...
 Author: Ian Romanick <idr@umwelt.(none)>
 Date:   Thu Aug 10 10:19:55 2006 -0700
 
@@ -1181,7 +1243,7 @@ Date:   Tue Aug 8 16:59:15 2006 -0700
     searching for it in MGAPreInit.
 
 commit 068e3427cfdf3e3b5dc5c97872d5f52f47ff0d68
-Merge: 95e0722 7170de8
+Merge: 95e0722... 7170de8...
 Author: Ian Romanick <idr@umwelt.(none)>
 Date:   Wed Jul 26 11:47:32 2006 -0700
 

@@ -52,7 +52,11 @@
 /* All drivers should typically include these */
 #include "xf86.h"
 #include "xf86_OSproc.h"
+
+#if GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) < 6
 #include "xf86Resources.h"
+#include "xf86RAC.h"
+#endif
 
 /* All drivers need this */
 
@@ -75,7 +79,7 @@
 #include "micmap.h"
 
 #include "xf86DDC.h"
-#include "xf86RAC.h"
+
 #include "vbe.h"
 
 #include "fb.h"
@@ -435,25 +439,25 @@ static SymTabRec MGAChipsets[] = {
 };
 
 static PciChipsets MGAPciChipsets[] = {
-    { PCI_CHIP_MGA2064,	    PCI_CHIP_MGA2064,	(resRange*)RES_SHARED_VGA },
-    { PCI_CHIP_MGA1064,	    PCI_CHIP_MGA1064,	(resRange*)RES_SHARED_VGA },
-    { PCI_CHIP_MGA2164,	    PCI_CHIP_MGA2164,	(resRange*)RES_SHARED_VGA },
-    { PCI_CHIP_MGA2164_AGP, PCI_CHIP_MGA2164_AGP,(resRange*)RES_SHARED_VGA },
-    { PCI_CHIP_MGAG100,	    PCI_CHIP_MGAG100,	(resRange*)RES_SHARED_VGA },
-    { PCI_CHIP_MGAG100_PCI, PCI_CHIP_MGAG100_PCI,(resRange*)RES_SHARED_VGA },
-    { PCI_CHIP_MGAG200,	    PCI_CHIP_MGAG200,	(resRange*)RES_SHARED_VGA },
-    { PCI_CHIP_MGAG200_PCI, PCI_CHIP_MGAG200_PCI,(resRange*)RES_SHARED_VGA },
+    { PCI_CHIP_MGA2064,	    PCI_CHIP_MGA2064,	RES_SHARED_VGA },
+    { PCI_CHIP_MGA1064,	    PCI_CHIP_MGA1064,	RES_SHARED_VGA },
+    { PCI_CHIP_MGA2164,	    PCI_CHIP_MGA2164,	RES_SHARED_VGA },
+    { PCI_CHIP_MGA2164_AGP, PCI_CHIP_MGA2164_AGP,RES_SHARED_VGA },
+    { PCI_CHIP_MGAG100,	    PCI_CHIP_MGAG100,	RES_SHARED_VGA },
+    { PCI_CHIP_MGAG100_PCI, PCI_CHIP_MGAG100_PCI,RES_SHARED_VGA },
+    { PCI_CHIP_MGAG200,	    PCI_CHIP_MGAG200,	RES_SHARED_VGA },
+    { PCI_CHIP_MGAG200_PCI, PCI_CHIP_MGAG200_PCI,RES_SHARED_VGA },
     { PCI_CHIP_MGAG200_SE_B_PCI, PCI_CHIP_MGAG200_SE_B_PCI,
-	(resRange*)RES_SHARED_VGA },
+	RES_SHARED_VGA },
     { PCI_CHIP_MGAG200_SE_A_PCI, PCI_CHIP_MGAG200_SE_A_PCI,
-	(resRange*)RES_SHARED_VGA },
+	RES_SHARED_VGA },
     { PCI_CHIP_MGAG200_EV_PCI, PCI_CHIP_MGAG200_EV_PCI,
-	(resRange*)RES_SHARED_VGA },
+	RES_SHARED_VGA },
     { PCI_CHIP_MGAG200_WINBOND_PCI, PCI_CHIP_MGAG200_WINBOND_PCI,
-	(resRange*)RES_SHARED_VGA },
-    { PCI_CHIP_MGAG400,	    PCI_CHIP_MGAG400,	(resRange*)RES_SHARED_VGA },
-    { PCI_CHIP_MGAG550,	    PCI_CHIP_MGAG550,	(resRange*)RES_SHARED_VGA },
-    { -1,			-1,		(resRange*)RES_UNDEFINED }
+	RES_SHARED_VGA },
+    { PCI_CHIP_MGAG400,	    PCI_CHIP_MGAG400,	RES_SHARED_VGA },
+    { PCI_CHIP_MGAG550,	    PCI_CHIP_MGAG550,	RES_SHARED_VGA },
+    { -1,			-1,		RES_UNDEFINED }
 };
 
 /*
@@ -526,190 +530,6 @@ static const OptionInfoRec MGAOptions[] = {
     { -1,			NULL,		OPTV_NONE,	{0}, FALSE }
 };
 
-
-/*
- * List of symbols from other modules that this module references.  This
- * list is used to tell the loader that it is OK for symbols here to be
- * unresolved providing that it hasn't been told that they haven't been
- * told that they are essential via a call to xf86LoaderReqSymbols() or
- * xf86LoaderReqSymLists().  The purpose is this is to avoid warnings about
- * unresolved symbols that are not required.
- */
-
-static const char *vgahwSymbols[] = {
-    "vgaHWFreeHWRec",
-    "vgaHWGetHWRec",
-    "vgaHWGetIOBase",
-    "vgaHWGetIndex",
-    "vgaHWInit",
-    "vgaHWLock",
-    "vgaHWMapMem",
-    "vgaHWProtect",
-    "vgaHWRestore",
-    "vgaHWSave",
-    "vgaHWSaveScreen",
-    "vgaHWSetMmioFuncs",
-    "vgaHWUnlock",
-    "vgaHWUnmapMem",
-    "vgaHWddc1SetSpeedWeak",
-    NULL
-};
-
-static const char *fbSymbols[] = {
-    "fbPictureInit",
-    "fbScreenInit",
-    NULL
-};
-
-#ifdef USE_EXA
-static const char *exaSymbols[] = {
-    "exaDriverInit",
-    "exaDriverFini",
-    "exaGetPixmapOffset",
-    "exaGetVersion",
-    NULL
-};
-#endif
-
-#ifdef USE_XAA
-static const char *xaaSymbols[] = {
-    "XAACachePlanarMonoStipple",
-    "XAACreateInfoRec",
-    "XAADestroyInfoRec",
-    "XAAGetFallbackOps",
-    "XAAInit",
-    "XAAMoveDWORDS",
-    "XAA_888_plus_PICT_a8_to_8888",
-    NULL
-};
-#endif
-
-static const char *ramdacSymbols[] = {
-    "xf86CreateCursorInfoRec",
-    "xf86DestroyCursorInfoRec",
-    "xf86InitCursor",
-    NULL
-};
-
-#ifdef XF86DRI
-static const char *drmSymbols[] = {
-    "drmAddBufs",
-    "drmAddMap",
-    "drmAgpAcquire",
-    "drmAgpAlloc",
-    "drmAgpBind",
-    "drmAgpDeviceId",
-    "drmAgpEnable",
-    "drmAgpFree",
-    "drmAgpGetMode",
-    "drmAgpRelease",
-    "drmAgpUnbind",
-    "drmAgpVendorId",
-    "drmCommandNone",
-    "drmCommandWrite",
-    "drmCtlInstHandler",
-    "drmCtlUninstHandler",
-    "drmFreeVersion",
-    "drmGetInterruptFromBusID",
-    "drmGetLibVersion",
-    "drmGetVersion",
-    "drmMap",
-    "drmMapBufs",
-    "drmUnmap",
-    "drmUnmapBufs",
-    NULL
-};
-
-static const char *driSymbols[] = {
-    "DRICloseScreen",
-    "DRICreateInfoRec",
-    "DRIDestroyInfoRec",
-    "DRIFinishScreenInit",
-    "DRIGetDeviceInfo",
-    "DRILock",
-    "DRIQueryVersion",
-    "DRIScreenInit",
-    "DRIUnlock",
-    "GlxSetVisualConfigs",
-    "DRICreatePCIBusID",
-    NULL
-};
-#endif
-
-#define MGAuseI2C 1
-
-static const char *ddcSymbols[] = {
-    "xf86DoEDID_DDC1",
-#if MGAuseI2C
-    "xf86DoEDID_DDC2",
-#endif
-    "xf86PrintEDID",
-    "xf86SetDDCproperties",
-    NULL
-};
-
-static const char *i2cSymbols[] = {
-    "xf86CreateI2CBusRec",
-    "xf86I2CBusInit",
-    NULL
-};
-
-static const char *shadowSymbols[] = {
-    "ShadowFBInit",
-    NULL
-};
-
-#ifdef XFree86LOADER
-static const char *vbeSymbols[] = {
-    "VBEInit",
-    "vbeDoEDID",
-    "vbeFree",
-    NULL
-};
-#endif
-
-static const char *int10Symbols[] = {
-    "xf86FreeInt10",
-    "xf86InitInt10",
-    NULL
-};
-
-static const char *fbdevHWSymbols[] = {
-    "fbdevHWAdjustFrameWeak",
-    "fbdevHWEnterVT",
-    "fbdevHWGetVidmem",
-    "fbdevHWInit",
-    "fbdevHWLeaveVTWeak",
-    "fbdevHWLoadPaletteWeak",
-    "fbdevHWMapMMIO",
-    "fbdevHWMapVidmem",
-    "fbdevHWModeInit",
-    "fbdevHWRestore",
-    "fbdevHWSave",
-    "fbdevHWSwitchModeWeak",
-    "fbdevHWUnmapMMIO",
-    "fbdevHWUnmapVidmem",
-    "fbdevHWUseBuildinMode",
-    "fbdevHWValidModeWeak",
-    NULL
-};
-
-#ifdef USEMGAHAL
-static const char *halSymbols[] = {
-  "MGACloseLibrary",
-  "MGAGetBOARDHANDLESize",
-  "MGAGetHardwareInfo",
-  "MGAOpenLibrary",
-  "MGARestoreVgaState",
-  "MGASaveVgaState",
-  "MGASetMode",
-  "MGASetVgaMode",
-  "MGAValidateMode",
-  "MGAValidateVideoParameters",
-  "HALSetDisplayStart",
-  NULL
-};
-#endif
 #ifdef XFree86LOADER
 
 static MODULESETUPPROTO(mgaSetup);
@@ -740,34 +560,6 @@ mgaSetup(pointer module, pointer opts, int *errmaj, int *errmin)
     if (!setupDone) {
 	setupDone = TRUE;
 	xf86AddDriver(&MGA_C_NAME, module, 1);
-
-	/*
-	 * Modules that this driver always requires may be loaded here
-	 * by calling LoadSubModule().
-	 */
-
-	/*
-	 * Tell the loader about symbols from other modules that this module
-	 * might refer to.
-	 */
-	LoaderRefSymLists(vgahwSymbols,
-#ifdef USE_XAA
-                          xaaSymbols,
-#endif
-#ifdef USE_EXA
-                          exaSymbols,
-#endif
-			  ramdacSymbols, ddcSymbols, i2cSymbols,
-			  shadowSymbols, fbdevHWSymbols, vbeSymbols,
-			  fbSymbols, int10Symbols,
-#ifdef XF86DRI
-			  drmSymbols, driSymbols,
-#endif
-#ifdef USEMGAHAL
-			  halSymbols,
-#endif
-			  NULL);
-
 	/*
 	 * The return value must be non-NULL on success even though there
 	 * is no TearDownProc.
@@ -1403,137 +1195,124 @@ MGACountRam(ScrnInfoPtr pScrn)
    return SizeFound;
 }
 
+#ifdef  EDID_COMPLETE_RAWDATA
+#undef  xf86DoEDID_DDC2
+#define xf86DoEDID_DDC2(a, b) xf86DoEEDID(a, b, TRUE)
+#endif
+
 static xf86MonPtr
 MGAdoDDC(ScrnInfoPtr pScrn)
 {
-  vgaHWPtr hwp;
-  MGAPtr pMga;
-  xf86MonPtr MonInfo = NULL;
+    vgaHWPtr hwp;
+    MGAPtr pMga;
+    xf86MonPtr MonInfo = NULL;
+    char *from = NULL;
 
-  hwp = VGAHWPTR(pScrn);
-  pMga = MGAPTR(pScrn);
+    hwp = VGAHWPTR(pScrn);
+    pMga = MGAPTR(pScrn);
 
-  /* Load DDC if we have the code to use it */
-  /* This gives us DDC1 */
-  if (pMga->ddc1Read || pMga->i2cInit) {
-      if (xf86LoadSubModule(pScrn, "ddc")) {
-	  xf86LoaderReqSymLists(ddcSymbols, NULL);
-	} else {
-	  /* ddc module not found, we can do without it */
-	  pMga->ddc1Read = NULL;
-	  pMga->DDC_Bus1 = NULL;
-	  pMga->DDC_Bus2 = NULL;
-	  return NULL;
+    /* Load DDC if we have the code to use it */
+    /* This gives us DDC1 */
+    if (pMga->ddc1Read || pMga->i2cInit) {
+	if (!xf86LoadSubModule(pScrn, "ddc")) {
+	    /* ddc module not found, we can do without it */
+	    pMga->ddc1Read = NULL;
+	    pMga->DDC_Bus1 = NULL;
+	    pMga->DDC_Bus2 = NULL;
+	    return NULL;
 	}
     } else 
-      return NULL;
+	return NULL;
 
-#if MGAuseI2C
     /* - DDC can use I2C bus */
     /* Load I2C if we have the code to use it */
     if (pMga->i2cInit) {
-      if ( xf86LoadSubModule(pScrn, "i2c") ) {
-	xf86LoaderReqSymLists(i2cSymbols,NULL);
-      } else {
-	/* i2c module not found, we can do without it */
-	pMga->i2cInit = NULL;
-	pMga->DDC_Bus1 = NULL;
-	pMga->DDC_Bus2 = NULL;
-      }
+	if (!xf86LoadSubModule(pScrn, "i2c")) {
+	    /* i2c module not found, we can do without it */
+	    pMga->i2cInit = NULL;
+	    pMga->DDC_Bus1 = NULL;
+	    pMga->DDC_Bus2 = NULL;
+	}
     }
-#endif /* MGAuseI2C */
 
-  /* Map the MGA memory and MMIO areas */
-  if (!MGAMapMem(pScrn))
-    return NULL;
+    /* Map the MGA memory and MMIO areas */
+    if (!MGAMapMem(pScrn))
+	return NULL;
 
-  /* Initialise the MMIO vgahw functions */
-  vgaHWSetMmioFuncs(hwp, pMga->IOBase, PORT_OFFSET);
-  vgaHWGetIOBase(hwp);
+    /* Initialise the MMIO vgahw functions */
+    vgaHWSetMmioFuncs(hwp, pMga->IOBase, PORT_OFFSET);
+    vgaHWGetIOBase(hwp);
 
-  /* Map the VGA memory when the primary video */
-  if (pMga->Primary) {
-    hwp->MapSize = 0x10000;
-    if (!vgaHWMapMem(pScrn))
-      return NULL;
-  } else {
-    /* XXX Need to write an MGA mode ddc1SetSpeed */
-    if (pMga->DDC1SetSpeed == vgaHWddc1SetSpeedWeak()) {
-      pMga->DDC1SetSpeed = NULL;
-      xf86DrvMsgVerb(pScrn->scrnIndex, X_INFO, 2,
-		     "DDC1 disabled - chip not in VGA mode\n");
+    /* Map the VGA memory when the primary video */
+    if (pMga->Primary) {
+	hwp->MapSize = 0x10000;
+	if (!vgaHWMapMem(pScrn))
+	    return NULL;
+    } else {
+	/* XXX Need to write an MGA mode ddc1SetSpeed */
+	if (pMga->DDC1SetSpeed == vgaHWddc1SetSpeedWeak()) {
+	    pMga->DDC1SetSpeed = NULL;
+	    xf86DrvMsgVerb(pScrn->scrnIndex, X_INFO, 2,
+			   "DDC1 disabled - chip not in VGA mode\n");
+	}
     }
-  }
 
-  /* Save the current state */
-  MGASave(pScrn);
+    /* Save the current state */
+    MGASave(pScrn);
 
-  /* It is now safe to talk to the card */
+    /* It is now safe to talk to the card */
 
-#if MGAuseI2C
-  /* Initialize I2C buses - used by DDC if available */
-  if (pMga->i2cInit) {
-    pMga->i2cInit(pScrn);
-  }
+    /* Initialize I2C buses - used by DDC if available */
+    if (pMga->i2cInit) {
+	pMga->i2cInit(pScrn);
+    }
 
-   /* DDC for second head... */
-  if (pMga->SecondCrtc && pMga->DDC_Bus2) {
-    MonInfo = xf86DoEDID_DDC2(pScrn->scrnIndex,pMga->DDC_Bus2);
-    xf86DrvMsg(pScrn->scrnIndex, X_INFO, "I2C Monitor info: %p\n",
-		(void *)MonInfo);
-    xf86PrintEDID(MonInfo);
-    xf86DrvMsg(pScrn->scrnIndex, X_INFO, "end of I2C Monitor info\n");
-    xf86SetDDCproperties(pScrn, MonInfo);
-    return MonInfo;
-  }
-
-  else {
+    /* DDC for second head... */
+    if (pMga->SecondCrtc && pMga->DDC_Bus2) {
+	MonInfo = xf86DoEDID_DDC2(pScrn->scrnIndex, pMga->DDC_Bus2);
+	from = "I2C";
+    } else {
 	/* Its the first head... */ 
-	  if (pMga->DDC_Bus1) {
-	    MonInfo = xf86DoEDID_DDC2(pScrn->scrnIndex,pMga->DDC_Bus1);
-	    xf86DrvMsg(pScrn->scrnIndex, X_INFO, "I2C Monitor info: %p\n", (void *) MonInfo);
-	    xf86PrintEDID(MonInfo);
-	    xf86DrvMsg(pScrn->scrnIndex, X_INFO, "end of I2C Monitor info\n");
-	  }
-	  if (!MonInfo)
-#endif /* MGAuseI2C */
-	  /* Read and output monitor info using DDC1 */
-	  if (pMga->ddc1Read && pMga->DDC1SetSpeed) {
-	    MonInfo = xf86DoEDID_DDC1(pScrn->scrnIndex,
-						 pMga->DDC1SetSpeed,
-						 pMga->ddc1Read ) ;
-	    xf86DrvMsg(pScrn->scrnIndex, X_INFO, "DDC Monitor info: %p\n", (void *) MonInfo);
-	    xf86PrintEDID( MonInfo );
-	    xf86DrvMsg(pScrn->scrnIndex, X_INFO, "end of DDC Monitor info\n");
-	  }
-	  if (!MonInfo){
+	if (pMga->DDC_Bus1) {
+	    MonInfo = xf86DoEDID_DDC2(pScrn->scrnIndex, pMga->DDC_Bus1);
+	    from = "I2C";
+	}
+	if (!MonInfo)
+	    /* Read and output monitor info using DDC1 */
+	    if (pMga->ddc1Read && pMga->DDC1SetSpeed) {
+		MonInfo = xf86DoEDID_DDC1(pScrn->scrnIndex,
+					  pMga->DDC1SetSpeed,
+					  pMga->ddc1Read ) ;
+		from = "DDC1";
+	    }
+	if (!MonInfo){
 	    vbeInfoPtr pVbe;
 	    if (xf86LoadSubModule(pScrn, "vbe")) {
-	      pVbe = VBEInit(NULL,pMga->pEnt->index);
-	      MonInfo = vbeDoEDID(pVbe, NULL);
-	      vbeFree(pVbe);
-	
-	      if (MonInfo){
-		xf86DrvMsg(pScrn->scrnIndex, X_INFO, "VBE DDC Monitor info: %p\n", (void *) MonInfo);
-		xf86PrintEDID( MonInfo );
-		xf86DrvMsg(pScrn->scrnIndex, X_INFO, "end of VBE DDC Monitor info\n\n");
-	      }
+		pVbe = VBEInit(NULL, pMga->pEnt->index);
+		MonInfo = vbeDoEDID(pVbe, NULL);
+		vbeFree(pVbe);
+		from = "VBE";
 	    }
-	  }
-#if MGAuseI2C
-   }
-#endif
-  /* Restore previous state and unmap MGA memory and MMIO areas */
-  MGARestore(pScrn);
-  MGAUnmapMem(pScrn);
-  /* Unmap vga memory if we mapped it */
-  if (xf86IsPrimaryPci(pMga->PciInfo) && !pMga->FBDev) {
-    vgaHWUnmapMem(pScrn);
-  }
+	}
+    }
 
-  xf86SetDDCproperties(pScrn, MonInfo);
+    if (MonInfo) {
+	xf86DrvMsg(pScrn->scrnIndex, X_INFO, "%s monitor info\n", from);
+	xf86PrintEDID(MonInfo);
+	xf86DrvMsg(pScrn->scrnIndex, X_INFO, "end of monitor info\n");
+    }
 
-  return MonInfo;
+    /* Restore previous state and unmap MGA memory and MMIO areas */
+    MGARestore(pScrn);
+    MGAUnmapMem(pScrn);
+    /* Unmap vga memory if we mapped it */
+    if (xf86IsPrimaryPci(pMga->PciInfo) && !pMga->FBDev) {
+	vgaHWUnmapMem(pScrn);
+    }
+
+    xf86SetDDCproperties(pScrn, MonInfo);
+
+    return MonInfo;
 }
 
 #ifdef DISABLE_VGA_IO
@@ -1723,8 +1502,6 @@ MGAPreInit(ScrnInfoPtr pScrn, int flags)
     if (!xf86LoadSubModule(pScrn, "vgahw"))
 	return FALSE;
 
-    xf86LoaderReqSymLists(vgahwSymbols, NULL);
-
     /*
      * Allocate a vgaHWRec
      */
@@ -1741,8 +1518,10 @@ MGAPreInit(ScrnInfoPtr pScrn, int flags)
     pMga->Primary = xf86IsPrimaryPci(pMga->PciInfo);
 
 #ifndef DISABLE_VGA_IO
+#ifndef XSERVER_LIBPCIACCESS
     xf86SetOperatingState(resVgaIo, pMga->pEnt->index, ResUnusedOpr);
     xf86SetOperatingState(resVgaMem, pMga->pEnt->index, ResDisableOpr);
+#endif
 #else
     /*
      * Set our own access functions, which control the vgaioen bit.
@@ -1831,7 +1610,6 @@ MGAPreInit(ScrnInfoPtr pScrn, int flags)
 	    from = X_CONFIG;
 	}
         if (loadHal && xf86LoadSubModule(pScrn, "mga_hal")) {
-	  xf86LoaderReqSymLists(halSymbols, NULL);
 	  xf86DrvMsg(pScrn->scrnIndex, from,"Matrox HAL module used\n");
 	  pMga->HALLoaded = TRUE;
 	} else {
@@ -2000,12 +1778,14 @@ MGAPreInit(ScrnInfoPtr pScrn, int flags)
     }
 #endif
 
+#ifndef XSERVER_LIBPCIACCESS
     if (xf86RegisterResources(pMga->pEnt->index, NULL, ResExclusive)) {
 	xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
 		"xf86RegisterResources() found resource conflicts\n");
 	MGAFreeRec(pScrn);
 	return FALSE;
     }
+#endif
 
     /*
      * The first thing we should figure out is the depth, bpp, etc.
@@ -2026,7 +1806,6 @@ MGAPreInit(ScrnInfoPtr pScrn, int flags)
 	/* check for linux framebuffer device */
 	if (!xf86LoadSubModule(pScrn, "fbdevhw"))
 	    return FALSE;
-	xf86LoaderReqSymLists(fbdevHWSymbols, NULL);
 	if (!fbdevHWInit(pScrn, pMga->PciInfo, NULL))
 	    return FALSE;
     }
@@ -2127,7 +1906,6 @@ MGAPreInit(ScrnInfoPtr pScrn, int flags)
         xf86LoadSubModule(pScrn, "int10")) {
         xf86Int10InfoPtr pInt;
 
-	xf86LoaderReqSymLists(int10Symbols, NULL);
         xf86DrvMsg(pScrn->scrnIndex, X_INFO, "Initializing int10\n");
         pInt = xf86InitInt10(pMga->pEnt->index);
 	if (pInt) pMga->softbooted = TRUE;
@@ -2897,8 +2675,6 @@ MGAPreInit(ScrnInfoPtr pScrn, int flags)
 	MGAFreeRec(pScrn);
 	return FALSE;
     }
-    xf86LoaderReqSymLists(fbSymbols, NULL);
-
 
     /* Load XAA if needed */
     if (!pMga->NoAccel) {
@@ -2907,14 +2683,14 @@ MGAPreInit(ScrnInfoPtr pScrn, int flags)
 	    if (!xf86LoadSubModule(pScrn, "exa")) {
 		MGAFreeRec(pScrn);
 		return FALSE;
-	    } else xf86LoaderReqSymLists(exaSymbols, NULL);
+	    }
 	} else {
 #endif
 #ifdef USE_XAA
 	    if (!xf86LoadSubModule(pScrn, "xaa")) {
 		MGAFreeRec(pScrn);
 		return FALSE;
-	    } else xf86LoaderReqSymLists(xaaSymbols, NULL);
+	    }
 #endif
 #ifdef USE_EXA
 	}
@@ -2927,7 +2703,6 @@ MGAPreInit(ScrnInfoPtr pScrn, int flags)
 	    MGAFreeRec(pScrn);
 	    return FALSE;
 	}
-	xf86LoaderReqSymLists(ramdacSymbols, NULL);
     }
 
     /* Load shadowfb if needed */
@@ -2936,15 +2711,12 @@ MGAPreInit(ScrnInfoPtr pScrn, int flags)
 	    MGAFreeRec(pScrn);
 	    return FALSE;
 	}
-	xf86LoaderReqSymLists(shadowSymbols, NULL);
     }
 
 #ifdef XF86DRI
     /* Load the dri module if requested. */
     if (xf86ReturnOptValBool(pMga->Options, OPTION_DRI, FALSE)) {
-       if (xf86LoadSubModule(pScrn, "dri")) {
-	  xf86LoaderReqSymLists(driSymbols, drmSymbols, NULL);
-       }
+       xf86LoadSubModule(pScrn, "dri");
     }
 #endif
     pMga->CurrentLayout.bitsPerPixel = pScrn->bitsPerPixel;
