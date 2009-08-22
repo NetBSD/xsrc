@@ -37,7 +37,9 @@
 #include <stdarg.h>
 #include <math.h>
 
+#ifdef HAVE_CONFIG_H
 #include "config.h"
+#endif
 
 #if RANDR_MAJOR > 1 || (RANDR_MAJOR == 1 && RANDR_MINOR >= 2)
 #define HAS_RANDR_1_2 1

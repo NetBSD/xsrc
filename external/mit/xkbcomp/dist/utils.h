@@ -35,7 +35,9 @@
 #include	<X11/Xfuncs.h>
 
 #include <stddef.h>
+#ifdef HAVE_CONFIG_H
 #include "config.h"
+#endif
 
 #ifndef NUL
 #define	NUL	'\0'
