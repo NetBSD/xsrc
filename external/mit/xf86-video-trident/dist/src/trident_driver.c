@@ -39,12 +39,15 @@
 #include "micmap.h"
 #include "xf86.h"
 #include "xf86_OSproc.h"
+#if GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) < 6
 #include "xf86Resources.h"
+#include "xf86RAC.h"
+#endif
 #include "xf86PciInfo.h"
 #include "xf86Pci.h"
 #include "xf86cmap.h"
 #include "vgaHW.h"
-#include "xf86RAC.h"
+
 #include "vbe.h"
 #include "dixstruct.h"
 #include "compiler.h"
@@ -62,8 +65,13 @@
 #endif
 
 #include "globals.h"
+#ifdef HAVE_XEXTPROTO_71
+#include <X11/extensions/dpmsconst.h>
+#else
 #define DPMS_SERVER
 #include <X11/extensions/dpms.h>
+#endif
+
 
 #include "xf86xv.h"
 
@@ -1011,7 +1019,9 @@ TRIDENTPreInit(ScrnInfoPtr pScrn, int flags)
     /* This is the general case */
     for (i = 0; i<pScrn->numEntities; i++) {
 	pTrident->pEnt = xf86GetEntityInfo(pScrn->entityList[i]);
+#ifndef XSERVER_LIBPCIACCESS
 	if (pTrident->pEnt->resources) return FALSE;
+#endif
 	pTrident->Chipset = pTrident->pEnt->chipset;
 	pScrn->chipset = (char *)xf86TokenToString(TRIDENTChipsets,
 						   pTrident->pEnt->chipset);
@@ -1100,7 +1110,9 @@ TRIDENTPreInit(ScrnInfoPtr pScrn, int flags)
     vgaIOBase = hwp->IOBase;
     pTrident->PIOBase = hwp->PIOOffset;
 
+#ifndef XSERVER_LIBPCIACCESS
     xf86SetOperatingState(resVga, pTrident->pEnt->index, ResUnusedOpr);
+#endif
 
     /* The ramdac module should be loaded here when needed */
     if (!xf86LoadSubModule(pScrn, "ramdac"))
@@ -1442,13 +1454,14 @@ TRIDENTPreInit(ScrnInfoPtr pScrn, int flags)
 		   (unsigned long)pTrident->IOAddress);
     }
 
+#ifndef XSERVER_LIBPCIACCESS
     /* Register the PCI-assigned resources. */
     if (xf86RegisterResources(pTrident->pEnt->index, NULL, ResExclusive)) {
 	xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
 		   "xf86RegisterResources() found resource conflicts\n");
 	return FALSE;
     }
-
+#endif
     /* Initialize VBE if possible 
      * Don't move this past MMIO enable!!
      * PIO access will be blocked
@@ -2427,13 +2440,14 @@ TRIDENTPreInit(ScrnInfoPtr pScrn, int flags)
 	TRIDENTUnmapMem(pScrn);
     }
 
+#ifndef XSERVER_LIBPCIACCESS
     pScrn->racMemFlags = RAC_FB | RAC_COLORMAP | RAC_CURSOR | RAC_VIEWPORT;
 
     if (pTrident->IsCyber && pTrident->MMIOonly)
 	pScrn->racIoFlags = 0;
     else 
 	pScrn->racIoFlags = RAC_FB | RAC_COLORMAP | RAC_CURSOR | RAC_VIEWPORT;
-
+#endif
     pTrident->FbMapSize = pScrn->videoRam * 1024;
 
     return TRUE;
