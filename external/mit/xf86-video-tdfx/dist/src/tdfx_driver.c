@@ -54,8 +54,10 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 #include "xf86.h"
 #include "xf86_OSproc.h"
+#if GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) < 6
 #include "xf86Resources.h"
 #include "xf86RAC.h"
+#endif
 #include "vbe.h"
 #include "xf86cmap.h"
 
@@ -855,10 +857,12 @@ TDFXPreInit(ScrnInfoPtr pScrn, int flags)
   pTDFX->Primary = xf86IsPrimaryPci(pTDFX->PciInfo);
 #endif
 
+#ifndef XSERVER_LIBPCIACCESS
   if (xf86RegisterResources(pTDFX->pEnt->index, NULL, ResExclusive)) {
       TDFXFreeRec(pScrn);
       return FALSE;
   }
+
   /* 
    * We don't need VGA resources during OPERATING state. However I'm
    * not sure if they are disabled.
@@ -876,7 +880,7 @@ TDFXPreInit(ScrnInfoPtr pScrn, int flags)
       pScrn->racIoFlags = RAC_FB | RAC_COLORMAP | RAC_CURSOR | RAC_VIEWPORT;
   } else
       pScrn->racMemFlags = 0;
-
+#endif
   /* Set pScrn->monitor */
   pScrn->monitor = pScrn->confScreen->monitor;
 
