@@ -102,6 +102,7 @@ typedef struct {
 
     VMWARERegRec SavedReg;
     VMWARERegRec ModeReg;
+    CARD32 suspensionSavedRegId;
 
     DisplayModePtr dynModes[NUM_DYN_MODES];
 
@@ -244,6 +245,10 @@ void vmwareSendSVGACmdUpdate(
    VMWAREPtr pVMWARE, BoxPtr pBB
    );
 
+void vmwareSendSVGACmdUpdateFullScreen(
+   VMWAREPtr pVMWARE
+   );
+
 DisplayModeRec *VMWAREAddDisplayMode(
     ScrnInfoPtr pScrn,
     const char *name,
@@ -254,6 +259,10 @@ DisplayModeRec *VMWAREAddDisplayMode(
 Bool vmwareIsRegionEqual(
     const RegionPtr reg1,
     const RegionPtr reg2
+   );
+
+void vmwareNextXineramaState(
+   VMWAREPtr pVMWARE
    );
 
 /* vmwarecurs.c */
