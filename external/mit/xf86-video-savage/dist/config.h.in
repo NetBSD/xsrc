@@ -32,12 +32,11 @@
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H
 
+/* xextproto 7.1 available */
+#undef HAVE_XEXTPROTO_71
+
 /* Have xf86XVFillKeyHelperDrawable prototype */
 #undef HAVE_XV_DRAWABLE_HELPER
-
-/* Define to the sub-directory in which libtool stores uninstalled libraries.
-   */
-#undef LT_OBJDIR
 
 /* Name of package */
 #undef PACKAGE
