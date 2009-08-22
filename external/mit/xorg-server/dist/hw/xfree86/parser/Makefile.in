@@ -34,7 +34,7 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 subdir = hw/xfree86/parser
-DIST_COMMON = $(am__sdk_HEADERS_DIST) $(srcdir)/Makefile.am \
+DIST_COMMON = $(sdk_HEADERS) $(srcdir)/Makefile.am \
 	$(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/acinclude.m4 \
@@ -80,7 +80,6 @@ LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	$(LDFLAGS) -o $@
 SOURCES = $(libxf86config_a_SOURCES)
 DIST_SOURCES = $(libxf86config_a_SOURCES)
-am__sdk_HEADERS_DIST = xf86Optrec.h xf86Parser.h
 sdkHEADERS_INSTALL = $(INSTALL_HEADER)
 HEADERS = $(sdk_HEADERS)
 ETAGS = etags
@@ -364,10 +363,6 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 @INSTALL_LIBXF86CONFIG_TRUE@lib_LIBRARIES = libxf86config.a
-@INSTALL_LIBXF86CONFIG_TRUE@LIBHEADERS = \
-@INSTALL_LIBXF86CONFIG_TRUE@	xf86Optrec.h \
-@INSTALL_LIBXF86CONFIG_TRUE@	xf86Parser.h
-
 @INSTALL_LIBXF86CONFIG_FALSE@noinst_LIBRARIES = libxf86config.a
 libxf86config_a_SOURCES = \
 	Device.c \
@@ -391,12 +386,11 @@ AM_CFLAGS = $(DIX_CFLAGS) $(XORG_CFLAGS)
 EXTRA_DIST = \
 	Configint.h \
 	configProcs.h \
-	xf86Optrec.h \
-	xf86Parser.h \
 	xf86tokens.h
 
 sdk_HEADERS = \
-	$(LIBHEADERS)
+	xf86Optrec.h \
+	xf86Parser.h
 
 all: all-am
 
