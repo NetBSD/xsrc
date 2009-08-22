@@ -31,11 +31,15 @@ authorization from The XFree86 Project or Silicon Motion.
 #include "config.h"
 #endif
 
-#include "xf86Resources.h"
-#include "xf86RAC.h"
+#include "xf86.h"
 #include "xf86DDC.h"
 #include "xf86int10.h"
 #include "vbe.h"
+
+#if GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) < 6
+#include "xf86Resources.h"
+#include "xf86RAC.h"
+#endif
 
 #include "smi.h"
 #include "smi_501.h"
@@ -43,8 +47,13 @@ authorization from The XFree86 Project or Silicon Motion.
 #include "smi_crtc.h"
 
 #include "globals.h"
+#ifdef HAVE_XEXTPROTO_71
+#include <X11/extensions/dpmsconst.h>
+#else
 #define DPMS_SERVER
 #include <X11/extensions/dpms.h>
+#endif
+
 
 /*
  * Internals
@@ -411,7 +420,7 @@ SMI_PreInit(ScrnInfoPtr pScrn, int flags)
 	LEAVE(TRUE);
     }
 
-    if (pEnt->location.type != BUS_PCI || pEnt->resources) {
+    if (pEnt->location.type != BUS_PCI) {
 	xfree(pEnt);
 	SMI_FreeRec(pScrn);
 	LEAVE(FALSE);
@@ -621,10 +630,9 @@ SMI_PreInit(ScrnInfoPtr pScrn, int flags)
 	}
     }
 
+#ifndef XSERVER_LIBPCIACCESS
     xf86RegisterResources(pEnt->index, NULL, ResExclusive);
-/*  xf86SetOperatingState(resVgaIo, pEnt->index, ResUnusedOpr); */
-/*  xf86SetOperatingState(resVgaMem, pEnt->index, ResDisableOpr); */
-
+#endif
     /*
      * Set the Chipset and ChipRev, allowing config file entries to
      * override.
