@@ -31,12 +31,15 @@
 #include <X11/Xmd.h>
 #include "gcstruct.h"
 #include "xf86sbusBus.h"
+#include "exa.h"
 #include "tcx_regs.h"
 
 /* Various offsets in virtual (ie. mmap()) spaces Linux and Solaris support. */
 #define TCX_RAM8_VOFF		0x00000000
 #define TCX_RAM24_VOFF		0x01000000
 #define TCX_CPLANE_VOFF		0x28000000
+#define	TCX_RSTIP_VOFF		0x30000000
+#define	TCX_RBLIT_VOFF		0x38000000
 #define TCX_TEC_VOFF		0x70000000
 #define TCX_BTREGS_VOFF		0x70002000
 #define TCX_THC_VOFF		0x70004000
@@ -53,14 +56,20 @@ typedef struct {
 	sbusDevicePtr	psdp;
 	CloseScreenProcPtr CloseScreen;
 	Bool		HWCursor;
+	uint64_t	*rblit;
+	uint64_t	*rstip;
 	xf86CursorInfoPtr CursorInfoRec;
 	unsigned int	CursorXY;
 	int		CursorBg, CursorFg;
-	Bool		CursorEnabled;
+	Bool		CursorEnabled, NoAccel;
 	unsigned char	CursorShiftX, CursorShiftY;
 	unsigned char	*CursorData;
 	OptionInfoPtr	Options;
+	ExaDriverPtr	pExa;
+	int		xdir, ydir, srcoff, srcpitch, fg;
 } TcxRec, *TcxPtr;
+
+Bool TcxInitAccel(ScreenPtr);
 
 #define TCX_CPLANE_MODE		0x03000000
 

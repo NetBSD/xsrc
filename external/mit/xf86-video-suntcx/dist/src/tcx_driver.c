@@ -25,7 +25,12 @@
 #include "config.h"
 #endif
 
+#include <fcntl.h>
+#include <sys/types.h>
+#include <sys/time.h>
 #include <string.h>
+#include <dev/sun/fbio.h>
+#include <dev/wscons/wsconsio.h>
 
 #include "xf86.h"
 #include "xf86_OSproc.h"
@@ -88,12 +93,14 @@ _X_EXPORT DriverRec SUNTCX = {
 
 typedef enum {
     OPTION_SW_CURSOR,
-    OPTION_HW_CURSOR
+    OPTION_HW_CURSOR,
+    OPTION_NOACCEL
 } TCXOpts;
 
 static const OptionInfoRec TCXOptions[] = {
     { OPTION_SW_CURSOR,		"SWcursor",	OPTV_BOOLEAN,	{0}, FALSE },
-    { OPTION_HW_CURSOR,		"HWcursor",	OPTV_BOOLEAN,	{0}, FALSE },
+    { OPTION_HW_CURSOR,		"HWcursor",	OPTV_BOOLEAN,	{0}, TRUE  },
+    { OPTION_NOACCEL,		"NoAccel",	OPTV_BOOLEAN,	{0}, FALSE },
     { -1,			NULL,		OPTV_NONE,	{0}, FALSE }
 };
 
@@ -341,6 +348,12 @@ TCXPreInit(ScrnInfoPtr pScrn, int flags)
 	sparcPromClose();
     }
 
+    /* all S24 support a hardware cursor */
+    if (!lowDepth)
+	hwCursor = 1;
+
+	xf86Msg(X_ERROR, "hw-cursor: %d\n", hwCursor);
+
     /*********************
     deal with depth
     *********************/
@@ -355,6 +368,7 @@ TCXPreInit(ScrnInfoPtr pScrn, int flags)
 	    /* OK */
 	    break;
 	case 32:
+	case 24:
 	    /* unless lowDepth OK */
 	    if (lowDepth) {
 		xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
@@ -383,7 +397,7 @@ TCXPreInit(ScrnInfoPtr pScrn, int flags)
      * xf86SetWeight references it.
      */
     if (pScrn->depth > 8) {
-	rgb weight = {10, 11, 11};
+	rgb weight = {0, 0, 0};
 	rgb mask = {0xff, 0xff00, 0xff0000};
                                        
 	if (!xf86SetWeight(pScrn, weight, mask)) {
@@ -429,7 +443,13 @@ TCXPreInit(ScrnInfoPtr pScrn, int flags)
 	    pTcx->HWCursor = FALSE;
 	}
     }
-    
+
+    pTcx->NoAccel = FALSE;
+    if (xf86ReturnOptValBool(pTcx->Options, OPTION_NOACCEL, FALSE)) {
+	pTcx->NoAccel = TRUE;
+	xf86DrvMsg(pScrn->scrnIndex, X_CONFIG, "Acceleration disabled\n");
+    }
+
     xf86DrvMsg(pScrn->scrnIndex, from, "Using %s cursor\n",
 		pTcx->HWCursor ? "HW" : "SW");
 
@@ -488,15 +508,12 @@ TCXScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
     /* Map the TCX memory */
     if (pScrn->depth == 8)
 	pTcx->fb =
-	    xf86MapSbusMem (pTcx->psdp, TCX_RAM8_VOFF,
-			    (pTcx->psdp->width * pTcx->psdp->height));
+	    xf86MapSbusMem (pTcx->psdp, TCX_RAM8_VOFF, 1024 * 1024);
     else {
 	pTcx->fb =
-	    xf86MapSbusMem (pTcx->psdp, TCX_RAM24_VOFF,
-			    (pTcx->psdp->width * pTcx->psdp->height * 4));
+	    xf86MapSbusMem (pTcx->psdp, TCX_RAM24_VOFF, 1024 * 1024 * 4);
 	pTcx->cplane =
-	    xf86MapSbusMem (pTcx->psdp, TCX_CPLANE_VOFF,
-			    (pTcx->psdp->width * pTcx->psdp->height * 4));
+	    xf86MapSbusMem (pTcx->psdp, TCX_CPLANE_VOFF, 1024 * 1024 * 4);
 	if (! pTcx->cplane)
 	    return FALSE;
     }
@@ -504,6 +521,17 @@ TCXScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 	pTcx->thc = xf86MapSbusMem (pTcx->psdp, TCX_THC_VOFF, 8192);
 	if (! pTcx->thc)
 	    return FALSE;
+    }
+
+    pTcx->rblit = xf86MapSbusMem(pTcx->psdp, TCX_RBLIT_VOFF, 8 * 1024 * 1024);
+    if (pTcx->rblit == NULL) {
+	xf86Msg(X_ERROR, "Couldn't map RBLIT space\n");
+	return FALSE;
+    }
+    pTcx->rstip = xf86MapSbusMem(pTcx->psdp, TCX_RSTIP_VOFF, 8 * 1024 * 1024);
+    if (pTcx->rstip == NULL) {
+	xf86Msg(X_ERROR, "Couldn't map RSTIP space\n");
+	return FALSE;
     }
 
     if (! pTcx->fb)
@@ -575,6 +603,24 @@ TCXScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
     /* must be after RGB ordering fixed */
     fbPictureInit (pScreen, 0, 0);
 #endif
+
+    if (!pTcx->NoAccel)
+    {
+        XF86ModReqInfo req;
+        int errmaj, errmin;
+
+        memset(&req, 0, sizeof(XF86ModReqInfo));
+        req.majorversion = 2;
+        req.minorversion = 0;
+        if (!LoadSubModule(pScrn->module, "exa", NULL, NULL, NULL, &req,
+            &errmaj, &errmin))
+        {
+            LoaderErrorMsg(NULL, "exa", errmaj, errmin);
+            return FALSE;
+        }
+	if (!TcxInitAccel(pScreen))
+	    return FALSE;
+    }
 
     miInitializeBackingStore(pScreen);
     xf86SetBackingStore(pScreen);
@@ -741,6 +787,37 @@ TCXSaveScreen(ScreenPtr pScreen, int mode)
        unblank it when unblank is TRUE -- it doesn't actually seem to be
        used for much though */
 {
+    ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
+    TcxPtr pTcx = GET_TCX_FROM_SCRN(pScrn);
+    int fd = pTcx->psdp->fd, state;
+    
+    /* 
+     * we're using ioctl() instead of just whacking the DAC because the 
+     * underlying driver will also turn off the backlight which we couldn't do 
+     * from here without adding lots more hardware dependencies 
+     */
+    switch(mode)
+    {
+	case SCREEN_SAVER_ON:
+	case SCREEN_SAVER_CYCLE:
+    		state = 0;
+		if(ioctl(fd, FBIOSVIDEO, &state) == -1)
+		{
+			/* complain */
+		}
+		break;
+	case SCREEN_SAVER_OFF:
+	case SCREEN_SAVER_FORCER:
+    		state = 1;
+		if(ioctl(fd, FBIOSVIDEO, &state) == -1)
+		{
+			/* complain */
+		}
+		break;
+	default:
+		return FALSE;
+    }
+ 
     return TRUE;
 }
 
