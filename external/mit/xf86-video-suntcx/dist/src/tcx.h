@@ -66,7 +66,7 @@ typedef struct {
 	unsigned char	*CursorData;
 	OptionInfoPtr	Options;
 	ExaDriverPtr	pExa;
-	int		xdir, ydir, srcoff, srcpitch, fg;
+	int		xdir, ydir, srcoff, srcpitch, fg, pitchshift;
 } TcxRec, *TcxPtr;
 
 Bool TcxInitAccel(ScreenPtr);

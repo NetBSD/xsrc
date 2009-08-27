@@ -506,14 +506,16 @@ TCXScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
     pTcx = GET_TCX_FROM_SCRN(pScrn);
 
     /* Map the TCX memory */
-    if (pScrn->depth == 8)
+    if (pScrn->depth == 8) {
 	pTcx->fb =
 	    xf86MapSbusMem (pTcx->psdp, TCX_RAM8_VOFF, 1024 * 1024);
-    else {
+	pTcx->pitchshift = 0;
+    } else {
 	pTcx->fb =
 	    xf86MapSbusMem (pTcx->psdp, TCX_RAM24_VOFF, 1024 * 1024 * 4);
 	pTcx->cplane =
 	    xf86MapSbusMem (pTcx->psdp, TCX_CPLANE_VOFF, 1024 * 1024 * 4);
+	pTcx->pitchshift = 2;
 	if (! pTcx->cplane)
 	    return FALSE;
     }

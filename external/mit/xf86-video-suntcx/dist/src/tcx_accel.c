@@ -21,7 +21,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-/* $NetBSD: tcx_accel.c,v 1.1 2009/08/26 22:24:34 macallan Exp $ */
+/* $NetBSD: tcx_accel.c,v 1.2 2009/08/27 02:41:53 macallan Exp $ */
 
 #include <sys/types.h>
 
@@ -75,8 +75,8 @@ TcxPrepareCopy
 
     pTcx->xdir = xdir;
     pTcx->ydir = ydir;
-    pTcx->srcoff = exaGetPixmapOffset(pSrcPixmap) >> 2;
-    pTcx->srcpitch = exaGetPixmapPitch(pSrcPixmap) >> 2;
+    pTcx->srcoff = exaGetPixmapOffset(pSrcPixmap) >> pTcx->pitchshift;
+    pTcx->srcpitch = exaGetPixmapPitch(pSrcPixmap) >> pTcx->pitchshift;
     LEAVE;
     return TRUE;
 }
@@ -105,8 +105,8 @@ TcxCopy
 	    lcmd = 0x3000000000000000LL | (leftover - 1) << 24;
 	    
 
-    doff = exaGetPixmapOffset(pDstPixmap) >> 2;
-    dpitch = exaGetPixmapPitch(pDstPixmap) >> 2;
+    doff = exaGetPixmapOffset(pDstPixmap) >> pTcx->pitchshift;
+    dpitch = exaGetPixmapPitch(pDstPixmap) >> pTcx->pitchshift;
     src = srcX + srcY * pTcx->srcpitch + pTcx->srcoff;
     dst = dstX + dstY * dpitch + doff;
 
@@ -187,7 +187,7 @@ TcxPrepareSolid(
 	return FALSE;
     if (exaGetPixmapOffset(pPixmap) != 0)
 	return FALSE;
-    pTcx->fg = (fg & 0x00ffffff) | 0x33000000;
+    pTcx->fg = (fg & 0x00ffffff) | pTcx->pitchshift ? 0x33000000 : 0x30000000;
 #ifdef DEBUG
     xf86Msg(X_ERROR, "fg: %08x\n", fg);
 #endif
@@ -209,7 +209,7 @@ TcxSolid(
     uint64_t cmd, rcmd, lcmd, tmpl;
     uint32_t pmask;
 
-    dpitch = exaGetPixmapPitch(pPixmap) >> 2;
+    dpitch = exaGetPixmapPitch(pPixmap) >> pTcx->pitchshift;
     dst = x1 + y1 * dpitch;
 
     tmpl = ((uint64_t)pTcx->fg) << 32;
@@ -331,6 +331,12 @@ TcxInitAccel(ScreenPtr pScreen)
     pExa->exa_major = EXA_VERSION_MAJOR;
     pExa->exa_minor = EXA_VERSION_MINOR;
 
+    /*
+     * The S24 can display both 8 and 24bit data at the same time, and in
+     * 24bit we can choose between gamma corrected ad direct. No idea how that
+     * would map to EXA - we'd have to pick the right framebuffer to draw into
+     * and Solid() would need to know what kind of pixels to write
+     */
     pExa->memoryBase = pTcx->fb;
     if (pScrn->depth == 8) {
 	pExa->memorySize = 1024 * 1024;
