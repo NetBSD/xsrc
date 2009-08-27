@@ -21,7 +21,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-/* $NetBSD: tcx_accel.c,v 1.2 2009/08/27 02:41:53 macallan Exp $ */
+/* $NetBSD: tcx_accel.c,v 1.3 2009/08/27 04:12:37 macallan Exp $ */
 
 #include <sys/types.h>
 
@@ -187,7 +187,11 @@ TcxPrepareSolid(
 	return FALSE;
     if (exaGetPixmapOffset(pPixmap) != 0)
 	return FALSE;
-    pTcx->fg = (fg & 0x00ffffff) | pTcx->pitchshift ? 0x33000000 : 0x30000000;
+    pTcx->fg = (fg & 0x00ffffff);
+    if (pTcx->pitchshift == 0) {
+    	pTcx->fg |= 0x30000000;
+    } else 
+	pTcx->fg |= 0x33000000;
 #ifdef DEBUG
     xf86Msg(X_ERROR, "fg: %08x\n", fg);
 #endif
