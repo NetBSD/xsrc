@@ -360,7 +360,7 @@ Bool TDFXDRIScreenInit(ScreenPtr pScreen)
   pDRIInfo->ddxDriverMajorVersion = TDFX_MAJOR_VERSION;
   pDRIInfo->ddxDriverMinorVersion = TDFX_MINOR_VERSION;
   pDRIInfo->ddxDriverPatchVersion = TDFX_PATCHLEVEL;
-  pDRIInfo->frameBufferPhysicalAddress = pTDFX->LinearAddr[0];
+  pDRIInfo->frameBufferPhysicalAddress = (pointer) pTDFX->LinearAddr[0];
   pDRIInfo->frameBufferSize = pTDFX->FbMapSize;
   pDRIInfo->frameBufferStride = pTDFX->stride;
   pDRIInfo->ddxDrawableTableEntry = TDFX_MAX_DRAWABLES;
