@@ -19,12 +19,14 @@
 
 #include "xf86.h"
 #include "xf86_OSproc.h"
-#include "xf86Resources.h"
+
 
 #include <X11/extensions/panoramiXproto.h>
 
 #ifdef XSERVER_LIBPCIACCESS
 #include <pciaccess.h>
+#else
+#include "xf86Resources.h"
 #endif
 
 #include "compiler.h"	        /* inb/outb */
