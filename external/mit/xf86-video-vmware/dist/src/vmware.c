@@ -18,7 +18,9 @@ char rcsId_vmware[] =
 
 #include "xf86.h"
 #include "xf86_OSproc.h"
+#if GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) < 6
 #include "xf86Resources.h"
+#endif
 
 #include "compiler.h"	/* inb/outb */
 
@@ -83,7 +85,7 @@ char rcsId_vmware[] =
 #define VMWARE_DRIVER_NAME "vmware"
 #define VMWARE_MAJOR_VERSION	10
 #define VMWARE_MINOR_VERSION	16
-#define VMWARE_PATCHLEVEL	7
+#define VMWARE_PATCHLEVEL	8
 #define VMWARE_DRIVER_VERSION \
    (VMWARE_MAJOR_VERSION * 65536 + VMWARE_MINOR_VERSION * 256 + VMWARE_PATCHLEVEL)
 #define VMWARE_DRIVER_VERSION_STRING \
@@ -109,11 +111,15 @@ static SymTabRec VMWAREChipsets[] = {
     { -1,                  NULL }
 };
 
+#ifndef XSERVER_LIBPCIACCESS
 static resRange vmwareLegacyRes[] = {
     { ResExcIoBlock, SVGA_LEGACY_BASE_PORT,
       SVGA_LEGACY_BASE_PORT + SVGA_NUM_PORTS*sizeof(uint32)},
     _VGA_EXCLUSIVE, _END
 };
+#else
+#define vmwareLegacyRes NULL
+#endif
 
 #if XSERVER_LIBPCIACCESS
 
