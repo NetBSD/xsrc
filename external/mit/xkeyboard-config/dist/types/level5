@@ -1,4 +1,4 @@
-// $XKeyboardConfig: xkeyboard-config/types/level5,v 1.3 2006/01/22 17:49:45 svu Exp $
+// $XKeyboardConfig$
 // $XFree86: xc/programs/xkbcomp/types/extra,v 1.3 2002/11/26 02:14:02 dawes Exp $
 
 partial default xkb_types "default" {

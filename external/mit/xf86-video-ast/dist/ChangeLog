@@ -1,3 +1,81 @@
+2009-06-03  Y.C. Chen  <yc_chen@aspedtech.com>
+        * src/ast_driver.c, ast_vgatool.c
+        - Fixed the screen flashing issue while running x11perf
+        * src/ast.h, ast_driver.c, ast_vgatool.c/h
+        - Fixed Suspend can't resume issue
+        
+2009-04-13  Y.C. Chen  <yc_chen@aspedtech.com>
+        * src/ast.h, ast_cursor.c
+        - Fixed xorg bugzilla #20606
+        * src/ast_driver.c
+        - Fixed xorg bugzilla #20472
+        * src/ast_accel.c
+        - Fixed desktop display abnormal if video buffer is above than 16MB
+ 
+2009-01-16  Y.C. Chen  <yc_chen@aspedtech.com>
+        * src/ast_driver.c
+        - Fixed Support Modes Incorrect Issues on Solaris 10 x86
+
+2009-01-08  Y.C. Chen  >yc_chen@aspedtech.com>
+        * src/ast.h
+        * src/ast_driver.c
+        * src/ast_2dtool.c, ast_2dtool.h
+        * src/ast_accel.c
+        * src/ast_cursor.c
+        * src/ast_mode.c
+        * src/ast_vgatool.c
+        - Support AST2200/2150
+        - Support ASPEED Graphics as Secondary
+        - Fixed AST1100 1280x1024x32bpp thershold issue
+        - Fixed Screen saver - celtic, DecayScreen abnormal issues
+        - Fixed Game - Potato Guys abnormal issue
+        
+2008-08-22  Y.C. Chen  <yc_chen@aspeedtech.com>
+        * src/ast.h
+        * src/ast_driver.c
+        * src/ast_vgatool.c, ast_vgatool.h
+        Support AST1100/2050/2100
+        
+        * src/ast_mode.c ast_mode.h
+        Modify the display timing of 1920x1200 to reduce blanking timing
+
+        * src/ast_driver.c
+        * src/ast_vgatool.c
+        Support Clone Display for Two VGA
+        
+2008-07-21  Y.C. Chen  <yc_chen@aspeedtech.com>
+        * src/ast_mode.c
+        Fixed Incorrect Settings for Graphices Registers 
+
+2008-03-18  Y.C. Chen  <yc_chen@aspeedtech.com>
+        * src/ast_2dtool.c
+        * src/ast_tool.c
+        Compiler Warning Fixed
+
+2008-03-01  Y.C. Chen  <yc_chen@aspeedtech.com>
+        * src/ast_driver.c:
+        Add _X_EXPORT for symbols public visibility
+
+2007-08-24  Y.C. Chen  <yc_chen@aspeedtech.com>
+         
+	* configure.ac:
+	* src/ast.h:
+	* src/ast_2dtool.c:
+	* src/ast_accel.c:
+	* src/ast_cursor.c:
+	* src/ast_driver.c:
+	* src/ast_mode.c:
+	* src/ast_tool.c:
+	* src/ast_vgatool.c:
+        * src/ast_2dtool.h
+        * src/ast_mode.h:
+        Support AST2100
+
+2006-04-17  Y.C. Chen  <yc_chen@aspeedtech.com>
+
+	* src/ast_vgatool.c: (GetMaxDCLK):
+        Fixed can't get correct MCLK in some platforms     
+
 2006-04-07  Adam Jackson  <ajax@freedesktop.org>
 
 	* configure.ac:

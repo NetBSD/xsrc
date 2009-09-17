@@ -1,5 +1,5 @@
 /*
- * Copyright 2008  Luc Verhaegen <lverhaegen@novell.com>
+ * Copyright 2008  Luc Verhaegen <libv@exsuse.de>
  * Copyright 2008  Matthias Hopf <mhopf@novell.com>
  * Copyright 2008  Egbert Eich   <eich@novell.com>
  * Copyright 2008  Advanced Micro Devices, Inc.
@@ -1032,10 +1032,6 @@ R5xxXAAFBInit(ScrnInfoPtr pScrn, ScreenPtr pScreen)
        can only use 8191 lines anyway. */
     if (tmp > 0x1FFF)
 	tmp = 0x1FFF;
-    /* FIXME: currently always allocate for maximum (dri: backbuffer)
-     * This probably breaks backbuffers, but allows for
-     * easier back-to-front/front-to-back blits. See rhd_dri.c: backY/X */
-    tmp = 0x1FFF;
 
     AvailFBArea.x1 = 0;
     AvailFBArea.y1 = 0;

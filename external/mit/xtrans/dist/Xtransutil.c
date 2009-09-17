@@ -104,17 +104,8 @@ TRANS(ConvertAddress)(int *familyp, int *addrlenp, Xtransaddr **addrp)
 	 */
 
 	struct sockaddr_in saddr;
-#ifdef CRAY
-#ifdef OLDTCP
-	int len = sizeof(saddr.sin_addr);
-#else
-	int len = SIZEOF_in_addr;
-#endif /* OLDTCP */
-	char *cp = (char *) &saddr.sin_addr;
-#else /* else not CRAY */
 	int len = sizeof(saddr.sin_addr.s_addr);
 	char *cp = (char *) &saddr.sin_addr.s_addr;
-#endif /* CRAY */
 
 	memcpy (&saddr, *addrp, sizeof (struct sockaddr_in));
 
@@ -169,28 +160,14 @@ TRANS(ConvertAddress)(int *familyp, int *addrlenp, Xtransaddr **addrp)
 #endif /* IPv6 */
 #endif /* defined(TCPCONN) || defined(STREAMSCONN) */
 
-#if defined(DNETCONN)
-    case AF_DECnet:
-    {
-	struct sockaddr_dn saddr;
 
-	memcpy (&saddr, *addrp, sizeof (struct sockaddr_dn));
-
-	*familyp=FamilyDECnet;
-	*addrlenp=sizeof(struct dn_naddr);
-	memcpy(*addrp,&saddr.sdn_add,*addrlenp);
-
-	break;
-    }
-#endif /* defined(DNETCONN) */
-
-#if defined(UNIXCONN) || defined(LOCALCONN) || defined(OS2PIPECONN)
+#if defined(UNIXCONN) || defined(LOCALCONN) 
     case AF_UNIX:
     {
 	*familyp=FamilyLocal;
 	break;
     }
-#endif /* defined(UNIXCONN) || defined(LOCALCONN) || defined(OS2PIPECONN)*/
+#endif /* defined(UNIXCONN) || defined(LOCALCONN) */
 
 #if (defined(__SCO__) || defined(__UNIXWARE__)) && defined(LOCALCONN)
     case 0:
@@ -248,6 +225,13 @@ TRANS(ConvertAddress)(int *familyp, int *addrlenp, Xtransaddr **addrp)
 
 #ifdef ICE_t
 
+/* Needed for _XGethostbyaddr usage in TRANS(GetPeerNetworkId) */
+# if defined(TCPCONN) || defined(UNIXCONN)
+#  define X_INCLUDE_NETDB_H
+#  define XOS_USE_NO_LOCKING
+#  include <X11/Xos_r.h>
+# endif
+
 #include <signal.h>
 
 char *
@@ -267,7 +251,7 @@ TRANS(GetMyNetworkId) (XtransConnInfo ciptr)
 
     switch (family)
     {
-#if defined(UNIXCONN) || defined(STREAMSCONN) || defined(LOCALCONN) || defined(OS2PIPECONN)
+#if defined(UNIXCONN) || defined(STREAMSCONN) || defined(LOCALCONN) 
     case AF_UNIX:
     {
 	struct sockaddr_un *saddr = (struct sockaddr_un *) addr;
@@ -277,7 +261,7 @@ TRANS(GetMyNetworkId) (XtransConnInfo ciptr)
 	    hostnamebuf, saddr->sun_path);
 	break;
     }
-#endif /* defined(UNIXCONN) || defined(STREAMSCONN) || defined(LOCALCONN) || defined(OS2PIPECONN) */
+#endif /* defined(UNIXCONN) || defined(STREAMSCONN) || defined(LOCALCONN) */
 
 #if defined(TCPCONN) || defined(STREAMSCONN)
     case AF_INET:
@@ -308,18 +292,6 @@ TRANS(GetMyNetworkId) (XtransConnInfo ciptr)
     }
 #endif /* defined(TCPCONN) || defined(STREAMSCONN) */
 
-#if defined(DNETCONN)
-    case AF_DECnet:
-    {
-	struct sockaddr_dn *saddr = (struct sockaddr_dn *) addr;
-
-	networkId = (char *) xalloc (
-	    13 + strlen (hostnamebuf) + saddr->sdn_objnamel);
-	sprintf (networkId, "dnet/%s::%s",
-	    hostnamebuf, saddr->sdn_objname);
-	break;
-    }
-#endif /* defined(DNETCONN) */
 
     default:
 	break;
@@ -369,14 +341,14 @@ TRANS(GetPeerNetworkId) (XtransConnInfo ciptr)
     switch (family)
     {
     case AF_UNSPEC:
-#if defined(UNIXCONN) || defined(STREAMSCONN) || defined(LOCALCONN) || defined(OS2PIPECONN)
+#if defined(UNIXCONN) || defined(STREAMSCONN) || defined(LOCALCONN) 
     case AF_UNIX:
     {
 	if (gethostname (addrbuf, sizeof (addrbuf)) == 0)
 	    addr = addrbuf;
 	break;
     }
-#endif /* defined(UNIXCONN) || defined(STREAMSCONN) || defined(LOCALCONN) || defined(OS2PIPECONN) */
+#endif /* defined(UNIXCONN) || defined(STREAMSCONN) || defined(LOCALCONN) */
 
 #if defined(TCPCONN) || defined(STREAMSCONN)
     case AF_INET:
@@ -440,22 +412,6 @@ TRANS(GetPeerNetworkId) (XtransConnInfo ciptr)
 
 #endif /* defined(TCPCONN) || defined(STREAMSCONN) */
 
-#if defined(DNETCONN)
-    case AF_DECnet:
-    {
-	struct sockaddr_dn *saddr = (struct sockaddr_dn *) peer_addr;
-	struct nodeent *np;
-
-	if (np = getnodebyaddr(saddr->sdn_add.a_addr,
-	    saddr->sdn_add.a_len, AF_DECnet)) {
-	    sprintf(addrbuf, "%s:", np->n_name);
-	} else {
-	    sprintf(addrbuf, "%s:", dnet_htoa(&saddr->sdn_add));
-	}
-	addr = addrbuf;
-	break;
-    }
-#endif /* defined(DNETCONN) */
 
     default:
 	return (NULL);
@@ -475,7 +431,7 @@ TRANS(GetPeerNetworkId) (XtransConnInfo ciptr)
 #endif /* ICE_t */
 
 
-#if defined(WIN32) && (defined(TCPCONN) || defined(DNETCONN))
+#if defined(WIN32) && defined(TCPCONN) 
 int
 TRANS(WSAStartup) (void)
 {
@@ -489,10 +445,10 @@ TRANS(WSAStartup) (void)
 }
 #endif
 
+#include <ctype.h>
 
 static int
-is_numeric (char *str)
-
+is_numeric (const char *str)
 {
     int i;
 
@@ -523,7 +479,7 @@ is_numeric (char *str)
  * bit cannot be set and fail.
  */
 static int 
-trans_mkdir(char *path, int mode)
+trans_mkdir(const char *path, int mode)
 {
     struct stat buf;
 

@@ -69,10 +69,12 @@ static xf86ConfigSymTabRec FilesTab[] =
 {
 	{ENDSECTION, "endsection"},
 	{FONTPATH, "fontpath"},
-	{RGBPATH, "rgbpath"},
 	{MODULEPATH, "modulepath"},
 	{INPUTDEVICES, "inputdevices"},
 	{LOGFILEPATH, "logfile"},
+	{XKBDIR, "xkbdir"},
+	/* Obsolete keywords that aren't used but shouldn't cause errors: */
+	{OBSOLETE_TOKEN, "rgbpath"},
 	{-1, ""},
 };
 
@@ -121,11 +123,6 @@ xf86parseFilesSection (void)
 
 			strcat (ptr->file_fontpath, str);
 			xf86conffree (val.str);
-			break;
-		case RGBPATH:
-			if (xf86getSubToken (&(ptr->file_comment)) != STRING)
-				Error (QUOTE_MSG, "RGBPath");
-			ptr->file_rgbpath = val.str;
 			break;
 		case MODULEPATH:
 			if (xf86getSubToken (&(ptr->file_comment)) != STRING)
@@ -186,8 +183,17 @@ xf86parseFilesSection (void)
 				Error (QUOTE_MSG, "LogFile");
 			ptr->file_logfile = val.str;
 			break;
+		case XKBDIR:
+			if (xf86getSubToken (&(ptr->file_xkbdir)) != STRING)
+				Error (QUOTE_MSG, "XkbDir");
+			ptr->file_xkbdir = val.str;
+			break;
 		case EOF_TOKEN:
 			Error (UNEXPECTED_EOF_MSG, NULL);
+			break;
+		case OBSOLETE_TOKEN:
+			xf86parseError (OBSOLETE_MSG, xf86tokenString ());
+			xf86getSubToken (&(ptr->file_comment));
 			break;
 		default:
 			Error (INVALID_KEYWORD_MSG, xf86tokenString ());
@@ -216,8 +222,6 @@ xf86printFileSection (FILE * cf, XF86ConfFilesPtr ptr)
 		fprintf (cf, "%s", ptr->file_comment);
 	if (ptr->file_logfile)
 		fprintf (cf, "\tLogFile      \"%s\"\n", ptr->file_logfile);
-	if (ptr->file_rgbpath)
-		fprintf (cf, "\tRgbPath      \"%s\"\n", ptr->file_rgbpath);
 	if (ptr->file_modulepath)
 	{
 		s = ptr->file_modulepath;
@@ -263,6 +267,8 @@ xf86printFileSection (FILE * cf, XF86ConfFilesPtr ptr)
 		}
 		fprintf (cf, "\tFontPath     \"%s\"\n", s);
 	}
+	if (ptr->file_xkbdir)
+		fprintf (cf, "\tXkbDir		\"%s\"\n", ptr->file_xkbdir);
 }
 
 void
@@ -272,11 +278,11 @@ xf86freeFiles (XF86ConfFilesPtr p)
 		return;
 
 	TestFree (p->file_logfile);
-	TestFree (p->file_rgbpath);
 	TestFree (p->file_modulepath);
 	TestFree (p->file_inputdevs);
 	TestFree (p->file_fontpath);
 	TestFree (p->file_comment);
+	TestFree (p->file_xkbdir);
 
 	xf86conffree (p);
 }

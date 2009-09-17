@@ -58,6 +58,8 @@ Equipment Corporation.
 #endif
 #include "modinit.h"
 
+#define SERVER_PANORAMIX_MAJOR_VERSION	1
+#define SERVER_PANORAMIX_MINOR_VERSION	1
 
 #ifdef GLXPROXY
 extern VisualPtr glxMatchVisual(ScreenPtr pScreen,
@@ -65,9 +67,6 @@ extern VisualPtr glxMatchVisual(ScreenPtr pScreen,
 				ScreenPtr pMatchScreen);
 #endif
 
-#if 0
-static unsigned char PanoramiXReqCode = 0;
-#endif
 /*
  *	PanoramiX data declarations
  */
@@ -84,14 +83,14 @@ static DepthPtr		PanoramiXDepths;
 static int		PanoramiXNumVisuals;
 static VisualPtr	PanoramiXVisuals;
 
-/* We support at most 256 visuals */
-_X_EXPORT XID		*PanoramiXVisualTable = NULL;
-
 _X_EXPORT unsigned long XRC_DRAWABLE;
 _X_EXPORT unsigned long XRT_WINDOW;
 _X_EXPORT unsigned long XRT_PIXMAP;
 _X_EXPORT unsigned long XRT_GC;
 _X_EXPORT unsigned long XRT_COLORMAP;
+
+static Bool VisualsEqual(VisualPtr, ScreenPtr, VisualPtr);
+_X_EXPORT XineramaVisualsEqualProcPtr XineramaVisualsEqualPtr = &VisualsEqual;
 
 /*
  *	Function prototypes
@@ -110,8 +109,10 @@ static void PanoramiXResetProc(ExtensionEntry*);
 
 int (* SavedProcVector[256]) (ClientPtr client) = { NULL, };
 
-static int PanoramiXGCIndex = -1;
-static int PanoramiXScreenIndex = -1;
+static int PanoramiXGCKeyIndex;
+static DevPrivateKey PanoramiXGCKey = &PanoramiXGCKeyIndex;
+static int PanoramiXScreenKeyIndex;
+static DevPrivateKey PanoramiXScreenKey = &PanoramiXScreenKeyIndex;
 
 typedef struct {
   DDXPointRec clipOrg;
@@ -140,8 +141,8 @@ static GCFuncs XineramaGCFuncs = {
 };
 
 #define Xinerama_GC_FUNC_PROLOGUE(pGC)\
-    PanoramiXGCPtr  pGCPriv = \
-		(PanoramiXGCPtr) (pGC)->devPrivates[PanoramiXGCIndex].ptr;\
+    PanoramiXGCPtr  pGCPriv = (PanoramiXGCPtr) \
+	dixLookupPrivate(&(pGC)->devPrivates, PanoramiXGCKey); \
     (pGC)->funcs = pGCPriv->wrapFuncs;
 
 #define Xinerama_GC_FUNC_EPILOGUE(pGC)\
@@ -152,8 +153,8 @@ static GCFuncs XineramaGCFuncs = {
 static Bool
 XineramaCloseScreen (int i, ScreenPtr pScreen)
 {
-    PanoramiXScreenPtr pScreenPriv = 
-        (PanoramiXScreenPtr) pScreen->devPrivates[PanoramiXScreenIndex].ptr;
+    PanoramiXScreenPtr pScreenPriv = (PanoramiXScreenPtr)
+	dixLookupPrivate(&pScreen->devPrivates, PanoramiXScreenKey);
 
     pScreen->CloseScreen = pScreenPriv->CloseScreen;
     pScreen->CreateGC = pScreenPriv->CreateGC;
@@ -171,14 +172,14 @@ static Bool
 XineramaCreateGC(GCPtr pGC)
 {
     ScreenPtr pScreen = pGC->pScreen;
-    PanoramiXScreenPtr pScreenPriv = 
-        (PanoramiXScreenPtr) pScreen->devPrivates[PanoramiXScreenIndex].ptr;
+    PanoramiXScreenPtr pScreenPriv = (PanoramiXScreenPtr)
+	dixLookupPrivate(&pScreen->devPrivates, PanoramiXScreenKey);
     Bool ret;
 
     pScreen->CreateGC = pScreenPriv->CreateGC;
     if((ret = (*pScreen->CreateGC)(pGC))) {
-	PanoramiXGCPtr pGCPriv = 
-		(PanoramiXGCPtr) pGC->devPrivates[PanoramiXGCIndex].ptr;
+	PanoramiXGCPtr pGCPriv = (PanoramiXGCPtr)
+	    dixLookupPrivate(&pGC->devPrivates, PanoramiXGCKey);
 
 	pGCPriv->wrapFuncs = pGC->funcs;
         pGC->funcs = &XineramaGCFuncs;
@@ -284,8 +285,8 @@ XineramaCopyGC (
     unsigned long   mask,
     GCPtr	    pGCDst
 ){
-    PanoramiXGCPtr pSrcPriv =
-                (PanoramiXGCPtr) pGCSrc->devPrivates[PanoramiXGCIndex].ptr;
+    PanoramiXGCPtr pSrcPriv = (PanoramiXGCPtr)
+	dixLookupPrivate(&pGCSrc->devPrivates, PanoramiXGCKey);
     Xinerama_GC_FUNC_PROLOGUE (pGCDst);
 
     if(mask & GCTileStipXOrigin)
@@ -466,14 +467,8 @@ void PanoramiXExtensionInit(int argc, char *argv[])
 				ProcPanoramiXDispatch,
 				SProcPanoramiXDispatch, PanoramiXResetProc, 
 				StandardMinorOpcode);
-	if (!extEntry) {
-	    ErrorF("PanoramiXExtensionInit(): failed to AddExtension\n");
+	if (!extEntry)
 	    break;
- 	}
-
-#if 0
-	PanoramiXReqCode = (unsigned char)extEntry->base;
-#endif
 
 	/*
 	 *	First make sure all the basic allocations succeed.  If not,
@@ -484,20 +479,17 @@ void PanoramiXExtensionInit(int argc, char *argv[])
 		xcalloc(PanoramiXNumScreens, sizeof(PanoramiXData));
 
         BREAK_IF(!panoramiXdataPtr);
-	BREAK_IF((PanoramiXGCIndex = AllocateGCPrivateIndex()) < 0);
-	BREAK_IF((PanoramiXScreenIndex = AllocateScreenPrivateIndex()) < 0);
+
+	if (!dixRequestPrivate(PanoramiXGCKey, sizeof(PanoramiXGCRec))) {
+		noPanoramiXExtension = TRUE;
+		return;
+	}
 	
 	for (i = 0; i < PanoramiXNumScreens; i++) {
 	   pScreen = screenInfo.screens[i];
-	   if(!AllocateGCPrivate(pScreen, PanoramiXGCIndex, 
-						sizeof(PanoramiXGCRec))) {
-		noPanoramiXExtension = TRUE;
-		return;
-	   }
-
 	   pScreenPriv = xalloc(sizeof(PanoramiXScreenRec));
-	   pScreen->devPrivates[PanoramiXScreenIndex].ptr = 
-						(pointer)pScreenPriv;
+	   dixSetPrivate(&pScreen->devPrivates, PanoramiXScreenKey,
+			 pScreenPriv);
 	   if(!pScreenPriv) {
 		noPanoramiXExtension = TRUE;
 		return;
@@ -524,7 +516,7 @@ void PanoramiXExtensionInit(int argc, char *argv[])
 
     if (!success) {
 	noPanoramiXExtension = TRUE;
-	ErrorF("%s Extension failed to initialize\n", PANORAMIX_PROTOCOL_NAME);
+	ErrorF(PANORAMIX_PROTOCOL_NAME " extension failed to initialize\n");
 	return;
     }
   
@@ -560,8 +552,8 @@ void PanoramiXExtensionInit(int argc, char *argv[])
     ProcVector[X_SetClipRectangles] = PanoramiXSetClipRectangles;
     ProcVector[X_FreeGC] = PanoramiXFreeGC;
     ProcVector[X_ClearArea] = PanoramiXClearToBackground;
-    ProcVector[X_CopyArea] = PanoramiXCopyArea;;
-    ProcVector[X_CopyPlane] = PanoramiXCopyPlane;;
+    ProcVector[X_CopyArea] = PanoramiXCopyArea;
+    ProcVector[X_CopyPlane] = PanoramiXCopyPlane;
     ProcVector[X_PolyPoint] = PanoramiXPolyPoint;
     ProcVector[X_PolyLine] = PanoramiXPolyLine;
     ProcVector[X_PolySegment] = PanoramiXPolySegment;
@@ -584,10 +576,10 @@ void PanoramiXExtensionInit(int argc, char *argv[])
     ProcVector[X_AllocColor] = PanoramiXAllocColor;
     ProcVector[X_AllocNamedColor] = PanoramiXAllocNamedColor;
     ProcVector[X_AllocColorCells] = PanoramiXAllocColorCells;
-    ProcVector[X_AllocColorPlanes] = PanoramiXAllocColorPlanes;    
+    ProcVector[X_AllocColorPlanes] = PanoramiXAllocColorPlanes;
     ProcVector[X_FreeColors] = PanoramiXFreeColors;
-    ProcVector[X_StoreColors] = PanoramiXStoreColors;    
-    ProcVector[X_StoreNamedColor] = PanoramiXStoreNamedColor;    
+    ProcVector[X_StoreColors] = PanoramiXStoreColors;
+    ProcVector[X_StoreNamedColor] = PanoramiXStoreNamedColor;
 
 #ifdef RENDER
     PanoramiXRenderInit ();
@@ -600,7 +592,6 @@ Bool PanoramiXCreateConnectionBlock(void)
 {
     int i, j, length;
     Bool disableBackingStore = FALSE;
-    Bool disableSaveUnders = FALSE;
     int old_width, old_height;
     float width_mult, height_mult;
     xWindowRoot *root;
@@ -614,29 +605,24 @@ Bool PanoramiXCreateConnectionBlock(void)
      */
 
     if(!PanoramiXNumDepths) {
-	ErrorF("PanoramiX error: Incompatible screens. No common visuals\n");
+	ErrorF("Xinerama error: No common visuals\n");
 	return FALSE;
     }
 
     for(i = 1; i < screenInfo.numScreens; i++) {
 	pScreen = screenInfo.screens[i];
 	if(pScreen->rootDepth != screenInfo.screens[0]->rootDepth) {
-	    ErrorF("PanoramiX error: Incompatible screens. Root window depths differ\n");
+	    ErrorF("Xinerama error: Root window depths differ\n");
 	    return FALSE;
 	}
 	if(pScreen->backingStoreSupport != screenInfo.screens[0]->backingStoreSupport)
 	     disableBackingStore = TRUE;
-	if(pScreen->saveUnderSupport != screenInfo.screens[0]->saveUnderSupport)
-	     disableSaveUnders = TRUE;
     }
 
-    if(disableBackingStore || disableSaveUnders) {
-    	for(i = 0; i < screenInfo.numScreens; i++) {
+    if (disableBackingStore) {
+    	for (i = 0; i < screenInfo.numScreens; i++) {
 	    pScreen = screenInfo.screens[i];
-	    if(disableBackingStore)
-		pScreen->backingStoreSupport = NotUseful;
-	    if(disableSaveUnders)
-		pScreen->saveUnderSupport = NotUseful;
+	    pScreen->backingStoreSupport = NotUseful;
 	}
     }
 
@@ -683,10 +669,10 @@ Bool PanoramiXCreateConnectionBlock(void)
 
     connSetupPrefix.length = length >> 2;
 
-    xfree(PanoramiXVisuals);
     for (i = 0; i < PanoramiXNumDepths; i++)
 	xfree(PanoramiXDepths[i].vids);
     xfree(PanoramiXDepths);
+    PanoramiXDepths = NULL;
 
     /*
      *  OK, change some dimensions so it looks as if it were one big screen
@@ -714,142 +700,131 @@ Bool PanoramiXCreateConnectionBlock(void)
     return TRUE;
 }
 
-extern
-void PanoramiXConsolidate(void)
+/*
+ * This isn't just memcmp(), bitsPerRGBValue is skipped.  markv made that
+ * change way back before xf86 4.0, but the comment for _why_ is a bit
+ * opaque, so I'm not going to question it for now.
+ *
+ * This is probably better done as a screen hook so DBE/EVI/GLX can add
+ * their own tests, and adding privates to VisualRec so they don't have to
+ * do their own back-mapping.
+ */
+static Bool
+VisualsEqual(VisualPtr a, ScreenPtr pScreenB, VisualPtr b)
 {
-    int 	i, j, k;
-    VisualPtr   pVisual, pVisual2;
-    ScreenPtr   pScreen, pScreen2;
-    DepthPtr    pDepth, pDepth2;
-    PanoramiXRes *root, *defmap, *saver;
-    Bool        foundDepth, missingDepth;
+    return ((a->class == b->class) &&
+	(a->ColormapEntries == b->ColormapEntries) &&
+	(a->nplanes == b->nplanes) &&
+	(a->redMask == b->redMask) &&
+	(a->greenMask == b->greenMask) &&
+	(a->blueMask == b->blueMask) &&
+	(a->offsetRed == b->offsetRed) &&
+	(a->offsetGreen == b->offsetGreen) &&
+	(a->offsetBlue == b->offsetBlue));
+}
 
-    if(!PanoramiXVisualTable)
-	PanoramiXVisualTable = xcalloc(256 * MAXSCREENS, sizeof(XID));
+static void
+PanoramiXMaybeAddDepth(DepthPtr pDepth)
+{
+    ScreenPtr pScreen;
+    int j, k;
+    Bool found = FALSE;
 
-    pScreen = screenInfo.screens[0];
-    pVisual = pScreen->visuals; 
-    pDepth  = pScreen->allowedDepths;
-
-    PanoramiXNumDepths = 0;
-    PanoramiXDepths = xcalloc(pScreen->numDepths,sizeof(DepthRec));
-    PanoramiXNumVisuals = 0;
-    PanoramiXVisuals = xcalloc(pScreen->numVisuals,sizeof(VisualRec));
-
-    for (i = 0; i < pScreen->numDepths; i++, pDepth++) {
-        missingDepth = FALSE;
-        for (j = 1; j < PanoramiXNumScreens; j++) {
-             pScreen2 = screenInfo.screens[j];
-             pDepth2 = pScreen2->allowedDepths;
-
-             foundDepth = FALSE;
-             for (k = 0; k < pScreen2->numDepths; k++, pDepth2++) {
-                 if(pDepth2->depth == pDepth->depth) {
-                     foundDepth = TRUE;
-                     break;
-                 }
-             }
-
-             if(!foundDepth) {
-                missingDepth = TRUE;
-                break;
-             }
-        }
-          
-        if(!missingDepth) {
-            PanoramiXDepths[PanoramiXNumDepths].depth = pDepth->depth;
-            PanoramiXDepths[PanoramiXNumDepths].numVids = 0;
-            if(pDepth->numVids)
-                PanoramiXDepths[PanoramiXNumDepths].vids = 
-                      xalloc(sizeof(VisualID) * pDepth->numVids);      
-            else
-                PanoramiXDepths[PanoramiXNumDepths].vids = NULL;
-            PanoramiXNumDepths++;
-        }
+    for (j = 1; j < PanoramiXNumScreens; j++) {
+	pScreen = screenInfo.screens[j];
+	for (k = 0; k < pScreen->numDepths; k++) {
+	    if (pScreen->allowedDepths[k].depth == pDepth->depth) {
+		found = TRUE;
+		break;
+	    }
+	}
     }
 
-    for (i = 0; i < pScreen->numVisuals; i++, pVisual++) {
-	PanoramiXVisualTable[pVisual->vid * MAXSCREENS] = pVisual->vid;
+    if (!found)
+	return;
 
-	/* check if the visual exists on all screens */
-	for (j = 1; j < PanoramiXNumScreens; j++) {
-	    pScreen2 = screenInfo.screens[j];
+    j = PanoramiXNumDepths;
+    PanoramiXNumDepths++;
+    PanoramiXDepths = xrealloc(PanoramiXDepths,
+	    PanoramiXNumDepths * sizeof(DepthRec));
+    PanoramiXDepths[j].depth = pDepth->depth;
+    PanoramiXDepths[j].numVids = 0;
+    /* XXX suboptimal, should grow these dynamically */
+    if(pDepth->numVids)
+	PanoramiXDepths[j].vids = xalloc(sizeof(VisualID) * pDepth->numVids);
+    else
+	PanoramiXDepths[j].vids = NULL;
+}
 
+static void
+PanoramiXMaybeAddVisual(VisualPtr pVisual)
+{
+    ScreenPtr pScreen;
+    int j, k;
+    Bool found = FALSE;
+
+    for (j = 1; j < PanoramiXNumScreens; j++) {
+	pScreen = screenInfo.screens[j];
+	found = FALSE;
+
+	for (k = 0; k < pScreen->numVisuals; k++) {
+	    VisualPtr candidate = &pScreen->visuals[k];
+
+	    if ((*XineramaVisualsEqualPtr)(pVisual, pScreen, candidate)
 #ifdef GLXPROXY
-	    pVisual2 = glxMatchVisual(pScreen, pVisual, pScreen2);
-	    if (pVisual2) {
-		PanoramiXVisualTable[(pVisual->vid * MAXSCREENS) + j] =
-		    pVisual2->vid;
-		continue;
-	    } else if (glxMatchVisual(pScreen, pVisual, pScreen)) {
-		PanoramiXVisualTable[(pVisual->vid * MAXSCREENS) + j] = 0;
-		break;
-	    }
+		&& glxMatchVisual(screenInfo.screens[0], pVisual, pScreen)
 #endif
-	    pVisual2 = pScreen2->visuals;
-
-	    for (k = 0; k < pScreen2->numVisuals; k++, pVisual2++) {
-		if ((pVisual->class == pVisual2->class) &&
-		    (pVisual->ColormapEntries == pVisual2->ColormapEntries) &&
-		    (pVisual->nplanes == pVisual2->nplanes) &&
-		    (pVisual->redMask == pVisual2->redMask) &&
-		    (pVisual->greenMask == pVisual2->greenMask) &&
-		    (pVisual->blueMask == pVisual2->blueMask) &&
-		    (pVisual->offsetRed == pVisual2->offsetRed) &&
-		    (pVisual->offsetGreen == pVisual2->offsetGreen) &&
-		    (pVisual->offsetBlue == pVisual2->offsetBlue))
-		{
-                /* We merely assign the first visual that matches.  OpenGL
-                   will need to get involved at some point if you want
-                   match GLX visuals */
-			PanoramiXVisualTable[(pVisual->vid * MAXSCREENS) + j] =
-					 pVisual2->vid;
-			break;
-		}
-	    }
-	}
-	
-	/* if it doesn't exist on all screens we can't use it */
-	for (j = 0; j < PanoramiXNumScreens; j++) {
-	    if (!PanoramiXVisualTable[(pVisual->vid * MAXSCREENS) + j]) {
-		PanoramiXVisualTable[pVisual->vid * MAXSCREENS] = 0;
+		    ) {
+		found = TRUE;
 		break;
 	    }
 	}
 
-	/* if it does, make sure it's in the list of supported depths and visuals */
-	if(PanoramiXVisualTable[pVisual->vid * MAXSCREENS]) {
-	    PanoramiXVisuals[PanoramiXNumVisuals].vid = pVisual->vid;
-	    PanoramiXVisuals[PanoramiXNumVisuals].class = pVisual->class;
-	    PanoramiXVisuals[PanoramiXNumVisuals].bitsPerRGBValue = pVisual->bitsPerRGBValue;
-	    PanoramiXVisuals[PanoramiXNumVisuals].ColormapEntries = pVisual->ColormapEntries;
-	    PanoramiXVisuals[PanoramiXNumVisuals].nplanes = pVisual->nplanes;
-	    PanoramiXVisuals[PanoramiXNumVisuals].redMask = pVisual->redMask;
-	    PanoramiXVisuals[PanoramiXNumVisuals].greenMask = pVisual->greenMask;
-	    PanoramiXVisuals[PanoramiXNumVisuals].blueMask = pVisual->blueMask;
-	    PanoramiXVisuals[PanoramiXNumVisuals].offsetRed = pVisual->offsetRed;
-	    PanoramiXVisuals[PanoramiXNumVisuals].offsetGreen = pVisual->offsetGreen;
-	    PanoramiXVisuals[PanoramiXNumVisuals].offsetBlue = pVisual->offsetBlue;
-	    PanoramiXNumVisuals++;	
+	if (!found)
+	    return;
+    }
 
-	    for (j = 0; j < PanoramiXNumDepths; j++) {
-	        if (PanoramiXDepths[j].depth == pVisual->nplanes) {
-		    PanoramiXDepths[j].vids[PanoramiXDepths[j].numVids] = pVisual->vid;
-		    PanoramiXDepths[j].numVids++;
-		    break;
-		}	
-	    }   
-	}
-    } 
+    /* found a matching visual on all screens, add it to the subset list */
+    j = PanoramiXNumVisuals;
+    PanoramiXNumVisuals++;
+    PanoramiXVisuals = xrealloc(PanoramiXVisuals,
+	    PanoramiXNumVisuals * sizeof(VisualRec));
 
+    memcpy(&PanoramiXVisuals[j], pVisual, sizeof(VisualRec));
 
-    root = (PanoramiXRes *) xalloc(sizeof(PanoramiXRes));
+    for (k = 0; k < PanoramiXNumDepths; k++) {
+	if (PanoramiXDepths[k].depth == pVisual->nplanes) {
+	    PanoramiXDepths[k].vids[PanoramiXDepths[k].numVids] = pVisual->vid;
+	    PanoramiXDepths[k].numVids++;
+	    break;
+	}	
+    }   
+}
+
+extern void
+PanoramiXConsolidate(void)
+{
+    int 	i;
+    PanoramiXRes *root, *defmap, *saver;
+    ScreenPtr   pScreen = screenInfo.screens[0];
+    DepthPtr    pDepth = pScreen->allowedDepths;
+    VisualPtr   pVisual = pScreen->visuals;
+
+    PanoramiXNumDepths = 0;
+    PanoramiXNumVisuals = 0;
+
+    for (i = 0; i < pScreen->numDepths; i++)
+	PanoramiXMaybeAddDepth(pDepth++);
+
+    for (i = 0; i < pScreen->numVisuals; i++)
+	PanoramiXMaybeAddVisual(pVisual++);
+
+    root = xalloc(sizeof(PanoramiXRes));
     root->type = XRT_WINDOW;
-    defmap = (PanoramiXRes *) xalloc(sizeof(PanoramiXRes));
+    defmap = xalloc(sizeof(PanoramiXRes));
     defmap->type = XRT_COLORMAP;
-    saver = (PanoramiXRes *) xalloc(sizeof(PanoramiXRes));
+    saver = xalloc(sizeof(PanoramiXRes));
     saver->type = XRT_WINDOW;
-
 
     for (i =  0; i < PanoramiXNumScreens; i++) {
 	root->info[i].id = WindowTable[i]->drawable.id;
@@ -864,6 +839,38 @@ void PanoramiXConsolidate(void)
     AddResource(root->info[0].id, XRT_WINDOW, root);
     AddResource(saver->info[0].id, XRT_WINDOW, saver);
     AddResource(defmap->info[0].id, XRT_COLORMAP, defmap);
+}
+
+_X_EXPORT VisualID
+PanoramiXTranslateVisualID(int screen, VisualID orig)
+{
+    ScreenPtr pOtherScreen = screenInfo.screens[screen];
+    VisualPtr pVisual = NULL;
+    int i;
+
+    for (i = 0; i < PanoramiXNumVisuals; i++) {
+	if (orig == PanoramiXVisuals[i].vid) {
+	    pVisual = &PanoramiXVisuals[i];
+	    break;
+	}
+    }
+
+    if (!pVisual)
+	return 0;
+
+    /* if screen is 0, orig is already the correct visual ID */
+    if (screen == 0)
+	return orig;
+
+    /* found the original, now translate it relative to the backend screen */
+    for (i = 0; i < pOtherScreen->numVisuals; i++) {
+	VisualPtr pOtherVisual = &pOtherScreen->visuals[i];
+
+	if ((*XineramaVisualsEqualPtr)(pVisual, pOtherScreen, pOtherVisual))
+	    return pOtherVisual->vid;
+    }
+
+    return 0;
 }
 
 
@@ -898,8 +905,8 @@ ProcPanoramiXQueryVersion (ClientPtr client)
     rep.type = X_Reply;
     rep.length = 0;
     rep.sequenceNumber = client->sequence;
-    rep.majorVersion = PANORAMIX_MAJOR_VERSION;
-    rep.minorVersion = PANORAMIX_MINOR_VERSION;   
+    rep.majorVersion = SERVER_PANORAMIX_MAJOR_VERSION;
+    rep.minorVersion = SERVER_PANORAMIX_MINOR_VERSION;
     if (client->swapped) { 
         swaps(&rep.sequenceNumber, n);
         swapl(&rep.length, n);     
@@ -916,10 +923,10 @@ ProcPanoramiXGetState(ClientPtr client)
 	REQUEST(xPanoramiXGetStateReq);
     	WindowPtr			pWin;
 	xPanoramiXGetStateReply		rep;
-	register int			n, rc;
+	int			n, rc;
 	
 	REQUEST_SIZE_MATCH(xPanoramiXGetStateReq);
-	rc = dixLookupWindow(&pWin, stuff->window, client, DixUnknownAccess);
+	rc = dixLookupWindow(&pWin, stuff->window, client, DixGetAttrAccess);
 	if (rc != Success)
 	    return rc;
 
@@ -927,10 +934,11 @@ ProcPanoramiXGetState(ClientPtr client)
 	rep.length = 0;
 	rep.sequenceNumber = client->sequence;
 	rep.state = !noPanoramiXExtension;
+	rep.window = stuff->window;
     	if (client->swapped) {
 	    swaps (&rep.sequenceNumber, n);
 	    swapl (&rep.length, n);
-	    swaps (&rep.state, n);
+	    swapl (&rep.window, n);
 	}	
 	WriteToClient (client, sizeof (xPanoramiXGetStateReply), (char *) &rep);
 	return client->noClientException;
@@ -943,10 +951,10 @@ ProcPanoramiXGetScreenCount(ClientPtr client)
 	REQUEST(xPanoramiXGetScreenCountReq);
     	WindowPtr			pWin;
 	xPanoramiXGetScreenCountReply	rep;
-	register int			n, rc;
+	int			n, rc;
 
 	REQUEST_SIZE_MATCH(xPanoramiXGetScreenCountReq);
-	rc = dixLookupWindow(&pWin, stuff->window, client, DixUnknownAccess);
+	rc = dixLookupWindow(&pWin, stuff->window, client, DixGetAttrAccess);
 	if (rc != Success)
 	    return rc;
 
@@ -954,10 +962,11 @@ ProcPanoramiXGetScreenCount(ClientPtr client)
 	rep.length = 0;
 	rep.sequenceNumber = client->sequence;
 	rep.ScreenCount = PanoramiXNumScreens;
+	rep.window = stuff->window;
     	if (client->swapped) {
 	    swaps (&rep.sequenceNumber, n);
 	    swapl (&rep.length, n);
-	    swaps (&rep.ScreenCount, n);
+	    swapl (&rep.window, n);
 	}	
 	WriteToClient (client, sizeof (xPanoramiXGetScreenCountReply), (char *) &rep);
 	return client->noClientException;
@@ -969,10 +978,13 @@ ProcPanoramiXGetScreenSize(ClientPtr client)
 	REQUEST(xPanoramiXGetScreenSizeReq);
     	WindowPtr			pWin;
 	xPanoramiXGetScreenSizeReply	rep;
-	register int			n, rc;
+	int			n, rc;
 	
+	if (stuff->screen >= PanoramiXNumScreens)
+	    return BadMatch;
+
 	REQUEST_SIZE_MATCH(xPanoramiXGetScreenSizeReq);
-	rc = dixLookupWindow(&pWin, stuff->window, client, DixUnknownAccess);
+	rc = dixLookupWindow(&pWin, stuff->window, client, DixGetAttrAccess);
 	if (rc != Success)
 	    return rc;
 
@@ -982,11 +994,15 @@ ProcPanoramiXGetScreenSize(ClientPtr client)
 		/* screen dimensions */
 	rep.width  = panoramiXdataPtr[stuff->screen].width; 
 	rep.height = panoramiXdataPtr[stuff->screen].height; 
+	rep.window = stuff->window;
+	rep.screen = stuff->screen;
     	if (client->swapped) {
 	    swaps (&rep.sequenceNumber, n);
 	    swapl (&rep.length, n);
-	    swaps (&rep.width, n);
-	    swaps (&rep.height, n);
+	    swapl (&rep.width, n);
+	    swapl (&rep.height, n);
+	    swapl (&rep.window, n);
+	    swapl (&rep.screen, n);
 	}	
 	WriteToClient (client, sizeof (xPanoramiXGetScreenSizeReply), (char *) &rep);
 	return client->noClientException;
@@ -1014,7 +1030,7 @@ ProcXineramaIsActive(ClientPtr client)
     rep.state = !noPanoramiXExtension;
 #endif
     if (client->swapped) {
-	register int n;
+	int n;
 	swaps (&rep.sequenceNumber, n);
 	swapl (&rep.length, n);
 	swapl (&rep.state, n);
@@ -1037,7 +1053,7 @@ ProcXineramaQueryScreens(ClientPtr client)
     rep.number = (noPanoramiXExtension) ? 0 : PanoramiXNumScreens;
     rep.length = rep.number * sz_XineramaScreenInfo >> 2;
     if (client->swapped) {
-	register int n;
+	int n;
 	swaps (&rep.sequenceNumber, n);
 	swapl (&rep.length, n);
 	swapl (&rep.number, n);
@@ -1055,7 +1071,7 @@ ProcXineramaQueryScreens(ClientPtr client)
 	    scratch.height = panoramiXdataPtr[i].height;
 	
 	    if(client->swapped) {
-		register int n;
+		int n;
 		swaps (&scratch.x_org, n);
 		swaps (&scratch.y_org, n);
 		swaps (&scratch.width, n);

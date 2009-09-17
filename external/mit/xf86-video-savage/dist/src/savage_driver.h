@@ -33,12 +33,27 @@
 #include <string.h>
 #include <math.h>
 
+#ifdef XSERVER_LIBPCIACCESS
+#include <pciaccess.h>
+#define VENDOR_ID(p)      (p)->vendor_id
+#define DEVICE_ID(p)      (p)->device_id
+#define SUBSYS_ID(p)      (p)->subdevice_id
+#define CHIP_REVISION(p)  (p)->revision
+#else
+#define VENDOR_ID(p)      (p)->vendor
+#define DEVICE_ID(p)      (p)->chipType
+#define SUBSYS_ID(p)      (p)->subsysCard
+#define CHIP_REVISION(p)  (p)->chipRev
+#endif
+
 #define MODE_24 24
 
 #include "compiler.h"
 #include "vgaHW.h"
 #include "xf86.h"
+#if GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) < 6
 #include "xf86Resources.h"
+#endif
 #include "xf86Pci.h"
 #include "xf86PciInfo.h"
 #include "xf86_OSproc.h"
@@ -123,6 +138,9 @@ typedef struct _server{
 
    /* command DMA */
    drmRegion cmdDma;
+
+   /* XVideo through AGP */
+   drmRegion agpXVideo;
 } SAVAGEDRIServerPrivateRec, *SAVAGEDRIServerPrivatePtr;
 
 #endif
@@ -267,8 +285,14 @@ typedef struct _StatInfo {
 } StatInfoRec,*StatInfoPtr;
 
 struct savage_region {
-    unsigned        bar;
-    unsigned long   offset;
+#ifdef XSERVER_LIBPCIACCESS
+    pciaddr_t       base;
+    pciaddr_t       size;
+#else
+    unsigned long   base;
+    unsigned long   size;
+#endif
+    void          * memory;
 };
 
 typedef struct _Savage {
@@ -292,18 +316,12 @@ typedef struct _Savage {
     int			endfb;
 
     /* These are physical addresses. */
-    unsigned long	FrameBufferBase;
-    unsigned long	MmioBase;
-    unsigned long	ApertureBase;
     unsigned long	ShadowPhysical;
 
     /* These are linear addresses. */
     struct savage_region   MmioRegion;
     struct savage_region   FbRegion;
     struct savage_region   ApertureRegion;
-    unsigned               last_bar;
-
-    unsigned char*         bar_mappings[3];
 
     unsigned char*	MapBase;
     unsigned char*	BciMem;
@@ -322,6 +340,7 @@ typedef struct _Savage {
     /* Here are all the Options */
 
     OptionInfoPtr	Options;
+    Bool		IgnoreEDID;
     Bool		ShowCache;
     Bool		pci_burst;
     Bool		NoPCIRetry;
@@ -363,8 +382,12 @@ typedef struct _Savage {
     int			TVSizeY;
 
     CloseScreenProcPtr	CloseScreen;
+#ifdef XSERVER_LIBPCIACCESS
+    struct pci_device * PciInfo;
+#else
     pciVideoPtr		PciInfo;
     PCITAG		PciTag;
+#endif
     int			Chipset;
     int			ChipId;
     int			ChipRev;
@@ -468,6 +491,7 @@ typedef struct _Savage {
 
     Bool bDisableXvMC;
 
+    Bool AGPforXv;
 #endif
 
     Bool disableCOB;

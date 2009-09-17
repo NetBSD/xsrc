@@ -67,44 +67,28 @@ static void AddDoubleClickCallback(Widget, Bool);
 static Bool ReallyDoLoad(char*, char*);
 static char *makeBackupName(String, String, unsigned);
 
-extern Widget scratch, texts[3], labels[3];
-static Boolean double_click = FALSE;
+/*
+ * External
+ */
+extern void _XawTextShowPosition(TextWidget);
 
-#define DC_UNSAVED	1
-#define DC_LOADED	2
-#define DC_CLOBBER	3
-#define DC_KILL		4
-#define DC_SAVE		5
+extern Widget scratch, texts[3], labels[3];
+
+#define DC_UNSAVED	(1 << 0)
+#define DC_LOADED	(1 << 1)
+#define DC_CLOBBER	(1 << 2)
+#define DC_KILL		(1 << 3)
+#define DC_SAVE		(1 << 4)
+#define DC_NEWER	(1 << 5)
 static int dc_state;
 
-/*	Function Name: AddDoubleClickCallback(w)
- *	Description: Adds a callback that will reset the double_click flag
- *                   to false when the text is changed.
- *	Arguments: w - widget to set callback upon.
- *                 state - If true add the callback, else remove it.
- *	Returns: none.
- */
 static void
 AddDoubleClickCallback(Widget w, Bool state)
 {
-  Arg args[1];
-  static XtCallbackRec cb[] = { {NULL, NULL}, {NULL, NULL} };
-
-  if (XtIsSubclass(w, asciiSrcObjectClass)) {
-      if (state)
-	  XtAddCallback(w, XtNcallback, ResetDC, NULL);
-      else
-	  XtRemoveCallback(w, XtNcallback, ResetDC, NULL);
-  }
-  else {
-      if (state)
-	  cb[0].callback = ResetDC;
-      else
-	  cb[0].callback = NULL;
-
-      XtSetArg(args[0], XtNcallback, cb);
-      XtSetValues(w, args, ONE);
-  }
+    if (state)
+	XtAddCallback(w, XtNcallback, ResetDC, NULL);
+    else
+	XtRemoveCallback(w, XtNcallback, ResetDC, NULL);
 }
   
 /*	Function Name: ResetDC
@@ -118,9 +102,7 @@ AddDoubleClickCallback(Widget w, Bool state)
 static void
 ResetDC(Widget w, XtPointer junk, XtPointer garbage)
 {
-  double_click = FALSE;
-
-  AddDoubleClickCallback(w, FALSE);
+    AddDoubleClickCallback(w, FALSE);
 }
 
 /*ARGSUSED*/
@@ -137,14 +119,14 @@ DoQuit(Widget w, XtPointer client_data, XtPointer call_data)
     unsigned i;
     Bool source_changed = False;
 
-    if (!double_click || (dc_state && dc_state != DC_UNSAVED)) {
+    if (!(dc_state & DC_UNSAVED)) {
 	for (i = 0; i < flist.num_itens; i++)
 	    if (flist.itens[i]->flags & CHANGED_BIT) {
 		source_changed = True;
 		break;
 	    }
     }
-    if(!source_changed) {
+    if (!source_changed) {
 #ifndef __UNIXOS2__
 	XeditLispCleanUp();
 #endif
@@ -153,8 +135,7 @@ DoQuit(Widget w, XtPointer client_data, XtPointer call_data)
 
     XeditPrintf("Unsaved changes. Save them, or Quit again.\n");
     Feep();
-    double_click = TRUE;
-    dc_state = DC_UNSAVED;
+    dc_state |= DC_UNSAVED;
     AddDoubleClickCallback(XawTextGetSource(textwindow), True);
 }
 
@@ -209,7 +190,16 @@ int rename (from, to)
 void
 SaveFile(Widget w, XEvent *event, String *params, Cardinal *num_params)
 {
-    DoSave(w, NULL, NULL);
+    if (line_edit) {
+	/* Don't try to save buffer with regex string.
+	 * Call CancelFindFile() to leave line_edit mode.
+	 */
+	XeditPrintf("Save: Leaving line edit mode -- nothing saved.\n");
+	CancelFindFile(w, event, params, num_params);
+	Feep();
+    }
+    else
+	DoSave(w, NULL, NULL);
 }
 
 /*ARGSUSED*/
@@ -218,177 +208,192 @@ DoSave(Widget w, XtPointer client_data, XtPointer call_data)
 {
     String name = GetString(filenamewindow);
     String filename = ResolveName(name);
-    char buf[BUFSIZ];
     FileAccess file_access;
     xedit_flist_item *item;
     Boolean exists;
     Widget source = XawTextGetSource(textwindow);
+    char buffer[BUFSIZ];
+    struct stat st;
+    static char *nothing_saved = " -- nothing saved.\n";
 
     if (!filename) {
-	XeditPrintf("Save: Can't resolve pathname -- nothing saved.\n");
-	Feep();
-	return;
+	XmuSnprintf(buffer, sizeof(buffer), "%s%s",
+		    "Save: Can't resolve pathname",  nothing_saved);
+	goto error;
     }
     else if (*name == '\0') {
-	XeditPrintf("Save: No filename specified -- nothing saved.\n");
-	Feep();
-	return;
-    }
-    else {
-	struct stat st;
-
-	if (stat(filename, &st) == 0 && !S_ISREG(st.st_mode)) {
-	    XmuSnprintf(buf, sizeof(buf),
-			"Save: file %s is not a regular file -- nothing saved.\n",
-			name);
-	    XeditPrintf(buf);
-	    Feep();
-	    return;
-	}
+	XmuSnprintf(buffer, sizeof(buffer), "%s%s",
+		    "Save: No filename specified", nothing_saved);
+	goto error;
     }
 
     item = FindTextSource(NULL, filename);
     if (item != NULL && item->source != source) {
-	if (!double_click || (dc_state && dc_state != DC_LOADED)) {
-	    XmuSnprintf(buf, sizeof(buf),
-			"Save: file %s is already loaded, "
-			"Save again to unload it -- nothing saved.\n",
-			name);
-	    XeditPrintf(buf);
+	if (!(dc_state & DC_LOADED)) {
+	    XmuSnprintf(buffer, sizeof(buffer), "%s%s%s%s",
+			"Save: file ", name, " is already loaded, "
+			"Save again to unload it", nothing_saved);
 	    Feep();
-	    double_click = TRUE;
-	    dc_state = DC_LOADED;
+	    dc_state |= DC_LOADED;
 	    AddDoubleClickCallback(XawTextGetSource(textwindow), True);
-	    return;
+	    goto error;
 	}
-	KillTextSource(item);
-	item = FindTextSource(source = XawTextGetSource(textwindow), NULL);
-	double_click = FALSE;
-	dc_state = 0;
+	else {
+	    KillTextSource(item);
+	    item = FindTextSource(source = XawTextGetSource(textwindow), NULL);
+	    dc_state &= ~DC_LOADED;
+	}
     }
     else if (item && !(item->flags & CHANGED_BIT)) {
-	if (!double_click || (dc_state && dc_state != DC_SAVE)) {
-	    XeditPrintf("Save: No changes need to be saved, "
-			"Save again to override.\n");
+	if (!(dc_state & DC_SAVE)) {
+	    XmuSnprintf(buffer, sizeof(buffer), "%s%s",
+			"Save: No changes need to be saved, "
+			"save again to override", nothing_saved);
 	    Feep();
-	    double_click = TRUE;
-	    dc_state = DC_SAVE;
+	    dc_state |= DC_SAVE;
 	    AddDoubleClickCallback(XawTextGetSource(textwindow), True);
-	    return; 
+	    goto error;
 	}
-	double_click = FALSE;
-	dc_state = 0;
+	else
+	    dc_state &= ~DC_SAVE;
     }
 
     file_access = CheckFilePermissions(filename, &exists);
+    if (exists) {
+	if (stat(filename, &st) != 0) {
+	    XmuSnprintf(buffer, sizeof(buffer), "%s%s%s",
+			"Save: cannot stat ", name, nothing_saved);
+	    goto error;
+	}
+	else if (!S_ISREG(st.st_mode)) {
+	    XmuSnprintf(buffer, sizeof(buffer), "%s%s%s%s",
+			"Save: file ", name, "is not a regular file",
+			nothing_saved);
+	    goto error;
+	}
+    }
+
     if (!item || strcmp(item->filename, filename)) {
 	if (file_access == WRITE_OK && exists) {
-	    if (!double_click || (dc_state && dc_state != DC_CLOBBER)) {
-		XmuSnprintf(buf, sizeof(buf),
-			    "Save: file %s already exists, "
-			    "Save again to overwrite it -- nothing saved.\n",
-			    name);
-		XeditPrintf(buf);
+	    if (!(dc_state & DC_CLOBBER)) {
+		XmuSnprintf(buffer, sizeof(buffer), "%s%s%s%s",
+			    "Save: file ", name, " already exists, "
+			    "save again to override", nothing_saved);
 		Feep();
-		double_click = TRUE;
-		dc_state = DC_CLOBBER;
+		dc_state |= DC_CLOBBER;
 		AddDoubleClickCallback(XawTextGetSource(textwindow), True);
-		return;
+		goto error;
 	    }
-	    double_click = FALSE;
-	    dc_state = 0;
+	    else
+		dc_state &= ~DC_CLOBBER;
 	}
 	if (!item)
 	    item = FindTextSource(source, NULL);
     }
-  
-  if (app_resources.enableBackups && exists) {
-    char backup_file[BUFSIZ];
 
-    if (makeBackupName(backup_file, filename, sizeof(backup_file)) == NULL
-	|| rename(filename, backup_file) != 0) {
-	XmuSnprintf(buf, sizeof(buf),"error backing up file:  %s\n",
-		    filename); 
-      XeditPrintf(buf);
+    if (item && item->mtime && exists && item->mtime < st.st_mtime) {
+	if (!(dc_state & DC_NEWER)) {
+	    XmuSnprintf(buffer, sizeof(buffer), "%s%s",
+			"Save: Newer file exists, "
+			"save again to override", nothing_saved);
+	    Feep();
+	    dc_state |= DC_NEWER;
+	    AddDoubleClickCallback(XawTextGetSource(textwindow), True);
+	    goto error;
+	}
+	else
+	    dc_state &= DC_NEWER;
     }
-  }
-  
-  switch( file_access = MaybeCreateFile(filename)) {
-  case NO_READ:
-  case READ_OK:
-      XmuSnprintf(buf, sizeof(buf),
-		  "File %s could not be opened for writing.\n", name);
-      Feep();
-      break;
-  case WRITE_OK:
-      if ( XawAsciiSaveAsFile(source, filename) ) {
-	  int i;
-	  Arg args[1];
-	  char label_buf[BUFSIZ];
 
-	  /* Keep file protection mode */
-	  if (item && item->mode)
-	      chmod(filename, item->mode);
+    if (app_resources.enableBackups && exists) {
+	char backup_file[BUFSIZ];
 
-	  XmuSnprintf(label_buf, sizeof(label_buf),
-		      "%s       Read - Write", name);
-	  XtSetArg(args[0], XtNlabel, label_buf);
-	  for (i = 0; i < 3; i++)
-	      if (XawTextGetSource(texts[i]) == source)
-		  XtSetValues(labels[i], args, 1);
+	if (makeBackupName(backup_file, filename, sizeof(backup_file)) == NULL
+	    || rename(filename, backup_file) != 0) {
+	    XeditPrintf("Error backing up file: %s\n", filename);
+	}
+    }
 
-	  XmuSnprintf(buf, sizeof(buf), "Saved file:  %s\n", name);
+    switch (file_access = MaybeCreateFile(filename)) {
+	case NO_READ:
+	case READ_OK:
+	    XeditPrintf("File %s could not be opened for writing.\n", name);
+	    Feep();
+	    break;
+	case WRITE_OK:
+	    if (XawAsciiSaveAsFile(source, filename)) {
+		int i;
+		Arg args[1];
 
-	  if (item && item->source != scratch) {
-	      XtSetArg(args[0], XtNlabel, filename);
-	      XtSetValues(item->sme, args, 1);
+		XmuSnprintf(buffer, sizeof(buffer),
+			    "%s       Read - Write", name);
+		XtSetArg(args[0], XtNlabel, buffer);
+		for (i = 0; i < 3; i++)
+		    if (XawTextGetSource(texts[i]) == source)
+			XtSetValues(labels[i], args, 1);
 
-	      XtSetArg(args[0], XtNeditType, XawtextEdit);
-	      XtSetValues(item->source, args, 1);
+		XeditPrintf("Saved file: %s\n", name);
 
-	      XtFree(item->name);
-	      XtFree(item->filename);
-	      item->name = XtNewString(name);
-	      item->filename = XtNewString(filename);
-	      item->flags = EXISTS_BIT;
-	  }
-	  else {
-	      item = flist.itens[0];
-	      XtRemoveCallback(scratch, XtNcallback, SourceChanged,
-			       (XtPointer)item);
-	      item->source = scratch =
-		  XtVaCreateWidget("textSource",
-				   multiSrcObjectClass,
-				   topwindow,
-				   XtNtype, XawAsciiFile,
-				   XtNeditType, XawtextEdit,
-				   NULL, NULL);
-	      ResetSourceChanged(item);
-	      XtAddCallback(scratch, XtNcallback, SourceChanged,
-			    (XtPointer)item);
+		if (item && item->source != scratch) {
+		    XtSetArg(args[0], XtNlabel, filename);
+		    XtSetValues(item->sme, args, 1);
 
-	      item = AddTextSource(source, name, filename, EXISTS_BIT,
-				   file_access);
-	      XtAddCallback(item->source, XtNcallback, SourceChanged,
-			    (XtPointer)item);
-	  }
-	  item->flags |= EXISTS_BIT;
-	  ResetSourceChanged(item);
-      }
-      else {
-	  XmuSnprintf(buf, sizeof(buf), "Error saving file:  %s\n",  name);
-	  Feep();
-      }
-      break;
-  default:
-      XmuSnprintf(buf, sizeof(buf), "%s %s",
-		  "Internal function MaybeCreateFile()",
-	      "returned unexpected value.\n");
-      Feep();
-      break;
-  }
+		    XtSetArg(args[0], XtNeditType, XawtextEdit);
+		    XtSetValues(item->source, args, 1);
 
-  XeditPrintf(buf);
+		    XtFree(item->name);
+		    XtFree(item->filename);
+		    item->name = XtNewString(name);
+		    item->filename = XtNewString(filename);
+		    item->flags = EXISTS_BIT;
+		}
+		else {
+		    item = flist.itens[0];
+		    XtRemoveCallback(scratch, XtNcallback, SourceChanged,
+				     (XtPointer)item);
+		    item->source = scratch =
+		    XtVaCreateWidget("textSource", international ?
+				     multiSrcObjectClass :
+				     asciiSrcObjectClass,
+				     topwindow,
+				     XtNtype, XawAsciiFile,
+				     XtNeditType, XawtextEdit,
+				     NULL, NULL);
+		    ResetSourceChanged(item);
+		    XtAddCallback(scratch, XtNcallback, SourceChanged,
+				  (XtPointer)item);
+
+		    item = AddTextSource(source, name, filename, EXISTS_BIT,
+					 file_access);
+		    XtAddCallback(item->source, XtNcallback, SourceChanged,
+				  (XtPointer)item);
+		}
+
+		/* Keep file protection mode */
+		if (item->mode)
+		    chmod(filename, item->mode);
+
+		/* Remember time of last modification */
+		if (stat(filename, &st) == 0)
+		    item->mtime = st.st_mtime;
+
+		item->flags |= EXISTS_BIT;
+		ResetSourceChanged(item);
+	    }
+	    else {
+		XeditPrintf("Error saving file: %s\n",  name);
+		Feep();
+	    }
+	    break;
+	default:
+	    Feep();
+	    break;
+    }
+
+    return;
+error:
+    XeditPrintf("%s", buffer);
+    Feep();
 }
 
 /*ARGSUSED*/
@@ -401,12 +406,17 @@ DoLoad(Widget w, XtPointer client_data, XtPointer call_data)
     }
 }
 
+Bool
+LoadFileInTextwindow(char *name, char *resolved_name)
+{
+    return (ReallyDoLoad(name, resolved_name));
+}
+
 static Bool
 ReallyDoLoad(char *name, char *filename)
 {
     Arg args[5];
     Cardinal num_args = 0;
-    char buf[BUFSIZ];
     xedit_flist_item *item;
     Widget source = XawTextGetSource(textwindow);
 
@@ -455,36 +465,27 @@ ReallyDoLoad(char *name, char *filename)
 	switch( file_access = CheckFilePermissions(filename, &exists) ) {
 	case NO_READ:
 	    if (exists)
-		XmuSnprintf(buf, sizeof(buf), "File %s, %s", name,
-			"exists, and could not be opened for reading.\n");
+		XeditPrintf("File %s, %s", name,
+			    "exists, and could not be opened for reading.\n");
 	    else
-		XmuSnprintf(buf, sizeof(buf), "File %s %s %s",  name,
+		XeditPrintf("File %s %s %s",  name,
 			    "does not exist, and",
-			"the directory could not be opened for writing.\n");
+			    "the directory could not be opened for writing.\n");
 
-	    XeditPrintf(buf);
 	    Feep();
 	    return (False);
 	case READ_OK:
 	    XtSetArg(args[num_args], XtNeditType, XawtextRead); num_args++;
-	    XmuSnprintf(buf, sizeof(buf), "File %s opened READ ONLY.\n",
-			name);
+	    XeditPrintf("File %s opened READ ONLY.\n", name);
 	    break;
 	case WRITE_OK:
 	    XtSetArg(args[num_args], XtNeditType, XawtextEdit); num_args++;
-	    XmuSnprintf(buf, sizeof(buf), "File %s opened read - write.\n",
-			name);
+	    XeditPrintf("File %s opened read - write.\n", name);
 	    break;
 	default:
-	    XmuSnprintf(buf, sizeof(buf), "%s %s",
-			"Internal function MaybeCreateFile()",
-		    "returned unexpected value.\n");
-	    XeditPrintf(buf);
 	    Feep();
 	    return (False);
 	}
-
-	XeditPrintf(buf);
 
 	if (exists) {
 	    flags = EXISTS_BIT;
@@ -495,8 +496,9 @@ ReallyDoLoad(char *name, char *filename)
 	    XtSetArg(args[num_args], XtNstring, NULL); num_args++;
 	}
 
-	source = XtVaCreateWidget("textSource",
-				  multiSrcObjectClass,
+	source = XtVaCreateWidget("textSource", international ?
+				  multiSrcObjectClass :
+				  asciiSrcObjectClass,
 				  topwindow,
 				  XtNtype, XawAsciiFile,
 				  XtNeditType, XawtextEdit,
@@ -509,8 +511,10 @@ ReallyDoLoad(char *name, char *filename)
 	if (exists && file_access == WRITE_OK) {
 	    struct stat st;
 
-	    if (stat(filename, &st) == 0)
+	    if (stat(item->filename, &st) == 0) {
 		item->mode = st.st_mode & (S_IRWXU | S_IRWXG | S_IRWXO);
+		item->mtime = st.st_mtime;
+	    }
 	}
 	SwitchTextSource(item);
 	ResetSourceChanged(item);
@@ -683,7 +687,6 @@ ResetSourceChanged(xedit_flist_item *item)
     XtSetValues(item->sme, args, num_args);
 
     dc_state = 0;
-    double_click = FALSE;
     for (i = 0; i < 3; i++) {
 	if (XawTextGetSource(texts[i]) == item->source)
 	    XtSetValues(labels[i], args, num_args);
@@ -709,16 +712,14 @@ KillFile(Widget w, XEvent *event, String *params, Cardinal *num_params)
     }
 
     if (item->flags & CHANGED_BIT) {
-	if (!double_click || (dc_state && dc_state != DC_KILL)) {
+	if (!(dc_state & DC_KILL)) {
 	    XeditPrintf("Kill: Unsaved changes. Kill again to override.\n");
 	    Feep();
-	    double_click = TRUE;
-	    dc_state = DC_KILL;
+	    dc_state |= DC_KILL;
 	    AddDoubleClickCallback(XawTextGetSource(textwindow), True);
 	    return;
 	}
-	double_click = FALSE;
-	dc_state = 0;
+	dc_state &= ~DC_KILL;
     }
     KillTextSource(item);
 }
@@ -727,14 +728,23 @@ KillFile(Widget w, XEvent *event, String *params, Cardinal *num_params)
 void
 FindFile(Widget w, XEvent *event, String *params, Cardinal *num_params)
 {
-    char *string = GetString(filenamewindow);
-    char *slash = NULL;
+    char *string;
+    char *slash;
     XawTextBlock block;
     XawTextPosition end = XawTextSourceScan(XawTextGetSource(filenamewindow),
 					    0, XawstAll, XawsdRight, 1, True);
 
-    if (string)
-	slash = strrchr(string, '/');
+    if (!line_edit) {
+	string = GetString(filenamewindow);
+	if (string)
+	    slash = strrchr(string, '/');
+    }
+    else {
+	string = "";
+	slash = NULL;
+	line_edit = False;
+    }
+
     block.firstPos = 0;
     block.format = FMT8BIT;
     block.ptr = string;
@@ -744,7 +754,6 @@ FindFile(Widget w, XEvent *event, String *params, Cardinal *num_params)
 	XawTextReplace(filenamewindow, 0, end, &block);
     XawTextSetInsertionPoint(filenamewindow, end);
     XtSetKeyboardFocus(topwindow, filenamewindow);
-    line_edit = False;
 }
 
 /*ARGSUSED*/
@@ -776,6 +785,9 @@ CancelFindFile(Widget w, XEvent *event, String *params, Cardinal *num_params)
 	XtSetArg(args[0], XtNstring, NULL);
 
     XtSetValues(filenamewindow, args, 1);
+    /* XXX This probably should be done by the TextWidget, i.e. notice
+     * if the cursor became inivisible due to an horizontal scroll */
+    _XawTextShowPosition((TextWidget)filenamewindow);
 
    if (XtIsManaged(XtParent(dirwindow)))
 	SwitchDirWindow(False);
@@ -891,7 +903,6 @@ FileCompletion(Widget w, XEvent *event, String *params, Cardinal *num_params)
 		strncpy(fname, slash2 + 1, sizeof(fname) - 1);
 		fname[sizeof(fname) - 1] = '\0';
 		save = XtRealloc(save, slen - diff + hlen + 2);
-		(void)memmove(&save[hlen], slash2, slen - diff + 1);
 		(void)memmove(save, home, hlen);
 		save[hlen] = '/';
 		strcpy(&save[hlen + 1], fname);
@@ -935,11 +946,11 @@ FileCompletion(Widget w, XEvent *event, String *params, Cardinal *num_params)
 
 	mlen = 0;
 	match[0] = '\0';
-	(void)readdir(dir);	/* "." */
-	(void)readdir(dir);	/* ".." */
 	while ((ent = readdir(dir)) != NULL) {
 	    unsigned d_namlen = strlen(ent->d_name);
 
+	    if (strcmp(ent->d_name, ".") == 0 || strcmp(ent->d_name, "..") == 0)
+		continue;
 	    if (d_namlen >= len && strncmp(ent->d_name, file_name, len) == 0) {
 		char *tmp = &(ent->d_name[len]), *mat = match;
 		struct stat st;
@@ -994,7 +1005,7 @@ FileCompletion(Widget w, XEvent *event, String *params, Cardinal *num_params)
 	closedir(dir);
 	changed = mlen != 0;
 
-	if (n_matches) {
+	if (first || n_matches) {
 	    Bool free_matches = True, add_slash = n_matches == 1 && isdir && !slash;
 
 	    if (mlen && has_dot && match[mlen - 1] == '.')

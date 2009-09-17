@@ -28,7 +28,6 @@
 #ifdef HAVE_CONFIG_H
 #include <kdrive-config.h>
 #endif
-#undef NDEBUG	/* No, really.  The whole point of this module is to crash. */
 
 #include "ephyr.h"
 #include "exa_priv.h"
@@ -308,7 +307,7 @@ ephyrDownloadFromScreen(PixmapPtr pSrc, int x, int y, int w, int h, char *dst,
     KdScreenInfo *screen = pScreenPriv->screen;
     EphyrScrPriv *scrpriv = screen->driver;
     EphyrFakexaPriv *fakexa = scrpriv->fakexa;
-    char *src;
+    unsigned char *src;
     int src_pitch, cpp;
 
     if (pSrc->drawable.bitsPerPixel < 8)
@@ -345,7 +344,7 @@ ephyrUploadToScreen(PixmapPtr pDst, int x, int y, int w, int h, char *src,
     KdScreenInfo *screen = pScreenPriv->screen;
     EphyrScrPriv *scrpriv = screen->driver;
     EphyrFakexaPriv *fakexa = scrpriv->fakexa;
-    char *dst;
+    unsigned char *dst;
     int dst_pitch, cpp;
 
     if (pDst->drawable.bitsPerPixel < 8)
@@ -520,6 +519,5 @@ exaDDXDriverInit(ScreenPtr pScreen)
     ExaScreenPriv(pScreen);
 
     pExaScr->migration = ExaMigrationSmart;
-    pExaScr->hideOffscreenPixmapData = TRUE;
     pExaScr->checkDirtyCorrectness = TRUE;
 }

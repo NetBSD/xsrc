@@ -1,8 +1,8 @@
 /*
- * Copyright 2007-2008  Luc Verhaegen <lverhaegen@novell.com>
- * Copyright 2007-2008  Matthias Hopf <mhopf@novell.com>
- * Copyright 2007-2008  Egbert Eich   <eich@novell.com>
- * Copyright 2007-2008  Advanced Micro Devices, Inc.
+ * Copyright 2007-2009  Luc Verhaegen <libv@exsuse.de>
+ * Copyright 2007-2009  Matthias Hopf <mhopf@novell.com>
+ * Copyright 2007-2009  Egbert Eich   <eich@novell.com>
+ * Copyright 2007-2009  Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -47,6 +47,7 @@
 #include "rhd_connector.h"
 #include "rhd_output.h"
 #include "rhd_regs.h"
+#include "rhd_hdmi.h"
 #ifdef ATOM_BIOS
 #include "rhd_atombios.h"
 #include "rhd_atomout.h"
@@ -137,6 +138,12 @@ struct LVDSPrivate {
     CARD32 StoreMacroControl;
     CARD32 StoreTXControl;
     CARD32 StoreBlModCntl;
+#ifdef NOT_YET
+    /* to hook in AtomBIOS property callback */
+    Bool (*WrappedPropertyCallback) (struct rhdOutput *Output,
+		      enum rhdPropertyAction Action, enum rhdOutputProperty Property, union rhdPropertyData *val);
+    void *PropertyPrivate;
+#endif
 };
 
 /*
@@ -196,12 +203,11 @@ LVDSDebugBacklight(struct rhdOutput *Output)
  *
  */
 static void
-LVDSSetBacklight(struct rhdOutput *Output, int level)
+LVDSSetBacklight(struct rhdOutput *Output)
 {
     struct LVDSPrivate *Private = (struct LVDSPrivate *) Output->Private;
+    int level = Private->BlLevel;
     RHDPtr rhdPtr = RHDPTRI(Output);
-
-    Private->BlLevel = level;
 
     xf86DrvMsg(rhdPtr->scrnIndex, X_INFO,
 	       "%s: trying to set BL_MOD_LEVEL to: %d\n",
@@ -257,7 +263,18 @@ LVDSPropertyControl(struct rhdOutput *Output, enum rhdPropertyAction Action,
 		case RHD_OUTPUT_BACKLIGHT:
 		    if (Private->BlLevel < 0)
 			return FALSE;
-		    LVDSSetBacklight(Output, val->integer);
+		    Private->BlLevel = val->integer;
+		    break;
+		default:
+		    return FALSE;
+	    }
+	    break;
+	case rhdPropertyCommit:
+	    switch (Property) {
+		case RHD_OUTPUT_BACKLIGHT:
+		    if (Private->BlLevel < 0)
+			return FALSE;
+		    LVDSSetBacklight(Output);
 		    break;
 		default:
 		    return FALSE;
@@ -413,10 +430,7 @@ LVDSEnable(struct rhdOutput *Output)
 		   __func__, i, (int) tmp);
     }
     if (Private->BlLevel >= 0) {
-	union rhdPropertyData data;
-	data.integer = Private->BlLevel;
-	Output->Property(Output, rhdPropertySet, RHD_OUTPUT_BACKLIGHT,
-			 &data);
+	LVDSSetBacklight(Output);
     }
 }
 
@@ -693,13 +707,38 @@ LVDSInfoRetrieve(RHDPtr rhdPtr)
 
 /*
  *
+ */
+static void
+LVDSDestroy(struct rhdOutput *Output)
+{
+
+    struct LVDSPrivate *Private = (struct LVDSPrivate *) Output->Private;
+
+    RHDFUNC(Output);
+
+    if (!Private)
+	return;
+
+#ifdef NOT_YET
+    if (Private->PropertyPrivate)
+	RhdAtomDestroyBacklightControlProperty(Output, Private->PropertyPrivate);
+#endif
+    xfree(Private);
+    Output->Private = NULL;
+}
+
+/*
+ *
  * Handling for LVTMA block as TMDS.
  *
  */
 struct rhdTMDSBPrivate {
     Bool RunsDualLink;
     Bool Coherent;
+    Bool HdmiEnabled;
     DisplayModePtr Mode;
+
+    struct rhdHdmi *Hdmi;
 
     Bool Stored;
 
@@ -730,9 +769,6 @@ TMDSBModeValid(struct rhdOutput *Output, DisplayModePtr Mode)
 {
     RHDFUNC(Output);
 
-    if (Mode->Flags & V_INTERLACE)
-        return MODE_NO_INTERLACE;
-
     if (Mode->Clock < 25000)
 	return MODE_CLOCK_LOW;
 
@@ -756,7 +792,7 @@ RS600VoltageControl(struct rhdOutput *Output, DisplayModePtr Mode)
     struct rhdTMDSBPrivate *Private = (struct rhdTMDSBPrivate *) Output->Private;
 
     RHDFUNC(Output);
-#ifdef NOT_YET
+#ifdef NOTYET
     if (Output->Connector == RHD_CONNECTOR_HDMI || Output->Connector == RHD_CONNECTOR_HDMI_DUAL) {
 	int clock = Mode->SynthClock;
 
@@ -791,12 +827,11 @@ RS600VoltageControl(struct rhdOutput *Output, DisplayModePtr Mode)
 static void
 RS690VoltageControl(struct rhdOutput *Output, DisplayModePtr Mode)
 {
-    RHDPtr rhdPtr = RHDPTRI(Output);
     struct rhdTMDSBPrivate *Private = (struct rhdTMDSBPrivate *) Output->Private;
     CARD32 rev = (RHDRegRead(Output, CONFIG_CNTL) && RS69_CFG_ATI_REV_ID_MASK) >> RS69_CFG_ATI_REV_ID_SHIFT;
 
     if (rev < 3) {
-#ifdef NOT_YET
+#ifdef NOTYET
 	if (Output->Connector == RHD_CONNECTOR_HDMI || Output->Connector == RHD_CONNECTOR_HDMI_DUAL) {
 	    if (Mode->SynthClock > 75000) {
 		RHDRegWrite(Output, LVTMA_R600_MACRO_CONTROL, 0xa001632f);
@@ -833,7 +868,7 @@ RS690VoltageControl(struct rhdOutput *Output, DisplayModePtr Mode)
 	    }
 	}
     } else {
-#ifdef NOT_YET
+#ifdef NOTYET
 	if (Output->Connector == RHD_CONNECTOR_HDMI || Output->Connector == RHD_CONNECTOR_HDMI_DUAL) {
 	    if (Mode->SynthClock <= 75000) {
 		RHDRegWrite(Output, LVTMA_R600_MACRO_CONTROL, 0x0002612f);
@@ -860,6 +895,7 @@ RS690VoltageControl(struct rhdOutput *Output, DisplayModePtr Mode)
 	    } else {
 		{
 #ifdef ATOM_BIOS
+		    RHDPtr rhdPtr = RHDPTRI(Output);
 		    AtomBiosArgRec data;
 
 		    if (RHDAtomBiosFunc(rhdPtr->scrnIndex, rhdPtr->atomBIOS,
@@ -1011,6 +1047,7 @@ TMDSBPropertyControl(struct rhdOutput *Output,
 	case rhdPropertyCheck:
 	    switch (Property) {
 		case RHD_OUTPUT_COHERENT:
+		case RHD_OUTPUT_HDMI:
 		    return TRUE;
 		default:
 		    return FALSE;
@@ -1020,6 +1057,9 @@ TMDSBPropertyControl(struct rhdOutput *Output,
 		case RHD_OUTPUT_COHERENT:
 		    val->Bool = Private->Coherent;
 		    return TRUE;
+		case RHD_OUTPUT_HDMI:
+		    val->Bool = Private->HdmiEnabled;
+		    return TRUE;
 		default:
 		    return FALSE;
 	    }
@@ -1028,6 +1068,18 @@ TMDSBPropertyControl(struct rhdOutput *Output,
 	    switch (Property) {
 		case RHD_OUTPUT_COHERENT:
 		    Private->Coherent = val->Bool;
+		    break;
+		case RHD_OUTPUT_HDMI:
+		    Private->HdmiEnabled = val->Bool;
+		    break;
+		default:
+		    return FALSE;
+	    }
+	    break;
+	case rhdPropertyCommit:
+	    switch (Property) {
+		case RHD_OUTPUT_COHERENT:
+		case RHD_OUTPUT_HDMI:
 		    Output->Mode(Output, Private->Mode);
 		    Output->Power(Output, RHD_POWER_ON);
 		    break;
@@ -1116,6 +1168,8 @@ TMDSBSet(struct rhdOutput *Output, DisplayModePtr Mode)
     RHDRegMask(Output, LVTMA_DATA_SYNCHRONIZATION, 0x00000100, 0x00000100);
     usleep(2);
     RHDRegMask(Output, LVTMA_DATA_SYNCHRONIZATION, 0, 0x00000001);
+
+    RHDHdmiSetMode(Private->Hdmi, Mode);
 }
 
 /*
@@ -1134,7 +1188,7 @@ TMDSBPower(struct rhdOutput *Output, int Power)
 
     switch (Power) {
     case RHD_POWER_ON:
-	RHDRegMask(Output, LVTMA_CNTL, 0x00000001, 0x00000001);
+	RHDRegMask(Output, LVTMA_CNTL, 0x1, 0x00000001);
 
 	if (Private->RunsDualLink)
 	    RHDRegMask(Output, LVTMA_TRANSMITTER_ENABLE, 0x00003E3E,0x00003E3E);
@@ -1144,6 +1198,7 @@ TMDSBPower(struct rhdOutput *Output, int Power)
 	RHDRegMask(Output, LVTMA_TRANSMITTER_CONTROL, 0x00000001, 0x00000001);
 	usleep(2);
 	RHDRegMask(Output, LVTMA_TRANSMITTER_CONTROL, 0, 0x00000002);
+	RHDHdmiEnable(Private->Hdmi, Private->HdmiEnabled);
 	return;
     case RHD_POWER_RESET:
 	RHDRegMask(Output, LVTMA_TRANSMITTER_ENABLE, 0, 0x00003E3E);
@@ -1155,6 +1210,7 @@ TMDSBPower(struct rhdOutput *Output, int Power)
 	RHDRegMask(Output, LVTMA_TRANSMITTER_CONTROL, 0, 0x00000001);
 	RHDRegMask(Output, LVTMA_TRANSMITTER_ENABLE, 0, 0x00003E3E);
 	RHDRegMask(Output, LVTMA_CNTL, 0, 0x00000001);
+	RHDHdmiEnable(Private->Hdmi, FALSE);
 	return;
     }
 }
@@ -1188,6 +1244,8 @@ TMDSBSave(struct rhdOutput *Output)
        Private->StoreRv600TXAdjust = RHDRegRead(Output, LVTMA_TRANSMITTER_ADJUST);
        Private->StoreRv600PreEmphasis = RHDRegRead(Output, LVTMA_PREEMPHASIS_CONTROL);
     }
+
+    RHDHdmiSave(Private->Hdmi);
 
     Private->Stored = TRUE;
 }
@@ -1227,6 +1285,8 @@ TMDSBRestore(struct rhdOutput *Output)
 	RHDRegWrite(Output, LVTMA_TRANSMITTER_ADJUST, Private->StoreRv600TXAdjust);
 	RHDRegWrite(Output, LVTMA_PREEMPHASIS_CONTROL, Private->StoreRv600PreEmphasis);
     }
+
+    RHDHdmiRestore(Private->Hdmi);
 }
 
 
@@ -1234,16 +1294,40 @@ TMDSBRestore(struct rhdOutput *Output)
  *
  */
 static void
-LVTMADestroy(struct rhdOutput *Output)
+TMDSBDestroy(struct rhdOutput *Output)
 {
+    struct rhdTMDSBPrivate *Private = (struct rhdTMDSBPrivate *) Output->Private;
     RHDFUNC(Output);
 
-    if (!Output->Private)
+    if (!Private)
 	return;
 
-    xfree(Output->Private);
+    RHDHdmiDestroy(Private->Hdmi);
+
+    xfree(Private);
     Output->Private = NULL;
 }
+
+#ifdef NOT_YET
+static Bool
+LVDSPropertyWrapper(struct rhdOutput *Output,
+		    enum rhdPropertyAction Action,
+		    enum rhdOutputProperty Property,
+		    union rhdPropertyData *val)
+{
+    struct LVDSPrivate *Private = (struct LVDSPrivate *) Output->Private;
+    void *storePrivate = Output->Private;
+    Bool (*func)(struct rhdOutput *,enum rhdPropertyAction, enum rhdOutputProperty,
+		  union rhdPropertyData *) = Private->WrappedPropertyCallback;
+    Bool ret;
+
+    Output->Private = Private->PropertyPrivate;
+    ret = func(Output, Action, Property, val);
+    Output->Private = storePrivate;
+
+    return ret;
+}
+#endif
 
 /*
  *
@@ -1252,7 +1336,6 @@ struct rhdOutput *
 RHDLVTMAInit(RHDPtr rhdPtr, CARD8 Type)
 {
     struct rhdOutput *Output;
-
     RHDFUNC(rhdPtr);
 
     /* Stop weird connector types */
@@ -1270,7 +1353,6 @@ RHDLVTMAInit(RHDPtr rhdPtr, CARD8 Type)
     Output->Id = RHD_OUTPUT_LVTMA;
 
     Output->Sense = NULL; /* not implemented in hw */
-    Output->Destroy = LVTMADestroy;
 
     if (Type == RHD_CONNECTOR_PANEL) {
 	struct LVDSPrivate *Private;
@@ -1283,11 +1365,15 @@ RHDLVTMAInit(RHDPtr rhdPtr, CARD8 Type)
 	Output->Save = LVDSSave;
 	Output->Restore = LVDSRestore;
 	Output->Property = LVDSPropertyControl;
+	Output->Destroy = LVDSDestroy;
 	Output->Private = Private =  LVDSInfoRetrieve(rhdPtr);
-#if 0
-	if (Private->BlLevel < 0)
-	    Private->BlLevel = RhdAtomSetupBacklightControlProperty(Output, &Output->Property);
-	else
+#ifdef NOT_YET
+	if (Private->BlLevel < 0) {
+	    Private->BlLevel = RhdAtomSetupBacklightControlProperty(Output, &Private->WrappedPropertyCallback,
+								    &Private->PropertyPrivate);
+	    if (Private->PropertyPrivate)
+		Output->Property = LVDSPropertyWrapper;
+	} else
 #else
 	if (Private->BlLevel >= 0)
 #endif
@@ -1304,7 +1390,9 @@ RHDLVTMAInit(RHDPtr rhdPtr, CARD8 Type)
 	Output->Save = TMDSBSave;
 	Output->Restore = TMDSBRestore;
 	Output->Property = TMDSBPropertyControl;
+	Output->Destroy = TMDSBDestroy;
 
+	Private->Hdmi = RHDHdmiInit(rhdPtr, Output);
 	Output->Private = Private;
 
 	Private->RunsDualLink = FALSE;

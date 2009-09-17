@@ -29,6 +29,7 @@ SOFTWARE.
 #include "cursor.h"
 #include "gc.h"
 #include "pixmap.h"
+#include "privates.h"
 #include <X11/Xmd.h>
 
 /*
@@ -70,22 +71,22 @@ typedef enum {ClientStateInitial,
 typedef struct _saveSet {
     struct _Window  *windowPtr;
     Bool	    toRoot;
-    Bool	    remap;
+    Bool	    map;
 } SaveSetElt;
 #define SaveSetWindow(ss)   ((ss).windowPtr)
 #define SaveSetToRoot(ss)   ((ss).toRoot)
-#define SaveSetRemap(ss)    ((ss).remap)
+#define SaveSetShouldMap(ss)	    ((ss).map)
 #define SaveSetAssignWindow(ss,w)   ((ss).windowPtr = (w))
 #define SaveSetAssignToRoot(ss,tr)  ((ss).toRoot = (tr))
-#define SaveSetAssignRemap(ss,rm)  ((ss).remap = (rm))
+#define SaveSetAssignMap(ss,m)      ((ss).map = (m))
 #else
 typedef struct _Window *SaveSetElt;
 #define SaveSetWindow(ss)   (ss)
 #define SaveSetToRoot(ss)   FALSE
-#define SaveSetRemap(ss)    TRUE
+#define SaveSetShouldMap(ss)	    TRUE
 #define SaveSetAssignWindow(ss,w)   ((ss) = (w))
 #define SaveSetAssignToRoot(ss,tr)
-#define SaveSetAssignRemap(ss,rm)
+#define SaveSetAssignMap(ss,m)
 #endif
 
 typedef struct _Client {
@@ -101,10 +102,6 @@ typedef struct _Client {
     int         clientGone;
     int         noClientException;	/* this client died or needs to be
 					 * killed */
-    DrawablePtr lastDrawable;
-    Drawable    lastDrawableID;
-    GCPtr       lastGC;
-    GContext    lastGCID;
     SaveSetElt	*saveSet;
     int         numSaved;
     pointer     screenPrivate[MAXSCREENS];
@@ -114,7 +111,7 @@ typedef struct _Client {
     Bool	big_requests;		/* supports large requests */
     int		priority;
     ClientState clientState;
-    DevUnion	*devPrivates;
+    PrivateRec	*devPrivates;
 #ifdef XKB
     unsigned short	xkbClientFlags;
     unsigned short	mapNotifyMask;
@@ -128,21 +125,18 @@ typedef struct _Client {
     int         requestLogIndex;
 #endif
     unsigned long replyBytesRemaining;
-#ifdef XAPPGROUP
-    struct _AppGroupRec*	appgroup;
-#endif
+    void *appgroup; /* Can't remove, ABI */
     struct _FontResolution * (*fontResFunc) (    /* no need for font.h */
 		ClientPtr	/* pClient */,
 		int *		/* num */);
-#ifdef SMART_SCHEDULE
     int	    smart_priority;
     long    smart_start_tick;
     long    smart_stop_tick;
     long    smart_check_tick;
-#endif
+    
+    DeviceIntPtr clientPtr;
 }           ClientRec;
 
-#ifdef SMART_SCHEDULE
 /*
  * Scheduling interface
  */
@@ -150,17 +144,14 @@ extern long SmartScheduleTime;
 extern long SmartScheduleInterval;
 extern long SmartScheduleSlice;
 extern long SmartScheduleMaxSlice;
-extern unsigned long SmartScheduleIdleCount;
 extern Bool SmartScheduleDisable;
-extern Bool SmartScheduleIdle;
-extern Bool SmartScheduleTimerStopped;
-extern Bool SmartScheduleStartTimer(void);
+extern void SmartScheduleStartTimer(void);
+extern void SmartScheduleStopTimer(void);
 #define SMART_MAX_PRIORITY  (20)
 #define SMART_MIN_PRIORITY  (-20)
 
 extern Bool SmartScheduleInit(void);
 
-#endif
 
 /* This prototype is used pervasively in Xext, dix */
 #define DISPATCH_PROC(func) int func(ClientPtr /* client */)
@@ -192,7 +183,6 @@ typedef struct _CallbackRec {
 } CallbackRec, *CallbackPtr;
 
 typedef struct _CallbackList {
-  CallbackFuncsRec funcs;
   int inCallback;
   Bool deleted;
   int numDeleted;

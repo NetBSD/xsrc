@@ -52,7 +52,9 @@
 #include "atixv.h"
 
 #include "vbe.h"
+#if GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) < 6
 #include "xf86RAC.h"
+#endif
 
 /*
  * FreeScreen handles the clean-up.
@@ -507,7 +509,9 @@ ATIPreInit
     ATIPtr           pATI;
     GDevPtr          pGDev;
     EntityInfoPtr    pEntity;
+#ifndef XSERVER_LIBPCIACCESS
     resPtr           pResources;
+#endif
     pciVideoPtr      pVideo;
     DisplayModePtr   pMode;
     CARD32           IOValue;
@@ -548,7 +552,9 @@ ATIPreInit
     /* Register resources */
     pEntity = xf86GetEntityInfo(pScreenInfo->entityList[0]);
     pGDev = pEntity->device;
+#ifndef XSERVER_LIBPCIACCESS
     pResources = pEntity->resources;
+#endif
 
     pATI->iEntity = pEntity->index;
     pATI->Chip = pEntity->chipset;
@@ -556,17 +562,17 @@ ATIPreInit
 
     xfree(pEntity);
 
+#ifndef XSERVER_LIBPCIACCESS
     if (!pResources)
         pResources = xf86RegisterResources(pATI->iEntity, NULL, ResShared);
     if (pResources)
     {
         xf86DrvMsg(pScreenInfo->scrnIndex, X_ERROR,
-            "Unable to register the following bus resources:\n");
-        xf86PrintResList(0, pResources);
+            "Unable to register bus resources\n");
         xf86FreeResList(pResources);
         return FALSE;
     }
-
+#endif
     ConfiguredMonitor = NULL;
     (void)memset(BIOS, 0, SizeOf(BIOS));
 
@@ -754,6 +760,7 @@ ATIPreInit
 
 #endif /* AVOID_CPIO */
 
+#ifndef XSERVER_LIBPCIACCESS
 #ifdef AVOID_CPIO
 
     pScreenInfo->racMemFlags =
@@ -766,7 +773,7 @@ ATIPreInit
     pScreenInfo->racMemFlags = RAC_FB | RAC_CURSOR;
 
 #endif /* AVOID_CPIO */
-
+#endif
     /* Finish private area initialisation */
     pATI->nFIFOEntries = 16;                    /* For now */
 
@@ -1057,6 +1064,7 @@ ATIPreInit
         xf86DrvMsg(pScreenInfo->scrnIndex, X_PROBED, "%s.\n", Buffer);
     }
 
+#ifndef XSERVER_LIBPCIACCESS
 #ifndef AVOID_CPIO
 
     if (pATI->CPIO_VGAWonder)
@@ -1065,6 +1073,7 @@ ATIPreInit
             pATI->CPIO_VGAWonder);
 
 #endif /* AVOID_CPIO */
+#endif
 
     xf86DrvMsg(pScreenInfo->scrnIndex, X_PROBED,
         "ATI Mach64 adapter detected.\n");
@@ -1175,6 +1184,7 @@ ATIPreInit
         xf86DrvMsg(pScreenInfo->scrnIndex, X_INFO,
             "Using Mach64 accelerator CRTC.\n");
 
+#ifndef XSERVER_LIBPCIACCESS
 #ifndef AVOID_CPIO
 
         if (pATI->VGAAdapter)
@@ -1207,6 +1217,7 @@ ATIPreInit
         }
 
 #endif /* AVOID_CPIO */
+#endif
 
     }
 
@@ -1962,6 +1973,7 @@ ATIPreInit
         }
     }
 
+#ifndef XSERVER_LIBPCIACCESS
 #ifndef AVOID_CPIO
 
         if (pATI->VGAAdapter)
@@ -1982,6 +1994,7 @@ ATIPreInit
         }
 
 #endif /* AVOID_CPIO */
+#endif
 
     /*
      * Remap apertures.  Must lock and re-unlock around this in case the

@@ -26,16 +26,15 @@
 #include "config.h"
 #endif
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/i128/i128_driver.c,v 1.34tsi Exp $ */
 
 
 /* All drivers should typically include these */
 #include "xf86.h"
 #include "xf86_OSproc.h"
+#if GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) < 6
 #include "xf86Resources.h"
-
-/* All drivers need this */
-#include "xf86_ansic.h"
+#include "xf86RAC.h"
+#endif
 
 #include "compiler.h"
 
@@ -56,7 +55,6 @@
 #include "micmap.h"
 
 #include "xf86DDC.h"
-#include "xf86RAC.h"
 #include "vbe.h"
 
 #include "xaa.h"
@@ -69,6 +67,8 @@
 /* driver specific includes */
 #include "i128.h"
 #include "i128reg.h"
+
+#include <unistd.h>
 
 /*
  * Forward definitions for the functions that make up the driver.
@@ -116,9 +116,9 @@ static unsigned int I128DDC1Read(ScrnInfoPtr pScrn);
 #define I128_VERSION 4000
 #define I128_NAME "I128"
 #define I128_DRIVER_NAME "i128"
-#define I128_MAJOR_VERSION 1
-#define I128_MINOR_VERSION 2
-#define I128_PATCHLEVEL 1
+#define I128_MAJOR_VERSION PACKAGE_VERSION_MAJOR
+#define I128_MINOR_VERSION PACKAGE_VERSION_MINOR
+#define I128_PATCHLEVEL PACKAGE_VERSION_PATCHLEVEL
 
 /* 
  * This contains the functions needed by the server after loading the
@@ -168,87 +168,6 @@ _X_EXPORT XF86ModuleData i128ModuleData = { &i128VersRec, i128Setup, NULL };
 
 #endif
 
-
-/*
- * List of symbols from other modules that this module references.  This
- * list is used to tell the loader that it is OK for symbols here to be
- * unresolved providing that it hasn't been told that they haven't been
- * told that they are essential via a call to xf86LoaderReqSymbols() or
- * xf86LoaderReqSymLists().  The purpose is this is to avoid warnings about
- * unresolved symbols that are not required.  These are provided to the
- * LoaderRefSymLists() function in the module specific Setup() function.
- */
-
-static const char *vgahwSymbols[] = {
-    "vgaHWFreeHWRec",
-    "vgaHWGetHWRec",
-    "vgaHWGetIOBase",  
-    "vgaHWGetIndex",  
-    "vgaHWProtect",
-    "vgaHWRestore",
-    "vgaHWSave",
-    NULL
-};      
-
-static const char *fbSymbols[] = {
-    "fbScreenInit",
-    "fbPictureInit",
-    NULL
-};
-
-static const char *exaSymbols[] = {
-    "exaDriverAlloc",
-    "exaDriverInit",
-    "exaDriverFini",
-    "exaGetPixmapOffset",
-    NULL
-};
-
-static const char *xaaSymbols[] = {
-    "XAACreateInfoRec",
-    "XAADestroyInfoRec",
-    "XAAInit",
-    NULL
-};
-
-static const char *ramdacSymbols[] = {
-    "xf86CreateCursorInfoRec",
-    "xf86DestroyCursorInfoRec",
-    "xf86InitCursor",
-    NULL
-};
-
-static const char *ddcSymbols[] = {
-    "xf86DoEDID_DDC1",
-    "xf86DoEDID_DDC2",
-    "xf86PrintEDID",
-    "xf86SetDDCproperties",
-    NULL
-};
-
-static const char *i2cSymbols[] = {
-    "xf86CreateI2CBusRec",
-    "xf86I2CBusInit",
-    NULL
-};
-
-#ifdef XFree86LOADER
-/* XXX The vbe module isn't currently loaded. */
-static const char *vbeSymbols[] = {
-    "VBEInit",
-    "vbeDoEDID",
-    NULL
-};
-
-/* XXX The int10 module isn't currently loaded. */
-static const char *int10Symbols[] = {
-    "xf86InitInt10",
-    "xf86FreeInt10",
-    NULL
-};
-#endif
-
-
 #ifdef XFree86LOADER
 
 /* Mandatory
@@ -283,22 +202,6 @@ i128Setup(pointer module, pointer opts, int *errmaj, int *errmin)
 	 * Modules that this driver always requires may be loaded here
 	 * by calling LoadSubModule().
 	 */
-
-	/*
-	 * Tell the loader about symbols from other modules that this module
-	 * might refer to.
-	 */
-	LoaderRefSymLists(fbSymbols,
-			  exaSymbols,
-			  xaaSymbols, 
-			  ramdacSymbols,
-			  ddcSymbols,
-			  ddcSymbols,
-			  i2cSymbols,
-			  vbeSymbols,
-			  int10Symbols,
-			  vgahwSymbols,
-			  NULL);
 
 	/*
 	 * The return value must be non-NULL on success even though there
@@ -386,6 +289,7 @@ I128Probe(DriverPtr drv, int flags)
      * All of the cards this driver supports are PCI, so the "probing" just
      * amounts to checking the PCI data that the server has already collected.
      */
+#ifndef XSERVER_LIBPCIACCESS
     if (xf86GetPciVideoInfo() == NULL) {
 	/*
 	 * We won't let anything in the config file override finding no
@@ -393,6 +297,7 @@ I128Probe(DriverPtr drv, int flags)
 	 */
 	return FALSE;
     }
+#endif
 
     numUsed = xf86MatchPciInstances(I128_NAME, PCI_VENDOR_NUMNINE,
 			I128Chipsets, I128PciChipsets, devSections,
@@ -569,8 +474,10 @@ I128PreInit(ScrnInfoPtr pScrn, int flags)
 
     /* Find the PCI info for this screen */
     pI128->PciInfo = xf86GetPciInfoForEntity(pI128->pEnt->index);
+#ifndef XSERVER_LIBPCIACCESS
     pI128->PciTag = pciTag(pI128->PciInfo->bus, pI128->PciInfo->device,
 			  pI128->PciInfo->func);
+#endif
 
     pI128->Primary = xf86IsPrimaryPci(pI128->PciInfo);
 
@@ -578,8 +485,6 @@ I128PreInit(ScrnInfoPtr pScrn, int flags)
     if (!xf86LoadSubModule(pScrn, "vgahw"))
         return FALSE;
     
-    xf86LoaderReqSymLists(vgahwSymbols, NULL);
-
     /*
      * Allocate a vgaHWRec
      */
@@ -717,9 +622,9 @@ I128PreInit(ScrnInfoPtr pScrn, int flags)
      * Set the Chipset and ChipRev.
      */
     from = X_PROBED;
-    pI128->Chipset = pI128->PciInfo->chipType;
+    pI128->Chipset = PCI_DEV_DEVICE_ID(pI128->PciInfo);
     pScrn->chipset = (char *)xf86TokenToString(I128Chipsets, pI128->Chipset);
-    pI128->ChipRev = pI128->PciInfo->chipRev;
+    pI128->ChipRev = PCI_DEV_REVISION(pI128->PciInfo);
 
     /*
      * This shouldn't happen because such problems should be caught in
@@ -737,15 +642,15 @@ I128PreInit(ScrnInfoPtr pScrn, int flags)
     }
 
     xf86DrvMsg(pScrn->scrnIndex, from, "Chipset: \"%s\"\n", pScrn->chipset);
-    if (pI128->PciInfo->subsysVendor == 0x105D)
+    if (PCI_SUB_VENDOR_ID(pI128->PciInfo) == 0x105D)
         xf86DrvMsg(pScrn->scrnIndex, from, "Subsystem Vendor: \"Number Nine\"\n");
-    else if (pI128->PciInfo->subsysVendor == 0x10F0)
+    else if (PCI_SUB_VENDOR_ID(pI128->PciInfo) == 0x10F0)
         xf86DrvMsg(pScrn->scrnIndex, from, "Subsystem Vendor: \"Peritek\"\n");
     else
         xf86DrvMsg(pScrn->scrnIndex, from, "Subsystem Vendor: \"%x\"\n",
-    	    pI128->PciInfo->subsysVendor);
+    	    PCI_SUB_VENDOR_ID(pI128->PciInfo));
 
-    iobase = (pI128->PciInfo->ioBase[5] & 0xFFFFFF00) + hwp->PIOOffset;
+    iobase = (PCI_REGION_BASE(pI128->PciInfo, 5, REGION_IO) & 0xFFFFFF00) + hwp->PIOOffset;
     pI128->RegRec.iobase = iobase;
 
     pI128->io.rbase_g = inl(iobase)        & 0xFFFFFF00;
@@ -789,9 +694,18 @@ I128PreInit(ScrnInfoPtr pScrn, int flags)
 	else
 		pI128->MemoryType = I128_MEMORY_WRAM;
     } else if (pI128->Chipset == PCI_CHIP_I128_2) {
+#ifndef XSERVER_LIBPCIACCESS
    	if (((((pciConfigPtr)pI128->PciInfo->thisCard)->pci_command & 0x03)
-	    == 0x03) && (pI128->PciInfo->subsysCard == 0x08))
+	    == 0x03) && (PCI_SUB_DEVICE_ID(pI128->PciInfo) == 0x08))
    	   pI128->MemoryType = I128_MEMORY_DRAM;
+#else
+	{
+	    unsigned short temp;
+	    pci_device_cfg_read_u16(pI128->PciInfo, &temp, 0x4);
+	    if (((temp & 0x03) == 0x03) && (PCI_SUB_DEVICE_ID(pI128->PciInfo) == 0x08))
+		pI128->MemoryType = I128_MEMORY_DRAM;
+	}
+#endif
     }
 
     xf86DrvMsg(pScrn->scrnIndex, X_PROBED, "Memory type %s\n",
@@ -806,17 +720,19 @@ I128PreInit(ScrnInfoPtr pScrn, int flags)
     outl(pI128->RegRec.iobase + 0x20, pI128->io.config2);
 
     xf86DrvMsg(pScrn->scrnIndex, X_PROBED, "Linear framebuffer at 0x%lX\n",
-	(unsigned long)pI128->PciInfo->memBase[0]);
+	       (unsigned long)PCI_REGION_BASE(pI128->PciInfo, 0, REGION_MEM));
 
     xf86DrvMsg(pScrn->scrnIndex, X_PROBED, "MMIO registers at 0x%lX\n",
-	(unsigned long)pI128->PciInfo->ioBase[5]);
+	       (unsigned long)PCI_REGION_BASE(pI128->PciInfo, 5, REGION_IO));
 
+#ifndef XSERVER_LIBPCIACCESS
     if (xf86RegisterResources(pI128->pEnt->index, NULL, ResExclusive)) {
 	xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
 		"xf86RegisterResources() found resource conflicts\n");
 	I128FreeRec(pScrn);
 	return FALSE;
     }
+#endif
 
     /* HW bpp matches reported bpp */
     pI128->bitsPerPixel = pScrn->bitsPerPixel;
@@ -863,9 +779,7 @@ I128PreInit(ScrnInfoPtr pScrn, int flags)
     /* Load DDC if we have the code to use it */
     /* This gives us DDC1 */
     if (pI128->ddc1Read || pI128->i2cInit) {
-        if (xf86LoadSubModule(pScrn, "ddc")) {
-          xf86LoaderReqSymLists(ddcSymbols, NULL);
-        } else {
+        if (!xf86LoadSubModule(pScrn, "ddc")) {
           /* ddc module not found, we can do without it */
           pI128->ddc1Read = NULL;
 
@@ -876,9 +790,7 @@ I128PreInit(ScrnInfoPtr pScrn, int flags)
     /* - DDC can use I2C bus */
     /* Load I2C if we have the code to use it */
     if (pI128->i2cInit) {
-      if ( xf86LoadSubModule(pScrn, "i2c") ) {
-        xf86LoaderReqSymLists(i2cSymbols,NULL);
-      } else {
+      if (!xf86LoadSubModule(pScrn, "i2c")) {
         /* i2c module not found, we can do without it */
         pI128->i2cInit = NULL;
         pI128->I2C = NULL;
@@ -887,7 +799,6 @@ I128PreInit(ScrnInfoPtr pScrn, int flags)
 
     /* Read and print the Monitor DDC info */
     mon = I128getDDC(pScrn);
-    pScrn->monitor->DDC = mon;
 
     /* see if we can find a flatpanel */
     if (!pI128->FlatPanel && mon) {
@@ -1184,7 +1095,6 @@ I128PreInit(ScrnInfoPtr pScrn, int flags)
 	I128FreeRec(pScrn);
 	return FALSE;
     }
-    xf86LoaderReqSymLists(fbSymbols, NULL);
 
     /* Load the acceleration engine */
     if (!pI128->NoAccel) {
@@ -1201,12 +1111,12 @@ I128PreInit(ScrnInfoPtr pScrn, int flags)
 		LoaderErrorMsg(NULL, "exa", errmaj, errmin);
                 I128FreeRec(pScrn);
                 return FALSE;
-            } else xf86LoaderReqSymLists(exaSymbols, NULL);
+            }
         } else {
             if (!xf86LoadSubModule(pScrn, "xaa")) {
 	        I128FreeRec(pScrn);
 	        return FALSE;
-	    } else xf86LoaderReqSymLists(xaaSymbols, NULL);
+	    }
         }
     }
 
@@ -1216,7 +1126,6 @@ I128PreInit(ScrnInfoPtr pScrn, int flags)
 	    I128FreeRec(pScrn);
 	    return FALSE;
 	}
-	xf86LoaderReqSymLists(ramdacSymbols, NULL);
     }
 
     I128UnmapMem(pScrn);
@@ -1288,7 +1197,7 @@ I128CountRam(ScrnInfoPtr pScrn)
     switch(pI128->Chipset) {
     case PCI_CHIP_I128_T2R4:
       /* Use the subsystem ID to determine the memory size */
-      switch ((pI128->PciInfo->subsysCard) & 0x0007) {
+      switch ((PCI_SUB_DEVICE_ID(pI128->PciInfo)) & 0x0007) {
          case 0x00:      /* 4MB card */
 	    SizeFound = 4 * 1024; break;
          case 0x01:      /* 8MB card */
@@ -1310,7 +1219,7 @@ I128CountRam(ScrnInfoPtr pScrn)
       }
       break;
     case PCI_CHIP_I128_T2R:
-      switch ((pI128->PciInfo->subsysCard) & 0xFFF7) {
+      switch ((PCI_SUB_DEVICE_ID(pI128->PciInfo)) & 0xFFF7) {
 	 case 0x00:	/* 4MB card, no daughtercard */
 	    SizeFound = 4 * 1024; break;
 	 case 0x01:	/* 4MB card, 4MB daughtercard */
@@ -1360,22 +1269,49 @@ I128MapMem(ScrnInfoPtr pScrn)
     /*
      * Map IO registers to virtual address space
      */ 
-
+#ifndef XSERVER_LIBPCIACCESS
     pI128->mem.mw0_ad = (unsigned char *)xf86MapPciMem(pScrn->scrnIndex,
 				VIDMEM_FRAMEBUFFER,
 				pI128->PciTag,
 				pI128->PciInfo->memBase[0] & 0xFFC00000,
 				pI128->MemorySize*1024);
+#else
+    {
+	void** result = (void**)&pI128->mem.mw0_ad;
+	int err = pci_device_map_range(pI128->PciInfo,
+				       PCI_REGION_BASE(pI128->PciInfo, 0, REGION_MEM) & 0xffc00000,
+				       pI128->MemorySize * 1024,
+				       PCI_DEV_MAP_FLAG_WRITABLE |
+				       PCI_DEV_MAP_FLAG_WRITE_COMBINE,
+				       result);
+	if (err)
+	    return FALSE;
+    }
+#endif
+
     if (pI128->mem.mw0_ad == NULL)
 	return FALSE;
 
     pI128->MemoryPtr = pI128->mem.mw0_ad;
 
+#ifndef XSERVER_LIBPCIACCESS
     pI128->mem.rbase_g = (CARD32 *)xf86MapPciMem(pScrn->scrnIndex,
 				VIDMEM_MMIO | VIDMEM_MMIO_32BIT,
 				pI128->PciTag,
 				pI128->PciInfo->memBase[4] & 0xFFFF0000,
 				64*1024);
+#else
+    {
+	void** result = (void**)&pI128->mem.rbase_g;
+	int err = pci_device_map_range(pI128->PciInfo,
+				       PCI_REGION_BASE(pI128->PciInfo, 4, REGION_MEM) & 0xffff0000,
+				       64 * 1024,
+				       PCI_DEV_MAP_FLAG_WRITABLE,
+				       result);
+	if (err)
+	    return FALSE;
+    }
+#endif
     if (pI128->mem.rbase_g == NULL)
 	return FALSE;
 
@@ -1405,12 +1341,21 @@ I128UnmapMem(ScrnInfoPtr pScrn)
     /*
      * Unmap IO registers to virtual address space
      */ 
+#ifndef XSERVER_LIBPCIACCESS
     xf86UnMapVidMem(pScrn->scrnIndex, (pointer)pI128->mem.mw0_ad,
 	pI128->MemorySize*1024);
+#else
+    pci_device_unmap_range(pI128->PciInfo, pI128->mem.mw0_ad,
+	pI128->MemorySize*1024);
+#endif
     pI128->mem.mw0_ad = NULL;
     pI128->MemoryPtr = NULL;
 
+#ifndef XSERVER_LIBPCIACCESS
     xf86UnMapVidMem(pScrn->scrnIndex, (pointer)pI128->mem.rbase_g, 64*1024);
+#else
+    pci_device_unmap_range(pI128->PciInfo, pI128->mem.rbase_g, 64*1024);
+#endif
     pI128->mem.rbase_g = NULL;
     pI128->mem.rbase_w = NULL;
     pI128->mem.rbase_a = NULL;
@@ -1865,7 +1810,7 @@ I128DDC1Read(ScrnInfoPtr pScrn)
   ddc = inl(iobase + 0x2C);
   if ((ddc & DDC_MODE_MASK) != DDC_MODE_DDC1) {
       outl(iobase + 0x2C, DDC_MODE_DDC1);
-      xf86usleep(40);
+      usleep(40);
   }
 
   /* wait for Vsync */
@@ -1882,7 +1827,7 @@ I128DDC1Read(ScrnInfoPtr pScrn)
 
   if ((ddc & DDC_MODE_MASK) != DDC_MODE_DDC1) {
       outl(iobase + 0x2C, ~DDC_MODE_MASK & ddc);
-      xf86usleep(40);
+      usleep(40);
   }
 
   return val;
@@ -1967,14 +1912,14 @@ I128I2CInit(ScrnInfoPtr pScrn)
     soft_sw &= 0xfffffffc;
     soft_sw |= 0x00000001;
     outl(iobase + 0x28, soft_sw);
-    xf86usleep(1000);
+    usleep(1000);
 
     /* set default as ddc2 mode */
     ddc = inl(iobase + 0x2C);
     ddc &= ~DDC_MODE_MASK;
     ddc |= DDC_MODE_DDC2;
     outl(iobase + 0x2C, ddc);
-    xf86usleep(40);
+    usleep(40);
 
     if (!xf86I2CBusInit(I2CPtr)) {
         return FALSE;
@@ -2069,38 +2014,39 @@ I128DumpBaseRegisters(ScrnInfoPtr pScrn)
 	"  PCI Registers\n");
     xf86DrvMsg(pScrn->scrnIndex, X_PROBED,
 	"    MW0_AD    0x%08lx  addr 0x%08lx  %spre-fetchable\n",
-	    pI128->PciInfo->memBase[0],
-	    pI128->PciInfo->memBase[0] & 0xFFC00000,
-	    pI128->PciInfo->memBase[0] & 0x8 ? "" : "not-");
+	    (unsigned long)PCI_REGION_BASE(pI128->PciInfo, 0, REGION_MEM),
+	    (unsigned long)(PCI_REGION_BASE(pI128->PciInfo, 0, REGION_MEM) & 0xFFC00000),
+	    PCI_REGION_BASE(pI128->PciInfo, 0, REGION_MEM) & 0x8 ? "" : "not-");
     xf86DrvMsg(pScrn->scrnIndex, X_PROBED,
 	"    MW1_AD    0x%08lx  addr 0x%08lx  %spre-fetchable\n",
-	    pI128->PciInfo->memBase[1],
-	    pI128->PciInfo->memBase[1] & 0xFFC00000,
-	    pI128->PciInfo->memBase[1] & 0x8 ? "" : "not-");
+	    (unsigned long)PCI_REGION_BASE(pI128->PciInfo, 1, REGION_MEM),
+	    (unsigned long)(PCI_REGION_BASE(pI128->PciInfo, 1, REGION_MEM) & 0xFFC00000),
+	    PCI_REGION_BASE(pI128->PciInfo, 1, REGION_MEM) & 0x8 ? "" : "not-");
     xf86DrvMsg(pScrn->scrnIndex, X_PROBED,
 	"    XYW_AD(A) 0x%08lx  addr 0x%08lx\n",
-	    pI128->PciInfo->memBase[2],
-	    pI128->PciInfo->memBase[2] & 0xFFC00000);
+	    (unsigned long)PCI_REGION_BASE(pI128->PciInfo, 2, REGION_MEM),
+	    (unsigned long)(PCI_REGION_BASE(pI128->PciInfo, 2, REGION_MEM) & 0xFFC00000));
     xf86DrvMsg(pScrn->scrnIndex, X_PROBED,
 	"    XYW_AD(B) 0x%08lx  addr 0x%08lx\n",
-	    pI128->PciInfo->memBase[3],
-	    pI128->PciInfo->memBase[3] & 0xFFC00000);
+	    (unsigned long)PCI_REGION_BASE(pI128->PciInfo, 3, REGION_MEM),
+	    (unsigned long)(PCI_REGION_BASE(pI128->PciInfo, 3, REGION_MEM) & 0xFFC00000));
     xf86DrvMsg(pScrn->scrnIndex, X_PROBED,
 	"    RBASE_G   0x%08lx  addr 0x%08lx\n",
-	    pI128->PciInfo->memBase[4],
-	    pI128->PciInfo->memBase[4] & 0xFFFF0000);
+	    (unsigned long)PCI_REGION_BASE(pI128->PciInfo, 4, REGION_MEM),
+	    (unsigned long)(PCI_REGION_BASE(pI128->PciInfo, 4, REGION_MEM) & 0xFFFF0000));
     xf86DrvMsg(pScrn->scrnIndex, X_PROBED,
 	"    IO        0x%08lx  addr 0x%08lx\n",
-	    pI128->PciInfo->ioBase[5],
-	    pI128->PciInfo->ioBase[5] & 0xFFFFFF00);
+	    (unsigned long)PCI_REGION_BASE(pI128->PciInfo, 5, REGION_IO),
+	    (unsigned long)(PCI_REGION_BASE(pI128->PciInfo, 5, REGION_IO) & 0xFFFFFF00));
     xf86DrvMsg(pScrn->scrnIndex, X_PROBED,
 	"    SSC       0x%08x  addr 0x%08x\n",
-    	    pI128->PciInfo->subsysCard,
-    	    pI128->PciInfo->subsysCard & 0xFFFFFF00);
+    	    (unsigned int)PCI_SUB_DEVICE_ID(pI128->PciInfo),
+	    (unsigned int)(PCI_SUB_DEVICE_ID(pI128->PciInfo) & 0xFFFFFF00));
     xf86DrvMsg(pScrn->scrnIndex, X_PROBED,
 	"    SSV       0x%08x  addr 0x%08x\n",
-    	    pI128->PciInfo->subsysVendor,
-    	    pI128->PciInfo->subsysVendor & 0xFFFFFF00);
+    	    (unsigned int)PCI_SUB_VENDOR_ID(pI128->PciInfo),
+	    (unsigned int)(PCI_SUB_VENDOR_ID(pI128->PciInfo) & 0xFFFFFF00));
+#ifndef XSERVER_LIBPCIACCESS
     xf86DrvMsg(pScrn->scrnIndex, X_PROBED,
 	"    RBASE_E   0x%08lx  addr 0x%08lx  %sdecode-enabled\n\n",
     	    pI128->PciInfo->biosBase,
@@ -2111,6 +2057,7 @@ I128DumpBaseRegisters(ScrnInfoPtr pScrn)
 	"    PCICMDST  0x%08x       0x%08x\n",
    	    ((pciConfigPtr)pI128->PciInfo->thisCard)->pci_command,
    	    ((pciConfigPtr)pI128->PciInfo->thisCard)->pci_status);
+#endif
 
     xf86DrvMsg(pScrn->scrnIndex, X_PROBED,
 	"  IO Mapped Registers\n");

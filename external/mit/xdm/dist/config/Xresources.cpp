@@ -65,7 +65,7 @@ xlogin*logoFileName: BITMAPDIR/**//XDM_BWPIXMAP
 XHASHendif
 xlogin*useShape: true
 xlogin*logoPadding: 10
-#endif /* XPM */
+#endif
 
 XConsole.text.geometry:	480x130
 XConsole.verbose:	true

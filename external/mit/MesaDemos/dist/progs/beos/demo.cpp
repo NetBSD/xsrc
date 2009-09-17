@@ -1,4 +1,3 @@
-// $Id: demo.cpp,v 1.1.1.1 2008/07/29 05:06:35 mrg Exp $
 
 // Simple BeOS GLView demo
 // Written by Brian Paul

@@ -35,8 +35,6 @@
 /*
  * backend.c++
  *
- * $Date: 2008/07/29 05:10:36 $ $Revision: 1.1.1.1 $
- * $Header: /cvsroot/xsrc/external/mit/MesaLib/dist/src/glu/sgi/libnurbs/internals/Attic/backend.cc,v 1.1.1.1 2008/07/29 05:10:36 mrg Exp $
  */
 
 /* Bezier surface backend
@@ -246,7 +244,7 @@ Backend::evalVStrip(int n_left, REAL u_left, REAL* left_val,
  *-------------------------------------------------------------------------
  */
 void
-Backend::bgntmesh( char * )		
+Backend::bgntmesh( const char * )		
 {
 #ifndef NOWIREFRAME
 

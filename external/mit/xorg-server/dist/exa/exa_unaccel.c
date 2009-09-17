@@ -23,6 +23,10 @@
 
 #include "exa_priv.h"
 
+#ifdef RENDER
+#include "mipict.h"
+#endif
+
 /*
  * These functions wrap the low-level fb rendering functions and
  * synchronize framebuffer/accelerated drawing by stalling until
@@ -35,10 +39,13 @@
  *
  * Solid doesn't use an extra pixmap source, and Stippled/OpaqueStippled are
  * 1bpp and never in fb, so we don't worry about them.
+ * We should worry about them for completeness sake and going forward.
  */
 void
 exaPrepareAccessGC(GCPtr pGC)
 {
+    if (pGC->stipple)
+        exaPrepareAccess(&pGC->stipple->drawable, EXA_PREPARE_MASK);
     if (pGC->fillStyle == FillTiled)
 	exaPrepareAccess(&pGC->tile.pixmap->drawable, EXA_PREPARE_SRC);
 }
@@ -51,6 +58,8 @@ exaFinishAccessGC(GCPtr pGC)
 {
     if (pGC->fillStyle == FillTiled)
 	exaFinishAccess(&pGC->tile.pixmap->drawable, EXA_PREPARE_SRC);
+    if (pGC->stipple)
+        exaFinishAccess(&pGC->stipple->drawable, EXA_PREPARE_MASK);
 }
 
 #if DEBUG_TRACE_FALL
@@ -88,15 +97,17 @@ ExaCheckPutImage (DrawablePtr pDrawable, GCPtr pGC, int depth,
 		 int x, int y, int w, int h, int leftPad, int format,
 		 char *bits)
 {
-    PixmapPtr pPixmap = exaGetDrawablePixmap(pDrawable);
-    int xoff, yoff;
+    ExaPixmapPriv(exaGetDrawablePixmap(pDrawable));
 
     EXA_FALLBACK(("to %p (%c)\n", pDrawable, exaDrawableLocation(pDrawable)));
-    exaPrepareAccess (pDrawable, EXA_PREPARE_DEST);
+    if (exaGCReadsDestination(pDrawable, pGC->planemask, pGC->fillStyle,
+			      pGC->alu, pGC->clientClipType))
+	exaPrepareAccess (pDrawable, EXA_PREPARE_DEST);
+    else
+	exaPrepareAccessReg (pDrawable, EXA_PREPARE_DEST, pExaPixmap->pDamage ?
+			     DamagePendingRegion(pExaPixmap->pDamage) : NULL);
     fbPutImage (pDrawable, pGC, depth, x, y, w, h, leftPad, format, bits);
     exaFinishAccess (pDrawable, EXA_PREPARE_DEST);
-    exaGetDrawableDeltas(pDrawable, pPixmap, &xoff, &yoff);
-    exaPixmapDirty(pPixmap, x + xoff, y + yoff, x + xoff + w, y + yoff + h);
 }
 
 RegionPtr
@@ -188,6 +199,12 @@ ExaCheckPolyArc (DrawablePtr pDrawable, GCPtr pGC,
 		int narcs, xArc *pArcs)
 {
     EXA_FALLBACK(("to %p (%c)\n", pDrawable, exaDrawableLocation(pDrawable)));
+
+    /* Disable this as fbPolyArc can call miZeroPolyArc which in turn
+     * can call accelerated functions, that as yet, haven't been notified
+     * with exaFinishAccess().
+     */
+#if 0
     if (pGC->lineWidth == 0)
     {
 	exaPrepareAccess (pDrawable, EXA_PREPARE_DEST);
@@ -197,6 +214,7 @@ ExaCheckPolyArc (DrawablePtr pDrawable, GCPtr pGC,
 	exaFinishAccess (pDrawable, EXA_PREPARE_DEST);
 	return;
     }
+#endif
     miPolyArc (pDrawable, pGC, narcs, pArcs);
 }
 
@@ -250,23 +268,12 @@ ExaCheckPushPixels (GCPtr pGC, PixmapPtr pBitmap,
 		  exaDrawableLocation(&pBitmap->drawable),
 		  exaDrawableLocation(pDrawable)));
     exaPrepareAccess (pDrawable, EXA_PREPARE_DEST);
+    exaPrepareAccess (&pBitmap->drawable, EXA_PREPARE_SRC);
     exaPrepareAccessGC (pGC);
     fbPushPixels (pGC, pBitmap, pDrawable, w, h, x, y);
     exaFinishAccessGC (pGC);
+    exaFinishAccess (&pBitmap->drawable, EXA_PREPARE_SRC);
     exaFinishAccess (pDrawable, EXA_PREPARE_DEST);
-}
-
-void
-ExaCheckGetImage (DrawablePtr pDrawable,
-		 int x, int y, int w, int h,
-		 unsigned int format, unsigned long planeMask,
-		 char *d)
-{
-    EXA_FALLBACK(("from %p (%c)\n", pDrawable,
-		  exaDrawableLocation(pDrawable)));
-    exaPrepareAccess (pDrawable, EXA_PREPARE_SRC);
-    fbGetImage (pDrawable, x, y, w, h, format, planeMask, d);
-    exaFinishAccess (pDrawable, EXA_PREPARE_SRC);
 }
 
 void
@@ -284,49 +291,6 @@ ExaCheckGetSpans (DrawablePtr pDrawable,
 }
 
 void
-ExaCheckSaveAreas (PixmapPtr	pPixmap,
-		  RegionPtr	prgnSave,
-		  int		xorg,
-		  int		yorg,
-		  WindowPtr	pWin)
-{
-    EXA_FALLBACK(("from %p (%c)\n", &pPixmap->drawable,
-		  exaDrawableLocation(&pPixmap->drawable)));
-    exaPrepareAccess ((DrawablePtr)pPixmap, EXA_PREPARE_DEST);
-    fbSaveAreas (pPixmap, prgnSave, xorg, yorg, pWin);
-    exaFinishAccess ((DrawablePtr)pPixmap, EXA_PREPARE_DEST);
-}
-
-void
-ExaCheckRestoreAreas (PixmapPtr	pPixmap,
-		     RegionPtr	prgnSave,
-		     int	xorg,
-		     int    	yorg,
-		     WindowPtr	pWin)
-{
-    EXA_FALLBACK(("to %p (%c)\n", &pPixmap->drawable,
-		  exaDrawableLocation(&pPixmap->drawable)));
-    exaPrepareAccess ((DrawablePtr)pPixmap, EXA_PREPARE_DEST);
-    fbRestoreAreas (pPixmap, prgnSave, xorg, yorg, pWin);
-    exaFinishAccess ((DrawablePtr)pPixmap, EXA_PREPARE_DEST);
-}
-
-/* XXX: Note the lack of a prepare on the tile, if the window has a tiled
- * background.  This function happens to only be called if pExaScr->swappedOut,
- * so we actually end up not having to do it since the tile won't be in fb.
- * That doesn't make this not dirty, though.
- */
-void
-ExaCheckPaintWindow (WindowPtr pWin, RegionPtr pRegion, int what)
-{
-    EXA_FALLBACK(("from %p (%c)\n", pWin,
-		  exaDrawableLocation(&pWin->drawable)));
-    exaPrepareAccess (&pWin->drawable, EXA_PREPARE_DEST);
-    fbPaintWindow (pWin, pRegion, what);
-    exaFinishAccess (&pWin->drawable, EXA_PREPARE_DEST);
-}
-
-void
 ExaCheckComposite (CARD8      op,
                    PicturePtr pSrc,
                    PicturePtr pMask,
@@ -340,9 +304,47 @@ ExaCheckComposite (CARD8      op,
                    CARD16     width,
                    CARD16     height)
 {
+    RegionRec region;
+    int xoff, yoff;
+
+    REGION_NULL(pScreen, &region);
+
+    /* We need to prepare access to any separate alpha maps first, in case the
+     * driver doesn't support EXA_PREPARE_AUX*, in which case EXA_PREPARE_SRC
+     * may be used for moving them out.
+     */
+    if (pSrc->alphaMap && pSrc->alphaMap->pDrawable)
+	exaPrepareAccess(pSrc->alphaMap->pDrawable, EXA_PREPARE_AUX2);
+    if (pMask && pMask->alphaMap && pMask->alphaMap->pDrawable)
+	exaPrepareAccess(pMask->alphaMap->pDrawable, EXA_PREPARE_AUX1);
+
+    if (!exaOpReadsDestination(op)) {
+	if (!miComputeCompositeRegion (&region, pSrc, pMask, pDst,
+				       xSrc, ySrc, xMask, yMask, xDst, yDst,
+				       width, height))
+	    return;
+
+	exaGetDrawableDeltas (pDst->pDrawable,
+			      exaGetDrawablePixmap(pDst->pDrawable),
+			      &xoff, &yoff);
+
+	REGION_TRANSLATE(pScreen, &region, xoff, yoff);
+
+	if (pDst->alphaMap && pDst->alphaMap->pDrawable)
+	    exaPrepareAccessReg(pDst->alphaMap->pDrawable, EXA_PREPARE_AUX0,
+				&region);
+
+	exaPrepareAccessReg (pDst->pDrawable, EXA_PREPARE_DEST, &region);
+    } else {
+	if (pDst->alphaMap && pDst->alphaMap->pDrawable)
+	    exaPrepareAccess(pDst->alphaMap->pDrawable, EXA_PREPARE_AUX0);
+
+	exaPrepareAccess (pDst->pDrawable, EXA_PREPARE_DEST);
+    }
+
     EXA_FALLBACK(("from picts %p/%p to pict %p\n",
 		 pSrc, pMask, pDst));
-    exaPrepareAccess (pDst->pDrawable, EXA_PREPARE_DEST);
+
     if (pSrc->pDrawable != NULL)
 	exaPrepareAccess (pSrc->pDrawable, EXA_PREPARE_SRC);
     if (pMask && pMask->pDrawable != NULL)
@@ -361,9 +363,31 @@ ExaCheckComposite (CARD8      op,
                  height);
     if (pMask && pMask->pDrawable != NULL)
 	exaFinishAccess (pMask->pDrawable, EXA_PREPARE_MASK);
+    if (pMask && pMask->alphaMap && pMask->alphaMap->pDrawable)
+	exaFinishAccess(pMask->alphaMap->pDrawable, EXA_PREPARE_AUX1);
     if (pSrc->pDrawable != NULL)
 	exaFinishAccess (pSrc->pDrawable, EXA_PREPARE_SRC);
+    if (pSrc->alphaMap && pSrc->alphaMap->pDrawable)
+	exaFinishAccess(pSrc->alphaMap->pDrawable, EXA_PREPARE_AUX2);
     exaFinishAccess (pDst->pDrawable, EXA_PREPARE_DEST);
+    if (pDst->alphaMap && pDst->alphaMap->pDrawable)
+	exaFinishAccess(pDst->alphaMap->pDrawable, EXA_PREPARE_AUX0);
+
+    REGION_UNINIT(pScreen, &region);
+}
+
+void
+ExaCheckAddTraps (PicturePtr	pPicture,
+		  INT16		x_off,
+		  INT16		y_off,
+		  int		ntrap,
+		  xTrap		*traps)
+{
+    EXA_FALLBACK(("to pict %p (%c)\n",
+		  exaDrawableLocation(pPicture->pDrawable)));
+    exaPrepareAccess(pPicture->pDrawable, EXA_PREPARE_DEST);
+    fbAddTraps (pPicture, x_off, y_off, ntrap, traps);
+    exaFinishAccess(pPicture->pDrawable, EXA_PREPARE_DEST);
 }
 
 /**
@@ -379,21 +403,29 @@ exaGetPixmapFirstPixel (PixmapPtr pPixmap)
     void *fb;
     Bool need_finish = FALSE;
     BoxRec box;
-    ExaMigrationRec pixmaps[1];
+    RegionRec migration;
     ExaPixmapPriv (pPixmap);
+    Bool sys_valid = pExaPixmap->pDamage &&
+	!miPointInRegion(&pExaPixmap->validSys, 0, 0,  &box);
+    Bool damaged = pExaPixmap->pDamage &&
+ 	miPointInRegion(DamageRegion(pExaPixmap->pDamage), 0, 0, &box);
+    Bool offscreen = exaPixmapIsOffscreen(pPixmap);
 
     fb = pExaPixmap->sys_ptr;
 
     /* Try to avoid framebuffer readbacks */
-    if (exaPixmapIsOffscreen(pPixmap) &&
-        miPointInRegion(DamageRegion(pExaPixmap->pDamage), 0, 0,  &box))
+    if ((!offscreen && !sys_valid && !damaged) ||
+	(offscreen && (!sys_valid || damaged)))
     {
+	box.x1 = 0;
+	box.y1 = 0;
+	box.x2 = 1;
+	box.y2 = 1;
+	REGION_INIT(pScreen, &migration, &box, 1);
+
 	need_finish = TRUE;
-	pixmaps[0].as_dst = FALSE;
-	pixmaps[0].as_src = TRUE;
-	pixmaps[0].pPix = pPixmap;
-	exaDoMigration (pixmaps, 1, FALSE);
-	exaPrepareAccess(&pPixmap->drawable, EXA_PREPARE_SRC);
+
+	exaPrepareAccessReg(&pPixmap->drawable, EXA_PREPARE_SRC, &migration);
 	fb = pPixmap->devPrivate.ptr;
     }
 
@@ -409,8 +441,10 @@ exaGetPixmapFirstPixel (PixmapPtr pPixmap)
 	break;
     }
 
-    if (need_finish)
+    if (need_finish) {
 	exaFinishAccess(&pPixmap->drawable, EXA_PREPARE_SRC);
+	REGION_UNINIT(pScreen, &migration);
+    }
 
     return pixel;
 }

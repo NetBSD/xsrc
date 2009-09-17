@@ -627,7 +627,8 @@ static int input (void );
 
 /* Amount of stuff to slurp up with each read. */
 #ifndef YY_READ_BUF_SIZE
-#define YY_READ_BUF_SIZE 8192
+/* On IA-64, the buffer size is 16k, not 8k */
+#define YY_READ_BUF_SIZE 16384
 #endif
 
 /* Copy whatever the last rule matched to the standard output. */
@@ -733,7 +734,7 @@ YY_DECL
     
 #line 62 "scanner.l"
 
-#line 737 "scanner.c"
+#line 738 "scanner.c"
 
 	if ( !(yy_init) )
 		{
@@ -923,7 +924,7 @@ YY_RULE_SETUP
 #line 83 "scanner.l"
 ECHO;
 	YY_BREAK
-#line 927 "scanner.c"
+#line 928 "scanner.c"
 
 	case YY_END_OF_BUFFER:
 		{
@@ -1682,8 +1683,8 @@ YY_BUFFER_STATE yy_scan_string (yyconst char * yystr )
 
 /** Setup the input buffer state to scan the given bytes. The next call to yylex() will
  * scan from a @e copy of @a bytes.
- * @param bytes the byte buffer to scan
- * @param len the number of bytes in the buffer pointed to by @a bytes.
+ * @param yybytes the byte buffer to scan
+ * @param _yybytes_len the number of bytes in the buffer pointed to by @a bytes.
  * 
  * @return the newly allocated buffer state object.
  */

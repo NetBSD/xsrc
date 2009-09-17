@@ -105,8 +105,8 @@ static CARD32 Cg6OpaqueStippleROP[16]={
 
 /* DGA stuff */
 
-static Bool Cg6_OpenFramebuffer(ScrnInfoPtr pScrn, char **, unsigned int *mem,
-    unsigned int *, unsigned int *, unsigned int *);
+static Bool Cg6_OpenFramebuffer(ScrnInfoPtr pScrn, char **, unsigned char **mem,
+    int *, int *, int *);
 static Bool Cg6_SetMode(ScrnInfoPtr, DGAModePtr);
 static void Cg6_SetViewport(ScrnInfoPtr, int, int, int);
 static int Cg6_GetViewport(ScrnInfoPtr);
@@ -541,15 +541,15 @@ Cg6DGAInit(ScreenPtr pScreen)
 
 static Bool 
 Cg6_OpenFramebuffer(ScrnInfoPtr pScrn, char **name,
-				unsigned int *mem,
-				unsigned int *size, unsigned int *offset,
-				unsigned int *extra)
+				unsigned char **mem,
+				int *size, int *offset,
+				int *extra)
 {
     Cg6Ptr pCg6 = GET_CG6_FROM_SCRN(pScrn);
 
     *name = pCg6->psdp->device;
 
-    *mem = CG6_RAM_VOFF;
+    *mem = (unsigned char*)CG6_RAM_VOFF;
     *size = pCg6->vidmem;
     *offset = 0;
     *extra = 0;

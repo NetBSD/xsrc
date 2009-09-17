@@ -26,3 +26,4 @@
   logiciink     =       +inet(logicink)
   $maclaptop    =       +inet(apple)+level3(enter_switch)
   $macs	        =       +inet(apple)
+  thinkpadz60   =       +inet(thinkpad60)

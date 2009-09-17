@@ -115,16 +115,10 @@
 /*
  * Global Definitions
  */
-#define MAX_PCI_DEVICES 128	/* Max number of devices accomodated */
-				/* by xf86scanpci		     */
-#if defined(sun) && defined(SVR4) && defined(sparc)
-# define MAX_PCI_BUSES   4096	/* Max number of PCI buses           */
-#elif (defined(__alpha__) || defined(__ia64__)) && defined (linux)
-# define MAX_PCI_DOMAINS	512
-# define PCI_DOM_MASK	0x01fful
-# define MAX_PCI_BUSES	(MAX_PCI_DOMAINS*256) /* 256 per domain      */
+#if (defined(__alpha__) || defined(__ia64__)) && defined (linux)
+#define PCI_DOM_MASK	0x01fful
 #else
-# define MAX_PCI_BUSES   256	/* Max number of PCI buses           */
+#define PCI_DOM_MASK 0x0ffu
 #endif
 
 #define DEVID(vendor, device) \
@@ -157,50 +151,6 @@
 #define PCI_TAG_NO_DOMAIN(tag) ((tag) & 0x00ffff00u)
 
 /*
- * Macros for bus numbers found in P2P headers.
- */
-#define PCI_PRIMARY_BUS_EXTRACT(x, tag)     \
-    ((((x) & PCI_PRIMARY_BUS_MASK    ) >>  0) | (PCI_DOM_FROM_TAG(tag) << 8))
-#define PCI_SECONDARY_BUS_EXTRACT(x, tag)   \
-    ((((x) & PCI_SECONDARY_BUS_MASK  ) >>  8) | (PCI_DOM_FROM_TAG(tag) << 8))
-#define PCI_SUBORDINATE_BUS_EXTRACT(x, tag) \
-    ((((x) & PCI_SUBORDINATE_BUS_MASK) >> 16) | (PCI_DOM_FROM_TAG(tag) << 8))
-
-#define PCI_PRIMARY_BUS_INSERT(x, y)     \
-    (((x) & ~PCI_PRIMARY_BUS_MASK    ) | (((y) & 0xffu) <<  0))
-#define PCI_SECONDARY_BUS_INSERT(x, y)   \
-    (((x) & ~PCI_SECONDARY_BUS_MASK  ) | (((y) & 0xffu) <<  8))
-#define PCI_SUBORDINATE_BUS_INSERT(x, y) \
-    (((x) & ~PCI_SUBORDINATE_BUS_MASK) | (((y) & 0xffu) << 16))
-
-/* Ditto for CardBus bridges */
-#define PCI_CB_PRIMARY_BUS_EXTRACT(x, tag)     \
-    PCI_PRIMARY_BUS_EXTRACT(x, tag)
-#define PCI_CB_CARDBUS_BUS_EXTRACT(x, tag)     \
-    PCI_SECONDARY_BUS_EXTRACT(x, tag)
-#define PCI_CB_SUBORDINATE_BUS_EXTRACT(x, tag) \
-    PCI_SUBORDINATE_BUS_EXTRACT(x, tag)
-
-#define PCI_CB_PRIMARY_BUS_INSERT(x, tag)     \
-    PCI_PRIMARY_BUS_INSERT(x, tag)
-#define PCI_CB_CARDBUS_BUS_INSERT(x, tag)     \
-    PCI_SECONDARY_BUS_INSERT(x, tag)
-#define PCI_CB_SUBORDINATE_BUS_INSERT(x, tag) \
-    PCI_SUBORDINATE_BUS_INSERT(x, tag)
-
-#if X_BYTE_ORDER == X_BIG_ENDIAN
-#define PCI_CPU(val)	(((val >> 24) & 0x000000ff) |	\
-			 ((val >>  8) & 0x0000ff00) |	\
-			 ((val <<  8) & 0x00ff0000) |	\
-			 ((val << 24) & 0xff000000))
-#define PCI_CPU16(val)	(((val >>  8) & 0x000000ff) |	\
-			 ((val <<  8) & 0x0000ff00))
-#else
-#define PCI_CPU(val)	(val)
-#define PCI_CPU16(val)	(val)
-#endif
-
-/*
  * Debug Macros/Definitions
  */
 /* #define DEBUGPCI  2 */    /* Disable/enable trace in PCI code */
@@ -218,138 +168,14 @@
 
 #endif /* !defined(DEBUGPCI) */
 
-/*
- * PCI Config mechanism definitions
- */
-#define PCI_EN 0x80000000
-
-#define	PCI_CFGMECH1_ADDRESS_REG	0xCF8
-#define	PCI_CFGMECH1_DATA_REG		0xCFC
-
-#define PCI_CFGMECH1_MAXDEV	32
-
-/*
- * Select architecture specific PCI init function
- */
-#if defined(__alpha__)
-# if defined(linux)
-#  define ARCH_PCI_INIT axpPciInit
-#  define INCLUDE_XF86_MAP_PCI_MEM
-# elif defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__DragonFly__)
-#  define ARCH_PCI_INIT freebsdPciInit
-#  define INCLUDE_XF86_MAP_PCI_MEM
-#  define INCLUDE_XF86_NO_DOMAIN
-# elif defined(__NetBSD__)
-#  define ARCH_PCI_INIT netbsdPciInit
-#  define INCLUDE_XF86_MAP_PCI_MEM
-#  define INCLUDE_XF86_NO_DOMAIN
-# endif
-#elif defined(__arm__)
-# if defined(linux)
-#  define ARCH_PCI_INIT linuxPciInit
-#  define INCLUDE_XF86_MAP_PCI_MEM
-#  define INCLUDE_XF86_NO_DOMAIN
-# elif defined(__NetBSD__)
-#  define ARCH_PCI_INIT netbsdPciInit
-#  define INCLUDE_XF86_MAP_PCI_MEM
-#  define INCLUDE_XF86_NO_DOMAIN
-# endif
-#elif defined(__hppa__)
-# if defined(linux)
-#  define ARCH_PCI_INIT linuxPciInit
-#  define INCLUDE_XF86_MAP_PCI_MEM
-#  define INCLUDE_XF86_NO_DOMAIN
-# endif
-#elif defined(__ia64__)
-# if defined(linux)
-#  define ARCH_PCI_INIT ia64linuxPciInit
-#  define INCLUDE_XF86_MAP_PCI_MEM
-# elif defined(FreeBSD)
-#  define ARCH_PCI_INIT freebsdPciInit
-#  define INCLUDE_XF86_MAP_PCI_MEM
-#  define INCLUDE_XF86_NO_DOMAIN
-# endif
-# define XF86SCANPCI_WRAPPER ia64ScanPCIWrapper
-#elif defined(__i386__) || defined(i386)
-# define ARCH_PCI_INIT ix86PciInit
-# define INCLUDE_XF86_MAP_PCI_MEM
-# define INCLUDE_XF86_NO_DOMAIN
-# if defined(linux)
-#  define ARCH_PCI_OS_INIT linuxPciInit
-# endif
-#elif defined(__mc68000__)
-# if defined(linux)
-#  define ARCH_PCI_INIT linuxPciInit
-#  define INCLUDE_XF86_MAP_PCI_MEM
-#  define INCLUDE_XF86_NO_DOMAIN
-# endif
-#elif defined(__mips__)
-# if defined(linux)
-#  define ARCH_PCI_INIT linuxPciInit
-#  define INCLUDE_XF86_MAP_PCI_MEM
-#  define INCLUDE_XF86_NO_DOMAIN
-# endif
-#elif defined(__powerpc__) || defined(__powerpc64__)
-# if defined(linux)
-#  define ARCH_PCI_INIT linuxPciInit
-#  define INCLUDE_XF86_MAP_PCI_MEM
-#  define INCLUDE_XF86_NO_DOMAIN	/* Needs kernel work to remove */
-# elif defined(__FreeBSD__) || defined(__OpenBSD__)
-#  define  ARCH_PCI_INIT freebsdPciInit
-#  define INCLUDE_XF86_MAP_PCI_MEM
-#  define INCLUDE_XF86_NO_DOMAIN
-# elif defined(__NetBSD__)
-#  define ARCH_PCI_INIT netbsdPciInit
-#  define INCLUDE_XF86_MAP_PCI_MEM
-#  define INCLUDE_XF86_NO_DOMAIN
-# else
-#  define ARCH_PCI_INIT ppcPciInit
-#  define INCLUDE_XF86_MAP_PCI_MEM
-#  define INCLUDE_XF86_NO_DOMAIN
-# endif
-#elif defined(__s390__)
-# if defined(linux)
-#  define ARCH_PCI_INIT linuxPciInit
-#  define INCLUDE_XF86_MAP_PCI_MEM
-#  define INCLUDE_XF86_NO_DOMAIN
-# endif
-#elif defined(__sh__)
-# if defined(linux)
-#  define ARCH_PCI_INIT linuxPciInit
-#  define INCLUDE_XF86_MAP_PCI_MEM
-#  define INCLUDE_XF86_NO_DOMAIN
-# endif
-#elif defined(__sparc__) || defined(sparc)
-# if defined(linux)
-#  define ARCH_PCI_INIT linuxPciInit
-#  define INCLUDE_XF86_MAP_PCI_MEM
-# elif defined(sun)
-#  define ARCH_PCI_INIT sparcPciInit
-#  define INCLUDE_XF86_MAP_PCI_MEM
-# elif (defined(__OpenBSD__) || defined(__FreeBSD__)) && defined(__sparc64__)
-#  define  ARCH_PCI_INIT freebsdPciInit
-#  define INCLUDE_XF86_MAP_PCI_MEM
-#  define INCLUDE_XF86_NO_DOMAIN
-# elif defined(__NetBSD__) && defined(__sparc__)
-#  define ARCH_PCI_INIT netbsdPciInit
-#  define INCLUDE_XF86_MAP_PCI_MEM
-#  define INCLUDE_XF86_NO_DOMAIN
-# endif
-# if !defined(__FreeBSD__) && !defined(linux) && !defined(__NetBSD__)
-#  define ARCH_PCI_PCI_BRIDGE sparcPciPciBridge
-# endif
-#elif defined(__amd64__) || defined(__amd64)
-# if defined(__FreeBSD__) || defined(__FreeBSD_kernel__)
-#  define ARCH_PCI_INIT freebsdPciInit
-# else
-#  define ARCH_PCI_INIT ix86PciInit
-# endif
-# define INCLUDE_XF86_MAP_PCI_MEM
-# define INCLUDE_XF86_NO_DOMAIN
-# if defined(linux)
-#  define ARCH_PCI_OS_INIT linuxPciInit
-# endif
+#if defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__NetBSD__) || \
+	defined(__DragonFly__) || defined(__sun)
+#define ARCH_PCI_INIT bsdPciInit
 #endif
+
+#if defined(linux)
+#define ARCH_PCI_INIT linuxPciInit
+#endif /* defined(linux) */
 
 #ifndef ARCH_PCI_INIT
 #if defined(__NetBSD__)
@@ -362,98 +188,18 @@
 #endif
 
 extern void ARCH_PCI_INIT(void);
-#if defined(ARCH_PCI_OS_INIT)
-extern void ARCH_PCI_OS_INIT(void);
-#endif
-
-#if defined(ARCH_PCI_PCI_BRIDGE)
-extern void ARCH_PCI_PCI_BRIDGE(pciConfigPtr pPCI);
-#endif
-
-#if defined(XF86SCANPCI_WRAPPER)
-typedef enum {
-    SCANPCI_INIT,
-    SCANPCI_TERM
-} scanpciWrapperOpt;
-extern void XF86SCANPCI_WRAPPER(scanpciWrapperOpt flags);
-#endif
 
 /*
  * Table of functions used to access a specific PCI bus domain
  * (e.g. a primary PCI bus and all of its secondaries)
  */
 typedef struct pci_bus_funcs {
-	CARD32  (*pciReadLong)(PCITAG, int);
-	void    (*pciWriteLong)(PCITAG, int, CARD32);
-	void    (*pciSetBitsLong)(PCITAG, int, CARD32, CARD32);
-	ADDRESS (*pciAddrHostToBus)(PCITAG, PciAddrType, ADDRESS);
 	ADDRESS (*pciAddrBusToHost)(PCITAG, PciAddrType, ADDRESS);
-	/*
-	 * The next three are optional.  If NULL, the corresponding function is
-	 * to be performed generically.
-	 */
-	CARD16  (*pciControlBridge)(int, CARD16, CARD16);
-	void    (*pciGetBridgeBuses)(int, int *, int *, int *);
-	/* Use pointer's to avoid #include recursion */
-	void    (*pciGetBridgeResources)(int, pointer *, pointer *, pointer *);
-
-	/* These are optional and will be implemented using read long
-	 * if not present. */
-	CARD8   (*pciReadByte)(PCITAG, int);
-	void    (*pciWriteByte)(PCITAG, int, CARD8);
-	CARD16  (*pciReadWord)(PCITAG, int);
-	void    (*pciWriteWord)(PCITAG, int, CARD16);
-
 } pciBusFuncs_t, *pciBusFuncs_p;
 
-/*
- * pciBusInfo_t - One structure per defined PCI bus
- */
-typedef struct pci_bus_info {
-	unsigned char  configMech;   /* PCI config type to use      */
-	unsigned char  numDevices;   /* Range of valid devnums      */
-	unsigned char  secondary;    /* Boolean: bus is a secondary */
-	int            primary_bus;  /* Parent bus                  */
-	pciBusFuncs_p  funcs;        /* PCI access functions        */
-	void          *pciBusPriv;   /* Implementation private data */
-	pciConfigPtr   bridge;       /* bridge that opens this bus  */
-} pciBusInfo_t;
-
-#define HOST_NO_BUS ((pciBusInfo_t *)(-1))
-
-/* configMech values */
-#define PCI_CFG_MECH_UNKNOWN 0 /* Not yet known  */
-#define PCI_CFG_MECH_1       1 /* Most machines  */
-#define PCI_CFG_MECH_2       2 /* Older PC's     */
-#define PCI_CFG_MECH_OTHER   3 /* Something else */
-
 /* Generic PCI service functions and helpers */
-PCITAG        pciGenFindFirst(void);
-PCITAG        pciGenFindNext(void);
-CARD32        pciCfgMech1Read(PCITAG tag, int offset);
-void          pciCfgMech1Write(PCITAG tag, int offset, CARD32 val);
-void          pciCfgMech1SetBits(PCITAG tag, int offset, CARD32 mask,
-				 CARD32 val);
-CARD32        pciByteSwap(CARD32);
-Bool          pciMfDev(int, int);
 ADDRESS       pciAddrNOOP(PCITAG tag, PciAddrType type, ADDRESS);
 
-extern void pciSetOSBIOSPtr(int (*bios_fn)(PCITAG Tag, int basereg, unsigned char * buf, int len));
-extern PCITAG (*pciFindFirstFP)(void);
-extern PCITAG (*pciFindNextFP)(void);
-
-extern CARD32 pciDevid;
-extern CARD32 pciDevidMask;
-
-extern int    pciMaxBusNum;
-
-extern int    pciBusNum;
-extern int    pciDevNum;
-extern int    pciFuncNum;
-extern PCITAG pciDeviceTag;
-
-extern int    xf86MaxPciDevs;
-
-extern pciBusInfo_t  *pciBusInfo[];
+extern pciBusFuncs_t  *pciBusFuncs;
 
 #endif /* _PCI_H */

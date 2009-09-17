@@ -208,34 +208,23 @@ dixLookupDrawable(DrawablePtr *pDraw, XID id, ClientPtr client,
 		  Mask type, Mask access)
 {
     DrawablePtr pTmp;
-    RESTYPE rtype;
+    int rc;
+
     *pDraw = NULL;
     client->errorValue = id;
 
     if (id == INVALID)
 	return BadDrawable;
 
-    if (id == client->lastDrawableID) {
-	pTmp = client->lastDrawable;
+    rc = dixLookupResourceByClass((pointer *)&pTmp, id, RC_DRAWABLE, client, access);
 
-	/* an access check is required for cached drawables */
-	rtype = (type & M_WINDOW) ? RT_WINDOW : RT_PIXMAP;
-	if (!XaceHook(XACE_RESOURCE_ACCESS, client, id, rtype, access, pTmp))
-	    return BadDrawable;
-    } else
-	pTmp = (DrawablePtr)SecurityLookupIDByClass(client, id, RC_DRAWABLE,
-						   access);
-    if (!pTmp)
+    if (rc == BadValue)
 	return BadDrawable;
+    if (rc != Success)
+	return rc;
     if (!((1 << pTmp->type) & (type ? type : M_DRAWABLE)))
 	return BadMatch;
 
-    if (type & M_DRAWABLE) {
-	client->lastDrawable = pTmp;
-	client->lastDrawableID = id;
-	client->lastGCID = INVALID;
-	client->lastGC = (GCPtr)NULL;
-    }
     *pDraw = pTmp;
     return Success;
 }
@@ -264,78 +253,32 @@ dixLookupGC(GCPtr *pGC, XID id, ClientPtr client, Mask access)
 _X_EXPORT int
 dixLookupClient(ClientPtr *pClient, XID rid, ClientPtr client, Mask access)
 {
-    pointer pRes = (pointer)SecurityLookupIDByClass(client, rid, RC_ANY,
-						    access);
-    int clientIndex = CLIENT_ID(rid);
-    client->errorValue = rid;
+    pointer pRes;
+    int rc = BadValue, clientIndex = CLIENT_ID(rid);
 
-    if (clientIndex && pRes && clients[clientIndex] && !(rid & SERVER_BIT)) {
-	*pClient = clients[clientIndex];
-	return Success;
-    }
+    if (!clientIndex || !clients[clientIndex] || (rid & SERVER_BIT))
+	goto bad;
+
+    rc = dixLookupResourceByClass(&pRes, rid, RC_ANY, client, DixGetAttrAccess);
+    if (rc != Success)
+	goto bad;
+
+    rc = XaceHook(XACE_CLIENT_ACCESS, client, clients[clientIndex], access);
+    if (rc != Success)
+	goto bad;
+
+    *pClient = clients[clientIndex];
+    return Success;
+bad:
+    if(client)
+        client->errorValue = rid;
     *pClient = NULL;
-    return BadValue;
+    return rc;
 }
-
-/*
- * These are deprecated compatibility functions and will be removed soon!
- * Please use the new dixLookup*() functions above.
- */
-_X_EXPORT _X_DEPRECATED WindowPtr
-SecurityLookupWindow(XID id, ClientPtr client, Mask access_mode)
-{
-    WindowPtr pWin;
-    int i = dixLookupWindow(&pWin, id, client, access_mode);
-    static int warn = 1;
-    if (warn-- > 0)
-	ErrorF("Warning: LookupWindow()/SecurityLookupWindow() "
-	       "are deprecated.  Please convert your driver/module "
-	       "to use dixLookupWindow().\n");
-    return (i == Success) ? pWin : NULL;
-}
-
-_X_EXPORT _X_DEPRECATED WindowPtr
-LookupWindow(XID id, ClientPtr client)
-{
-    return SecurityLookupWindow(id, client, DixUnknownAccess);
-}
-
-_X_EXPORT _X_DEPRECATED pointer
-SecurityLookupDrawable(XID id, ClientPtr client, Mask access_mode)
-{
-    DrawablePtr pDraw;
-    int i = dixLookupDrawable(&pDraw, id, client, M_DRAWABLE, access_mode);
-    static int warn = 1;
-    if (warn-- > 0)
-	ErrorF("Warning: LookupDrawable()/SecurityLookupDrawable() "
-	       "are deprecated.  Please convert your driver/module "
-	       "to use dixLookupDrawable().\n");
-    return (i == Success) ? pDraw : NULL;
-}
-
-_X_EXPORT _X_DEPRECATED pointer
-LookupDrawable(XID id, ClientPtr client)
-{
-    return SecurityLookupDrawable(id, client, DixUnknownAccess);
-}
-
-_X_EXPORT _X_DEPRECATED ClientPtr
-LookupClient(XID id, ClientPtr client)
-{
-    ClientPtr pClient;
-    int i = dixLookupClient(&pClient, id, client, DixUnknownAccess);
-    static int warn = 1;
-    if (warn-- > 0)
-	ErrorF("Warning: LookupClient() is deprecated.  Please convert your "
-	       "driver/module to use dixLookupClient().\n");
-    return (i == Success) ? pClient : NULL;
-}
-
-/* end deprecated functions */
 
 int
 AlterSaveSetForClient(ClientPtr client, WindowPtr pWin, unsigned mode,
-                      Bool toRoot, Bool remap)
+                      Bool toRoot, Bool map)
 {
     int numnow;
     SaveSetElt *pTmp = NULL;
@@ -361,7 +304,7 @@ AlterSaveSetForClient(ClientPtr client, WindowPtr pWin, unsigned mode,
        	client->numSaved = numnow;
 	SaveSetAssignWindow(client->saveSet[numnow - 1], pWin);
 	SaveSetAssignToRoot(client->saveSet[numnow - 1], toRoot);
-	SaveSetAssignRemap(client->saveSet[numnow - 1], remap);
+	SaveSetAssignMap(client->saveSet[numnow - 1], map);
 	return(Success);
     }
     else if ((mode == SetModeDelete) && (j < numnow))
@@ -858,7 +801,7 @@ _DeleteCallbackList(
 
     for (i = 0; i < numCallbackListsToCleanup; i++)
     {
-	if ((listsToCleanup[i] = pcbl) != 0)
+	if (listsToCleanup[i] == pcbl)
 	{
 	    listsToCleanup[i] = NULL;
 	    break;
@@ -874,16 +817,8 @@ _DeleteCallbackList(
     *pcbl = NULL;
 }
 
-static CallbackFuncsRec default_cbfuncs =
-{
-    _AddCallback,
-    _DeleteCallback,
-    _CallCallbacks,
-    _DeleteCallbackList
-};
-
 static Bool
-CreateCallbackList(CallbackListPtr *pcbl, CallbackFuncsPtr cbfuncs)
+CreateCallbackList(CallbackListPtr *pcbl)
 {
     CallbackListPtr  cbl;
     int i;
@@ -891,7 +826,6 @@ CreateCallbackList(CallbackListPtr *pcbl, CallbackFuncsPtr cbfuncs)
     if (!pcbl) return FALSE;
     cbl = (CallbackListPtr) xalloc(sizeof(CallbackListRec));
     if (!cbl) return FALSE;
-    cbl->funcs = cbfuncs ? *cbfuncs : default_cbfuncs;
     cbl->inCallback = 0;
     cbl->deleted = FALSE;
     cbl->numDeleted = 0;
@@ -922,31 +856,31 @@ AddCallback(CallbackListPtr *pcbl, CallbackProcPtr callback, pointer data)
     if (!pcbl) return FALSE;
     if (!*pcbl)
     {	/* list hasn't been created yet; go create it */
-	if (!CreateCallbackList(pcbl, (CallbackFuncsPtr)NULL))
+	if (!CreateCallbackList(pcbl))
 	    return FALSE;
     }
-    return ((*(*pcbl)->funcs.AddCallback) (pcbl, callback, data));
+    return _AddCallback(pcbl, callback, data);
 }
 
 _X_EXPORT Bool 
 DeleteCallback(CallbackListPtr *pcbl, CallbackProcPtr callback, pointer data)
 {
     if (!pcbl || !*pcbl) return FALSE;
-    return ((*(*pcbl)->funcs.DeleteCallback) (pcbl, callback, data));
+    return _DeleteCallback(pcbl, callback, data);
 }
 
 void 
 CallCallbacks(CallbackListPtr *pcbl, pointer call_data)
 {
     if (!pcbl || !*pcbl) return;
-    (*(*pcbl)->funcs.CallCallbacks) (pcbl, call_data);
+    _CallCallbacks(pcbl, call_data);
 }
 
 void
 DeleteCallbackList(CallbackListPtr *pcbl)
 {
     if (!pcbl || !*pcbl) return;
-    (*(*pcbl)->funcs.DeleteCallbackList) (pcbl);
+    _DeleteCallbackList(pcbl);
 }
 
 void 

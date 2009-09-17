@@ -1,4 +1,4 @@
-// $XKeyboardConfig: xkeyboard-config/symbols/gr,v 1.14 2008-01-21 21:37:36 svu Exp $
+// $XKeyboardConfig$
 
 // Hellenic keyboard map for X.org
 //
@@ -11,10 +11,50 @@
 
 default partial alphanumeric_keys alternate_group
 xkb_symbols "basic" {
+	name[Group1] = "Greece";
+	include "eurosign(e)"
+	include "eurosign(5)"
+	include "gr(simple)"
+	include "kpdl(comma)"
+	key <AB01> { [       NoSymbol,       NoSymbol,          U037D,          U03FF ] };
+	key <AB02> { [       NoSymbol,       NoSymbol,     rightarrow,      leftarrow ] };
+	key <AB03> { [       NoSymbol,       NoSymbol,      copyright                 ] };
+	key <AB04> { [       NoSymbol,       NoSymbol,          U03D6                 ] };
+	key <AB05> { [       NoSymbol,       NoSymbol,          U03D0                 ] };
+	key <AB06> { [       NoSymbol,       NoSymbol,          U0374,          U0375 ] };
+	key <AB07> { [       NoSymbol,       NoSymbol,          U03FB,          U03FA ] };
+	key <AB08> { [       NoSymbol,       NoSymbol,  guillemotleft                 ] };
+	key <AB09> { [       NoSymbol,       NoSymbol, guillemotright, periodcentered ] };
+	key <AC03> { [       NoSymbol,       NoSymbol,      downarrow,        uparrow ] };
+	key <AC04> { [       NoSymbol,       NoSymbol,          U03D5                 ] };
+	key <AC05> { [       NoSymbol,       NoSymbol,          U03DD,          U03DC ] };
+	key <AC07> { [       NoSymbol,       NoSymbol,          U037C,          U03FE ] };
+	key <AC08> { [       NoSymbol,       NoSymbol,          U03DF,          U03DE ] };
+	key <AC09> { [       NoSymbol,       NoSymbol,          U03F2,          U03F9 ] };
+	key <AC10> { [       NoSymbol,       NoSymbol,     dead_acute,     dead_psili ] };
+	key <AC11> { [       NoSymbol,       NoSymbol,     dead_grave,     dead_dasia ] };
+	key <AD01> { [       NoSymbol,       NoSymbol, periodcentered                 ] };
+	key <AD02> { [       NoSymbol,       NoSymbol,          U03DB,          U03DA ] };
+	key <AD04> { [       NoSymbol,       NoSymbol,     registered,          U03F1 ] };
+	key <AD07> { [       NoSymbol,       NoSymbol,          U03D1,          U03F4 ] };
+	key <AD08> { [       NoSymbol,       NoSymbol,          U037B,          U03FD ] };
+	key <AD10> { [       NoSymbol,       NoSymbol,          U03E1,          U03E0 ] };
+	key <AD11> { [       NoSymbol,       NoSymbol,     dead_tilde,    dead_macron ] };
+	key <AD12> { [       NoSymbol,       NoSymbol,      dead_iota,     dead_breve ] };
+	key <AE01> { [       NoSymbol,       NoSymbol,       NoSymbol,    onesuperior ] };
+	key <AE02> { [       NoSymbol,       NoSymbol,        onehalf,    twosuperior ] };
+	key <AE03> { [       NoSymbol,       NoSymbol,       sterling,  threesuperior ] };
+	key <AE04> { [       NoSymbol,       NoSymbol,     onequarter,  threequarters ] };
+	key <AE07> { [       NoSymbol,       NoSymbol,          U03F0                 ] };
+	key <AE10> { [       NoSymbol,       NoSymbol,         degree                 ] };
+};
+
+partial alphanumeric_keys alternate_group
+xkb_symbols "simple" {
 
     include "gr(bare)"
 
-    name[Group1] = "Greece";
+    name[Group1] = "Greece - Simple";
 
     key <TLDE> { [        grave,  asciitilde ] }; // ` ~
     key <AE01> { [            1,      exclam ] }; // 1 !
@@ -103,7 +143,7 @@ xkb_symbols "bare" {
 partial alphanumeric_keys alternate_group
 xkb_symbols "extended" {
 
-    include "gr(basic)"
+    include "gr(simple)"
 
     name[Group1] = "Greece - Extended";
 
@@ -144,7 +184,7 @@ xkb_symbols "polytonic" {
 partial alphanumeric_keys alternate_group
 xkb_symbols "nodeadkeys" {
 
-    include "gr(basic)"
+    include "gr(simple)"
 
     name[Group1] = "Greece - Eliminate dead keys";
 

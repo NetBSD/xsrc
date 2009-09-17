@@ -1,4 +1,3 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/mga/mga_dh.c,v 1.4tsi Exp $ */
 /*********************************************************************
 *  	G450: This is for Dual Head. 
 *       Matrox Graphics
@@ -252,9 +251,9 @@ void MGAEnableSecondOutPut(ScrnInfoPtr pScrn, xMODEINFO *pModeInfo)
     
     
     /* We don't use MISC synch pol, must be 0*/
-    ucByte = inMGAdreg( MGAREG_MISC_READ);
+    ucByte = INREG8( MGAREG_MEM_MISC_READ);
     
-    OUTREG8(MGAREG_MISC_WRITE, (CARD8)(ucByte & ~(HSYNCPOL| VSYNCPOL) ));
+    OUTREG8(MGAREG_MEM_MISC_WRITE, (CARD8)(ucByte & ~(HSYNCPOL| VSYNCPOL) ));
 
     
 

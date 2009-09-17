@@ -56,14 +56,10 @@ SOFTWARE.
 #include <dix-config.h>
 #endif
 
-#include <X11/X.h>	/* for inputstr.h    */
-#include <X11/Xproto.h>	/* Request macro     */
 #include "inputstr.h"	/* DeviceIntPtr      */
 #include <X11/extensions/XI.h>
 #include <X11/extensions/XIproto.h>
 
-#include "extnsionst.h"
-#include "extinit.h"	/* LookupDeviceIntRec */
 #include "exglobals.h"
 
 #include "allowev.h"
@@ -98,40 +94,38 @@ ProcXAllowDeviceEvents(ClientPtr client)
 {
     TimeStamp time;
     DeviceIntPtr thisdev;
+    int rc;
 
     REQUEST(xAllowDeviceEventsReq);
     REQUEST_SIZE_MATCH(xAllowDeviceEventsReq);
 
-    thisdev = LookupDeviceIntRec(stuff->deviceid);
-    if (thisdev == NULL) {
-	SendErrorToClient(client, IReqCode, X_AllowDeviceEvents, 0, BadDevice);
-	return Success;
-    }
+    rc = dixLookupDevice(&thisdev, stuff->deviceid, client, DixGetAttrAccess);
+    if (rc != Success)
+	return rc;
     time = ClientTimeToServerTime(stuff->time);
 
     switch (stuff->mode) {
     case ReplayThisDevice:
-	AllowSome(client, time, thisdev, NOT_GRABBED);
+	AllowSome(client, time, thisdev, NOT_GRABBED, FALSE);
 	break;
     case SyncThisDevice:
-	AllowSome(client, time, thisdev, FREEZE_NEXT_EVENT);
+	AllowSome(client, time, thisdev, FREEZE_NEXT_EVENT, FALSE);
 	break;
     case AsyncThisDevice:
-	AllowSome(client, time, thisdev, THAWED);
+	AllowSome(client, time, thisdev, THAWED, FALSE);
 	break;
     case AsyncOtherDevices:
-	AllowSome(client, time, thisdev, THAW_OTHERS);
+	AllowSome(client, time, thisdev, THAW_OTHERS, FALSE);
 	break;
     case SyncAll:
-	AllowSome(client, time, thisdev, FREEZE_BOTH_NEXT_EVENT);
+	AllowSome(client, time, thisdev, FREEZE_BOTH_NEXT_EVENT, FALSE);
 	break;
     case AsyncAll:
-	AllowSome(client, time, thisdev, THAWED_BOTH);
+	AllowSome(client, time, thisdev, THAWED_BOTH, FALSE);
 	break;
     default:
-	SendErrorToClient(client, IReqCode, X_AllowDeviceEvents, 0, BadValue);
 	client->errorValue = stuff->mode;
-	return Success;
+	return BadValue;
     }
     return Success;
 }

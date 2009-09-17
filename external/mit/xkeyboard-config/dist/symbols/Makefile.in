@@ -46,7 +46,7 @@ ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/configure.in
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
-mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
+mkinstalldirs = $(install_sh) -d
 CONFIG_CLEAN_FILES =
 SOURCES =
 DIST_SOURCES =
@@ -235,8 +235,10 @@ za \
 altwin capslock compose ctrl eurosign group inet \
 keypad kpdl level3 level5 nbsp olpc shift srvr_ctrl
 
+dir_data = $(dist_symbols_DATA)
 dist_dir_DATA = $(subdir).dir
 dirdir = $(xkb_base)
+CLEANFILES = $(subdir).dir
 all: all-recursive
 
 .SUFFIXES:
@@ -505,6 +507,7 @@ install-strip:
 mostlyclean-generic:
 
 clean-generic:
+	-test -z "$(CLEANFILES)" || rm -f $(CLEANFILES)
 
 distclean-generic:
 	-test -z "$(CONFIG_CLEAN_FILES)" || rm -f $(CONFIG_CLEAN_FILES)
@@ -576,7 +579,7 @@ uninstall-info: uninstall-info-recursive
 	uninstall-dist_symbolsDATA uninstall-info-am
 
 
-$(subdir).dir:
+$(subdir).dir: $(dir_data)
 	-rm -f $@
 	here=$$(pwd); cd $(srcdir) && $(XKBCOMP) -lfhlpR -o $${here}/$@ '*'
 # Tell versions [3.59,3.63) of GNU make to not export all variables.

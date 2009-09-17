@@ -51,14 +51,16 @@
 #include "servermd.h"
 #include "inputstr.h"
 #include "windowstr.h"
+#include "xace.h"
 
 static RESTYPE		CursorClientType;
 static RESTYPE		CursorHideCountType;
 static RESTYPE		CursorWindowType;
-static int		CursorScreenPrivateIndex = -1;
-static int		CursorGeneration;
 static CursorPtr	CursorCurrent;
 static CursorPtr        pInvisibleCursor = NULL;
+
+static int CursorScreenPrivateKeyIndex;
+static DevPrivateKey CursorScreenPrivateKey = &CursorScreenPrivateKeyIndex;
 
 static void deleteCursorHideCountsForScreen (ScreenPtr pScreen);
 
@@ -70,7 +72,7 @@ static void deleteCursorHideCountsForScreen (ScreenPtr pScreen);
 	return BadCursor; \
     } \
 }
-	
+
 /*
  * There is a global list of windows selecting for cursor events
  */
@@ -113,14 +115,18 @@ typedef struct _CursorScreen {
     CursorHideCountPtr          pCursorHideCounts;
 } CursorScreenRec, *CursorScreenPtr;
 
-#define GetCursorScreen(s)	((CursorScreenPtr) ((s)->devPrivates[CursorScreenPrivateIndex].ptr))
-#define GetCursorScreenIfSet(s) ((CursorScreenPrivateIndex != -1) ? GetCursorScreen(s) : NULL)
-#define SetCursorScreen(s,p)	((s)->devPrivates[CursorScreenPrivateIndex].ptr = (pointer) (p))
+#define GetCursorScreen(s) ((CursorScreenPtr)dixLookupPrivate(&(s)->devPrivates, CursorScreenPrivateKey))
+#define GetCursorScreenIfSet(s) GetCursorScreen(s)
+#define SetCursorScreen(s,p) dixSetPrivate(&(s)->devPrivates, CursorScreenPrivateKey, p)
 #define Wrap(as,s,elt,func)	(((as)->elt = (s)->elt), (s)->elt = func)
 #define Unwrap(as,s,elt)	((s)->elt = (as)->elt)
 
+/* The cursor doesn't show up until the first XDefineCursor() */
+static Bool CursorVisible = FALSE;
+
 static Bool
-CursorDisplayCursor (ScreenPtr pScreen,
+CursorDisplayCursor (DeviceIntPtr pDev,
+                     ScreenPtr pScreen,
 		     CursorPtr pCursor)
 {
     CursorScreenPtr	cs = GetCursorScreen(pScreen);
@@ -128,10 +134,18 @@ CursorDisplayCursor (ScreenPtr pScreen,
 
     Unwrap (cs, pScreen, DisplayCursor);
 
-    if (cs->pCursorHideCounts != NULL) {
-	ret = (*pScreen->DisplayCursor) (pScreen, pInvisibleCursor);
+    /*
+     * Have to check ConnectionInfo to distinguish client requests from
+     * initial root window setup.  Not a great way to do it, I admit.
+     */
+    if (ConnectionInfo)
+	CursorVisible = TRUE;
+
+    if (cs->pCursorHideCounts != NULL || !CursorVisible) {
+        ret = ((*pScreen->RealizeCursor)(pDev, pScreen, pInvisibleCursor) &&
+	       (*pScreen->DisplayCursor) (pDev, pScreen, pInvisibleCursor));
     } else {
-	ret = (*pScreen->DisplayCursor) (pScreen, pCursor);
+	ret = (*pScreen->DisplayCursor) (pDev, pScreen, pCursor);
     }
 
     if (pCursor != CursorCurrent)
@@ -171,8 +185,6 @@ CursorCloseScreen (int index, ScreenPtr pScreen)
     deleteCursorHideCountsForScreen(pScreen);
     ret = (*pScreen->CloseScreen) (index, pScreen);
     xfree (cs);
-    if (index == 0)
-	CursorScreenPrivateIndex = -1;
     return ret;
 }
 
@@ -241,7 +253,7 @@ ProcXFixesSelectCursorInput (ClientPtr client)
     int		rc;
 
     REQUEST_SIZE_MATCH (xXFixesSelectCursorInputReq);
-    rc = dixLookupWindow(&pWin, stuff->window, client, DixReadAccess);
+    rc = dixLookupWindow(&pWin, stuff->window, client, DixGetAttrAccess);
     if (rc != Success)
         return rc;
     if (stuff->eventMask & ~CursorAllEvents)
@@ -346,15 +358,17 @@ ProcXFixesGetCursorImage (ClientPtr client)
     xXFixesGetCursorImageReply	*rep;
     CursorPtr			pCursor;
     CARD32			*image;
-    int				npixels;
-    int				width, height;
-    int				x, y;
+    int				npixels, width, height, rc, x, y;
 
     REQUEST_SIZE_MATCH(xXFixesGetCursorImageReq);
     pCursor = CursorCurrent;
     if (!pCursor)
 	return BadCursor;
-    GetSpritePosition (&x, &y);
+    rc = XaceHook(XACE_RESOURCE_ACCESS, client, pCursor->id, RT_CURSOR,
+		  pCursor, RT_NONE, NULL, DixReadAccess);
+    if (rc != Success)
+	return rc;
+    GetSpritePosition (PickPointer(client), &x, &y);
     width = pCursor->bits->width;
     height = pCursor->bits->height;
     npixels = width * height;
@@ -414,7 +428,7 @@ ProcXFixesSetCursorName (ClientPtr client)
     Atom atom;
 
     REQUEST_AT_LEAST_SIZE(xXFixesSetCursorNameReq);
-    VERIFY_CURSOR(pCursor, stuff->cursor, client, DixWriteAccess);
+    VERIFY_CURSOR(pCursor, stuff->cursor, client, DixSetAttrAccess);
     tchar = (char *) &stuff[1];
     atom = MakeAtom (tchar, stuff->nbytes, TRUE);
     if (atom == BAD_RESOURCE)
@@ -447,7 +461,7 @@ ProcXFixesGetCursorName (ClientPtr client)
     int len;
 
     REQUEST_SIZE_MATCH(xXFixesGetCursorNameReq);
-    VERIFY_CURSOR(pCursor, stuff->cursor, client, DixReadAccess);
+    VERIFY_CURSOR(pCursor, stuff->cursor, client, DixGetAttrAccess);
     if (pCursor->name)
 	str = NameForAtom (pCursor->name);
     else
@@ -496,13 +510,17 @@ ProcXFixesGetCursorImageAndName (ClientPtr client)
     char			*name;
     int				nbytes, nbytesRound;
     int				width, height;
-    int				x, y;
+    int				rc, x, y;
 
     REQUEST_SIZE_MATCH(xXFixesGetCursorImageAndNameReq);
     pCursor = CursorCurrent;
     if (!pCursor)
 	return BadCursor;
-    GetSpritePosition (&x, &y);
+    rc = XaceHook(XACE_RESOURCE_ACCESS, client, pCursor->id, RT_CURSOR,
+		  pCursor, RT_NONE, NULL, DixReadAccess|DixGetAttrAccess);
+    if (rc != Success)
+	return rc;
+    GetSpritePosition (PickPointer(client), &x, &y);
     width = pCursor->bits->width;
     height = pCursor->bits->height;
     npixels = width * height;
@@ -678,8 +696,10 @@ ProcXFixesChangeCursor (ClientPtr client)
     REQUEST(xXFixesChangeCursorReq);
 
     REQUEST_SIZE_MATCH(xXFixesChangeCursorReq);
-    VERIFY_CURSOR (pSource, stuff->source, client, DixReadAccess);
-    VERIFY_CURSOR (pDestination, stuff->destination, client, DixWriteAccess);
+    VERIFY_CURSOR (pSource, stuff->source, client,
+		   DixReadAccess|DixGetAttrAccess);
+    VERIFY_CURSOR (pDestination, stuff->destination, client,
+		   DixWriteAccess|DixSetAttrAccess);
 
     ReplaceCursor (pSource, TestForCursor, (pointer) pDestination);
     return (client->noClientException);
@@ -701,7 +721,8 @@ SProcXFixesChangeCursor (ClientPtr client)
 static Bool
 TestForCursorName (CursorPtr pCursor, pointer closure)
 {
-    return (pCursor->name == (Atom) closure);
+    Atom *pName = closure;
+    return (pCursor->name == *pName);
 }
 
 int
@@ -713,11 +734,12 @@ ProcXFixesChangeCursorByName (ClientPtr client)
     REQUEST(xXFixesChangeCursorByNameReq);
 
     REQUEST_FIXED_SIZE(xXFixesChangeCursorByNameReq, stuff->nbytes);
-    VERIFY_CURSOR(pSource, stuff->source, client, DixReadAccess);
+    VERIFY_CURSOR(pSource, stuff->source, client,
+		  DixReadAccess|DixGetAttrAccess);
     tchar = (char *) &stuff[1];
     name = MakeAtom (tchar, stuff->nbytes, FALSE);
     if (name)
-	ReplaceCursor (pSource, TestForCursorName, (pointer) name);
+	ReplaceCursor (pSource, TestForCursorName, &name);
     return (client->noClientException);
 }
 
@@ -841,10 +863,11 @@ ProcXFixesHideCursor (ClientPtr client)
 
     REQUEST_SIZE_MATCH (xXFixesHideCursorReq);
 
-    pWin = (WindowPtr) LookupIDByType (stuff->window, RT_WINDOW);
-    if (!pWin) {
+    ret = dixLookupResourceByType((pointer *)&pWin, stuff->window, RT_WINDOW,
+			    client, DixGetAttrAccess);
+    if (ret != Success) {
 	client->errorValue = stuff->window;
-	return BadWindow;
+	return (ret == BadValue) ? BadWindow : ret;
     }
 
     /* 
@@ -862,10 +885,15 @@ ProcXFixesHideCursor (ClientPtr client)
      * This is the first time this client has hid the cursor 
      * for this screen.
      */
+    ret = XaceHook(XACE_SCREEN_ACCESS, client, pWin->drawable.pScreen,
+		   DixHideAccess);
+    if (ret != Success)
+	return ret;
+
     ret = createCursorHideCount(client, pWin->drawable.pScreen);
 
     if (ret == Success) {
-        (void) CursorDisplayCursor(pWin->drawable.pScreen, CursorCurrent);
+        (void) CursorDisplayCursor(PickPointer(client), pWin->drawable.pScreen, CursorCurrent);
     }
 
     return ret;
@@ -888,14 +916,16 @@ ProcXFixesShowCursor (ClientPtr client)
 {
     WindowPtr pWin;
     CursorHideCountPtr pChc;
+    int rc;
     REQUEST(xXFixesShowCursorReq);
 
     REQUEST_SIZE_MATCH (xXFixesShowCursorReq);
 
-    pWin = (WindowPtr) LookupIDByType (stuff->window, RT_WINDOW);
-    if (!pWin) {
+    rc = dixLookupResourceByType((pointer *)&pWin, stuff->window, RT_WINDOW,
+			   client, DixGetAttrAccess);
+    if (rc != Success) {
 	client->errorValue = stuff->window;
-	return BadWindow;
+	return (rc == BadValue) ? BadWindow : rc;
     }
 
     /* 
@@ -906,6 +936,11 @@ ProcXFixesShowCursor (ClientPtr client)
     if (pChc == NULL) {
 	return BadMatch;
     }
+
+    rc = XaceHook(XACE_SCREEN_ACCESS, client, pWin->drawable.pScreen,
+		  DixShowAccess);
+    if (rc != Success)
+	return rc;
 
     pChc->hideCount--;
     if (pChc->hideCount <= 0) {
@@ -952,7 +987,7 @@ CursorFreeHideCount (pointer data, XID id)
     ScreenPtr pScreen = pChc->pScreen;
 
     deleteCursorHideCount(pChc, pChc->pScreen);
-    (void) CursorDisplayCursor(pScreen, CursorCurrent);
+    (void) CursorDisplayCursor(inputInfo.pointer, pScreen, CursorCurrent);
 
     return 1;
 }
@@ -980,6 +1015,7 @@ createInvisibleCursor (void)
     CursorPtr pCursor;
     static unsigned int *psrcbits, *pmaskbits;
     CursorMetricRec cm;
+    int rc;
 
     psrcbits = (unsigned int *) xalloc(4);
     pmaskbits = (unsigned int *) xalloc(4);
@@ -994,12 +1030,13 @@ createInvisibleCursor (void)
     cm.xhot = 0;
     cm.yhot = 0;
 
-    pCursor = AllocCursor(
+    rc = AllocARGBCursor(
 	        (unsigned char *)psrcbits,
 		(unsigned char *)pmaskbits,
-		&cm,
+		NULL, &cm,
 		0, 0, 0,
-		0, 0, 0);
+		0, 0, 0,
+		&pCursor, serverClient, (XID)0);
 
     return pCursor;
 }
@@ -1008,14 +1045,10 @@ Bool
 XFixesCursorInit (void)
 {
     int	i;
+
+    if (party_like_its_1989)
+	CursorVisible = TRUE;
     
-    if (CursorGeneration != serverGeneration)
-    {
-	CursorScreenPrivateIndex = AllocateScreenPrivateIndex ();
-	if (CursorScreenPrivateIndex < 0)
-	    return FALSE;
-	CursorGeneration = serverGeneration;
-    }
     for (i = 0; i < screenInfo.numScreens; i++)
     {
 	ScreenPtr	pScreen = screenInfo.screens[i];

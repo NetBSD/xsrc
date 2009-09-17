@@ -47,12 +47,6 @@ int realRepeat;
     realRepeat= ctrl->autoRepeat;
     if ((dev->kbdfeed)&&(XkbDDXUsesSoftRepeat(dev)))
 	ctrl->autoRepeat= 0;
-#ifdef DEBUG
-if (xkbDebugFlags&0x4) {
-    ErrorF("XkbDDXKeybdCtrlProc: setting repeat to %d (real repeat is %d)\n",
-					ctrl->autoRepeat,realRepeat);
-}
-#endif
     if (dev->key && dev->key->xkbInfo && dev->key->xkbInfo->kbdProc)
 	(*dev->key->xkbInfo->kbdProc)(dev,ctrl);
     ctrl->autoRepeat= realRepeat;
@@ -63,27 +57,7 @@ if (xkbDebugFlags&0x4) {
 int
 XkbDDXUsesSoftRepeat(DeviceIntPtr pXDev)
 {
-#ifndef XKB_ALWAYS_USES_SOFT_REPEAT
-    if (pXDev && pXDev->kbdfeed ) {
-	if (pXDev->kbdfeed->ctrl.autoRepeat) {
-	    if (pXDev->key && pXDev->key->xkbInfo) {
-		XkbDescPtr	xkb;
-		xkb= pXDev->key->xkbInfo->desc;
-		if ((xkb->ctrls->repeat_delay == 660) &&
-		    (xkb->ctrls->repeat_interval == 40) &&
-		    ((xkb->ctrls->enabled_ctrls&(XkbSlowKeysMask|
-						 XkbBounceKeysMask|
-						 XkbMouseKeysMask))==0)) {
-			return 0;
-		}
-		return ((xkb->ctrls->enabled_ctrls&XkbRepeatKeysMask)!=0);
-	    }
-	}
-    }
-    return 0;
-#else
     return 1;
-#endif
 }
 
 void
@@ -93,23 +67,6 @@ unsigned	changed, i;
 unsigned 	char *rep_old, *rep_new, *rep_fb;
 
     changed= new->enabled_ctrls^old->enabled_ctrls;
-#ifdef NOTDEF
-    if (changed&XkbRepeatKeysMask) {
-	if (dev->kbdfeed) {
-	    int realRepeat;
-
-	    if (new->enabled_ctrls&XkbRepeatKeysMask)
-		 dev->kbdfeed->ctrl.autoRepeat= realRepeat= 1;
-	    else dev->kbdfeed->ctrl.autoRepeat= realRepeat= 0;
-
-	    if (XkbDDXUsesSoftRepeat(dev))
-		dev->kbdfeed->ctrl.autoRepeat= FALSE;
-	    if (dev->kbdfeed->CtrlProc)
-		(*dev->kbdfeed->CtrlProc)(dev,&dev->kbdfeed->ctrl);
-	    dev->kbdfeed->ctrl.autoRepeat= realRepeat;
-	}
-    }
-#endif
     for (rep_old = old->per_key_repeat,
          rep_new = new->per_key_repeat,
 	 rep_fb  = dev->kbdfeed->ctrl.autoRepeats,

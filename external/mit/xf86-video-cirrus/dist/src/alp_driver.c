@@ -36,8 +36,10 @@
 /* This driver needs to be modified to not use vgaHW for multihead operation */
 #include "vgaHW.h"
 
+#if GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) < 6
 #include "xf86RAC.h"
 #include "xf86Resources.h"
+#endif
 
 /* All drivers initialising the SW cursor need this */
 #include "mipointer.h"
@@ -56,8 +58,13 @@
 /* Framebuffer memory manager */
 #include "xf86fbman.h"
 
+#if HAVE_XF4BPP
 #include "xf4bpp.h"
+#endif
+#if HAVE_XF1BPP
 #include "xf1bpp.h"
+#endif
+
 #include "fb.h"
 
 
@@ -147,86 +154,6 @@ static int gd5446_MaxClocks[] = { 135100, 135100,  85500,  85500,      0 };
 static int gd5480_MaxClocks[] = { 135100, 200000, 200000, 135100, 135100 };
 static int gd7548_MaxClocks[] = {  80100,  80100,  80100,  80100,  80100 };
 
-/*
- * List of symbols from other modules that this module references.  This
- * list is used to tell the loader that it is OK for symbols here to be
- * unresolved providing that it hasn't been told that they haven't been
- * told that they are essential via a call to xf86LoaderReqSymbols() or
- * xf86LoaderReqSymLists().  The purpose is this is to avoid warnings about
- * unresolved symbols that are not required.
- */
-
-static const char *vgahwSymbols[] = {
-	"vgaHWFreeHWRec",
-	"vgaHWGetHWRec",
-	"vgaHWGetIOBase",
-	"vgaHWGetIndex",
-	"vgaHWHandleColormaps",
-	"vgaHWInit",
-	"vgaHWLock",
-	"vgaHWMapMem",
-	"vgaHWProtect",
-	"vgaHWRestore",
-	"vgaHWSave",
-	"vgaHWSaveScreen",
-	"vgaHWSetMmioFuncs",
-	"vgaHWSetStdFuncs",
-	"vgaHWUnlock",
-	NULL
-};
-
-#ifdef XFree86LOADER
-static const char *miscfbSymbols[] = {
-    "xf1bppScreenInit",
-    "xf4bppScreenInit",
-    NULL
-};
-#endif
-
-static const char *fbSymbols[] = {
-    "fbScreenInit",
-    "fbPictureInit",
-    NULL
-};
-
-static const char *xaaSymbols[] = {
-	"XAACreateInfoRec",
-	"XAADestroyInfoRec",
-	"XAAInit",
-	NULL
-};
-
-static const char *ramdacSymbols[] = {
-	"xf86CreateCursorInfoRec",
-	"xf86DestroyCursorInfoRec",
-	"xf86InitCursor",
-	NULL
-};
-
-static const char *int10Symbols[] = {
-    "xf86FreeInt10",
-    "xf86InitInt10",
-    NULL
-};
-
-static const char *shadowSymbols[] = {
-    "ShadowFBInit",
-    NULL
-};
-
-static const char *ddcSymbols[] = {
-	"xf86PrintEDID",
-	"xf86DoEDID_DDC2",
-	"xf86SetDDCproperties",
-	NULL
-};
-
-static const char *i2cSymbols[] = {
-	"xf86CreateI2CBusRec",
-	"xf86I2CBusInit",
-	NULL
-};
-
 #ifdef XFree86LOADER
 
 #define ALP_MAJOR_VERSION 1
@@ -265,9 +192,6 @@ alpSetup(pointer module, pointer opts, int *errmaj, int *errmin)
 	static Bool setupDone = FALSE;
 	if (!setupDone) {
 		setupDone = TRUE;
-		LoaderRefSymLists(vgahwSymbols, fbSymbols, xaaSymbols,
-				  miscfbSymbols, ramdacSymbols,int10Symbols,
-				  ddcSymbols, i2cSymbols, shadowSymbols, NULL);
 	}
 	return (pointer)1;
 }
@@ -346,7 +270,8 @@ AlpCountRam(ScrnInfoPtr pScrn)
     
     /* Map the Alp memory and MMIO areas */
     pCir->FbMapSize = 1024*1024; /* XX temp */
-    pCir->IoMapSize = 0x4000;	/* 16K for moment */
+    if (!pCir->IoMapSize)
+    	pCir->IoMapSize = 0x4000;	/* 16K for moment */
     if (!CirMapMem(pCir, pScrn->scrnIndex))
 	return 0;
 
@@ -522,6 +447,7 @@ AlpPreInit(ScrnInfoPtr pScrn, int flags)
 	vgaHWPtr hwp;
 	MessageType from, from1;
 	int i;
+	int depth_flags;
 	ClockRangePtr clockRanges;
 	char *s;
  	xf86Int10InfoPtr pInt = NULL;
@@ -541,8 +467,6 @@ AlpPreInit(ScrnInfoPtr pScrn, int flags)
 
 	if (!xf86LoadSubModule(pScrn, "vgahw"))
 		return FALSE;
-
-	xf86LoaderReqSymLists(vgahwSymbols, NULL);
 
 	/*
 	 * Allocate a vgaHWRec
@@ -570,12 +494,11 @@ AlpPreInit(ScrnInfoPtr pScrn, int flags)
 	pCir->Chipset = pCir->pEnt->chipset;
 	/* Find the PCI info for this screen */
 	pCir->PciInfo = xf86GetPciInfoForEntity(pCir->pEnt->index);
-	pCir->PciTag = pciTag(pCir->PciInfo->bus,
-									pCir->PciInfo->device,
-									pCir->PciInfo->func);
+	pCir->PciTag = pciTag(PCI_DEV_BUS(pCir->PciInfo),
+			      PCI_DEV_DEV(pCir->PciInfo),
+			      PCI_DEV_FUNC(pCir->PciInfo));
 
     if (xf86LoadSubModule(pScrn, "int10")) {
-	xf86LoaderReqSymLists(int10Symbols,NULL);
 	xf86DrvMsg(pScrn->scrnIndex,X_INFO,"initializing int10\n");
 	pInt = xf86InitInt10(pCir->pEnt->index);
 	xf86FreeInt10(pInt);
@@ -583,20 +506,26 @@ AlpPreInit(ScrnInfoPtr pScrn, int flags)
 	 * This is a hack: We restore the PCI base regs as some Colorgraphic
 	 * BIOSes tend to mess them up
 	 */
-	pciWriteLong(pCir->PciTag,0x10,pCir->PciInfo->memBase[0]);
-	pciWriteLong(pCir->PciTag,0x14,pCir->PciInfo->memBase[1]);
+
+	PCI_WRITE_LONG(pCir->PciInfo, PCI_REGION_BASE(pCir->PciInfo, 0, REGION_MEM), 0x10);
+	PCI_WRITE_LONG(pCir->PciInfo, PCI_REGION_BASE(pCir->PciInfo, 1, REGION_MEM), 0x14);
 	
     }
 
     /* Set pScrn->monitor */
 	pScrn->monitor = pScrn->confScreen->monitor;
 
+	/* 32bpp only works on 5480 and 7548 */
+	depth_flags = Support24bppFb;
+	if (pCir->Chipset == PCI_CHIP_GD5480 || pCir->Chipset ==PCI_CHIP_GD7548)
+	    depth_flags |= Support32bppFb |
+			   SupportConvert32to24 |
+			   PreferConvert32to24;
 	/*
 	 * The first thing we should figure out is the depth, bpp, etc.
 	 * We support both 24bpp and 32bpp layouts, so indicate that.
 	 */
-	if (!xf86SetDepthBpp(pScrn, 0, 0, 0, Support24bppFb | Support32bppFb |
-				SupportConvert32to24 | PreferConvert32to24)) {
+	if (!xf86SetDepthBpp(pScrn, 0, 0, 24, depth_flags)) {
 		return FALSE;
 	} else {
 		/* Check that the returned depth is one we support */
@@ -684,7 +613,7 @@ AlpPreInit(ScrnInfoPtr pScrn, int flags)
 		xf86DrvMsg(pScrn->scrnIndex, X_CONFIG, "ChipRev override: %d\n",
 			pCir->ChipRev);
 	} else {
-		pCir->ChipRev = pCir->PciInfo->chipRev;
+ 	        pCir->ChipRev = PCI_DEV_REVISION(pCir->PciInfo);
 	}
 
 	/* Find the frame buffer base address */
@@ -698,10 +627,10 @@ AlpPreInit(ScrnInfoPtr pScrn, int flags)
 		pCir->FbAddress = pCir->pEnt->device->MemBase;
 		from = X_CONFIG;
 	} else {
-		if (pCir->PciInfo->memBase[0] != 0) {
+		if (PCI_REGION_BASE(pCir->PciInfo, 0, REGION_MEM) != 0) {
 			/* 5446B and 5480 use mask of 0xfe000000.
 			   5446A uses 0xff000000. */
-			pCir->FbAddress = pCir->PciInfo->memBase[0] & 0xff000000;
+			pCir->FbAddress = PCI_REGION_BASE(pCir->PciInfo, 0, REGION_MEM) & 0xff000000;
 			from = X_PROBED;
 		} else {
 			xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
@@ -724,8 +653,9 @@ AlpPreInit(ScrnInfoPtr pScrn, int flags)
 	    pCir->IOAddress = pCir->pEnt->device->IOBase;
 		from = X_CONFIG;
 	} else {
-		if (pCir->PciInfo->memBase[1] != 0) {
-			pCir->IOAddress = pCir->PciInfo->memBase[1] & 0xfffff000;
+		if (PCI_REGION_BASE(pCir->PciInfo, 1, REGION_MEM) != 0) {
+			pCir->IOAddress = PCI_REGION_BASE(pCir->PciInfo, 1, REGION_MEM) & 0xfffff000;
+			pCir->IoMapSize = PCI_REGION_SIZE(pCir->PciInfo, 1);
 			from = X_PROBED;
 		} else {
 			xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
@@ -767,7 +697,8 @@ AlpPreInit(ScrnInfoPtr pScrn, int flags)
  			(unsigned long)pCir->IOAddress);
  	} else 
  	    xf86DrvMsg(pScrn->scrnIndex, from1, "Not Using MMIO\n");
-     
+
+#ifndef XSERVER_LIBPCIACCESS
      /*
       * XXX Check if this is correct
       */
@@ -784,18 +715,17 @@ AlpPreInit(ScrnInfoPtr pScrn, int flags)
 		    "xf86RegisterResources() found resource conflicts\n");
 	 return FALSE;
      }
+#endif
 
      if (!xf86LoadSubModule(pScrn, "i2c")) {
 	 AlpFreeRec(pScrn);
  	return FALSE;
      }
-     xf86LoaderReqSymLists(i2cSymbols,NULL);
  
      if (!xf86LoadSubModule(pScrn, "ddc")) {
  	AlpFreeRec(pScrn);
  	return FALSE;
      }
-     xf86LoaderReqSymLists(ddcSymbols, NULL);
  
      if(!AlpI2CInit(pScrn)) {
          xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
@@ -1082,20 +1012,22 @@ AlpPreInit(ScrnInfoPtr pScrn, int flags)
 
 	/* Load bpp-specific modules */
 	switch (pScrn->bitsPerPixel) {
+#ifdef HAVE_XF1BPP
 	case 1:  
 	    if (xf86LoadSubModule(pScrn, "xf1bpp") == NULL) {
 	        AlpFreeRec(pScrn);
 		return FALSE;
 	    } 
-	    xf86LoaderReqSymbols("xf1bppScreenInit",NULL);
 	    break;
+#endif
+#ifdef HAVE_XF4BPP
 	case 4:  
 	    if (xf86LoadSubModule(pScrn, "xf4bpp") == NULL) {
 	        AlpFreeRec(pScrn);
 		return FALSE;
 	    } 
-	    xf86LoaderReqSymbols("xf4bppScreenInit",NULL);	    
 	    break;
+#endif
 	case 8:
 	case 16:
 	case 24:
@@ -1104,7 +1036,6 @@ AlpPreInit(ScrnInfoPtr pScrn, int flags)
 	        AlpFreeRec(pScrn);
 		return FALSE;
 	    } 
-	    xf86LoaderReqSymLists(fbSymbols, NULL);
 	    break;
 	}
 
@@ -1114,7 +1045,6 @@ AlpPreInit(ScrnInfoPtr pScrn, int flags)
 			AlpFreeRec(pScrn);
 			return FALSE;
 		}
-		xf86LoaderReqSymLists(xaaSymbols, NULL);
 	}
 
 	/* Load ramdac if needed */
@@ -1123,7 +1053,6 @@ AlpPreInit(ScrnInfoPtr pScrn, int flags)
 			AlpFreeRec(pScrn);
 			return FALSE;
 		}
-		xf86LoaderReqSymLists(ramdacSymbols, NULL);
 	}
 
 	if (pCir->shadowFB) {
@@ -1131,7 +1060,6 @@ AlpPreInit(ScrnInfoPtr pScrn, int flags)
 		AlpFreeRec(pScrn);
 		return FALSE;
 	    }
-	    xf86LoaderReqSymLists(shadowSymbols, NULL);
 	}
 
 	return TRUE;
@@ -1575,18 +1503,22 @@ AlpScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 	 */
 
 	switch (pScrn->bitsPerPixel) {
+#ifdef HAVE_XF1BPP
 	case 1:
 	    ret = xf1bppScreenInit(pScreen, FbBase,
 				   width, height,
 				   pScrn->xDpi, pScrn->yDpi,
 				   displayWidth);
 	    break;
+#endif
+#ifdef HAVE_XF4BPP
 	case 4:
 	    ret = xf4bppScreenInit(pScreen, FbBase,
 				   width, height,
 				   pScrn->xDpi, pScrn->yDpi,
 				   displayWidth);
 	    break;
+#endif
 	case 8:
 	case 16:
 	case 24:

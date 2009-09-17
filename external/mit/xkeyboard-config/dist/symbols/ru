@@ -1,4 +1,4 @@
-// $XKeyboardConfig: xkeyboard-config/symbols/ru,v 1.23 2008-05-27 22:51:58 svu Exp $
+// $XKeyboardConfig$
 
 // based on
 // russian standard keyboard
@@ -187,7 +187,7 @@ xkb_symbols "phonetic" {
 
 partial alphanumeric_keys
 xkb_symbols "tt" {
-    include "ru(common)"
+    include "ru(winkeys)"
     name[Group1]= "Russia - Tatar";
 
     key.type[group1]="FOUR_LEVEL";
@@ -222,7 +222,7 @@ xkb_symbols "os_legacy" {
 
 partial alphanumeric_keys 
 xkb_symbols "os_winkeys" {
-    include "ru(common)"
+    include "ru(winkeys)"
 
     name[Group1]= "Russia - Ossetian, Winkeys";
 
@@ -233,7 +233,7 @@ xkb_symbols "os_winkeys" {
 
 partial alphanumeric_keys
 xkb_symbols "cv" {
-    include "ru(common)"
+    include "ru(winkeys)"
 
     name[Group1]= "Russia - Chuvash";
 
@@ -253,7 +253,7 @@ xkb_symbols "cv" {
 
 partial alphanumeric_keys
 xkb_symbols "udm" {
-    include "ru(common)"
+    include "ru(winkeys)"
 
     name[Group1]= "Russia - Udmurt";
 
@@ -306,7 +306,7 @@ xkb_symbols "cv_latin" {
 partial alphanumeric_keys 
 xkb_symbols "kom" {
 
-    include "ru(common)"
+    include "ru(winkeys)"
 
     name[Group1]= "Russia - Komi";
 
@@ -323,3 +323,45 @@ xkb_symbols "kom" {
     include "level3(ralt_switch)"
 };
 
+// Yakut language layout
+// 2008/04/23 Yakov Aleksandrov <bertjickty@yandex.ru>
+// 2008/04/23 Anatoliy Zhozhikov <jav@sitc.ru>
+// 2008/04/23 Aleksandr Varlamov
+partial alphanumeric_keys
+xkb_symbols "sah" {
+
+    include "ru(winkeys)"
+
+    name[Group1]= "Russia - Yakut";
+
+    key.type[group1]="FOUR_LEVEL_ALPHABETIC";
+
+    key <TLDE> { [	Cyrillic_io,		Cyrillic_IO,
+    			U04EB,			U04EA			] };
+    key <AD01> { [	Cyrillic_shorti,	Cyrillic_SHORTI,
+			U048B,			U048A			] };
+    key <AD03> { [	Cyrillic_u,		Cyrillic_U,
+			Cyrillic_u_straight,	Cyrillic_U_straight	] };
+    key <AD04> { [	Cyrillic_ka,		Cyrillic_KA,
+    			U04C4,			U04C3			] };
+    key <AD06> { [	Cyrillic_en,		Cyrillic_EN,
+			U04A5,			U04A4			] };
+    key <AD07> { [	Cyrillic_ghe,		Cyrillic_GHE,
+			U0495,			U0494			] };
+    key <AD10> { [	Cyrillic_ze,		Cyrillic_ZE,
+    			U04E1,			U04E0			] };
+    key <AD11> { [	Cyrillic_ha,		Cyrillic_HA,
+			Cyrillic_shha,		Cyrillic_SHHA		] };
+    key <AC07> { [	Cyrillic_o,		Cyrillic_O,
+			Cyrillic_o_bar,		Cyrillic_O_bar		] };
+    key <AC10> { [	Cyrillic_zhe,		Cyrillic_ZHE,
+    			U0461,			U0460			] };
+    key <AB02> { [	Cyrillic_che,		Cyrillic_CHE,
+    			Cyrillic_u_macron,	Cyrillic_U_macron	] };
+    key <AB04> { [	Cyrillic_em,		Cyrillic_EM,
+    			U04C8,			U04C7			] };
+    key <AB05> { [	Cyrillic_i,		Cyrillic_I,
+			Cyrillic_i_macron,	Cyrillic_I_macron	] };
+
+    include "level3(ralt_switch)"
+};

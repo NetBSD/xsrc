@@ -33,10 +33,6 @@ SOFTWARE.
 
 typedef struct _DIXFontProp *DIXFontPropPtr;
 
-extern FPEFunctions *fpe_functions;
-
-extern int FontToXError(int /*err*/);
-
 extern Bool SetDefaultFont(char * /*defaultfontname*/);
 
 extern void QueueFontWakeup(FontPathElementPtr /*fpe*/);
@@ -105,20 +101,16 @@ extern int SetFontPath(ClientPtr /*client*/,
 
 extern int SetDefaultFontPath(char * /*path*/);
 
-extern unsigned char *GetFontPath(int * /*count*/,
-				  int * /*length*/);
-
-extern int LoadGlyphs(ClientPtr /*client*/,
-		      FontPtr /*pfont*/,
-		      unsigned /*nchars*/,
-		      int /*item_size*/,
-		      unsigned char * /*data*/);
+extern int GetFontPath(ClientPtr client,
+		       int *count,
+		       int *length,
+		       unsigned char **result);
 
 extern void DeleteClientFontStuff(ClientPtr /*client*/);
 
 /* Quartz support on Mac OS X pulls in the QuickDraw
    framework whose InitFonts function conflicts here. */
-#ifdef __DARWIN__
+#ifdef __APPLE__
 #define InitFonts Darwin_X_InitFonts
 #endif
 extern void InitFonts(void);
@@ -149,5 +141,48 @@ extern Bool ParseGlyphCachingMode(char * /*str*/);
 extern void InitGlyphCaching(void);
 
 extern void SetGlyphCachingMode(int /*newmode*/);
+
+/*
+ * libXfont/src/builtins/builtin.h
+ */
+extern void BuiltinRegisterFpeFunctions(void);
+
+/*
+ * libXfont stubs.
+ */
+extern int client_auth_generation(ClientPtr client);
+
+extern void DeleteFontClientID(Font id);
+
+extern FontResolutionPtr GetClientResolutions(int *num);
+
+extern int GetDefaultPointSize(void);
+
+extern Font GetNewFontClientID(void);
+
+extern int init_fs_handlers(FontPathElementPtr fpe,
+				      BlockHandlerProcPtr block_handler);
+
+extern int RegisterFPEFunctions(NameCheckFunc name_func,
+					  InitFpeFunc init_func,
+					  FreeFpeFunc free_func,
+					  ResetFpeFunc reset_func,
+					  OpenFontFunc open_func,
+					  CloseFontFunc close_func,
+					  ListFontsFunc list_func,
+					  StartLfwiFunc start_lfwi_func,
+					  NextLfwiFunc next_lfwi_func,
+					  WakeupFpeFunc wakeup_func,
+					  ClientDiedFunc client_died,
+					  LoadGlyphsFunc load_glyphs,
+					  StartLaFunc start_list_alias_func,
+					  NextLaFunc next_list_alias_func,
+					  SetPathFunc set_path_func);
+
+extern void remove_fs_handlers(FontPathElementPtr fpe,
+					 BlockHandlerProcPtr blockHandler,
+					 Bool all);
+
+extern int StoreFontClientFont(FontPtr pfont, Font id);
 
 #endif				/* DIXFONT_H */

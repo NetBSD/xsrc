@@ -9,7 +9,7 @@
 ! $pcmodels = pc101 pc102 pc104 pc105
 
 // Microsoft models (using MS geometry)
-! $msmodels = microsoft microsoftpro microsoftprousb microsoftprose
+! $msmodels = microsoft microsoft7000 microsoftpro microsoftprousb microsoftprose
 
 // PC geometries - they have special geometry but symbols are mostly pc105
 ! $pcgeometries = abnt2 latitude jp106 kr106
@@ -42,14 +42,14 @@
               gyration honeywell_euroboard \
               hp2501 hp2505 hp5xx hp500fa hp5181 hp5185 \
               hpi6 hpxe3gc hpxe3gf hpxe4xxx hpxt1000 hpzt11xx \
-              ipaq inspiron intel latitude \
+              ibm_spacesaver ipaq inspiron intel latitude \
               logiaccess logicda logicink \
               logiex110 logiclx300 \
               logiinkse logiinkseusb logiitc logiik \
               logitech_base itouch logiultrax \
               logitech_g15 \
 	      logidinovo logidinovoedge \
-              microsoftinet microsoftpro microsoftprousb microsoftprooem microsoftprose \
+              microsoft7000 microsoftinet microsoftpro microsoftprousb microsoftprooem microsoftprose \
               microsoftoffice microsoftmult \
               mx1998 mx2500 mx2750 \
               oretec \
@@ -59,7 +59,7 @@
               samsung4500 samsung4510 \
               scorpius silvercrest \
               sk1300 sk2500 sk6200 sk7100 sp_inet \
-              sven symplon \
+              sven sven303 symplon \
               toshiba_s3000 trust trustda \
               yahoo
 

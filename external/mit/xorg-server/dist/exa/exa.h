@@ -39,7 +39,7 @@
 #include "fb.h"
 
 #define EXA_VERSION_MAJOR   2
-#define EXA_VERSION_MINOR   2
+#define EXA_VERSION_MINOR   4
 #define EXA_VERSION_RELEASE 0
 
 typedef struct _ExaOffscreenArea ExaOffscreenArea;
@@ -56,7 +56,7 @@ struct _ExaOffscreenArea {
     int                 base_offset;	/* allocation base */
     int                 offset;         /* aligned offset */
     int                 size;           /* total allocation size */
-    int                 score;
+    unsigned            last_use;
     pointer             privData;
 
     ExaOffscreenSaveProc save;
@@ -64,6 +64,8 @@ struct _ExaOffscreenArea {
     ExaOffscreenState   state;
 
     ExaOffscreenArea    *next;
+
+    unsigned            eviction_cost;
 };
 
 /**
@@ -670,7 +672,52 @@ typedef struct _ExaDriver {
 	 * from.
 	 */
 	#define EXA_PREPARE_MASK	2
+	/**
+	 * EXA_PREPARE_AUX* are additional indices for other purposes, e.g.
+	 * separate alpha maps with Composite operations.
+	 */
+	#define EXA_PREPARE_AUX0	3
+	#define EXA_PREPARE_AUX1	4
+	#define EXA_PREPARE_AUX2	5
 	/** @} */
+
+    /**
+     * maxPitchPixels controls the pitch limitation for rendering from
+     * the card.
+     * The driver should never receive a request for rendering a pixmap
+     * that has a pitch (in pixels) beyond maxPitchPixels.
+     *
+     * Setting this field is optional -- if your hardware doesn't have
+     * a pitch limitation in pixels, don't set this. If neither this value
+     * nor maxPitchBytes is set, then maxPitchPixels is set to maxX.
+     * If set, it must not be smaller than maxX.
+     *
+     * @sa maxPitchBytes
+     */
+    int maxPitchPixels;
+
+    /**
+     * maxPitchBytes controls the pitch limitation for rendering from
+     * the card.
+     * The driver should never receive a request for rendering a pixmap
+     * that has a pitch (in bytes) beyond maxPitchBytes.
+     *
+     * Setting this field is optional -- if your hardware doesn't have
+     * a pitch limitation in bytes, don't set this.
+     * If set, it must not be smaller than maxX * 4.
+     * There's no default value for maxPitchBytes.
+     *
+     * @sa maxPitchPixels
+     */
+    int maxPitchBytes;
+
+    /* Hooks to allow driver to its own pixmap memory management */
+    void *(*CreatePixmap)(ScreenPtr pScreen, int size, int align);
+    void (*DestroyPixmap)(ScreenPtr pScreen, void *driverPriv);
+    Bool (*ModifyPixmapHeader)(PixmapPtr pPixmap, int width, int height,
+                              int depth, int bitsPerPixel, int devKind,
+                              pointer pPixData);
+
     /** @} */
 } ExaDriverRec, *ExaDriverPtr;
 
@@ -695,23 +742,52 @@ typedef struct _ExaDriver {
  * (right-to-left, bottom-to-top).
  */
 #define EXA_TWO_BITBLT_DIRECTIONS	(1 << 2)
+
+/**
+ * EXA_HANDLES_PIXMAPS indicates to EXA that the driver can handle
+ * all pixmap addressing and migration.
+ */
+#define EXA_HANDLES_PIXMAPS             (1 << 3)
+
+/**
+ * EXA_SUPPORTS_PREPARE_AUX indicates to EXA that the driver can handle the
+ * EXA_PREPARE_AUX* indices in the Prepare/FinishAccess hooks. If there are no
+ * such hooks, this flag has no effect.
+ */
+#define EXA_SUPPORTS_PREPARE_AUX        (1 << 4)
+
 /** @} */
 
+/* in exa.c */
 ExaDriverPtr
 exaDriverAlloc(void);
 
 Bool
-exaDriverInit(ScreenPtr                pScreen,
+exaDriverInit(ScreenPtr      pScreen,
               ExaDriverPtr   pScreenInfo);
 
 void
-exaDriverFini(ScreenPtr                pScreen);
+exaDriverFini(ScreenPtr      pScreen);
 
 void
 exaMarkSync(ScreenPtr pScreen);
 void
 exaWaitSync(ScreenPtr pScreen);
 
+unsigned long
+exaGetPixmapOffset(PixmapPtr pPix);
+
+unsigned long
+exaGetPixmapPitch(PixmapPtr pPix);
+
+unsigned long
+exaGetPixmapSize(PixmapPtr pPix);
+
+void *
+exaGetPixmapDriverPrivate(PixmapPtr p);
+
+
+/* in exa_offscreen.c */
 ExaOffscreenArea *
 exaOffscreenAlloc(ScreenPtr pScreen, int size, int align,
                   Bool locked,
@@ -724,23 +800,24 @@ exaOffscreenFree(ScreenPtr pScreen, ExaOffscreenArea *area);
 void
 ExaOffscreenMarkUsed (PixmapPtr pPixmap);
 
-unsigned long
-exaGetPixmapOffset(PixmapPtr pPix);
-
-unsigned long
-exaGetPixmapPitch(PixmapPtr pPix);
-
-unsigned long
-exaGetPixmapSize(PixmapPtr pPix);
-
 void
 exaEnableDisableFBAccess (int index, Bool enable);
 
+Bool
+exaDrawableIsOffscreen (DrawablePtr pDrawable);
+
+/* in exa_migration.c */
 void
 exaMoveInPixmap (PixmapPtr pPixmap);
 
 void
 exaMoveOutPixmap (PixmapPtr pPixmap);
+
+
+/* in exa_unaccel.c */
+CARD32
+exaGetPixmapFirstPixel (PixmapPtr pPixmap);
+
 
 /**
  * Returns TRUE if the given planemask covers all the significant bits in the

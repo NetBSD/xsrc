@@ -1,4 +1,3 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/s3virge/s3v_shadow.c,v 1.2 2000/03/06 22:59:30 dawes Exp $ */
 
 /*
 Copyright (C) 1994-2000 The XFree86 Project, Inc.  All Rights Reserved.
@@ -61,7 +60,6 @@ in this Software without prior written authorization from the XFree86 Project.
 
 #include "xf86.h"
 #include "xf86_OSproc.h"
-#include "xf86Resources.h"
 #include "xf86PciInfo.h"
 #include "xf86Pci.h"
 #include "shadowfb.h"

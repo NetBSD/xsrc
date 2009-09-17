@@ -40,65 +40,18 @@
 #include "gcstruct.h"
 #include "servermd.h"
 #include "picturestr.h"
+#include "xace.h"
+#include "registry.h"
 
-_X_EXPORT int	PictureScreenPrivateIndex = -1;
-int		PictureWindowPrivateIndex;
+static int PictureScreenPrivateKeyIndex;
+_X_EXPORT DevPrivateKey PictureScreenPrivateKey = &PictureScreenPrivateKeyIndex;
+static int PictureWindowPrivateKeyIndex;
+DevPrivateKey	PictureWindowPrivateKey = &PictureWindowPrivateKeyIndex;
 static int	PictureGeneration;
 RESTYPE		PictureType;
 RESTYPE		PictFormatType;
 RESTYPE		GlyphSetType;
 int		PictureCmapPolicy = PictureCmapPolicyDefault;
-
-/* Picture Private machinery */
-
-static int picturePrivateCount;
-
-void
-ResetPicturePrivateIndex (void)
-{
-    picturePrivateCount = 0;
-}
-
-int
-AllocatePicturePrivateIndex (void)
-{
-    return picturePrivateCount++;
-}
-
-Bool
-AllocatePicturePrivate (ScreenPtr pScreen, int index2, unsigned int amount)
-{
-    PictureScreenPtr	ps = GetPictureScreen(pScreen);
-    unsigned int	oldamount;
-
-    /* Round up sizes for proper alignment */
-    amount = ((amount + (sizeof(long) - 1)) / sizeof(long)) * sizeof(long);
-
-    if (index2 >= ps->PicturePrivateLen)
-    {
-	unsigned int *nsizes;
-
-	nsizes = (unsigned int *)xrealloc(ps->PicturePrivateSizes,
-					  (index2 + 1) * sizeof(unsigned int));
-	if (!nsizes)
-	    return FALSE;
-	while (ps->PicturePrivateLen <= index2)
-	{
-	    nsizes[ps->PicturePrivateLen++] = 0;
-	    ps->totalPictureSize += sizeof(DevUnion);
-	}
-	ps->PicturePrivateSizes = nsizes;
-    }
-    oldamount = ps->PicturePrivateSizes[index2];
-    if (amount > oldamount)
-    {
-	ps->PicturePrivateSizes[index2] = amount;
-	ps->totalPictureSize += (amount - oldamount);
-    }
-
-    return TRUE;
-}
-
 
 Bool
 PictureDestroyWindow (WindowPtr pWindow)
@@ -137,8 +90,6 @@ PictureCloseScreen (int index, ScreenPtr pScreen)
 	    (*ps->CloseIndexed) (pScreen, &ps->formats[n]);
     GlyphUninit (pScreen);
     SetPictureScreen(pScreen, 0);
-    if (ps->PicturePrivateSizes)
-	xfree (ps->PicturePrivateSizes);
     xfree (ps->formats);
     xfree (ps);
     return ret;
@@ -365,10 +316,9 @@ PictureCreateDefaultFormats (ScreenPtr pScreen, int *nformatp)
     }
     
 
-    pFormats = (PictFormatPtr) xalloc (nformats * sizeof (PictFormatRec));
+    pFormats = xcalloc (nformats, sizeof (PictFormatRec));
     if (!pFormats)
 	return 0;
-    memset (pFormats, '\0', nformats * sizeof (PictFormatRec));
     for (f = 0; f < nformats; f++)
     {
         pFormats[f].id = FakeClientID (0);
@@ -452,6 +402,29 @@ PictureFindVisual (ScreenPtr pScreen, VisualID visual)
 }
 
 Bool
+PictureInitIndexedFormat(ScreenPtr pScreen, PictFormatPtr format)
+{
+    PictureScreenPtr ps = GetPictureScreenIfSet(pScreen);
+
+    if (format->type != PictTypeIndexed || format->index.pColormap)
+	return TRUE;
+
+    if (format->index.vid == pScreen->rootVisual) {
+	format->index.pColormap =
+	    (ColormapPtr) LookupIDByType(pScreen->defColormap, RT_COLORMAP);
+    } else {
+	VisualPtr pVisual = PictureFindVisual(pScreen, format->index.vid);
+	if (CreateColormap(FakeClientID (0), pScreen, pVisual,
+		    &format->index.pColormap, AllocNone, 0)
+		!= Success)
+	    return FALSE;
+    }
+    if (!ps->InitIndexed(pScreen, format))
+	return FALSE;
+    return TRUE;
+}
+
+static Bool
 PictureInitIndexedFormats (ScreenPtr pScreen)
 {
     PictureScreenPtr    ps = GetPictureScreenIfSet(pScreen);
@@ -463,30 +436,8 @@ PictureInitIndexedFormats (ScreenPtr pScreen)
     format = ps->formats;
     nformat = ps->nformats;
     while (nformat--)
-    {
-	if (format->type == PictTypeIndexed && !format->index.pColormap)
-	{
-	    if (format->index.vid == pScreen->rootVisual)
-		format->index.pColormap = (ColormapPtr) LookupIDByType(pScreen->defColormap,
-								       RT_COLORMAP);
-	    else
-	    {
-                VisualPtr   pVisual;
-
-                pVisual = PictureFindVisual (pScreen, format->index.vid);
-		if (CreateColormap (FakeClientID (0), pScreen,
-				    pVisual,
-				    &format->index.pColormap, AllocNone,
-				    0) != Success)
-		{
-		    return FALSE;
-		}
-	    }
-	    if (!(*ps->InitIndexed) (pScreen, format))
-		return FALSE;
-	}
-	format++;
-    }
+	if (!PictureInitIndexedFormat(pScreen, format++))
+	    return FALSE;
     return TRUE;
 }
 
@@ -497,8 +448,6 @@ PictureFinishInit (void)
 
     for (s = 0; s < screenInfo.numScreens; s++)
     {
-	if (!GlyphFinishInit (screenInfo.screens[s]))
-	    return FALSE;
 	if (!PictureInitIndexedFormats (screenInfo.screens[s]))
 	    return FALSE;
 	(void) AnimCurInit (screenInfo.screens[s]);
@@ -637,20 +586,11 @@ PictureInit (ScreenPtr pScreen, PictFormatPtr formats, int nformats)
 	GlyphSetType = CreateNewResourceType (FreeGlyphSet);
 	if (!GlyphSetType)
 	    return FALSE;
-	PictureScreenPrivateIndex = AllocateScreenPrivateIndex();
-	if (PictureScreenPrivateIndex < 0)
-	    return FALSE;
-	PictureWindowPrivateIndex = AllocateWindowPrivateIndex();
 	PictureGeneration = serverGeneration;
-#ifdef XResExtension
 	RegisterResourceName (PictureType, "PICTURE");
 	RegisterResourceName (PictFormatType, "PICTFORMAT");
 	RegisterResourceName (GlyphSetType, "GLYPHSET");
-#endif
     }
-    if (!AllocateWindowPrivate (pScreen, PictureWindowPrivateIndex, 0))
-	return FALSE;
-    
     if (!formats)
     {
 	formats = PictureCreateDefaultFormats (pScreen, &nformats);
@@ -697,18 +637,7 @@ PictureInit (ScreenPtr pScreen, PictFormatPtr formats, int nformats)
 	return FALSE;
     }
     SetPictureScreen(pScreen, ps);
-    if (!GlyphInit (pScreen))
-    {
-	SetPictureScreen(pScreen, 0);
-	xfree (formats);
-	xfree (ps);
-	return FALSE;
-    }
 
-    ps->totalPictureSize = sizeof (PictureRec);
-    ps->PicturePrivateSizes = 0;
-    ps->PicturePrivateLen = 0;
-    
     ps->formats = formats;
     ps->fallback = formats;
     ps->nformats = nformats;
@@ -774,37 +703,6 @@ SetPictureToDefaults (PicturePtr    pPicture)
 }
 
 PicturePtr
-AllocatePicture (ScreenPtr  pScreen)
-{
-    PictureScreenPtr	ps = GetPictureScreen(pScreen);
-    PicturePtr		pPicture;
-    char		*ptr;
-    DevUnion		*ppriv;
-    unsigned int    	*sizes;
-    unsigned int    	size;
-    int			i;
-
-    pPicture = (PicturePtr) xalloc (ps->totalPictureSize);
-    if (!pPicture)
-	return 0;
-    ppriv = (DevUnion *)(pPicture + 1);
-    pPicture->devPrivates = ppriv;
-    sizes = ps->PicturePrivateSizes;
-    ptr = (char *)(ppriv + ps->PicturePrivateLen);
-    for (i = ps->PicturePrivateLen; --i >= 0; ppriv++, sizes++)
-    {
-	if ( (size = *sizes) )
-	{
-	    ppriv->ptr = (pointer)ptr;
-	    ptr += size;
-	}
-	else
-	    ppriv->ptr = (pointer)NULL;
-    }
-    return pPicture;
-}
-
-PicturePtr
 CreatePicture (Picture		pid,
 	       DrawablePtr	pDrawable,
 	       PictFormatPtr	pFormat,
@@ -816,7 +714,7 @@ CreatePicture (Picture		pid,
     PicturePtr		pPicture;
     PictureScreenPtr	ps = GetPictureScreen(pDrawable->pScreen);
 
-    pPicture = AllocatePicture (pDrawable->pScreen);
+    pPicture = (PicturePtr)xalloc(sizeof(PictureRec));
     if (!pPicture)
     {
 	*error = BadAlloc;
@@ -827,6 +725,14 @@ CreatePicture (Picture		pid,
     pPicture->pDrawable = pDrawable;
     pPicture->pFormat = pFormat;
     pPicture->format = pFormat->format | (pDrawable->bitsPerPixel << 24);
+    pPicture->devPrivates = NULL;
+
+    /* security creation/labeling check */
+    *error = XaceHook(XACE_RESOURCE_ACCESS, client, pid, PictureType, pPicture,
+		      RT_PIXMAP, pDrawable, DixCreateAccess|DixSetAttrAccess);
+    if (*error != Success)
+	goto out;
+
     if (pDrawable->type == DRAWABLE_PIXMAP)
     {
 	++((PixmapPtr)pDrawable)->refcnt;
@@ -846,6 +752,7 @@ CreatePicture (Picture		pid,
 	*error = Success;
     if (*error == Success)
 	*error = (*ps->CreatePicture) (pPicture);
+out:
     if (*error != Success)
     {
 	FreePicture (pPicture, (XID) 0);
@@ -1163,14 +1070,13 @@ ChangePicture (PicturePtr	pPicture,
 			pAlpha = 0;
 		    else
 		    {
-			pAlpha = (PicturePtr) SecurityLookupIDByType(client,
-								     pid, 
-								     PictureType, 
-								     DixWriteAccess|DixReadAccess);
-			if (!pAlpha)
+			error = dixLookupResourceByType((pointer *)&pAlpha, pid,
+						  PictureType, client,
+						  DixReadAccess);
+			if (error != Success)
 			{
 			    client->errorValue = pid;
-			    error = BadPixmap;
+			    error = (error == BadValue) ? BadPixmap : error;
 			    break;
 			}
 			if (pAlpha->pDrawable == NULL ||
@@ -1225,14 +1131,13 @@ ChangePicture (PicturePtr	pPicture,
 		    else
 		    {
 			clipType = CT_PIXMAP;
-			pPixmap = (PixmapPtr)SecurityLookupIDByType(client,
-								    pid, 
-								    RT_PIXMAP,
-								    DixReadAccess);
-			if (!pPixmap)
+			error = dixLookupResourceByType((pointer *)&pPixmap, pid,
+						  RT_PIXMAP, client,
+						  DixReadAccess);
+			if (error != Success)
 			{
 			    client->errorValue = pid;
-			    error = BadPixmap;
+			    error = (error == BadValue) ? BadPixmap : error;
 			    break;
 			}
 		    }
@@ -1607,7 +1512,8 @@ FreePicture (pointer	value,
                 WindowPtr	pWindow = (WindowPtr) pPicture->pDrawable;
                 PicturePtr	*pPrev;
 
-                for (pPrev = (PicturePtr *) &((pWindow)->devPrivates[PictureWindowPrivateIndex].ptr);
+                for (pPrev = (PicturePtr *)dixLookupPrivateAddr
+			 (&pWindow->devPrivates, PictureWindowPrivateKey);
                      *pPrev;
                      pPrev = &(*pPrev)->pNext)
                 {
@@ -1623,6 +1529,7 @@ FreePicture (pointer	value,
                 (*pScreen->DestroyPixmap) ((PixmapPtr)pPicture->pDrawable);
             }
         }
+	dixFreePrivates(pPicture->devPrivates);
 	xfree (pPicture);
     }
     return Success;
@@ -1642,12 +1549,24 @@ FreePictFormat (pointer	pPictFormat,
  * being careful to avoid these cases.
  */
 static CARD8
-ReduceCompositeOp (CARD8 op, PicturePtr pSrc, PicturePtr pMask, PicturePtr pDst)
+ReduceCompositeOp (CARD8 op, PicturePtr pSrc, PicturePtr pMask, PicturePtr pDst,
+		   INT16 xSrc, INT16 ySrc, CARD16 width, CARD16 height)
 {
     Bool no_src_alpha, no_dst_alpha;
 
+    /* Sampling off the edge of a RepeatNone picture introduces alpha
+     * even if the picture itself doesn't have alpha. We don't try to
+     * detect every case where we don't sample off the edge, just the
+     * simplest case where there is no transform on the source
+     * picture.
+     */
     no_src_alpha = PICT_FORMAT_COLOR(pSrc->format) &&
                    PICT_FORMAT_A(pSrc->format) == 0 &&
+                   (pSrc->repeatType != RepeatNone ||
+		    (!pSrc->transform &&
+		     xSrc >= 0 && ySrc >= 0 &&
+		     xSrc + width <= pSrc->pDrawable->width &&
+		     ySrc + height <= pSrc->pDrawable->height)) &&
                    pSrc->alphaMap == NULL &&
                    pMask == NULL;
     no_dst_alpha = PICT_FORMAT_COLOR(pDst->format) &&
@@ -1749,7 +1668,7 @@ CompositePicture (CARD8		op,
 	ValidatePicture (pMask);
     ValidatePicture (pDst);
 
-    op = ReduceCompositeOp (op, pSrc, pMask, pDst);
+    op = ReduceCompositeOp (op, pSrc, pMask, pDst, xSrc, ySrc, width, height);
     if (op == PictOpDst)
 	return;
 
@@ -1765,24 +1684,6 @@ CompositePicture (CARD8		op,
 		       yDst,
 		       width,
 		       height);
-}
-
-void
-CompositeGlyphs (CARD8		op,
-		 PicturePtr	pSrc,
-		 PicturePtr	pDst,
-		 PictFormatPtr	maskFormat,
-		 INT16		xSrc,
-		 INT16		ySrc,
-		 int		nlist,
-		 GlyphListPtr	lists,
-		 GlyphPtr	*glyphs)
-{
-    PictureScreenPtr	ps = GetPictureScreen(pDst->pDrawable->pScreen);
-    
-    ValidatePicture (pSrc);
-    ValidatePicture (pDst);
-    (*ps->Glyphs) (op, pSrc, pDst, maskFormat, xSrc, ySrc, nlist, lists, glyphs);
 }
 
 void
@@ -1879,67 +1780,3 @@ AddTraps (PicturePtr	pPicture,
     (*ps->AddTraps) (pPicture, xOff, yOff, ntrap, traps);
 }
 
-_X_EXPORT Bool
-PictureTransformPoint3d (PictTransformPtr transform,
-                         PictVectorPtr	vector)
-{
-    PictVector	    result;
-    int		    i, j;
-    xFixed_32_32    partial;
-    xFixed_48_16    v;
-
-    for (j = 0; j < 3; j++)
-    {
-	v = 0;
-	for (i = 0; i < 3; i++)
-	{
-	    partial = ((xFixed_48_16) transform->matrix[j][i] *
-		       (xFixed_48_16) vector->vector[i]);
-	    v += partial >> 16;
-	}
-	if (v > MAX_FIXED_48_16 || v < MIN_FIXED_48_16)
-	    return FALSE;
-	result.vector[j] = (xFixed) v;
-    }
-    if (!result.vector[2])
-	return FALSE;
-    *vector = result;
-    return TRUE;
-}
-
-
-_X_EXPORT Bool
-PictureTransformPoint (PictTransformPtr transform,
-		       PictVectorPtr	vector)
-{
-    PictVector	    result;
-    int		    i, j;
-    xFixed_32_32    partial;
-    xFixed_48_16    v;
-
-    for (j = 0; j < 3; j++)
-    {
-	v = 0;
-	for (i = 0; i < 3; i++)
-	{
-	    partial = ((xFixed_48_16) transform->matrix[j][i] * 
-		       (xFixed_48_16) vector->vector[i]);
-	    v += partial >> 16;
-	}
-	if (v > MAX_FIXED_48_16 || v < MIN_FIXED_48_16)
-	    return FALSE;
-	result.vector[j] = (xFixed) v;
-    }
-    if (!result.vector[2])
-	return FALSE;
-    for (j = 0; j < 2; j++)
-    {
-	partial = (xFixed_48_16) result.vector[j] << 16;
-	v = partial / result.vector[2];
-	if (v > MAX_FIXED_48_16 || v < MIN_FIXED_48_16)
-	    return FALSE;
-	vector->vector[j] = (xFixed) v;
-    }
-    vector->vector[2] = xFixed1;
-    return TRUE;
-}

@@ -41,15 +41,12 @@ is" without express or implied warranty.
 #include "Init.h"
 #include "mipointer.h"
 #include "Args.h"
+#include "mipointrst.h"
 
 Window xnestDefaultWindows[MAXSCREENS];
 Window xnestScreenSaverWindows[MAXSCREENS];
-
-#ifdef GLXEXT
-extern void GlxWrapInitVisuals(miInitVisualsProcPtr *);
-#endif
-
-static int xnestScreenGeneration = -1;
+static int xnestCursorScreenKeyIndex;
+DevPrivateKey xnestCursorScreenKey = &xnestCursorScreenKeyIndex;
 
 ScreenPtr
 xnestScreen(Window window)
@@ -130,6 +127,8 @@ static miPointerSpriteFuncRec xnestPointerSpriteFuncs =
     xnestUnrealizeCursor,
     xnestSetCursor,
     xnestMoveCursor,
+    xnestDeviceCursorInitialize,
+    xnestDeviceCursorCleanup
 };
 
 Bool
@@ -145,22 +144,13 @@ xnestOpenScreen(int index, ScreenPtr pScreen, int argc, char *argv[])
   XSizeHints sizeHints;
   VisualID defaultVisual;
   int rootDepth;
+  miPointerScreenPtr PointPriv;
 
-  if (!(AllocateWindowPrivate(pScreen, xnestWindowPrivateIndex,
-			    sizeof(xnestPrivWin))  &&
-	  AllocateGCPrivate(pScreen, xnestGCPrivateIndex, 
-			    sizeof(xnestPrivGC)))) 
+  if (!dixRequestPrivate(xnestWindowPrivateKey, sizeof(xnestPrivWin)))
+      return False;
+  if (!dixRequestPrivate(xnestGCPrivateKey, sizeof(xnestPrivGC)))
     return False;
 
-  if (xnestScreenGeneration != serverGeneration) {
-      if ((xnestPixmapPrivateIndex = AllocatePixmapPrivateIndex()) < 0)
-	  return False;
-      xnestScreenGeneration = serverGeneration;
-  }
-  
-  if (!AllocatePixmapPrivate(pScreen,xnestPixmapPrivateIndex,
-			     sizeof (xnestPrivPixmap)))
-      return False;
   visuals = (VisualPtr)xalloc(xnestNumVisuals * sizeof(VisualRec));
   numVisuals = 0;
 
@@ -230,17 +220,6 @@ xnestOpenScreen(int index, ScreenPtr pScreen, int argc, char *argv[])
   defaultVisual = visuals[xnestDefaultVisualIndex].vid;
   rootDepth = visuals[xnestDefaultVisualIndex].nplanes;
 
-#ifdef GLXEXT
-  {
-    miInitVisualsProcPtr proc = NULL;
-
-    GlxWrapInitVisuals(&proc);
-    /* GlxInitVisuals ignores the last three arguments. */
-    proc(&visuals, &depths, &numVisuals, &numDepths,
-	 &rootDepth, &defaultVisual, 0, 0, 0);
-  }
-#endif
-
   if (xnestParentWindow != 0) {
     XGetWindowAttributes(xnestDisplay, xnestParentWindow, &gattributes);
     xnestWidth = gattributes.width;
@@ -294,8 +273,6 @@ xnestOpenScreen(int index, ScreenPtr pScreen, int argc, char *argv[])
   pScreen->UnrealizeWindow = xnestUnrealizeWindow;
   pScreen->PostValidateTree = NULL;
   pScreen->WindowExposures = xnestWindowExposures;
-  pScreen->PaintWindowBackground = xnestPaintWindowBackground;
-  pScreen->PaintWindowBorder = xnestPaintWindowBorder;
   pScreen->CopyWindow = xnestCopyWindow;
   pScreen->ClipNotify = xnestClipNotify;
 
@@ -303,15 +280,6 @@ xnestOpenScreen(int index, ScreenPtr pScreen, int argc, char *argv[])
 
   pScreen->CreatePixmap = xnestCreatePixmap;
   pScreen->DestroyPixmap = xnestDestroyPixmap;
-
-  /* Backing store procedures */
-  
-  pScreen->SaveDoomedAreas = NULL;
-  pScreen->RestoreAreas = NULL;
-  pScreen->ExposeCopy = NULL;
-  pScreen->TranslateBackingStore = NULL;
-  pScreen->ClearBackingStore = NULL;
-  pScreen->DrawGuarantee = NULL;
 
   /* Font procedures */
 
@@ -341,8 +309,11 @@ xnestOpenScreen(int index, ScreenPtr pScreen, int argc, char *argv[])
   pScreen->blockData = NULL;
   pScreen->wakeupData = NULL;
 
-  miPointerInitialize (pScreen, &xnestPointerSpriteFuncs, 
-		       &xnestPointerCursorFuncs, True);
+  miDCInitialize(pScreen, &xnestPointerCursorFuncs); /* init SW rendering */
+  PointPriv = dixLookupPrivate(&pScreen->devPrivates, miPointerScreenKey);
+  xnestCursorFuncs.spriteFuncs = PointPriv->spriteFuncs;
+  dixSetPrivate(&pScreen->devPrivates, xnestCursorScreenKey, &xnestCursorFuncs);
+  PointPriv->spriteFuncs = &xnestPointerSpriteFuncs;
 
   pScreen->mmWidth = xnestWidth * DisplayWidthMM(xnestDisplay, 
 		       DefaultScreen(xnestDisplay)) / 
@@ -359,10 +330,8 @@ xnestOpenScreen(int index, ScreenPtr pScreen, int argc, char *argv[])
   if (!miScreenDevPrivateInit(pScreen, xnestWidth, NULL))
       return FALSE;
 
-#ifdef SHAPE
   /* overwrite miSetShape with our own */
   pScreen->SetShape = xnestSetShape;
-#endif /* SHAPE */
 
   /* devPrivates */
 

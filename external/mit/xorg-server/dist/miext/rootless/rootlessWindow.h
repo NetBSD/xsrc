@@ -36,13 +36,10 @@
 
 #include "rootlessCommon.h"
 
-
 Bool RootlessCreateWindow(WindowPtr pWin);
 Bool RootlessDestroyWindow(WindowPtr pWin);
 
-#ifdef SHAPE
 void RootlessSetShape(WindowPtr pWin);
-#endif // SHAPE
 
 Bool RootlessChangeWindowAttributes(WindowPtr pWin, unsigned long vmask);
 Bool RootlessPositionWindow(WindowPtr pWin, int x, int y);
@@ -54,10 +51,8 @@ void RootlessMoveWindow(WindowPtr pWin,int x,int y,WindowPtr pSib,VTKind kind);
 void RootlessResizeWindow(WindowPtr pWin, int x, int y,
 			  unsigned int w, unsigned int h, WindowPtr pSib);
 void RootlessReparentWindow(WindowPtr pWin, WindowPtr pPriorParent);
-void RootlessPaintWindowBackground(WindowPtr pWin, RegionPtr pRegion,
-                                   int what);
-void RootlessPaintWindowBorder(WindowPtr pWin, RegionPtr pRegion,
-                               int what);
 void RootlessChangeBorderWidth(WindowPtr pWin, unsigned int width);
+void RootlessNativeWindowMoved (WindowPtr pWin);
+void RootlessNativeWindowStateChanged (WindowPtr pWin, unsigned int state); 
 
 #endif

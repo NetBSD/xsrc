@@ -93,6 +93,7 @@ Equipment Corporation.
 #include "colormap.h"
 #include "colormapst.h"
 #include "cursorstr.h"
+#include "selection.h"
 #include <X11/fonts/font.h>
 #include "opaque.h"
 #include "servermd.h"
@@ -100,9 +101,8 @@ Equipment Corporation.
 #include "site.h"
 #include "dixfont.h"
 #include "extnsionst.h"
-#ifdef XPRINT
-#include "DiPrint.h"
-#endif
+#include "privates.h"
+#include "registry.h"
 #ifdef PANORAMIX
 #include "panoramiXsrv.h"
 #else
@@ -116,15 +116,11 @@ Equipment Corporation.
 #include "dpmsproc.h"
 #endif
 
-extern int InitClientPrivates(ClientPtr client);
-
 extern void Dispatch(void);
 
-char *ConnectionInfo;
 xConnSetupPrefix connSetupPrefix;
 
 extern FontPtr defaultFont;
-extern int screenPrivateCount;
 
 extern void InitProcVectors(void);
 extern Bool CreateGCperDepthArray(void);
@@ -134,13 +130,9 @@ static
 #endif
 Bool CreateConnectionBlock(void);
 
-static void FreeScreen(ScreenPtr);
-
 _X_EXPORT PaddingInfo PixmapWidthPaddingInfo[33];
 
 int connBlockScreenStart;
-
-static int restart = 0;
 
 _X_EXPORT void
 NotImplemented(xEvent *from, xEvent *to)
@@ -241,54 +233,31 @@ static int indexForScanlinePad[ 65 ] = {
 #define MIN(a,b) (((a) < (b)) ? (a) : (b))
 #endif
 
-int
-main(int argc, char *argv[], char *envp[])
+#ifdef XQUARTZ
+#include <pthread.h>
+
+BOOL serverInitComplete = FALSE;
+pthread_mutex_t serverInitCompleteMutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_cond_t serverInitCompleteCond = PTHREAD_COND_INITIALIZER;
+
+int dix_main(int argc, char *argv[], char *envp[])
+#else
+int main(int argc, char *argv[], char *envp[])
+#endif
 {
-    int		i, j, k, error;
-    char	*xauthfile;
+    int		i;
     HWEventQueueType	alwaysCheckForInput[2];
 
     display = "0";
 
-    InitGlobals();
     InitRegions();
-#ifdef XPRINT
-    PrinterInitGlobals();
-#endif
-
-    /* Quartz support on Mac OS X requires that the Cocoa event loop be in
-     * the main thread. This allows the X server main to be called again
-     * from another thread. */
-#if defined(__DARWIN__) && defined(DARWIN_WITH_QUARTZ)
-    DarwinHandleGUI(argc, argv, envp);
-#endif
-
-    /* Notice if we're restarted.  Probably this is because we jumped through
-     * an uninitialized pointer */
-    if (restart)
-	FatalError("server restarted. Jumped through uninitialized pointer?\n");
-    else
-	restart = 1;
 
     CheckUserParameters(argc, argv, envp);
 
     CheckUserAuthorization();
 
-#ifdef COMMANDLINE_CHALLENGED_OPERATING_SYSTEMS
-    ExpandCommandLine(&argc, &argv);
-#endif
-
     InitConnectionLimits();
 
-    /* These are needed by some routines which are called from interrupt
-     * handlers, thus have no direct calling path back to main and thus
-     * can't be passed argc, argv as parameters */
-    argcGlobal = argc;
-    argvGlobal = argv;
-    /* prep X authority file from environment; this can be overriden by a
-     * command line option */
-    xauthfile = getenv("XAUTHORITY");
-    if (xauthfile) InitAuthorization (xauthfile);
     ProcessCommandLine(argc, argv);
 
     alwaysCheckForInput[0] = 0;
@@ -315,10 +284,7 @@ main(int argc, char *argv[], char *envp[])
 	{
 	    CreateWellKnownSockets();
 	    InitProcVectors();
-	    clients = (ClientPtr *)xalloc(MAXCLIENTS * sizeof(ClientPtr));
-	    if (!clients)
-		FatalError("couldn't create client array");
-	    for (i=1; i<MAXCLIENTS; i++) 
+	    for (i=1; i<MAXCLIENTS; i++)
 		clients[i] = NullClient;
 	    serverClient = (ClientPtr)xalloc(sizeof(ClientRec));
 	    if (!serverClient)
@@ -336,48 +302,21 @@ main(int argc, char *argv[], char *envp[])
 	SetInputCheck(&alwaysCheckForInput[0], &alwaysCheckForInput[1]);
 	screenInfo.arraySize = MAXSCREENS;
 	screenInfo.numScreens = 0;
-	screenInfo.numVideoScreens = -1;
-	WindowTable = (WindowPtr *)xalloc(MAXSCREENS * sizeof(WindowPtr));
-	if (!WindowTable)
-	    FatalError("couldn't create root window table");
-
-	/*
-	 * Just in case the ddx doesnt supply a format for depth 1 (like qvss).
-	 */
-	j = indexForBitsPerPixel[ 1 ];
-	k = indexForScanlinePad[ BITMAP_SCANLINE_PAD ];
-	PixmapWidthPaddingInfo[1].padRoundUp = BITMAP_SCANLINE_PAD-1;
-	PixmapWidthPaddingInfo[1].padPixelsLog2 = answer[j][k];
- 	j = indexForBitsPerPixel[8]; /* bits per byte */
- 	PixmapWidthPaddingInfo[1].padBytesLog2 = answer[j][k];
-	PixmapWidthPaddingInfo[1].bitsPerPixel = 1;
 
 	InitAtoms();
 	InitEvents();
+	InitSelections();
 	InitGlyphCaching();
-	ResetExtensionPrivates();
-	ResetClientPrivates();
-	ResetScreenPrivates();
-	ResetWindowPrivates();
-	ResetGCPrivates();
-	ResetPixmapPrivates();
-	ResetColormapPrivates();
+	if (!dixResetPrivates())
+	    FatalError("couldn't init private data storage");
+	dixResetRegistry();
 	ResetFontPrivateIndex();
-	ResetDevicePrivateIndex();
 	InitCallbackManager();
-	InitVisualWrap();
 	InitOutput(&screenInfo, argc, argv);
-#ifdef XPRINT
-	PrinterInitOutput(&screenInfo, argc, argv);
-#endif
 
 	if (screenInfo.numScreens < 1)
 	    FatalError("no screens found");
-	if (screenInfo.numVideoScreens < 0)
-	    screenInfo.numVideoScreens = screenInfo.numScreens;
 	InitExtensions(argc, argv);
-	if (!InitClientPrivates(serverClient))
-	    FatalError("failed to allocate serverClient devprivates");
 	for (i = 0; i < screenInfo.numScreens; i++)
 	{
 	    ScreenPtr pScreen = screenInfo.screens[i];
@@ -393,19 +332,10 @@ main(int argc, char *argv[], char *envp[])
 	    if (!CreateRootWindow(pScreen))
 		FatalError("failed to create root window");
 	}
-        InitCoreDevices();
-	InitInput(argc, argv);
-	if (InitAndStartDevices() != Success)
-	    FatalError("failed to initialize core devices");
 
 	InitFonts();
-	if (loadableFonts) {
-	    SetFontPath(0, 0, (unsigned char *)defaultFontPath, &error);
-	}
-        else {
-	    if (SetDefaultFontPath(defaultFontPath) != Success)
-		ErrorF("failed to set default font path '%s'",
-			defaultFontPath);
+	if (SetDefaultFontPath(defaultFontPath) != Success) {
+	    ErrorF("[dix] failed to set default font path '%s'", defaultFontPath);
 	}
 	if (!SetDefaultFont(defaultTextFont)) {
 	    FatalError("could not open default font '%s'", defaultTextFont);
@@ -434,7 +364,12 @@ main(int argc, char *argv[], char *envp[])
 	for (i = 0; i < screenInfo.numScreens; i++)
 	    InitRootWindow(WindowTable[i]);
 	DefineInitialRootWindow(WindowTable[0]);
-	SaveScreens(SCREEN_SAVER_FORCER, ScreenSaverReset);
+
+        InitCoreDevices();
+	InitInput(argc, argv);
+	InitAndStartDevices();
+
+	dixSaveScreens(serverClient, SCREEN_SAVER_FORCER, ScreenSaverReset);
 
 #ifdef PANORAMIX
 	if (!noPanoramiXExtension) {
@@ -449,11 +384,23 @@ main(int argc, char *argv[], char *envp[])
 	    }
 	}
 
+#ifdef XQUARTZ
+    /* Let the other threads know the server is done with its init */
+    pthread_mutex_lock(&serverInitCompleteMutex);
+    serverInitComplete = TRUE;
+    pthread_cond_broadcast(&serverInitCompleteCond);
+    pthread_mutex_unlock(&serverInitCompleteMutex);
+#endif
+        
+	NotifyParentProcess();
+
 	Dispatch();
+
+        UndisplayDevices();
 
 	/* Now free up whatever must be freed */
 	if (screenIsSaved == SCREEN_SAVER_ON)
-	    SaveScreens(SCREEN_SAVER_OFF, ScreenSaverReset);
+	    dixSaveScreens(serverClient, SCREEN_SAVER_OFF, ScreenSaverReset);
 	FreeScreenSaverTimer();
 	CloseDownExtensions();
 
@@ -469,24 +416,26 @@ main(int argc, char *argv[], char *envp[])
 #endif
 
         config_fini();
+
+        memset(WindowTable, 0, sizeof(WindowTable));
 	CloseDownDevices();
+	CloseDownEvents();
+
 	for (i = screenInfo.numScreens - 1; i >= 0; i--)
 	{
 	    FreeScratchPixmapsForScreen(i);
 	    FreeGCperDepth(i);
 	    FreeDefaultStipple(i);
 	    (* screenInfo.screens[i]->CloseScreen)(i, screenInfo.screens[i]);
-	    FreeScreen(screenInfo.screens[i]);
+	    dixFreePrivates(screenInfo.screens[i]->devPrivates);
+	    xfree(screenInfo.screens[i]);
 	    screenInfo.numScreens = i;
 	}
-  	CloseDownEvents();
-	xfree(WindowTable);
-	WindowTable = NULL;
 	FreeFonts();
 
 	FreeAuditTimer();
 
-	xfree(serverClient->devPrivates);
+	dixFreePrivates(serverClient->devPrivates);
 	serverClient->devPrivates = NULL;
 
 	if (dispatchException & DE_TERMINATE)
@@ -523,7 +472,7 @@ SetVendorString(char *string)
     VendorString = string;
 }
 
-static int padlength[4] = {0, 3, 2, 1};
+static const int padlength[4] = {0, 3, 2, 1};
 
 #ifndef PANORAMIX
 static
@@ -614,7 +563,7 @@ CreateConnectionBlock(void)
 	root.maxInstalledMaps = pScreen->maxInstalledCmaps; 
 	root.rootVisualID = pScreen->rootVisual;		
 	root.backingStore = pScreen->backingStoreSupport;
-	root.saveUnders = pScreen->saveUnderSupport != NotUseful;
+	root.saveUnders = FALSE;
 	root.rootDepth = pScreen->rootDepth;
 	root.nDepths = pScreen->numDepths;
 	memmove(pBuf, (char *)&root, sizeof(xWindowRoot));
@@ -698,24 +647,8 @@ AddScreen(
     if (!pScreen)
 	return -1;
 
-    pScreen->devPrivates = (DevUnion *)xcalloc(sizeof(DevUnion),
-						screenPrivateCount);
-    if (!pScreen->devPrivates && screenPrivateCount)
-    {
-	xfree(pScreen);
-	return -1;
-    }
+    pScreen->devPrivates = NULL;
     pScreen->myNum = i;
-    pScreen->WindowPrivateLen = 0;
-    pScreen->WindowPrivateSizes = (unsigned *)NULL;
-    pScreen->totalWindowSize =
-        ((sizeof(WindowRec) + sizeof(long) - 1) / sizeof(long)) * sizeof(long);
-    pScreen->GCPrivateLen = 0;
-    pScreen->GCPrivateSizes = (unsigned *)NULL;
-    pScreen->totalGCSize =
-        ((sizeof(GC) + sizeof(long) - 1) / sizeof(long)) * sizeof(long);
-    pScreen->PixmapPrivateLen = 0;
-    pScreen->PixmapPrivateSizes = (unsigned *)NULL;
     pScreen->totalPixmapSize = BitmapBytePad(sizeof(PixmapRec)*8);
     pScreen->ClipNotify = 0;	/* for R4 ddx compatibility */
     pScreen->CreateScreenResources = 0;
@@ -768,19 +701,10 @@ AddScreen(
     screenInfo.numScreens++;
     if (!(*pfnInit)(i, pScreen, argc, argv))
     {
-	FreeScreen(pScreen);
+	dixFreePrivates(pScreen->devPrivates);
+	xfree(pScreen);
 	screenInfo.numScreens--;
 	return -1;
     }
     return i;
-}
-
-static void
-FreeScreen(ScreenPtr pScreen)
-{
-    xfree(pScreen->WindowPrivateSizes);
-    xfree(pScreen->GCPrivateSizes);
-    xfree(pScreen->PixmapPrivateSizes);
-    xfree(pScreen->devPrivates);
-    xfree(pScreen);
 }

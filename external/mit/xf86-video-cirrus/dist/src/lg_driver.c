@@ -39,11 +39,16 @@
 /* This driver needs to be modified to not use vgaHW for multihead operation */
 #include "vgaHW.h"
 
+#if GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) < 6
 #include "xf86RAC.h"
 #include "xf86Resources.h"
+#endif
 
 /* All drivers initialising the SW cursor need this */
 #include "mipointer.h"
+
+/* need this for inputInfo */
+#include "inputstr.h"
 
 /* All drivers implementing backing store need this */
 #include "mibstore.h"
@@ -56,6 +61,8 @@
 #include "xf86int10.h"
 
 #include "fb.h"
+
+#include "inputstr.h"
 
 #include "xf86DDC.h"
 
@@ -161,80 +168,6 @@ static int LgLinePitches[4][11] = {
 	/* 32 */ { 160,  256,  320,  416,  512,  640,  832, 1024, 1280, 1664, 0 }
 };
 
-/*
- * List of symbols from other modules that this module references.  This
- * list is used to tell the loader that it is OK for symbols here to be
- * unresolved providing that it hasn't been told that they haven't been
- * told that they are essential via a call to xf86LoaderReqSymbols() or
- * xf86LoaderReqSymLists().  The purpose is this is to avoid warnings about
- * unresolved symbols that are not required.
- */
-
-static const char *vgahwSymbols[] = {
-	"vgaHWFreeHWRec",
-	"vgaHWGetHWRec",
-	"vgaHWGetIOBase",
-	"vgaHWGetIndex",
-	"vgaHWHandleColormaps",
-	"vgaHWInit",
-	"vgaHWLock",
-	"vgaHWMapMem",
-	"vgaHWProtect",
-	"vgaHWRestore",
-	"vgaHWSave",
-	"vgaHWSaveScreen",
-	"vgaHWUnlock",
-	NULL
-};
-
-static const char *fbSymbols[] = {
-	"fbScreenInit",
-	"fbPictureInit",
-	NULL
-};
-
-static const char *xaaSymbols[] = {
-	"XAACreateInfoRec",
-	"XAADestroyInfoRec",
-	"XAAInit",
-	NULL
-};
-
-static const char *ramdacSymbols[] = {
-	"xf86CreateCursorInfoRec",
-	"xf86DestroyCursorInfoRec",
-	"xf86InitCursor",
-	NULL
-};
-
-#define LGuseI2C 1
-
-static const char *ddcSymbols[] = {
-	"xf86PrintEDID",
-#if LGuseI2C
-	"xf86DoEDID_DDC2",
-#endif
-	"xf86SetDDCproperties",
-	NULL
-};
-
-static const char *i2cSymbols[] = {
-	"xf86CreateI2CBusRec",
-	"xf86I2CBusInit",
-	NULL
-};
-
-static const char *int10Symbols[] = {
-	"xf86FreeInt10",
-	"xf86InitInt10",
-	NULL
-};
-
-static const char *shadowSymbols[] = {
-    "ShadowFBInit",
-    NULL
-};
-
 #ifdef XFree86LOADER
 
 #define LG_MAJOR_VERSION 1
@@ -274,9 +207,6 @@ lgSetup(pointer module, pointer opts, int *errmaj, int *errmin)
     
     if (!setupDone) {
 	setupDone = TRUE;
-	LoaderRefSymLists(vgahwSymbols, fbSymbols, xaaSymbols,
-			  ramdacSymbols, ddcSymbols, i2cSymbols,
-			  int10Symbols, NULL);
     }
     return (pointer)1;
 }
@@ -430,8 +360,6 @@ LgPreInit(ScrnInfoPtr pScrn, int flags)
 	if (!xf86LoadSubModule(pScrn, "vgahw"))
 		return FALSE;
 
-	xf86LoaderReqSymLists(vgahwSymbols, NULL);
-
 	/*
 	 * Allocate a vgaHWRec
 	 */
@@ -457,13 +385,12 @@ LgPreInit(ScrnInfoPtr pScrn, int flags)
 
 	/* Find the PCI info for this screen */
 	pCir->PciInfo = xf86GetPciInfoForEntity(pCir->pEnt->index);
-	pCir->PciTag = pciTag(pCir->PciInfo->bus,
-								pCir->PciInfo->device,
-								pCir->PciInfo->func);
+	pCir->PciTag = pciTag(PCI_DEV_BUS(pCir->PciInfo),
+			      PCI_DEV_DEV(pCir->PciInfo),
+			      PCI_DEV_FUNC(pCir->PciInfo));
 
 	if (xf86LoadSubModule(pScrn, "int10")) {
 	    xf86Int10InfoPtr int10InfoPtr;
-	    xf86LoaderReqSymLists(int10Symbols, NULL);
 	    
 	    int10InfoPtr = xf86InitInt10(pCir->pEnt->index);
 
@@ -560,7 +487,7 @@ LgPreInit(ScrnInfoPtr pScrn, int flags)
 		xf86DrvMsg(pScrn->scrnIndex, X_CONFIG, "ChipRev override: %d\n",
 			pCir->ChipRev);
 	} else {
-		pCir->ChipRev = pCir->PciInfo->chipRev;
+	        pCir->ChipRev = PCI_DEV_REVISION(pCir->PciInfo);
 	}
 
 	/* Cirrus swapped the FB and IO registers in the 5465 (by design). */
@@ -584,8 +511,8 @@ LgPreInit(ScrnInfoPtr pScrn, int flags)
 		pCir->FbAddress = pCir->pEnt->device->MemBase;
 		from = X_CONFIG;
 	} else {
-		if (pCir->PciInfo->memBase[fbPCIReg] != 0) {
-			pCir->FbAddress = pCir->PciInfo->memBase[fbPCIReg] & 0xff000000;
+		if (PCI_REGION_BASE(pCir->PciInfo, fbPCIReg, REGION_MEM) != 0) {
+			pCir->FbAddress = PCI_REGION_BASE(pCir->PciInfo, fbPCIReg, REGION_MEM) & 0xff000000;
 			from = X_PROBED;
 		} else {
 			xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
@@ -609,8 +536,8 @@ LgPreInit(ScrnInfoPtr pScrn, int flags)
 		pCir->IOAddress = pCir->pEnt->device->IOBase;
 		from = X_CONFIG;
 	} else {
-		if (pCir->PciInfo->memBase[ioPCIReg] != 0) {
-			pCir->IOAddress = pCir->PciInfo->memBase[ioPCIReg] & 0xfffff000;
+		if (PCI_REGION_BASE(pCir->PciInfo, ioPCIReg, REGION_MEM) != 0) {
+			pCir->IOAddress = PCI_REGION_BASE(pCir->PciInfo, ioPCIReg, REGION_MEM) & 0xfffff000;
 			from = X_PROBED;
 		} else {
 			xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
@@ -648,6 +575,7 @@ LgPreInit(ScrnInfoPtr pScrn, int flags)
 	pCir->FbMapSize = pScrn->videoRam * 1024;
 	pCir->IoMapSize = 0x4000;	/* 16K for moment,  will increase */
 
+#ifndef XSERVER_LIBPCIACCESS
 	pScrn->racIoFlags =   RAC_COLORMAP 
 #ifndef EXPERIMENTAL
 	  | RAC_VIEWPORT
@@ -661,19 +589,17 @@ LgPreInit(ScrnInfoPtr pScrn, int flags)
 			"xf86RegisterResources() found resource conflicts\n");
 		return FALSE;
 	}
-
+#endif
 	if (!xf86LoadSubModule(pScrn, "ddc")) {
 		LgFreeRec(pScrn);
 		return FALSE;
 	}
-	xf86LoaderReqSymLists(ddcSymbols, NULL);
 
 #if LGuseI2C
 	if (!xf86LoadSubModule(pScrn, "i2c")) {
 		LgFreeRec(pScrn);
 		return FALSE;
 	}
-	xf86LoaderReqSymLists(i2cSymbols, NULL);
 #endif
 
 	/* Read and print the monitor DDC information */
@@ -866,7 +792,6 @@ LgPreInit(ScrnInfoPtr pScrn, int flags)
 	         LgFreeRec(pScrn);
 		 return FALSE;
 	    }
-	    xf86LoaderReqSymLists(fbSymbols, NULL);
 	    break;
 	}
 
@@ -876,7 +801,6 @@ LgPreInit(ScrnInfoPtr pScrn, int flags)
 			LgFreeRec(pScrn);
 			return FALSE;
 		}
-		xf86LoaderReqSymLists(xaaSymbols, NULL);
 	}
 
 	/* Load ramdac if needed */
@@ -885,7 +809,6 @@ LgPreInit(ScrnInfoPtr pScrn, int flags)
 			LgFreeRec(pScrn);
 			return FALSE;
 		}
-		xf86LoaderReqSymLists(ramdacSymbols, NULL);
 	}
 
 	if (pCir->shadowFB) {
@@ -893,7 +816,6 @@ LgPreInit(ScrnInfoPtr pScrn, int flags)
 		LgFreeRec(pScrn);
 		return FALSE;
 	    }
-	    xf86LoaderReqSymLists(shadowSymbols, NULL);
 	}
 	
 	return TRUE;
@@ -1547,7 +1469,7 @@ LgAdjustFrame(int scrnIndex, int x, int y, int flags)
 		(PCI_CHIP_GD5465 == pCir->Chipset) ? 1 : (24==pScrn->bitsPerPixel?3:1);
 
 	/* Where's the pointer? */
-	miPointerPosition(&cursorX, &cursorY);
+	miPointerGetPosition(inputInfo.pointer, &cursorX, &cursorY);
 
 	/* Where's the middle of the screen?  We want to eventually know
 	   which side of the screen the pointer is on. */

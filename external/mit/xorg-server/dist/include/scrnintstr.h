@@ -56,6 +56,7 @@ SOFTWARE.
 #include "validate.h"
 #include <X11/Xproto.h>
 #include "dix.h"
+#include "privates.h"
 
 typedef struct _PixmapFormat {
     unsigned char	depth;
@@ -121,6 +122,7 @@ typedef    void (* GetSpansProcPtr)(
 	char * /*pdstStart*/);
 
 typedef    void (* PointerNonInterestBoxProcPtr)(
+        DeviceIntPtr /*pDev*/,
 	ScreenPtr /*pScreen*/,
 	BoxPtr /*pBox*/);
 
@@ -197,11 +199,19 @@ typedef    void (* ClipNotifyProcPtr)(
 	int /*dx*/,
 	int /*dy*/);
 
+/* pixmap will exist only for the duration of the current rendering operation */
+#define CREATE_PIXMAP_USAGE_SCRATCH                     1
+/* pixmap will be the backing pixmap for a redirected window */
+#define CREATE_PIXMAP_USAGE_BACKING_PIXMAP              2
+/* pixmap will contain a glyph */
+#define CREATE_PIXMAP_USAGE_GLYPH_PICTURE               3
+
 typedef    PixmapPtr (* CreatePixmapProcPtr)(
 	ScreenPtr /*pScreen*/,
 	int /*width*/,
 	int /*height*/,
-	int /*depth*/);
+	int /*depth*/,
+	unsigned /*usage_hint*/);
 
 typedef    Bool (* DestroyPixmapProcPtr)(
 	PixmapPtr /*pPixmap*/);
@@ -257,33 +267,40 @@ typedef    Bool (* UnrealizeFontProcPtr)(
 	FontPtr /*pFont*/);
 
 typedef    void (* ConstrainCursorProcPtr)(
+        DeviceIntPtr /*pDev*/,
 	ScreenPtr /*pScreen*/,
 	BoxPtr /*pBox*/);
 
 typedef    void (* CursorLimitsProcPtr)(
+        DeviceIntPtr /* pDev */,
 	ScreenPtr /*pScreen*/,
 	CursorPtr /*pCursor*/,
 	BoxPtr /*pHotBox*/,
 	BoxPtr /*pTopLeftBox*/);
 
 typedef    Bool (* DisplayCursorProcPtr)(
+        DeviceIntPtr /* pDev */,
 	ScreenPtr /*pScreen*/,
 	CursorPtr /*pCursor*/);
 
 typedef    Bool (* RealizeCursorProcPtr)(
+        DeviceIntPtr /* pDev */,
 	ScreenPtr /*pScreen*/,
 	CursorPtr /*pCursor*/);
 
 typedef    Bool (* UnrealizeCursorProcPtr)(
+        DeviceIntPtr /* pDev */,
 	ScreenPtr /*pScreen*/,
 	CursorPtr /*pCursor*/);
 
 typedef    void (* RecolorCursorProcPtr)(
+        DeviceIntPtr /* pDev */,
 	ScreenPtr /*pScreen*/,
 	CursorPtr /*pCursor*/,
 	Bool /*displayed*/);
 
 typedef    Bool (* SetCursorPositionProcPtr)(
+        DeviceIntPtr /* pDev */,
 	ScreenPtr /*pScreen*/,
 	int /*x*/,
 	int /*y*/,
@@ -409,10 +426,8 @@ typedef    void (* ReparentWindowProcPtr)(
     WindowPtr /*pWin*/,
     WindowPtr /*pPriorParent*/);
 
-#ifdef SHAPE
 typedef    void (* SetShapeProcPtr)(
 	WindowPtr /*pWin*/);
-#endif /* SHAPE */
 
 typedef    void (* ChangeBorderWidthProcPtr)(
 	WindowPtr /*pWin*/,
@@ -422,6 +437,14 @@ typedef    void (* MarkUnrealizedWindowProcPtr)(
 	WindowPtr /*pChild*/,
 	WindowPtr /*pWin*/,
 	Bool /*fromConfigure*/);
+
+typedef    Bool (* DeviceCursorInitializeProcPtr)(
+        DeviceIntPtr /* pDev */,
+        ScreenPtr    /* pScreen */);
+
+typedef    void (* DeviceCursorCleanupProcPtr)(
+        DeviceIntPtr /* pDev */,
+        ScreenPtr    /* pScreen */);
 
 typedef struct _Screen {
     int			myNum;	/* index of this instance in Screens[] */
@@ -449,12 +472,6 @@ typedef struct _Screen {
     pointer		devPrivate;
     short       	numVisuals;
     VisualPtr		visuals;
-    int			WindowPrivateLen;
-    unsigned		*WindowPrivateSizes;
-    unsigned		totalWindowSize;
-    int			GCPrivateLen;
-    unsigned		*GCPrivateSizes;
-    unsigned		totalGCSize;
 
     /* Random screen procedures */
 
@@ -477,8 +494,8 @@ typedef struct _Screen {
     ValidateTreeProcPtr		ValidateTree;
     PostValidateTreeProcPtr	PostValidateTree;
     WindowExposuresProcPtr	WindowExposures;
-    PaintWindowBackgroundProcPtr PaintWindowBackground;
-    PaintWindowBorderProcPtr	PaintWindowBorder;
+    PaintWindowBackgroundProcPtr PaintWindowBackground; /** unused */
+    PaintWindowBorderProcPtr	PaintWindowBorder; /** unused */
     CopyWindowProcPtr		CopyWindow;
     ClearToBackgroundProcPtr	ClearToBackground;
     ClipNotifyProcPtr		ClipNotify;
@@ -546,7 +563,7 @@ typedef struct _Screen {
     pointer wakeupData;
 
     /* anybody can get a piece of this array */
-    DevUnion	*devPrivates;
+    PrivateRec	*devPrivates;
 
     CreateScreenResourcesProcPtr CreateScreenResources;
     ModifyPixmapHeaderProcPtr	ModifyPixmapHeader;
@@ -558,8 +575,6 @@ typedef struct _Screen {
 
     PixmapPtr pScratchPixmap;		/* scratch pixmap "pool" */
 
-    int			PixmapPrivateLen;
-    unsigned int		*PixmapPrivateSizes;
     unsigned int		totalPixmapSize;
 
     MarkWindowProcPtr		MarkWindow;
@@ -572,13 +587,14 @@ typedef struct _Screen {
     HandleExposuresProcPtr	HandleExposures;
     ReparentWindowProcPtr	ReparentWindow;
 
-#ifdef SHAPE
     SetShapeProcPtr		SetShape;
-#endif /* SHAPE */
 
     ChangeBorderWidthProcPtr	ChangeBorderWidth;
     MarkUnrealizedWindowProcPtr	MarkUnrealizedWindow;
 
+    /* Device cursor procedures */
+    DeviceCursorInitializeProcPtr DeviceCursorInitialize;
+    DeviceCursorCleanupProcPtr    DeviceCursorCleanup;
 } ScreenRec;
 
 typedef struct _ScreenInfo {
@@ -592,7 +608,7 @@ typedef struct _ScreenInfo {
     int		arraySize;
     int		numScreens;
     ScreenPtr	screens[MAXSCREENS];
-    int		numVideoScreens;
+    int		unused;
 } ScreenInfo;
 
 extern ScreenInfo screenInfo;

@@ -26,20 +26,11 @@
 /* Support Composite Extension */
 #define COMPOSITE 1
 
-/* Use OsVendorInit */
-#define DDXOSINIT 1
-
 /* Build DPMS extension */
 #define DPMSExtension 1
 
-/* Built-in output drivers */
-#define DRIVERS {}
-
 /* Build GLX extension */
-/* #undef GLXEXT */
-
-/* Include handhelds.org h3600 touchscreen driver */
-/* #undef H3600_TS */
+#define GLXEXT 1
 
 /* Support XDM-AUTH*-1 */
 #define HASXDMAUTH 1
@@ -47,32 +38,14 @@
 /* Support SHM */
 #define HAS_SHM 1
 
-/* Built-in input drivers */
-#define IDRIVERS {}
-
 /* Support IPv6 for TCP connections */
 #define IPv6 1
-
-/* Support MIT Misc extension */
-#define MITMISC 1
 
 /* Support MIT-SHM Extension */
 #define MITSHM 1
 
-/* Disable some debugging code */
-#define NDEBUG 1
-
-/* Need XFree86 helper functions */
-#define NEED_XF86_PROTOTYPES 1
-
-/* Need XFree86 typedefs */
-#define NEED_XF86_TYPES 1
-
 /* Internal define for Xinerama */
 #define PANORAMIX 1
-
-/* Support pixmap privates */
-#define PIXPRIV 1
 
 /* Support RANDR extension */
 #define RANDR 1
@@ -86,14 +59,8 @@
 /* Support MIT-SCREEN-SAVER extension */
 #define SCREENSAVER 1
 
-/* Use a lock to prevent multiple servers on a display */
-#define SERVER_LOCK 1
-
 /* Support SHAPE extension */
 #define SHAPE 1
-
-/* Include time-based scheduler */
-#define SMART_SCHEDULE 1
 
 /* Define to 1 on systems derived from System V Release 4 */
 /* #undef SVR4 */
@@ -110,12 +77,6 @@
 /* Support UNIX socket connections */
 #define UNIXCONN 1
 
-/* Use builtin rgb color database */
-/* #undef USE_RGB_BUILTIN */
-
-/* Use rgb.txt directly */
-#define USE_RGB_TXT 1
-
 /* unaligned word accesses behave as expected */
 /* #undef WORKING_UNALIGNED_INT */
 
@@ -126,10 +87,7 @@
 #define XDMCP 1
 
 /* Build XFree86 BigFont extension */
-#define XF86BIGFONT 1
-
-/* Support XFree86 miscellaneous extensions */
-#define XF86MISC 1
+/* #undef XF86BIGFONT */
 
 /* Support XFree86 Video Mode extension */
 #define XF86VIDMODE 1
@@ -158,6 +116,9 @@
 /* Build DRI extension */
 #define XF86DRI 1
 
+/* Build DRI2 extension */
+#define DRI2 1
+
 /* Build Xorg server */
 #define XORGSERVER 1
 
@@ -165,7 +126,7 @@
 /* #undef XORG_RELEASE */
 
 /* Current Xorg version */
-#define XORG_VERSION_CURRENT (((1) * 10000000) + ((4) * 100000) + ((2) * 1000) + 0)
+#define XORG_VERSION_CURRENT (((1) * 10000000) + ((6) * 100000) + ((3) * 1000) + 0)
 
 /* Build Xv Extension */
 #define XvExtension 1
@@ -173,45 +134,17 @@
 /* Build XvMC Extension */
 #define XvMCExtension 1
 
-/* Build XRes extension */
-#define XResExtension 1
-
 /* Support XSync extension */
 #define XSYNC 1
 
 /* Support XTest extension */
 #define XTEST 1
 
-/* Support XTrap extension */
-#define XTRAP 1
-
 /* Support Xv Extension */
 #define XV 1
 
 /* Vendor name */
 #define XVENDORNAME "The X.Org Foundation"
-
-#ifdef __NetBSD__
-#include <sys/endian.h>
-#if _BYTE_ORDER == _BIG_ENDIAN
-#define _X_BYTE_ORDER X_BIG_ENDIAN
-#else
-#define _X_BYTE_ORDER X_LITTLE_ENDIAN
-#endif
-#else
-/* Endian order */
-#define _X_BYTE_ORDER X_LITTLE_ENDIAN
-/* Deal with multiple architecture compiles on Mac OS X */
-#ifndef __APPLE_CC__
-#define X_BYTE_ORDER _X_BYTE_ORDER
-#else
-#ifdef __BIG_ENDIAN__
-#define X_BYTE_ORDER X_BIG_ENDIAN
-#else
-#define X_BYTE_ORDER X_LITTLE_ENDIAN
-#endif
-#endif
-#endif
 
 /* BSD-compliant source */
 /* #undef _BSD_SOURCE */
@@ -262,5 +195,8 @@
 
 /* Loadable XFree86 server awesomeness */
 #define XFree86LOADER 1
+
+/* Use libpciaccess */
+#define XSERVER_LIBPCIACCESS 1
 
 #endif /* _XORG_SERVER_H_ */

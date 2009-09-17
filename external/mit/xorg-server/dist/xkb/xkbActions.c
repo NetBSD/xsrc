@@ -42,8 +42,8 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <ctype.h>
 #define EXTENSION_EVENT_BASE 64
 
-static unsigned int _xkbServerGeneration;
-int xkbDevicePrivateIndex = -1;
+static int xkbDevicePrivateKeyIndex;
+DevPrivateKey xkbDevicePrivateKey = &xkbDevicePrivateKeyIndex;
 
 void
 xkbUnwrapProc(DeviceIntPtr device, DeviceHandleProc proc,
@@ -66,20 +66,12 @@ XkbSetExtension(DeviceIntPtr device, ProcessInputProc proc)
 {
     xkbDeviceInfoPtr xkbPrivPtr;
 
-    if (serverGeneration != _xkbServerGeneration) {
-	if ((xkbDevicePrivateIndex = AllocateDevicePrivateIndex()) == -1)
-	    return;
-	_xkbServerGeneration = serverGeneration;
-    }
-    if (!AllocateDevicePrivate(device, xkbDevicePrivateIndex))
-	return;
-
     xkbPrivPtr = (xkbDeviceInfoPtr) xcalloc(1, sizeof(xkbDeviceInfoRec));
     if (!xkbPrivPtr)
 	return;
     xkbPrivPtr->unwrapProc = NULL;
 
-    device->devPrivates[xkbDevicePrivateIndex].ptr = xkbPrivPtr;
+    dixSetPrivate(&device->devPrivates, xkbDevicePrivateKey, xkbPrivPtr);
     WRAP_PROCESS_INPUT_PROC(device, xkbPrivPtr, proc, xkbUnwrapProc);
 }
 
@@ -603,9 +595,6 @@ _XkbFilterPointerBtn(	XkbSrvInfoPtr	xkbi,
 			unsigned	keycode,
 			XkbAction *	pAction)
 {
-    if (xkbi->device == inputInfo.keyboard)
-        return 0;
-
     if (filter->keycode==0) {		/* initial press */
 	int	button= pAction->btn.button;
 
@@ -625,7 +614,7 @@ _XkbFilterPointerBtn(	XkbSrvInfoPtr	xkbi,
 			((pAction->btn.flags&XkbSA_LockNoLock)==0)) {
 		    xkbi->lockedPtrButtons|= (1<<button);
 		    AccessXCancelRepeatKey(xkbi,keycode);
-		    XkbDDXFakePointerButton(ButtonPress,button);
+		    XkbDDXFakeDeviceButton(xkbi->device, 1, button);
 		    filter->upAction.type= XkbSA_NoAction;
 		}
 		break;
@@ -636,12 +625,12 @@ _XkbFilterPointerBtn(	XkbSrvInfoPtr	xkbi,
 		    if (pAction->btn.count>0) {
 			nClicks= pAction->btn.count;
 			for (i=0;i<nClicks;i++) {
-			    XkbDDXFakePointerButton(ButtonPress,button);
-			    XkbDDXFakePointerButton(ButtonRelease,button);
+			    XkbDDXFakeDeviceButton(xkbi->device, 1, button);
+			    XkbDDXFakeDeviceButton(xkbi->device, 0, button);
 			}
 			filter->upAction.type= XkbSA_NoAction;
 		    }
-		    else XkbDDXFakePointerButton(ButtonPress,button);
+		    else XkbDDXFakeDeviceButton(xkbi->device, 1, button);
 		}
 		break;
 	    case XkbSA_SetPtrDflt:
@@ -697,7 +686,7 @@ _XkbFilterPointerBtn(	XkbSrvInfoPtr	xkbi,
 		}
 		xkbi->lockedPtrButtons&= ~(1<<button);
 	    case XkbSA_PtrBtn:
-		XkbDDXFakePointerButton(ButtonRelease,button);
+		XkbDDXFakeDeviceButton(xkbi->device, 0, button);
 		break;
 	}
 	filter->active = 0;
@@ -851,7 +840,7 @@ _XkbFilterRedirectKey(	XkbSrvInfoPtr	xkbi,
 			unsigned	keycode,
 			XkbAction *	pAction)
 {
-unsigned	realMods;
+unsigned	realMods = 0;
 xEvent 		ev;
 int		x,y;
 XkbStateRec	old;
@@ -866,7 +855,7 @@ ProcessInputProc backupproc;
     if ((filter->keycode!=0)&&(filter->keycode!=keycode))
 	return 1;
 
-    GetSpritePosition(&x,&y);
+    GetSpritePosition(inputInfo.pointer, &x,&y);
     ev.u.keyButtonPointer.time = GetTimeInMillis();
     ev.u.keyButtonPointer.rootX = x;
     ev.u.keyButtonPointer.rootY = y;
@@ -911,10 +900,6 @@ ProcessInputProc backupproc;
 
 	realMods = xkbi->device->key->modifierMap[ev.u.u.detail];
 	xkbi->device->key->modifierMap[ev.u.u.detail] = 0;
-        /* XXX: Bad! Since the switch to XI devices xkbi->device will be the
-         * XI device. Sending a core event through ProcessOtherEvent will
-         * cause trouble. Somebody should fix this. 
-         */
 	UNWRAP_PROCESS_INPUT_PROC(xkbi->device,xkbPrivPtr, backupproc);
 	xkbi->device->public.processInputProc(&ev,xkbi->device,1);
 	COND_WRAP_PROCESS_INPUT_PROC(xkbi->device, xkbPrivPtr,
@@ -957,10 +942,6 @@ ProcessInputProc backupproc;
 
 	realMods = xkbi->device->key->modifierMap[ev.u.u.detail];
 	xkbi->device->key->modifierMap[ev.u.u.detail] = 0;
-        /* XXX: Bad! Since the switch to XI devices xkbi->device will be the
-         * XI device. Sending a core event through ProcessOtherEvent will
-         * cause trouble. Somebody should fix this. 
-         */
 	UNWRAP_PROCESS_INPUT_PROC(xkbi->device,xkbPrivPtr, backupproc);
 	xkbi->device->public.processInputProc(&ev,xkbi->device,1);
 	COND_WRAP_PROCESS_INPUT_PROC(xkbi->device, xkbPrivPtr,
@@ -1040,12 +1021,13 @@ _XkbFilterDeviceBtn(	XkbSrvInfoPtr	xkbi,
 DeviceIntPtr	dev;
 int		button;
 
-    if (dev == inputInfo.keyboard)
+    if (xkbi->device == inputInfo.keyboard)
         return 0;
 
     if (filter->keycode==0) {		/* initial press */
-	dev= _XkbLookupButtonDevice(pAction->devbtn.device,NULL);
-	if ((!dev)||(!dev->public.on)||(&dev->public==LookupPointerDevice()))
+	_XkbLookupButtonDevice(&dev, pAction->devbtn.device, serverClient,
+			       DixUnknownAccess, &button);
+	if (!dev || !dev->public.on || dev == inputInfo.pointer)
 	    return 1;
 
 	button= pAction->devbtn.button;
@@ -1061,7 +1043,7 @@ int		button;
 	switch (pAction->type) {
 	    case XkbSA_LockDeviceBtn:
 		if ((pAction->devbtn.flags&XkbSA_LockNoLock)||
-		    (dev->button->down[button/8]&(1L<<(button%8))))
+		    BitIsOn(dev->button->down, button))
 		    return 0;
 		XkbDDXFakeDeviceButton(dev,True,button);
 		filter->upAction.type= XkbSA_NoAction;
@@ -1084,15 +1066,16 @@ int		button;
 	int	button;
 
 	filter->active= 0;
-	dev= _XkbLookupButtonDevice(filter->upAction.devbtn.device,NULL);
-	if ((!dev)||(!dev->public.on)||(&dev->public==LookupPointerDevice()))
+	_XkbLookupButtonDevice(&dev, filter->upAction.devbtn.device,
+			       serverClient, DixUnknownAccess, &button);
+	if (!dev || !dev->public.on || dev == inputInfo.pointer)
 	    return 1;
 
 	button= filter->upAction.btn.button;
 	switch (filter->upAction.type) {
 	    case XkbSA_LockDeviceBtn:
 		if ((filter->upAction.devbtn.flags&XkbSA_LockNoUnlock)||
-		    ((dev->button->down[button/8]&(1L<<(button%8)))==0))
+		    !BitIsOn(dev->button->down, button))
 		    return 0;
 		XkbDDXFakeDeviceButton(dev,False,button);
 		break;
@@ -1151,7 +1134,7 @@ void
 XkbHandleActions(DeviceIntPtr dev,DeviceIntPtr kbd,xEvent *xE,int count)
 {
 int		key,bit,i;
-CARD8		realMods;
+CARD8		realMods = 0;
 XkbSrvInfoPtr	xkbi;
 KeyClassPtr	keyc;
 int		changed,sendEvent;
@@ -1288,14 +1271,17 @@ xkbDeviceInfoPtr xkbPrivPtr = XKBDEVICEINFO(dev);
     }
 
     if (sendEvent) {
+        DeviceIntPtr tmpdev;
 	if (keyEvent) {
 	    realMods = keyc->modifierMap[key];
 	    keyc->modifierMap[key] = 0;
-        }
+            tmpdev = dev;
+        } else
+            tmpdev = GetPairedDevice(dev);
 
-        UNWRAP_PROCESS_INPUT_PROC(dev,xkbPrivPtr, backupproc);
-        dev->public.processInputProc(xE,dev,count);
-        COND_WRAP_PROCESS_INPUT_PROC(dev, xkbPrivPtr,
+        UNWRAP_PROCESS_INPUT_PROC(tmpdev,xkbPrivPtr, backupproc);
+        dev->public.processInputProc(xE,tmpdev,count);
+        COND_WRAP_PROCESS_INPUT_PROC(tmpdev, xkbPrivPtr,
                                      backupproc,xkbUnwrapProc);
         if (keyEvent)
 	    keyc->modifierMap[key] = realMods;

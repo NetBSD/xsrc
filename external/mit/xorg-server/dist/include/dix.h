@@ -51,6 +51,9 @@ SOFTWARE.
 #include "gc.h"
 #include "window.h"
 #include "input.h"
+#include "cursor.h"
+#include "geext.h"
+#include <X11/extensions/XI.h>
 
 #define EARLIER -1
 #define SAMETIME 0
@@ -58,7 +61,7 @@ SOFTWARE.
 
 #define NullClient ((ClientPtr) 0)
 #define REQUEST(type) \
-	register type *stuff = (type *)client->requestBuffer
+	type *stuff = (type *)client->requestBuffer
 
 
 #define REQUEST_SIZE_MATCH(req)\
@@ -81,29 +84,16 @@ SOFTWARE.
         return(BadIDChoice);\
     }
 
-#define VALIDATE_DRAWABLE_AND_GC(drawID, pDraw, pGC, client)\
-    if ((stuff->gc == INVALID) || (client->lastGCID != stuff->gc) ||\
-	(client->lastDrawableID != drawID))\
+#define VALIDATE_DRAWABLE_AND_GC(drawID, pDraw, mode)\
     {\
-	int rc;\
-	rc = dixLookupDrawable(&(pDraw), drawID, client, M_ANY,\
-			       DixWriteAccess);\
+	int rc = dixLookupDrawable(&(pDraw), drawID, client, M_ANY, mode);\
 	if (rc != Success)\
 	    return rc;\
-	rc = dixLookupGC(&(pGC), stuff->gc, client, DixReadAccess);\
+	rc = dixLookupGC(&(pGC), stuff->gc, client, DixUseAccess);\
 	if (rc != Success)\
 	    return rc;\
 	if ((pGC->depth != pDraw->depth) || (pGC->pScreen != pDraw->pScreen))\
 	    return (BadMatch);\
-	client->lastDrawable = pDraw;\
-	client->lastDrawableID = drawID;\
-	client->lastGC = pGC;\
-	client->lastGCID = stuff->gc;\
-    }\
-    else\
-    {\
-        pGC = client->lastGC;\
-        pDraw = client->lastDrawable;\
     }\
     if (pGC->serialNumber != pDraw->serialNumber)\
 	ValidateGC(pDraw, pGC);
@@ -129,8 +119,7 @@ typedef struct _Client *ClientPtr; /* also in misc.h */
 
 typedef struct _WorkQueue	*WorkQueuePtr;
 
-extern ClientPtr requestingClient;
-extern ClientPtr *clients;
+extern ClientPtr clients[MAXCLIENTS];
 extern ClientPtr serverClient;
 extern int currentMaxClients;
 extern char dispatchExceptionAtReset;
@@ -158,10 +147,6 @@ extern void UpdateCurrentTime(void);
 
 extern void UpdateCurrentTimeIf(void);
 
-extern void InitSelections(void);
-
-extern void FlushClientCaches(XID /*id*/);
-
 extern int dixDestroyPixmap(
     pointer /*value*/,
     XID /*pid*/);
@@ -181,19 +166,10 @@ extern void SendErrorToClient(
     XID /*resId*/,
     int /*errorCode*/);
 
-extern void DeleteWindowFromAnySelections(
-    WindowPtr /*pWin*/);
-
 extern void MarkClientException(
     ClientPtr /*client*/);
 
-extern int SendConnSetup(
-    ClientPtr /*client*/,
-    char* /*reason*/);
-
-#if defined(DDXBEFORERESET)
 extern void ddxBeforeReset (void);
-#endif
 
 /* dixutils.c */
 
@@ -233,17 +209,6 @@ extern int dixLookupClient(
     ClientPtr client,
     Mask access_mode);
 
-/*
- * These are deprecated compatibility functions and will be removed soon!
- * Please use the new dixLookup*() functions above.
- */
-extern WindowPtr SecurityLookupWindow(XID, ClientPtr, Mask);
-extern WindowPtr LookupWindow(XID, ClientPtr);
-extern pointer SecurityLookupDrawable(XID, ClientPtr, Mask);
-extern pointer LookupDrawable(XID, ClientPtr);
-extern ClientPtr LookupClient(XID, ClientPtr);
-/* end deprecated functions */
-
 extern void NoopDDA(void);
 
 extern int AlterSaveSetForClient(
@@ -251,7 +216,7 @@ extern int AlterSaveSetForClient(
     WindowPtr /*pWin*/,
     unsigned /*mode*/,
     Bool /*toRoot*/,
-    Bool /*remap*/);
+    Bool /*map*/);
   
 extern void DeleteWindowFromAnySaveSet(
     WindowPtr /*pWin*/);
@@ -342,17 +307,23 @@ extern void SetVendorString(char *string);
 /* events.c */
 
 extern void SetMaskForEvent(
+    int /* deviceid */,
     Mask /* mask */,
     int /* event */);
 
+extern void ConfineToShape(
+    DeviceIntPtr /* pDev */, 
+    RegionPtr /* shape */, 
+    int*      /* px */,
+    int*      /* py */);
 
 extern Bool IsParent(
     WindowPtr /* maybeparent */,
     WindowPtr /* child */);
 
-extern WindowPtr GetCurrentRootWindow(void);
+extern WindowPtr GetCurrentRootWindow(DeviceIntPtr pDev);
 
-extern WindowPtr GetSpriteWindow(void);
+extern WindowPtr GetSpriteWindow(DeviceIntPtr pDev);
 
 
 extern void NoticeEventTime(xEventPtr /* xE */);
@@ -361,13 +332,6 @@ extern void EnqueueEvent(
     xEventPtr /* xE */,
     DeviceIntPtr /* device */,
     int	/* count */);
-
-extern void ComputeFreezes(void);
-
-extern void CheckGrabForSyncs(
-    DeviceIntPtr /* dev */,
-    Bool /* thisMode */,
-    Bool /* otherMode */);
 
 extern void ActivatePointerGrab(
     DeviceIntPtr /* mouse */,
@@ -391,12 +355,14 @@ extern void AllowSome(
     ClientPtr	/* client */,
     TimeStamp /* time */,
     DeviceIntPtr /* thisDev */,
-    int /* newState */);
+    int /* newState */,
+    Bool /* core */);
 
 extern void ReleaseActiveGrabs(
     ClientPtr client);
 
 extern int DeliverEventsToWindow(
+    DeviceIntPtr /* pWin */,
     WindowPtr /* pWin */,
     xEventPtr /* pEvents */,
     int /* count */,
@@ -414,6 +380,18 @@ extern int DeliverDeviceEvents(
 
 extern void DefineInitialRootWindow(
     WindowPtr /* win */);
+
+extern void SetupSprite(
+    DeviceIntPtr /* pDev */,
+    ScreenPtr    /* pScreen */);
+
+extern void InitializeSprite(
+    DeviceIntPtr /* pDev */,
+    WindowPtr    /* pWin */);
+
+extern void UpdateSpriteForScreen(
+    DeviceIntPtr /* pDev */,
+    ScreenPtr /* pScreen */);
 
 extern void WindowHasNewCursor(
     WindowPtr /* pWin */);
@@ -472,9 +450,14 @@ extern int GrabDevice(
     unsigned /* ownerEvents */,
     Time /* ctime */,
     Mask /* mask */,
-    CARD8 * /* status */);
+    CARD8 * /* status */,
+    Bool /* coreGrab */);
 
 extern void InitEvents(void);
+extern void InitSprite(
+        DeviceIntPtr /* pDev */, 
+        Bool /* hasCursor */
+        );
 
 extern void CloseDownEvents(void);
 
@@ -495,6 +478,10 @@ extern int DeliverEvents(
     int /*count*/,
     WindowPtr /*otherParent*/);
 
+extern Bool
+CheckMotion(
+    xEvent* /* xE */, 
+    DeviceIntPtr /* pDev */);
 
 extern void WriteEventsToClient(
     ClientPtr /*pClient*/,
@@ -503,6 +490,7 @@ extern void WriteEventsToClient(
 
 extern int TryClientEvents(
     ClientPtr /*client*/,
+    DeviceIntPtr /* device */,
     xEventPtr /*pEvents*/,
     int /*count*/,
     Mask /*mask*/,
@@ -510,6 +498,22 @@ extern int TryClientEvents(
     GrabPtr /*grab*/);
 
 extern void WindowsRestructured(void);
+
+extern Bool SetClientPointer(
+        ClientPtr /* client */, 
+        ClientPtr /* setter */, 
+        DeviceIntPtr /* device */);
+
+extern DeviceIntPtr PickPointer(
+    ClientPtr /* client */);
+
+extern DeviceIntPtr PickKeyboard(
+    ClientPtr /* client */);
+
+extern Bool IsInterferingGrab(
+        ClientPtr /* client */,
+        DeviceIntPtr /* dev */,
+        xEvent* /* events */);
 
 #ifdef PANORAMIX
 extern void ReinitializeRootWindow(WindowPtr win, int xoff, int yoff);
@@ -519,14 +523,6 @@ extern void ReinitializeRootWindow(WindowPtr win, int xoff, int yoff);
 void
 ScreenRestructured (ScreenPtr pScreen);
 #endif
-
-extern void ResetClientPrivates(void);
-
-extern int AllocateClientPrivateIndex(void);
-
-extern Bool AllocateClientPrivate(
-    int /*index*/,
-    unsigned /*amount*/);
 
 extern int ffs(int i);
 
@@ -541,25 +537,6 @@ typedef struct _CallbackList *CallbackListPtr; /* also in misc.h */
 
 typedef void (*CallbackProcPtr) (
     CallbackListPtr *, pointer, pointer);
-
-typedef Bool (*AddCallbackProcPtr) (
-    CallbackListPtr *, CallbackProcPtr, pointer);
-
-typedef Bool (*DeleteCallbackProcPtr) (
-    CallbackListPtr *, CallbackProcPtr, pointer);
-
-typedef void (*CallCallbacksProcPtr) (
-    CallbackListPtr *, pointer);
-
-typedef void (*DeleteCallbackListProcPtr) (
-    CallbackListPtr *);
-
-typedef struct _CallbackProcs {
-    AddCallbackProcPtr		AddCallback;
-    DeleteCallbackProcPtr	DeleteCallback;
-    CallCallbacksProcPtr	CallCallbacks;
-    DeleteCallbackListProcPtr	DeleteCallbackList;
-} CallbackFuncsRec, *CallbackFuncsPtr;
 
 extern Bool AddCallback(
     CallbackListPtr * /*pcbl*/,
@@ -617,27 +594,52 @@ typedef struct {
     int count;
 } DeviceEventInfoRec;
 
+extern int XItoCoreType(int xi_type);
+extern Bool DevHasCursor(DeviceIntPtr pDev);
+extern Bool IsPointerDevice( DeviceIntPtr dev);
+extern Bool IsKeyboardDevice(DeviceIntPtr dev);
+extern Bool IsPointerEvent(xEvent* xE);
+
 /*
- * SelectionCallback stuff
+ * These are deprecated compatibility functions and will be removed soon!
+ * Please use the noted replacements instead.
  */
+/* replaced by dixLookupWindow */
+extern WindowPtr SecurityLookupWindow(
+    XID id,
+    ClientPtr client,
+    Mask access_mode);
+/* replaced by dixLookupWindow */
+extern WindowPtr LookupWindow(
+    XID id,
+    ClientPtr client);
 
-extern CallbackListPtr SelectionCallback;
+/* replaced by dixLookupDrawable */
+extern pointer SecurityLookupDrawable(
+    XID id,
+    ClientPtr client,
+    Mask access_mode);
 
-typedef enum {
-    SelectionSetOwner,
-    SelectionWindowDestroy,
-    SelectionClientClose
-} SelectionCallbackKind;
+/* replaced by dixLookupDrawable */
+extern pointer LookupDrawable(
+    XID id,
+    ClientPtr client);
 
-typedef struct {
-    struct _Selection	    *selection;
-    SelectionCallbackKind   kind;
-} SelectionInfoRec;
+/* replaced by dixLookupClient */
+extern ClientPtr LookupClient(
+    XID id,
+    ClientPtr client);
 
-/* strcasecmp.c */
-#if NEED_STRCASECMP
-#define strcasecmp xstrcasecmp
-extern int xstrcasecmp(char *s1, char *s2);
-#endif
-
+/* GE stuff */
+extern void SetGenericFilter(int extension, Mask* filters);
+extern int ExtGrabDevice(ClientPtr client,
+                         DeviceIntPtr dev,
+                         int device_mode,
+                         WindowPtr grabWindow,
+                         WindowPtr confineTo,
+                         TimeStamp ctime,
+                         Bool ownerEvents,
+                         CursorPtr cursor, 
+                         Mask xi_mask,
+                         GenericMaskPtr ge_masks);
 #endif /* DIX_H */

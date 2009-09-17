@@ -53,9 +53,7 @@ Author:  Bob Scheifler, MIT X Consortium
 #define Dcos(d)	cos((double)d*(M_PI/11520.0))
 
 _X_EXPORT void
-miFillArcSetup(arc, info)
-    xArc *arc;
-    miFillArcRec *info;
+miFillArcSetup(xArc *arc, miFillArcRec *info)
 {
     info->y = arc->height >> 1;
     info->dy = arc->height & 1;
@@ -307,10 +305,7 @@ miGetPieEdge(
 }
 
 _X_EXPORT void
-miFillArcSliceSetup(arc, slice, pGC)
-    xArc *arc;
-    miArcSliceRec *slice;
-    GCPtr pGC;
+miFillArcSliceSetup(xArc *arc, miArcSliceRec *slice, GCPtr pGC)
 {
     int angle1, angle2;
 
@@ -551,13 +546,13 @@ miFillEllipseI(
     int *widths;
     int *wids;
 
-    points = (DDXPointPtr)ALLOCATE_LOCAL(sizeof(DDXPointRec) * arc->height);
+    points = (DDXPointPtr)xalloc(sizeof(DDXPointRec) * arc->height);
     if (!points)
 	return;
-    widths = (int *)ALLOCATE_LOCAL(sizeof(int) * arc->height);
+    widths = (int *)xalloc(sizeof(int) * arc->height);
     if (!widths)
     {
-	DEALLOCATE_LOCAL(points);
+	xfree(points);
 	return;
     }
     miFillArcSetup(arc, &info);
@@ -575,8 +570,8 @@ miFillEllipseI(
 	ADDSPANS();
     }
     (*pGC->ops->FillSpans)(pDraw, pGC, pts - points, points, widths, FALSE);
-    DEALLOCATE_LOCAL(widths);
-    DEALLOCATE_LOCAL(points);
+    xfree(widths);
+    xfree(points);
 }
 
 static void
@@ -594,13 +589,13 @@ miFillEllipseD(
     int *widths;
     int *wids;
 
-    points = (DDXPointPtr)ALLOCATE_LOCAL(sizeof(DDXPointRec) * arc->height);
+    points = (DDXPointPtr)xalloc(sizeof(DDXPointRec) * arc->height);
     if (!points)
 	return;
-    widths = (int *)ALLOCATE_LOCAL(sizeof(int) * arc->height);
+    widths = (int *)xalloc(sizeof(int) * arc->height);
     if (!widths)
     {
-	DEALLOCATE_LOCAL(points);
+	xfree(points);
 	return;
     }
     miFillArcDSetup(arc, &info);
@@ -618,8 +613,8 @@ miFillEllipseD(
 	ADDSPANS();
     }
     (*pGC->ops->FillSpans)(pDraw, pGC, pts - points, points, widths, FALSE);
-    DEALLOCATE_LOCAL(widths);
-    DEALLOCATE_LOCAL(points);
+    xfree(widths);
+    xfree(points);
 }
 
 #define ADDSPAN(l,r) \
@@ -666,13 +661,13 @@ miFillArcSliceI(
     slw = arc->height;
     if (slice.flip_top || slice.flip_bot)
 	slw += (arc->height >> 1) + 1;
-    points = (DDXPointPtr)ALLOCATE_LOCAL(sizeof(DDXPointRec) * slw);
+    points = (DDXPointPtr)xalloc(sizeof(DDXPointRec) * slw);
     if (!points)
 	return;
-    widths = (int *)ALLOCATE_LOCAL(sizeof(int) * slw);
+    widths = (int *)xalloc(sizeof(int) * slw);
     if (!widths)
     {
-	DEALLOCATE_LOCAL(points);
+	xfree(points);
 	return;
     }
     if (pGC->miTranslate)
@@ -703,8 +698,8 @@ miFillArcSliceI(
 	}
     }
     (*pGC->ops->FillSpans)(pDraw, pGC, pts - points, points, widths, FALSE);
-    DEALLOCATE_LOCAL(widths);
-    DEALLOCATE_LOCAL(points);
+    xfree(widths);
+    xfree(points);
 }
 
 static void
@@ -730,13 +725,13 @@ miFillArcSliceD(
     slw = arc->height;
     if (slice.flip_top || slice.flip_bot)
 	slw += (arc->height >> 1) + 1;
-    points = (DDXPointPtr)ALLOCATE_LOCAL(sizeof(DDXPointRec) * slw);
+    points = (DDXPointPtr)xalloc(sizeof(DDXPointRec) * slw);
     if (!points)
 	return;
-    widths = (int *)ALLOCATE_LOCAL(sizeof(int) * slw);
+    widths = (int *)xalloc(sizeof(int) * slw);
     if (!widths)
     {
-	DEALLOCATE_LOCAL(points);
+	xfree(points);
 	return;
     }
     if (pGC->miTranslate)
@@ -767,8 +762,8 @@ miFillArcSliceD(
 	}
     }
     (*pGC->ops->FillSpans)(pDraw, pGC, pts - points, points, widths, FALSE);
-    DEALLOCATE_LOCAL(widths);
-    DEALLOCATE_LOCAL(points);
+    xfree(widths);
+    xfree(points);
 }
 
 /* MIPOLYFILLARC -- The public entry for the PolyFillArc request.
@@ -776,11 +771,7 @@ miFillArcSliceD(
  * fill each arc as it comes.
  */
 _X_EXPORT void
-miPolyFillArc(pDraw, pGC, narcs, parcs)
-    DrawablePtr	pDraw;
-    GCPtr	pGC;
-    int		narcs;
-    xArc	*parcs;
+miPolyFillArc(DrawablePtr pDraw, GCPtr pGC, int narcs, xArc *parcs)
 {
     int i;
     xArc *arc;
@@ -788,7 +779,7 @@ miPolyFillArc(pDraw, pGC, narcs, parcs)
     for(i = narcs, arc = parcs; --i >= 0; arc++)
     {
 	if (miFillArcEmpty(arc))
-	    continue;;
+	    continue;
 	if ((arc->angle2 >= FULLCIRCLE) || (arc->angle2 <= -FULLCIRCLE))
 	{
 	    if (miCanFillArc(arc))

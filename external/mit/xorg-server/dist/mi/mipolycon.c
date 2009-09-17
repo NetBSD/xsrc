@@ -71,12 +71,13 @@ static int getPolyYBounds(DDXPointPtr pts, int n, int *by, int *ty);
  *     For a derivation of the algorithm, see the author of
  *     this code.
  */
-_X_EXPORT Bool
-miFillConvexPoly(dst, pgc, count, ptsIn)
-    DrawablePtr dst;
-    GCPtr	pgc;
-    int		count;                /* number of points        */
-    DDXPointPtr ptsIn;                /* the points              */
+Bool
+miFillConvexPoly(
+    DrawablePtr dst,
+    GCPtr	pgc,
+    int		count,                /* number of points        */
+    DDXPointPtr ptsIn                 /* the points              */
+    )
 {
     int xl = 0, xr = 0; /* x vals of left and right edges */
     int dl = 0, dr = 0; /* decision variables             */
@@ -104,12 +105,12 @@ miFillConvexPoly(dst, pgc, count, ptsIn)
     dy = ymax - ymin + 1;
     if ((count < 3) || (dy < 0))
 	return(TRUE);
-    ptsOut = FirstPoint = (DDXPointPtr )ALLOCATE_LOCAL(sizeof(DDXPointRec)*dy);
-    width = FirstWidth = (int *)ALLOCATE_LOCAL(sizeof(int) * dy);
+    ptsOut = FirstPoint = (DDXPointPtr )xalloc(sizeof(DDXPointRec)*dy);
+    width = FirstWidth = (int *)xalloc(sizeof(int) * dy);
     if(!FirstPoint || !FirstWidth)
     {
-	if (FirstWidth) DEALLOCATE_LOCAL(FirstWidth);
-	if (FirstPoint) DEALLOCATE_LOCAL(FirstPoint);
+	if (FirstWidth) xfree(FirstWidth);
+	if (FirstPoint) xfree(FirstPoint);
 	return(FALSE);
     }
 
@@ -174,8 +175,8 @@ miFillConvexPoly(dst, pgc, count, ptsIn)
 	/* in case we're called with non-convex polygon */
 	if(i < 0)
         {
-	    DEALLOCATE_LOCAL(FirstWidth);
-	    DEALLOCATE_LOCAL(FirstPoint);
+	    xfree(FirstWidth);
+	    xfree(FirstPoint);
 	    return(TRUE);
 	}
         while (i-- > 0) 
@@ -209,8 +210,8 @@ miFillConvexPoly(dst, pgc, count, ptsIn)
     (*pgc->ops->FillSpans)(dst, pgc, 
 		      ptsOut-FirstPoint,FirstPoint,FirstWidth,
 		      1);
-    DEALLOCATE_LOCAL(FirstWidth);
-    DEALLOCATE_LOCAL(FirstPoint);
+    xfree(FirstWidth);
+    xfree(FirstPoint);
     return(TRUE);
 }
 

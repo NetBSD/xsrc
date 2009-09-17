@@ -1,4 +1,3 @@
-
 /*
  * Copyright (c) 1997-2003 by The XFree86 Project, Inc.
  *
@@ -39,6 +38,9 @@
 #include <xorg-config.h>
 #endif
 
+#include <pciaccess.h>
+#include "Pci.h"
+
 #include <X11/X.h>
 #include "os.h"
 #include "servermd.h"
@@ -58,7 +60,6 @@
 #include "mivalidate.h"
 #include "xf86RAC.h"
 #include "xf86Bus.h"
-#include "xf86Version.h"
 
 /* For xf86GetClocks */
 #if defined(CSRG_BASED) || defined(__GNU__)
@@ -167,36 +168,16 @@ xf86LookupInput(const char *name)
     return NULL;
 }
 
+/* ABI stubs of despair */
 _X_EXPORT void
-xf86AddModuleInfo(ModuleInfoPtr info, pointer module)
+xf86AddModuleInfo(pointer info, pointer module)
 {
-    /* Don't add null entries */
-    if (!module)
-	return;
-
-    if (xf86ModuleInfoList == NULL)
-	xf86NumModuleInfos = 0;
-
-    xf86NumModuleInfos++;
-    xf86ModuleInfoList = xnfrealloc(xf86ModuleInfoList,
-				    xf86NumModuleInfos * sizeof(ModuleInfoPtr));
-    xf86ModuleInfoList[xf86NumModuleInfos - 1] = xnfalloc(sizeof(ModuleInfoRec));
-    *xf86ModuleInfoList[xf86NumModuleInfos - 1] = *info;
-    xf86ModuleInfoList[xf86NumModuleInfos - 1]->module = module;
-    xf86ModuleInfoList[xf86NumModuleInfos - 1]->refCount = 0;
 }
 
 _X_EXPORT void
 xf86DeleteModuleInfo(int idx)
 {
-    if (xf86ModuleInfoList[idx]) {
-	if (xf86ModuleInfoList[idx]->module)
-	    UnloadModule(xf86ModuleInfoList[idx]->module);
-	xfree(xf86ModuleInfoList[idx]);
-	xf86ModuleInfoList[idx] = NULL;
-    }
 }
-
 
 /* Allocate a new ScrnInfoRec in xf86Screens */
 
@@ -326,12 +307,11 @@ xf86AllocateScrnInfoPrivateIndex(void)
     return idx;
 }
 
-/* Allocate a new InputInfoRec and add it to the head xf86InputDevs. */
-
+/* Allocate a new InputInfoRec and append it to the tail of xf86InputDevs. */
 _X_EXPORT InputInfoPtr
 xf86AllocateInput(InputDriverPtr drv, int flags)
 {
-    InputInfoPtr new;
+    InputInfoPtr new, *prev = NULL;
 
     if (!(new = xcalloc(sizeof(InputInfoRec), 1)))
 	return NULL;
@@ -339,8 +319,13 @@ xf86AllocateInput(InputDriverPtr drv, int flags)
     new->drv = drv;
     drv->refCount++;
     new->module = DuplicateModule(drv->module, NULL);
-    new->next = xf86InputDevs;
-    xf86InputDevs = new;
+
+    for (prev = &xf86InputDevs; *prev; prev = &(*prev)->next)
+        ;
+
+    *prev = new;
+    new->next = NULL;
+
     return new;
 }
 
@@ -371,11 +356,11 @@ xf86DeleteInput(InputInfoPtr pInp, int flags)
     if (pInp->drv)
 	pInp->drv->refCount--;
 
-    /* This should *really* be handled in drv->UnInit(dev) call instead */
-#if 0
+    /* This should *really* be handled in drv->UnInit(dev) call instead, but
+     * if the driver forgets about it make sure we free it or at least crash
+     * with flying colors */
     if (pInp->private)
 	xfree(pInp->private);
-#endif
 
     /* Remove the entry from the list. */
     if (pInp == xf86InputDevs)
@@ -462,10 +447,6 @@ xf86AddPixFormat(ScrnInfoPtr pScrn, int depth, int bpp, int pad)
 #define GLOBAL_DEFAULT_DEPTH 24
 #endif
 
-#ifndef GLOBAL_DEFAULT_FBBPP
-#define GLOBAL_DEFAULT_FBBPP 32
-#endif
-
 _X_EXPORT Bool
 xf86SetDepthBpp(ScrnInfoPtr scrp, int depth, int dummy, int fbbpp,
 		int depth24flags)
@@ -543,7 +524,6 @@ xf86SetDepthBpp(ScrnInfoPtr scrp, int depth, int dummy, int fbbpp,
 	    if (depth > 0)
 		scrp->depth = depth;
 	} else {
-	    scrp->bitsPerPixel = GLOBAL_DEFAULT_FBBPP;
 	    scrp->depth = GLOBAL_DEFAULT_DEPTH;
 	}
     }
@@ -1111,10 +1091,6 @@ xf86SetRootClip (ScreenPtr pScreen, Bool enable)
     WindowPtr	pChild;
     Bool	WasViewable = (Bool)(pWin->viewable);
     Bool	anyMarked = FALSE;
-    RegionPtr	pOldClip = NULL, bsExposed;
-#ifdef DO_SAVE_UNDERS
-    Bool	dosave = FALSE;
-#endif
     WindowPtr   pLayerWin;
     BoxRec	box;
 
@@ -1172,12 +1148,6 @@ xf86SetRootClip (ScreenPtr pScreen, Bool enable)
 
     if (WasViewable)
     {
-	if (pWin->backStorage)
-	{
-	    pOldClip = REGION_CREATE(pScreen, NullBox, 1);
-	    REGION_COPY(pScreen, pOldClip, &pWin->clipList);
-	}
-
 	if (pWin->firstChild)
 	{
 	    anyMarked |= (*pScreen->MarkOverlappedWindows)(pWin->firstChild,
@@ -1190,47 +1160,15 @@ xf86SetRootClip (ScreenPtr pScreen, Bool enable)
 	    anyMarked = TRUE;
 	}
 
-#ifdef DO_SAVE_UNDERS
-	if (DO_SAVE_UNDERS(pWin))
-	{
-	    dosave = (*pScreen->ChangeSaveUnder)(pLayerWin, pLayerWin);
-	}
-#endif /* DO_SAVE_UNDERS */
 
 	if (anyMarked)
 	    (*pScreen->ValidateTree)(pWin, NullWindow, VTOther);
     }
 
-    if (pWin->backStorage &&
-	((pWin->backingStore == Always) || WasViewable))
-    {
-	if (!WasViewable)
-	    pOldClip = &pWin->clipList; /* a convenient empty region */
-	bsExposed = (*pScreen->TranslateBackingStore)
-			     (pWin, 0, 0, pOldClip,
-			      pWin->drawable.x, pWin->drawable.y);
-	if (WasViewable)
-	    REGION_DESTROY(pScreen, pOldClip);
-	if (bsExposed)
-	{
-	    RegionPtr	valExposed = NullRegion;
-
-	    if (pWin->valdata)
-		valExposed = &pWin->valdata->after.exposed;
-	    (*pScreen->WindowExposures) (pWin, valExposed, bsExposed);
-	    if (valExposed)
-		REGION_EMPTY(pScreen, valExposed);
-	    REGION_DESTROY(pScreen, bsExposed);
-	}
-    }
     if (WasViewable)
     {
 	if (anyMarked)
 	    (*pScreen->HandleExposures)(pWin);
-#ifdef DO_SAVE_UNDERS
-	if (dosave)
-	    (*pScreen->PostChangeSaveUnder)(pLayerWin, pLayerWin);
-#endif /* DO_SAVE_UNDERS */
 	if (anyMarked && pScreen->PostValidateTree)
 	    (*pScreen->PostValidateTree)(pWin, NullWindow, VTOther);
     }
@@ -1399,7 +1337,7 @@ xf86ErrorF(const char *format, ...)
 void
 xf86LogInit()
 {
-    char *lf;
+    char *lf = NULL;
 
 #define LOGSUFFIX ".log"
 #define LOGOLDSUFFIX ".old"
@@ -1423,6 +1361,8 @@ xf86LogInit()
 
 #undef LOGSUFFIX
 #undef LOGOLDSUFFIX
+
+    free(lf);
 }
 
 void
@@ -1517,9 +1457,6 @@ xf86PrintChipsets(const char *drvname, const char *drvmsg, SymTabPtr chips)
 }
 
 
-#define MAXDRIVERS 64	/* A >hack<, to be sure ... */
-
-
 _X_EXPORT int
 xf86MatchDevice(const char *drivername, GDevPtr **sectlist)
 {
@@ -1529,6 +1466,8 @@ xf86MatchDevice(const char *drivername, GDevPtr **sectlist)
 
     if (sectlist)
 	*sectlist = NULL;
+
+    if (xf86DoModalias) return 0;
 
     if (xf86DoProbe) return 1;
 
@@ -1594,8 +1533,23 @@ xf86MatchDevice(const char *drivername, GDevPtr **sectlist)
     return i;
 }
 
+static Bool
+pciDeviceHasBars(struct pci_device *pci)
+{
+    int i;
+
+    for (i = 0; i < 6; i++)
+	if (pci->regions[i].size)
+	    return TRUE;
+
+    if (pci->rom_size)
+	return TRUE;
+
+    return FALSE;
+}
+
 struct Inst {
-    pciVideoPtr	pci;
+    struct pci_device *	pci;
     GDevPtr		dev;
     Bool		foundHW;  /* PCIid in list of supported chipsets */
     Bool		claimed;  /* BusID matches with a device section */
@@ -1643,7 +1597,8 @@ xf86MatchPciInstances(const char *driverName, int vendorID,
 		      int **foundEntities)
 {
     int i,j;
-    pciVideoPtr pPci, *ppPci;
+    struct pci_device * pPci;
+    struct pci_device_iterator *iter;
     struct Inst *instances = NULL;
     int numClaimedInstances = 0;
     int allocatedInstances = 0;
@@ -1654,8 +1609,6 @@ xf86MatchPciInstances(const char *driverName, int vendorID,
 
     *foundEntities = NULL;
 
-    if (!xf86PciVideoInfo)
-	return 0;
 
     /* Each PCI device will contribute at least one entry.  Each device
      * section can contribute at most one entry.  The sum of the two is
@@ -1665,20 +1618,21 @@ xf86MatchPciInstances(const char *driverName, int vendorID,
      */
     if ( !xf86DoProbe && !(xf86DoConfigure && xf86DoConfigurePass1) ) {
 	unsigned max_entries = numDevs;
-	for (ppPci = xf86PciVideoInfo ; *ppPci != NULL ; ppPci++) {
+
+	iter = pci_slot_match_iterator_create(NULL);
+	while ((pPci = pci_device_next(iter)) != NULL) {
 	    max_entries++;
 	}
 
-	instances = xnfalloc( max_entries * sizeof(struct Inst) );
+	pci_iterator_destroy(iter);
+	instances = xnfalloc(max_entries * sizeof(struct Inst));
     }
 
-    for (ppPci = xf86PciVideoInfo; *ppPci != NULL; ppPci++) {
-	unsigned device_class = ((*ppPci)->class << 16)
-	    | ((*ppPci)->subclass << 8) | ((*ppPci)->interface);
+    iter = pci_slot_match_iterator_create(NULL);
+    while ((pPci = pci_device_next(iter)) != NULL) {
+	unsigned device_class = pPci->device_class;
 	Bool foundVendor = FALSE;
 
-
-	pPci = *ppPci;
 
 	/* Convert the pre-PCI 2.0 device class for a VGA adapter to the
 	 * 2.0 version of the same class.
@@ -1704,19 +1658,21 @@ xf86MatchPciInstances(const char *driverName, int vendorID,
 	    const unsigned device_id = (id->PCIid & 0x0000FFFF);
 	    const unsigned match_class = 0x00030000 | id->PCIid;
 
-	    if ( (vendor_id == pPci->vendor)
-		 || ((vendorID == PCI_VENDOR_GENERIC) && (match_class == device_class)) ) {
-		if ( !foundVendor && (instances != NULL) ) {
+	    if ((vendor_id == pPci->vendor_id)
+		|| ((vendorID == PCI_VENDOR_GENERIC) && (match_class == device_class))) {
+		if (!foundVendor && (instances != NULL)) {
 		    ++allocatedInstances;
-		    instances[allocatedInstances - 1].pci = *ppPci;
+		    instances[allocatedInstances - 1].pci = pPci;
 		    instances[allocatedInstances - 1].dev = NULL;
 		    instances[allocatedInstances - 1].claimed = FALSE;
 		    instances[allocatedInstances - 1].foundHW = FALSE;
 		    instances[allocatedInstances - 1].screen = 0;
-		    foundVendor = TRUE;
 		}
-		if ( (device_id == pPci->chipType)
-		     || ((vendorID == PCI_VENDOR_GENERIC)
+
+		foundVendor = TRUE;
+
+		if ( (device_id == pPci->device_id)
+		     || ((vendorID == PCI_VENDOR_GENERIC) 
 			 && (match_class == device_class)) ) {
 		    if ( instances != NULL ) {
 			instances[allocatedInstances - 1].foundHW = TRUE;
@@ -1725,11 +1681,10 @@ xf86MatchPciInstances(const char *driverName, int vendorID,
 
 
 		    if ( xf86DoConfigure && xf86DoConfigurePass1 ) {
-			if ( xf86CheckPciSlot(pPci->bus, pPci->device,
-					      pPci->func) ) {
-			    GDevPtr pGDev =
-			      xf86AddDeviceToConfigure( drvp->driverName,
-							pPci, -1 );
+			if (xf86CheckPciSlot(pPci)) {
+			    GDevPtr pGDev = 
+			      xf86AddBusDeviceToConfigure(drvp->driverName,
+							  BUS_PCI, pPci, -1);
 			    if (pGDev) {
 				/* After configure pass 1, chipID and chipRev
 				 * are treated as over-rides, so clobber them
@@ -1751,6 +1706,8 @@ xf86MatchPciInstances(const char *driverName, int vendorID,
 	    }
 	}
     }
+
+    pci_iterator_destroy(iter);
 
 
     /* In "probe only" or "configure" mode (signaled by instances being NULL),
@@ -1789,8 +1746,9 @@ xf86MatchPciInstances(const char *driverName, int vendorID,
 	    && *devList[j]->busID) {
 	    for (i = 0; i < allocatedInstances; i++) {
 	        pPci = instances[i].pci;
-	        if (xf86ComparePciBusString(devList[j]->busID, pPci->bus,
-					    pPci->device,
+	        if (xf86ComparePciBusString(devList[j]->busID, 
+					    PCI_MAKE_BUS( pPci->domain, pPci->bus ),
+					    pPci->dev,
 					    pPci->func)) {
 		    allocatedInstances++;
 		    instances[allocatedInstances - 1] = instances[i];
@@ -1810,9 +1768,10 @@ xf86MatchPciInstances(const char *driverName, int vendorID,
 	pPci = instances[i].pci;
 	for (j = 0; j < numDevs; j++) {
 	    if (devList[j]->busID && *devList[j]->busID) {
-		if (xf86ComparePciBusString(devList[j]->busID, pPci->bus,
-					   pPci->device,
-					   pPci->func) &&
+		if (xf86ComparePciBusString(devList[j]->busID, 
+					    PCI_MAKE_BUS( pPci->domain, pPci->bus ),
+					    pPci->dev,
+					    pPci->func) &&
 		    devList[j]->screen == instances[i].screen) {
 
 		    if (devBus)
@@ -1843,10 +1802,11 @@ xf86MatchPciInstances(const char *driverName, int vendorID,
 	}
 	if (devBus) dev = devBus;  /* busID preferred */
 	if (!dev) {
-	    if (xf86CheckPciSlot(pPci->bus, pPci->device, pPci->func)) {
+	    if (xf86CheckPciSlot(pPci) && pciDeviceHasBars(pPci)) {
 		xf86MsgVerb(X_WARNING, 0, "%s: No matching Device section "
-			    "for instance (BusID PCI:%i:%i:%i) found\n",
-			    driverName, pPci->bus, pPci->device, pPci->func);
+			    "for instance (BusID PCI:%u@%u:%u:%u) found\n",
+			    driverName, pPci->domain, pPci->bus, pPci->dev,
+			    pPci->func);
 	    }
 	} else {
 	    numClaimedInstances++;
@@ -1957,31 +1917,27 @@ xf86MatchPciInstances(const char *driverName, int vendorID,
 	 * XXX Need to make sure that two different drivers don't claim
 	 * the same screen > 0 instance.
 	 */
-        if (instances[i].screen == 0 &&
-	    !xf86CheckPciSlot(pPci->bus, pPci->device, pPci->func))
+        if (instances[i].screen == 0 && !xf86CheckPciSlot( pPci ))
 	    continue;
 
 #ifdef DEBUG
 	ErrorF("%s: card at %d:%d:%d is claimed by a Device section\n",
-	       driverName, pPci->bus, pPci->device, pPci->func);
+	       driverName, pPci->bus, pPci->dev, pPci->func);
 #endif
 	
 	/* Allocate an entry in the lists to be returned */
 	numFound++;
 	retEntities = xnfrealloc(retEntities, numFound * sizeof(int));
-	retEntities[numFound - 1]
-	    = xf86ClaimPciSlot(pPci->bus, pPci->device,
-			       pPci->func,drvp,	instances[i].chip,
-			       instances[i].dev,instances[i].dev->active ?
-			       TRUE : FALSE);
+	retEntities[numFound - 1] = xf86ClaimPciSlot( pPci, drvp,
+						      instances[i].chip,
+						      instances[i].dev,
+						      instances[i].dev->active);
         if (retEntities[numFound - 1] == -1 && instances[i].screen > 0) {
 	    for (j = 0; j < xf86NumEntities; j++) {
 	        EntityPtr pEnt = xf86Entities[j];
-	        if (pEnt->busType != BUS_PCI)
+	        if (pEnt->bus.type != BUS_PCI)
 		    continue;
-	        if (pEnt->pciBusId.bus == pPci->bus &&
-		    pEnt->pciBusId.device == pPci->device &&
-		    pEnt->pciBusId.func == pPci->func) {
+	        if (pEnt->bus.id.pci == pPci) {
 		    retEntities[numFound - 1] = j;
 		    xf86AddDevToEntity(j, instances[i].dev);
 		    break;
@@ -1994,108 +1950,6 @@ xf86MatchPciInstances(const char *driverName, int vendorID,
 	*foundEntities = retEntities;
     }
 	
-    return numFound;
-}
-
-_X_EXPORT int
-xf86MatchIsaInstances(const char *driverName, SymTabPtr chipsets,
-		      IsaChipsets *ISAchipsets, DriverPtr drvp,
-		      FindIsaDevProc FindIsaDevice, GDevPtr *devList,
-		      int numDevs, int **foundEntities)
-{
-    SymTabRec *c;
-    IsaChipsets *Chips;
-    int i;
-    int numFound = 0;
-    int foundChip = -1;
-    int *retEntities = NULL;
-
-    *foundEntities = NULL;
-
-#if defined(__sparc__) || defined(__powerpc__)
-    FindIsaDevice = NULL;	/* Temporary */
-#endif
-
-    if (xf86DoProbe || (xf86DoConfigure && xf86DoConfigurePass1)) {
-	if (FindIsaDevice &&
-	    ((foundChip = (*FindIsaDevice)(NULL)) != -1)) {
-	    xf86AddDeviceToConfigure(drvp->driverName, NULL, foundChip);
-	    return 1;
-	}
-	return 0;
-    }
-
-    for (i = 0; i < numDevs; i++) {
-	MessageType from = X_CONFIG;
-	GDevPtr dev = NULL;
-	GDevPtr devBus = NULL;
-
-	if (devList[i]->busID && *devList[i]->busID) {
-	    if (xf86ParseIsaBusString(devList[i]->busID)) {
-		if (devBus) xf86MsgVerb(X_WARNING,0,
-					"%s: More than one matching Device "
-					"section for ISA-Bus found: %s\n",
-					driverName,devList[i]->identifier);
-		else devBus = devList[i];
-	    }
-	} else {
-	    if (xf86IsPrimaryIsa()) {
-		if (dev) xf86MsgVerb(X_WARNING,0,
-				     "%s: More than one matching "
-				     "Device section found: %s\n",
-				     driverName,devList[i]->identifier);
-		else dev = devList[i];
-	    }
-	}
-	if (devBus) dev = devBus;
-	if (dev) {
-	    if (dev->chipset) {
-		for (c = chipsets; c->token >= 0; c++) {
-		    if (xf86NameCmp(c->name, dev->chipset) == 0)
-			break;
-		}
-		if (c->token == -1) {
-		    xf86MsgVerb(X_WARNING, 0, "%s: Chipset \"%s\" in Device "
-				"section \"%s\" isn't valid for this driver\n",
-				driverName, dev->chipset,
-				dev->identifier);
-		} else
-		    foundChip = c->token;
-	    } else {
-		if (FindIsaDevice) foundChip = (*FindIsaDevice)(dev);
-                                                        /* Probe it */
-		from = X_PROBED;
-	    }
-	}
-	
-	/* Check if the chip type is listed in the chipset table - for sanity*/
-
-	if (foundChip >= 0){
-	    for (Chips = ISAchipsets; Chips->numChipset >= 0; Chips++) {
-		if (Chips->numChipset == foundChip)
-		    break;
-	    }
-	    if (Chips->numChipset == -1){
-		foundChip = -1;
-		xf86MsgVerb(X_WARNING,0,
-			    "%s: Driver detected unknown ISA-Bus Chipset\n",
-			    driverName);
-	    }
-	}
-	if (foundChip != -1) {
-	    numFound++;
-	    retEntities = xnfrealloc(retEntities,numFound * sizeof(int));
-	    retEntities[numFound - 1] =
-	    xf86ClaimIsaSlot(drvp,foundChip,dev, dev->active ? TRUE : FALSE);
-	    for (c = chipsets; c->token >= 0; c++) {
-		if (c->token == foundChip)
-		    break;
-	    }
-	    xf86Msg(from, "Chipset %s found\n", c->name);
-	}
-    }
-    *foundEntities = retEntities;
-
     return numFound;
 }
 
@@ -2138,14 +1992,6 @@ xf86GetClocks(ScrnInfoPtr pScrn, int num, Bool (*ClockFunc)(ScrnInfoPtr, int),
     	cnt  = 0;
     	sync = 200000;
 
-	/* XXX How critical is this? */
-    	if (!xf86DisableInterrupts())
-    	{
-	    (*ClockFunc)(pScrn, CLK_REG_RESTORE);
-	    ErrorF("Failed to disable interrupts during clock probe.  If\n");
-	    ErrorF("your OS does not support disabling interrupts, then you\n");
-	    FatalError("must specify a Clocks line in the XF86Config file.\n");
-	}
 	while ((inb(status) & maskval) == 0x00)
 	    if (sync-- == 0) goto finish;
 	/* Something appears to be happening, so reset sync count */
@@ -2166,8 +2012,6 @@ xf86GetClocks(ScrnInfoPtr pScrn, int num, Bool (*ClockFunc)(ScrnInfoPtr, int),
 	}
 
 finish:
-	xf86EnableInterrupts();
-
 	pScrn->clock[i] = cnt ? cnt : -1;
 	if (BlankScreen)
             (*BlankScreen)(pScrn, TRUE);
@@ -2364,7 +2208,7 @@ xf86GetAllowMouseOpenFail()
 _X_EXPORT Bool
 xf86IsPc98()
 {
-#if defined(i386) || defined(__i386__)
+#ifdef __i386__
     return xf86Info.pc98;
 #else
     return FALSE;
@@ -2376,12 +2220,6 @@ xf86DisableRandR()
 {
     xf86Info.disableRandR = TRUE;
     xf86Info.randRFrom = X_PROBED;
-}
-
-_X_EXPORT CARD32
-xf86GetVersion()
-{
-    return XF86_VERSION_CURRENT;
 }
 
 _X_EXPORT CARD32
@@ -2607,49 +2445,6 @@ xf86FindXvOptions(int scrnIndex, int adaptor_index, char *port_name,
 #include "loader/os.c"
 
 /* new RAC */
-/*
- * xf86ConfigIsa/PciEntity() -- These helper functions assign an
- * active entity to a screen, registers its fixed resources, assign
- * special enter/leave functions and their private scratch area to
- * this entity, take the dog for a walk...
- */
-_X_EXPORT ScrnInfoPtr
-xf86ConfigIsaEntity(ScrnInfoPtr pScrn, int scrnFlag, int entityIndex,
-			  IsaChipsets *i_chip, resList res, EntityProc init,
-			  EntityProc enter, EntityProc leave, pointer private)
-{
-    IsaChipsets *i_id;
-    EntityInfoPtr pEnt = xf86GetEntityInfo(entityIndex);
-    if (!pEnt) return pScrn;
-
-    if (!(pEnt->location.type == BUS_ISA)) {
-	xfree(pEnt);
-	return pScrn;
-    }
-
-    if (!pEnt->active) {
-	xf86ConfigIsaEntityInactive(pEnt, i_chip, res, init,  enter,
-				    leave,  private);
-	xfree(pEnt);
-	return pScrn;
-    }
-
-    if (!pScrn)
-	pScrn = xf86AllocateScreen(pEnt->driver,scrnFlag);
-    xf86AddEntityToScreen(pScrn,entityIndex);
-
-    if (i_chip) {
-	for (i_id = i_chip; i_id->numChipset != -1; i_id++) {
-	    if (pEnt->chipset == i_id->numChipset) break;
-	}
-	xf86ClaimFixedResources(i_id->resList,entityIndex);
-    }
-    xfree(pEnt);
-    xf86ClaimFixedResources(res,entityIndex);
-    xf86SetEntityFuncs(entityIndex,init,enter,leave,private);
-
-    return pScrn;
-}
 
 _X_EXPORT ScrnInfoPtr
 xf86ConfigPciEntity(ScrnInfoPtr pScrn, int scrnFlag, int entityIndex,
@@ -2725,39 +2520,9 @@ xf86ConfigFbEntity(ScrnInfoPtr pScrn, int scrnFlag, int entityIndex,
 
 /*
  *
- *  OBSOLETE ! xf86ConfigActiveIsaEntity() and xf86ConfigActivePciEntity()
- *             are obsolete functions. They the are likely to be removed
- *             Don't use!
+ *  OBSOLETE ! xf86ConfigActivePciEntity() is an obsolete functions.
+ *	       They the are likely to be removed. Don't use!
  */
-_X_EXPORT Bool
-xf86ConfigActiveIsaEntity(ScrnInfoPtr pScrn, int entityIndex,
-                          IsaChipsets *i_chip, resList res, EntityProc init,
-                          EntityProc enter, EntityProc leave, pointer private)
-{
-    IsaChipsets *i_id;
-    EntityInfoPtr pEnt = xf86GetEntityInfo(entityIndex);
-    if (!pEnt) return FALSE;
-
-    if (!pEnt->active || !(pEnt->location.type == BUS_ISA)) {
-        xfree(pEnt);
-        return FALSE;
-    }
-
-    xf86AddEntityToScreen(pScrn,entityIndex);
-
-    if (i_chip) {
-        for (i_id = i_chip; i_id->numChipset != -1; i_id++) {
-            if (pEnt->chipset == i_id->numChipset) break;
-        }
-        xf86ClaimFixedResources(i_id->resList,entityIndex);
-    }
-    xfree(pEnt);
-    xf86ClaimFixedResources(res,entityIndex);
-    if (!xf86SetEntityFuncs(entityIndex,init,enter,leave,private))
-        return FALSE;
-
-    return TRUE;
-}
 
 _X_EXPORT Bool
 xf86ConfigActivePciEntity(ScrnInfoPtr pScrn, int entityIndex,
@@ -2790,10 +2555,10 @@ xf86ConfigActivePciEntity(ScrnInfoPtr pScrn, int entityIndex,
 }
 
 /*
- * xf86ConfigPci/IsaEntityInactive() -- These functions can be used
+ * xf86ConfigPciEntityInactive() -- This functions can be used
  * to configure an inactive entity as well as to reconfigure an
  * previously active entity inactive. If the entity has been
- * assigned to a screen before it will be removed. If p_pci(p_isa) is
+ * assigned to a screen before it will be removed. If p_pci is
  * non-NULL all static resources listed there will be registered.
  */
 _X_EXPORT void
@@ -2811,28 +2576,6 @@ xf86ConfigPciEntityInactive(EntityInfoPtr pEnt, PciChipsets *p_chip,
 	    if (pEnt->chipset == p_id->numChipset) break;
 	}
 	xf86ClaimFixedResources(p_id->resList,pEnt->index);
-    }
-    xf86ClaimFixedResources(res,pEnt->index);
-    /* shared resources are only needed when entity is active: remove */
-    xf86DeallocateResourcesForEntity(pEnt->index, ResShared);
-    xf86SetEntityFuncs(pEnt->index,init,enter,leave,private);
-}
-
-_X_EXPORT void
-xf86ConfigIsaEntityInactive(EntityInfoPtr pEnt, IsaChipsets *i_chip,
-			    resList res, EntityProc init, EntityProc enter,
-			    EntityProc leave, pointer private)
-{
-    IsaChipsets *i_id;
-    ScrnInfoPtr pScrn;
-
-    if ((pScrn = xf86FindScreenForEntity(pEnt->index)))
-	xf86RemoveEntityFromScreen(pScrn,pEnt->index);
-    else if (i_chip) {
-	for (i_id = i_chip; i_id->numChipset != -1; i_id++) {
-	    if (pEnt->chipset == i_id->numChipset) break;
-	}
-	xf86ClaimFixedResources(i_id->resList,pEnt->index);
     }
     xf86ClaimFixedResources(res,pEnt->index);
     /* shared resources are only needed when entity is active: remove */
@@ -2979,7 +2722,7 @@ xf86MotionHistoryAllocate(LocalDevicePtr local)
 
 _X_EXPORT int
 xf86GetMotionEvents(DeviceIntPtr pDev, xTimecoord *buff, unsigned long start,
-                    unsigned long stop, ScreenPtr pScreen)
+                    unsigned long stop, ScreenPtr pScreen, BOOL core)
 {
-    return GetMotionHistory(pDev, buff, start, stop, pScreen);
+    return GetMotionHistory(pDev, buff, start, stop, pScreen, core);
 }

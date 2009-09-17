@@ -4,7 +4,7 @@
 #include "xorg-server.h"
 
 /* Use Damage extension */
-/* #undef DAMAGE */
+#define DAMAGE 1
 
 /* Use linux pragma pack */
 /* #undef FGL_LINUX */
@@ -67,22 +67,22 @@
 #define PACKAGE_NAME "xf86-video-ati"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "xf86-video-ati 6.9.0"
+#define PACKAGE_STRING "xf86-video-ati 6.12.2"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "xf86-video-ati"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "6.9.0"
+#define PACKAGE_VERSION "6.12.2"
 
 /* Major version of this package */
 #define PACKAGE_VERSION_MAJOR 6
 
 /* Minor version of this package */
-#define PACKAGE_VERSION_MINOR 9
+#define PACKAGE_VERSION_MINOR 12
 
 /* Patch version of this package */
-#define PACKAGE_VERSION_PATCHLEVEL 0
+#define PACKAGE_VERSION_PATCHLEVEL 2
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1
@@ -97,7 +97,7 @@
 #define USE_XAA 1
 
 /* Version number of package */
-#define VERSION "6.9.0"
+#define VERSION "6.12.2"
 
 /* Enable DRI driver support */
 #define XF86DRI 1

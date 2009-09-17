@@ -40,7 +40,7 @@ ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/configure.in
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
-mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
+mkinstalldirs = $(install_sh) -d
 CONFIG_CLEAN_FILES =
 SCRIPTS = $(noinst_SCRIPTS)
 SOURCES =
@@ -181,14 +181,16 @@ xkb_rules_symlink = @xkb_rules_symlink@
 transform_files = layoutRename.lst variantRename.lst
 transform_scripts = ln_s.sh lnv_s.sh ml_s.sh mlv_s.sh ml1_s.sh ml1v_s.sh ml1v1_s.sh
 dist_parts = base.o_s.part
-@USE_COMPAT_RULES_FALSE@noinst_SCRIPTS = 
-@USE_COMPAT_RULES_TRUE@noinst_SCRIPTS = base.l2_s.part base.l3_s.part base.l4_s.part \
-@USE_COMPAT_RULES_TRUE@base.l2v2_s.part base.l3v3_s.part base.l4v4_s.part \
-@USE_COMPAT_RULES_TRUE@base.ml_s.part base.ml1_s.part \
-@USE_COMPAT_RULES_TRUE@base.mlv_s.part base.ml1v1_s.part \
-@USE_COMPAT_RULES_TRUE@base.ml_s.part $(dist_parts)
+scripts = base.l2_s.part base.l3_s.part base.l4_s.part \
+base.l2v2_s.part base.l3v3_s.part base.l4v4_s.part \
+base.ml_s.part base.ml1_s.part \
+base.mlv_s.part base.ml1v1_s.part \
+base.ml_s.part
 
+@USE_COMPAT_RULES_FALSE@noinst_SCRIPTS = 
+@USE_COMPAT_RULES_TRUE@noinst_SCRIPTS = $(scripts) $(dist_parts)
 EXTRA_DIST = base.lists.part $(transform_files) $(transform_scripts) $(dist_parts)
+CLEANFILES = $(scripts)
 all: all-am
 
 .SUFFIXES:
@@ -277,6 +279,7 @@ install-strip:
 mostlyclean-generic:
 
 clean-generic:
+	-test -z "$(CLEANFILES)" || rm -f $(CLEANFILES)
 
 distclean-generic:
 	-test -z "$(CONFIG_CLEAN_FILES)" || rm -f $(CONFIG_CLEAN_FILES)

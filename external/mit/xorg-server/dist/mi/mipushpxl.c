@@ -53,10 +53,25 @@ SOFTWARE.
 #include "scrnintstr.h"
 #include "pixmapstr.h"
 #include "regionstr.h"
-#include "../mfb/maskbits.h"
 #include "mi.h"
+#include "servermd.h"
 
 #define NPT 128
+
+/* These were stolen from mfb.  They don't really belong here. */
+#define LONG2CHARSSAMEORDER(x) ((MiBits)(x))
+#define LONG2CHARSDIFFORDER( x ) ( ( ( ( x ) & (MiBits)0x000000FF ) << 0x18 ) \
+                        | ( ( ( x ) & (MiBits)0x0000FF00 ) << 0x08 ) \
+                        | ( ( ( x ) & (MiBits)0x00FF0000 ) >> 0x08 ) \
+                        | ( ( ( x ) & (MiBits)0xFF000000 ) >> 0x18 ) )
+
+
+#define PGSZB	4
+#define PPW	(PGSZB<<3) /* assuming 8 bits per byte */
+#define PGSZ	PPW
+#define PLST	(PPW-1)
+#define PIM	PLST
+#define PWSH	5
 
 /* miPushPixels -- squeegees the fill style of pGC through pBitMap
  * into pDrawable.  pBitMap is a stencil (dx by dy of it is used, it may
@@ -77,12 +92,9 @@ bitsizeof(int) padding and sacnline unit == bitsizeof(int).)
  * in order to have both (MSB_FIRST and LSB_FIRST) versions of this
  * in the server, we need to rename one of them
  */
-_X_EXPORT void
-miPushPixels(pGC, pBitMap, pDrawable, dx, dy, xOrg, yOrg)
-    GCPtr	pGC;
-    PixmapPtr	pBitMap;
-    DrawablePtr pDrawable;
-    int		dx, dy, xOrg, yOrg;
+void
+miPushPixels(GCPtr pGC, PixmapPtr pBitMap, DrawablePtr pDrawable,
+             int dx, int dy, int xOrg, int yOrg)
 {
     int		h, dxDivPPW, ibEnd;
     MiBits 	*pwLineStart;
@@ -94,7 +106,7 @@ miPushPixels(pGC, pBitMap, pDrawable, dx, dy, xOrg, yOrg)
     DDXPointRec	pt[NPT], ptThisLine;
     int		width[NPT];
 #if 1
-    PixelType	startmask;
+    MiBits	startmask;
     if (screenInfo.bitmapBitOrder == IMAGE_BYTE_ORDER)
       if (screenInfo.bitmapBitOrder == LSBFirst)
         startmask = (MiBits)(-1) ^

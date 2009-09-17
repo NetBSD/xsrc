@@ -59,8 +59,13 @@ SOFTWARE.
 #define ARGB_CURSOR
 #endif
 
+struct _DeviceIntRec;
+
 typedef struct _Cursor *CursorPtr;
 typedef struct _CursorMetric *CursorMetricPtr;
+
+extern int cursorScreenDevPriv[MAXSCREENS];
+#define CursorScreenKey(pScreen) (cursorScreenDevPriv + (pScreen)->myNum)
 
 extern CursorPtr rootCursor;
 
@@ -68,23 +73,7 @@ extern int FreeCursor(
     pointer /*pCurs*/,
     XID /*cid*/);
 
-/* Quartz support on Mac OS X pulls in the QuickDraw
-   framework whose AllocCursor function conflicts here. */ 
-#ifdef __DARWIN__
-#define AllocCursor Darwin_X_AllocCursor
-#endif
-extern CursorPtr AllocCursor(
-    unsigned char* /*psrcbits*/,
-    unsigned char* /*pmaskbits*/,
-    CursorMetricPtr /*cm*/,
-    unsigned /*foreRed*/,
-    unsigned /*foreGreen*/,
-    unsigned /*foreBlue*/,
-    unsigned /*backRed*/,
-    unsigned /*backGreen*/,
-    unsigned /*backBlue*/);
-
-extern CursorPtr AllocCursorARGB(
+extern int AllocARGBCursor(
     unsigned char* /*psrcbits*/,
     unsigned char* /*pmaskbits*/,
     CARD32* /*argb*/,
@@ -94,7 +83,10 @@ extern CursorPtr AllocCursorARGB(
     unsigned /*foreBlue*/,
     unsigned /*backRed*/,
     unsigned /*backGreen*/,
-    unsigned /*backBlue*/);
+    unsigned /*backBlue*/,
+    CursorPtr* /*ppCurs*/,
+    ClientPtr /*client*/,
+    XID /*cid*/);
 
 extern int AllocGlyphCursor(
     Font /*source*/,
@@ -108,7 +100,8 @@ extern int AllocGlyphCursor(
     unsigned /*backGreen*/,
     unsigned /*backBlue*/,
     CursorPtr* /*ppCurs*/,
-    ClientPtr /*client*/);
+    ClientPtr /*client*/,
+    XID /*cid*/);
 
 extern CursorPtr CreateRootCursor(
     char* /*pfilename*/,
@@ -117,7 +110,7 @@ extern CursorPtr CreateRootCursor(
 extern int ServerBitsFromGlyph(
     FontPtr /*pfont*/,
     unsigned int /*ch*/,
-    register CursorMetricPtr /*cm*/,
+    CursorMetricPtr /*cm*/,
     unsigned char ** /*ppbits*/);
 
 extern Bool CursorMetricsFromGlyph(
@@ -129,18 +122,20 @@ extern void CheckCursorConfinement(
     WindowPtr /*pWin*/);
 
 extern void NewCurrentScreen(
+    struct _DeviceIntRec* /*pDev*/,
     ScreenPtr /*newScreen*/,
     int /*x*/,
     int /*y*/);
 
-extern Bool PointerConfinedToScreen(void);
+extern Bool PointerConfinedToScreen(struct _DeviceIntRec* /* pDev */);
 
 extern void GetSpritePosition(
+    struct _DeviceIntRec* /* pDev */,
     int * /*px*/,
     int * /*py*/);
 
 #ifdef PANORAMIX
-extern int XineramaGetCursorScreen(void);
+extern int XineramaGetCursorScreen(struct _DeviceIntRec* pDev);
 #endif /* PANORAMIX */
 
 #endif /* CURSOR_H */

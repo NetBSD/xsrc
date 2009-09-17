@@ -1,6 +1,9 @@
 /* config.h.  Generated from config.h.in by configure.  */
 /* config.h.in.  Generated from configure.ac by autoheader.  */
 
+/* Define if building universal (internal helper macro) */
+/* #undef AC_APPLE_UNIVERSAL_BUILD */
+
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #define HAVE_DLFCN_H 1
 
@@ -34,6 +37,10 @@
 /* Define to 1 if you have the <unistd.h> header file. */
 #define HAVE_UNISTD_H 1
 
+/* Define to the sub-directory in which libtool stores uninstalled libraries.
+   */
+#define LT_OBJDIR ".libs/"
+
 /* Name of package */
 #define PACKAGE "pixman"
 
@@ -44,16 +51,28 @@
 #define PACKAGE_NAME "pixman"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "pixman 0.12.0"
+#define PACKAGE_STRING "pixman 0.15.16"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "pixman"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "0.12.0"
+#define PACKAGE_VERSION "0.15.16"
+
+/* enable TIMER_BEGIN/TIMER_END macros */
+#define PIXMAN_TIMERS 1
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1
+
+/* use ARM NEON compiler intrinsics */
+/* #undef USE_ARM_NEON */
+
+/* use ARM SIMD compiler intrinsics */
+/* #undef USE_ARM_SIMD */
+
+/* use GNU-style inline assembler */
+#define USE_GCC_INLINE_ASM 1
 
 #if defined(__i386__) || defined(__x86_64__)
 /* use MMX compiler intrinsics */
@@ -67,10 +86,10 @@
 /* #undef USE_VMX */
 
 /* Version number of package */
-#define VERSION "0.12.0"
+#define VERSION "0.15.16"
 
-/* Define to 1 if your processor stores words with the most significant byte
-   first (like Motorola and SPARC, unlike Intel and VAX). */
+/* Define WORDS_BIGENDIAN to 1 if your processor stores words with the most
+   significant byte first (like Motorola and SPARC, unlike Intel). */
 /* #undef WORDS_BIGENDIAN */
 
 #include <sys/endian.h>

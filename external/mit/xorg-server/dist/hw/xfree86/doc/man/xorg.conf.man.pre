@@ -54,7 +54,7 @@ is the relative path (with no \(lq..\(rq components) specified by that
 environment variable, and
 .I <hostname>
 is the machine's hostname as reported by
-.BR gethostname (__oslibmansuffix__).
+.BR gethostname (__libmansuffix__).
 .PP
 When the __xservername__ server is started by the \(lqroot\(rq user, the config file
 search locations are as follows:
@@ -67,7 +67,6 @@ search locations are as follows:
 .B $XORGCONFIG
 .IB /etc/X11/ $XORGCONFIG
 .IB __projectroot__/etc/X11/ $XORGCONFIG
-.BI $HOME /__xconfigfile__
 .I /etc/X11/__xconfigfile__\-4
 .I /etc/X11/__xconfigfile__
 .I /etc/__xconfigfile__
@@ -93,7 +92,7 @@ is the path specified by that environment variable (usually the home
 directory), and
 .I <hostname>
 is the machine's hostname as reported by
-.BR gethostname (__oslibmansuffix__).
+.BR gethostname (__libmansuffix__).
 .PP
 The
 .I __xconfigfile__
@@ -116,6 +115,7 @@ The section names are:
 .BR "Files          " "File pathnames"
 .BR "ServerFlags    " "Server flags"
 .BR "Module         " "Dynamic module loading"
+.BR "Extensions     " "Extension enabling"
 .BR "InputDevice    " "Input device description"
 .BR "Device         " "Graphics device description"
 .BR "VideoAdaptor   " "Xv video adaptor description"
@@ -293,15 +293,50 @@ server searches for font databases.
 Multiple
 .B FontPath
 entries may be specified, and they will be concatenated to build up the
-fontpath used by the server.  Font path elements may be either absolute
-directory paths, or a font server identifier.
-Font server identifiers have the form:
+fontpath used by the server.  Font path elements can be absolute
+directory paths, catalogue directories or a font server identifier. The
+formats of the later two are explained below:
 .PP
-.RS 11
+.RS 7
+Catalogue directories:
+.PP
+.RS 4
+Catalogue directories can be specified using the prefix \fBcatalogue:\fR
+before the directory name. The directory can then be populated with
+symlinks pointing to the real font directories, using the following
+syntax in the symlink name:
+.PP
+.RS 4
+.IR <identifier> : [attribute]: pri= <priority>
+.RE
+.PP
+where
+.I <identifier>
+is an alphanumeric identifier,
+.I [attribute]
+is an attribute which will be passed to the underlying FPE and
+.I <priority>
+is a number used to order the fontfile FPEs. Examples:
+.PP
+.RS 4
+.nf
+.I 75dpi:unscaled:pri=20  -> /usr/share/X11/fonts/75dpi
+.I gscript:pri=60 -> /usr/share/fonts/default/ghostscript
+.I misc:unscaled:pri=10 \-> /usr/share/X11/fonts/misc
+.fi
+.PP
+.RE .RE .RE
+.PP
+.RS 7
+Font server identifiers:
+.PP
+.RS 4
+Font server identifiers have the form:
+.RS 4
+.PP
 .IR <trans> / <hostname> : <port\-number>
 .RE
 .PP
-.RS 7
 where
 .I <trans>
 is the transport type to use to connect to the font server (e.g.,
@@ -313,10 +348,11 @@ for a TCP/IP connection),
 is the hostname of the machine running the font server, and
 .I <port\-number>
 is the port number that the font server is listening on (usually 7100).
+.RE
 .PP
 When this entry is not specified in the config file, the server falls back
 to the compiled\-in default font path, which contains the following
-font path elements:
+font path elements (which can be set inside a catalogue directory):
 .PP
 .RS 4
 .nf
@@ -337,7 +373,6 @@ The recommended font path contains the following font path elements:
 .I __projectroot__/lib/X11/fonts/75dpi/:unscaled
 .I __projectroot__/lib/X11/fonts/100dpi/:unscaled
 .I __projectroot__/lib/X11/fonts/Type1/
-.I __projectroot__/lib/X11/fonts/Speedo/
 .I __projectroot__/lib/X11/fonts/75dpi/
 .I __projectroot__/lib/X11/fonts/100dpi/
 .fi
@@ -346,20 +381,6 @@ The recommended font path contains the following font path elements:
 Font path elements that are found to be invalid are removed from the
 font path when the server starts up.
 .RE
-.TP 7
-.BI "RGBPath \*q" path \*q
-sets the path name for the RGB color database.
-When this entry is not specified in the config file, the server falls back
-to the compiled\-in default RGB path, which is:
-.PP
-.RS 11
-.I __projectroot__/share/X11/rgb
-.RE
-.PP
-Note that an implicit
-.I .txt
-is added to this path if the server was compiled to use text rather than
-binary format RGB color databases.
 .TP 7
 .BI "ModulePath \*q" path \*q
 sets the search path for loadable __xservername__ server modules.
@@ -443,11 +464,10 @@ Default: off.
 .TP 7
 .BI "Option \*qDontZap\*q  \*q" boolean \*q
 This disallows the use of the
-.B Ctrl+Alt+Backspace
-sequence.
-That sequence is normally used to terminate the __xservername__ server.
-When this option is enabled, that key sequence has no special meaning and
-is passed to clients.
+.B Terminate_Server
+XKB action (usually on Ctrl+Alt+Backspace, depending on XKB options).
+This action is normally used to terminate the __xservername__ server.
+When this option is enabled, the action has no effect.
 Default: off.
 .TP 7
 .BI "Option \*qDontZoom\*q  \*q" boolean \*q
@@ -471,31 +491,10 @@ This allows the xvidtune client (and other clients that use the VidMode
 extension) to connect from another host.
 Default: off.
 .TP 7
-.BI "Option \*qDisableModInDev\*q  \*q" boolean \*q
-This disables the parts of the __xservername__\-Misc extension that can be used to
-modify the input device settings dynamically.
-Default: that functionality is enabled.
-.TP 7
-.BI "Option \*qAllowNonLocalModInDev\*q  \*q" boolean \*q
-This allows a client to connect from another host and change keyboard
-and mouse settings in the running server.
-Default: off.
-.TP 7
 .BI "Option \*qAllowMouseOpenFail\*q  \*q" boolean \*q
 This allows the server to start up even if the mouse device can't be
 opened/initialised.
 Default: false.
-.TP 7
-.BI "Option \*qVTInit\*q  \*q" command \*q
-Runs
-.I command
-after the VT used by the server has been opened.
-The command string is passed to \*q/bin/sh \-c\*q, and is run with the real
-user's id with stdin and stdout set to the VT.
-The purpose of this option is to allow system dependent VT initialisation
-commands to be run.
-This option should rarely be needed.
-Default: not set.
 .TP 7
 .BI "Option \*qVTSysReq\*q  \*q" boolean \*q
 enables the SYSV\-style VT switch sequence for non\-SYSV systems
@@ -616,31 +615,6 @@ Default: PM enabled on platforms that support it.
 enable or disable XINERAMA extension.
 Default is disabled.
 .TP 7
-.BI "Option \*qAllowDeactivateGrabs\*q \*q" boolean \*q
-This option enables the use of the
-.B Ctrl+Alt+Keypad\-Divide
-key sequence to deactivate any active keyboard and mouse grabs.
-Default: off.
-.TP 7
-.BI "Option \*qAllowClosedownGrabs\*q \*q" boolean \*q
-This option enables the use of the
-.B Ctrl+Alt+Keypad\-Multiply
-key sequence to kill clients with an active keyboard or mouse grab as well
-as killing any application that may have locked the server, normally using
-the
-.BR XGrabServer(__libmansuffix__)
-Xlib function.
-Default: off.
-.br
-Note that the options
-.B AllowDeactivateGrabs
-and
-.B AllowClosedownGrabs
-will allow users to remove the grab used by screen saver/locker programs.
-An API was written to such cases.
-If you enable this option, make sure your screen saver/locker is updated.
-Default: off.
-.TP 7
 .BI "Option \*qHandleSpecialKeys\*q \*q" when \*q
 This option controls when the server uses the builtin handler to process
 special key combinations (such as
@@ -664,6 +638,17 @@ the builtin handler will be used.
 .BI "Option \*qAIGLX\*q \*q" boolean \*q
 enable or disable AIGLX. AIGLX is enabled by default.
 .TP 7
+.BI "Option \*qGlxVisuals\*q \*q" string \*q
+This option controls how many GLX visuals the GLX modules sets up.
+The default value is
+.BR "typical" ,
+which will setup up a typical subset of
+the GLXFBConfigs provided by the driver as GLX visuals.  Other options are
+.BR "minimal" ,
+which will set up the minimal set allowed by the GLX specification and
+.BR "all"
+which will setup GLX visuals for all GLXFBConfigs.
+.TP 7
 .BI "Option \*qUseDefaultFontPath\*q \*q" boolean \*q
 Include the default font path even if other paths are specified in
 xorg.conf. If enabled, other font paths are included as well. Enabled by
@@ -672,6 +657,31 @@ default.
 .BI "Option \*qIgnoreABI\*q \*q" boolean \*q
 Allow modules built for a different, potentially incompatible version of
 the X server to load. Disabled by default.
+.TP 7
+.BI "Option \*qAllowEmptyInput\*q \*q" boolean \*q
+If enabled, don't add the standard keyboard and mouse drivers, if there are no
+input devices in the config file.  Enabled by default if AutoAddDevices and
+AutoEnableDevices is enabled, otherwise disabled.
+If AllowEmptyInput is on, devices using the kbd, mouse or vmmouse driver are ignored.
+.TP 7
+.BI "Option \*qAutoAddDevices\*q \*q" boolean \*q
+If this option is disabled, then no devices will be added from HAL events.
+Enabled by default.
+.TP 7
+.BI "Option \*qAutoEnableDevices\*q \*q" boolean \*q
+If this option is disabled, then the devices will be added (and the
+DevicePresenceNotify event sent), but not enabled, thus leaving policy up
+to the client.
+Enabled by default.
+.TP 7
+.BI "Option \*qLog\*q \*q" string \*q
+This option controls whether the log is flushed and/or synced to disk after
+each message.
+Possible values are
+.B flush
+or
+.BR sync .
+Unset by default.
 .SH "MODULE SECTION"
 The
 .B Module
@@ -700,10 +710,10 @@ The standard name is case\-sensitive, and does not include the \(lqlib\(rq
 prefix, or the \(lq.a\(rq, \(lq.o\(rq, or \(lq.so\(rq suffixes.
 .PP
 .RS 7
-Example: the Type 1 font rasteriser can be loaded with the following entry:
+Example: the FreeType font rasteriser can be loaded with the following entry:
 .PP
 .RS 4
-.B "Load \*qtype1\*q"
+.B "Load \*qfreetype\*q"
 .RE
 .RE
 .TP 7
@@ -758,11 +768,38 @@ __projectroot__/lib/modules/extensions
 .fi
 .RE
 .PP
-The \(lqbitmap\(rq font module is loaded automatically.
+The \(lqextmod\(rq, \(lqdbe\(rq, \(lqglx\(rq, and \(lqdri\(rq extension
+modules are loaded automatically, unless disabled with \*qDisable\*q entries.
 It is recommended
 that at very least the \(lqextmod\(rq extension module be loaded.
 If it isn't, some commonly used server extensions (like the SHAPE
 extension) will not be available.
+.SH "EXTENSIONS SECTION"
+The
+.B Extensions
+section is used to specify which X11 protocol extensions should be enabled
+or disabled.
+The
+.B Extensions
+section is optional, as are all of the entries that may be specified in
+it.
+.PP
+Entries in this section are listed as Option statements with the name of
+the extension as the first argument, and a boolean value as the second.
+The extension name is case\-sensitive, and matches the form shown in the output
+of \*qXorg -extension ?\*q.
+.PP
+.RS 7
+Example: the MIT-SHM extension can be disabled with the following entry:
+.PP
+.RS 4
+.nf
+.B "Section \*qExtensions\*q"
+.B "    Option \*qMIT-SHM\*q \*qDisable\*q"
+.B "EndSection"
+.fi
+.RE
+.RE
 .SH "INPUTDEVICE SECTION"
 The config file may have multiple
 .B InputDevice
@@ -818,9 +855,12 @@ or
 command line options, or if it is selected implicitly as the core pointer
 or keyboard device in the absence of such explicit references.
 The most commonly used input drivers are
-.BR keyboard (__drivermansuffix__)
+.BR evdev (__drivermansuffix__)
+on Linux systems, and
+.BR kbd (__drivermansuffix__)
 and
-.BR mouse (__drivermansuffix__).
+.BR mouse (__drivermansuffix__)
+on other platforms.
 .PP
 In the absence of an explicitly specified core input device, the first
 .B InputDevice
@@ -831,7 +871,7 @@ marked as
 is used.
 If there is no match there, the first
 .B InputDevice
-that uses the \(lqmouse\(rq (or \(lqkeyboard\(rq or \(lqkbd\(rq) driver is used.
+that uses the \(lqmouse\(rq (or \(lqkbd\(rq) driver is used.
 The final fallback is to use built\-in default configurations.
 .PP
 .B InputDevice
@@ -959,10 +999,8 @@ In multi-head configurations, or when using a secondary graphics card in a
 single-head configuration, this entry is mandatory.
 Its main purpose is to make an unambiguous connection between the device
 section and the hardware it is representing.
-This information can usually be found by running the __xservername__ server
-with the
-.B \-scanpci
-command line option.
+This information can usually be found by running the pciaccess tool
+scanpci.
 .TP 7
 .BI "Screen  " number
 This option is mandatory for cards where a single PCI entity can drive more
@@ -1386,24 +1424,24 @@ This optional entry specifies the position of the monitor within the X
 screen.
 (RandR 1.2-supporting drivers only)
 .TP 7
-.BI "Option " "\*qLeftOf\*q  " \*qmonitor\*q
+.BI "Option " "\*qLeftOf\*q  " \*qoutput\*q
 This optional entry specifies that the monitor should be positioned to the
-left of the monitor of the given name.
+left of the output (not monitor) of the given name.
 (RandR 1.2-supporting drivers only)
 .TP 7
-.BI "Option " "\*qRightOf\*q  " \*qmonitor\*q
+.BI "Option " "\*qRightOf\*q  " \*qoutput\*q
 This optional entry specifies that the monitor should be positioned to the
-right of the monitor of the given name.
+right of the output (not monitor) of the given name.
 (RandR 1.2-supporting drivers only)
 .TP 7
-.BI "Option " "\*qAbove\*q  " \*qmonitor\*q
+.BI "Option " "\*qAbove\*q  " \*qoutput\*q
 This optional entry specifies that the monitor should be positioned above the
-monitor of the given name.
+output (not monitor) of the given name.
 (RandR 1.2-supporting drivers only)
 .TP 7
-.BI "Option " "\*qBelow\*q  " \*qmonitor\*q
+.BI "Option " "\*qBelow\*q  " \*qoutput\*q
 This optional entry specifies that the monitor should be positioned below the
-monitor of the given name.
+output (not monitor) of the given name.
 (RandR 1.2-supporting drivers only)
 .TP 7
 .BI "Option " "\*qEnable\*q  " \*qbool\*q
@@ -1591,8 +1629,8 @@ Others are driver\-independent, and will eventually be described here.
 .\" XXX These should really be in an xaa man page.
 .TP 7
 .BI "Option \*qAccel\*q"
-Enables XAA (X Acceleration Architecture), a mechanism that makes video
-cards' 2D hardware acceleration available to the  __xservername__ server.
+Enables XAA (X Acceleration Architecture), a mechanism that makes video cards'
+2D hardware acceleration available to the  __xservername__ server.
 This option is on by default, but it may be necessary to turn it off if
 there are bugs in the driver.
 There are many options to disable specific accelerated operations, listed
@@ -1983,7 +2021,7 @@ These both specify that the upper left corner's coordinates are
 The
 .B Absolute
 keyword is optional.
-Some older versions of __xservername__ (4.2 and earlier) don't recognise the
+Some older versions of XFree86 (4.2 and earlier) don't recognise the
 .B Absolute
 keyword, so it's safest to just specify the coordinates without it.
 .TP 4
@@ -2112,13 +2150,15 @@ The data therein is not used in this release.
 General:
 .BR X (__miscmansuffix__),
 .BR Xserver (__appmansuffix__),
-.BR __xservername__ (__appmansuffix__).
+.BR __xservername__ (__appmansuffix__),
+.BR cvt (__appmansuffix__),
+.BR gtf (__appmansuffix__).
 .PP
-.B Not all modules or interfaces are available on all platforms.
+.B "Not all modules or interfaces are available on all platforms."
 .PP
 Display drivers:
 .BR apm (__drivermansuffix__),
-.\" .BR ati (__drivermansuffix__),
+.BR ati (__drivermansuffix__),
 .BR chips (__drivermansuffix__),
 .BR cirrus (__drivermansuffix__),
 .BR cyrix (__drivermansuffix__),
@@ -2127,17 +2167,20 @@ Display drivers:
 .BR glint (__drivermansuffix__),
 .BR i128 (__drivermansuffix__),
 .BR i740 (__drivermansuffix__),
-.BR i810 (__drivermansuffix__),
 .BR imstt (__drivermansuffix__),
+.BR intel (__drivermansuffix__),
 .BR mga (__drivermansuffix__),
 .BR neomagic (__drivermansuffix__),
 .BR nv (__drivermansuffix__),
+.BR openchrome (__drivermansuffix__),
 .BR r128 (__drivermansuffix__),
+.BR radeon (__drivermansuffix__),
 .BR rendition (__drivermansuffix__),
 .BR savage (__drivermansuffix__),
 .BR s3virge (__drivermansuffix__),
 .BR siliconmotion (__drivermansuffix__),
 .BR sis (__drivermansuffix__),
+.BR sisusb (__drivermansuffix__),
 .BR sunbw2 (__drivermansuffix__),
 .BR suncg14 (__drivermansuffix__),
 .BR suncg3 (__drivermansuffix__),
@@ -2146,37 +2189,43 @@ Display drivers:
 .BR sunleo (__drivermansuffix__),
 .BR suntcx (__drivermansuffix__),
 .BR tdfx (__drivermansuffix__),
-.BR tga (__drivermansuffix__),
+.\" .BR tga (__drivermansuffix__),
 .BR trident (__drivermansuffix__),
 .BR tseng (__drivermansuffix__),
 .BR vesa (__drivermansuffix__),
-.BR vga (__drivermansuffix__),
-.BR via (__drivermansuffix__),
-.BR vmware (__drivermansuffix__).
+.BR vmware (__drivermansuffix__),
+.BR voodoo (__drivermansuffix__),
+.BR wsfb (__drivermansuffix__),
+.BR xgi (__drivermansuffix__),
+.BR xgixp (__drivermansuffix__).
 .PP
 Input drivers:
-.\" .BR acecad (__drivermansuffix__),
-.\" .BR calcomp (__drivermansuffix__),
+.BR acecad (__drivermansuffix__),
+.BR calcomp (__drivermansuffix__),
 .BR citron (__drivermansuffix__),
 .BR dmc (__drivermansuffix__),
 .BR dynapro (__drivermansuffix__),
 .BR elographics (__drivermansuffix__),
+.BR evdev (__drivermansuffix__),
 .BR fpit (__drivermansuffix__),
 .BR js_x (__drivermansuffix__),
+.BR joystick (__drivermansuffix__),
 .BR kbd (__drivermansuffix__),
-.BR keyboard (__drivermansuffix__),
-.\" .BR magictouch (__drivermansuffix__),
+.BR magictouch (__drivermansuffix__),
 .BR microtouch (__drivermansuffix__),
-.BR mouse (__drivermansuffix__),
+.BR mousedrv (__drivermansuffix__),
 .BR mutouch (__drivermansuffix__),
 .BR palmax (__drivermansuffix__),
 .BR penmount (__drivermansuffix__),
+.BR synaptics (__drivermansuffix__),
 .BR tek4957 (__drivermansuffix__),
-.\" .BR ur98 (__drivermansuffix__),
+.BR ur98 (__drivermansuffix__),
+.BR vmmouse (__drivermansuffix__),
 .BR void (__drivermansuffix__),
 .BR wacom (__drivermansuffix__).
 .PP
 Other modules and interfaces:
+.BR exa (__drivermansuffix__),
 .BR fbdevhw (__drivermansuffix__),
 .\" .BR shadowfb (__drivermansuffix__),
 .BR v4l (__drivermansuffix__).
