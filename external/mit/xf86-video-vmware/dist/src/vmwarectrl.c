@@ -116,19 +116,20 @@ VMwareCtrlDoSetRes(ScrnInfoPtr pScrn,
                    CARD32 y,
                    Bool resetXinerama)
 {
+   int modeIndex;
    DisplayModePtr mode;
    VMWAREPtr pVMWARE = VMWAREPTR(pScrn);
 
    if (pScrn && pScrn->modes) {
       VmwareLog(("DoSetRes: %d %d\n", x, y));
-  
+
       if (resetXinerama) {
          xfree(pVMWARE->xineramaNextState);
          pVMWARE->xineramaNextState = NULL;
          pVMWARE->xineramaNextNumOutputs = 0;
       }
 
-      /* 
+      /*
        * Don't resize larger than possible but don't
        * return an X Error either.
        */
@@ -138,20 +139,30 @@ VMwareCtrlDoSetRes(ScrnInfoPtr pScrn,
       }
 
       /*
-       * Switch the dynamic modes so that we alternate
-       * which one gets updated on each call.
+       * Find an dynamic mode which isn't current, and replace it with
+       * the requested mode. Normally this will cause us to alternate
+       * between two dynamic mode slots, but there are some important
+       * corner cases to consider. For example, adding the same mode
+       * multiple times, adding a mode that we never switch to, or
+       * adding a mode which is a duplicate of a built-in mode. The
+       * best way to handle all of these cases is to directly test the
+       * dynamic mode against the current mode pointer for this
+       * screen.
        */
-      mode = pVMWARE->dynMode1;
-      pVMWARE->dynMode1 = pVMWARE->dynMode2;
-      pVMWARE->dynMode2 = mode;
 
-      /*
-       * Initialise the dynamic mode if it hasn't been used before.
-       */
-      if (!pVMWARE->dynMode1) {
-         pVMWARE->dynMode1 = VMWAREAddDisplayMode(pScrn, "DynMode", 1, 1);
+      for (modeIndex = 0; modeIndex < NUM_DYN_MODES; modeIndex++) {
+         /*
+          * Initialise the dynamic mode if it hasn't been used before.
+          */
+         if (!pVMWARE->dynModes[modeIndex]) {
+            pVMWARE->dynModes[modeIndex] = VMWAREAddDisplayMode(pScrn, "DynMode", 1, 1);
+         }
+
+         mode = pVMWARE->dynModes[modeIndex];
+         if (mode != pScrn->currentMode) {
+            break;
+         }
       }
-      mode = pVMWARE->dynMode1;
 
       mode->HDisplay = x;
       mode->VDisplay = y;
@@ -271,11 +282,59 @@ VMwareCtrlDoSetTopology(ScrnInfoPtr pScrn,
       if (xineramaState) {
          memcpy(xineramaState, extents, number * sizeof (VMWAREXineramaRec));
 
+         /*
+          * Make this the new pending Xinerama state. Normally we'll
+          * wait until the next mode switch in order to synchronously
+          * push this state out to X clients and the virtual hardware.
+          *
+          * However, if we're already in the right video mode, there
+          * will be no mode change. In this case, push it out
+          * immediately.
+          */
          xfree(pVMWARE->xineramaNextState);
          pVMWARE->xineramaNextState = xineramaState;
          pVMWARE->xineramaNextNumOutputs = number;
 
-         return VMwareCtrlDoSetRes(pScrn, maxX, maxY, FALSE);
+         if (maxX == pVMWARE->ModeReg.svga_reg_width &&
+             maxY == pVMWARE->ModeReg.svga_reg_height) {
+
+            /*
+             * XXX:
+             *
+             * There are problems with trying to set a Xinerama state
+             * without a mode switch. The biggest one is that
+             * applications typically won't notice a topology change
+             * that occurs without a mode switch. If you run "xdpyinfo
+             * -ext XINERAMA" after one such topology change, it will
+             * report the new data, but apps (like the GNOME Panel)
+             * will not notice until the next mode change.
+             *
+             * I don't think there's any good solution to this... as
+             * far as I know, even on a non-virtualized machine
+             * there's no way for an app to find out if the Xinerama
+             * opology changes without a resolution change also
+             * occurring. There might be some cheats we can take, like
+             * swithcing to a new mode with the same resolution and a
+             * different (fake) refresh rate, or temporarily switching
+             * to an intermediate mode. Ick.
+             *
+             * The other annoyance here is that when we reprogram the
+             * SVGA device's monitor topology registers, it may
+             * rearrange those monitors on the host's screen, but they
+             * will still have the old contents. This might be
+             * correct, but it isn't guaranteed to match what's on X's
+             * framebuffer at the moment. So we'll send a
+             * full-framebuffer update rect afterwards.
+             */
+
+            vmwareNextXineramaState(pVMWARE);
+            vmwareSendSVGACmdUpdateFullScreen(pVMWARE);
+
+            return TRUE;
+         } else {
+            return VMwareCtrlDoSetRes(pScrn, maxX, maxY, FALSE);
+         }
+
       } else {
          return FALSE;
       }

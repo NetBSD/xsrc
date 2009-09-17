@@ -1,2 +1,2 @@
 #define MSBFIRST
-#include "../../../../hw/xfree86/xaa/xaaStipple.c"
+#include "./xaaStipple.c"

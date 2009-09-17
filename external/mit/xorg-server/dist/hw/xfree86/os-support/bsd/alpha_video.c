@@ -162,10 +162,15 @@ memory_base(void)
 	if (abw_count < 0)
 		init_abw();
 	
-	if (abw_count > 0) {
+	if (abw_count > 1) {
 		xf86Msg(X_INFO, "memory base = %#lx\n", 
 			abw[1].abw_abst.abst_sys_start); /* XXXX */
 		return abw[1].abw_abst.abst_sys_start;
+	} else if (abw_count == 1) {
+		/* assume memory_base == dense_base */
+		xf86Msg(X_INFO, "memory base = %#lx\n", 
+			abw[0].abw_abst.abst_sys_start); /* XXXX */
+		return abw[0].abw_abst.abst_sys_start;
 	} else {
 		xf86Msg(X_INFO, "no memory base\n"); /* XXXX */
 		return 0;
@@ -368,7 +373,7 @@ xf86ReadBIOS(unsigned long Base, unsigned long Offset, unsigned char *Buf,
 	    return(-1);
 	}
 
-	psize = xf86getpagesize();
+	psize = getpagesize();
 	Offset += Base & (psize - 1);
 	Base &= ~(psize - 1);
 	mlen = (Offset + Len + psize - 1) & ~(psize - 1);
@@ -432,24 +437,6 @@ xf86DisableIO()
 }
 
 #endif /* USE_ALPHA_PIO */
-
-/***************************************************************************/
-/* Interrupt Handling section                                              */
-/***************************************************************************/
-
-_X_EXPORT Bool
-xf86DisableInterrupts()
-{
-
-	return(TRUE);
-}
-
-_X_EXPORT void
-xf86EnableInterrupts()
-{
-	return;
-}
-
 
 #define vuip    volatile unsigned int *
 

@@ -1,4 +1,3 @@
-/* $Id: norm_args.h,v 1.1.1.1 2008/07/29 05:10:22 mrg Exp $ */
 
 /*
  * Mesa 3-D graphics library

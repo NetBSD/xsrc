@@ -1,5 +1,5 @@
 /*
- * Copyright 2008  Luc Verhaegen <lverhaegen@novell.com>
+ * Copyright 2008  Luc Verhaegen <libv@exsuse.de>
  * Copyright 2008  Matthias Hopf <mhopf@novell.com>
  * Copyright 2008  Egbert Eich   <eich@novell.com>
  *
@@ -62,7 +62,6 @@ struct RhdCS {
     CARD32 Flushed;
     CARD32 Wptr;
     CARD32 Size;
-    CARD32 Mask;
 
 #ifdef RHD_CS_DEBUG
     CARD32 Grabbed;
@@ -136,17 +135,11 @@ void RHDCSGrabDebug(struct RhdCS *CS, CARD32 Count, const char *func);
 #define RHDCSGrab(CS, Count) _RHDCSGrab((CS), (Count))
 #endif
 
-#define RHDCSWrite(CS, Value) \
-do { \
-    (CS)->Buffer[(CS)->Wptr] = (Value); \
-    (CS)->Wptr = ((CS)->Wptr + 1) & (CS)->Mask; \
-} while (0)
-
+#define RHDCSWrite(CS, Value) (CS)->Buffer[(CS)->Wptr++] = (Value)
 #define RHDCSRegWrite(CS, Reg, Value) \
 do { \
-    (CS)->Buffer[(CS)->Wptr] = CP_PACKET0((Reg), 1); \
-    (CS)->Buffer[((CS)->Wptr + 1) & (CS)->Mask] = (Value); \
-    (CS)->Wptr = ((CS)->Wptr + 2) & (CS)->Mask; \
+    (CS)->Buffer[(CS)->Wptr++] = CP_PACKET0((Reg), 1); \
+    (CS)->Buffer[(CS)->Wptr++] = (Value); \
 } while (0)
 
 #define RHDCSAdvance(CS) \

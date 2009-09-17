@@ -579,6 +579,7 @@ int _XtWaitForSomething(
 #ifdef USE_POLL
     wf.fdlist = NULL;
     wf.stack = fdlist;
+    wf.fdlistlen = wf.num_dpys = 0;
 #endif
 
 WaitLoop:
@@ -1438,7 +1439,7 @@ XtInputMask XtAppPending(
 	    X_GETTIMEOFDAY (&cur_time);
 	    FIXUP_TIMEVAL(cur_time);
 	    if ((IS_AT_OR_AFTER(app->timerQueue->te_timer_value, cur_time))  &&
-                (app->timerQueue->te_proc != 0)) {
+                (app->timerQueue->te_proc != NULL)) {
 		ret |= XtIMTimer;
 	    }
 	}

@@ -17,13 +17,7 @@
 #define XORGSERVER 1
 
 /* Current X.Org version. */
-#define XORG_VERSION_CURRENT (((1) * 10000000) + ((4) * 100000) + ((2) * 1000) + 0)
-
-/* Need XFree86 libc-replacement typedefs. */
-#define NEED_XF86_TYPES 1
-
-/* Need XFree86 libc-replacement functions. */
-#define NEED_XF86_PROTOTYPES 1
+#define XORG_VERSION_CURRENT (((1) * 10000000) + ((6) * 100000) + ((3) * 1000) + 0)
 
 /* Name of X server. */
 #define __XSERVERNAME__ "Xorg"
@@ -32,10 +26,10 @@
 #define __VENDORDWEBSUPPORT__ "http://wiki.x.org"
 
 /* Built-in output drivers. */
-#define DRIVERS {}
+/* #undef DRIVERS */
 
 /* Built-in input drivers. */
-#define IDRIVERS {}
+/* #undef IDRIVERS */
 
 /* Path to configuration file. */
 #define XF86CONFIGFILE "xorg.conf"
@@ -44,22 +38,25 @@
 #define __XCONFIGFILE__ "xorg.conf"
 
 /* Path to loadable modules. */
-#define DEFAULT_MODULE_PATH "/usr/local/lib/xorg/modules"
+#define DEFAULT_MODULE_PATH "/usr/X11R7/lib/modules"
 
 /* Path to installed libraries. */
-#define DEFAULT_LIBRARY_PATH "/usr/local/lib"
+#define DEFAULT_LIBRARY_PATH "/usr/X11R7/lib"
 
 /* Path to server log file. */
-#define DEFAULT_LOGPREFIX "/usr/local/var/log/Xorg."
+#define DEFAULT_LOGPREFIX "/var/log/Xorg."
 
 /* Building DRI-capable DDX. */
 #define XF86DRI 1
 
+/* Build DRI2 extension */
+#define DRI2 1
+
 /* Solaris 8 or later? */
 /* #undef __SOL8__ */
 
-/* Whether to use pixmap privates */
-#define PIXPRIV 1
+/* Define to 1 if you have the <sys/kd.h> header file. */
+/* #undef HAVE_SYS_KD_H */
 
 /* Define to 1 if you have the `walkcontext' function (used on Solaris for
    xorg_backtrace in hw/xfree86/common/xf86Events.c */
@@ -88,8 +85,8 @@
 /* BSD /dev/io */
 /* #undef USE_DEV_IO */
 
-/* BSD i386 iopl */
 #if defined(__i386__) || defined(__x86_64__)
+/* BSD i386 iopl */
 #define USE_I386_IOPL 1
 #endif
 
@@ -119,5 +116,14 @@
 
 /* Have execinfo.h */
 /* #undef HAVE_EXECINFO_H */
+
+/* Have pci_system_init_dev_mem() */
+/* #undef HAVE_PCI_SYSTEM_INIT_DEV_MEM */
+
+/* Have pci_enable_device */
+/* #undef HAVE_PCI_DEVICE_ENABLE */
+
+/* Path to text files containing PCI IDs */
+/* #define PCI_TXT_IDS_PATH "" */
 
 #endif /* _XORG_CONFIG_H_ */

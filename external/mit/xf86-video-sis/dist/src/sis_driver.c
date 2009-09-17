@@ -1,5 +1,3 @@
-/* $XFree86$ */
-/* $XdotOrg: driver/xf86-video-sis/src/sis_driver.c,v 1.72 2006/03/09 06:06:25 anholt Exp $ */
 /*
  * SiS driver main code
  *
@@ -51,7 +49,9 @@
 
 #include "sis.h"
 
+#if GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) < 6
 #include "xf86RAC.h"
+#endif
 #include "dixstruct.h"
 #include "shadowfb.h"
 #include "fb.h"
@@ -59,8 +59,6 @@
 #include "mibank.h"
 #include "mipointer.h"
 #include "mibstore.h"
-#define _XF86MISC_SERVER_
-#include <X11/extensions/xf86misc.h>
 #include "edid.h"
 
 #define SIS_NEED_inSISREG
@@ -82,8 +80,13 @@
 
 #include "globals.h"
 
+#ifdef HAVE_XEXTPROTO_71
+#include <X11/extensions/dpmsconst.h>
+#else
 #define DPMS_SERVER
 #include <X11/extensions/dpms.h>
+#endif
+
 
 #ifdef XF86DRI
 #include "dri.h"
@@ -195,127 +198,6 @@ static PciChipsets XGIPciChipsets[] = {
     { -1,                   -1,                 RES_UNDEFINED }
 };
 
-#ifdef SIS_USE_XAA
-static const char *xaaSymbols[] = {
-    "XAACreateInfoRec",
-    "XAADestroyInfoRec",
-    "XAAHelpPatternROP",
-    "XAAInit",
-    NULL
-};
-#endif
-
-#ifdef SIS_USE_EXA
-static const char *exaSymbols[] = {
-    "exaDriverAccel",
-    "exaDriverInit",
-    "exaDriverFini",
-    "exaOffscreenAlloc",
-    "exaOffscreenFree",
-    NULL
-};
-#endif
-
-static const char *fbSymbols[] = {
-    "fbPictureInit",
-    "fbScreenInit",
-    NULL
-};
-
-static const char *shadowSymbols[] = {
-    "ShadowFBInit",
-    NULL
-};
-
-static const char *ramdacSymbols[] = {
-    "xf86CreateCursorInfoRec",
-    "xf86DestroyCursorInfoRec",
-    "xf86InitCursor",
-    NULL
-};
-
-static const char *ddcSymbols[] = {
-    "xf86PrintEDID",
-    "xf86SetDDCproperties",
-    "xf86InterpretEDID",
-    NULL
-};
-
-static const char *int10Symbols[] = {
-    "xf86FreeInt10",
-    "xf86InitInt10",
-    NULL
-};
-
-static const char *vbeSymbols[] = {
-#if XF86_VERSION_CURRENT < XF86_VERSION_NUMERIC(4,2,99,0,0)
-    "VBEInit",
-#else
-    "VBEExtendedInit",
-#endif
-    "vbeDoEDID",
-    "vbeFree",
-    "VBEGetVBEInfo",
-    "VBEFreeVBEInfo",
-    "VBEGetModeInfo",
-    "VBEFreeModeInfo",
-    "VBESaveRestore",
-    "VBESetVBEMode",
-    "VBEGetVBEMode",
-    "VBESetDisplayStart",
-    "VBESetGetLogicalScanlineLength",
-    NULL
-};
-
-#ifdef XF86DRI
-static const char *drmSymbols[] = {
-    "drmAddMap",
-    "drmAgpAcquire",
-    "drmAgpRelease",
-    "drmAgpAlloc",
-    "drmAgpFree",
-    "drmAgpBase",
-    "drmAgpBind",
-    "drmAgpUnbind",
-    "drmAgpEnable",
-    "drmAgpGetMode",
-    "drmCtlInstHandler",
-    "drmCtlUninstHandler",
-    "drmGetInterruptFromBusID",
-#ifndef SISHAVEDRMWRITE
-    "drmSiSAgpInit",
-#else
-    "drmCommandWrite",
-#endif
-#if XF86_VERSION_CURRENT >= XF86_VERSION_NUMERIC(4,3,0,0,0)
-    "drmGetVersion",
-    "drmFreeVersion",
-#endif
-    NULL
-};
-
-static const char *driSymbols[] = {
-    "DRICreateInfoRec",
-    "DRIScreenInit",
-    "DRIFinishScreenInit",
-    "DRIDestroyInfoRec",
-    "DRICloseScreen",
-    "DRIGetSAREAPrivate",
-    "DRILock",
-    "DRIUnlock",
-    "DRIQueryVersion",
-    "GlxSetVisualConfigs",
-    NULL
-};
-
-#ifdef XFree86LOADER
-static const char *driRefSymbols[] = {
-    "DRICreatePCIBusID",  /* not REQUIRED, but eventually referenced */
-    NULL
-};
-#endif
-#endif  /* XF86DRI */
-
 #ifdef XFree86LOADER
 
 static MODULESETUPPROTO(sisSetup);
@@ -351,19 +233,6 @@ sisSetup(pointer module, pointer opts, int *errmaj, int *errmin)
     if(!setupDone) {
        setupDone = TRUE;
        xf86AddDriver(&SIS, module, SIS_HaveDriverFuncs);
-       LoaderRefSymLists(fbSymbols,
-#ifdef SIS_USE_XAA
-			 xaaSymbols,
-#endif
-#ifdef SIS_USE_EXA
-			 exaSymbols,
-#endif
-			 shadowSymbols, ramdacSymbols,
-			 vbeSymbols, int10Symbols,
-#ifdef XF86DRI
-			 drmSymbols, driSymbols, driRefSymbols,
-#endif
-			 NULL);
        return (pointer)TRUE;
     }
 
@@ -555,7 +424,7 @@ SiS_SiSFB_Lock(ScrnInfoPtr pScrn, Bool lock)
     if(!pSiS->sisfbfound) return;
     if(!pSiS->sisfb_havelock) return;
 
-    if((fd = open(pSiS->sisfbdevname, 'r')) != -1) {
+    if((fd = open(pSiS->sisfbdevname, O_RDONLY)) != -1) {
        parm = lock ? 1 : 0;
        ioctl(fd, SISFB_SET_LOCK, &parm);
        close(fd);
@@ -614,6 +483,7 @@ SISProbe(DriverPtr drv, int flags)
      * All of the cards this driver supports are PCI, so the "probing" just
      * amounts to checking the PCI data that the server has already collected.
      */
+#ifndef XSERVER_LIBPCIACCESS
     if(xf86GetPciVideoInfo() == NULL) {
        /*
         * We won't let anything in the config file override finding no
@@ -621,6 +491,7 @@ SISProbe(DriverPtr drv, int flags)
         */
        return FALSE;
     }
+#endif
 
     numUsedSiS = xf86MatchPciInstances(SIS_NAME, PCI_VENDOR_SIS,
 			SISChipsets, SISPciChipsets, devSections,
@@ -669,11 +540,7 @@ SISProbe(DriverPtr drv, int flags)
 	    pScrn->LeaveVT          = SISLeaveVT;
 	    pScrn->FreeScreen       = SISFreeScreen;
 	    pScrn->ValidMode        = SISValidMode;
-#ifdef X_XF86MiscPassMessage
-	    if(xf86GetVersion() >= XF86_VERSION_NUMERIC(4,3,99,2,0)) {
-	       pScrn->HandleMessage = SISHandleMessage;
-	    }
-#endif
+
 	    foundScreen = TRUE;
 	}
 
@@ -2955,7 +2822,6 @@ SiS_LoadInitVBE(ScrnInfoPtr pScrn)
     if(pSiS->pVbe) return;
 
     if(xf86LoadSubModule(pScrn, "vbe")) {
-       xf86LoaderReqSymLists(vbeSymbols, NULL);
 #if XF86_VERSION_CURRENT < XF86_VERSION_NUMERIC(4,2,99,0,0)
        pSiS->pVbe = VBEInit(pSiS->pInt, pSiS->pEnt->index);
 #else
@@ -2983,7 +2849,7 @@ SiS_MapVGAMem(ScrnInfoPtr pScrn)
        /* If card is secondary or if a0000-address decoding
         * is disabled, set Phys to beginning of our video RAM.
 	*/
-       pSiS->VGAMapPhys = pSiS->PciInfo->memBase[0];
+       pSiS->VGAMapPhys = PCI_REGION_BASE(pSiS->PciInfo, 0, REGION_MEM);
     }
     if(!SiSVGAMapMem(pScrn)) {
        xf86DrvMsg(pScrn->scrnIndex, X_WARNING,
@@ -3032,7 +2898,7 @@ SiS_CheckKernelFB(ScrnInfoPtr pScrn)
 	     sprintf(name, "/dev/fb/%1d", (i - 8));
 	  }
 
-          if((fd = open(name, 'r')) != -1) {
+          if((fd = open(name, O_RDONLY)) != -1) {
 
 	     Bool gotit = FALSE;
 
@@ -3380,10 +3246,13 @@ SISPreInit(ScrnInfoPtr pScrn, int flags)
 
     /* Find the PCI info for this screen */
     pSiS->PciInfo = xf86GetPciInfoForEntity(pSiS->pEnt->index);
-    pSiS->PciBus = ((pciConfigPtr)pSiS->PciInfo->thisCard)->busnum;    /*SIS_PCI_BUS(pSiS->PciInfo);*/
-    pSiS->PciDevice = ((pciConfigPtr)pSiS->PciInfo->thisCard)->devnum; /*SIS_PCI_DEVICE(pSiS->PciInfo);*/
-    pSiS->PciFunc = ((pciConfigPtr)pSiS->PciInfo->thisCard)->funcnum;  /*SIS_PCI_FUNC(pSiS->PciInfo);*/
-    pSiS->PciTag = ((pciConfigPtr)pSiS->PciInfo->thisCard)->tag;       /*SIS_PCI_TAG(pSiS->PciInfo);*/
+    pSiS->PciBus = PCI_CFG_BUS(pSiS->PciInfo);    /*SIS_PCI_BUS(pSiS->PciInfo);*/
+    pSiS->PciDevice = PCI_CFG_DEV(pSiS->PciInfo); /*SIS_PCI_DEVICE(pSiS->PciInfo);*/
+    pSiS->PciFunc = PCI_CFG_FUNC(pSiS->PciInfo);  /*SIS_PCI_FUNC(pSiS->PciInfo);*/
+
+    pSiS->PciTag = pciTag(PCI_DEV_BUS(pSiS->PciInfo),
+			  PCI_DEV_DEV(pSiS->PciInfo),
+			  PCI_DEV_FUNC(pSiS->PciInfo));
 
 #ifdef SIS_NEED_MAP_IOP
     /********************************************/
@@ -3433,7 +3302,7 @@ SISPreInit(ScrnInfoPtr pScrn, int flags)
     {
        SymTabRec *myChipsets = SISChipsets;
 
-       if(pSiS->PciInfo->vendor == PCI_VENDOR_XGI) {
+       if(PCI_DEV_VENDOR_ID(pSiS->PciInfo) == PCI_VENDOR_XGI) {
           myChipsets = XGIChipsets;
        }
 
@@ -3451,7 +3320,7 @@ SISPreInit(ScrnInfoPtr pScrn, int flags)
 								pSiS->Chipset);
        } else {
 
-          pSiS->Chipset = pSiS->PciInfo->chipType;
+          pSiS->Chipset = PCI_DEV_DEVICE_ID(pSiS->PciInfo);
           pScrn->chipset = (char *)xf86TokenToString(myChipsets, pSiS->Chipset);
 
        }
@@ -3464,7 +3333,7 @@ SISPreInit(ScrnInfoPtr pScrn, int flags)
 								pSiS->ChipRev);
     } else {
 
-       pSiS->ChipRev = pSiS->PciInfo->chipRev;
+       pSiS->ChipRev = PCI_DEV_REVISION(pSiS->PciInfo);
 
     }
 
@@ -3631,7 +3500,6 @@ SISPreInit(ScrnInfoPtr pScrn, int flags)
 	  xf86DrvMsg(pScrn->scrnIndex, X_INFO,
 		"Initializing adapter through int10\n");
 	  if(xf86LoadSubModule(pScrn, "int10")) {
-	     xf86LoaderReqSymLists(int10Symbols, NULL);
 	     pSiS->pInt = xf86InitInt10(pSiS->pEnt->index);
 	  } else {
 	     SISErrorLog(pScrn, "Failed to load int10 module\n");
@@ -3648,7 +3516,7 @@ SISPreInit(ScrnInfoPtr pScrn, int flags)
      * by the BIOS. So we can pretty much rely on that these
      * are enabled.
      */
-    pSiS->RelIO = (SISIOADDRESS)(pSiS->PciInfo->ioBase[2] + pSiS->IODBase);
+    pSiS->RelIO = (SISIOADDRESS)(PCI_REGION_BASE(pSiS->PciInfo, 2, REGION_IO) + pSiS->IODBase);
     xf86DrvMsg(pScrn->scrnIndex, X_PROBED, "Relocated I/O registers at 0x%lX\n",
            (ULong)pSiS->RelIO);
 
@@ -3686,6 +3554,7 @@ SISPreInit(ScrnInfoPtr pScrn, int flags)
     SiS_MapVGAMem(pScrn);
 #endif
 
+#ifndef XSERVER_LIBPCIACCESS
     /* Set operating state */
 
     /* 1. memory */
@@ -3715,13 +3584,13 @@ SISPreInit(ScrnInfoPtr pScrn, int flags)
     /* Operations for which I/O access is required */
     pScrn->racIoFlags = RAC_COLORMAP | RAC_CURSOR | RAC_VIEWPORT;
 
+#endif
+
     /* Load ramdac module */
     if(!xf86LoadSubModule(pScrn, "ramdac")) {
        SISErrorLog(pScrn, "Could not load ramdac module\n");
        goto my_error_1;
     }
-
-    xf86LoaderReqSymLists(ramdacSymbols, NULL);
 
     /* Set pScrn->monitor */
     pScrn->monitor = pScrn->confScreen->monitor;
@@ -3769,7 +3638,7 @@ SISPreInit(ScrnInfoPtr pScrn, int flags)
 	  break;
        case PCI_CHIP_SIS630: /* 630 + 730 */
 	  pSiS->ChipType = SIS_630;
-	  if(pciReadLong(0x00000000, 0x00) == 0x07301039) {
+	  if(sis_pci_read_host_bridge_u32(0x00) == 0x07301039) {
 	     pSiS->ChipType = SIS_730;
 	  }
 	  pSiS->SiS_SD_Flags |= SiS_SD_IS300SERIES;
@@ -3808,7 +3677,7 @@ SISPreInit(ScrnInfoPtr pScrn, int flags)
 	  break;
        case PCI_CHIP_SIS650: /* 650 + 740 */
 	  pSiS->ChipType = SIS_650;
-	  if(pciReadLong(0x00000000, 0x00) == 0x07401039) {
+	  if(sis_pci_read_host_bridge_u32(0x00) == 0x07401039) {
 	     pSiS->ChipType = SIS_740;
 	  }
 	  pSiS->ChipFlags |= (SiSCF_Integrated | SiSCF_Real256ECore | SiSCF_MMIOPalette);
@@ -3826,7 +3695,7 @@ SISPreInit(ScrnInfoPtr pScrn, int flags)
 	  break;
        case PCI_CHIP_SIS660: /* 660, 661, 741, 760, 761, 670(?) */
 	  {
-	     ULong hpciid = pciReadLong(0x00000000, 0x00);
+	     ULong hpciid = sis_pci_read_host_bridge_u32(0x00);
 	     switch(hpciid) {
 	     case 0x06601039:
 		pSiS->ChipType = SIS_660;
@@ -4067,7 +3936,7 @@ SISPreInit(ScrnInfoPtr pScrn, int flags)
        case PCI_CHIP_SIS6326:
 	  pSiS->oldChipset = OC_SIS6326; break;
        case PCI_CHIP_SIS530:
-	  if(pciReadLong(0x00000000, 0x00) == 0x06201039) {
+	  if(sis_pci_read_host_bridge_u32(0x00) == 0x06201039) {
 	     pSiS->oldChipset = OC_SIS620;
 	  } else {
 	     if((pSiS->ChipRev & 0x0f) < 0x0a)
@@ -4214,7 +4083,6 @@ SISPreInit(ScrnInfoPtr pScrn, int flags)
 	     xf86DrvMsg(pScrn->scrnIndex, X_WARNING,
 		"Could not allocate memory for video BIOS image\n");
 	  } else {
-	     ULong  segstart;
 	     UShort mypciid = pSiS->Chipset;
 	     UShort mypcivendor = (pSiS->ChipFlags & SiSCF_IsXGI) ? PCI_VENDOR_XGI : PCI_VENDOR_SIS;
 	     Bool   found = FALSE, readpci = FALSE;
@@ -4237,7 +4105,15 @@ SISPreInit(ScrnInfoPtr pScrn, int flags)
 			      biossize = 0x8000;
 			      break;
 	     }
-
+#if XSERVER_LIBPCIACCESS
+	     if(readpci) {
+		pSiS->PciInfo->rom_size = biossize;
+		pci_device_read_rom(pSiS->PciInfo, pSiS->BIOS);
+		if(SISCheckBIOS(pSiS, mypciid, mypcivendor, biossize)) {
+		   found = TRUE;
+		}
+	     }
+#else
 	     if(readpci) {
 		xf86ReadPciBIOS(0, pSiS->PciTag, 0, pSiS->BIOS, biossize);
 		if(SISCheckBIOS(pSiS, mypciid, mypcivendor, biossize)) {
@@ -4246,6 +4122,7 @@ SISPreInit(ScrnInfoPtr pScrn, int flags)
 	     }
 
 	     if(!found) {
+	        ULong  segstart;
 		for(segstart = BIOS_BASE; segstart < 0x000f0000; segstart += 0x00001000) {
 
 #if XF86_VERSION_CURRENT < XF86_VERSION_NUMERIC(4,2,99,0,0)
@@ -4260,7 +4137,7 @@ SISPreInit(ScrnInfoPtr pScrn, int flags)
 		   break;
 		}
              }
-
+#endif
 	     if(found) {
 		UShort romptr = pSiS->BIOS[0x16] | (pSiS->BIOS[0x17] << 8);
 		pSiS->SiS_Pr->VirtualRomBase = pSiS->BIOS;
@@ -4522,7 +4399,7 @@ SISPreInit(ScrnInfoPtr pScrn, int flags)
        pSiS->FbAddress = pSiS->pEnt->device->MemBase;
        from = X_CONFIG;
     } else {
-       pSiS->FbAddress = pSiS->PciInfo->memBase[0] & 0xFFFFFFF0;
+       pSiS->FbAddress = PCI_REGION_BASE(pSiS->PciInfo, 0, REGION_MEM) & 0xFFFFFFF0;
        from = X_PROBED;
     }
 
@@ -4546,12 +4423,13 @@ SISPreInit(ScrnInfoPtr pScrn, int flags)
        pSiS->IOAddress = pSiS->pEnt->device->IOBase;
        from = X_CONFIG;
     } else {
-       pSiS->IOAddress = pSiS->PciInfo->memBase[1] & 0xFFFFFFF0;
+       pSiS->IOAddress = PCI_REGION_BASE(pSiS->PciInfo, 1, REGION_MEM) & 0xFFFFFFF0;
        from = X_PROBED;
     }
     xf86DrvMsg(pScrn->scrnIndex, from, "MMIO registers at 0x%lX (size %ldK)\n",
 	   (ULong)pSiS->IOAddress, pSiS->mmioSize);
 
+#ifndef XSERVER_LIBPCIACCESS
     /* Register the PCI-assigned resources */
     if(xf86RegisterResources(pSiS->pEnt->index, NULL, ResExclusive)) {
        SISErrorLog(pScrn, "PCI resource conflicts detected\n");
@@ -4563,6 +4441,7 @@ SISPreInit(ScrnInfoPtr pScrn, int flags)
        SISFreeRec(pScrn);
        return FALSE;
     }
+#endif
 
     from = X_PROBED;
     if(pSiS->pEnt->device->videoRam != 0) {
@@ -5064,15 +4943,15 @@ SISPreInit(ScrnInfoPtr pScrn, int flags)
     if(pSiS->Chipset == PCI_CHIP_SIS630) {
        int i = 0;
        do {
-	  if(mychswtable[i].subsysVendor == pSiS->PciInfo->subsysVendor &&
-	     mychswtable[i].subsysCard == pSiS->PciInfo->subsysCard) {
+	  if(mychswtable[i].subsysVendor == PCI_SUB_VENDOR_ID(pSiS->PciInfo) &&
+	     mychswtable[i].subsysCard == PCI_SUB_DEVICE_ID(pSiS->PciInfo)) {
 	     xf86DrvMsg(pScrn->scrnIndex, X_INFO,
 	         "PCI subsystem ID found in list for Chrontel/GPIO setup:\n");
 	     xf86DrvMsg(pScrn->scrnIndex, X_PROBED,
 		 "\tVendor/Card: %s %s (ID %04x)\n",
 		  mychswtable[i].vendorName,
 		  mychswtable[i].cardName,
-		  pSiS->PciInfo->subsysCard);
+		  PCI_SUB_DEVICE_ID(pSiS->PciInfo));
 	     pSiS->SiS_Pr->SiS_ChSW = TRUE;
 	     break;
           }
@@ -5105,8 +4984,8 @@ SISPreInit(ScrnInfoPtr pScrn, int flags)
 	      ((!SiS_customttable[i].bioschksum) ||
 	       (pSiS->SiS_Pr->UseROM &&
 	       (SiS_customttable[i].bioschksum == chksum)))			      &&
-	      (SiS_customttable[i].pcisubsysvendor == pSiS->PciInfo->subsysVendor)      &&
-	      (SiS_customttable[i].pcisubsyscard == pSiS->PciInfo->subsysCard) ) {
+	      (SiS_customttable[i].pcisubsysvendor == PCI_SUB_VENDOR_ID(pSiS->PciInfo))      &&
+	      (SiS_customttable[i].pcisubsyscard == PCI_SUB_DEVICE_ID(pSiS->PciInfo)) ) {
 	     footprint = TRUE;
 	     for(j=0; j<5; j++) {
 	        if(SiS_customttable[i].biosFootprintAddr[j]) {
@@ -5834,14 +5713,14 @@ SISPreInit(ScrnInfoPtr pScrn, int flags)
 	     if(pSiS->SiS_Pr->PDC == -1) {
 		int i=0;
 		do {
-		   if(mypdctable[i].subsysVendor == pSiS->PciInfo->subsysVendor &&
-		      mypdctable[i].subsysCard == pSiS->PciInfo->subsysCard) {
+		   if(mypdctable[i].subsysVendor == PCI_SUB_VENDOR_ID(pSiS->PciInfo) &&
+		      mypdctable[i].subsysCard == PCI_SUB_DEVICE_ID(pSiS->PciInfo)) {
 			 xf86DrvMsg(pScrn->scrnIndex, X_INFO,
 			    "PCI card/vendor identified for non-default PanelDelayCompensation\n");
 			 xf86DrvMsg(pScrn->scrnIndex, X_PROBED,
 			     "Vendor: %s, card: %s (ID %04x), PanelDelayCompensation: 0x%02x\n",
 			     mypdctable[i].vendorName, mypdctable[i].cardName,
-			     pSiS->PciInfo->subsysCard, mypdctable[i].pdc);
+			     PCI_SUB_DEVICE_ID(pSiS->PciInfo), mypdctable[i].pdc);
 			 if(pSiS->PDC == -1) {
 			    pSiS->PDC = mypdctable[i].pdc;
 			 } else {
@@ -6081,7 +5960,6 @@ SISPreInit(ScrnInfoPtr pScrn, int flags)
     if((pSiS->VGAEngine == SIS_300_VGA) || (pSiS->VGAEngine == SIS_315_VGA)) {
        if(xf86LoadSubModule(pScrn, "ddc")) {
 	  int crtnum = 0;
-	  xf86LoaderReqSymLists(ddcSymbols, NULL);
 	  if((pMonitor = SiSDoPrivateDDC(pScrn, &crtnum))) {
 	     didddc2 = TRUE;
 	     xf86DrvMsg(pScrn->scrnIndex, X_PROBED, ddcsstr, crtnum);
@@ -6113,8 +5991,6 @@ SISPreInit(ScrnInfoPtr pScrn, int flags)
     if(!didddc2) {
 
        if(xf86LoadSubModule(pScrn, "ddc")) {
-
-	  xf86LoaderReqSymLists(ddcSymbols, NULL);
 
 	  /* Now load and initialize VBE module. */
 	  SiS_LoadInitVBE(pScrn);
@@ -6952,18 +6828,15 @@ SISPreInit(ScrnInfoPtr pScrn, int flags)
 	SISErrorLog(pScrn, "Unsupported framebuffer bpp (%d)\n", pScrn->bitsPerPixel);
 	goto my_error_1;
     }
-    xf86LoaderReqSymLists(fbSymbols, NULL);
 
     /* Load XAA/EXA (if needed) */
     if(!pSiS->NoAccel) {
-       const char **symNames = NULL;
 #ifdef SIS_USE_XAA
        if(!pSiS->useEXA) {
 	  if (!xf86LoadSubModule(pScrn, "xaa")) {
 	    SISErrorLog(pScrn, "Could not load xaa module\n");
 	    goto my_error_1;
 	  }
-	  symNames = xaaSymbols;
        }
 #endif
 #ifdef SIS_USE_EXA
@@ -6979,13 +6852,9 @@ SISPreInit(ScrnInfoPtr pScrn, int flags)
 	    LoaderErrorMsg(NULL, "exa", errmaj, errmin);
 	    goto my_error_1;
 	  }
-	  symNames = exaSymbols;
        }
 #endif
-       if(symNames) {
-	  xf86LoaderReqSymLists(symNames, NULL);
-	  xf86DrvMsg(pScrn->scrnIndex, X_INFO, "2D acceleration enabled\n");
-       }
+       xf86DrvMsg(pScrn->scrnIndex, X_INFO, "2D acceleration enabled\n");
     }
 
     /* Load shadowfb (if needed) */
@@ -6994,7 +6863,6 @@ SISPreInit(ScrnInfoPtr pScrn, int flags)
 	  SISErrorLog(pScrn, "Could not load shadowfb module\n");
 	  goto my_error_1;
        }
-       xf86LoaderReqSymLists(shadowSymbols, NULL);
     }
 
     /* Load the dri and glx modules if requested. */
@@ -7003,9 +6871,7 @@ SISPreInit(ScrnInfoPtr pScrn, int flags)
        if(!xf86LoaderCheckSymbol("DRIScreenInit")) {
 	  if(xf86LoadSubModule(pScrn, "dri")) {
 	     if(!xf86LoaderCheckSymbol("GlxSetVisualConfigs")) {
-	        if(xf86LoadSubModule(pScrn, "glx")) {
-		   xf86LoaderReqSymLists(driSymbols, drmSymbols, NULL);
-		} else {
+	        if(!xf86LoadSubModule(pScrn, "glx")) {
 		   SISErrorLog(pScrn, "Failed to load glx module\n");
 		}
 	     }
@@ -7144,15 +7010,48 @@ SISMapIOPMem(ScrnInfoPtr pScrn)
         pSiSEnt->MapCountIOPBase++;
         if(!(pSiSEnt->IOPBase)) {
 	     /* Only map if not mapped previously */
+#ifndef XSERVER_LIBPCIACCESS
 	     pSiSEnt->IOPBase = xf86MapPciMem(pScrn->scrnIndex, VIDMEM_MMIO,
 			pSiS->PciTag, pSiS->IOPAddress, 128);
+#else
+	     {
+	       void **result = (void **)&pSiSEnt->IOPBase;
+	       int err = pci_device_map_range(pSiS->PciInfo,
+					      pSiS->IOPAddress,
+					      128,
+					      PCI_DEV_MAP_FLAG_WRITABLE,
+					      result);
+
+	       if (err) {
+                 xf86DrvMsg (pScrn->scrnIndex, X_ERROR,
+                             "Unable to map IO aperture. %s (%d)\n",
+                             strerror (err), err);
+	       }
+	     }
+#endif
         }
         pSiS->IOPBase = pSiSEnt->IOPBase;
     } else
 #endif
-	pSiS->IOPBase = xf86MapPciMem(pScrn->scrnIndex, mmioFlags,
-			pSiS->PciTag, pSiS->IOPAddress, 128);
+#ifndef XSERVER_LIBPCIACCESS
+	     pSiS->IOPBase = xf86MapPciMem(pScrn->scrnIndex, VIDMEM_MMIO,
+					   pSiS->PciTag, pSiS->IOPAddress, 128);
+#else
+	     {
+	       void **result = (void **)&pSiS->IOPBase;
+	       int err = pci_device_map_range(pSiS->PciInfo,
+					      pSiS->IOPAddress,
+					      128,
+					      PCI_DEV_MAP_FLAG_WRITABLE,
+					      result);
 
+	       if (err) {
+                 xf86DrvMsg (pScrn->scrnIndex, X_ERROR,
+                             "Unable to map IO aperture. %s (%d)\n",
+                             strerror (err), err);
+	       }
+	     }
+#endif
     if(pSiS->IOPBase == NULL) {
 	SISErrorLog(pScrn, "Could not map I/O port area\n");
 	return FALSE;
@@ -7222,14 +7121,46 @@ SISMapMem(ScrnInfoPtr pScrn)
         pSiSEnt->MapCountIOBase++;
         if(!(pSiSEnt->IOBase)) {
 	     /* Only map if not mapped previously */
+#ifndef XSERVER_LIBPCIACCESS
     	     pSiSEnt->IOBase = xf86MapPciMem(pScrn->scrnIndex, mmioFlags,
                          pSiS->PciTag, pSiS->IOAddress, (pSiS->mmioSize * 1024));
+#else
+	     void **result = (void **)&pSiSEnt->IOBase;
+	     int err = pci_device_map_range(pSiS->PciInfo,
+ 	                                    pSiS->IOAddress,
+	                                    (pSiS->mmioSize * 1024),
+                                            PCI_DEV_MAP_FLAG_WRITABLE,
+                                            result);
+
+             if (err) {
+                 xf86DrvMsg (pScrn->scrnIndex, X_ERROR,
+                             "Unable to map IO aperture. %s (%d)\n",
+                             strerror (err), err);
+	     }
+#endif
         }
         pSiS->IOBase = pSiSEnt->IOBase;
     } else
 #endif
+#ifndef XSERVER_LIBPCIACCESS
     	pSiS->IOBase = xf86MapPciMem(pScrn->scrnIndex, mmioFlags,
                         pSiS->PciTag, pSiS->IOAddress, (pSiS->mmioSize * 1024));
+#else
+       {
+	     void **result = (void **)&pSiS->IOBase;
+	     int err = pci_device_map_range(pSiS->PciInfo,
+ 	                                    pSiS->IOAddress,
+	                                    (pSiS->mmioSize * 1024),
+                                            PCI_DEV_MAP_FLAG_WRITABLE,
+                                            result);
+
+             if (err) {
+                 xf86DrvMsg (pScrn->scrnIndex, X_ERROR,
+                             "Unable to map IO aperture. %s (%d)\n",
+                             strerror (err), err);
+	     }
+       }
+#endif
 
     if(pSiS->IOBase == NULL) {
     	SISErrorLog(pScrn, "Could not map MMIO area\n");
@@ -7246,15 +7177,47 @@ SISMapMem(ScrnInfoPtr pScrn)
         pSiSEnt->MapCountIOBaseDense++;
         if(!(pSiSEnt->IOBaseDense)) {
 	     /* Only map if not mapped previously */
+#ifndef XSERVER_LIBPCIACCESS
 	     pSiSEnt->IOBaseDense = xf86MapPciMem(pScrn->scrnIndex, VIDMEM_MMIO,
                     pSiS->PciTag, pSiS->IOAddress, (pSiS->mmioSize * 1024));
+#else
+	     void **result = (void **)&pSiSEnt->IOBaseDense;
+	     int err = pci_device_map_range(pSiS->PciInfo,
+ 	                                    pSiS->IOAddress,
+	                                    (pSiS->mmioSize * 1024),
+                                            PCI_DEV_MAP_FLAG_WRITABLE,
+                                            result);
+
+             if (err) {
+                 xf86DrvMsg (pScrn->scrnIndex, X_ERROR,
+                             "Unable to map IO dense aperture. %s (%d)\n",
+                             strerror (err), err);
+	     }
+#endif /* XSERVER_LIBPCIACCESS */
 	}
 	pSiS->IOBaseDense = pSiSEnt->IOBaseDense;
-    } else
-#endif
-    	pSiS->IOBaseDense = xf86MapPciMem(pScrn->scrnIndex, VIDMEM_MMIO,
+    } else {
+#endif /* SISDUALHEAD */
+#ifndef XSERVER_LIBPCIACCESS
+	     pSiS->IOBaseDense = xf86MapPciMem(pScrn->scrnIndex, VIDMEM_MMIO,
                     pSiS->PciTag, pSiS->IOAddress, (pSiS->mmioSize * 1024));
+#else
+	     void **result = (void **)&pSiS->IOBaseDense;
+	     int err = pci_device_map_range(pSiS->PciInfo,
+ 	                                    pSiS->IOAddress,
+	                                    (pSiS->mmioSize * 1024),
+                                            PCI_DEV_MAP_FLAG_WRITABLE,
+                                            result);
 
+             if (err) {
+                 xf86DrvMsg (pScrn->scrnIndex, X_ERROR,
+                             "Unable to map IO dense aperture. %s (%d)\n",
+                             strerror (err), err);
+	     }
+#endif /* XSERVER_LIBPCIACCESS */
+#ifdef SISDUALHEAD
+    }
+#endif
     if(pSiS->IOBaseDense == NULL) {
        SISErrorLog(pScrn, "Could not map MMIO dense area\n");
        return FALSE;
@@ -7266,21 +7229,55 @@ SISMapMem(ScrnInfoPtr pScrn)
 	pSiSEnt->MapCountFbBase++;
 	if(!(pSiSEnt->FbBase)) {
 	     /* Only map if not mapped previously */
+#ifndef XSERVER_LIBPCIACCESS
 	     pSiSEnt->FbBase = pSiSEnt->RealFbBase =
 			xf86MapPciMem(pScrn->scrnIndex, VIDMEM_FRAMEBUFFER,
 			 pSiS->PciTag, (ULong)pSiS->realFbAddress,
 			 pSiS->FbMapSize);
+#else
+         int err = pci_device_map_range(pSiS->PciInfo,
+                                   (ULong)pSiS->realFbAddress,
+                                   pSiS->FbMapSize,
+                                   PCI_DEV_MAP_FLAG_WRITABLE |
+                                   PCI_DEV_MAP_FLAG_WRITE_COMBINE,
+                                   (void *)&pSiSEnt->FbBase);
+	if (err) {
+            xf86DrvMsg (pScrn->scrnIndex, X_ERROR,
+                        "Unable to map FB aperture. %s (%d)\n",
+                        strerror (err), err);
+            return FALSE;
+        }
+	pSiSEnt->RealFbBase = pSiSEnt->FbBase;
+#endif
 	}
 	pSiS->FbBase = pSiS->RealFbBase = pSiSEnt->FbBase;
 	/* Adapt FbBase (for DHM and SiS76x UMA skipping; dhmOffset is 0 otherwise) */
 	pSiS->FbBase += pSiS->dhmOffset;
     } else {
 #endif
-	pSiS->FbBase = pSiS->RealFbBase =
-		xf86MapPciMem(pScrn->scrnIndex, VIDMEM_FRAMEBUFFER,
+
+#ifndef XSERVER_LIBPCIACCESS
+      pSiS->FbBase = pSiS->RealFbBase =
+			xf86MapPciMem(pScrn->scrnIndex, VIDMEM_FRAMEBUFFER,
 			 pSiS->PciTag, (ULong)pSiS->realFbAddress,
 			 pSiS->FbMapSize);
+#else
+         int err = pci_device_map_range(pSiS->PciInfo,
+                                   (ULong)pSiS->realFbAddress,
+                                   pSiS->FbMapSize,
+                                   PCI_DEV_MAP_FLAG_WRITABLE |
+                                   PCI_DEV_MAP_FLAG_WRITE_COMBINE,
+                                   (void *)&pSiS->FbBase);
+	if (err) {
+            xf86DrvMsg (pScrn->scrnIndex, X_ERROR,
+                        "Unable to map FB aperture. %s (%d)\n",
+                        strerror (err), err);
+            return FALSE;
+        }
+	pSiS->RealFbBase = pSiS->FbBase;
+#endif
 	pSiS->FbBase += pSiS->dhmOffset;
+
 #ifdef SISDUALHEAD
     }
 #endif
@@ -7847,7 +7844,7 @@ SiSRestore_SiSFB_TVParms(ScrnInfoPtr pScrn)
     if(!pSiS->sisfb_tvposvalid) return;
     if(!(pSiS->sisfbdevname[0])) return;
 
-    if((fd = open(pSiS->sisfbdevname, 'r')) != -1) {
+    if((fd = open(pSiS->sisfbdevname, O_RDONLY)) != -1) {
        parm = (CARD32)((pSiS->sisfb_tvxpos << 16) | (pSiS->sisfb_tvypos & 0xffff));
        ioctl(fd, SISFB_SET_TVPOSOFFSET, &parm);
        close(fd);

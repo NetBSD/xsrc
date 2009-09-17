@@ -56,23 +56,16 @@
 #undef IN_LOADER
 #define IN_LOADER
 #include "xf86Module.h"
-#include <X11/fonts/fontmod.h>
 
 typedef struct module_desc {
     struct module_desc *child;
     struct module_desc *sib;
     struct module_desc *parent;
-    struct module_desc *demand_next;
     char *name;
-    char *filename;
-    char *identifier;
-    XID client_id;
-    int in_use;
     int handle;
     ModuleSetupProc SetupProc;
     ModuleTearDownProc TearDownProc;
     void *TearDownData;		/* returned from SetupProc */
-    const char *path;
     const XF86ModuleVersionInfo *VersionInfo;
 } ModuleDesc, *ModuleDescPtr;
 
@@ -93,7 +86,6 @@ ModuleDescPtr LoadSubModuleLocal(ModuleDescPtr, const char *,
 				 pointer, const XF86ModReqInfo *,
 				 int *, int *);
 ModuleDescPtr DuplicateModule(ModuleDescPtr mod, ModuleDescPtr parent);
-void LoadFont(FontModule *);
 void UnloadModule(ModuleDescPtr);
 void UnloadSubModule(ModuleDescPtr);
 void UnloadDriver(ModuleDescPtr);

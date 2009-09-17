@@ -1,4 +1,3 @@
-/* $Id: glstate.c,v 1.1.1.1 2008/07/29 05:10:46 mrg Exp $ */
 
 /*
  * Print GL state information (for debugging)
@@ -21,10 +20,6 @@
 
 
 /*
- * $Log: glstate.c,v $
- * Revision 1.1.1.1  2008/07/29 05:10:46  mrg
- * initial import of MesaLib-7.0.3
- *
  * Revision 1.1  1999/08/19 00:55:42  jtg
  * Initial revision
  *

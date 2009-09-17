@@ -24,7 +24,6 @@
  *
  *
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/s3/s3_bios.c,v 1.2 2001/07/11 07:45:35 alanh Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -37,22 +36,38 @@
 #include "s3.h"
 
 
-static unsigned char *find_bios_string(S3Ptr pS3, int BIOSbase,
+static unsigned char *find_bios_string(ScrnInfoPtr pScrn, int BIOSbase,
 				       char *match1, char *match2)
 {
-	static unsigned char bios[BIOS_BSIZE];
+	static unsigned char *bios;
 	static int init=0;
-	int i, j, l1, l2;
+	int i, j, l1, l2, ret;
+
+	S3Ptr pS3 = S3PTR(pScrn);
+
+	bios = xalloc(BIOS_BSIZE);
+	if (bios = NULL)
+		return NULL;
 
 	if (!init) {
 		init = 1;
+#ifndef XSERVER_LIBPCIACCESS
 		if (xf86ReadDomainMemory(pS3->PciTag, BIOSbase, BIOS_BSIZE, bios) != BIOS_BSIZE)
-			return NULL;
+			goto error;
+#else
+		ret = pci_device_read_rom(pS3->PciInfo, bios);
+		if (ret) {
+			xf86DrvMsg(pScrn->scrnIndex, X_WARNING,
+				"libpciaccess failed to read video BIOS: %s\n",
+				strerror(-ret));
+		        goto error;
+		}
+#endif
 		if ((bios[0] != 0x55) || (bios[1] != 0xaa))
-			return NULL;
+			goto error;
 	}
 	if (match1 == NULL)
-		return NULL;
+		goto error;
 
 	l1 = strlen(match1);
 	if (match2 != NULL)
@@ -70,17 +85,17 @@ static unsigned char *find_bios_string(S3Ptr pS3, int BIOSbase,
 					    !memcmp(&bios[j], match2, l2))
 						return &bios[j+l2];
 		}
-
+error:
+	xfree(bios);
 	return NULL;
 }
 
 
 int S3GetRefClock(ScrnInfoPtr pScrn)
 {
-	S3Ptr pS3 = S3PTR(pScrn);
 	int RefClock = 16000;	/* default */
 
-	if (find_bios_string(pS3, BIOS_BASE, "Number Nine Visual Technology",
+	if (find_bios_string(pScrn, BIOS_BASE, "Number Nine Visual Technology",
 					"Motion 771") != NULL)
 		RefClock = 16000;
 

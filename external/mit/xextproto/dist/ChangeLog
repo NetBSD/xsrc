@@ -1,3 +1,47 @@
+commit 8b5b82ec72dd6952d0664655715a0a47951454f4
+Author: Paulo Cesar Pereira de Andrade <pcpa@mandriva.com.br>
+Date:   Tue Jan 27 20:06:28 2009 -0200
+
+    Janitor: Correct make distcheck and dont distribute autogen.sh
+
+commit fa652c6013a5d3ae8106814d97245fdbac3557ac
+Author: Julien Cristau <jcristau@debian.org>
+Date:   Tue Dec 23 16:16:46 2008 +0100
+
+    Add geproto.txt to EXTRA_DIST
+
+commit bd7f3e16b5a5520f0abb8c481f23a19219d26c7f
+Author: Julien Cristau <jcristau@debian.org>
+Date:   Tue Dec 23 15:45:13 2008 +0100
+
+    COPYING: add Peter Hutterer's license and copyright notice
+    
+    Taken from Xge.h
+
+commit e1773d8ad7d36535f856dcb308be9a1b0601c1fc
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Thu Dec 18 10:10:42 2008 +1000
+
+    Bump to 7.0.4
+
+commit e7f0c4261c59da82da1c151dd1bd0d143a32906a
+Author: Peter Hutterer <peter.hutterer@redhat.com>
+Date:   Mon Dec 1 14:44:03 2008 +1000
+
+    Clean up XGE documentation.
+
+commit b0080664e432f8ee569ce099a536c0232dd64d3e
+Author: Peter Hutterer <peter.hutterer@redhat.com>
+Date:   Mon Dec 1 15:41:16 2008 +1000
+
+    geproto: remote trailing whitespaces.
+
+commit f7e5f23e37e62cc0a981d9b002b69d90b8a7daa9
+Author: Peter Hutterer <peter.hutterer@redhat.com>
+Date:   Fri Sep 26 14:54:19 2008 +0930
+
+    Xge.h: include Xmd.h for CARD8
+
 commit db08133016b421ef12c65db9c4a2819078f01b06
 Author: Peter Hutterer <peter@cs.unisa.edu.au>
 Date:   Wed May 28 17:18:14 2008 +0930

@@ -2,6 +2,9 @@
 
 #include "xorg-server.h"
 
+/* Major version of EXA we can handle */
+#undef EXA_DRIVER_KNOWN_MAJOR
+
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #undef HAVE_DLFCN_H
 
@@ -32,6 +35,12 @@
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H
 
+/* Have 1bpp support */
+#undef HAVE_XF1BPP
+
+/* Have 4bpp support */
+#undef HAVE_XF4BPP
+
 /* Name of package */
 #undef PACKAGE
 
@@ -49,6 +58,15 @@
 
 /* Define to the version of this package. */
 #undef PACKAGE_VERSION
+
+/* Major version of this package */
+#undef PACKAGE_VERSION_MAJOR
+
+/* Minor version of this package */
+#undef PACKAGE_VERSION_MINOR
+
+/* Patch version of this package */
+#undef PACKAGE_VERSION_PATCHLEVEL
 
 /* Define to 1 if you have the ANSI C header files. */
 #undef STDC_HEADERS

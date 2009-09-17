@@ -26,6 +26,7 @@
 AM_CFLAGS = @XORG_CFLAGS@
 trident_drv_la_LTLIBRARIES = trident_drv.la
 trident_drv_la_LDFLAGS = -module -avoid-version
+trident_drv_la_LIBADD = -lm
 trident_drv_ladir = @moduledir@/drivers
 
 trident_drv_la_SOURCES = \
@@ -39,8 +40,8 @@ trident_drv_la_SOURCES = \
          trident_driver.c \
          trident.h \
          tridenthelper.c \
+	 tridentpcirename.h \
          trident_i2c.c \
-         tridentramdac.c \
          trident_regs.h \
          trident_shadow.c \
          trident_tv.c \

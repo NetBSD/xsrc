@@ -286,7 +286,7 @@ NewportProbe(DriverPtr drv, int flags)
 						+ busID * NEWPORT_BASE_OFFSET);
 					RANGE(range[0], base, base + sizeof(NewportRegs),\
 							ResExcMemBlock);
-					pScrn = xf86ConfigIsaEntity(pScrn, 0, entity, NULL, range, \
+					pScrn = (void *)xf86ConfigIsaEntity(pScrn, 0, entity, NULL, range, \
 							NULL, NULL, NULL, NULL);
 					/* Allocate a ScrnInfoRec */
 					pScrn->driverVersion = NEWPORT_VERSION;
@@ -831,6 +831,8 @@ NewportModeInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
 		for (i = 0; i < 256; i++) {
 			col.red = col.green = col.blue = i;
 			NewportCmapSetRGB(NEWPORTREGSPTR(pScrn), i, col);
+			NewportCmapSetRGB(NEWPORTREGSPTR(pScrn), i + 256, col);
+			NewportCmapSetRGB(NEWPORTREGSPTR(pScrn), i + 512, col);
 		}
 	}
 	/* blank the framebuffer */

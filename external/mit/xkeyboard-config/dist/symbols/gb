@@ -1,4 +1,4 @@
-// $XKeyboardConfig: xkeyboard-config/symbols/gb,v 1.12 2008-04-01 21:23:40 svu Exp $
+// $XKeyboardConfig$
 
 // based on a keyboard map from an 'xkb/symbols/gb' file
 //
@@ -85,20 +85,34 @@ xkb_symbols "colemak" {
 
 
 // Dvorak (UK) keymap (by odaen) allowing the usage of
-// the £ and ? key and swapping the @ and " keys.
+// the Â£ and ? key and swapping the @ and " keys.
 
 partial alphanumeric_keys
 xkb_symbols "dvorak" {
-    include "us(dvorak)"
+    include "us(dvorak-intl)"
 
     name[Group1]="United Kingdom - Dvorak";
 
     key <BKSL> { [ numbersign,	asciitilde	] };
     key <AE02> { [	    2,	quotedbl,  twosuperior,   NoSymbol	] };
     key <AE03> { [	    3,	sterling,  threesuperior, NoSymbol	] };
-    key <AE04> { [	    4,	dollar,    EuroSign,      NoSymbol	] };
     key <LSGT> { [  backslash,	bar		] };
     key <AD01> { [ apostrophe,	at		] };
+};
+
+// Dvorak letter positions, but punctuation all in the normal UK positions.
+partial alphanumeric_keys
+xkb_symbols "dvorakukp" {
+    include "gb(dvorak)"
+
+    name[Group1]="United Kingdom - Dvorak (UK Punctuation)";
+
+    key <AE11> {        [     minus,    underscore      ]       };
+    key <AE12> {        [     equal,    plus            ]       };
+    key <AD11> {        [ bracketleft,  braceleft       ]       };
+    key <AD12> {        [ bracketright, braceright      ]       };
+    key <AD01> {        [ slash,        question        ]       };
+    key <AC11> {        [apostrophe,    at,         dead_circumflex, dead_caron] };
 };
 
 // Copied from macintosh_vndr/gb

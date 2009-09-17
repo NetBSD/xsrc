@@ -24,6 +24,7 @@ is" without express or implied warranty.
 #include "regionstr.h"
 #include "gc.h"
 #include "servermd.h"
+#include "privates.h"
 #include "mi.h"
 
 #include "Xnest.h"
@@ -32,10 +33,12 @@ is" without express or implied warranty.
 #include "Screen.h"
 #include "XNPixmap.h"
 
-int xnestPixmapPrivateIndex;	    
+static int xnestPixmapPrivateKeyIndex;
+DevPrivateKey xnestPixmapPrivateKey = &xnestPixmapPrivateKeyIndex;
 
 PixmapPtr
-xnestCreatePixmap(ScreenPtr pScreen, int width, int height, int depth)
+xnestCreatePixmap(ScreenPtr pScreen, int width, int height, int depth,
+		  unsigned usage_hint)
 {
   PixmapPtr pPixmap;
 
@@ -55,8 +58,9 @@ xnestCreatePixmap(ScreenPtr pScreen, int width, int height, int depth)
   pPixmap->drawable.serialNumber = NEXT_SERIAL_NUMBER;
   pPixmap->refcnt = 1;
   pPixmap->devKind = PixmapBytePad(width, depth);
-  pPixmap->devPrivates[xnestPixmapPrivateIndex].ptr =
-      (pointer)((char *)pPixmap + pScreen->totalPixmapSize);
+  pPixmap->usage_hint = usage_hint;
+  dixSetPrivate(&pPixmap->devPrivates, xnestPixmapPrivateKey,
+		(char *)pPixmap + pScreen->totalPixmapSize);
   if (width && height)
       xnestPixmapPriv(pPixmap)->pixmap = 
 	  XCreatePixmap(xnestDisplay, 
@@ -74,6 +78,7 @@ xnestDestroyPixmap(PixmapPtr pPixmap)
   if(--pPixmap->refcnt)
     return TRUE;
   XFreePixmap(xnestDisplay, xnestPixmap(pPixmap));
+  dixFreePrivates(pPixmap->devPrivates);
   xfree(pPixmap);
   return TRUE;
 }
@@ -85,7 +90,7 @@ xnestPixmapToRegion(PixmapPtr pPixmap)
   register RegionPtr pReg, pTmpReg;
   register int x, y;
   unsigned long previousPixel, currentPixel;
-  BoxRec Box;
+  BoxRec Box = { 0, 0, 0, 0 };
   Bool overlap;
   
   ximage = XGetImage(xnestDisplay, xnestPixmap(pPixmap), 0, 0,

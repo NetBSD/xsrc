@@ -1,5 +1,5 @@
 /*
- * Copyright 2007, 2008  Luc Verhaegen <lverhaegen@novell.com>
+ * Copyright 2007, 2008  Luc Verhaegen <libv@exsuse.de>
  * Copyright 2007, 2008  Matthias Hopf <mhopf@novell.com>
  * Copyright 2007, 2008  Egbert Eich   <eich@novell.com>
  * Copyright 2007, 2008  Advanced Micro Devices, Inc.
@@ -28,7 +28,10 @@
 
 extern int RhdAtomSetupBacklightControlProperty(struct rhdOutput *Output,
 						Bool (**PropertyFunc)(struct rhdOutput *Output,
-								       enum rhdPropertyAction Action,
-								       enum rhdOutputProperty Property,
-								       union rhdPropertyData *val));
+								      enum rhdPropertyAction Action,
+								      enum rhdOutputProperty Property,
+								      union rhdPropertyData *val),
+						void **PrivatePtr);
+extern void RhdAtomDestroyBacklightControlProperty(struct rhdOutput *Output, void *PrivatePtr);
+
 #endif

@@ -25,9 +25,10 @@ ogham	is434		ie	ogam_is434
 ogham	is434laptop	ie	ogam_is434
 ori	basic		in	ori
 ro	de		ro	winkeys
-ro	us		ro	std_comma
-ro	std		ro	std_cedilla
-ro	academic	ro	std_comma
+ro	us		ro	std
+ro	academic	ro	std
+ro	std_comma	ro	std
+ro	comma		ro	basic	
 ru	os		ru	os_legacy
 sapmi	basic		no	smi
 sapmi	nodeadkeys	no	smi_nodeadkeys

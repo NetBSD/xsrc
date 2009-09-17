@@ -364,8 +364,8 @@ static EventKey events[] = {
 #ifdef DEBUG
 # ifdef notdef
 {"Timer",	    NULLQUARK, _XtTimerEventType,ParseNone,	NULL},
-# endif /* notdef */
 {"EventTimer",	    NULLQUARK, _XtEventTimerEventType,ParseNone,NULL},
+# endif /* notdef */
 #endif /* DEBUG */
 
 /* Event Name,	  Quark, Event Type,	Detail Parser, Closure */
@@ -1533,7 +1533,7 @@ static String ParseEventSeq(
 
     while ( *str != '\0' && !IsNewline(*str)) {
 	static Event	nullEvent =
-             {0, 0,0L, 0, 0L, 0L,_XtRegularMatch,FALSE};
+             {0, 0,NULL, 0, 0L, 0L,_XtRegularMatch,FALSE};
 	EventPtr	event;
 
 	ScanWhitespace(str);
@@ -1836,6 +1836,7 @@ static String ParseTranslationTableProduction(
     ActionPtr	*actionsP;
     String	production = str;
 
+    actionsP = NULL;
     str = ParseEventSeq(str, &eventSeq, &actionsP,error);
     if (*error == TRUE) {
 	ShowProduction(production);

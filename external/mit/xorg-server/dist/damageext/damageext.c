@@ -29,9 +29,11 @@
 static unsigned char	DamageReqCode;
 static int		DamageEventBase;
 static int		DamageErrorBase;
-static int		DamageClientPrivateIndex;
 static RESTYPE		DamageExtType;
 static RESTYPE		DamageExtWinType;
+
+static int DamageClientPrivateKeyIndex;
+static DevPrivateKey DamageClientPrivateKey = &DamageClientPrivateKeyIndex;
 
 /* Version of the damage extension supported by the server, as opposed to the
  * DAMAGE_* defines from damageproto for what version the proto header
@@ -90,9 +92,7 @@ DamageExtNotify (DamageExtPtr pDamageExt, BoxPtr pBoxes, int nBoxes)
     if (pDamageClient->critical > 0)
     {
 	SetCriticalOutputPending ();
-#ifdef SMART_SCHEDULE
 	pClient->smart_priority = SMART_MAX_PRIORITY;
-#endif
     }
 }
 
@@ -185,7 +185,7 @@ ProcDamageCreate (ClientPtr client)
     REQUEST_SIZE_MATCH(xDamageCreateReq);
     LEGAL_NEW_RESOURCE(stuff->damage, client);
     rc = dixLookupDrawable(&pDrawable, stuff->drawable, client, 0,
-			   DixReadAccess);
+			   DixGetAttrAccess|DixReadAccess);
     if (rc != Success)
 	return rc;
 
@@ -233,7 +233,7 @@ ProcDamageCreate (ClientPtr client)
     if (pDrawable->type == DRAWABLE_WINDOW)
     {
 	pRegion = &((WindowPtr) pDrawable)->borderClip;
-	DamageDamageRegion (pDrawable, pRegion);
+	DamageRegionAppend(pDrawable, pRegion);
     }
 
     return (client->noClientException);
@@ -295,7 +295,7 @@ ProcDamageAdd (ClientPtr client)
     REQUEST_SIZE_MATCH(xDamageAddReq);
     VERIFY_REGION(pRegion, stuff->region, client, DixWriteAccess);
     rc = dixLookupDrawable(&pDrawable, stuff->drawable, client, 0,
-			   DixReadAccess);
+			   DixWriteAccess);
     if (rc != Success)
 	return rc;
 
@@ -303,7 +303,7 @@ ProcDamageAdd (ClientPtr client)
      * screen coordinates like damage expects.
      */
     REGION_TRANSLATE(pScreen, pRegion, pDrawable->x, pDrawable->y);
-    DamageDamageRegion(pDrawable, pRegion);
+    DamageRegionAppend(pDrawable, pRegion);
     REGION_TRANSLATE(pScreen, pRegion, -pDrawable->x, -pDrawable->y);
 
     return (client->noClientException);
@@ -511,9 +511,7 @@ DamageExtensionInit(void)
     if (!DamageExtWinType)
 	return;
 
-    DamageClientPrivateIndex = AllocateClientPrivateIndex ();
-    if (!AllocateClientPrivate (DamageClientPrivateIndex, 
-				sizeof (DamageClientRec)))
+    if (!dixRequestPrivate(DamageClientPrivateKey, sizeof (DamageClientRec)))
 	return;
     if (!AddCallback (&ClientStateCallback, DamageClientCallback, 0))
 	return;

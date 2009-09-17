@@ -28,7 +28,6 @@
  *	    Massimiliano Ghilardi, max@Linuz.sns.it, some fixes to the
  *				   clockchip programming code.
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/trident/trident_driver.c,v 1.190 2004/01/21 22:31:54 alanh Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -40,13 +39,15 @@
 #include "micmap.h"
 #include "xf86.h"
 #include "xf86_OSproc.h"
+#if GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) < 6
 #include "xf86Resources.h"
-#include "xf86Version.h"
+#include "xf86RAC.h"
+#endif
 #include "xf86PciInfo.h"
 #include "xf86Pci.h"
 #include "xf86cmap.h"
 #include "vgaHW.h"
-#include "xf86RAC.h"
+
 #include "vbe.h"
 #include "dixstruct.h"
 #include "compiler.h"
@@ -64,8 +65,13 @@
 #endif
 
 #include "globals.h"
+#ifdef HAVE_XEXTPROTO_71
+#include <X11/extensions/dpmsconst.h>
+#else
 #define DPMS_SERVER
 #include <X11/extensions/dpms.h>
+#endif
+
 
 #include "xf86xv.h"
 
@@ -115,9 +121,9 @@ static int pix24bpp = 0;
 #define TRIDENT_VERSION 4000
 #define TRIDENT_NAME "TRIDENT"
 #define TRIDENT_DRIVER_NAME "trident"
-#define TRIDENT_MAJOR_VERSION 1
-#define TRIDENT_MINOR_VERSION 2
-#define TRIDENT_PATCHLEVEL 3
+#define TRIDENT_MAJOR_VERSION PACKAGE_VERSION_MAJOR
+#define TRIDENT_MINOR_VERSION PACKAGE_VERSION_MINOR
+#define TRIDENT_PATCHLEVEL PACKAGE_VERSION_PATCHLEVEL
 
 /* 
  * This contains the functions needed by the server after loading the driver
@@ -175,6 +181,7 @@ static SymTabRec TRIDENTChipsets[] = {
     { -1,				NULL }
 };
 
+#ifdef HAVE_ISA
 static IsaChipsets TRIDENTISAchipsets[] = {
     { TVGA9000,			RES_EXCLUSIVE_VGA },
     { TVGA9000i,		RES_EXCLUSIVE_VGA },
@@ -186,6 +193,7 @@ static IsaChipsets TRIDENTISAchipsets[] = {
     { TGUI9440AGi,		RES_EXCLUSIVE_VGA },
     { -1,			RES_UNDEFINED }
 };
+#endif
 
 static PciChipsets TRIDENTPciChipsets[] = {
     { CYBER9320,	PCI_CHIP_9320,	RES_SHARED_VGA },
@@ -488,86 +496,6 @@ tridentLCD LCD[] = {
 #endif
 #endif
 
-static const char *xaaSymbols[] = {
-    "XAAGetCopyROP",
-    "XAACreateInfoRec",
-    "XAADestroyInfoRec",
-    "XAAInit",
-    "XAAGetPatternROP",
-    NULL
-};
-
-const char *exaSymbols[] = {
-    "exaDriverAlloc",
-    "exaDriverInit",
-    "exaDriverFini",
-    "exaOffscreenAlloc",
-    "exaOffscreenFree",
-    NULL
-};
-
-static const char *vgahwSymbols[] = {
-    "vgaHWBlankScreenWeak",
-    "vgaHWFreeHWRec",
-    "vgaHWGetHWRec",
-    "vgaHWGetIOBase",
-    "vgaHWGetIndex",
-    "vgaHWInit",
-    "vgaHWLock",
-    "vgaHWMapMem",
-    "vgaHWProtectWeak",
-    "vgaHWRestore",
-    "vgaHWSave",
-    "vgaHWSaveScreen",
-    "vgaHWSetMmioFuncs",
-    "vgaHWUnlock",
-    NULL
-};
-
-static const char *fbSymbols[] = {
-    "fbPictureInit",
-    "fbScreenInit",
-    NULL
-};
-
-static const char *ramdacSymbols[] = {
-    "xf86CreateCursorInfoRec",
-    "xf86DestroyCursorInfoRec",
-    "xf86InitCursor",
-    NULL
-};
-
-static const char *ddcSymbols[] = {
-    "xf86PrintEDID",
-    "xf86SetDDCproperties",
-    NULL
-};
-
-static const char *i2cSymbols[] = {
-    "xf86CreateI2CBusRec",
-    "xf86I2CBusInit",
-    NULL
-};
-
-static const char *int10Symbols[] = {
-    "xf86ExecX86int10",
-    "xf86FreeInt10",
-    "xf86InitInt10",
-    NULL
-};
-
-static const char *shadowSymbols[] = {
-    "shadowInit",
-    NULL
-};
-
-static const char *vbeSymbols[] = {
-    "VBEInit",
-    "vbeDoEDID",
-    "vbeFree",
-    NULL
-};
-
 #ifdef XFree86LOADER
 
 static MODULESETUPPROTO(tridentSetup);
@@ -600,9 +528,6 @@ tridentSetup(pointer module, pointer opts, int *errmaj, int *errmin)
     if (!setupDone) {
 	setupDone = TRUE;
 	xf86AddDriver(&TRIDENT, module, 0);
-	LoaderRefSymLists(vgahwSymbols, fbSymbols, i2cSymbols, vbeSymbols,
-			  ramdacSymbols, int10Symbols,
-			  xaaSymbols, exaSymbols, shadowSymbols, NULL);
 	return (pointer)TRUE;
     } 
 
@@ -810,6 +735,7 @@ TRIDENTClockSelect(ScrnInfoPtr pScrn, int no)
     return(TRUE);
 }
 
+#ifdef HAVE_ISA
 static int
 TridentFindIsaDevice(GDevPtr dev)
 {
@@ -900,6 +826,7 @@ TridentFindIsaDevice(GDevPtr dev)
     }
     return found;
 }
+#endif
 
 
 /* Mandatory */
@@ -937,7 +864,12 @@ TRIDENTProbe(DriverPtr drv, int flags)
      * All of the cards this driver supports are PCI, so the "probing" just
      * amounts to checking the PCI data that the server has already collected.
      */
-    if (xf86GetPciVideoInfo()) {
+#ifndef XSERVER_LIBPCIACCESS
+    if (xf86GetPciVideoInfo()== NULL) {
+	return FALSE;
+    }
+#endif
+    {
     	numUsed = xf86MatchPciInstances(TRIDENT_NAME, PCI_VENDOR_TRIDENT,
 		   TRIDENTChipsets, TRIDENTPciChipsets, devSections,
 		   numDevSections, drv, &usedChips);
@@ -971,6 +903,7 @@ TRIDENTProbe(DriverPtr drv, int flags)
 	}
     }
 
+#ifdef HAVE_ISA
     /* Isa Bus */
     numUsed = xf86MatchIsaInstances(TRIDENT_NAME,TRIDENTChipsets,
 				     TRIDENTISAchipsets,
@@ -1001,7 +934,8 @@ TRIDENTProbe(DriverPtr drv, int flags)
 	}
 	xfree(usedChips);
     }
-    
+#endif    
+
     xfree(devSections);
     return foundScreen;
 }
@@ -1085,16 +1019,18 @@ TRIDENTPreInit(ScrnInfoPtr pScrn, int flags)
     /* This is the general case */
     for (i = 0; i<pScrn->numEntities; i++) {
 	pTrident->pEnt = xf86GetEntityInfo(pScrn->entityList[i]);
+#ifndef XSERVER_LIBPCIACCESS
 	if (pTrident->pEnt->resources) return FALSE;
+#endif
 	pTrident->Chipset = pTrident->pEnt->chipset;
 	pScrn->chipset = (char *)xf86TokenToString(TRIDENTChipsets,
 						   pTrident->pEnt->chipset);
 	/* This driver can handle ISA and PCI buses */
 	if (pTrident->pEnt->location.type == BUS_PCI) {
 	    pTrident->PciInfo = xf86GetPciInfoForEntity(pTrident->pEnt->index);
-	    pTrident->PciTag = pciTag(pTrident->PciInfo->bus, 
-				  pTrident->PciInfo->device,
-				  pTrident->PciInfo->func);
+#ifndef XSERVER_LIBPCIACCESS
+	    pTrident->PciTag = PCI_DEV_TAG(pTrident->PciInfo);
+#endif
     	    pTrident->Linear = TRUE;
 	} else {
     	    pTrident->Linear = FALSE;
@@ -1163,8 +1099,6 @@ TRIDENTPreInit(ScrnInfoPtr pScrn, int flags)
     if (!xf86LoadSubModule(pScrn, "vgahw"))
 	return FALSE;
 
-    xf86LoaderReqSymLists(vgahwSymbols, NULL);
-
     /*
      * Allocate a vgaHWRec
      */
@@ -1176,13 +1110,13 @@ TRIDENTPreInit(ScrnInfoPtr pScrn, int flags)
     vgaIOBase = hwp->IOBase;
     pTrident->PIOBase = hwp->PIOOffset;
 
+#ifndef XSERVER_LIBPCIACCESS
     xf86SetOperatingState(resVga, pTrident->pEnt->index, ResUnusedOpr);
+#endif
 
     /* The ramdac module should be loaded here when needed */
     if (!xf86LoadSubModule(pScrn, "ramdac"))
 	return FALSE;
-
-    xf86LoaderReqSymLists(ramdacSymbols, NULL);
 
     /*
      * This must happen after pScrn->display has been set because
@@ -1491,7 +1425,7 @@ TRIDENTPreInit(ScrnInfoPtr pScrn, int flags)
 	    from = X_CONFIG;
     	} else {
     	    if (IsPciCard)
-	    	pTrident->FbAddress = pTrident->PciInfo->memBase[0]& 0xFFFFFFF0;
+	    	pTrident->FbAddress = PCI_REGION_BASE(pTrident->PciInfo, 0, REGION_MEM) & 0xFFFFFFF0;
 	    else
 	    	pTrident->FbAddress = 0xA0000;
     	}
@@ -1510,7 +1444,7 @@ TRIDENTPreInit(ScrnInfoPtr pScrn, int flags)
 	    from = X_CONFIG;
     	} else {
     	    if (IsPciCard)
-	    	pTrident->IOAddress = pTrident->PciInfo->memBase[1]& 0xFFFFC000;
+	    	pTrident->IOAddress = PCI_REGION_BASE(pTrident->PciInfo, 1, REGION_MEM) & 0xFFFFC000;
 	    else
 	    	/* FIXME - Multihead UNAWARE */
     	    	pTrident->IOAddress = 0xBF000;
@@ -1520,13 +1454,14 @@ TRIDENTPreInit(ScrnInfoPtr pScrn, int flags)
 		   (unsigned long)pTrident->IOAddress);
     }
 
+#ifndef XSERVER_LIBPCIACCESS
     /* Register the PCI-assigned resources. */
     if (xf86RegisterResources(pTrident->pEnt->index, NULL, ResExclusive)) {
 	xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
 		   "xf86RegisterResources() found resource conflicts\n");
 	return FALSE;
     }
-
+#endif
     /* Initialize VBE if possible 
      * Don't move this past MMIO enable!!
      * PIO access will be blocked
@@ -1536,7 +1471,6 @@ TRIDENTPreInit(ScrnInfoPtr pScrn, int flags)
     if (xf86LoadSubModule(pScrn, "vbe")) {
 	vbeInfoPtr pVbe;
 
-        xf86LoaderReqSymLists(vbeSymbols, NULL);
 	pVbe =  VBEInit(NULL,pTrident->pEnt->index);
 	pMon = vbeDoEDID(pVbe, NULL);
 #ifdef VBE_INFO
@@ -1554,7 +1488,6 @@ TRIDENTPreInit(ScrnInfoPtr pScrn, int flags)
 		TRIDENTFreeRec(pScrn);
 		return FALSE;
 	    } else {
-		xf86LoaderReqSymLists(ddcSymbols, NULL);
 		xf86SetDDCproperties(pScrn,xf86PrintEDID(pMon));
 		ddcLoaded = TRUE;
 	    }
@@ -1996,7 +1929,7 @@ TRIDENTPreInit(ScrnInfoPtr pScrn, int flags)
 	    pTrident->NewClockCode = TRUE;
 	    pTrident->frequency = NTSC;
 	    OUTB(0x3C4, 0x5D);
-	    if (pTrident->PciInfo->subsysVendor != 0x1023) {
+	    if (PCI_SUB_VENDOR_ID(pTrident->PciInfo) != 0x1023) {
 	    	chipset = "CyberBladeXP";
 	    	pTrident->IsCyber = TRUE;
 	    } else
@@ -2321,7 +2254,7 @@ TRIDENTPreInit(ScrnInfoPtr pScrn, int flags)
     clockRanges->maxClock = pTrident->MaxClock;
     clockRanges->clockIndex = -1;		/* programmable */
     clockRanges->interlaceAllowed = TRUE;
-    clockRanges->doubleScanAllowed = FALSE;	/* XXX check this */
+    clockRanges->doubleScanAllowed = TRUE;
 
     /*
      * xf86ValidateModes will check that the mode HTotal and VTotal values
@@ -2422,8 +2355,6 @@ TRIDENTPreInit(ScrnInfoPtr pScrn, int flags)
 	return FALSE;
     }
 
-    xf86LoaderReqSymLists(fbSymbols, NULL);
-
     if (!xf86LoadSubModule(pScrn, "i2c")) {
 	if (IsPciCard && UseMMIO) {
     	    TRIDENTDisableMMIO(pScrn);
@@ -2433,15 +2364,12 @@ TRIDENTPreInit(ScrnInfoPtr pScrn, int flags)
 	return FALSE;
     }
 
-    xf86LoaderReqSymLists(i2cSymbols, NULL);
-
     /* Load shadow if needed */
     if (pTrident->ShadowFB) {
 	if (!xf86LoadSubModule(pScrn, "shadow")) {
 	    TRIDENTFreeRec(pScrn);
 	    return FALSE;
 	}
-	xf86LoaderReqSymLists(shadowSymbols, NULL);
     }
 
     /* Load XAA if needed */
@@ -2455,7 +2383,6 @@ TRIDENTPreInit(ScrnInfoPtr pScrn, int flags)
 		TRIDENTFreeRec(pScrn);
 		return FALSE;
 	    }
-	    xf86LoaderReqSymLists(xaaSymbols, NULL);
 	}
 
 	if (pTrident->useEXA) {
@@ -2476,7 +2403,6 @@ TRIDENTPreInit(ScrnInfoPtr pScrn, int flags)
 		TRIDENTFreeRec(pScrn);
 		return FALSE;
 	    }
-	    xf86LoaderReqSymLists(exaSymbols, NULL);
 	}
 
         switch (pScrn->displayWidth * pScrn->bitsPerPixel / 8) {
@@ -2508,21 +2434,20 @@ TRIDENTPreInit(ScrnInfoPtr pScrn, int flags)
 	    TRIDENTFreeRec(pScrn);
 	    return FALSE;
 	}
-    
-    xf86LoaderReqSymLists(ddcSymbols, NULL);
 
     if (IsPciCard && UseMMIO) {
         TRIDENTDisableMMIO(pScrn);
 	TRIDENTUnmapMem(pScrn);
     }
 
+#ifndef XSERVER_LIBPCIACCESS
     pScrn->racMemFlags = RAC_FB | RAC_COLORMAP | RAC_CURSOR | RAC_VIEWPORT;
 
     if (pTrident->IsCyber && pTrident->MMIOonly)
 	pScrn->racIoFlags = 0;
     else 
 	pScrn->racIoFlags = RAC_FB | RAC_COLORMAP | RAC_CURSOR | RAC_VIEWPORT;
-
+#endif
     pTrident->FbMapSize = pScrn->videoRam * 1024;
 
     return TRUE;
@@ -2542,12 +2467,32 @@ TRIDENTMapMem(ScrnInfoPtr pScrn)
     if (Is3Dchip) mapsize = 0x20000;
 
     if (IsPciCard && UseMMIO)
+#ifndef XSERVER_LIBPCIACCESS
     	pTrident->IOBase = xf86MapPciMem(pScrn->scrnIndex, VIDMEM_MMIO, 
 		pTrident->PciTag, pTrident->IOAddress, mapsize);
+#else
+	{
+		void **result = (void **)&pTrident->IOBase;
+		int err = pci_device_map_range(pTrident->PciInfo,
+						pTrident->IOAddress,
+						mapsize,
+						PCI_DEV_MAP_FLAG_WRITABLE,
+						result);
+		if (err) {
+			xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
+				"Unable to map IO aperture. %s (%d)\n",
+				strerror(err), err);
+		}
+	}
+#endif
     else {
+#ifndef XSERVER_LIBPCIACCESS
     	pTrident->IOBase = xf86MapDomainMemory(pScrn->scrnIndex, VIDMEM_MMIO, 
 		pTrident->PciTag, pTrident->IOAddress, 0x1000);
     	pTrident->IOBase += 0xF00;
+#else
+	return FALSE;
+#endif
     }
 
     if (pTrident->IOBase == NULL)
@@ -2555,11 +2500,28 @@ TRIDENTMapMem(ScrnInfoPtr pScrn)
 
     if (pTrident->Linear) {
         if (pTrident->FbMapSize != 0) {
+#ifndef XSERVER_LIBPCIACCESS
 	    pTrident->FbBase = xf86MapPciMem(pScrn->scrnIndex, 
 				VIDMEM_FRAMEBUFFER,
 				 pTrident->PciTag,
 				 (unsigned long)pTrident->FbAddress,
 				 pTrident->FbMapSize);
+#else
+	    {
+		void **result = (void **)&pTrident->FbBase;
+		int err = pci_device_map_range(pTrident->PciInfo,
+						pTrident->FbAddress,
+						pTrident->FbMapSize,
+						PCI_DEV_MAP_FLAG_WRITABLE |
+						PCI_DEV_MAP_FLAG_WRITE_COMBINE,
+						result);
+		if (err) {
+			xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
+				"Unable to map VRAM aperture. %s (%d)\n",
+				strerror(err), err);
+		}
+	    }
+#endif
 	    if (pTrident->FbBase == NULL)
 		return FALSE;
     	}
@@ -2585,19 +2547,27 @@ TRIDENTUnmapMem(ScrnInfoPtr pScrn)
     /*
      * Unmap IO registers to virtual address space
      */ 
-    if (IsPciCard && UseMMIO) 
+#ifdef XSERVER_LIBPCIACCESS
+    pci_device_unmap_range(pTrident->PciInfo, (pointer)pTrident->IOBase, mapsize);
+#else
+    if (IsPciCard && UseMMIO) {
     	xf86UnMapVidMem(pScrn->scrnIndex, (pointer)pTrident->IOBase, mapsize);
-    else {
+    } else {
     	pTrident->IOBase -= 0xF00;
     	xf86UnMapVidMem(pScrn->scrnIndex, (pointer)pTrident->IOBase, 0x1000);
     }
+#endif
     pTrident->IOBase = NULL;
 
     if (pTrident->Linear) {
     	if (pTrident->FbMapSize != 0) {
+#ifdef XSERVER_LIBPCIACCESS
+	    pci_device_unmap_range(pTrident->PciInfo, (pointer)pTrident->FbBase, pTrident->FbMapSize);
+#else
     	    xf86UnMapVidMem(pScrn->scrnIndex, (pointer)pTrident->FbBase, 
 							pTrident->FbMapSize);
-    	pTrident->FbBase = NULL;
+#endif
+	    pTrident->FbBase = NULL;
         }
     }
 
@@ -2646,7 +2616,7 @@ TRIDENTModeInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
     TRIDENTPtr pTrident = TRIDENTPTR(pScrn);
     TRIDENTRegPtr tridentReg;
 
-    WAITFORVSYNC;
+    if (!xf86IsPc98()) WAITFORVSYNC;
 
     TridentFindClock(pScrn,mode->Clock);
 
@@ -2820,7 +2790,6 @@ TRIDENTScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 #endif
 	{
 	    if (xf86LoadSubModule(pScrn, "int10")) {
-		xf86LoaderReqSymLists(int10Symbols, NULL);
 		xf86DrvMsg(pScrn->scrnIndex,X_INFO,"Initializing int10\n");
 		pTrident->Int10 = xf86InitInt10(pTrident->pEnt->index);
 	    }

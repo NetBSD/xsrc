@@ -34,6 +34,7 @@
 #include "xf86DDC.h"
 #include "mipointer.h"
 #include <randrstr.h>
+#include "inputstr.h"
 
 typedef struct _xf86RandRInfo {
     CreateScreenResourcesProcPtr    CreateScreenResources;
@@ -45,16 +46,18 @@ typedef struct _xf86RandRInfo {
     Rotation			    rotation;
 } XF86RandRInfoRec, *XF86RandRInfoPtr;
 
-static int	    xf86RandRIndex = -1;
-static int	    xf86RandRGeneration;
+static int xf86RandRKeyIndex;
+static DevPrivateKey xf86RandRKey;
 
-#define XF86RANDRINFO(p)    ((XF86RandRInfoPtr) (p)->devPrivates[xf86RandRIndex].ptr)
+#define XF86RANDRINFO(p) ((XF86RandRInfoPtr)dixLookupPrivate(&(p)->devPrivates, xf86RandRKey))
 
 static int
 xf86RandRModeRefresh (DisplayModePtr mode)
 {
     if (mode->VRefresh)
 	return (int) (mode->VRefresh + 0.5);
+    else if (mode->Clock == 0)
+	return 0;
     else
 	return (int) (mode->Clock * 1000.0 / mode->HTotal / mode->VTotal + 0.5);
 }
@@ -71,7 +74,7 @@ xf86RandRGetInfo (ScreenPtr pScreen, Rotation *rotations)
 
     *rotations = RR_Rotate_0;
 
-    for (mode = scrp->modes; ; mode = mode->next)
+    for (mode = scrp->modes; mode != NULL ; mode = mode->next)
     {
 	int refresh = xf86RandRModeRefresh (mode);
 
@@ -171,6 +174,25 @@ xf86RandRSetMode (ScreenPtr	    pScreen,
 	scrp->virtualX = mode->HDisplay;
 	scrp->virtualY = mode->VDisplay;
     }
+
+    /*
+     * The DIX forgets the physical dimensions we passed into RRRegisterSize, so
+     * reconstruct them if possible.
+     */
+    if(scrp->DriverFunc) {
+	xorgRRModeMM RRModeMM;
+
+	RRModeMM.mode = mode;
+	RRModeMM.virtX = scrp->virtualX;
+	RRModeMM.virtY = scrp->virtualY;
+	RRModeMM.mmWidth = mmWidth;
+	RRModeMM.mmHeight = mmHeight;
+
+	(*scrp->DriverFunc)(scrp, RR_GET_MODE_MM, &RRModeMM);
+
+	mmWidth = RRModeMM.mmWidth;
+	mmHeight = RRModeMM.mmHeight;
+    }
     if(randrp->rotation & (RR_Rotate_90 | RR_Rotate_270))
     {
 	/* If the screen is rotated 90 or 270 degrees, swap the sizes. */
@@ -224,7 +246,7 @@ xf86RandRSetConfig (ScreenPtr		pScreen,
     Bool		    useVirtual = FALSE;
     Rotation		    oldRotation = randrp->rotation;
 
-    miPointerPosition (&px, &py);
+    miPointerGetPosition(inputInfo.pointer, &px, &py);
     for (mode = scrp->modes; ; mode = mode->next)
     {
 	if (mode->HDisplay == pSize->width &&
@@ -291,7 +313,7 @@ xf86RandRSetConfig (ScreenPtr		pScreen,
 
         xf86SetViewport(pScreen, px, py);
 
-        (*pScreen->SetCursorPosition) (pScreen, px, py, FALSE);
+        (*pScreen->SetCursorPosition) (inputInfo.pointer, pScreen, px, py, FALSE);
     }
 
     return TRUE;
@@ -338,14 +360,14 @@ xf86RandRCloseScreen (int index, ScreenPtr pScreen)
     scrp->currentMode = scrp->modes;
     pScreen->CloseScreen = randrp->CloseScreen;
     xfree (randrp);
-    pScreen->devPrivates[xf86RandRIndex].ptr = 0;
+    dixSetPrivate(&pScreen->devPrivates, xf86RandRKey, NULL);
     return (*pScreen->CloseScreen) (index, pScreen);
 }
 
 _X_EXPORT Rotation
 xf86GetRotation(ScreenPtr pScreen)
 {
-    if (xf86RandRIndex == -1)
+    if (xf86RandRKey == NULL)
        return RR_Rotate_0;
 
     return XF86RANDRINFO(pScreen)->rotation;
@@ -359,7 +381,7 @@ xf86RandRSetNewVirtualAndDimensions(ScreenPtr pScreen,
 {
     XF86RandRInfoPtr randrp;
 
-    if (xf86RandRIndex == -1)
+    if (xf86RandRKey == NULL)
 	return FALSE;
 
     randrp = XF86RANDRINFO(pScreen);
@@ -401,11 +423,8 @@ xf86RandRInit (ScreenPtr    pScreen)
     if (!noPanoramiXExtension)
 	return TRUE;
 #endif
-    if (xf86RandRGeneration != serverGeneration)
-    {
-	xf86RandRIndex = AllocateScreenPrivateIndex();
-	xf86RandRGeneration = serverGeneration;
-    }
+
+    xf86RandRKey = &xf86RandRKeyIndex;
 
     randrp = xalloc (sizeof (XF86RandRInfoRec));
     if (!randrp)
@@ -433,7 +452,7 @@ xf86RandRInit (ScreenPtr    pScreen)
 
     randrp->rotation = RR_Rotate_0;
 
-    pScreen->devPrivates[xf86RandRIndex].ptr = randrp;
+    dixSetPrivate(&pScreen->devPrivates, xf86RandRKey, randrp);
     return TRUE;
 }
 

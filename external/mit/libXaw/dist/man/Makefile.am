@@ -1,4 +1,3 @@
-# $Id: Makefile.am,v 1.1.1.1 2008/07/30 02:45:07 mrg Exp $
 #
 # Copyright 2005 Sun Microsystems, Inc.  All rights reserved.
 # 

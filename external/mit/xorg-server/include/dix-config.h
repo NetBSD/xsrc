@@ -11,7 +11,7 @@
 /* #define BUILDERADDR "xorg@lists.freedesktop.org" */
 
 /* Operating System Name */
-/* #define OSNAME "NetBSD 4.99.67 amd64" */
+/* #define OSNAME "NetBSD 5.0_STABLE amd64" */
 
 /* Operating System Vendor */
 /* #define OSVENDOR "" */
@@ -24,31 +24,17 @@
 #define COMPILEDDEFAULTFONTPATH "/usr/local/lib/X11/fonts/misc/,/usr/local/lib/X11/fonts/TTF/,/usr/local/lib/X11/fonts/OTF,/usr/local/lib/X11/fonts/Type1/,/usr/local/lib/X11/fonts/100dpi/,/usr/local/lib/X11/fonts/75dpi/"
 #endif
 
+/* Miscellaneous server configuration files path */
+#define SERVER_MISC_CONFIG_PATH "/usr/X11R7/lib/xorg"
+
 /* Support Composite Extension */
 #define COMPOSITE 1
-
-/* Define to one of `_getb67', `GETB67', `getb67' for Cray-2 and Cray-YMP
-   systems. This function is required for `alloca.c' support on those systems.
-   */
-/* #undef CRAY_STACKSEG_END */
-
-/* Define to 1 if using `alloca.c'. */
-/* #undef C_ALLOCA */
 
 /* Support Damage extension */
 #define DAMAGE 1
 
 /* Build for darwin with Quartz support */
 /* #undef DARWIN_WITH_QUARTZ */
-
-/* Use OsVendorInit */
-#define DDXOSINIT 1
-
-/* Use GetTimeInMillis */
-/* #undef DDXTIME */
-
-/* Use OsVendorFatalError */
-/* #undef DDXOSFATALERROR */
 
 /* Use OsVendorVErrorF */
 /* #undef DDXOSVERRORF */
@@ -60,16 +46,13 @@
 #define DPMSExtension 1
 
 /* Build GLX extension */
-/* #undef GLXEXT */
+#define GLXEXT 1
 
 /* Build GLX DRI loader */
 /* #undef GLX_DRI */
 
 /* Path to DRI drivers */
-#define DRI_DRIVER_PATH "/usr/local/lib/dri"
-
-/* Include handhelds.org h3600 touchscreen driver */
-/* #undef H3600_TS */
+#define DRI_DRIVER_PATH "/usr/X11R7/lib/modules/dri"
 
 /* Support XDM-AUTH*-1 */
 #define HASXDMAUTH 1
@@ -92,15 +75,14 @@
 /* Support SHM */
 #define HAS_SHM 1
 
-/* Define to 1 if you have `alloca', as a function or macro. */
-#define HAVE_ALLOCA 1
-
-/* Define to 1 if you have <alloca.h> and it should be used (not on Ultrix).
-   */
-/* #undef HAVE_ALLOCA_H */
+/* Have the 'strlcpy' function */
+#define HAS_STRLCPY 1
 
 /* Define to 1 if you have the <asm/mtrr.h> header file. */
 /* #undef HAVE_ASM_MTRR_H */
+
+/* Has backtrace support */
+/* #undef HAVE_BACKTRACE */
 
 /* Define to 1 if you have the <byteswap.h> header file. */
 /* #undef HAVE_BYTESWAP_H */
@@ -121,6 +103,9 @@
 /* Define to 1 if you don't have `vprintf' but do have `_doprnt.' */
 /* #undef HAVE_DOPRNT */
 
+/* Have execinfo.h */
+/* #undef HAVE_EXECINFO_H */
+
 /* Define to 1 if you have the <fcntl.h> header file. */
 #define HAVE_FCNTL_H 1
 
@@ -130,20 +115,20 @@
 /* Define to 1 if you have the `getisax' function. */
 /* #undef HAVE_GETISAX */
 
-/* Define to 1 if you have the `getopt' function. */
-#define HAVE_GETOPT 1
-
-/* Define to 1 if you have the `getopt_long' function. */
-#define HAVE_GETOPT_LONG 1
-
 /* Define to 1 if you have the `getuid' function. */
 #define HAVE_GETUID 1
+
+/* Define to 1 if you have the `getzoneid' function. */
+/* #undef HAVE_GETZONEID */
 
 /* Define to 1 if you have the <inttypes.h> header file. */
 #define HAVE_INTTYPES_H 1
 
-/* Define to 1 if you have version 2.2 (or newer) of the drm library */
-#define HAVE_LIBDRM_2_2 1
+/* Have Quartz */
+/* #undef XQUARTZ */
+
+/* Build a standalone xpbproxy */
+/* #undef STANDALONE_XPBPROXY */
 
 /* Define to 1 if you have the `m' library (-lm). */
 #define HAVE_LIBM 1
@@ -160,18 +145,6 @@
 /* Define to 1 if you have the <linux/fb.h> header file. */
 /* #undef HAVE_LINUX_FB_H */
 
-/* Define to 1 if you have the <linux/h3600_ts.h> header file. */
-/* #undef HAVE_LINUX_H3600_TS_H */
-
-/* Define to 1 if you have the `memmove' function. */
-#define HAVE_MEMMOVE 1
-
-/* Define to 1 if you have the <memory.h> header file. */
-#define HAVE_MEMORY_H 1
-
-/* Define to 1 if you have the `memset' function. */
-#define HAVE_MEMSET 1
-
 /* Define to 1 if you have the `mkstemp' function. */
 #define HAVE_MKSTEMP 1
 
@@ -183,6 +156,12 @@
 
 /* Define to 1 if you have the <rpcsvc/dbm.h> header file. */
 /* #undef HAVE_RPCSVC_DBM_H */
+
+/* Define to use libmd SHA1 functions instead of OpenSSL libcrypto */
+/* #undef HAVE_SHA1_IN_LIBMD */
+
+/* Define to 1 if you have the `shmctl64' function. */
+/* #undef HAVE_SHMCTL64 */
 
 /* Define to 1 if you have the <stdint.h> header file. */
 #define HAVE_STDINT_H 1
@@ -237,6 +216,9 @@
 /* Define to 1 if you have the <unistd.h> header file. */
 #define HAVE_UNISTD_H 1
 
+/* Have /dev/urandom */
+/* #undef HAVE_URANDOM */
+
 /* Define to 1 if you have the `vprintf' function. */
 #define HAVE_VPRINTF 1
 
@@ -246,14 +228,8 @@
 /* Support os-specific local connections */
 /* #undef LOCALCONN */
 
-/* Support MIT Misc extension */
-#define MITMISC 1
-
 /* Support MIT-SHM Extension */
 #define MITSHM 1
-
-/* Disable some debugging code */
-#define NDEBUG 1
 
 /* Enable some debugging code */
 /* #undef DEBUG */
@@ -266,9 +242,6 @@
 /* Internal define for Xinerama */
 #define PANORAMIX 1
 
-/* Support pixmap privates */
-#define PIXPRIV 1
-
 /* Overall prefix */
 /* #define PROJECTROOT "/usr/local" */
 
@@ -276,7 +249,7 @@
 #define RANDR 1
 
 /* Support Record extension */
-#define XRECORD 1
+/* #undef XRECORD */
 
 /* Support RENDER extension */
 #define RENDER 1
@@ -290,25 +263,8 @@
 /* Support Secure RPC ("SUN-DES-1") authentication for X11 clients */
 /* #undef SECURE_RPC */
 
-/* Use a lock to prevent multiple servers on a display */
-#define SERVER_LOCK 1
-
 /* Support SHAPE extension */
 #define SHAPE 1
-
-/* Include time-based scheduler */
-#define SMART_SCHEDULE 1
-
-/* If using the C implementation of alloca, define if you know the
-   direction of stack growth for your system; otherwise it will be
-   automatically deduced at run-time.
-	STACK_DIRECTION > 0 => grows toward higher addresses
-	STACK_DIRECTION < 0 => grows toward lower addresses
-	STACK_DIRECTION = 0 => direction of growth unknown */
-/* #undef STACK_DIRECTION */
-
-/* Define to 1 if you have the ANSI C header files. */
-#define STDC_HEADERS 1
 
 /* Define to 1 on systems derived from System V Release 4 */
 /* #undef SVR4 */
@@ -325,38 +281,32 @@
 /* Support UNIX socket connections */
 #define UNIXCONN 1
 
-/* Use builtin rgb color database */
-/* #undef USE_RGB_BUILTIN */
-
-/* Use rgb.txt directly */
-#define USE_RGB_TXT 1
-
 /* Define to use byteswap macros from <sys/endian.h> */
 #define USE_SYS_ENDIAN_H 1
 
 /* unaligned word accesses behave as expected */
 /* #undef WORKING_UNALIGNED_INT */
 
+/* Build X string registry */
+#define XREGISTRY 1
+
 /* Build X-ACE extension */
 #define XACE 1
+
+/* Build SELinux extension */
+/* #undef XSELINUX */
 
 /* Support XCMisc extension */
 #define XCMISC 1
 
 /* Build Security extension */
-#define XCSECURITY 1
+/* #undef XCSECURITY */
 
 /* Support Xdmcp */
 #define XDMCP 1
 
-/* Build XEvIE extension */
-#define XEVIE 1
-
 /* Build XFree86 BigFont extension */
-#define XF86BIGFONT 1
-
-/* Support XFree86 miscellaneous extensions */
-#define XF86MISC 1
+/* #undef XF86BIGFONT */
 
 /* Support XFree86 Video Mode extension */
 #define XF86VIDMODE 1
@@ -369,9 +319,6 @@
 
 /* Support Xinerama extension */
 #define XINERAMA 1
-
-/* Support X Input extension */
-#define XINPUT 1
 
 /* Build XKB */
 #define XKB 1
@@ -386,10 +333,10 @@
 /* #undef XORG_RELEASE */
 
 /* Current Xorg version */
-#define XORG_VERSION_CURRENT (((1) * 10000000) + ((4) * 100000) + ((2) * 1000) + 0)
+#define XORG_VERSION_CURRENT (((1) * 10000000) + ((6) * 100000) + ((3) * 1000) + 0)
 
 /* Xorg release date */
-#define XORG_DATE "11 June 2008"
+#define XORG_DATE "2009-7-7"
 
 /* Build Xv Extension */
 #define XvExtension 1
@@ -397,29 +344,14 @@
 /* Build XvMC Extension */
 #define XvMCExtension 1
 
-/* Build XRes extension */
-#define XResExtension 1
-
 /* Support XSync extension */
 #define XSYNC 1
 
 /* Support XTest extension */
 #define XTEST 1
 
-/* Support XTrap extension */
-#define XTRAP 1
-
 /* Support Xv extension */
 #define XV 1
-
-/* Build APPGROUP extension */
-#define XAPPGROUP 1
-
-/* Build TOG-CUP extension */
-#define TOGCUP 1
-
-/* Build Extended-Visual-Information extension */
-#define EVI 1
 
 /* Build Multibuffer extension */
 /* #undef MULTIBUFFER */
@@ -427,28 +359,14 @@
 /* Support DRI extension */
 #define XF86DRI 1
 
+/* Build DRI2 extension */
+#define DRI2 1
+
 /* Build DBE support */
 #define DBE 1
 
 /* Vendor name */
 #define XVENDORNAME "The X.Org Foundation"
-
-/* Endian order */
-#if 0
-#define _X_BYTE_ORDER X_LITTLE_ENDIAN
-/* Deal with multiple architecture compiles on Mac OS X */
-#ifndef __APPLE_CC__
-#define X_BYTE_ORDER _X_BYTE_ORDER
-#else
-#ifdef __BIG_ENDIAN__
-#define X_BYTE_ORDER X_BIG_ENDIAN
-#else
-#define X_BYTE_ORDER X_LITTLE_ENDIAN
-#endif
-#endif
-#else
-#include <X11/Xarch.h>
-#endif
 
 /* Enable GNU and other extensions to the C environment for GLIBC */
 /* #undef _GNU_SOURCE */
@@ -467,34 +385,26 @@
 #define _XSERVER64 1
 #endif
 
-#ifndef RGB_DB
-/* Define to location of RGB database */
-#define RGB_DB "/usr/local/share/X11/rgb"
-#endif
-
 /* System is BSD-like */
 #define CSRG_BASED 1
 
 /* Define to 1 if `struct sockaddr_in' has a `sin_len' member */
 #define BSD44SOCKETS 1
 
-/* Define to 1 if modules should avoid the libcwrapper */
-#define NO_LIBCWRAPPER 1
-
 /* Support D-Bus */
-/* #undef HAVE_DBUS */
+/* #define HAVE_DBUS 1 */
+
+/* Use D-Bus for input hotplug */
+/* #define CONFIG_NEED_DBUS 1 */
 
 /* Support the D-Bus hotplug API */
 /* #undef CONFIG_DBUS_API */
 
 /* Support HAL for hotplug */
-/* #undef CONFIG_HAL */
+/* #define CONFIG_HAL 1 */
 
 /* Use only built-in fonts */
 /* #undef BUILTIN_FONTS */
-
-/* Avoid using font servers */
-/* #undef NOFONTSERVERACCESS */
 
 /* Use an empty root cursor */
 /* #undef NULL_ROOT_CURSOR */
@@ -505,11 +415,6 @@
 /* Define to 1 if the DTrace Xserver provider probes should be built in */
 /* #undef XSERVER_DTRACE */
 
-/* Path to XErrorDB file */
-#ifndef XERRORDB_PATH
-#define XERRORDB_PATH "/usr/local/share/X11/XErrorDB"
-#endif
-
 /* Define to 16-bit byteswap macro */
 #define bswap_16 bswap16
 
@@ -518,5 +423,24 @@
 
 /* Define to 64-bit byteswap macro */
 #define bswap_64 bswap64
+
+/* Need the strcasecmp function. */
+/* #undef NEED_STRCASECMP */
+
+/* Need the strncasecmp function. */
+/* #undef NEED_STRNCASECMP */
+
+/* Need the strcasestr function. */
+/* #undef NEED_STRCASESTR */
+
+/* Define to 1 if you have the `ffs' function. */
+#define HAVE_FFS 1
+
+/* Correctly set _XSERVER64 for OSX fat binaries */
+#ifdef __APPLE__
+#include "dix-config-apple-verbatim.h"
+#endif
+
+/* #undef HAVE_AVC_NETLINK_ACQUIRE_FD */
 
 #endif /* _DIX_CONFIG_H_ */

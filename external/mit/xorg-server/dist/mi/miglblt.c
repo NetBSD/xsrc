@@ -82,13 +82,15 @@ with the sample server.
 */
 
 _X_EXPORT void
-miPolyGlyphBlt(pDrawable, pGC, x, y, nglyph, ppci, pglyphBase)
-    DrawablePtr pDrawable;
-    GC 		*pGC;
-    int 	 x, y;
-    unsigned int nglyph;
-    CharInfoPtr *ppci;		/* array of character info */
-    pointer      pglyphBase;	/* start of array of glyphs */
+miPolyGlyphBlt(
+    DrawablePtr pDrawable,
+    GC		*pGC,
+    int		x,
+    int		y,
+    unsigned int nglyph,
+    CharInfoPtr *ppci,		/* array of character info */
+    pointer      pglyphBase	/* start of array of glyphs */
+    )
 {
     int width, height;
     PixmapPtr pPixmap;
@@ -120,7 +122,8 @@ miPolyGlyphBlt(pDrawable, pGC, x, y, nglyph, ppci, pglyphBase)
 	     FONTMAXBOUNDS(pfont,descent);
 
     pPixmap = (*pDrawable->pScreen->CreatePixmap)(pDrawable->pScreen,
-						  width, height, 1);
+						  width, height, 1,
+						  CREATE_PIXMAP_USAGE_SCRATCH);
     if (!pPixmap)
 	return;
 
@@ -138,7 +141,7 @@ miPolyGlyphBlt(pDrawable, pGC, x, y, nglyph, ppci, pglyphBase)
     DoChangeGC(pGCtmp, GCFunction|GCForeground|GCBackground, gcvals, 0);
 
     nbyLine = BitmapBytePad(width);
-    pbits = (unsigned char *)ALLOCATE_LOCAL(height*nbyLine);
+    pbits = (unsigned char *)xalloc(height*nbyLine);
     if (!pbits)
     {
 	(*pDrawable->pScreen->DestroyPixmap)(pPixmap);
@@ -189,19 +192,21 @@ miPolyGlyphBlt(pDrawable, pGC, x, y, nglyph, ppci, pglyphBase)
 	x += pci->metrics.characterWidth;
     }
     (*pDrawable->pScreen->DestroyPixmap)(pPixmap);
-    DEALLOCATE_LOCAL(pbits);
+    xfree(pbits);
     FreeScratchGC(pGCtmp);
 }
 
 
 _X_EXPORT void
-miImageGlyphBlt(pDrawable, pGC, x, y, nglyph, ppci, pglyphBase)
-    DrawablePtr pDrawable;
-    GC 		*pGC;
-    int 	 x, y;
-    unsigned int nglyph;
-    CharInfoPtr *ppci;		/* array of character info */
-    pointer      pglyphBase;	/* start of array of glyphs */
+miImageGlyphBlt(
+    DrawablePtr pDrawable,
+    GC		*pGC,
+    int		 x,
+    int		 y,
+    unsigned int nglyph,
+    CharInfoPtr *ppci,		/* array of character info */
+    pointer      pglyphBase	/* start of array of glyphs */
+    )
 {
     ExtentInfoRec info;		/* used by QueryGlyphExtents() */
     XID gcvals[3];

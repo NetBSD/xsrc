@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2008  Luc Verhaegen <lverhaegen@novell.com>
+ * Copyright 2007-2008  Luc Verhaegen <libv@exsuse.de>
  * Copyright 2007-2008  Matthias Hopf <mhopf@novell.com>
  * Copyright 2007-2008  Egbert Eich   <eich@novell.com>
  * Copyright 2007-2008  Advanced Micro Devices, Inc.
@@ -46,6 +46,7 @@
 #include "rhd_connector.h"
 #include "rhd_output.h"
 #include "rhd_regs.h"
+#include "rhd_hdmi.h"
 
 #ifdef ATOM_BIOS
 #include "rhd_atombios.h"
@@ -55,7 +56,10 @@ struct rhdTMDSPrivate {
     Bool RunsDualLink;
     DisplayModePtr Mode;
     Bool Coherent;
+    Bool HdmiEnabled;
     int PowerState;
+
+    struct rhdHdmi *Hdmi;
 
     Bool Stored;
 
@@ -129,9 +133,6 @@ static ModeStatus
 TMDSAModeValid(struct rhdOutput *Output, DisplayModePtr Mode)
 {
     RHDFUNC(Output);
-
-    if (Mode->Flags & V_INTERLACE)
-        return MODE_NO_INTERLACE;
 
     if (Mode->Clock < 25000)
 	return MODE_CLOCK_LOW;
@@ -239,18 +240,21 @@ TMDSAPropertyControl(struct rhdOutput *Output,
     RHDFUNC(Output);
     switch (Action) {
 	case rhdPropertyCheck:
-	switch (Property) {
-	    case RHD_OUTPUT_COHERENT:
-		return TRUE;
-	    default:
-		return FALSE;
-	}
+	    switch (Property) {
+		case RHD_OUTPUT_COHERENT:
+		case RHD_OUTPUT_HDMI:
+		    return TRUE;
+		default:
+		    return FALSE;
+	    }
 	case rhdPropertyGet:
 	    switch (Property) {
 		case RHD_OUTPUT_COHERENT:
 		    val->Bool = Private->Coherent;
 		    return TRUE;
-		    break;
+		case RHD_OUTPUT_HDMI:
+		    val->Bool = Private->HdmiEnabled;
+		    return TRUE;
 		default:
 		    return FALSE;
 	    }
@@ -259,6 +263,18 @@ TMDSAPropertyControl(struct rhdOutput *Output,
 	    switch (Property) {
 		case RHD_OUTPUT_COHERENT:
 		    Private->Coherent = val->Bool;
+		    break;
+		case RHD_OUTPUT_HDMI:
+		    Private->HdmiEnabled = val->Bool;
+		    break;
+		default:
+		    return FALSE;
+	    }
+	    break;
+	case rhdPropertyCommit:
+	    switch (Property) {
+		case RHD_OUTPUT_COHERENT:
+		case RHD_OUTPUT_HDMI:
 		    Output->Mode(Output, Private->Mode);
 		    Output->Power(Output, RHD_POWER_ON);
 		    break;
@@ -335,6 +351,8 @@ TMDSASet(struct rhdOutput *Output, DisplayModePtr Mode)
 	RHDRegMask(Output, TMDSA_TRANSMITTER_CONTROL, 0x00000000, 0x10000000);
     else
 	RHDRegMask(Output, TMDSA_TRANSMITTER_CONTROL, 0x10000000, 0x10000000);
+
+    RHDHdmiSetMode(Private->Hdmi, Mode);
 }
 
 /*
@@ -353,7 +371,7 @@ TMDSAPower(struct rhdOutput *Output, int Power)
     case RHD_POWER_ON:
 	if (Private->PowerState == RHD_POWER_SHUTDOWN
 	    || Private->PowerState == RHD_POWER_UNKNOWN) {
-	    RHDRegMask(Output, TMDSA_CNTL, 0x00000001, 0x00000001);
+	    RHDRegMask(Output, TMDSA_CNTL, 0x1, 0x00000001);
 
 	    RHDRegMask(Output, TMDSA_TRANSMITTER_CONTROL, 0x00000001, 0x00000001);
 	    usleep(20);
@@ -385,6 +403,8 @@ TMDSAPower(struct rhdOutput *Output, int Power)
 	    RHDRegMask(Output, TMDSA_TRANSMITTER_ENABLE, 0x00001F1F, 0x00001F1F);
 	} else
 	    RHDRegMask(Output, TMDSA_TRANSMITTER_ENABLE, 0x0000001F, 0x00001F1F);
+
+	RHDHdmiEnable(Private->Hdmi, Private->HdmiEnabled);
 	Private->PowerState = RHD_POWER_ON;
 	return;
 
@@ -403,6 +423,7 @@ TMDSAPower(struct rhdOutput *Output, int Power)
 	RHDRegMask(Output, TMDSA_TRANSMITTER_CONTROL, 0, 0x00000001);
 	RHDRegMask(Output, TMDSA_TRANSMITTER_ENABLE, 0, 0x00001F1F);
 	RHDRegMask(Output, TMDSA_CNTL, 0, 0x00000001);
+	RHDHdmiEnable(Private->Hdmi, FALSE);
 	Private->PowerState = RHD_POWER_SHUTDOWN;
 	return;
     }
@@ -437,6 +458,8 @@ TMDSASave(struct rhdOutput *Output)
 
     if (ChipSet >= RHD_RV610)
 	Private->StoreTXAdjust = RHDRegRead(Output, TMDSA_TRANSMITTER_ADJUST);
+
+    RHDHdmiSave(Private->Hdmi);
 
     Private->Stored = TRUE;
 }
@@ -476,6 +499,8 @@ TMDSARestore(struct rhdOutput *Output)
 
     if (ChipSet >= RHD_RV610)
 	RHDRegWrite(Output, TMDSA_TRANSMITTER_ADJUST, Private->StoreTXAdjust);
+
+    RHDHdmiRestore(Private->Hdmi);
 }
 
 /*
@@ -484,12 +509,15 @@ TMDSARestore(struct rhdOutput *Output)
 static void
 TMDSADestroy(struct rhdOutput *Output)
 {
+    struct rhdTMDSPrivate *Private = (struct rhdTMDSPrivate *) Output->Private;
     RHDFUNC(Output);
 
-    if (!Output->Private)
+    if (!Private)
 	return;
 
-    xfree(Output->Private);
+    RHDHdmiDestroy(Private->Hdmi);
+
+    xfree(Private);
     Output->Private = NULL;
 }
 
@@ -523,6 +551,7 @@ RHDTMDSAInit(RHDPtr rhdPtr)
     Private->RunsDualLink = FALSE;
     Private->Coherent = FALSE;
     Private->PowerState = RHD_POWER_UNKNOWN;
+    Private->Hdmi = RHDHdmiInit(rhdPtr, Output);
 
     Output->Private = Private;
 

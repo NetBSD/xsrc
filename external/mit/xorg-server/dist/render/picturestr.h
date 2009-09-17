@@ -27,6 +27,7 @@
 #include "scrnintstr.h"
 #include "glyphstr.h"
 #include "resource.h"
+#include "privates.h"
 
 typedef struct _DirectFormat {
     CARD16	    red, redMask;
@@ -54,6 +55,9 @@ typedef struct _PictFormat {
 
 typedef struct pixman_vector PictVector, *PictVectorPtr;
 typedef struct pixman_transform PictTransform, *PictTransformPtr;
+
+#define pict_f_vector pixman_f_vector
+#define pict_f_transform pixman_f_transform
 
 #define PICT_GRADIENT_STOPTABLE_SIZE 1024
 #define SourcePictTypeSolidFill 0
@@ -173,7 +177,7 @@ typedef struct _Picture {
 
     RegionPtr	    pCompositeClip;
 
-    DevUnion	    *devPrivates;
+    PrivateRec	    *devPrivates;
 
     PictTransform   *transform;
 
@@ -183,12 +187,14 @@ typedef struct _Picture {
     SourcePictPtr   pSourcePict;
 } PictureRec;
 
-typedef Bool (*PictFilterValidateParamsProcPtr) (PicturePtr pPicture, int id,
-						 xFixed *params, int nparams);
+typedef Bool (*PictFilterValidateParamsProcPtr) (ScreenPtr pScreen, int id,
+						 xFixed *params, int nparams,
+						 int *width, int *height);
 typedef struct {
     char			    *name;
     int				    id;
     PictFilterValidateParamsProcPtr ValidateParams;
+    int				    width, height;
 } PictFilterRec, *PictFilterPtr;
 
 #define PictFilterNearest	0
@@ -328,10 +334,6 @@ typedef void	(*UnrealizeGlyphProcPtr)    (ScreenPtr	    pScreen,
 					     GlyphPtr	    glyph);
 
 typedef struct _PictureScreen {
-    int				totalPictureSize;
-    unsigned int		*PicturePrivateSizes;
-    int				PicturePrivateLen;
-
     PictFormatPtr		formats;
     PictFormatPtr		fallback;
     int				nformats;
@@ -345,7 +347,7 @@ typedef struct _PictureScreen {
     ValidatePictureProcPtr	ValidatePicture;
 
     CompositeProcPtr		Composite;
-    GlyphsProcPtr		Glyphs;
+    GlyphsProcPtr		Glyphs; /* unused */
     CompositeRectsProcPtr	CompositeRects;
 
     DestroyWindowProcPtr	DestroyWindow;
@@ -389,30 +391,22 @@ typedef struct _PictureScreen {
 
     AddTrapsProcPtr		AddTraps;
 
-    int			  	totalGlyphPrivateSize;
-    unsigned int	  	*glyphPrivateSizes;
-    int			  	glyphPrivateLen;
-    int			  	glyphPrivateOffset;
-
     RealizeGlyphProcPtr   	RealizeGlyph;
     UnrealizeGlyphProcPtr 	UnrealizeGlyph;
 
 } PictureScreenRec, *PictureScreenPtr;
 
-extern int		PictureScreenPrivateIndex;
-extern int		PictureWindowPrivateIndex;
+extern DevPrivateKey	PictureScreenPrivateKey;
+extern DevPrivateKey	PictureWindowPrivateKey;
 extern RESTYPE		PictureType;
 extern RESTYPE		PictFormatType;
 extern RESTYPE		GlyphSetType;
 
-#define GetPictureScreen(s) ((PictureScreenPtr) ((s)->devPrivates[PictureScreenPrivateIndex].ptr))
-#define GetPictureScreenIfSet(s) ((PictureScreenPrivateIndex != -1) ? GetPictureScreen(s) : NULL)
-#define SetPictureScreen(s,p) ((s)->devPrivates[PictureScreenPrivateIndex].ptr = (pointer) (p))
-#define GetPictureWindow(w) ((PicturePtr) ((w)->devPrivates[PictureWindowPrivateIndex].ptr))
-#define SetPictureWindow(w,p) ((w)->devPrivates[PictureWindowPrivateIndex].ptr = (pointer) (p))
-
-#define GetGlyphPrivatesForScreen(glyph, s)				\
-    ((glyph)->devPrivates + (GetPictureScreen (s))->glyphPrivateOffset)
+#define GetPictureScreen(s) ((PictureScreenPtr)dixLookupPrivate(&(s)->devPrivates, PictureScreenPrivateKey))
+#define GetPictureScreenIfSet(s) GetPictureScreen(s)
+#define SetPictureScreen(s,p) dixSetPrivate(&(s)->devPrivates, PictureScreenPrivateKey, p)
+#define GetPictureWindow(w) ((PicturePtr)dixLookupPrivate(&(w)->devPrivates, PictureWindowPrivateKey))
+#define SetPictureWindow(w,p) dixSetPrivate(&(w)->devPrivates, PictureWindowPrivateKey, p)
 
 #define VERIFY_PICTURE(pPicture, pid, client, mode, err) {\
     pPicture = SecurityLookupIDByType(client, pid, PictureType, mode);\
@@ -430,15 +424,6 @@ extern RESTYPE		GlyphSetType;
     } \
 } \
 
-void
-ResetPicturePrivateIndex (void);
-
-int
-AllocatePicturePrivateIndex (void);
-
-Bool
-AllocatePicturePrivate (ScreenPtr pScreen, int index2, unsigned int amount);
-
 Bool
 PictureDestroyWindow (WindowPtr pWindow);
 
@@ -449,7 +434,7 @@ void
 PictureStoreColors (ColormapPtr pColormap, int ndef, xColorItem *pdef);
 
 Bool
-PictureInitIndexedFormats (ScreenPtr pScreen);
+PictureInitIndexedFormat (ScreenPtr pScreen, PictFormatPtr format);
 
 Bool
 PictureSetSubpixelOrder (ScreenPtr pScreen, int subpixel);
@@ -478,7 +463,9 @@ PictureGetFilterName (int id);
 int
 PictureAddFilter (ScreenPtr			    pScreen,
 		  char				    *filter,
-		  PictFilterValidateParamsProcPtr   ValidateParams);
+		  PictFilterValidateParamsProcPtr   ValidateParams,
+		  int				    width,
+		  int				    height);
 
 Bool
 PictureSetFilterAlias (ScreenPtr pScreen, char *filter, char *alias);
@@ -493,22 +480,18 @@ PictFilterPtr
 PictureFindFilter (ScreenPtr pScreen, char *name, int len);
 
 int
-SetPictureFilter (PicturePtr pPicture, char *name, int len, xFixed *params, int nparams);
+SetPicturePictFilter (PicturePtr pPicture, PictFilterPtr pFilter,
+		      xFixed *params, int nparams);
+
+int
+SetPictureFilter (PicturePtr pPicture, char *name, int len,
+		  xFixed *params, int nparams);
 
 Bool
 PictureFinishInit (void);
 
 void
 SetPictureToDefaults (PicturePtr pPicture);
-
-PicturePtr
-AllocatePicture (ScreenPtr  pScreen);
-
-#if 0
-Bool
-miPictureInit (ScreenPtr pScreen, PictFormatPtr formats, int nformats);
-#endif
-
 
 PicturePtr
 CreatePicture (Picture		pid,
@@ -631,14 +614,6 @@ CompositeTriFan (CARD8		op,
 		 int		npoints,
 		 xPointFixed	*points);
 
-Bool
-PictureTransformPoint (PictTransformPtr transform,
-		       PictVectorPtr	vector);
-
-Bool
-PictureTransformPoint3d (PictTransformPtr transform,
-                         PictVectorPtr	vector);
-
 CARD32
 PictureGradientColor (PictGradientStopPtr stop1,
 		      PictGradientStopPtr stop2,
@@ -650,7 +625,7 @@ Bool
 AnimCurInit (ScreenPtr pScreen);
 
 int
-AnimCursorCreate (CursorPtr *cursors, CARD32 *deltas, int ncursor, CursorPtr *ppCursor);
+AnimCursorCreate (CursorPtr *cursors, CARD32 *deltas, int ncursor, CursorPtr *ppCursor, ClientPtr client, XID cid);
 
 void
 AddTraps (PicturePtr	pPicture,
@@ -701,5 +676,25 @@ CreateConicalGradientPicture (Picture pid,
 void PanoramiXRenderInit (void);
 void PanoramiXRenderReset (void);
 #endif
+
+/*
+ * matrix.c
+ */
+
+void
+PictTransform_from_xRenderTransform (PictTransformPtr pict,
+				     xRenderTransform *render);
+
+void
+xRenderTransform_from_PictTransform (xRenderTransform *render,
+				     PictTransformPtr pict);
+
+Bool
+PictureTransformPoint (PictTransformPtr transform,
+		       PictVectorPtr	vector);
+
+Bool
+PictureTransformPoint3d (PictTransformPtr transform,
+                         PictVectorPtr	vector);
 
 #endif /* _PICTURESTR_H_ */

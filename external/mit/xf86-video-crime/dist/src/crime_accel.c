@@ -1,4 +1,4 @@
-/* $NetBSD: crime_accel.c,v 1.3.2.8 2009/04/01 21:29:14 snj Exp $ */
+/* $NetBSD: crime_accel.c,v 1.3.2.9 2009/09/17 03:33:50 snj Exp $ */
 /*
  * Copyright (c) 2008 Michael Lorenz
  * All rights reserved.
@@ -64,6 +64,9 @@ uint32_t regcache[0x1000];
 #define MAKE_ROOM(x) do {} while ((16 - \
 				   CRIME_PIPE_LEVEL(*CRIMEREG(0x4000))) < x);
 
+#define MAX(a, b) (a > b ? a : b)
+#define MIN(a, b) (a < b ? a : b)
+
 CARD32 CrimeAlphaTextureFormats[] = {PICT_a8, 0};
 CARD32 CrimeTextureFormats[] = {PICT_a8b8g8r8, PICT_a8r8g8b8, 0};
 
@@ -94,7 +97,6 @@ CrimeSetupForScreenToScreenCopy(
 
 	LOG(CRIME_DEBUG_BITBLT);
 	MAKE_ROOM(9);
-#if 0
 	if ((rop == GXcopy) && (planemask == 0xffffffff) && (xdir > 0)) {
 		/* use the MTE */
 		WRITE4(CRIME_MTE_MODE, MTE_MODE_DST_ECC |
@@ -111,7 +113,6 @@ CrimeSetupForScreenToScreenCopy(
 			WRITE4(CRIME_MTE_SRC_Y_STEP, -1);
 		}		
 	} else
-#endif
 		fPtr->use_mte = 0;
 
 	WRITE4(CRIME_DE_XFER_STEP_X, 1);
@@ -144,7 +145,6 @@ CrimeSubsequentScreenToScreenCopy
 {
 	CrimePtr fPtr = CRIMEPTR(pScrn);
 	uint32_t prim = DE_PRIM_RECTANGLE;
-	volatile uint32_t reg, oreg;
 	uint32_t rxa, rya, rxe, rye, rxs, rys, rxd, ryd, rxde, ryde;
 
 	LOG(CRIME_DEBUG_BITBLT);
@@ -152,8 +152,8 @@ CrimeSubsequentScreenToScreenCopy
 	xf86Msg(X_ERROR, "%s: %d, %d; %d x %d -> %d %d\n", __func__,
 	    xSrc, ySrc, w, h, xDst, yDst);
 #endif
-
-	if ((fPtr->use_mte) && (w > 64) && ((w & 3) == 0) && ((xSrc & 3) == 0) && ((xDst & 3) == 0)) {
+	if ((fPtr->use_mte) && (w > 64) && /*((w & 3) == 0) &&*/
+	   ((xSrc & 15) == (xDst & 15))) {
 		if (fPtr->ydir == -1) {
 			/* bottom to top */
 			rye = ySrc;
@@ -171,13 +171,12 @@ CrimeSubsequentScreenToScreenCopy
 		rxe = ((xSrc + w) << 2) - 1;
 		rxd = xDst << 2;
 		rxde = ((xDst + w) << 2) - 1;
-		oreg = *CRIMEREG(0x4000);
 		MAKE_ROOM(4);
 		WRITE4(CRIME_MTE_SRC0, (rxa << 16) | rya);
 		WRITE4(CRIME_MTE_SRC1, (rxe << 16) | rye);
 		WRITE4(CRIME_MTE_DST0, (rxd << 16) | ryd);
 		WRITE4ST(CRIME_MTE_DST1, (rxde << 16) | ryde);
-		reg = *CRIMEREG(0x4000);
+		//xf86Msg(X_ERROR, "MTE");
 
 #ifdef CRIME_DEBUG_LOUD
 		xf86Msg(X_ERROR, "reg: %08x %08x\n", oreg, reg);
@@ -228,18 +227,32 @@ CrimeSetupForSolidFill
 	int i;
 
 	LOG(CRIME_DEBUG_RECTFILL);
-	MAKE_ROOM(7);
-	WRITE4(CRIME_DE_PLANEMASK, planemask);
-	WRITE4(CRIME_DE_ROP, rop);
-	WRITE4(CRIME_DE_FG, colour << 8);
-	WRITE4(CRIME_DE_DRAWMODE,
-	    DE_DRAWMODE_PLANEMASK | DE_DRAWMODE_BYTEMASK | DE_DRAWMODE_ROP |
-	    DE_DRAWMODE_SCISSOR_EN);
-	WRITE4(CRIME_DE_PRIMITIVE,
-		DE_PRIM_RECTANGLE | DE_PRIM_LR | DE_PRIM_TB);
-	WRITE4(CRIME_DE_MODE_DST, DE_MODE_TLB_A | DE_MODE_BUFDEPTH_32 |
-			    DE_MODE_TYPE_RGBA | DE_MODE_PIXDEPTH_32);
-	SYNC;
+	if (rop == GXcopy) {
+		fPtr->use_mte = 1;
+		MAKE_ROOM(3);
+		WRITE4(CRIME_MTE_MODE, MTE_MODE_DST_ECC |
+		    MTE_TLB_A << MTE_DST_TLB_SHIFT |
+		    MTE_TLB_A << MTE_SRC_TLB_SHIFT |
+		    MTE_DEPTH_32 << MTE_DEPTH_SHIFT);
+		WRITE4(CRIME_MTE_DST_Y_STEP, 1);
+		WRITE4(CRIME_MTE_BG, colour << 8);
+		SYNCMTE;
+	} else {
+		fPtr->use_mte = 0;
+		MAKE_ROOM(7);
+		WRITE4(CRIME_DE_PLANEMASK, planemask);
+		WRITE4(CRIME_DE_ROP, rop);
+		WRITE4(CRIME_DE_FG, colour << 8);
+		WRITE4(CRIME_DE_DRAWMODE,
+		    DE_DRAWMODE_PLANEMASK | DE_DRAWMODE_BYTEMASK | 	
+		    DE_DRAWMODE_ROP |\
+		    DE_DRAWMODE_SCISSOR_EN);
+		WRITE4(CRIME_DE_PRIMITIVE,
+		    DE_PRIM_RECTANGLE | DE_PRIM_LR | DE_PRIM_TB);
+		WRITE4(CRIME_DE_MODE_DST, DE_MODE_TLB_A | DE_MODE_BUFDEPTH_32 |
+		    DE_MODE_TYPE_RGBA | DE_MODE_PIXDEPTH_32);
+		SYNC;
+	}
 	DONE(CRIME_DEBUG_RECTFILL);
 }
 
@@ -254,12 +267,31 @@ CrimeSubsequentSolidFillRect
 )
 {
 	CrimePtr fPtr = CRIMEPTR(pScrn);
+	int xa, xe, ya, ye;
 
 	LOG(CRIME_DEBUG_RECTFILL);
-	MAKE_ROOM(2);
-	WRITE4(CRIME_DE_X_VERTEX_0, (x << 16) | (y & 0xffff));
-	WRITE4ST(CRIME_DE_X_VERTEX_1,
-	    ((x + w - 1) << 16) | ((y + h - 1) & 0xffff));
+	if (fPtr->use_mte) {
+		
+		/*
+		 * the MTE doesn't support clipping so we have to do it
+		 * ourselves - luckily it's trivial with rectangles
+		 */
+		xa = MAX(fPtr->cxa, x);
+		ya = MAX(fPtr->cya, y);
+		xe = MIN(fPtr->cxe, x + w);
+		ye = MIN(fPtr->cye, y + h);
+		if ((xa < xe) && (ya < ye)) {
+			MAKE_ROOM(2);
+			WRITE4(CRIME_MTE_DST0, (xa << 18) | (ya & 0xffff));
+			WRITE4ST(CRIME_MTE_DST1,
+		 	   (((xe << 2) - 1 ) << 16) | ((ye - 1) & 0xffff));
+		}
+	} else {
+		MAKE_ROOM(2);
+		WRITE4(CRIME_DE_X_VERTEX_0, (x << 16) | (y & 0xffff));
+		WRITE4ST(CRIME_DE_X_VERTEX_1,
+		    ((x + w - 1) << 16) | ((y + h - 1) & 0xffff));
+	}
 	DONE(CRIME_DEBUG_RECTFILL);
 }
 
@@ -627,6 +659,10 @@ CrimeSetClippingRectangle ( ScrnInfoPtr pScrn,
 	MAKE_ROOM(2);
 	WRITE4(CRIME_DE_SCISSOR, (left << 16) | top);
 	WRITE4(CRIME_DE_SCISSOR + 4, ((right + 1) << 16) | (bottom + 1));
+	fPtr->cxa = left;
+	fPtr->cxe = right;
+	fPtr->cya = top;
+	fPtr->cye = bottom;
 	SYNC;
 	DONE(CRIME_DEBUG_CLIPPING);
 }
@@ -640,6 +676,10 @@ CrimeDisableClipping (ScrnInfoPtr pScrn)
 	MAKE_ROOM(2);
 	WRITE4(CRIME_DE_SCISSOR, 0);
 	WRITE4(CRIME_DE_SCISSOR + 4, 0x3fff3fff);
+	fPtr->cxa = 0;
+	fPtr->cxe = 2047;
+	fPtr->cya = 0;
+	fPtr->cye = 2047;
 	SYNC;
 	DONE(CRIME_DEBUG_CLIPPING);
 }
@@ -1296,12 +1336,6 @@ CrimeDoCPUToScreenComposite(
 				PixmapPtr pPix = (PixmapPtr)(pMask->pDrawable);
 				int skipleft;
 
-				if (alpha == 0xffff) {
-					/* actually we can but for now we don't care */
-					xf86Msg(X_ERROR,
-					   "can't colour expand with alpha\n");
-					return;
-				}
 				if (op != PictOpOver) {
 					xf86Msg(X_ERROR, "!over\n");
 					return;
@@ -1983,7 +2017,8 @@ CrimeAccelInit(ScrnInfoPtr pScrn)
 
 	/* clipping */
 	pXAAInfo->ClippingFlags = HARDWARE_CLIP_SCREEN_TO_SCREEN_COPY |
-		HARDWARE_CLIP_SOLID_FILL | HARDWARE_CLIP_SOLID_LINE |
+		HARDWARE_CLIP_SOLID_FILL | 
+		HARDWARE_CLIP_SOLID_LINE |
 		HARDWARE_CLIP_MONO_8x8_FILL | HARDWARE_CLIP_DASHED_LINE;
 	pXAAInfo->SetClippingRectangle = CrimeSetClippingRectangle;
 	pXAAInfo->DisableClipping = CrimeDisableClipping;

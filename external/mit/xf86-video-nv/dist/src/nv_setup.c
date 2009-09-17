@@ -229,7 +229,12 @@ NVProbeDDC (ScrnInfoPtr pScrn, int bus)
     xf86DrvMsg(pScrn->scrnIndex, X_INFO, 
                "Probing for EDID on I2C bus %s...\n", bus ? "B" : "A");
 
-    if ((MonInfo = xf86DoEDID_DDC2(pScrn->scrnIndex, pNv->I2C))) {
+#ifdef EDID_COMPLETE_RAWDATA
+    MonInfo = xf86DoEEDID(pScrn->scrnIndex, pNv->I2C, TRUE);
+#else
+    MonInfo = xf86DoEDID_DDC2(pScrn->scrnIndex, pNv->I2C);
+#endif
+    if (MonInfo) {
        xf86DrvMsg(pScrn->scrnIndex, X_PROBED,
                   "DDC detected a %s:\n", MonInfo->features.input_type ?
                   "DFP" : "CRT");
@@ -341,7 +346,10 @@ NVCommonSetup(ScrnInfoPtr pScrn)
     int FlatPanel = -1;   /* really means the CRTC is slaved */
     Bool Television = FALSE;
     void *tmp;
-    
+#if XSERVER_LIBPCIACCESS
+    int err;
+#endif
+
     /*
      * Override VGA I/O routines.
      */
@@ -371,8 +379,12 @@ NVCommonSetup(ScrnInfoPtr pScrn)
     pVga->MMIOOffset = 0;
 
 #if XSERVER_LIBPCIACCESS
-    pci_device_map_range(pNv->PciInfo, pNv->IOAddress, 0x01000000,
-                         PCI_DEV_MAP_FLAG_WRITABLE, &tmp);
+    err = pci_device_map_range(pNv->PciInfo, pNv->IOAddress, 0x01000000,
+			       PCI_DEV_MAP_FLAG_WRITABLE, &tmp);
+    if (err != 0) {
+	xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
+		   "pci_device_map_range failed: %s\n", strerror(err));
+    }
 #else
     tmp = xf86MapPciMem(pScrn->scrnIndex, VIDMEM_MMIO | VIDMEM_READSIDEEFFECT,
                         pNv->PciTag, pNv->IOAddress, 0x01000000);

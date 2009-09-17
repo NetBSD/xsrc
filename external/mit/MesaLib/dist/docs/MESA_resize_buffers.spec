@@ -16,7 +16,6 @@ Status
 
 Version
 
-    $Id: MESA_resize_buffers.spec,v 1.1.1.1 2008/07/29 05:08:21 mrg Exp $
 
 Number
 

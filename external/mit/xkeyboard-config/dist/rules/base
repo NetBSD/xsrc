@@ -19,7 +19,7 @@
 ! $pcmodels = pc101 pc102 pc104 pc105
 
 // Microsoft models (using MS geometry)
-! $msmodels = microsoft microsoftpro microsoftprousb microsoftprose
+! $msmodels = microsoft microsoft7000 microsoftpro microsoftprousb microsoftprose
 
 // PC geometries - they have special geometry but symbols are mostly pc105
 ! $pcgeometries = abnt2 latitude jp106 kr106
@@ -52,14 +52,14 @@
               gyration honeywell_euroboard \
               hp2501 hp2505 hp5xx hp500fa hp5181 hp5185 \
               hpi6 hpxe3gc hpxe3gf hpxe4xxx hpxt1000 hpzt11xx \
-              ipaq inspiron intel latitude \
+              ibm_spacesaver ipaq inspiron intel latitude \
               logiaccess logicda logicink \
               logiex110 logiclx300 \
               logiinkse logiinkseusb logiitc logiik \
               logitech_base itouch logiultrax \
               logitech_g15 \
 	      logidinovo logidinovoedge \
-              microsoftinet microsoftpro microsoftprousb microsoftprooem microsoftprose \
+              microsoft7000 microsoftinet microsoftpro microsoftprousb microsoftprooem microsoftprose \
               microsoftoffice microsoftmult \
               mx1998 mx2500 mx2750 \
               oretec \
@@ -69,7 +69,7 @@
               samsung4500 samsung4510 \
               scorpius silvercrest \
               sk1300 sk2500 sk6200 sk7100 sp_inet \
-              sven symplon \
+              sven sven303 symplon \
               toshiba_s3000 trust trustda \
               yahoo
 
@@ -114,7 +114,7 @@
   macintosh_old	=	macintosh(old)
  $macbooks	=	macintosh+macintosh(goodmap)
  $macs   	=	macintosh
-  thinkpad60	=	xfree86(thinkpad60)
+  thinkpadz60	=	xfree86(thinkpadz60)
   *		=	xfree86
 
 ! layout[1]	=	keycodes
@@ -147,6 +147,7 @@
   everex	=	everex(STEPnote)
   thinkpad	=	thinkpad(intl)
   thinkpad60	=	thinkpad(60)
+  thinkpadz60	=	thinkpad(60)
   winbook	=	winbook(XP5)
   pc98		=	nec(pc98)
  $macbooks      =       macintosh(%m)
@@ -183,9 +184,10 @@
   *		ogham		is434laptop		=	pc+ie(ogam_is434)
   *		ori		basic		=	pc+in(ori)
   *		ro		de		=	pc+ro(winkeys)
-  *		ro		us		=	pc+ro(std_comma)
-  *		ro		std		=	pc+ro(std_cedilla)
-  *		ro		academic		=	pc+ro(std_comma)
+  *		ro		us		=	pc+ro(std)
+  *		ro		academic		=	pc+ro(std)
+  *		ro		std_comma		=	pc+ro(std)
+  *		ro		comma		=	pc+ro(basic)
   *		ru		os		=	pc+ru(os_legacy)
   *		sapmi		basic		=	pc+no(smi)
   *		sapmi		nodeadkeys		=	pc+no(smi_nodeadkeys)
@@ -261,9 +263,10 @@
   *		ogham(is434laptop)			=	pc+ie(ogam_is434)
   *		ori(basic)			=	pc+in(ori)
   *		ro(de)			=	pc+ro(winkeys)
-  *		ro(us)			=	pc+ro(std_comma)
-  *		ro(std)			=	pc+ro(std_cedilla)
-  *		ro(academic)			=	pc+ro(std_comma)
+  *		ro(us)			=	pc+ro(std)
+  *		ro(academic)			=	pc+ro(std)
+  *		ro(std_comma)			=	pc+ro(std)
+  *		ro(comma)			=	pc+ro(basic)
   *		ru(os)			=	pc+ru(os_legacy)
   *		sapmi(basic)			=	pc+no(smi)
   *		sapmi(nodeadkeys)			=	pc+no(smi_nodeadkeys)
@@ -284,7 +287,6 @@
   ataritt	*			=	xfree68_vndr/ataritt(us)+%l%(v)
   amiga		$nonlatin		=	xfree68_vndr/amiga(usa1)+%l%(v):2
   amiga		*			=	xfree68_vndr/amiga(usa1)+%l%(v)
-
   classmate	us			=	pc+%l(classmate)
   sun4		$nonlatin		=	latin+sun_vndr/us(sun4)+%l%(v):2
   sun4		*			=	latin+sun_vndr/us(sun4)+%l%(v)
@@ -362,9 +364,10 @@
   *		ogham(is434laptop)			=	pc+ie(ogam_is434)
   *		ori(basic)			=	pc+in(ori)
   *		ro(de)			=	pc+ro(winkeys)
-  *		ro(us)			=	pc+ro(std_comma)
-  *		ro(std)			=	pc+ro(std_cedilla)
-  *		ro(academic)			=	pc+ro(std_comma)
+  *		ro(us)			=	pc+ro(std)
+  *		ro(academic)			=	pc+ro(std)
+  *		ro(std_comma)			=	pc+ro(std)
+  *		ro(comma)			=	pc+ro(basic)
   *		ru(os)			=	pc+ru(os_legacy)
   *		sapmi(basic)			=	pc+no(smi)
   *		sapmi(nodeadkeys)			=	pc+no(smi_nodeadkeys)
@@ -420,9 +423,10 @@
   *		ogham		is434laptop		=	pc+ie(ogam_is434)
   *		ori		basic		=	pc+in(ori)
   *		ro		de		=	pc+ro(winkeys)
-  *		ro		us		=	pc+ro(std_comma)
-  *		ro		std		=	pc+ro(std_cedilla)
-  *		ro		academic		=	pc+ro(std_comma)
+  *		ro		us		=	pc+ro(std)
+  *		ro		academic		=	pc+ro(std)
+  *		ro		std_comma		=	pc+ro(std)
+  *		ro		comma		=	pc+ro(basic)
   *		ru		os		=	pc+ru(os_legacy)
   *		sapmi		basic		=	pc+no(smi)
   *		sapmi		nodeadkeys		=	pc+no(smi_nodeadkeys)
@@ -495,9 +499,10 @@
   ogham(is434laptop)	=	+ie(ogam_is434):2
   ori(basic)	=	+in(ori):2
   ro(de)	=	+ro(winkeys):2
-  ro(us)	=	+ro(std_comma):2
-  ro(std)	=	+ro(std_cedilla):2
-  ro(academic)	=	+ro(std_comma):2
+  ro(us)	=	+ro(std):2
+  ro(academic)	=	+ro(std):2
+  ro(std_comma)	=	+ro(std):2
+  ro(comma)	=	+ro(basic):2
   ru(os)	=	+ru(os_legacy):2
   sapmi(basic)	=	+no(smi):2
   sapmi(nodeadkeys)	=	+no(smi_nodeadkeys):2
@@ -571,9 +576,10 @@
   ogham(is434laptop)	=	+ie(ogam_is434):3
   ori(basic)	=	+in(ori):3
   ro(de)	=	+ro(winkeys):3
-  ro(us)	=	+ro(std_comma):3
-  ro(std)	=	+ro(std_cedilla):3
-  ro(academic)	=	+ro(std_comma):3
+  ro(us)	=	+ro(std):3
+  ro(academic)	=	+ro(std):3
+  ro(std_comma)	=	+ro(std):3
+  ro(comma)	=	+ro(basic):3
   ru(os)	=	+ru(os_legacy):3
   sapmi(basic)	=	+no(smi):3
   sapmi(nodeadkeys)	=	+no(smi_nodeadkeys):3
@@ -647,9 +653,10 @@
   ogham(is434laptop)	=	+ie(ogam_is434):4
   ori(basic)	=	+in(ori):4
   ro(de)	=	+ro(winkeys):4
-  ro(us)	=	+ro(std_comma):4
-  ro(std)	=	+ro(std_cedilla):4
-  ro(academic)	=	+ro(std_comma):4
+  ro(us)	=	+ro(std):4
+  ro(academic)	=	+ro(std):4
+  ro(std_comma)	=	+ro(std):4
+  ro(comma)	=	+ro(basic):4
   ru(os)	=	+ru(os_legacy):4
   sapmi(basic)	=	+no(smi):4
   sapmi(nodeadkeys)	=	+no(smi_nodeadkeys):4
@@ -696,9 +703,10 @@
   ogham		is434laptop	=	+ie(ogam_is434):2
   ori		basic	=	+in(ori):2
   ro		de	=	+ro(winkeys):2
-  ro		us	=	+ro(std_comma):2
-  ro		std	=	+ro(std_cedilla):2
-  ro		academic	=	+ro(std_comma):2
+  ro		us	=	+ro(std):2
+  ro		academic	=	+ro(std):2
+  ro		std_comma	=	+ro(std):2
+  ro		comma	=	+ro(basic):2
   ru		os	=	+ru(os_legacy):2
   sapmi		basic	=	+no(smi):2
   sapmi		nodeadkeys	=	+no(smi_nodeadkeys):2
@@ -744,9 +752,10 @@
   ogham		is434laptop	=	+ie(ogam_is434):3
   ori		basic	=	+in(ori):3
   ro		de	=	+ro(winkeys):3
-  ro		us	=	+ro(std_comma):3
-  ro		std	=	+ro(std_cedilla):3
-  ro		academic	=	+ro(std_comma):3
+  ro		us	=	+ro(std):3
+  ro		academic	=	+ro(std):3
+  ro		std_comma	=	+ro(std):3
+  ro		comma	=	+ro(basic):3
   ru		os	=	+ru(os_legacy):3
   sapmi		basic	=	+no(smi):3
   sapmi		nodeadkeys	=	+no(smi_nodeadkeys):3
@@ -792,9 +801,10 @@
   ogham		is434laptop	=	+ie(ogam_is434):4
   ori		basic	=	+in(ori):4
   ro		de	=	+ro(winkeys):4
-  ro		us	=	+ro(std_comma):4
-  ro		std	=	+ro(std_cedilla):4
-  ro		academic	=	+ro(std_comma):4
+  ro		us	=	+ro(std):4
+  ro		academic	=	+ro(std):4
+  ro		std_comma	=	+ro(std):4
+  ro		comma	=	+ro(basic):4
   ru		os	=	+ru(os_legacy):4
   sapmi		basic	=	+no(smi):4
   sapmi		nodeadkeys	=	+no(smi_nodeadkeys):4
@@ -841,6 +851,7 @@
   logiciink     =       +inet(logicink)
   $maclaptop    =       +inet(apple)+level3(enter_switch)
   $macs	        =       +inet(apple)
+  thinkpadz60   =       +inet(thinkpad60)
 
 ! model		layout		=	compat
   pc98		nec_vndr/jp	=	pc98(basic)
@@ -892,7 +903,8 @@
   grp:alts_toggle	=	+group(alts_toggle)
   grp:ctrl_shift_toggle	=	+group(ctrl_shift_toggle)
   grp:lctrl_lshift_toggle	=	+group(lctrl_lshift_toggle)
-  grp:caps_toggle	=	+group(caps_toggle)
+  grp:caps_toggle	=	+capslock(grouplock)
+  grp:caps_switch       =       +capslock(groupshift)
   grp:shift_caps_toggle	=	+group(shift_caps_toggle)
   grp:shift_caps_switch	=	+group(shift_caps_switch)
   grp:alt_caps_toggle   =       +group(alt_caps_toggle)
@@ -903,6 +915,7 @@
   grp:rwin_toggle	=	+group(rwin_toggle)
   grp:lshift_toggle	=	+group(lshift_toggle)
   grp:rshift_toggle	=	+group(rshift_toggle)
+  grp:rctrl_switch	=	+group(rctrl_switch)
   grp:lctrl_toggle	=	+group(lctrl_toggle)
   grp:rctrl_toggle	=	+group(rctrl_toggle)
   grp:lalt_toggle	=	+group(lalt_toggle)
@@ -918,7 +931,6 @@
   lv3:rwin_switch	=	+level3(rwin_switch)
   caps:capslock		=	+capslock(capslock)
   caps:shiftlock	=	+capslock(shiftlock)
-  caps:grouplock	=	+capslock(grouplock)
   caps:swapescape	=	+capslock(swapescape)
   ctrl:nocaps		=	+ctrl(nocaps)
   ctrl:swapcaps		=	+ctrl(swapcaps)
@@ -941,7 +953,9 @@
   keypad:legacy         =	+keypad(legacy)
   keypad:legacy_wang    =	+keypad(legacy_wang)
   keypad:oss_wang       =	+keypad(oss_wang)
+  keypad:future         =	+keypad(future)
   keypad:future_wang    =	+keypad(future_wang)
+  keypad:phone_hex      =	+keypad(phone_hex)
   nbsp:none             =	+nbsp(none)
   nbsp:level2           =	+nbsp(level2)
   nbsp:level3           =	+nbsp(level3)

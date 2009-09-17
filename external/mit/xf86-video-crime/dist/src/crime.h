@@ -1,4 +1,4 @@
-/* $NetBSD: crime.h,v 1.2.2.5 2009/04/01 03:18:07 snj Exp $ */
+/* $NetBSD: crime.h,v 1.2.2.6 2009/09/17 03:33:50 snj Exp $ */
 /*
  * Copyright (c) 2008 Michael Lorenz
  * All rights reserved.
@@ -37,7 +37,6 @@
 
 #include "xf86.h"
 #include "xf86_OSproc.h"
-#include "xf86_ansic.h"
 
 #include "xf86RamDac.h"
 #include "xaa.h"
@@ -91,6 +90,7 @@ typedef struct {
 	int			start, xdir, ydir;
 	int			format;
 	int			use_mte;
+	int			cxa, cxe, cya, cye;
 	uint32_t		expand[2048];
 	uint32_t		pattern[8];
 	uint32_t		alpha_color;

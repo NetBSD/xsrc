@@ -1,12 +1,9 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/mga/mga_video.c,v 1.33tsi Exp $ */
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
 #include "xf86.h"
 #include "xf86_OSproc.h"
-#include "xf86Resources.h"
 #include "compiler.h"
 #include "xf86PciInfo.h"
 #include "xf86Pci.h"
@@ -93,31 +90,28 @@ void MGAInitVideo(ScreenPtr pScreen)
     MGAPtr pMga = MGAPTR(pScrn);
     int num_adaptors;
 
-    if((pScrn->bitsPerPixel != 8) && !pMga->NoAccel &&
-       (pMga->SecondCrtc == FALSE) &&
-       ((pMga->Chipset == PCI_CHIP_MGA2164) ||
-        (pMga->Chipset == PCI_CHIP_MGA2164_AGP) ||     
-/*        (pMga->Chipset == PCI_CHIP_MGA2064) ||     */
-        (pMga->Chipset == PCI_CHIP_MGAG200) ||     
-        (pMga->Chipset == PCI_CHIP_MGAG200_PCI) ||
-        (pMga->Chipset == PCI_CHIP_MGAG400) ||
-	(pMga->Chipset == PCI_CHIP_MGAG550))) 
-    {
-      if( (pMga->Chipset == PCI_CHIP_MGA2164) ||
-/*        (pMga->Chipset == PCI_CHIP_MGA2064) ||   */  
-        (pMga->Chipset == PCI_CHIP_MGA2164_AGP) 
-	) {
-	xf86DrvMsg(pScrn->scrnIndex, X_INFO, "Using MGA 2164W ILOAD video\n");
-	xf86DrvMsg(pScrn->scrnIndex, X_INFO, 
-	"This is an experimental driver and may not work on your machine.\n");
+    if ((pScrn->bitsPerPixel != 8) && !pMga->NoAccel &&
+	(pMga->SecondCrtc == FALSE) &&
+	((pMga->Chipset == PCI_CHIP_MGA2164) ||
+	 (pMga->Chipset == PCI_CHIP_MGA2164_AGP) ||     
+/*	 (pMga->Chipset == PCI_CHIP_MGA2064) ||     */
+	 (pMga->Chipset == PCI_CHIP_MGAG200) ||     
+	 (pMga->Chipset == PCI_CHIP_MGAG200_PCI) ||
+	 (pMga->Chipset == PCI_CHIP_MGAG400) ||
+	 (pMga->Chipset == PCI_CHIP_MGAG550))) {
+	if ((pMga->Chipset == PCI_CHIP_MGA2164) ||
+/*	    (pMga->Chipset == PCI_CHIP_MGA2064) ||   */  
+	    (pMga->Chipset == PCI_CHIP_MGA2164_AGP)) {
+	    xf86DrvMsg(pScrn->scrnIndex, X_INFO, "Using MGA 2164W ILOAD video\n");
+	    xf86DrvMsg(pScrn->scrnIndex, X_INFO, 
+		       "This is an experimental driver and may not work on your machine.\n");
 
-	newAdaptor = MGASetupImageVideoILOAD(pScreen);
-	pMga->TexturedVideo = TRUE; 
-	/* ^^^ this is not really true but the ILOAD scaler shares 
-	much more code with the textured video than the overlay */
-      } else if((pMga->Overlay8Plus24 || pMga->TexturedVideo) &&
-	   (pScrn->bitsPerPixel != 24))
-        {
+	    newAdaptor = MGASetupImageVideoILOAD(pScreen);
+	    pMga->TexturedVideo = TRUE; 
+	    /* ^^^ this is not really true but the ILOAD scaler shares 
+	     * much more code with the textured video than the overlay 
+	     */
+	} else if (pMga->TexturedVideo && (pScrn->bitsPerPixel != 24)) {
 	    xf86DrvMsg(pScrn->scrnIndex, X_INFO, "Using texture video\n");
 	    newAdaptor = MGASetupImageVideoTexture(pScreen);
 	    pMga->TexturedVideo = TRUE;
@@ -126,8 +120,8 @@ void MGAInitVideo(ScreenPtr pScreen)
 	    newAdaptor = MGASetupImageVideoOverlay(pScreen);
 	    pMga->TexturedVideo = FALSE;
 	}
-	if(!pMga->Overlay8Plus24)
-	    MGAInitOffscreenImages(pScreen);
+
+	MGAInitOffscreenImages(pScreen);
     }
 
     num_adaptors = xf86XVListGenericAdaptors(pScrn, &adaptors);
@@ -800,11 +794,6 @@ MGADisplayVideoTexture(
     incy = (src_h << 20)/(drw_h * padh);
    
     CHECK_DMA_QUIESCENT(pMga, pScrn);
-
-    if(pMga->Overlay8Plus24) {
-	WAITFIFO(1);
-	SET_PLANEMASK_REPLICATED( 0x00ffffff, 0xffffffff, 32 );
-    }
 
     WAITFIFO(15);
     OUTREG(MGAREG_TMR0, incx);  /* sx inc */

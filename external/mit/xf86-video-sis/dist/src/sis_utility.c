@@ -1,5 +1,3 @@
-/* $XFree86$ */
-/* $XdotOrg$ */
 /*
  * SiS driver utility interface & routines
  *
@@ -40,8 +38,6 @@
 #define NEED_EVENTS
 #include <X11/X.h>
 #include "dixstruct.h"
-#define _XF86MISC_SERVER_
-#include <X11/extensions/xf86misc.h>
 
 #include "sis_videostr.h"
 
@@ -257,9 +253,6 @@ typedef struct {
     int		 (*HandleSiSDirectCommand[SISCTRL_MAX_SCREENS])(xSiSCtrlCommandReply *);
 } xSiSCtrlScreenTable;
 
-#ifdef X_XF86MiscPassMessage
-int		SISHandleMessage(int scrnIndex, const char *msgtype, const char *msgval, char **retmsg);
-#endif
 void		SiSCtrlExtInit(ScrnInfoPtr pScrn);
 void		SiSCtrlExtUnregister(SISPtr pSiS, int index);
 
@@ -851,19 +844,6 @@ SISGetMergedModeDetails(ScrnInfoPtr pScrn,
     *crt2x = tmode->HDisplay;
     *crt2y = tmode->VDisplay;
     *crt2clk = (unsigned int)SiSCalcVRate(tmode);
-}
-#endif
-
-/***********************************
- *     MessageHandler interface    *
- *   (unused now; use extension)   *
- ***********************************/
-
-#ifdef X_XF86MiscPassMessage
-int
-SISHandleMessage(int scrnIndex, const char *msgtype, const char *msgval, char **retmsg)
-{
-    return BadMatch;
 }
 #endif
 

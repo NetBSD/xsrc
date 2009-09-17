@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2008  Luc Verhaegen <lverhaegen@novell.com>
+ * Copyright 2004-2008  Luc Verhaegen <libv@exsuse.de>
  * Copyright 2007, 2008 Matthias Hopf <mhopf@novell.com>
  * Copyright 2007, 2008 Egbert Eich   <eich@novell.com>
  * Copyright 2007, 2008 Advanced Micro Devices, Inc.
@@ -977,6 +977,7 @@ struct {
     { MODE_MINHEIGHT,     "Height too low."},
     { MODE_FIXED,         "Mode not compatible with fixed mode."},
     { MODE_SCALE,         "Mode cannot be scaled to fixed mode."},
+    { MODE_NO_ENCODER,    "No encoder available for this output."},
     { 0, NULL}
 };
 

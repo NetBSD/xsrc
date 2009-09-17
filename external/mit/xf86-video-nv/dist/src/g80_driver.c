@@ -51,56 +51,6 @@
 #define G80_REG_SIZE (1024 * 1024 * 16)
 #define G80_RESERVED_VIDMEM 0xd000
 
-static const char *fbSymbols[] = {
-    "fbPictureInit",
-    "fbScreenInit",
-    NULL
-};
-
-static const char *xaaSymbols[] = {
-    "XAACopyROP",
-    "XAACreateInfoRec",
-    "XAADestroyInfoRec",
-    "XAAFallbackOps",
-    "XAAInit",
-    "XAAPatternROP",
-    NULL
-};
-
-static const char *exaSymbols[] = {
-    "exaDriverAlloc",
-    "exaDriverInit",
-    "exaDriverFini",
-    NULL
-};
-
-static const char *i2cSymbols[] = {
-    "xf86CreateI2CBusRec",
-    "xf86I2CBusInit",
-    NULL
-};
-
-static const char *ramdacSymbols[] = {
-    "xf86CreateCursorInfoRec",
-    "xf86DestroyCursorInfoRec",
-    "xf86InitCursor",
-    NULL
-};
-
-static const char *ddcSymbols[] = {
-    "xf86PrintEDID",
-    "xf86DoEDID_DDC2",
-    "xf86SetDDCproperties",
-    NULL
-};
-
-static const char *int10Symbols[] = {
-    "xf86FreeInt10",
-    "xf86InitInt10",
-    "xf86ExecX86int10",
-    NULL
-};
-
 typedef enum {
     OPTION_HW_CURSOR,
     OPTION_NOACCEL,
@@ -206,11 +156,8 @@ G80PreInit(ScrnInfoPtr pScrn, int flags)
     CARD32 tmp;
     memType BAR1sizeKB;
 
-    if(flags & PROBE_DETECT) {
-        xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
-                "G80 PROBE_DETECT unimplemented\n");
-        return FALSE;
-    }
+    if(flags & PROBE_DETECT)
+        return TRUE;
 
     /* Check the number of entities, and fail if it isn't one. */
     if(pScrn->numEntities != 1)
@@ -246,7 +193,6 @@ G80PreInit(ScrnInfoPtr pScrn, int flags)
     pNv->int10 = NULL;
     pNv->int10Mode = 0;
     if(xf86LoadSubModule(pScrn, "int10")) {
-        xf86LoaderReqSymLists(int10Symbols, NULL);
         xf86DrvMsg(pScrn->scrnIndex, X_INFO, "Initializing int10\n");
         pNv->int10 = xf86InitInt10(pEnt->index);
     }
@@ -437,7 +383,6 @@ G80PreInit(ScrnInfoPtr pScrn, int flags)
 
     if(!xf86LoadSubModule(pScrn, "i2c")) goto fail;
     if(!xf86LoadSubModule(pScrn, "ddc")) goto fail;
-    xf86LoaderReqSymLists(i2cSymbols, ddcSymbols, NULL);
 
     if(!G80DispPreInit(pScrn)) goto fail;
     /* Read the DDC routing table and create outputs */
@@ -468,17 +413,14 @@ G80PreInit(ScrnInfoPtr pScrn, int flags)
 
     /* Load fb */
     if(!xf86LoadSubModule(pScrn, "fb")) goto fail;
-    xf86LoaderReqSymLists(fbSymbols, NULL);
 
     if(!pNv->NoAccel) {
         switch(pNv->AccelMethod) {
         case XAA:
             if(!xf86LoadSubModule(pScrn, "xaa")) goto fail;
-            xf86LoaderReqSymLists(xaaSymbols, NULL);
             break;
         case EXA:
             if(!xf86LoadSubModule(pScrn, "exa")) goto fail;
-            xf86LoaderReqSymLists(exaSymbols, NULL);
             break;
         }
     }
@@ -489,9 +431,7 @@ G80PreInit(ScrnInfoPtr pScrn, int flags)
             xf86DrvMsg(pScrn->scrnIndex, X_ERROR, "Failed to load ramdac. "
                        "Falling back to software cursor.\n");
             pNv->HWCursor = FALSE;
-        } else {
-            xf86LoaderReqSymLists(ramdacSymbols, NULL);
-        }
+	}
     }
 
     return TRUE;
@@ -914,13 +854,6 @@ G80ScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
        Must precede creation of the default colormap */
     miDCInitialize(pScreen, xf86GetPointerScreenFuncs());
 
-    /* Initialize hardware cursor.  Must follow software cursor initialization. */
-    if(pNv->HWCursor && !G80CursorInit(pScreen)) {
-        xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
-                   "Hardware cursor initialization failed\n");
-        pNv->HWCursor = FALSE;
-    }
-
     /* Initialize default colormap */
     if(!miCreateDefColormap(pScreen))
         return FALSE;
@@ -948,6 +881,13 @@ G80ScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
     /* Initialize the display */
     if(!AcquireDisplay(pScrn))
         return FALSE;
+
+    /* Initialize hardware cursor.  Must follow software cursor initialization. */
+    if(pNv->HWCursor && !G80CursorInit(pScreen)) {
+        xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
+                   "Hardware cursor initialization failed\n");
+        pNv->HWCursor = FALSE;
+    }
 
     pScreen->SaveScreen = G80SaveScreen;
 

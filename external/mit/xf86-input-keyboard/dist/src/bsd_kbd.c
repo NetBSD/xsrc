@@ -447,15 +447,16 @@ OpenKeyboard(InputInfoPtr pInfo)
        xfree(s);
     }
 
-#if defined (SYSCONS_SUPPORT) || defined (PCVT_SUPPORT)
-    if (pKbd->isConsole &&
-        ((pKbd->consType == SYSCONS) || (pKbd->consType == PCVT)))
-        pKbd->vtSwitchSupported = TRUE;
-#endif
-
 #ifdef WSCONS_SUPPORT
     if( prot == PROT_WSCONS) {
        pKbd->consType = WSCONS;
+#ifdef WSKBDIO_SETVERSION
+       int version = WSKBDIO_EVENT_VERSION;
+       if (ioctl(pInfo->fd, WSKBDIO_SETVERSION, &version) == -1) {
+           xf86Msg(X_WARNING, "%s: cannot set version\n", pInfo->name);
+           return FALSE;
+       }
+#endif 
        /* Find out keyboard type */
        if (ioctl(pInfo->fd, WSKBDIO_GTYPE, &(pKbd->wsKbdType)) == -1) {
            xf86Msg(X_ERROR, "%s: cannot get keyboard type", pInfo->name);
@@ -484,8 +485,8 @@ OpenKeyboard(InputInfoPtr pInfo)
 #endif
 #ifdef WSKBD_TYPE_SUN5
      case WSKBD_TYPE_SUN5:
-	     xf86Msg(X_PROBED, "Keyboard type: Sun5\n");
-	     break;
+               printWsType("Sun5", pInfo->name);
+               break;
 #endif
            default:
                xf86Msg(X_ERROR, "%s: Unsupported wskbd type \"%d\"",
@@ -495,6 +496,14 @@ OpenKeyboard(InputInfoPtr pInfo)
        }
     }
 #endif
+
+#if defined (SYSCONS_SUPPORT) || defined (PCVT_SUPPORT) || defined (WSCONS_SUPPORT)
+    if (pKbd->isConsole &&
+        ((pKbd->consType == SYSCONS) || (pKbd->consType == PCVT)) ||
+	 ((pKbd->consType == WSCONS)))
+        pKbd->vtSwitchSupported = TRUE;
+#endif
+
     return TRUE;
 }
 

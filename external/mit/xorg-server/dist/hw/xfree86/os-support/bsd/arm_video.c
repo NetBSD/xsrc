@@ -223,7 +223,8 @@ xf86ReadBIOS(unsigned long Base, unsigned long Offset, unsigned char *Buf,
 	if (devMemFd == -1) {
 		return (-1);
 	}
-	psize = xf86getpagesize();
+
+	psize = getpagesize();
 	Offset += Base & (psize - 1);
 	Base &= ~(psize - 1);
 	mlen = (Offset + Len + psize - 1) & ~(psize - 1);
@@ -309,6 +310,21 @@ xf86DisableIO()
 
 	ExtendedEnabled = FALSE;
 }
+
+#if 0
+/*
+ * XXX This is here for reference.  It needs to be handled differently for the
+ * ND.
+ */
+#if defined(USE_ARC_MMAP) || defined(__arm32__)
+
+#ifdef USE_ARM32_MMAP
+#define	DEV_MEM_IOBASE	0x43000000
+#endif
+
+static Bool ScreenEnabled[MAXSCREENS];
+static Bool ExtendedEnabled = FALSE;
+static Bool InitDone = FALSE;
 
 Bool
 xf86DisableInterrupts()

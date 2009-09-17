@@ -23,10 +23,13 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include "ast_pcirename.h"
+
 /* Compiler Options */
 #define	Accel_2D
 /* #define MMIO_2D */
 #define HWC
+/* #define PATCH_ABI_VERSION */
 
 /* Vendor & Device Info */
 #ifndef PCI_VENDOR_AST
@@ -37,12 +40,25 @@
 #define PCI_CHIP_AST2000		0x2000		
 #endif
 
+#ifndef	PCI_CHIP_AST2100
+#define PCI_CHIP_AST2100		0x2010
+#endif
+
+typedef enum _CHIP_ID {
+    VGALegacy,
+    AST2000,
+    AST2100,
+    AST1100,
+    AST2200,
+    AST2150
+} CHIP_ID;
+
 /* AST REC Info */
 #define AST_NAME 			"AST"
 #define AST_DRIVER_NAME 		"ast"
-#define AST_MAJOR_VERSION 		0
-#define AST_MINOR_VERSION 		81
-#define AST_PATCH_VERSION		0
+#define AST_MAJOR_VERSION 		PACKAGE_VERSION_MAJOR
+#define AST_MINOR_VERSION 		PACKAGE_VERSION_MINOR
+#define AST_PATCH_VERSION		PACKAGE_VERSION_PATCHLEVEL
 #define AST_VERSION	\
         ((AST_MAJOR_VERSION << 20) | (AST_MINOR_VERSION << 10) | AST_PATCH_VERSION)
 
@@ -53,6 +69,9 @@
 #define MIN_CMDQ_SIZE			0x00040000
 #define CMD_QUEUE_GUARD_BAND    	0x00000020
 #define DEFAULT_HWC_NUM			0x00000002
+
+/* Patch Info */
+#define ABI_VIDEODRV_VERSION_PATCH	SET_ABI_VERSION(0, 5)
 
 /* Data Type Definition */
 typedef INT32  		LONG;
@@ -113,15 +132,20 @@ typedef struct {
     USHORT   		offset_y;
     ULONG		fg;
     ULONG		bg;
-    
+
+    UCHAR               cursorpattern[1024];    
         
 } HWCINFO, *PHWCINFO;
 
 typedef struct _ASTRec {
 	
     EntityInfoPtr 	pEnt;
-    pciVideoPtr 	PciInfo;
-    PCITAG 		PciTag;
+#ifndef XSERVER_LIBPCIACCESS	
+	pciVideoPtr		PciInfo;
+	PCITAG			PciTag;
+#else
+	struct pci_device       *PciInfo;
+#endif
 
     OptionInfoPtr 	Options;
     DisplayModePtr      ModePtr;		    
@@ -132,12 +156,16 @@ typedef struct _ASTRec {
 
     CloseScreenProcPtr CloseScreen;
     ScreenBlockHandlerProcPtr BlockHandler;
+
+    UCHAR		jChipType;
+    UCHAR		jDRAMType;
              
     Bool 		noAccel;
     Bool 		noHWC;
     Bool 		MMIO2D;
     int			ENGCaps;
     int			DBGSelect;
+    Bool		VGA2Clone;
               	
     ULONG     		FBPhysAddr;		/* Frame buffer physical address     */
     ULONG     		MMIOPhysAddr;     	/* MMIO region physical address      */
@@ -159,6 +187,11 @@ typedef struct _ASTRec {
     HWCINFO    		HWCInfo;
     ULONG		ulCMDReg;   
     Bool		EnableClip;
+
+    int			clip_left;    
+    int			clip_top;
+    int			clip_right;    
+    int			clip_bottom;    	
    		
 } ASTRec, *ASTRecPtr;
 	

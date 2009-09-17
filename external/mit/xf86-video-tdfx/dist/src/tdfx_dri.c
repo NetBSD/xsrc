@@ -1,4 +1,3 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/tdfx/tdfx_dri.c,v 1.25 2003/02/08 21:26:59 dawes Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -345,6 +344,9 @@ Bool TDFXDRIScreenInit(ScreenPtr pScreen)
 
   pDRIInfo->drmDriverName = TDFXKernelDriverName;
   pDRIInfo->clientDriverName = TDFXClientDriverName;
+#ifdef XSERVER_LIBPCIACCESS
+    pDRIInfo->busIdString = DRICreatePCIBusID(pTDFX->PciInfo[0]);
+#else
   if (xf86LoaderCheckSymbol("DRICreatePCIBusID")) {
     pDRIInfo->busIdString = DRICreatePCIBusID(pTDFX->PciInfo);
   } else {
@@ -354,10 +356,11 @@ Bool TDFXDRIScreenInit(ScreenPtr pScreen)
 	    ((pciConfigPtr)pTDFX->PciInfo->thisCard)->devnum,
 	    ((pciConfigPtr)pTDFX->PciInfo->thisCard)->funcnum);
   }
+#endif
   pDRIInfo->ddxDriverMajorVersion = TDFX_MAJOR_VERSION;
   pDRIInfo->ddxDriverMinorVersion = TDFX_MINOR_VERSION;
   pDRIInfo->ddxDriverPatchVersion = TDFX_PATCHLEVEL;
-  pDRIInfo->frameBufferPhysicalAddress = pTDFX->LinearAddr[0];
+  pDRIInfo->frameBufferPhysicalAddress = (pointer) pTDFX->LinearAddr[0];
   pDRIInfo->frameBufferSize = pTDFX->FbMapSize;
   pDRIInfo->frameBufferStride = pTDFX->stride;
   pDRIInfo->ddxDrawableTableEntry = TDFX_MAX_DRAWABLES;
@@ -514,7 +517,11 @@ TDFXDRIFinishScreenInit(ScreenPtr pScreen)
   pTDFX->pDRIInfo->driverSwapMethod = DRI_HIDE_X_CONTEXT;
 
   pTDFXDRI=(TDFXDRIPtr)pTDFX->pDRIInfo->devPrivate;
-  pTDFXDRI->deviceID=pTDFX->PciInfo->chipType;
+#ifdef XSERVER_LIBPCIACCESS
+  pTDFXDRI->deviceID = DEVICE_ID(pTDFX->PciInfo[0]);
+#else
+  pTDFXDRI->deviceID = DEVICE_ID(pTDFX->PciInfo);
+#endif
   pTDFXDRI->width=pScrn->virtualX;
   pTDFXDRI->height=pScrn->virtualY;
   pTDFXDRI->mem=pScrn->videoRam*1024;

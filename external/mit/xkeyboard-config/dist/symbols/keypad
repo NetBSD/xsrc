@@ -1,4 +1,4 @@
-// $XKeyboardConfig: xkeyboard-config/symbols/keypad,v 1.6 2007/07/16 08:27:03 svu Exp $
+// $XKeyboardConfig$
 // $Xorg: keypad,v 1.3 2000/08/17 19:54:43 cpqbld Exp $
 
 partial hidden keypad_keys
@@ -492,4 +492,49 @@ xkb_symbols "ossnumber_wang" {
     key <KP3>  { [   KP_Next,   KP_3,   numbersign, 0x1002198 ] }; //   <next> 3 # ↘
 
     key <KP0>  { [ KP_Insert,   KP_0,   apostrophe, 0x1002195 ] }; // <insert> 0 ' ↕
+};
+
+// ATM/phone-style hexadecimal numpad
+// by Roland Kaufmann <rlndkfmn at gmail dot com>
+// License: BSD
+// Main numbers follows the traditions from ATMs and phones with
+// numbers increasing downwards to the right. (It is easier to
+// change the keyboard layout than to reprogram your local ATM;
+// also cell-phones are becoming more common while calculators are
+// becoming more rare).
+// Third-level gives the letters used in hexadecimal numbers, or
+// columns in small spreadsheets. Equal is added to start formulas
+// (most numpads don't have their own equal key), comma as a list
+// separator and colon to enter times and ranges.
+partial keypad_keys
+xkb_symbols "phone_hex" {
+    // NumLock, Enter
+    include "keypad(core)"
+
+    key.type[Group1]="FOUR_LEVEL_MIXED_KEYPAD" ;
+
+    //             None          NumLock      AltGr
+    // symbol row
+    key <KPDV> { [ KP_Divide,    slash,       parenleft  ] };
+    key <KPMU> { [ KP_Multiply,  asterisk,    parenright ] };
+    key <KPSU> { [ KP_Subtract,  minus,       dollar     ] };
+
+    // upper row
+    key <KP7>  { [ KP_Home,      KP_1,        A          ] };
+    key <KP8>  { [ KP_Up,        KP_2,        B          ] };
+    key <KP9>  { [ KP_Prior,     KP_3,        C          ] };
+ 
+    // home row
+    key <KP4>  { [ KP_Left,      KP_4,        D          ] };
+    key <KP5>  { [ KP_Begin,     KP_5,        E          ] };
+    key <KP6>  { [ KP_Right,     KP_6,        F          ] };
+    key <KPAD> { [ KP_Add,       plus,        comma      ] };
+
+    // lower row
+    key <KP1>  { [ KP_End,       KP_7,        equal      ] };
+    key <KP2>  { [ KP_Down,      KP_8,        x          ] };
+    key <KP3>  { [ KP_Next,      KP_9,        colon      ] };
+
+    // decimal row
+    key <KP0>  { [ KP_Insert,    KP_0,        backslash  ] };
 };

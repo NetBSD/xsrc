@@ -98,12 +98,12 @@ SOFTWARE.
 }
 
 _X_EXPORT void
-miZeroLine(pDraw, pGC, mode, npt, pptInit)
-    DrawablePtr pDraw;
-    GCPtr	pGC;
-    int		mode;		/* Origin or Previous */
-    int		npt;		/* number of points */
-    DDXPointPtr pptInit;
+miZeroLine(
+    DrawablePtr pDraw,
+    GCPtr	pGC,
+    int		mode,		/* Origin or Previous */
+    int		npt,		/* number of points */
+    DDXPointPtr pptInit)
 {
     int Nspans, current_y = 0;
     DDXPointPtr ppt; 
@@ -155,8 +155,8 @@ miZeroLine(pDraw, pGC, mode, npt, pptInit)
     width = xright - xleft + 1;
     height = ybottom - ytop + 1;
     list_len = (height >= width) ? height : width;
-    pspanInit = (DDXPointPtr)ALLOCATE_LOCAL(list_len * sizeof(DDXPointRec));
-    pwidthInit = (int *)ALLOCATE_LOCAL(list_len * sizeof(int));
+    pspanInit = (DDXPointPtr)xalloc(list_len * sizeof(DDXPointRec));
+    pwidthInit = (int *)xalloc(list_len * sizeof(int));
     if (!pspanInit || !pwidthInit)
 	return;
 
@@ -359,17 +359,18 @@ miZeroLine(pDraw, pGC, mode, npt, pptInit)
 	(*pGC->ops->FillSpans)(pDraw, pGC, Nspans, pspanInit,
 			       pwidthInit, FALSE);
 
-    DEALLOCATE_LOCAL(pwidthInit);
-    DEALLOCATE_LOCAL(pspanInit);
+    xfree(pwidthInit);
+    xfree(pspanInit);
 }
 
-_X_EXPORT void
-miZeroDashLine(dst, pgc, mode, nptInit, pptInit)
-DrawablePtr dst;
-GCPtr pgc;
-int mode;
-int nptInit;		/* number of points in polyline */
-DDXPointRec *pptInit;	/* points in the polyline */
+void
+miZeroDashLine(
+            DrawablePtr dst,
+            GCPtr pgc,
+            int mode,
+            int nptInit,		/* number of points in polyline */
+            DDXPointRec *pptInit	/* points in the polyline */
+        )
 {
     /* XXX kludge until real zero-width dash code is written */
     pgc->lineWidth = 1;

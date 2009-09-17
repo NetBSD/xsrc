@@ -25,7 +25,6 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 **************************************************************************/
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/i740/i740_driver.c,v 1.49tsi Exp $ */
 
 /*
  * Authors:
@@ -48,17 +47,15 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  * DGA
  */
 
-#ifndef USE_DDC2
-#define USE_DDC2 0
-#endif
-
 /*
  * These are X and server generic header files.
  */
 #include "xf86.h"
 #include "xf86_OSproc.h"
+#if GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) < 6
 #include "xf86Resources.h"
 #include "xf86RAC.h"
+#endif
 #include "xf86cmap.h"
 
 /* If the driver uses port I/O directly, it needs: */
@@ -142,9 +139,9 @@ static Bool I740UnmapMem(ScrnInfoPtr pScrn);
 #define I740_VERSION 4000
 #define I740_NAME "I740"
 #define I740_DRIVER_NAME "i740"
-#define I740_MAJOR_VERSION 1
-#define I740_MINOR_VERSION 1
-#define I740_PATCHLEVEL 0
+#define I740_MAJOR_VERSION PACKAGE_VERSION_MAJOR
+#define I740_MINOR_VERSION PACKAGE_VERSION_MINOR
+#define I740_PATCHLEVEL PACKAGE_VERSION_PATCHLEVEL
 
 _X_EXPORT DriverRec I740 = {
   I740_VERSION,
@@ -192,70 +189,6 @@ static const OptionInfoRec I740Options[] = {
   { -1, NULL, OPTV_NONE, {0}, FALSE}
 };
 
-static const char *vgahwSymbols[] = {
-    "vgaHWGetHWRec",
-    "vgaHWSave", /* Added */
-    "vgaHWRestore", /* Added */
-    "vgaHWProtect",
-    "vgaHWInit",
-    "vgaHWMapMem",
-    "vgaHWSetMmioFuncs",
-    "vgaHWGetIOBase",
-    "vgaHWLock",
-    "vgaHWUnlock",
-    "vgaHWFreeHWRec",
-    "vgaHWSaveScreen",
-    "vgaHWHandleColormaps",
-    0
-};
-
-#ifdef XFree86LOADER
-static const char *fbSymbols[] = {
-    "fbScreenInit",
-    "fbPictureInit",
-    NULL
-};
-#endif
-
-static const char *xaaSymbols[] = {
-    "XAADestroyInfoRec",
-    "XAACreateInfoRec",
-    "XAAInit",
-    NULL
-};
-
-static const char *ramdacSymbols[] = {
-    "xf86InitCursor",
-    "xf86CreateCursorInfoRec",
-    "xf86DestroyCursorInfoRec",
-    NULL
-};
-
-#ifdef XFree86LOADER
-static const char *vbeSymbols[] = {
-    "VBEInit",
-    "vbeDoEDID",
-    "vbeFree",
-    NULL
-};
-#endif
-
-#if USE_DDC2
-static const char *ddcSymbols[] = {
-  "xf86PrintEDID",
-  "xf86DoEDID_DDC1",
-  "xf86DoEDID_DDC2",
-    NULL
-};
-
-static const char *i2cSymbols[] = {
-  "xf86CreateI2CBusRec",
-  "xf86I2CBusInit",
-    NULL
-};
-#endif
-
-
 #ifdef XFree86LOADER
 
 static MODULESETUPPROTO(i740Setup);
@@ -291,17 +224,6 @@ i740Setup(pointer module, pointer opts, int *errmaj, int *errmin)
 	 * Modules that this driver always requires may be loaded here
 	 * by calling LoadSubModule().
 	 */
-
-	/*
-	 * Tell the loader about symbols from other modules that this module
-	 * might refer to.
-	 */
-	LoaderRefSymLists(vgahwSymbols, fbSymbols, xaaSymbols, 
-			  ramdacSymbols, vbeSymbols,
-#if USE_DDC2
-			  ddcSymbols, i2cSymbols,
-#endif
-			  NULL);
 
 	/*
 	 * The return value must be non-NULL on success even though there
@@ -378,11 +300,13 @@ I740Probe(DriverPtr drv, int flags) {
     return FALSE;
   }
 
+#ifndef XSERVER_LIBPCIACCESS
   /* 
      Since these Probing is just checking the PCI data the server already
      collected.
   */
   if (!xf86GetPciVideoInfo()) return FALSE;
+#endif
  
   /* Look for Intel based chips */
   numUsed = xf86MatchPciInstances(I740_NAME, PCI_VENDOR_INTEL,
@@ -453,6 +377,7 @@ I740Probe(DriverPtr drv, int flags) {
   return foundScreen;
 }
 
+/* Ugh.  Can we not do this? */
 static void
 I740ProbeDDC(ScrnInfoPtr pScrn, int index)
 {
@@ -502,12 +427,11 @@ I740PreInit(ScrnInfoPtr pScrn, int flags) {
   /* The vgahw module should be loaded here when needed */
   if (!xf86LoadSubModule(pScrn, "vgahw")) return FALSE;
 
-  xf86LoaderReqSymLists(vgahwSymbols, NULL);
-
   /* Allocate a vgaHWRec */
   if (!vgaHWGetHWRec(pScrn)) return FALSE;
 
   pI740->PciInfo = xf86GetPciInfoForEntity(pI740->pEnt->index);
+#ifndef XSERVER_LIBPCIACCESS
   pI740->PciTag = pciTag(pI740->PciInfo->bus, pI740->PciInfo->device,
 			 pI740->PciInfo->func);
 
@@ -517,7 +441,7 @@ I740PreInit(ScrnInfoPtr pScrn, int flags) {
     pScrn->racIoFlags = RAC_FB | RAC_COLORMAP;
   else
     pScrn->racMemFlags = RAC_FB | RAC_COLORMAP;
-
+#endif
   /* Set pScrn->monitor */
   pScrn->monitor = pScrn->confScreen->monitor;
 
@@ -598,7 +522,7 @@ I740PreInit(ScrnInfoPtr pScrn, int flags) {
 	       pI740->pEnt->device->chipID);
   } else {
     from = X_PROBED;
-    pScrn->chipset = (char *)xf86TokenToString(I740Chipsets, pI740->PciInfo->chipType);
+    pScrn->chipset = (char *)xf86TokenToString(I740Chipsets, PCI_DEV_DEVICE_ID(pI740->PciInfo));
   }
   if (pI740->pEnt->device->chipRev >= 0) {
     xf86DrvMsg(pScrn->scrnIndex, X_CONFIG, "ChipRev override: %d\n",
@@ -611,8 +535,8 @@ I740PreInit(ScrnInfoPtr pScrn, int flags) {
     pI740->LinearAddr = pI740->pEnt->device->MemBase;
     from = X_CONFIG;
   } else {
-    if (pI740->PciInfo->memBase[1] != 0) {
-      pI740->LinearAddr = pI740->PciInfo->memBase[0]&0xFF000000;
+    if (PCI_REGION_BASE(pI740->PciInfo, 0, REGION_MEM) != 0) {
+      pI740->LinearAddr = PCI_REGION_BASE(pI740->PciInfo, 0, REGION_MEM)&0xFF000000;
       from = X_PROBED;
     } else {
       xf86DrvMsg(pScrn->scrnIndex, X_ERROR, 
@@ -628,8 +552,8 @@ I740PreInit(ScrnInfoPtr pScrn, int flags) {
     pI740->MMIOAddr = pI740->pEnt->device->IOBase;
     from = X_CONFIG;
   } else {
-    if (pI740->PciInfo->memBase[1]) {
-      pI740->MMIOAddr = pI740->PciInfo->memBase[1]&0xFFF80000;
+    if (PCI_REGION_BASE(pI740->PciInfo, 1, REGION_MEM)) {
+      pI740->MMIOAddr = PCI_REGION_BASE(pI740->PciInfo, 1, REGION_MEM)&0xFFF80000;
       from = X_PROBED;
     } else {
       xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
@@ -742,6 +666,32 @@ I740PreInit(ScrnInfoPtr pScrn, int flags) {
   clockRanges->interlaceAllowed = FALSE; /*PL*/
   clockRanges->doubleScanAllowed = TRUE; /*PL*/
 
+  { /*PL*/
+
+   if (xf86LoadSubModule(pScrn, "ddc")) {
+     if (xf86LoadSubModule(pScrn, "i2c") ) {
+       if (I740MapMem(pScrn)) {
+	   if (I740_I2CInit(pScrn))
+	     {
+	       xf86MonPtr MonInfo;
+	       if ((MonInfo = xf86DoEDID_DDC2(pScrn->scrnIndex,pI740->rc_i2c))) {
+		 xf86DrvMsg(pScrn->scrnIndex, X_INFO, "DDC Monitor info: %p\n",
+			    MonInfo);
+		 xf86PrintEDID( MonInfo );
+		 xf86DrvMsg(pScrn->scrnIndex, X_INFO, "end of DDC Monitor "
+			    "info\n\n");
+		 xf86SetDDCproperties(pScrn,MonInfo);
+	       }
+	     }
+	   else
+	     xf86DrvMsg(pScrn->scrnIndex,X_ERROR,"I2C initialization failed\n");
+	   
+	   I740UnmapMem(pScrn);
+	 }
+     }
+   }
+  }
+
   i = xf86ValidateModes(pScrn, pScrn->monitor->Modes,
 			pScrn->display->modes, clockRanges,
 			0, 320, 1600,
@@ -774,14 +724,12 @@ I740PreInit(ScrnInfoPtr pScrn, int flags) {
     I740FreeRec(pScrn);
     return FALSE;
   }
-  xf86LoaderReqSymbols("fbScreenInit","fbPictureInit", NULL);
 
   if (!xf86ReturnOptValBool(pI740->Options, OPTION_NOACCEL, FALSE)) {
     if (!xf86LoadSubModule(pScrn, "xaa")) {
       I740FreeRec(pScrn);
       return FALSE;
     }
-    xf86LoaderReqSymLists(xaaSymbols, NULL);
   }
 
   if (!xf86ReturnOptValBool(pI740->Options, OPTION_SW_CURSOR, FALSE)) {
@@ -789,11 +737,11 @@ I740PreInit(ScrnInfoPtr pScrn, int flags) {
       I740FreeRec(pScrn);
       return FALSE;
     }
-    xf86LoaderReqSymLists(ramdacSymbols, NULL);
   }
 
   /*  We wont be using the VGA access after the probe */
   if (!xf86ReturnOptValBool(pI740->Options, OPTION_USE_PIO, FALSE)) {
+#ifndef XSERVER_LIBPCIACCESS
     resRange vgaio[] = { {ResShrIoBlock,0x3B0,0x3BB},
 			 {ResShrIoBlock,0x3C0,0x3DF},
 			 _END };
@@ -801,11 +749,13 @@ I740PreInit(ScrnInfoPtr pScrn, int flags) {
 			 {ResShrMemBlock,0xB8000,0xBFFFF},
 			 {ResShrMemBlock,0xB0000,0xB7FFF},
 			 _END };
-
+#endif
     pI740->usePIO=FALSE;
     I740SetMMIOAccess(pI740);
+#ifndef XSERVER_LIBPCIACCESS
     xf86SetOperatingState(vgaio, pI740->pEnt->index, ResUnusedOpr);
     xf86SetOperatingState(vgamem, pI740->pEnt->index, ResDisableOpr);
+#endif
   } else {
     pI740->usePIO=TRUE;
   }
@@ -816,40 +766,6 @@ I740PreInit(ScrnInfoPtr pScrn, int flags) {
     pI740->usevgacompat=FALSE;
 
 
-#if USE_DDC2 /*DDC2*/
-  { /*PL*/
-
-   if (xf86LoadSubModule(pScrn, "ddc")) {
-     xf86LoaderReqSymLists(ddcSymbols, NULL);
-     if ( xf86LoadSubModule(pScrn, "i2c") ) {
-       xf86LoaderReqSymLists(i2cSymbols,NULL);
-
-       if (I740MapMem(pScrn))
-	 {
-	   if (I740_I2CInit(pScrn))
-	     {
-	       xf86MonPtr MonInfo;
-
-	       if ((MonInfo = xf86DoEDID_DDC2(pScrn->scrnIndex,pI740->rc_i2c))) {
-		 xf86DrvMsg(pScrn->scrnIndex, X_INFO, "DDC Monitor info: %p\n",
-			    MonInfo);
-		 xf86PrintEDID( MonInfo );
-		 xf86DrvMsg(pScrn->scrnIndex, X_INFO, "end of DDC Monitor "
-			    "info\n\n");
-		 xf86SetDDCproperties(pScrn,MonInfo);
-	       }
-
-	       //xf86SetDDCproperties(pScrn,xf86PrintEDID(  xf86DoEDID_DDC2(pScrn->scrnIndex,pI740->rc_i2c)));
-	     }
-	   else
-	     xf86DrvMsg(pScrn->scrnIndex,X_ERROR,"I2C initialization failed\n");
-	   
-	   I740UnmapMem(pScrn);
-	 }
-     }
-   }
-  }
-#endif /*DDC2*/
 
   { /* Overlay */
     pI740->colorKey = (1 << pScrn->offset.red) | (1 << pScrn->offset.green) |
@@ -871,18 +787,48 @@ static Bool I740MapMem(ScrnInfoPtr pScrn)
 
   pI740 = I740PTR(pScrn);
 
+#ifndef XSERVER_LIBPCIACCESS
   mmioFlags = VIDMEM_MMIO | VIDMEM_READSIDEEFFECT;
 
   pI740->MMIOBase = xf86MapPciMem(pScrn->scrnIndex, mmioFlags, 
 				      pI740->PciTag, 
 				      pI740->MMIOAddr,
 				      0x80000);
+#else
+  {
+    void** result = (void**)&pI740->MMIOBase;
+    int err = pci_device_map_range(pI740->PciInfo,
+				   pI740->MMIOAddr,
+				   0x80000,
+				   PCI_DEV_MAP_FLAG_WRITABLE,
+				   result);
+    
+    if (err) 
+      return FALSE;
+  }
+
+#endif
   if (!pI740->MMIOBase) return FALSE;
 
+#ifndef XSERVER_LIBPCIACCESS
   pI740->FbBase = xf86MapPciMem(pScrn->scrnIndex, VIDMEM_FRAMEBUFFER,
 				pI740->PciTag,
 				pI740->LinearAddr,
 				pI740->FbMapSize);
+#else
+  {
+    void** result = (void**)&pI740->FbBase;
+    int err = pci_device_map_range(pI740->PciInfo,
+				   pI740->LinearAddr,
+				   pI740->FbMapSize,
+				   PCI_DEV_MAP_FLAG_WRITABLE |
+				   PCI_DEV_MAP_FLAG_WRITE_COMBINE,
+				   result);
+    
+    if (err) 
+      return FALSE;
+  }
+#endif
   if (!pI740->FbBase) return FALSE;
 
   return TRUE;
@@ -894,10 +840,18 @@ static Bool I740UnmapMem(ScrnInfoPtr pScrn)
 
   pI740 = I740PTR(pScrn);
 
+#ifndef XSERVER_LIBPCIACCESS
   xf86UnMapVidMem(pScrn->scrnIndex, (pointer)pI740->MMIOBase, 0x80000);
+#else
+  pci_device_unmap_range(pI740->PciInfo, pI740->MMIOBase, 0x80000);
+#endif
   pI740->MMIOBase=0;
 
+#ifndef XSERVER_LIBPCIACCESS
   xf86UnMapVidMem(pScrn->scrnIndex, (pointer)pI740->FbBase, pI740->FbMapSize);
+#else
+  pci_device_unmap_range(pI740->PciInfo, pI740->FbBase, pI740->FbMapSize);
+#endif
   pI740->FbBase = 0;
   return TRUE;
 }

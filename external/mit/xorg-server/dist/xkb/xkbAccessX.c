@@ -30,16 +30,13 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 #include <stdio.h>
 #include <math.h>
-#ifdef __QNX__
-#include <limits.h>
-#endif
 #define NEED_EVENTS 1
 #include <X11/X.h>
 #include <X11/Xproto.h>
 #include <X11/keysym.h>
 #include "inputstr.h"
 #include <xkbsrv.h>
-#if !defined(WIN32) && !defined(Lynx)
+#if !defined(WIN32)
 #include <sys/time.h>
 #endif
 
@@ -130,11 +127,9 @@ xEvent		xE;
     xE.u.u.type = type;
     xE.u.u.detail = keyCode;
     xE.u.keyButtonPointer.time = GetTimeInMillis();	    
-#ifdef DEBUG
     if (xkbDebugFlags&0x8) {
-	ErrorF("AXKE: Key %d %s\n",keyCode,(xE.u.u.type==KeyPress?"down":"up"));
+	DebugF("[xkb] AXKE: Key %d %s\n",keyCode,(xE.u.u.type==KeyPress?"down":"up"));
     }
-#endif
 
     if (_XkbIsPressEvent(type))
 	XkbDDXKeyClick(keybd,keyCode,TRUE);
@@ -311,16 +306,14 @@ AccessXRepeatKeyExpire(OsTimerPtr timer,CARD32 now,pointer arg)
 DeviceIntPtr    dev = (DeviceIntPtr) arg;
 XkbSrvInfoPtr	xkbi = dev->key->xkbInfo;
 KeyCode		key;
-BOOL            is_core;
 
     if (xkbi->repeatKey == 0)
 	return 0;
 
-    is_core = (dev == inputInfo.keyboard);
     key = xkbi->repeatKey;
-    AccessXKeyboardEvent(dev, is_core ? KeyRelease : DeviceKeyRelease, key,
-                         True);
-    AccessXKeyboardEvent(dev, is_core ? KeyPress : DeviceKeyPress, key, True);
+    AccessXKeyboardEvent(dev, DeviceKeyRelease, key, True);
+    AccessXKeyboardEvent(dev, DeviceKeyPress, key, True);
+
     return xkbi->desc->ctrls->repeat_interval;
 }
 
@@ -354,7 +347,7 @@ XkbControlsPtr	ctrls;
 	XkbSendAccessXNotify(keybd,&ev);
 	if (XkbAX_NeedFeedback(ctrls,XkbAX_SKAcceptFBMask))
 	    XkbDDXAccessXBeep(keybd,_BEEP_SLOW_ACCEPT,XkbSlowKeysMask);
-	AccessXKeyboardEvent(keybd,KeyPress,xkbi->slowKey,False);
+	AccessXKeyboardEvent(keybd,DeviceKeyPress,xkbi->slowKey,False);
 	/* check for magic sequences */
 	if ((ctrls->enabled_ctrls&XkbAccessXKeysMask) &&
 	    ((sym[0]==XK_Shift_R)||(sym[0]==XK_Shift_L)))
@@ -533,10 +526,8 @@ KeySym *	sym = XkbKeySymsPtr(xkbi->desc,key);
 		((ctrls->enabled_ctrls&(XkbSlowKeysMask|XkbRepeatKeysMask))==
 							XkbRepeatKeysMask)) {
 	    if (BitIsOn(keybd->kbdfeed->ctrl.autoRepeats,key)) {
-#ifdef DEBUG
 		if (xkbDebugFlags&0x10)
-		    ErrorF("Starting software autorepeat...\n");
-#endif	    
+		    DebugF("Starting software autorepeat...\n");
 		xkbi->repeatKey = key;
 		xkbi->repeatKeyTimer= TimerSet(xkbi->repeatKeyTimer,
 					0, ctrls->repeat_delay,
@@ -689,12 +680,14 @@ Bool		ignoreKeyEvent = FALSE;
 /* don't accidentally turn on StickyKeys or the Keyboard Response Group.*/
 /*									*/
 /************************************************************************/
+extern int xkbDevicePrivateIndex;
+extern void xkbUnwrapProc(DeviceIntPtr, DeviceHandleProc, pointer);
 void
 ProcessPointerEvent(	register xEvent  *	xE, 
 			register DeviceIntPtr	mouse, 
 			int		        count)
 {
-DeviceIntPtr	dev = (DeviceIntPtr)LookupKeyboardDevice();
+DeviceIntPtr	dev = GetPairedDevice(mouse);
 XkbSrvInfoPtr	xkbi = dev->key->xkbInfo;
 unsigned 	changed = 0;
 ProcessInputProc backupproc;

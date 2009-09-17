@@ -37,17 +37,6 @@
 #include "xf86Pci.h"
 #include "xf86str.h"
 
-/* PCI probe flags */
-
-typedef enum {
-    PCIProbe1		= 0,
-    PCIProbe2,
-    PCIForceConfig1,
-    PCIForceConfig2,
-    PCIForceNone,
-    PCIOsConfig
-} PciProbeType;
-
 typedef enum {
     LogNone,
     LogFlush,
@@ -60,6 +49,12 @@ typedef enum {
     SKAlways
 } SpecialKeysInDDX;
 
+typedef enum {
+    XF86_GlxVisualsMinimal,
+    XF86_GlxVisualsTypical,
+    XF86_GlxVisualsAll,
+} XF86_GlxVisuals;
+
 /*
  * xf86InfoRec contains global parameters which the video drivers never
  * need to access.  Global parameters which the video drivers do need
@@ -69,20 +64,12 @@ typedef enum {
 typedef struct {
     int			consoleFd;
     int			vtno;
-    char *		vtinit;
     Bool		vtSysreq;
     SpecialKeysInDDX	ddxSpecialKeys;
-
-    /* mouse part */
-    DeviceIntPtr	pMouse;
-#ifdef XINPUT
-    pointer		mouseLocal;
-#endif
 
     /* event handler part */
     int			lastEventTime;
     Bool		vtRequestsPending;
-    Bool		inputPending;
     Bool		dontVTSwitch;
     Bool		dontZap;
     Bool		dontZoom;
@@ -90,7 +77,6 @@ typedef struct {
     Bool		caughtSignal;
 
     /* graphics part */
-    Bool		sharedMonitor;
     ScreenPtr		currentScreen;
 #if defined(CSRG_BASED) || defined(__FreeBSD_kernel__)
     int			screenFd;	/* fd for memory mapped access to
@@ -106,41 +92,33 @@ typedef struct {
     Bool		miscModInDevEnabled;	/* Allow input devices to be
 						 * changed */
     Bool		miscModInDevAllowNonLocal;
-    PciProbeType	pciFlags;
     Pix24Flags		pixmap24;
     MessageType		pix24From;
-#if defined(i386) || defined(__i386__)
+#ifdef __i386__
     Bool		pc98;
 #endif
     Bool		pmFlag;
     Log			log;
-    int			estimateSizesAggressively;
     Bool		kbdCustomKeycodes;
     Bool		disableRandR;
     MessageType		randRFrom;
     Bool		aiglx;
     MessageType		aiglxFrom;
+    XF86_GlxVisuals	glxVisuals;
+    MessageType		glxVisualsFrom;
+    
     Bool		useDefaultFontPath;
     MessageType		useDefaultFontPathFrom;
     Bool        ignoreABI;
-    struct {
-	Bool		disabled;		/* enable/disable deactivating
-						 * grabs or closing the
-						 * connection to the grabbing
-						 * client */
-	ClientPtr	override;		/* client that disabled
-						 * grab deactivation.
-						 */
-	Bool		allowDeactivate;
-	Bool		allowClosedown;
-	ServerGrabInfoRec server;
-    } grabInfo;
 
     Bool        allowEmptyInput;  /* Allow the server to start with no input
                                    * devices. */
     Bool        autoAddDevices; /* Whether to succeed NIDR, or ignore. */
     Bool        autoEnableDevices; /* Whether to enable, or let the client
                                     * control. */
+
+    Bool		dri2;
+    MessageType		dri2From;
 } xf86InfoRec, *xf86InfoPtr;
 
 #ifdef DPMSExtension

@@ -15,26 +15,22 @@ INCLUDES = -I$(top_srcdir)/hw/xfree86/dixmods/extmod
 AM_CFLAGS = $(DIX_CFLAGS)
 
 if XORG
-sdk_HEADERS = xvdix.h xvmcext.h
+sdk_HEADERS = xvdix.h xvmcext.h geext.h geint.h shmint.h
 endif
 
 # Sources always included in libXextbuiltin.la & libXext.la
 BUILTIN_SRCS =			\
+	bigreq.c		\
+        geext.c			\
 	shape.c			\
 	sleepuntil.c		\
 	sleepuntil.h		\
+	sync.c			\
+	xcmisc.c		\
 	xtest.c
 
-# Sources always included in libXextmodule.la & libXext.la
-MODULE_SRCS =			\
-	bigreq.c		\
-	mitmisc.c		\
-	shape.c			\
-	sync.c			\
-	xcmisc.c
-
-# Extra configuration files ship with some extensions
-SERVERCONFIG_DATA =
+# Sources always included in libXextmodule.la & libXext.la. That's right, zero.
+MODULE_SRCS =
 
 # Optional sources included if extension enabled by configure.ac rules
 
@@ -75,52 +71,23 @@ if XACE
 BUILTIN_SRCS += $(XACE_SRCS)
 endif
 
+# SELinux extension: provides SELinux policy support for X objects
+# requires X-ACE extension
+XSELINUX_SRCS = xselinux.c xselinux.h
+if XSELINUX
+MODULE_SRCS += $(XSELINUX_SRCS)
+endif
+
 # Security extension: multi-level security to protect clients from each other
 XCSECURITY_SRCS = security.c securitysrv.h
 if XCSECURITY   
 BUILTIN_SRCS += $(XCSECURITY_SRCS)
-
-SERVERCONFIG_DATA += SecurityPolicy
-AM_CFLAGS += -DDEFAULTPOLICYFILE=\"$(SERVERCONFIGdir)/SecurityPolicy\"
 endif
 
 XCALIBRATE_SRCS = xcalibrate.c
 if XCALIBRATE
 BUILTIN_SRCS += $(XCALIBRATE_SRCS)
-# XCalibrare needs tslib
-endif
-
-# X EVent Interception Extension: allows accessibility helpers & composite
-# managers to intercept events from input devices and transform as needed
-# before the clients see them.
-XEVIE_SRCS = xevie.c
-if XEVIE
-BUILTIN_SRCS += $(XEVIE_SRCS)
-endif
-
-# XPrint: Printing via X Protocol
-XPRINT_SRCS = xprint.c
-if XPRINT
-BUILTIN_SRCS += $(XPRINT_SRCS)
-endif
-
-# AppGroup
-APPGROUP_SRCS = appgroup.c appgroup.h
-if APPGROUP
-BUILTIN_SRCS += $(APPGROUP_SRCS)
-endif
-
-# Colormap Utilization Protocol: Less flashing when switching between
-# PsuedoColor apps and better sharing of limited colormap slots
-CUP_SRCS = cup.c
-if CUP
-MODULE_SRCS  += $(CUP_SRCS)
-endif
-
-# Extended Visual Information
-EVI_SRCS = EVI.c sampleEVI.c EVIstruct.h
-if EVI
-MODULE_SRCS  += $(EVI_SRCS)
+# XCalibrate needs tslib
 endif
 
 # Multi-buffering extension
@@ -128,12 +95,6 @@ MULTIBUFFER_SRCS = mbuf.c
 EXTRA_MULTIBUFFER_SRCS = mbufbf.c mbufpx.c
 if MULTIBUFFER
 MODULE_SRCS  += $(MULTIBUFFER_SRCS)
-endif
-
-# Font Cache extension
-FONTCACHE_SRCS = fontcache.c
-if FONTCACHE
-MODULE_SRCS  += $(FONTCACHE_SRCS)
 endif
 
 # XF86 Big Font extension
@@ -159,7 +120,6 @@ libXextmodule_la_SOURCES =	$(MODULE_SRCS)
 endif
 
 EXTRA_DIST = \
-	$(SERVERCONFIG_DATA) \
 	$(MITSHM_SRCS) \
 	$(XV_SRCS) \
 	$(RES_SRCS) \
@@ -168,14 +128,10 @@ EXTRA_DIST = \
 	$(XCSECURITY_SRCS) \
 	$(XCALIBRATE_SRCS) \
 	$(XINERAMA_SRCS) \
-	$(XEVIE_SRCS) \
-	$(XPRINT_SRCS) \
-	$(APPGROUP_SRCS) \
-	$(CUP_SRCS) \
-	$(EVI_SRCS) \
 	$(MULTIBUFFER_SRCS) \
 	$(EXTRA_MULTIBUFFER_SRCS) \
 	$(FONTCACHE_SRCS) \
 	$(BIGFONT_SRCS) \
-	$(DPMS_SRCS)
+	$(DPMS_SRCS) \
+        $(GE_SRCS)
 

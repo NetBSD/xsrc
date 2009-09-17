@@ -24,8 +24,6 @@
  *
  *
  */
-/* $XdotOrg: xc/programs/Xserver/hw/xfree86/drivers/s3/s3_accel.c,v 1.2 2004/04/23 19:43:14 eich Exp $ */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/s3/s3_accel.c,v 1.2 2001/10/28 03:33:44 tsi Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -142,7 +140,7 @@ static void S3SubsequentScreenToScreenCopy(ScrnInfoPtr pScrn,
 	}
 }
 
-
+#if 0
 static void S3SetupForColor8x8PatternFill(ScrnInfoPtr pScrn,
 					  int patx, int paty,
 					  int rop, unsigned int planemask,
@@ -184,6 +182,7 @@ static void S3SubsequentColor8x8PatternFillRect(ScrnInfoPtr pScrn,
 		SET_MULT_MISC(CMD_REG_WIDTH);
 	}
 }
+#endif
 
 #ifdef S3_NEWMMIO
 static void S3SetupForCPUToScreenColorExpandFill(ScrnInfoPtr pScrn,
@@ -571,9 +570,22 @@ Bool S3AccelInitPIO(ScreenPtr pScreen)
 
 	pXAA->SetupForScreenToScreenCopy = S3SetupForScreenToScreenCopy;
 	pXAA->SubsequentScreenToScreenCopy = S3SubsequentScreenToScreenCopy;
+	pXAA->ScreenToScreenCopyFlags = NO_TRANSPARENCY;
 
+#if 0
+/*
+  8x8 color pattern filling doesn't work properly after introducing 
+  framebuffer manager initialization before XAA initialization. There 
+  are problems with addressing a colour patterns from offscreen area.
+*/
 	pXAA->SetupForColor8x8PatternFill = S3SetupForColor8x8PatternFill;
 	pXAA->SubsequentColor8x8PatternFillRect = S3SubsequentColor8x8PatternFillRect;
+	pXAA->Color8x8PatternFillFlags = NO_TRANSPARENCY | 
+		HARDWARE_PATTERN_SCREEN_ORIGIN |
+		BIT_ORDER_IN_BYTE_MSBFIRST;
+
+	pXAA->CachePixelGranularity = 0;
+#endif
 
 #ifdef S3_NEWMMIO
 	pXAA->SetupForCPUToScreenColorExpandFill =
