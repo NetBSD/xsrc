@@ -1,8 +1,8 @@
-/* $XTermId: menu.c,v 1.241 2008/06/03 20:05:49 tom Exp $ */
+/* $XTermId: menu.c,v 1.252 2009/07/03 15:01:14 tom Exp $ */
 
 /*
 
-Copyright 1999-2007,2008 by Thomas E. Dickey
+Copyright 1999-2008,2009 by Thomas E. Dickey
 
                         All Rights Reserved
 
@@ -113,6 +113,8 @@ in this Software without prior written authorization from The Open Group.
 
 #include <stdio.h>
 #include <signal.h>
+
+#define ToggleFlag(flag) flag = (Boolean) !flag
 /* *INDENT-OFF* */
 static void do_8bit_control    PROTO_XT_CALLBACK_ARGS;
 static void do_allow132        PROTO_XT_CALLBACK_ARGS;
@@ -134,6 +136,7 @@ static void do_kill            PROTO_XT_CALLBACK_ARGS;
 static void do_old_fkeys       PROTO_XT_CALLBACK_ARGS;
 static void do_poponbell       PROTO_XT_CALLBACK_ARGS;
 static void do_print           PROTO_XT_CALLBACK_ARGS;
+static void do_print_everything PROTO_XT_CALLBACK_ARGS;
 static void do_print_redir     PROTO_XT_CALLBACK_ARGS;
 static void do_quit            PROTO_XT_CALLBACK_ARGS;
 static void do_redraw          PROTO_XT_CALLBACK_ARGS;
@@ -159,6 +162,14 @@ static void do_logging         PROTO_XT_CALLBACK_ARGS;
 #ifndef NO_ACTIVE_ICON
 static void do_activeicon      PROTO_XT_CALLBACK_ARGS;
 #endif /* NO_ACTIVE_ICON */
+
+#if OPT_ALLOW_XXX_OPS
+static void enable_allow_xxx_ops (Bool);
+static void do_allowTcapOps    PROTO_XT_CALLBACK_ARGS;
+static void do_allowFontOps    PROTO_XT_CALLBACK_ARGS;
+static void do_allowTitleOps   PROTO_XT_CALLBACK_ARGS;
+static void do_allowWindowOps  PROTO_XT_CALLBACK_ARGS;
+#endif
 
 #if OPT_BLINK_CURS
 static void do_cursorblink     PROTO_XT_CALLBACK_ARGS;
@@ -360,6 +371,14 @@ MenuEntry fontMenuEntries[] = {
 #endif
 #endif /* toggles for other font extensions */
 
+#if OPT_ALLOW_XXX_OPS
+    { "line3",		NULL,		NULL },
+    { "allow-tcap-ops",	do_allowTcapOps,NULL },
+    { "allow-font-ops",	do_allowFontOps,NULL },
+    { "allow-title-ops",do_allowTitleOps,NULL },
+    { "allow-window-ops",do_allowWindowOps,NULL },
+#endif
+
     };
 
 #if OPT_TEK4014
@@ -479,7 +498,7 @@ create_menu(Widget w, XtermWidget xtw, MenuIndex num)
     MenuHeader *data = &menu_names[num];
     MenuList *list = select_menu(w, num);
     struct _MenuEntry *entries = data->entry_list;
-    int nentries = data->entry_len;
+    Cardinal nentries = data->entry_len;
 #if !OPT_TOOLBAR
     String saveLocale;
 #endif
@@ -607,7 +626,7 @@ domenu(Widget w,
 				   False);
 	    }
 #endif
-	    if (!xtermHasPrinter()) {
+	    if (!xtermHasPrinter(term)) {
 		SetItemSensitivity(mainMenuEntries[mainMenu_print].widget,
 				   False);
 		SetItemSensitivity(mainMenuEntries[mainMenu_print_redir].widget,
@@ -719,6 +738,13 @@ domenu(Widget w,
 #if OPT_WIDE_CHARS
 	    update_font_utf8_mode();
 	    update_font_utf8_title();
+#endif
+#if OPT_ALLOW_XXX_OPS
+	    update_menu_allowTcapOps();
+	    update_menu_allowFontOps();
+	    update_menu_allowTitleOps();
+	    update_menu_allowWindowOps();
+	    enable_allow_xxx_ops(!(screen->allowSendEvents));
 #endif
 	}
 	FindFontSelection(term, NULL, True);
@@ -848,8 +874,11 @@ do_allowsends(Widget gw GCC_UNUSED,
 {
     TScreen *screen = TScreenOf(term);
 
-    screen->allowSendEvents = !screen->allowSendEvents;
+    ToggleFlag(screen->allowSendEvents);
     update_allowsends();
+#if OPT_ALLOW_XXX_OPS
+    enable_allow_xxx_ops(!(screen->allowSendEvents));
+#endif
 }
 
 static void
@@ -859,7 +888,7 @@ do_visualbell(Widget gw GCC_UNUSED,
 {
     TScreen *screen = TScreenOf(term);
 
-    screen->visualbell = !screen->visualbell;
+    ToggleFlag(screen->visualbell);
     update_visualbell();
 }
 
@@ -870,7 +899,7 @@ do_bellIsUrgent(Widget gw GCC_UNUSED,
 {
     TScreen *screen = TScreenOf(term);
 
-    screen->bellIsUrgent = !screen->bellIsUrgent;
+    ToggleFlag(screen->bellIsUrgent);
     update_bellIsUrgent();
 }
 
@@ -881,7 +910,7 @@ do_poponbell(Widget gw GCC_UNUSED,
 {
     TScreen *screen = TScreenOf(term);
 
-    screen->poponbell = !screen->poponbell;
+    ToggleFlag(screen->poponbell);
     update_poponbell();
 }
 
@@ -907,7 +936,15 @@ do_print(Widget gw GCC_UNUSED,
 	 XtPointer closure GCC_UNUSED,
 	 XtPointer data GCC_UNUSED)
 {
-    xtermPrintScreen(True);
+    xtermPrintScreen(term, True);
+}
+
+static void
+do_print_everything(Widget gw GCC_UNUSED,
+		    XtPointer closure GCC_UNUSED,
+		    XtPointer data GCC_UNUSED)
+{
+    xtermPrintEverything(term);
 }
 
 static void
@@ -915,7 +952,7 @@ do_print_redir(Widget gw GCC_UNUSED,
 	       XtPointer closure GCC_UNUSED,
 	       XtPointer data GCC_UNUSED)
 {
-    setPrinterControlMode(term->screen.printer_controlmode ? 0 : 2);
+    setPrinterControlMode(term, term->screen.printer_controlmode ? 0 : 2);
 }
 
 static void
@@ -930,7 +967,7 @@ void
 show_8bit_control(Bool value)
 {
     if (term->screen.control_eight_bits != value) {
-	term->screen.control_eight_bits = value;
+	term->screen.control_eight_bits = (Boolean) value;
 	update_8bit_control();
     }
 }
@@ -958,7 +995,7 @@ do_num_lock(Widget gw GCC_UNUSED,
 	    XtPointer closure GCC_UNUSED,
 	    XtPointer data GCC_UNUSED)
 {
-    term->misc.real_NumLock = !term->misc.real_NumLock;
+    ToggleFlag(term->misc.real_NumLock);
     update_num_lock();
 }
 
@@ -967,7 +1004,7 @@ do_alt_esc(Widget gw GCC_UNUSED,
 	   XtPointer closure GCC_UNUSED,
 	   XtPointer data GCC_UNUSED)
 {
-    term->screen.alt_sends_esc = !term->screen.alt_sends_esc;
+    ToggleFlag(term->screen.alt_sends_esc);
     update_alt_esc();
 }
 
@@ -976,7 +1013,7 @@ do_meta_esc(Widget gw GCC_UNUSED,
 	    XtPointer closure GCC_UNUSED,
 	    XtPointer data GCC_UNUSED)
 {
-    term->screen.meta_sends_esc = !term->screen.meta_sends_esc;
+    ToggleFlag(term->screen.meta_sends_esc);
     update_meta_esc();
 }
 #endif
@@ -1215,7 +1252,7 @@ do_scrollkey(Widget gw GCC_UNUSED,
 {
     TScreen *screen = TScreenOf(term);
 
-    screen->scrollkey = !screen->scrollkey;
+    ToggleFlag(screen->scrollkey);
     update_scrollkey();
 }
 
@@ -1226,7 +1263,7 @@ do_scrollttyoutput(Widget gw GCC_UNUSED,
 {
     TScreen *screen = TScreenOf(term);
 
-    screen->scrollttyoutput = !screen->scrollttyoutput;
+    ToggleFlag(screen->scrollttyoutput);
     update_scrollttyoutput();
 }
 
@@ -1237,7 +1274,7 @@ do_keepSelection(Widget gw GCC_UNUSED,
 {
     TScreen *screen = TScreenOf(term);
 
-    screen->keepSelection = !screen->keepSelection;
+    ToggleFlag(screen->keepSelection);
     update_keepSelection();
 }
 
@@ -1248,7 +1285,7 @@ do_selectClipboard(Widget gw GCC_UNUSED,
 {
     TScreen *screen = TScreenOf(term);
 
-    screen->selectToClipboard = !screen->selectToClipboard;
+    ToggleFlag(screen->selectToClipboard);
     update_selectToClipboard();
 }
 
@@ -1259,7 +1296,7 @@ do_allow132(Widget gw GCC_UNUSED,
 {
     TScreen *screen = TScreenOf(term);
 
-    screen->c132 = !screen->c132;
+    ToggleFlag(screen->c132);
     update_allow132();
 }
 
@@ -1270,7 +1307,7 @@ do_cursesemul(Widget gw GCC_UNUSED,
 {
     TScreen *screen = TScreenOf(term);
 
-    screen->curses = !screen->curses;
+    ToggleFlag(screen->curses);
     update_cursesemul();
 }
 
@@ -1281,7 +1318,7 @@ do_marginbell(Widget gw GCC_UNUSED,
 {
     TScreen *screen = TScreenOf(term);
 
-    if (!(screen->marginbell = !screen->marginbell))
+    if (!(ToggleFlag(screen->marginbell)))
 	screen->bellarmed = -1;
     update_marginbell();
 }
@@ -1348,7 +1385,7 @@ do_titeInhibit(Widget gw GCC_UNUSED,
 	       XtPointer closure GCC_UNUSED,
 	       XtPointer data GCC_UNUSED)
 {
-    term->misc.titeInhibit = !term->misc.titeInhibit;
+    ToggleFlag(term->misc.titeInhibit);
     update_titeInhibit();
 }
 
@@ -1363,7 +1400,7 @@ do_activeicon(Widget gw GCC_UNUSED,
 
     if (screen->iconVwin.window) {
 	Widget shell = XtParent(term);
-	term->misc.active_icon = !term->misc.active_icon;
+	ToggleFlag(term->misc.active_icon);
 	XtVaSetValues(shell, XtNiconWindow,
 		      term->misc.active_icon ? screen->iconVwin.window : None,
 		      (XtPointer) 0);
@@ -1443,7 +1480,7 @@ do_font_doublesize(Widget gw GCC_UNUSED,
 		   XtPointer data GCC_UNUSED)
 {
     if (term->screen.cache_doublesize != 0)
-	term->screen.font_doublesize = !term->screen.font_doublesize;
+	ToggleFlag(term->screen.font_doublesize);
     update_font_doublesize();
     Redraw();
 }
@@ -1455,7 +1492,7 @@ do_font_boxchars(Widget gw GCC_UNUSED,
 		 XtPointer closure GCC_UNUSED,
 		 XtPointer data GCC_UNUSED)
 {
-    term->screen.force_box_chars = !term->screen.force_box_chars;
+    ToggleFlag(term->screen.force_box_chars);
     update_font_boxchars();
     Redraw();
 }
@@ -1467,7 +1504,7 @@ do_font_loadable(Widget gw GCC_UNUSED,
 		 XtPointer closure GCC_UNUSED,
 		 XtPointer data GCC_UNUSED)
 {
-    term->misc.font_loadable = !term->misc.font_loadable;
+    ToggleFlag(term->misc.font_loadable);
     update_font_loadable();
 }
 #endif
@@ -1482,7 +1519,7 @@ do_font_renderfont(Widget gw GCC_UNUSED,
     int fontnum = screen->menu_font_number;
     String name = term->screen.MenuFontName(fontnum);
 
-    term->misc.render_font = !term->misc.render_font;
+    ToggleFlag(term->misc.render_font);
     update_font_renderfont();
     xtermLoadFont(term, xtermFontName(name), True, fontnum);
     ScrnRefresh(term, 0, 0,
@@ -1527,7 +1564,7 @@ do_font_utf8_title(Widget gw GCC_UNUSED,
 {
     TScreen *screen = TScreenOf(term);
 
-    screen->utf8_title = !screen->utf8_title;
+    ToggleFlag(screen->utf8_title);
     update_font_utf8_title();
 }
 #endif
@@ -1538,59 +1575,59 @@ do_font_utf8_title(Widget gw GCC_UNUSED,
 
 #if OPT_TEK4014
 static void
-do_tektextlarge(Widget gw GCC_UNUSED,
+do_tektextlarge(Widget gw,
 		XtPointer closure GCC_UNUSED,
 		XtPointer data GCC_UNUSED)
 {
-    TekSetFontSize(tekWidget, tekMenu_tektextlarge);
+    TekSetFontSize(getTekWidget(gw), True, tekMenu_tektextlarge);
 }
 
 static void
-do_tektext2(Widget gw GCC_UNUSED,
+do_tektext2(Widget gw,
 	    XtPointer closure GCC_UNUSED,
 	    XtPointer data GCC_UNUSED)
 {
-    TekSetFontSize(tekWidget, tekMenu_tektext2);
+    TekSetFontSize(getTekWidget(gw), True, tekMenu_tektext2);
 }
 
 static void
-do_tektext3(Widget gw GCC_UNUSED,
+do_tektext3(Widget gw,
 	    XtPointer closure GCC_UNUSED,
 	    XtPointer data GCC_UNUSED)
 {
-    TekSetFontSize(tekWidget, tekMenu_tektext3);
+    TekSetFontSize(getTekWidget(gw), True, tekMenu_tektext3);
 }
 
 static void
-do_tektextsmall(Widget gw GCC_UNUSED,
+do_tektextsmall(Widget gw,
 		XtPointer closure GCC_UNUSED,
 		XtPointer data GCC_UNUSED)
 {
-    TekSetFontSize(tekWidget, tekMenu_tektextsmall);
+    TekSetFontSize(getTekWidget(gw), True, tekMenu_tektextsmall);
 }
 
 static void
-do_tekpage(Widget gw GCC_UNUSED,
+do_tekpage(Widget gw,
 	   XtPointer closure GCC_UNUSED,
 	   XtPointer data GCC_UNUSED)
 {
-    TekSimulatePageButton(tekWidget, False);
+    TekSimulatePageButton(getTekWidget(gw), False);
 }
 
 static void
-do_tekreset(Widget gw GCC_UNUSED,
+do_tekreset(Widget gw,
 	    XtPointer closure GCC_UNUSED,
 	    XtPointer data GCC_UNUSED)
 {
-    TekSimulatePageButton(tekWidget, True);
+    TekSimulatePageButton(getTekWidget(gw), True);
 }
 
 static void
-do_tekcopy(Widget gw GCC_UNUSED,
+do_tekcopy(Widget gw,
 	   XtPointer closure GCC_UNUSED,
 	   XtPointer data GCC_UNUSED)
 {
-    TekCopy(tekWidget);
+    TekCopy(getTekWidget(gw));
 }
 
 static void
@@ -1755,6 +1792,16 @@ HandlePrintScreen(Widget w,
 		  Cardinal *param_count GCC_UNUSED)
 {
     do_print(w, (XtPointer) 0, (XtPointer) 0);
+}
+
+/* ARGSUSED */
+void
+HandlePrintEverything(Widget w,
+		      XEvent * event GCC_UNUSED,
+		      String * params GCC_UNUSED,
+		      Cardinal *param_count GCC_UNUSED)
+{
+    do_print_everything(w, (XtPointer) 0, (XtPointer) 0);
 }
 
 /* ARGSUSED */
@@ -2136,7 +2183,7 @@ HandleAltScreen(Widget w,
 		Cardinal *param_count)
 {
     /* eventually want to see if sensitive or not */
-    handle_vt_toggle(do_altscreen, term->screen.alternate,
+    handle_vt_toggle(do_altscreen, term->screen.whichBuf,
 		     params, *param_count, w);
 }
 
@@ -2378,7 +2425,7 @@ UpdateMenuItem(
 #endif
 		  MenuEntry * menu,
 		  int which,
-		  XtArgVal val)
+		  Bool val)
 {
     static Arg menuArgs =
     {XtNleftBitmap, (XtArgVal) 0};
@@ -2400,7 +2447,7 @@ UpdateMenuItem(
 #endif
 
 void
-SetItemSensitivity(Widget mi, XtArgVal val)
+SetItemSensitivity(Widget mi, Bool val)
 {
     static Arg menuArgs =
     {XtNsensitive, (XtArgVal) 0};
@@ -2476,8 +2523,8 @@ SetupShell(Widget *menus, MenuList * shell, int n, int m)
 		  XtNborderWidth, &button_border,
 		  (XtPointer) 0);
 
-    (void) setMenuLocale(True, saveLocale);
-    return button_height + (button_border * 2);
+    (void) setMenuLocale(False, saveLocale);
+    return (Dimension) (button_height + (button_border * 2));
 }
 #endif /* OPT_TOOLBAR */
 
@@ -2551,7 +2598,7 @@ SetupMenus(Widget shell, Widget *forms, Widget *menus, Dimension * menu_high)
      * Tell the main program how high the toolbar is, to help with the initial
      * layout.
      */
-    *menu_high = (button_height + 2 * (toolbar_hSpace));
+    *menu_high = (Dimension) (button_height + 2 * (toolbar_hSpace));
     TRACE(("...menuHeight:%d = (%d + 2 * %d)\n",
 	   *menu_high, button_height, toolbar_hSpace));
 
@@ -2700,7 +2747,7 @@ ShowToolbar(Bool enable)
 	    hide_toolbar((Widget) tekWidget);
 #endif
 	}
-	resource.toolBar = enable;
+	resource.toolBar = (Boolean) enable;
 	update_toolbar();
     }
 }
@@ -2733,7 +2780,7 @@ do_toolbar(Widget gw GCC_UNUSED,
     if (IsIcon(&(term->screen))) {
 	Bell(XkbBI_MinorError, 0);
     } else {
-	ShowToolbar(resource.toolBar = !resource.toolBar);
+	ShowToolbar(ToggleFlag(resource.toolBar));
     }
 }
 
@@ -3086,7 +3133,7 @@ update_altscreen(void)
     UpdateCheckbox("update_altscreen",
 		   vtMenuEntries,
 		   vtMenu_altscreen,
-		   term->screen.alternate);
+		   term->screen.whichBuf);
 }
 
 void
@@ -3180,6 +3227,141 @@ update_font_utf8_title(void)
 		   fontMenuEntries,
 		   fontMenu_wide_title,
 		   enable);
+}
+#endif
+
+#if OPT_ALLOW_XXX_OPS
+static void
+enable_allow_xxx_ops(Bool enable)
+{
+    SetItemSensitivity(fontMenuEntries[fontMenu_allowFontOps].widget, enable);
+    SetItemSensitivity(fontMenuEntries[fontMenu_allowTcapOps].widget, enable);
+    SetItemSensitivity(fontMenuEntries[fontMenu_allowTitleOps].widget, enable);
+    SetItemSensitivity(fontMenuEntries[fontMenu_allowWindowOps].widget, enable);
+}
+
+static void
+do_allowFontOps(Widget w,
+		XtPointer closure GCC_UNUSED,
+		XtPointer data GCC_UNUSED)
+{
+    XtermWidget xw = getXtermWidget(w);
+    if (xw != 0) {
+	ToggleFlag(xw->screen.allowFontOps);
+	update_menu_allowFontOps();
+    }
+}
+
+static void
+do_allowTcapOps(Widget w,
+		XtPointer closure GCC_UNUSED,
+		XtPointer data GCC_UNUSED)
+{
+    XtermWidget xw = getXtermWidget(w);
+    if (xw != 0) {
+	ToggleFlag(xw->screen.allowTcapOps);
+	update_menu_allowTcapOps();
+    }
+}
+
+static void
+do_allowTitleOps(Widget w,
+		 XtPointer closure GCC_UNUSED,
+		 XtPointer data GCC_UNUSED)
+{
+    XtermWidget xw = getXtermWidget(w);
+    if (xw != 0) {
+	ToggleFlag(xw->screen.allowTitleOps);
+	update_menu_allowTitleOps();
+    }
+}
+
+static void
+do_allowWindowOps(Widget w,
+		  XtPointer closure GCC_UNUSED,
+		  XtPointer data GCC_UNUSED)
+{
+    XtermWidget xw = getXtermWidget(w);
+    if (xw != 0) {
+	ToggleFlag(xw->screen.allowWindowOps);
+	update_menu_allowWindowOps();
+    }
+}
+
+void
+HandleAllowFontOps(Widget w,
+		   XEvent * event GCC_UNUSED,
+		   String * params,
+		   Cardinal *param_count)
+{
+    handle_vt_toggle(do_allowFontOps, term->screen.allowFontOps,
+		     params, *param_count, w);
+}
+
+void
+HandleAllowTcapOps(Widget w,
+		   XEvent * event GCC_UNUSED,
+		   String * params,
+		   Cardinal *param_count)
+{
+    handle_vt_toggle(do_allowTcapOps, term->screen.allowTcapOps,
+		     params, *param_count, w);
+}
+
+void
+HandleAllowTitleOps(Widget w,
+		    XEvent * event GCC_UNUSED,
+		    String * params,
+		    Cardinal *param_count)
+{
+    handle_vt_toggle(do_allowTitleOps, term->screen.allowTitleOps,
+		     params, *param_count, w);
+}
+
+void
+HandleAllowWindowOps(Widget w,
+		     XEvent * event GCC_UNUSED,
+		     String * params,
+		     Cardinal *param_count)
+{
+    handle_vt_toggle(do_allowWindowOps, term->screen.allowWindowOps,
+		     params, *param_count, w);
+}
+
+void
+update_menu_allowTcapOps(void)
+{
+    UpdateCheckbox("update_menu_allowTcapOps",
+		   fontMenuEntries,
+		   fontMenu_allowTcapOps,
+		   term->screen.allowTcapOps);
+}
+
+void
+update_menu_allowFontOps(void)
+{
+    UpdateCheckbox("update_menu_allowFontOps",
+		   fontMenuEntries,
+		   fontMenu_allowFontOps,
+		   term->screen.allowFontOps);
+}
+
+void
+update_menu_allowTitleOps(void)
+{
+    UpdateCheckbox("update_menu_allowTitleOps",
+		   fontMenuEntries,
+		   fontMenu_allowTitleOps,
+		   term->screen.allowTitleOps);
+}
+
+void
+update_menu_allowWindowOps(void)
+{
+    UpdateCheckbox("update_menu_allowWindowOps",
+		   fontMenuEntries,
+		   fontMenu_allowWindowOps,
+		   term->screen.allowWindowOps);
 }
 #endif
 
