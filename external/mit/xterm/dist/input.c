@@ -1,4 +1,4 @@
-/* $XTermId: input.c,v 1.309 2009/06/18 00:08:40 tom Exp $ */
+/* $XTermId: input.c,v 1.303 2009/01/08 23:28:36 tom Exp $ */
 
 /*
  * Copyright 1999-2008,2009 by Thomas E. Dickey
@@ -342,23 +342,35 @@ allowModifierParm(XtermWidget xw, KEY_DATA * kd)
 *       Meta+Ctrl+Alt+Shift  16 = 1(None)+8(Meta)+1(Shift)+2(Alt)+4(Ctrl)
 */
 
-unsigned
+#undef CTRL
+
+/* FIXME - make these used in xtermcap.c */
+#define	UNMOD	1
+#define	SHIFT	1
+#define	ALT	2
+#define	CTRL	4
+#define	META	8
+
+#define MODIFIER_NAME(parm, name) \
+	(((parm > UNMOD) && ((parm - UNMOD) & name)) ? " "#name : "")
+
+int
 xtermParamToState(XtermWidget xw, unsigned param)
 {
-    unsigned result = 0;
+    int result = 0;
 #if OPT_NUM_LOCK
-    if (param > MOD_NONE
+    if (param > UNMOD
 	&& ((ShiftMask
 	     | ControlMask
 	     | xw->misc.alt_mods
 	     | xw->misc.meta_mods) & xw->misc.other_mods) == 0) {
-	if ((param - MOD_NONE) & MOD_SHIFT)
+	if ((param - UNMOD) & SHIFT)
 	    result |= ShiftMask;
-	if ((param - MOD_NONE) & MOD_CTRL)
+	if ((param - UNMOD) & CTRL)
 	    result |= ControlMask;
-	if ((param - MOD_NONE) & MOD_ALT)
+	if ((param - UNMOD) & ALT)
 	    result |= xw->misc.alt_mods;
-	if ((param - MOD_NONE) & MOD_META)
+	if ((param - UNMOD) & META)
 	    result |= xw->misc.meta_mods;
     }
 #else
@@ -366,50 +378,47 @@ xtermParamToState(XtermWidget xw, unsigned param)
     (void) param;
 #endif
     TRACE(("xtermParamToState(%d) %s%s%s%s -> %#x\n", param,
-	   MODIFIER_NAME(param, MOD_SHIFT),
-	   MODIFIER_NAME(param, MOD_ALT),
-	   MODIFIER_NAME(param, MOD_CTRL),
-	   MODIFIER_NAME(param, MOD_META),
+	   MODIFIER_NAME(param, SHIFT),
+	   MODIFIER_NAME(param, ALT),
+	   MODIFIER_NAME(param, CTRL),
+	   MODIFIER_NAME(param, META),
 	   result));
     return result;
 }
 
-unsigned
+int
 xtermStateToParam(XtermWidget xw, unsigned state)
 {
-    unsigned modify_parm = MOD_NONE;
+    int modify_parm = UNMOD;
 
-    TRACE(("xtermStateToParam %#x\n", state));
 #if OPT_NUM_LOCK
     if ((state & xw->misc.other_mods) == 0) {
 	if (state & ShiftMask) {
-	    modify_parm += MOD_SHIFT;
+	    modify_parm += SHIFT;
 	    state &= ~ShiftMask;
 	}
 	if (state & ControlMask) {
-	    modify_parm += MOD_CTRL;
+	    modify_parm += CTRL;
 	    state &= ~ControlMask;
 	}
 	if ((state & xw->misc.alt_mods) != 0) {
-	    modify_parm += MOD_ALT;
+	    modify_parm += ALT;
 	    state &= ~xw->misc.alt_mods;
 	}
 	if ((state & xw->misc.meta_mods) != 0) {
-	    modify_parm += MOD_META;
+	    modify_parm += META;
 	    state &= ~xw->misc.meta_mods;
 	}
     }
-    if (modify_parm == MOD_NONE)
-	modify_parm = 0;
 #else
     (void) xw;
     (void) state;
 #endif
     TRACE(("...xtermStateToParam %d%s%s%s%s\n", modify_parm,
-	   MODIFIER_NAME(modify_parm, MOD_SHIFT),
-	   MODIFIER_NAME(modify_parm, MOD_ALT),
-	   MODIFIER_NAME(modify_parm, MOD_CTRL),
-	   MODIFIER_NAME(modify_parm, MOD_META)));
+	   MODIFIER_NAME(modify_parm, SHIFT),
+	   MODIFIER_NAME(modify_parm, ALT),
+	   MODIFIER_NAME(modify_parm, CTRL),
+	   MODIFIER_NAME(modify_parm, META)));
     return modify_parm;
 }
 
@@ -523,7 +532,7 @@ static Bool
 ModifyOtherKeys(XtermWidget xw,
 		unsigned state,
 		KEY_DATA * kd,
-		unsigned modify_parm)
+		int modify_parm)
 {
     TKeyboard *keyboard = &(xw->keyboard);
     Bool result = False;
@@ -563,25 +572,26 @@ ModifyOtherKeys(XtermWidget xw,
 		    break;
 #ifdef XK_ISO_Left_Tab
 		case XK_ISO_Left_Tab:
-		    if (computeMaskedModifier(xw, state, ShiftMask))
+		    if (computeMaskedModifier(xw, state, ShiftMask) > 1)
 			result = True;
 		    break;
 #endif
 		case XK_Return:
 		case XK_Tab:
-		    result = (modify_parm != 0);
+		    result = (modify_parm > 1);
 		    break;
 		default:
 		    if (IsControlInput(kd)) {
 			if (state == ControlMask || state == ShiftMask) {
 			    result = False;
 			} else {
-			    result = (modify_parm != 0);
+			    result = (modify_parm > 1);
 			}
 		    } else if (IsControlAlias(kd)) {
 			if (state == ShiftMask)
 			    result = False;
-			else if (computeMaskedModifier(xw, state, ControlMask)) {
+			else if (computeMaskedModifier(xw, state, ControlMask)
+				 > 1) {
 			    result = True;
 			}
 		    } else {
@@ -594,28 +604,28 @@ ModifyOtherKeys(XtermWidget xw,
 		switch (kd->keysym) {
 		case XK_BackSpace:
 		    /* strip ControlMask as per IsBackarrowToggle() */
-		    if (computeMaskedModifier(xw, state, ControlMask))
+		    if (computeMaskedModifier(xw, state, ControlMask) > 1)
 			result = True;
 		    break;
 		case XK_Delete:
-		    result = (xtermStateToParam(xw, state) != 0);
+		    result = (xtermStateToParam(xw, state) > 1);
 		    break;
 #ifdef XK_ISO_Left_Tab
 		case XK_ISO_Left_Tab:
-		    if (computeMaskedModifier(xw, state, ShiftMask))
+		    if (computeMaskedModifier(xw, state, ShiftMask) > 1)
 			result = True;
 		    break;
 #endif
 		case XK_Return:
 		case XK_Tab:
-		    result = (modify_parm != 0);
+		    result = (modify_parm > 1);
 		    break;
 		default:
 		    if (IsControlInput(kd)) {
 			result = True;
 		    } else if (state == ShiftMask) {
 			result = (kd->keysym == ' ' || kd->keysym == XK_Return);
-		    } else if (computeMaskedModifier(xw, state, ShiftMask)) {
+		    } else if (computeMaskedModifier(xw, state, ShiftMask) > 1) {
 			result = True;
 		    }
 		    break;
@@ -632,8 +642,8 @@ ModifyOtherKeys(XtermWidget xw,
 }
 
 #define APPEND_PARM(number) \
-	    reply->a_param[reply->a_nparam] = (ParmType) number; \
-	    reply->a_nparam++
+	    reply->a_param[(int) reply->a_nparam] = number, \
+	    reply->a_nparam += 1
 
 /*
  * Function-key code 27 happens to not be used in the vt220-style encoding.
@@ -642,7 +652,7 @@ ModifyOtherKeys(XtermWidget xw,
  * for more information.
  */
 static Bool
-modifyOtherKey(ANSI * reply, int input_char, unsigned modify_parm, int format_keys)
+modifyOtherKey(ANSI * reply, int input_char, int modify_parm, int format_keys)
 {
     Bool result = False;
 
@@ -665,9 +675,9 @@ modifyOtherKey(ANSI * reply, int input_char, unsigned modify_parm, int format_ke
 }
 
 static void
-modifyCursorKey(ANSI * reply, int modify, unsigned *modify_parm)
+modifyCursorKey(ANSI * reply, int modify, int *modify_parm)
 {
-    if (*modify_parm != 0) {
+    if (*modify_parm > 1) {
 	if (modify < 0) {
 	    *modify_parm = 0;
 	}
@@ -748,12 +758,12 @@ TranslateFromSUNPC(KeySym keysym)
 
 #undef  APPEND_PARM
 #define APPEND_PARM(number) \
-	    reply.a_param[reply.a_nparam] = (ParmType) number, \
-	    reply.a_nparam++
+	    reply.a_param[(int) reply.a_nparam] = number, \
+	    reply.a_nparam += 1
 
 #if OPT_MOD_FKEYS
 #define MODIFIER_PARM \
-	if (modify_parm != 0) APPEND_PARM(modify_parm)
+	if (modify_parm > 1) APPEND_PARM(modify_parm)
 #else
 #define MODIFIER_PARM		/*nothing */
 #endif
@@ -802,7 +812,7 @@ Input(XtermWidget xw,
     int key = False;
     ANSI reply;
     int dec_code;
-    unsigned modify_parm = 0;
+    int modify_parm = 0;
     int keypad_mode = ((keyboard->flags & MODE_DECKPAM) != 0);
     unsigned evt_state = event->state;
     unsigned mod_state;
@@ -874,7 +884,7 @@ Input(XtermWidget xw,
 	   ", %d:'%s'%s" FMT_MODIFIER_NAMES "%s%s%s%s%s%s\n",
 	   kd.keysym,
 	   kd.nbytes,
-	   visibleChars((Char *) kd.strbuf,
+	   visibleChars(PAIRED_CHARS((Char *) kd.strbuf, 0),
 			((kd.nbytes > 0)
 			 ? (unsigned) kd.nbytes
 			 : 0)),
@@ -1095,7 +1105,7 @@ Input(XtermWidget xw,
 		&& !ModifyOtherKeys(xw, evt_state, &kd, modify_parm)
 #endif
 	       ) || (kd.keysym == XK_Delete
-		     && ((modify_parm != 0)
+		     && ((modify_parm > 1)
 			 || !xtermDeleteIsDEL(xw)))) {
 	dec_code = decfuncvalue(&kd);
 	if ((evt_state & ShiftMask)
@@ -1107,6 +1117,7 @@ Input(XtermWidget xw,
 	    while (kd.nbytes-- > 0)
 		unparseputc(xw, CharOf(*string++));
 	}
+#if OPT_VT52_MODE
 	/*
 	 * Interpret F1-F4 as PF1-PF4 for VT52, VT100
 	 */
@@ -1120,7 +1131,9 @@ Input(XtermWidget xw,
 			    &modify_parm);
 	    MODIFIER_PARM;
 	    unparseseq(xw, &reply);
-	} else {
+	}
+#endif
+	else {
 	    reply.a_type = ANSI_CSI;
 	    reply.a_final = 0;
 
@@ -1130,7 +1143,7 @@ Input(XtermWidget xw,
 		reply.a_final = 'Z';
 #if OPT_MOD_FKEYS
 		if (keyboard->modify_now.other_keys > 1
-		    && computeMaskedModifier(xw, evt_state, ShiftMask))
+		    && computeMaskedModifier(xw, evt_state, ShiftMask) > 1)
 		    modifyOtherKey(&reply, '\t', modify_parm, keyboard->format_keys);
 #endif
 	    } else
@@ -1145,7 +1158,7 @@ Input(XtermWidget xw,
 		}
 		MODIFIER_PARM;
 #endif
-		reply.a_param[0] = (ParmType) dec_code;
+		reply.a_param[0] = dec_code;
 		reply.a_final = '~';
 	    }
 	    if (reply.a_final != 0
@@ -1339,7 +1352,7 @@ void
 StringInput(XtermWidget xw, Char * string, size_t nbytes)
 {
     TRACE(("InputString (%s,%d)\n",
-	   visibleChars(string, nbytes),
+	   visibleChars(PAIRED_CHARS(string, 0), nbytes),
 	   nbytes));
 #if OPT_TEK4014
     if (nbytes && TEK4014_GIN(tekWidget)) {
@@ -1569,7 +1582,7 @@ static void
 sunfuncvalue(ANSI * reply, KEY_DATA * kd)
 {
 #if OPT_SUN_FUNC_KEYS
-    ParmType result;
+    int result;
 
     if (kd->is_fkey) {
 	switch (kd->keysym) {
@@ -1860,7 +1873,7 @@ VTInitModifiers(XtermWidget xw)
 	XDisplayKeycodes(dpy, &min_keycode, &max_keycode);
 	keycode_count = (max_keycode - min_keycode + 1);
 	theMap = XGetKeyboardMapping(dpy,
-				     (KeyCode) min_keycode,
+				     min_keycode,
 				     keycode_count,
 				     &keysyms_per_keycode);
 
