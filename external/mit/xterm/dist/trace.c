@@ -1,8 +1,8 @@
-/* $XTermId: trace.c,v 1.102 2009/07/03 13:57:08 tom Exp $ */
+/* $XTermId: trace.c,v 1.85 2008/06/03 20:52:34 tom Exp $ */
 
 /************************************************************
 
-Copyright 1997-2008,2009 by Thomas E. Dickey
+Copyright 1997-2007,2008 by Thomas E. Dickey
 
                         All Rights Reserved
 
@@ -40,9 +40,6 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <stdio.h>
 #include <stdarg.h>
 #include <assert.h>
-
-#include <X11/Xatom.h>
-#include <X11/Xmu/Atoms.h>
 
 #ifdef HAVE_X11_TRANSLATEI_H
 #include <X11/TranslateI.h>
@@ -109,9 +106,6 @@ Trace(const char *fmt,...)
 	(void) fclose(fp);
 	(void) fflush(stdout);
 	(void) fflush(stderr);
-	(void) visibleChars(NULL, 0);
-	(void) visibleIChars(NULL, 0);
-	(void) visibleIChar(NULL, 0);
     }
     va_end(ap);
 }
@@ -164,7 +158,7 @@ formatAscii(char *dst, unsigned value)
 #if OPT_DEC_CHRSET
 
 const char *
-visibleChrsetName(unsigned chrset)
+visibleChrsetName(int chrset)
 {
     const char *result = "?";
     switch (chrset) {
@@ -186,64 +180,32 @@ visibleChrsetName(unsigned chrset)
 #endif
 
 char *
-visibleChars(Char * buf, unsigned len)
+visibleChars(PAIRED_CHARS(Char * buf, Char * buf2), unsigned len)
 {
     static char *result;
     static unsigned used;
+    unsigned limit = ((len + 1) * 8) + 1;
+    char *dst;
 
-    if (buf != 0) {
-	unsigned limit = ((len + 1) * 8) + 1;
-	char *dst;
-
-	if (limit > used) {
-	    used = limit;
-	    result = XtRealloc(result, used);
-	}
-	dst = result;
-	*dst = '\0';
-	while (len--) {
-	    unsigned value = *buf++;
-	    formatAscii(dst, value);
-	    dst += strlen(dst);
-	}
-    } else if (result != 0) {
-	free(result);
-	result = 0;
-	used = 0;
+    if (limit > used) {
+	used = limit;
+	result = XtRealloc(result, used);
     }
-    return result;
-}
-
-char *
-visibleIChars(IChar * buf, unsigned len)
-{
-    static char *result;
-    static unsigned used;
-
-    if (buf != 0) {
-	unsigned limit = ((len + 1) * 8) + 1;
-	char *dst;
-
-	if (limit > used) {
-	    used = limit;
-	    result = XtRealloc(result, used);
-	}
-	dst = result;
-	*dst = '\0';
-	while (len--) {
-	    unsigned value = *buf++;
+    dst = result;
+    *dst = '\0';
+    while (len--) {
+	unsigned value = *buf++;
 #if OPT_WIDE_CHARS
-	    if (value > 255)
-		sprintf(dst, "\\u+%04X", value);
-	    else
-#endif
-		formatAscii(dst, value);
-	    dst += strlen(dst);
+	if (buf2 != 0) {
+	    value |= (*buf2 << 8);
+	    buf2++;
 	}
-    } else if (result != 0) {
-	free(result);
-	result = 0;
-	used = 0;
+	if (value > 255)
+	    sprintf(dst, "\\u+%04X", value);
+	else
+#endif
+	    formatAscii(dst, value);
+	dst += strlen(dst);
     }
     return result;
 }
@@ -253,30 +215,23 @@ visibleIChar(IChar * buf, unsigned len)
 {
     static char *result;
     static unsigned used;
+    unsigned limit = ((len + 1) * 6) + 1;
+    char *dst;
 
-    if (buf != 0) {
-	unsigned limit = ((len + 1) * 6) + 1;
-	char *dst;
-
-	if (limit > used) {
-	    used = limit;
-	    result = XtRealloc(result, used);
-	}
-	dst = result;
-	while (len--) {
-	    unsigned value = *buf++;
+    if (limit > used) {
+	used = limit;
+	result = XtRealloc(result, used);
+    }
+    dst = result;
+    while (len--) {
+	unsigned value = *buf++;
 #if OPT_WIDE_CHARS
-	    if (value > 255)
-		sprintf(dst, "\\u+%04X", value);
-	    else
+	if (value > 255)
+	    sprintf(dst, "\\u+%04X", value);
+	else
 #endif
-		formatAscii(dst, value);
-	    dst += strlen(dst);
-	}
-    } else if (result != 0) {
-	free(result);
-	result = 0;
-	used = 0;
+	    formatAscii(dst, value);
+	dst += strlen(dst);
     }
     return result;
 }
@@ -342,26 +297,6 @@ visibleEventType(int type)
 }
 
 const char *
-visibleSelectionTarget(Display * d, Atom a)
-{
-    const char *result = "?";
-
-    if (a == XA_STRING) {
-	result = "XA_STRING";
-    } else if (a == XA_TEXT(d)) {
-	result = "XA_TEXT()";
-    } else if (a == XA_COMPOUND_TEXT(d)) {
-	result = "XA_COMPOUND_TEXT()";
-    } else if (a == XA_UTF8_STRING(d)) {
-	result = "XA_UTF8_STRING()";
-    } else if (a == XA_TARGETS(d)) {
-	result = "XA_TARGETS()";
-    }
-
-    return result;
-}
-
-const char *
 visibleXError(int code)
 {
     static char temp[80];
@@ -397,56 +332,88 @@ visibleXError(int code)
 #define isScrnFlag(flag) ((flag) == LINEWRAPPED)
 
 static char *
-ScrnText(LineData * ld)
+ScrnText(TScreen * screen, int row)
 {
-    return visibleIChars(ld->charData, ld->lineSize);
+    Char *chars = SCRN_BUF_CHARS(screen, row);
+#if OPT_WIDE_CHARS
+    Char *widec = 0;
+#endif
+
+    if_OPT_WIDE_CHARS(screen, {
+	widec = SCRN_BUF_WIDEC(screen, row);
+    });
+    return visibleChars(PAIRED_CHARS(chars, widec), screen->max_col + 1);
 }
 
-#define SHOW_BAD_LINE(name, ld) \
-	Trace("OOPS " #name " bad row\n")
+#if OPT_TRACE_FLAGS > 1
+#define DETAILED_FLAGS(name) \
+    Trace("TEST " #name " %d [%d..%d] top %d chars %p (%d)\n", \
+    	  row, \
+	  -screen->savedlines, \
+	  screen->max_row, \
+	  screen->topline, \
+	  SCRN_BUF_CHARS(screen, row), \
+	  (&(SCRN_BUF_FLAGS(screen, row)) - screen->visbuf) / MAX_PTRS)
+#else
+#define DETAILED_FLAGS(name)	/* nothing */
+#endif
+
+#define SHOW_BAD_ROW(name, screen, row) \
+	Trace("OOPS " #name " bad row %d [%d..%d]\n", \
+	      row, -(screen->savedlines), screen->max_row)
 
 #define SHOW_SCRN_FLAG(name,code) \
-	Trace(#name " %s:%s\n", \
+	Trace(#name " {%d, top=%d, saved=%d}%05d%s:%s\n", \
+	      row, screen->topline, screen->savedlines, \
+	      ROW2ABS(screen, row), \
 	      code ? "*" : "", \
-	      ScrnText(ld))
+	      ScrnText(screen, row))
 
 void
-LineClrFlag(LineData * ld, int flag)
+ScrnClrFlag(TScreen * screen, int row, int flag)
 {
-    if (ld == 0) {
-	SHOW_BAD_LINE(LineClrFlag, ld);
+    DETAILED_FLAGS(ScrnClrFlag);
+    if (!okScrnRow(screen, row)) {
+	SHOW_BAD_ROW(ScrnClrFlag, screen, row);
 	assert(0);
     } else if (isScrnFlag(flag)) {
-	SHOW_SCRN_FLAG(LineClrFlag, 0);
+	SHOW_SCRN_FLAG(ScrnClrFlag, 0);
     }
 
-    LineFlags(ld) &= ~flag;
+    SCRN_BUF_FLAGS(screen, row) =
+	(Char *) ((long) SCRN_BUF_FLAGS(screen, row) & ~(flag));
 }
 
 void
-LineSetFlag(LineData * ld, int flag)
+ScrnSetFlag(TScreen * screen, int row, int flag)
 {
-    if (ld == 0) {
-	SHOW_BAD_LINE(LineSetFlag, ld);
+    DETAILED_FLAGS(ScrnSetFlag);
+    if (!okScrnRow(screen, row)) {
+	SHOW_BAD_ROW(ScrnSetFlag, screen, row);
 	assert(0);
     } else if (isScrnFlag(flag)) {
-	SHOW_SCRN_FLAG(LineSetFlag, 1);
+	SHOW_SCRN_FLAG(ScrnSetFlag, 1);
     }
 
-    LineFlags(ld) |= flag;
+    SCRN_BUF_FLAGS(screen, row) =
+	(Char *) (((long) SCRN_BUF_FLAGS(screen, row) | (flag)));
 }
 
 int
-LineTstFlag(LineData ld, int flag)
+ScrnTstFlag(TScreen * screen, int row, int flag)
 {
     int code = 0;
-    if (ld == 0) {
-	SHOW_BAD_LINE(LineTstFlag, ld);
+    if (!okScrnRow(screen, row)) {
+	SHOW_BAD_ROW(ScrnTstFlag, screen, row);
     } else {
-	code = LineFlags(ld);
+	code = ((long) SCRN_BUF_FLAGS(screen, row) & (flag)) != 0;
 
-	if (isScrnFlag(flag)) {
-	    SHOW_SCRN_FLAG(LineTstFlag, code);
+	DETAILED_FLAGS(ScrnTstFlag);
+	if (!okScrnRow(screen, row)) {
+	    SHOW_BAD_ROW(ScrnSetFlag, screen, row);
+	    assert(0);
+	} else if (isScrnFlag(flag)) {
+	    SHOW_SCRN_FLAG(ScrnTstFlag, code);
 	}
     }
     return code;
@@ -617,7 +584,7 @@ parse_option(char *dst, char *src, int first)
     char *s;
 
     if (!strncmp(src, "-/+", 3)) {
-	dst[0] = (char) first;
+	dst[0] = first;
 	strcpy(dst + 1, src + 3);
     } else {
 	strcpy(dst, src);
