@@ -20,7 +20,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF   *
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.            *
  *****************************************************************************
-  $XTermId: xterm.log.html,v 1.707 2009/01/09 02:02:49 tom Exp $
+  $XTermId: xterm.log.html,v 1.790 2009/09/11 23:10:00 tom Exp $
   -->
 <HTML>
 <HEAD>
@@ -45,7 +45,16 @@ Most of these are summarized in the XFree86 CHANGELOG
 is the latest version of this file.
 
 <UL>
-<LI><A HREF="#xterm_239">Patch #239 - 2001/1/8</A>
+<LI><A HREF="#xterm_248">Patch #248 - 2009/9/11</A>
+<LI><A HREF="#xterm_247">Patch #247 - 2009/8/30</A>
+<LI><A HREF="#xterm_246">Patch #246 - 2009/8/16</A>
+<LI><A HREF="#xterm_245">Patch #245 - 2009/8/12</A>
+<LI><A HREF="#xterm_244">Patch #244 - 2009/8/9</A>
+<LI><A HREF="#xterm_243">Patch #243 - 2009/3/28</A>
+<LI><A HREF="#xterm_242">Patch #242 - 2009/2/15</A>
+<LI><A HREF="#xterm_241">Patch #241 - 2009/1/26</A>
+<LI><A HREF="#xterm_240">Patch #240 - 2009/1/25</A>
+<LI><A HREF="#xterm_239">Patch #239 - 2009/1/8</A>
 <LI><A HREF="#xterm_238">Patch #238 - 2008/12/30</A>
 <LI><A HREF="#xterm_237">Patch #237 - 2008/09/14</A>
 <LI><A HREF="#xterm_236">Patch #236 - 2008/07/27</A>
@@ -286,6 +295,304 @@ is the latest version of this file.
 <LI><A HREF="#xterm_02">Patch #2 - 1996/1/7</A>
 <LI><A HREF="#xterm_01">Patch #1 - 1996/1/6</A>
 </UL>
+
+<H1><A NAME="xterm_248">Patch #248 - 2009/9/11</A></H1>
+<ul>
+	<li>fix an overlooked adjustment for selecting double-width characters
+	    in the narrow-character configuration.
+
+	<li>eliminate uses of <code>XTERM_CELL</code> and
+	    <code>XTERM_CELLC</code> where an appropriate <code>LineData</code>
+	    pointer is available.
+
+	<li>correct expression in <code>okScrnRow</code> macro, making
+	    selections give the length of lines below the visible screen
+	    (report by Stuart Henderson).
+
+	<li>correct logic used to improve performance of missing-glyph check,
+	    which did not handle line-drawing characters (Debian #545220).
+</ul>
+
+<H1><A NAME="xterm_247">Patch #247 - 2009/8/30</A></H1>
+<ul>
+	<li>add ifdef's and check for openpty() on DragonFly (patch by
+	    Alex Hornung).
+
+	<li>correct calculation for size of line's data block, which was
+	    sometimes off-by-one when configured
+	    using <code>--enable-16bit-chars</code>
+	    (report by H Merijn Brand).
+
+	<li>fix indexing error in print-everything feature from
+	    <a href="#xterm_246">patch #246</a> (patch by Ovidiu Gheorghioiu).
+</ul>
+
+<H1><A NAME="xterm_246">Patch #246 - 2009/8/16</A></H1>
+<ul>
+	<li>remove obsolete logic for saving/restoring wrapping flags, which
+	    did not work on 64-bit platform.  Wrapping flags (stored in the
+	    line-index) are now copied with line-data (Debian #541160).
+
+	<li>modify comments in app-defaults files to avoid problem with
+	    C preprocessor used by <code>xrdb</code> (Debian #541603).
+
+	<li>restore special case in <code>makeColorPair</code>,
+	    needed for <code>colorBDMode</code> resource (Debian #541089).
+
+	<li>correct <code>SetLineFlags()</code> macro, broken in
+	    <a href="#xterm_244">patch #244</a>
+	    when recoding to avoid gcc-specific bitfields (Debian #541236).
+
+	<li>modify initialization of screen buffers to ensure that pointers
+	    align to int-boundaries.
+	    This fixes a problem introduced in
+	    <a href="#xterm_244">patch #244</a>
+	    where the color- and character-arrays
+	    (stored after the video-attributes in each row)
+	    might be misaligned (report by Rajeev V Pillai).
+
+	<li>add limit-check in <code>ScrnRefresh</code> for handling
+	    saved-lines from the circular buffer which are repainted on a
+	    screen whose width has increased.  To improve performance, circular
+	    buffer entries are not resized (report by Rajeev V Pillai).
+
+	<li>correct type for <code>CellColor</code> (a late change in
+	    <a href="#xterm_244">patch #244</a>
+	    to avoid gcc-specifc enums made that unsigned
+	    rather than unsigned short, for the 256-color option).
+
+	<li>fix typo in configure option --enable-16bit-chars (report by
+	    Rajeev V. Pillai).
+</ul>
+
+<H1><A NAME="xterm_245">Patch #245 - 2009/8/12</A></H1>
+<ul>
+	<li>correct a special case in saving FIFO-lines from
+	    <a href="#xterm_244">patch #244</a>.
+	    If the screen was shrunk, xterm used the wrong amount for copying
+	    to FIFO-lines, and then used this amount to adjust the current
+	    row on the screen.  That was both a visible defect (Debian #541109)
+	    as well as a potential addressing error (Debian #541132, #541160,
+	    and #541236).
+
+	<li>add clarification in xterm manual about the
+	    various <code>allow<em>XXX</em>Ops</code> resources, which
+	    are disabled when the 
+	    <code>allowSendEvents</code> resource is active (patch by
+	    Julien Cristau, Debian #531597).
+</ul>
+
+<H1><A NAME="xterm_244">Patch #244 - 2009/8/9</A></H1>
+<ul>
+	<li>refactored storage of saved-lines, providing a configure option
+	    to manage them as a FIFO (actually a circular buffer), improving
+	    performance.
+	    Added configure option <code>--enable-fifo-lines</code> to
+	    enable/disable the new feature (it is enabled by default).
+
+	<li>added <code>fastScroll</code> resource, to amuse
+	    people who measure terminal emulator performance by
+	    <code>cat</code>'ing large files to the screen.
+
+	<li>modify check in <code>readPtyData</code> from return values
+	    to provide exit on zero-bytes read from pty for FreeBSD, or
+	    eliminate high-CPU in "xterm-hold" processing
+	    (discussion with Ulrich Spoerlein, FreeBSD ports/136686).
+	    The check was originally modified to combine negative/zero
+	    values in XFree86-3.1.2E, 1996/05/06.
+
+	<li>add configure option <code>--enable-16bit-chars</code> to
+	    provide wide-characters with 16-bits (rather than the default
+	    32-bits).
+
+	<li>add <code>retryInputMethod</code> resource to allow configuring
+	    out the retries xterm uses to connect to non-responsive XIM
+	    server, to work around defective X configurations as noted in
+	    <a href="http://mail-index.netbsd.org/tech-x11/2009/06/07/msg000511.html">NetBSD mailing list</a>.
+
+	<li>make regular-expression selection work for VT100 double-sized
+	    characters.
+
+	<li>improve layout when drawing missing characters in a proportional
+	    font, e.g., as boxes, to take into account whether they are
+	    double-width (report by Guilbert Stabilo on comp.unix.shell).
+
+	<li>add capability for keypad-center (kb2/KA2) to termcap entry for
+	    xterm-new, as well as xterm-8bit, xterm-sun and xterm-vt220
+	    (FreeBSD conf/136336).
+
+	<li>change default for <code>keepSelection</code> resource to true
+	    (prompted by discussion with David Muir Sharnoff).
+
+	<li>remove a limit-check in ptydata.c, allowing Unicode values past
+	    64k to be displayed using TrueType fonts (Debian #458432).
+
+	<li>remove a vt52-specific ifdef to allow mapping F1-F4 to PF1-PF4
+	    when vt52 support is not compiled (report by Olaf 'Rhialto'
+	    Seibert).
+
+	<li>save/restore line-wrapping flags when converting from ISO-8859-1
+	    encoding to UTF-8 encoding, as well as when resizing screen.
+
+	<li>remove extra adjustment of position in fix for Debian #418324.
+
+	<li>modify default check for <code>mkWidth</code> resource to check
+	    for line-drawing characters, which are categorized as double-width
+	    in Solaris 10 (report by Sebastian Kayser).
+
+	<li>add "print-everything" action (patch by Ovidiu Gheorghioiu).
+
+	<li>start refactoring scrollback data using new getLineData() function.
+
+	<li>demote recent change to Debian #252873 fix to experimental,
+	    ifdef'd out as <code>EXP_BOGUS_FG</code> (Debian #522141).
+
+	<li>work around groff mapping of ASCII quotes using macros (requested
+	    by Reuben Thomas based on Colin Watson advice, fixes Debian #378700).
+
+	<li>correct symbol used for default of <code>allowWindowOps</code>
+	    which was <code>DEF_ALLOW_FONT</code>
+	    rather than <code>DEF_ALLOW_WINDOW</code>
+	    (report by Matthieu Herrb).
+
+	<li>amend fix for tek4014 from <a href="#xterm_243">patch #243</a>
+	    to make it only apply to the Tek Options menu.
+</ul>
+
+<H1><A NAME="xterm_243">Patch #243 - 2009/3/28</A></H1>
+<ul>
+	<li>revert change to default for <code>allowTcapOps</code> (request by
+	    Bram Moolenaar).
+
+	<li>reallocate result returned by <code>xtermEnvLocale()</code> to
+	    avoid reference to freed memory after handling
+	    <code>menuLocale</code> resource.
+
+	<li>fix an old (X11R5) bug in tek4014 for switching fontsizes.
+
+	<li>add resource <code>defaultString</code> to make configurable the
+	    use of "#" when pastes of UTF-8 text fail due to limitations in
+	    the current locale settings.
+
+	<li>make the set of selection target Atom's configurable by two new
+	    resources <code>eightBitSelectTypes</code> and
+	    <code>utf8SelectTypes</code>, e.g., to use the <code>TEXT</code>
+	    Atom in preference to <code>UTF8_STRING</code> (discussion with
+	    Stanislav Sedov regarding koi8rxterm and the FreeBSD port).
+
+	<li>modify handling of <code>TARGETS</code> Atom by making it return
+	    exactly the set of targets as those which xterm is currently
+	    providing.
+
+	<li>set <code>MANPAGER</code> and <code>PAGER</code> explicitly to
+	    /bin/cat in <code>minstall.sh</code> to work around /etc/man.conf's
+	    with those variables already set
+	    (report by &#1052;&#1072;&#1088;&#1100;&#1103;&#1089;&#1080;&#1085;
+	    &#1057;&#1077;&#1084;&#1105;&#1085;).
+	<li>improve error-checking of tcap-query parser.
+
+	<li>add check for keyboard <code>tcap</code>), which ensures that
+	    terminal descriptions containing the same string for
+	    shifted/unshifted keys will be seen by tcap-query as only the
+	    unshifted key.  (This would only happen with an incorrect terminal
+	    description).
+
+	<li>fix conversion for input event-state to modifier-parameter which
+	    made tcap-query feature not work with <code>tcapFunctionKeys</code>
+	    (keyboard type <code>tcap</code>).
+
+	<li>add "DEF_ALLOW_<em>XXX</em>" definitions to main.h to allow
+	    overriding the default compiled-in values for
+	    "allow<em>xxx</em>" resources.
+
+	<li>remove check on bell-percentage added in
+	    <a href="#xterm_242">patch #242</a>,
+	    which disallowed zero/negative values (Redhat Bugzilla #487829).
+</ul>
+
+<H1><A NAME="xterm_242">Patch #242 - 2009/2/15</A></H1>
+<ul>
+	<li>fix configure check for <code>XkbBell</code> and provide
+	    appropriate parameter for it.
+
+	<li>fix a caching problem with double-size fonts versus reverse video
+	    that could cause core dump.
+
+	<li>repair double-size fonts from workaround
+	    used in <a href="#xterm_240">patch #240</a>.
+
+	<li>add new section to the VT Fonts menu which allows enabling or
+	    disabling the font, termcap (tcap-query), title and window
+	    operations.
+
+	<li>add <code>fontWarnings</code> resource, to control whether to show
+	    warnings on failure to load a font.
+
+	<li>improve warnings for unloadable fonts introduced in
+	    <a href="#xterm_240">patch #240</a>
+	    by limiting those to the cases where a font would be specified
+	    directly by a resource setting rather than a derived fontname.
+
+	<li>further amend fix for Debian #252873
+	    from <a href="#xterm_197">patch #197</a> to
+	    treat a blank cell which does not have both foreground and background
+	    colored as a non-colored cell.
+	    This improves a special case where the cursor is on a blank
+	    cell which had foreground color scrolled in
+	    (report by Miroslav Lichvar).
+	    <p>
+	    Also add the same logic when hiding cursor, so the outline matches
+	    the in-focus cursor.
+
+	<li>modify internals to reduce places PAIRED_CHARS() is used, making
+	    WriteText() and ScrnWriteText() accept IChar array, as well as
+	    providing a wrapper for drawXtermText().
+
+	<li>change default XIM font from "*" to "fixed" to improve startup
+	    time in zh_CN.UTF-8 locale (Mike Fabian, SuSE Bugzilla #464930).
+
+	<li>typo in #240 log (Slava Semushin)
+</ul>
+
+<H1><A NAME="xterm_241">Patch #241 - 2009/1/26</A></H1>
+<ul>
+	<li>improve checks for missing bitmap fonts, fallback to "fixed" as
+	    needed to work around broken font-packages (report by Jacek
+	    Luczak).
+
+	<li>fix breakage from <a href="#xterm_240">patch #240</a> changes for
+	    <code>xtermAddInput()</code> (patches by Jeff Chua, Julien Cristau).
+</ul>
+
+<H1><A NAME="xterm_240">Patch #240 - 2009/1/25</A></H1>
+<ul>
+	<li>use <code>plink.sh</code> for linking xterm (suggested by Larry
+	    Doolittle).
+
+	<li>add resource descriptions for input method to xterm manpage.
+
+	<li>update configure script; consistently append to $CFLAGS rather
+	    than prepend.
+
+	<li>add <code>install-scripts</code> rule to makefile, to allow
+	    koi8rxterm and uxterm scripts to be altered independently of
+	    <code>install-bin</code> 
+
+	<li>add <code>-maximized</code> command-line option and corresponding
+	    resource (prompted by alt.os.linux newsgroup comment).
+
+	<li>modify translations of scrollbar widget using
+	    <code>xtermAddInput()</code>
+	    (see <a href="#xterm_181">patch #181</a>) to accept the actions
+	    that the vt100 widget accepts, such as shift-insert to perform
+	    a paste operation (request by Martin Zwickel).
+
+	<li>change default for <code>allowTcapsOps</code> resource to false,
+	    since it causes unexpected behavior for vim users with
+	    <code>AltGr</code>.
+
+	<li>update config.guess, config.sub
+</ul>
 
 <H1><A NAME="xterm_239">Patch #239 - 2009/1/8</A></H1>
 <ul>

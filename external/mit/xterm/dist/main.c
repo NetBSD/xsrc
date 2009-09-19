@@ -1,4 +1,4 @@
-/* $XTermId: main.c,v 1.588 2008/09/14 15:20:31 Paul.Lampert Exp $ */
+/* $XTermId: main.c,v 1.594 2009/08/30 21:40:45 Alex.Hornung Exp $ */
 
 /*
  *				 W A R N I N G
@@ -15,7 +15,7 @@
 
 /***********************************************************
 
-Copyright 2002-2007,2008 by Thomas E. Dickey
+Copyright 2002-2008,2009 by Thomas E. Dickey
 
                         All Rights Reserved
 
@@ -380,7 +380,7 @@ extern struct utmp *getutid __((struct utmp * _Id));
 #include <util.h>		/* openpty() */
 #endif
 
-#ifdef __FreeBSD__
+#if defined(__FreeBSD__) || defined(__DragonFly__)
 #include <libutil.h>		/* openpty() */
 #endif
 
@@ -883,6 +883,9 @@ static XtResource application_resources[] =
 #if OPT_TOOLBAR
     Bres(XtNtoolBar, XtCToolBar, toolBar, True),
 #endif
+#if OPT_MAXIMIZE
+    Bres(XtNmaximized, XtCMaximized, maximized, False),
+#endif
 };
 
 static char *fallback_resources[] =
@@ -1075,6 +1078,10 @@ static XrmOptionDescRec optionDescList[] = {
 {"-tb",		"*"XtNtoolBar,	XrmoptionNoArg,		(caddr_t) "on"},
 {"+tb",		"*"XtNtoolBar,	XrmoptionNoArg,		(caddr_t) "off"},
 #endif
+#if OPT_MAXIMIZE
+{"-maximized",	"*maximized",	XrmoptionNoArg,		(caddr_t) "on"},
+{"+maximized",	"*maximized",	XrmoptionNoArg,		(caddr_t) "off"},
+#endif
 /* options that we process ourselves */
 {"-help",	NULL,		XrmoptionSkipNArgs,	(caddr_t) NULL},
 {"-version",	NULL,		XrmoptionSkipNArgs,	(caddr_t) NULL},
@@ -1247,6 +1254,9 @@ static OptionHelp xtermOptions[] = {
 #if OPT_SESSION_MGT
 { "-/+sm",                 "turn on/off the session-management support" },
 #endif
+#if OPT_MAXIMIZE
+{"-/+maximized",           "turn on/off maxmize on startup" },
+#endif
 { NULL, NULL }};
 /* *INDENT-ON* */
 
@@ -1336,9 +1346,9 @@ Syntax(char *badOption)
 	    ProgramName, badOption);
 
     fprintf(stderr, "usage:  %s", ProgramName);
-    col = 8 + strlen(ProgramName);
+    col = 8 + (int) strlen(ProgramName);
     for (opt = list; opt->opt; opt++) {
-	int len = 3 + strlen(opt->opt);		/* space [ string ] */
+	int len = 3 + (int) strlen(opt->opt);	/* space [ string ] */
 	if (col + len > 79) {
 	    fprintf(stderr, "\r\n   ");		/* 3 spaces */
 	    col = 3;
@@ -1516,7 +1526,7 @@ my_pty_id(char *device)
     char *leaf = x_basename(name);
 
     if (name == leaf) {		/* no '/' in the name */
-	int len = strlen(leaf);
+	int len = (int) strlen(leaf);
 	if (PTYCHARLEN < len)
 	    leaf = leaf + (len - PTYCHARLEN);
     }
@@ -1557,7 +1567,7 @@ ParseSccn(char *option)
 	if (leaf - option > 0
 	    && isdigit(CharOf(*leaf))
 	    && sscanf(leaf, "%d", &am_slave) == 1) {
-	    size_t len = leaf - option - 1;
+	    size_t len = (size_t) (leaf - option - 1);
 	    /*
 	     * If we have a slash, we only care about the part after the slash,
 	     * which is a file-descriptor.  The part before the slash can be
@@ -1798,7 +1808,7 @@ main(int argc, char *argv[]ENVP_ARG)
     TRACE_ARGV("Before XtOpenApplication", argv);
     if (argc > 1) {
 	int n;
-	unsigned unique = 2;
+	size_t unique = 2;
 	Bool quit = True;
 
 	for (n = 1; n < argc; n++) {
@@ -2227,10 +2237,10 @@ main(int argc, char *argv[]ENVP_ARG)
 	    int n;
 	    char **c;
 	    for (n = 0, c = command_to_exec; *c; n++, c++) ;
-	    c = TypeMallocN(char *, n + 3 + u);
+	    c = TypeMallocN(char *, (unsigned) (n + 3 + u));
 	    if (c == NULL)
 		SysError(ERROR_LUMALLOC);
-	    memcpy(c + 2 + u, command_to_exec, (n + 1) * sizeof(char *));
+	    memcpy(c + 2 + u, command_to_exec, (unsigned) (n + 1) * sizeof(char *));
 	    c[0] = term->misc.localefilter;
 	    if (u) {
 		c[1] = "-encoding";
@@ -2391,17 +2401,21 @@ main(int argc, char *argv[]ENVP_ARG)
 	ReverseVideo(term);
 #endif /* OPT_COLOR_RES */
 
+#if OPT_MAXIMIZE
+    if (resource.maximized)
+	RequestMaximize(term, True);
+#endif
     for (;;) {
 #if OPT_TEK4014
 	if (TEK4014_ACTIVE(term))
 	    TekRun();
 	else
 #endif
-	    VTRun();
+	    VTRun(term);
     }
 }
 
-#if defined(__osf__) || (defined(__GLIBC__) && !defined(USE_USG_PTYS)) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__) || defined(__APPLE__)
+#if defined(__osf__) || (defined(__GLIBC__) && !defined(USE_USG_PTYS)) || defined(__DragonFly__) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__) || defined(__APPLE__)
 #define USE_OPENPTY 1
 static int opened_tty = -1;
 #endif
@@ -3227,7 +3241,7 @@ spawnXTerm(XtermWidget xw)
 				   False);
 
     if (!TEK4014_ACTIVE(xw))
-	VTInit();		/* realize now so know window size for tty driver */
+	VTInit(xw);		/* realize now so know window size for tty driver */
 #if defined(TIOCCONS) || defined(SRIOCSREDIR)
     if (Console) {
 	/*
@@ -4077,7 +4091,7 @@ spawnXTerm(XtermWidget xw)
 	    {
 		if (tslot > 0 && pw && !resource.utmpInhibit &&
 		    (i = open(etc_utmp, O_WRONLY)) >= 0) {
-		    bzero((char *) &utmp, sizeof(utmp));
+		    memset(&utmp, 0, sizeof(utmp));
 		    (void) strncpy(utmp.ut_line,
 				   my_pty_name(ttydev),
 				   sizeof(utmp.ut_line));
@@ -4127,7 +4141,7 @@ spawnXTerm(XtermWidget xw)
 
 #ifdef USE_LASTLOGX
 	    if (xw->misc.login_shell) {
-		bzero((char *) &lastlogx, sizeof(lastlogx));
+		memset(&lastlogx, 0, sizeof(lastlogx));
 		(void) strncpy(lastlogx.ll_line,
 			       my_pty_name(ttydev),
 			       sizeof(lastlogx.ll_line));
@@ -4143,7 +4157,7 @@ spawnXTerm(XtermWidget xw)
 		size_t size = sizeof(struct lastlog);
 		off_t offset = (screen->uid * size);
 
-		bzero((char *) &lastlog, size);
+		memset(&lastlog, 0, size);
 		(void) strncpy(lastlog.ll_line,
 			       my_pty_name(ttydev),
 			       sizeof(lastlog.ll_line));
@@ -4625,7 +4639,7 @@ Exit(int n)
 	TRACE_IDS;
 #endif
 	if ((wfd = open(etc_utmp, O_WRONLY)) >= 0) {
-	    bzero((char *) &utmp, sizeof(utmp));
+	    memset(&utmp, 0, sizeof(utmp));
 	    lseek(wfd, (long) (tslot * sizeof(utmp)), 0);
 	    write(wfd, (char *) &utmp, sizeof(utmp));
 	    close(wfd);
@@ -4737,14 +4751,14 @@ resize_termcap(XtermWidget xw, char *newtc)
 	}
 	ptr1 += 3;
 	ptr2 += 3;
-	strncpy(newtc, oldtc, i = ptr1 - oldtc);
+	strncpy(newtc, oldtc, i = (size_t) (ptr1 - oldtc));
 	temp = newtc + i;
 	sprintf(temp, "%d", (li_first
 			     ? MaxRows(screen)
 			     : MaxCols(screen)));
 	temp += strlen(temp);
 	ptr1 = strchr(ptr1, ':');
-	strncpy(temp, ptr1, i = ptr2 - ptr1);
+	strncpy(temp, ptr1, i = (size_t) (ptr2 - ptr1));
 	temp += i;
 	sprintf(temp, "%d", (li_first
 			     ? MaxCols(screen)
