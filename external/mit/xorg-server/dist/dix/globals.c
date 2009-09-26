@@ -139,7 +139,7 @@ char *defaultCursorFont = COMPILEDCURSORFONT;
 FontPtr defaultFont;   /* not declared in dix.h to avoid including font.h in
 			every compilation of dix code */
 CursorPtr rootCursor;
-Bool party_like_its_1989 = FALSE;
+Bool party_like_its_1989 = TRUE;
 Bool whiteRoot = FALSE;
 
 int cursorScreenDevPriv[MAXSCREENS];
