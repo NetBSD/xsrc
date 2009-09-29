@@ -1710,6 +1710,9 @@ CARD32 XAAReverseBitOrder(CARD32 data);
 #define IS_OFFSCREEN_PIXMAP(pPix)\
         ((XAA_GET_PIXMAP_PRIVATE((PixmapPtr)(pPix)))->offscreenArea)	
 
+#define PIXMAP_IS_SCREEN(pPix, pGC)\
+        (pPix == pGC->pScreen->GetScreenPixmap(pGC->pScreen))
+ 
 #define PIXMAP_IS_SHARED(pPix)\
         ((XAA_GET_PIXMAP_PRIVATE((PixmapPtr)(pPix)))->flags & SHARED_PIXMAP)
 

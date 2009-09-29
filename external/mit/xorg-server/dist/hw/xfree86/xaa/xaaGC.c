@@ -88,7 +88,8 @@ XAAValidateGC(
 	    pGC->fgPixel = 0x7fffffff;
     }
 
-    if((pDraw->type == DRAWABLE_PIXMAP) && !IS_OFFSCREEN_PIXMAP(pDraw)){
+    if((pDraw->type == DRAWABLE_PIXMAP) && 
+       !IS_OFFSCREEN_PIXMAP(pDraw) && !PIXMAP_IS_SCREEN((PixmapPtr)pDraw, pGC)) {
 	pGCPriv->flags = OPS_ARE_PIXMAP;
         pGCPriv->changes |= changes;
 
