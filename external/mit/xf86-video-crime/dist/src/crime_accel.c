@@ -1,4 +1,4 @@
-/* $NetBSD: crime_accel.c,v 1.10 2009/07/01 03:52:11 macallan Exp $ */
+/* $NetBSD: crime_accel.c,v 1.11 2009/09/29 20:41:22 macallan Exp $ */
 /*
  * Copyright (c) 2008 Michael Lorenz
  * All rights reserved.
@@ -34,6 +34,7 @@
 #include "crime.h"
 #include "picturestr.h"
 #include "xaalocal.h"
+#include "xaa.h"
 
 uint32_t regcache[0x1000];
 
@@ -48,7 +49,7 @@ uint32_t regcache[0x1000];
 #define WRITE4(r, v) { *CRIMEREG(r) = v; }
 #endif
 #define WRITE4ST(r, v) {WBFLUSH; *CRIMEREG(r + CRIME_DE_START) = v; WBFLUSH;}
-#ifdef DEBUG
+#ifdef CRIME_DEBUG
 #define SYNC { int bail = 0; do {bail++; } \
           while(((*CRIMEREG(0x4000) & CRIME_DE_IDLE) == 0) && (bail < 10000000)); \
           if (bail == 10000000) { \
@@ -176,7 +177,6 @@ CrimeSubsequentScreenToScreenCopy
 		WRITE4(CRIME_MTE_SRC1, (rxe << 16) | rye);
 		WRITE4(CRIME_MTE_DST0, (rxd << 16) | ryd);
 		WRITE4ST(CRIME_MTE_DST1, (rxde << 16) | ryde);
-		//xf86Msg(X_ERROR, "MTE");
 
 #ifdef CRIME_DEBUG_LOUD
 		xf86Msg(X_ERROR, "reg: %08x %08x\n", oreg, reg);
@@ -227,6 +227,7 @@ CrimeSetupForSolidFill
 	int i;
 
 	LOG(CRIME_DEBUG_RECTFILL);
+#ifdef MTE_DRAW_RECT
 	if (rop == GXcopy) {
 		fPtr->use_mte = 1;
 		MAKE_ROOM(3);
@@ -237,7 +238,9 @@ CrimeSetupForSolidFill
 		WRITE4(CRIME_MTE_DST_Y_STEP, 1);
 		WRITE4(CRIME_MTE_BG, colour << 8);
 		SYNCMTE;
-	} else {
+	} else
+#endif
+	{
 		fPtr->use_mte = 0;
 		MAKE_ROOM(7);
 		WRITE4(CRIME_DE_PLANEMASK, planemask);
@@ -270,6 +273,7 @@ CrimeSubsequentSolidFillRect
 	int xa, xe, ya, ye;
 
 	LOG(CRIME_DEBUG_RECTFILL);
+#ifdef MTE_DRAW_RECT
 	if (fPtr->use_mte) {
 		
 		/*
@@ -286,7 +290,9 @@ CrimeSubsequentSolidFillRect
 			WRITE4ST(CRIME_MTE_DST1,
 		 	   (((xe << 2) - 1 ) << 16) | ((ye - 1) & 0xffff));
 		}
-	} else {
+	} else 
+#endif
+	{
 		MAKE_ROOM(2);
 		WRITE4(CRIME_DE_X_VERTEX_0, (x << 16) | (y & 0xffff));
 		WRITE4ST(CRIME_DE_X_VERTEX_1,
@@ -582,7 +588,7 @@ CrimeSubsequentSolidTwoPointLine(ScrnInfoPtr pScrn, int x1, int y1, int x2,
 	WRITE4(CRIME_DE_X_VERTEX_0, (x1 << 16) | y1);
 	WRITE4ST(CRIME_DE_X_VERTEX_1, (x2 << 16) | y2);
 	DONE(CRIME_DEBUG_LINES);
-}      
+}
 
 void
 CrimeSetupForDashedLine(ScrnInfoPtr pScrn,
