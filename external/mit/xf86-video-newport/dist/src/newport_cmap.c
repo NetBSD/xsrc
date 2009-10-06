@@ -71,7 +71,8 @@ void NewportRestorePalette(ScrnInfoPtr pScrn)
 	}
 #endif
 	for(i = 0; i < 256; i++) {
-		NewportCmapSetRGB(pNewport->pNewportRegs, i, pNewport->txt_colormap[i]);
+		NewportCmapSetRGB(pNewport->pNewportRegs, i, 
+		    pNewport->txt_colormap[i]);
 	}
 }
 
@@ -80,8 +81,8 @@ void NewportRestorePalette(ScrnInfoPtr pScrn)
 static void NewportCmapFifoWait(NewportRegsPtr pNewportRegs)
 {
         while(1) {
-		pNewportRegs->set.dcbmode = (NPORT_DMODE_ACM0 |  NCMAP_PROTOCOL |
-						NCMAP_REGADDR_SREG | NPORT_DMODE_W1);
+		pNewportRegs->set.dcbmode = (NPORT_DMODE_ACM0 | NCMAP_PROTOCOL |
+		    NCMAP_REGADDR_SREG | NPORT_DMODE_W1);
 		if(!(pNewportRegs->set.dcbdata0.bytes.b3 & 4))
 			break;
         }
@@ -91,6 +92,7 @@ static void NewportCmapFifoWait(NewportRegsPtr pNewportRegs)
 /* set the colormap entry at addr to color */
 void NewportCmapSetRGB( NewportRegsPtr pNewportRegs, unsigned short addr, LOCO color)
 {
+	uint32_t colour;
 	NewportWait(pNewportRegs);	/* this one should not be necessary */
 	NewportBfwait(pNewportRegs);
 	pNewportRegs->set.dcbmode = (NPORT_DMODE_ACMALL | NCMAP_PROTOCOL |
@@ -99,9 +101,9 @@ void NewportCmapSetRGB( NewportRegsPtr pNewportRegs, unsigned short addr, LOCO c
 	pNewportRegs->set.dcbdata0.hwords.s1 = addr;
 	pNewportRegs->set.dcbmode = (NPORT_DMODE_ACMALL | NCMAP_PROTOCOL |
 				 NCMAP_REGADDR_PBUF | NPORT_DMODE_W3);
-	pNewportRegs->set.dcbdata0.all = (color.red << 24) |
-						(color.green << 16) |
+	colour = (color.red << 24) | (color.green << 16) |
 						(color.blue << 8);
+	pNewportRegs->set.dcbdata0.all = colour;
 }
 
 /* get the colormap entry at addr */

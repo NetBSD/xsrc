@@ -397,8 +397,8 @@ struct Newport_regs {
 #   define XM9_CRS_FIFO_AVAIL        (2 << DCB_CRS_SHIFT)
 #       define XM9_FIFO_0_AVAIL      0
 #       define XM9_FIFO_1_AVAIL      1
-#       define XM9_FIFO_2_AVAIL      3
-#       define XM9_FIFO_3_AVAIL      2
+#       define XM9_FIFO_2_AVAIL      2
+#       define XM9_FIFO_3_AVAIL      3
 #       define XM9_FIFO_FULL         XM9_FIFO_0_AVAIL
 #       define XM9_FIFO_EMPTY        XM9_FIFO_3_AVAIL
 #   define XM9_CRS_CURS_CMAP_MSB     (3 << DCB_CRS_SHIFT)
@@ -412,7 +412,7 @@ struct Newport_regs {
 		   (setup << DCB_CSSETUP_SHIFT)|    \
 		   (width << DCB_CSWIDTH_SHIFT))
 
-#define W_DCB_XMAP9_PROTOCOL       DCB_CYCLES (2, 1, 0)
+#define W_DCB_XMAP9_PROTOCOL       DCB_CYCLES (1, 2, 3)
 #define WSLOW_DCB_XMAP9_PROTOCOL   DCB_CYCLES (5, 5, 0)
 #define WAYSLOW_DCB_XMAP9_PROTOCOL DCB_CYCLES (12, 12, 0)
 #define R_DCB_XMAP9_PROTOCOL       DCB_CYCLES (2, 1, 3)
