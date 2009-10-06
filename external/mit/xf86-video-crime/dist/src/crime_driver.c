@@ -1,4 +1,4 @@
-/* $NetBSD: crime_driver.c,v 1.4 2009/09/29 20:41:22 macallan Exp $ */
+/* $NetBSD: crime_driver.c,v 1.5 2009/10/06 06:26:47 macallan Exp $ */
 /*
  * Copyright (c) 2008 Michael Lorenz
  * All rights reserved.
@@ -304,8 +304,6 @@ CrimeProbe(DriverPtr drv, int flags)
 	char *dev;
 	Bool foundScreen = FALSE;
 
-	xf86Msg(X_ERROR, "%s\n", __func__);
-
 	if ((numDevSections = xf86MatchDevice(CRIME_DRIVER_NAME,
 					      &devSections)) <= 0)
 		return FALSE;
@@ -313,45 +311,60 @@ CrimeProbe(DriverPtr drv, int flags)
 
 	if ((fd = crime_open(CRIME_DEFAULT_DEV)) == 0)
 		return FALSE;
-	xf86Msg(X_ERROR, "%s: fd found\n", __func__);
+	xf86Msg(X_DEBUG, "%s: fd found\n", __func__);
 
 	if (ioctl(fd, WSDISPLAYIO_GTYPE, &wstype) == -1)
 		return FALSE;
-	xf86Msg(X_ERROR, "%s: type: %d\n", __func__, wstype);
+	xf86Msg(X_DEBUG, "%s: type: %d\n", __func__, wstype);
 	if (wstype != WSDISPLAY_TYPE_CRIME)
 		return FALSE;
 
-	xf86Msg(X_ERROR, "%s: CRIME found\n", __func__);
+	xf86Msg(X_INFO, "%s: CRIME found\n", __func__);
 
-	if (flags & PROBE_DETECT)
+	if ( xf86DoConfigure && xf86DoConfigurePass1 ) {
+		GDevPtr pGDev;
+
+		xf86Msg(X_DEBUG, "writing device section\n");
+		pGDev = xf86AddBusDeviceToConfigure(CRIME_DRIVER_NAME, BUS_NONE,
+			NULL, 0);
+		if (pGDev) {
+			/*
+			 * XF86Match???Instances() treat chipID and chipRev as
+			 * overrides, so clobber them here.
+			 */
+			xf86Msg(X_DEBUG, "clobbering chipID etc. \n");
+			pGDev->chipID = pGDev->chipRev = -1;
+	    	}
+	}
+
+	if (flags & PROBE_DETECT) {
 		return TRUE;
+	}
 
+	if (numDevSections > 1) {
+		xf86Msg(X_ERROR, "Ignoring additional device sections\n");
+		numDevSections = 1;
+	}
 	/* ok, at this point we know we've got a CRIME */
 	for (i = 0; i < numDevSections; i++) {
 	
-		dev = xf86FindOptionValue(devSections[i]->options, "device");
-		if ((fd = crime_open(dev)) >= 0) {
-			entity = xf86ClaimFbSlot(drv, 0, devSections[i], TRUE);
-			pScrn = xf86ConfigFbEntity(NULL,0,entity,
-						   NULL,NULL,NULL,NULL);
-			if (pScrn != NULL) {
-				foundScreen = TRUE;
-				pScrn->driverVersion = VERSION;
-				pScrn->driverName = CRIME_DRIVER_NAME;
-				pScrn->name = CRIME_NAME;
-				pScrn->Probe = CrimeProbe;
-				pScrn->PreInit = CrimePreInit;
-				pScrn->ScreenInit = CrimeScreenInit;
-				pScrn->SwitchMode = CrimeSwitchMode;
-				pScrn->AdjustFrame = NULL;
-				pScrn->EnterVT = CrimeEnterVT;
-				pScrn->LeaveVT = CrimeLeaveVT;
-				pScrn->ValidMode = CrimeValidMode;
+		entity = xf86ClaimFbSlot(drv, 0, devSections[i], TRUE);
+		pScrn = xf86ConfigFbEntity(NULL, 0, entity,
+		    NULL, NULL, NULL, NULL);
+		if (pScrn != NULL) {
+			foundScreen = TRUE;
+			pScrn->driverVersion = VERSION;
+			pScrn->driverName = CRIME_DRIVER_NAME;
+			pScrn->name = CRIME_NAME;
+			pScrn->Probe = CrimeProbe;
+			pScrn->PreInit = CrimePreInit;
+			pScrn->ScreenInit = CrimeScreenInit;
+			pScrn->SwitchMode = CrimeSwitchMode;
+			pScrn->AdjustFrame = NULL;
+			pScrn->EnterVT = CrimeEnterVT;
+			pScrn->LeaveVT = CrimeLeaveVT;
+			pScrn->ValidMode = CrimeValidMode;
 
-				xf86DrvMsg(pScrn->scrnIndex, X_INFO,
-				    "using %s\n", dev != NULL ? dev :
-				    "default device");
-			}
 		}
 	}
 	xfree(devSections);
