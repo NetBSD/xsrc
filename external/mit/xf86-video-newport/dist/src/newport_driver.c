@@ -246,7 +246,8 @@ NewportFreeRec(ScrnInfoPtr pScrn)
 static void
 NewportIdentify(int flags)
 {
-	xf86PrintChipsets( NEWPORT_NAME, "driver for Newport Graphics Card", NewportChipsets);
+	xf86PrintChipsets( NEWPORT_NAME, "driver for Newport Graphics Card", 
+	    NewportChipsets);
 }
 
 static Bool
@@ -266,9 +267,24 @@ NewportProbe(DriverPtr drv, int flags)
 	if ( numUsed <= 0 ) 
 		return FALSE;
 
-	if(flags & PROBE_DETECT) 
+	if ( xf86DoConfigure && xf86DoConfigurePass1 ) {
+		GDevPtr pGDev;
+		for (i = 0; i < numUsed; i++) {
+			pGDev = xf86AddBusDeviceToConfigure(NEWPORT_DRIVER_NAME,
+				BUS_NONE, NULL, 0);
+			if (pGDev) {
+				/*
+				 * XF86Match???Instances() treat chipID and 
+				 * chipRev as overrides, so clobber them here.
+				 */
+				pGDev->chipID = pGDev->chipRev = -1;
+			}
+	    	}
+	}
+
+	if(flags & PROBE_DETECT) {
 		foundScreen = TRUE;
-	else {
+	} else {
 		for (i = 0; i < numDevSections; i++) {
 			dev = devSections[i];
 			busID =  xf86SetIntOption(dev->options, "BusID", 0);
@@ -281,13 +297,15 @@ NewportProbe(DriverPtr drv, int flags)
 					/* This is a hack because don't have the RAC info(and don't want it).  
 					 * Set it as an ISA entity to get the entity field set up right.
 					 */
-					entity = xf86ClaimIsaSlot(drv, 0, dev, TRUE);
+					entity = xf86ClaimFbSlot(drv, 0, dev,
+					    TRUE);
 					base = (NEWPORT_BASE_ADDR0
 						+ busID * NEWPORT_BASE_OFFSET);
-					RANGE(range[0], base, base + sizeof(NewportRegs),\
-							ResExcMemBlock);
-					pScrn = (void *)xf86ConfigIsaEntity(pScrn, 0, entity, NULL, range, \
-							NULL, NULL, NULL, NULL);
+					RANGE(range[0], base, base +
+					    sizeof(NewportRegs), 
+					    ResExcMemBlock);
+					pScrn = (void *)xf86ConfigFbEntity(NULL,
+					    0, entity, NULL, NULL, NULL, NULL);
 					/* Allocate a ScrnInfoRec */
 					pScrn->driverVersion = NEWPORT_VERSION;
 					pScrn->driverName    = NEWPORT_DRIVER_NAME;
@@ -678,7 +696,7 @@ NewportScreenInit(int index, ScreenPtr pScreen, int argc, char **argv)
 	if (serverGeneration == 1) {
 		xf86ShowUnusedOptions(pScrn->scrnIndex, pScrn->options);
 	}
-	
+	NewportModeInit(pScrn, pScrn->currentMode);
 	return TRUE;
 }
 
@@ -808,9 +826,11 @@ NewportModeInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
 		    ~(XM9_8_BITPLANES | XM9_PUPMODE);
 		NewportBfwait(pNewport->pNewportRegs);
 		/* set up the mode register for 24bpp */
-		mode = XM9_MREG_PIX_SIZE_24BPP | XM9_MREG_PIX_MODE_RGB1
+		mode = XM9_MREG_PIX_SIZE_24BPP | XM9_MREG_PIX_MODE_RGB2
 				| XM9_MREG_GAMMA_BYPASS;
-		NewportXmap9SetModeRegister( pNewportRegs , 0, mode);
+		for (i = 0; i < 32; i++)
+			NewportXmap9SetModeRegister( pNewportRegs , i, mode);
+
 		/* select the set up mode register */
 		NewportBfwait(pNewport->pNewportRegs);
 		pNewportRegs->set.dcbmode = (DCB_XMAP_ALL | W_DCB_XMAP9_PROTOCOL |
@@ -824,22 +844,29 @@ NewportModeInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
 					NPORT_DMODE1_RGBMD | 
 					/* turn on 8888 = RGBA pixel packing */
 					NPORT_DMODE1_HD32 | NPORT_DMODE1_RWPCKD;
-		/* After setting up XMAP9 we have to reinitialize the CMAP for
-		 * whatever reason (the docs say nothing about it). RestorePalette()
-		 * is just a lazy way to do this */
-		/*NewportRestorePalette( pScrn );*/
+		/*
+		 * After setting up XMAP9 we have to reinitialize the CMAP for
+		 * whatever reason (the docs say nothing about it). 
+		 */
+
+
 		for (i = 0; i < 256; i++) {
 			col.red = col.green = col.blue = i;
 			NewportCmapSetRGB(NEWPORTREGSPTR(pScrn), i, col);
-			NewportCmapSetRGB(NEWPORTREGSPTR(pScrn), i + 256, col);
-			NewportCmapSetRGB(NEWPORTREGSPTR(pScrn), i + 512, col);
 		}
+		for (i = 0; i < 256; i++) {
+			col.red = col.green = col.blue = i;
+			NewportCmapSetRGB(NEWPORTREGSPTR(pScrn), i + 0x1f00,
+			    col);
+		}
+
 	}
 	/* blank the framebuffer */
 	NewportWait(pNewportRegs);
-	pNewportRegs->set.drawmode0 = (NPORT_DMODE0_DRAW | NPORT_DMODE0_DOSETUP |
-					NPORT_DMODE0_STOPX | NPORT_DMODE0_STOPY |
-					NPORT_DMODE0_BLOCK);
+	pNewportRegs->set.drawmode0 = (NPORT_DMODE0_DRAW |
+				       NPORT_DMODE0_DOSETUP |
+				       NPORT_DMODE0_STOPX | NPORT_DMODE0_STOPY |
+				       NPORT_DMODE0_BLOCK);
 	pNewportRegs->set.drawmode1 = pNewport->drawmode1 |
 					NPORT_DMODE1_FCLR |
 					NPORT_DMODE1_RGBMD;
