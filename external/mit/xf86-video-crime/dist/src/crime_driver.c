@@ -1,4 +1,4 @@
-/* $NetBSD: crime_driver.c,v 1.2.2.4 2009/09/17 03:33:50 snj Exp $ */
+/* $NetBSD: crime_driver.c,v 1.2.2.5 2009/10/16 06:20:23 snj Exp $ */
 /*
  * Copyright (c) 2008 Michael Lorenz
  * All rights reserved.
@@ -71,11 +71,6 @@
 #endif
 
 #define CRIME_DEFAULT_DEV "/dev/ttyE0"
-
-#define DEBUG 1
-#ifndef DEBUG
-#define DEBUG 0
-#endif
 
 /* Prototypes */
 #ifdef XFree86LOADER
@@ -293,7 +288,7 @@ crime_mmap(size_t len, off_t off, int fd, int ro)
 	if (mapaddr == (pointer) -1) {
 		mapaddr = NULL;
 	}
-#if DEBUG
+#ifdef CRIME_DEBUG
 	ErrorF("mmap returns: addr %p len 0x%x\n", mapaddr, len);
 #endif
 	return mapaddr;
@@ -531,7 +526,7 @@ CrimeScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 	int wsmode = WSDISPLAYIO_MODE_DUMBFB;
 	size_t len;
 
-#if DEBUG
+#ifdef CRIME_DEBUG
 	ErrorF("\tbitsPerPixel=%d, depth=%d, defaultVisual=%s\n"
 	       "\tmask: %x,%x,%x, offset: %d,%d,%d\n",
 	       pScrn->bitsPerPixel,
@@ -564,13 +559,22 @@ CrimeScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 	}
 
 	memset(fPtr->linear, 0, 0x10000);
-	fPtr->fb = crime_mmap(8192 * fPtr->info.width, 0, fPtr->fd, 0);
+#ifdef CRIME_DEBUG
+	fPtr->fb = crime_mmap(8192 * fPtr->info.height, 0, fPtr->fd, 1);
 	if (fPtr->fb == NULL) {
 		xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
 			   "crime_mmap fb: %s\n", strerror(errno));
 		return FALSE;
 	}
-	
+#else
+	fPtr->fb = malloc(8192 * fPtr->info.height);
+	if (fPtr->fb == NULL) {
+		xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
+			   "Cannot allocate fake fb: %s\n", strerror(errno));
+		return FALSE;
+	}
+#endif
+
 	CrimeSave(pScrn);
 	pScrn->vtSema = TRUE;
 
@@ -686,6 +690,14 @@ CrimeCloseScreen(int scrnIndex, ScreenPtr pScreen)
 			xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
 				   "munmap linear: %s\n", strerror(errno));
 		}
+#ifdef CRIME_DEBUG
+		if (munmap(fPtr->fb, 8192 * fPtr->info.height) == -1) {
+			xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
+				   "munmap fb: %s\n", strerror(errno));
+		}
+#else
+		free(fPtr->fb);
+#endif
 
 		fPtr->engine = NULL;
 		fPtr->linear = NULL;
@@ -714,9 +726,6 @@ CrimeLeaveVT(int scrnIndex, int flags)
 static Bool
 CrimeSwitchMode(int scrnIndex, DisplayModePtr mode, int flags)
 {
-#if DEBUG
-	ScrnInfoPtr pScrn = xf86Screens[scrnIndex];
-#endif
 
 	/* Nothing else to do */
 	return TRUE;
@@ -725,9 +734,6 @@ CrimeSwitchMode(int scrnIndex, DisplayModePtr mode, int flags)
 static int
 CrimeValidMode(int scrnIndex, DisplayModePtr mode, Bool verbose, int flags)
 {
-#if DEBUG
-	ScrnInfoPtr pScrn = xf86Screens[scrnIndex];
-#endif
 
 	return MODE_OK;
 }
