@@ -1,4 +1,4 @@
-/* $NetBSD: crime_accel.c,v 1.3.2.10 2009/10/16 06:20:23 snj Exp $ */
+/* $NetBSD: crime_accel.c,v 1.3.2.11 2009/10/16 06:53:28 snj Exp $ */
 /*
  * Copyright (c) 2008 Michael Lorenz
  * All rights reserved.
@@ -1704,9 +1704,11 @@ CrimeComposite(
 		return FALSE;
 
 	if((pDst->pDrawable->type == DRAWABLE_WINDOW) ||
-	    IS_OFFSCREEN_PIXMAP(pDst->pDrawable)) {
+	    IS_OFFSCREEN_PIXMAP(pDst->pDrawable) ||
+	    PIXMAP_IS_SCREEN(pDst->pDrawable)) {
 		if ((pSrc->pDrawable->type == DRAWABLE_WINDOW) ||
-		    IS_OFFSCREEN_PIXMAP(pSrc->pDrawable)) {
+		    IS_OFFSCREEN_PIXMAP(pSrc->pDrawable) ||
+		    PIXMAP_IS_SCREEN(pSrc->pDrawable)) {
 			/* screen-to-screen */
 			CrimeDoScreenToScreenComposite(op, pSrc, pMask, pDst,
 			    xSrc, ySrc, xMask, yMask,
