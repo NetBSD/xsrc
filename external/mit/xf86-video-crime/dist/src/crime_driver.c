@@ -1,4 +1,4 @@
-/* $NetBSD: crime_driver.c,v 1.2.2.6 2009/10/16 06:54:59 snj Exp $ */
+/* $NetBSD: crime_driver.c,v 1.2.2.7 2009/10/16 06:56:02 snj Exp $ */
 /*
  * Copyright (c) 2008 Michael Lorenz
  * All rights reserved.
@@ -311,11 +311,9 @@ CrimeProbe(DriverPtr drv, int flags)
 
 	if ((fd = crime_open(CRIME_DEFAULT_DEV)) == 0)
 		return FALSE;
-	xf86Msg(X_DEBUG, "%s: fd found\n", __func__);
 
 	if (ioctl(fd, WSDISPLAYIO_GTYPE, &wstype) == -1)
 		return FALSE;
-	xf86Msg(X_DEBUG, "%s: type: %d\n", __func__, wstype);
 	if (wstype != WSDISPLAY_TYPE_CRIME)
 		return FALSE;
 
@@ -324,7 +322,6 @@ CrimeProbe(DriverPtr drv, int flags)
 	if ( xf86DoConfigure && xf86DoConfigurePass1 ) {
 		GDevPtr pGDev;
 
-		xf86Msg(X_DEBUG, "writing device section\n");
 		pGDev = xf86AddBusDeviceToConfigure(CRIME_DRIVER_NAME, BUS_NONE,
 			NULL, 0);
 		if (pGDev) {
@@ -332,7 +329,6 @@ CrimeProbe(DriverPtr drv, int flags)
 			 * XF86Match???Instances() treat chipID and chipRev as
 			 * overrides, so clobber them here.
 			 */
-			xf86Msg(X_DEBUG, "clobbering chipID etc. \n");
 			pGDev->chipID = pGDev->chipRev = -1;
 	    	}
 	}
