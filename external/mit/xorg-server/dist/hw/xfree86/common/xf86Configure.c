@@ -123,6 +123,9 @@ xf86AddBusDeviceToConfigure(const char *driver, BusType bus, void *busData, int 
 		return NULL;
 	break;
 #endif
+    case BUS_NONE:
+    case BUS_ISA:
+    	break;
     default:
 	return NULL;
     }
@@ -215,6 +218,11 @@ xf86AddBusDeviceToConfigure(const char *driver, BusType bus, void *busData, int 
 	}
 	break;
 #endif
+    case BUS_ISA: {
+        NewDevice.GDev.busID = xnfalloc(6);
+        strcpy(NewDevice.GDev.busID, "ISA");
+    }
+    break;
     default:
 	break;
     }
