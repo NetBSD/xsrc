@@ -14,19 +14,19 @@ static void NewportXmap9FifoWait(NewportRegsPtr pNewportRegs, unsigned long xmap
 void 
 NewportVc2Set(NewportRegsPtr pNewportRegs, unsigned char vc2Ireg, unsigned short val)
 {
-	pNewportRegs->set.dcbmode = (NPORT_DMODE_AVC2 | VC2_REGADDR_INDEX | NPORT_DMODE_W3 |
-					NPORT_DMODE_ECINC | VC2_PROTOCOL);
+	pNewportRegs->set.dcbmode = (NPORT_DMODE_AVC2 | VC2_REGADDR_INDEX | 
+	    NPORT_DMODE_W3 | NPORT_DMODE_ECINC | VC2_PROTOCOL);
 	pNewportRegs->set.dcbdata0.all = (vc2Ireg << 24) | (val << 8);
 }
 
 unsigned short 
 NewportVc2Get(NewportRegsPtr pNewportRegs, unsigned char vc2Ireg)
 {
-	pNewportRegs->set.dcbmode = (NPORT_DMODE_AVC2 | VC2_REGADDR_INDEX | NPORT_DMODE_W1 |
-					NPORT_DMODE_ECINC | VC2_PROTOCOL);
+	pNewportRegs->set.dcbmode = (NPORT_DMODE_AVC2 | VC2_REGADDR_INDEX | 
+	    NPORT_DMODE_W1 | NPORT_DMODE_ECINC | VC2_PROTOCOL);
 	pNewportRegs->set.dcbdata0.bytes.b3 = vc2Ireg;
-	pNewportRegs->set.dcbmode = (NPORT_DMODE_AVC2 | VC2_REGADDR_IREG | NPORT_DMODE_W2 |
-					NPORT_DMODE_ECINC | VC2_PROTOCOL);
+	pNewportRegs->set.dcbmode = (NPORT_DMODE_AVC2 | VC2_REGADDR_IREG | 
+	    NPORT_DMODE_W2 | NPORT_DMODE_ECINC | VC2_PROTOCOL);
 	return pNewportRegs->set.dcbdata0.hwords.s1;
 }
 
@@ -106,7 +106,7 @@ NewportXmap9FifoWait(NewportRegsPtr pNewportRegs, unsigned long xmapChip)
 	while(1) {
 		NewportBfwait( pNewportRegs);
 		pNewportRegs->set.dcbmode = (xmapChip | R_DCB_XMAP9_PROTOCOL |
-						XM9_CRS_FIFO_AVAIL | NPORT_DMODE_W1);
+		    XM9_CRS_FIFO_AVAIL | NPORT_DMODE_W1);
 		if( (pNewportRegs->set.dcbdata0.bytes.b3) & 7 ) 
 			break;
 	}
