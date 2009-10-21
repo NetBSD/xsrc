@@ -1,4 +1,4 @@
-/* $NetBSD: crime_accel.c,v 1.12 2009/10/06 06:25:47 macallan Exp $ */
+/* $NetBSD: crime_accel.c,v 1.13 2009/10/21 03:28:40 macallan Exp $ */
 /*
  * Copyright (c) 2008 Michael Lorenz
  * All rights reserved.
@@ -35,12 +35,12 @@
 #include "picturestr.h"
 #include "xaalocal.h"
 #include "xaa.h"
+#include "mipict.h"
 
 uint32_t regcache[0x1000];
 
 #define CRIMEREG(p) (volatile uint32_t *)(fPtr->engine + p)
-/*#define WBFLUSH { volatile uint32_t boo = *CRIMEREG(0x4000); }*/
-#define WBFLUSH __asm__ ("nop; sync;")
+#define WBFLUSH __asm("sync")
 #if 0
 #define WRITE4(r, v) {if (regcache[r >> 2] != v) { \
 			*CRIMEREG(r) = v; \
@@ -60,8 +60,8 @@ uint32_t regcache[0x1000];
         }
 #else
 #define SYNC do {} while ((*CRIMEREG(0x4000) & CRIME_DE_IDLE) == 0)
-#define SYNCMTE do {} while ((*CRIMEREG(0x4000) & CRIME_DE_MTE_IDLE) == 0)
 #endif
+#define SYNCMTE do {} while ((*CRIMEREG(0x4000) & CRIME_DE_MTE_IDLE) == 0)
 #define MAKE_ROOM(x) do {} while ((16 - \
 				   CRIME_PIPE_LEVEL(*CRIMEREG(0x4000))) < x);
 
@@ -75,7 +75,7 @@ void
 CrimeSync(ScrnInfoPtr pScrn)
 {
 	CrimePtr fPtr = CRIMEPTR(pScrn);
-#ifdef CRIME_DEBUG_LOUD
+#if defined(CRIME_DEBUG_LOUD) && (CRIME_DEBUG_MASK & CRIME_DEBUG_SYNC)
 	volatile uint32_t *status = CRIMEREG(CRIME_DE_STATUS);
 
 	xf86Msg(X_ERROR, "%s: %08x\n", __func__, *status);
@@ -149,11 +149,11 @@ CrimeSubsequentScreenToScreenCopy
 	uint32_t rxa, rya, rxe, rye, rxs, rys, rxd, ryd, rxde, ryde;
 
 	LOG(CRIME_DEBUG_BITBLT);
-#ifdef CRIME_DEBUG_LOUD
+#if defined(CRIME_DEBUG_LOUD) && (CRIME_DEBUG_MASK & CRIME_DEBUG_BITBLT)
 	xf86Msg(X_ERROR, "%s: %d, %d; %d x %d -> %d %d\n", __func__,
 	    xSrc, ySrc, w, h, xDst, yDst);
 #endif
-	if ((fPtr->use_mte) && (w > 64) && /*((w & 3) == 0) &&*/
+	if ((fPtr->use_mte) && (w > 64) && (abs(ySrc - yDst) > 4) &&
 	   ((xSrc & 15) == (xDst & 15))) {
 		if (fPtr->ydir == -1) {
 			/* bottom to top */
@@ -178,9 +178,6 @@ CrimeSubsequentScreenToScreenCopy
 		WRITE4(CRIME_MTE_DST0, (rxd << 16) | ryd);
 		WRITE4ST(CRIME_MTE_DST1, (rxde << 16) | ryde);
 
-#ifdef CRIME_DEBUG_LOUD
-		xf86Msg(X_ERROR, "reg: %08x %08x\n", oreg, reg);
-#endif
 	} else {
 		if (fPtr->xdir == -1) {
 			prim |= DE_PRIM_RL;
@@ -397,7 +394,7 @@ CrimeSetupForScanlineImageWrite(ScrnInfoPtr pScrn, int rop,
 	CrimePtr fPtr = CRIMEPTR(pScrn);
 
 	LOG(CRIME_DEBUG_IMAGEWRITE);
-#ifdef CRIME_DEBUG_LOUD
+#if defined(CRIME_DEBUG_LOUD) && (CRIME_DEBUG_MASK & CRIME_DEBUG_IMAGEWRITE)
 	if ((bpp == 24) || (depth == 24))
 	xf86Msg(X_ERROR, "%s: %d %d \n", __func__, bpp, depth);
 #endif
@@ -426,7 +423,7 @@ CrimeSubsequentImageWriteRect(ScrnInfoPtr pScrn,
 
 	LOG(CRIME_DEBUG_IMAGEWRITE);
 
-#ifdef CRIME_DEBUG_LOUD
+#if defined(CRIME_DEBUG_LOUD) && (CRIME_DEBUG_MASK & CRIME_DEBUG_IMAGEWRITE)
 	xf86Msg(X_ERROR, "%s: %d %d %d %d\n", __func__, x, y, w, h);
 #endif
 
@@ -728,6 +725,7 @@ CrimeSetupForCPUToScreenAlphaTexture (
 		xf86Msg(X_ERROR, "ARGB mask %08x %d\n", (uint32_t)alphaPtr,
 		    alphaPitch);
 	}
+	xf86Msg(X_ERROR, "%s: %x %x %x\n", __func__, red, green, blue);
 #endif
 	MAKE_ROOM(7);
 	WRITE4(CRIME_DE_MODE_DST, DE_MODE_TLB_A | DE_MODE_BUFDEPTH_32 |
@@ -835,7 +833,7 @@ CrimeSubsequentCPUToScreenAlphaTexture32 (
 	int bufnum = 0;
 
 	LOG(CRIME_DEBUG_XRENDER);
-#ifdef CRIME_DEBUG_LOUD
+#ifdef CRIME_DEBUG_LOUD_
 	xf86Msg(X_ERROR, "%d %d %d %d %d %d\n",srcx, srcy, dstx, dsty, width, 
 	    height); 
 #endif
@@ -845,7 +843,7 @@ CrimeSubsequentCPUToScreenAlphaTexture32 (
 		sptr = (uint32_t *)aptr;
 		for (j = 0; j < width; j++) {
 			*dptr = (*sptr >> 24) | fPtr->alpha_color;
-#ifdef CRIME_DEBUG_LOUD
+#ifdef CRIME_DEBUG_LOUD_
 			xf86Msg(X_ERROR, "%08x %08x\n", *sptr, *dptr);
 #endif
 			sptr++;
@@ -1098,7 +1096,7 @@ CrimeSubsequentCPUToScreenTextureMask32(
 	}
 
 #ifdef CRIME_DEBUG_LOUD
-	xf86Msg(X_ERROR, "ARGB %08x %d\n", (uint32_t)aptr, fPtr->uw);
+	xf86Msg(X_ERROR, "ARGB %08x %d\n", (uint32_t)asptr, fPtr->uw);
 #endif
 	lcnt = fPtr->uh - srcy;
 	for (i = 0; i < height; i++) {
@@ -1204,7 +1202,7 @@ CrimeSubsequentCPUToScreenTextureMask8(
 	}
 
 #ifdef CRIME_DEBUG_LOUD
-	xf86Msg(X_ERROR, "ARGB %08x %d\n", (uint32_t)aptr, fPtr->uw);
+	xf86Msg(X_ERROR, "ARGB %08x %d\n", (uint32_t)asptr, fPtr->uw);
 #endif
 	lcnt = fPtr->uh;
 	for (i = 0; i < height; i++) {
@@ -1317,12 +1315,13 @@ CrimeDoCPUToScreenComposite(
 	if(pMask) {
 		CARD16 red, green, blue, alpha;
 		CARD32 pixel =
-		    *((CARD32*)(((PixmapPtr)(pSrc->pDrawable))->devPrivate.ptr));
+		   *((CARD32*)(((PixmapPtr)(pSrc->pDrawable))->devPrivate.ptr));
 #ifdef CRIME_DEBUG_LOUD
 		if(pMask->componentAlpha) {
 			xf86Msg(X_ERROR, "%s: alpha component mask\n", 
 			    __func__);
-			xf86Msg(X_ERROR, "src: %d x %d\n", pSrc->pDrawable->width,
+			xf86Msg(X_ERROR, "src: %d x %d\n",
+			    pSrc->pDrawable->width,
 			    pSrc->pDrawable->height);
 		}
 #endif 
@@ -1331,9 +1330,14 @@ CrimeDoCPUToScreenComposite(
 
 			if(!XAAGetRGBAFromPixel(pixel, &red, &green, &blue, 
 			    &alpha, pSrc->format)) {
-				xf86Msg(X_ERROR, "%s: can't read pixel\n", __func__);
+				xf86Msg(X_ERROR, "%s: can't read pixel\n", 
+				    __func__);
 				return;
 			}
+#ifdef CRIME_DEBUG_LOUD
+			xf86Msg(X_ERROR, "RGBA: %d %d %d %d\n", red, green, 
+			    blue, alpha);
+#endif
 			xMask += pMask->pDrawable->x;
 			yMask += pMask->pDrawable->y;	
 
@@ -1372,13 +1376,16 @@ CrimeDoCPUToScreenComposite(
 				while(nbox--) {
 					skipleft = pbox->x1 + xMask;
 
-					(*infoRec->WriteBitmap)(infoRec->pScrn, 					    pbox->x1, pbox->y1,
+					(*infoRec->WriteBitmap)(infoRec->pScrn, 					    	    pbox->x1, pbox->y1,
 					    pbox->x2 - pbox->x1, 
 					    pbox->y2 - pbox->y1,
-					    (unsigned char*)(pPix->devPrivate.ptr) + 					    (pPix->devKind *
-					    (pbox->y1 + yMask)) + ((skipleft >> 3) & ~3), 
-					    pPix->devKind, skipleft & 31, pixel, -1,
-					    GXcopy, ~0);
+					    (unsigned char*) 
+					        (pPix->devPrivate.ptr) +
+						(pPix->devKind *
+					        (pbox->y1 + yMask)) + 
+						((skipleft >> 3) & ~3), 
+					    pPix->devKind, skipleft & 31, pixel,
+					    -1, GXcopy, ~0);
 					pbox++;
 				}
 
@@ -1411,8 +1418,9 @@ CrimeDoCPUToScreenComposite(
 					return;
 				}
 
-				CrimeSetupForCPUToScreenAlphaTexture(infoRec->pScrn,
-				    op, red, green, blue, alpha, pMask->format, 
+				CrimeSetupForCPUToScreenAlphaTexture( 
+				    infoRec->pScrn, op, red, green, blue, alpha,
+				    pMask->format,
 				    ((PixmapPtr)(pMask->pDrawable))->devPrivate.ptr,
 				    ((PixmapPtr)(pMask->pDrawable))->devKind, 
 				    w, h, flags);
@@ -1433,8 +1441,10 @@ CrimeDoCPUToScreenComposite(
 					while(nbox--) {
 						CrimeSubsequentCPUToScreenAlphaTexture(
 						    infoRec->pScrn,
-						    pbox->x1, pbox->y1, pbox->x1 + xMask,
-						    pbox->y1 + yMask, pbox->x2 - pbox->x1,
+						    pbox->x1, pbox->y1,
+						    pbox->x1 + xMask,
+						    pbox->y1 + yMask,
+						    pbox->x2 - pbox->x1,
 						    pbox->y2 - pbox->y1);
 						pbox++;
 					}
@@ -1444,7 +1454,8 @@ CrimeDoCPUToScreenComposite(
 				DONE(CRIME_DEBUG_XRENDER);
 				return;
 			} else {
-				xf86Msg(X_ERROR, "unknown mask %x\n", pMask->format);
+				xf86Msg(X_ERROR, "unknown mask %x\n", 
+				    pMask->format);
 			}
 			REGION_UNINIT(pScreen, &region);
 			DONE(CRIME_DEBUG_XRENDER);
@@ -1489,7 +1500,8 @@ CrimeDoCPUToScreenComposite(
 					    pbox->x1, pbox->y1,
 					    pbox->x1 + xSrc, pbox->y1 + ySrc,
 					    xMask, yMask,
-					    pbox->x2 - pbox->x1, pbox->y2 - pbox->y1);
+					    pbox->x2 - pbox->x1,
+					    pbox->y2 - pbox->y1);
 					pbox++;
 				}
 			} else {
@@ -1594,7 +1606,7 @@ CrimeDoScreenToScreenComposite(
 	BoxPtr pbox;
 	int nbox;
 	int xs, ys, xd, yd, w, h;
-
+xf86Msg(X_ERROR, "CRIME screen-to-screen composite\n");
 	LOG(CRIME_DEBUG_XRENDER);
 	if (pSrc->transform || (pMask && pMask->transform)) {
 		xf86Msg(X_ERROR, "%s: mask?!\n", __func__);
@@ -1697,11 +1709,19 @@ CrimeComposite(
 
 	LOG(CRIME_DEBUG_XRENDER);
 
-	if(!REGION_NUM_RECTS(pDst->pCompositeClip))
+	if(!REGION_NUM_RECTS(pDst->pCompositeClip)) {
+#ifdef CRIME_DEBUG_LOUD
+		xf86Msg(X_ERROR, "%s: empty clip\n", __func__);
+#endif
 		return TRUE;
+	}
 
-	if(!infoRec->pScrn->vtSema)
+	if(!infoRec->pScrn->vtSema) {
+#ifdef CRIME_DEBUG_LOUD
+		xf86Msg(X_ERROR, "%s: semaphore\n", __func__);
+#endif
 		return FALSE;
+	}
 
 	if((pDst->pDrawable->type == DRAWABLE_WINDOW) ||
 	    IS_OFFSCREEN_PIXMAP(pDst->pDrawable) ||
@@ -1725,17 +1745,77 @@ CrimeComposite(
 		}
 	} else {
 		if ((pSrc->pDrawable->type == DRAWABLE_WINDOW) ||
-		    IS_OFFSCREEN_PIXMAP(pSrc->pDrawable)) {
-			/* screen-to-RAM */
+		    IS_OFFSCREEN_PIXMAP(pSrc->pDrawable) ||
+		    PIXMAP_IS_SCREEN(pSrc->pDrawable)) {
+			/* 
+			 * screen-to-RAM
+			 * Download from screen, then composite
+			 */
 			xf86Msg(X_ERROR, "%s: screen-to-RAM composite\n", 
 			   __func__);
 			return TRUE;
 		} else {
 			/* RAM-to-RAM */
+#ifdef CRIME_DEBUG_LOUD
+			xf86Msg(X_ERROR, "%s: fallback %d, %08x %08x %08x\n", 
+			    __func__, op, (uint32_t)pSrc->format, 
+			    (uint32_t)pDst->format,
+			    pMask == NULL ? 0 : (uint32_t)pMask->format);
+#endif
+#if 0
 			return FALSE;
+#else
+			return fbComposite(op, pSrc, pMask, pDst, xSrc, ySrc, 
+			    xMask, yMask, xDst, yDst, width, height);
+#endif
 		}
 	}
 	xf86Msg(X_ERROR, "composite fucked\n");
+}
+
+static Bool
+CrimeGlyphs (CARD8	op,
+	  PicturePtr	pSrc,
+	  PicturePtr	pDst,
+	  PictFormatPtr	maskFormat,
+	  INT16		xSrc,
+	  INT16		ySrc,
+	  int		nlist,
+	  GlyphListPtr	list,
+	  GlyphPtr	*glyphs)
+{
+	ScreenPtr	pScreen = pDst->pDrawable->pScreen;
+	PicturePtr	pPicture;
+	GlyphPtr	glyph;
+	int		xDst = list->xOff, yDst = list->yOff;
+	int		x = 0, y = 0, i, n;
+
+	while (nlist--)     {
+		x += list->xOff;
+		y += list->yOff;
+		n = list->len;
+		while (n--) {
+			glyph = *glyphs++;
+			pPicture = GlyphPicture (glyph)[pScreen->myNum];
+
+			CrimeComposite (op,
+				  pSrc,
+				  pPicture,
+				  pDst,
+				  xSrc + (x - glyph->info.x) - xDst,
+				  ySrc + (y - glyph->info.y) - yDst,
+				  0, 0,
+				  x - glyph->info.x,
+				  y - glyph->info.y,
+				  glyph->info.width,
+				  glyph->info.height);
+
+			x += glyph->info.xOff;
+			y += glyph->info.yOff;
+		}
+		list++;
+	}
+	return TRUE;
 }
 
 static void
@@ -1936,6 +2016,7 @@ CrimeReadPixmap(ScrnInfoPtr pScrn,
 	DONE(CRIME_DEBUG_IMAGEREAD);
 
 }
+
 int
 CrimeAccelInit(ScrnInfoPtr pScrn)
 {
@@ -2066,6 +2147,7 @@ CrimeAccelInit(ScrnInfoPtr pScrn)
 	pXAAInfo->CPUToScreenTextureFlags = 0;
 	pXAAInfo->CPUToScreenTextureFormats = CrimeTextureFormats;
 	pXAAInfo->Composite = CrimeComposite;
+	pXAAInfo->Glyphs = CrimeGlyphs;
 #endif
 	pXAAInfo->ValidatePolyPoint = CrimeValidatePolyPoint;
 	pXAAInfo->PolyPointMask = GCFunction;
