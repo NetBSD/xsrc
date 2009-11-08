@@ -18,10 +18,6 @@ libXau_la_SOURCES = \
 	AuUnlock.c \
 	AuWrite.c
 
-if KERBEROS
-libXau_la_SOURCES +=k5encode.c
-endif KERBEROS
-
 xauincludedir=$(includedir)/X11
 
 xauinclude_HEADERS = include/X11/Xauth.h
@@ -56,7 +52,7 @@ LIB_MAN_DIR_SUFFIX = $(LIB_MAN_DIR:@mandir@/man%=%)
 
 libmandir = $(LIB_MAN_DIR)
 libman_PRE = Xau.man
-BUILT_SOURCES = shadows.DONE
+BUILT_SOURCES = $(Xau_shadows:=.@LIB_MAN_SUFFIX@)
 CLEANFILES = $(libman_DATA) $(BUILT_SOURCES) $(lintlib_DATA)
 libman_DATA = $(libman_PRE:man=@LIB_MAN_SUFFIX@) \
 	      $(Xau_shadows:=.@LIB_MAN_SUFFIX@)
@@ -73,12 +69,9 @@ Xau_shadows =                               \
     XauGetAuthByAddr                        \
     XauGetBestAuthByAddr
 
-shadows.DONE:
-	-rm -f $(Xau_shadows:=.@LIB_MAN_SUFFIX@)
-	(for i in $(Xau_shadows:=.@LIB_MAN_SUFFIX@) ; do \
-	 echo .so man$(LIB_MAN_DIR_SUFFIX)/Xau.$(LIB_MAN_SUFFIX) > $$i; \
-	 done)
-	touch shadows.DONE
+Xau_shadows_man = $(Xau_shadows:=.@LIB_MAN_SUFFIX@)
+$(Xau_shadows_man):
+	echo .so man$(LIB_MAN_DIR_SUFFIX)/Xau.$(LIB_MAN_SUFFIX) > $@
 
 XORGRELSTRING = @PACKAGE_STRING@
   XORGMANNAME = X Version 11
@@ -90,6 +83,6 @@ Xau.$(LIB_MAN_SUFFIX): $(srcdir)/Xau.man
 .PHONY: ChangeLog
 
 ChangeLog:
-	(GIT_DIR=$(top_srcdir)/.git git-log > .changelog.tmp && mv .changelog.tmp ChangeLog; rm -f .changelog.tmp) || (touch ChangeLog; echo 'git directory not found: installing possibly empty changelog.' >&2)
+	$(CHANGELOG_CMD)
 
 dist-hook: ChangeLog
