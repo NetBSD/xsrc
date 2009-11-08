@@ -1,6 +1,4 @@
 /*
- * $Id: AddTrap.c,v 1.1.1.1 2008/07/30 02:56:06 mrg Exp $
- *
  * Copyright © 2004 Keith Packard
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
