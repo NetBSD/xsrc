@@ -6,4 +6,16 @@ xproxymng_HEADERS = \
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = xproxymngproto.pc
 
-EXTRA_DIST = autogen.sh xproxymngproto.pc.in
+dist_doc_DATA = PM_spec
+
+EXTRA_DIST = xproxymngproto.pc.in
+
+EXTRA_DIST += ChangeLog
+MAINTAINERCLEANFILES = ChangeLog
+
+.PHONY: ChangeLog
+
+ChangeLog:
+	$(CHANGELOG_CMD)
+
+dist-hook: ChangeLog
