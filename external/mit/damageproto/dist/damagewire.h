@@ -1,6 +1,4 @@
 /*
- * $Id: damagewire.h,v 1.1.1.1 2008/07/29 05:24:33 mrg Exp $
- *
  * Copyright © 2003 Keith Packard
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
