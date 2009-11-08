@@ -3,7 +3,7 @@ dnl Process this file with autoconf to create configure.
 AC_PREREQ([2.57])
 
 AC_INIT([libXaw],
-	1.0.6,
+	1.0.7,
 	[https://bugs.freedesktop.org/enter_bug.cgi?product=xorg],
 	libXaw)
 
@@ -11,24 +11,47 @@ AM_INIT_AUTOMAKE([dist-bzip2])
 
 AM_CONFIG_HEADER(config.h)
 
-# Require xorg-macros: XORG_WITH_LINT, XORG_CWARNFLAGS, XORG_CHANGELOG
-m4_ifndef([XORG_MACROS_VERSION], [AC_FATAL([must install xorg-macros 1.2.1 or later before running autoconf/autogen])])
-XORG_MACROS_VERSION(1.2.1)
+# Require xorg-macros: XORG_WITH_LINT, XORG_DEFAULT_OPTIONS
+m4_ifndef([XORG_MACROS_VERSION],
+	  [m4_fatal([must install xorg-macros 1.3 or later before running autoconf/autogen])])
+XORG_MACROS_VERSION(1.3)
 
 # Check for progs
 AC_PROG_CC
 AC_PROG_LIBTOOL
+AC_PROG_AWK
+AC_PROG_SED
+
+AC_PATH_PROGS([GROFF], [groff], [none], [$PATH:/usr/gnu/bin])
+
+AC_MSG_CHECKING([whether to build documentation])
+AC_ARG_ENABLE(docs, AC_HELP_STRING([--enable-docs],
+				   [Enable building of Xaw documentation]),
+	      [build_docs="${enableval}"], [build_docs="auto"])
+
+if test "x${build_docs}" = xauto; then
+    if test "x${GROFF}" = xnone ; then
+	build_docs=no
+    else
+	build_docs=yes
+    fi
+fi
+AC_MSG_RESULT([${build_docs}])
+if test "x${build_docs}" = xyes && test "x${GROFF}" = xnone ; then
+    AC_MSG_ERROR([can't build documentation without groff])
+fi
+
+AM_CONDITIONAL(BUILD_DOCS, [test x$build_docs = xyes])
 
 # Need to call this explicitly since the first call to PKG_CHECK_MODULES
 # is in an if statement, and later calls would break if it's skipped.
 PKG_PROG_PKG_CONFIG
 
-XORG_CWARNFLAGS
+XORG_DEFAULT_OPTIONS
 
 #
 # fix libtool to set SONAME to libXaw.so.$major
 #
-AC_PROG_SED
 AC_CONFIG_COMMANDS([libtool_hack], [
 	cp -f libtool libtool_
 	test -z "$SED" && SED=sed
@@ -66,7 +89,6 @@ AC_ARG_ENABLE(xaw6, AC_HELP_STRING([--disable-xaw6],
 
 if test "x$build_v6" = xyes; then
    PKG_CHECK_MODULES(XAW6, xproto x11 xext xextproto xt xmu)
-   XAW6_CFLAGS="$CWARNFLAGS $XAW6_CFLAGS"
    AC_SUBST(XAW6_CFLAGS)
    AC_SUBST(XAW6_LIBS)
 fi
@@ -80,7 +102,6 @@ AC_ARG_ENABLE(xaw7, AC_HELP_STRING([--disable-xaw7],
 
 if test "x$build_v7" = xyes; then
    PKG_CHECK_MODULES(XAW7, xproto x11 xext xextproto xt xmu xpm)
-   XAW7_CFLAGS="$CWARNFLAGS $XAW7_CFLAGS"
    AC_SUBST(XAW7_CFLAGS)
    AC_SUBST(XAW7_LIBS)
 fi
@@ -104,13 +125,10 @@ AC_CHECK_HEADER(widec.h, [],
 # Checks for functions
 AC_CHECK_FUNCS([iswalnum])
 
-XORG_MANPAGE_SECTIONS
-XORG_RELEASE_VERSION
-XORG_CHANGELOG
-
 AC_OUTPUT([Makefile
 	  include/Makefile
 	  man/Makefile
+	  spec/Makefile
 	  src/Makefile])
 
 if test "x$build_v6" = xyes; then

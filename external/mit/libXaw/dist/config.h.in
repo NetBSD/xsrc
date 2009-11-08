@@ -39,10 +39,6 @@
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H
 
-/* Define to the sub-directory in which libtool stores uninstalled libraries.
-   */
-#undef LT_OBJDIR
-
 /* Define to 1 if you DO NOT have the <widec.h> header file. */
 #undef NO_WIDEC_H
 
