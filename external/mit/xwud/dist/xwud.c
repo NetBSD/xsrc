@@ -42,11 +42,11 @@ from The Open Group.
 #include <errno.h>
 #include <stdlib.h>
 
-Atom wm_protocols;
-Atom wm_delete_window;
-int split;
+static Atom wm_protocols;
+static Atom wm_delete_window;
+static int split;
 
-char *progname;
+static char *progname;
 
 static void usage(void);
 static Bool Read(char *ptr, int size, int nitems, FILE *stream);
@@ -274,6 +274,8 @@ main(int argc, char *argv[])
 
     /* alloc window name */
     win_name_size = (header.header_size - SIZEOF(XWDheader));
+    if (win_name_size < 1)
+      Error("win_name_size");
     if((win_name = malloc((unsigned) win_name_size + 6)) == NULL)
       Error("Can't malloc window name storage.");
     strcpy(win_name, "xwud: ");
@@ -281,6 +283,7 @@ main(int argc, char *argv[])
      /* read in window name */
     if(!Read(win_name + 6, sizeof(char), win_name_size, in_file))
       Error("Unable to read window name from dump file.");
+    (win_name + 6)[win_name_size - 1] = 0;
 
     if (dump_header) {
 	DumpHeader(&header, win_name);
@@ -1023,6 +1026,8 @@ Do_Direct(Display *dpy, XWDFileHeader *header, Colormap *colormap,
     if (in_image->depth <= 12) {
 	pix = 1 << in_image->depth;
 	pixels = (unsigned long *)malloc(sizeof(unsigned long) * pix);
+	if (pixels == NULL)
+	    Error("Unable to allocate memory for pixel conversion");
 	for (i = 0; i < pix; i++)
 	    pixels[i] = ~0L;
 	color.flags = DoRed | DoGreen | DoBlue;
@@ -1054,6 +1059,7 @@ Do_Direct(Display *dpy, XWDFileHeader *header, Colormap *colormap,
 		XPutPixel(out_image, x, y, color.pixel);
 	    }
 	}
+	free(pixels);
     } else if (header->visual_class == TrueColor &&
 	       vinfo->class == TrueColor) {
 	ormask = vinfo->red_mask;
@@ -1089,6 +1095,8 @@ Do_Direct(Display *dpy, XWDFileHeader *header, Colormap *colormap,
 	pix = 1 << 12;
 	pixels = (unsigned long *)malloc(sizeof(unsigned long) * pix);
 	rpixels = (unsigned long *)malloc(sizeof(unsigned long) * pix);
+	if ((pixels == NULL) || (rpixels == NULL))
+	    Error("Unable to allocate memory for pixel conversion");
 	for (i = 0; i < pix; i++) {
 	    pixels[i] = ~0L;
 	    rpixels[i] = ~0L;
@@ -1125,6 +1133,8 @@ Do_Direct(Display *dpy, XWDFileHeader *header, Colormap *colormap,
 		XPutPixel(out_image, x, y, color.pixel);
 	    }
 	}
+	free(pixels);
+	free(rpixels);
     }
 }
 
