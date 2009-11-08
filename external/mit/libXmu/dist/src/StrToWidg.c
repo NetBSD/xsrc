@@ -60,7 +60,7 @@ XmuCvtStringToWidget(XrmValuePtr args, Cardinal *num_args,
 {
     static Widget widget, *widgetP, parent;
     XrmName name = XrmStringToName(fromVal->addr);
-    int i;
+    Cardinal i;
 
     if (*num_args != 1)
     {
