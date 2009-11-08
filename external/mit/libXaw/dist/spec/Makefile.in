@@ -15,6 +15,34 @@
 
 @SET_MAKE@
 
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+#
+# Permission to use, copy, modify, distribute, and sell this software and its
+# documentation for any purpose is hereby granted without fee, provided that
+# the above copyright notice appear in all copies and that both that
+# copyright notice and this permission notice appear in supporting
+# documentation.
+#
+# The above copyright notice and this permission notice shall be included
+# in all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+# MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+# IN NO EVENT SHALL THE OPEN GROUP BE LIABLE FOR ANY CLAIM, DAMAGES OR
+# OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+# ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+# OTHER DEALINGS IN THE SOFTWARE.
+#
+# Except as contained in this notice, the name of the copyright holders shall
+# not be used in advertising or otherwise to promote the sale, use or
+# other dealings in this Software without prior written authorization
+# from the copyright holders.
+#
+
+# Based on xc/doc/specs/Xaw/Makefile from X11R6.9
+
 VPATH = @srcdir@
 pkgdatadir = $(datadir)/@PACKAGE@
 pkgincludedir = $(includedir)/@PACKAGE@
@@ -34,9 +62,8 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-subdir = include
-DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in \
-	$(xawinclude_HEADERS)
+subdir = spec
+DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
@@ -74,10 +101,8 @@ am__nobase_list = $(am__nobase_strip_setup); \
 am__base_list = \
   sed '$$!N;$$!N;$$!N;$$!N;$$!N;$$!N;$$!N;s/\n/ /g' | \
   sed '$$!N;$$!N;$$!N;$$!N;s/\n/ /g'
-am__installdirs = "$(DESTDIR)$(xawincludedir)"
-HEADERS = $(xawinclude_HEADERS)
-ETAGS = etags
-CTAGS = ctags
+am__installdirs = "$(DESTDIR)$(docdir)"
+DATA = $(doc_DATA)
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 ACLOCAL = @ACLOCAL@
 ADMIN_MAN_DIR = @ADMIN_MAN_DIR@
@@ -211,80 +236,32 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-xawincludedir = ${includedir}/X11/Xaw
-xawinclude_HEADERS = \
-	X11/Xaw/AllWidgets.h \
-	X11/Xaw/AsciiSink.h \
-	X11/Xaw/AsciiSinkP.h \
-	X11/Xaw/AsciiSrc.h \
-	X11/Xaw/AsciiSrcP.h \
-	X11/Xaw/AsciiText.h \
-	X11/Xaw/AsciiTextP.h \
-	X11/Xaw/Box.h \
-	X11/Xaw/BoxP.h \
-	X11/Xaw/Cardinals.h \
-	X11/Xaw/Command.h \
-	X11/Xaw/CommandP.h \
-	X11/Xaw/Dialog.h \
-	X11/Xaw/DialogP.h \
-	X11/Xaw/Form.h \
-	X11/Xaw/FormP.h \
-	X11/Xaw/Grip.h \
-	X11/Xaw/GripP.h \
-	X11/Xaw/Label.h \
-	X11/Xaw/LabelP.h \
-	X11/Xaw/List.h \
-	X11/Xaw/ListP.h \
-	X11/Xaw/MenuButton.h \
-	X11/Xaw/MenuButtoP.h \
-	X11/Xaw/MultiSrc.h \
-	X11/Xaw/MultiSrcP.h \
-	X11/Xaw/MultiSink.h \
-	X11/Xaw/MultiSinkP.h \
-	X11/Xaw/Paned.h \
-	X11/Xaw/PanedP.h \
-	X11/Xaw/Panner.h \
-	X11/Xaw/PannerP.h \
-	X11/Xaw/Porthole.h \
-	X11/Xaw/PortholeP.h \
-	X11/Xaw/Repeater.h \
-	X11/Xaw/RepeaterP.h \
-	X11/Xaw/Reports.h \
-	X11/Xaw/Scrollbar.h \
-	X11/Xaw/ScrollbarP.h \
-	X11/Xaw/Simple.h \
-	X11/Xaw/SimpleP.h \
-	X11/Xaw/SimpleMenu.h \
-	X11/Xaw/SimpleMenP.h \
-	X11/Xaw/Sme.h \
-	X11/Xaw/SmeP.h \
-	X11/Xaw/SmeBSB.h \
-	X11/Xaw/SmeBSBP.h \
-	X11/Xaw/SmeLine.h \
-	X11/Xaw/SmeLineP.h \
-	X11/Xaw/StripChart.h \
-	X11/Xaw/StripCharP.h \
-	X11/Xaw/Template.c \
-	X11/Xaw/Template.h \
-	X11/Xaw/TemplateP.h \
-	X11/Xaw/Text.h \
-	X11/Xaw/TextP.h \
-	X11/Xaw/TextSink.h \
-	X11/Xaw/TextSinkP.h \
-	X11/Xaw/TextSrc.h \
-	X11/Xaw/TextSrcP.h \
-	X11/Xaw/Tip.h \
-	X11/Xaw/TipP.h \
-	X11/Xaw/Toggle.h \
-	X11/Xaw/ToggleP.h \
-	X11/Xaw/Tree.h \
-	X11/Xaw/TreeP.h \
-	X11/Xaw/VendorEP.h \
-	X11/Xaw/Viewport.h \
-	X11/Xaw/ViewportP.h \
-	X11/Xaw/XawImP.h \
-	X11/Xaw/XawInit.h
+XDOCMACROS = macros.t
+XIDXMACROS = indexmacros.t
+EVERYWHERE = $(XDOCMACROS) strings.mit strings.xaw
+CHAPTER1 = CH1
+CHAPTER2 = CH2
+CHAPTER3 = CH3.intro Command Grip Label List Panner Repeater \
+           Scrollbar Simple StripChart Toggle
 
+CHAPTER4 = CH4.intro SimpleMenu SmeBSB SmeLine Sme MenuButton
+CHAPTER5 = CH5.intro TextActions TextFuncs AsciiText AsciiSource AsciiSink \
+           TextCustom Text TextSource TextSink
+
+CHAPTER6 = CH6.intro Box Dialog Form Paned Porthole Tree Viewport
+CHAPTER7 = CH7.intro Template
+spec_sources = \
+        $(EVERYWHERE) TPage_Credits \
+        $(CHAPTER1) $(CHAPTER2) $(CHAPTER3) $(CHAPTER4) \
+        $(CHAPTER5) $(CHAPTER6) $(CHAPTER7)
+
+spec_input = $(spec_sources:%=$(srcdir)/%)
+EXTRA_DIST = $(spec_sources) $(XIDXMACROS) block.awk fixindex.awk widg.idxmac.t
+@BUILD_DOCS_TRUE@doc_DATA = widgets.ps widgets.index.ps widgets.txt widgets.html
+@BUILD_DOCS_TRUE@CLEANFILES = $(doc_DATA)
+@BUILD_DOCS_TRUE@MOSTLYCLEANFILES = index.*
+@BUILD_DOCS_TRUE@GROFF_DEFS = -dxV="$(PACKAGE_STRING)"
+@BUILD_DOCS_TRUE@GROFF_FLAGS = -t -ms $(GROFF_DEFS)
 all: all-am
 
 .SUFFIXES:
@@ -297,9 +274,9 @@ $(srcdir)/Makefile.in:  $(srcdir)/Makefile.am  $(am__configure_deps)
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --gnu include/Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --gnu spec/Makefile'; \
 	$(am__cd) $(top_srcdir) && \
-	  $(AUTOMAKE) --gnu include/Makefile
+	  $(AUTOMAKE) --gnu spec/Makefile
 .PRECIOUS: Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \
@@ -324,78 +301,32 @@ mostlyclean-libtool:
 
 clean-libtool:
 	-rm -rf .libs _libs
-install-xawincludeHEADERS: $(xawinclude_HEADERS)
+install-docDATA: $(doc_DATA)
 	@$(NORMAL_INSTALL)
-	test -z "$(xawincludedir)" || $(MKDIR_P) "$(DESTDIR)$(xawincludedir)"
-	@list='$(xawinclude_HEADERS)'; test -n "$(xawincludedir)" || list=; \
+	test -z "$(docdir)" || $(MKDIR_P) "$(DESTDIR)$(docdir)"
+	@list='$(doc_DATA)'; test -n "$(docdir)" || list=; \
 	for p in $$list; do \
 	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
 	  echo "$$d$$p"; \
 	done | $(am__base_list) | \
 	while read files; do \
-	  echo " $(INSTALL_HEADER) $$files '$(DESTDIR)$(xawincludedir)'"; \
-	  $(INSTALL_HEADER) $$files "$(DESTDIR)$(xawincludedir)" || exit $$?; \
+	  echo " $(INSTALL_DATA) $$files '$(DESTDIR)$(docdir)'"; \
+	  $(INSTALL_DATA) $$files "$(DESTDIR)$(docdir)" || exit $$?; \
 	done
 
-uninstall-xawincludeHEADERS:
+uninstall-docDATA:
 	@$(NORMAL_UNINSTALL)
-	@list='$(xawinclude_HEADERS)'; test -n "$(xawincludedir)" || list=; \
+	@list='$(doc_DATA)'; test -n "$(docdir)" || list=; \
 	files=`for p in $$list; do echo $$p; done | sed -e 's|^.*/||'`; \
 	test -n "$$files" || exit 0; \
-	echo " ( cd '$(DESTDIR)$(xawincludedir)' && rm -f" $$files ")"; \
-	cd "$(DESTDIR)$(xawincludedir)" && rm -f $$files
-
-ID: $(HEADERS) $(SOURCES) $(LISP) $(TAGS_FILES)
-	list='$(SOURCES) $(HEADERS) $(LISP) $(TAGS_FILES)'; \
-	unique=`for i in $$list; do \
-	    if test -f "$$i"; then echo $$i; else echo $(srcdir)/$$i; fi; \
-	  done | \
-	  $(AWK) '{ files[$$0] = 1; nonempty = 1; } \
-	      END { if (nonempty) { for (i in files) print i; }; }'`; \
-	mkid -fID $$unique
+	echo " ( cd '$(DESTDIR)$(docdir)' && rm -f" $$files ")"; \
+	cd "$(DESTDIR)$(docdir)" && rm -f $$files
 tags: TAGS
+TAGS:
 
-TAGS:  $(HEADERS) $(SOURCES)  $(TAGS_DEPENDENCIES) \
-		$(TAGS_FILES) $(LISP)
-	set x; \
-	here=`pwd`; \
-	list='$(SOURCES) $(HEADERS)  $(LISP) $(TAGS_FILES)'; \
-	unique=`for i in $$list; do \
-	    if test -f "$$i"; then echo $$i; else echo $(srcdir)/$$i; fi; \
-	  done | \
-	  $(AWK) '{ files[$$0] = 1; nonempty = 1; } \
-	      END { if (nonempty) { for (i in files) print i; }; }'`; \
-	shift; \
-	if test -z "$(ETAGS_ARGS)$$*$$unique"; then :; else \
-	  test -n "$$unique" || unique=$$empty_fix; \
-	  if test $$# -gt 0; then \
-	    $(ETAGS) $(ETAGSFLAGS) $(AM_ETAGSFLAGS) $(ETAGS_ARGS) \
-	      "$$@" $$unique; \
-	  else \
-	    $(ETAGS) $(ETAGSFLAGS) $(AM_ETAGSFLAGS) $(ETAGS_ARGS) \
-	      $$unique; \
-	  fi; \
-	fi
 ctags: CTAGS
-CTAGS:  $(HEADERS) $(SOURCES)  $(TAGS_DEPENDENCIES) \
-		$(TAGS_FILES) $(LISP)
-	list='$(SOURCES) $(HEADERS)  $(LISP) $(TAGS_FILES)'; \
-	unique=`for i in $$list; do \
-	    if test -f "$$i"; then echo $$i; else echo $(srcdir)/$$i; fi; \
-	  done | \
-	  $(AWK) '{ files[$$0] = 1; nonempty = 1; } \
-	      END { if (nonempty) { for (i in files) print i; }; }'`; \
-	test -z "$(CTAGS_ARGS)$$unique" \
-	  || $(CTAGS) $(CTAGSFLAGS) $(AM_CTAGSFLAGS) $(CTAGS_ARGS) \
-	     $$unique
+CTAGS:
 
-GTAGS:
-	here=`$(am__cd) $(top_builddir) && pwd` \
-	  && $(am__cd) $(top_srcdir) \
-	  && gtags -i $(GTAGS_ARGS) "$$here"
-
-distclean-tags:
-	-rm -f TAGS ID GTAGS GRTAGS GSYMS GPATH tags
 
 distdir: $(DISTFILES)
 	@srcdirstrip=`echo "$(srcdir)" | sed 's/[].[^$$\\*]/\\\\&/g'`; \
@@ -429,9 +360,9 @@ distdir: $(DISTFILES)
 	done
 check-am: all-am
 check: check-am
-all-am: Makefile $(HEADERS)
+all-am: Makefile $(DATA)
 installdirs:
-	for dir in "$(DESTDIR)$(xawincludedir)"; do \
+	for dir in "$(DESTDIR)$(docdir)"; do \
 	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
 	done
 install: install-am
@@ -449,8 +380,10 @@ install-strip:
 	  `test -z '$(STRIP)' || \
 	    echo "INSTALL_PROGRAM_ENV=STRIPPROG='$(STRIP)'"` install
 mostlyclean-generic:
+	-test -z "$(MOSTLYCLEANFILES)" || rm -f $(MOSTLYCLEANFILES)
 
 clean-generic:
+	-test -z "$(CLEANFILES)" || rm -f $(CLEANFILES)
 
 distclean-generic:
 	-test -z "$(CONFIG_CLEAN_FILES)" || rm -f $(CONFIG_CLEAN_FILES)
@@ -465,7 +398,7 @@ clean-am: clean-generic clean-libtool mostlyclean-am
 
 distclean: distclean-am
 	-rm -f Makefile
-distclean-am: clean-am distclean-generic distclean-tags
+distclean-am: clean-am distclean-generic
 
 dvi: dvi-am
 
@@ -479,7 +412,7 @@ info: info-am
 
 info-am:
 
-install-data-am: install-xawincludeHEADERS
+install-data-am: install-docDATA
 
 install-dvi: install-dvi-am
 
@@ -523,24 +456,57 @@ ps: ps-am
 
 ps-am:
 
-uninstall-am: uninstall-xawincludeHEADERS
+uninstall-am: uninstall-docDATA
 
 .MAKE: install-am install-strip
 
-.PHONY: CTAGS GTAGS all all-am check check-am clean clean-generic \
-	clean-libtool ctags distclean distclean-generic \
-	distclean-libtool distclean-tags distdir dvi dvi-am html \
-	html-am info info-am install install-am install-data \
-	install-data-am install-dvi install-dvi-am install-exec \
-	install-exec-am install-html install-html-am install-info \
-	install-info-am install-man install-pdf install-pdf-am \
-	install-ps install-ps-am install-strip \
-	install-xawincludeHEADERS installcheck installcheck-am \
-	installdirs maintainer-clean maintainer-clean-generic \
-	mostlyclean mostlyclean-generic mostlyclean-libtool pdf pdf-am \
-	ps ps-am tags uninstall uninstall-am \
-	uninstall-xawincludeHEADERS
+.PHONY: all all-am check check-am clean clean-generic clean-libtool \
+	distclean distclean-generic distclean-libtool distdir dvi \
+	dvi-am html html-am info info-am install install-am \
+	install-data install-data-am install-docDATA install-dvi \
+	install-dvi-am install-exec install-exec-am install-html \
+	install-html-am install-info install-info-am install-man \
+	install-pdf install-pdf-am install-ps install-ps-am \
+	install-strip installcheck installcheck-am installdirs \
+	maintainer-clean maintainer-clean-generic mostlyclean \
+	mostlyclean-generic mostlyclean-libtool pdf pdf-am ps ps-am \
+	uninstall uninstall-am uninstall-docDATA
 
+
+@BUILD_DOCS_TRUE@widgets.ps: $(spec_input)
+@BUILD_DOCS_TRUE@	-$(AM_V_GEN) $(GROFF) -Tps $(GROFF_FLAGS) $(spec_input) \
+@BUILD_DOCS_TRUE@	 2> index.raw > $@
+@BUILD_DOCS_TRUE@	@if grep '^[^1-9.]' index.raw | grep -v warning; then exit 1; \
+@BUILD_DOCS_TRUE@	 else test $$? -le 1; fi
+
+@BUILD_DOCS_TRUE@widgets.txt: $(spec_input)
+@BUILD_DOCS_TRUE@	$(AM_V_GEN) $(GROFF) -Tascii $(GROFF_FLAGS) $(spec_input) \
+@BUILD_DOCS_TRUE@	 2> index.txt.raw > $@
+
+@BUILD_DOCS_TRUE@widgets.html: $(spec_input)
+@BUILD_DOCS_TRUE@	$(AM_V_GEN) $(GROFF) -Thtml $(GROFF_FLAGS) $(spec_input) \
+@BUILD_DOCS_TRUE@	 2> index.html.raw > $@
+
+@BUILD_DOCS_TRUE@index.raw: widgets.ps
+
+@BUILD_DOCS_TRUE@index.pageno: index.raw
+@BUILD_DOCS_TRUE@	$(AM_V_GEN)$(SED) -n '$$p' index.raw > $@
+
+@BUILD_DOCS_TRUE@index.troff: index.raw
+@BUILD_DOCS_TRUE@	$(AM_V_GEN)$(GREP) '^[1-9]' index.raw | \
+@BUILD_DOCS_TRUE@	 (sort -f '-t:' -k2,2 -k1,1n 2>/dev/null || \
+@BUILD_DOCS_TRUE@	  sort -f '-t:' +1 -3 +0n -1n) | \
+@BUILD_DOCS_TRUE@	 $(AWK) -f $(srcdir)/fixindex.awk | \
+@BUILD_DOCS_TRUE@	 $(AWK) -f $(srcdir)/block.awk > $@
+
+@BUILD_DOCS_TRUE@widgets.index.ps: widg.idxmac.t index.troff index.pageno
+@BUILD_DOCS_TRUE@	$(AM_V_GEN)$(GROFF) -me $(GROFF_DEFS) \
+@BUILD_DOCS_TRUE@	 $(srcdir)/widg.idxmac.t $(srcdir)/$(XIDXMACROS) index.troff > $@
+
+# Useful for running off part of the manual by hand,
+# e.g., make part PART=Label
+@BUILD_DOCS_TRUE@part: $(srcdir)/$(PART)
+@BUILD_DOCS_TRUE@	$(GROFF) -Tps $(GROFF_FLAGS) $(EVERYWHERE) $(srcdir)/$(PART) > $(PART).ps
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

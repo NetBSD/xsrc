@@ -56,6 +56,7 @@ COMMON_SOURCES = \
 	XawI18n.h
 
 COMMON_CFLAGS = \
+	$(CWARNFLAGS) \
 	-I${top_srcdir}/include \
 	-I${top_srcdir}/include/X11/Xaw \
 	-DPROJECT_ROOT=\"$(prefix)\"
