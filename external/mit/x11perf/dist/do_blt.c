@@ -200,7 +200,7 @@ InitCopyPix(XParms xp, Parms p, int reps)
 
     /* Create pixmap to write stuff into, and initialize it */
     pix = XCreatePixmap(xp->d, xp->w, WIDTH, HEIGHT, xp->vinfo.depth);
-    pixgc = XCreateGC(xp->d, pix, 0, 0);
+    pixgc = XCreateGC(xp->d, pix, 0, NULL);
     /* need a gc with GXcopy cos pixmaps contain junk on creation. mmm */
     XCopyArea(xp->d, xp->w, pix, pixgc, 0, 0, WIDTH, HEIGHT, 0, 0);
     XFreeGC(xp->d, pixgc);
@@ -214,8 +214,8 @@ InitGetImage(XParms xp, Parms p, int reps)
 
     /* Create image to stuff bits into */
     image = XGetImage(xp->d, xp->w, 0, 0, WIDTH, HEIGHT, xp->planemask,
-		      p->font==0?ZPixmap:XYPixmap);
-    if(image==0){
+		      p->font==NULL?ZPixmap:XYPixmap);
+    if(image==NULL){
 	printf("XGetImage failed\n");
 	return False;
     }	
@@ -284,7 +284,7 @@ DoGetImage(XParms xp, Parms p, int reps)
     int format;
 
     size = p->special;
-    format = (p->font == 0) ? ZPixmap : XYPixmap;
+    format = (p->font == NULL) ? ZPixmap : XYPixmap;
     for (sa = segsa, sb = segsb, i = 0; i != reps; i++, sa++, sb++) {
 	XDestroyImage(image);
 	image = XGetImage(xp->d, xp->w, sa->x1, sa->y1, size, size,
@@ -404,7 +404,7 @@ InitShmPutImage(XParms xp, Parms p, int reps)
 	perror ("shmget");
 	return False;
     }
-    shm_info.shmaddr = (char *) shmat(shm_info.shmid, 0, 0);
+    shm_info.shmaddr = (char *) shmat(shm_info.shmid, NULL, 0);
     if (shm_info.shmaddr == ((char *) -1))
     {
 	/*
@@ -417,7 +417,7 @@ InitShmPutImage(XParms xp, Parms p, int reps)
 	free(segsa);
 	free(segsb);
 	perror ("shmat");
-	shmctl (shm_info.shmid, IPC_RMID, 0);
+	shmctl (shm_info.shmid, IPC_RMID, NULL);
 	return False;
     }
     shm_info.readOnly = True;
@@ -439,7 +439,7 @@ InitShmPutImage(XParms xp, Parms p, int reps)
 	free(segsb);
 	if(shmdt (shm_info.shmaddr)==-1)
 	    perror("shmdt:");
-	if(shmctl (shm_info.shmid, IPC_RMID, 0)==-1)
+	if(shmctl (shm_info.shmid, IPC_RMID, NULL)==-1)
 	    perror("shmctl rmid:");
 	return False;
     }
@@ -478,7 +478,7 @@ EndShmPutImage(XParms xp, Parms p)
     XSync(xp->d, False);	/* need server to detach so can remove id */
     if(shmdt (shm_info.shmaddr)==-1)
 	perror("shmdt:");
-    if(shmctl (shm_info.shmid, IPC_RMID, 0)==-1)
+    if(shmctl (shm_info.shmid, IPC_RMID, NULL)==-1)
 	perror("shmctl rmid:");
 }
 
@@ -528,7 +528,7 @@ InitCopyPlane(XParms xp, Parms p, int reps)
 
     /* Create pixmap to write stuff into, and initialize it */
     pix = XCreatePixmap(xp->d, xp->w, WIDTH, HEIGHT, 
-	    p->font==0 ? 1 : xp->vinfo.depth);
+	    p->font==NULL ? 1 : xp->vinfo.depth);
     gcv.graphics_exposures = False;
     gcv.foreground = 0;
     gcv.background = 1;
@@ -564,3 +564,120 @@ DoCopyPlane(XParms xp, Parms p, int reps)
     }
 }
 
+#include <X11/extensions/Xrender.h>
+
+static Picture	winPict, pixPict;
+
+int
+InitCompositeWin(XParms xp, Parms p, int reps)
+{
+    XRenderPictFormat	*format;
+    (void) InitScroll (xp, p, reps);
+    InitCopyLocations (xp, p, reps);
+    format = XRenderFindVisualFormat (xp->d, xp->vinfo.visual);
+    winPict = XRenderCreatePicture (xp->d, xp->w, format, 0, NULL);
+    return reps;
+}
+
+int
+InitCompositePix(XParms xp, Parms p, int reps)
+{
+    XRenderPictFormat	*format = NULL;
+    int			depth;
+
+    (void) InitCompositeWin (xp, p, reps);
+    
+    /* Create pixmap to write stuff into, and initialize it */
+    switch (xp->planemask) {
+    case PictStandardNative:
+	depth = xp->vinfo.depth;
+	format = XRenderFindVisualFormat (xp->d, xp->vinfo.visual);
+	break;
+    case PictStandardRGB24:
+	depth = 24;
+	break;
+    case PictStandardARGB32:
+	depth = 32;
+	break;
+    case PictStandardA8:
+	depth = 8;
+	break;
+    case PictStandardA4:
+	depth = 4;
+	break;
+    case PictStandardA1:
+	depth = 1;
+	break;
+    default:
+	depth = 0;
+	break;
+    }
+    if (!format)
+	format = XRenderFindStandardFormat (xp->d, xp->planemask);
+    
+    pix = XCreatePixmap(xp->d, xp->w, WIDTH, HEIGHT, depth);
+    pixPict = XRenderCreatePicture (xp->d, pix, format, 0, NULL);
+    
+    XRenderComposite (xp->d, PictOpClear,
+		      winPict, None, pixPict,
+		      0, 0, 0, 0, 0, 0, WIDTH, HEIGHT);
+    
+#if 1
+    XRenderComposite (xp->d, PictOpOver,
+		      winPict, None, pixPict,
+		      0, 0, 0, 0, 0, 0, WIDTH, HEIGHT);
+#endif
+    return reps;
+}
+
+void
+EndCompositeWin (XParms xp, Parms p)
+{
+    if (winPict)
+    {
+	XRenderFreePicture (xp->d, winPict);
+	winPict = None;
+    }
+    if (pixPict)
+    {
+	XRenderFreePicture (xp->d, pixPict);
+	pixPict = None;
+    }
+}
+
+static void 
+CompositeArea(XParms xp, Parms p, int reps, Picture src, Picture dst)
+{
+    int i, size;
+    XSegment *sa, *sb;
+
+    size = p->special;
+    for (sa = segsa, sb = segsb, i = 0; i != reps; i++, sa++, sb++) {
+	XRenderComposite (xp->d, xp->func,
+			  src, None, dst,
+			  sa->x1, sa->y1, 0, 0, 
+			  sa->x2, sa->y2, size, size);
+	XRenderComposite (xp->d, xp->func,
+			  src, None, dst,
+			  sa->x2, sa->y2, 0, 0, sa->x1, sa->y1, size, size);
+	XRenderComposite (xp->d, xp->func,
+			  src, None, dst,
+			  sb->x2, sb->y2, 0, 0, sb->x1, sb->y1, size, size);
+	XRenderComposite (xp->d, xp->func,
+			  src, None, dst,
+			  sb->x1, sb->y1, 0, 0, sb->x2, sb->y2, size, size);
+	CheckAbort ();
+    }
+}
+
+void
+DoCompositeWinWin (XParms xp, Parms p, int reps)
+{
+    CompositeArea (xp, p, reps, winPict, winPict);
+}
+
+void
+DoCompositePixWin (XParms xp, Parms p, int reps)
+{
+    CompositeArea (xp, p, reps, pixPict, winPict);
+}
