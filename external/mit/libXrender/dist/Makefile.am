@@ -1,6 +1,4 @@
 # 
-#  $Id: Makefile.am,v 1.1.1.1 2008/07/30 02:56:00 mrg Exp $
-# 
 #  Copyright © 2003 Keith Packard, Noah Levitt
 # 
 #  Permission to use, copy, modify, distribute, and sell this software and its
@@ -26,5 +24,15 @@ SUBDIRS = src
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = xrender.pc
 
-EXTRA_DIST = xrender.pc.in autogen.sh
+renderdocdir = $(datadir)/doc/$(PACKAGE)
+dist_renderdoc_DATA = doc/libXrender.txt
 
+EXTRA_DIST = xrender.pc.in ChangeLog
+MAINTAINERCLEANFILES = ChangeLog
+
+.PHONY: ChangeLog
+
+ChangeLog:
+	$(CHANGELOG_CMD)
+
+dist-hook: ChangeLog
