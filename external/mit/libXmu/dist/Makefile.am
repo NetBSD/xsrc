@@ -1,5 +1,3 @@
-# $Id: Makefile.am,v 1.1.1.1 2008/07/30 02:52:43 mrg Exp $
-
 SUBDIRS = include src
 
 pkgconfigdir = $(libdir)/pkgconfig
@@ -8,16 +6,14 @@ pkgconfig_DATA = xmu.pc xmuu.pc
 EXTRA_DIST = \
 	xmu.pc.in \
 	xmuu.pc.in \
-	autogen.sh \
-	include/X11/Xmu/WhitePoint.h
-
-EXTRA_DIST += ChangeLog
+	include/X11/Xmu/WhitePoint.h \
+	ChangeLog
 MAINTAINERCLEANFILES = ChangeLog
 
 .PHONY: ChangeLog
 
 ChangeLog:
-	(GIT_DIR=$(top_srcdir)/.git git-log > .changelog.tmp && mv .changelog.tmp ChangeLog; rm -f .changelog.tmp) || (touch ChangeLog; echo 'git directory not found: installing possibly empty changelog.' >&2)
+	$(CHANGELOG_CMD)
 
 dist-hook: ChangeLog
 
