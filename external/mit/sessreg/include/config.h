@@ -50,13 +50,13 @@
 #define PACKAGE_NAME "sessreg"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "sessreg 1.0.3"
+#define PACKAGE_STRING "sessreg 1.0.5"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "sessreg"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "1.0.3"
+#define PACKAGE_VERSION "1.0.5"
 
 /* Major version of this package */
 #define PACKAGE_VERSION_MAJOR 1
@@ -65,13 +65,13 @@
 #define PACKAGE_VERSION_MINOR 0
 
 /* Patch version of this package */
-#define PACKAGE_VERSION_PATCHLEVEL 3
+#define PACKAGE_VERSION_PATCHLEVEL 5
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1
 
 /* Version number of package */
-#define VERSION "1.0.3"
+#define VERSION "1.0.5"
 
 /* Number of bits in a file offset, on hosts where this is settable. */
 /* #undef _FILE_OFFSET_BITS */
