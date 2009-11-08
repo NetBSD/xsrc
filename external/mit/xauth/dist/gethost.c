@@ -295,6 +295,8 @@ struct addrlist *get_address_info (
 	hints.ai_protocol = 0;	
         if (getaddrinfo(host,NULL,&hints,&firstai) !=0) return NULL;
 	for (ai = firstai; ai != NULL; ai = ai->ai_next) {
+	    struct addrlist *duplicate;
+
 	    if (ai->ai_family == AF_INET) {
 		struct sockaddr_in *sin = (struct sockaddr_in *)ai->ai_addr;
 		src = &(sin->sin_addr);
@@ -307,7 +309,6 @@ struct addrlist *get_address_info (
 		family = FamilyInternet6;
 	    }
 
-	    struct addrlist *duplicate;
 	    for(duplicate = retval; duplicate != NULL; duplicate = duplicate->next) {
 		if(duplicate->family == family && duplicate->len == len &&
                    memcmp(duplicate->address, src, len) == 0) {
