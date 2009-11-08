@@ -11,7 +11,7 @@
 #include <X11/X.h>
 #include "gram.h"
 #include "constants.h"
-#if defined(FLEX_SCANNER) && !defined(YY_FLEX_LEX_COMPAT) && !defined(__UNIXOS2__)
+#if defined(FLEX_SCANNER) && !defined(YY_FLEX_LEX_COMPAT) && !defined(__UNIXOS2__) && !defined(__NetBSD__)
 int yylineno = 0;
 #endif
 %}
