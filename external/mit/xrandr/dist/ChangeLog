@@ -1,3 +1,27 @@
+commit 5da0cb3533aa829588b2e6d715d511691fa1e45f
+Author: Matthias Hopf <mhopf@suse.de>
+Date:   Thu Sep 10 13:18:35 2009 +0200
+
+    Bump to 1.3.2
+
+commit e5861530a6c3bb6219217e5f3ddc71f13b9509c4
+Author: Matthias Hopf <mhopf@suse.de>
+Date:   Thu Sep 10 13:17:56 2009 +0200
+
+    Add missing 'static's to get rid of warnings.
+
+commit ab875be43651befa654a24719f1ea365dde09073
+Author: Bart Massey <bart@cs.pdx.edu>
+Date:   Thu Feb 7 14:03:24 2008 -0800
+
+    changed a bunch of string to number conversions for reliability
+
+commit 25325aae2e80cb33af17682a6cd1bcd292a5f445
+Author: Bart Massey <bart@cs.pdx.edu>
+Date:   Fri Sep 4 15:36:51 2009 +0200
+
+    Warn if one of the outputs given did not exist
+
 commit 713a8ea5646f7c893b52afeb3c2443b21b837e46
 Author: Matthias Hopf <mhopf@suse.de>
 Date:   Tue Aug 11 16:11:39 2009 +0200
