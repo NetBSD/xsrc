@@ -407,7 +407,7 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #endif /* i386Architecture */
 
 #if defined(AMD64Architecture)
-# define HasMTRRBuiltin                YES
+# define HasMTRRBuiltin		YES
 #endif
 
 /*
@@ -596,7 +596,9 @@ InstallManPageAliasesBase(file,destdir,aliases)
 # define BuildXInputLib          YES
 #endif
 
-#if !defined(SparcArchitecture)
+
+/* was !defined(SparcArchitecture) */
+#if defined(i386Architecture) || defined(Arm32Architecture) || defined(AlphaArchitecture) || defined(PpcArchitecture) || defined(AMD64Architecture)
 # include <xorg.cf>
 #endif
 
