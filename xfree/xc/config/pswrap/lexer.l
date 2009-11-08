@@ -46,7 +46,7 @@
 #include "pswparser.h"
 
 /* flex of EMX seems to be too old */
-#if defined(FLEX_SCANNER) && !defined(YY_FLEX_LEX_COMPAT) && !defined(__UNIXOS2__)
+#if defined(FLEX_SCANNER) && !defined(YY_FLEX_LEX_COMPAT) && !defined(__UNIXOS2__) && !defined(__NetBSD__)
 int yylineno = 1;
 #endif
 
