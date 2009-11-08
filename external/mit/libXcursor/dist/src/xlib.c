@@ -1,6 +1,4 @@
 /*
- * $Id: xlib.c,v 1.1.1.1 2008/07/30 02:45:53 mrg Exp $
- *
  * Copyright © 2002 Keith Packard
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
