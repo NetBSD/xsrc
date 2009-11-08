@@ -1,6 +1,4 @@
 # 
-#  $Id: Makefile.am,v 1.1.1.1 2008/07/30 02:45:44 mrg Exp $
-# 
 #  Copyright © 2003 Keith Packard, Noah Levitt
 # 
 #  Permission to use, copy, modify, distribute, and sell this software and its
@@ -21,7 +19,8 @@
 #  TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 #  PERFORMANCE OF THIS SOFTWARE.
 
-AM_CFLAGS = $(XCOMPOSITE_CFLAGS) $(XCOMPOSITE_CFLAGS) $(X_CFLAGS) -I$(top_srcdir)/include
+AM_CFLAGS = $(CWARNFLAGS) $(XCOMPOSITE_CFLAGS) $(X_CFLAGS)
+AM_CPPFLAGS = -I$(top_srcdir)/include
 
 lib_LTLIBRARIES = libXcomposite.la
 

@@ -1,6 +1,4 @@
 /*
- * $Id: xcompositeint.h,v 1.1.1.1 2008/07/30 02:45:44 mrg Exp $
- *
  * Copyright © 2006 Sun Microsystems
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
