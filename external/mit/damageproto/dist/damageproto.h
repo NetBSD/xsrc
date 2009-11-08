@@ -1,6 +1,4 @@
 /*
- * $Id: damageproto.h,v 1.1.1.1 2008/07/29 05:24:33 mrg Exp $
- *
  * Copyright © 2003 Keith Packard
  * Copyright © 2007 Eric Anholt
  *
