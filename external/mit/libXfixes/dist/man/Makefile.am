@@ -1,4 +1,3 @@
-# $Id: Makefile.am,v 1.1.1.1 2008/07/30 02:48:25 mrg Exp $
 #
 # Copyright 2005 Sun Microsystems, Inc.  All rights reserved.
 # 
@@ -48,4 +47,4 @@ MAN_SUBSTS = \
 SUFFIXES = .$(LIB_MAN_SUFFIX) .man
 
 .man.$(LIB_MAN_SUFFIX):
-	sed $(MAN_SUBSTS) < $< > $@
+	$(AM_V_GEN)$(SED) $(MAN_SUBSTS) < $< > $@
