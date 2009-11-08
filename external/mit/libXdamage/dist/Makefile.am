@@ -1,5 +1,5 @@
 # 
-#  $Id: Makefile.am,v 1.1.1.1 2008/07/30 02:46:40 mrg Exp $
+#  $Id: Makefile.am,v 1.1.1.2 2009/11/08 09:42:59 mrg Exp $
 # 
 #  Copyright © 2003 Keith Packard, Noah Levitt
 # 
@@ -21,8 +21,6 @@
 #  TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 #  PERFORMANCE OF THIS SOFTWARE.
 
-AM_CFLAGS = $(XDAMAGE_CFLAGS) $(X_CFLAGS)
-
 SUBDIRS = src
 
 INCLUDES = $(top_srcdir)/include/
@@ -30,4 +28,14 @@ INCLUDES = $(top_srcdir)/include/
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = xdamage.pc
 
-EXTRA_DIST = xdamage.pc.in autogen.sh
+EXTRA_DIST = xdamage.pc.in
+
+EXTRA_DIST += ChangeLog
+MAINTAINERCLEANFILES = ChangeLog
+
+.PHONY: ChangeLog
+
+ChangeLog:
+	$(CHANGELOG_CMD)
+
+dist-hook: ChangeLog
