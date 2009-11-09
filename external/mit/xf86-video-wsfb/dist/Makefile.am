@@ -24,12 +24,7 @@ SUBDIRS = src man
 .PHONY: ChangeLog
 
 ChangeLog:
-	( GIT_DIR=$(top_srcdir)/.git git-log > .changelog.tmp && \
-	 mv .changelog.tmp ChangeLog;  rm -f .changelog.tmp ) || \
-	( touch ChangeLog;  \
-	 echo 'git directory not found: installing possibly empty ChangeLog.' \
-	 >&2 )
-
+	$(CHANGELOG_CMD)
 
 dist-hook: ChangeLog
 
