@@ -59,6 +59,7 @@ extern int screen;                           /* The current screen */
     /* Declarations for functions in just_display.c */
 
 char *Malloc(unsigned);
+char *Realloc(char *,unsigned);
 char *Get_Display_Name(int *, char **);
 Display *Open_Display(const char *);
 void Setup_Display_And_Screen(int *, char **);
@@ -78,7 +79,7 @@ void usage(void);
  * Send bugs, etc. to chariot@athena.mit.edu.
  */
 
-Window Select_Window(Display *);
+Window Select_Window(Display *, int descend);
 Window Window_With_Name(Display *, Window, const char *);
 #ifdef __GNUC__
 void Fatal_Error(char *, ...) __attribute__((__noreturn__));
