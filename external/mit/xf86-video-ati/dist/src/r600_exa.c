@@ -315,6 +315,7 @@ R600DoneSolid(PixmapPtr pPix)
     if ((info->ChipFamily == CHIP_FAMILY_RV610) ||
 	(info->ChipFamily == CHIP_FAMILY_RV620) ||
 	(info->ChipFamily == CHIP_FAMILY_RS780) ||
+	(info->ChipFamily == CHIP_FAMILY_RS880) ||
 	(info->ChipFamily == CHIP_FAMILY_RV710))
 	cp_set_surface_sync(pScrn, accel_state->ib, TC_ACTION_ENA_bit,
 			    accel_state->vb_size, accel_state->vb_mc_addr);
@@ -553,6 +554,7 @@ R600DoCopy(ScrnInfoPtr pScrn)
     if ((info->ChipFamily == CHIP_FAMILY_RV610) ||
 	(info->ChipFamily == CHIP_FAMILY_RV620) ||
 	(info->ChipFamily == CHIP_FAMILY_RS780) ||
+	(info->ChipFamily == CHIP_FAMILY_RS880) ||
 	(info->ChipFamily == CHIP_FAMILY_RV710))
 	cp_set_surface_sync(pScrn, accel_state->ib, TC_ACTION_ENA_bit,
 			    accel_state->vb_size, accel_state->vb_mc_addr);
@@ -1107,10 +1109,10 @@ static Bool R600TextureSetup(PicturePtr pPict, PixmapPtr pPix,
     accel_state->src_pitch[unit] = exaGetPixmapPitch(pPix) / (pPix->drawable.bitsPerPixel / 8);
     accel_state->src_size[unit] = exaGetPixmapPitch(pPix) * pPix->drawable.height;
 
-    if (accel_state->src_pitch[1] & 7)
+    if (accel_state->src_pitch[unit] & 7)
 	RADEON_FALLBACK(("Bad pitch %d 0x%x\n", (int)accel_state->src_pitch[unit], unit));
 
-    if (accel_state->src_mc_addr[1] & 0xff)
+    if (accel_state->src_mc_addr[unit] & 0xff)
 	RADEON_FALLBACK(("Bad offset %d 0x%x\n", (int)accel_state->src_mc_addr[unit], unit));
 
     for (i = 0; i < sizeof(R600TexFormats) / sizeof(R600TexFormats[0]); i++) {
@@ -1715,6 +1717,7 @@ static void R600DoneComposite(PixmapPtr pDst)
     if ((info->ChipFamily == CHIP_FAMILY_RV610) ||
 	(info->ChipFamily == CHIP_FAMILY_RV620) ||
 	(info->ChipFamily == CHIP_FAMILY_RS780) ||
+	(info->ChipFamily == CHIP_FAMILY_RS880) ||
 	(info->ChipFamily == CHIP_FAMILY_RV710))
 	cp_set_surface_sync(pScrn, accel_state->ib, TC_ACTION_ENA_bit,
 			    accel_state->vb_size, accel_state->vb_mc_addr);
@@ -1843,6 +1846,10 @@ R600DownloadFromScreen(PixmapPtr pSrc, int x, int y, int w, int h,
     uint32_t scratch_pitch = scratch_pitch_bytes / (bpp / 8);
     int wpass = w * (bpp/8);
     drmBufPtr scratch;
+
+    /* RV740 seems to be particularly problematic with small xfers */
+    if ((info->ChipFamily == CHIP_FAMILY_RV740) && (w < 32 || h < 32))
+	return FALSE;
 
     if (src_pitch & 7)
 	return FALSE;

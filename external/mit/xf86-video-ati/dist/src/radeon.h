@@ -318,7 +318,6 @@ typedef enum {
     CHIP_FAMILY_RS690,
     CHIP_FAMILY_RS740,
     CHIP_FAMILY_R600,    /* r600 */
-    CHIP_FAMILY_R630,
     CHIP_FAMILY_RV610,
     CHIP_FAMILY_RV630,
     CHIP_FAMILY_RV670,
@@ -329,6 +328,7 @@ typedef enum {
     CHIP_FAMILY_RV770,
     CHIP_FAMILY_RV730,
     CHIP_FAMILY_RV710,
+    CHIP_FAMILY_RV740,
     CHIP_FAMILY_LAST
 } RADEONChipFamily;
 
@@ -1115,7 +1115,7 @@ extern void RADEONPrintPortMap(ScrnInfoPtr pScrn);
 extern void RADEONSetOutputType(ScrnInfoPtr pScrn,
 				RADEONOutputPrivatePtr radeon_output);
 extern Bool RADEONSetupConnectors(ScrnInfoPtr pScrn);
-extern Bool RADEONI2CDoLock(xf86OutputPtr output, Bool lock_state);
+extern Bool RADEONI2CDoLock(xf86OutputPtr output, I2CBusPtr b, Bool lock_state);
 
 
 /* radeon_tv.c */

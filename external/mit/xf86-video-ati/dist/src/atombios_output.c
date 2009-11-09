@@ -34,8 +34,13 @@
 #include "config.h"
 #endif
 /* DPMS */
+#ifdef HAVE_XEXTPROTO_71
+#include <X11/extensions/dpmsconst.h>
+#else
 #define DPMS_SERVER
 #include <X11/extensions/dpms.h>
+#endif
+
 #include <unistd.h>
 
 #include "radeon.h"
@@ -59,6 +64,8 @@ const char *device_name[12] = {
     "DFP4",
     "DFP5",
 };
+
+static void atombios_set_output_crtc_source(xf86OutputPtr output);
 
 static int
 atombios_output_dac_setup(xf86OutputPtr output, int action)
@@ -766,234 +773,238 @@ atombios_output_dig_transmitter_setup(xf86OutputPtr output, int action)
 
 }
 
-static void atom_rv515_force_tv_scaler(ScrnInfoPtr pScrn)
+static void atom_rv515_force_tv_scaler(ScrnInfoPtr pScrn, RADEONCrtcPrivatePtr radeon_crtc)
 {
     RADEONInfoPtr info       = RADEONPTR(pScrn);
     unsigned char *RADEONMMIO = info->MMIO;
+    int index_reg = 0x6578, data_reg = 0x657c;
 
-    OUTREG(0x659C,0x0);
-    OUTREG(0x6594,0x705);
-    OUTREG(0x65A4,0x10001);
-    OUTREG(0x65D8,0x0);
-    OUTREG(0x65B0,0x0);
-    OUTREG(0x65C0,0x0);
-    OUTREG(0x65D4,0x0);
-    OUTREG(0x6578,0x0);
-    OUTREG(0x657C,0x841880A8);
-    OUTREG(0x6578,0x1);
-    OUTREG(0x657C,0x84208680);
-    OUTREG(0x6578,0x2);
-    OUTREG(0x657C,0xBFF880B0);
-    OUTREG(0x6578,0x100);
-    OUTREG(0x657C,0x83D88088);
-    OUTREG(0x6578,0x101);
-    OUTREG(0x657C,0x84608680);
-    OUTREG(0x6578,0x102);
-    OUTREG(0x657C,0xBFF080D0);
-    OUTREG(0x6578,0x200);
-    OUTREG(0x657C,0x83988068);
-    OUTREG(0x6578,0x201);
-    OUTREG(0x657C,0x84A08680);
-    OUTREG(0x6578,0x202);
-    OUTREG(0x657C,0xBFF080F8);
-    OUTREG(0x6578,0x300);
-    OUTREG(0x657C,0x83588058);
-    OUTREG(0x6578,0x301);
-    OUTREG(0x657C,0x84E08660);
-    OUTREG(0x6578,0x302);
-    OUTREG(0x657C,0xBFF88120);
-    OUTREG(0x6578,0x400);
-    OUTREG(0x657C,0x83188040);
-    OUTREG(0x6578,0x401);
-    OUTREG(0x657C,0x85008660);
-    OUTREG(0x6578,0x402);
-    OUTREG(0x657C,0xBFF88150);
-    OUTREG(0x6578,0x500);
-    OUTREG(0x657C,0x82D88030);
-    OUTREG(0x6578,0x501);
-    OUTREG(0x657C,0x85408640);
-    OUTREG(0x6578,0x502);
-    OUTREG(0x657C,0xBFF88180);
-    OUTREG(0x6578,0x600);
-    OUTREG(0x657C,0x82A08018);
-    OUTREG(0x6578,0x601);
-    OUTREG(0x657C,0x85808620);
-    OUTREG(0x6578,0x602);
-    OUTREG(0x657C,0xBFF081B8);
-    OUTREG(0x6578,0x700);
-    OUTREG(0x657C,0x82608010);
-    OUTREG(0x6578,0x701);
-    OUTREG(0x657C,0x85A08600);
-    OUTREG(0x6578,0x702);
-    OUTREG(0x657C,0x800081F0);
-    OUTREG(0x6578,0x800);
-    OUTREG(0x657C,0x8228BFF8);
-    OUTREG(0x6578,0x801);
-    OUTREG(0x657C,0x85E085E0);
-    OUTREG(0x6578,0x802);
-    OUTREG(0x657C,0xBFF88228);
-    OUTREG(0x6578,0x10000);
-    OUTREG(0x657C,0x82A8BF00);
-    OUTREG(0x6578,0x10001);
-    OUTREG(0x657C,0x82A08CC0);
-    OUTREG(0x6578,0x10002);
-    OUTREG(0x657C,0x8008BEF8);
-    OUTREG(0x6578,0x10100);
-    OUTREG(0x657C,0x81F0BF28);
-    OUTREG(0x6578,0x10101);
-    OUTREG(0x657C,0x83608CA0);
-    OUTREG(0x6578,0x10102);
-    OUTREG(0x657C,0x8018BED0);
-    OUTREG(0x6578,0x10200);
-    OUTREG(0x657C,0x8148BF38);
-    OUTREG(0x6578,0x10201);
-    OUTREG(0x657C,0x84408C80);
-    OUTREG(0x6578,0x10202);
-    OUTREG(0x657C,0x8008BEB8);
-    OUTREG(0x6578,0x10300);
-    OUTREG(0x657C,0x80B0BF78);
-    OUTREG(0x6578,0x10301);
-    OUTREG(0x657C,0x85008C20);
-    OUTREG(0x6578,0x10302);
-    OUTREG(0x657C,0x8020BEA0);
-    OUTREG(0x6578,0x10400);
-    OUTREG(0x657C,0x8028BF90);
-    OUTREG(0x6578,0x10401);
-    OUTREG(0x657C,0x85E08BC0);
-    OUTREG(0x6578,0x10402);
-    OUTREG(0x657C,0x8018BE90);
-    OUTREG(0x6578,0x10500);
-    OUTREG(0x657C,0xBFB8BFB0);
-    OUTREG(0x6578,0x10501);
-    OUTREG(0x657C,0x86C08B40);
-    OUTREG(0x6578,0x10502);
-    OUTREG(0x657C,0x8010BE90);
-    OUTREG(0x6578,0x10600);
-    OUTREG(0x657C,0xBF58BFC8);
-    OUTREG(0x6578,0x10601);
-    OUTREG(0x657C,0x87A08AA0);
-    OUTREG(0x6578,0x10602);
-    OUTREG(0x657C,0x8010BE98);
-    OUTREG(0x6578,0x10700);
-    OUTREG(0x657C,0xBF10BFF0);
-    OUTREG(0x6578,0x10701);
-    OUTREG(0x657C,0x886089E0);
-    OUTREG(0x6578,0x10702);
-    OUTREG(0x657C,0x8018BEB0);
-    OUTREG(0x6578,0x10800);
-    OUTREG(0x657C,0xBED8BFE8);
-    OUTREG(0x6578,0x10801);
-    OUTREG(0x657C,0x89408940);
-    OUTREG(0x6578,0x10802);
-    OUTREG(0x657C,0xBFE8BED8);
-    OUTREG(0x6578,0x20000);
-    OUTREG(0x657C,0x80008000);
-    OUTREG(0x6578,0x20001);
-    OUTREG(0x657C,0x90008000);
-    OUTREG(0x6578,0x20002);
-    OUTREG(0x657C,0x80008000);
-    OUTREG(0x6578,0x20003);
-    OUTREG(0x657C,0x80008000);
-    OUTREG(0x6578,0x20100);
-    OUTREG(0x657C,0x80108000);
-    OUTREG(0x6578,0x20101);
-    OUTREG(0x657C,0x8FE0BF70);
-    OUTREG(0x6578,0x20102);
-    OUTREG(0x657C,0xBFE880C0);
-    OUTREG(0x6578,0x20103);
-    OUTREG(0x657C,0x80008000);
-    OUTREG(0x6578,0x20200);
-    OUTREG(0x657C,0x8018BFF8);
-    OUTREG(0x6578,0x20201);
-    OUTREG(0x657C,0x8F80BF08);
-    OUTREG(0x6578,0x20202);
-    OUTREG(0x657C,0xBFD081A0);
-    OUTREG(0x6578,0x20203);
-    OUTREG(0x657C,0xBFF88000);
-    OUTREG(0x6578,0x20300);
-    OUTREG(0x657C,0x80188000);
-    OUTREG(0x6578,0x20301);
-    OUTREG(0x657C,0x8EE0BEC0);
-    OUTREG(0x6578,0x20302);
-    OUTREG(0x657C,0xBFB082A0);
-    OUTREG(0x6578,0x20303);
-    OUTREG(0x657C,0x80008000);
-    OUTREG(0x6578,0x20400);
-    OUTREG(0x657C,0x80188000);
-    OUTREG(0x6578,0x20401);
-    OUTREG(0x657C,0x8E00BEA0);
-    OUTREG(0x6578,0x20402);
-    OUTREG(0x657C,0xBF8883C0);
-    OUTREG(0x6578,0x20403);
-    OUTREG(0x657C,0x80008000);
-    OUTREG(0x6578,0x20500);
-    OUTREG(0x657C,0x80188000);
-    OUTREG(0x6578,0x20501);
-    OUTREG(0x657C,0x8D00BE90);
-    OUTREG(0x6578,0x20502);
-    OUTREG(0x657C,0xBF588500);
-    OUTREG(0x6578,0x20503);
-    OUTREG(0x657C,0x80008008);
-    OUTREG(0x6578,0x20600);
-    OUTREG(0x657C,0x80188000);
-    OUTREG(0x6578,0x20601);
-    OUTREG(0x657C,0x8BC0BE98);
-    OUTREG(0x6578,0x20602);
-    OUTREG(0x657C,0xBF308660);
-    OUTREG(0x6578,0x20603);
-    OUTREG(0x657C,0x80008008);
-    OUTREG(0x6578,0x20700);
-    OUTREG(0x657C,0x80108000);
-    OUTREG(0x6578,0x20701);
-    OUTREG(0x657C,0x8A80BEB0);
-    OUTREG(0x6578,0x20702);
-    OUTREG(0x657C,0xBF0087C0);
-    OUTREG(0x6578,0x20703);
-    OUTREG(0x657C,0x80008008);
-    OUTREG(0x6578,0x20800);
-    OUTREG(0x657C,0x80108000);
-    OUTREG(0x6578,0x20801);
-    OUTREG(0x657C,0x8920BED0);
-    OUTREG(0x6578,0x20802);
-    OUTREG(0x657C,0xBED08920);
-    OUTREG(0x6578,0x20803);
-    OUTREG(0x657C,0x80008010);
-    OUTREG(0x6578,0x30000);
-    OUTREG(0x657C,0x90008000);
-    OUTREG(0x6578,0x30001);
-    OUTREG(0x657C,0x80008000);
-    OUTREG(0x6578,0x30100);
-    OUTREG(0x657C,0x8FE0BF90);
-    OUTREG(0x6578,0x30101);
-    OUTREG(0x657C,0xBFF880A0);
-    OUTREG(0x6578,0x30200);
-    OUTREG(0x657C,0x8F60BF40);
-    OUTREG(0x6578,0x30201);
-    OUTREG(0x657C,0xBFE88180);
-    OUTREG(0x6578,0x30300);
-    OUTREG(0x657C,0x8EC0BF00);
-    OUTREG(0x6578,0x30301);
-    OUTREG(0x657C,0xBFC88280);
-    OUTREG(0x6578,0x30400);
-    OUTREG(0x657C,0x8DE0BEE0);
-    OUTREG(0x6578,0x30401);
-    OUTREG(0x657C,0xBFA083A0);
-    OUTREG(0x6578,0x30500);
-    OUTREG(0x657C,0x8CE0BED0);
-    OUTREG(0x6578,0x30501);
-    OUTREG(0x657C,0xBF7884E0);
-    OUTREG(0x6578,0x30600);
-    OUTREG(0x657C,0x8BA0BED8);
-    OUTREG(0x6578,0x30601);
-    OUTREG(0x657C,0xBF508640);
-    OUTREG(0x6578,0x30700);
-    OUTREG(0x657C,0x8A60BEE8);
-    OUTREG(0x6578,0x30701);
-    OUTREG(0x657C,0xBF2087A0);
-    OUTREG(0x6578,0x30800);
-    OUTREG(0x657C,0x8900BF00);
-    OUTREG(0x6578,0x30801);
-    OUTREG(0x657C,0xBF008900);
+    index_reg += radeon_crtc->crtc_offset;
+    data_reg += radeon_crtc->crtc_offset;
+
+    OUTREG(0x659C + radeon_crtc->crtc_offset, 0x0);
+    OUTREG(0x6594 + radeon_crtc->crtc_offset, 0x705);
+    OUTREG(0x65A4 + radeon_crtc->crtc_offset, 0x10001);
+    OUTREG(0x65D8 + radeon_crtc->crtc_offset, 0x0);
+    OUTREG(0x65B0 + radeon_crtc->crtc_offset, 0x0);
+    OUTREG(0x65C0 + radeon_crtc->crtc_offset, 0x0);
+    OUTREG(0x65D4 + radeon_crtc->crtc_offset, 0x0);
+    OUTREG(index_reg,0x0);
+    OUTREG(data_reg,0x841880A8);
+    OUTREG(index_reg,0x1);
+    OUTREG(data_reg,0x84208680);
+    OUTREG(index_reg,0x2);
+    OUTREG(data_reg,0xBFF880B0);
+    OUTREG(index_reg,0x100);
+    OUTREG(data_reg,0x83D88088);
+    OUTREG(index_reg,0x101);
+    OUTREG(data_reg,0x84608680);
+    OUTREG(index_reg,0x102);
+    OUTREG(data_reg,0xBFF080D0);
+    OUTREG(index_reg,0x200);
+    OUTREG(data_reg,0x83988068);
+    OUTREG(index_reg,0x201);
+    OUTREG(data_reg,0x84A08680);
+    OUTREG(index_reg,0x202);
+    OUTREG(data_reg,0xBFF080F8);
+    OUTREG(index_reg,0x300);
+    OUTREG(data_reg,0x83588058);
+    OUTREG(index_reg,0x301);
+    OUTREG(data_reg,0x84E08660);
+    OUTREG(index_reg,0x302);
+    OUTREG(data_reg,0xBFF88120);
+    OUTREG(index_reg,0x400);
+    OUTREG(data_reg,0x83188040);
+    OUTREG(index_reg,0x401);
+    OUTREG(data_reg,0x85008660);
+    OUTREG(index_reg,0x402);
+    OUTREG(data_reg,0xBFF88150);
+    OUTREG(index_reg,0x500);
+    OUTREG(data_reg,0x82D88030);
+    OUTREG(index_reg,0x501);
+    OUTREG(data_reg,0x85408640);
+    OUTREG(index_reg,0x502);
+    OUTREG(data_reg,0xBFF88180);
+    OUTREG(index_reg,0x600);
+    OUTREG(data_reg,0x82A08018);
+    OUTREG(index_reg,0x601);
+    OUTREG(data_reg,0x85808620);
+    OUTREG(index_reg,0x602);
+    OUTREG(data_reg,0xBFF081B8);
+    OUTREG(index_reg,0x700);
+    OUTREG(data_reg,0x82608010);
+    OUTREG(index_reg,0x701);
+    OUTREG(data_reg,0x85A08600);
+    OUTREG(index_reg,0x702);
+    OUTREG(data_reg,0x800081F0);
+    OUTREG(index_reg,0x800);
+    OUTREG(data_reg,0x8228BFF8);
+    OUTREG(index_reg,0x801);
+    OUTREG(data_reg,0x85E085E0);
+    OUTREG(index_reg,0x802);
+    OUTREG(data_reg,0xBFF88228);
+    OUTREG(index_reg,0x10000);
+    OUTREG(data_reg,0x82A8BF00);
+    OUTREG(index_reg,0x10001);
+    OUTREG(data_reg,0x82A08CC0);
+    OUTREG(index_reg,0x10002);
+    OUTREG(data_reg,0x8008BEF8);
+    OUTREG(index_reg,0x10100);
+    OUTREG(data_reg,0x81F0BF28);
+    OUTREG(index_reg,0x10101);
+    OUTREG(data_reg,0x83608CA0);
+    OUTREG(index_reg,0x10102);
+    OUTREG(data_reg,0x8018BED0);
+    OUTREG(index_reg,0x10200);
+    OUTREG(data_reg,0x8148BF38);
+    OUTREG(index_reg,0x10201);
+    OUTREG(data_reg,0x84408C80);
+    OUTREG(index_reg,0x10202);
+    OUTREG(data_reg,0x8008BEB8);
+    OUTREG(index_reg,0x10300);
+    OUTREG(data_reg,0x80B0BF78);
+    OUTREG(index_reg,0x10301);
+    OUTREG(data_reg,0x85008C20);
+    OUTREG(index_reg,0x10302);
+    OUTREG(data_reg,0x8020BEA0);
+    OUTREG(index_reg,0x10400);
+    OUTREG(data_reg,0x8028BF90);
+    OUTREG(index_reg,0x10401);
+    OUTREG(data_reg,0x85E08BC0);
+    OUTREG(index_reg,0x10402);
+    OUTREG(data_reg,0x8018BE90);
+    OUTREG(index_reg,0x10500);
+    OUTREG(data_reg,0xBFB8BFB0);
+    OUTREG(index_reg,0x10501);
+    OUTREG(data_reg,0x86C08B40);
+    OUTREG(index_reg,0x10502);
+    OUTREG(data_reg,0x8010BE90);
+    OUTREG(index_reg,0x10600);
+    OUTREG(data_reg,0xBF58BFC8);
+    OUTREG(index_reg,0x10601);
+    OUTREG(data_reg,0x87A08AA0);
+    OUTREG(index_reg,0x10602);
+    OUTREG(data_reg,0x8010BE98);
+    OUTREG(index_reg,0x10700);
+    OUTREG(data_reg,0xBF10BFF0);
+    OUTREG(index_reg,0x10701);
+    OUTREG(data_reg,0x886089E0);
+    OUTREG(index_reg,0x10702);
+    OUTREG(data_reg,0x8018BEB0);
+    OUTREG(index_reg,0x10800);
+    OUTREG(data_reg,0xBED8BFE8);
+    OUTREG(index_reg,0x10801);
+    OUTREG(data_reg,0x89408940);
+    OUTREG(index_reg,0x10802);
+    OUTREG(data_reg,0xBFE8BED8);
+    OUTREG(index_reg,0x20000);
+    OUTREG(data_reg,0x80008000);
+    OUTREG(index_reg,0x20001);
+    OUTREG(data_reg,0x90008000);
+    OUTREG(index_reg,0x20002);
+    OUTREG(data_reg,0x80008000);
+    OUTREG(index_reg,0x20003);
+    OUTREG(data_reg,0x80008000);
+    OUTREG(index_reg,0x20100);
+    OUTREG(data_reg,0x80108000);
+    OUTREG(index_reg,0x20101);
+    OUTREG(data_reg,0x8FE0BF70);
+    OUTREG(index_reg,0x20102);
+    OUTREG(data_reg,0xBFE880C0);
+    OUTREG(index_reg,0x20103);
+    OUTREG(data_reg,0x80008000);
+    OUTREG(index_reg,0x20200);
+    OUTREG(data_reg,0x8018BFF8);
+    OUTREG(index_reg,0x20201);
+    OUTREG(data_reg,0x8F80BF08);
+    OUTREG(index_reg,0x20202);
+    OUTREG(data_reg,0xBFD081A0);
+    OUTREG(index_reg,0x20203);
+    OUTREG(data_reg,0xBFF88000);
+    OUTREG(index_reg,0x20300);
+    OUTREG(data_reg,0x80188000);
+    OUTREG(index_reg,0x20301);
+    OUTREG(data_reg,0x8EE0BEC0);
+    OUTREG(index_reg,0x20302);
+    OUTREG(data_reg,0xBFB082A0);
+    OUTREG(index_reg,0x20303);
+    OUTREG(data_reg,0x80008000);
+    OUTREG(index_reg,0x20400);
+    OUTREG(data_reg,0x80188000);
+    OUTREG(index_reg,0x20401);
+    OUTREG(data_reg,0x8E00BEA0);
+    OUTREG(index_reg,0x20402);
+    OUTREG(data_reg,0xBF8883C0);
+    OUTREG(index_reg,0x20403);
+    OUTREG(data_reg,0x80008000);
+    OUTREG(index_reg,0x20500);
+    OUTREG(data_reg,0x80188000);
+    OUTREG(index_reg,0x20501);
+    OUTREG(data_reg,0x8D00BE90);
+    OUTREG(index_reg,0x20502);
+    OUTREG(data_reg,0xBF588500);
+    OUTREG(index_reg,0x20503);
+    OUTREG(data_reg,0x80008008);
+    OUTREG(index_reg,0x20600);
+    OUTREG(data_reg,0x80188000);
+    OUTREG(index_reg,0x20601);
+    OUTREG(data_reg,0x8BC0BE98);
+    OUTREG(index_reg,0x20602);
+    OUTREG(data_reg,0xBF308660);
+    OUTREG(index_reg,0x20603);
+    OUTREG(data_reg,0x80008008);
+    OUTREG(index_reg,0x20700);
+    OUTREG(data_reg,0x80108000);
+    OUTREG(index_reg,0x20701);
+    OUTREG(data_reg,0x8A80BEB0);
+    OUTREG(index_reg,0x20702);
+    OUTREG(data_reg,0xBF0087C0);
+    OUTREG(index_reg,0x20703);
+    OUTREG(data_reg,0x80008008);
+    OUTREG(index_reg,0x20800);
+    OUTREG(data_reg,0x80108000);
+    OUTREG(index_reg,0x20801);
+    OUTREG(data_reg,0x8920BED0);
+    OUTREG(index_reg,0x20802);
+    OUTREG(data_reg,0xBED08920);
+    OUTREG(index_reg,0x20803);
+    OUTREG(data_reg,0x80008010);
+    OUTREG(index_reg,0x30000);
+    OUTREG(data_reg,0x90008000);
+    OUTREG(index_reg,0x30001);
+    OUTREG(data_reg,0x80008000);
+    OUTREG(index_reg,0x30100);
+    OUTREG(data_reg,0x8FE0BF90);
+    OUTREG(index_reg,0x30101);
+    OUTREG(data_reg,0xBFF880A0);
+    OUTREG(index_reg,0x30200);
+    OUTREG(data_reg,0x8F60BF40);
+    OUTREG(index_reg,0x30201);
+    OUTREG(data_reg,0xBFE88180);
+    OUTREG(index_reg,0x30300);
+    OUTREG(data_reg,0x8EC0BF00);
+    OUTREG(index_reg,0x30301);
+    OUTREG(data_reg,0xBFC88280);
+    OUTREG(index_reg,0x30400);
+    OUTREG(data_reg,0x8DE0BEE0);
+    OUTREG(index_reg,0x30401);
+    OUTREG(data_reg,0xBFA083A0);
+    OUTREG(index_reg,0x30500);
+    OUTREG(data_reg,0x8CE0BED0);
+    OUTREG(index_reg,0x30501);
+    OUTREG(data_reg,0xBF7884E0);
+    OUTREG(index_reg,0x30600);
+    OUTREG(data_reg,0x8BA0BED8);
+    OUTREG(index_reg,0x30601);
+    OUTREG(data_reg,0xBF508640);
+    OUTREG(index_reg,0x30700);
+    OUTREG(data_reg,0x8A60BEE8);
+    OUTREG(index_reg,0x30701);
+    OUTREG(data_reg,0xBF2087A0);
+    OUTREG(index_reg,0x30800);
+    OUTREG(data_reg,0x8900BF00);
+    OUTREG(index_reg,0x30801);
+    OUTREG(data_reg,0xBF008900);
 }
 
 static int
@@ -1182,7 +1193,7 @@ atombios_output_scaler_setup(xf86OutputPtr output)
 	if (radeon_output->active_device & (ATOM_DEVICE_CV_SUPPORT | ATOM_DEVICE_TV_SUPPORT)
 	    && info->ChipFamily >= CHIP_FAMILY_RV515 && info->ChipFamily <= CHIP_FAMILY_RV570) {
 	    ErrorF("forcing TV scaler\n");
-	    atom_rv515_force_tv_scaler(output->scrn);
+	    atom_rv515_force_tv_scaler(output->scrn, radeon_crtc);
 	}
 	ErrorF("scaler %d setup success\n", radeon_crtc->crtc_id);
 	return ATOM_SUCCESS;
@@ -1271,6 +1282,9 @@ atombios_output_dpms(xf86OutputPtr output, int mode)
 		ErrorF("Output %s enable failed\n",
 		       device_name[radeon_get_device_index(radeon_output->active_device)]);
 	}
+	/* at least for TV atom fails to reassociate the correct crtc source at dpms on */
+	if (radeon_output->active_device & (ATOM_DEVICE_TV_SUPPORT))
+		atombios_set_output_crtc_source(output);
 	break;
     case DPMSModeStandby:
     case DPMSModeSuspend:
@@ -1600,7 +1614,7 @@ atombios_dac_detect(xf86OutputPtr output)
     RADEONOutputPrivatePtr radeon_output = output->driver_private;
     RADEONMonitorType MonType = MT_NONE;
     AtomBiosResult ret;
-    uint32_t bios_0_scratch;
+    RADEONSavePtr save = info->ModeReg;
 
     if (radeon_output->devices & ATOM_DEVICE_TV1_SUPPORT) {
 	if (xf86ReturnOptValBool(info->Options, OPTION_FORCE_TVOUT, FALSE)) {
@@ -1614,24 +1628,24 @@ atombios_dac_detect(xf86OutputPtr output)
     ret = atom_bios_dac_load_detect(info->atomBIOS, output);
     if (ret == ATOM_SUCCESS) {
 	if (info->ChipFamily >= CHIP_FAMILY_R600)
-	    bios_0_scratch = INREG(R600_BIOS_0_SCRATCH);
+	    save->bios_0_scratch = INREG(R600_BIOS_0_SCRATCH);
 	else
-	    bios_0_scratch = INREG(RADEON_BIOS_0_SCRATCH);
-	/*ErrorF("DAC connect %08X\n", (unsigned int)bios_0_scratch);*/
+	    save->bios_0_scratch = INREG(RADEON_BIOS_0_SCRATCH);
+	/*ErrorF("DAC connect %08X\n", (unsigned int)save->bios_0_scratch);*/
 
 	if (radeon_output->devices & ATOM_DEVICE_CRT1_SUPPORT) {
-	    if (bios_0_scratch & ATOM_S0_CRT1_MASK)
+	    if (save->bios_0_scratch & ATOM_S0_CRT1_MASK)
 		MonType = MT_CRT;
 	} else if (radeon_output->devices & ATOM_DEVICE_CRT2_SUPPORT) {
-	    if (bios_0_scratch & ATOM_S0_CRT2_MASK)
+	    if (save->bios_0_scratch & ATOM_S0_CRT2_MASK)
 		MonType = MT_CRT;
 	} else if (radeon_output->devices & ATOM_DEVICE_CV_SUPPORT) {
-	    if (bios_0_scratch & (ATOM_S0_CV_MASK | ATOM_S0_CV_MASK_A))
+	    if (save->bios_0_scratch & (ATOM_S0_CV_MASK | ATOM_S0_CV_MASK_A))
 		MonType = MT_CV;
 	} else if (radeon_output->devices & ATOM_DEVICE_TV1_SUPPORT) {
-	    if (bios_0_scratch & (ATOM_S0_TV1_COMPOSITE | ATOM_S0_TV1_COMPOSITE_A))
+	    if (save->bios_0_scratch & (ATOM_S0_TV1_COMPOSITE | ATOM_S0_TV1_COMPOSITE_A))
 		MonType = MT_CTV;
-	    else if (bios_0_scratch & (ATOM_S0_TV1_SVIDEO | ATOM_S0_TV1_SVIDEO_A))
+	    else if (save->bios_0_scratch & (ATOM_S0_TV1_SVIDEO | ATOM_S0_TV1_SVIDEO_A))
 		MonType = MT_STV;
 	}
     }

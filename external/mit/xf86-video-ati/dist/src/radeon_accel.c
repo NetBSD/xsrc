@@ -87,6 +87,8 @@
 #include "radeon_drm.h"
 #endif
 
+#include "ati_pciids_gen.h"
+
 				/* Line support */
 #include "miline.h"
 
@@ -481,12 +483,17 @@ void RADEONEngineInit(ScrnInfoPtr pScrn)
 	}
     }
 
+    /* RV410 SE cards only have 1 quadpipe */
+    if ((info->Chipset == PCI_CHIP_RV410_5E4C) ||
+	(info->Chipset == PCI_CHIP_RV410_5E4F))
+	info->accel_state->num_gb_pipes = 1;
+
     if (IS_R300_3D || IS_R500_3D)
 	xf86DrvMsg(pScrn->scrnIndex, X_INFO,
 		   "num quad-pipes is %d\n", info->accel_state->num_gb_pipes);
 
     if (IS_R300_3D || IS_R500_3D) {
-	uint32_t gb_tile_config = (R300_ENABLE_TILING | R300_TILE_SIZE_16 | R300_SUBPIXEL_1_16);
+	uint32_t gb_tile_config = (R300_ENABLE_TILING | R300_TILE_SIZE_16);
 
 	switch(info->accel_state->num_gb_pipes) {
 	case 2: gb_tile_config |= R300_PIPE_COUNT_R300; break;
