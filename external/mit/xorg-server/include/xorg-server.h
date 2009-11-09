@@ -126,7 +126,7 @@
 /* #undef XORG_RELEASE */
 
 /* Current Xorg version */
-#define XORG_VERSION_CURRENT (((1) * 10000000) + ((6) * 100000) + ((3) * 1000) + 0)
+#define XORG_VERSION_CURRENT (((1) * 10000000) + ((6) * 100000) + ((5) * 1000) + 0)
 
 /* Build Xv Extension */
 #define XvExtension 1
