@@ -77,9 +77,11 @@
 #if defined(__i386__) || defined(__x86_64__)
 /* use MMX compiler intrinsics */
 #define USE_MMX 1
+#endif
 
+#if defined(__x86_64__)
 /* use SSE2 compiler intrinsics */
-/* #undef USE_SSE2 */
+#define USE_SSE2 1
 #endif
 
 /* use VMX compiler intrinsics */
