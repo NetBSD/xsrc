@@ -40,12 +40,17 @@ host_triplet = @host@
 DIST_COMMON = README $(srcdir)/Makefile.am $(srcdir)/Makefile.in \
 	$(top_srcdir)/RadeonHD.am
 EXTRA_PROGRAMS = rhd_conntest$(EXEEXT) rhd_dump$(EXEEXT)
+@HAVE_PCI_PCI_H_FALSE@@XSERVER_LIBPCIACCESS_TRUE@noinst_PROGRAMS = rhd_conntest$(EXEEXT) \
+@HAVE_PCI_PCI_H_FALSE@@XSERVER_LIBPCIACCESS_TRUE@	rhd_dump$(EXEEXT)
 @HAVE_PCI_PCI_H_TRUE@@HAVE_ZLIB_TRUE@noinst_PROGRAMS =  \
 @HAVE_PCI_PCI_H_TRUE@@HAVE_ZLIB_TRUE@	rhd_conntest$(EXEEXT) \
 @HAVE_PCI_PCI_H_TRUE@@HAVE_ZLIB_TRUE@	rhd_dump$(EXEEXT)
+@HAVE_ZLIB_FALSE@@XSERVER_LIBPCIACCESS_TRUE@noinst_PROGRAMS = rhd_conntest$(EXEEXT) \
+@HAVE_ZLIB_FALSE@@XSERVER_LIBPCIACCESS_TRUE@	rhd_dump$(EXEEXT)
 subdir = utils/conntest
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
-am__aclocal_m4_deps = $(top_srcdir)/configure.ac
+am__aclocal_m4_deps = $(top_srcdir)/acinclude.m4 \
+	$(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 mkinstalldirs = $(install_sh) -d
@@ -83,6 +88,7 @@ ACLOCAL = @ACLOCAL@
 ADMIN_MAN_DIR = @ADMIN_MAN_DIR@
 ADMIN_MAN_SUFFIX = @ADMIN_MAN_SUFFIX@
 AMTAR = @AMTAR@
+AM_MAKEFLAGS = @AM_MAKEFLAGS@
 APP_MAN_DIR = @APP_MAN_DIR@
 APP_MAN_SUFFIX = @APP_MAN_SUFFIX@
 AR = @AR@
@@ -96,6 +102,7 @@ CCDEPMODE = @CCDEPMODE@
 CFLAGS = @CFLAGS@
 CPP = @CPP@
 CPPFLAGS = @CPPFLAGS@
+CXX = @CXX@
 CYGPATH_W = @CYGPATH_W@
 DEFS = @DEFS@
 DEPDIR = @DEPDIR@
@@ -111,6 +118,8 @@ ECHO_N = @ECHO_N@
 ECHO_T = @ECHO_T@
 EGREP = @EGREP@
 EXEEXT = @EXEEXT@
+F77 = @F77@
+FC = @FC@
 FGREP = @FGREP@
 FILE_MAN_DIR = @FILE_MAN_DIR@
 FILE_MAN_SUFFIX = @FILE_MAN_SUFFIX@
@@ -131,12 +140,14 @@ LIPO = @LIPO@
 LN_S = @LN_S@
 LTLIBOBJS = @LTLIBOBJS@
 MAINT = @MAINT@
+MAKEFLAGS = @MAKEFLAGS@
 MAKEINFO = @MAKEINFO@
 MISC_MAN_DIR = @MISC_MAN_DIR@
 MISC_MAN_SUFFIX = @MISC_MAN_SUFFIX@
 MKDIR_P = @MKDIR_P@
 NM = @NM@
 NMEDIT = @NMEDIT@
+OBJC = @OBJC@
 OBJDUMP = @OBJDUMP@
 OBJEXT = @OBJEXT@
 OTOOL = @OTOOL@
@@ -154,14 +165,18 @@ PCIUTILS_CFLAGS = @PCIUTILS_CFLAGS@
 PCIUTILS_LIBS = @PCIUTILS_LIBS@
 PEDANTIC_CFLAGS = @PEDANTIC_CFLAGS@
 PKG_CONFIG = @PKG_CONFIG@
+Q = @Q@
 RANDR_VERSION = @RANDR_VERSION@
 RANLIB = @RANLIB@
 SED = @SED@
 SET_MAKE = @SET_MAKE@
 SHELL = @SHELL@
 STRIP = @STRIP@
+V = @V@
 VERSION = @VERSION@
 WARN_CFLAGS = @WARN_CFLAGS@
+XEXT_CFLAGS = @XEXT_CFLAGS@
+XEXT_LIBS = @XEXT_LIBS@
 XORG_CFLAGS = @XORG_CFLAGS@
 XORG_LIBS = @XORG_LIBS@
 abs_builddir = @abs_builddir@
@@ -211,6 +226,7 @@ program_transform_name = @program_transform_name@
 psdir = @psdir@
 sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
+shavedir = @shavedir@
 srcdir = @srcdir@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
@@ -233,10 +249,12 @@ AM_CFLAGS = @XORG_CFLAGS@ @WARN_CFLAGS@ @PCIUTILS_CFLAGS@
 AM_CPPFLAGS = -I$(top_srcdir)/src/AtomBios/includes
 rhd_conntest_SOURCES = rhd_conntest.c
 nodist_rhd_conntest_SOURCES = git_version.h
-rhd_conntest_LDADD = @PCIUTILS_LIBS@
+@XSERVER_LIBPCIACCESS_FALSE@rhd_conntest_LDADD = @PCIUTILS_LIBS@
+@XSERVER_LIBPCIACCESS_TRUE@rhd_conntest_LDADD = @PCIACCESS_LIBS@
 rhd_dump_SOURCES = rhd_dump.c
 nodist_rhd_dump_SOURCES = git_version.h
-rhd_dump_LDADD = @PCIUTILS_LIBS@
+@XSERVER_LIBPCIACCESS_FALSE@rhd_dump_LDADD = @PCIUTILS_LIBS@
+@XSERVER_LIBPCIACCESS_TRUE@rhd_dump_LDADD = @PCIACCESS_LIBS@
 all: $(BUILT_SOURCES)
 	$(MAKE) $(AM_MAKEFLAGS) all-am
 
@@ -251,9 +269,9 @@ $(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am $(top_srcdir
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign  utils/conntest/Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --gnu  utils/conntest/Makefile'; \
 	cd $(top_srcdir) && \
-	  $(AUTOMAKE) --foreign  utils/conntest/Makefile
+	  $(AUTOMAKE) --gnu  utils/conntest/Makefile
 .PRECIOUS: Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \
