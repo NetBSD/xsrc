@@ -25,7 +25,9 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
  * SOFTWARE.
  */
+#ifdef HAVE_CONFIG_H
 #include <config.h>
+#endif
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
@@ -71,7 +73,7 @@ general_composite_rect  (pixman_implementation_t *imp,
     fetch_scanline_t fetch_src = NULL, fetch_mask = NULL, fetch_dest = NULL;
     pixman_combine_32_func_t compose;
     store_scanline_t store;
-    source_pict_class_t src_class, mask_class;
+    source_image_class_t src_class, mask_class;
     pixman_bool_t component_alpha;
     uint32_t *bits;
     int32_t stride;
@@ -134,7 +136,7 @@ general_composite_rect  (pixman_implementation_t *imp,
      */
     if (!wide &&
         !dest->common.alpha_map &&
-        !dest->common.write_func &&
+        !dest->bits.write_func &&
         (op == PIXMAN_OP_ADD || op == PIXMAN_OP_OVER) &&
         (dest->bits.format == PIXMAN_a8r8g8b8 ||
          dest->bits.format == PIXMAN_x8r8g8b8))
