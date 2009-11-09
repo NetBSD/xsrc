@@ -429,7 +429,7 @@ texture_override(GLcontext *ctx,
       }
       if (texObj->_Complete) {
          texUnit->_ReallyEnabled = textureBit;
-	 _mesa_reference_texobj(&texUnit->_Current, texObj);
+         _mesa_reference_texobj(&texUnit->_Current, texObj);
          update_texture_compare_function(ctx, texObj);
       }
    }
