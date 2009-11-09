@@ -75,6 +75,9 @@ static int pci_device_linux_sysfs_write( struct pci_device * dev,
     const void * data, pciaddr_t offset, pciaddr_t size,
     pciaddr_t * bytes_written );
 
+static int pci_device_linux_sysfs_boot_vga( struct pci_device * dev );
+static int pci_device_linux_sysfs_has_kernel_driver(struct pci_device *dev);
+
 static const struct pci_system_methods linux_sysfs_methods = {
     .destroy = NULL,
     .destroy_device = NULL,
@@ -88,6 +91,8 @@ static const struct pci_system_methods linux_sysfs_methods = {
 
     .fill_capabilities = pci_fill_capabilities_generic,
     .enable = pci_device_linux_sysfs_enable,
+    .boot_vga = pci_device_linux_sysfs_boot_vga,
+    .has_kernel_driver = pci_device_linux_sysfs_has_kernel_driver,
 };
 
 #define SYS_BUS_PCI "/sys/bus/pci/devices"
@@ -208,6 +213,10 @@ populate_entries( struct pci_system * p )
 	}
     }
 
+    for (i = 0; i < n; i++)
+	free(devices[i]);
+    free(devices);
+
     if (err) {
 	free(p->devices);
 	p->devices = NULL;
@@ -322,10 +331,15 @@ pci_device_linux_sysfs_read_rom( struct pci_device * dev, void * buffer )
     
     fd = open( name, O_RDWR );
     if ( fd == -1 ) {
+#ifdef LINUX_ROM
 	/* If reading the ROM using sysfs fails, fall back to the old
 	 * /dev/mem based interface.
+	 * disable this for newer kernels using configure
 	 */
 	return pci_device_linux_devmem_read_rom(dev, buffer);
+#else
+	return errno;
+#endif
     }
 
 
@@ -697,4 +711,51 @@ static void pci_device_linux_sysfs_enable(struct pci_device *dev)
 
     write( fd, "1", 1 );
     close(fd);
+}
+
+static int pci_device_linux_sysfs_boot_vga(struct pci_device *dev)
+{
+    char name[256];
+    char reply[3];
+    int fd, bytes_read;
+    int ret = 0;
+
+    snprintf( name, 255, "%s/%04x:%02x:%02x.%1u/boot_vga",
+	      SYS_BUS_PCI,
+	      dev->domain,
+	      dev->bus,
+	      dev->dev,
+	      dev->func );
+    
+    fd = open( name, O_RDONLY );
+    if (fd == -1)
+       return 0;
+
+    bytes_read = read(fd, reply, 1);
+    if (bytes_read != 1)
+	goto out;
+    if (reply[0] == '1')
+	ret = 1;
+out:
+    close(fd);
+    return ret;
+}
+
+static int pci_device_linux_sysfs_has_kernel_driver(struct pci_device *dev)
+{
+    char name[256];
+    struct stat dummy;
+    int ret;
+
+    snprintf( name, 255, "%s/%04x:%02x:%02x.%1u/driver",
+	      SYS_BUS_PCI,
+	      dev->domain,
+	      dev->bus,
+	      dev->dev,
+	      dev->func );
+    
+    ret = stat(name, &dummy);
+    if (ret < 0)
+	return 0;
+    return 1;
 }

@@ -55,7 +55,7 @@
 typedef gzFile pci_id_file;
 
 static pci_id_file
-pci_id_file_open()
+pci_id_file_open(void)
 {
     pci_id_file result;
 

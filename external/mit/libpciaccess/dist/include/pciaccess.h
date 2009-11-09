@@ -21,6 +21,31 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  */
+/*
+ * Copyright (c) 2007 Paulo R. Zanoni, Tiago Vignatti
+ *
+ * Permission is hereby granted, free of charge, to any person
+ * obtaining a copy of this software and associated documentation
+ * files (the "Software"), to deal in the Software without
+ * restriction, including without limitation the rights to use,
+ * copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following
+ * conditions:
+ *
+ * The above copyright notice and this permission notice shall be
+ * included in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+ * OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+ * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+ * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ * OTHER DEALINGS IN THE SOFTWARE.
+ *
+ */
 
 /**
  * \file pciaccess.h
@@ -49,6 +74,10 @@ struct pci_slot_match;
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+int pci_device_has_kernel_driver(struct pci_device *dev);
+
+int pci_device_is_boot_vga(struct pci_device *dev);
 
 int pci_device_read_rom(struct pci_device *dev, void *buffer);
 
@@ -348,6 +377,11 @@ struct pci_device {
      * the \c pci_device structure.
      */
     intptr_t user_data;
+
+    /**
+      * Used by the VGA arbiter. Type of resource decoded by the device and
+      * the file descriptor (/dev/vga_arbiter). */
+    int vgaarb_rsrc;
 };
 
 
@@ -446,5 +480,29 @@ struct pci_pcmcia_bridge_info {
     } mem[2];
 
 };
+
+
+/**
+ * VGA Arbiter definitions, functions and related.
+ */
+
+/* Legacy VGA regions */
+#define VGA_ARB_RSRC_NONE       0x00
+#define VGA_ARB_RSRC_LEGACY_IO  0x01
+#define VGA_ARB_RSRC_LEGACY_MEM 0x02
+/* Non-legacy access */
+#define VGA_ARB_RSRC_NORMAL_IO  0x04
+#define VGA_ARB_RSRC_NORMAL_MEM 0x08
+
+int  pci_device_vgaarb_init         (void);
+void pci_device_vgaarb_fini         (void);
+int  pci_device_vgaarb_set_target   (struct pci_device *dev);
+/* use the targetted device */
+int  pci_device_vgaarb_decodes      (int new_vga_rsrc);
+int  pci_device_vgaarb_lock         (void);
+int  pci_device_vgaarb_trylock      (void);
+int  pci_device_vgaarb_unlock       (void);
+/* return the current device count + resource decodes for the device */
+int pci_device_vgaarb_get_info	    (struct pci_device *dev, int *vga_count, int *rsrc_decodes);
 
 #endif /* PCIACCESS_H */
