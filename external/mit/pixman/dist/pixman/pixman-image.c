@@ -62,7 +62,7 @@ _pixman_init_gradient (gradient_t *                  gradient,
  * depth, but that's a project for the future.
  */
 void
-_pixman_image_get_scanline_generic_64 (pixman_image_t * pict,
+_pixman_image_get_scanline_generic_64 (pixman_image_t * image,
                                        int              x,
                                        int              y,
                                        int              width,
@@ -85,7 +85,7 @@ _pixman_image_get_scanline_generic_64 (pixman_image_t * pict,
     }
 
     /* Fetch the source image into the first half of buffer. */
-    _pixman_image_get_scanline_32 (pict, x, y, width, (uint32_t*)buffer, mask8,
+    _pixman_image_get_scanline_32 (image, x, y, width, (uint32_t*)buffer, mask8,
                                    mask_bits);
 
     /* Expand from 32bpp to 64bpp in place. */
@@ -115,19 +115,18 @@ _pixman_image_allocate (void)
 	common->alpha_map = NULL;
 	common->component_alpha = FALSE;
 	common->ref_count = 1;
-	common->read_func = NULL;
-	common->write_func = NULL;
 	common->classify = NULL;
 	common->client_clip = FALSE;
 	common->destroy_func = NULL;
 	common->destroy_data = NULL;
 	common->need_workaround = FALSE;
+	common->dirty = TRUE;
     }
 
     return image;
 }
 
-source_pict_class_t
+source_image_class_t
 _pixman_image_classify (pixman_image_t *image,
                         int             x,
                         int             y,
@@ -170,7 +169,7 @@ _pixman_image_get_scanline_64 (pixman_image_t *image,
 static void
 image_property_changed (pixman_image_t *image)
 {
-    image->common.property_changed (image);
+    image->common.dirty = TRUE;
 }
 
 /* Ref Counting */
@@ -240,6 +239,16 @@ _pixman_image_reset_clip_region (pixman_image_t *image)
     image->common.have_clip_region = FALSE;
 }
 
+void
+_pixman_image_validate (pixman_image_t *image)
+{
+    if (image->common.dirty)
+    {
+	image->common.property_changed (image);
+	image->common.dirty = FALSE;
+    }
+}
+
 PIXMAN_EXPORT pixman_bool_t
 pixman_image_set_clip_region32 (pixman_image_t *   image,
                                 pixman_region32_t *region)
@@ -303,7 +312,7 @@ pixman_image_set_transform (pixman_image_t *          image,
     {
 	{ { pixman_fixed_1, 0, 0 },
 	  { 0, pixman_fixed_1, 0 },
-	  { 0, 0, pixman_fixed_1 }}
+	  { 0, 0, pixman_fixed_1 } }
     };
 
     image_common_t *common = (image_common_t *)image;
@@ -333,10 +342,12 @@ pixman_image_set_transform (pixman_image_t *          image,
 
     memcpy (common->transform, transform, sizeof(pixman_transform_t));
 
+    result = TRUE;
+
 out:
     image_property_changed (image);
 
-    return TRUE;
+    return result;
 }
 
 PIXMAN_EXPORT void
@@ -450,10 +461,13 @@ pixman_image_set_accessors (pixman_image_t *           image,
 {
     return_if_fail (image != NULL);
 
-    image->common.read_func = read_func;
-    image->common.write_func = write_func;
+    if (image->type == BITS)
+    {
+	image->bits.read_func = read_func;
+	image->bits.write_func = write_func;
 
-    image_property_changed (image);
+	image_property_changed (image);
+    }
 }
 
 PIXMAN_EXPORT uint32_t *
