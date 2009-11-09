@@ -747,6 +747,8 @@ static radeon_agpmode_quirk radeon_agpmode_quirk_list[] = {
     { PCI_VENDOR_INTEL,0x2570,  PCI_VENDOR_ATI,0x4a4e,  PCI_VENDOR_DELL,0x5106,  4 },
     /* Intel 82865G/PE/P DRAM Controller/Host-Hub / RV280 [Radeon 9200 SE] Needs AGPMode 4 (lp #300304) */
     { PCI_VENDOR_INTEL,0x2570,  PCI_VENDOR_ATI,0x5964,  0x148c,0x2073,           4 },
+    /* Intel 82855PM host bridge / Mobility M7 LW Needs AGPMode 4 (lp: #353996) */
+    { PCI_VENDOR_INTEL,0x3340,  PCI_VENDOR_ATI,0x4c57, PCI_VENDOR_IBM,0x0530,    4 },
     /* Intel 82855PM Processor to I/O Controller / Mobility M6 LY Needs AGPMode 1 (deb #467235) */
     { PCI_VENDOR_INTEL,0x3340,  PCI_VENDOR_ATI,0x4c59,  PCI_VENDOR_IBM,0x052f,   1 },
     /* Intel 82855PM host bridge / Mobility 9600 M10 RV350 Needs AGPMode 1 (lp #195051) */
@@ -769,6 +771,16 @@ static radeon_agpmode_quirk radeon_agpmode_quirk_list[] = {
     { PCI_VENDOR_INTEL,0x3580,  PCI_VENDOR_ATI,0x4e50,  PCI_VENDOR_ASUS,0x1942,  1 },
     /* Intel 82852/82855 host bridge / Mobility 9600/9700 Needs AGPMode 1 (deb #510208) */
     { PCI_VENDOR_INTEL,0x3580,  PCI_VENDOR_ATI,0x4e50,  0x10cf,0x127f,           1 },
+    /* Intel 82443BX/ZX/DX Host bridge / RV280 [Radeon 9200] Needs AGPMode 1 (lp #370205) */
+    { PCI_VENDOR_INTEL,0x7190,  PCI_VENDOR_ATI,0x5961,  0x174b,0x7c13,           1 },
+
+    /* Ali Corp M1671 Super P4 Northbridge / Mobility M6 LY Needs AGPMode 1 (lp #146303)*/
+    { 0x10b9,0x1671,           PCI_VENDOR_ATI,0x4c59,   0x103c,0x0027,           1 },
+
+    /* SiS Host Bridge 655 / R420 [Radeon X800] Needs AGPMode 4 (lp #371296) */
+    { 0x1039,0x0655,            PCI_VENDOR_ATI,0x4a4b,  PCI_VENDOR_ATI,0x4422,   4 },
+    /* SiS Host Bridge / RV280 Needs AGPMode 4 */
+    { 0x1039,0x0741,            PCI_VENDOR_ATI,0x5964,  0x148c,0x2073,           4 },
 
     /* ASRock K7VT4A+ AGP 8x / ATI Radeon 9250 AGP Needs AGPMode 4 (lp #133192) */
     { 0x1849,0x3189,            PCI_VENDOR_ATI,0x5960,  0x1787,0x5960,           4 },
@@ -789,12 +801,19 @@ static radeon_agpmode_quirk radeon_agpmode_quirk_list[] = {
     { PCI_VENDOR_VIA,0x3189,    PCI_VENDOR_ATI,0x5960,  0x1462,0x0380,           4 },
     /* VIA VT8377 Host Bridge / RV280 Needs AGPMode 4 (ati ML) */
     { PCI_VENDOR_VIA,0x3189,    PCI_VENDOR_ATI,0x5964,  0x148c,0x2073,           4 },
+    /* VIA VT8377 Host Bridge / RV280 Needs AGPMode 4 (fdo #12544) */
+    { PCI_VENDOR_VIA,0x3189,    PCI_VENDOR_ATI,0x5964,  PCI_VENDOR_ASUS,0xc008,  4 },
+    /* VIA VT8377 Host Bridge / RV280 Needs AGPMode 4 (deb #545040) */
+    { PCI_VENDOR_VIA,0x3189,    PCI_VENDOR_ATI,0x5960,  PCI_VENDOR_ASUS,0x004c,  4 },
 
     /* ATI Host Bridge / RV280 [M9+] Needs AGPMode 1 (phoronix forum) */
     { PCI_VENDOR_ATI,0xcbb2,    PCI_VENDOR_ATI,0x5c61,  PCI_VENDOR_SONY,0x8175,  1 },
 
     /* HP Host Bridge / R300 [FireGL X1] Needs AGPMode 2 (fdo #7770) */
     { PCI_VENDOR_HP,0x122e,    PCI_VENDOR_ATI,0x4e47,  PCI_VENDOR_ATI,0x0152,    2 },
+
+    /* nVidia Host Bridge / R420 [X800 Pro] Needs AGPMode 4 (fdo #22726) */
+    { 0x10de,0x00e1,           PCI_VENDOR_ATI,0x4a49,  PCI_VENDOR_ATI,0x0002,    4 },
 
     { 0, 0, 0, 0, 0, 0, 0 },
 };
@@ -1373,7 +1392,7 @@ Bool RADEONDRIGetVersion(ScrnInfoPtr pScrn)
     if (!xf86LoaderCheckSymbol("drmAvailable"))        return FALSE;
     if (!xf86LoaderCheckSymbol("DRIQueryVersion")) {
       xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
-		 "[dri] RADEONDRIGetVersion failed (libdri.a too old)\n"
+		 "[dri] RADEONDRIGetVersion failed (libdri too old)\n"
 		 "[dri] Disabling DRI.\n");
       return FALSE;
     }
@@ -1397,7 +1416,7 @@ Bool RADEONDRIGetVersion(ScrnInfoPtr pScrn)
 	info->dri->pLibDRMVersion = drmGetLibVersion(info->dri->drmFD);
     if (info->dri->pLibDRMVersion == NULL) {
 	xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
-		   "[dri] RADEONDRIGetVersion failed because libDRM is really "
+		   "[dri] RADEONDRIGetVersion failed because libdrm is really "
 		   "way to old to even get a version number out of it.\n"
 		   "[dri] Disabling DRI.\n");
 	return FALSE;
@@ -1408,7 +1427,7 @@ Bool RADEONDRIGetVersion(ScrnInfoPtr pScrn)
 	xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
 		   "[dri] RADEONDRIGetVersion failed because of a "
 		   "version mismatch.\n"
-		   "[dri] libdrm.a module version is %d.%d.%d but "
+		   "[dri] libdrm module version is %d.%d.%d but "
 		   "version 1.2.x is needed.\n"
 		   "[dri] Disabling DRI.\n",
 		   info->dri->pLibDRMVersion->version_major,
@@ -1472,7 +1491,7 @@ Bool RADEONDRIGetVersion(ScrnInfoPtr pScrn)
 	xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
 		   "[dri] RADEONDRIGetVersion failed because of a version "
 		   "mismatch.\n"
-		   "[dri] radeon.o kernel module version is %d.%d.%d "
+		   "[dri] radeon kernel module version is %d.%d.%d "
 		   "but version 1.%d.%d or newer is needed.\n"
 		   "[dri] Disabling DRI.\n",
 		   info->dri->pKernelDRMVersion->version_major,
@@ -1555,12 +1574,13 @@ Bool RADEONDRIScreenInit(ScreenPtr pScreen)
     info->dri->pDRIInfo                       = pDRIInfo;
     pDRIInfo->drmDriverName              = RADEON_DRIVER_NAME;
 
-    if ( (info->ChipFamily >= CHIP_FAMILY_R300) ) {
+    if ( (info->ChipFamily >= CHIP_FAMILY_R600) )
+       pDRIInfo->clientDriverName        = R600_DRIVER_NAME;
+    else if ( (info->ChipFamily >= CHIP_FAMILY_R300) )
        pDRIInfo->clientDriverName        = R300_DRIVER_NAME;
-    } else    
-    if ( info->ChipFamily >= CHIP_FAMILY_R200 )
+    else if ( info->ChipFamily >= CHIP_FAMILY_R200 )
        pDRIInfo->clientDriverName	 = R200_DRIVER_NAME;
-    else 
+    else
        pDRIInfo->clientDriverName	 = RADEON_DRIVER_NAME;
 
     if (xf86LoaderCheckSymbol("DRICreatePCIBusID")) {
