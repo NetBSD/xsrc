@@ -60,6 +60,8 @@ struct pci_system_methods {
 
     int (*fill_capabilities)( struct pci_device * dev );
     void (*enable)( struct pci_device *dev );
+    int (*boot_vga)( struct pci_device *dev );
+    int (*has_kernel_driver)( struct pci_device *dev );
 };
 
 struct pci_device_mapping {
@@ -130,6 +132,10 @@ struct pci_system {
 #ifdef HAVE_MTRR
     int mtrr_fd;
 #endif
+    int vgaarb_fd;
+    int vga_count;
+    struct pci_device *vga_target;
+    struct pci_device *vga_default_dev;
 };
 
 extern struct pci_system * pci_sys;
