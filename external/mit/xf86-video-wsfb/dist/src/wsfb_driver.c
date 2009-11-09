@@ -835,6 +835,7 @@ WsfbScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 
 	fPtr->fbstart = fPtr->fbmem;
 
+#if 0
 	if (fPtr->shadowFB) {
 		fPtr->shadow = xcalloc(1, pScrn->virtualX * pScrn->virtualY *
 		    pScrn->bitsPerPixel);
@@ -845,6 +846,7 @@ WsfbScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 			return FALSE;
 		}
 	}
+#endif
 
 	switch (pScrn->bitsPerPixel) {
 	case 1:
