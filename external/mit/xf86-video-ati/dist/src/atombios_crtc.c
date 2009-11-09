@@ -33,8 +33,13 @@
 #include "config.h"
 #endif
 /* DPMS */
+#ifdef HAVE_XEXTPROTO_71
+#include <X11/extensions/dpmsconst.h>
+#else
 #define DPMS_SERVER
 #include <X11/extensions/dpms.h>
+#endif
+
 
 #include "radeon.h"
 #include "radeon_reg.h"
@@ -167,13 +172,13 @@ atombios_crtc_dpms(xf86CrtcPtr crtc, int mode)
     RADEONInfoPtr  info = RADEONPTR(crtc->scrn);
     switch (mode) {
     case DPMSModeOn:
-    case DPMSModeStandby:
-    case DPMSModeSuspend:
 	if (IS_DCE3_VARIANT)
 	    atombios_enable_crtc_memreq(info->atomBIOS, radeon_crtc->crtc_id, 1);
 	atombios_enable_crtc(info->atomBIOS, radeon_crtc->crtc_id, 1);
 	atombios_blank_crtc(info->atomBIOS, radeon_crtc->crtc_id, 0);
 	break;
+    case DPMSModeStandby:
+    case DPMSModeSuspend:
     case DPMSModeOff:
 	atombios_blank_crtc(info->atomBIOS, radeon_crtc->crtc_id, 1);
 	atombios_enable_crtc(info->atomBIOS, radeon_crtc->crtc_id, 0);

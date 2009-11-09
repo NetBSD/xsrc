@@ -77,6 +77,9 @@ radeon_crtc_dpms(xf86CrtcPtr crtc, int mode)
     if ((mode == DPMSModeOn) && radeon_crtc->enabled)
 	return;
 
+    if (mode == DPMSModeOff)
+	radeon_crtc_modeset_ioctl(crtc, FALSE);
+
     if (IS_AVIVO_VARIANT || info->r4xx_atom) {
 	atombios_crtc_dpms(crtc, mode);
     } else {
@@ -97,6 +100,11 @@ radeon_crtc_dpms(xf86CrtcPtr crtc, int mode)
 	}
     }
 
+    if (mode != DPMSModeOff) {
+	radeon_crtc_modeset_ioctl(crtc, TRUE);
+	radeon_crtc_load_lut(crtc);
+    }
+
     if (mode == DPMSModeOn)
 	radeon_crtc->enabled = TRUE;
     else
@@ -114,9 +122,6 @@ static void
 radeon_crtc_mode_prepare(xf86CrtcPtr crtc)
 {
     RADEONCrtcPrivatePtr radeon_crtc = crtc->driver_private;
-
-    if (radeon_crtc->initialized)
-	radeon_crtc_dpms(crtc, DPMSModeOff);
 
     if (radeon_crtc->enabled)
 	crtc->funcs->hide_cursor(crtc);
@@ -286,8 +291,6 @@ radeon_crtc_mode_commit(xf86CrtcPtr crtc)
 {
     if (crtc->scrn->pScreen != NULL)
 	xf86_reload_cursors(crtc->scrn->pScreen);
-
-    radeon_crtc_dpms(crtc, DPMSModeOn);
 }
 
 void

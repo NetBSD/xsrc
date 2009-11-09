@@ -532,11 +532,11 @@ Bool FUNC_NAME(RADEONDrawInit)(ScreenPtr pScreen)
     xf86DrvMsg(pScrn->scrnIndex, X_INFO, "Setting EXA maxPitchBytes\n");
 
     info->accel_state->exa->maxPitchBytes = 16320;
-    info->accel_state->exa->maxX = 8192;
+    info->accel_state->exa->maxX = 8191;
 #else
     info->accel_state->exa->maxX = 16320 / 4;
 #endif
-    info->accel_state->exa->maxY = 8192;
+    info->accel_state->exa->maxY = 8191;
 
     if (xf86ReturnOptValBool(info->Options, OPTION_EXA_VSYNC, FALSE)) {
 	xf86DrvMsg(pScrn->scrnIndex, X_INFO, "EXA VSync enabled\n");

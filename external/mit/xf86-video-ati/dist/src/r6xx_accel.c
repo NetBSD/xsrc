@@ -197,6 +197,7 @@ sq_setup(ScrnInfoPtr pScrn, drmBufPtr ib, sq_config_t *sq_conf)
     if ((info->ChipFamily == CHIP_FAMILY_RV610) ||
 	(info->ChipFamily == CHIP_FAMILY_RV620) ||
 	(info->ChipFamily == CHIP_FAMILY_RS780) ||
+	(info->ChipFamily == CHIP_FAMILY_RS880) ||
 	(info->ChipFamily == CHIP_FAMILY_RV710))
 	sq_config = 0;						// no VC
     else
@@ -738,6 +739,7 @@ set_default_state(ScrnInfoPtr pScrn, drmBufPtr ib)
     case CHIP_FAMILY_RV610:
     case CHIP_FAMILY_RV620:
     case CHIP_FAMILY_RS780:
+    case CHIP_FAMILY_RS880:
     default:
 	sq_conf.num_ps_gprs = 84;
 	sq_conf.num_vs_gprs = 36;
@@ -784,6 +786,7 @@ set_default_state(ScrnInfoPtr pScrn, drmBufPtr ib)
 	sq_conf.num_es_stack_entries = 0;
 	break;
     case CHIP_FAMILY_RV730:
+    case CHIP_FAMILY_RV740:
 	sq_conf.num_ps_gprs = 84;
 	sq_conf.num_vs_gprs = 36;
 	sq_conf.num_temp_gprs = 4;
@@ -973,7 +976,7 @@ set_default_state(ScrnInfoPtr pScrn, drmBufPtr ib)
     EREG(ib, PA_SU_POLY_OFFSET_FRONT_OFFSET,      0);
 
     EREG(ib, PA_SU_LINE_CNTL,                     (8 << PA_SU_LINE_CNTL__WIDTH_shift)); /* Line width 1 pixel */
-    EREG(ib, PA_SU_VTX_CNTL,                      ((2 << PA_SU_VTX_CNTL__ROUND_MODE_shift) |
+    EREG(ib, PA_SU_VTX_CNTL,                      ((2 << PA_SU_VTX_CNTL__ROUND_MODE_shift) | PIX_CENTER_bit |
 						   (5 << QUANT_MODE_shift))); /* Round to Even, fixed point 1/256 */
     EREG(ib, PA_SU_POLY_OFFSET_CLAMP,             0);
 

@@ -216,6 +216,7 @@ typedef struct _radeon_lvds {
 
 typedef struct _radeon_dvo {
     /* dvo */
+    I2CBusPtr         pI2CBus;
     I2CDevPtr         DVOChip;
     RADEONI2CBusRec   dvo_i2c;
     int               dvo_i2c_slave_addr;
