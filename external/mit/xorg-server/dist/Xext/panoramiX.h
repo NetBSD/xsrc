@@ -41,6 +41,8 @@ Equipment Corporation.
 #define _PANORAMIX_H_
 
 #define _PANORAMIX_SERVER
+/* XXXMRG before xext* update */
+#include <X11/extensions/XKBsrv.h>
 #include <X11/extensions/panoramiXext.h>
 #undef _PANORAMIX_SERVER
 
