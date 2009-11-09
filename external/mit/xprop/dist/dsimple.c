@@ -41,6 +41,7 @@ from The Open Group.
  * Written by Mark Lillibridge.   Last updated 7/1/87
  */
 
+#include "clientwin.h"
 #include "dsimple.h"
 
 /*
@@ -71,7 +72,17 @@ char *Malloc(unsigned size)
 
 	return(data);
 }
-	
+
+/*
+ * Realloc: like realloc but handles out of memory using Fatal_Error:
+ */
+char *Realloc(char *mem, unsigned size)
+{
+    if (!(mem = realloc (mem, size)))
+	Fatal_Error("Out of memory!");
+
+    return mem;
+}
 
 /*
  * Get_Display_Name (argc, argv) Look for -display, -d, or host:dpy (obselete)
@@ -122,8 +133,7 @@ Display *Open_Display(const char *display_name)
 	if (d == NULL) {
 	    fprintf (stderr, "%s:  unable to open display '%s'\n",
 		     program_name, XDisplayName (display_name));
-	    usage ();
-	    /* doesn't return */
+	    exit(1);
 	}
 
 	return(d);
@@ -263,7 +273,7 @@ Window Select_Window_Args(
  * Routine to let user select a window using the mouse
  */
 
-Window Select_Window(Display *dpy)
+Window Select_Window(Display *dpy, int descend)
 {
   int status;
   Cursor cursor;
@@ -301,6 +311,11 @@ Window Select_Window(Display *dpy)
   } 
 
   XUngrabPointer(dpy, CurrentTime);      /* Done with pointer */
+
+  if (!descend || (target_win == root))
+    return(target_win);
+
+  target_win = Find_Client(dpy, root, target_win);
 
   return(target_win);
 }
