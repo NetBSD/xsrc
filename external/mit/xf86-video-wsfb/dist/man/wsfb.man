@@ -90,7 +90,7 @@ Default: on for depths were it is supported, off otherwise.
 .br
 ShadowFB is currently not supported on monochrome displays.
 .SH "SEE ALSO"
-XFree86(1), __xconfigfile__(__filemansuffix__), xorgconfig(1), Xserver(1),
+__xservername__(1), __xconfigfile__(__filemansuffix__), Xserver(1),
 X(__miscmansuffix__), fbdev(__drivermansuffix__)
 .SH AUTHORS
 Authors include: Matthieu Herrb, Gerd Knorr, Michel Dänzer, Geert Uytterhoeven
