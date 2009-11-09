@@ -49,7 +49,7 @@ static void FFB_BlitRect(ScrnInfoPtr, int, int, int, int,
 			 int, int);
 
 static DGAFunctionRec FFB_DGAFuncs = {
-	(void *)FFB_OpenFramebuffer,
+	FFB_OpenFramebuffer,
 	FFB_CloseFramebuffer,
 	FFB_SetMode,
 	FFB_SetViewport,

@@ -488,7 +488,7 @@ FFBProbeBoardType(FFBPtr pFfb)
 		pFfb->has_double_buffer = 1;
 	} else {
 		unsigned char sbits;
-		//xf86Msg(X_ERROR,"ffb?");
+
 		/* Read the board strapping bits twice, because sometimes
 		 * the strapping pins can get misrouted to the bus interface
 		 * on the first attempt.  The second attempt will get the
@@ -652,6 +652,7 @@ FFBScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 
     if (! pFfb->strapping_bits)
 	return FALSE;
+
     /* Probe for the type of FFB/AFB we have. */
     FFBProbeBoardType(pFfb);
 
