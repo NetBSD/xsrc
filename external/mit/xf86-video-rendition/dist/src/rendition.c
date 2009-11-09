@@ -538,7 +538,6 @@ renditionPreInit(ScrnInfoPtr pScreenInfo, int flags)
     pRendition->PciInfo = xf86GetPciInfoForEntity(pRendition->pEnt->index);
     pRendition->pcitag= pciTag(pRendition->PciInfo->bus,
                pRendition->PciInfo->device, pRendition->PciInfo->func);
-#endif
 
     /*
      * XXX This could be refined if some VGA memory resources are not
@@ -549,11 +548,12 @@ renditionPreInit(ScrnInfoPtr pScreenInfo, int flags)
     if (xf86RegisterResources(pRendition->pEnt->index, NULL, ResExclusive))
          return FALSE;
 
+
     /* Operations for which memory access is required. */
     pScreenInfo->racMemFlags = RAC_FB | RAC_CURSOR;
     /* Operations for which I/O access is required. (XXX Check this) */
     pScreenInfo->racIoFlags = RAC_FB | RAC_COLORMAP | RAC_CURSOR | RAC_VIEWPORT;
-    
+#endif
     /* determine depth, bpp, etc. */
     if (!xf86SetDepthBpp(pScreenInfo, 0, 0, 0, Support32bppFb))
         return FALSE;
