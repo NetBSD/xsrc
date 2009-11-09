@@ -92,9 +92,11 @@
 				/* X and server generic header files */
 #include "xf86.h"
 #include "xf86_OSproc.h"
-#include "xf86RAC.h"
 #include "xf86RandR12.h"
+#if GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) < 6
+#include "xf86RAC.h"
 #include "xf86Resources.h"
+#endif
 #include "xf86cmap.h"
 #include "vbe.h"
 
@@ -104,8 +106,13 @@
 #include "vgaHW.h"
 #endif
 
+#ifdef HAVE_XEXTPROTO_71
+#include <X11/extensions/dpmsconst.h>
+#else
 #define DPMS_SERVER
 #include <X11/extensions/dpms.h>
+#endif
+
 
 #include "atipciids.h"
 #include "radeon_chipset_gen.h"
@@ -1814,16 +1821,6 @@ static Bool RADEONPreInitChipType(ScrnInfoPtr pScrn)
 	break;
     }
 
-    if (info->ChipFamily >= CHIP_FAMILY_R600) {
-        xf86DrvMsg(pScrn->scrnIndex, X_WARNING,
-                   "R600 support is mostly incomplete and very experimental\n");
-    }
-
-    if ((info->ChipFamily >= CHIP_FAMILY_RV515) && (info->ChipFamily < CHIP_FAMILY_R600)) {
-	xf86DrvMsg(pScrn->scrnIndex, X_WARNING,
-                   "R500 support is under development. Please report any issues to xorg-driver-ati@lists.x.org\n");
-    }
-
     from               = X_PROBED;
     info->LinearAddr   = PCI_REGION_BASE(info->PciInfo, 0, REGION_MEM) & ~0x1ffffffULL;
     pScrn->memPhysBase = info->LinearAddr;
@@ -1942,7 +1939,6 @@ static Bool RADEONPreInitChipType(ScrnInfoPtr pScrn)
 	}
     }
 
-
     xf86DrvMsg(pScrn->scrnIndex, X_INFO, "%s card detected\n",
 	       (info->cardType==CARD_PCI) ? "PCI" :
 		(info->cardType==CARD_PCIE) ? "PCIE" : "AGP");
@@ -1962,12 +1958,15 @@ static Bool RADEONPreInitChipType(ScrnInfoPtr pScrn)
 	if (strcmp(s, "AGP") == 0) {
 	    info->cardType = CARD_AGP;
 	    xf86DrvMsg(pScrn->scrnIndex, X_CONFIG, "Forced into AGP mode\n");
-	} else if (strcmp(s, "PCI") == 0) {
-	    info->cardType = CARD_PCI;
-	    xf86DrvMsg(pScrn->scrnIndex, X_CONFIG, "Forced into PCI mode\n");
-	} else if (strcmp(s, "PCIE") == 0) {
-	    info->cardType = CARD_PCIE;
-	    xf86DrvMsg(pScrn->scrnIndex, X_CONFIG, "Forced into PCI Express mode\n");
+	} else if ((strcmp(s, "PCI") == 0) ||
+		   (strcmp(s, "PCIE") == 0)) {
+	    if (info->ChipFamily >= CHIP_FAMILY_RV380) {
+		info->cardType = CARD_PCIE;
+		xf86DrvMsg(pScrn->scrnIndex, X_CONFIG, "Forced into PCI Express mode\n");
+	    } else {
+		info->cardType = CARD_PCI;
+		xf86DrvMsg(pScrn->scrnIndex, X_CONFIG, "Forced into PCI mode\n");
+	    }
 	} else {
 	    xf86DrvMsg(pScrn->scrnIndex, X_CONFIG,
 		       "Invalid BusType option, using detected type\n");
@@ -2065,6 +2064,9 @@ static Bool RADEONPreInitAccel(ScrnInfoPtr pScrn)
     }
 
     info->useEXA = FALSE;
+    /* if we have shadow fb bail */
+    if (info->r600_shadow_fb) 
+	return TRUE;
 
     if (info->ChipFamily >= CHIP_FAMILY_R600) {
 	xf86DrvMsg(pScrn->scrnIndex, X_DEFAULT,
@@ -2237,9 +2239,6 @@ static Bool RADEONPreInitDRI(ScrnInfoPtr pScrn)
 	    return FALSE;
 	}
     }
-
-    if (info->ChipFamily == CHIP_FAMILY_RS880)
-	return FALSE;
 
     if (!xf86ReturnOptValBool(info->Options, OPTION_DRI, TRUE)) {
 	xf86DrvMsg(pScrn->scrnIndex, X_INFO,
@@ -2778,7 +2777,6 @@ Bool RADEONPreInit(ScrnInfoPtr pScrn, int flags)
     xf86Int10InfoPtr  pInt10 = NULL;
     void *int10_save = NULL;
     const char *s;
-    int crtc_max_X, crtc_max_Y;
     RADEONEntPtr pRADEONEnt;
     DevUnion* pPriv;
 
@@ -2882,12 +2880,14 @@ Bool RADEONPreInit(ScrnInfoPtr pScrn, int flags)
 	       PCI_DEV_DEV(info->PciInfo),
 	       PCI_DEV_FUNC(info->PciInfo));
 
+#ifndef XSERVER_LIBPCIACCESS
     if (xf86RegisterResources(info->pEnt->index, 0, ResExclusive))
 	goto fail;
 
     xf86SetOperatingState(resVga, info->pEnt->index, ResUnusedOpr);
 
     pScrn->racMemFlags = RAC_FB | RAC_COLORMAP | RAC_VIEWPORT | RAC_CURSOR;
+#endif
     pScrn->monitor     = pScrn->confScreen->monitor;
 
    /* Allocate an xf86CrtcConfig */
@@ -2984,51 +2984,10 @@ Bool RADEONPreInit(ScrnInfoPtr pScrn, int flags)
 
     RADEONPreInitColorTiling(pScrn);
 
-    /* we really need an FB manager... */
-    if (pScrn->display->virtualX) {
-	crtc_max_X = pScrn->display->virtualX;
-	crtc_max_Y = pScrn->display->virtualY;
-	if (info->allowColorTiling) {
-	    if (crtc_max_X > info->MaxSurfaceWidth ||
-		crtc_max_Y > info->MaxLines) {
-		info->allowColorTiling = FALSE;
-		xf86DrvMsg(pScrn->scrnIndex, X_WARNING,
-			   "Requested desktop size exceeds surface limts for tiling, ColorTiling disabled\n");
-	    }
-	}
-	if (crtc_max_X > 8192)
-	    crtc_max_X = 8192;
-	if (crtc_max_Y > 8192)
-	    crtc_max_Y = 8192;
-    } else {
-	/*
-	 * note that these aren't really the CRTC limits, they're just
-	 * heuristics until we have a better memory manager.
-	 */
-	if (pScrn->videoRam <= 16384) {
-	    crtc_max_X = 1600;
-	    crtc_max_Y = 1200;
-	} else if (IS_R300_VARIANT) {
-	    crtc_max_X = 2560;
-	    crtc_max_Y = 1200;
-	} else if (IS_AVIVO_VARIANT) {
-	    crtc_max_X = 2560;
-	    crtc_max_Y = 1600;
-	} else {
-	    crtc_max_X = 2048;
-	    crtc_max_Y = 1200;
-	}
-    }
-    xf86DrvMsg(pScrn->scrnIndex, X_INFO, "Max desktop size set to %dx%d\n",
-	       crtc_max_X, crtc_max_Y);
-    xf86DrvMsg(pScrn->scrnIndex, X_INFO,
-	       "For a larger or smaller max desktop size, add a Virtual line to your xorg.conf\n");
-    xf86DrvMsg(pScrn->scrnIndex, X_INFO,
-	       "If you are having trouble with 3D, "
-	       "reduce the desktop size by adjusting the Virtual line to your xorg.conf\n");
-
-    /*xf86CrtcSetSizeRange (pScrn, 320, 200, info->MaxSurfaceWidth, info->MaxLines);*/
-    xf86CrtcSetSizeRange (pScrn, 320, 200, crtc_max_X, crtc_max_Y);
+    if (IS_AVIVO_VARIANT)
+	xf86CrtcSetSizeRange (pScrn, 320, 200, 8192, 8192);
+    else
+	xf86CrtcSetSizeRange (pScrn, 320, 200, 4096, 4096);
 
     RADEONPreInitDDC(pScrn);
 
@@ -3764,6 +3723,10 @@ Bool RADEONScreenInit(int scrnIndex, ScreenPtr pScreen,
             return FALSE;
         }
     }
+
+    /* Clear the framebuffer */
+    memset(info->FB + pScrn->fbOffset, 0,
+           pScrn->virtualY * pScrn->displayWidth * info->CurrentLayout.pixel_bytes);
 
     /* set the modes with desired rotation, etc. */
     if (!xf86SetDesiredModes (pScrn))
@@ -5660,6 +5623,10 @@ Bool RADEONEnterVT(int scrnIndex, int flags)
 	radeon_crtc_modeset_ioctl(config->crtc[i], TRUE);
 
     pScrn->vtSema = TRUE;
+
+    /* Clear the framebuffer */
+    memset(info->FB + pScrn->fbOffset, 0,
+           pScrn->virtualY * pScrn->displayWidth * info->CurrentLayout.pixel_bytes);
 
     if (!xf86SetDesiredModes(pScrn))
 	return FALSE;
