@@ -22,14 +22,14 @@
  * git_repo_dir=".git" (usually ".git" or "/path/to/.git")
  * PWD="/space/home/mhopf/e/xorg/driver/xf86-video-radeonhd"
  * srcdir="../.."
- * working_dir="/space/home/mhopf/e/xorg/driver/xf86-video-radeonhd/.build.i386/src"
+ * working_dir="/space/home/mhopf/e/xorg/driver/xf86-video-radeonhd/.build.x86_64/src"
  */
 
 /* git repo found */
 #define GIT_REPO 1
 
 /* Git SHA ID of last commit */
-#define GIT_SHAID "cb54f48b"
+#define GIT_SHAID "8cbff7bf"
 
 /* Branch this tree is on */
 #define GIT_BRANCH "master"
