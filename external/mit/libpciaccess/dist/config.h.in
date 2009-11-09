@@ -39,6 +39,9 @@
 /* Use zlib to read gzip compressed pci.ids */
 #undef HAVE_ZLIB
 
+/* Linux ROM read fallback */
+#undef LINUX_ROM
+
 /* Name of package */
 #undef PACKAGE
 

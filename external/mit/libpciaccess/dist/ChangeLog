@@ -1,3 +1,357 @@
+commit 97d677746cd70ec9eb1f33483cc829a0063953bc
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Fri Sep 25 10:25:56 2009 +1000
+
+    shutup stupid gcc warning, strtok_r ignores the first parameter
+
+commit 2a10d510d24c7c0aebb03914dd887f9e92cfa754
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Fri Sep 25 10:19:07 2009 +1000
+
+    libpciaccess 0.10.9
+
+commit 1714046ef08ef685bcf1d6c154e64809b12e8d7f
+Author: Tiago Vignatti <tiago.vignatti@nokia.com>
+Date:   Fri Sep 18 15:21:19 2009 +0300
+
+    vgaarb: fix newbie typo
+    
+    Eh, we don't need to check for the fd anyway. Kudos jcristau for reporting.
+    
+    Signed-off-by: Tiago Vignatti <tiago.vignatti@nokia.com>
+
+commit 13c7e6c8f100882718f995f5bf1d478a012cdbdd
+Author: Tiago Vignatti <tiago.vignatti@nokia.com>
+Date:   Wed Sep 16 12:56:53 2009 +0300
+
+    vgaarb: check for fd before close it
+    
+    Signed-off-by: Tiago Vignatti <tiago.vignatti@nokia.com>
+
+commit cdbdfaf61c05d0d18eae6815b10666f93162148f
+Author: Keith Packard <keithp@keithp.com>
+Date:   Thu Sep 17 17:38:56 2009 -0700
+
+    Free return value from scandir instead of leaking it.
+    
+    Scandir is defined to return pointers to malloc'd storage, so make
+    sure that memory is nicely freed.
+    
+    Signed-off-by: Keith Packard <keithp@keithp.com>
+
+commit 42b879a203c1c16daa9d0c610c6a217ead7a5829
+Author: Dave Airlie <airlied@linux.ie>
+Date:   Wed Sep 2 19:03:11 2009 +1000
+
+    vgaarb: check pci_sys exists before initing vga arb
+
+commit 312cde3c2f3530b031134cfb53a8a54731f02b1b
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Mon Aug 31 09:14:16 2009 +1000
+
+    pciaccess: bump to 0.10.8
+
+commit 566a67767e9fea463c24421d99dc12db590a7b5f
+Author: Thomas Klausner <wiz@netbsd.org>
+Date:   Mon Aug 31 09:13:27 2009 +1000
+
+    pciaccess: fix vga arb stubs
+
+commit d062dd78baeb28ef2cc59f4fb4a7d82ecd5adf60
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Fri Aug 28 11:29:00 2009 +1000
+
+    libpciaccess: bump to 0.10.7 for vga arb interface addition
+
+commit 81b4705525bdf82d75f5b3c740c53fa4a866d9c3
+Merge: f514852... 2f997f9...
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Fri Aug 28 11:25:15 2009 +1000
+
+    Merge branch 'vga'
+
+commit 2f997f90c8d0b54baab85285703550e8df28325e
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Fri Aug 28 11:24:53 2009 +1000
+
+    vgaarb: update stub interface
+
+commit b229acdfd10fd61f46d8e711910b5c1bdb727857
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Fri Aug 28 11:21:11 2009 +1000
+
+    Revert "vgaarb: delete stub functions"
+    
+    This reverts commit b7fd4d06890d801aae93fe1a1af7ab110fd388fd.
+
+commit e70767cb2e574f8544a04903eea3afee33345eea
+Author: Tiago Vignatti <tiago.vignatti@nokia.com>
+Date:   Wed Aug 26 11:14:03 2009 +0300
+
+    Revert "vgaarb: fix pci_device_vgaarb_get_info() return value."
+    
+    This reverts commit ef8aca5da46155e9ea0d1227215921ad9ce59150.
+
+commit f5148525d546015c12b703a768b5e6c3726446a3
+Merge: 7636348... ef8aca5...
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Fri Aug 21 13:27:11 2009 +1000
+
+    Merge remote branch 'origin/vga-arbiter'
+
+commit ef8aca5da46155e9ea0d1227215921ad9ce59150
+Author: Tiago Vignatti <tiago.vignatti@nokia.com>
+Date:   Sun Aug 16 19:11:15 2009 +0300
+
+    vgaarb: fix pci_device_vgaarb_get_info() return value.
+    
+    Signed-off-by: Tiago Vignatti <tiago.vignatti@nokia.com>
+
+commit 25be96885671d22ee3f932769d72cf3a31f355ee
+Author: Tiago Vignatti <tiago.vignatti@nokia.com>
+Date:   Sun Aug 16 19:09:35 2009 +0300
+
+    vgaarb: fix indentation and remove trailing white spaces
+    
+    Signed-off-by: Tiago Vignatti <tiago.vignatti@nokia.com>
+
+commit b7fd4d06890d801aae93fe1a1af7ab110fd388fd
+Author: Tiago Vignatti <tiago.vignatti@nokia.com>
+Date:   Sun Aug 16 18:59:21 2009 +0300
+
+    vgaarb: delete stub functions
+    
+    Such stub functions is already with API outdated. Moreover, if some operating
+    system doesn't have arbiter's implementation then the app can set some
+    autoconf tricks like "ifdef HAVE_PCI_DEVICE_VGAARB_INIT".
+    
+    Signed-off-by: Tiago Vignatti <tiago.vignatti@nokia.com>
+
+commit 76363486864b325b8f156ece35736ddb64c4e697
+Author: Julien Cristau <jcristau@debian.org>
+Date:   Sun Aug 9 11:28:38 2009 +0200
+
+    Silence compiler warning about pci_id_file_open definition
+    
+    src/common_device_name.c:59: warning: function declaration isn't a prototype
+    src/common_device_name.c: In function 'pci_id_file_open':
+    src/common_device_name.c:59: warning: old-style function definition
+
+commit 4eac0173588ab9ef67fcadb47b531abb114aa0a7
+Author: Julien Cristau <jcristau@debian.org>
+Date:   Sat Aug 8 18:12:08 2009 +0200
+
+    configure.ac: fix help text for the linux-rom-fallback option
+    
+    LINUX_ROM defaults to no, fix the help text to reflect that
+    
+    Signed-off-by: Julien Cristau <jcristau@debian.org>
+
+commit e9f2db8b867cba8d91a040a0db9be56099fba680
+Merge: 706201e... dedd31b...
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Thu Aug 6 09:43:08 2009 +1000
+
+    Merge branch 'master' into vga-arbiter
+
+commit dedd31b3bcdeea12955bf565b8e3f2a9d3c66057
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Thu Aug 6 09:39:01 2009 +1000
+
+    pciaccess: make linux rom reading fallback optional
+    
+    On kernels which have ROM files, the boot VGA rom file
+    will contain the 0xc0000 file anyways. If another card
+    is missing a rom file there is no need for this.
+    
+    This is fallback is disabled by default, on the premise
+    that distro shipping this new a pciaccess will be running
+    on kernels with working rom support which is been upstream
+    for a long time
+
+commit 706201e900b5664ea35ec498784590275b98c23a
+Merge: 57cf6f1... 8aa06cf...
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Thu Aug 6 09:42:06 2009 +1000
+
+    Merge branch 'master' into vga-arbiter
+
+commit 8aa06cf7ef5e88c53bf6778336ba1a6036b16cc0
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Thu Aug 6 09:39:01 2009 +1000
+
+    pciaccess: make linux rom reading fallback optional
+    
+    On kernels which have ROM files, the boot VGA rom file
+    will contain the 0xc0000 file anyways. If another card
+    is missing a rom file there is no need for this.
+    
+    This is fallback is disabled by default, on the premise
+    that distro shipping this new a pciaccess will be running
+    on kernels with working rom support which is been upstream
+    for a long time
+
+commit 57cf6f1f428ab73fb2a88c39c694e7d14c2c96c6
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Thu Aug 6 09:39:01 2009 +1000
+
+    pciaccess: make linux rom reading fallback optional
+    
+    On kernels which have ROM files, the boot VGA rom file
+    will contain the 0xc0000 file anyways. If another card
+    is missing a rom file there is no need for this.
+    
+    This is fallback is disabled by default, on the premise
+    that distro shipping this new a pciaccess will be running
+    on kernels with working rom support which is been upstream
+    for a long time
+
+commit 7b7999a302c70f1ad9a5c8fc7517e24ab95c3a95
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Mon Aug 3 12:43:26 2009 +1000
+
+    vgaarb: add vga count + resource accessor
+
+commit 3a6c1be79c05517cfddbce88157bb352237058ab
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Mon Aug 3 09:39:22 2009 +1000
+
+    vgaarb: more api changes + cleanup
+    
+    add a comma for ease of parsing,
+    use hex on the interface in both directions instead of hex on one
+    and decimal on the other
+
+commit e5127339c6c48ae6f63f9dc841a94fe960d11496
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Fri Jul 31 16:15:55 2009 +1000
+
+    vgaarb: change API to target taking a device + lock/unlock not taking one
+    
+    working on the target device - a target device of NULL
+    reselects the target that existed when we started.
+    
+    this is mainly to allow a udev posting tool to return to the
+    state of what happened before it ran.
+
+commit 0596c559af5ca277a069b04a6402d21724464cda
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Fri Jul 31 15:34:32 2009 +1000
+
+    vgaarb: add support for targetting default device
+
+commit 453928b8485bc7beff69996abe12628efc09405f
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Fri Jul 31 11:17:21 2009 +1000
+
+    vgaarb: clean up debug output
+
+commit d22d7c0d5e48d130c89282514e378819e0b98636
+Merge: e360c11... 2bda5b7...
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Fri Jul 31 11:16:16 2009 +1000
+
+    Merge remote branch 'main/master' into vga-arbiter
+
+commit e360c11c37a219534bfd7266caf163870dddced0
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Mon Jul 20 13:26:41 2009 +1000
+
+    vgaarb: fixup api for new count reporting + decodes interface was wrong.
+    
+    decodes is a information setting interface so it takes new decodes
+    and sends them to the kernel
+
+commit 5d1bdf0cb51c19efd6e2b2c0a463ace9443c48d9
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Thu Jul 16 15:36:30 2009 +1000
+
+    add support for finding if something has a kernel driver
+
+commit 2bda5b733bb12854760750c08138db95e77aea0c
+Author: Jesse Barnes <jbarnes@virtuousgeek.org>
+Date:   Tue Jun 30 15:24:45 2009 -0700
+
+    Don't try to use bogus bridge data
+    
+    If, for whatever reason, we weren't able to read bridge data (therefore
+    leaving bridge.pci or bridge.pcmcia empty), we shouldn't try to look at
+    the bus data inside the pci/pcmcia struct.
+
+commit 9ae22c87743c624bda593a1ef4bd4eca01c65655
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Fri Jun 5 09:32:10 2009 +1000
+
+    vgaarb: fixup api and decode rsrc.
+    
+    This fixes up the API and stores the vga arb fd in the sys_pci structure,
+    instead of hiding it in a random dev struct.
+    
+    It also reads back after setting the target and works out the decodes.
+    
+    Signed-off-by: Dave Airlie <airlied@redhat.com>
+
+commit 9ae66143550a6aee25d9a9620c5bebf93fa196e5
+Author: Tiago Vignatti <vignatti@freedesktop.org>
+Date:   Thu May 14 17:30:17 2009 -0300
+
+    Comment typo.
+
+commit 6ae00a992714639fd725efd8817dca69b28276c8
+Author: Tiago Vignatti <vignatti@freedesktop.org>
+Date:   Thu May 14 17:28:05 2009 -0300
+
+    Reorganize the code.
+
+commit 6ef4e7aebfd2b83e2346e9f8f4ef3c890a6ea73d
+Author: Tiago Vignatti <vignatti@freedesktop.org>
+Date:   Thu May 14 03:42:56 2009 -0300
+
+    Fix typo in vgaarb stubs.
+
+commit 18a186804bc4e496a392cb31003cef25798f6c7b
+Author: Tiago Vignatti <vignatti@freedesktop.org>
+Date:   Thu May 14 03:40:25 2009 -0300
+
+    Delete vga_arb_rec.
+
+commit 812ad80018d49f6e4f1be8256d86488690c3ba52
+Author: Tiago Vignatti <vignatti@freedesktop.org>
+Date:   Wed May 13 18:31:09 2009 -0300
+
+    vgaarb: a bunch of clean ups to fit in libpciaccess style.
+
+commit b77b0fc3fbacc46d55998889f09326d1233339fc
+Author: Tiago Vignatti <vignatti@freedesktop.org>
+Date:   Wed May 13 17:55:31 2009 -0300
+
+    vgaarb: make it compile.
+
+commit 67af888bcc5667eadf1e9e9bf15305f742416daf
+Author: Tiago Vignatti <vignatti@freedesktop.org>
+Date:   Wed May 13 17:44:46 2009 -0300
+
+    Import libvgaaccess (VGA Arbiter) implementation from C3SL repository:
+        http://git.c3sl.ufpr.br/
+
+commit 8ba6b02ecfa5b03bbf2807e8262bb1253a026493
+Author: Aaron Plattner <aplattner@nvidia.com>
+Date:   Fri May 1 15:04:19 2009 -0700
+
+    Don't try to write boot_vga since that fails with EACCES
+
+commit b2838fb61c3542f107014b285cbda097acae1e12
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Wed Mar 4 15:55:11 2009 +1000
+
+    pciaccess: provide a method to detect if a device is boot VGA
+    
+    When the linux kernel exposes this information, we can use this interface
+    in the X server to detect whether the kernel believes the device we
+    are looking at is the boot VGA device.
+    
+    Signed-off-by: Dave Airlie <airlied@redhat.com>
+
 commit f14c6cd626273bd2f8b102ff661d11926619a99b
 Author: Alan Coopersmith <alan.coopersmith@sun.com>
 Date:   Fri Apr 24 16:32:12 2009 -0700
