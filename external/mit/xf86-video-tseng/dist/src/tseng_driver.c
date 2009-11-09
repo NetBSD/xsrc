@@ -42,8 +42,10 @@
 
 #include "fb.h"
 
+#if GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) < 6
 #include "xf86RAC.h"
 #include "xf86Resources.h"
+#endif
 #include "xf86int10.h"
 
 #include "xf86xv.h"
@@ -889,10 +891,12 @@ TsengGetFbAddress(ScrnInfoPtr pScrn)
         pTseng->FbAddress = PCI_REGION_BASE(pTseng->PciInfo, 0, REGION_MEM);
 
 
+#ifndef XSERVER_LIBPCIACCESS
     if (xf86RegisterResources(pTseng->pEnt->index,NULL,ResNone)) {
         xf86DrvMsg(pScrn->scrnIndex, X_ERROR, "Cannot register FB memory.\n");
         return FALSE;
     }
+#endif
 
     /* The W32 linear map address space is always 4Mb (mainly because the
      * memory-mapped registers are located near the top of the 4MB area). 
@@ -1089,13 +1093,14 @@ TsengPreInit(ScrnInfoPtr pScrn, int flags)
     else
 	VGAHWPTR(pScrn)->MapSize = 0x10000;
 
+#ifndef XSERVER_LIBPCIACCESS
     /*
      * XXX At least part of this range does appear to be disabled,
      * but to play safe, it is marked as "unused" for now.
      * Changed this to "disable". Otherwise it might interfere with DGA.
      */
     xf86SetOperatingState(resVgaMem, pTseng->pEnt->index, ResDisableOpr);
-    
+#endif
     /* hibit processing (TsengProcessOptions() must have been called first) */
     pTseng->save_divide = 0x40;	       /* default */
     if (pTseng->ChipType == ET4000) {
@@ -1466,9 +1471,10 @@ TsengScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
     if (pScrn->depth == 4 || pScrn->depth == 8) { /* fb and xf4bpp */
 	vgaHWHandleColormaps(pScreen);
     }
+#ifndef XSERVER_LIBPCIACCESS
     pScrn->racIoFlags = RAC_FB | RAC_COLORMAP | RAC_CURSOR | RAC_VIEWPORT;
     pScrn->racMemFlags = pScrn->racIoFlags;
-
+#endif
     /* Wrap the current CloseScreen and SaveScreen functions */
     pScreen->SaveScreen = TsengSaveScreen;
 
