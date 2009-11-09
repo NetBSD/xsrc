@@ -1198,7 +1198,7 @@ void RADEONAdjustCrtc2RegistersForTV(ScrnInfoPtr pScrn, RADEONSavePtr save,
     save->crtc2_v_total_disp = ((constPtr->verResolution - 1) << RADEON_CRTC_V_DISP_SHIFT) |
 	((constPtr->verTotal - 1) << RADEON_CRTC_V_TOTAL_SHIFT);
 
-    save->crtc_v_sync_strt_wid = (save->crtc_v_sync_strt_wid & ~RADEON_CRTC_V_SYNC_STRT) |
+    save->crtc2_v_sync_strt_wid = (save->crtc2_v_sync_strt_wid & ~RADEON_CRTC_V_SYNC_STRT) |
 	((constPtr->verSyncStart - 1) << RADEON_CRTC_V_SYNC_STRT_SHIFT);
 
 }

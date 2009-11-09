@@ -219,24 +219,12 @@ radeon_ddc_connected(xf86OutputPtr output)
     RADEONOutputPrivatePtr radeon_output = output->driver_private;
 
     if (radeon_output->pI2CBus) {
-	/* RV410 RADEON_GPIO_VGA_DDC seems to only work via hw i2c
-	 * We may want to extend this to other cases if the need arises...
-	 */
-	if ((info->ChipFamily == CHIP_FAMILY_RV410) &&
-	    (radeon_output->ddc_i2c.mask_clk_reg == RADEON_GPIO_VGA_DDC) &&
-	    info->IsAtomBios)
-	    MonInfo = radeon_atom_get_edid(output);
-	else if (info->get_hardcoded_edid_from_bios) {
+	if (info->get_hardcoded_edid_from_bios)
 	    MonInfo = RADEONGetHardCodedEDIDFromBIOS(output);
-	    if (MonInfo == NULL) {
-		RADEONI2CDoLock(output, TRUE);
-		MonInfo = xf86OutputGetEDID(output, radeon_output->pI2CBus);
-		RADEONI2CDoLock(output, FALSE);
-	    }
-	} else {
-	    RADEONI2CDoLock(output, TRUE);
+	if (MonInfo == NULL) {
+	    RADEONI2CDoLock(output, radeon_output->pI2CBus, TRUE);
 	    MonInfo = xf86OutputGetEDID(output, radeon_output->pI2CBus);
-	    RADEONI2CDoLock(output, FALSE);
+	    RADEONI2CDoLock(output, radeon_output->pI2CBus, FALSE);
 	}
     }
     if (MonInfo) {
@@ -285,9 +273,6 @@ radeon_ddc_connected(xf86OutputPtr output)
 		xf86OutputSetEDID(output, MonInfo);
     } else
 	MonType = MT_NONE;
-
-    xf86DrvMsg(pScrn->scrnIndex, X_INFO,
-	       "Output: %s, Detected Monitor Type: %d\n", output->name, MonType);
 
     return MonType;
 }
@@ -520,8 +505,32 @@ radeon_mode_fixup(xf86OutputPtr output, DisplayModePtr mode,
 static void
 radeon_mode_prepare(xf86OutputPtr output)
 {
+    RADEONInfoPtr info = RADEONPTR(output->scrn);
+    xf86CrtcConfigPtr	config = XF86_CRTC_CONFIG_PTR (output->scrn);
+    int o;
+
+    for (o = 0; o < config->num_output; o++) {
+	xf86OutputPtr loop_output = config->output[o];
+	if (loop_output == output)
+	    continue;
+	else if (loop_output->crtc) {
+	    xf86CrtcPtr other_crtc = loop_output->crtc;
+	    RADEONCrtcPrivatePtr other_radeon_crtc = other_crtc->driver_private;
+	    if (other_crtc->enabled) {
+		if (other_radeon_crtc->initialized) {
+		    radeon_crtc_dpms(other_crtc, DPMSModeOff);
+		    if (IS_AVIVO_VARIANT || info->r4xx_atom)
+			atombios_lock_crtc(info->atomBIOS, other_radeon_crtc->crtc_id, 1);
+		    radeon_dpms(loop_output, DPMSModeOff);
+		}
+	    }
+	}
+    }
+
     radeon_bios_output_lock(output, TRUE);
     radeon_dpms(output, DPMSModeOff);
+    radeon_crtc_dpms(output->crtc, DPMSModeOff);
+
 }
 
 static void
@@ -541,7 +550,30 @@ radeon_mode_set(xf86OutputPtr output, DisplayModePtr mode,
 static void
 radeon_mode_commit(xf86OutputPtr output)
 {
+    RADEONInfoPtr info = RADEONPTR(output->scrn);
+    xf86CrtcConfigPtr	config = XF86_CRTC_CONFIG_PTR (output->scrn);
+    int o;
+
+    for (o = 0; o < config->num_output; o++) {
+	xf86OutputPtr loop_output = config->output[o];
+	if (loop_output == output)
+	    continue;
+	else if (loop_output->crtc) {
+	    xf86CrtcPtr other_crtc = loop_output->crtc;
+	    RADEONCrtcPrivatePtr other_radeon_crtc = other_crtc->driver_private;
+	    if (other_crtc->enabled) {
+		if (other_radeon_crtc->initialized) {
+		    radeon_crtc_dpms(other_crtc, DPMSModeOn);
+		    if (IS_AVIVO_VARIANT || info->r4xx_atom)
+			atombios_lock_crtc(info->atomBIOS, other_radeon_crtc->crtc_id, 0);
+		    radeon_dpms(loop_output, DPMSModeOn);
+		}
+	    }
+	}
+    }
+
     radeon_dpms(output, DPMSModeOn);
+    radeon_crtc_dpms(output->crtc, DPMSModeOn);
     radeon_bios_output_lock(output, FALSE);
 }
 
@@ -960,6 +992,8 @@ radeon_detect(xf86OutputPtr output)
     }
 
 
+    xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+	       "Output: %s, Detected Monitor Type: %d\n", output->name, radeon_output->MonType);
     if (output->MonInfo) {
 	xf86DrvMsg(pScrn->scrnIndex, X_INFO, "EDID data from the display on output: %s ----------------------\n",
 		   output->name);
@@ -1174,7 +1208,7 @@ radeon_create_resources(xf86OutputPtr output)
 	}
     }
 
-    if ((!IS_AVIVO_VARIANT) && (radeon_output->devices & (ATOM_DEVICE_DFP2_SUPPORT))) {
+    if ((!IS_AVIVO_VARIANT) && (radeon_output->devices & (ATOM_DEVICE_DFP1_SUPPORT))) {
 	tmds_pll_atom = MAKE_ATOM("tmds_pll");
 
 	err = RRConfigureOutputProperty(output->randr_output, tmds_pll_atom,
@@ -1608,16 +1642,27 @@ static const xf86OutputFuncsRec radeon_output_funcs = {
 };
 
 Bool
-RADEONI2CDoLock(xf86OutputPtr output, int lock_state)
+RADEONI2CDoLock(xf86OutputPtr output, I2CBusPtr b, int lock_state)
 {
     ScrnInfoPtr pScrn = output->scrn;
     RADEONInfoPtr  info       = RADEONPTR(pScrn);
-    RADEONOutputPrivatePtr radeon_output = output->driver_private;
-    RADEONI2CBusPtr pRADEONI2CBus = radeon_output->pI2CBus->DriverPrivate.ptr;
+    RADEONI2CBusPtr pRADEONI2CBus = b->DriverPrivate.ptr;
     unsigned char *RADEONMMIO = info->MMIO;
     uint32_t temp;
 
     if (lock_state) {
+	/* RV410 appears to have a bug where the hw i2c in reset
+	 * holds the i2c port in a bad state - switch hw i2c away before
+	 * doing DDC - do this for all r200s/r300s for safety sakes */
+	if ((info->ChipFamily >= CHIP_FAMILY_R200) && (!IS_AVIVO_VARIANT)) {
+	    if (pRADEONI2CBus->mask_clk_reg == RADEON_GPIO_MONID)
+                OUTREG(RADEON_DVI_I2C_CNTL_0, (RADEON_I2C_SOFT_RST |
+					       R200_DVI_I2C_PIN_SEL(R200_SEL_DDC1)));
+	    else
+                OUTREG(RADEON_DVI_I2C_CNTL_0, (RADEON_I2C_SOFT_RST |
+					       R200_DVI_I2C_PIN_SEL(R200_SEL_DDC3)));
+	}
+
 	temp = INREG(pRADEONI2CBus->a_clk_reg);
 	temp &= ~(pRADEONI2CBus->a_clk_mask);
 	OUTREG(pRADEONI2CBus->a_clk_reg, temp);

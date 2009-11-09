@@ -44,11 +44,14 @@
 #include "atipcirename.h"
 
 #include "xf86.h"
+#if GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) < 6
 #include "xf86Resources.h"
+#endif
 
 #include "radeon_chipset_gen.h"
 
 #include "radeon_pci_chipset_gen.h"
+
 
 #ifdef XSERVER_LIBPCIACCESS
 #include "radeon_pci_device_match_gen.h"

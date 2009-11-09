@@ -195,10 +195,10 @@ do {                                                                    \
 do {                                                                    \
     if ((reg) >= SET_CONFIG_REG_offset && (reg) < SET_CONFIG_REG_end) {	\
 	PACK3((ib), IT_SET_CONFIG_REG, (num) + 1);			\
-        E32(ib, ((reg) - SET_CONFIG_REG_offset) >> 2);                  \
+	E32(ib, ((reg) - SET_CONFIG_REG_offset) >> 2);                  \
     } else if ((reg) >= SET_CONTEXT_REG_offset && (reg) < SET_CONTEXT_REG_end) { \
-        PACK3((ib), IT_SET_CONTEXT_REG, (num) + 1);			\
-	E32(ib, ((reg) - 0x28000) >> 2);				\
+	PACK3((ib), IT_SET_CONTEXT_REG, (num) + 1);			\
+	E32(ib, ((reg) - SET_CONTEXT_REG_offset) >> 2);			\
     } else if ((reg) >= SET_ALU_CONST_offset && (reg) < SET_ALU_CONST_end) { \
 	PACK3((ib), IT_SET_ALU_CONST, (num) + 1);			\
 	E32(ib, ((reg) - SET_ALU_CONST_offset) >> 2);			\

@@ -936,11 +936,11 @@
 #define RADEON_GENMO_WT                     0x03c2 /* VGA */
 #define RADEON_GENS0                        0x03c2 /* VGA */
 #define RADEON_GENS1                        0x03da /* VGA, 0x03ba */
-#define RADEON_GPIO_MONID                   0x0068 /* DDC interface via I2C */
+#define RADEON_GPIO_MONID                   0x0068 /* DDC interface via I2C */ /* DDC3 */
 #define RADEON_GPIO_MONIDB                  0x006c
 #define RADEON_GPIO_CRT2_DDC                0x006c
-#define RADEON_GPIO_DVI_DDC                 0x0064
-#define RADEON_GPIO_VGA_DDC                 0x0060
+#define RADEON_GPIO_DVI_DDC                 0x0064 /* DDC2 */
+#define RADEON_GPIO_VGA_DDC                 0x0060 /* DDC1 */
 #       define RADEON_GPIO_A_0              (1 <<  0)
 #       define RADEON_GPIO_A_1              (1 <<  1)
 #       define RADEON_GPIO_Y_0              (1 <<  8)
@@ -979,24 +979,28 @@
 
        /* Multimedia I2C bus */
 #define RADEON_I2C_CNTL_0		    0x0090
-#define RADEON_I2C_DONE (1<<0)
-#define RADEON_I2C_NACK (1<<1)
-#define RADEON_I2C_HALT (1<<2)
-#define RADEON_I2C_SOFT_RST (1<<5)
-#define RADEON_I2C_DRIVE_EN (1<<6)
-#define RADEON_I2C_DRIVE_SEL (1<<7)
-#define RADEON_I2C_START (1<<8)
-#define RADEON_I2C_STOP (1<<9)
-#define RADEON_I2C_RECEIVE (1<<10)
-#define RADEON_I2C_ABORT (1<<11)
-#define RADEON_I2C_GO (1<<12)
+#define RADEON_I2C_DONE                     (1 << 0)
+#define RADEON_I2C_NACK                     (1 << 1)
+#define RADEON_I2C_HALT                     (1 << 2)
+#define RADEON_I2C_SOFT_RST                 (1 << 5)
+#define RADEON_I2C_DRIVE_EN                 (1 << 6)
+#define RADEON_I2C_DRIVE_SEL                (1 << 7)
+#define RADEON_I2C_START                    (1 << 8)
+#define RADEON_I2C_STOP                     (1 << 9)
+#define RADEON_I2C_RECEIVE                  (1 << 10)
+#define RADEON_I2C_ABORT                    (1 << 11)
+#define RADEON_I2C_GO                       (1 << 12)
 #define RADEON_I2C_CNTL_1                   0x0094
-#define RADEON_I2C_SEL         (1<<16)
-#define RADEON_I2C_EN          (1<<17)
+#define RADEON_I2C_SEL                      (1 << 16)
+#define RADEON_I2C_EN                       (1 << 17)
 #define RADEON_I2C_DATA			    0x0098
 
 #define RADEON_DVI_I2C_CNTL_0		    0x02e0
-#define RADEON_DVI_I2C_CNTL_1               0x02e4 /* ? */
+#       define R200_DVI_I2C_PIN_SEL(x)      ((x) << 3)
+#       define R200_SEL_DDC1                0 /* 0x60 - VGA_DDC */
+#       define R200_SEL_DDC2                1 /* 0x64 - DVI_DDC */
+#       define R200_SEL_DDC3                2 /* 0x68 - MONID_DDC */
+#define RADEON_DVI_I2C_CNTL_1               0x02e4
 #define RADEON_DVI_I2C_DATA		    0x02e8
 
 #define RADEON_INTERRUPT_LINE               0x0f3c /* PCI */

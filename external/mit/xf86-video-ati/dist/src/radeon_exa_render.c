@@ -409,8 +409,7 @@ static Bool FUNC_NAME(R100TextureSetup)(PicturePtr pPict, PixmapPtr pPix,
 	RADEON_FALLBACK(("Bad filter 0x%x\n", pPict->filter));
     }
 
-    if (repeat) {
-	switch (pPict->repeatType) {
+    switch (pPict->repeatType) {
 	case RepeatNormal:
 	    txfilter |= RADEON_CLAMP_S_WRAP | RADEON_CLAMP_T_WRAP;
 	    break;
@@ -421,9 +420,10 @@ static Bool FUNC_NAME(R100TextureSetup)(PicturePtr pPict, PixmapPtr pPix,
 	    txfilter |= RADEON_CLAMP_S_MIRROR | RADEON_CLAMP_T_MIRROR;
 	    break;
 	case RepeatNone:
-	    /* Nothing to do */
+	    /* don't set an illegal clamp mode for rects */
+	    if (txformat & RADEON_TXFORMAT_NON_POWER2)
+		txfilter |= RADEON_CLAMP_S_CLAMP_LAST | RADEON_CLAMP_T_CLAMP_LAST;
 	    break;
-	}
     }
 
     BEGIN_ACCEL(5);
@@ -747,8 +747,7 @@ static Bool FUNC_NAME(R200TextureSetup)(PicturePtr pPict, PixmapPtr pPix,
 	RADEON_FALLBACK(("Bad filter 0x%x\n", pPict->filter));
     }
 
-    if (repeat) {
-	switch (pPict->repeatType) {
+    switch (pPict->repeatType) {
 	case RepeatNormal:
 	    txfilter |= R200_CLAMP_S_WRAP | R200_CLAMP_T_WRAP;
 	    break;
@@ -759,9 +758,10 @@ static Bool FUNC_NAME(R200TextureSetup)(PicturePtr pPict, PixmapPtr pPix,
 	    txfilter |= R200_CLAMP_S_MIRROR | R200_CLAMP_T_MIRROR;
 	    break;
 	case RepeatNone:
-	    /* Nothing to do */
+	    /* don't set an illegal clamp mode for rect textures */
+	    if (txformat & R200_TXFORMAT_NON_POWER2)
+		txfilter |= R200_CLAMP_S_CLAMP_LAST | R200_CLAMP_T_CLAMP_LAST;
 	    break;
-	}
     }
 
     BEGIN_ACCEL(6);
@@ -802,6 +802,10 @@ static Bool R200CheckComposite(int op, PicturePtr pSrcPicture, PicturePtr pMaskP
     uint32_t tmp1;
 
     TRACE;
+
+    /* Check for unsupported compositing operations. */
+    if (op >= sizeof(RadeonBlendOp) / sizeof(RadeonBlendOp[0]))
+	RADEON_FALLBACK(("Unsupported Composite op 0x%x\n", op));
 
     if (!pSrcPicture->pDrawable)
 	return FALSE;
@@ -1492,7 +1496,7 @@ static Bool FUNC_NAME(R300PrepareComposite)(int op, PicturePtr pSrcPicture,
 			   R300_RS_COUNT_HIRES_EN));
 
 	    /* R300_INST_COUNT_RS - highest RS instruction used */
-	    OUT_ACCEL_REG(R300_RS_INST_COUNT, R300_INST_COUNT_RS(1) | R300_TX_OFFSET_RS(6));
+	    OUT_ACCEL_REG(R300_RS_INST_COUNT, R300_INST_COUNT_RS(1));
 
 	    OUT_ACCEL_REG(R300_US_CODE_OFFSET, (R300_ALU_CODE_OFFSET(0) |
 						R300_ALU_CODE_SIZE(0) |
@@ -1514,7 +1518,7 @@ static Bool FUNC_NAME(R300PrepareComposite)(int op, PicturePtr pSrcPicture,
 			  ((2 << R300_RS_COUNT_IT_COUNT_SHIFT) |
 			   R300_RS_COUNT_HIRES_EN));
 
-	    OUT_ACCEL_REG(R300_RS_INST_COUNT, R300_INST_COUNT_RS(0) | R300_TX_OFFSET_RS(6));
+	    OUT_ACCEL_REG(R300_RS_INST_COUNT, R300_INST_COUNT_RS(0));
 
 	    OUT_ACCEL_REG(R300_US_CODE_OFFSET, (R300_ALU_CODE_OFFSET(0) |
 						R300_ALU_CODE_SIZE(0) |
@@ -1741,7 +1745,7 @@ static Bool FUNC_NAME(R300PrepareComposite)(int op, PicturePtr pSrcPicture,
 			   R300_RS_COUNT_HIRES_EN));
 
 	    /* 2 RS instructions: 1 for tex0 (src), 1 for tex1 (mask) */
-	    OUT_ACCEL_REG(R300_RS_INST_COUNT, R300_INST_COUNT_RS(1) | R300_TX_OFFSET_RS(6));
+	    OUT_ACCEL_REG(R300_RS_INST_COUNT, R300_INST_COUNT_RS(1));
 
 	    OUT_ACCEL_REG(R500_US_CODE_ADDR, (R500_US_CODE_START_ADDR(0) |
 					      R500_US_CODE_END_ADDR(2)));
@@ -1753,7 +1757,7 @@ static Bool FUNC_NAME(R300PrepareComposite)(int op, PicturePtr pSrcPicture,
 			  ((2 << R300_RS_COUNT_IT_COUNT_SHIFT) |
 			   R300_RS_COUNT_HIRES_EN));
 
-	    OUT_ACCEL_REG(R300_RS_INST_COUNT, R300_INST_COUNT_RS(0) | R300_TX_OFFSET_RS(6));
+	    OUT_ACCEL_REG(R300_RS_INST_COUNT, R300_INST_COUNT_RS(0));
 
 	    OUT_ACCEL_REG(R500_US_CODE_ADDR, (R500_US_CODE_START_ADDR(0) |
 					      R500_US_CODE_END_ADDR(1)));
@@ -1933,8 +1937,12 @@ static Bool FUNC_NAME(R300PrepareComposite)(int op, PicturePtr pSrcPicture,
 
     /* Clear out scissoring */
     BEGIN_ACCEL(2);
-    OUT_ACCEL_REG(R300_SC_SCISSOR0, ((0 << R300_SCISSOR_X_SHIFT) |
-				     (0 << R300_SCISSOR_Y_SHIFT)));
+    if (IS_R300_3D)
+	OUT_ACCEL_REG(R300_SC_SCISSOR0, ((1440 << R300_SCISSOR_X_SHIFT) |
+					 (1440 << R300_SCISSOR_Y_SHIFT)));
+    else
+	OUT_ACCEL_REG(R300_SC_SCISSOR0, ((0 << R300_SCISSOR_X_SHIFT) |
+					 (0 << R300_SCISSOR_Y_SHIFT)));
     OUT_ACCEL_REG(R300_SC_SCISSOR1, ((8191 << R300_SCISSOR_X_SHIFT) |
 				     (8191 << R300_SCISSOR_Y_SHIFT)));
     FINISH_ACCEL();

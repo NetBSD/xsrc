@@ -273,6 +273,7 @@ radeon_card_posted(ScrnInfoPtr pScrn)
     unsigned char *RADEONMMIO = info->MMIO;
     uint32_t reg;
 
+    /* first check CRTCs */
     if (IS_AVIVO_VARIANT) {
 	reg = INREG(AVIVO_D1CRTC_CONTROL) | INREG(AVIVO_D2CRTC_CONTROL);
 	if (reg & AVIVO_CRTC_EN)
@@ -282,6 +283,15 @@ radeon_card_posted(ScrnInfoPtr pScrn)
 	if (reg & RADEON_CRTC_EN)
 	    return TRUE;
     }
+
+    /* then check MEM_SIZE, in case something turned the crtcs off */
+    if (info->ChipFamily >= CHIP_FAMILY_R600)
+	reg = INREG(R600_CONFIG_MEMSIZE);
+    else
+	reg = INREG(RADEON_CONFIG_MEMSIZE);
+
+    if (reg)
+	return TRUE;
 
     return FALSE;
 }

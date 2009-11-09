@@ -150,7 +150,6 @@ void
 RADEONGetExtTMDSInfo(ScrnInfoPtr pScrn, radeon_dvo_ptr dvo)
 {
     RADEONInfoPtr  info       = RADEONPTR(pScrn);
-    I2CBusPtr pDVOBus;
 
     if (!info->IsAtomBios) {
 #if defined(__powerpc__)
@@ -162,11 +161,11 @@ RADEONGetExtTMDSInfo(ScrnInfoPtr pScrn, radeon_dvo_ptr dvo)
 	    dvo->dvo_i2c_slave_addr = 0x70;
 	}
 #endif
-	if (RADEONI2CInit(pScrn, &pDVOBus, "DVO", &dvo->dvo_i2c)) {
+	if (RADEONI2CInit(pScrn, &dvo->pI2CBus, "DVO", &dvo->dvo_i2c)) {
 	    dvo->DVOChip =
-		RADEONDVODeviceInit(pDVOBus, dvo->dvo_i2c_slave_addr);
+		RADEONDVODeviceInit(dvo->pI2CBus, dvo->dvo_i2c_slave_addr);
 	    if (!dvo->DVOChip)
-		xfree(pDVOBus);
+		xfree(dvo->pI2CBus);
 	}
     }
 }
@@ -481,7 +480,7 @@ RADEONRestoreDVOChip(ScrnInfoPtr pScrn, xf86OutputPtr output)
     if (!dvo->DVOChip)
 	return;
 
-    RADEONI2CDoLock(output, TRUE);
+    RADEONI2CDoLock(output, dvo->pI2CBus, TRUE);
     if (!RADEONInitExtTMDSInfoFromBIOS(output)) {
 	if (dvo->DVOChip) {
 	    switch(info->ext_tmds_chip) {
@@ -511,7 +510,7 @@ RADEONRestoreDVOChip(ScrnInfoPtr pScrn, xf86OutputPtr output)
 	    }
 	}
     }
-    RADEONI2CDoLock(output, FALSE);
+    RADEONI2CDoLock(output, dvo->pI2CBus, FALSE);
 }
 
 #if 0

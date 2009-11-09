@@ -393,7 +393,7 @@ FUNC_NAME(RADEONDisplayTexturedVideo)(ScrnInfoPtr pScrn, RADEONPortPrivPtr pPriv
 						   R300_RS_COUNT_HIRES_EN));
 
 		/* R300_INST_COUNT_RS - highest RS instruction used */
-		OUT_ACCEL_REG(R300_RS_INST_COUNT, R300_INST_COUNT_RS(1) | R300_TX_OFFSET_RS(6));
+		OUT_ACCEL_REG(R300_RS_INST_COUNT, R300_INST_COUNT_RS(1));
 
 		/* Pixel stack frame size. */
 		OUT_ACCEL_REG(R300_US_PIXSIZE, 5);
@@ -770,7 +770,7 @@ FUNC_NAME(RADEONDisplayTexturedVideo)(ScrnInfoPtr pScrn, RADEONPortPrivPtr pPriv
 			  ((2 << R300_RS_COUNT_IT_COUNT_SHIFT) |
 			   R300_RS_COUNT_HIRES_EN));
 		/* R300_INST_COUNT_RS - highest RS instruction used */
-		OUT_ACCEL_REG(R300_RS_INST_COUNT, R300_INST_COUNT_RS(0) | R300_TX_OFFSET_RS(6));
+		OUT_ACCEL_REG(R300_RS_INST_COUNT, R300_INST_COUNT_RS(0));
 
 		OUT_ACCEL_REG(R300_US_PIXSIZE, 2); /* highest temp used */
 
@@ -902,7 +902,7 @@ FUNC_NAME(RADEONDisplayTexturedVideo)(ScrnInfoPtr pScrn, RADEONPortPrivPtr pPriv
 			  ((2 << R300_RS_COUNT_IT_COUNT_SHIFT) |
 			   R300_RS_COUNT_HIRES_EN));
 		/* R300_INST_COUNT_RS - highest RS instruction used */
-		OUT_ACCEL_REG(R300_RS_INST_COUNT, R300_INST_COUNT_RS(0) | R300_TX_OFFSET_RS(6));
+		OUT_ACCEL_REG(R300_RS_INST_COUNT, R300_INST_COUNT_RS(0));
 
 		OUT_ACCEL_REG(R300_US_PIXSIZE, 0); /* highest temp used */
 
@@ -975,7 +975,7 @@ FUNC_NAME(RADEONDisplayTexturedVideo)(ScrnInfoPtr pScrn, RADEONPortPrivPtr pPriv
 			       R300_RS_COUNT_HIRES_EN));
 
 		/* R300_INST_COUNT_RS - highest RS instruction used */
-		OUT_ACCEL_REG(R300_RS_INST_COUNT, R300_INST_COUNT_RS(1) | R300_TX_OFFSET_RS(6));
+		OUT_ACCEL_REG(R300_RS_INST_COUNT, R300_INST_COUNT_RS(1));
 
 		/* Pixel stack frame size. */
 		OUT_ACCEL_REG(R300_US_PIXSIZE, 5);
@@ -1447,7 +1447,7 @@ FUNC_NAME(RADEONDisplayTexturedVideo)(ScrnInfoPtr pScrn, RADEONPortPrivPtr pPriv
 			       R300_RS_COUNT_HIRES_EN));
 
 		/* R300_INST_COUNT_RS - highest RS instruction used */
-		OUT_ACCEL_REG(R300_RS_INST_COUNT, R300_INST_COUNT_RS(0) | R300_TX_OFFSET_RS(6));
+		OUT_ACCEL_REG(R300_RS_INST_COUNT, R300_INST_COUNT_RS(0));
 
 		/* Pixel stack frame size. */
 		OUT_ACCEL_REG(R300_US_PIXSIZE, 0); /* highest temp used */
@@ -2014,7 +2014,7 @@ FUNC_NAME(RADEONDisplayTexturedVideo)(ScrnInfoPtr pScrn, RADEONPortPrivPtr pPriv
      *     We render a single, large triangle and use the scissor
      *     functionality to restrict it to the desired rectangle.
      *     Due to guardband limits on r3xx/r4xx, we can only use
-     *     the single triangle up to 2880 pixels; above that we
+     *     the single triangle up to 4021 pixels; above that we
      *     render as a quad.
      */
 
@@ -2041,7 +2041,7 @@ FUNC_NAME(RADEONDisplayTexturedVideo)(ScrnInfoPtr pScrn, RADEONPortPrivPtr pPriv
 #endif
 
 	if (IS_R300_3D || IS_R500_3D) {
-	    if (IS_R300_3D && ((dstw+dsth) > 2880))
+	    if (IS_R300_3D && ((dstw+dsth) > 4021))
 		use_quad = TRUE;
 	    /*
 	     * Set up the scissor area to that of the output size.
@@ -2049,10 +2049,10 @@ FUNC_NAME(RADEONDisplayTexturedVideo)(ScrnInfoPtr pScrn, RADEONPortPrivPtr pPriv
 	    BEGIN_ACCEL(2);
 	    if (IS_R300_3D) {
 		/* R300 has an offset */
-		OUT_ACCEL_REG(R300_SC_SCISSOR0, (((dstX + 1088) << R300_SCISSOR_X_SHIFT) |
-						 ((dstY + 1088) << R300_SCISSOR_Y_SHIFT)));
-		OUT_ACCEL_REG(R300_SC_SCISSOR1, (((dstX + dstw + 1088 - 1) << R300_SCISSOR_X_SHIFT) |
-						 ((dstY + dsth + 1088 - 1) << R300_SCISSOR_Y_SHIFT)));
+		OUT_ACCEL_REG(R300_SC_SCISSOR0, (((dstX + 1440) << R300_SCISSOR_X_SHIFT) |
+						 ((dstY + 1440) << R300_SCISSOR_Y_SHIFT)));
+		OUT_ACCEL_REG(R300_SC_SCISSOR1, (((dstX + dstw + 1440 - 1) << R300_SCISSOR_X_SHIFT) |
+						 ((dstY + dsth + 1440 - 1) << R300_SCISSOR_Y_SHIFT)));
 	    } else {
 		OUT_ACCEL_REG(R300_SC_SCISSOR0, (((dstX) << R300_SCISSOR_X_SHIFT) |
 						 ((dstY) << R300_SCISSOR_Y_SHIFT)));

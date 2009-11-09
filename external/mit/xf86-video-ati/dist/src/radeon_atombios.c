@@ -1377,10 +1377,10 @@ const int object_connector_convert[] =
       CONNECTOR_CTV,
       CONNECTOR_STV,
       CONNECTOR_NONE,
+      CONNECTOR_NONE,
       CONNECTOR_DIN,
       CONNECTOR_SCART,
       CONNECTOR_HDMI_TYPE_A,
-      CONNECTOR_HDMI_TYPE_B,
       CONNECTOR_HDMI_TYPE_B,
       CONNECTOR_LVDS,
       CONNECTOR_DIN,
@@ -1534,6 +1534,7 @@ static void RADEONApplyATOMQuirks(ScrnInfoPtr pScrn, int index)
 	    info->BiosConnector[index].ConnectorType = CONNECTOR_DVI_D;
 	}
     }
+
     /* a-bit f-i90hd - ciaranm on #radeonhd - this board has no DVI */
     if ((info->Chipset == PCI_CHIP_RS600_7941) &&
 	(PCI_SUB_VENDOR_ID(info->PciInfo) == 0x147b) &&
@@ -1565,12 +1566,6 @@ static void RADEONApplyATOMQuirks(ScrnInfoPtr pScrn, int index)
 	}
     }
 
-    /* some BIOSes seem to report DAC on HDMI - they hurt me with their lies */
-    if ((info->BiosConnector[index].ConnectorType == CONNECTOR_HDMI_TYPE_A) ||
-    	(info->BiosConnector[index].ConnectorType == CONNECTOR_HDMI_TYPE_B)) {
-	info->BiosConnector[index].devices &= ~(ATOM_DEVICE_CRT_SUPPORT);
-    }
-
     /* ASUS HD 3600 XT board lists the DVI port as HDMI */
     if ((info->Chipset == PCI_CHIP_RV635_9598) &&
 	(PCI_SUB_VENDOR_ID(info->PciInfo) == 0x1043) &&
@@ -1579,6 +1574,26 @@ static void RADEONApplyATOMQuirks(ScrnInfoPtr pScrn, int index)
 	    info->BiosConnector[index].ConnectorType = CONNECTOR_DVI_D;
     }
 
+    /* ASUS HD 3450 board lists the DVI port as HDMI */
+    if ((info->Chipset == PCI_CHIP_RV620_95C5) &&
+	(PCI_SUB_VENDOR_ID(info->PciInfo) == 0x1043) &&
+	(PCI_SUB_DEVICE_ID(info->PciInfo) == 0x01e2)) {
+	if (info->BiosConnector[index].ConnectorType == CONNECTOR_HDMI_TYPE_B)
+	    info->BiosConnector[index].ConnectorType = CONNECTOR_DVI_D;
+    }
+
+    /* some BIOSes seem to report DAC on HDMI - usually this is a board with
+     * HDMI + VGA reporting as HDMI
+     */
+    if ((info->BiosConnector[index].ConnectorType == CONNECTOR_HDMI_TYPE_A) ||
+	(info->BiosConnector[index].ConnectorType == CONNECTOR_HDMI_TYPE_B)) {
+	if (info->BiosConnector[index].devices & (ATOM_DEVICE_CRT_SUPPORT)) {
+	    info->BiosConnector[index].devices &= ~(ATOM_DEVICE_DFP_SUPPORT);
+	    info->BiosConnector[index].ConnectorType = CONNECTOR_VGA;
+	    info->BiosConnector[index].connector_object = 0;
+	} else
+	    info->BiosConnector[index].devices &= ~(ATOM_DEVICE_CRT_SUPPORT);
+    }
 
 }
 
@@ -1761,17 +1776,17 @@ RADEONGetATOMConnectorInfoFromBIOSObject (ScrnInfoPtr pScrn)
 	ATOM_DISPLAY_OBJECT_PATH *path;
 	addr += path_size;
 	path = (ATOM_DISPLAY_OBJECT_PATH *)addr;
-	path_size += path->usSize;
+	path_size += le16_to_cpu(path->usSize);
 
-	if (device_support & path->usDeviceTag) {
+	if (device_support & le16_to_cpu(path->usDeviceTag)) {
 	    uint8_t con_obj_id, con_obj_num, con_obj_type;
 
-	    con_obj_id = (path->usConnObjectId & OBJECT_ID_MASK) >> OBJECT_ID_SHIFT;
-	    con_obj_num = (path->usConnObjectId & ENUM_ID_MASK) >> ENUM_ID_SHIFT;
-	    con_obj_type = (path->usConnObjectId & OBJECT_TYPE_MASK) >> OBJECT_TYPE_SHIFT;
+	    con_obj_id = (le16_to_cpu(path->usConnObjectId) & OBJECT_ID_MASK) >> OBJECT_ID_SHIFT;
+	    con_obj_num = (le16_to_cpu(path->usConnObjectId) & ENUM_ID_MASK) >> ENUM_ID_SHIFT;
+	    con_obj_type = (le16_to_cpu(path->usConnObjectId) & OBJECT_TYPE_MASK) >> OBJECT_TYPE_SHIFT;
 
-	    if ((path->usDeviceTag == ATOM_DEVICE_TV1_SUPPORT) ||
-		(path->usDeviceTag == ATOM_DEVICE_TV2_SUPPORT)) {
+	    if ((le16_to_cpu(path->usDeviceTag) == ATOM_DEVICE_TV1_SUPPORT) ||
+		(le16_to_cpu(path->usDeviceTag) == ATOM_DEVICE_TV2_SUPPORT)) {
 		if (!enable_tv) {
 		    info->BiosConnector[i].valid = FALSE;
 		    continue;
@@ -1779,7 +1794,7 @@ RADEONGetATOMConnectorInfoFromBIOSObject (ScrnInfoPtr pScrn)
 	    }
 
 	    /* don't support CV yet */
-	    if (path->usDeviceTag == ATOM_DEVICE_CV_SUPPORT) {
+	    if (le16_to_cpu(path->usDeviceTag) == ATOM_DEVICE_CV_SUPPORT) {
 		info->BiosConnector[i].valid = FALSE;
 		continue;
 	    }
@@ -1810,15 +1825,15 @@ RADEONGetATOMConnectorInfoFromBIOSObject (ScrnInfoPtr pScrn)
 		continue;
 	    } else
 		info->BiosConnector[i].valid = TRUE;
-	    info->BiosConnector[i].devices = path->usDeviceTag;
-	    info->BiosConnector[i].connector_object = path->usConnObjectId;
+	    info->BiosConnector[i].devices = le16_to_cpu(path->usDeviceTag);
+	    info->BiosConnector[i].connector_object = le16_to_cpu(path->usConnObjectId);
 
-	    for (j = 0; j < ((path->usSize - 8) / 2); j++) {
+	    for (j = 0; j < ((le16_to_cpu(path->usSize) - 8) / 2); j++) {
 		uint8_t enc_obj_id, enc_obj_num, enc_obj_type;
 
-		enc_obj_id = (path->usGraphicObjIds[j] & OBJECT_ID_MASK) >> OBJECT_ID_SHIFT;
-		enc_obj_num = (path->usGraphicObjIds[j] & ENUM_ID_MASK) >> ENUM_ID_SHIFT;
-		enc_obj_type = (path->usGraphicObjIds[j] & OBJECT_TYPE_MASK) >> OBJECT_TYPE_SHIFT;
+		enc_obj_id = (le16_to_cpu(path->usGraphicObjIds[j]) & OBJECT_ID_MASK) >> OBJECT_ID_SHIFT;
+		enc_obj_num = (le16_to_cpu(path->usGraphicObjIds[j]) & ENUM_ID_MASK) >> ENUM_ID_SHIFT;
+		enc_obj_type = (le16_to_cpu(path->usGraphicObjIds[j]) & OBJECT_TYPE_MASK) >> OBJECT_TYPE_SHIFT;
 
 		if (enc_obj_type == GRAPH_OBJECT_TYPE_ENCODER) {
 		    if (enc_obj_num == 2)
@@ -1826,15 +1841,15 @@ RADEONGetATOMConnectorInfoFromBIOSObject (ScrnInfoPtr pScrn)
 		    else
 			info->BiosConnector[i].linkb = FALSE;
 
-		    if (!radeon_add_encoder(pScrn, enc_obj_id, path->usDeviceTag))
+		    if (!radeon_add_encoder(pScrn, enc_obj_id, le16_to_cpu(path->usDeviceTag)))
 			return FALSE;
 		}
 	    }
 
 	    /* look up gpio for ddc */
-	    if ((path->usDeviceTag & (ATOM_DEVICE_TV_SUPPORT | ATOM_DEVICE_CV_SUPPORT)) == 0) {
+	    if ((le16_to_cpu(path->usDeviceTag) & (ATOM_DEVICE_TV_SUPPORT | ATOM_DEVICE_CV_SUPPORT)) == 0) {
 		for (j = 0; j < con_obj->ucNumberOfObjects; j++) {
-		    if (path->usConnObjectId == le16_to_cpu(con_obj->asObjects[j].usObjectID)) {
+		    if (le16_to_cpu(path->usConnObjectId) == le16_to_cpu(con_obj->asObjects[j].usObjectID)) {
 			ATOM_COMMON_RECORD_HEADER *Record = (ATOM_COMMON_RECORD_HEADER *)
 			    ((char *)&atomDataPtr->Object_Header->sHeader
 			     + le16_to_cpu(con_obj->asObjects[j].usRecordOffset));
@@ -2240,8 +2255,11 @@ RADEONGetATOMConnectorInfoFromBIOSConnectorTable (ScrnInfoPtr pScrn)
 	    info->BiosConnector[i].ddc_i2c.valid = FALSE;
 	else if ((info->ChipFamily == CHIP_FAMILY_RS690) ||
 		 (info->ChipFamily == CHIP_FAMILY_RS740)) {
-	    /* IGP DFP ports use non-standard gpio entries */
-	    if ((i == ATOM_DEVICE_DFP2_INDEX) || (i == ATOM_DEVICE_DFP3_INDEX))
+	    /* IGP DFP ports sometimes use non-standard gpio entries */
+	    if ((i == ATOM_DEVICE_DFP2_INDEX) && (ci.sucI2cId.sbfAccess.bfI2C_LineMux == 2))
+		info->BiosConnector[i].ddc_i2c =
+		    RADEONLookupGPIOLineForDDC(pScrn, ci.sucI2cId.sbfAccess.bfI2C_LineMux + 1);
+	    else if ((i == ATOM_DEVICE_DFP3_INDEX) && (ci.sucI2cId.sbfAccess.bfI2C_LineMux == 1))
 		info->BiosConnector[i].ddc_i2c =
 		    RADEONLookupGPIOLineForDDC(pScrn, ci.sucI2cId.sbfAccess.bfI2C_LineMux + 1);
 	    else
@@ -2303,6 +2321,8 @@ RADEONGetATOMConnectorInfoFromBIOSConnectorTable (ScrnInfoPtr pScrn)
 			    ((j == ATOM_DEVICE_CRT1_INDEX) ||
 			     (j == ATOM_DEVICE_CRT2_INDEX))) {
 			    info->BiosConnector[i].devices |= info->BiosConnector[j].devices;
+			    if (info->BiosConnector[i].ConnectorType == CONNECTOR_DVI_D)
+				info->BiosConnector[i].ConnectorType = CONNECTOR_DVI_I;
 			    info->BiosConnector[j].valid = FALSE;
 			} else if (((j == ATOM_DEVICE_DFP1_INDEX) ||
 				    (j == ATOM_DEVICE_DFP2_INDEX) ||
@@ -2310,6 +2330,8 @@ RADEONGetATOMConnectorInfoFromBIOSConnectorTable (ScrnInfoPtr pScrn)
 				   ((i == ATOM_DEVICE_CRT1_INDEX) ||
 				    (i == ATOM_DEVICE_CRT2_INDEX))) {
 			    info->BiosConnector[j].devices |= info->BiosConnector[i].devices;
+			    if (info->BiosConnector[j].ConnectorType == CONNECTOR_DVI_D)
+				info->BiosConnector[j].ConnectorType = CONNECTOR_DVI_I;
 			    info->BiosConnector[i].valid = FALSE;
 			} else {
 			    info->BiosConnector[i].shared_ddc = TRUE;
