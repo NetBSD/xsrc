@@ -44,14 +44,23 @@
 #include "dixevents.h"
 #include "mipointer.h"
 
+/* XXXMRG before xext* update */
+/*
 #ifdef XKB
 #include <X11/extensions/XKBproto.h>
 #include <xkbsrv.h>
 #endif
+*/
 
 #ifdef PANORAMIX
 #include "panoramiX.h"
 #include "panoramiXsrv.h"
+#endif
+
+/* XXXMRG before xext* update */
+#ifdef XKB
+#include <X11/extensions/XKBproto.h>
+#include <xkbsrv.h>
 #endif
 
 #include <X11/extensions/XI.h>

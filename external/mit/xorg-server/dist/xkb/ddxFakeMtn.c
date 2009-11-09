@@ -36,13 +36,17 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include "inputstr.h"
 #include "scrnintstr.h"
 #include "windowstr.h"
-#include <xkbsrv.h>
+/* XXXMRG before xext* update */
+/* #include <xkbsrv.h> */
 #include <X11/extensions/XI.h>
 
 #ifdef PANORAMIX
 #include "panoramiX.h"
 #include "panoramiXsrv.h"
 #endif
+
+/* XXXMRG before xext* update */
+#include <xkbsrv.h>
 
 #include "mipointer.h"
 #include "mipointrst.h"
