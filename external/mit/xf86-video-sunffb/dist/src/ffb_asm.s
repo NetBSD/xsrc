@@ -24,6 +24,9 @@
  */
 /* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sunffb/ffb_asm.s,v 1.1 2000/05/18 23:21:35 dawes Exp $ */
 
+  .register %g2, #scratch
+  .register %g3, #scratch
+
 /* Hardware register offsets */
 #define FFB_BY		0x0060
 #define FFB_DY		0x0068
