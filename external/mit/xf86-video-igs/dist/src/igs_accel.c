@@ -21,7 +21,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-/* $NetBSD: igs_accel.c,v 1.1 2009/11/10 21:39:45 macallan Exp $ */
+/* $NetBSD: igs_accel.c,v 1.2 2009/11/21 22:22:27 macallan Exp $ */
 
 #include <sys/types.h>
 
@@ -69,6 +69,7 @@ IgsWaitMarker(ScreenPtr pScreen, int Marker)
 	ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
 	IgsPtr fPtr = IGSPTR(pScrn);
 	int bail = 0x0fffffff;
+
 	ENTER;
 	IgsWrite1(fPtr, IGS_COP_MAP_FMT_REG, (fPtr->info.depth >> 3) - 1);
 	while ((IgsRead1(fPtr,
@@ -89,14 +90,15 @@ IgsWaitMarker(ScreenPtr pScreen, int Marker)
 static int
 IgsMarkSync(ScreenPtr pScreenInfo)
 {
-    ENTER;
-    return 0;
+	ENTER;
+	return 0;
 }
 
 static void
 IgsWaitReady(IgsPtr fPtr)
 {
 	int bail = 0x0fffffff;
+
 	ENTER;
 	IgsWrite1(fPtr, IGS_COP_MAP_FMT_REG, (fPtr->info.depth >> 3) - 1);
 	while (((IgsRead1(fPtr,
@@ -253,23 +255,25 @@ static Bool
 IgsUploadToScreen(PixmapPtr pDst, int x, int y, int w, int h,
     char *src, int src_pitch)
 {
-    char  *dst        = pDst->devPrivate.ptr;
-    int    dst_pitch  = exaGetPixmapPitch(pDst);
+	ScrnInfoPtr pScrn = xf86Screens[pDst->drawable.pScreen->myNum];
+	IgsPtr fPtr = IGSPTR(pScrn);
+	char  *dst        = fPtr->fbmem + exaGetPixmapOffset(pDst);
+	int    dst_pitch  = exaGetPixmapPitch(pDst);
 
-    int bpp    = pDst->drawable.bitsPerPixel;
-    int cpp    = (bpp + 7) / 8;
-    int wBytes = w * cpp;
+	int bpp    = pDst->drawable.bitsPerPixel;
+	int cpp    = (bpp + 7) / 8;
+	int wBytes = w * cpp;
 
-    ENTER;
-    dst += (x * cpp) + (y * dst_pitch);
+	ENTER;
+	dst += (x * cpp) + (y * dst_pitch);
 
-    while (h--) {
-        memcpy(dst, src, wBytes);
-        src += src_pitch;
-        dst += dst_pitch;
-    }
-    LEAVE;
-    return TRUE;
+	while (h--) {
+		memcpy(dst, src, wBytes);
+		src += src_pitch;
+		dst += dst_pitch;
+	}
+	LEAVE;
+	return TRUE;
 }
 
 /*
@@ -279,66 +283,62 @@ static Bool
 IgsDownloadFromScreen(PixmapPtr pSrc, int x, int y, int w, int h,
     char *dst, int dst_pitch)
 {
-    char  *src        = pSrc->devPrivate.ptr;
-    int    src_pitch  = exaGetPixmapPitch(pSrc);
+	ScrnInfoPtr pScrn = xf86Screens[pSrc->drawable.pScreen->myNum];
+	IgsPtr fPtr = IGSPTR(pScrn);
+	char  *src        = fPtr->fbmem + exaGetPixmapOffset(pSrc);
+	int    src_pitch  = exaGetPixmapPitch(pSrc);
 
-    int bpp    = pSrc->drawable.bitsPerPixel;
-    int cpp    = (bpp + 7) / 8;
-    int wBytes = w * cpp;
+	int bpp    = pSrc->drawable.bitsPerPixel;
+	int cpp    = (bpp + 7) / 8;
+	int wBytes = w * cpp;
 
-    ENTER;
-    src += (x * cpp) + (y * src_pitch);
+	ENTER;
+	src += (x * cpp) + (y * src_pitch);
 
-    while (h--) {
-        memcpy(dst, src, wBytes);
-        src += src_pitch;
-        dst += dst_pitch;
-    }
-    LEAVE;
-    return TRUE;
+	while (h--) {
+		memcpy(dst, src, wBytes);
+		src += src_pitch;
+		dst += dst_pitch;
+	}
+	LEAVE;
+	return TRUE;
 }
 
 Bool
 IgsInitAccel(ScreenPtr pScreen)
 {
-    ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
-    IgsPtr fPtr = IGSPTR(pScrn);
-    ExaDriverPtr pExa;
+	ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
+	IgsPtr fPtr = IGSPTR(pScrn);
+	ExaDriverPtr pExa;
 
-    pExa = exaDriverAlloc();
-    if (!pExa)
-        return FALSE;
+	pExa = exaDriverAlloc();
+	if (!pExa)
+		return FALSE;
 
-    fPtr->pExa = pExa;
+	fPtr->pExa = pExa;
 
-    pExa->exa_major = EXA_VERSION_MAJOR;
-    pExa->exa_minor = EXA_VERSION_MINOR;
+	pExa->exa_major = EXA_VERSION_MAJOR;
+	pExa->exa_minor = EXA_VERSION_MINOR;
 
-    /*
-     * The S24 can display both 8 and 24bit data at the same time, and in
-     * 24bit we can choose between gamma corrected ad direct. No idea how that
-     * would map to EXA - we'd have to pick the right framebuffer to draw into
-     * and Solid() would need to know what kind of pixels to write
-     */
-    pExa->memoryBase = fPtr->fbmem;
+	pExa->memoryBase = fPtr->fbmem;
 	pExa->memorySize = fPtr->fbmem_len;
 	pExa->offScreenBase = fPtr->linebytes * fPtr->info.height;
 	pExa->pixmapOffsetAlign = 4;
 	pExa->pixmapPitchAlign = 4;
 
-    pExa->flags = EXA_OFFSCREEN_PIXMAPS;
+	pExa->flags = EXA_OFFSCREEN_PIXMAPS;
 
-    pExa->maxX = 2048;
-    pExa->maxY = 2048;	/* dummy, available VRAM is the limit */
+	pExa->maxX = 2048;
+	pExa->maxY = 2048;	
 
-    pExa->MarkSync = IgsMarkSync;
-    pExa->WaitMarker = IgsWaitMarker;
-    pExa->PrepareSolid = IgsPrepareSolid;
-    pExa->Solid = IgsSolid;
-    pExa->DoneSolid = IgsDoneCopy;
-    pExa->PrepareCopy = IgsPrepareCopy;
-    pExa->Copy = IgsCopy;
-    pExa->DoneCopy = IgsDoneCopy;
+	pExa->MarkSync = IgsMarkSync;
+	pExa->WaitMarker = IgsWaitMarker;
+	pExa->PrepareSolid = IgsPrepareSolid;
+	pExa->Solid = IgsSolid;
+	pExa->DoneSolid = IgsDoneCopy;
+	pExa->PrepareCopy = IgsPrepareCopy;
+	pExa->Copy = IgsCopy;
+	pExa->DoneCopy = IgsDoneCopy;
 
 	switch(fPtr->info.depth) {
 		case 8:
@@ -351,12 +351,11 @@ IgsInitAccel(ScreenPtr pScreen)
 			fPtr->shift = 2;
 			break;
 	}
-    /* EXA hits more optimized paths when it does not have to fallback because
-     * of missing UTS/DFS, hook memcpy-based UTS/DFS.
-     */
-if (0) {
-    pExa->UploadToScreen = IgsUploadToScreen;
-    pExa->DownloadFromScreen = IgsDownloadFromScreen;
-}
-    return exaDriverInit(pScreen, pExa);
+	/* EXA hits more optimized paths when it does not have to fallback 
+	 * because of missing UTS/DFS, hook memcpy-based UTS/DFS.
+	 */
+	pExa->UploadToScreen = IgsUploadToScreen;
+	pExa->DownloadFromScreen = IgsDownloadFromScreen;
+
+	return exaDriverInit(pScreen, pExa);
 }
