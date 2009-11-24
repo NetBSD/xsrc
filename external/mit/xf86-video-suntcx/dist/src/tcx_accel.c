@@ -21,7 +21,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-/* $NetBSD: tcx_accel.c,v 1.3 2009/08/27 04:12:37 macallan Exp $ */
+/* $NetBSD: tcx_accel.c,v 1.4 2009/11/24 03:46:19 macallan Exp $ */
 
 #include <sys/types.h>
 
@@ -274,7 +274,9 @@ static Bool
 TcxUploadToScreen(PixmapPtr pDst, int x, int y, int w, int h,
     char *src, int src_pitch)
 {
-    char  *dst        = pDst->devPrivate.ptr;
+    ScrnInfoPtr pScrn = xf86Screens[pDst->drawable.pScreen->myNum];
+    TcxPtr pTcx       = GET_TCX_FROM_SCRN(pScrn);
+    char  *dst        = pTcx->fb + exaGetPixmapOffset(pDst);
     int    dst_pitch  = exaGetPixmapPitch(pDst);
 
     int bpp    = pDst->drawable.bitsPerPixel;
@@ -300,7 +302,9 @@ static Bool
 TcxDownloadFromScreen(PixmapPtr pSrc, int x, int y, int w, int h,
     char *dst, int dst_pitch)
 {
-    char  *src        = pSrc->devPrivate.ptr;
+    ScrnInfoPtr pScrn = xf86Screens[pSrc->drawable.pScreen->myNum];
+    TcxPtr pTcx       = GET_TCX_FROM_SCRN(pScrn);
+    char  *src        = pTcx->fb + exaGetPixmapOffset(pSrc);
     int    src_pitch  = exaGetPixmapPitch(pSrc);
 
     int bpp    = pSrc->drawable.bitsPerPixel;
@@ -373,9 +377,8 @@ TcxInitAccel(ScreenPtr pScreen)
     /* EXA hits more optimized paths when it does not have to fallback because
      * of missing UTS/DFS, hook memcpy-based UTS/DFS.
      */
-if (0) {
     pExa->UploadToScreen = TcxUploadToScreen;
     pExa->DownloadFromScreen = TcxDownloadFromScreen;
-}
+
     return exaDriverInit(pScreen, pExa);
 }
