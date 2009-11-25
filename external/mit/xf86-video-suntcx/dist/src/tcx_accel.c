@@ -21,7 +21,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-/* $NetBSD: tcx_accel.c,v 1.4 2009/11/24 03:46:19 macallan Exp $ */
+/* $NetBSD: tcx_accel.c,v 1.5 2009/11/25 05:24:44 macallan Exp $ */
 
 #include <sys/types.h>
 
@@ -147,8 +147,8 @@ TcxCopy
 	    if (leftover > 0) {
 		cmd = lcmd | (uint64_t)(src + xoff);
 		pTcx->rblit[dst + xoff] = cmd;
-		xoff -= 32;
 	    }
+	    xoff -= 32;
 	    while (x > 0) {
 		cmd = 0x300000001f000000LL | (uint64_t)(src + xoff);
 		pTcx->rblit[dst + xoff] = cmd;
