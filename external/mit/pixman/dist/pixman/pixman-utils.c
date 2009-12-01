@@ -80,27 +80,20 @@ clip_general_image (pixman_region32_t * region,
 
 static inline pixman_bool_t
 clip_source_image (pixman_region32_t * region,
-                   pixman_image_t *    picture,
+                   pixman_image_t *    image,
                    int                 dx,
                    int                 dy)
 {
-    /* The workaround lets certain fast paths run even when they
-     * would normally be rejected because of out-of-bounds access.
-     * We need to clip against the source geometry in that case
+    /* Source clips are ignored, unless they are explicitly turned on
+     * and the clip in question was set by an X client. (Because if
+     * the clip was not set by a client, then it is a hierarchy
+     * clip and those should always be ignored for sources).
      */
-    if (!picture->common.need_workaround)
-    {
-	/* Source clips are ignored, unless they are explicitly turned on
-	 * and the clip in question was set by an X client. (Because if
-	 * the clip was not set by a client, then it is a hierarchy
-	 * clip and those should always be ignored for sources).
-	 */
-	if (!picture->common.clip_sources || !picture->common.client_clip)
-	    return TRUE;
-    }
+    if (!image->common.clip_sources || !image->common.client_clip)
+	return TRUE;
 
     return clip_general_image (region,
-                               &picture->common.clip_region,
+                               &image->common.clip_region,
                                dx, dy);
 }
 
@@ -133,21 +126,8 @@ pixman_compute_composite_region32 (pixman_region32_t * region,
 
     region->extents.x1 = MAX (region->extents.x1, 0);
     region->extents.y1 = MAX (region->extents.y1, 0);
-
-    /* Some X servers rely on an old bug, where pixman would just believe the
-     * set clip_region and not clip against the destination geometry. So,
-     * since only X servers set "source clip", we don't clip against
-     * destination geometry when that is set and when the workaround has
-     * not been explicitly disabled by
-     *
-     *      pixman_disable_out_of_bounds_workaround();
-     *
-     */
-    if (!(dst_image->common.need_workaround))
-    {
-	region->extents.x2 = MIN (region->extents.x2, dst_image->bits.width);
-	region->extents.y2 = MIN (region->extents.y2, dst_image->bits.height);
-    }
+    region->extents.x2 = MIN (region->extents.x2, dst_image->bits.width);
+    region->extents.y2 = MIN (region->extents.y2, dst_image->bits.height);
 
     region->data = 0;
 
@@ -666,23 +646,43 @@ _pixman_run_fast_path (const pixman_fast_path_t *paths,
     pixman_bool_t mask_repeat =
 	mask && mask->common.repeat == PIXMAN_REPEAT_NORMAL;
     pixman_bool_t result;
+    pixman_bool_t has_fast_path;
 
-    if ((src->type == BITS || _pixman_image_is_solid (src)) &&
-        (!mask || mask->type == BITS)
-        && !src->common.transform && !(mask && mask->common.transform)
-	&& !src->common.alpha_map && !dest->common.alpha_map
-        && !(mask && mask->common.alpha_map)
-        && (src->common.filter != PIXMAN_FILTER_CONVOLUTION)
-        && (src->common.repeat != PIXMAN_REPEAT_PAD)
-        && (src->common.repeat != PIXMAN_REPEAT_REFLECT)
-        && (!mask || (mask->common.filter != PIXMAN_FILTER_CONVOLUTION &&
-                      mask->common.repeat != PIXMAN_REPEAT_PAD &&
-                      mask->common.repeat != PIXMAN_REPEAT_REFLECT))
-        && !src->common.read_func && !src->common.write_func
-        && !(mask && mask->common.read_func)
-        && !(mask && mask->common.write_func)
-        && !dest->common.read_func
-        && !dest->common.write_func)
+    has_fast_path = !dest->common.alpha_map &&
+		    !dest->bits.read_func &&
+		    !dest->bits.write_func;
+
+    if (has_fast_path)
+    {
+	has_fast_path = (src->type == BITS || _pixman_image_is_solid (src)) &&
+	                !src->common.transform &&
+	                !src->common.alpha_map &&
+			src->common.filter != PIXMAN_FILTER_CONVOLUTION &&
+			src->common.repeat != PIXMAN_REPEAT_PAD &&
+			src->common.repeat != PIXMAN_REPEAT_REFLECT;
+	if (has_fast_path && src->type == BITS)
+	{
+	    has_fast_path = !src->bits.read_func &&
+	                    !src->bits.write_func &&
+		            !PIXMAN_FORMAT_IS_WIDE (src->bits.format);
+	}
+    }
+
+    if (mask && has_fast_path)
+    {
+	has_fast_path =
+	    mask->type == BITS &&
+	    !mask->common.transform &&
+	    !mask->common.alpha_map &&
+	    !mask->bits.read_func &&
+	    !mask->bits.write_func &&
+	    mask->common.filter != PIXMAN_FILTER_CONVOLUTION &&
+	    mask->common.repeat != PIXMAN_REPEAT_PAD &&
+	    mask->common.repeat != PIXMAN_REPEAT_REFLECT &&
+	    !PIXMAN_FORMAT_IS_WIDE (mask->bits.format);
+    }
+
+    if (has_fast_path)
     {
 	const pixman_fast_path_t *info;
 	pixman_bool_t pixbuf;

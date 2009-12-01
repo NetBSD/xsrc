@@ -24,11 +24,13 @@
  * SOFTWARE.
  */
 
+#ifdef HAVE_CONFIG_H
 #include <config.h>
+#endif
 #include <stdlib.h>
 #include "pixman-private.h"
 
-static source_pict_class_t
+static source_image_class_t
 linear_gradient_classify (pixman_image_t *image,
                           int             x,
                           int             y,
@@ -286,8 +288,6 @@ pixman_image_create_linear_gradient (pixman_point_fixed_t *        p1,
     image->source.class = SOURCE_IMAGE_CLASS_UNKNOWN;
     image->common.classify = linear_gradient_classify;
     image->common.property_changed = linear_gradient_property_changed;
-
-    linear_gradient_property_changed (image);
 
     return image;
 }

@@ -352,7 +352,7 @@ noinst_LTLIBRARIES = $(am__append_1) $(am__append_4) $(am__append_6) \
 	$(am__append_9) $(am__append_11)
 BUILT_SOURCES = pixman-combine32.h pixman-combine32.c pixman-combine64.h pixman-combine64.c
 EXTRA_DIST = Makefile.win32 pixman-combine.c.template make-combine.pl pixman-region.c \
-	pixman-combine.h.template solaris-hwcap.mapfile
+	pixman-combine.h.template solaris-hwcap.mapfile pixman-x64-mmx-emulation.h
 
 CLEANFILES = pixman-combine32.c pixman-combine64.c pixman-combine32.h pixman-combine64.h
 @USE_MMX_TRUE@libpixman_mmx_la_SOURCES = \
