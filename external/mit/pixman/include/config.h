@@ -51,13 +51,13 @@
 #define PACKAGE_NAME "pixman"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "pixman 0.15.16"
+#define PACKAGE_STRING "pixman 0.16.2"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "pixman"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "0.15.16"
+#define PACKAGE_VERSION "0.16.2"
 
 /* enable TIMER_BEGIN/TIMER_END macros */
 #define PIXMAN_TIMERS 1
@@ -77,16 +77,18 @@
 #if defined(__i386__) || defined(__x86_64__)
 /* use MMX compiler intrinsics */
 #define USE_MMX 1
+#endif
 
+#if defined(__x86_64__)
 /* use SSE2 compiler intrinsics */
-/* #undef USE_SSE2 */
+#define USE_SSE2 1
 #endif
 
 /* use VMX compiler intrinsics */
 /* #undef USE_VMX */
 
 /* Version number of package */
-#define VERSION "0.15.16"
+#define VERSION "0.16.2"
 
 /* Define WORDS_BIGENDIAN to 1 if your processor stores words with the most
    significant byte first (like Motorola and SPARC, unlike Intel). */

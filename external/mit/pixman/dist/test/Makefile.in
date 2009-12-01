@@ -58,8 +58,8 @@ CONFIG_CLEAN_FILES =
 @HAVE_GTK_TRUE@	alpha-test$(EXEEXT) screen-test$(EXEEXT) \
 @HAVE_GTK_TRUE@	convolution-test$(EXEEXT) trap-test$(EXEEXT)
 am__EXEEXT_2 = region-test$(EXEEXT) scaling-test$(EXEEXT) \
-	fetch-test$(EXEEXT) oob-test$(EXEEXT) trap-crasher$(EXEEXT) \
-	$(am__EXEEXT_1)
+	blitters-test$(EXEEXT) fetch-test$(EXEEXT) oob-test$(EXEEXT) \
+	window-test$(EXEEXT) trap-crasher$(EXEEXT) $(am__EXEEXT_1)
 PROGRAMS = $(noinst_PROGRAMS)
 am__alpha_test_SOURCES_DIST = alpha-test.c utils.c utils.h
 @HAVE_GTK_TRUE@am_alpha_test_OBJECTS = alpha-test.$(OBJEXT) \
@@ -69,6 +69,9 @@ am__DEPENDENCIES_1 =
 @HAVE_GTK_TRUE@am__DEPENDENCIES_2 = $(TEST_LDADD) \
 @HAVE_GTK_TRUE@	$(am__DEPENDENCIES_1)
 @HAVE_GTK_TRUE@alpha_test_DEPENDENCIES = $(am__DEPENDENCIES_2)
+blitters_test_SOURCES = blitters-test.c
+blitters_test_OBJECTS = blitters-test.$(OBJEXT)
+blitters_test_DEPENDENCIES = $(TEST_LDADD)
 am__clip_in_SOURCES_DIST = clip-in.c utils.c utils.h
 @HAVE_GTK_TRUE@am_clip_in_OBJECTS = clip-in.$(OBJEXT) utils.$(OBJEXT)
 clip_in_OBJECTS = $(am_clip_in_OBJECTS)
@@ -118,6 +121,9 @@ am__trap_test_SOURCES_DIST = trap-test.c utils.c utils.h
 @HAVE_GTK_TRUE@	utils.$(OBJEXT)
 trap_test_OBJECTS = $(am_trap_test_OBJECTS)
 @HAVE_GTK_TRUE@trap_test_DEPENDENCIES = $(am__DEPENDENCIES_2)
+window_test_SOURCES = window-test.c
+window_test_OBJECTS = window-test.$(OBJEXT)
+window_test_DEPENDENCIES = $(TEST_LDADD)
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
@@ -130,19 +136,19 @@ CCLD = $(CC)
 LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
-SOURCES = $(alpha_test_SOURCES) $(clip_in_SOURCES) \
+SOURCES = $(alpha_test_SOURCES) blitters-test.c $(clip_in_SOURCES) \
 	$(clip_test_SOURCES) $(composite_test_SOURCES) \
 	$(convolution_test_SOURCES) fetch-test.c \
 	$(gradient_test_SOURCES) oob-test.c region-test.c \
 	scaling-test.c $(screen_test_SOURCES) trap-crasher.c \
-	$(trap_test_SOURCES)
-DIST_SOURCES = $(am__alpha_test_SOURCES_DIST) \
+	$(trap_test_SOURCES) window-test.c
+DIST_SOURCES = $(am__alpha_test_SOURCES_DIST) blitters-test.c \
 	$(am__clip_in_SOURCES_DIST) $(am__clip_test_SOURCES_DIST) \
 	$(am__composite_test_SOURCES_DIST) \
 	$(am__convolution_test_SOURCES_DIST) fetch-test.c \
 	$(am__gradient_test_SOURCES_DIST) oob-test.c region-test.c \
 	scaling-test.c $(am__screen_test_SOURCES_DIST) trap-crasher.c \
-	$(am__trap_test_SOURCES_DIST)
+	$(am__trap_test_SOURCES_DIST) window-test.c
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -277,13 +283,15 @@ top_srcdir = @top_srcdir@
 TEST_LDADD = $(top_builddir)/pixman/libpixman-1.la
 INCLUDES = -I$(top_srcdir)/pixman -I$(top_builddir)/pixman \
 	$(am__append_2)
-TESTPROGRAMS = region-test scaling-test fetch-test oob-test \
-	trap-crasher $(am__append_1)
+TESTPROGRAMS = region-test scaling-test blitters-test fetch-test \
+	oob-test window-test trap-crasher $(am__append_1)
 fetch_test_LDADD = $(TEST_LDADD)
 region_test_LDADD = $(TEST_LDADD)
 scaling_test_LDADD = $(TEST_LDADD)
+blitters_test_LDADD = $(TEST_LDADD)
 trap_crasher_LDADD = $(TEST_LDADD)
 oob_test_LDADD = $(TEST_LDADD)
+window_test_LDADD = $(TEST_LDADD)
 
 # GTK using test programs
 @HAVE_GTK_TRUE@GTK_LDADD = $(TEST_LDADD) $(GTK_LIBS)
@@ -346,6 +354,9 @@ clean-noinstPROGRAMS:
 alpha-test$(EXEEXT): $(alpha_test_OBJECTS) $(alpha_test_DEPENDENCIES) 
 	@rm -f alpha-test$(EXEEXT)
 	$(LINK) $(alpha_test_OBJECTS) $(alpha_test_LDADD) $(LIBS)
+blitters-test$(EXEEXT): $(blitters_test_OBJECTS) $(blitters_test_DEPENDENCIES) 
+	@rm -f blitters-test$(EXEEXT)
+	$(LINK) $(blitters_test_OBJECTS) $(blitters_test_LDADD) $(LIBS)
 clip-in$(EXEEXT): $(clip_in_OBJECTS) $(clip_in_DEPENDENCIES) 
 	@rm -f clip-in$(EXEEXT)
 	$(LINK) $(clip_in_OBJECTS) $(clip_in_LDADD) $(LIBS)
@@ -382,6 +393,9 @@ trap-crasher$(EXEEXT): $(trap_crasher_OBJECTS) $(trap_crasher_DEPENDENCIES)
 trap-test$(EXEEXT): $(trap_test_OBJECTS) $(trap_test_DEPENDENCIES) 
 	@rm -f trap-test$(EXEEXT)
 	$(LINK) $(trap_test_OBJECTS) $(trap_test_LDADD) $(LIBS)
+window-test$(EXEEXT): $(window_test_OBJECTS) $(window_test_DEPENDENCIES) 
+	@rm -f window-test$(EXEEXT)
+	$(LINK) $(window_test_OBJECTS) $(window_test_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -390,6 +404,7 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/alpha-test.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/blitters-test.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/clip-in.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/clip-test.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/composite-test.Po@am__quote@
@@ -403,6 +418,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/trap-crasher.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/trap-test.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/utils.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/window-test.Po@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
