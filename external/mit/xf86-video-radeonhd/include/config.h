@@ -20,7 +20,7 @@
 #define HAVE_DLFCN_H 1
 
 /* have RotateFreeShadow API */
-/* #undef HAVE_FREE_SHADOW */
+#define HAVE_FREE_SHADOW 1
 
 /* Define to 1 if you have the <inttypes.h> header file. */
 #define HAVE_INTTYPES_H 1
@@ -99,7 +99,7 @@
 #define STDC_HEADERS 1
 
 /* Build support for DRI */
-/* #undef USE_DRI */
+#define USE_DRI 1
 
 /* Build support for Exa */
 #define USE_EXA 1
@@ -108,6 +108,6 @@
 #define VERSION "1.2.5"
 
 /* xf86CrtcFuncsRec has member set_mode_major */
-/* #undef XF86CRTCFUNCS_HAS_SETMODEMAJOR */
+#define XF86CRTCFUNCS_HAS_SETMODEMAJOR 1
 
 #endif
