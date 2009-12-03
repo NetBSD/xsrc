@@ -1517,8 +1517,11 @@ setAccess(EntityPtr pEnt, xf86State state)
      */
     if (!pEnt->access->pAccess
 	&& (pEnt->entityProp & (state == SETUP ? NEED_VGA_ROUTED_SETUP :
-				NEED_VGA_ROUTED)))
-	((BusAccPtr)pEnt->busAcc)->set_f(pEnt->busAcc);
+				NEED_VGA_ROUTED))) {
+	if (pEnt->busAcc != NULL) {
+	    ((BusAccPtr)pEnt->busAcc)->set_f(pEnt->busAcc);
+	}
+    }
 }
 
     
