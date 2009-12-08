@@ -340,10 +340,13 @@ wsPreInit(InputDriverPtr drv, IDevPtr dev, int flags)
 	pInfo->flags |= XI86_CONFIGURED;
 	return pInfo;
 fail:
-	if (priv != NULL)
+	if (priv != NULL) {
 		xfree(priv);
-	if (pInfo != NULL)
-		xfree(pInfo);
+		pInfo->private = NULL;
+	}
+	if (pInfo != NULL) {
+		xf86DeleteInput(pInfo, 0);
+	}
 	return NULL;
 }
 
