@@ -13,7 +13,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-/* $OpenBSD: ws.c,v 1.26 2009/11/26 18:18:34 matthieu Exp $ */
+/* $OpenBSD: ws.c,v 1.28 2009/12/10 22:32:02 matthieu Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -422,6 +422,15 @@ wsDeviceInit(DeviceIntPtr pWS)
 		ymax = -1;
 	}
 
+	if (priv->swap_axes) {
+		int tmp;
+		tmp = xmin;
+		xmin = ymin;
+		ymin = tmp;
+		tmp = xmax;
+		xmax = ymax;
+		ymax = tmp;
+	}
 #if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
 	if ((priv->type == WSMOUSE_TYPE_TPANEL)) {
 		axes_labels[0] = XIGetKnownProperty(AXIS_LABEL_PROP_ABS_X);
@@ -459,6 +468,7 @@ wsDeviceInit(DeviceIntPtr pWS)
 #endif
 	    ymin, ymax, 1, 0, 1);
 	xf86InitValuatorDefaults(pWS, 1);
+
 	xf86MotionHistoryAllocate(pInfo);
 	AssignTypeAndName(pWS, pInfo->atom, pInfo->name);
 	pWS->public.on = FALSE;
@@ -603,11 +613,11 @@ wsReadInput(InputInfoPtr pInfo)
 			break;
 		case WSCONS_EVENT_MOUSE_ABSOLUTE_X:
 			DBG(4, ErrorF("Absolute X %d\n", event->value));
-			if (event->value != 4095) {
-				ax = event->value;
-				if (priv->inv_x)
-					ax = priv->max_x - ax + priv->min_x;
-			}
+			if (event->value == 4095) 
+				break;
+			ax = event->value;
+			if (priv->inv_x)
+				ax = priv->max_x - ax + priv->min_x;
 			break;
 		case WSCONS_EVENT_MOUSE_ABSOLUTE_Y:
 			DBG(4, ErrorF("Absolute Y %d\n", event->value));
@@ -686,6 +696,13 @@ wsReadInput(InputInfoPtr pInfo)
 			/* generate a button up event */
 			buttons &= ~zbutton;
 			wsSendButtons(pInfo, buttons);
+		}
+		if (priv->swap_axes) {
+			int tmp;
+
+			tmp = ax;
+			ax = ay;
+			ay = tmp;
 		}
 		if (ax) {
 			/* absolute position event */
@@ -851,10 +868,17 @@ wsSetProperty(DeviceIntPtr device, Atom atom, XIPropertyValuePtr val,
 				need_update++;
 			}
 			/* Update axes descriptors */
-			ax->min_value = priv->min_x;
-			ax->max_value = priv->max_x;
-			ay->min_value = priv->min_y;
-			ay->max_value = priv->max_y;
+			if (!priv->swap_axes) {
+				ax->min_value = priv->min_x;
+				ax->max_value = priv->max_x;
+				ay->min_value = priv->min_y;
+				ay->max_value = priv->max_y;
+			} else {
+				ax->min_value = priv->min_y;
+				ax->max_value = priv->max_y;
+				ay->min_value = priv->min_x;
+				ay->max_value = priv->max_x;
+			}
 		}
 	} else if (atom == prop_swap) {
 		if (val->format != 8 || val->type != XA_INTEGER ||
