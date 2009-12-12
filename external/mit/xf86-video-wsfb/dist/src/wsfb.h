@@ -58,7 +58,7 @@ typedef struct {
 	unsigned char*		fbstart;
 	unsigned char*		fbmem;
 	size_t			fbmem_len;
-	//void *			shadow;
+	void *			shadow;
 	Bool			shadowFB;
 	Bool			HWCursor;
 	CloseScreenProcPtr	CloseScreen;
