@@ -112,7 +112,7 @@ SymTabRec RHDChipsets[] = {
 # define RHD_DEVICE_MATCH(d, i) \
     { 0x1002, (d), PCI_MATCH_ANY, PCI_MATCH_ANY, 0, 0, (i) }
 # define PCI_ID_LIST struct pci_id_match RHDDeviceMatch[]
-# define LIST_END { 0, 0, (~0), (~0), 0, 0, 0 }
+# define LIST_END { 0, 0, 0, 0, 0, 0, 0 }
 #else
 resRange res_none[] = { _END };
 
