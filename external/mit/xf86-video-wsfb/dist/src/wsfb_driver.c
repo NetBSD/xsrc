@@ -514,7 +514,8 @@ WsfbPreInit(ScrnInfoPtr pScrn, int flags)
 		    wstype == WSDISPLAY_TYPE_SUNCG12 ||
 		    wstype == WSDISPLAY_TYPE_SUNCG14 ||
 		    wstype == WSDISPLAY_TYPE_SUNTCX ||
-		    wstype == WSDISPLAY_TYPE_SUNFFB) {
+		    wstype == WSDISPLAY_TYPE_SUNFFB ||
+		    wstype == WSDISPLAY_TYPE_XVR1000) {
 			masks.red = 0x0000ff;
 			masks.green = 0x00ff00;
 			masks.blue = 0xff0000;
