@@ -272,6 +272,21 @@ pci_device_netbsd_probe(struct pci_device *device)
 	dev = device->dev;
 	func = device->func;
 
+	/* Enable the device if necessary */
+	err = pci_read(domain, bus, dev, func, PCI_COMMAND_STATUS_REG, &reg);
+	if (err)
+		return err;
+	if ((reg & (PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE | PCI_COMMAND_MASTER_ENABLE)) !=
+	    (PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE | PCI_COMMAND_MASTER_ENABLE)) {
+		reg |= PCI_COMMAND_IO_ENABLE |
+		       PCI_COMMAND_MEM_ENABLE |
+		       PCI_COMMAND_MASTER_ENABLE;
+		err = pci_write(domain, bus, dev, func, PCI_COMMAND_STATUS_REG,
+				reg);
+		if (err)
+			return err;
+	}
+
 	err = pci_read(domain, bus, dev, func, PCI_BHLC_REG, &reg);
 	if (err)
 		return err;
@@ -454,7 +469,7 @@ pci_system_netbsd_create(void)
 	struct pci_device_private *device;
 	int bus, dev, func, ndevs, nfuncs, domain, pcifd;
 	uint32_t reg;
-	char devname[32];
+	char netbsd_devname[32];
 	struct pciio_businfo businfo;
 
 	pci_sys = calloc(1, sizeof(struct pci_system));
@@ -463,8 +478,8 @@ pci_system_netbsd_create(void)
 
 	ndevs = 0;
 	nbuses = 0;
-	snprintf(devname, 32, "/dev/pci%d", nbuses);
-	pcifd = open(devname, O_RDWR);
+	snprintf(netbsd_devname, 32, "/dev/pci%d", nbuses);
+	pcifd = open(netbsd_devname, O_RDWR);
 	while (pcifd > 0) {
 		ioctl(pcifd, PCI_IOC_BUSINFO, &businfo);
 		buses[nbuses].fd = pcifd;
@@ -485,8 +500,8 @@ pci_system_netbsd_create(void)
 				ndevs++;
 			}
 		}
-		snprintf(devname, 32, "/dev/pci%d", nbuses);
-		pcifd = open(devname, O_RDWR);
+		snprintf(netbsd_devname, 32, "/dev/pci%d", nbuses);
+		pcifd = open(netbsd_devname, O_RDWR);
 	}
 
 	pci_sys->num_devices = ndevs;
