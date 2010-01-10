@@ -33,12 +33,11 @@
 /* Define to 1 if you have the <unistd.h> header file. */
 #define HAVE_UNISTD_H 1
 
-/* X server has new mode code */
-/* #undef HAVE_XMODES */
+/* xextproto 7.1 available */
+/* #undef HAVE_XEXTPROTO_71 */
 
-/* Define to the sub-directory in which libtool stores uninstalled libraries.
-   */
-#define LT_OBJDIR ".libs/"
+/* X server has new mode code */
+#define HAVE_XMODES 1
 
 /* Name of package */
 #define PACKAGE "xf86-video-siliconmotion"
