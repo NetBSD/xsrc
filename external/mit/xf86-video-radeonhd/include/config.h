@@ -20,13 +20,16 @@
 #define HAVE_DLFCN_H 1
 
 /* have RotateFreeShadow API */
-/* #undef HAVE_FREE_SHADOW */
+#define HAVE_FREE_SHADOW 1
 
 /* Define to 1 if you have the <inttypes.h> header file. */
 #define HAVE_INTTYPES_H 1
 
 /* Define to 1 if you have the <memory.h> header file. */
 #define HAVE_MEMORY_H 1
+
+/* Have pci_device_enable prototype */
+#define HAVE_PCI_DEVICE_ENABLE 1
 
 /* Define to 1 if you have <pci/pci.h>. */
 /* #undef HAVE_PCI_PCI_H */
@@ -51,6 +54,9 @@
 
 /* Define to 1 if you have the <unistd.h> header file. */
 #define HAVE_UNISTD_H 1
+
+/* xextproto 7.1 available */
+/* #undef HAVE_XEXTPROTO_71 */
 
 /* Define to 1 if you have <${sdkdir}/xf86_ansic.h>. */
 /* #undef HAVE_XF86_ANSIC_H */
@@ -108,6 +114,6 @@
 #define VERSION "1.3.0"
 
 /* xf86CrtcFuncsRec has member set_mode_major */
-/* #undef XF86CRTCFUNCS_HAS_SETMODEMAJOR */
+#define XF86CRTCFUNCS_HAS_SETMODEMAJOR 1
 
 #endif
