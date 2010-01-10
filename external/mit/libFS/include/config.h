@@ -10,6 +10,9 @@
 /* Define to 1 if you have the <inttypes.h> header file. */
 #define HAVE_INTTYPES_H 1
 
+/* Define to 1 if you have the `ws2_32' library (-lws2_32). */
+/* #undef HAVE_LIBWS2_32 */
+
 /* Define to 1 if you have the <memory.h> header file. */
 #define HAVE_MEMORY_H 1
 
@@ -83,4 +86,4 @@
 #define UNIXCONN 1
 
 /* Version number of package */
-#define VERSION "1.0.1"
+#define VERSION "1.0.2"
