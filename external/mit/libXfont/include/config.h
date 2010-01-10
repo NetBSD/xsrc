@@ -13,6 +13,9 @@
 /* Define to 1 if you have the <inttypes.h> header file. */
 #define HAVE_INTTYPES_H 1
 
+/* Define to 1 if you have the `ws2_32' library (-lws2_32). */
+/* #undef HAVE_LIBWS2_32 */
+
 /* Define to 1 if you have the <memory.h> header file. */
 #define HAVE_MEMORY_H 1
 
@@ -55,10 +58,6 @@
 /* Support os-specific local connections */
 /* #undef LOCALCONN */
 
-/* Define to the sub-directory in which libtool stores uninstalled libraries.
-   */
-#define LT_OBJDIR ".libs/"
-
 /* Name of package */
 #define PACKAGE "libXfont"
 
@@ -69,13 +68,13 @@
 #define PACKAGE_NAME "libXfont"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "libXfont 1.4.0"
+#define PACKAGE_STRING "libXfont 1.4.1"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "libXfont"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "1.4.0"
+#define PACKAGE_VERSION "1.4.1"
 
 /* Major version of this package */
 #define PACKAGE_VERSION_MAJOR 1
@@ -84,7 +83,7 @@
 #define PACKAGE_VERSION_MINOR 4
 
 /* Patch version of this package */
-#define PACKAGE_VERSION_PATCHLEVEL 0
+#define PACKAGE_VERSION_PATCHLEVEL 1
 
 /* Define as the return type of signal handlers (`int' or `void'). */
 #define RETSIGTYPE void
@@ -99,7 +98,7 @@
 #define UNIXCONN 1
 
 /* Version number of package */
-#define VERSION "1.4.0"
+#define VERSION "1.4.1"
 
 /* Support bdf format bitmap font files */
 #define XFONT_BDFFORMAT 1
