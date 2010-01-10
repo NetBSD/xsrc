@@ -33,6 +33,9 @@
 /* Define to 1 if you have the <unistd.h> header file. */
 #define HAVE_UNISTD_H 1
 
+/* xextproto 7.1 available */
+/* #undef HAVE_XEXTPROTO_71 */
+
 /* Name of package */
 #define PACKAGE "xf86-video-sis"
 
