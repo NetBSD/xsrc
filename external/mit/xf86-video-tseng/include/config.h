@@ -39,10 +39,6 @@
 /* Have 4bpp support */
 /* #undef HAVE_XF4BPP */
 
-/* Define to the sub-directory in which libtool stores uninstalled libraries.
-   */
-#define LT_OBJDIR ".libs/"
-
 /* Name of package */
 #define PACKAGE "xf86-video-tseng"
 
