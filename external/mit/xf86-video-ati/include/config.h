@@ -16,7 +16,7 @@
 #define HAVE_DLFCN_H 1
 
 /* have new FreeShadow API */
-/* #undef HAVE_FREE_SHADOW */
+#define HAVE_FREE_SHADOW 1
 
 /* Define to 1 if you have the <inttypes.h> header file. */
 #define HAVE_INTTYPES_H 1
@@ -25,7 +25,7 @@
 #define HAVE_MEMORY_H 1
 
 /* Have pci_device_enable prototype */
-/* #undef HAVE_PCI_DEVICE_ENABLE */
+#define HAVE_PCI_DEVICE_ENABLE 1
 
 /* Define to 1 if you have the <stdint.h> header file. */
 #define HAVE_STDINT_H 1
@@ -48,11 +48,14 @@
 /* Define to 1 if you have the <unistd.h> header file. */
 #define HAVE_UNISTD_H 1
 
+/* xextproto 7.1 available */
+/* #undef HAVE_XEXTPROTO_71 */
+
 /* Have xf86_crtc_clip_video_helper prototype */
-/* #undef HAVE_XF86CRTCCLIPVIDEOHELPER */
+#define HAVE_XF86CRTCCLIPVIDEOHELPER 1
 
 /* Have xf86ModeBandwidth prototype */
-/* #undef HAVE_XF86MODEBANDWIDTH */
+#define HAVE_XF86MODEBANDWIDTH 1
 
 /* Have xf86XVFillKeyHelperDrawable prototype */
 #define HAVE_XV_DRAWABLE_HELPER 1
