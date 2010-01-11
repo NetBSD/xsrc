@@ -28,6 +28,9 @@
 /* Define to 1 if you have the <memory.h> header file. */
 #define HAVE_MEMORY_H 1
 
+/* Have pci_device_enable prototype */
+#define HAVE_PCI_DEVICE_ENABLE 1
+
 /* Define to 1 if you have <pci/pci.h>. */
 /* #undef HAVE_PCI_PCI_H */
 
@@ -52,6 +55,9 @@
 /* Define to 1 if you have the <unistd.h> header file. */
 #define HAVE_UNISTD_H 1
 
+/* xextproto 7.1 available */
+/* #undef HAVE_XEXTPROTO_71 */
+
 /* Define to 1 if you have <${sdkdir}/xf86_ansic.h>. */
 /* #undef HAVE_XF86_ANSIC_H */
 
@@ -75,22 +81,22 @@
 #define PACKAGE_NAME "xf86-video-radeonhd"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "xf86-video-radeonhd 1.2.5"
+#define PACKAGE_STRING "xf86-video-radeonhd 1.3.0"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "xf86-video-radeonhd"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "1.2.5"
+#define PACKAGE_VERSION "1.3.0"
 
 /* Major Version */
 #define PACKAGE_VERSION_MAJOR 1
 
 /* Minor Version */
-#define PACKAGE_VERSION_MINOR 2
+#define PACKAGE_VERSION_MINOR 3
 
 /* Patchlevel Version */
-#define PACKAGE_VERSION_PATCHLEVEL 5
+#define PACKAGE_VERSION_PATCHLEVEL 0
 
 /* Build RandR 1.2 Support */
 #define RANDR_12_SUPPORT 1
@@ -99,13 +105,13 @@
 #define STDC_HEADERS 1
 
 /* Build support for DRI */
-#define USE_DRI 1
+/* #undef USE_DRI */
 
 /* Build support for Exa */
 #define USE_EXA 1
 
 /* Version number of package */
-#define VERSION "1.2.5"
+#define VERSION "1.3.0"
 
 /* xf86CrtcFuncsRec has member set_mode_major */
 #define XF86CRTCFUNCS_HAS_SETMODEMAJOR 1
