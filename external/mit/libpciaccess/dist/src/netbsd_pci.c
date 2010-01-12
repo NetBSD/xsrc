@@ -354,6 +354,23 @@ pci_device_netbsd_probe(struct pci_device *device)
 		}
 	}
 
+	/* Probe expansion ROM if present */
+	err = pci_read(domain, bus, dev, func, PCI_MAPREG_ROM, &reg);
+	if (err)
+		return err;
+	if (reg != 0) {
+		err = pci_write(domain, bus, dev, func, PCI_MAPREG_ROM,
+		    (uint32_t)(~PCI_MAPREG_ROM_ENABLE));
+		if (err)
+			return err;
+		pci_read(domain, bus, dev, func, PCI_MAPREG_ROM, &size);
+		pci_write(domain, bus, dev, func, PCI_MAPREG_ROM, reg);
+		if ((reg & PCI_MAPREG_MEM_ADDR_MASK) != 0) {
+			priv->rom_base = reg & PCI_MAPREG_MEM_ADDR_MASK;
+			device->rom_size = -(size & PCI_MAPREG_MEM_ADDR_MASK);
+		}
+	}
+
 	return 0;
 }
 
@@ -379,6 +396,10 @@ pci_device_netbsd_read_rom(struct pci_device *dev, void *buffer)
 
     if (priv->rom_base == 0) {
 #if defined(__amd64__) || defined(__i386__)
+	/*
+	 * We need a way to detect when this isn't the console and reject
+	 * this request outright.
+	 */
 	rom_base = 0xc0000;
 	rom_size = 0x10000;
 	pci_rom = 0;
@@ -419,7 +440,7 @@ pci_device_netbsd_read_rom(struct pci_device *dev, void *buffer)
     if (memfd == -1)
 	return errno;
 
-    bios = mmap(NULL, rom_size, PROT_READ, 0, memfd, (off_t)rom_base);
+    bios = mmap(NULL, rom_size, PROT_READ, MAP_SHARED, memfd, (off_t)rom_base);
     if (bios == MAP_FAILED) {
 	int serrno = errno;
 	close(memfd);
