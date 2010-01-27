@@ -45,11 +45,6 @@
 #include "pswpriv.h"
 #include "pswparser.h"
 
-/* flex of EMX seems to be too old */
-#if defined(FLEX_SCANNER) && !defined(YY_FLEX_LEX_COMPAT) && !defined(__UNIXOS2__) && !defined(__NetBSD__)
-int yylineno = 1;
-#endif
-
 static int parens = 0;		/* current paren balancing */
 static char *sbody;		/* cur pointer into string_temp */
 static int curleng = 0;		/* current scanned string length */
