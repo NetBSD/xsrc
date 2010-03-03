@@ -305,7 +305,8 @@ RADEONRestorePLLRegisters(ScrnInfoPtr pScrn,
 
 #if defined(__powerpc__)
     /* apparently restoring the pll causes a hang??? */
-    if (info->MacModel == RADEON_MAC_IBOOK)
+    if ((info->MacModel == RADEON_MAC_IBOOK) ||
+        (info->MacModel == RADEON_MAC_MINI_INTERNAL))
 	return;
 #endif
 
@@ -1242,7 +1243,8 @@ RADEONInitPLLRegisters(ScrnInfoPtr pScrn, RADEONSavePtr save,
 
 #if defined(__powerpc__)
     /* apparently programming this otherwise causes a hang??? */
-    if (info->MacModel == RADEON_MAC_IBOOK)
+    if ((info->MacModel == RADEON_MAC_IBOOK) ||
+        (info->MacModel == RADEON_MAC_MINI_INTERNAL))
 	save->ppll_div_3 = 0x000600ad;
     else
 #endif
