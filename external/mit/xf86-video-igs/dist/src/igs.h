@@ -1,5 +1,5 @@
 /* $OpenBSD: wsfb_driver.c,v 1.18 2003/04/02 16:42:13 jason Exp $ */
-/* $NetBSD: igs.h,v 1.1 2009/11/10 21:39:45 macallan Exp $ */
+/* $NetBSD: igs.h,v 1.2 2010/05/20 07:55:19 macallan Exp $ */
 /*
  * Copyright (c) 2001 Matthieu Herrb
  *		 2009 Michael Lorenz
@@ -57,7 +57,7 @@ typedef struct {
 	int			fd; /* file descriptor of open device */
 	struct wsdisplay_fbinfo info; /* frame buffer characteristics */
 	int			linebytes; /* number of bytes per row */
-	uint8_t			*reg;
+	volatile uint8_t	*reg;
 	unsigned char*		fbstart;
 	unsigned char*		fbmem;
 	size_t			fbmem_len;
@@ -81,6 +81,7 @@ typedef struct {
 	int			nDGAMode;
 #endif
 	OptionInfoPtr		Options;
+	uint8_t			mapfmt;
 } IgsRec, *IgsPtr;
 
 #define IGSPTR(p) ((IgsPtr)((p)->driverPrivate))

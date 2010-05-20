@@ -1,5 +1,5 @@
 /* $OpenBSD: wsfb_driver.c,v 1.19 2003/04/27 16:42:32 matthieu Exp $ */
-/* $NetBSD: igs_driver.c,v 1.1 2009/11/10 21:39:45 macallan Exp $ */
+/* $NetBSD: igs_driver.c,v 1.2 2010/05/20 07:55:20 macallan Exp $ */
 /*
  * Copyright (c) 2001 Matthieu Herrb
  *		 2009 Michael Lorenz
@@ -416,7 +416,7 @@ static Bool
 IgsPreInit(ScrnInfoPtr pScrn, int flags)
 {
 	IgsPtr fPtr;
-	int default_depth, vram_size;
+	int default_depth, vram_size = 2 * 1024 * 1024;
 	char *dev, *s;
 	char *mod = NULL;
 	const char *reqSym = NULL;
