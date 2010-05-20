@@ -21,7 +21,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-/* $NetBSD: igs_accel.c,v 1.2 2009/11/21 22:22:27 macallan Exp $ */
+/* $NetBSD: igs_accel.c,v 1.3 2010/05/20 07:55:20 macallan Exp $ */
 
 #include <sys/types.h>
 
@@ -71,12 +71,12 @@ IgsWaitMarker(ScreenPtr pScreen, int Marker)
 	int bail = 0x0fffffff;
 
 	ENTER;
-	IgsWrite1(fPtr, IGS_COP_MAP_FMT_REG, (fPtr->info.depth >> 3) - 1);
+	IgsWrite1(fPtr, IGS_COP_MAP_FMT_REG, fPtr->mapfmt);
 	while ((IgsRead1(fPtr,
 	    IGS_COP_CTL_REG) & (IGS_COP_CTL_BUSY | IGS_COP_CTL_HFEMPTZ) != 0)
 	    && (bail > 0)) {
 		bail--;
-		usleep(1);
+		IgsWrite1(fPtr, IGS_COP_MAP_FMT_REG, fPtr->mapfmt);
 	}
 
 	/* reset the coprocessor if we run into a timeout */
@@ -100,12 +100,12 @@ IgsWaitReady(IgsPtr fPtr)
 	int bail = 0x0fffffff;
 
 	ENTER;
-	IgsWrite1(fPtr, IGS_COP_MAP_FMT_REG, (fPtr->info.depth >> 3) - 1);
+	IgsWrite1(fPtr, IGS_COP_MAP_FMT_REG, fPtr->mapfmt);
 	while (((IgsRead1(fPtr,
 	    IGS_COP_CTL_REG) & (IGS_COP_CTL_BUSY | IGS_COP_CTL_HFEMPTZ)) != 0)
 	    && (bail > 0)) {
 		bail--;
-		usleep(1);
+		IgsWrite1(fPtr, IGS_COP_MAP_FMT_REG, fPtr->mapfmt);
 	}
 
 	/* reset the coprocessor if we run into a timeout */
@@ -261,11 +261,13 @@ IgsUploadToScreen(PixmapPtr pDst, int x, int y, int w, int h,
 	int    dst_pitch  = exaGetPixmapPitch(pDst);
 
 	int bpp    = pDst->drawable.bitsPerPixel;
-	int cpp    = (bpp + 7) / 8;
+	int cpp    = (bpp + 7) >> 3;
 	int wBytes = w * cpp;
 
 	ENTER;
 	dst += (x * cpp) + (y * dst_pitch);
+
+	IgsWaitReady(fPtr);
 
 	while (h--) {
 		memcpy(dst, src, wBytes);
@@ -289,11 +291,13 @@ IgsDownloadFromScreen(PixmapPtr pSrc, int x, int y, int w, int h,
 	int    src_pitch  = exaGetPixmapPitch(pSrc);
 
 	int bpp    = pSrc->drawable.bitsPerPixel;
-	int cpp    = (bpp + 7) / 8;
+	int cpp    = (bpp + 7) >> 3;
 	int wBytes = w * cpp;
 
 	ENTER;
 	src += (x * cpp) + (y * src_pitch);
+
+	IgsWaitReady(fPtr);
 
 	while (h--) {
 		memcpy(dst, src, wBytes);
@@ -343,14 +347,22 @@ IgsInitAccel(ScreenPtr pScreen)
 	switch(fPtr->info.depth) {
 		case 8:
 			fPtr->shift = 0;
+			fPtr->mapfmt = IGS_COP_MAP_8BPP;
 			break;
 		case 16:
 			fPtr->shift = 1;
+			fPtr->mapfmt = IGS_COP_MAP_16BPP;
 			break;
+		case 24:
 		case 32:
 			fPtr->shift = 2;
+			fPtr->mapfmt = IGS_COP_MAP_32BPP;
 			break;
+		default:	
+			ErrorF("Unsupported depth: %d\n", fPtr->info.depth);
 	}
+	IgsWrite1(fPtr, IGS_COP_MAP_FMT_REG, fPtr->mapfmt);
+
 	/* EXA hits more optimized paths when it does not have to fallback 
 	 * because of missing UTS/DFS, hook memcpy-based UTS/DFS.
 	 */
