@@ -21,7 +21,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-/* $NetBSD: igs_accel.c,v 1.4 2010/05/20 19:45:21 macallan Exp $ */
+/* $NetBSD: igs_accel.c,v 1.5 2010/05/20 20:05:34 macallan Exp $ */
 
 #include <sys/types.h>
 
@@ -45,12 +45,12 @@ static inline void IgsWrite1(IgsPtr fPtr, int offset, uint8_t val)
 
 static inline void IgsWrite2(IgsPtr fPtr, int offset, uint16_t val)
 {
-	*(uint16_t *)(fPtr->reg + offset) = val;
+	*(volatile uint16_t *)(fPtr->reg + offset) = val;
 }
 
 static inline void IgsWrite4(IgsPtr fPtr, int offset, uint32_t val)
 {
-	*(uint32_t *)(fPtr->reg + offset) = val;
+	*(volatile uint32_t *)(fPtr->reg + offset) = val;
 }
 
 static inline uint8_t IgsRead1(IgsPtr fPtr, int offset)
@@ -60,7 +60,7 @@ static inline uint8_t IgsRead1(IgsPtr fPtr, int offset)
 
 static inline uint16_t IgsRead2(IgsPtr fPtr, int offset)
 {
-	return *(uint16_t *)(fPtr->reg + offset);
+	return *(volatile uint16_t *)(fPtr->reg + offset);
 }
 
 static void
