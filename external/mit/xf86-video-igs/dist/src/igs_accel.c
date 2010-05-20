@@ -21,7 +21,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-/* $NetBSD: igs_accel.c,v 1.3 2010/05/20 07:55:20 macallan Exp $ */
+/* $NetBSD: igs_accel.c,v 1.4 2010/05/20 19:45:21 macallan Exp $ */
 
 #include <sys/types.h>
 
@@ -308,6 +308,23 @@ IgsDownloadFromScreen(PixmapPtr pSrc, int x, int y, int w, int h,
 	return TRUE;
 }
 
+#ifdef __arm__
+static Bool
+IgsPrepareAccess(PixmapPtr pPix, int index)
+{
+	ScrnInfoPtr pScrn = xf86Screens[pPix->drawable.pScreen->myNum];
+	IgsPtr fPtr = IGSPTR(pScrn);
+
+	IgsWaitReady(fPtr);
+	return TRUE;	
+}
+
+static void
+IgsFinishAccess(PixmapPtr pPix, int index)
+{
+}
+#endif
+
 Bool
 IgsInitAccel(ScreenPtr pScreen)
 {
@@ -368,6 +385,9 @@ IgsInitAccel(ScreenPtr pScreen)
 	 */
 	pExa->UploadToScreen = IgsUploadToScreen;
 	pExa->DownloadFromScreen = IgsDownloadFromScreen;
-
+#ifdef __arm__
+	pExa->PrepareAccess = IgsPrepareAccess;
+	pExa->FinishAccess = IgsFinishAccess;
+#endif
 	return exaDriverInit(pScreen, pExa);
 }
