@@ -34,14 +34,8 @@ THE SOFTWARE.
 #include <signal.h>
 #include <errno.h>
 
-#ifdef SVR4
-#define HAVE_POLL
-#endif
-
-#ifndef HAVE_POLL
-#ifndef _MINIX
-#define HAVE_SELECT
-#endif
+#ifdef HAVE_CONFIG_H
+# include "config.h"
 #endif
 
 #ifdef HAVE_POLL
@@ -49,27 +43,20 @@ THE SOFTWARE.
 #undef HAVE_SELECT
 #endif
 
-#ifdef __QNX__
-#include <sys/select.h>
+#ifdef HAVE_SYS_SELECT_H
+# include <sys/select.h>
 #endif
 
-
-#if (defined(__GLIBC__) && \
-     (__GLIBC__ > 2 || (__GLIBC__ == 2 && __GLIBC_MINOR__ >= 1))) || \
-    defined(SVR4)
-#define HAVE_GRANTPT
+#ifdef HAVE_PTY_H
+# include <pty.h>
 #endif
 
-#ifdef __GLIBC__
-#include <pty.h>
+#ifdef HAVE_STROPTS_H
+# include <stropts.h>
 #endif
 
-#ifdef SVR4
-#include <stropts.h>
-#endif
-
-#if (defined(__unix__) || defined(unix)) && !defined(USG)
-#include <sys/param.h>
+#ifdef HAVE_SYS_PARAM_H
+# include <sys/param.h>
 #endif
 
 #include "sys.h"
@@ -115,9 +102,9 @@ waitForInput(int fd1, int fd2)
         return -1;
 
     ret = 0;
-    if(pfd[0].revents & POLLIN)
+    if(pfd[0].revents & (POLLIN | POLLERR | POLLHUP))
         ret |= 1;
-    if(pfd[1].revents & POLLIN)
+    if(pfd[1].revents & (POLLIN | POLLERR | POLLHUP))
         ret |= 2;
     return ret;
 }
@@ -340,7 +327,12 @@ allocatePty(int *pty_return, char **line_return)
     char *temp_line;
     int rc;
 
+#ifdef __APPLE__
+    pty = posix_openpt(O_RDWR);
+#else
     pty = open("/dev/ptmx", O_RDWR);
+#endif
+
     if(pty < 0)
         goto bsd;
 
@@ -416,8 +408,18 @@ openTty(char *line)
     int rc;
     int tty = -1;
 
+#if !defined(O_NOCTTY) || !defined(TIOCSCTTY)
+    /* e.g. Cygwin has a working O_NOCTTY but no TIOCSCTTY, so the tty
+       must be opened as controlling */
+    tty = open(line, O_RDWR);
+#else
+    /* The TIOCSCTTY ioctl below will fail if the process already has a
+       controlling tty (even if the current controlling tty is the same
+       as the tty you want to make controlling).  So we need to open
+       the tty with O_NOCTTY to make sure this doesn't happen. */
     tty = open(line, O_RDWR | O_NOCTTY);
- 
+#endif
+
     if(tty < 0)
         goto bail;
 
@@ -428,7 +430,7 @@ openTty(char *line)
     }
 #endif
 
-#ifdef SVR4
+#if defined(SVR4) || defined(__SVR4)
     rc = ioctl(tty, I_PUSH, "ptem");
     if(rc < 0)
         goto bail;
