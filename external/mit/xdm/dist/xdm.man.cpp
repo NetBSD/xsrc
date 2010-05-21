@@ -371,7 +371,7 @@ algorithm is used instead.
 .IP \fBDisplayManager.greeterLib\fP
 On systems that support a dynamically-loadable greeter library, the
 name of the library.  The default is
-\fI XDMDIR/libXdmGreet.so\fP.
+\fI DEF_GREETER_LIB\fP.
 .IP \fBDisplayManager.choiceTimeout\fP
 Number of seconds to wait for display to respond after user has
 selected a host from the chooser.  If the display sends an XDMCP
@@ -1050,6 +1050,10 @@ If set to ``true'', allow an otherwise failing password match to succeed
 if the account does not require a password at all.
 The default is ``false'', so only users that have passwords assigned can
 log in.
+.IP "\fBxlogin.Login.echoPasswd\fP"
+If set to ``true'', stars will be rendered instead of the password itself,
+i.e. '***...'.
+The default is ``false''.
 .IP "\fBxlogin.Login.translations\fP"
 This specifies the translations used for the login widget.  Refer to the X
 Toolkit documentation for a complete discussion on translations.  The default

@@ -25,32 +25,27 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* Copyright 2006 Sun Microsystems, Inc.  All rights reserved.
+/*
+ * Copyright © 2006 Sun Microsystems, Inc.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the
- * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modify, merge, publish,
- * distribute, and/or sell copies of the Software, and to permit persons
- * to whom the Software is furnished to do so, provided that the above
- * copyright notice(s) and this permission notice appear in all copies of
- * the Software and that both the above copyright notice(s) and this
- * permission notice appear in supporting documentation.
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
  *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT
- * OF THIRD PARTY RIGHTS. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR
- * HOLDERS INCLUDED IN THIS NOTICE BE LIABLE FOR ANY CLAIM, OR ANY SPECIAL
- * INDIRECT OR CONSEQUENTIAL DAMAGES, OR ANY DAMAGES WHATSOEVER RESULTING
- * FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
- * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
- * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ * The above copyright notice and this permission notice (including the next
+ * paragraph) shall be included in all copies or substantial portions of the
+ * Software.
  *
- * Except as contained in this notice, the name of a copyright holder
- * shall not be used in advertising or otherwise to promote the sale, use
- * or other dealings in this Software without prior written authorization
- * of the copyright holder.
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
  */
 
 
@@ -224,7 +219,9 @@ static XtResource resources[] = {
     {XtNallowNullPasswd, XtCAllowNullPasswd, XtRBoolean, sizeof (Boolean),
 	offset(allow_null_passwd), XtRImmediate, (XtPointer) False},
     {XtNallowRootLogin, XtCAllowRootLogin, XtRBoolean, sizeof(Boolean),
-     offset(allow_root_login), XtRImmediate, (XtPointer) True}
+	offset(allow_root_login), XtRImmediate, (XtPointer) True},
+    {XtNechoPasswd, XtCEchoPasswd, XtRBoolean, sizeof(Boolean),
+	offset(echo_passwd), XtRImmediate, (XtPointer) False}
 };
 
 #undef offset
@@ -355,11 +352,33 @@ static inline int max (int a, int b) { return a > b ? a : b; }
 static void
 realizeValue (LoginWidget w, int cursor, int promptNum, GC gc)
 {
-    loginPromptState state = w->login.prompts[promptNum].state;
+    loginPromptState state = PROMPT_STATE(w, promptNum);
     char *text = VALUE_TEXT(w, promptNum);
     int	x, y, height, width, curoff;
 
     XDM_ASSERT(promptNum >= 0 && promptNum <= LAST_PROMPT);
+
+    /* replace all password characters with asterisks */
+    if ((state == LOGIN_PROMPT_ECHO_OFF) && (w->login.echo_passwd == True))
+    {
+	Cardinal length = strlen(text);
+	Cardinal i = 0;
+
+	text = XtMalloc(length + 1);
+
+	if (text == NULL)
+	{
+	    LogOutOfMem("realizeValue");
+	    return;
+	}
+
+	while (i < length)
+	{
+	    text[i++] = '*';
+	}
+
+	text[i] = 0;
+    }
 
     x = VALUE_X (w,promptNum);
     y = PROMPT_Y (w,promptNum);
@@ -370,7 +389,7 @@ realizeValue (LoginWidget w, int cursor, int promptNum, GC gc)
     height -= (w->login.inframeswidth * 2);
     width -= (w->login.inframeswidth * 2);
 #ifdef XPM
-    width -= (w->login.logoWidth + 2*(w->login.logoPadding));
+    width -= (w->login.logoWidth + (w->login.logoPadding * 2));
 #endif
     if (cursor > VALUE_SHOW_START(w, promptNum))
 	curoff = TEXT_WIDTH (text, text, cursor);
@@ -384,7 +403,9 @@ realizeValue (LoginWidget w, int cursor, int promptNum, GC gc)
 			    x + curoff, y - TEXT_Y_INC(w),
 			    width - curoff, height);
 	}
-    } else if ((state == LOGIN_PROMPT_ECHO_ON) || (state == LOGIN_TEXT_INFO)) {
+    } else if ((state == LOGIN_PROMPT_ECHO_ON) || (state == LOGIN_TEXT_INFO) ||
+	       ((state == LOGIN_PROMPT_ECHO_OFF) && (w->login.echo_passwd == True)))
+    {
 	int textwidth;
 	int offset = max(cursor, VALUE_SHOW_START(w, promptNum));
 	int textlen = strlen (text + offset);
@@ -416,6 +437,11 @@ realizeValue (LoginWidget w, int cursor, int promptNum, GC gc)
 	} else {
 	    DRAW_STRING(text, x + curoff, y, text + offset, textlen);
 	}
+    }
+    /* free memory */
+    if ((state == LOGIN_PROMPT_ECHO_OFF) && (w->login.echo_passwd == True))
+    {
+	XtFree(text);
     }
 }
 
@@ -465,9 +491,18 @@ realizeCursor (LoginWidget w, GC gc)
 	}
 	break;
     case LOGIN_PROMPT_ECHO_OFF:
-	/* Move cursor one pixel per character to give some feedback without
-	   giving away the password length */
-	x += PROMPT_CURSOR(w, w->login.activePrompt);
+	if (w->login.echo_passwd == True) {
+	    int len = PROMPT_CURSOR(w, w->login.activePrompt) -
+		VALUE_SHOW_START(w, w->login.activePrompt);
+
+	    x += len*TEXT_WIDTH(text, "*", 1);
+	}
+	else
+	{
+	    /* Move cursor one pixel per character to give some feedback
+	       without giving away the password length */
+	    x += PROMPT_CURSOR(w, w->login.activePrompt);
+	}
 	break;
     }
 
@@ -595,7 +630,7 @@ RedrawFail (LoginWidget w)
 		    x = ERROR_X(w, start);
 #ifdef USE_XFT
 		    if (w->login.failUp == 0) {
-			XClearArea(XtDisplay(w), XtWindow(w), x, y,
+			XClearArea(XtDisplay(w), XtWindow(w), x, y - F_ASCENT(fail),
 				   ERROR_W(w, start), FAIL_Y_INC(w), False);
 		    } else
 #endif
@@ -616,7 +651,7 @@ RedrawFail (LoginWidget w)
 
 #ifdef USE_XFT
 	if (w->login.failUp == 0) {
-	    XClearArea(XtDisplay(w), XtWindow(w), x, y,
+	    XClearArea(XtDisplay(w), XtWindow(w), x, y - F_ASCENT(fail),
 		       ERROR_W(w, w->login.fail), FAIL_Y_INC(w), False);
 	} else
 #endif
@@ -670,8 +705,7 @@ draw_it (LoginWidget w)
 
     EraseCursor (w);
 
-    if( (w->login.outframewidth) < 1 )
-      w->login.outframewidth = 1;
+    /* draw window borders */
     for(i=1;i<=(w->login.outframewidth);i++)
     {
       XDrawLine(XtDisplay (w), XtWindow (w), w->login.hiGC,
@@ -727,6 +761,7 @@ draw_it (LoginWidget w)
 	    topLeftGC = botRightGC = w->login.bgGC;
 	}
 
+	/* draw borders of editboxes */
 	for (i=1; i<=(w->login.inframeswidth); i++)
 	{
 	    /* Make top/left sides */
@@ -766,20 +801,8 @@ draw_it (LoginWidget w)
     }
     RedrawFail (w);
     XorCursor (w);
-    /*
-     * The GrabKeyboard here is needed only because of
-     * a bug in the R3 server -- the keyboard is grabbed on
-     * the root window, and the server won't dispatch events
-     * to the focus window unless the focus window is a ancestor
-     * of the grab window.  Bug in server already found and fixed,
-     * compatibility until at least R4.
-     */
-    if (XGrabKeyboard (XtDisplay (w), XtWindow (w), False, GrabModeAsync,
-		       GrabModeAsync, CurrentTime) != GrabSuccess)
-    {
-	XSetInputFocus (XtDisplay (w), XtWindow (w),
-			RevertToPointerRoot, CurrentTime);
-    }
+    XSetInputFocus (XtDisplay (w), XtWindow (w),
+		    RevertToPointerRoot, CurrentTime);
 }
 
 /* Returns 0 on success, -1 on failure */

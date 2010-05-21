@@ -1,3 +1,463 @@
+commit 7006d5c582e382660437a64b749822116823ecee
+Author: Julien Cristau <jcristau@debian.org>
+Date:   Sat Apr 10 03:48:05 2010 +0200
+
+    Bump to 1.1.10
+
+commit 7c4c0592aca80cc8affe4e94d2742caa754d5be3
+Author: Julien Cristau <jcristau@debian.org>
+Date:   Sun Apr 4 19:20:39 2010 +0200
+
+    Add missing brace in previous commit
+    
+    Thanks to cjb and tinderbox.
+    
+    Signed-off-by: Julien Cristau <jcristau@debian.org>
+
+commit 8eb897bb980dd6ce3f8ade517a8a39023a477743
+Author: Julien Cristau <jcristau@debian.org>
+Date:   Tue Mar 23 19:40:49 2010 +0100
+
+    xdmcp: disable IPV6_V6ONLY for ipv6 listening sockets
+    
+    This allows ipv4 connections mapped to ipv6, in case the system default
+    is backwards.
+    
+    Signed-off-by: Julien Cristau <jcristau@debian.org>
+    Reviewed-by: Jeremy Huddleston <jeremyhu@apple.com>
+
+commit 3a4f890fa9466ed27d49ce97adbcad30b840d3d4
+Author: Julien Cristau <jcristau@debian.org>
+Date:   Tue Mar 23 19:40:48 2010 +0100
+
+    Don't remove the pid file from xdm child processes
+    
+    The parent xdm process registers RemovePid with atexit(), which means
+    that any child exit would trigger the (wrong) removal of the pidfile.
+    So in RemovePid, don't do anything if we're not the parent xdm process.
+    
+    Signed-off-by: Julien Cristau <jcristau@debian.org>
+    Reviewed-by: Jeremy Huddleston <jeremyhu@apple.com>
+
+commit 931c98390274a9e0c62c41c5e9ceed6681e7a9b7
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Sat Mar 13 15:19:37 2010 -0500
+
+    lint: option -rdynamic is not valid for the lint program
+    
+    Use xdm_LIBS instead. Tested on Solaris.
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit 34b9c0e02bc2d36da2c8c5ee468b2a2d63914610
+Author: Alan Coopersmith <alan.coopersmith@sun.com>
+Date:   Tue Mar 16 16:33:48 2010 -0700
+
+    Reject PAM conversation calls after login dialog is closed
+    
+    Based on patch suggested by Bjoern A. Zeeb <bzeeb+patch@zabbadoz.net>
+    to fix http://bugs.freedesktop.org/show_bug.cgi?id=10522
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@sun.com>
+
+commit afc752d1c483e77de9aa3cb9532a67d95fd27dd9
+Author: Alan Coopersmith <alan.coopersmith@sun.com>
+Date:   Tue Mar 16 11:23:30 2010 -0700
+
+    Make sure username is not NULL when calling syslog from FailedLogin()
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@sun.com>
+
+commit 0f18bdfa7fcfe100e487f4c9f91ae37a125ef0f0
+Author: Johannes Dewender <xorg@JonnyJD.net>
+Date:   Fri Nov 13 21:28:23 2009 +0100
+
+    Bug #25066: exec sessreg
+    
+    Sessreg saves the pid of the calling process in utmp.
+    If this process is terminated the session is implicitly deleted.
+    Xstartup is called and the process id is gone right when
+    the script is done so the session is closed right away.
+    Using "exec" will save the pid of the master process of this login.
+    
+    Signed-off-by: Johannes Dewender <xorg@JonnyJD.net>
+    Tested-by: Johannes Dewender <xorg@JonnyJD.net>
+    Acked-by: Julien Cristau <jcristau@debian.org>
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@sun.com>
+
+commit c9cdd56df50f280e90ba95cfa933222f94ad2677
+Author: Alan Coopersmith <alan.coopersmith@sun.com>
+Date:   Mon Mar 15 23:34:04 2010 -0700
+
+    Move m4 macros to m4 subdir as automake/libtool recommend
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@sun.com>
+
+commit b9226288b96f0c5988d2c2f52718674d39803a5e
+Author: Alan Coopersmith <alan.coopersmith@sun.com>
+Date:   Mon Mar 15 23:21:30 2010 -0700
+
+    Replace hardcoded NAMELEN of 14 for ancient SysV with MAXNAMELEN
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@sun.com>
+
+commit af916ebc97a3bd6208f1376e52a4310099b48622
+Author: Alan Coopersmith <alan.coopersmith@sun.com>
+Date:   Mon Mar 15 18:12:05 2010 -0700
+
+    echo_passwd should key off PAM no-echo state, not prompt position
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@sun.com>
+
+commit dd9dc06055e16cd72ff34c2caea22a6627803fa5
+Author: Georgy A. Shepelev <gerik@super-komputer6-44.ultra>
+Date:   Wed Dec 9 09:34:02 2009 +0300
+
+    xdm: add documentation of the "EchoPasswd" option to the man page
+    
+    Signed-off-by: Georgy A. Shepelev <shepelev.georgy@googlemail.com>
+
+commit 7437298deab265b7669043d4a470a684201f5f3c
+Author: Georgy A. Shepelev <gerik@k24a.ulsu.ru>
+Date:   Wed Dec 9 12:18:50 2009 +0300
+
+    Adding an option to show stars instead of the password itself.
+    
+    The behaviour can be controlled via 'xlogin*echoPasswd' option
+    in Xresource file. The default option value is 'false'.
+    
+    Signed-off-by: Georgy A. Shepelev <shepelev.georgy@googlemail.com>
+    Tested-by: Georgy A. Shepelev <shepelev.georgy@googlemail.com>
+    
+    [Reformatted to match existing code style by Alan Coopersmith]
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@sun.com>
+
+commit 34d120f31347697886a419411d9d4d825874f3f0
+Author: Alan Coopersmith <alan.coopersmith@sun.com>
+Date:   Fri Jan 15 13:23:24 2010 -0800
+
+    Update Sun license notices to current X.Org standard form
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@sun.com>
+
+commit 504bb1aee60d570d8676a61acbe32c66d6069c45
+Author: Dmitry V. Levin <ldv@altlinux.org>
+Date:   Tue Jan 12 14:38:33 2010 +0000
+
+    greeter: fix logging of failed login attempts
+    
+    When PAM rejects a login attempt, the "username" variable remains
+    uninitialized, which results to garbage being syslogged instead of
+    login name.  Explicit initialization helps to avoid this issue.
+    
+    Fixes FreeDesktop Bug #26015 <https://bugs.freedesktop.org/show_bug.cgi?id=26015>
+    
+    Signed-off-by: Dmitry V. Levin <ldv@altlinux.org>
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@sun.com>
+
+commit 7d8b4c16d9307f9fa984da7ac5cc00cb945cac09
+Author: Alan Coopersmith <alan.coopersmith@sun.com>
+Date:   Tue Jan 12 10:46:38 2010 -0800
+
+    Raise xorg-macros requirement to 1.4
+    
+    Needed since the changes in a4a8f7b83afc9a46bc989c0eeb528a46b3a1db5d
+    depend on the INSTALL file delivered in xorg-macros 1.4
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@sun.com>
+
+commit b69f12706abc728e9c16449f52f02ae0d3a0ee62
+Author: Alan Coopersmith <alan.coopersmith@sun.com>
+Date:   Tue Jan 12 10:24:34 2010 -0800
+
+    Remove workaround for X11R3 server bug
+    
+    The comment promised 'compatibility until at least R4', so we're 20 years
+    past due for removing this.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@sun.com>
+    Reviewed-by: Julien Cristau <jcristau@debian.org>
+
+commit c925709069d7515bb94f43e4b88155a95e41c8fe
+Author: Branden Robinson <branden@debian.org>
+Date:   Mon Nov 18 04:24:48 2002 -0500
+
+    rewrite StorePid()
+    
+    Update StorePid() function to use Matthieu Herrb's changes that refuse
+    to open an existing pid file, and take more care with the size of the
+    Pid_t type.
+    
+    Matthieu Herrb rewrote the StorePid() function based on my changes; he
+    made it more careful with the size of Pid_t, and treats an existing pid
+    file as a failure.  I then made some more changes: use _SysErrorMsg()
+    instead of strerror(), and don't assume that the process id we write to
+    the pidFile is 5 digits.
+    
+    Forward-ported by David Nusinow, Eugene Konev and Julien Cristau.
+    
+    Signed-off-by: Julien Cristau <jcristau@debian.org>
+    Reviewed-by: Alan Coopersmith <alan.coopersmith@sun.com>
+    Reviewed-by: Matthieu Herrb <matthieu.herrb@laas.fr>
+
+commit 6d393844dca10823f85d1ac797879fc6e00eae59
+Author: Manoj Srivastava <srivasta@golden-gryphon.com>
+Date:   Tue Jan 5 16:40:21 2010 +0000
+
+    xdm: add SELinux support
+    
+    Initial patch submitted in Debian bug#233551.
+    Forward-ported to modular X by Eugene Konev (changes: remove Imakefile hunks,
+    add --with-selinux flag to configure.ac).
+    Updated to latest SE Linux code by Russell Coker 3rd Aug 2008, with bugfix from
+    Julien Cristau (Debian bug#493524).
+    
+    Signed-off-by: Julien Cristau <jcristau@debian.org>
+    Reviewed-by: Alan Coopersmith <alan.coopersmith@sun.com>
+    Reviewed-by: Matthieu Herrb <matthieu.herrb@laas.fr>
+
+commit 90c2cc57cdf911cec2eec185f357868209212c79
+Author: Branden Robinson <branden@debian.org>
+Date:   Tue Jan 5 16:40:21 2010 +0000
+
+    Improve logging of xdm's script handling
+    
+    * Make execution of the session program an informational log message (with
+      LogInfo()), not a Debug() message.
+    * Ensure that source()d scripts (Xreset, Xsetup, Xstartup) can be
+      fopen()ed before invoking runAndWait() on them.  If they can, LogInfo()
+      the fact.  If they cannot, LogInfo() that, too, and use _SysErrorMsg() to
+      report why fopen() failed.
+    * Make source() complain using Debug() when it is given a null pointer in
+      its file argument.
+    * For clarity, make source() return from only one location.
+    
+    Also see Debian bug #219311.
+    
+    Forward ported by Eugene Konev.
+    
+    Signed-off-by: Julien Cristau <jcristau@debian.org>
+    Reviewed-by: Alan Coopersmith <alan.coopersmith@sun.com>
+    Reviewed-by: Matthieu Herrb <matthieu.herrb@laas.fr>
+
+commit 5222d28e8d8e5b4cc705f1a637aace405ad32bd5
+Author: Branden Robinson <branden@debian.org>
+Date:   Tue Jan 5 16:40:21 2010 +0000
+
+    improve error logging
+    
+    Make several LogError() and Debug() messages more informative.
+    Change LogError() invocations to use _SysErrorMsg() where errno might be set
+    (and not clobbered by intermediate calls).  Also make LogError() the first
+    thing we do after an error condition in those cases.
+    
+    Forward-ported by Julien Cristau <jcristau@debian.org>.
+    
+    Signed-off-by: Julien Cristau <jcristau@debian.org>
+    Reviewed-by: Alan Coopersmith <alan.coopersmith@sun.com>
+    Reviewed-by: Matthieu Herrb <matthieu.herrb@laas.fr>
+
+commit 17105faffcb4533da71f0d3d17fd40a64b6faf50
+Author: Branden Robinson <branden@debian.org>
+Date:   Tue Jan 5 16:40:21 2010 +0000
+
+    Always attempt to write data to the auth file
+    
+    Actually attempt to write data to the auth file in SaveServerAuthorizations();
+    that way we detect problems like ENOSPC (full filesystem, user over quota)
+    early enough to do something about it.  (See Debian #217505, #253480)
+    
+    Forward-ported by Julien Cristau <jcristau@debian.org>.
+    
+    Signed-off-by: Julien Cristau <jcristau@debian.org>
+    Reviewed-by: Alan Coopersmith <alan.coopersmith@sun.com>
+    Reviewed-by: Matthieu Herrb <matthieu.herrb@laas.fr>
+
+commit 11d6aa0b392daef2900681b70960d8be4ada89a9
+Author: Branden Robinson <branden@debian.org>
+Date:   Tue Jan 5 16:40:21 2010 +0000
+
+    Change openFiles() to avoid race-based symlink attacks.
+    
+    Forward-ported by Julien Cristau <jcristau@debian.org>.
+    
+    Signed-off-by: Julien Cristau <jcristau@debian.org>
+    Reviewed-by: Alan Coopersmith <alan.coopersmith@sun.com>
+    Reviewed-by: Matthieu Herrb <matthieu.herrb@laas.fr>
+
+commit cd6b6d5f78e92725d6466d138f5441d791e58212
+Author: Branden Robinson <branden@debian.org>
+Date:   Tue Jan 5 16:40:21 2010 +0000
+
+    downgrade an error to info message
+    
+    During normal xdm shutdown, killed local X servers
+    can be zombies; this is not an error.
+    
+    Forward-ported by David Nusinow, Eugene Konev and Julien Cristau
+    
+    Signed-off-by: Julien Cristau <jcristau@debian.org>
+    Reviewed-by: Alan Coopersmith <alan.coopersmith@sun.com>
+    Reviewed-by: Matthieu Herrb <matthieu.herrb@laas.fr>
+
+commit ecf015a4e78b96af913c1620d542c8e356f2a3d0
+Author: Dmitry V. Levin <ldv@altlinux.org>
+Date:   Mon Jan 11 23:09:47 2010 +0000
+
+    Call openlog(3) early
+    
+    Before this change, openlog(3) used to be called by greeter which could
+    be built as a dynamically loadable plugin.  In the latter case, the
+    ident string passed to openlog(3) resides in a dynamically mapped
+    memory region that is unmapped later when the plugin is unloaded.
+    This can cause fatal problems in some environments.  For example, in
+    any GNU/Linux system with PAM support enabled an implicit syslog(3)
+    call made by a PAM module after plugin unload causes attempt to access
+    already unmapped memory, followed by instant crash.
+    
+    It is a common practice to call openlog(3) before the first syslog(3)
+    call, including implicit calls that could be made e.g. by PAM.
+    Also, openlog(3) LOG_ODELAY flag is redundant.
+    
+    Fixes ALT Linux Bug #22362 <https://bugzilla.altlinux.org/show_bug.cgi?id=22362>
+    Fixes FreeDesktop Bug #24589 <https://bugs.freedesktop.org/show_bug.cgi?id=24589>
+    
+    Reported-by: Martin Mokrejš <mmokrejs@ribosome.natur.cuni.cz>
+    Reported-by: Denis Kirienko <dk@altlinux.org>
+    Patch-by: Oleg Zenin <tt@compas.ihep.su>
+    Signed-off-by: Dmitry V. Levin <ldv@altlinux.org>
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@sun.com>
+
+commit 9142a99cedc99277319e56f132077c1263e1eea8
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Sat Dec 19 20:48:47 2009 -0500
+
+    configure.ac: use backticks rather than $() for cmd subs
+    
+    Use "$PKG_CONFIG" rather than hard coded "pkg-config"
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit 989d892443b9d6e52313bf6f4a8606f8749e218d
+Author: Christoph Bartoschek <bartoschek@or.uni-bonn.de>
+Date:   Mon Nov 30 13:34:30 2009 +0100
+
+    XDM: Add support for clients that sent ipv4 addresses to a dual-stacked host
+    
+    If a client sends an ipv4 address to a dual-stacked xdm that is bound to a ipv6
+    socket in a forward request, then the packet was silently discarded. Now the
+    address is encapsulated as a ipv4-mapped address and a response is send back.
+    
+    Signed-off-by: Adam Jackson <ajax@redhat.com>
+
+commit bad944beb34a988a12a9e18a2f4c42dc59a916a5
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Sun Nov 29 10:54:01 2009 -0500
+
+    configure.ac: restore correct order for XORG_DEFAULT_OPTIONS
+    
+    It must be following AC_USE_SYSTEM_EXTENSION
+
+commit a9ca4d452326b0dafbf1b6f828b53fd0ddd43168
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Thu Nov 26 09:19:53 2009 -0500
+
+    Makefile.am: add ChangeLog and INSTALL on MAINTAINERCLEANFILES
+    
+    Now that the INSTALL file is generated.
+    Allows running make maintainer-clean.
+
+commit a4a8f7b83afc9a46bc989c0eeb528a46b3a1db5d
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Wed Oct 28 14:09:08 2009 -0400
+
+    INSTALL, NEWS, README or AUTHORS files are missing/incorrect #24206
+    
+    Add missing INSTALL file. Use standard GNU file on building tarball
+    README may have been updated
+    Remove AUTHORS file as it is empty and no content available yet.
+    Remove NEWS file as it is empty and no content available yet.
+
+commit 2d4c65a3e62c00e7907dc3f8929cbf8989fc783d
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Tue Oct 27 15:07:24 2009 -0400
+
+    Deploy the new XORG_DEFAULT_OPTIONS #24242
+    
+    This macro aggregate a number of existing macros that sets commmon
+    X.Org components configuration options. It shields the configuration file from
+    future changes.
+
+commit f33e95d44bd378a4a7632f6b591e21b23a861486
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Mon Oct 26 22:08:38 2009 -0400
+
+    Makefile.am: ChangeLog not required: EXTRA_DIST or *CLEANFILES #24432
+    
+    ChangeLog filename is known to Automake and requires no further
+    coding in the makefile.
+
+commit 8c251b945f57923a37a34219589ac31227ab65df
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Thu Oct 22 15:47:23 2009 -0400
+
+    .gitignore: use common defaults with custom section # 24239
+    
+    Using common defaults will reduce errors and maintenance.
+    Only the very small or inexistent custom section need periodic maintenance
+    when the structure of the component changes. Do not edit defaults.
+
+commit 4de08979f8a77f895919145aa8f5db1b90853537
+Author: Alan Coopersmith <alan.coopersmith@sun.com>
+Date:   Thu Sep 24 13:54:40 2009 -0700
+
+    Correct default greeterLib path in man page
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@sun.com>
+
+commit 1ce3159739800fd7a93d51a378d7dbb3e0b755a5
+Author: Martin Dickopp <martin@zero-based.org>
+Date:   Tue Sep 22 20:16:37 2009 -0700
+
+    Debian bug 525596: "Login incorrect" only partially cleared on next login
+    
+    http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=525596
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@sun.com>
+
+commit 61f5e8ee407d361bc10d704ab67a828c54678bfa
+Author: Georgy A. Shepelev <gerik@super-komputer6-44.ultra>
+Date:   Tue Sep 22 16:58:40 2009 +0400
+
+    The whole widget borders width could not be set to zero.
+    
+    Signed-off-by: Georgy A. Shepelev <shepelev.georgy@googlemail.com>
+    Tested-by: Georgy A. Shepelev <shepelev.georgy@googlemail.com>
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@sun.com>
+
+commit 748cfcc771c7f599d8087c7aa044bc5ff770da1d
+Author: Alan Coopersmith <alan.coopersmith@sun.com>
+Date:   Tue Sep 22 13:42:31 2009 -0700
+
+    Make parent authdir if needed at startup
+    
+    Allows setting authdir to /var/run/xdm
+    
+    Also refactor directory creation code for less duplication
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@sun.com>
+
+commit 619af82effb9125c904d34c9fbc4bf93385d7b9e
+Author: Alan Coopersmith <alan.coopersmith@sun.com>
+Date:   Tue Sep 22 13:41:38 2009 -0700
+
+    Create piddir if needed on startup
+    
+    Allows setting piddir to /var/run/xdm/
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@sun.com>
+
 commit 6061722888eab858888dac2499194393299872e4
 Author: Alan Coopersmith <alan.coopersmith@sun.com>
 Date:   Fri Sep 18 15:31:50 2009 -0700
