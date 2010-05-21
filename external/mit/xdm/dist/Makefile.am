@@ -105,9 +105,9 @@ appmandir = $(APP_MAN_DIR)
 appman_PRE = xdm.man.cpp
 appman_DATA = $(appman_PRE:man.cpp=@APP_MAN_SUFFIX@)
 
+MAINTAINERCLEANFILES = ChangeLog INSTALL
 CLEANFILES = $(appman_DATA)
-EXTRA_DIST = $(appman_PRE) ChangeLog
-MAINTAINERCLEANFILES = ChangeLog
+EXTRA_DIST = $(appman_PRE) 
 
 include $(top_srcdir)/cpprules.in
 
@@ -121,6 +121,7 @@ MANDEFS = \
 	-DXDMPIDDIR="$(XDMPIDDIR)" -DXDMXAUTHDIR="$(XDMXAUTHDIR)" \
 	-DDEF_USER_PATH="$(DEF_USER_PATH)" \
 	-DDEF_SYSTEM_PATH="$(DEF_SYSTEM_PATH)" \
+	-DDEF_GREETER_LIB="$(DEF_GREETER_LIB)" \
 	-D__appmansuffix__=$(APP_MAN_SUFFIX) \
 	-D__filemansuffix__=$(FILE_MAN_SUFFIX) \
 	-D__libmansuffix__=$(LIB_MAN_SUFFIX) \
@@ -179,16 +180,20 @@ ALL_LINT_FLAGS=$(LINT_FLAGS) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
 		$(AM_CPPFLAGS) $(CPPFLAGS)
 
 lint:
-	$(LINT) $(ALL_LINT_FLAGS) $(xdm_CFLAGS) $(xdm_SOURCES) $(xdm_LDADD)
+	$(LINT) $(ALL_LINT_FLAGS) $(xdm_CFLAGS) $(xdm_SOURCES) $(xdm_LIBS)
 	$(LINT) $(ALL_LINT_FLAGS) $(xdmshell_CFLAGS) $(xdmshell_SOURCES)
 	$(LINT) $(ALL_LINT_FLAGS) $(chooser_CFLAGS) $(chooser_SOURCES) $(chooser_LDADD)
 	(cd greeter && $(MAKE) $(AM_MAKEFLAGS) lint)
 endif LINT
 
-.PHONY: ChangeLog
+.PHONY: ChangeLog INSTALL
+
+INSTALL:
+	$(INSTALL_CMD)
 
 ChangeLog:
 	$(CHANGELOG_CMD)
 
-dist-hook: ChangeLog
+dist-hook: ChangeLog INSTALL
 
+ACLOCAL_AMFLAGS = -I m4

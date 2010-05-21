@@ -87,6 +87,9 @@
 /* Define to 1 if you have the `openlog' function. */
 #undef HAVE_OPENLOG
 
+/* Add support for selinux */
+#undef HAVE_SELINUX
+
 /* Define to 1 if you have the `sigaction' function. */
 #undef HAVE_SIGACTION
 
@@ -135,6 +138,10 @@
 /* Support os-specific local connections */
 #undef LOCALCONN
 
+/* Define to the sub-directory in which libtool stores uninstalled libraries.
+   */
+#undef LT_OBJDIR
+
 /* Define to 1 if your C compiler doesn't accept -c and -o together. */
 #undef NO_MINUS_C_MINUS_O
 
@@ -152,6 +159,9 @@
 
 /* Define to the one symbol short name of this package. */
 #undef PACKAGE_TARNAME
+
+/* Define to the home page for this package. */
+#undef PACKAGE_URL
 
 /* Define to the version of this package. */
 #undef PACKAGE_VERSION

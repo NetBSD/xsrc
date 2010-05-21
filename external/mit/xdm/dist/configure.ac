@@ -22,17 +22,20 @@ dnl Process this file with autoconf to create configure.
 
 
 AC_PREREQ([2.60])
-AC_INIT(xdm,[1.1.9],[https://bugs.freedesktop.org/enter_bug.cgi?product=xorg],xdm)
-AM_INIT_AUTOMAKE([dist-bzip2])
+AC_INIT(xdm,[1.1.10],[https://bugs.freedesktop.org/enter_bug.cgi?product=xorg],xdm)
+AM_INIT_AUTOMAKE([foreign dist-bzip2])
 AM_MAINTAINER_MODE
+AC_CONFIG_MACRO_DIR([m4])
 
-# Require xorg-macros: XORG_DEFAULT_OPTIONS, XORG_CWARNFLAGS, XORG_CHANGELOG
-m4_ifndef([XORG_MACROS_VERSION], [AC_FATAL([must install xorg-macros 1.2 or later before running autoconf/autogen])])
-XORG_MACROS_VERSION(1.3)
+# Require xorg-macros: XORG_DEFAULT_OPTIONS
+m4_ifndef([XORG_MACROS_VERSION],
+          [m4_fatal([must install xorg-macros 1.4 or later before running autoconf/autogen])])
+XORG_MACROS_VERSION(1.4)
+AC_USE_SYSTEM_EXTENSIONS
+XORG_DEFAULT_OPTIONS
 
 AM_CONFIG_HEADER(config.h)
 
-AC_USE_SYSTEM_EXTENSIONS
 AC_PROG_CC
 AM_PROG_CC_C_O
 AC_C_INLINE
@@ -41,7 +44,6 @@ AM_PROG_LIBTOOL
 AC_PROG_INSTALL
 
 XORG_PROG_RAWCPP
-XORG_DEFAULT_OPTIONS
 XORG_WITH_LINT
 
 m4_ifdef([AM_SILENT_RULES],[HAVE_AM_SILENT_RULES=yes])
@@ -127,6 +129,23 @@ if test "x$USE_PAM" != "xno" ; then
 		[if test "x$USE_PAM" != "xtry" ; then
 			AC_MSG_ERROR([PAM support requested, but pam_open_session not found.])
 		 fi])
+fi
+
+use_selinux_default=no
+# Check for selinux support
+AC_ARG_WITH(selinux, AC_HELP_STRING([--with-selinux],[Add support for selinux]),
+	[USE_SELINUX=$withval], [USE_SELINUX=$use_selinux_default])
+if test "x$USE_SELINUX" != "xno" ; then
+   	old_LIBS="$LIBS"
+	LIBS=""
+	AC_SEARCH_LIBS(is_selinux_enabled,[selinux])
+	AC_CHECK_FUNC(is_selinux_enabled,
+		[AC_DEFINE(HAVE_SELINUX,1,[Add support for selinux])],
+		[if test "x$USE_SELINUX" != "xtry" ; then
+			AC_MSG_ERROR(["selinux support requested, but is_selinux_enabled not found."])
+		 fi])
+	XDM_LIBS="$XDM_LIBS $LIBS"
+	LIBS="$old_LIBS"
 fi
 
 # FIXME: Find better test for which OS'es use su -m  - for now, just try to
@@ -577,7 +596,7 @@ AC_DEFINE_DIR(DEF_GREETER_LIB, XDMLIBDIR/libXdmGreet.so,
 	[Define to pathname where greeter shared object is installed (if used)])
 
 PKG_CHECK_MODULES(APPDEFS, xt)
-xt_appdefaultdir=$(pkg-config --variable=appdefaultdir xt)
+xt_appdefaultdir=`$PKG_CONFIG --variable=appdefaultdir xt`
 AC_ARG_WITH(appdefaultdir,
 	AC_HELP_STRING([--with-appdefaultdir=<pathname>],
 	  [specify directory for app-defaults files (default is autodetected)]),
