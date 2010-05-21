@@ -33,6 +33,10 @@ from The Open Group.
  * session.c
  */
 
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
+
 #include "dm.h"
 #include "dm_auth.h"
 #include "dm_error.h"
@@ -67,12 +71,53 @@ extern int key_setnet(struct key_netstarg *arg);
 # include <prot.h>
 #endif
 
+#ifdef HAVE_SELINUX
+#include <selinux/selinux.h>
+#include <selinux/get_context_list.h>
+#endif /* HAVE_SELINUX */
+
 #ifndef GREET_USER_STATIC
 # include <dlfcn.h>
 # ifndef RTLD_NOW
 #  define RTLD_NOW 1
 # endif
 #endif
+
+#ifdef HAVE_SELINUX
+/* This should be run just before we exec the user session. */
+static int
+xdm_selinux_setup (const char *login)
+  {
+	security_context_t scontext;
+	int ret = -1;
+	char *seuser=NULL;
+	char *level=NULL;
+
+	/* If SELinux is not enabled, then we don't do anything. */
+	if ( is_selinux_enabled () <= 0)
+		return TRUE;
+
+	if (getseuserbyname(login, &seuser, &level) == 0) {
+		ret=get_default_context_with_level(seuser, level, 0, &scontext);
+		free(seuser);
+		free(level);
+	}
+	if (ret < 0 || scontext == NULL) {
+		LogError ("SELinux: unable to obtain default security context for %s\n", login);
+		return FALSE;
+	}
+
+	if (setexeccon (scontext) != 0) {
+	freecon (scontext);
+	LogError ("SELinux: unable to set executable context %s\n",
+	      (char *)scontext);
+	return FALSE;
+	}
+
+	freecon (scontext);
+	return TRUE;
+}
+#endif /* HAVE_SELINUX */
 
 static	int	runAndWait (char **args, char **environ);
 
@@ -782,6 +827,17 @@ StartClient (
 	    bzero(passwd, strlen(passwd));
 
 	SetUserAuthorization (d, verify);
+#ifdef HAVE_SELINUX
+   /*
+    * For Security Enhanced Linux:
+    * set the default security context for this user.
+    */
+   if ( ! xdm_selinux_setup (name)) {
+      LogError ("failed to set security context\n");
+       exit (UNMANAGE_DISPLAY);
+       return (0);
+   }
+#endif /* HAVE_SELINUX */
 	home = getEnv (verify->userEnviron, "HOME");
 	if (home)
 	    if (chdir (home) == -1) {
@@ -791,7 +847,7 @@ StartClient (
 		verify->userEnviron = setEnv(verify->userEnviron, "HOME", "/");
 	    }
 	if (verify->argv) {
-		Debug ("executing session %s\n", verify->argv[0]);
+		LogInfo ("executing session %s\n", verify->argv[0]);
 		execute (verify->argv, verify->userEnviron);
 		LogError ("Session \"%s\" execution failed (err %d)\n", verify->argv[0], errno);
 	} else {
@@ -821,21 +877,28 @@ int
 source (char **environ, char *file)
 {
     char	**args, *args_safe[2];
-    int		ret;
+    int		ret = 0;
+    FILE	*f;
 
     if (file && file[0]) {
-	Debug ("source %s\n", file);
-	args = parseArgs ((char **) 0, file);
-	if (!args) {
-	    args = args_safe;
-	    args[0] = file;
-	    args[1] = NULL;
+	f = fopen (file, "r");
+	if (!f)
+	    LogInfo ("not sourcing %s (%s)\n", file, _SysErrorMsg (errno));
+	else {
+	    fclose (f);
+	    LogInfo ("sourcing %s\n", file);
+	    args = parseArgs ((char **) 0, file);
+	    if (!args) {
+		args = args_safe;
+		args[0] = file;
+		args[1] = NULL;
+	    }
+	    ret = runAndWait (args, environ);
+	    freeArgs (args);
 	}
-	ret = runAndWait (args, environ);
-	freeArgs (args);
-	return ret;
-    }
-    return 0;
+    } else
+	Debug ("source() given null pointer in file argument\n");
+    return ret;
 }
 
 static int

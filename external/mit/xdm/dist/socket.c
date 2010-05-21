@@ -1,7 +1,28 @@
 /*
+ * Copyright © 2002 Sun Microsystems, Inc.  All rights reserved.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice (including the next
+ * paragraph) shall be included in all copies or substantial portions of the
+ * Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
+ */
+/*
 
 Copyright 1988, 1998  The Open Group
-Copyright 2002 Sun Microsystems, Inc.  All rights reserved.
 
 Permission to use, copy, modify, distribute, and sell this software and its
 documentation for any purpose is hereby granted without fee, provided that
@@ -153,6 +174,16 @@ CreateListeningSocket (struct sockaddr *sock_addr, int salen)
 	return fd;
     }
     RegisterCloseOnFork (fd);
+
+#  if defined(IPv6) && defined(IPV6_V6ONLY)
+    if (sock_addr->sa_family == AF_INET6) {
+	int zero = 0;
+	if (setsockopt(fd, IPPROTO_IPV6, IPV6_V6ONLY, &zero, sizeof(zero)) < 0) {
+	    LogError ("Could not disable V6ONLY on XDMCP socket: %s\n",
+	              _SysErrorMsg (errno));
+	}
+    }
+#  endif
 
     if (bind (fd, sock_addr, salen) == -1)
     {

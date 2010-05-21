@@ -75,6 +75,16 @@ from The Open Group.
 # endif
 #endif
 
+#if defined(HAVE_OPENLOG) && defined(HAVE_SYSLOG_H)
+# define USE_SYSLOG
+# include <syslog.h>
+# ifndef LOG_AUTHPRIV
+#  define LOG_AUTHPRIV LOG_AUTH
+# endif
+# ifndef LOG_PID
+#  define LOG_PID 0
+# endif
+#endif
 
 #if defined(SVR4) && !defined(sun)
 extern FILE    *fdopen();
@@ -103,7 +113,7 @@ static int TitleLen;
 static SIGVAL ChildNotify (int n);
 #endif
 
-static int StorePid (void);
+static long StorePid (void);
 static void RemovePid (void);
 
 static pid_t parent_pid = -1; 	/* PID of parent xdm process */
@@ -543,8 +553,17 @@ WaitForChild (void)
 			d->startTries, d->startAttempts);
 		if (d->displayType.origin == FromXDMCP ||
 		    d->status == zombie ||
-		    ++d->startTries >= d->startAttempts) {
-		    LogError ("Display %s is being disabled\n", d->name);
+		    ++d->startTries >= d->startAttempts)
+		{
+		    /*
+		     * During normal xdm shutdown, killed local X servers
+		     * can be zombies; this is not an error.
+		     */
+		    if (d->status == zombie &&
+			(d->startTries < d->startAttempts))
+			LogInfo ("display %s is being disabled\n", d->name);
+		    else
+			LogError ("display %s is being disabled\n", d->name);
 		    StopDisplay(d);
 		} else
 		    RestartDisplay (d, TRUE);
@@ -749,6 +768,9 @@ StartDisplay (struct display *d)
 	    CleanUpChild ();
 	    (void) Signal (SIGPIPE, SIG_IGN);
 	}
+#ifdef USE_SYSLOG
+	openlog("xdm", LOG_PID, LOG_AUTHPRIV);
+#endif
 	LoadSessionResources (d);
 	SetAuthorization (d);
 	if (!WaitForServer (d))
@@ -855,65 +877,88 @@ CloseOnFork (void)
 static int  pidFd;
 static FILE *pidFilePtr;
 
-static int
+/*
+ * Create and populate file storing xdm's process ID.
+ */
+static long
 StorePid (void)
 {
-    int		oldpid;
+    long	oldpid;
+    char	pidstr[11]; /* enough space for a 32-bit pid plus \0 */
+    size_t	pidstrlen;
 
-    if (pidFile[0] != '\0') {
-	pidFd = open (pidFile, O_RDWR);
+    if (pidFile[0] != '\0')
+    {
+	Debug ("storing process ID in %s\n", pidFile);
+	pidFd = open (pidFile, O_WRONLY|O_CREAT|O_EXCL, 0666);
 	if (pidFd == -1 && errno == ENOENT)
-	    pidFd = open (pidFile, O_RDWR|O_CREAT, 0666);
-	if (pidFd == -1 || !(pidFilePtr = fdopen (pidFd, "r+")))
 	{
-	    LogError ("process-id file %s cannot be opened\n",
-		      pidFile);
+	    /* Make sure directory exists if needed
+	       Allows setting pidDir to /var/run/xdm
+	     */
+	    char *pidDir = strdup(pidFile);
+
+	    if (pidDir != NULL)
+	    {
+		char *p = strrchr(pidDir, '/');
+		int r;
+
+		if ((p != NULL) && (p != pidDir)) {
+		    *p = '\0';
+		}
+		r = mkdir(pidDir, 0755);
+		if ( (r < 0) && (errno != EEXIST) ) {
+		     LogError ("process-id directory %s cannot be created\n",
+			       pidDir);
+		}
+	    }
+
+	    pidFd = open (pidFile, O_WRONLY|O_CREAT|O_EXCL, 0666);
+	}
+	if (pidFd == -1)
+	{
+	    if (errno == EEXIST)
+	    {
+		/* pidFile already exists; see if we can open it */
+		pidFilePtr = fopen (pidFile, "r");
+		if (pidFilePtr == NULL)
+		{
+		    LogError ("cannot open process ID file %s for reading: "
+			      "%s\n", pidFile, _SysErrorMsg (errno));
+		    return -1;
+		}
+		if (fscanf (pidFilePtr, "%ld\n", &oldpid) != 1)
+		{
+		    LogError ("existing process ID file %s empty or contains "
+			      "garbage\n", pidFile);
+		    oldpid = -1;
+		}
+		fclose (pidFilePtr);
+		return oldpid;
+	    }
+		else
+	    {
+		LogError ("cannot fdopen process ID file %s for writing: "
+			  "%s\n", pidFile, _SysErrorMsg (errno));
+		return -1;
+	    }
+	}
+	if ((pidFilePtr = fdopen (pidFd, "w")) == NULL)
+	{
+	    LogError ("cannot open process ID file %s for writing: %s\n",
+		      pidFile, _SysErrorMsg (errno));
 	    return -1;
 	}
-	if (fscanf (pidFilePtr, "%d\n", &oldpid) != 1)
-	    oldpid = -1;
-	fseek (pidFilePtr, 0l, 0);
-	if (lockPidFile)
+	(void) snprintf (pidstr, 11, "%ld", (long) getpid ());
+	pidstrlen = strlen (pidstr);
+	if (fprintf (pidFilePtr, "%s\n", pidstr) != ( pidstrlen + 1))
 	{
-#ifdef F_SETLK
-# ifndef SEEK_SET
-#  define SEEK_SET 0
-# endif
-	    struct flock lock_data;
-	    lock_data.l_type = F_WRLCK;
-	    lock_data.l_whence = SEEK_SET;
-	    lock_data.l_start = lock_data.l_len = 0;
-	    if (fcntl(pidFd, F_SETLK, &lock_data) == -1)
-	    {
-		if (errno == EAGAIN)
-		    return oldpid;
-		else
-		    return -1;
-	    }
-#else
-# ifdef LOCK_EX
-	    if (flock (pidFd, LOCK_EX|LOCK_NB) == -1)
-	    {
-		if (errno == EWOULDBLOCK)
-		    return oldpid;
-		else
-		    return -1;
-	    }
-# else
-	    if (lockf (pidFd, F_TLOCK, 0) == -1)
-	    {
-		if (errno == EACCES)
-		    return oldpid;
-		else
-		    return -1;
-	    }
-# endif
-#endif
+	    LogError ("cannot write to process ID file %s: %s\n", pidFile,
+		      _SysErrorMsg (errno));
+	    return -1;
 	}
-	ftruncate(pidFd, 0);
-	fprintf (pidFilePtr, "%5ld\n", (long)getpid ());
 	(void) fflush (pidFilePtr);
-	RegisterCloseOnFork (pidFd);
+	(void) fclose (pidFilePtr);
     }
     return 0;
 }
@@ -924,6 +969,9 @@ StorePid (void)
 static void
 RemovePid (void)
 {
+    if (parent_pid != getpid())
+	return;
+
     Debug ("unlinking process ID file %s\n", pidFile);
     if (unlink (pidFile))
 	if (errno != ENOENT)

@@ -270,6 +270,38 @@ CleanUpFileName (char *src, char *dst, int len)
     *dst = '\0';
 }
 
+/* Checks to see if specified directory exists, makes it if not
+ * Returns: 0 if already exists, 1 if created, < 0 if error occured
+ */
+static int
+CheckServerAuthDir (const char *path, struct stat *statb, int mode)
+{
+    int r = stat(path, statb);
+
+    if (r != 0) {
+	if (errno == ENOENT) {
+	    r = mkdir(path, mode);
+	    if (r < 0) {
+		LogError ("cannot make authentication directory %s: %s\n",
+			  path, _SysErrorMsg (errno));
+	    } else {
+		r = 1;
+	    }
+	} else {
+	    LogError ("cannot access authentication directory %s: %s\n",
+		      path, _SysErrorMsg (errno));
+	}
+    } else { /* Directory already exists */
+	if (!S_ISDIR(statb->st_mode)) {
+	    LogError ("cannot make authentication directory %s: %s\n",
+		      path, "file with that name already exists");
+	    return -1;
+	}
+    }
+
+    return r;
+}
+
 static char authdir1[] = "authdir";
 static char authdir2[] = "authfiles";
 
@@ -277,8 +309,8 @@ static int
 MakeServerAuthFile (struct display *d, FILE ** file)
 {
     int len;
-#if defined(SYSV) && !defined(SVR4)
-# define NAMELEN	14
+#ifdef MAXNAMELEN
+# define NAMELEN	MAXNAMELEN
 #else
 # define NAMELEN	255
 #endif
@@ -298,6 +330,13 @@ MakeServerAuthFile (struct display *d, FILE ** file)
 		return FALSE;
 	} else {
 	    CleanUpFileName (d->name, cleanname, NAMELEN - 8);
+
+	    /* Make authDir if it doesn't already exist */
+	    r = CheckServerAuthDir(authDir, &statb, 0755);
+	    if (r < 0) {
+		return FALSE;
+	    }
+
 	    len = strlen (authDir) + strlen (authdir1) + strlen (authdir2)
 		+ strlen (cleanname) + 14;
 	    d->authFile = malloc (len);
@@ -305,35 +344,22 @@ MakeServerAuthFile (struct display *d, FILE ** file)
 		return FALSE;
 
 	    snprintf (d->authFile, len, "%s/%s", authDir, authdir1);
-	    r = stat(d->authFile, &statb);
+	    r = CheckServerAuthDir(d->authFile, &statb, 0700);
 	    if (r == 0) {
 		if (statb.st_uid != 0)
 		    (void) chown(d->authFile, 0, statb.st_gid);
 		if ((statb.st_mode & 0077) != 0)
 		    (void) chmod(d->authFile, statb.st_mode & 0700);
-	    } else {
-		if (errno == ENOENT) {
-		    r = mkdir(d->authFile, 0700);
-		    if (r < 0) {
-			LogError ("cannot make authentication directory %s: "
-				  "%s\n", d->authFile, _SysErrorMsg (errno));
-		    }
-		} else {
-		    LogError ("cannot access authentication directory %s: "
-			      "%s\n", d->authFile, _SysErrorMsg (errno));
-		}
-		if (r < 0) {
-		    free (d->authFile);
-		    d->authFile = NULL;
-		    return FALSE;
-		}
+	    } else if (r < 0) {
+		free (d->authFile);
+		d->authFile = NULL;
+		return FALSE;
 	    }
+
 	    snprintf (d->authFile, len, "%s/%s/%s",
 		      authDir, authdir1, authdir2);
-	    r = mkdir(d->authFile, 0700);
-	    if (r < 0  &&  errno != EEXIST) {
-		LogError ("cannot make authentication directory %s: %s\n",
-			  d->authFile, _SysErrorMsg (errno));
+	    r = CheckServerAuthDir(d->authFile, &statb, 0700);
+	    if (r < 0) {
 		free (d->authFile);
 		d->authFile = NULL;
 		return FALSE;
@@ -375,6 +401,9 @@ SaveServerAuthorizations (
     mode_t	mask;
     int		ret;
     int		i;
+    const char	dummy_auth[] = "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+		               "XXXXXXXXXXXXXXXXX"; /* 64 "X"s */
+    int		err = 0;
 
     mask = umask (0077);
     ret = MakeServerAuthFile(d, &auth_file);
@@ -382,16 +411,38 @@ SaveServerAuthorizations (
     if (!ret)
 	return FALSE;
     if (!auth_file) {
-	Debug ("Can't creat auth file %s\n", d->authFile);
-	LogError ("Cannot open server authorization file %s\n", d->authFile);
-	free (d->authFile);
-	d->authFile = NULL;
+	LogError ("cannot open server authorization file %s: %s\n",
+		  d->authFile, _SysErrorMsg (errno));
 	ret = FALSE;
     }
     else
     {
     	Debug ("File: %s auth: %p\n", d->authFile, auths);
 	ret = TRUE;
+	if (count == 0)
+	{
+		/*
+		 * This is a crude hack to determine whether we really can
+		 * write to the auth file even if we don't have real data
+		 * to write right now.
+		 */
+
+		/*
+		 * Write garbage data to file to provoke ENOSPC and other
+		 * errors.
+		 */
+		(void) fprintf (auth_file, "%s", dummy_auth);
+		(void) fflush (auth_file);
+		if (ferror (auth_file))
+		{
+		    err = errno;
+		    ret = FALSE;
+		}
+		/*
+		 * Rewind so that the garbage data is overwritten later.
+		 */
+		rewind(auth_file);
+	}
 	for (i = 0; i < count; i++)
 	{
 	    /*
@@ -400,17 +451,35 @@ SaveServerAuthorizations (
 	     * to the auth file so xrdb and setup programs don't fail.
 	     */
 	    if (auths[i]->data_length > 0)
-		if (!XauWriteAuth (auth_file, auths[i]) ||
-		    fflush (auth_file) == EOF)
+		if (!XauWriteAuth (auth_file, auths[i]))
 		{
-		    LogError ("Cannot write server authorization file %s\n",
-			      d->authFile);
+		    Debug ("XauWriteAuth() failed\n");
+		}
+		(void) fflush (auth_file);
+		if (ferror (auth_file))
+		{
+		    err = errno;
 		    ret = FALSE;
-		    free (d->authFile);
-		    d->authFile = NULL;
 		}
     	}
+	/*
+	 * XXX: This is not elegant, but stdio has no truncation function.
+	 */
+	if (ftruncate(fileno(auth_file), ftell(auth_file)))
+	{
+		Debug ("ftruncate() failed\n");
+	}
 	fclose (auth_file);
+
+    }
+    if (ret == FALSE)
+    {
+	LogError ("Cannot write to server authorization file %s%s%s\n",
+		  d->authFile,
+		  err ? ": " : "",
+		  err ? _SysErrorMsg (errno) : "");
+	free (d->authFile);
+	d->authFile = NULL;
     }
     return ret;
 }
@@ -496,12 +565,32 @@ static int
 openFiles (char *name, char *new_name, FILE **oldp, FILE **newp)
 {
 	mode_t	mask;
+	int newfd;
 
 	strcpy (new_name, name);
 	strcat (new_name, "-n");
+	/*
+	 * Set safe umask for file creation operations.
+	 */
 	mask = umask (0077);
+	/*
+	 * Unlink the authorization file we intend to create, and then open
+	 * it with O_CREAT | O_EXCL to avoid race-based symlink attacks.
+	 */
 	(void) unlink (new_name);
-	*newp = fopen (new_name, "w");
+	newfd = open (new_name, O_WRONLY | O_CREAT | O_EXCL, 0600);
+	if (newfd >= 0)
+	    *newp = fdopen (newfd, "w");
+	else
+	{
+	    LogError ("Cannot create file %s: %s\n", new_name,
+		      _SysErrorMsg (errno));
+	    *newp = NULL;
+	}
+	/*
+	 * There are no more attempts to create files after this point;
+	 * restore the original umask.
+	 */
 	(void) umask (mask);
 	if (!*newp) {
 		Debug ("can't open new file %s\n", new_name);
