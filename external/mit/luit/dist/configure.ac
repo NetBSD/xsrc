@@ -22,15 +22,25 @@ dnl
 dnl Process this file with autoconf to create configure.
 
 AC_PREREQ([2.57])
-AC_INIT(luit,[1.0.3], [https://bugs.freedesktop.org/enter_bug.cgi?product=xorg],luit)
-AM_INIT_AUTOMAKE([dist-bzip2])
+AC_INIT(luit,[1.0.5], [https://bugs.freedesktop.org/enter_bug.cgi?product=xorg],luit)
+AM_INIT_AUTOMAKE([foreign dist-bzip2])
 AM_MAINTAINER_MODE
+
+# Require xorg-macros: XORG_DEFAULT_OPTIONS
+m4_ifndef([XORG_MACROS_VERSION],
+          [m4_fatal([must install xorg-macros 1.4 or later before running autoconf/autogen])])
+XORG_MACROS_VERSION(1.4)
+XORG_DEFAULT_OPTIONS
 
 AM_CONFIG_HEADER(config.h)
 
 AC_PROG_CC
 AC_PROG_INSTALL
 AC_CANONICAL_HOST
+
+
+AC_CHECK_HEADERS([pty.h stropts.h sys/param.h sys/select.h])
+AC_CHECK_FUNCS([select grantpt])
 
 AC_CHECK_LIB(z, gzopen,, AC_MSG_ERROR([zlib not found]))
 
@@ -45,10 +55,18 @@ AC_SUBST([LOCALEALIASFILE])
 PKG_CHECK_MODULES(LUIT, x11 fontenc)
 
 case $host_os in
+    # darwin has poll() but can't be used to poll character devices (atleast through SnowLeopard)
+    darwin*)
+        OS_CFLAGS=
+        ;;
     linux*)
+        AC_CHECK_HEADERS([poll.h])
+        AC_CHECK_FUNCS([poll])
         OS_CFLAGS="-D_XOPEN_SOURCE=500"
         ;;
     *)
+        AC_CHECK_HEADERS([poll.h])
+        AC_CHECK_FUNCS([poll])
         OS_CFLAGS=
         ;;
 esac
@@ -56,8 +74,5 @@ esac
 LUIT_CFLAGS="$LUIT_CFLAGS $OS_CFLAGS"
 AC_SUBST(LUIT_CFLAGS)
 AC_SUBST(LUIT_LIBS)
-
-XORG_MANPAGE_SECTIONS
-XORG_RELEASE_VERSION
 
 AC_OUTPUT([Makefile])
