@@ -23,7 +23,8 @@ bin_PROGRAMS = luit
 
 LOCALEALIASFILE = @LOCALEALIASFILE@
 
-AM_CFLAGS = $(LUIT_CFLAGS) -DLOCALE_ALIAS_FILE=\"$(LOCALEALIASFILE)\"
+AM_CFLAGS = $(CWARNFLAGS) $(LUIT_CFLAGS) \
+	-DLOCALE_ALIAS_FILE=\"$(LOCALEALIASFILE)\"
 luit_LDADD = $(LUIT_LIBS)
 
 luit_SOURCES =	\
@@ -49,19 +50,22 @@ appmandir = $(APP_MAN_DIR)
 
 appman_DATA = $(appman_PRE:man=@APP_MAN_SUFFIX@)
 
-EXTRA_DIST = $(appman_PRE) ChangeLog
+EXTRA_DIST = $(appman_PRE) 
+MAINTAINERCLEANFILES = ChangeLog INSTALL
 CLEANFILES = $(appman_DATA)
 
 SED = sed
 
-MAINTAINERCLEANFILES = ChangeLog
 
-.PHONY: ChangeLog
+.PHONY: ChangeLog INSTALL
+
+INSTALL:
+	$(INSTALL_CMD)
 
 ChangeLog:
-	(GIT_DIR=$(top_srcdir)/.git git-log > .changelog.tmp && mv .changelog.tmp ChangeLog; rm -f .changelog.tmp) || (touch ChangeLog; echo 'git directory not found: installing possibly empty changelog.' >&2)
+	$(CHANGELOG_CMD)
 
-dist-hook: ChangeLog
+dist-hook: ChangeLog INSTALL
 
 # Strings to replace in man pages
 XORGRELSTRING = @PACKAGE_STRING@
@@ -84,4 +88,4 @@ MAN_SUBSTS = \
 SUFFIXES = .$(APP_MAN_SUFFIX) .man
 
 .man.$(APP_MAN_SUFFIX):
-	sed $(MAN_SUBSTS) < $< > $@
+	$(AM_V_GEN)sed $(MAN_SUBSTS) < $< > $@

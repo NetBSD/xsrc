@@ -1,3 +1,178 @@
+commit 3b2bbab48945e9dd8563f4ae047436c138e41789
+Author: Julien Cristau <jcristau@debian.org>
+Date:   Wed Feb 10 01:49:18 2010 +0100
+
+    Bump to 1.0.5
+
+commit 633a436d7b158f87d8973b5547236dc0ef485895
+Author: Julien Cristau <jcristau@debian.org>
+Date:   Wed Feb 10 01:48:44 2010 +0100
+
+    Bump xorg-macros requirement to 1.4 for XORG_INSTALL
+
+commit b7af1cef38d1995289acd1f2c13580b378ec0fc9
+Author: Julien Cristau <jcristau@debian.org>
+Date:   Tue Feb 2 14:45:17 2010 +0100
+
+    poll: check for POLLERR|POLLHUP in WaitForInput
+    
+    X.Org bug#26383 <http://bugs.freedesktop.org/26383>
+    
+    Acked-by: Juliusz Chroboczek <jch@pps.jussieu.fr>
+    Signed-off-by: Julien Cristau <jcristau@debian.org>
+
+commit 3fb0af21816b9f89c4b33e7cac5aad6d90bcc6c7
+Author: Jeremy Huddleston <jeremyhu@freedesktop.org>
+Date:   Tue Dec 22 11:02:51 2009 -0800
+
+    configure: Fix a linewrap that snuck in with copy/paste
+    
+    Signed-off-by: Jeremy Huddleston <jeremyhu@freedesktop.org>
+
+commit 5cb2d1e544ee22a29cfbc2c9729e2d043eb916b5
+Author: Jeremy Huddleston <jeremyhu@freedesktop.org>
+Date:   Tue Dec 22 10:58:07 2009 -0800
+
+    darwin: Don't use poll()
+    
+    Signed-off-by: Jeremy Huddleston <jeremyhu@freedesktop.org>
+
+commit 21e3e5b6fe0ed2e17c3fd403433e07350393cd1c
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Thu Nov 26 09:19:52 2009 -0500
+
+    Makefile.am: add ChangeLog and INSTALL on MAINTAINERCLEANFILES
+    
+    Now that the INSTALL file is generated.
+    Allows running make maintainer-clean.
+
+commit a8550d4f38259d207cb96c90f31d63a23951a176
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Wed Oct 28 14:09:07 2009 -0400
+
+    INSTALL, NEWS, README or AUTHORS files are missing/incorrect #24206
+    
+    Add missing INSTALL file. Use standard GNU file on building tarball
+    README may have been updated
+    Remove AUTHORS file as it is empty and no content available yet.
+    Remove NEWS file as it is empty and no content available yet.
+
+commit 4ddd9147cd27942c3cacd81d4fb3148fb5626100
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Tue Oct 27 15:07:24 2009 -0400
+
+    Deploy the new XORG_DEFAULT_OPTIONS #24242
+    
+    This macro aggregate a number of existing macros that sets commmon
+    X.Org components configuration options. It shields the configuration file from
+    future changes.
+
+commit ab0905fe39cf23855c3e0c319b96cdd773d9f756
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Mon Oct 26 22:08:38 2009 -0400
+
+    Makefile.am: ChangeLog not required: EXTRA_DIST or *CLEANFILES #24432
+    
+    ChangeLog filename is known to Automake and requires no further
+    coding in the makefile.
+
+commit dec37ff576b2d5728d8741eaa2195f129cfb990f
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Thu Oct 22 12:34:14 2009 -0400
+
+    .gitignore: use common defaults with custom section # 24239
+    
+    Using common defaults will reduce errors and maintenance.
+    Only the very small or inexistent custom section need periodic maintenance
+    when the structure of the component changes. Do not edit defaults.
+
+commit 587d1b5a0c7e164e3006022499b56f4a927a613c
+Author: Jeremy Huddleston <jeremyhu@freedesktop.org>
+Date:   Wed Oct 21 12:47:19 2009 -0700
+
+    This is not a GNU project, so declare it foreign.
+    
+    On Wed, 2009-10-21 at 13:36 +1000, Peter Hutterer wrote:
+    > On Tue, Oct 20, 2009 at 08:23:55PM -0700, Jeremy Huddleston wrote:
+    > > I noticed an INSTALL file in xlsclients and libXvMC today, and it
+    > > was quite annoying to work around since 'autoreconf -fvi' replaces
+    > > it and git wants to commit it.  Should these files even be in git?
+    > > Can I nuke them for the betterment of humanity and since they get
+    > > created by autoreconf anyways?
+    >
+    > See https://bugs.freedesktop.org/show_bug.cgi?id=24206
+    
+    As an interim measure, replace AM_INIT_AUTOMAKE([dist-bzip2]) with
+    AM_INIT_AUTOMAKE([foreign dist-bzip2]). This will prevent the generation
+    of the INSTALL file. It is also part of the 24206 solution.
+    
+    Signed-off-by: Jeremy Huddleston <jeremyhu@freedesktop.org>
+
+commit 6de92b1ddf17a16a8075ad3922da68e72dcc949f
+Author: Yaakov Selkowitz <yselkowitz@users.sourceforge.net>
+Date:   Tue Oct 6 13:28:58 2009 -0500
+
+    luit: Cygwin compatibility fix
+    
+    Cygwin has O_NOCTTY but not TIOCSCTTY, so there is no way for the tty
+    to become controlling this way.  Also, document the reason for calling
+    one right after the other.
+    
+    Signed-off-by: Yaakov Selkowitz <yselkowitz@users.sourceforge.net>
+    Reviewed-by: Alan Coopersmith <alan.coopersmith@sun.com>
+    Signed-off-by: Jon TURNEY <jon.turney@dronecode.org.uk>
+
+commit f5e4bc812cec6503722ee289a0cc1099ce6fb3f5
+Author: Alan Coopersmith <alan.coopersmith@sun.com>
+Date:   Thu Oct 1 18:14:18 2009 -0700
+
+    luit 1.0.4
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@sun.com>
+
+commit 61bb775852796628207a5062d8fdd8bcd6ec77bd
+Author: Alan Coopersmith <alan.coopersmith@sun.com>
+Date:   Thu Oct 1 18:01:27 2009 -0700
+
+    Migrate to xorg macros 1.3 & XORG_DEFAULT_OPTIONS
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@sun.com>
+
+commit 8f9d685e4bb91640fb01392c6d73e7d9e365b41b
+Author: Alan Coopersmith <alan.coopersmith@sun.com>
+Date:   Thu Oct 1 14:54:17 2009 -0700
+
+    Add README with pointers to mailing lists, bugzilla, & git
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@sun.com>
+
+commit 4823838f77ab03cccd07860fdf8002bc577e0f04
+Author: Alan Coopersmith <alan.coopersmith@sun.com>
+Date:   Thu Apr 9 14:55:03 2009 -0700
+
+    luit: Convert platform #ifdefs to configure tests for functions & headers
+    
+    Also check for __SVR4 in remaining SVR4 check to match Solaris compiler
+    default definition.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@sun.com>
+
+commit 638f4ac8e233973dc3c89d87cd9f6ac05489fef4
+Author: Paulo Cesar Pereira de Andrade <pcpa@mandriva.com.br>
+Date:   Fri Jan 16 20:01:11 2009 -0200
+
+    Ansification and compile warning fixes.
+    
+      This also uses XORG_CHANGELOG and XORG_CWARNFLAGS, corrects
+    make distcheck and most gcc 4.3 and sparse warnings.
+
+commit 51eae7b3a07faab716ea7ef3186cee658f393d04
+Author: Jeremy Huddleston <jeremyhu@freedesktop.org>
+Date:   Fri Apr 11 10:32:59 2008 -0700
+
+    Apple: Use secure tty
+    Thanks to Martin Otte for the patch
+
 commit 2547b637ab615884ea51458dfb793f1a70bc5201
 Author: Julien Cristau <jcristau@debian.org>
 Date:   Fri Feb 1 00:08:27 2008 +0100
