@@ -1,7 +1,5 @@
-# $Id: Makefile.am,v 1.1.1.1 2008/07/30 04:27:00 mrg Exp $
-# 
 #  Copyright 2005  Red Hat, Inc.
-# 
+#
 #  Permission to use, copy, modify, distribute, and sell this software and its
 #  documentation for any purpose is hereby granted without fee, provided that
 #  the above copyright notice appear in all copies and that both that
@@ -11,7 +9,7 @@
 #  specific, written prior permission.  Red Hat makes no
 #  representations about the suitability of this software for any purpose.  It
 #  is provided "as is" without express or implied warranty.
-# 
+#
 #  RED HAT DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE,
 #  INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO
 #  EVENT SHALL RED HAT BE LIABLE FOR ANY SPECIAL, INDIRECT OR
@@ -22,7 +20,7 @@
 
 bin_PROGRAMS = xlogo
 
-xlogo_CFLAGS = $(XLOGO_CFLAGS)
+AM_CFLAGS = $(XLOGO_CFLAGS)
 xlogo_LDADD = $(XLOGO_LIBS)
 
 xlogo_SOURCES =	\
@@ -34,43 +32,26 @@ xlogo_SOURCES =	\
         xlogo.c \
         xlogo.h
 
-if XAW_USE_XPRINT
-xlogo_SOURCES += \
-        print.c \
-        print.h 
-endif
-
 appman_PRE = \
         xlogo.man
 
-# App default files  (*.ad)
+# App default files
+DISTCHECK_CONFIGURE_FLAGS = --with-appdefaultdir=\$${datadir}/X11/app-defaults
 
 appdefaultdir = @appdefaultdir@
 
-
-APPDEFAULTFILES = \
-        XLogo \
-        XLogo-color
-
-
-SUFFIXES = .ad
-
-.ad:
-	cp $< $@
-
-appdefault_DATA = $(APPDEFAULTFILES)
-
-EXTRA_DIST = $(APPDEFAULTFILES:%=%.ad)
-
-CLEANFILES = $(APPDEFAULTFILES)
+dist_appdefault_DATA = \
+        app-defaults/XLogo \
+        app-defaults/XLogo-color
 
 
 appmandir = $(APP_MAN_DIR)
 
 appman_DATA = $(appman_PRE:man=@APP_MAN_SUFFIX@)
 
-EXTRA_DIST += $(appman_PRE)
-CLEANFILES += $(appman_DATA)
+EXTRA_DIST = $(appman_PRE)
+MAINTAINERCLEANFILES = ChangeLog INSTALL
+CLEANFILES = $(appman_DATA)
 
 SED = sed
 
@@ -91,7 +72,18 @@ MAN_SUBSTS = \
 	-e 's|__miscmansuffix__|$(MISC_MAN_SUFFIX)|g' \
 	-e 's|__filemansuffix__|$(FILE_MAN_SUFFIX)|g'
 
-SUFFIXES += .$(APP_MAN_SUFFIX) .man
+SUFFIXES = .$(APP_MAN_SUFFIX) .man
 
 .man.$(APP_MAN_SUFFIX):
-	sed $(MAN_SUBSTS) < $< > $@
+	$(AM_V_GEN)$(SED) $(MAN_SUBSTS) < $< > $@
+
+
+.PHONY: ChangeLog INSTALL
+
+INSTALL:
+	$(INSTALL_CMD)
+
+ChangeLog:
+	$(CHANGELOG_CMD)
+
+dist-hook: ChangeLog INSTALL
