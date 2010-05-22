@@ -44,19 +44,19 @@
 #define PACKAGE_NAME "xf86-input-mouse"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "xf86-input-mouse 1.4.0"
+#define PACKAGE_STRING "xf86-input-mouse 1.5.0"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "xf86-input-mouse"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "1.4.0"
+#define PACKAGE_VERSION "1.5.0"
 
 /* Major version of this package */
 #define PACKAGE_VERSION_MAJOR 1
 
 /* Minor version of this package */
-#define PACKAGE_VERSION_MINOR 4
+#define PACKAGE_VERSION_MINOR 5
 
 /* Patch version of this package */
 #define PACKAGE_VERSION_PATCHLEVEL 0
@@ -65,4 +65,4 @@
 #define STDC_HEADERS 1
 
 /* Version number of package */
-#define VERSION "1.4.0"
+#define VERSION "1.5.0"
