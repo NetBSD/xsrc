@@ -81,15 +81,15 @@ int printMode(struct drm_mode_modeinfo *mode)
 		printf("\tvrefresh    : %i\n", mode->vrefresh);
 		printf("\tflags       : %i\n", mode->flags);
 	} else {
-		printf("Mode: \"%s\" %ix%i %.0f\n", mode->name,
-				mode->hdisplay, mode->vdisplay, mode->vrefresh / 1000.0);
+		printf("Mode: \"%s\" %ix%i %i\n", mode->name,
+				mode->hdisplay, mode->vdisplay, mode->vrefresh);
 	}
 	return 0;
 }
 
 int printProperty(int fd, drmModeResPtr res, drmModePropertyPtr props, uint64_t value)
 {
-	const unsigned char *name = NULL;
+	const char *name = NULL;
 	int j;
 
 	printf("Property: %s\n", props->name);
@@ -101,7 +101,7 @@ int printProperty(int fd, drmModeResPtr res, drmModePropertyPtr props, uint64_t 
 	if (props->count_values) {
 		printf("\tvalues       :");
 		for (j = 0; j < props->count_values; j++)
-			printf(" %lld", props->values[j]);
+			printf(" %llu", props->values[j]);
 		printf("\n");
 	}
 
@@ -116,7 +116,7 @@ int printProperty(int fd, drmModeResPtr res, drmModePropertyPtr props, uint64_t 
 			printf("blob is %d length, %08X\n", blob->length, *(uint32_t *)blob->data);
 			drmModeFreePropertyBlob(blob);
 		} else {
-			printf("error getting blob %lld\n", value);
+			printf("error getting blob %llu\n", value);
 		}
 
 	} else {
@@ -169,7 +169,7 @@ int printConnector(int fd, drmModeResPtr res, drmModeConnectorPtr connector, uin
 
 	if (modes) {
 		for (i = 0; i < connector->count_modes; i++) {
-			mode = &connector->modes[i];
+			mode = (struct drm_mode_modeinfo *)&connector->modes[i];
 			printMode(mode);
 		}
 	}
