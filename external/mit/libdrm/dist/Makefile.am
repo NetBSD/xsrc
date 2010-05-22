@@ -18,13 +18,55 @@
 #  IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 #  CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-# eventually someone might want to build the kernel modules or tests from 
-# here too, but let's just do libdrm for now
-
 AUTOMAKE_OPTIONS = foreign
-SUBDIRS = libdrm shared-core tests
+
+DISTCHECK_CONFIGURE_FLAGS = --enable-nouveau-experimental-api --enable-radeon-experimental-api
 
 pkgconfigdir = @pkgconfigdir@
-pkgconfig_DATA = libdrm.pc libdrm_intel.pc
+pkgconfig_DATA = libdrm.pc
 
-EXTRA_DIST = libdrm.pc.in libdrm_intel.pc.in
+if HAVE_LIBKMS
+LIBKMS_SUBDIR = libkms
+endif
+
+if HAVE_INTEL
+INTEL_SUBDIR = intel
+endif
+
+if HAVE_NOUVEAU
+NOUVEAU_SUBDIR = nouveau
+endif
+
+if HAVE_RADEON
+RADEON_SUBDIR = radeon
+endif
+
+SUBDIRS = . $(LIBKMS_SUBDIR) $(INTEL_SUBDIR) $(NOUVEAU_SUBDIR) $(RADEON_SUBDIR) tests include
+
+libdrm_la_LTLIBRARIES = libdrm.la
+libdrm_ladir = $(libdir)
+libdrm_la_LDFLAGS = -version-number 2:4:0 -no-undefined
+libdrm_la_LIBADD = @CLOCK_LIB@
+
+libdrm_la_CPPFLAGS = -I$(top_srcdir)/include/drm
+
+libdrm_la_SOURCES =				\
+	xf86drm.c				\
+	xf86drmHash.c				\
+	xf86drmRandom.c				\
+	xf86drmSL.c				\
+	xf86drmMode.c				\
+	xf86atomic.h				\
+	libdrm_lists.h
+
+libdrmincludedir = ${includedir}
+libdrminclude_HEADERS = xf86drm.h xf86drmMode.h
+
+EXTRA_DIST = libdrm.pc.in include/drm/*
+
+copy-headers :
+	cp -r $(kernel_source)/usr/include/drm $(top_srcdir)/include
+
+commit-headers : copy-headers
+	git add include
+	git commit -am "Copy headers from kernel $$(GIT_DIR=$(kernel_source)/.git git describe)"
