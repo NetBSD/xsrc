@@ -1,6 +1,6 @@
                         The XFIXES Extension
 			    Version 4.0
-			 Document Revision 1
+			 Document Revision 2
 			     2006-12-14
 			    Keith Packard
 			  keithp@keithp.com
@@ -186,6 +186,11 @@ SelectCursorInput
 	assigned to the cursor image which identifies the image.  Cursors
 	with different serial numbers may have different images.  Timestamp
 	is the time of the cursor change.
+
+	Servers supporting the X Input Extension Version 2.0 or higher only
+	notify the clients of cursor change events for the ClientPointer, not
+	of any other master pointer (see Section 4.4. in the XI2 protocol
+	specificiation).
 
 GetCursorImage
 
@@ -537,6 +542,11 @@ HideCursor
 	When a client with outstanding cursor hiding requests
 	terminates its connection these requests will be deleted.
 
+	Servers supporting the X Input Extension Version 2.0 or higher hide
+	all visible cursors in response to a HideCursor request. If a master
+	pointer is created while the cursors are hidden, this master pointer's
+	cursor will be hidden as well.
+
 ShowCursor
 
 		window:			WINDOW
@@ -553,7 +563,9 @@ ShowCursor
 	If the client has made no outstanding HideCursor requests
 	a BadMatch error is generated.
 
-		
+	Servers supporting the X Input Extension Version 2.0 or higher show
+	all visible cursors in response to a ShowCursor request.
+
 99. Future compatibility
 
 This extension is not expected to remain fixed.  Future changes will
