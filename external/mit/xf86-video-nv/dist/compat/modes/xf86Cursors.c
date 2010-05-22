@@ -39,8 +39,7 @@
 #include "xf86RandR12.h"
 #include "xf86CursorPriv.h"
 #include "X11/extensions/render.h"
-#define DPMS_SERVER
-#include "X11/extensions/dpms.h"
+#include "X11/extensions/dpmsconst.h"
 #include "X11/Xatom.h"
 #ifdef RENDER
 #include "picturestr.h"
@@ -481,10 +480,10 @@ xf86_use_hw_cursor_argb (ScreenPtr screen, CursorPtr cursor)
     xf86CrtcConfigPtr   xf86_config = XF86_CRTC_CONFIG_PTR(scrn);
     xf86CursorInfoPtr	cursor_info = xf86_config->cursor_info;
     
+    ++cursor->refcnt;
     if (xf86_config->cursor)
 	FreeCursor (xf86_config->cursor, None);
     xf86_config->cursor = cursor;
-    ++cursor->refcnt;
     
     /* Make sure ARGB support is available */
     if ((cursor_info->Flags & HARDWARE_CURSOR_ARGB) == 0)
@@ -640,9 +639,11 @@ xf86_reload_cursors (ScreenPtr screen)
 	    (*cursor_info->LoadCursorARGB) (scrn, cursor);
 	else if (src)
 #endif
-	    (*cursor_info->LoadCursorImage)(cursor_info->pScrn, src);
+	    (*cursor_info->LoadCursorImage)(scrn, src);
 
-	(*cursor_info->SetCursorPosition)(cursor_info->pScrn, x, y);
+	x += scrn->frameX0 + cursor_screen_priv->HotX;
+	y += scrn->frameY0 + cursor_screen_priv->HotY;
+	(*cursor_info->SetCursorPosition)(scrn, x, y);
     }
 }
 
