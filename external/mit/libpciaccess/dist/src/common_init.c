@@ -91,6 +91,7 @@ pci_system_cleanup( void )
 	return;
     }
 
+    pci_io_cleanup();
 
     if ( pci_sys->devices ) {
 	for ( i = 0 ; i < pci_sys->num_devices ; i++ ) {

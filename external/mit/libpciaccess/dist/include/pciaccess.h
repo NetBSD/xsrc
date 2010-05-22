@@ -1,5 +1,6 @@
 /*
  * (C) Copyright IBM Corporation 2006
+ * Copyright 2009 Red Hat, Inc.
  * All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -130,6 +131,8 @@ struct pci_device *pci_device_next(struct pci_device_iterator *iter);
 
 struct pci_device *pci_device_find_by_slot(uint32_t domain, uint32_t bus,
     uint32_t dev, uint32_t func);
+
+struct pci_device *pci_device_get_parent_bridge(struct pci_device *dev);
 
 void pci_get_strings(const struct pci_id_match *m,
     const char **device_name, const char **vendor_name,
@@ -504,5 +507,23 @@ int  pci_device_vgaarb_trylock      (void);
 int  pci_device_vgaarb_unlock       (void);
 /* return the current device count + resource decodes for the device */
 int pci_device_vgaarb_get_info	    (struct pci_device *dev, int *vga_count, int *rsrc_decodes);
+
+/*
+ * I/O space access.
+ */
+
+struct pci_io_handle;
+
+struct pci_io_handle *pci_device_open_io(struct pci_device *dev, pciaddr_t base,
+					 pciaddr_t size);
+struct pci_io_handle *pci_legacy_open_io(struct pci_device *dev, pciaddr_t base,
+					 pciaddr_t size);
+void pci_device_close_io(struct pci_device *dev, struct pci_io_handle *handle);
+uint32_t pci_io_read32(struct pci_io_handle *handle, uint32_t reg);
+uint16_t pci_io_read16(struct pci_io_handle *handle, uint32_t reg);
+uint8_t pci_io_read8(struct pci_io_handle *handle, uint32_t reg);
+void pci_io_write32(struct pci_io_handle *handle, uint32_t reg, uint32_t data);
+void pci_io_write16(struct pci_io_handle *handle, uint32_t reg, uint16_t data);
+void pci_io_write8(struct pci_io_handle *handle, uint32_t reg, uint8_t data);
 
 #endif /* PCIACCESS_H */
