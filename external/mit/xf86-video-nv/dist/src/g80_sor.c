@@ -25,8 +25,7 @@
 #include "config.h"
 #endif
 
-#define DPMS_SERVER
-#include <X11/extensions/dpms.h>
+#include <X11/extensions/dpmsconst.h>
 #include <X11/Xatom.h>
 
 #include "g80_type.h"

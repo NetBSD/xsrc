@@ -27,8 +27,7 @@
 
 #include <unistd.h>
 
-#define DPMS_SERVER
-#include <X11/extensions/dpms.h>
+#include <X11/extensions/dpmsconst.h>
 #include <xf86_OSproc.h>
 
 #include "g80_type.h"
