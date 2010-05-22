@@ -31,6 +31,7 @@ from The Open Group.
 #endif
 
 #include <X11/X.h>
+#include <X11/Xlib.h>
 #include "servermd.h"
 #include "misc.h"
 #include "mi.h"

@@ -44,7 +44,7 @@ in this Software without prior written authorization from The Open Group.
 #include "opaque.h"
 #include "sleepuntil.h"
 #define _MULTIBUF_SERVER_	/* don't want Xlib structures */
-#include <X11/extensions/multibufst.h>
+#include <X11/extensions/multibufproto.h>
 
 #include <stdio.h>
 #if !defined(WIN32)
