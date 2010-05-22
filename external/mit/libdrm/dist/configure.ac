@@ -18,12 +18,13 @@
 #  IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 #  CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-AC_PREREQ(2.57)
-AC_INIT([libdrm], 2.4.11, [dri-devel@lists.sourceforge.net], libdrm)
+AC_PREREQ(2.60)
+AC_INIT([libdrm], 2.4.20, [dri-devel@lists.sourceforge.net], libdrm)
+AC_USE_SYSTEM_EXTENSIONS
 AC_CONFIG_SRCDIR([Makefile.am])
 AM_INIT_AUTOMAKE([dist-bzip2])
 
-AM_CONFIG_HEADER([libdrm/config.h])
+AM_CONFIG_HEADER([config.h])
 
 AC_DISABLE_STATIC
 AC_PROG_LIBTOOL
@@ -31,6 +32,7 @@ AC_PROG_CC
 
 AC_HEADER_STDC
 AC_SYS_LARGEFILE
+AC_FUNC_ALLOCA
 
 PKG_CHECK_MODULES(PTHREADSTUBS, pthread-stubs)
 AC_SUBST(PTHREADSTUBS_CFLAGS)
@@ -42,10 +44,31 @@ AC_ARG_ENABLE(udev,	AS_HELP_STRING([--enable-udev],
 				[Enable support for using udev instead of mknod (default: disabled)]),
 				[UDEV=$enableval], [UDEV=no])
 
+AC_ARG_ENABLE(libkms,
+	      AS_HELP_STRING([--disable-libkms],
+	      [Disable KMS mm abstraction library (default: enabled)]),
+	      [LIBKMS=$enableval], [LIBKMS=yes])
+
+AC_ARG_ENABLE(intel,
+	      AS_HELP_STRING([--disable-intel],
+	      [Enable support for intel's KMS API (default: auto)]),
+	      [INTEL=$enableval], [INTEL=auto])
+
+AC_ARG_ENABLE(radeon,
+	      AS_HELP_STRING([--disable-radeon],
+	      [Enable support for radeon's KMS API (default: auto)]),
+	      [RADEON=$enableval], [RADEON=auto])
+
+AC_ARG_ENABLE(vmwgfx-experimental-api,
+	      AS_HELP_STRING([--enable-vmwgfx-experimental-api],
+	      [Install vmwgfx's experimental kernel API header (default: disabled)]),
+	      [VMWGFX=$enableval], [VMWGFX=no])
+
 AC_ARG_ENABLE(nouveau-experimental-api,
 	      AS_HELP_STRING([--enable-nouveau-experimental-api],
 	      [Enable support for nouveau's experimental API (default: disabled)]),
 	      [NOUVEAU=$enableval], [NOUVEAU=no])
+
 
 dnl ===========================================================================
 dnl check compiler flags
@@ -123,7 +146,17 @@ if test "x$UDEV" = xyes; then
 	AC_DEFINE(UDEV, 1, [Have UDEV support])
 fi
 
+AM_CONDITIONAL(HAVE_LIBKMS, [test "x$LIBKMS" = xyes])
+
+AM_CONDITIONAL(HAVE_VMWGFX, [test "x$VMWGFX" = xyes])
+if test "x$VMWGFX" = xyes; then
+	AC_DEFINE(HAVE_VMWGFX, 1, [Have vmwgfx kernel headers])
+fi
+
 AM_CONDITIONAL(HAVE_NOUVEAU, [test "x$NOUVEAU" = xyes])
+if test "x$NOUVEAU" = xyes; then
+	AC_DEFINE(HAVE_NOUVEAU, 1, [Have nouveau (nvidia) support])
+fi
 
 PKG_CHECK_MODULES(CAIRO, cairo, [HAVE_CAIRO=yes], [HAVE_CAIRO=no])
 if test "x$HAVE_CAIRO" = xyes; then
@@ -138,17 +171,100 @@ if test "x$HAVE_LIBUDEV" = xyes; then
 fi
 AM_CONDITIONAL(HAVE_LIBUDEV, [test "x$HAVE_LIBUDEV" = xyes])
 
+if test "x$INTEL" != "xno" -o "x$RADEON" != "xno"; then
+    # Check for atomic intrinsics
+    AC_CACHE_CHECK([for native atomic primitives], drm_cv_atomic_primitives,
+    [
+	    drm_cv_atomic_primitives="none"
+
+	    AC_TRY_LINK([
+    int atomic_add(int i) { return __sync_fetch_and_add (&i, 1); }
+    int atomic_cmpxchg(int i, int j, int k) { return __sync_val_compare_and_swap (&i, j, k); }
+    ], [],
+	      drm_cv_atomic_primitives="Intel"
+	      )
+
+	    if test "x$drm_cv_atomic_primitives" = "xnone"; then
+		    AC_CHECK_HEADER([atomic_ops.h], drm_cv_atomic_primitives="libatomic-ops")
+	    fi
+
+	    # atomic functions defined in <atomic.h> & libc on Solaris
+	    if test "x$drm_cv_atomic_primitives" = "xnone"; then
+		    AC_CHECK_FUNC([atomic_cas_uint],
+				  drm_cv_atomic_primitives="Solaris")
+	    fi
+
+    ])
+    if test "x$drm_cv_atomic_primitives" = xIntel; then
+	    AC_DEFINE(HAVE_LIBDRM_ATOMIC_PRIMITIVES, 1,
+		      [Enable if your compiler supports the Intel __sync_* atomic primitives])
+    fi
+    if test "x$drm_cv_atomic_primitives" = "xlibatomic-ops"; then
+	    AC_DEFINE(HAVE_LIB_ATOMIC_OPS, 1, [Enable if you have libatomic-ops-dev installed])
+    fi
+
+    if test "x$drm_cv_atomic_primitives" = "xnone"; then
+           if test "x$INTEL" != "xauto"; then
+                   if test "x$INTEL" != "xno"; then
+                        AC_MSG_ERROR([libdrm_intel depends upon atomic operations, which were not found for your compiler/cpu. Try compiling with -march=native, or install the libatomics-op-dev package, or, failing both of those, disable support for Intel GPUs by passing --disable-intel to ./configure])
+                   fi
+           else
+                   AC_MSG_WARN([Disabling libdrm_intel. It depends on atomic operations, which were not found for your compiler/cpu. Try compiling with -march=native, or install the libatomics-op-dev package.])
+                   INTEL=no
+           fi
+           if test "x$RADEON" != "xauto"; then
+                   if test "x$RADEON" != "xno"; then
+                        AC_MSG_ERROR([libdrm_radeon depends upon atomic operations, which were not found for your compiler/cpu. Try compiling with -march=native, or install the libatomics-op-dev package, or, failing both of those, disable support for Radeon support by passing --disable-radeon to ./configure])
+                   fi
+           else
+                   AC_MSG_WARN([Disabling libdrm_radeon. It depends on atomic operations, which were not found for your compiler/cpu. Try compiling with -march=native, or install the libatomics-op-dev package.])
+                   RADEON=no
+           fi
+
+    else
+           if test "x$INTEL" != "xno"; then
+                   INTEL=yes
+           fi
+           if test "x$RADEON" != "xno"; then
+                   RADEON=yes
+           fi
+    fi
+fi
+
+AM_CONDITIONAL(HAVE_INTEL, [test "x$INTEL" != "xno"])
+AM_CONDITIONAL(HAVE_RADEON, [test "x$RADEON" != "xno"])
+
+AC_ARG_WITH([kernel-source],
+            [AS_HELP_STRING([--with-kernel-source],
+              [specify path to linux kernel source])],
+	    [kernel_source="$with_kernel_source"])
+AC_SUBST(kernel_source)
 
 AC_SUBST(WARN_CFLAGS)
 AC_OUTPUT([
 	Makefile
-	libdrm/Makefile
-	libdrm/intel/Makefile
-	libdrm/nouveau/Makefile
-	libdrm/nouveau/libdrm_nouveau.pc
-	shared-core/Makefile
+	libkms/Makefile
+	libkms/libkms.pc
+	intel/Makefile
+	intel/libdrm_intel.pc
+	radeon/Makefile
+	radeon/libdrm_radeon.pc
+	nouveau/Makefile
+	nouveau/libdrm_nouveau.pc
 	tests/Makefile
 	tests/modeprint/Makefile
 	tests/modetest/Makefile
-	libdrm.pc
-	libdrm_intel.pc])
+	tests/kmstest/Makefile
+	include/Makefile
+	include/drm/Makefile
+	libdrm.pc])
+
+echo ""
+echo "$PACKAGE_STRING will be compiled with:"
+echo ""
+echo "  libkms         $LIBKMS"
+echo "  Intel API      $INTEL"
+echo "  vmwgfx API     $VMWGFX"
+echo "  Radeon API     $RADEON"
+echo "  Nouveau API    $NOUVEAU"
+echo ""

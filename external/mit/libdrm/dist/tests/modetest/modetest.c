@@ -46,10 +46,13 @@
 #include <unistd.h>
 #include <string.h>
 #include <errno.h>
+#include <sys/poll.h>
+#include <sys/time.h>
 
 #include "xf86drm.h"
 #include "xf86drmMode.h"
 #include "intel_bufmgr.h"
+#include "i915_drm.h"
 
 #ifdef HAVE_CAIRO
 #include <math.h>
@@ -140,9 +143,9 @@ void dump_encoders(void)
 
 void dump_mode(drmModeModeInfo *mode)
 {
-	printf("  %s %.02f %d %d %d %d %d %d %d %d\n",
+	printf("  %s %d %d %d %d %d %d %d %d %d\n",
 	       mode->name,
-	       (float)mode->vrefresh / 1000,
+	       mode->vrefresh,
 	       mode->hdisplay,
 	       mode->hsync_start,
 	       mode->hsync_end,
@@ -172,7 +175,7 @@ void dump_connectors(void)
 	int i, j;
 
 	printf("Connectors:\n");
-	printf("id\tencoder\tstatus\t\ttype\tsize (mm)\tmodes\n");
+	printf("id\tencoder\tstatus\t\ttype\tsize (mm)\tmodes\tencoders\n");
 	for (i = 0; i < resources->count_connectors; i++) {
 		connector = drmModeGetConnector(fd, resources->connectors[i]);
 
@@ -182,13 +185,17 @@ void dump_connectors(void)
 			continue;
 		}
 
-		printf("%d\t%d\t%s\t%s\t%dx%d\t\t%d\n",
+		printf("%d\t%d\t%s\t%s\t%dx%d\t\t%d\t",
 		       connector->connector_id,
 		       connector->encoder_id,
 		       connector_status_str(connector->connection),
 		       connector_type_str(connector->connector_type),
 		       connector->mmWidth, connector->mmHeight,
 		       connector->count_modes);
+
+		for (j = 0; j < connector->count_encoders; j++)
+			printf("%s%d", j > 0 ? ", " : "", connector->encoders[j]);
+		printf("\n");
 
 		if (!connector->count_modes)
 			continue;
@@ -199,10 +206,10 @@ void dump_connectors(void)
 		for (j = 0; j < connector->count_modes; j++)
 			dump_mode(&connector->modes[j]);
 
-		drmModeFreeConnector(connector);
-
 		printf("  props:\n");
 		dump_props(connector);
+
+		drmModeFreeConnector(connector);
 	}
 	printf("\n");
 }
@@ -249,9 +256,10 @@ void dump_framebuffers(void)
 				resources->fbs[i], strerror(errno));
 			continue;
 		}
-		printf("%d\t(%dx%d)\t%d\n",
+		printf("%u\t(%ux%u)\t%u\n",
 		       fb->fb_id,
-		       fb->width, fb->height);
+		       fb->width, fb->height,
+		       fb->pitch);
 
 		drmModeFreeFB(fb);
 	}
@@ -266,18 +274,22 @@ void dump_framebuffers(void)
  * can bind it with a free crtc.
  */
 struct connector {
-	int id;
+	uint32_t id;
 	char mode_str[64];
 	drmModeModeInfo *mode;
 	drmModeEncoder *encoder;
 	int crtc;
+	unsigned int fb_id[2], current_fb_id;
+	struct timeval start;
+
+	int swap_count;
 };	
 
 static void
 connector_find_mode(struct connector *c)
 {
 	drmModeConnector *connector;
-	int i, j, size, ret, width, height;
+	int i, j;
 
 	/* First, find the connector & mode */
 	c->mode = NULL;
@@ -348,7 +360,7 @@ create_test_buffer(drm_intel_bufmgr *bufmgr,
 {
 	drm_intel_bo *bo;
 	unsigned int *fb_ptr;
-	int size, ret, i, stride;
+	int size, i, stride;
 	div_t d;
 	cairo_surface_t *surface;
 	cairo_t *cr;
@@ -447,7 +459,7 @@ create_test_buffer(drm_intel_bufmgr *bufmgr,
 		d = div(i, width);
 		fb_ptr[i] = 0x00130502 * (d.quot >> 6) + 0x000a1120 * (d.rem >> 6);
 	}
-	drm_intel_bo_unmap(bo);
+	drm_intel_gem_bo_unmap_gtt(bo);
 
 	*bo_out = bo;
 	*stride_out = stride;
@@ -457,16 +469,77 @@ create_test_buffer(drm_intel_bufmgr *bufmgr,
 
 #endif
 
-static void
-set_mode(struct connector *c, int count)
+static int
+create_grey_buffer(drm_intel_bufmgr *bufmgr,
+		   int width, int height, int *stride_out, drm_intel_bo **bo_out)
 {
-	drmModeConnector *connector;
-	drmModeEncoder *encoder = NULL;
-	struct drm_mode_modeinfo *mode = NULL;
-	drm_intel_bufmgr *bufmgr;
 	drm_intel_bo *bo;
-	unsigned int fb_id;
-	int i, j, ret, width, height, x, stride;
+	int size, ret, stride;
+
+	/* Mode size at 32 bpp */
+	stride = width * 4;
+	size = stride * height;
+
+	bo = drm_intel_bo_alloc(bufmgr, "frontbuffer", size, 4096);
+	if (!bo) {
+		fprintf(stderr, "failed to alloc buffer: %s\n",
+			strerror(errno));
+		return -1;
+	}
+
+	ret = drm_intel_gem_bo_map_gtt(bo);
+	if (ret) {
+		fprintf(stderr, "failed to GTT map buffer: %s\n",
+			strerror(errno));
+		return -1;
+	}
+
+	memset(bo->virtual, 0x77, size);
+	drm_intel_gem_bo_unmap_gtt(bo);
+
+	*bo_out = bo;
+	*stride_out = stride;
+
+	return 0;
+}
+
+void
+page_flip_handler(int fd, unsigned int frame,
+		  unsigned int sec, unsigned int usec, void *data)
+{
+	struct connector *c;
+	unsigned int new_fb_id;
+	struct timeval end;
+	double t;
+
+	c = data;
+	if (c->current_fb_id == c->fb_id[0])
+		new_fb_id = c->fb_id[1];
+	else
+		new_fb_id = c->fb_id[0];
+			
+	drmModePageFlip(fd, c->crtc, new_fb_id,
+			DRM_MODE_PAGE_FLIP_EVENT, c);
+	c->current_fb_id = new_fb_id;
+	c->swap_count++;
+	if (c->swap_count == 60) {
+		gettimeofday(&end, NULL);
+		t = end.tv_sec + end.tv_usec * 1e-6 -
+			(c->start.tv_sec + c->start.tv_usec * 1e-6);
+		fprintf(stderr, "freq: %.02fHz\n", c->swap_count / t);
+		c->swap_count = 0;
+		c->start = end;
+	}
+}
+
+static void
+set_mode(struct connector *c, int count, int page_flip)
+{
+	drm_intel_bufmgr *bufmgr;
+	drm_intel_bo *bo, *other_bo;
+	unsigned int fb_id, other_fb_id;
+	int i, ret, width, height, x, stride;
+	drmEventContext evctx;
 
 	width = 0;
 	height = 0;
@@ -497,7 +570,6 @@ set_mode(struct connector *c, int count)
 
 	x = 0;
 	for (i = 0; i < count; i++) {
-		int crtc_id;
 		if (c[i].mode == NULL)
 			continue;
 
@@ -513,11 +585,80 @@ set_mode(struct connector *c, int count)
 			return;
 		}
 	}
+
+	if (!page_flip)
+		return;
+
+	if (create_grey_buffer(bufmgr, width, height, &stride, &other_bo))
+		return;
+
+	ret = drmModeAddFB(fd, width, height, 32, 32, stride, other_bo->handle,
+			   &other_fb_id);
+	if (ret) {
+		fprintf(stderr, "failed to add fb: %s\n", strerror(errno));
+		return;
+	}
+
+	for (i = 0; i < count; i++) {
+		if (c[i].mode == NULL)
+			continue;
+
+		drmModePageFlip(fd, c[i].crtc, other_fb_id,
+				DRM_MODE_PAGE_FLIP_EVENT, &c[i]);
+		gettimeofday(&c[i].start, NULL);
+		c[i].swap_count = 0;
+		c[i].fb_id[0] = fb_id;
+		c[i].fb_id[1] = other_fb_id;
+		c[i].current_fb_id = fb_id;
+	}
+
+	memset(&evctx, 0, sizeof evctx);
+	evctx.version = DRM_EVENT_CONTEXT_VERSION;
+	evctx.vblank_handler = NULL;
+	evctx.page_flip_handler = page_flip_handler;
+	
+	while (1) {
+#if 0
+		struct pollfd pfd[2];
+
+		pfd[0].fd = 0;
+		pfd[0].events = POLLIN;
+		pfd[1].fd = fd;
+		pfd[1].events = POLLIN;
+
+		if (poll(pfd, 2, -1) < 0) {
+			fprintf(stderr, "poll error\n");
+			break;
+		}
+
+		if (pfd[0].revents)
+			break;
+#else
+		struct timeval timeout = { .tv_sec = 3, .tv_usec = 0 };
+		fd_set fds;
+		int ret;
+
+		FD_ZERO(&fds);
+		FD_SET(0, &fds);
+		FD_SET(fd, &fds);
+		ret = select(fd + 1, &fds, NULL, NULL, &timeout);
+
+		if (ret <= 0) {
+			fprintf(stderr, "select timed out or error (ret %d)\n",
+				ret);
+			continue;
+		} else if (FD_ISSET(0, &fds)) {
+			break;
+		}
+#endif
+
+		drmHandleEvent(fd, &evctx);
+	}
 }
 
 extern char *optarg;
 extern int optind, opterr, optopt;
-static char optstr[] = "ecpmfs:";
+static char optstr[] = "ecpmfs:v";
 
 void usage(char *name)
 {
@@ -527,6 +668,7 @@ void usage(char *name)
 	fprintf(stderr, "\t-p\tlist CRTCs (pipes)\n");
 	fprintf(stderr, "\t-m\tlist modes\n");
 	fprintf(stderr, "\t-f\tlist framebuffers\n");
+	fprintf(stderr, "\t-v\ttest vsynced page flipping\n");
 	fprintf(stderr, "\t-s <connector_id>:<mode>\tset a mode\n");
 	fprintf(stderr, "\t-s <connector_id>@<crtc_id>:<mode>\tset a mode\n");
 	fprintf(stderr, "\n\tDefault is to dump all info.\n");
@@ -535,13 +677,31 @@ void usage(char *name)
 
 #define dump_resource(res) if (res) dump_##res()
 
+static int page_flipping_supported(int fd)
+{
+	int ret, value;
+	struct drm_i915_getparam gp;
+
+	gp.param = I915_PARAM_HAS_PAGEFLIPPING;
+	gp.value = &value;
+
+	ret = drmCommandWriteRead(fd, DRM_I915_GETPARAM, &gp, sizeof(gp));
+	if (ret) {
+		fprintf(stderr, "drm_i915_getparam: %m\n");
+		return 0;
+	}
+
+	return *gp.value;
+}
+
 int main(int argc, char **argv)
 {
 	int c;
 	int encoders = 0, connectors = 0, crtcs = 0, framebuffers = 0;
-	char *modules[] = { "i915", "radeon" };
-	char *modeset = NULL, *mode, *connector;
-	int i, connector_id, count = 0;
+	int test_vsync = 0;
+	char *modules[] = { "i915", "radeon", "nouveau" };
+	char *modeset = NULL;
+	int i, count = 0;
 	struct connector con_args[2];
 	
 	opterr = 0;
@@ -562,16 +722,19 @@ int main(int argc, char **argv)
 		case 'f':
 			framebuffers = 1;
 			break;
+		case 'v':
+			test_vsync = 1;
+			break;
 		case 's':
 			modeset = strdup(optarg);
 			con_args[count].crtc = -1;
 			if (sscanf(optarg, "%d:%64s",
 				   &con_args[count].id,
-				   &con_args[count].mode_str) != 2 &&
+				   con_args[count].mode_str) != 2 &&
 			    sscanf(optarg, "%d@%d:%64s",
 				   &con_args[count].id,
 				   &con_args[count].crtc,
-				   &con_args[count].mode_str) != 3)
+				   con_args[count].mode_str) != 3)
 				usage(argv[0]);
 			count++;				      
 			break;
@@ -595,6 +758,11 @@ int main(int argc, char **argv)
 		}
 	}
 
+	if (test_vsync && !page_flipping_supported(fd)) {
+		fprintf(stderr, "page flipping not supported by drm.\n");
+		return -1;
+	}
+
 	if (i == ARRAY_SIZE(modules)) {
 		fprintf(stderr, "failed to load any modules, aborting.\n");
 		return -1;
@@ -614,7 +782,7 @@ int main(int argc, char **argv)
 	dump_resource(framebuffers);
 
 	if (count > 0) {
-		set_mode(con_args, count);
+		set_mode(con_args, count, test_vsync);
 		getchar();
 	}
 

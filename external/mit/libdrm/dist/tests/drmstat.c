@@ -28,6 +28,8 @@
  * 
  */
 
+#include "config.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -39,7 +41,15 @@
 #include <errno.h>
 #include <signal.h>
 #include <fcntl.h>
+#ifdef HAVE_ALLOCA_H
+# include <alloca.h>
+#endif
 #include "xf86drm.h"
+
+/* Support gcc's __FUNCTION__ for people using other compilers */
+#if !defined(__GNUC__) && !defined(__FUNCTION__)
+# define __FUNCTION__ __func__ /* C99 */
+#endif
 
 int sigio_fd;
 

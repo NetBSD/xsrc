@@ -1,16 +1,23 @@
-AM_CPPFLAGS = \
-	-I $(top_srcdir)/shared-core \
-	-I $(top_srcdir)/libdrm
+NULL:=#
 
-LDADD = $(top_builddir)/libdrm/libdrm.la
+AM_CPPFLAGS = \
+	-I $(top_srcdir)/include/drm \
+	-I $(top_srcdir)
+
+LDADD = $(top_builddir)/libdrm.la
 
 noinst_PROGRAMS = \
 	dristat \
 	drmstat
 
-SUBDIRS = \
-	modeprint \
-	modetest
+SUBDIRS =
+
+if HAVE_LIBKMS
+SUBDIRS += kmstest
+endif
+
+if HAVE_INTEL
+endif
 
 if HAVE_LIBUDEV
 
@@ -21,7 +28,7 @@ libdrmtest_la_SOURCES = \
 	drmtest.h
 
 libdrmtest_la_LIBADD = \
-	$(top_builddir)/libdrm/libdrm.la \
+	$(top_builddir)/libdrm.la \
 	$(LIBUDEV_LIBS)
 
 LDADD += libdrmtest.la
@@ -37,14 +44,25 @@ TESTS =						\
 	getstats				\
 	setversion				\
 	updatedraw				\
+	name_from_fd				\
+	$(NULL)
+
+if HAVE_INTEL
+SUBDIRS += \
+	modeprint				\
+	modetest				\
+	$(NULL)
+
+TESTS +=					\
 	gem_basic				\
 	gem_flink				\
 	gem_readwrite				\
-	gem_mmap
+	gem_mmap				\
+	$(NULL)
+endif
 
 EXTRA_PROGRAMS = $(TESTS)
 
 endif
 
 CLEANFILES = $(EXTRA_PROGRAMS) $(EXTRA_LTLIBRARIES)
-
