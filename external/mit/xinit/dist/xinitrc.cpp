@@ -1,5 +1,4 @@
 XCOMM!SHELL_CMD
-XCOMM $Xorg: xinitrc.cpp,v 1.3 2000/08/17 19:54:30 cpqbld Exp $
 
 userresources=$HOME/.Xresources
 usermodmap=$HOME/.Xmodmap
