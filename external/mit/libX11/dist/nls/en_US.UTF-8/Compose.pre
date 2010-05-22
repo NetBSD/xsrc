@@ -1,7 +1,6 @@
 XCOMM UTF-8 (Unicode) compose sequence
 XCOMM David.Monniaux@ens.fr
 XCOMM
-XCOMM $XFree86: xc/nls/Compose/en_US.UTF-8,v 1.11 2004/01/06 13:14:04 pascal Exp $
 
 XCOMM Part 1 - Manual definitions
 
@@ -217,6 +216,9 @@ XCOMM Other symbols
 
 <Multi_key> <C> <C> <C> <P>             : "☭"   U262D # HAMMER AND SICKLE
 <Multi_key> <less> <3>                  : "♥"   U2665 # BLACK HEART SUIT
+
+<Multi_key> <colon> <parenright>        : "☺"   U263A # WHITE SMILING FACE
+<Multi_key> <colon> <parenleft>         : "☹"   U2639 # WHITE FROWNING FACE
 
 XCOMM Part 2
 
@@ -4150,6 +4152,8 @@ XCOMM Part 3
 <Multi_key> <KP_Divide> <rightarrow> 	: "↛"   U219B # RIGHTWARDS ARROW WITH STROKE
 <Multi_key> <slash> <U2194>  	: "↮"   U21AE # LEFT RIGHT ARROW WITH STROKE
 <Multi_key> <KP_Divide> <U2194> 	: "↮"   U21AE # LEFT RIGHT ARROW WITH STROKE
+<Multi_key> <less> <minus> 	: "←" U2190 # LEFTWARDS ARROW
+<Multi_key> <minus> <greater> 	: "→" U2192 # RIGHTWARDS ARROW
 <Multi_key> <U2203> <U0338> 	: "∄"   U2204 # THERE DOES NOT EXIST
 <Multi_key> <U2208> <U0338> 	: "∉"   U2209 # NOT AN ELEMENT OF
 <Multi_key> <U220B> <U0338> 	: "∌"   U220C # DOES NOT CONTAIN AS MEMBER
@@ -5162,3 +5166,208 @@ XCOMM
 <dead_ogonek> <dead_macron> <o>       : "ǭ"   U01ED               # LATIN SMALL LETTER O WITH OGONEK AND MACRON
 <dead_tilde> <dead_macron> <O> 	      : "Ȭ"   U022C               # LATIN CAPITAL LETTER O WITH TILDE AND MACRON
 <dead_tilde> <dead_macron> <o> 	      : "ȭ"   U022D               # LATIN SMALL LETTER O WITH TILDE AND MACRON
+
+XCOMM
+XCOMM Cyrillic NFDs
+XCOMM
+
+<dead_doublegrave> <Cyrillic_a>			: "а̏"		# CYRILLIC SMALL LETTER A WITH COMBINING DOUBLE GRAVE ACCENT
+<Multi_key> <grave> <grave> <Cyrillic_a>	: "а̏"		# CYRILLIC SMALL LETTER A WITH COMBINING DOUBLE GRAVE ACCENT
+
+<dead_invertedbreve> <Cyrillic_a>		: "а̑"		# CYRILLIC SMALL LETTER A WITH COMBINING INVERTED BREVE
+
+<dead_grave> <Cyrillic_a>			: "а̀"		# CYRILLIC SMALL LETTER A WITH COMBINING GRAVE ACCENT
+<Multi_key> <grave> <Cyrillic_a>		: "а̀"		# CYRILLIC SMALL LETTER A WITH COMBINING GRAVE ACCENT
+
+<dead_acute> <Cyrillic_a>			: "а́"		# CYRILLIC SMALL LETTER A WITH COMBINING ACUTE ACCENT
+<Multi_key> <acute> <Cyrillic_a>		: "а́"		# CYRILLIC SMALL LETTER A WITH COMBINING ACUTE ACCENT
+<Multi_key> <apostrophe> <Cyrillic_a>		: "а́"		# CYRILLIC SMALL LETTER A WITH COMBINING ACUTE ACCENT
+
+<dead_macron> <Cyrillic_a>			: "а̄"		# CYRILLIC SMALL LETTER A WITH COMBINING MACRON
+<Multi_key> <macron> <Cyrillic_a>		: "а̄"		# CYRILLIC SMALL LETTER A WITH COMBINING MACRON
+<Multi_key> <underscore> <Cyrillic_a>		: "а̄"		# CYRILLIC SMALL LETTER A WITH COMBINING MACRON
+
+<dead_circumflex> <Cyrillic_a>			: "а̂"		# CYRILLIC SMALL LETTER A WITH COMBINING CIRCUMFLEX ACCENT
+<Multi_key> <asciicircum> <Cyrillic_a>		: "а̂"		# CYRILLIC SMALL LETTER A WITH COMBINING CIRCUMFLEX ACCENT
+
+<dead_doublegrave> <Cyrillic_A>			: "А̏"		# CYRILLIC CAPITAL LETTER A WITH COMBINING DOUBLE GRAVE ACCENT
+<Multi_key> <grave> <grave> <Cyrillic_A>	: "А̏"		# CYRILLIC CAPITAL LETTER A WITH COMBINING DOUBLE GRAVE ACCENT
+
+<dead_invertedbreve> <Cyrillic_A>		: "А̑"		# CYRILLIC CAPITAL LETTER A WITH COMBINING INVERTED BREVE
+
+<dead_grave> <Cyrillic_A>			: "А̀"		# CYRILLIC CAPITAL LETTER A WITH COMBINING GRAVE ACCENT
+<Multi_key> <grave> <Cyrillic_A>		: "А̀"		# CYRILLIC CAPITAL LETTER A WITH COMBINING GRAVE ACCENT
+
+<dead_acute> <Cyrillic_A>			: "А́"		# CYRILLIC CAPITAL LETTER A WITH COMBINING ACUTE ACCENT
+<Multi_key> <acute> <Cyrillic_A>		: "А́"		# CYRILLIC CAPITAL LETTER A WITH COMBINING ACUTE ACCENT
+<Multi_key> <apostrophe> <Cyrillic_A>		: "А́"		# CYRILLIC CAPITAL LETTER A WITH COMBINING ACUTE ACCENT
+
+<dead_macron> <Cyrillic_A>			: "А̄"		# CYRILLIC CAPITAL LETTER A WITH COMBINING MACRON
+<Multi_key> <macron> <Cyrillic_A>		: "А̄"		# CYRILLIC CAPITAL LETTER A WITH COMBINING MACRON
+<Multi_key> <underscore> <Cyrillic_A>		: "А̄"		# CYRILLIC CAPITAL LETTER A WITH COMBINING MACRON
+
+<dead_circumflex> <Cyrillic_A>			: "А̂"		# CYRILLIC CAPITAL LETTER A WITH COMBINING CIRCUMFLEX ACCENT
+<Multi_key> <asciicircum> <Cyrillic_A>		: "А̂"		# CYRILLIC CAPITAL LETTER A WITH COMBINING CIRCUMFLEX ACCENT
+
+<dead_doublegrave> <Cyrillic_ie>		: "е̏"		# CYRILLIC SMALL LETTER IE WITH COMBINING DOUBLE GRAVE ACCENT
+<Multi_key> <grave> <grave> <Cyrillic_ie>	: "е̏"		# CYRILLIC SMALL LETTER IE WITH COMBINING DOUBLE GRAVE ACCENT
+
+<dead_invertedbreve> <Cyrillic_ie>		: "е̑"		# CYRILLIC SMALL LETTER IE WITH COMBINING INVERTED BREVE
+
+<dead_acute> <Cyrillic_ie>			: "е́"		# CYRILLIC SMALL LETTER IE WITH COMBINING ACUTE ACCENT
+<Multi_key> <acute> <Cyrillic_ie>		: "е́"		# CYRILLIC SMALL LETTER IE WITH COMBINING ACUTE ACCENT
+<Multi_key> <apostrophe> <Cyrillic_ie>		: "е́"		# CYRILLIC SMALL LETTER IE WITH COMBINING ACUTE ACCENT
+
+<dead_macron> <Cyrillic_ie>			: "е̄"		# CYRILLIC SMALL LETTER IE WITH COMBINING MACRON
+<Multi_key> <macron> <Cyrillic_ie>		: "е̄"		# CYRILLIC SMALL LETTER IE WITH COMBINING MACRON
+<Multi_key> <underscore> <Cyrillic_ie>		: "е̄"		# CYRILLIC SMALL LETTER IE WITH COMBINING MACRON
+
+<dead_circumflex> <Cyrillic_ie>			: "е̂"		# CYRILLIC SMALL LETTER IE WITH COMBINING CIRCUMFLEX ACCENT
+<Multi_key> <asciicircum> <Cyrillic_ie>		: "е̂"		# CYRILLIC SMALL LETTER IE WITH COMBINING CIRCUMFLEX ACCENT
+
+<dead_doublegrave> <Cyrillic_IE>		: "Е̏"		# CYRILLIC CAPITAL LETTER IE WITH COMBINING DOUBLE GRAVE ACCENT
+<Multi_key> <grave> <grave> <Cyrillic_IE>	: "Е̏"		# CYRILLIC CAPITAL LETTER IE WITH COMBINING DOUBLE GRAVE ACCENT
+
+<dead_invertedbreve> <Cyrillic_IE>		: "Е̑"		# CYRILLIC CAPITAL LETTER IE WITH COMBINING INVERTED BREVE
+
+<dead_acute> <Cyrillic_IE>			: "Е́"		# CYRILLIC CAPITAL LETTER IE WITH COMBINING ACUTE ACCENT
+<Multi_key> <acute> <Cyrillic_IE>		: "Е́"		# CYRILLIC CAPITAL LETTER IE WITH COMBINING ACUTE ACCENT
+<Multi_key> <apostrophe> <Cyrillic_IE>		: "Е́"		# CYRILLIC CAPITAL LETTER IE WITH COMBINING ACUTE ACCENT
+
+<dead_macron> <Cyrillic_IE>			: "Е̄"		# CYRILLIC CAPITAL LETTER IE WITH COMBINING MACRON
+<Multi_key> <macron> <Cyrillic_IE>		: "Е̄"		# CYRILLIC CAPITAL LETTER IE WITH COMBINING MACRON
+<Multi_key> <underscore> <Cyrillic_IE>		: "Е̄"		# CYRILLIC CAPITAL LETTER IE WITH COMBINING MACRON
+
+<dead_circumflex> <Cyrillic_IE>			: "Е̂"		# CYRILLIC CAPITAL LETTER IE WITH COMBINING CIRCUMFLEX ACCENT
+<Multi_key> <asciicircum> <Cyrillic_IE>		: "Е̂"		# CYRILLIC CAPITAL LETTER IE WITH COMBINING CIRCUMFLEX ACCENT
+
+<dead_doublegrave> <Cyrillic_i>			: "и̏"		# CYRILLIC SMALL LETTER I WITH COMBINING DOUBLE GRAVE ACCENT
+<Multi_key> <grave> <grave> <Cyrillic_i>	: "и̏"		# CYRILLIC SMALL LETTER I WITH COMBINING DOUBLE GRAVE ACCENT
+
+<dead_invertedbreve> <Cyrillic_i>		: "и̑"		# CYRILLIC SMALL LETTER I WITH COMBINING INVERTED BREVE
+
+<dead_acute> <Cyrillic_i>			: "и́"		# CYRILLIC SMALL LETTER I WITH COMBINING ACUTE ACCENT
+<Multi_key> <acute> <Cyrillic_i>		: "и́"		# CYRILLIC SMALL LETTER I WITH COMBINING ACUTE ACCENT
+<Multi_key> <apostrophe> <Cyrillic_i>		: "и́"		# CYRILLIC SMALL LETTER I WITH COMBINING ACUTE ACCENT
+
+<dead_circumflex> <Cyrillic_i>			: "и̂"		# CYRILLIC SMALL LETTER I WITH COMBINING CIRCUMFLEX ACCENT
+<Multi_key> <asciicircum> <Cyrillic_i>		: "и̂"		# CYRILLIC SMALL LETTER I WITH COMBINING CIRCUMFLEX ACCENT
+
+<dead_doublegrave> <Cyrillic_I>			: "И̏"		# CYRILLIC CAPITAL LETTER I WITH COMBINING DOUBLE GRAVE ACCENT
+<Multi_key> <grave> <grave> <Cyrillic_I>	: "И̏"		# CYRILLIC CAPITAL LETTER I WITH COMBINING DOUBLE GRAVE ACCENT
+
+<dead_invertedbreve> <Cyrillic_I>		: "И̑"		# CYRILLIC CAPITAL LETTER I WITH COMBINING INVERTED BREVE
+
+<dead_acute> <Cyrillic_I>			: "И́"		# CYRILLIC CAPITAL LETTER I WITH COMBINING ACUTE ACCENT
+<Multi_key> <acute> <Cyrillic_I>		: "И́"		# CYRILLIC CAPITAL LETTER I WITH COMBINING ACUTE ACCENT
+<Multi_key> <apostrophe> <Cyrillic_I>		: "И́"		# CYRILLIC CAPITAL LETTER I WITH COMBINING ACUTE ACCENT
+
+<dead_circumflex> <Cyrillic_I>			: "И̂"		# CYRILLIC CAPITAL LETTER I WITH COMBINING CIRCUMFLEX ACCENT
+<Multi_key> <asciicircum> <Cyrillic_I>		: "И̂"		# CYRILLIC CAPITAL LETTER I WITH COMBINING CIRCUMFLEX ACCENT
+
+<dead_doublegrave> <Cyrillic_o>			: "о̏"		# CYRILLIC SMALL LETTER O WITH COMBINING DOUBLE GRAVE ACCENT
+<Multi_key> <grave> <grave> <Cyrillic_o>	: "о̏"		# CYRILLIC SMALL LETTER O WITH COMBINING DOUBLE GRAVE ACCENT
+
+<dead_invertedbreve> <Cyrillic_o>		: "о̑"		# CYRILLIC SMALL LETTER O WITH COMBINING INVERTED BREVE
+
+<dead_grave> <Cyrillic_o>			: "о̀"		# CYRILLIC SMALL LETTER O WITH COMBINING GRAVE ACCENT
+<Multi_key> <grave> <Cyrillic_o>		: "о̀"		# CYRILLIC SMALL LETTER O WITH COMBINING GRAVE ACCENT
+
+<dead_acute> <Cyrillic_o>			: "о́"		# CYRILLIC SMALL LETTER O WITH COMBINING ACUTE ACCENT
+<Multi_key> <acute> <Cyrillic_o>		: "о́"		# CYRILLIC SMALL LETTER O WITH COMBINING ACUTE ACCENT
+<Multi_key> <apostrophe> <Cyrillic_o>		: "о́"		# CYRILLIC SMALL LETTER O WITH COMBINING ACUTE ACCENT
+
+<dead_macron> <Cyrillic_o>			: "о̄"		# CYRILLIC SMALL LETTER O WITH COMBINING MACRON
+<Multi_key> <macron> <Cyrillic_o>		: "о̄"		# CYRILLIC SMALL LETTER O WITH COMBINING MACRON
+<Multi_key> <underscore> <Cyrillic_o>		: "о̄"		# CYRILLIC SMALL LETTER O WITH COMBINING MACRON
+
+<dead_circumflex> <Cyrillic_o>			: "о̂"		# CYRILLIC SMALL LETTER O WITH COMBINING CIRCUMFLEX ACCENT
+<Multi_key> <asciicircum> <Cyrillic_o>		: "о̂"		# CYRILLIC SMALL LETTER O WITH COMBINING CIRCUMFLEX ACCENT
+
+<dead_doublegrave> <Cyrillic_O>			: "О̏"		# CYRILLIC CAPITAL LETTER O WITH COMBINING DOUBLE GRAVE ACCENT
+<Multi_key> <grave> <grave> <Cyrillic_O>	: "О̏"		# CYRILLIC CAPITAL LETTER O WITH COMBINING DOUBLE GRAVE ACCENT
+
+<dead_invertedbreve> <Cyrillic_O>		: "О̑"		# CYRILLIC CAPITAL LETTER O WITH COMBINING INVERTED BREVE
+
+<dead_grave> <Cyrillic_O>			: "О̀"		# CYRILLIC CAPITAL LETTER O WITH COMBINING GRAVE ACCENT
+<Multi_key> <grave> <Cyrillic_O>		: "О̀"		# CYRILLIC CAPITAL LETTER O WITH COMBINING GRAVE ACCENT
+
+<dead_acute> <Cyrillic_O>			: "О́"		# CYRILLIC CAPITAL LETTER O WITH COMBINING ACUTE ACCENT
+<Multi_key> <acute> <Cyrillic_O>		: "О́"		# CYRILLIC CAPITAL LETTER O WITH COMBINING ACUTE ACCENT
+<Multi_key> <apostrophe> <Cyrillic_O>		: "О́"		# CYRILLIC CAPITAL LETTER O WITH COMBINING ACUTE ACCENT
+
+<dead_macron> <Cyrillic_O>			: "О̄"		# CYRILLIC CAPITAL LETTER O WITH COMBINING MACRON
+<Multi_key> <macron> <Cyrillic_O>		: "О̄"		# CYRILLIC CAPITAL LETTER O WITH COMBINING MACRON
+<Multi_key> <underscore> <Cyrillic_O>		: "О̄"		# CYRILLIC CAPITAL LETTER O WITH COMBINING MACRON
+
+<dead_circumflex> <Cyrillic_O>			: "О̂"		# CYRILLIC CAPITAL LETTER O WITH COMBINING CIRCUMFLEX ACCENT
+<Multi_key> <asciicircum> <Cyrillic_O>		: "О̂"		# CYRILLIC CAPITAL LETTER O WITH COMBINING CIRCUMFLEX ACCENT
+
+<dead_doublegrave> <Cyrillic_u>			: "у̏"		# CYRILLIC SMALL LETTER U WITH COMBINING DOUBLE GRAVE ACCENT
+<Multi_key> <grave> <grave> <Cyrillic_u>	: "у̏"		# CYRILLIC SMALL LETTER U WITH COMBINING DOUBLE GRAVE ACCENT
+
+<dead_invertedbreve> <Cyrillic_u>		: "у̑"		# CYRILLIC SMALL LETTER U WITH COMBINING INVERTED BREVE
+
+<dead_grave> <Cyrillic_u>			: "у̀"		# CYRILLIC SMALL LETTER U WITH COMBINING GRAVE ACCENT
+<Multi_key> <grave> <Cyrillic_u>		: "у̀"		# CYRILLIC SMALL LETTER U WITH COMBINING GRAVE ACCENT
+
+<dead_acute> <Cyrillic_u>			: "у́"		# CYRILLIC SMALL LETTER U WITH COMBINING ACUTE ACCENT
+<Multi_key> <acute> <Cyrillic_u>		: "у́"		# CYRILLIC SMALL LETTER U WITH COMBINING ACUTE ACCENT
+<Multi_key> <apostrophe> <Cyrillic_u>		: "у́"		# CYRILLIC SMALL LETTER U WITH COMBINING ACUTE ACCENT
+
+<dead_circumflex> <Cyrillic_u>			: "у̂"		# CYRILLIC SMALL LETTER U WITH COMBINING CIRCUMFLEX ACCENT
+<Multi_key> <asciicircum> <Cyrillic_u>		: "у̂"		# CYRILLIC SMALL LETTER U WITH COMBINING CIRCUMFLEX ACCENT
+
+<dead_doublegrave> <Cyrillic_U>			: "У̏"		# CYRILLIC CAPITAL LETTER U WITH COMBINING DOUBLE GRAVE ACCENT
+<Multi_key> <grave> <grave> <Cyrillic_U>	: "У̏"		# CYRILLIC CAPITAL LETTER U WITH COMBINING DOUBLE GRAVE ACCENT
+
+<dead_invertedbreve> <Cyrillic_U>		: "У̑"		# CYRILLIC CAPITAL LETTER U WITH COMBINING INVERTED BREVE
+
+<dead_grave> <Cyrillic_U>			: "У̀"		# CYRILLIC CAPITAL LETTER U WITH COMBINING GRAVE ACCENT
+<Multi_key> <grave> <Cyrillic_U>		: "У̀"		# CYRILLIC CAPITAL LETTER U WITH COMBINING GRAVE ACCENT
+
+<dead_acute> <Cyrillic_U>			: "У́"		# CYRILLIC CAPITAL LETTER U WITH COMBINING ACUTE ACCENT
+<Multi_key> <acute> <Cyrillic_U>		: "У́"		# CYRILLIC CAPITAL LETTER U WITH COMBINING ACUTE ACCENT
+<Multi_key> <apostrophe> <Cyrillic_U>		: "У́"		# CYRILLIC CAPITAL LETTER U WITH COMBINING ACUTE ACCENT
+
+<dead_circumflex> <Cyrillic_U>			: "У̂"		# CYRILLIC CAPITAL LETTER U WITH COMBINING CIRCUMFLEX ACCENT
+<Multi_key> <asciicircum> <Cyrillic_U>		: "У̂"		# CYRILLIC CAPITAL LETTER U WITH COMBINING CIRCUMFLEX ACCENT
+
+<dead_doublegrave> <Cyrillic_er>		: "р̏"		# CYRILLIC SMALL LETTER ER WITH COMBINING DOUBLE GRAVE ACCENT
+<Multi_key> <grave> <grave> <Cyrillic_er>	: "р̏"		# CYRILLIC SMALL LETTER ER WITH COMBINING DOUBLE GRAVE ACCENT
+
+<dead_invertedbreve> <Cyrillic_er>		: "р̑"		# CYRILLIC SMALL LETTER ER WITH COMBINING INVERTED BREVE
+
+<dead_grave> <Cyrillic_er>			: "р̀"		# CYRILLIC SMALL LETTER ER WITH COMBINING GRAVE ACCENT
+<Multi_key> <grave> <Cyrillic_er>		: "р̀"		# CYRILLIC SMALL LETTER ER WITH COMBINING GRAVE ACCENT
+
+<dead_acute> <Cyrillic_er>			: "р́"		# CYRILLIC SMALL LETTER ER WITH COMBINING ACUTE ACCENT
+<Multi_key> <acute> <Cyrillic_er>		: "р́"		# CYRILLIC SMALL LETTER ER WITH COMBINING ACUTE ACCENT
+<Multi_key> <apostrophe> <Cyrillic_er>		: "р́"		# CYRILLIC SMALL LETTER ER WITH COMBINING ACUTE ACCENT
+
+<dead_macron> <Cyrillic_er>			: "р̄"		# CYRILLIC SMALL LETTER ER WITH COMBINING MACRON
+<Multi_key> <macron> <Cyrillic_er>		: "р̄"		# CYRILLIC SMALL LETTER ER WITH COMBINING MACRON
+<Multi_key> <underscore> <Cyrillic_er>		: "р̄"		# CYRILLIC SMALL LETTER ER WITH COMBINING MACRON
+
+<dead_circumflex> <Cyrillic_er>			: "р̂"		# CYRILLIC SMALL LETTER ER WITH COMBINING CIRCUMFLEX ACCENT
+<Multi_key> <asciicircum> <Cyrillic_er>		: "р̂"		# CYRILLIC SMALL LETTER ER WITH COMBINING CIRCUMFLEX ACCENT
+
+<dead_doublegrave> <Cyrillic_ER>		: "Р̏"		# CYRILLIC CAPITAL LETTER ER WITH COMBINING DOUBLE GRAVE ACCENT
+<Multi_key> <grave> <grave> <Cyrillic_ER>	: "Р̏"		# CYRILLIC CAPITAL LETTER ER WITH COMBINING DOUBLE GRAVE ACCENT
+
+<dead_invertedbreve> <Cyrillic_ER>		: "Р̑"		# CYRILLIC CAPITAL LETTER ER WITH COMBINING INVERTED BREVE
+
+<dead_grave> <Cyrillic_ER>			: "Р̀"		# CYRILLIC CAPITAL LETTER ER WITH COMBINING GRAVE ACCENT
+<Multi_key> <grave> <Cyrillic_ER>		: "Р̀"		# CYRILLIC CAPITAL LETTER ER WITH COMBINING GRAVE ACCENT
+
+<dead_acute> <Cyrillic_ER>			: "Р́"		# CYRILLIC CAPITAL LETTER ER WITH COMBINING ACUTE ACCENT
+<Multi_key> <acute> <Cyrillic_ER>		: "Р́"		# CYRILLIC CAPITAL LETTER ER WITH COMBINING ACUTE ACCENT
+<Multi_key> <apostrophe> <Cyrillic_ER>		: "Р́"		# CYRILLIC CAPITAL LETTER ER WITH COMBINING ACUTE ACCENT
+
+<dead_macron> <Cyrillic_ER>			: "Р̄"		# CYRILLIC CAPITAL LETTER ER WITH COMBINING MACRON
+<Multi_key> <macron> <Cyrillic_ER>		: "Р̄"		# CYRILLIC CAPITAL LETTER ER WITH COMBINING MACRON
+<Multi_key> <underscore> <Cyrillic_ER>		: "Р̄"		# CYRILLIC CAPITAL LETTER ER WITH COMBINING MACRON
+
+<dead_circumflex> <Cyrillic_ER>			: "Р̂"		# CYRILLIC CAPITAL LETTER ER WITH COMBINING CIRCUMFLEX ACCENT
+<Multi_key> <asciicircum> <Cyrillic_ER>		: "Р̂"		# CYRILLIC CAPITAL LETTER ER WITH COMBINING CIRCUMFLEX ACCENT
+
