@@ -36,10 +36,10 @@ Equipment Corporation.
 #include <X11/Xmd.h>
 #include <X11/extensions/dpmsconst.h>
 
-#ifndef Status
+#if !defined(_XKBSRV_H_) && !defined(_XLIB_H_)
 /* XXX: this is a hack to let old xf86-video-* build. Does not belong here. */
-#define Bool int
-#define Status int
+typedef int Status;
+typedef pointer XPointer;
 typedef struct _XDisplay Display;
 #endif
 
