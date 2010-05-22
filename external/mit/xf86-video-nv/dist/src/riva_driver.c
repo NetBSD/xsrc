@@ -396,8 +396,10 @@ RivaPreInit(ScrnInfoPtr pScrn, int flags)
 #endif
     }
    
+#ifndef XSERVER_LIBPCIACCESS
     xf86SetOperatingState(resVgaIo, pRiva->pEnt->index, ResUnusedOpr);
     xf86SetOperatingState(resVgaMem, pRiva->pEnt->index, ResDisableOpr);
+#endif
 
     /* Set pScrn->monitor */
     pScrn->monitor = pScrn->confScreen->monitor;
@@ -633,6 +635,7 @@ RivaPreInit(ScrnInfoPtr pScrn, int flags)
     xf86DrvMsg(pScrn->scrnIndex, from, "MMIO registers at 0x%lX\n",
 	       (unsigned long)pRiva->IOAddress);
      
+#ifndef XSERVER_LIBPCIACCESS
     if (xf86RegisterResources(pRiva->pEnt->index, NULL, ResExclusive)) {
 	xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
 		"xf86RegisterResources() found resource conflicts\n");
@@ -640,7 +643,7 @@ RivaPreInit(ScrnInfoPtr pScrn, int flags)
 	RivaFreeRec(pScrn);
 	return FALSE;
     }
-
+#endif
     Riva3Setup(pScrn);
 
     /*
