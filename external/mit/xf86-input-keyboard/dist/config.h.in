@@ -35,6 +35,10 @@
 /* Name of the period field in struct kbd_repeat */
 #undef LNX_KBD_PERIOD_NAME
 
+/* Define to the sub-directory in which libtool stores uninstalled libraries.
+   */
+#undef LT_OBJDIR
+
 /* Name of package */
 #undef PACKAGE
 
