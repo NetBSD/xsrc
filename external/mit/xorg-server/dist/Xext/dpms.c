@@ -46,7 +46,7 @@ Equipment Corporation.
 #include "opaque.h"
 #define DPMS_SERVER
 #include <X11/extensions/dpms.h>
-#include <X11/extensions/dpmsstr.h>
+#include <X11/extensions/dpmsproto.h>
 #include "dpmsproc.h"
 #include "modinit.h"
 

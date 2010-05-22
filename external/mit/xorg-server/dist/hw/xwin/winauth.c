@@ -37,7 +37,7 @@
 /* Includes for authorization */
 #include <X11/Xauth.h>
 #include "securitysrv.h"
-#include <X11/extensions/securstr.h>
+#include <X11/extensions/securproto.h>
 
 
 /*

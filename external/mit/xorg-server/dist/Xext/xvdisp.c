@@ -44,6 +44,7 @@ SOFTWARE.
 #ifdef MITSHM
 #define _XSHM_SERVER_
 #include <X11/extensions/shmstr.h>
+#include <X11/extensions/shmproto.h>
 #endif
 
 #include "xvdisp.h"

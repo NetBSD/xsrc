@@ -52,7 +52,7 @@ in this Software without prior written authorization from The Open Group.
 
 #define _MULTIBUF_SERVER_	/* don't want Xlib structures */
 #define _MULTIBUF_BUFFER_
-#include <X11/extensions/multibufst.h>
+#include <X11/extensions/multibufproto.h>
 
 /* 
 Support for doublebuffer hardare
