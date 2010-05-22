@@ -325,3 +325,43 @@ pci_device_get_bridge_buses(struct pci_device * dev, int *primary_bus,
 
     return 0;
 }
+
+#define PCI_CLASS_BRIDGE 0x06
+#define PCI_SUBCLASS_BRIDGE_PCI 0x04
+
+struct pci_device *
+pci_device_get_parent_bridge(struct pci_device *dev)
+{
+    struct pci_id_match bridge_match = {
+        PCI_MATCH_ANY, PCI_MATCH_ANY, PCI_MATCH_ANY, PCI_MATCH_ANY,
+        (PCI_CLASS_BRIDGE << 16) | (PCI_SUBCLASS_BRIDGE_PCI << 8),
+        0
+    };
+
+    struct pci_device *bridge;
+    struct pci_device_iterator *iter;
+
+    if (dev == NULL)
+        return NULL;
+
+    iter = pci_id_match_iterator_create(& bridge_match);
+    if (iter == NULL)
+        return NULL;
+
+    while ((bridge = pci_device_next(iter)) != NULL) {
+        if (bridge->domain == dev->domain) {
+            const struct pci_bridge_info *info =
+                pci_device_get_bridge_info(bridge);
+
+            if (info != NULL) {
+                if (info->secondary_bus == dev->bus) {
+                    break;
+                }
+            }
+        }
+    }
+
+    pci_iterator_destroy(iter);
+
+    return bridge;
+}
