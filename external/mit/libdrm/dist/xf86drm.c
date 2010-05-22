@@ -64,7 +64,8 @@
 #endif
 
 #ifdef __NetBSD__
-#define DRM_MAJOR 34
+#undef DRM_MAJOR
+#define DRM_MAJOR 180
 #endif
 
 # ifdef __OpenBSD__
@@ -496,7 +497,9 @@ static int drmOpenByBusid(const char *busid)
 	    sv.drm_di_minor = 1;
 	    sv.drm_dd_major = -1;	/* Don't care */
 	    sv.drm_dd_minor = -1;	/* Don't care */
-	    drmSetInterfaceVersion(fd, &sv);
+	    if (drmSetInterfaceVersion(fd, &sv) < 0) {
+	        drmMsg("drmOpenByBusid: drmSetInterfaceVersion failed: %s\n", strerror(errno));
+	    }
 	    buf = drmGetBusid(fd);
 	    drmMsg("drmOpenByBusid: drmGetBusid reports %s\n", buf);
 	    if (buf && drmMatchBusID(buf, busid)) {
