@@ -31,9 +31,17 @@ Equipment Corporation.
 #ifndef _X11_EXTENSIONS_DPMS_H
 #define _X11_EXTENSIONS_DPMS_H 1
 
+#include <X11/Xfuncproto.h>
 #include <X11/X.h>
 #include <X11/Xmd.h>
 #include <X11/extensions/dpmsconst.h>
+
+#ifndef Status
+/* XXX: this is a hack to let old xf86-video-* build. Does not belong here. */
+#define Bool int
+#define Status int
+typedef struct _XDisplay Display;
+#endif
 
 _XFUNCPROTOBEGIN
 
