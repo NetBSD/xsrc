@@ -55,6 +55,7 @@ libpciaccess_la_SOURCES = common_bridge.c \
 	common_iterator.c \
 	common_init.c \
 	common_interface.c \
+	common_io.c \
 	common_capability.c \
 	common_device_name.c \
 	common_map.c \

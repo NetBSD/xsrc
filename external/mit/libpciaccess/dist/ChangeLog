@@ -1,3 +1,91 @@
+commit 947ab16f2938e8883503ef679a40684dfe2a90e5
+Author: Adam Jackson <ajax@redhat.com>
+Date:   Mon Dec 14 16:26:31 2009 -0500
+
+    Fix I/O handle array allocator to work for devices past the first
+    
+    Signed-off-by: Adam Jackson <ajax@redhat.com>
+
+commit d4e008eeb9af7773edadd259cf55da43411f1a7f
+Author: Adam Jackson <ajax@redhat.com>
+Date:   Mon Dec 14 16:19:35 2009 -0500
+
+    Fix pci_device_open_io() to actually return something useful
+    
+    Remember, code review just means we're all inept.
+    
+    Signed-off-by: Adam Jackson <ajax@redhat.com>
+
+commit 5e8d4c19b4f618e22b6e8e1ad3294d8708067474
+Author: Adam Jackson <ajax@redhat.com>
+Date:   Wed Nov 18 13:53:49 2009 -0500
+
+    I/O port access routines
+    
+    Acked-by: Tiago Vignatti <tiago.vignatti@nokia.com>
+    Acked-by: Matt Turner <mattst88@gmail.com>
+    Signed-off-by: Adam Jackson <ajax@redhat.com>
+
+commit b2fbe63bdf3522c5d3df5eda2ca3c3b8770c02c9
+Author: Adam Jackson <ajax@redhat.com>
+Date:   Wed Nov 18 14:12:57 2009 -0500
+
+    Add pci_device_get_parent_bridge()
+    
+    Copied from linuxPci.c in the X server.
+    
+    Acked-by: Tiago Vignatti <tiago.vignatti@nokia.com>
+    Signed-off-by: Adam Jackson <ajax@redhat.com>
+
+commit b2b3c3bfdac23c1c8e33f47b28f22c1d4a78cc71
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Fri Nov 27 20:56:05 2009 -0500
+
+    Makefile.am: add ChangeLog and INSTALL on MAINTAINERCLEANFILES
+    
+    Now that the INSTALL file is generated.
+    Allows running make maintainer-clean.
+
+commit 57f4d11fef7021e77549a70cbf40ca43e60ea55f
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Wed Oct 28 14:09:10 2009 -0400
+
+    INSTALL, NEWS, README or AUTHORS files are missing/incorrect #24206
+    
+    Add missing INSTALL file. Use standard GNU file on building tarball
+    README may have been updated
+    Remove AUTHORS file as it is empty and no content available yet.
+    Remove NEWS file as it is empty and no content available yet.
+
+commit caa398b5305cb4c5299e283b9833ed2251698893
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Tue Oct 27 15:07:25 2009 -0400
+
+    Deploy the new XORG_DEFAULT_OPTIONS #24242
+    
+    This macro aggregate a number of existing macros that sets commmon
+    X.Org components configuration options. It shields the configuration file from
+    future changes.
+
+commit b8284cb2097601d5934773ab75db388b9fa5a9db
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Mon Oct 26 22:08:43 2009 -0400
+
+    Makefile.am: ChangeLog not required: EXTRA_DIST or *CLEANFILES #24432
+    
+    ChangeLog filename is known to Automake and requires no further
+    coding in the makefile.
+
+commit 28830993636cc5820842345b511d301af33d9c49
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Thu Oct 22 12:34:20 2009 -0400
+
+    .gitignore: use common defaults with custom section # 24239
+    
+    Using common defaults will reduce errors and maintenance.
+    Only the very small or inexistent custom section need periodic maintenance
+    when the structure of the component changes. Do not edit defaults.
+
 commit 97d677746cd70ec9eb1f33483cc829a0063953bc
 Author: Dave Airlie <airlied@redhat.com>
 Date:   Fri Sep 25 10:25:56 2009 +1000
@@ -64,7 +152,7 @@ Date:   Fri Aug 28 11:29:00 2009 +1000
     libpciaccess: bump to 0.10.7 for vga arb interface addition
 
 commit 81b4705525bdf82d75f5b3c740c53fa4a866d9c3
-Merge: f514852... 2f997f9...
+Merge: f514852 2f997f9
 Author: Dave Airlie <airlied@redhat.com>
 Date:   Fri Aug 28 11:25:15 2009 +1000
 
@@ -93,7 +181,7 @@ Date:   Wed Aug 26 11:14:03 2009 +0300
     This reverts commit ef8aca5da46155e9ea0d1227215921ad9ce59150.
 
 commit f5148525d546015c12b703a768b5e6c3726446a3
-Merge: 7636348... ef8aca5...
+Merge: 7636348 ef8aca5
 Author: Dave Airlie <airlied@redhat.com>
 Date:   Fri Aug 21 13:27:11 2009 +1000
 
@@ -148,7 +236,7 @@ Date:   Sat Aug 8 18:12:08 2009 +0200
     Signed-off-by: Julien Cristau <jcristau@debian.org>
 
 commit e9f2db8b867cba8d91a040a0db9be56099fba680
-Merge: 706201e... dedd31b...
+Merge: 706201e dedd31b
 Author: Dave Airlie <airlied@redhat.com>
 Date:   Thu Aug 6 09:43:08 2009 +1000
 
@@ -170,7 +258,7 @@ Date:   Thu Aug 6 09:39:01 2009 +1000
     for a long time
 
 commit 706201e900b5664ea35ec498784590275b98c23a
-Merge: 57cf6f1... 8aa06cf...
+Merge: 57cf6f1 8aa06cf
 Author: Dave Airlie <airlied@redhat.com>
 Date:   Thu Aug 6 09:42:06 2009 +1000
 
@@ -247,7 +335,7 @@ Date:   Fri Jul 31 11:17:21 2009 +1000
     vgaarb: clean up debug output
 
 commit d22d7c0d5e48d130c89282514e378819e0b98636
-Merge: e360c11... 2bda5b7...
+Merge: e360c11 2bda5b7
 Author: Dave Airlie <airlied@redhat.com>
 Date:   Fri Jul 31 11:16:16 2009 +1000
 
@@ -922,7 +1010,7 @@ Date:   Tue Sep 4 16:13:24 2007 -0700
     to pci_device_map_range as soon as possible.
 
 commit 9d1596cba90c8fd273e9d1d5488747cc0f34fdc7
-Merge: b1e9117... 5cf29b0...
+Merge: b1e9117 5cf29b0
 Author: James Cloos <cloos@jhcloos.com>
 Date:   Mon Sep 3 06:15:58 2007 -0400
 
@@ -1106,7 +1194,7 @@ Date:   Tue Jan 16 21:24:12 2007 -0800
     pci_device_cfg_write instead of just passing data.
 
 commit 54d40b528ab769c4e89aaca87d1728a6194e4378
-Merge: 37ce43c... 335d42f...
+Merge: 37ce43c 335d42f
 Author: Ian Romanick <idr@us.ibm.com>
 Date:   Mon Jan 15 11:18:29 2007 -0800
 
@@ -1201,7 +1289,7 @@ Date:   Tue Nov 14 14:37:53 2006 -0800
     Add missing newline at the end of the file.
 
 commit e29843d3b0ff5d32d8ab4bc84c58300782d189d3
-Merge: 07b09d9... d05da65...
+Merge: 07b09d9 d05da65
 Author: Eric Anholt <eric@anholt.net>
 Date:   Tue Nov 14 14:37:46 2006 -0800
 
