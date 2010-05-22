@@ -1,5 +1,5 @@
 AC_PREREQ([2.57])
-AC_INIT([XExtProto], [7.0.5], [https://bugs.freedesktop.org/enter_bug.cgi?product=xorg])
+AC_INIT([XExtProto], [7.1.1], [https://bugs.freedesktop.org/enter_bug.cgi?product=xorg])
 AM_INIT_AUTOMAKE([foreign dist-bzip2])
 
 # Require xorg-macros: XORG_CHANGELOG
