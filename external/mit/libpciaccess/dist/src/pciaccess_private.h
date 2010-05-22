@@ -62,6 +62,21 @@ struct pci_system_methods {
     void (*enable)( struct pci_device *dev );
     int (*boot_vga)( struct pci_device *dev );
     int (*has_kernel_driver)( struct pci_device *dev );
+    struct pci_io_handle *(*open_device_io)( struct pci_io_handle *handle,
+					     struct pci_device *dev, int bar,
+					     pciaddr_t base, pciaddr_t size );
+    struct pci_io_handle *(*open_legacy_io)( struct pci_io_handle *handle,
+					     struct pci_device *dev,
+					     pciaddr_t base, pciaddr_t size );
+    void (*close_io)( struct pci_device *dev, struct pci_io_handle *handle );
+    uint32_t (*read32)( struct pci_io_handle *handle, uint32_t reg );
+    uint16_t (*read16)( struct pci_io_handle *handle, uint32_t reg );
+    uint8_t  (*read8)( struct pci_io_handle *handle, uint32_t reg );
+    void (*write32)( struct pci_io_handle *handle, uint32_t reg,
+		     uint32_t data );
+    void (*write16)( struct pci_io_handle *handle, uint32_t reg,
+		     uint16_t data );
+    void (*write8)( struct pci_io_handle *handle, uint32_t reg, uint8_t data );
 };
 
 struct pci_device_mapping {
@@ -70,6 +85,12 @@ struct pci_device_mapping {
     unsigned region;
     unsigned flags;
     void *memory;
+};
+
+struct pci_io_handle {
+    pciaddr_t base;
+    pciaddr_t size;
+    int fd;
 };
 
 struct pci_device_private {
@@ -146,3 +167,4 @@ extern int pci_system_netbsd_create( void );
 extern int pci_system_openbsd_create( void );
 extern void pci_system_openbsd_init_dev_mem( int );
 extern int pci_system_solx_devfs_create( void );
+extern void pci_io_cleanup( void );

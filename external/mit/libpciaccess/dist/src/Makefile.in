@@ -65,7 +65,9 @@ DIST_COMMON = $(libpciaccessinclude_HEADERS) $(srcdir)/Makefile.am \
 	$(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/ac_define_dir.m4 \
-	$(top_srcdir)/configure.ac
+	$(top_srcdir)/m4/libtool.m4 $(top_srcdir)/m4/ltoptions.m4 \
+	$(top_srcdir)/m4/ltsugar.m4 $(top_srcdir)/m4/ltversion.m4 \
+	$(top_srcdir)/m4/lt~obsolete.m4 $(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 mkinstalldirs = $(install_sh) -d
@@ -98,11 +100,11 @@ am__installdirs = "$(DESTDIR)$(libdir)" \
 LTLIBRARIES = $(lib_LTLIBRARIES)
 libpciaccess_la_DEPENDENCIES =
 am__libpciaccess_la_SOURCES_DIST = common_bridge.c common_iterator.c \
-	common_init.c common_interface.c common_capability.c \
-	common_device_name.c common_map.c pciaccess_private.h \
-	common_vgaarb_stub.c common_vgaarb.c freebsd_pci.c \
-	linux_sysfs.c linux_devmem.c linux_devmem.h netbsd_pci.c \
-	openbsd_pci.c solx_devfs.c pci_tools.h
+	common_init.c common_interface.c common_io.c \
+	common_capability.c common_device_name.c common_map.c \
+	pciaccess_private.h common_vgaarb_stub.c common_vgaarb.c \
+	freebsd_pci.c linux_sysfs.c linux_devmem.c linux_devmem.h \
+	netbsd_pci.c openbsd_pci.c solx_devfs.c pci_tools.h
 @LINUX_FALSE@am__objects_1 = common_vgaarb_stub.lo
 @LINUX_TRUE@am__objects_1 = common_vgaarb.lo
 @FREEBSD_FALSE@@LINUX_FALSE@@NETBSD_FALSE@@OPENBSD_FALSE@@SOLARIS_TRUE@am__objects_2 = solx_devfs.lo
@@ -113,9 +115,9 @@ am__libpciaccess_la_SOURCES_DIST = common_bridge.c common_iterator.c \
 @FREEBSD_FALSE@@LINUX_TRUE@	linux_devmem.lo
 @FREEBSD_TRUE@am__objects_2 = freebsd_pci.lo
 am_libpciaccess_la_OBJECTS = common_bridge.lo common_iterator.lo \
-	common_init.lo common_interface.lo common_capability.lo \
-	common_device_name.lo common_map.lo $(am__objects_1) \
-	$(am__objects_2)
+	common_init.lo common_interface.lo common_io.lo \
+	common_capability.lo common_device_name.lo common_map.lo \
+	$(am__objects_1) $(am__objects_2)
 libpciaccess_la_OBJECTS = $(am_libpciaccess_la_OBJECTS)
 AM_V_lt = $(am__v_lt_$(V))
 am__v_lt_ = $(am__v_lt_$(AM_DEFAULT_VERBOSITY))
@@ -162,8 +164,12 @@ ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 ACLOCAL = @ACLOCAL@
+ADMIN_MAN_DIR = @ADMIN_MAN_DIR@
+ADMIN_MAN_SUFFIX = @ADMIN_MAN_SUFFIX@
 AMTAR = @AMTAR@
 AM_DEFAULT_VERBOSITY = @AM_DEFAULT_VERBOSITY@
+APP_MAN_DIR = @APP_MAN_DIR@
+APP_MAN_SUFFIX = @APP_MAN_SUFFIX@
 AR = @AR@
 AUTOCONF = @AUTOCONF@
 AUTOHEADER = @AUTOHEADER@
@@ -176,39 +182,49 @@ CHANGELOG_CMD = @CHANGELOG_CMD@
 CPP = @CPP@
 CPPFLAGS = @CPPFLAGS@
 CWARNFLAGS = @CWARNFLAGS@
-CXX = @CXX@
-CXXCPP = @CXXCPP@
-CXXDEPMODE = @CXXDEPMODE@
-CXXFLAGS = @CXXFLAGS@
 CYGPATH_W = @CYGPATH_W@
 DEFS = @DEFS@
 DEPDIR = @DEPDIR@
+DRIVER_MAN_DIR = @DRIVER_MAN_DIR@
+DRIVER_MAN_SUFFIX = @DRIVER_MAN_SUFFIX@
 DSYMUTIL = @DSYMUTIL@
-ECHO = @ECHO@
+DUMPBIN = @DUMPBIN@
 ECHO_C = @ECHO_C@
 ECHO_N = @ECHO_N@
 ECHO_T = @ECHO_T@
 EGREP = @EGREP@
 EXEEXT = @EXEEXT@
-F77 = @F77@
-FFLAGS = @FFLAGS@
+FGREP = @FGREP@
+FILE_MAN_DIR = @FILE_MAN_DIR@
+FILE_MAN_SUFFIX = @FILE_MAN_SUFFIX@
 GREP = @GREP@
 INSTALL = @INSTALL@
+INSTALL_CMD = @INSTALL_CMD@
 INSTALL_DATA = @INSTALL_DATA@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_SCRIPT = @INSTALL_SCRIPT@
 INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
+LD = @LD@
 LDFLAGS = @LDFLAGS@
 LIBOBJS = @LIBOBJS@
 LIBS = @LIBS@
 LIBTOOL = @LIBTOOL@
+LIB_MAN_DIR = @LIB_MAN_DIR@
+LIB_MAN_SUFFIX = @LIB_MAN_SUFFIX@
+LIPO = @LIPO@
 LN_S = @LN_S@
 LTLIBOBJS = @LTLIBOBJS@
 MAINT = @MAINT@
 MAKEINFO = @MAKEINFO@
+MISC_MAN_DIR = @MISC_MAN_DIR@
+MISC_MAN_SUFFIX = @MISC_MAN_SUFFIX@
 MKDIR_P = @MKDIR_P@
+NM = @NM@
 NMEDIT = @NMEDIT@
+OBJDUMP = @OBJDUMP@
 OBJEXT = @OBJEXT@
+OTOOL = @OTOOL@
+OTOOL64 = @OTOOL64@
 PACKAGE = @PACKAGE@
 PACKAGE_BUGREPORT = @PACKAGE_BUGREPORT@
 PACKAGE_NAME = @PACKAGE_NAME@
@@ -219,6 +235,7 @@ PATH_SEPARATOR = @PATH_SEPARATOR@
 PCIACCESS_CFLAGS = @PCIACCESS_CFLAGS@
 PCIACCESS_LIBS = @PCIACCESS_LIBS@
 PCIIDS_PATH = @PCIIDS_PATH@
+PKG_CONFIG = @PKG_CONFIG@
 RANLIB = @RANLIB@
 SED = @SED@
 SET_MAKE = @SET_MAKE@
@@ -230,8 +247,7 @@ abs_srcdir = @abs_srcdir@
 abs_top_builddir = @abs_top_builddir@
 abs_top_srcdir = @abs_top_srcdir@
 ac_ct_CC = @ac_ct_CC@
-ac_ct_CXX = @ac_ct_CXX@
-ac_ct_F77 = @ac_ct_F77@
+ac_ct_DUMPBIN = @ac_ct_DUMPBIN@
 am__include = @am__include@
 am__leading_dot = @am__leading_dot@
 am__quote = @am__quote@
@@ -246,7 +262,6 @@ build_vendor = @build_vendor@
 builddir = @builddir@
 datadir = @datadir@
 datarootdir = @datarootdir@
-distcleancheck_listfiles = @distcleancheck_listfiles@
 docdir = @docdir@
 dvidir = @dvidir@
 exec_prefix = @exec_prefix@
@@ -263,6 +278,7 @@ libdir = @libdir@
 libexecdir = @libexecdir@
 localedir = @localedir@
 localstatedir = @localstatedir@
+lt_ECHO = @lt_ECHO@
 mandir = @mandir@
 mkdir_p = @mkdir_p@
 oldincludedir = @oldincludedir@
@@ -291,6 +307,7 @@ libpciaccess_la_SOURCES = common_bridge.c \
 	common_iterator.c \
 	common_init.c \
 	common_interface.c \
+	common_io.c \
 	common_capability.c \
 	common_device_name.c \
 	common_map.c \
@@ -321,9 +338,9 @@ $(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am  $(am__confi
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --gnu src/Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign src/Makefile'; \
 	$(am__cd) $(top_srcdir) && \
-	  $(AUTOMAKE) --gnu src/Makefile
+	  $(AUTOMAKE) --foreign src/Makefile
 .PRECIOUS: Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \
@@ -399,6 +416,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/common_device_name.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/common_init.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/common_interface.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/common_io.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/common_iterator.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/common_map.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/common_vgaarb.Plo@am__quote@

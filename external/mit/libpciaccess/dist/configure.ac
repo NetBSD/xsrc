@@ -24,19 +24,20 @@ dnl Process this file with autoconf to create configure.
 
 AC_PREREQ([2.57])
 
-AC_INIT(libpciaccess, 0.10.9, [https://bugs.freedesktop.org/enter_bug.cgi?product=xorg&component=libpciaccess], libpciaccess)
-AM_INIT_AUTOMAKE([dist-bzip2])
+AC_INIT(libpciaccess, 0.11.0, [https://bugs.freedesktop.org/enter_bug.cgi?product=xorg&component=libpciaccess], libpciaccess)
+AM_INIT_AUTOMAKE([foreign dist-bzip2])
 AM_MAINTAINER_MODE
 
-# Require xorg-macros: XORG_CWARNFLAGS, XORG_CHANGELOG
-m4_ifndef([XORG_MACROS_VERSION], [AC_FATAL([must install xorg-macros 1.2 or later before running autoconf/autogen])])
-XORG_MACROS_VERSION(1.2)
+# Require xorg-macros: XORG_DEFAULT_OPTIONS
+m4_ifndef([XORG_MACROS_VERSION],
+          [m4_fatal([must install xorg-macros 1.3 or later before running autoconf/autogen])])
+XORG_MACROS_VERSION(1.3)
+XORG_DEFAULT_OPTIONS
 AM_CONFIG_HEADER(config.h)
 
 # Check for progs
 AC_PROG_CC
 AC_PROG_LIBTOOL
-XORG_CWARNFLAGS
 
 pciids_path=/usr/share/hwdata
 AC_ARG_WITH(pciids-path, AC_HELP_STRING([--with-pciids-path=PCIIDS_PATH],
@@ -116,8 +117,6 @@ AC_CHECK_MEMBER([struct pci_io.pi_sel.pc_domain],
 AC_SUBST(PCIACCESS_CFLAGS)
 AC_SUBST(PCIACCESS_LIBS)
 		  
-XORG_RELEASE_VERSION
-XORG_CHANGELOG
 
 AC_OUTPUT([Makefile
 	   src/Makefile
