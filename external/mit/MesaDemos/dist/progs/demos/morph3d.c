@@ -137,7 +137,6 @@ So the angle is:
 #endif
 #include <GL/glut.h>
 #include <math.h>
-#include <string.h>
 
 #define Scale                      0.3
 
@@ -887,5 +886,6 @@ int main(int argc, char **argv)
   glutIdleFunc( idle_ );
   glutDisplayFunc( draw );
   glutMainLoop();
-  
+
+  return 0;
 }
