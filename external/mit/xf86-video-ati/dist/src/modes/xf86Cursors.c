@@ -39,7 +39,8 @@
 #include "xf86RandR12.h"
 #include "xf86CursorPriv.h"
 #include "X11/extensions/render.h"
-#include "X11/extensions/dpmsconst.h"
+#define DPMS_SERVER
+#include "X11/extensions/dpms.h"
 #include "X11/Xatom.h"
 #ifdef RENDER
 #include "picturestr.h"

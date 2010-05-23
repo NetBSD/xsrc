@@ -912,6 +912,11 @@ legacy_output_dpms(xf86OutputPtr output, int mode)
 	    ErrorF("enable LVDS\n");
 	    tmp = INREG(RADEON_LVDS_GEN_CNTL);
 	    tmp |= (RADEON_LVDS_ON | RADEON_LVDS_BLON | RADEON_LVDS_EN);
+#if defined(__powerpc__)
+	    /* not sure if this is needed on non-Macs */
+	    if (info->MacModel)
+		tmp |= RADEON_LVDS_BL_MOD_EN;
+#endif
 	    tmp &= ~(RADEON_LVDS_DISPLAY_DIS);
 	    usleep (lvds->PanelPwrDly * 1000);
 	    OUTREG(RADEON_LVDS_GEN_CNTL, tmp);
@@ -1001,10 +1006,24 @@ legacy_output_dpms(xf86OutputPtr output, int mode)
 			*/
 			OUTPLLP(pScrn, RADEON_PIXCLKS_CNTL, 0, ~RADEON_PIXCLK_LVDS_ALWAYS_ONb);
 		    }
-		    tmp = INREG(RADEON_LVDS_GEN_CNTL);
-		    tmp |= RADEON_LVDS_DISPLAY_DIS;
-		    tmp &= ~(RADEON_LVDS_ON | RADEON_LVDS_BLON | RADEON_LVDS_EN);
-		    OUTREG(RADEON_LVDS_GEN_CNTL, tmp);
+#if defined(__powerpc__)
+		    /* not sure if this is needed on non-Macs */
+		    if (info->MacModel) {
+			tmp = INREG(RADEON_LVDS_GEN_CNTL);
+			tmp |= RADEON_LVDS_DISPLAY_DIS;
+			tmp &= ~RADEON_LVDS_BL_MOD_EN;
+			OUTREG(RADEON_LVDS_GEN_CNTL, tmp);
+			usleep(100);
+			tmp &= ~(RADEON_LVDS_ON | RADEON_LVDS_EN);
+			OUTREG(RADEON_LVDS_GEN_CNTL, tmp);
+		    } else
+#endif
+		    {
+			tmp = INREG(RADEON_LVDS_GEN_CNTL);
+			tmp |= RADEON_LVDS_DISPLAY_DIS;
+			tmp &= ~(RADEON_LVDS_ON | RADEON_LVDS_BLON | RADEON_LVDS_EN);
+			OUTREG(RADEON_LVDS_GEN_CNTL, tmp);
+		    }
 		    save->lvds_gen_cntl |= RADEON_LVDS_DISPLAY_DIS;
 		    save->lvds_gen_cntl &= ~(RADEON_LVDS_ON | RADEON_LVDS_BLON | RADEON_LVDS_EN);
 		    if (info->IsMobility || info->IsIGP) {
@@ -1216,14 +1235,25 @@ RADEONInitFP2Registers(xf86OutputPtr output, RADEONSavePtr save,
 	if ((info->Chipset == PCI_CHIP_RV350_NP) &&
 	    (PCI_SUB_VENDOR_ID(info->PciInfo) == 0x1028) &&
 	    (PCI_SUB_DEVICE_ID(info->PciInfo) == 0x2001))
-	    save->fp2_gen_cntl |= R300_FP2_DVO_CLOCK_MODE_SINGLE; /* Dell Inspiron 8600 */
+	    save->fp2_gen_cntl |= R200_FP2_DVO_CLOCK_MODE_SINGLE; /* Dell Inspiron 8600 */
 	else
-	    save->fp2_gen_cntl |= RADEON_FP2_PAD_FLOP_EN | R300_FP2_DVO_CLOCK_MODE_SINGLE;
-#if 0
-	if (mode->Clock > 165000)
-	    save->fp2_gen_cntl |= R300_FP2_DVO_DUAL_CHANNEL_EN;
-#endif
+	    save->fp2_gen_cntl |= RADEON_FP2_PAD_FLOP_EN | R200_FP2_DVO_CLOCK_MODE_SINGLE;
     }
+
+#if 0
+    /* DVO configurations:
+     * SDR single channel (data rate 165 Mhz, port width 12 bits)
+     * DDR single channel (data rate 330 Mhz, port width 12 bits)
+     * SDR dual   channel (data rate 330 Mhz, port width 24 bits)
+     * - dual channel is only available on r3xx+
+     */
+    if (info->ChipFamily >= CHIP_FAMILY_R200) {
+	if (sdr)
+	    save->fp2_gen_cntl |= R200_FP2_DVO_RATE_SEL_SDR;
+	if (IS_R300_VARIANT && dual channel)
+	    save->fp2_gen_cntl |= R300_FP2_DVO_DUAL_CHANNEL_EN;
+    }
+#endif
 
     if (IsPrimary) {
 	if ((info->ChipFamily == CHIP_FAMILY_R200) || IS_R300_VARIANT) {
@@ -1510,7 +1540,7 @@ RADEONInitTvDacCntl(xf86OutputPtr output, RADEONSavePtr save)
 			       R420_TV_DAC_DACADJ_MASK |
 			       R420_TV_DAC_RDACPD |
 			       R420_TV_DAC_GDACPD |
-			       R420_TV_DAC_GDACPD |
+			       R420_TV_DAC_BDACPD |
 			       R420_TV_DAC_TVENABLE);
     } else {
 	save->tv_dac_cntl = info->SavedReg->tv_dac_cntl &
@@ -1519,7 +1549,7 @@ RADEONInitTvDacCntl(xf86OutputPtr output, RADEONSavePtr save)
 			       RADEON_TV_DAC_DACADJ_MASK |
 			       RADEON_TV_DAC_RDACPD |
 			       RADEON_TV_DAC_GDACPD |
-			       RADEON_TV_DAC_GDACPD);
+			       RADEON_TV_DAC_BDACPD);
     }
 
     save->tv_dac_cntl |= (RADEON_TV_DAC_NBLANK |

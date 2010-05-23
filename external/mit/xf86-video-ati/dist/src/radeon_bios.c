@@ -107,7 +107,62 @@ radeon_read_disabled_bios(ScrnInfoPtr pScrn)
 
     xf86DrvMsg(pScrn->scrnIndex, X_INFO, "Attempting to read un-POSTed bios\n");
 
-    if (info->ChipFamily >= CHIP_FAMILY_R600) {
+    if (info->ChipFamily >= CHIP_FAMILY_RV770) {
+	uint32_t viph_control   = INREG(RADEON_VIPH_CONTROL);
+	uint32_t bus_cntl       = INREG(RADEON_BUS_CNTL);
+	uint32_t d1vga_control  = INREG(AVIVO_D1VGA_CONTROL);
+	uint32_t d2vga_control  = INREG(AVIVO_D2VGA_CONTROL);
+	uint32_t vga_render_control  = INREG(AVIVO_VGA_RENDER_CONTROL);
+	uint32_t rom_cntl       = INREG(R600_ROM_CNTL);
+	uint32_t cg_spll_func_cntl = 0;
+	uint32_t cg_spll_status;
+
+	/* disable VIP */
+	OUTREG(RADEON_VIPH_CONTROL, (viph_control & ~RADEON_VIPH_EN));
+
+	/* enable the rom */
+	OUTREG(RADEON_BUS_CNTL, (bus_cntl & ~RADEON_BUS_BIOS_DIS_ROM));
+
+	/* Disable VGA mode */
+	OUTREG(AVIVO_D1VGA_CONTROL, (d1vga_control & ~(AVIVO_DVGA_CONTROL_MODE_ENABLE |
+						       AVIVO_DVGA_CONTROL_TIMING_SELECT)));
+	OUTREG(AVIVO_D2VGA_CONTROL, (d2vga_control & ~(AVIVO_DVGA_CONTROL_MODE_ENABLE |
+						       AVIVO_DVGA_CONTROL_TIMING_SELECT)));
+	OUTREG(AVIVO_VGA_RENDER_CONTROL, (vga_render_control & ~AVIVO_VGA_VSTATUS_CNTL_MASK));
+
+	if (info->ChipFamily == CHIP_FAMILY_RV730) {
+	    cg_spll_func_cntl = INREG(R600_CG_SPLL_FUNC_CNTL);
+
+	    /* enable bypass mode */
+	    OUTREG(R600_CG_SPLL_FUNC_CNTL, (cg_spll_func_cntl | R600_SPLL_BYPASS_EN));
+
+	    /* wait for SPLL_CHG_STATUS to change to 1 */
+	    cg_spll_status = 0;
+	    while (!(cg_spll_status & R600_SPLL_CHG_STATUS))
+		cg_spll_status = INREG(R600_CG_SPLL_STATUS);
+
+	    OUTREG(R600_ROM_CNTL, (rom_cntl & ~R600_SCK_OVERWRITE));
+	} else
+	    OUTREG(R600_ROM_CNTL, (rom_cntl | R600_SCK_OVERWRITE));
+
+	ret = radeon_read_bios(pScrn);
+
+	/* restore regs */
+	if (info->ChipFamily == CHIP_FAMILY_RV730) {
+	    OUTREG(R600_CG_SPLL_FUNC_CNTL, cg_spll_func_cntl);
+
+	    /* wait for SPLL_CHG_STATUS to change to 1 */
+	    cg_spll_status = 0;
+	    while (!(cg_spll_status & R600_SPLL_CHG_STATUS))
+		cg_spll_status = INREG(R600_CG_SPLL_STATUS);
+	}
+	OUTREG(RADEON_VIPH_CONTROL, viph_control);
+	OUTREG(RADEON_BUS_CNTL, bus_cntl);
+	OUTREG(AVIVO_D1VGA_CONTROL, d1vga_control);
+	OUTREG(AVIVO_D2VGA_CONTROL, d2vga_control);
+	OUTREG(AVIVO_VGA_RENDER_CONTROL, vga_render_control);
+	OUTREG(R600_ROM_CNTL, rom_cntl);
+    } else if (info->ChipFamily >= CHIP_FAMILY_R600) {
 	uint32_t viph_control   = INREG(RADEON_VIPH_CONTROL);
 	uint32_t bus_cntl       = INREG(RADEON_BUS_CNTL);
 	uint32_t d1vga_control  = INREG(AVIVO_D1VGA_CONTROL);
@@ -127,7 +182,7 @@ radeon_read_disabled_bios(ScrnInfoPtr pScrn)
 	/* enable the rom */
 	OUTREG(RADEON_BUS_CNTL, (bus_cntl & ~RADEON_BUS_BIOS_DIS_ROM));
 
-        /* Disable VGA mode */
+	/* Disable VGA mode */
 	OUTREG(AVIVO_D1VGA_CONTROL, (d1vga_control & ~(AVIVO_DVGA_CONTROL_MODE_ENABLE |
 						       AVIVO_DVGA_CONTROL_TIMING_SELECT)));
 	OUTREG(AVIVO_D2VGA_CONTROL, (d2vga_control & ~(AVIVO_DVGA_CONTROL_MODE_ENABLE |
@@ -477,6 +532,11 @@ static void RADEONApplyLegacyQuirks(ScrnInfoPtr pScrn, int index)
 	info->BiosConnector[index].ddc_i2c.get_clk_reg = RADEON_LCD_GPIO_Y_REG;
 	info->BiosConnector[index].ddc_i2c.get_data_reg = RADEON_LCD_GPIO_Y_REG;
     }
+
+    /* R3xx+ chips don't have GPIO_CRT2_DDC gpio pad */
+    if ((IS_R300_VARIANT) &&
+	info->BiosConnector[index].ddc_i2c.mask_clk_reg == RADEON_GPIO_CRT2_DDC)
+	info->BiosConnector[index].ddc_i2c = legacy_setup_i2c_bus(RADEON_GPIO_DVI_DDC);
 
     /* Certain IBM chipset RN50s have a BIOS reporting two VGAs,
        one with VGA DDC and one with CRT2 DDC. - kill the CRT2 DDC one */
@@ -940,30 +1000,7 @@ Bool RADEONGetClockInfoFromBIOS (ScrnInfoPtr pScrn)
 	return FALSE;
     } else {
 	if (info->IsAtomBios) {
-	    pll_info_block = RADEON_BIOS16 (info->MasterDataStart + 12);
-
-	    pll->reference_freq = RADEON_BIOS16 (pll_info_block + 82);
-	    pll->reference_div = 0; /* Need to derive from existing setting
-					or use a new algorithm to calculate
-					from min_input and max_input
-				     */
-	    pll->pll_out_min = RADEON_BIOS16 (pll_info_block + 78);
-	    pll->pll_out_max = RADEON_BIOS32 (pll_info_block + 32);
-
-	    if (pll->pll_out_min == 0) {
-		if (IS_AVIVO_VARIANT)
-		    pll->pll_out_min = 64800;
-		else
-		    pll->pll_out_min = 20000;
-	    }
-
-	    pll->pll_in_min = RADEON_BIOS16 (pll_info_block + 74);
-	    pll->pll_in_max = RADEON_BIOS16 (pll_info_block + 76);
-
-	    pll->xclk = RADEON_BIOS16 (pll_info_block + 72);
-
-	    info->sclk = RADEON_BIOS32(pll_info_block + 8) / 100.0;
-	    info->mclk = RADEON_BIOS32(pll_info_block + 12) / 100.0;
+	    return RADEONGetATOMClockInfo(pScrn);
 	} else {
 	    int rev;
 
@@ -1269,7 +1306,6 @@ RADEONLookupI2CBlock(ScrnInfoPtr pScrn, int id)
 	for (i = 0; i < blocks; i++) {
 	    int i2c_id = RADEON_BIOS8(offset + 3 + (i * 5) + 0);
 	    if (id == i2c_id) {
-		int reg = RADEON_BIOS16(offset + 3 + (i * 5) + 1) * 4;
 		int clock_shift = RADEON_BIOS8(offset + 3 + (i * 5) + 3);
 		int data_shift = RADEON_BIOS8(offset + 3 + (i * 5) + 4);
 
@@ -1281,14 +1317,14 @@ RADEONLookupI2CBlock(ScrnInfoPtr pScrn, int id)
 		i2c.put_data_mask = (1 << data_shift);
 		i2c.get_clk_mask = (1 << clock_shift);
 		i2c.get_data_mask = (1 << data_shift);
-		i2c.mask_clk_reg = reg;
-		i2c.mask_data_reg = reg;
-		i2c.a_clk_reg = reg;
-		i2c.a_data_reg = reg;
-		i2c.put_clk_reg = reg;
-		i2c.put_data_reg = reg;
-		i2c.get_clk_reg = reg;
-		i2c.get_data_reg = reg;
+		i2c.mask_clk_reg = RADEON_GPIOPAD_MASK;
+		i2c.mask_data_reg = RADEON_GPIOPAD_MASK;
+		i2c.a_clk_reg = RADEON_GPIOPAD_A;
+		i2c.a_data_reg = RADEON_GPIOPAD_A;
+		i2c.put_clk_reg = RADEON_GPIOPAD_EN;
+		i2c.put_data_reg = RADEON_GPIOPAD_EN;
+		i2c.get_clk_reg = RADEON_LCD_GPIO_Y_REG;
+		i2c.get_data_reg = RADEON_LCD_GPIO_Y_REG;
 		i2c.valid = TRUE;
 		break;
 	    }
@@ -1352,6 +1388,10 @@ Bool RADEONGetExtTMDSInfoFromBIOS (ScrnInfoPtr pScrn, radeon_dvo_ptr dvo)
 		    }
 		}
 	    }
+	} else {
+	    dvo->dvo_i2c_slave_addr = 0x70;
+	    dvo->dvo_i2c = RADEONLookupI2CBlock(pScrn, 136);
+	    info->ext_tmds_chip = RADEON_SIL_164;
 	}
     } else {
 	offset = RADEON_BIOS16(info->ROMHeaderStart + 0x58);
@@ -1370,9 +1410,12 @@ Bool RADEONGetExtTMDSInfoFromBIOS (ScrnInfoPtr pScrn, radeon_dvo_ptr dvo)
 		dvo->dvo_i2c = legacy_setup_i2c_bus(RADEON_GPIO_DVI_DDC);
 	    else if (gpio_reg == 3)
 		dvo->dvo_i2c = legacy_setup_i2c_bus(RADEON_GPIO_VGA_DDC);
-	    else if (gpio_reg == 4)
-		dvo->dvo_i2c = legacy_setup_i2c_bus(RADEON_GPIO_CRT2_DDC);
-	    else if (gpio_reg == 5) {
+	    else if (gpio_reg == 4) {
+		if (IS_R300_VARIANT)
+		    dvo->dvo_i2c = legacy_setup_i2c_bus(RADEON_GPIO_MONID);
+		else
+		    dvo->dvo_i2c = legacy_setup_i2c_bus(RADEON_GPIO_CRT2_DDC);
+	    } else if (gpio_reg == 5) {
 		xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
 			   "unsupported MM gpio_reg\n");
 		return FALSE;
