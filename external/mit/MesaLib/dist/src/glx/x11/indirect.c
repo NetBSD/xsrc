@@ -5201,10 +5201,9 @@ glDeleteTexturesEXT(GLsizei n, const GLuint * textures)
 #ifdef GLX_DIRECT_RENDERING
     if (gc->driContext) {
         CALL_DeleteTextures(GET_DISPATCH(), (n, textures));
-    } else {
-#else
-    {
+    } else
 #endif
+    {
         __GLXcontext *const gc = __glXGetCurrentContext();
         Display *const dpy = gc->currentDpy;
         const GLuint cmdlen = 4 + __GLX_PAD((n * 4));
@@ -5270,13 +5269,12 @@ glGenTexturesEXT(GLsizei n, GLuint * textures)
 {
     __GLXcontext *const gc = __glXGetCurrentContext();
 
-#ifdef GLX_DIRECT_RENDERING    
+#ifdef GLX_DIRECT_RENDERING
     if (gc->driContext) {
         CALL_GenTextures(GET_DISPATCH(), (n, textures));
-    } else {
-#else 
-    {
+    } else
 #endif
+    {
         __GLXcontext *const gc = __glXGetCurrentContext();
         Display *const dpy = gc->currentDpy;
         const GLuint cmdlen = 4;
@@ -5336,13 +5334,12 @@ glIsTextureEXT(GLuint texture)
 {
     __GLXcontext *const gc = __glXGetCurrentContext();
 
-#ifdef GLX_DIRECT_RENDERING    
+#ifdef GLX_DIRECT_RENDERING
     if (gc->driContext) {
         return CALL_IsTexture(GET_DISPATCH(), (texture));
-    } else {
-#else 
-    {
+    } else
 #endif
+    {
         __GLXcontext *const gc = __glXGetCurrentContext();
         Display *const dpy = gc->currentDpy;
         GLboolean retval = (GLboolean) 0;
@@ -5653,13 +5650,12 @@ glGetColorTableEXT(GLenum target, GLenum format, GLenum type, GLvoid * table)
 {
     __GLXcontext *const gc = __glXGetCurrentContext();
 
-#ifdef GLX_DIRECT_RENDERING    
+#ifdef GLX_DIRECT_RENDERING
     if (gc->driContext) {
         CALL_GetColorTable(GET_DISPATCH(), (target, format, type, table));
-    } else {
-#else 
-    {
+    } else
 #endif
+    {
         __GLXcontext *const gc = __glXGetCurrentContext();
         const __GLXattribute *const state = gc->client_state_private;
         Display *const dpy = gc->currentDpy;
@@ -5730,14 +5726,13 @@ glGetColorTableParameterfvEXT(GLenum target, GLenum pname, GLfloat * params)
 {
     __GLXcontext *const gc = __glXGetCurrentContext();
 
-#ifdef GLX_DIRECT_RENDERING    
+#ifdef GLX_DIRECT_RENDERING
     if (gc->driContext) {
         CALL_GetColorTableParameterfv(GET_DISPATCH(),
                                       (target, pname, params));
-    } else {
-#else 
-    {
+    } else
 #endif
+    {
         __GLXcontext *const gc = __glXGetCurrentContext();
         Display *const dpy = gc->currentDpy;
         const GLuint cmdlen = 8;
@@ -5804,14 +5799,13 @@ glGetColorTableParameterivEXT(GLenum target, GLenum pname, GLint * params)
 {
     __GLXcontext *const gc = __glXGetCurrentContext();
 
-#ifdef GLX_DIRECT_RENDERING    
+#ifdef GLX_DIRECT_RENDERING
     if (gc->driContext) {
         CALL_GetColorTableParameteriv(GET_DISPATCH(),
                                       (target, pname, params));
-    } else {
-#else 
-    {
+    } else
 #endif
+    {
         __GLXcontext *const gc = __glXGetCurrentContext();
         Display *const dpy = gc->currentDpy;
         const GLuint cmdlen = 8;
@@ -6131,14 +6125,13 @@ gl_dispatch_stub_356(GLenum target, GLenum format, GLenum type,
 {
     __GLXcontext *const gc = __glXGetCurrentContext();
 
-#ifdef GLX_DIRECT_RENDERING    
+#ifdef GLX_DIRECT_RENDERING
     if (gc->driContext) {
         CALL_GetConvolutionFilter(GET_DISPATCH(),
                                   (target, format, type, image));
-    } else {
-#else 
-    {
+    } else
 #endif
+    {
         __GLXcontext *const gc = __glXGetCurrentContext();
         const __GLXattribute *const state = gc->client_state_private;
         Display *const dpy = gc->currentDpy;
@@ -6210,14 +6203,13 @@ gl_dispatch_stub_357(GLenum target, GLenum pname, GLfloat * params)
 {
     __GLXcontext *const gc = __glXGetCurrentContext();
 
-#ifdef GLX_DIRECT_RENDERING    
+#ifdef GLX_DIRECT_RENDERING
     if (gc->driContext) {
         CALL_GetConvolutionParameterfv(GET_DISPATCH(),
                                        (target, pname, params));
-    } else {
-#else 
-    {
+    } else
 #endif
+    {
         __GLXcontext *const gc = __glXGetCurrentContext();
         Display *const dpy = gc->currentDpy;
         const GLuint cmdlen = 8;
@@ -6284,14 +6276,13 @@ gl_dispatch_stub_358(GLenum target, GLenum pname, GLint * params)
 {
     __GLXcontext *const gc = __glXGetCurrentContext();
 
-#ifdef GLX_DIRECT_RENDERING    
+#ifdef GLX_DIRECT_RENDERING
     if (gc->driContext) {
         CALL_GetConvolutionParameteriv(GET_DISPATCH(),
                                        (target, pname, params));
-    } else {
-#else 
-    {
+    } else
 #endif
+    {
         __GLXcontext *const gc = __glXGetCurrentContext();
         Display *const dpy = gc->currentDpy;
         const GLuint cmdlen = 8;
@@ -6365,14 +6356,13 @@ gl_dispatch_stub_361(GLenum target, GLboolean reset, GLenum format,
 {
     __GLXcontext *const gc = __glXGetCurrentContext();
 
-#ifdef GLX_DIRECT_RENDERING    
+#ifdef GLX_DIRECT_RENDERING
     if (gc->driContext) {
         CALL_GetHistogram(GET_DISPATCH(),
                           (target, reset, format, type, values));
-    } else {
-#else 
-    {
+    } else
 #endif
+    {
         __GLXcontext *const gc = __glXGetCurrentContext();
         const __GLXattribute *const state = gc->client_state_private;
         Display *const dpy = gc->currentDpy;
@@ -6443,13 +6433,12 @@ gl_dispatch_stub_362(GLenum target, GLenum pname, GLfloat * params)
 {
     __GLXcontext *const gc = __glXGetCurrentContext();
 
-#ifdef GLX_DIRECT_RENDERING    
+#ifdef GLX_DIRECT_RENDERING
     if (gc->driContext) {
         CALL_GetHistogramParameterfv(GET_DISPATCH(), (target, pname, params));
-    } else {
-#else 
-    {
+    } else
 #endif
+    {
         __GLXcontext *const gc = __glXGetCurrentContext();
         Display *const dpy = gc->currentDpy;
         const GLuint cmdlen = 8;
@@ -6515,13 +6504,12 @@ gl_dispatch_stub_363(GLenum target, GLenum pname, GLint * params)
 {
     __GLXcontext *const gc = __glXGetCurrentContext();
 
-#ifdef GLX_DIRECT_RENDERING    
+#ifdef GLX_DIRECT_RENDERING
     if (gc->driContext) {
         CALL_GetHistogramParameteriv(GET_DISPATCH(), (target, pname, params));
-    } else {
-#else 
-    {
+    } else
 #endif
+    {
         __GLXcontext *const gc = __glXGetCurrentContext();
         Display *const dpy = gc->currentDpy;
         const GLuint cmdlen = 8;
@@ -6591,13 +6579,12 @@ gl_dispatch_stub_364(GLenum target, GLboolean reset, GLenum format,
 {
     __GLXcontext *const gc = __glXGetCurrentContext();
 
-#ifdef GLX_DIRECT_RENDERING    
+#ifdef GLX_DIRECT_RENDERING
     if (gc->driContext) {
         CALL_GetMinmax(GET_DISPATCH(), (target, reset, format, type, values));
-    } else {
-#else 
-    {
+    } else
 #endif
+    {
         __GLXcontext *const gc = __glXGetCurrentContext();
         const __GLXattribute *const state = gc->client_state_private;
         Display *const dpy = gc->currentDpy;
@@ -6666,13 +6653,12 @@ gl_dispatch_stub_365(GLenum target, GLenum pname, GLfloat * params)
 {
     __GLXcontext *const gc = __glXGetCurrentContext();
 
-#ifdef GLX_DIRECT_RENDERING    
+#ifdef GLX_DIRECT_RENDERING
     if (gc->driContext) {
         CALL_GetMinmaxParameterfv(GET_DISPATCH(), (target, pname, params));
-    } else {
-#else 
-    {
+    } else
 #endif
+    {
         __GLXcontext *const gc = __glXGetCurrentContext();
         Display *const dpy = gc->currentDpy;
         const GLuint cmdlen = 8;
@@ -6735,13 +6721,12 @@ gl_dispatch_stub_366(GLenum target, GLenum pname, GLint * params)
 {
     __GLXcontext *const gc = __glXGetCurrentContext();
 
-#ifdef GLX_DIRECT_RENDERING    
+#ifdef GLX_DIRECT_RENDERING
     if (gc->driContext) {
         CALL_GetMinmaxParameteriv(GET_DISPATCH(), (target, pname, params));
-    } else {
-#else 
-    {
+    } else
 #endif
+    {
         __GLXcontext *const gc = __glXGetCurrentContext();
         Display *const dpy = gc->currentDpy;
         const GLuint cmdlen = 8;
@@ -8616,6 +8601,26 @@ __indirect_glDrawBuffersARB(GLsizei n, const GLenum * bufs)
             (void) memcpy((void *) (pc + 8), (void *) (&n), 4);
             __glXSendLargeCommand(gc, pc, 12, bufs, (n * 4));
         }
+    }
+}
+
+#define X_GLrop_RenderbufferStorageMultisample 4331
+void
+__indirect_glRenderbufferStorageMultisample(GLenum target, GLsizei samples,
+                                            GLenum internalformat,
+                                            GLsizei width, GLsizei height)
+{
+    __GLXcontext *const gc = __glXGetCurrentContext();
+    const GLuint cmdlen = 24;
+    emit_header(gc->pc, X_GLrop_RenderbufferStorageMultisample, cmdlen);
+    (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
+    (void) memcpy((void *) (gc->pc + 8), (void *) (&samples), 4);
+    (void) memcpy((void *) (gc->pc + 12), (void *) (&internalformat), 4);
+    (void) memcpy((void *) (gc->pc + 16), (void *) (&width), 4);
+    (void) memcpy((void *) (gc->pc + 20), (void *) (&height), 4);
+    gc->pc += cmdlen;
+    if (__builtin_expect(gc->pc > gc->limit, 0)) {
+        (void) __glXFlushRenderBuffer(gc, gc->pc);
     }
 }
 
@@ -10606,6 +10611,52 @@ __indirect_glRenderbufferStorageEXT(GLenum target, GLenum internalformat,
     (void) memcpy((void *) (gc->pc + 8), (void *) (&internalformat), 4);
     (void) memcpy((void *) (gc->pc + 12), (void *) (&width), 4);
     (void) memcpy((void *) (gc->pc + 16), (void *) (&height), 4);
+    gc->pc += cmdlen;
+    if (__builtin_expect(gc->pc > gc->limit, 0)) {
+        (void) __glXFlushRenderBuffer(gc, gc->pc);
+    }
+}
+
+#define X_GLrop_BlitFramebufferEXT 4330
+void
+__indirect_glBlitFramebufferEXT(GLint srcX0, GLint srcY0, GLint srcX1,
+                                GLint srcY1, GLint dstX0, GLint dstY0,
+                                GLint dstX1, GLint dstY1, GLbitfield mask,
+                                GLenum filter)
+{
+    __GLXcontext *const gc = __glXGetCurrentContext();
+    const GLuint cmdlen = 44;
+    emit_header(gc->pc, X_GLrop_BlitFramebufferEXT, cmdlen);
+    (void) memcpy((void *) (gc->pc + 4), (void *) (&srcX0), 4);
+    (void) memcpy((void *) (gc->pc + 8), (void *) (&srcY0), 4);
+    (void) memcpy((void *) (gc->pc + 12), (void *) (&srcX1), 4);
+    (void) memcpy((void *) (gc->pc + 16), (void *) (&srcY1), 4);
+    (void) memcpy((void *) (gc->pc + 20), (void *) (&dstX0), 4);
+    (void) memcpy((void *) (gc->pc + 24), (void *) (&dstY0), 4);
+    (void) memcpy((void *) (gc->pc + 28), (void *) (&dstX1), 4);
+    (void) memcpy((void *) (gc->pc + 32), (void *) (&dstY1), 4);
+    (void) memcpy((void *) (gc->pc + 36), (void *) (&mask), 4);
+    (void) memcpy((void *) (gc->pc + 40), (void *) (&filter), 4);
+    gc->pc += cmdlen;
+    if (__builtin_expect(gc->pc > gc->limit, 0)) {
+        (void) __glXFlushRenderBuffer(gc, gc->pc);
+    }
+}
+
+#define X_GLrop_FramebufferTextureLayerEXT 237
+void
+__indirect_glFramebufferTextureLayerEXT(GLenum target, GLenum attachment,
+                                        GLuint texture, GLint level,
+                                        GLint layer)
+{
+    __GLXcontext *const gc = __glXGetCurrentContext();
+    const GLuint cmdlen = 24;
+    emit_header(gc->pc, X_GLrop_FramebufferTextureLayerEXT, cmdlen);
+    (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
+    (void) memcpy((void *) (gc->pc + 8), (void *) (&attachment), 4);
+    (void) memcpy((void *) (gc->pc + 12), (void *) (&texture), 4);
+    (void) memcpy((void *) (gc->pc + 16), (void *) (&level), 4);
+    (void) memcpy((void *) (gc->pc + 20), (void *) (&layer), 4);
     gc->pc += cmdlen;
     if (__builtin_expect(gc->pc > gc->limit, 0)) {
         (void) __glXFlushRenderBuffer(gc, gc->pc);

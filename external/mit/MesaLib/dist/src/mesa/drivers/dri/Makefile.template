@@ -2,13 +2,17 @@
 
 MESA_MODULES = $(TOP)/src/mesa/libmesa.a
 
-COMMON_SOURCES = \
+COMMON_GALLIUM_SOURCES = \
         ../common/utils.c \
-        ../common/texmem.c \
         ../common/vblank.c \
         ../common/dri_util.c \
-        ../common/xmlconfig.c \
-        ../common/drirenderbuffer.c 
+        ../common/xmlconfig.c
+
+COMMON_SOURCES = $(COMMON_GALLIUM_SOURCES) \
+        ../../common/driverfuncs.c \
+        ../common/texmem.c \
+        ../common/drirenderbuffer.c \
+	../common/dri_metaops.c
 
 ifeq ($(WINDOW_SYSTEM),dri)
 WINOBJ=
@@ -56,22 +60,46 @@ SHARED_INCLUDES = \
 
 ##### TARGETS #####
 
-default: symlinks depend $(LIBNAME) $(TOP)/$(LIB_DIR)/$(LIBNAME)
+default: subdirs lib
 
 
-$(LIBNAME): $(OBJECTS) $(MESA_MODULES) $(WINOBJ) Makefile $(TOP)/src/mesa/drivers/dri/Makefile.template
+.PHONY: lib
+lib: symlinks subdirs depend
+	@$(MAKE) $(LIBNAME) $(TOP)/$(LIB_DIR)/$(LIBNAME)
+
+$(LIBNAME): $(OBJECTS) $(MESA_MODULES) $(EXTRA_MODULES) $(WINOBJ) Makefile \
+		$(TOP)/src/mesa/drivers/dri/Makefile.template
 	$(MKLIB) -o $@ -noprefix -linker '$(CC)' -ldflags '$(LDFLAGS)' \
-		$(OBJECTS) $(MESA_MODULES) $(WINOBJ) $(DRI_LIB_DEPS)
+		$(OBJECTS) $(MESA_MODULES) $(EXTRA_MODULES) $(WINOBJ) \
+		$(DRI_LIB_DEPS)
 
 
 $(TOP)/$(LIB_DIR)/$(LIBNAME): $(LIBNAME)
 	$(INSTALL) $(LIBNAME) $(TOP)/$(LIB_DIR) 
 
 
+# If the Makefile defined SUBDIRS, run make in each
+.PHONY: subdirs
+subdirs:
+	@if test -n "$(SUBDIRS)" ; then \
+		for dir in $(SUBDIRS) ; do \
+			if [ -d $$dir ] ; then \
+				(cd $$dir && $(MAKE)) || exit 1; \
+			fi \
+		done \
+	fi
+
+
+.PHONY: symlinks
+symlinks:
+
+
 depend: $(C_SOURCES) $(ASM_SOURCES) $(SYMLINKS)
-	touch depend
-	$(MKDEP) $(MKDEP_OPTIONS) $(DRIVER_DEFINES) $(INCLUDES) $(C_SOURCES) \
-		$(ASM_SOURCES)
+	@ echo "running $(MKDEP)"
+	@ rm -f depend
+	@ touch depend
+	@ $(MKDEP) $(MKDEP_OPTIONS) $(DRIVER_DEFINES) $(INCLUDES) $(C_SOURCES) \
+		$(ASM_SOURCES) > /dev/null 2>/dev/null
 
 
 # Emacs tags
@@ -87,7 +115,7 @@ clean:
 
 install: $(LIBNAME)
 	$(INSTALL) -d $(DESTDIR)$(DRI_DRIVER_INSTALL_DIR)
-	$(INSTALL) -m 755 $(LIBNAME) $(DESTDIR)$(DRI_DRIVER_INSTALL_DIR)
+	$(MINSTALL) -m 755 $(LIBNAME) $(DESTDIR)$(DRI_DRIVER_INSTALL_DIR)
 
 
 -include depend

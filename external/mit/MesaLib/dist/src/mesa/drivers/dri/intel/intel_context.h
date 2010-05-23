@@ -33,6 +33,7 @@
 #include "main/mtypes.h"
 #include "main/mm.h"
 #include "texmem.h"
+#include "dri_metaops.h"
 #include "drm.h"
 #include "intel_bufmgr.h"
 
@@ -48,6 +49,8 @@
 #define DV_PF_555  (1<<8)
 #define DV_PF_565  (2<<8)
 #define DV_PF_8888 (3<<8)
+#define DV_PF_4444 (8<<8)
+#define DV_PF_1555 (9<<8)
 
 struct intel_region;
 struct intel_context;
@@ -58,6 +61,10 @@ typedef void (*intel_line_func) (struct intel_context *, intelVertex *,
                                  intelVertex *);
 typedef void (*intel_point_func) (struct intel_context *, intelVertex *);
 
+/**
+ * Bits for intel->Fallback field
+ */
+/*@{*/
 #define INTEL_FALLBACK_DRAW_BUFFER	 0x1
 #define INTEL_FALLBACK_READ_BUFFER	 0x2
 #define INTEL_FALLBACK_DEPTH_BUFFER      0x4
@@ -65,8 +72,10 @@ typedef void (*intel_point_func) (struct intel_context *, intelVertex *);
 #define INTEL_FALLBACK_USER		 0x10
 #define INTEL_FALLBACK_RENDERMODE	 0x20
 #define INTEL_FALLBACK_TEXTURE   	 0x40
+#define INTEL_FALLBACK_DRIVER            0x1000  /**< first for drivers */
+/*@}*/
 
-extern void intelFallback(struct intel_context *intel, GLuint bit,
+extern void intelFallback(struct intel_context *intel, GLbitfield bit,
                           GLboolean mode);
 #define FALLBACK( intel, bit, mode ) intelFallback( intel, bit, mode )
 
@@ -77,9 +86,19 @@ extern void intelFallback(struct intel_context *intel, GLuint bit,
 
 #define INTEL_MAX_FIXUP 64
 
+struct intel_sync_object {
+   struct gl_sync_object Base;
+
+   /** Batch associated with this sync object */
+   drm_intel_bo *bo;
+};
+
+/**
+ * intel_context is derived from Mesa's context class: GLcontext.
+ */
 struct intel_context
 {
-   GLcontext ctx;               /* the parent class */
+   GLcontext ctx;  /**< base class, must be first field */
 
    struct
    {
@@ -89,7 +108,6 @@ struct intel_context
       void (*new_batch) (struct intel_context * intel);
       void (*emit_invarient_state) (struct intel_context * intel);
       void (*note_fence) (struct intel_context *intel, GLuint fence);
-      void (*note_unlock) (struct intel_context *intel);
       void (*update_texture_state) (struct intel_context * intel);
 
       void (*render_start) (struct intel_context * intel);
@@ -98,9 +116,6 @@ struct intel_context
                                struct intel_region * draw_regions[],
                                struct intel_region * depth_region,
 			       GLuint num_regions);
-
-      GLuint (*flush_cmd) (void);
-      void (*emit_flush) (struct intel_context *intel, GLuint unused);
 
       void (*reduced_primitive_state) (struct intel_context * intel,
                                        GLenum rprim);
@@ -157,26 +172,18 @@ struct intel_context
       void (*debug_batch)(struct intel_context *intel);
    } vtbl;
 
-   struct {
-      struct gl_fragment_program *bitmap_fp;
-      struct gl_vertex_program *passthrough_vp;
+   struct dri_metaops meta;
 
-      struct gl_fragment_program *saved_fp;
-      GLboolean saved_fp_enable;
-      struct gl_vertex_program *saved_vp;
-      GLboolean saved_vp_enable;
-
-      GLint saved_vp_x, saved_vp_y;
-      GLsizei saved_vp_width, saved_vp_height;
-      GLenum saved_matrix_mode;
-   } meta;
-
-   GLint refcount;
-   GLuint Fallback;
+   GLbitfield Fallback;  /**< mask of INTEL_FALLBACK_x bits */
    GLuint NewGLState;
 
    dri_bufmgr *bufmgr;
    unsigned int maxBatchSize;
+
+   /**
+    * Generation number of the hardware: 2 is 8xx, 3 is 9xx pre-965, 4 is 965.
+    */
+   int gen;
 
    struct intel_region *front_region;
    struct intel_region *back_region;
@@ -189,8 +196,8 @@ struct intel_context
    GLboolean ttm;
 
    struct intel_batchbuffer *batch;
+   drm_intel_bo *first_post_swapbuffers_batch;
    GLboolean no_batch_wrap;
-   unsigned batch_id;
 
    struct
    {
@@ -213,6 +220,7 @@ struct intel_context
    GLuint ClearColor565;
    GLuint ClearColor8888;
 
+
    /* Offsets of fields within the current vertex:
     */
    GLuint coloroffset;
@@ -229,6 +237,8 @@ struct intel_context
    GLboolean hw_stipple;
    GLboolean depth_buffer_is_float;
    GLboolean no_rast;
+   GLboolean always_flush_batch;
+   GLboolean always_flush_cache;
 
    /* 0 - nonconformant, best performance;
     * 1 - fallback to sw for known conformance bugs
@@ -251,9 +261,6 @@ struct intel_context
    intel_line_func draw_line;
    intel_tri_func draw_tri;
 
-   /* These refer to the current drawing buffer:
-    */
-   struct gl_texture_object *frame_buffer_texobj;
    /**
     * Set to true if a single constant cliprect should be used in the
     * batchbuffer.  Otherwise, cliprects must be calculated at batchbuffer
@@ -282,7 +289,17 @@ struct intel_context
     * easily.
     */
    GLboolean is_front_buffer_rendering;
+   /**
+    * Track whether front-buffer is the current read target.
+    *
+    * This is closely associated with is_front_buffer_rendering, but may
+    * be set separately.  The DRI2 fake front buffer must be referenced
+    * either way.
+    */
+   GLboolean is_front_buffer_reading;
 
+   GLboolean use_texture_tiling;
+   GLboolean use_early_z;
    drm_clip_rect_t fboRect;     /**< cliprect for FBO rendering */
 
    int perf_boxes;
@@ -304,7 +321,7 @@ struct intel_context
    __DRIdrawablePrivate *driReadDrawable;
    __DRIscreenPrivate *driScreen;
    intelScreenPrivate *intelScreen;
-   volatile struct drm_i915_sarea *sarea;
+   volatile drm_i915_sarea_t *sarea;
 
    GLuint lastStamp;
 
@@ -335,6 +352,20 @@ extern char *__progname;
 
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof(x[0]))
 #define ALIGN(value, alignment)  ((value + alignment - 1) & ~(alignment - 1))
+#define IS_POWER_OF_TWO(val) (((val) & (val - 1)) == 0)
+
+static INLINE uint32_t
+U_FIXED(float value, uint32_t frac_bits)
+{
+   value *= (1 << frac_bits);
+   return value < 0 ? 0 : value;
+}
+
+static INLINE uint32_t
+S_FIXED(float value, uint32_t frac_bits)
+{
+   return value * (1 << frac_bits);
+}
 
 #define INTEL_FIREVERTICES(intel)		\
 do {						\
@@ -458,10 +489,10 @@ extern void intelGetLock(struct intel_context *intel, GLuint flags);
 
 extern void intelFinish(GLcontext * ctx);
 extern void intelFlush(GLcontext * ctx);
-extern void intel_glFlush(GLcontext *ctx);
 
 extern void intelInitDriverFunctions(struct dd_function_table *functions);
-extern void intelInitExtensions(GLcontext *ctx, GLboolean enable_imaging);
+
+void intel_init_syncobj_functions(struct dd_function_table *functions);
 
 
 /* ================================================================
@@ -538,6 +569,9 @@ void intel_viewport(GLcontext * ctx, GLint x, GLint y,
 void intel_update_renderbuffers(__DRIcontext *context,
 				__DRIdrawable *drawable);
 
+void i915_set_buf_info_for_region(uint32_t *state, struct intel_region *region,
+				  uint32_t buffer_id);
+
 /*======================================================================
  * Inline conversion functions.  
  * These are better-typed than the macros used previously:
@@ -546,6 +580,33 @@ static INLINE struct intel_context *
 intel_context(GLcontext * ctx)
 {
    return (struct intel_context *) ctx;
+}
+
+static INLINE GLboolean
+is_power_of_two(uint32_t value)
+{
+   return (value & (value - 1)) == 0;
+}
+
+static INLINE void
+intel_bo_map_gtt_preferred(struct intel_context *intel,
+			   drm_intel_bo *bo,
+			   GLboolean write)
+{
+   if (intel->intelScreen->kernel_exec_fencing)
+      drm_intel_gem_bo_map_gtt(bo);
+   else
+      drm_intel_bo_map(bo, write);
+}
+
+static INLINE void
+intel_bo_unmap_gtt_preferred(struct intel_context *intel,
+			     drm_intel_bo *bo)
+{
+   if (intel->intelScreen->kernel_exec_fencing)
+      drm_intel_gem_bo_unmap_gtt(bo);
+   else
+      drm_intel_bo_unmap(bo);
 }
 
 #endif

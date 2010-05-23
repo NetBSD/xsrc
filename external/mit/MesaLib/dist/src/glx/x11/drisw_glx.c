@@ -250,11 +250,13 @@ driCreateContext(__GLXscreenConfigs * psc,
 {
    __GLXDRIcontextPrivate *pcp, *pcp_shared;
    __GLXDRIconfigPrivate *config = (__GLXDRIconfigPrivate *) mode;
-   const __DRIcoreExtension *core = psc->core;
+   const __DRIcoreExtension *core;
    __DRIcontext *shared = NULL;
 
    if (!psc || !psc->driScreen)
       return NULL;
+
+   core = psc->core;
 
    if (shareList) {
       pcp_shared = (__GLXDRIcontextPrivate *) shareList->driContext;
@@ -400,6 +402,8 @@ driCreateScreen(__GLXscreenConfigs * psc, int screen,
 
    psc->configs = driConvertConfigs(psc->core, psc->configs, driver_configs);
    psc->visuals = driConvertConfigs(psc->core, psc->visuals, driver_configs);
+
+   psc->driver_configs = driver_configs;
 
    psp->destroyScreen = driDestroyScreen;
    psp->createContext = driCreateContext;

@@ -120,15 +120,11 @@ _mesa_DeleteHashTable(struct _mesa_HashTable *table)
 
 
 /**
- * Lookup an entry in the hash table.
- * 
- * \param table the hash table.
- * \param key the key.
- * 
- * \return pointer to user's data or NULL if key not in table
+ * Lookup an entry in the hash table, without locking.
+ * \sa _mesa_HashLookup
  */
-void *
-_mesa_HashLookup(const struct _mesa_HashTable *table, GLuint key)
+static INLINE void *
+_mesa_HashLookup_unlocked(struct _mesa_HashTable *table, GLuint key)
 {
    GLuint pos;
    const struct HashEntry *entry;
@@ -140,13 +136,32 @@ _mesa_HashLookup(const struct _mesa_HashTable *table, GLuint key)
    entry = table->Table[pos];
    while (entry) {
       if (entry->Key == key) {
-	 return entry->Data;
+         return entry->Data;
       }
       entry = entry->Next;
    }
    return NULL;
 }
 
+
+/**
+ * Lookup an entry in the hash table.
+ * 
+ * \param table the hash table.
+ * \param key the key.
+ * 
+ * \return pointer to user's data or NULL if key not in table
+ */
+void *
+_mesa_HashLookup(struct _mesa_HashTable *table, GLuint key)
+{
+   void *res;
+   assert(table);
+   _glthread_LOCK_MUTEX(table->Mutex);
+   res = _mesa_HashLookup_unlocked(table, key);
+   _glthread_UNLOCK_MUTEX(table->Mutex);
+   return res;
+}
 
 
 /**
@@ -191,10 +206,12 @@ _mesa_HashInsert(struct _mesa_HashTable *table, GLuint key, void *data)
 
    /* alloc and insert new table entry */
    entry = MALLOC_STRUCT(HashEntry);
-   entry->Key = key;
-   entry->Data = data;
-   entry->Next = table->Table[pos];
-   table->Table[pos] = entry;
+   if (entry) {
+      entry->Key = key;
+      entry->Data = data;
+      entry->Next = table->Table[pos];
+      table->Table[pos] = entry;
+   }
 
    _glthread_UNLOCK_MUTEX(table->Mutex);
 }
@@ -442,7 +459,7 @@ _mesa_HashFindFreeKeyBlock(struct _mesa_HashTable *table, GLuint numKeys)
       GLuint freeStart = 1;
       GLuint key;
       for (key = 1; key != maxKey; key++) {
-	 if (_mesa_HashLookup(table, key)) {
+	 if (_mesa_HashLookup_unlocked(table, key)) {
 	    /* darn, this key is already in use */
 	    freeCount = 0;
 	    freeStart = key+1;

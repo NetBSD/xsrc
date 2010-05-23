@@ -23,7 +23,6 @@
 #include "main/colormac.h"
 #include "main/context.h"
 #include "main/macros.h"
-#include "shader/program.h"
 #include "shader/atifragshader.h"
 #include "swrast/s_atifragshader.h"
 
@@ -47,17 +46,12 @@ static void
 fetch_texel(GLcontext * ctx, const GLfloat texcoord[4], GLfloat lambda,
 	    GLuint unit, GLfloat color[4])
 {
-   GLchan rgba[4];
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
 
    /* XXX use a float-valued TextureSample routine here!!! */
    swrast->TextureSample[unit](ctx, ctx->Texture.Unit[unit]._Current,
                                1, (const GLfloat(*)[4]) texcoord,
-                               &lambda, &rgba);
-   color[0] = CHAN_TO_FLOAT(rgba[0]);
-   color[1] = CHAN_TO_FLOAT(rgba[1]);
-   color[2] = CHAN_TO_FLOAT(rgba[2]);
-   color[3] = CHAN_TO_FLOAT(rgba[3]);
+                               &lambda, (GLfloat (*)[4]) color);
 }
 
 static void
@@ -284,7 +278,7 @@ handle_sample_op(GLcontext * ctx, struct atifs_machine *machine,
 /* sample from unit idx using texinst->src as coords */
    GLuint swizzle = texinst->swizzle;
    GLuint coord_source = texinst->src;
-   GLfloat tex_coords[4];
+   GLfloat tex_coords[4] = { 0 };
 
    if (coord_source >= GL_TEXTURE0_ARB && coord_source <= GL_TEXTURE7_ARB) {
       coord_source -= GL_TEXTURE0_ARB;
@@ -591,8 +585,6 @@ _swrast_exec_fragment_shader(GLcontext * ctx, SWspan *span)
    /* incoming colors should be floats */
    ASSERT(span->array->ChanType == GL_FLOAT);
 
-   ctx->_CurrentProgram = GL_FRAGMENT_SHADER_ATI;
-
    for (i = 0; i < span->end; i++) {
       if (span->array->mask[i]) {
 	 init_machine(ctx, &machine, shader, span, i);
@@ -608,6 +600,4 @@ _swrast_exec_fragment_shader(GLcontext * ctx, SWspan *span)
 	 }
       }
    }
-
-   ctx->_CurrentProgram = 0;
 }

@@ -50,6 +50,7 @@
 #define _T_CONTEXT_H
 
 #include "main/glheader.h"
+#include "main/bitset.h"
 #include "main/mtypes.h"
 
 #include "math/m_matrix.h"
@@ -545,6 +546,10 @@ typedef struct
 
 #define TYPE_IDX(t) ((t) & 0xf)
 #define MAX_TYPES TYPE_IDX(GL_DOUBLE)+1      /* 0xa + 1 */
+
+
+extern void
+tnl_clip_prepare(GLcontext *ctx);
 
 
 #endif

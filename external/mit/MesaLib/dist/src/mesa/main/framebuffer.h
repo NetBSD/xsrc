@@ -47,9 +47,6 @@ _mesa_reference_framebuffer(struct gl_framebuffer **ptr,
                             struct gl_framebuffer *fb);
 
 extern void
-_mesa_unreference_framebuffer(struct gl_framebuffer **fb);
-
-extern void
 _mesa_resize_framebuffer(GLcontext *ctx, struct gl_framebuffer *fb,
                          GLuint width, GLuint height);
 
@@ -84,5 +81,10 @@ _mesa_source_buffer_exists(GLcontext *ctx, GLenum format);
 extern GLboolean
 _mesa_dest_buffer_exists(GLcontext *ctx, GLenum format);
 
+extern GLenum
+_mesa_get_color_read_type(GLcontext *ctx);
+
+extern GLenum
+_mesa_get_color_read_format(GLcontext *ctx);
 
 #endif /* FRAMEBUFFER_H */

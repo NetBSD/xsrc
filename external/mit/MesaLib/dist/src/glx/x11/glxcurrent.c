@@ -73,45 +73,7 @@ static __GLapi *IndirectAPI = NULL;
  * Current context management and locking
  */
 
-#if defined( USE_XTHREADS )
-
-/* thread safe */
-static GLboolean TSDinitialized = GL_FALSE;
-static xthread_key_t ContextTSD;
-
-_X_HIDDEN __GLXcontext *
-__glXGetCurrentContext(void)
-{
-   if (!TSDinitialized) {
-      xthread_key_create(&ContextTSD, NULL);
-      TSDinitialized = GL_TRUE;
-      return &dummyContext;
-   }
-   else {
-      void *p;
-      xthread_get_specific(ContextTSD, &p);
-      if (!p)
-         return &dummyContext;
-      else
-         return (__GLXcontext *) p;
-   }
-}
-
-_X_HIDDEN void
-__glXSetCurrentContext(__GLXcontext * c)
-{
-   if (!TSDinitialized) {
-      xthread_key_create(&ContextTSD, NULL);
-      TSDinitialized = GL_TRUE;
-   }
-   xthread_set_specific(ContextTSD, c);
-}
-
-
-/* Used by the __glXLock() and __glXUnlock() macros */
-_X_HIDDEN xmutex_rec __glXmutex;
-
-#elif defined( PTHREADS )
+#if defined( PTHREADS )
 
 _X_HIDDEN pthread_mutex_t __glXmutex = PTHREAD_MUTEX_INITIALIZER;
 
@@ -119,7 +81,7 @@ _X_HIDDEN pthread_mutex_t __glXmutex = PTHREAD_MUTEX_INITIALIZER;
 
 /**
  * Per-thread GLX context pointer.
- * 
+ *
  * \c __glXSetCurrentContext is written is such a way that this pointer can
  * \b never be \c NULL.  This is important!  Because of this
  * \c __glXGetCurrentContext can be implemented as trivial macro.
@@ -139,7 +101,7 @@ static pthread_once_t once_control = PTHREAD_ONCE_INIT;
 
 /**
  * Per-thread data key.
- * 
+ *
  * Once \c init_thread_data has been called, the per-thread data key will
  * take a value of \c NULL.  As each new thread is created the default
  * value, in that thread, will be \c NULL.
@@ -148,7 +110,7 @@ static pthread_key_t ContextTSD;
 
 /**
  * Initialize the per-thread data key.
- * 
+ *
  * This function is called \b exactly once per-process (not per-thread!) to
  * initialize the per-thread data key.  This is ideally done using the
  * \c pthread_once mechanism.
@@ -200,6 +162,7 @@ __glXSetCurrentContextNull(void)
    __glXSetCurrentContext(&dummyContext);
 #ifdef GLX_DIRECT_RENDERING
    _glapi_set_dispatch(NULL);   /* no-op functions */
+   _glapi_set_context(NULL);
 #endif
 }
 
@@ -339,10 +302,24 @@ FetchDRIDrawable(Display * dpy, GLXDrawable glxDrawable, GLXContext gc)
 }
 #endif /* GLX_DIRECT_RENDERING */
 
+static void
+__glXGenerateError(Display * dpy, GLXContext gc, XID resource,
+                   BYTE errorCode, CARD16 minorCode)
+{
+   xError error;
+
+   error.errorCode = errorCode;
+   error.resourceID = resource;
+   error.sequenceNumber = dpy->request;
+   error.type = X_Error;
+   error.majorCode = gc->majorOpcode;
+   error.minorCode = minorCode;
+   _XError(dpy, &error);
+}
 
 /**
  * Make a particular context current.
- * 
+ *
  * \note This is in this file so that it can access dummyContext.
  */
 static Bool
@@ -369,7 +346,23 @@ MakeContextCurrent(Display * dpy, GLXDrawable draw,
       return GL_FALSE;
    }
 
+   if (gc == NULL && (draw != None || read != None)) {
+      __glXGenerateError(dpy, gc, (draw != None) ? draw : read,
+                         BadMatch, X_GLXMakeContextCurrent);
+      return False;
+   }
+   if (gc != NULL && (draw == None || read == None)) {
+      __glXGenerateError(dpy, gc, None, BadMatch, X_GLXMakeContextCurrent);
+      return False;
+   }
+
    _glapi_check_multithread();
+
+   if (gc != NULL && gc->thread_id != 0 && gc->thread_id != _glthread_GetID()) {
+      __glXGenerateError(dpy, gc, gc->xid,
+                         BadAccess, X_GLXMakeContextCurrent);
+      return False;
+   }
 
 #ifdef GLX_DIRECT_RENDERING
    /* Bind the direct rendering context to the drawable */
@@ -378,20 +371,16 @@ MakeContextCurrent(Display * dpy, GLXDrawable draw,
       __GLXDRIdrawable *pread = FetchDRIDrawable(dpy, read, gc);
 
       if ((pdraw == NULL) || (pread == NULL)) {
-         xError error;
-
-         error.errorCode = GLXBadDrawable;
-         error.resourceID = (pdraw == NULL) ? draw : read;
-         error.sequenceNumber = dpy->request;
-         error.type = X_Error;
-         error.majorCode = gc->majorOpcode;
-         error.minorCode = X_GLXMakeContextCurrent;
-         _XError(dpy, &error);
+         __glXGenerateError(dpy, gc, (pdraw == NULL) ? draw : read,
+                            GLXBadDrawable, X_GLXMakeContextCurrent);
          return False;
       }
 
       bindReturnValue =
          (gc->driContext->bindContext) (gc->driContext, pdraw, pread);
+   }
+   else if (!gc && oldGC && oldGC->driContext) {
+      bindReturnValue = True;
    }
    else
 #endif
@@ -453,6 +442,7 @@ MakeContextCurrent(Display * dpy, GLXDrawable draw,
          oldGC->currentDrawable = None;
          oldGC->currentReadable = None;
          oldGC->currentContextTag = 0;
+         oldGC->thread_id = 0;
 
          if (oldGC->xid == None) {
             /* We are switching away from a context that was
@@ -477,6 +467,7 @@ MakeContextCurrent(Display * dpy, GLXDrawable draw,
          gc->currentDpy = dpy;
          gc->currentDrawable = draw;
          gc->currentReadable = read;
+         gc->thread_id = _glthread_GetID();
 
 #ifdef GLX_DIRECT_RENDERING
          if (!gc->driContext) {
@@ -484,13 +475,6 @@ MakeContextCurrent(Display * dpy, GLXDrawable draw,
             if (!IndirectAPI)
                IndirectAPI = __glXNewIndirectAPI();
             _glapi_set_dispatch(IndirectAPI);
-
-#ifdef GLX_USE_APPLEGL
-            do {
-               extern void XAppleDRIUseIndirectDispatch(void);
-               XAppleDRIUseIndirectDispatch();
-            } while (0);
-#endif
 
             state = (__GLXattribute *) (gc->client_state_private);
 
@@ -529,6 +513,5 @@ GLX_ALIAS(Bool, glXMakeCurrentReadSGI,
 
 PUBLIC
 GLX_ALIAS(Bool, glXMakeContextCurrent,
-	  (Display * dpy, GLXDrawable d, GLXDrawable r,
-	   GLXContext ctx), (dpy, d, r, ctx),
-	  MakeContextCurrent)
+          (Display * dpy, GLXDrawable d, GLXDrawable r,
+           GLXContext ctx), (dpy, d, r, ctx), MakeContextCurrent)

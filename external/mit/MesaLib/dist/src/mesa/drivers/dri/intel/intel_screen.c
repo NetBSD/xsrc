@@ -28,28 +28,28 @@
 #include "main/glheader.h"
 #include "main/context.h"
 #include "main/framebuffer.h"
-#include "main/matrix.h"
 #include "main/renderbuffer.h"
-#include "main/simple_list.h"
+
 #include "utils.h"
 #include "vblank.h"
 #include "xmlpool.h"
 
-
-#include "intel_screen.h"
-
+#include "intel_batchbuffer.h"
 #include "intel_buffers.h"
-#include "intel_tex.h"
-#include "intel_span.h"
-#include "intel_fbo.h"
+#include "intel_bufmgr.h"
 #include "intel_chipset.h"
+#include "intel_fbo.h"
 #include "intel_swapbuffers.h"
+#include "intel_screen.h"
+#include "intel_tex.h"
 
 #include "i915_drm.h"
 #include "i830_dri.h"
-#include "intel_regions.h"
-#include "intel_batchbuffer.h"
-#include "intel_bufmgr.h"
+
+#define DRI_CONF_TEXTURE_TILING(def) \
+	DRI_CONF_OPT_BEGIN(texture_tiling, bool, def)		\
+		DRI_CONF_DESC(en, "Enable texture tiling")	\
+	DRI_CONF_OPT_END					\
 
 PUBLIC const char __driConfigOptions[] =
    DRI_CONF_BEGIN
@@ -65,6 +65,21 @@ PUBLIC const char __driConfigOptions[] =
 	    DRI_CONF_ENUM(1, "Enable reuse of all sizes of buffer objects")
 	 DRI_CONF_DESC_END
       DRI_CONF_OPT_END
+
+#ifdef I915
+     DRI_CONF_TEXTURE_TILING(false)
+#else
+     DRI_CONF_TEXTURE_TILING(true)
+#endif
+
+      DRI_CONF_OPT_BEGIN(early_z, bool, false)
+	 DRI_CONF_DESC(en, "Enable early Z in classic mode (unstable, 945-only).")
+      DRI_CONF_OPT_END
+
+      DRI_CONF_OPT_BEGIN(fragment_shader, bool, false)
+	 DRI_CONF_DESC(en, "Enable limited ARB_fragment_shader support on 915/945.")
+      DRI_CONF_OPT_END
+
    DRI_CONF_SECTION_END
    DRI_CONF_SECTION_QUALITY
       DRI_CONF_FORCE_S3TC_ENABLE(false)
@@ -72,10 +87,16 @@ PUBLIC const char __driConfigOptions[] =
    DRI_CONF_SECTION_END
    DRI_CONF_SECTION_DEBUG
      DRI_CONF_NO_RAST(false)
+     DRI_CONF_ALWAYS_FLUSH_BATCH(false)
+     DRI_CONF_ALWAYS_FLUSH_CACHE(false)
+
+      DRI_CONF_OPT_BEGIN(stub_occlusion_query, bool, false)
+	 DRI_CONF_DESC(en, "Enable stub ARB_occlusion_query support on 915/945.")
+      DRI_CONF_OPT_END
    DRI_CONF_SECTION_END
 DRI_CONF_END;
 
-const GLuint __driNConfigOptions = 6;
+const GLuint __driNConfigOptions = 12;
 
 #ifdef USE_NEW_INTERFACE
 static PFNGLXCREATECONTEXTMODES create_context_modes = NULL;
@@ -210,6 +231,7 @@ static const __DRItexOffsetExtension intelTexOffsetExtension = {
 static const __DRItexBufferExtension intelTexBufferExtension = {
     { __DRI_TEX_BUFFER, __DRI_TEX_BUFFER_VERSION },
    intelSetTexBuffer,
+   intelSetTexBuffer2,
 };
 
 static const __DRIextension *intelScreenExtensions[] = {
@@ -234,7 +256,7 @@ intel_get_param(__DRIscreenPrivate *psp, int param, int *value)
 
    ret = drmCommandWriteRead(psp->fd, DRM_I915_GETPARAM, &gp, sizeof(gp));
    if (ret) {
-      fprintf(stderr, "drm_i915_getparam: %d\n", ret);
+      _mesa_warning(NULL, "drm_i915_getparam: %d", ret);
       return GL_FALSE;
    }
 
@@ -303,6 +325,7 @@ intelDestroyScreen(__DRIscreenPrivate * sPriv)
 
    dri_bufmgr_destroy(intelScreen->bufmgr);
    intelUnmapScreenRegions(intelScreen);
+   driDestroyOptionInfo(&intelScreen->optionCache);
 
    FREE(intelScreen);
    sPriv->private = NULL;
@@ -323,7 +346,7 @@ intelCreateBuffer(__DRIscreenPrivate * driScrnPriv,
    else {
       GLboolean swStencil = (mesaVis->stencilBits > 0 &&
                              mesaVis->depthBits != 24);
-      GLenum rgbFormat = (mesaVis->redBits == 5 ? GL_RGB5 : GL_RGBA8);
+      gl_format rgbFormat;
 
       struct intel_framebuffer *intel_fb = CALLOC_STRUCT(intel_framebuffer);
 
@@ -331,6 +354,13 @@ intelCreateBuffer(__DRIscreenPrivate * driScrnPriv,
 	 return GL_FALSE;
 
       _mesa_initialize_framebuffer(&intel_fb->Base, mesaVis);
+
+      if (mesaVis->redBits == 5)
+	 rgbFormat = MESA_FORMAT_RGB565;
+      else if (mesaVis->alphaBits == 0)
+	 rgbFormat = MESA_FORMAT_XRGB8888;
+      else
+	 rgbFormat = MESA_FORMAT_ARGB8888;
 
       /* setup the hardware-based renderbuffers */
       intel_fb->color_rb[0] = intel_create_renderbuffer(rgbFormat);
@@ -349,7 +379,7 @@ intelCreateBuffer(__DRIscreenPrivate * driScrnPriv,
 	 if (mesaVis->stencilBits == 8) {
 	    /* combined depth/stencil buffer */
 	    struct intel_renderbuffer *depthStencilRb
-	       = intel_create_renderbuffer(GL_DEPTH24_STENCIL8_EXT);
+	       = intel_create_renderbuffer(MESA_FORMAT_S8_Z24);
 	    /* note: bind RB to two attachment points */
 	    _mesa_add_renderbuffer(&intel_fb->Base, BUFFER_DEPTH,
 				   &depthStencilRb->Base);
@@ -357,7 +387,7 @@ intelCreateBuffer(__DRIscreenPrivate * driScrnPriv,
 				   &depthStencilRb->Base);
 	 } else {
 	    struct intel_renderbuffer *depthRb
-	       = intel_create_renderbuffer(GL_DEPTH_COMPONENT24);
+	       = intel_create_renderbuffer(MESA_FORMAT_X8_Z24);
 	    _mesa_add_renderbuffer(&intel_fb->Base, BUFFER_DEPTH,
 				   &depthRb->Base);
 	 }
@@ -365,7 +395,7 @@ intelCreateBuffer(__DRIscreenPrivate * driScrnPriv,
       else if (mesaVis->depthBits == 16) {
          /* just 16-bit depth buffer, no hw stencil */
          struct intel_renderbuffer *depthRb
-	    = intel_create_renderbuffer(GL_DEPTH_COMPONENT16);
+	    = intel_create_renderbuffer(MESA_FORMAT_Z16);
          _mesa_add_renderbuffer(&intel_fb->Base, BUFFER_DEPTH, &depthRb->Base);
       }
 
@@ -409,7 +439,7 @@ intelDestroyBuffer(__DRIdrawablePrivate * driDrawPriv)
       }
    }
 
-   _mesa_unreference_framebuffer((GLframebuffer **)(&(driDrawPriv->driverPrivate)));
+   _mesa_reference_framebuffer((GLframebuffer **)(&(driDrawPriv->driverPrivate)), NULL);
 }
 
 
@@ -490,8 +520,6 @@ intelFillInModes(__DRIscreenPrivate *psp,
    __GLcontextModes *m;
    unsigned depth_buffer_factor;
    unsigned back_buffer_factor;
-   GLenum fb_format;
-   GLenum fb_type;
    int i;
 
    /* GLX_SWAP_COPY_OML is only supported because the Intel driver doesn't
@@ -503,6 +531,7 @@ intelFillInModes(__DRIscreenPrivate *psp,
 
    uint8_t depth_bits_array[3];
    uint8_t stencil_bits_array[3];
+   uint8_t msaa_samples_array[1];
 
    depth_bits_array[0] = 0;
    depth_bits_array[1] = depth_bits;
@@ -519,22 +548,39 @@ intelFillInModes(__DRIscreenPrivate *psp,
 
    stencil_bits_array[2] = (stencil_bits == 0) ? 8 : stencil_bits;
 
+   msaa_samples_array[0] = 0;
+
    depth_buffer_factor = ((depth_bits != 0) || (stencil_bits != 0)) ? 3 : 1;
    back_buffer_factor = (have_back_buffer) ? 3 : 1;
 
    if (pixel_bits == 16) {
-      fb_format = GL_RGB;
-      fb_type = GL_UNSIGNED_SHORT_5_6_5;
+      configs = driCreateConfigs(GL_RGB, GL_UNSIGNED_SHORT_5_6_5,
+				 depth_bits_array, stencil_bits_array,
+				 depth_buffer_factor, back_buffer_modes,
+				 back_buffer_factor,
+				 msaa_samples_array, 1);
    }
    else {
-      fb_format = GL_BGRA;
-      fb_type = GL_UNSIGNED_INT_8_8_8_8_REV;
+      __DRIconfig **configs_a8r8g8b8;
+      __DRIconfig **configs_x8r8g8b8;
+
+      configs_a8r8g8b8 = driCreateConfigs(GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV,
+					  depth_bits_array,
+					  stencil_bits_array,
+					  depth_buffer_factor,
+					  back_buffer_modes,
+					  back_buffer_factor,
+					  msaa_samples_array, 1);
+      configs_x8r8g8b8 = driCreateConfigs(GL_BGR, GL_UNSIGNED_INT_8_8_8_8_REV,
+					  depth_bits_array,
+					  stencil_bits_array,
+					  depth_buffer_factor,
+					  back_buffer_modes,
+					  back_buffer_factor,
+					  msaa_samples_array, 1);
+      configs = driConcatConfigs(configs_a8r8g8b8, configs_x8r8g8b8);
    }
 
-   configs = driCreateConfigs(fb_format, fb_type,
-			      depth_bits_array, stencil_bits_array,
-			      depth_buffer_factor, back_buffer_modes,
-			      back_buffer_factor);
    if (configs == NULL) {
     fprintf(stderr, "[%s:%u] Error creating FBConfig!\n", __func__,
               __LINE__);
@@ -561,6 +607,7 @@ intel_init_bufmgr(intelScreenPrivate *intelScreen)
    GLboolean gem_supported;
    struct drm_i915_getparam gp;
    __DRIscreenPrivate *spriv = intelScreen->driScrnPriv;
+   int num_fences = 0;
 
    intelScreen->no_hw = getenv("INTEL_NO_HW") != NULL;
 
@@ -590,10 +637,10 @@ intel_init_bufmgr(intelScreenPrivate *intelScreen)
    /* Otherwise, use the classic buffer manager. */
    if (intelScreen->bufmgr == NULL) {
       if (gem_disable) {
-	 fprintf(stderr, "GEM disabled.  Using classic.\n");
+	 _mesa_warning(NULL, "GEM disabled.  Using classic.");
       } else {
-	 fprintf(stderr, "Failed to initialize GEM.  "
-		 "Falling back to classic.\n");
+	 _mesa_warning(NULL,
+                       "Failed to initialize GEM.  Falling back to classic.");
       }
 
       if (intelScreen->tex.size == 0) {
@@ -611,8 +658,10 @@ intel_init_bufmgr(intelScreenPrivate *intelScreen)
 				&intelScreen->sarea->last_dispatch);
    }
 
-   /* XXX bufmgr should be per-screen, not per-context */
-   intelScreen->ttm = intelScreen->ttm;
+   if (intel_get_param(spriv, I915_PARAM_NUM_FENCES_AVAIL, &num_fences))
+      intelScreen->kernel_exec_fencing = !!num_fences;
+   else
+      intelScreen->kernel_exec_fencing = GL_FALSE;
 
    return GL_TRUE;
 }
@@ -644,18 +693,6 @@ static const __DRIconfig **intelInitScreen(__DRIscreenPrivate *psp)
       return NULL;
    }
 
-   /* Calling driInitExtensions here, with a NULL context pointer,
-    * does not actually enable the extensions.  It just makes sure
-    * that all the dispatch offsets for all the extensions that
-    * *might* be enables are known.  This is needed because the
-    * dispatch offsets need to be known when _mesa_context_create is
-    * called, but we can't enable the extensions until we have a
-    * context pointer.
-    *
-    * Hello chicken.  Hello egg.  How are you two today?
-    */
-   intelInitExtensions(NULL, GL_TRUE);
-	   
    if (!intelInitDriver(psp))
        return NULL;
 
@@ -696,18 +733,17 @@ static const
 __DRIconfig **intelInitScreen2(__DRIscreenPrivate *psp)
 {
    intelScreenPrivate *intelScreen;
-
-   /* Calling driInitExtensions here, with a NULL context pointer,
-    * does not actually enable the extensions.  It just makes sure
-    * that all the dispatch offsets for all the extensions that
-    * *might* be enables are known.  This is needed because the
-    * dispatch offsets need to be known when _mesa_context_create is
-    * called, but we can't enable the extensions until we have a
-    * context pointer.
-    *
-    * Hello chicken.  Hello egg.  How are you two today?
+   GLenum fb_format[3];
+   GLenum fb_type[3];
+   /* GLX_SWAP_COPY_OML is only supported because the Intel driver doesn't
+    * support pageflipping at all.
     */
-   intelInitExtensions(NULL, GL_TRUE);
+   static const GLenum back_buffer_modes[] = {
+      GLX_NONE, GLX_SWAP_UNDEFINED_OML, GLX_SWAP_COPY_OML
+   };
+   uint8_t depth_bits[4], stencil_bits[4], msaa_samples_array[1];
+   int color;
+   __DRIconfig **configs = NULL;
 
    /* Allocate the private area */
    intelScreen = (intelScreenPrivate *) CALLOC(sizeof(intelScreenPrivate));
@@ -735,8 +771,71 @@ __DRIconfig **intelInitScreen2(__DRIscreenPrivate *psp)
    intelScreen->irq_active = 1;
    psp->extensions = intelScreenExtensions;
 
-   return driConcatConfigs(intelFillInModes(psp, 16, 16, 0, 1),
-			   intelFillInModes(psp, 32, 24, 8, 1));
+   depth_bits[0] = 0;
+   stencil_bits[0] = 0;
+   depth_bits[1] = 16;
+   stencil_bits[1] = 0;
+   depth_bits[2] = 24;
+   stencil_bits[2] = 0;
+   depth_bits[3] = 24;
+   stencil_bits[3] = 8;
+
+   msaa_samples_array[0] = 0;
+
+   fb_format[0] = GL_RGB;
+   fb_type[0] = GL_UNSIGNED_SHORT_5_6_5;
+
+   fb_format[1] = GL_BGR;
+   fb_type[1] = GL_UNSIGNED_INT_8_8_8_8_REV;
+
+   fb_format[2] = GL_BGRA;
+   fb_type[2] = GL_UNSIGNED_INT_8_8_8_8_REV;
+
+   depth_bits[0] = 0;
+   stencil_bits[0] = 0;
+
+   for (color = 0; color < ARRAY_SIZE(fb_format); color++) {
+      __DRIconfig **new_configs;
+      int depth_factor;
+
+      /* With DRI2 right now, GetBuffers always returns a depth/stencil buffer
+       * with the same cpp as the drawable.  So we can't support depth cpp !=
+       * color cpp currently.
+       */
+      if (fb_type[color] == GL_UNSIGNED_SHORT_5_6_5) {
+	 depth_bits[1] = 16;
+	 stencil_bits[1] = 0;
+
+	 depth_factor = 2;
+      } else {
+	 depth_bits[1] = 24;
+	 stencil_bits[1] = 0;
+	 depth_bits[2] = 24;
+	 stencil_bits[2] = 8;
+
+	 depth_factor = 3;
+      }
+      new_configs = driCreateConfigs(fb_format[color], fb_type[color],
+				     depth_bits,
+				     stencil_bits,
+				     depth_factor,
+				     back_buffer_modes,
+				     ARRAY_SIZE(back_buffer_modes),
+				     msaa_samples_array,
+				     ARRAY_SIZE(msaa_samples_array));
+      if (configs == NULL)
+	 configs = new_configs;
+      else
+	 configs = driConcatConfigs(configs, new_configs);
+   }
+
+   if (configs == NULL) {
+      fprintf(stderr, "[%s:%u] Error creating FBConfig!\n", __func__,
+              __LINE__);
+      return NULL;
+   }
+
+   return (const __DRIconfig **)configs;
 }
 
 const struct __DriverAPIRec driDriverAPI = {

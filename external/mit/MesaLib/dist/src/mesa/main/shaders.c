@@ -26,6 +26,12 @@
 #include "glheader.h"
 #include "context.h"
 #include "shaders.h"
+#include "shader/shader_api.h"
+
+
+/** Define this to enable shader substitution (see below) */
+#define SHADER_SUBST 0
+
 
 
 /**
@@ -374,6 +380,36 @@ _mesa_LinkProgramARB(GLhandleARB programObj)
 }
 
 
+
+/**
+ * Read shader source code from a file.
+ * Useful for debugging to override an app's shader.
+ */
+static GLcharARB *
+_mesa_read_shader(const char *fname)
+{
+   const int max = 50*1000;
+   FILE *f = fopen(fname, "r");
+   GLcharARB *buffer, *shader;
+   int len;
+
+   if (!f) {
+      return NULL;
+   }
+
+   buffer = (char *) malloc(max);
+   len = fread(buffer, 1, max, f);
+   buffer[len] = 0;
+
+   fclose(f);
+
+   shader = _mesa_strdup(buffer);
+   free(buffer);
+
+   return shader;
+}
+
+
 /**
  * Called via glShaderSource() and glShaderSourceARB() API functions.
  * Basically, concatenate the source code strings into one long string
@@ -387,6 +423,7 @@ _mesa_ShaderSourceARB(GLhandleARB shaderObj, GLsizei count,
    GLint *offsets;
    GLsizei i, totalLength;
    GLcharARB *source;
+   GLuint checksum;
 
    if (!shaderObj || string == NULL) {
       _mesa_error(ctx, GL_INVALID_VALUE, "glShaderSourceARB");
@@ -438,7 +475,34 @@ _mesa_ShaderSourceARB(GLhandleARB shaderObj, GLsizei count,
    source[totalLength - 1] = '\0';
    source[totalLength - 2] = '\0';
 
+   if (SHADER_SUBST) {
+      /* Compute the shader's source code checksum then try to open a file
+       * named newshader_<CHECKSUM>.  If it exists, use it in place of the
+       * original shader source code.  For debugging.
+       */
+      char filename[100];
+      GLcharARB *newSource;
+
+      checksum = _mesa_str_checksum(source);
+
+      sprintf(filename, "newshader_%d", checksum);
+
+      newSource = _mesa_read_shader(filename);
+      if (newSource) {
+         _mesa_fprintf(stderr, "Mesa: Replacing shader %u chksum=%d with %s\n",
+                       shaderObj, checksum, filename);
+         _mesa_free(source);
+         source = newSource;
+      }
+   }      
+
    ctx->Driver.ShaderSource(ctx, shaderObj, source);
+
+   if (SHADER_SUBST) {
+      struct gl_shader *sh = _mesa_lookup_shader(ctx, shaderObj);
+      if (sh)
+         sh->SourceChecksum = checksum; /* save original checksum */
+   }
 
    _mesa_free(offsets);
 }
@@ -587,8 +651,7 @@ _mesa_UniformMatrix2fvARB(GLint location, GLsizei count, GLboolean transpose,
                           const GLfloat * value)
 {
    GET_CURRENT_CONTEXT(ctx);
-   ctx->Driver.UniformMatrix(ctx, 2, 2, GL_FLOAT_MAT2,
-                             location, count, transpose, value);
+   ctx->Driver.UniformMatrix(ctx, 2, 2, location, count, transpose, value);
 }
 
 void GLAPIENTRY
@@ -596,8 +659,7 @@ _mesa_UniformMatrix3fvARB(GLint location, GLsizei count, GLboolean transpose,
                           const GLfloat * value)
 {
    GET_CURRENT_CONTEXT(ctx);
-   ctx->Driver.UniformMatrix(ctx, 3, 3, GL_FLOAT_MAT3,
-                             location, count, transpose, value);
+   ctx->Driver.UniformMatrix(ctx, 3, 3, location, count, transpose, value);
 }
 
 void GLAPIENTRY
@@ -605,8 +667,7 @@ _mesa_UniformMatrix4fvARB(GLint location, GLsizei count, GLboolean transpose,
                           const GLfloat * value)
 {
    GET_CURRENT_CONTEXT(ctx);
-   ctx->Driver.UniformMatrix(ctx, 4, 4, GL_FLOAT_MAT4,
-                             location, count, transpose, value);
+   ctx->Driver.UniformMatrix(ctx, 4, 4, location, count, transpose, value);
 }
 
 
@@ -618,8 +679,7 @@ _mesa_UniformMatrix2x3fv(GLint location, GLsizei count, GLboolean transpose,
                          const GLfloat *value)
 {
    GET_CURRENT_CONTEXT(ctx);
-   ctx->Driver.UniformMatrix(ctx, 2, 3, GL_FLOAT_MAT2x3,
-                             location, count, transpose, value);
+   ctx->Driver.UniformMatrix(ctx, 2, 3, location, count, transpose, value);
 }
 
 void GLAPIENTRY
@@ -627,8 +687,7 @@ _mesa_UniformMatrix3x2fv(GLint location, GLsizei count, GLboolean transpose,
                          const GLfloat *value)
 {
    GET_CURRENT_CONTEXT(ctx);
-   ctx->Driver.UniformMatrix(ctx, 3, 2, GL_FLOAT_MAT3x2,
-                             location, count, transpose, value);
+   ctx->Driver.UniformMatrix(ctx, 3, 2, location, count, transpose, value);
 }
 
 void GLAPIENTRY
@@ -636,8 +695,7 @@ _mesa_UniformMatrix2x4fv(GLint location, GLsizei count, GLboolean transpose,
                          const GLfloat *value)
 {
    GET_CURRENT_CONTEXT(ctx);
-   ctx->Driver.UniformMatrix(ctx, 2, 4, GL_FLOAT_MAT2x4,
-                             location, count, transpose, value);
+   ctx->Driver.UniformMatrix(ctx, 2, 4, location, count, transpose, value);
 }
 
 void GLAPIENTRY
@@ -645,8 +703,7 @@ _mesa_UniformMatrix4x2fv(GLint location, GLsizei count, GLboolean transpose,
                          const GLfloat *value)
 {
    GET_CURRENT_CONTEXT(ctx);
-   ctx->Driver.UniformMatrix(ctx, 4, 2, GL_FLOAT_MAT4x2,
-                             location, count, transpose, value);
+   ctx->Driver.UniformMatrix(ctx, 4, 2, location, count, transpose, value);
 }
 
 void GLAPIENTRY
@@ -654,8 +711,7 @@ _mesa_UniformMatrix3x4fv(GLint location, GLsizei count, GLboolean transpose,
                          const GLfloat *value)
 {
    GET_CURRENT_CONTEXT(ctx);
-   ctx->Driver.UniformMatrix(ctx, 3, 4, GL_FLOAT_MAT3x4,
-                             location, count, transpose, value);
+   ctx->Driver.UniformMatrix(ctx, 3, 4, location, count, transpose, value);
 }
 
 void GLAPIENTRY
@@ -663,8 +719,7 @@ _mesa_UniformMatrix4x3fv(GLint location, GLsizei count, GLboolean transpose,
                          const GLfloat *value)
 {
    GET_CURRENT_CONTEXT(ctx);
-   ctx->Driver.UniformMatrix(ctx, 4, 3, GL_FLOAT_MAT4x3,
-                             location, count, transpose, value);
+   ctx->Driver.UniformMatrix(ctx, 4, 3, location, count, transpose, value);
 }
 
 

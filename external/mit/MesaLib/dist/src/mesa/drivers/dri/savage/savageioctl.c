@@ -37,12 +37,10 @@
 
 #include "savagecontext.h"
 #include "savageioctl.h"
-#include "savage_bci.h"
 #include "savagestate.h"
 #include "savagespan.h"
 
 #include "drm.h"
-#include <sys/ioctl.h>
 #include <sys/timeb.h>
 
 #define DEPTH_SCALE_16 ((1<<16)-1)
@@ -337,6 +335,8 @@ static void savageDDClear( GLcontext *ctx, GLbitfield mask )
    GLint ch = ctx->DrawBuffer->_Ymax - cy;
 
    /* XXX FIX ME: the cx,cy,cw,ch vars are currently ignored! */
+   (void) ch;
+   (void) cw;
 
    if (SAVAGE_DEBUG & DEBUG_VERBOSE_MSG)
        fprintf (stderr, "%s\n", __FUNCTION__);

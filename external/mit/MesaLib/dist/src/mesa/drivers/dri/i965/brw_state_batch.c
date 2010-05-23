@@ -79,7 +79,7 @@ GLboolean brw_cached_batch_struct( struct brw_context *brw,
    return GL_TRUE;
 }
 
-static void clear_batch_cache( struct brw_context *brw )
+void brw_clear_batch_cache( struct brw_context *brw )
 {
    struct brw_cached_batch_item *item = brw->cached_batch_items;
 
@@ -93,20 +93,7 @@ static void clear_batch_cache( struct brw_context *brw )
    brw->cached_batch_items = NULL;
 }
 
-void brw_clear_batch_cache_flush( struct brw_context *brw )
-{
-   clear_batch_cache(brw);
-
-/*    brw_do_flush(brw, BRW_FLUSH_STATE_CACHE|BRW_FLUSH_READ_CACHE); */
-   
-   brw->state.dirty.mesa |= ~0;
-   brw->state.dirty.brw |= ~0;
-   brw->state.dirty.cache |= ~0;
-}
-
-
-
 void brw_destroy_batch_cache( struct brw_context *brw )
 {
-   clear_batch_cache(brw);
+   brw_clear_batch_cache(brw);
 }

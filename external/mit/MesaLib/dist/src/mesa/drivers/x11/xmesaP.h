@@ -212,6 +212,9 @@ struct xmesa_buffer {
    XMesaDisplay *display;
    BufferType type;             /* window, pixmap, pbuffer or glxwindow */
 
+   GLboolean largestPbuffer;    /**< for pbuffers */
+   GLboolean preservedContents; /**< for pbuffers */
+
    struct xmesa_renderbuffer *frontxrb; /* front color renderbuffer */
    struct xmesa_renderbuffer *backxrb;  /* back color renderbuffer */
 
@@ -580,5 +583,9 @@ extern void xmesa_register_swrast_functions( GLcontext *ctx );
 #else
 #define ENABLE_EXT_timer_query 0 /* may not have 64-bit GLuint64EXT */
 #endif
+
+
+#define TEST_META_FUNCS 0
+
 
 #endif

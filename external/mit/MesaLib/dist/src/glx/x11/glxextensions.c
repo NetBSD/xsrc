@@ -99,7 +99,7 @@ static const struct extension_info known_glx_extensions[] = {
    { GLX(SGIS_color_range),            VER(0,0), N, N, N, N },
    { GLX(SGIS_multisample),            VER(0,0), Y, Y, N, N },
    { GLX(SGIX_fbconfig),               VER(1,3), Y, Y, N, N },
-   { GLX(SGIX_pbuffer),                VER(1,3), Y, N, N, N },
+   { GLX(SGIX_pbuffer),                VER(1,3), Y, Y, N, N },
    { GLX(SGIX_swap_barrier),           VER(0,0), N, N, N, N },
    { GLX(SGIX_swap_group),             VER(0,0), N, N, N, N },
    { GLX(SGIX_visual_select_group),    VER(0,0), Y, Y, N, N },
@@ -112,6 +112,7 @@ static const struct extension_info known_gl_extensions[] = {
    { GL(ARB_draw_buffers),               VER(0,0), Y, N, N, N },
    { GL(ARB_fragment_program),           VER(0,0), Y, N, N, N },
    { GL(ARB_fragment_program_shadow),    VER(0,0), Y, N, N, N },
+   { GL(ARB_framebuffer_object),         VER(0,0), Y, N, N, N },
    { GL(ARB_imaging),                    VER(0,0), Y, N, N, N },
    { GL(ARB_multisample),                VER(1,3), Y, N, N, N },
    { GL(ARB_multitexture),               VER(1,3), Y, N, N, N },
@@ -150,8 +151,11 @@ static const struct extension_info known_gl_extensions[] = {
    { GL(EXT_depth_bounds_test),          VER(0,0), N, N, N, N },
    { GL(EXT_draw_range_elements),        VER(1,2), Y, N, Y, N },
    { GL(EXT_fog_coord),                  VER(1,4), Y, N, N, N },
+   { GL(EXT_framebuffer_blit),           VER(0,0), Y, N, N, N },
+   { GL(EXT_framebuffer_multisample),    VER(0,0), Y, N, N, N },
    { GL(EXT_framebuffer_object),         VER(0,0), Y, N, N, N },
    { GL(EXT_multi_draw_arrays),          VER(1,4), Y, N, Y, N },
+   { GL(EXT_packed_depth_stencil),       VER(0,0), Y, N, N, N },
    { GL(EXT_packed_pixels),              VER(1,2), Y, N, N, N },
    { GL(EXT_paletted_texture),           VER(0,0), Y, N, N, N },
    { GL(EXT_pixel_buffer_object),        VER(0,0), N, N, N, N },
@@ -209,6 +213,7 @@ static const struct extension_info known_gl_extensions[] = {
    { GL(NV_fragment_program2),           VER(0,0), Y, N, N, N },
    { GL(NV_light_max_exponent),          VER(0,0), Y, N, N, N },
    { GL(NV_multisample_filter_hint),     VER(0,0), Y, N, N, N },
+   { GL(NV_packed_depth_stencil),        VER(0,0), Y, N, N, N },
    { GL(NV_point_sprite),                VER(0,0), Y, N, N, N },
    { GL(NV_texgen_reflection),           VER(0,0), Y, N, N, N },
    { GL(NV_texture_compression_vtc),     VER(0,0), Y, N, N, N },
@@ -315,10 +320,10 @@ set_glx_extension(const struct extension_info *ext,
 
 /**
  * Convert the server's extension string to a bit-field.
- * 
+ *
  * \param server_string   GLX extension string from the server.
  * \param server_support  Bit-field of supported extensions.
- * 
+ *
  * \note
  * This function is used to process both GLX and GL extension strings.  The
  * bit-fields used to track each of these have different sizes.  Therefore,
@@ -336,8 +341,7 @@ __glXProcessServerString(const struct extension_info *ext,
       /* Determine the length of the next extension name.
        */
       for (len = 0; (server_string[base + len] != SEPARATOR)
-           && (server_string[base + len] != NUL);
-           len++) {
+           && (server_string[base + len] != NUL); len++) {
          /* empty */
       }
 
@@ -351,8 +355,7 @@ __glXProcessServerString(const struct extension_info *ext,
        * over the previous string and any trialing white-space.
        */
       for (base += len; (server_string[base] == SEPARATOR)
-           && (server_string[base] != NUL);
-           base++) {
+           && (server_string[base] != NUL); base++) {
          /* empty */
       }
    }
@@ -549,7 +552,7 @@ __glXGetClientExtensions(void)
 /**
  * Calculate the list of application usable extensions.  The resulting
  * string is stored in \c psc->effectiveGLXexts.
- * 
+ *
  * \param psc                        Pointer to GLX per-screen record.
  * \param display_is_direct_capable  True if the display is capable of
  *                                   direct rendering.
@@ -600,7 +603,7 @@ __glXCalculateUsableExtensions(__GLXscreenConfigs * psc,
     * it and the "server" supports it.  In this case that means that either
     * the true server supports it or it is only for direct-rendering and
     * the direct rendering driver supports it.
-    * 
+    *
     * If the display is not capable of direct rendering, then the extension
     * is enabled if and only if the client-side library and the server
     * support it.
@@ -609,10 +612,10 @@ __glXCalculateUsableExtensions(__GLXscreenConfigs * psc,
    if (display_is_direct_capable) {
       for (i = 0; i < 8; i++) {
          usable[i] = (client_glx_support[i] & client_glx_only[i])
-            | (client_glx_support[i] & psc->
-               direct_support[i] & server_support[i])
-            | (client_glx_support[i] & psc->
-               direct_support[i] & direct_glx_only[i]);
+            | (client_glx_support[i] & psc->direct_support[i] &
+               server_support[i])
+            | (client_glx_support[i] & psc->direct_support[i] &
+               direct_glx_only[i]);
       }
    }
    else {
@@ -630,7 +633,7 @@ __glXCalculateUsableExtensions(__GLXscreenConfigs * psc,
 /**
  * Calculate the list of application usable extensions.  The resulting
  * string is stored in \c gc->extensions.
- * 
+ *
  * \param gc             Pointer to GLX context.
  * \param server_string  Extension string from the server.
  * \param major_version  GL major version from the server.

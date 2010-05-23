@@ -32,13 +32,11 @@
 #include "context.h"
 #include "enable.h"
 #include "light.h"
-#include "macros.h"
 #include "simple_list.h"
 #include "mtypes.h"
 #include "enums.h"
-#include "math/m_matrix.h"
-#include "math/m_xform.h"
 #include "api_arrayelt.h"
+#include "texstate.h"
 
 
 
@@ -56,46 +54,47 @@
 static void
 client_state(GLcontext *ctx, GLenum cap, GLboolean state)
 {
+   struct gl_array_object *arrayObj = ctx->Array.ArrayObj;
    GLuint flag;
    GLboolean *var;
 
    switch (cap) {
       case GL_VERTEX_ARRAY:
-         var = &ctx->Array.ArrayObj->Vertex.Enabled;
+         var = &arrayObj->Vertex.Enabled;
          flag = _NEW_ARRAY_VERTEX;
          break;
       case GL_NORMAL_ARRAY:
-         var = &ctx->Array.ArrayObj->Normal.Enabled;
+         var = &arrayObj->Normal.Enabled;
          flag = _NEW_ARRAY_NORMAL;
          break;
       case GL_COLOR_ARRAY:
-         var = &ctx->Array.ArrayObj->Color.Enabled;
+         var = &arrayObj->Color.Enabled;
          flag = _NEW_ARRAY_COLOR0;
          break;
       case GL_INDEX_ARRAY:
-         var = &ctx->Array.ArrayObj->Index.Enabled;
+         var = &arrayObj->Index.Enabled;
          flag = _NEW_ARRAY_INDEX;
          break;
       case GL_TEXTURE_COORD_ARRAY:
-         var = &ctx->Array.ArrayObj->TexCoord[ctx->Array.ActiveTexture].Enabled;
+         var = &arrayObj->TexCoord[ctx->Array.ActiveTexture].Enabled;
          flag = _NEW_ARRAY_TEXCOORD(ctx->Array.ActiveTexture);
          break;
       case GL_EDGE_FLAG_ARRAY:
-         var = &ctx->Array.ArrayObj->EdgeFlag.Enabled;
+         var = &arrayObj->EdgeFlag.Enabled;
          flag = _NEW_ARRAY_EDGEFLAG;
          break;
       case GL_FOG_COORDINATE_ARRAY_EXT:
-         var = &ctx->Array.ArrayObj->FogCoord.Enabled;
+         var = &arrayObj->FogCoord.Enabled;
          flag = _NEW_ARRAY_FOGCOORD;
          break;
       case GL_SECONDARY_COLOR_ARRAY_EXT:
-         var = &ctx->Array.ArrayObj->SecondaryColor.Enabled;
+         var = &arrayObj->SecondaryColor.Enabled;
          flag = _NEW_ARRAY_COLOR1;
          break;
 
 #if FEATURE_point_size_array
       case GL_POINT_SIZE_ARRAY_OES:
-         var = &ctx->Array.ArrayObj->PointSize.Enabled;
+         var = &arrayObj->PointSize.Enabled;
          flag = _NEW_ARRAY_POINT_SIZE;
          break;
 #endif
@@ -120,7 +119,8 @@ client_state(GLcontext *ctx, GLenum cap, GLboolean state)
          CHECK_EXTENSION(NV_vertex_program, cap);
          {
             GLint n = (GLint) cap - GL_VERTEX_ATTRIB_ARRAY0_NV;
-            var = &ctx->Array.ArrayObj->VertexAttrib[n].Enabled;
+            ASSERT(n < Elements(ctx->Array.ArrayObj->VertexAttrib));
+            var = &arrayObj->VertexAttrib[n].Enabled;
             flag = _NEW_ARRAY_ATTRIB(n);
          }
          break;
@@ -223,16 +223,17 @@ get_texcoord_unit(GLcontext *ctx)
 
 /**
  * Helper function to enable or disable a texture target.
+ * \param bit  one of the TEXTURE_x_BIT values
+ * \return GL_TRUE if state is changing or GL_FALSE if no change
  */
 static GLboolean
-enable_texture(GLcontext *ctx, GLboolean state, GLbitfield bit)
+enable_texture(GLcontext *ctx, GLboolean state, GLbitfield texBit)
 {
-   const GLuint curr = ctx->Texture.CurrentUnit;
-   struct gl_texture_unit *texUnit = &ctx->Texture.Unit[curr];
-   const GLuint newenabled = (!state)
-       ? (texUnit->Enabled & ~bit) :  (texUnit->Enabled | bit);
+   struct gl_texture_unit *texUnit = _mesa_get_current_tex_unit(ctx);
+   const GLbitfield newenabled = state
+      ? (texUnit->Enabled | texBit) : (texUnit->Enabled & ~texBit);
 
-   if (!ctx->DrawBuffer->Visual.rgbMode || texUnit->Enabled == newenabled)
+   if (texUnit->Enabled == newenabled)
        return GL_FALSE;
 
    FLUSH_VERTICES(ctx, _NEW_TEXTURE);
@@ -603,11 +604,6 @@ _mesa_set_enable(GLcontext *ctx, GLenum cap, GLboolean state)
          ctx->Texture.SharedPalette = state;
          break;
       case GL_STENCIL_TEST:
-         if (state && ctx->DrawBuffer->Visual.stencilBits == 0) {
-            _mesa_warning(ctx,
-                          "glEnable(GL_STENCIL_TEST) but no stencil buffer");
-            return;
-         }
          if (ctx->Stencil.Enabled == state)
             return;
          FLUSH_VERTICES(ctx, _NEW_STENCIL);
@@ -772,35 +768,30 @@ _mesa_set_enable(GLcontext *ctx, GLenum cap, GLboolean state)
 
       /* GL_ARB_multisample */
       case GL_MULTISAMPLE_ARB:
-         CHECK_EXTENSION(ARB_multisample, cap);
          if (ctx->Multisample.Enabled == state)
             return;
          FLUSH_VERTICES(ctx, _NEW_MULTISAMPLE);
          ctx->Multisample.Enabled = state;
          break;
       case GL_SAMPLE_ALPHA_TO_COVERAGE_ARB:
-         CHECK_EXTENSION(ARB_multisample, cap);
          if (ctx->Multisample.SampleAlphaToCoverage == state)
             return;
          FLUSH_VERTICES(ctx, _NEW_MULTISAMPLE);
          ctx->Multisample.SampleAlphaToCoverage = state;
          break;
       case GL_SAMPLE_ALPHA_TO_ONE_ARB:
-         CHECK_EXTENSION(ARB_multisample, cap);
          if (ctx->Multisample.SampleAlphaToOne == state)
             return;
          FLUSH_VERTICES(ctx, _NEW_MULTISAMPLE);
          ctx->Multisample.SampleAlphaToOne = state;
          break;
       case GL_SAMPLE_COVERAGE_ARB:
-         CHECK_EXTENSION(ARB_multisample, cap);
          if (ctx->Multisample.SampleCoverage == state)
             return;
          FLUSH_VERTICES(ctx, _NEW_MULTISAMPLE);
          ctx->Multisample.SampleCoverage = state;
          break;
       case GL_SAMPLE_COVERAGE_INVERT_ARB:
-         CHECK_EXTENSION(ARB_multisample, cap);
          if (ctx->Multisample.SampleCoverageInvert == state)
             return;
          FLUSH_VERTICES(ctx, _NEW_MULTISAMPLE);
@@ -944,26 +935,19 @@ _mesa_set_enable(GLcontext *ctx, GLenum cap, GLboolean state)
       /* GL_EXT_depth_bounds_test */
       case GL_DEPTH_BOUNDS_TEST_EXT:
          CHECK_EXTENSION(EXT_depth_bounds_test, cap);
-         if (state && ctx->DrawBuffer->Visual.depthBits == 0) {
-            _mesa_warning(ctx,
-                   "glEnable(GL_DEPTH_BOUNDS_TEST_EXT) but no depth buffer");
-            return;
-         }
          if (ctx->Depth.BoundsTest == state)
             return;
          FLUSH_VERTICES(ctx, _NEW_DEPTH);
          ctx->Depth.BoundsTest = state;
          break;
 
-      /* GL_MESA_program_debug */
-      case GL_FRAGMENT_PROGRAM_CALLBACK_MESA:
-         CHECK_EXTENSION(MESA_program_debug, cap);
-         ctx->FragmentProgram.CallbackEnabled = state;
-         break;
-      case GL_VERTEX_PROGRAM_CALLBACK_MESA:
-         CHECK_EXTENSION(MESA_program_debug, cap);
-         ctx->VertexProgram.CallbackEnabled = state;
-         break;
+      case GL_DEPTH_CLAMP:
+         if (ctx->Transform.DepthClamp == state)
+            return;
+	 CHECK_EXTENSION(ARB_depth_clamp, cap);
+         FLUSH_VERTICES(ctx, _NEW_TRANSFORM);
+	 ctx->Transform.DepthClamp = state;
+	 break;
 
 #if FEATURE_ATI_fragment_shader
       case GL_FRAGMENT_SHADER_ATI:
@@ -989,6 +973,11 @@ _mesa_set_enable(GLcontext *ctx, GLenum cap, GLboolean state)
             return;
          }
          break;
+
+      case GL_TEXTURE_CUBE_MAP_SEAMLESS:
+	 CHECK_EXTENSION(ARB_seamless_cube_map, cap);
+	 ctx->Texture.CubeMapSeamless = state;
+	 break;
 
       default:
          _mesa_error(ctx, GL_INVALID_ENUM,
@@ -1284,19 +1273,14 @@ _mesa_IsEnabled( GLenum cap )
 
       /* GL_ARB_multisample */
       case GL_MULTISAMPLE_ARB:
-         CHECK_EXTENSION(ARB_multisample);
          return ctx->Multisample.Enabled;
       case GL_SAMPLE_ALPHA_TO_COVERAGE_ARB:
-         CHECK_EXTENSION(ARB_multisample);
          return ctx->Multisample.SampleAlphaToCoverage;
       case GL_SAMPLE_ALPHA_TO_ONE_ARB:
-         CHECK_EXTENSION(ARB_multisample);
          return ctx->Multisample.SampleAlphaToOne;
       case GL_SAMPLE_COVERAGE_ARB:
-         CHECK_EXTENSION(ARB_multisample);
          return ctx->Multisample.SampleCoverage;
       case GL_SAMPLE_COVERAGE_INVERT_ARB:
-         CHECK_EXTENSION(ARB_multisample);
          return ctx->Multisample.SampleCoverageInvert;
 
       /* GL_IBM_rasterpos_clip */
@@ -1340,6 +1324,7 @@ _mesa_IsEnabled( GLenum cap )
          CHECK_EXTENSION(NV_vertex_program);
          {
             GLint n = (GLint) cap - GL_VERTEX_ATTRIB_ARRAY0_NV;
+            ASSERT(n < Elements(ctx->Array.ArrayObj->VertexAttrib));
             return (ctx->Array.ArrayObj->VertexAttrib[n].Enabled != 0);
          }
       case GL_MAP1_VERTEX_ATTRIB0_4_NV:
@@ -1412,18 +1397,21 @@ _mesa_IsEnabled( GLenum cap )
          CHECK_EXTENSION(EXT_depth_bounds_test);
          return ctx->Depth.BoundsTest;
 
-      /* GL_MESA_program_debug */
-      case GL_FRAGMENT_PROGRAM_CALLBACK_MESA:
-         CHECK_EXTENSION(MESA_program_debug);
-         return ctx->FragmentProgram.CallbackEnabled;
-      case GL_VERTEX_PROGRAM_CALLBACK_MESA:
-         CHECK_EXTENSION(MESA_program_debug);
-         return ctx->VertexProgram.CallbackEnabled;
+      /* GL_ARB_depth_clamp */
+      case GL_DEPTH_CLAMP:
+         CHECK_EXTENSION(ARB_depth_clamp);
+         return ctx->Transform.DepthClamp;
+
 #if FEATURE_ATI_fragment_shader
       case GL_FRAGMENT_SHADER_ATI:
 	 CHECK_EXTENSION(ATI_fragment_shader);
 	 return ctx->ATIFragmentShader.Enabled;
 #endif /* FEATURE_ATI_fragment_shader */
+
+      case GL_TEXTURE_CUBE_MAP_SEAMLESS:
+	 CHECK_EXTENSION(ARB_seamless_cube_map);
+	 return ctx->Texture.CubeMapSeamless;
+
       default:
          _mesa_error(ctx, GL_INVALID_ENUM, "glIsEnabled(0x%x)", (int) cap);
 	 return GL_FALSE;

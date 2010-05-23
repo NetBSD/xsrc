@@ -49,9 +49,11 @@
 #define CONTEXT_H
 
 
-#include "glapi/glapi.h"
 #include "imports.h"
 #include "mtypes.h"
+
+
+struct _glapi_table;
 
 
 /** \name Visual-related functions */
@@ -129,11 +131,11 @@ _mesa_copy_context(const GLcontext *src, GLcontext *dst, GLuint mask);
 
 
 extern void
+_mesa_check_init_viewport(GLcontext *ctx, GLuint width, GLuint height);
+
+extern GLboolean
 _mesa_make_current( GLcontext *ctx, GLframebuffer *drawBuffer,
                     GLframebuffer *readBuffer );
-
-extern void
-_mesa_check_init_viewport(GLcontext *ctx, GLuint width, GLuint height);
 
 extern GLboolean
 _mesa_share_state(GLcontext *ctx, GLcontext *ctxToShare);
@@ -152,12 +154,29 @@ extern struct _glapi_table *
 _mesa_get_dispatch(GLcontext *ctx);
 
 
+void
+_mesa_set_mvp_with_dp4( GLcontext *ctx,
+                        GLboolean flag );
+
+
+extern GLboolean
+_mesa_valid_to_render(GLcontext *ctx, const char *where);
+
+
 
 /** \name Miscellaneous */
 /*@{*/
 
 extern void
 _mesa_record_error( GLcontext *ctx, GLenum error );
+
+
+extern void
+_mesa_finish(GLcontext *ctx);
+
+extern void
+_mesa_flush(GLcontext *ctx);
+
 
 extern void GLAPIENTRY
 _mesa_Finish( void );
@@ -166,7 +185,6 @@ extern void GLAPIENTRY
 _mesa_Flush( void );
 
 /*@}*/
-
 
 
 /**
@@ -189,8 +207,8 @@ _mesa_Flush( void );
 do {								\
    if (MESA_VERBOSE & VERBOSE_STATE)				\
       _mesa_debug(ctx, "FLUSH_VERTICES in %s\n", MESA_FUNCTION);\
-   if (ctx->Driver.NeedFlush & FLUSH_STORED_VERTICES)		\
-      ctx->Driver.FlushVertices(ctx, FLUSH_STORED_VERTICES);	\
+   if (ctx->Driver.NeedFlush)		\
+      ctx->Driver.FlushVertices(ctx, FLUSH_STORED_VERTICES | FLUSH_UPDATE_CURRENT);     \
    ctx->NewState |= newstate;					\
 } while (0)
 
@@ -208,8 +226,8 @@ do {								\
 do {								\
    if (MESA_VERBOSE & VERBOSE_STATE)				\
       _mesa_debug(ctx, "FLUSH_CURRENT in %s\n", MESA_FUNCTION);	\
-   if (ctx->Driver.NeedFlush & FLUSH_UPDATE_CURRENT)		\
-      ctx->Driver.FlushVertices(ctx, FLUSH_UPDATE_CURRENT);	\
+   if (ctx->Driver.NeedFlush)		\
+      ctx->Driver.FlushVertices(ctx, FLUSH_STORED_VERTICES | FLUSH_UPDATE_CURRENT);	\
    ctx->NewState |= newstate;					\
 } while (0)
 

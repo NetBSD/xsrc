@@ -52,7 +52,6 @@
 #include "intel_buffers.h"
 #include "intel_reg.h"
 #include "intel_span.h"
-#include "intel_tex.h"
 #include "intel_chipset.h"
 #include "i830_context.h"
 #include "i830_reg.h"
@@ -89,8 +88,8 @@ intel_flush_inline_primitive(struct intel_context *intel)
 
 static void intel_start_inline(struct intel_context *intel, uint32_t prim)
 {
-   BATCH_LOCALS;
    uint32_t batch_flags = LOOP_CLIPRECTS;
+   BATCH_LOCALS;
 
    intel->vtbl.emit_state(intel);
 
@@ -201,10 +200,10 @@ uint32_t *intel_get_prim_space(struct intel_context *intel, unsigned int count)
 /** Dispatches the accumulated primitive to the batchbuffer. */
 void intel_flush_prim(struct intel_context *intel)
 {
-   BATCH_LOCALS;
    dri_bo *aper_array[2];
    dri_bo *vb_bo;
    unsigned int offset, count;
+   BATCH_LOCALS;
 
    /* Must be called after an intel_start_prim. */
    assert(intel->prim.primitive != ~0);
@@ -255,7 +254,7 @@ void intel_flush_prim(struct intel_context *intel)
       BEGIN_BATCH(5, LOOP_CLIPRECTS);
       OUT_BATCH(_3DSTATE_LOAD_STATE_IMMEDIATE_1 |
 		I1_LOAD_S(0) | I1_LOAD_S(1) | 1);
-      assert((offset & !S0_VB_OFFSET_MASK) == 0);
+      assert((offset & ~S0_VB_OFFSET_MASK) == 0);
       OUT_RELOC(vb_bo, I915_GEM_DOMAIN_VERTEX, 0, offset);
       OUT_BATCH((intel->vertex_size << S1_VERTEX_WIDTH_SHIFT) |
 		(intel->vertex_size << S1_VERTEX_PITCH_SHIFT));
@@ -274,7 +273,7 @@ void intel_flush_prim(struct intel_context *intel)
       OUT_BATCH(_3DSTATE_LOAD_STATE_IMMEDIATE_1 |
 		I1_LOAD_S(0) | I1_LOAD_S(2) | 1);
       /* S0 */
-      assert((offset & !S0_VB_OFFSET_MASK_830) == 0);
+      assert((offset & ~S0_VB_OFFSET_MASK_830) == 0);
       OUT_RELOC(vb_bo, I915_GEM_DOMAIN_VERTEX, 0,
 		offset | (intel->vertex_size << S0_VB_PITCH_SHIFT_830) |
 		S0_VB_ENABLE_830);
@@ -1076,7 +1075,9 @@ intelRunPipeline(GLcontext * ctx)
       intel->NewGLState = 0;
    }
 
+   intel_map_vertex_shader_textures(ctx);
    _tnl_run_pipeline(ctx);
+   intel_unmap_vertex_shader_textures(ctx);
 
    _mesa_unlock_context_textures(ctx);
 }
@@ -1086,6 +1087,7 @@ intelRenderStart(GLcontext * ctx)
 {
    struct intel_context *intel = intel_context(ctx);
 
+   intel_check_front_buffer_rendering(intel);
    intel->vtbl.render_start(intel_context(ctx));
    intel->vtbl.emit_state(intel);
 }
@@ -1194,12 +1196,16 @@ getFallbackString(GLuint bit)
 
 
 
+/**
+ * Enable/disable a fallback flag.
+ * \param bit  one of INTEL_FALLBACK_x flags.
+ */
 void
-intelFallback(struct intel_context *intel, GLuint bit, GLboolean mode)
+intelFallback(struct intel_context *intel, GLbitfield bit, GLboolean mode)
 {
    GLcontext *ctx = &intel->ctx;
    TNLcontext *tnl = TNL_CONTEXT(ctx);
-   GLuint oldfallback = intel->Fallback;
+   const GLbitfield oldfallback = intel->Fallback;
 
    if (mode) {
       intel->Fallback |= bit;
@@ -1255,11 +1261,9 @@ intel_meta_draw_poly(struct intel_context *intel,
 {
    union fi *vb;
    GLint i;
-   GLboolean was_locked = intel->locked;
    unsigned int saved_vertex_size = intel->vertex_size;
 
-   if (!was_locked)
-       LOCK_HARDWARE(intel);
+   LOCK_HARDWARE(intel);
 
    intel->vertex_size = 6;
 
@@ -1283,8 +1287,7 @@ intel_meta_draw_poly(struct intel_context *intel,
 
    intel->vertex_size = saved_vertex_size;
 
-   if (!was_locked)
-       UNLOCK_HARDWARE(intel);
+   UNLOCK_HARDWARE(intel);
 }
 
 static void

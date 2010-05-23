@@ -52,7 +52,6 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "savagestate.h"
 #include "savagetex.h"
 #include "savageioctl.h"
-#include "savage_bci.h"
 
 static void savageRasterPrimitive( GLcontext *ctx, GLuint prim );
 static void savageRenderPrimitive( GLcontext *ctx, GLenum prim );
@@ -435,7 +434,8 @@ do {								\
 
 #define LOCAL_VARS(n)						\
    savageContextPtr imesa = SAVAGE_CONTEXT(ctx);		\
-   GLuint color[n], spec[n];					\
+   GLuint color[n] = { 0 };					\
+   GLuint spec[n] = { 0 };					\
    GLuint coloroffset =						\
       ((imesa->skip & SAVAGE_SKIP_W) ? 3 : 4);			\
    GLboolean specoffset =					\

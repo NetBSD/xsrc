@@ -71,7 +71,7 @@
 
 
 #if (defined(PTHREADS) || defined(SOLARIS_THREADS) ||\
-     defined(WIN32_THREADS) || defined(USE_XTHREADS) || defined(BEOS_THREADS)) \
+     defined(WIN32_THREADS) || defined(BEOS_THREADS)) \
     && !defined(THREADS)
 # define THREADS
 #endif
@@ -116,9 +116,49 @@ typedef pthread_mutex_t _glthread_Mutex;
 #define _glthread_UNLOCK_MUTEX(name) \
    (void) pthread_mutex_unlock(&(name))
 
-#endif /* PTHREADS */
+typedef pthread_cond_t _glthread_Cond;
+
+#define _glthread_DECLARE_STATIC_COND(name) \
+   static _glthread_Cond name = PTHREAD_COND_INITIALIZER
+
+#define _glthread_INIT_COND(cond)			\
+   pthread_cond_init(&(cond), NULL)
+
+#define _glthread_DESTROY_COND(name) \
+   pthread_cond_destroy(&(name))
+
+#define _glthread_COND_WAIT(cond, mutex) \
+  pthread_cond_wait(&(cond), &(mutex))
+
+#define _glthread_COND_SIGNAL(cond) \
+  pthread_cond_signal(&(cond))
+
+#define _glthread_COND_BROADCAST(cond) \
+  pthread_cond_broadcast(&(cond))
 
 
+#else /* PTHREADS */
+
+typedef unsigned int _glthread_Cond;
+#define _glthread_DECLARE_STATIC_COND(name) \
+//  #warning Condition variables not implemented.
+
+#define _glthread_INIT_COND(cond)	    \
+  ASSERT(0);
+
+#define _glthread_DESTROY_COND(name) \
+  ASSERT(0);
+
+#define _glthread_COND_WAIT(cond, mutex) \
+  ASSERT(0);
+
+#define _glthread_COND_SIGNAL(cond) \
+  ASSERT(0);
+
+#define _glthread_COND_BROADCAST(cond) \
+  ASSERT(0);
+
+#endif
 
 
 /*
@@ -178,48 +218,6 @@ typedef CRITICAL_SECTION _glthread_Mutex;
 #endif /* WIN32_THREADS */
 
 
-
-
-/*
- * XFree86 has its own thread wrapper, Xthreads.h
- * We wrap it again for GL.
- */
-#ifdef USE_XTHREADS
-#include <X11/Xthreads.h>
-
-typedef struct {
-   xthread_key_t key;
-   int initMagic;
-} _glthread_TSD;
-
-typedef xthread_t _glthread_Thread;
-
-typedef xmutex_rec _glthread_Mutex;
-
-#ifdef XMUTEX_INITIALIZER
-#define _glthread_DECLARE_STATIC_MUTEX(name) \
-   static _glthread_Mutex name = XMUTEX_INITIALIZER
-#else
-#define _glthread_DECLARE_STATIC_MUTEX(name) \
-   static _glthread_Mutex name
-#endif
-
-#define _glthread_INIT_MUTEX(name) \
-   xmutex_init(&(name))
-
-#define _glthread_DESTROY_MUTEX(name) \
-   xmutex_clear(&(name))
-
-#define _glthread_LOCK_MUTEX(name) \
-   (void) xmutex_lock(&(name))
-
-#define _glthread_UNLOCK_MUTEX(name) \
-   (void) xmutex_unlock(&(name))
-
-#endif /* USE_XTHREADS */
-
-
-
 /*
  * BeOS threads. R5.x required.
  */
@@ -271,11 +269,11 @@ typedef benaphore _glthread_Mutex;
  * THREADS not defined
  */
 
-typedef int _glthread_TSD;
+typedef unsigned _glthread_TSD;
 
-typedef int _glthread_Thread;
+typedef unsigned _glthread_Thread;
 
-typedef int _glthread_Mutex;
+typedef unsigned _glthread_Mutex;
 
 #define _glthread_DECLARE_STATIC_MUTEX(name)  static _glthread_Mutex name = 0
 

@@ -29,6 +29,10 @@
 #include "imports.h"
 #include "queryobj.h"
 #include "mtypes.h"
+#include "glapi/dispatch.h"
+
+
+#if FEATURE_queryobj
 
 
 /**
@@ -38,7 +42,7 @@
  * \param id - the new object's ID
  * \return pointer to new query_object object or NULL if out of memory.
  */
-struct gl_query_object *
+static struct gl_query_object *
 _mesa_new_query_object(GLcontext *ctx, GLuint id)
 {
    struct gl_query_object *q = MALLOC_STRUCT(gl_query_object);
@@ -57,7 +61,7 @@ _mesa_new_query_object(GLcontext *ctx, GLuint id)
  * Begin a query.  Software driver fallback.
  * Called via ctx->Driver.BeginQuery().
  */
-void
+static void
 _mesa_begin_query(GLcontext *ctx, struct gl_query_object *q)
 {
    /* no-op */
@@ -68,7 +72,7 @@ _mesa_begin_query(GLcontext *ctx, struct gl_query_object *q)
  * End a query.  Software driver fallback.
  * Called via ctx->Driver.EndQuery().
  */
-void
+static void
 _mesa_end_query(GLcontext *ctx, struct gl_query_object *q)
 {
    q->Ready = GL_TRUE;
@@ -79,13 +83,27 @@ _mesa_end_query(GLcontext *ctx, struct gl_query_object *q)
  * Wait for query to complete.  Software driver fallback.
  * Called via ctx->Driver.WaitQuery().
  */
-void
+static void
 _mesa_wait_query(GLcontext *ctx, struct gl_query_object *q)
 {
    /* For software drivers, _mesa_end_query() should have completed the query.
-    * For real hardware, implement a proper WaitQuery() driver function.
+    * For real hardware, implement a proper WaitQuery() driver function,
+    * which may require issuing a flush.
     */
    assert(q->Ready);
+}
+
+
+/**
+ * Check if a query results are ready.  Software driver fallback.
+ * Called via ctx->Driver.CheckQuery().
+ */
+static void
+_mesa_check_query(GLcontext *ctx, struct gl_query_object *q)
+{
+   /* No-op for sw rendering.
+    * HW drivers may need to flush at this time.
+    */
 }
 
 
@@ -93,7 +111,7 @@ _mesa_wait_query(GLcontext *ctx, struct gl_query_object *q)
  * Delete a query object.  Called via ctx->Driver.DeleteQuery().
  * Not removed from hash table here.
  */
-void
+static void
 _mesa_delete_query(GLcontext *ctx, struct gl_query_object *q)
 {
    _mesa_free(q);
@@ -107,6 +125,18 @@ lookup_query_object(GLcontext *ctx, GLuint id)
       _mesa_HashLookup(ctx->Query.QueryObjects, id);
 }
 
+
+
+void
+_mesa_init_query_object_functions(struct dd_function_table *driver)
+{
+   driver->NewQueryObject = _mesa_new_query_object;
+   driver->DeleteQuery = _mesa_delete_query;
+   driver->BeginQuery = _mesa_begin_query;
+   driver->EndQuery = _mesa_end_query;
+   driver->WaitQuery = _mesa_wait_query;
+   driver->CheckQuery = _mesa_check_query;
+}
 
 
 void GLAPIENTRY
@@ -190,7 +220,7 @@ _mesa_IsQueryARB(GLuint id)
 }
 
 
-void GLAPIENTRY
+static void GLAPIENTRY
 _mesa_BeginQueryARB(GLenum target, GLuint id)
 {
    struct gl_query_object *q;
@@ -210,7 +240,6 @@ _mesa_BeginQueryARB(GLenum target, GLuint id)
             return;
          }
          break;
-#if FEATURE_EXT_timer_query
       case GL_TIME_ELAPSED_EXT:
          if (!ctx->Extensions.EXT_timer_query) {
             _mesa_error(ctx, GL_INVALID_ENUM, "glBeginQueryARB(target)");
@@ -221,7 +250,6 @@ _mesa_BeginQueryARB(GLenum target, GLuint id)
             return;
          }
          break;
-#endif
       default:
          _mesa_error(ctx, GL_INVALID_ENUM, "glBeginQueryARB(target)");
          return;
@@ -259,17 +287,15 @@ _mesa_BeginQueryARB(GLenum target, GLuint id)
    if (target == GL_SAMPLES_PASSED_ARB) {
       ctx->Query.CurrentOcclusionObject = q;
    }
-#if FEATURE_EXT_timer_query
    else if (target == GL_TIME_ELAPSED_EXT) {
       ctx->Query.CurrentTimerObject = q;
    }
-#endif
 
    ctx->Driver.BeginQuery(ctx, q);
 }
 
 
-void GLAPIENTRY
+static void GLAPIENTRY
 _mesa_EndQueryARB(GLenum target)
 {
    struct gl_query_object *q;
@@ -287,7 +313,6 @@ _mesa_EndQueryARB(GLenum target)
          q = ctx->Query.CurrentOcclusionObject;
          ctx->Query.CurrentOcclusionObject = NULL;
          break;
-#if FEATURE_EXT_timer_query
       case GL_TIME_ELAPSED_EXT:
          if (!ctx->Extensions.EXT_timer_query) {
             _mesa_error(ctx, GL_INVALID_ENUM, "glEndQueryARB(target)");
@@ -296,7 +321,6 @@ _mesa_EndQueryARB(GLenum target)
          q = ctx->Query.CurrentTimerObject;
          ctx->Query.CurrentTimerObject = NULL;
          break;
-#endif
       default:
          _mesa_error(ctx, GL_INVALID_ENUM, "glEndQueryARB(target)");
          return;
@@ -328,7 +352,6 @@ _mesa_GetQueryivARB(GLenum target, GLenum pname, GLint *params)
          }
          q = ctx->Query.CurrentOcclusionObject;
          break;
-#if FEATURE_EXT_timer_query
       case GL_TIME_ELAPSED_EXT:
          if (!ctx->Extensions.EXT_timer_query) {
             _mesa_error(ctx, GL_INVALID_ENUM, "glEndQueryARB(target)");
@@ -336,7 +359,6 @@ _mesa_GetQueryivARB(GLenum target, GLenum pname, GLint *params)
          }
          q = ctx->Query.CurrentTimerObject;
          break;
-#endif
       default:
          _mesa_error(ctx, GL_INVALID_ENUM, "glGetQueryivARB(target)");
          return;
@@ -436,12 +458,10 @@ _mesa_GetQueryObjectuivARB(GLuint id, GLenum pname, GLuint *params)
 }
 
 
-#if FEATURE_EXT_timer_query
-
 /**
  * New with GL_EXT_timer_query
  */
-void GLAPIENTRY
+static void GLAPIENTRY
 _mesa_GetQueryObjecti64vEXT(GLuint id, GLenum pname, GLint64EXT *params)
 {
    struct gl_query_object *q = NULL;
@@ -478,7 +498,7 @@ _mesa_GetQueryObjecti64vEXT(GLuint id, GLenum pname, GLint64EXT *params)
 /**
  * New with GL_EXT_timer_query
  */
-void GLAPIENTRY
+static void GLAPIENTRY
 _mesa_GetQueryObjectui64vEXT(GLuint id, GLenum pname, GLuint64EXT *params)
 {
    struct gl_query_object *q = NULL;
@@ -511,19 +531,35 @@ _mesa_GetQueryObjectui64vEXT(GLuint id, GLenum pname, GLuint64EXT *params)
    }
 }
 
-#endif /* FEATURE_EXT_timer_query */
+
+void
+_mesa_init_queryobj_dispatch(struct _glapi_table *disp)
+{
+   SET_GenQueriesARB(disp, _mesa_GenQueriesARB);
+   SET_DeleteQueriesARB(disp, _mesa_DeleteQueriesARB);
+   SET_IsQueryARB(disp, _mesa_IsQueryARB);
+   SET_BeginQueryARB(disp, _mesa_BeginQueryARB);
+   SET_EndQueryARB(disp, _mesa_EndQueryARB);
+   SET_GetQueryivARB(disp, _mesa_GetQueryivARB);
+   SET_GetQueryObjectivARB(disp, _mesa_GetQueryObjectivARB);
+   SET_GetQueryObjectuivARB(disp, _mesa_GetQueryObjectuivARB);
+
+   SET_GetQueryObjecti64vEXT(disp, _mesa_GetQueryObjecti64vEXT);
+   SET_GetQueryObjectui64vEXT(disp, _mesa_GetQueryObjectui64vEXT);
+}
+
+
+#endif /* FEATURE_queryobj */
 
 
 /**
  * Allocate/init the context state related to query objects.
  */
 void
-_mesa_init_query(GLcontext *ctx)
+_mesa_init_queryobj(GLcontext *ctx)
 {
-#if FEATURE_ARB_occlusion_query
    ctx->Query.QueryObjects = _mesa_NewHashTable();
    ctx->Query.CurrentOcclusionObject = NULL;
-#endif
 }
 
 
@@ -543,7 +579,7 @@ delete_queryobj_cb(GLuint id, void *data, void *userData)
  * Free the context state related to query objects.
  */
 void
-_mesa_free_query_data(GLcontext *ctx)
+_mesa_free_queryobj_data(GLcontext *ctx)
 {
    _mesa_HashDeleteAll(ctx->Query.QueryObjects, delete_queryobj_cb, ctx);
    _mesa_DeleteHashTable(ctx->Query.QueryObjects);

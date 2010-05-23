@@ -43,8 +43,6 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "sis_alloc.h"
 
 #include "main/imports.h"
-#include "main/matrix.h"
-#include "main/extensions.h"
 #include "utils.h"
 #include "main/framebuffer.h"
 
@@ -55,14 +53,10 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "vbo/vbo.h"
 
 #include "tnl/tnl.h"
-#include "tnl/t_pipeline.h"
 
-#define need_GL_ARB_multisample
-#define need_GL_ARB_texture_compression
-#define need_GL_ARB_vertex_buffer_object
 #define need_GL_EXT_fog_coord
 #define need_GL_EXT_secondary_color
-#include "extension_helper.h"
+#include "main/remap_helper.h"
 
 #ifndef SIS_DEBUG
 int SIS_DEBUG = 0;
@@ -72,14 +66,11 @@ int GlobalCurrentHwcx = -1;
 int GlobalHwcxCountBase = 1;
 int GlobalCmdQueueLen = 0;
 
-struct dri_extension card_extensions[] =
+static struct dri_extension card_extensions[] =
 {
-    { "GL_ARB_multisample",                GL_ARB_multisample_functions },
     { "GL_ARB_multitexture",               NULL },
     { "GL_ARB_texture_border_clamp",       NULL },
-    { "GL_ARB_texture_compression",        GL_ARB_texture_compression_functions },
     { "GL_ARB_texture_mirrored_repeat",    NULL },
-    { "GL_ARB_vertex_buffer_object",       GL_ARB_vertex_buffer_object_functions },
     /*{ "GL_EXT_fog_coord",                  GL_EXT_fog_coord_functions },*/
     { "GL_EXT_texture_lod_bias",           NULL },
     { "GL_EXT_secondary_color",            GL_EXT_secondary_color_functions },
@@ -89,15 +80,15 @@ struct dri_extension card_extensions[] =
     { NULL,                                NULL }
 };
 
-struct dri_extension card_extensions_6326[] =
+#if 0
+static struct dri_extension card_extensions_6326[] =
 {
-    { "GL_ARB_multisample",                GL_ARB_multisample_functions },
     /*{ "GL_ARB_texture_border_clamp",       NULL },*/
-    { "GL_ARB_texture_compression",        GL_ARB_texture_compression_functions },
     /*{ "GL_ARB_texture_mirrored_repeat",    NULL },*/
     /*{ "GL_MESA_ycbcr_texture",             NULL },*/
     { NULL,                                NULL }
 };
+#endif
 
 static const struct dri_debug_control debug_control[] =
 {
