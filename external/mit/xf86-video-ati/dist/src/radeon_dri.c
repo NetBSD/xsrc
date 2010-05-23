@@ -53,7 +53,6 @@
 #include "radeon_dri.h"
 #include "radeon_version.h"
 
-#include "atipciids.h"
 
 				/* X and server generic header files */
 #include "xf86.h"
@@ -64,6 +63,8 @@
 #define _XF86DRI_SERVER_
 #include "GL/glxtokens.h"
 #include "sarea.h"
+
+#include "atipciids.h"
 
 static size_t radeon_drm_page_size;
 
@@ -1382,7 +1383,7 @@ Bool RADEONDRIGetVersion(ScrnInfoPtr pScrn)
 {
     RADEONInfoPtr  info    = RADEONPTR(pScrn);
     int            major, minor, patch, fd;
-    int		   req_minor, req_patch;
+    int            req_major, req_minor, req_patch;
     char           *busId;
 
     /* Check that the GLX, DRI, and DRM modules have been loaded by testing
@@ -1399,16 +1400,26 @@ Bool RADEONDRIGetVersion(ScrnInfoPtr pScrn)
 
     /* Check the DRI version */
     DRIQueryVersion(&major, &minor, &patch);
-    if (major != DRIINFO_MAJOR_VERSION || minor < 0) {
-	xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
-		   "[dri] RADEONDRIGetVersion failed because of a version "
-		   "mismatch.\n"
-		   "[dri] libdri version is %d.%d.%d but version %d.%d.x is "
-		   "needed.\n"
-		   "[dri] Disabling DRI.\n",
-		   major, minor, patch,
-                   DRIINFO_MAJOR_VERSION, 0);
-	return FALSE;
+    if (major < DRIINFO_MAJOR_VERSION) {
+        xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
+            "[dri] RADEONDRIGetVersion failed because of a version mismatch.\n"
+            "[dri] This driver was built with %d.%d.x, which is too new;\n"
+            "[dri] libdri reports a version of %d.%d.%d."
+            "[dri] A server upgrade may be needed.\n"
+            "[dri] Disabling DRI.\n",
+            DRIINFO_MAJOR_VERSION, 0,
+            major, minor, patch);
+        return FALSE;
+    } else if (major > DRIINFO_MAJOR_VERSION) {
+        xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
+            "[dri] RADEONDRIGetVersion failed because of a version mismatch.\n"
+            "[dri] This driver was built with %d.%d.x, which is too old;\n"
+            "[dri] libdri reports a version of %d.%d.%d."
+            "[dri] This driver needs to be upgraded/rebuilt.\n"
+            "[dri] Disabling DRI.\n",
+            DRIINFO_MAJOR_VERSION, 0,
+            major, minor, patch);
+        return FALSE;
     }
 
     /* Check the lib version */
@@ -1471,37 +1482,40 @@ Bool RADEONDRIGetVersion(ScrnInfoPtr pScrn)
     }
 
     /* Now check if we qualify */
+    req_major = 1;
     if (info->ChipFamily >= CHIP_FAMILY_R300) {
         req_minor = 17;
         req_patch = 0;
     } else if (info->IsIGP) {
         req_minor = 10;
-	req_patch = 0;
+        req_patch = 0;
     } else { /* Many problems have been reported with 1.7 in the 2.4 kernel */
-	req_minor = 8;
-	req_patch = 0;
+        req_minor = 8;
+        req_patch = 0;
     }
 
     /* We don't, bummer ! */
-    if (info->dri->pKernelDRMVersion->version_major != 1 ||
-	info->dri->pKernelDRMVersion->version_minor < req_minor ||
-	(info->dri->pKernelDRMVersion->version_minor == req_minor &&
-	 info->dri->pKernelDRMVersion->version_patchlevel < req_patch)) {
+    if (info->dri->pKernelDRMVersion->version_major != req_major ||
+        info->dri->pKernelDRMVersion->version_minor < req_minor ||
+        (info->dri->pKernelDRMVersion->version_minor == req_minor &&
+        info->dri->pKernelDRMVersion->version_patchlevel < req_patch)) {
         /* Incompatible drm version */
-	xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
-		   "[dri] RADEONDRIGetVersion failed because of a version "
-		   "mismatch.\n"
-		   "[dri] radeon kernel module version is %d.%d.%d "
-		   "but version 1.%d.%d or newer is needed.\n"
-		   "[dri] Disabling DRI.\n",
-		   info->dri->pKernelDRMVersion->version_major,
-		   info->dri->pKernelDRMVersion->version_minor,
-		   info->dri->pKernelDRMVersion->version_patchlevel,
-		   req_minor,
-		   req_patch);
-	drmFreeVersion(info->dri->pKernelDRMVersion);
-	info->dri->pKernelDRMVersion = NULL;
-	return FALSE;
+        xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
+            "[dri] RADEONDRIGetVersion failed because of a version mismatch.\n"
+            "[dri] This chipset requires a kernel module version of %d.%d.%d,\n"
+            "[dri] but the kernel reports a version of %d.%d.%d."
+            "[dri] If using legacy modesetting, upgrade your kernel.\n"
+            "[dri] If using kernel modesetting, make sure your module is\n"
+            "[dri] loaded prior to starting X, and that this driver was built\n"
+            "[dri] with support for KMS.\n"
+            "[dri] Disabling DRI.\n",
+            req_major, req_minor, req_patch,
+            info->dri->pKernelDRMVersion->version_major,
+            info->dri->pKernelDRMVersion->version_minor,
+            info->dri->pKernelDRMVersion->version_patchlevel);
+        drmFreeVersion(info->dri->pKernelDRMVersion);
+        info->dri->pKernelDRMVersion = NULL;
+        return FALSE;
     }
 
     return TRUE;
