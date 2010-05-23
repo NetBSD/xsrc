@@ -48,6 +48,8 @@ extern XF86ConfigPtr xf86configptr;
 
 /**
  * Calculates the horizontal sync rate of a mode.
+ *
+ * Exact copy of xf86Mode.c's.
  */
 double
 xf86ModeHSync(const DisplayModeRec *mode)
@@ -64,6 +66,8 @@ xf86ModeHSync(const DisplayModeRec *mode)
 
 /**
  * Calculates the vertical refresh rate of a mode.
+ *
+ * Exact copy of xf86Mode.c's.
  */
 double
 xf86ModeVRefresh(const DisplayModeRec *mode)
@@ -119,7 +123,7 @@ unsigned int
 xf86ModeBandwidth(DisplayModePtr mode, int depth)
 {
     float a_active, a_total, active_percent, pixels_per_second;
-    int bytes_per_pixel = bits_to_bytes(depth);
+    int bytes_per_pixel = (depth + 7) / 8;
 
     if (!mode->HTotal || !mode->VTotal || !mode->Clock)
 	return 0;
@@ -147,6 +151,8 @@ xf86SetModeDefaultName(DisplayModePtr mode)
  *
  * Initialises the Crtc parameters for a mode.  The initialisation includes
  * adjustments for interlaced and double scan modes.
+ *
+ * Exact copy of xf86Mode.c's.
  */
 void
 xf86SetModeCrtc(DisplayModePtr p, int adjustFlags)
@@ -254,6 +260,8 @@ xf86DuplicateModes(ScrnInfoPtr pScrn, DisplayModePtr modeList)
  *
  * This doesn't use Crtc values, as it might be used on ModeRecs without the
  * Crtc values set.  So, it's assumed that the other numbers are enough.
+ *
+ * This isn't in xf86Modes.c, but it might deserve to be there.
  */
 Bool
 xf86ModesEqual(const DisplayModeRec *pMode1, const DisplayModeRec *pMode2)
@@ -277,6 +285,7 @@ xf86ModesEqual(const DisplayModeRec *pMode1, const DisplayModeRec *pMode2)
      }
 }
 
+/* exact copy of xf86Mode.c */
 static void
 add(char **p, char *new)
 {
@@ -287,6 +296,8 @@ add(char **p, char *new)
 
 /**
  * Print out a modeline.
+ *
+ * Convenient VRefresh printing was added, though, compared to xf86Mode.c
  */
 void
 xf86PrintModeline(int scrnIndex,DisplayModePtr mode)
@@ -530,9 +541,17 @@ xf86ModeIsReduced(const DisplayModeRec *mode)
 void
 xf86ValidateModesReducedBlanking(ScrnInfoPtr pScrn, DisplayModePtr modeList)
 {
-    for (; modeList != NULL; modeList = modeList->next)
-	if (xf86ModeIsReduced(modeList))
-	    modeList->status = MODE_NO_REDUCED;
+    DisplayModePtr mode;
+
+    for (mode = modeList; mode != NULL; mode = mode->next) {
+	/* gratuitous duplication from pre-randr validation code */
+	if ((((mode->HDisplay * 5 / 4) & ~0x07) > mode->HTotal) &&
+	    ((mode->HTotal - mode->HDisplay) == 160) &&
+	    ((mode->HSyncEnd - mode->HDisplay) == 80) &&
+	    ((mode->HSyncEnd - mode->HSyncStart) == 32) &&
+	    ((mode->VSyncStart - mode->VDisplay) == 3))
+	    mode->status = MODE_NO_REDUCED;
+    }
 }
 
 /**

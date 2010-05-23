@@ -40,7 +40,8 @@
 #include "xf86Priv.h"
 #include "xf86RandR12.h"
 #include "X11/extensions/render.h"
-#include "X11/extensions/dpmsconst.h"
+#define DPMS_SERVER
+#include "X11/extensions/dpms.h"
 #include "X11/Xatom.h"
 #ifdef RENDER
 #include "picturestr.h"
@@ -439,7 +440,6 @@ typedef enum {
     OPTION_IGNORE,
     OPTION_ROTATE,
     OPTION_PANNING,
-    OPTION_PRIMARY,
 } OutputOpts;
 
 static OptionInfoRec xf86OutputOptions[] = {
@@ -456,7 +456,6 @@ static OptionInfoRec xf86OutputOptions[] = {
     {OPTION_IGNORE,	    "Ignore",		OPTV_BOOLEAN, {0}, FALSE },
     {OPTION_ROTATE,	    "Rotate",		OPTV_STRING,  {0}, FALSE },
     {OPTION_PANNING,	    "Panning",		OPTV_STRING,  {0}, FALSE },
-    {OPTION_PRIMARY,	    "Primary",		OPTV_BOOLEAN, {0}, FALSE },
     {-1,		    NULL,		OPTV_NONE,    {0}, FALSE },
 };
 
@@ -589,7 +588,6 @@ xf86OutputCreate (ScrnInfoPtr		    scrn,
     xf86OutputPtr	output, *outputs;
     xf86CrtcConfigPtr   xf86_config = XF86_CRTC_CONFIG_PTR(scrn);
     int			len;
-    Bool		primary;
 
     if (name)
 	len = strlen (name) + 1;
@@ -635,22 +633,10 @@ xf86OutputCreate (ScrnInfoPtr		    scrn,
 	xfree (output);
 	return NULL;
     }
-
+    
     xf86_config->output = outputs;
-
-    if (xf86GetOptValBool (output->options, OPTION_PRIMARY, &primary) && primary)
-    {
-	memmove(xf86_config->output + 1, xf86_config->output,
-		xf86_config->num_output * sizeof (xf86OutputPtr));
-	xf86_config->output[0] = output;
-    }
-    else
-    {
-	xf86_config->output[xf86_config->num_output] = output;
-    }
-
-    xf86_config->num_output++;
-
+    xf86_config->output[xf86_config->num_output++] = output;
+    
     return output;
 }
 
@@ -1923,8 +1909,7 @@ xf86SetScrnInfoModes (ScrnInfoPtr scrn)
 }
 
 static void
-xf86CollectEnabledOutputs(ScrnInfoPtr scrn, xf86CrtcConfigPtr config,
-			  Bool *enabled)
+xf86EnableOutputs(ScrnInfoPtr scrn, xf86CrtcConfigPtr config, Bool *enabled)
 {
     Bool any_enabled = FALSE;
     int o;
@@ -2232,13 +2217,10 @@ xf86CrtcSetInitialGamma(xf86CrtcPtr crtc, float gamma_red, float gamma_green,
     blue = green + size;
 
      /* Only cause warning if user wanted gamma to be set. */
-    if (!crtc->funcs->gamma_set && (gamma_red != 1.0 || gamma_green != 1.0 || gamma_blue != 1.0)) {
-        free(red);
+    if (!crtc->funcs->gamma_set && (gamma_red != 1.0 || gamma_green != 1.0 || gamma_blue != 1.0))
         return FALSE;
-    } else if (!crtc->funcs->gamma_set) {
-        free(red);
+    else if (!crtc->funcs->gamma_set)
         return TRUE;
-      }
 
     /* At this early stage none of the randr-interface stuff is up.
      * So take the default gamma size for lack of something better.
@@ -2264,10 +2246,8 @@ xf86CrtcSetInitialGamma(xf86CrtcPtr crtc, float gamma_red, float gamma_green,
     }
 
     /* Default size is 256, so anything else is failure. */
-    if (size != crtc->gamma_size) {
-        free(red);
+    if (size != crtc->gamma_size)
         return FALSE;
-      }
 
     crtc->gamma_size = size;
     memcpy (crtc->gamma_red, red, crtc->gamma_size * sizeof (CARD16));
@@ -2363,7 +2343,7 @@ xf86InitialConfiguration (ScrnInfoPtr scrn, Bool canGrow)
     modes = xnfcalloc (config->num_output, sizeof (DisplayModePtr));
     enabled = xnfcalloc (config->num_output, sizeof (Bool));
     
-    xf86CollectEnabledOutputs(scrn, config, enabled);
+    xf86EnableOutputs(scrn, config, enabled);
 
     if (xf86TargetUserpref(scrn, config, modes, enabled, width, height))
 	xf86DrvMsg(i, X_INFO, "Using user preference for initial modes\n");
