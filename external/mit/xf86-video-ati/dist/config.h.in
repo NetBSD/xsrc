@@ -59,6 +59,10 @@
 /* Have xf86XVFillKeyHelperDrawable prototype */
 #undef HAVE_XV_DRAWABLE_HELPER
 
+/* Define to the sub-directory in which libtool stores uninstalled libraries.
+   */
+#undef LT_OBJDIR
+
 /* Name of package */
 #undef PACKAGE
 
@@ -86,6 +90,9 @@
 /* Patch version of this package */
 #undef PACKAGE_VERSION_PATCHLEVEL
 
+/* Enable DRI2 code */
+#undef RADEON_DRI2
+
 /* Define to 1 if you have the ANSI C header files. */
 #undef STDC_HEADERS
 
@@ -107,8 +114,17 @@
 /* Enable developmental DRI driver support */
 #undef XF86DRI_DEVEL
 
+/* DRM kernel modesetting */
+#undef XF86DRM_MODE
+
 /* X server has built-in mode code */
 #undef XMODES
+
+/* Number of bits in a file offset, on hosts where this is settable. */
+#undef _FILE_OFFSET_BITS
+
+/* Define for large files, on AIX-style hosts. */
+#undef _LARGE_FILES
 
 /* Define to 16-bit byteswap macro */
 #undef bswap_16

@@ -50,6 +50,7 @@ typedef struct {
     int round_mode;
     int tile_compact;
     int source_format;
+    struct radeon_bo *bo;
 } cb_config_t;
 
 /* Depth buffer */
@@ -63,6 +64,7 @@ typedef struct {
     int tile_surface_en;
     int tile_compact;
     int zrange_precision;
+    struct radeon_bo *bo;
 } db_config_t;
 
 /* Shader */
@@ -79,6 +81,7 @@ typedef struct {
     int clamp_consts;
     int export_mode;
     int uncached_first_inst;
+    struct radeon_bo *bo;
 } shader_config_t;
 
 /* Vertex buffer / vtx resource */
@@ -94,6 +97,7 @@ typedef struct {
     int srf_mode_all;
     int endian;
     int mem_req_size;
+    struct radeon_bo *bo;
 } vtx_resource_t;
 
 /* Texture resource */
@@ -129,6 +133,8 @@ typedef struct {
     int mpeg_clamp;
     int perf_modulation;
     int interlaced;
+    struct radeon_bo *bo;
+    struct radeon_bo *mip_bo;
 } tex_resource_t;
 
 /* Texture sampler */
@@ -170,12 +176,46 @@ typedef struct {
     uint32_t num_indices;
 } draw_config_t;
 
+#if defined(XF86DRM_MODE)
+#define BEGIN_BATCH(n)				\
+do {					\
+    if (info->cs)			\
+	radeon_ddx_cs_start(pScrn, (n), __FILE__, __func__, __LINE__);	\
+} while(0)
+#define END_BATCH()				\
+do {					\
+    if (info->cs)			\
+	radeon_cs_end(info->cs, __FILE__, __func__, __LINE__);	\
+} while(0)
+#define RELOC_BATCH(bo, rd, wd)					\
+do {							\
+    if (info->cs) {							\
+	int _ret;							\
+	_ret = radeon_cs_write_reloc(info->cs, (bo), (rd), (wd), 0);	\
+	if (_ret) ErrorF("reloc emit failure %d (%s %d)\n", _ret, __func__, __LINE__); \
+    }									\
+} while(0)
+#define E32(ib, dword)                                                  \
+do {                                                                    \
+    if (info->cs)							\
+	radeon_cs_write_dword(info->cs, (dword));			\
+    else {								\
+	uint32_t *ib_head = (pointer)(char*)(ib)->address;		\
+	ib_head[(ib)->used >> 2] = (dword);				\
+	(ib)->used += 4;						\
+    }									\
+} while (0)
+#else
+#define BEGIN_BATCH(n) do {(void)info;} while(0)
+#define END_BATCH() do {} while(0)
+#define RELOC_BATCH(bo, wd, rd) do {} while(0)
 #define E32(ib, dword)                                                  \
 do {                                                                    \
     uint32_t *ib_head = (pointer)(char*)(ib)->address;			\
     ib_head[(ib)->used >> 2] = (dword);					\
     (ib)->used += 4;							\
 } while (0)
+#endif
 
 #define EFLOAT(ib, val)							\
 do {								        \
@@ -241,25 +281,26 @@ wait_3d_idle(ScrnInfoPtr pScrn, drmBufPtr ib);
 void
 start_3d(ScrnInfoPtr pScrn, drmBufPtr ib);
 void
-set_render_target(ScrnInfoPtr pScrn, drmBufPtr ib, cb_config_t *cb_conf);
+set_render_target(ScrnInfoPtr pScrn, drmBufPtr ib, cb_config_t *cb_conf, uint32_t domain);
 void
-cp_set_surface_sync(ScrnInfoPtr pScrn, drmBufPtr ib, uint32_t sync_type, uint32_t size, uint64_t mc_addr);
+cp_set_surface_sync(ScrnInfoPtr pScrn, drmBufPtr ib, uint32_t sync_type, uint32_t size, uint64_t mc_addr,
+		    struct radeon_bo *bo, uint32_t rdomains, uint32_t wdomain);
 void
-cp_wait_vline_sync(ScrnInfoPtr pScrn, drmBufPtr ib, PixmapPtr pPix, int crtc, int start, int stop);
+cp_wait_vline_sync(ScrnInfoPtr pScrn, drmBufPtr ib, PixmapPtr pPix, xf86CrtcPtr crtc, int start, int stop);
 void
-fs_setup(ScrnInfoPtr pScrn, drmBufPtr ib, shader_config_t *fs_conf);
+fs_setup(ScrnInfoPtr pScrn, drmBufPtr ib, shader_config_t *fs_conf, uint32_t domain);
 void
-vs_setup(ScrnInfoPtr pScrn, drmBufPtr ib, shader_config_t *vs_conf);
+vs_setup(ScrnInfoPtr pScrn, drmBufPtr ib, shader_config_t *vs_conf, uint32_t domain);
 void
-ps_setup(ScrnInfoPtr pScrn, drmBufPtr ib, shader_config_t *ps_conf);
+ps_setup(ScrnInfoPtr pScrn, drmBufPtr ib, shader_config_t *ps_conf, uint32_t domain);
 void
 set_alu_consts(ScrnInfoPtr pScrn, drmBufPtr ib, int offset, int count, float *const_buf);
 void
 set_bool_consts(ScrnInfoPtr pScrn, drmBufPtr ib, int offset, uint32_t val);
 void
-set_vtx_resource(ScrnInfoPtr pScrn, drmBufPtr ib, vtx_resource_t *res);
+set_vtx_resource(ScrnInfoPtr pScrn, drmBufPtr ib, vtx_resource_t *res, uint32_t domain);
 void
-set_tex_resource(ScrnInfoPtr pScrn, drmBufPtr ib, tex_resource_t *tex_res);
+set_tex_resource(ScrnInfoPtr pScrn, drmBufPtr ib, tex_resource_t *tex_res, uint32_t domain);
 void
 set_tex_sampler (ScrnInfoPtr pScrn, drmBufPtr ib, tex_sampler_t *s);
 void
@@ -278,5 +319,29 @@ void
 draw_immd(ScrnInfoPtr pScrn, drmBufPtr ib, draw_config_t *draw_conf, uint32_t *indices);
 void
 draw_auto(ScrnInfoPtr pScrn, drmBufPtr ib, draw_config_t *draw_conf);
+
+Bool
+r600_vb_get(ScrnInfoPtr pScrn);
+void
+r600_vb_discard(ScrnInfoPtr pScrn);
+int
+r600_cp_start(ScrnInfoPtr pScrn);
+void r600_finish_op(ScrnInfoPtr pScrn, int vtx_size);
+
+Bool
+R600SetAccelState(ScrnInfoPtr pScrn,
+		  struct r600_accel_object *src0,
+		  struct r600_accel_object *src1,
+		  struct r600_accel_object *dst,
+		  uint32_t vs_offset, uint32_t ps_offset,
+		  int rop, Pixel planemask);
+
+extern Bool RADEONPrepareAccess_CS(PixmapPtr pPix, int index);
+extern void RADEONFinishAccess_CS(PixmapPtr pPix, int index);
+extern void *RADEONEXACreatePixmap(ScreenPtr pScreen, int size, int align);
+extern void RADEONEXADestroyPixmap(ScreenPtr pScreen, void *driverPriv);
+extern struct radeon_bo *radeon_get_pixmap_bo(PixmapPtr pPix);
+extern Bool RADEONEXAPixmapIsOffscreen(PixmapPtr pPix);
+
 
 #endif

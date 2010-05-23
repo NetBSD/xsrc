@@ -36,6 +36,7 @@
  * Authors:
  *   Kevin E. Martin <martin@xfree86.org>
  *   Rickard E. Faith <faith@valinux.com>
+ * KMS support - Dave Airlie <airlied@redhat.com>
  */
 
 #include "radeon_probe.h"
@@ -46,6 +47,11 @@
 #include "xf86.h"
 #if GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) < 6
 #include "xf86Resources.h"
+#endif
+
+#ifdef XF86DRM_MODE
+#include "xf86drmMode.h"
+#include "dri.h"
 #endif
 
 #include "radeon_chipset_gen.h"
@@ -79,11 +85,42 @@ RADEONIdentify(int flags)
 		      RADEONChipsets);
 }
 
+
+#ifdef XF86DRM_MODE
+static Bool radeon_kernel_mode_enabled(ScrnInfoPtr pScrn, struct pci_device *pci_dev)
+{
+    char *busIdString;
+    int ret;
+
+    if (!xf86LoaderCheckSymbol("DRICreatePCIBusID")) {
+      xf86DrvMsgVerb(pScrn->scrnIndex, X_INFO, 0,
+		   "[KMS] No DRICreatePCIBusID symbol, no kernel modesetting.\n");
+	return FALSE;
+    }
+
+    busIdString = DRICreatePCIBusID(pci_dev);
+    ret = drmCheckModesettingSupported(busIdString);
+    xfree(busIdString);
+    if (ret) {
+      xf86DrvMsgVerb(pScrn->scrnIndex, X_INFO, 0,
+		   "[KMS] drm report modesetting isn't supported.\n");
+	return FALSE;
+    }
+
+    xf86DrvMsgVerb(pScrn->scrnIndex, X_INFO, 0,
+		   "[KMS] Kernel modesetting enabled.\n");
+    return TRUE;
+}
+#else
+#define radeon_kernel_mode_enabled(x, y) FALSE
+#endif
+
 static Bool
-radeon_get_scrninfo(int entity_num)
+radeon_get_scrninfo(int entity_num, void *pci_dev)
 {
     ScrnInfoPtr   pScrn = NULL;
     EntityInfoPtr pEnt;
+    int kms = 0;
 
     pScrn = xf86ConfigPciEntity(pScrn, 0, entity_num, RADEONPciChipsets,
                                 NULL,
@@ -91,6 +128,11 @@ radeon_get_scrninfo(int entity_num)
 
     if (!pScrn)
         return FALSE;
+
+    if (pci_dev) {
+      if (radeon_kernel_mode_enabled(pScrn, pci_dev))
+	kms = 1;
+    }
 
     pScrn->driverVersion = RADEON_VERSION_CURRENT;
     pScrn->driverName    = RADEON_DRIVER_NAME;
@@ -100,14 +142,29 @@ radeon_get_scrninfo(int entity_num)
 #else
     pScrn->Probe         = RADEONProbe;
 #endif
-    pScrn->PreInit       = RADEONPreInit;
-    pScrn->ScreenInit    = RADEONScreenInit;
-    pScrn->SwitchMode    = RADEONSwitchMode;
-    pScrn->AdjustFrame   = RADEONAdjustFrame;
-    pScrn->EnterVT       = RADEONEnterVT;
-    pScrn->LeaveVT       = RADEONLeaveVT;
-    pScrn->FreeScreen    = RADEONFreeScreen;
-    pScrn->ValidMode     = RADEONValidMode;
+
+#ifdef XF86DRM_MODE
+    if (kms == 1) {
+      pScrn->PreInit       = RADEONPreInit_KMS;
+      pScrn->ScreenInit    = RADEONScreenInit_KMS;
+      pScrn->SwitchMode    = RADEONSwitchMode_KMS;
+      pScrn->AdjustFrame   = RADEONAdjustFrame_KMS;
+      pScrn->EnterVT       = RADEONEnterVT_KMS;
+      pScrn->LeaveVT       = RADEONLeaveVT_KMS;
+      pScrn->FreeScreen    = RADEONFreeScreen_KMS;
+      pScrn->ValidMode     = RADEONValidMode;
+    } else 
+#endif 
+    {
+      pScrn->PreInit       = RADEONPreInit;
+      pScrn->ScreenInit    = RADEONScreenInit;
+      pScrn->SwitchMode    = RADEONSwitchMode;
+      pScrn->AdjustFrame   = RADEONAdjustFrame;
+      pScrn->EnterVT       = RADEONEnterVT;
+      pScrn->LeaveVT       = RADEONLeaveVT;
+      pScrn->FreeScreen    = RADEONFreeScreen;
+      pScrn->ValidMode     = RADEONValidMode;
+    }
 
     pEnt = xf86GetEntityInfo(entity_num);
 
@@ -126,13 +183,9 @@ radeon_get_scrninfo(int entity_num)
         pPriv = xf86GetEntityPrivate(pEnt->index,
                                      gRADEONEntityIndex);
 
+	xf86SetEntityInstanceForScreen(pScrn, pEnt->index, xf86GetNumEntityInstances(pEnt->index) - 1);
+
         if (!pPriv->ptr) {
-            int j;
-            int instance = xf86GetNumEntityInstances(pEnt->index);
-
-            for (j = 0; j < instance; j++)
-                xf86SetEntityInstanceForScreen(pScrn, pEnt->index, j);
-
             pPriv->ptr = xnfcalloc(sizeof(RADEONEntRec), 1);
             pRADEONEnt = pPriv->ptr;
             pRADEONEnt->HasSecondary = FALSE;
@@ -181,7 +234,7 @@ RADEONProbe(DriverPtr drv, int flags)
 	foundScreen = TRUE;
     } else {
 	for (i = 0; i < numUsed; i++) {
-	    if (radeon_get_scrninfo(usedChips[i]))
+	    if (radeon_get_scrninfo(usedChips[i], NULL))
 		foundScreen = TRUE;
 	}
     }
@@ -202,7 +255,7 @@ radeon_pci_probe(
     intptr_t           match_data
 )
 {
-    return radeon_get_scrninfo(entity_num);
+    return radeon_get_scrninfo(entity_num, (void *)device);
 }
 
 #endif /* XSERVER_LIBPCIACCESS */

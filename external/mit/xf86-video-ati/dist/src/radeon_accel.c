@@ -375,6 +375,9 @@ void RADEONEngineRestore(ScrnInfoPtr pScrn)
     RADEONInfoPtr  info       = RADEONPTR(pScrn);
     unsigned char *RADEONMMIO = info->MMIO;
 
+    if (info->cs)
+      return;
+
     xf86DrvMsgVerb(pScrn->scrnIndex, X_INFO, RADEON_LOGLEVEL_DEBUG,
 		   "EngineRestore (%d/%d)\n",
 		   info->CurrentLayout.pixel_code,
@@ -421,6 +424,24 @@ void RADEONEngineRestore(ScrnInfoPtr pScrn)
     info->accel_state->XInited3D = FALSE;
 }
 
+static int RADEONDRMGetNumPipes(ScrnInfoPtr pScrn, int *num_pipes)
+{
+    RADEONInfoPtr info = RADEONPTR(pScrn);
+    if (info->dri->pKernelDRMVersion->version_major < 2) {
+        drm_radeon_getparam_t np;
+
+        memset(&np, 0, sizeof(np));
+        np.param = RADEON_PARAM_NUM_GB_PIPES;
+        np.value = num_pipes;
+        return drmCommandWriteRead(info->dri->drmFD, DRM_RADEON_GETPARAM, &np, sizeof(np));
+    } else {
+        struct drm_radeon_info np2;
+        np2.value = (unsigned long)num_pipes;
+        np2.request = RADEON_INFO_NUM_GB_PIPES;
+        return drmCommandWriteRead(info->dri->drmFD, DRM_RADEON_INFO, &np2, sizeof(np2));
+    }
+}
+
 /* Initialize the acceleration hardware */
 void RADEONEngineInit(ScrnInfoPtr pScrn)
 {
@@ -436,15 +457,9 @@ void RADEONEngineInit(ScrnInfoPtr pScrn)
 
 #ifdef XF86DRI
     if (info->directRenderingEnabled && (IS_R300_3D || IS_R500_3D)) {
-	drm_radeon_getparam_t np;
 	int num_pipes;
 
-	memset(&np, 0, sizeof(np));
-	np.param = RADEON_PARAM_NUM_GB_PIPES;
-	np.value = &num_pipes;
-
-	if (drmCommandWriteRead(info->dri->drmFD, DRM_RADEON_GETPARAM, &np,
-				sizeof(np)) < 0) {
+	if(RADEONDRMGetNumPipes(pScrn, &num_pipes) < 0) {
 	    xf86DrvMsg(pScrn->scrnIndex, X_WARNING,
 		       "Failed to determine num pipes from DRM, falling back to "
 		       "manual look-up!\n");
@@ -455,64 +470,67 @@ void RADEONEngineInit(ScrnInfoPtr pScrn)
     }
 #endif
 
-    if ((info->ChipFamily == CHIP_FAMILY_RV410) ||
-	(info->ChipFamily == CHIP_FAMILY_R420)  ||
-	(info->ChipFamily == CHIP_FAMILY_RS600) ||
-	(info->ChipFamily == CHIP_FAMILY_RS690) ||
-	(info->ChipFamily == CHIP_FAMILY_RS740) ||
-	(info->ChipFamily == CHIP_FAMILY_RS400) ||
-	(info->ChipFamily == CHIP_FAMILY_RS480) ||
-	IS_R500_3D) {
-	if (info->accel_state->num_gb_pipes == 0) {
-	    uint32_t gb_pipe_sel = INREG(R400_GB_PIPE_SELECT);
+    if (!info->cs) {
+	if ((info->ChipFamily == CHIP_FAMILY_RV410) ||
+	    (info->ChipFamily == CHIP_FAMILY_R420)  ||
+	    (info->ChipFamily == CHIP_FAMILY_RS600) ||
+	    (info->ChipFamily == CHIP_FAMILY_RS690) ||
+	    (info->ChipFamily == CHIP_FAMILY_RS740) ||
+	    (info->ChipFamily == CHIP_FAMILY_RS400) ||
+	    (info->ChipFamily == CHIP_FAMILY_RS480) ||
+	    IS_R500_3D) {
+	    if (info->accel_state->num_gb_pipes == 0) {
+		uint32_t gb_pipe_sel = INREG(R400_GB_PIPE_SELECT);
 
-	    info->accel_state->num_gb_pipes = ((gb_pipe_sel >> 12) & 0x3) + 1;
-	    if (IS_R500_3D)
-		OUTPLL(pScrn, R500_DYN_SCLK_PWMEM_PIPE, (1 | ((gb_pipe_sel >> 8) & 0xf) << 4));
-	}
-    } else {
-	if (info->accel_state->num_gb_pipes == 0) {
-	    if ((info->ChipFamily == CHIP_FAMILY_R300) ||
-		(info->ChipFamily == CHIP_FAMILY_R350)) {
-		/* R3xx chips */
-		info->accel_state->num_gb_pipes = 2;
-	    } else {
-		/* RV3xx chips */
-		info->accel_state->num_gb_pipes = 1;
+		info->accel_state->num_gb_pipes = ((gb_pipe_sel >> 12) & 0x3) + 1;
+		if (IS_R500_3D)
+		    OUTPLL(pScrn, R500_DYN_SCLK_PWMEM_PIPE, (1 | ((gb_pipe_sel >> 8) & 0xf) << 4));
+	    }
+	} else {
+	    if (info->accel_state->num_gb_pipes == 0) {
+		if ((info->ChipFamily == CHIP_FAMILY_R300) ||
+		    (info->ChipFamily == CHIP_FAMILY_R350)) {
+		    /* R3xx chips */
+		    info->accel_state->num_gb_pipes = 2;
+		} else {
+		    /* RV3xx chips */
+		    info->accel_state->num_gb_pipes = 1;
+		}
 	    }
 	}
+
+	/* RV410 SE cards only have 1 quadpipe */
+	if ((info->Chipset == PCI_CHIP_RV410_5E4C) ||
+	    (info->Chipset == PCI_CHIP_RV410_5E4F))
+	    info->accel_state->num_gb_pipes = 1;
+
+	if (IS_R300_3D || IS_R500_3D)
+	    xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+		       "num quad-pipes is %d\n", info->accel_state->num_gb_pipes);
+
+	if (IS_R300_3D || IS_R500_3D) {
+	    uint32_t gb_tile_config = (R300_ENABLE_TILING | R300_TILE_SIZE_16);
+	    
+	    switch(info->accel_state->num_gb_pipes) {
+	    case 2: gb_tile_config |= R300_PIPE_COUNT_R300; break;
+	    case 3: gb_tile_config |= R300_PIPE_COUNT_R420_3P; break;
+	    case 4: gb_tile_config |= R300_PIPE_COUNT_R420; break;
+	    default:
+	    case 1: gb_tile_config |= R300_PIPE_COUNT_RV350; break;
+	    }
+
+	    OUTREG(R300_GB_TILE_CONFIG, gb_tile_config);
+	    OUTREG(RADEON_WAIT_UNTIL, RADEON_WAIT_2D_IDLECLEAN | RADEON_WAIT_3D_IDLECLEAN);
+	    if (info->ChipFamily >= CHIP_FAMILY_R420)
+		OUTREG(R300_DST_PIPE_CONFIG, INREG(R300_DST_PIPE_CONFIG) | R300_PIPE_AUTO_CONFIG);
+	    OUTREG(R300_RB2D_DSTCACHE_MODE, (INREG(R300_RB2D_DSTCACHE_MODE) |
+					     R300_DC_AUTOFLUSH_ENABLE |
+					     R300_DC_DC_DISABLE_IGNORE_PE));
+	} else
+	    OUTREG(RADEON_RB3D_CNTL, 0);
+	
+	RADEONEngineReset(pScrn);
     }
-
-    /* RV410 SE cards only have 1 quadpipe */
-    if ((info->Chipset == PCI_CHIP_RV410_5E4C) ||
-	(info->Chipset == PCI_CHIP_RV410_5E4F))
-	info->accel_state->num_gb_pipes = 1;
-
-    if (IS_R300_3D || IS_R500_3D)
-	xf86DrvMsg(pScrn->scrnIndex, X_INFO,
-		   "num quad-pipes is %d\n", info->accel_state->num_gb_pipes);
-
-    if (IS_R300_3D || IS_R500_3D) {
-	uint32_t gb_tile_config = (R300_ENABLE_TILING | R300_TILE_SIZE_16);
-
-	switch(info->accel_state->num_gb_pipes) {
-	case 2: gb_tile_config |= R300_PIPE_COUNT_R300; break;
-	case 3: gb_tile_config |= R300_PIPE_COUNT_R420_3P; break;
-	case 4: gb_tile_config |= R300_PIPE_COUNT_R420; break;
-	default:
-	case 1: gb_tile_config |= R300_PIPE_COUNT_RV350; break;
-	}
-
-	OUTREG(R300_GB_TILE_CONFIG, gb_tile_config);
-	OUTREG(RADEON_WAIT_UNTIL, RADEON_WAIT_2D_IDLECLEAN | RADEON_WAIT_3D_IDLECLEAN);
-	OUTREG(R300_DST_PIPE_CONFIG, INREG(R300_DST_PIPE_CONFIG) | R300_PIPE_AUTO_CONFIG);
-	OUTREG(R300_RB2D_DSTCACHE_MODE, (INREG(R300_RB2D_DSTCACHE_MODE) |
-					 R300_DC_AUTOFLUSH_ENABLE |
-					 R300_DC_DC_DISABLE_IGNORE_PE));
-    } else
-	OUTREG(RADEON_RB3D_CNTL, 0);
-
-    RADEONEngineReset(pScrn);
 
     switch (info->CurrentLayout.pixel_code) {
     case 8:  datatype = 2; break;
@@ -536,6 +554,24 @@ void RADEONEngineInit(ScrnInfoPtr pScrn)
     RADEONEngineRestore(pScrn);
 }
 
+uint32_t radeonGetPixmapOffset(PixmapPtr pPix)
+{
+    ScrnInfoPtr pScrn = xf86Screens[pPix->drawable.pScreen->myNum];
+    RADEONInfoPtr info = RADEONPTR(pScrn);
+    uint32_t offset = 0;
+    if (info->cs)
+	return 0;
+#ifdef USE_EXA
+    if (info->useEXA) {
+	offset = exaGetPixmapOffset(pPix);
+    } else
+#endif
+    {
+	offset = pPix->devPrivate.ptr - info->FB;
+    }
+    offset += info->fbLocation + pScrn->fbOffset;
+    return offset;
+}
 
 #define ACCEL_MMIO
 #define ACCEL_PREAMBLE()        unsigned char *RADEONMMIO = info->MMIO
@@ -620,6 +656,8 @@ int RADEONCPStop(ScrnInfoPtr pScrn, RADEONInfoPtr info)
     }
 }
 
+#define RADEON_IB_RESERVE (16 * sizeof(uint32_t))
+
 /* Get an indirect buffer for the CP 2D acceleration commands  */
 drmBufPtr RADEONCPGetBuffer(ScrnInfoPtr pScrn)
 {
@@ -696,6 +734,7 @@ void RADEONCPFlushIndirect(ScrnInfoPtr pScrn, int discard)
     int                start  = info->cp->indirectStart;
     drm_radeon_indirect_t  indirect;
 
+    assert(!info->cs);
     if (!buffer) return;
     if (start == buffer->used && !discard) return;
 
@@ -729,7 +768,7 @@ void RADEONCPFlushIndirect(ScrnInfoPtr pScrn, int discard)
 	info->cp->indirectStart  = 0;
     } else {
 	/* Start on a double word boundary */
-	info->cp->indirectStart  = buffer->used = (buffer->used + 7) & ~7;
+	info->cp->indirectStart  = buffer->used = RADEON_ALIGN(buffer->used, 8);
 	if (RADEON_VERBOSE) {
 	    xf86DrvMsg(pScrn->scrnIndex, X_INFO, "   Starting at %d\n",
 		       info->cp->indirectStart);
@@ -745,6 +784,7 @@ void RADEONCPReleaseIndirect(ScrnInfoPtr pScrn)
     int                start  = info->cp->indirectStart;
     drm_radeon_indirect_t  indirect;
 
+    assert(!info->cs);
     if (info->ChipFamily >= CHIP_FAMILY_R600) {
 	if (buffer && (buffer->used & 0x3c)) {
 	    RING_LOCALS;
@@ -827,11 +867,11 @@ RADEONHostDataBlit(
 	break;
     case 2:
 	format = RADEON_GMC_DST_16BPP;
-	*bufPitch = 2 * ((w + 1) & ~1);
+	*bufPitch = 2 * RADEON_ALIGN(w, 2);
 	break;
     case 1:
 	format = RADEON_GMC_DST_8BPP_CI;
-	*bufPitch = (w + 3) & ~3;
+	*bufPitch = RADEON_ALIGN(w, 4);
 	break;
     default:
 	xf86DrvMsg( pScrn->scrnIndex, X_ERROR,
@@ -940,7 +980,7 @@ void RADEONCopySwap(uint8_t *dst, uint8_t *src, unsigned int size, int swap)
 	}
     }
     if (src != dst)
-	    memmove(dst, src, size);
+	memcpy(dst, src, size);
 }
 
 /* Copies a single pass worth of data for a hostdata blit set up by
@@ -1079,8 +1119,10 @@ void RADEONInit3DEngine(ScrnInfoPtr pScrn)
     if (info->directRenderingEnabled) {
 	drm_radeon_sarea_t *pSAREAPriv;
 
-	pSAREAPriv = DRIGetSAREAPrivate(pScrn->pScreen);
-	pSAREAPriv->ctx_owner = DRIGetContext(pScrn->pScreen);
+	if (!info->kms_enabled) {
+	    pSAREAPriv = DRIGetSAREAPrivate(pScrn->pScreen);
+	    pSAREAPriv->ctx_owner = DRIGetContext(pScrn->pScreen);
+	}
 	RADEONInit3DEngineCP(pScrn);
     } else
 #endif
@@ -1115,20 +1157,20 @@ RADEONSetupMemXAA_DRI(int scrnIndex, ScreenPtr pScreen)
      * Might need that for non-XF86DRI too?
      */
     if (info->allowColorTiling) {
-	bufferSize = (((pScrn->virtualY + 15) & ~15) * width_bytes
-		      + RADEON_BUFFER_ALIGN) & ~RADEON_BUFFER_ALIGN;
+	bufferSize = RADEON_ALIGN((RADEON_ALIGN(pScrn->virtualY, 16)) * width_bytes,
+		      RADEON_GPU_PAGE_SIZE);
     } else {
-        bufferSize = (pScrn->virtualY * width_bytes
-		      + RADEON_BUFFER_ALIGN) & ~RADEON_BUFFER_ALIGN;
+        bufferSize = RADEON_ALIGN(pScrn->virtualY * width_bytes,
+		      RADEON_GPU_PAGE_SIZE);
     }
 
     /* Due to tiling, the Z buffer pitch must be a multiple of 32 pixels,
      * which is always the case if color tiling is used due to color pitch
      * but not necessarily otherwise, and its height a multiple of 16 lines.
      */
-    info->dri->depthPitch = (pScrn->displayWidth + 31) & ~31;
-    depthSize = ((((pScrn->virtualY + 15) & ~15) * info->dri->depthPitch
-		  * depthCpp + RADEON_BUFFER_ALIGN) & ~RADEON_BUFFER_ALIGN);
+    info->dri->depthPitch = RADEON_ALIGN(pScrn->displayWidth, 32);
+    depthSize = RADEON_ALIGN((RADEON_ALIGN(pScrn->virtualY, 16)) * info->dri->depthPitch
+		  * depthCpp, RADEON_GPU_PAGE_SIZE);
 
     xf86DrvMsg(pScrn->scrnIndex, X_INFO,
 	       "Using %d MB GART aperture\n", info->dri->gartSize);
@@ -1235,25 +1277,22 @@ RADEONSetupMemXAA_DRI(int scrnIndex, ScreenPtr pScreen)
     }
     else {
 	/* Reserve space for textures */
-	info->dri->textureOffset = ((info->FbMapSize - info->dri->textureSize +
-				     RADEON_BUFFER_ALIGN) &
-				    ~(uint32_t)RADEON_BUFFER_ALIGN);
+	info->dri->textureOffset = RADEON_ALIGN(info->FbMapSize - info->dri->textureSize,
+				     RADEON_GPU_PAGE_SIZE);
     }
 
     /* Reserve space for the shared depth
      * buffer.
      */
-    info->dri->depthOffset = ((info->dri->textureOffset - depthSize +
-			       RADEON_BUFFER_ALIGN) &
-			      ~(uint32_t)RADEON_BUFFER_ALIGN);
+    info->dri->depthOffset = RADEON_ALIGN(info->dri->textureOffset - depthSize,
+			       RADEON_GPU_PAGE_SIZE);
 
     /* Reserve space for the shared back buffer */
     if (info->dri->noBackBuffer) {
        info->dri->backOffset = info->dri->depthOffset;
     } else {
-       info->dri->backOffset = ((info->dri->depthOffset - bufferSize +
-				 RADEON_BUFFER_ALIGN) &
-				~(uint32_t)RADEON_BUFFER_ALIGN);
+       info->dri->backOffset = RADEON_ALIGN(info->dri->depthOffset - bufferSize,
+				 RADEON_GPU_PAGE_SIZE);
     }
 
     info->dri->backY = info->dri->backOffset / width_bytes;
@@ -1285,7 +1324,7 @@ RADEONSetupMemXAA_DRI(int scrnIndex, ScreenPtr pScreen)
 	if ((fbarea = xf86AllocateOffscreenArea(pScreen,
 						pScrn->displayWidth,
 						info->allowColorTiling ? 
-						((pScrn->virtualY + 15) & ~15)
+						(RADEON_ALIGN(pScrn->virtualY, 16))
 						- pScrn->virtualY + 2 : 2,
 						0, NULL, NULL,
 						NULL))) {
@@ -1393,7 +1432,7 @@ RADEONSetupMemXAA(int scrnIndex, ScreenPtr pScreen)
 	if ((fbarea = xf86AllocateOffscreenArea(pScreen,
 						pScrn->displayWidth,
 						info->allowColorTiling ? 
-						((pScrn->virtualY + 15) & ~15)
+						(RADEON_ALIGN(pScrn->virtualY, 16))
 						- pScrn->virtualY + 2 : 2,
 						0, NULL, NULL,
 						NULL))) {

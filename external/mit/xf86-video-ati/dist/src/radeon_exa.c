@@ -120,6 +120,19 @@ static __inline__ uint32_t F_TO_DW(float val)
     return tmp.l;
 }
 
+
+#ifdef XF86DRM_MODE
+
+static inline void radeon_add_pixmap(struct radeon_cs *cs, PixmapPtr pPix, int read_domains, int write_domain)
+{
+    struct radeon_exa_pixmap_priv *driver_priv = exaGetPixmapDriverPrivate(pPix);
+
+    radeon_cs_space_add_persistent_bo(cs, driver_priv->bo, read_domains, write_domain);
+}
+
+#endif /* XF86DRM_MODE */
+
+
 /* Assumes that depth 15 and 16 can be used as depth 16, which is okay since we
  * require src and dest datatypes to be equal.
  */
@@ -179,7 +192,6 @@ static Bool RADEONGetOffsetPitch(PixmapPtr pPix, int bpp, uint32_t *pitch_offset
 
 Bool RADEONGetPixmapOffsetPitch(PixmapPtr pPix, uint32_t *pitch_offset)
 {
-	RINFO_FROM_SCREEN(pPix->drawable.pScreen);
 	uint32_t pitch, offset;
 	int bpp;
 
@@ -187,44 +199,17 @@ Bool RADEONGetPixmapOffsetPitch(PixmapPtr pPix, uint32_t *pitch_offset)
 	if (bpp == 24)
 		bpp = 8;
 
-	offset = exaGetPixmapOffset(pPix) + info->fbLocation + pScrn->fbOffset;
+	offset = radeonGetPixmapOffset(pPix);
 	pitch = exaGetPixmapPitch(pPix);
 
 	return RADEONGetOffsetPitch(pPix, bpp, pitch_offset, offset, pitch);
-}
-
-/*
- * Used for vblank render stalling.
- * Ideally we'd have one pixmap per crtc.
- * syncing per-blit is unrealistic so,
- * we sync to whichever crtc has a larger area.
- */
-int RADEONBiggerCrtcArea(PixmapPtr pPix)
-{
-    ScrnInfoPtr pScrn =  xf86Screens[pPix->drawable.pScreen->myNum];
-    xf86CrtcConfigPtr xf86_config = XF86_CRTC_CONFIG_PTR(pScrn);
-    int c, crtc_num = -1, area = 0;
-
-    for (c = 0; c < xf86_config->num_crtc; c++) {
-	xf86CrtcPtr crtc = xf86_config->crtc[c];
-
-	if (!crtc->enabled)
-	    continue;
-
-	if ((crtc->mode.HDisplay * crtc->mode.VDisplay) > area) {
-	    area = crtc->mode.HDisplay * crtc->mode.VDisplay;
-	    crtc_num = c;
-	}
-    }
-
-    return crtc_num;
 }
 
 #if X_BYTE_ORDER == X_BIG_ENDIAN
 
 static unsigned long swapper_surfaces[6];
 
-static Bool RADEONPrepareAccess(PixmapPtr pPix, int index)
+static Bool RADEONPrepareAccess_BE(PixmapPtr pPix, int index)
 {
     RINFO_FROM_SCREEN(pPix->drawable.pScreen);
     unsigned char *RADEONMMIO = info->MMIO;
@@ -247,7 +232,7 @@ static Bool RADEONPrepareAccess(PixmapPtr pPix, int index)
      * surface. We need to align the size first
      */
     size = exaGetPixmapSize(pPix);
-    size = (size + RADEON_BUFFER_ALIGN) & ~(RADEON_BUFFER_ALIGN);
+    size = RADEON_ALIGN(size, RADEON_GPU_PAGE_SIZE);
 
     /* Set surface to tiling disabled with appropriate swapper */
     switch (bpp) {
@@ -290,7 +275,7 @@ static Bool RADEONPrepareAccess(PixmapPtr pPix, int index)
     return TRUE;
 }
 
-static void RADEONFinishAccess(PixmapPtr pPix, int index)
+static void RADEONFinishAccess_BE(PixmapPtr pPix, int index)
 {
     RINFO_FROM_SCREEN(pPix->drawable.pScreen);
     unsigned char *RADEONMMIO = info->MMIO;
@@ -323,6 +308,198 @@ static void RADEONFinishAccess(PixmapPtr pPix, int index)
 
 #endif /* X_BYTE_ORDER == X_BIG_ENDIAN */
 
+#ifdef XF86DRM_MODE
+Bool RADEONPrepareAccess_CS(PixmapPtr pPix, int index)
+{
+    ScreenPtr pScreen = pPix->drawable.pScreen;
+    ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
+    RADEONInfoPtr info = RADEONPTR(pScrn);
+    struct radeon_exa_pixmap_priv *driver_priv;
+    int ret;
+
+#if X_BYTE_ORDER == X_BIG_ENDIAN
+    /* May need to handle byte swapping in DownloadFrom/UploadToScreen */
+    if (pPix->drawable.bitsPerPixel > 8 &&
+	pPix != pScreen->GetScreenPixmap(pScreen))
+	return FALSE;
+#endif
+
+    driver_priv = exaGetPixmapDriverPrivate(pPix);
+    if (!driver_priv)
+      return FALSE;
+
+    /* if we have more refs than just the BO then flush */
+    if (radeon_bo_is_referenced_by_cs(driver_priv->bo, info->cs))
+        radeon_cs_flush_indirect(pScrn);
+    
+    /* flush IB */
+    ret = radeon_bo_map(driver_priv->bo, 1);
+    if (ret) {
+      FatalError("failed to map pixmap %d\n", ret);
+      return FALSE;
+    }
+    driver_priv->bo_mapped = TRUE;
+
+    pPix->devPrivate.ptr = driver_priv->bo->ptr;
+
+    return TRUE;
+}
+
+void RADEONFinishAccess_CS(PixmapPtr pPix, int index)
+{
+    struct radeon_exa_pixmap_priv *driver_priv;
+
+    driver_priv = exaGetPixmapDriverPrivate(pPix);
+    if (!driver_priv || !driver_priv->bo_mapped)
+        return;
+
+    radeon_bo_unmap(driver_priv->bo);
+    pPix->devPrivate.ptr = NULL;
+}
+
+
+void *RADEONEXACreatePixmap(ScreenPtr pScreen, int size, int align)
+{
+    ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
+    RADEONInfoPtr info = RADEONPTR(pScrn);
+    struct radeon_exa_pixmap_priv *new_priv;
+
+#ifdef EXA_MIXED_PIXMAPS
+    if (info->accel_state->exa->flags & EXA_MIXED_PIXMAPS) {
+        if (size != 0 && !info->exa_force_create &&
+	    info->exa_pixmaps == FALSE)
+            return NULL;
+    }
+#endif
+	    
+    new_priv = xcalloc(1, sizeof(struct radeon_exa_pixmap_priv));
+    if (!new_priv)
+	return NULL;
+
+    if (size == 0)
+	return new_priv;
+
+    new_priv->bo = radeon_bo_open(info->bufmgr, 0, size, align,
+				  RADEON_GEM_DOMAIN_VRAM, 0);
+    if (!new_priv->bo) {
+	xfree(new_priv);
+	ErrorF("Failed to alloc memory\n");
+	return NULL;
+    }
+    
+    return new_priv;
+
+}
+
+void *RADEONEXACreatePixmap2(ScreenPtr pScreen, int width, int height,
+			     int depth, int usage_hint, int bitsPerPixel,
+			     int *new_pitch)
+{
+    ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
+    RADEONInfoPtr info = RADEONPTR(pScrn);
+    struct radeon_exa_pixmap_priv *new_priv;
+    int padded_width;
+    uint32_t size;
+    uint32_t tiling = 0;
+    int pixmap_align;
+
+#ifdef EXA_MIXED_PIXMAPS
+    if (info->accel_state->exa->flags & EXA_MIXED_PIXMAPS) {
+	if (width != 0 && height != 0 && !info->exa_force_create &&
+	    info->exa_pixmaps == FALSE)
+            return NULL;
+    }
+#endif
+
+    if (usage_hint) {
+	if (info->allowColorTiling) {
+    	    if (usage_hint & RADEON_CREATE_PIXMAP_TILING_MACRO)
+ 	   	tiling |= RADEON_TILING_MACRO;
+    	    if (usage_hint & RADEON_CREATE_PIXMAP_TILING_MICRO)
+                tiling |= RADEON_TILING_MICRO;
+	}
+    }
+
+    if (tiling) {
+	height = RADEON_ALIGN(height, 16);
+	pixmap_align = 256;
+    } else
+	pixmap_align = 64;
+
+    padded_width = ((width * bitsPerPixel + FB_MASK) >> FB_SHIFT) * sizeof(FbBits);
+    padded_width = RADEON_ALIGN(padded_width, pixmap_align);
+    size = height * padded_width;
+
+    new_priv = xcalloc(1, sizeof(struct radeon_exa_pixmap_priv));
+    if (!new_priv)
+	return NULL;
+
+    if (size == 0)
+	return new_priv;
+
+    *new_pitch = padded_width;
+
+    new_priv->bo = radeon_bo_open(info->bufmgr, 0, size, 0,
+				  RADEON_GEM_DOMAIN_VRAM, 0);
+    if (!new_priv->bo) {
+	xfree(new_priv);
+	ErrorF("Failed to alloc memory\n");
+	return NULL;
+    }
+
+    if (tiling)
+	radeon_bo_set_tiling(new_priv->bo, tiling, *new_pitch);
+
+    return new_priv;
+}
+
+void RADEONEXADestroyPixmap(ScreenPtr pScreen, void *driverPriv)
+{
+    struct radeon_exa_pixmap_priv *driver_priv = driverPriv;
+
+    if (!driverPriv)
+      return;
+
+    if (driver_priv->bo)
+	radeon_bo_unref(driver_priv->bo);
+    xfree(driverPriv);
+}
+
+struct radeon_bo *radeon_get_pixmap_bo(PixmapPtr pPix)
+{
+    struct radeon_exa_pixmap_priv *driver_priv;
+    driver_priv = exaGetPixmapDriverPrivate(pPix);
+    return driver_priv->bo;
+}
+
+void radeon_set_pixmap_bo(PixmapPtr pPix, struct radeon_bo *bo)
+{
+    struct radeon_exa_pixmap_priv *driver_priv;
+
+    driver_priv = exaGetPixmapDriverPrivate(pPix);
+    if (driver_priv) {
+	if (driver_priv->bo)
+	    radeon_bo_unref(driver_priv->bo);
+
+	radeon_bo_ref(bo);
+	driver_priv->bo = bo;
+    }
+}
+
+Bool RADEONEXAPixmapIsOffscreen(PixmapPtr pPix)
+{
+    struct radeon_exa_pixmap_priv *driver_priv;
+
+    driver_priv = exaGetPixmapDriverPrivate(pPix);
+
+    if (!driver_priv)
+       return FALSE;
+    if (driver_priv->bo)
+       return TRUE;
+    return FALSE;
+}
+#endif
+
 #define ENTER_DRAW(x) TRACE
 #define LEAVE_DRAW(x) TRACE
 /***********************************************************************/
@@ -332,6 +509,7 @@ static void RADEONFinishAccess(PixmapPtr pPix, int index)
 #define BEGIN_ACCEL(n)		RADEONWaitForFifo(pScrn, (n))
 #define OUT_ACCEL_REG(reg, val)	OUTREG(reg, val)
 #define OUT_ACCEL_REG_F(reg, val) OUTREG(reg, F_TO_DW(val))
+#define OUT_RELOC(x, read, write)            do {} while(0)
 #define FINISH_ACCEL()
 
 #ifdef RENDER
@@ -345,6 +523,7 @@ static void RADEONFinishAccess(PixmapPtr pPix, int index)
 #undef OUT_ACCEL_REG
 #undef OUT_ACCEL_REG_F
 #undef FINISH_ACCEL
+#undef OUT_RELOC
 
 #ifdef XF86DRI
 
@@ -355,6 +534,7 @@ static void RADEONFinishAccess(PixmapPtr pPix, int index)
 #define BEGIN_ACCEL(n)		BEGIN_RING(2*(n))
 #define OUT_ACCEL_REG(reg, val)	OUT_RING_REG(reg, val)
 #define FINISH_ACCEL()		ADVANCE_RING()
+#define OUT_RELOC(x, read, write) OUT_RING_RELOC(x, read, write)
 
 #define OUT_RING_F(x) OUT_RING(F_TO_DW(x))
 
@@ -455,7 +635,7 @@ Bool RADEONSetupMemEXA (ScreenPtr pScreen)
 	 * offscreen locations does.
 	 */
 	info->dri->backPitch = pScrn->displayWidth;
-	next = RADEON_ALIGN(info->accel_state->exa->offScreenBase, RADEON_BUFFER_ALIGN);
+	next = RADEON_ALIGN(info->accel_state->exa->offScreenBase, RADEON_GPU_PAGE_SIZE);
 	if (!info->dri->noBackBuffer &&
 	    next + screen_size <= info->accel_state->exa->memorySize)
 	{
@@ -471,7 +651,7 @@ Bool RADEONSetupMemEXA (ScreenPtr pScreen)
 	 */
 	info->dri->depthPitch = RADEON_ALIGN(pScrn->displayWidth, 32);
 	depth_size = RADEON_ALIGN(pScrn->virtualY, 16) * info->dri->depthPitch * depthCpp;
-	next = RADEON_ALIGN(info->accel_state->exa->offScreenBase, RADEON_BUFFER_ALIGN);
+	next = RADEON_ALIGN(info->accel_state->exa->offScreenBase, RADEON_GPU_PAGE_SIZE);
 	if (next + depth_size <= info->accel_state->exa->memorySize)
 	{
 	    info->dri->depthOffset = next;
@@ -523,6 +703,10 @@ RADEONTexOffsetStart(PixmapPtr pPix)
 {
     RINFO_FROM_SCREEN(pPix->drawable.pScreen);
     unsigned long long offset;
+
+    if (exaGetPixmapDriverPrivate(pPix))
+	return -1;
+
     exaMoveInPixmap(pPix);
     ExaOffscreenMarkUsed(pPix);
 

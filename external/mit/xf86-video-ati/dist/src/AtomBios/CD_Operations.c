@@ -42,6 +42,7 @@ Revision History:
 
 #include <X11/Xos.h>
 #include "xorg-server.h"
+#include "compiler.h"
 
 #include "Decoder.h"
 
@@ -230,7 +231,7 @@ UINT32 IndirectInputOutput(PARSER_TEMP_DATA STACK_BASED * pParserTempData)
 		IndirectIOParserCommands[*pParserTempData->IndirectIOTablePointer].func(pParserTempData);
 		pParserTempData->IndirectIOTablePointer+=IndirectIOParserCommands[*pParserTempData->IndirectIOTablePointer].csize;
 	    }
-	    pParserTempData->IndirectIOTablePointer-=UINT16LE_TO_CPU(*(UINT16*)(pParserTempData->IndirectIOTablePointer+1));
+	    pParserTempData->IndirectIOTablePointer-=UINT16LE_TO_CPU(ldw_u((uint16_t *)(pParserTempData->IndirectIOTablePointer+1)));
 	    pParserTempData->IndirectIOTablePointer++;
 	    return pParserTempData->IndirectData;
 	} else pParserTempData->IndirectIOTablePointer+=IndirectIOParserCommands[*pParserTempData->IndirectIOTablePointer].csize;
@@ -267,8 +268,8 @@ VOID PutDataRegister(PARSER_TEMP_DATA STACK_BASED * pParserTempData)
 
 VOID PutDataPS(PARSER_TEMP_DATA STACK_BASED * pParserTempData)
 {
-    *(pParserTempData->pDeviceData->pParameterSpace+pParserTempData->pCmd->Parameters.ByteXX.PA_Destination)=
-	    CPU_TO_UINT32LE(pParserTempData->DestData32);
+    stl_u(CPU_TO_UINT32LE(pParserTempData->DestData32), 
+	  pParserTempData->pDeviceData->pParameterSpace+pParserTempData->pCmd->Parameters.ByteXX.PA_Destination);
 }
 
 VOID PutDataWS(PARSER_TEMP_DATA STACK_BASED * pParserTempData)
@@ -299,6 +300,9 @@ VOID PutDataWS(PARSER_TEMP_DATA STACK_BASED * pParserTempData)
 		break;
 	    case WS_ATTRIBUTES_C:
 		pParserTempData->AttributesData=(UINT16)pParserTempData->DestData32;
+		break;
+	    case WS_REGPTR_C:
+		pParserTempData->CurrentRegBlock=(UINT16)pParserTempData->DestData32;
 		break;
 	}
 
@@ -338,7 +342,7 @@ VOID SkipParameters16(PARSER_TEMP_DATA STACK_BASED *	pParserTempData)
 
 UINT32 GetParametersRegister(PARSER_TEMP_DATA STACK_BASED *	pParserTempData)
 {
-    pParserTempData->Index=UINT16LE_TO_CPU(*(UINT16*)pParserTempData->pWorkingTableData->IP);
+    pParserTempData->Index=UINT16LE_TO_CPU(ldw_u((uint16_t *)pParserTempData->pWorkingTableData->IP));
     pParserTempData->pWorkingTableData->IP+=sizeof(UINT16);
     pParserTempData->Index+=pParserTempData->CurrentRegBlock;
     switch(pParserTempData->Multipurpose.CurrentPort)
@@ -390,6 +394,8 @@ UINT32 GetParametersWS(PARSER_TEMP_DATA STACK_BASED *	pParserTempData)
 		return pParserTempData->CurrentFB_Window;
 	    case WS_ATTRIBUTES_C:
 		return pParserTempData->AttributesData;
+	    case WS_REGPTR_C:
+		return (UINT32)pParserTempData->CurrentRegBlock;
 	}
     return 0;
 
@@ -420,9 +426,9 @@ UINT32 GetParametersMC(PARSER_TEMP_DATA STACK_BASED *	pParserTempData)
 
 UINT32 GetParametersIndirect(PARSER_TEMP_DATA STACK_BASED *	pParserTempData)
 {
-	  UINT32 ret;
+    UINT32 ret;
 
-    pParserTempData->Index=UINT16LE_TO_CPU(*(UINT16*)pParserTempData->pWorkingTableData->IP);
+    pParserTempData->Index=UINT16LE_TO_CPU(ldw_u((uint16_t *)pParserTempData->pWorkingTableData->IP));
     pParserTempData->pWorkingTableData->IP+=sizeof(UINT16);
     ret = UINT32LE_TO_CPU(*(UINT32*)(RELATIVE_TO_BIOS_IMAGE(pParserTempData->Index)+pParserTempData->CurrentDataBlock));
     return ret;
@@ -439,7 +445,7 @@ UINT32 GetParametersDirect8(PARSER_TEMP_DATA STACK_BASED *	pParserTempData)
 UINT32 GetParametersDirect16(PARSER_TEMP_DATA STACK_BASED *	pParserTempData)
 {
     pParserTempData->CD_Mask.SrcAlignment=alignmentLowerWord;
-    pParserTempData->Index=UINT16LE_TO_CPU(*(UINT16*)pParserTempData->pWorkingTableData->IP);
+    pParserTempData->Index=UINT16LE_TO_CPU(ldw_u((uint16_t *)pParserTempData->pWorkingTableData->IP));
     pParserTempData->pWorkingTableData->IP+=sizeof(UINT16);
     return pParserTempData->Index;
 }
@@ -502,7 +508,7 @@ VOID ProcessMask(PARSER_TEMP_DATA STACK_BASED * pParserTempData)
 
     pParserTempData->DestData32=GetDestination[pParserTempData->ParametersType.Destination](pParserTempData);
     pParserTempData->SourceData32=GetParametersDirect(pParserTempData);
-    pParserTempData->Index=GetParametersDirect(pParserTempData);
+    pParserTempData->Index=GetSource[pParserTempData->ParametersType.Source](pParserTempData);
     pParserTempData->SourceData32 <<= DestinationAlignmentShift[pParserTempData->CD_Mask.DestAlignment];
     pParserTempData->SourceData32 |= ~(AlignmentMask[pParserTempData->CD_Mask.SrcAlignment] << DestinationAlignmentShift[pParserTempData->CD_Mask.DestAlignment]);
     pParserTempData->DestData32   &= pParserTempData->SourceData32;
@@ -675,7 +681,7 @@ VOID ProcessSwitch(PARSER_TEMP_DATA STACK_BASED * pParserTempData){
     pParserTempData->SourceData32 >>= SourceAlignmentShift[pParserTempData->CD_Mask.SrcAlignment];
     pParserTempData->SourceData32 &= AlignmentMask[pParserTempData->CD_Mask.SrcAlignment];
 
-    while ( UINT16LE_TO_CPU(*(UINT16*)pParserTempData->pWorkingTableData->IP) != (((UINT16)NOP_OPCODE << 8)+NOP_OPCODE))
+    while ( UINT16LE_TO_CPU(ldw_u((uint16_t *)pParserTempData->pWorkingTableData->IP)) != (((UINT16)NOP_OPCODE << 8)+NOP_OPCODE))
     {
 	if (*pParserTempData->pWorkingTableData->IP == 'c')
 	{
