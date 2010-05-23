@@ -49,7 +49,7 @@
 #define HAVE_UNISTD_H 1
 
 /* xextproto 7.1 available */
-/* #undef HAVE_XEXTPROTO_71 */
+#define HAVE_XEXTPROTO_71 1
 
 /* Have xf86_crtc_clip_video_helper prototype */
 #define HAVE_XF86CRTCCLIPVIDEOHELPER 1
@@ -59,6 +59,10 @@
 
 /* Have xf86XVFillKeyHelperDrawable prototype */
 #define HAVE_XV_DRAWABLE_HELPER 1
+
+/* Define to the sub-directory in which libtool stores uninstalled libraries.
+   */
+#define LT_OBJDIR ".libs/"
 
 /* Name of package */
 #define PACKAGE "xf86-video-ati"
@@ -70,22 +74,25 @@
 #define PACKAGE_NAME "xf86-video-ati"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "xf86-video-ati 6.12.4"
+#define PACKAGE_STRING "xf86-video-ati 6.13.0"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "xf86-video-ati"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "6.12.4"
+#define PACKAGE_VERSION "6.13.0"
 
 /* Major version of this package */
 #define PACKAGE_VERSION_MAJOR 6
 
 /* Minor version of this package */
-#define PACKAGE_VERSION_MINOR 12
+#define PACKAGE_VERSION_MINOR 13
 
 /* Patch version of this package */
-#define PACKAGE_VERSION_PATCHLEVEL 4
+#define PACKAGE_VERSION_PATCHLEVEL 0
+
+/* Enable DRI2 code */
+/* #undef RADEON_DRI2 */
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1
@@ -100,7 +107,7 @@
 #define USE_XAA 1
 
 /* Version number of package */
-#define VERSION "6.12.4"
+#define VERSION "6.13.0"
 
 /* Enable DRI driver support */
 #define XF86DRI 1
@@ -108,8 +115,17 @@
 /* Enable developmental DRI driver support */
 #define XF86DRI_DEVEL 1
 
+/* DRM kernel modesetting */
+/* #undef XF86DRM_MODE */
+
 /* X server has built-in mode code */
 #define XMODES 1
+
+/* Number of bits in a file offset, on hosts where this is settable. */
+/* #undef _FILE_OFFSET_BITS */
+
+/* Define for large files, on AIX-style hosts. */
+/* #undef _LARGE_FILES */
 
 /* Define to 16-bit byteswap macro */
 #define bswap_16 bswap16
