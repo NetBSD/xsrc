@@ -89,13 +89,13 @@ static char optstr[] = "w:h:s:v";
 enum sync_type {
 	none = 0,
 	sgi_video_sync,
-	buffer_swap,
+	buffer_swap
 };
 
 static void usage(char *name)
 {
 	printf("usage: %s [-w <width>] [-h <height>] [-s<sync method>] "
-	       "[-vc]\n", name);
+	       "[-v]\n", name);
 	printf("\t-s<sync method>:\n");
 	printf("\t\tn: none\n");
 	printf("\t\ts: SGI video sync extension\n");
@@ -112,6 +112,7 @@ int main(int argc, char *argv[])
 	int attrib[14];
 	GLint last_val = -1, count = 0;
 	Window winGL;
+	GLXContext context;
 	int dummy;
 	Atom wmDelete;
 	enum sync_type waitforsync = none;
@@ -185,7 +186,6 @@ int main(int argc, char *argv[])
 		attrib[10] = None;
 	}
 
-	GLXContext context;
 	pvi = glXChooseVisual(disp, DefaultScreen(disp), attrib);
 	if (!pvi) {
 		fprintf(stderr, "failed to choose visual, exiting\n");

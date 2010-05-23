@@ -9,10 +9,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <GL/glew.h>
 #include <GL/glut.h>
-#include <GL/glu.h>
-#include <GL/glext.h>
-#include "extfuncs.h"
 #include "shaderutil.h"
 
 
@@ -26,11 +24,11 @@ static GLuint program;
 
 
 static struct uniform_info Uniforms[] = {
-   { "LightPosition",    3, GL_FLOAT, { 0.57737, 0.57735, 0.57735, 0.0 }, -1 },
-   { "SurfaceColor",     3, GL_FLOAT, { 0.8, 0.8, 0.2, 0 }, -1 },
-   { "BumpDensity",      1, GL_FLOAT, { 10.0, 0, 0, 0 }, -1 },
-   { "BumpSize",         1, GL_FLOAT, { 0.125, 0, 0, 0 }, -1 },
-   { "SpecularFactor",   1, GL_FLOAT, { 0.5, 0, 0, 0 }, -1 },
+   { "LightPosition",  1, GL_FLOAT_VEC3, { 0.57737, 0.57735, 0.57735, 0.0 }, -1 },
+   { "SurfaceColor",   1, GL_FLOAT_VEC3, { 0.8, 0.8, 0.2, 0 }, -1 },
+   { "BumpDensity",    1, GL_FLOAT, { 10.0, 0, 0, 0 }, -1 },
+   { "BumpSize",       1, GL_FLOAT, { 0.125, 0, 0, 0 }, -1 },
+   { "SpecularFactor", 1, GL_FLOAT, { 0.5, 0, 0, 0 }, -1 },
    END_OF_UNIFORMS
 };
 
@@ -38,7 +36,7 @@ static GLint win = 0;
 
 static GLfloat xRot = 20.0f, yRot = 0.0f, zRot = 0.0f;
 
-static GLuint tangentAttrib;
+static GLint tangentAttrib;
 
 static GLboolean Anim = GL_FALSE;
 
@@ -60,7 +58,7 @@ static void
 Square(GLfloat size)
 {
    glNormal3f(0, 0, 1);
-   glVertexAttrib3f_func(tangentAttrib, 1, 0, 0);
+   glVertexAttrib3f(tangentAttrib, 1, 0, 0);
    glBegin(GL_POLYGON);
    glTexCoord2f(0, 0);  glVertex2f(-size, -size);
    glTexCoord2f(1, 0);  glVertex2f( size, -size);
@@ -150,10 +148,11 @@ Redisplay(void)
 static void
 Reshape(int width, int height)
 {
+   float ar = (float) width / (float) height;
    glViewport(0, 0, width, height);
    glMatrixMode(GL_PROJECTION);
    glLoadIdentity();
-   glFrustum(-1.0, 1.0, -1.0, 1.0, 5.0, 25.0);
+   glFrustum(-ar, ar, -1.0, 1.0, 5.0, 25.0);
    glMatrixMode(GL_MODELVIEW);
    glLoadIdentity();
    glTranslatef(0.0f, 0.0f, -15.0f);
@@ -163,9 +162,9 @@ Reshape(int width, int height)
 static void
 CleanUp(void)
 {
-   glDeleteShader_func(fragShader);
-   glDeleteShader_func(vertShader);
-   glDeleteProgram_func(program);
+   glDeleteShader(fragShader);
+   glDeleteShader(vertShader);
+   glDeleteProgram(program);
    glutDestroyWindow(win);
 }
 
@@ -229,27 +228,26 @@ Init(void)
    if (!ShadersSupported())
       exit(1);
 
-   GetExtensionFuncs();
-
    vertShader = CompileShaderFile(GL_VERTEX_SHADER, VertProgFile);
    fragShader = CompileShaderFile(GL_FRAGMENT_SHADER, FragProgFile);
    program = LinkShaders(vertShader, fragShader);
 
-   glUseProgram_func(program);
+   glUseProgram(program);
 
-   assert(glIsProgram_func(program));
-   assert(glIsShader_func(fragShader));
-   assert(glIsShader_func(vertShader));
+   assert(glIsProgram(program));
+   assert(glIsShader(fragShader));
+   assert(glIsShader(vertShader));
 
    assert(glGetError() == 0);
 
    CheckError(__LINE__);
 
-   InitUniforms(program, Uniforms);
+   SetUniformValues(program, Uniforms);
+   PrintUniforms(Uniforms);
 
    CheckError(__LINE__);
 
-   tangentAttrib = glGetAttribLocation_func(program, "Tangent");
+   tangentAttrib = glGetAttribLocation(program, "Tangent");
    printf("Tangent Attrib: %d\n", tangentAttrib);
 
    assert(tangentAttrib >= 0);
@@ -283,10 +281,10 @@ int
 main(int argc, char *argv[])
 {
    glutInit(&argc, argv);
-   glutInitWindowPosition( 0, 0);
    glutInitWindowSize(400, 400);
    glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
    win = glutCreateWindow(argv[0]);
+   glewInit();
    glutReshapeFunc(Reshape);
    glutKeyboardFunc(Key);
    glutSpecialFunc(SpecialKey);
