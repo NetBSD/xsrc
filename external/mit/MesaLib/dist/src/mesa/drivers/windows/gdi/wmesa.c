@@ -12,6 +12,7 @@
 #include "framebuffer.h"
 #include "renderbuffer.h"
 #include "drivers/common/driverfuncs.h"
+#include "drivers/common/meta.h"
 #include "vbo/vbo.h"
 #include "swrast/swrast.h"
 #include "swrast_setup/swrast_setup.h"
@@ -62,7 +63,7 @@ wmesa_free_framebuffer(HDC hdc)
 	else
 	    prev->next = pwfb->next;
         fb = &pwfb->Base;
-        _mesa_unreference_framebuffer(&fb); 
+        _mesa_reference_framebuffer(&fb, NULL); 
     }
 }
 
@@ -1285,9 +1286,6 @@ void wmesa_set_renderbuffer_funcs(struct gl_renderbuffer *rb, int pixelformat,
 	    rb->PutMonoValues = write_mono_rgba_pixels_16;
 	    rb->GetRow = read_rgba_span_16;
 	    rb->GetValues = read_rgba_pixels_16;
-            rb->RedBits = 5;
-            rb->GreenBits = 6;
-            rb->BlueBits = 5;
 	    break;
 	case PF_8R8G8B:
 		if (cColorBits == 24)
@@ -1299,9 +1297,6 @@ void wmesa_set_renderbuffer_funcs(struct gl_renderbuffer *rb, int pixelformat,
 		    rb->PutMonoValues = write_mono_rgba_pixels_24;
 		    rb->GetRow = read_rgba_span_24;
 		    rb->GetValues = read_rgba_pixels_24;
-	        rb->RedBits = 8;
-	        rb->GreenBits = 8;
-	        rb->BlueBits = 8;		
 		}
 		else
 		{
@@ -1312,9 +1307,6 @@ void wmesa_set_renderbuffer_funcs(struct gl_renderbuffer *rb, int pixelformat,
 	        rb->PutMonoValues = write_mono_rgba_pixels_32;
 	        rb->GetRow = read_rgba_span_32;
 	        rb->GetValues = read_rgba_pixels_32;
-            rb->RedBits = 8;
-            rb->GreenBits = 8;
-            rb->BlueBits = 8;
 		}
 	    break;
 	default:
@@ -1330,9 +1322,6 @@ void wmesa_set_renderbuffer_funcs(struct gl_renderbuffer *rb, int pixelformat,
 	rb->PutMonoValues = write_mono_rgba_pixels_front;
 	rb->GetRow = read_rgba_span_front;
 	rb->GetValues = read_rgba_pixels_front;
-        rb->RedBits = 8; /* XXX fix these (565?) */
-        rb->GreenBits = 8;
-        rb->BlueBits = 8;
     }
 }
 
@@ -1515,6 +1504,8 @@ WMesaContext WMesaCreateContext(HDC hDC,
     _mesa_enable_2_0_extensions(ctx);
     _mesa_enable_2_1_extensions(ctx);
   
+    _mesa_meta_init(ctx);
+
     /* Initialize the software rasterizer and helper modules. */
     if (!_swrast_CreateContext(ctx) ||
         !_vbo_CreateContext(ctx) ||
@@ -1558,6 +1549,8 @@ void WMesaDestroyContext( WMesaContext pwc )
     DeleteObject(pwc->clearPen); 
     DeleteObject(pwc->clearBrush); 
     
+    _mesa_meta_free(ctx);
+
     _swsetup_DestroyContext(ctx);
     _tnl_DestroyContext(ctx);
     _vbo_DestroyContext(ctx);
@@ -1679,80 +1672,3 @@ void WMesaShareLists(WMesaContext ctx_to_share, WMesaContext ctx)
 	_mesa_share_state(&ctx->gl_ctx, &ctx_to_share->gl_ctx);	
 }
 
-/* This is hopefully a temporary hack to define some needed dispatch
- * table entries.  Hopefully, I'll find a better solution.  The
- * dispatch table generation scripts ought to be making these dummy
- * stubs as well. */
-#if !defined(__MINGW32__) || !defined(GL_NO_STDCALL)
-void gl_dispatch_stub_543(void){}
-void gl_dispatch_stub_544(void){}
-void gl_dispatch_stub_545(void){}
-void gl_dispatch_stub_546(void){}
-void gl_dispatch_stub_547(void){}
-void gl_dispatch_stub_548(void){}
-void gl_dispatch_stub_549(void){}
-void gl_dispatch_stub_550(void){}
-void gl_dispatch_stub_551(void){}
-void gl_dispatch_stub_552(void){}
-void gl_dispatch_stub_553(void){}
-void gl_dispatch_stub_554(void){}
-void gl_dispatch_stub_555(void){}
-void gl_dispatch_stub_556(void){}
-void gl_dispatch_stub_557(void){}
-void gl_dispatch_stub_558(void){}
-void gl_dispatch_stub_559(void){}
-void gl_dispatch_stub_560(void){}
-void gl_dispatch_stub_561(void){}
-void gl_dispatch_stub_565(void){}
-void gl_dispatch_stub_566(void){}
-void gl_dispatch_stub_577(void){}
-void gl_dispatch_stub_578(void){}
-void gl_dispatch_stub_603(void){}
-void gl_dispatch_stub_645(void){}
-void gl_dispatch_stub_646(void){}
-void gl_dispatch_stub_647(void){}
-void gl_dispatch_stub_648(void){}
-void gl_dispatch_stub_649(void){}
-void gl_dispatch_stub_650(void){}
-void gl_dispatch_stub_651(void){}
-void gl_dispatch_stub_652(void){}
-void gl_dispatch_stub_653(void){}
-void gl_dispatch_stub_733(void){}
-void gl_dispatch_stub_734(void){}
-void gl_dispatch_stub_735(void){}
-void gl_dispatch_stub_736(void){}
-void gl_dispatch_stub_737(void){}
-void gl_dispatch_stub_738(void){}
-void gl_dispatch_stub_744(void){}
-void gl_dispatch_stub_745(void){}
-void gl_dispatch_stub_746(void){}
-void gl_dispatch_stub_760(void){}
-void gl_dispatch_stub_761(void){}
-void gl_dispatch_stub_763(void){}
-void gl_dispatch_stub_765(void){}
-void gl_dispatch_stub_766(void){}
-void gl_dispatch_stub_767(void){}
-void gl_dispatch_stub_768(void){}
-
-void gl_dispatch_stub_562(void){}
-void gl_dispatch_stub_563(void){}
-void gl_dispatch_stub_564(void){}
-void gl_dispatch_stub_567(void){}
-void gl_dispatch_stub_568(void){}
-void gl_dispatch_stub_569(void){}
-void gl_dispatch_stub_580(void){}
-void gl_dispatch_stub_581(void){}
-void gl_dispatch_stub_606(void){}
-void gl_dispatch_stub_654(void){}
-void gl_dispatch_stub_655(void){}
-void gl_dispatch_stub_656(void){}
-void gl_dispatch_stub_739(void){}
-void gl_dispatch_stub_740(void){}
-void gl_dispatch_stub_741(void){}
-void gl_dispatch_stub_748(void){}
-void gl_dispatch_stub_749(void){}
-void gl_dispatch_stub_769(void){}
-void gl_dispatch_stub_770(void){}
-void gl_dispatch_stub_771(void){}
-
-#endif

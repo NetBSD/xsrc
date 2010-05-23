@@ -24,7 +24,6 @@
  */
 
 #include "main/imports.h"
-#include "main/context.h"
 #include "slang_log.h"
 #include "slang_utility.h"
 
@@ -76,10 +75,6 @@ slang_info_log_message(slang_info_log * log, const char *prefix,
    }
    slang_string_concat(log->text, msg);
    slang_string_concat(log->text, "\n");
-
-   if (MESA_VERBOSE & VERBOSE_GLSL) {
-      _mesa_printf("Mesa: GLSL %s", log->text);
-   }
 
    return 1;
 }

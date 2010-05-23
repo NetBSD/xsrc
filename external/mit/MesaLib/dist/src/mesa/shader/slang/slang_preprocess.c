@@ -447,6 +447,7 @@ typedef struct
    GLboolean else_allowed;    /* TRUE if in #if-#else section, FALSE if in #else-#endif section
                                * and for global context. */
    GLboolean endif_required;  /* FALSE for global context only. */
+   GLboolean had_true;        /* TRUE if any sibiling #if or #elif had condition value of TRUE. */
 } pp_cond_ctx;
 
 /* Should be enuff. */
@@ -508,8 +509,7 @@ static GLvoid
 pp_ext_init(pp_ext *self, const struct gl_extensions *extensions)
 {
    pp_ext_disable_all (self);
-   if (extensions->ARB_draw_buffers)
-      self->ARB_draw_buffers = GL_TRUE;
+   self->ARB_draw_buffers = GL_TRUE;
    if (extensions->NV_texture_rectangle)
       self->ARB_texture_rectangle = GL_TRUE;
 }
@@ -531,14 +531,6 @@ pp_ext_set(pp_ext *self, const char *name, GLboolean enable)
 }
 
 
-static void
-pp_pragmas_init(struct gl_sl_pragmas *pragmas)
-{
-   pragmas->Optimize = GL_TRUE;
-   pragmas->Debug = GL_FALSE;
-}
-
-
 /**
  * Called in response to #pragma.  For example, "#pragma debug(on)" would
  * call this function as pp_pragma("debug", "on").
@@ -554,10 +546,12 @@ pp_pragma(struct gl_sl_pragmas *pragmas, const char *pragma, const char *param)
       if (!param)
          return GL_FALSE; /* missing required param */
       if (_mesa_strcmp(param, "on") == 0) {
-         pragmas->Optimize = GL_TRUE;
+         if (!pragmas->IgnoreOptimize)
+            pragmas->Optimize = GL_TRUE;
       }
       else if (_mesa_strcmp(param, "off") == 0) {
-         pragmas->Optimize = GL_FALSE;
+         if (!pragmas->IgnoreOptimize)
+            pragmas->Optimize = GL_FALSE;
       }
       else {
          return GL_FALSE; /* invalid param */
@@ -567,10 +561,12 @@ pp_pragma(struct gl_sl_pragmas *pragmas, const char *pragma, const char *param)
       if (!param)
          return GL_FALSE; /* missing required param */
       if (_mesa_strcmp(param, "on") == 0) {
-         pragmas->Debug = GL_TRUE;
+         if (!pragmas->IgnoreDebug)
+            pragmas->Debug = GL_TRUE;
       }
       else if (_mesa_strcmp(param, "off") == 0) {
-         pragmas->Debug = GL_FALSE;
+         if (!pragmas->IgnoreDebug)
+            pragmas->Debug = GL_FALSE;
       }
       else {
          return GL_FALSE; /* invalid param */
@@ -617,6 +613,7 @@ pp_state_init (pp_state *self, slang_info_log *elog,
    self->cond.top->effective = GL_TRUE;
    self->cond.top->else_allowed = GL_FALSE;
    self->cond.top->endif_required = GL_FALSE;
+   self->cond.top->had_true = GL_TRUE;
 }
 
 static GLvoid
@@ -919,6 +916,35 @@ parse_if (slang_string *output, const byte *prod, GLuint *pi, GLint *result, pp_
 #define PRAGMA_PARAM     1
 
 
+/**
+ * Return the length of the given string, stopping at any C++-style comments.
+ * This step fixes bugs with macro definitions such as:
+ *   #define PI 3.14159 // this is pi
+ * The preprocessor includes the comment in the definition of PI so
+ * when we plug in PI somewhere, we get the comment too.
+ * This function effectively strips of the // comment from the given string.
+ * It might also be possible to fix this in the preprocessor grammar.
+ * This bug is not present in the new Mesa 7.8 preprocessor.
+ */
+static int
+strlen_without_comments(const char *s)
+{
+   char pred = 0;
+   int len = 0;
+   while (*s) {
+      if (*s == '/' && pred == '/') {
+         return len - 1;
+      }
+      pred = *s;
+      s++;
+      len++;
+   }
+   return len;
+}
+
+
+
+
 static GLboolean
 preprocess_source (slang_string *output, const char *source,
                    grammar pid, grammar eid,
@@ -946,7 +972,6 @@ preprocess_source (slang_string *output, const char *source,
    }
 
    pp_state_init (&state, elog, extensions);
-   pp_pragmas_init (pragmas);
 
    /* add the predefined symbols to the symbol table */
    for (i = 0; predefined[i]; i++) {
@@ -1061,11 +1086,12 @@ preprocess_source (slang_string *output, const char *source,
                if (state.cond.top->effective) {
                   slang_string replacement;
                   expand_state es;
+                  int idlen2 = strlen_without_comments((char*)id);
 
                   pp_annotate (output, ") %s", id);
 
                   slang_string_init(&replacement);
-                  slang_string_pushs(&replacement, id, idlen);
+                  slang_string_pushs(&replacement, id, idlen2);
 
                   /* Expand macro replacement. */
                   es.output = &symbol->replacement;
@@ -1111,6 +1137,7 @@ preprocess_source (slang_string *output, const char *source,
                state.cond.top->current = result ? GL_TRUE : GL_FALSE;
                state.cond.top->else_allowed = GL_TRUE;
                state.cond.top->endif_required = GL_TRUE;
+               state.cond.top->had_true = GL_FALSE;
                pp_cond_stack_reevaluate (&state.cond);
             }
             break;
@@ -1122,8 +1149,10 @@ preprocess_source (slang_string *output, const char *source,
                goto error;
             }
 
-            /* Negate current condition and reevaluate it. */
-            state.cond.top->current = !state.cond.top->current;
+            state.cond.top->had_true = state.cond.top->had_true || state.cond.top->current;
+
+            /* Update current condition and reevaluate it. */
+            state.cond.top->current = !(state.cond.top->had_true || state.cond.top->current);
             state.cond.top->else_allowed = GL_FALSE;
             pp_cond_stack_reevaluate (&state.cond);
             if (state.cond.top->effective)
@@ -1137,8 +1166,10 @@ preprocess_source (slang_string *output, const char *source,
                goto error;
             }
 
-            /* Negate current condition and reevaluate it. */
-            state.cond.top->current = !state.cond.top->current;
+            state.cond.top->had_true = state.cond.top->had_true || state.cond.top->current;
+
+            /* Update current condition and reevaluate it. */
+            state.cond.top->current = !(state.cond.top->had_true || state.cond.top->current);
             pp_cond_stack_reevaluate (&state.cond);
 
             if (state.cond.top->effective)
@@ -1351,6 +1382,8 @@ _slang_preprocess_backslashes(slang_string *output,
  * \param output  the post-process results
  * \param input  the input text
  * \param elog  log to record warnings, errors
+ * \param extensions  out extension settings
+ * \param pragmas  in/out #pragma settings
  * \return GL_TRUE for success, GL_FALSE for error
  */
 GLboolean

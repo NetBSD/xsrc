@@ -61,7 +61,7 @@ static void compile_sf_prog( struct brw_context *brw,
    c.key = *key;
    c.nr_attrs = brw_count_bits(c.key.attrs);
    c.nr_attr_regs = (c.nr_attrs+1)/2;
-   c.nr_setup_attrs = brw_count_bits(c.key.attrs & DO_SETUP_BITS);
+   c.nr_setup_attrs = brw_count_bits(c.key.attrs);
    c.nr_setup_regs = (c.nr_setup_attrs+1)/2;
 
    c.prog_data.urb_read_length = c.nr_attr_regs;
@@ -70,7 +70,7 @@ static void compile_sf_prog( struct brw_context *brw,
    /* Construct map from attribute number to position in the vertex.
     */
    for (i = idx = 0; i < VERT_RESULT_MAX; i++) 
-      if (c.key.attrs & (1<<i)) {
+      if (c.key.attrs & BITFIELD64_BIT(i)) {
 	 c.attr_to_idx[i] = idx;
 	 c.idx_to_attr[idx] = i;
 	 if (i >= VERT_RESULT_TEX0 && i <= VERT_RESULT_TEX7) {
@@ -147,7 +147,7 @@ static void upload_sf_prog(struct brw_context *brw)
        * edgeflag testing here, it is already done in the clip
        * program.
        */
-      if (key.attrs & (1<<VERT_RESULT_EDGE))
+      if (key.attrs & BITFIELD64_BIT(VERT_RESULT_EDGE))
 	 key.primitive = SF_UNFILLED_TRIS;
       else
 	 key.primitive = SF_TRIANGLES;
@@ -161,10 +161,13 @@ static void upload_sf_prog(struct brw_context *brw)
    }
 
    key.do_point_sprite = ctx->Point.PointSprite;
-   key.SpriteOrigin = ctx->Point.SpriteOrigin;
+   key.sprite_origin_lower_left = (ctx->Point.SpriteOrigin == GL_LOWER_LEFT);
    /* _NEW_LIGHT */
    key.do_flat_shading = (ctx->Light.ShadeModel == GL_FLAT);
    key.do_twoside_color = (ctx->Light.Enabled && ctx->Light.Model.TwoSide);
+
+   /* _NEW_HINT */
+   key.linear_color = (ctx->Hint.PerspectiveCorrection == GL_FASTEST);
 
    /* _NEW_POLYGON */
    if (key.do_twoside_color) {
@@ -188,7 +191,7 @@ static void upload_sf_prog(struct brw_context *brw)
 
 const struct brw_tracked_state brw_sf_prog = {
    .dirty = {
-      .mesa  = (_NEW_LIGHT|_NEW_POLYGON|_NEW_POINT),
+      .mesa  = (_NEW_HINT | _NEW_LIGHT | _NEW_POLYGON | _NEW_POINT),
       .brw   = (BRW_NEW_REDUCED_PRIMITIVE),
       .cache = CACHE_NEW_VS_PROG
    },

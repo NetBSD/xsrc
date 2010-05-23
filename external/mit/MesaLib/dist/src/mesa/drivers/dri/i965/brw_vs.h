@@ -58,6 +58,7 @@ struct brw_vs_compile {
 
    GLuint first_output;
    GLuint nr_outputs;
+   GLuint first_overflow_output; /**< VERT_ATTRIB_x */
 
    GLuint first_tmp;
    GLuint last_tmp;
@@ -75,6 +76,11 @@ struct brw_vs_compile {
 
    struct brw_reg userplane[6];
 
+   /** we may need up to 3 constants per instruction (if use_const_buffer) */
+   struct {
+      GLint index;
+      struct brw_reg reg;
+   } current_const[3];
 };
 
 void brw_vs_emit( struct brw_vs_compile *c );

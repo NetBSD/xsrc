@@ -1,8 +1,9 @@
 /*
  * Mesa 3-D graphics library
- * Version:  7.1
+ * Version:  7.5
  *
- * Copyright (C) 1999-2007  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2008  Brian Paul   All Rights Reserved.
+ * Copyright (C) 2009  VMware, Inc.  All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -188,10 +189,10 @@ interpolate_active_attribs(GLcontext *ctx, SWspan *span, GLbitfield attrMask)
          const GLfloat dv1dx = span->attrStepX[attr][1];
          const GLfloat dv2dx = span->attrStepX[attr][2];
          const GLfloat dv3dx = span->attrStepX[attr][3];
-         GLfloat v0 = span->attrStart[attr][0];
-         GLfloat v1 = span->attrStart[attr][1];
-         GLfloat v2 = span->attrStart[attr][2];
-         GLfloat v3 = span->attrStart[attr][3];
+         GLfloat v0 = span->attrStart[attr][0] + span->leftClip * dv0dx;
+         GLfloat v1 = span->attrStart[attr][1] + span->leftClip * dv1dx;
+         GLfloat v2 = span->attrStart[attr][2] + span->leftClip * dv2dx;
+         GLfloat v3 = span->attrStart[attr][3] + span->leftClip * dv3dx;
          GLuint k;
          for (k = 0; k < span->end; k++) {
             const GLfloat invW = 1.0f / w;
@@ -521,10 +522,10 @@ interpolate_texcoords(GLcontext *ctx, SWspan *span)
          const GLfloat drdx = span->attrStepX[attr][2];
          const GLfloat dqdx = span->attrStepX[attr][3];
          const GLfloat dqdy = span->attrStepY[attr][3];
-         GLfloat s = span->attrStart[attr][0];
-         GLfloat t = span->attrStart[attr][1];
-         GLfloat r = span->attrStart[attr][2];
-         GLfloat q = span->attrStart[attr][3];
+         GLfloat s = span->attrStart[attr][0] + span->leftClip * dsdx;
+         GLfloat t = span->attrStart[attr][1] + span->leftClip * dtdx;
+         GLfloat r = span->attrStart[attr][2] + span->leftClip * drdx;
+         GLfloat q = span->attrStart[attr][3] + span->leftClip * dqdx;
 
          if (obj) {
             const struct gl_texture_image *img = obj->Image[0][obj->BaseLevel];
@@ -546,7 +547,7 @@ interpolate_texcoords(GLcontext *ctx, SWspan *span)
                 || ctx->ATIFragmentShader._Enabled) {
                /* do perspective correction but don't divide s, t, r by q */
                const GLfloat dwdx = span->attrStepX[FRAG_ATTRIB_WPOS][3];
-               GLfloat w = span->attrStart[FRAG_ATTRIB_WPOS][3];
+               GLfloat w = span->attrStart[FRAG_ATTRIB_WPOS][3] + span->leftClip * dwdx;
                for (i = 0; i < span->end; i++) {
                   const GLfloat invW = 1.0F / w;
                   texcoord[i][0] = s * invW;
@@ -587,7 +588,7 @@ interpolate_texcoords(GLcontext *ctx, SWspan *span)
                 ctx->ATIFragmentShader._Enabled) {
                /* do perspective correction but don't divide s, t, r by q */
                const GLfloat dwdx = span->attrStepX[FRAG_ATTRIB_WPOS][3];
-               GLfloat w = span->attrStart[FRAG_ATTRIB_WPOS][3];
+               GLfloat w = span->attrStart[FRAG_ATTRIB_WPOS][3] + span->leftClip * dwdx;
                for (i = 0; i < span->end; i++) {
                   const GLfloat invW = 1.0F / w;
                   texcoord[i][0] = s * invW;
@@ -660,8 +661,8 @@ interpolate_wpos(GLcontext *ctx, SWspan *span)
       }
    }
 
-   w = span->attrStart[FRAG_ATTRIB_WPOS][3];
    dw = span->attrStepX[FRAG_ATTRIB_WPOS][3];
+   w = span->attrStart[FRAG_ATTRIB_WPOS][3] + span->leftClip * dw;
    for (i = 0; i < span->end; i++) {
       wpos[i][2] = (GLfloat) span->array->z[i] * zScale;
       wpos[i][3] = w;
@@ -726,6 +727,8 @@ clip_span( GLcontext *ctx, SWspan *span )
    const GLint ymin = ctx->DrawBuffer->_Ymin;
    const GLint ymax = ctx->DrawBuffer->_Ymax;
 
+   span->leftClip = 0;
+
    if (span->arrayMask & SPAN_XY) {
       /* arrays of x/y pixel coords */
       const GLint *x = span->array->x;
@@ -753,7 +756,7 @@ clip_span( GLcontext *ctx, SWspan *span )
       /* horizontal span of pixels */
       const GLint x = span->x;
       const GLint y = span->y;
-      const GLint n = span->end;
+      GLint n = span->end;
 
       /* Trivial rejection tests */
       if (y < ymin || y >= ymax || x + n <= xmin || x >= xmax) {
@@ -761,18 +764,77 @@ clip_span( GLcontext *ctx, SWspan *span )
          return GL_FALSE;  /* all pixels clipped */
       }
 
-      /* Clip to the left */
-      if (x < xmin) {
-         ASSERT(x + n > xmin);
-         span->writeAll = GL_FALSE;
-         _mesa_bzero(span->array->mask, (xmin - x) * sizeof(GLubyte));
-      }
-
       /* Clip to right */
       if (x + n > xmax) {
          ASSERT(x < xmax);
-         span->end = xmax - x;
+         n = span->end = xmax - x;
       }
+
+      /* Clip to the left */
+      if (x < xmin) {
+         const GLint leftClip = xmin - x;
+         GLuint i;
+
+         ASSERT(leftClip > 0);
+         ASSERT(x + n > xmin);
+
+         /* Clip 'leftClip' pixels from the left side.
+          * The span->leftClip field will be applied when we interpolate
+          * fragment attributes.
+          * For arrays of values, shift them left.
+          */
+         for (i = 0; i < FRAG_ATTRIB_MAX; i++) {
+            if (span->interpMask & (1 << i)) {
+               GLuint j;
+               for (j = 0; j < 4; j++) {
+                  span->attrStart[i][j] += leftClip * span->attrStepX[i][j];
+               }
+            }
+         }
+
+         span->red += leftClip * span->redStep;
+         span->green += leftClip * span->greenStep;
+         span->blue += leftClip * span->blueStep;
+         span->alpha += leftClip * span->alphaStep;
+         span->index += leftClip * span->indexStep;
+         span->z += leftClip * span->zStep;
+         span->intTex[0] += leftClip * span->intTexStep[0];
+         span->intTex[1] += leftClip * span->intTexStep[1];
+
+#define SHIFT_ARRAY(ARRAY, SHIFT, LEN) \
+         memcpy(ARRAY, ARRAY + (SHIFT), (LEN) * sizeof(ARRAY[0]))
+
+         for (i = 0; i < FRAG_ATTRIB_MAX; i++) {
+            if (span->arrayAttribs & (1 << i)) {
+               /* shift array elements left by 'leftClip' */
+               SHIFT_ARRAY(span->array->attribs[i], leftClip, n - leftClip);
+            }
+         }
+
+         SHIFT_ARRAY(span->array->mask, leftClip, n - leftClip);
+         SHIFT_ARRAY(span->array->rgba8, leftClip, n - leftClip);
+         SHIFT_ARRAY(span->array->rgba16, leftClip, n - leftClip);
+         SHIFT_ARRAY(span->array->x, leftClip, n - leftClip);
+         SHIFT_ARRAY(span->array->y, leftClip, n - leftClip);
+         SHIFT_ARRAY(span->array->z, leftClip, n - leftClip);
+         SHIFT_ARRAY(span->array->index, leftClip, n - leftClip);
+         for (i = 0; i < MAX_TEXTURE_COORD_UNITS; i++) {
+            SHIFT_ARRAY(span->array->lambda[i], leftClip, n - leftClip);
+         }
+         SHIFT_ARRAY(span->array->coverage, leftClip, n - leftClip);
+
+#undef SHIFT_ARRAY
+
+         span->leftClip = leftClip;
+         span->x = xmin;
+         span->end -= leftClip;
+         span->writeAll = GL_FALSE;
+      }
+
+      ASSERT(span->x >= xmin);
+      ASSERT(span->x + span->end <= xmax);
+      ASSERT(span->y >= ymin);
+      ASSERT(span->y < ymax);
 
       return GL_TRUE;  /* some pixels visible */
    }
@@ -818,6 +880,12 @@ _swrast_write_index_span( GLcontext *ctx, SWspan *span)
       }
    }
 
+   if (!(span->arrayMask & SPAN_MASK)) {
+      /* post-clip sanity check */
+      assert(span->x >= 0);
+      assert(span->y >= 0);
+   }
+
    /* Depth bounds test */
    if (ctx->Depth.BoundsTest && fb->Visual.depthBits > 0) {
       if (!_swrast_depth_bounds_test(ctx, span)) {
@@ -846,11 +914,14 @@ _swrast_write_index_span( GLcontext *ctx, SWspan *span)
    }
 
    /* Stencil and Z testing */
-   if (ctx->Depth.Test || ctx->Stencil.Enabled) {
+   if (ctx->Stencil._Enabled || ctx->Depth.Test) {
       if (!(span->arrayMask & SPAN_Z))
          _swrast_span_interpolate_z(ctx, span);
 
-      if (ctx->Stencil.Enabled) {
+      if (ctx->Transform.DepthClamp)
+	 _swrast_depth_clamp_span(ctx, span);
+
+      if (ctx->Stencil._Enabled) {
          if (!_swrast_stencil_and_ztest_span(ctx, span)) {
             span->arrayMask = origArrayMask;
             return;
@@ -866,7 +937,6 @@ _swrast_write_index_span( GLcontext *ctx, SWspan *span)
       }
    }
 
-#if FEATURE_ARB_occlusion_query
    if (ctx->Query.CurrentOcclusionObject) {
       /* update count of 'passed' fragments */
       struct gl_query_object *q = ctx->Query.CurrentOcclusionObject;
@@ -874,7 +944,6 @@ _swrast_write_index_span( GLcontext *ctx, SWspan *span)
       for (i = 0; i < span->end; i++)
          q->Result += span->array->mask[i];
    }
-#endif
 
    /* we have to wait until after occlusion to do this test */
    if (ctx->Color.IndexMask == 0) {
@@ -1211,7 +1280,7 @@ shade_texture_span(GLcontext *ctx, SWspan *span)
          _swrast_exec_fragment_shader(ctx, span);
       }
    }
-   else if (ctx->Texture._EnabledUnits) {
+   else if (ctx->Texture._EnabledCoordUnits) {
       /* conventional texturing */
 
 #if CHAN_BITS == 32
@@ -1250,7 +1319,7 @@ _swrast_write_rgba_span( GLcontext *ctx, SWspan *span)
    void * const origRgba = span->array->rgba;
    const GLboolean shader = (ctx->FragmentProgram._Current
                              || ctx->ATIFragmentShader._Enabled);
-   const GLboolean shaderOrTexture = shader || ctx->Texture._EnabledUnits;
+   const GLboolean shaderOrTexture = shader || ctx->Texture._EnabledCoordUnits;
    struct gl_framebuffer *fb = ctx->DrawBuffer;
 
    /*
@@ -1262,7 +1331,6 @@ _swrast_write_rgba_span( GLcontext *ctx, SWspan *span)
           span->primitive == GL_LINE ||
 	  span->primitive == GL_POLYGON ||
           span->primitive == GL_BITMAP);
-   ASSERT(span->end <= MAX_WIDTH);
 
    /* Fragment write masks */
    if (span->arrayMask & SPAN_MASK) {
@@ -1275,15 +1343,23 @@ _swrast_write_rgba_span( GLcontext *ctx, SWspan *span)
    }
 
    /* Clip to window/scissor box */
-   if ((swrast->_RasterMask & CLIP_BIT) || (span->primitive != GL_POLYGON)) {
-      if (!clip_span(ctx, span)) {
-	 return;
+   if (!clip_span(ctx, span)) {
+      return;
+   }
+
+   ASSERT(span->end <= MAX_WIDTH);
+
+   /* Depth bounds test */
+   if (ctx->Depth.BoundsTest && fb->Visual.depthBits > 0) {
+      if (!_swrast_depth_bounds_test(ctx, span)) {
+         return;
       }
    }
 
 #ifdef DEBUG
    /* Make sure all fragments are within window bounds */
    if (span->arrayMask & SPAN_XY) {
+      /* array of pixel locations */
       GLuint i;
       for (i = 0; i < span->end; i++) {
          if (span->array->mask[i]) {
@@ -1311,18 +1387,23 @@ _swrast_write_rgba_span( GLcontext *ctx, SWspan *span)
    /* Do the alpha test */
    if (ctx->Color.AlphaEnabled) {
       if (!_swrast_alpha_test(ctx, span)) {
+         /* all fragments failed test */
          goto end;
       }
    }
 
    /* Stencil and Z testing */
-   if (ctx->Stencil.Enabled || ctx->Depth.Test) {
+   if (ctx->Stencil._Enabled || ctx->Depth.Test) {
       if (!(span->arrayMask & SPAN_Z))
          _swrast_span_interpolate_z(ctx, span);
 
-      if (ctx->Stencil.Enabled && fb->Visual.stencilBits > 0) {
+      if (ctx->Transform.DepthClamp)
+	 _swrast_depth_clamp_span(ctx, span);
+
+      if (ctx->Stencil._Enabled) {
          /* Combined Z/stencil tests */
          if (!_swrast_stencil_and_ztest_span(ctx, span)) {
+            /* all fragments failed test */
             goto end;
          }
       }
@@ -1331,12 +1412,12 @@ _swrast_write_rgba_span( GLcontext *ctx, SWspan *span)
          ASSERT(ctx->Depth.Test);
          ASSERT(span->arrayMask & SPAN_Z);
          if (!_swrast_depth_test_span(ctx, span)) {
+            /* all fragments failed test */
             goto end;
          }
       }
    }
 
-#if FEATURE_ARB_occlusion_query
    if (ctx->Query.CurrentOcclusionObject) {
       /* update count of 'passed' fragments */
       struct gl_query_object *q = ctx->Query.CurrentOcclusionObject;
@@ -1344,12 +1425,12 @@ _swrast_write_rgba_span( GLcontext *ctx, SWspan *span)
       for (i = 0; i < span->end; i++)
          q->Result += span->array->mask[i];
    }
-#endif
 
    /* We had to wait until now to check for glColorMask(0,0,0,0) because of
     * the occlusion test.
     */
    if (colorMask == 0x0) {
+      /* no colors to write */
       goto end;
    }
 
@@ -1373,12 +1454,14 @@ _swrast_write_rgba_span( GLcontext *ctx, SWspan *span)
 
    ASSERT(span->arrayMask & SPAN_RGBA);
 
-   if (!shader) {
-      /* Add base and specular colors */
-      if (ctx->Fog.ColorSumEnabled ||
-          (ctx->Light.Enabled &&
-           ctx->Light.Model.ColorControl == GL_SEPARATE_SPECULAR_COLOR)) {
-         add_specular(ctx, span);
+   if (span->primitive == GL_BITMAP || !swrast->SpecularVertexAdd) {
+      /* Add primary and specular (diffuse + specular) colors */
+      if (!shader) {
+         if (ctx->Fog.ColorSumEnabled ||
+             (ctx->Light.Enabled &&
+              ctx->Light.Model.ColorControl == GL_SEPARATE_SPECULAR_COLOR)) {
+            add_specular(ctx, span);
+         }
       }
    }
 
@@ -1723,9 +1806,7 @@ _swrast_get_row(GLcontext *ctx, struct gl_renderbuffer *rb,
 
 
 /**
- * Get RGBA pixels from the given renderbuffer.  Put the pixel colors into
- * the span's specular color arrays.  The specular color arrays should no
- * longer be needed by time this function is called.
+ * Get RGBA pixels from the given renderbuffer.
  * Used by blending, logicop and masking functions.
  * \return pointer to the colors we read.
  */
@@ -1736,10 +1817,8 @@ _swrast_get_dest_rgba(GLcontext *ctx, struct gl_renderbuffer *rb,
    const GLuint pixelSize = RGBA_PIXEL_SIZE(span->array->ChanType);
    void *rbPixels;
 
-   /*
-    * Point rbPixels to a temporary space (use specular color arrays).
-    */
-   rbPixels = span->array->attribs[FRAG_ATTRIB_COL1];
+   /* Point rbPixels to a temporary space */
+   rbPixels = span->array->attribs[FRAG_ATTRIB_MAX - 1];
 
    /* Get destination values from renderbuffer */
    if (span->arrayMask & SPAN_XY) {

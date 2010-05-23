@@ -41,9 +41,9 @@ static void TAG(triangle)(GLcontext *ctx, GLuint e0, GLuint e1, GLuint e2 )
    GLenum mode = GL_FILL;
    GLuint facing = 0;
    GLchan saved_color[3][4];
-   GLfloat saved_col0[3][4];
-   GLfloat saved_spec[3][4];
-   GLfloat saved_index[3];
+   GLfloat saved_col0[3][4] = { { 0 } };
+   GLfloat saved_spec[3][4] = { { 0 } };
+   GLfloat saved_index[3] = { 0 };
 
    v[0] = &verts[e0];
    v[1] = &verts[e1];
@@ -171,14 +171,14 @@ static void TAG(triangle)(GLcontext *ctx, GLuint e0, GLuint e1, GLuint e2 )
 	 v[1]->attrib[FRAG_ATTRIB_WPOS][2] = oz1;
 	 v[2]->attrib[FRAG_ATTRIB_WPOS][2] = oz2;
       }
-      _swsetup_render_point_tri( ctx, e0, e1, e2, facing );
+      _swsetup_render_tri(ctx, e0, e1, e2, facing, _swsetup_edge_render_point_tri);
    } else if (mode == GL_LINE) {
       if ((IND & SS_OFFSET_BIT) && ctx->Polygon.OffsetLine) {
 	 v[0]->attrib[FRAG_ATTRIB_WPOS][2] = oz0;
 	 v[1]->attrib[FRAG_ATTRIB_WPOS][2] = oz1;
 	 v[2]->attrib[FRAG_ATTRIB_WPOS][2] = oz2;
       }
-      _swsetup_render_line_tri( ctx, e0, e1, e2, facing );
+      _swsetup_render_tri(ctx, e0, e1, e2, facing, _swsetup_edge_render_line_tri);
    } else {
       if ((IND & SS_OFFSET_BIT) && ctx->Polygon.OffsetFill) {
 	 v[0]->attrib[FRAG_ATTRIB_WPOS][2] = oz0;

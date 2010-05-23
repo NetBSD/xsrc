@@ -28,10 +28,8 @@
 #include "intel_context.h"
 #include "intel_buffers.h"
 #include "intel_fbo.h"
-#include "intel_regions.h"
 #include "intel_batchbuffer.h"
 #include "main/framebuffer.h"
-#include "drirenderbuffer.h"
 
 
 /**
@@ -133,6 +131,25 @@ intel_get_cliprects(struct intel_context *intel,
 
 
 /**
+ * Check if we're about to draw into the front color buffer.
+ * If so, set the intel->front_buffer_dirty field to true.
+ */
+void
+intel_check_front_buffer_rendering(struct intel_context *intel)
+{
+   const struct gl_framebuffer *fb = intel->ctx.DrawBuffer;
+   if (fb->Name == 0) {
+      /* drawing to window system buffer */
+      if (fb->_NumColorDrawBuffers > 0) {
+         if (fb->_ColorDrawBufferIndexes[0] == BUFFER_FRONT_LEFT) {
+	    intel->front_buffer_dirty = GL_TRUE;
+	 }
+      }
+   }
+}
+
+
+/**
  * Update the hardware state for drawing into a window or framebuffer object.
  *
  * Called by glDrawBuffer, glBindFramebufferEXT, MakeCurrent, and other
@@ -154,10 +171,10 @@ intel_draw_buffer(GLcontext * ctx, struct gl_framebuffer *fb)
       return;
    }
 
-   /* Do this here, note core Mesa, since this function is called from
+   /* Do this here, not core Mesa, since this function is called from
     * many places within the driver.
     */
-   if (ctx->NewState & (_NEW_BUFFERS | _NEW_COLOR | _NEW_PIXEL)) {
+   if (ctx->NewState & _NEW_BUFFERS) {
       /* this updates the DrawBuffer->_NumColorDrawBuffers fields, etc */
       _mesa_update_framebuffer(ctx);
       /* this updates the DrawBuffer's Width/Height if it's a FBO */
@@ -172,17 +189,20 @@ intel_draw_buffer(GLcontext * ctx, struct gl_framebuffer *fb)
       return;
    }
 
-   if (fb->Name)
-      intel_validate_paired_depth_stencil(ctx, fb);
-
-   /*
-    * How many color buffers are we drawing into?
+   /* How many color buffers are we drawing into?
+    *
+    * If there are zero buffers or the buffer is too big, don't configure any
+    * regions for hardware drawing.  We'll fallback to software below.  Not
+    * having regions set makes some of the software fallback paths faster.
     */
-   if (fb->_NumColorDrawBuffers == 0) {
+   if ((fb->Width > ctx->Const.MaxRenderbufferSize)
+       || (fb->Height > ctx->Const.MaxRenderbufferSize)
+       || (fb->_NumColorDrawBuffers == 0)) {
       /* writing to 0  */
       colorRegions[0] = NULL;
       intel->constant_cliprect = GL_TRUE;
-   } else if (fb->_NumColorDrawBuffers > 1) {
+   }
+   else if (fb->_NumColorDrawBuffers > 1) {
        int i;
        struct intel_renderbuffer *irb;
 
@@ -194,7 +214,7 @@ intel_draw_buffer(GLcontext * ctx, struct gl_framebuffer *fb)
    }
    else {
       /* Get the intel_renderbuffer for the single colorbuffer we're drawing
-       * into, and set up cliprects if it's .
+       * into, and set up cliprects if it's a DRI1 window front buffer.
        */
       if (fb->Name == 0) {
 	 intel->constant_cliprect = intel->driScreen->dri2.enabled;
@@ -204,14 +224,12 @@ intel_draw_buffer(GLcontext * ctx, struct gl_framebuffer *fb)
 	       intel_batchbuffer_flush(intel->batch);
 	    intel->front_cliprects = GL_TRUE;
 	    colorRegions[0] = intel_get_rb_region(fb, BUFFER_FRONT_LEFT);
-
-	    intel->front_buffer_dirty = GL_TRUE;
 	 }
 	 else {
 	    if (!intel->constant_cliprect && intel->front_cliprects)
 	       intel_batchbuffer_flush(intel->batch);
 	    intel->front_cliprects = GL_FALSE;
-	    colorRegions[0]= intel_get_rb_region(fb, BUFFER_BACK_LEFT);
+	    colorRegions[0] = intel_get_rb_region(fb, BUFFER_BACK_LEFT);
 	 }
       }
       else {
@@ -222,14 +240,6 @@ intel_draw_buffer(GLcontext * ctx, struct gl_framebuffer *fb)
 	 intel->constant_cliprect = GL_TRUE;
       }
    }
-
-   /* Update culling direction which changes depending on the
-    * orientation of the buffer:
-    */
-   if (ctx->Driver.FrontFace)
-      ctx->Driver.FrontFace(ctx, ctx->Polygon.FrontFace);
-   else
-      ctx->NewState |= _NEW_POLYGON;
 
    if (!colorRegions[0]) {
       FALLBACK(intel, INTEL_FALLBACK_DRAW_BUFFER, GL_TRUE);
@@ -262,50 +272,43 @@ intel_draw_buffer(GLcontext * ctx, struct gl_framebuffer *fb)
    /***
     *** Stencil buffer
     *** This can only be hardware accelerated if we're using a
-    *** combined DEPTH_STENCIL buffer (for now anyway).
+    *** combined DEPTH_STENCIL buffer.
     ***/
    if (fb->_StencilBuffer && fb->_StencilBuffer->Wrapped) {
       irbStencil = intel_renderbuffer(fb->_StencilBuffer->Wrapped);
       if (irbStencil && irbStencil->region) {
-         ASSERT(irbStencil->Base._ActualFormat == GL_DEPTH24_STENCIL8_EXT);
+         ASSERT(irbStencil->Base.Format == MESA_FORMAT_S8_Z24);
          FALLBACK(intel, INTEL_FALLBACK_STENCIL_BUFFER, GL_FALSE);
-         /* need to re-compute stencil hw state */
-	 if (ctx->Driver.Enable != NULL)
-	    ctx->Driver.Enable(ctx, GL_STENCIL_TEST, ctx->Stencil.Enabled);
-	 else
-	    ctx->NewState |= _NEW_STENCIL;
-         if (!depthRegion)
-            depthRegion = irbStencil->region;
       }
       else {
          FALLBACK(intel, INTEL_FALLBACK_STENCIL_BUFFER, GL_TRUE);
       }
    }
    else {
-      /* XXX FBO: instead of FALSE, pass ctx->Stencil.Enabled ??? */
+      /* XXX FBO: instead of FALSE, pass ctx->Stencil._Enabled ??? */
       FALLBACK(intel, INTEL_FALLBACK_STENCIL_BUFFER, GL_FALSE);
-      /* need to re-compute stencil hw state */
-      if (ctx->Driver.Enable != NULL)
-	 ctx->Driver.Enable(ctx, GL_STENCIL_TEST, ctx->Stencil.Enabled);
-      else
-	 ctx->NewState |= _NEW_STENCIL;
    }
 
    /*
-    * Update depth test state
+    * Update depth and stencil test state
     */
    if (ctx->Driver.Enable) {
-      if (ctx->Depth.Test && fb->Visual.depthBits > 0) {
-	 ctx->Driver.Enable(ctx, GL_DEPTH_TEST, GL_TRUE);
-      } else {
-	 ctx->Driver.Enable(ctx, GL_DEPTH_TEST, GL_FALSE);
-      }
-   } else {
-      ctx->NewState |= _NEW_DEPTH;
+      ctx->Driver.Enable(ctx, GL_DEPTH_TEST,
+                         (ctx->Depth.Test && fb->Visual.depthBits > 0));
+      ctx->Driver.Enable(ctx, GL_STENCIL_TEST,
+                         (ctx->Stencil.Enabled && fb->Visual.stencilBits > 0));
+   }
+   else {
+      /* Mesa's Stencil._Enabled field is updated when
+       * _NEW_BUFFERS | _NEW_STENCIL, but i965 code assumes that the value
+       * only changes with _NEW_STENCIL (which seems sensible).  So flag it
+       * here since this is the _NEW_BUFFERS path.
+       */
+      ctx->NewState |= (_NEW_DEPTH | _NEW_STENCIL);
    }
 
    intel->vtbl.set_draw_region(intel, colorRegions, depthRegion, 
-	fb->_NumColorDrawBuffers);
+                               fb->_NumColorDrawBuffers);
 
    /* update viewport since it depends on window size */
 #ifdef I915
@@ -324,6 +327,14 @@ intel_draw_buffer(GLcontext * ctx, struct gl_framebuffer *fb)
       ctx->Driver.DepthRange(ctx,
 			     ctx->Viewport.Near,
 			     ctx->Viewport.Far);
+
+   /* Update culling direction which changes depending on the
+    * orientation of the buffer:
+    */
+   if (ctx->Driver.FrontFace)
+      ctx->Driver.FrontFace(ctx, ctx->Polygon.FrontFace);
+   else
+      ctx->NewState |= _NEW_POLYGON;
 }
 
 
@@ -332,8 +343,19 @@ intelDrawBuffer(GLcontext * ctx, GLenum mode)
 {
    if ((ctx->DrawBuffer != NULL) && (ctx->DrawBuffer->Name == 0)) {
       struct intel_context *const intel = intel_context(ctx);
+      const GLboolean was_front_buffer_rendering =
+	intel->is_front_buffer_rendering;
 
-      intel->is_front_buffer_rendering = (mode == GL_FRONT_LEFT);
+      intel->is_front_buffer_rendering = (mode == GL_FRONT_LEFT)
+	|| (mode == GL_FRONT);
+
+      /* If we weren't front-buffer rendering before but we are now, make sure
+       * that the front-buffer has actually been allocated.
+       */
+      if (!was_front_buffer_rendering && intel->is_front_buffer_rendering) {
+	 intel_update_renderbuffers(intel->driContext,
+				    intel->driContext->driDrawablePriv);
+      }
    }
 
    intel_draw_buffer(ctx, ctx->DrawBuffer);
@@ -343,6 +365,23 @@ intelDrawBuffer(GLcontext * ctx, GLenum mode)
 static void
 intelReadBuffer(GLcontext * ctx, GLenum mode)
 {
+   if ((ctx->DrawBuffer != NULL) && (ctx->DrawBuffer->Name == 0)) {
+      struct intel_context *const intel = intel_context(ctx);
+      const GLboolean was_front_buffer_reading =
+	intel->is_front_buffer_reading;
+
+      intel->is_front_buffer_reading = (mode == GL_FRONT_LEFT)
+	|| (mode == GL_FRONT);
+
+      /* If we weren't front-buffer reading before but we are now, make sure
+       * that the front-buffer has actually been allocated.
+       */
+      if (!was_front_buffer_reading && intel->is_front_buffer_reading) {
+	 intel_update_renderbuffers(intel->driContext,
+				    intel->driContext->driDrawablePriv);
+      }
+   }
+
    if (ctx->ReadBuffer == ctx->DrawBuffer) {
       /* This will update FBO completeness status.
        * A framebuffer will be incomplete if the GL_READ_BUFFER setting

@@ -1,4 +1,3 @@
-/* $XFree86: xc/lib/GL/dri/dri_util.c,v 1.7 2003/04/28 17:01:25 dawes Exp $ */
 /**
  * \file dri_util.c
  * DRI utility functions.
@@ -37,6 +36,9 @@
 typedef GLboolean ( * PFNGLXGETMSCRATEOMLPROC) (__DRIdrawable *drawable, int32_t *numerator, int32_t *denominator);
 #endif
 
+static void dri_get_drawable(__DRIdrawable *pdp);
+static void dri_put_drawable(__DRIdrawable *pdp);
+
 /**
  * This is just a token extension used to signal that the driver
  * supports setting a read drawable.
@@ -59,7 +61,7 @@ __driUtilMessage(const char *f, ...)
     va_list args;
 
     if (getenv("LIBGL_DEBUG")) {
-        fprintf(stderr, "libGL error: \n");
+        fprintf(stderr, "libGL: ");
         va_start(args, f);
         vfprintf(stderr, f, args);
         va_end(args);
@@ -130,7 +132,7 @@ static int driUnbindContext(__DRIcontext *pcp)
 	return GL_FALSE;
     }
 
-    pdp->refcount--;
+    dri_put_drawable(pdp);
 
     if (prp != pdp) {
         if (prp->refcount == 0) {
@@ -138,7 +140,7 @@ static int driUnbindContext(__DRIcontext *pcp)
 	    return GL_FALSE;
 	}
 
-	prp->refcount--;
+    	dri_put_drawable(prp);
     }
 
 
@@ -165,23 +167,21 @@ static int driBindContext(__DRIcontext *pcp,
 			  __DRIdrawable *pdp,
 			  __DRIdrawable *prp)
 {
-    __DRIscreenPrivate *psp = pcp->driScreenPriv;
-
-    /*
-    ** Assume error checking is done properly in glXMakeCurrent before
-    ** calling driBindContext.
-    */
-
-    if (pcp == NULL || pdp == None || prp == None)
-	return GL_FALSE;
+    __DRIscreenPrivate *psp = NULL;
 
     /* Bind the drawable to the context */
-    pcp->driDrawablePriv = pdp;
-    pcp->driReadablePriv = prp;
-    pdp->driContextPriv = pcp;
-    pdp->refcount++;
-    if ( pdp != prp ) {
-	prp->refcount++;
+
+    if (pcp) {
+	psp = pcp->driScreenPriv;
+	pcp->driDrawablePriv = pdp;
+	pcp->driReadablePriv = prp;
+	if (pdp) {
+	    pdp->driContextPriv = pcp;
+    	    dri_get_drawable(pdp);
+	}
+	if ( prp && pdp != prp ) {
+    	    dri_get_drawable(prp);
+	}
     }
 
     /*
@@ -190,23 +190,21 @@ static int driBindContext(__DRIcontext *pcp,
     */
 
     if (!psp->dri2.enabled) {
-	if (!pdp->pStamp || *pdp->pStamp != pdp->lastStamp) {
+	if (pdp && !pdp->pStamp) {
 	    DRM_SPINLOCK(&psp->pSAREA->drawable_lock, psp->drawLockID);
 	    __driUtilUpdateDrawableInfo(pdp);
 	    DRM_SPINUNLOCK(&psp->pSAREA->drawable_lock, psp->drawLockID);
 	}
-	
-	if ((pdp != prp) && (!prp->pStamp || *prp->pStamp != prp->lastStamp)) {
+	if (prp && pdp != prp && !prp->pStamp) {
 	    DRM_SPINLOCK(&psp->pSAREA->drawable_lock, psp->drawLockID);
 	    __driUtilUpdateDrawableInfo(prp);
 	    DRM_SPINUNLOCK(&psp->pSAREA->drawable_lock, psp->drawLockID);
-	}
+        }
     }
 
     /* Call device-specific MakeCurrent */
-    (*psp->DriverAPI.MakeCurrent)(pcp, pdp, prp);
 
-    return GL_TRUE;
+    return (*psp->DriverAPI.MakeCurrent)(pcp, pdp, prp);
 }
 
 /*@}*/
@@ -320,11 +318,11 @@ static void driSwapBuffers(__DRIdrawable *dPriv)
     __DRIscreen *psp = dPriv->driScreenPriv;
     drm_clip_rect_t *rects;
     int i;
-    
-    if (!dPriv->numClipRects)
-        return;
 
     psp->DriverAPI.SwapBuffers(dPriv);
+
+    if (!dPriv->numClipRects)
+        return;
 
     rects = _mesa_malloc(sizeof(*rects) * dPriv->numClipRects);
 
@@ -439,7 +437,7 @@ driCreateNewDrawable(__DRIscreen *psp, const __DRIconfig *config,
 
     pdp->loaderPrivate = data;
     pdp->hHWDrawable = hwDrawable;
-    pdp->refcount = 0;
+    pdp->refcount = 1;
     pdp->pStamp = NULL;
     pdp->lastStamp = 0;
     pdp->index = 0;
@@ -492,13 +490,20 @@ dri2CreateNewDrawable(__DRIscreen *screen,
     return pdraw;
 }
 
-
-static void
-driDestroyDrawable(__DRIdrawable *pdp)
+static void dri_get_drawable(__DRIdrawable *pdp)
+{
+    pdp->refcount++;
+}
+	
+static void dri_put_drawable(__DRIdrawable *pdp)
 {
     __DRIscreenPrivate *psp;
 
     if (pdp) {
+	pdp->refcount--;
+	if (pdp->refcount)
+	    return;
+
 	psp = pdp->driScreenPriv;
         (*psp->DriverAPI.DestroyBuffer)(pdp);
 	if (pdp->pClipRects) {
@@ -511,6 +516,12 @@ driDestroyDrawable(__DRIdrawable *pdp)
 	}
 	_mesa_free(pdp);
     }
+}
+
+static void
+driDestroyDrawable(__DRIdrawable *pdp)
+{
+    dri_put_drawable(pdp);
 }
 
 /*@}*/
@@ -768,7 +779,7 @@ dri2CreateNewScreen(int scrn, int fd,
     if (driDriverAPI.InitScreen2 == NULL)
         return NULL;
 
-    psp = _mesa_malloc(sizeof(*psp));
+    psp = _mesa_calloc(sizeof(*psp));
     if (!psp)
 	return NULL;
 

@@ -61,21 +61,11 @@ do {									\
    printf( "\n" );							\
 } while (0)
 
-#if defined(__BEOS__) || defined(__HAIKU__) || defined(_LP64)
 #define OFFSET( s, t, m )						\
-   printf( "#define %s\t%ld\n", s, offsetof( t, m ) );
-#else
-#define OFFSET( s, t, m )						\
-   printf( "#define %s\t%d\n", s, offsetof( t, m ) );
-#endif
+   printf( "#define %s\t%lu\n", s, (unsigned long) offsetof( t, m ) );
 
-#if defined(__BEOS__) || defined(__HAIKU__) || defined(_LP64)
 #define SIZEOF( s, t )							\
-   printf( "#define %s\t%ld\n", s, sizeof(t) );
-#else
-#define SIZEOF( s, t )							\
-   printf( "#define %s\t%d\n", s, sizeof(t) );
-#endif
+   printf( "#define %s\t%lu\n", s, (unsigned long) sizeof(t) );
 
 #define DEFINE( s, d )							\
    printf( "#define %s\t0x%x\n", s, d );
@@ -197,7 +187,7 @@ int main( int argc, char **argv )
    OFFSET( "LIGHT_DIFFUSE           ", struct gl_light, Diffuse );
    OFFSET( "LIGHT_SPECULAR          ", struct gl_light, Specular );
    OFFSET( "LIGHT_EYE_POSITION      ", struct gl_light, EyePosition );
-   OFFSET( "LIGHT_EYE_DIRECTION     ", struct gl_light, EyeDirection );
+   OFFSET( "LIGHT_SPOT_DIRECTION    ", struct gl_light, SpotDirection );
    OFFSET( "LIGHT_SPOT_EXPONENT     ", struct gl_light, SpotExponent );
    OFFSET( "LIGHT_SPOT_CUTOFF       ", struct gl_light, SpotCutoff );
    OFFSET( "LIGHT_COS_CUTOFF        ", struct gl_light, _CosCutoff );
@@ -211,7 +201,7 @@ int main( int argc, char **argv )
    OFFSET( "LIGHT_POSITION          ", struct gl_light, _Position );
    OFFSET( "LIGHT_VP_INF_NORM       ", struct gl_light, _VP_inf_norm );
    OFFSET( "LIGHT_H_INF_NORM        ", struct gl_light, _h_inf_norm );
-   OFFSET( "LIGHT_NORM_DIRECTION    ", struct gl_light, _NormDirection );
+   OFFSET( "LIGHT_NORM_DIRECTION    ", struct gl_light, _NormSpotDirection );
    OFFSET( "LIGHT_VP_INF_SPOT_ATTEN ", struct gl_light, _VP_inf_spot_attenuation );
    printf( "\n" );
    OFFSET( "LIGHT_SPOT_EXP_TABLE    ", struct gl_light, _SpotExpTable );

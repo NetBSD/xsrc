@@ -31,8 +31,6 @@
 
 #include "mach64_context.h"
 #include "mach64_ioctl.h"
-#include "mach64_tris.h"
-#include "mach64_vb.h"
 #include "mach64_span.h"
 
 #include "main/context.h"
@@ -67,8 +65,6 @@ static const GLuint __driNConfigOptions = 3;
 static const GLuint __driNConfigOptions = 2;
 #endif
 
-extern const struct dri_extension card_extensions[];
-
 static const __DRIconfig **
 mach64FillInModes( __DRIscreenPrivate *psp,
 		   unsigned pixel_bits, unsigned depth_bits,
@@ -93,6 +89,7 @@ mach64FillInModes( __DRIscreenPrivate *psp,
 
     uint8_t depth_bits_array[2];
     uint8_t stencil_bits_array[2];
+    uint8_t msaa_samples_array[1];
 
     depth_bits_array[0] = depth_bits;
     depth_bits_array[1] = depth_bits;
@@ -103,6 +100,8 @@ mach64FillInModes( __DRIscreenPrivate *psp,
      */
     stencil_bits_array[0] = 0;
     stencil_bits_array[1] = (stencil_bits == 0) ? 8 : stencil_bits;
+
+    msaa_samples_array[0] = 0;
 
     depth_buffer_factor = ((depth_bits != 0) || (stencil_bits != 0)) ? 2 : 1;
     back_buffer_factor  = (have_back_buffer) ? 2 : 1;
@@ -119,7 +118,8 @@ mach64FillInModes( __DRIscreenPrivate *psp,
     configs = driCreateConfigs(fb_format, fb_type,
 			       depth_bits_array, stencil_bits_array,
 			       depth_buffer_factor, back_buffer_modes,
-			       back_buffer_factor);
+			       back_buffer_factor,
+                               msaa_samples_array, 1);
     if (configs == NULL) {
        fprintf(stderr, "[%s:%u] Error creating FBConfig!\n",
 	       __func__, __LINE__);
@@ -312,7 +312,7 @@ mach64CreateBuffer( __DRIscreenPrivate *driScrnPriv,
 
       {
          driRenderbuffer *frontRb
-            = driNewRenderbuffer(GL_RGBA,
+            = driNewRenderbuffer(MESA_FORMAT_ARGB8888,
                                  NULL,
                                  screen->cpp,
                                  screen->frontOffset, screen->frontPitch,
@@ -323,7 +323,7 @@ mach64CreateBuffer( __DRIscreenPrivate *driScrnPriv,
 
       if (mesaVis->doubleBufferMode) {
          driRenderbuffer *backRb
-            = driNewRenderbuffer(GL_RGBA,
+            = driNewRenderbuffer(MESA_FORMAT_ARGB8888,
                                  NULL,
                                  screen->cpp,
                                  screen->backOffset, screen->backPitch,
@@ -334,7 +334,7 @@ mach64CreateBuffer( __DRIscreenPrivate *driScrnPriv,
 
       if (mesaVis->depthBits == 16) {
          driRenderbuffer *depthRb
-            = driNewRenderbuffer(GL_DEPTH_COMPONENT16,
+            = driNewRenderbuffer(MESA_FORMAT_Z16,
                                  NULL, screen->cpp,
                                  screen->depthOffset, screen->depthPitch,
                                  driDrawPriv);
@@ -344,7 +344,7 @@ mach64CreateBuffer( __DRIscreenPrivate *driScrnPriv,
       else if (mesaVis->depthBits == 24) {
          /* XXX I don't think 24-bit Z is supported - so this isn't used */
          driRenderbuffer *depthRb
-            = driNewRenderbuffer(GL_DEPTH_COMPONENT24,
+            = driNewRenderbuffer(MESA_FORMAT_Z24_S8,
                                  NULL,
                                  screen->cpp,
                                  screen->depthOffset, screen->depthPitch,
@@ -370,7 +370,7 @@ mach64CreateBuffer( __DRIscreenPrivate *driScrnPriv,
 static void
 mach64DestroyBuffer(__DRIdrawablePrivate *driDrawPriv)
 {
-   _mesa_unreference_framebuffer((GLframebuffer **)(&(driDrawPriv->driverPrivate)));
+   _mesa_reference_framebuffer((GLframebuffer **)(&(driDrawPriv->driverPrivate)), NULL);
 }
 
 
@@ -432,18 +432,6 @@ mach64InitScreen(__DRIscreenPrivate *psp)
       return NULL;
    }
    
-   /* Calling driInitExtensions here, with a NULL context pointer,
-    * does not actually enable the extensions.  It just makes sure
-    * that all the dispatch offsets for all the extensions that
-    * *might* be enables are known.  This is needed because the
-    * dispatch offsets need to be known when _mesa_context_create is
-    * called, but we can't enable the extensions until we have a
-    * context pointer.
-    *
-    * Hello chicken.  Hello egg.  How are you two today?
-    */
-   driInitExtensions( NULL, card_extensions, GL_FALSE );
-
    if (!mach64InitDriver(psp))
       return NULL;
 

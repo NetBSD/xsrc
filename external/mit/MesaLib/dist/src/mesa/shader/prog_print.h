@@ -47,11 +47,21 @@ const char *
 _mesa_writemask_string(GLuint writeMask);
 
 extern void
+_mesa_print_swizzle(GLuint swizzle);
+
+extern void
 _mesa_print_alu_instruction(const struct prog_instruction *inst,
                             const char *opcode_string, GLuint numRegs);
 
 extern void
 _mesa_print_instruction(const struct prog_instruction *inst);
+
+extern GLint
+_mesa_fprint_instruction_opt(FILE *f,
+                            const struct prog_instruction *inst,
+                            GLint indent,
+                            gl_prog_print_mode mode,
+                            const struct gl_program *prog);
 
 extern GLint
 _mesa_print_instruction_opt(const struct prog_instruction *inst, GLint indent,
@@ -62,14 +72,23 @@ extern void
 _mesa_print_program(const struct gl_program *prog);
 
 extern void
-_mesa_print_program_opt(const struct gl_program *prog, gl_prog_print_mode mode,
-                        GLboolean lineNumbers);
+_mesa_fprint_program_opt(FILE *f,
+                         const struct gl_program *prog, gl_prog_print_mode mode,
+                         GLboolean lineNumbers);
 
 extern void
 _mesa_print_program_parameters(GLcontext *ctx, const struct gl_program *prog);
 
 extern void
 _mesa_print_parameter_list(const struct gl_program_parameter_list *list);
+
+
+extern void
+_mesa_write_shader_to_file(const struct gl_shader *shader);
+
+extern void
+_mesa_append_uniforms_to_file(const struct gl_shader *shader,
+                              const struct gl_program *prog);
 
 
 #endif /* PROG_PRINT_H */

@@ -34,7 +34,6 @@
 #include "via_context.h"
 #include "via_tris.h"
 #include "via_ioctl.h"
-#include "via_state.h"
 #include "via_fb.h"
 #include "via_3d_reg.h"
 
@@ -885,9 +884,6 @@ void viaFlushDmaLocked(struct via_context *vmesa, GLuint flags)
    }
    else if (vmesa->numClipRects) {
       drm_clip_rect_t *pbox = vmesa->pClipRects;
-      __DRIdrawablePrivate *dPriv = vmesa->driDrawable;
-      struct via_renderbuffer *const vrb = 
-	(struct via_renderbuffer *) dPriv->driverPrivate;
 
       for (i = 0; i < vmesa->numClipRects; i++) {
 	 drm_clip_rect_t b;

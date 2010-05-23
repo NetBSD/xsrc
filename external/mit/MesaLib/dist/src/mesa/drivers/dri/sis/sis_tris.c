@@ -47,7 +47,6 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "sis_state.h"
 #include "sis_lock.h"
 #include "sis_span.h"
-#include "sis_alloc.h"
 #include "sis_tex.h"
 
 /* 6326 and 300-series shared */
@@ -430,7 +429,8 @@ do {								\
 
 #define LOCAL_VARS(n)						\
    sisContextPtr smesa = SIS_CONTEXT(ctx);			\
-   GLuint color[n], spec[n];					\
+   GLuint color[n] = { 0 };					\
+   GLuint spec[n] = { 0 };					\
    GLuint coloroffset = smesa->coloroffset;			\
    GLuint specoffset = smesa->specoffset;			\
    (void) color; (void) spec; (void) coloroffset; (void) specoffset;
@@ -994,7 +994,7 @@ sisFlushPrimsLocked(sisContextPtr smesa)
 	 MMIO(REG_3D_PrimitiveSet, smesa->dwPrimitiveSet);
       }
       while (smesa->vb_last < smesa->vb_cur) {
-	 sis_emit_func(smesa, smesa->vb_last);
+	 sis_emit_func(smesa, (char *)smesa->vb_last);
 	 smesa->vb_last += incr;
       }
       mWait3DCmdQueue(1);

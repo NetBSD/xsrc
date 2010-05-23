@@ -38,7 +38,6 @@
  */
 
 #include "tdfx_state.h"
-#include "tdfx_tex.h"
 #include "tdfx_texman.h"
 #include "tdfx_texstate.h"
 
@@ -1314,7 +1313,7 @@ SetupDoubleTexEnvVoodoo3(GLcontext *ctx, int tmu0,
       fxMesa->TexCombine[0].InvertRGB = FXFALSE;
       fxMesa->TexCombine[0].InvertAlpha = FXFALSE;
 
-      if ((baseFormat0 == GL_RGB) && (baseFormat0 == GL_LUMINANCE)) {
+      if ((baseFormat0 == GL_RGB) || (baseFormat0 == GL_LUMINANCE)) {
          fxMesa->AlphaCombine.Function = GR_COMBINE_FUNCTION_LOCAL;
          fxMesa->AlphaCombine.Factor = GR_COMBINE_FACTOR_NONE;
          fxMesa->AlphaCombine.Local = locala;

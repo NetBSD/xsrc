@@ -3,8 +3,7 @@
 TOP = ../..
 include $(TOP)/configs/current
 
-include sources
-
+include sources.mak
 
 .SUFFIXES : .cpp
 
@@ -19,9 +18,11 @@ include sources
 
 
 
+
 # Default: build dependencies, then asm_subdirs, then convenience
 # libs (.a) and finally the device drivers:
-default: depend asm_subdirs libmesa.a libglapi.a driver_subdirs
+default: depend asm_subdirs libmesa.a libmesagallium.a libglapi.a \
+	driver_subdirs
 
 
 
@@ -32,15 +33,18 @@ default: depend asm_subdirs libmesa.a libglapi.a driver_subdirs
 libmesa.a: $(MESA_OBJECTS)
 	@ $(MKLIB) -o mesa -static $(MESA_OBJECTS)
 
+# Make archive of subset of core mesa object files for gallium
+libmesagallium.a: $(MESA_GALLIUM_OBJECTS)
+	@ $(MKLIB) -o mesagallium -static $(MESA_GALLIUM_OBJECTS)
+
 # Make archive of gl* API dispatcher functions only
 libglapi.a: $(GLAPI_OBJECTS)
-	@ $(MKLIB) -o glapi -static $(GLAPI_OBJECTS)
-
+	$(MKLIB) -o glapi -static $(GLAPI_OBJECTS)
 
 ######################################################################
 # Device drivers
-driver_subdirs: libmesa.a libglapi.a
-	(cd drivers && $(MAKE))
+driver_subdirs: libmesa.a libglapi.a libmesagallium.a
+	@ (cd drivers && $(MAKE))
 
 
 ######################################################################
@@ -95,7 +99,8 @@ gl_pcedit = sed \
 	-e 's,@VERSION@,$(MESA_MAJOR).$(MESA_MINOR).$(MESA_TINY),' \
 	-e 's,@GL_PC_REQ_PRIV@,$(GL_PC_REQ_PRIV),' \
 	-e 's,@GL_PC_LIB_PRIV@,$(GL_PC_LIB_PRIV),' \
-	-e 's,@GL_PC_CFLAGS@,$(GL_PC_CFLAGS),'
+	-e 's,@GL_PC_CFLAGS@,$(GL_PC_CFLAGS),' \
+	-e 's,@GL_LIB@,$(GL_LIB),'
 
 gl.pc: gl.pc.in
 	$(gl_pcedit) $< > $@
@@ -120,14 +125,14 @@ install-headers:
 install-libgl: default gl.pc install-headers
 	$(INSTALL) -d $(DESTDIR)$(INSTALL_LIB_DIR)
 	$(INSTALL) -d $(DESTDIR)$(INSTALL_LIB_DIR)/pkgconfig
-	$(INSTALL) $(TOP)/$(LIB_DIR)/$(GL_LIB_GLOB) \
+	$(MINSTALL) $(TOP)/$(LIB_DIR)/$(GL_LIB_GLOB) \
 		$(DESTDIR)$(INSTALL_LIB_DIR)
 	$(INSTALL) -m 644 gl.pc $(DESTDIR)$(INSTALL_LIB_DIR)/pkgconfig
 
 install-osmesa: default osmesa.pc
 	$(INSTALL) -d $(DESTDIR)$(INSTALL_LIB_DIR)
 	$(INSTALL) -d $(DESTDIR)$(INSTALL_LIB_DIR)/pkgconfig
-	$(INSTALL) $(TOP)/$(LIB_DIR)/$(OSMESA_LIB_GLOB) \
+	$(MINSTALL) $(TOP)/$(LIB_DIR)/$(OSMESA_LIB_GLOB) \
 		$(DESTDIR)$(INSTALL_LIB_DIR)
 	$(INSTALL) -m 644 osmesa.pc $(DESTDIR)$(INSTALL_LIB_DIR)/pkgconfig
 

@@ -27,8 +27,6 @@
 
 #include "main/mtypes.h"
 #include "main/colormac.h"
-#include "main/mm.h"
-#include "main/extensions.h"
 #include "main/enums.h"
 
 #include "vbo/vbo.h"
@@ -39,12 +37,9 @@
 
 #include "ffb_dd.h"
 #include "ffb_span.h"
-#include "ffb_depth.h"
 #include "ffb_context.h"
-#include "ffb_vb.h"
 #include "ffb_tris.h"
 #include "ffb_state.h"
-#include "ffb_lock.h"
 
 #undef STATE_TRACE
 
@@ -275,7 +270,7 @@ ffbDDStencilFuncSeparate(GLcontext *ctx, GLenum face, GLenum func,
 	/* We will properly update sw/hw state when stenciling is
 	 * enabled.
 	 */
-	if (! ctx->Stencil.Enabled)
+	if (! ctx->Stencil._Enabled)
 		return;
 
 	stencilctl = fmesa->stencilctl;
@@ -333,7 +328,7 @@ ffbDDStencilOpSeparate(GLcontext *ctx, GLenum face, GLenum fail,
 	/* We will properly update sw/hw state when stenciling is
 	 * enabled.
 	 */
-	if (! ctx->Stencil.Enabled)
+	if (! ctx->Stencil._Enabled)
 		return;
 
 	stencilctl = fmesa->stencilctl;
