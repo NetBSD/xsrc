@@ -20,7 +20,7 @@
 #define HAVE_POSIX_MEMALIGN 1
 
 /* Whether pthread_setspecific() is supported */
-/* #undef HAVE_PTHREAD_SETSPECIFIC */
+#define HAVE_PTHREAD_SETSPECIFIC 1
 
 /* Define to 1 if you have the <stdint.h> header file. */
 #define HAVE_STDINT_H 1
@@ -78,7 +78,7 @@
 #define STDC_HEADERS 1
 
 /* Whether the tool chain supports __thread */
-#define TOOLCHAIN_SUPPORTS__THREAD /**/
+/* #undef TOOLCHAIN_SUPPORTS__THREAD */
 
 /* use ARM NEON assembly optimizations */
 /* #undef USE_ARM_NEON */
@@ -89,11 +89,15 @@
 /* use GNU-style inline assembler */
 #define USE_GCC_INLINE_ASM 1
 
+#if defined(__i386__) || defined(__x86_64__)
 /* use MMX compiler intrinsics */
 #define USE_MMX 1
+#endif
 
+#if defined(__x86_64__)
 /* use SSE2 compiler intrinsics */
 #define USE_SSE2 1
+#endif
 
 /* use VMX compiler intrinsics */
 /* #undef USE_VMX */
@@ -103,14 +107,9 @@
 
 /* Define WORDS_BIGENDIAN to 1 if your processor stores words with the most
    significant byte first (like Motorola and SPARC, unlike Intel). */
-#if defined AC_APPLE_UNIVERSAL_BUILD
-# if defined __BIG_ENDIAN__
-#  define WORDS_BIGENDIAN 1
-# endif
-#else
-# ifndef WORDS_BIGENDIAN
-/* #  undef WORDS_BIGENDIAN */
-# endif
+#include <sys/endian.h>
+#if _BYTE_ORDER == _BIG_ENDIAN
+#define WORDS_BIGENDIAN 1
 #endif
 
 /* Define to `__inline__' or `__inline' if that's what the C compiler
