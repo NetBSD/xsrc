@@ -28,6 +28,7 @@
 #include "imports.h"
 #include "macros.h"
 #include "state.h"
+#include "GL/glext.h"
 #include "mtypes.h"
 #include "glapi/dispatch.h"
 
