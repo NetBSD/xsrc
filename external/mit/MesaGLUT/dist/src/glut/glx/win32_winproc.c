@@ -20,10 +20,10 @@
 extern unsigned __glutMenuButton;
 extern GLUTidleCB __glutIdleFunc;
 extern GLUTtimer *__glutTimerList;
-extern GLUTmenuItem *__glutGetUniqueMenuItem(GLUTmenu * menu, int unique);
+extern GLUTmenuItem *__glutGetUniqueMenuItem(GLUTmenu * menu, UINT unique);
 static HMENU __glutHMenu;
 
-void
+static void
 updateWindowState(GLUTwindow *window, int visState)
 {
   GLUTwindow* child;
@@ -548,8 +548,13 @@ __glutWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
        window to be bigger than the screen, and smaller than 100x100
        (although it doesn't seem to help the y minimum). */
     minmax = (LPMINMAXINFO)lParam;
+#if 0
+    /* These two lines are disabled to fix incorrect handling of
+     * window maximization on Vista.  See bug 23182.
+     */
     minmax->ptMaxSize.x = __glutScreenWidth;
     minmax->ptMaxSize.y = __glutScreenHeight;
+#endif
     minmax->ptMinTrackSize.x = 0;
     minmax->ptMinTrackSize.y = 0;
     minmax->ptMaxTrackSize.x = __glutScreenWidth + 
