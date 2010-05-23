@@ -66,19 +66,6 @@ static GLuint translate_wrap_mode( GLenum wrap )
    }
 }
 
-
-static GLuint U_FIXED(GLfloat value, GLuint frac_bits)
-{
-   value *= (1<<frac_bits);
-   return value < 0 ? 0 : value;
-}
-
-static GLint S_FIXED(GLfloat value, GLuint frac_bits)
-{
-   return value * (1<<frac_bits);
-}
-
-
 static dri_bo *upload_default_color( struct brw_context *brw,
 				     const GLfloat *color )
 {
@@ -86,8 +73,8 @@ static dri_bo *upload_default_color( struct brw_context *brw,
 
    COPY_4V(sdc.color, color); 
    
-   return brw_cache_data( &brw->cache, BRW_SAMPLER_DEFAULT_COLOR, &sdc,
-			  NULL, 0 );
+   return brw_cache_data(&brw->cache, BRW_SAMPLER_DEFAULT_COLOR,
+			 &sdc, sizeof(sdc), NULL, 0);
 }
 
 
@@ -103,6 +90,10 @@ struct wm_sampler_key {
       GLenum minfilter, magfilter;
       GLenum comparemode, comparefunc;
       dri_bo *sdc_bo;
+
+      /** If target is cubemap, take context setting.
+       */
+      GLboolean seamless_cube_map;
    } sampler[BRW_MAX_TEX_UNIT];
 };
 
@@ -152,7 +143,7 @@ static void brw_update_sampler_state(struct wm_sampler_entry *key,
       sampler->ss0.mag_filter = BRW_MAPFILTER_ANISOTROPIC;
 
       if (key->max_aniso > 2.0) {
-	 sampler->ss3.max_aniso = MAX2((key->max_aniso - 2) / 2,
+	 sampler->ss3.max_aniso = MIN2((key->max_aniso - 2) / 2,
 				       BRW_ANISORATIO_16);
       }
    }
@@ -169,20 +160,33 @@ static void brw_update_sampler_state(struct wm_sampler_entry *key,
       }  
    }
 
-   if (key->tex_target == GL_TEXTURE_CUBE_MAP &&
-       (key->minfilter != GL_NEAREST || key->magfilter != GL_NEAREST)) {
-      /* If we're using anything but nearest sampling for a cube map, we
-       * need to set this wrap mode to avoid GPU lock-ups.
+   sampler->ss1.r_wrap_mode = translate_wrap_mode(key->wrap_r);
+   sampler->ss1.s_wrap_mode = translate_wrap_mode(key->wrap_s);
+   sampler->ss1.t_wrap_mode = translate_wrap_mode(key->wrap_t);
+
+   /* Cube-maps on 965 and later must use the same wrap mode for all 3
+    * coordinate dimensions.  Futher, only CUBE and CLAMP are valid.
+    */
+   if (key->tex_target == GL_TEXTURE_CUBE_MAP) {
+      if (key->seamless_cube_map &&
+	  (key->minfilter != GL_NEAREST || key->magfilter != GL_NEAREST)) {
+	 sampler->ss1.r_wrap_mode = BRW_TEXCOORDMODE_CUBE;
+	 sampler->ss1.s_wrap_mode = BRW_TEXCOORDMODE_CUBE;
+	 sampler->ss1.t_wrap_mode = BRW_TEXCOORDMODE_CUBE;
+      } else {
+	 sampler->ss1.r_wrap_mode = BRW_TEXCOORDMODE_CLAMP;
+	 sampler->ss1.s_wrap_mode = BRW_TEXCOORDMODE_CLAMP;
+	 sampler->ss1.t_wrap_mode = BRW_TEXCOORDMODE_CLAMP;
+      }
+   } else if (key->tex_target == GL_TEXTURE_1D) {
+      /* There's a bug in 1D texture sampling - it actually pays
+       * attention to the wrap_t value, though it should not.
+       * Override the wrap_t value here to GL_REPEAT to keep
+       * any nonexistent border pixels from floating in.
        */
-      sampler->ss1.r_wrap_mode = BRW_TEXCOORDMODE_CUBE;
-      sampler->ss1.s_wrap_mode = BRW_TEXCOORDMODE_CUBE;
-      sampler->ss1.t_wrap_mode = BRW_TEXCOORDMODE_CUBE;
+      sampler->ss1.t_wrap_mode = BRW_TEXCOORDMODE_WRAP;
    }
-   else {
-      sampler->ss1.r_wrap_mode = translate_wrap_mode(key->wrap_r);
-      sampler->ss1.s_wrap_mode = translate_wrap_mode(key->wrap_s);
-      sampler->ss1.t_wrap_mode = translate_wrap_mode(key->wrap_t);
-   }
+
 
    /* Set shadow function: 
     */
@@ -211,11 +215,12 @@ static void brw_update_sampler_state(struct wm_sampler_entry *key,
     */
    sampler->ss0.base_level = U_FIXED(0, 1);
 
-   sampler->ss1.max_lod = U_FIXED(MIN2(MAX2(key->maxlod, 0), 13), 6);
-   sampler->ss1.min_lod = U_FIXED(MIN2(MAX2(key->minlod, 0), 13), 6);
+   sampler->ss1.max_lod = U_FIXED(CLAMP(key->maxlod, 0, 13), 6);
+   sampler->ss1.min_lod = U_FIXED(CLAMP(key->minlod, 0, 13), 6);
    
    sampler->ss2.default_color_pointer = sdc_bo->offset >> 5; /* reloc */
 }
+
 
 /** Sets up the cache key for sampler state for all texture units */
 static void
@@ -237,6 +242,9 @@ brw_wm_sampler_populate_key(struct brw_context *brw,
 	    texObj->Image[0][intelObj->firstLevel];
 
          entry->tex_target = texObj->Target;
+
+	 entry->seamless_cube_map = (texObj->Target == GL_TEXTURE_CUBE_MAP)
+	    ? ctx->Texture.CubeMapSeamless : GL_FALSE;
 
 	 entry->wrap_r = texObj->WrapR;
 	 entry->wrap_s = texObj->WrapS;

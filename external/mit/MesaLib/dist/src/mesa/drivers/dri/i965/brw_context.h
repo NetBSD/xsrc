@@ -46,7 +46,7 @@
  *
  * CURBE - constant URB entry.  An urb region (entry) used to hold
  * constant values which the fixed function units can be instructed to
- * preload into the GRF when spawining a thread.
+ * preload into the GRF when spawning a thread.
  *
  * VUE - vertex URB entry.  An urb entry holding a vertex and usually
  * a vertex header.  The header contains control information and
@@ -63,7 +63,7 @@
  * special and may be overwritten.
  *
  * MRF - message register file.  Threads communicate (and terminate)
- * by sending messages.  Message parameters are placed in contigous
+ * by sending messages.  Message parameters are placed in contiguous
  * MRF registers.  All program output is via these messages.  URB
  * entries are populated by sending a message to the shared URB
  * function containing the new data, together with a control word,
@@ -115,7 +115,7 @@
  * Handles blending and (presumably) depth and stencil testing.
  */
 
-#define BRW_FALLBACK_TEXTURE		 0x1
+
 #define BRW_MAX_CURBE                    (32*16)
 
 struct brw_context;
@@ -129,8 +129,8 @@ struct brw_context;
 #define BRW_NEW_PRIMITIVE               0x40
 #define BRW_NEW_CONTEXT                 0x80
 #define BRW_NEW_WM_INPUT_DIMENSIONS     0x100
-#define BRW_NEW_INPUT_VARYING           0x200
 #define BRW_NEW_PSP                     0x800
+#define BRW_NEW_WM_SURFACES		0x1000
 #define BRW_NEW_FENCE                   0x2000
 #define BRW_NEW_INDICES			0x4000
 #define BRW_NEW_VERTICES		0x8000
@@ -141,7 +141,9 @@ struct brw_context;
 #define BRW_NEW_BATCH			0x10000
 /** brw->depth_region updated */
 #define BRW_NEW_DEPTH_BUFFER		0x20000
-#define BRW_NEW_NR_SURFACES		0x40000
+#define BRW_NEW_NR_WM_SURFACES		0x40000
+#define BRW_NEW_NR_VS_SURFACES		0x80000
+#define BRW_NEW_INDEX_BUFFER		0x100000
 
 struct brw_state_flags {
    /** State update flags signalled by mesa internals */
@@ -154,19 +156,28 @@ struct brw_state_flags {
    GLuint cache;
 };
 
+
+/** Subclass of Mesa vertex program */
 struct brw_vertex_program {
    struct gl_vertex_program program;
    GLuint id;
+   dri_bo *const_buffer;    /** Program constant buffer/surface */
+   GLboolean use_const_buffer;
 };
 
 
-
+/** Subclass of Mesa fragment program */
 struct brw_fragment_program {
    struct gl_fragment_program program;
-   GLuint id;
+   GLuint id;  /**< serial no. to identify frag progs, never re-used */
+   GLboolean isGLSL;  /**< really, any IF/LOOP/CONT/BREAK instructions */
+
+   dri_bo *const_buffer;    /** Program constant buffer/surface */
+   GLboolean use_const_buffer;
+
+   /** for debugging, which texture units are referenced */
+   GLbitfield tex_units_used;
 };
-
-
 
 
 /* Data about a particular attempt to compile a program.  Note that
@@ -182,7 +193,7 @@ struct brw_wm_prog_data {
    GLuint total_grf;
    GLuint total_scratch;
 
-   GLuint nr_params;
+   GLuint nr_params;       /**< number of float params/constants */
    GLboolean error;
 
    /* Pointer to tracked values (only valid once
@@ -220,7 +231,8 @@ struct brw_vs_prog_data {
    GLuint curb_read_length;
    GLuint urb_read_length;
    GLuint total_grf;
-   GLuint outputs_written;
+   GLbitfield64 outputs_written;
+   GLuint nr_params;       /**< number of float params/constants */
 
    GLuint inputs_read;
 
@@ -237,8 +249,38 @@ struct brw_vs_ouput_sizes {
 };
 
 
+/** Number of texture sampler units */
 #define BRW_MAX_TEX_UNIT 16
-#define BRW_WM_MAX_SURF BRW_MAX_TEX_UNIT + MAX_DRAW_BUFFERS
+
+/** Max number of render targets in a shader */
+#define BRW_MAX_DRAW_BUFFERS 4
+
+/**
+ * Size of our surface binding table for the WM.
+ * This contains pointers to the drawing surfaces and current texture
+ * objects and shader constant buffers (+2).
+ */
+#define BRW_WM_MAX_SURF (BRW_MAX_DRAW_BUFFERS + BRW_MAX_TEX_UNIT + 1)
+
+/**
+ * Helpers to convert drawing buffers, textures and constant buffers
+ * to surface binding table indexes, for WM.
+ */
+#define SURF_INDEX_DRAW(d)           (d)
+#define SURF_INDEX_FRAG_CONST_BUFFER (BRW_MAX_DRAW_BUFFERS) 
+#define SURF_INDEX_TEXTURE(t)        (BRW_MAX_DRAW_BUFFERS + 1 + (t))
+
+/**
+ * Size of surface binding table for the VS.
+ * Only one constant buffer for now.
+ */
+#define BRW_VS_MAX_SURF 1
+
+/**
+ * Only a VS constant buffer
+ */
+#define SURF_INDEX_VERT_CONST_BUFFER 0
+
 
 enum brw_cache_id {
    BRW_CC_VP,
@@ -278,7 +320,6 @@ struct brw_cache_item {
    GLuint nr_reloc_bufs;
 
    dri_bo *bo;
-   GLuint data_size;
 
    struct brw_cache_item *next;
 };   
@@ -291,7 +332,6 @@ struct brw_cache {
    struct brw_cache_item **items;
    GLuint size, n_items;
 
-   GLuint key_size[BRW_MAX_CACHE];		/* for fixed-size keys */
    GLuint aux_size[BRW_MAX_CACHE];
    char *name[BRW_MAX_CACHE];
 
@@ -351,6 +391,8 @@ struct brw_cached_batch_item {
 struct brw_vertex_element {
    const struct gl_client_array *glarray;
 
+   /** The corresponding Mesa vertex attribute */
+   gl_vert_attrib attrib;
    /** Size of a complete element */
    GLuint element_size;
    /** Number of uploaded elements for this input. */
@@ -366,25 +408,7 @@ struct brw_vertex_element {
 
 
 struct brw_vertex_info {
-   GLuint varying;  /* varying:1[VERT_ATTRIB_MAX] */
    GLuint sizes[ATTRIB_BIT_DWORDS * 2]; /* sizes:2[VERT_ATTRIB_MAX] */
-};
-
-
-
-
-/* Cache for TNL programs.
- */
-struct brw_tnl_cache_item {
-   GLuint hash;
-   void *key;
-   void *data;
-   struct brw_tnl_cache_item *next;
-};
-
-struct brw_tnl_cache {
-   struct brw_tnl_cache_item **items;
-   GLuint size, n_items;
 };
 
 struct brw_query_object {
@@ -404,22 +428,23 @@ struct brw_query_object {
    unsigned int count;
 };
 
+
+/**
+ * brw_context is derived from intel_context.
+ */
 struct brw_context 
 {
-   struct intel_context intel;
+   struct intel_context intel;  /**< base class, must be first field */
    GLuint primitive;
 
    GLboolean emit_state_always;
-   GLboolean tmp_fallback;
    GLboolean no_batch_wrap;
 
    struct {
       struct brw_state_flags dirty;
-      struct brw_tracked_state **atoms;
-      GLuint nr_atoms;
 
-      GLuint nr_draw_regions;
-      struct intel_region *draw_regions[MAX_DRAW_BUFFERS];
+      GLuint nr_color_regions;
+      struct intel_region *color_regions[MAX_DRAW_BUFFERS];
       struct intel_region *depth_region;
 
       /**
@@ -436,11 +461,15 @@ struct brw_context
       int validated_bo_count;
    } state;
 
-   struct brw_cache cache;
+   struct brw_cache cache;  /** non-surface items */
+   struct brw_cache surface_cache;  /* surface items */
    struct brw_cached_batch_item *cached_batch_items;
 
    struct {
       struct brw_vertex_element inputs[VERT_ATTRIB_MAX];
+
+      struct brw_vertex_element *enabled[VERT_ATTRIB_MAX];
+      GLuint nr_enabled;
 
 #define BRW_NR_UPLOAD_BUFS 17
 #define BRW_UPLOAD_INIT_SIZE (128*1024)
@@ -465,8 +494,15 @@ struct brw_context
        */
       const struct _mesa_index_buffer *ib;
 
+      /* Updates to these fields are signaled by BRW_NEW_INDEX_BUFFER. */
       dri_bo *bo;
       unsigned int offset;
+      unsigned int size;
+      /* Offset to index buffer index to use in CMD_3D_PRIM so that we can
+       * avoid re-uploading the IB packet over and over if we're actually
+       * referencing the same index buffer.
+       */
+      unsigned int start_vertex_offset;
    } ib;
 
    /* Active vertex program: 
@@ -512,18 +548,13 @@ struct brw_context
    /* BRW_NEW_CURBE_OFFSETS: 
     */
    struct {
-      GLuint wm_start;
-      GLuint wm_size;
+      GLuint wm_start;  /**< pos of first wm const in CURBE buffer */
+      GLuint wm_size;   /**< number of float[4] consts, multiple of 16 */
       GLuint clip_start;
       GLuint clip_size;
       GLuint vs_start;
       GLuint vs_size;
       GLuint total_size;
-
-      /* Dynamic tracker which changes to reflect the state referenced
-       * by active fp and vp program parameters:
-       */
-      struct brw_tracked_state tracked_state;
 
       dri_bo *curbe_bo;
       /** Offset within curbe_bo of space for current curbe entry */
@@ -545,6 +576,11 @@ struct brw_context
 
       dri_bo *prog_bo;
       dri_bo *state_bo;
+
+      /** Binding table of pointers to surf_bo entries */
+      dri_bo *bind_bo;
+      dri_bo *surf_bo[BRW_VS_MAX_SURF];
+      GLuint nr_surfaces;      
    } vs;
 
    struct {
@@ -576,9 +612,10 @@ struct brw_context
       struct brw_wm_prog_data *prog_data;
       struct brw_wm_compile *compile_data;
 
-      /* Input sizes, calculated from active vertex program:
+      /** Input sizes, calculated from active vertex program.
+       * One bit per fragment program input attribute.
        */
-      GLuint input_size_masks[4];
+      GLbitfield input_size_masks[4];
 
       /** Array of surface default colors (texture border color) */
       dri_bo *sdc_bo[BRW_MAX_TEX_UNIT];
@@ -587,7 +624,7 @@ struct brw_context
       GLuint nr_surfaces;      
 
       GLuint max_threads;
-      dri_bo *scratch_buffer;
+      dri_bo *scratch_bo;
 
       GLuint sampler_count;
       dri_bo *sampler_bo;
@@ -627,8 +664,6 @@ struct brw_context
  * brw_vtbl.c
  */
 void brwInitVtbl( struct brw_context *brw );
-void brw_do_flush( struct brw_context *brw, 
-		   GLuint flags );
 
 /*======================================================================
  * brw_context.c
@@ -653,10 +688,6 @@ void brw_debug_batch(struct intel_context *intel);
 /*======================================================================
  * brw_tex.c
  */
-void brwUpdateTextureState( struct intel_context *intel );
-void brw_FrameBufferTexInit( struct brw_context *brw,
-			     struct intel_region *region );
-void brw_FrameBufferTexDestroy( struct brw_context *brw );
 void brw_validate_textures( struct brw_context *brw );
 
 
@@ -670,8 +701,12 @@ void brwInitFragProgFuncs( struct dd_function_table *functions );
  */
 void brw_upload_urb_fence(struct brw_context *brw);
 
-void brw_upload_constant_buffer_state(struct brw_context *brw);
+/* brw_curbe.c
+ */
+void brw_upload_cs_urb_state(struct brw_context *brw);
 
+/* brw_disasm.c */
+int brw_disasm (FILE *file, struct brw_instruction *inst);
 
 /*======================================================================
  * Inline conversion functions.  These are better-typed than the
@@ -683,7 +718,29 @@ brw_context( GLcontext *ctx )
    return (struct brw_context *)ctx;
 }
 
-#define DO_SETUP_BITS ((1<<(FRAG_ATTRIB_MAX)) - 1)
+static INLINE struct brw_vertex_program *
+brw_vertex_program(struct gl_vertex_program *p)
+{
+   return (struct brw_vertex_program *) p;
+}
+
+static INLINE const struct brw_vertex_program *
+brw_vertex_program_const(const struct gl_vertex_program *p)
+{
+   return (const struct brw_vertex_program *) p;
+}
+
+static INLINE struct brw_fragment_program *
+brw_fragment_program(struct gl_fragment_program *p)
+{
+   return (struct brw_fragment_program *) p;
+}
+
+static INLINE const struct brw_fragment_program *
+brw_fragment_program_const(const struct gl_fragment_program *p)
+{
+   return (const struct brw_fragment_program *) p;
+}
 
 #endif
 

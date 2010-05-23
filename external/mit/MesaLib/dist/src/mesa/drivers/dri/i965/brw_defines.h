@@ -139,6 +139,7 @@
 #define BRW_CLIPMODE_CLIP_NON_REJECTED   2
 #define BRW_CLIPMODE_REJECT_ALL          3
 #define BRW_CLIPMODE_ACCEPT_ALL          4
+#define BRW_CLIPMODE_KERNEL_CLIP         5
 
 #define BRW_CLIP_NDCSPACE     0
 #define BRW_CLIP_SCREENSPACE  1
@@ -225,6 +226,24 @@
 
 #define BRW_RASTRULE_UPPER_LEFT  0    
 #define BRW_RASTRULE_UPPER_RIGHT 1
+/* These are listed as "Reserved, but not seen as useful"
+ * in Intel documentation (page 212, "Point Rasterization Rule",
+ * section 7.4 "SF Pipeline State Summary", of document
+ * "Intel® 965 Express Chipset Family and Intel® G35 Express
+ * Chipset Graphics Controller Programmer's Reference Manual,
+ * Volume 2: 3D/Media", Revision 1.0b as of January 2008,
+ * available at 
+ *     http://intellinuxgraphics.org/documentation.html
+ * at the time of this writing).
+ *
+ * These appear to be supported on at least some
+ * i965-family devices, and the BRW_RASTRULE_LOWER_RIGHT
+ * is useful when using OpenGL to render to a FBO
+ * (which has the pixel coordinate Y orientation inverted
+ * with respect to the normal OpenGL pixel coordinate system).
+ */
+#define BRW_RASTRULE_LOWER_LEFT  2
+#define BRW_RASTRULE_LOWER_RIGHT 3
 
 #define BRW_RENDERTARGET_CLAMPRANGE_UNORM    0
 #define BRW_RENDERTARGET_CLAMPRANGE_SNORM    1
@@ -349,9 +368,10 @@
 #define BRW_SURFACEFORMAT_L8A8_UNORM                     0x114 
 #define BRW_SURFACEFORMAT_I16_FLOAT                      0x115
 #define BRW_SURFACEFORMAT_L16_FLOAT                      0x116
-#define BRW_SURFACEFORMAT_A16_FLOAT                      0x117 
-#define BRW_SURFACEFORMAT_R5G5_SNORM_B6_UNORM            0x119 
-#define BRW_SURFACEFORMAT_B5G5R5X1_UNORM                 0x11A 
+#define BRW_SURFACEFORMAT_A16_FLOAT                      0x117
+#define BRW_SURFACEFORMAT_L8A8_UNORM_SRGB                0x118
+#define BRW_SURFACEFORMAT_R5G5_SNORM_B6_UNORM            0x119
+#define BRW_SURFACEFORMAT_B5G5R5X1_UNORM                 0x11A
 #define BRW_SURFACEFORMAT_B5G5R5X1_UNORM_SRGB            0x11B
 #define BRW_SURFACEFORMAT_R8G8_SSCALED                   0x11C
 #define BRW_SURFACEFORMAT_R8G8_USCALED                   0x11D
@@ -368,6 +388,7 @@
 #define BRW_SURFACEFORMAT_A4P4_UNORM                     0x148
 #define BRW_SURFACEFORMAT_R8_SSCALED                     0x149
 #define BRW_SURFACEFORMAT_R8_USCALED                     0x14A
+#define BRW_SURFACEFORMAT_L8_UNORM_SRGB                  0x14C
 #define BRW_SURFACEFORMAT_R1_UINT                        0x181 
 #define BRW_SURFACEFORMAT_YCRCB_NORMAL                   0x182 
 #define BRW_SURFACEFORMAT_YCRCB_SWAPUVY                  0x183 
@@ -450,8 +471,9 @@
 #define BRW_CONDITIONAL_GE    4
 #define BRW_CONDITIONAL_L     5
 #define BRW_CONDITIONAL_LE    6
-#define BRW_CONDITIONAL_C     7
+#define BRW_CONDITIONAL_R     7
 #define BRW_CONDITIONAL_O     8
+#define BRW_CONDITIONAL_U     9
 
 #define BRW_DEBUG_NONE        0
 #define BRW_DEBUG_BREAKPOINT  1
@@ -491,6 +513,7 @@
 #define BRW_OPCODE_RSL        11
 #define BRW_OPCODE_ASR        12
 #define BRW_OPCODE_CMP        16
+#define BRW_OPCODE_CMPN       17
 #define BRW_OPCODE_JMPI       32
 #define BRW_OPCODE_IF         34
 #define BRW_OPCODE_IFF        35
@@ -650,6 +673,17 @@
 #define BRW_SAMPLER_MESSAGE_SIMD8_LD                  3
 #define BRW_SAMPLER_MESSAGE_SIMD16_LD                 3
 
+#define BRW_SAMPLER_MESSAGE_SAMPLE_IGDNG            0
+#define BRW_SAMPLER_MESSAGE_SAMPLE_BIAS_IGDNG       1
+#define BRW_SAMPLER_MESSAGE_SAMPLE_LOD_IGDNG        2
+#define BRW_SAMPLER_MESSAGE_SAMPLE_COMPARE_IGDNG    3
+
+/* for IGDNG only */
+#define BRW_SAMPLER_SIMD_MODE_SIMD4X2                   0
+#define BRW_SAMPLER_SIMD_MODE_SIMD8                     1
+#define BRW_SAMPLER_SIMD_MODE_SIMD16                    2
+#define BRW_SAMPLER_SIMD_MODE_SIMD32_64                 3
+
 #define BRW_DATAPORT_OWORD_BLOCK_1_OWORDLOW   0
 #define BRW_DATAPORT_OWORD_BLOCK_1_OWORDHIGH  1
 #define BRW_DATAPORT_OWORD_BLOCK_2_OWORDS     2
@@ -734,7 +768,7 @@
 
 
 #define CMD_URB_FENCE                 0x6000
-#define CMD_CONST_BUFFER_STATE        0x6001
+#define CMD_CS_URB_STATE              0x6001
 #define CMD_CONST_BUFFER              0x6002
 
 #define CMD_STATE_BASE_ADDRESS        0x6101
@@ -799,8 +833,11 @@
 #include "intel_chipset.h"
 
 #define BRW_IS_G4X(brw)         (IS_G4X((brw)->intel.intelScreen->deviceID))
-#define CMD_PIPELINE_SELECT(brw)        (BRW_IS_G4X(brw) ? CMD_PIPELINE_SELECT_GM45 : CMD_PIPELINE_SELECT_965)
-#define CMD_VF_STATISTICS(brw)          (BRW_IS_G4X(brw) ? CMD_VF_STATISTICS_GM45 : CMD_VF_STATISTICS_965)
-#define URB_SIZES(brw)                  (BRW_IS_G4X(brw) ? 384 : 256)  /* 512 bit units */
+#define BRW_IS_IGDNG(brw)         (IS_IGDNG((brw)->intel.intelScreen->deviceID))
+#define BRW_IS_965(brw)         (!(BRW_IS_G4X(brw) || BRW_IS_IGDNG(brw)))
+#define CMD_PIPELINE_SELECT(brw)        ((BRW_IS_G4X(brw) || BRW_IS_IGDNG(brw)) ? CMD_PIPELINE_SELECT_GM45 : CMD_PIPELINE_SELECT_965)
+#define CMD_VF_STATISTICS(brw)          ((BRW_IS_G4X(brw) || BRW_IS_IGDNG(brw)) ? CMD_VF_STATISTICS_GM45 : CMD_VF_STATISTICS_965)
+#define URB_SIZES(brw)                  (BRW_IS_IGDNG(brw) ? 1024 : \
+                                         (BRW_IS_G4X(brw) ? 384 : 256))  /* 512 bit units */
 
 #endif

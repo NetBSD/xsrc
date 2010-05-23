@@ -32,19 +32,11 @@
 #include <string.h>
 #include <stdlib.h>
 #include "main/mtypes.h"
+#include "main/cpuinfo.h"
 #include "main/extensions.h"
 #include "glapi/dispatch.h"
 #include "utils.h"
 
-int driDispatchRemapTable[ driDispatchRemapTable_size ];
-
-#if defined(USE_X86_ASM)
-#include "x86/common_x86_asm.h"
-#endif
-
-#if defined(USE_PPC_ASM)
-#include "ppc/common_ppc_features.h"
-#endif
 
 unsigned
 driParseDebugString( const char * debug, 
@@ -93,12 +85,8 @@ unsigned
 driGetRendererString( char * buffer, const char * hardware_name,
 		      const char * driver_date, GLuint agp_mode )
 {
-#define MAX_INFO   4
-   const char * cpu[MAX_INFO];
-   unsigned   next = 0;
-   unsigned   i;
-   unsigned   offset;
-
+   unsigned offset;
+   char *cpu;
 
    offset = sprintf( buffer, "Mesa DRI %s %s", hardware_name, driver_date );
 
@@ -118,59 +106,10 @@ driGetRendererString( char * buffer, const char * hardware_name,
 
    /* Append any CPU-specific information.
     */
-#ifdef USE_X86_ASM
-   if ( _mesa_x86_cpu_features ) {
-      cpu[next] = " x86";
-      next++;
-   }
-# ifdef USE_MMX_ASM
-   if ( cpu_has_mmx ) {
-      cpu[next] = (cpu_has_mmxext) ? "/MMX+" : "/MMX";
-      next++;
-   }
-# endif
-# ifdef USE_3DNOW_ASM
-   if ( cpu_has_3dnow ) {
-      cpu[next] = (cpu_has_3dnowext) ? "/3DNow!+" : "/3DNow!";
-      next++;
-   }
-# endif
-# ifdef USE_SSE_ASM
-   if ( cpu_has_xmm ) {
-      cpu[next] = (cpu_has_xmm2) ? "/SSE2" : "/SSE";
-      next++;
-   }
-# endif
-
-#elif defined(USE_SPARC_ASM)
-
-   cpu[0] = " SPARC";
-   next = 1;
-
-#elif defined(USE_PPC_ASM)
-   if ( _mesa_ppc_cpu_features ) {
-      cpu[next] = (cpu_has_64) ? " PowerPC 64" : " PowerPC";
-      next++;
-   }
-
-# ifdef USE_VMX_ASM
-   if ( cpu_has_vmx ) {
-      cpu[next] = "/Altivec";
-      next++;
-   }
-# endif
-
-   if ( ! cpu_has_fpu ) {
-      cpu[next] = "/No FPU";
-      next++;
-   }
-#endif
-
-   for ( i = 0 ; i < next ; i++ ) {
-      const size_t len = strlen( cpu[i] );
-
-      strncpy( & buffer[ offset ], cpu[i], len );
-      offset += len;
+   cpu = _mesa_get_cpu_string();
+   if (cpu) {
+      offset += sprintf(buffer + offset, " %s", cpu);
+      _mesa_free(cpu);
    }
 
    return offset;
@@ -179,13 +118,18 @@ driGetRendererString( char * buffer, const char * hardware_name,
 
 
 
+#define need_GL_ARB_draw_buffers
 #define need_GL_ARB_multisample
+#define need_GL_ARB_texture_compression
 #define need_GL_ARB_transpose_matrix
+#define need_GL_ARB_vertex_buffer_object
 #define need_GL_ARB_window_pos
 #define need_GL_EXT_compiled_vertex_array
+#define need_GL_EXT_multi_draw_arrays
 #define need_GL_EXT_polygon_offset
 #define need_GL_EXT_texture_object
 #define need_GL_EXT_vertex_array
+#define need_GL_IBM_multimode_draw_arrays
 #define need_GL_MESA_window_pos
 
 /* These are needed in *all* drivers because Mesa internally implements
@@ -195,17 +139,22 @@ driGetRendererString( char * buffer, const char * hardware_name,
 #define need_GL_EXT_blend_func_separate
 #define need_GL_NV_vertex_program
 
-#include "extension_helper.h"
+#include "main/remap_helper.h"
 
 static const struct dri_extension all_mesa_extensions[] = {
+   { "GL_ARB_draw_buffers",          GL_ARB_draw_buffers_functions },
    { "GL_ARB_multisample",           GL_ARB_multisample_functions },
+   { "GL_ARB_texture_compression",   GL_ARB_texture_compression_functions },
    { "GL_ARB_transpose_matrix",      GL_ARB_transpose_matrix_functions },
+   { "GL_ARB_vertex_buffer_object",  GL_ARB_vertex_buffer_object_functions},
    { "GL_ARB_window_pos",            GL_ARB_window_pos_functions },
    { "GL_EXT_blend_func_separate",   GL_EXT_blend_func_separate_functions },
    { "GL_EXT_compiled_vertex_array", GL_EXT_compiled_vertex_array_functions },
+   { "GL_EXT_multi_draw_arrays",     GL_EXT_multi_draw_arrays_functions },
    { "GL_EXT_polygon_offset",        GL_EXT_polygon_offset_functions },
    { "GL_EXT_texture_object",        GL_EXT_texture_object_functions },
    { "GL_EXT_vertex_array",          GL_EXT_vertex_array_functions },
+   { "GL_IBM_multimode_draw_arrays", GL_IBM_multimode_draw_arrays_functions },
    { "GL_MESA_window_pos",           GL_MESA_window_pos_functions },
    { "GL_NV_vertex_program",         GL_NV_vertex_program_functions },
    { NULL,                           NULL }
@@ -213,8 +162,12 @@ static const struct dri_extension all_mesa_extensions[] = {
 
 
 /**
- * Enable extensions supported by the driver.
+ * Enable and map extensions supported by the driver.
  * 
+ * When ctx is NULL, extensions are not enabled, but their functions
+ * are still mapped.  When extensions_to_enable is NULL, all static
+ * functions known to mesa core are mapped.
+ *
  * \bug
  * ARB_imaging isn't handled properly.  In Mesa, enabling ARB_imaging also
  * enables all the sub-extensions that are folded into it.  This means that
@@ -229,16 +182,21 @@ void driInitExtensions( GLcontext * ctx,
    unsigned   i;
 
    if ( first_time ) {
-      for ( i = 0 ; i < driDispatchRemapTable_size ; i++ ) {
-	 driDispatchRemapTable[i] = -1;
-      }
-
       first_time = 0;
-      driInitExtensions( ctx, all_mesa_extensions, GL_FALSE );
+      driInitExtensions( NULL, all_mesa_extensions, GL_FALSE );
    }
 
    if ( (ctx != NULL) && enable_imaging ) {
       _mesa_enable_imaging_extensions( ctx );
+   }
+
+   /* The caller is too lazy to list any extension */
+   if ( extensions_to_enable == NULL ) {
+      /* Map the static functions.  Together with those mapped by remap
+       * table, this should cover everything mesa core knows.
+       */
+      _mesa_map_static_functions();
+      return;
    }
 
    for ( i = 0 ; extensions_to_enable[i].name != NULL ; i++ ) {
@@ -250,78 +208,18 @@ void driInitExtensions( GLcontext * ctx,
 
 
 /**
- * Enable and add dispatch functions for a single extension
+ * Enable and map functions for a single extension
  * 
  * \param ctx  Context where extension is to be enabled.
  * \param ext  Extension that is to be enabled.
  * 
- * \sa driInitExtensions, _mesa_enable_extension, _glapi_add_entrypoint
- *
- * \todo
- * Determine if it would be better to use \c strlen instead of the hardcoded
- * for-loops.
+ * \sa driInitExtensions, _mesa_enable_extension, _mesa_map_function_array
  */
 void driInitSingleExtension( GLcontext * ctx,
 			     const struct dri_extension * ext )
 {
-    unsigned i;
-
-
     if ( ext->functions != NULL ) {
-	for ( i = 0 ; ext->functions[i].strings != NULL ; i++ ) {
-	    const char * functions[16];
-	    const char * parameter_signature;
-	    const char * str = ext->functions[i].strings;
-	    unsigned j;
-	    unsigned offset;
-
-
-	    /* Separate the parameter signature from the rest of the string.
-	     * If the parameter signature is empty (i.e., the string starts
-	     * with a NUL character), then the function has a void parameter
-	     * list.
-	     */
-	    parameter_signature = str;
-	    while ( str[0] != '\0' ) {
-		str++;
-	    }
-	    str++;
-
-
-	    /* Divide the string into the substrings that name each
-	     * entry-point for the function.
-	     */
-	    for ( j = 0 ; j < 16 ; j++ ) {
-		if ( str[0] == '\0' ) {
-		    functions[j] = NULL;
-		    break;
-		}
-
-		functions[j] = str;
-
-		while ( str[0] != '\0' ) {
-		    str++;
-		}
-		str++;
-	    }
-
-
-	    /* Add each entry-point to the dispatch table.
-	     */
-	    offset = _glapi_add_dispatch( functions, parameter_signature );
-	    if (offset == -1) {
-		fprintf(stderr, "DISPATCH ERROR! _glapi_add_dispatch failed "
-			"to add %s!\n", functions[0]);
-	    }
-	    else if (ext->functions[i].remap_index != -1) {
-		driDispatchRemapTable[ ext->functions[i].remap_index ] = 
-		  offset;
-	    }
-	    else if (ext->functions[i].offset != offset) {
-		fprintf(stderr, "DISPATCH ERROR! %s -> %u != %u\n",
-			functions[0], offset, ext->functions[i].offset);
-	    }
-	}
+       _mesa_map_function_array(ext->functions);
     }
 
     if ( ctx != NULL ) {
@@ -504,6 +402,9 @@ GLboolean driClipRectToFramebuffer( const GLframebuffer *buffer,
  *                      \c GLX_SWAP_UNDEFINED_OML.  See the
  *                      GLX_OML_swap_method extension spec for more details.
  * \param num_db_modes  Number of entries in \c db_modes.
+ * \param msaa_samples  Array of msaa sample count. 0 represents a visual
+ *                      without a multisample buffer.
+ * \param num_msaa_modes Number of entries in \c msaa_samples.
  * \param visType       GLX visual type.  Usually either \c GLX_TRUE_COLOR or
  *                      \c GLX_DIRECT_COLOR.
  * 
@@ -523,7 +424,8 @@ __DRIconfig **
 driCreateConfigs(GLenum fb_format, GLenum fb_type,
 		 const uint8_t * depth_bits, const uint8_t * stencil_bits,
 		 unsigned num_depth_stencil_bits,
-		 const GLenum * db_modes, unsigned num_db_modes)
+		 const GLenum * db_modes, unsigned num_db_modes,
+		 const uint8_t * msaa_samples, unsigned num_msaa_modes)
 {
    static const uint8_t bits_table[4][4] = {
      /* R  G  B  A */
@@ -583,9 +485,7 @@ driCreateConfigs(GLenum fb_format, GLenum fb_type,
    int index;
    __DRIconfig **configs, **c;
    __GLcontextModes *modes;
-   unsigned i;
-   unsigned j;
-   unsigned k;
+   unsigned i, j, k, h;
    unsigned num_modes;
    unsigned num_accum_bits = 2;
 
@@ -658,7 +558,7 @@ driCreateConfigs(GLenum fb_format, GLenum fb_type,
 	 break;
    }
 
-   num_modes = num_depth_stencil_bits * num_db_modes * num_accum_bits;
+   num_modes = num_depth_stencil_bits * num_db_modes * num_accum_bits * num_msaa_modes;
    configs = _mesa_calloc((num_modes + 1) * sizeof *configs);
    if (configs == NULL)
        return NULL;
@@ -666,66 +566,72 @@ driCreateConfigs(GLenum fb_format, GLenum fb_type,
     c = configs;
     for ( k = 0 ; k < num_depth_stencil_bits ; k++ ) {
 	for ( i = 0 ; i < num_db_modes ; i++ ) {
-	    for ( j = 0 ; j < num_accum_bits ; j++ ) {
-		*c = _mesa_malloc (sizeof **c);
-		modes = &(*c)->modes;
-		c++;
+	    for ( h = 0 ; h < num_msaa_modes; h++ ) {
+	    	for ( j = 0 ; j < num_accum_bits ; j++ ) {
+		    *c = _mesa_malloc (sizeof **c);
+		    modes = &(*c)->modes;
+		    c++;
 
-		memset(modes, 0, sizeof *modes);
-		modes->redBits   = bits[0];
-		modes->greenBits = bits[1];
-		modes->blueBits  = bits[2];
-		modes->alphaBits = bits[3];
-		modes->redMask   = masks[0];
-		modes->greenMask = masks[1];
-		modes->blueMask  = masks[2];
-		modes->alphaMask = masks[3];
-		modes->rgbBits   = modes->redBits + modes->greenBits
-		    + modes->blueBits + modes->alphaBits;
+		    memset(modes, 0, sizeof *modes);
+		    modes->redBits   = bits[0];
+		    modes->greenBits = bits[1];
+		    modes->blueBits  = bits[2];
+		    modes->alphaBits = bits[3];
+		    modes->redMask   = masks[0];
+		    modes->greenMask = masks[1];
+		    modes->blueMask  = masks[2];
+		    modes->alphaMask = masks[3];
+		    modes->rgbBits   = modes->redBits + modes->greenBits
+		    	+ modes->blueBits + modes->alphaBits;
 
-		modes->accumRedBits   = 16 * j;
-		modes->accumGreenBits = 16 * j;
-		modes->accumBlueBits  = 16 * j;
-		modes->accumAlphaBits = (masks[3] != 0) ? 16 * j : 0;
-		modes->visualRating = (j == 0) ? GLX_NONE : GLX_SLOW_CONFIG;
+		    modes->accumRedBits   = 16 * j;
+		    modes->accumGreenBits = 16 * j;
+		    modes->accumBlueBits  = 16 * j;
+		    modes->accumAlphaBits = (masks[3] != 0) ? 16 * j : 0;
+		    modes->visualRating = (j == 0) ? GLX_NONE : GLX_SLOW_CONFIG;
 
-		modes->stencilBits = stencil_bits[k];
-		modes->depthBits = depth_bits[k];
+		    modes->stencilBits = stencil_bits[k];
+		    modes->depthBits = depth_bits[k];
 
-		modes->transparentPixel = GLX_NONE;
-		modes->transparentRed = GLX_DONT_CARE;
-		modes->transparentGreen = GLX_DONT_CARE;
-		modes->transparentBlue = GLX_DONT_CARE;
-		modes->transparentAlpha = GLX_DONT_CARE;
-		modes->transparentIndex = GLX_DONT_CARE;
-		modes->visualType = GLX_DONT_CARE;
-		modes->renderType = GLX_RGBA_BIT;
-		modes->drawableType = GLX_WINDOW_BIT;
-		modes->rgbMode = GL_TRUE;
+		    modes->transparentPixel = GLX_NONE;
+		    modes->transparentRed = GLX_DONT_CARE;
+		    modes->transparentGreen = GLX_DONT_CARE;
+		    modes->transparentBlue = GLX_DONT_CARE;
+		    modes->transparentAlpha = GLX_DONT_CARE;
+		    modes->transparentIndex = GLX_DONT_CARE;
+		    modes->visualType = GLX_DONT_CARE;
+		    modes->renderType = GLX_RGBA_BIT;
+		    modes->drawableType = GLX_WINDOW_BIT;
+		    modes->rgbMode = GL_TRUE;
 
-		if ( db_modes[i] == GLX_NONE ) {
-		    modes->doubleBufferMode = GL_FALSE;
-		}
-		else {
-		    modes->doubleBufferMode = GL_TRUE;
-		    modes->swapMethod = db_modes[i];
-		}
+		    if ( db_modes[i] == GLX_NONE ) {
+		    	modes->doubleBufferMode = GL_FALSE;
+		    }
+		    else {
+		    	modes->doubleBufferMode = GL_TRUE;
+		    	modes->swapMethod = db_modes[i];
+		    }
 
-		modes->haveAccumBuffer = ((modes->accumRedBits +
+		    modes->samples = msaa_samples[h];
+		    modes->sampleBuffers = modes->samples ? 1 : 0;
+
+
+		    modes->haveAccumBuffer = ((modes->accumRedBits +
 					   modes->accumGreenBits +
 					   modes->accumBlueBits +
 					   modes->accumAlphaBits) > 0);
-		modes->haveDepthBuffer = (modes->depthBits > 0);
-		modes->haveStencilBuffer = (modes->stencilBits > 0);
+		    modes->haveDepthBuffer = (modes->depthBits > 0);
+		    modes->haveStencilBuffer = (modes->stencilBits > 0);
 
-		modes->bindToTextureRgb = GL_TRUE;
-		modes->bindToTextureRgba = GL_TRUE;
-		modes->bindToMipmapTexture = GL_FALSE;
-		modes->bindToTextureTargets = modes->rgbMode ?
-		    __DRI_ATTRIB_TEXTURE_1D_BIT |
-		    __DRI_ATTRIB_TEXTURE_2D_BIT |
-		    __DRI_ATTRIB_TEXTURE_RECTANGLE_BIT :
-		    0;
+		    modes->bindToTextureRgb = GL_TRUE;
+		    modes->bindToTextureRgba = GL_TRUE;
+		    modes->bindToMipmapTexture = GL_FALSE;
+		    modes->bindToTextureTargets = modes->rgbMode ?
+		    	__DRI_ATTRIB_TEXTURE_1D_BIT |
+		    	__DRI_ATTRIB_TEXTURE_2D_BIT |
+		    	__DRI_ATTRIB_TEXTURE_RECTANGLE_BIT :
+		    	0;
+		}
 	    }
 	}
     }
@@ -734,9 +640,10 @@ driCreateConfigs(GLenum fb_format, GLenum fb_type,
     return configs;
 }
 
-const __DRIconfig **driConcatConfigs(__DRIconfig **a, __DRIconfig **b)
+__DRIconfig **driConcatConfigs(__DRIconfig **a,
+			       __DRIconfig **b)
 {
-    const __DRIconfig **all;
+    __DRIconfig **all;
     int i, j, index;
 
     i = 0;

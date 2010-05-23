@@ -56,19 +56,6 @@
 void __glXDumpDrawBuffer(__GLXcontext * ctx);
 #endif
 
-#ifdef USE_SPARC_ASM
-static void _glx_mesa_init_sparc_glapi_relocs(void);
-static int _mesa_sparc_needs_init = 1;
-#define INIT_MESA_SPARC do {               \
-   if (_mesa_sparc_needs_init) {           \
-      _glx_mesa_init_sparc_glapi_relocs(); \
-      _mesa_sparc_needs_init = 0;          \
-   }                                       \
-  } while(0)
-#else
-#define INIT_MESA_SPARC do { } while(0)
-#endif
-
 /*
 ** You can set this cell to 1 to force the gl drawing stuff to be
 ** one command per packet
@@ -115,19 +102,19 @@ static
 XEXT_GENERATE_ERROR_STRING(__glXErrorString, __glXExtensionName,
                            __GLX_NUMBER_ERRORS, error_list)
 
-     static /* const */ XExtensionHooks __glXExtensionHooks = {
-        NULL,                   /* create_gc */
-        NULL,                   /* copy_gc */
-        NULL,                   /* flush_gc */
-        NULL,                   /* free_gc */
-        NULL,                   /* create_font */
-        NULL,                   /* free_font */
-        __glXCloseDisplay,      /* close_display */
-        NULL,                   /* wire_to_event */
-        NULL,                   /* event_to_wire */
-        NULL,                   /* error */
-        __glXErrorString,       /* error_string */
-     };
+static /* const */ XExtensionHooks __glXExtensionHooks = {
+  NULL,                   /* create_gc */
+  NULL,                   /* copy_gc */
+  NULL,                   /* flush_gc */
+  NULL,                   /* free_gc */
+  NULL,                   /* create_font */
+  NULL,                   /* free_font */
+  __glXCloseDisplay,      /* close_display */
+  NULL,                   /* wire_to_event */
+  NULL,                   /* event_to_wire */
+  NULL,                   /* error */
+  __glXErrorString,       /* error_string */
+};
 
 static
 XEXT_GENERATE_FIND_DISPLAY(__glXFindDisplay, __glXExtensionInfo,
@@ -162,6 +149,13 @@ FreeScreenConfigs(__GLXdisplayPrivate * priv)
       Xfree((char *) psc->serverGLXexts);
 
 #ifdef GLX_DIRECT_RENDERING
+      if (psc->driver_configs) {
+         unsigned int j;
+         for (j = 0; psc->driver_configs[j]; j++)
+            free((__DRIconfig *) psc->driver_configs[j]);
+         free(psc->driver_configs);
+         psc->driver_configs = NULL;
+      }
       if (psc->driScreen) {
          psc->driScreen->destroyScreen(psc);
          __glxHashDestroy(psc->drawHash);
@@ -224,15 +218,14 @@ QueryVersion(Display * dpy, int opcode, int *major, int *minor)
 {
 #ifdef USE_XCB
    xcb_connection_t *c = XGetXCBConnection(dpy);
-   xcb_glx_query_version_reply_t* reply =
-      xcb_glx_query_version_reply(c,
-                                  xcb_glx_query_version(c,
-                                                        GLX_MAJOR_VERSION,
-                                                        GLX_MINOR_VERSION),
-                                  NULL);
+   xcb_glx_query_version_reply_t *reply = xcb_glx_query_version_reply(c,
+                                                                      xcb_glx_query_version
+                                                                      (c,
+                                                                       GLX_MAJOR_VERSION,
+                                                                       GLX_MINOR_VERSION),
+                                                                      NULL);
 
-   if(reply->major_version != GLX_MAJOR_VERSION)
-   {
+   if (reply->major_version != GLX_MAJOR_VERSION) {
       free(reply);
       return GL_FALSE;
    }
@@ -550,7 +543,8 @@ getFBConfigs(Display * dpy, __GLXdisplayPrivate * priv, int screen)
    __GLXscreenConfigs *psc;
 
    psc = priv->screenConfigs + screen;
-   psc->serverGLXexts = __glXQueryServerString(dpy, priv->majorOpcode, screen, GLX_EXTENSIONS);
+   psc->serverGLXexts =
+      __glXQueryServerString(dpy, priv->majorOpcode, screen, GLX_EXTENSIONS);
 
    LockDisplay(dpy);
 
@@ -608,7 +602,8 @@ AllocAndFetchScreenConfigs(Display * dpy, __GLXdisplayPrivate * priv)
    memset(psc, 0, screens * sizeof(__GLXscreenConfigs));
    priv->screenConfigs = psc;
 
-   priv->serverGLXversion = __glXQueryServerString(dpy, priv->majorOpcode, 0, GLX_VERSION);
+   priv->serverGLXversion =
+      __glXQueryServerString(dpy, priv->majorOpcode, 0, GLX_VERSION);
    if (priv->serverGLXversion == NULL) {
       FreeScreenConfigs(priv);
       return GL_FALSE;
@@ -659,18 +654,6 @@ __glXInitialize(Display * dpy)
    Bool glx_direct, glx_accel;
 #endif
 
-#if defined(USE_XTHREADS)
-   {
-      static int firstCall = 1;
-      if (firstCall) {
-         /* initialize the GLX mutexes */
-         xmutex_init(&__glXmutex);
-         firstCall = 0;
-      }
-   }
-#endif
-
-   INIT_MESA_SPARC;
    /* The one and only long long lock */
    __glXLock();
 
@@ -785,7 +768,6 @@ __glXSetupForCommand(Display * dpy)
 
       if (gc->currentDpy == dpy) {
          /* Use opcode from gc because its right */
-         INIT_MESA_SPARC;
          return gc->majorOpcode;
       }
       else {
@@ -806,10 +788,10 @@ __glXSetupForCommand(Display * dpy)
 
 /**
  * Flush the drawing command transport buffer.
- * 
+ *
  * \param ctx  Context whose transport buffer is to be flushed.
  * \param pc   Pointer to first unused buffer location.
- * 
+ *
  * \todo
  * Modify this function to use \c ctx->pc instead of the explicit
  * \c pc parameter.
@@ -901,11 +883,11 @@ __glXSendLargeChunk(__GLXcontext * gc, GLint requestNumber,
 
 /**
  * Send a command that is too large for the GLXRender protocol request.
- * 
+ *
  * Send a large command, one that is too large for some reason to
  * send using the GLXRender protocol request.  One reason to send
  * a large command is to avoid copying the data.
- * 
+ *
  * \param ctx        GLX context
  * \param header     Header data.
  * \param headerLen  Size, in bytes, of the header data.  It is assumed that
@@ -979,74 +961,3 @@ __glXDumpDrawBuffer(__GLXcontext * ctx)
    }
 }
 #endif
-
-#ifdef  USE_SPARC_ASM
-/*
- * This is where our dispatch table's bounds are.
- * And the static mesa_init is taken directly from
- * Mesa's 'sparc.c' initializer.
- *
- * We need something like this here, because this version
- * of openGL/glx never initializes a Mesa context, and so
- * the address of the dispatch table pointer never gets stuffed
- * into the dispatch jump table otherwise.
- *
- * It matters only on SPARC, and only if you are using assembler
- * code instead of C-code indirect dispatch.
- *
- * -- FEM, 04.xii.03
- */
-extern unsigned int _mesa_sparc_glapi_begin;
-extern unsigned int _mesa_sparc_glapi_end;
-extern void __glapi_sparc_icache_flush(unsigned int *);
-
-static void
-_glx_mesa_init_sparc_glapi_relocs(void)
-{
-   unsigned int *insn_ptr, *end_ptr;
-   unsigned long disp_addr;
-
-   insn_ptr = &_mesa_sparc_glapi_begin;
-   end_ptr = &_mesa_sparc_glapi_end;
-   disp_addr = (unsigned long) &_glapi_Dispatch;
-
-   /*
-    * Verbatim from Mesa sparc.c.  It's needed because there doesn't
-    * seem to be a better way to do this:
-    *
-    * UNCONDITIONAL_JUMP ( (*_glapi_Dispatch) + entry_offset )
-    *
-    * This code is patching in the ADDRESS of the pointer to the
-    * dispatch table.  Hence, it must be called exactly once, because
-    * that address is not going to change.
-    *
-    * What it points to can change, but Mesa (and hence, we) assume
-    * that there is only one pointer.
-    *
-    */
-   while (insn_ptr < end_ptr) {
-#if ( defined(__sparc_v9__) && ( !defined(__linux__) || defined(__linux_64__) ) )
-/*
-	This code patches for 64-bit addresses.  This had better
-	not happen for Sparc/Linux, no matter what architecture we
-	are building for.  So, don't do this.
-
-        The 'defined(__linux_64__)' is used here as a placeholder for
-        when we do do 64-bit usermode on sparc linux.
-	*/
-      insn_ptr[0] |= (disp_addr >> (32 + 10));
-      insn_ptr[1] |= ((disp_addr & 0xffffffff) >> 10);
-      __glapi_sparc_icache_flush(&insn_ptr[0]);
-      insn_ptr[2] |= ((disp_addr >> 32) & ((1 << 10) - 1));
-      insn_ptr[3] |= (disp_addr & ((1 << 10) - 1));
-      __glapi_sparc_icache_flush(&insn_ptr[2]);
-      insn_ptr += 11;
-#else
-      insn_ptr[0] |= (disp_addr >> 10);
-      insn_ptr[1] |= (disp_addr & ((1 << 10) - 1));
-      __glapi_sparc_icache_flush(&insn_ptr[0]);
-      insn_ptr += 5;
-#endif
-   }
-}
-#endif /* sparc ASM in use */

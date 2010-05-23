@@ -192,6 +192,10 @@ __glTexParameterfv_size(GLenum e)
     case GL_TEXTURE_MAX_ANISOTROPY_EXT:
     case GL_TEXTURE_LOD_BIAS:
 /*      case GL_TEXTURE_LOD_BIAS_EXT:*/
+    case GL_TEXTURE_STORAGE_HINT_APPLE:
+    case GL_STORAGE_PRIVATE_APPLE:
+    case GL_STORAGE_CACHED_APPLE:
+    case GL_STORAGE_SHARED_APPLE:
     case GL_DEPTH_TEXTURE_MODE:
 /*      case GL_DEPTH_TEXTURE_MODE_ARB:*/
     case GL_TEXTURE_COMPARE_MODE:
@@ -240,6 +244,7 @@ __glTexEnvfv_size(GLenum e)
     case GL_OPERAND1_ALPHA:
     case GL_OPERAND2_ALPHA:
     case GL_OPERAND3_ALPHA_NV:
+    case GL_BUMP_TARGET_ATI:
     case GL_COORD_REPLACE_ARB:
 /*      case GL_COORD_REPLACE_NV:*/
         return 1;

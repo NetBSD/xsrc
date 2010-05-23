@@ -73,6 +73,10 @@ _mesa_init_teximage_fields(GLcontext *ctx, GLenum target,
 
 
 extern void
+_mesa_clear_texture_image(GLcontext *ctx, struct gl_texture_image *texImage);
+
+
+extern void
 _mesa_set_tex_image(struct gl_texture_object *tObj,
                     GLenum target, GLint level,
                     struct gl_texture_image *texImage);
@@ -81,6 +85,9 @@ _mesa_set_tex_image(struct gl_texture_object *tObj,
 extern struct gl_texture_object *
 _mesa_select_tex_object(GLcontext *ctx, const struct gl_texture_unit *texUnit,
                         GLenum target);
+
+extern struct gl_texture_object *
+_mesa_get_current_tex_object(GLcontext *ctx, GLenum target);
 
 
 extern struct gl_texture_image *
@@ -109,10 +116,6 @@ _mesa_test_proxy_teximage(GLcontext *ctx, GLenum target, GLint level,
 
 extern GLuint
 _mesa_tex_target_to_face(GLenum target);
-
-
-extern GLboolean
-_mesa_is_color_format(GLenum format);
 
 
 /**
@@ -161,11 +164,6 @@ _mesa_TexImage3DEXT( GLenum target, GLint level, GLenum internalformat,
                      GLsizei width, GLsizei height, GLsizei depth,
                      GLint border, GLenum format, GLenum type,
                      const GLvoid *pixels );
-
-
-extern void GLAPIENTRY
-_mesa_GetTexImage( GLenum target, GLint level,
-                   GLenum format, GLenum type, GLvoid *pixels );
 
 
 extern void GLAPIENTRY
@@ -259,9 +257,6 @@ _mesa_CompressedTexSubImage3DARB(GLenum target, GLint level, GLint xoffset,
                                  GLint yoffset, GLint zoffset, GLsizei width,
                                  GLsizei height, GLsizei depth, GLenum format,
                                  GLsizei imageSize, const GLvoid *data);
-
-extern void GLAPIENTRY
-_mesa_GetCompressedTexImageARB(GLenum target, GLint lod, GLvoid *img);
 
 /*@}*/
 

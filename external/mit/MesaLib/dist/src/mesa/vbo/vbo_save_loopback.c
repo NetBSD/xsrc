@@ -29,7 +29,6 @@
 #include "main/glheader.h"
 #include "main/enums.h"
 #include "main/imports.h"
-#include "main/macros.h"
 #include "main/mtypes.h"
 #include "glapi/dispatch.h"
 #include "glapi/glapi.h"
@@ -97,7 +96,7 @@ static void loopback_prim( GLcontext *ctx,
 
    if (0)
       _mesa_printf("loopback prim %s(%s,%s) verts %d..%d\n",
-		   _mesa_lookup_enum_by_nr(prim->mode),
+		   _mesa_lookup_prim_by_nr(prim->mode),
 		   prim->begin ? "begin" : "..",
 		   prim->end ? "end" : "..",
 		   start, 

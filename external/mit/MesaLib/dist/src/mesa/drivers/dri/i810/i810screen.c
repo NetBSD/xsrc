@@ -36,8 +36,6 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "main/imports.h"
 #include "main/context.h"
 #include "main/framebuffer.h"
-#include "main/fbobject.h"
-#include "main/matrix.h"
 #include "main/renderbuffer.h"
 #include "main/simple_list.h"
 #include "utils.h"
@@ -48,12 +46,8 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "i810state.h"
 #include "i810tex.h"
 #include "i810span.h"
-#include "i810tris.h"
-#include "i810ioctl.h"
 
 #include "GL/internal/dri_interface.h"
-
-extern const struct dri_extension card_extensions[];
 
 static const __DRIconfig **
 i810FillInModes( __DRIscreenPrivate *psp,
@@ -77,6 +71,7 @@ i810FillInModes( __DRIscreenPrivate *psp,
 
     uint8_t depth_bits_array[2];
     uint8_t stencil_bits_array[2];
+    uint8_t msaa_samples_array[1];
 
     depth_bits_array[0] = depth_bits;
     depth_bits_array[1] = depth_bits;
@@ -88,13 +83,16 @@ i810FillInModes( __DRIscreenPrivate *psp,
     stencil_bits_array[0] = 0;
     stencil_bits_array[1] = (stencil_bits == 0) ? 8 : stencil_bits;
 
+    msaa_samples_array[0] = 0;
+
     depth_buffer_factor = ((depth_bits != 0) || (stencil_bits != 0)) ? 2 : 1;
     back_buffer_factor  = (have_back_buffer) ? 2 : 1;
 
     configs = driCreateConfigs(GL_RGB, GL_UNSIGNED_SHORT_5_6_5,
 			       depth_bits_array, stencil_bits_array,
 			       depth_buffer_factor,
-			       back_buffer_modes, back_buffer_factor);
+			       back_buffer_modes, back_buffer_factor,
+                               msaa_samples_array, 1);
     if (configs == NULL) {
 	fprintf( stderr, "[%s:%u] Error creating FBConfig!\n",
 		 __func__, __LINE__ );
@@ -161,8 +159,6 @@ i810InitScreen(__DRIscreen *sPriv)
 				      &sPriv->drm_version, & drm_expected ) ) {
       return NULL;
    }
-
-   driInitExtensions( NULL, card_extensions, GL_TRUE );
 
    if (sPriv->devPrivSize != sizeof(I810DRIRec)) {
       fprintf(stderr,"\nERROR!  sizeof(I810DRIRec) does not match passed size from device driver\n");
@@ -289,7 +285,7 @@ i810CreateBuffer( __DRIscreenPrivate *driScrnPriv,
 
       {
          driRenderbuffer *frontRb
-            = driNewRenderbuffer(GL_RGBA,
+            = driNewRenderbuffer(MESA_FORMAT_ARGB8888,
                                  driScrnPriv->pFB,
                                  screen->cpp,
                                  /*screen->frontOffset*/0, screen->backPitch,
@@ -300,7 +296,7 @@ i810CreateBuffer( __DRIscreenPrivate *driScrnPriv,
 
       if (mesaVis->doubleBufferMode) {
          driRenderbuffer *backRb
-            = driNewRenderbuffer(GL_RGBA,
+            = driNewRenderbuffer(MESA_FORMAT_ARGB8888,
                                  screen->back.map,
                                  screen->cpp,
                                  screen->backOffset, screen->backPitch,
@@ -311,7 +307,7 @@ i810CreateBuffer( __DRIscreenPrivate *driScrnPriv,
 
       if (mesaVis->depthBits == 16) {
          driRenderbuffer *depthRb
-            = driNewRenderbuffer(GL_DEPTH_COMPONENT16,
+            = driNewRenderbuffer(MESA_FORMAT_Z16,
                                  screen->depth.map,
                                  screen->cpp,
                                  screen->depthOffset, screen->backPitch,
@@ -337,7 +333,7 @@ i810CreateBuffer( __DRIscreenPrivate *driScrnPriv,
 static void
 i810DestroyBuffer(__DRIdrawablePrivate *driDrawPriv)
 {
-    _mesa_unreference_framebuffer((GLframebuffer **)(&(driDrawPriv->driverPrivate)));
+   _mesa_reference_framebuffer((GLframebuffer **)(&(driDrawPriv->driverPrivate)), NULL);
 }
 
 const struct __DriverAPIRec driDriverAPI = {

@@ -39,7 +39,6 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "sis_context.h"
 #include "sis_dri.h"
 #include "sis_lock.h"
-#include "sis_span.h"
 
 #include "xmlpool.h"
 
@@ -77,6 +76,7 @@ sisFillInModes(__DRIscreenPrivate *psp, int bpp)
    };
    uint8_t depth_bits_array[4];
    uint8_t stencil_bits_array[4];
+   uint8_t msaa_samples_array[1];
 
    depth_bits_array[0] = 0;
    stencil_bits_array[0] = 0;
@@ -86,6 +86,8 @@ sisFillInModes(__DRIscreenPrivate *psp, int bpp)
    stencil_bits_array[2] = 8;
    depth_bits_array[3] = 32;
    stencil_bits_array[3] = 0;
+
+   msaa_samples_array[0] = 0;
 
    depth_buffer_factor = 4;
    back_buffer_factor = 2;
@@ -100,7 +102,8 @@ sisFillInModes(__DRIscreenPrivate *psp, int bpp)
 
    configs = driCreateConfigs(fb_format, fb_type, depth_bits_array,
 			      stencil_bits_array, depth_buffer_factor,
-			      back_buffer_modes, back_buffer_factor);
+			      back_buffer_modes, back_buffer_factor,
+                              msaa_samples_array, 1);
    if (configs == NULL) {
       fprintf(stderr, "[%s:%u] Error creating FBConfig!\n", __func__, __LINE__);
       return NULL;
@@ -217,7 +220,7 @@ sisCreateBuffer( __DRIscreenPrivate *driScrnPriv,
 static void
 sisDestroyBuffer(__DRIdrawablePrivate *driDrawPriv)
 {
-   _mesa_unreference_framebuffer((GLframebuffer **)(&(driDrawPriv->driverPrivate)));
+   _mesa_reference_framebuffer((GLframebuffer **)(&(driDrawPriv->driverPrivate)), NULL);
 }
 
 static void sisCopyBuffer( __DRIdrawablePrivate *dPriv )
@@ -293,18 +296,6 @@ sisInitScreen(__DRIscreenPrivate *psp)
 				   &psp->ddx_version, &ddx_expected,
 				   &psp->drm_version, &drm_expected))
       return NULL;
-
-   /* Calling driInitExtensions here, with a NULL context pointer,
-    * does not actually enable the extensions.  It just makes sure
-    * that all the dispatch offsets for all the extensions that
-    * *might* be enables are known.  This is needed because the
-    * dispatch offsets need to be known when _mesa_context_create is
-    * called, but we can't enable the extensions until we have a
-    * context pointer.
-    *
-    * Hello chicken.  Hello egg.  How are you two today?
-    */
-   driInitExtensions( NULL, card_extensions, GL_FALSE );
 
    psp->private = sisCreateScreen(psp);
 

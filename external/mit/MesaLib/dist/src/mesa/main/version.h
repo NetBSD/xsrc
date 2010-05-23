@@ -1,9 +1,9 @@
 /*
  * Mesa 3-D graphics library
- * Version:  7.4.4
+ * Version:  7.7.1
  *
  * Copyright (C) 1999-2008  Brian Paul   All Rights Reserved.
- * Copyright (C) 2009  VMware, Inc.  All Rights Reserved.
+ * Copyright (C) 2009-2010  VMware, Inc.  All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -30,9 +30,9 @@
 
 /* Mesa version */
 #define MESA_MAJOR 7
-#define MESA_MINOR 4
-#define MESA_PATCH 4
-#define MESA_VERSION_STRING "7.4.4"
+#define MESA_MINOR 7
+#define MESA_PATCH 1
+#define MESA_VERSION_STRING "7.7.1"
 
 /* To make version comparison easy */
 #define MESA_VERSION(a,b,c) (((a) << 16) + ((b) << 8) + (c))

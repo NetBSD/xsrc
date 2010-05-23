@@ -28,14 +28,11 @@
 #include "i830_context.h"
 #include "main/imports.h"
 #include "texmem.h"
-#include "intel_tex.h"
 #include "tnl/tnl.h"
 #include "tnl/t_vertex.h"
 #include "tnl/t_context.h"
 #include "tnl/t_pipeline.h"
-#include "utils.h"
 #include "intel_span.h"
-#include "intel_pixel.h"
 #include "intel_tris.h"
 
 /***************************************
@@ -47,7 +44,6 @@ i830InitDriverFunctions(struct dd_function_table *functions)
 {
    intelInitDriverFunctions(functions);
    i830InitStateFuncs(functions);
-   i830InitTextureFuncs(functions);
 }
 
 extern const struct tnl_pipeline_stage *intel_pipeline[];
@@ -73,6 +69,8 @@ i830CreateContext(const __GLcontextModes * mesaVis,
       return GL_FALSE;
    }
 
+   _math_matrix_ctr(&intel->ViewportMatrix);
+
    /* Initialize swrast, tnl driver tables: */
    intelInitSpanFuncs(ctx);
    intelInitTriFuncs(ctx);
@@ -96,6 +94,10 @@ i830CreateContext(const __GLcontextModes * mesaVis,
    ctx->Const.MaxCubeTextureLevels = 11;
    ctx->Const.MaxTextureRectSize = (1 << 11);
    ctx->Const.MaxTextureUnits = I830_TEX_UNITS;
+
+   ctx->Const.MaxTextureMaxAnisotropy = 2.0;
+
+   ctx->Const.MaxDrawBuffers = 1;
 
    _tnl_init_vertices(ctx, ctx->Const.MaxArrayLockSize + 12,
                       18 * sizeof(GLfloat));

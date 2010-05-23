@@ -28,7 +28,6 @@
 #include "ffb_xmesa.h"
 #include "main/context.h"
 #include "main/framebuffer.h"
-#include "main/matrix.h"
 #include "main/renderbuffer.h"
 #include "main/simple_list.h"
 #include "main/imports.h"
@@ -52,7 +51,6 @@
 #include "ffb_lines.h"
 #include "ffb_points.h"
 #include "ffb_state.h"
-#include "ffb_tex.h"
 #include "ffb_lock.h"
 #include "ffb_vtxfmt.h"
 #include "ffb_bitmap.h"
@@ -260,6 +258,8 @@ ffbCreateContext(const __GLcontextModes *mesaVis,
 	ctx->Const.MaxLineWidthAA = 1.0;
 	ctx->Const.LineWidthGranularity = 1.0;
 
+	ctx->Const.MaxDrawBuffers = 1;
+
 	/* Instead of having GCC emit these constants a zillion times
 	 * everywhere in the driver, put them here.
 	 */
@@ -345,7 +345,7 @@ ffbCreateBuffer(__DRIscreenPrivate *driScrnPriv,
 
       {
          driRenderbuffer *frontRb
-            = driNewRenderbuffer(GL_RGBA, NULL, bpp, offset, bogusPitch,
+            = driNewRenderbuffer(MESA_FORMAT_ARGB8888, NULL, bpp, offset, bogusPitch,
                                  driDrawPriv);
          ffbSetSpanFunctions(frontRb, mesaVis);
          _mesa_add_renderbuffer(fb, BUFFER_FRONT_LEFT, &frontRb->Base);
@@ -353,7 +353,7 @@ ffbCreateBuffer(__DRIscreenPrivate *driScrnPriv,
 
       if (mesaVis->doubleBufferMode) {
          driRenderbuffer *backRb
-            = driNewRenderbuffer(GL_RGBA, NULL, bpp, offset, bogusPitch,
+            = driNewRenderbuffer(MESA_FORMAT_ARGB8888, NULL, bpp, offset, bogusPitch,
                                  driDrawPriv);
          ffbSetSpanFunctions(backRb, mesaVis);
          _mesa_add_renderbuffer(fb, BUFFER_BACK_LEFT, &backRb->Base);
@@ -361,7 +361,7 @@ ffbCreateBuffer(__DRIscreenPrivate *driScrnPriv,
 
       if (mesaVis->depthBits == 16) {
          driRenderbuffer *depthRb
-            = driNewRenderbuffer(GL_DEPTH_COMPONENT16, NULL, bpp, offset,
+            = driNewRenderbuffer(MESA_FORMAT_Z16, NULL, bpp, offset,
                                  bogusPitch, driDrawPriv);
          ffbSetDepthFunctions(depthRb, mesaVis);
          _mesa_add_renderbuffer(fb, BUFFER_DEPTH, &depthRb->Base);
@@ -369,7 +369,7 @@ ffbCreateBuffer(__DRIscreenPrivate *driScrnPriv,
 
       if (mesaVis->stencilBits > 0 && !swStencil) {
          driRenderbuffer *stencilRb
-            = driNewRenderbuffer(GL_STENCIL_INDEX8_EXT, NULL, bpp, offset,
+            = driNewRenderbuffer(MESA_FORMAT_S8, NULL, bpp, offset,
                                  bogusPitch, driDrawPriv);
          ffbSetStencilFunctions(stencilRb, mesaVis);
          _mesa_add_renderbuffer(fb, BUFFER_STENCIL, &stencilRb->Base);
@@ -392,7 +392,7 @@ ffbCreateBuffer(__DRIscreenPrivate *driScrnPriv,
 static void
 ffbDestroyBuffer(__DRIdrawablePrivate *driDrawPriv)
 {
-   _mesa_unreference_framebuffer((GLframebuffer **)(&(driDrawPriv->driverPrivate)));
+   _mesa_reference_framebuffer((GLframebuffer **)(&(driDrawPriv->driverPrivate)), NULL);
 }
 
 
@@ -626,6 +626,7 @@ ffbFillInModes( __DRIscreenPrivate *psp,
 
    uint8_t depth_bits_array[3];
    uint8_t stencil_bits_array[3];
+   uint8_t msaa_samples_array[1];
 
    depth_bits_array[0] = 0;
    depth_bits_array[1] = depth_bits;
@@ -638,6 +639,8 @@ ffbFillInModes( __DRIscreenPrivate *psp,
    stencil_bits_array[0] = 0;
    stencil_bits_array[1] = 0;
    stencil_bits_array[2] = (stencil_bits == 0) ? 8 : stencil_bits;
+
+   msaa_samples_array[0] = 0;
 
    depth_buffer_factor = ((depth_bits != 0) || (stencil_bits != 0)) ? 3 : 1;
    back_buffer_factor  = (have_back_buffer) ? 3 : 1;
@@ -654,9 +657,10 @@ ffbFillInModes( __DRIscreenPrivate *psp,
    configs = driCreateConfigs(fb_format, fb_type,
 			      depth_bits_array, stencil_bits_array,
 			      depth_buffer_factor, back_buffer_modes,
-			      back_buffer_factor);
+			      back_buffer_factor,
+                               msaa_samples_array, 1);
    if (configs == NULL) {
-    fprintf(stderr, "[%s:%u] Error creating FBConfig!\n", __func__,
+      fprintf(stderr, "[%s:%u] Error creating FBConfig!\n", __func__,
               __LINE__);
       return NULL;
    }

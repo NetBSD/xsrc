@@ -56,7 +56,7 @@ static struct brw_reg get_vert_attr(struct brw_sf_compile *c,
 static GLboolean have_attr(struct brw_sf_compile *c,
 			   GLuint attr)
 {
-   return (c->key.attrs & (1<<attr)) ? 1 : 0;
+   return (c->key.attrs & BITFIELD64_BIT(attr)) ? 1 : 0;
 }
 
 /*********************************************************************** 
@@ -122,8 +122,8 @@ static void do_twoside_color( struct brw_sf_compile *c )
  * Flat shading
  */
 
-#define VERT_RESULT_COLOR_BITS ((1<<VERT_RESULT_COL0) | \
-                                 (1<<VERT_RESULT_COL1))
+#define VERT_RESULT_COLOR_BITS (BITFIELD64_BIT(VERT_RESULT_COL0) | \
+				BITFIELD64_BIT(VERT_RESULT_COL1))
 
 static void copy_colors( struct brw_sf_compile *c,
 		     struct brw_reg dst,
@@ -151,6 +151,8 @@ static void do_flatshade_triangle( struct brw_sf_compile *c )
    struct brw_compile *p = &c->func;
    struct brw_reg ip = brw_ip_reg();
    GLuint nr = brw_count_bits(c->key.attrs & VERT_RESULT_COLOR_BITS);
+   GLuint jmpi = 1;
+
    if (!nr)
       return;
 
@@ -159,18 +161,21 @@ static void do_flatshade_triangle( struct brw_sf_compile *c )
    if (c->key.primitive == SF_UNFILLED_TRIS)
       return;
 
+   if (BRW_IS_IGDNG(p->brw))
+       jmpi = 2;
+
    brw_push_insn_state(p);
    
-   brw_MUL(p, c->pv, c->pv, brw_imm_ud(nr*2+1));
+   brw_MUL(p, c->pv, c->pv, brw_imm_d(jmpi*(nr*2+1)));
    brw_JMPI(p, ip, ip, c->pv);
 
    copy_colors(c, c->vert[1], c->vert[0]);
    copy_colors(c, c->vert[2], c->vert[0]);
-   brw_JMPI(p, ip, ip, brw_imm_ud(nr*4+1));
+   brw_JMPI(p, ip, ip, brw_imm_d(jmpi*(nr*4+1)));
 
    copy_colors(c, c->vert[0], c->vert[1]);
    copy_colors(c, c->vert[2], c->vert[1]);
-   brw_JMPI(p, ip, ip, brw_imm_ud(nr*2));
+   brw_JMPI(p, ip, ip, brw_imm_d(jmpi*nr*2));
 
    copy_colors(c, c->vert[0], c->vert[2]);
    copy_colors(c, c->vert[1], c->vert[2]);
@@ -184,7 +189,8 @@ static void do_flatshade_line( struct brw_sf_compile *c )
    struct brw_compile *p = &c->func;
    struct brw_reg ip = brw_ip_reg();
    GLuint nr = brw_count_bits(c->key.attrs & VERT_RESULT_COLOR_BITS);
-   
+   GLuint jmpi = 1;
+
    if (!nr)
       return;
 
@@ -193,13 +199,16 @@ static void do_flatshade_line( struct brw_sf_compile *c )
    if (c->key.primitive == SF_UNFILLED_TRIS)
       return;
 
+   if (BRW_IS_IGDNG(p->brw))
+       jmpi = 2;
+
    brw_push_insn_state(p);
    
-   brw_MUL(p, c->pv, c->pv, brw_imm_ud(nr+1));
+   brw_MUL(p, c->pv, c->pv, brw_imm_d(jmpi*(nr+1)));
    brw_JMPI(p, ip, ip, c->pv);
    copy_colors(c, c->vert[1], c->vert[0]);
 
-   brw_JMPI(p, ip, ip, brw_imm_ud(nr));
+   brw_JMPI(p, ip, ip, brw_imm_ud(jmpi*nr));
    copy_colors(c, c->vert[0], c->vert[1]);
 
    brw_pop_insn_state(p);
@@ -218,7 +227,7 @@ static void alloc_regs( struct brw_sf_compile *c )
 
    /* Values computed by fixed function unit:
     */
-   c->pv  = retype(brw_vec1_grf(1, 1), BRW_REGISTER_TYPE_UD);
+   c->pv  = retype(brw_vec1_grf(1, 1), BRW_REGISTER_TYPE_D);
    c->det = brw_vec1_grf(1, 2);
    c->dx0 = brw_vec1_grf(1, 3);
    c->dx2 = brw_vec1_grf(1, 4);
@@ -295,9 +304,6 @@ static void invert_det( struct brw_sf_compile *c)
 
 }
 
-#define NON_PERPECTIVE_ATTRS  (FRAG_BIT_WPOS | \
-                               FRAG_BIT_COL0 | \
-			       FRAG_BIT_COL1)
 
 static GLboolean calculate_masks( struct brw_sf_compile *c,
 				  GLuint reg,
@@ -306,8 +312,15 @@ static GLboolean calculate_masks( struct brw_sf_compile *c,
 				  GLushort *pc_linear)
 {
    GLboolean is_last_attr = (reg == c->nr_setup_regs - 1);
-   GLuint persp_mask = c->key.attrs & ~NON_PERPECTIVE_ATTRS;
-   GLuint linear_mask;
+   GLbitfield64 persp_mask;
+   GLbitfield64 linear_mask;
+
+   if (c->key.do_flat_shading || c->key.linear_color)
+      persp_mask = c->key.attrs & ~(FRAG_BIT_WPOS |
+                                    FRAG_BIT_COL0 |
+                                    FRAG_BIT_COL1);
+   else
+      persp_mask = c->key.attrs & ~(FRAG_BIT_WPOS);
 
    if (c->key.do_flat_shading)
       linear_mask = c->key.attrs & ~(FRAG_BIT_COL0|FRAG_BIT_COL1);
@@ -318,10 +331,10 @@ static GLboolean calculate_masks( struct brw_sf_compile *c,
    *pc_linear = 0;
    *pc = 0xf;
       
-   if (persp_mask & (1 << c->idx_to_attr[reg*2])) 
+   if (persp_mask & BITFIELD64_BIT(c->idx_to_attr[reg*2]))
       *pc_persp = 0xf;
 
-   if (linear_mask & (1 << c->idx_to_attr[reg*2])) 
+   if (linear_mask & BITFIELD64_BIT(c->idx_to_attr[reg*2]))
       *pc_linear = 0xf;
 
    /* Maybe only processs one attribute on the final round:
@@ -329,10 +342,10 @@ static GLboolean calculate_masks( struct brw_sf_compile *c,
    if (reg*2+1 < c->nr_setup_attrs) {
       *pc |= 0xf0;
 
-      if (persp_mask & (1 << c->idx_to_attr[reg*2+1])) 
+      if (persp_mask & BITFIELD64_BIT(c->idx_to_attr[reg*2+1]))
 	 *pc_persp |= 0xf0;
 
-      if (linear_mask & (1 << c->idx_to_attr[reg*2+1])) 
+      if (linear_mask & BITFIELD64_BIT(c->idx_to_attr[reg*2+1]))
 	 *pc_linear |= 0xf0;
    }
 
@@ -538,7 +551,7 @@ void brw_emit_point_sprite_setup( struct brw_sf_compile *c, GLboolean allocate)
 		  BRW_MATH_DATA_SCALAR,
 		  BRW_MATH_PRECISION_FULL);
 
-	  if (c->key.SpriteOrigin == GL_LOWER_LEFT) {
+	  if (c->key.sprite_origin_lower_left) {
 	   	brw_MUL(p, c->m1Cx, c->tmp, c->inv_w[0]);
 		brw_MOV(p, vec1(suboffset(c->m1Cx, 1)), brw_imm_f(0.0));
 	  	brw_MUL(p, c->m2Cy, c->tmp, negate(c->inv_w[0]));
@@ -557,7 +570,7 @@ void brw_emit_point_sprite_setup( struct brw_sf_compile *c, GLboolean allocate)
       {
 	 brw_set_predicate_control_flag_value(p, pc); 
 	 if (tex->CoordReplace) {
-	     if (c->key.SpriteOrigin == GL_LOWER_LEFT) {
+	     if (c->key.sprite_origin_lower_left) {
 		 brw_MUL(p, c->m3C0, c->inv_w[0], brw_imm_f(1.0));
 		 brw_MOV(p, vec1(suboffset(c->m3C0, 0)), brw_imm_f(0.0));
 	     }
@@ -674,7 +687,7 @@ void brw_emit_anyprim_setup( struct brw_sf_compile *c )
 					       (1<<_3DPRIM_POLYGON) |
 					       (1<<_3DPRIM_RECTLIST) |
 					       (1<<_3DPRIM_TRIFAN_NOSTIPPLE)));
-   jmp = brw_JMPI(p, ip, ip, brw_imm_w(0));
+   jmp = brw_JMPI(p, ip, ip, brw_imm_d(0));
    {
       saveflag = p->flag_value;
       brw_push_insn_state(p); 
@@ -695,7 +708,7 @@ void brw_emit_anyprim_setup( struct brw_sf_compile *c )
 					       (1<<_3DPRIM_LINESTRIP_CONT) |
 					       (1<<_3DPRIM_LINESTRIP_BF) |
 					       (1<<_3DPRIM_LINESTRIP_CONT_BF)));
-   jmp = brw_JMPI(p, ip, ip, brw_imm_w(0));
+   jmp = brw_JMPI(p, ip, ip, brw_imm_d(0));
    {
       saveflag = p->flag_value;
       brw_push_insn_state(p); 
@@ -708,7 +721,7 @@ void brw_emit_anyprim_setup( struct brw_sf_compile *c )
 
    brw_set_conditionalmod(p, BRW_CONDITIONAL_Z);
    brw_AND(p, v1_null_ud, payload_attr, brw_imm_ud(1<<BRW_SPRITE_POINT_ENABLE));
-   jmp = brw_JMPI(p, ip, ip, brw_imm_w(0));
+   jmp = brw_JMPI(p, ip, ip, brw_imm_d(0));
    {
       saveflag = p->flag_value;
       brw_push_insn_state(p); 

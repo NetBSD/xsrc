@@ -35,7 +35,6 @@
 #include "brw_state.h"
 #include "brw_defines.h"
 #include "main/macros.h"
-#include "intel_fbo.h"
 
 static void upload_sf_vp(struct brw_context *brw)
 {
@@ -44,6 +43,7 @@ static void upload_sf_vp(struct brw_context *brw)
    struct brw_sf_viewport sfv;
    GLfloat y_scale, y_bias;
    const GLboolean render_to_fbo = (ctx->DrawBuffer->Name != 0);
+   const GLfloat *v = ctx->Viewport._WindowMap.m;
 
    memset(&sfv, 0, sizeof(sfv));
 
@@ -58,8 +58,6 @@ static void upload_sf_vp(struct brw_context *brw)
 
    /* _NEW_VIEWPORT */
 
-   const GLfloat *v = ctx->Viewport._WindowMap.m;
-
    sfv.viewport.m00 = v[MAT_SX];
    sfv.viewport.m11 = v[MAT_SY] * y_scale;
    sfv.viewport.m22 = v[MAT_SZ] * depth_scale;
@@ -67,7 +65,9 @@ static void upload_sf_vp(struct brw_context *brw)
    sfv.viewport.m31 = v[MAT_TY] * y_scale + y_bias;
    sfv.viewport.m32 = v[MAT_TZ] * depth_scale;
 
-   /* _NEW_SCISSOR */
+   /* _NEW_SCISSOR | _NEW_BUFFERS | _NEW_VIEWPORT
+    * for DrawBuffer->_[XY]{min,max}
+    */
 
    /* The scissor only needs to handle the intersection of drawable and
     * scissor rect.  Clipping to the boundaries of static shared buffers
@@ -92,13 +92,15 @@ static void upload_sf_vp(struct brw_context *brw)
    }
 
    dri_bo_unreference(brw->sf.vp_bo);
-   brw->sf.vp_bo = brw_cache_data( &brw->cache, BRW_SF_VP, &sfv, NULL, 0 );
+   brw->sf.vp_bo = brw_cache_data(&brw->cache, BRW_SF_VP, &sfv, sizeof(sfv),
+				  NULL, 0);
 }
 
 const struct brw_tracked_state brw_sf_vp = {
    .dirty = {
       .mesa  = (_NEW_VIEWPORT | 
-		_NEW_SCISSOR),
+		_NEW_SCISSOR |
+		_NEW_BUFFERS),
       .brw   = 0,
       .cache = 0
    },
@@ -112,10 +114,14 @@ struct brw_sf_unit_key {
    unsigned int nr_urb_entries, urb_size, sfsize;
 
    GLenum front_face, cull_face;
-   GLboolean scissor, line_smooth, point_sprite, point_attenuated;
+   unsigned pv_first:1;
+   unsigned scissor:1;
+   unsigned line_smooth:1;
+   unsigned point_sprite:1;
+   unsigned point_attenuated:1;
+   unsigned render_to_fbo:1;
    float line_width;
    float point_size;
-   GLboolean render_to_fbo;
 };
 
 static void
@@ -145,8 +151,11 @@ sf_unit_populate_key(struct brw_context *brw, struct brw_sf_unit_key *key)
    key->line_smooth = ctx->Line.SmoothFlag;
 
    key->point_sprite = ctx->Point.PointSprite;
-   key->point_size = ctx->Point.Size;
+   key->point_size = CLAMP(ctx->Point.Size, ctx->Point.MinSize, ctx->Point.MaxSize);
    key->point_attenuated = ctx->Point._Attenuated;
+
+   /* _NEW_LIGHT */
+   key->pv_first = (ctx->Light.ProvokingVertex == GL_FIRST_VERTEX_CONVENTION);
 
    key->render_to_fbo = brw->intel.ctx.DrawBuffer->Name != 0;
 }
@@ -157,7 +166,7 @@ sf_unit_create_from_key(struct brw_context *brw, struct brw_sf_unit_key *key,
 {
    struct brw_sf_unit_state sf;
    dri_bo *bo;
-
+   int chipset_max_threads;
    memset(&sf, 0, sizeof(sf));
 
    sf.thread0.grf_reg_count = ALIGN(key->total_grf, 16) / 16 - 1;
@@ -166,13 +175,26 @@ sf_unit_create_from_key(struct brw_context *brw, struct brw_sf_unit_key *key,
    sf.thread1.floating_point_mode = BRW_FLOATING_POINT_NON_IEEE_754;
 
    sf.thread3.dispatch_grf_start_reg = 3;
-   sf.thread3.urb_entry_read_offset = 1;
+
+   if (BRW_IS_IGDNG(brw))
+       sf.thread3.urb_entry_read_offset = 3;
+   else
+       sf.thread3.urb_entry_read_offset = 1;
+
    sf.thread3.urb_entry_read_length = key->urb_entry_read_length;
 
    sf.thread4.nr_urb_entries = key->nr_urb_entries;
    sf.thread4.urb_entry_allocation_size = key->sfsize - 1;
-   /* Each SF thread produces 1 PUE, and there can be up to 24 threads */
-   sf.thread4.max_threads = MIN2(24, key->nr_urb_entries) - 1;
+
+   /* Each SF thread produces 1 PUE, and there can be up to 24(Pre-IGDNG) or 
+    * 48(IGDNG) threads 
+    */
+   if (BRW_IS_IGDNG(brw))
+      chipset_max_threads = 48;
+   else
+      chipset_max_threads = 24;
+
+   sf.thread4.max_threads = MIN2(chipset_max_threads, key->nr_urb_entries) - 1;
 
    if (INTEL_DEBUG & DEBUG_SINGLE_THREAD)
       sf.thread4.max_threads = 0;
@@ -228,10 +250,37 @@ sf_unit_create_from_key(struct brw_context *brw, struct brw_sf_unit_key *key,
    else if (sf.sf6.line_width <= 0x2)
        sf.sf6.line_width = 0;
 
-   /* _NEW_POINT */
-   sf.sf6.point_rast_rule = BRW_RASTRULE_UPPER_RIGHT;	/* opengl conventions */
+   /* _NEW_BUFFERS */
+   key->render_to_fbo = brw->intel.ctx.DrawBuffer->Name != 0;
+   if (!key->render_to_fbo) {
+      /* Rendering to an OpenGL window */
+      sf.sf6.point_rast_rule = BRW_RASTRULE_UPPER_RIGHT;
+   }
+   else {
+      /* If rendering to an FBO, the pixel coordinate system is
+       * inverted with respect to the normal OpenGL coordinate
+       * system, so BRW_RASTRULE_LOWER_RIGHT is correct.
+       * But this value is listed as "Reserved, but not seen as useful"
+       * in Intel documentation (page 212, "Point Rasterization Rule",
+       * section 7.4 "SF Pipeline State Summary", of document
+       * "Intel® 965 Express Chipset Family and Intel® G35 Express
+       * Chipset Graphics Controller Programmer's Reference Manual,
+       * Volume 2: 3D/Media", Revision 1.0b as of January 2008,
+       * available at 
+       *     http://intellinuxgraphics.org/documentation.html
+       * at the time of this writing).
+       *
+       * It does work on at least some devices, if not all;
+       * if devices that don't support it can be identified,
+       * the likely failure case is that points are rasterized
+       * incorrectly, which is no worse than occurs without
+       * the value, so we're using it here.
+       */
+      sf.sf6.point_rast_rule = BRW_RASTRULE_LOWER_RIGHT;
+   }
    /* XXX clamp max depends on AA vs. non-AA */
 
+   /* _NEW_POINT */
    sf.sf7.sprite_point = key->point_sprite;
    sf.sf7.point_size = CLAMP(rint(key->point_size), 1, 255) * (1<<3);
    sf.sf7.use_point_size_state = !key->point_attenuated;
@@ -239,9 +288,15 @@ sf_unit_create_from_key(struct brw_context *brw, struct brw_sf_unit_key *key,
 
    /* might be BRW_NEW_PRIMITIVE if we have to adjust pv for polygons:
     */
-   sf.sf7.trifan_pv = 2;
-   sf.sf7.linestrip_pv = 1;
-   sf.sf7.tristrip_pv = 2;
+   if (!key->pv_first) {
+      sf.sf7.trifan_pv = 2;
+      sf.sf7.linestrip_pv = 1;
+      sf.sf7.tristrip_pv = 2;
+   } else {
+      sf.sf7.trifan_pv = 1;
+      sf.sf7.linestrip_pv = 0;
+      sf.sf7.tristrip_pv = 0;
+   }
    sf.sf7.line_last_pixel_enable = 0;
 
    /* Set bias for OpenGL rasterization rules:
@@ -255,6 +310,9 @@ sf_unit_create_from_key(struct brw_context *brw, struct brw_sf_unit_key *key,
 			 &sf, sizeof(sf),
 			 NULL, NULL);
 
+   /* STATE_PREFETCH command description describes this state as being
+    * something loaded through the GPE (L2 ISC), so it's INSTRUCTION domain.
+    */
    /* Emit SF program relocation */
    dri_bo_emit_reloc(bo,
 		     I915_GEM_DOMAIN_INSTRUCTION, 0,
@@ -295,9 +353,11 @@ static void upload_sf_unit( struct brw_context *brw )
 const struct brw_tracked_state brw_sf_unit = {
    .dirty = {
       .mesa  = (_NEW_POLYGON | 
+		_NEW_LIGHT |
 		_NEW_LINE | 
 		_NEW_POINT | 
-		_NEW_SCISSOR),
+		_NEW_SCISSOR |
+		_NEW_BUFFERS),
       .brw   = BRW_NEW_URB_FENCE,
       .cache = (CACHE_NEW_SF_VP |
 		CACHE_NEW_SF_PROG)

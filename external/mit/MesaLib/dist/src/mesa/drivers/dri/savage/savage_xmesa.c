@@ -23,7 +23,6 @@
  */
 
 
-#include <X11/Xlibint.h>
 #include <stdio.h>
 
 #include "main/context.h"
@@ -59,11 +58,8 @@
 #include "drirenderbuffer.h"
 #include "texmem.h"
 
-#define need_GL_ARB_multisample
-#define need_GL_ARB_texture_compression
-#define need_GL_ARB_vertex_buffer_object
 #define need_GL_EXT_secondary_color
-#include "extension_helper.h"
+#include "main/remap_helper.h"
 
 #include "xmlpool.h"
 
@@ -133,10 +129,7 @@ struct timeval tv_s1,tv_f1;
 
 static const struct dri_extension card_extensions[] =
 {
-    { "GL_ARB_multisample",                GL_ARB_multisample_functions },
     { "GL_ARB_multitexture",               NULL },
-    { "GL_ARB_texture_compression",        GL_ARB_texture_compression_functions },
-    { "GL_ARB_vertex_buffer_object",       GL_ARB_vertex_buffer_object_functions },
     { "GL_EXT_stencil_wrap",               NULL },
     { "GL_EXT_texture_lod_bias",           NULL },
     { "GL_EXT_secondary_color",            GL_EXT_secondary_color_functions },
@@ -186,7 +179,7 @@ savageInitDriver(__DRIscreenPrivate *sPriv)
    }
 
    /* Allocate the private area */
-   savageScreen = (savageScreenPrivate *)Xmalloc(sizeof(savageScreenPrivate));
+   savageScreen = (savageScreenPrivate *)_mesa_malloc(sizeof(savageScreenPrivate));
    if (!savageScreen)
       return GL_FALSE;
 
@@ -233,7 +226,7 @@ savageInitDriver(__DRIscreenPrivate *sPriv)
 		  savageScreen->agpTextures.handle,
 		  savageScreen->agpTextures.size,
 		  (drmAddress *)&(savageScreen->agpTextures.map)) != 0) {
-	   Xfree(savageScreen);
+	   _mesa_free(savageScreen);
 	   sPriv->private = NULL;
 	   return GL_FALSE;
        }
@@ -253,7 +246,7 @@ savageInitDriver(__DRIscreenPrivate *sPriv)
 	      savageScreen->aperture.size, 
 	      (drmAddress *)&savageScreen->aperture.map) != 0) 
    {
-      Xfree(savageScreen);
+      _mesa_free(savageScreen);
       sPriv->private = NULL;
       return GL_FALSE;
    }
@@ -289,7 +282,7 @@ savageDestroyScreen(__DRIscreenPrivate *sPriv)
    /* free all option information */
    driDestroyOptionInfo (&savageScreen->optionCache);
 
-   Xfree(savageScreen);
+   _mesa_free(savageScreen);
    sPriv->private = NULL;
 }
 
@@ -307,7 +300,7 @@ savageCreateContext( const __GLcontextModes *mesaVis,
 						 savageScreen->sarea_priv_offset);
    int textureSize[SAVAGE_NR_TEX_HEAPS];
    int i;
-   imesa = (savageContextPtr)Xcalloc(sizeof(savageContext), 1);
+   imesa = (savageContextPtr)_mesa_calloc(sizeof(savageContext));
    if (!imesa) {
       return GL_FALSE;
    }
@@ -324,7 +317,7 @@ savageCreateContext( const __GLcontextModes *mesaVis,
       shareCtx = NULL;
    ctx = _mesa_create_context(mesaVis, shareCtx, &functions, imesa);
    if (!ctx) {
-      Xfree(imesa);
+      _mesa_free(imesa);
       return GL_FALSE;
    }
    driContextPriv->driverPrivate = imesa;
@@ -350,7 +343,9 @@ savageCreateContext( const __GLcontextModes *mesaVis,
    ctx->Const.MaxLineWidthAA = 3.0;
    ctx->Const.LineWidthGranularity = 1.0;
 #endif
-   
+
+   ctx->Const.MaxDrawBuffers = 1;
+
    /* Dri stuff
     */
    imesa->hHWContext = driContextPriv->hHWContext;
@@ -441,7 +436,7 @@ savageCreateContext( const __GLcontextModes *mesaVis,
    if (ctx->Const.MaxTextureLevels <= 6) { /*spec requires at least 64x64*/
        __driUtilMessage("Not enough texture memory. "
 			"Falling back to indirect rendering.");
-       Xfree(imesa);
+       _mesa_free(imesa);
        return GL_FALSE;
    }
 
@@ -579,7 +574,7 @@ savageDestroyContext(__DRIcontextPrivate *driContextPriv)
       _mesa_destroy_context(imesa->glCtx);
 
       /* no longer use vertex_dma_buf*/
-      Xfree(imesa);
+      _mesa_free(imesa);
    }
 }
 
@@ -607,7 +602,7 @@ savageCreateBuffer( __DRIscreenPrivate *driScrnPriv,
 
       {
          driRenderbuffer *frontRb
-            = driNewRenderbuffer(GL_RGBA,
+            = driNewRenderbuffer(MESA_FORMAT_ARGB8888,
                                  (GLubyte *) screen->aperture.map
                                  + 0x01000000 * TARGET_FRONT,
                                  screen->cpp,
@@ -620,7 +615,7 @@ savageCreateBuffer( __DRIscreenPrivate *driScrnPriv,
 
       if (mesaVis->doubleBufferMode) {
          driRenderbuffer *backRb
-            = driNewRenderbuffer(GL_RGBA,
+            = driNewRenderbuffer(MESA_FORMAT_ARGB8888,
                                  (GLubyte *) screen->aperture.map
                                  + 0x01000000 * TARGET_BACK,
                                  screen->cpp,
@@ -633,7 +628,7 @@ savageCreateBuffer( __DRIscreenPrivate *driScrnPriv,
 
       if (mesaVis->depthBits == 16) {
          driRenderbuffer *depthRb
-            = driNewRenderbuffer(GL_DEPTH_COMPONENT16,
+            = driNewRenderbuffer(MESA_FORMAT_Z16,
                                  (GLubyte *) screen->aperture.map
                                  + 0x01000000 * TARGET_DEPTH,
                                  screen->zpp,
@@ -644,7 +639,7 @@ savageCreateBuffer( __DRIscreenPrivate *driScrnPriv,
       }
       else if (mesaVis->depthBits == 24) {
          driRenderbuffer *depthRb
-            = driNewRenderbuffer(GL_DEPTH_COMPONENT24,
+            = driNewRenderbuffer(MESA_FORMAT_S8_Z24,
                                  (GLubyte *) screen->aperture.map
                                  + 0x01000000 * TARGET_DEPTH,
                                  screen->zpp,
@@ -656,7 +651,7 @@ savageCreateBuffer( __DRIscreenPrivate *driScrnPriv,
 
       if (mesaVis->stencilBits > 0 && !swStencil) {
          driRenderbuffer *stencilRb
-            = driNewRenderbuffer(GL_STENCIL_INDEX8_EXT,
+            = driNewRenderbuffer(MESA_FORMAT_S8,
                                  (GLubyte *) screen->aperture.map
                                  + 0x01000000 * TARGET_DEPTH,
                                  screen->zpp,
@@ -682,7 +677,7 @@ savageCreateBuffer( __DRIscreenPrivate *driScrnPriv,
 static void
 savageDestroyBuffer(__DRIdrawablePrivate *driDrawPriv)
 {
-   _mesa_unreference_framebuffer((GLframebuffer **)(&(driDrawPriv->driverPrivate)));
+   _mesa_reference_framebuffer((GLframebuffer **)(&(driDrawPriv->driverPrivate)), NULL);
 }
 
 #if 0
@@ -914,7 +909,7 @@ savageFillInModes( __DRIscreenPrivate *psp,
 
     uint8_t depth_bits_array[2];
     uint8_t stencil_bits_array[2];
-
+    uint8_t msaa_samples_array[1];
 
     depth_bits_array[0] = depth_bits;
     depth_bits_array[1] = depth_bits;
@@ -925,6 +920,8 @@ savageFillInModes( __DRIscreenPrivate *psp,
      */
     stencil_bits_array[0] = 0;
     stencil_bits_array[1] = (stencil_bits == 0) ? 8 : stencil_bits;
+
+    msaa_samples_array[0] = 0;
 
     depth_buffer_factor = ((depth_bits != 0) || (stencil_bits != 0)) ? 2 : 1;
     back_buffer_factor  = (have_back_buffer) ? 2 : 1;
@@ -941,7 +938,8 @@ savageFillInModes( __DRIscreenPrivate *psp,
     configs = driCreateConfigs(fb_format, fb_type,
 			       depth_bits_array, stencil_bits_array,
 			       depth_buffer_factor,
-			       back_buffer_modes, back_buffer_factor);
+			       back_buffer_modes, back_buffer_factor,
+                               msaa_samples_array, 1);
     if (configs == NULL) {
 	fprintf( stderr, "[%s:%u] Error creating FBConfig!\n",
 		 __func__, __LINE__ );
@@ -981,18 +979,6 @@ savageInitScreen(__DRIscreenPrivate *psp)
 				      &psp->ddx_version, & ddx_expected,
 				      &psp->drm_version, & drm_expected ) )
       return NULL;
-
-   /* Calling driInitExtensions here, with a NULL context pointer,
-    * does not actually enable the extensions.  It just makes sure
-    * that all the dispatch offsets for all the extensions that
-    * *might* be enables are known.  This is needed because the
-    * dispatch offsets need to be known when _mesa_context_create is
-    * called, but we can't enable the extensions until we have a
-    * context pointer.
-    *
-    * Hello chicken.  Hello egg.  How are you two today?
-    */
-   driInitExtensions( NULL, card_extensions, GL_FALSE );
 
    if (!savageInitDriver(psp))
        return NULL;

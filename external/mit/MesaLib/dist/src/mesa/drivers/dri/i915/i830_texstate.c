@@ -27,7 +27,6 @@
 
 #include "main/mtypes.h"
 #include "main/enums.h"
-#include "main/texformat.h"
 
 #include "intel_mipmap_tree.h"
 #include "intel_tex.h"
@@ -38,7 +37,7 @@
 
 
 static GLuint
-translate_texture_format(GLuint mesa_format)
+translate_texture_format(GLuint mesa_format, GLuint internal_format)
 {
    switch (mesa_format) {
    case MESA_FORMAT_L8:
@@ -57,6 +56,8 @@ translate_texture_format(GLuint mesa_format)
       return MAPSURF_16BIT | MT_16BIT_ARGB4444;
    case MESA_FORMAT_ARGB8888:
       return MAPSURF_32BIT | MT_32BIT_ARGB8888;
+   case MESA_FORMAT_XRGB8888:
+      return MAPSURF_32BIT | MT_32BIT_XRGB8888;
    case MESA_FORMAT_YCBCR_REV:
       return (MAPSURF_422 | MT_422_YCRCB_NORMAL);
    case MESA_FORMAT_YCBCR:
@@ -119,6 +120,7 @@ i830_update_tex_unit(struct intel_context *intel, GLuint unit, GLuint ss3)
    struct gl_texture_image *firstImage;
    GLuint *state = i830->state.Tex[unit], format, pitch;
    GLint lodbias;
+   GLubyte border[4];
 
    memset(state, 0, sizeof(state));
 
@@ -156,26 +158,36 @@ i830_update_tex_unit(struct intel_context *intel, GLuint unit, GLuint ss3)
 
       pitch = intelObj->pitchOverride;
    } else {
+      GLuint dst_x, dst_y;
+
+      intel_miptree_get_image_offset(intelObj->mt, intelObj->firstLevel, 0, 0,
+				     &dst_x, &dst_y);
+
       dri_bo_reference(intelObj->mt->region->buffer);
       i830->state.tex_buffer[unit] = intelObj->mt->region->buffer;
-      i830->state.tex_offset[unit] = intel_miptree_image_offset(intelObj->mt,
-								0, intelObj->
-								firstLevel);
+      /* XXX: This calculation is probably broken for tiled images with
+       * a non-page-aligned offset.
+       */
+      i830->state.tex_offset[unit] = (dst_x + dst_y * intelObj->mt->pitch) *
+	 intelObj->mt->cpp;
 
-      format = translate_texture_format(firstImage->TexFormat->MesaFormat);
+      format = translate_texture_format(firstImage->TexFormat,
+					firstImage->InternalFormat);
       pitch = intelObj->mt->pitch * intelObj->mt->cpp;
    }
 
    state[I830_TEXREG_TM0LI] = (_3DSTATE_LOAD_STATE_IMMEDIATE_2 |
                                (LOAD_TEXTURE_MAP0 << unit) | 4);
 
-/*    state[I830_TEXREG_TM0S0] = (TM0S0_USE_FENCE | */
-/* 			       t->intel.TextureOffset); */
-
-
    state[I830_TEXREG_TM0S1] =
       (((firstImage->Height - 1) << TM0S1_HEIGHT_SHIFT) |
        ((firstImage->Width - 1) << TM0S1_WIDTH_SHIFT) | format);
+
+   if (intelObj->mt->region->tiling != I915_TILING_NONE) {
+      state[I830_TEXREG_TM0S1] |= TM0S1_TILED_SURFACE;
+      if (intelObj->mt->region->tiling == I915_TILING_Y)
+	 state[I830_TEXREG_TM0S1] |= TM0S1_TILE_WALK;
+   }
 
    state[I830_TEXREG_TM0S2] =
       ((((pitch / 4) - 1) << TM0S2_PITCH_SHIFT) | TM0S2_CUBE_FACE_ENA_MASK);
@@ -290,11 +302,16 @@ i830_update_tex_unit(struct intel_context *intel, GLuint unit, GLuint ss3)
                                                      (ws)));
    }
 
+   /* convert border color from float to ubyte */
+   CLAMPED_FLOAT_TO_UBYTE(border[0], tObj->BorderColor[0]);
+   CLAMPED_FLOAT_TO_UBYTE(border[1], tObj->BorderColor[1]);
+   CLAMPED_FLOAT_TO_UBYTE(border[2], tObj->BorderColor[2]);
+   CLAMPED_FLOAT_TO_UBYTE(border[3], tObj->BorderColor[3]);
 
-   state[I830_TEXREG_TM0S4] = INTEL_PACKCOLOR8888(tObj->_BorderChan[0],
-                                                  tObj->_BorderChan[1],
-                                                  tObj->_BorderChan[2],
-                                                  tObj->_BorderChan[3]);
+   state[I830_TEXREG_TM0S4] = INTEL_PACKCOLOR8888(border[0],
+                                                  border[1],
+                                                  border[2],
+                                                  border[3]);
 
 
    I830_ACTIVESTATE(i830, I830_UPLOAD_TEX(unit), GL_TRUE);

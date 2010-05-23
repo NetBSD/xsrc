@@ -176,6 +176,23 @@ if [ ${ARCH} = "auto" ] ; then
 fi
 
 
+if [ $STATIC = 1 ]; then
+    # filter out linker options inside object list
+    NEWOBJECTS=""
+    for OBJ in $OBJECTS ; do
+	case $OBJ in
+	    -Wl,*)
+		echo "mklib: warning: ignoring $OBJ for static library"
+		;;
+	    *)
+		NEWOBJECTS="$NEWOBJECTS $OBJ"
+		;;
+	esac
+    done
+    OBJECTS=$NEWOBJECTS
+fi
+
+
 #
 # Error checking
 #
@@ -264,18 +281,21 @@ case $ARCH in
 	    # expand any .a objects into constituent .o files.
 	    NEWOBJECTS=""
 	    DELETIA=""
-	    for OBJ in ${OBJECTS} ; do
-		if [ `expr match $OBJ '.*\.a'` -gt 0 ] ; then
-		    # extract the .o files from this .a archive
-		    FILES=`ar t $OBJ`
-		    ar x $OBJ
-		    NEWOBJECTS="$NEWOBJECTS $FILES"
-		    # keep track of temporary .o files and delete them below
-		    DELETIA="$DELETIA $FILES"
-		else
-		    # ordinary .o file
-		    NEWOBJECTS="$NEWOBJECTS $OBJ"
-		fi
+	    for OBJ in $OBJECTS ; do
+		case $OBJ in
+		    *.a)
+			# extract the .o files from this .a archive
+			FILES=`ar t $OBJ`
+			ar x $OBJ
+			NEWOBJECTS="$NEWOBJECTS $FILES"
+			# keep track of temporary .o files and delete them below
+			DELETIA="$DELETIA $FILES"
+			;;
+		    *)
+			# ordinary .o file
+			NEWOBJECTS="$NEWOBJECTS $OBJ"
+			;;
+		esac
 	    done
 
             # make lib
@@ -704,22 +724,10 @@ case $ARCH in
 
 	    # examine first object to determine ABI
     	    set ${OBJECTS}
-            ABI_PPC=`file $1 | grep ' ppc'`
-            ABI_I386=`file $1 | grep ' i386'`
-            ABI_PPC64=`file $1 | grep ' ppc64'`
-            ABI_X86_64=`file $1 | grep ' x86_64'`
-            if [ "${ABI_PPC}" ] ; then
-                OPTS="${OPTS} -arch ppc"
-            fi
-            if [ "${ABI_I386}" ] ; then
-                OPTS="${OPTS} -arch i386"
-            fi
-            if [ "${ABI_PPC64}" ] ; then
-                OPTS="${OPTS} -arch ppc64"
-            fi
-            if [ "${ABI_X86_64}" ] ; then
-                OPTS="${OPTS} -arch x86_64"
-            fi
+            ABIS=`lipo -info $1 | sed s/.*://`
+            for ABI in $ABIS; do
+                OPTS="${OPTS} -arch ${ABI}"
+            done
 
             if [ "${ALTOPTS}" ] ; then
                 OPTS=${ALTOPTS}
@@ -865,6 +873,17 @@ case $ARCH in
 
      CYGWIN*)
 	# GCC-based environment
+	if [ $NOPREFIX = 1 ] ; then
+	    # No "lib" or ".so" part
+	    echo "mklib: Making CYGWIN shared library: " ${LIBNAME}
+	    OPTS="-shared -Wl,--enable-auto-image-base"
+            if [ "${ALTOPTS}" ] ; then
+                OPTS=${ALTOPTS}
+            fi
+	    rm -f ${LIBNAME}
+	    ${LINK} ${OPTS} ${LDFLAGS} -o ${LIBNAME} ${OBJECTS} ${DEPS}
+	    FINAL_LIBS=${LIBNAME}
+        else
 	CYGNAME="cyg${LIBNAME}"     # prefix with "cyg"
 	LIBNAME="lib${LIBNAME}"     # prefix with "lib"
 
@@ -881,11 +900,11 @@ case $ARCH in
             # finish up
             FINAL_LIBS=${LIBNAME}.a
         else
-	    OPTS="-shared -Wl,-export-all -Wl,--out-implib=${LIBNAME}-${MAJOR}.dll.a"
+	    OPTS="-shared -Wl,--enable-auto-image-base -Wl,-export-all -Wl,--out-implib=${LIBNAME}-${MAJOR}.dll.a"
             if [ "${ALTOPTS}" ] ; then
                 OPTS=${ALTOPTS}
             fi
-            echo "mklib: Making" $ARCH "shared library: " ${LIBNAME}-${MAJOR}.dll
+            echo "mklib: Making" $ARCH "shared library: " ${CYGNAME}-${MAJOR}.dll
 
             if [ $CPLUSPLUS = 1 ] ; then
                 LINK="g++"
@@ -894,18 +913,25 @@ case $ARCH in
             fi
 
             # rm any old libs
-            rm -f ${LIBNAME}-${MAJOR}.dll
+            rm -f ${CYGNAME}-${MAJOR}.dll
+            rm -f ${LIBNAME}-${MAJOR}.dll.a
             rm -f ${LIBNAME}.dll.a
             rm -f ${LIBNAME}.a
 
             # make lib
             ${LINK} ${OPTS} ${LDFLAGS} -o ${CYGNAME}-${MAJOR}.dll ${OBJECTS} ${DEPS}
+            # make build fail if link failed
+            es=$?
+            if [ "$es" -ne "0" ]; then
+                exit $es
+            fi
             # make usual symlinks
             ln -s ${LIBNAME}-${MAJOR}.dll.a ${LIBNAME}.dll.a
             # finish up
             FINAL_LIBS="${LIBNAME}-${MAJOR}.dll.a ${LIBNAME}.dll.a"
 	    # special case for installing in bin
             FINAL_BINS="${CYGNAME}-${MAJOR}.dll"
+        fi
         fi
 	;;
 
@@ -938,5 +964,6 @@ esac
 #
 if [ ${INSTALLDIR} != "." ] ; then
     echo "mklib: Installing" ${FINAL_LIBS} "in" ${INSTALLDIR}
+    test -d ${INSTALLDIR} || mkdir -p ${INSTALLDIR}
     mv ${FINAL_LIBS} ${INSTALLDIR}/
 fi
