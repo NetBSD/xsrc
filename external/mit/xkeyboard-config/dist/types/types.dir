@@ -1,3 +1,4 @@
+-dp----- -------- nokia(default)
 -dp----- -------- mousekeys(default)
 --p----- -------- caps(internal)
 --p----- -------- caps(internal_nocancel)
@@ -16,3 +17,4 @@
 -dp----- -------- numpad(pc)
 --p----- -------- numpad(mac)
 --p----- -------- numpad(microsoft)
+--p----- -------- numpad(shift3)

@@ -19,10 +19,7 @@ xkb_symbols "pc105" {
     include "pc(editing)"
     include "keypad(x11)"
 
-    key <BKSP> {
-        type="CTRL+ALT",
-        symbols[Group1]= [ BackSpace,   Terminate_Server ]
-    };
+    key <BKSP> {	[ BackSpace	]	};
 
     key  <TAB> {	[ Tab,	ISO_Left_Tab	]	};
     key <RTRN> {	[ Return	]	};
@@ -48,6 +45,7 @@ xkb_symbols "pc105" {
     modifier_map Lock   { Caps_Lock, ISO_Lock };
     modifier_map Control{ Control_L, Control_R };
     modifier_map Mod2   { Num_Lock };
+    modifier_map Mod4   { Super_L, Super_R };
 
     //  Fake keys for virtual<->real modifiers mapping 
     key <LVL3> {	[ ISO_Level3_Shift	]	};
