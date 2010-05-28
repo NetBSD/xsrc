@@ -467,7 +467,12 @@ xkb_symbols "shs" {
     //q, l, t, s, m, g, k, p, w, y, r
     //XCompose key is used for the other accute and grave.
 
-    key <AB08> {        [ comma, less, U0313    ]	};
+    key <AB08>	{ [ comma, less, U0313    ]	};
+    key <AC01>	{ [ a, A, aacute, Aacute  ]	};
+    key <AD03>	{ [ e, E, eacute, Eacute  ]	};
+    key <AD07>	{ [ u, U, uacute, Uacute  ]	};
+    key <AD08>	{ [ i, I, iacute, Iacute  ]	};
+    key <AD09>	{ [ o, O, oacute, Oacute  ]	};
 
     include "level3(ralt_switch)"
     include "compose(rctrl)"
@@ -476,9 +481,16 @@ xkb_symbols "shs" {
 // OLPC Section
 xkb_symbols "olpc" {
 
-    include "fr"
-
-    key <AE03>	{ [          3,    slash,          ograve,        Ograve ] };
+    include "ca(fr)"
+    
+    key <AE02>	{ [          2,    quotedbl,          ograve,        Ograve ] };
+    key <AE03>	{ [          3,    slash,          at,        VoidSymbol ] };
+    
+    key <AD03>	{ [          e,    E,          EuroSign, VoidSymbol]	};
+        
+    key <AB09>	{ [  period,         period,         0x1002010 ]	};
+    
+    key <I219>  { [  guillemotleft,  guillemotright, degree, VoidSymbol ] };
 };
 
 partial alphanumeric_keys 
@@ -509,3 +521,10 @@ xkb_symbols "kut" {
     //MODIFIER LETTER RIGHT HALF RING
     key <AC10> {	[ semicolon,	colon,U02BE,U02BE	]	};
 };
+
+partial alphanumeric_keys 
+xkb_symbols "eng" {
+    name[Group1] = "Canada - English";
+    include "us(basic)"
+};
+
