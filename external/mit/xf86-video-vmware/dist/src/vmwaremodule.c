@@ -152,7 +152,7 @@ vmware_chain_module(pointer opts)
     int vmware_devices;
     int matched;
     char *driver_name;
-    GDevPtr *gdevs;
+    GDevPtr *gdevs = NULL;
     GDevPtr gdev;
     int i;
 
@@ -173,7 +173,7 @@ vmware_chain_module(pointer opts)
 	matched = vmwlegacy_devices;
     }
 
-    for (i = 0; i < vmware_devices; i++) {
+    for (i = 0; gdevs && i < vmware_devices; i++) {
 	gdev = gdevs[i];
 	gdev->driver = driver_name;
     }
