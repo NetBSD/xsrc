@@ -1,4 +1,4 @@
-// $NetBSD: ws011sh,v 1.1 2010/05/25 13:12:51 nonaka Exp $
+// $NetBSD: ws011sh,v 1.2 2010/05/30 10:10:20 nonaka Exp $
 
 partial default alphanumeric_keys
 xkb_symbols "basic" {
@@ -6,8 +6,8 @@ xkb_symbols "basic" {
 
 	// Upper row
 	key <HZTG> {
-		type[Group1]="THREE_LEVEL",
-		symbols[Group1]= [ Zenkaku_Hankaku, Zenkaku_Hankaku, exclam ]
+		type[Group1] = "THREE_LEVEL",
+		symbols[Group1] = [ Zenkaku_Hankaku, Zenkaku_Hankaku, exclam ]
 	};
 
 	key <AD01> { [ q, Q, quotedbl ] };
@@ -55,13 +55,24 @@ xkb_symbols "basic" {
 	key <SPCE> { [ space ] };
 	// End alphanumeric section
 	
-	// keypad
 	key <UP> { [ Up, Up, Prior ] };
 	key <LEFT> { [ Left, Left, Home ] };
 	key <DOWN> { [ Down, Down, Next ] };
 	key <RGHT> { [ Right, Right, End ] };
 
 	key <ESC> { [ Escape ] };
+
+	// keypad
+	key <KP1> { [ 1 ] };
+	key <KP2> { [ 2 ] };
+	key <KP3> { [ 3 ] };
+	key <KP4> { [ 4 ] };
+	key <KP5> { [ 5 ] };
+	key <KP6> { [ 6 ] };
+	key <KP7> { [ 7 ] };
+	key <KP8> { [ 8 ] };
+	key <KP9> { [ 9 ] };
+	key <KP0> { [ 0 ] };
 
 	include "level3(ralt_switch)"
 };
