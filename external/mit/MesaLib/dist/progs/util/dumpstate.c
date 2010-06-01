@@ -1610,7 +1610,7 @@ static void print_enum_name( FILE* OUT, GLenum e )
         for( i= 0; i < 16; ++i ) m[i]= 0.0;                \
         glGetFloatv(GL_##VAR,m);                           \
         fprintf( OUT,                                      \
-                 "%s:\n\t[%+.6f %+.6f %+.6f %+.6f]\n\t[%+.6f %+.6f %+.6f 
+                 "%s:\n\t[%+.6f %+.6f %+.6f %+.6f]\n\t[%+.6f %+.6f %+.6f \
 %+.6f]\n\t[%+.6f %+.6f %+.6f %+.6f]\n\t[%+.6f %+.6f %+.6f %+.6f]\n", \
                  #VAR,                                     \
                  m[0+0*4], m[0+1*4], m[0+2*4], m[0+3*4],   \
