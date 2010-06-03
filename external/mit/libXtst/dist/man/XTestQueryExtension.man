@@ -7,7 +7,7 @@
 .\"    Source: __xorgversion__
 .\"  Language: English
 .\"
-.TH "XTEST" "__libmansuffix__" "<pubdate>6 June 2007</pubdate>" "__xorgversion__" "XTST FUNCTIONS"
+.TH "XTEST" __libmansuffix__ "<pubdate>6 June 2007</pubdate>" __xorgversion__ "XTST FUNCTIONS"
 .\" -----------------------------------------------------------------
 .\" * set default formatting
 .\" -----------------------------------------------------------------
