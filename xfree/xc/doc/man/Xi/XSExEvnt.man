@@ -47,7 +47,6 @@ Specifies the list of event selections to be used.
 .TP 12
 .I event_send
 Specifies a pointer to the event that is to be sent.
-.TP 12
 .SH DESCRIPTION
 The
 \fIXSendExtensionEvent\fP
