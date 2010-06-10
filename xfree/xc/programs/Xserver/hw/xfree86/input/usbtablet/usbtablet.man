@@ -93,7 +93,6 @@ Scaling factor between tablet coordinates and X screen coordinates. If
 you don't specify it, it will be calculated to match the height of your
 tablet to the height of your screen.
 .TP 4
-.TP 4
 .B Option \fI"DebugLevel"\fP \fInumber \fP
 sets the level of debugging info reported.
 .TP 4
