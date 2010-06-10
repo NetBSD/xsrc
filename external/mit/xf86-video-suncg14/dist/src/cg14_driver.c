@@ -331,12 +331,12 @@ CG14PreInit(ScrnInfoPtr pScrn, int flags)
     deal with depth
     *********************/
     
-    if (!xf86SetDepthBpp(pScrn, 32, 0, 32, Support32bppFb)) {
-	return FALSE;
-    } else {
-	/* Check that the returned depth is one we support */
-	switch (pScrn->depth) {
+    if (!xf86SetDepthBpp(pScrn, 0, 0, 0, Support24bppFb|Support32bppFb))
+		return FALSE;
+    /* Check that the returned depth is one we support */
+    switch (pScrn->depth) {
 	case 32:
+	case 24:
 	    /* OK */
 	    break;
 	default:
@@ -344,7 +344,6 @@ CG14PreInit(ScrnInfoPtr pScrn, int flags)
 		       "Given depth (%d) is not supported by this driver\n",
 		       pScrn->depth);
 	    return FALSE;
-	}
     }
 
     /* Collect all of the relevant option flags (fill in pScrn->options) */
@@ -360,7 +359,7 @@ CG14PreInit(ScrnInfoPtr pScrn, int flags)
      * xf86SetWeight references it.
      */
     if (pScrn->depth > 8) {
-	rgb weight = {10, 11, 11};
+	rgb weight = {0, 0, 0};
 	rgb mask = {0xff, 0xff00, 0xff0000};
                                        
 	if (!xf86SetWeight(pScrn, weight, mask)) {
@@ -446,8 +445,11 @@ CG14ScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 				 (pCg14->psdp->width * pCg14->psdp->height));
     pCg14->xlut = xf86MapSbusMem (pCg14->psdp, CG14_XLUT_VOFF, 4096);
 
-    if (! pCg14->fb || !pCg14->x32 || !pCg14->xlut)
+    if (! pCg14->fb || !pCg14->x32 || !pCg14->xlut) {
+    	xf86Msg(X_ERROR, "can't mmap something: fd %08x  x32 %08x xlut %08x\n",
+	    (uint32_t)pCg14->fb, (uint32_t)pCg14->x32, (uint32_t)pCg14->xlut);
 	return FALSE;
+    }
 
     /* Darken the screen for aesthetic reasons and set the viewport */
     CG14SaveScreen(pScreen, SCREEN_SAVER_ON);
@@ -541,6 +543,7 @@ CG14ScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 static Bool
 CG14SwitchMode(int scrnIndex, DisplayModePtr mode, int flags)
 {
+    xf86Msg(X_ERROR, "CG14SwitchMode\n");
     return TRUE;
 }
 
@@ -601,6 +604,7 @@ CG14CloseScreen(int scrnIndex, ScreenPtr pScreen)
     Cg14Ptr pCg14 = GET_CG14_FROM_SCRN(pScrn);
 
     pScrn->vtSema = FALSE;
+    CG14ExitCplane24 (pScrn);
     xf86UnmapSbusMem(pCg14->psdp, pCg14->fb,
 		     (pCg14->psdp->width * pCg14->psdp->height * 4));
     xf86UnmapSbusMem(pCg14->psdp, pCg14->x32,
