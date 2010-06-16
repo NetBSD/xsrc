@@ -43,6 +43,7 @@ typedef pointer XPointer;
 typedef struct _XDisplay Display;
 #endif
 
+#ifndef DPMS_SERVER
 _XFUNCPROTOBEGIN
 
 extern Bool DPMSQueryExtension(Display *, int *, int *);
@@ -56,6 +57,7 @@ extern Status DPMSForceLevel(Display *, CARD16);
 extern Status DPMSInfo(Display *, CARD16 *, BOOL *);
 
 _XFUNCPROTOEND
+#endif
 
 #endif /* !_X11_EXTENSIONS_DPMS_H */
 
