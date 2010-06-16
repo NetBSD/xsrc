@@ -1,6 +1,4 @@
 /*
- * $Id: Xdamage.c,v 1.1.1.2 2009/11/08 09:42:59 mrg Exp $
- *
  * Copyright © 2003 Keith Packard
  * Copyright © 2007 Eric Anholt
  *
@@ -94,6 +92,7 @@ XDamageExtAddDisplay (XDamageExtInfo	*extinfo,
 	info->major_version = rep.majorVersion;
 	info->minor_version = rep.minorVersion;
 	UnlockDisplay (dpy);
+	SyncHandle ();
     } else {
 	/* The server doesn't have this extension.
 	 * Use a private Xlib-internal extension to hang the close_display

@@ -1,6 +1,4 @@
 /*
- * $Id: Xdamage.h,v 1.1.1.2 2009/11/08 09:42:59 mrg Exp $
- *
  * Copyright © 2003 Keith Packard
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
