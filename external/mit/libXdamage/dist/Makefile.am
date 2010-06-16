@@ -1,6 +1,4 @@
 # 
-#  $Id: Makefile.am,v 1.1.1.2 2009/11/08 09:42:59 mrg Exp $
-# 
 #  Copyright © 2003 Keith Packard, Noah Levitt
 # 
 #  Permission to use, copy, modify, distribute, and sell this software and its
@@ -28,14 +26,14 @@ INCLUDES = $(top_srcdir)/include/
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = xdamage.pc
 
-EXTRA_DIST = xdamage.pc.in
+MAINTAINERCLEANFILES = ChangeLog INSTALL
 
-EXTRA_DIST += ChangeLog
-MAINTAINERCLEANFILES = ChangeLog
+.PHONY: ChangeLog INSTALL
 
-.PHONY: ChangeLog
+INSTALL:
+	$(INSTALL_CMD)
 
 ChangeLog:
 	$(CHANGELOG_CMD)
 
-dist-hook: ChangeLog
+dist-hook: ChangeLog INSTALL
