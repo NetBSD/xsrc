@@ -93,6 +93,10 @@
 /* preference sorted list of transport types to try for local connections */
 #undef LOCAL_TRANSPORT_LIST
 
+/* Define to the sub-directory in which libtool stores uninstalled libraries.
+   */
+#undef LT_OBJDIR
+
 /* Disable XLOCALEDIR environment variable */
 #undef NO_XLOCALEDIR
 
