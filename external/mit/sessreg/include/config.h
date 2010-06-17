@@ -34,11 +34,20 @@
 /* Define to 1 if you have the <unistd.h> header file. */
 #define HAVE_UNISTD_H 1
 
+/* Define to 1 if you have the `updwtmpx' function. */
+#define HAVE_UPDWTMPX 1
+
+/* Define to 1 if you have the `utmpxname' function. */
+#define HAVE_UTMPXNAME 1
+
 /* Define to 1 if you have the <utmpx.h> header file. */
 #define HAVE_UTMPX_H 1
 
 /* utmpx structure includes ut_syslen field */
 #define HAVE_UTMPX_UT_SYSLEN 0
+
+/* Define to 1 if you have the <utmp.h> header file. */
+#define HAVE_UTMP_H 1
 
 /* Name of package */
 #define PACKAGE "sessreg"
@@ -50,13 +59,16 @@
 #define PACKAGE_NAME "sessreg"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "sessreg 1.0.5"
+#define PACKAGE_STRING "sessreg 1.0.6"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "sessreg"
 
+/* Define to the home page for this package. */
+#define PACKAGE_URL ""
+
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "1.0.5"
+#define PACKAGE_VERSION "1.0.6"
 
 /* Major version of this package */
 #define PACKAGE_VERSION_MAJOR 1
@@ -65,16 +77,48 @@
 #define PACKAGE_VERSION_MINOR 0
 
 /* Patch version of this package */
-#define PACKAGE_VERSION_PATCHLEVEL 5
+#define PACKAGE_VERSION_PATCHLEVEL 6
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1
 
+/* Enable extensions on AIX 3, Interix.  */
+#ifndef _ALL_SOURCE
+# define _ALL_SOURCE 1
+#endif
+/* Enable GNU extensions on systems that have them.  */
+#ifndef _GNU_SOURCE
+# define _GNU_SOURCE 1
+#endif
+/* Enable threading extensions on Solaris.  */
+#ifndef _POSIX_PTHREAD_SEMANTICS
+# define _POSIX_PTHREAD_SEMANTICS 1
+#endif
+/* Enable extensions on HP NonStop.  */
+#ifndef _TANDEM_SOURCE
+# define _TANDEM_SOURCE 1
+#endif
+/* Enable general extensions on Solaris.  */
+#ifndef __EXTENSIONS__
+# define __EXTENSIONS__ 1
+#endif
+
+
 /* Version number of package */
-#define VERSION "1.0.5"
+#define VERSION "1.0.6"
 
 /* Number of bits in a file offset, on hosts where this is settable. */
 /* #undef _FILE_OFFSET_BITS */
 
 /* Define for large files, on AIX-style hosts. */
 /* #undef _LARGE_FILES */
+
+/* Define to 1 if on MINIX. */
+/* #undef _MINIX */
+
+/* Define to 2 if the system does not provide POSIX.1 features except with
+   this defined. */
+/* #undef _POSIX_1_SOURCE */
+
+/* Define to 1 if you need to in order for `stat' and other things to work. */
+/* #undef _POSIX_SOURCE */
