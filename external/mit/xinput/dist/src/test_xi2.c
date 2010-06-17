@@ -153,7 +153,7 @@ static void print_enterleave(XILeaveEvent* event)
     char *mode, *detail;
     int i;
 
-    printf("    device: %d\n", event->deviceid);
+    printf("    device: %d (%d)\n", event->deviceid, event->sourceid);
     printf("    windows: root 0x%lx event 0x%lx child 0x%ld\n",
             event->root, event->event, event->child);
     switch(event->mode)
