@@ -95,6 +95,15 @@
 #  define WTMP_FILE	"/usr/adm/wtmp"
 # endif
 #endif
+
+#ifndef WTMPX_FILE
+# ifdef _PATH_WTMPX
+#  define WTMPX_FILE	_PATH_WTMPX
+# else
+#  define WTMPX_FILE	"/usr/adm/wtmpx"
+# endif
+#endif
+
 #ifndef UTMP_FILE
 # ifdef _PATH_UTMP
 #  define UTMP_FILE	_PATH_UTMP
@@ -102,6 +111,15 @@
 #  define UTMP_FILE	"/etc/utmp"
 # endif
 #endif
+
+#ifndef UTMPX_FILE
+# ifdef _PATH_UTMPX
+#  define UTMPX_FILE	_PATH_UTMPX
+# else
+#  define UTMPX_FILE	"/etc/utmpx"
+# endif
+#endif
+
 #ifndef NO_LASTLOG
 # ifndef LLOG_FILE
 #  ifdef _PATH_LASTLOG
