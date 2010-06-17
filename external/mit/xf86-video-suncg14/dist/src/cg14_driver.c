@@ -20,7 +20,6 @@
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/suncg14/cg14_driver.c,v 1.6 2001/10/01 13:44:10 eich Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -30,7 +29,6 @@
 
 #include "xf86.h"
 #include "xf86_OSproc.h"
-#include "xf86Version.h"
 #include "mipointer.h"
 #include "mibstore.h"
 #include "micmap.h"
@@ -67,9 +65,9 @@ void CG14Sync(ScrnInfoPtr pScrn);
 #define CG14_VERSION 4000
 #define CG14_NAME "SUNCG14"
 #define CG14_DRIVER_NAME "suncg14"
-#define CG14_MAJOR_VERSION 1
-#define CG14_MINOR_VERSION 1
-#define CG14_PATCHLEVEL 0
+#define CG14_MAJOR_VERSION PACKAGE_VERSION_MAJOR
+#define CG14_MINOR_VERSION PACKAGE_VERSION_MINOR
+#define CG14_PATCHLEVEL PACKAGE_VERSION_PATCHLEVEL
 
 /* 
  * This contains the functions needed by the server after loading the driver
