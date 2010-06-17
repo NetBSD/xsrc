@@ -1,4 +1,3 @@
-# $Id: Makefile.am,v 1.1.1.1 2010/02/11 00:16:41 macallan Exp $
 #
 # Copyright 2005 Sun Microsystems, Inc.  All rights reserved.
 # 
