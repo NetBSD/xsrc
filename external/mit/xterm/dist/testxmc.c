@@ -1,8 +1,8 @@
-/* $XTermId: testxmc.c,v 1.45 2009/09/10 09:05:20 tom Exp $ */
+/* $XTermId: testxmc.c,v 1.47 2010/04/17 17:11:33 tom Exp $ */
 
 /************************************************************
 
-Copyright 1997-2006,2009 by Thomas E. Dickey
+Copyright 1997-2009,2010 by Thomas E. Dickey
 
                         All Rights Reserved
 
@@ -88,18 +88,18 @@ authorization.
 #include <xterm.h>
 #include <data.h>
 
-#define MARK_ON(a)  (my_attrs & a) != 0 && (xw->flags & (whichone = CharOf(a))) == 0
-#define MARK_OFF(a) (my_attrs & a) != 0 && (xw->flags & (whichone = CharOf(a))) != 0
+#define MARK_ON(a)  (Bool) ((my_attrs & a) != 0 && (xw->flags & (whichone = CharOf(a))) == 0)
+#define MARK_OFF(a) (Bool) ((my_attrs & a) != 0 && (xw->flags & (whichone = CharOf(a))) != 0)
 
 void
 Mark_XMC(XtermWidget xw, int param)
 {
     static IChar *glitch;
 
-    TScreen *screen = &(xw->screen);
+    TScreen *screen = TScreenOf(xw);
     Bool found = False;
-    Char my_attrs = CharOf(screen->xmc_attributes & XMC_FLAGS);
-    Char whichone = 0;
+    unsigned my_attrs = CharOf(screen->xmc_attributes & XMC_FLAGS);
+    unsigned whichone = 0;
 
     if (glitch == 0) {
 	unsigned len = screen->xmc_glitch;
@@ -159,7 +159,7 @@ Mark_XMC(XtermWidget xw, int param)
 void
 Jump_XMC(XtermWidget xw)
 {
-    TScreen *screen = &(xw->screen);
+    TScreen *screen = TScreenOf(xw);
     if (!screen->move_sgr_ok
 	&& screen->cur_col <= LineMaxCol(screen,
 					 getLineData(screen, screen->cur_row))) {
@@ -174,7 +174,7 @@ Jump_XMC(XtermWidget xw)
 void
 Resolve_XMC(XtermWidget xw)
 {
-    TScreen *screen = &(xw->screen);
+    TScreen *screen = TScreenOf(xw);
     LineData *ld;
     Bool changed = False;
     Char start;
