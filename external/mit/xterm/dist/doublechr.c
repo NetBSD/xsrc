@@ -1,8 +1,8 @@
-/* $XTermId: doublechr.c,v 1.72 2009/08/07 00:25:02 tom Exp $ */
+/* $XTermId: doublechr.c,v 1.75 2010/06/15 10:58:13 tom Exp $ */
 
 /************************************************************
 
-Copyright 1997-2008,2009 by Thomas E. Dickey
+Copyright 1997-2009,2010 by Thomas E. Dickey
 
                         All Rights Reserved
 
@@ -50,7 +50,7 @@ authorization.
 static void
 repaint_line(XtermWidget xw, unsigned newChrSet)
 {
-    TScreen *screen = &xw->screen;
+    TScreen *screen = TScreenOf(xw);
     LineData *ld;
     int curcol = screen->cur_col;
     int currow = screen->cur_row;
@@ -140,7 +140,7 @@ xterm_DECDWL(XtermWidget xw GCC_UNUSED)
 static void
 discard_font(XtermWidget xw, int n)
 {
-    TScreen *screen = &xw->screen;
+    TScreen *screen = TScreenOf(xw);
     XTermFonts *data = &(screen->double_fonts[n]);
 
     TRACE(("discard_font chrset=%d %s\n", data->chrset,
@@ -165,7 +165,7 @@ discard_font(XtermWidget xw, int n)
 static XTermFonts *
 pushback_font(XtermWidget xw, XTermFonts * source)
 {
-    TScreen *screen = &xw->screen;
+    TScreen *screen = TScreenOf(xw);
     XTermFonts *data = screen->double_fonts;
     int n;
 
@@ -190,7 +190,7 @@ xterm_Double_index(XtermWidget xw, unsigned chrset, unsigned flags)
 {
     int n;
     int result = -1;
-    TScreen *screen = &xw->screen;
+    TScreen *screen = TScreenOf(xw);
     XTermFonts *data = screen->double_fonts;
 
     flags &= BOLD;
@@ -228,7 +228,7 @@ xterm_DoubleGC(XtermWidget xw,
 	       GC old_gc,
 	       int *inxp)
 {
-    TScreen *screen = &(xw->screen);
+    TScreen *screen = TScreenOf(xw);
     VTwin *cgsWin = WhichVWin(screen);
     int n;
     char *name;
@@ -293,7 +293,7 @@ xterm_DoubleGC(XtermWidget xw,
 	    result = getCgsGC(xw, cgsWin, cgsId);
 	    *inxp = n;
 	} else if (flags & BOLD) {
-	    flags &= ~BOLD;
+	    UIntClr(flags, BOLD);
 	    result = xterm_DoubleGC(xw, chrset, flags, old_gc, inxp);
 	}
     }

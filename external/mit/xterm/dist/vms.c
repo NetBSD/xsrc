@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/xterm/vms.c,v 1.2 2003/10/27 01:07:58 dickey Exp $ */
+/* $XTermId: vms.c,v 1.12 2010/06/13 17:46:27 tom Exp $ */
 
 /*  vms.c
  *
@@ -547,7 +547,7 @@ static void send_xoff(void)
 
 static void send_bell(void)
 {
-   Bell();
+   Bell(term);
 }
 
 /*
@@ -567,13 +567,13 @@ static void char_change(void)
    * Dont do anything if in Tek mode
    */
 
-  if(!(term->screen.TekEmu))
+  if(!(TScreenOf(term)->TekEmu))
     {
       status = sys$qiow(0,tt_chan,IO$_SENSEMODE,0,0,0,&tt_mode,8,0,0,0,0);
       if(!(status & SS$_NORMAL)) CloseDown(status);
 
-      if((term->screen.max_row != tt_mode.length) ||
-	 (term->screen.max_col != tt_mode.page_width))
+      if((TScreenOf(term)->max_row != tt_mode.length) ||
+	 (TScreenOf(term)->max_col != tt_mode.page_width))
 	{
 	  tt_length = tt_mode.length;
 	  tt_width =  tt_mode.page_width;

@@ -1,8 +1,8 @@
-/* $XTermId: fontutils.h,v 1.76 2009/09/09 23:31:55 tom Exp $ */
+/* $XTermId: fontutils.h,v 1.81 2010/06/15 10:58:13 tom Exp $ */
 
 /************************************************************
 
-Copyright 1998-2008,2009 by Thomas E. Dickey
+Copyright 1998-2009,2010 by Thomas E. Dickey
 
                         All Rights Reserved
 
@@ -40,7 +40,7 @@ authorization.
 extern Bool xtermLoadDefaultFonts (XtermWidget /* xw */);
 extern Bool xtermOpenFont (XtermWidget /* xw */, const char */* name */, XTermFonts * /* result */, fontWarningTypes /* warn */, Bool /* force */);
 extern XTermFonts * xtermCloseFont (XtermWidget /* xw */, XTermFonts * /* fnt */);
-extern const VTFontNames * xtermFontName (char */* normal */);
+extern const VTFontNames * xtermFontName (const char */* normal */);
 extern int lookupRelativeFontSize (XtermWidget /* xw */, int /* old */, int /* relative */);
 extern int xtermGetFont(const char * /* param */);
 extern int xtermLoadFont (XtermWidget /* xw */, const VTFontNames */* fonts */, Bool /* doresize */, int /* fontnum */);
@@ -101,11 +101,14 @@ extern Bool xtermLoadWideFonts (XtermWidget /* w */, Bool /* nullOk */);
 
 #if OPT_RENDERFONT
 extern Bool xtermXftMissing (XtermWidget /* xw */, XftFont * /* font */, unsigned /* wc */);
+extern void xtermCloseXft(TScreen * /* screen */, XTermXftFonts * /* pub */);
 #endif
 
 #if OPT_SHIFT_FONTS
-extern void HandleSmallerFont PROTO_XT_ACTIONS_ARGS;
+extern char *getFaceName(XtermWidget /* xw */, Bool /* wideName */);
 extern void HandleLargerFont PROTO_XT_ACTIONS_ARGS;
+extern void HandleSmallerFont PROTO_XT_ACTIONS_ARGS;
+extern void setFaceName(XtermWidget /* xw */, const char * /*value */);
 #endif
 
 #if OPT_WIDE_CHARS

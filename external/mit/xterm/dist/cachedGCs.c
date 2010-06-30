@@ -1,8 +1,8 @@
-/* $XTermId: cachedGCs.c,v 1.54 2009/08/07 00:06:33 tom Exp $ */
+/* $XTermId: cachedGCs.c,v 1.59 2010/04/15 00:00:17 tom Exp $ */
 
 /************************************************************
 
-Copyright 2007-2008,2009 by Thomas E. Dickey
+Copyright 2007-2009,2010 by Thomas E. Dickey
 
                         All Rights Reserved
 
@@ -65,7 +65,7 @@ typedef struct {
 } CgsCacheData;
 
 #define DEPTH 8
-#define ITEM()      (me->data - me->list)
+#define ITEM()      (int) (me->data - me->list)
 #define LIST(item)  me->list[item]
 #define LINK(item)  me->data = (me->list + (item))
 #define THIS(field) me->data->field
@@ -127,10 +127,10 @@ traceVTwin(XtermWidget xw, VTwin * value)
     const char *result = "?";
     if (value == 0)
 	result = "null";
-    else if (value == &(xw->screen.fullVwin))
+    else if (value == &(TScreenOf(xw)->fullVwin))
 	result = "fullVwin";
 #ifndef NO_ACTIVE_ICON
-    else if (value == &(xw->screen.iconVwin))
+    else if (value == &(TScreenOf(xw)->iconVwin))
 	result = "iconVwin";
 #endif
     return result;
@@ -205,7 +205,7 @@ tracePixel(XtermWidget xw, Pixel value)
 	    CASE(TEK_CURSOR),
 #endif
     };
-    TScreen *screen = &(xw->screen);
+    TScreen *screen = TScreenOf(xw);
     String result = 0;
     int n;
 
@@ -284,11 +284,11 @@ myCache(XtermWidget xw, VTwin * cgsWin, CgsEnum cgsId)
 	(void) xw;
 	(void) cgsWin;
 #else
-	if (cgsWin == &(xw->screen.iconVwin))
-	    result = allocCache(&(xw->screen.icon_cgs_cache));
+	if (cgsWin == &(TScreenOf(xw)->iconVwin))
+	    result = allocCache(&(TScreenOf(xw)->icon_cgs_cache));
 	else
 #endif
-	    result = allocCache(&(xw->screen.main_cgs_cache));
+	    result = allocCache(&(TScreenOf(xw)->main_cgs_cache));
 
 	result += cgsId;
 	if (result->data == 0) {
@@ -302,7 +302,7 @@ myCache(XtermWidget xw, VTwin * cgsWin, CgsEnum cgsId)
 static Display *
 myDisplay(XtermWidget xw)
 {
-    return xw->screen.display;
+    return TScreenOf(xw)->display;
 }
 
 static Drawable
@@ -500,11 +500,11 @@ setCgsFont(XtermWidget xw, VTwin * cgsWin, CgsEnum cgsId, XTermFonts * font)
 	    if (cgsId != gcNorm)
 		(void) getCgsGC(xw, cgsWin, gcNorm);
 #ifndef NO_ACTIVE_ICON
-	    if (cgsWin == &(xw->screen.iconVwin))
-		font = &(xw->screen.fnt_icon);
+	    if (cgsWin == &(TScreenOf(xw)->iconVwin))
+		font = &(TScreenOf(xw)->fnt_icon);
 	    else
 #endif
-		font = &(xw->screen.fnts[fNorm]);
+		font = &(TScreenOf(xw)->fnts[fNorm]);
 	}
 	if (HaveFont(font) && okFont(font->fs)) {
 	    TRACE2(("...updated next font in %p for %s to %s\n",
@@ -549,7 +549,7 @@ clrCgsFonts(XtermWidget xw, VTwin * cgsWin, XTermFonts * font)
 			    traceFont(font)));
 		    NEXT(font) = 0;
 		    NEXT(cset) = 0;
-		    me->mask &= ~(GCFont | GC_CSet);
+		    me->mask &= (unsigned) ~(GCFont | GC_CSet);
 		}
 	    }
 	}
@@ -629,7 +629,7 @@ getCgsGC(XtermWidget xw, VTwin * cgsWin, CgsEnum cgsId)
 		    }
 		}
 		LINK(k);
-		TRACE(("...getCgsGC least-used(%d) was %d\n", k, THIS(used)));
+		TRACE2(("...getCgsGC least-used(%d) was %d\n", k, THIS(used)));
 		result = chgCache(xw, cgsId, me, True);
 	    }
 	    me->next = *(me->data);
@@ -769,7 +769,7 @@ void
 redoCgs(XtermWidget xw, Pixel fg, Pixel bg, CgsEnum cgsId)
 {
     int n;
-    VTwin *cgsWin = WhichVWin(&(xw->screen));
+    VTwin *cgsWin = WhichVWin(TScreenOf(xw));
     CgsCache *me = myCache(xw, cgsWin, cgsId);
 
     if (me != 0) {
@@ -844,7 +844,7 @@ freeCgs(XtermWidget xw, VTwin * cgsWin, CgsEnum cgsId)
 		    XmuReleaseStippledPixmap(XtScreen((Widget) xw), LIST(j).tile);
 		}
 #endif
-		XFreeGC(xw->screen.display, LIST(j).gc);
+		XFreeGC(TScreenOf(xw)->display, LIST(j).gc);
 		memset(&LIST(j), 0, sizeof(LIST(j)));
 	    }
 	    LINK(0);
@@ -858,8 +858,8 @@ void
 noleaks_cachedCgs(XtermWidget xw)
 {
 #ifndef NO_ACTIVE_ICON
-    free(xw->screen.icon_cgs_cache);
+    free(TScreenOf(xw)->icon_cgs_cache);
 #endif
-    free(xw->screen.main_cgs_cache);
+    free(TScreenOf(xw)->main_cgs_cache);
 }
 #endif

@@ -1,8 +1,8 @@
-/* $XTermId: ptydata.c,v 1.90 2009/08/09 17:22:05 tom Exp $ */
+/* $XTermId: ptydata.c,v 1.98 2010/06/20 21:41:15 tom Exp $ */
 
 /************************************************************
 
-Copyright 1999-2008,2009 by Thomas E. Dickey
+Copyright 1999-2009,2010 by Thomas E. Dickey
 
                         All Rights Reserved
 
@@ -62,7 +62,7 @@ Bool
 decodeUtf8(PtyData * data)
 {
     int i;
-    int length = data->last - data->next;
+    int length = (int) (data->last - data->next);
     int utf_count = 0;
     unsigned utf_char = 0;
 
@@ -171,13 +171,14 @@ decodeUtf8(PtyData * data)
 #endif
 
 int
-readPtyData(TScreen * screen, PtySelect * select_mask, PtyData * data)
+readPtyData(XtermWidget xw, PtySelect * select_mask, PtyData * data)
 {
+    TScreen *screen = TScreenOf(xw);
     int size = 0;
 
 #ifdef VMS
     if (*select_mask & pty_mask) {
-	trimPtyData(screen, data);
+	trimPtyData(xw, data);
 	if (read_queue.flink != 0) {
 	    size = tt_read(data->next);
 	    if (size == 0) {
@@ -190,9 +191,9 @@ readPtyData(TScreen * screen, PtySelect * select_mask, PtyData * data)
 #else /* !VMS */
     if (FD_ISSET(screen->respond, select_mask)) {
 	int save_err;
-	trimPtyData(screen, data);
+	trimPtyData(xw, data);
 
-	size = read(screen->respond, (char *) data->last, (unsigned) FRG_SIZE);
+	size = (int) read(screen->respond, (char *) data->last, (size_t) FRG_SIZE);
 	save_err = errno;
 #if (defined(i386) && defined(SVR4) && defined(sun)) || defined(__CYGWIN__)
 	/*
@@ -240,7 +241,7 @@ readPtyData(TScreen * screen, PtySelect * select_mask, PtyData * data)
 #endif
 	data->last += size;
 #ifdef ALLOWLOGGING
-	term->screen.logstart = VTbuffer->next;
+	TScreenOf(term)->logstart = VTbuffer->next;
 #endif
     }
 
@@ -322,7 +323,8 @@ initPtyData(PtyData ** result)
     TRACE(("initPtyData using minBufSize %d, maxBufSize %d\n",
 	   FRG_SIZE, BUF_SIZE));
 
-    data = (PtyData *) XtMalloc(sizeof(*data) + (unsigned) (BUF_SIZE + FRG_SIZE));
+    data = (PtyData *) XtMalloc((Cardinal) (sizeof(*data)
+					    + (unsigned) (BUF_SIZE + FRG_SIZE)));
 
     memset(data, 0, sizeof(*data));
     data->next = data->buffer;
@@ -331,7 +333,7 @@ initPtyData(PtyData ** result)
 }
 
 /*
- * Initialize a buffer for the caller, using its data in 'source'.
+ * Initialize a buffer for the caller, using its data in 'next'.
  */
 #if OPT_WIDE_CHARS
 PtyData *
@@ -352,14 +354,14 @@ fakePtyData(PtyData * result, Char * next, Char * last)
  * e.g., a continuation-read.
  */
 void
-trimPtyData(TScreen * screen GCC_UNUSED, PtyData * data)
+trimPtyData(XtermWidget xw GCC_UNUSED, PtyData * data)
 {
     int i;
 
-    FlushLog(screen);
+    FlushLog(xw);
 
     if (data->next != data->buffer) {
-	int n = (data->last - data->next);
+	int n = (int) (data->last - data->next);
 
 	TRACE(("shifting buffer down by %d\n", n));
 	for (i = 0; i < n; ++i) {
@@ -376,16 +378,16 @@ trimPtyData(TScreen * screen GCC_UNUSED, PtyData * data)
  * and nextPtyData() will return that.
  */
 void
-fillPtyData(TScreen * screen, PtyData * data, char *value, int length)
+fillPtyData(XtermWidget xw, PtyData * data, const char *value, int length)
 {
     int size;
     int n;
 
     /* remove the used portion of the buffer */
-    trimPtyData(screen, data);
+    trimPtyData(xw, data);
 
     VTbuffer->last += length;
-    size = VTbuffer->last - VTbuffer->next;
+    size = (int) (VTbuffer->last - VTbuffer->next);
 
     /* shift the unused portion up to make room */
     for (n = size; n >= length; --n)
@@ -400,21 +402,44 @@ fillPtyData(TScreen * screen, PtyData * data, char *value, int length)
 Char *
 convertToUTF8(Char * lp, unsigned c)
 {
-    if (c < 0x80) {		/*  0*******  */
-	*lp++ = (Char) (c);
-    } else if (c < 0x800) {	/*  110***** 10******  */
-	*lp++ = (Char) (0xc0 | (c >> 6));
-	*lp++ = (Char) (0x80 | (c & 0x3f));
-    } else {			/*  1110**** 10****** 10******  */
-	*lp++ = (Char) (0xe0 | (c >> 12));
-	*lp++ = (Char) (0x80 | ((c >> 6) & 0x3f));
-	*lp++ = (Char) (0x80 | (c & 0x3f));
+#define CH(n) (Char)((c) >> ((n) * 8))
+    if (c < 0x80) {
+	/*  0*******  */
+	*lp++ = (Char) CH(0);
+    } else if (c < 0x800) {
+	/*  110***** 10******  */
+	*lp++ = (Char) (0xc0 | (CH(0) >> 6) | ((CH(1) & 0x07) << 2));
+	*lp++ = (Char) (0x80 | (CH(0) & 0x3f));
+    } else if (c < 0x00010000) {
+	/*  1110**** 10****** 10******  */
+	*lp++ = (Char) (0xe0 | ((int) (CH(1) & 0xf0) >> 4));
+	*lp++ = (Char) (0x80 | (CH(0) >> 6) | ((CH(1) & 0x0f) << 2));
+	*lp++ = (Char) (0x80 | (CH(0) & 0x3f));
+    } else if (c < 0x00200000) {
+	*lp++ = (Char) (0xf0 | ((int) (CH(2) & 0x1f) >> 2));
+	*lp++ = (Char) (0x80 |
+			((int) (CH(1) & 0xf0) >> 4) |
+			((int) (CH(2) & 0x03) << 4));
+	*lp++ = (Char) (0x80 | (CH(0) >> 6) | ((CH(1) & 0x0f) << 2));
+	*lp++ = (Char) (0x80 | (CH(0) & 0x3f));
+    } else if (c < 0x04000000) {
+	*lp++ = (Char) (0xf8 | (CH(3) & 0x03));
+	*lp++ = (Char) (0x80 | (CH(2) >> 2));
+	*lp++ = (Char) (0x80 |
+			((int) (CH(1) & 0xf0) >> 4) |
+			((int) (CH(2) & 0x03) << 4));
+	*lp++ = (Char) (0x80 | (CH(0) >> 6) | ((CH(1) & 0x0f) << 2));
+	*lp++ = (Char) (0x80 | (CH(0) & 0x3f));
+    } else {
+	*lp++ = (Char) (0xfc | ((int) (CH(3) & 0x40) >> 6));
+	*lp++ = (Char) (0x80 | (CH(3) & 0x3f));
+	*lp++ = (Char) (0x80 | (CH(2) >> 2));
+	*lp++ = (Char) (0x80 | (CH(1) >> 4) | ((CH(2) & 0x03) << 4));
+	*lp++ = (Char) (0x80 | (CH(0) >> 6) | ((CH(1) & 0x0f) << 2));
+	*lp++ = (Char) (0x80 | (CH(0) & 0x3f));
     }
-    /*
-     * UTF-8 is defined for words of up to 31 bits, but we need only 16
-     * bits here, since that's all that X11R6 supports.
-     */
     return lp;
+#undef CH
 }
 
 /*
@@ -451,6 +476,37 @@ noleaks_ptydata(void)
 #endif
 	free(VTbuffer);
 	VTbuffer = 0;
+    }
+}
+#endif
+
+#if 0
+void
+test_ptydata(void)
+{
+    PtyData *data;
+    unsigned code;
+
+    initPtyData(&data);
+    TRACE(("test_ptydata\n"));
+    for (code = 0; code <= 0x7fffffff; ++code) {
+	int use_size;
+
+	memset(data, 0, sizeof(*data));
+	data->next = data->buffer;
+	data->last = convertToUTF8(data->buffer, code);
+
+	use_size = (data->last - data->next);
+
+	if (decodeUtf8(data)) {
+	    if (code != data->utf_data) {
+		TRACE(("code %#x ->%#x\n", code, data->utf_data));
+	    } else if (use_size != data->utf_size) {
+		TRACE(("size %#x %d->%d\n", code, use_size, data->utf_size));
+	    }
+	} else {
+	    TRACE(("fail %#x\n", code));
+	}
     }
 }
 #endif

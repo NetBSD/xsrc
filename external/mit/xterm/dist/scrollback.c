@@ -1,8 +1,8 @@
-/* $XTermId: scrollback.c,v 1.11 2009/08/06 08:34:30 tom Exp $ */
+/* $XTermId: scrollback.c,v 1.14 2010/04/28 21:47:09 tom Exp $ */
 
 /************************************************************
 
-Copyright 2009 by Thomas E. Dickey
+Copyright 2009,2010 by Thomas E. Dickey
 
                         All Rights Reserved
 
@@ -34,8 +34,9 @@ authorization.
 
 #include <xterm.h>
 
+#define REAL_ROW(screen, row) ((row) + 1 + (screen)->saved_fifo)
 #define ROW2FIFO(screen, row) \
-	(unsigned) (((row) + 1 + (screen)->saved_fifo) % (screen)->savelines)
+	(unsigned) (REAL_ROW(screen, row) % (screen)->savelines)
 
 /*
  * Given a row-number, find the corresponding data for the line in the VT100
@@ -45,11 +46,18 @@ authorization.
 LineData *
 getScrollback(TScreen * screen, int row)
 {
-    unsigned which = ROW2FIFO(screen, row);
-    ScrnBuf where = scrnHeadAddr(screen, screen->saveBuf_index, which);
+    LineData *result = 0;
 
-    TRACE(("getScrollback %d -> %d -> %p\n", row, which, where));
-    return (LineData *) where;
+    if (screen->saved_fifo > 0 && REAL_ROW(screen, row) >= 0) {
+	unsigned which = ROW2FIFO(screen, row);
+	ScrnBuf where = scrnHeadAddr(screen, screen->saveBuf_index, which);
+	result = (LineData *) where;
+    }
+
+    TRACE(("getScrollback %d -> %d -> %p\n",
+	   row, ROW2FIFO(screen, row),
+	   (void *) result));
+    return result;
 }
 
 /*
@@ -80,7 +88,7 @@ addScrollback(TScreen * screen)
 	     */
 	    if (prior->attribs != 0) {
 		TRACE(("...freeing prior FIFO data in slot %d: %p->%p\n",
-		       which, prior, prior->attribs));
+		       which, (void *) prior, prior->attribs));
 		free(prior->attribs);
 		prior->attribs = 0;
 	    }
@@ -93,7 +101,7 @@ addScrollback(TScreen * screen)
 	setupLineData(screen, where, (Char *) block, 1, ncols);
 
 	TRACE(("...storing new FIFO data in slot %d: %p->%p\n",
-	       which, where, block));
+	       which, (void *) where, block));
 
     }
     return (LineData *) where;
@@ -111,7 +119,7 @@ deleteScrollback(TScreen * screen, int row)
      */
     if (prior->attribs != 0) {
 	TRACE(("...freeing prior FIFO data in slot %d: %p->%p\n",
-	       which, prior, prior->attribs));
+	       which, (void *) prior, prior->attribs));
 	free(prior->attribs);
 	prior->attribs = 0;
     }

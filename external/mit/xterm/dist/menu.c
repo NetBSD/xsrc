@@ -1,51 +1,58 @@
-/* $XTermId: menu.c,v 1.252 2009/07/03 15:01:14 tom Exp $ */
+/* $XTermId: menu.c,v 1.267 2010/06/20 21:09:10 tom Exp $ */
 
 /*
-
-Copyright 1999-2008,2009 by Thomas E. Dickey
-
-                        All Rights Reserved
-
-Permission to use, copy, modify, and distribute this software and its
-documentation for any purpose and without fee is hereby granted,
-provided that the above copyright notice appear in all copies and that
-both that copyright notice and this permission notice appear in
-supporting documentation, and that the name of the above listed
-copyright holder(s) not be used in advertising or publicity pertaining
-to distribution of the software without specific, written prior
-permission.
-
-THE ABOVE LISTED COPYRIGHT HOLDER(S) DISCLAIM ALL WARRANTIES WITH REGARD
-TO THIS SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
-AND FITNESS, IN NO EVENT SHALL THE ABOVE LISTED COPYRIGHT HOLDER(S) BE
-LIABLE FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
-ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-
-Copyright 1989  The Open Group
-
-Permission to use, copy, modify, distribute, and sell this software and its
-documentation for any purpose is hereby granted without fee, provided that
-the above copyright notice appear in all copies and that both that
-copyright notice and this permission notice appear in supporting
-documentation.
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
-OPEN GROUP BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
-AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
-CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-Except as contained in this notice, the name of The Open Group shall not be
-used in advertising or otherwise to promote the sale, use or other dealings
-in this Software without prior written authorization from The Open Group.
-
-*/
+ *
+ * Copyright 1999-2009,2010 by Thomas E. Dickey
+ *
+ *                         All Rights Reserved
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the
+ * "Software"), to deal in the Software without restriction, including
+ * without limitation the rights to use, copy, modify, merge, publish,
+ * distribute, sublicense, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject to
+ * the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+ * IN NO EVENT SHALL THE ABOVE LISTED COPYRIGHT HOLDER(S) BE LIABLE FOR ANY
+ * CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+ * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+ * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ *
+ * Except as contained in this notice, the name(s) of the above copyright
+ * holders shall not be used in advertising or otherwise to promote the
+ * sale, use or other dealings in this Software without prior written
+ * authorization.
+ *
+ * Copyright 1989  The Open Group
+ *
+ * Permission to use, copy, modify, distribute, and sell this software and its
+ * documentation for any purpose is hereby granted without fee, provided that
+ * the above copyright notice appear in all copies and that both that
+ * copyright notice and this permission notice appear in supporting
+ * documentation.
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+ * OPEN GROUP BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
+ * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ *
+ * Except as contained in this notice, the name of The Open Group shall not be
+ * used in advertising or otherwise to promote the sale, use or other dealings
+ * in this Software without prior written authorization from The Open Group.
+ *
+ */
 
 #include <xterm.h>
 #include <data.h>
@@ -136,7 +143,6 @@ static void do_kill            PROTO_XT_CALLBACK_ARGS;
 static void do_old_fkeys       PROTO_XT_CALLBACK_ARGS;
 static void do_poponbell       PROTO_XT_CALLBACK_ARGS;
 static void do_print           PROTO_XT_CALLBACK_ARGS;
-static void do_print_everything PROTO_XT_CALLBACK_ARGS;
 static void do_print_redir     PROTO_XT_CALLBACK_ARGS;
 static void do_quit            PROTO_XT_CALLBACK_ARGS;
 static void do_redraw          PROTO_XT_CALLBACK_ARGS;
@@ -165,8 +171,9 @@ static void do_activeicon      PROTO_XT_CALLBACK_ARGS;
 
 #if OPT_ALLOW_XXX_OPS
 static void enable_allow_xxx_ops (Bool);
-static void do_allowTcapOps    PROTO_XT_CALLBACK_ARGS;
+static void do_allowColorOps   PROTO_XT_CALLBACK_ARGS;
 static void do_allowFontOps    PROTO_XT_CALLBACK_ARGS;
+static void do_allowTcapOps    PROTO_XT_CALLBACK_ARGS;
 static void do_allowTitleOps   PROTO_XT_CALLBACK_ARGS;
 static void do_allowWindowOps  PROTO_XT_CALLBACK_ARGS;
 #endif
@@ -177,6 +184,7 @@ static void do_cursorblink     PROTO_XT_CALLBACK_ARGS;
 
 #if OPT_BOX_CHARS
 static void do_font_boxchars   PROTO_XT_CALLBACK_ARGS;
+static void do_font_packed     PROTO_XT_CALLBACK_ARGS;
 #endif
 
 #if OPT_DEC_CHRSET
@@ -351,6 +359,7 @@ MenuEntry fontMenuEntries[] = {
     { "line1",		NULL,		NULL },
 #if OPT_BOX_CHARS
     { "font-linedrawing",do_font_boxchars,NULL },
+    { "font-packed",	do_font_packed,NULL },
 #endif
 #if OPT_DEC_CHRSET
     { "font-doublesize",do_font_doublesize,NULL },
@@ -373,8 +382,9 @@ MenuEntry fontMenuEntries[] = {
 
 #if OPT_ALLOW_XXX_OPS
     { "line3",		NULL,		NULL },
-    { "allow-tcap-ops",	do_allowTcapOps,NULL },
+    { "allow-color-ops",do_allowColorOps,NULL },
     { "allow-font-ops",	do_allowFontOps,NULL },
+    { "allow-tcap-ops",	do_allowTcapOps,NULL },
     { "allow-title-ops",do_allowTitleOps,NULL },
     { "allow-window-ops",do_allowWindowOps,NULL },
 #endif
@@ -434,13 +444,19 @@ static MenuList tek_shell[NUM_POPUP_MENUS];
 static String
 setMenuLocale(Bool before, String substitute)
 {
-    String result;
+    String result = setlocale(LC_CTYPE, 0);
 
-    result = setlocale(LC_CTYPE, substitute);
     if (before) {
 	result = x_strdup(result);
-    } else {
-	result = 0;
+    }
+    (void) setlocale(LC_CTYPE, substitute);
+    TRACE(("setMenuLocale %s:%s\n",
+	   (before
+	    ? "before"
+	    : "after"),
+	   NonNull(result)));
+    if (!before) {
+	free((void *) substitute);
     }
     return result;
 }
@@ -494,7 +510,7 @@ create_menu(Widget w, XtermWidget xtw, MenuIndex num)
     static Arg arg =
     {XtNcallback, (XtArgVal) cb};
 
-    TScreen *screen = &xtw->screen;
+    TScreen *screen = TScreenOf(xtw);
     MenuHeader *data = &menu_names[num];
     MenuList *list = select_menu(w, num);
     struct _MenuEntry *entries = data->entry_list;
@@ -581,24 +597,25 @@ domenu(Widget w,
        String * params,		/* mainMenu, vtMenu, or tekMenu */
        Cardinal *param_count)	/* 0 or 1 */
 {
-    TScreen *screen = TScreenOf(term);
+    XtermWidget xw = term;
+    TScreen *screen = TScreenOf(xw);
     MenuIndex me;
     Bool created = False;
     Widget mw;
 
     if (*param_count != 1) {
-	Bell(XkbBI_MinorError, 0);
+	Bell(xw, XkbBI_MinorError, 0);
 	return False;
     }
 
     if ((me = indexOfMenu(params[0])) == noMenu) {
-	Bell(XkbBI_MinorError, 0);
+	Bell(xw, XkbBI_MinorError, 0);
 	return False;
     }
 
     if ((mw = obtain_menu(w, me)) == 0
 	|| sizeof_menu(w, me) == 0) {
-	mw = create_menu(w, term, me);
+	mw = create_menu(w, xw, me);
 	created = (mw != 0);
     }
     if (mw == 0)
@@ -626,7 +643,7 @@ domenu(Widget w,
 				   False);
 	    }
 #endif
-	    if (!xtermHasPrinter(term)) {
+	    if (!xtermHasPrinter(xw)) {
 		SetItemSensitivity(mainMenuEntries[mainMenu_print].widget,
 				   False);
 		SetItemSensitivity(mainMenuEntries[mainMenu_print_redir].widget,
@@ -713,6 +730,10 @@ domenu(Widget w,
 	    SetItemSensitivity(
 				  fontMenuEntries[fontMenu_font_boxchars].widget,
 				  True);
+	    update_font_packed();
+	    SetItemSensitivity(
+				  fontMenuEntries[fontMenu_font_packedfont].widget,
+				  True);
 #endif
 #if OPT_DEC_SOFTFONT		/* FIXME: not implemented */
 	    update_font_loadable();
@@ -722,32 +743,28 @@ domenu(Widget w,
 #endif
 #if OPT_DEC_CHRSET
 	    update_font_doublesize();
-	    if (term->screen.cache_doublesize == 0)
+	    if (TScreenOf(xw)->cache_doublesize == 0)
 		SetItemSensitivity(
 				      fontMenuEntries[fontMenu_font_doublesize].widget,
 				      False);
 #endif
 #if OPT_RENDERFONT
 	    update_font_renderfont();
-	    if (term->misc.face_name == 0) {
-		SetItemSensitivity(
-				      fontMenuEntries[fontMenu_render_font].widget,
-				      False);
-	    }
 #endif
 #if OPT_WIDE_CHARS
 	    update_font_utf8_mode();
 	    update_font_utf8_title();
 #endif
 #if OPT_ALLOW_XXX_OPS
-	    update_menu_allowTcapOps();
+	    update_menu_allowColorOps();
 	    update_menu_allowFontOps();
+	    update_menu_allowTcapOps();
 	    update_menu_allowTitleOps();
 	    update_menu_allowWindowOps();
 	    enable_allow_xxx_ops(!(screen->allowSendEvents));
 #endif
 	}
-	FindFontSelection(term, NULL, True);
+	FindFontSelection(xw, NULL, True);
 	SetItemSensitivity(
 			      fontMenuEntries[fontMenu_fontsel].widget,
 			      (screen->menu_font_names[fontMenu_fontsel]
@@ -757,7 +774,7 @@ domenu(Widget w,
 #if OPT_TEK4014
     case tekMenu:
 	if (created && tekWidget) {
-	    set_tekfont_menu_item(tekWidget->screen.cur.fontsize, True);
+	    set_tekfont_menu_item(TekScreenOf(tekWidget)->cur.fontsize, True);
 	    update_vtshow();
 	}
 	break;
@@ -827,20 +844,21 @@ do_securekbd(Widget gw GCC_UNUSED,
 	     XtPointer closure GCC_UNUSED,
 	     XtPointer data GCC_UNUSED)
 {
-    TScreen *screen = TScreenOf(term);
+    XtermWidget xw = term;
+    TScreen *screen = TScreenOf(xw);
     Time now = CurrentTime;	/* XXX - wrong */
 
     if (screen->grabbedKbd) {
 	XUngrabKeyboard(screen->display, now);
-	ReverseVideo(term);
+	ReverseVideo(xw);
 	screen->grabbedKbd = False;
     } else {
 	if (XGrabKeyboard(screen->display, XtWindow(CURRENT_EMU()),
 			  True, GrabModeAsync, GrabModeAsync, now)
 	    != GrabSuccess) {
-	    Bell(XkbBI_MinorError, 100);
+	    Bell(xw, XkbBI_MinorError, 100);
 	} else {
-	    ReverseVideo(term);
+	    ReverseVideo(xw);
 	    screen->grabbedKbd = True;
 	}
     }
@@ -920,12 +938,13 @@ do_logging(Widget gw GCC_UNUSED,
 	   XtPointer closure GCC_UNUSED,
 	   XtPointer data GCC_UNUSED)
 {
-    TScreen *screen = TScreenOf(term);
+    XtermWidget xw = term;
+    TScreen *screen = TScreenOf(xw);
 
     if (screen->logging) {
-	CloseLog(screen);
+	CloseLog(xw);
     } else {
-	StartLog(screen);
+	StartLog(xw);
     }
     /* update_logging done by CloseLog and StartLog */
 }
@@ -936,15 +955,7 @@ do_print(Widget gw GCC_UNUSED,
 	 XtPointer closure GCC_UNUSED,
 	 XtPointer data GCC_UNUSED)
 {
-    xtermPrintScreen(term, True);
-}
-
-static void
-do_print_everything(Widget gw GCC_UNUSED,
-		    XtPointer closure GCC_UNUSED,
-		    XtPointer data GCC_UNUSED)
-{
-    xtermPrintEverything(term);
+    xtermPrintScreen(term, True, getPrinterFlags(term, NULL, 0));
 }
 
 static void
@@ -952,7 +963,7 @@ do_print_redir(Widget gw GCC_UNUSED,
 	       XtPointer closure GCC_UNUSED,
 	       XtPointer data GCC_UNUSED)
 {
-    setPrinterControlMode(term, term->screen.printer_controlmode ? 0 : 2);
+    setPrinterControlMode(term, TScreenOf(term)->printer_controlmode ? 0 : 2);
 }
 
 static void
@@ -966,8 +977,8 @@ do_redraw(Widget gw GCC_UNUSED,
 void
 show_8bit_control(Bool value)
 {
-    if (term->screen.control_eight_bits != value) {
-	term->screen.control_eight_bits = (Boolean) value;
+    if (TScreenOf(term)->control_eight_bits != value) {
+	TScreenOf(term)->control_eight_bits = (Boolean) value;
 	update_8bit_control();
     }
 }
@@ -977,7 +988,7 @@ do_8bit_control(Widget gw GCC_UNUSED,
 		XtPointer closure GCC_UNUSED,
 		XtPointer data GCC_UNUSED)
 {
-    show_8bit_control(!term->screen.control_eight_bits);
+    show_8bit_control(!TScreenOf(term)->control_eight_bits);
 }
 
 static void
@@ -1004,7 +1015,7 @@ do_alt_esc(Widget gw GCC_UNUSED,
 	   XtPointer closure GCC_UNUSED,
 	   XtPointer data GCC_UNUSED)
 {
-    ToggleFlag(term->screen.alt_sends_esc);
+    ToggleFlag(TScreenOf(term)->alt_sends_esc);
     update_alt_esc();
 }
 
@@ -1013,7 +1024,7 @@ do_meta_esc(Widget gw GCC_UNUSED,
 	    XtPointer closure GCC_UNUSED,
 	    XtPointer data GCC_UNUSED)
 {
-    ToggleFlag(term->screen.meta_sends_esc);
+    ToggleFlag(TScreenOf(term)->meta_sends_esc);
     update_meta_esc();
 }
 #endif
@@ -1024,9 +1035,9 @@ do_delete_del(Widget gw GCC_UNUSED,
 	      XtPointer data GCC_UNUSED)
 {
     if (xtermDeleteIsDEL(term))
-	term->screen.delete_is_del = False;
+	TScreenOf(term)->delete_is_del = False;
     else
-	term->screen.delete_is_del = True;
+	TScreenOf(term)->delete_is_del = True;
     update_delete_del();
 }
 
@@ -1319,7 +1330,7 @@ do_marginbell(Widget gw GCC_UNUSED,
     TScreen *screen = TScreenOf(term);
 
     if (!(ToggleFlag(screen->marginbell)))
-	screen->bellarmed = -1;
+	screen->bellArmed = -1;
     update_marginbell();
 }
 
@@ -1327,16 +1338,17 @@ do_marginbell(Widget gw GCC_UNUSED,
 static void
 handle_tekshow(Widget gw GCC_UNUSED, Bool allowswitch)
 {
-    TScreen *screen = TScreenOf(term);
+    XtermWidget xw = term;
+    TScreen *screen = TScreenOf(xw);
 
     TRACE(("Show tek-window\n"));
-    if (!TEK4014_SHOWN(term)) {	/* not showing, turn on */
+    if (!TEK4014_SHOWN(xw)) {	/* not showing, turn on */
 	set_tek_visibility(True);
     } else if (screen->Vshow || allowswitch) {	/* is showing, turn off */
 	set_tek_visibility(False);
 	end_tek_mode();		/* WARNING: this does a longjmp */
     } else
-	Bell(XkbBI_MinorError, 0);
+	Bell(xw, XkbBI_MinorError, 0);
 }
 
 /* ARGSUSED */
@@ -1461,16 +1473,17 @@ do_vtfont(Widget gw GCC_UNUSED,
 	  XtPointer closure,
 	  XtPointer data GCC_UNUSED)
 {
+    XtermWidget xw = term;
     char *entryname = (char *) closure;
     int i;
 
     for (i = 0; i < NMENUFONTS; i++) {
 	if (strcmp(entryname, fontMenuEntries[i].name) == 0) {
-	    SetVTFont(term, i, True, NULL);
+	    SetVTFont(xw, i, True, NULL);
 	    return;
 	}
     }
-    Bell(XkbBI_MinorError, 0);
+    Bell(xw, XkbBI_MinorError, 0);
 }
 
 #if OPT_DEC_CHRSET
@@ -1479,8 +1492,10 @@ do_font_doublesize(Widget gw GCC_UNUSED,
 		   XtPointer closure GCC_UNUSED,
 		   XtPointer data GCC_UNUSED)
 {
-    if (term->screen.cache_doublesize != 0)
-	ToggleFlag(term->screen.font_doublesize);
+    XtermWidget xw = term;
+
+    if (TScreenOf(xw)->cache_doublesize != 0)
+	ToggleFlag(TScreenOf(xw)->font_doublesize);
     update_font_doublesize();
     Redraw();
 }
@@ -1492,9 +1507,19 @@ do_font_boxchars(Widget gw GCC_UNUSED,
 		 XtPointer closure GCC_UNUSED,
 		 XtPointer data GCC_UNUSED)
 {
-    ToggleFlag(term->screen.force_box_chars);
+    ToggleFlag(TScreenOf(term)->force_box_chars);
     update_font_boxchars();
     Redraw();
+}
+
+static void
+do_font_packed(Widget gw GCC_UNUSED,
+	       XtPointer closure GCC_UNUSED,
+	       XtPointer data GCC_UNUSED)
+{
+    ToggleFlag(TScreenOf(term)->force_packed);
+    update_font_packed();
+    SetVTFont(term, TScreenOf(term)->menu_font_number, True, NULL);
 }
 #endif
 
@@ -1515,13 +1540,15 @@ do_font_renderfont(Widget gw GCC_UNUSED,
 		   XtPointer closure GCC_UNUSED,
 		   XtPointer data GCC_UNUSED)
 {
-    TScreen *screen = TScreenOf(term);
+    XtermWidget xw = (XtermWidget) term;
+    TScreen *screen = TScreenOf(xw);
     int fontnum = screen->menu_font_number;
-    String name = term->screen.MenuFontName(fontnum);
+    String name = TScreenOf(xw)->MenuFontName(fontnum);
 
-    ToggleFlag(term->misc.render_font);
+    DefaultRenderFont(xw);
+    ToggleFlag(xw->misc.render_font);
     update_font_renderfont();
-    xtermLoadFont(term, xtermFontName(name), True, fontnum);
+    xtermLoadFont(xw, xtermFontName(name), True, fontnum);
     ScrnRefresh(term, 0, 0,
 		MaxRows(screen),
 		MaxCols(screen), True);
@@ -1633,18 +1660,19 @@ do_tekcopy(Widget gw,
 static void
 handle_vtshow(Widget gw GCC_UNUSED, Bool allowswitch)
 {
-    TScreen *screen = TScreenOf(term);
+    XtermWidget xw = term;
+    TScreen *screen = TScreenOf(xw);
 
     TRACE(("Show vt-window\n"));
     if (!screen->Vshow) {	/* not showing, turn on */
 	set_vt_visibility(True);
-    } else if (TEK4014_SHOWN(term) || allowswitch) {	/* is showing, turn off */
+    } else if (TEK4014_SHOWN(xw) || allowswitch) {	/* is showing, turn off */
 	set_vt_visibility(False);
-	if (!TEK4014_ACTIVE(term) && tekRefreshList)
+	if (!TEK4014_ACTIVE(xw) && tekRefreshList)
 	    TekRefresh(tekWidget);
 	end_vt_mode();		/* WARNING: this does a longjmp... */
     } else
-	Bell(XkbBI_MinorError, 0);
+	Bell(xw, XkbBI_MinorError, 0);
 }
 
 static void
@@ -1694,6 +1722,7 @@ handle_toggle(void (*proc) PROTO_XT_CALLBACK_ARGS,
 	      XtPointer closure,
 	      XtPointer data)
 {
+    XtermWidget xw = term;
     int dir = -2;
 
     switch (nparams) {
@@ -1712,7 +1741,7 @@ handle_toggle(void (*proc) PROTO_XT_CALLBACK_ARGS,
 
     switch (dir) {
     case -2:
-	Bell(XkbBI_MinorError, 0);
+	Bell(xw, XkbBI_MinorError, 0);
 	break;
 
     case -1:
@@ -1723,14 +1752,14 @@ handle_toggle(void (*proc) PROTO_XT_CALLBACK_ARGS,
 	if (var)
 	    (*proc) (w, closure, data);
 	else
-	    Bell(XkbBI_MinorError, 0);
+	    Bell(xw, XkbBI_MinorError, 0);
 	break;
 
     case 1:
 	if (!var)
 	    (*proc) (w, closure, data);
 	else
-	    Bell(XkbBI_MinorError, 0);
+	    Bell(xw, XkbBI_MinorError, 0);
 	break;
     }
     return;
@@ -1738,6 +1767,9 @@ handle_toggle(void (*proc) PROTO_XT_CALLBACK_ARGS,
 
 #define handle_vt_toggle(proc, var, params, nparams, w) \
 	handle_toggle(proc, (int) (var), params, nparams, w, (XtPointer)0, (XtPointer)0)
+
+#define HANDLE_VT_TOGGLE(name) \
+	handle_vt_toggle(do_##name, TScreenOf(term)->name, params, *param_count, w)
 
 #define handle_tek_toggle(proc, var, params, nparams, w) \
 	handle_toggle(proc, (int) (var), params, nparams, w, (XtPointer)0, (XtPointer)0)
@@ -1748,7 +1780,7 @@ HandleAllowSends(Widget w,
 		 String * params,
 		 Cardinal *param_count)
 {
-    handle_vt_toggle(do_allowsends, term->screen.allowSendEvents,
+    handle_vt_toggle(do_allowsends, TScreenOf(term)->allowSendEvents,
 		     params, *param_count, w);
 }
 
@@ -1758,8 +1790,7 @@ HandleSetVisualBell(Widget w,
 		    String * params,
 		    Cardinal *param_count)
 {
-    handle_vt_toggle(do_visualbell, term->screen.visualbell,
-		     params, *param_count, w);
+    HANDLE_VT_TOGGLE(visualbell);
 }
 
 void
@@ -1768,8 +1799,7 @@ HandleSetPopOnBell(Widget w,
 		   String * params,
 		   Cardinal *param_count)
 {
-    handle_vt_toggle(do_poponbell, term->screen.poponbell,
-		     params, *param_count, w);
+    HANDLE_VT_TOGGLE(poponbell);
 }
 
 #ifdef ALLOWLOGGING
@@ -1779,29 +1809,28 @@ HandleLogging(Widget w,
 	      String * params,
 	      Cardinal *param_count)
 {
-    handle_vt_toggle(do_logging, term->screen.logging,
-		     params, *param_count, w);
+    HANDLE_VT_TOGGLE(logging);
 }
 #endif
 
 /* ARGSUSED */
 void
-HandlePrintScreen(Widget w,
+HandlePrintScreen(Widget w GCC_UNUSED,
 		  XEvent * event GCC_UNUSED,
 		  String * params GCC_UNUSED,
 		  Cardinal *param_count GCC_UNUSED)
 {
-    do_print(w, (XtPointer) 0, (XtPointer) 0);
+    xtermPrintScreen(term, True, getPrinterFlags(term, params, param_count));
 }
 
 /* ARGSUSED */
 void
-HandlePrintEverything(Widget w,
+HandlePrintEverything(Widget w GCC_UNUSED,
 		      XEvent * event GCC_UNUSED,
-		      String * params GCC_UNUSED,
-		      Cardinal *param_count GCC_UNUSED)
+		      String * params,
+		      Cardinal *param_count)
 {
-    do_print_everything(w, (XtPointer) 0, (XtPointer) 0);
+    xtermPrintEverything(term, getPrinterFlags(term, params, param_count));
 }
 
 /* ARGSUSED */
@@ -1833,7 +1862,7 @@ HandleSendSignal(Widget w,
 {
     /* *INDENT-OFF* */
     static struct sigtab {
-	char *name;
+	const char *name;
 	int sig;
     } signals[] = {
 #ifdef SIGTSTP
@@ -1866,7 +1895,7 @@ HandleSendSignal(Widget w,
 	/* one could allow numeric values, but that would be a security hole */
     }
 
-    Bell(XkbBI_MinorError, 0);
+    Bell(term, XkbBI_MinorError, 0);
 }
 
 /* ARGSUSED */
@@ -1885,7 +1914,7 @@ Handle8BitControl(Widget w,
 		  String * params,
 		  Cardinal *param_count)
 {
-    handle_vt_toggle(do_8bit_control, term->screen.control_eight_bits,
+    handle_vt_toggle(do_8bit_control, TScreenOf(term)->control_eight_bits,
 		     params, *param_count, w);
 }
 
@@ -1928,7 +1957,7 @@ HandleAltEsc(Widget w,
 	     String * params,
 	     Cardinal *param_count)
 {
-    handle_vt_toggle(do_alt_esc, !term->screen.input_eight_bits,
+    handle_vt_toggle(do_alt_esc, !TScreenOf(term)->input_eight_bits,
 		     params, *param_count, w);
 }
 
@@ -1938,7 +1967,7 @@ HandleMetaEsc(Widget w,
 	      String * params,
 	      Cardinal *param_count)
 {
-    handle_vt_toggle(do_meta_esc, term->screen.meta_sends_esc,
+    handle_vt_toggle(do_meta_esc, TScreenOf(term)->meta_sends_esc,
 		     params, *param_count, w);
 }
 #endif
@@ -1949,7 +1978,7 @@ HandleDeleteIsDEL(Widget w,
 		  String * params,
 		  Cardinal *param_count)
 {
-    handle_vt_toggle(do_delete_del, term->screen.delete_is_del,
+    handle_vt_toggle(do_delete_del, TScreenOf(term)->delete_is_del,
 		     params, *param_count, w);
 }
 
@@ -2005,10 +2034,12 @@ HandleScrollbar(Widget w,
 		String * params,
 		Cardinal *param_count)
 {
-    if (IsIcon(&(term->screen))) {
-	Bell(XkbBI_MinorError, 0);
+    XtermWidget xw = term;
+
+    if (IsIcon(TScreenOf(xw))) {
+	Bell(xw, XkbBI_MinorError, 0);
     } else {
-	handle_vt_toggle(do_scrollbar, term->screen.fullVwin.sb_info.width,
+	handle_vt_toggle(do_scrollbar, TScreenOf(xw)->fullVwin.sb_info.width,
 			 params, *param_count, w);
     }
 }
@@ -2019,8 +2050,7 @@ HandleJumpscroll(Widget w,
 		 String * params,
 		 Cardinal *param_count)
 {
-    handle_vt_toggle(do_jumpscroll, term->screen.jumpscroll,
-		     params, *param_count, w);
+    HANDLE_VT_TOGGLE(jumpscroll);
 }
 
 void
@@ -2029,8 +2059,7 @@ HandleKeepSelection(Widget w,
 		    String * params,
 		    Cardinal *param_count)
 {
-    handle_vt_toggle(do_keepSelection, term->screen.keepSelection,
-		     params, *param_count, w);
+    HANDLE_VT_TOGGLE(keepSelection);
 }
 
 void
@@ -2039,7 +2068,7 @@ HandleSetSelect(Widget w,
 		String * params,
 		Cardinal *param_count)
 {
-    handle_vt_toggle(do_selectClipboard, term->screen.selectToClipboard,
+    handle_vt_toggle(do_selectClipboard, TScreenOf(term)->selectToClipboard,
 		     params, *param_count, w);
 }
 
@@ -2109,8 +2138,7 @@ HandleScrollKey(Widget w,
 		String * params,
 		Cardinal *param_count)
 {
-    handle_vt_toggle(do_scrollkey, term->screen.scrollkey,
-		     params, *param_count, w);
+    HANDLE_VT_TOGGLE(scrollkey);
 }
 
 void
@@ -2119,8 +2147,7 @@ HandleScrollTtyOutput(Widget w,
 		      String * params,
 		      Cardinal *param_count)
 {
-    handle_vt_toggle(do_scrollttyoutput, term->screen.scrollttyoutput,
-		     params, *param_count, w);
+    HANDLE_VT_TOGGLE(scrollttyoutput);
 }
 
 void
@@ -2129,7 +2156,7 @@ HandleAllow132(Widget w,
 	       String * params,
 	       Cardinal *param_count)
 {
-    handle_vt_toggle(do_allow132, term->screen.c132,
+    handle_vt_toggle(do_allow132, TScreenOf(term)->c132,
 		     params, *param_count, w);
 }
 
@@ -2139,7 +2166,7 @@ HandleCursesEmul(Widget w,
 		 String * params,
 		 Cardinal *param_count)
 {
-    handle_vt_toggle(do_cursesemul, term->screen.curses,
+    handle_vt_toggle(do_cursesemul, TScreenOf(term)->curses,
 		     params, *param_count, w);
 }
 
@@ -2149,8 +2176,7 @@ HandleBellIsUrgent(Widget w,
 		   String * params,
 		   Cardinal *param_count)
 {
-    handle_vt_toggle(do_bellIsUrgent, term->screen.bellIsUrgent,
-		     params, *param_count, w);
+    HANDLE_VT_TOGGLE(bellIsUrgent);
 }
 
 void
@@ -2159,8 +2185,7 @@ HandleMarginBell(Widget w,
 		 String * params,
 		 Cardinal *param_count)
 {
-    handle_vt_toggle(do_marginbell, term->screen.marginbell,
-		     params, *param_count, w);
+    HANDLE_VT_TOGGLE(marginbell);
 }
 
 #if OPT_BLINK_CURS
@@ -2171,7 +2196,7 @@ HandleCursorBlink(Widget w,
 		  Cardinal *param_count)
 {
     /* eventually want to see if sensitive or not */
-    handle_vt_toggle(do_cursorblink, term->screen.cursor_blink,
+    handle_vt_toggle(do_cursorblink, TScreenOf(term)->cursor_blink,
 		     params, *param_count, w);
 }
 #endif
@@ -2183,7 +2208,7 @@ HandleAltScreen(Widget w,
 		Cardinal *param_count)
 {
     /* eventually want to see if sensitive or not */
-    handle_vt_toggle(do_altscreen, term->screen.whichBuf,
+    handle_vt_toggle(do_altscreen, TScreenOf(term)->whichBuf,
 		     params, *param_count, w);
 }
 
@@ -2235,8 +2260,7 @@ HandleFontDoublesize(Widget w,
 		     String * params,
 		     Cardinal *param_count)
 {
-    handle_vt_toggle(do_font_doublesize, term->screen.font_doublesize,
-		     params, *param_count, w);
+    HANDLE_VT_TOGGLE(font_doublesize);
 }
 #endif
 
@@ -2247,7 +2271,17 @@ HandleFontBoxChars(Widget w,
 		   String * params,
 		   Cardinal *param_count)
 {
-    handle_vt_toggle(do_font_boxchars, term->screen.force_box_chars,
+    handle_vt_toggle(do_font_boxchars, TScreenOf(term)->force_box_chars,
+		     params, *param_count, w);
+}
+
+void
+HandleFontPacked(Widget w,
+		 XEvent * event GCC_UNUSED,
+		 String * params,
+		 Cardinal *param_count)
+{
+    handle_vt_toggle(do_font_packed, TScreenOf(term)->force_packed,
 		     params, *param_count, w);
 }
 #endif
@@ -2271,7 +2305,11 @@ HandleRenderFont(Widget w,
 		 String * params,
 		 Cardinal *param_count)
 {
-    handle_vt_toggle(do_font_renderfont, term->misc.render_font,
+    XtermWidget xw = (XtermWidget) term;
+
+    DefaultRenderFont(xw);
+
+    handle_vt_toggle(do_font_renderfont, xw->misc.render_font,
 		     params, *param_count, w);
 }
 #endif
@@ -2283,7 +2321,7 @@ HandleUTF8Mode(Widget w,
 	       String * params,
 	       Cardinal *param_count)
 {
-    handle_vt_toggle(do_font_utf8_mode, term->screen.utf8_mode,
+    handle_vt_toggle(do_font_utf8_mode, TScreenOf(term)->utf8_mode,
 		     params, *param_count, w);
 }
 
@@ -2293,7 +2331,7 @@ HandleUTF8Title(Widget w,
 		String * params,
 		Cardinal *param_count)
 {
-    handle_vt_toggle(do_font_utf8_title, term->screen.utf8_title,
+    handle_vt_toggle(do_font_utf8_title, TScreenOf(term)->utf8_title,
 		     params, *param_count, w);
 }
 #endif
@@ -2305,23 +2343,25 @@ HandleSetTerminalType(Widget w,
 		      String * params,
 		      Cardinal *param_count)
 {
+    XtermWidget xw = term;
+
     if (*param_count == 1) {
 	switch (params[0][0]) {
 	case 'v':
 	case 'V':
-	    if (TEK4014_ACTIVE(term))
+	    if (TEK4014_ACTIVE(xw))
 		do_vtmode(w, (XtPointer) 0, (XtPointer) 0);
 	    break;
 	case 't':
 	case 'T':
-	    if (!TEK4014_ACTIVE(term))
+	    if (!TEK4014_ACTIVE(xw))
 		do_tekmode(w, (XtPointer) 0, (XtPointer) 0);
 	    break;
 	default:
-	    Bell(XkbBI_MinorError, 0);
+	    Bell(xw, XkbBI_MinorError, 0);
 	}
     } else {
-	Bell(XkbBI_MinorError, 0);
+	Bell(xw, XkbBI_MinorError, 0);
     }
 }
 
@@ -2331,23 +2371,25 @@ HandleVisibility(Widget w,
 		 String * params,
 		 Cardinal *param_count)
 {
+    XtermWidget xw = term;
+
     if (*param_count == 2) {
 	switch (params[0][0]) {
 	case 'v':
 	case 'V':
-	    handle_tek_toggle(do_vtonoff, (int) term->screen.Vshow,
+	    handle_tek_toggle(do_vtonoff, (int) TScreenOf(xw)->Vshow,
 			      params + 1, (*param_count) - 1, w);
 	    break;
 	case 't':
 	case 'T':
-	    handle_tek_toggle(do_tekonoff, (int) TEK4014_SHOWN(term),
+	    handle_tek_toggle(do_tekonoff, (int) TEK4014_SHOWN(xw),
 			      params + 1, (*param_count) - 1, w);
 	    break;
 	default:
-	    Bell(XkbBI_MinorError, 0);
+	    Bell(xw, XkbBI_MinorError, 0);
 	}
     } else {
-	Bell(XkbBI_MinorError, 0);
+	Bell(xw, XkbBI_MinorError, 0);
     }
 }
 
@@ -2358,6 +2400,7 @@ HandleSetTekText(Widget w,
 		 String * params,
 		 Cardinal *param_count)
 {
+    XtermWidget xw = term;
     void (*proc) PROTO_XT_CALLBACK_ARGS = 0;
 
     switch (*param_count) {
@@ -2384,7 +2427,7 @@ HandleSetTekText(Widget w,
     if (proc)
 	(*proc) (w, (XtPointer) 0, (XtPointer) 0);
     else
-	Bell(XkbBI_MinorError, 0);
+	Bell(xw, XkbBI_MinorError, 0);
 }
 
 /* ARGSUSED */
@@ -2433,7 +2476,7 @@ UpdateMenuItem(
 
     if (mi) {
 	menuArgs.value = (XtArgVal) ((val)
-				     ? term->screen.menu_item_bitmap
+				     ? TScreenOf(term)->menu_item_bitmap
 				     : None);
 	XtSetValues(mi, &menuArgs, (Cardinal) 1);
     }
@@ -2589,7 +2632,7 @@ SetupMenus(Widget shell, Widget *forms, Widget *menus, Dimension * menu_high)
     }
 #if OPT_TEK4014
     else {			/* tek4014 */
-	button_height = SetupShell(menus, tek_shell, mainMenu, -1);
+	(void) SetupShell(menus, tek_shell, mainMenu, -1);
 	button_height = SetupShell(menus, tek_shell, tekMenu, mainMenu);
     }
 #endif
@@ -2633,7 +2676,7 @@ InitWidgetMenu(Widget shell)
 {
     Bool result = False;
 
-    TRACE(("InitWidgetMenu(%p)\n", shell));
+    TRACE(("InitWidgetMenu(%p)\n", (void *) shell));
     if (term != 0) {
 	if (shell == toplevel) {	/* vt100 */
 	    if (!term->init_menu) {
@@ -2671,7 +2714,7 @@ toolbar_info(Widget w)
 #else
     (void) w;
 #endif
-    return &(WhichVWin(&(term->screen))->tb_info);
+    return &(WhichVWin(TScreenOf(term))->tb_info);
 }
 
 static void
@@ -2729,20 +2772,22 @@ show_toolbar(Widget w)
 void
 ShowToolbar(Bool enable)
 {
+    XtermWidget xw = term;
+
     TRACE(("ShowToolbar(%d)\n", enable));
 
-    if (IsIcon(&(term->screen))) {
-	Bell(XkbBI_MinorError, 0);
+    if (IsIcon(TScreenOf(xw))) {
+	Bell(xw, XkbBI_MinorError, 0);
     } else {
 	if (enable) {
 	    if (InitWidgetMenu(toplevel))
-		show_toolbar((Widget) term);
+		show_toolbar((Widget) xw);
 #if OPT_TEK4014
 	    if (InitWidgetMenu(tekshellwidget))
 		show_toolbar((Widget) tekWidget);
 #endif
 	} else {
-	    hide_toolbar((Widget) term);
+	    hide_toolbar((Widget) xw);
 #if OPT_TEK4014
 	    hide_toolbar((Widget) tekWidget);
 #endif
@@ -2758,8 +2803,10 @@ HandleToolbar(Widget w,
 	      String * params GCC_UNUSED,
 	      Cardinal *param_count GCC_UNUSED)
 {
-    if (IsIcon(&(term->screen))) {
-	Bell(XkbBI_MinorError, 0);
+    XtermWidget xw = term;
+
+    if (IsIcon(TScreenOf(xw))) {
+	Bell(xw, XkbBI_MinorError, 0);
     } else {
 	handle_vt_toggle(do_toolbar, resource.toolBar,
 			 params, *param_count, w);
@@ -2772,13 +2819,15 @@ do_toolbar(Widget gw GCC_UNUSED,
 	   XtPointer closure GCC_UNUSED,
 	   XtPointer data GCC_UNUSED)
 {
+    XtermWidget xw = term;
+
     /*
      * Toggle toolbars for both vt100 and tek windows, since they share the
      * menu which contains the checkbox indicating whether the toolbar is
      * active.
      */
-    if (IsIcon(&(term->screen))) {
-	Bell(XkbBI_MinorError, 0);
+    if (IsIcon(TScreenOf(xw))) {
+	Bell(xw, XkbBI_MinorError, 0);
     } else {
 	ShowToolbar(ToggleFlag(resource.toolBar));
     }
@@ -2800,7 +2849,7 @@ update_securekbd(void)
     UpdateCheckbox("update_securekbd",
 		   mainMenuEntries,
 		   mainMenu_securekbd,
-		   term->screen.grabbedKbd);
+		   TScreenOf(term)->grabbedKbd);
 }
 
 void
@@ -2809,7 +2858,7 @@ update_allowsends(void)
     UpdateCheckbox("update_allowsends",
 		   mainMenuEntries,
 		   mainMenu_allowsends,
-		   term->screen.allowSendEvents);
+		   TScreenOf(term)->allowSendEvents);
 }
 
 #ifdef ALLOWLOGGING
@@ -2819,7 +2868,7 @@ update_logging(void)
     UpdateCheckbox("update_logging",
 		   mainMenuEntries,
 		   mainMenu_logging,
-		   term->screen.logging);
+		   TScreenOf(term)->logging);
 }
 #endif
 
@@ -2829,7 +2878,7 @@ update_print_redir(void)
     UpdateCheckbox("update_print_redir",
 		   mainMenuEntries,
 		   mainMenu_print_redir,
-		   term->screen.printer_controlmode);
+		   TScreenOf(term)->printer_controlmode);
 }
 
 void
@@ -2838,7 +2887,7 @@ update_8bit_control(void)
     UpdateCheckbox("update_8bit_control",
 		   mainMenuEntries,
 		   mainMenu_8bit_ctrl,
-		   term->screen.control_eight_bits);
+		   TScreenOf(term)->control_eight_bits);
 }
 
 void
@@ -2866,7 +2915,7 @@ update_alt_esc(void)
     UpdateCheckbox("update_alt_esc",
 		   mainMenuEntries,
 		   mainMenu_alt_esc,
-		   term->screen.alt_sends_esc);
+		   TScreenOf(term)->alt_sends_esc);
 }
 
 void
@@ -2875,7 +2924,7 @@ update_meta_esc(void)
     UpdateCheckbox("update_meta_esc",
 		   mainMenuEntries,
 		   mainMenu_meta_esc,
-		   term->screen.meta_sends_esc);
+		   TScreenOf(term)->meta_sends_esc);
 }
 #endif
 
@@ -2967,7 +3016,7 @@ update_jumpscroll(void)
     UpdateCheckbox("update_jumpscroll",
 		   vtMenuEntries,
 		   vtMenu_jumpscroll,
-		   term->screen.jumpscroll);
+		   TScreenOf(term)->jumpscroll);
 }
 
 void
@@ -3030,7 +3079,7 @@ update_scrollkey(void)
     UpdateCheckbox("update_scrollkey",
 		   vtMenuEntries,
 		   vtMenu_scrollkey,
-		   term->screen.scrollkey);
+		   TScreenOf(term)->scrollkey);
 }
 
 void
@@ -3039,7 +3088,7 @@ update_scrollttyoutput(void)
     UpdateCheckbox("update_scrollttyoutput",
 		   vtMenuEntries,
 		   vtMenu_scrollttyoutput,
-		   term->screen.scrollttyoutput);
+		   TScreenOf(term)->scrollttyoutput);
 }
 
 void
@@ -3048,7 +3097,7 @@ update_keepSelection(void)
     UpdateCheckbox("update_keepSelection",
 		   vtMenuEntries,
 		   vtMenu_keepSelection,
-		   term->screen.keepSelection);
+		   TScreenOf(term)->keepSelection);
 }
 
 void
@@ -3057,7 +3106,7 @@ update_selectToClipboard(void)
     UpdateCheckbox("update_selectToClipboard",
 		   vtMenuEntries,
 		   vtMenu_selectToClipboard,
-		   term->screen.selectToClipboard);
+		   TScreenOf(term)->selectToClipboard);
 }
 
 void
@@ -3066,7 +3115,7 @@ update_allow132(void)
     UpdateCheckbox("update_allow132",
 		   vtMenuEntries,
 		   vtMenu_allow132,
-		   term->screen.c132);
+		   TScreenOf(term)->c132);
 }
 
 void
@@ -3074,7 +3123,7 @@ update_cursesemul(void)
 {
 #if 0				/* 2006-2-12: no longer menu entry */
     UpdateMenuItem("update_cursesemul", vtMenuEntries, vtMenu_cursesemul,
-		   term->screen.curses);
+		   TScreenOf(term)->curses);
 #endif
 }
 
@@ -3084,7 +3133,7 @@ update_visualbell(void)
     UpdateCheckbox("update_visualbell",
 		   vtMenuEntries,
 		   vtMenu_visualbell,
-		   term->screen.visualbell);
+		   TScreenOf(term)->visualbell);
 }
 
 void
@@ -3093,7 +3142,7 @@ update_bellIsUrgent(void)
     UpdateCheckbox("update_bellIsUrgent",
 		   vtMenuEntries,
 		   vtMenu_bellIsUrgent,
-		   term->screen.bellIsUrgent);
+		   TScreenOf(term)->bellIsUrgent);
 }
 
 void
@@ -3102,7 +3151,7 @@ update_poponbell(void)
     UpdateCheckbox("update_poponbell",
 		   vtMenuEntries,
 		   vtMenu_poponbell,
-		   term->screen.poponbell);
+		   TScreenOf(term)->poponbell);
 }
 
 #ifndef update_marginbell	/* 2007-3-7: no longer menu entry */
@@ -3112,7 +3161,7 @@ update_marginbell(void)
     UpdateCheckbox("update_marginbell",
 		   vtMenuEntries,
 		   vtMenu_marginbell,
-		   term->screen.marginbell);
+		   TScreenOf(term)->marginbell);
 }
 #endif
 
@@ -3123,7 +3172,7 @@ update_cursorblink(void)
     UpdateCheckbox("update_cursorblink",
 		   vtMenuEntries,
 		   vtMenu_cursorblink,
-		   term->screen.cursor_blink);
+		   TScreenOf(term)->cursor_blink);
 }
 #endif
 
@@ -3133,7 +3182,7 @@ update_altscreen(void)
     UpdateCheckbox("update_altscreen",
 		   vtMenuEntries,
 		   vtMenu_altscreen,
-		   term->screen.whichBuf);
+		   TScreenOf(term)->whichBuf);
 }
 
 void
@@ -3163,7 +3212,7 @@ update_font_doublesize(void)
     UpdateCheckbox("update_font_doublesize",
 		   fontMenuEntries,
 		   fontMenu_font_doublesize,
-		   term->screen.font_doublesize);
+		   TScreenOf(term)->font_doublesize);
 }
 #endif
 
@@ -3174,7 +3223,16 @@ update_font_boxchars(void)
     UpdateCheckbox("update_font_boxchars",
 		   fontMenuEntries,
 		   fontMenu_font_boxchars,
-		   term->screen.force_box_chars);
+		   TScreenOf(term)->force_box_chars);
+}
+
+void
+update_font_packed(void)
+{
+    UpdateCheckbox("update_font_packed",
+		   fontMenuEntries,
+		   fontMenu_font_packedfont,
+		   TScreenOf(term)->force_packed);
 }
 #endif
 
@@ -3196,7 +3254,9 @@ update_font_renderfont(void)
     UpdateCheckbox("update_font_renderfont",
 		   fontMenuEntries,
 		   fontMenu_render_font,
-		   term->misc.render_font);
+		   (term->misc.render_font == True));
+    SetItemSensitivity(fontMenuEntries[fontMenu_render_font].widget,
+		       !IsEmpty(term->misc.face_name));
 }
 #endif
 
@@ -3204,8 +3264,8 @@ update_font_renderfont(void)
 void
 update_font_utf8_mode(void)
 {
-    Bool active = (term->screen.utf8_mode != uAlways);
-    Bool enable = (term->screen.utf8_mode != uFalse);
+    Bool active = (TScreenOf(term)->utf8_mode != uAlways);
+    Bool enable = (TScreenOf(term)->utf8_mode != uFalse);
 
     TRACE(("update_font_utf8_mode active %d, enable %d\n", active, enable));
     SetItemSensitivity(fontMenuEntries[fontMenu_wide_chars].widget, active);
@@ -3218,8 +3278,8 @@ update_font_utf8_mode(void)
 void
 update_font_utf8_title(void)
 {
-    Bool active = (term->screen.utf8_mode != uFalse);
-    Bool enable = (term->screen.utf8_title);
+    Bool active = (TScreenOf(term)->utf8_mode != uFalse);
+    Bool enable = (TScreenOf(term)->utf8_title);
 
     TRACE(("update_font_utf8_title active %d, enable %d\n", active, enable));
     SetItemSensitivity(fontMenuEntries[fontMenu_wide_title].widget, active);
@@ -3241,13 +3301,25 @@ enable_allow_xxx_ops(Bool enable)
 }
 
 static void
+do_allowColorOps(Widget w,
+		 XtPointer closure GCC_UNUSED,
+		 XtPointer data GCC_UNUSED)
+{
+    XtermWidget xw = getXtermWidget(w);
+    if (xw != 0) {
+	ToggleFlag(TScreenOf(xw)->allowColorOps);
+	update_menu_allowColorOps();
+    }
+}
+
+static void
 do_allowFontOps(Widget w,
 		XtPointer closure GCC_UNUSED,
 		XtPointer data GCC_UNUSED)
 {
     XtermWidget xw = getXtermWidget(w);
     if (xw != 0) {
-	ToggleFlag(xw->screen.allowFontOps);
+	ToggleFlag(TScreenOf(xw)->allowFontOps);
 	update_menu_allowFontOps();
     }
 }
@@ -3259,7 +3331,7 @@ do_allowTcapOps(Widget w,
 {
     XtermWidget xw = getXtermWidget(w);
     if (xw != 0) {
-	ToggleFlag(xw->screen.allowTcapOps);
+	ToggleFlag(TScreenOf(xw)->allowTcapOps);
 	update_menu_allowTcapOps();
     }
 }
@@ -3271,7 +3343,7 @@ do_allowTitleOps(Widget w,
 {
     XtermWidget xw = getXtermWidget(w);
     if (xw != 0) {
-	ToggleFlag(xw->screen.allowTitleOps);
+	ToggleFlag(TScreenOf(xw)->allowTitleOps);
 	update_menu_allowTitleOps();
     }
 }
@@ -3283,9 +3355,18 @@ do_allowWindowOps(Widget w,
 {
     XtermWidget xw = getXtermWidget(w);
     if (xw != 0) {
-	ToggleFlag(xw->screen.allowWindowOps);
+	ToggleFlag(TScreenOf(xw)->allowWindowOps);
 	update_menu_allowWindowOps();
     }
+}
+
+void
+HandleAllowColorOps(Widget w,
+		    XEvent * event GCC_UNUSED,
+		    String * params,
+		    Cardinal *param_count)
+{
+    HANDLE_VT_TOGGLE(allowColorOps);
 }
 
 void
@@ -3294,8 +3375,7 @@ HandleAllowFontOps(Widget w,
 		   String * params,
 		   Cardinal *param_count)
 {
-    handle_vt_toggle(do_allowFontOps, term->screen.allowFontOps,
-		     params, *param_count, w);
+    HANDLE_VT_TOGGLE(allowFontOps);
 }
 
 void
@@ -3304,8 +3384,7 @@ HandleAllowTcapOps(Widget w,
 		   String * params,
 		   Cardinal *param_count)
 {
-    handle_vt_toggle(do_allowTcapOps, term->screen.allowTcapOps,
-		     params, *param_count, w);
+    HANDLE_VT_TOGGLE(allowTcapOps);
 }
 
 void
@@ -3314,8 +3393,7 @@ HandleAllowTitleOps(Widget w,
 		    String * params,
 		    Cardinal *param_count)
 {
-    handle_vt_toggle(do_allowTitleOps, term->screen.allowTitleOps,
-		     params, *param_count, w);
+    HANDLE_VT_TOGGLE(allowTitleOps);
 }
 
 void
@@ -3324,17 +3402,16 @@ HandleAllowWindowOps(Widget w,
 		     String * params,
 		     Cardinal *param_count)
 {
-    handle_vt_toggle(do_allowWindowOps, term->screen.allowWindowOps,
-		     params, *param_count, w);
+    HANDLE_VT_TOGGLE(allowWindowOps);
 }
 
 void
-update_menu_allowTcapOps(void)
+update_menu_allowColorOps(void)
 {
-    UpdateCheckbox("update_menu_allowTcapOps",
+    UpdateCheckbox("update_menu_allowColorOps",
 		   fontMenuEntries,
-		   fontMenu_allowTcapOps,
-		   term->screen.allowTcapOps);
+		   fontMenu_allowColorOps,
+		   TScreenOf(term)->allowColorOps);
 }
 
 void
@@ -3343,7 +3420,16 @@ update_menu_allowFontOps(void)
     UpdateCheckbox("update_menu_allowFontOps",
 		   fontMenuEntries,
 		   fontMenu_allowFontOps,
-		   term->screen.allowFontOps);
+		   TScreenOf(term)->allowFontOps);
+}
+
+void
+update_menu_allowTcapOps(void)
+{
+    UpdateCheckbox("update_menu_allowTcapOps",
+		   fontMenuEntries,
+		   fontMenu_allowTcapOps,
+		   TScreenOf(term)->allowTcapOps);
 }
 
 void
@@ -3352,7 +3438,7 @@ update_menu_allowTitleOps(void)
     UpdateCheckbox("update_menu_allowTitleOps",
 		   fontMenuEntries,
 		   fontMenu_allowTitleOps,
-		   term->screen.allowTitleOps);
+		   TScreenOf(term)->allowTitleOps);
 }
 
 void
@@ -3361,7 +3447,7 @@ update_menu_allowWindowOps(void)
     UpdateCheckbox("update_menu_allowWindowOps",
 		   fontMenuEntries,
 		   fontMenu_allowWindowOps,
-		   term->screen.allowWindowOps);
+		   TScreenOf(term)->allowWindowOps);
 }
 #endif
 
@@ -3369,7 +3455,7 @@ update_menu_allowWindowOps(void)
 void
 update_tekshow(void)
 {
-    if (!(term->screen.inhibit & I_TEK)) {
+    if (!(TScreenOf(term)->inhibit & I_TEK)) {
 	UpdateCheckbox("update_tekshow",
 		       vtMenuEntries,
 		       vtMenu_tekshow,
@@ -3380,7 +3466,7 @@ update_tekshow(void)
 void
 update_vttekmode(void)
 {
-    if (!(term->screen.inhibit & I_TEK)) {
+    if (!(TScreenOf(term)->inhibit & I_TEK)) {
 	UpdateCheckbox("update_vtmode",
 		       vtMenuEntries,
 		       vtMenu_tekmode,
@@ -3395,18 +3481,18 @@ update_vttekmode(void)
 void
 update_vtshow(void)
 {
-    if (!(term->screen.inhibit & I_TEK)) {
+    if (!(TScreenOf(term)->inhibit & I_TEK)) {
 	UpdateCheckbox("update_vtshow",
 		       tekMenuEntries,
 		       tekMenu_vtshow,
-		       term->screen.Vshow);
+		       TScreenOf(term)->Vshow);
     }
 }
 
 void
 set_vthide_sensitivity(void)
 {
-    if (!(term->screen.inhibit & I_TEK)) {
+    if (!(TScreenOf(term)->inhibit & I_TEK)) {
 	SetItemSensitivity(
 			      vtMenuEntries[vtMenu_vthide].widget,
 			      TEK4014_SHOWN(term));
@@ -3416,17 +3502,17 @@ set_vthide_sensitivity(void)
 void
 set_tekhide_sensitivity(void)
 {
-    if (!(term->screen.inhibit & I_TEK)) {
+    if (!(TScreenOf(term)->inhibit & I_TEK)) {
 	SetItemSensitivity(
 			      tekMenuEntries[tekMenu_tekhide].widget,
-			      term->screen.Vshow);
+			      TScreenOf(term)->Vshow);
     }
 }
 
 void
 set_tekfont_menu_item(int n, int val)
 {
-    if (!(term->screen.inhibit & I_TEK)) {
+    if (!(TScreenOf(term)->inhibit & I_TEK)) {
 	UpdateCheckbox("set_tekfont_menu_item", tekMenuEntries, FS2MI(n),
 		       (val));
     }
@@ -3438,6 +3524,6 @@ set_menu_font(int val)
 {
     UpdateCheckbox("set_menu_font",
 		   fontMenuEntries,
-		   term->screen.menu_font_number,
+		   TScreenOf(term)->menu_font_number,
 		   (val));
 }
