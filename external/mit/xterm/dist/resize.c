@@ -1,7 +1,7 @@
-/* $XTermId: resize.c,v 1.108 2009/05/31 14:00:16 tom Exp $ */
+/* $XTermId: resize.c,v 1.114 2010/05/23 16:04:32 tom Exp $ */
 
 /*
- * Copyright 2003-2008,2009 by Thomas E. Dickey
+ * Copyright 2003-2009,2010 by Thomas E. Dickey
  *
  *                         All Rights Reserved
  *
@@ -86,6 +86,10 @@
 #include <signal.h>
 #include <pwd.h>
 
+#ifdef USE_IGNORE_RC
+int ignore_unused;
+#endif
+
 #ifdef X_NOT_POSIX
 #if !defined(SYSV) && !defined(i386)
 extern struct passwd *getpwuid();	/* does ANYBODY need this? */
@@ -109,7 +113,7 @@ extern struct passwd *getpwuid();	/* does ANYBODY need this? */
 #define	SHELL_BOURNE	2
 /* *INDENT-OFF* */
 static struct {
-    char *name;
+    const char *name;
     int type;
 } shell_list[] = {
     { "csh",	SHELL_C },	/* vanilla cshell */
@@ -124,33 +128,33 @@ static struct {
 };
 /* *INDENT-ON* */
 
-static char *emuname[EMULATIONS] =
+static const char *emuname[EMULATIONS] =
 {
     "VT100",
     "Sun",
 };
 static char *myname;
 static int shell_type = SHELL_UNKNOWN;
-static char *getsize[EMULATIONS] =
+static const char *getsize[EMULATIONS] =
 {
     ESCAPE("7") ESCAPE("[r") ESCAPE("[999;999H") ESCAPE("[6n"),
     ESCAPE("[18t"),
 };
 #if defined(USE_STRUCT_TTYSIZE)
 #elif defined(USE_STRUCT_WINSIZE)
-static char *getwsize[EMULATIONS] =
+static const char *getwsize[EMULATIONS] =
 {				/* size in pixels */
     0,
     ESCAPE("[14t"),
 };
 #endif /* USE_STRUCT_{TTYSIZE|WINSIZE} */
-static char *restore[EMULATIONS] =
+static const char *restore[EMULATIONS] =
 {
     ESCAPE("8"),
     0,
 };
-static char *setname = "";
-static char *setsize[EMULATIONS] =
+static const char *setname = "";
+static const char *setsize[EMULATIONS] =
 {
     0,
     ESCAPE("[8;%s;%st"),
@@ -164,7 +168,7 @@ static struct termios tioorig;
 static struct sgttyb sgorig;
 #endif /* USE_ANY_SYSV_TERMIO/USE_TERMIOS */
 
-static char *size[EMULATIONS] =
+static const char *size[EMULATIONS] =
 {
     ESCAPE("[%d;%dR"),
     ESCAPE("[8;%d;%dt"),
@@ -175,7 +179,7 @@ static FILE *ttyfp;
 
 #if defined(USE_STRUCT_TTYSIZE)
 #elif defined(USE_STRUCT_WINSIZE)
-static char *wsize[EMULATIONS] =
+static const char *wsize[EMULATIONS] =
 {
     0,
     ESCAPE("[4;%hd;%hdt"),
@@ -186,7 +190,7 @@ static SIGNAL_T onintr(int sig);
 static SIGNAL_T resize_timeout(int sig);
 static int checkdigits(char *str);
 static void Usage(void);
-static void readstring(FILE *fp, char *buf, char *str);
+static void readstring(FILE *fp, char *buf, const char *str);
 
 #ifdef USE_TERMCAP
 static void
@@ -279,7 +283,7 @@ main(int argc, char **argv ENVP_ARG)
 	    (((pw = getpwuid(getuid())) == NULL) ||
 	     *(ptr = pw->pw_shell) == 0))
 	    /* this is the same default that xterm uses */
-	    ptr = "/bin/sh";
+	    ptr = x_strdup("/bin/sh");
 
 	shell = x_basename(ptr);
 
@@ -305,7 +309,7 @@ main(int argc, char **argv ENVP_ARG)
 #ifdef CANT_OPEN_DEV_TTY
     if ((name_of_tty = ttyname(fileno(stderr))) == NULL)
 #endif
-	name_of_tty = "/dev/tty";
+	name_of_tty = x_strdup("/dev/tty");
 
     if ((ttyfp = fopen(name_of_tty, "r+")) == NULL) {
 	fprintf(stderr, "%s:  can't open terminal %s\n",
@@ -337,16 +341,16 @@ main(int argc, char **argv ENVP_ARG)
 #ifdef USE_ANY_SYSV_TERMIO
     ioctl(tty, TCGETA, &tioorig);
     tio = tioorig;
-    tio.c_iflag &= ~(ICRNL | IUCLC);
-    tio.c_lflag &= ~(ICANON | ECHO);
+    UIntClr(tio.c_iflag, (ICRNL | IUCLC));
+    UIntClr(tio.c_lflag, (ICANON | ECHO));
     tio.c_cflag |= CS8;
     tio.c_cc[VMIN] = 6;
     tio.c_cc[VTIME] = 1;
 #elif defined(USE_TERMIOS)
     tcgetattr(tty, &tioorig);
     tio = tioorig;
-    tio.c_iflag &= ~ICRNL;
-    tio.c_lflag &= ~(ICANON | ECHO);
+    UIntClr(tio.c_iflag, ICRNL);
+    UIntClr(tio.c_lflag, (ICANON | ECHO));
     tio.c_cflag |= CS8;
     tio.c_cc[VMIN] = 6;
     tio.c_cc[VTIME] = 1;
@@ -354,7 +358,7 @@ main(int argc, char **argv ENVP_ARG)
     ioctl(tty, TIOCGETP, &sgorig);
     sg = sgorig;
     sg.sg_flags |= RAW;
-    sg.sg_flags &= ~ECHO;
+    UIntClr(sg.sg_flags, ECHO);
 #endif /* USE_ANY_SYSV_TERMIO/USE_TERMIOS */
     signal(SIGINT, onintr);
     signal(SIGQUIT, onintr);
@@ -376,19 +380,20 @@ main(int argc, char **argv ENVP_ARG)
 	if (tmpbuf == 0) {
 	    fprintf(stderr, "%s: Cannot query size\n", myname);
 	    onintr(0);
+	} else {
+	    sprintf(tmpbuf, setsize[emu], argv[0], argv[1]);
+	    IGNORE_RC(write(tty, tmpbuf, strlen(tmpbuf)));
+	    free(tmpbuf);
 	}
-	sprintf(tmpbuf, setsize[emu], argv[0], argv[1]);
-	write(tty, tmpbuf, strlen(tmpbuf));
-	free(tmpbuf);
     }
-    write(tty, getsize[emu], strlen(getsize[emu]));
+    IGNORE_RC(write(tty, getsize[emu], strlen(getsize[emu])));
     readstring(ttyfp, buf, size[emu]);
     if (sscanf(buf, size[emu], &rows, &cols) != 2) {
 	fprintf(stderr, "%s: Can't get rows and columns\r\n", myname);
 	onintr(0);
     }
     if (restore[emu])
-	write(tty, restore[emu], strlen(restore[emu]));
+	IGNORE_RC(write(tty, restore[emu], strlen(restore[emu])));
 #if defined(USE_STRUCT_TTYSIZE)
     /* finally, set the tty's window size */
     if (ioctl(tty, TIOCGSIZE, &ts) != -1) {
@@ -400,14 +405,14 @@ main(int argc, char **argv ENVP_ARG)
     /* finally, set the tty's window size */
     if (getwsize[emu]) {
 	/* get the window size in pixels */
-	write(tty, getwsize[emu], strlen(getwsize[emu]));
+	IGNORE_RC(write(tty, getwsize[emu], strlen(getwsize[emu])));
 	readstring(ttyfp, buf, wsize[emu]);
 	if (sscanf(buf, wsize[emu], &ts.ws_xpixel, &ts.ws_ypixel) != 2) {
 	    fprintf(stderr, "%s: Can't get window size\r\n", myname);
 	    onintr(0);
 	}
-	TTYSIZE_ROWS(ts) = rows;
-	TTYSIZE_COLS(ts) = cols;
+	TTYSIZE_ROWS(ts) = (ttySize_t) rows;
+	TTYSIZE_COLS(ts) = (ttySize_t) cols;
 	SET_TTYSIZE(tty, ts);
     } else if (ioctl(tty, TIOCGWINSZ, &ts) != -1) {
 	/* we don't have any way of directly finding out
@@ -415,11 +420,11 @@ main(int argc, char **argv ENVP_ARG)
 	   our best by computing the font height and width from the "old"
 	   window-size values, and multiplying by these ratios... */
 	if (TTYSIZE_COLS(ts) != 0)
-	    ts.ws_xpixel = cols * (ts.ws_xpixel / TTYSIZE_COLS(ts));
+	    ts.ws_xpixel = (ttySize_t) (cols * (ts.ws_xpixel / TTYSIZE_COLS(ts)));
 	if (TTYSIZE_ROWS(ts) != 0)
-	    ts.ws_ypixel = rows * (ts.ws_ypixel / TTYSIZE_ROWS(ts));
-	TTYSIZE_ROWS(ts) = rows;
-	TTYSIZE_COLS(ts) = cols;
+	    ts.ws_ypixel = (ttySize_t) (rows * (ts.ws_ypixel / TTYSIZE_ROWS(ts)));
+	TTYSIZE_ROWS(ts) = (ttySize_t) rows;
+	TTYSIZE_COLS(ts) = (ttySize_t) cols;
 	SET_TTYSIZE(tty, ts);
     }
 #endif /* USE_STRUCT_{TTYSIZE|WINSIZE} */
@@ -445,7 +450,7 @@ main(int argc, char **argv ENVP_ARG)
 	}
 
 	i = ptr - termcap + 3;
-	strncpy(newtc, termcap, (unsigned) i);
+	strncpy(newtc, termcap, (size_t) i);
 	sprintf(newtc + i, "%d", cols);
 	ptr = strchr(ptr, ':');
 	strcat(newtc, ptr);
@@ -457,7 +462,7 @@ main(int argc, char **argv ENVP_ARG)
 	}
 
 	i = ptr - newtc + 3;
-	strncpy(termcap, newtc, (unsigned) i);
+	strncpy(termcap, newtc, (size_t) i);
 	sprintf(termcap + i, "%d", rows);
 	ptr = strchr(ptr, ':');
 	strcat(termcap, ptr);
@@ -507,7 +512,7 @@ checkdigits(char *str)
 }
 
 static void
-readstring(FILE *fp, char *buf, char *str)
+readstring(FILE *fp, char *buf, const char *str)
 {
     int last, c;
 #if !defined(USG) && !defined(__UNIXOS2__)

@@ -1,7 +1,7 @@
-/* $XTermId: input.c,v 1.309 2009/06/18 00:08:40 tom Exp $ */
+/* $XTermId: input.c,v 1.326 2010/06/15 22:41:09 tom Exp $ */
 
 /*
- * Copyright 1999-2008,2009 by Thomas E. Dickey
+ * Copyright 1999-2009,2010 by Thomas E. Dickey
  *
  *                         All Rights Reserved
  *
@@ -115,7 +115,7 @@
 
 #define KEYSYM_FMT "0x%04lX"	/* simplify matching <X11/keysymdef.h> */
 
-#define TEK4014_GIN(tw) (tw != 0 && tw->screen.TekGIN)
+#define TEK4014_GIN(tw) (tw != 0 && TekScreenOf(tw)->TekGIN)
 
 typedef struct {
     KeySym keysym;
@@ -125,13 +125,14 @@ typedef struct {
     char strbuf[STRBUFSIZE];
 } KEY_DATA;
 
-/*                       0123456789 abc def0123456789abcdef0123456789abcdef0123456789abcd */
-static char *kypd_num = " XXXXXXXX\tXXX\rXXXxxxxXXXXXXXXXXXXXXXXXXXXX*+,-./0123456789XXX=";
-
-/*                       0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcd */
-static char *kypd_apl = " ABCDEFGHIJKLMNOPQRSTUVWXYZ??????abcdefghijklmnopqrstuvwxyzXXX";
-
-static char *curfinal = "HDACB  FE";
+static
+const char *kypd_num = " XXXXXXXX\tXXX\rXXXxxxxXXXXXXXXXXXXXXXXXXXXX*+,-./0123456789XXX=";
+/*                      0123456789 abc def0123456789abcdef0123456789abcdef0123456789abcd */
+static
+const char *kypd_apl = " ABCDEFGHIJKLMNOPQRSTUVWXYZ??????abcdefghijklmnopqrstuvwxyzXXX";
+/*                      0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcd */
+static
+const char *curfinal = "HDACB  FE";
 
 static int decfuncvalue(KEY_DATA *);
 static void sunfuncvalue(ANSI *, KEY_DATA *);
@@ -139,10 +140,10 @@ static void hpfuncvalue(ANSI *, KEY_DATA *);
 static void scofuncvalue(ANSI *, KEY_DATA *);
 
 #if OPT_TRACE
-static char *
+static const char *
 ModifierName(unsigned modifier)
 {
-    char *s = "";
+    const char *s = "";
     if (modifier & ShiftMask)
 	s = " Shift";
     else if (modifier & LockMask)
@@ -177,23 +178,24 @@ ModifierName(unsigned modifier)
 static void
 AdjustAfterInput(XtermWidget xw)
 {
-    TScreen *screen = &(xw->screen);
+    TScreen *screen = TScreenOf(xw);
 
     if (screen->scrollkey && screen->topline != 0)
-	WindowScroll(xw, 0);
+	WindowScroll(xw, 0, False);
     if (screen->marginbell) {
 	int col = screen->max_col - screen->nmarginbell;
-	if (screen->bellarmed >= 0) {
-	    if (screen->bellarmed == screen->cur_row) {
+	if (screen->bellArmed >= 0) {
+	    if (screen->bellArmed == screen->cur_row) {
 		if (screen->cur_col >= col) {
-		    Bell(XkbBI_MarginBell, 0);
-		    screen->bellarmed = -1;
+		    Bell(xw, XkbBI_MarginBell, 0);
+		    screen->bellArmed = -1;
 		}
-	    } else
-		screen->bellarmed =
+	    } else {
+		screen->bellArmed =
 		    screen->cur_col < col ? screen->cur_row : -1;
+	    }
 	} else if (screen->cur_col < col)
-	    screen->bellarmed = screen->cur_row;
+	    screen->bellArmed = screen->cur_row;
     }
 }
 
@@ -303,7 +305,7 @@ static Bool
 allowModifierParm(XtermWidget xw, KEY_DATA * kd)
 {
     TKeyboard *keyboard = &(xw->keyboard);
-    TScreen *screen = &(xw->screen);
+    TScreen *screen = TScreenOf(xw);
     int keypad_mode = ((keyboard->flags & MODE_DECKPAM) != 0);
 
     Bool result = False;
@@ -353,13 +355,13 @@ xtermParamToState(XtermWidget xw, unsigned param)
 	     | xw->misc.alt_mods
 	     | xw->misc.meta_mods) & xw->misc.other_mods) == 0) {
 	if ((param - MOD_NONE) & MOD_SHIFT)
-	    result |= ShiftMask;
+	    UIntSet(result, ShiftMask);
 	if ((param - MOD_NONE) & MOD_CTRL)
-	    result |= ControlMask;
+	    UIntSet(result, ControlMask);
 	if ((param - MOD_NONE) & MOD_ALT)
-	    result |= xw->misc.alt_mods;
+	    UIntSet(result, xw->misc.alt_mods);
 	if ((param - MOD_NONE) & MOD_META)
-	    result |= xw->misc.meta_mods;
+	    UIntSet(result, xw->misc.meta_mods);
     }
 #else
     (void) xw;
@@ -384,19 +386,19 @@ xtermStateToParam(XtermWidget xw, unsigned state)
     if ((state & xw->misc.other_mods) == 0) {
 	if (state & ShiftMask) {
 	    modify_parm += MOD_SHIFT;
-	    state &= ~ShiftMask;
+	    UIntClr(state, ShiftMask);
 	}
 	if (state & ControlMask) {
 	    modify_parm += MOD_CTRL;
-	    state &= ~ControlMask;
+	    UIntClr(state, ControlMask);
 	}
 	if ((state & xw->misc.alt_mods) != 0) {
 	    modify_parm += MOD_ALT;
-	    state &= ~xw->misc.alt_mods;
+	    UIntClr(state, xw->misc.alt_mods);
 	}
 	if ((state & xw->misc.meta_mods) != 0) {
 	    modify_parm += MOD_META;
-	    state &= ~xw->misc.meta_mods;
+	    UIntClr(state, xw->misc.meta_mods);
 	}
     }
     if (modify_parm == MOD_NONE)
@@ -481,7 +483,7 @@ allowedCharModifiers(XtermWidget xw, unsigned state, KEY_DATA * kd)
 	    && Masked(result, ControlMask) == 0) {
 	    /* These keys are already associated with the control-key */
 	    if (xw->keyboard.modify_now.other_keys == 0) {
-		result &= ~ControlMask;
+		UIntClr(result, ControlMask);
 	    }
 	} else if (kd->keysym == XK_Tab || kd->keysym == XK_Return) {
 	    ;
@@ -493,17 +495,17 @@ allowedCharModifiers(XtermWidget xw, unsigned state, KEY_DATA * kd)
 	} else if (!IsControlOutput(kd) && !IsPredefinedKey(kd->keysym)) {
 	    /* Printable keys are already associated with the shift-key */
 	    if (!(result & ControlMask)) {
-		result &= ~ShiftMask;
+		UIntClr(result, ShiftMask);
 	    }
 	}
 #if OPT_NUM_LOCK
 	result = filterAltMeta(result,
 			       xw->misc.meta_mods,
-			       xw->screen.meta_sends_esc, kd);
-	if (xw->screen.alt_is_not_meta) {
+			       TScreenOf(xw)->meta_sends_esc, kd);
+	if (TScreenOf(xw)->alt_is_not_meta) {
 	    result = filterAltMeta(result,
 				   xw->misc.alt_mods,
-				   xw->screen.alt_sends_esc, kd);
+				   TScreenOf(xw)->alt_sends_esc, kd);
 	}
 #endif
     }
@@ -546,7 +548,7 @@ ModifyOtherKeys(XtermWidget xw,
     } else if (modify_parm != 0) {
 	if (IsBackarrowToggle(keyboard, kd->keysym, state)) {
 	    kd->keysym = XK_Delete;
-	    state &= ~ControlMask;
+	    UIntClr(state, ControlMask);
 	}
 	if (!IsPredefinedKey(kd->keysym)) {
 	    state = allowedCharModifiers(xw, state, kd);
@@ -775,14 +777,14 @@ xtermDeleteIsDEL(XtermWidget xw)
 
     if (xw->keyboard.type == keyboardIsDefault
 	|| xw->keyboard.type == keyboardIsVT220)
-	result = (xw->screen.delete_is_del == True);
+	result = (TScreenOf(xw)->delete_is_del == True);
 
     if (xw->keyboard.type == keyboardIsLegacy)
-	result = (xw->screen.delete_is_del != False);
+	result = (TScreenOf(xw)->delete_is_del != False);
 
     TRACE(("xtermDeleteIsDEL(%d/%d) = %d\n",
 	   xw->keyboard.type,
-	   xw->screen.delete_is_del,
+	   TScreenOf(xw)->delete_is_del,
 	   result));
 
     return result;
@@ -796,7 +798,7 @@ Input(XtermWidget xw,
     Char *string;
 
     TKeyboard *keyboard = &(xw->keyboard);
-    TScreen *screen = &(xw->screen);
+    TScreen *screen = TScreenOf(xw);
 
     int j;
     int key = False;
@@ -834,13 +836,13 @@ Input(XtermWidget xw,
 #if OPT_WIDE_CHARS
 	    if (screen->utf8_mode) {
 		kd.nbytes = Xutf8LookupString(screen->xic, event,
-					      kd.strbuf, sizeof(kd.strbuf),
+					      kd.strbuf, (int) sizeof(kd.strbuf),
 					      &kd.keysym, &status_return);
 	    } else
 #endif
 	    {
 		kd.nbytes = XmbLookupString(screen->xic, event,
-					    kd.strbuf, sizeof(kd.strbuf),
+					    kd.strbuf, (int) sizeof(kd.strbuf),
 					    &kd.keysym, &status_return);
 	    }
 #if OPT_MOD_FKEYS
@@ -861,7 +863,7 @@ Input(XtermWidget xw,
 	{
 	    static XComposeStatus compose_status =
 	    {NULL, 0};
-	    kd.nbytes = XLookupString(event, kd.strbuf, sizeof(kd.strbuf),
+	    kd.nbytes = XLookupString(event, kd.strbuf, (int) sizeof(kd.strbuf),
 				      &kd.keysym, &compose_status);
 	}
 	kd.is_fkey = IsFunctionKey(kd.keysym);
@@ -897,7 +899,7 @@ Input(XtermWidget xw,
 	&& (evt_state & ShiftMask) == 0) {
 	if (kd.keysym == XK_KP_Add) {
 	    kd.keysym = XK_KP_Separator;
-	    evt_state &= ~ShiftMask;
+	    UIntClr(evt_state, ShiftMask);
 	    TRACE(("...Input keypad(+), change keysym to "
 		   KEYSYM_FMT
 		   "\n",
@@ -906,7 +908,7 @@ Input(XtermWidget xw,
 	if ((evt_state & ControlMask) != 0
 	    && kd.keysym == XK_KP_Separator) {
 	    kd.keysym = XK_KP_Subtract;
-	    evt_state &= ~ControlMask;
+	    UIntClr(evt_state, ControlMask);
 	    TRACE(("...Input control/keypad(,), change keysym to "
 		   KEYSYM_FMT
 		   "\n",
@@ -1020,7 +1022,7 @@ Input(XtermWidget xw,
 	    TRACE(("...map XK_F%ld", kd.keysym - XK_Fn(1) + 1));
 	    if (evt_state & ControlMask) {
 		kd.keysym += (KeySym) xw->misc.ctrl_fkeys;
-		evt_state &= ~ControlMask;
+		UIntClr(evt_state, ControlMask);
 	    }
 	    TRACE((" to XK_F%ld\n", kd.keysym - XK_Fn(1) + 1));
 
@@ -1031,11 +1033,11 @@ Input(XtermWidget xw,
 	    TRACE(("...map XK_F%ld", kd.keysym - XK_Fn(1) + 1));
 	    if (evt_state & ShiftMask) {
 		kd.keysym += (KeySym) (xw->misc.ctrl_fkeys * 1);
-		evt_state &= ~ShiftMask;
+		UIntClr(evt_state, ShiftMask);
 	    }
 	    if (evt_state & ControlMask) {
 		kd.keysym += (KeySym) (xw->misc.ctrl_fkeys * 2);
-		evt_state &= ~ControlMask;
+		UIntClr(evt_state, ControlMask);
 	    }
 	    TRACE((" to XK_F%ld\n", kd.keysym - XK_Fn(1) + 1));
 
@@ -1103,7 +1105,7 @@ Input(XtermWidget xw,
 	    && keyboard->type == keyboardIsVT220
 #endif
 	    && ((string = (Char *) udk_lookup(dec_code, &kd.nbytes)) != 0)) {
-	    evt_state &= ~ShiftMask;
+	    UIntClr(evt_state, ShiftMask);
 	    while (kd.nbytes-- > 0)
 		unparseputc(xw, CharOf(*string++));
 	}
@@ -1223,7 +1225,7 @@ Input(XtermWidget xw,
 	    if (modifyOtherKey(&reply, input_char, modify_parm, keyboard->format_keys)) {
 		unparseseq(xw, &reply);
 	    } else {
-		Bell(XkbBI_MinorError, 0);
+		Bell(xw, XkbBI_MinorError, 0);
 	    }
 	} else
 #endif /* OPT_MOD_FKEYS */
@@ -1238,7 +1240,7 @@ Input(XtermWidget xw,
 		if (screen->meta_sends_esc
 		    && (evt_state & xw->misc.meta_mods) != 0) {
 		    TRACE(("...input-char is modified by META\n"));
-		    evt_state &= ~xw->misc.meta_mods;
+		    UIntClr(evt_state, xw->misc.meta_mods);
 		    eightbit = False;
 		    prefix = ANSI_ESC;
 		} else if (eightbit) {
@@ -1247,7 +1249,7 @@ Input(XtermWidget xw,
 		}
 		if (screen->alt_is_not_meta
 		    && (evt_state & xw->misc.alt_mods) != 0) {
-		    evt_state &= ~xw->misc.alt_mods;
+		    UIntClr(evt_state, xw->misc.alt_mods);
 		    if (screen->alt_sends_esc) {
 			TRACE(("...input-char is modified by ALT\n"));
 			eightbit = False;
@@ -1316,7 +1318,7 @@ Input(XtermWidget xw,
 		} else if (kd.strbuf[0] == '?'
 			   && (evt_state & ControlMask) != 0) {
 		    kd.strbuf[0] = ANSI_DEL;
-		    evt_state &= ~ControlMask;
+		    UIntClr(evt_state, ControlMask);
 		}
 	    }
 	    if (prefix != 0)
@@ -1324,7 +1326,7 @@ Input(XtermWidget xw,
 	    for (j = 0; j < kd.nbytes; ++j)
 		unparseputc(xw, CharOf(kd.strbuf[j]));
 	}
-	key = True;
+	key = ((kd.keysym != ANSI_XOFF) && (kd.keysym != ANSI_XON));
     }
     unparse_end(xw);
 
@@ -1336,11 +1338,11 @@ Input(XtermWidget xw,
 }
 
 void
-StringInput(XtermWidget xw, Char * string, size_t nbytes)
+StringInput(XtermWidget xw, const Char * string, size_t nbytes)
 {
-    TRACE(("InputString (%s,%d)\n",
-	   visibleChars(string, nbytes),
-	   nbytes));
+    TRACE(("InputString (%s,%lu)\n",
+	   visibleChars(string, (unsigned) nbytes),
+	   (unsigned long) nbytes));
 #if OPT_TEK4014
     if (nbytes && TEK4014_GIN(tekWidget)) {
 	TekEnqMouse(tekWidget, *string++);
@@ -1663,14 +1665,95 @@ sunfuncvalue(ANSI * reply, KEY_DATA * kd)
 }
 
 #if OPT_NUM_LOCK
-#define isName(c) ((c) == '_' || isalnum(CharOf(c)))
+#define isName(c) ((c) == '_' || (c) == '-' || isalnum(CharOf(c)))
+
+static const char *
+skipName(const char *s)
+{
+    while (*s != '\0' && isName(CharOf(*s)))
+	++s;
+    return s;
+}
+
+/*
+ * Found a ":" in a translation, check what is past it to see if it contains
+ * any of the insert-text action names.
+ */
+static Boolean
+keyCanInsert(const char *parse)
+{
+    Boolean result = False;
+    int ch;
+    Boolean escape = False;
+    Boolean quoted = False;
+
+    static const char *table[] =
+    {
+	"insert",
+	"insert-seven-bit",
+	"insert-eight-bit",
+	"string",
+    };
+    Cardinal n;
+
+    while (*parse != '\0' && *parse != '\n') {
+	ch = CharOf(*parse++);
+	if (escape) {
+	    escape = False;
+	} else if (ch == '\\') {
+	    escape = True;
+	} else if (ch == '"') {
+	    quoted = (Boolean) ! quoted;
+	} else if (!quoted && isName(ch)) {
+	    const char *next = skipName(--parse);
+	    size_t need = (size_t) (next - parse);
+
+	    for (n = 0; n < XtNumber(table); ++n) {
+		if (need == strlen(table[n])
+		    && !strncmp(parse, table[n], need)) {
+		    result = True;
+		    break;
+		}
+	    }
+	    parse = next;
+	}
+
+    }
+    return result;
+}
+
+/*
+ * Strip the entire action, to avoid matching it.
+ */
+static char *
+stripAction(char *base, char *last)
+{
+    while (last != base) {
+	if (*--last == '\n') {
+	    break;
+	}
+    }
+    return last;
+}
+
+static char *
+stripBlanks(char *base, char *last)
+{
+    while (last != base) {
+	int ch = CharOf(last[-1]);
+	if (ch != ' ' && ch != '\t')
+	    break;
+	--last;
+    }
+    return last;
+}
 
 /*
  * Strip unneeded whitespace from a translations resource, mono-casing and
  * returning a malloc'd copy of the result.
  */
 static char *
-stripTranslations(const char *s)
+stripTranslations(const char *s, Bool onlyInsert)
 {
     char *dst = 0;
 
@@ -1691,16 +1774,17 @@ stripTranslations(const char *s)
 			*d++ = (char) ch;
 		    state = 0;
 		} else if (strchr(":!#", ch) != 0) {
-		    while (d != dst && isspace(CharOf(d[-1])))
-			--d;
+		    d = stripBlanks(dst, d);
+		    if (onlyInsert && (ch == ':') && !keyCanInsert(s)) {
+			d = stripAction(dst, d);
+		    }
 		    state = -1;
 		} else if (state >= 0) {
 		    if (isspace(CharOf(ch))) {
 			if (state == 0 || strchr("<>~ \t", prv))
 			    continue;
 		    } else if (strchr("<>~", ch)) {
-			while (d != dst && isspace(CharOf(d[-1])))
-			    --d;
+			d = stripBlanks(dst, d);
 		    }
 		    *d++ = x_toupper(ch);
 		    ++state;
@@ -1729,7 +1813,7 @@ stripTranslations(const char *s)
  * "XTerm*translations", we see only the latter.
  */
 static Bool
-TranslationsUseKeyword(Widget w, char **cache, const char *keyword)
+TranslationsUseKeyword(Widget w, char **cache, const char *keyword, Bool onlyInsert)
 {
     static String data;
     static XtResource key_resources[] =
@@ -1741,7 +1825,7 @@ TranslationsUseKeyword(Widget w, char **cache, const char *keyword)
     char *copy;
     char *test;
 
-    if ((test = stripTranslations(keyword)) != 0) {
+    if ((test = stripTranslations(keyword, onlyInsert)) != 0) {
 	if (*cache == 0) {
 	    XtGetSubresources(w,
 			      (XtPointer) &data,
@@ -1751,7 +1835,7 @@ TranslationsUseKeyword(Widget w, char **cache, const char *keyword)
 			      XtNumber(key_resources),
 			      NULL,
 			      (Cardinal) 0);
-	    if (data != 0 && (copy = stripTranslations(data)) != 0) {
+	    if (data != 0 && (copy = stripTranslations(data, onlyInsert)) != 0) {
 		*cache = copy;
 	    }
 	}
@@ -1786,34 +1870,37 @@ TranslationsUseKeyword(Widget w, char **cache, const char *keyword)
 	}
 	free(test);
     }
-    TRACE(("TranslationsUseKeyword(%p, %s) = %d\n", w, keyword, result));
+    TRACE(("TranslationsUseKeyword(%p, %s) = %d\n",
+	   (void *) w, keyword, result));
     return result;
 }
 
 static Bool
-xtermHasTranslation(XtermWidget xw, const char *keyword)
+xtermHasTranslation(XtermWidget xw, const char *keyword, Bool onlyInsert)
 {
     return (TranslationsUseKeyword(SHELL_OF(xw),
 				   &(xw->keyboard.shell_translations),
-				   keyword)
+				   keyword,
+				   onlyInsert)
 	    || TranslationsUseKeyword((Widget) xw,
 				      &(xw->keyboard.xterm_translations),
-				      keyword));
+				      keyword,
+				      onlyInsert));
 }
 
 #if OPT_EXTRA_PASTE
 static void
-addTranslation(XtermWidget xw, char *fromString, char *toString)
+addTranslation(XtermWidget xw, const char *fromString, const char *toString)
 {
-    unsigned have = (xw->keyboard.extra_translations
-		     ? strlen(xw->keyboard.extra_translations)
-		     : 0);
-    unsigned need = (((have != 0) ? (have + 4) : 0)
-		     + strlen(fromString)
-		     + strlen(toString)
-		     + 6);
+    size_t have = (xw->keyboard.extra_translations
+		   ? strlen(xw->keyboard.extra_translations)
+		   : 0);
+    size_t need = (((have != 0) ? (have + 4) : 0)
+		   + strlen(fromString)
+		   + strlen(toString)
+		   + 6);
 
-    if (!xtermHasTranslation(xw, fromString)) {
+    if (!xtermHasTranslation(xw, fromString, False)) {
 	xw->keyboard.extra_translations
 	    = TypeRealloc(char, need, xw->keyboard.extra_translations);
 	if ((xw->keyboard.extra_translations) != 0) {
@@ -1828,11 +1915,11 @@ addTranslation(XtermWidget xw, char *fromString, char *toString)
 }
 #endif
 
-#define SaveMask(name)	xw->misc.name |= mask;\
-			TRACE(("SaveMask(%s) %#lx (%#lx is%s modifier)\n", \
+#define SaveMask(name)	xw->misc.name |= (unsigned) mask;\
+			TRACE(("SaveMask(%s) %#x (%#x is%s modifier)\n", \
 				#name, \
-				xw->misc.name, mask, \
-				ModifierName(mask)));
+				xw->misc.name, (unsigned) mask, \
+				ModifierName((unsigned) mask)));
 /*
  * Determine which modifier mask (if any) applies to the Num_Lock keysym.
  *
@@ -1935,12 +2022,25 @@ VTInitModifiers(XtermWidget xw)
 
 	/* Don't disable any mods if "alwaysUseMods" is true. */
 	if (!xw->misc.alwaysUseMods) {
+
+	    /*
+	     * Force TranslationsUseKeyword() to reload.
+	     */
+	    if (xw->keyboard.shell_translations) {
+		free(xw->keyboard.shell_translations);
+		xw->keyboard.shell_translations = 0;
+	    }
+	    if (xw->keyboard.xterm_translations) {
+		free(xw->keyboard.xterm_translations);
+		xw->keyboard.xterm_translations = 0;
+	    }
+
 	    /*
 	     * If the Alt modifier is used in translations, we would rather not
 	     * use it to modify function-keys when NumLock is active.
 	     */
 	    if ((xw->misc.alt_mods != 0)
-		&& xtermHasTranslation(xw, "alt")) {
+		&& xtermHasTranslation(xw, "alt", True)) {
 		TRACE(("ALT is used as a modifier in translations (ignore mask)\n"));
 		xw->misc.alt_mods = 0;
 	    }
@@ -1950,7 +2050,7 @@ VTInitModifiers(XtermWidget xw)
 	     * use it to modify function-keys.
 	     */
 	    if ((xw->misc.meta_mods != 0)
-		&& xtermHasTranslation(xw, "meta")) {
+		&& xtermHasTranslation(xw, "meta", True)) {
 		TRACE(("META is used as a modifier in translations\n"));
 		xw->misc.meta_mods = 0;
 	    }

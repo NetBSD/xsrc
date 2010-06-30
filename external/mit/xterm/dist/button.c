@@ -1,7 +1,7 @@
-/* $XTermId: button.c,v 1.352 2009/09/11 09:13:53 tom Exp $ */
+/* $XTermId: button.c,v 1.377 2010/06/04 09:27:07 tom Exp $ */
 
 /*
- * Copyright 1999-2008,2009 by Thomas E. Dickey
+ * Copyright 1999-2009,2010 by Thomas E. Dickey
  *
  *                         All Rights Reserved
  *
@@ -62,6 +62,7 @@ button.c	Handles button events in the terminal emulator.
 #include <xterm.h>
 
 #include <stdio.h>
+#include <assert.h>
 
 #include <X11/Xatom.h>
 #include <X11/Xmu/Atoms.h>
@@ -345,7 +346,7 @@ SendLocatorPosition(XtermWidget xw, XEvent * event)
     state = (event->xbutton.state
 	     & (Button1Mask | Button2Mask | Button3Mask | Button4Mask)) >> 8;
     /* update mask to "after" state */
-    state ^= 1 << button;
+    state ^= ((unsigned) (1 << button));
     /* swap Button1 & Button3 */
     state = ((state & (unsigned) ~(4 | 1))
 	     | ((state & 1) ? 4 : 0)
@@ -796,7 +797,7 @@ ReadLineMovePoint(TScreen * screen, int col, int ldelta)
 	line[count++] = ANSI_ESC;
 	line[count++] = '[';	/* XXX maybe sometimes O is better? */
     }
-    line[count++] = CharOf(col > 0 ? 'C' : 'D');
+    line[count] = CharOf(col > 0 ? 'C' : 'D');
     if (col < 0)
 	col = -col;
     while (col--)
@@ -835,10 +836,10 @@ DiredButton(Widget w,
 	if ((event->type == ButtonPress || event->type == ButtonRelease)
 	    && (event->xbutton.y >= screen->border)
 	    && (event->xbutton.x >= OriginX(screen))) {
-	    line = ((unsigned) (event->xbutton.y - screen->border)
-		    / FontHeight(screen));
-	    col = ((unsigned) (event->xbutton.x - OriginX(screen))
-		   / FontWidth(screen));
+	    line = (unsigned) ((event->xbutton.y - screen->border)
+			       / FontHeight(screen));
+	    col = (unsigned) ((event->xbutton.x - OriginX(screen))
+			      / FontWidth(screen));
 	    Line[0] = CONTROL('X');
 	    Line[1] = ANSI_ESC;
 	    Line[2] = 'G';
@@ -1074,28 +1075,38 @@ DECtoASCII(unsigned ch)
     }
     return ch;
 }
+
+#if OPT_WIDE_CHARS
+static Cardinal
+addXtermChar(Char ** buffer, Cardinal *used, Cardinal offset, unsigned value)
+{
+    if (offset + 1 >= *used) {
+	*used = 1 + (2 * (offset + 1));
+	allocXtermChars(buffer, *used);
+    }
+    (*buffer)[offset++] = (Char) value;
+    return offset;
+}
+#define AddChar(buffer, used, offset, value) \
+	offset = addXtermChar(buffer, used, offset, (unsigned) value)
+
 /*
  * Convert a UTF-8 string to Latin-1, replacing non Latin-1 characters by `#',
  * or ASCII/Latin-1 equivalents for special cases.
  */
-#if OPT_WIDE_CHARS
 static Char *
-UTF8toLatin1(TScreen * screen, Char * s, unsigned len, unsigned long *result)
+UTF8toLatin1(TScreen * screen, Char * s, unsigned long len, unsigned long *result)
 {
     static Char *buffer;
     static Cardinal used;
 
-    Char *p, *q;
+    Cardinal offset = 0;
 
-    if (len > used) {
-	used = 1 + (2 * len);
-	allocXtermChars(&buffer, used);
-    }
+    Char *p;
 
-    if (buffer != 0) {
+    if (len != 0) {
 	PtyData data;
 
-	q = buffer;
 	fakePtyData(&data, s, s + len);
 	while (decodeUtf8(&data)) {
 	    Bool fails = False;
@@ -1104,17 +1115,17 @@ UTF8toLatin1(TScreen * screen, Char * s, unsigned len, unsigned long *result)
 	    if (value == UCS_REPL) {
 		fails = True;
 	    } else if (value < 256) {
-		*q++ = CharOf(value);
+		AddChar(&buffer, &used, offset, CharOf(value));
 	    } else {
 		unsigned eqv = ucs2dec(value);
 		if (xtermIsDecGraphic(eqv)) {
-		    *q++ = (Char) DECtoASCII(eqv);
+		    AddChar(&buffer, &used, offset, DECtoASCII(eqv));
 		} else {
 		    eqv = AsciiEquivs(value);
 		    if (eqv == value) {
 			fails = True;
 		    } else {
-			*q++ = (Char) eqv;
+			AddChar(&buffer, &used, offset, eqv);
 		    }
 		    if (isWide((wchar_t) value))
 			extra = True;
@@ -1128,23 +1139,73 @@ UTF8toLatin1(TScreen * screen, Char * s, unsigned len, unsigned long *result)
 	     */
 	    if (fails) {
 		for (p = (Char *) screen->default_string; *p != '\0'; ++p) {
-		    len = (unsigned) (3 + q - buffer);
-		    if (len >= used) {
-			used = 1 + (2 * len);
-			allocXtermChars(&buffer, used);
-		    }
-		    *q++ = *p;
+		    AddChar(&buffer, &used, offset, *p);
 		}
 	    }
 	    if (extra)
-		*q++ = ' ';
+		AddChar(&buffer, &used, offset, ' ');
 	}
-	*q = 0;
-	*result = (unsigned long) (q - buffer);
+	AddChar(&buffer, &used, offset, '\0');
+	*result = (unsigned long) (offset - 1);
     } else {
 	*result = 0;
     }
     return buffer;
+}
+
+int
+xtermUtf8ToTextList(XtermWidget xw,
+		    XTextProperty * text_prop,
+		    char ***text_list,
+		    int *text_list_count)
+{
+    TScreen *screen = TScreenOf(xw);
+    Display *dpy = screen->display;
+    int rc = -1;
+
+    if (text_prop->format == 8
+	&& (rc = Xutf8TextPropertyToTextList(dpy, text_prop,
+					     text_list,
+					     text_list_count)) >= 0) {
+	if (*text_list != NULL && *text_list_count != 0) {
+	    int i;
+	    Char *data;
+	    char **new_text_list, *tmp;
+	    unsigned long size, new_size;
+
+	    TRACE(("xtermUtf8ToTextList size %d\n", *text_list_count));
+
+	    /*
+	     * XLib StringList actually uses only two pointers, one for the
+	     * list itself, and one for the data.  Pointer to the data is the
+	     * first element of the list, the rest (if any) list elements point
+	     * to the same memory block as the first element
+	     */
+	    new_size = 0;
+	    for (i = 0; i < *text_list_count; ++i) {
+		data = (Char *) (*text_list)[i];
+		size = strlen((*text_list)[i]) + 1;
+		(void) UTF8toLatin1(screen, data, size, &size);
+		new_size += size + 1;
+	    }
+	    new_text_list =
+		(char **) XtMalloc((Cardinal) sizeof(char *) * (unsigned) *text_list_count);
+	    new_text_list[0] = tmp = XtMalloc((Cardinal) new_size);
+	    for (i = 0; i < (*text_list_count); ++i) {
+		data = (Char *) (*text_list)[i];
+		size = strlen((*text_list)[i]) + 1;
+		data = UTF8toLatin1(screen, data, size, &size);
+		memcpy(tmp, data, size + 1);
+		new_text_list[i] = tmp;
+		tmp += size + 1;
+	    }
+	    XFreeStringList((*text_list));
+	    *text_list = new_text_list;
+	} else {
+	    rc = -1;
+	}
+    }
+    return rc;
 }
 #endif /* OPT_WIDE_CHARS */
 
@@ -1196,7 +1257,7 @@ overrideTargets(Widget w, String value, Atom ** resultp)
     if ((xw = getXtermWidget(w)) != 0) {
 	TScreen *screen = TScreenOf(xw);
 
-	if (value != 0 && *value != '\0') {
+	if (!IsEmpty(value)) {
 	    String copied = x_strdup(value);
 	    if (copied != 0) {
 		Atom *result = 0;
@@ -1208,12 +1269,13 @@ overrideTargets(Widget w, String value, Atom ** resultp)
 		    if (copied[n] == ',')
 			++count;
 		}
-		result = (Atom *) XtMalloc(((2 * count) + 1) * sizeof(Atom));
+		result = (Atom *) XtMalloc(((2 * count) + 1)
+					   * (Cardinal) sizeof(Atom));
 		if (result == NULL) {
 		    TRACE(("Couldn't allocate selection types\n"));
 		} else {
 		    char nextc = '?';
-		    char *listp = copied;
+		    char *listp = (char *) copied;
 		    count = 0;
 		    do {
 			char *nextp = parseItem(listp, &nextc);
@@ -1362,7 +1424,7 @@ UnmapSelections(XtermWidget xw)
 
     if (screen->mappedSelect) {
 	for (n = 0; screen->mappedSelect[n] != 0; ++n)
-	    free(screen->mappedSelect[n]);
+	    free((void *) screen->mappedSelect[n]);
 	free(screen->mappedSelect);
 	screen->mappedSelect = 0;
     }
@@ -1422,10 +1484,10 @@ MapSelections(XtermWidget xw, String * params, Cardinal num_params)
  * If it is not a cut-buffer, it is the primary selection (-1).
  */
 static int
-CutBuffer(unsigned code)
+CutBuffer(Atom code)
 {
     int cutbuffer;
-    switch (code) {
+    switch ((unsigned) code) {
     case XA_CUT_BUFFER0:
 	cutbuffer = 0;
 	break;
@@ -1488,6 +1550,8 @@ xtermGetSelection(Widget w,
 
     XtermWidget xw;
 
+    if (num_params == 0)
+	return;
     if ((xw = getXtermWidget(w)) == 0)
 	return;
 
@@ -1683,7 +1747,7 @@ _qWriteSelectionData(TScreen * screen, Char * lag, unsigned length)
 }
 
 static void
-_WriteSelectionData(TScreen * screen, Char * line, unsigned length)
+_WriteSelectionData(TScreen * screen, Char * line, size_t length)
 {
     /* Write data to pty a line at a time. */
     /* Doing this one line at a time may no longer be necessary
@@ -1736,7 +1800,7 @@ _WriteKey(TScreen * screen, Char * in)
 {
     Char line[16];
     unsigned count = 0;
-    unsigned length = strlen((char *) in);
+    size_t length = strlen((char *) in);
 
     if (screen->control_eight_bits) {
 	line[count++] = ANSI_CSI;
@@ -1823,41 +1887,8 @@ SelectionReceived(Widget w,
 #if OPT_WIDE_CHARS
 	    if (*type == XA_UTF8_STRING(dpy) &&
 		!(screen->wide_chars || screen->c1_printable)) {
-		rc = Xutf8TextPropertyToTextList(dpy, &text_prop,
-						 &text_list, &text_list_count);
-		if (text_list != NULL && text_list_count != 0) {
-		    int i;
-		    Char *data;
-		    char **new_text_list, *tmp;
-		    unsigned long size, new_size;
-		    /* XLib StringList actually uses only two
-		     * pointers, one for the list itself, and one for
-		     * the data. Pointer to the data is the first
-		     * element of the list, the rest (if any) list
-		     * elements point to the same memory block as the
-		     * first element
-		     */
-		    new_size = 0;
-		    for (i = 0; i < text_list_count; ++i) {
-			data = (Char *) text_list[i];
-			size = strlen(text_list[i]) + 1;
-			data = UTF8toLatin1(screen, data, size, &size);
-			new_size += size + 1;
-		    }
-		    new_text_list =
-			(char **) XtMalloc(sizeof(char *) * (unsigned) text_list_count);
-		    new_text_list[0] = tmp = XtMalloc(new_size);
-		    for (i = 0; i < text_list_count; ++i) {
-			data = (Char *) text_list[i];
-			size = strlen(text_list[i]) + 1;
-			data = UTF8toLatin1(screen, data, size, &size);
-			memcpy(tmp, data, size + 1);
-			new_text_list[i] = tmp;
-			tmp += size + 1;
-		    }
-		    XFreeStringList(text_list);
-		    text_list = new_text_list;
-		}
+		rc = xtermUtf8ToTextList(xw, &text_prop,
+					 &text_list, &text_list_count);
 	    } else
 #endif
 	    if (*type == XA_STRING && screen->brokenSelections) {
@@ -1889,7 +1920,7 @@ SelectionReceived(Widget w,
 	}
 #endif
 	for (i = 0; i < text_list_count; i++) {
-	    unsigned len = strlen(text_list[i]);
+	    size_t len = strlen(text_list[i]);
 	    _WriteSelectionData(screen, (Char *) text_list[i], len);
 	}
 #if OPT_PASTE64
@@ -1965,7 +1996,7 @@ EvalSelectUnit(XtermWidget xw,
     int delta;
 
     if (button != screen->lastButton) {
-	delta = xw->screen.multiClickTime + 1;
+	delta = screen->multiClickTime + 1;
     } else if (screen->lastButtonUpTime == (Time) 0) {
 	/* first time and once in a blue moon */
 	delta = screen->multiClickTime + 1;
@@ -2427,7 +2458,7 @@ ResizeSelection(TScreen * screen GCC_UNUSED, int rows, int cols)
 Bool
 iswide(int i)
 {
-    return (i == HIDDEN_CHAR) || ((i >= FIRST_WIDECHAR) && my_wcwidth(i) == 2);
+    return (i == HIDDEN_CHAR) || (WideCells(i) == 2);
 }
 
 #define isWideCell(row, col) iswide((int)XTERM_CELL(row, col))
@@ -2473,23 +2504,23 @@ PointToCELL(TScreen * screen,
 static int
 LastTextCol(TScreen * screen, LineData * ld, int row)
 {
-    int i;
+    int i = -1;
     Char *ch;
 
-    if (okScrnRow(screen, row)) {
-	for (i = screen->max_col,
-	     ch = ld->attribs + i;
-	     i >= 0 && !(*ch & CHARDRAWN);
-	     ch--, i--) {
-	    ;
-	}
+    if (ld != 0) {
+	if (okScrnRow(screen, row)) {
+	    for (i = screen->max_col,
+		 ch = ld->attribs + i;
+		 i >= 0 && !(*ch & CHARDRAWN);
+		 ch--, i--) {
+		;
+	    }
 #if OPT_DEC_CHRSET
-	if (CSET_DOUBLE(GetLineDblCS(ld))) {
-	    i *= 2;
-	}
+	    if (CSET_DOUBLE(GetLineDblCS(ld))) {
+		i *= 2;
+	    }
 #endif
-    } else {
-	i = -1;
+	}
     }
     return (i);
 }
@@ -2601,6 +2632,7 @@ class_of(LineData * ld, CELL * cell)
     }
 #endif
 
+    assert(temp.col < ld->lineSize);
     return CharacterClass((int) (ld->charData[temp.col]));
 }
 
@@ -2624,12 +2656,18 @@ okPosition(TScreen * screen,
 	   LineData ** ld,
 	   CELL * cell)
 {
-    if (cell->col > (LastTextCol(screen, *ld, cell->row) + 1)) {
-	cell->col = 0;
-	*ld = GET_LINEDATA(screen, ++cell->row);
-	return False;
+    Boolean result = True;
+
+    if (cell->row > screen->max_row) {
+	result = False;
+    } else if (cell->col > (LastTextCol(screen, *ld, cell->row) + 1)) {
+	if (cell->row < screen->max_row) {
+	    cell->col = 0;
+	    *ld = GET_LINEDATA(screen, ++cell->row);
+	    result = False;
+	}
     }
-    return True;
+    return result;
 }
 
 static void
@@ -2637,7 +2675,7 @@ trimLastLine(TScreen * screen,
 	     LineData ** ld,
 	     CELL * last)
 {
-    if (screen->cutNewline) {
+    if (screen->cutNewline && last->row < screen->max_row) {
 	last->col = 0;
 	*ld = GET_LINEDATA(screen, ++last->row);
     } else {
@@ -2706,7 +2744,7 @@ static char *
 make_indexed_text(TScreen * screen, int row, unsigned length, int *indexed)
 {
     Char *result = 0;
-    unsigned need = (length + 1);
+    size_t need = (length + 1);
 
     /*
      * Get a quick upper bound to the number of bytes needed, if the whole
@@ -2729,6 +2767,7 @@ make_indexed_text(TScreen * screen, int row, unsigned length, int *indexed)
 		Char *next = last;
 		unsigned data = ld->charData[col];
 
+		assert(col < ld->lineSize);
 		/* some internal points may not be drawn */
 		if (data == 0)
 		    data = ' ';
@@ -2750,13 +2789,13 @@ make_indexed_text(TScreen * screen, int row, unsigned length, int *indexed)
 		    }
 		});
 
-		indexed[used] = last - result;
+		indexed[used] = (int) (last - result);
 		*next = 0;
 		/* TRACE(("index[%d.%d] %d:%s\n", row, used, indexed[used], last)); */
 		last = next;
 		++used;
 		++col;
-		indexed[used] = next - result;
+		indexed[used] = (int) (next - result);
 	    }
 	} while (used < length &&
 		 LineTstWrapped(ld) &&
@@ -2872,7 +2911,7 @@ do_select_regex(TScreen * screen, CELL * startc, CELL * endc)
 		    for (col = 0; indexed[col] < len; ++col) {
 			if (regexec(&preg,
 				    search + indexed[col],
-				    1, &match, 0) == 0) {
+				    (size_t) 1, &match, 0) == 0) {
 			    int start_inx = match.rm_so + indexed[col];
 			    int finis_inx = match.rm_eo + indexed[col];
 			    int start_col = indexToCol(indexed, len, start_inx);
@@ -2937,6 +2976,9 @@ do_select_regex(TScreen * screen, CELL * startc, CELL * endc)
 #define PrevRow(name) \
 	ld.name = GET_LINEDATA(screen, --screen->name.row)
 
+#define MoreRows(name) \
+	(screen->name.row < screen->max_row)
+
 #define isPrevWrapped(name) \
 	(screen->name.row > 0 \
 	   && (ltmp = GET_LINEDATA(screen, screen->name.row - 1)) != 0 \
@@ -2975,7 +3017,7 @@ ComputeSelect(XtermWidget xw,
     if (first.col > 1
 	&& isWideCell(first.row, first.col - 1)
 	&& XTERM_CELL(first.row, first.col - 0) == HIDDEN_CHAR) {
-	fprintf(stderr, "Adjusting start. Changing downwards from %i.\n", first.col);
+	TRACE(("Adjusting start. Changing downwards from %i.\n", first.col));
 	first.col -= 1;
 	if (last.col == (first.col + 1))
 	    last.col--;
@@ -3034,6 +3076,8 @@ ComputeSelect(XtermWidget xw,
 		++screen->endSel.col;
 		if (screen->endSel.col > length
 		    && LineTstWrapped(ld.endSel)) {
+		    if (!MoreRows(endSel))
+			break;
 		    screen->endSel.col = 0;
 		    NextRow(endSel);
 		    length = LastTextCol(screen, ld.endSel, screen->endSel.row);
@@ -3044,7 +3088,8 @@ ComputeSelect(XtermWidget xw,
 	     * especially note that it includes the last character in a word.
 	     * So we do no --endSel.col and do special eol handling.
 	     */
-	    if (screen->endSel.col > length + 1) {
+	    if (screen->endSel.col > length + 1
+		&& MoreRows(endSel)) {
 		screen->endSel.col = 0;
 		NextRow(endSel);
 	    }
@@ -3061,7 +3106,8 @@ ComputeSelect(XtermWidget xw,
 
     case Select_LINE:
 	TRACE(("Select_LINE\n"));
-	while (LineTstWrapped(ld.endSel)) {
+	while (LineTstWrapped(ld.endSel)
+	       && MoreRows(endSel)) {
 	    NextRow(endSel);
 	}
 	if (screen->cutToBeginningOfLine
@@ -3097,7 +3143,7 @@ ComputeSelect(XtermWidget xw,
 	    }
 	    screen->startSel.col = 0;
 	    /* scan forward for end of group */
-	    while (screen->endSel.row < screen->max_row &&
+	    while (MoreRows(endSel) &&
 		   (LastTextCol(screen, ld.endSel, screen->endSel.row + 1) >
 		    0 ||
 		    LineTstWrapped(ld.endSel))) {
@@ -3111,7 +3157,7 @@ ComputeSelect(XtermWidget xw,
 	TRACE(("Select_PAGE\n"));
 	screen->startSel.row = 0;
 	screen->startSel.col = 0;
-	screen->endSel.row = screen->max_row + 1;
+	screen->endSel.row = MaxRows(screen);
 	screen->endSel.col = 0;
 	break;
 
@@ -3119,7 +3165,7 @@ ComputeSelect(XtermWidget xw,
 	TRACE(("Select_ALL\n"));
 	screen->startSel.row = -screen->savedlines;
 	screen->startSel.col = 0;
-	screen->endSel.row = screen->max_row + 1;
+	screen->endSel.row = MaxRows(screen);
 	screen->endSel.col = 0;
 	break;
 
@@ -3279,7 +3325,7 @@ SaltTextAway(XtermWidget xw,
     /* now get some memory to save it in */
 
     if (screen->selection_size <= j) {
-	if ((line = (Char *) malloc((unsigned) j + 1)) == 0)
+	if ((line = (Char *) malloc((size_t) j + 1)) == 0)
 	    SysError(ERROR_BMALLOC2);
 	XtFree((char *) screen->selection_data);
 	screen->selection_data = line;
@@ -3326,7 +3372,7 @@ ClearSelectionBuffer(TScreen * screen)
 }
 
 static void
-AppendStrToSelectionBuffer(TScreen * screen, Char * text, unsigned len)
+AppendStrToSelectionBuffer(TScreen * screen, Char * text, size_t len)
 {
     if (len != 0) {
 	int j = (int) (screen->selection_length + len);		/* New length */
@@ -3335,7 +3381,7 @@ AppendStrToSelectionBuffer(TScreen * screen, Char * text, unsigned len)
 	    if (!screen->selection_length) {
 		/* New buffer */
 		Char *line;
-		if ((line = (Char *) malloc((unsigned) k)) == 0)
+		if ((line = (Char *) malloc((size_t) k)) == 0)
 		    SysError(ERROR_BMALLOC2);
 		XtFree((char *) screen->selection_data);
 		screen->selection_data = line;
@@ -3343,15 +3389,17 @@ AppendStrToSelectionBuffer(TScreen * screen, Char * text, unsigned len)
 		/* Realloc buffer */
 		screen->selection_data = (Char *)
 		    realloc(screen->selection_data,
-			    (unsigned) k);
+			    (size_t) k);
 		if (screen->selection_data == 0)
 		    SysError(ERROR_BMALLOC2);
 	    }
 	    screen->selection_size = k;
 	}
-	memcpy(screen->selection_data + screen->selection_length, text, len);
-	screen->selection_length += len;
-	screen->selection_data[screen->selection_length] = 0;
+	if (screen->selection_data != 0) {
+	    memcpy(screen->selection_data + screen->selection_length, text, len);
+	    screen->selection_length += len;
+	    screen->selection_data[screen->selection_length] = 0;
+	}
     }
 }
 
@@ -3385,27 +3433,27 @@ AppendToSelectionBuffer(TScreen * screen, unsigned c)
     case 2:
 	ch = CharOf((screen->base64_accu << 6) + six);
 	screen->base64_count = 0;
-	AppendStrToSelectionBuffer(screen, &ch, 1);
+	AppendStrToSelectionBuffer(screen, &ch, (size_t) 1);
 	break;
 
     case 4:
 	ch = CharOf((screen->base64_accu << 4) + (six >> 2));
 	screen->base64_accu = (six & 0x3);
 	screen->base64_count = 2;
-	AppendStrToSelectionBuffer(screen, &ch, 1);
+	AppendStrToSelectionBuffer(screen, &ch, (size_t) 1);
 	break;
 
     case 6:
 	ch = CharOf((screen->base64_accu << 2) + (six >> 4));
 	screen->base64_accu = (six & 0xF);
 	screen->base64_count = 4;
-	AppendStrToSelectionBuffer(screen, &ch, 1);
+	AppendStrToSelectionBuffer(screen, &ch, (size_t) 1);
 	break;
     }
 }
 
 void
-CompleteSelection(XtermWidget xw, char **args, Cardinal len)
+CompleteSelection(XtermWidget xw, String * args, Cardinal len)
 {
     TScreen *screen = TScreenOf(xw);
 
@@ -3459,13 +3507,15 @@ SaveConvertedLength(XtPointer *target, unsigned long source)
 	if (sizeof(unsigned long) == 4) {
 	    *(unsigned long *) *target = source;
 	} else if (sizeof(unsigned) == 4) {
-	    *(unsigned *) *target = source;
+	    *(unsigned *) *target = (unsigned) source;
 	} else if (sizeof(unsigned short) == 4) {
 	    *(unsigned short *) *target = (unsigned short) source;
 	} else {
 	    /* FIXME - does this depend on byte-order? */
 	    unsigned long temp = source;
-	    memcpy((char *) *target, ((char *) &temp) + sizeof(temp) - 4, 4);
+	    memcpy((char *) *target,
+		   ((char *) &temp) + sizeof(temp) - 4,
+		   (size_t) 4);
 	}
     }
     return result;
@@ -3606,7 +3656,7 @@ ConvertSelection(Widget w,
     }
 #endif
     else if (*target == XA_LIST_LENGTH(dpy)) {
-	result = SaveConvertedLength(value, 1);
+	result = SaveConvertedLength(value, (unsigned long) 1);
 	*type = XA_INTEGER;
 	*length = 1;
 	*format = 32;
@@ -3688,6 +3738,8 @@ _OwnSelection(XtermWidget xw,
     Cardinal i;
     Bool have_selection = False;
 
+    if (count == 0)
+	return;
     if (screen->selection_length == 0)
 	return;
 
@@ -3707,6 +3759,8 @@ _OwnSelection(XtermWidget xw,
 	    unsigned long limit =
 	    (unsigned long) (4 * XMaxRequestSize(XtDisplay((Widget) xw)) - 32);
 	    if (screen->selection_length > limit) {
+		TRACE(("selection too big (%lu bytes), not storing in CUT_BUFFER%d\n",
+		       screen->selection_length, cutbuffer));
 		fprintf(stderr,
 			"%s: selection too big (%lu bytes), not storing in CUT_BUFFER%d\n",
 			xterm_name, screen->selection_length, cutbuffer);
@@ -3845,6 +3899,7 @@ SaveText(TScreen * screen,
 #endif
     *eol = !LineTstWrapped(ld);
     for (i = scol; i < ecol; i++) {
+	assert(i < ld->lineSize);
 	c = E2A(ld->charData[i]);
 #if OPT_WIDE_CHARS
 	/* We want to strip out every occurrence of HIDDEN_CHAR AFTER a

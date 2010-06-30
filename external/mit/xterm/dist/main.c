@@ -1,4 +1,4 @@
-/* $XTermId: main.c,v 1.594 2009/08/30 21:40:45 Alex.Hornung Exp $ */
+/* $XTermId: main.c,v 1.618 2010/06/20 21:11:51 tom Exp $ */
 
 /*
  *				 W A R N I N G
@@ -15,7 +15,7 @@
 
 /***********************************************************
 
-Copyright 2002-2008,2009 by Thomas E. Dickey
+Copyright 2002-2009,2010 by Thomas E. Dickey
 
                         All Rights Reserved
 
@@ -448,16 +448,16 @@ extern char *ptsname(int);
 #endif
 
 #ifndef VMS
-static SIGNAL_T reapchild(int n);
+static SIGNAL_T reapchild(int /* n */ );
 static int spawnXTerm(XtermWidget /* xw */ );
-static void remove_termcap_entry(char *buf, char *str);
+static void remove_termcap_entry(char *, const char *);
 #ifdef USE_PTY_SEARCH
-static int pty_search(int *pty);
+static int pty_search(int * /* pty */ );
 #endif
 #endif /* ! VMS */
 
 static int get_pty(int *pty, char *from);
-static void resize_termcap(XtermWidget xw, char *newtc);
+static void resize_termcap(XtermWidget xw);
 static void set_owner(char *device, uid_t uid, gid_t gid, mode_t mode);
 
 static Bool added_utmp_entry = False;
@@ -640,7 +640,7 @@ static struct jtchars d_jtc =
 static Boolean override_tty_modes = False;
 /* *INDENT-OFF* */
 static struct _xttymodes {
-    char *name;
+    const char *name;
     size_t len;
     int set;
     int value;
@@ -844,7 +844,7 @@ static XtResource application_resources[] =
     Bres("messages", "Messages", messages, True),
     Ires("minBufSize", "MinBufSize", minBufSize, 4096),
     Ires("maxBufSize", "MaxBufSize", maxBufSize, 32768),
-    Sres("menuLocale", "MenuLocale", menuLocale, ""),
+    Sres("menuLocale", "MenuLocale", menuLocale, DEF_MENU_LOCALE),
     Sres("keyboardType", "KeyboardType", keyboardType, "unknown"),
 #if OPT_SUNPC_KBD
     Bres("sunKeyboard", "SunKeyboard", sunKeyboard, False),
@@ -888,7 +888,7 @@ static XtResource application_resources[] =
 #endif
 };
 
-static char *fallback_resources[] =
+static String fallback_resources[] =
 {
     "*SimpleMenu*menuLabel.vertSpace: 100",
     "*SimpleMenu*HorizontalMargins: 16",
@@ -907,198 +907,198 @@ static char *fallback_resources[] =
    pass over the remaining options after XrmParseCommand is let loose. */
 /* *INDENT-OFF* */
 static XrmOptionDescRec optionDescList[] = {
-{"-geometry",	"*vt100.geometry",XrmoptionSepArg,	(caddr_t) NULL},
-{"-132",	"*c132",	XrmoptionNoArg,		(caddr_t) "on"},
-{"+132",	"*c132",	XrmoptionNoArg,		(caddr_t) "off"},
-{"-ah",		"*alwaysHighlight", XrmoptionNoArg,	(caddr_t) "on"},
-{"+ah",		"*alwaysHighlight", XrmoptionNoArg,	(caddr_t) "off"},
-{"-aw",		"*autoWrap",	XrmoptionNoArg,		(caddr_t) "on"},
-{"+aw",		"*autoWrap",	XrmoptionNoArg,		(caddr_t) "off"},
+{"-geometry",	"*vt100.geometry",XrmoptionSepArg,	(XPointer) NULL},
+{"-132",	"*c132",	XrmoptionNoArg,		(XPointer) "on"},
+{"+132",	"*c132",	XrmoptionNoArg,		(XPointer) "off"},
+{"-ah",		"*alwaysHighlight", XrmoptionNoArg,	(XPointer) "on"},
+{"+ah",		"*alwaysHighlight", XrmoptionNoArg,	(XPointer) "off"},
+{"-aw",		"*autoWrap",	XrmoptionNoArg,		(XPointer) "on"},
+{"+aw",		"*autoWrap",	XrmoptionNoArg,		(XPointer) "off"},
 #ifndef NO_ACTIVE_ICON
-{"-ai",		"*activeIcon",	XrmoptionNoArg,		(caddr_t) "off"},
-{"+ai",		"*activeIcon",	XrmoptionNoArg,		(caddr_t) "on"},
+{"-ai",		"*activeIcon",	XrmoptionNoArg,		(XPointer) "off"},
+{"+ai",		"*activeIcon",	XrmoptionNoArg,		(XPointer) "on"},
 #endif /* NO_ACTIVE_ICON */
-{"-b",		"*internalBorder",XrmoptionSepArg,	(caddr_t) NULL},
-{"-bc",		"*cursorBlink",	XrmoptionNoArg,		(caddr_t) "on"},
-{"+bc",		"*cursorBlink",	XrmoptionNoArg,		(caddr_t) "off"},
-{"-bcf",	"*cursorOffTime",XrmoptionSepArg,	(caddr_t) NULL},
-{"-bcn",	"*cursorOnTime",XrmoptionSepArg,	(caddr_t) NULL},
-{"-bdc",	"*colorBDMode",	XrmoptionNoArg,		(caddr_t) "off"},
-{"+bdc",	"*colorBDMode",	XrmoptionNoArg,		(caddr_t) "on"},
-{"-cb",		"*cutToBeginningOfLine", XrmoptionNoArg, (caddr_t) "off"},
-{"+cb",		"*cutToBeginningOfLine", XrmoptionNoArg, (caddr_t) "on"},
-{"-cc",		"*charClass",	XrmoptionSepArg,	(caddr_t) NULL},
-{"-cm",		"*colorMode",	XrmoptionNoArg,		(caddr_t) "off"},
-{"+cm",		"*colorMode",	XrmoptionNoArg,		(caddr_t) "on"},
-{"-cn",		"*cutNewline",	XrmoptionNoArg,		(caddr_t) "off"},
-{"+cn",		"*cutNewline",	XrmoptionNoArg,		(caddr_t) "on"},
-{"-cr",		"*cursorColor",	XrmoptionSepArg,	(caddr_t) NULL},
-{"-cu",		"*curses",	XrmoptionNoArg,		(caddr_t) "on"},
-{"+cu",		"*curses",	XrmoptionNoArg,		(caddr_t) "off"},
-{"-dc",		"*dynamicColors",XrmoptionNoArg,	(caddr_t) "off"},
-{"+dc",		"*dynamicColors",XrmoptionNoArg,	(caddr_t) "on"},
-{"-fb",		"*boldFont",	XrmoptionSepArg,	(caddr_t) NULL},
-{"-fbb",	"*freeBoldBox", XrmoptionNoArg,		(caddr_t)"off"},
-{"+fbb",	"*freeBoldBox", XrmoptionNoArg,		(caddr_t)"on"},
-{"-fbx",	"*forceBoxChars", XrmoptionNoArg,	(caddr_t)"off"},
-{"+fbx",	"*forceBoxChars", XrmoptionNoArg,	(caddr_t)"on"},
+{"-b",		"*internalBorder",XrmoptionSepArg,	(XPointer) NULL},
+{"-bc",		"*cursorBlink",	XrmoptionNoArg,		(XPointer) "on"},
+{"+bc",		"*cursorBlink",	XrmoptionNoArg,		(XPointer) "off"},
+{"-bcf",	"*cursorOffTime",XrmoptionSepArg,	(XPointer) NULL},
+{"-bcn",	"*cursorOnTime",XrmoptionSepArg,	(XPointer) NULL},
+{"-bdc",	"*colorBDMode",	XrmoptionNoArg,		(XPointer) "off"},
+{"+bdc",	"*colorBDMode",	XrmoptionNoArg,		(XPointer) "on"},
+{"-cb",		"*cutToBeginningOfLine", XrmoptionNoArg, (XPointer) "off"},
+{"+cb",		"*cutToBeginningOfLine", XrmoptionNoArg, (XPointer) "on"},
+{"-cc",		"*charClass",	XrmoptionSepArg,	(XPointer) NULL},
+{"-cm",		"*colorMode",	XrmoptionNoArg,		(XPointer) "off"},
+{"+cm",		"*colorMode",	XrmoptionNoArg,		(XPointer) "on"},
+{"-cn",		"*cutNewline",	XrmoptionNoArg,		(XPointer) "off"},
+{"+cn",		"*cutNewline",	XrmoptionNoArg,		(XPointer) "on"},
+{"-cr",		"*cursorColor",	XrmoptionSepArg,	(XPointer) NULL},
+{"-cu",		"*curses",	XrmoptionNoArg,		(XPointer) "on"},
+{"+cu",		"*curses",	XrmoptionNoArg,		(XPointer) "off"},
+{"-dc",		"*dynamicColors",XrmoptionNoArg,	(XPointer) "off"},
+{"+dc",		"*dynamicColors",XrmoptionNoArg,	(XPointer) "on"},
+{"-fb",		"*boldFont",	XrmoptionSepArg,	(XPointer) NULL},
+{"-fbb",	"*freeBoldBox", XrmoptionNoArg,		(XPointer)"off"},
+{"+fbb",	"*freeBoldBox", XrmoptionNoArg,		(XPointer)"on"},
+{"-fbx",	"*forceBoxChars", XrmoptionNoArg,	(XPointer)"off"},
+{"+fbx",	"*forceBoxChars", XrmoptionNoArg,	(XPointer)"on"},
 #ifndef NO_ACTIVE_ICON
-{"-fi",		"*iconFont",	XrmoptionSepArg,	(caddr_t) NULL},
+{"-fi",		"*iconFont",	XrmoptionSepArg,	(XPointer) NULL},
 #endif /* NO_ACTIVE_ICON */
 #if OPT_RENDERFONT
-{"-fa",		"*faceName",	XrmoptionSepArg,	(caddr_t) NULL},
-{"-fd",		"*faceNameDoublesize", XrmoptionSepArg,	(caddr_t) NULL},
-{"-fs",		"*faceSize",	XrmoptionSepArg,	(caddr_t) NULL},
+{"-fa",		"*faceName",	XrmoptionSepArg,	(XPointer) NULL},
+{"-fd",		"*faceNameDoublesize", XrmoptionSepArg,	(XPointer) NULL},
+{"-fs",		"*faceSize",	XrmoptionSepArg,	(XPointer) NULL},
 #endif
 #if OPT_WIDE_CHARS
-{"-fw",		"*wideFont",	XrmoptionSepArg,	(caddr_t) NULL},
-{"-fwb",	"*wideBoldFont", XrmoptionSepArg,	(caddr_t) NULL},
+{"-fw",		"*wideFont",	XrmoptionSepArg,	(XPointer) NULL},
+{"-fwb",	"*wideBoldFont", XrmoptionSepArg,	(XPointer) NULL},
 #endif
 #if OPT_INPUT_METHOD
-{"-fx",		"*ximFont",	XrmoptionSepArg,	(caddr_t) NULL},
+{"-fx",		"*ximFont",	XrmoptionSepArg,	(XPointer) NULL},
 #endif
 #if OPT_HIGHLIGHT_COLOR
-{"-hc",		"*highlightColor", XrmoptionSepArg,	(caddr_t) NULL},
-{"-hm",		"*highlightColorMode", XrmoptionNoArg,	(caddr_t) "on"},
-{"+hm",		"*highlightColorMode", XrmoptionNoArg,	(caddr_t) "off"},
-{"-selfg",	"*highlightTextColor", XrmoptionSepArg,	(caddr_t) NULL},
-{"-selbg",	"*highlightColor", XrmoptionSepArg,	(caddr_t) NULL},
+{"-hc",		"*highlightColor", XrmoptionSepArg,	(XPointer) NULL},
+{"-hm",		"*highlightColorMode", XrmoptionNoArg,	(XPointer) "on"},
+{"+hm",		"*highlightColorMode", XrmoptionNoArg,	(XPointer) "off"},
+{"-selfg",	"*highlightTextColor", XrmoptionSepArg,	(XPointer) NULL},
+{"-selbg",	"*highlightColor", XrmoptionSepArg,	(XPointer) NULL},
 #endif
 #if OPT_HP_FUNC_KEYS
-{"-hf",		"*hpFunctionKeys",XrmoptionNoArg,	(caddr_t) "on"},
-{"+hf",		"*hpFunctionKeys",XrmoptionNoArg,	(caddr_t) "off"},
+{"-hf",		"*hpFunctionKeys",XrmoptionNoArg,	(XPointer) "on"},
+{"+hf",		"*hpFunctionKeys",XrmoptionNoArg,	(XPointer) "off"},
 #endif
-{"-hold",	"*hold",	XrmoptionNoArg,		(caddr_t) "on"},
-{"+hold",	"*hold",	XrmoptionNoArg,		(caddr_t) "off"},
+{"-hold",	"*hold",	XrmoptionNoArg,		(XPointer) "on"},
+{"+hold",	"*hold",	XrmoptionNoArg,		(XPointer) "off"},
 #if OPT_INITIAL_ERASE
-{"-ie",		"*ptyInitialErase", XrmoptionNoArg,	(caddr_t) "on"},
-{"+ie",		"*ptyInitialErase", XrmoptionNoArg,	(caddr_t) "off"},
+{"-ie",		"*ptyInitialErase", XrmoptionNoArg,	(XPointer) "on"},
+{"+ie",		"*ptyInitialErase", XrmoptionNoArg,	(XPointer) "off"},
 #endif
-{"-j",		"*jumpScroll",	XrmoptionNoArg,		(caddr_t) "on"},
-{"+j",		"*jumpScroll",	XrmoptionNoArg,		(caddr_t) "off"},
+{"-j",		"*jumpScroll",	XrmoptionNoArg,		(XPointer) "on"},
+{"+j",		"*jumpScroll",	XrmoptionNoArg,		(XPointer) "off"},
 #if OPT_C1_PRINT
-{"-k8",		"*allowC1Printable", XrmoptionNoArg,	(caddr_t) "on"},
-{"+k8",		"*allowC1Printable", XrmoptionNoArg,	(caddr_t) "off"},
+{"-k8",		"*allowC1Printable", XrmoptionNoArg,	(XPointer) "on"},
+{"+k8",		"*allowC1Printable", XrmoptionNoArg,	(XPointer) "off"},
 #endif
-{"-kt",		"*keyboardType", XrmoptionSepArg,	(caddr_t) NULL},
-{"+kt",		"*keyboardType", XrmoptionSepArg,	(caddr_t) NULL},
+{"-kt",		"*keyboardType", XrmoptionSepArg,	(XPointer) NULL},
+{"+kt",		"*keyboardType", XrmoptionSepArg,	(XPointer) NULL},
 /* parse logging options anyway for compatibility */
-{"-l",		"*logging",	XrmoptionNoArg,		(caddr_t) "on"},
-{"+l",		"*logging",	XrmoptionNoArg,		(caddr_t) "off"},
-{"-lf",		"*logFile",	XrmoptionSepArg,	(caddr_t) NULL},
-{"-ls",		"*loginShell",	XrmoptionNoArg,		(caddr_t) "on"},
-{"+ls",		"*loginShell",	XrmoptionNoArg,		(caddr_t) "off"},
-{"-mb",		"*marginBell",	XrmoptionNoArg,		(caddr_t) "on"},
-{"+mb",		"*marginBell",	XrmoptionNoArg,		(caddr_t) "off"},
-{"-mc",		"*multiClickTime", XrmoptionSepArg,	(caddr_t) NULL},
-{"-mesg",	"*messages",	XrmoptionNoArg,		(caddr_t) "off"},
-{"+mesg",	"*messages",	XrmoptionNoArg,		(caddr_t) "on"},
-{"-ms",		"*pointerColor",XrmoptionSepArg,	(caddr_t) NULL},
-{"-nb",		"*nMarginBell",	XrmoptionSepArg,	(caddr_t) NULL},
-{"-nul",	"*underLine",	XrmoptionNoArg,		(caddr_t) "off"},
-{"+nul",	"*underLine",	XrmoptionNoArg,		(caddr_t) "on"},
-{"-pc",		"*boldColors",	XrmoptionNoArg,		(caddr_t) "on"},
-{"+pc",		"*boldColors",	XrmoptionNoArg,		(caddr_t) "off"},
-{"-rw",		"*reverseWrap",	XrmoptionNoArg,		(caddr_t) "on"},
-{"+rw",		"*reverseWrap",	XrmoptionNoArg,		(caddr_t) "off"},
-{"-s",		"*multiScroll",	XrmoptionNoArg,		(caddr_t) "on"},
-{"+s",		"*multiScroll",	XrmoptionNoArg,		(caddr_t) "off"},
-{"-sb",		"*scrollBar",	XrmoptionNoArg,		(caddr_t) "on"},
-{"+sb",		"*scrollBar",	XrmoptionNoArg,		(caddr_t) "off"},
+{"-l",		"*logging",	XrmoptionNoArg,		(XPointer) "on"},
+{"+l",		"*logging",	XrmoptionNoArg,		(XPointer) "off"},
+{"-lf",		"*logFile",	XrmoptionSepArg,	(XPointer) NULL},
+{"-ls",		"*loginShell",	XrmoptionNoArg,		(XPointer) "on"},
+{"+ls",		"*loginShell",	XrmoptionNoArg,		(XPointer) "off"},
+{"-mb",		"*marginBell",	XrmoptionNoArg,		(XPointer) "on"},
+{"+mb",		"*marginBell",	XrmoptionNoArg,		(XPointer) "off"},
+{"-mc",		"*multiClickTime", XrmoptionSepArg,	(XPointer) NULL},
+{"-mesg",	"*messages",	XrmoptionNoArg,		(XPointer) "off"},
+{"+mesg",	"*messages",	XrmoptionNoArg,		(XPointer) "on"},
+{"-ms",		"*pointerColor",XrmoptionSepArg,	(XPointer) NULL},
+{"-nb",		"*nMarginBell",	XrmoptionSepArg,	(XPointer) NULL},
+{"-nul",	"*underLine",	XrmoptionNoArg,		(XPointer) "off"},
+{"+nul",	"*underLine",	XrmoptionNoArg,		(XPointer) "on"},
+{"-pc",		"*boldColors",	XrmoptionNoArg,		(XPointer) "on"},
+{"+pc",		"*boldColors",	XrmoptionNoArg,		(XPointer) "off"},
+{"-rw",		"*reverseWrap",	XrmoptionNoArg,		(XPointer) "on"},
+{"+rw",		"*reverseWrap",	XrmoptionNoArg,		(XPointer) "off"},
+{"-s",		"*multiScroll",	XrmoptionNoArg,		(XPointer) "on"},
+{"+s",		"*multiScroll",	XrmoptionNoArg,		(XPointer) "off"},
+{"-sb",		"*scrollBar",	XrmoptionNoArg,		(XPointer) "on"},
+{"+sb",		"*scrollBar",	XrmoptionNoArg,		(XPointer) "off"},
 #ifdef SCROLLBAR_RIGHT
-{"-leftbar",	"*rightScrollBar", XrmoptionNoArg,	(caddr_t) "off"},
-{"-rightbar",	"*rightScrollBar", XrmoptionNoArg,	(caddr_t) "on"},
+{"-leftbar",	"*rightScrollBar", XrmoptionNoArg,	(XPointer) "off"},
+{"-rightbar",	"*rightScrollBar", XrmoptionNoArg,	(XPointer) "on"},
 #endif
-{"-rvc",	"*colorRVMode",	XrmoptionNoArg,		(caddr_t) "off"},
-{"+rvc",	"*colorRVMode",	XrmoptionNoArg,		(caddr_t) "on"},
-{"-sf",		"*sunFunctionKeys", XrmoptionNoArg,	(caddr_t) "on"},
-{"+sf",		"*sunFunctionKeys", XrmoptionNoArg,	(caddr_t) "off"},
-{"-si",		"*scrollTtyOutput", XrmoptionNoArg,	(caddr_t) "off"},
-{"+si",		"*scrollTtyOutput", XrmoptionNoArg,	(caddr_t) "on"},
-{"-sk",		"*scrollKey",	XrmoptionNoArg,		(caddr_t) "on"},
-{"+sk",		"*scrollKey",	XrmoptionNoArg,		(caddr_t) "off"},
-{"-sl",		"*saveLines",	XrmoptionSepArg,	(caddr_t) NULL},
+{"-rvc",	"*colorRVMode",	XrmoptionNoArg,		(XPointer) "off"},
+{"+rvc",	"*colorRVMode",	XrmoptionNoArg,		(XPointer) "on"},
+{"-sf",		"*sunFunctionKeys", XrmoptionNoArg,	(XPointer) "on"},
+{"+sf",		"*sunFunctionKeys", XrmoptionNoArg,	(XPointer) "off"},
+{"-si",		"*scrollTtyOutput", XrmoptionNoArg,	(XPointer) "off"},
+{"+si",		"*scrollTtyOutput", XrmoptionNoArg,	(XPointer) "on"},
+{"-sk",		"*scrollKey",	XrmoptionNoArg,		(XPointer) "on"},
+{"+sk",		"*scrollKey",	XrmoptionNoArg,		(XPointer) "off"},
+{"-sl",		"*saveLines",	XrmoptionSepArg,	(XPointer) NULL},
 #if OPT_SUNPC_KBD
-{"-sp",		"*sunKeyboard", XrmoptionNoArg,		(caddr_t) "on"},
-{"+sp",		"*sunKeyboard", XrmoptionNoArg,		(caddr_t) "off"},
+{"-sp",		"*sunKeyboard", XrmoptionNoArg,		(XPointer) "on"},
+{"+sp",		"*sunKeyboard", XrmoptionNoArg,		(XPointer) "off"},
 #endif
 #if OPT_TEK4014
-{"-t",		"*tekStartup",	XrmoptionNoArg,		(caddr_t) "on"},
-{"+t",		"*tekStartup",	XrmoptionNoArg,		(caddr_t) "off"},
+{"-t",		"*tekStartup",	XrmoptionNoArg,		(XPointer) "on"},
+{"+t",		"*tekStartup",	XrmoptionNoArg,		(XPointer) "off"},
 #endif
-{"-ti",		"*decTerminalID",XrmoptionSepArg,	(caddr_t) NULL},
-{"-tm",		"*ttyModes",	XrmoptionSepArg,	(caddr_t) NULL},
-{"-tn",		"*termName",	XrmoptionSepArg,	(caddr_t) NULL},
+{"-ti",		"*decTerminalID",XrmoptionSepArg,	(XPointer) NULL},
+{"-tm",		"*ttyModes",	XrmoptionSepArg,	(XPointer) NULL},
+{"-tn",		"*termName",	XrmoptionSepArg,	(XPointer) NULL},
 #if OPT_WIDE_CHARS
-{"-u8",		"*utf8",	XrmoptionNoArg,		(caddr_t) "2"},
-{"+u8",		"*utf8",	XrmoptionNoArg,		(caddr_t) "0"},
+{"-u8",		"*utf8",	XrmoptionNoArg,		(XPointer) "2"},
+{"+u8",		"*utf8",	XrmoptionNoArg,		(XPointer) "0"},
 #endif
 #if OPT_LUIT_PROG
-{"-lc",		"*locale",	XrmoptionNoArg,		(caddr_t) "on"},
-{"+lc",		"*locale",	XrmoptionNoArg,		(caddr_t) "off"},
-{"-lcc",	"*localeFilter",XrmoptionSepArg,	(caddr_t) NULL},
-{"-en",		"*locale",	XrmoptionSepArg,	(caddr_t) NULL},
+{"-lc",		"*locale",	XrmoptionNoArg,		(XPointer) "on"},
+{"+lc",		"*locale",	XrmoptionNoArg,		(XPointer) "off"},
+{"-lcc",	"*localeFilter",XrmoptionSepArg,	(XPointer) NULL},
+{"-en",		"*locale",	XrmoptionSepArg,	(XPointer) NULL},
 #endif
-{"-uc",		"*cursorUnderLine", XrmoptionNoArg,	(caddr_t) "on"},
-{"+uc",		"*cursorUnderLine", XrmoptionNoArg,	(caddr_t) "off"},
-{"-ulc",	"*colorULMode",	XrmoptionNoArg,		(caddr_t) "off"},
-{"+ulc",	"*colorULMode",	XrmoptionNoArg,		(caddr_t) "on"},
-{"-ulit",       "*italicULMode", XrmoptionNoArg,        (caddr_t) "off"},
-{"+ulit",       "*italicULMode", XrmoptionNoArg,        (caddr_t) "on"},
-{"-ut",		"*utmpInhibit",	XrmoptionNoArg,		(caddr_t) "on"},
-{"+ut",		"*utmpInhibit",	XrmoptionNoArg,		(caddr_t) "off"},
-{"-im",		"*useInsertMode", XrmoptionNoArg,	(caddr_t) "on"},
-{"+im",		"*useInsertMode", XrmoptionNoArg,	(caddr_t) "off"},
-{"-vb",		"*visualBell",	XrmoptionNoArg,		(caddr_t) "on"},
-{"+vb",		"*visualBell",	XrmoptionNoArg,		(caddr_t) "off"},
-{"-pob",	"*popOnBell",	XrmoptionNoArg,		(caddr_t) "on"},
-{"+pob",	"*popOnBell",	XrmoptionNoArg,		(caddr_t) "off"},
+{"-uc",		"*cursorUnderLine", XrmoptionNoArg,	(XPointer) "on"},
+{"+uc",		"*cursorUnderLine", XrmoptionNoArg,	(XPointer) "off"},
+{"-ulc",	"*colorULMode",	XrmoptionNoArg,		(XPointer) "off"},
+{"+ulc",	"*colorULMode",	XrmoptionNoArg,		(XPointer) "on"},
+{"-ulit",       "*italicULMode", XrmoptionNoArg,        (XPointer) "off"},
+{"+ulit",       "*italicULMode", XrmoptionNoArg,        (XPointer) "on"},
+{"-ut",		"*utmpInhibit",	XrmoptionNoArg,		(XPointer) "on"},
+{"+ut",		"*utmpInhibit",	XrmoptionNoArg,		(XPointer) "off"},
+{"-im",		"*useInsertMode", XrmoptionNoArg,	(XPointer) "on"},
+{"+im",		"*useInsertMode", XrmoptionNoArg,	(XPointer) "off"},
+{"-vb",		"*visualBell",	XrmoptionNoArg,		(XPointer) "on"},
+{"+vb",		"*visualBell",	XrmoptionNoArg,		(XPointer) "off"},
+{"-pob",	"*popOnBell",	XrmoptionNoArg,		(XPointer) "on"},
+{"+pob",	"*popOnBell",	XrmoptionNoArg,		(XPointer) "off"},
 #if OPT_WIDE_CHARS
-{"-wc",		"*wideChars",	XrmoptionNoArg,		(caddr_t) "on"},
-{"+wc",		"*wideChars",	XrmoptionNoArg,		(caddr_t) "off"},
-{"-mk_width",	"*mkWidth",	XrmoptionNoArg,		(caddr_t) "on"},
-{"+mk_width",	"*mkWidth",	XrmoptionNoArg,		(caddr_t) "off"},
-{"-cjk_width",	"*cjkWidth",	XrmoptionNoArg,		(caddr_t) "on"},
-{"+cjk_width",	"*cjkWidth",	XrmoptionNoArg,		(caddr_t) "off"},
+{"-wc",		"*wideChars",	XrmoptionNoArg,		(XPointer) "on"},
+{"+wc",		"*wideChars",	XrmoptionNoArg,		(XPointer) "off"},
+{"-mk_width",	"*mkWidth",	XrmoptionNoArg,		(XPointer) "on"},
+{"+mk_width",	"*mkWidth",	XrmoptionNoArg,		(XPointer) "off"},
+{"-cjk_width",	"*cjkWidth",	XrmoptionNoArg,		(XPointer) "on"},
+{"+cjk_width",	"*cjkWidth",	XrmoptionNoArg,		(XPointer) "off"},
 #endif
-{"-wf",		"*waitForMap",	XrmoptionNoArg,		(caddr_t) "on"},
-{"+wf",		"*waitForMap",	XrmoptionNoArg,		(caddr_t) "off"},
+{"-wf",		"*waitForMap",	XrmoptionNoArg,		(XPointer) "on"},
+{"+wf",		"*waitForMap",	XrmoptionNoArg,		(XPointer) "off"},
 #if OPT_ZICONBEEP
-{"-ziconbeep",	"*zIconBeep",	XrmoptionSepArg,	(caddr_t) NULL},
+{"-ziconbeep",	"*zIconBeep",	XrmoptionSepArg,	(XPointer) NULL},
 #endif
 #if OPT_SAME_NAME
-{"-samename",	"*sameName",	XrmoptionNoArg,		(caddr_t) "on"},
-{"+samename",	"*sameName",	XrmoptionNoArg,		(caddr_t) "off"},
+{"-samename",	"*sameName",	XrmoptionNoArg,		(XPointer) "on"},
+{"+samename",	"*sameName",	XrmoptionNoArg,		(XPointer) "off"},
 #endif
 #if OPT_SESSION_MGT
-{"-sm",		"*sessionMgt",	XrmoptionNoArg,		(caddr_t) "on"},
-{"+sm",		"*sessionMgt",	XrmoptionNoArg,		(caddr_t) "off"},
+{"-sm",		"*sessionMgt",	XrmoptionNoArg,		(XPointer) "on"},
+{"+sm",		"*sessionMgt",	XrmoptionNoArg,		(XPointer) "off"},
 #endif
 #if OPT_TOOLBAR
-{"-tb",		"*"XtNtoolBar,	XrmoptionNoArg,		(caddr_t) "on"},
-{"+tb",		"*"XtNtoolBar,	XrmoptionNoArg,		(caddr_t) "off"},
+{"-tb",		"*"XtNtoolBar,	XrmoptionNoArg,		(XPointer) "on"},
+{"+tb",		"*"XtNtoolBar,	XrmoptionNoArg,		(XPointer) "off"},
 #endif
 #if OPT_MAXIMIZE
-{"-maximized",	"*maximized",	XrmoptionNoArg,		(caddr_t) "on"},
-{"+maximized",	"*maximized",	XrmoptionNoArg,		(caddr_t) "off"},
+{"-maximized",	"*maximized",	XrmoptionNoArg,		(XPointer) "on"},
+{"+maximized",	"*maximized",	XrmoptionNoArg,		(XPointer) "off"},
 #endif
 /* options that we process ourselves */
-{"-help",	NULL,		XrmoptionSkipNArgs,	(caddr_t) NULL},
-{"-version",	NULL,		XrmoptionSkipNArgs,	(caddr_t) NULL},
-{"-class",	NULL,		XrmoptionSkipArg,	(caddr_t) NULL},
-{"-e",		NULL,		XrmoptionSkipLine,	(caddr_t) NULL},
-{"-into",	NULL,		XrmoptionSkipArg,	(caddr_t) NULL},
+{"-help",	NULL,		XrmoptionSkipNArgs,	(XPointer) NULL},
+{"-version",	NULL,		XrmoptionSkipNArgs,	(XPointer) NULL},
+{"-class",	NULL,		XrmoptionSkipArg,	(XPointer) NULL},
+{"-e",		NULL,		XrmoptionSkipLine,	(XPointer) NULL},
+{"-into",	NULL,		XrmoptionSkipArg,	(XPointer) NULL},
 /* bogus old compatibility stuff for which there are
    standard XtOpenApplication options now */
-{"%",		"*tekGeometry",	XrmoptionStickyArg,	(caddr_t) NULL},
-{"#",		".iconGeometry",XrmoptionStickyArg,	(caddr_t) NULL},
-{"-T",		".title",	XrmoptionSepArg,	(caddr_t) NULL},
-{"-n",		"*iconName",	XrmoptionSepArg,	(caddr_t) NULL},
-{"-r",		"*reverseVideo",XrmoptionNoArg,		(caddr_t) "on"},
-{"+r",		"*reverseVideo",XrmoptionNoArg,		(caddr_t) "off"},
-{"-rv",		"*reverseVideo",XrmoptionNoArg,		(caddr_t) "on"},
-{"+rv",		"*reverseVideo",XrmoptionNoArg,		(caddr_t) "off"},
-{"-w",		".borderWidth", XrmoptionSepArg,	(caddr_t) NULL},
+{"%",		"*tekGeometry",	XrmoptionStickyArg,	(XPointer) NULL},
+{"#",		".iconGeometry",XrmoptionStickyArg,	(XPointer) NULL},
+{"-T",		".title",	XrmoptionSepArg,	(XPointer) NULL},
+{"-n",		"*iconName",	XrmoptionSepArg,	(XPointer) NULL},
+{"-r",		"*reverseVideo",XrmoptionNoArg,		(XPointer) "on"},
+{"+r",		"*reverseVideo",XrmoptionNoArg,		(XPointer) "off"},
+{"-rv",		"*reverseVideo",XrmoptionNoArg,		(XPointer) "on"},
+{"+rv",		"*reverseVideo",XrmoptionNoArg,		(XPointer) "off"},
+{"-w",		".borderWidth", XrmoptionSepArg,	(XPointer) NULL},
 };
 
 static OptionHelp xtermOptions[] = {
@@ -1260,7 +1260,7 @@ static OptionHelp xtermOptions[] = {
 { NULL, NULL }};
 /* *INDENT-ON* */
 
-static char *message[] =
+static const char *message[] =
 {
     "Fonts should be fixed width and, if both normal and bold are specified, should",
     "have the same size.  If only a normal font is specified, it will be used for",
@@ -1280,7 +1280,7 @@ decode_keyvalue(char **ptr, int termcap)
     char *string = *ptr;
     int value = -1;
 
-    TRACE(("...decode '%s'\n", string));
+    TRACE(("decode_keyvalue '%s'\n", string));
     if (*string == '^') {
 	switch (*++string) {
 	case '?':
@@ -1294,7 +1294,7 @@ decode_keyvalue(char **ptr, int termcap)
 #endif
 #if defined(_PC_VDISABLE)
 		if (value == -1) {
-		    value = fpathconf(0, _PC_VDISABLE);
+		    value = (int) fpathconf(0, _PC_VDISABLE);
 		    if (value == -1) {
 			if (errno != 0)
 			    break;	/* skip this (error) */
@@ -1315,7 +1315,7 @@ decode_keyvalue(char **ptr, int termcap)
 	++string;
     } else if (termcap && (*string == '\\')) {
 	char *d;
-	int temp = strtol(string + 1, &d, 8);
+	int temp = (int) strtol(string + 1, &d, 8);
 	if (temp > 0 && d != string) {
 	    value = temp;
 	    string = d;
@@ -1325,11 +1325,12 @@ decode_keyvalue(char **ptr, int termcap)
 	++string;
     }
     *ptr = string;
+    TRACE(("...decode_keyvalue %#x\n", value));
     return value;
 }
 
 static int
-abbrev(char *tst, char *cmp, size_t need)
+abbrev(const char *tst, const char *cmp, size_t need)
 {
     size_t len = strlen(tst);
     return ((len >= need) && (!strncmp(tst, cmp, len)));
@@ -1374,7 +1375,7 @@ Help(void)
 {
     OptionHelp *opt;
     OptionHelp *list = sortedOpts(xtermOptions, optionDescList, XtNumber(optionDescList));
-    char **cpp;
+    const char **cpp;
 
     printf("%s usage:\n    %s [-options ...] [-e command args]\n\n",
 	   xtermVersion(), ProgramName);
@@ -1458,7 +1459,7 @@ DeleteWindow(Widget w,
 	    hide_vt_window();
 	else
 	    do_hangup(w, (XtPointer) 0, (XtPointer) 0);
-    } else if (term->screen.Vshow)
+    } else if (TScreenOf(term)->Vshow)
 	hide_tek_window();
     else
 #endif
@@ -1817,7 +1818,7 @@ main(int argc, char *argv[]ENVP_ARG)
 		Version();
 	    } else if (abbrev(argv[n], "-help", unique)) {
 		Help();
-	    } else if (abbrev(argv[n], "-class", 3)) {
+	    } else if (abbrev(argv[n], "-class", (size_t) 3)) {
 		if ((my_class = argv[++n]) == 0) {
 		    Help();
 		} else {
@@ -1826,7 +1827,7 @@ main(int argc, char *argv[]ENVP_ARG)
 		unique = 3;
 	    } else {
 #if OPT_COLOR_RES
-		if (abbrev(argv[n], "-reverse", 2)
+		if (abbrev(argv[n], "-reverse", (size_t) 2)
 		    || !strcmp("-rv", argv[n])) {
 		    reversed = True;
 		} else if (!strcmp("+rv", argv[n])) {
@@ -2301,7 +2302,7 @@ main(int argc, char *argv[]ENVP_ARG)
 
 	buf[0] = '\0';
 	sprintf(buf, "%lx\n", XtWindow(SHELL_OF(CURRENT_EMU())));
-	write(screen->respond, buf, strlen(buf));
+	IGNORE_RC(write(screen->respond, buf, strlen(buf)));
     }
 #ifdef AIXV3
 #if (OSMAJORVERSION < 4)
@@ -2371,7 +2372,7 @@ main(int argc, char *argv[]ENVP_ARG)
     initPtyData(&VTbuffer);
 #ifdef ALLOWLOGGING
     if (term->misc.log_on) {
-	StartLog(screen);
+	StartLog(term);
     }
 #endif
 
@@ -2389,14 +2390,14 @@ main(int argc, char *argv[]ENVP_ARG)
 #if OPT_COLOR_RES
     TRACE(("checking resource values rv %s fg %s, bg %s\n",
 	   BtoS(term->misc.re_verse0),
-	   NonNull(term->screen.Tcolors[TEXT_FG].resource),
-	   NonNull(term->screen.Tcolors[TEXT_BG].resource)));
+	   NonNull(TScreenOf(term)->Tcolors[TEXT_FG].resource),
+	   NonNull(TScreenOf(term)->Tcolors[TEXT_BG].resource)));
 
     if ((reversed && term->misc.re_verse0)
-	&& ((term->screen.Tcolors[TEXT_FG].resource
-	     && !isDefaultForeground(term->screen.Tcolors[TEXT_FG].resource))
-	    || (term->screen.Tcolors[TEXT_BG].resource
-		&& !isDefaultBackground(term->screen.Tcolors[TEXT_BG].resource))
+	&& ((TScreenOf(term)->Tcolors[TEXT_FG].resource
+	     && !isDefaultForeground(TScreenOf(term)->Tcolors[TEXT_FG].resource))
+	    || (TScreenOf(term)->Tcolors[TEXT_BG].resource
+		&& !isDefaultBackground(TScreenOf(term)->Tcolors[TEXT_BG].resource))
 	))
 	ReverseVideo(term);
 #endif /* OPT_COLOR_RES */
@@ -2711,7 +2712,7 @@ pty_search(int *pty)
  */
 
 #if OPT_TEK4014
-static char *tekterm[] =
+static const char *tekterm[] =
 {
     "tek4014",
     "tek4015",			/* 4014 with APL character set support */
@@ -2730,7 +2731,7 @@ static char *tekterm[] =
  * The VT420 has up to 48 lines on the screen.
  */
 
-static char *vtterm[] =
+static const char *vtterm[] =
 {
 #ifdef USE_X11TERM
     "x11term",			/* for people who want special term name */
@@ -2847,7 +2848,9 @@ HsSysError(int error)
 	       handshake.fatal_error,
 	       handshake.buffer));
 	TRACE_HANDSHAKE("writing", &handshake);
-	write(cp_pipe[1], (char *) &handshake, sizeof(handshake));
+	IGNORE_RC(write(cp_pipe[1],
+			(const char *) &handshake,
+			sizeof(handshake)));
     } else {
 	fprintf(stderr,
 		"%s: fatal pty error errno=%d, error=%d device \"%s\"\n",
@@ -2876,7 +2879,9 @@ first_map_occurred(void)
 	if (pc_pipe[1] >= 0) {
 	    TRACE(("first_map_occurred: %dx%d\n", handshake.rows, handshake.cols));
 	    TRACE_HANDSHAKE("writing", &handshake);
-	    write(pc_pipe[1], (char *) &handshake, sizeof(handshake));
+	    IGNORE_RC(write(pc_pipe[1],
+			    (const char *) &handshake,
+			    sizeof(handshake)));
 	    close(cp_pipe[0]);
 	    close(pc_pipe[1]);
 	}
@@ -2903,7 +2908,8 @@ set_owner(char *device, uid_t uid, gid_t gid, mode_t mode)
     int why;
 
     TRACE_IDS;
-    TRACE(("set_owner(%s, uid=%d, gid=%d, mode=%#o\n", device, uid, gid, mode));
+    TRACE(("set_owner(%s, uid=%d, gid=%d, mode=%#o\n",
+	   device, uid, gid, (unsigned) mode));
 
     if (chown(device, uid, gid) < 0) {
 	why = errno;
@@ -2931,7 +2937,7 @@ set_owner(char *device, uid_t uid, gid_t gid, mode_t mode)
 			(unsigned long) (sb.st_mode & 0777U),
 			strerror(why));
 		TRACE(("...stat uid=%d, gid=%d, mode=%#o\n",
-		       sb.st_uid, sb.st_gid, sb.st_mode));
+		       sb.st_uid, sb.st_gid, (unsigned) sb.st_mode));
 	    }
 	}
 	TRACE(("...chmod failed: %s\n", strerror(why)));
@@ -2985,6 +2991,12 @@ find_utmp(struct UTMP_STR *tofind)
 
 #define close_fd(fd) close(fd), fd = -1
 
+#if defined(TIOCNOTTY) && (!defined(__GLIBC__) || (__GLIBC__ < 2) || ((__GLIBC__ == 2) && (__GLIBC_MINOR__ < 1)))
+#define USE_NO_DEV_TTY 1
+#else
+#define USE_NO_DEV_TTY 0
+#endif
+
 /*
  *  Inits pty and tty and forks a login process.
  *  Does not close fd Xsocket.
@@ -3034,8 +3046,11 @@ spawnXTerm(XtermWidget xw)
 #endif /* TERMIO_STRUCT */
 
     char *ptr, *shname, *shname_minus;
-    int i, no_dev_tty = False;
-    char **envnew;		/* new environment */
+    int i;
+#if USE_NO_DEV_TTY
+    int no_dev_tty = False;
+#endif
+    const char **envnew;	/* new environment */
     char buf[64];
     char *TermName = NULL;
 #ifdef TTYSIZE_STRUCT
@@ -3120,7 +3135,9 @@ spawnXTerm(XtermWidget xw)
 	 * seem to return EIO.  Solaris 2.3 is said to return EINVAL.
 	 * Cygwin returns ENOENT.
 	 */
+#if USE_NO_DEV_TTY
 	no_dev_tty = False;
+#endif
 	if (ttyfd < 0) {
 	    if (tty_got_hung || errno == ENXIO || errno == EIO ||
 #ifdef ENODEV
@@ -3130,7 +3147,9 @@ spawnXTerm(XtermWidget xw)
 		errno == ENOENT ||
 #endif
 		errno == EINVAL || errno == ENOTTY || errno == EACCES) {
+#if USE_NO_DEV_TTY
 		no_dev_tty = True;
+#endif
 #ifdef HAS_LTCHARS
 		ltc = d_ltc;
 #endif /* HAS_LTCHARS */
@@ -3168,10 +3187,12 @@ spawnXTerm(XtermWidget xw)
 		lmode = d_lmode;
 #endif /* TIOCLSET */
 #ifdef TERMIO_STRUCT
-	    if ((rc = ttyGetAttr(ttyfd, &tio)) == -1)
+	    rc = ttyGetAttr(ttyfd, &tio);
+	    if (rc == -1)
 		tio = d_tio;
 #else /* !TERMIO_STRUCT */
-	    if ((rc = ioctl(ttyfd, TIOCGETP, (char *) &sg)) == -1)
+	    rc = ioctl(ttyfd, TIOCGETP, (char *) &sg);
+	    if (rc == -1)
 		sg = d_sg;
 	    if (ioctl(ttyfd, TIOCGETC, (char *) &tc) == -1)
 		tc = d_tc;
@@ -3220,11 +3241,13 @@ spawnXTerm(XtermWidget xw)
 	if (resource.ptyInitialErase) {
 #ifdef TERMIO_STRUCT
 	    TERMIO_STRUCT my_tio;
-	    if ((rc = ttyGetAttr(screen->respond, &my_tio)) == 0)
+	    rc = ttyGetAttr(screen->respond, &my_tio);
+	    if (rc == 0)
 		initial_erase = my_tio.c_cc[VERASE];
 #else /* !TERMIO_STRUCT */
 	    struct sgttyb my_sg;
-	    if ((rc = ioctl(screen->respond, TIOCGETP, (char *) &my_sg)) == 0)
+	    rc = ioctl(screen->respond, TIOCGETP, (char *) &my_sg);
+	    if (rc == 0)
 		initial_erase = my_sg.sg_erase;
 #endif /* TERMIO_STRUCT */
 	    TRACE(("%s initial_erase:%d (from pty)\n",
@@ -3259,12 +3282,10 @@ spawnXTerm(XtermWidget xw)
 #if OPT_TEK4014
     if (TEK4014_ACTIVE(xw)) {
 	envnew = tekterm;
-	newtc = TekScreenOf(tekWidget)->tcapbuf;
     } else
 #endif
     {
 	envnew = vtterm;
-	newtc = screen->tcapbuf;
     }
 
     /*
@@ -3274,23 +3295,30 @@ spawnXTerm(XtermWidget xw)
      * entry is not found.
      */
     ok_termcap = True;
-    if (!get_termcap(TermName = resource.term_name, newtc)) {
-	char *last = NULL;
-	TermName = *envnew;
+    if (!get_termcap(xw, TermName = resource.term_name)) {
+	const char *last = NULL;
+	char *next;
+
+	TermName = x_strdup(*envnew);
 	ok_termcap = False;
 	while (*envnew != NULL) {
-	    if ((last == NULL || strcmp(last, *envnew))
-		&& get_termcap(*envnew, newtc)) {
-		TermName = *envnew;
-		ok_termcap = True;
-		break;
+	    if (last == NULL || strcmp(last, *envnew)) {
+		next = x_strdup(*envnew);
+		if (get_termcap(xw, next)) {
+		    free(TermName);
+		    TermName = next;
+		    ok_termcap = True;
+		    break;
+		} else {
+		    free(next);
+		}
 	    }
 	    last = *envnew;
 	    envnew++;
 	}
     }
     if (ok_termcap) {
-	resize_termcap(xw, newtc);
+	resize_termcap(xw);
     }
 
     /*
@@ -3307,12 +3335,13 @@ spawnXTerm(XtermWidget xw)
     } else if (resource.ptyInitialErase) {
 	;
     } else if (ok_termcap) {
-	char temp[1024], *p = temp;
-	char *s = tgetstr(TERMCAP_ERASE, &p);
+	char *s = get_tcap_erase(xw);
 	TRACE(("...extracting initial_erase value from termcap\n"));
 	if (s != 0) {
+	    char *save = s;
 	    initial_erase = decode_keyvalue(&s, True);
 	    setInitialErase = True;
+	    free(save);
 	}
     }
     TRACE(("...initial_erase:%d\n", initial_erase));
@@ -3321,7 +3350,7 @@ spawnXTerm(XtermWidget xw)
 	   resource.backarrow_is_erase ? "" : "not "));
     if (resource.backarrow_is_erase) {	/* see input.c */
 	if (initial_erase == ANSI_DEL) {
-	    xw->keyboard.flags &= ~MODE_DECBKM;
+	    UIntClr(xw->keyboard.flags, MODE_DECBKM);
 	} else {
 	    xw->keyboard.flags |= MODE_DECBKM;
 	    xw->keyboard.reset_DECBKM = 1;
@@ -3340,20 +3369,20 @@ spawnXTerm(XtermWidget xw)
 	TTYSIZE_ROWS(ts) = 38;
 	TTYSIZE_COLS(ts) = 81;
 #if defined(USE_STRUCT_WINSIZE)
-	ts.ws_xpixel = TFullWidth(&(tekWidget->screen));
-	ts.ws_ypixel = TFullHeight(&(tekWidget->screen));
+	ts.ws_xpixel = TFullWidth(TekScreenOf(tekWidget));
+	ts.ws_ypixel = TFullHeight(TekScreenOf(tekWidget));
 #endif
     } else
 #endif
     {
-	TTYSIZE_ROWS(ts) = MaxRows(screen);
-	TTYSIZE_COLS(ts) = MaxCols(screen);
+	TTYSIZE_ROWS(ts) = (ttySize_t) MaxRows(screen);
+	TTYSIZE_COLS(ts) = (ttySize_t) MaxCols(screen);
 #if defined(USE_STRUCT_WINSIZE)
-	ts.ws_xpixel = FullWidth(screen);
-	ts.ws_ypixel = FullHeight(screen);
+	ts.ws_xpixel = (ttySize_t) FullWidth(screen);
+	ts.ws_ypixel = (ttySize_t) FullHeight(screen);
 #endif
     }
-    i = SET_TTYSIZE(screen->respond, ts);
+    TRACE_RC(i, SET_TTYSIZE(screen->respond, ts));
     TRACE(("spawn SET_TTYSIZE %dx%d return %d\n",
 	   TTYSIZE_ROWS(ts),
 	   TTYSIZE_COLS(ts), i));
@@ -3383,7 +3412,7 @@ spawnXTerm(XtermWidget xw)
 
 	if (screen->pid == 0) {
 #ifdef USE_USG_PTYS
-	    int ptyfd;
+	    int ptyfd = -1;
 	    char *pty_name;
 #endif
 	    /*
@@ -3400,32 +3429,29 @@ spawnXTerm(XtermWidget xw)
 #ifdef USE_ISPTS_FLAG
 		if (IsPts) {	/* SYSV386 supports both, which did we open? */
 #endif
-		ptyfd = 0;
-		pty_name = 0;
-
 		setpgrp();
 		grantpt(screen->respond);
 		unlockpt(screen->respond);
 		if ((pty_name = ptsname(screen->respond)) == 0) {
 		    SysError(ERROR_PTSNAME);
-		}
-		if ((ptyfd = open(pty_name, O_RDWR)) < 0) {
+		} else if ((ptyfd = open(pty_name, O_RDWR)) < 0) {
 		    SysError(ERROR_OPPTSNAME);
 		}
 #ifdef I_PUSH
-		if (ioctl(ptyfd, I_PUSH, "ptem") < 0) {
+		else if (ioctl(ptyfd, I_PUSH, "ptem") < 0) {
 		    SysError(ERROR_PTEM);
 		}
 #if !defined(SVR4) && !(defined(SYSV) && defined(i386))
-		if (!x_getenv("CONSEM") && ioctl(ptyfd, I_PUSH, "consem") < 0) {
+		else if (!x_getenv("CONSEM")
+			 && ioctl(ptyfd, I_PUSH, "consem") < 0) {
 		    SysError(ERROR_CONSEM);
 		}
 #endif /* !SVR4 */
-		if (ioctl(ptyfd, I_PUSH, "ldterm") < 0) {
+		else if (ioctl(ptyfd, I_PUSH, "ldterm") < 0) {
 		    SysError(ERROR_LDTERM);
 		}
 #ifdef SVR4			/* from Sony */
-		if (ioctl(ptyfd, I_PUSH, "ttcompat") < 0) {
+		else if (ioctl(ptyfd, I_PUSH, "ttcompat") < 0) {
 		    SysError(ERROR_TTCOMPAT);
 		}
 #endif /* SVR4 */
@@ -3442,17 +3468,17 @@ spawnXTerm(XtermWidget xw)
 		    TTYSIZE_ROWS(ts) = 24;
 		    TTYSIZE_COLS(ts) = 80;
 #ifdef USE_STRUCT_WINSIZE
-		    ts.ws_xpixel = TFullWidth(&(tekWidget->screen));
-		    ts.ws_ypixel = TFullHeight(&(tekWidget->screen));
+		    ts.ws_xpixel = TFullWidth(TekScreenOf(tekWidget));
+		    ts.ws_ypixel = TFullHeight(TekScreenOf(tekWidget));
 #endif
 		} else
 #endif /* OPT_TEK4014 */
 		{
-		    TTYSIZE_ROWS(ts) = MaxRows(screen);
-		    TTYSIZE_COLS(ts) = MaxCols(screen);
+		    TTYSIZE_ROWS(ts) = (ttySize_t) MaxRows(screen);
+		    TTYSIZE_COLS(ts) = (ttySize_t) MaxCols(screen);
 #ifdef USE_STRUCT_WINSIZE
-		    ts.ws_xpixel = FullWidth(screen);
-		    ts.ws_ypixel = FullHeight(screen);
+		    ts.ws_xpixel = (ttySize_t) FullWidth(screen);
+		    ts.ws_ypixel = (ttySize_t) FullHeight(screen);
 #endif
 		}
 #endif /* TTYSIZE_STRUCT */
@@ -3476,13 +3502,13 @@ spawnXTerm(XtermWidget xw)
 		     */
 		    if (cp_pipe[1] <= 2) {
 			if ((i = fcntl(cp_pipe[1], F_DUPFD, 3)) >= 0) {
-			    (void) close(cp_pipe[1]);
+			    IGNORE_RC(close(cp_pipe[1]));
 			    cp_pipe[1] = i;
 			}
 		    }
 		    if (pc_pipe[0] <= 2) {
 			if ((i = fcntl(pc_pipe[0], F_DUPFD, 3)) >= 0) {
-			    (void) close(pc_pipe[0]);
+			    IGNORE_RC(close(pc_pipe[0]));
 			    pc_pipe[0] = i;
 			}
 		    }
@@ -3490,7 +3516,8 @@ spawnXTerm(XtermWidget xw)
 		    /* we don't need the socket, or the pty master anymore */
 		    close(ConnectionNumber(screen->display));
 #ifndef __MVS__
-		    close(screen->respond);
+		    if (screen->respond >= 0)
+			close(screen->respond);
 #endif /* __MVS__ */
 
 		    /* Now is the time to set up our process group and
@@ -3498,9 +3525,9 @@ spawnXTerm(XtermWidget xw)
 		     */
 #ifdef USE_SYSV_PGRP
 #if defined(CRAY) && (OSMAJORVERSION > 5)
-		    (void) setsid();
+		    IGNORE_RC(setsid());
 #else
-		    (void) setpgrp();
+		    IGNORE_RC(setpgrp());
 #endif
 #endif /* USE_SYSV_PGRP */
 
@@ -3519,15 +3546,15 @@ spawnXTerm(XtermWidget xw)
 		    }
 
 		    while (1) {
-#if defined(TIOCNOTTY) && (!defined(__GLIBC__) || (__GLIBC__ < 2) || ((__GLIBC__ == 2) && (__GLIBC_MINOR__ < 1)))
+#if USE_NO_DEV_TTY
 			if (!no_dev_tty
 			    && (ttyfd = open("/dev/tty", O_RDWR)) >= 0) {
 			    ioctl(ttyfd, TIOCNOTTY, (char *) NULL);
 			    close_fd(ttyfd);
 			}
-#endif /* TIOCNOTTY && !glibc >= 2.1 */
+#endif /* USE_NO_DEV_TTY */
 #ifdef CSRG_BASED
-			(void) revoke(ttydev);
+			IGNORE_RC(revoke(ttydev));
 #endif
 			if ((ttyfd = open(ttydev, O_RDWR)) >= 0) {
 #if defined(CRAY) && defined(TCSETCTTY)
@@ -3562,12 +3589,13 @@ spawnXTerm(XtermWidget xw)
 			handshake.error = errno;
 			strcpy(handshake.buffer, ttydev);
 			TRACE_HANDSHAKE("writing", &handshake);
-			write(cp_pipe[1], (char *) &handshake,
-			      sizeof(handshake));
+			IGNORE_RC(write(cp_pipe[1],
+					(const char *) &handshake,
+					sizeof(handshake)));
 
 			/* get reply from parent */
-			i = read(pc_pipe[0], (char *) &handshake,
-				 sizeof(handshake));
+			i = (int) read(pc_pipe[0], (char *) &handshake,
+				       sizeof(handshake));
 			if (i <= 0) {
 			    /* parent terminated */
 			    exit(1);
@@ -3580,23 +3608,15 @@ spawnXTerm(XtermWidget xw)
 
 			/* We have a new pty to try */
 			free(ttydev);
-			ttydev = CastMallocN(char, strlen(handshake.buffer));
-			if (ttydev == NULL) {
-			    SysError(ERROR_SPREALLOC);
-			}
-			strcpy(ttydev, handshake.buffer);
+			ttydev = x_strdup(handshake.buffer);
 		    }
 
 		    /* use the same tty name that everyone else will use
 		     * (from ttyname)
 		     */
 		    if ((ptr = ttyname(ttyfd)) != 0) {
-			/* it may be bigger */
-			ttydev = TypeRealloc(char, strlen(ptr) + 1, ttydev);
-			if (ttydev == NULL) {
-			    SysError(ERROR_SPREALLOC);
-			}
-			(void) strcpy(ttydev, ptr);
+			free(ttydev);
+			ttydev = x_strdup(ptr);
 		    }
 		}
 #endif /* OPT_PTY_HANDSHAKE -- from near fork */
@@ -3629,7 +3649,7 @@ spawnXTerm(XtermWidget xw)
 		 * child pty.
 		 */
 		/* input: nl->nl, don't ignore cr, cr->nl */
-		tio.c_iflag &= ~(INLCR | IGNCR);
+		UIntClr(tio.c_iflag, (INLCR | IGNCR));
 		tio.c_iflag |= ICRNL;
 #if OPT_WIDE_CHARS && defined(linux) && defined(IUTF8)
 #if OPT_LUIT_PROG
@@ -3640,15 +3660,15 @@ spawnXTerm(XtermWidget xw)
 #endif
 		/* ouput: cr->cr, nl is not return, no delays, ln->cr/nl */
 #ifndef USE_POSIX_TERMIOS
-		tio.c_oflag &=
-		    ~(OCRNL
-		      | ONLRET
-		      | NLDLY
-		      | CRDLY
-		      | TABDLY
-		      | BSDLY
-		      | VTDLY
-		      | FFDLY);
+		UIntClr(tio.c_oflag,
+			(OCRNL
+			 | ONLRET
+			 | NLDLY
+			 | CRDLY
+			 | TABDLY
+			 | BSDLY
+			 | VTDLY
+			 | FFDLY));
 #endif /* USE_POSIX_TERMIOS */
 #ifdef ONLCR
 		tio.c_oflag |= ONLCR;
@@ -3660,7 +3680,7 @@ spawnXTerm(XtermWidget xw)
 # if defined(Lynx) && !defined(CBAUD)
 #  define CBAUD V_CBAUD
 # endif
-		tio.c_cflag &= ~(CBAUD);
+		UIntClr(tio.c_cflag, CBAUD);
 #ifdef BAUD_0
 		/* baud rate is 0 (don't care) */
 #elif defined(HAVE_TERMIO_C_ISPEED)
@@ -3740,7 +3760,7 @@ spawnXTerm(XtermWidget xw)
 		    HsSysError(ERROR_TIOCSETP);
 
 		/* ignore errors here - some platforms don't work */
-		tio.c_cflag &= ~CSIZE;
+		UIntClr(tio.c_cflag, CSIZE);
 		if (screen->input_eight_bits)
 		    tio.c_cflag |= CS8;
 		else
@@ -3815,7 +3835,7 @@ spawnXTerm(XtermWidget xw)
 		    if (fd == -1 || ioctl(fd, SRIOCSREDIR, ttyfd) == -1)
 			fprintf(stderr, "%s: cannot open console: %s\n",
 				ProgramName, strerror(errno));
-		    (void) close(fd);
+		    IGNORE_RC(close(fd));
 #endif
 		}
 #endif /* TIOCCONS */
@@ -3856,7 +3876,7 @@ spawnXTerm(XtermWidget xw)
 		old_erase = tio.c_cc[VERASE];
 #endif
 		tio.c_cc[VERASE] = initial_erase;
-		rc = ttySetAttr(ttyfd, &tio);
+		TRACE_RC(rc, ttySetAttr(ttyfd, &tio));
 #else /* !TERMIO_STRUCT */
 		if (ioctl(ttyfd, TIOCGETP, (char *) &sg) == -1)
 		    sg = d_sg;
@@ -3875,7 +3895,7 @@ spawnXTerm(XtermWidget xw)
 
 	    xtermSetenv("TERM", TermName);
 	    if (!TermName)
-		*newtc = 0;
+		*get_tcap_buffer(xw) = 0;
 
 	    sprintf(buf, "%lu",
 		    ((unsigned long) XtWindow(SHELL_OF(CURRENT_EMU()))));
@@ -3895,21 +3915,21 @@ spawnXTerm(XtermWidget xw)
 #if defined(CRAY) && (OSMAJORVERSION >= 6)
 		close_fd(ttyfd);
 
-		(void) close(0);
+		IGNORE_RC(close(0));
 
 		if (open("/dev/tty", O_RDWR)) {
 		    SysError(ERROR_OPDEVTTY);
 		}
-		(void) close(1);
-		(void) close(2);
+		IGNORE_RC(close(1));
+		IGNORE_RC(close(2));
 		dup(0);
 		dup(0);
 #else
 		/* dup the tty */
 		for (i = 0; i <= 2; i++)
 		    if (i != ttyfd) {
-			(void) close(i);
-			(void) dup(ttyfd);
+			IGNORE_RC(close(i));
+			IGNORE_RC(dup(ttyfd));
 		    }
 #ifndef ATT
 		/* and close the tty */
@@ -4003,10 +4023,12 @@ spawnXTerm(XtermWidget xw)
 
 	    /* position to entry in utmp file */
 	    /* Test return value: beware of entries left behind: PSz 9 Mar 00 */
-	    if (!(utret = find_utmp(&utmp))) {
+	    utret = find_utmp(&utmp);
+	    if (utret == 0) {
 		(void) call_setutent();
 		init_utmp(USER_PROCESS, &utmp);
-		if (!(utret = find_utmp(&utmp))) {
+		utret = find_utmp(&utmp);
+		if (utret == 0) {
 		    (void) call_setutent();
 		}
 	    }
@@ -4015,7 +4037,7 @@ spawnXTerm(XtermWidget xw)
 		TRACE(("getutid: NULL\n"));
 	    else
 		TRACE(("getutid: pid=%d type=%d user=%s line=%s id=%s\n",
-		       utret->ut_pid, utret->ut_type, utret->ut_user,
+		       (int) utret->ut_pid, utret->ut_type, utret->ut_user,
 		       utret->ut_line, utret->ut_id));
 #endif
 
@@ -4184,13 +4206,13 @@ spawnXTerm(XtermWidget xw)
 		handshake.error = 0;
 		strcpy(handshake.buffer, ttydev);
 		TRACE_HANDSHAKE("writing", &handshake);
-		(void) write(cp_pipe[1], (char *) &handshake, sizeof(handshake));
+		IGNORE_RC(write(cp_pipe[1], (char *) &handshake, sizeof(handshake)));
 	    }
 #endif /* OPT_PTY_HANDSHAKE */
 #endif /* USE_UTEMPTER */
 #endif /* HAVE_UTMP */
 
-	    (void) setgid(screen->gid);
+	    IGNORE_RC(setgid(screen->gid));
 	    TRACE_IDS;
 #ifdef HAS_BSD_GROUPS
 	    if (geteuid() == 0 && pw) {
@@ -4218,11 +4240,13 @@ spawnXTerm(XtermWidget xw)
 		handshake.error = 0;
 		(void) strcpy(handshake.buffer, ttydev);
 		TRACE_HANDSHAKE("writing", &handshake);
-		(void) write(cp_pipe[1], (char *) &handshake, sizeof(handshake));
+		IGNORE_RC(write(cp_pipe[1],
+				(const char *) &handshake,
+				sizeof(handshake)));
 
 		if (resource.wait_for_map) {
-		    i = read(pc_pipe[0], (char *) &handshake,
-			     sizeof(handshake));
+		    i = (int) read(pc_pipe[0], (char *) &handshake,
+				   sizeof(handshake));
 		    if (i != sizeof(handshake) ||
 			handshake.status != PTY_EXEC) {
 			/* some very bad problem occurred */
@@ -4235,11 +4259,11 @@ spawnXTerm(XtermWidget xw)
 			set_max_col(screen, handshake.cols);
 #ifdef TTYSIZE_STRUCT
 			got_handshake_size = True;
-			TTYSIZE_ROWS(ts) = MaxRows(screen);
-			TTYSIZE_COLS(ts) = MaxCols(screen);
+			TTYSIZE_ROWS(ts) = (ttySize_t) MaxRows(screen);
+			TTYSIZE_COLS(ts) = (ttySize_t) MaxCols(screen);
 #if defined(USE_STRUCT_WINSIZE)
-			ts.ws_xpixel = FullWidth(screen);
-			ts.ws_ypixel = FullHeight(screen);
+			ts.ws_xpixel = (ttySize_t) FullWidth(screen);
+			ts.ws_ypixel = (ttySize_t) FullHeight(screen);
 #endif
 #endif /* TTYSIZE_STRUCT */
 		    }
@@ -4267,34 +4291,36 @@ spawnXTerm(XtermWidget xw)
 	    xtermSetenv("TERMINFO", OWN_TERMINFO_DIR);
 #endif
 #else /* USE_SYSV_ENVVARS */
-	    resize_termcap(xw, newtc);
-	    if (xw->misc.titeInhibit && !xw->misc.tiXtraScroll) {
-		remove_termcap_entry(newtc, "ti=");
-		remove_termcap_entry(newtc, "te=");
-	    }
-	    /*
-	     * work around broken termcap entries */
-	    if (resource.useInsertMode) {
-		remove_termcap_entry(newtc, "ic=");
-		/* don't get duplicates */
-		remove_termcap_entry(newtc, "im=");
-		remove_termcap_entry(newtc, "ei=");
-		remove_termcap_entry(newtc, "mi");
-		if (*newtc)
-		    strcat(newtc, ":im=\\E[4h:ei=\\E[4l:mi:");
-	    }
-	    if (*newtc) {
+	    if (*(newtc = get_tcap_buffer(xw)) != '\0') {
+		resize_termcap(xw);
+		if (xw->misc.titeInhibit && !xw->misc.tiXtraScroll) {
+		    remove_termcap_entry(newtc, "ti=");
+		    remove_termcap_entry(newtc, "te=");
+		}
+		/*
+		 * work around broken termcap entries */
+		if (resource.useInsertMode) {
+		    remove_termcap_entry(newtc, "ic=");
+		    /* don't get duplicates */
+		    remove_termcap_entry(newtc, "im=");
+		    remove_termcap_entry(newtc, "ei=");
+		    remove_termcap_entry(newtc, "mi");
+		    if (*newtc)
+			strcat(newtc, ":im=\\E[4h:ei=\\E[4l:mi:");
+		}
+		if (*newtc) {
 #if OPT_INITIAL_ERASE
-		unsigned len;
-		remove_termcap_entry(newtc, TERMCAP_ERASE "=");
-		len = strlen(newtc);
-		if (len != 0 && newtc[len - 1] == ':')
-		    len--;
-		sprintf(newtc + len, ":%s=\\%03o:",
-			TERMCAP_ERASE,
-			CharOf(initial_erase));
+		    unsigned len;
+		    remove_termcap_entry(newtc, TERMCAP_ERASE "=");
+		    len = (unsigned) strlen(newtc);
+		    if (len != 0 && newtc[len - 1] == ':')
+			len--;
+		    sprintf(newtc + len, ":%s=\\%03o:",
+			    TERMCAP_ERASE,
+			    CharOf(initial_erase));
 #endif
-		xtermSetenv("TERMCAP", newtc);
+		    xtermSetenv("TERMCAP", newtc);
+		}
 	    }
 #endif /* USE_SYSV_ENVVARS */
 
@@ -4309,7 +4335,7 @@ spawnXTerm(XtermWidget xw)
 		&& resource.ptySttySize
 		&& (got_handshake_size || !resource.wait_for_map0)) {
 #ifdef TTYSIZE_STRUCT
-		i = SET_TTYSIZE(0, ts);
+		TRACE_RC(i, SET_TTYSIZE(0, ts));
 		TRACE(("ptyHandshake SET_TTYSIZE %dx%d return %d\n",
 		       TTYSIZE_ROWS(ts),
 		       TTYSIZE_COLS(ts), i));
@@ -4322,7 +4348,7 @@ spawnXTerm(XtermWidget xw)
 		if (((ptr = x_getenv("SHELL")) == NULL) &&
 		    ((pw == NULL && (pw = getpwuid(screen->uid)) == NULL) ||
 		     *(ptr = pw->pw_shell) == 0)) {
-		    ptr = "/bin/sh";
+		    ptr = x_strdup("/bin/sh");
 		}
 	    } else {
 		xtermSetenv("SHELL", explicit_shname);
@@ -4385,7 +4411,7 @@ spawnXTerm(XtermWidget xw)
 		if (xw->misc.login_shell) {
 		    int u;
 		    u = (term->misc.use_encoding ? 2 : 0);
-		    command_to_exec_with_luit[u + 1] = "-argv0";
+		    command_to_exec_with_luit[u + 1] = x_strdup("-argv0");
 		    command_to_exec_with_luit[u + 2] = shname_minus;
 		    command_to_exec_with_luit[u + 3] = NULL;
 		}
@@ -4402,7 +4428,7 @@ spawnXTerm(XtermWidget xw)
 	    /* Exec failed. */
 	    fprintf(stderr, "%s: Could not exec %s: %s\n", ProgramName,
 		    ptr, strerror(errno));
-	    (void) sleep(5);
+	    IGNORE_RC(sleep(5));
 	    exit(ERROR_EXEC);
 	}
 	/* end if in child after fork */
@@ -4440,7 +4466,7 @@ spawnXTerm(XtermWidget xw)
 		    /* The open of the pty failed!  Let's get
 		     * another one.
 		     */
-		    (void) close(screen->respond);
+		    IGNORE_RC(close(screen->respond));
 		    if (get_pty(&screen->respond, XDisplayString(screen->display))) {
 			/* no more ptys! */
 			fprintf(stderr,
@@ -4448,13 +4474,17 @@ spawnXTerm(XtermWidget xw)
 				ProgramName, strerror(errno));
 			handshake.status = PTY_NOMORE;
 			TRACE_HANDSHAKE("writing", &handshake);
-			write(pc_pipe[1], (char *) &handshake, sizeof(handshake));
+			IGNORE_RC(write(pc_pipe[1],
+					(const char *) &handshake,
+					sizeof(handshake)));
 			exit(ERROR_PTYS);
 		    }
 		    handshake.status = PTY_NEW;
 		    (void) strcpy(handshake.buffer, ttydev);
 		    TRACE_HANDSHAKE("writing", &handshake);
-		    write(pc_pipe[1], (char *) &handshake, sizeof(handshake));
+		    IGNORE_RC(write(pc_pipe[1],
+				    (const char *) &handshake,
+				    sizeof(handshake)));
 		    break;
 
 		case PTY_FATALERROR:
@@ -4550,7 +4580,8 @@ spawnXTerm(XtermWidget xw)
 SIGNAL_T
 Exit(int n)
 {
-    TScreen *screen = TScreenOf(term);
+    XtermWidget xw = term;
+    TScreen *screen = TScreenOf(xw);
 
 #ifdef USE_UTEMPTER
     if (!resource.utmpInhibit && added_utmp_entry)
@@ -4601,15 +4632,15 @@ Exit(int n)
 		(void) call_pututline(utptr);
 #ifdef WTMP
 #if defined(WTMPX_FILE) && (defined(SVR4) || defined(__SCO__))
-		if (term->misc.login_shell)
+		if (xw->misc.login_shell)
 		    updwtmpx(WTMPX_FILE, utptr);
 #elif defined(linux) && defined(__GLIBC__) && (__GLIBC__ >= 2) && !(defined(__powerpc__) && (__GLIBC__ == 2) && (__GLIBC_MINOR__ == 0))
 		strncpy(utmp.ut_line, utptr->ut_line, sizeof(utmp.ut_line));
-		if (term->misc.login_shell)
+		if (xw->misc.login_shell)
 		    call_updwtmp(etc_wtmp, utptr);
 #else
 		/* set wtmp entry if wtmp file exists */
-		if (term->misc.login_shell) {
+		if (xw->misc.login_shell) {
 		    int fd;
 		    if ((fd = open(etc_wtmp, O_WRONLY | O_APPEND)) >= 0) {
 			write(fd, utptr, sizeof(*utptr));
@@ -4645,7 +4676,7 @@ Exit(int n)
 	    close(wfd);
 	}
 #ifdef WTMP
-	if (term->misc.login_shell &&
+	if (xw->misc.login_shell &&
 	    (wfd = open(etc_wtmp, O_WRONLY | O_APPEND)) >= 0) {
 	    (void) strncpy(utmp.ut_line,
 			   my_pty_name(ttydev),
@@ -4685,14 +4716,14 @@ Exit(int n)
     close(screen->respond);	/* close explicitly to avoid race with slave side */
 #ifdef ALLOWLOGGING
     if (screen->logging)
-	CloseLog(screen);
+	CloseLog(xw);
 #endif
 
 #ifdef NO_LEAKS
     if (n == 0) {
 	TRACE(("Freeing memory leaks\n"));
-	if (term != 0) {
-	    Display *dpy = term->screen.display;
+	if (xw != 0) {
+	    Display *dpy = TScreenOf(xw)->display;
 
 	    if (toplevel) {
 		XtDestroyWidget(toplevel);
@@ -4712,7 +4743,7 @@ Exit(int n)
 #endif
 	    TRACE(("closed display\n"));
 	}
-	TRACE((0));
+	TRACE_CLOSE();
     }
 #endif
 
@@ -4722,8 +4753,10 @@ Exit(int n)
 
 /* ARGSUSED */
 static void
-resize_termcap(XtermWidget xw, char *newtc)
+resize_termcap(XtermWidget xw)
 {
+    char *newtc = get_tcap_buffer(xw);
+
 #ifndef USE_SYSV_ENVVARS
     if (!TEK4014_ACTIVE(xw) && *newtc) {
 	TScreen *screen = TScreenOf(xw);
@@ -4820,7 +4853,7 @@ reapchild(int n GCC_UNUSED)
 #endif
 
     do {
-	if (pid == term->screen.pid) {
+	if (pid == TScreenOf(term)->pid) {
 #ifdef DEBUG
 	    if (debug)
 		fputs("Exiting\n", stderr);
@@ -4836,7 +4869,7 @@ reapchild(int n GCC_UNUSED)
 #endif /* !VMS */
 
 static void
-remove_termcap_entry(char *buf, char *str)
+remove_termcap_entry(char *buf, const char *str)
 {
     char *base = buf;
     char *first = base;
@@ -4930,12 +4963,12 @@ GetBytesAvailable(int fd)
     return (int) arg;
 #elif defined(__CYGWIN__)
     fd_set set;
-    struct timeval timeout =
+    struct timeval select_timeout =
     {0, 0};
 
     FD_ZERO(&set);
     FD_SET(fd, &set);
-    if (Select(fd + 1, &set, NULL, NULL, &timeout) > 0)
+    if (Select(fd + 1, &set, NULL, NULL, &select_timeout) > 0)
 	return 1;
     else
 	return 0;

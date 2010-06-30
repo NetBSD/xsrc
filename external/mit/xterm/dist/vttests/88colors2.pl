@@ -1,7 +1,37 @@
 #!/usr/bin/perl
-# $XTermId: 88colors2.pl,v 1.5 2007/07/17 00:42:15 tom Exp $
-# Authors: Steve Wall <swall@redcom.com>
-#          Thomas E Dickey
+# $XTermId: 88colors2.pl,v 1.7 2009/10/10 14:57:12 tom Exp $
+# -----------------------------------------------------------------------------
+# this file is part of xterm
+#
+# Copyright 1999-2007,2009 by Thomas E. Dickey
+# Copyright 1999 by Steve Wall
+# 
+#                         All Rights Reserved
+# 
+# Permission is hereby granted, free of charge, to any person obtaining a
+# copy of this software and associated documentation files (the
+# "Software"), to deal in the Software without restriction, including
+# without limitation the rights to use, copy, modify, merge, publish,
+# distribute, sublicense, and/or sell copies of the Software, and to
+# permit persons to whom the Software is furnished to do so, subject to
+# the following conditions:
+# 
+# The above copyright notice and this permission notice shall be included
+# in all copies or substantial portions of the Software.
+# 
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+# MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+# IN NO EVENT SHALL THE ABOVE LISTED COPYRIGHT HOLDER(S) BE LIABLE FOR ANY
+# CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+# TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+# SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+# 
+# Except as contained in this notice, the name(s) of the above copyright
+# holders shall not be used in advertising or otherwise to promote the
+# sale, use or other dealings in this Software without prior written
+# authorization.
+# -----------------------------------------------------------------------------
 #
 # Adapted from 256colors2.pl
 
@@ -13,8 +43,14 @@ use strict;
 
 use Getopt::Std;
 
-our ($opt_r);
-&getopts('r') || die("Usage: $0 [-r]");
+our ($opt_h, $opt_q, $opt_r);
+&getopts('hqr') || die("Usage: $0 [-q] [-r]");
+die("Usage: $0 [options]\n
+Options:
+  -h  display this message
+  -q  quieter output by merging all palette initialization
+  -r  display the reverse of the usual palette
+") if ( $opt_h);
 
 our (@steps);
 our ($red, $green, $blue);
@@ -34,14 +70,17 @@ sub map_gray($) {
 
 # colors 16-79 are a 4x4x4 color cube
 @steps=(0,139,205,255);
+printf("\x1b]4") if ($opt_q);
 for ($red = 0; $red < 4; $red++) {
     for ($green = 0; $green < 4; $green++) {
 	for ($blue = 0; $blue < 4; $blue++) {
-	    printf("\x1b]4;%d;rgb:%2.2x/%2.2x/%2.2x\x1b\\",
+	    printf("\x1b]4") unless ($opt_q);
+	    printf(";%d;rgb:%2.2x/%2.2x/%2.2x",
 		   16 + (map_cube($red) * 16) + (map_cube($green) * 4) + map_cube($blue),
 		   int (@steps[$red]),
 		   int (@steps[$green]),
 		   int (@steps[$blue]));
+	    printf("\x1b\\") unless ($opt_q);
 	}
     }
 }
@@ -51,9 +90,12 @@ for ($red = 0; $red < 4; $red++) {
 for ($gray = 0; $gray < 8; $gray++) {
     $level = (map_gray($gray) * 23.18181818) + 46.36363636;
     if( $gray > 0 ) { $level += 23.18181818; }
-    printf("\x1b]4;%d;rgb:%2.2x/%2.2x/%2.2x\x1b\\",
+    printf("\x1b]4") unless ($opt_q);
+    printf(";%d;rgb:%2.2x/%2.2x/%2.2x",
 	   80 + $gray, int($level), int($level), int($level));
+    printf("\x1b\\") unless ($opt_q);
 }
+printf("\x1b\\") if ($opt_q);
 
 
 # display the colors

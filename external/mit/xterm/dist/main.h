@@ -1,7 +1,7 @@
-/* $XTermId: main.h,v 1.42 2009/03/28 17:39:51 tom Exp $ */
+/* $XTermId: main.h,v 1.54 2010/06/20 20:22:32 tom Exp $ */
 
 /*
- * Copyright 2000-2008,2009 by Thomas E. Dickey
+ * Copyright 2000-2009,2010 by Thomas E. Dickey
  *
  *                         All Rights Reserved
  *
@@ -87,8 +87,20 @@
 #define DEFFACENAME		NULL
 #endif
 
+#ifndef DEFFACENAME_AUTO
+#define DEFFACENAME_AUTO	"mono"
+#endif
+
 #ifndef DEFFACESIZE
 #define DEFFACESIZE		"14.0"
+#endif
+
+#ifndef DEFFACESIZE
+#define DEFFACESIZE_AUTO	"8.0"
+#endif
+
+#ifndef DEF_ALLOW_COLOR
+#define DEF_ALLOW_COLOR		True
 #endif
 
 #ifndef DEF_ALLOW_FONT
@@ -104,7 +116,23 @@
 #endif
 
 #ifndef DEF_ALLOW_WINDOW
-#define DEF_ALLOW_WINDOW	True
+#define DEF_ALLOW_WINDOW	False
+#endif
+
+#ifndef DEF_DISALLOWED_COLOR
+#define DEF_DISALLOWED_COLOR	"SetColor,GetColor,GetAnsiColor"
+#endif
+
+#ifndef DEF_DISALLOWED_FONT
+#define DEF_DISALLOWED_FONT	"SetFont,GetFont"
+#endif
+
+#ifndef DEF_DISALLOWED_TCAP
+#define DEF_DISALLOWED_TCAP	"SetTcap,GetTcap"
+#endif
+
+#ifndef DEF_DISALLOWED_WINDOW
+#define DEF_DISALLOWED_WINDOW	"20,21,SetXprop,SetSelection"
 #endif
 
 #if OPT_BLINK_TEXT
@@ -133,6 +161,10 @@
 #define DEF_INITIAL_ERASE	False
 #endif
 
+#ifndef DEF_MENU_LOCALE
+#define DEF_MENU_LOCALE		"C"
+#endif
+
 #ifndef DEF_POINTER_MODE
 #define DEF_POINTER_MODE	pNoMouse
 #endif
@@ -143,6 +175,10 @@
 #else
 #define DEF_PTY_STTY_SIZE	True
 #endif
+#endif
+
+#ifndef DEF_TITLE_MODES
+#define DEF_TITLE_MODES		0
 #endif
 
 #ifndef PROJECTROOT
@@ -168,5 +204,10 @@
 #define DEFLOCALEFILTER1(x)	DEFLOCALEFILTER2(x)
 #define DEFLOCALEFILTER		DEFLOCALEFILTER1(PROJECTROOT) "/bin/luit"
 #endif
+
+/*
+ * See lib/Xt/Resources.c
+ */
+#define MAXRESOURCES            400
 
 #endif	/* included_main_h */

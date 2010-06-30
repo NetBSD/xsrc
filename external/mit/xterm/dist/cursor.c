@@ -1,7 +1,7 @@
-/* $XTermId: cursor.c,v 1.53 2009/08/09 17:23:25 tom Exp $ */
+/* $XTermId: cursor.c,v 1.55 2010/04/17 17:12:01 tom Exp $ */
 
 /*
- * Copyright 2002-2008,2009 by Thomas E. Dickey
+ * Copyright 2002-2009,2010 by Thomas E. Dickey
  * 
  *                         All Rights Reserved
  * 
@@ -96,7 +96,7 @@ CursorSet(TScreen * screen, int row, int col, unsigned flags)
 void
 CursorBack(XtermWidget xw, int n)
 {
-    TScreen *screen = &xw->screen;
+    TScreen *screen = TScreenOf(xw);
     int i, j, k, rev;
 
     if ((rev = (xw->flags & (REVERSEWRAP | WRAPAROUND)) ==
@@ -189,7 +189,7 @@ CursorUp(TScreen * screen, int n)
 void
 xtermIndex(XtermWidget xw, int amount)
 {
-    TScreen *screen = &xw->screen;
+    TScreen *screen = TScreenOf(xw);
     int j;
 
     /*
@@ -213,7 +213,7 @@ xtermIndex(XtermWidget xw, int amount)
 void
 RevIndex(XtermWidget xw, int amount)
 {
-    TScreen *screen = &xw->screen;
+    TScreen *screen = TScreenOf(xw);
 
     /*
      * reverse indexing when above scrolling region is cursor up.
@@ -249,7 +249,7 @@ CarriageReturn(TScreen * screen)
 void
 AdjustSavedCursor(XtermWidget xw, int adjust)
 {
-    TScreen *screen = &xw->screen;
+    TScreen *screen = TScreenOf(xw);
 
     if (screen->whichBuf) {
 	SavedCursor *sc = &screen->sc[0];
@@ -267,7 +267,7 @@ AdjustSavedCursor(XtermWidget xw, int adjust)
 void
 CursorSave(XtermWidget xw)
 {
-    TScreen *screen = &xw->screen;
+    TScreen *screen = TScreenOf(xw);
     SavedCursor *sc = &screen->sc[screen->whichBuf];
 
     sc->saved = True;
@@ -296,7 +296,7 @@ CursorSave(XtermWidget xw)
 void
 CursorRestore(XtermWidget xw)
 {
-    TScreen *screen = &xw->screen;
+    TScreen *screen = TScreenOf(xw);
     SavedCursor *sc = &screen->sc[screen->whichBuf];
 
     /* Restore the character sets, unless we never did a save-cursor op.
@@ -310,8 +310,8 @@ CursorRestore(XtermWidget xw)
 	resetCharsets(screen);
     }
 
-    xw->flags &= ~DECSC_FLAGS;
-    xw->flags |= sc->flags & DECSC_FLAGS;
+    UIntClr(xw->flags, DECSC_FLAGS);
+    UIntSet(xw->flags, sc->flags & DECSC_FLAGS);
     CursorSet(screen,
 	      ((xw->flags & ORIGIN)
 	       ? sc->row - screen->top_marg
