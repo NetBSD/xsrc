@@ -130,6 +130,8 @@ _X_EXPORT DriverRec S3 =
 
 /* supported chipsets */
 static SymTabRec S3Chipsets[] = {
+	{ PCI_CHIP_864_0,	"864-0"},
+	{ PCI_CHIP_864_1,	"864-1"},
 	{ PCI_CHIP_964_0,	"964-0"},
 	{ PCI_CHIP_964_1,	"964-1"},
 	{ PCI_CHIP_968,		"968" },
@@ -142,6 +144,8 @@ static SymTabRec S3Chipsets[] = {
 
 
 static PciChipsets S3PciChipsets[] = {
+	{ PCI_CHIP_864_0,	PCI_CHIP_864_0,		RES_SHARED_VGA },
+	{ PCI_CHIP_864_1,	PCI_CHIP_864_1,		RES_SHARED_VGA },
 	{ PCI_CHIP_964_0,	PCI_CHIP_964_0,		RES_SHARED_VGA },
 	{ PCI_CHIP_964_1,	PCI_CHIP_964_1,		RES_SHARED_VGA },
 	{ PCI_CHIP_968, 	PCI_CHIP_968, 		RES_SHARED_VGA },
@@ -486,6 +490,8 @@ static Bool S3PreInit(ScrnInfoPtr pScrn, int flags)
 #endif
 
 	switch (pS3->Chipset) {
+	case PCI_CHIP_864_0:
+	case PCI_CHIP_864_1:
 	case PCI_CHIP_964_0:
 	case PCI_CHIP_964_1:
 	case PCI_CHIP_TRIO:
@@ -609,6 +615,54 @@ static Bool S3PreInit(ScrnInfoPtr pScrn, int flags)
 	pScrn->rgbBits = 8;	/* set default */
 
 	/* probe for dac */
+	if (S3GENDACProbe(pScrn)) {
+		pS3->DacPreInit = S3GENDAC_PreInit;
+		pS3->DacSave = S3GENDAC_Save;
+		pS3->DacRestore = S3GENDAC_Restore;
+		if (pS3->RamDac->RamDacType == GENDAC_RAMDAC) {
+			pS3->DacInit = S3GENDAC_Init;
+			switch(pScrn->bitsPerPixel) {
+			case 8:
+#if 0
+				pS3->MaxClock = 110000;
+#else
+				pS3->MaxClock = 95000;
+#endif
+				break;
+			case 16:
+				pS3->MaxClock = 55000;
+				break;
+			case 24:
+			case 32:
+				pS3->MaxClock = 27500;
+				break;
+			}
+		} else {	/* SDAC */
+			pS3->DacInit = S3SDAC_Init;
+			switch(pScrn->bitsPerPixel) {
+			case 8:
+				pS3->MaxClock = 135000;
+				break;
+			case 16:
+#if 0
+				pS3->MaxClock = 110000;
+#else
+				pS3->MaxClock = 95000;
+#endif
+				break;
+			case 24:
+			case 32:
+#if 0
+				pS3->MaxClock = 55000;
+#else
+				pS3->MaxClock = 50000;
+#endif
+				break;
+			}
+		}
+		pScrn->rgbBits = 6;
+		pS3->LoadPalette = S3GenericLoadPalette;
+	}
 	if (S3TiDACProbe(pScrn)) {
 		pS3->DacPreInit = S3TiDAC_PreInit;
 		pS3->DacInit = S3TiDAC_Init;
@@ -1351,8 +1405,8 @@ static Bool S3ModeInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
 
 	outb(vgaCRIndex, 0x33);
 	new->cr33 = inb(vgaCRReg) | 0x20;
-	if ((pS3->Chipset == PCI_CHIP_964_0) ||
-	    (pS3->Chipset == PCI_CHIP_964_1))
+	if (S3_864_SERIES () ||
+	    S3_964_SERIES())
 		new->cr33 = 0x20;
 	else if (pS3->Chipset == PCI_CHIP_TRIO64V2_DXGX)
 		new->cr33 &= ~0x20;
@@ -1381,7 +1435,10 @@ static Bool S3ModeInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
 	switch (pScrn->bitsPerPixel) {
 	case 24:
 	case 32:
-		new->cr43 = inb(vgaCRReg);
+		if (S3_864_SERIES())
+			new->cr43 = 0x08;
+		else
+			new->cr43 = inb(vgaCRReg);
 		break;
 	case 15:
 	case 16:
@@ -1391,6 +1448,10 @@ static Bool S3ModeInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
 			new->cr43 = 0x10;
 		else if (pS3->RamDac->RamDacType == TRIO64_RAMDAC)
 			new->cr43 = 0x09;
+		else if (pS3->RamDac->RamDacType == GENDAC_RAMDAC)
+			new->cr43 = 0x80;
+		else if (S3_864_SERIES())
+			new->cr43 = 0x08;
 		break;
 	case 8:
 	default:
