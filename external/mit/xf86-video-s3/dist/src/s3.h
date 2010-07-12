@@ -228,6 +228,14 @@ Bool S3Ti_CursorInit(ScreenPtr pScreen);
 void S3OutTiIndReg(ScrnInfoPtr pScrn, CARD32 reg, unsigned char mask,
 		   unsigned char data);
 
+/* SDAC/GENDAC */
+Bool S3SDACProbe(ScrnInfoPtr pScrn);
+void S3GENDAC_PreInit(ScrnInfoPtr pScrn);
+void S3GENDAC_Init(ScrnInfoPtr pScrn, DisplayModePtr mode);
+void S3SDAC_Init(ScrnInfoPtr pScrn, DisplayModePtr mode);
+void S3GENDAC_Save(ScrnInfoPtr pScrn);
+void S3GENDAC_Restore(ScrnInfoPtr pScrn);
+
 /* s3 gen cursor */
 Bool S3_CursorInit(ScreenPtr pScreen);
 
@@ -243,6 +251,8 @@ void S3RefreshArea32(ScrnInfoPtr pScrn, int num, BoxPtr pbox);
 #define TRIO64_RAMDAC	0x8811
 #define	TI3025_RAMDAC	0x3025
 #define	TI3020_RAMDAC	0x3020
+#define	GENDAC_RAMDAC	0x0708
+#define	SDAC_RAMDAC	0x0716
 
 #define BIOS_BSIZE	1024
 #define	BIOS_BASE	0xc0000
@@ -251,6 +261,8 @@ void S3RefreshArea32(ScrnInfoPtr pScrn, int num, BoxPtr pbox);
  * Chip...Sets...
  */
 
+#define S3_864_SERIES()		((pS3->Chipset == PCI_CHIP_864_0) ||	\
+				 (pS3->Chipset == PCI_CHIP_864_1))
 #define S3_964_SERIES()		((pS3->Chipset == PCI_CHIP_964_0) ||	\
 			 	 (pS3->Chipset == PCI_CHIP_964_1))
 
