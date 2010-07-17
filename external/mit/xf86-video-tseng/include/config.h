@@ -41,7 +41,7 @@
 
 /* Define to the sub-directory in which libtool stores uninstalled libraries.
    */
-#undef LT_OBJDIR
+#define LT_OBJDIR ".libs/"
 
 /* Name of package */
 #define PACKAGE "xf86-video-tseng"
