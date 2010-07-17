@@ -40,8 +40,7 @@
 #include "xf86Modes.h"
 #include "xf86RandR12.h"
 #include "X11/extensions/render.h"
-#define DPMS_SERVER
-#include "X11/extensions/dpms.h"
+#include "X11/extensions/dpmsconst.h"
 #include "X11/Xatom.h"
 
 /* borrowed from composite extension, move to Render and publish? */
@@ -77,13 +76,13 @@ xf86RotateCrtcRedisplay (xf86CrtcPtr crtc, RegionPtr region)
 {
     ScrnInfoPtr		scrn = crtc->scrn;
     ScreenPtr		screen = scrn->pScreen;
-    WindowPtr		root = WindowTable[screen->myNum];
+    WindowPtr		root = screen->root;
     PixmapPtr		dst_pixmap = crtc->rotatedPixmap;
-    PictFormatPtr	format = compWindowFormat (WindowTable[screen->myNum]);
+    PictFormatPtr	format = compWindowFormat (screen->root);
     int			error;
     PicturePtr		src, dst;
-    int			n = REGION_NUM_RECTS(region);
-    BoxPtr		b = REGION_RECTS(region);
+    int			n = RegionNumRects(region);
+    BoxPtr		b = RegionRects(region);
     XID			include_inferiors = IncludeInferiors;
     
     src = CreatePicture (None,
@@ -146,37 +145,6 @@ xf86RotateCrtcRedisplay (xf86CrtcPtr crtc, RegionPtr region)
 }
 
 static void
-xf86CrtcShadowClear (xf86CrtcPtr crtc)
-{
-    PixmapPtr		dst_pixmap = crtc->rotatedPixmap;
-    ScrnInfoPtr		scrn = crtc->scrn;
-    ScreenPtr		screen = scrn->pScreen;
-    PicturePtr		dst;
-    PictFormatPtr	format = compWindowFormat (WindowTable[screen->myNum]);
-    static xRenderColor black = { 0, 0, 0, 0 };
-    xRectangle		rect;
-    int			error;
-
-    if (!dst_pixmap)
-	return;
-    dst = CreatePicture (None,
-			 &dst_pixmap->drawable,
-			 format,
-			 0L,
-			 NULL,
-			 serverClient,
-			 &error);
-    if (!dst)
-	return;
-    rect.x = 0;
-    rect.y = 0;
-    rect.width = dst_pixmap->drawable.width;
-    rect.height = dst_pixmap->drawable.height;
-    CompositeRects (PictOpSrc, dst, &black, 1, &rect);
-    FreePicture (dst, None);
-}
-
-static void
 xf86CrtcDamageShadow (xf86CrtcPtr crtc)
 {
     ScrnInfoPtr	pScrn = crtc->scrn;
@@ -199,10 +167,10 @@ xf86CrtcDamageShadow (xf86CrtcPtr crtc)
     if (damage_box.y1 < 0) damage_box.y1 = 0;
     if (damage_box.x2 > pScreen->width) damage_box.x2 = pScreen->width;
     if (damage_box.y2 > pScreen->height) damage_box.y2 = pScreen->height;
-    REGION_INIT (pScreen, &damage_region, &damage_box, 1);
+    RegionInit(&damage_region, &damage_box, 1);
     DamageRegionAppend (&(*pScreen->GetScreenPixmap)(pScreen)->drawable,
 			&damage_region);
-    REGION_UNINIT (pScreen, &damage_region);
+    RegionUninit(&damage_region);
     crtc->shadowClear = TRUE;
 }
 
@@ -229,6 +197,7 @@ xf86RotatePrepare (ScreenPtr pScreen)
 		DamageRegister (&(*pScreen->GetScreenPixmap)(pScreen)->drawable,
 				xf86_config->rotation_damage);
 		xf86_config->rotation_damage_registered = TRUE;
+		EnableLimitedSchedulingLatency();
 	    }
 	    
 	    xf86CrtcDamageShadow (crtc);
@@ -248,7 +217,7 @@ xf86RotateRedisplay(ScreenPtr pScreen)
 	return FALSE;
     xf86RotatePrepare (pScreen);
     region = DamageRegion(damage);
-    if (REGION_NOTEMPTY(pScreen, region)) 
+    if (RegionNotEmpty(region))
     {
 	int			c;
 	SourceValidateProcPtr	SourceValidate;
@@ -271,14 +240,14 @@ xf86RotateRedisplay(ScreenPtr pScreen)
 		RegionRec   crtc_damage;
 
 		/* compute portion of damage that overlaps crtc */
-		REGION_INIT(pScreen, &crtc_damage, &crtc->bounds, 1);
-		REGION_INTERSECT (pScreen, &crtc_damage, &crtc_damage, region);
+		RegionInit(&crtc_damage, &crtc->bounds, 1);
+		RegionIntersect(&crtc_damage, &crtc_damage, region);
 		
 		/* update damaged region */
-		if (REGION_NOTEMPTY(pScreen, &crtc_damage))
+		if (RegionNotEmpty(&crtc_damage))
     		    xf86RotateCrtcRedisplay (crtc, &crtc_damage);
 		
-		REGION_UNINIT (pScreen, &crtc_damage);
+		RegionUninit(&crtc_damage);
 	    }
 	}
 	pScreen->SourceValidate = SourceValidate;
@@ -294,17 +263,14 @@ xf86RotateBlockHandler(int screenNum, pointer blockData,
     ScreenPtr		pScreen = screenInfo.screens[screenNum];
     ScrnInfoPtr		pScrn = xf86Screens[screenNum];
     xf86CrtcConfigPtr   xf86_config = XF86_CRTC_CONFIG_PTR(pScrn);
+    Bool		rotation_active;
 
+    rotation_active = xf86RotateRedisplay(pScreen);
     pScreen->BlockHandler = xf86_config->BlockHandler;
     (*pScreen->BlockHandler) (screenNum, blockData, pTimeout, pReadmask);
-    if (xf86RotateRedisplay(pScreen))
-    {
-	/* Re-wrap if rotation is still happening */
-	xf86_config->BlockHandler = pScreen->BlockHandler;
-	pScreen->BlockHandler = xf86RotateBlockHandler;
-    } else {
-	xf86_config->BlockHandler = NULL;
-    }
+    /* cannot avoid re-wrapping until all wrapping is audited */
+    xf86_config->BlockHandler = pScreen->BlockHandler;
+    pScreen->BlockHandler = xf86RotateBlockHandler;
 }
 
 void
@@ -338,6 +304,7 @@ xf86RotateDestroy (xf86CrtcPtr crtc)
 	    DamageUnregister (&(*pScreen->GetScreenPixmap)(pScreen)->drawable,
 			      xf86_config->rotation_damage);
 	    xf86_config->rotation_damage_registered = FALSE;
+	    DisableLimitedSchedulingLatency();
 	}
 	DamageDestroy (xf86_config->rotation_damage);
 	xf86_config->rotation_damage = NULL;
@@ -438,8 +405,7 @@ xf86CrtcRotate (xf86CrtcPtr crtc)
 	 */
 	xf86RotateDestroy (crtc);
 	crtc->transform_in_use = FALSE;
-	if (new_params)
-	    xfree (new_params);
+	free(new_params);
 	new_params = NULL;
 	new_nparams = 0;
 	new_filter = NULL;
@@ -500,7 +466,7 @@ xf86CrtcRotate (xf86CrtcPtr crtc)
 	if (transform)
 	{
 	    if (transform->nparams) {
-		new_params = xalloc (transform->nparams * sizeof (xFixed));
+		new_params = malloc(transform->nparams * sizeof (xFixed));
 		if (new_params) {
 		    memcpy (new_params, transform->params,
 			    transform->nparams * sizeof (xFixed));
@@ -539,8 +505,7 @@ xf86CrtcRotate (xf86CrtcPtr crtc)
     crtc->crtc_to_framebuffer = crtc_to_fb;
     crtc->f_crtc_to_framebuffer = f_crtc_to_fb;
     crtc->f_framebuffer_to_crtc = f_fb_to_crtc;
-    if (crtc->params)
-	xfree (crtc->params);
+    free(crtc->params);
     crtc->params = new_params;
     crtc->nparams = new_nparams;
     crtc->filter = new_filter;

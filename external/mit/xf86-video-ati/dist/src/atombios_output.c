@@ -1801,8 +1801,12 @@ atombios_output_mode_set(xf86OutputPtr output,
     case ENCODER_OBJECT_ID_INTERNAL_DAC2:
     case ENCODER_OBJECT_ID_INTERNAL_KLDSCP_DAC2:
 	atombios_output_dac_setup(output, ATOM_ENABLE);
-	if (radeon_output->active_device & (ATOM_DEVICE_TV_SUPPORT | ATOM_DEVICE_CV_SUPPORT))
-	    atombios_output_tv_setup(output, ATOM_ENABLE);
+	if (radeon_output->devices & (ATOM_DEVICE_TV_SUPPORT | ATOM_DEVICE_CV_SUPPORT)) {
+		if (radeon_output->active_device & (ATOM_DEVICE_TV_SUPPORT | ATOM_DEVICE_CV_SUPPORT))
+			atombios_output_tv_setup(output, ATOM_ENABLE);
+		else
+			atombios_output_tv_setup(output, ATOM_DISABLE);
+	}
 	break;
     }
     atombios_apply_output_quirks(output, adjusted_mode);

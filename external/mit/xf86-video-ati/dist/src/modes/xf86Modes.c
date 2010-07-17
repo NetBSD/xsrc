@@ -48,8 +48,6 @@ extern XF86ConfigPtr xf86configptr;
 
 /**
  * Calculates the horizontal sync rate of a mode.
- *
- * Exact copy of xf86Mode.c's.
  */
 double
 xf86ModeHSync(const DisplayModeRec *mode)
@@ -66,8 +64,6 @@ xf86ModeHSync(const DisplayModeRec *mode)
 
 /**
  * Calculates the vertical refresh rate of a mode.
- *
- * Exact copy of xf86Mode.c's.
  */
 double
 xf86ModeVRefresh(const DisplayModeRec *mode)
@@ -123,7 +119,7 @@ unsigned int
 xf86ModeBandwidth(DisplayModePtr mode, int depth)
 {
     float a_active, a_total, active_percent, pixels_per_second;
-    int bytes_per_pixel = (depth + 7) / 8;
+    int bytes_per_pixel = bits_to_bytes(depth);
 
     if (!mode->HTotal || !mode->VTotal || !mode->Clock)
 	return 0;
@@ -140,10 +136,12 @@ xf86ModeBandwidth(DisplayModePtr mode, int depth)
 void
 xf86SetModeDefaultName(DisplayModePtr mode)
 {
-    if (mode->name != NULL)
-	xfree(mode->name);
+    Bool interlaced = !!(mode->Flags & V_INTERLACE);
 
-    mode->name = XNFprintf("%dx%d", mode->HDisplay, mode->VDisplay);
+    free(mode->name);
+
+    mode->name = XNFprintf("%dx%d%s", mode->HDisplay, mode->VDisplay,
+			   interlaced ? "i" : "");
 }
 
 /*
@@ -151,8 +149,6 @@ xf86SetModeDefaultName(DisplayModePtr mode)
  *
  * Initialises the Crtc parameters for a mode.  The initialisation includes
  * adjustments for interlaced and double scan modes.
- *
- * Exact copy of xf86Mode.c's.
  */
 void
 xf86SetModeCrtc(DisplayModePtr p, int adjustFlags)
@@ -260,8 +256,6 @@ xf86DuplicateModes(ScrnInfoPtr pScrn, DisplayModePtr modeList)
  *
  * This doesn't use Crtc values, as it might be used on ModeRecs without the
  * Crtc values set.  So, it's assumed that the other numbers are enough.
- *
- * This isn't in xf86Modes.c, but it might deserve to be there.
  */
 Bool
 xf86ModesEqual(const DisplayModeRec *pMode1, const DisplayModeRec *pMode2)
@@ -285,7 +279,6 @@ xf86ModesEqual(const DisplayModeRec *pMode1, const DisplayModeRec *pMode2)
      }
 }
 
-/* exact copy of xf86Mode.c */
 static void
 add(char **p, char *new)
 {
@@ -296,8 +289,6 @@ add(char **p, char *new)
 
 /**
  * Print out a modeline.
- *
- * Convenient VRefresh printing was added, though, compared to xf86Mode.c
  */
 void
 xf86PrintModeline(int scrnIndex,DisplayModePtr mode)
@@ -333,7 +324,7 @@ xf86PrintModeline(int scrnIndex,DisplayModePtr mode)
 		   mode->HSyncStart, mode->HSyncEnd, mode->HTotal,
 		   mode->VDisplay, mode->VSyncStart, mode->VSyncEnd,
 		   mode->VTotal, flags, xf86ModeHSync(mode));
-    xfree(flags);
+    free(flags);
 }
 #endif /* XORG_VERSION_CURRENT <= 7.2.99.2 */
 
@@ -541,17 +532,9 @@ xf86ModeIsReduced(const DisplayModeRec *mode)
 void
 xf86ValidateModesReducedBlanking(ScrnInfoPtr pScrn, DisplayModePtr modeList)
 {
-    DisplayModePtr mode;
-
-    for (mode = modeList; mode != NULL; mode = mode->next) {
-	/* gratuitous duplication from pre-randr validation code */
-	if ((((mode->HDisplay * 5 / 4) & ~0x07) > mode->HTotal) &&
-	    ((mode->HTotal - mode->HDisplay) == 160) &&
-	    ((mode->HSyncEnd - mode->HDisplay) == 80) &&
-	    ((mode->HSyncEnd - mode->HSyncStart) == 32) &&
-	    ((mode->VSyncStart - mode->VDisplay) == 3))
-	    mode->status = MODE_NO_REDUCED;
-    }
+    for (; modeList != NULL; modeList = modeList->next)
+	if (xf86ModeIsReduced(modeList))
+	    modeList->status = MODE_NO_REDUCED;
 }
 
 /**
@@ -624,13 +607,13 @@ xf86GetConfigModes (XF86ConfModeLinePtr conf_mode)
     
     for (; conf_mode; conf_mode = (XF86ConfModeLinePtr) conf_mode->list.next)
     {
-        mode = xcalloc(1, sizeof(DisplayModeRec));
+        mode = calloc(1, sizeof(DisplayModeRec));
 	if (!mode)
 	    continue;
         mode->name       = xstrdup(conf_mode->ml_identifier);
 	if (!mode->name)
 	{
-	    xfree (mode);
+	    free(mode);
 	    continue;
 	}
 	mode->type       = 0;
@@ -707,4 +690,38 @@ xf86GetDefaultModes (void)
 	head = xf86ModesAdd(head, mode);
     }
     return head;
+}
+
+/*
+ * Walk a mode list and prune out duplicates.  Will preserve the preferred
+ * mode of an otherwise-duplicate pair.
+ *
+ * Probably best to call this on lists that are all of a single class
+ * (driver, default, user, etc.), otherwise, which mode gets deleted is
+ * not especially well defined.
+ *
+ * Returns the new list.
+ */
+
+DisplayModePtr
+xf86PruneDuplicateModes(DisplayModePtr modes)
+{
+    DisplayModePtr m, n, o;
+
+top:
+    for (m = modes; m; m = m->next) {
+	for (n = m->next; n; n = o) {
+	    o = n->next;
+	    if (xf86ModesEqual(m, n)) {
+		if (n->type & M_T_PREFERRED) {
+		    xf86DeleteMode(&modes, m);
+		    goto top;
+		}
+		else
+		    xf86DeleteMode(&modes, n);
+	    }
+	}
+    }
+
+    return modes;
 }

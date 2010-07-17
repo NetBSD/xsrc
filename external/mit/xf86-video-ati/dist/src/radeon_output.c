@@ -418,7 +418,7 @@ radeon_ddc_connected(xf86OutputPtr output)
 	    if (!xf86ReturnOptValBool(info->Options, OPTION_IGNORE_EDID, FALSE))
 		xf86OutputSetEDID(output, MonInfo);
 	} else
-	    xfree(MonInfo);
+	    free(MonInfo);
     } else
 	MonType = MT_NONE;
 
@@ -1295,7 +1295,7 @@ static void
 radeon_destroy (xf86OutputPtr output)
 {
     if (output->driver_private)
-        xfree(output->driver_private);
+        free(output->driver_private);
 }
 
 static void

@@ -39,4 +39,10 @@ Bool radeon_dri2_screen_init(ScreenPtr pScreen);
 void radeon_dri2_close_screen(ScreenPtr pScreen);
 #endif
 
+int drmmode_get_crtc_id(xf86CrtcPtr crtc);
+xf86CrtcPtr radeon_covering_crtc(ScrnInfoPtr pScrn, BoxPtr box,
+                                 xf86CrtcPtr desired, BoxPtr crtc_box_ret);
+void radeon_dri2_frame_event_handler(unsigned int frame, unsigned int tv_sec,
+                                     unsigned int tv_usec, void *event_data);
+
 #endif

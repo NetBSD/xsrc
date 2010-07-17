@@ -78,6 +78,7 @@ AM_CFLAGS = \
             @XORG_CFLAGS@ \
             @DRI_CFLAGS@ \
             @XMODES_CFLAGS@ \
+            @LIBUDEV_CFLAGS@ \
             -DDISABLE_EASF \
             -DENABLE_ALL_SERVICE_FUNCTIONS \
             -DATOM_BIOS \
@@ -89,6 +90,10 @@ INCLUDES = -I$(srcdir)/AtomBios/includes
 if XSERVER_LIBPCIACCESS
 ati_drv_la_LIBADD = $(PCIACCESS_LIBS)
 radeon_drv_la_LIBADD += $(PCIACCESS_LIBS)
+endif
+
+if LIBUDEV
+radeon_drv_la_LIBADD += $(LIBUDEV_LIBS)
 endif
 
 ati_drv_la_LTLIBRARIES = ati_drv.la

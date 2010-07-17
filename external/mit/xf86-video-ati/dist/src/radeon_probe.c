@@ -100,7 +100,7 @@ static Bool radeon_kernel_mode_enabled(ScrnInfoPtr pScrn, struct pci_device *pci
 
     busIdString = DRICreatePCIBusID(pci_dev);
     ret = drmCheckModesettingSupported(busIdString);
-    xfree(busIdString);
+    free(busIdString);
     if (ret) {
       xf86DrvMsgVerb(pScrn->scrnIndex, X_INFO, 0,
 		   "[KMS] drm report modesetting isn't supported.\n");
@@ -195,7 +195,7 @@ radeon_get_scrninfo(int entity_num, void *pci_dev)
         }
     }
 
-    xfree(pEnt);
+    free(pEnt);
 
     return TRUE;
 }
@@ -239,8 +239,8 @@ RADEONProbe(DriverPtr drv, int flags)
 	}
     }
 
-    xfree(usedChips);
-    xfree(devSections);
+    free(usedChips);
+    free(devSections);
 
     return foundScreen;
 }

@@ -22,8 +22,8 @@
  * authorization from the author.
  *
  * $Log: theatre200.c,v $
- * Revision 1.1.1.1  2008/08/02 05:10:35  mrg
- * initial import of xf86-video-ati-6.9.0
+ * Revision 1.1.1.2  2010/07/17 06:31:47  mrg
+ * initial import of xf86-video-ati-6.13.1
  *
  * Revision 1.6  2006/03/22 22:30:14  krh
  * 2006-03-22  Kristian Høgsberg  <krh@redhat.com>
@@ -321,10 +321,10 @@ fail_exit:
 	curr_seg = seg_list;
 	while(curr_seg)
 	{
-		Xfree(curr_seg->data);
+		free(curr_seg->data);
 		prev_seg = curr_seg;
 		curr_seg = curr_seg->next;
-		Xfree(prev_seg);
+		free(prev_seg);
 	}
 	fclose(file);
 
@@ -338,10 +338,10 @@ static void microc_clean(struct rt200_microc_data* microc_datap, int screen)
 
 	while(seg_list)
 	{
-		Xfree(seg_list->data);
+		free(seg_list->data);
 		prev_seg = seg_list;
 		seg_list = seg_list->next;
-		Xfree(prev_seg);
+		free(prev_seg);
 	}
 }
 

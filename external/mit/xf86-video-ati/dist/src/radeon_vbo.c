@@ -97,19 +97,19 @@ void radeon_vbo_free_lists(ScrnInfoPtr pScrn)
     foreach_s(dma_bo, temp, &accel_state->bo_free) {
 	remove_from_list(dma_bo);
 	radeon_bo_unref(dma_bo->bo);
-	xfree(dma_bo);
+	free(dma_bo);
     }
 
     foreach_s(dma_bo, temp, &accel_state->bo_wait) {
 	remove_from_list(dma_bo);
 	radeon_bo_unref(dma_bo->bo);
-	xfree(dma_bo);
+	free(dma_bo);
     }
 
     foreach_s(dma_bo, temp, &accel_state->bo_reserved) {
 	remove_from_list(dma_bo);
 	radeon_bo_unref(dma_bo->bo);
-	xfree(dma_bo);
+	free(dma_bo);
     }
 }
 
@@ -126,7 +126,7 @@ void radeon_vbo_flush_bos(ScrnInfoPtr pScrn)
 	    ErrorF("leaking dma buffer\n");
 	    while ((dma_bo->bo = radeon_bo_unref(dma_bo->bo))) {}
 	    remove_from_list(dma_bo);
-	    xfree(dma_bo);
+	    free(dma_bo);
 	    continue;
 	}
 
@@ -157,7 +157,7 @@ void radeon_vbo_flush_bos(ScrnInfoPtr pScrn)
 
 	remove_from_list(dma_bo);
 	radeon_bo_unref(dma_bo->bo);
-	xfree(dma_bo);
+	free(dma_bo);
     }
 }
 
@@ -169,7 +169,7 @@ static struct radeon_bo *radeon_vbo_get_bo(ScrnInfoPtr pScrn)
     struct radeon_bo *bo;
 
     if (is_empty_list(&accel_state->bo_free)) {
-	dma_bo = xcalloc(1, sizeof(struct radeon_dma_bo));
+	dma_bo = calloc(1, sizeof(struct radeon_dma_bo));
 	if (!dma_bo)
 	    return NULL;
 

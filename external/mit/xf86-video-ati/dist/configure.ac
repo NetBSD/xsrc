@@ -22,7 +22,7 @@
 
 AC_PREREQ(2.57)
 AC_INIT([xf86-video-ati],
-        6.13.0,
+        6.13.1,
         [https://bugs.freedesktop.org/enter_bug.cgi?product=xorg],
         xf86-video-ati)
 
@@ -152,6 +152,10 @@ if test "$DRI" = yes; then
                         else
                                 DRM_MODE=no
 			fi
+			PKG_CHECK_MODULES(LIBUDEV, [libudev], [LIBUDEV=yes], [LIBUDEV=no])
+			if test "x$LIBUDEV" = xyes; then
+			       AC_DEFINE(HAVE_LIBUDEV, 1,[libudev support])
+			fi
         	fi
 	fi
 	CFLAGS="$save_CFLAGS"
@@ -159,6 +163,7 @@ else
 	DRM_MODE=no
 fi
 AM_CONDITIONAL(DRM_MODE, test x$DRM_MODE = xyes)
+AM_CONDITIONAL(LIBUDEV, test x$LIBUDEV = xyes)
 
 save_CFLAGS="$CFLAGS"
 CFLAGS="$XORG_CFLAGS"
@@ -358,6 +363,8 @@ AC_SUBST([XORG_CFLAGS])
 AC_SUBST([DRI_CFLAGS])
 AC_SUBST([LIBDRM_RADEON_CFLAGS])
 AC_SUBST([LIBDRM_RADEON_LIBS])
+AC_SUBST([LIBUDEV_CFLAGS])
+AC_SUBST([LIBUDEV_LIBS])
 AC_SUBST([moduledir])
 
 DRIVER_NAME=ati
