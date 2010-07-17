@@ -343,7 +343,7 @@ radeon_crtc_set_cursor_colors (xf86CrtcPtr crtc, int bg, int fg)
     ScrnInfoPtr pScrn = crtc->scrn;
     RADEONCrtcPrivatePtr radeon_crtc = crtc->driver_private;
     RADEONInfoPtr info = RADEONPTR(pScrn);
-    uint32_t *pixels = (uint32_t *)(pointer)(info->FB + radeon_crtc->cursor_offset);
+    uint32_t *pixels = (uint32_t *)(pointer)(info->FB + pScrn->fbOffset + radeon_crtc->cursor_offset);
     int            pixel, i;
     CURSOR_SWAPPING_DECL_MMIO
 
@@ -386,7 +386,7 @@ radeon_crtc_load_cursor_argb (xf86CrtcPtr crtc, CARD32 *image)
     RADEONCrtcPrivatePtr radeon_crtc = crtc->driver_private;
     RADEONInfoPtr  info = RADEONPTR(pScrn);
     CURSOR_SWAPPING_DECL_MMIO
-    uint32_t *d = (uint32_t *)(pointer)(info->FB + radeon_crtc->cursor_offset);
+    uint32_t *d = (uint32_t *)(pointer)(info->FB + pScrn->fbOffset + radeon_crtc->cursor_offset);
 
     RADEONCTRACE(("RADEONLoadCursorARGB\n"));
 
