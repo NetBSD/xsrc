@@ -1403,7 +1403,7 @@ int R600_comp_vs(RADEONChipFamily ChipSet, uint32_t* shader)
                             WHOLE_QUAD_MODE(0),
                             BARRIER(0));
     /* 2 */
-    shader[i++] = CF_DWORD0(0);
+    shader[i++] = CF_DWORD0(ADDR(0));
     shader[i++] = CF_DWORD1(POP_COUNT(0),
                             CF_CONST(0),
                             COND(SQ_CF_COND_ACTIVE),

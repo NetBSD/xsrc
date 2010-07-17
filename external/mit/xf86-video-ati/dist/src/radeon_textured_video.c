@@ -769,8 +769,8 @@ RADEONSetupImageTexturedVideo(ScreenPtr pScreen)
     int i;
     int num_texture_ports = 16;
 
-    adapt = xcalloc(1, sizeof(XF86VideoAdaptorRec) + num_texture_ports *
-		    (sizeof(RADEONPortPrivRec) + sizeof(DevUnion)));
+    adapt = calloc(1, sizeof(XF86VideoAdaptorRec) + num_texture_ports *
+		   (sizeof(RADEONPortPrivRec) + sizeof(DevUnion)));
     if (adapt == NULL)
 	return NULL;
 
@@ -843,7 +843,7 @@ RADEONSetupImageTexturedVideo(ScreenPtr pScreen)
 	pPriv->videoStatus = 0;
 	pPriv->currentBuffer = 0;
 	pPriv->doubleBuffer = 0;
-	pPriv->bicubic_state = BICUBIC_AUTO;
+	pPriv->bicubic_state = BICUBIC_OFF;
 	pPriv->vsync = TRUE;
 	pPriv->brightness = 0;
 	pPriv->contrast = 0;

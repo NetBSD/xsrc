@@ -328,10 +328,6 @@ void RADEONEngineReset(ScrnInfoPtr pScrn)
 	INREG(RADEON_RBBM_SOFT_RESET);
     }
 
-    OUTREG(RADEON_HOST_PATH_CNTL, host_path_cntl | RADEON_HDP_SOFT_RESET);
-    INREG(RADEON_HOST_PATH_CNTL);
-    OUTREG(RADEON_HOST_PATH_CNTL, host_path_cntl);
-
     if (!IS_R300_VARIANT && !IS_AVIVO_VARIANT)
 	OUTREG(RADEON_RBBM_SOFT_RESET, rbbm_soft_reset);
 
@@ -499,9 +495,11 @@ void RADEONEngineInit(ScrnInfoPtr pScrn)
 	    }
 	}
 
-	/* RV410 SE cards only have 1 quadpipe */
+	/* SE cards only have 1 quadpipe */
 	if ((info->Chipset == PCI_CHIP_RV410_5E4C) ||
-	    (info->Chipset == PCI_CHIP_RV410_5E4F))
+	    (info->Chipset == PCI_CHIP_RV410_5E4F) ||
+	    (info->Chipset == PCI_CHIP_R300_AD) ||
+	    (info->Chipset == PCI_CHIP_R350_AH))
 	    info->accel_state->num_gb_pipes = 1;
 
 	if (IS_R300_3D || IS_R500_3D)
@@ -571,6 +569,18 @@ uint32_t radeonGetPixmapOffset(PixmapPtr pPix)
     }
     offset += info->fbLocation + pScrn->fbOffset;
     return offset;
+}
+
+int radeon_cs_space_remaining(ScrnInfoPtr pScrn)
+{
+    RADEONInfoPtr info = RADEONPTR(pScrn);
+
+#ifdef XF86DRM_MODE
+    if (info->cs)
+	return (info->cs->ndw - info->cs->cdw);
+    else
+#endif
+        return (info->cp->indirectBuffer->total - info->cp->indirectBuffer->used) / (int)sizeof(uint32_t);
 }
 
 #define ACCEL_MMIO

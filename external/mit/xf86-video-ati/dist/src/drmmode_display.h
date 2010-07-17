@@ -30,6 +30,9 @@
 #ifdef XF86DRM_MODE
 
 #include "xf86drmMode.h"
+#ifdef HAVE_LIBUDEV
+#include "libudev.h"
+#endif
 
 #include "radeon_probe.h"
 
@@ -40,12 +43,19 @@ typedef struct {
   drmModeFBPtr mode_fb;
   int cpp;
   struct radeon_bo_manager *bufmgr;
+  ScrnInfoPtr scrn;
+#ifdef HAVE_LIBUDEV
+  struct udev_monitor *uevent_monitor;
+  InputHandlerProc uevent_handler;
+#endif
+  drmEventContext event_context;
+  int flip_count;
 } drmmode_rec, *drmmode_ptr;
 
 typedef struct {
-
     drmmode_ptr drmmode;
     drmModeCrtcPtr mode_crtc;
+    int hw_id;
     struct radeon_bo *cursor_bo;
     struct radeon_bo *rotate_bo;
     unsigned rotate_fb_id;
@@ -81,6 +91,10 @@ void drmmode_adjust_frame(ScrnInfoPtr pScrn, drmmode_ptr drmmode, int x, int y, 
 extern Bool drmmode_set_desired_modes(ScrnInfoPtr pScrn, drmmode_ptr drmmode);
 extern void drmmode_copy_fb(ScrnInfoPtr pScrn, drmmode_ptr drmmode);
 extern Bool drmmode_setup_colormap(ScreenPtr pScreen, ScrnInfoPtr pScrn);
+
+extern void drmmode_uevent_init(ScrnInfoPtr scrn, drmmode_ptr drmmode);
+extern void drmmode_uevent_fini(ScrnInfoPtr scrn, drmmode_ptr drmmode);
+
 #endif
 
 #endif

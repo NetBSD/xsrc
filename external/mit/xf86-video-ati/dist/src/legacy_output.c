@@ -165,7 +165,7 @@ RADEONGetExtTMDSInfo(ScrnInfoPtr pScrn, radeon_dvo_ptr dvo)
 	    dvo->DVOChip =
 		RADEONDVODeviceInit(dvo->pI2CBus, dvo->dvo_i2c_slave_addr);
 	    if (!dvo->DVOChip)
-		xfree(dvo->pI2CBus);
+		free(dvo->pI2CBus);
 	}
     }
 }
@@ -442,7 +442,7 @@ RADEONDVODeviceInit(I2CBusPtr b, I2CSlaveAddr addr)
 {
     I2CDevPtr dvo;
 
-    dvo = xcalloc(1, sizeof(I2CDevRec));
+    dvo = calloc(1, sizeof(I2CDevRec));
     if (dvo == NULL)
 	return NULL;
 
@@ -458,7 +458,7 @@ RADEONDVODeviceInit(I2CBusPtr b, I2CSlaveAddr addr)
 	return dvo;
     }
 
-    xfree(dvo);
+    free(dvo);
     return NULL;
 }
 

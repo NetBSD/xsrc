@@ -118,6 +118,8 @@ typedef struct {
     int drw_x, drw_y;
     int src_x, src_y;
     int vsync;
+    Bool is_planar;
+    int vtx_count;
 
     struct radeon_bo *src_bo[2];
 } RADEONPortPrivRec, *RADEONPortPrivPtr;

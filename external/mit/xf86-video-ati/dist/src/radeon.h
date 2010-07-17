@@ -543,13 +543,8 @@ typedef struct {
 } RADEONConfigPrivRec, *RADEONConfigPrivPtr;
 
 typedef struct {
-#ifdef PER_CONTEXT_SAREA
-    drm_context_t ctx_id;
-    drm_handle_t sarea_handle;
-#else
     /* Nothing here yet */
     int dummy;
-#endif
 } RADEONDRIContextRec, *RADEONDRIContextPtr;
 
 struct radeon_dri {
@@ -645,10 +640,6 @@ struct radeon_dri {
     void              *pciGartBackup;
 
     int               irq;
-
-#ifdef PER_CONTEXT_SAREA
-    int               perctx_sarea_size;
-#endif
 
 #ifdef USE_XAA
     uint32_t          frontPitchOffset;
@@ -971,7 +962,6 @@ typedef struct {
     unsigned int xv_max_height;
 
     /* general */
-    Bool              showCache;
     OptionInfoPtr     Options;
 
     DisplayModePtr currentMode, savedCurrentMode;
@@ -1042,7 +1032,7 @@ typedef struct {
     struct radeon_cs_manager *csm;
     struct radeon_cs *cs;
 
-    struct radeon_bo *cursor_bo[2];
+    struct radeon_bo *cursor_bo[6];
     uint64_t vram_size;
     uint64_t gart_size;
     drmmode_rec drmmode;
@@ -1138,6 +1128,7 @@ extern Bool RADEONSetupMemXAA_DRI(int scrnIndex, ScreenPtr pScreen);
 #  endif
 uint32_t radeonGetPixmapOffset(PixmapPtr pPix);
 #endif
+extern int radeon_cs_space_remaining(ScrnInfoPtr pScrn);
 
 #ifdef USE_XAA
 /* radeon_accelfuncs.c */
@@ -1176,7 +1167,7 @@ extern void radeon_crtc_load_lut(xf86CrtcPtr crtc);
 extern void radeon_crtc_modeset_ioctl(xf86CrtcPtr crtc, Bool post);
 extern Bool RADEONAllocateControllers(ScrnInfoPtr pScrn, int mask);
 extern void RADEONBlank(ScrnInfoPtr pScrn);
-extern void RADEONComputePLL(ScrnInfoPtr pScrn,
+extern void RADEONComputePLL(xf86CrtcPtr crtc,
 			     RADEONPLLPtr pll, unsigned long freq,
 			     uint32_t *chosen_dot_clock_freq,
 			     uint32_t *chosen_feedback_div,
