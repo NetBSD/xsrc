@@ -21,6 +21,9 @@
 /* Define to 1 if you have the <inttypes.h> header file. */
 #define HAVE_INTTYPES_H 1
 
+/* libudev support */
+#undef HAVE_LIBUDEV
+
 /* Define to 1 if you have the <memory.h> header file. */
 #define HAVE_MEMORY_H 1
 
@@ -74,13 +77,13 @@
 #define PACKAGE_NAME "xf86-video-ati"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "xf86-video-ati 6.13.0"
+#define PACKAGE_STRING "xf86-video-ati 6.13.1"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "xf86-video-ati"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "6.13.0"
+#define PACKAGE_VERSION "6.13.1"
 
 /* Major version of this package */
 #define PACKAGE_VERSION_MAJOR 6
@@ -89,7 +92,7 @@
 #define PACKAGE_VERSION_MINOR 13
 
 /* Patch version of this package */
-#define PACKAGE_VERSION_PATCHLEVEL 0
+#define PACKAGE_VERSION_PATCHLEVEL 1
 
 /* Enable DRI2 code */
 /* #undef RADEON_DRI2 */
@@ -107,7 +110,7 @@
 #define USE_XAA 1
 
 /* Version number of package */
-#define VERSION "6.13.0"
+#define VERSION "6.13.1"
 
 /* Enable DRI driver support */
 #define XF86DRI 1
