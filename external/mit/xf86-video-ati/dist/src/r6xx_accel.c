@@ -1262,10 +1262,10 @@ void r600_finish_op(ScrnInfoPtr pScrn, int vtx_size)
 
 void r600_vb_no_space(ScrnInfoPtr pScrn, int vert_size)
 {
-#ifdef XF86DRM_MODE
     RADEONInfoPtr info = RADEONPTR(pScrn);
     struct radeon_accel_state *accel_state = info->accel_state; 
 
+#ifdef XF86DRM_MODE
     if (info->cs) {
 	if (accel_state->vb_bo) {
 	    if (accel_state->vb_start_op != accel_state->vb_offset) { 

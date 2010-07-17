@@ -119,7 +119,7 @@
 #define XF86DRI_DEVEL 1
 
 /* DRM kernel modesetting */
-#define XF86DRM_MODE 1
+/* #define XF86DRM_MODE 1 */
 
 /* X server has built-in mode code */
 #define XMODES 1
