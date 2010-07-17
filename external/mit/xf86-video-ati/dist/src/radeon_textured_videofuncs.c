@@ -87,8 +87,8 @@ do {								\
 
 #endif /* !ACCEL_CP */
 
-static void
-FUNC_NAME(RADEONDisplayTexturedVideo)(ScrnInfoPtr pScrn, RADEONPortPrivPtr pPriv)
+static Bool
+FUNC_NAME(RADEONPrepareTexturedVideo)(ScrnInfoPtr pScrn, RADEONPortPrivPtr pPriv)
 {
     RADEONInfoPtr info = RADEONPTR(pScrn);
     PixmapPtr pPixmap = pPriv->pPixmap;
@@ -97,10 +97,9 @@ FUNC_NAME(RADEONDisplayTexturedVideo)(ScrnInfoPtr pScrn, RADEONPortPrivPtr pPriv
     uint32_t txformat, txsize, txpitch, txoffset;
     uint32_t dst_pitch, dst_format;
     uint32_t colorpitch;
-    Bool isplanar = FALSE;
-    int dstxoff, dstyoff, pixel_shift, vtx_count;
-    BoxPtr pBox = REGION_RECTS(&pPriv->clip);
-    int nBox = REGION_NUM_RECTS(&pPriv->clip);
+    int pixel_shift;
+    int scissor_w = MIN(pPixmap->drawable.width, 2047);
+    int scissor_h = MIN(pPixmap->drawable.height, 2047);
     ACCEL_PREAMBLE();
 
 #ifdef XF86DRM_MODE
@@ -119,14 +118,14 @@ FUNC_NAME(RADEONDisplayTexturedVideo)(ScrnInfoPtr pScrn, RADEONPortPrivPtr pPriv
 	ret = radeon_cs_space_check(info->cs);
 	if (ret) {
 	    ErrorF("Not enough RAM to hw accel xv operation\n");
-	    return;
+	    return FALSE;
 	}
     }
 #endif
 
     pixel_shift = pPixmap->drawable.bitsPerPixel >> 4;
 
-    
+
 #ifdef USE_EXA
     if (info->useEXA) {
 	dst_pitch = exaGetPixmapPitch(pPixmap);
@@ -135,14 +134,6 @@ FUNC_NAME(RADEONDisplayTexturedVideo)(ScrnInfoPtr pScrn, RADEONPortPrivPtr pPriv
     {
         dst_pitch = pPixmap->devKind;
     }
-
-#ifdef COMPOSITE
-    dstxoff = -pPixmap->screen_x + pPixmap->drawable.x;
-    dstyoff = -pPixmap->screen_y + pPixmap->drawable.y;
-#else
-    dstxoff = 0;
-    dstyoff = 0;
-#endif
 
 #ifdef USE_EXA
     if (info->useEXA) {
@@ -176,13 +167,14 @@ FUNC_NAME(RADEONDisplayTexturedVideo)(ScrnInfoPtr pScrn, RADEONPortPrivPtr pPriv
 	dst_format = RADEON_COLOR_FORMAT_ARGB8888;
 	break;
     default:
-	return;
+	return FALSE;
     }
 
     if (pPriv->id == FOURCC_I420 || pPriv->id == FOURCC_YV12) {
-	isplanar = TRUE;
+	pPriv->is_planar = TRUE;
 	txformat = RADEON_TXFORMAT_Y8;
     } else {
+	pPriv->is_planar = FALSE;
 	if (pPriv->id == FOURCC_UYVY)
 	    txformat = RADEON_TXFORMAT_YVYU422;
 	else
@@ -208,11 +200,11 @@ FUNC_NAME(RADEONDisplayTexturedVideo)(ScrnInfoPtr pScrn, RADEONPortPrivPtr pPriv
 
     FINISH_ACCEL();
 
-    if (isplanar) {
+    if (pPriv->is_planar) {
 	/* need 2 texcoord sets (even though they are identical) due
 	   to denormalization! hw apparently can't premultiply
 	   same coord set by different texture size */
-	vtx_count = 6;
+	pPriv->vtx_count = 6;
 
 	txsize = (((((pPriv->w + 1 ) >> 1) - 1) & 0x7ff) |
 		  (((((pPriv->h + 1 ) >> 1) - 1) & 0x7ff) << RADEON_TEX_VSIZE_SHIFT));
@@ -307,7 +299,7 @@ FUNC_NAME(RADEONDisplayTexturedVideo)(ScrnInfoPtr pScrn, RADEONPortPrivPtr pPriv
 	OUT_ACCEL_REG(RADEON_PP_TEX_PITCH_2, txpitch);
 	FINISH_ACCEL();
     } else {
-	vtx_count = 4;
+	pPriv->vtx_count = 4;
 	BEGIN_ACCEL_RELOC(9, 1);
 
 	OUT_ACCEL_REG(RADEON_SE_VTX_FMT, (RADEON_SE_VTX_FMT_XY |
@@ -344,17 +336,12 @@ FUNC_NAME(RADEONDisplayTexturedVideo)(ScrnInfoPtr pScrn, RADEONPortPrivPtr pPriv
 	FINISH_ACCEL();
     }
 
-    {
-      int scissor_w, scissor_h;
-      scissor_w = MIN(pPixmap->drawable.width, 2047);
-      scissor_h = MIN(pPixmap->drawable.height, 2047);
+    BEGIN_ACCEL(2);
+    OUT_ACCEL_REG(RADEON_RE_TOP_LEFT, 0);
+    OUT_ACCEL_REG(RADEON_RE_WIDTH_HEIGHT, ((scissor_w << RADEON_RE_WIDTH_SHIFT) |
+					   (scissor_h << RADEON_RE_HEIGHT_SHIFT)));
+    FINISH_ACCEL();
 
-      BEGIN_ACCEL(2);
-      OUT_ACCEL_REG(RADEON_RE_TOP_LEFT, 0);
-      OUT_ACCEL_REG(RADEON_RE_WIDTH_HEIGHT, ((scissor_w << RADEON_RE_WIDTH_SHIFT) |
-					     (scissor_h << RADEON_RE_HEIGHT_SHIFT)));
-      FINISH_ACCEL();
-    }
     if (pPriv->vsync) {
 	xf86CrtcPtr crtc;
 	if (pPriv->desired_crtc)
@@ -371,6 +358,31 @@ FUNC_NAME(RADEONDisplayTexturedVideo)(ScrnInfoPtr pScrn, RADEONPortPrivPtr pPriv
 					  pPriv->drw_y - crtc->y,
 					  (pPriv->drw_y - crtc->y) + pPriv->dst_h);
     }
+
+    return TRUE;
+}
+
+static void
+FUNC_NAME(RADEONDisplayTexturedVideo)(ScrnInfoPtr pScrn, RADEONPortPrivPtr pPriv)
+{
+    RADEONInfoPtr info = RADEONPTR(pScrn);
+    PixmapPtr pPixmap = pPriv->pPixmap;
+    int dstxoff, dstyoff;
+    BoxPtr pBox = REGION_RECTS(&pPriv->clip);
+    int nBox = REGION_NUM_RECTS(&pPriv->clip);
+    ACCEL_PREAMBLE();
+
+#ifdef COMPOSITE
+    dstxoff = -pPixmap->screen_x + pPixmap->drawable.x;
+    dstyoff = -pPixmap->screen_y + pPixmap->drawable.y;
+#else
+    dstxoff = 0;
+    dstyoff = 0;
+#endif
+
+    if (!FUNC_NAME(RADEONPrepareTexturedVideo)(pScrn, pPriv))
+	return;
+
     /*
      * Rendering of the actual polygon is done in two different
      * ways depending on chip generation:
@@ -390,12 +402,26 @@ FUNC_NAME(RADEONDisplayTexturedVideo)(ScrnInfoPtr pScrn, RADEONPortPrivPtr pPriv
      *     the single triangle up to 2560/4021 pixels; above that we
      *     render as a quad.
      */
-
 #ifdef ACCEL_CP
-	BEGIN_RING(nBox * 3 * vtx_count + 5);
+    while (nBox) {
+	int draw_size = 3 * pPriv->vtx_count + 5;
+	int loop_boxes;
+
+	if (draw_size > radeon_cs_space_remaining(pScrn)) {
+	    if (info->cs)
+		radeon_cs_flush_indirect(pScrn);
+	    else
+		RADEONCPFlushIndirect(pScrn, 1);
+	    if (!FUNC_NAME(RADEONPrepareTexturedVideo)(pScrn, pPriv))
+		return;
+	}
+	loop_boxes = MIN(radeon_cs_space_remaining(pScrn) / draw_size, nBox);
+	nBox -= loop_boxes;
+
+	BEGIN_RING(loop_boxes * 3 * pPriv->vtx_count + 5);
 	OUT_RING(CP_PACKET3(RADEON_CP_PACKET3_3D_DRAW_IMMD,
-			    nBox * 3 * vtx_count + 1));
-	if (isplanar)
+			    loop_boxes * 3 * pPriv->vtx_count + 1));
+	if (pPriv->is_planar)
 	    OUT_RING(RADEON_CP_VC_FRMT_XY |
 		     RADEON_CP_VC_FRMT_ST0 |
 		     RADEON_CP_VC_FRMT_ST1);
@@ -406,15 +432,64 @@ FUNC_NAME(RADEONDisplayTexturedVideo)(ScrnInfoPtr pScrn, RADEONPortPrivPtr pPriv
 		 RADEON_CP_VC_CNTL_PRIM_WALK_RING |
 		 RADEON_CP_VC_CNTL_MAOS_ENABLE |
 		 RADEON_CP_VC_CNTL_VTX_FMT_RADEON_MODE |
-		 ((nBox * 3) << RADEON_CP_VC_CNTL_NUM_SHIFT));
-#else /* ACCEL_CP */
-	BEGIN_ACCEL(nBox * vtx_count * 3 + 2);
-	OUT_ACCEL_REG(RADEON_SE_VF_CNTL, (RADEON_VF_PRIM_TYPE_RECTANGLE_LIST |
-					  RADEON_VF_PRIM_WALK_DATA |
-					  RADEON_VF_RADEON_MODE |
-					  ((nBox * 3) << RADEON_VF_NUM_VERTICES_SHIFT)));
-#endif
+		 ((loop_boxes * 3) << RADEON_CP_VC_CNTL_NUM_SHIFT));
 
+	while (loop_boxes--) {
+	    int srcX, srcY, srcw, srch;
+	    int dstX, dstY, dstw, dsth;
+	    dstX = pBox->x1 + dstxoff;
+	    dstY = pBox->y1 + dstyoff;
+	    dstw = pBox->x2 - pBox->x1;
+	    dsth = pBox->y2 - pBox->y1;
+
+	    srcX = pPriv->src_x;
+	    srcX += ((pBox->x1 - pPriv->drw_x) *
+		     pPriv->src_w) / pPriv->dst_w;
+	    srcY = pPriv->src_y;
+	    srcY += ((pBox->y1 - pPriv->drw_y) *
+		     pPriv->src_h) / pPriv->dst_h;
+
+	    srcw = (pPriv->src_w * dstw) / pPriv->dst_w;
+	    srch = (pPriv->src_h * dsth) / pPriv->dst_h;
+
+
+	    if (pPriv->is_planar) {
+		/*
+		 * Just render a rect (using three coords).
+		 */
+		VTX_OUT_6((float)dstX,                     (float)(dstY + dsth),
+			  (float)srcX / pPriv->w,          (float)(srcY + srch) / pPriv->h,
+			  (float)srcX / pPriv->w,          (float)(srcY + srch) / pPriv->h);
+		VTX_OUT_6((float)(dstX + dstw),            (float)(dstY + dsth),
+			  (float)(srcX + srcw) / pPriv->w, (float)(srcY + srch) / pPriv->h,
+			  (float)(srcX + srcw) / pPriv->w, (float)(srcY + srch) / pPriv->h);
+		VTX_OUT_6((float)(dstX + dstw),            (float)dstY,
+			  (float)(srcX + srcw) / pPriv->w, (float)srcY / pPriv->h,
+			  (float)(srcX + srcw) / pPriv->w, (float)srcY / pPriv->h);
+	    } else {
+		/*
+		 * Just render a rect (using three coords).
+		 */
+		VTX_OUT_4((float)dstX,                     (float)(dstY + dsth),
+			  (float)srcX / pPriv->w,          (float)(srcY + srch) / pPriv->h);
+		VTX_OUT_4((float)(dstX + dstw),            (float)(dstY + dsth),
+			  (float)(srcX + srcw) / pPriv->w, (float)(srcY + srch) / pPriv->h);
+		VTX_OUT_4((float)(dstX + dstw),            (float)dstY,
+			  (float)(srcX + srcw) / pPriv->w, (float)srcY / pPriv->h);
+	    }
+
+	    pBox++;
+	}
+
+	OUT_ACCEL_REG(RADEON_WAIT_UNTIL, RADEON_WAIT_3D_IDLECLEAN);
+	ADVANCE_RING();
+    }
+#else /* ACCEL_CP */
+    BEGIN_ACCEL(nBox * pPriv->vtx_count * 3 + 2);
+    OUT_ACCEL_REG(RADEON_SE_VF_CNTL, (RADEON_VF_PRIM_TYPE_RECTANGLE_LIST |
+				      RADEON_VF_PRIM_WALK_DATA |
+				      RADEON_VF_RADEON_MODE |
+				      ((nBox * 3) << RADEON_VF_NUM_VERTICES_SHIFT)));
     while (nBox--) {
 	int srcX, srcY, srcw, srch;
 	int dstX, dstY, dstw, dsth;
@@ -434,7 +509,7 @@ FUNC_NAME(RADEONDisplayTexturedVideo)(ScrnInfoPtr pScrn, RADEONPortPrivPtr pPriv
 	srch = (pPriv->src_h * dsth) / pPriv->dst_h;
 
 
-	if (isplanar) {
+	if (pPriv->is_planar) {
 	    /*
 	     * Just render a rect (using three coords).
 	     */
@@ -463,17 +538,14 @@ FUNC_NAME(RADEONDisplayTexturedVideo)(ScrnInfoPtr pScrn, RADEONPortPrivPtr pPriv
     }
 
     OUT_ACCEL_REG(RADEON_WAIT_UNTIL, RADEON_WAIT_3D_IDLECLEAN);
-#ifdef ACCEL_CP
-	ADVANCE_RING();
-#else
-	FINISH_ACCEL();
+    FINISH_ACCEL();
 #endif /* !ACCEL_CP */
 
     DamageDamageRegion(pPriv->pDraw, &pPriv->clip);
 }
 
-static void
-FUNC_NAME(R200DisplayTexturedVideo)(ScrnInfoPtr pScrn, RADEONPortPrivPtr pPriv)
+static Bool
+FUNC_NAME(R200PrepareTexturedVideo)(ScrnInfoPtr pScrn, RADEONPortPrivPtr pPriv)
 {
     RADEONInfoPtr info = RADEONPTR(pScrn);
     PixmapPtr pPixmap = pPriv->pPixmap;
@@ -483,11 +555,9 @@ FUNC_NAME(R200DisplayTexturedVideo)(ScrnInfoPtr pScrn, RADEONPortPrivPtr pPriv)
     uint32_t txfilter, txsize, txpitch, txoffset;
     uint32_t dst_pitch, dst_format;
     uint32_t colorpitch;
-    Bool isplanar = FALSE;
-    int dstxoff, dstyoff, pixel_shift, vtx_count;
-    BoxPtr pBox = REGION_RECTS(&pPriv->clip);
-    int nBox = REGION_NUM_RECTS(&pPriv->clip);
-
+    int pixel_shift;
+    int scissor_w = MIN(pPixmap->drawable.width, 2047);
+    int scissor_h = MIN(pPixmap->drawable.height, 2047);
     /* note: in contrast to r300, use input biasing on uv components */
     const float Loff = -0.0627;
     float uvcosf, uvsinf;
@@ -515,7 +585,7 @@ FUNC_NAME(R200DisplayTexturedVideo)(ScrnInfoPtr pScrn, RADEONPortPrivPtr pPriv)
 	ret = radeon_cs_space_check(info->cs);
 	if (ret) {
 	    ErrorF("Not enough RAM to hw accel xv operation\n");
-	    return;
+	    return FALSE;
 	}
     }
 #endif
@@ -530,14 +600,6 @@ FUNC_NAME(R200DisplayTexturedVideo)(ScrnInfoPtr pScrn, RADEONPortPrivPtr pPriv)
     {
 	dst_pitch = pPixmap->devKind;
     }
-
-#ifdef COMPOSITE
-    dstxoff = -pPixmap->screen_x + pPixmap->drawable.x;
-    dstyoff = -pPixmap->screen_y + pPixmap->drawable.y;
-#else
-    dstxoff = 0;
-    dstyoff = 0;
-#endif
 
 #ifdef USE_EXA
     if (info->useEXA) {
@@ -571,13 +633,14 @@ FUNC_NAME(R200DisplayTexturedVideo)(ScrnInfoPtr pScrn, RADEONPortPrivPtr pPriv)
 	dst_format = RADEON_COLOR_FORMAT_ARGB8888;
 	break;
     default:
-	return;
+	return FALSE;
     }
 
     if (pPriv->id == FOURCC_I420 || pPriv->id == FOURCC_YV12) {
-	isplanar = TRUE;
+	pPriv->is_planar = TRUE;
 	txformat = RADEON_TXFORMAT_I8;
     } else {
+	pPriv->is_planar = FALSE;
 	if (pPriv->id == FOURCC_UYVY)
 	    txformat = RADEON_TXFORMAT_YVYU422;
 	else
@@ -640,11 +703,11 @@ FUNC_NAME(R200DisplayTexturedVideo)(ScrnInfoPtr pScrn, RADEONPortPrivPtr pPriv)
 
     txoffset = info->cs ? 0 : pPriv->src_offset;
 
-    if (isplanar) {
+    if (pPriv->is_planar) {
 	/* need 2 texcoord sets (even though they are identical) due
 	   to denormalization! hw apparently can't premultiply
 	   same coord set by different texture size */
-	vtx_count = 6;
+	pPriv->vtx_count = 6;
 
 	txsize = (((((pPriv->w + 1 ) >> 1) - 1) & 0x7ff) |
 		  (((((pPriv->h + 1 ) >> 1) - 1) & 0x7ff) << RADEON_TEX_VSIZE_SHIFT));
@@ -807,7 +870,7 @@ FUNC_NAME(R200DisplayTexturedVideo)(ScrnInfoPtr pScrn, RADEONPortPrivPtr pPriv)
 
 	FINISH_ACCEL();
     } else {
-	vtx_count = 4;
+	pPriv->vtx_count = 4;
 
 	BEGIN_ACCEL_RELOC(24, 1);
 
@@ -912,15 +975,10 @@ FUNC_NAME(R200DisplayTexturedVideo)(ScrnInfoPtr pScrn, RADEONPortPrivPtr pPriv)
 	FINISH_ACCEL();
     }
 
-    {
-      int scissor_w, scissor_h;
-      scissor_w = MIN(pPixmap->drawable.width, 2047);
-      scissor_h = MIN(pPixmap->drawable.height, 2047);
-      BEGIN_ACCEL(2);
-      OUT_ACCEL_REG(RADEON_RE_TOP_LEFT, 0);
-      OUT_ACCEL_REG(RADEON_RE_WIDTH_HEIGHT, ((scissor_w << RADEON_RE_WIDTH_SHIFT) |
-					     (scissor_h << RADEON_RE_HEIGHT_SHIFT)));
-    }
+    BEGIN_ACCEL(2);
+    OUT_ACCEL_REG(RADEON_RE_TOP_LEFT, 0);
+    OUT_ACCEL_REG(RADEON_RE_WIDTH_HEIGHT, ((scissor_w << RADEON_RE_WIDTH_SHIFT) |
+					   (scissor_h << RADEON_RE_HEIGHT_SHIFT)));
     FINISH_ACCEL();
 
     if (pPriv->vsync) {
@@ -939,6 +997,31 @@ FUNC_NAME(R200DisplayTexturedVideo)(ScrnInfoPtr pScrn, RADEONPortPrivPtr pPriv)
 					  pPriv->drw_y - crtc->y,
 					  (pPriv->drw_y - crtc->y) + pPriv->dst_h);
     }
+
+    return TRUE;
+}
+
+static void
+FUNC_NAME(R200DisplayTexturedVideo)(ScrnInfoPtr pScrn, RADEONPortPrivPtr pPriv)
+{
+    RADEONInfoPtr info = RADEONPTR(pScrn);
+    PixmapPtr pPixmap = pPriv->pPixmap;
+    int dstxoff, dstyoff;
+    BoxPtr pBox = REGION_RECTS(&pPriv->clip);
+    int nBox = REGION_NUM_RECTS(&pPriv->clip);
+    ACCEL_PREAMBLE();
+
+#ifdef COMPOSITE
+    dstxoff = -pPixmap->screen_x + pPixmap->drawable.x;
+    dstyoff = -pPixmap->screen_y + pPixmap->drawable.y;
+#else
+    dstxoff = 0;
+    dstyoff = 0;
+#endif
+
+    if (!FUNC_NAME(R200PrepareTexturedVideo)(pScrn, pPriv))
+	return;
+
     /*
      * Rendering of the actual polygon is done in two different
      * ways depending on chip generation:
@@ -960,20 +1043,82 @@ FUNC_NAME(R200DisplayTexturedVideo)(ScrnInfoPtr pScrn, RADEONPortPrivPtr pPriv)
      */
 
 #ifdef ACCEL_CP
-	BEGIN_RING(nBox * 3 * vtx_count + 4);
+    while (nBox) {
+	int draw_size = 3 * pPriv->vtx_count + 4;
+	int loop_boxes;
+
+	if (draw_size > radeon_cs_space_remaining(pScrn)) {
+	    if (info->cs)
+		radeon_cs_flush_indirect(pScrn);
+	    else
+		RADEONCPFlushIndirect(pScrn, 1);
+	    if (!FUNC_NAME(R200PrepareTexturedVideo)(pScrn, pPriv))
+		return;
+	}
+	loop_boxes = MIN(radeon_cs_space_remaining(pScrn) / draw_size, nBox);
+	nBox -= loop_boxes;
+
+	BEGIN_RING(loop_boxes * 3 * pPriv->vtx_count + 4);
 	OUT_RING(CP_PACKET3(R200_CP_PACKET3_3D_DRAW_IMMD_2,
-			    nBox * 3 * vtx_count));
+			    loop_boxes * 3 * pPriv->vtx_count));
 	OUT_RING(RADEON_CP_VC_CNTL_PRIM_TYPE_RECT_LIST |
 		 RADEON_CP_VC_CNTL_PRIM_WALK_RING |
-		 ((nBox * 3) << RADEON_CP_VC_CNTL_NUM_SHIFT));
+		 ((loop_boxes * 3) << RADEON_CP_VC_CNTL_NUM_SHIFT));
+
+	while (loop_boxes--) {
+	    int srcX, srcY, srcw, srch;
+	    int dstX, dstY, dstw, dsth;
+	    dstX = pBox->x1 + dstxoff;
+	    dstY = pBox->y1 + dstyoff;
+	    dstw = pBox->x2 - pBox->x1;
+	    dsth = pBox->y2 - pBox->y1;
+
+	    srcX = pPriv->src_x;
+	    srcX += ((pBox->x1 - pPriv->drw_x) *
+		     pPriv->src_w) / pPriv->dst_w;
+	    srcY = pPriv->src_y;
+	    srcY += ((pBox->y1 - pPriv->drw_y) *
+		     pPriv->src_h) / pPriv->dst_h;
+
+	    srcw = (pPriv->src_w * dstw) / pPriv->dst_w;
+	    srch = (pPriv->src_h * dsth) / pPriv->dst_h;
+
+	    if (pPriv->is_planar) {
+		/*
+		 * Just render a rect (using three coords).
+		 */
+		VTX_OUT_6((float)dstX,                     (float)(dstY + dsth),
+			  (float)srcX / pPriv->w,          (float)(srcY + srch) / pPriv->h,
+			  (float)srcX / pPriv->w,          (float)(srcY + srch) / pPriv->h);
+		VTX_OUT_6((float)(dstX + dstw),            (float)(dstY + dsth),
+			  (float)(srcX + srcw) / pPriv->w, (float)(srcY + srch) / pPriv->h,
+			  (float)(srcX + srcw) / pPriv->w, (float)(srcY + srch) / pPriv->h);
+		VTX_OUT_6((float)(dstX + dstw),            (float)dstY,
+			  (float)(srcX + srcw) / pPriv->w, (float)srcY / pPriv->h,
+			  (float)(srcX + srcw) / pPriv->w, (float)srcY / pPriv->h);
+	    } else {
+		/*
+		 * Just render a rect (using three coords).
+		 */
+		VTX_OUT_4((float)dstX,                     (float)(dstY + dsth),
+			  (float)srcX / pPriv->w,          (float)(srcY + srch) / pPriv->h);
+		VTX_OUT_4((float)(dstX + dstw),            (float)(dstY + dsth),
+			  (float)(srcX + srcw) / pPriv->w, (float)(srcY + srch) / pPriv->h);
+		VTX_OUT_4((float)(dstX + dstw),            (float)dstY,
+			  (float)(srcX + srcw) / pPriv->w, (float)srcY / pPriv->h);
+	    }
+
+	    pBox++;
+	}
+
+	OUT_ACCEL_REG(RADEON_WAIT_UNTIL, RADEON_WAIT_3D_IDLECLEAN);
+	ADVANCE_RING();
+    }
 #else /* ACCEL_CP */
-	BEGIN_ACCEL(nBox * 3 * vtx_count + 2);
-	OUT_ACCEL_REG(RADEON_SE_VF_CNTL, (RADEON_VF_PRIM_TYPE_RECTANGLE_LIST |
-					  RADEON_VF_PRIM_WALK_DATA |
-					  ((nBox * 3) << RADEON_VF_NUM_VERTICES_SHIFT)));
-
-#endif
-
+    BEGIN_ACCEL(nBox * 3 * pPriv->vtx_count + 2);
+    OUT_ACCEL_REG(RADEON_SE_VF_CNTL, (RADEON_VF_PRIM_TYPE_RECTANGLE_LIST |
+				      RADEON_VF_PRIM_WALK_DATA |
+				      ((nBox * 3) << RADEON_VF_NUM_VERTICES_SHIFT)));
     while (nBox--) {
 	int srcX, srcY, srcw, srch;
 	int dstX, dstY, dstw, dsth;
@@ -992,7 +1137,7 @@ FUNC_NAME(R200DisplayTexturedVideo)(ScrnInfoPtr pScrn, RADEONPortPrivPtr pPriv)
 	srcw = (pPriv->src_w * dstw) / pPriv->dst_w;
 	srch = (pPriv->src_h * dsth) / pPriv->dst_h;
 
-	if (isplanar) {
+	if (pPriv->is_planar) {
 	    /*
 	     * Just render a rect (using three coords).
 	     */
@@ -1021,18 +1166,14 @@ FUNC_NAME(R200DisplayTexturedVideo)(ScrnInfoPtr pScrn, RADEONPortPrivPtr pPriv)
     }
 
     OUT_ACCEL_REG(RADEON_WAIT_UNTIL, RADEON_WAIT_3D_IDLECLEAN);
-
-#ifdef ACCEL_CP
-	ADVANCE_RING();
-#else
-	FINISH_ACCEL();
+    FINISH_ACCEL();
 #endif /* !ACCEL_CP */
 
     DamageDamageRegion(pPriv->pDraw, &pPriv->clip);
 }
 
-static void
-FUNC_NAME(R300DisplayTexturedVideo)(ScrnInfoPtr pScrn, RADEONPortPrivPtr pPriv)
+static Bool
+FUNC_NAME(R300PrepareTexturedVideo)(ScrnInfoPtr pScrn, RADEONPortPrivPtr pPriv)
 {
     RADEONInfoPtr info = RADEONPTR(pScrn);
     PixmapPtr pPixmap = pPriv->pPixmap;
@@ -1042,10 +1183,7 @@ FUNC_NAME(R300DisplayTexturedVideo)(ScrnInfoPtr pScrn, RADEONPortPrivPtr pPriv)
     uint32_t dst_pitch, dst_format;
     uint32_t txenable, colorpitch, bicubic_offset;
     uint32_t output_fmt;
-    Bool isplanar = FALSE;
-    int dstxoff, dstyoff, pixel_shift, vtx_count;
-    BoxPtr pBox = REGION_RECTS(&pPriv->clip);
-    int nBox = REGION_NUM_RECTS(&pPriv->clip);
+    int pixel_shift;
     ACCEL_PREAMBLE();
 
 #ifdef XF86DRM_MODE
@@ -1064,7 +1202,7 @@ FUNC_NAME(R300DisplayTexturedVideo)(ScrnInfoPtr pScrn, RADEONPortPrivPtr pPriv)
 	ret = radeon_cs_space_check(info->cs);
 	if (ret) {
 	    ErrorF("Not enough RAM to hw accel xv operation\n");
-	    return;
+	    return FALSE;
 	}
     }
 #endif
@@ -1079,14 +1217,6 @@ FUNC_NAME(R300DisplayTexturedVideo)(ScrnInfoPtr pScrn, RADEONPortPrivPtr pPriv)
     {
 	dst_pitch = pPixmap->devKind;
     }
-
-#ifdef COMPOSITE
-    dstxoff = -pPixmap->screen_x + pPixmap->drawable.x;
-    dstyoff = -pPixmap->screen_y + pPixmap->drawable.y;
-#else
-    dstxoff = 0;
-    dstyoff = 0;
-#endif
 
 #ifdef USE_EXA
     if (info->useEXA) {
@@ -1109,9 +1239,9 @@ FUNC_NAME(R300DisplayTexturedVideo)(ScrnInfoPtr pScrn, RADEONPortPrivPtr pPriv)
     }
 
     if (pPriv->bicubic_enabled)
-	vtx_count = 6;
+	pPriv->vtx_count = 6;
     else
-	vtx_count = 4;
+	pPriv->vtx_count = 4;
 
     switch (pPixmap->drawable.bitsPerPixel) {
     case 16:
@@ -1124,7 +1254,7 @@ FUNC_NAME(R300DisplayTexturedVideo)(ScrnInfoPtr pScrn, RADEONPortPrivPtr pPriv)
 	dst_format = R300_COLORFORMAT_ARGB8888;
 	break;
     default:
-	return;
+	return FALSE;
     }
 
     output_fmt = (R300_OUT_FMT_C4_8 |
@@ -1142,9 +1272,11 @@ FUNC_NAME(R300DisplayTexturedVideo)(ScrnInfoPtr pScrn, RADEONPortPrivPtr pPriv)
 
     if (((pPriv->bicubic_state == BICUBIC_OFF)) &&
 	(pPriv->id == FOURCC_I420 || pPriv->id == FOURCC_YV12))
-	isplanar = TRUE;
+	pPriv->is_planar = TRUE;
+    else
+	pPriv->is_planar = FALSE;
 
-    if (isplanar) {
+    if (pPriv->is_planar) {
 	txformat1 = R300_TX_FORMAT_X8 | R300_TX_FORMAT_CACHE_HALF_REGION_0;
 	txpitch = pPriv->src_pitch;
     } else {
@@ -1177,7 +1309,7 @@ FUNC_NAME(R300DisplayTexturedVideo)(ScrnInfoPtr pScrn, RADEONPortPrivPtr pPriv)
     OUT_ACCEL_REG(R300_TX_FILTER0_0, txfilter);
     OUT_ACCEL_REG(R300_TX_FILTER1_0, 0);
     OUT_ACCEL_REG(R300_TX_FORMAT0_0, txformat0);
-    if (isplanar)
+    if (pPriv->is_planar)
 	OUT_ACCEL_REG(R300_TX_FORMAT1_0, txformat1 | R300_TX_FORMAT_CACHE_HALF_REGION_0);
     else
 	OUT_ACCEL_REG(R300_TX_FORMAT1_0, txformat1);
@@ -1187,7 +1319,7 @@ FUNC_NAME(R300DisplayTexturedVideo)(ScrnInfoPtr pScrn, RADEONPortPrivPtr pPriv)
 
     txenable = R300_TEX_0_ENABLE;
 
-    if (isplanar) {
+    if (pPriv->is_planar) {
 	txformat0 = ((((((pPriv->w + 1 ) >> 1) - 1) & 0x7ff) << R300_TXWIDTH_SHIFT) |
 		     (((((pPriv->h + 1 ) >> 1 ) - 1) & 0x7ff) << R300_TXHEIGHT_SHIFT) |
 		     R300_TXPITCH_EN);
@@ -1824,7 +1956,7 @@ FUNC_NAME(R300DisplayTexturedVideo)(ScrnInfoPtr pScrn, RADEONPortPrivPtr pPriv)
 	       if that's of any use. */
 	}
 
-	if (isplanar) {
+	if (pPriv->is_planar) {
 	    BEGIN_ACCEL(needgamma ? 28 + 33 : 33);
 	    /* 2 components: same 2 for tex0/1/2 */
 	    OUT_ACCEL_REG(R300_RS_COUNT,
@@ -2296,7 +2428,7 @@ FUNC_NAME(R300DisplayTexturedVideo)(ScrnInfoPtr pScrn, RADEONPortPrivPtr pPriv)
     /* no need to enable blending */
     OUT_ACCEL_REG(R300_RB3D_BLENDCNTL, RADEON_SRC_BLEND_GL_ONE | RADEON_DST_BLEND_GL_ZERO);
 
-    OUT_ACCEL_REG(R300_VAP_VTX_SIZE, vtx_count);
+    OUT_ACCEL_REG(R300_VAP_VTX_SIZE, pPriv->vtx_count);
     FINISH_ACCEL();
 
     if (pPriv->vsync) {
@@ -2315,6 +2447,31 @@ FUNC_NAME(R300DisplayTexturedVideo)(ScrnInfoPtr pScrn, RADEONPortPrivPtr pPriv)
 					  pPriv->drw_y - crtc->y,
 					  (pPriv->drw_y - crtc->y) + pPriv->dst_h);
     }
+
+    return TRUE;
+}
+
+static void
+FUNC_NAME(R300DisplayTexturedVideo)(ScrnInfoPtr pScrn, RADEONPortPrivPtr pPriv)
+{
+    RADEONInfoPtr info = RADEONPTR(pScrn);
+    PixmapPtr pPixmap = pPriv->pPixmap;
+    int dstxoff, dstyoff;
+    BoxPtr pBox = REGION_RECTS(&pPriv->clip);
+    int nBox = REGION_NUM_RECTS(&pPriv->clip);
+    ACCEL_PREAMBLE();
+
+#ifdef COMPOSITE
+    dstxoff = -pPixmap->screen_x + pPixmap->drawable.x;
+    dstyoff = -pPixmap->screen_y + pPixmap->drawable.y;
+#else
+    dstxoff = 0;
+    dstyoff = 0;
+#endif
+
+    if (!FUNC_NAME(R300PrepareTexturedVideo)(pScrn, pPriv))
+	return;
+
     /*
      * Rendering of the actual polygon is done in two different
      * ways depending on chip generation:
@@ -2339,6 +2496,19 @@ FUNC_NAME(R300DisplayTexturedVideo)(ScrnInfoPtr pScrn, RADEONPortPrivPtr pPriv)
 	int srcX, srcY, srcw, srch;
 	int dstX, dstY, dstw, dsth;
 	Bool use_quad = FALSE;
+#ifdef ACCEL_CP
+	int draw_size = 4 * pPriv->vtx_count + 4 + 2 + 3;
+
+	if (draw_size > radeon_cs_space_remaining(pScrn)) {
+	    if (info->cs)
+		radeon_cs_flush_indirect(pScrn);
+	    else
+		RADEONCPFlushIndirect(pScrn, 1);
+	    if (!FUNC_NAME(R300PrepareTexturedVideo)(pScrn, pPriv))
+		return;
+	}
+#endif
+
 	dstX = pBox->x1 + dstxoff;
 	dstY = pBox->y1 + dstyoff;
 	dstw = pBox->x2 - pBox->x1;
@@ -2353,11 +2523,6 @@ FUNC_NAME(R300DisplayTexturedVideo)(ScrnInfoPtr pScrn, RADEONPortPrivPtr pPriv)
 
 	srcw = (pPriv->src_w * dstw) / pPriv->dst_w;
 	srch = (pPriv->src_h * dsth) / pPriv->dst_h;
-
-#if 0
-	ErrorF("dst: %d, %d, %d, %d\n", dstX, dstY, dstw, dsth);
-	ErrorF("src: %d, %d, %d, %d\n", srcX, srcY, srcw, srch);
-#endif
 
 	if (IS_R400_3D) {
 	    if ((dstw+dsth) > 4021)
@@ -2379,25 +2544,25 @@ FUNC_NAME(R300DisplayTexturedVideo)(ScrnInfoPtr pScrn, RADEONPortPrivPtr pPriv)
 
 #ifdef ACCEL_CP
 	if (use_quad) {
-	    BEGIN_RING(4 * vtx_count + 4);
+	    BEGIN_RING(4 * pPriv->vtx_count + 4);
 	    OUT_RING(CP_PACKET3(R200_CP_PACKET3_3D_DRAW_IMMD_2,
-				4 * vtx_count));
+				4 * pPriv->vtx_count));
 	    OUT_RING(RADEON_CP_VC_CNTL_PRIM_TYPE_QUAD_LIST |
 		     RADEON_CP_VC_CNTL_PRIM_WALK_RING |
 		     (4 << RADEON_CP_VC_CNTL_NUM_SHIFT));
 	} else {
-	    BEGIN_RING(3 * vtx_count + 4);
+	    BEGIN_RING(3 * pPriv->vtx_count + 4);
 	    OUT_RING(CP_PACKET3(R200_CP_PACKET3_3D_DRAW_IMMD_2,
-				3 * vtx_count));
+				3 * pPriv->vtx_count));
 	    OUT_RING(RADEON_CP_VC_CNTL_PRIM_TYPE_TRI_LIST |
 		     RADEON_CP_VC_CNTL_PRIM_WALK_RING |
 		     (3 << RADEON_CP_VC_CNTL_NUM_SHIFT));
 	}
 #else /* ACCEL_CP */
 	if (use_quad)
-	    BEGIN_ACCEL(2 + vtx_count * 4);
+	    BEGIN_ACCEL(2 + pPriv->vtx_count * 4);
 	else
-	    BEGIN_ACCEL(2 + vtx_count * 3);
+	    BEGIN_ACCEL(2 + pPriv->vtx_count * 3);
 
 	if (use_quad)
 	    OUT_ACCEL_REG(RADEON_SE_VF_CNTL, (RADEON_VF_PRIM_TYPE_QUAD_LIST |
@@ -2489,8 +2654,8 @@ FUNC_NAME(R300DisplayTexturedVideo)(ScrnInfoPtr pScrn, RADEONPortPrivPtr pPriv)
     DamageDamageRegion(pPriv->pDraw, &pPriv->clip);
 }
 
-static void
-FUNC_NAME(R500DisplayTexturedVideo)(ScrnInfoPtr pScrn, RADEONPortPrivPtr pPriv)
+static Bool
+FUNC_NAME(R500PrepareTexturedVideo)(ScrnInfoPtr pScrn, RADEONPortPrivPtr pPriv)
 {
     RADEONInfoPtr info = RADEONPTR(pScrn);
     PixmapPtr pPixmap = pPriv->pPixmap;
@@ -2500,10 +2665,7 @@ FUNC_NAME(R500DisplayTexturedVideo)(ScrnInfoPtr pScrn, RADEONPortPrivPtr pPriv)
     uint32_t dst_pitch, dst_format;
     uint32_t txenable, colorpitch, bicubic_offset;
     uint32_t output_fmt;
-    Bool isplanar = FALSE;
-    int dstxoff, dstyoff, pixel_shift, vtx_count;
-    BoxPtr pBox = REGION_RECTS(&pPriv->clip);
-    int nBox = REGION_NUM_RECTS(&pPriv->clip);
+    int pixel_shift;
     ACCEL_PREAMBLE();
 
 #ifdef XF86DRM_MODE
@@ -2522,7 +2684,7 @@ FUNC_NAME(R500DisplayTexturedVideo)(ScrnInfoPtr pScrn, RADEONPortPrivPtr pPriv)
 	ret = radeon_cs_space_check(info->cs);
 	if (ret) {
 	    ErrorF("Not enough RAM to hw accel xv operation\n");
-	    return;
+	    return FALSE;
 	}
     }
 #endif
@@ -2537,14 +2699,6 @@ FUNC_NAME(R500DisplayTexturedVideo)(ScrnInfoPtr pScrn, RADEONPortPrivPtr pPriv)
     {
 	dst_pitch = pPixmap->devKind;
     }
-
-#ifdef COMPOSITE
-    dstxoff = -pPixmap->screen_x + pPixmap->drawable.x;
-    dstyoff = -pPixmap->screen_y + pPixmap->drawable.y;
-#else
-    dstxoff = 0;
-    dstyoff = 0;
-#endif
 
 #ifdef USE_EXA
     if (info->useEXA) {
@@ -2567,9 +2721,9 @@ FUNC_NAME(R500DisplayTexturedVideo)(ScrnInfoPtr pScrn, RADEONPortPrivPtr pPriv)
     }
 
     if (pPriv->bicubic_enabled)
-	vtx_count = 6;
+	pPriv->vtx_count = 6;
     else
-	vtx_count = 4;
+	pPriv->vtx_count = 4;
 
     switch (pPixmap->drawable.bitsPerPixel) {
     case 16:
@@ -2582,7 +2736,7 @@ FUNC_NAME(R500DisplayTexturedVideo)(ScrnInfoPtr pScrn, RADEONPortPrivPtr pPriv)
 	dst_format = R300_COLORFORMAT_ARGB8888;
 	break;
     default:
-	return;
+	return FALSE;
     }
 
     output_fmt = (R300_OUT_FMT_C4_8 |
@@ -2599,9 +2753,11 @@ FUNC_NAME(R500DisplayTexturedVideo)(ScrnInfoPtr pScrn, RADEONPortPrivPtr pPriv)
 
     if (((pPriv->bicubic_state == BICUBIC_OFF)) &&
         (pPriv->id == FOURCC_I420 || pPriv->id == FOURCC_YV12))
-	isplanar = TRUE;
+	pPriv->is_planar = TRUE;
+    else
+	pPriv->is_planar = FALSE;
 
-    if (isplanar) {
+    if (pPriv->is_planar) {
 	txformat1 = R300_TX_FORMAT_X8;
 	txpitch = pPriv->src_pitch;
     } else {
@@ -2648,7 +2804,7 @@ FUNC_NAME(R500DisplayTexturedVideo)(ScrnInfoPtr pScrn, RADEONPortPrivPtr pPriv)
 
     txenable = R300_TEX_0_ENABLE;
 
-    if (isplanar) {
+    if (pPriv->is_planar) {
 	txformat0 = ((((((pPriv->w + 1 ) >> 1) - 1) & 0x7ff) << R300_TXWIDTH_SHIFT) |
 		     (((((pPriv->h + 1 ) >> 1 ) - 1) & 0x7ff) << R300_TXHEIGHT_SHIFT) |
 		     R300_TXPITCH_EN);
@@ -3439,7 +3595,7 @@ FUNC_NAME(R500DisplayTexturedVideo)(ScrnInfoPtr pScrn, RADEONPortPrivPtr pPriv)
 	       if that's of any use. */
 	}
 
-	if (isplanar) {
+	if (pPriv->is_planar) {
 	    BEGIN_ACCEL(56);
 	    /* 2 components: 2 for tex0 */
 	    OUT_ACCEL_REG(R300_RS_COUNT,
@@ -3880,7 +4036,7 @@ FUNC_NAME(R500DisplayTexturedVideo)(ScrnInfoPtr pScrn, RADEONPortPrivPtr pPriv)
     /* no need to enable blending */
     OUT_ACCEL_REG(R300_RB3D_BLENDCNTL, RADEON_SRC_BLEND_GL_ONE | RADEON_DST_BLEND_GL_ZERO);
 
-    OUT_ACCEL_REG(R300_VAP_VTX_SIZE, vtx_count);
+    OUT_ACCEL_REG(R300_VAP_VTX_SIZE, pPriv->vtx_count);
     FINISH_ACCEL();
 
     if (pPriv->vsync) {
@@ -3899,6 +4055,31 @@ FUNC_NAME(R500DisplayTexturedVideo)(ScrnInfoPtr pScrn, RADEONPortPrivPtr pPriv)
 					  pPriv->drw_y - crtc->y,
 					  (pPriv->drw_y - crtc->y) + pPriv->dst_h);
     }
+
+    return TRUE;
+}
+
+static void
+FUNC_NAME(R500DisplayTexturedVideo)(ScrnInfoPtr pScrn, RADEONPortPrivPtr pPriv)
+{
+    RADEONInfoPtr info = RADEONPTR(pScrn);
+    PixmapPtr pPixmap = pPriv->pPixmap;
+    int dstxoff, dstyoff;
+    BoxPtr pBox = REGION_RECTS(&pPriv->clip);
+    int nBox = REGION_NUM_RECTS(&pPriv->clip);
+    ACCEL_PREAMBLE();
+
+#ifdef COMPOSITE
+    dstxoff = -pPixmap->screen_x + pPixmap->drawable.x;
+    dstyoff = -pPixmap->screen_y + pPixmap->drawable.y;
+#else
+    dstxoff = 0;
+    dstyoff = 0;
+#endif
+
+    if (!FUNC_NAME(R500PrepareTexturedVideo)(pScrn, pPriv))
+	return;
+
     /*
      * Rendering of the actual polygon is done in two different
      * ways depending on chip generation:
@@ -3922,6 +4103,19 @@ FUNC_NAME(R500DisplayTexturedVideo)(ScrnInfoPtr pScrn, RADEONPortPrivPtr pPriv)
     while (nBox--) {
 	int srcX, srcY, srcw, srch;
 	int dstX, dstY, dstw, dsth;
+#ifdef ACCEL_CP
+	int draw_size = 3 * pPriv->vtx_count + 4 + 2 + 3;
+
+	if (draw_size > radeon_cs_space_remaining(pScrn)) {
+	    if (info->cs)
+		radeon_cs_flush_indirect(pScrn);
+	    else
+		RADEONCPFlushIndirect(pScrn, 1);
+	    if (!FUNC_NAME(R500PrepareTexturedVideo)(pScrn, pPriv))
+		return;
+	}
+#endif
+
 	dstX = pBox->x1 + dstxoff;
 	dstY = pBox->y1 + dstyoff;
 	dstw = pBox->x2 - pBox->x1;
@@ -3945,14 +4139,14 @@ FUNC_NAME(R500DisplayTexturedVideo)(ScrnInfoPtr pScrn, RADEONPortPrivPtr pPriv)
 	FINISH_ACCEL();
 
 #ifdef ACCEL_CP
-	BEGIN_RING(3 * vtx_count + 4);
+	BEGIN_RING(3 * pPriv->vtx_count + 4);
 	OUT_RING(CP_PACKET3(R200_CP_PACKET3_3D_DRAW_IMMD_2,
-			    3 * vtx_count));
+			    3 * pPriv->vtx_count));
 	OUT_RING(RADEON_CP_VC_CNTL_PRIM_TYPE_TRI_LIST |
 		 RADEON_CP_VC_CNTL_PRIM_WALK_RING |
 		 (3 << RADEON_CP_VC_CNTL_NUM_SHIFT));
 #else /* ACCEL_CP */
-	BEGIN_ACCEL(2 + vtx_count * 3);
+	BEGIN_ACCEL(2 + pPriv->vtx_count * 3);
 	OUT_ACCEL_REG(RADEON_SE_VF_CNTL, (RADEON_VF_PRIM_TYPE_TRIANGLE_LIST |
 					  RADEON_VF_PRIM_WALK_DATA |
 					  (3 << RADEON_VF_NUM_VERTICES_SHIFT)));

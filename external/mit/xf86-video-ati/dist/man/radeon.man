@@ -656,7 +656,7 @@ sizes are scaled to more than double to avoid blurred output.  Bicubic
 filtering is not currently compatible with other Xv attributes like hue,
 contrast, and brightness, and must be disabled to use those attributes.
 The default is
-.B 'auto'(2).
+.B 'off'(0).
 
 .SH SEE ALSO
 __xservername__(__appmansuffix__), __xconfigfile__(__filemansuffix__), Xserver(__appmansuffix__), X(__miscmansuffix__)

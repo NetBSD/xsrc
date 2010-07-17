@@ -447,7 +447,7 @@ done:
 }
 
 void
-RADEONComputePLL(ScrnInfoPtr pScrn,
+RADEONComputePLL(xf86CrtcPtr crtc,
 		 RADEONPLLPtr pll,
 		 unsigned long freq,
 		 uint32_t *chosen_dot_clock_freq,
@@ -457,28 +457,21 @@ RADEONComputePLL(ScrnInfoPtr pScrn,
 		 uint32_t *chosen_post_div,
 		 int flags)
 {
-    RADEONInfoPtr info = RADEONPTR(pScrn);
+    RADEONCrtcPrivatePtr radeon_crtc = crtc->driver_private;
 
-    if (IS_AVIVO_VARIANT) {
-	if (xf86ReturnOptValBool(info->Options, OPTION_NEW_PLL, TRUE)) {
-	    /* disable frac fb dividers */
-	    flags &= ~RADEON_PLL_USE_FRAC_FB_DIV;
-	    RADEONComputePLL_new(pll, freq, chosen_dot_clock_freq,
-				 chosen_feedback_div, chosen_frac_feedback_div,
-				 chosen_reference_div, chosen_post_div, flags);
-	} else
-	    RADEONComputePLL_old(pll, freq, chosen_dot_clock_freq,
-				 chosen_feedback_div, chosen_frac_feedback_div,
-				 chosen_reference_div, chosen_post_div, flags);
-    } else {
-	if (xf86ReturnOptValBool(info->Options, OPTION_NEW_PLL, FALSE))
-	    RADEONComputePLL_new(pll, freq, chosen_dot_clock_freq,
-				 chosen_feedback_div, chosen_frac_feedback_div,
-				 chosen_reference_div, chosen_post_div, flags);
-	else
-	    RADEONComputePLL_old(pll, freq, chosen_dot_clock_freq,
-				 chosen_feedback_div, chosen_frac_feedback_div,
-				 chosen_reference_div, chosen_post_div, flags);
+    switch (radeon_crtc->pll_algo) {
+    case RADEON_PLL_OLD:
+	RADEONComputePLL_old(pll, freq, chosen_dot_clock_freq,
+			     chosen_feedback_div, chosen_frac_feedback_div,
+			     chosen_reference_div, chosen_post_div, flags);
+	break;
+    case RADEON_PLL_NEW:
+	/* disable frac fb dividers */
+	flags &= ~RADEON_PLL_USE_FRAC_FB_DIV;
+	RADEONComputePLL_new(pll, freq, chosen_dot_clock_freq,
+			     chosen_feedback_div, chosen_frac_feedback_div,
+			     chosen_reference_div, chosen_post_div, flags);
+	break;
     }
 }
 
@@ -571,28 +564,12 @@ radeon_crtc_gamma_set(xf86CrtcPtr crtc, uint16_t *red, uint16_t *green,
 		      uint16_t *blue, int size)
 {
     RADEONCrtcPrivatePtr radeon_crtc = crtc->driver_private;
-    ScrnInfoPtr		pScrn = crtc->scrn;
-    int i, j;
+    int i;
 
-    if (pScrn->depth == 16) {
-	for (i = 0; i < 64; i++) {
-	    if (i <= 31) {
-		for (j = 0; j < 8; j++) {
-		    radeon_crtc->lut_r[i * 8 + j] = red[i] >> 6;
-		    radeon_crtc->lut_b[i * 8 + j] = blue[i] >> 6;
-		}
-	    }
-
-	    for (j = 0; j < 4; j++) {
-		radeon_crtc->lut_g[i * 4 + j] = green[i] >> 6;
-	    }
-	}
-    } else {
-	for (i = 0; i < 256; i++) {
-	    radeon_crtc->lut_r[i] = red[i] >> 6;
-	    radeon_crtc->lut_g[i] = green[i] >> 6;
-	    radeon_crtc->lut_b[i] = blue[i] >> 6;
-	}
+    for (i = 0; i < 256; i++) {
+	radeon_crtc->lut_r[i] = red[i] >> 6;
+	radeon_crtc->lut_g[i] = green[i] >> 6;
+	radeon_crtc->lut_b[i] = blue[i] >> 6;
     }
 
     radeon_crtc_load_lut(crtc);
@@ -889,7 +866,7 @@ Bool RADEONAllocateControllers(ScrnInfoPtr pScrn, int mask)
 	pRADEONEnt->Controller[1] = xnfcalloc(sizeof(RADEONCrtcPrivateRec), 1);
 	if (!pRADEONEnt->Controller[1])
 	    {
-		xfree(pRADEONEnt->Controller[0]);
+		free(pRADEONEnt->Controller[0]);
 		return FALSE;
 	    }
 
@@ -917,7 +894,7 @@ Bool RADEONAllocateControllers(ScrnInfoPtr pScrn, int mask)
 	    pRADEONEnt->Controller[i] = xnfcalloc(sizeof(RADEONCrtcPrivateRec), 1);
 	    if (!pRADEONEnt->Controller[i])
 	    {
-		xfree(pRADEONEnt->Controller[i]);
+		free(pRADEONEnt->Controller[i]);
 		return FALSE;
 	    }
 

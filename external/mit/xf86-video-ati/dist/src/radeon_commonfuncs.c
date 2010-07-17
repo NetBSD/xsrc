@@ -170,20 +170,21 @@ static void FUNC_NAME(RADEONInit3DEngine)(ScrnInfoPtr pScrn)
 			(5 << R300_PVS_NUM_CNTLRS_SHIFT) |
 			(5 << R300_VF_MAX_VTX_NUM_SHIFT));
 
-	if (info->ChipFamily == CHIP_FAMILY_RV515)
-	    vap_cntl |= (2 << R300_PVS_NUM_FPUS_SHIFT);
-	else if ((info->ChipFamily == CHIP_FAMILY_RV530) ||
-		 (info->ChipFamily == CHIP_FAMILY_RV560) ||
-		 (info->ChipFamily == CHIP_FAMILY_RV570))
+	if ((info->ChipFamily == CHIP_FAMILY_R300) ||
+	    (info->ChipFamily == CHIP_FAMILY_R350))
+	    vap_cntl |= (4 << R300_PVS_NUM_FPUS_SHIFT);
+	else if (info->ChipFamily == CHIP_FAMILY_RV530)
 	    vap_cntl |= (5 << R300_PVS_NUM_FPUS_SHIFT);
 	else if ((info->ChipFamily == CHIP_FAMILY_RV410) ||
 		 (info->ChipFamily == CHIP_FAMILY_R420))
 	    vap_cntl |= (6 << R300_PVS_NUM_FPUS_SHIFT);
 	else if ((info->ChipFamily == CHIP_FAMILY_R520) ||
-		 (info->ChipFamily == CHIP_FAMILY_R580))
+		 (info->ChipFamily == CHIP_FAMILY_R580) ||
+		 (info->ChipFamily == CHIP_FAMILY_RV560) ||
+		 (info->ChipFamily == CHIP_FAMILY_RV570))
 	    vap_cntl |= (8 << R300_PVS_NUM_FPUS_SHIFT);
 	else
-	    vap_cntl |= (4 << R300_PVS_NUM_FPUS_SHIFT);
+	    vap_cntl |= (2 << R300_PVS_NUM_FPUS_SHIFT);
 
 	if (info->accel_state->has_tcl)
 	    BEGIN_ACCEL(15);

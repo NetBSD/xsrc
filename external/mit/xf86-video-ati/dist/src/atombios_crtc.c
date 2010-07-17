@@ -458,6 +458,19 @@ atombios_crtc_set_pll(xf86CrtcPtr crtc, DisplayModePtr mode)
     unsigned char *space;
 
     memset(&spc_param, 0, sizeof(spc_param));
+
+    if (IS_AVIVO_VARIANT) {
+	if (xf86ReturnOptValBool(info->Options, OPTION_NEW_PLL, TRUE))
+	    radeon_crtc->pll_algo = RADEON_PLL_NEW;
+	else
+	    radeon_crtc->pll_algo = RADEON_PLL_OLD;
+    } else {
+	if (xf86ReturnOptValBool(info->Options, OPTION_NEW_PLL, FALSE))
+	    radeon_crtc->pll_algo = RADEON_PLL_NEW;
+	else
+	    radeon_crtc->pll_algo = RADEON_PLL_OLD;
+    }
+
     if (IS_AVIVO_VARIANT) {
 	if ((info->ChipFamily == CHIP_FAMILY_RS600) ||
 	    (info->ChipFamily == CHIP_FAMILY_RS690) ||
@@ -471,6 +484,7 @@ atombios_crtc_set_pll(xf86CrtcPtr crtc, DisplayModePtr mode)
 	for (i = 0; i < xf86_config->num_output; i++) {
 	    xf86OutputPtr output = xf86_config->output[i];
 	    if (output->crtc == crtc) {
+		radeon_output = output->driver_private;
 		radeon_encoder = radeon_get_encoder(output);
 		/* DVO wants 2x pixel clock if the DVO chip is in 12 bit mode */
 		/* AdjustDisplayPll handles this on DCE3.x */
@@ -478,6 +492,11 @@ atombios_crtc_set_pll(xf86CrtcPtr crtc, DisplayModePtr mode)
 		    (radeon_encoder->encoder_id == ENCODER_OBJECT_ID_INTERNAL_KLDSCP_DVO1) &&
 		    !IS_DCE3_VARIANT)
 		    sclock *= 2;
+		if (radeon_output->active_device &
+		    (ATOM_DEVICE_CV_SUPPORT | ATOM_DEVICE_TV_SUPPORT)) {
+		    pll_flags |= RADEON_PLL_PREFER_CLOSEST_LOWER;
+		    radeon_crtc->pll_algo = RADEON_PLL_OLD;
+		}
 	    }
 	}
 
@@ -614,7 +633,8 @@ atombios_crtc_set_pll(xf86CrtcPtr crtc, DisplayModePtr mode)
 	}
     }
 
-    RADEONComputePLL(pScrn, &info->pll, sclock, &temp, &fb_div, &frac_fb_div, &ref_div, &post_div, pll_flags);
+    RADEONComputePLL(crtc, &info->pll, sclock, &temp,
+		     &fb_div, &frac_fb_div, &ref_div, &post_div, pll_flags);
     sclock = temp; /* 10 khz */
 
     xf86DrvMsg(crtc->scrn->scrnIndex, X_INFO,

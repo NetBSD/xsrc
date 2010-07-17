@@ -181,7 +181,6 @@ static const OptionInfoRec RADEONOptions[] = {
     { OPTION_RENDER_ACCEL,   "RenderAccel",      OPTV_BOOLEAN, {0}, FALSE },
     { OPTION_SUBPIXEL_ORDER, "SubPixelOrder",    OPTV_ANYSTR,  {0}, FALSE },
 #endif
-    { OPTION_SHOWCACHE,      "ShowCache",        OPTV_BOOLEAN, {0}, FALSE },
     { OPTION_CLOCK_GATING,   "ClockGating",      OPTV_BOOLEAN, {0}, FALSE },
     { OPTION_VGA_ACCESS,     "VGAAccess",        OPTV_BOOLEAN, {0}, TRUE  },
     { OPTION_REVERSE_DDC,    "ReverseDDC",       OPTV_BOOLEAN, {0}, FALSE },
@@ -239,7 +238,7 @@ radeonShadowWindow(ScreenPtr screen, CARD32 row, CARD32 offset, int mode,
     stride = (pScrn->displayWidth * pScrn->bitsPerPixel) / 8;
     *size = stride;
 
-    return ((uint8_t *)info->FB + row * stride + offset);
+    return ((uint8_t *)info->FB + pScrn->fbOffset + row * stride + offset);
 }
 static Bool
 RADEONCreateScreenResources (ScreenPtr pScreen)
@@ -369,32 +368,32 @@ void RADEONFreeRec(ScrnInfoPtr pScrn)
     info = RADEONPTR(pScrn);
 
     if (info->cp) {
-	xfree(info->cp);
+	free(info->cp);
 	info->cp = NULL;
     }
 
     if (info->dri) {
-	xfree(info->dri);
+	free(info->dri);
 	info->dri = NULL;
     }
 
     if (info->accel_state) {
-	xfree(info->accel_state);
+	free(info->accel_state);
 	info->accel_state = NULL;
     }
 
     for (i = 0; i < RADEON_MAX_BIOS_CONNECTOR; i++) {
 	if (info->encoders[i]) {
 	    if (info->encoders[i]->dev_priv) {
-		xfree(info->encoders[i]->dev_priv);
+		free(info->encoders[i]->dev_priv);
 		info->encoders[i]->dev_priv = NULL;
 	    }
-	    xfree(info->encoders[i]);
+	    free(info->encoders[i]);
 	    info->encoders[i]= NULL;
 	}
     }
 
-    xfree(pScrn->driverPrivate);
+    free(pScrn->driverPrivate);
     pScrn->driverPrivate = NULL;
 }
 
@@ -403,10 +402,14 @@ void RADEONFreeRec(ScrnInfoPtr pScrn)
  */
 static Bool RADEONMapMMIO(ScrnInfoPtr pScrn)
 {
+#ifdef XSERVER_LIBPCIACCESS
+    int err;
+#endif
     RADEONInfoPtr  info = RADEONPTR(pScrn);
     RADEONEntPtr pRADEONEnt = RADEONEntPriv(pScrn);
 
     if (pRADEONEnt->MMIO) {
+        pRADEONEnt->MMIO_cnt++;
         info->MMIO = pRADEONEnt->MMIO;
         return TRUE;
     }
@@ -419,15 +422,15 @@ static Bool RADEONMapMMIO(ScrnInfoPtr pScrn)
 			       info->MMIOAddr,
 			       info->MMIOSize);
 
-    if (!info->MMIO) return FALSE;
+    if (!info->MMIO)
+        return FALSE;
 #else
 
-    void** result = (void**)&info->MMIO;
-    int err = pci_device_map_range(info->PciInfo,
+    err = pci_device_map_range(info->PciInfo,
 				   info->MMIOAddr,
 				   info->MMIOSize,
 				   PCI_DEV_MAP_FLAG_WRITABLE,
-				   result);
+				   &info->MMIO);
 
     if (err) {
 	xf86DrvMsg (pScrn->scrnIndex, X_ERROR,
@@ -439,6 +442,7 @@ static Bool RADEONMapMMIO(ScrnInfoPtr pScrn)
 #endif
 
     pRADEONEnt->MMIO = info->MMIO;
+    pRADEONEnt->MMIO_cnt = 1;
     return TRUE;
 }
 
@@ -450,8 +454,8 @@ static Bool RADEONUnmapMMIO(ScrnInfoPtr pScrn)
     RADEONInfoPtr  info = RADEONPTR(pScrn);
     RADEONEntPtr pRADEONEnt = RADEONEntPriv(pScrn);
 
-    if (info->IsPrimary || info->IsSecondary) {
-      /* never unmap on zaphod */
+    /* refcount for zaphod */
+    if (--pRADEONEnt->MMIO_cnt != 0) {
       info->MMIO = NULL;
       return TRUE;
     }
@@ -474,6 +478,13 @@ static Bool RADEONMapFB(ScrnInfoPtr pScrn)
     int err;
 #endif
     RADEONInfoPtr  info = RADEONPTR(pScrn);
+    RADEONEntPtr pRADEONEnt = RADEONEntPriv(pScrn);
+
+    if (pRADEONEnt->FB) {
+        pRADEONEnt->FB_cnt++;
+        info->FB = pRADEONEnt->FB;
+        return TRUE;
+    }
 
     xf86DrvMsgVerb(pScrn->scrnIndex, X_INFO, RADEON_LOGLEVEL_DEBUG,
 		   "Map: 0x%016llx, 0x%08lx\n", info->LinearAddr, info->FbMapSize);
@@ -506,6 +517,8 @@ static Bool RADEONMapFB(ScrnInfoPtr pScrn)
 
 #endif
 
+    pRADEONEnt->FB = info->FB;
+    pRADEONEnt->FB_cnt = 1;
     return TRUE;
 }
 
@@ -513,6 +526,13 @@ static Bool RADEONMapFB(ScrnInfoPtr pScrn)
 static Bool RADEONUnmapFB(ScrnInfoPtr pScrn)
 {
     RADEONInfoPtr  info = RADEONPTR(pScrn);
+    RADEONEntPtr pRADEONEnt = RADEONEntPriv(pScrn);
+
+    /* refcount for zaphod */
+    if (--pRADEONEnt->FB_cnt != 0) {
+      info->FB = NULL;
+      return TRUE;
+    }
 
 #ifndef XSERVER_LIBPCIACCESS
     xf86UnMapVidMem(pScrn->scrnIndex, info->FB, info->FbMapSize);
@@ -520,6 +540,7 @@ static Bool RADEONUnmapFB(ScrnInfoPtr pScrn)
     pci_device_unmap_range(info->PciInfo, info->FB, info->FbMapSize);
 #endif
 
+    pRADEONEnt->FB = NULL;
     info->FB = NULL;
     return TRUE;
 }
@@ -1767,23 +1788,21 @@ static Bool RADEONPreInitVRAM(ScrnInfoPtr pScrn)
     xf86DrvMsg(pScrn->scrnIndex, from,
 	       "Mapped VideoRAM: %d kByte (%d bit %s SDRAM)\n", pScrn->videoRam, info->RamWidth, info->IsDDR?"DDR":"SDR");
 
+    /* Do this before we truncate since we only map fb once */
+    info->FbMapSize  = (pScrn->videoRam & ~1023) * 1024;
+
     if (info->IsPrimary) {
 	pScrn->videoRam /= 2;
 	xf86DrvMsg(pScrn->scrnIndex, X_INFO,
 		   "Using %dk of videoram for primary head\n",
 		   pScrn->videoRam);
-    }
-    
-    if (info->IsSecondary) {
+    } else if (info->IsSecondary) {
 	pScrn->videoRam /= 2;
-	info->LinearAddr += pScrn->videoRam * 1024;
 	xf86DrvMsg(pScrn->scrnIndex, X_INFO,
 		   "Using %dk of videoram for secondary head\n",
 		   pScrn->videoRam);
     }
-
     pScrn->videoRam  &= ~1023;
-    info->FbMapSize  = pScrn->videoRam * 1024;
 
     /* if the card is PCI Express reserve the last 32k for the gart table */
 #ifdef XF86DRI
@@ -2070,11 +2089,6 @@ static Bool RADEONPreInitChipType(ScrnInfoPtr pScrn)
 	}
     }
 #endif
-    xf86GetOptValBool(info->Options, OPTION_SHOWCACHE, &info->showCache);
-    if (info->showCache)
-	xf86DrvMsg(pScrn->scrnIndex, X_CONFIG,
-		   "Option ShowCache enabled\n");
-
 #ifdef RENDER
     info->RenderAccel = xf86ReturnOptValBool(info->Options, OPTION_RENDER_ACCEL,
 					     info->Chipset != PCI_CHIP_RN50_515E &&
@@ -2140,9 +2154,11 @@ static Bool RADEONPreInitAccel(ScrnInfoPtr pScrn)
 #if defined(USE_EXA) && defined(USE_XAA)
     char *optstr;
 #endif
+#ifdef XF86DRI /* zaphod FbMapSize is wrong, but no dri then */
     int maxy = info->FbMapSize / (pScrn->displayWidth * info->CurrentLayout.pixel_bytes);
+#endif
 
-    if (!(info->accel_state = xcalloc(1, sizeof(struct radeon_accel_state)))) {
+    if (!(info->accel_state = calloc(1, sizeof(struct radeon_accel_state)))) {
 	xf86DrvMsg(pScrn->scrnIndex, X_ERROR, "Unable to allocate accel_state rec!\n");
 	return FALSE;
     }
@@ -2313,12 +2329,12 @@ static Bool RADEONPreInitDRI(ScrnInfoPtr pScrn)
     info->directRenderingEnabled = FALSE;
     info->directRenderingInited = FALSE;
 
-    if (!(info->dri = xcalloc(1, sizeof(struct radeon_dri)))) {
+    if (!(info->dri = calloc(1, sizeof(struct radeon_dri)))) {
 	xf86DrvMsg(pScrn->scrnIndex, X_ERROR,"Unable to allocate dri rec!\n");
 	return FALSE;
     }
 
-    if (!(info->cp = xcalloc(1, sizeof(struct radeon_cp)))) {
+    if (!(info->cp = calloc(1, sizeof(struct radeon_cp)))) {
 	xf86DrvMsg(pScrn->scrnIndex, X_ERROR,"Unable to allocate cp rec!\n");
 	return FALSE;
     }
@@ -2701,7 +2717,11 @@ static Bool RADEONPreInitXv(ScrnInfoPtr pScrn)
 	switch(info->ChipFamily){
 	case CHIP_FAMILY_R200:
 	case CHIP_FAMILY_R300:
+	case CHIP_FAMILY_R350:
 	case CHIP_FAMILY_RV350:
+	case CHIP_FAMILY_RV380:
+	case CHIP_FAMILY_R420:
+	case CHIP_FAMILY_RV410:
 		info->overlay_scaler_buffer_width = 1920;
 		break;
 	default:
@@ -3065,7 +3085,7 @@ Bool RADEONPreInit(ScrnInfoPtr pScrn, int flags)
 				/* We can't do this until we have a
 				   pScrn->display. */
     xf86CollectOptions(pScrn, NULL);
-    if (!(info->Options = xalloc(sizeof(RADEONOptions))))
+    if (!(info->Options = malloc(sizeof(RADEONOptions))))
 	goto fail;
 
     memcpy(info->Options, RADEONOptions, sizeof(RADEONOptions));
@@ -3229,7 +3249,7 @@ fail:
 				/* Pre-init failed. */
 				/* Free the video bios (if applicable) */
     if (info->VBIOS) {
-	xfree(info->VBIOS);
+	free(info->VBIOS);
 	info->VBIOS = NULL;
     }
 
@@ -3426,7 +3446,8 @@ Bool RADEONScreenInit(int scrnIndex, ScreenPtr pScreen,
     pScrn->fbOffset    = info->dri->frontOffset;
 #endif
 
-    if (info->IsSecondary) pScrn->fbOffset = pScrn->videoRam * 1024;
+    if (info->IsSecondary)
+        pScrn->fbOffset = pScrn->videoRam * 1024;
 #ifdef XF86DRI
     xf86DrvMsg(pScrn->scrnIndex, X_INFO, 
 		   "RADEONScreenInit %lx %ld %d\n",
@@ -3649,9 +3670,9 @@ Bool RADEONScreenInit(int scrnIndex, ScreenPtr pScreen,
 		   "Initializing fb layer\n");
 
     if (info->r600_shadow_fb) {
-	info->fb_shadow = xcalloc(1,
-				  pScrn->displayWidth * pScrn->virtualY *
-				  ((pScrn->bitsPerPixel + 7) >> 3));
+	info->fb_shadow = calloc(1,
+				 pScrn->displayWidth * pScrn->virtualY *
+				 ((pScrn->bitsPerPixel + 7) >> 3));
 	if (info->fb_shadow == NULL) {
 	    xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
                        "Failed to allocate shadow framebuffer\n");
@@ -3667,7 +3688,7 @@ Bool RADEONScreenInit(int scrnIndex, ScreenPtr pScreen,
 
     if (info->r600_shadow_fb == FALSE) {
 	/* Init fb layer */
-	if (!fbScreenInit(pScreen, info->FB,
+	if (!fbScreenInit(pScreen, info->FB + pScrn->fbOffset,
 			  pScrn->virtualX, pScrn->virtualY,
 			  pScrn->xDpi, pScrn->yDpi, pScrn->displayWidth,
 			  pScrn->bitsPerPixel))
@@ -5626,15 +5647,6 @@ void RADEONDoAdjustFrame(ScrnInfoPtr pScrn, int x, int y, Bool crtc2)
 		   "RADEONDoAdjustFrame(%d,%d,%d)\n", x, y, clone);
 #endif
 
-    if (info->showCache && y) {
-	        int lastline = info->FbMapSize /
-		    ((pScrn->displayWidth * pScrn->bitsPerPixel) / 8);
-
-		lastline -= pScrn->currentMode->VDisplay;
-		y += (pScrn->virtualY - 1) * (y / 3 + 1);
-		if (y > lastline) y = lastline;
-    }
-
     Base = pScrn->fbOffset;
 
   /* note we cannot really simply use the info->ModeReg.crtc_offset_cntl value, since the
@@ -6006,7 +6018,7 @@ static Bool RADEONCloseScreen(int scrnIndex, ScreenPtr pScreen)
 #ifdef USE_EXA
     if (info->accel_state->exa) {
 	exaDriverFini(pScreen);
-	xfree(info->accel_state->exa);
+	free(info->accel_state->exa);
 	info->accel_state->exa = NULL;
     }
 #endif /* USE_EXA */
@@ -6017,7 +6029,7 @@ static Bool RADEONCloseScreen(int scrnIndex, ScreenPtr pScreen)
 	info->accel_state->accel = NULL;
 
 	if (info->accel_state->scratch_save)
-	    xfree(info->accel_state->scratch_save);
+	    free(info->accel_state->scratch_save);
 	info->accel_state->scratch_save = NULL;
     }
 #endif /* USE_XAA */

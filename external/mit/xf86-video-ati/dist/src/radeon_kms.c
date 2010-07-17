@@ -159,6 +159,11 @@ static Bool RADEONCreateScreenResources_KMS(ScreenPtr pScreen)
 	return FALSE;
     pScreen->CreateScreenResources = RADEONCreateScreenResources_KMS;
 
+    if (!drmmode_set_desired_modes(pScrn, &info->drmmode))
+	return FALSE;
+
+    drmmode_uevent_init(pScrn, &info->drmmode);
+
     if (info->r600_shadow_fb) {
 	pixmap = pScreen->GetScreenPixmap(pScreen);
 
@@ -222,12 +227,13 @@ static Bool RADEONPreInitAccel_KMS(ScrnInfoPtr pScrn)
 {
     RADEONInfoPtr  info = RADEONPTR(pScrn);
 
-    if (!(info->accel_state = xcalloc(1, sizeof(struct radeon_accel_state)))) {
+    if (!(info->accel_state = calloc(1, sizeof(struct radeon_accel_state)))) {
 	xf86DrvMsg(pScrn->scrnIndex, X_ERROR, "Unable to allocate accel_state rec!\n");
 	return FALSE;
     }
 
     if (xf86ReturnOptValBool(info->Options, OPTION_NOACCEL, FALSE) ||
+	(info->ChipFamily >= CHIP_FAMILY_CEDAR) ||
 	(!RADEONIsAccelWorking(pScrn))) {
 	xf86DrvMsg(pScrn->scrnIndex, X_INFO,
 		   "GPU accel disabled or not working, using shadowfb for KMS\n");
@@ -350,12 +356,12 @@ static Bool RADEONPreInitChipType_KMS(ScrnInfoPtr pScrn)
 static Bool radeon_alloc_dri(ScrnInfoPtr pScrn)
 {
     RADEONInfoPtr  info   = RADEONPTR(pScrn);
-    if (!(info->dri = xcalloc(1, sizeof(struct radeon_dri)))) {
+    if (!(info->dri = calloc(1, sizeof(struct radeon_dri)))) {
 	xf86DrvMsg(pScrn->scrnIndex, X_ERROR,"Unable to allocate dri rec!\n");
 	return FALSE;
     }
 
-    if (!(info->cp = xcalloc(1, sizeof(struct radeon_cp)))) {
+    if (!(info->cp = calloc(1, sizeof(struct radeon_cp)))) {
 	xf86DrvMsg(pScrn->scrnIndex, X_ERROR,"Unable to allocate cp rec!\n");
 	return FALSE;
     }
@@ -388,10 +394,10 @@ static Bool radeon_open_drm_master(ScrnInfoPtr pScrn)
 	xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
 		   "[drm] Failed to open DRM device for %s: %s\n",
 		   busid, strerror(errno));
-	xfree(busid);
+	free(busid);
 	return FALSE;
     }
-    xfree(busid);
+    free(busid);
 
     /* Check that what we opened was a master or a master-capable FD,
      * by setting the version of the interface we'll use to talk to it.
@@ -424,6 +430,7 @@ Bool RADEONPreInit_KMS(ScrnInfoPtr pScrn, int flags)
     RADEONEntPtr pRADEONEnt;
     DevUnion* pPriv;
     Gamma  zeros = { 0.0, 0.0, 0.0 };
+    Bool colorTilingDefault;
 
     xf86DrvMsgVerb(pScrn->scrnIndex, X_INFO, RADEON_LOGLEVEL_DEBUG,
 		   "RADEONPreInit_KMS\n");
@@ -465,7 +472,7 @@ Bool RADEONPreInit_KMS(ScrnInfoPtr pScrn, int flags)
 	goto fail;
 
     xf86CollectOptions(pScrn, NULL);
-    if (!(info->Options = xalloc(sizeof(RADEONOptions_KMS))))
+    if (!(info->Options = malloc(sizeof(RADEONOptions_KMS))))
 	goto fail;
 
     memcpy(info->Options, RADEONOptions_KMS, sizeof(RADEONOptions_KMS));
@@ -480,8 +487,11 @@ Bool RADEONPreInit_KMS(ScrnInfoPtr pScrn, int flags)
     if (!radeon_alloc_dri(pScrn))
 	return FALSE;
 
+    colorTilingDefault = info->ChipFamily >= CHIP_FAMILY_R300 &&
+                         info->ChipFamily <= CHIP_FAMILY_RS740;
+
     info->allowColorTiling = xf86ReturnOptValBool(info->Options,
-                                        OPTION_COLOR_TILING, FALSE);
+                                        OPTION_COLOR_TILING, colorTilingDefault);
     if (info->ChipFamily >= CHIP_FAMILY_R600) {
 	    xf86DrvMsg(pScrn->scrnIndex, X_WARNING, "Color tiling is not yet supported on R600/R700\n");
 	    info->allowColorTiling = FALSE;
@@ -493,10 +503,6 @@ Bool RADEONPreInit_KMS(ScrnInfoPtr pScrn, int flags)
 	xf86DrvMsg(pScrn->scrnIndex, X_ERROR, "Kernel modesetting setup failed\n");
 	goto fail;
     }
-    if (drmmode_pre_init(pScrn, &info->drmmode, pScrn->bitsPerPixel / 8) == FALSE) {
-	xf86DrvMsg(pScrn->scrnIndex, X_ERROR, "Kernel modesetting setup failed\n");
-	goto fail;
-    }
 
     info->dri2.enabled = FALSE;
     info->dri->pKernelDRMVersion = drmGetVersion(info->dri->drmFD);
@@ -504,6 +510,36 @@ Bool RADEONPreInit_KMS(ScrnInfoPtr pScrn, int flags)
 	xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
 		   "RADEONDRIGetVersion failed to get the DRM version\n");
 	goto fail;
+    }
+
+    if (drmmode_pre_init(pScrn, &info->drmmode, pScrn->bitsPerPixel / 8) == FALSE) {
+	xf86DrvMsg(pScrn->scrnIndex, X_ERROR, "Kernel modesetting setup failed\n");
+	goto fail;
+    }
+
+    if (info->drmmode.mode_res->count_crtcs == 1)
+        pRADEONEnt->HasCRTC2 = FALSE;
+    else
+        pRADEONEnt->HasCRTC2 = TRUE;
+
+
+    /* fix up cloning on rn50 cards
+     * since they only have one crtc sometimes the xserver doesn't assign
+     * a crtc to one of the outputs even though both outputs have common modes
+     * which results in only one monitor being enabled.  Assign a crtc here so
+     * that both outputs light up.
+     */
+    if (info->ChipFamily == CHIP_FAMILY_RV100 && !pRADEONEnt->HasCRTC2) {
+	xf86CrtcConfigPtr xf86_config = XF86_CRTC_CONFIG_PTR(pScrn);
+	int i;
+
+	for (i = 0; i < xf86_config->num_output; i++) {
+	    xf86OutputPtr output = xf86_config->output[i];
+
+	    /* XXX: double check crtc mode */
+	    if ((output->probed_modes != NULL) && (output->crtc == NULL))
+		output->crtc = xf86_config->crtc[0];
+	}
     }
 
     {
@@ -601,12 +637,13 @@ static Bool RADEONCloseScreen_KMS(int scrnIndex, ScreenPtr pScreen)
     xf86DrvMsgVerb(pScrn->scrnIndex, X_INFO, RADEON_LOGLEVEL_DEBUG,
 		   "RADEONCloseScreen\n");
 
+    drmmode_uevent_fini(pScrn, &info->drmmode);
     if (info->cs)
       radeon_cs_flush_indirect(pScrn);
 
     if (info->accel_state->exa) {
 	exaDriverFini(pScreen);
-	xfree(info->accel_state->exa);
+	free(info->accel_state->exa);
 	info->accel_state->exa = NULL;
     }
 
@@ -704,9 +741,9 @@ Bool RADEONScreenInit_KMS(int scrnIndex, ScreenPtr pScreen,
     front_ptr = info->front_bo->ptr;
 
     if (info->r600_shadow_fb) {
-	info->fb_shadow = xcalloc(1,
-				  pScrn->displayWidth * pScrn->virtualY *
-				  ((pScrn->bitsPerPixel + 7) >> 3));
+	info->fb_shadow = calloc(1,
+				 pScrn->displayWidth * pScrn->virtualY *
+				 ((pScrn->bitsPerPixel + 7) >> 3));
 	if (info->fb_shadow == NULL) {
 	    xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
                        "Failed to allocate shadow framebuffer\n");
@@ -832,9 +869,6 @@ Bool RADEONScreenInit_KMS(int scrnIndex, ScreenPtr pScreen,
         }
     }
     pScrn->pScreen = pScreen;
-
-    if (!drmmode_set_desired_modes(pScrn, &info->drmmode))
-	return FALSE;
 
     /* Provide SaveScreen & wrap BlockHandler and CloseScreen */
     /* Wrap CloseScreen */
@@ -975,7 +1009,7 @@ static Bool radeon_setup_kernel_mem(ScreenPtr pScreen)
 
 #if X_BYTE_ORDER == X_BIG_ENDIAN
 		radeon_bo_set_tiling(info->cursor_bo[c], RADEON_TILING_SWAP_32BIT |
-				     RADEON_TILING_SURFACE, stride);
+				     RADEON_TILING_SURFACE, CURSOR_WIDTH);
 #endif
 
                 if (radeon_bo_map(info->cursor_bo[c], 1)) {

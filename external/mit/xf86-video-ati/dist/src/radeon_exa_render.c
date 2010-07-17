@@ -332,8 +332,12 @@ static Bool RADEONSetupSourceTile(PicturePtr pPict,
 
 /* R100-specific code */
 
-static Bool R100CheckCompositeTexture(PicturePtr pPict, int unit)
+static Bool R100CheckCompositeTexture(PicturePtr pPict,
+				      PicturePtr pDstPict,
+				      int op,
+				      int unit)
 {
+    unsigned int repeatType = pPict->repeat ? pPict->repeatType : RepeatNone;
     int w = pPict->pDrawable->width;
     int h = pPict->pDrawable->height;
     int i;
@@ -360,6 +364,19 @@ static Bool R100CheckCompositeTexture(PicturePtr pPict, int unit)
 	pPict->filter != PictFilterBilinear)
     {
 	RADEON_FALLBACK(("Unsupported filter 0x%x\n", pPict->filter));
+    }
+
+    /* for REPEAT_NONE, Render semantics are that sampling outside the source
+     * picture results in alpha=0 pixels. We can implement this with a border color
+     * *if* our source texture has an alpha channel, otherwise we need to fall
+     * back. If we're not transformed then we hope that upper layers have clipped
+     * rendering to the bounds of the source drawable, in which case it doesn't
+     * matter. I have not, however, verified that the X server always does such
+     * clipping.
+     */
+    if (pPict->transform != 0 && repeatType == RepeatNone && PICT_FORMAT_A(pPict->format) == 0) {
+	if (!(((op == PictOpSrc) || (op == PictOpClear)) && (PICT_FORMAT_A(pDstPict->format) == 0)))
+	    RADEON_FALLBACK(("REPEAT_NONE unsupported for transformed xRGB source\n"));
     }
 
     return TRUE;
@@ -551,11 +568,11 @@ static Bool R100CheckComposite(int op, PicturePtr pSrcPicture,
 	    }
 	}
 
-	if (!R100CheckCompositeTexture(pMaskPicture, 1))
+	if (!R100CheckCompositeTexture(pMaskPicture, pDstPicture, op, 1))
 	    return FALSE;
     }
 
-    if (!R100CheckCompositeTexture(pSrcPicture, 0))
+    if (!R100CheckCompositeTexture(pSrcPicture, pDstPicture, op, 0))
 	return FALSE;
 
     if (!RADEONGetDestFormat(pDstPicture, &tmp1))
@@ -723,8 +740,12 @@ static Bool FUNC_NAME(R100PrepareComposite)(int op,
 
 #ifdef ONLY_ONCE
 
-static Bool R200CheckCompositeTexture(PicturePtr pPict, int unit)
+static Bool R200CheckCompositeTexture(PicturePtr pPict,
+				      PicturePtr pDstPict,
+				      int op,
+				      int unit)
 {
+    unsigned int repeatType = pPict->repeat ? pPict->repeatType : RepeatNone;
     int w = pPict->pDrawable->width;
     int h = pPict->pDrawable->height;
     int i;
@@ -751,6 +772,19 @@ static Bool R200CheckCompositeTexture(PicturePtr pPict, int unit)
     if (pPict->filter != PictFilterNearest &&
 	pPict->filter != PictFilterBilinear)
 	RADEON_FALLBACK(("Unsupported filter 0x%x\n", pPict->filter));
+
+    /* for REPEAT_NONE, Render semantics are that sampling outside the source
+     * picture results in alpha=0 pixels. We can implement this with a border color
+     * *if* our source texture has an alpha channel, otherwise we need to fall
+     * back. If we're not transformed then we hope that upper layers have clipped
+     * rendering to the bounds of the source drawable, in which case it doesn't
+     * matter. I have not, however, verified that the X server always does such
+     * clipping.
+     */
+    if (pPict->transform != 0 && repeatType == RepeatNone && PICT_FORMAT_A(pPict->format) == 0) {
+	if (!(((op == PictOpSrc) || (op == PictOpClear)) && (PICT_FORMAT_A(pDstPict->format) == 0)))
+	    RADEON_FALLBACK(("REPEAT_NONE unsupported for transformed xRGB source\n"));
+    }
 
     return TRUE;
 }
@@ -932,11 +966,11 @@ static Bool R200CheckComposite(int op, PicturePtr pSrcPicture, PicturePtr pMaskP
 	    }
 	}
 
-	if (!R200CheckCompositeTexture(pMaskPicture, 1))
+	if (!R200CheckCompositeTexture(pMaskPicture, pDstPicture, op, 1))
 	    return FALSE;
     }
 
-    if (!R200CheckCompositeTexture(pSrcPicture, 0))
+    if (!R200CheckCompositeTexture(pSrcPicture, pDstPicture, op, 0))
 	return FALSE;
 
     if (!RADEONGetDestFormat(pDstPicture, &tmp1))

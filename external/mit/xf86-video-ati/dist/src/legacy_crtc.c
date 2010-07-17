@@ -1184,10 +1184,12 @@ RADEONInitCrtc2Registers(xf86CrtcPtr crtc, RADEONSavePtr save,
 
 /* Define PLL registers for requested video mode */
 static void
-RADEONInitPLLRegisters(ScrnInfoPtr pScrn, RADEONSavePtr save,
+RADEONInitPLLRegisters(xf86CrtcPtr crtc, RADEONSavePtr save,
 		       RADEONPLLPtr pll, DisplayModePtr mode,
 		       int flags)
 {
+    RADEONCrtcPrivatePtr radeon_crtc = crtc->driver_private;
+    ScrnInfoPtr pScrn = crtc->scrn;
     RADEONInfoPtr  info       = RADEONPTR(pScrn);
     uint32_t feedback_div = 0;
     uint32_t frac_fb_div = 0;
@@ -1223,7 +1225,13 @@ RADEONInitPLLRegisters(ScrnInfoPtr pScrn, RADEONSavePtr save,
        return;
     }
 
-    RADEONComputePLL(pScrn, pll, mode->Clock, &freq, &feedback_div, &frac_fb_div, &reference_div, &post_divider, flags);
+    if (xf86ReturnOptValBool(info->Options, OPTION_NEW_PLL, FALSE))
+	radeon_crtc->pll_algo = RADEON_PLL_NEW;
+    else
+	radeon_crtc->pll_algo = RADEON_PLL_OLD;
+
+    RADEONComputePLL(crtc, pll, mode->Clock, &freq,
+		     &feedback_div, &frac_fb_div, &reference_div, &post_divider, flags);
 
     for (post_div = &post_divs[0]; post_div->divider; ++post_div) {
 	if (post_div->divider == post_divider)
@@ -1266,10 +1274,12 @@ RADEONInitPLLRegisters(ScrnInfoPtr pScrn, RADEONSavePtr save,
 
 /* Define PLL2 registers for requested video mode */
 static void
-RADEONInitPLL2Registers(ScrnInfoPtr pScrn, RADEONSavePtr save,
+RADEONInitPLL2Registers(xf86CrtcPtr crtc, RADEONSavePtr save,
 			RADEONPLLPtr pll, DisplayModePtr mode,
 			int flags)
 {
+    RADEONCrtcPrivatePtr radeon_crtc = crtc->driver_private;
+    ScrnInfoPtr pScrn = crtc->scrn;
     RADEONInfoPtr  info       = RADEONPTR(pScrn);
     uint32_t feedback_div = 0;
     uint32_t frac_fb_div = 0;
@@ -1303,7 +1313,13 @@ RADEONInitPLL2Registers(ScrnInfoPtr pScrn, RADEONSavePtr save,
        return;
     }
 
-    RADEONComputePLL(pScrn, pll, mode->Clock, &freq, &feedback_div, &frac_fb_div, &reference_div, &post_divider, flags);
+    if (xf86ReturnOptValBool(info->Options, OPTION_NEW_PLL, FALSE))
+	radeon_crtc->pll_algo = RADEON_PLL_NEW;
+    else
+	radeon_crtc->pll_algo = RADEON_PLL_OLD;
+
+    RADEONComputePLL(crtc, pll, mode->Clock, &freq,
+		     &feedback_div, &frac_fb_div, &reference_div, &post_divider, flags);
 
     for (post_div = &post_divs[0]; post_div->divider; ++post_div) {
 	if (post_div->divider == post_divider)
@@ -1795,7 +1811,7 @@ legacy_crtc_mode_set(xf86CrtcPtr crtc, DisplayModePtr mode,
 	dot_clock = adjusted_mode->Clock / 1000.0;
 	if (dot_clock) {
 	    ErrorF("init pll1\n");
-	    RADEONInitPLLRegisters(pScrn, info->ModeReg, &info->pll, adjusted_mode, pll_flags);
+	    RADEONInitPLLRegisters(crtc, info->ModeReg, &info->pll, adjusted_mode, pll_flags);
 	} else {
 	    info->ModeReg->ppll_ref_div = info->SavedReg->ppll_ref_div;
 	    info->ModeReg->ppll_div_3   = info->SavedReg->ppll_div_3;
@@ -1809,7 +1825,7 @@ legacy_crtc_mode_set(xf86CrtcPtr crtc, DisplayModePtr mode,
 	dot_clock = adjusted_mode->Clock / 1000.0;
 	if (dot_clock) {
 	    ErrorF("init pll2\n");
-	    RADEONInitPLL2Registers(pScrn, info->ModeReg, &info->pll, adjusted_mode, pll_flags);
+	    RADEONInitPLL2Registers(crtc, info->ModeReg, &info->pll, adjusted_mode, pll_flags);
 	}
 	break;
     }

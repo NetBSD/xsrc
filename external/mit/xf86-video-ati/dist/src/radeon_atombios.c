@@ -490,7 +490,7 @@ rhdAtomAllocateFbScratch(atomBiosHandlePtr handle,
 	xf86DrvMsg(handle->scrnIndex, X_INFO,
 		   "Cannot get VRAM scratch space. "
 		   "Allocating in main memory instead\n");
-	handle->scratchBase = xcalloc(fb_size,1);
+	handle->scratchBase = calloc(fb_size,1);
 	return ATOM_SUCCESS;
     }
     return ATOM_FAILED;
@@ -651,14 +651,14 @@ rhdAtomInit(atomBiosHandlePtr unused1, AtomBiosRequestID unused2,
     BIOSImageSize = RADEON_VBIOS_SIZE;
 #endif
 
-    if (!(atomDataPtr = xcalloc(1, sizeof(atomDataTables)))) {
+    if (!(atomDataPtr = calloc(1, sizeof(atomDataTables)))) {
 	xf86DrvMsg(scrnIndex,X_ERROR,"Cannot allocate memory for "
 		   "ATOM BIOS data tabes\n");
 	goto error;
     }
     if (!rhdAtomGetDataTable(scrnIndex, info->VBIOS, atomDataPtr, &cmd_offset, BIOSImageSize))
 	goto error1;
-    if (!(handle = xcalloc(1, sizeof(atomBiosHandleRec)))) {
+    if (!(handle = calloc(1, sizeof(atomBiosHandleRec)))) {
 	xf86DrvMsg(scrnIndex,X_ERROR,"Cannot allocate memory\n");
 	goto error1;
     }
@@ -677,7 +677,7 @@ rhdAtomInit(atomBiosHandlePtr unused1, AtomBiosRequestID unused2,
     return ATOM_SUCCESS;
 
  error1:
-    xfree(atomDataPtr);
+    free(atomDataPtr);
  error:
     return ATOM_FAILED;
 }
@@ -688,10 +688,10 @@ rhdAtomTearDown(atomBiosHandlePtr handle,
 {
     //RHDFUNC(handle);
 
-    xfree(handle->BIOSBase);
-    xfree(handle->atomDataPtr);
-    if (handle->scratchBase) xfree(handle->scratchBase);
-    xfree(handle);
+    free(handle->BIOSBase);
+    free(handle->atomDataPtr);
+    if (handle->scratchBase) free(handle->scratchBase);
+    free(handle);
     return ATOM_SUCCESS;
 }
 
@@ -777,7 +777,7 @@ rhdAtomDTDTimings(atomBiosHandlePtr handle, ATOM_DTD_FORMAT *dtd)
     if (!dtd->usHActive || !dtd->usVActive)
 	return NULL;
 
-    if (!(mode = (DisplayModePtr)xcalloc(1,sizeof(DisplayModeRec))))
+    if (!(mode = (DisplayModePtr)calloc(1,sizeof(DisplayModeRec))))
 	return NULL;
 
     mode->CrtcHDisplay = mode->HDisplay = le16_to_cpu(dtd->usHActive);
@@ -861,7 +861,7 @@ rhdAtomLvdsDDC(atomBiosHandlePtr handle, uint32_t offset, unsigned char *record)
 		    - sizeof(UCHAR);
 		if (offset > handle->BIOSImageSize) break;
 		/* dup string as we free it later */
-		if (!(EDIDBlock = (unsigned char *)xalloc(
+		if (!(EDIDBlock = (unsigned char *)malloc(
 			  ((ATOM_FAKE_EDID_PATCH_RECORD*)record)->ucFakeEDIDLength)))
 		    return NULL;
 		memcpy(EDIDBlock,&((ATOM_FAKE_EDID_PATCH_RECORD*)record)->ucFakeEDIDString,
@@ -871,7 +871,7 @@ rhdAtomLvdsDDC(atomBiosHandlePtr handle, uint32_t offset, unsigned char *record)
 		{
 		    xf86MonPtr mon = xf86InterpretEDID(handle->scrnIndex,EDIDBlock);
 		    xf86PrintEDID(mon);
-		    xfree(mon);
+		    free(mon);
 		}
 		return EDIDBlock;
 
@@ -1802,9 +1802,9 @@ radeon_add_encoder(ScrnInfoPtr pScrn, uint32_t encoder_id, uint32_t device_suppo
 		    if (device_support & ATOM_DEVICE_LCD1_SUPPORT) {
 			if (info->encoders[device_index]->dev_priv == NULL) {
 			    info->encoders[device_index]->dev_priv =
-				(radeon_lvds_ptr)xcalloc(1,sizeof(radeon_lvds_rec));
+				(radeon_lvds_ptr)calloc(1,sizeof(radeon_lvds_rec));
 			    if (info->encoders[device_index]->dev_priv == NULL) {
-				ErrorF("xalloc failed\n");
+				ErrorF("calloc failed\n");
 				return FALSE;
 			    } else
 				RADEONGetATOMLVDSInfo(pScrn, (radeon_lvds_ptr)info->encoders[device_index]->dev_priv);
@@ -1816,7 +1816,7 @@ radeon_add_encoder(ScrnInfoPtr pScrn, uint32_t encoder_id, uint32_t device_suppo
 	    }
 	}
 
-	info->encoders[device_index] = (radeon_encoder_ptr)xcalloc(1,sizeof(radeon_encoder_rec));
+	info->encoders[device_index] = (radeon_encoder_ptr)calloc(1,sizeof(radeon_encoder_rec));
 	if (info->encoders[device_index] != NULL) {
 	    info->encoders[device_index]->encoder_id = encoder_id;
 	    info->encoders[device_index]->devices = 0;
@@ -1824,9 +1824,9 @@ radeon_add_encoder(ScrnInfoPtr pScrn, uint32_t encoder_id, uint32_t device_suppo
 	    // add dev_priv stuff
 	    switch (encoder_id) {
 	    case ENCODER_OBJECT_ID_INTERNAL_LVDS:
-		    info->encoders[device_index]->dev_priv = (radeon_lvds_ptr)xcalloc(1,sizeof(radeon_lvds_rec));
+		    info->encoders[device_index]->dev_priv = (radeon_lvds_ptr)calloc(1,sizeof(radeon_lvds_rec));
 		    if (info->encoders[device_index]->dev_priv == NULL) {
-			ErrorF("xalloc failed\n");
+			ErrorF("calloc failed\n");
 			return FALSE;
 		    } else {
 			if (info->IsAtomBios)
@@ -1837,9 +1837,9 @@ radeon_add_encoder(ScrnInfoPtr pScrn, uint32_t encoder_id, uint32_t device_suppo
 		break;
 	    case ENCODER_OBJECT_ID_INTERNAL_DAC2:
 		if (!IS_AVIVO_VARIANT) {
-		    info->encoders[device_index]->dev_priv = (radeon_tvdac_ptr)xcalloc(1,sizeof(radeon_tvdac_rec));
+		    info->encoders[device_index]->dev_priv = (radeon_tvdac_ptr)calloc(1,sizeof(radeon_tvdac_rec));
 		    if (info->encoders[device_index]->dev_priv == NULL) {
-			ErrorF("xalloc failed\n");
+			ErrorF("calloc failed\n");
 			return FALSE;
 		    } else
 			RADEONGetTVDacAdjInfo(pScrn, (radeon_tvdac_ptr)info->encoders[device_index]->dev_priv);
@@ -1847,9 +1847,9 @@ radeon_add_encoder(ScrnInfoPtr pScrn, uint32_t encoder_id, uint32_t device_suppo
 		break;
 	    case ENCODER_OBJECT_ID_INTERNAL_TMDS1:
 		if (!IS_AVIVO_VARIANT) {
-		    info->encoders[device_index]->dev_priv = (radeon_tmds_ptr)xcalloc(1,sizeof(radeon_tmds_rec));
+		    info->encoders[device_index]->dev_priv = (radeon_tmds_ptr)calloc(1,sizeof(radeon_tmds_rec));
 		    if (info->encoders[device_index]->dev_priv == NULL) {
-			ErrorF("xalloc failed\n");
+			ErrorF("calloc failed\n");
 			return FALSE;
 		    } else
 			RADEONGetTMDSInfo(pScrn, (radeon_tmds_ptr)info->encoders[device_index]->dev_priv);
@@ -1857,9 +1857,9 @@ radeon_add_encoder(ScrnInfoPtr pScrn, uint32_t encoder_id, uint32_t device_suppo
 		break;
 	    case ENCODER_OBJECT_ID_INTERNAL_DVO1:
 		if (!IS_AVIVO_VARIANT) {
-		    info->encoders[device_index]->dev_priv = (radeon_dvo_ptr)xcalloc(1,sizeof(radeon_dvo_rec));
+		    info->encoders[device_index]->dev_priv = (radeon_dvo_ptr)calloc(1,sizeof(radeon_dvo_rec));
 		    if (info->encoders[device_index]->dev_priv == NULL) {
-			ErrorF("xalloc failed\n");
+			ErrorF("calloc failed\n");
 			return FALSE;
 		    } else
 			RADEONGetExtTMDSInfo(pScrn, (radeon_dvo_ptr)info->encoders[device_index]->dev_priv);
@@ -1871,9 +1871,9 @@ radeon_add_encoder(ScrnInfoPtr pScrn, uint32_t encoder_id, uint32_t device_suppo
 	    case ENCODER_OBJECT_ID_INTERNAL_UNIPHY2:
 	    case ENCODER_OBJECT_ID_INTERNAL_LVTM1:
 		if (device_support & ATOM_DEVICE_LCD1_SUPPORT) {
-		    info->encoders[device_index]->dev_priv = (radeon_lvds_ptr)xcalloc(1,sizeof(radeon_lvds_rec));
+		    info->encoders[device_index]->dev_priv = (radeon_lvds_ptr)calloc(1,sizeof(radeon_lvds_rec));
 		    if (info->encoders[device_index]->dev_priv == NULL) {
-			ErrorF("xalloc failed\n");
+			ErrorF("calloc failed\n");
 			return FALSE;
 		    } else
 			RADEONGetATOMLVDSInfo(pScrn, (radeon_lvds_ptr)info->encoders[device_index]->dev_priv);
@@ -1882,7 +1882,7 @@ radeon_add_encoder(ScrnInfoPtr pScrn, uint32_t encoder_id, uint32_t device_suppo
 	    }
 	    return TRUE;
 	} else {
-	    ErrorF("xalloc failed\n");
+	    ErrorF("calloc failed\n");
 	    return FALSE;
 	}
     }
@@ -2289,9 +2289,12 @@ RADEONGetATOMClockInfo(ScrnInfoPtr pScrn)
 	break;
     }
     pll->reference_div = 0;
-    if (pll->pll_out_min == 0)
-	pll->pll_out_min = 64800;
-
+    if (pll->pll_out_min == 0) {
+	if (IS_AVIVO_VARIANT)
+	    pll->pll_out_min = 64800;
+	else
+	    pll->pll_out_min = 20000;
+    }
 
     /* limiting the range is a good thing in most cases
      * as it limits the number of matching pll combinations,

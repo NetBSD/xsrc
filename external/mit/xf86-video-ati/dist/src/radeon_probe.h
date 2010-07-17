@@ -147,6 +147,11 @@ typedef struct
     Bool hw_capable;
 } RADEONI2CBusRec, *RADEONI2CBusPtr;
 
+enum radeon_pll_algo {
+    RADEON_PLL_OLD,
+    RADEON_PLL_NEW
+};
+
 typedef struct _RADEONCrtcPrivateRec {
     void *crtc_rotate_mem;
     void *cursor_mem;
@@ -164,6 +169,7 @@ typedef struct _RADEONCrtcPrivateRec {
     float vsc;
     float hsc;
     int pll_id;
+    enum radeon_pll_algo     pll_algo;
 } RADEONCrtcPrivateRec, *RADEONCrtcPrivatePtr;
 
 typedef struct _radeon_encoder {
@@ -638,6 +644,9 @@ typedef struct
     RADEONSaveRec     SavedReg;         /* Original (text) mode              */
 
     void              *MMIO;            /* Map of MMIO region                */
+    int               MMIO_cnt;         /* Map of FB region refcount         */
+    void              *FB;              /* Map of FB region                  */
+    int               FB_cnt;           /* Map of FB region refcount         */
     int fd;                             /* for sharing across zaphod heads   */
 } RADEONEntRec, *RADEONEntPtr;
 

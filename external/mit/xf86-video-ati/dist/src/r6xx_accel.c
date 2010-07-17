@@ -661,11 +661,12 @@ set_screen_scissor(ScrnInfoPtr pScrn, drmBufPtr ib, int x1, int y1, int x2, int 
 {
     RADEONInfoPtr info = RADEONPTR(pScrn);
 
-    BEGIN_BATCH(6);
-    EREG(ib, PA_SC_SCREEN_SCISSOR_TL,              ((x1 << PA_SC_SCREEN_SCISSOR_TL__TL_X_shift) |
-						    (y1 << PA_SC_SCREEN_SCISSOR_TL__TL_Y_shift)));
-    EREG(ib, PA_SC_SCREEN_SCISSOR_BR,              ((x2 << PA_SC_SCREEN_SCISSOR_BR__BR_X_shift) |
-						    (y2 << PA_SC_SCREEN_SCISSOR_BR__BR_Y_shift)));
+    BEGIN_BATCH(4);
+    PACK0(ib, PA_SC_SCREEN_SCISSOR_TL, 2);
+    E32(ib, ((x1 << PA_SC_SCREEN_SCISSOR_TL__TL_X_shift) |
+	     (y1 << PA_SC_SCREEN_SCISSOR_TL__TL_Y_shift)));
+    E32(ib, ((x2 << PA_SC_SCREEN_SCISSOR_BR__BR_X_shift) |
+	     (y2 << PA_SC_SCREEN_SCISSOR_BR__BR_Y_shift)));
     END_BATCH();
 }
 
@@ -674,14 +675,13 @@ set_vport_scissor(ScrnInfoPtr pScrn, drmBufPtr ib, int id, int x1, int y1, int x
 {
     RADEONInfoPtr info = RADEONPTR(pScrn);
 
-    BEGIN_BATCH(6);
-    EREG(ib, PA_SC_VPORT_SCISSOR_0_TL +
-	 id * PA_SC_VPORT_SCISSOR_0_TL_offset, ((x1 << PA_SC_VPORT_SCISSOR_0_TL__TL_X_shift) |
-						(y1 << PA_SC_VPORT_SCISSOR_0_TL__TL_Y_shift) |
-						WINDOW_OFFSET_DISABLE_bit));
-    EREG(ib, PA_SC_VPORT_SCISSOR_0_BR +
-	 id * PA_SC_VPORT_SCISSOR_0_BR_offset, ((x2 << PA_SC_VPORT_SCISSOR_0_BR__BR_X_shift) |
-						(y2 << PA_SC_VPORT_SCISSOR_0_BR__BR_Y_shift)));
+    BEGIN_BATCH(4);
+    PACK0(ib, PA_SC_VPORT_SCISSOR_0_TL + id * PA_SC_VPORT_SCISSOR_0_TL_offset, 2);
+    E32(ib, ((x1 << PA_SC_VPORT_SCISSOR_0_TL__TL_X_shift) |
+	     (y1 << PA_SC_VPORT_SCISSOR_0_TL__TL_Y_shift) |
+	     WINDOW_OFFSET_DISABLE_bit));
+    E32(ib, ((x2 << PA_SC_VPORT_SCISSOR_0_BR__BR_X_shift) |
+	     (y2 << PA_SC_VPORT_SCISSOR_0_BR__BR_Y_shift)));
     END_BATCH();
 }
 
@@ -690,12 +690,13 @@ set_generic_scissor(ScrnInfoPtr pScrn, drmBufPtr ib, int x1, int y1, int x2, int
 {
     RADEONInfoPtr info = RADEONPTR(pScrn);
 
-    BEGIN_BATCH(6);
-    EREG(ib, PA_SC_GENERIC_SCISSOR_TL,            ((x1 << PA_SC_GENERIC_SCISSOR_TL__TL_X_shift) |
-						   (y1 << PA_SC_GENERIC_SCISSOR_TL__TL_Y_shift) |
-						   WINDOW_OFFSET_DISABLE_bit));
-    EREG(ib, PA_SC_GENERIC_SCISSOR_BR,            ((x2 << PA_SC_GENERIC_SCISSOR_BR__BR_X_shift) |
-						   (y2 << PA_SC_GENERIC_SCISSOR_TL__TL_Y_shift)));
+    BEGIN_BATCH(4);
+    PACK0(ib, PA_SC_GENERIC_SCISSOR_TL, 2);
+    E32(ib, ((x1 << PA_SC_GENERIC_SCISSOR_TL__TL_X_shift) |
+	     (y1 << PA_SC_GENERIC_SCISSOR_TL__TL_Y_shift) |
+	     WINDOW_OFFSET_DISABLE_bit));
+    E32(ib, ((x2 << PA_SC_GENERIC_SCISSOR_BR__BR_X_shift) |
+	     (y2 << PA_SC_GENERIC_SCISSOR_TL__TL_Y_shift)));
     END_BATCH();
 }
 
@@ -704,12 +705,13 @@ set_window_scissor(ScrnInfoPtr pScrn, drmBufPtr ib, int x1, int y1, int x2, int 
 {
     RADEONInfoPtr info = RADEONPTR(pScrn);
 
-    BEGIN_BATCH(6);
-    EREG(ib, PA_SC_WINDOW_SCISSOR_TL,             ((x1 << PA_SC_WINDOW_SCISSOR_TL__TL_X_shift) |
-						   (y1 << PA_SC_WINDOW_SCISSOR_TL__TL_Y_shift) |
-						   WINDOW_OFFSET_DISABLE_bit));
-    EREG(ib, PA_SC_WINDOW_SCISSOR_BR,             ((x2 << PA_SC_WINDOW_SCISSOR_BR__BR_X_shift) |
-						   (y2 << PA_SC_WINDOW_SCISSOR_BR__BR_Y_shift)));
+    BEGIN_BATCH(4);
+    PACK0(ib, PA_SC_WINDOW_SCISSOR_TL, 2);
+    E32(ib, ((x1 << PA_SC_WINDOW_SCISSOR_TL__TL_X_shift) |
+	     (y1 << PA_SC_WINDOW_SCISSOR_TL__TL_Y_shift) |
+	     WINDOW_OFFSET_DISABLE_bit));
+    E32(ib, ((x2 << PA_SC_WINDOW_SCISSOR_BR__BR_X_shift) |
+	      (y2 << PA_SC_WINDOW_SCISSOR_BR__BR_Y_shift)));
     END_BATCH();
 }
 
@@ -718,13 +720,12 @@ set_clip_rect(ScrnInfoPtr pScrn, drmBufPtr ib, int id, int x1, int y1, int x2, i
 {
     RADEONInfoPtr info = RADEONPTR(pScrn);
 
-    BEGIN_BATCH(6);
-    EREG(ib, PA_SC_CLIPRECT_0_TL +
-	 id * PA_SC_CLIPRECT_0_TL_offset,     ((x1 << PA_SC_CLIPRECT_0_TL__TL_X_shift) |
-					       (y1 << PA_SC_CLIPRECT_0_TL__TL_Y_shift)));
-    EREG(ib, PA_SC_CLIPRECT_0_BR +
-	 id * PA_SC_CLIPRECT_0_BR_offset,     ((x2 << PA_SC_CLIPRECT_0_BR__BR_X_shift) |
-					       (y2 << PA_SC_CLIPRECT_0_BR__BR_Y_shift)));
+    BEGIN_BATCH(4);
+    PACK0(ib, PA_SC_CLIPRECT_0_TL + id * PA_SC_CLIPRECT_0_TL_offset, 2);
+    E32(ib, ((x1 << PA_SC_CLIPRECT_0_TL__TL_X_shift) |
+	     (y1 << PA_SC_CLIPRECT_0_TL__TL_Y_shift)));
+    E32(ib, ((x2 << PA_SC_CLIPRECT_0_BR__BR_X_shift) |
+	     (y2 << PA_SC_CLIPRECT_0_BR__BR_Y_shift)));
     END_BATCH();
 }
 
@@ -751,35 +752,6 @@ set_default_state(ScrnInfoPtr pScrn, drmBufPtr ib)
     accel_state->XInited3D = TRUE;
 
     start_3d(pScrn, accel_state->ib);
-
-    // ASIC specific setup, see drm
-    BEGIN_BATCH(15);
-    if (info->ChipFamily < CHIP_FAMILY_RV770) {
-	EREG(ib, TA_CNTL_AUX,                     (( 3 << GRADIENT_CREDIT_shift)		|
-						   (28 << TD_FIFO_CREDIT_shift)));
-	EREG(ib, VC_ENHANCE,                      0);
-	EREG(ib, R7xx_SQ_DYN_GPR_CNTL_PS_FLUSH_REQ, 0);
-	EREG(ib, DB_DEBUG,                        0x82000000); /* ? */
-	EREG(ib, DB_WATERMARKS,		        ((4  << DEPTH_FREE_shift)		|
-						 (16 << DEPTH_FLUSH_shift)		|
-						 (0  << FORCE_SUMMARIZE_shift)		|
-						 (4  << DEPTH_PENDING_FREE_shift)	|
-						 (16 << DEPTH_CACHELINE_FREE_shift)	|
-						 0));
-    } else {
-	EREG(ib, TA_CNTL_AUX,                      (( 2 << GRADIENT_CREDIT_shift)		|
-						    (28 << TD_FIFO_CREDIT_shift)));
-	EREG(ib, VC_ENHANCE,                       0);
-	EREG(ib, R7xx_SQ_DYN_GPR_CNTL_PS_FLUSH_REQ, VS_PC_LIMIT_ENABLE_bit);
-	EREG(ib, DB_DEBUG,                         0);
-	EREG(ib, DB_WATERMARKS,                    ((4  << DEPTH_FREE_shift)		|
-						    (16 << DEPTH_FLUSH_shift)		|
-						    (0  << FORCE_SUMMARIZE_shift)		|
-						    (4  << DEPTH_PENDING_FREE_shift)	|
-						    (4  << DEPTH_CACHELINE_FREE_shift)	|
-						    0));
-    }
-    END_BATCH();
 
     // SQ
     sq_conf.ps_prio = 0;
@@ -905,171 +877,145 @@ set_default_state(ScrnInfoPtr pScrn, drmBufPtr ib)
 
     sq_setup(pScrn, ib, &sq_conf);
 
-    BEGIN_BATCH(59);
-    EREG(ib, SQ_VTX_BASE_VTX_LOC,                 0);
-    EREG(ib, SQ_VTX_START_INST_LOC,               0);
+    BEGIN_BATCH(83);
+    if (info->ChipFamily < CHIP_FAMILY_RV770) {
+	EREG(ib, TA_CNTL_AUX, (( 3 << GRADIENT_CREDIT_shift) |
+				 - (28 << TD_FIFO_CREDIT_shift)));
+	EREG(ib, VC_ENHANCE, 0);
+	EREG(ib, R7xx_SQ_DYN_GPR_CNTL_PS_FLUSH_REQ, 0);
+	EREG(ib, DB_DEBUG, 0x82000000); /* ? */
+	EREG(ib, DB_WATERMARKS, ((4 << DEPTH_FREE_shift) |
+				 (16 << DEPTH_FLUSH_shift) |
+				 (0 << FORCE_SUMMARIZE_shift) |
+				 (4 << DEPTH_PENDING_FREE_shift) |
+				 (16 << DEPTH_CACHELINE_FREE_shift) |
+				 0));
+    } else {
+	EREG(ib, TA_CNTL_AUX, (( 2 << GRADIENT_CREDIT_shift) |
+			       - (28 << TD_FIFO_CREDIT_shift)));
+	EREG(ib, VC_ENHANCE, 0);
+	EREG(ib, R7xx_SQ_DYN_GPR_CNTL_PS_FLUSH_REQ, VS_PC_LIMIT_ENABLE_bit);
+	EREG(ib, DB_DEBUG, 0);
+	EREG(ib, DB_WATERMARKS, ((4 << DEPTH_FREE_shift) |
+				 (16 << DEPTH_FLUSH_shift) |
+				 (0 << FORCE_SUMMARIZE_shift) |
+				 (4 << DEPTH_PENDING_FREE_shift) |
+				 (4 << DEPTH_CACHELINE_FREE_shift) |
+				 0));
+    }
+
+    PACK0(ib, SQ_VTX_BASE_VTX_LOC, 2);
+    E32(ib, 0);
+    E32(ib, 0);
 
     PACK0(ib, SQ_ESGS_RING_ITEMSIZE, 9);
-    E32(ib, 0);							// SQ_ESGS_RING_ITEMSIZE
-    E32(ib, 0);							// SQ_GSVS_RING_ITEMSIZE
-    E32(ib, 0);							// SQ_ESTMP_RING_ITEMSIZE
-    E32(ib, 0);							// SQ_GSTMP_RING_ITEMSIZE
-    E32(ib, 0);							// SQ_VSTMP_RING_ITEMSIZE
-    E32(ib, 0);							// SQ_PSTMP_RING_ITEMSIZE
-    E32(ib, 0);							// SQ_FBUF_RING_ITEMSIZE
-    E32(ib, 0);							// SQ_REDUC_RING_ITEMSIZE
-    E32(ib, 0);							// SQ_GS_VERT_ITEMSIZE
+    E32(ib, 0); // SQ_ESGS_RING_ITEMSIZE
+    E32(ib, 0); // SQ_GSVS_RING_ITEMSIZE
+    E32(ib, 0); // SQ_ESTMP_RING_ITEMSIZE
+    E32(ib, 0); // SQ_GSTMP_RING_ITEMSIZE
+    E32(ib, 0); // SQ_VSTMP_RING_ITEMSIZE
+    E32(ib, 0); // SQ_PSTMP_RING_ITEMSIZE
+    E32(ib, 0); // SQ_FBUF_RING_ITEMSIZE
+    E32(ib, 0); // SQ_REDUC_RING_ITEMSIZE
+    E32(ib, 0); // SQ_GS_VERT_ITEMSIZE
 
     // DB
     EREG(ib, DB_DEPTH_INFO,                       0);
-    EREG(ib, DB_STENCIL_CLEAR,                    0);
-    EREG(ib, DB_DEPTH_CLEAR,                      0);
-    EREG(ib, DB_STENCILREFMASK,                   0);
-    EREG(ib, DB_STENCILREFMASK_BF,                0);
     EREG(ib, DB_DEPTH_CONTROL,                    0);
-    EREG(ib, DB_RENDER_CONTROL,                   STENCIL_COMPRESS_DISABLE_bit | DEPTH_COMPRESS_DISABLE_bit);
+    PACK0(ib, DB_RENDER_CONTROL, 2);
+    E32(ib, STENCIL_COMPRESS_DISABLE_bit | DEPTH_COMPRESS_DISABLE_bit);
     if (info->ChipFamily < CHIP_FAMILY_RV770)
-	EREG(ib, DB_RENDER_OVERRIDE,              FORCE_SHADER_Z_ORDER_bit);
+	E32(ib, FORCE_SHADER_Z_ORDER_bit);
     else
-	EREG(ib, DB_RENDER_OVERRIDE,              0);
+	E32(ib, 0);
     EREG(ib, DB_ALPHA_TO_MASK,                    ((2 << ALPHA_TO_MASK_OFFSET0_shift)	|
 						   (2 << ALPHA_TO_MASK_OFFSET1_shift)	|
 						   (2 << ALPHA_TO_MASK_OFFSET2_shift)	|
 						   (2 << ALPHA_TO_MASK_OFFSET3_shift)));
-
-
     EREG(ib, DB_SHADER_CONTROL, ((1 << Z_ORDER_shift) | /* EARLY_Z_THEN_LATE_Z */
 				 DUAL_EXPORT_ENABLE_bit)); /* Only useful if no depth export */
 
+    PACK0(ib, DB_STENCIL_CLEAR, 2);
+    E32(ib, 0); // DB_STENCIL_CLEAR
+    E32(ib, 0); // DB_DEPTH_CLEAR
 
-    // SX
-    EREG(ib, SX_ALPHA_TEST_CONTROL,               0);
-    EREG(ib, SX_ALPHA_REF,                        0);
+    PACK0(ib, DB_STENCILREFMASK, 3);
+    E32(ib, 0); // DB_STENCILREFMASK
+    E32(ib, 0); // DB_STENCILREFMASK_BF
+    E32(ib, 0); // SX_ALPHA_REF
 
-    // CB
-    PACK0(ib, CB_BLEND_RED, 4);
-    E32(ib, 0x00000000);
-    E32(ib, 0x00000000);
-    E32(ib, 0x00000000);
-    E32(ib, 0x00000000);
-    END_BATCH();
-
-    if (info->ChipFamily < CHIP_FAMILY_RV770) {
-	BEGIN_BATCH(11);
-	PACK0(ib, CB_FOG_RED, 3);
-	E32(ib, 0x00000000);
-	E32(ib, 0x00000000);
-	E32(ib, 0x00000000);
-	PACK0(ib, CB_CLEAR_RED, 4);
-	EFLOAT(ib, 1.0);						/* WTF? */
-	EFLOAT(ib, 0.0);
-	EFLOAT(ib, 1.0);
-	EFLOAT(ib, 1.0);
-	END_BATCH();
-    }
-
-    BEGIN_BATCH(18);
     PACK0(ib, CB_CLRCMP_CONTROL, 4);
     E32(ib, 1 << CLRCMP_FCN_SEL_shift);				// CB_CLRCMP_CONTROL: use CLRCMP_FCN_SRC
     E32(ib, 0);							// CB_CLRCMP_SRC
     E32(ib, 0);							// CB_CLRCMP_DST
     E32(ib, 0);							// CB_CLRCMP_MSK
 
-    EREG(ib, CB_SHADER_MASK,                      (0xf << OUTPUT0_ENABLE_shift));
+    EREG(ib, CB_SHADER_MASK,                      OUTPUT0_ENABLE_mask);
     EREG(ib, R7xx_CB_SHADER_CONTROL,              (RT0_ENABLE_bit));
 
+    PACK0(ib, SX_ALPHA_TEST_CONTROL, 5);
+    E32(ib, 0); // SX_ALPHA_TEST_CONTROL
+    E32(ib, 0x00000000); // CB_BLEND_RED
+    E32(ib, 0x00000000); // CB_BLEND_GREEN
+    E32(ib, 0x00000000); // CB_BLEND_BLUE
+    E32(ib, 0x00000000); // CB_BLEND_ALPHA
 
-    // SC
     EREG(ib, PA_SC_WINDOW_OFFSET,                 ((0 << WINDOW_X_OFFSET_shift) |
 						   (0 << WINDOW_Y_OFFSET_shift)));
 
+    if (info->ChipFamily < CHIP_FAMILY_RV770)
+	EREG(ib, R7xx_PA_SC_EDGERULE,             0x00000000);
+    else
+	EREG(ib, R7xx_PA_SC_EDGERULE,             0xAAAAAAAA);
+
     EREG(ib, PA_SC_CLIPRECT_RULE,                 CLIP_RULE_mask);
+
     END_BATCH();
 
     /* clip boolean is set to always visible -> doesn't matter */
     for (i = 0; i < PA_SC_CLIPRECT_0_TL_num; i++)
 	set_clip_rect (pScrn, ib, i, 0, 0, 8192, 8192);
 
-    BEGIN_BATCH(3);
-    if (info->ChipFamily < CHIP_FAMILY_RV770)
-	EREG(ib, R7xx_PA_SC_EDGERULE,             0x00000000);
-    else
-	EREG(ib, R7xx_PA_SC_EDGERULE,             0xAAAAAAAA);
-    END_BATCH();
-
-    for (i = 0; i < PA_SC_VPORT_SCISSOR_0_TL_num; i++) {
+    for (i = 0; i < PA_SC_VPORT_SCISSOR_0_TL_num; i++)
 	set_vport_scissor (pScrn, ib, i, 0, 0, 8192, 8192);
-	BEGIN_BATCH(4);
-	PACK0(ib, PA_SC_VPORT_ZMIN_0 + i * PA_SC_VPORT_ZMIN_0_offset, 2);
-	EFLOAT(ib, 0.0);
-	EFLOAT(ib, 1.0);
-	END_BATCH();
-    }
 
-    BEGIN_BATCH(15);
+    BEGIN_BATCH(42);
+    PACK0(ib, PA_SC_MPASS_PS_CNTL, 2);
+    E32(ib, 0);
     if (info->ChipFamily < CHIP_FAMILY_RV770)
-	EREG(ib, PA_SC_MODE_CNTL,                 (WALK_ORDER_ENABLE_bit | FORCE_EOV_CNTDWN_ENABLE_bit));
+	E32(ib, (WALK_ORDER_ENABLE_bit | FORCE_EOV_CNTDWN_ENABLE_bit));
     else
-	EREG(ib, PA_SC_MODE_CNTL,                 (FORCE_EOV_CNTDWN_ENABLE_bit | FORCE_EOV_REZ_ENABLE_bit |
-						   0x00500000)); /* ? */
+	E32(ib, (FORCE_EOV_CNTDWN_ENABLE_bit | FORCE_EOV_REZ_ENABLE_bit |
+		 0x00500000)); /* ? */
 
-    EREG(ib, PA_SU_SC_MODE_CNTL, (FACE_bit |
-				  (POLYMODE_PTYPE__TRIANGLES << POLYMODE_FRONT_PTYPE_shift) |
-				  (POLYMODE_PTYPE__TRIANGLES << POLYMODE_BACK_PTYPE_shift)));
-
-
-    EREG(ib, PA_SC_LINE_CNTL,                     0);
-    EREG(ib, PA_SC_AA_CONFIG,                     0);
-    EREG(ib, PA_SC_AA_MASK,                       0xFFFFFFFF);
-    END_BATCH();
-
-    //XXX: double check this
-    if (info->ChipFamily > CHIP_FAMILY_R600) {
-	BEGIN_BATCH(6);
-	EREG(ib, PA_SC_AA_SAMPLE_LOCS_MCTX,       0);
-	EREG(ib, PA_SC_AA_SAMPLE_LOCS_8S_WD1_M,   0);
-	END_BATCH();
-    }
-
-    BEGIN_BATCH(83);
-    EREG(ib, PA_SC_LINE_STIPPLE,                  0);
-    EREG(ib, PA_SC_MPASS_PS_CNTL,                 0);
-
-    // CL
-    PACK0(ib, PA_CL_VPORT_XSCALE_0, 6);
-    EFLOAT(ib, 0.0f);						// PA_CL_VPORT_XSCALE
-    EFLOAT(ib, 0.0f);						// PA_CL_VPORT_XOFFSET
-    EFLOAT(ib, 0.0f);						// PA_CL_VPORT_YSCALE
-    EFLOAT(ib, 0.0f);						// PA_CL_VPORT_YOFFSET
-    EFLOAT(ib, 0.0f);						// PA_CL_VPORT_ZSCALE
-    EFLOAT(ib, 0.0f);						// PA_CL_VPORT_ZOFFSET
-    EREG(ib, PA_CL_VTE_CNTL,                      0);
-    EREG(ib, PA_CL_VS_OUT_CNTL,                   0);
-    EREG(ib, PA_CL_NANINF_CNTL,                   0);
-    PACK0(ib, PA_CL_GB_VERT_CLIP_ADJ, 4);
+    PACK0(ib, PA_SC_LINE_CNTL, 9);
+    E32(ib, 0); // PA_SC_LINE_CNTL
+    E32(ib, 0); // PA_SC_AA_CONFIG
+    E32(ib, ((2 << PA_SU_VTX_CNTL__ROUND_MODE_shift) | PIX_CENTER_bit | // PA_SU_VTX_CNTL
+	     (5 << QUANT_MODE_shift))); /* Round to Even, fixed point 1/256 */
     EFLOAT(ib, 1.0);						// PA_CL_GB_VERT_CLIP_ADJ
     EFLOAT(ib, 1.0);						// PA_CL_GB_VERT_DISC_ADJ
     EFLOAT(ib, 1.0);						// PA_CL_GB_HORZ_CLIP_ADJ
     EFLOAT(ib, 1.0);						// PA_CL_GB_HORZ_DISC_ADJ
+    E32(ib, 0);                                                 // PA_SC_AA_SAMPLE_LOCS_MCTX
+    E32(ib, 0);                                                 // PA_SC_AA_SAMPLE_LOCS_8S_WD1_M
 
-    /* Scissor / viewport */
-    EREG(ib, PA_CL_VTE_CNTL,                      VTX_XY_FMT_bit);
-    EREG(ib, PA_CL_CLIP_CNTL,                     CLIP_DISABLE_bit);
+    EREG(ib, PA_SC_AA_MASK,                       0xFFFFFFFF);
 
-    // SU
-    EREG(ib, PA_SU_SC_MODE_CNTL,                  FACE_bit);
-    EREG(ib, PA_SU_POINT_SIZE,                    0);
-    EREG(ib, PA_SU_POINT_MINMAX,                  0);
-    EREG(ib, PA_SU_POLY_OFFSET_DB_FMT_CNTL,       0);
-    EREG(ib, PA_SU_POLY_OFFSET_BACK_SCALE,        0);
-    EREG(ib, PA_SU_POLY_OFFSET_FRONT_SCALE,       0);
-    EREG(ib, PA_SU_POLY_OFFSET_BACK_OFFSET,       0);
-    EREG(ib, PA_SU_POLY_OFFSET_FRONT_OFFSET,      0);
+    PACK0(ib, PA_CL_CLIP_CNTL, 5);
+    E32(ib, CLIP_DISABLE_bit); // PA_CL_CLIP_CNTL
+    E32(ib, FACE_bit);         // PA_SU_SC_MODE_CNTL
+    E32(ib, VTX_XY_FMT_bit);   // PA_CL_VTE_CNTL
+    E32(ib, 0);                // PA_CL_VS_OUT_CNTL
+    E32(ib, 0);                // PA_CL_NANINF_CNTL
 
-    EREG(ib, PA_SU_LINE_CNTL,                     (8 << PA_SU_LINE_CNTL__WIDTH_shift)); /* Line width 1 pixel */
-    EREG(ib, PA_SU_VTX_CNTL,                      ((2 << PA_SU_VTX_CNTL__ROUND_MODE_shift) | PIX_CENTER_bit |
-						   (5 << QUANT_MODE_shift))); /* Round to Even, fixed point 1/256 */
-    EREG(ib, PA_SU_POLY_OFFSET_CLAMP,             0);
+    PACK0(ib, PA_SU_POLY_OFFSET_DB_FMT_CNTL, 6);
+    E32(ib, 0); // PA_SU_POLY_OFFSET_DB_FMT_CNTL
+    E32(ib, 0); // PA_SU_POLY_OFFSET_CLAMP
+    E32(ib, 0); // PA_SU_POLY_OFFSET_FRONT_SCALE
+    E32(ib, 0); // PA_SU_POLY_OFFSET_FRONT_OFFSET
+    E32(ib, 0); // PA_SU_POLY_OFFSET_BACK_SCALE
+    E32(ib, 0); // PA_SU_POLY_OFFSET_BACK_OFFSET
 
     // SPI
     if (info->ChipFamily < CHIP_FAMILY_RV770)
@@ -1077,10 +1023,12 @@ set_default_state(ScrnInfoPtr pScrn, drmBufPtr ib)
     else
 	EREG(ib, R7xx_SPI_THREAD_GROUPING,        (1 << PS_GROUPING_shift));
 
-    EREG(ib, SPI_INPUT_Z,                         0);
-    EREG(ib, SPI_FOG_CNTL,                        0);
-    EREG(ib, SPI_FOG_FUNC_SCALE,                  0);
-    EREG(ib, SPI_FOG_FUNC_BIAS,                   0);
+    PACK0(ib, SPI_INPUT_Z, 4);
+    E32(ib, 0); // SPI_INPUT_Z
+    E32(ib, 0); // SPI_FOG_CNTL
+    E32(ib, 0); // SPI_FOG_FUNC_SCALE
+    E32(ib, 0); // SPI_FOG_FUNC_BIAS
+
     END_BATCH();
 
     // clear FS
@@ -1088,31 +1036,44 @@ set_default_state(ScrnInfoPtr pScrn, drmBufPtr ib)
     fs_setup(pScrn, ib, &fs_conf, RADEON_GEM_DOMAIN_VRAM);
 
     // VGT
-    BEGIN_BATCH(75);
-    EREG(ib, VGT_MAX_VTX_INDX,                    2048); /* XXX set to a reasonably large number of indices */
-    EREG(ib, VGT_MIN_VTX_INDX,                    0);
-    EREG(ib, VGT_INDX_OFFSET,                     0);
-    EREG(ib, VGT_INSTANCE_STEP_RATE_0,            0);
-    EREG(ib, VGT_INSTANCE_STEP_RATE_1,            0);
-    EREG(ib, VGT_MULTI_PRIM_IB_RESET_INDX,        0);
-    EREG(ib, VGT_OUTPUT_PATH_CNTL,                0);
-    EREG(ib, VGT_GS_MODE,                         0);
-    EREG(ib, VGT_HOS_CNTL,                        0);
-    EREG(ib, VGT_HOS_MAX_TESS_LEVEL,              0);
-    EREG(ib, VGT_HOS_MIN_TESS_LEVEL,              0);
-    EREG(ib, VGT_HOS_REUSE_DEPTH,                 0);
-    EREG(ib, VGT_GROUP_PRIM_TYPE,                 0);
-    EREG(ib, VGT_GROUP_FIRST_DECR,                0);
-    EREG(ib, VGT_GROUP_DECR,                      0);
-    EREG(ib, VGT_GROUP_VECT_0_CNTL,               0);
-    EREG(ib, VGT_GROUP_VECT_1_CNTL,               0);
-    EREG(ib, VGT_GROUP_VECT_0_FMT_CNTL,           0);
-    EREG(ib, VGT_GROUP_VECT_1_FMT_CNTL,           0);
+    BEGIN_BATCH(43);
+    PACK0(ib, VGT_MAX_VTX_INDX, 4);
+    E32(ib, 2048); /* XXX set to a reasonably large number of indices */ // VGT_MAX_VTX_INDX
+    E32(ib, 0); // VGT_MIN_VTX_INDX
+    E32(ib, 0); // VGT_INDX_OFFSET
+    E32(ib, 0); // VGT_MULTI_PRIM_IB_RESET_INDX
+
     EREG(ib, VGT_PRIMITIVEID_EN,                  0);
     EREG(ib, VGT_MULTI_PRIM_IB_RESET_EN,          0);
-    EREG(ib, VGT_STRMOUT_EN,                      0);
-    EREG(ib, VGT_REUSE_OFF,                       0);
-    EREG(ib, VGT_VTX_CNT_EN,                      0);
+
+    PACK0(ib, VGT_INSTANCE_STEP_RATE_0, 2);
+    E32(ib, 0); // VGT_INSTANCE_STEP_RATE_0
+    E32(ib, 0); // VGT_INSTANCE_STEP_RATE_1
+
+    PACK0(ib, PA_SU_POINT_SIZE, 17);
+    E32(ib, 0); // PA_SU_POINT_SIZE
+    E32(ib, 0); // PA_SU_POINT_MINMAX
+    E32(ib, (8 << PA_SU_LINE_CNTL__WIDTH_shift)); /* Line width 1 pixel */ // PA_SU_LINE_CNTL
+    E32(ib, 0); // PA_SC_LINE_STIPPLE
+    E32(ib, 0); // VGT_OUTPUT_PATH_CNTL
+    E32(ib, 0); // VGT_HOS_CNTL
+    E32(ib, 0); // VGT_HOS_MAX_TESS_LEVEL
+    E32(ib, 0); // VGT_HOS_MIN_TESS_LEVEL
+    E32(ib, 0); // VGT_HOS_REUSE_DEPTH
+    E32(ib, 0); // VGT_GROUP_PRIM_TYPE
+    E32(ib, 0); // VGT_GROUP_FIRST_DECR
+    E32(ib, 0); // VGT_GROUP_DECR
+    E32(ib, 0); // VGT_GROUP_VECT_0_CNTL
+    E32(ib, 0); // VGT_GROUP_VECT_1_CNTL
+    E32(ib, 0); // VGT_GROUP_VECT_0_FMT_CNTL
+    E32(ib, 0); // VGT_GROUP_VECT_1_FMT_CNTL
+    E32(ib, 0); // VGT_GS_MODE
+
+    PACK0(ib, VGT_STRMOUT_EN, 3);
+    E32(ib, 0); // VGT_STRMOUT_EN
+    E32(ib, 0); // VGT_REUSE_OFF
+    E32(ib, 0); // VGT_VTX_CNT_EN
+
     EREG(ib, VGT_STRMOUT_BUFFER_EN,               0);
     END_BATCH();
 }
@@ -1322,6 +1283,8 @@ void r600_vb_no_space(ScrnInfoPtr pScrn, int vert_size)
     }
 #endif 
 
-    r600_finish_op(pScrn, vert_size);
-    r600_cp_start(pScrn);
+    if (accel_state->vb_start_op != -1) {
+	r600_finish_op(pScrn, vert_size);
+	r600_cp_start(pScrn);
+    }
 }
