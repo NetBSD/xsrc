@@ -36,6 +36,10 @@
 /* xextproto 7.1 available */
 /* #undef HAVE_XEXTPROTO_71 */
 
+/* Define to the sub-directory in which libtool stores uninstalled libraries.
+   */
+#undef LT_OBJDIR
+
 /* Name of package */
 #define PACKAGE "xf86-video-sis"
 
@@ -46,13 +50,13 @@
 #define PACKAGE_NAME "xf86-video-sis"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "xf86-video-sis 0.10.2"
+#define PACKAGE_STRING "xf86-video-sis 0.10.3"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "xf86-video-sis"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "0.10.2"
+#define PACKAGE_VERSION "0.10.3"
 
 /* Major version of this package */
 #define PACKAGE_VERSION_MAJOR 0
@@ -61,13 +65,13 @@
 #define PACKAGE_VERSION_MINOR 10
 
 /* Patch version of this package */
-#define PACKAGE_VERSION_PATCHLEVEL 2
+#define PACKAGE_VERSION_PATCHLEVEL 3
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1
 
 /* Version number of package */
-#define VERSION "0.10.2"
+#define VERSION "0.10.3"
 
 /* Enable DRI driver support */
 #define XF86DRI 1
