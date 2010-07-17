@@ -34,11 +34,11 @@
 #define HAVE_UNISTD_H 1
 
 /* xextproto 7.1 available */
-/* #undef HAVE_XEXTPROTO_71 */
+#define HAVE_XEXTPROTO_71 1
 
 /* Define to the sub-directory in which libtool stores uninstalled libraries.
    */
-#undef LT_OBJDIR
+#define LT_OBJDIR ".libs/"
 
 /* Name of package */
 #define PACKAGE "xf86-video-sis"
