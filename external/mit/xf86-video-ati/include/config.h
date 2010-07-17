@@ -22,7 +22,7 @@
 #define HAVE_INTTYPES_H 1
 
 /* libudev support */
-#undef HAVE_LIBUDEV
+/* #undef HAVE_LIBUDEV */
 
 /* Define to 1 if you have the <memory.h> header file. */
 #define HAVE_MEMORY_H 1
@@ -95,7 +95,7 @@
 #define PACKAGE_VERSION_PATCHLEVEL 1
 
 /* Enable DRI2 code */
-/* #undef RADEON_DRI2 */
+#define RADEON_DRI2 1
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1
@@ -119,7 +119,7 @@
 #define XF86DRI_DEVEL 1
 
 /* DRM kernel modesetting */
-/* #undef XF86DRM_MODE */
+#define XF86DRM_MODE 1
 
 /* X server has built-in mode code */
 #define XMODES 1
