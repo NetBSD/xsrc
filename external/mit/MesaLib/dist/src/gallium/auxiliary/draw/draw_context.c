@@ -31,13 +31,15 @@
   */
 
 
+#include "pipe/p_context.h"
 #include "util/u_memory.h"
 #include "util/u_math.h"
 #include "draw_context.h"
 #include "draw_vs.h"
+#include "draw_gs.h"
 
 
-struct draw_context *draw_create( void )
+struct draw_context *draw_create( struct pipe_context *pipe )
 {
    struct draw_context *draw = CALLOC_STRUCT( draw_context );
    if (draw == NULL)
@@ -64,6 +66,11 @@ struct draw_context *draw_create( void )
    if (!draw_vs_init( draw ))
       goto fail;
 
+   if (!draw_gs_init( draw ))
+      goto fail;
+
+   draw->pipe = pipe;
+
    return draw;
 
 fail:
@@ -74,10 +81,21 @@ fail:
 
 void draw_destroy( struct draw_context *draw )
 {
+   struct pipe_context *pipe = draw->pipe;
+   int i, j;
+
    if (!draw)
       return;
 
-
+   /* free any rasterizer CSOs that we may have created.
+    */
+   for (i = 0; i < 2; i++) {
+      for (j = 0; j < 2; j++) {
+         if (draw->rasterizer_no_cull[i][j]) {
+            pipe->delete_rasterizer_state(pipe, draw->rasterizer_no_cull[i][j]);
+         }
+      }
+   }
 
    /* Not so fast -- we're just borrowing this at the moment.
     * 
@@ -88,6 +106,7 @@ void draw_destroy( struct draw_context *draw )
    draw_pipeline_destroy( draw );
    draw_pt_destroy( draw );
    draw_vs_destroy( draw );
+   draw_gs_destroy( draw );
 
    FREE( draw );
 }
@@ -118,14 +137,17 @@ void draw_set_mrd(struct draw_context *draw, double mrd)
  * This causes the drawing pipeline to be rebuilt.
  */
 void draw_set_rasterizer_state( struct draw_context *draw,
-                                const struct pipe_rasterizer_state *raster )
+                                const struct pipe_rasterizer_state *raster,
+                                void *rast_handle )
 {
-   draw_do_flush( draw, DRAW_FLUSH_STATE_CHANGE );
+   if (!draw->suspend_flushing) {
+      draw_do_flush( draw, DRAW_FLUSH_STATE_CHANGE );
 
-   draw->rasterizer = raster;
-   draw->bypass_clipping =
-      ((draw->rasterizer && draw->rasterizer->bypass_vs_clip_and_viewport) ||
-       draw->driver.bypass_clipping);
+      draw->rasterizer = raster;
+      draw->rast_handle = rast_handle;
+
+      draw->bypass_clipping = draw->driver.bypass_clipping;
+   }
 }
 
 
@@ -135,9 +157,7 @@ void draw_set_driver_clipping( struct draw_context *draw,
    draw_do_flush( draw, DRAW_FLUSH_STATE_CHANGE );
 
    draw->driver.bypass_clipping = bypass_clipping;
-   draw->bypass_clipping =
-      ((draw->rasterizer && draw->rasterizer->bypass_vs_clip_and_viewport) ||
-       draw->driver.bypass_clipping);
+   draw->bypass_clipping = draw->driver.bypass_clipping;
 }
 
 
@@ -228,11 +248,22 @@ draw_set_mapped_vertex_buffer(struct draw_context *draw,
 
 void
 draw_set_mapped_constant_buffer(struct draw_context *draw,
-                                const void *buffer, 
+                                unsigned shader_type,
+                                unsigned slot,
+                                const void *buffer,
                                 unsigned size )
 {
-   draw->pt.user.constants = buffer;
-   draw_vs_set_constants( draw, (const float (*)[4])buffer, size );
+   debug_assert(shader_type == PIPE_SHADER_VERTEX ||
+                shader_type == PIPE_SHADER_GEOMETRY);
+   debug_assert(slot < PIPE_MAX_CONSTANT_BUFFERS);
+
+   if (shader_type == PIPE_SHADER_VERTEX) {
+      draw->pt.user.vs_constants[slot] = buffer;
+      draw_vs_set_constants(draw, slot, buffer, size);
+   } else if (shader_type == PIPE_SHADER_GEOMETRY) {
+      draw->pt.user.gs_constants[slot] = buffer;
+      draw_gs_set_constants(draw, slot, buffer, size);
+   }
 }
 
 
@@ -295,7 +326,7 @@ draw_set_force_passthrough( struct draw_context *draw, boolean enable )
  * a post-transformed vertex.
  *
  * With this function, drivers that use the draw module should have no reason
- * to track the current vertex shader.
+ * to track the current vertex/geometry shader.
  *
  * Note that the draw module may sometimes generate vertices with extra
  * attributes (such as texcoords for AA lines).  The driver can call this
@@ -306,43 +337,64 @@ draw_set_force_passthrough( struct draw_context *draw, boolean enable )
  * work for the drivers.
  */
 int
-draw_find_vs_output(const struct draw_context *draw,
-                    uint semantic_name, uint semantic_index)
+draw_find_shader_output(const struct draw_context *draw,
+                        uint semantic_name, uint semantic_index)
 {
    const struct draw_vertex_shader *vs = draw->vs.vertex_shader;
+   const struct draw_geometry_shader *gs = draw->gs.geometry_shader;
    uint i;
-   for (i = 0; i < vs->info.num_outputs; i++) {
-      if (vs->info.output_semantic_name[i] == semantic_name &&
-          vs->info.output_semantic_index[i] == semantic_index)
+   const struct tgsi_shader_info *info = &vs->info;
+
+   if (gs)
+      info = &gs->info;
+
+   for (i = 0; i < info->num_outputs; i++) {
+      if (info->output_semantic_name[i] == semantic_name &&
+          info->output_semantic_index[i] == semantic_index)
          return i;
    }
 
    /* XXX there may be more than one extra vertex attrib.
     * For example, simulated gl_FragCoord and gl_PointCoord.
     */
-   if (draw->extra_vp_outputs.semantic_name == semantic_name &&
-       draw->extra_vp_outputs.semantic_index == semantic_index) {
-      return draw->extra_vp_outputs.slot;
+   if (draw->extra_shader_outputs.semantic_name == semantic_name &&
+       draw->extra_shader_outputs.semantic_index == semantic_index) {
+      return draw->extra_shader_outputs.slot;
    }
+
    return 0;
 }
 
 
 /**
- * Return number of vertex shader outputs.
+ * Return total number of the shader outputs.  This function is similar to
+ * draw_current_shader_outputs() but this function also counts any extra
+ * vertex/geometry output attributes that may be filled in by some draw
+ * stages (such as AA point, AA line).
+ *
+ * If geometry shader is present, its output will be returned,
+ * if not vertex shader is used.
  */
 uint
-draw_num_vs_outputs(const struct draw_context *draw)
+draw_num_shader_outputs(const struct draw_context *draw)
 {
    uint count = draw->vs.vertex_shader->info.num_outputs;
-   if (draw->extra_vp_outputs.slot > 0)
+
+   /* If a geometry shader is present, its outputs go to the
+    * driver, else the vertex shader's outputs.
+    */
+   if (draw->gs.geometry_shader)
+      count = draw->gs.geometry_shader->info.num_outputs;
+
+   if (draw->extra_shader_outputs.slot > 0)
       count++;
    return count;
 }
 
 
 /**
- * Provide TGSI sampler objects for vertex shaders that use texture fetches.
+ * Provide TGSI sampler objects for vertex/geometry shaders that use
+ * texture fetches.
  * This might only be used by software drivers for the time being.
  */
 void
@@ -352,6 +404,8 @@ draw_texture_samplers(struct draw_context *draw,
 {
    draw->vs.num_samplers = num_samplers;
    draw->vs.samplers = samplers;
+   draw->gs.num_samplers = num_samplers;
+   draw->gs.samplers = samplers;
 }
 
 
@@ -362,13 +416,6 @@ void draw_set_render( struct draw_context *draw,
 {
    draw->render = render;
 }
-
-void draw_set_edgeflags( struct draw_context *draw,
-                         const unsigned *edgeflag )
-{
-   draw->pt.user.edgeflag = edgeflag;
-}
-
 
 
 
@@ -424,4 +471,66 @@ void draw_do_flush( struct draw_context *draw, unsigned flags )
       
       draw->flushing = FALSE;
    }
+}
+
+
+/**
+ * Return the number of output attributes produced by the geometry
+ * shader, if present.  If no geometry shader, return the number of
+ * outputs from the vertex shader.
+ * \sa draw_num_shader_outputs
+ */
+uint
+draw_current_shader_outputs(const struct draw_context *draw)
+{
+   if (draw->gs.geometry_shader)
+      return draw->gs.num_gs_outputs;
+   return draw->vs.num_vs_outputs;
+}
+
+
+/**
+ * Return the index of the shader output which will contain the
+ * vertex position.
+ */
+uint
+draw_current_shader_position_output(const struct draw_context *draw)
+{
+   if (draw->gs.geometry_shader)
+      return draw->gs.position_output;
+   return draw->vs.position_output;
+}
+
+
+/**
+ * Return a pointer/handle for a driver/CSO rasterizer object which
+ * disabled culling, stippling, unfilled tris, etc.
+ * This is used by some pipeline stages (such as wide_point, aa_line
+ * and aa_point) which convert points/lines into triangles.  In those
+ * cases we don't want to accidentally cull the triangles.
+ *
+ * \param scissor  should the rasterizer state enable scissoring?
+ * \param flatshade  should the rasterizer state use flat shading?
+ * \return  rasterizer CSO handle
+ */
+void *
+draw_get_rasterizer_no_cull( struct draw_context *draw,
+                             boolean scissor,
+                             boolean flatshade )
+{
+   if (!draw->rasterizer_no_cull[scissor][flatshade]) {
+      /* create now */
+      struct pipe_context *pipe = draw->pipe;
+      struct pipe_rasterizer_state rast;
+
+      memset(&rast, 0, sizeof(rast));
+      rast.scissor = scissor;
+      rast.flatshade = flatshade;
+      rast.front_winding = PIPE_WINDING_CCW;
+      rast.gl_rasterization_rules = draw->rasterizer->gl_rasterization_rules;
+
+      draw->rasterizer_no_cull[scissor][flatshade] =
+         pipe->create_rasterizer_state(pipe, &rast);
+   }
+   return draw->rasterizer_no_cull[scissor][flatshade];
 }

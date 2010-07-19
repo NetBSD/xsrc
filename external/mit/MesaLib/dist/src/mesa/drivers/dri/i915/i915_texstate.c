@@ -28,6 +28,7 @@
 #include "main/mtypes.h"
 #include "main/enums.h"
 #include "main/macros.h"
+#include "main/colormac.h"
 
 #include "intel_mipmap_tree.h"
 #include "intel_tex.h"
@@ -149,7 +150,7 @@ i915_update_tex_unit(struct intel_context *intel, GLuint unit, GLuint ss3)
        i915->state.tex_buffer[unit] = NULL;
    }
 
-   if (!intelObj->imageOverride && !intel_finalize_mipmap_tree(intel, unit))
+   if (!intel_finalize_mipmap_tree(intel, unit))
       return GL_FALSE;
 
    /* Get first image here, since intelObj->firstLevel will get set in
@@ -157,34 +158,14 @@ i915_update_tex_unit(struct intel_context *intel, GLuint unit, GLuint ss3)
     */
    firstImage = tObj->Image[0][intelObj->firstLevel];
 
-   if (intelObj->imageOverride) {
-      i915->state.tex_buffer[unit] = NULL;
-      i915->state.tex_offset[unit] = intelObj->textureOffset;
+   dri_bo_reference(intelObj->mt->region->buffer);
+   i915->state.tex_buffer[unit] = intelObj->mt->region->buffer;
+   i915->state.tex_offset[unit] = 0; /* Always the origin of the miptree */
 
-      switch (intelObj->depthOverride) {
-      case 32:
-	 format = MAPSURF_32BIT | MT_32BIT_ARGB8888;
-	 break;
-      case 24:
-      default:
-	 format = MAPSURF_32BIT | MT_32BIT_XRGB8888;
-	 break;
-      case 16:
-	 format = MAPSURF_16BIT | MT_16BIT_RGB565;
-	 break;
-      }
-
-      pitch = intelObj->pitchOverride;
-   } else {
-      dri_bo_reference(intelObj->mt->region->buffer);
-      i915->state.tex_buffer[unit] = intelObj->mt->region->buffer;
-      i915->state.tex_offset[unit] = 0; /* Always the origin of the miptree */
-
-      format = translate_texture_format(firstImage->TexFormat,
-					firstImage->InternalFormat,
-					tObj->DepthMode);
-      pitch = intelObj->mt->pitch * intelObj->mt->cpp;
-   }
+   format = translate_texture_format(firstImage->TexFormat,
+				     firstImage->InternalFormat,
+				     tObj->DepthMode);
+   pitch = intelObj->mt->pitch * intelObj->mt->cpp;
 
    state[I915_TEXREG_MS3] =
       (((firstImage->Height - 1) << MS3_HEIGHT_SHIFT) |
@@ -300,6 +281,7 @@ i915_update_tex_unit(struct intel_context *intel, GLuint unit, GLuint ss3)
       GLenum ws = tObj->WrapS;
       GLenum wt = tObj->WrapT;
       GLenum wr = tObj->WrapR;
+      float minlod;
 
       /* We program 1D textures as 2D textures, so the 2D texcoord could
        * result in sampling border values if we don't set the T wrap to
@@ -340,32 +322,33 @@ i915_update_tex_unit(struct intel_context *intel, GLuint unit, GLuint ss3)
           (translate_wrap_mode(wt) << SS3_TCY_ADDR_MODE_SHIFT) |
           (translate_wrap_mode(wr) << SS3_TCZ_ADDR_MODE_SHIFT));
 
+      minlod = MIN2(tObj->MinLod, tObj->_MaxLevel - tObj->BaseLevel);
       state[I915_TEXREG_SS3] |= (unit << SS3_TEXTUREMAP_INDEX_SHIFT);
-      state[I915_TEXREG_SS3] |= (U_FIXED(CLAMP(tObj->MinLod, 0.0, 11.0), 4) <<
+      state[I915_TEXREG_SS3] |= (U_FIXED(CLAMP(minlod, 0.0, 11.0), 4) <<
 				 SS3_MIN_LOD_SHIFT);
 
    }
 
    /* convert border color from float to ubyte */
-   CLAMPED_FLOAT_TO_UBYTE(border[0], tObj->BorderColor[0]);
-   CLAMPED_FLOAT_TO_UBYTE(border[1], tObj->BorderColor[1]);
-   CLAMPED_FLOAT_TO_UBYTE(border[2], tObj->BorderColor[2]);
-   CLAMPED_FLOAT_TO_UBYTE(border[3], tObj->BorderColor[3]);
+   CLAMPED_FLOAT_TO_UBYTE(border[0], tObj->BorderColor.f[0]);
+   CLAMPED_FLOAT_TO_UBYTE(border[1], tObj->BorderColor.f[1]);
+   CLAMPED_FLOAT_TO_UBYTE(border[2], tObj->BorderColor.f[2]);
+   CLAMPED_FLOAT_TO_UBYTE(border[3], tObj->BorderColor.f[3]);
 
    if (firstImage->_BaseFormat == GL_DEPTH_COMPONENT) {
       /* GL specs that border color for depth textures is taken from the
        * R channel, while the hardware uses A.  Spam R into all the channels
        * for safety.
        */
-      state[I915_TEXREG_SS4] = INTEL_PACKCOLOR8888(border[0],
-						   border[0],
-						   border[0],
-						   border[0]);
+      state[I915_TEXREG_SS4] = PACK_COLOR_8888(border[0],
+					       border[0],
+					       border[0],
+					       border[0]);
    } else {
-      state[I915_TEXREG_SS4] = INTEL_PACKCOLOR8888(border[0],
-						   border[1],
-						   border[2],
-						   border[3]);
+      state[I915_TEXREG_SS4] = PACK_COLOR_8888(border[3],
+					       border[0],
+					       border[1],
+					       border[2]);
    }
 
 

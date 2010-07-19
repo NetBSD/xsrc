@@ -67,6 +67,7 @@ void st_init_limits(struct st_context *st)
 {
    struct pipe_screen *screen = st->pipe->screen;
    struct gl_constants *c = &st->ctx->Const;
+   struct gl_program_constants *pc;
 
    c->MaxTextureLevels
       = _min(screen->get_param(screen, PIPE_CAP_MAX_TEXTURE_2D_LEVELS),
@@ -91,6 +92,10 @@ void st_init_limits(struct st_context *st)
       = _min(screen->get_param(screen, PIPE_CAP_MAX_VERTEX_TEXTURE_UNITS),
              MAX_VERTEX_TEXTURE_IMAGE_UNITS);
 
+   c->MaxCombinedTextureImageUnits
+      = _min(screen->get_param(screen, PIPE_CAP_MAX_COMBINED_SAMPLERS),
+             MAX_COMBINED_TEXTURE_IMAGE_UNITS);
+
    c->MaxTextureCoordUnits
       = _min(c->MaxTextureImageUnits, MAX_TEXTURE_COORD_UNITS);
 
@@ -109,6 +114,15 @@ void st_init_limits(struct st_context *st)
       = _maxf(1.0f, screen->get_paramf(screen, PIPE_CAP_MAX_POINT_WIDTH));
    c->MaxPointSizeAA
       = _maxf(1.0f, screen->get_paramf(screen, PIPE_CAP_MAX_POINT_WIDTH_AA));
+   /* called after _mesa_create_context/_mesa_init_point, fix default user
+    * settable max point size up
+    */
+   st->ctx->Point.MaxSize = MAX2(c->MaxPointSize, c->MaxPointSizeAA);
+   /* these are not queryable. Note that GL basically mandates a 1.0 minimum
+    * for non-aa sizes, but we can go down to 0.0 for aa points.
+    */
+   c->MinPointSize = 1.0f;
+   c->MinPointSizeAA = 0.0f;
 
    c->MaxTextureMaxAnisotropy
       = _maxf(2.0f, screen->get_paramf(screen, PIPE_CAP_MAX_TEXTURE_ANISOTROPY));
@@ -124,6 +138,96 @@ void st_init_limits(struct st_context *st)
    /* XXX separate query for early function return? */
    st->ctx->Shader.EmitContReturn =
       screen->get_param(screen, PIPE_CAP_TGSI_CONT_SUPPORTED);
+
+   if (screen->get_param(screen, PIPE_CAP_GLSL)) {
+      /*
+       * In the lack of more fine grained capabilities, if the pipe driver supports
+       * GLSL then assume native limits match Mesa software limits.
+       */
+
+      pc = &c->FragmentProgram;
+      pc->MaxNativeInstructions      = pc->MaxInstructions;
+      pc->MaxNativeAluInstructions   = pc->MaxAluInstructions;
+      pc->MaxNativeTexInstructions   = pc->MaxTexInstructions;
+      pc->MaxNativeTexIndirections   = pc->MaxTexIndirections;
+      pc->MaxNativeAttribs           = pc->MaxAttribs;
+      pc->MaxNativeTemps             = pc->MaxTemps;
+      pc->MaxNativeAddressRegs       = pc->MaxAddressRegs;
+      pc->MaxNativeParameters        = pc->MaxParameters;
+
+      pc = &c->VertexProgram;
+      pc->MaxNativeInstructions      = pc->MaxInstructions;
+      pc->MaxNativeAluInstructions   = pc->MaxAluInstructions;
+      pc->MaxNativeTexInstructions   = pc->MaxTexInstructions;
+      pc->MaxNativeTexIndirections   = pc->MaxTexIndirections;
+      pc->MaxNativeAttribs           = pc->MaxAttribs;
+      pc->MaxNativeTemps             = pc->MaxTemps;
+      pc->MaxNativeAddressRegs       = pc->MaxAddressRegs;
+      pc->MaxNativeParameters        = pc->MaxParameters;
+   } else if (screen->get_param(screen, PIPE_CAP_SM3)) {
+      /*
+       * Assume the hardware meets the minimum requirements
+       * for Shader Model 3.
+       *
+       * See also:
+       * - http://msdn.microsoft.com/en-us/library/bb172920(VS.85).aspx
+       * - http://msdn.microsoft.com/en-us/library/bb172963(VS.85).aspx
+       */
+
+      pc = &c->FragmentProgram;
+      pc->MaxNativeInstructions      = 512; /* D3DMIN30SHADERINSTRUCTIONS */
+      pc->MaxNativeAluInstructions   = pc->MaxNativeInstructions;
+      pc->MaxNativeTexInstructions   = pc->MaxNativeInstructions;
+      pc->MaxNativeTexIndirections   = pc->MaxNativeTexInstructions;
+      pc->MaxNativeAttribs           = 10;
+      pc->MaxNativeTemps             = 32;
+      pc->MaxNativeAddressRegs       = 1; /* aL */
+      pc->MaxNativeParameters        = 224;
+
+      pc = &c->VertexProgram;
+      pc->MaxNativeInstructions      = 512; /* D3DMIN30SHADERINSTRUCTIONS */
+      pc->MaxNativeAluInstructions   = pc->MaxNativeInstructions;
+      pc->MaxNativeTexInstructions   = pc->MaxNativeInstructions;
+      pc->MaxNativeTexIndirections   = pc->MaxNativeTexInstructions;
+      pc->MaxNativeAttribs           = 16;
+      pc->MaxNativeTemps             = 32;
+      pc->MaxNativeAddressRegs       = 2; /* a0 and aL */
+      pc->MaxNativeParameters        = 256;
+   } else {
+      /*
+       * Assume the hardware meets the minimum requirements
+       * for Shader Model 2.
+       *
+       * See also:
+       * - http://msdn.microsoft.com/en-us/library/bb172918(VS.85).aspx
+       * - http://msdn.microsoft.com/en-us/library/bb172961(VS.85).aspx
+       */
+
+      pc = &c->FragmentProgram;
+      pc->MaxNativeInstructions      = 96; /* D3DPS20_MIN_NUMINSTRUCTIONSLOTS */
+      pc->MaxNativeAluInstructions   = 64;
+      pc->MaxNativeTexInstructions   = 32;
+      pc->MaxNativeTexIndirections   = pc->MaxNativeTexInstructions;
+      pc->MaxNativeAttribs           = 10; /* 2 color + 8 texture coord */
+      pc->MaxNativeTemps             = 12; /* D3DPS20_MIN_NUMTEMPS */
+      pc->MaxNativeAddressRegs       = 0;
+      pc->MaxNativeParameters        = 16;
+
+      pc = &c->VertexProgram;
+      pc->MaxNativeInstructions      = 256;
+      pc->MaxNativeAluInstructions   = 256;
+      pc->MaxNativeTexInstructions   = 0;
+      pc->MaxNativeTexIndirections   = 0;
+      pc->MaxNativeAttribs           = 16;
+      pc->MaxNativeTemps             = 12; /* D3DVS20_MIN_NUMTEMPS */
+      pc->MaxNativeAddressRegs       = 2; /* a0 and aL */
+      pc->MaxNativeParameters        = 256;
+   }
+
+   if (!screen->get_param(screen, PIPE_CAP_MAX_VERTEX_TEXTURE_UNITS)) {
+      c->VertexProgram.MaxNativeTexInstructions = 0;
+      c->VertexProgram.MaxNativeTexIndirections = 0;
+   }
 }
 
 
@@ -143,6 +247,7 @@ void st_init_extensions(struct st_context *st)
     * Extensions that are supported by all Gallium drivers:
     */
    ctx->Extensions.ARB_copy_buffer = GL_TRUE;
+   ctx->Extensions.ARB_fragment_coord_conventions = GL_TRUE;
    ctx->Extensions.ARB_fragment_program = GL_TRUE;
    ctx->Extensions.ARB_map_buffer_range = GL_TRUE;
    ctx->Extensions.ARB_multisample = GL_TRUE;
@@ -163,6 +268,7 @@ void st_init_extensions(struct st_context *st)
    ctx->Extensions.EXT_blend_subtract = GL_TRUE;
    ctx->Extensions.EXT_framebuffer_blit = GL_TRUE;
    ctx->Extensions.EXT_framebuffer_object = GL_TRUE;
+   ctx->Extensions.EXT_framebuffer_multisample = GL_TRUE;
    ctx->Extensions.EXT_fog_coord = GL_TRUE;
    ctx->Extensions.EXT_multi_draw_arrays = GL_TRUE;
    ctx->Extensions.EXT_pixel_buffer_object = GL_TRUE;
@@ -181,6 +287,10 @@ void st_init_extensions(struct st_context *st)
    ctx->Extensions.NV_blend_square = GL_TRUE;
    ctx->Extensions.NV_texgen_reflection = GL_TRUE;
    ctx->Extensions.NV_texture_env_combine4 = GL_TRUE;
+
+#if FEATURE_OES_draw_texture
+   ctx->Extensions.OES_draw_texture = GL_TRUE;
+#endif
 
    ctx->Extensions.SGI_color_matrix = GL_TRUE;
    ctx->Extensions.SGIS_generate_mipmap = GL_TRUE;
@@ -251,28 +361,28 @@ void st_init_extensions(struct st_context *st)
    /* GL_EXT_packed_depth_stencil requires both the ability to render to
     * a depth/stencil buffer and texture from depth/stencil source.
     */
-   if (screen->is_format_supported(screen, PIPE_FORMAT_Z24S8_UNORM,
+   if (screen->is_format_supported(screen, PIPE_FORMAT_S8Z24_UNORM,
                                    PIPE_TEXTURE_2D, 
                                    PIPE_TEXTURE_USAGE_DEPTH_STENCIL, 0) &&
-       screen->is_format_supported(screen, PIPE_FORMAT_Z24S8_UNORM,
+       screen->is_format_supported(screen, PIPE_FORMAT_S8Z24_UNORM,
                                    PIPE_TEXTURE_2D, 
                                    PIPE_TEXTURE_USAGE_SAMPLER, 0)) {
       ctx->Extensions.EXT_packed_depth_stencil = GL_TRUE;
    }
-   else if (screen->is_format_supported(screen, PIPE_FORMAT_S8Z24_UNORM,
+   else if (screen->is_format_supported(screen, PIPE_FORMAT_Z24S8_UNORM,
                                         PIPE_TEXTURE_2D, 
                                         PIPE_TEXTURE_USAGE_DEPTH_STENCIL, 0) &&
-            screen->is_format_supported(screen, PIPE_FORMAT_S8Z24_UNORM,
+            screen->is_format_supported(screen, PIPE_FORMAT_Z24S8_UNORM,
                                         PIPE_TEXTURE_2D, 
                                         PIPE_TEXTURE_USAGE_SAMPLER, 0)) {
       ctx->Extensions.EXT_packed_depth_stencil = GL_TRUE;
    }
 
    /* sRGB support */
-   if (screen->is_format_supported(screen, PIPE_FORMAT_R8G8B8A8_SRGB,
+   if (screen->is_format_supported(screen, PIPE_FORMAT_A8B8G8R8_SRGB,
                                    PIPE_TEXTURE_2D, 
                                    PIPE_TEXTURE_USAGE_SAMPLER, 0) ||
-      screen->is_format_supported(screen, PIPE_FORMAT_A8R8G8B8_SRGB,
+      screen->is_format_supported(screen, PIPE_FORMAT_B8G8R8A8_SRGB,
                                    PIPE_TEXTURE_2D, 
                                    PIPE_TEXTURE_USAGE_SAMPLER, 0)) {
       ctx->Extensions.EXT_texture_sRGB = GL_TRUE;
@@ -280,17 +390,21 @@ void st_init_extensions(struct st_context *st)
 
    /* s3tc support */
    if (screen->is_format_supported(screen, PIPE_FORMAT_DXT5_RGBA,
-                                   PIPE_TEXTURE_2D, 
-                                   PIPE_TEXTURE_USAGE_SAMPLER, 0)) {
+                                   PIPE_TEXTURE_2D,
+                                   PIPE_TEXTURE_USAGE_SAMPLER, 0) &&
+       (ctx->Mesa_DXTn ||
+        screen->is_format_supported(screen, PIPE_FORMAT_DXT5_RGBA,
+                                    PIPE_TEXTURE_2D,
+                                    PIPE_TEXTURE_USAGE_RENDER_TARGET, 0))) {
       ctx->Extensions.EXT_texture_compression_s3tc = GL_TRUE;
       ctx->Extensions.S3_s3tc = GL_TRUE;
    }
 
    /* ycbcr support */
-   if (screen->is_format_supported(screen, PIPE_FORMAT_YCBCR, 
+   if (screen->is_format_supported(screen, PIPE_FORMAT_UYVY, 
                                    PIPE_TEXTURE_2D, 
                                    PIPE_TEXTURE_USAGE_SAMPLER, 0) ||
-       screen->is_format_supported(screen, PIPE_FORMAT_YCBCR_REV, 
+       screen->is_format_supported(screen, PIPE_FORMAT_YUYV, 
                                    PIPE_TEXTURE_2D, 
                                    PIPE_TEXTURE_USAGE_SAMPLER, 0)) {
       ctx->Extensions.MESA_ycbcr_texture = GL_TRUE;
@@ -301,4 +415,18 @@ void st_init_extensions(struct st_context *st)
       /* we support always support GL_EXT_framebuffer_blit */
       ctx->Extensions.ARB_framebuffer_object = GL_TRUE;
    }
+
+   if (st->pipe->render_condition) {
+      ctx->Extensions.NV_conditional_render = GL_TRUE;
+   }
+
+   if (screen->get_param(screen, PIPE_CAP_INDEP_BLEND_ENABLE)) {
+      ctx->Extensions.EXT_draw_buffers2 = GL_TRUE;
+   }
+
+#if 0 /* not yet */
+   if (screen->get_param(screen, PIPE_CAP_INDEP_BLEND_FUNC)) {
+      ctx->Extensions.ARB_draw_buffers_blend = GL_TRUE;
+   }
+#endif
 }
