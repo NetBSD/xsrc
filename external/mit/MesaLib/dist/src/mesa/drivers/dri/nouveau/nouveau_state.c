@@ -1,345 +1,525 @@
-/**************************************************************************
+/*
+ * Copyright (C) 2009 Francisco Jerez.
+ * All Rights Reserved.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining
+ * a copy of this software and associated documentation files (the
+ * "Software"), to deal in the Software without restriction, including
+ * without limitation the rights to use, copy, modify, merge, publish,
+ * distribute, sublicense, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject to
+ * the following conditions:
+ *
+ * The above copyright notice and this permission notice (including the
+ * next paragraph) shall be included in all copies or substantial
+ * portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+ * IN NO EVENT SHALL THE COPYRIGHT OWNER(S) AND/OR ITS SUPPLIERS BE
+ * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+ * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+ * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ *
+ */
 
-Copyright 2006 Jeremy Kolb
-All Rights Reserved.
-
-Permission is hereby granted, free of charge, to any person obtaining a
-copy of this software and associated documentation files (the "Software"),
-to deal in the Software without restriction, including without limitation
-on the rights to use, copy, modify, merge, publish, distribute, sub
-license, and/or sell copies of the Software, and to permit persons to whom
-the Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice (including the next
-paragraph) shall be included in all copies or substantial portions of the
-Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL
-ERIC ANHOLT OR SILICON INTEGRATED SYSTEMS CORP BE LIABLE FOR ANY CLAIM,
-DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
-OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
-USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-**************************************************************************/
-
+#include "nouveau_driver.h"
 #include "nouveau_context.h"
-#include "nouveau_state.h"
-#include "nouveau_swtcl.h"
-#include "nouveau_fifo.h"
+#include "nouveau_texture.h"
+#include "nouveau_util.h"
 
 #include "swrast/swrast.h"
 #include "tnl/tnl.h"
-#include "swrast_setup/swrast_setup.h"
 
-#include "tnl/t_pipeline.h"
-
-#include "mtypes.h"
-#include "colormac.h"
-
-static __inline__ GLuint nouveauPackColor(GLuint format,
-				       GLubyte r, GLubyte g,
-				       GLubyte b, GLubyte a)
+static void
+nouveau_alpha_func(GLcontext *ctx, GLenum func, GLfloat ref)
 {
-   switch (format) {
-   case 2:
-      return PACK_COLOR_565( r, g, b );
-   case 4:
-      return PACK_COLOR_8888( r, g, b, a);
-   default:
-      fprintf(stderr, "unknown format %d\n", (int)format);
-      return 0;
-   }
+	context_dirty(ctx, ALPHA_FUNC);
 }
 
-static void nouveauCalcViewport(GLcontext *ctx)
+static void
+nouveau_blend_color(GLcontext *ctx, const GLfloat color[4])
 {
-    /* Calculate the Viewport Matrix */
-    
-    nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
-    const GLfloat *v = ctx->Viewport._WindowMap.m;
-    GLfloat *m = nmesa->viewport.m;
-    GLfloat xoffset = nmesa->drawX, yoffset = nmesa->drawY;
-  
-    nmesa->depth_scale = 1.0 / ctx->DrawBuffer->_DepthMaxF;
-
-    m[MAT_SX] =   v[MAT_SX];
-    m[MAT_TX] =   v[MAT_TX] + xoffset + SUBPIXEL_X;
-    m[MAT_SY] = - v[MAT_SY];
-    m[MAT_TY] =   v[MAT_TY] + yoffset + SUBPIXEL_Y;
-    m[MAT_SZ] =   v[MAT_SZ] * nmesa->depth_scale;
-    m[MAT_TZ] =   v[MAT_TZ] * nmesa->depth_scale;
-
-    nmesa->hw_func.WindowMoved(nmesa);
+	context_dirty(ctx, BLEND_COLOR);
 }
 
-static void nouveauViewport(GLcontext *ctx, GLint x, GLint y, GLsizei w, GLsizei h)
+static void
+nouveau_blend_equation_separate(GLcontext *ctx, GLenum modeRGB, GLenum modeA)
 {
-    /* 
-     * Need to send (at least on an nv35 the following:
-     * cons = 4 (this may be bytes per pixel)
-     *
-     * The viewport:
-     * 445   0x0000bee0   {size: 0x0   channel: 0x1   cmd: 0x00009ee0} <-- VIEWPORT_SETUP/HEADER ?
-     * 446   0x00000000   {size: 0x0   channel: 0x0   cmd: 0x00000000} <-- x * cons
-     * 447   0x00000c80   {size: 0x0   channel: 0x0   cmd: 0x00000c80} <-- (height + x) * cons
-     * 448   0x00000000   {size: 0x0   channel: 0x0   cmd: 0x00000000} <-- y * cons
-     * 449   0x00000960   {size: 0x0   channel: 0x0   cmd: 0x00000960} <-- (width + y) * cons
-     * 44a   0x00082a00   {size: 0x2   channel: 0x1   cmd: 0x00000a00} <-- VIEWPORT_DIMS
-     * 44b   0x04000000  <-- (Width_from_glViewport << 16) | x
-     * 44c   0x03000000  <-- (Height_from_glViewport << 16) | (win_height - height - y)
-     *
-     */
-    
-    nouveauCalcViewport(ctx);
+	context_dirty(ctx, BLEND_EQUATION);
 }
 
-static void nouveauDepthRange(GLcontext *ctx, GLclampd near, GLclampd far)
+static void
+nouveau_blend_func_separate(GLcontext *ctx, GLenum sfactorRGB,
+			    GLenum dfactorRGB, GLenum sfactorA, GLenum dfactorA)
 {
-    nouveauCalcViewport(ctx);
+	context_dirty(ctx, BLEND_FUNC);
 }
 
-static void nouveauDDUpdateHWState(GLcontext *ctx)
+static void
+nouveau_clip_plane(GLcontext *ctx, GLenum plane, const GLfloat *equation)
 {
-    nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
-    int new_state = nmesa->new_state;
-
-    if ( new_state || nmesa->new_render_state & _NEW_TEXTURE )
-    {
-        nmesa->new_state = 0;
-
-        /* Update the various parts of the context's state.
-        */
-        /*
-        if ( new_state & NOUVEAU_NEW_ALPHA )
-            nouveauUpdateAlphaMode( ctx );
-
-        if ( new_state & NOUVEAU_NEW_DEPTH )
-            nouveauUpdateZMode( ctx );
-
-        if ( new_state & NOUVEAU_NEW_FOG )
-            nouveauUpdateFogAttrib( ctx );
-
-        if ( new_state & NOUVEAU_NEW_CLIP )
-            nouveauUpdateClipping( ctx );
-
-        if ( new_state & NOUVEAU_NEW_CULL )
-            nouveauUpdateCull( ctx );
-
-        if ( new_state & NOUVEAU_NEW_MASKS )
-            nouveauUpdateMasks( ctx );
-
-        if ( new_state & NOUVEAU_NEW_WINDOW )
-            nouveauUpdateWindow( ctx );
-
-        if ( nmesa->new_render_state & _NEW_TEXTURE ) {
-            nouveauUpdateTextureState( ctx );
-        }*/
-    }
+	context_dirty_i(ctx, CLIP_PLANE, plane - GL_CLIP_PLANE0);
 }
 
-static void nouveauDDInvalidateState(GLcontext *ctx, GLuint new_state)
+static void
+nouveau_color_mask(GLcontext *ctx, GLboolean rmask, GLboolean gmask,
+		   GLboolean bmask, GLboolean amask)
 {
-    _swrast_InvalidateState( ctx, new_state );
-    _swsetup_InvalidateState( ctx, new_state );
-    _vbo_InvalidateState( ctx, new_state );
-    _tnl_InvalidateState( ctx, new_state );
-    NOUVEAU_CONTEXT(ctx)->new_render_state |= new_state;
+	context_dirty(ctx, COLOR_MASK);
 }
 
-/* Initialize the context's hardware state. */
-void nouveauDDInitState(nouveauContextPtr nmesa)
+static void
+nouveau_color_material(GLcontext *ctx, GLenum face, GLenum mode)
 {
-    uint32_t type = nmesa->screen->card->type;
-    switch(type)
-    {
-        case NV_03:
-            /* Unimplemented */
-            break;
-        case NV_04:
-        case NV_05:
-            nv04InitStateFuncs(nmesa->glCtx, &nmesa->glCtx->Driver);
-            break;
-        case NV_10:
-            nv10InitStateFuncs(nmesa->glCtx, &nmesa->glCtx->Driver);
-            break;
-        case NV_20:
-            nv20InitStateFuncs(nmesa->glCtx, &nmesa->glCtx->Driver);
-            break;
-        case NV_30:
-        case NV_40:
-        case NV_44:
-            nv30InitStateFuncs(nmesa->glCtx, &nmesa->glCtx->Driver);
-            break;
-        case NV_50:
-            nv50InitStateFuncs(nmesa->glCtx, &nmesa->glCtx->Driver);
-            break;
-        default:
-            break;
-    }
-    nouveau_state_cache_init(nmesa);
+	context_dirty(ctx, COLOR_MATERIAL);
+	context_dirty(ctx, MATERIAL_FRONT_AMBIENT);
+	context_dirty(ctx, MATERIAL_BACK_AMBIENT);
+	context_dirty(ctx, MATERIAL_FRONT_DIFFUSE);
+	context_dirty(ctx, MATERIAL_BACK_DIFFUSE);
+	context_dirty(ctx, MATERIAL_FRONT_SPECULAR);
+	context_dirty(ctx, MATERIAL_BACK_SPECULAR);
 }
 
-/* Initialize the driver's state functions */
-void nouveauDDInitStateFuncs(GLcontext *ctx)
+static void
+nouveau_cull_face(GLcontext *ctx, GLenum mode)
 {
-   ctx->Driver.UpdateState		= nouveauDDInvalidateState;
-
-   ctx->Driver.ClearIndex		= NULL;
-   ctx->Driver.ClearColor		= NULL; //nouveauDDClearColor;
-   ctx->Driver.ClearStencil		= NULL; //nouveauDDClearStencil;
-   ctx->Driver.DrawBuffer		= NULL; //nouveauDDDrawBuffer;
-   ctx->Driver.ReadBuffer		= NULL; //nouveauDDReadBuffer;
-
-   ctx->Driver.IndexMask		= NULL;
-   ctx->Driver.ColorMask		= NULL; //nouveauDDColorMask;
-   ctx->Driver.AlphaFunc		= NULL; //nouveauDDAlphaFunc;
-   ctx->Driver.BlendEquationSeparate	= NULL; //nouveauDDBlendEquationSeparate;
-   ctx->Driver.BlendFuncSeparate	= NULL; //nouveauDDBlendFuncSeparate;
-   ctx->Driver.ClearDepth		= NULL; //nouveauDDClearDepth;
-   ctx->Driver.CullFace			= NULL; //nouveauDDCullFace;
-   ctx->Driver.FrontFace		= NULL; //nouveauDDFrontFace;
-   ctx->Driver.DepthFunc		= NULL; //nouveauDDDepthFunc;
-   ctx->Driver.DepthMask		= NULL; //nouveauDDDepthMask;
-   ctx->Driver.Enable			= NULL; //nouveauDDEnable;
-   ctx->Driver.Fogfv			= NULL; //nouveauDDFogfv;
-   ctx->Driver.Hint			= NULL;
-   ctx->Driver.Lightfv			= NULL;
-   ctx->Driver.LightModelfv		= NULL; //nouveauDDLightModelfv;
-   ctx->Driver.LogicOpcode		= NULL; //nouveauDDLogicOpCode;
-   ctx->Driver.PolygonMode		= NULL;
-   ctx->Driver.PolygonStipple		= NULL; //nouveauDDPolygonStipple;
-   ctx->Driver.RenderMode		= NULL; //nouveauDDRenderMode;
-   ctx->Driver.Scissor			= NULL; //nouveauDDScissor;
-   ctx->Driver.ShadeModel		= NULL; //nouveauDDShadeModel;
-   ctx->Driver.StencilFuncSeparate	= NULL; //nouveauDDStencilFuncSeparate;
-   ctx->Driver.StencilMaskSeparate	= NULL; //nouveauDDStencilMaskSeparate;
-   ctx->Driver.StencilOpSeparate	= NULL; //nouveauDDStencilOpSeparate;
-
-   ctx->Driver.DepthRange               = nouveauDepthRange;
-   ctx->Driver.Viewport                 = nouveauViewport;
-
-   /* Pixel path fallbacks.
-    */
-   ctx->Driver.Accum = _swrast_Accum;
-   ctx->Driver.Bitmap = _swrast_Bitmap;
-   ctx->Driver.CopyPixels = _swrast_CopyPixels;
-   ctx->Driver.DrawPixels = _swrast_DrawPixels;
-   ctx->Driver.ReadPixels = _swrast_ReadPixels;
-
-   /* Swrast hooks for imaging extensions:
-    */
-   ctx->Driver.CopyColorTable = _swrast_CopyColorTable;
-   ctx->Driver.CopyColorSubTable = _swrast_CopyColorSubTable;
-   ctx->Driver.CopyConvolutionFilter1D = _swrast_CopyConvolutionFilter1D;
-   ctx->Driver.CopyConvolutionFilter2D = _swrast_CopyConvolutionFilter2D;
+	context_dirty(ctx, CULL_FACE);
 }
 
-#define STATE_INIT(a) if (ctx->Driver.a) ctx->Driver.a
-
-void nouveauInitState(GLcontext *ctx)
+static void
+nouveau_front_face(GLcontext *ctx, GLenum mode)
 {
-    /*
-     * Mesa should do this for us:
-     */
+	context_dirty(ctx, FRONT_FACE);
+}
 
-    STATE_INIT(AlphaFunc)( ctx, 
-            ctx->Color.AlphaFunc,
-            ctx->Color.AlphaRef);
+static void
+nouveau_depth_func(GLcontext *ctx, GLenum func)
+{
+	context_dirty(ctx, DEPTH);
+}
 
-    STATE_INIT(BlendColor)( ctx,
-            ctx->Color.BlendColor );
+static void
+nouveau_depth_mask(GLcontext *ctx, GLboolean flag)
+{
+	context_dirty(ctx, DEPTH);
+}
 
-    STATE_INIT(BlendEquationSeparate)( ctx, 
-            ctx->Color.BlendEquationRGB,
-            ctx->Color.BlendEquationA);
+static void
+nouveau_depth_range(GLcontext *ctx, GLclampd nearval, GLclampd farval)
+{
+	context_dirty(ctx, VIEWPORT);
+}
 
-    STATE_INIT(BlendFuncSeparate)( ctx,
-            ctx->Color.BlendSrcRGB,
-            ctx->Color.BlendDstRGB,
-            ctx->Color.BlendSrcA,
-            ctx->Color.BlendDstA);
+static void
+nouveau_draw_buffer(GLcontext *ctx, GLenum buffer)
+{
+	context_dirty(ctx, FRAMEBUFFER);
+}
 
-    STATE_INIT(ClearColor)( ctx, ctx->Color.ClearColor);
-    STATE_INIT(ClearDepth)( ctx, ctx->Depth.Clear);
-    STATE_INIT(ClearStencil)( ctx, ctx->Stencil.Clear);
+static void
+nouveau_draw_buffers(GLcontext *ctx, GLsizei n, const GLenum *buffers)
+{
+	context_dirty(ctx, FRAMEBUFFER);
+}
 
-    STATE_INIT(ColorMask)( ctx, 
-            ctx->Color.ColorMask[RCOMP],
-            ctx->Color.ColorMask[GCOMP],
-            ctx->Color.ColorMask[BCOMP],
-            ctx->Color.ColorMask[ACOMP]);
+static void
+nouveau_enable(GLcontext *ctx, GLenum cap, GLboolean state)
+{
+	int i;
 
-    STATE_INIT(CullFace)( ctx, ctx->Polygon.CullFaceMode );
-    STATE_INIT(DepthFunc)( ctx, ctx->Depth.Func );
-    STATE_INIT(DepthMask)( ctx, ctx->Depth.Mask );
+	switch (cap) {
+	case GL_ALPHA_TEST:
+		context_dirty(ctx, ALPHA_FUNC);
+		break;
+	case GL_BLEND:
+		context_dirty(ctx, BLEND_EQUATION);
+		break;
+	case GL_COLOR_LOGIC_OP:
+		context_dirty(ctx, LOGIC_OPCODE);
+		break;
+	case GL_COLOR_MATERIAL:
+		context_dirty(ctx, COLOR_MATERIAL);
+		context_dirty(ctx, MATERIAL_FRONT_AMBIENT);
+		context_dirty(ctx, MATERIAL_BACK_AMBIENT);
+		context_dirty(ctx, MATERIAL_FRONT_DIFFUSE);
+		context_dirty(ctx, MATERIAL_BACK_DIFFUSE);
+		context_dirty(ctx, MATERIAL_FRONT_SPECULAR);
+		context_dirty(ctx, MATERIAL_BACK_SPECULAR);
+		break;
+	case GL_COLOR_SUM_EXT:
+		context_dirty(ctx, FRAG);
+		break;
+	case GL_CULL_FACE:
+		context_dirty(ctx, CULL_FACE);
+		break;
+	case GL_DEPTH_TEST:
+		context_dirty(ctx, DEPTH);
+		break;
+	case GL_DITHER:
+		context_dirty(ctx, DITHER);
+		break;
+	case GL_FOG:
+		context_dirty(ctx, FOG);
+		context_dirty(ctx, FRAG);
+		context_dirty(ctx, MODELVIEW);
+		break;
+	case GL_LIGHT0:
+	case GL_LIGHT1:
+	case GL_LIGHT2:
+	case GL_LIGHT3:
+	case GL_LIGHT4:
+	case GL_LIGHT5:
+	case GL_LIGHT6:
+	case GL_LIGHT7:
+		context_dirty(ctx, MODELVIEW);
+		context_dirty(ctx, LIGHT_ENABLE);
+		context_dirty_i(ctx, LIGHT_SOURCE, cap - GL_LIGHT0);
+		context_dirty(ctx, MATERIAL_FRONT_AMBIENT);
+		context_dirty(ctx, MATERIAL_BACK_AMBIENT);
+		context_dirty(ctx, MATERIAL_FRONT_DIFFUSE);
+		context_dirty(ctx, MATERIAL_BACK_DIFFUSE);
+		context_dirty(ctx, MATERIAL_FRONT_SPECULAR);
+		context_dirty(ctx, MATERIAL_BACK_SPECULAR);
+		context_dirty(ctx, MATERIAL_FRONT_SHININESS);
+		context_dirty(ctx, MATERIAL_BACK_SHININESS);
+		break;
+	case GL_LIGHTING:
+		context_dirty(ctx, FRAG);
+		context_dirty(ctx, MODELVIEW);
+		context_dirty(ctx, LIGHT_ENABLE);
 
-    STATE_INIT(Enable)( ctx, GL_ALPHA_TEST, ctx->Color.AlphaEnabled );
-    STATE_INIT(Enable)( ctx, GL_BLEND, ctx->Color.BlendEnabled );
-    STATE_INIT(Enable)( ctx, GL_COLOR_LOGIC_OP, ctx->Color.ColorLogicOpEnabled );
-    STATE_INIT(Enable)( ctx, GL_COLOR_SUM, ctx->Fog.ColorSumEnabled );
-    STATE_INIT(Enable)( ctx, GL_CULL_FACE, ctx->Polygon.CullFlag );
-    STATE_INIT(Enable)( ctx, GL_DEPTH_TEST, ctx->Depth.Test );
-    STATE_INIT(Enable)( ctx, GL_DITHER, ctx->Color.DitherFlag );
-    STATE_INIT(Enable)( ctx, GL_FOG, ctx->Fog.Enabled );
-    STATE_INIT(Enable)( ctx, GL_LIGHTING, ctx->Light.Enabled );
-    STATE_INIT(Enable)( ctx, GL_LINE_SMOOTH, ctx->Line.SmoothFlag );
-    STATE_INIT(Enable)( ctx, GL_LINE_STIPPLE, ctx->Line.StippleFlag );
-    STATE_INIT(Enable)( ctx, GL_POINT_SMOOTH, ctx->Point.SmoothFlag );
-    STATE_INIT(Enable)( ctx, GL_POLYGON_OFFSET_FILL, ctx->Polygon.OffsetFill);
-    STATE_INIT(Enable)( ctx, GL_POLYGON_OFFSET_LINE, ctx->Polygon.OffsetLine);
-    STATE_INIT(Enable)( ctx, GL_POLYGON_OFFSET_POINT, ctx->Polygon.OffsetPoint);
-    STATE_INIT(Enable)( ctx, GL_POLYGON_SMOOTH, ctx->Polygon.SmoothFlag );
-    STATE_INIT(Enable)( ctx, GL_POLYGON_STIPPLE, ctx->Polygon.StippleFlag );
-    STATE_INIT(Enable)( ctx, GL_SCISSOR_TEST, ctx->Scissor.Enabled );
-    STATE_INIT(Enable)( ctx, GL_STENCIL_TEST, ctx->Stencil.Enabled );
-    STATE_INIT(Enable)( ctx, GL_TEXTURE_1D, GL_FALSE );
-    STATE_INIT(Enable)( ctx, GL_TEXTURE_2D, GL_FALSE );
-    STATE_INIT(Enable)( ctx, GL_TEXTURE_RECTANGLE_NV, GL_FALSE );
-    STATE_INIT(Enable)( ctx, GL_TEXTURE_3D, GL_FALSE );
-    STATE_INIT(Enable)( ctx, GL_TEXTURE_CUBE_MAP, GL_FALSE );
+		for (i = 0; i < MAX_LIGHTS; i++) {
+			if (ctx->Light.Light[i].Enabled)
+				context_dirty_i(ctx, LIGHT_SOURCE, i);
+		}
 
-    STATE_INIT(Fogfv)( ctx, GL_FOG_COLOR, ctx->Fog.Color );
-    STATE_INIT(Fogfv)( ctx, GL_FOG_MODE, 0 );
-    STATE_INIT(Fogfv)( ctx, GL_FOG_DENSITY, &ctx->Fog.Density );
-    STATE_INIT(Fogfv)( ctx, GL_FOG_START, &ctx->Fog.Start );
-    STATE_INIT(Fogfv)( ctx, GL_FOG_END, &ctx->Fog.End );
+		context_dirty(ctx, MATERIAL_FRONT_AMBIENT);
+		context_dirty(ctx, MATERIAL_BACK_AMBIENT);
+		context_dirty(ctx, MATERIAL_FRONT_DIFFUSE);
+		context_dirty(ctx, MATERIAL_BACK_DIFFUSE);
+		context_dirty(ctx, MATERIAL_FRONT_SPECULAR);
+		context_dirty(ctx, MATERIAL_BACK_SPECULAR);
+		context_dirty(ctx, MATERIAL_FRONT_SHININESS);
+		context_dirty(ctx, MATERIAL_BACK_SHININESS);
+		break;
+	case GL_LINE_SMOOTH:
+		context_dirty(ctx, LINE_MODE);
+		break;
+	case GL_NORMALIZE:
+		context_dirty(ctx, LIGHT_ENABLE);
+		break;
+	case GL_POINT_SMOOTH:
+		context_dirty(ctx, POINT_MODE);
+		break;
+	case GL_POLYGON_OFFSET_POINT:
+	case GL_POLYGON_OFFSET_LINE:
+	case GL_POLYGON_OFFSET_FILL:
+		context_dirty(ctx, POLYGON_OFFSET);
+		break;
+	case GL_POLYGON_SMOOTH:
+		context_dirty(ctx, POLYGON_MODE);
+		break;
+	case GL_SCISSOR_TEST:
+		context_dirty(ctx, SCISSOR);
+		break;
+	case GL_STENCIL_TEST:
+		context_dirty(ctx, STENCIL_FUNC);
+		break;
+	case GL_TEXTURE_1D:
+	case GL_TEXTURE_2D:
+	case GL_TEXTURE_3D:
+		context_dirty_i(ctx, TEX_ENV, ctx->Texture.CurrentUnit);
+		context_dirty_i(ctx, TEX_OBJ, ctx->Texture.CurrentUnit);
+		break;
+	}
+}
 
-    STATE_INIT(FrontFace)( ctx, ctx->Polygon.FrontFace );
+static void
+nouveau_fog(GLcontext *ctx, GLenum pname, const GLfloat *params)
+{
+	context_dirty(ctx, FOG);
+}
 
-    {
-        GLfloat f = (GLfloat)ctx->Light.Model.ColorControl;
-        STATE_INIT(LightModelfv)( ctx, GL_LIGHT_MODEL_COLOR_CONTROL, &f );
-    }
+static void
+nouveau_light(GLcontext *ctx, GLenum light, GLenum pname, const GLfloat *params)
+{
+	switch (pname) {
+	case GL_AMBIENT:
+		context_dirty(ctx, MATERIAL_FRONT_AMBIENT);
+		context_dirty(ctx, MATERIAL_BACK_AMBIENT);
+		break;
+	case GL_DIFFUSE:
+		context_dirty(ctx, MATERIAL_FRONT_DIFFUSE);
+		context_dirty(ctx, MATERIAL_BACK_DIFFUSE);
+		break;
+	case GL_SPECULAR:
+		context_dirty(ctx, MATERIAL_FRONT_SPECULAR);
+		context_dirty(ctx, MATERIAL_BACK_SPECULAR);
+		break;
+	case GL_SPOT_CUTOFF:
+	case GL_POSITION:
+		context_dirty(ctx, MODELVIEW);
+		context_dirty(ctx, LIGHT_ENABLE);
+		context_dirty_i(ctx, LIGHT_SOURCE, light - GL_LIGHT0);
+		break;
+	default:
+		context_dirty_i(ctx, LIGHT_SOURCE, light - GL_LIGHT0);
+		break;
+	}
+}
 
-    STATE_INIT(LineStipple)( ctx, ctx->Line.StippleFactor, ctx->Line.StipplePattern );
-    STATE_INIT(LineWidth)( ctx, ctx->Line.Width );
-    STATE_INIT(LogicOpcode)( ctx, ctx->Color.LogicOp );
-    STATE_INIT(PointSize)( ctx, ctx->Point.Size );
-    STATE_INIT(PolygonMode)( ctx, GL_FRONT, ctx->Polygon.FrontMode );
-    STATE_INIT(PolygonMode)( ctx, GL_BACK, ctx->Polygon.BackMode );
-    STATE_INIT(PolygonOffset)( ctx,
-	    ctx->Polygon.OffsetFactor,
-	    ctx->Polygon.OffsetUnits );
-    STATE_INIT(PolygonStipple)( ctx, (const GLubyte *)ctx->PolygonStipple );
-    STATE_INIT(ShadeModel)( ctx, ctx->Light.ShadeModel );
-    STATE_INIT(StencilFuncSeparate)( ctx, GL_FRONT,
-            ctx->Stencil.Function[0],
-            ctx->Stencil.Ref[0],
-            ctx->Stencil.ValueMask[0] );
-    STATE_INIT(StencilFuncSeparate)( ctx, GL_BACK,
-            ctx->Stencil.Function[1],
-            ctx->Stencil.Ref[1],
-            ctx->Stencil.ValueMask[1] );
-    STATE_INIT(StencilMaskSeparate)( ctx, GL_FRONT, ctx->Stencil.WriteMask[0] );
-    STATE_INIT(StencilMaskSeparate)( ctx, GL_BACK, ctx->Stencil.WriteMask[1] );
-    STATE_INIT(StencilOpSeparate)( ctx, GL_FRONT,
-            ctx->Stencil.FailFunc[0],
-            ctx->Stencil.ZFailFunc[0],
-            ctx->Stencil.ZPassFunc[0]);
-    STATE_INIT(StencilOpSeparate)( ctx, GL_BACK,
-            ctx->Stencil.FailFunc[1],
-            ctx->Stencil.ZFailFunc[1],
-            ctx->Stencil.ZPassFunc[1]);
+static void
+nouveau_light_model(GLcontext *ctx, GLenum pname, const GLfloat *params)
+{
+	context_dirty(ctx, LIGHT_MODEL);
+	context_dirty(ctx, MODELVIEW);
+}
+
+static void
+nouveau_line_stipple(GLcontext *ctx, GLint factor, GLushort pattern )
+{
+	context_dirty(ctx, LINE_STIPPLE);
+}
+
+static void
+nouveau_line_width(GLcontext *ctx, GLfloat width)
+{
+	context_dirty(ctx, LINE_MODE);
+}
+
+static void
+nouveau_logic_opcode(GLcontext *ctx, GLenum opcode)
+{
+	context_dirty(ctx, LOGIC_OPCODE);
+}
+
+static void
+nouveau_point_parameter(GLcontext *ctx, GLenum pname, const GLfloat *params)
+{
+	context_dirty(ctx, POINT_PARAMETER);
+}
+
+static void
+nouveau_point_size(GLcontext *ctx, GLfloat size)
+{
+	context_dirty(ctx, POINT_MODE);
+}
+
+static void
+nouveau_polygon_mode(GLcontext *ctx, GLenum face, GLenum mode)
+{
+	context_dirty(ctx, POLYGON_MODE);
+}
+
+static void
+nouveau_polygon_offset(GLcontext *ctx, GLfloat factor, GLfloat units)
+{
+	context_dirty(ctx, POLYGON_OFFSET);
+}
+
+static void
+nouveau_polygon_stipple(GLcontext *ctx, const GLubyte *mask)
+{
+	context_dirty(ctx, POLYGON_STIPPLE);
+}
+
+static void
+nouveau_render_mode(GLcontext *ctx, GLenum mode)
+{
+	context_dirty(ctx, RENDER_MODE);
+}
+
+static void
+nouveau_scissor(GLcontext *ctx, GLint x, GLint y, GLsizei w, GLsizei h)
+{
+	context_dirty(ctx, SCISSOR);
+}
+
+static void
+nouveau_shade_model(GLcontext *ctx, GLenum mode)
+{
+	context_dirty(ctx, SHADE_MODEL);
+}
+
+static void
+nouveau_stencil_func_separate(GLcontext *ctx, GLenum face, GLenum func,
+			      GLint ref, GLuint mask)
+{
+	context_dirty(ctx, STENCIL_FUNC);
+}
+
+static void
+nouveau_stencil_mask_separate(GLcontext *ctx, GLenum face, GLuint mask)
+{
+	context_dirty(ctx, STENCIL_MASK);
+}
+
+static void
+nouveau_stencil_op_separate(GLcontext *ctx, GLenum face, GLenum fail,
+			    GLenum zfail, GLenum zpass)
+{
+	context_dirty(ctx, STENCIL_OP);
+}
+
+static void
+nouveau_tex_gen(GLcontext *ctx, GLenum coord, GLenum pname,
+		const GLfloat *params)
+{
+	context_dirty_i(ctx, TEX_GEN, ctx->Texture.CurrentUnit);
+}
+
+static void
+nouveau_tex_env(GLcontext *ctx, GLenum target, GLenum pname,
+		const GLfloat *param)
+{
+	switch (target) {
+	case GL_TEXTURE_FILTER_CONTROL_EXT:
+		context_dirty_i(ctx, TEX_OBJ, ctx->Texture.CurrentUnit);
+		break;
+	default:
+		context_dirty_i(ctx, TEX_ENV, ctx->Texture.CurrentUnit);
+		break;
+	}
+}
+
+static void
+nouveau_tex_parameter(GLcontext *ctx, GLenum target,
+		      struct gl_texture_object *t, GLenum pname,
+		      const GLfloat *params)
+{
+	switch (pname) {
+	case GL_TEXTURE_MAG_FILTER:
+	case GL_TEXTURE_WRAP_S:
+	case GL_TEXTURE_WRAP_T:
+	case GL_TEXTURE_WRAP_R:
+	case GL_TEXTURE_MIN_LOD:
+	case GL_TEXTURE_MAX_LOD:
+	case GL_TEXTURE_MAX_ANISOTROPY_EXT:
+	case GL_TEXTURE_LOD_BIAS:
+		context_dirty_i(ctx, TEX_OBJ, ctx->Texture.CurrentUnit);
+		break;
+
+	case GL_TEXTURE_MIN_FILTER:
+	case GL_TEXTURE_BASE_LEVEL:
+	case GL_TEXTURE_MAX_LEVEL:
+		nouveau_texture_reallocate(ctx, t);
+		context_dirty_i(ctx, TEX_OBJ, ctx->Texture.CurrentUnit);
+		break;
+	}
+}
+
+static void
+nouveau_viewport(GLcontext *ctx, GLint x, GLint y, GLsizei w, GLsizei h)
+{
+	context_dirty(ctx, VIEWPORT);
+}
+
+void
+nouveau_emit_nothing(GLcontext *ctx, int emit)
+{
+}
+
+int
+nouveau_next_dirty_state(GLcontext *ctx)
+{
+	struct nouveau_context *nctx = to_nouveau_context(ctx);
+	int i = BITSET_FFS(nctx->dirty) - 1;
+
+	if (i < 0 || i >= context_drv(ctx)->num_emit)
+		return -1;
+
+	return i;
+}
+
+void
+nouveau_state_emit(GLcontext *ctx)
+{
+	struct nouveau_context *nctx = to_nouveau_context(ctx);
+	const struct nouveau_driver *drv = context_drv(ctx);
+	int i;
+
+	while ((i = nouveau_next_dirty_state(ctx)) >= 0) {
+		BITSET_CLEAR(nctx->dirty, i);
+		drv->emit[i](ctx, i);
+	}
+
+	BITSET_ZERO(nctx->dirty);
+
+	nouveau_bo_state_emit(ctx);
+}
+
+static void
+nouveau_update_state(GLcontext *ctx, GLbitfield new_state)
+{
+	if (new_state & (_NEW_PROJECTION | _NEW_MODELVIEW))
+		context_dirty(ctx, PROJECTION);
+
+	if (new_state & _NEW_MODELVIEW)
+		context_dirty(ctx, MODELVIEW);
+
+	if (new_state & _NEW_CURRENT_ATTRIB &&
+	    new_state & _NEW_LIGHT) {
+		context_dirty(ctx, MATERIAL_FRONT_AMBIENT);
+		context_dirty(ctx, MATERIAL_BACK_AMBIENT);
+		context_dirty(ctx, MATERIAL_FRONT_DIFFUSE);
+		context_dirty(ctx, MATERIAL_BACK_DIFFUSE);
+		context_dirty(ctx, MATERIAL_FRONT_SPECULAR);
+		context_dirty(ctx, MATERIAL_BACK_SPECULAR);
+		context_dirty(ctx, MATERIAL_FRONT_SHININESS);
+		context_dirty(ctx, MATERIAL_BACK_SHININESS);
+	}
+
+	_swrast_InvalidateState(ctx, new_state);
+	_tnl_InvalidateState(ctx, new_state);
+
+	nouveau_state_emit(ctx);
+}
+
+void
+nouveau_state_init(GLcontext *ctx)
+{
+	struct nouveau_context *nctx = to_nouveau_context(ctx);
+
+	ctx->Driver.AlphaFunc = nouveau_alpha_func;
+	ctx->Driver.BlendColor = nouveau_blend_color;
+	ctx->Driver.BlendEquationSeparate = nouveau_blend_equation_separate;
+	ctx->Driver.BlendFuncSeparate = nouveau_blend_func_separate;
+	ctx->Driver.ClipPlane = nouveau_clip_plane;
+	ctx->Driver.ColorMask = nouveau_color_mask;
+	ctx->Driver.ColorMaterial = nouveau_color_material;
+	ctx->Driver.CullFace = nouveau_cull_face;
+	ctx->Driver.FrontFace = nouveau_front_face;
+	ctx->Driver.DepthFunc = nouveau_depth_func;
+	ctx->Driver.DepthMask = nouveau_depth_mask;
+	ctx->Driver.DepthRange = nouveau_depth_range;
+	ctx->Driver.DrawBuffer = nouveau_draw_buffer;
+	ctx->Driver.DrawBuffers = nouveau_draw_buffers;
+	ctx->Driver.Enable = nouveau_enable;
+	ctx->Driver.Fogfv = nouveau_fog;
+	ctx->Driver.Lightfv = nouveau_light;
+	ctx->Driver.LightModelfv = nouveau_light_model;
+	ctx->Driver.LineStipple = nouveau_line_stipple;
+	ctx->Driver.LineWidth = nouveau_line_width;
+	ctx->Driver.LogicOpcode = nouveau_logic_opcode;
+	ctx->Driver.PointParameterfv = nouveau_point_parameter;
+	ctx->Driver.PointSize = nouveau_point_size;
+	ctx->Driver.PolygonMode = nouveau_polygon_mode;
+	ctx->Driver.PolygonOffset = nouveau_polygon_offset;
+	ctx->Driver.PolygonStipple = nouveau_polygon_stipple;
+	ctx->Driver.RenderMode = nouveau_render_mode;
+	ctx->Driver.Scissor = nouveau_scissor;
+	ctx->Driver.ShadeModel = nouveau_shade_model;
+	ctx->Driver.StencilFuncSeparate = nouveau_stencil_func_separate;
+	ctx->Driver.StencilMaskSeparate = nouveau_stencil_mask_separate;
+	ctx->Driver.StencilOpSeparate = nouveau_stencil_op_separate;
+	ctx->Driver.TexGen = nouveau_tex_gen;
+	ctx->Driver.TexEnv = nouveau_tex_env;
+	ctx->Driver.TexParameter = nouveau_tex_parameter;
+	ctx->Driver.Viewport = nouveau_viewport;
+
+	ctx->Driver.UpdateState = nouveau_update_state;
+
+	BITSET_ONES(nctx->dirty);
 }

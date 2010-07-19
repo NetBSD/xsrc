@@ -25,7 +25,7 @@
 
 #include "draw/draw_context.h"
 #include "draw/draw_vbuf.h"
-#include "pipe/p_inlines.h"
+#include "util/u_inlines.h"
 #include "pipe/p_state.h"
 
 #include "svga_context.h"
@@ -89,7 +89,7 @@ svga_swtnl_draw_range_elements(struct svga_context *svga,
                             PIPE_BUFFER_USAGE_CPU_READ);
       assert(map);
       draw_set_mapped_constant_buffer(
-         draw, 
+         draw, PIPE_SHADER_VERTEX, 0,
          map,
          svga->curr.cb[PIPE_SHADER_VERTEX]->size);
    }
@@ -134,7 +134,7 @@ boolean svga_init_swtnl( struct svga_context *svga )
    /*
     * Create drawing context and plug our rendering stage into it.
     */
-   svga->swtnl.draw = draw_create();
+   svga->swtnl.draw = draw_create(&svga->pipe);
    if (svga->swtnl.draw == NULL)
       goto fail;
 

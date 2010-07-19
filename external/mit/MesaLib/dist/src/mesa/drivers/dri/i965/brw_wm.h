@@ -67,7 +67,7 @@ struct brw_wm_prog_key {
    GLuint flat_shade:1;
    GLuint linear_color:1;  /**< linear interpolation vs perspective interp */
    GLuint runtime_check_aads_emit:1;
-   GLuint nr_color_regions:2;
+   GLuint nr_color_regions:5;
    
    GLbitfield proj_attrib_mask; /**< one bit per fragment program attribute */
    GLuint shadowtex_mask:16;
@@ -76,10 +76,9 @@ struct brw_wm_prog_key {
 
    GLushort tex_swizzles[BRW_MAX_TEX_UNIT];
 
-   GLuint program_string_id:32;
-   GLushort origin_x, origin_y;
    GLushort drawable_height;
    GLbitfield64 vp_outputs_written;
+   GLuint program_string_id:32;
 };
 
 
@@ -329,6 +328,12 @@ void emit_cinterp(struct brw_compile *p,
 		  const struct brw_reg *dst,
 		  GLuint mask,
 		  const struct brw_reg *arg0);
+void emit_cmp(struct brw_compile *p,
+	      const struct brw_reg *dst,
+	      GLuint mask,
+	      const struct brw_reg *arg0,
+	      const struct brw_reg *arg1,
+	      const struct brw_reg *arg2);
 void emit_ddxy(struct brw_compile *p,
 	       const struct brw_reg *dst,
 	       GLuint mask,

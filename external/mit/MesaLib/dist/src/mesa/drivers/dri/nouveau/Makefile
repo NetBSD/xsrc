@@ -3,49 +3,53 @@
 TOP = ../../../../..
 include $(TOP)/configs/current
 
-LIBNAME = nouveau_dri.so
+CFLAGS += $(shell pkg-config libdrm libdrm_nouveau --cflags)
+DRI_LIB_DEPS += $(shell pkg-config libdrm_nouveau --libs)
 
-MINIGLX_SOURCES = 
+LIBNAME = nouveau_vieux_dri.so
+
+MINIGLX_SOURCES =
 
 DRIVER_SOURCES = \
-	nouveau_bufferobj.c      \
-	nouveau_buffers.c        \
-	nouveau_card.c           \
-	nouveau_context.c        \
-	nouveau_driver.c         \
-	nouveau_fifo.c           \
-	nouveau_lock.c           \
-	nouveau_object.c         \
-	nouveau_screen.c         \
-	nouveau_span.c           \
-	nouveau_state.c          \
-	nouveau_state_cache.c    \
-	nouveau_shader.c         \
-	nouveau_shader_0.c       \
-	nouveau_shader_1.c       \
-	nouveau_shader_2.c       \
-	nouveau_tex.c            \
-	nouveau_swtcl.c          \
-	nouveau_sync.c           \
-	nouveau_query.c          \
-	nv04_state.c             \
-	nv04_swtcl.c             \
-	nv10_state.c             \
-	nv10_swtcl.c             \
-	nv20_state.c             \
-	nv20_vertprog.c          \
-	nv30_state.c             \
-	nv30_fragprog.c          \
-	nv30_vertprog.c          \
-	nv40_fragprog.c          \
-	nv40_vertprog.c          \
-	nv50_state.c
+	nouveau_screen.c \
+	nouveau_context.c \
+	nouveau_fbo.c \
+	nouveau_driver.c \
+	nouveau_state.c \
+	nouveau_bufferobj.c \
+	nouveau_span.c \
+	nouveau_bo_state.c \
+	nouveau_texture.c \
+	nouveau_surface.c \
+	nv04_context.c \
+	nv04_render.c \
+	nv04_state_fb.c \
+	nv04_state_raster.c \
+	nv04_state_tex.c \
+	nv04_state_frag.c \
+	nv04_surface.c \
+	nv10_context.c \
+	nv10_render.c \
+	nv10_state_fb.c \
+	nv10_state_polygon.c \
+	nv10_state_raster.c \
+	nv10_state_tex.c \
+	nv10_state_frag.c \
+	nv10_state_tnl.c \
+	nv20_context.c \
+	nv20_render.c \
+	nv20_state_fb.c \
+	nv20_state_polygon.c \
+	nv20_state_raster.c \
+	nv20_state_tex.c \
+	nv20_state_frag.c \
+	nv20_state_tnl.c
 
 C_SOURCES = \
 	$(COMMON_SOURCES) \
-	$(DRIVER_SOURCES) 
+	$(DRIVER_SOURCES)
 
-ASM_SOURCES = 
+ASM_SOURCES =
 
 
 include ../Makefile.template

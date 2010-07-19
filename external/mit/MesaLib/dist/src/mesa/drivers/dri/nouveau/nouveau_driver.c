@@ -1,146 +1,138 @@
-/**************************************************************************
+/*
+ * Copyright (C) 2009 Francisco Jerez.
+ * All Rights Reserved.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining
+ * a copy of this software and associated documentation files (the
+ * "Software"), to deal in the Software without restriction, including
+ * without limitation the rights to use, copy, modify, merge, publish,
+ * distribute, sublicense, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject to
+ * the following conditions:
+ *
+ * The above copyright notice and this permission notice (including the
+ * next paragraph) shall be included in all copies or substantial
+ * portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+ * IN NO EVENT SHALL THE COPYRIGHT OWNER(S) AND/OR ITS SUPPLIERS BE
+ * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+ * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+ * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ *
+ */
 
-Copyright 2006 Stephane Marchesin
-All Rights Reserved.
-
-Permission is hereby granted, free of charge, to any person obtaining a
-copy of this software and associated documentation files (the "Software"),
-to deal in the Software without restriction, including without limitation
-on the rights to use, copy, modify, merge, publish, distribute, sub
-license, and/or sell copies of the Software, and to permit persons to whom
-the Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice (including the next
-paragraph) shall be included in all copies or substantial portions of the
-Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL
-ERIC ANHOLT OR SILICON INTEGRATED SYSTEMS CORP BE LIABLE FOR ANY CLAIM,
-DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
-OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
-USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-**************************************************************************/
-
-#include "nouveau_context.h"
-//#include "nouveau_state.h"
-#include "nouveau_lock.h"
-#include "nouveau_fifo.h"
 #include "nouveau_driver.h"
-#include "swrast/swrast.h"
+#include "nouveau_context.h"
+#include "nouveau_fbo.h"
+#include "nouveau_util.h"
 
-#include "context.h"
-#include "framebuffer.h"
+#include "drivers/common/meta.h"
 
-#include "utils.h"
-
-/* Wrapper for DRM_NOUVEAU_GETPARAM ioctl */
-GLboolean nouveauDRMGetParam(nouveauContextPtr nmesa,
-			     unsigned int      param,
-			     uint64_t*         value)
+static const GLubyte *
+nouveau_get_string(GLcontext *ctx, GLenum name)
 {
-	drm_nouveau_getparam_t getp;
-
-	getp.param = param;
-	if (!value || drmCommandWriteRead(nmesa->driFd, DRM_NOUVEAU_GETPARAM,
-					  &getp, sizeof(getp)))
-		return GL_FALSE;
-	*value = getp.value;
-	return GL_TRUE;
-}
-
-/* Wrapper for DRM_NOUVEAU_GETPARAM ioctl */
-GLboolean nouveauDRMSetParam(nouveauContextPtr nmesa,
-			     unsigned int      param,
-			     uint64_t          value)
-{
-	drm_nouveau_setparam_t setp;
-
-	setp.param = param;
-	setp.value = value;
-	if (drmCommandWrite(nmesa->driFd, DRM_NOUVEAU_SETPARAM, &setp,
-				sizeof(setp)))
-		return GL_FALSE;
-	return GL_TRUE;
-}
-
-/* Return the width and height of the current color buffer */
-static void nouveauGetBufferSize( GLframebuffer *buffer,
-		GLuint *width, GLuint *height )
-{
-	GET_CURRENT_CONTEXT(ctx);
-	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
-
-	LOCK_HARDWARE( nmesa );
-	*width  = nmesa->driDrawable->w;
-	*height = nmesa->driDrawable->h;
-	UNLOCK_HARDWARE( nmesa );
-}
-
-/* glGetString */
-static const GLubyte *nouveauGetString( GLcontext *ctx, GLenum name )
-{
-	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
 	static char buffer[128];
-	const char * card_name = "Unknown";
-	GLuint agp_mode = 0;
+	char hardware_name[32];
 
-	switch ( name ) {
+	switch (name) {
 		case GL_VENDOR:
-			return (GLubyte *)DRIVER_AUTHOR;
+			return (GLubyte *)"Nouveau";
 
 		case GL_RENDERER:
-			card_name=nmesa->screen->card->name;
+			sprintf(hardware_name, "nv%02X", context_chipset(ctx));
+			driGetRendererString(buffer, hardware_name, DRIVER_DATE, 0);
 
-			switch(nmesa->screen->bus_type)
-			{
-				case NV_PCI:
-				case NV_PCIE:
-				default:
-					agp_mode=0;
-					break;
-				case NV_AGP:
-					agp_mode=nmesa->screen->agp_mode;
-					break;
-			}
-			driGetRendererString( buffer, card_name, DRIVER_DATE,
-					agp_mode );
 			return (GLubyte *)buffer;
 		default:
 			return NULL;
 	}
 }
 
-/* glFlush */
-static void nouveauFlush( GLcontext *ctx )
+static void
+nouveau_flush(GLcontext *ctx)
 {
-	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
-	FIRE_RING();
+	struct nouveau_context *nctx = to_nouveau_context(ctx);
+	struct nouveau_channel *chan = context_chan(ctx);
+
+	FIRE_RING(chan);
+
+	if (ctx->DrawBuffer->Name == 0 &&
+	    ctx->DrawBuffer->_ColorDrawBufferIndexes[0] == BUFFER_FRONT_LEFT) {
+		__DRIscreen *screen = nctx->screen->dri_screen;
+		__DRIdri2LoaderExtension *dri2 = screen->dri2.loader;
+		__DRIdrawable *drawable = nctx->dri_context->driDrawablePriv;
+
+		dri2->flushFrontBuffer(drawable, drawable->loaderPrivate);
+	}
 }
 
-/* glFinish */
-static void nouveauFinish( GLcontext *ctx )
+static void
+nouveau_finish(GLcontext *ctx)
 {
-	nouveauContextPtr nmesa = NOUVEAU_CONTEXT(ctx);
-	nouveauFlush( ctx );
-	nouveauWaitForIdle( nmesa );
+	nouveau_flush(ctx);
 }
 
-/* glClear */
-static void nouveauClear( GLcontext *ctx, GLbitfield mask )
+void
+nouveau_clear(GLcontext *ctx, GLbitfield buffers)
 {
-	// XXX we really should do something here...
+	struct gl_framebuffer *fb = ctx->DrawBuffer;
+	int x, y, w, h;
+	int i, buf;
+
+	nouveau_validate_framebuffer(ctx);
+	get_scissors(fb, &x, &y, &w, &h);
+
+	for (i = 0; i < BUFFER_COUNT; i++) {
+		struct nouveau_surface *s;
+		unsigned mask, value;
+
+		buf = buffers & (1 << i);
+		if (!buf)
+			continue;
+
+		s = &to_nouveau_renderbuffer(
+			fb->Attachment[i].Renderbuffer->Wrapped)->surface;
+
+		if (buf & BUFFER_BITS_COLOR) {
+			mask = pack_rgba_i(s->format, ctx->Color.ColorMask[0]);
+			value = pack_rgba_f(s->format, ctx->Color.ClearColor);
+
+			if (mask)
+				context_drv(ctx)->surface_fill(
+					ctx, s, mask, value, x, y, w, h);
+
+			buffers &= ~buf;
+
+		} else if (buf & (BUFFER_BIT_DEPTH | BUFFER_BIT_STENCIL)) {
+			mask = pack_zs_i(s->format,
+					 (buffers & BUFFER_BIT_DEPTH &&
+					  ctx->Depth.Mask) ? ~0 : 0,
+					 (buffers & BUFFER_BIT_STENCIL ?
+					  ctx->Stencil.WriteMask[0] : 0));
+			value = pack_zs_f(s->format,
+					  ctx->Depth.Clear,
+					  ctx->Stencil.Clear);
+
+			if (mask)
+				context_drv(ctx)->surface_fill(
+					ctx, s, mask, value, x, y, w, h);
+
+			buffers &= ~(BUFFER_BIT_DEPTH | BUFFER_BIT_STENCIL);
+		}
+	}
+
+	if (buffers)
+		_mesa_meta_Clear(ctx, buffers);
 }
 
-void nouveauDriverInitFunctions( struct dd_function_table *functions )
+void
+nouveau_driver_functions_init(struct dd_function_table *functions)
 {
-	functions->GetBufferSize	= nouveauGetBufferSize;
-	functions->ResizeBuffers	= _mesa_resize_framebuffer;
-	functions->GetString		= nouveauGetString;
-	functions->Flush		= nouveauFlush;
-	functions->Finish		= nouveauFinish;
-	functions->Clear		= nouveauClear;
+	functions->GetString = nouveau_get_string;
+	functions->Flush = nouveau_flush;
+	functions->Finish = nouveau_finish;
+	functions->Clear = nouveau_clear;
 }
-

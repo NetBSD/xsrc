@@ -20,20 +20,18 @@ INCLUDE_DIRS = \
 	-I$(TOP)/src/gallium/include \
 	-I$(TOP)/src/gallium/drivers \
 	-I$(TOP)/src/gallium/state_trackers/glx/xlib \
-	-I$(TOP)/src/gallium/auxiliary
+	-I$(TOP)/src/gallium/auxiliary \
+	$(X11_CFLAGS)
 
 DEFINES += \
-	-DGALLIUM_SOFTPIPE \
-	-DGALLIUM_TRACE \
-	-DGALLIUM_BRW
+	-DGALLIUM_SOFTPIPE
 #-DGALLIUM_CELL will be defined by the config */
 
 XLIB_WINSYS_SOURCES = \
 	xlib.c \
 	xlib_cell.c \
 	xlib_llvmpipe.c \
-	xlib_softpipe.c \
-	xlib_trace.c 
+	xlib_softpipe.c
 
 
 XLIB_WINSYS_OBJECTS = $(XLIB_WINSYS_SOURCES:.c=.o)
@@ -53,10 +51,10 @@ LIBS = \
 .SUFFIXES : .cpp
 
 .c.o:
-	$(CC) -c $(INCLUDE_DIRS) $(DEFINES) $(CFLAGS) $< -o $@
+	$(CC) -c $(INCLUDE_DIRS) $(CFLAGS) $< -o $@
 
 .cpp.o:
-	$(CXX) -c $(INCLUDE_DIRS) $(DEFINES) $(CXXFLAGS) $< -o $@
+	$(CXX) -c $(INCLUDE_DIRS) $(CXXFLAGS) $< -o $@
 
 
 

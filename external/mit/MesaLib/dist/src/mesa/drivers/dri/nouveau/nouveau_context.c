@@ -1,378 +1,339 @@
-/**************************************************************************
+/*
+ * Copyright (C) 2009-2010 Francisco Jerez.
+ * All Rights Reserved.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining
+ * a copy of this software and associated documentation files (the
+ * "Software"), to deal in the Software without restriction, including
+ * without limitation the rights to use, copy, modify, merge, publish,
+ * distribute, sublicense, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject to
+ * the following conditions:
+ *
+ * The above copyright notice and this permission notice (including the
+ * next paragraph) shall be included in all copies or substantial
+ * portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+ * IN NO EVENT SHALL THE COPYRIGHT OWNER(S) AND/OR ITS SUPPLIERS BE
+ * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+ * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+ * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ *
+ */
 
-Copyright 2006 Stephane Marchesin
-All Rights Reserved.
-
-Permission is hereby granted, free of charge, to any person obtaining a
-copy of this software and associated documentation files (the "Software"),
-to deal in the Software without restriction, including without limitation
-on the rights to use, copy, modify, merge, publish, distribute, sub
-license, and/or sell copies of the Software, and to permit persons to whom
-the Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice (including the next
-paragraph) shall be included in all copies or substantial portions of the
-Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL
-ERIC ANHOLT OR SILICON INTEGRATED SYSTEMS CORP BE LIABLE FOR ANY CLAIM,
-DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
-OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
-USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-**************************************************************************/
-
-#include "glheader.h"
-#include "context.h"
-#include "simple_list.h"
-#include "imports.h"
-#include "matrix.h"
-#include "swrast/swrast.h"
-#include "swrast_setup/swrast_setup.h"
-#include "framebuffer.h"
-
-#include "tnl/tnl.h"
-#include "tnl/t_pipeline.h"
-#include "tnl/t_vp_build.h"
-
-#include "drivers/common/driverfuncs.h"
-
-#include "nouveau_context.h"
 #include "nouveau_driver.h"
-//#include "nouveau_state.h"
-#include "nouveau_span.h"
-#include "nouveau_object.h"
-#include "nouveau_fifo.h"
-#include "nouveau_tex.h"
-#include "nouveau_msg.h"
-#include "nouveau_reg.h"
-#include "nouveau_lock.h"
-#include "nouveau_query.h"
-#include "nv04_swtcl.h"
-#include "nv10_swtcl.h"
+#include "nouveau_context.h"
+#include "nouveau_bufferobj.h"
+#include "nouveau_fbo.h"
 
-#include "vblank.h"
-#include "utils.h"
-#include "texmem.h"
-#include "xmlpool.h" /* for symbolic values of enum-type options */
+#include "main/dd.h"
+#include "main/framebuffer.h"
+#include "main/light.h"
+#include "main/state.h"
+#include "drivers/common/meta.h"
+#include "drivers/common/driverfuncs.h"
+#include "swrast/swrast.h"
+#include "swrast/s_context.h"
+#include "vbo/vbo.h"
+#include "tnl/tnl.h"
+#include "tnl/t_context.h"
 
-#ifndef NOUVEAU_DEBUG
-int NOUVEAU_DEBUG = 0;
-#endif
+#define need_GL_EXT_framebuffer_object
+#define need_GL_EXT_fog_coord
 
-static const struct dri_debug_control debug_control[] =
-{
-	{ "shaders"   , DEBUG_SHADERS    },
-	{ "mem"       , DEBUG_MEM        },
-	{ "bufferobj" , DEBUG_BUFFEROBJ  },
-	{ NULL        , 0                }
+#include "main/remap_helper.h"
+
+static const struct dri_extension nouveau_extensions[] = {
+	{ "GL_ARB_multitexture",	NULL },
+	{ "GL_ARB_texture_env_combine",	NULL },
+	{ "GL_ARB_texture_env_dot3",	NULL },
+	{ "GL_ARB_texture_env_add",	NULL },
+	{ "GL_EXT_texture_lod_bias",	NULL },
+	{ "GL_EXT_framebuffer_object",	GL_EXT_framebuffer_object_functions },
+	{ "GL_ARB_texture_mirrored_repeat", NULL },
+	{ "GL_EXT_stencil_wrap",	NULL },
+	{ "GL_EXT_fog_coord",		GL_EXT_fog_coord_functions },
+	{ "GL_SGIS_generate_mipmap",	NULL },
+	{ NULL,				NULL }
 };
 
-#define need_GL_ARB_vertex_program
-#define need_GL_ARB_occlusion_query
-#include "extension_helper.h"
-
-const struct dri_extension common_extensions[] =
+static void
+nouveau_channel_flush_notify(struct nouveau_channel *chan)
 {
-	{ NULL,    0 }
-};
+	struct nouveau_context *nctx = chan->user_private;
+	GLcontext *ctx = &nctx->base;
 
-const struct dri_extension nv10_extensions[] =
-{
-	{ NULL,    0 }
-};
+	if (nctx->fallback < SWRAST && ctx->DrawBuffer)
+		nouveau_state_emit(&nctx->base);
+}
 
-const struct dri_extension nv20_extensions[] =
+GLboolean
+nouveau_context_create(const __GLcontextModes *visual, __DRIcontext *dri_ctx,
+		       void *share_ctx)
 {
-	{ NULL,    0 }
-};
+	__DRIscreen *dri_screen = dri_ctx->driScreenPriv;
+	struct nouveau_screen *screen = dri_screen->private;
+	struct nouveau_context *nctx;
+	GLcontext *ctx;
 
-const struct dri_extension nv30_extensions[] =
-{
-	{ "GL_ARB_fragment_program",	NULL                            },
-	{ NULL,    0 }
-};
+	ctx = screen->driver->context_create(screen, visual, share_ctx);
+	if (!ctx)
+		return GL_FALSE;
 
-const struct dri_extension nv40_extensions[] =
-{
-   /* ARB_vp can be moved to nv20/30 once the shader backend has been
-    * written for those cards.
-    */
-	{ "GL_ARB_vertex_program",	GL_ARB_vertex_program_functions },
-	{ "GL_ARB_occlusion_query",	GL_ARB_occlusion_query_functions},
-	{ NULL, 0 }
-};
+	nctx = to_nouveau_context(ctx);
+	nctx->dri_context = dri_ctx;
+	dri_ctx->driverPrivate = ctx;
 
-const struct dri_extension nv50_extensions[] =
-{
-	{ NULL,    0 }
-};
+	return GL_TRUE;
+}
 
-/* Create the device specific context.
- */
-GLboolean nouveauCreateContext( const __GLcontextModes *glVisual,
-		__DRIcontextPrivate *driContextPriv,
-		void *sharedContextPrivate )
+GLboolean
+nouveau_context_init(GLcontext *ctx, struct nouveau_screen *screen,
+		     const GLvisual *visual, GLcontext *share_ctx)
 {
-	GLcontext *ctx, *shareCtx;
-	__DRIscreenPrivate *sPriv = driContextPriv->driScreenPriv;
+	struct nouveau_context *nctx = to_nouveau_context(ctx);
 	struct dd_function_table functions;
-	nouveauContextPtr nmesa;
-	nouveauScreenPtr screen;
+	int ret;
 
-	/* Allocate the context */
-	nmesa = (nouveauContextPtr) CALLOC( sizeof(*nmesa) );
-	if ( !nmesa )
-		return GL_FALSE;
+	nctx->screen = screen;
+	nctx->fallback = HWTNL;
 
-	nmesa->driContext = driContextPriv;
-	nmesa->driScreen = sPriv;
-	nmesa->driDrawable = NULL;
-	nmesa->hHWContext = driContextPriv->hHWContext;
-	nmesa->driHwLock = &sPriv->pSAREA->lock;
-	nmesa->driFd = sPriv->fd;
+	/* Initialize the function pointers. */
+	_mesa_init_driver_functions(&functions);
+	nouveau_driver_functions_init(&functions);
+	nouveau_bufferobj_functions_init(&functions);
+	nouveau_texture_functions_init(&functions);
+	nouveau_fbo_functions_init(&functions);
 
-	nmesa->screen = (nouveauScreenPtr)(sPriv->private);
-	screen=nmesa->screen;
+	/* Initialize the mesa context. */
+	_mesa_initialize_context(ctx, visual, share_ctx, &functions, NULL);
 
-	/* Create the hardware context */
-	if (!nouveauDRMGetParam(nmesa, NOUVEAU_GETPARAM_FB_PHYSICAL,
-		 		&nmesa->vram_phys))
-	   return GL_FALSE;
-	if (!nouveauDRMGetParam(nmesa, NOUVEAU_GETPARAM_FB_SIZE,
-		 		&nmesa->vram_size))
-	   return GL_FALSE;
-	if (!nouveauDRMGetParam(nmesa, NOUVEAU_GETPARAM_AGP_PHYSICAL,
-		 		&nmesa->agp_phys))
-	   return GL_FALSE;
-	if (!nouveauDRMGetParam(nmesa, NOUVEAU_GETPARAM_AGP_SIZE,
-		 		&nmesa->agp_size))
-	   return GL_FALSE;
-	if (!nouveauFifoInit(nmesa))
-	   return GL_FALSE;
-	nouveauObjectInit(nmesa);
+	nouveau_state_init(ctx);
+	nouveau_bo_state_init(ctx);
+	_mesa_meta_init(ctx);
+	_swrast_CreateContext(ctx);
+	_vbo_CreateContext(ctx);
+	_tnl_CreateContext(ctx);
+	nouveau_span_functions_init(ctx);
+	_mesa_allow_light_in_model(ctx, GL_FALSE);
 
-
-	/* Init default driver functions then plug in our nouveau-specific functions
-	 * (the texture functions are especially important)
-	 */
-	_mesa_init_driver_functions( &functions );
-	nouveauDriverInitFunctions( &functions );
-	nouveauTexInitFunctions( &functions );
-
-	/* Allocate the Mesa context */
-	if (sharedContextPrivate)
-		shareCtx = ((nouveauContextPtr) sharedContextPrivate)->glCtx;
-	else 
-		shareCtx = NULL;
-	nmesa->glCtx = _mesa_create_context(glVisual, shareCtx,
-			&functions, (void *) nmesa);
-	if (!nmesa->glCtx) {
-		FREE(nmesa);
+	/* Allocate a hardware channel. */
+	ret = nouveau_channel_alloc(context_dev(ctx), 0xbeef0201, 0xbeef0202,
+				    &nctx->hw.chan);
+	if (ret) {
+		nouveau_error("Error initializing the FIFO.\n");
 		return GL_FALSE;
 	}
-	driContextPriv->driverPrivate = nmesa;
-	ctx = nmesa->glCtx;
 
-	/* Parse configuration files */
-	driParseConfigFiles (&nmesa->optionCache, &screen->optionCache,
-			screen->driScreen->myNum, "nouveau");
+	nctx->hw.chan->flush_notify = nouveau_channel_flush_notify;
+	nctx->hw.chan->user_private = nctx;
 
-	nmesa->sarea = (drm_nouveau_sarea_t *)((char *)sPriv->pSAREA +
-			screen->sarea_priv_offset);
+	/* Enable any supported extensions. */
+	driInitExtensions(ctx, nouveau_extensions, GL_TRUE);
 
-	/* Enable any supported extensions */
-	driInitExtensions(ctx, common_extensions, GL_TRUE);
-	if (nmesa->screen->card->type >= NV_10)
-		driInitExtensions(ctx, nv10_extensions, GL_FALSE);
-	if (nmesa->screen->card->type >= NV_20)
-		driInitExtensions(ctx, nv20_extensions, GL_FALSE);
-	if (nmesa->screen->card->type >= NV_30)
-		driInitExtensions(ctx, nv30_extensions, GL_FALSE);
-	if (nmesa->screen->card->type >= NV_40)
-		driInitExtensions(ctx, nv40_extensions, GL_FALSE);
-	if (nmesa->screen->card->type >= NV_50)
-		driInitExtensions(ctx, nv50_extensions, GL_FALSE);
+	return GL_TRUE;
+}
 
-	nmesa->current_primitive = -1;
+void
+nouveau_context_deinit(GLcontext *ctx)
+{
+	struct nouveau_context *nctx = to_nouveau_context(ctx);
 
-	nouveauShaderInitFuncs(ctx);
-	/* Install Mesa's fixed-function texenv shader support */
-	if (nmesa->screen->card->type >= NV_40)
-		ctx->FragmentProgram._MaintainTexEnvProgram = GL_TRUE;
+	if (TNL_CONTEXT(ctx))
+		_tnl_DestroyContext(ctx);
 
-	/* Initialize the swrast */
-	_swrast_CreateContext( ctx );
-	_vbo_CreateContext( ctx );
-	_tnl_CreateContext( ctx );
-	_swsetup_CreateContext( ctx );
+	if (vbo_context(ctx))
+		_vbo_DestroyContext(ctx);
 
-	_math_matrix_ctr(&nmesa->viewport);
+	if (SWRAST_CONTEXT(ctx))
+		_swrast_DestroyContext(ctx);
 
-	nouveauDDInitStateFuncs( ctx );
-	nouveauSpanInitFunctions( ctx );
-	nouveauDDInitState( nmesa );
-	switch(nmesa->screen->card->type)
-	{
-		case NV_03:
-			//nv03TriInitFunctions( ctx );
+	if (ctx->Meta)
+		_mesa_meta_free(ctx);
+
+	if (nctx->hw.chan)
+		nouveau_channel_free(&nctx->hw.chan);
+
+	nouveau_bo_state_destroy(ctx);
+	_mesa_free_context_data(ctx);
+}
+
+void
+nouveau_context_destroy(__DRIcontext *dri_ctx)
+{
+	struct nouveau_context *nctx = dri_ctx->driverPrivate;
+	GLcontext *ctx = &nctx->base;
+
+	context_drv(ctx)->context_destroy(ctx);
+}
+
+void
+nouveau_update_renderbuffers(__DRIcontext *dri_ctx, __DRIdrawable *draw)
+{
+	GLcontext *ctx = dri_ctx->driverPrivate;
+	__DRIscreen *screen = dri_ctx->driScreenPriv;
+	struct gl_framebuffer *fb = draw->driverPrivate;
+	unsigned int attachments[10];
+	__DRIbuffer *buffers = NULL;
+	int i = 0, count, ret;
+
+	if (draw->lastStamp == *draw->pStamp)
+		return;
+	draw->lastStamp = *draw->pStamp;
+
+	attachments[i++] = __DRI_BUFFER_FRONT_LEFT;
+	if (fb->Visual.doubleBufferMode)
+		attachments[i++] = __DRI_BUFFER_BACK_LEFT;
+	if (fb->Visual.haveDepthBuffer && fb->Visual.haveStencilBuffer)
+		attachments[i++] = __DRI_BUFFER_DEPTH_STENCIL;
+	else if (fb->Visual.haveDepthBuffer)
+		attachments[i++] = __DRI_BUFFER_DEPTH;
+	else if (fb->Visual.haveStencilBuffer)
+		attachments[i++] = __DRI_BUFFER_STENCIL;
+
+	buffers = (*screen->dri2.loader->getBuffers)(draw, &draw->w, &draw->h,
+						     attachments, i, &count,
+						     draw->loaderPrivate);
+	if (buffers == NULL)
+		return;
+
+	for (i = 0; i < count; i++) {
+		struct gl_renderbuffer *rb;
+		struct nouveau_surface *s;
+		uint32_t old_handle;
+		int index;
+
+		switch (buffers[i].attachment) {
+		case __DRI_BUFFER_FRONT_LEFT:
+		case __DRI_BUFFER_FAKE_FRONT_LEFT:
+			index = BUFFER_FRONT_LEFT;
 			break;
-		case NV_04:
-		case NV_05:
-			nv04TriInitFunctions( ctx );
+		case __DRI_BUFFER_BACK_LEFT:
+			index = BUFFER_BACK_LEFT;
 			break;
-		case NV_10:
-		case NV_20:
-		case NV_30:
-		case NV_40:
-		case NV_44:
-		case NV_50:
+		case __DRI_BUFFER_DEPTH:
+		case __DRI_BUFFER_DEPTH_STENCIL:
+			index = BUFFER_DEPTH;
+			break;
+		case __DRI_BUFFER_STENCIL:
+			index = BUFFER_STENCIL;
+			break;
 		default:
-			nv10TriInitFunctions( ctx );
-			break;
-	}
-
-	nouveauInitBufferObjects(ctx);
-	if (!nouveauSyncInitFuncs(ctx))
-	   return GL_FALSE;
-	nouveauQueryInitFuncs(ctx);
-	nmesa->hw_func.InitCard(nmesa);
-        nouveauInitState(ctx);
-
-	driContextPriv->driverPrivate = (void *)nmesa;
-
-	NOUVEAU_DEBUG = driParseDebugString( getenv( "NOUVEAU_DEBUG" ),
-			debug_control );
-
-	if (driQueryOptionb(&nmesa->optionCache, "no_rast")) {
-		fprintf(stderr, "disabling 3D acceleration\n");
-		FALLBACK(nmesa, NOUVEAU_FALLBACK_DISABLE, 1);
-	}
-
-	return GL_TRUE;
-}
-
-/* Destroy the device specific context. */
-void nouveauDestroyContext( __DRIcontextPrivate *driContextPriv  )
-{
-	nouveauContextPtr nmesa = (nouveauContextPtr) driContextPriv->driverPrivate;
-
-	assert(nmesa);
-	if ( nmesa ) {
-		/* free the option cache */
-		driDestroyOptionCache (&nmesa->optionCache);
-
-		FREE( nmesa );
-	}
-
-}
-
-
-/* Force the context `c' to be the current context and associate with it
- * buffer `b'.
- */
-GLboolean nouveauMakeCurrent( __DRIcontextPrivate *driContextPriv,
-		__DRIdrawablePrivate *driDrawPriv,
-		__DRIdrawablePrivate *driReadPriv )
-{
-	if ( driContextPriv ) {
-		nouveauContextPtr nmesa = (nouveauContextPtr) driContextPriv->driverPrivate;
-		struct gl_framebuffer *draw_fb =
-			(struct gl_framebuffer*)driDrawPriv->driverPrivate;
-		struct gl_framebuffer *read_fb =
-			(struct gl_framebuffer*)driReadPriv->driverPrivate;
-
-		driDrawableInitVBlank(driDrawPriv, nmesa->vblank_flags, &nmesa->vblank_seq );
-		nmesa->driDrawable = driDrawPriv;
-
-		_mesa_resize_framebuffer(nmesa->glCtx, draw_fb,
-					 driDrawPriv->w, driDrawPriv->h);
-		if (draw_fb != read_fb) {
-			_mesa_resize_framebuffer(nmesa->glCtx, draw_fb,
-						 driReadPriv->w,
-						 driReadPriv->h);
+			assert(0);
 		}
-		_mesa_make_current(nmesa->glCtx, draw_fb, read_fb);
 
-		nouveau_build_framebuffer(nmesa->glCtx,
-		      			  driDrawPriv->driverPrivate);
+		rb = fb->Attachment[index].Renderbuffer;
+		s = &to_nouveau_renderbuffer(rb)->surface;
+
+		s->width = draw->w;
+		s->height = draw->h;
+		s->pitch = buffers[i].pitch;
+		s->cpp = buffers[i].cpp;
+
+		/* Don't bother to reopen the bo if it happens to be
+		 * the same. */
+		if (s->bo) {
+			ret = nouveau_bo_handle_get(s->bo, &old_handle);
+			assert(!ret);
+		}
+
+		if (!s->bo || old_handle != buffers[i].name) {
+			nouveau_bo_ref(NULL, &s->bo);
+			ret = nouveau_bo_handle_ref(context_dev(ctx),
+						    buffers[i].name, &s->bo);
+			assert(!ret);
+		}
+	}
+
+	_mesa_resize_framebuffer(NULL, fb, draw->w, draw->h);
+}
+
+static void
+update_framebuffer(__DRIcontext *dri_ctx, __DRIdrawable *draw,
+		   int *stamp)
+{
+	GLcontext *ctx = dri_ctx->driverPrivate;
+	struct gl_framebuffer *fb = draw->driverPrivate;
+
+	*stamp = *draw->pStamp;
+
+	nouveau_update_renderbuffers(dri_ctx, draw);
+	_mesa_resize_framebuffer(ctx, fb, draw->w, draw->h);
+
+	context_dirty(ctx, FRAMEBUFFER);
+}
+
+GLboolean
+nouveau_context_make_current(__DRIcontext *dri_ctx, __DRIdrawable *dri_draw,
+			     __DRIdrawable *dri_read)
+{
+	if (dri_ctx) {
+		struct nouveau_context *nctx = dri_ctx->driverPrivate;
+		GLcontext *ctx = &nctx->base;
+
+		/* Ask the X server for new renderbuffers. */
+		if (dri_draw->driverPrivate != ctx->WinSysDrawBuffer)
+			update_framebuffer(dri_ctx, dri_draw,
+					   &dri_ctx->dri2.draw_stamp);
+
+		if (dri_draw != dri_read &&
+		    dri_read->driverPrivate != ctx->WinSysReadBuffer)
+			update_framebuffer(dri_ctx, dri_read,
+					   &dri_ctx->dri2.read_stamp);
+
+		/* Pass it down to mesa. */
+		_mesa_make_current(ctx, dri_draw->driverPrivate,
+				   dri_read->driverPrivate);
+		_mesa_update_state(ctx);
+
+		FIRE_RING(context_chan(ctx));
+
 	} else {
-		_mesa_make_current( NULL, NULL, NULL );
+		_mesa_make_current(NULL, NULL, NULL);
 	}
 
 	return GL_TRUE;
 }
 
-
-/* Force the context `c' to be unbound from its buffer.
- */
-GLboolean nouveauUnbindContext( __DRIcontextPrivate *driContextPriv )
+GLboolean
+nouveau_context_unbind(__DRIcontext *dri_ctx)
 {
 	return GL_TRUE;
 }
 
-static void nouveauDoSwapBuffers(nouveauContextPtr nmesa,
-				 __DRIdrawablePrivate *dPriv)
+void
+nouveau_fallback(GLcontext *ctx, enum nouveau_fallback mode)
 {
-	struct gl_framebuffer *fb;
-	nouveau_renderbuffer *src, *dst;
-	drm_clip_rect_t *box;
-	int nbox, i;
+	struct nouveau_context *nctx = to_nouveau_context(ctx);
 
-	fb = (struct gl_framebuffer *)dPriv->driverPrivate;
-	dst = (nouveau_renderbuffer*)
-		fb->Attachment[BUFFER_FRONT_LEFT].Renderbuffer;
-	src = (nouveau_renderbuffer*)
-		fb->Attachment[BUFFER_BACK_LEFT].Renderbuffer;
+	nctx->fallback = MAX2(HWTNL, mode);
 
-#ifdef ALLOW_MULTI_SUBCHANNEL
-	LOCK_HARDWARE(nmesa);
-	nbox = dPriv->numClipRects;
-	box  = dPriv->pClipRects;
-
-	if (nbox) {
-		BEGIN_RING_SIZE(NvSubCtxSurf2D,
-				NV10_CONTEXT_SURFACES_2D_FORMAT, 4);
-		if (src->mesa._ActualFormat == GL_RGBA8)
-			OUT_RING       (6); /* X8R8G8B8 */
-		else
-			OUT_RING       (4); /* R5G6B5 */
-		OUT_RING       ((dst->pitch << 16) | src->pitch);
-		OUT_RING       (src->offset);
-		OUT_RING       (dst->offset);
-	}
-
-	for (i=0; i<nbox; i++, box++) {
-		BEGIN_RING_SIZE(NvSubImageBlit, NV10_IMAGE_BLIT_SET_POINT, 3);
-		OUT_RING       (((box->y1 - dPriv->y) << 16) |
-				(box->x1 - dPriv->x));
-		OUT_RING       ((box->y1 << 16) | box->x1);
-		OUT_RING       (((box->y2 - box->y1) << 16) |
-				(box->x2 - box->x1));
-	}
-	FIRE_RING();
-
-	UNLOCK_HARDWARE(nmesa);
-#endif
+	if (mode < SWRAST)
+		nouveau_state_emit(ctx);
+	else
+		FIRE_RING(context_chan(ctx));
 }
 
-void nouveauSwapBuffers(__DRIdrawablePrivate *dPriv)
+void
+nouveau_validate_framebuffer(GLcontext *ctx)
 {
-	if (dPriv->driContextPriv && dPriv->driContextPriv->driverPrivate) {
-		nouveauContextPtr nmesa = dPriv->driContextPriv->driverPrivate;
+	__DRIcontext *dri_ctx = to_nouveau_context(ctx)->dri_context;
+	__DRIdrawable *dri_draw = dri_ctx->driDrawablePriv;
+	__DRIdrawable *dri_read = dri_ctx->driReadablePriv;
 
-		if (nmesa->glCtx->Visual.doubleBufferMode) {
-			_mesa_notifySwapBuffers(nmesa->glCtx);
-			nouveauDoSwapBuffers(nmesa, dPriv);
-		}
+	if (ctx->DrawBuffer->Name == 0 &&
+	    dri_ctx->dri2.draw_stamp != *dri_draw->pStamp)
+		update_framebuffer(dri_ctx, dri_draw,
+				   &dri_ctx->dri2.draw_stamp);
 
-	}
+	if (ctx->ReadBuffer->Name == 0 && dri_draw != dri_read &&
+	    dri_ctx->dri2.read_stamp != *dri_read->pStamp)
+		update_framebuffer(dri_ctx, dri_read,
+				   &dri_ctx->dri2.read_stamp);
+
+	if (nouveau_next_dirty_state(ctx) >= 0)
+		FIRE_RING(context_chan(ctx));
 }
-
-void nouveauCopySubBuffer(__DRIdrawablePrivate *dPriv,
-			  int x, int y, int w, int h)
-{
-}
-
