@@ -145,8 +145,8 @@ i915_miptree_layout_cube(struct intel_context *intel,
 	 intel_miptree_set_image_offset(mt, level, face, x, y);
 
 	 if (d == 0)
-	    _mesa_printf("cube mipmap %d/%d (%d..%d) is 0x0\n",
-			 face, level, mt->first_level, mt->last_level);
+	    printf("cube mipmap %d/%d (%d..%d) is 0x0\n",
+		   face, level, mt->first_level, mt->last_level);
 
 	 d >>= 1;
 	 x += step_offsets[face][0] * d;
@@ -484,7 +484,7 @@ i945_miptree_layout(struct intel_context *intel, struct intel_mipmap_tree * mt,
    case GL_TEXTURE_1D:
    case GL_TEXTURE_2D:
    case GL_TEXTURE_RECTANGLE_ARB:
-      i945_miptree_layout_2d(intel, mt, tiling);
+      i945_miptree_layout_2d(intel, mt, tiling, 1);
       break;
    default:
       _mesa_problem(NULL, "Unexpected tex target in i945_miptree_layout()");

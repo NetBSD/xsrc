@@ -27,7 +27,7 @@
 
 #include <unistd.h>
 #include "util/u_memory.h"
-#include "pipe/p_inlines.h"
+#include "util/u_inlines.h"
 #include "cell_context.h"
 #include "cell_batch.h"
 #include "cell_fence.h"
@@ -92,7 +92,6 @@ cell_add_buffer_to_list(struct cell_context *cell,
                         struct cell_buffer_list *list,
                         struct pipe_buffer *buffer)
 {
-   struct pipe_screen *ps = cell->pipe.screen;
    struct cell_buffer_node *node = CALLOC_STRUCT(cell_buffer_node);
    /* create new list node which references the buffer, insert at head */
    if (node) {
