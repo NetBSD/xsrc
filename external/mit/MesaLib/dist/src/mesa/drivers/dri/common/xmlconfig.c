@@ -29,6 +29,8 @@
 
 #include "main/glheader.h"
 
+#include <sys/param.h>
+
 #include <string.h>
 #include <assert.h>
 #include <expat.h>
