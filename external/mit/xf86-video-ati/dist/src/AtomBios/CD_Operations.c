@@ -505,13 +505,16 @@ VOID ProcessMove(PARSER_TEMP_DATA STACK_BASED * pParserTempData)
 
 VOID ProcessMask(PARSER_TEMP_DATA STACK_BASED * pParserTempData)
 {
+    UINT8 src;
 
     pParserTempData->DestData32=GetDestination[pParserTempData->ParametersType.Destination](pParserTempData);
+    src = pParserTempData->CD_Mask.SrcAlignment;
     pParserTempData->SourceData32=GetParametersDirect(pParserTempData);
     pParserTempData->Index=GetSource[pParserTempData->ParametersType.Source](pParserTempData);
     pParserTempData->SourceData32 <<= DestinationAlignmentShift[pParserTempData->CD_Mask.DestAlignment];
     pParserTempData->SourceData32 |= ~(AlignmentMask[pParserTempData->CD_Mask.SrcAlignment] << DestinationAlignmentShift[pParserTempData->CD_Mask.DestAlignment]);
     pParserTempData->DestData32   &= pParserTempData->SourceData32;
+    pParserTempData->Index        >>= SourceAlignmentShift[src];
     pParserTempData->Index        &= AlignmentMask[pParserTempData->CD_Mask.SrcAlignment];
     pParserTempData->Index        <<= DestinationAlignmentShift[pParserTempData->CD_Mask.DestAlignment];
     pParserTempData->DestData32   |= pParserTempData->Index;
