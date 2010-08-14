@@ -173,6 +173,13 @@ struct _drm_intel_bufmgr {
 			drm_clip_rect_t *cliprects, int num_cliprects,
 			int DR4);
 
+	/** Executes the command buffer pointed to by bo on the selected
+	 * ring buffer
+	 */
+	int (*bo_mrb_exec) (drm_intel_bo *bo, int used,
+			drm_clip_rect_t *cliprects, int num_cliprects,
+			int DR4, int ring_flag);
+
 	/**
 	 * Pin a buffer to the aperture and fix the offset until unpinned
 	 *
@@ -245,6 +252,13 @@ struct _drm_intel_bufmgr {
 	 * \param bo Buffer to disable reuse for
 	 */
 	int (*bo_disable_reuse) (drm_intel_bo *bo);
+
+	/**
+	 * Query whether a buffer is reusable.
+	 *
+	 * \param bo Buffer to query
+	 */
+	int (*bo_is_reusable) (drm_intel_bo *bo);
 
 	/**
 	 *
