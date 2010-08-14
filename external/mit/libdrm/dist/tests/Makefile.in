@@ -14,7 +14,6 @@
 # PARTICULAR PURPOSE.
 
 @SET_MAKE@
-
 VPATH = @srcdir@
 pkgdatadir = $(datadir)/@PACKAGE@
 pkgincludedir = $(includedir)/@PACKAGE@
@@ -34,7 +33,7 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-noinst_PROGRAMS = dristat$(EXEEXT) drmstat$(EXEEXT)
+check_PROGRAMS = dristat$(EXEEXT) drmstat$(EXEEXT) $(am__EXEEXT_4)
 @HAVE_LIBKMS_TRUE@am__append_1 = kmstest
 @HAVE_LIBUDEV_TRUE@am__append_2 = libdrmtest.la
 @HAVE_LIBUDEV_TRUE@TESTS = openclose$(EXEEXT) getversion$(EXEEXT) \
@@ -42,19 +41,20 @@ noinst_PROGRAMS = dristat$(EXEEXT) drmstat$(EXEEXT)
 @HAVE_LIBUDEV_TRUE@	setversion$(EXEEXT) updatedraw$(EXEEXT) \
 @HAVE_LIBUDEV_TRUE@	name_from_fd$(EXEEXT) $(am__EXEEXT_1) \
 @HAVE_LIBUDEV_TRUE@	$(am__EXEEXT_2)
-@HAVE_INTEL_TRUE@@HAVE_LIBUDEV_TRUE@am__append_3 = \
+@HAVE_LIBUDEV_TRUE@am__append_3 = vbltest $(NULL)
+@HAVE_INTEL_TRUE@@HAVE_LIBUDEV_TRUE@am__append_4 = \
 @HAVE_INTEL_TRUE@@HAVE_LIBUDEV_TRUE@	modeprint				\
 @HAVE_INTEL_TRUE@@HAVE_LIBUDEV_TRUE@	modetest				\
 @HAVE_INTEL_TRUE@@HAVE_LIBUDEV_TRUE@	$(NULL)
 
-@HAVE_INTEL_TRUE@@HAVE_LIBUDEV_TRUE@am__append_4 = \
+@HAVE_INTEL_TRUE@@HAVE_LIBUDEV_TRUE@am__append_5 = \
 @HAVE_INTEL_TRUE@@HAVE_LIBUDEV_TRUE@	gem_basic				\
 @HAVE_INTEL_TRUE@@HAVE_LIBUDEV_TRUE@	gem_flink				\
 @HAVE_INTEL_TRUE@@HAVE_LIBUDEV_TRUE@	gem_readwrite				\
 @HAVE_INTEL_TRUE@@HAVE_LIBUDEV_TRUE@	gem_mmap				\
 @HAVE_INTEL_TRUE@@HAVE_LIBUDEV_TRUE@	$(NULL)
 
-@HAVE_LIBUDEV_TRUE@EXTRA_PROGRAMS = $(am__EXEEXT_3)
+@HAVE_LIBUDEV_TRUE@am__append_6 = $(TESTS)
 subdir = tests
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -72,6 +72,9 @@ am__DEPENDENCIES_1 =
 am__libdrmtest_la_SOURCES_DIST = drmtest.c drmtest.h
 @HAVE_LIBUDEV_TRUE@am_libdrmtest_la_OBJECTS = drmtest.lo
 libdrmtest_la_OBJECTS = $(am_libdrmtest_la_OBJECTS)
+AM_V_lt = $(am__v_lt_$(V))
+am__v_lt_ = $(am__v_lt_$(AM_DEFAULT_VERBOSITY))
+am__v_lt_0 = --silent
 @HAVE_LIBUDEV_TRUE@am_libdrmtest_la_rpath =
 am__EXEEXT_1 =
 @HAVE_INTEL_TRUE@@HAVE_LIBUDEV_TRUE@am__EXEEXT_2 = gem_basic$(EXEEXT) \
@@ -84,7 +87,7 @@ am__EXEEXT_1 =
 @HAVE_LIBUDEV_TRUE@	getstats$(EXEEXT) setversion$(EXEEXT) \
 @HAVE_LIBUDEV_TRUE@	updatedraw$(EXEEXT) name_from_fd$(EXEEXT) \
 @HAVE_LIBUDEV_TRUE@	$(am__EXEEXT_1) $(am__EXEEXT_2)
-PROGRAMS = $(noinst_PROGRAMS)
+@HAVE_LIBUDEV_TRUE@am__EXEEXT_4 = $(am__EXEEXT_3)
 dristat_SOURCES = dristat.c
 dristat_OBJECTS = dristat.$(OBJEXT)
 dristat_LDADD = $(LDADD)
@@ -143,13 +146,26 @@ am__depfiles_maybe = depfiles
 am__mv = mv -f
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
-LTCOMPILE = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
-	--mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
-	$(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
+LTCOMPILE = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) \
+	$(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) \
+	$(AM_CFLAGS) $(CFLAGS)
+AM_V_CC = $(am__v_CC_$(V))
+am__v_CC_ = $(am__v_CC_$(AM_DEFAULT_VERBOSITY))
+am__v_CC_0 = @echo "  CC    " $@;
+AM_V_at = $(am__v_at_$(V))
+am__v_at_ = $(am__v_at_$(AM_DEFAULT_VERBOSITY))
+am__v_at_0 = @
 CCLD = $(CC)
-LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
-	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
-	$(LDFLAGS) -o $@
+LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
+	$(AM_LDFLAGS) $(LDFLAGS) -o $@
+AM_V_CCLD = $(am__v_CCLD_$(V))
+am__v_CCLD_ = $(am__v_CCLD_$(AM_DEFAULT_VERBOSITY))
+am__v_CCLD_0 = @echo "  CCLD  " $@;
+AM_V_GEN = $(am__v_GEN_$(V))
+am__v_GEN_ = $(am__v_GEN_$(AM_DEFAULT_VERBOSITY))
+am__v_GEN_0 = @echo "  GEN   " $@;
 SOURCES = $(libdrmtest_la_SOURCES) dristat.c drmstat.c gem_basic.c \
 	gem_flink.c gem_mmap.c gem_readwrite.c getclient.c getstats.c \
 	getversion.c name_from_fd.c openclose.c setversion.c \
@@ -174,7 +190,7 @@ ETAGS = etags
 CTAGS = ctags
 am__tty_colors = \
 red=; grn=; lgn=; blu=; std=
-DIST_SUBDIRS = kmstest modeprint modetest
+DIST_SUBDIRS = kmstest vbltest modeprint modetest
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 am__relativize = \
   dir0=`pwd`; \
@@ -204,6 +220,7 @@ am__relativize = \
 ACLOCAL = @ACLOCAL@
 ALLOCA = @ALLOCA@
 AMTAR = @AMTAR@
+AM_DEFAULT_VERBOSITY = @AM_DEFAULT_VERBOSITY@
 AR = @AR@
 AUTOCONF = @AUTOCONF@
 AUTOHEADER = @AUTOHEADER@
@@ -257,9 +274,12 @@ PACKAGE_BUGREPORT = @PACKAGE_BUGREPORT@
 PACKAGE_NAME = @PACKAGE_NAME@
 PACKAGE_STRING = @PACKAGE_STRING@
 PACKAGE_TARNAME = @PACKAGE_TARNAME@
+PACKAGE_URL = @PACKAGE_URL@
 PACKAGE_VERSION = @PACKAGE_VERSION@
 PATH_SEPARATOR = @PATH_SEPARATOR@
 PKG_CONFIG = @PKG_CONFIG@
+PKG_CONFIG_LIBDIR = @PKG_CONFIG_LIBDIR@
+PKG_CONFIG_PATH = @PKG_CONFIG_PATH@
 PTHREADSTUBS_CFLAGS = @PTHREADSTUBS_CFLAGS@
 PTHREADSTUBS_LIBS = @PTHREADSTUBS_LIBS@
 RANLIB = @RANLIB@
@@ -329,8 +349,8 @@ AM_CPPFLAGS = \
 	-I $(top_srcdir)
 
 LDADD = $(top_builddir)/libdrm.la $(am__append_2)
-SUBDIRS = $(am__append_1) $(am__append_3)
-@HAVE_LIBUDEV_TRUE@EXTRA_LTLIBRARIES = libdrmtest.la
+SUBDIRS = $(am__append_1) $(am__append_3) $(am__append_4)
+@HAVE_LIBUDEV_TRUE@check_LTLIBRARIES = libdrmtest.la
 @HAVE_LIBUDEV_TRUE@libdrmtest_la_SOURCES = \
 @HAVE_LIBUDEV_TRUE@	drmtest.c \
 @HAVE_LIBUDEV_TRUE@	drmtest.h
@@ -343,7 +363,6 @@ SUBDIRS = $(am__append_1) $(am__append_3)
 @HAVE_LIBUDEV_TRUE@	auth					\
 @HAVE_LIBUDEV_TRUE@	lock
 
-CLEANFILES = $(EXTRA_PROGRAMS) $(EXTRA_LTLIBRARIES)
 all: all-recursive
 
 .SUFFIXES:
@@ -357,9 +376,9 @@ $(srcdir)/Makefile.in:  $(srcdir)/Makefile.am  $(am__configure_deps)
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --gnu tests/Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign tests/Makefile'; \
 	$(am__cd) $(top_srcdir) && \
-	  $(AUTOMAKE) --gnu tests/Makefile
+	  $(AUTOMAKE) --foreign tests/Makefile
 .PRECIOUS: Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \
@@ -378,11 +397,20 @@ $(top_srcdir)/configure:  $(am__configure_deps)
 $(ACLOCAL_M4):  $(am__aclocal_m4_deps)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
 $(am__aclocal_m4_deps):
-libdrmtest.la: $(libdrmtest_la_OBJECTS) $(libdrmtest_la_DEPENDENCIES) 
-	$(LINK) $(am_libdrmtest_la_rpath) $(libdrmtest_la_OBJECTS) $(libdrmtest_la_LIBADD) $(LIBS)
 
-clean-noinstPROGRAMS:
-	@list='$(noinst_PROGRAMS)'; test -n "$$list" || exit 0; \
+clean-checkLTLIBRARIES:
+	-test -z "$(check_LTLIBRARIES)" || rm -f $(check_LTLIBRARIES)
+	@list='$(check_LTLIBRARIES)'; for p in $$list; do \
+	  dir="`echo $$p | sed -e 's|/[^/]*$$||'`"; \
+	  test "$$dir" != "$$p" || dir=.; \
+	  echo "rm -f \"$${dir}/so_locations\""; \
+	  rm -f "$${dir}/so_locations"; \
+	done
+libdrmtest.la: $(libdrmtest_la_OBJECTS) $(libdrmtest_la_DEPENDENCIES) 
+	$(AM_V_CCLD)$(LINK) $(am_libdrmtest_la_rpath) $(libdrmtest_la_OBJECTS) $(libdrmtest_la_LIBADD) $(LIBS)
+
+clean-checkPROGRAMS:
+	@list='$(check_PROGRAMS)'; test -n "$$list" || exit 0; \
 	echo " rm -f" $$list; \
 	rm -f $$list || exit $$?; \
 	test -n "$(EXEEXT)" || exit 0; \
@@ -391,43 +419,43 @@ clean-noinstPROGRAMS:
 	rm -f $$list
 dristat$(EXEEXT): $(dristat_OBJECTS) $(dristat_DEPENDENCIES) 
 	@rm -f dristat$(EXEEXT)
-	$(LINK) $(dristat_OBJECTS) $(dristat_LDADD) $(LIBS)
+	$(AM_V_CCLD)$(LINK) $(dristat_OBJECTS) $(dristat_LDADD) $(LIBS)
 drmstat$(EXEEXT): $(drmstat_OBJECTS) $(drmstat_DEPENDENCIES) 
 	@rm -f drmstat$(EXEEXT)
-	$(LINK) $(drmstat_OBJECTS) $(drmstat_LDADD) $(LIBS)
+	$(AM_V_CCLD)$(LINK) $(drmstat_OBJECTS) $(drmstat_LDADD) $(LIBS)
 gem_basic$(EXEEXT): $(gem_basic_OBJECTS) $(gem_basic_DEPENDENCIES) 
 	@rm -f gem_basic$(EXEEXT)
-	$(LINK) $(gem_basic_OBJECTS) $(gem_basic_LDADD) $(LIBS)
+	$(AM_V_CCLD)$(LINK) $(gem_basic_OBJECTS) $(gem_basic_LDADD) $(LIBS)
 gem_flink$(EXEEXT): $(gem_flink_OBJECTS) $(gem_flink_DEPENDENCIES) 
 	@rm -f gem_flink$(EXEEXT)
-	$(LINK) $(gem_flink_OBJECTS) $(gem_flink_LDADD) $(LIBS)
+	$(AM_V_CCLD)$(LINK) $(gem_flink_OBJECTS) $(gem_flink_LDADD) $(LIBS)
 gem_mmap$(EXEEXT): $(gem_mmap_OBJECTS) $(gem_mmap_DEPENDENCIES) 
 	@rm -f gem_mmap$(EXEEXT)
-	$(LINK) $(gem_mmap_OBJECTS) $(gem_mmap_LDADD) $(LIBS)
+	$(AM_V_CCLD)$(LINK) $(gem_mmap_OBJECTS) $(gem_mmap_LDADD) $(LIBS)
 gem_readwrite$(EXEEXT): $(gem_readwrite_OBJECTS) $(gem_readwrite_DEPENDENCIES) 
 	@rm -f gem_readwrite$(EXEEXT)
-	$(LINK) $(gem_readwrite_OBJECTS) $(gem_readwrite_LDADD) $(LIBS)
+	$(AM_V_CCLD)$(LINK) $(gem_readwrite_OBJECTS) $(gem_readwrite_LDADD) $(LIBS)
 getclient$(EXEEXT): $(getclient_OBJECTS) $(getclient_DEPENDENCIES) 
 	@rm -f getclient$(EXEEXT)
-	$(LINK) $(getclient_OBJECTS) $(getclient_LDADD) $(LIBS)
+	$(AM_V_CCLD)$(LINK) $(getclient_OBJECTS) $(getclient_LDADD) $(LIBS)
 getstats$(EXEEXT): $(getstats_OBJECTS) $(getstats_DEPENDENCIES) 
 	@rm -f getstats$(EXEEXT)
-	$(LINK) $(getstats_OBJECTS) $(getstats_LDADD) $(LIBS)
+	$(AM_V_CCLD)$(LINK) $(getstats_OBJECTS) $(getstats_LDADD) $(LIBS)
 getversion$(EXEEXT): $(getversion_OBJECTS) $(getversion_DEPENDENCIES) 
 	@rm -f getversion$(EXEEXT)
-	$(LINK) $(getversion_OBJECTS) $(getversion_LDADD) $(LIBS)
+	$(AM_V_CCLD)$(LINK) $(getversion_OBJECTS) $(getversion_LDADD) $(LIBS)
 name_from_fd$(EXEEXT): $(name_from_fd_OBJECTS) $(name_from_fd_DEPENDENCIES) 
 	@rm -f name_from_fd$(EXEEXT)
-	$(LINK) $(name_from_fd_OBJECTS) $(name_from_fd_LDADD) $(LIBS)
+	$(AM_V_CCLD)$(LINK) $(name_from_fd_OBJECTS) $(name_from_fd_LDADD) $(LIBS)
 openclose$(EXEEXT): $(openclose_OBJECTS) $(openclose_DEPENDENCIES) 
 	@rm -f openclose$(EXEEXT)
-	$(LINK) $(openclose_OBJECTS) $(openclose_LDADD) $(LIBS)
+	$(AM_V_CCLD)$(LINK) $(openclose_OBJECTS) $(openclose_LDADD) $(LIBS)
 setversion$(EXEEXT): $(setversion_OBJECTS) $(setversion_DEPENDENCIES) 
 	@rm -f setversion$(EXEEXT)
-	$(LINK) $(setversion_OBJECTS) $(setversion_LDADD) $(LIBS)
+	$(AM_V_CCLD)$(LINK) $(setversion_OBJECTS) $(setversion_LDADD) $(LIBS)
 updatedraw$(EXEEXT): $(updatedraw_OBJECTS) $(updatedraw_DEPENDENCIES) 
 	@rm -f updatedraw$(EXEEXT)
-	$(LINK) $(updatedraw_OBJECTS) $(updatedraw_LDADD) $(LIBS)
+	$(AM_V_CCLD)$(LINK) $(updatedraw_OBJECTS) $(updatedraw_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -451,22 +479,25 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/updatedraw.Po@am__quote@
 
 .c.o:
-@am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
+@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(COMPILE) -c $<
 
 .c.obj:
-@am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ `$(CYGPATH_W) '$<'`
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ `$(CYGPATH_W) '$<'`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
+@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(COMPILE) -c `$(CYGPATH_W) '$<'`
 
 .c.lo:
-@am__fastdepCC_TRUE@	$(LTCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Plo
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LTCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Plo
+@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$<' object='$@' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LTCOMPILE) -c -o $@ $<
@@ -763,9 +794,10 @@ distdir: $(DISTFILES)
 	  fi; \
 	done
 check-am: all-am
+	$(MAKE) $(AM_MAKEFLAGS) $(check_LTLIBRARIES) $(check_PROGRAMS)
 	$(MAKE) $(AM_MAKEFLAGS) check-TESTS
 check: check-recursive
-all-am: Makefile $(PROGRAMS)
+all-am: Makefile
 installdirs: installdirs-recursive
 installdirs-am:
 install: install-recursive
@@ -785,7 +817,6 @@ install-strip:
 mostlyclean-generic:
 
 clean-generic:
-	-test -z "$(CLEANFILES)" || rm -f $(CLEANFILES)
 
 distclean-generic:
 	-test -z "$(CONFIG_CLEAN_FILES)" || rm -f $(CONFIG_CLEAN_FILES)
@@ -796,8 +827,8 @@ maintainer-clean-generic:
 	@echo "it deletes files that may require special tools to rebuild."
 clean: clean-recursive
 
-clean-am: clean-generic clean-libtool clean-noinstPROGRAMS \
-	mostlyclean-am
+clean-am: clean-checkLTLIBRARIES clean-checkPROGRAMS clean-generic \
+	clean-libtool mostlyclean-am
 
 distclean: distclean-recursive
 	-rm -rf ./$(DEPDIR)
@@ -869,19 +900,20 @@ uninstall-am:
 	ctags-recursive install-am install-strip tags-recursive
 
 .PHONY: $(RECURSIVE_CLEAN_TARGETS) $(RECURSIVE_TARGETS) CTAGS GTAGS \
-	all all-am check check-TESTS check-am clean clean-generic \
-	clean-libtool clean-noinstPROGRAMS ctags ctags-recursive \
-	distclean distclean-compile distclean-generic \
-	distclean-libtool distclean-tags distdir dvi dvi-am html \
-	html-am info info-am install install-am install-data \
-	install-data-am install-dvi install-dvi-am install-exec \
-	install-exec-am install-html install-html-am install-info \
-	install-info-am install-man install-pdf install-pdf-am \
-	install-ps install-ps-am install-strip installcheck \
-	installcheck-am installdirs installdirs-am maintainer-clean \
-	maintainer-clean-generic mostlyclean mostlyclean-compile \
-	mostlyclean-generic mostlyclean-libtool pdf pdf-am ps ps-am \
-	tags tags-recursive uninstall uninstall-am
+	all all-am check check-TESTS check-am clean \
+	clean-checkLTLIBRARIES clean-checkPROGRAMS clean-generic \
+	clean-libtool ctags ctags-recursive distclean \
+	distclean-compile distclean-generic distclean-libtool \
+	distclean-tags distdir dvi dvi-am html html-am info info-am \
+	install install-am install-data install-data-am install-dvi \
+	install-dvi-am install-exec install-exec-am install-html \
+	install-html-am install-info install-info-am install-man \
+	install-pdf install-pdf-am install-ps install-ps-am \
+	install-strip installcheck installcheck-am installdirs \
+	installdirs-am maintainer-clean maintainer-clean-generic \
+	mostlyclean mostlyclean-compile mostlyclean-generic \
+	mostlyclean-libtool pdf pdf-am ps ps-am tags tags-recursive \
+	uninstall uninstall-am
 
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.

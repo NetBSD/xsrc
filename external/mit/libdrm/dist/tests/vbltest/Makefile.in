@@ -15,8 +15,6 @@
 
 @SET_MAKE@
 
-
-
 VPATH = @srcdir@
 pkgdatadir = $(datadir)/@PACKAGE@
 pkgincludedir = $(includedir)/@PACKAGE@
@@ -36,56 +34,24 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-subdir = nouveau
-DIST_COMMON = $(libdrm_nouveaucommoninclude_HEADERS) \
-	$(libdrm_nouveauinclude_HEADERS) $(srcdir)/Makefile.am \
-	$(srcdir)/Makefile.in $(srcdir)/libdrm_nouveau.pc.in
+noinst_PROGRAMS = vbltest$(EXEEXT)
+subdir = tests/vbltest
+DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = $(top_builddir)/config.h
-CONFIG_CLEAN_FILES = libdrm_nouveau.pc
+CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
-am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
-am__vpath_adj = case $$p in \
-    $(srcdir)/*) f=`echo "$$p" | sed "s|^$$srcdirstrip/||"`;; \
-    *) f=$$p;; \
-  esac;
-am__strip_dir = f=`echo $$p | sed -e 's|^.*/||'`;
-am__install_max = 40
-am__nobase_strip_setup = \
-  srcdirstrip=`echo "$(srcdir)" | sed 's/[].[^$$\\*|]/\\\\&/g'`
-am__nobase_strip = \
-  for p in $$list; do echo "$$p"; done | sed -e "s|$$srcdirstrip/||"
-am__nobase_list = $(am__nobase_strip_setup); \
-  for p in $$list; do echo "$$p $$p"; done | \
-  sed "s| $$srcdirstrip/| |;"' / .*\//!s/ .*/ ./; s,\( .*\)/[^/]*$$,\1,' | \
-  $(AWK) 'BEGIN { files["."] = "" } { files[$$2] = files[$$2] " " $$1; \
-    if (++n[$$2] == $(am__install_max)) \
-      { print $$2, files[$$2]; n[$$2] = 0; files[$$2] = "" } } \
-    END { for (dir in files) print dir, files[dir] }'
-am__base_list = \
-  sed '$$!N;$$!N;$$!N;$$!N;$$!N;$$!N;$$!N;s/\n/ /g' | \
-  sed '$$!N;$$!N;$$!N;$$!N;s/\n/ /g'
-am__installdirs = "$(DESTDIR)$(libdrm_nouveau_ladir)" \
-	"$(DESTDIR)$(pkgconfigdir)" \
-	"$(DESTDIR)$(libdrm_nouveaucommonincludedir)" \
-	"$(DESTDIR)$(libdrm_nouveauincludedir)"
-LTLIBRARIES = $(libdrm_nouveau_la_LTLIBRARIES)
-libdrm_nouveau_la_DEPENDENCIES = ../libdrm.la
-am_libdrm_nouveau_la_OBJECTS = nouveau_device.lo nouveau_channel.lo \
-	nouveau_pushbuf.lo nouveau_grobj.lo nouveau_notifier.lo \
-	nouveau_bo.lo nouveau_resource.lo nouveau_reloc.lo
-libdrm_nouveau_la_OBJECTS = $(am_libdrm_nouveau_la_OBJECTS)
+PROGRAMS = $(noinst_PROGRAMS)
+am_vbltest_OBJECTS = vbltest.$(OBJEXT)
+vbltest_OBJECTS = $(am_vbltest_OBJECTS)
+vbltest_DEPENDENCIES = $(top_builddir)/libdrm.la
 AM_V_lt = $(am__v_lt_$(V))
 am__v_lt_ = $(am__v_lt_$(AM_DEFAULT_VERBOSITY))
 am__v_lt_0 = --silent
-libdrm_nouveau_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
-	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CCLD) \
-	$(AM_CFLAGS) $(CFLAGS) $(libdrm_nouveau_la_LDFLAGS) $(LDFLAGS) \
-	-o $@
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
@@ -112,11 +78,8 @@ am__v_CCLD_0 = @echo "  CCLD  " $@;
 AM_V_GEN = $(am__v_GEN_$(V))
 am__v_GEN_ = $(am__v_GEN_$(AM_DEFAULT_VERBOSITY))
 am__v_GEN_0 = @echo "  GEN   " $@;
-SOURCES = $(libdrm_nouveau_la_SOURCES)
-DIST_SOURCES = $(libdrm_nouveau_la_SOURCES)
-DATA = $(pkgconfig_DATA)
-HEADERS = $(libdrm_nouveaucommoninclude_HEADERS) \
-	$(libdrm_nouveauinclude_HEADERS)
+SOURCES = $(vbltest_SOURCES)
+DIST_SOURCES = $(vbltest_SOURCES)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -247,43 +210,15 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 AM_CFLAGS = \
-	$(WARN_CFLAGS) \
-	-I$(top_srcdir) \
-	-I$(top_srcdir)/nouveau \
-	$(PTHREADSTUBS_CFLAGS) \
-	-I$(top_srcdir)/include/drm
+	-I$(top_srcdir)/include/drm \
+	-I$(top_srcdir)
 
-libdrm_nouveau_la_LTLIBRARIES = libdrm_nouveau.la
-libdrm_nouveau_ladir = $(libdir)
-libdrm_nouveau_la_LDFLAGS = -version-number 1:0:0 -no-undefined
-libdrm_nouveau_la_LIBADD = ../libdrm.la @PTHREADSTUBS_LIBS@
-libdrm_nouveau_la_SOURCES = \
-			    nouveau_device.c \
-			    nouveau_channel.c \
-			    nouveau_pushbuf.c \
-			    nouveau_grobj.c \
-			    nouveau_notifier.c \
-			    nouveau_bo.c \
-			    nouveau_resource.c \
-			    nouveau_private.h \
-			    nouveau_reloc.c
+vbltest_SOURCES = \
+	vbltest.c
 
-libdrm_nouveaucommonincludedir = ${includedir}/nouveau
-libdrm_nouveaucommoninclude_HEADERS = \
-				nouveau_device.h \
-				nouveau_channel.h \
-				nouveau_grobj.h \
-				nouveau_notifier.h \
-				nouveau_pushbuf.h \
-				nouveau_bo.h \
-				nouveau_resource.h \
-				nouveau_reloc.h
+vbltest_LDADD = \
+	$(top_builddir)/libdrm.la
 
-libdrm_nouveauincludedir = ${includedir}/libdrm
-libdrm_nouveauinclude_HEADERS = \
-				nouveau_drmif.h
-
-pkgconfig_DATA = libdrm_nouveau.pc
 all: all-am
 
 .SUFFIXES:
@@ -297,9 +232,9 @@ $(srcdir)/Makefile.in:  $(srcdir)/Makefile.am  $(am__configure_deps)
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign nouveau/Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign tests/vbltest/Makefile'; \
 	$(am__cd) $(top_srcdir) && \
-	  $(AUTOMAKE) --foreign nouveau/Makefile
+	  $(AUTOMAKE) --foreign tests/vbltest/Makefile
 .PRECIOUS: Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \
@@ -318,41 +253,18 @@ $(top_srcdir)/configure:  $(am__configure_deps)
 $(ACLOCAL_M4):  $(am__aclocal_m4_deps)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
 $(am__aclocal_m4_deps):
-libdrm_nouveau.pc: $(top_builddir)/config.status $(srcdir)/libdrm_nouveau.pc.in
-	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
-install-libdrm_nouveau_laLTLIBRARIES: $(libdrm_nouveau_la_LTLIBRARIES)
-	@$(NORMAL_INSTALL)
-	test -z "$(libdrm_nouveau_ladir)" || $(MKDIR_P) "$(DESTDIR)$(libdrm_nouveau_ladir)"
-	@list='$(libdrm_nouveau_la_LTLIBRARIES)'; test -n "$(libdrm_nouveau_ladir)" || list=; \
-	list2=; for p in $$list; do \
-	  if test -f $$p; then \
-	    list2="$$list2 $$p"; \
-	  else :; fi; \
-	done; \
-	test -z "$$list2" || { \
-	  echo " $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=install $(INSTALL) $(INSTALL_STRIP_FLAG) $$list2 '$(DESTDIR)$(libdrm_nouveau_ladir)'"; \
-	  $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=install $(INSTALL) $(INSTALL_STRIP_FLAG) $$list2 "$(DESTDIR)$(libdrm_nouveau_ladir)"; \
-	}
 
-uninstall-libdrm_nouveau_laLTLIBRARIES:
-	@$(NORMAL_UNINSTALL)
-	@list='$(libdrm_nouveau_la_LTLIBRARIES)'; test -n "$(libdrm_nouveau_ladir)" || list=; \
-	for p in $$list; do \
-	  $(am__strip_dir) \
-	  echo " $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=uninstall rm -f '$(DESTDIR)$(libdrm_nouveau_ladir)/$$f'"; \
-	  $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=uninstall rm -f "$(DESTDIR)$(libdrm_nouveau_ladir)/$$f"; \
-	done
-
-clean-libdrm_nouveau_laLTLIBRARIES:
-	-test -z "$(libdrm_nouveau_la_LTLIBRARIES)" || rm -f $(libdrm_nouveau_la_LTLIBRARIES)
-	@list='$(libdrm_nouveau_la_LTLIBRARIES)'; for p in $$list; do \
-	  dir="`echo $$p | sed -e 's|/[^/]*$$||'`"; \
-	  test "$$dir" != "$$p" || dir=.; \
-	  echo "rm -f \"$${dir}/so_locations\""; \
-	  rm -f "$${dir}/so_locations"; \
-	done
-libdrm_nouveau.la: $(libdrm_nouveau_la_OBJECTS) $(libdrm_nouveau_la_DEPENDENCIES) 
-	$(AM_V_CCLD)$(libdrm_nouveau_la_LINK) -rpath $(libdrm_nouveau_ladir) $(libdrm_nouveau_la_OBJECTS) $(libdrm_nouveau_la_LIBADD) $(LIBS)
+clean-noinstPROGRAMS:
+	@list='$(noinst_PROGRAMS)'; test -n "$$list" || exit 0; \
+	echo " rm -f" $$list; \
+	rm -f $$list || exit $$?; \
+	test -n "$(EXEEXT)" || exit 0; \
+	list=`for p in $$list; do echo "$$p"; done | sed 's/$(EXEEXT)$$//'`; \
+	echo " rm -f" $$list; \
+	rm -f $$list
+vbltest$(EXEEXT): $(vbltest_OBJECTS) $(vbltest_DEPENDENCIES) 
+	@rm -f vbltest$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(vbltest_OBJECTS) $(vbltest_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -360,14 +272,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/nouveau_bo.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/nouveau_channel.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/nouveau_device.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/nouveau_grobj.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/nouveau_notifier.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/nouveau_pushbuf.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/nouveau_reloc.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/nouveau_resource.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/vbltest.Po@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
@@ -398,66 +303,6 @@ mostlyclean-libtool:
 
 clean-libtool:
 	-rm -rf .libs _libs
-install-pkgconfigDATA: $(pkgconfig_DATA)
-	@$(NORMAL_INSTALL)
-	test -z "$(pkgconfigdir)" || $(MKDIR_P) "$(DESTDIR)$(pkgconfigdir)"
-	@list='$(pkgconfig_DATA)'; test -n "$(pkgconfigdir)" || list=; \
-	for p in $$list; do \
-	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
-	  echo "$$d$$p"; \
-	done | $(am__base_list) | \
-	while read files; do \
-	  echo " $(INSTALL_DATA) $$files '$(DESTDIR)$(pkgconfigdir)'"; \
-	  $(INSTALL_DATA) $$files "$(DESTDIR)$(pkgconfigdir)" || exit $$?; \
-	done
-
-uninstall-pkgconfigDATA:
-	@$(NORMAL_UNINSTALL)
-	@list='$(pkgconfig_DATA)'; test -n "$(pkgconfigdir)" || list=; \
-	files=`for p in $$list; do echo $$p; done | sed -e 's|^.*/||'`; \
-	test -n "$$files" || exit 0; \
-	echo " ( cd '$(DESTDIR)$(pkgconfigdir)' && rm -f" $$files ")"; \
-	cd "$(DESTDIR)$(pkgconfigdir)" && rm -f $$files
-install-libdrm_nouveaucommonincludeHEADERS: $(libdrm_nouveaucommoninclude_HEADERS)
-	@$(NORMAL_INSTALL)
-	test -z "$(libdrm_nouveaucommonincludedir)" || $(MKDIR_P) "$(DESTDIR)$(libdrm_nouveaucommonincludedir)"
-	@list='$(libdrm_nouveaucommoninclude_HEADERS)'; test -n "$(libdrm_nouveaucommonincludedir)" || list=; \
-	for p in $$list; do \
-	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
-	  echo "$$d$$p"; \
-	done | $(am__base_list) | \
-	while read files; do \
-	  echo " $(INSTALL_HEADER) $$files '$(DESTDIR)$(libdrm_nouveaucommonincludedir)'"; \
-	  $(INSTALL_HEADER) $$files "$(DESTDIR)$(libdrm_nouveaucommonincludedir)" || exit $$?; \
-	done
-
-uninstall-libdrm_nouveaucommonincludeHEADERS:
-	@$(NORMAL_UNINSTALL)
-	@list='$(libdrm_nouveaucommoninclude_HEADERS)'; test -n "$(libdrm_nouveaucommonincludedir)" || list=; \
-	files=`for p in $$list; do echo $$p; done | sed -e 's|^.*/||'`; \
-	test -n "$$files" || exit 0; \
-	echo " ( cd '$(DESTDIR)$(libdrm_nouveaucommonincludedir)' && rm -f" $$files ")"; \
-	cd "$(DESTDIR)$(libdrm_nouveaucommonincludedir)" && rm -f $$files
-install-libdrm_nouveauincludeHEADERS: $(libdrm_nouveauinclude_HEADERS)
-	@$(NORMAL_INSTALL)
-	test -z "$(libdrm_nouveauincludedir)" || $(MKDIR_P) "$(DESTDIR)$(libdrm_nouveauincludedir)"
-	@list='$(libdrm_nouveauinclude_HEADERS)'; test -n "$(libdrm_nouveauincludedir)" || list=; \
-	for p in $$list; do \
-	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
-	  echo "$$d$$p"; \
-	done | $(am__base_list) | \
-	while read files; do \
-	  echo " $(INSTALL_HEADER) $$files '$(DESTDIR)$(libdrm_nouveauincludedir)'"; \
-	  $(INSTALL_HEADER) $$files "$(DESTDIR)$(libdrm_nouveauincludedir)" || exit $$?; \
-	done
-
-uninstall-libdrm_nouveauincludeHEADERS:
-	@$(NORMAL_UNINSTALL)
-	@list='$(libdrm_nouveauinclude_HEADERS)'; test -n "$(libdrm_nouveauincludedir)" || list=; \
-	files=`for p in $$list; do echo $$p; done | sed -e 's|^.*/||'`; \
-	test -n "$$files" || exit 0; \
-	echo " ( cd '$(DESTDIR)$(libdrm_nouveauincludedir)' && rm -f" $$files ")"; \
-	cd "$(DESTDIR)$(libdrm_nouveauincludedir)" && rm -f $$files
 
 ID: $(HEADERS) $(SOURCES) $(LISP) $(TAGS_FILES)
 	list='$(SOURCES) $(HEADERS) $(LISP) $(TAGS_FILES)'; \
@@ -543,11 +388,8 @@ distdir: $(DISTFILES)
 	done
 check-am: all-am
 check: check-am
-all-am: Makefile $(LTLIBRARIES) $(DATA) $(HEADERS)
+all-am: Makefile $(PROGRAMS)
 installdirs:
-	for dir in "$(DESTDIR)$(libdrm_nouveau_ladir)" "$(DESTDIR)$(pkgconfigdir)" "$(DESTDIR)$(libdrm_nouveaucommonincludedir)" "$(DESTDIR)$(libdrm_nouveauincludedir)"; do \
-	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
-	done
 install: install-am
 install-exec: install-exec-am
 install-data: install-data-am
@@ -575,8 +417,8 @@ maintainer-clean-generic:
 	@echo "it deletes files that may require special tools to rebuild."
 clean: clean-am
 
-clean-am: clean-generic clean-libdrm_nouveau_laLTLIBRARIES \
-	clean-libtool mostlyclean-am
+clean-am: clean-generic clean-libtool clean-noinstPROGRAMS \
+	mostlyclean-am
 
 distclean: distclean-am
 	-rm -rf ./$(DEPDIR)
@@ -596,9 +438,7 @@ info: info-am
 
 info-am:
 
-install-data-am: install-libdrm_nouveau_laLTLIBRARIES \
-	install-libdrm_nouveaucommonincludeHEADERS \
-	install-libdrm_nouveauincludeHEADERS install-pkgconfigDATA
+install-data-am:
 
 install-dvi: install-dvi-am
 
@@ -644,30 +484,22 @@ ps: ps-am
 
 ps-am:
 
-uninstall-am: uninstall-libdrm_nouveau_laLTLIBRARIES \
-	uninstall-libdrm_nouveaucommonincludeHEADERS \
-	uninstall-libdrm_nouveauincludeHEADERS uninstall-pkgconfigDATA
+uninstall-am:
 
 .MAKE: install-am install-strip
 
 .PHONY: CTAGS GTAGS all all-am check check-am clean clean-generic \
-	clean-libdrm_nouveau_laLTLIBRARIES clean-libtool ctags \
-	distclean distclean-compile distclean-generic \
-	distclean-libtool distclean-tags distdir dvi dvi-am html \
-	html-am info info-am install install-am install-data \
-	install-data-am install-dvi install-dvi-am install-exec \
-	install-exec-am install-html install-html-am install-info \
-	install-info-am install-libdrm_nouveau_laLTLIBRARIES \
-	install-libdrm_nouveaucommonincludeHEADERS \
-	install-libdrm_nouveauincludeHEADERS install-man install-pdf \
-	install-pdf-am install-pkgconfigDATA install-ps install-ps-am \
+	clean-libtool clean-noinstPROGRAMS ctags distclean \
+	distclean-compile distclean-generic distclean-libtool \
+	distclean-tags distdir dvi dvi-am html html-am info info-am \
+	install install-am install-data install-data-am install-dvi \
+	install-dvi-am install-exec install-exec-am install-html \
+	install-html-am install-info install-info-am install-man \
+	install-pdf install-pdf-am install-ps install-ps-am \
 	install-strip installcheck installcheck-am installdirs \
 	maintainer-clean maintainer-clean-generic mostlyclean \
 	mostlyclean-compile mostlyclean-generic mostlyclean-libtool \
-	pdf pdf-am ps ps-am tags uninstall uninstall-am \
-	uninstall-libdrm_nouveau_laLTLIBRARIES \
-	uninstall-libdrm_nouveaucommonincludeHEADERS \
-	uninstall-libdrm_nouveauincludeHEADERS uninstall-pkgconfigDATA
+	pdf pdf-am ps ps-am tags uninstall uninstall-am
 
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.

@@ -19,7 +19,7 @@
 #  CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 AC_PREREQ(2.60)
-AC_INIT([libdrm], 2.4.20, [dri-devel@lists.sourceforge.net], libdrm)
+AC_INIT([libdrm], 2.4.21, [dri-devel@lists.sourceforge.net], libdrm)
 AC_USE_SYSTEM_EXTENSIONS
 AC_CONFIG_SRCDIR([Makefile.am])
 AM_INIT_AUTOMAKE([dist-bzip2])
@@ -34,6 +34,9 @@ AC_HEADER_STDC
 AC_SYS_LARGEFILE
 AC_FUNC_ALLOCA
 
+# Enable quiet compiles on automake 1.11.
+m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
+
 PKG_CHECK_MODULES(PTHREADSTUBS, pthread-stubs)
 AC_SUBST(PTHREADSTUBS_CFLAGS)
 AC_SUBST(PTHREADSTUBS_LIBS)
@@ -46,8 +49,8 @@ AC_ARG_ENABLE(udev,	AS_HELP_STRING([--enable-udev],
 
 AC_ARG_ENABLE(libkms,
 	      AS_HELP_STRING([--disable-libkms],
-	      [Disable KMS mm abstraction library (default: enabled)]),
-	      [LIBKMS=$enableval], [LIBKMS=yes])
+	      [Disable KMS mm abstraction library (default: auto)]),
+	      [LIBKMS=$enableval], [LIBKMS=auto])
 
 AC_ARG_ENABLE(intel,
 	      AS_HELP_STRING([--disable-intel],
@@ -144,6 +147,14 @@ WARN_CFLAGS="$libdrm_cv_warn_cflags"
 
 if test "x$UDEV" = xyes; then
 	AC_DEFINE(UDEV, 1, [Have UDEV support])
+fi
+
+AC_CANONICAL_HOST
+if test "x$LIBKMS" = xauto ; then
+	case $host_os in
+		linux*)		LIBKMS="yes" ;;
+		*)		LIBKMS="no" ;;
+	esac
 fi
 
 AM_CONDITIONAL(HAVE_LIBKMS, [test "x$LIBKMS" = xyes])
@@ -255,6 +266,7 @@ AC_OUTPUT([
 	tests/modeprint/Makefile
 	tests/modetest/Makefile
 	tests/kmstest/Makefile
+	tests/vbltest/Makefile
 	include/Makefile
 	include/drm/Makefile
 	libdrm.pc])
