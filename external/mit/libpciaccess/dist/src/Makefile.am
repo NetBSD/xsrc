@@ -51,6 +51,10 @@ else
 VGA_ARBITER = common_vgaarb_stub.c
 endif
 
+if GNU
+OS_SUPPORT = x86_pci.c
+endif
+
 libpciaccess_la_SOURCES = common_bridge.c \
 	common_iterator.c \
 	common_init.c \
@@ -65,7 +69,7 @@ libpciaccess_la_SOURCES = common_bridge.c \
 
 INCLUDES = -I$(top_srcdir)/include
 
-libpciaccess_la_LIBADD = @PCIACCESS_LIBS@
+libpciaccess_la_LIBADD = $(PCIACCESS_LIBS)
 
 libpciaccess_la_LDFLAGS = -version-number 0:10:8 -no-undefined
 
@@ -76,8 +80,4 @@ libpciaccessinclude_HEADERS = \
 noinst_PROGRAMS = scanpci
 
 scanpci_SOURCES = scanpci.c
-if SOLARIS
-scanpci_LDADD = libpciaccess.la -ldevinfo
-else
 scanpci_LDADD = libpciaccess.la
-endif
