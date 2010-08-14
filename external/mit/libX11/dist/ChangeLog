@@ -1,3 +1,131 @@
+commit 8e3877aa50f3092c8fdfd916b072720439bc818b
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Wed Aug 11 16:24:28 2010 -0700
+
+    libX11 1.3.5
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 4b17b61421e81dd8acc0e410c37b76e674c2ddf7
+Author: Adam Jackson <ajax@redhat.com>
+Date:   Thu Jul 29 11:11:21 2010 -0400
+
+    nls: Switch one of the interrobang sequences to gnaborretni
+    
+    Since gnaborretni is primarily used in LTR locales, the ? part of the
+    sequence reflects the position of the bulge in the ?.  When scanning an
+    inverted interrobang left-to-right, you see the bulge first, so the
+    compose sequence ?! is used; upright interrobang shows the bulge
+    last, so it's !?.
+    
+    This is a change in behaviour, but I was unable to come up with anything
+    better.  ??!! or !!?? would match the patterns for ¿ and ¡, but they
+    would delay evaluation of them; "¿Qué?" wouldn't show the ¿ until you hit
+    Q.  Likewise ?!?! and !?!? would delay showing the interrobang itself.
+    ~!? and ~?! were considered but are arguably less intuitive.
+    
+    Reviewed-by: James Cloos <cloos@jhcloos.com>
+    Signed-off-by: Adam Jackson <ajax@redhat.com>
+    (cherry picked from commit f70527f05677aaf6a493ba42d2d95f738aaebafa)
+
+commit 0f70c845ad336a235e2f2f5d966b421d9a9d653d
+Author: Daniel Stone <daniel@fooishbar.org>
+Date:   Tue Jul 20 12:34:48 2010 +0100
+
+    NLS: Add \o/ Compose sequence
+    
+    Unicode is even more pointlessly awesome! Add a binding for Compose-\o/
+    to U+1F64C PERSON RAISING BOTH HANDS IN CELEBRATION.
+    
+    Signed-off-by: Daniel Stone <daniel@fooishbar.org>
+    (cherry picked from commit 554da76ece85d0fc0cada45a86860e69c2107e9a)
+
+commit 5c99e5b7f26e209de3430397784db443051d6eff
+Author: Juliusz Chroboczek <jch@pps.jussieu.fr>
+Date:   Tue Jun 29 18:32:42 2010 +0200
+
+    Make Compose-comma map to ogonek for I and U in UTF-8 locales.
+    
+    With the preceding patch, it makes the UTF-8 compose map consistent with
+    the ISO 8859-4 and -13 maps.
+    (cherry picked from commit 241a990afcf9c967c587ad6fd245df21b68b1ad9)
+
+commit ce7e5309bd227c14f6569fbccd8523e992c2bf07
+Author: Juliusz Chroboczek <jch@pps.jussieu.fr>
+Date:   Tue Jun 29 18:20:18 2010 +0200
+
+    Make Compose-comma map to Ogonek for A and E in UTF-8 locales.
+    
+    This makes the UTF-8 compose file consistent with the ISO 8859-2 compose file
+    as far as Polish is concerned.  We only sacrifice one pair of characters,
+    e-cedilla, which is not used in any language.
+    (cherry picked from commit af55e582f485a668c2bf43129be972bc65f03c60)
+
+commit 54a963608d23d35cd9233b2223f880ac3671f10b
+Author: Jamey Sharp <jamey@minilop.net>
+Date:   Fri Aug 6 15:51:56 2010 -0700
+
+    Fix use-after-free in _XReply on X errors.
+    
+    _XReply would always call dequeue_pending_request on errors.  When it
+    got an error for the current request, it would call dequeue, then break
+    out of the loop; then, if it had an error in the event queue, it would
+    compare it with the sequence number of the now-freed pending request.
+    _XReply already stored that sequence number in dpy->last_request_read
+    before freeing it, so look at that instead.
+    
+    Fixes: https://bugs.freedesktop.org/show_bug.cgi?id=29412
+    
+    Signed-off-by: Jamey Sharp <jamey@minilop.net>
+    Signed-off-by: Josh Triplett <josh@joshtriplett.org>
+    (cherry picked from commit 4b8ff7db39f2fe7ef12968d462aaf3f9054b6c18)
+
+commit 8da90e33865340fe954bcb6b99dfcb1b7617ab10
+Author: Julien Cristau <jcristau@debian.org>
+Date:   Sat Jul 24 22:13:07 2010 +0200
+
+    Compose.man: default user compose file is .XCompose, not .Xcompose
+    
+    The path was correct in the DESCRIPTION section, but not in FILES.
+    
+    Signed-off-by: Julien Cristau <jcristau@debian.org>
+    (cherry picked from commit 8e603413586ff42b1351688f6f99318cbe243bca)
+
+commit 2cce273a4ac89662e9f00a6a8317c84b0c8c391d
+Author: Jeremy Huddleston <jeremyhu@apple.com>
+Date:   Mon Jul 12 16:52:12 2010 -0700
+
+    launchd: Explicitly search /sbin
+    
+    Previously, launchd wasn't found if /sbin wasn't in the user's PATH.
+    https://bugs.freedesktop.org/show_bug.cgi?id=29028
+    
+    Signed-off-by: Jeremy Huddleston <jeremyhu@apple.com>
+    (cherry picked from commit a151346a2b7810e988f1de4b1e00b37672dc587a)
+
+commit 2b82daa88538022cfb49d8ceab22650e8062cacc
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Thu Jun 24 13:13:11 2010 -0700
+
+    Define FILE_MAN_DIR_SUFFIX so XCompose shadow page has correct path
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    (cherry picked from commit d6ba13009fc9ef876a104b907ffef73c6e405d4b)
+
+commit c1e35695d9d3b22b63db762ad0a1f040a72e958a
+Author: Julien Cristau <jcristau@debian.org>
+Date:   Fri Jun 4 13:57:45 2010 +0200
+
+    Hide _XSeqSyncFunction
+    
+    Commit a6d974dc59f2722b36e2df9d4f07aeee4f83ce43 made _XSeqSyncFunction
+    non-static, but we don't need to export it.
+    
+    Signed-off-by: Julien Cristau <jcristau@debian.org>
+    Reviewed-by: Adam Jackson <ajax@redhat.com>
+    Reviewed-by: Jamey Sharp <jamey@minilop.net>
+    (cherry picked from commit abcd1b67c8135ad652833e5a60d818837c39fce1)
+
 commit fb19eb767a32fd4ff74021c51bc6f60eb8bdff74
 Author: Alan Coopersmith <alan.coopersmith@oracle.com>
 Date:   Thu Jun 3 15:21:40 2010 -0700

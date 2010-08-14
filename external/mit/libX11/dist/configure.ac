@@ -3,7 +3,7 @@
 
 AC_PREREQ(2.60)
 AC_INIT([libX11],
-        1.3.4,
+        [1.3.5],
         [https://bugs.freedesktop.org/enter_bug.cgi?product=xorg],
         libX11)
 AC_CONFIG_SRCDIR([Makefile.am])
@@ -288,7 +288,7 @@ AM_CONDITIONAL(OS2, test x$os2 = xtrue)
 AC_ARG_WITH(launchd, AS_HELP_STRING([--with-launchd], [Build with support for Apple's launchd (default: auto)]), [LAUNCHD=$withval], [LAUNCHD=auto])
 if test "x$LAUNCHD" = xauto; then
 	unset LAUNCHD
-	AC_CHECK_PROG(LAUNCHD, [launchd], [yes], [no])
+	AC_CHECK_PROG(LAUNCHD, [launchd], [yes], [no], [$PATH$PATH_SEPARATOR/sbin])
 fi
 
 if test "x$LAUNCHD" = xyes ; then
