@@ -22,9 +22,9 @@ dnl DEALINGS IN THE SOFTWARE.
 dnl
 dnl Process this file with autoconf to create configure.
 
-AC_PREREQ([2.57])
+AC_PREREQ([2.60])
 
-AC_INIT(libpciaccess, 0.11.0, [https://bugs.freedesktop.org/enter_bug.cgi?product=xorg&component=libpciaccess], libpciaccess)
+AC_INIT(libpciaccess, 0.12.0, [https://bugs.freedesktop.org/enter_bug.cgi?product=xorg&component=libpciaccess], libpciaccess)
 AM_INIT_AUTOMAKE([foreign dist-bzip2])
 AM_MAINTAINER_MODE
 
@@ -90,6 +90,9 @@ case $host_os in
 		solaris=yes
 		PCIACCESS_LIBS="$PCIACCESS_LIBS -ldevinfo"
 		;;
+	gnu*)
+		gnu=yes
+		;;
 esac
 
 AM_CONDITIONAL(LINUX, [test "x$linux" = xyes])
@@ -97,6 +100,7 @@ AM_CONDITIONAL(FREEBSD, [test "x$freebsd" = xyes])
 AM_CONDITIONAL(NETBSD, [test "x$netbsd" = xyes])
 AM_CONDITIONAL(OPENBSD, [test "x$openbsd" = xyes])
 AM_CONDITIONAL(SOLARIS, [test "x$solaris" = xyes])
+AM_CONDITIONAL(GNU, [test "x$gnu" = xyes])
 
 AC_SYS_LARGEFILE
 

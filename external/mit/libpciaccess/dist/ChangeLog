@@ -1,3 +1,147 @@
+commit fa3f1c1ea8ce4b45976e11520856cfa164f8b92d
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Wed Jul 21 09:39:26 2010 +1000
+
+    libpciaccess 0.12.0 - bump version for release
+
+commit 2f98724d1e603268360d704b3c8823b93d5fecb4
+Author: Thomas Hellstrom <thellstrom@vmware.com>
+Date:   Tue Jul 20 22:14:22 2010 +0200
+
+    Fix long standing MTRR bug.
+    
+    Add an include that makes the file common_vgaarb.c see the same
+    struct pci_system as the file linux_sysfs.c.
+    
+    Without this fix, on a MTRR system, the vgaarb_fd member
+    would overwrite the mtrr_fd member and cause the MTRR_IOC_ADD_ENTRY call
+    to be issued to the incorrect device causing the infamous
+    "Inappropriate ioctl for device (25)" error.
+    
+    This error would cause MTRR setup to fail on all systems relying on it
+    and is severe enough to warrant a new release.
+    
+    Signed-off-by: Thomas Hellstrom <thellstrom@vmware.com>
+    Signed-off-by: Dave Airlie <airlied@redhat.com>
+
+commit e5159771bd0a013201dcef760e9320071c6df59e
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Mon Jul 12 13:09:33 2010 +1000
+
+    pciaccess: fix use after free.
+    
+    Using the pointer passed to realloc earlier isn't a recipe for success.
+    
+    Signed-off-by: Dave Airlie <airlied@redhat.com>
+
+commit 3f59728ddc6f7d2cb17d434e81ac76c9288d0aef
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Jun 19 10:36:24 2010 -0700
+
+    Let libtool handle library flags for scanpci on Solaris
+    
+    Stop hardcoding -ldevinfo since configure/libtool already know to add it
+    for static linking, and ELF dependencies handle it for dynamic linking
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit e0ae5251cd030b201c14f5888a539aa40f17abfb
+Author: Tiago Vignatti <tiago.vignatti@nokia.com>
+Date:   Sat May 22 18:23:33 2010 +0300
+
+    vgaarb: read back vga count when setting new decoding
+    
+    Decode kernel operation can also change vga refcount, so we need to read back
+    the information when calling it.
+    
+    Signed-off-by: Tiago Vignatti <tiago.vignatti@nokia.com>
+
+commit 0f153de858032c95ea5844aa6e0f1c8dad7531da
+Author: Tiago Vignatti <tiago.vignatti@nokia.com>
+Date:   Wed May 12 13:12:47 2010 +0300
+
+    vgaarb: decode should send new information to the kernel
+    
+    This was introduced in e360c11c.
+    
+    Signed-off-by: Tiago Vignatti <tiago.vignatti@nokia.com>
+
+commit fa7cca617583eb93a862c5ebbb5a56843210e5a8
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Jun 4 16:58:56 2010 -0700
+
+    Delay allocation of agp_info so we don't leak it on prior errors
+    
+       Memory leak of pointer 'agp_info'
+            at line 119 of src/common_capability.c in function 'pci_fill_capabilities_generic'.
+              'agp_info' allocated at line 107 with calloc(1, 12).
+              'agp_info' leaks when err != 0 at line 118.
+            at line 124 of src/common_capability.c in function 'pci_fill_capabilities_generic'.
+              'agp_info' allocated at line 107 with calloc(1, 12).
+              'agp_info' leaks when err != 0 at line 123.
+    
+    [ This bug was found by the Parfait bug checking tool.
+      For more information see http://research.sun.com/projects/parfait ]
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit b8295f4776912d4c3cef836eb0f158e07b432a25
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Mon Mar 29 16:50:34 2010 -0400
+
+    config: update AC_PREREQ statement to 2.60
+    
+    Unrelated to the previous patches, the new value simply reflects
+    the reality that the minimum level for autoconf to configure
+    all x.org modules is 2.60 dated June 2006.
+    
+    ftp://ftp.gnu.org/gnu/autoconf/autoconf-2.60.tar.gz
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit a624de7af1d4c0956ecd485e3ae193f93bd78c57
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Mon Mar 29 14:53:49 2010 -0400
+
+    config: remove the pkgconfig pc.in file from EXTRA_DIST
+    
+    Automake always includes it in the tarball.
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit af2be74979aeab9a2fc4c933462e97ce70f816b6
+Author: Samuel Thibault <samuel.thibault@ens-lyon.org>
+Date:   Tue Jan 19 18:37:43 2010 +0100
+
+    libpciaccess x86 backend
+    
+    This adds support on x86 for OSes that do not have a PCI interface,
+    tinkering with I/O ports, and makes use of it on GNU/Hurd.
+    
+    Signed-off-by: Julien Cristau <jcristau@debian.org>
+
+commit ebb3c6b69f4e8a844ff95d4e880dde9ede3de347
+Author: Julien Cristau <jcristau@debian.org>
+Date:   Sun Jan 17 14:33:13 2010 +0000
+
+    COPYING: add Red Hat's copyright notice
+
+commit b775e6fa006d78cac21bbfe52f1f721947ddc6ca
+Author: Alan Coopersmith <alan.coopersmith@sun.com>
+Date:   Thu Jan 14 20:48:20 2010 -0800
+
+    Update Sun license notices to current X.Org standard form
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@sun.com>
+
+commit fac83b8116e19d4efbf8438d1cc485656cca5c60
+Author: Adam Jackson <ajax@redhat.com>
+Date:   Mon Dec 14 17:27:12 2009 -0500
+
+    libpciaccess 0.11.0
+    
+    Signed-off-by: Adam Jackson <ajax@redhat.com>
+
 commit 947ab16f2938e8883503ef679a40684dfe2a90e5
 Author: Adam Jackson <ajax@redhat.com>
 Date:   Mon Dec 14 16:26:31 2009 -0500
