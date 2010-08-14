@@ -156,6 +156,18 @@ LN_S = @LN_S@
 LTLIBOBJS = @LTLIBOBJS@
 MAINT = @MAINT@
 MAKEINFO = @MAKEINFO@
+MAN_SUBSTS = \
+	-e 's|__vendorversion__|"$(XORGRELSTRING)" "$(XORGMANNAME)"|' \
+	-e 's|__xorgversion__|"$(XORGRELSTRING)" "$(XORGMANNAME)"|' \
+	-e 's|__xservername__|Xorg|g' \
+	-e 's|__xconfigfile__|xorg.conf|g' \
+	-e 's|__projectroot__|$(prefix)|g' \
+	-e 's|__appmansuffix__|$(APP_MAN_SUFFIX)|g' \
+	-e 's|__drivermansuffix__|$(DRIVER_MAN_SUFFIX)|g' \
+	-e 's|__adminmansuffix__|$(ADMIN_MAN_SUFFIX)|g' \
+	-e 's|__miscmansuffix__|$(MISC_MAN_SUFFIX)|g' \
+	-e 's|__filemansuffix__|$(FILE_MAN_SUFFIX)|g'
+
 MISC_MAN_DIR = @MISC_MAN_DIR@
 MISC_MAN_SUFFIX = @MISC_MAN_SUFFIX@
 MKDIR_P = @MKDIR_P@
@@ -183,6 +195,7 @@ VERSION = @VERSION@
 XORG_CFLAGS = @XORG_CFLAGS@
 XORG_CONF_DIR = @XORG_CONF_DIR@
 XORG_LIBS = @XORG_LIBS@
+XORG_MAN_PAGE = @XORG_MAN_PAGE@
 abs_builddir = @abs_builddir@
 abs_srcdir = @abs_srcdir@
 abs_top_builddir = @abs_top_builddir@
@@ -248,18 +261,6 @@ CLEANFILES = $(driverman_DATA) $(appman_DATA)
 # Strings to replace in man pages
 XORGRELSTRING = @PACKAGE_STRING@
 XORGMANNAME = X Version 11
-MAN_SUBSTS = \
-	-e 's|__vendorversion__|"$(XORGRELSTRING)" "$(XORGMANNAME)"|' \
-	-e 's|__xorgversion__|"$(XORGRELSTRING)" "$(XORGMANNAME)"|' \
-	-e 's|__xservername__|Xorg|g' \
-	-e 's|__xconfigfile__|xorg.conf|g' \
-	-e 's|__projectroot__|$(prefix)|g' \
-	-e 's|__appmansuffix__|$(APP_MAN_SUFFIX)|g' \
-	-e 's|__drivermansuffix__|$(DRIVER_MAN_SUFFIX)|g' \
-	-e 's|__adminmansuffix__|$(ADMIN_MAN_SUFFIX)|g' \
-	-e 's|__miscmansuffix__|$(MISC_MAN_SUFFIX)|g' \
-	-e 's|__filemansuffix__|$(FILE_MAN_SUFFIX)|g'
-
 SUFFIXES = .$(DRIVER_MAN_SUFFIX) .man
 all: all-am
 
