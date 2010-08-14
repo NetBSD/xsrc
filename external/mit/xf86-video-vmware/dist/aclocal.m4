@@ -1,7 +1,7 @@
-# generated automatically by aclocal 1.10.2 -*- Autoconf -*-
+# generated automatically by aclocal 1.11.1 -*- Autoconf -*-
 
 # Copyright (C) 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004,
-# 2005, 2006, 2007, 2008  Free Software Foundation, Inc.
+# 2005, 2006, 2007, 2008, 2009  Free Software Foundation, Inc.
 # This file is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
 # with or without modifications, as long as this notice is preserved.
@@ -2485,10 +2485,13 @@ linux* | k*bsd*-gnu)
   # before this can be enabled.
   hardcode_into_libs=yes
 
+  # Add ABI-specific directories to the system library path.
+  sys_lib_dlsearch_path_spec="/lib64 /usr/lib64 /lib /usr/lib"
+
   # Append ld.so.conf contents to the search path
   if test -f /etc/ld.so.conf; then
     lt_ld_extra=`awk '/^include / { system(sprintf("cd /etc; cat %s 2>/dev/null", \[$]2)); skip = 1; } { if (!skip) print \[$]0; skip = 0; }' < /etc/ld.so.conf | $SED -e 's/#.*//;/^[	 ]*hwcap[	 ]/d;s/[:,	]/ /g;s/=[^=]*$//;s/=[^= ]* / /g;/^$/d' | tr '\n' ' '`
-    sys_lib_dlsearch_path_spec="/lib /usr/lib $lt_ld_extra"
+    sys_lib_dlsearch_path_spec="$sys_lib_dlsearch_path_spec $lt_ld_extra"
   fi
 
   # We used to test for /lib/ld.so.1 and disable shared libraries on
@@ -2498,18 +2501,6 @@ linux* | k*bsd*-gnu)
   # people can always --disable-shared, the test was removed, and we
   # assume the GNU/Linux dynamic linker is in use.
   dynamic_linker='GNU/Linux ld.so'
-  ;;
-
-netbsdelf*-gnu)
-  version_type=linux
-  need_lib_prefix=no
-  need_version=no
-  library_names_spec='${libname}${release}${shared_ext}$versuffix ${libname}${release}${shared_ext}$major ${libname}${shared_ext}'
-  soname_spec='${libname}${release}${shared_ext}$major'
-  shlibpath_var=LD_LIBRARY_PATH
-  shlibpath_overrides_runpath=no
-  hardcode_into_libs=yes
-  dynamic_linker='NetBSD ld.elf_so'
   ;;
 
 netbsd*)
@@ -3103,7 +3094,7 @@ linux* | k*bsd*-gnu)
   lt_cv_deplibs_check_method=pass_all
   ;;
 
-netbsd* | netbsdelf*-gnu)
+netbsd*)
   if echo __ELF__ | $CC -E - | $GREP __ELF__ > /dev/null; then
     lt_cv_deplibs_check_method='match_pattern /lib[[^/]]+(\.so\.[[0-9]]+\.[[0-9]]+|_pic\.a)$'
   else
@@ -3784,7 +3775,7 @@ m4_if([$1], [CXX], [
 	    ;;
 	esac
 	;;
-      netbsd* | netbsdelf*-gnu)
+      netbsd*)
 	;;
       *qnx* | *nto*)
         # QNX uses GNU C++, but need to define -shared option too, otherwise
@@ -4209,9 +4200,6 @@ m4_if([$1], [CXX], [
   cygwin* | mingw* | cegcc*)
     _LT_TAGVAR(export_symbols_cmds, $1)='$NM $libobjs $convenience | $global_symbol_pipe | $SED -e '\''/^[[BCDGRS]][[ ]]/s/.*[[ ]]\([[^ ]]*\)/\1 DATA/;/^.*[[ ]]__nm__/s/^.*[[ ]]__nm__\([[^ ]]*\)[[ ]][[^ ]]*/\1 DATA/;/^I[[ ]]/d;/^[[AITW]][[ ]]/s/.* //'\'' | sort | uniq > $export_symbols'
   ;;
-  linux* | k*bsd*-gnu)
-    _LT_TAGVAR(link_all_deplibs, $1)=no
-  ;;
   *)
     _LT_TAGVAR(export_symbols_cmds, $1)='$NM $libobjs $convenience | $global_symbol_pipe | $SED '\''s/.* //'\'' | sort | uniq > $export_symbols'
   ;;
@@ -4458,7 +4446,7 @@ _LT_EOF
       fi
       ;;
 
-    netbsd* | netbsdelf*-gnu)
+    netbsd*)
       if echo __ELF__ | $CC -E - | $GREP __ELF__ >/dev/null; then
 	_LT_TAGVAR(archive_cmds, $1)='$LD -Bshareable $libobjs $deplibs $linker_flags -o $lib'
 	wlarc=
@@ -4633,7 +4621,6 @@ _LT_EOF
 	if test "$aix_use_runtimelinking" = yes; then
 	  shared_flag="$shared_flag "'${wl}-G'
 	fi
-	_LT_TAGVAR(link_all_deplibs, $1)=no
       else
 	# not using gcc
 	if test "$host_cpu" = ia64; then
@@ -4872,7 +4859,7 @@ _LT_EOF
       _LT_TAGVAR(link_all_deplibs, $1)=yes
       ;;
 
-    netbsd* | netbsdelf*-gnu)
+    netbsd*)
       if echo __ELF__ | $CC -E - | $GREP __ELF__ >/dev/null; then
 	_LT_TAGVAR(archive_cmds, $1)='$LD -Bshareable -o $lib $libobjs $deplibs $linker_flags'  # a.out
       else
@@ -7875,15 +7862,15 @@ m4_define([lt_dict_filter],
 
 # Generated from ltversion.in.
 
-# serial 3012 ltversion.m4
+# serial 3017 ltversion.m4
 # This file is part of GNU Libtool
 
-m4_define([LT_PACKAGE_VERSION], [2.2.6])
-m4_define([LT_PACKAGE_REVISION], [1.3012])
+m4_define([LT_PACKAGE_VERSION], [2.2.6b])
+m4_define([LT_PACKAGE_REVISION], [1.3017])
 
 AC_DEFUN([LTVERSION_VERSION],
-[macro_version='2.2.6'
-macro_revision='1.3012'
+[macro_version='2.2.6b'
+macro_revision='1.3017'
 _LT_DECL(, macro_version, 0, [Which release of libtool.m4 was used?])
 _LT_DECL(, macro_revision, 0)
 ])
@@ -8049,16 +8036,14 @@ fi])
 # _PKG_CONFIG([VARIABLE], [COMMAND], [MODULES])
 # ---------------------------------------------
 m4_define([_PKG_CONFIG],
-[if test -n "$PKG_CONFIG"; then
-    if test -n "$$1"; then
-        pkg_cv_[]$1="$$1"
-    else
-        PKG_CHECK_EXISTS([$3],
-                         [pkg_cv_[]$1=`$PKG_CONFIG --[]$2 "$3" 2>/dev/null`],
-			 [pkg_failed=yes])
-    fi
-else
-	pkg_failed=untried
+[if test -n "$$1"; then
+    pkg_cv_[]$1="$$1"
+ elif test -n "$PKG_CONFIG"; then
+    PKG_CHECK_EXISTS([$3],
+                     [pkg_cv_[]$1=`$PKG_CONFIG --[]$2 "$3" 2>/dev/null`],
+		     [pkg_failed=yes])
+ else
+    pkg_failed=untried
 fi[]dnl
 ])# _PKG_CONFIG
 
@@ -8102,9 +8087,9 @@ See the pkg-config man page for more details.])
 if test $pkg_failed = yes; then
         _PKG_SHORT_ERRORS_SUPPORTED
         if test $_pkg_short_errors_supported = yes; then
-	        $1[]_PKG_ERRORS=`$PKG_CONFIG --short-errors --errors-to-stdout --print-errors "$2"`
+	        $1[]_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors "$2" 2>&1`
         else 
-	        $1[]_PKG_ERRORS=`$PKG_CONFIG --errors-to-stdout --print-errors "$2"`
+	        $1[]_PKG_ERRORS=`$PKG_CONFIG --print-errors "$2" 2>&1`
         fi
 	# Put the nasty error message in config.log where it belongs
 	echo "$$1[]_PKG_ERRORS" >&AS_MESSAGE_LOG_FD
@@ -8178,7 +8163,7 @@ dnl DEALINGS IN THE SOFTWARE.
 # See the "minimum version" comment for each macro you use to see what 
 # version you require.
 m4_defun([XORG_MACROS_VERSION],[
-m4_define([vers_have], [1.6.0])
+m4_define([vers_have], [1.10.0])
 m4_define([maj_have], m4_substr(vers_have, 0, m4_index(vers_have, [.])))
 m4_define([maj_needed], m4_substr([$1], 0, m4_index([$1], [.])))
 m4_if(m4_cmp(maj_have, maj_needed), 0,,
@@ -8246,9 +8231,12 @@ AC_SUBST(RAWCPPFLAGS)
 # on this OS - replaces *ManSuffix settings in old Imake *.cf per-os files.
 # Not sure if there's any better way than just hardcoding by OS name.
 # Override default settings by setting environment variables
+# Added MAN_SUBSTS in version 1.8
+# Added AC_PROG_SED in version 1.8
 
 AC_DEFUN([XORG_MANPAGE_SECTIONS],[
 AC_REQUIRE([AC_CANONICAL_HOST])
+AC_REQUIRE([AC_PROG_SED])
 
 if test x$APP_MAN_SUFFIX = x    ; then
     APP_MAN_SUFFIX=1
@@ -8317,7 +8305,58 @@ AC_SUBST([FILE_MAN_DIR])
 AC_SUBST([MISC_MAN_DIR])
 AC_SUBST([DRIVER_MAN_DIR])
 AC_SUBST([ADMIN_MAN_DIR])
+
+XORG_MAN_PAGE="X Version 11"
+AC_SUBST([XORG_MAN_PAGE])
+MAN_SUBSTS="\
+	-e 's|__vendorversion__|\"\$(PACKAGE_STRING)\" \"\$(XORG_MAN_PAGE)\"|' \
+	-e 's|__xorgversion__|\"\$(PACKAGE_STRING)\" \"\$(XORG_MAN_PAGE)\"|' \
+	-e 's|__xservername__|Xorg|g' \
+	-e 's|__xconfigfile__|xorg.conf|g' \
+	-e 's|__projectroot__|\$(prefix)|g' \
+	-e 's|__appmansuffix__|\$(APP_MAN_SUFFIX)|g' \
+	-e 's|__drivermansuffix__|\$(DRIVER_MAN_SUFFIX)|g' \
+	-e 's|__adminmansuffix__|\$(ADMIN_MAN_SUFFIX)|g' \
+	-e 's|__libmansuffix__|\$(LIB_MAN_SUFFIX)|g' \
+	-e 's|__miscmansuffix__|\$(MISC_MAN_SUFFIX)|g' \
+	-e 's|__filemansuffix__|\$(FILE_MAN_SUFFIX)|g'"
+AC_SUBST([MAN_SUBSTS])
+
 ]) # XORG_MANPAGE_SECTIONS
+
+# XORG_CHECK_SGML_DOCTOOLS([MIN-VERSION])
+# ------------------------
+# Minimum version: 1.7.0
+#
+# Defines the variable XORG_SGML_PATH containing the location of X11/defs.ent
+# provided by xorg-sgml-doctools, if installed.
+AC_DEFUN([XORG_CHECK_SGML_DOCTOOLS],[
+AC_MSG_CHECKING([for X.Org SGML entities m4_ifval([$1],[>= $1])])
+XORG_SGML_PATH=
+PKG_CHECK_EXISTS([xorg-sgml-doctools m4_ifval([$1],[>= $1])],
+    [XORG_SGML_PATH=`$PKG_CONFIG --variable=sgmlrootdir xorg-sgml-doctools`],
+    [m4_ifval([$1],[:],
+        [if test x"$cross_compiling" != x"yes" ; then
+            AC_CHECK_FILE([$prefix/share/sgml/X11/defs.ent],
+                          [XORG_SGML_PATH=$prefix/share/sgml])
+         fi])
+    ])
+
+# Define variables STYLESHEET_SRCDIR and XSL_STYLESHEET containing
+# the path and the name of the doc stylesheet
+if test "x$XORG_SGML_PATH" != "x" ; then
+   AC_MSG_RESULT([$XORG_SGML_PATH])
+   STYLESHEET_SRCDIR=$XORG_SGML_PATH/X11
+   XSL_STYLESHEET=$STYLESHEET_SRCDIR/xorg.xsl
+else
+   AC_MSG_RESULT([no])
+fi
+
+AC_SUBST(XORG_SGML_PATH)
+AC_SUBST(STYLESHEET_SRCDIR)
+AC_SUBST(XSL_STYLESHEET)
+AM_CONDITIONAL([HAVE_STYLESHEETS], [test "x$XSL_STYLESHEET" != "x"])
+]) # XORG_CHECK_SGML_DOCTOOLS
 
 # XORG_CHECK_LINUXDOC
 # -------------------
@@ -8328,23 +8367,14 @@ AC_SUBST([ADMIN_MAN_DIR])
 # Whether or not the necessary tools and files are found can be checked
 # with the AM_CONDITIONAL "BUILD_LINUXDOC"
 AC_DEFUN([XORG_CHECK_LINUXDOC],[
-if test x$XORG_SGML_PATH = x ; then
-    XORG_SGML_PATH=$prefix/share/sgml
-fi
-HAVE_DEFS_ENT=
-
-if test x"$cross_compiling" = x"yes" ; then
-  HAVE_DEFS_ENT=no
-else
-  AC_CHECK_FILE([$XORG_SGML_PATH/X11/defs.ent], [HAVE_DEFS_ENT=yes])
-fi
+AC_REQUIRE([XORG_CHECK_SGML_DOCTOOLS])
+AC_REQUIRE([XORG_WITH_PS2PDF])
 
 AC_PATH_PROG(LINUXDOC, linuxdoc)
-AC_PATH_PROG(PS2PDF, ps2pdf)
 
-AC_MSG_CHECKING([Whether to build documentation])
+AC_MSG_CHECKING([whether to build documentation])
 
-if test x$HAVE_DEFS_ENT != x && test x$LINUXDOC != x ; then
+if test x$XORG_SGML_PATH != x && test x$LINUXDOC != x ; then
    BUILDDOC=yes
 else
    BUILDDOC=no
@@ -8354,9 +8384,9 @@ AM_CONDITIONAL(BUILD_LINUXDOC, [test x$BUILDDOC = xyes])
 
 AC_MSG_RESULT([$BUILDDOC])
 
-AC_MSG_CHECKING([Whether to build pdf documentation])
+AC_MSG_CHECKING([whether to build pdf documentation])
 
-if test x$PS2PDF != x && test x$BUILD_PDFDOC != xno; then
+if test x$have_ps2pdf != xno && test x$BUILD_PDFDOC != xno; then
    BUILDPDFDOC=yes
 else
    BUILDPDFDOC=no
@@ -8366,7 +8396,7 @@ AM_CONDITIONAL(BUILD_PDFDOC, [test x$BUILDPDFDOC = xyes])
 
 AC_MSG_RESULT([$BUILDPDFDOC])
 
-MAKE_TEXT="SGML_SEARCH_PATH=$XORG_SGML_PATH GROFF_NO_SGR=y $LINUXDOC -B txt"
+MAKE_TEXT="SGML_SEARCH_PATH=$XORG_SGML_PATH GROFF_NO_SGR=y $LINUXDOC -B txt -f"
 MAKE_PS="SGML_SEARCH_PATH=$XORG_SGML_PATH $LINUXDOC -B latex --papersize=letter --output=ps"
 MAKE_PDF="$PS2PDF"
 MAKE_HTML="SGML_SEARCH_PATH=$XORG_SGML_PATH $LINUXDOC  -B html --split=0"
@@ -8386,48 +8416,44 @@ AC_SUBST(MAKE_HTML)
 # indicates whether the necessary tools and files are found and, if set,
 # $(MAKE_XXX) blah.sgml will produce blah.xxx.
 AC_DEFUN([XORG_CHECK_DOCBOOK],[
-if test x$XORG_SGML_PATH = x ; then
-    XORG_SGML_PATH=$prefix/share/sgml
-fi
-HAVE_DEFS_ENT=
+AC_REQUIRE([XORG_CHECK_SGML_DOCTOOLS])
+
 BUILDTXTDOC=no
 BUILDPDFDOC=no
 BUILDPSDOC=no
 BUILDHTMLDOC=no
-
-AC_CHECK_FILE([$XORG_SGML_PATH/X11/defs.ent], [HAVE_DEFS_ENT=yes])
 
 AC_PATH_PROG(DOCBOOKPS, docbook2ps)
 AC_PATH_PROG(DOCBOOKPDF, docbook2pdf)
 AC_PATH_PROG(DOCBOOKHTML, docbook2html)
 AC_PATH_PROG(DOCBOOKTXT, docbook2txt)
 
-AC_MSG_CHECKING([Whether to build text documentation])
-if test x$HAVE_DEFS_ENT != x && test x$DOCBOOKTXT != x &&
+AC_MSG_CHECKING([whether to build text documentation])
+if test x$XORG_SGML_PATH != x && test x$DOCBOOKTXT != x &&
    test x$BUILD_TXTDOC != xno; then
 	BUILDTXTDOC=yes
 fi
 AM_CONDITIONAL(BUILD_TXTDOC, [test x$BUILDTXTDOC = xyes])
 AC_MSG_RESULT([$BUILDTXTDOC])
 
-AC_MSG_CHECKING([Whether to build PDF documentation])
-if test x$HAVE_DEFS_ENT != x && test x$DOCBOOKPDF != x &&
+AC_MSG_CHECKING([whether to build PDF documentation])
+if test x$XORG_SGML_PATH != x && test x$DOCBOOKPDF != x &&
    test x$BUILD_PDFDOC != xno; then
 	BUILDPDFDOC=yes
 fi
 AM_CONDITIONAL(BUILD_PDFDOC, [test x$BUILDPDFDOC = xyes])
 AC_MSG_RESULT([$BUILDPDFDOC])
 
-AC_MSG_CHECKING([Whether to build PostScript documentation])
-if test x$HAVE_DEFS_ENT != x && test x$DOCBOOKPS != x &&
+AC_MSG_CHECKING([whether to build PostScript documentation])
+if test x$XORG_SGML_PATH != x && test x$DOCBOOKPS != x &&
    test x$BUILD_PSDOC != xno; then
 	BUILDPSDOC=yes
 fi
 AM_CONDITIONAL(BUILD_PSDOC, [test x$BUILDPSDOC = xyes])
 AC_MSG_RESULT([$BUILDPSDOC])
 
-AC_MSG_CHECKING([Whether to build HTML documentation])
-if test x$HAVE_DEFS_ENT != x && test x$DOCBOOKHTML != x &&
+AC_MSG_CHECKING([whether to build HTML documentation])
+if test x$XORG_SGML_PATH != x && test x$DOCBOOKHTML != x &&
    test x$BUILD_HTMLDOC != xno; then
 	BUILDHTMLDOC=yes
 fi
@@ -8445,7 +8471,7 @@ AC_SUBST(MAKE_PDF)
 AC_SUBST(MAKE_HTML)
 ]) # XORG_CHECK_DOCBOOK
 
-# XORG_WITH_XMLTO
+# XORG_WITH_XMLTO([MIN-VERSION])
 # ----------------
 # Minimum version: 1.5.0
 #
@@ -8461,6 +8487,10 @@ AC_SUBST(MAKE_HTML)
 #		returns the path set by the user in the environment
 # --with-xmlto:	'yes' user instructs the module to use xmlto
 #		'no' user instructs the module not to use xmlto
+#
+# Added in version 1.10.0
+# HAVE_XMLTO_TEXT: used in makefiles to conditionally generate text documentation
+#                  xmlto for text output requires either lynx, links, or w3m browsers
 #
 # If the user sets the value of XMLTO, AC_PATH_PROG skips testing the path.
 #
@@ -8493,10 +8523,37 @@ elif test "x$use_xmlto" = x"no" ; then
 else
    AC_MSG_ERROR([--with-xmlto expects 'yes' or 'no'])
 fi
-AM_CONDITIONAL([HAVE_XMLTO], [test "$have_xmlto" = yes])
-]) # XORG_CHECK_XMLTO
 
-# XORG_WITH_ASCIIDOC
+# Test for a minimum version of xmlto, if provided.
+m4_ifval([$1],
+[if test "$have_xmlto" = yes; then
+    # scrape the xmlto version
+    AC_MSG_CHECKING([the xmlto version])
+    xmlto_version=`$XMLTO --version 2>/dev/null | cut -d' ' -f3`
+    AC_MSG_RESULT([$xmlto_version])
+    AS_VERSION_COMPARE([$xmlto_version], [$1],
+        [if test "x$use_xmlto" = xauto; then
+            AC_MSG_WARN([xmlto version $xmlto_version found, but $1 needed])
+            have_xmlto=no
+        else
+            AC_MSG_ERROR([xmlto version $xmlto_version found, but $1 needed])
+        fi])
+fi])
+
+# Test for the ability of xmlto to generate a text target
+have_xmlto_text=no
+cat > conftest.xml << "EOF"
+EOF
+AS_IF([test "$have_xmlto" = yes],
+      [AS_IF([$XMLTO --skip-validation txt conftest.xml >/dev/null 2>&1],
+             [have_xmlto_text=yes],
+             [AC_MSG_WARN([xmlto cannot generate text format, this format skipped])])])
+rm -f conftest.xml
+AM_CONDITIONAL([HAVE_XMLTO_TEXT], [test $have_xmlto_text = yes])
+AM_CONDITIONAL([HAVE_XMLTO], [test "$have_xmlto" = yes])
+]) # XORG_WITH_XMLTO
+
+# XORG_WITH_ASCIIDOC([MIN-VERSION])
 # ----------------
 # Minimum version: 1.5.0
 #
@@ -8544,11 +8601,25 @@ elif test "x$use_asciidoc" = x"no" ; then
 else
    AC_MSG_ERROR([--with-asciidoc expects 'yes' or 'no'])
 fi
+m4_ifval([$1],
+[if test "$have_asciidoc" = yes; then
+    # scrape the asciidoc version
+    AC_MSG_CHECKING([the asciidoc version])
+    asciidoc_version=`$ASCIIDOC --version 2>/dev/null | cut -d' ' -f2`
+    AC_MSG_RESULT([$asciidoc_version])
+    AS_VERSION_COMPARE([$asciidoc_version], [$1],
+        [if test "x$use_asciidoc" = xauto; then
+            AC_MSG_WARN([asciidoc version $asciidoc_version found, but $1 needed])
+            have_asciidoc=no
+        else
+            AC_MSG_ERROR([asciidoc version $asciidoc_version found, but $1 needed])
+        fi])
+fi])
 AM_CONDITIONAL([HAVE_ASCIIDOC], [test "$have_asciidoc" = yes])
-]) # XORG_CHECK_ASCIIDOC
+]) # XORG_WITH_ASCIIDOC
 
-# XORG_WITH_DOXYGEN
-# ----------------
+# XORG_WITH_DOXYGEN([MIN-VERSION])
+# --------------------------------
 # Minimum version: 1.5.0
 #
 # Documentation tools are not always available on all platforms and sometimes
@@ -8595,8 +8666,22 @@ elif test "x$use_doxygen" = x"no" ; then
 else
    AC_MSG_ERROR([--with-doxygen expects 'yes' or 'no'])
 fi
+m4_ifval([$1],
+[if test "$have_doxygen" = yes; then
+    # scrape the doxygen version
+    AC_MSG_CHECKING([the doxygen version])
+    doxygen_version=`$DOXYGEN --version 2>/dev/null`
+    AC_MSG_RESULT([$doxygen_version])
+    AS_VERSION_COMPARE([$doxygen_version], [$1],
+        [if test "x$use_doxygen" = xauto; then
+            AC_MSG_WARN([doxygen version $doxygen_version found, but $1 needed])
+            have_doxygen=no
+        else
+            AC_MSG_ERROR([doxygen version $doxygen_version found, but $1 needed])
+        fi])
+fi])
 AM_CONDITIONAL([HAVE_DOXYGEN], [test "$have_doxygen" = yes])
-]) # XORG_CHECK_DOXYGEN
+]) # XORG_WITH_DOXYGEN
 
 # XORG_WITH_GROFF
 # ----------------
@@ -8616,6 +8701,12 @@ AM_CONDITIONAL([HAVE_DOXYGEN], [test "$have_doxygen" = yes])
 #		 returns the path set by the user in the environment
 # --with-groff:	 'yes' user instructs the module to use groff
 #		 'no' user instructs the module not to use groff
+#
+# Added in version 1.9.0:
+# HAVE_GROFF_HTML: groff has dependencies to output HTML format:
+#		   pnmcut pnmcrop pnmtopng pnmtops from the netpbm package.
+#		   psselect from the psutils package.
+#		   the ghostcript package. Refer to the grohtml man pages
 #
 # If the user sets the value of GROFF, AC_PATH_PROG skips testing the path.
 #
@@ -8656,6 +8747,7 @@ elif test "x$use_groff" = x"no" ; then
 else
    AC_MSG_ERROR([--with-groff expects 'yes' or 'no'])
 fi
+
 # We have groff, test for the presence of the macro packages
 if test "x$have_groff" = x"yes"; then
     AC_MSG_CHECKING([for ${GROFF} -ms macros])
@@ -8673,9 +8765,25 @@ if test "x$have_groff" = x"yes"; then
     fi
     AC_MSG_RESULT([$groff_mm_works])
 fi
+
+# We have groff, test for HTML dependencies, one command per package
+if test "x$have_groff" = x"yes"; then
+   AC_PATH_PROGS(GS_PATH, [gs gswin32c])
+   AC_PATH_PROG(PNMTOPNG_PATH, [pnmtopng])
+   AC_PATH_PROG(PSSELECT_PATH, [psselect])
+   if test "x$GS_PATH" != "x" -a "x$PNMTOPNG_PATH" != "x" -a "x$PSSELECT_PATH" != "x"; then
+      have_groff_html=yes
+   else
+      have_groff_html=no
+      AC_MSG_WARN([grohtml dependencies not found - HTML Documentation skipped. Refer to grohtml man pages])
+   fi
+fi
+
+# Set Automake conditionals for Makefiles
 AM_CONDITIONAL([HAVE_GROFF], [test "$have_groff" = yes])
 AM_CONDITIONAL([HAVE_GROFF_MS], [test "$groff_ms_works" = yes])
 AM_CONDITIONAL([HAVE_GROFF_MM], [test "$groff_mm_works" = yes])
+AM_CONDITIONAL([HAVE_GROFF_HTML], [test "$have_groff_html" = yes])
 ]) # XORG_WITH_GROFF
 
 # XORG_WITH_FOP
@@ -8940,38 +9048,69 @@ AC_SUBST([XTMALLOC_ZERO_CFLAGS])
 # ----------------
 # Minimum version: 1.1.0
 #
-# Sets up flags for source checkers such as lint and sparse if --with-lint
-# is specified.   (Use --with-lint=sparse for sparse.)
-# Sets $LINT to name of source checker passed with --with-lint (default: lint)
-# Sets $LINT_FLAGS to flags to pass to source checker
-# Sets LINT automake conditional if enabled (default: disabled)
+# This macro enables the use of a tool that flags some suspicious and
+# non-portable constructs (likely to be bugs) in C language source code.
+# It will attempt to locate the tool and use appropriate options.
+# There are various lint type tools on different platforms.
+#
+# Interface to module:
+# LINT:		returns the path to the tool found on the platform
+#		or the value set to LINT on the configure cmd line
+#		also an Automake conditional
+# LINT_FLAGS:	an Automake variable with appropriate flags
+#
+# --with-lint:	'yes' user instructs the module to use lint
+#		'no' user instructs the module not to use lint (default)
+#
+# If the user sets the value of LINT, AC_PATH_PROG skips testing the path.
+# If the user sets the value of LINT_FLAGS, they are used verbatim.
 #
 AC_DEFUN([XORG_WITH_LINT],[
 
-# Allow checking code with lint, sparse, etc.
+AC_ARG_VAR([LINT], [Path to a lint-style command])
+AC_ARG_VAR([LINT_FLAGS], [Flags for the lint-style command])
 AC_ARG_WITH(lint, [AS_HELP_STRING([--with-lint],
 		[Use a lint-style source code checker (default: disabled)])],
 		[use_lint=$withval], [use_lint=no])
-if test "x$use_lint" = "xyes" ; then
-	LINT="lint"
+
+# Obtain platform specific info like program name and options
+# The lint program on FreeBSD and NetBSD is different from the one on Solaris
+case $host_os in
+  *linux* | *openbsd* | kfreebsd*-gnu | darwin* | cygwin*)
+	lint_name=splint
+	lint_options="-badflag"
+	;;
+  *freebsd* | *netbsd*)
+	lint_name=lint
+	lint_options="-u -b"
+	;;
+  *solaris*)
+	lint_name=lint
+	lint_options="-u -b -h -erroff=E_INDISTING_FROM_TRUNC2"
+	;;
+esac
+
+# Test for the presence of the program (either guessed by the code or spelled out by the user)
+if test "x$use_lint" = x"yes" ; then
+   AC_PATH_PROG([LINT], [$lint_name])
+   if test "x$LINT" = "x"; then
+        AC_MSG_ERROR([--with-lint=yes specified but lint-style tool not found in PATH])
+   fi
+elif test "x$use_lint" = x"no" ; then
+   if test "x$LINT" != "x"; then
+      AC_MSG_WARN([ignoring LINT environment variable since --with-lint=no was specified])
+   fi
 else
-	LINT="$use_lint"
-fi
-if test "x$LINT_FLAGS" = "x" -a "x$LINT" != "xno" ; then
-    case $LINT in
-	lint|*/lint)
-	    case $host_os in
-		solaris*)
-			LINT_FLAGS="-u -b -h -erroff=E_INDISTING_FROM_TRUNC2"
-			;;
-	    esac
-	    ;;
-    esac
+   AC_MSG_ERROR([--with-lint expects 'yes' or 'no'. Use LINT variable to specify path.])
 fi
 
-AC_SUBST(LINT)
-AC_SUBST(LINT_FLAGS)
-AM_CONDITIONAL(LINT, [test x$LINT != xno])
+# User supplied flags override default flags
+if test "x$LINT_FLAGS" != "x"; then
+   lint_options=$LINT_FLAGS
+fi
+
+AC_SUBST([LINT_FLAGS],[$lint_options])
+AM_CONDITIONAL(LINT, [test "x$LINT" != x])
 
 ]) # XORG_WITH_LINT
 
@@ -8981,28 +9120,29 @@ AM_CONDITIONAL(LINT, [test x$LINT != xno])
 #
 # Sets up flags for building lint libraries for checking programs that call
 # functions in the library.
-# Disabled by default, enable with --enable-lint-library
-# Sets: 
-#	@LINTLIB@		- name of lint library file to make
-#	MAKE_LINT_LIB		- automake conditional
 #
+# Interface to module:
+# LINTLIB		- Automake variable with the name of lint library file to make
+# MAKE_LINT_LIB		- Automake conditional
+#
+# --enable-lint-library:  - 'yes' user instructs the module to created a lint library
+#			  - 'no' user instructs the module not to create a lint library (default)
 
 AC_DEFUN([XORG_LINT_LIBRARY],[
 AC_REQUIRE([XORG_WITH_LINT])
-# Build lint "library" for more indepth checks of programs calling this library
 AC_ARG_ENABLE(lint-library, [AS_HELP_STRING([--enable-lint-library],
 	[Create lint library (default: disabled)])],
 	[make_lint_lib=$enableval], [make_lint_lib=no])
-if test "x$make_lint_lib" != "xno" ; then
-	if test "x$LINT" = "xno" ; then
-		AC_MSG_ERROR([Cannot make lint library without --with-lint])
-	fi
-	if test "x$make_lint_lib" = "xyes" ; then
-		LINTLIB=llib-l$1.ln
-	else
-		LINTLIB=$make_lint_lib
-	fi
+
+if test "x$make_lint_lib" = x"yes" ; then
+   LINTLIB=llib-l$1.ln
+   if test "x$LINT" = "x"; then
+        AC_MSG_ERROR([Cannot make lint library without --with-lint])
+   fi
+elif test "x$make_lint_lib" != x"no" ; then
+   AC_MSG_ERROR([--enable-lint-library expects 'yes' or 'no'.])
 fi
+
 AC_SUBST(LINTLIB)
 AM_CONDITIONAL(MAKE_LINT_LIB, [test x$make_lint_lib != xno])
 
@@ -9015,7 +9155,7 @@ AM_CONDITIONAL(MAKE_LINT_LIB, [test x$make_lint_lib != xno])
 # Defines CWARNFLAGS to enable C compiler warnings.
 #
 AC_DEFUN([XORG_CWARNFLAGS], [
-AC_REQUIRE([AC_PROG_CC])
+AC_REQUIRE([AC_PROG_CC_C99])
 if  test "x$GCC" = xyes ; then
     CWARNFLAGS="-Wall -Wpointer-arith -Wstrict-prototypes -Wmissing-prototypes \
 -Wmissing-declarations -Wnested-externs -fno-strict-aliasing \
@@ -9032,7 +9172,6 @@ else
     fi
 fi
 AC_SUBST(CWARNFLAGS)
-m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 ]) # XORG_CWARNFLAGS
 
 # XORG_STRICT_OPTION
@@ -9041,7 +9180,7 @@ m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 #
 # Add configure option to enable strict compilation
 AC_DEFUN([XORG_STRICT_OPTION], [
-AC_REQUIRE([AC_PROG_CC])
+# If the module's configure.ac calls AC_PROG_CC later on, CC gets set to C89
 AC_REQUIRE([AC_PROG_CC_C99])
 AC_REQUIRE([XORG_CWARNFLAGS])
 
@@ -9071,12 +9210,15 @@ AC_SUBST([CWARNFLAGS])
 # Defines default options for X.Org modules.
 #
 AC_DEFUN([XORG_DEFAULT_OPTIONS], [
+AC_REQUIRE([AC_PROG_INSTALL])
 XORG_CWARNFLAGS
 XORG_STRICT_OPTION
 XORG_RELEASE_VERSION
 XORG_CHANGELOG
 XORG_INSTALL
 XORG_MANPAGE_SECTIONS
+m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])],
+    [AC_SUBST([AM_DEFAULT_VERBOSITY], [1])])
 ]) # XORG_DEFAULT_OPTIONS
 
 # XORG_INSTALL()
@@ -9122,22 +9264,9 @@ dnl
 
 # XORG_RELEASE_VERSION
 # --------------------
-# Adds --with/without-release-string and changes the PACKAGE and
-# PACKAGE_TARNAME to use "$PACKAGE{_TARNAME}-$RELEASE_VERSION".  If
-# no option is given, PACKAGE and PACKAGE_TARNAME are unchanged.  Also
-# defines PACKAGE_VERSION_{MAJOR,MINOR,PATCHLEVEL} for modules to use.
+# Defines PACKAGE_VERSION_{MAJOR,MINOR,PATCHLEVEL} for modules to use.
  
 AC_DEFUN([XORG_RELEASE_VERSION],[
-	AC_ARG_WITH(release-version,
-			AS_HELP_STRING([--with-release-version=STRING],
-				[Use release version string in package name]),
-			[RELEASE_VERSION="$withval"],
-			[RELEASE_VERSION=""])
-	if test "x$RELEASE_VERSION" != "x"; then
-		PACKAGE="$PACKAGE-$RELEASE_VERSION"
-		PACKAGE_TARNAME="$PACKAGE_TARNAME-$RELEASE_VERSION"
-		AC_MSG_NOTICE([Building with package name set to $PACKAGE])
-	fi
 	AC_DEFINE_UNQUOTED([PACKAGE_VERSION_MAJOR],
 		[`echo $PACKAGE_VERSION | cut -d . -f 1`],
 		[Major version of this package])
@@ -9204,8 +9333,9 @@ dnl
 # is defined, then add $1 to $REQUIRED_MODULES.
 
 AC_DEFUN([XORG_DRIVER_CHECK_EXT],[
+	AC_REQUIRE([PKG_PROG_PKG_CONFIG])
 	SAVE_CFLAGS="$CFLAGS"
-	CFLAGS="$CFLAGS -I`pkg-config --variable=sdkdir xorg-server`"
+	CFLAGS="$CFLAGS -I`$PKG_CONFIG --variable=sdkdir xorg-server`"
 	AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
 #include "xorg-server.h"
 #if !defined $1
@@ -9234,10 +9364,10 @@ AC_DEFUN([XORG_DRIVER_CHECK_EXT],[
 # generated from the m4 files accompanying Automake X.Y.
 # (This private macro should not be called outside this file.)
 AC_DEFUN([AM_AUTOMAKE_VERSION],
-[am__api_version='1.10'
+[am__api_version='1.11'
 dnl Some users find AM_AUTOMAKE_VERSION and mistake it for a way to
 dnl require some minimum version.  Point them to the right macro.
-m4_if([$1], [1.10.2], [],
+m4_if([$1], [1.11.1], [],
       [AC_FATAL([Do not call $0, use AM_INIT_AUTOMAKE([$1]).])])dnl
 ])
 
@@ -9253,7 +9383,7 @@ m4_define([_AM_AUTOCONF_VERSION], [])
 # Call AM_AUTOMAKE_VERSION and AM_AUTOMAKE_VERSION so they can be traced.
 # This function is AC_REQUIREd by AM_INIT_AUTOMAKE.
 AC_DEFUN([AM_SET_CURRENT_AUTOMAKE_VERSION],
-[AM_AUTOMAKE_VERSION([1.10.2])dnl
+[AM_AUTOMAKE_VERSION([1.11.1])dnl
 m4_ifndef([AC_AUTOCONF_VERSION],
   [m4_copy([m4_PACKAGE_VERSION], [AC_AUTOCONF_VERSION])])dnl
 _AM_AUTOCONF_VERSION(m4_defn([AC_AUTOCONF_VERSION]))])
@@ -9313,14 +9443,14 @@ am_aux_dir=`cd $ac_aux_dir && pwd`
 
 # AM_CONDITIONAL                                            -*- Autoconf -*-
 
-# Copyright (C) 1997, 2000, 2001, 2003, 2004, 2005, 2006
+# Copyright (C) 1997, 2000, 2001, 2003, 2004, 2005, 2006, 2008
 # Free Software Foundation, Inc.
 #
 # This file is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
 # with or without modifications, as long as this notice is preserved.
 
-# serial 8
+# serial 9
 
 # AM_CONDITIONAL(NAME, SHELL-CONDITION)
 # -------------------------------------
@@ -9333,6 +9463,7 @@ AC_SUBST([$1_TRUE])dnl
 AC_SUBST([$1_FALSE])dnl
 _AM_SUBST_NOTMAKE([$1_TRUE])dnl
 _AM_SUBST_NOTMAKE([$1_FALSE])dnl
+m4_define([_AM_COND_VALUE_$1], [$2])dnl
 if $2; then
   $1_TRUE=
   $1_FALSE='#'
@@ -9346,14 +9477,14 @@ AC_CONFIG_COMMANDS_PRE(
 Usually this means the macro was only invoked conditionally.]])
 fi])])
 
-# Copyright (C) 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006
+# Copyright (C) 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2009
 # Free Software Foundation, Inc.
 #
 # This file is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
 # with or without modifications, as long as this notice is preserved.
 
-# serial 9
+# serial 10
 
 # There are a few dirty hacks below to avoid letting `AC_PROG_CC' be
 # written in clear, in which case automake, when reading aclocal.m4,
@@ -9410,6 +9541,16 @@ AC_CACHE_CHECK([dependency style of $depcc],
   if test "$am_compiler_list" = ""; then
      am_compiler_list=`sed -n ['s/^#*\([a-zA-Z0-9]*\))$/\1/p'] < ./depcomp`
   fi
+  am__universal=false
+  m4_case([$1], [CC],
+    [case " $depcc " in #(
+     *\ -arch\ *\ -arch\ *) am__universal=true ;;
+     esac],
+    [CXX],
+    [case " $depcc " in #(
+     *\ -arch\ *\ -arch\ *) am__universal=true ;;
+     esac])
+
   for depmode in $am_compiler_list; do
     # Setup a source with many dependencies, because some compilers
     # like to wrap large dependency lists on column 80 (with \), and
@@ -9427,7 +9568,17 @@ AC_CACHE_CHECK([dependency style of $depcc],
     done
     echo "${am__include} ${am__quote}sub/conftest.Po${am__quote}" > confmf
 
+    # We check with `-c' and `-o' for the sake of the "dashmstdout"
+    # mode.  It turns out that the SunPro C++ compiler does not properly
+    # handle `-M -o', and we need to detect this.  Also, some Intel
+    # versions had trouble with output in subdirs
+    am__obj=sub/conftest.${OBJEXT-o}
+    am__minus_obj="-o $am__obj"
     case $depmode in
+    gcc)
+      # This depmode causes a compiler race in universal mode.
+      test "$am__universal" = false || continue
+      ;;
     nosideeffect)
       # after this tag, mechanisms are not by side-effect, so they'll
       # only be used when explicitly requested
@@ -9437,19 +9588,23 @@ AC_CACHE_CHECK([dependency style of $depcc],
 	break
       fi
       ;;
+    msvisualcpp | msvcmsys)
+      # This compiler won't grok `-c -o', but also, the minuso test has
+      # not run yet.  These depmodes are late enough in the game, and
+      # so weak that their functioning should not be impacted.
+      am__obj=conftest.${OBJEXT-o}
+      am__minus_obj=
+      ;;
     none) break ;;
     esac
-    # We check with `-c' and `-o' for the sake of the "dashmstdout"
-    # mode.  It turns out that the SunPro C++ compiler does not properly
-    # handle `-M -o', and we need to detect this.
     if depmode=$depmode \
-       source=sub/conftest.c object=sub/conftest.${OBJEXT-o} \
+       source=sub/conftest.c object=$am__obj \
        depfile=sub/conftest.Po tmpdepfile=sub/conftest.TPo \
-       $SHELL ./depcomp $depcc -c -o sub/conftest.${OBJEXT-o} sub/conftest.c \
+       $SHELL ./depcomp $depcc -c $am__minus_obj sub/conftest.c \
          >/dev/null 2>conftest.err &&
        grep sub/conftst1.h sub/conftest.Po > /dev/null 2>&1 &&
        grep sub/conftst6.h sub/conftest.Po > /dev/null 2>&1 &&
-       grep sub/conftest.${OBJEXT-o} sub/conftest.Po > /dev/null 2>&1 &&
+       grep $am__obj sub/conftest.Po > /dev/null 2>&1 &&
        ${MAKE-make} -s -f confmf > /dev/null 2>&1; then
       # icc doesn't choke on unknown options, it will just issue warnings
       # or remarks (even with -Werror).  So we grep stderr for any message
@@ -9584,28 +9739,16 @@ AC_DEFUN([AM_OUTPUT_DEPENDENCY_COMMANDS],
      [AMDEP_TRUE="$AMDEP_TRUE" ac_aux_dir="$ac_aux_dir"])
 ])
 
-# Copyright (C) 1996, 1997, 2000, 2001, 2003, 2005
-# Free Software Foundation, Inc.
-#
-# This file is free software; the Free Software Foundation
-# gives unlimited permission to copy and/or distribute it,
-# with or without modifications, as long as this notice is preserved.
-
-# serial 8
-
-# AM_CONFIG_HEADER is obsolete.  It has been replaced by AC_CONFIG_HEADERS.
-AU_DEFUN([AM_CONFIG_HEADER], [AC_CONFIG_HEADERS($@)])
-
 # Do all the work for Automake.                             -*- Autoconf -*-
 
 # Copyright (C) 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004,
-# 2005, 2006, 2008 Free Software Foundation, Inc.
+# 2005, 2006, 2008, 2009 Free Software Foundation, Inc.
 #
 # This file is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
 # with or without modifications, as long as this notice is preserved.
 
-# serial 13
+# serial 16
 
 # This macro actually does too much.  Some checks are only needed if
 # your package does certain things.  But this isn't really a big deal.
@@ -9622,7 +9765,7 @@ AU_DEFUN([AM_CONFIG_HEADER], [AC_CONFIG_HEADERS($@)])
 # arguments mandatory, and then we can depend on a new Autoconf
 # release and drop the old call support.
 AC_DEFUN([AM_INIT_AUTOMAKE],
-[AC_PREREQ([2.60])dnl
+[AC_PREREQ([2.62])dnl
 dnl Autoconf wants to disallow AM_ names.  We explicitly allow
 dnl the ones we care about.
 m4_pattern_allow([^AM_[A-Z]+FLAGS$])dnl
@@ -9673,8 +9816,8 @@ AM_MISSING_PROG(AUTOCONF, autoconf)
 AM_MISSING_PROG(AUTOMAKE, automake-${am__api_version})
 AM_MISSING_PROG(AUTOHEADER, autoheader)
 AM_MISSING_PROG(MAKEINFO, makeinfo)
-AM_PROG_INSTALL_SH
-AM_PROG_INSTALL_STRIP
+AC_REQUIRE([AM_PROG_INSTALL_SH])dnl
+AC_REQUIRE([AM_PROG_INSTALL_STRIP])dnl
 AC_REQUIRE([AM_PROG_MKDIR_P])dnl
 # We need awk for the "check" target.  The system "awk" is bad on
 # some platforms.
@@ -9682,23 +9825,36 @@ AC_REQUIRE([AC_PROG_AWK])dnl
 AC_REQUIRE([AC_PROG_MAKE_SET])dnl
 AC_REQUIRE([AM_SET_LEADING_DOT])dnl
 _AM_IF_OPTION([tar-ustar], [_AM_PROG_TAR([ustar])],
-              [_AM_IF_OPTION([tar-pax], [_AM_PROG_TAR([pax])],
-	      		     [_AM_PROG_TAR([v7])])])
+	      [_AM_IF_OPTION([tar-pax], [_AM_PROG_TAR([pax])],
+			     [_AM_PROG_TAR([v7])])])
 _AM_IF_OPTION([no-dependencies],,
 [AC_PROVIDE_IFELSE([AC_PROG_CC],
-                  [_AM_DEPENDENCIES(CC)],
-                  [define([AC_PROG_CC],
-                          defn([AC_PROG_CC])[_AM_DEPENDENCIES(CC)])])dnl
+		  [_AM_DEPENDENCIES(CC)],
+		  [define([AC_PROG_CC],
+			  defn([AC_PROG_CC])[_AM_DEPENDENCIES(CC)])])dnl
 AC_PROVIDE_IFELSE([AC_PROG_CXX],
-                  [_AM_DEPENDENCIES(CXX)],
-                  [define([AC_PROG_CXX],
-                          defn([AC_PROG_CXX])[_AM_DEPENDENCIES(CXX)])])dnl
+		  [_AM_DEPENDENCIES(CXX)],
+		  [define([AC_PROG_CXX],
+			  defn([AC_PROG_CXX])[_AM_DEPENDENCIES(CXX)])])dnl
 AC_PROVIDE_IFELSE([AC_PROG_OBJC],
-                  [_AM_DEPENDENCIES(OBJC)],
-                  [define([AC_PROG_OBJC],
-                          defn([AC_PROG_OBJC])[_AM_DEPENDENCIES(OBJC)])])dnl
+		  [_AM_DEPENDENCIES(OBJC)],
+		  [define([AC_PROG_OBJC],
+			  defn([AC_PROG_OBJC])[_AM_DEPENDENCIES(OBJC)])])dnl
 ])
+_AM_IF_OPTION([silent-rules], [AC_REQUIRE([AM_SILENT_RULES])])dnl
+dnl The `parallel-tests' driver may need to know about EXEEXT, so add the
+dnl `am__EXEEXT' conditional if _AM_COMPILER_EXEEXT was seen.  This macro
+dnl is hooked onto _AC_COMPILER_EXEEXT early, see below.
+AC_CONFIG_COMMANDS_PRE(dnl
+[m4_provide_if([_AM_COMPILER_EXEEXT],
+  [AM_CONDITIONAL([am__EXEEXT], [test -n "$EXEEXT"])])])dnl
 ])
+
+dnl Hook into `_AC_COMPILER_EXEEXT' early to learn its expansion.  Do not
+dnl add the conditional right here, as _AC_COMPILER_EXEEXT may be further
+dnl mangled by Autoconf and run in a shell conditional statement.
+m4_define([_AC_COMPILER_EXEEXT],
+m4_defn([_AC_COMPILER_EXEEXT])[m4_provide([_AM_COMPILER_EXEEXT])])
 
 
 # When config.status generates a header, we must update the stamp-h file.
@@ -9722,7 +9878,7 @@ for _am_header in $config_headers :; do
 done
 echo "timestamp for $_am_arg" >`AS_DIRNAME(["$_am_arg"])`/stamp-h[]$_am_stamp_count])
 
-# Copyright (C) 2001, 2003, 2005  Free Software Foundation, Inc.
+# Copyright (C) 2001, 2003, 2005, 2008  Free Software Foundation, Inc.
 #
 # This file is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
@@ -9733,7 +9889,14 @@ echo "timestamp for $_am_arg" >`AS_DIRNAME(["$_am_arg"])`/stamp-h[]$_am_stamp_co
 # Define $install_sh.
 AC_DEFUN([AM_PROG_INSTALL_SH],
 [AC_REQUIRE([AM_AUX_DIR_EXPAND])dnl
-install_sh=${install_sh-"\$(SHELL) $am_aux_dir/install-sh"}
+if test x"${install_sh}" != xset; then
+  case $am_aux_dir in
+  *\ * | *\	*)
+    install_sh="\${SHELL} '$am_aux_dir/install-sh'" ;;
+  *)
+    install_sh="\${SHELL} $am_aux_dir/install-sh"
+  esac
+fi
 AC_SUBST(install_sh)])
 
 # Copyright (C) 2003, 2005  Free Software Foundation, Inc.
@@ -9760,27 +9923,38 @@ AC_SUBST([am__leading_dot])])
 # Add --enable-maintainer-mode option to configure.         -*- Autoconf -*-
 # From Jim Meyering
 
-# Copyright (C) 1996, 1998, 2000, 2001, 2002, 2003, 2004, 2005
+# Copyright (C) 1996, 1998, 2000, 2001, 2002, 2003, 2004, 2005, 2008
 # Free Software Foundation, Inc.
 #
 # This file is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
 # with or without modifications, as long as this notice is preserved.
 
-# serial 4
+# serial 5
 
+# AM_MAINTAINER_MODE([DEFAULT-MODE])
+# ----------------------------------
+# Control maintainer-specific portions of Makefiles.
+# Default is to disable them, unless `enable' is passed literally.
+# For symmetry, `disable' may be passed as well.  Anyway, the user
+# can override the default with the --enable/--disable switch.
 AC_DEFUN([AM_MAINTAINER_MODE],
-[AC_MSG_CHECKING([whether to enable maintainer-specific portions of Makefiles])
-  dnl maintainer-mode is disabled by default
-  AC_ARG_ENABLE(maintainer-mode,
-[  --enable-maintainer-mode  enable make rules and dependencies not useful
+[m4_case(m4_default([$1], [disable]),
+       [enable], [m4_define([am_maintainer_other], [disable])],
+       [disable], [m4_define([am_maintainer_other], [enable])],
+       [m4_define([am_maintainer_other], [enable])
+        m4_warn([syntax], [unexpected argument to AM@&t@_MAINTAINER_MODE: $1])])
+AC_MSG_CHECKING([whether to am_maintainer_other maintainer-specific portions of Makefiles])
+  dnl maintainer-mode's default is 'disable' unless 'enable' is passed
+  AC_ARG_ENABLE([maintainer-mode],
+[  --][am_maintainer_other][-maintainer-mode  am_maintainer_other make rules and dependencies not useful
 			  (and sometimes confusing) to the casual installer],
-      USE_MAINTAINER_MODE=$enableval,
-      USE_MAINTAINER_MODE=no)
+      [USE_MAINTAINER_MODE=$enableval],
+      [USE_MAINTAINER_MODE=]m4_if(am_maintainer_other, [enable], [no], [yes]))
   AC_MSG_RESULT([$USE_MAINTAINER_MODE])
-  AM_CONDITIONAL(MAINTAINER_MODE, [test $USE_MAINTAINER_MODE = yes])
+  AM_CONDITIONAL([MAINTAINER_MODE], [test $USE_MAINTAINER_MODE = yes])
   MAINT=$MAINTAINER_MODE_TRUE
-  AC_SUBST(MAINT)dnl
+  AC_SUBST([MAINT])dnl
 ]
 )
 
@@ -9788,13 +9962,13 @@ AU_DEFUN([jm_MAINTAINER_MODE], [AM_MAINTAINER_MODE])
 
 # Check to see how 'make' treats includes.	            -*- Autoconf -*-
 
-# Copyright (C) 2001, 2002, 2003, 2005  Free Software Foundation, Inc.
+# Copyright (C) 2001, 2002, 2003, 2005, 2009  Free Software Foundation, Inc.
 #
 # This file is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
 # with or without modifications, as long as this notice is preserved.
 
-# serial 3
+# serial 4
 
 # AM_MAKE_INCLUDE()
 # -----------------
@@ -9803,7 +9977,7 @@ AC_DEFUN([AM_MAKE_INCLUDE],
 [am_make=${MAKE-make}
 cat > confinc << 'END'
 am__doit:
-	@echo done
+	@echo this is the am__doit target
 .PHONY: am__doit
 END
 # If we don't find an include directive, just comment out the code.
@@ -9813,24 +9987,24 @@ am__quote=
 _am_result=none
 # First try GNU make style include.
 echo "include confinc" > confmf
-# We grep out `Entering directory' and `Leaving directory'
-# messages which can occur if `w' ends up in MAKEFLAGS.
-# In particular we don't look at `^make:' because GNU make might
-# be invoked under some other name (usually "gmake"), in which
-# case it prints its new name instead of `make'.
-if test "`$am_make -s -f confmf 2> /dev/null | grep -v 'ing directory'`" = "done"; then
-   am__include=include
-   am__quote=
-   _am_result=GNU
-fi
+# Ignore all kinds of additional output from `make'.
+case `$am_make -s -f confmf 2> /dev/null` in #(
+*the\ am__doit\ target*)
+  am__include=include
+  am__quote=
+  _am_result=GNU
+  ;;
+esac
 # Now try BSD make style include.
 if test "$am__include" = "#"; then
    echo '.include "confinc"' > confmf
-   if test "`$am_make -s -f confmf 2> /dev/null`" = "done"; then
-      am__include=.include
-      am__quote="\""
-      _am_result=BSD
-   fi
+   case `$am_make -s -f confmf 2> /dev/null` in #(
+   *the\ am__doit\ target*)
+     am__include=.include
+     am__quote="\""
+     _am_result=BSD
+     ;;
+   esac
 fi
 AC_SUBST([am__include])
 AC_SUBST([am__quote])
@@ -9838,16 +10012,51 @@ AC_MSG_RESULT([$_am_result])
 rm -f confinc confmf
 ])
 
-# Fake the existence of programs that GNU maintainers use.  -*- Autoconf -*-
-
-# Copyright (C) 1997, 1999, 2000, 2001, 2003, 2004, 2005
+# Copyright (C) 1999, 2000, 2001, 2003, 2004, 2005, 2008
 # Free Software Foundation, Inc.
 #
 # This file is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
 # with or without modifications, as long as this notice is preserved.
 
-# serial 5
+# serial 6
+
+# AM_PROG_CC_C_O
+# --------------
+# Like AC_PROG_CC_C_O, but changed for automake.
+AC_DEFUN([AM_PROG_CC_C_O],
+[AC_REQUIRE([AC_PROG_CC_C_O])dnl
+AC_REQUIRE([AM_AUX_DIR_EXPAND])dnl
+AC_REQUIRE_AUX_FILE([compile])dnl
+# FIXME: we rely on the cache variable name because
+# there is no other way.
+set dummy $CC
+am_cc=`echo $[2] | sed ['s/[^a-zA-Z0-9_]/_/g;s/^[0-9]/_/']`
+eval am_t=\$ac_cv_prog_cc_${am_cc}_c_o
+if test "$am_t" != yes; then
+   # Losing compiler, so override with the script.
+   # FIXME: It is wrong to rewrite CC.
+   # But if we don't then we get into trouble of one sort or another.
+   # A longer-term fix would be to have automake use am__CC in this case,
+   # and then we could set am__CC="\$(top_srcdir)/compile \$(CC)"
+   CC="$am_aux_dir/compile $CC"
+fi
+dnl Make sure AC_PROG_CC is never called again, or it will override our
+dnl setting of CC.
+m4_define([AC_PROG_CC],
+          [m4_fatal([AC_PROG_CC cannot be called after AM_PROG_CC_C_O])])
+])
+
+# Fake the existence of programs that GNU maintainers use.  -*- Autoconf -*-
+
+# Copyright (C) 1997, 1999, 2000, 2001, 2003, 2004, 2005, 2008
+# Free Software Foundation, Inc.
+#
+# This file is free software; the Free Software Foundation
+# gives unlimited permission to copy and/or distribute it,
+# with or without modifications, as long as this notice is preserved.
+
+# serial 6
 
 # AM_MISSING_PROG(NAME, PROGRAM)
 # ------------------------------
@@ -9864,7 +10073,14 @@ AC_SUBST($1)])
 AC_DEFUN([AM_MISSING_HAS_RUN],
 [AC_REQUIRE([AM_AUX_DIR_EXPAND])dnl
 AC_REQUIRE_AUX_FILE([missing])dnl
-test x"${MISSING+set}" = xset || MISSING="\${SHELL} $am_aux_dir/missing"
+if test x"${MISSING+set}" != xset; then
+  case $am_aux_dir in
+  *\ * | *\	*)
+    MISSING="\${SHELL} \"$am_aux_dir/missing\"" ;;
+  *)
+    MISSING="\${SHELL} $am_aux_dir/missing" ;;
+  esac
+fi
 # Use eval to expand $SHELL
 if eval "$MISSING --run true"; then
   am_missing_run="$MISSING --run "
@@ -9935,14 +10151,14 @@ AC_DEFUN([_AM_IF_OPTION],
 
 # Check to make sure that the build environment is sane.    -*- Autoconf -*-
 
-# Copyright (C) 1996, 1997, 2000, 2001, 2003, 2005
+# Copyright (C) 1996, 1997, 2000, 2001, 2003, 2005, 2008
 # Free Software Foundation, Inc.
 #
 # This file is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
 # with or without modifications, as long as this notice is preserved.
 
-# serial 4
+# serial 5
 
 # AM_SANITY_CHECK
 # ---------------
@@ -9951,16 +10167,29 @@ AC_DEFUN([AM_SANITY_CHECK],
 # Just in case
 sleep 1
 echo timestamp > conftest.file
+# Reject unsafe characters in $srcdir or the absolute working directory
+# name.  Accept space and tab only in the latter.
+am_lf='
+'
+case `pwd` in
+  *[[\\\"\#\$\&\'\`$am_lf]]*)
+    AC_MSG_ERROR([unsafe absolute working directory name]);;
+esac
+case $srcdir in
+  *[[\\\"\#\$\&\'\`$am_lf\ \	]]*)
+    AC_MSG_ERROR([unsafe srcdir value: `$srcdir']);;
+esac
+
 # Do `set' in a subshell so we don't clobber the current shell's
 # arguments.  Must try -L first in case configure is actually a
 # symlink; some systems play weird games with the mod time of symlinks
 # (eg FreeBSD returns the mod time of the symlink's containing
 # directory).
 if (
-   set X `ls -Lt $srcdir/configure conftest.file 2> /dev/null`
+   set X `ls -Lt "$srcdir/configure" conftest.file 2> /dev/null`
    if test "$[*]" = "X"; then
       # -L didn't work.
-      set X `ls -t $srcdir/configure conftest.file`
+      set X `ls -t "$srcdir/configure" conftest.file`
    fi
    rm -f conftest.file
    if test "$[*]" != "X $srcdir/configure conftest.file" \
@@ -9984,6 +10213,33 @@ else
 Check your system clock])
 fi
 AC_MSG_RESULT(yes)])
+
+# Copyright (C) 2009  Free Software Foundation, Inc.
+#
+# This file is free software; the Free Software Foundation
+# gives unlimited permission to copy and/or distribute it,
+# with or without modifications, as long as this notice is preserved.
+
+# serial 1
+
+# AM_SILENT_RULES([DEFAULT])
+# --------------------------
+# Enable less verbose build rules; with the default set to DEFAULT
+# (`yes' being less verbose, `no' or empty being verbose).
+AC_DEFUN([AM_SILENT_RULES],
+[AC_ARG_ENABLE([silent-rules],
+[  --enable-silent-rules          less verbose build output (undo: `make V=1')
+  --disable-silent-rules         verbose build output (undo: `make V=0')])
+case $enable_silent_rules in
+yes) AM_DEFAULT_VERBOSITY=0;;
+no)  AM_DEFAULT_VERBOSITY=1;;
+*)   AM_DEFAULT_VERBOSITY=m4_if([$1], [yes], [0], [1]);;
+esac
+AC_SUBST([AM_DEFAULT_VERBOSITY])dnl
+AM_BACKSLASH='\'
+AC_SUBST([AM_BACKSLASH])dnl
+_AM_SUBST_NOTMAKE([AM_BACKSLASH])dnl
+])
 
 # Copyright (C) 2001, 2003, 2005  Free Software Foundation, Inc.
 #
@@ -10013,17 +10269,24 @@ fi
 INSTALL_STRIP_PROGRAM="\$(install_sh) -c -s"
 AC_SUBST([INSTALL_STRIP_PROGRAM])])
 
-# Copyright (C) 2006  Free Software Foundation, Inc.
+# Copyright (C) 2006, 2008  Free Software Foundation, Inc.
 #
 # This file is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
 # with or without modifications, as long as this notice is preserved.
+
+# serial 2
 
 # _AM_SUBST_NOTMAKE(VARIABLE)
 # ---------------------------
 # Prevent Automake from outputting VARIABLE = @VARIABLE@ in Makefile.in.
 # This macro is traced by Automake.
 AC_DEFUN([_AM_SUBST_NOTMAKE])
+
+# AM_SUBST_NOTMAKE(VARIABLE)
+# ---------------------------
+# Public sister of _AM_SUBST_NOTMAKE.
+AC_DEFUN([AM_SUBST_NOTMAKE], [_AM_SUBST_NOTMAKE($@)])
 
 # Check how to create a tarball.                            -*- Autoconf -*-
 
