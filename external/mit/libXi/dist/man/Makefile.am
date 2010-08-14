@@ -114,7 +114,7 @@ libman_ref = \
 
 libman_pre = $(libman_txt:.txt=.man) $(libman_ref)
 
-if HAVE_DOCTOOLS
+if INSTALL_MANPAGES
 nodist_libman_DATA = $(libman_pre:.man=.$(LIB_MAN_SUFFIX))
 endif
 
