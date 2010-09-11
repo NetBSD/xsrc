@@ -1,9 +1,9 @@
 /* xtermcfg.h.  Generated automatically by configure.  */
-/* $XTermId: xtermcfg.hin,v 1.178 2009/08/09 17:23:19 tom Exp $ */
+/* $XTermId: xtermcfg.hin,v 1.180 2010/04/21 00:19:23 tom Exp $ */
 
 /************************************************************
 
-Copyright 1997-2008,2009 by Thomas E. Dickey
+Copyright 1997-2009,2010 by Thomas E. Dickey
 
                         All Rights Reserved
 
@@ -81,23 +81,26 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #define HAVE_WCSWIDTH 1		/* AC_CHECK_FUNCS(wcswidth) */
 #define HAVE_WCWIDTH 1		/* AC_CHECK_FUNCS(wcwidth) */
 #define HAVE_X11_DECKEYSYM_H 1	/* AC_CHECK_HEADERS(X11/DECkeysym.h) */
+#define HAVE_X11_EXTENSIONS_XKB_H 1 /* AC_CHECK_HEADERS(X11/extensions/XKB.h) */
 #define HAVE_X11_SUNKEYSYM_H 1	/* AC_CHECK_HEADERS(X11/Sunkeysym.h) */
 #define HAVE_X11_XF86KEYSYM_H 1	/* AC_CHECK_HEADERS(X11/XF86keysym.h) */
+#define HAVE_X11_XKBLIB_H 1	/* AC_CHECK_HEADERS(X11/XKBlib.h) */
 #define HAVE_X11_XPOLL_H 1		/* AC_CHECK_HEADERS(X11/Xpoll.h) */
 #define HAVE_XFTDRAWSETCLIP 1	/* CF_X_FREETYPE */
 #define HAVE_XFTDRAWSETCLIPRECTANGLES 1 /* CF_X_FREETYPE */
+#define HAVE_XKBQUERYEXTENSION 1	/* AC_CHECK_FUNCS(XkbQueryExtension) */
 #define HAVE_XKB_BELL_EXT 1	/* CF_XKB_BELL_EXT */
-#define LUIT_PATH "/usr/pkg/bin/luit"		/* CF_ARG_ENABLE(luit) */
+/* #undef LUIT_PATH */		/* CF_ARG_ENABLE(luit) */
 /* #undef NO_ACTIVE_ICON */		/* CF_ARG_DISABLE(active-icon) */
 /* #undef NO_LEAKS */			/* CF_ARG_DISABLE(leaks) */
-#define OPT_256_COLORS 1		/* CF_ARG_ENABLE(256-color) */
+/* #undef OPT_256_COLORS */		/* CF_ARG_ENABLE(256-color) */
 /* #undef OPT_88_COLORS */		/* CF_ARG_ENABLE(88-color) */
 /* #undef OPT_AIX_COLORS */		/* CF_ARG_DISABLE(16-color) */
 /* #undef OPT_BLINK_CURS */		/* CF_ARG_DISABLE(blink-cursor) */
 /* #undef OPT_BLINK_TEXT */		/* CF_ARG_DISABLE(blink-text) */
 /* #undef OPT_BOX_CHARS */		/* CF_ARG_DISABLE(boxchars) */
 #define OPT_BROKEN_OSC 0		/* CF_ARG_ENABLE(broken-osc) */
-#define OPT_BROKEN_ST 0		/* CF_ARG_DISABLE(broken-st) */
+/* #undef OPT_BROKEN_ST */		/* CF_ARG_DISABLE(broken-st) */
 /* #undef OPT_C1_PRINT */		/* CF_ARG_DISABLE(c1-print) */
 /* #undef OPT_COLOR_CLASS */		/* CF_ARG_DISABLE(color-class) */
 /* #undef OPT_DABBREV */		/* CF_ARG_ENABLE(dabbrev) */
@@ -113,14 +116,14 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 /* #undef OPT_INPUT_METHOD */		/* CF_ARG_DISABLE(input-method) */
 /* #undef OPT_ISO_COLORS */		/* CF_ARG_DISABLE(ansi-color) */
 /* #undef OPT_LOAD_VTFONTS */		/* CF_ARG_ENABLE(load-vt-fonts) */
-#define OPT_LUIT_PROG 1		/* CF_ARG_ENABLE(luit) */
+/* #undef OPT_LUIT_PROG */		/* CF_ARG_ENABLE(luit) */
 /* #undef OPT_MAXIMIZE */		/* CF_ARG_DISABLE(maximize) */
-#define OPT_MINI_LUIT 1		/* CF_ARG_ENABLE(mini-luit) */
+/* #undef OPT_MINI_LUIT */		/* CF_ARG_ENABLE(mini-luit) */
 /* #undef OPT_NUM_LOCK */		/* CF_ARG_DISABLE(num-lock) */
 #define OPT_PASTE64 1		/* CF_ARG_ENABLE(past64) */
 /* #undef OPT_PC_COLORS */		/* CF_ARG_DISABLE(pc-color) */
 #define OPT_PTY_HANDSHAKE 1	/* CF_ARG_ENABLE(pty-handshake) */
-#define OPT_READLINE 1		/* CF_ARG_ENABLE(readline-mouse) */
+/* #undef OPT_READLINE */		/* CF_ARG_ENABLE(readline-mouse) */
 /* #undef OPT_SAME_NAME */		/* CF_ARG_DISABLE(samename) */
 /* #undef OPT_SCO_FUNC_KEYS */	/* CF_ARG_ENABLE(sco-fkeys) */
 #define OPT_SELECT_REGEX 1		/* CF_ARG_DISABLE(regex) */
@@ -129,10 +132,10 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #define OPT_TCAP_FKEYS 1		/* CF_ARG_ENABLE(tcap-fkeys) */
 #define OPT_TCAP_QUERY 1		/* CF_ARG_ENABLE(tcap-query) */
 /* #undef OPT_TEK4014 */		/* CF_ARG_DISABLE(tek4014) */
-#define OPT_TOOLBAR 1		/* CF_ARG_ENABLE(toolbar) */
+/* #undef OPT_TOOLBAR */		/* CF_ARG_ENABLE(toolbar) */
 /* #undef OPT_VT52_MODE */		/* CF_ARG_DISABLE(vt52) */
 /* #undef OPT_WIDER_ICHAR */		/* CF_ARG_ENABLE(16bit-chars) */
-#define OPT_WIDE_CHARS 1		/* CF_ARG_OPTION(wide-chars) */
+/* #undef OPT_WIDE_CHARS */		/* CF_ARG_OPTION(wide-chars) */
 /* #undef OPT_XMC_GLITCH */		/* CF_ARG_ENABLE(xmc-glitch) */
 /* #undef OPT_ZICONBEEP */		/* CF_ARG_DISABLE(ziconbeep) */
 /* #undef OWN_TERMINFO_DIR */		/* AC_ARG_WITH(own-terminfo) */
