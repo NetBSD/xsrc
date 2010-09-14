@@ -634,7 +634,7 @@ do_composite (pixman_implementation_t *imp,
 	    &region, src, mask, dest,
 	    src_x, src_y, mask_x, mask_y, dest_x, dest_y, width, height))
     {
-	return;
+	goto out;
     }
     
     extents = pixman_region32_extents (&region);
@@ -651,7 +651,7 @@ do_composite (pixman_implementation_t *imp,
      */
     op = optimize_operator (op, src_flags, mask_flags, dest_flags);
     if (op == PIXMAN_OP_DST)
-	return;
+	goto out;
 
     /* Check cache for fast paths */
     cache = PIXMAN_GET_THREAD_LOCAL (fast_path_cache);
