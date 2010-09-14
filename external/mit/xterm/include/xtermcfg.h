@@ -136,6 +136,7 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 /* #undef OPT_VT52_MODE */		/* CF_ARG_DISABLE(vt52) */
 /* #undef OPT_WIDER_ICHAR */		/* CF_ARG_ENABLE(16bit-chars) */
 /* #undef OPT_WIDE_CHARS */		/* CF_ARG_OPTION(wide-chars) */
+#define OPT_WIDE_CHARS 1		/* CF_ARG_OPTION(wide-chars) */
 /* #undef OPT_XMC_GLITCH */		/* CF_ARG_ENABLE(xmc-glitch) */
 /* #undef OPT_ZICONBEEP */		/* CF_ARG_DISABLE(ziconbeep) */
 /* #undef OWN_TERMINFO_DIR */		/* AC_ARG_WITH(own-terminfo) */
