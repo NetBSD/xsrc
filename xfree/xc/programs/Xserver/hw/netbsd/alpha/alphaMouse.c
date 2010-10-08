@@ -153,6 +153,19 @@ int alphaMouseProc (device, what)
 		Error ("alphaMouseProc ioctl VUIDSFORMAT");
 		return !Success;
 	    }
+#endif
+
+#ifdef WSMOUSEIO_SETVERSION
+	   {
+               int version = WSMOUSE_EVENT_VERSION;
+               if (ioctl(alphaPtrPriv.fd, WSMOUSEIO_SETVERSION, &version) == -1) {
+                   Error ("alphaMouseProc ioctl WSMOUSEIO_SETVERSION");
+                   return !Success;
+               }
+           }
+#endif
+
+#if 0
 	    alphaPtrPriv.bmask = 0;
 	    AddEnabledDevice (alphaPtrPriv.fd);
 #endif

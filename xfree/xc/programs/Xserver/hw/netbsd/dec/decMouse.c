@@ -1,4 +1,4 @@
-/*	$NetBSD: decMouse.c,v 1.1 2004/01/18 05:21:41 rtr Exp $	*/
+/*	$NetBSD: decMouse.c,v 1.2 2010/10/08 17:49:25 tsutsui Exp $	*/
 
 /* XConsortium: sunMouse.c,v 5.21 94/04/17 20:29:47 kaleb Exp */
 /*-
@@ -131,6 +131,19 @@ int decMouseProc (device, what)
 		Error ("decMouseProc ioctl VUIDSFORMAT");
 		return !Success;
 	    }
+#endif
+
+#ifdef WSMOUSEIO_SETVERSION
+	   {
+               int version = WSMOUSE_EVENT_VERSION;
+               if (ioctl(decPtrPriv.fd, WSMOUSEIO_SETVERSION, &version) == -1) {
+                   Error ("decMouseProc ioctl WSMOUSEIO_SETVERSION");
+                   return !Success;
+               }
+           }
+#endif
+
+#if 0
 	    decPtrPriv.bmask = 0;
 #endif
 	    AddEnabledDevice (decPtrPriv.fd);
