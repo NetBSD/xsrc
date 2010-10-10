@@ -31,11 +31,10 @@
 #include <sys/filio.h>
 #include <sys/ioctl.h>
 #include <sys/resource.h>
+#include <sys/time.h>
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplay_usl_io.h>
-
-extern int gettimeofday();
 
 /*
  * Server specific headers
@@ -57,13 +56,6 @@ extern int gettimeofday();
 #include "resource.h"
 #include "servermd.h"
 #include "windowstr.h"
-
-#undef __P
-#if NeedFunctionPrototypes
-#   define __P(p) p
-#else
-#   define __P(p) ()
-#endif
 
 /*
  * ddx specific headers
@@ -129,14 +121,14 @@ typedef struct {
     unsigned char*  fb;		/* Frame buffer itself */
     int		    fd;		/* frame buffer for ioctl()s, */
     struct wsdisplay_fbinfo info; /* */
-    void	    (*EnterLeave)();/* screen switch */
+    void	    (*EnterLeave)(ScreenPtr, int);/* screen switch */
     char*           devname;	/* device name (e.g. "/dev/ttyE0") */
 } dreamcastFbRec, *dreamcastFbPtr;
 
 typedef struct {
     ColormapPtr		installedMap;
     CloseScreenProcPtr	CloseScreen;
-    void		(*UpdateColormap)();
+    void		(*UpdateColormap)(ScreenPtr, int, int, u_char *, u_char *, u_char *);
     Bool		hasHardwareCursor;
 } dreamcastScreenRec, *dreamcastScreenPtr;
 
@@ -144,62 +136,68 @@ typedef struct {
 extern Bool		noXkbExtension;
 #endif
 
-#define dreamcastError(str)	{ \
-	int mode; \
-	dreamcastSetDisplayMode(fileno(stderr), WSDISPLAYIO_MODE_EMUL, &mode); \
+#define dreamcastError(str)	do { \
+	int __m; \
+	dreamcastSetDisplayMode(fileno(stderr), WSDISPLAYIO_MODE_EMUL, &__m); \
 	Error(str); \
-	dreamcastSetDisplayMode(fileno(stderr), mode, NULL); \
-}
+	dreamcastSetDisplayMode(fileno(stderr), __m, NULL); \
+} while (/*CONSTCOND*/0)
 
-#define dreamcastErrorF(a)	{ \
-	int mode; \
-	dreamcastSetDisplayMode(fileno(stderr), WSDISPLAYIO_MODE_EMUL, &mode); \
+#define dreamcastErrorF(a)	do { \
+	int __m; \
+	dreamcastSetDisplayMode(fileno(stderr), WSDISPLAYIO_MODE_EMUL, &__m); \
 	ErrorF a; \
-	dreamcastSetDisplayMode(fileno(stderr), mode, NULL); \
-}
+	dreamcastSetDisplayMode(fileno(stderr), __m, NULL); \
+} while (/*CONSTCOND*/0)
 
-#define dreamcastFatalError(a)	{ \
-	int mode; \
-	dreamcastSetDisplayMode(fileno(stderr), WSDISPLAYIO_MODE_EMUL, &mode); \
+#define dreamcastFatalError(a)	do { \
+	int __m; \
+	dreamcastSetDisplayMode(fileno(stderr), WSDISPLAYIO_MODE_EMUL, &__m); \
 	FatalError a; \
-}
+} while (/*CONSTCOND*/0)
+
+/*
+ * dreamcastColormap.c
+ */
+void dreamcastColormapInit(ScreenPtr pScreen);
 
 /*
  * dreamcastInit.c
  */
-dreamcastFbPtr dreamcastGetScreenFb __P((ScreenPtr	pScreen));
+dreamcastFbPtr dreamcastGetScreenFb(ScreenPtr pScreen);
 
 /*
  * dreamcastIo.c
  */
-void dreamcastCleanupFd __P((int));
-void dreamcastEnqueueEvents __P((void));
+void dreamcastCleanupFd(int);
+void dreamcastEnqueueEvents(void);
 
 /*
  * dreamcastKbd.c
  */
-int dreamcastKbdProc __P((DeviceIntPtr pKeyboard, int what));
-dreamcastEvent* dreamcastKbdGetEvents __P((dreamcastKbdPrivPtr, int*, Bool*));
-void dreamcastKbdEnqueueEvent __P((DeviceIntPtr dev, dreamcastEvent* fe));
+int dreamcastKbdProc(DeviceIntPtr pKeyboard, int what);
+dreamcastEvent* dreamcastKbdGetEvents(dreamcastKbdPrivPtr, int*, Bool*);
+void dreamcastKbdEnqueueEvent(DeviceIntPtr dev, dreamcastEvent* fe);
 
 /*
  * dreamcastMouse.c
  */
-int dreamcastMouseProc __P((DeviceIntPtr pMouse, int what));
-dreamcastEvent* dreamcastMouseGetEvents __P((dreamcastPtrPrivPtr, int*, Bool*));
-void dreamcastMouseEnqueueEvent __P((DeviceIntPtr dev, dreamcastEvent*));
+int dreamcastMouseProc(DeviceIntPtr pMouse, int what);
+dreamcastEvent* dreamcastMouseGetEvents(dreamcastPtrPrivPtr, int*, Bool*);
+void dreamcastMouseEnqueueEvent(DeviceIntPtr dev, dreamcastEvent*);
 
 /*
  * dreamcastScreen.c
  */
-pointer dreamcastMemoryMap __P((size_t len, off_t off, int fd));
-Bool dreamcastScreenInit __P((ScreenPtr pScreen));
-dreamcastScreenPtr dreamcastGetScreenPrivate __P((ScreenPtr	pScreen));
+pointer dreamcastMemoryMap(size_t len, off_t off, int fd);
+Bool dreamcastScreenInit(ScreenPtr pScreen);
+Bool dreamcastAllocateScreenPrivate(ScreenPtr pScreen);
+dreamcastScreenPtr dreamcastGetScreenPrivate(ScreenPtr	pScreen);
 
 /*
  * dreamcastFB.c
  */
-Bool dreamcastFBInit __P((int scrn, ScreenPtr pScrn, int argc, char** argv));
+Bool dreamcastFBInit(int scrn, ScreenPtr pScrn, int argc, char** argv);
 int dreamcastSetDisplayMode(int, int, int *);
 
 #endif

@@ -34,7 +34,9 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include "dreamcast.h"
 
 #define FORCE_SEPARATE_PRIVATE
+#include "mi.h"
 #include "cfb.h"
+#include "cfb16.h"
 
 #include <stdio.h>
 
@@ -43,24 +45,23 @@ extern int cfb16ScreenPrivateIndex;
 extern Bool cfb16CreateScreenResources(ScreenPtr pScreen);
 
 
-Bool
-dreamcast16ScreenInit(pScreen, pbits, xsize, ysize, dpix, dpiy, width)
-    register ScreenPtr pScreen;
-    pointer pbits;		/* pointer to screen bitmap */
-    int xsize, ysize;		/* in pixels */
-    int dpix, dpiy;		/* dots per inch */
-    int width;			/* pixel width of frame buffer */
+static Bool
+dreamcast16ScreenInit(ScreenPtr pScreen, pointer pbits, int xsize, int ysize,
+    int dpix, int dpiy, int width)
+    /* pointer pbits;		pointer to screen bitmap */
+    /* int xsize, ysize;	in pixels */
+    /* int dpix, dpiy;		dots per inch */
+    /* int width;		pixel width of frame buffer */
 {
-    int	i, j;
 #ifdef CFB_NEED_SCREEN_PRIVATE
     pointer oldDevPrivate;
 #endif
-    VisualPtr	visuals;
-    DepthPtr	depths;
+    VisualPtr	visuals = NULL;
+    DepthPtr	depths = NULL;
     int		nvisuals;
     int		ndepths;
     int		rootdepth;
-    VisualID	defaultVisual;
+    VisualID	defaultVisual = 0;
     dreamcastFbPtr pFb = dreamcastGetScreenFb(pScreen);
     struct wsdisplay_fbinfo *fbconf = &pFb->info;
     extern Bool cfb16CloseScreen(int index, ScreenPtr pScreen);
@@ -160,10 +161,9 @@ dreamcastFBInit(screen, pScreen, argc, argv)
 	int res;
 	dreamcastFbPtr pFb = dreamcastGetScreenFb(pScreen);
 	unsigned char *fb = pFb->fb;
-	int rowsize;
 	struct wsdisplay_fbinfo *fbconf = &pFb->info;
 
-	pFb->EnterLeave = (void (*)())NoopDDA;
+	pFb->EnterLeave = (void *)NoopDDA;
 
 	if (!dreamcastAllocateScreenPrivate(pScreen))
 	    return FALSE;

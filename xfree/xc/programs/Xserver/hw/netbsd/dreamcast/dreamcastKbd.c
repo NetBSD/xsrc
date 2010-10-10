@@ -45,6 +45,7 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #define NEED_EVENTS
+#include "mi.h"
 #include "dreamcast.h"
 #include "keysym.h"
 #include <stdio.h>
@@ -65,11 +66,9 @@ extern dreamcastModmapRec *dreamcastModMaps[];
  *	None, really...
  */
 static void 
-dreamcastBell(percent, device, ctrl, unused)
-    int		    percent;	    /* Percentage of full volume */
-    DeviceIntPtr    device;	    /* Keyboard to ring */
-    pointer	    ctrl;
-    int		    unused;
+dreamcastBell(int percent, DeviceIntPtr device, pointer ctrl, int unused)
+/*  int		    percent;	       Percentage of full volume */
+/*  DeviceIntPtr    device;	       Keyboard to ring */
 {
 	/* None */
 }
@@ -85,9 +84,8 @@ dreamcastBell(percent, device, ctrl, unused)
  *	Some...
  */
 static void
-dreamcastKbdCtrl(device, ctrl)
-    DeviceIntPtr    device;	    /* Keyboard to alter */
-    KeybdCtrl*	    ctrl;
+dreamcastKbdCtrl(DeviceIntPtr device, KeybdCtrl *ctrl)
+/*  DeviceIntPtr    device;	       Keyboard to alter */
 {
     dreamcastKbdPrivPtr pPriv = (dreamcastKbdPrivPtr) device->public.devicePrivate;
 
@@ -104,16 +102,13 @@ dreamcastKbdCtrl(device, ctrl)
  *	None.
  */
 int
-dreamcastKbdProc(device, what)
-    DeviceIntPtr  device;	/* Keyboard to manipulate */
-    int	    	  what;	    	/* What to do to it */
+dreamcastKbdProc(DeviceIntPtr device, int what)
+/*    DeviceIntPtr  device;	   Keyboard to manipulate */
+/*    int    	  what;	    	   What to do to it */
 {
     int i;
     DevicePtr pKeyboard = (DevicePtr) device;
     dreamcastKbdPrivPtr pPriv;
-    KeybdCtrl*	ctrl = &device->kbdfeed->ctrl;
-    extern int XkbDfltRepeatDelay, XkbDfltRepeatInterval;
-    struct termios tkbdtty;
 
     static CARD8 *workingModMap = NULL;
     static KeySymsRec *workingKeySyms;
@@ -203,7 +198,6 @@ dreamcastKbdGetEvents(pPriv, pNumEvents, pAgain)
 {
     int fd;
     int	nBytes;	    /* number of bytes of events available. */
-    u_char c, c2;
     static dreamcastEvent evBuf[MAXEVENTS];   /* Buffer for dreamcastEvents */
 
     fd = pPriv->fd;
