@@ -158,13 +158,13 @@ int macppcMouseProc (device, what)
 #endif
 
 #ifdef WSMOUSEIO_SETVERSION
-	   {
-               int version = WSMOUSE_EVENT_VERSION;
-               if (ioctl(macppcPtrPriv.fd, WSMOUSEIO_SETVERSION, &version) == -1) {
-                   Error ("macppcMouseProc ioctl WSMOUSEIO_SETVERSION");
-                   return !Success;
-               }
-           }
+	    {
+		int version = WSMOUSE_EVENT_VERSION;
+		if (ioctl(macppcPtrPriv.fd, WSMOUSEIO_SETVERSION, &version) == -1) {
+		    Error ("macppcMouseProc ioctl WSMOUSEIO_SETVERSION");
+		    return !Success;
+		}
+	    }
 #endif
 
 	    macppcPtrPriv.bmask = 0;

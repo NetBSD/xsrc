@@ -1,4 +1,4 @@
-/* $NetBSD: hpcMouse.c,v 1.2 2009/08/26 12:54:10 jun Exp $	*/
+/* $NetBSD: hpcMouse.c,v 1.3 2010/10/10 05:28:50 tsutsui Exp $	*/
 /* $XConsortium: sunMouse.c,v 5.21 94/04/17 20:29:47 kaleb Exp $ */
 /*-
  * Copyright (c) 1987 by the Regents of the University of California
@@ -150,13 +150,13 @@ hpcMouseProc(device, what)
 	    }
 
 #ifdef WSMOUSEIO_SETVERSION
-	   {
-               int version = WSMOUSE_EVENT_VERSION;
-               if (ioctl(hpcPtrPriv.fd, WSMOUSEIO_SETVERSION, &version) == -1) {
-                   hpcError ("hpcMouseProc ioctl WSMOUSEIO_SETVERSION");
-                   return !Success;
-               }
-           }
+	    {
+		int version = WSMOUSE_EVENT_VERSION;
+		if (ioctl(hpcPtrPriv.fd, WSMOUSEIO_SETVERSION, &version) == -1) {
+		    hpcError ("hpcMouseProc ioctl WSMOUSEIO_SETVERSION");
+		    return !Success;
+		}
+	    }
 #endif
 
 	    hpcPtrPriv.bemask = 0;

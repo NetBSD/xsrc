@@ -121,13 +121,13 @@ ews4800mipsMouseProc(DeviceIntPtr device, int what)
 
 	case DEVICE_ON:
 #ifdef WSMOUSEIO_SETVERSION
-	   {
-               int version = WSMOUSE_EVENT_VERSION;
-               if (ioctl(ews4800mipsPtrPriv.fd, WSMOUSEIO_SETVERSION, &version) == -1) {
-                   Error ("ews4800mipsMouseProc ioctl WSMOUSEIO_SETVERSION");
-                   return !Success;
-               }
-           }
+		{
+			int version = WSMOUSE_EVENT_VERSION;
+			if (ioctl(ews4800mipsPtrPriv.fd, WSMOUSEIO_SETVERSION, &version) == -1) {
+				Error ("ews4800mipsMouseProc ioctl WSMOUSEIO_SETVERSION");
+				return !Success;
+			}
+		}
 #endif
 
 		ews4800mipsPtrPriv.bmask = 0;

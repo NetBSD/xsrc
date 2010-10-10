@@ -132,13 +132,13 @@ dreamcastMouseProc(device, what)
 
 	case DEVICE_ON:
 #ifdef WSMOUSEIO_SETVERSION
-	   {
-               int version = WSMOUSE_EVENT_VERSION;
-               if (ioctl(dreamcastPtrPriv.fd, WSMOUSEIO_SETVERSION, &version) == -1) {
-                   Error ("dreamcastMouseProc ioctl WSMOUSEIO_SETVERSION");
-                   return !Success;
-               }
-           }
+	    {
+		int version = WSMOUSE_EVENT_VERSION;
+		if (ioctl(dreamcastPtrPriv.fd, WSMOUSEIO_SETVERSION, &version) == -1) {
+		    Error ("dreamcastMouseProc ioctl WSMOUSEIO_SETVERSION");
+		    return !Success;
+		}
+	    }
 #endif
 
 	    dreamcastPtrPriv.bmask = 0;

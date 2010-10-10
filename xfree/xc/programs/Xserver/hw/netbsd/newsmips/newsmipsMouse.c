@@ -124,13 +124,13 @@ newsmipsMouseProc(DeviceIntPtr device, int what)
 
 	case DEVICE_ON:
 #ifdef WSMOUSEIO_SETVERSION
-	   {
-               int version = WSMOUSE_EVENT_VERSION;
-               if (ioctl(newsmipsPtrPriv.fd, WSMOUSEIO_SETVERSION, &version) == -1) {
-                   Error ("newsmipsMouseProc ioctl WSMOUSEIO_SETVERSION");
-                   return !Success;
-               }
-           }
+		{
+			int version = WSMOUSE_EVENT_VERSION;
+			if (ioctl(newsmipsPtrPriv.fd, WSMOUSEIO_SETVERSION, &version) == -1) {
+				Error ("newsmipsMouseProc ioctl WSMOUSEIO_SETVERSION");
+				return !Success;
+			}
+		}
 #endif
 
 		newsmipsPtrPriv.bmask = 0;

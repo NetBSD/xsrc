@@ -1,4 +1,4 @@
-/*	$NetBSD: decMouse.c,v 1.2 2010/10/08 17:49:25 tsutsui Exp $	*/
+/*	$NetBSD: decMouse.c,v 1.3 2010/10/10 05:28:49 tsutsui Exp $	*/
 
 /* XConsortium: sunMouse.c,v 5.21 94/04/17 20:29:47 kaleb Exp */
 /*-
@@ -134,13 +134,13 @@ int decMouseProc (device, what)
 #endif
 
 #ifdef WSMOUSEIO_SETVERSION
-	   {
-               int version = WSMOUSE_EVENT_VERSION;
-               if (ioctl(decPtrPriv.fd, WSMOUSEIO_SETVERSION, &version) == -1) {
-                   Error ("decMouseProc ioctl WSMOUSEIO_SETVERSION");
-                   return !Success;
-               }
-           }
+	    {
+		int version = WSMOUSE_EVENT_VERSION;
+		if (ioctl(decPtrPriv.fd, WSMOUSEIO_SETVERSION, &version) == -1) {
+		    Error ("decMouseProc ioctl WSMOUSEIO_SETVERSION");
+		    return !Success;
+		}
+	    }
 #endif
 
 #if 0

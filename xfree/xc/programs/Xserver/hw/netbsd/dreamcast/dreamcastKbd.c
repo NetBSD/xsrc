@@ -159,13 +159,13 @@ dreamcastKbdProc(device, what)
 	pPriv = (dreamcastKbdPrivPtr)pKeyboard->devicePrivate;
 	dreamcastCleanupFd(pPriv->fd);
 #ifdef WSKBDIO_SETVERSION
-	   {
-		int version = WSKBDIO_EVENT_VERSION;
-		if (ioctl(pPriv->fd, WSKBDIO_SETVERSION, &version) == -1) {
-		    Error ("dreamcastKbdProc ioctl WSKBDIO_SETVERSION");
-		    return !Success;
-		}
-           }
+	{
+	    int version = WSKBDIO_EVENT_VERSION;
+	    if (ioctl(pPriv->fd, WSKBDIO_SETVERSION, &version) == -1) {
+		Error ("dreamcastKbdProc ioctl WSKBDIO_SETVERSION");
+		return !Success;
+	    }
+	}
 #endif
 	AddEnabledDevice(pPriv->fd);
 	pKeyboard->on = TRUE;
