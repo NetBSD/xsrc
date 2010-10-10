@@ -521,6 +521,15 @@ int alphaKbdProc (device, what)
 	if (alphaChangeKbdTranslation(pPriv->fd,TRUE) == -1)
 	    FatalError("Can't set keyboard translation\n");
 #endif /* 0 XXX */
+#ifdef WSKBDIO_SETVERSION
+	{
+	    int version = WSKBDIO_EVENT_VERSION;
+	    if (ioctl(pPriv->fd, WSKBDIO_SETVERSION, &version) == -1) {
+		Error ("alphaKbdProc ioctl WSKBDIO_SETVERSION");
+		return !Success;
+	    }
+	}
+#endif
 	(void) AddEnabledDevice(pPriv->fd);
 	pKeyboard->on = TRUE;
 	break;

@@ -154,6 +154,15 @@ newsmipsKbdProc(DeviceIntPtr  device, int what)
 	case DEVICE_ON:
 		pPriv = (newsmipsKbdPrivPtr)pKeyboard->devicePrivate;
 		newsmipsCleanupFd(pPriv->fd);
+#ifdef WSKBDIO_SETVERSION
+		{
+			int version = WSKBDIO_EVENT_VERSION;
+			if (ioctl(pPriv->fd, WSKBDIO_SETVERSION, &version) == -1) {
+				Error ("newsmipsKbdProc ioctl WSKBDIO_SETVERSION");
+				return !Success;
+			}
+		}
+#endif
 		AddEnabledDevice(pPriv->fd);
 		pKeyboard->on = TRUE;
 		break;

@@ -1,4 +1,4 @@
-/*	$NetBSD: decKbd.c,v 1.1 2004/01/18 05:21:41 rtr Exp $	*/
+/*	$NetBSD: decKbd.c,v 1.2 2010/10/10 05:35:33 tsutsui Exp $	*/
 
 /* XConsortium: sunKbd.c,v 5.47 94/08/16 13:45:30 dpw Exp */
 /*-
@@ -519,6 +519,15 @@ int decKbdProc (device, what)
 	 * Save the original keyclick volume.
 	 */
 	ioctl(pPriv->fd, WSKBDIO_GETKEYCLICK, &pPriv->prevClick);
+#ifdef WSKBDIO_SETVERSION
+	{
+	    int version = WSKBDIO_EVENT_VERSION;
+	    if (ioctl(pPriv->fd, WSKBDIO_SETVERSION, &version) == -1) {
+		Error ("decKbdProc ioctl WSKBDIO_SETVERSION");
+		return !Success;
+	    }
+	}
+#endif
 
 	(void) AddEnabledDevice(pPriv->fd);
 	pKeyboard->on = TRUE;
