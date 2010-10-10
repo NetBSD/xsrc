@@ -154,6 +154,15 @@ ews4800mipsKbdProc(DeviceIntPtr  device, int what)
 	case DEVICE_ON:
 		pPriv = (ews4800mipsKbdPrivPtr)pKeyboard->devicePrivate;
 		ews4800mipsCleanupFd(pPriv->fd);
+#ifdef WSKBDIO_SETVERSION
+		{
+			int version = WSKBDIO_EVENT_VERSION;
+			if (ioctl(pPriv->fd, WSKBDIO_SETVERSION, &version) == -1) {
+				Error ("ews4800mipsKbdProc ioctl WSKBDIO_SETVERSION");
+				return !Success;
+			}
+		}
+#endif
 		AddEnabledDevice(pPriv->fd);
 		pKeyboard->on = TRUE;
 		break;
