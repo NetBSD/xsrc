@@ -156,13 +156,13 @@ int alphaMouseProc (device, what)
 #endif
 
 #ifdef WSMOUSEIO_SETVERSION
-	   {
-               int version = WSMOUSE_EVENT_VERSION;
-               if (ioctl(alphaPtrPriv.fd, WSMOUSEIO_SETVERSION, &version) == -1) {
-                   Error ("alphaMouseProc ioctl WSMOUSEIO_SETVERSION");
-                   return !Success;
-               }
-           }
+	    {
+		int version = WSMOUSE_EVENT_VERSION;
+		if (ioctl(alphaPtrPriv.fd, WSMOUSEIO_SETVERSION, &version) == -1) {
+		    Error ("alphaMouseProc ioctl WSMOUSEIO_SETVERSION");
+		    return !Success;
+		}
+	    }
 #endif
 
 #if 0
