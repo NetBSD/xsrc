@@ -1,4 +1,4 @@
-/* $NetBSD: dreamcastInit.c,v 1.2 2005/03/30 17:27:41 tron Exp $ */
+/* $NetBSD: dreamcastInit.c,v 1.3 2010/10/10 05:33:32 tsutsui Exp $ */
 
 /*
  * Modified from  hpcInit.c of Xhpc 
@@ -6,7 +6,7 @@
 
 #include    "dreamcast.h"
 #include    "gcstruct.h"
-/* #include    "mi.h" */
+#include    "mi.h"
 #include    "mibstore.h"
 #include    "cfb.h"
 
@@ -31,6 +31,7 @@ dreamcastPtrPrivRec dreamcastPtrPriv = {
     0,		/* last known button state */
 };
 
+#if 0
 /*
  * a list of devices to try if there is no environment or command
  * line list of devices
@@ -40,6 +41,7 @@ static char *fallbackList[] = {
     "/dev/ttyE4", "/dev/ttyE5", "/dev/ttyE6", "/dev/ttyE7",
 };
 #define FALLBACK_LIST_LEN sizeof fallbackList / sizeof fallbackList[0]
+#endif
 
 dreamcastFbRec dreamcastFbs[MAXSCREENS];
 
@@ -65,9 +67,9 @@ dreamcastGetScreenFb(pScreen)
  *	The fd of the framebuffer.
  */
 static int
-OpenFrameBuffer(device, screen)
-    char		*device;	/* e.g. "/dev/ttyE0" */
-    int			screen;    	/* what screen am I going to be */
+OpenFrameBuffer(char *device, int screen)
+/*    char	*device;	e.g. "/dev/ttyE0" */
+/*    int	screen;		what screen am I going to be */
 {
     int			ret = TRUE;
 
@@ -108,8 +110,7 @@ OpenFrameBuffer(device, screen)
  *
  */
 static void
-SigIOHandler(sig)
-    int		sig;
+SigIOHandler(int sig)
 {
     int olderrno = errno;
 
@@ -118,9 +119,7 @@ SigIOHandler(sig)
 }
 
 static char**
-GetDeviceList (argc, argv)
-    int		argc;
-    char	**argv;
+GetDeviceList (int argc, char **argv)
 {
     int		i;
     char	*envList = NULL;
@@ -179,24 +178,21 @@ GetDeviceList (argc, argv)
 }
 
 void 
-OsVendorPreInit()
+OsVendorPreInit(void)
 {
 }
 
 void 
-OsVendorInit()
+OsVendorInit(void)
 {
 }
 
-void 
-InitKbdMouse(argc, argv)
-    int     	  argc;
-    char    	  **argv;
+static void 
+InitKbdMouse(int argc, char **argv)
 {
 	struct rlimit rl;
 	int maxfds, kbdtype, layout;
 	int i;
-	char **devList;
 
 	static int inited;
 
@@ -226,17 +222,17 @@ InitKbdMouse(argc, argv)
 	 * try each mouse device
 	 */
 	for (i = 0; i < 8; i++) {
-	    char devname[16];
+	    char dvname[16];
 
 	    if (dreamcastKbdPriv.fd == -1) {
-		sprintf(devname, "/dev/wskbd%d", i);
-		dreamcastKbdPriv.fd = open(devname, O_RDWR);
+		sprintf(dvname, "/dev/wskbd%d", i);
+		dreamcastKbdPriv.fd = open(dvname, O_RDWR);
 	    }
 
 	    if (dreamcastPtrPriv.fd == -1) {
-		sprintf(devname, "/dev/wsmouse%d", i);
-		if ((dreamcastPtrPriv.fd = open(devname, O_RDWR)) < 0)
-		    dreamcastError(devname);
+		sprintf(dvname, "/dev/wsmouse%d", i);
+		if ((dreamcastPtrPriv.fd = open(dvname, O_RDWR)) < 0)
+		    dreamcastError(dvname);
 	    }
 	}
 
@@ -277,7 +273,7 @@ InitKbdMouse(argc, argv)
 	    dreamcastKbdPriv.layout = DREAMCAST_KBDLAYOUT_US;
 	    break;
 	default:
-	    dreamcastError(("Unknown keyboard layout; assume JP layout.\n"));
+	    dreamcastError("Unknown keyboard layout; assume JP layout.\n");
 	    dreamcastKbdPriv.layout = DREAMCAST_KBDLAYOUT_JP;
 	    break;
 	}
@@ -303,9 +299,7 @@ InitOutput(pScreenInfo, argc, argv)
     int     	i, scr;
     int		nonBlockConsole = 0;
     char	**devList;
-    static int	setup_on_exit = 0;
     extern Bool	RunFromSmartParent;
-    dreamcastScreenPtr pPrivate;
 
     if (!monitorResolution)
 	monitorResolution = 75;
@@ -359,8 +353,7 @@ InitInput(argc, argv)
     int     	  argc;
     char    	  **argv;
 {
-    DeviceIntPtr	p, k;
-    extern Bool mieqInit();
+    pointer	p, k;
 
     InitKbdMouse(argc, argv);
 
@@ -407,19 +400,18 @@ void OsVendorFatalError(void)
  * stubs
  *
  ***************************************************************/
+#include <Xext/dpmsproc.h>
 
-void DPMSSet (level)
-    int level;
+void DPMSSet (int level)
 {
 }
 
-int DPMSGet (level)
-    int* level;
+int DPMSGet (int *level)
 {
     return -1;
 }
 
-Bool DPMSSupported ()
+Bool DPMSSupported (void)
 {
     return FALSE;
 }

@@ -776,37 +776,37 @@ static KeySym map_uskbd[] = {
 #define ScrollLockMask  Mod5Mask
 
 static dreamcastModmapRec modmap_jpkbd[] = {
-	0xe1,	ShiftMask,	/* Shift_L */
-	0xe5,	ShiftMask,	/* Shift_R */
-	0x39,	LockMask,	/* CapsLock */
-	0xe0,	ControlMask,	/* Control_L */
-	0xe4,	ControlMask,	/* Control_R */
-	0xe2,	AltMask,	/* Alt_L */
-	0xe6,	AltMask,	/* Alt_R */
-	0x35,	AltLangMask,	/* Zenkaku_Hankaku */
-	0x88,	KanaMask,	/* Hiragana_Katakana */
-	0x47,	ScrollLockMask,	/* ScrollLock */
-	0,	0
+	{ 0xe1,	ShiftMask },		/* Shift_L */
+	{ 0xe5,	ShiftMask },		/* Shift_R */
+	{ 0x39,	LockMask },		/* CapsLock */
+	{ 0xe0,	ControlMask },		/* Control_L */
+	{ 0xe4,	ControlMask },		/* Control_R */
+	{ 0xe2,	AltMask },		/* Alt_L */
+	{ 0xe6,	AltMask },		/* Alt_R */
+	{ 0x35,	AltLangMask },		/* Zenkaku_Hankaku */
+	{ 0x88,	KanaMask },		/* Hiragana_Katakana */
+	{ 0x47,	ScrollLockMask },	/* ScrollLock */
+	{ 0,	0 }
 };
 
 static dreamcastModmapRec modmap_uskbd[] = {
-	0xe1,	ShiftMask,	/* Shift_L */
-	0xe5,	ShiftMask,	/* Shift_R */
-	0x39,	LockMask,	/* CapsLock */
-	0xe0,	ControlMask,	/* Control_L */
-	0xe4,	ControlMask,	/* Control_R */
-	0xe2,	AltMask,	/* Alt_L */
-	0xe6,	AltMask,	/* Alt_R */
-	0x53,	NumLockMask,	/* NumLock */
-	0x47,	ScrollLockMask,	/* ScrollLock */
-	0,	0
+	{ 0xe1,	ShiftMask },		/* Shift_L */
+	{ 0xe5,	ShiftMask },		/* Shift_R */
+	{ 0x39,	LockMask },		/* CapsLock */
+	{ 0xe0,	ControlMask },		/* Control_L */
+	{ 0xe4,	ControlMask },		/* Control_R */
+	{ 0xe2,	AltMask },		/* Alt_L */
+	{ 0xe6,	AltMask },		/* Alt_R */
+	{ 0x53,	NumLockMask },		/* NumLock */
+	{ 0x47,	ScrollLockMask },	/* ScrollLock */
+	{ 0,	0 }
 };
 
 KeySymsRec dreamcastKeySyms[] = {
-    /*	map		minKC	maxKC	width */
-	map_jpkbd,	0x00,	0xe7,	GLYPHS_PER_KEY,
-	map_ukkbd,	0x00,	0xe7,	GLYPHS_PER_KEY,
-	map_uskbd,	0x00,	0xe7,	GLYPHS_PER_KEY,
+    /*	  map		minKC	maxKC	width */
+	{ map_jpkbd,	0x00,	0xe7,	GLYPHS_PER_KEY },
+	{ map_ukkbd,	0x00,	0xe7,	GLYPHS_PER_KEY },
+	{ map_uskbd,	0x00,	0xe7,	GLYPHS_PER_KEY },
 };
 
 dreamcastModmapRec *dreamcastModMaps[] = {

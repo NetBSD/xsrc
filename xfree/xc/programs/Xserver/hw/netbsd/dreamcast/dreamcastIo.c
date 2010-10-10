@@ -49,6 +49,7 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <stdio.h>
 
 #define NEED_EVENTS
+#include "mi.h"
 #include "dreamcast.h"
 
 void
@@ -110,8 +111,10 @@ dreamcastEnqueueEvents ()
     if (!pPointer->public.on || !pKeyboard->public.on)
 	return;
 
+    ptrEvents = NULL;
     numPtrEvents = 0;
     PtrAgain = TRUE;
+    kbdEvents = NULL;
     numKbdEvents = 0;
     KbdAgain = TRUE;
 
@@ -163,12 +166,11 @@ dreamcastEnqueueEvents ()
  * DDX - specific abort routine.  Called by AbortServer().
  */
 void
-AbortDDX()
+AbortDDX(void)
 {
     int		i;
     ScreenPtr	pScreen;
     dreamcastFbPtr	pFb;
-    DevicePtr	devPtr;
 
     OsSignal (SIGIO, SIG_IGN);
     for (i = 0; i < screenInfo.numScreens; i++)
@@ -194,7 +196,6 @@ ddxProcessArgument (argc, argv, i)
     char *argv[];
     int	i;
 {
-    extern void UseMsg();
 
 #if 0 /* XXX */
 #ifndef XKB

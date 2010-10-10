@@ -86,7 +86,6 @@ dreamcastAllocateScreenPrivate(pScreen)
     ScreenPtr	pScreen;
 {
     dreamcastScreenPtr    pPrivate;
-    extern int AllocateScreenPrivateIndex();
 
     if (generation != serverGeneration) {
 	dreamcastScreenIndex = AllocateScreenPrivateIndex();
@@ -134,13 +133,12 @@ dreamcastMemoryMap (len, off, fd)
 	(void) close (fd);
 	return NULL;
     }
-    return mapaddr + off;
+    mapaddr = (char *)mapaddr + off;
+    return mapaddr;
 }
 
 static Bool
-dreamcastSaveScreen (pScreen, on)
-    ScreenPtr	pScreen;
-    int		on;
+dreamcastSaveScreen (ScreenPtr pScreen, int on)
 {
     int state;
     dreamcastFbPtr pFb = dreamcastGetScreenFb(pScreen);
@@ -158,9 +156,7 @@ dreamcastSaveScreen (pScreen, on)
 }
 
 static Bool
-dreamcastCloseScreen (i, pScreen)
-    int		i;
-    ScreenPtr	pScreen;
+dreamcastCloseScreen (int i, ScreenPtr pScreen)
 {
     Bool    ret;
     dreamcastScreenPtr pPrivate = dreamcastGetScreenPrivate(pScreen);
@@ -181,9 +177,6 @@ dreamcastScreenInit (pScreen)
     ScreenPtr	pScreen;
 {
     dreamcastScreenPtr pPrivate;
-    extern void   dreamcastBlockHandler();
-    extern void   dreamcastWakeupHandler();
-    static ScreenPtr autoRepeatScreen;
     extern miPointerScreenFuncRec dreamcastPointerScreenFuncs;
 
     pPrivate = dreamcastGetScreenPrivate(pScreen);

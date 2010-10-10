@@ -56,13 +56,14 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #define NEED_EVENTS
+#include "mi.h"
 #include "dreamcast.h"
 #include <stdio.h>
 
 
-static Bool dreamcastCursorOffScreen();
-static void dreamcastCrossScreen();
-static void dreamcastWarpCursor();
+static Bool dreamcastCursorOffScreen(ScreenPtr *, int *, int *);
+static void dreamcastCrossScreen(ScreenPtr, Bool);
+static void dreamcastWarpCursor(ScreenPtr, int, int);
 
 miPointerScreenFuncRec dreamcastPointerScreenFuncs = {
     dreamcastCursorOffScreen,
@@ -82,10 +83,8 @@ miPointerScreenFuncRec dreamcastPointerScreenFuncs = {
  * Side Effects:
  *	None.
  */
-void
-dreamcastMouseCtrl(device, ctrl)
-    DeviceIntPtr    device;
-    PtrCtrl*	    ctrl;
+static void
+dreamcastMouseCtrl(DeviceIntPtr device, PtrCtrl *ctrl)
 {
 }
 
@@ -104,10 +103,7 @@ dreamcastMouseProc(device, what)
     int	    	  what;	    	/* What to do with it */
 {
     DevicePtr	  pMouse = (DevicePtr) device;
-    int	    	  format;
-    static int	  oformat;
     BYTE    	  map[7];
-    char	  *dev;
 
     switch (what) {
 	case DEVICE_INIT:
@@ -208,9 +204,7 @@ dreamcastMouseGetEvents (pPriv, pNumEvents, pAgain)
  *	None.
  */
 static short
-MouseAccelerate (device, delta)
-    DeviceIntPtr  device;
-    int	    	  delta;
+MouseAccelerate (DeviceIntPtr device, int delta)
 {
     int  sgn = sign(delta);
     PtrCtrl *pCtrl;
@@ -247,13 +241,12 @@ dreamcastMouseEnqueueEvent (device, fe)
 {
     xEvent		xE;
     dreamcastPtrPrivPtr	pPriv;	/* Private data for pointer */
-    dreamcastKbdPrivPtr	keyPriv;/* Private keyboard data for button emul */
-    unsigned long	time;
+    unsigned long	ptime;
     int			x, y, bmask;
 
     pPriv = (dreamcastPtrPrivPtr)device->public.devicePrivate;
 
-    time = xE.u.keyButtonPointer.time = TSTOMILLI(fe->time);
+    ptime = xE.u.keyButtonPointer.time = TSTOMILLI(fe->time);
 
     /*
      * Mouse buttons start at 1.
@@ -304,21 +297,21 @@ dreamcastMouseEnqueueEvent (device, fe)
         mieqEnqueue (&xE);
         break;
     case WSCONS_EVENT_MOUSE_DELTA_X:
-	miPointerDeltaCursor (MouseAccelerate(device,fe->value),0,time);
+	miPointerDeltaCursor (MouseAccelerate(device,fe->value),0,ptime);
 	break;
     case WSCONS_EVENT_MOUSE_DELTA_Y:
-	miPointerDeltaCursor (0,-MouseAccelerate(device,fe->value),time);
+	miPointerDeltaCursor (0,-MouseAccelerate(device,fe->value),ptime);
 	break;
     case WSCONS_EVENT_MOUSE_DELTA_Z:
 	/* Ignore for now. */
 	break;
     case WSCONS_EVENT_MOUSE_ABSOLUTE_X:
 	miPointerPosition (&x, &y);
-	miPointerAbsoluteCursor (fe->value, y, time);
+	miPointerAbsoluteCursor (fe->value, y, ptime);
 	break;
     case WSCONS_EVENT_MOUSE_ABSOLUTE_Y:
 	miPointerPosition (&x, &y);
-	miPointerAbsoluteCursor (x, fe->value, time);
+	miPointerAbsoluteCursor (x, fe->value, ptime);
 	break;
     case WSCONS_EVENT_MOUSE_ABSOLUTE_Z:
 	break;
@@ -333,8 +326,7 @@ dreamcastCursorOffScreen (pScreen, x, y)
     ScreenPtr	*pScreen;
     int		*x, *y;
 {
-    int	    index, ret = FALSE;
-    extern Bool PointerConfinedToScreen();
+    int	    ret = FALSE;
 
     if (PointerConfinedToScreen()) return TRUE;
     return ret;

@@ -94,28 +94,26 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 static ColormapPtr InstalledMaps[MAXSCREENS];
 
-void
-dreamcastInstallColormap(pmap)
-    ColormapPtr pmap;
+static void
+dreamcastInstallColormap(ColormapPtr pmap)
 {
-    int index = pmap->pScreen->myNum;
-    ColormapPtr oldpmap = InstalledMaps[index];
+    int i = pmap->pScreen->myNum;
+    ColormapPtr oldpmap = InstalledMaps[i];
 
     if (pmap != oldpmap)
     {
 	if (oldpmap != (ColormapPtr)None)
 	    WalkTree(pmap->pScreen, TellLostMap, (char *)&oldpmap->mid);
-	InstalledMaps[index] = pmap;
+	InstalledMaps[i] = pmap;
 	WalkTree(pmap->pScreen, TellGainedMap, (char *)&pmap->mid);
     }
 }
 
-void
-dreamcastUninstallColormap(pmap)
-    ColormapPtr pmap;
+static void
+dreamcastUninstallColormap(ColormapPtr pmap)
 {
-    int index = pmap->pScreen->myNum;
-    ColormapPtr curpmap = InstalledMaps[index];
+    int i = pmap->pScreen->myNum;
+    ColormapPtr curpmap = InstalledMaps[i];
     
     if(pmap == curpmap)
     {
@@ -128,10 +126,8 @@ dreamcastUninstallColormap(pmap)
     }
 }
 
-int    
-dreamcastListInstalledColormaps(pScreen, pmaps) 
-    ScreenPtr   pScreen;
-    Colormap    *pmaps;
+static int    
+dreamcastListInstalledColormaps(ScreenPtr pScreen, Colormap *pmaps)
 {
     /* By the time we are processing requests, we can guarantee that there
      * is always a colormap installed */
@@ -140,14 +136,11 @@ dreamcastListInstalledColormaps(pScreen, pmaps)
 }
 
 void
-dreamcastColormapInit (pScreen)
-    ScreenPtr pScreen;
+dreamcastColormapInit (ScreenPtr pScreen)
 {
-	dreamcastScreenPtr pPrivate = dreamcastGetScreenPrivate(pScreen);
-	dreamcastFbPtr pFb = dreamcastGetScreenFb(pScreen);
 
 	pScreen->InstallColormap = dreamcastInstallColormap;
 	pScreen->UninstallColormap = dreamcastUninstallColormap;
 	pScreen->ListInstalledColormaps = dreamcastListInstalledColormaps;
-	pScreen->StoreColors = (void (*)())NoopDDA;
+	pScreen->StoreColors = (void *)NoopDDA;
 }
