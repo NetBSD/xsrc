@@ -338,9 +338,9 @@ WSReadInput(InputInfoPtr pInfo)
 }
 
 static void
-printWsType(char *type, char *devname)
+printWsType(const char *type, char *name)
 {
-    xf86Msg(X_PROBED, "%s: Keyboard type: %s\n", devname, type); 
+    xf86Msg(X_PROBED, "%s: Keyboard type: %s\n", name, type); 
 }
 #endif
 
@@ -452,8 +452,8 @@ OpenKeyboard(InputInfoPtr pInfo)
 
 #if defined (SYSCONS_SUPPORT) || defined (PCVT_SUPPORT) || defined (WSCONS_SUPPORT)
     if (pKbd->isConsole &&
-        ((pKbd->consType == SYSCONS) || (pKbd->consType == PCVT)) ||
-	 ((pKbd->consType == WSCONS)))
+        ((pKbd->consType == SYSCONS) || (pKbd->consType == PCVT) ||
+	 (pKbd->consType == WSCONS)))
         pKbd->vtSwitchSupported = TRUE;
 #endif
 
