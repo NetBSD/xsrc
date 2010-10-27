@@ -4453,8 +4453,6 @@ static void RADEONSaveMemMapRegisters(ScrnInfoPtr pScrn, RADEONSavePtr save)
     }
 }
 
-
-#if 0
 /* Read palette data */
 static void RADEONSavePalette(ScrnInfoPtr pScrn, RADEONSavePtr save)
 {
@@ -4462,19 +4460,37 @@ static void RADEONSavePalette(ScrnInfoPtr pScrn, RADEONSavePtr save)
     unsigned char *RADEONMMIO = info->MMIO;
     int            i;
 
-#ifdef ENABLE_FLAT_PANEL
-    /* Select palette 0 (main CRTC) if using FP-enabled chip */
- /* if (info->Port1 == MT_DFP) PAL_SELECT(1); */
-#endif
     PAL_SELECT(1);
     INPAL_START(0);
-    for (i = 0; i < 256; i++) save->palette2[i] = INPAL_NEXT();
+    for (i = 0; i < 256; i++) {
+	save->palette2[i] = INREG(RADEON_PALETTE_30_DATA);
+    }
+
     PAL_SELECT(0);
     INPAL_START(0);
-    for (i = 0; i < 256; i++) save->palette[i] = INPAL_NEXT();
-    save->palette_valid = TRUE;
+    for (i = 0; i < 256; i++) {
+	save->palette[i] = INREG(RADEON_PALETTE_30_DATA);
+    }
 }
-#endif
+
+static void RADEONRestorePalette(ScrnInfoPtr pScrn, RADEONSavePtr restore)
+{
+    RADEONInfoPtr  info       = RADEONPTR(pScrn);
+    unsigned char *RADEONMMIO = info->MMIO;
+    int            i;
+
+    PAL_SELECT(1);
+    OUTPAL_START(0);
+    for (i = 0; i < 256; i++) {
+	OUTREG(RADEON_PALETTE_30_DATA, restore->palette2[i]);
+    }
+
+    PAL_SELECT(0);
+    OUTPAL_START(0);
+    for (i = 0; i < 256; i++) {
+	OUTREG(RADEON_PALETTE_30_DATA, restore->palette[i]);
+    }
+}
 
 static void
 avivo_save(ScrnInfoPtr pScrn, RADEONSavePtr save)
@@ -5347,6 +5363,8 @@ static void RADEONSave(ScrnInfoPtr pScrn)
 	RADEONSaveCrtcRegisters(pScrn, save);
 	RADEONSaveFPRegisters(pScrn, save);
 	RADEONSaveDACRegisters(pScrn, save);
+	RADEONSavePalette(pScrn, save);
+
 	if (pRADEONEnt->HasCRTC2) {
 	    RADEONSaveCrtc2Registers(pScrn, save);
 	    RADEONSavePLL2Registers(pScrn, save);
@@ -5468,23 +5486,14 @@ static void RADEONRestore(ScrnInfoPtr pScrn)
     if (IS_AVIVO_VARIANT)
 	avivo_restore_vga_regs(pScrn, restore);
 
-    if (!IS_AVIVO_VARIANT)
+    if (!IS_AVIVO_VARIANT) {
+	RADEONRestorePalette(pScrn, restore);
 	RADEONRestoreDACRegisters(pScrn, restore);
-
+    }
 #if 0
     RADEONWaitForVerticalSync(pScrn);
 #endif
 }
-
-#if 0
-/* Define initial palette for requested video mode.  This doesn't do
- * anything for XFree86 4.0.
- */
-static void RADEONInitPalette(RADEONSavePtr save)
-{
-    save->palette_valid = FALSE;
-}
-#endif
 
 static Bool RADEONSaveScreen(ScreenPtr pScreen, int mode)
 {
