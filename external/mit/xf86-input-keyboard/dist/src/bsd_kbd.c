@@ -451,9 +451,9 @@ OpenKeyboard(InputInfoPtr pInfo)
 #endif
 
 #if defined (SYSCONS_SUPPORT) || defined (PCVT_SUPPORT) || defined (WSCONS_SUPPORT)
-    if (pKbd->isConsole &&
-        ((pKbd->consType == SYSCONS) || (pKbd->consType == PCVT) ||
-	 (pKbd->consType == WSCONS)))
+    if ((pKbd->isConsole &&
+         ((pKbd->consType == SYSCONS) || (pKbd->consType == PCVT))) ||
+	(pKbd->consType == WSCONS))
         pKbd->vtSwitchSupported = TRUE;
 #endif
 
