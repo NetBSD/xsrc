@@ -431,6 +431,11 @@ OpenKeyboard(InputInfoPtr pInfo)
                printWsType("ADB", pInfo->name);
                break;
 #endif
+#ifdef WSKBD_TYPE_MAPLE
+           case WSKBD_TYPE_MAPLE:
+               printWsType("Maple", pInfo->name);
+               break;
+#endif
 #ifdef WSKBD_TYPE_SUN
            case WSKBD_TYPE_SUN:
                printWsType("Sun", pInfo->name);
