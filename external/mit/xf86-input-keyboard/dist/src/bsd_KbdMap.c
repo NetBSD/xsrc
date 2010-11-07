@@ -1297,6 +1297,9 @@ KbdGetMapping (InputInfoPtr pInfo, KeySymsPtr pKeySyms, CARD8 *pModMap)
                     pKbd->scancodeMap = &wsXt;
                     break;
 	       case WSKBD_TYPE_USB:
+#ifdef WSKBD_TYPE_MAPLE
+	       case WSKBD_TYPE_MAPLE:
+#endif
                     pKbd->scancodeMap = &wsUsb;
                     break;
 #ifdef WSKBD_TYPE_ADB	
