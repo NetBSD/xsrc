@@ -230,7 +230,9 @@ typedef struct {
     int               Chipset;
     Bool              Primary;
 
+#ifndef AVOID_FBDEV
     Bool              FBDev;
+#endif
 
     unsigned long     LinearAddr;   /* Frame buffer physical address         */
     unsigned long     MMIOAddr;     /* MMIO region physical address          */
