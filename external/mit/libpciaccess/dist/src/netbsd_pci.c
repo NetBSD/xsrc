@@ -388,7 +388,7 @@ pci_device_netbsd_read_rom(struct pci_device *dev, void *buffer)
     pciaddr_t rom_base;
     size_t rom_size;
     uint32_t bios_val, command_val;
-    int pci_rom, memfd;
+    int pci_rom;
 
     if (((priv->base.device_class >> 16) & 0xff) != PCI_CLASS_DISPLAY ||
 	((priv->base.device_class >> 8) & 0xff) != PCI_SUBCLASS_DISPLAY_VGA)
@@ -434,23 +434,19 @@ pci_device_netbsd_read_rom(struct pci_device *dev, void *buffer)
 	}
     }
 
-    fprintf(stderr, "Using rom_base = 0x%lx (pci_rom=%d)\n", (long)rom_base,
-	pci_rom);
-    memfd = open("/dev/mem", O_RDONLY);
-    if (memfd == -1)
-	return errno;
+    fprintf(stderr, "Using rom_base = 0x%lx 0x%lx (pci_rom=%d)\n", 
+        (long)rom_base, (long)rom_size, pci_rom);
 
-    bios = mmap(NULL, rom_size, PROT_READ, MAP_SHARED, memfd, (off_t)rom_base);
+    bios = mmap(NULL, rom_size, PROT_READ, MAP_SHARED, buses[dev->domain].fd, 
+        (off_t)rom_base);
     if (bios == MAP_FAILED) {
 	int serrno = errno;
-	close(memfd);
 	return serrno;
     }
 
     memcpy(buffer, bios, rom_size);
 
     munmap(bios, rom_size);
-    close(memfd);
 
     if (pci_rom) {
 	if ((command_val & PCI_COMMAND_MEM_ENABLE) == 0) {
