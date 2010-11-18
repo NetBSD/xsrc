@@ -1,0 +1,2084 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.3//EN"
+                      "http://www.oasis-open.org/docbook/xml/4.3/docbookx.dtd"
+[
+<!ENTITY % defs SYSTEM "X11/defs.ent"> %defs;
+]>
+
+<article>
+
+  <articleinfo>
+
+    <title>Release Notes for X11R&relvers;</title>
+
+    <corpauthor>
+      <ulink url="http://www.x.org/wiki/XorgFoundation">
+	The X.Org Foundation
+      </ulink>
+    </corpauthor>
+
+    <pubdate>&reldate;</pubdate>
+
+    <abstract>
+
+      <para>
+	These release notes contains information about features and their
+	status in the X.Org Foundation X11R&relvers; release.
+      </para>
+
+    </abstract>
+
+  </articleinfo>
+
+  <sect1>
+    <title>Introduction to the X11R&relvers; Release</title>
+
+    <para>
+      This release is the &whichfullrel; modular release of the
+      <productname>X Window System</productname>.
+      The next full release will be X11R&nextrelvers; and is expected in
+      &nextfullreldate;.
+    </para>
+
+    <para>
+      Unlike X11R1 through X11R6.9, X11R7.x releases are not built from one
+      monolithic source tree, but many individual modules.   These modules
+      are distributed as individual source code releases, and each one is
+      released when it is ready, instead of only when the overall window
+      system is ready for release.  The X11R7.x releases are made by
+      &ldquo;rolling up&rdquo; the individual module releases into a
+      collection that is often affectionately called the
+      &ldquo;<foreignphrase>katamari</foreignphrase>&rdquo; by the developers.
+    </para>
+
+    <para>
+      The X11R&relvers; release does not include all of the software
+      formerly included in the previous X Window System releases.
+      It is designed to be a reasonable baseline from which to start
+      when building the window system for the first time for a new
+      installation, distribution, or package set.  It does not provide
+      a full desktop environment, expecting a more feature rich set of
+      applications to be installed from one of the several excellent
+      desktop environments available for the X Window System.  The
+      X.Org developers continue to maintain and produce new releases
+      of much of the software that was formerly in the main window
+      system releases but is no longer included in the katamari
+      releases, including many of the Athena Widgets desktop
+      applications that were provided as samples in previous window
+      system versions.
+    </para>
+
+    <para>
+      Once their window system build is established, most builders watch for
+      announcements of individual module updates on the <ulink
+	url="http://lists.freedesktop.org/mailman/listinfo/xorg-announce"
+	>xorg-announce mailing list</ulink> and update to those as needed.
+      The X.Org Foundation currently releases the X Window System
+      katamari releases approximately once a year, but many modules,
+      especially the X servers and drivers, are updated more frequently
+      between those releases.
+    </para>
+
+    <para>
+      For help with how to build and develop in the modular tree see the
+      <ulink url="http://wiki.x.org/wiki/ModularDevelopersGuide">Modular
+	Developer's Guide</ulink> in the X.Org wiki.
+    </para>
+
+    <para>
+      We encourage you to submit bug fixes and enhancements to
+      freedesktop.org's <ulink url="https://bugs.freedesktop.org/">
+	bug tracking system</ulink> using the xorg product, and to
+      discuss them on <email>xorg@lists.freedesktop.org</email>.
+      More details on patch submission and review process are available on the
+      <ulink
+       url="http://www.x.org/wiki/Development/Documentation/SubmittingPatches">
+	SubmittingPatches</ulink> page of the X.Org wiki.
+    </para>
+
+<para>
+The release numbering is based on the original MIT X numbering system.
+X11 refers to the version of the network protocol that the X Window
+system is based on: Version 11 was first released in 1988 and has been
+stable for 21 years, with only upward compatible additions to the core X
+protocol, a record of stability envied in computing.  Formal releases of
+X started with X version 9 from MIT; the first commercial X products
+were based on X version 10.  The MIT X Consortium and its successors,
+the X Consortium, the Open Group X Project Team, and the X.Org Group
+released versions X11R3 through X11R6.6.  Since the founding of the
+X.Org Foundation in early 2004, many further releases have been
+issued, from X11R6.7 to the current &relvers;.
+</para>
+
+<para>
+<![ %updaterel [
+The next sections describe what has changed in the update release(s)
+as well as what is new in the latest full release (&fullrelvers;).
+]]>
+<![ %majorrel [
+The next section describes what is new in the latest full release
+(&relvers;) compared with the previous full release
+(&prevrelvers;).
+]]>
+<![ %minorrel [
+The next section describes what is new in the latest version
+(&relvers;) compared with the previous full release (&prevrelvers;).
+]]>
+</para>
+
+</sect1>
+
+<![ %updaterel [
+<sect1>
+    <title>Summary of updates in &relvers;</title>
+    <para>
+    </para>
+</sect1>
+]]>
+
+<sect1>
+    <title>Summary of new features in X11R&relvers;</title>
+
+    <para>
+    This is a sampling of the new features in X11R&relvers;.
+    A more complete list of changes can be found in the ChangeLog files that
+    are part of the source of each X module.
+    </para>
+
+    <para>
+
+      <itemizedlist>
+        <listitem>
+	  <para>
+	    <firstterm>Multi-Pointer X (<acronym>MPX</acronym>)</firstterm>
+	    provides the user with multiple independent mouse cursors and
+	    multiple independent keyboard foci.  Each cursor is a true system
+	    cursor and different pointers can operate in multiple applications
+	    simultaneously.
+	  </para>
+        </listitem>
+        <listitem>
+	  <para>
+	    <firstterm>Input device properties</firstterm> allow you to attach
+	    properties to a device. These properties can be of arbitrary type
+	    and can be changed without the server having to know their details.
+	  </para>
+        </listitem>
+
+	<listitem>
+	  <para>
+	    The <firstterm>X Input Extension version 2.0
+		(<acronym>XI2</acronym>)</firstterm> is designed to
+	    replace both core input processing and prior
+	    versions of the X Input Extension.   Besides MPX, it provides a
+	    number of other enhancements over version 1.5, including:
+	    <itemizedlist spacing="compact">
+
+	      <listitem><para>use of XGE and GenericEvents.</para></listitem>
+	      <listitem><para>explicit device hierarchy of master and slave devices.</para></listitem>
+	      <listitem><para>the ability for devices to change capabilities at runtime.</para></listitem>
+	      <listitem><para>raw device events</para></listitem>
+	    </itemizedlist>
+	  </para>
+        </listitem>
+
+        <listitem>
+	  <para>
+	    <firstterm>Resize, Rotate and Reflect Extension
+	      (<acronym>RANDR</acronym>) version 1.3</firstterm>
+	    builds on the changes made with version 1.2 and adds some new
+	    capabilities without fundmentally changing the extension again.
+	    The following features are added in this version:
+	    <variablelist>
+	      <varlistentry>
+		<term>Projective Transforms</term>
+		<listitem><para>
+		    The implementation work for general rotation support made
+		    it trivial to add full projective transformations. These
+		    can be used to scale the screen up/down as well as perform
+		    projector keystone correct or other effects.
+		</para></listitem>
+	      </varlistentry>
+	      <varlistentry>
+		<term>Panning</term>
+		<listitem><para>
+		    Panning was removed with RandR 1.2 because the old
+		    semantics didn't fit any longer. With RandR 1.3 panning
+		    can be specified per crtc.
+		  </para></listitem>
+	      </varlistentry>
+	    </variablelist>
+	  </para>
+        </listitem>
+
+        <listitem>
+	  <para>
+	    The <firstterm><acronym>DRI2</acronym> extension</firstterm>
+	    is designed to associate and access auxillary rendering
+	    buffers with an X drawable.  It is a essentially a helper
+	    extension to support implementation of direct rendering
+	    drivers/libraries/technologies.
+	    The first consumer of this extension is a direct
+	    rendering OpenGL driver, but the DRI2 extension is not
+	    designed to be OpenGL specific.  Work is underway to
+	    utilize DRI2 for the Video Decode and Presentation API for Unix
+	    (<acronym>VPDAU</acronym>) as well.    Direct rendering
+	    implementations of OpenVG, Xv, cairo and other graphics
+	    APIs should find the functionality exposed by this
+	    extension helpful and hopefully sufficient.
+	  </para>
+        </listitem>
+
+        <listitem>
+	  <para>
+	    <firstterm>Video and input driver enhancements</firstterm>.
+	    Please see the ChangeLog files for individual drivers; there are
+	    far too many updates to list here.
+	  </para>
+        </listitem>
+
+        <listitem>
+	  <para>
+            ... and the usual assortment of correctness and crash fixes.
+	  </para>
+        </listitem>
+      </itemizedlist>
+    </para>
+  </sect1>
+
+  <sect1>
+    <title>Overview of X11R&relvers;</title>
+
+    <para>
+      On most platforms, X11R&relvers; has a single hardware-driving
+      X server binary called <command>Xorg</command>.  This binary can
+      dynamically load the video drivers, input drivers, and other modules
+      that are needed.
+
+      <command>Xorg</command> has currently has support for Linux, Solaris,
+      and some BSD OSs on Alpha, PowerPC, IA-64, AMD64, Intel x86, Sparc,
+      and MIPS platforms.
+
+    </para>
+
+    <para>
+      Additional specialized X server binaries may be found depending on
+      the platform and build configuration, including:
+
+      <glosslist>
+	<glossentry>
+	  <glossterm><command>Xdmx</command></glossterm>
+	  <glossdef><para>
+	    is a proxy X server that uses one or more other X servers as its
+	    display devices.  It provides multi-head X functionality for
+	    displays that might be located on different machines.
+	  </para></glossdef>
+	</glossentry>
+	<glossentry>
+	  <glossterm><command>Xnest</command></glossterm>
+	  <glossdef><para>
+	    is a nested X server, that operates as both an X client and X
+	    server.  <command>Xnest</command> is a client of the real server
+	    which manages windows and graphics requests on its behalf.
+	    <command>Xnest</command> is a server to its own clients, and
+	    manages windows and graphics requests on their behalf.
+	    To these clients, it appears to be a conventional server.
+	  </para></glossdef>
+	</glossentry>
+	<glossentry>
+	  <glossterm><command>Xephyr</command></glossterm>
+	  <glossdef><para>
+	      is a X server that outputs to a window on a pre-existing
+	      &ldquo;host&rdquo; X display.  Unlike <command>Xnest</command>
+	      which is an X proxy, and thus limited to the capabilities of
+	      the host X server, <command>Xephyr</command> is a full X server
+	      which uses the host X server window as a
+	      &ldquo;framebuffer&rdquo; via fast SHM XImages.
+	  </para></glossdef>
+	</glossentry>
+	<glossentry>
+	  <glossterm><command>Xvfb</command></glossterm>
+	  <glossdef><para>
+	    is a virtual framebuffer X server that can run on machines with
+	    no display hardware and no physical input devices.  It emulates
+	    a dumb framebuffer using virtual memory.
+	  </para></glossdef>
+	</glossentry>
+	<glossentry>
+	  <glossterm><command>Xquartz</command></glossterm>
+	  <glossdef><para>
+	    is an X server that interacts with the MacOS X native Aqua window
+	    system, displaying windows on the Mac desktop and accepting
+	    input from the Mac system devices, allowing X11 applications
+	    to be used in a native Mac desktop session.
+	  </para></glossdef>
+	</glossentry>
+	<glossentry>
+	  <glossterm><command>Xwin</command></glossterm>
+	  <glossdef><para>
+	    is an X server that runs under the Cygwin environment,
+	    interacting with the Microsoft Windows native window
+	    system, displaying windows on the Windows desktop and accepting
+	    input from the Windows system devices, allowing X11 applications
+	    to be used in a native Windows desktop session.
+	  </para></glossdef>
+	</glossentry>
+      </glosslist>
+    </para>
+  </sect1>
+
+  <sect1>
+    <title>Details of X11R&relvers; components</title>
+
+    <sect2>
+    <title>Video Drivers</title>
+
+    <para>
+    X11R&relvers; includes the following video drivers:
+    </para>
+
+    <para>
+    <informaltable id="drivertables" xreflabel="driver tables">
+        <tgroup cols="3">
+            <colspec align="left" colsep="1"></colspec>
+            <colspec align="left" colsep="1"></colspec>
+            <colspec align="left" colsep="1"></colspec>
+        <tbody>
+            <row>
+                <entry>Driver Name</entry>
+                <entry>Description</entry>
+                <entry>Further Information</entry>
+            </row>
+            <row>
+                <entry><literal remap="tt">apm</literal></entry>
+                <entry>Alliance Pro Motion</entry>
+                <entry><ulink url="apm.html">README.apm</ulink></entry>
+            </row>
+            <row>
+                <entry><literal remap="tt">ark</literal></entry>
+                <entry>Ark Logic</entry>
+                <entry>&nbsp;</entry>
+            </row>
+            <row>
+                <entry><literal remap="tt">ast</literal></entry>
+                <entry>ASPEED Technology</entry>
+                <entry>&nbsp;</entry>
+            </row>
+            <row>
+                <entry><literal remap="tt">chips</literal></entry>
+                <entry>Chips &amp; Technologies</entry>
+                <entry><ulink url="chips.html">README.chips</ulink>,
+                    <ulink url="chips.4.html">chips(4)</ulink>
+                </entry>
+            </row>
+            <row>
+                <entry><literal remap="tt">cirrus</literal></entry>
+                <entry>Cirrus Logic</entry>
+                <entry>&nbsp;</entry>
+            </row>
+            <row>
+                <entry><literal remap="tt">fbdev</literal></entry>
+                <entry>Linux framebuffer device</entry>
+                <entry><ulink url="fbdev.4.html">fbdev(4)</ulink></entry>
+            </row>
+            <row>
+                <entry><literal remap="tt">geode</literal> (*)</entry>
+                <entry>AMD Geode GX and LX</entry>
+                <entry>&nbsp;</entry>
+            </row>
+            <row>
+                <entry><literal remap="tt">glint</literal></entry>
+                <entry>3Dlabs, TI</entry>
+                <entry><ulink url="glint.4.html">glint(4)</ulink></entry>
+            </row>
+            <row>
+                <entry><literal remap="tt">i128</literal></entry>
+                <entry>Number Nine</entry>
+                <entry><ulink url="I128.html">README.I128</ulink>,
+                    <ulink url="i128.4.html">i128(4)</ulink></entry>
+            </row>
+            <row>
+                <entry><literal remap="tt">i740</literal></entry>
+                <entry>Intel i740</entry>
+                <entry><ulink url="i740.html">README.i740</ulink></entry>
+            </row>
+            <row>
+                <entry><literal remap="tt">imstt</literal></entry>
+                <entry>Integrated Micro Solns</entry>
+                <entry>&nbsp;</entry>
+            </row>
+            <row>
+                <entry><literal remap="tt">intel</literal></entry>
+                <entry>Intel i8xx/i9xx</entry>
+                <entry><ulink url="intel.html">README.intel</ulink>,
+                    <ulink url="intel.4.html">intel(4)</ulink></entry>
+            </row>
+            <row>
+                <entry><literal remap="tt">mach64</literal></entry>
+                <entry>ATI Mach64</entry>
+                <entry><ulink url="ati.html">README.ati</ulink></entry>
+            </row>
+            <row>
+                <entry><literal remap="tt">mga</literal></entry>
+                <entry>Matrox</entry>
+                <entry><ulink url="mga.4.html">mga(4)</ulink></entry>
+            </row>
+            <row>
+                <entry><literal remap="tt">neomagic</literal></entry>
+                <entry>NeoMagic</entry>
+                <entry><ulink url="neomagic.4.html">neomagic(4)</ulink></entry>
+            </row>
+            <row>
+                <entry><literal remap="tt">newport</literal> (-)</entry>
+                <entry>SGI Newport</entry>
+                <entry><ulink url="newport.html">README.newport</ulink>,
+                    <ulink url="newport.4.html">newport(4)</ulink></entry>
+            </row>
+            <row>
+                <entry><literal remap="tt">nsc</literal></entry>
+                <entry>National Semiconductor</entry>
+                <entry><ulink url="nsc.4.html">nsc(4)</ulink></entry>
+            </row>
+            <row>
+                <entry><literal remap="tt">nv</literal></entry>
+                <entry>NVIDIA</entry>
+                <entry><ulink url="nv.4.html">nv(4)</ulink></entry>
+            </row>
+            <row>
+                <entry><literal remap="tt">r128</literal></entry>
+                <entry>ATI Rage128</entry>
+                <entry><ulink url="r128.html">README.r128</ulink>,
+			<ulink url="r128.4.html">r128(4)</ulink></entry>
+            </row>
+            <row>
+                <entry><literal remap="tt">radeon</literal></entry>
+                <entry>ATI Radeon</entry>
+                <entry><ulink url="radeon.4.html">radeon(4)</ulink></entry>
+            </row>
+
+            <row>
+                <entry><literal remap="tt">rendition</literal></entry>
+                <entry>Rendition</entry>
+                <entry><ulink url="rendition.html">README.rendition</ulink>,
+                    <ulink url="rendition.4.html">rendition(4)</ulink></entry>
+            </row>
+            <row>
+                <entry><literal remap="tt">s3</literal></entry>
+                <entry>S3 (not ViRGE or Savage)</entry>
+                <entry>&nbsp;</entry>
+            </row>
+            <row>
+                <entry><literal remap="tt">s3virge</literal></entry>
+                <entry>S3 ViRGE</entry>
+                <entry><ulink url="s3virge.html">README.s3virge</ulink>,
+                    <ulink url="s3virge.4.html">s3virge(4)</ulink></entry>
+            </row>
+            <row>
+                <entry><literal remap="tt">savage</literal></entry>
+                <entry>S3 Savage</entry>
+                <entry><ulink url="savage.4.html">savage(4)</ulink></entry>
+            </row>
+            <row>
+                <entry><literal remap="tt">siliconmotion</literal></entry>
+                <entry>Silicon Motion</entry>
+                <entry><ulink url="siliconmotion.4.html">siliconmotion(4)</ulink></entry>
+            </row>
+            <row>
+                <entry><literal remap="tt">sis</literal></entry>
+                <entry>SiS</entry>
+                <entry><ulink url="SiS.html">README.SiS</ulink>,
+                    <ulink url="sis.4.html">sis(4)</ulink></entry>
+            </row>
+            <row>
+                <entry><literal remap="tt">sisusb</literal></entry>
+                <entry>SiS USB</entry>
+                <entry><ulink url="sisusb.4.html">sisusb(4)</ulink></entry>
+            </row>
+            <row>
+                <entry><literal remap="tt">suncg14</literal> (+)</entry>
+                <entry>Sun cg14</entry>
+                <entry>&nbsp;</entry>
+            </row>
+            <row>
+                <entry><literal remap="tt">suncg3</literal> (+)</entry>
+                <entry>Sun cg3</entry>
+                <entry>&nbsp;</entry>
+            </row>
+            <row>
+                <entry><literal remap="tt">suncg6</literal> (+)</entry>
+                <entry>Sun GX and Turbo GX</entry>
+                <entry>&nbsp;</entry>
+            </row>
+            <row>
+                <entry><literal remap="tt">sunffb</literal> (+)</entry>
+                <entry>Sun Creator/3D, Elite 3D</entry>
+                <entry>&nbsp;</entry>
+            </row>
+            <row>
+                <entry><literal remap="tt">sunleo</literal> (+)</entry>
+                <entry>Sun Leo (ZX)</entry>
+                <entry>&nbsp;</entry>
+            </row>
+            <row>
+                <entry>
+                <literal remap="tt">suntcx</literal> (+)</entry>
+                <entry>Sun TCX</entry>
+                <entry>&nbsp;</entry>
+            </row>
+            <row>
+                <entry><literal remap="tt">tdfx</literal></entry>
+                <entry>3Dfx Voodoo Banshee, 3, 4 &amp; 5</entry>
+                <entry><ulink url="tdfx.4.html">tdfx(4)</ulink></entry>
+            </row>
+            <row>
+                <entry><literal remap="tt">tga</literal></entry>
+                <entry>DEC TGA</entry>
+                <entry><ulink url="DECtga.html">README.DECtga</ulink></entry>
+            </row>
+            <row>
+                <entry><literal remap="tt">trident</literal></entry>
+                <entry>Trident</entry>
+                <entry><ulink url="trident.4.html">trident(4)</ulink></entry>
+            </row>
+            <row>
+                <entry><literal remap="tt">tseng</literal></entry>
+                <entry>Tseng Labs</entry>
+                <entry>&nbsp;</entry>
+            </row>
+            <row>
+                <entry><literal remap="tt">v4l</literal></entry>
+                <entry>Video4Linux</entry>
+                <entry><ulink url="v4l.4.html">v4l(4)</ulink></entry>
+            </row>
+            <row>
+                <entry><literal remap="tt">vesa</literal></entry>
+                <entry>VESA</entry>
+                <entry><ulink url="vesa.4.html">vesa(4)</ulink></entry>
+            </row>
+            <row>
+                <entry><literal remap="tt">vmware</literal></entry>
+                <entry>VMware guest OS</entry>
+                <entry><ulink url="vmware.4.html">vmware(4)</ulink></entry>
+            </row>
+	    <row>
+                <entry><literal remap="tt">voodoo</literal></entry>
+                <entry>3Dfx Voodoo 1 &amp; 2</entry>
+                <entry><ulink url="voodoo.4.html">voodoo(4)</ulink></entry>
+            </row>
+            <row>
+                <entry><literal remap="tt">wsfb</literal></entry>
+                <entry>Workstation Framebuffer</entry>
+                <entry><ulink url="wsfb.4.html">wsfb(4)</ulink></entry>
+            </row>
+            <row>
+                <entry><literal remap="tt">xgi</literal></entry>
+                <entry>XGI</entry>
+                <entry><ulink url="xgi.4.html">xgi(4)</ulink></entry>
+            </row>
+            <row>
+                <entry><literal remap="tt">xgixp</literal></entry>
+                <entry>XGI XP</entry>
+                <entry><ulink url="xgixp.4.html">xgixp(4)</ulink></entry>
+            </row>
+	  </tbody>
+       </tgroup>
+    </informaltable>
+    </para>
+
+    <para>
+    Drivers marked with (*) are present in a preliminary form in this release,
+    but are not complete and/or stable yet.
+    </para>
+
+    <para>
+    Drivers marked with (+) are for Linux/Sparc only.
+    </para>
+
+    <para>
+    Drivers marked with (-) are for Linux/mips only.
+    </para>
+    </sect2>
+
+    <sect2>
+    <title>Input Drivers</title>
+
+    <para>
+    X11R&relvers; includes the following input drivers:
+    </para>
+
+    <para>
+
+    <informaltable>
+        <tgroup cols="3">
+            <colspec align="left" colsep="1"></colspec>
+            <colspec align="left" colsep="1"></colspec>
+            <colspec align="left" colsep="1"></colspec>
+        <tbody>
+            <row>
+                <entry>Driver Name</entry>
+                <entry>Description</entry>
+                <entry>Further Information</entry>
+            </row>
+            <row>
+                <entry><literal remap="tt">acecad</literal></entry>
+                <entry>Acecad Flair</entry>
+                <entry><ulink url="aiptek.4.html">acecad(4)</ulink></entry>
+            </row>
+            <row>
+                <entry><literal remap="tt">aiptek(*)</literal></entry>
+                <entry>Aiptek USB tablet</entry>
+                <entry><ulink url="aiptek.4.html">aiptek(4)</ulink></entry>
+            </row>
+            <row>
+                <entry><literal remap="tt">evdev(*)</literal></entry>
+                <entry>Linux kernel EvDev</entry>
+                <entry><ulink url="evdev.4.html">evdev(4)</ulink></entry>
+            </row>
+            <row>
+                <entry><literal remap="tt">joystick</literal></entry>
+                <entry>Joystick</entry>
+                <entry><ulink url="joystick.4.html">joystick(4)</ulink></entry>
+            </row>
+            <row>
+                <entry><literal remap="tt">kbd</literal></entry>
+                <entry>generic keyboards (non-evdev systems)</entry>
+                <entry><ulink url="kbd.4.html">kbd(4)</ulink></entry>
+            </row>
+            <row>
+                <entry><literal remap="tt">mouse</literal></entry>
+                <entry>most mouse devices (non-evdev systems)</entry>
+                <entry><ulink url="mouse.4.html">mouse(4)</ulink></entry>
+            </row>
+            <row>
+                <entry><literal remap="tt">synaptics</literal></entry>
+                <entry>Synaptics &amp; ALP touchpads</entry>
+                <entry><ulink url="synaptics.4.html">synaptics(4)</ulink></entry>
+            </row>
+            <row>
+                <entry><literal remap="tt">vmmouse</literal></entry>
+                <entry>VMWare virtual mouse</entry>
+                <entry><ulink url="vmmouse.4.html">vmmouse(4)</ulink></entry>
+            </row>
+            <row>
+                <entry><literal remap="tt">void</literal></entry>
+                <entry>dummy device</entry>
+                <entry><ulink url="void.4.html">void(4)</ulink></entry>
+            </row>
+        </tbody>
+        </tgroup>
+    </informaltable>
+    </para>
+
+    <para>
+    Drivers marked with (*) are available for Linux only.
+    </para>
+
+    </sect2>
+
+    <sect2>
+      <title>Xorg server</title>
+      <sect3>
+        <title>Loader and Modules</title>
+
+        <para>
+	  The Xorg server relies on the operating system's native
+	  module loader support for handling program modules. The X
+	  server makes use of modules for video drivers, X server
+	  extensions, input device drivers, framebuffer layers, and
+	  internal components used by some drivers (like XAA &amp; EXA).
+        </para>
+
+        <para>
+        The module interfaces (both API and ABI) used in this release are
+        subject to change without notice.  While we will attempt to provide
+        backward compatibility for the module interfaces, we cannot
+        guarantee this. Compatibility in the other direction is explicitly
+        not guaranteed because new modules may rely on interfaces added in
+        new releases.
+        </para>
+
+        <warning>
+        <title>Note about module security</title>
+        <para>The X server runs with root privileges, i.e.,
+        the X server loadable modules also run with these privileges.
+        For this reason we recommend that all users be careful to only
+        use loadable modules from reliable sources,  otherwise the
+        introduction of viruses and contaminated code can occur and
+        wreak havoc on your system.  We hope to have a mechanism for
+        signing/verifying the modules that we provide available in a
+        future release.
+        </para></warning>
+      </sect3>
+
+      <sect3 id="config">
+        <title>Configuration File</title>
+
+        <para>
+        The Xorg server uses a configuration file as the primary mechanism
+        for providing configuration and run-time parameters.  The configuration
+        file format is described in detail in the <ulink url="xorg.conf.5.html">
+        xorg.conf(5)</ulink> manual page.
+        </para>
+
+        <para>
+        Note that this release features significant improvements
+        for running the server without a configuration file, so many users
+        may find that that they don't need a configuration file.
+        </para>
+
+        <para>
+        If you do need to customize the configuration file, see the <ulink
+        url="xorg.conf.5.html"
+        >xorg.conf manual page</ulink> .  You can also
+        check the driver-specific manual pages and the related
+        documentation (found at <xref linkend="drivertables"></xref>) also.
+        </para>
+
+        <para>
+        The recommended method for generating a configuration file is to use
+        the Xorg server itself.  Run as root:
+
+        <screen>
+        Xorg -configure
+        </screen>
+         and follow the instructions.
+        </para>
+
+      </sect3>
+
+      <sect3>
+        <title>Command Line Options</title>
+
+        <para>
+        Command line options can be used to override some default
+        parameters and parameters provided in the configuration file.
+        These command line options are described in the <ulink
+        url="Xorg.1.html">Xorg(1)</ulink> manual page.
+        </para>
+      </sect3>
+
+      <sect3>
+        <title>XAA</title>
+
+        <para>
+        The XFree86 Acceleration Architecture (XAA) was completely rewritten
+        from scratch for XFree86 4.x and is used in X11R&relvers;.
+        Most drivers implement acceleration by making use of the XAA module.
+        </para>
+      </sect3>
+
+      <sect3>
+        <title>EXA</title>
+
+        <para>
+        EXA was created as a new driver acceleration architecture to
+        replace XAA. EXA was designed specifically to accelerate Render
+        operations. This release features improved driver support for EXA.
+        See the individual driver changelogs for details.
+        </para>
+      </sect3>
+
+      <sect3>
+        <title>Multi-head</title>
+
+        <para>
+	  Some multi-head configurations are supported in X11R&relvers;.
+	  Support for multiple PCI/AGP cards may require a kernel with
+	  changes to support VGA arbitration.
+        </para>
+
+        <para>
+        One of the main problems is with drivers not sufficiently
+        initializing cards that were not initialized at boot time.  This
+        has been improved somewhat with the INT10 support that is used by
+        most drivers (which allows secondary card to be "soft-booted", but
+        in some cases there are other issues that still need to be
+        resolved.  Some combinations can be made to work better by changing
+        which card is the primary card (either by using a different PCI
+        slot, or by changing the system BIOS's preference for the primary
+        card).
+        </para>
+      </sect3>
+
+      <sect3>
+        <title>Xinerama</title>
+        <para>
+        Xinerama is an X server extension that allows multiple physical screens
+        to behave as a single screen.  With traditional multi-head in X11,
+        windows cannot span or cross physical screens.  Xinerama removes this
+        limitation.  Xinerama does, however, require that the physical screens
+        all have the same root depth, so it isn't possible, for example, to use
+        an 8-bit screen together with a 16-bit screen in Xinerama mode.
+        </para>
+
+        <para>
+        Xinerama is not enabled by default, and can be enabled with the
+        <option>+xinerama</option> command line option for the
+        X server.
+        </para>
+      </sect3>
+
+      <sect3>
+        <title>DDC</title>
+
+        <para>
+	  The <acronym>VESA</acronym>&reg; Display Data Channel
+	  (<acronym><trademark>DDC</trademark></acronym>) standard allows
+	  the monitor to tell the video card (or in some cases the
+	  computer directly) about itself; particularly the supported
+	  screen resolutions and refresh rates.
+        </para>
+
+        <para>
+        Partial or complete DDC support is available in most of the video
+        drivers.  DDC is enabled by default, but can be disabled with a
+        "Device" section entry:  <literal remap="tt">Option
+        "NoDDC"</literal>.  We have support for DDC versions 1 and 2; these
+        can be disabled independently with <literal remap="tt">Option
+        "NoDDC1"</literal> and <literal remap="tt">Option
+        "NoDDC2"</literal>.
+        </para>
+
+        <para>
+        At startup the server prints out DDC information from the display,
+        and can use this information to set the default monitor parameters,
+        or to warn about monitor sync limits if those provided in the
+        configuration file don't match those that are detected.
+        </para>
+
+        <sect4>
+            <title>Changed behavior caused by DDC.</title>
+
+            <para>
+            Several drivers use DDC information to set the screen size and
+            pitch.  This can be overridden by explicitly resetting it to
+            the and non-DDC default value 75 with the <option>-dpi 75</option>
+	    command line option for the X
+            server, or by specifying appropriate screen dimensions with the
+            "DisplaySize" keyword in the "Monitor" section of the config
+            file.
+            </para>
+        </sect4>
+      </sect3>
+
+      <sect3>
+        <title>GLX and the Direct Rendering Infrastructure (DRI)</title>
+
+        <para>
+        Direct rendered OpenGL&reg; support is provided for several
+        hardware platforms by the Direct Rendering Infrastructure (DRI).
+        Further information about DRI can be found at the <ulink
+        url="http://dri.sf.net/">DRI Project's web site</ulink>.  The 3D
+        core rendering component is provided by <ulink
+        url="http://www.mesa3d.org">Mesa</ulink>.
+        </para>
+
+        <para>
+        Of note is that this release supports building the X server using
+        the system-wide libdrm. Previously, drm was kept in the server's
+        tree and loaded as a module, rather than using the standard OS
+        mechanisms for managing shared libraries of code. This requires
+        that the server be built using a version of libdrm of 2.3.0 or
+        newer if it is to use DRM.
+        </para>
+      </sect3>
+
+      <sect3>
+	<title>Terminate Server keystroke</title>
+
+	<para>
+	  The Xorg server has previously allowed users to exit the server
+	  by pressing the keys
+	  <keycap function="control">Control</keycap> +
+	  <keycap function="alt">Alt</keycap> +
+	  <keycap function="backspace">Backspace</keycap>.
+	  While this function is still enabled by default in this release,
+	  the keymap data usually used with Xorg, from the
+	  xkeyboard-config project, has been modified to not map that
+	  sequence by default, in order to reduce the chance that
+	  inexperienced users will accidentally destroy their work.
+	</para>
+	<para>
+	  Users who wish to have this functionality available by default
+	  may enable it via the XKB configuration option
+	  &ldquo;<option>terminate:ctrl_alt_bksp</option>&rdquo;.  For
+	  instance, the <command>setxkbmap</command> command can be used
+	  to enable this by running:
+	  <screen>
+	setxkbmap -option "terminate:ctrl_alt_bksp"
+	  </screen>
+	  Many desktop environments include XKB configuration options in
+	  their preferences to enable this as well.
+	</para>
+      </sect3>
+
+
+      <sect3>
+	<title>X Server startup state</title>
+
+	<para>
+	  The X servers in the X11R&relvers; release now start by default
+	  with an empty black screen and do not draw the mouse cursor until
+	  a client sets the cursor image.   To restore the classic behavior
+	  of starting with the grey weave pattern and &times; cursor, start
+	  the X server with the <option>-retro</option> option.
+	</para>
+      </sect3>
+    </sect2>
+
+<!--
+    <sect2>
+        <title>Other extensions</title>
+        <para></para>
+    </sect2>
+-->
+
+<!--
+<sect1>
+<title>X libraries and clients</title>
+<para>
+</para>
+</sect1>
+-->
+
+<!--
+<sect1>
+<title>Fonts and Internationalisation</title>
+<para>
+</para>
+</sect1>
+-->
+
+    <sect2 id="font">
+        <title>Font support</title>
+
+        <para>
+        Details about the font support in X11R&relvers; can be
+        found in the <ulink url="fonts/fonts.html">README.fonts</ulink>
+        document.
+        </para>
+
+	<sect3>
+	  <title>Default font installation directory</title>
+
+	  <para>
+	    Previous versions of X installed font files under the
+	    <filename class="directory">lib/X11/fonts</filename> subdirectory
+	    of the X installation directory (for instance, in X11R6 releases,
+	    <filename class="directory">/usr/X11R6/lib/X11/fonts</filename>
+	    was commonly used).   This release changes the default installation
+	    path to the <filename class="directory">fonts</filename>
+	    subdirectory of the <varname>datadir</varname> setting from the
+	    GNU autoconf configuration.   For instance, if the fonts are
+	    configured with <userinput>./configure --prefix=/usr</userinput>,
+	    they will be installed under subdirectories of
+	    <filename class="directory">/usr/share/fonts/X11</filename>.
+	    The font module configure scripts all take an option of
+	    <option>--with-fontrootdir=<parameter>PATH</parameter></option>
+	    to override the default.   If <option>--with-fontrootdir</option>
+	    is not specified, the <filename>fontutil</filename> pkg-config
+	    file will be consulted to find the <varname>fontrootdir</varname>
+	    specified when the <filename>fontutil</filename> module was
+	    installed.
+	  </para>
+	</sect3>
+
+	<sect3>
+	  <title>Bitmap font compression methods</title>
+
+	  <para>
+	    The X11R&relvers; release supports PCF format bitmap fonts stored
+	    uncompressed or compressed via the <command>compress</command>,
+	    <command>gzip</command>, or <command>bzip2</command> programs.
+	    To utilize bzip2 compression, the <literal>libXfont</literal>
+	    and <command>mkfontscale</command> modules must be built with
+	    the <option>--with-bzip2</option> &mdash; all other methods are
+	    enabled by default.
+	  </para>
+	  <para>
+	    To specify which compression method to use when installing
+	    a font module from X11R&relvers; the configure scripts accept
+	    an option of
+	    <option>--with-compression=<parameter>TYPE</parameter></option>,
+	    where <parameter>TYPE</parameter> may be <literal>none</literal>,
+	    <literal>compress</literal>, <literal>gzip</literal>, or
+	    <literal>bzip2</literal>.
+	  </para>
+	</sect3>
+
+	<sect3>
+	  <title>Type1 Font support</title>
+
+	  <para>
+	    Previous versions of X came with two Postscript Type1 font
+	    backends.  The functionality from the &ldquo;Type1&rdquo;
+	    backend has been replaced by the Type1 support in the
+	    &ldquo;FreeType&rdquo; backend.
+	  </para>
+	</sect3>
+
+	<sect3>
+	  <title>CID Font support</title>
+
+	  <para>
+	    The CID-keyed font format was designed by Adobe Systems for
+	    fonts with large character sets.  The CID-keyed format is
+	    obsolete, as it has been superseded by other formats such as
+	    OpenType/CFF and support for CID-keyed fonts has been removed
+	    from X11.
+	  </para>
+	</sect3>
+
+      </sect2>
+
+  </sect1>
+
+  <sect1>
+    <title>Build changes and issues</title>
+
+    <sect2>
+      <title>Silent build rules</title>
+
+      <para>
+	Most of the modules in this release use the
+	<function>AM_SILENT_RULES</function> option of GNU automake 1.11.
+	When building the software, most output will show an abbreviated
+	format for the commands being run, such as:
+	<screen>
+   CC	xmen.o
+	</screen>
+	To enable verbose output, showing all the arguments to the commands
+	being run, add the flag <option>V=1</option> to the
+	<command>make</command> command line or add the flag
+	<option>--disable-silent-rules</option> to the configure command.
+      </para>
+    </sect2>
+
+    <sect2>
+      <title>New configure options for font modules</title>
+
+      <para>
+	Several new options have been added to the configure scripts
+	for font modules in this release.   See the
+	<link linkend="font">Font support</link> section of this document
+	for details of the
+	<option>--with-fontrootdir=<parameter>PATH</parameter></option>
+	and
+	<option>--with-compression=<parameter>TYPE</parameter></option>
+	options.
+      </para>
+    </sect2>
+
+    <sect2>
+      <title>Changes to extension headers</title>
+
+      <para>
+	The C language header files for a number of X11 protocol
+	extensions were refactored in this release to better split the
+	protocol definitions and the client library definitions.
+	Efforts were made to retain compatibility for existing
+	software, but use of some headers may now trigger warnings
+	suggesting including new or more appropriate headers instead.
+      </para>
+      <para>
+	Since these changes were made to files in both the
+	<literal>proto</literal> and <literal>lib</literal>
+	modules for each extension, builders upgrading individual
+	modules will have to update these modules in unison to avoid
+	breaking builds of software using the headers from these modules.
+      </para>
+    </sect2>
+
+
+  </sect1>
+
+  <sect1>
+    <title>Miscellaneous</title>
+
+    <para>
+    This section describes other items of note for the
+    X11R&relvers; release.
+    </para>
+
+    <sect2>
+        <title>Socket directory ownership and permissions</title>
+
+      <para>
+	The socket directories created in <filename>/tmp</filename>
+        are now required to be owned by root and have their sticky-bit
+        set.  If the permissions are not set correctly, the component
+        using this directory will print an error message and fail to
+        start.  Common socket directories that are known to be
+        affected include:
+
+        <screen>
+        /tmp/.font-unix
+        /tmp/.ICE-unix
+        /tmp/.X11-unix
+        </screen>
+
+        These directories are used by the font server
+	(<command>xfs</command>), applications using the Inter-Client
+	Exchange protocol (<acronym>ICE</acronym>) and the X server,
+	respectively.
+      </para>
+
+      <para>
+        There are several solutions to the problem of when to create these
+        directories.  They could be created at install time by the system's
+        installer if the <filename class="directory">/tmp</filename> dir is
+        persistent.  They could be created at boot time by the system's
+        boot scripts (e.g., the <filename class="directory" >init.d</filename>
+        scripts).  Or, they could be created by PAM modules at service
+        startup or user login time.
+      </para>
+
+      <para>
+        The solution chosen is platform dependent, and the system administrator
+        should be able to handle creating those directories on any systems that
+        do not have the correct ownership or permissions.
+      </para>
+    </sect2>
+
+    <sect2>
+        <title>Composite exposes extra visuals</title>
+
+        <para>
+        When the Composite extension is enabled, a new visual is
+        created.  This visual is different from the other visuals used by X
+        applications in that it includes an alpha component.  It is used by
+        the compositing manager and other Composite aware applications.
+        </para>
+
+        <para>
+        Most X applications ignore this visual since it is not useful to
+        them; however some applications mistakenly try to use it, which
+        will cause them to fail.  An environment variable,
+	<envar>XLIB_SKIP_ARGB_VISUALS</envar>,
+        was added to the X11 library to hide this visual from applications
+        that mistakenly try to use it.  If an application fails only when
+        the Composite is enabled, try setting this environment variable
+        before starting the application.
+        </para>
+
+    </sect2>
+  </sect1>
+
+  <sect1>
+    <title>Deprecated components and removal plans</title>
+
+    <para>
+    This section lists current plans for removal of obsolete or deprecated
+    components in the X.Org releases.  As our releases are open source,
+    users who continue to require these can find the source in previous
+    releases and continue to use these, but the X.Org Foundation and its
+    volunteers have decided the burden of continued maintenance and
+    distribution in the core X11 releases outweighs the benefits of doing
+    so.  In some cases, this is simply because no one has volunteered to do
+    continued maintenance, so if software is listed here that you need, you
+    can contact <email>xorg@lists.freedesktop.org</email> to volunteer to
+    take over maintainership, either inside or outside of the Xorg release
+    process.
+    </para>
+
+
+    <sect2>
+      <title>Future Removals</title>
+
+      <variablelist>
+	<varlistentry>
+	  <term>DGA version 2</term>
+	  <listitem>
+	    <para>
+	      DGA 2.0 is included in &relvers;.  Documentation for the client
+	      libraries can be found in the
+	      <ulink url="XDGA.3.man">XDGA(3)</ulink> man page.  DGA should be
+	      considered deprecated; if you are relying on it, please let us
+	      know what you need it for so we can find better solutions.
+	    </para>
+	  </listitem>
+        </varlistentry>
+      </variablelist>
+
+      <variablelist>
+	<varlistentry>
+	  <term>Input device discovery via HAL</term>
+	  <listitem>
+	    <para>
+	      The Xorg server currently uses the <ulink
+	      url="http://www.freedesktop.org/wiki/Software/hal">HAL
+	      framework</ulink> to discover connected input devices,
+	      receive notification of hotplug events for them, and to
+	      retrieve configuration parameters for them. The HAL
+	      maintainers have deprecated HAL, so the X.Org developers
+	      are investigating alternatives.  As a result, configuration
+	      of input devices via HAL <filename>*.fdi</filename> files
+	      may not be supported in future Xorg server releases.
+	    </para>
+	  </listitem>
+        </varlistentry>
+      </variablelist>
+
+      <variablelist>
+	<varlistentry>
+	  <term>Xsdl server</term>
+	  <listitem>
+	    <para>
+	      The experimental Xsdl server has never been finished or
+	      maintained, and will be removed in future X server releases.
+	    </para>
+	  </listitem>
+        </varlistentry>
+      </variablelist>
+
+    </sect2>
+
+    <sect2>
+      <title>Removed in this Release</title>
+	<para>
+	  <variablelist>
+	    <varlistentry>
+	    <term>Xprint</term>
+	    <listitem>
+	      <para>
+		The Xprint server and extension have been removed in
+		this release.  The libXaw8 variant of the Athena Widgets
+		which added Xprint widgets has been removed from this
+		release.  Xprint support in a number of client programs
+		has also been removed.
+	      </para>
+	    </listitem>
+	  </varlistentry>
+	  <varlistentry>
+	    <term>kdrive servers</term>
+	    <listitem>
+	      <para>
+		The kdrive X servers for vesa, ati, chips, epson, i810,
+		igs, ipaq, itsy, mach64, mga, neomagic, nvidia, pcmcia, pm2,
+		r128, savage, sis300, sis530, smi, trident, trio, ts300, via,
+		and vxworks have been removed in this release.  Most of
+		these have not worked or been maintained in recent releases.
+	      </para>
+	    </listitem>
+	  </varlistentry>
+	  <varlistentry>
+	    <term>Unmaintained extensions</term>
+	    <listitem>
+	      <para>
+		Support has been removed from the X servers for the
+		following extensions, which were obsolete, not widely
+		used, or not working:
+		<itemizedlist>
+		  <listitem><para>AppGroup</para></listitem>
+		  <listitem><para>EVI</para></listitem>
+		  <listitem><para>FontCache</para></listitem>
+		  <listitem><para>MIT-SUNDRY-NONSTANDARD</para></listitem>
+		  <listitem><para>TOG-CUP</para></listitem>
+		  <listitem><para>XTrap</para></listitem>
+		  <listitem><para>XFree86-Misc</para></listitem>
+		  <listitem><para>XEvIE</para></listitem>
+		</itemizedlist>
+	      </para>
+	    </listitem>
+	  </varlistentry>
+	  <varlistentry>
+	    <term>Xorg configuration utilities</term>
+	    <listitem>
+	      <para>
+		The <command>xorgcfg</command> GUI and
+		<command>xorgconfig</command> CLI utilities
+		have been removed in this release.  See the
+		<link linkend="config">Configuration File</link> section for
+		alternative methods of Xorg configuration.
+	      </para>
+	    </listitem>
+	  </varlistentry>
+	  <varlistentry>
+	    <term>ioport</term>
+	    <listitem>
+	      <para>
+		The ioport utility and its aliases (inb, inw, inl, outb, outw,
+		and outl) for manipulating I/O space addresses directly have
+		been removed in this release.
+	      </para>
+	    </listitem>
+	  </varlistentry>
+	</variablelist>
+      </para>
+    </sect2>
+  </sect1>
+
+  <sect1>
+    <title>Attributions/Acknowledgements/Credits</title>
+
+    <![ %snapshot [
+    <note>
+      <title>THIS IS A DRAFT OF THE X11R&relvers; CREDITS SECTION.</title>
+      <para>
+	If you find missing credits, incorrect attributions, or other errors,
+	please send details to <email>xorg@lists.freedesktop.org</email>.
+      </para>
+    </note>
+    ]]>
+
+
+    <para>
+      This section lists the credits for the X11R&relvers; release.
+      For a more detailed breakdown, refer to the ChangeLog file in
+      the source tree for each module, the history in <ulink
+	url="http://cgit.freedesktop.org/xorg/">the xorg product in
+	freedesktop.org's git repositories</ulink> or the
+      '<userinput>git log</userinput>' information for individual source files.
+    </para>
+
+    <para>
+      The X Window System has been a collaborative effort from its inception.
+      Our apologies for anyone or organization inadvertently overlooked.
+      Many individuals (including major contributors) who worked on X are
+      represented by their employers in this list.  If you feel we have left
+      anyone out, please let us know.
+    </para>
+
+    <para>
+      These people contributed in some way to X11R&relvers;:
+      <simplelist type='vert' columns='2'>
+	<member>Aaron Plattner</member>
+	<member>Aaron Zang</member>
+	<member>Adam Hoka</member>
+	<member>Adam Jackson</member>
+	<member>Adam Tkac</member>
+	<member>Adel Gadllah</member>
+	<member>Adrian Friedli</member>
+	<member>Alan Coopersmith</member>
+	<member>Alan Cox</member>
+	<member>Alan Curry</member>
+	<member>Alan Hourihane</member>
+	<member>Albert Damen</member>
+	<member>Alberto Milone</member>
+	<member>Alex Deucher</member>
+	<member>Alex Villac&iacute;s Lasso</member>
+	<member>Alexey Ten</member>
+	<member>Ander Conselvan de Oliveira</member>
+	<member>Andre Herms</member>
+	<member>Andreas Luik</member>
+	<member>Andres Salomon</member>
+	<member>Andrew Randrianasulu</member>
+	<member>Arkadiusz Mi&sacute;kiewicz</member>
+	<member>Arnaud Patard</member>
+	<member>Arthur HUILLET</member>
+	<member>Asbj&oslash;annes</member>
+	<member>Barry Scott</member>
+	<member>Bart Massey</member>
+	<member>Bart Trojanowski</member>
+	<member>Bastien Nocera</member>
+	<member>Batchty</member>
+	<member>Ben Byer</member>
+	<member>Ben Gamari</member>
+	<member>Ben Hutchings</member>
+	<member>Ben North</member>
+	<member>Ben Skeggs</member>
+	<member>Benjamin Close</member>
+	<member>Benjamin Defnet</member>
+	<member>Benjamin Herrenschmidt</member>
+	<member>Benjamin Tissoires</member>
+	<member>Bernhard R. Link</member>
+	<member>Bernhard Rosenkraenzer</member>
+	<member>Bill Nottingham</member>
+	<member>Bob Ham</member>
+	<member>Bob Long</member>
+	<member>Brad Smith</member>
+	<member>Branden Robinson</member>
+	<member>Brian Rogers</member>
+	<member>Brice Goglin</member>
+	<member>Bryce Harrington</member>
+	<member>Calvin Fong</member>
+	<member>Caolan McNamara</member>
+	<member>Carl Worth</member>
+	<member>Charlie</member>
+	<member>Chris Ball</member>
+	<member>Chris Salch</member>
+	<member>Chris Wilson</member>
+	<member>Christiaan van Dijk</member>
+	<member>Christian Aistleitner</member>
+	<member>Christian Beier</member>
+	<member>Christian Koenig</member>
+	<member>Christian Schmitt</member>
+	<member>Christoph Brill</member>
+	<member>Christoph Pfister</member>
+	<member>Coleman Kane</member>
+	<member>Colin Guthrie</member>
+	<member>Colin Harrison</member>
+	<member>Cooper Yuan</member>
+	<member>Corbin Simpson</member>
+	<member>Dan</member>
+	<member>Dan Nicholson</member>
+	<member>Daniel Drake</member>
+	<member>Daniel Stone</member>
+	<member>Daniel Vetter</member>
+	<member>Darren Smith</member>
+	<member>Dave Airlie</member>
+	<member>Dave Miller</member>
+	<member>David Jander</member>
+	<member>David Marx</member>
+	<member>David Miller</member>
+	<member>David Nolden</member>
+	<member>David Nusinow</member>
+	<member>David Schleef</member>
+	<member>Dennis Kasprzyk</member>
+	<member>Derek Upham</member>
+	<member>Derek Wang</member>
+	<member>Diego Elio 'Flameeyes' Petten&ograve;</member>
+	<member>Dima Kogan</member>
+	<member>Dmitry Torokhov</member>
+	<member>Dodji Seketeli</member>
+	<member>Donald Kayser</member>
+	<member>Donnie Berkholz</member>
+	<member>Doug Chapman</member>
+	<member>Drew Parsons</member>
+	<member>Eamon Walsh</member>
+	<member>Ed Catmur</member>
+	<member>Eduard Bagrov</member>
+	<member>Eduard Fuchs</member>
+	<member>edward shu</member>
+	<member>Egbert Eich</member>
+	<member>Emilio Jes&uacute;s Gallego Arias</member>
+	<member>Eric Anholt</member>
+	<member>Eric Paris</member>
+	<member>&Eacute;ric Piel</member>
+	<member>Erik Andren</member>
+	<member>Erkin Bahceci</member>
+	<member>Evgeny M. Zubok</member>
+	<member>Eygene Ryabinkin</member>
+	<member>Fabio</member>
+	<member>Federico Mena Quintero</member>
+	<member>Fedor P. Goncharov (Fredy)</member>
+	<member>Felix Kuehling</member>
+	<member>Fernando Carrijo</member>
+	<member>Filippo Giunchedi</member>
+	<member>Francis Giraldeau</member>
+	<member>Francisco Jerez</member>
+	<member>Fredrik H&ouml;glund</member>
+	<member>Gaetan Nadon</member>
+	<member>George Peter Staplin</member>
+	<member>George Sapountzis</member>
+	<member>George Staplin</member>
+	<member>Giuseppe Bilotta</member>
+	<member>Goneri Le Bouder</member>
+	<member>Guillem Jover</member>
+	<member>Hans de Goede</member>
+	<member>Hasso Tepper</member>
+	<member>Havoc Pennington</member>
+	<member>Helge Bahmann</member>
+	<member>Henrik Rydberg</member>
+	<member>Henry unbongo</member>
+	<member>Hong Liu</member>
+	<member>Hugo Jacques</member>
+	<member>Ian Romanick</member>
+	<member>Imranullah Syed</member>
+	<member>Ivaylo Boyadzhiev</member>
+	<member>Jakob Bornecrantz</member>
+	<member>Jakub Bogusz</member>
+	<member>James Cloos</member>
+	<member>Jamey Sharp</member>
+	<member>Jamie Lentin</member>
+	<member>Jason Vas Dias</member>
+	<member>Jasper Lievisse Adriaanse</member>
+	<member>Jay Cotton</member>
+	<member>Jeff Smith</member>
+	<member>Jens Granseuer</member>
+	<member>Jens Herden</member>
+	<member>Jeremy C. Reed</member>
+	<member>Jeremy Huddleston</member>
+	<member>Jeremy Jay</member>
+	<member>Jeremy Lain&eacute;</member>
+	<member>Jeremy Uejio</member>
+	<member>Jerome Glisse</member>
+	<member>Jerome Pinot</member>
+	<member>Jesse Adkins</member>
+	<member>Jesse Barnes</member>
+	<member>Jesse Ruffin</member>
+	<member>Jie Luo</member>
+	<member>Jim Huang</member>
+	<member>Jochen Voss</member>
+	<member>Joe Krahn</member>
+	<member>Joel Bosveld</member>
+	<member>John Hein</member>
+	<member>John McKernan</member>
+	<member>John Nielsen</member>
+	<member>John Tapsell</member>
+	<member>Jon TURNEY</member>
+	<member>Jordan Crouse</member>
+	<member>Joseph Adams</member>
+	<member>Josh Triplett</member>
+	<member>Juan RP</member>
+	<member>Julien Cristau</member>
+	<member>Julien Plissonneau Duquene</member>
+	<member>Juliusz Chroboczek</member>
+	<member>Kalev Lember</member>
+	<member>Kazuhiro Inaoka</member>
+	<member>Kees Cook</member>
+	<member>Keith Packard</member>
+	<member>Kel Modderman</member>
+	<member>Ken Thomases</member>
+	<member>Kevin E Martin</member>
+	<member>Khaled Hosny</member>
+	<member>Kim Woelders</member>
+	<member>Kristian H&oslash;gsberg</member>
+	<member>Krzysztof Halasa</member>
+	<member>Kshitij Kulshreshtha</member>
+	<member>Kyle McMartin</member>
+	<member>Lee Leahu</member>
+	<member>Li Peng</member>
+	<member>Li Shao Hua</member>
+	<member>Lubos Lunak</member>
+	<member>Luc Verhaegen</member>
+	<member>Luk&aacute;&scaron; Hejtm&aacute;nek</member>
+	<member>Lukasz Kurylo</member>
+	<member>Ma Ling</member>
+	<member>Maarten Maathuis</member>
+	<member>Maciej Cencora</member>
+	<member>Magnus Kessler</member>
+	<member>Magnus Vigerl&ouml;f</member>
+	<member>Manuel Bouyer</member>
+	<member>Marcel Dejean</member>
+	<member>Marcin Baczy&nacute;ski</member>
+	<member>Marcin 'Qrczak' Kowalczyk</member>
+	<member>Mark Kettenis</member>
+	<member>Mark van Doesburg</member>
+	<member>Markus Gapp</member>
+	<member>Markus Kuhn</member>
+	<member>Mart Raudsepp</member>
+	<member>Martin-&Eacute;ric Racine</member>
+	<member>Mathieu B&eacute;rard</member>
+	<member>Matt Helsley</member>
+	<member>Matt Turner</member>
+	<member>Matthias Clasen</member>
+	<member>Matthias Hopf</member>
+	<member>Matthieu Herrb</member>
+	<member>Mattia Dongili</member>
+	<member>Maxim Levitsky</member>
+	<member>Micah Dowty</member>
+	<member>Michael Chapman</member>
+	<member>Michael Cree</member>
+	<member>Michael Lorenz</member>
+	<member>Michael Scherer</member>
+	<member>Michael Verret</member>
+	<member>Michael Vogt</member>
+	<member>Michael Witrant</member>
+	<member>Michael Witten</member>
+	<member>Michel D&auml;nzer</member>
+	<member>Mikhail Gusarov</member>
+	<member>Mikko Niskanen</member>
+	<member>Milos Komarcevic</member>
+	<member>Nathael Pajani</member>
+	<member>Nathaniel McCallum</member>
+	<member>Neale Pickett</member>
+	<member>Nicolai H&auml;hnle</member>
+	<member>Nicos Gollan</member>
+	<member>Niels de Vos</member>
+	<member>Nirbheek Chauhan</member>
+	<member>Oliver McFadden</member>
+	<member>Olivier Blin</member>
+	<member>Olivier Fourdan</member>
+	<member>Otavio Salvador</member>
+	<member>Owain Gordon Ainsworth</member>
+	<member>Owen W. Taylor</member>
+	<member>parag</member>
+	<member>Patrick Haller</member>
+	<member>Paul Bender</member>
+	<member>Paul Menzel</member>
+	<member>Paul &quot;TBBle&quot; Hampson</member>
+	<member>Pauli Nieminen</member>
+	<member>Paulo C&eacute;sar Pereira de Andrade</member>
+	<member>Paulo Ricardo Zanoni</member>
+	<member>Peter Alfredsen</member>
+	<member>Peter &Aring;strand</member>
+	<member>Peter Breitenlohner</member>
+	<member>Peter Harris</member>
+	<member>Peter Hutterer</member>
+	<member>Peter Korsgaard</member>
+	<member>Petr Salinger</member>
+	<member>Philip Langdale</member>
+	<member>Pierre Ossman</member>
+	<member>Pierre Willenbrock</member>
+	<member>Pierre-Loup A. Griffais</member>
+	<member>Rafael &Aacute;vila de Esp&iacute;ndola</member>
+	<member>RALOVICH, Krist&oacute;f</member>
+	<member>Rami Ylimaki</member>
+	<member>Ramon van der Stelt</member>
+	<member>R&eacute;mi Cardona</member>
+	<member>Richard Hughes</member>
+	<member>Robert Lowery</member>
+	<member>Robert Noland</member>
+	<member>Roland B&auml;r</member>
+	<member>Roland Scheidegger</member>
+	<member>Ross Burton</member>
+	<member>Ryan Hill</member>
+	<member>Ryan Lortie</member>
+	<member>Samuel Thibault</member>
+	<member>Sascha Hlusiak</member>
+	<member>Sayamindu Dasgupta</member>
+	<member>Shaohua Li</member>
+	<member>Shelley Gong</member>
+	<member>Shuang He</member>
+	<member>Shunichi Fuji</member>
+	<member>Simon Farnsworth</member>
+	<member>Simon Munton</member>
+	<member>Simon Thum</member>
+	<member>S&oslash;ren Hauberg</member>
+	<member>S&oslash;ren Sandmann Pedersen</member>
+	<member>Stefan Dirsch</member>
+	<member>Stijn van Drongelen</member>
+	<member>Stuart Bennett</member>
+	<member>Stuart Kreitman</member>
+	<member>Tero Saarni</member>
+	<member>Theppitak Karoonboonyanan</member>
+	<member>Thomas Bodzar</member>
+	<member>Thomas Jaeger</member>
+	<member>Thomas Klausner</member>
+	<member>Thomas Petazzoni</member>
+	<member>Thorvald Natvig</member>
+	<member>Tiago Vignatti</member>
+	<member>Tibi Nagy</member>
+	<member>Tilman Sauerbeck</member>
+	<member>Timo Aaltonen</member>
+	<member>Tom Jaeger</member>
+	<member>Tomas Carnecky</member>
+	<member>Tomas Janousek</member>
+	<member>Topi Kanerva</member>
+	<member>Tormod Volden</member>
+	<member>vehemens</member>
+	<member>Vincent Mussard</member>
+	<member>walter</member>
+	<member>Werner LEMBERG</member>
+	<member>Will Thompson</member>
+	<member>William Grant</member>
+	<member>Winfried Gr&uuml;newald</member>
+	<member>Wolke Liu</member>
+	<member>Wu Fengguang</member>
+	<member>Xake</member>
+	<member>Xavier Bestel</member>
+	<member>Xiang, Haihao</member>
+	<member>Xue Wei</member>
+	<member>Y.C. Chen</member>
+	<member>Yaakov Selkowitz</member>
+	<member>Yan Li</member>
+	<member>Yang Zhao</member>
+	<member>Yann Droneaud</member>
+	<member>Yannick Heneault</member>
+	<member>Yinan Shen</member>
+	<member>&#50724;&#50976;&#50672;(Yu-yeon Oh)</member>
+	<member>Zdenek Kabelac</member>
+	<member>Zhao Yakui</member>
+	<member>Zhenyu Wang</member>
+	<member>Zou Nan hai</member>
+      </simplelist>
+    </para>
+
+    <para>
+      This product includes software developed by:
+      <simplelist type='vert' columns='2'>
+	<member>2d3d Inc.</member>
+	<member>3Dlabs Inc. Ltd.</member>
+	<member>Aaron Plattner</member>
+	<member>Adam de Boor</member>
+	<member>Adam Jackson</member>
+	<member>Adobe Systems Inc.</member>
+	<member>After X-TT Project</member>
+	<member>AGE Logic Inc.</member>
+	<member>Alan Coopersmith</member>
+	<member>Alan Cox</member>
+	<member>Alan Hourihane</member>
+	<member>Alexander Gottwald</member>
+	<member>Alex Deucher</member>
+	<member>Alex Williamson</member>
+	<member>Anders Carlsson</member>
+	<member>Andreas Luik</member>
+	<member>Andreas Monitzer</member>
+	<member>Andreas Robinson</member>
+	<member>Andrei Barbu</member>
+	<member>Andrew C Aitchison</member>
+	<member>Andy Ritger</member>
+	<member>Angus Lees</member>
+	<member>Ani Joshi</member>
+	<member>Anton Zioviev</member>
+	<member>Apollo Computer Inc.</member>
+	<member>Apple Computer Inc.</member>
+	<member>Ares Software Corp.</member>
+	<member>AT&amp;T Inc.</member>
+	<member>ATI Technologies Inc.</member>
+	<member>BEAM Ltd.</member>
+	<member>Benjamin Herrenschmidt</member>
+	<member>Benjamin Rienfenstahl</member>
+	<member>Ben Skeggs</member>
+	<member>Bigelow and Holmes</member>
+	<member>Bill Reynolds</member>
+	<member>Bitstream Inc.</member>
+	<member>Bogdan Diaconescu</member>
+	<member>Branden Robinson</member>
+	<member>Brian Fundakowski Feldman</member>
+	<member>Brian Goines</member>
+	<member>Brian Paul</member>
+	<member>Bruno Haible</member>
+	<member>Bryan Stine</member>
+	<member>Carl Switzky</member>
+	<member>Catharon Productions Inc.</member>
+	<member>Charles Murcko</member>
+	<member>Chen Xiangyang</member>
+	<member>Chisato Yamauchi</member>
+	<member>Chris Constello</member>
+	<member>Christian Zietz</member>
+	<member>Cognition Corp.</member>
+	<member>Compaq Computer Corporation</member>
+	<member>Concurrent Computer Corporation</member>
+	<member>Conectiva S.A.</member>
+	<member>Corin Anderson</member>
+	<member>Craig Struble</member>
+	<member>Daewoo Electronics Co. Ltd.</member>
+	<member>Dag-Erling Sm&oslash;rgrav</member>
+	<member>Dale Schumacher</member>
+	<member>Damien Miller</member>
+	<member>Daniel Berrange</member>
+	<member>Daniel Borca</member>
+	<member>Daniel Stone</member>
+	<member>Daniver Limited</member>
+	<member>Daryll Strauss</member>
+	<member>Data General Corporation</member>
+	<member>Dave Airlie</member>
+	<member>David Bateman</member>
+	<member>David Dawes</member>
+	<member>David E. Wexelblat</member>
+	<member>David Holland</member>
+	<member>David J. McKay</member>
+	<member>David McCullough</member>
+	<member>David Mosberger-Tang</member>
+	<member>David Reveman</member>
+	<member>David S. Miller</member>
+	<member>David Woodhouse</member>
+	<member>Davor Matic</member>
+	<member>Deron Johnson</member>
+	<member>Digeo Inc.</member>
+	<member>Digital Equipment Corporation</member>
+	<member>Dirk Hohndel</member>
+	<member>Dmitry Golubev</member>
+	<member>Donnie Berkholz</member>
+	<member>DOS-EMU-Development-Team</member>
+	<member>Doug Anson</member>
+	<member>Drew Parsons</member>
+	<member>Earle F. Philhower III</member>
+	<member>Edouard TISSERANT</member>
+	<member>Eduard Fuchs</member>
+	<member>Eduardo Horvath</member>
+	<member>Egbert Eich</member>
+	<member>Egmont Koblinger</member>
+	<member>Elliot Lee</member>
+	<member>Eric Anholt</member>
+	<member>Eric Fortune</member>
+	<member>Eric Sunshine</member>
+	<member>Erik Fortune</member>
+	<member>Erik Nygren</member>
+	<member>Evans &#38; Sutherland Computer Corp.</member>
+	<member>Fabio Massimo Di Nitto</member>
+	<member>Fabrizio Gennari</member>
+	<member>Felix Kuehling</member>
+	<member>Felix K&uuml;hling</member>
+	<member>Finn Thoegersen</member>
+	<member>Francesco Zappa Nardelli</member>
+	<member>Frank C. Earl</member>
+	<member>Frederic Lepied</member>
+	<member>Fredrik H&ouml;glund</member>
+	<member>Free Software Foundation</member>
+	<member>Fujitsu Limited</member>
+	<member>Fujitsu Open Systems Solutions Inc.</member>
+	<member>Fuji Xerox Co. Ltd.</member>
+	<member>Geert Uytterhoeven</member>
+	<member>George Fufutos</member>
+	<member>Gerrit Jan Akkerman</member>
+	<member>Gerry Toll</member>
+	<member>Glenn G. Lai</member>
+	<member>GNOME Foundation</member>
+	<member>Go Watanabe</member>
+	<member>Google Summer of Code participants</member>
+	<member>Greg Kroah-Hartman</member>
+	<member>Gregory Mokhin</member>
+	<member>Greg Parker</member>
+	<member>GROUPE BULL</member>
+	<member>Guy Martin</member>
+	<member>Hans Oey</member>
+	<member>Harald Koenig</member>
+	<member>Harm Hanemaayer</member>
+	<member>Harold L Hunt II</member>
+	<member>Harry Langenbacher</member>
+	<member>Henry A. Worth</member>
+	<member>Hewlett-Packard Company</member>
+	<member>Hitachi Ltd</member>
+	<member>Holger Veit</member>
+	<member>Hong Bo Peng</member>
+	<member>Howard Greenwell</member>
+	<member>Hummingbird Communications Ltd.</member>
+	<member>Ian Romanick</member>
+	<member>IBM Corporation</member>
+	<member>Inst. of Software Academia Sinica</member>
+	<member>Intel Corporation</member>
+	<member>INTERACTIVE Systems Corporation</member>
+	<member>Itai Nahshon</member>
+	<member>Ivan Kokshaysky</member>
+	<member>Ivan Pascal</member>
+	<member>Jakub Jelinek</member>
+	<member>James Tsillas</member>
+	<member>Jason Bacon</member>
+	<member>Jaymz Julian</member>
+	<member>Jean-loup Gailly</member>
+	<member>Jeff Hartmann</member>
+	<member>Jeff Kirk</member>
+	<member>Jeffrey Hsu</member>
+	<member>Jehan Bing</member>
+	<member>Jeremy C. Reed</member>
+	<member>Jeremy Katz</member>
+	<member>Jerome Glisse</member>
+	<member>Jesse Barnes</member>
+	<member>Jim Gettys</member>
+	<member>Jim Tsillas</member>
+	<member>John Dennis</member>
+	<member>John Harper</member>
+	<member>John Heasley</member>
+	<member>Jonathan Adamczewski</member>
+	<member>Jon Block</member>
+	<member>Jon Smirl</member>
+	<member>Jon Tombs</member>
+	<member>Jorge Delgado</member>
+	<member>Jos&eacute; Fonseca</member>
+	<member>Joseph Friedman</member>
+	<member>Joseph V. Moss</member>
+	<member>Julio M. Merino Vidal</member>
+	<member>Juliusz Chroboczek</member>
+	<member>Jyunji Takagi</member>
+	<member>Kaleb Keithley</member>
+	<member>Kazushi (Jam) Marukawa</member>
+	<member>Kazuyuki (ikko-) Okamoto</member>
+	<member>Kean Johnston</member>
+	<member>Keith Packard</member>
+	<member>Keith Whitwell</member>
+	<member>Kensuke Matsuzaki</member>
+	<member>Kevin E. Martin</member>
+	<member>Kristian H&oslash;gsberg</member>
+	<member>Larry Wall</member>
+	<member>Lars Knoll</member>
+	<member>Lawrence Berkeley Laboratory</member>
+	<member>Leif Delgass</member>
+	<member>Lennart Augustsson</member>
+	<member>Leon Shiman</member>
+	<member>Lexmark International Inc.</member>
+	<member>Linus Torvalds</member>
+	<member>Luc Verhaegen</member>
+	<member>Machine Vision Holdings Inc.</member>
+	<member>Manfred Brands</member>
+	<member>Marc Aurele La France</member>
+	<member>Mark Adler</member>
+	<member>Mark J. Kilgard</member>
+	<member>Mark Leisher</member>
+	<member>Mark Smulders</member>
+	<member>Mark Vojkovich</member>
+	<member>Marvin Solomon</member>
+	<member>Massachusetts Inst. Of Technology</member>
+	<member>Matrox Graphics</member>
+	<member>Matthew Grossman</member>
+	<member>Matthias Hopf</member>
+	<member>Matthieu Herrb</member>
+	<member>Metro Link Inc.</member>
+	<member>Michael Bax</member>
+	<member>Michael H. Schimek</member>
+	<member>Michael P. Marking</member>
+	<member>Michael Schimek</member>
+	<member>Michael Smith</member>
+	<member>Michel D&auml;nzer</member>
+	<member>Mike A. Harris</member>
+	<member>Mike Harris</member>
+	<member>Ming Yu</member>
+	<member>MIPS Computer Systems Inc.</member>
+	<member>National Semiconductor</member>
+	<member>NCR Corporation Inc.</member>
+	<member>NetBSD Foundation</member>
+	<member>Netscape Communications Corp.</member>
+	<member>Network Computing Devices Inc.</member>
+	<member>Nicholas Joly</member>
+	<member>Nicholas Miell</member>
+	<member>Nicholas Wourms</member>
+	<member>Nicolai Haehnle</member>
+	<member>Noah Levitt</member>
+	<member>Nolan Leake</member>
+	<member>Nokia Corporation</member>
+	<member>Novell Inc.</member>
+	<member>Nozomi YTOW</member>
+	<member>NTT Software Corporation</member>
+	<member>Number Nine Computer Corp.</member>
+	<member>Number Nine Visual Technologies</member>
+	<member>NVIDIA Corporation</member>
+	<member>Oivier Danet</member>
+	<member>Oki Technosystems Laboratory Inc.</member>
+	<member>Olivetti Research Limited</member>
+	<member>OMRON Corporation</member>
+	<member>Open Software Foundation</member>
+	<member>OpenedHand Ltd</member>
+	<member>Orest Zborowski</member>
+	<member>Owen Taylor</member>
+	<member>Pablo Saratxaga</member>
+	<member>Panacea Inc.</member>
+	<member>Panagiotis Tsirigotis</member>
+	<member>Paolo Severini</member>
+	<member>Pascal Haible</member>
+	<member>Patrick Lecoanet</member>
+	<member>Patrick Lerda</member>
+	<member>Paul Anderson</member>
+	<member>Paul Elliott</member>
+	<member>Paul Mackerras</member>
+	<member>Peter Breitenlohner</member>
+	<member>Peter Kunzmann</member>
+	<member>Peter Trattler</member>
+	<member>Philip Homburg</member>
+	<member>Philip Langdale</member>
+	<member>Precision Insight Inc.</member>
+	<member>Prentice Hall</member>
+	<member>Quarterdeck Office Systems</member>
+	<member>Radek Doulik</member>
+	<member>Ralf Habacker</member>
+	<member>Randy Hendry</member>
+	<member>Ranier Keller</member>
+	<member>Red Hat Inc.</member>
+	<member>Regis Cridlig</member>
+	<member>Rene Cougnenc</member>
+	<member>Richard A. Hecker</member>
+	<member>Richard Burdick</member>
+	<member>Rich Murphey</member>
+	<member>Rickard E. Faith</member>
+	<member>Rik Faith</member>
+	<member>Robert Chesler</member>
+	<member>Robert Millan</member>
+	<member>Robert V. Baron</member>
+	<member>Robin Cutshaw</member>
+	<member>Roland Mainz</member>
+	<member>Roland Scheidegger</member>
+	<member>Ronny Vindenes</member>
+	<member>Russ Blaine</member>
+	<member>Ryan Breen</member>
+	<member>Ryan Lortie</member>
+	<member>Ryan Underwood</member>
+	<member>S3 Graphics Inc.</member>
+	<member>Sam Leffler</member>
+	<member>Santa Cruz Operation Inc.</member>
+	<member>SciTech Software</member>
+	<member>Scott Laird</member>
+	<member>Sebastien Marineau</member>
+	<member>Shigehiro Nomura</member>
+	<member>ShoGraphics Inc.</member>
+	<member>Shunsuke Akiyama</member>
+	<member>Silicon Graphics Computer Systems</member>
+	<member>Silicon Integrated Systems Corp</member>
+	<member>Silicon Motion Inc.</member>
+	<member>Simon P. Cooper</member>
+	<member>Snitily Graphics Consulting Services</member>
+	<member>Sony Corporation</member>
+	<member>S&oslash;ren Sandmann</member>
+	<member>SRI</member>
+	<member>Stanislav Brabec</member>
+	<member>Stefan Dirsch</member>
+	<member>Stephane Marchesin</member>
+	<member>Stephan Lang</member>
+	<member>Steven Lang</member>
+	<member>Stuart Kreitman</member>
+	<member>Sun Microsystems Inc.</member>
+	<member>SunSoft Inc.</member>
+	<member>SuSE Inc</member>
+	<member>Sven Luther</member>
+	<member>Takis Psarogiannakopoulos</member>
+	<member>Takuma Murakami</member>
+	<member>Takuya SHIOZAKI</member>
+	<member>T. A. Phelps</member>
+	<member>Tektronix Inc.</member>
+	<member>Theo de Raadt</member>
+	<member>Theodore Ts'o</member>
+	<member>The Open Group</member>
+	<member>The Weather Channel Inc.</member>
+	<member>Thomas E. Dickey</member>
+	<member>Thomas G. Lane</member>
+	<member>Thomas Hellstr&ouml;m</member>
+	<member>Thomas Mueller</member>
+	<member>Thomas Roell</member>
+	<member>Thomas Thanner</member>
+	<member>Thomas Winischhofer</member>
+	<member>Thomas Wolfram</member>
+	<member>Thorsten.Ohl</member>
+	<member>Tiago Gons</member>
+	<member>Tilman Sauerbeck</member>
+	<member>Todd C. Miller</member>
+	<member>Tomohiro KUBOTA</member>
+	<member>Torrey Lyons</member>
+	<member>Torrey T. Lyons</member>
+	<member>TOSHIBA Corp.</member>
+	<member>Toshimitsu Tanaka</member>
+	<member>Travis Tilley</member>
+	<member>Trolltech AS</member>
+	<member>Tungsten Graphics Inc.</member>
+	<member>Tuomas J. Lukka</member>
+	<member>Ty Sarna</member>
+	<member>UCHIYAMA Yasushi</member>
+	<member>Unicode Inc.</member>
+	<member>UniSoft Group Limited</member>
+	<member>University of California</member>
+	<member>University of South Australia</member>
+	<member>University of Utah</member>
+	<member>University of Wisconsin</member>
+	<member>UNIX System Laboratories Inc.</member>
+	<member>URW++ GmbH</member>
+	<member>Valery Inozemtsev</member>
+	<member>VA Linux Systems</member>
+	<member>VIA Technologies Inc.</member>
+	<member>Video Electronics Standard Assoc.</member>
+	<member>VMware Inc.</member>
+	<member>Vrije Universiteit</member>
+	<member>Wittawat Yamwong</member>
+	<member>Wyse Technology Inc.</member>
+	<member>X Consortium</member>
+	<member>XFree86 Project Inc.</member>
+	<member>Xi Graphics Inc.</member>
+	<member>X-Oz Technologies</member>
+	<member>X-TrueType Server Project</member>
+	<member>Yu Shao</member>
+	<member>Zack Rusin</member>
+	<member>Zephaniah E. Hull</member>
+	<member>Zhenyu Wang</member>
+      </simplelist>
+    </para>
+
+    <para>
+    This product includes software developed by The XFree86 Project, Inc
+    (<ulink url="http://www.xfree86.org/"></ulink>) and its contributors.
+    </para>
+
+    <para>
+    This product includes software that is based in part of the work of the
+    FreeType Team (<ulink url="http://www.freetype.org/"></ulink>).
+    </para>
+
+    <para>
+    This product includes software developed by the University of California,
+    Berkeley and its contributors.
+    </para>
+
+    <para>
+    This product includes software developed by Christopher G. Demetriou.
+    </para>
+
+    <para>
+    This product includes software developed by the NetBSD Foundation, Inc.
+      (<ulink url="http://www.netbsd.org/"></ulink>) and its contributors.
+    </para>
+
+    <para>
+    This product includes software developed by X-Oz Technologies
+      (<ulink url="http://www.x-oz.com/"></ulink>).
+    </para>
+
+  </sect1>
+
+</article>
