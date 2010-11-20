@@ -2216,11 +2216,15 @@ RADEONCopyData(
 		swap = RADEON_HOST_DATA_SWAP_32BIT;
 		break;
 	    }
-	} else if (bpp != pScrn->bitsPerPixel) {
-	    if (bpp == 8)
+	} else {
+	    switch (pScrn->bitsPerPixel) {
+	    case 16:
+		swap = RADEON_HOST_DATA_SWAP_16BIT;
+		break;
+	    case 32:
 		swap = RADEON_HOST_DATA_SWAP_32BIT;
-	    else
-		swap = RADEON_HOST_DATA_SWAP_HDW;
+		break;
+	    }
 	}
 #endif
 

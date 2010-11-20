@@ -22,8 +22,8 @@
  * authorization from the author.
  *
  * $Log: theatre_detect.c,v $
- * Revision 1.1.1.1  2008/08/02 05:10:33  mrg
- * initial import of xf86-video-ati-6.9.0
+ * Revision 1.1.1.2  2010/11/20 10:00:26  mrg
+ * initial import of xf86-video-ati-6.13.2
  *
  * Revision 1.4  2005/08/28 18:00:23  bogdand
  * Modified the licens type from GPL to a X/MIT one
@@ -82,7 +82,7 @@ _X_EXPORT TheatrePtr DetectTheatre(GENERIC_BUS_Ptr b)
    return NULL;
    }
    
-   t = xcalloc(1,sizeof(TheatreRec));
+   t = calloc(1,sizeof(TheatreRec));
    t->VIP = b;
    t->theatre_num = -1;
    t->mode=MODE_UNINITIALIZED;
@@ -116,7 +116,7 @@ _X_EXPORT TheatrePtr DetectTheatre(GENERIC_BUS_Ptr b)
 
    if(t->theatre_num < 0)
    {
-   xfree(t);
+   free(t);
    return NULL;
    }
 

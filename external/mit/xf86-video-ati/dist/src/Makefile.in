@@ -64,9 +64,6 @@ host_triplet = @host@
 @DRI_TRUE@am__append_1 = $(DRI_LIBS)
 @XSERVER_LIBPCIACCESS_TRUE@am__append_2 = $(PCIACCESS_LIBS)
 @LIBUDEV_TRUE@am__append_3 = $(LIBUDEV_LIBS)
-@XMODES_TRUE@am__append_4 = \
-@XMODES_TRUE@	$(XMODE_SRCS)
-
 subdir = src
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -141,22 +138,15 @@ am__radeon_drv_la_SOURCES_DIST = radeon_accel.c radeon_cursor.c \
 	AtomBios/includes/regsdef.h radeon_atombios.c \
 	radeon_atomwrapper.c radeon_dri.c radeon_exa.c r600_exa.c \
 	r6xx_accel.c r600_textured_videofuncs.c r600_shader.c \
-	atombios_output.c atombios_crtc.c radeon_dri2.c radeon_kms.c \
-	drmmode_display.c radeon_vbo.c local_xf86Rename.h \
-	parser/xf86Parser.h parser/xf86Optrec.h modes/xf86Modes.h \
-	modes/xf86Modes.c modes/xf86cvt.c modes/xf86Crtc.h \
-	modes/xf86Crtc.c modes/xf86Cursors.c modes/xf86EdidModes.c \
-	modes/xf86RandR12.c modes/xf86RandR12.h modes/xf86Rename.h \
-	modes/xf86Rotate.c modes/xf86DiDGA.c
+	radeon_exa_shared.c atombios_output.c atombios_crtc.c \
+	radeon_dri2.c radeon_kms.c drmmode_display.c radeon_vbo.c
 am__objects_1 = CD_Operations.lo Decoder.lo hwserv_drv.lo
 @DRI_TRUE@am__objects_2 = radeon_dri.lo
 @USE_EXA_TRUE@am__objects_3 = radeon_exa.lo r600_exa.lo r6xx_accel.lo \
-@USE_EXA_TRUE@	r600_textured_videofuncs.lo r600_shader.lo
+@USE_EXA_TRUE@	r600_textured_videofuncs.lo r600_shader.lo \
+@USE_EXA_TRUE@	radeon_exa_shared.lo
 @XF86DRM_MODE_TRUE@am__objects_4 = radeon_dri2.lo radeon_kms.lo \
 @XF86DRM_MODE_TRUE@	drmmode_display.lo radeon_vbo.lo
-am__objects_5 = xf86Modes.lo xf86cvt.lo xf86Crtc.lo xf86Cursors.lo \
-	xf86EdidModes.lo xf86RandR12.lo xf86Rotate.lo xf86DiDGA.lo
-@XMODES_TRUE@am__objects_6 = $(am__objects_5)
 am_radeon_drv_la_OBJECTS = radeon_accel.lo radeon_cursor.lo \
 	radeon_legacy_memory.lo radeon_driver.lo radeon_video.lo \
 	radeon_bios.lo radeon_mm_i2c.lo radeon_vip.lo radeon_misc.lo \
@@ -165,7 +155,7 @@ am_radeon_drv_la_OBJECTS = radeon_accel.lo radeon_cursor.lo \
 	radeon_output.lo radeon_modes.lo radeon_tv.lo $(am__objects_1) \
 	radeon_atombios.lo radeon_atomwrapper.lo $(am__objects_2) \
 	$(am__objects_3) atombios_output.lo atombios_crtc.lo \
-	$(am__objects_4) $(am__objects_6)
+	$(am__objects_4)
 radeon_drv_la_OBJECTS = $(am_radeon_drv_la_OBJECTS)
 radeon_drv_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
@@ -303,6 +293,7 @@ PACKAGE_BUGREPORT = @PACKAGE_BUGREPORT@
 PACKAGE_NAME = @PACKAGE_NAME@
 PACKAGE_STRING = @PACKAGE_STRING@
 PACKAGE_TARNAME = @PACKAGE_TARNAME@
+PACKAGE_URL = @PACKAGE_URL@
 PACKAGE_VERSION = @PACKAGE_VERSION@
 PATH_SEPARATOR = @PATH_SEPARATOR@
 PCIACCESS_CFLAGS = @PCIACCESS_CFLAGS@
@@ -316,7 +307,6 @@ STRIP = @STRIP@
 VERSION = @VERSION@
 XEXT_CFLAGS = @XEXT_CFLAGS@
 XEXT_LIBS = @XEXT_LIBS@
-XMODES_CFLAGS = @XMODES_CFLAGS@
 XORG_CFLAGS = @XORG_CFLAGS@
 XORG_LIBS = @XORG_LIBS@
 XORG_MAN_PAGE = @XORG_MAN_PAGE@
@@ -391,30 +381,12 @@ RADEON_ATOMBIOS_SOURCES = \
         AtomBios/includes/ObjectID.h \
         AtomBios/includes/regsdef.h
 
-XMODE_SRCS = \
-        local_xf86Rename.h \
-	parser/xf86Parser.h \
-        parser/xf86Optrec.h \
-        modes/xf86Modes.h \
-        modes/xf86Modes.c \
-        modes/xf86cvt.c \
-        modes/xf86Crtc.h \
-        modes/xf86Crtc.c \
-        modes/xf86Cursors.c \
-        modes/xf86EdidModes.c \
-        modes/xf86RandR12.c \
-        modes/xf86RandR12.h \
-        modes/xf86Rename.h \
-        modes/xf86Rotate.c \
-        modes/xf86DiDGA.c
-
 @XF86DRM_MODE_TRUE@RADEON_KMS_SRCS = radeon_dri2.c radeon_kms.c drmmode_display.c radeon_vbo.c
-@USE_EXA_TRUE@RADEON_EXA_SOURCES = radeon_exa.c r600_exa.c r6xx_accel.c r600_textured_videofuncs.c r600_shader.c
+@USE_EXA_TRUE@RADEON_EXA_SOURCES = radeon_exa.c r600_exa.c r6xx_accel.c r600_textured_videofuncs.c r600_shader.c radeon_exa_shared.c
 AM_CFLAGS = \
             @LIBDRM_RADEON_CFLAGS@ \
             @XORG_CFLAGS@ \
             @DRI_CFLAGS@ \
-            @XMODES_CFLAGS@ \
             @LIBUDEV_CFLAGS@ \
             -DDISABLE_EASF \
             -DENABLE_ALL_SERVICE_FUNCTIONS \
@@ -433,16 +405,17 @@ ati_drv_la_SOURCES = \
 radeon_drv_la_LTLIBRARIES = radeon_drv.la
 radeon_drv_la_LDFLAGS = -module -avoid-version
 radeon_drv_ladir = @moduledir@/drivers
-radeon_drv_la_SOURCES = radeon_accel.c radeon_cursor.c \
-	radeon_legacy_memory.c radeon_driver.c radeon_video.c \
-	radeon_bios.c radeon_mm_i2c.c radeon_vip.c radeon_misc.c \
-	radeon_probe.c legacy_crtc.c legacy_output.c \
-	radeon_textured_video.c radeon_pm.c radeon_crtc.c \
-	radeon_output.c radeon_modes.c radeon_tv.c \
-	$(RADEON_ATOMBIOS_SOURCES) radeon_atombios.c \
-	radeon_atomwrapper.c $(RADEON_DRI_SRCS) $(RADEON_EXA_SOURCES) \
-	atombios_output.c atombios_crtc.c $(RADEON_KMS_SRCS) \
-	$(am__append_4)
+radeon_drv_la_SOURCES = \
+	radeon_accel.c radeon_cursor.c radeon_legacy_memory.c \
+	radeon_driver.c radeon_video.c radeon_bios.c radeon_mm_i2c.c \
+	radeon_vip.c radeon_misc.c radeon_probe.c \
+	legacy_crtc.c legacy_output.c \
+	radeon_textured_video.c radeon_pm.c \
+	radeon_crtc.c radeon_output.c radeon_modes.c radeon_tv.c \
+	$(RADEON_ATOMBIOS_SOURCES) radeon_atombios.c radeon_atomwrapper.c \
+	$(RADEON_DRI_SRCS) $(RADEON_EXA_SOURCES) atombios_output.c atombios_crtc.c \
+	$(RADEON_KMS_SRCS)
+
 theatre_detect_drv_la_LTLIBRARIES = theatre_detect_drv.la
 theatre_detect_drv_la_LDFLAGS = -module -avoid-version
 theatre_detect_drv_ladir = @moduledir@/multimedia
@@ -465,7 +438,6 @@ theatre200_drv_la_SOURCES = \
 	theatre200.c theatre200_module.c
 
 EXTRA_DIST = \
-	$(XMODE_SRCS) \
 	radeon_render.c \
 	radeon_accelfuncs.c \
 	radeon_textured_videofuncs.c \
@@ -485,6 +457,7 @@ EXTRA_DIST = \
 	radeon_dummy_bufmgr.h \
 	radeon_exa_render.c \
 	radeon_exa_funcs.c \
+	radeon_exa_shared.h \
 	radeon.h \
 	radeon_macros.h \
 	radeon_probe.h \
@@ -742,6 +715,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/radeon_dri2.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/radeon_driver.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/radeon_exa.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/radeon_exa_shared.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/radeon_kms.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/radeon_legacy_memory.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/radeon_misc.Plo@am__quote@
@@ -761,14 +735,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/theatre_detect.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/theatre_detect_module.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/theatre_module.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xf86Crtc.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xf86Cursors.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xf86DiDGA.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xf86EdidModes.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xf86Modes.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xf86RandR12.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xf86Rotate.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xf86cvt.Plo@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
@@ -817,70 +783,6 @@ hwserv_drv.lo: AtomBios/hwserv_drv.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='AtomBios/hwserv_drv.c' object='hwserv_drv.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o hwserv_drv.lo `test -f 'AtomBios/hwserv_drv.c' || echo '$(srcdir)/'`AtomBios/hwserv_drv.c
-
-xf86Modes.lo: modes/xf86Modes.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT xf86Modes.lo -MD -MP -MF $(DEPDIR)/xf86Modes.Tpo -c -o xf86Modes.lo `test -f 'modes/xf86Modes.c' || echo '$(srcdir)/'`modes/xf86Modes.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/xf86Modes.Tpo $(DEPDIR)/xf86Modes.Plo
-@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='modes/xf86Modes.c' object='xf86Modes.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o xf86Modes.lo `test -f 'modes/xf86Modes.c' || echo '$(srcdir)/'`modes/xf86Modes.c
-
-xf86cvt.lo: modes/xf86cvt.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT xf86cvt.lo -MD -MP -MF $(DEPDIR)/xf86cvt.Tpo -c -o xf86cvt.lo `test -f 'modes/xf86cvt.c' || echo '$(srcdir)/'`modes/xf86cvt.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/xf86cvt.Tpo $(DEPDIR)/xf86cvt.Plo
-@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='modes/xf86cvt.c' object='xf86cvt.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o xf86cvt.lo `test -f 'modes/xf86cvt.c' || echo '$(srcdir)/'`modes/xf86cvt.c
-
-xf86Crtc.lo: modes/xf86Crtc.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT xf86Crtc.lo -MD -MP -MF $(DEPDIR)/xf86Crtc.Tpo -c -o xf86Crtc.lo `test -f 'modes/xf86Crtc.c' || echo '$(srcdir)/'`modes/xf86Crtc.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/xf86Crtc.Tpo $(DEPDIR)/xf86Crtc.Plo
-@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='modes/xf86Crtc.c' object='xf86Crtc.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o xf86Crtc.lo `test -f 'modes/xf86Crtc.c' || echo '$(srcdir)/'`modes/xf86Crtc.c
-
-xf86Cursors.lo: modes/xf86Cursors.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT xf86Cursors.lo -MD -MP -MF $(DEPDIR)/xf86Cursors.Tpo -c -o xf86Cursors.lo `test -f 'modes/xf86Cursors.c' || echo '$(srcdir)/'`modes/xf86Cursors.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/xf86Cursors.Tpo $(DEPDIR)/xf86Cursors.Plo
-@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='modes/xf86Cursors.c' object='xf86Cursors.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o xf86Cursors.lo `test -f 'modes/xf86Cursors.c' || echo '$(srcdir)/'`modes/xf86Cursors.c
-
-xf86EdidModes.lo: modes/xf86EdidModes.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT xf86EdidModes.lo -MD -MP -MF $(DEPDIR)/xf86EdidModes.Tpo -c -o xf86EdidModes.lo `test -f 'modes/xf86EdidModes.c' || echo '$(srcdir)/'`modes/xf86EdidModes.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/xf86EdidModes.Tpo $(DEPDIR)/xf86EdidModes.Plo
-@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='modes/xf86EdidModes.c' object='xf86EdidModes.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o xf86EdidModes.lo `test -f 'modes/xf86EdidModes.c' || echo '$(srcdir)/'`modes/xf86EdidModes.c
-
-xf86RandR12.lo: modes/xf86RandR12.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT xf86RandR12.lo -MD -MP -MF $(DEPDIR)/xf86RandR12.Tpo -c -o xf86RandR12.lo `test -f 'modes/xf86RandR12.c' || echo '$(srcdir)/'`modes/xf86RandR12.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/xf86RandR12.Tpo $(DEPDIR)/xf86RandR12.Plo
-@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='modes/xf86RandR12.c' object='xf86RandR12.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o xf86RandR12.lo `test -f 'modes/xf86RandR12.c' || echo '$(srcdir)/'`modes/xf86RandR12.c
-
-xf86Rotate.lo: modes/xf86Rotate.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT xf86Rotate.lo -MD -MP -MF $(DEPDIR)/xf86Rotate.Tpo -c -o xf86Rotate.lo `test -f 'modes/xf86Rotate.c' || echo '$(srcdir)/'`modes/xf86Rotate.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/xf86Rotate.Tpo $(DEPDIR)/xf86Rotate.Plo
-@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='modes/xf86Rotate.c' object='xf86Rotate.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o xf86Rotate.lo `test -f 'modes/xf86Rotate.c' || echo '$(srcdir)/'`modes/xf86Rotate.c
-
-xf86DiDGA.lo: modes/xf86DiDGA.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT xf86DiDGA.lo -MD -MP -MF $(DEPDIR)/xf86DiDGA.Tpo -c -o xf86DiDGA.lo `test -f 'modes/xf86DiDGA.c' || echo '$(srcdir)/'`modes/xf86DiDGA.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/xf86DiDGA.Tpo $(DEPDIR)/xf86DiDGA.Plo
-@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='modes/xf86DiDGA.c' object='xf86DiDGA.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o xf86DiDGA.lo `test -f 'modes/xf86DiDGA.c' || echo '$(srcdir)/'`modes/xf86DiDGA.c
 
 theatre200_drv_la-theatre200.lo: theatre200.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(theatre200_drv_la_CFLAGS) $(CFLAGS) -MT theatre200_drv_la-theatre200.lo -MD -MP -MF $(DEPDIR)/theatre200_drv_la-theatre200.Tpo -c -o theatre200_drv_la-theatre200.lo `test -f 'theatre200.c' || echo '$(srcdir)/'`theatre200.c

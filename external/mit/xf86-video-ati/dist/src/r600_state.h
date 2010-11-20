@@ -70,6 +70,7 @@ typedef struct {
 /* Shader */
 typedef struct {
     uint64_t shader_addr;
+    uint32_t shader_size;
     int num_gprs;
     int stack_size;
     int dx10_clamp;
@@ -113,6 +114,7 @@ typedef struct {
     int format;
     uint64_t base;
     uint64_t mip_base;
+    uint32_t size;
     int format_comp_x;
     int format_comp_y;
     int format_comp_z;
@@ -283,9 +285,6 @@ start_3d(ScrnInfoPtr pScrn, drmBufPtr ib);
 void
 set_render_target(ScrnInfoPtr pScrn, drmBufPtr ib, cb_config_t *cb_conf, uint32_t domain);
 void
-cp_set_surface_sync(ScrnInfoPtr pScrn, drmBufPtr ib, uint32_t sync_type, uint32_t size, uint64_t mc_addr,
-		    struct radeon_bo *bo, uint32_t rdomains, uint32_t wdomain);
-void
 cp_wait_vline_sync(ScrnInfoPtr pScrn, drmBufPtr ib, PixmapPtr pPix, xf86CrtcPtr crtc, int start, int stop);
 void
 fs_setup(ScrnInfoPtr pScrn, drmBufPtr ib, shader_config_t *fs_conf, uint32_t domain);
@@ -297,8 +296,6 @@ void
 set_alu_consts(ScrnInfoPtr pScrn, drmBufPtr ib, int offset, int count, float *const_buf);
 void
 set_bool_consts(ScrnInfoPtr pScrn, drmBufPtr ib, int offset, uint32_t val);
-void
-set_vtx_resource(ScrnInfoPtr pScrn, drmBufPtr ib, vtx_resource_t *res, uint32_t domain);
 void
 set_tex_resource(ScrnInfoPtr pScrn, drmBufPtr ib, tex_resource_t *tex_res, uint32_t domain);
 void
@@ -320,12 +317,6 @@ draw_immd(ScrnInfoPtr pScrn, drmBufPtr ib, draw_config_t *draw_conf, uint32_t *i
 void
 draw_auto(ScrnInfoPtr pScrn, drmBufPtr ib, draw_config_t *draw_conf);
 
-Bool
-r600_vb_get(ScrnInfoPtr pScrn);
-void
-r600_vb_discard(ScrnInfoPtr pScrn);
-int
-r600_cp_start(ScrnInfoPtr pScrn);
 void r600_finish_op(ScrnInfoPtr pScrn, int vtx_size);
 
 Bool
@@ -339,6 +330,9 @@ R600SetAccelState(ScrnInfoPtr pScrn,
 extern Bool RADEONPrepareAccess_CS(PixmapPtr pPix, int index);
 extern void RADEONFinishAccess_CS(PixmapPtr pPix, int index);
 extern void *RADEONEXACreatePixmap(ScreenPtr pScreen, int size, int align);
+extern void *RADEONEXACreatePixmap2(ScreenPtr pScreen, int width, int height,
+				    int depth, int usage_hint, int bitsPerPixel,
+				    int *new_pitch);
 extern void RADEONEXADestroyPixmap(ScreenPtr pScreen, void *driverPriv);
 extern struct radeon_bo *radeon_get_pixmap_bo(PixmapPtr pPix);
 extern Bool RADEONEXAPixmapIsOffscreen(PixmapPtr pPix);

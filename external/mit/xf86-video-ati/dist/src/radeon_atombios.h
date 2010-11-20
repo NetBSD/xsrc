@@ -194,6 +194,7 @@ typedef struct _atomDataTables
         ATOM_FIRMWARE_INFO_V1_2         *FirmwareInfo_V_1_2;
         ATOM_FIRMWARE_INFO_V1_3         *FirmwareInfo_V_1_3;
         ATOM_FIRMWARE_INFO_V1_4         *FirmwareInfo_V_1_4;
+        ATOM_FIRMWARE_INFO_V2_1         *FirmwareInfo_V_2_1;
     } FirmwareInfo;
     ATOM_DAC_INFO                       *DAC_Info;
     union {
@@ -287,4 +288,5 @@ radeon_add_encoder(ScrnInfoPtr pScrn, uint32_t encoder_id, uint32_t device_suppo
 extern uint32_t
 radeon_get_encoder_id_from_supported_device(ScrnInfoPtr pScrn, uint32_t supported_device, int dac);
 
+void atombios_set_output_crtc_source(xf86OutputPtr output);
 #endif /*  RHD_ATOMBIOS_H_ */

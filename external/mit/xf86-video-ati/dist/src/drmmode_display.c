@@ -347,7 +347,8 @@ drmmode_set_mode_major(xf86CrtcPtr crtc, DisplayModePtr mode,
 		}
 	}
 
-	if (pScrn->pScreen)
+	if (pScrn->pScreen &&
+		!xf86ReturnOptValBool(info->Options, OPTION_SW_CURSOR, FALSE))
 		xf86_reload_cursors(pScrn->pScreen);
 
 done:
@@ -959,6 +960,8 @@ drmmode_output_init(ScrnInfoPtr pScrn, drmmode_ptr drmmode, int num)
 	output->mm_height = koutput->mmHeight;
 
 	output->subpixel_order = subpixel_conv_table[koutput->subpixel];
+	output->interlaceAllowed = TRUE;
+	output->doubleScanAllowed = TRUE;
 	output->driver_private = drmmode_output;
 	
 	output->possible_crtcs = 0x7f;
@@ -1100,8 +1103,11 @@ drmmode_xf86crtc_resize (ScrnInfoPtr scrn, int width, int height)
 	if (!info->front_bo)
 		goto fail;
 
-	if (info->allowColorTiling)
-	    tiling_flags |= RADEON_TILING_MACRO;
+	/* no tiled scanout on r6xx+ yet */
+	if (info->allowColorTiling) {
+		if (info->ChipFamily < CHIP_FAMILY_R600)
+			tiling_flags |= RADEON_TILING_MACRO;
+	}
 #if X_BYTE_ORDER == X_BIG_ENDIAN
 	switch (cpp) {
 	case 4:
