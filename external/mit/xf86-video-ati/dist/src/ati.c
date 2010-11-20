@@ -227,7 +227,7 @@ ati_gdev_subdriver(pointer options)
         }
     }
 
-    xfree(ATIGDevs);
+    free(ATIGDevs);
 
     /* load subdrivers as primary modules and only if they do not get loaded
      * from other device sections

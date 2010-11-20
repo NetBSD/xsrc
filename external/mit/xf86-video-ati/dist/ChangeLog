@@ -1,3 +1,621 @@
+commit cc5005af61f45a3552f7358dc5aa711e42f5af54
+Author: Alex Deucher <alexdeucher@gmail.com>
+Date:   Mon Sep 27 18:20:53 2010 -0400
+
+    bump version for release
+
+commit 7f8820fcec8c90bf2f823170bd08a23e8b4ff7af
+Author: Michael Cree <mcree@orcon.net.nz>
+Date:   Mon Sep 27 13:39:12 2010 -0400
+
+    Fix some unaligned 32bit accesses in the AtomBios code.
+    
+    On the Alpha architecture unaligned 32bit accesses incur a software
+    trap to the kernel and pollute the kernel logs.  Fixed by use of the
+    ldl_u() interface.
+    
+    Signed-off-by: Michael Cree <mcree@orcon.net.nz>
+
+commit c4f834cdfbe96aa47ac5fb039f9dd7aa9730c8a3
+Author: Nicolas Reinecke <nr@das-labor.org>
+Date:   Mon Sep 27 13:33:55 2010 -0400
+
+    radeon: Convert remaining x(c)alloc/xfree to m/calloc/free.
+    
+    Fixes deprecation warnings missed out by
+    f7a91ece264af9f3fd2fc18e99aefcda93ce9f5c
+
+commit f8fb9312d791af1f77020e8c2d35bb30841ed9aa
+Author: Karl Tomlinson <karlt+@karlt.net>
+Date:   Sun Aug 22 22:46:33 2010 +1200
+
+    RADEONPrepareAccess_CS: fallback to DFS when pixmap is in VRAM
+    
+    This avoids costly CPU VRAM reads and lets EXA manage a system memory cache
+    of the portions of pixmaps needed for unaccelerated operations.
+    
+    https://bugs.freedesktop.org/show_bug.cgi?id=27139
+
+commit 35c4ff936601ee083f51510a5192fb97d622a483
+Author: Karl Tomlinson <karlt+@karlt.net>
+Date:   Sun Aug 22 22:28:06 2010 +1200
+
+    radeon: complete UTS and DFS even when a scratch BO is not necessary
+    
+    Turns on the big-endian paths even for little-endian systems, and adds
+    similar paths to the r6xx/r7xx functions.
+    
+    This makes UTS and DFS reliable, which will let PrepareAccess (with
+    mixed pixmaps) choose to fail based on whether the pixmap is in VRAM
+    (to avoid CPU reads).
+
+commit d46381a3a6bf10903803f5acaa7aa0ce06373b96
+Author: Karl Tomlinson <karlt+@karlt.net>
+Date:   Sun Aug 22 21:02:45 2010 +1200
+
+    radeon: complete big endian UTS and DFS even when scratch allocation fails.
+    
+    On big endian systems, PrepareAccess will fail when byte-swapping is
+    required so UploadToScreen and DownloadFromScreen cannot rely on
+    fallback to PrepareAccess.
+    
+    When scratch BO space allocation fails, this patch merely adds simple
+    fallback to direct CPU access without any GPU blit.  This sometimes
+    requires a CS flush even in UploadToScreen.
+    (No allocation retry after a flush is added here.)
+
+commit 4ced4e1eff67946e306c0c67c9ed59dd5f3c4ba9
+Author: Karl Tomlinson <karlt+@karlt.net>
+Date:   Sun Aug 22 20:04:42 2010 +1200
+
+    RADEONDownloadFromScreenCS: flush CS writes before mapping BO for read
+    
+    If unflushed CS operations write to the pixmap BO, then these need to be
+    flushed before mapping the BO for read.  This currently only affects big
+    endian systems and only when the operation writes to the GTT domain.
+
+commit a4eef8faffbb1ea2f742273ee855f4e6f992e5c8
+Author: Karl Tomlinson <karlt+@karlt.net>
+Date:   Sat Aug 21 22:29:34 2010 +1200
+
+    FinishAccess_CS: set bo_mapped to FALSE on unmap
+    
+    This is actually only necessary when PrepareAccess may behave differently on
+    different calls with the same pixmap, which currently doesn't happen.
+    
+    However resetting bo_mapped is necessary to let PrepareAccess (with mixed
+    pixmaps) choose to fail based on whether the pixmap is in VRAM (to avoid CPU
+    reads).
+
+commit bfebe039af0c0282d04eb6234b6e6d1e02097146
+Author: Karl Tomlinson <karlt+@karlt.net>
+Date:   Sat Aug 21 21:44:39 2010 +1200
+
+    DownloadFromScreenCS: download via a scratch BO if pixmap domain is unknown
+    
+    radeon_bo_is_busy() may return without setting the domain out-parameter.
+    If this happens, then download via a scratch GTT BO to avoid CPU VRAM read.
+
+commit b90cb61ccb0f4f80e0627141f223354a9371d47d
+Author: Alex Deucher <alexdeucher@gmail.com>
+Date:   Tue Sep 7 11:51:16 2010 -0400
+
+    radeon: set interlaced and doublescan enabled for randr outputs
+    
+    interlaced used to work without setting these parameters.  Changes
+    in the xserver seem to require them now.
+    
+    Should fix:
+    https://bugs.freedesktop.org/show_bug.cgi?id=29591
+
+commit 2b98ec1f7e931019a4ab699a56d5dfaa395946fb
+Author: Alex Deucher <alexdeucher@gmail.com>
+Date:   Wed Sep 1 13:24:19 2010 -0400
+
+    r6xx/r7xx: fix typos
+    
+    some stray - signs
+
+commit 966ac1be81da76c8aa4ea46b63f3ca5358a2c021
+Author: Alex Deucher <alexdeucher@gmail.com>
+Date:   Fri Aug 27 18:22:21 2010 -0400
+
+    evergreen: work around bad data in some i2c tables
+    
+    The 7th entry in a lot of evergreen i2c gpio tables is partially
+    zeroed.  Fix the entry.
+    
+    Signed-off-by: Alex Deucher <alexdeucher@gmail.com>
+
+commit 91f707d308d4bbf16c3d62d046cf280fef5a8f4c
+Author: Heikki Lindholm <holin@iki.fi>
+Date:   Fri Aug 27 02:26:24 2010 -0400
+
+    xv: fix non-kms/non-dri Xv column ordering on big endian systems
+    
+    Column order is wrong on big endian systems, primarly because of a
+    bits / bytes mix up with the bpp variable. Fix tested with r100 and
+    r300, screen depth 16 and 32 with YV12 and YUY2 (overlay, textured video),
+    RGBA and RGBT (overlay).
+    
+    Should fix: https://bugs.freedesktop.org/show_bug.cgi?id=29041
+    
+    Signed-off-by: Heikki Lindholm <holin@iki.fi>
+
+commit 6a2c8587a4e05a8be2a2e975a6660942cfe115d6
+Author: Christopher James Halse Rogers <christopher.halse.rogers@canonical.com>
+Date:   Fri Aug 27 13:14:33 2010 +1000
+
+    dri2: Reference count DRI2 buffers
+    
+    When a client calls ScheduleSwap we set up a kernel callback when the
+    relevent vblank event occurs.  However, it's possible for the client
+    to go away between calling ScheduleSwap and the vblank event,
+    resulting in the buffers being destroyed before they're passed to
+    radeon_dri2_frame_event_handler.
+    
+    Add reference-counting to the buffers and take a reference in
+    radeon_dri2_schedule_swap to ensure the buffers won't be destroyed
+    before the vblank event is dealt with.
+    
+    This parallels the approach taken by the Intel DDX in commit
+    0d2392d44aae95d6b571d98f7ec323cf672a687f.
+    
+    Fixes: http://bugs.freedesktop.org/show_bug.cgi?id=29065
+    
+    v2: Don't write completion events to the client if it has quit.
+    v3: Don't try to unref the NULL buffers from a DRI2_WAITMSC event.
+        Take a ref in schedule_swap earlier, so the offscreen fallback
+        doesn't incorrectly destroy the buffers.
+    
+    Signed-off-by: Christopher James Halse Rogers <christopher.halse.rogers@canonical.com>
+    Signed-off-by: Dave Airlie <airlied@redhat.com>
+
+commit e9928fe036e9382fd7bc353f3f05531445f08977
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Wed Aug 25 10:42:39 2010 +1000
+
+    remove explicit buffer submit from copy region
+    
+    port of 0be3e95c844247746742805830860ace9f546d99 from intel driver.
+    
+        Remove explicit batchbuffer submit in DRI2 copyregion
+    
+        Now that we submit from the flush callback chain, we know we'll always
+        submit before the client receives the reply or event that blocks it from
+        rendering the next frame.
+    
+    Signed-off-by: Dave Airlie <airlied@redhat.com>
+
+commit 9f13049ddf06f6f2138851a548cfb82f12a52f42
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Wed Aug 25 08:56:37 2010 +1000
+
+    radeon: add correct flushing for direct rendered
+    
+    this is a port of 69d65f9184006eac790efcff78a0e425160e95aa from the Intel
+    driver.
+    
+        Submit batch buffers from flush callback chain
+    
+        There are a few cases where the server will flush client output buffers
+        but our block handler only catches the most common (before going into select
+        If the server flushes client buffers before we submit our batch buffer,
+        the client may receive a damage event for rendering that hasn't happened yet
+    
+        Instead, we can hook into the flush callback chain, which the server will
+        invoke just before flushing output.  This lets us submit batch buffers
+        before sending out events, preserving ordering.
+    
+        Fixes 28438: [bisected] incorrect character in gnome-terminal under compiz
+        https://bugs.freedesktop.org/show_bug.cgi?id=28438
+    
+        Signed-off-by: Kristian Høgsberg <krh@bitplanet.net>
+    
+    Signed-off-by: Dave Airlie <airlied@redhat.com>
+
+commit 5a7c9d94733a0db1d3565447acc9f0e751db5950
+Author: Alex Deucher <alexdeucher@gmail.com>
+Date:   Mon Aug 23 00:43:48 2010 -0400
+
+    radeon: fix legacy lvds dpms sequence
+    
+    Take from my kms commit.
+    
+    Should fix:
+    https://bugs.freedesktop.org/show_bug.cgi?id=19459
+    
+    Signed-off-by: Alex Deucher <alexdeucher@gmail.com>
+
+commit bdd41fecdb19c83c6c7b793016b61d38065dcd13
+Author: Alex Deucher <alexdeucher@gmail.com>
+Date:   Fri Aug 20 01:17:13 2010 -0400
+
+    evergreen: set encoder type to DVI for HDMI
+    
+    Fixes:
+    http://bugs.freedesktop.org/show_bug.cgi?id=27452
+    
+    Signed-off-by: Alex Deucher <alexdeucher@gmail.com>
+
+commit ad8ea1f6e5fcb4f163622cf5eab953ea812b5829
+Author: Alex Deucher <alexdeucher@gmail.com>
+Date:   Thu Aug 19 17:04:35 2010 -0400
+
+    DCE3+: switch pads to ddc mode when doing i2c
+    
+    The pins for ddc and aux are shared so you need to switch the
+    mode when doing ddc.  The ProcessAuxChannel table already sets
+    the pin mode to DP.  This should fix unreliable ddc issues
+    on DP ports using non-DP monitors.
+    
+    Signed-off-by: Alex Deucher <alexdeucher@gmail.com>
+
+commit fd686668289258ffaf6b81057545e50612aac6a8
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Thu Aug 12 12:59:18 2010 +1000
+
+    radeon: fixup non-kms build
+
+commit 5a9865d90c23c4ce0f46d380ea9119eac87a99eb
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Thu Aug 12 11:18:06 2010 +1000
+
+    evergreen: fix multi-head cursor support
+
+commit 8351bb9f085fde5dc47b115375efcc61adc23859
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Tue Aug 10 15:05:45 2010 +1000
+
+    radeon: take 8/10 encoding into a/c on displayport link
+
+commit b91e0efcb24eea32e6978c146c5409eeeeac0a62
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Tue Aug 10 15:05:25 2010 +1000
+
+    dce32: remove rmx workaround
+
+commit 94bc1b7156cd0866566dc44a823c7e051bb45175
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Tue Aug 10 13:24:52 2010 +1000
+
+    atombios: fixup set crtc source like KMS
+    
+    This removes a bunch of strict aliasing warnings and fixes the
+    codepaths up like the latest KMS code, including a workaround for a bug
+    on evergreen.
+
+commit 9bc716eb62d4e0eed2902b92437a42634eef6ba1
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Tue Aug 10 13:23:21 2010 +1000
+
+    atombios: move adjust pixel clock around to follow KMS code flow
+    
+    This reworks the pixel clock adjusting code to follow the KMS style,
+    also fixes warnings in this code.
+
+commit 31de43bf9d9eb93cc2b2150474ea7404beabe49d
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Tue Aug 10 13:21:39 2010 +1000
+
+    displayport: retry on timeout
+    
+    this is ported from KMS
+
+commit 9ef67335583d36080d227e8bce1966afe08e0486
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Tue Aug 10 13:21:01 2010 +1000
+
+    evergreen: don't call YUV table on evergreen
+
+commit 1cce55e8ba43e7958cb67147aeaeb068826ab99f
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Tue Aug 10 13:20:13 2010 +1000
+
+    evergreen: add support to parse firmware info for ext dp clk
+
+commit bbffd67d3296344e8735b007cdee83146d38369c
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Tue Aug 10 13:14:54 2010 +1000
+
+    atombios: realign digital transmitter/encoder setup with kms
+
+commit 6244153467665f5007e2fc7786b4bcc4b0b96030
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Tue Aug 10 12:57:22 2010 +1000
+
+    update atombios.h to latest from kernel
+
+commit bb7c77ca75e857f90791b0dd1c04c8e2f19d0e3c
+Author: Alex Deucher <alexdeucher@gmail.com>
+Date:   Mon Aug 9 22:18:53 2010 -0400
+
+    atom: upstream parser update
+    
+    fixes digital output problems on evergreen asics
+
+commit cc0a167ff2db9b097891883ded147af1d67e4407
+Author: Alex Deucher <alexdeucher@gmail.com>
+Date:   Tue May 25 18:17:15 2010 -0400
+
+    r6xx/r7xx: default to micro (1D) tiling for now
+    
+    SW de-tiling used in the r600c 3D driver has issues with
+    certain configurations.
+    
+    Signed-off-by: Alex Deucher <alexdeucher@gmail.com>
+
+commit b5bfdbd70d9671250957ccd41dfc8818850d257e
+Author: Alex Deucher <alexdeucher@gmail.com>
+Date:   Thu Aug 5 17:26:28 2010 -0400
+
+    r6xx/r7xx: add support for tiling with kms (v3)
+    
+    Requires radeon drm 2.6.0 and updated mesa.
+    
+    v2: - fix lockup due to not emiting DB_DEPTH_INFO
+    https://bugs.freedesktop.org/show_bug.cgi?id=28342
+        - fix drm minor version to deal with evergreen accel
+    v3: rebase on current ddx git
+    
+    Signed-off-by: Alex Deucher <alexdeucher@gmail.com>
+
+commit a3c59c6f6be7067421e348142da0ca13428dcd57
+Author: Alex Deucher <alexdeucher@gmail.com>
+Date:   Wed Aug 4 12:07:36 2010 -0400
+
+    radeon: add new pci ids
+
+commit a456587b77ae357750179a50f8db2a17c0f2738e
+Author: Alex Deucher <alexdeucher@gmail.com>
+Date:   Mon Aug 2 14:24:41 2010 -0400
+
+    r6xx/r7xx: move syrface sync emit to the functions that emit surface info
+    
+    reduces code duplication.
+
+commit 8eba977cab1878ba247da8160771d41194d8014f
+Author: Alex Deucher <alexdeucher@gmail.com>
+Date:   Thu Jun 10 13:34:59 2010 -0400
+
+    EXA: move more common helpers to exa_shared
+
+commit 71c1a2704af23b61439cee5ce784f7fe267a8a26
+Author: Alex Deucher <alexdeucher@gmail.com>
+Date:   Thu Jun 10 11:52:43 2010 -0400
+
+    remove unused reg headers from radeon_exa_shared.c
+
+commit d73aef78919005369af1b60df138439b4b6105c3
+Author: Alex Deucher <alexdeucher@gmail.com>
+Date:   Mon Aug 2 13:27:12 2010 -0400
+
+    r6xx/r7xx: set VGT_MAX_VTX_INDX to a larger value
+
+commit dacaf5d827b58c39f9e5a7ac0530f9ea6e257347
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Mon Aug 2 08:33:51 2010 +1000
+
+    fix make distcheck
+
+commit c79ce215a01b45fc63b483da167ae37ec7aefad6
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Sun Aug 1 16:51:48 2010 +1000
+
+    radeon/r600: restructure exa + vbo to provide more sharing
+    
+    This is a precursor for r300/500 vbo support.
+    
+    Signed-off-by: Dave Airlie <airlied@redhat.com>
+
+commit 82254b59268140c4102ae3cd713743ae2be15c00
+Author: Alex Deucher <alexdeucher@gmail.com>
+Date:   Fri Jul 30 17:15:05 2010 -0400
+
+    r6xx/r7xx: unify composite mask and non-mask pixel shader
+
+commit 1c17f3a192f644e8e38b5cfb1470f49434bfba27
+Author: Alex Deucher <alexdeucher@gmail.com>
+Date:   Fri Jul 30 16:34:54 2010 -0400
+
+    r6xx/r7xx: clean up composite vertex shader
+    
+    keep CF, ALU, Fetch instructions in separate groups
+
+commit f9d6c0de231357f96e2e0de71e6c9221bcb36bd4
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Fri Jul 23 13:28:42 2010 -0400
+
+    The local copy of the modes code is no longer required.
+    
+    The server 1.2 as shipped in the tarball on the web does not contain the
+    modes code. It was added just after and found in git branch server-1.2-branch.
+    
+    The modes code was initially included in version ati 6.8.0 and fails to compile
+    with server 1.2 as it requires randr 1.2. The modes code is included in server
+    versions 1.3 and later, so there is no need to provide an unknown version of
+    the modes code in the ati driver tarball. It will never be used.
+    
+    This patch makes the ati driver requiring server 1.3 or later.
+    Version 6.8.0 configures and builds ok on server 1.3
+    Master branch post 6.13.1  configures and builds ok on server 1.3
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit 0028419acb0762eeb950de5fe702c93e70301612
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Sat Jul 24 10:51:18 2010 -0400
+
+    config: add AM_PROG_CC_C_O for per-target compilation flags
+    
+    Per-target compilation flags (theatre200_drv_la_CFLAGS) are required
+    when multiple targets which require different compiler flags,
+    are build in the same makefile.
+    
+    Automake issues a command with -c and -o flags which not all compilers
+    support. The object fles are prefixed with theatre200_drv_la.
+    The macro AM_PROG_CC_C_O must then be used to provide this feature
+    on compilers that do not have it. If not, a warning is issued at make time.
+    
+    This macros checks for compiler support and if missing, uses a "compile"
+    script it generates in the package root directory.
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit aca0a8669b538d58f018f95c9b22e6b3ec1ffe50
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Wed Jul 21 16:49:04 2010 -0400
+
+    config: add comments for main statements
+
+commit 66e614f7115efeec237b3b916d9637e8b3e8985c
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Wed Jul 21 16:07:00 2010 -0400
+
+    config: replace deprecated use of AC_OUTPUT with AC_CONFIG_FILES
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit 16e5510c90ef1ba2bbaab78d18943f080b86d809
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Wed Jul 21 14:37:41 2010 -0400
+
+    config: replace deprecated AC_HELP_STRING with AS_HELP_STRING
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit b36d8c09e91382f4cfa71635374ec88f5b676d1c
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Wed Jul 21 14:05:22 2010 -0400
+
+    config: replace deprecated AM_CONFIG_HEADER with AC_CONFIG_HEADERS
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit cd9351b04c2d6982b28c647a63d550eb3e1937eb
+Author: Alex Deucher <alexdeucher@gmail.com>
+Date:   Wed Jul 21 13:48:24 2010 -0400
+
+    r6xx/r7xx: group op variable state
+    
+    Group the op variable state into one emit block, re-order
+    to reduce dwords emitted.
+
+commit 5f838c664e8010f4e51afecd4100d73a96fe1209
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Wed Jul 21 09:27:42 2010 -0400
+
+    config: complete AC_INIT m4 quoting
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit 48ec2e65c268b426ab9a3e214d174447cf5b5936
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Wed Jul 21 08:33:38 2010 -0400
+
+    config: remove unrequired AC_SUBST for LIBDRM and LIBUDEV
+    
+    These macros are called by the PKG_CHECK_MODULES macro.
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit 1aabb7eb7d8f06c7481151145db3b9a722ce4ef0
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Tue Jul 20 21:54:11 2010 -0400
+
+    config: remove unrequired AC_SUBST([DRI_CFLAGS])
+    
+    This macro is called by PKG_CHECK_MODULES
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit 8f92b349821a3ee5ed8df55273d905b9605385aa
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Tue Jul 20 21:44:57 2010 -0400
+
+    config: remove unrequired AC_SUBST([XORG_CFLAGS])
+    
+    This macro is called by PKG_CHECK_MODULES
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit 5b483b832f9c4a5b92ffb7f72a470669201f1fba
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Tue Jul 20 20:24:42 2010 -0400
+
+    config: remove unrequired AC_HEADER_STDC
+    
+    Autoconf says:
+    "This macro is obsolescent, as current systems have conforming
+    header files. New programs need not use this macro".
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit 6574e3a16eb3631ee7e00ee60a8c9ba95c8b84ef
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Tue Jul 20 19:41:30 2010 -0400
+
+    config: remove AC_PROG_CC as it overrides AC_PROG_C_C99
+    
+    XORG_STRICT_OPTION from XORG_DEFAULT_OPTIONS calls
+    AC_PROG_C_C99. This sets gcc with -std=gnu99.
+    If AC_PROG_CC macro is called afterwards, it resets CC to gcc.
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit 593eff2924c2ad161d8b490fbf6d7e433fbe2a80
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Tue Jul 20 18:45:18 2010 -0400
+
+    config: update AC_PREREQ statement to 2.60
+    
+    Unrelated to the previous patches, the new value simply reflects
+    the reality that the minimum level for autoconf to configure
+    all x.org modules is 2.60 dated June 2006.
+    
+    ftp://ftp.gnu.org/gnu/autoconf/autoconf-2.60.tar.gz
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit c2ab6ffc25aa6759cbbb4c1fbbd4a136b38983bf
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Tue Jul 20 16:15:29 2010 -0400
+
+    config: upgrade to util-macros 1.8 for additional man page support
+    
+    Use MAN_SUBST now supplied in XORG_MANPAGE_SECTIONS
+    The value of MAN_SUBST is the same for all X.Org packages.
+
+commit cdeb1949c820242f05a8897d3ddd0718f204dacf
+Author: Jerome Glisse <jglisse@redhat.com>
+Date:   Thu Jul 15 16:21:41 2010 -0400
+
+    kms: don't call cursor helper if using software cursor
+    
+    Fix :
+    https://bugzilla.redhat.com/show_bug.cgi?id=601713
+    https://bugzilla.redhat.com/show_bug.cgi?id=598358
+    
+    Signed-off-by: Jerome Glisse <jglisse@redhat.com>
+
+commit 06691376b1ee963c711420edaf5a03eab6f5658f
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Wed Jul 7 13:15:03 2010 +1000
+
+    fix build on non-kms
+
+commit 052cf0169ae70d5448af6dc4db840b2fc195569b
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Wed Jul 7 11:10:46 2010 +1000
+
+    configure.ac: bump version post release
+
+commit ad999e633ff41d27eed9d2c6535e163a7181b0bd
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Wed Jul 7 10:49:22 2010 +1000
+
+    set version for release
+
 commit 37b348059b1c15d7b381cd3df3db52bd9ee6613e
 Author: Alex Deucher <alexdeucher@gmail.com>
 Date:   Wed Jun 30 12:56:48 2010 -0400

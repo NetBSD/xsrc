@@ -721,7 +721,7 @@ struct radeon_accel_state {
     uint32_t          *draw_header;
     unsigned          vtx_count;
     unsigned          num_vtx;
-
+    unsigned          verts_per_op;
     Bool              vsync;
 
     drmBufPtr         ib;
@@ -741,7 +741,7 @@ struct radeon_accel_state {
     struct radeon_dma_bo bo_reserved;
     Bool use_vbos;
 #endif
-
+    void (*finish_op)(ScrnInfoPtr, int);
     // shader storage
     ExaOffscreenArea  *shaders;
     struct radeon_bo  *shaders_bo;
@@ -751,7 +751,6 @@ struct radeon_accel_state {
     uint32_t          copy_ps_offset;
     uint32_t          comp_vs_offset;
     uint32_t          comp_ps_offset;
-    uint32_t          comp_mask_ps_offset;
     uint32_t          xv_vs_offset;
     uint32_t          xv_ps_offset;
 
@@ -873,6 +872,8 @@ typedef struct {
     Bool              ddc2;
 
     RADEONPLLRec      pll;
+    int               default_dispclk;
+    int               dp_extclk;
 
     int               RamWidth;
     float	      sclk;		/* in MHz */
@@ -1036,6 +1037,12 @@ typedef struct {
     uint64_t vram_size;
     uint64_t gart_size;
     drmmode_rec drmmode;
+    /* r6xx+ tile config */
+    uint32_t tile_config;
+    int group_bytes;
+    int num_channels;
+    int num_banks;
+    int r7xx_bank_op;
 #else
     /* fake bool */
     Bool cs;

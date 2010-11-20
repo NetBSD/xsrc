@@ -1538,6 +1538,19 @@ RADEONLookupGPIOLineForDDC(ScrnInfoPtr pScrn, uint8_t id)
 
     for (i = 0; i < num_indices; i++) {
 	    gpio = &atomDataPtr->GPIO_I2C_Info->asGPIO_Info[i];
+
+	    if (IS_DCE4_VARIANT) {
+	        if ((i == 7) &&
+		    (gpio->usClkMaskRegisterIndex == 0x1936) &&
+		    (gpio->sucI2cId.ucAccess == 0)) {
+		    gpio->sucI2cId.ucAccess = 0x97;
+		    gpio->ucDataMaskShift = 8;
+		    gpio->ucDataEnShift = 8;
+		    gpio->ucDataY_Shift = 8;
+		    gpio->ucDataA_Shift = 8;
+		}
+	    }
+
 	    if (gpio->sucI2cId.ucAccess == id) {
 		    i2c.mask_clk_reg = le16_to_cpu(gpio->usClkMaskRegisterIndex) * 4;
 		    i2c.mask_data_reg = le16_to_cpu(gpio->usDataMaskRegisterIndex) * 4;
@@ -2307,6 +2320,13 @@ RADEONGetATOMClockInfo(ScrnInfoPtr pScrn)
 	    pll->pll_out_min = 64800;
     }
 
+    if (IS_DCE4_VARIANT) {
+	info->default_dispclk =
+	    le32_to_cpu(atomDataPtr->FirmwareInfo.FirmwareInfo_V_2_1->ulDefaultDispEngineClkFreq);
+	if (info->default_dispclk == 0)
+	    info->default_dispclk = 60000;
+	info->dp_extclk = le16_to_cpu(atomDataPtr->FirmwareInfo.FirmwareInfo_V_2_1->usUniphyDPModeExtClkFreq);
+    }
     return TRUE;
 }
 

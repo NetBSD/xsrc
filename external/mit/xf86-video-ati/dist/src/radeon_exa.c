@@ -42,6 +42,7 @@
 #include "radeon_macros.h"
 #include "radeon_probe.h"
 #include "radeon_version.h"
+#include "radeon_exa_shared.h"
 
 #include "xf86.h"
 
@@ -49,26 +50,6 @@
 /***********************************************************************/
 #define RINFO_FROM_SCREEN(pScr) ScrnInfoPtr pScrn =  xf86Screens[pScr->myNum]; \
     RADEONInfoPtr info   = RADEONPTR(pScrn)
-
-#define RADEON_TRACE_FALL 0
-#define RADEON_TRACE_DRAW 0
-
-#if RADEON_TRACE_FALL
-#define RADEON_FALLBACK(x)     		\
-do {					\
-	ErrorF("%s: ", __FUNCTION__);	\
-	ErrorF x;			\
-	return FALSE;			\
-} while (0)
-#else
-#define RADEON_FALLBACK(x) return FALSE
-#endif
-
-#if RADEON_TRACE_DRAW
-#define TRACE do { ErrorF("TRACE: %s\n", __FUNCTION__); } while(0)
-#else
-#define TRACE
-#endif
 
 static struct {
     int rop;
@@ -119,18 +100,6 @@ static __inline__ uint32_t F_TO_DW(float val)
     tmp.f = val;
     return tmp.l;
 }
-
-
-#ifdef XF86DRM_MODE
-
-static inline void radeon_add_pixmap(struct radeon_cs *cs, PixmapPtr pPix, int read_domains, int write_domain)
-{
-    struct radeon_exa_pixmap_priv *driver_priv = exaGetPixmapDriverPrivate(pPix);
-
-    radeon_cs_space_add_persistent_bo(cs, driver_priv->bo, read_domains, write_domain);
-}
-
-#endif /* XF86DRM_MODE */
 
 
 /* Assumes that depth 15 and 16 can be used as depth 16, which is okay since we
@@ -315,12 +284,21 @@ Bool RADEONPrepareAccess_CS(PixmapPtr pPix, int index)
     ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
     RADEONInfoPtr info = RADEONPTR(pScrn);
     struct radeon_exa_pixmap_priv *driver_priv;
+    uint32_t possible_domains = ~0U;
+    uint32_t current_domain = 0;
+#ifdef EXA_MIXED_PIXMAPS
+    Bool can_fail = !(pPix->drawable.bitsPerPixel < 8) &&
+	pPix != pScreen->GetScreenPixmap(pScreen) &&
+        (info->accel_state->exa->flags & EXA_MIXED_PIXMAPS);
+#else
+    Bool can_fail = FALSE;
+#endif
+    Bool flush = FALSE;
     int ret;
 
 #if X_BYTE_ORDER == X_BIG_ENDIAN
     /* May need to handle byte swapping in DownloadFrom/UploadToScreen */
-    if (pPix->drawable.bitsPerPixel > 8 &&
-	pPix != pScreen->GetScreenPixmap(pScreen))
+    if (can_fail && pPix->drawable.bitsPerPixel > 8)
 	return FALSE;
 #endif
 
@@ -329,7 +307,28 @@ Bool RADEONPrepareAccess_CS(PixmapPtr pPix, int index)
       return FALSE;
 
     /* if we have more refs than just the BO then flush */
-    if (radeon_bo_is_referenced_by_cs(driver_priv->bo, info->cs))
+    if (radeon_bo_is_referenced_by_cs(driver_priv->bo, info->cs)) {
+	flush = TRUE;
+
+	if (can_fail) {
+	    possible_domains = radeon_bo_get_src_domain(driver_priv->bo);
+	    if (possible_domains == RADEON_GEM_DOMAIN_VRAM)
+		return FALSE; /* use DownloadFromScreen */
+	}
+    }
+
+    /* if the BO might end up in VRAM, prefer DownloadFromScreen */
+    if (can_fail && (possible_domains & RADEON_GEM_DOMAIN_VRAM)) {
+	radeon_bo_is_busy(driver_priv->bo, &current_domain);
+
+	if (current_domain & possible_domains) {
+	    if (current_domain == RADEON_GEM_DOMAIN_VRAM)
+		return FALSE;
+	} else if (possible_domains & RADEON_GEM_DOMAIN_VRAM)
+	    return FALSE;
+    }
+
+    if (flush)
         radeon_cs_flush_indirect(pScrn);
     
     /* flush IB */
@@ -354,6 +353,7 @@ void RADEONFinishAccess_CS(PixmapPtr pPix, int index)
         return;
 
     radeon_bo_unmap(driver_priv->bo);
+    driver_priv->bo_mapped = FALSE;
     pPix->devPrivate.ptr = NULL;
 }
 
@@ -461,11 +461,27 @@ void *RADEONEXACreatePixmap2(ScreenPtr pScreen, int width, int height,
         tiling &= ~RADEON_TILING_MACRO;
     }
 
-    if (tiling) {
-	height = RADEON_ALIGN(height, 16);
-	pixmap_align = 256;
-    } else
-	pixmap_align = 64;
+    if (info->ChipFamily >= CHIP_FAMILY_R600) {
+	int bpe = bitsPerPixel / 8;
+
+	if (tiling & RADEON_TILING_MACRO) {
+	    height = RADEON_ALIGN(height, info->num_banks * 8);
+	    pixmap_align = MAX(info->num_banks,
+			       (((info->group_bytes / 8) / bpe) * info->num_banks)) * 8 * bpe;
+	} else if (tiling & RADEON_TILING_MICRO) {
+	    height = RADEON_ALIGN(height, 8);
+	    pixmap_align = MAX(8, (info->group_bytes / (8 * bpe))) * bpe;
+	} else {
+	    height = RADEON_ALIGN(height, 8);
+	    pixmap_align = 256; /* 8 * bpe */
+	}
+    } else {
+	if (tiling) {
+	    height = RADEON_ALIGN(height, 16);
+	    pixmap_align = 256;
+	} else
+	    pixmap_align = 64;
+    }
 
     padded_width = ((width * bitsPerPixel + FB_MASK) >> FB_SHIFT) * sizeof(FbBits);
     padded_width = RADEON_ALIGN(padded_width, pixmap_align);

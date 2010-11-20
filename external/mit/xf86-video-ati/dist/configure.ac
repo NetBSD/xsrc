@@ -20,32 +20,36 @@
 #
 # Process this file with autoconf to produce a configure script
 
-AC_PREREQ(2.57)
+# Initialize Autoconf
+AC_PREREQ([2.60])
 AC_INIT([xf86-video-ati],
-        6.13.1,
+        [6.13.2],
         [https://bugs.freedesktop.org/enter_bug.cgi?product=xorg],
-        xf86-video-ati)
+        [xf86-video-ati])
 
 AC_CONFIG_SRCDIR([Makefile.am])
-AM_CONFIG_HEADER([config.h])
+AC_CONFIG_HEADERS([config.h])
 
-# Require xorg-macros: XORG_DEFAULT_OPTIONS
-m4_ifndef([XORG_MACROS_VERSION], 
-          [m4_fatal([must install xorg-macros 1.3 or later before running autoconf/autogen])])
-XORG_MACROS_VERSION(1.3)
+# Require X.Org macros 1.8 or later for MAN_SUBSTS set by XORG_MANPAGE_SECTIONS
+m4_ifndef([XORG_MACROS_VERSION],
+          [m4_fatal([must install xorg-macros 1.8 or later before running autoconf/autogen])])
+XORG_MACROS_VERSION(1.8)
 XORG_DEFAULT_OPTIONS
 
 AC_CONFIG_AUX_DIR(.)
 
+# Initialize Automake
 AM_INIT_AUTOMAKE([foreign dist-bzip2])
 AC_SYS_LARGEFILE
 
 AM_MAINTAINER_MODE
 
-# Checks for programs.
+# Initialize libtool
 AC_DISABLE_STATIC
 AC_PROG_LIBTOOL
-AC_PROG_CC
+
+# Checks for programs.
+AM_PROG_CC_C_O
 
 if test "x$GCC" = "xyes"; then
 	CPPFLAGS="$CPPFLAGS -Wall"
@@ -53,42 +57,38 @@ fi
 
 AH_TOP([#include "xorg-server.h"])
 
+# Define a configure option for an alternate module directory
 AC_ARG_WITH(xorg-module-dir,
-            AC_HELP_STRING([--with-xorg-module-dir=DIR],
+            AS_HELP_STRING([--with-xorg-module-dir=DIR],
                            [Default xorg module directory [[default=$libdir/xorg/modules]]]),
             [moduledir="$withval"],
             [moduledir="$libdir/xorg/modules"])
 
-AC_ARG_ENABLE(dri, AC_HELP_STRING([--disable-dri],
+AC_ARG_ENABLE(dri, AS_HELP_STRING([--disable-dri],
                                   [Disable DRI support [[default=auto]]]),
               [DRI="$enableval"],
               [DRI=auto])
 
 AC_ARG_ENABLE(exa,
-              AC_HELP_STRING([--disable-exa],
+              AS_HELP_STRING([--disable-exa],
                              [Disable EXA support [[default=enabled]]]),
               [EXA="$enableval"],
               [EXA=yes])
 
 AC_ARG_ENABLE(kms,
-              AC_HELP_STRING([--disable-kms],
+              AS_HELP_STRING([--disable-kms],
                              [Disable KMS support [[default=enabled]]]),
               [DRM_MODE="$enableval"],
               [DRM_MODE=yes])
 
-AC_ARG_WITH(xserver-source,AC_HELP_STRING([--with-xserver-source=XSERVER_SOURCE],
-                                          [Path to X server source tree]),
-                           [ XSERVER_SOURCE="$withval" ],
-                           [ XSERVER_SOURCE="" ])
-
-# Checks for extensions
+# Store the list of server defined optional extensions in REQUIRED_MODULES
 XORG_DRIVER_CHECK_EXT(RANDR, randrproto)
 XORG_DRIVER_CHECK_EXT(RENDER, renderproto)
 XORG_DRIVER_CHECK_EXT(XV, videoproto)
 XORG_DRIVER_CHECK_EXT(DPMSExtension, xextproto)
 
-# Checks for pkg-config packages
-PKG_CHECK_MODULES(XORG, [xorg-server >= 1.2 xproto fontsproto $REQUIRED_MODULES])
+# Obtain compiler/linker options for the driver dependencies
+PKG_CHECK_MODULES(XORG, [xorg-server >= 1.3 xproto fontsproto $REQUIRED_MODULES])
 PKG_CHECK_MODULES(XEXT, [xextproto >= 7.0.99.1],
                   HAVE_XEXTPROTO_71="yes"; AC_DEFINE(HAVE_XEXTPROTO_71, 1, [xextproto 7.1 available]),
                   HAVE_XEXTPROTO_71="no")
@@ -96,8 +96,6 @@ AM_CONDITIONAL(HAVE_XEXTPROTO_71, [ test "$HAVE_XEXTPROTO_71" = "yes" ])
 
 # Checks for libraries.
 
-# Checks for header files.
-AC_HEADER_STDC
 
 if test "$DRI" != no; then
 	PKG_CHECK_MODULES(DRI, [libdrm >= 2.2 xf86driproto])
@@ -164,11 +162,6 @@ else
 fi
 AM_CONDITIONAL(DRM_MODE, test x$DRM_MODE = xyes)
 AM_CONDITIONAL(LIBUDEV, test x$LIBUDEV = xyes)
-
-save_CFLAGS="$CFLAGS"
-CFLAGS="$XORG_CFLAGS"
-AC_CHECK_HEADER(xf86Modes.h,[XMODES=yes],[XMODES=no],[#include "xorg-server.h"])
-CFLAGS="$save_CFLAGS"
 
 AC_DEFINE(USE_XAA, 1, [Build support for XAA])
 
@@ -239,48 +232,6 @@ AC_CHECK_DECL(pci_device_enable,
 AC_CHECK_DECL(XSERVER_LIBPCIACCESS,
 	      [XSERVER_LIBPCIACCESS=yes],[XSERVER_LIBPCIACCESS=no],
 	      [#include "xorg-server.h"])
-
-AM_CONDITIONAL(XMODES, test "x$XMODES" = xno)
-
-if test "x$XSERVER_SOURCE" = x; then
-        if test -d ../../xserver; then
-                XSERVER_SOURCE="`cd ../../xserver && pwd`"
-        fi
-fi
-
-if test -d "$XSERVER_SOURCE"; then
-        case "$XSERVER_SOURCE" in
-        /*)
-                ;;
-        *)
-                XSERVER_SOURCE="`cd $XSERVER_SOURCE && pwd`"
-        esac
-        if test -f src/modes/xf86Modes.h; then
-                :
-        else
-                ln -sf $XSERVER_SOURCE/hw/xfree86/modes src/modes
-        fi
-
-        if test -f src/parser/xf86Parser.h; then
-                :
-        else
-                ln -sf $XSERVER_SOURCE/hw/xfree86/parser src/parser
-        fi
-fi
-if test "x$XMODES" = xyes; then
-        AC_MSG_NOTICE([X server has new mode code])
-        AC_DEFINE(XMODES, 1,[X server has built-in mode code])
-        XMODES_CFLAGS=
-else
-        if test -f src/modes/xf86Modes.h -a -f src/parser/xf86Parser.h; then
-                AC_MSG_NOTICE([X server is missing new mode code, using local copy])
-        else
-                AC_MSG_ERROR([Must have X server >= 1.3 source tree for mode setting code. Please specify --with-xserver-source])
-        fi
-        XMODES_CFLAGS='-DXF86_MODES_RENAME -I$(top_srcdir)/src -I$(top_srcdir)/src/modes -I$(top_srcdir)/src/parser'
-fi
-
-AC_SUBST([XMODES_CFLAGS])
 
 CPPFLAGS="$SAVE_CPPFLAGS"
 
@@ -359,12 +310,6 @@ case $host_os in
   AC_DEFINE(FGL_LINUX, 1, [Use linux pragma pack]) ;;
 esac
 
-AC_SUBST([XORG_CFLAGS])
-AC_SUBST([DRI_CFLAGS])
-AC_SUBST([LIBDRM_RADEON_CFLAGS])
-AC_SUBST([LIBDRM_RADEON_LIBS])
-AC_SUBST([LIBUDEV_CFLAGS])
-AC_SUBST([LIBUDEV_LIBS])
 AC_SUBST([moduledir])
 
 DRIVER_NAME=ati
@@ -382,11 +327,12 @@ AC_MSG_NOTICE(
 [Please install that driver as well for rage128-based cards.]
 )
 
-AC_OUTPUT([
-	Makefile
-	src/Makefile
-	man/Makefile
+AC_CONFIG_FILES([
+                Makefile
+                src/Makefile
+                man/Makefile
 ])
+AC_OUTPUT
 
 dnl
 dnl Output some configuration info for the user

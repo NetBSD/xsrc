@@ -734,6 +734,9 @@ radeon_mode_prepare(xf86OutputPtr output)
     radeon_dpms(output, DPMSModeOff);
     radeon_crtc_dpms(output->crtc, DPMSModeOff);
 
+    if (IS_AVIVO_VARIANT || info->r4xx_atom)
+        atombios_set_output_crtc_source(output);
+
 }
 
 static void
@@ -1871,6 +1874,13 @@ RADEONI2CDoLock(xf86OutputPtr output, I2CBusPtr b, int lock_state)
 					       R200_DVI_I2C_PIN_SEL(R200_SEL_DDC3)));
 	}
 
+	/* set the pad in ddc mode */
+	if (IS_DCE3_VARIANT) {
+	    temp = INREG(pRADEONI2CBus->mask_clk_reg);
+	    temp &= ~(1 << 16);
+	    OUTREG(pRADEONI2CBus->mask_clk_reg, temp);
+	}
+
 	temp = INREG(pRADEONI2CBus->a_clk_reg);
 	temp &= ~(pRADEONI2CBus->a_clk_mask);
 	OUTREG(pRADEONI2CBus->a_clk_reg, temp);
@@ -2099,10 +2109,6 @@ void RADEONInitConnector(xf86OutputPtr output)
 	radeon_output->rmx_type = RMX_FULL;
     else
 	radeon_output->rmx_type = RMX_OFF;
-
-    /* dce 3.2 chips have problems with low dot clocks, so use the scaler */
-    if (IS_DCE32_VARIANT && (radeon_output->devices & (ATOM_DEVICE_DFP_SUPPORT)))
-	radeon_output->rmx_type = RMX_FULL;
 
     if (!IS_AVIVO_VARIANT) {
 	if (radeon_output->devices & (ATOM_DEVICE_CRT2_SUPPORT)) {
@@ -3077,6 +3083,8 @@ Bool RADEONSetupConnectors(ScrnInfoPtr pScrn)
 	    if (!output) {
 		return FALSE;
 	    }
+	    output->interlaceAllowed = TRUE;
+	    output->doubleScanAllowed = TRUE;
 	    output->driver_private = radeon_output;
 	    if (IS_DCE4_VARIANT) {
 		output->possible_crtcs = 0x3f;

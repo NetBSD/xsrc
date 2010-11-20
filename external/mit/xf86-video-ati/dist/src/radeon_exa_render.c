@@ -496,14 +496,6 @@ static Bool FUNC_NAME(R100TextureSetup)(PicturePtr pPict, PixmapPtr pPix,
 
 #ifdef ONLY_ONCE
 
-PixmapPtr
-RADEONGetDrawablePixmap(DrawablePtr pDrawable)
-{
-    if (pDrawable->type == DRAWABLE_WINDOW)
-	return pDrawable->pScreen->GetWindowPixmap((WindowPtr)pDrawable);
-    else
-	return (PixmapPtr)pDrawable;
-}
 
 static Bool R100CheckComposite(int op, PicturePtr pSrcPicture,
 			       PicturePtr pMaskPicture, PicturePtr pDstPicture)
