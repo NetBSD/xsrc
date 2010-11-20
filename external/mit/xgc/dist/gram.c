@@ -130,7 +130,7 @@
 
 
 /* Copy the first part of user declarations.  */
-#line 6 "gram.y"
+#line 5 "gram.y"
 
 #define YYDEBUG 1
 
@@ -163,7 +163,7 @@ extern int yylineno;
 
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 typedef union YYSTYPE
-#line 19 "gram.y"
+#line 18 "gram.y"
 {
   int num;
   char *ptr;
@@ -475,9 +475,9 @@ static const yytype_int8 yyrhs[] =
 /* YYRLINE[YYN] -- source line where rule number YYN was defined.  */
 static const yytype_uint8 yyrline[] =
 {
-       0,    41,    41,    44,    45,    46,    49,    50,    52,    54,
-      56,    58,    60,    62,    64,    66,    68,    70,    72,    74,
-      76,    78,    80,    82,    84,    86,    88
+       0,    40,    40,    43,    44,    45,    48,    49,    51,    53,
+      55,    57,    59,    61,    63,    65,    67,    69,    71,    73,
+      75,    77,    79,    81,    83,    85,    87
 };
 #endif
 
@@ -1406,102 +1406,102 @@ yyreduce:
   switch (yyn)
     {
         case 7:
-#line 51 "gram.y"
+#line 50 "gram.y"
     { run_test(); }
     break;
 
   case 8:
-#line 53 "gram.y"
+#line 52 "gram.y"
     { change_test ((yyvsp[(2) - (2)].num), TRUE); }
     break;
 
   case 9:
-#line 55 "gram.y"
+#line 54 "gram.y"
     { GC_change_function ((yyvsp[(2) - (2)].num), TRUE); }
     break;
 
   case 10:
-#line 57 "gram.y"
+#line 56 "gram.y"
     { GC_change_linestyle ((yyvsp[(2) - (2)].num), TRUE); }
     break;
 
   case 11:
-#line 59 "gram.y"
+#line 58 "gram.y"
     { GC_change_linestyle (LineSolid, TRUE); }
     break;
 
   case 12:
-#line 61 "gram.y"
+#line 60 "gram.y"
     { GC_change_capstyle ((yyvsp[(2) - (2)].num), TRUE); }
     break;
 
   case 13:
-#line 63 "gram.y"
+#line 62 "gram.y"
     { GC_change_capstyle (CapRound, TRUE); }
     break;
 
   case 14:
-#line 65 "gram.y"
+#line 64 "gram.y"
     { GC_change_joinstyle ((yyvsp[(2) - (2)].num), TRUE); }
     break;
 
   case 15:
-#line 67 "gram.y"
+#line 66 "gram.y"
     { GC_change_joinstyle (JoinRound, TRUE); }
     break;
 
   case 16:
-#line 69 "gram.y"
+#line 68 "gram.y"
     { GC_change_fillstyle ((yyvsp[(2) - (2)].num), TRUE); }
     break;
 
   case 17:
-#line 71 "gram.y"
+#line 70 "gram.y"
     { GC_change_fillstyle (FillSolid, TRUE); }
     break;
 
   case 18:
-#line 73 "gram.y"
+#line 72 "gram.y"
     { GC_change_fillrule ((yyvsp[(2) - (2)].num), TRUE); }
     break;
 
   case 19:
-#line 75 "gram.y"
+#line 74 "gram.y"
     { GC_change_arcmode ((yyvsp[(2) - (2)].num), TRUE); }
     break;
 
   case 20:
-#line 77 "gram.y"
+#line 76 "gram.y"
     { GC_change_foreground ((yyvsp[(2) - (2)].num), TRUE); }
     break;
 
   case 21:
-#line 79 "gram.y"
+#line 78 "gram.y"
     { GC_change_background ((yyvsp[(2) - (2)].num), TRUE); }
     break;
 
   case 22:
-#line 81 "gram.y"
+#line 80 "gram.y"
     { GC_change_linewidth ((yyvsp[(2) - (2)].num), TRUE); }
     break;
 
   case 23:
-#line 83 "gram.y"
+#line 82 "gram.y"
     { GC_change_planemask ((yyvsp[(2) - (2)].num), TRUE); }
     break;
 
   case 24:
-#line 85 "gram.y"
+#line 84 "gram.y"
     { GC_change_dashlist ((yyvsp[(2) - (2)].num), TRUE); }
     break;
 
   case 25:
-#line 87 "gram.y"
+#line 86 "gram.y"
     { GC_change_font ((yyvsp[(2) - (2)].ptr), TRUE); }
     break;
 
   case 26:
-#line 89 "gram.y"
+#line 88 "gram.y"
     { change_percent ((yyvsp[(2) - (2)].num), TRUE); }
     break;
 
@@ -1721,7 +1721,7 @@ yyreturn:
 }
 
 
-#line 92 "gram.y"
+#line 91 "gram.y"
 
 void
 yyerror(const char *s)
