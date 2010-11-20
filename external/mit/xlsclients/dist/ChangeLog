@@ -1,3 +1,69 @@
+commit 29ad1d40dbd77d6efedd5d7db53e35650732dd6e
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Sep 24 09:43:42 2010 -0700
+
+    xlsclients 1.1.1
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 050eb2ca576e11cf5781af38db1442f2c9dd2f56
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Sep 24 09:23:51 2010 -0700
+
+    config: Remove unnecessary calls from configure.ac
+    
+    AC_PROG_CC & AC_PROG_INSTALL are provided by XORG_DEFAULT_OPTIONS now
+    PKG_CONFIG_MODULES handles AC_SUBST of the CFLAGS & LIBS variables
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit ca8d92fe63776474f3aa166bbedd9220ec560177
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Sep 24 09:11:05 2010 -0700
+
+    config: upgrade to util-macros 1.8 for additional man page support
+    
+    Use MAN_SUBST now supplied in XORG_MANPAGE_SECTIONS
+    The value of MAN_SUBST is the same for all X.Org packages.
+    
+    Use AC_PROG_SED now supplied by XORG_DEFAULT_OPTIONS
+    Enables use of platform appropriate version of sed.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit ffdf25c57b0e1b040523789b1e21fb24c0ec2e07
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Tue Jul 20 18:45:18 2010 -0400
+
+    config: update AC_PREREQ statement to 2.60
+    
+    Unrelated to the previous patches, the new value simply reflects
+    the reality that the minimum level for autoconf to configure
+    all x.org modules is 2.60 dated June 2006.
+    
+    ftp://ftp.gnu.org/gnu/autoconf/autoconf-2.60.tar.gz
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit a8bd97c46f9671a02ad0d436142c9ff80cd5bc15
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Wed Jun 23 21:07:39 2010 -0700
+
+    strnlen.h should be added to EXTRA_DIST, not overwrite it
+    
+    Fixes 'make distcheck' failure found by tinderbox:
+    make[2]: *** No rule to make target `xlsclients.1', needed by `all-am'.  Stop.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit f30f41b8dc37e775279835c97f2bea83a513dc10
+Author: Jeremy Huddleston <jeremyhu@apple.com>
+Date:   Fri Jun 4 22:14:23 2010 -0700
+
+    Add strnlen.h to EXTRA_DIST
+    
+    Signed-off-by: Jeremy Huddleston <jeremyhu@apple.com>
+
 commit cc6dbd2c1e7966b32e333142ab7630ed19700414
 Author: Alan Coopersmith <alan.coopersmith@oracle.com>
 Date:   Thu Jun 3 16:05:20 2010 -0700
