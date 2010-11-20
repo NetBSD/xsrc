@@ -258,7 +258,7 @@ static void EraseLast(void)
 {
     argvsize--;
     XtFree((char *) argv[argvsize]);
-    argv[argvsize] = 0;
+    argv[argvsize] = NULL;
 }
 
 

@@ -120,7 +120,7 @@ char **MakeArgv(int n)
 {
     char **result;
     result = ((char **) XtMalloc((unsigned) (n+1) * sizeof(char *)));
-    result[n] = 0;
+    result[n] = NULL;
     return result;
 }
 
@@ -128,7 +128,7 @@ char **MakeArgv(int n)
 char **ResizeArgv(char **argv, int n)
 {
     argv = ((char **) XtRealloc((char *) argv, (unsigned) (n+1) * sizeof(char *)));
-    argv[n] = 0;
+    argv[n] = NULL;
     return argv;
 }
 
@@ -445,7 +445,7 @@ void InitBusyCursor(Scrn scrn)
     scrn->wait_window =
 	XCreateWindow(XtDisplay(scrn->parent), XtWindow(scrn->parent), 0, 0, 
 		      rootwidth, rootheight, (unsigned int) 0, CopyFromParent,
-		      InputOnly, CopyFromParent, valuemask, &attributes);
+		      InputOnly, (Visual *)CopyFromParent, valuemask, &attributes);
 }
 
 void ShowBusyCursor(void)

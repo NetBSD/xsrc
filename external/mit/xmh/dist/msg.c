@@ -904,7 +904,7 @@ void XmhInsert(
 	sprintf(command, "%s %s", app_resources.insert_filter,
 		MsgFileName(scrn->assocmsg));
 	argv[2] = command;
-	argv[3] = 0;
+	argv[3] = NULL;
 	block.ptr = DoCommandToString(argv);
         block.length = strlen(block.ptr);
     }

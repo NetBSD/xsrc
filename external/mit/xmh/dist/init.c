@@ -31,7 +31,6 @@
 
 #include "xmh.h"
 #include "actions.h"
-#include "version.h"
 #include <errno.h>
 
 #define MIN_APP_DEFAULTS_VERSION 1
