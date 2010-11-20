@@ -1,3 +1,116 @@
+commit 8a3ad532fc8e00ea5066355a783cb270315596fe
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Wed Nov 10 20:02:19 2010 -0800
+
+    xset 1.2.1
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit d75ab3dcae8bcb022e87fd73c9f798421d040c46
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Tue Nov 9 18:16:27 2010 -0800
+
+    Strip trailing whitespace
+    
+    Generated via: perl -i -p -e 's{\s+$}{\n}' *
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 33580bb84fb5ca6d1a49c1f1ac7b785fe4f92d11
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Tue Nov 9 18:13:51 2010 -0800
+
+    Restore man page copyright accidentally removed in ce3f6a73c2beef
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 0d807d97e8387a38b6a9324912b9c65662949038
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Tue Nov 9 17:13:41 2010 -0800
+
+    config: replace deprecated AM_CONFIG_HEADER with AC_CONFIG_HEADERS
+    
+    Regroup AC statements under the Autoconf initialization section.
+    Regroup AM sttaements under the Automake initialization section.
+    Add missing AC_CONFIG_SRCDIR
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit edeb291f81424ec04798618379ad252c122377ec
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Tue Nov 9 17:11:42 2010 -0800
+
+    config: AC_PROG_CC & AC_PROG_INSTALL are provided by XORG_DEFAULT_OPTIONS
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 5b4a8121b1cb2c0dc643460ee7c9363dc0d83a38
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Tue Nov 9 17:09:45 2010 -0800
+
+    config: update AC_PREREQ statement to 2.60
+    
+    Unrelated to the previous patches, the new value simply reflects
+    the reality that the minimum level for autoconf to configure
+    all x.org modules is 2.60 dated June 2006.
+    
+    ftp://ftp.gnu.org/gnu/autoconf/autoconf-2.60.tar.gz
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit ce3f6a73c2beef0c486575f7797d92b44a718973
+Author: Jesse Adkins <jesserayadkins@gmail.com>
+Date:   Tue Sep 28 13:29:50 2010 -0700
+
+    Purge cvs tags.
+    
+    Signed-off-by: Jesse Adkins <jesserayadkins@gmail.com>
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 41743c6fbea9f58dff4e9fe200837fe718eefc9d
+Author: Bryce Harrington <bryce@canonical.com>
+Date:   Tue Aug 10 12:46:14 2010 -0400
+
+    Spelling fix in help docs.
+    
+    Reviewed-by: Robert Hooker <sarvatt@ubuntu.com>
+    Signed-off-by: Bryce Harrington <bryce@canonical.com>
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+
+commit 5948a0e2095c4e032dd93e22a65077ff81288666
+Author: Yaakov Selkowitz <yselkowitz@users.sourceforge.net>
+Date:   Fri Aug 6 00:26:48 2010 -0500
+
+    Use silent rules
+    
+    Signed-off-by: Yaakov Selkowitz <yselkowitz@users.sourceforge.net>
+    Reviewed-by: Peter Hutterer <peter.hutterer@who-t.net>
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+
+commit d36afd69f0c5129b6b50c9062257560342d81ebd
+Author: Yaakov Selkowitz <yselkowitz@users.sourceforge.net>
+Date:   Fri Aug 6 00:26:47 2010 -0500
+
+    Use AC_PROG_SED and MAN_SUBSTS in macros-1.8
+    
+    Signed-off-by: Yaakov Selkowitz <yselkowitz@users.sourceforge.net>
+    Reviewed-by: Peter Hutterer <peter.hutterer@who-t.net>
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+
+commit 0ac4f20a863d69b99193da26d468397827c672a1
+Author: Yaakov Selkowitz <yselkowitz@users.sourceforge.net>
+Date:   Fri Aug 6 00:26:46 2010 -0500
+
+    Remove unused variable warning with !XF86MISC
+    
+    xset.c: In function 'query':
+    xset.c:1317: warning: unused variable 'dummy'
+    
+    Signed-off-by: Yaakov Selkowitz <yselkowitz@users.sourceforge.net>
+    Reviewed-by: Peter Hutterer <peter.hutterer@who-t.net>
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+
 commit c963b0cb393630962e9094e849b291c539b655ca
 Author: Peter Hutterer <peter.hutterer@who-t.net>
 Date:   Fri Aug 6 13:10:36 2010 +1000
