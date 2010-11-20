@@ -9,6 +9,9 @@
 /* Define to 1 if you have the <inttypes.h> header file. */
 #define HAVE_INTTYPES_H 1
 
+/* Has libdrm */
+#undef HAVE_LIBDRM
+
 /* Define to 1 if you have the <memory.h> header file. */
 #define HAVE_MEMORY_H 1
 
@@ -42,8 +45,11 @@
 /* Has version 1.2.0 or greater of the Xserver */
 #define HAVE_XORG_SERVER_1_2_0 1
 
+/* Has version 1.5.0 or greater of the Xserver */
+#define HAVE_XORG_SERVER_1_5_0 1
+
 /* Has version 1.7.0 or greater of the Xserver */
-/* #undef HAVE_XORG_SERVER_1_7_0 */
+#define HAVE_XORG_SERVER_1_7_0 1
 
 /* Define to the sub-directory in which libtool stores uninstalled libraries.
    */
@@ -59,13 +65,13 @@
 #define PACKAGE_NAME "xf86-video-vmware"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "xf86-video-vmware 11.0.2"
+#define PACKAGE_STRING "xf86-video-vmware 11.0.3"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "xf86-video-vmware"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "11.0.2"
+#define PACKAGE_VERSION "11.0.3"
 
 /* Major version of this package */
 #define PACKAGE_VERSION_MAJOR 11
@@ -74,10 +80,10 @@
 #define PACKAGE_VERSION_MINOR 0
 
 /* Patch version of this package */
-#define PACKAGE_VERSION_PATCHLEVEL 2
+#define PACKAGE_VERSION_PATCHLEVEL 3
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1
 
 /* Version number of package */
-#define VERSION "11.0.2"
+#define VERSION "11.0.3"
