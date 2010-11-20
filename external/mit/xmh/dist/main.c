@@ -25,9 +25,39 @@
  */
 /* $XFree86: xc/programs/xmh/main.c,v 1.2 2001/08/01 00:45:06 tsi Exp $ */
 
-#define MAIN 1			/* Makes global.h actually declare vars */
 #include "xmh.h"
 #include "actions.h"
+
+Display	*theDisplay;		/* Display variable. */
+Widget	toplevel;		/* The top level widget (A hack %%%). */
+char	*progName;		/* Program name. */
+char	*homeDir;		/* User's home directory. */
+Atom	wm_protocols;		/* WM_PROTOCOLS atom for this display */
+Atom	wm_delete_window;	/* see ICCCM on Window Deletion */
+Atom	wm_save_yourself;	/* see ICCCM on session management */
+Atom	protocolList[2];	/* contains the two above */
+
+struct _resources app_resources;
+
+char	*draftFile;		/* Filename of draft. */
+char	*xmhDraftFile;		/* Filename for sending. */
+Toc	*folderList;		/* Array of folders. */
+int	numFolders;		/* Number of entries in above array. */
+Toc	InitialFolder;		/* Toc containing initial folder. */
+Toc	DraftsFolder;		/* Toc containing drafts. */
+Scrn	*scrnList;		/* Array of scrns in use. */
+int	numScrns;		/* Number of scrns in above array. */
+Widget	NoMenuForButton;	/* Flag menu widget value: no menu */
+Widget	LastMenuButtonPressed;	/* to `toggle' menu buttons */
+Widget	NullSource;		/* null text widget source */
+Dimension rootwidth;		/* Dimensions of root window.  */
+Dimension rootheight;
+Pixmap	MenuItemBitmap;		/* Options menu item checkmark */
+XtTranslations NoTextSearchAndReplace; /* no-op ^S and ^R in Text */
+
+struct _LastInput lastInput;
+
+Boolean	subProcessRunning; 	/* interlock for DoCommand/CheckMail */
 
 /*ARGSUSED*/
 static void NeedToCheckScans(

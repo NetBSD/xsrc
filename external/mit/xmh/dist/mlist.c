@@ -53,7 +53,7 @@ void AppendMsgList(MsgList mlist, Msg msg)
 	(Msg *) XtRealloc((char *) mlist->msglist,
 			  (unsigned) (mlist->nummsgs + 1) * sizeof(Msg));
     mlist->msglist[mlist->nummsgs - 1] = msg;
-    mlist->msglist[mlist->nummsgs] = 0;
+    mlist->msglist[mlist->nummsgs] = NULL;
 }
 
 

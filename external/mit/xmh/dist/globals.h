@@ -32,16 +32,16 @@
 #define ext extern
 #endif
 
-ext Display	*theDisplay;	/* Display variable. */
-ext Widget	toplevel;	/* The top level widget (A hack %%%). */
-ext char	*progName;	/* Program name. */
-ext char	*homeDir;	/* User's home directory. */
-ext Atom	wm_protocols;	/* WM_PROTOCOLS atom for this display */
-ext Atom	wm_delete_window;	/* see ICCCM on Window Deletion */
-ext Atom	wm_save_yourself;	/* see ICCCM on session management */
-ext Atom	protocolList[2];	/* contains the two above */
+extern Display	*theDisplay;		/* Display variable. */
+extern Widget	toplevel;		/* The top level widget (A hack %%%). */
+extern char	*progName;		/* Program name. */
+extern char	*homeDir;		/* User's home directory. */
+extern Atom	wm_protocols;		/* WM_PROTOCOLS atom for this display */
+extern Atom	wm_delete_window;	/* see ICCCM on Window Deletion */
+extern Atom	wm_save_yourself;	/* see ICCCM on session management */
+extern Atom	protocolList[2];	/* contains the two above */
 
-ext struct _resources {
+struct _resources {
     Boolean	debug;
     char	*mail_path;		/* mh's mail directory. */
     char	*temp_dir;		/* Directory for temporary files. */
@@ -90,31 +90,35 @@ ext struct _resources {
     int		app_defaults_version;	/* for sanity check */
     char 	*banner;		/* defaults to xmh version string */
     XtTranslations wm_protocols_translations; /* for all shells seen by WM */
-} app_resources;
+};
 
-ext char	*draftFile;	/* Filename of draft. */
-ext char	*xmhDraftFile;	/* Filename for sending. */
-ext Toc		*folderList;	/* Array of folders. */
-ext int		numFolders;	/* Number of entries in above array. */
-ext Toc		InitialFolder;	/* Toc containing initial folder. */
-ext Toc		DraftsFolder;	/* Toc containing drafts. */
-ext Scrn	*scrnList;	/* Array of scrns in use. */
-ext int		numScrns;	/* Number of scrns in above array. */
-ext Widget	NoMenuForButton;/* Flag menu widget value: no menu */
-ext Widget	LastMenuButtonPressed;	/* to `toggle' menu buttons */
-ext Widget      NullSource;	/* null text widget source */
-ext Dimension	rootwidth;	/* Dimensions of root window.  */
-ext Dimension	rootheight;
-ext Pixmap	MenuItemBitmap;	/* Options menu item checkmark */
-ext XtTranslations NoTextSearchAndReplace; /* no-op ^S and ^R in Text */
+extern struct _resources app_resources;
 
-ext struct _LastInput {
+extern char	*draftFile;		/* Filename of draft. */
+extern char	*xmhDraftFile;		/* Filename for sending. */
+extern Toc	*folderList;		/* Array of folders. */
+extern int	numFolders;		/* Number of entries in above array. */
+extern Toc	InitialFolder;		/* Toc containing initial folder. */
+extern Toc	DraftsFolder;		/* Toc containing drafts. */
+extern Scrn	*scrnList;		/* Array of scrns in use. */
+extern int	numScrns;		/* Number of scrns in above array. */
+extern Widget	NoMenuForButton;	/* Flag menu widget value: no menu */
+extern Widget	LastMenuButtonPressed;	/* to `toggle' menu buttons */
+extern Widget	NullSource;		/* null text widget source */
+extern Dimension rootwidth;		/* Dimensions of root window.  */
+extern Dimension rootheight;
+extern Pixmap	MenuItemBitmap;		/* Options menu item checkmark */
+extern XtTranslations NoTextSearchAndReplace; /* no-op ^S and ^R in Text */
+
+struct _LastInput {
     Window win;
     int x;
     int y;
-} lastInput;
+};
 
-ext Boolean	subProcessRunning; /* interlock for DoCommand/CheckMail */
+extern struct _LastInput lastInput;
+
+extern Boolean	subProcessRunning; /* interlock for DoCommand/CheckMail */
 
 #define PNullSource (NullSource != NULL ? NullSource : \
 (NullSource = (Widget)  CreateFileSource(scrn->viewlabel, "/dev/null", False)))

@@ -21,7 +21,8 @@
 
 bin_PROGRAMS = xmh
 
-xmh_CFLAGS = $(XMH_CFLAGS) -DXVENDORNAME=\"X.org\ Foundation\" -DXORG_RELEASE=\"$(VERSION)\" -D_BSD_SOURCE
+AM_CFLAGS = $(CWARNFLAGS) $(XMH_CFLAGS) -D_BSD_SOURCE
+
 xmh_LDADD = $(XMH_LIBS)
 
 xmh_SOURCES =	\
@@ -55,39 +56,23 @@ xmh_SOURCES =	\
         tsource.h \
         tsourceP.h \
         util.c \
-        version.h \
         viewfuncs.c \
         xmh.h
 
 appman_PRE = \
         xmh.man
 
-# App default files  (*.ad)
+# App default files
+DISTCHECK_CONFIGURE_FLAGS = --with-appdefaultdir=\$${datadir}/X11/app-defaults
 
 appdefaultdir = @appdefaultdir@
 
-
-APPDEFAULTFILES = \
-        Xmh
-
-SUFFIXES = .ad
-
-.ad:
-	cp $< $@
-
-appdefault_DATA = $(APPDEFAULTFILES)
-
-# bitmap files
-
-bitmapdir = $(includedir)/X11/bitmaps
-
-dist_bitmap_DATA = black6 box6
+dist_appdefault_DATA = \
+        app-defaults/Xmh
 
 #
 
-EXTRA_DIST = $(APPDEFAULTFILES:%=%.ad) Xmh.sample
-
-CLEANFILES = $(APPDEFAULTFILES)
+EXTRA_DIST = Xmh.sample
 
 
 appmandir = $(APP_MAN_DIR)
@@ -95,28 +80,22 @@ appmandir = $(APP_MAN_DIR)
 appman_DATA = $(appman_PRE:man=@APP_MAN_SUFFIX@)
 
 EXTRA_DIST += $(appman_PRE)
-CLEANFILES += $(appman_DATA)
+MAINTAINERCLEANFILES = ChangeLog INSTALL
+CLEANFILES = $(appman_DATA)
 
-SED = sed
+SUFFIXES = .$(APP_MAN_SUFFIX) .man
 
-# Strings to replace in man pages
-XORGRELSTRING = @PACKAGE_STRING@
-  XORGMANNAME = X Version 11
-
-MAN_SUBSTS = \
-	-e 's|__vendorversion__|"$(XORGRELSTRING)" "$(XORGMANNAME)"|' \
-	-e 's|__xorgversion__|"$(XORGRELSTRING)" "$(XORGMANNAME)"|' \
-	-e 's|__xservername__|Xorg|g' \
-	-e 's|__xconfigfile__|xorg.conf|g' \
-	-e 's|__projectroot__|$(prefix)|g' \
-	-e 's|__apploaddir__|$(appdefaultdir)|' \
-	-e 's|__appmansuffix__|$(APP_MAN_SUFFIX)|g' \
-	-e 's|__libmansuffix__|$(LIB_MAN_SUFFIX)|g' \
-	-e 's|__adminmansuffix__|$(ADMIN_MAN_SUFFIX)|g' \
-	-e 's|__miscmansuffix__|$(MISC_MAN_SUFFIX)|g' \
-	-e 's|__filemansuffix__|$(FILE_MAN_SUFFIX)|g'
-
-SUFFIXES += .$(APP_MAN_SUFFIX) .man
-
+# String replacements in MAN_SUBSTS now come from xorg-macros.m4 via configure
 .man.$(APP_MAN_SUFFIX):
-	sed $(MAN_SUBSTS) < $< > $@
+	$(AM_V_GEN)$(SED) $(MAN_SUBSTS) < $< > $@
+
+
+.PHONY: ChangeLog INSTALL
+
+INSTALL:
+	$(INSTALL_CMD)
+
+ChangeLog:
+	$(CHANGELOG_CMD)
+
+dist-hook: ChangeLog INSTALL
