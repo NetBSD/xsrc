@@ -415,15 +415,15 @@ XtPointer call_data;	/* pointer to (double) return value */
 
 #if defined(linux) || (defined(__FreeBSD_kernel__) && defined(__GLIBC__))
 
-void InitLoadPoint()
+void InitLoadPoint(void)
 {
       return;
 }
 
-void GetLoadPoint( w, closure, call_data )
-     Widget   w;              /* unused */
-     XtPointer  closure;        /* unused */
-     XtPointer  call_data;      /* pointer to (double) return value */
+void GetLoadPoint(
+    Widget	w,		/* unused */
+    XtPointer	closure,	/* unused */
+    XtPointer	call_data)      /* pointer to (double) return value */
 {
       static int fd = -1;
       int n;
@@ -476,17 +476,17 @@ void GetLoadPoint( w, closure, call_data )
 
 static processor_set_t default_set;
 
-void InitLoadPoint()
+void InitLoadPoint(void)
 {
   if (processor_set_default (mach_host_self (), &default_set) != KERN_SUCCESS)
     xload_error("cannot get processor_set_default", "");
 }
 
 /* ARGSUSED */
-void GetLoadPoint( w, closure, call_data )
-     Widget	w;		/* unused */
-     XtPointer	closure;	/* unused */
-     XtPointer	call_data;	/* pointer to (double) return value */
+void GetLoadPoint(
+    Widget	w,		/* unused */
+    XtPointer	closure,	/* unused */
+    XtPointer	call_data)	/* pointer to (double) return value */
 {
   host_t host;
   struct processor_set_basic_info info;
@@ -508,22 +508,22 @@ void GetLoadPoint( w, closure, call_data )
 
 #else /* __GNU__ */
 
-#ifdef __DARWIN__
+#ifdef __APPLE__
 
 #include <mach/mach.h>
 
 static mach_port_t host_priv_port;
 
-void InitLoadPoint()
+void InitLoadPoint(void)
 {
     host_priv_port = mach_host_self();
 }
 
 /* ARGSUSED */
-void GetLoadPoint( w, closure, call_data )
-    Widget	w;		/* unused */
-    XtPointer	closure;	/* unused */
-    XtPointer	call_data;	/* pointer to (double) return value */
+void GetLoadPoint(
+    Widget	w,		/* unused */
+    XtPointer	closure,	/* unused */
+    XtPointer	call_data)	/* pointer to (double) return value */
 {
     double *loadavg = (double *)call_data;
 
@@ -540,7 +540,7 @@ void GetLoadPoint( w, closure, call_data )
     return;
 }
 
-#else /* __DARWIN__ */
+#else /* __APPLE__ */
 
 #ifdef LOADSTUB
 
@@ -591,7 +591,7 @@ static  int       nto_idle_id;
 static  struct timespec nto_now, nto_last;
 
 void
-InitLoadPoint()
+InitLoadPoint(void)
 {
   nto_idle_id = ClockId(1, 1); /* Idle thread */
   ClockTime(nto_idle_id, NULL, &nto_idle_last);
@@ -600,10 +600,10 @@ InitLoadPoint()
 
 /* ARGSUSED */
 void
-GetLoadPoint( w, closure, call_data )           /* QNX NTO version */
-Widget  w;              /* unused */
-XtPointer closure;      /* unused */
-XtPointer call_data;    /* pointer to (double) return value */
+GetLoadPoint(			/* QNX NTO version */
+    Widget	w,		/* unused */
+    XtPointer	closure,	/* unused */
+    XtPointer	call_data)	/* pointer to (double) return value */
 {
     double *loadavg = (double *)call_data;
     double timediff;
@@ -633,7 +633,7 @@ static struct nlist nl[] = {
 static kvm_t *kd;
 static int fscale;
 
-void InitLoadPoint()
+void InitLoadPoint(void)
 {
   fixpt_t averunnable[3];  /* unused really */
 
@@ -654,10 +654,10 @@ void InitLoadPoint()
   return;
 }
 
-void GetLoadPoint(w, closure, call_data)
-     Widget w;          /* unused */
-     XtPointer closure;   /* unused */
-     XtPointer call_data; /* ptr to (double) return value */
+void GetLoadPoint(
+     Widget	w,		/* unused */
+     XtPointer	closure,	/* unused */
+    XtPointer	call_data)	/* ptr to (double) return value */
 {
   double *loadavg = (double *)call_data;
   fixpt_t t;
@@ -928,7 +928,7 @@ void InitLoadPoint()
 	nl[i].n_value = (int)nl[i].n_value - v.v_kvoffset;
     }
 #else /* not macII */
-#if !defined(SVR4) && !defined(sgi) && !defined(MOTOROLA) && !defined(AIXV5) && !(BSD >= 199103)
+#if !defined(SVR4) && !defined(sgi) && !defined(MOTOROLA) && !defined(AIXV5) && !(BSD >= 199103) && !defined(__APPLE__)
     extern void nlist();
 #endif
 
@@ -1132,14 +1132,13 @@ void GetLoadPoint( w, closure, call_data )
 #endif /* __QNXNTO__ else */
 #endif /* __osf__ else */
 #endif /* LOADSTUB else */
-#endif /* __DARWIN__ else */
+#endif /* __APPLE__ else */
 #endif /* __GNU__ else */
 #endif /* linux else */
 #endif /* KVM_ROUTINES else */
 #endif /* SYSV && i386 else */
 
-void xload_error(str1, str2)
-char *str1, *str2;
+void xload_error(char *str1, char *str2)
 {
     (void) fprintf(stderr,"xload: %s %s\n", str1, str2);
 #ifdef __bsdi__

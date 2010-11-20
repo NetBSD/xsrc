@@ -18,7 +18,7 @@ program displays a periodically updating histogram of the system load average.
 .PP
 .I Xload
 accepts all of the standard X Toolkit command line options (see \fIX(__miscmansuffix__)\fP).
-The order of the options in unimportant.  \fIxload also accepts the
+The order of the options is unimportant.  \fIxload also accepts the
 following additional options:
 .PP
 .TP 8
@@ -94,12 +94,12 @@ specifies required resources
 .SH SEE ALSO
 X(__miscmansuffix__), xrdb(1), mem(4), Athena StripChart Widget.
 .SH BUGS
-This program requires the ability to open and read the special system
-file \fI/dev/kmem\fP.  Sites that do not allow general access to this file
-should make \fIxload\fP belong to the same group as \fI/dev/kmem\fP and
-turn on the \fIset group id\fP permission flag.
+On older platforms, this program may require the ability to open and read
+the special system file \fI/dev/kmem\fP.  Sites that do not allow general 
+access to this file may need to make \fIxload\fP belong to the same group 
+as \fI/dev/kmem\fP and turn on the \fIset group id\fP permission flag.
 .PP
-Reading /dev/kmem is inherently non-portable.  Therefore, the routine
+Reading the load average is inherently non-portable.  Therefore, the routine
 used to read it (get_load.c) must be ported to each new operating system. 
 .SH COPYRIGHT
 Copyright \(co X Consortium

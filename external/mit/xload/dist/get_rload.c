@@ -15,10 +15,10 @@
 #endif
 
 #ifdef RLOADSTUB
-void GetRLoadPoint( w, closure, call_data )
-     Widget   w;              /* unused */
-     XtPointer  closure;        /* unused */
-     XtPointer  call_data;      /* pointer to (double) return value */
+void GetRLoadPoint(
+    Widget	w,		/* unused */
+    XtPointer	closure,	/* unused */
+    XtPointer	call_data)	/* pointer to (double) return value */
 
 {
   *(double *)call_data = 1.0;
@@ -30,21 +30,12 @@ void GetRLoadPoint( w, closure, call_data )
 #define _PATH_RWHODIR "/var/spool/rwho"
 #endif
 
-typedef struct _XLoadResources {
-  Boolean show_label;
-  Boolean use_lights;
-  String remote;
-} XLoadResources;
-
-extern XLoadResources resources ;
-
 #define WHDRSIZE        ((int)(sizeof (buf) - sizeof (buf.wd_we)))
 
-void GetRLoadPoint( w, closure, call_data )
-     Widget   w;              /* unused */
-     XtPointer  closure;        /* unused */
-     XtPointer  call_data;      /* pointer to (double) return value */
-
+void GetRLoadPoint(
+    Widget	w,		/* unused */
+    XtPointer	closure,	/* unused */
+    XtPointer	call_data)	/* pointer to (double) return value */
 {
   int f;
   static char *fname = NULL;
