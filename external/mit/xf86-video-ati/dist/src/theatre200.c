@@ -22,8 +22,8 @@
  * authorization from the author.
  *
  * $Log: theatre200.c,v $
- * Revision 1.1.1.2  2010/07/17 06:31:47  mrg
- * initial import of xf86-video-ati-6.13.1
+ * Revision 1.1.1.3  2010/11/20 10:00:26  mrg
+ * initial import of xf86-video-ati-6.13.2
  *
  * Revision 1.6  2006/03/22 22:30:14  krh
  * 2006-03-22  Kristian Høgsberg  <krh@redhat.com>
@@ -165,7 +165,7 @@ static int microc_load (char* micro_path, char* micro_type, struct rt200_microc_
 		{
 			int ret;
 			
-			curr_seg = (struct rt200_microc_seg*)Xalloc(sizeof(struct rt200_microc_seg));
+			curr_seg = (struct rt200_microc_seg*)malloc(sizeof(struct rt200_microc_seg));
 			if (curr_seg == NULL)
 			{
 				ERROR_0("Cannot allocate memory\n");
@@ -181,7 +181,7 @@ static int microc_load (char* micro_path, char* micro_type, struct rt200_microc_
 				goto fail_exit;
 			}
 
-			curr_seg->data = (unsigned char*)Xalloc(curr_seg->num_bytes);
+			curr_seg->data = (unsigned char*)malloc(curr_seg->num_bytes);
 			if (curr_seg->data == NULL)
 			{
 				ERROR_0("cannot allocate memory\n");
@@ -244,7 +244,7 @@ static int microc_load (char* micro_path, char* micro_type, struct rt200_microc_
 
 		for (i = 0; i < microc_headp->num_seg; i++)
 		{
-			curr_seg = (struct rt200_microc_seg*)Xalloc(sizeof(struct rt200_microc_seg));
+			curr_seg = (struct rt200_microc_seg*)malloc(sizeof(struct rt200_microc_seg));
 			if (curr_seg == NULL)
 			{
 				ERROR_0("Cannot allocate memory\n");
@@ -265,7 +265,7 @@ static int microc_load (char* micro_path, char* micro_type, struct rt200_microc_
 				goto fail_exit;
 			}
 								
-			curr_seg->data = (unsigned char*)Xalloc(curr_seg->num_bytes);
+			curr_seg->data = (unsigned char*)malloc(curr_seg->num_bytes);
 			if (curr_seg->data == NULL)
 			{
 				ERROR_0("cannot allocate memory\n");

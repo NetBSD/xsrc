@@ -347,6 +347,164 @@ atombios_pick_pll(xf86CrtcPtr crtc)
     }
 }
 
+union adjust_pixel_clock {
+	ADJUST_DISPLAY_PLL_PS_ALLOCATION v1;
+	ADJUST_DISPLAY_PLL_PS_ALLOCATION_V3 v3;
+};
+
+static uint32_t atombios_adjust_pll(xf86CrtcPtr crtc, DisplayModePtr mode, int *pll_flags_p)
+{
+    RADEONCrtcPrivatePtr radeon_crtc = crtc->driver_private;
+    ScrnInfoPtr pScrn = crtc->scrn;
+    RADEONInfoPtr  info = RADEONPTR(pScrn);
+    xf86CrtcConfigPtr   xf86_config = XF86_CRTC_CONFIG_PTR(crtc->scrn);
+    uint32_t adjusted_clock = mode->Clock;
+    RADEONOutputPrivatePtr radeon_output = NULL;
+    radeon_encoder_ptr radeon_encoder = NULL;
+    xf86OutputPtr output;
+    int pll_flags = 0;
+    int i;
+
+    if (IS_AVIVO_VARIANT) {
+	if (xf86ReturnOptValBool(info->Options, OPTION_NEW_PLL, TRUE))
+	    radeon_crtc->pll_algo = RADEON_PLL_NEW;
+	else
+	    radeon_crtc->pll_algo = RADEON_PLL_OLD;
+    } else {
+	if (xf86ReturnOptValBool(info->Options, OPTION_NEW_PLL, FALSE))
+	    radeon_crtc->pll_algo = RADEON_PLL_NEW;
+	else
+	    radeon_crtc->pll_algo = RADEON_PLL_OLD;
+    }
+
+    if (IS_AVIVO_VARIANT) {
+	if ((info->ChipFamily == CHIP_FAMILY_RS600) ||
+	    (info->ChipFamily == CHIP_FAMILY_RS690) ||
+	    (info->ChipFamily == CHIP_FAMILY_RS740))
+	    pll_flags |= /*RADEON_PLL_USE_FRAC_FB_DIV |*/
+		RADEON_PLL_PREFER_CLOSEST_LOWER;
+	if (IS_DCE32_VARIANT && mode->Clock > 200000) /* range limits??? */
+	    pll_flags |= RADEON_PLL_PREFER_HIGH_FB_DIV;
+	else
+	    pll_flags |= RADEON_PLL_PREFER_LOW_REF_DIV;
+    } else {
+	pll_flags |= RADEON_PLL_LEGACY;
+
+	if (mode->Clock > 200000) /* range limits??? */
+	    pll_flags |= RADEON_PLL_PREFER_HIGH_FB_DIV;
+	else
+	    pll_flags |= RADEON_PLL_PREFER_LOW_REF_DIV;
+    }
+    
+    for (i = 0; i < xf86_config->num_output; i++) {
+	output = xf86_config->output[i];
+	if (output->crtc == crtc) {
+	    radeon_output = output->driver_private;
+	    radeon_encoder = radeon_get_encoder(output);
+	    if (IS_AVIVO_VARIANT) {
+		/* DVO wants 2x pixel clock if the DVO chip is in 12 bit mode */
+		if (radeon_encoder &&
+		    (radeon_encoder->encoder_id == ENCODER_OBJECT_ID_INTERNAL_KLDSCP_DVO1) &&
+		    !IS_DCE3_VARIANT)
+		    adjusted_clock *= 2;
+		if (radeon_output->active_device &
+		    (ATOM_DEVICE_CV_SUPPORT | ATOM_DEVICE_TV_SUPPORT)) {
+		    pll_flags |= RADEON_PLL_PREFER_CLOSEST_LOWER;
+		    radeon_crtc->pll_algo = RADEON_PLL_OLD;
+		}
+	    } else {
+		if (radeon_output->active_device & (ATOM_DEVICE_LCD_SUPPORT |
+						    ATOM_DEVICE_DFP_SUPPORT))
+		    pll_flags |= RADEON_PLL_NO_ODD_POST_DIV;
+		if (radeon_output->active_device & (ATOM_DEVICE_LCD_SUPPORT))
+		    pll_flags |= (RADEON_PLL_USE_BIOS_DIVS | RADEON_PLL_USE_REF_DIV);
+	    }
+    	    if (IS_DCE3_VARIANT)
+		break;
+	}
+    }
+    
+    if (IS_DCE3_VARIANT) {
+	union adjust_pixel_clock args;
+	int major, minor, index;
+	AtomBiosArgRec data;
+	unsigned char *space;
+
+	memset(&args, 0, sizeof(args));
+
+	index = GetIndexIntoMasterTable(COMMAND, AdjustDisplayPll);
+
+	atombios_get_command_table_version(info->atomBIOS, index, &major, &minor);
+
+	data.exec.index = index;
+	data.exec.dataSpace = (void *)&space;
+	data.exec.pspace = &args;
+
+	switch(major) {
+	case 1:
+	    switch(minor) {
+	    case 1:
+	    case 2:
+		args.v1.usPixelClock = cpu_to_le16(adjusted_clock / 10);
+		args.v1.ucTransmitterID = radeon_encoder->encoder_id;
+		args.v1.ucEncodeMode = atombios_get_encoder_mode(output);
+
+		ErrorF("before %d\n", args.v1.usPixelClock);
+		if (RHDAtomBiosFunc(info->atomBIOS->scrnIndex, info->atomBIOS, ATOMBIOS_EXEC, &data) == ATOM_SUCCESS) {
+		    adjusted_clock = le16_to_cpu(args.v1.usPixelClock) * 10;
+		}
+		ErrorF("after %d\n", args.v1.usPixelClock);
+		break;
+	    case 3:
+		args.v3.sInput.usPixelClock = cpu_to_le16(adjusted_clock / 10);
+		args.v3.sInput.ucTransmitterID = radeon_encoder->encoder_id;
+		args.v3.sInput.ucEncodeMode = atombios_get_encoder_mode(output);
+		args.v3.sInput.ucDispPllConfig = 0;
+		if (radeon_output->coherent_mode || (args.v3.sInput.ucEncodeMode == ATOM_ENCODER_MODE_DP))
+		    args.v3.sInput.ucDispPllConfig |= DISPPLL_CONFIG_COHERENT_MODE;
+		if (adjusted_clock > 165000)
+		    args.v3.sInput.ucDispPllConfig |= DISPPLL_CONFIG_DUAL_LINK;
+		// if SS
+		//    args.v3.sInput.ucDispPllConfig |= DISPPLL_CONFIG_SS_ENABLE;
+
+		ErrorF("before %d 0x%x\n", args.v3.sInput.usPixelClock, args.v3.sInput.ucDispPllConfig);
+		if (RHDAtomBiosFunc(info->atomBIOS->scrnIndex, info->atomBIOS, ATOMBIOS_EXEC, &data) == ATOM_SUCCESS) {
+		    adjusted_clock = args.v3.sOutput.ulDispPllFreq * 10;
+		    if (args.v3.sOutput.ucRefDiv) {
+			pll_flags |= RADEON_PLL_USE_REF_DIV;
+			info->pll.reference_div = args.v3.sOutput.ucRefDiv;
+		    }
+		    if (args.v3.sOutput.ucPostDiv) {
+			pll_flags |= RADEON_PLL_USE_POST_DIV;
+			info->pll.post_div = args.v3.sOutput.ucPostDiv;
+		    }
+		    ErrorF("after %d %d %d\n", args.v3.sOutput.ulDispPllFreq,
+			   args.v3.sOutput.ucRefDiv, args.v3.sOutput.ucPostDiv);
+		}
+		break;
+	    default:
+		ErrorF("%s: Unknown table version %d %d\n", __func__, major, minor);
+		goto out;
+	    }
+	    break;
+	default:
+	    ErrorF("%s: Unknown table version %d %d\n", __func__, major, minor);
+	    goto out;
+	}
+    }
+out:
+    *pll_flags_p = pll_flags;
+    return adjusted_clock;
+}
+				    
+union set_pixel_clock {
+	SET_PIXEL_CLOCK_PS_ALLOCATION base;
+	PIXEL_CLOCK_PARAMETERS v1;
+	PIXEL_CLOCK_PARAMETERS_V2 v2;
+	PIXEL_CLOCK_PARAMETERS_V3 v3;
+	PIXEL_CLOCK_PARAMETERS_V5 v5;
+};
+
 static void
 atombios_crtc_set_dcpll(xf86CrtcPtr crtc)
 {
@@ -357,7 +515,7 @@ atombios_crtc_set_dcpll(xf86CrtcPtr crtc)
     radeon_encoder_ptr radeon_encoder = NULL;
     int index;
     int major, minor, i;
-    PIXEL_CLOCK_PARAMETERS_V5 args;
+    union set_pixel_clock args;
     AtomBiosArgRec data;
     unsigned char *space;
 
@@ -390,25 +548,10 @@ atombios_crtc_set_dcpll(xf86CrtcPtr crtc)
     case 1:
 	switch(minor) {
 	case 5:
-	    args.ucCRTC = ATOM_CRTC_INVALID;
+	    args.v5.ucCRTC = ATOM_CRTC_INVALID;
 	    /* XXX: get this from the firmwareinfo table */
-	    args.usPixelClock = 60000; // 600 Mhz
-	    args.ucPostDiv = info->pll.pll_out_max / 60000;
-	    if (info->pll.reference_freq == 10000) {
-		// 100 Mhz ref clock
-		args.ucRefDiv = 7;
-		args.usFbDiv = cpu_to_le16(84);
-		args.ulFbDivDecFrac = cpu_to_le32(0);
-	    } else {
-		// 27 Mhz ref clock
-		args.ucRefDiv = 2;
-		args.usFbDiv = cpu_to_le16(88);
-		args.ulFbDivDecFrac = cpu_to_le32(888889);
-	    }
-	    args.ucPpll = ATOM_DCPLL;
-	    args.ucMiscInfo = 0; //HDMI depth
-	    args.ucTransmitterID = radeon_encoder->encoder_id;
-	    args.ucEncoderMode = atombios_get_encoder_mode(output);
+	    args.v5.usPixelClock = info->default_dispclk;
+	    args.v5.ucPpll = ATOM_DCPLL;
 	    break;
 	default:
 	    ErrorF("Unknown table version\n");
@@ -439,199 +582,65 @@ atombios_crtc_set_pll(xf86CrtcPtr crtc, DisplayModePtr mode)
     RADEONCrtcPrivatePtr radeon_crtc = crtc->driver_private;
     ScrnInfoPtr pScrn = crtc->scrn;
     RADEONInfoPtr  info = RADEONPTR(pScrn);
-    xf86CrtcConfigPtr   xf86_config = XF86_CRTC_CONFIG_PTR(crtc->scrn);
     unsigned char *RADEONMMIO = info->MMIO;
     int index;
-    uint32_t sclock = mode->Clock;
+    uint32_t sclock;
     uint32_t ref_div = 0, fb_div = 0, frac_fb_div = 0, post_div = 0;
-    int major, minor, i;
-    SET_PIXEL_CLOCK_PS_ALLOCATION spc_param;
-    PIXEL_CLOCK_PARAMETERS_V2 *spc2_ptr;
-    PIXEL_CLOCK_PARAMETERS_V3 *spc3_ptr;
-    PIXEL_CLOCK_PARAMETERS_V5 *spc5_ptr;
+    int major, minor;
+    union set_pixel_clock args;
     xf86OutputPtr output = NULL;
-    RADEONOutputPrivatePtr radeon_output = NULL;
+    xf86CrtcConfigPtr   xf86_config = XF86_CRTC_CONFIG_PTR(crtc->scrn);
     radeon_encoder_ptr radeon_encoder = NULL;
     int pll_flags = 0;
     uint32_t temp;
     AtomBiosArgRec data;
     unsigned char *space;
+    int i;
 
-    memset(&spc_param, 0, sizeof(spc_param));
+    memset(&args, 0, sizeof(args));
 
-    if (IS_AVIVO_VARIANT) {
-	if (xf86ReturnOptValBool(info->Options, OPTION_NEW_PLL, TRUE))
-	    radeon_crtc->pll_algo = RADEON_PLL_NEW;
-	else
-	    radeon_crtc->pll_algo = RADEON_PLL_OLD;
-    } else {
-	if (xf86ReturnOptValBool(info->Options, OPTION_NEW_PLL, FALSE))
-	    radeon_crtc->pll_algo = RADEON_PLL_NEW;
-	else
-	    radeon_crtc->pll_algo = RADEON_PLL_OLD;
-    }
-
-    if (IS_AVIVO_VARIANT) {
-	if ((info->ChipFamily == CHIP_FAMILY_RS600) ||
-	    (info->ChipFamily == CHIP_FAMILY_RS690) ||
-	    (info->ChipFamily == CHIP_FAMILY_RS740))
-	    pll_flags |= RADEON_PLL_USE_FRAC_FB_DIV | RADEON_PLL_PREFER_CLOSEST_LOWER;
-	if (IS_DCE3_VARIANT && mode->Clock > 200000) /* range limits??? */
-	    pll_flags |= RADEON_PLL_PREFER_HIGH_FB_DIV;
-	else
-	    pll_flags |= RADEON_PLL_PREFER_LOW_REF_DIV;
-
-	for (i = 0; i < xf86_config->num_output; i++) {
-	    xf86OutputPtr output = xf86_config->output[i];
-	    if (output->crtc == crtc) {
-		radeon_output = output->driver_private;
-		radeon_encoder = radeon_get_encoder(output);
-		/* DVO wants 2x pixel clock if the DVO chip is in 12 bit mode */
-		/* AdjustDisplayPll handles this on DCE3.x */
-		if (radeon_encoder &&
-		    (radeon_encoder->encoder_id == ENCODER_OBJECT_ID_INTERNAL_KLDSCP_DVO1) &&
-		    !IS_DCE3_VARIANT)
-		    sclock *= 2;
-		if (radeon_output->active_device &
-		    (ATOM_DEVICE_CV_SUPPORT | ATOM_DEVICE_TV_SUPPORT)) {
-		    pll_flags |= RADEON_PLL_PREFER_CLOSEST_LOWER;
-		    radeon_crtc->pll_algo = RADEON_PLL_OLD;
-		}
-	    }
+    if (IS_DCE4_VARIANT) {
+	/* XXX 6 crtcs, but only 2 plls */
+	switch (radeon_crtc->pll_id) {
+	case ATOM_PPLL1:
+	    temp = INREG(EVERGREEN_P1PLL_SS_CNTL);
+	    OUTREG(EVERGREEN_P1PLL_SS_CNTL, temp & ~EVERGREEN_PxPLL_SS_EN);
+	    break;
+	case ATOM_PPLL2:
+	    temp = INREG(EVERGREEN_P2PLL_SS_CNTL);
+	    OUTREG(EVERGREEN_P2PLL_SS_CNTL, temp & ~EVERGREEN_PxPLL_SS_EN);
+	    break;
 	}
-
-	/* disable spread spectrum clocking for now -- thanks Hedy Lamarr */
-	if (IS_DCE4_VARIANT) {
-	    /* XXX 6 crtcs, but only 2 plls */
-	    switch (radeon_crtc->pll_id) {
-	    case ATOM_PPLL1:
-		temp = INREG(EVERGREEN_P1PLL_SS_CNTL);
-		OUTREG(EVERGREEN_P1PLL_SS_CNTL, temp & ~EVERGREEN_PxPLL_SS_EN);
-		break;
-	    case ATOM_PPLL2:
-		temp = INREG(EVERGREEN_P2PLL_SS_CNTL);
-		OUTREG(EVERGREEN_P2PLL_SS_CNTL, temp & ~EVERGREEN_PxPLL_SS_EN);
-		break;
-	    }
+    } else {
+	if (radeon_crtc->crtc_id == 0) {
+	    temp = INREG(AVIVO_P1PLL_INT_SS_CNTL);
+	    OUTREG(AVIVO_P1PLL_INT_SS_CNTL, temp & ~1);
 	} else {
-	    if (radeon_crtc->crtc_id == 0) {
-		temp = INREG(AVIVO_P1PLL_INT_SS_CNTL);
-		OUTREG(AVIVO_P1PLL_INT_SS_CNTL, temp & ~1);
-	    } else {
-		temp = INREG(AVIVO_P2PLL_INT_SS_CNTL);
-		OUTREG(AVIVO_P2PLL_INT_SS_CNTL, temp & ~1);
-	    }
+	    temp = INREG(AVIVO_P2PLL_INT_SS_CNTL);
+	    OUTREG(AVIVO_P2PLL_INT_SS_CNTL, temp & ~1);
 	}
-    } else {
-	pll_flags |= RADEON_PLL_LEGACY;
-
-	for (i = 0; i < xf86_config->num_output; i++) {
-	    xf86OutputPtr output = xf86_config->output[i];
-	    RADEONOutputPrivatePtr radeon_output = output->driver_private;
-
-	    if (output->crtc == crtc) {
-		if (radeon_output->active_device & (ATOM_DEVICE_LCD_SUPPORT |
-						    ATOM_DEVICE_DFP_SUPPORT))
-		    pll_flags |= RADEON_PLL_NO_ODD_POST_DIV;
-		if (radeon_output->active_device & (ATOM_DEVICE_LCD_SUPPORT))
-		    pll_flags |= (RADEON_PLL_USE_BIOS_DIVS | RADEON_PLL_USE_REF_DIV);
-	    }
-	}
-
-	if (mode->Clock > 200000) /* range limits??? */
-	    pll_flags |= RADEON_PLL_PREFER_HIGH_FB_DIV;
-	else
-	    pll_flags |= RADEON_PLL_PREFER_LOW_REF_DIV;
     }
 
     if (IS_DCE3_VARIANT) {
-	ADJUST_DISPLAY_PLL_PS_ALLOCATION adjust_pll_param;
-	ADJUST_DISPLAY_PLL_PS_ALLOCATION *adp_ptr;
-	ADJUST_DISPLAY_PLL_PS_ALLOCATION_V3 *adp3_ptr;
-
-	/* Can't really do cloning easily on DCE3 cards */
 	for (i = 0; i < xf86_config->num_output; i++) {
 	    output = xf86_config->output[i];
 	    if (output->crtc == crtc) {
-		radeon_output = output->driver_private;
 		radeon_encoder = radeon_get_encoder(output);
 		break;
 	    }
 	}
 
-	if (radeon_output == NULL) {
+	if (output->driver_private == NULL) {
 	    xf86DrvMsg(crtc->scrn->scrnIndex, X_ERROR, "No output assigned to crtc!\n");
 	    return;
 	}
-
 	if (radeon_encoder == NULL) {
 	    xf86DrvMsg(crtc->scrn->scrnIndex, X_ERROR, "No encoder assigned to output!\n");
 	    return;
 	}
-
-	memset(&adjust_pll_param, 0, sizeof(adjust_pll_param));
-
-	index = GetIndexIntoMasterTable(COMMAND, AdjustDisplayPll);
-	atombios_get_command_table_version(info->atomBIOS, index, &major, &minor);
-
-	data.exec.index = index;
-	data.exec.dataSpace = (void *)&space;
-	data.exec.pspace = &adjust_pll_param;
-
-	switch(major) {
-	case 1:
-	    switch(minor) {
-	    case 1:
-	    case 2:
-		adp_ptr = (ADJUST_DISPLAY_PLL_PS_ALLOCATION*)&adjust_pll_param.usPixelClock;
-		adp_ptr->usPixelClock = cpu_to_le16(sclock / 10);
-		adp_ptr->ucTransmitterID = radeon_encoder->encoder_id;
-		adp_ptr->ucEncodeMode = atombios_get_encoder_mode(output);
-
-		ErrorF("before %d\n", adp_ptr->usPixelClock);
-		if (RHDAtomBiosFunc(info->atomBIOS->scrnIndex, info->atomBIOS, ATOMBIOS_EXEC, &data) == ATOM_SUCCESS) {
-		    sclock = le16_to_cpu(adp_ptr->usPixelClock) * 10;
-		}
-		ErrorF("after %d\n", adp_ptr->usPixelClock);
-		break;
-	    case 3:
-		adp3_ptr = (ADJUST_DISPLAY_PLL_PS_ALLOCATION_V3*)&adjust_pll_param.usPixelClock;
-		adp3_ptr->sInput.usPixelClock = cpu_to_le16(sclock / 10);
-		adp3_ptr->sInput.ucTransmitterID = radeon_encoder->encoder_id;
-		adp3_ptr->sInput.ucEncodeMode = atombios_get_encoder_mode(output);
-		adp3_ptr->sInput.ucDispPllConfig = 0;
-		if (radeon_output->coherent_mode || (adp3_ptr->sInput.ucEncodeMode == ATOM_ENCODER_MODE_DP))
-		    adp3_ptr->sInput.ucDispPllConfig |= DISPPLL_CONFIG_COHERENT_MODE;
-		if (sclock > 165000)
-		    adp3_ptr->sInput.ucDispPllConfig |= DISPPLL_CONFIG_DUAL_LINK;
-		// if SS
-		//    adp3_ptr->sInput.ucDispPllConfig |= DISPPLL_CONFIG_SS_ENABLE;
-
-		ErrorF("before %d 0x%x\n", adp3_ptr->sInput.usPixelClock, adp3_ptr->sInput.ucDispPllConfig);
-		if (RHDAtomBiosFunc(info->atomBIOS->scrnIndex, info->atomBIOS, ATOMBIOS_EXEC, &data) == ATOM_SUCCESS) {
-		    sclock = adp3_ptr->sOutput.ulDispPllFreq * 10;
-		    if (adp3_ptr->sOutput.ucRefDiv) {
-			pll_flags |= RADEON_PLL_USE_REF_DIV;
-			info->pll.reference_div = adp3_ptr->sOutput.ucRefDiv;
-		    }
-		    if (adp3_ptr->sOutput.ucPostDiv) {
-			pll_flags |= RADEON_PLL_USE_POST_DIV;
-			info->pll.post_div = adp3_ptr->sOutput.ucPostDiv;
-		    }
-		    ErrorF("after %d %d %d\n", adp3_ptr->sOutput.ulDispPllFreq,
-			   adp3_ptr->sOutput.ucRefDiv, adp3_ptr->sOutput.ucPostDiv);
-		}
-		break;
-	    default:
-		ErrorF("Unknown table version\n");
-		exit(-1);
-	    }
-	    break;
-	default:
-	    ErrorF("Unknown table version\n");
-	    exit(-1);
-	}
     }
+
+    sclock = atombios_adjust_pll(crtc, mode, &pll_flags);
 
     RADEONComputePLL(crtc, &info->pll, sclock, &temp,
 		     &fb_div, &frac_fb_div, &ref_div, &post_div, pll_flags);
@@ -654,40 +663,37 @@ atombios_crtc_set_pll(xf86CrtcPtr crtc, DisplayModePtr mode)
 	switch(minor) {
 	case 1:
 	case 2:
-	    spc2_ptr = (PIXEL_CLOCK_PARAMETERS_V2*)&spc_param.sPCLKInput;
-	    spc2_ptr->usPixelClock = cpu_to_le16(mode->Clock / 10);
-	    spc2_ptr->usRefDiv = cpu_to_le16(ref_div);
-	    spc2_ptr->usFbDiv = cpu_to_le16(fb_div);
-	    spc2_ptr->ucFracFbDiv = frac_fb_div;
-	    spc2_ptr->ucPostDiv = post_div;
-	    spc2_ptr->ucPpll = radeon_crtc->pll_id;
-	    spc2_ptr->ucCRTC = radeon_crtc->crtc_id;
-	    spc2_ptr->ucRefDivSrc = 1;
+	    args.v2.usPixelClock = cpu_to_le16(mode->Clock / 10);
+	    args.v2.usRefDiv = cpu_to_le16(ref_div);
+	    args.v2.usFbDiv = cpu_to_le16(fb_div);
+	    args.v2.ucFracFbDiv = frac_fb_div;
+	    args.v2.ucPostDiv = post_div;
+	    args.v2.ucPpll = radeon_crtc->pll_id;
+	    args.v2.ucCRTC = radeon_crtc->crtc_id;
+	    args.v2.ucRefDivSrc = 1;
 	    break;
 	case 3:
-	    spc3_ptr = (PIXEL_CLOCK_PARAMETERS_V3*)&spc_param.sPCLKInput;
-	    spc3_ptr->usPixelClock = cpu_to_le16(mode->Clock / 10);
-	    spc3_ptr->usRefDiv = cpu_to_le16(ref_div);
-	    spc3_ptr->usFbDiv = cpu_to_le16(fb_div);
-	    spc3_ptr->ucFracFbDiv = frac_fb_div;
-	    spc3_ptr->ucPostDiv = post_div;
-	    spc3_ptr->ucPpll = radeon_crtc->pll_id;
-	    spc3_ptr->ucMiscInfo = (radeon_crtc->crtc_id << 2);
-	    spc3_ptr->ucTransmitterId = radeon_encoder->encoder_id;
-	    spc3_ptr->ucEncoderMode = atombios_get_encoder_mode(output);
+	    args.v3.usPixelClock = cpu_to_le16(mode->Clock / 10);
+	    args.v3.usRefDiv = cpu_to_le16(ref_div);
+	    args.v3.usFbDiv = cpu_to_le16(fb_div);
+	    args.v3.ucFracFbDiv = frac_fb_div;
+	    args.v3.ucPostDiv = post_div;
+	    args.v3.ucPpll = radeon_crtc->pll_id;
+	    args.v3.ucMiscInfo = (radeon_crtc->crtc_id << 2);
+	    args.v3.ucTransmitterId = radeon_encoder->encoder_id;
+	    args.v3.ucEncoderMode = atombios_get_encoder_mode(output);
 	    break;
 	case 5:
-	    spc5_ptr = (PIXEL_CLOCK_PARAMETERS_V5*)&spc_param.sPCLKInput;
-	    spc5_ptr->ucCRTC = radeon_crtc->crtc_id;
-	    spc5_ptr->usPixelClock = cpu_to_le16(mode->Clock / 10);
-	    spc5_ptr->ucRefDiv = ref_div;
-	    spc5_ptr->usFbDiv = cpu_to_le16(fb_div);
-	    spc5_ptr->ulFbDivDecFrac = cpu_to_le32(frac_fb_div * 100000);
-	    spc5_ptr->ucPostDiv = post_div;
-	    spc5_ptr->ucPpll = radeon_crtc->pll_id;
-	    spc5_ptr->ucMiscInfo = 0; //HDMI depth
-	    spc5_ptr->ucTransmitterID = radeon_encoder->encoder_id;
-	    spc5_ptr->ucEncoderMode = atombios_get_encoder_mode(output);
+	    args.v5.ucCRTC = radeon_crtc->crtc_id;
+	    args.v5.usPixelClock = cpu_to_le16(mode->Clock / 10);
+	    args.v5.ucRefDiv = ref_div;
+	    args.v5.usFbDiv = cpu_to_le16(fb_div);
+	    args.v5.ulFbDivDecFrac = cpu_to_le32(frac_fb_div * 100000);
+	    args.v5.ucPostDiv = post_div;
+	    args.v5.ucPpll = radeon_crtc->pll_id;
+	    args.v5.ucMiscInfo = 0; //HDMI depth
+	    args.v5.ucTransmitterID = radeon_encoder->encoder_id;
+	    args.v5.ucEncoderMode = atombios_get_encoder_mode(output);
 	    break;
 	default:
 	    ErrorF("Unknown table version\n");
@@ -701,7 +707,7 @@ atombios_crtc_set_pll(xf86CrtcPtr crtc, DisplayModePtr mode)
 
     data.exec.index = index;
     data.exec.dataSpace = (void *)&space;
-    data.exec.pspace = &spc_param;
+    data.exec.pspace = &args;
 
     if (RHDAtomBiosFunc(info->atomBIOS->scrnIndex, info->atomBIOS, ATOMBIOS_EXEC, &data) == ATOM_SUCCESS) {
 	ErrorF("Set CRTC %d PLL success\n", radeon_crtc->crtc_id);

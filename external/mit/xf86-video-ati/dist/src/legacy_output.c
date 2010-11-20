@@ -999,7 +999,9 @@ legacy_output_dpms(xf86OutputPtr output, int mode)
 	    case ENCODER_OBJECT_ID_INTERNAL_LVDS:
 		{
 		    unsigned long tmpPixclksCntl = INPLL(pScrn, RADEON_PIXCLKS_CNTL);
-		    ErrorF("disable LVDS\n");
+		    radeon_lvds_ptr lvds = (radeon_lvds_ptr)radeon_encoder->dev_priv;
+		    if (lvds == NULL)
+		      return;
 		    if (info->IsMobility || info->IsIGP) {
 			/* Asic bug, when turning off LVDS_ON, we have to make sure
 			   RADEON_PIXCLK_LVDS_ALWAYS_ON bit is off
@@ -1029,6 +1031,7 @@ legacy_output_dpms(xf86OutputPtr output, int mode)
 		    if (info->IsMobility || info->IsIGP) {
 			OUTPLL(pScrn, RADEON_PIXCLKS_CNTL, tmpPixclksCntl);
 		    }
+		    usleep (lvds->PanelPwrDly * 1000);
 		}
 		break;
 	    case ENCODER_OBJECT_ID_INTERNAL_TMDS1:

@@ -55,6 +55,7 @@ typedef DRI2Buffer2Ptr BufferPtr;
 struct dri2_buffer_priv {
     PixmapPtr   pixmap;
     unsigned int attachment;
+    unsigned int refcnt;
 };
 
 
@@ -101,13 +102,25 @@ radeon_dri2_create_buffers(DrawablePtr drawable,
 	    switch(attachments[i]) {
 	    case DRI2BufferDepth:
 	    case DRI2BufferDepthStencil:
-		flags = RADEON_CREATE_PIXMAP_TILING_MACRO | RADEON_CREATE_PIXMAP_TILING_MICRO;
+		if (info->ChipFamily >= CHIP_FAMILY_R600)
+		    /* macro is the preferred setting, but the 2D detiling for software
+		     * fallbacks in mesa still has issues on some configurations
+		     */
+		    flags = RADEON_CREATE_PIXMAP_TILING_MICRO;
+		else
+		    flags = RADEON_CREATE_PIXMAP_TILING_MACRO | RADEON_CREATE_PIXMAP_TILING_MICRO;
 		break;
 	    case DRI2BufferBackLeft:
 	    case DRI2BufferBackRight:
 	    case DRI2BufferFakeFrontLeft:
 	    case DRI2BufferFakeFrontRight:
-		flags = RADEON_CREATE_PIXMAP_TILING_MACRO;
+		if (info->ChipFamily >= CHIP_FAMILY_R600)
+		    /* macro is the preferred setting, but the 2D detiling for software
+		     * fallbacks in mesa still has issues on some configurations
+		     */
+		    flags = RADEON_CREATE_PIXMAP_TILING_MICRO;
+		else
+		    flags = RADEON_CREATE_PIXMAP_TILING_MACRO;
 		break;
 	    default:
 		flags = 0;
@@ -183,13 +196,25 @@ radeon_dri2_create_buffer(DrawablePtr drawable,
 	switch(attachment) {
 	case DRI2BufferDepth:
 	case DRI2BufferDepthStencil:
-	    flags = RADEON_CREATE_PIXMAP_TILING_MACRO | RADEON_CREATE_PIXMAP_TILING_MICRO;
+	    /* macro is the preferred setting, but the 2D detiling for software
+	     * fallbacks in mesa still has issues on some configurations
+	     */
+	    if (info->ChipFamily >= CHIP_FAMILY_R600)
+		flags = RADEON_CREATE_PIXMAP_TILING_MICRO;
+	    else
+		flags = RADEON_CREATE_PIXMAP_TILING_MACRO | RADEON_CREATE_PIXMAP_TILING_MICRO;
 	    break;
 	case DRI2BufferBackLeft:
 	case DRI2BufferBackRight:
 	case DRI2BufferFakeFrontLeft:
 	case DRI2BufferFakeFrontRight:
-	    flags = RADEON_CREATE_PIXMAP_TILING_MACRO;
+	    if (info->ChipFamily >= CHIP_FAMILY_R600)
+		/* macro is the preferred setting, but the 2D detiling for software
+		 * fallbacks in mesa still has issues on some configurations
+		 */
+		flags = RADEON_CREATE_PIXMAP_TILING_MICRO;
+	    else
+		flags = RADEON_CREATE_PIXMAP_TILING_MACRO;
 	    break;
 	default:
 	    flags = 0;
@@ -220,6 +245,7 @@ radeon_dri2_create_buffer(DrawablePtr drawable,
     buffers->flags = 0; /* not tiled */
     privates->pixmap = pixmap;
     privates->attachment = attachment;
+    privates->refcnt = 1;
 
     return buffers;
 }
@@ -251,13 +277,26 @@ radeon_dri2_destroy_buffer(DrawablePtr drawable, BufferPtr buffers)
     if(buffers)
     {
         ScreenPtr pScreen = drawable->pScreen;
-        struct dri2_buffer_priv *private;
+        struct dri2_buffer_priv *private = buffers->driverPrivate;
 
-        private = buffers->driverPrivate;
-        (*pScreen->DestroyPixmap)(private->pixmap);
+        /* Trying to free an already freed buffer is unlikely to end well */
+        if (private->refcnt == 0) {
+            ScrnInfoPtr scrn = xf86Screens[pScreen->myNum];
 
-        free(buffers->driverPrivate);
-        free(buffers);
+            xf86DrvMsg(scrn->scrnIndex, X_WARNING, 
+                       "Attempted to destroy previously destroyed buffer.\
+ This is a programming error\n");
+            return;
+        }
+
+        private->refcnt--;
+        if (private->refcnt == 0)
+        {
+            (*pScreen->DestroyPixmap)(private->pixmap);
+
+            free(buffers->driverPrivate);
+            free(buffers);
+        }
     }
 }
 #endif
@@ -323,7 +362,6 @@ radeon_dri2_copy_region(DrawablePtr drawable,
     info->accel_state->vsync = vsync;
 
     FreeScratchGC(gc);
-    radeon_cs_flush_indirect(pScrn);
 }
 
 
@@ -338,6 +376,7 @@ enum DRI2FrameEventType {
 typedef struct _DRI2FrameEvent {
     XID drawable_id;
     ClientPtr client;
+    int client_index;
     enum DRI2FrameEventType type;
     int frame;
 
@@ -348,11 +387,28 @@ typedef struct _DRI2FrameEvent {
     DRI2BufferPtr back;
 } DRI2FrameEventRec, *DRI2FrameEventPtr;
 
+static void
+radeon_dri2_ref_buffer(BufferPtr buffer)
+{
+    struct dri2_buffer_priv *private = buffer->driverPrivate;
+    private->refcnt++;
+}
+
+static void
+radeon_dri2_unref_buffer(BufferPtr buffer)
+{
+    if (buffer) {
+        struct dri2_buffer_priv *private = buffer->driverPrivate;
+        radeon_dri2_destroy_buffer(&(private->pixmap->drawable), buffer);
+    }
+}
+
 void radeon_dri2_frame_event_handler(unsigned int frame, unsigned int tv_sec,
                                      unsigned int tv_usec, void *event_data)
 {
     DRI2FrameEventPtr event = event_data;
     DrawablePtr drawable;
+    ClientPtr client;
     ScreenPtr screen;
     ScrnInfoPtr scrn;
     int status;
@@ -363,12 +419,25 @@ void radeon_dri2_frame_event_handler(unsigned int frame, unsigned int tv_sec,
     status = dixLookupDrawable(&drawable, event->drawable_id, serverClient,
                                M_ANY, DixWriteAccess);
     if (status != Success) {
+        radeon_dri2_unref_buffer(event->front);
+        radeon_dri2_unref_buffer(event->back);
         free(event);
         return;
     }
 
     screen = drawable->pScreen;
     scrn = xf86Screens[screen->myNum];
+
+    /* event->client may have quit between submitting a request
+     * and this callback being triggered.
+     *
+     * Check our saved client pointer against the client in the saved client
+     * slot.  This will catch almost all cases where the client that requested
+     * SwapBuffers has gone away, and will guarantee that there is at least a 
+     * valid client to write the BufferSwapComplete event to.
+     */
+    client = event->client == clients[event->client_index] ? 
+            event->client : NULL;
 
     switch (event->type) {
     case DRI2_FLIP:
@@ -381,11 +450,14 @@ void radeon_dri2_frame_event_handler(unsigned int frame, unsigned int tv_sec,
         radeon_dri2_copy_region(drawable, &region, event->front, event->back);
         swap_type = DRI2_BLIT_COMPLETE;
 
-        DRI2SwapComplete(event->client, drawable, frame, tv_sec, tv_usec,
+        DRI2SwapComplete(client, drawable, frame, tv_sec, tv_usec,
                 swap_type, event->event_complete, event->event_data);
+
+        radeon_dri2_unref_buffer(event->front);
+        radeon_dri2_unref_buffer(event->back);
         break;
     case DRI2_WAITMSC:
-        DRI2WaitMSCComplete(event->client, drawable, frame, tv_sec, tv_usec);
+        DRI2WaitMSCComplete(client, drawable, frame, tv_sec, tv_usec);
         break;
     default:
         /* Unknown type */
@@ -488,6 +560,7 @@ static int radeon_dri2_schedule_wait_msc(ClientPtr client, DrawablePtr draw,
 
     wait_info->drawable_id = draw->id;
     wait_info->client = client;
+    wait_info->client_index = client->index;
     wait_info->type = DRI2_WAITMSC;
 
     /* Get current count */
@@ -618,12 +691,20 @@ static int radeon_dri2_schedule_swap(ClientPtr client, DrawablePtr draw,
 
     swap_info = calloc(1, sizeof(DRI2FrameEventRec));
 
+    /* radeon_dri2_frame_event_handler will get called some unknown time in the
+     * future with these buffers.  Take a reference to ensure that they won't
+     * get destroyed before then. 
+     */
+    radeon_dri2_ref_buffer(front);
+    radeon_dri2_ref_buffer(back);
+
     /* Drawable not displayed... just complete the swap */
     if (crtc == -1 || !swap_info)
         goto blit_fallback;
 
     swap_info->drawable_id = draw->id;
     swap_info->client = client;
+    swap_info->client_index = client->index;
     swap_info->event_complete = func;
     swap_info->event_data = data;
     swap_info->front = front;
@@ -752,6 +833,10 @@ blit_fallback:
     DRI2SwapComplete(client, draw, 0, 0, 0, DRI2_BLIT_COMPLETE, func, data);
     if (swap_info)
         free(swap_info);
+
+    radeon_dri2_unref_buffer(front);
+    radeon_dri2_unref_buffer(back);
+
     *target_msc = 0; /* offscreen, so zero out target vblank count */
     return TRUE;
 }
