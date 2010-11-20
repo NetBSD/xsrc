@@ -225,7 +225,7 @@ radeon_crtc_hide_cursor (xf86CrtcPtr crtc)
     if (IS_DCE4_VARIANT) {
 	evergreen_lock_cursor(crtc, TRUE);
 	evergreen_setup_cursor(crtc, FALSE);
-	evergreen_lock_cursor(crtc, TRUE);
+	evergreen_lock_cursor(crtc, FALSE);
     } else if (IS_AVIVO_VARIANT) {
 	avivo_lock_cursor(crtc, TRUE);
 	avivo_setup_cursor(crtc, FALSE);
@@ -265,7 +265,12 @@ radeon_crtc_set_cursor_position (xf86CrtcPtr crtc, int x, int y)
     if (yorigin >= CURSOR_HEIGHT) yorigin = CURSOR_HEIGHT - 1;
 
     if (IS_DCE4_VARIANT) {
-	/* XXX - does evergreen need a similar hack as below? */
+	/* avivo cursor spans the full fb width */
+	if (crtc->rotatedData == NULL) {
+	    x += crtc->x;
+	    y += crtc->y;
+	}
+
 	evergreen_lock_cursor(crtc, TRUE);
 	OUTREG(EVERGREEN_CUR_POSITION + radeon_crtc->crtc_offset, ((xorigin ? 0 : x) << 16)
 	       | (yorigin ? 0 : y));

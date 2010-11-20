@@ -367,7 +367,7 @@ UINT32 GetParametersPS(PARSER_TEMP_DATA STACK_BASED *	pParserTempData)
     UINT32 data;
     pParserTempData->Index=*pParserTempData->pWorkingTableData->IP;
     pParserTempData->pWorkingTableData->IP+=sizeof(UINT8);
-    data = UINT32LE_TO_CPU(*(pParserTempData->pDeviceData->pParameterSpace+pParserTempData->Index));
+    data = UINT32LE_TO_CPU(ldl_u(pParserTempData->pDeviceData->pParameterSpace+pParserTempData->Index));
     return data;
 }
 
@@ -430,7 +430,7 @@ UINT32 GetParametersIndirect(PARSER_TEMP_DATA STACK_BASED *	pParserTempData)
 
     pParserTempData->Index=UINT16LE_TO_CPU(ldw_u((uint16_t *)pParserTempData->pWorkingTableData->IP));
     pParserTempData->pWorkingTableData->IP+=sizeof(UINT16);
-    ret = UINT32LE_TO_CPU(*(UINT32*)(RELATIVE_TO_BIOS_IMAGE(pParserTempData->Index)+pParserTempData->CurrentDataBlock));
+    ret = UINT32LE_TO_CPU(ldl_u((UINT32*)(RELATIVE_TO_BIOS_IMAGE(pParserTempData->Index)+pParserTempData->CurrentDataBlock)));
     return ret;
 }
 
@@ -453,7 +453,7 @@ UINT32 GetParametersDirect16(PARSER_TEMP_DATA STACK_BASED *	pParserTempData)
 UINT32 GetParametersDirect32(PARSER_TEMP_DATA STACK_BASED *	pParserTempData)
 {
     pParserTempData->CD_Mask.SrcAlignment=alignmentDword;
-    pParserTempData->Index=UINT32LE_TO_CPU(*(UINT32*)pParserTempData->pWorkingTableData->IP);
+    pParserTempData->Index=UINT32LE_TO_CPU(ldl_u((UINT32*)pParserTempData->pWorkingTableData->IP));
     pParserTempData->pWorkingTableData->IP+=sizeof(UINT32);
     return pParserTempData->Index;
 }
