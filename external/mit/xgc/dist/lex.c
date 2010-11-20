@@ -707,13 +707,11 @@ int yy_flex_debug = 0;
 #define YY_RESTORE_YY_MORE_OFFSET
 char *yytext;
 #line 1 "lex.l"
-/* $XConsortium: lex.l,v 1.8 94/03/31 20:40:44 rws Exp $ */
-/* $XFree86: xc/programs/xgc/lex.l,v 1.3 2000/04/05 18:14:07 dawes Exp $ */
 /*
 ** lex file for xgc syntax
 */
 /* Lots of stuff stolen from gwm's wool.lex */
-#line 10 "lex.l"
+#line 8 "lex.l"
 
 #include <X11/X.h>
 #include <stdlib.h>
@@ -722,7 +720,7 @@ char *yytext;
 #if defined(FLEX_SCANNER) && !defined(YY_FLEX_LEX_COMPAT) && !defined(__UNIXOS2__)
 int yylineno;
 #endif
-#line 726 "lex.c"
+#line 724 "lex.c"
 
 #define INITIAL 0
 
@@ -904,10 +902,10 @@ YY_DECL
 	register char *yy_cp, *yy_bp;
 	register int yy_act;
     
-#line 27 "lex.l"
+#line 25 "lex.l"
 
 
-#line 911 "lex.c"
+#line 909 "lex.c"
 
 	if ( !(yy_init) )
 		{
@@ -992,419 +990,419 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 29 "lex.l"
+#line 27 "lex.l"
 { return (RUN); }
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 31 "lex.l"
+#line 29 "lex.l"
 { return (FUNCTION); }
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 32 "lex.l"
+#line 30 "lex.l"
 { yylval.num = GXclear;
 				  return (FUNCTIONTYPE); }
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 34 "lex.l"
+#line 32 "lex.l"
 { yylval.num = GXand;
 				  return (FUNCTIONTYPE); }
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 36 "lex.l"
+#line 34 "lex.l"
 { yylval.num = GXandReverse;
 				  return (FUNCTIONTYPE); }
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 38 "lex.l"
+#line 36 "lex.l"
 { yylval.num = GXcopy;
 				  return (FUNCTIONTYPE); }
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 40 "lex.l"
+#line 38 "lex.l"
 { yylval.num = GXandInverted;
 				  return (FUNCTIONTYPE); }
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 42 "lex.l"
+#line 40 "lex.l"
 { yylval.num = GXnoop;
 				  return (FUNCTIONTYPE); }
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 44 "lex.l"
+#line 42 "lex.l"
 { yylval.num = GXxor;
 				  return (FUNCTIONTYPE); }
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 46 "lex.l"
+#line 44 "lex.l"
 { yylval.num = GXor;
 				  return (FUNCTIONTYPE); }
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 48 "lex.l"
+#line 46 "lex.l"
 { yylval.num = GXnor;
 				  return (FUNCTIONTYPE); }
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 50 "lex.l"
+#line 48 "lex.l"
 { yylval.num = GXequiv;
 				  return (FUNCTIONTYPE); }
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
-#line 52 "lex.l"
+#line 50 "lex.l"
 { yylval.num = GXinvert;
 				  return (FUNCTIONTYPE); }
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 54 "lex.l"
+#line 52 "lex.l"
 { yylval.num = GXorReverse;
 				  return (FUNCTIONTYPE); }
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
-#line 56 "lex.l"
+#line 54 "lex.l"
 { yylval.num = GXcopyInverted;
 				  return (FUNCTIONTYPE); }
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
-#line 58 "lex.l"
+#line 56 "lex.l"
 { yylval.num = GXorInverted;
 				  return (FUNCTIONTYPE); }
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
-#line 60 "lex.l"
+#line 58 "lex.l"
 { yylval.num = GXnand;
 				  return (FUNCTIONTYPE); }
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
-#line 62 "lex.l"
+#line 60 "lex.l"
 { yylval.num = GXset;
 				  return (FUNCTIONTYPE); }
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
-#line 65 "lex.l"
+#line 63 "lex.l"
 { return (TEST); }
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
-#line 66 "lex.l"
+#line 64 "lex.l"
 { yylval.num = CopyArea;
 				  return (TESTTYPE); }
 	YY_BREAK
 case 21:
 YY_RULE_SETUP
-#line 68 "lex.l"
+#line 66 "lex.l"
 { yylval.num = CopyPlane;
 				  return (TESTTYPE); }
 	YY_BREAK
 case 22:
 YY_RULE_SETUP
-#line 70 "lex.l"
+#line 68 "lex.l"
 { yylval.num = PolyPoint;
 				  return (TESTTYPE); }
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
-#line 72 "lex.l"
+#line 70 "lex.l"
 { yylval.num = PolyLine;
 				  return (TESTTYPE); }
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
-#line 74 "lex.l"
+#line 72 "lex.l"
 { yylval.num = PolySegment;
 				  return (TESTTYPE); }
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
-#line 76 "lex.l"
+#line 74 "lex.l"
 { yylval.num = PolyRectangle;
 				  return (TESTTYPE); }
 	YY_BREAK
 case 26:
 YY_RULE_SETUP
-#line 78 "lex.l"
+#line 76 "lex.l"
 { yylval.num = PolyArc;
 				  return (TESTTYPE); }
 	YY_BREAK
 case 27:
 YY_RULE_SETUP
-#line 80 "lex.l"
+#line 78 "lex.l"
 { yylval.num = FillPolygon;
 				  return (TESTTYPE); }
 	YY_BREAK
 case 28:
 YY_RULE_SETUP
-#line 82 "lex.l"
+#line 80 "lex.l"
 { yylval.num = PolyFillRect;
 				  return (TESTTYPE); }
 	YY_BREAK
 case 29:
 YY_RULE_SETUP
-#line 84 "lex.l"
+#line 82 "lex.l"
 { yylval.num = PolyFillArc;
 				  return (TESTTYPE); }
 	YY_BREAK
 case 30:
 YY_RULE_SETUP
-#line 86 "lex.l"
+#line 84 "lex.l"
 { yylval.num = PutImage;
 				  return (TESTTYPE); }
 	YY_BREAK
 case 31:
 YY_RULE_SETUP
-#line 88 "lex.l"
+#line 86 "lex.l"
 { yylval.num = GetImage;
 				  return (TESTTYPE); }
 	YY_BREAK
 case 32:
 YY_RULE_SETUP
-#line 90 "lex.l"
+#line 88 "lex.l"
 { yylval.num = PolyText8;
 				  return (TESTTYPE); }
 	YY_BREAK
 case 33:
 YY_RULE_SETUP
-#line 92 "lex.l"
+#line 90 "lex.l"
 { yylval.num = ImageText8;
 				  return (TESTTYPE); }
 	YY_BREAK
 case 34:
 YY_RULE_SETUP
-#line 94 "lex.l"
+#line 92 "lex.l"
 { yylval.num = PolyText16;
 				  return (TESTTYPE); }
 	YY_BREAK
 case 35:
 YY_RULE_SETUP
-#line 96 "lex.l"
+#line 94 "lex.l"
 { yylval.num = ImageText16;
 				  return (TESTTYPE); }
 	YY_BREAK
 case 36:
 YY_RULE_SETUP
-#line 99 "lex.l"
+#line 97 "lex.l"
 { return (LINESTYLE); }
 	YY_BREAK
 case 37:
 YY_RULE_SETUP
-#line 100 "lex.l"
+#line 98 "lex.l"
 { yylval.num = LineOnOffDash;
 				  return (LINESTYLETYPE); }
 	YY_BREAK
 case 38:
 YY_RULE_SETUP
-#line 102 "lex.l"
+#line 100 "lex.l"
 { yylval.num = LineDoubleDash;
 				  return (LINESTYLETYPE); }
 	YY_BREAK
 case 39:
 YY_RULE_SETUP
-#line 105 "lex.l"
+#line 103 "lex.l"
 { return (CAPSTYLE); }
 	YY_BREAK
 case 40:
 YY_RULE_SETUP
-#line 106 "lex.l"
+#line 104 "lex.l"
 { yylval.num = CapNotLast;
 				  return (CAPSTYLETYPE); }
 	YY_BREAK
 case 41:
 YY_RULE_SETUP
-#line 108 "lex.l"
+#line 106 "lex.l"
 { yylval.num = CapButt;
 				  return (CAPSTYLETYPE); }
 	YY_BREAK
 case 42:
 YY_RULE_SETUP
-#line 110 "lex.l"
+#line 108 "lex.l"
 { yylval.num = CapProjecting;
 				  return (CAPSTYLETYPE); }
 	YY_BREAK
 case 43:
 YY_RULE_SETUP
-#line 113 "lex.l"
+#line 111 "lex.l"
 { return (JOINSTYLE); }
 	YY_BREAK
 case 44:
 YY_RULE_SETUP
-#line 114 "lex.l"
+#line 112 "lex.l"
 { yylval.num = JoinMiter;
 				  return (JOINSTYLETYPE); }
 	YY_BREAK
 case 45:
 YY_RULE_SETUP
-#line 116 "lex.l"
+#line 114 "lex.l"
 { yylval.num = JoinBevel;
 				  return (JOINSTYLETYPE); }
 	YY_BREAK
 case 46:
 YY_RULE_SETUP
-#line 119 "lex.l"
+#line 117 "lex.l"
 { return (ROUND); }
 	YY_BREAK
 case 47:
 YY_RULE_SETUP
-#line 121 "lex.l"
+#line 119 "lex.l"
 { return (FILLSTYLE); }
 	YY_BREAK
 case 48:
 YY_RULE_SETUP
-#line 122 "lex.l"
+#line 120 "lex.l"
 { yylval.num = FillTiled;
 				  return (FILLSTYLETYPE); }
 	YY_BREAK
 case 49:
 YY_RULE_SETUP
-#line 124 "lex.l"
+#line 122 "lex.l"
 { yylval.num = FillStippled;
 				  return (FILLSTYLETYPE); }
 	YY_BREAK
 case 50:
 YY_RULE_SETUP
-#line 126 "lex.l"
+#line 124 "lex.l"
 { yylval.num = FillOpaqueStippled;
 				  return (FILLSTYLETYPE); }
 	YY_BREAK
 case 51:
 YY_RULE_SETUP
-#line 129 "lex.l"
+#line 127 "lex.l"
 { return (SOLID); }
 	YY_BREAK
 case 52:
 YY_RULE_SETUP
-#line 131 "lex.l"
+#line 129 "lex.l"
 { return (FILLRULE); }
 	YY_BREAK
 case 53:
 YY_RULE_SETUP
-#line 132 "lex.l"
+#line 130 "lex.l"
 { yylval.num = EvenOddRule;
 				  return (FILLRULETYPE); }
 	YY_BREAK
 case 54:
 YY_RULE_SETUP
-#line 134 "lex.l"
+#line 132 "lex.l"
 { yylval.num = WindingRule;
 				  return (FILLRULETYPE); }
 	YY_BREAK
 case 55:
 YY_RULE_SETUP
-#line 137 "lex.l"
+#line 135 "lex.l"
 { return (ARCMODE); }
 	YY_BREAK
 case 56:
 YY_RULE_SETUP
-#line 138 "lex.l"
+#line 136 "lex.l"
 { yylval.num = ArcChord;
 				  return (ARCMODETYPE); }
 	YY_BREAK
 case 57:
 YY_RULE_SETUP
-#line 140 "lex.l"
+#line 138 "lex.l"
 { yylval.num = ArcPieSlice;
 				  return (ARCMODETYPE); }
 	YY_BREAK
 case 58:
 YY_RULE_SETUP
-#line 143 "lex.l"
+#line 141 "lex.l"
 { return (FOREGROUND); }
 	YY_BREAK
 case 59:
 YY_RULE_SETUP
-#line 144 "lex.l"
+#line 142 "lex.l"
 { return (BACKGROUND); }
 	YY_BREAK
 case 60:
 YY_RULE_SETUP
-#line 145 "lex.l"
+#line 143 "lex.l"
 { return (LINEWIDTH); }
 	YY_BREAK
 case 61:
 YY_RULE_SETUP
-#line 146 "lex.l"
+#line 144 "lex.l"
 { return (PLANEMASK); }
 	YY_BREAK
 case 62:
 YY_RULE_SETUP
-#line 147 "lex.l"
+#line 145 "lex.l"
 { return (DASHLIST); }
 	YY_BREAK
 case 63:
 YY_RULE_SETUP
-#line 148 "lex.l"
+#line 146 "lex.l"
 { return (FONT); }
 	YY_BREAK
 case 64:
 YY_RULE_SETUP
-#line 149 "lex.l"
+#line 147 "lex.l"
 { return (PERCENT); }
 	YY_BREAK
 case 65:
 YY_RULE_SETUP
-#line 151 "lex.l"
+#line 149 "lex.l"
 { (void) sscanf ((char *)yytext, "%d", &yylval.num);
 				  return (NUMBER); }
 	YY_BREAK
 case 66:
 /* rule 66 can match eol */
 YY_RULE_SETUP
-#line 153 "lex.l"
+#line 151 "lex.l"
 { yylval.ptr = (char *) yytext;
 				  return (STRING); }
 	YY_BREAK
 case 67:
 /* rule 67 can match eol */
 YY_RULE_SETUP
-#line 155 "lex.l"
+#line 153 "lex.l"
 { ; }
 	YY_BREAK
 case 68:
 YY_RULE_SETUP
-#line 156 "lex.l"
+#line 154 "lex.l"
 { ; }
 	YY_BREAK
 case 69:
 /* rule 69 can match eol */
 YY_RULE_SETUP
-#line 157 "lex.l"
+#line 155 "lex.l"
 { return ('\n'); }
 	YY_BREAK
 case 70:
 YY_RULE_SETUP
-#line 159 "lex.l"
+#line 157 "lex.l"
 { yylval.ptr = (char *) yytext;
 				  return (STRING); }
 	YY_BREAK
 case 71:
 YY_RULE_SETUP
-#line 162 "lex.l"
+#line 160 "lex.l"
 { fprintf(stderr,
 					"xgc: bad character `%s', line %d\n",
 					yytext, yylineno); }
 	YY_BREAK
 case 72:
 YY_RULE_SETUP
-#line 166 "lex.l"
+#line 164 "lex.l"
 ECHO;
 	YY_BREAK
-#line 1408 "lex.c"
+#line 1406 "lex.c"
 case YY_STATE_EOF(INITIAL):
 	yyterminate();
 
@@ -2402,7 +2400,7 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 166 "lex.l"
+#line 164 "lex.l"
 
 
 
