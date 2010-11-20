@@ -31,10 +31,10 @@ in this Software without prior written authorization from the X Consortium.
 #include "bboxint.h"
 
 
-void AttachMenuToButton(button, menu, menu_name)
-    Button	button;
-    Widget	menu;
-    char *	menu_name;
+void AttachMenuToButton(
+    Button	 button,
+    Widget	 menu,
+    char	*menu_name)
 {
     Arg		args[3];
 
@@ -47,10 +47,10 @@ void AttachMenuToButton(button, menu, menu_name)
 
 
 /*ARGSUSED*/
-void DoRememberMenuSelection(widget, client_data, call_data)
-    Widget	widget;		/* menu entry object */
-    XtPointer	client_data;
-    XtPointer	call_data;
+void DoRememberMenuSelection(
+    Widget	widget,		/* menu entry object */
+    XtPointer	client_data,
+    XtPointer	call_data)
 {
     static Arg	args[] = {
 	{ XtNpopupOnEntry,	(XtArgVal) NULL },
@@ -60,10 +60,10 @@ void DoRememberMenuSelection(widget, client_data, call_data)
 }
 
 
-void SendMenuEntryEnableMsg(button, entry_name, value)
-    Button	button;
-    char *	entry_name;
-    int		value;
+void SendMenuEntryEnableMsg(
+    Button	 button,
+    char	*entry_name,
+    int		 value)
 {
     Widget	entry;
     static Arg	args[] = {{XtNsensitive, (XtArgVal) NULL}};

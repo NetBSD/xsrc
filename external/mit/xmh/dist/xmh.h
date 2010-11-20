@@ -29,6 +29,9 @@
 #ifndef _xmh_h
 #define _xmh_h
 
+#include "config.h"
+#define XMH_VERSION PACKAGE_STRING
+
 #include <X11/Intrinsic.h>
 #include <X11/StringDefs.h>
 #include <X11/Shell.h>

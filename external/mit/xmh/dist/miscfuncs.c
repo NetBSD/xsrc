@@ -163,7 +163,8 @@ ScanDir(
 
     /* Sort? */
     if (i)
-	qsort((char *)names, i, sizeof(char *), (int (*)())StrCmp);
+	qsort((char *)names, i, sizeof(char *),
+	      (int (*)(const void *, const void *))StrCmp);
 
     return(i);
 }
