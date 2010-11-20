@@ -13,8 +13,8 @@
 
 m4_ifndef([AC_AUTOCONF_VERSION],
   [m4_copy([m4_PACKAGE_VERSION], [AC_AUTOCONF_VERSION])])dnl
-m4_if(m4_defn([AC_AUTOCONF_VERSION]), [2.65],,
-[m4_warning([this file was generated for autoconf 2.65.
+m4_if(m4_defn([AC_AUTOCONF_VERSION]), [2.68],,
+[m4_warning([this file was generated for autoconf 2.68.
 You have another version of autoconf.  It may work, but is not guaranteed to.
 If you have problems, you may need to regenerate the build system entirely.
 To do so, use the procedure documented by the package, typically `autoreconf'.])])
@@ -1030,7 +1030,7 @@ AC_SUBST([am__untar])
 
 dnl xorg-macros.m4.  Generated from xorg-macros.m4.in xorgversion.m4 by configure.
 dnl
-dnl Copyright 2005-2006 Sun Microsystems, Inc.  All rights reserved.
+dnl Copyright (c) 2005, 2006, Oracle and/or its affiliates. All rights reserved.
 dnl 
 dnl Permission is hereby granted, free of charge, to any person obtaining a
 dnl copy of this software and associated documentation files (the "Software"),
@@ -1067,7 +1067,7 @@ dnl DEALINGS IN THE SOFTWARE.
 # See the "minimum version" comment for each macro you use to see what 
 # version you require.
 m4_defun([XORG_MACROS_VERSION],[
-m4_define([vers_have], [1.7.0])
+m4_define([vers_have], [1.10.1])
 m4_define([maj_have], m4_substr(vers_have, 0, m4_index(vers_have, [.])))
 m4_define([maj_needed], m4_substr([$1], 0, m4_index([$1], [.])))
 m4_if(m4_cmp(maj_have, maj_needed), 0,,
@@ -1136,9 +1136,11 @@ AC_SUBST(RAWCPPFLAGS)
 # Not sure if there's any better way than just hardcoding by OS name.
 # Override default settings by setting environment variables
 # Added MAN_SUBSTS in version 1.8
+# Added AC_PROG_SED in version 1.8
 
 AC_DEFUN([XORG_MANPAGE_SECTIONS],[
 AC_REQUIRE([AC_CANONICAL_HOST])
+AC_REQUIRE([AC_PROG_SED])
 
 if test x$APP_MAN_SUFFIX = x    ; then
     APP_MAN_SUFFIX=1
@@ -1216,6 +1218,7 @@ MAN_SUBSTS="\
 	-e 's|__xservername__|Xorg|g' \
 	-e 's|__xconfigfile__|xorg.conf|g' \
 	-e 's|__projectroot__|\$(prefix)|g' \
+	-e 's|__apploaddir__|\$(appdefaultdir)|g' \
 	-e 's|__appmansuffix__|\$(APP_MAN_SUFFIX)|g' \
 	-e 's|__drivermansuffix__|\$(DRIVER_MAN_SUFFIX)|g' \
 	-e 's|__adminmansuffix__|\$(ADMIN_MAN_SUFFIX)|g' \
@@ -1244,13 +1247,20 @@ PKG_CHECK_EXISTS([xorg-sgml-doctools m4_ifval([$1],[>= $1])],
          fi])
     ])
 
+# Define variables STYLESHEET_SRCDIR and XSL_STYLESHEET containing
+# the path and the name of the doc stylesheet
 if test "x$XORG_SGML_PATH" != "x" ; then
    AC_MSG_RESULT([$XORG_SGML_PATH])
+   STYLESHEET_SRCDIR=$XORG_SGML_PATH/X11
+   XSL_STYLESHEET=$STYLESHEET_SRCDIR/xorg.xsl
 else
    AC_MSG_RESULT([no])
 fi
 
 AC_SUBST(XORG_SGML_PATH)
+AC_SUBST(STYLESHEET_SRCDIR)
+AC_SUBST(XSL_STYLESHEET)
+AM_CONDITIONAL([HAVE_STYLESHEETS], [test "x$XSL_STYLESHEET" != "x"])
 ]) # XORG_CHECK_SGML_DOCTOOLS
 
 # XORG_CHECK_LINUXDOC
@@ -1383,6 +1393,10 @@ AC_SUBST(MAKE_HTML)
 # --with-xmlto:	'yes' user instructs the module to use xmlto
 #		'no' user instructs the module not to use xmlto
 #
+# Added in version 1.10.0
+# HAVE_XMLTO_TEXT: used in makefiles to conditionally generate text documentation
+#                  xmlto for text output requires either lynx, links, or w3m browsers
+#
 # If the user sets the value of XMLTO, AC_PATH_PROG skips testing the path.
 #
 AC_DEFUN([XORG_WITH_XMLTO],[
@@ -1414,6 +1428,8 @@ elif test "x$use_xmlto" = x"no" ; then
 else
    AC_MSG_ERROR([--with-xmlto expects 'yes' or 'no'])
 fi
+
+# Test for a minimum version of xmlto, if provided.
 m4_ifval([$1],
 [if test "$have_xmlto" = yes; then
     # scrape the xmlto version
@@ -1428,6 +1444,17 @@ m4_ifval([$1],
             AC_MSG_ERROR([xmlto version $xmlto_version found, but $1 needed])
         fi])
 fi])
+
+# Test for the ability of xmlto to generate a text target
+have_xmlto_text=no
+cat > conftest.xml << "EOF"
+EOF
+AS_IF([test "$have_xmlto" = yes],
+      [AS_IF([$XMLTO --skip-validation txt conftest.xml >/dev/null 2>&1],
+             [have_xmlto_text=yes],
+             [AC_MSG_WARN([xmlto cannot generate text format, this format skipped])])])
+rm -f conftest.xml
+AM_CONDITIONAL([HAVE_XMLTO_TEXT], [test $have_xmlto_text = yes])
 AM_CONDITIONAL([HAVE_XMLTO], [test "$have_xmlto" = yes])
 ]) # XORG_WITH_XMLTO
 
@@ -1580,6 +1607,12 @@ AM_CONDITIONAL([HAVE_DOXYGEN], [test "$have_doxygen" = yes])
 # --with-groff:	 'yes' user instructs the module to use groff
 #		 'no' user instructs the module not to use groff
 #
+# Added in version 1.9.0:
+# HAVE_GROFF_HTML: groff has dependencies to output HTML format:
+#		   pnmcut pnmcrop pnmtopng pnmtops from the netpbm package.
+#		   psselect from the psutils package.
+#		   the ghostcript package. Refer to the grohtml man pages
+#
 # If the user sets the value of GROFF, AC_PATH_PROG skips testing the path.
 #
 # OS and distros often splits groff in a basic and full package, the former
@@ -1619,6 +1652,7 @@ elif test "x$use_groff" = x"no" ; then
 else
    AC_MSG_ERROR([--with-groff expects 'yes' or 'no'])
 fi
+
 # We have groff, test for the presence of the macro packages
 if test "x$have_groff" = x"yes"; then
     AC_MSG_CHECKING([for ${GROFF} -ms macros])
@@ -1636,9 +1670,25 @@ if test "x$have_groff" = x"yes"; then
     fi
     AC_MSG_RESULT([$groff_mm_works])
 fi
+
+# We have groff, test for HTML dependencies, one command per package
+if test "x$have_groff" = x"yes"; then
+   AC_PATH_PROGS(GS_PATH, [gs gswin32c])
+   AC_PATH_PROG(PNMTOPNG_PATH, [pnmtopng])
+   AC_PATH_PROG(PSSELECT_PATH, [psselect])
+   if test "x$GS_PATH" != "x" -a "x$PNMTOPNG_PATH" != "x" -a "x$PSSELECT_PATH" != "x"; then
+      have_groff_html=yes
+   else
+      have_groff_html=no
+      AC_MSG_WARN([grohtml dependencies not found - HTML Documentation skipped. Refer to grohtml man pages])
+   fi
+fi
+
+# Set Automake conditionals for Makefiles
 AM_CONDITIONAL([HAVE_GROFF], [test "$have_groff" = yes])
 AM_CONDITIONAL([HAVE_GROFF_MS], [test "$groff_ms_works" = yes])
 AM_CONDITIONAL([HAVE_GROFF_MM], [test "$groff_mm_works" = yes])
+AM_CONDITIONAL([HAVE_GROFF_HTML], [test "$have_groff_html" = yes])
 ]) # XORG_WITH_GROFF
 
 # XORG_WITH_FOP
@@ -1903,38 +1953,69 @@ AC_SUBST([XTMALLOC_ZERO_CFLAGS])
 # ----------------
 # Minimum version: 1.1.0
 #
-# Sets up flags for source checkers such as lint and sparse if --with-lint
-# is specified.   (Use --with-lint=sparse for sparse.)
-# Sets $LINT to name of source checker passed with --with-lint (default: lint)
-# Sets $LINT_FLAGS to flags to pass to source checker
-# Sets LINT automake conditional if enabled (default: disabled)
+# This macro enables the use of a tool that flags some suspicious and
+# non-portable constructs (likely to be bugs) in C language source code.
+# It will attempt to locate the tool and use appropriate options.
+# There are various lint type tools on different platforms.
+#
+# Interface to module:
+# LINT:		returns the path to the tool found on the platform
+#		or the value set to LINT on the configure cmd line
+#		also an Automake conditional
+# LINT_FLAGS:	an Automake variable with appropriate flags
+#
+# --with-lint:	'yes' user instructs the module to use lint
+#		'no' user instructs the module not to use lint (default)
+#
+# If the user sets the value of LINT, AC_PATH_PROG skips testing the path.
+# If the user sets the value of LINT_FLAGS, they are used verbatim.
 #
 AC_DEFUN([XORG_WITH_LINT],[
 
-# Allow checking code with lint, sparse, etc.
+AC_ARG_VAR([LINT], [Path to a lint-style command])
+AC_ARG_VAR([LINT_FLAGS], [Flags for the lint-style command])
 AC_ARG_WITH(lint, [AS_HELP_STRING([--with-lint],
 		[Use a lint-style source code checker (default: disabled)])],
 		[use_lint=$withval], [use_lint=no])
-if test "x$use_lint" = "xyes" ; then
-	LINT="lint"
+
+# Obtain platform specific info like program name and options
+# The lint program on FreeBSD and NetBSD is different from the one on Solaris
+case $host_os in
+  *linux* | *openbsd* | kfreebsd*-gnu | darwin* | cygwin*)
+	lint_name=splint
+	lint_options="-badflag"
+	;;
+  *freebsd* | *netbsd*)
+	lint_name=lint
+	lint_options="-u -b"
+	;;
+  *solaris*)
+	lint_name=lint
+	lint_options="-u -b -h -erroff=E_INDISTING_FROM_TRUNC2"
+	;;
+esac
+
+# Test for the presence of the program (either guessed by the code or spelled out by the user)
+if test "x$use_lint" = x"yes" ; then
+   AC_PATH_PROG([LINT], [$lint_name])
+   if test "x$LINT" = "x"; then
+        AC_MSG_ERROR([--with-lint=yes specified but lint-style tool not found in PATH])
+   fi
+elif test "x$use_lint" = x"no" ; then
+   if test "x$LINT" != "x"; then
+      AC_MSG_WARN([ignoring LINT environment variable since --with-lint=no was specified])
+   fi
 else
-	LINT="$use_lint"
-fi
-if test "x$LINT_FLAGS" = "x" -a "x$LINT" != "xno" ; then
-    case $LINT in
-	lint|*/lint)
-	    case $host_os in
-		solaris*)
-			LINT_FLAGS="-u -b -h -erroff=E_INDISTING_FROM_TRUNC2"
-			;;
-	    esac
-	    ;;
-    esac
+   AC_MSG_ERROR([--with-lint expects 'yes' or 'no'. Use LINT variable to specify path.])
 fi
 
-AC_SUBST(LINT)
-AC_SUBST(LINT_FLAGS)
-AM_CONDITIONAL(LINT, [test x$LINT != xno])
+# User supplied flags override default flags
+if test "x$LINT_FLAGS" != "x"; then
+   lint_options=$LINT_FLAGS
+fi
+
+AC_SUBST([LINT_FLAGS],[$lint_options])
+AM_CONDITIONAL(LINT, [test "x$LINT" != x])
 
 ]) # XORG_WITH_LINT
 
@@ -1944,28 +2025,29 @@ AM_CONDITIONAL(LINT, [test x$LINT != xno])
 #
 # Sets up flags for building lint libraries for checking programs that call
 # functions in the library.
-# Disabled by default, enable with --enable-lint-library
-# Sets: 
-#	@LINTLIB@		- name of lint library file to make
-#	MAKE_LINT_LIB		- automake conditional
 #
+# Interface to module:
+# LINTLIB		- Automake variable with the name of lint library file to make
+# MAKE_LINT_LIB		- Automake conditional
+#
+# --enable-lint-library:  - 'yes' user instructs the module to created a lint library
+#			  - 'no' user instructs the module not to create a lint library (default)
 
 AC_DEFUN([XORG_LINT_LIBRARY],[
 AC_REQUIRE([XORG_WITH_LINT])
-# Build lint "library" for more indepth checks of programs calling this library
 AC_ARG_ENABLE(lint-library, [AS_HELP_STRING([--enable-lint-library],
 	[Create lint library (default: disabled)])],
 	[make_lint_lib=$enableval], [make_lint_lib=no])
-if test "x$make_lint_lib" != "xno" ; then
-	if test "x$LINT" = "xno" ; then
-		AC_MSG_ERROR([Cannot make lint library without --with-lint])
-	fi
-	if test "x$make_lint_lib" = "xyes" ; then
-		LINTLIB=llib-l$1.ln
-	else
-		LINTLIB=$make_lint_lib
-	fi
+
+if test "x$make_lint_lib" = x"yes" ; then
+   LINTLIB=llib-l$1.ln
+   if test "x$LINT" = "x"; then
+        AC_MSG_ERROR([Cannot make lint library without --with-lint])
+   fi
+elif test "x$make_lint_lib" != x"no" ; then
+   AC_MSG_ERROR([--enable-lint-library expects 'yes' or 'no'.])
 fi
+
 AC_SUBST(LINTLIB)
 AM_CONDITIONAL(MAKE_LINT_LIB, [test x$make_lint_lib != xno])
 
@@ -1978,7 +2060,7 @@ AM_CONDITIONAL(MAKE_LINT_LIB, [test x$make_lint_lib != xno])
 # Defines CWARNFLAGS to enable C compiler warnings.
 #
 AC_DEFUN([XORG_CWARNFLAGS], [
-AC_REQUIRE([AC_PROG_CC])
+AC_REQUIRE([AC_PROG_CC_C99])
 if  test "x$GCC" = xyes ; then
     CWARNFLAGS="-Wall -Wpointer-arith -Wstrict-prototypes -Wmissing-prototypes \
 -Wmissing-declarations -Wnested-externs -fno-strict-aliasing \
@@ -2003,7 +2085,7 @@ AC_SUBST(CWARNFLAGS)
 #
 # Add configure option to enable strict compilation
 AC_DEFUN([XORG_STRICT_OPTION], [
-AC_REQUIRE([AC_PROG_CC])
+# If the module's configure.ac calls AC_PROG_CC later on, CC gets set to C89
 AC_REQUIRE([AC_PROG_CC_C99])
 AC_REQUIRE([XORG_CWARNFLAGS])
 
@@ -2033,6 +2115,7 @@ AC_SUBST([CWARNFLAGS])
 # Defines default options for X.Org modules.
 #
 AC_DEFUN([XORG_DEFAULT_OPTIONS], [
+AC_REQUIRE([AC_PROG_INSTALL])
 XORG_CWARNFLAGS
 XORG_STRICT_OPTION
 XORG_RELEASE_VERSION
@@ -2086,22 +2169,9 @@ dnl
 
 # XORG_RELEASE_VERSION
 # --------------------
-# Adds --with/without-release-string and changes the PACKAGE and
-# PACKAGE_TARNAME to use "$PACKAGE{_TARNAME}-$RELEASE_VERSION".  If
-# no option is given, PACKAGE and PACKAGE_TARNAME are unchanged.  Also
-# defines PACKAGE_VERSION_{MAJOR,MINOR,PATCHLEVEL} for modules to use.
+# Defines PACKAGE_VERSION_{MAJOR,MINOR,PATCHLEVEL} for modules to use.
  
 AC_DEFUN([XORG_RELEASE_VERSION],[
-	AC_ARG_WITH(release-version,
-			AS_HELP_STRING([--with-release-version=STRING],
-				[Use release version string in package name]),
-			[RELEASE_VERSION="$withval"],
-			[RELEASE_VERSION=""])
-	if test "x$RELEASE_VERSION" != "x"; then
-		PACKAGE="$PACKAGE-$RELEASE_VERSION"
-		PACKAGE_TARNAME="$PACKAGE_TARNAME-$RELEASE_VERSION"
-		AC_MSG_NOTICE([Building with package name set to $PACKAGE])
-	fi
 	AC_DEFINE_UNQUOTED([PACKAGE_VERSION_MAJOR],
 		[`echo $PACKAGE_VERSION | cut -d . -f 1`],
 		[Major version of this package])
