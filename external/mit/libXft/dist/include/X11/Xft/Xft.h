@@ -27,10 +27,10 @@
 /*
  * Current Xft version number, set from version in the Xft configure.ac file.
  */
-
+/* #undef will be substituted by configure */
 #define XFT_MAJOR 2
-#define XFT_MINOR 1
-#define XFT_REVISION 14
+#define XFT_MINOR 2
+#define XFT_REVISION 0
 
 #define XFT_VERSION	((XFT_MAJOR * 10000) + (XFT_MINOR * 100) + (XFT_REVISION))
 #define XftVersion	XFT_VERSION
