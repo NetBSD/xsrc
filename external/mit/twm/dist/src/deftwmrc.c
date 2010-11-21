@@ -1,6 +1,6 @@
 /* 
  * This file is generated automatically from the default
- * twm bindings file system.twmrc by the twm Imakefile.
+ * twm bindings file system.twmrc by the twm Makefile.
  */
 
 unsigned char *defTwmrc[] = {
