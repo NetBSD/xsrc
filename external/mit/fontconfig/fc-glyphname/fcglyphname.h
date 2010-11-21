@@ -1,5 +1,5 @@
 /*
- * $Id: fcglyphname.h,v 1.1 2008/07/31 01:24:16 mrg Exp $
+ * fontconfig/fc-glyphname/fcglyphname.tmpl.h
  *
  * Copyright © 2003 Keith Packard
  *
@@ -13,9 +13,9 @@
  * representations about the suitability of this software for any purpose.  It
  * is provided "as is" without express or implied warranty.
  *
- * KEITH PACKARD DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE,
+ * THE AUTHOR(S) DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE,
  * INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO
- * EVENT SHALL KEITH PACKARD BE LIABLE FOR ANY SPECIAL, INDIRECT OR
+ * EVENT SHALL THE AUTHOR(S) BE LIABLE FOR ANY SPECIAL, INDIRECT OR
  * CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE,
  * DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
@@ -30,7 +30,7 @@
 
 typedef int16_t FcGlyphId;
 
-static const struct { const FcChar32 ucs; const FcChar8 name[5]; } glyphs[201] = {
+static const struct { const FcChar32 ucs; const FcChar8 name[5]; } _fc_glyph_names[201] = {
     { 0x2701, "a1" },
     { 0x2721, "a10" },
     { 0x275e, "a100" },
@@ -233,7 +233,7 @@ static const struct { const FcChar32 ucs; const FcChar8 name[5]; } glyphs[201] =
     { 0x275c, "a98" },
     { 0x275d, "a99" },
 };
-static const FcGlyphId name_to_ucs[271] = {
+static const FcGlyphId _fc_name_to_ucs[271] = {
     123,
     81,
     198,
@@ -506,7 +506,7 @@ static const FcGlyphId name_to_ucs[271] = {
     185,
     175,
 };
-static const FcGlyphId ucs_to_name[271] = {
+static const FcGlyphId _fc_ucs_to_name[271] = {
     56,
     135,
     19,
