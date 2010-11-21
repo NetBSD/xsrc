@@ -47,9 +47,6 @@ _pixman_init_gradient (gradient_t *                  gradient,
 
     gradient->n_stops = n_stops;
 
-    gradient->stop_range = 0xffff;
-    gradient->common.class = SOURCE_IMAGE_CLASS_UNKNOWN;
-
     return TRUE;
 }
 
@@ -65,8 +62,7 @@ _pixman_image_get_scanline_generic_64 (pixman_image_t * image,
                                        int              y,
                                        int              width,
                                        uint32_t *       buffer,
-                                       const uint32_t * mask,
-                                       uint32_t         mask_bits)
+                                       const uint32_t * mask)
 {
     uint32_t *mask8 = NULL;
 
@@ -83,8 +79,7 @@ _pixman_image_get_scanline_generic_64 (pixman_image_t * image,
     }
 
     /* Fetch the source image into the first half of buffer. */
-    _pixman_image_get_scanline_32 (image, x, y, width, (uint32_t*)buffer, mask8,
-                                   mask_bits);
+    _pixman_image_get_scanline_32 (image, x, y, width, (uint32_t*)buffer, mask8);
 
     /* Expand from 32bpp to 64bpp in place. */
     pixman_expand ((uint64_t *)buffer, buffer, PIXMAN_a8r8g8b8, width);
@@ -103,6 +98,7 @@ _pixman_image_allocate (void)
 
 	pixman_region32_init (&common->clip_region);
 
+	common->alpha_count = 0;
 	common->have_clip_region = FALSE;
 	common->clip_sources = FALSE;
 	common->transform = NULL;
@@ -142,10 +138,9 @@ _pixman_image_get_scanline_32 (pixman_image_t *image,
                                int             y,
                                int             width,
                                uint32_t *      buffer,
-                               const uint32_t *mask,
-                               uint32_t        mask_bits)
+                               const uint32_t *mask)
 {
-    image->common.get_scanline_32 (image, x, y, width, buffer, mask, mask_bits);
+    image->common.get_scanline_32 (image, x, y, width, buffer, mask);
 }
 
 /* Even thought the type of buffer is uint32_t *, the function actually expects
@@ -157,10 +152,9 @@ _pixman_image_get_scanline_64 (pixman_image_t *image,
                                int             y,
                                int             width,
                                uint32_t *      buffer,
-                               const uint32_t *unused,
-                               uint32_t        unused2)
+                               const uint32_t *unused)
 {
-    image->common.get_scanline_64 (image, x, y, width, buffer, unused, unused2);
+    image->common.get_scanline_64 (image, x, y, width, buffer, unused);
 }
 
 static void
@@ -242,54 +236,27 @@ _pixman_image_reset_clip_region (pixman_image_t *image)
     image->common.have_clip_region = FALSE;
 }
 
-static pixman_bool_t out_of_bounds_workaround = TRUE;
-
-/* Old X servers rely on out-of-bounds accesses when they are asked
- * to composite with a window as the source. They create a pixman image
- * pointing to some bogus position in memory, but then they set a clip
- * region to the position where the actual bits are.
+/* Executive Summary: This function is a no-op that only exists
+ * for historical reasons.
+ *
+ * There used to be a bug in the X server where it would rely on
+ * out-of-bounds accesses when it was asked to composite with a
+ * window as the source. It would create a pixman image pointing
+ * to some bogus position in memory, but then set a clip region
+ * to the position where the actual bits were.
  *
  * Due to a bug in old versions of pixman, where it would not clip
  * against the image bounds when a clip region was set, this would
- * actually work. So by default we allow certain out-of-bound access
- * to happen unless explicitly disabled.
+ * actually work. So when the pixman bug was fixed, a workaround was
+ * added to allow certain out-of-bound accesses. This function disabled
+ * those workarounds.
  *
- * Fixed X servers should call this function to disable the workaround.
+ * Since 0.21.2, pixman doesn't do these workarounds anymore, so now
+ * this function is a no-op.
  */
 PIXMAN_EXPORT void
 pixman_disable_out_of_bounds_workaround (void)
 {
-    out_of_bounds_workaround = FALSE;
-}
-
-static pixman_bool_t
-source_image_needs_out_of_bounds_workaround (bits_image_t *image)
-{
-    if (image->common.clip_sources                      &&
-        image->common.repeat == PIXMAN_REPEAT_NONE      &&
-	image->common.have_clip_region			&&
-        out_of_bounds_workaround)
-    {
-	if (!image->common.client_clip)
-	{
-	    /* There is no client clip, so if the clip region extends beyond the
-	     * drawable geometry, it must be because the X server generated the
-	     * bogus clip region.
-	     */
-	    const pixman_box32_t *extents =
-		pixman_region32_extents (&image->common.clip_region);
-
-	    if (extents->x1 >= 0 && extents->x2 <= image->width &&
-		extents->y1 >= 0 && extents->y2 <= image->height)
-	    {
-		return FALSE;
-	    }
-	}
-
-	return TRUE;
-    }
-
-    return FALSE;
 }
 
 static void
@@ -301,26 +268,34 @@ compute_image_info (pixman_image_t *image)
     /* Transform */
     if (!image->common.transform)
     {
-	flags |= (FAST_PATH_ID_TRANSFORM | FAST_PATH_X_UNIT_POSITIVE);
+	flags |= (FAST_PATH_ID_TRANSFORM	|
+		  FAST_PATH_X_UNIT_POSITIVE	|
+		  FAST_PATH_Y_UNIT_ZERO		|
+		  FAST_PATH_AFFINE_TRANSFORM);
     }
     else
     {
-	if (image->common.transform->matrix[0][1] == 0 &&
-	    image->common.transform->matrix[1][0] == 0 &&
-	    image->common.transform->matrix[2][0] == 0 &&
-	    image->common.transform->matrix[2][1] == 0 &&
+	flags |= FAST_PATH_HAS_TRANSFORM;
+
+	if (image->common.transform->matrix[2][0] == 0			&&
+	    image->common.transform->matrix[2][1] == 0			&&
 	    image->common.transform->matrix[2][2] == pixman_fixed_1)
 	{
-	    flags |= FAST_PATH_SCALE_TRANSFORM;
+	    flags |= FAST_PATH_AFFINE_TRANSFORM;
+
+	    if (image->common.transform->matrix[0][1] == 0 &&
+		image->common.transform->matrix[1][0] == 0)
+	    {
+		flags |= FAST_PATH_SCALE_TRANSFORM;
+	    }
 	}
 
 	if (image->common.transform->matrix[0][0] > 0)
 	    flags |= FAST_PATH_X_UNIT_POSITIVE;
-    }
 
-    /* Alpha map */
-    if (!image->common.alpha_map)
-	flags |= FAST_PATH_NO_ALPHA_MAP;
+	if (image->common.transform->matrix[1][0] == 0)
+	    flags |= FAST_PATH_Y_UNIT_ZERO;
+    }
 
     /* Filter */
     switch (image->common.filter)
@@ -328,6 +303,12 @@ compute_image_info (pixman_image_t *image)
     case PIXMAN_FILTER_NEAREST:
     case PIXMAN_FILTER_FAST:
 	flags |= (FAST_PATH_NEAREST_FILTER | FAST_PATH_NO_CONVOLUTION_FILTER);
+	break;
+
+    case PIXMAN_FILTER_BILINEAR:
+    case PIXMAN_FILTER_GOOD:
+    case PIXMAN_FILTER_BEST:
+	flags |= (FAST_PATH_BILINEAR_FILTER | FAST_PATH_NO_CONVOLUTION_FILTER);
 	break;
 
     case PIXMAN_FILTER_CONVOLUTION:
@@ -342,19 +323,31 @@ compute_image_info (pixman_image_t *image)
     switch (image->common.repeat)
     {
     case PIXMAN_REPEAT_NONE:
-	flags |= FAST_PATH_NO_REFLECT_REPEAT | FAST_PATH_NO_PAD_REPEAT;
+	flags |=
+	    FAST_PATH_NO_REFLECT_REPEAT		|
+	    FAST_PATH_NO_PAD_REPEAT		|
+	    FAST_PATH_NO_NORMAL_REPEAT;
 	break;
 
     case PIXMAN_REPEAT_REFLECT:
-	flags |= FAST_PATH_NO_PAD_REPEAT | FAST_PATH_NO_NONE_REPEAT;
+	flags |=
+	    FAST_PATH_NO_PAD_REPEAT		|
+	    FAST_PATH_NO_NONE_REPEAT		|
+	    FAST_PATH_NO_NORMAL_REPEAT;
 	break;
 
     case PIXMAN_REPEAT_PAD:
-	flags |= FAST_PATH_NO_REFLECT_REPEAT | FAST_PATH_NO_NONE_REPEAT;
+	flags |=
+	    FAST_PATH_NO_REFLECT_REPEAT		|
+	    FAST_PATH_NO_NONE_REPEAT		|
+	    FAST_PATH_NO_NORMAL_REPEAT;
 	break;
 
     default:
-	flags |= FAST_PATH_NO_REFLECT_REPEAT | FAST_PATH_NO_PAD_REPEAT | FAST_PATH_NO_NONE_REPEAT;
+	flags |=
+	    FAST_PATH_NO_REFLECT_REPEAT		|
+	    FAST_PATH_NO_PAD_REPEAT		|
+	    FAST_PATH_NO_NONE_REPEAT;
 	break;
     }
 
@@ -364,7 +357,7 @@ compute_image_info (pixman_image_t *image)
     else
 	flags |= FAST_PATH_UNIFIED_ALPHA;
 
-    flags |= (FAST_PATH_NO_ACCESSORS | FAST_PATH_NO_WIDE_FORMAT);
+    flags |= (FAST_PATH_NO_ACCESSORS | FAST_PATH_NARROW_FORMAT);
 
     /* Type specific checks */
     switch (image->type)
@@ -386,34 +379,42 @@ compute_image_info (pixman_image_t *image)
 	else
 	{
 	    code = image->bits.format;
-
-	    if (!image->common.transform &&
-		image->common.repeat == PIXMAN_REPEAT_NORMAL)
-	    {
-		flags |= FAST_PATH_SIMPLE_REPEAT;
-	    }
 	}
 
-	if (image->common.repeat != PIXMAN_REPEAT_NONE				&&
-	    !PIXMAN_FORMAT_A (image->bits.format)				&&
+	if (!PIXMAN_FORMAT_A (image->bits.format)				&&
 	    PIXMAN_FORMAT_TYPE (image->bits.format) != PIXMAN_TYPE_GRAY		&&
 	    PIXMAN_FORMAT_TYPE (image->bits.format) != PIXMAN_TYPE_COLOR)
 	{
-	    flags |= FAST_PATH_IS_OPAQUE;
-	}
+	    flags |= FAST_PATH_SAMPLES_OPAQUE;
 
-	if (source_image_needs_out_of_bounds_workaround (&image->bits))
-	    flags |= FAST_PATH_NEEDS_WORKAROUND;
+	    if (image->common.repeat != PIXMAN_REPEAT_NONE)
+		flags |= FAST_PATH_IS_OPAQUE;
+	}
 
 	if (image->bits.read_func || image->bits.write_func)
 	    flags &= ~FAST_PATH_NO_ACCESSORS;
 
 	if (PIXMAN_FORMAT_IS_WIDE (image->bits.format))
-	    flags &= ~FAST_PATH_NO_WIDE_FORMAT;
+	    flags &= ~FAST_PATH_NARROW_FORMAT;
 	break;
 
-    case LINEAR:
     case RADIAL:
+	code = PIXMAN_unknown;
+
+	/*
+	 * As explained in pixman-radial-gradient.c, every point of
+	 * the plane has a valid associated radius (and thus will be
+	 * colored) if and only if a is negative (i.e. one of the two
+	 * circles contains the other one).
+	 */
+
+        if (image->radial.a >= 0)
+	    break;
+
+	/* Fall through */
+
+    case CONICAL:
+    case LINEAR:
 	code = PIXMAN_unknown;
 
 	if (image->common.repeat != PIXMAN_REPEAT_NONE)
@@ -437,6 +438,17 @@ compute_image_info (pixman_image_t *image)
 	break;
     }
 
+    /* Alpha map */
+    if (!image->common.alpha_map)
+    {
+	flags |= FAST_PATH_NO_ALPHA_MAP;
+    }
+    else
+    {
+	if (PIXMAN_FORMAT_IS_WIDE (image->common.alpha_map->format))
+	    flags &= ~FAST_PATH_NARROW_FORMAT;
+    }
+
     /* Both alpha maps and convolution filters can introduce
      * non-opaqueness in otherwise opaque images. Also
      * an image with component alpha turned on is only opaque
@@ -447,7 +459,7 @@ compute_image_info (pixman_image_t *image)
 	image->common.filter == PIXMAN_FILTER_CONVOLUTION	||
 	image->common.component_alpha)
     {
-	flags &= ~FAST_PATH_IS_OPAQUE;
+	flags &= ~(FAST_PATH_IS_OPAQUE | FAST_PATH_SAMPLES_OPAQUE);
     }
 
     image->common.flags = flags;
@@ -654,15 +666,41 @@ pixman_image_set_alpha_map (pixman_image_t *image,
 
     return_if_fail (!alpha_map || alpha_map->type == BITS);
 
+    if (alpha_map && common->alpha_count > 0)
+    {
+	/* If this image is being used as an alpha map itself,
+	 * then you can't give it an alpha map of its own.
+	 */
+	return;
+    }
+
+    if (alpha_map && alpha_map->common.alpha_map)
+    {
+	/* If the image has an alpha map of its own,
+	 * then it can't be used as an alpha map itself
+	 */
+	return;
+    }
+
     if (common->alpha_map != (bits_image_t *)alpha_map)
     {
 	if (common->alpha_map)
+	{
+	    common->alpha_map->common.alpha_count--;
+
 	    pixman_image_unref ((pixman_image_t *)common->alpha_map);
+	}
 
 	if (alpha_map)
+	{
 	    common->alpha_map = (bits_image_t *)pixman_image_ref (alpha_map);
+
+	    common->alpha_map->common.alpha_count++;
+	}
 	else
+	{
 	    common->alpha_map = NULL;
+	}
     }
 
     common->alpha_origin_x = x;
@@ -678,6 +716,12 @@ pixman_image_set_component_alpha   (pixman_image_t *image,
     image->common.component_alpha = component_alpha;
 
     image_property_changed (image);
+}
+
+PIXMAN_EXPORT pixman_bool_t
+pixman_image_get_component_alpha   (pixman_image_t       *image)
+{
+    return image->common.component_alpha;
 }
 
 PIXMAN_EXPORT void
@@ -741,13 +785,22 @@ pixman_image_get_depth (pixman_image_t *image)
     return 0;
 }
 
+PIXMAN_EXPORT pixman_format_code_t
+pixman_image_get_format (pixman_image_t *image)
+{
+    if (image->type == BITS)
+	return image->bits.format;
+
+    return 0;
+}
+
 uint32_t
 _pixman_image_get_solid (pixman_image_t *     image,
                          pixman_format_code_t format)
 {
     uint32_t result;
 
-    _pixman_image_get_scanline_32 (image, 0, 0, 1, &result, NULL, 0);
+    _pixman_image_get_scanline_32 (image, 0, 0, 1, &result, NULL);
 
     /* If necessary, convert RGB <--> BGR. */
     if (PIXMAN_FORMAT_TYPE (format) != PIXMAN_TYPE_ARGB)
