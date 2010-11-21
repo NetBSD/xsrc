@@ -58,7 +58,6 @@
 
 /* Machine independent stuff */
 #include "mipointer.h"
-#include "mibank.h"
 #include "micmap.h"
 /* All drivers implementing backing store need this */
 #include "mibstore.h"
@@ -500,7 +499,7 @@ AmdProbe(DriverPtr drv, int flags)
 			    break;
 			}
 		    }
-		    xfree(pEnt);
+		    free(pEnt);
 		    if (drvr_setup == NULL)
 			return FALSE;
 
@@ -521,9 +520,9 @@ AmdProbe(DriverPtr drv, int flags)
     }
 
     if (usedChips)
-	xfree(usedChips);
+	free(usedChips);
     if (devSections)
-	xfree(devSections);
+	free(devSections);
     DEBUGMSG(1, (0, X_INFO, "AmdProbe: result (%d)!\n", foundScreen));
     return foundScreen;
 }
