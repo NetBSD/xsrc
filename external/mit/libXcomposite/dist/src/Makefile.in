@@ -92,8 +92,7 @@ am__installdirs = "$(DESTDIR)$(libdir)" \
 	"$(DESTDIR)$(libXcompositeincludedir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
 am__DEPENDENCIES_1 =
-libXcomposite_la_DEPENDENCIES = $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+libXcomposite_la_DEPENDENCIES = $(am__DEPENDENCIES_1)
 am_libXcomposite_la_OBJECTS = Xcomposite.lo
 libXcomposite_la_OBJECTS = $(am_libXcomposite_la_OBJECTS)
 AM_V_lt = $(am__v_lt_$(V))
@@ -216,6 +215,8 @@ STRIP = @STRIP@
 VERSION = @VERSION@
 XCOMPOSITE_CFLAGS = @XCOMPOSITE_CFLAGS@
 XCOMPOSITE_LIBS = @XCOMPOSITE_LIBS@
+XFIXES_CFLAGS = @XFIXES_CFLAGS@
+XFIXES_LIBS = @XFIXES_LIBS@
 XMLTO = @XMLTO@
 XORG_MAN_PAGE = @XORG_MAN_PAGE@
 abs_builddir = @abs_builddir@
@@ -254,7 +255,6 @@ libdir = @libdir@
 libexecdir = @libexecdir@
 localedir = @localedir@
 localstatedir = @localstatedir@
-lt_ECHO = @lt_ECHO@
 mandir = @mandir@
 mkdir_p = @mkdir_p@
 oldincludedir = @oldincludedir@
@@ -270,14 +270,14 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-AM_CFLAGS = $(CWARNFLAGS) $(XCOMPOSITE_CFLAGS) $(X_CFLAGS)
+AM_CFLAGS = $(CWARNFLAGS) $(XCOMPOSITE_CFLAGS) $(XFIXES_CFLAGS)
 AM_CPPFLAGS = -I$(top_srcdir)/include
 lib_LTLIBRARIES = libXcomposite.la
 libXcomposite_la_SOURCES = \
 	xcompositeint.h	\
 	Xcomposite.c
 
-libXcomposite_la_LIBADD = $(XCOMPOSITE_LIBS) $(X_LIBS) $(XCOMPOSITE_LIBS)
+libXcomposite_la_LIBADD = $(XCOMPOSITE_LIBS)
 libXcomposite_la_LDFLAGS = -version-number 1:0:0 -no-undefined
 libXcompositeincludedir = $(includedir)/X11/extensions
 libXcompositeinclude_HEADERS = $(top_srcdir)/include/X11/extensions/Xcomposite.h 
