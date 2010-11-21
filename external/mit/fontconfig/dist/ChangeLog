@@ -1,51 +1,3534 @@
+commit 4a3bef8ac3b91354c6c10b5f6af10ead9d4fe49a
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:   Wed Nov 18 18:45:19 2009 -0500
+
+    Bump version to 2.8.0
+
+ README                  |   32 ++++++++++++++++++++++++++++++--
+ configure.in            |    2 +-
+ fontconfig/fontconfig.h |    4 ++--
+ 3 files changed, 33 insertions(+), 5 deletions(-)
+
+commit 2e44cbe1b9bf466718167e9e05077743df36ab21
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:   Wed Nov 18 18:45:06 2009 -0500
+
+    Bump libtool revision in preparation for release
+
+ configure.in |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
+
+commit 91a73751dcd4fd2d2e4e8bcb98af53098c721224
+Author: Tor Lillqvist <tml@iki.fi>
+Date:   Wed Nov 18 21:56:16 2009 +0200
+
+    Improve zip "distribution"
+
+    Don't put entries for directories in the zip file. Fetch manpages from
+    correct place.
+
+ fontconfig-zip.in |    8 ++------
+ 1 files changed, 2 insertions(+), 6 deletions(-)
+
+commit bb8fdae8ad6f0a857569b3e09cf21f1af6b4a41b
+Author: Tor Lillqvist <tml@iki.fi>
+Date:   Wed Nov 18 21:54:39 2009 +0200
+
+    Use correct autoconf variable
+
+    Use LIBT_CURRENT_MINUS_AGE instead of the undefined
+    lt_current_minus_age for the name of the DLL when generating the MS
+    style import library.
+
+ src/Makefile.am |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
+
+commit 1845f3100d15927cc536bc3d38f140c139fb5614
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:   Wed Nov 18 14:39:34 2009 -0500
+
+    [fc-arch] Rename architecture names to better reflect what they are
+
+    We only care about three properties in the arch:
+
+      - endianness
+      - pointer size
+      - for 32-bit archs, whether double is aligned on 4 or 8 bytes
+
+    This leads to the following 6 archs (old name -> new name):
+
+	x86    -> le32d4
+	mipsel -> le32d8
+	x86-64 -> le64
+	m68k   -> be32d4
+	ppc    -> be32d8
+	ppc64  -> be64
+
+ fc-arch/fcarch.tmpl.h |   67
+ +++++++++++++++++++++++++------------------------
+ 1 files changed, 34 insertions(+), 33 deletions(-)
+
+commit d5ebf48e34e9235cf10e9f7beb49af74823c3fc6
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Wed Nov 18 14:08:00 2009 -0500
+
+    [fc-arch] Beautify the arch template
+
+ fc-arch/fc-arch.c     |   10 +++++-----
+ fc-arch/fcarch.tmpl.h |   42 ++++++++++++++++++++++++++++++++++--------
+ 2 files changed, 39 insertions(+), 13 deletions(-)
+
+commit d074706b507226427f5a4018e78fe120a01eb53d
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Wed Nov 18 09:40:11 2009 -0500
+
+    [fc-case] Update CaseFolding.txt to Unicode 5.2.0
+
+ fc-case/CaseFolding.txt |  116
+ +++++++++++++++++++++++++++++++++++++++++++++--
+ 1 files changed, 112 insertions(+), 4 deletions(-)
+
+commit 13781ba00b0ded28319ff417a254c620231973f1
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Wed Nov 18 09:36:23 2009 -0500
+
+    [fc-glyphname] Remove Adobe glyphlist
+
+    It was unused.
+
+ fc-glyphname/glyphlist.txt | 4291
+ --------------------------------------------
+ 1 files changed, 0 insertions(+), 4291 deletions(-)
+
+commit d2fb683796f41a68edec53f26e524fd06725eef8
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Wed Nov 18 09:35:40 2009 -0500
+
+    Clean up Makefile's a bit
+
+ fc-arch/Makefile.am	  |    4 +---
+ fc-case/Makefile.am	  |    7 +++----
+ fc-glyphname/Makefile.am |    3 ++-
+ fc-lang/Makefile.am	  |    2 +-
+ src/Makefile.am	  |   12 +++++++++---
+ 5 files changed, 16 insertions(+), 12 deletions(-)
+
+commit 192927225c447a8eaba613838aff93f82dee41d0
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Wed Nov 18 09:26:24 2009 -0500
+
+    [fc-glyphname] Rename internal arrays to prefix with _fc_
+
+    Although they were static, I was still surprised that gdb was seeing
+    our variable "glyphs".  Not helpful.
+
+ fc-glyphname/fc-glyphname.c |	  6 +++---
+ src/fcfreetype.c	     |	 13 ++++++-------
+ 2 files changed, 9 insertions(+), 10 deletions(-)
+
+commit 3e5e83e12e051d6ac734f08609c6c584b0f0b807
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Wed Nov 18 09:26:01 2009 -0500
+
+    [src] Create fcglyphname.h automatically
+
+ src/Makefile.am |    4 +++-
+ 1 files changed, 3 insertions(+), 1 deletions(-)
+
+commit 040c98bcc40617ecbc9eb7e16b1714ebd256cfdc
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Wed Nov 18 09:25:42 2009 -0500
+
+    [fc-glyphname] Cleanup Makefile.am
+
+ fc-glyphname/Makefile.am |    8 +++-----
+ 1 files changed, 3 insertions(+), 5 deletions(-)
+
+commit 77f4e60a32971a815b85f187712191724a00b856
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Wed Nov 18 09:10:05 2009 -0500
+
+    Remove bogus comment
+
+    Last night in between my dreams I also noticed that we support Unicode
+    values up to 0x01000000 and not 0x00100000 which I thought before.
+    This covers the entire Unicode range.
+
+ src/fccharset.c |    1 -
+ 1 files changed, 0 insertions(+), 1 deletions(-)
+
+commit a90a3ad97a7cee10225190e13a576e55871b9441
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Tue Nov 17 12:10:01 2009 -0500
+
+    Make sure fclang.h and fcarch.h are built
+
+ src/Makefile.am |    7 ++++++-
+ 1 files changed, 6 insertions(+), 1 deletions(-)
+
+commit a3b2426819836ab2454c6a7bad27c382f4a245bf
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Mon Nov 16 18:29:26 2009 -0500
+
+    [lang] Fix serializing LangSet from older versions
+
+ src/fclang.c |    9 ++++++---
+ 1 files changed, 6 insertions(+), 3 deletions(-)
+
+commit 8480c6f86327877fce729ebb01b52bd7a40ddfc5
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Mon Nov 16 17:38:40 2009 -0500
+
+    [arch] Try to ensure proper FcLangSet alignment in arch
+
+ fc-arch/fc-arch.c     |    5 +++--
+ fc-arch/fcarch.tmpl.h |   16 ++++++++--------
+ src/fclang.c	       |    2 +-
+ 3 files changed, 12 insertions(+), 11 deletions(-)
+
+commit dffcb2a083bc5f959ed96dbdf0f365ebc0e710cc
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Mon Nov 16 17:00:50 2009 -0500
+
+    [xml] Remove unused code
+
+ src/fcxml.c |	 12 ------------
+ 1 files changed, 0 insertions(+), 12 deletions(-)
+
+commit b2d910123008115813a5cd623389189a2d66880b
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Mon Nov 16 16:57:53 2009 -0500
+
+    [int] Remove more unused macros
+
+ src/fcint.h |	  4 ----
+ 1 files changed, 0 insertions(+), 4 deletions(-)
+
+commit 247c4f3df21582260c4799bdbda2be1c13cc8901
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Mon Nov 16 15:48:20 2009 -0500
+
+    Enable automake silent rules
+
+ configure.in |    1 +
+ 1 files changed, 1 insertions(+), 0 deletions(-)
+
+commit 963820fcbfdb537fd956f8863f8793cf22093c5d
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Mon Nov 16 15:46:46 2009 -0500
+
+    [int] Remove fc_value_* macros that did nothing other than renaming
+
+ src/fcint.h   |    6 ------
+ src/fcmatch.c |    8 ++++----
+ src/fcpat.c   |   12 ++++++------
+ 3 files changed, 10 insertions(+), 16 deletions(-)
+
+commit 888f9427ae84195104855d2bb2fbb6d44067a998
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Mon Nov 16 15:43:08 2009 -0500
+
+    [int] Remove fc_storage_type() in favor of direct access to v->type
+
+ src/fcint.h   |    1 -
+ src/fcmatch.c |    2 +-
+ src/fcpat.c   |    2 +-
+ 3 files changed, 2 insertions(+), 3 deletions(-)
+
+commit 486fa46893d070485738de6e2c0d418650662d63
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Mon Nov 16 15:41:58 2009 -0500
+
+    Remove unused macros
+
+ src/fcint.h |	  5 -----
+ 1 files changed, 0 insertions(+), 5 deletions(-)
+
+commit 1f4e6fecde22fd4ce8336b01a5c32c533fcb8bac
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Mon Nov 16 15:39:16 2009 -0500
+
+    Bump cache version up from 2 to 3 and fix FcLangSet caching/crash
+
+    Protect cache against future expansions of FcLangSet (adding new
+    orth files).  Previously, doing so could change the size of
+    that struct.  Indeed, that happened between 2.6.0 and 2.7.3, causing
+    crashes.  Unfortunately, sizeof(FcLangSet) was not checked in
+    fcarch.c.
+
+    This changes FcLangSet code to be able to cope with struct size
+    changes.
+    And change cache format, hence bumping from 2 to 3.
+
+ fontconfig/fontconfig.h |    2 +-
+ src/fcint.h		 |    2 +-
+ src/fclang.c		 |   67
+ ++++++++++++++++++++++++++++++++++++----------
+ 3 files changed, 54 insertions(+), 17 deletions(-)
+
+commit 6b1fc678ca59df3f3f1ffac0e509cf485c9df0c0
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Mon Nov 16 16:57:10 2009 -0500
+
+    [int] Define MIN/MAX/ABS macros
+
+ src/fcfreetype.c |    3 ---
+ src/fcint.h	  |    4 ++++
+ 2 files changed, 4 insertions(+), 3 deletions(-)
+
+commit b393846860a390ebe35b19320b5eaf9272084042
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Mon Nov 16 15:17:56 2009 -0500
+
+    [fc-arch] Add FcAlign to arch signature
+
+ fc-arch/fc-arch.c     |    5 +++--
+ fc-arch/fcarch.tmpl.h |   16 ++++++++--------
+ 2 files changed, 11 insertions(+), 10 deletions(-)
+
+commit 8009229bc5cd9b540ff56a47ddc32ccada2679b0
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Mon Nov 16 15:12:52 2009 -0500
+
+    Move FcAlign to fcint.h
+
+ src/fcint.h	   |	8 ++++++++
+ src/fcserialize.c |	8 --------
+ 2 files changed, 8 insertions(+), 8 deletions(-)
+
+commit 36ae1d9563cff4966b293f816cf9eb25c8ebb857
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Mon Nov 9 13:17:17 2009 -0500
+
+    Clarify default confdir and cachedir better.
+
+    Also remove --with-docdir.	It can be set by setting docdir variable.
+
+ configure.in	 |   19 ++-----------------
+ doc/Makefile.am |    2 --
+ 2 files changed, 2 insertions(+), 19 deletions(-)
+
+commit b322eb4d7a90778dc9f08c73036836deba7e463e
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Tue Sep 8 11:45:26 2009 -0400
+
+    Bump version to 2.7.3
+
+ README			 |   14 ++++++++++++--
+ configure.in		 |    2 +-
+ fontconfig/fontconfig.h |    2 +-
+ 3 files changed, 14 insertions(+), 4 deletions(-)
+
+commit afc845d930877ac62f6d5a5f50ea87b5182d0a4a
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Tue Sep 8 11:44:59 2009 -0400
+
+    Bump libtool version in preparation for release
+
+ configure.in |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
+
+commit 5e544b32d8dc98737c7a268a6a5f877207284e9a
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Sun Sep 6 22:10:22 2009 -0400
+
+    Use default config in FcFileScan() and FcDirScan()
+
+    Before a NULL config was passed down adn essentially FcFileScan was
+    equivalent to FcFreeTypeQuery.  Now fc-scan tool correctly applies
+    the configuration to the scanned patterns.
+
+ src/fcdir.c |	  4 ++--
+ 1 files changed, 2 insertions(+), 2 deletions(-)
+
+commit 25436fd08fa6d0825a2f7c7b5d51e34873a05187
+Author: Roozbeh Pournader <roozbeh@gmail.com>
+Date:	Wed Sep 2 20:03:42 2009 -0700
+
+    Updated Arabic, Persian, and Urdu orthographies
+
+    - Arabic (ar), Persian (fa), and Urdu (ur) now use generic forms
+    (bug #23004)
+    - Persian (fa) orthography updated to latest standards and
+    orthographies
+    - Persian dialects Dari/Eastern Farsi (prs) and Western Farsi
+    (pes) added
+
+ fc-lang/ar.orth  |   81
+ ++++++++++-------------------------------------------
+ fc-lang/fa.orth  |   80
+ +++++++++++++++++++++++++++++++++--------------------
+ fc-lang/pes.orth |   26 +++++++++++++++++
+ fc-lang/prs.orth |   29 +++++++++++++++++++
+ fc-lang/ur.orth  |   77
+ ++++++++++++++++++++++++++------------------------
+ 5 files changed, 161 insertions(+), 132 deletions(-)
+
+commit d9d8b8826402ca75e882a427392bc8209ae8ff1a
+Author: Roozbeh Pournader <roozbeh@gmail.com>
+Date:	Wed Sep 2 18:54:24 2009 -0700
+
+    Correct Ewe (ee) orthography to use U+025B (bug #20711)
+
+ fc-lang/ee.orth |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
+
+commit e52fdbd2bc1b9589ca0adc4b0c143034ff60dd18
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Mon Aug 31 17:32:36 2009 -0400
+
+    Bump version to 2.7.2
+
+ README			 |   19 +++++++++++++++++--
+ configure.in		 |    2 +-
+ fontconfig/fontconfig.h |    2 +-
+ 3 files changed, 19 insertions(+), 4 deletions(-)
+
+commit a74cfb63cb6af3c357b9c33d9f28b9cea5ff3e72
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Mon Aug 31 17:32:13 2009 -0400
+
+    Bump libtool version for release
+
+ configure.in |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
+
+commit c5f0a65b36bc863d67bbf1f334262c35445ce610
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Tue Aug 25 20:40:30 2009 -0400
+
+    Revert "Fix FcNameUnparseLangSet()" and redo it
+
+    This reverts commit 5c6d1ff23bda4386984a1d6e4c024958f8f5547c and
+    fixes that bug using the new reverse-map I added in the previous
+    commit.
+
+ src/fclang.c |   29 ++++++++++++++++++-----------
+ 1 files changed, 18 insertions(+), 11 deletions(-)
+
+commit d354a321ee51f0bb70a39faeed541d1a90477d7d
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Tue Aug 25 20:39:20 2009 -0400
+
+    Bug 23419 - "contains" expression seems not working on the fontconfig
+    rule
+
+    Fix bug in FcLangSetContains(), similar to
+    5c6d1ff23bda4386984a1d6e4c024958f8f5547c
+
+ fc-lang/fc-lang.c |   20 +++++++++++++++++---
+ src/fclang.c	   |	4 ++--
+ 2 files changed, 19 insertions(+), 5 deletions(-)
+
+commit f33a23133ecbcc981745051f7c34d96b33b57447
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Fri Aug 21 13:41:41 2009 -0400
+
+    Bug 22037 - No Fonts installed on a default install on Windows
+    Server 2003
+
+    Make it easy to install on older Windows
+
+ src/fcxml.c |	  4 ++++
+ 1 files changed, 4 insertions(+), 0 deletions(-)
+
+commit 8b1ceef0b7f41703775c163d6ac595a5407e9159
+Author: Tor Lillqvist <tml@iki.fi>
+Date:	Fri Aug 14 00:16:18 2009 +0300
+
+    Use multi-byte codepage aware string function on Windows
+
+    The East Asian double-byte codepages have characters with backslash as
+    the second byte, so we must use _mbsrchr() instead of strrchr() when
+    looking at pathnames in the system codepage.
+
+ src/fcxml.c |	 11 +++++++++--
+ 1 files changed, 9 insertions(+), 2 deletions(-)
+
+commit d15678127aeea96c9c8254a171c2f0af0bd7d140
+Author: Tor Lillqvist <tml@iki.fi>
+Date:	Fri Aug 14 00:08:17 2009 +0300
+
+    Fix heap corruption on Windows in FcEndElement()
+
+    Must not call FcStrFree() on a value returned by
+    FcStrBufDoneStatic(). In the Windows code don't bother with dynamic
+    allocation, just use a local buffer.
+
+ src/fcxml.c |	 43 +++++++++++--------------------------------
+ 1 files changed, 11 insertions(+), 32 deletions(-)
+
+commit a1b6e34a9a17a4a675bdc993aa465b92d7122376
+Author: Tor Lillqvist <tml@iki.fi>
+Date:	Fri Aug 14 00:02:59 2009 +0300
+
+    Fix MinGW compilation
+
+    Need to define _WIN32_WINNT as 0x0500 to get declaration for
+    GetSystemWindowsDirectory().
+
+ src/fcxml.c |	  1 +
+ 1 files changed, 1 insertions(+), 0 deletions(-)
+
+commit 161620108bbb4e70f2817481e4d5bc26772fe67e
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Tue Jul 28 14:24:21 2009 -0400
+
+    [ja.orth] Comment out FULLWIDTH YEN SIGN (#22942)
+
+ fc-lang/ja.orth |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
+
+commit 7c12181f7a75a434e2139f4bee794046258342cf
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Tue Jul 28 14:23:10 2009 -0400
+
+    Improve charset printing
+
+ src/fcdbg.c  |    4 ++--
+ src/fclang.c |    4 ++--
+ 2 files changed, 4 insertions(+), 4 deletions(-)
+
+commit d2c8ac373e9ac45df66627cfc42679636d017f6e
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Mon Jul 27 17:53:26 2009 -0400
+
+    Bump version to 2.7.1
+
+ README			 |   27 +++++++++++++++++++++++++--
+ configure.in		 |    4 ++--
+ fontconfig/fontconfig.h |    2 +-
+ 3 files changed, 28 insertions(+), 5 deletions(-)
+
+commit 16630692ec590bd70f4e426125e358251e05435d
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Mon Jul 27 17:51:17 2009 -0400
+
+    Update .gitignore
+
+ .gitignore |	 1 +
+ 1 files changed, 1 insertions(+), 0 deletions(-)
+
+commit 50d937b0e110ee21d9861b8fb973d62534db98ae
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Mon Jul 27 17:48:29 2009 -0400
+
+    Bump libtool versions that 2.7.0 (I forgot to do back then)
+
+ configure.in |    4 ++--
+ 1 files changed, 2 insertions(+), 2 deletions(-)
+
+commit 273e22c71f78281ade1c5c30a25ef10d214d7ea6
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Mon Jul 27 15:07:12 2009 -0400
+
+    Hardcode /etc/fonts instead of @CONFDIR@ in docs (#22911)
+
+    We distribute the docs, so it makes little sense to distribute with
+    @CONFDIR@ replaced.  Until we find a better solution, I've hardcoded
+    /etc/fonts now.
+
+ doc/confdir.sgml.in |	  3 ++-
+ 1 files changed, 2 insertions(+), 1 deletions(-)
+
+commit 21384990ffd045cc0f8379a325612aba6d810359
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Mon Jul 27 14:50:44 2009 -0400
+
+    [doc] Add ~/fonts.conf.d to user docs
+
+ doc/fontconfig-user.sgml |    7 +++++++
+ 1 files changed, 7 insertions(+), 0 deletions(-)
+
+commit 7575c666619c58df00659d4e70b01104b8e114a5
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Sat Jul 25 16:38:52 2009 -0400
+
+    TT_MS_ID_UCS_4 is really UTF-16BE, not UTF-32
+
+    Reported by Yuriy Kaminskiy.
+
+ src/fcfreetype.c |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
+
+commit 558581c434abf0d96c46cf3bb1454be6806e1ffc
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Fri Jul 24 14:59:07 2009 -0400
+
+    Fix doc syntax (#22902)
+
+ fc-match/fc-match.sgml |    3 ++-
+ fc-scan/fc-scan.sgml	|    2 +-
+ 2 files changed, 3 insertions(+), 2 deletions(-)
+
+commit 5c6d1ff23bda4386984a1d6e4c024958f8f5547c
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Wed Jul 22 19:25:24 2009 -0400
+
+    Fix FcNameUnparseLangSet()
+
+    Was broken since ffd6668b469508177c4baf7745ae42aee5b00322
+
+ src/fclang.c |   29 +++++++++++------------------
+ 1 files changed, 11 insertions(+), 18 deletions(-)
+
+commit d9741a7f1a73f718ab20b0582fff8aebeba01077
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Wed Jul 22 19:01:06 2009 -0400
+
+    Remove unused macros
+
+ src/fcmatch.c |   33 ++-------------------------------
+ 1 files changed, 2 insertions(+), 31 deletions(-)
+
+commit 792ce655cb06c678d4a4ff091866fd0531b141fb
+Author: Karl Tomlinson <karlt@karlt.net>
+Date:	Wed Jul 22 08:39:23 2009 -0400
+
+    Don't change the order of names unnecessarily (#20128)
+
+    so that TT_NAME_ID_PREFERRED_FAMILY is consistently preferred over
+    TT_NAME_ID_FONT_FAMILY when both are specified for the default
+    language.
+
+ src/fclist.c |    5 ++++-
+ 1 files changed, 4 insertions(+), 1 deletions(-)
+
+commit 327fc9d183ba193c307d0ecaec8ad1f4e6ca1330
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Tue Jul 21 15:41:47 2009 -0400
+
+    Use GetSystemWindowsDirectory() instead of GetWindowsDirectory()
+    (#22037)
+
+ src/fcxml.c |	  6 +++---
+ 1 files changed, 3 insertions(+), 3 deletions(-)
+
+commit 86dd857447f69cf89fd47259055b150f62519c17
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Tue Jul 21 15:39:58 2009 -0400
+
+    Improve libtool version parsing (#22122)
+
+ autogen.sh |	 2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
+
+commit 16e55c7c85fc5771349172d6eb989dddd48c5c25
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Mon Jul 20 16:30:12 2009 -0400
+
+    Fix leak with string VStack objects
+
+ src/fcxml.c |	  2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
+
+commit c0ffd7733a735bf2e10834925c63f0039c408649
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Fri Jul 10 18:09:42 2009 +0100
+
+    Add Inconsolata to monospace config (#22710)
+
+ conf.d/45-latin.conf |    1 +
+ conf.d/60-latin.conf |    1 +
+ 2 files changed, 2 insertions(+), 0 deletions(-)
+
+commit 55e202a62d95e25cf2c4897afd66eab5711195c3
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Sun Jun 28 14:14:46 2009 -0400
+
+    Remove unused ftglue code
+
+ src/fcfreetype.c |   66
+ +++++++++++++++++++++++-------------------------------
+ src/ftglue.c	  |   62
+ +-------------------------------------------------
+ src/ftglue.h	  |   33 ---------------------------
+ 3 files changed, 30 insertions(+), 131 deletions(-)
+
+commit 52742ff86b60b1d244c1e87611aff5ceee46e596
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Sun Jun 28 13:49:09 2009 -0400
+
+    Replace spaces with tabs in conf files
+
+ conf.d/25-unhint-nonlatin.conf |   32 ++++----
+ conf.d/30-metric-aliases.conf	|   48 +++++-----
+ conf.d/30-urw-aliases.conf	|   36 ++++----
+ conf.d/65-fonts-persian.conf	|  184
+ ++++++++++++++++++++--------------------
+ conf.d/90-synthetic.conf	|    8 +-
+ 5 files changed, 154 insertions(+), 154 deletions(-)
+
+commit 57cf838cccda12dd171d3834b3e9b1275467d9e2
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Sun Jun 28 13:46:41 2009 -0400
+
+    Fix win32 build
+
+ src/fcint.h |	  2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
+
+commit 76374f0edef04e21859122dd8a2026b64fd2b273
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Wed Jun 24 15:19:13 2009 -0400
+
+    git-tag -s again
+
+ new-version.sh |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
+
+commit 0f40912599a4be1b961c091733ed86d08a4e14e1
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Wed Jun 24 15:04:11 2009 -0400
+
+    Bump version to 2.7.0
+
+ README			 |  222
+ ++++++++++++++++++++++++++++++++++++++++++++++-
+ configure.in		 |    2 +-
+ fontconfig/fontconfig.h |    2 +-
+ 3 files changed, 222 insertions(+), 4 deletions(-)
+
+commit 3734d6a5a2c5326bf1cd8b7cc7f3f07fe6943aa5
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Wed Jun 24 15:03:32 2009 -0400
+
+    Remove keithp's GPG key id
+
+ new-version.sh |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
+
+commit d07059b7a3f8044904d884818d5e03596e7cc1a2
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Wed Jun 24 14:43:32 2009 -0400
+
+    Fix distcheck
+
+ Makefile.am |	  7 +++----
+ 1 files changed, 3 insertions(+), 4 deletions(-)
+
+commit b65fa0c3113bd1e1cec38d05f8c4f45f78e3e044
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Thu Jun 11 07:08:10 2009 -0400
+
+    Bug 22154 -- fontconfig.pc doesn't include libxml2 link flags
+
+ fontconfig.pc.in |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
+
+commit 3164ac76229d9817120015401c1f532934d0a3e2
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Fri Jun 5 22:59:06 2009 -0400
+
+    [xml] Intern more strings
+
+ src/fcxml.c |	  9 ++++-----
+ 1 files changed, 4 insertions(+), 5 deletions(-)
+
+commit 390c05e64a3716f6ea6fd81cf3ab63439051fbaa
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Fri Jun 5 22:32:31 2009 -0400
+
+    [xml] Allocate FcExpr's in a pool in FcConfig
+
+    Reduces number of malloc's for FcExprs from hundreds into single
+    digits.
+
+ src/fccfg.c |	 32 +++++++++++++++++++++++++
+ src/fcint.h |	 14 +++++++++++
+ src/fcxml.c |	 75
+ +++++++++++++++++++++++++---------------------------------
+ 3 files changed, 78 insertions(+), 43 deletions(-)
+
+commit 398d436441d741d6f8edcc25ca01aa9715c0731c
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Fri Jun 5 21:37:01 2009 -0400
+
+    [xml] Mark more symbols static
+
+ src/fcint.h |	 30 ------------------------------
+ src/fcxml.c |	 22 ++++++++++++----------
+ 2 files changed, 12 insertions(+), 40 deletions(-)
+
+commit a96ecbfa20fbc66fad3847b1d2bc6fb3cd712c91
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Fri Jun 5 18:40:46 2009 -0400
+
+    [xml] Centralize FcExpr allocation
+
+    To be improved, using a central pool.
+
+ src/fcxml.c |	 46 ++++++++++++++++++++--------------------------
+ 1 files changed, 20 insertions(+), 26 deletions(-)
+
+commit 5aebb3e299d877c4a66f409a7d448b2ac4e94be0
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Fri Jun 5 18:27:47 2009 -0400
+
+    Remove unused prototypes and function
+
+ src/fcint.h |	 16 ++--------------
+ src/fcxml.c |	  6 ------
+ 2 files changed, 2 insertions(+), 20 deletions(-)
+
+commit 900723f3d2396cfb606e5eceb8df0b71c4ffc0dd
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Fri Jun 5 18:16:38 2009 -0400
+
+    [charset] Grow internal FcCharset arrays exponentially
+
+ src/fccharset.c |   65
+ ++++++++++++++++++++++++++++++------------------------
+ 1 files changed, 36 insertions(+), 29 deletions(-)
+
+commit cce69b07efd82056c8eb855ef7ac7e02c94439da
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Fri Jun 5 17:15:53 2009 -0400
+
+    Always set *changed in FcCharsetMerge
+
+ src/fccharset.c |    5 ++++-
+ 1 files changed, 4 insertions(+), 1 deletions(-)
+
+commit 86bdf4598fb46f7f2a36151016a5d318da073d60
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Fri Jun 5 16:57:35 2009 -0400
+
+    Add XXX note about Unicode Plane 16
+
+ src/fccharset.c |    6 +++---
+ 1 files changed, 3 insertions(+), 3 deletions(-)
+
+commit efe5eae26b2443363b1000b3197d1731a40f8af9
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Fri Jun 5 16:49:07 2009 -0400
+
+    Simplify FcValueSave() semantics
+
+ src/fccfg.c |	  3 ++-
+ src/fcpat.c |	 12 ++----------
+ 2 files changed, 4 insertions(+), 11 deletions(-)
+
+commit 8ea654b2aa6b4e97b369e299325da49807559511
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Mon Jun 1 21:14:56 2009 -0400
+
+    Use/prefer WWS family/style (name table id 21/22)
+
+ src/fcfreetype.c |   12 ++++++++++++
+ 1 files changed, 12 insertions(+), 0 deletions(-)
+
+commit 76845a40c58b092a9b1812830dc98b6f32e13da6
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Mon May 25 20:26:56 2009 -0400
+
+    Mark matchers array const (#21935)
+
+ src/fcmatch.c |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
+
+commit aa82a4f81d4d5e547c84266e66274d55e3843746
+Author: Roozbeh Pournader <roozbeh@gmail.com>
+Date:	Thu May 7 14:31:11 2009 -0700
+
+    Reorganize Panjabi/Punjabi and Lahnda orthographies (bug #19890)
+
+    The correct ISO 639 code for Pakistani/Western Panjabi seems to be
+    'lah',
+    not 'pa'. We are keeping 'pa_pk.orth' for compatiblity with glibc.
+
+    Signed-off-by: Behdad Esfahbod <behdad@behdad.org>
+
+ fc-lang/Makefile.am |	  5 ++-
+ fc-lang/lah.orth    |	 35 +++++++++++++++++++++++++++++++++
+ fc-lang/pa.orth     |	 53
+ +++++++++++++++++++++++++++++++++++++++++++++++++++
+ fc-lang/pa_in.orth  |	 46 --------------------------------------------
+ fc-lang/pa_pk.orth  |	  7 +++--
+ 5 files changed, 95 insertions(+), 51 deletions(-)
+
+commit 58aa0c8ee83f7bbd232401583106387517d216a9
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Thu Apr 9 13:31:18 2009 -0400
+
+    Detect TrueType Collections by checking the font data header
+
+    Instead of checking for "face->num_faces >1". (GNOME bug #577952)
+
+ src/ftglue.c |   11 +++++++++--
+ 1 files changed, 9 insertions(+), 2 deletions(-)
+
+commit 1dd95fcb8bb9b5feeabee0dfe334448733f5cb4c
+Author: Serge van den Boom <svdb+freedesktop.org@stack.nl>
+Date:	Sun Apr 5 19:00:18 2009 -0400
+
+    Correctly handle mmap() failure (#21062)
+
+ src/fccache.c |    2 ++
+ 1 files changed, 2 insertions(+), 0 deletions(-)
+
+commit 35c51811515ab316c7279bd779f6685f2aaf7e81
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Wed Mar 25 23:40:40 2009 -0400
+
+    [fc-cache] Remove obsolete sentence from man page
+
+ fc-cache/fc-cache.sgml |    5 +----
+ 1 files changed, 1 insertions(+), 4 deletions(-)
+
+commit ffd6668b469508177c4baf7745ae42aee5b00322
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Wed Mar 18 19:28:52 2009 -0400
+
+    [fc-lang] Make LangSet representation in the cache files stable
+
+    Fontconfig assigns an index number to each language it knows about.
+    The index is used to index a bit in FcLangSet language map.  The bit
+    map is stored in the cache.
+
+    Previously fc-lang simply sorted the list of languages and assigned
+    them an index starting from zero.  Net effect is that whenever new
+    orth files were added, all the FcLangSet info in the cache files would
+    become invalid.  This was causing weird bugs like this one:
+
+      https://bugzilla.redhat.com/show_bug.cgi?id=490888
+
+    With this commit we fix the index assigned to each language.
+    The index
+    will be based on the order the orth files are passed to fc-lang.  As a
+    result all orth files are explicitly listed in Makefile.am now, and
+    new additions should be made to the end of the list.  The list is made
+    to reflect the sorted list of orthographies from 2.6.0 released
+    followed
+    by new additions since.
+
+    This fixes the stability problem.  Needless to say, recreating caches
+    is necessary before any new orthography is recognized in existing
+    fonts,
+    but at least the existing caches are still valid and don't cause bugs
+    like the above.
+
+ configure.in	     |	  7 --
+ fc-lang/Makefile.am |	248
+ ++++++++++++++++++++++++++++++++++++++++++++++++++-
+ fc-lang/fc-lang.c   |	 49 +++++++---
+ src/fclang.c	     |	  4 +-
+ 4 files changed, 282 insertions(+), 26 deletions(-)
+
+commit 4d13536db49bdfba97f84f702325d1a99796c06b
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Wed Mar 18 18:50:14 2009 -0400
+
+    [fcstr] Remove unused variable
+
+ src/fcstr.c |	  2 --
+ 1 files changed, 0 insertions(+), 2 deletions(-)
+
+commit bb36e67685dc4139fc4199c57c9d74d97f7923c8
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Wed Mar 18 18:43:09 2009 -0400
+
+    [fc-lang] Fix bug in country map generation
+
+    Previously the county map code was using an uninitialized variable and
+    hence was totally failing to populate same-lang-different-territory
+    map.
+
+ fc-lang/fc-lang.c |	2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
+
+commit 0f11354877323edc2145f687f9127d2de83c5b3b
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Tue Mar 17 12:52:48 2009 -0400
+
+    Revert "[conf] Disable hinting when emboldening (#19904)" (#20599)
+
+    This reverts commit 10609af4aa4030a15c19573198462fa002d2ef13.
+    Apparently disabling hinting can cause worse rendering with certain
+    fonts.  This is better handled on a per font basis.
+
+ conf.d/90-synthetic.conf |   11 -----------
+ 1 files changed, 0 insertions(+), 11 deletions(-)
+
+commit 7042e236495399aab4eaf268232177d4b1680a12
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Mon Mar 16 17:59:50 2009 -0400
+
+    [Makefile.am] Don't clean ChangeLog in distclean
+
+ Makefile.am |	  2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
+
+commit caeea376da54a6337bfcb1bb20f50c8c2302458f
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Fri Mar 13 17:26:21 2009 -0400
+
+    Document FcPatternFormat() format
+
+ doc/Makefile.am	   |	2 +
+ doc/fcformat.fncs	   |  301
+ +++++++++++++++++++++++++++++++++++++++++++++
+ doc/fcpattern.fncs	   |   20 ---
+ doc/fontconfig-devel.sgml |	2 +
+ src/fcformat.c		   |   94 +++++++-------
+ 5 files changed, 353 insertions(+), 66 deletions(-)
+
+commit f6d83439890c165e5a7f6a8a746ffdb189dbbd0d
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Fri Mar 13 12:11:13 2009 -0400
+
+    [fcformat] Fix default-value handling
+
+ src/fcformat.c |   21 +++++++++++----------
+ 1 files changed, 11 insertions(+), 10 deletions(-)
+
+commit 3074a73b418b40135d4a4f4e0713fcf987d34795
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Thu Mar 12 16:00:08 2009 -0400
+
+    Replace 'KEITH PACKARD' with 'THE AUTHOR(S)' in license text in
+    all files
+
+ COPYING			 |    4 ++--
+ Makefile.am			 |    4 ++--
+ conf.d/65-fonts-persian.conf	 |    2 +-
+ conf.d/Makefile.am		 |    4 ++--
+ config/Makedefs.in		 |    4 ++--
+ configure.in			 |    4 ++--
+ doc/Makefile.am		 |    4 ++--
+ doc/confdir.sgml.in		 |    4 ++--
+ doc/edit-sgml.c		 |    4 ++--
+ doc/fcatomic.fncs		 |    4 ++--
+ doc/fcblanks.fncs		 |    4 ++--
+ doc/fccache.fncs		 |    4 ++--
+ doc/fccharset.fncs		 |    4 ++--
+ doc/fcconfig.fncs		 |    4 ++--
+ doc/fcconstant.fncs		 |    4 ++--
+ doc/fcfile.fncs		 |    4 ++--
+ doc/fcfontset.fncs		 |    4 ++--
+ doc/fcfreetype.fncs		 |    4 ++--
+ doc/fcinit.fncs		 |    4 ++--
+ doc/fcmatrix.fncs		 |    4 ++--
+ doc/fcobjectset.fncs		 |    4 ++--
+ doc/fcobjecttype.fncs		 |    4 ++--
+ doc/fcpattern.fncs		 |    4 ++--
+ doc/fcstring.fncs		 |    4 ++--
+ doc/fcstrset.fncs		 |    4 ++--
+ doc/fcvalue.fncs		 |    4 ++--
+ doc/fontconfig-devel.sgml	 |    8 ++++----
+ doc/fontconfig-user.sgml	 |    4 ++--
+ doc/func.sgml			 |    4 ++--
+ doc/version.sgml.in		 |    4 ++--
+ fc-arch/Makefile.am		 |    4 ++--
+ fc-arch/fcarch.tmpl.h		 |    4 ++--
+ fc-cache/Makefile.am		 |    4 ++--
+ fc-cache/fc-cache.c		 |    4 ++--
+ fc-case/Makefile.am		 |    4 ++--
+ fc-case/fc-case.c		 |    4 ++--
+ fc-case/fccase.tmpl.h		 |    4 ++--
+ fc-cat/Makefile.am		 |    4 ++--
+ fc-cat/fc-cat.c		 |    4 ++--
+ fc-glyphname/Makefile.am	 |    4 ++--
+ fc-glyphname/fc-glyphname.c	 |    4 ++--
+ fc-glyphname/fcglyphname.tmpl.h |    4 ++--
+ fc-lang/Makefile.am		 |    4 ++--
+ fc-lang/aa.orth		 |    4 ++--
+ fc-lang/ab.orth		 |    4 ++--
+ fc-lang/af.orth		 |    4 ++--
+ fc-lang/am.orth		 |    4 ++--
+ fc-lang/ar.orth		 |    4 ++--
+ fc-lang/ast.orth		 |    4 ++--
+ fc-lang/av.orth		 |    4 ++--
+ fc-lang/ay.orth		 |    4 ++--
+ fc-lang/az_ir.orth		 |    4 ++--
+ fc-lang/ba.orth		 |    4 ++--
+ fc-lang/be.orth		 |    4 ++--
+ fc-lang/bg.orth		 |    4 ++--
+ fc-lang/bh.orth		 |    4 ++--
+ fc-lang/bho.orth		 |    4 ++--
+ fc-lang/bi.orth		 |    4 ++--
+ fc-lang/bin.orth		 |    4 ++--
+ fc-lang/bm.orth		 |    4 ++--
+ fc-lang/bo.orth		 |    4 ++--
+ fc-lang/br.orth		 |    4 ++--
+ fc-lang/bs.orth		 |    4 ++--
+ fc-lang/bua.orth		 |    4 ++--
+ fc-lang/ca.orth		 |    4 ++--
+ fc-lang/ce.orth		 |    4 ++--
+ fc-lang/ch.orth		 |    4 ++--
+ fc-lang/chm.orth		 |    4 ++--
+ fc-lang/chr.orth		 |    4 ++--
+ fc-lang/co.orth		 |    4 ++--
+ fc-lang/cs.orth		 |    4 ++--
+ fc-lang/cu.orth		 |    4 ++--
+ fc-lang/cv.orth		 |    4 ++--
+ fc-lang/cy.orth		 |    4 ++--
+ fc-lang/da.orth		 |    4 ++--
+ fc-lang/de.orth		 |    4 ++--
+ fc-lang/dz.orth		 |    4 ++--
+ fc-lang/el.orth		 |    4 ++--
+ fc-lang/en.orth		 |    4 ++--
+ fc-lang/eo.orth		 |    4 ++--
+ fc-lang/es.orth		 |    4 ++--
+ fc-lang/et.orth		 |    4 ++--
+ fc-lang/eu.orth		 |    4 ++--
+ fc-lang/fa.orth		 |    4 ++--
+ fc-lang/fc-lang.c		 |    4 ++--
+ fc-lang/fc-lang.man		 |    4 ++--
+ fc-lang/fclang.tmpl.h		 |    4 ++--
+ fc-lang/ff.orth		 |    4 ++--
+ fc-lang/fi.orth		 |    4 ++--
+ fc-lang/fj.orth		 |    4 ++--
+ fc-lang/fo.orth		 |    4 ++--
+ fc-lang/fr.orth		 |    4 ++--
+ fc-lang/fur.orth		 |    4 ++--
+ fc-lang/fy.orth		 |    4 ++--
+ fc-lang/ga.orth		 |    4 ++--
+ fc-lang/gd.orth		 |    4 ++--
+ fc-lang/gez.orth		 |    4 ++--
+ fc-lang/gl.orth		 |    4 ++--
+ fc-lang/gn.orth		 |    4 ++--
+ fc-lang/gu.orth		 |    4 ++--
+ fc-lang/gv.orth		 |    4 ++--
+ fc-lang/ha.orth		 |    4 ++--
+ fc-lang/haw.orth		 |    4 ++--
+ fc-lang/he.orth		 |    4 ++--
+ fc-lang/hi.orth		 |    4 ++--
+ fc-lang/ho.orth		 |    4 ++--
+ fc-lang/hr.orth		 |    4 ++--
+ fc-lang/hu.orth		 |    4 ++--
+ fc-lang/hy.orth		 |    4 ++--
+ fc-lang/ia.orth		 |    4 ++--
+ fc-lang/id.orth		 |    4 ++--
+ fc-lang/ie.orth		 |    4 ++--
+ fc-lang/ig.orth		 |    4 ++--
+ fc-lang/ik.orth		 |    4 ++--
+ fc-lang/io.orth		 |    4 ++--
+ fc-lang/is.orth		 |    4 ++--
+ fc-lang/it.orth		 |    4 ++--
+ fc-lang/iu.orth		 |    4 ++--
+ fc-lang/ja.orth		 |    4 ++--
+ fc-lang/ka.orth		 |    4 ++--
+ fc-lang/kaa.orth		 |    4 ++--
+ fc-lang/ki.orth		 |    4 ++--
+ fc-lang/kk.orth		 |    4 ++--
+ fc-lang/kl.orth		 |    4 ++--
+ fc-lang/kn.orth		 |    4 ++--
+ fc-lang/ko.orth		 |    4 ++--
+ fc-lang/kok.orth		 |    4 ++--
+ fc-lang/ku_am.orth		 |    4 ++--
+ fc-lang/ku_ir.orth		 |    4 ++--
+ fc-lang/kum.orth		 |    4 ++--
+ fc-lang/kv.orth		 |    4 ++--
+ fc-lang/kw.orth		 |    4 ++--
+ fc-lang/ky.orth		 |    4 ++--
+ fc-lang/la.orth		 |    4 ++--
+ fc-lang/lb.orth		 |    4 ++--
+ fc-lang/lez.orth		 |    4 ++--
+ fc-lang/ln.orth		 |    4 ++--
+ fc-lang/lo.orth		 |    4 ++--
+ fc-lang/lt.orth		 |    4 ++--
+ fc-lang/lv.orth		 |    4 ++--
+ fc-lang/mai.orth		 |    4 ++--
+ fc-lang/mg.orth		 |    4 ++--
+ fc-lang/mh.orth		 |    4 ++--
+ fc-lang/mi.orth		 |    4 ++--
+ fc-lang/mk.orth		 |    4 ++--
+ fc-lang/ml.orth		 |    4 ++--
+ fc-lang/mn_cn.orth		 |    4 ++--
+ fc-lang/mo.orth		 |    4 ++--
+ fc-lang/mr.orth		 |    4 ++--
+ fc-lang/mt.orth		 |    4 ++--
+ fc-lang/my.orth		 |    4 ++--
+ fc-lang/nb.orth		 |    4 ++--
+ fc-lang/nds.orth		 |    4 ++--
+ fc-lang/ne.orth		 |    4 ++--
+ fc-lang/nl.orth		 |    4 ++--
+ fc-lang/nn.orth		 |    4 ++--
+ fc-lang/no.orth		 |    4 ++--
+ fc-lang/ny.orth		 |    4 ++--
+ fc-lang/oc.orth		 |    4 ++--
+ fc-lang/om.orth		 |    4 ++--
+ fc-lang/or.orth		 |    4 ++--
+ fc-lang/os.orth		 |    4 ++--
+ fc-lang/pa_in.orth		 |    2 +-
+ fc-lang/pl.orth		 |    4 ++--
+ fc-lang/ps_af.orth		 |    4 ++--
+ fc-lang/ps_pk.orth		 |    4 ++--
+ fc-lang/pt.orth		 |    4 ++--
+ fc-lang/rm.orth		 |    4 ++--
+ fc-lang/ro.orth		 |    4 ++--
+ fc-lang/ru.orth		 |    4 ++--
+ fc-lang/sa.orth		 |    4 ++--
+ fc-lang/sah.orth		 |    4 ++--
+ fc-lang/sco.orth		 |    4 ++--
+ fc-lang/se.orth		 |    4 ++--
+ fc-lang/sel.orth		 |    4 ++--
+ fc-lang/sk.orth		 |    4 ++--
+ fc-lang/sl.orth		 |    4 ++--
+ fc-lang/sm.orth		 |    4 ++--
+ fc-lang/sma.orth		 |    4 ++--
+ fc-lang/smj.orth		 |    4 ++--
+ fc-lang/smn.orth		 |    4 ++--
+ fc-lang/sms.orth		 |    4 ++--
+ fc-lang/so.orth		 |    4 ++--
+ fc-lang/sq.orth		 |    4 ++--
+ fc-lang/sr.orth		 |    4 ++--
+ fc-lang/sv.orth		 |    4 ++--
+ fc-lang/sw.orth		 |    4 ++--
+ fc-lang/syr.orth		 |    4 ++--
+ fc-lang/ta.orth		 |    4 ++--
+ fc-lang/te.orth		 |    4 ++--
+ fc-lang/tg.orth		 |    4 ++--
+ fc-lang/th.orth		 |    4 ++--
+ fc-lang/ti_er.orth		 |    4 ++--
+ fc-lang/ti_et.orth		 |    4 ++--
+ fc-lang/tig.orth		 |    4 ++--
+ fc-lang/tn.orth		 |    4 ++--
+ fc-lang/to.orth		 |    4 ++--
+ fc-lang/tr.orth		 |    4 ++--
+ fc-lang/ts.orth		 |    4 ++--
+ fc-lang/tt.orth		 |    4 ++--
+ fc-lang/tw.orth		 |    4 ++--
+ fc-lang/tyv.orth		 |    4 ++--
+ fc-lang/ug.orth		 |    4 ++--
+ fc-lang/uk.orth		 |    4 ++--
+ fc-lang/ur.orth		 |    4 ++--
+ fc-lang/ve.orth		 |    4 ++--
+ fc-lang/vi.orth		 |    4 ++--
+ fc-lang/vo.orth		 |    4 ++--
+ fc-lang/vot.orth		 |    4 ++--
+ fc-lang/wa.orth		 |    4 ++--
+ fc-lang/wen.orth		 |    4 ++--
+ fc-lang/wo.orth		 |    4 ++--
+ fc-lang/xh.orth		 |    4 ++--
+ fc-lang/yap.orth		 |    4 ++--
+ fc-lang/yi.orth		 |    4 ++--
+ fc-lang/yo.orth		 |    4 ++--
+ fc-lang/zh_cn.orth		 |    4 ++--
+ fc-lang/zh_hk.orth		 |    4 ++--
+ fc-lang/zh_mo.orth		 |    4 ++--
+ fc-lang/zh_sg.orth		 |    4 ++--
+ fc-lang/zh_tw.orth		 |    4 ++--
+ fc-lang/zu.orth		 |    4 ++--
+ fc-list/Makefile.am		 |    4 ++--
+ fc-list/fc-list.c		 |    4 ++--
+ fc-match/Makefile.am		 |    4 ++--
+ fc-match/fc-match.c		 |    4 ++--
+ fc-query/Makefile.am		 |    4 ++--
+ fc-query/fc-query.c		 |    4 ++--
+ fc-scan/Makefile.am		 |    4 ++--
+ fc-scan/fc-scan.c		 |    4 ++--
+ fontconfig/fcfreetype.h	 |    4 ++--
+ fontconfig/fcprivate.h		 |    4 ++--
+ fontconfig/fontconfig.h	 |    4 ++--
+ src/Makefile.am		 |    4 ++--
+ src/fcatomic.c			 |    4 ++--
+ src/fcblanks.c			 |    4 ++--
+ src/fccache.c			 |    4 ++--
+ src/fccfg.c			 |    4 ++--
+ src/fccharset.c		 |    4 ++--
+ src/fcdbg.c			 |    4 ++--
+ src/fcdefault.c		 |    4 ++--
+ src/fcdir.c			 |    4 ++--
+ src/fcformat.c			 |    4 ++--
+ src/fcfreetype.c		 |    4 ++--
+ src/fcfs.c			 |    4 ++--
+ src/fcinit.c			 |    4 ++--
+ src/fcint.h			 |    4 ++--
+ src/fclang.c			 |    4 ++--
+ src/fclist.c			 |    4 ++--
+ src/fcmatch.c			 |    4 ++--
+ src/fcname.c			 |    4 ++--
+ src/fcpat.c			 |    4 ++--
+ src/fcstr.c			 |    4 ++--
+ src/fcxml.c			 |    4 ++--
+ 254 files changed, 508 insertions(+), 508 deletions(-)
+
+commit b9b01b6ed0849f770200fb6ae2a3ac0ca2166877
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Thu Mar 12 13:48:07 2009 -0400
+
+    Call git tools using "git cmd" instead of "git-cmd" syntax
+
+    Recent git doesn't install the git-* commands in path.
+
+ Makefile.am	|    2 +-
+ new-version.sh |   10 +++++-----
+ 2 files changed, 6 insertions(+), 6 deletions(-)
+
+commit de69ee14d3ed094cd2bc4df603a03675c28d1b5b
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Thu Mar 12 12:31:57 2009 -0400
+
+    [fcxml.c] Embed a static 64-byte attr buffer in FcPStack
+
+    Reduces number of mallocs called from FcConfigSaveAttr in my
+    small test
+    from 160 down to 6.
+
+ src/fcstr.c |	  4 ++--
+ src/fcxml.c |	 23 +++++++++++++++--------
+ 2 files changed, 17 insertions(+), 10 deletions(-)
+
+commit 39861b7d9c69e71b9a8fb0d0d04279520cb30f04
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Thu Mar 12 12:22:37 2009 -0400
+
+    [fcxml] Embed 64 static FcVStack objects in FcConfigParse
+
+    This reduces the number of mallocs called from FcVStackPush from
+    over 800 down to zero.
+
+ src/fcxml.c |	218
+ ++++++++++++++++++++++++++++------------------------------
+ 1 files changed, 105 insertions(+), 113 deletions(-)
+
+commit 1d7b47da9da574a8adf39b0b5d11aab3d3cf4a37
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Thu Mar 12 11:58:04 2009 -0400
+
+    [fcxml] Embed 8 static FcPStack objects in FcConfigParse
+
+    This reduces the number of mallocs called from FcPStackPush from
+    over 900 down to zero.
+
+ src/fcxml.c |	 28 ++++++++++++++++++++++------
+ 1 files changed, 22 insertions(+), 6 deletions(-)
+
+commit 532d8a1dbc2baebc2603d091952a640b954b6f71
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Thu Mar 12 09:27:20 2009 -0400
+
+    [fcxml] Don't allocate attr array if there are no attributes
+
+    Reduces number of mallocs from FcConfigSaveAttr() in my small test
+    from over 900 down to 157.
+
+ src/fcxml.c |	 19 ++++++-------------
+ 1 files changed, 6 insertions(+), 13 deletions(-)
+
+commit 3ed70071cdc8a03229c009f5565c23948264a5e0
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Wed Mar 11 14:07:15 2009 -0400
+
+    [fcstr,fcxml] Don't copy FcStrBuf contents when we would free it soon
+
+    We can simply NUL-terminate the buffer and use it.	Reduces number of
+    mallocs called from FcStrBufDone in my small test from 631 down to 66.
+
+ src/fcint.h |	  3 +++
+ src/fcstr.c |	 13 +++++++++++++
+ src/fcxml.c |	 28 ++++++++++++++--------------
+ 3 files changed, 30 insertions(+), 14 deletions(-)
+
+commit 7d35c11b3304659d8be43913c9b125f2b5b38516
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Wed Mar 11 13:56:09 2009 -0400
+
+    [fcstr.c] Embed a static 64-byte buffer in FcStrBuf
+
+    Reduces number of mallocs called from FcStrBufChar in my small test
+    from 900 down to 6.
+
+ src/fcint.h |	  1 +
+ src/fcstr.c |	 11 +++++++++--
+ 2 files changed, 10 insertions(+), 2 deletions(-)
+
+commit 916640ce40b995d1d97244975139ec0c030483e4
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Tue Mar 10 02:15:37 2009 -0400
+
+    Fix Makefile's to not create target file in case of failure
+
+ fc-arch/Makefile.am |	  3 ++-
+ fc-lang/Makefile.am |	  3 ++-
+ 2 files changed, 4 insertions(+), 2 deletions(-)
+
+commit 26ce979e825d661be046b1440563115ddc5ea4ab
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Tue Mar 10 02:14:15 2009 -0400
+
+    Fix Fanti (fat) orth file (#20390)
+
+ fc-lang/fat.orth |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
+
+commit 49111c11fb5dca2af06004cc2ae443517f6c9557
+Author: Roozbeh Pournader <roozbeh@gmail.com>
+Date:	Mon Mar 2 22:48:37 2009 -0800
+
+    Add Sundanese (su) orthography (bug #20440)
+
+ fc-lang/su.orth |   33 +++++++++++++++++++++++++++++++++
+ 1 files changed, 33 insertions(+), 0 deletions(-)
+
+commit 0eaed16d34687bddc831d1ab3c50406c7c56792d
+Author: Roozbeh Pournader <roozbeh@gmail.com>
+Date:	Mon Mar 2 20:53:26 2009 -0800
+
+    Add Kanuri (kr) orthography (bug #20438)
+
+ fc-lang/kr.orth |   43 +++++++++++++++++++++++++++++++++++++++++++
+ 1 files changed, 43 insertions(+), 0 deletions(-)
+
+commit fe4838588b0b9eb84f66bd4ad70ee12013e0b49a
+Author: Roozbeh Pournader <roozbeh@gmail.com>
+Date:	Mon Mar 2 02:21:17 2009 -0800
+
+    Add Nauru (na) orthography (bug #20418)
+
+ fc-lang/na.orth |   40 ++++++++++++++++++++++++++++++++++++++++
+ 1 files changed, 40 insertions(+), 0 deletions(-)
+
+commit 9141b4bbe9a100200b09597f02521cd6e30d0f06
+Author: Roozbeh Pournader <roozbeh@gmail.com>
+Date:	Sun Mar 1 03:53:11 2009 -0800
+
+    Add Javanese (jv) orthography (bug #20403)
+
+ fc-lang/jv.orth |   36 ++++++++++++++++++++++++++++++++++++
+ 1 files changed, 36 insertions(+), 0 deletions(-)
+
+commit dc6daae9494e30d8c2d9657bab04d8f88751f751
+Author: Roozbeh Pournader <roozbeh@gmail.com>
+Date:	Sun Mar 1 03:50:46 2009 -0800
+
+    Add Sichuan Yi (ii) orthography (bug #20402)
+
+ fc-lang/ii.orth |   34 ++++++++++++++++++++++++++++++++++
+ 1 files changed, 34 insertions(+), 0 deletions(-)
+
+commit 43517045f885c0e463c8a784c65f0b783658fc9b
+Author: Roozbeh Pournader <roozbeh@gmail.com>
+Date:	Sun Mar 1 03:46:48 2009 -0800
+
+    Add Shona (sn) orthography (bug #20394)
+
+ fc-lang/sn.orth |   35 +++++++++++++++++++++++++++++++++++
+ 1 files changed, 35 insertions(+), 0 deletions(-)
+
+commit 42a8008df14c7dcdd85ab7d3ce12b4191b807f27
+Author: Roozbeh Pournader <roozbeh@gmail.com>
+Date:	Sun Mar 1 03:30:58 2009 -0800
+
+    Add orthographies for Oshiwambo languages (bug #20401)
+
+    The languages are Kuanyama/Kwanyama (kj), Ndonga (ng), and Kwambi
+    (kwm).
+
+ fc-lang/kj.orth  |   34 ++++++++++++++++++++++++++++++++++
+ fc-lang/kwm.orth |   29 +++++++++++++++++++++++++++++
+ fc-lang/ng.orth  |   29 +++++++++++++++++++++++++++++
+ 3 files changed, 92 insertions(+), 0 deletions(-)
+
+commit f0b546372967434418aa6cfe6f2d709795fdff24
+Author: Roozbeh Pournader <roozbeh@gmail.com>
+Date:	Sun Mar 1 02:33:54 2009 -0800
+
+    Add Zhuang (za) orthography (bug #20399)
+
+ fc-lang/za.orth |   39 +++++++++++++++++++++++++++++++++++++++
+ 1 files changed, 39 insertions(+), 0 deletions(-)
+
+commit 7886b147834decbcab6f556b1c43cc003e2bf893
+Author: Roozbeh Pournader <roozbeh@gmail.com>
+Date:	Sun Mar 1 02:12:38 2009 -0800
+
+    Add Rundi (rn) orthography (bug #20398)
+
+ fc-lang/rn.orth |   32 ++++++++++++++++++++++++++++++++
+ 1 files changed, 32 insertions(+), 0 deletions(-)
+
+commit 10a85249d9e79ae474c996d3e4f14d0ea8aa50b8
+Author: Roozbeh Pournader <roozbeh@gmail.com>
+Date:	Sat Feb 28 19:43:02 2009 -0800
+
+    Add Navajo (nv) orthography (bug #20395)
+
+ fc-lang/nv.orth |   48 ++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 files changed, 48 insertions(+), 0 deletions(-)
+
+commit bf20886085a18227702f67b70dd7ef5f0e919469
+Author: Roozbeh Pournader <roozbeh@gmail.com>
+Date:	Sat Feb 28 18:25:20 2009 -0800
+
+    Add Tahitian (ty) orthography (bug #20391)
+
+ fc-lang/ty.orth |   41 +++++++++++++++++++++++++++++++++++++++++
+ 1 files changed, 41 insertions(+), 0 deletions(-)
+
+commit 0e05d7e5c730a1740d4c289a66f43f11a527c840
+Author: Roozbeh Pournader <roozbeh@gmail.com>
+Date:	Sat Feb 28 18:01:11 2009 -0800
+
+    Add Sango (sg) orthography (bug #20393)
+
+ fc-lang/sg.orth |   47 +++++++++++++++++++++++++++++++++++++++++++++++
+ 1 files changed, 47 insertions(+), 0 deletions(-)
+
+commit bdbdc64dd1e0a1727e2486c3320f9598695e4ab4
+Author: Roozbeh Pournader <roozbeh@gmail.com>
+Date:	Sat Feb 28 17:38:21 2009 -0800
+
+    Added Quechua (qu) orthography (bug #20392)
+
+ fc-lang/qu.orth |   36 ++++++++++++++++++++++++++++++++++++
+ 1 files changed, 36 insertions(+), 0 deletions(-)
+
+commit 16159d0fae1d8d0d2ba6ac1fc7f845582dec351b
+Author: Roozbeh Pournader <roozbeh@gmail.com>
+Date:	Sat Feb 28 17:05:11 2009 -0800
+
+    Add Akan (ak) and Fanti (fat) orthographies (bug #20390)
+
+ fc-lang/ak.orth  |   30 ++++++++++++++++++++++++++++++
+ fc-lang/fat.orth |   30 ++++++++++++++++++++++++++++++
+ 2 files changed, 60 insertions(+), 0 deletions(-)
+
+commit 881a7cd93b3358e371a25bc7ad4818baa3c8968b
+Author: Roozbeh Pournader <roozbeh@gmail.com>
+Date:	Sat Feb 28 16:29:07 2009 -0800
+
+    Add Herero (hz) orthograhy (bug #20387)
+
+ fc-lang/hz.orth |   35 +++++++++++++++++++++++++++++++++++
+ 1 files changed, 35 insertions(+), 0 deletions(-)
+
+commit bc701d2a5b7dc687ba25bafc5fea282adad37ecb
+Author: Roozbeh Pournader <roozbeh@gmail.com>
+Date:	Sat Feb 28 16:03:51 2009 -0800
+
+    Add Ewe (ee) orthography (bug #20386)
+
+ fc-lang/ee.orth |   77
+ +++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 files changed, 77 insertions(+), 0 deletions(-)
+
+commit 5a83914b733755ff6c710ff398cb5668fdb74a19
+Author: Roozbeh Pournader <roozbeh@gmail.com>
+Date:	Fri Feb 27 14:41:07 2009 -0800
+
+    Update Serbo-Croatian (sh) orthography (bug #20368)
+
+ fc-lang/sh.orth |   18 +++++++++++++-----
+ 1 files changed, 13 insertions(+), 5 deletions(-)
+
+commit 505ea8ce37dff9cc35dba6a98de4a31ed1ac5f8c
+Author: Roozbeh Pournader <roozbeh@gmail.com>
+Date:	Thu Feb 26 23:27:20 2009 -0800
+
+    Extend Crimean Tatar (crh) orthography (bug #19891)
+
+ fc-lang/crh.orth |    7 ++++---
+ 1 files changed, 4 insertions(+), 3 deletions(-)
+
+commit 4c7da799f3b90fb2f1117f9e9c45fa7fc1bd268c
+Author: Roozbeh Pournader <roozbeh@gmail.com>
+Date:	Wed Feb 18 21:21:01 2009 -0800
+
+    Add Divehi (dv) orthography (bug #20207)
+
+ fc-lang/dv.orth |   34 ++++++++++++++++++++++++++++++++++
+ 1 files changed, 34 insertions(+), 0 deletions(-)
+
+commit 5cac0a4fd681087562c84b3d2534cecff6876048
+Author: Roozbeh Pournader <roozbeh@gmail.com>
+Date:	Wed Feb 18 17:09:51 2009 -0800
+
+    Remove digits and symbols from some Indic orthographies (bug #20204)
+
+    These orthographies were changed: Gujarati (gu), Kannada (kn), Lao
+    (lo),
+    Malayalam (ml), Oriya (or), Telugu (te), and Thai (th).
+
+ fc-lang/gu.orth |    4 ++--
+ fc-lang/kn.orth |    4 ++--
+ fc-lang/lo.orth |    4 ++--
+ fc-lang/ml.orth |    4 ++--
+ fc-lang/or.orth |    5 +++--
+ fc-lang/te.orth |    4 ++--
+ fc-lang/th.orth |    8 ++++++--
+ 7 files changed, 19 insertions(+), 14 deletions(-)
+
+commit ea628d97706e842cb5555ceb5368fd972c941e0c
+Author: Roozbeh Pournader <roozbeh@gmail.com>
+Date:	Wed Feb 18 16:44:10 2009 -0800
+
+    Tighten Central Khmer (km) orthography (bug #20202)
+
+ fc-lang/km.orth |   24 +++++++++++++++++-------
+ 1 files changed, 17 insertions(+), 7 deletions(-)
+
+commit 4a5805d9c6b20b4c8f56f3b8201653e88e3706be
+Author: Roozbeh Pournader <roozbeh@gmail.com>
+Date:	Wed Feb 18 16:03:30 2009 -0800
+
+    Change Kashmiri (ks) orthography to Arabic script (bug #20200)
+
+ fc-lang/ks.orth |   19 ++++++++++++-------
+ 1 files changed, 12 insertions(+), 7 deletions(-)
+
+commit cda57219229025db963d3db0f984974187a409f8
+Author: Roozbeh Pournader <roozbeh@gmail.com>
+Date:	Tue Feb 17 23:33:07 2009 -0800
+
+    Rename Fulah orthography from 'ful' to 'ff' (bug #20177)
+
+ fc-lang/ff.orth  |   38 ++++++++++++++++++++++++++++++++++++++
+ fc-lang/ful.orth |   38 --------------------------------------
+ 2 files changed, 38 insertions(+), 38 deletions(-)
+
+commit a32b79c3a5251916597bb871d2cd7698baeb5e58
+Author: Roozbeh Pournader <roozbeh@gmail.com>
+Date:	Tue Feb 17 22:45:17 2009 -0800
+
+    Rename Bambara orthography from 'bam' to 'bm' (bug #20175)
+
+ fc-lang/bam.orth |   37 -------------------------------------
+ fc-lang/bm.orth  |   37 +++++++++++++++++++++++++++++++++++++
+ 2 files changed, 37 insertions(+), 37 deletions(-)
+
+commit 74a0a28695a24e02bc623d1b2c1c72054ff03d52
+Author: Roozbeh Pournader <roozbeh@gmail.com>
+Date:	Tue Feb 17 22:40:50 2009 -0800
+
+    Rename Avaric orthography from 'ava' to 'av' (bug #20174)
+
+ fc-lang/av.orth  |   97
+ ++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ fc-lang/ava.orth |   97
+ ------------------------------------------------------
+ 2 files changed, 97 insertions(+), 97 deletions(-)
+
+commit eba32fa3f3024fb94f75cdedaa8d4c17d786a761
+Author: Roozbeh Pournader <roozbeh@gmail.com>
+Date:	Tue Feb 17 22:09:53 2009 -0800
+
+    Update Azerbaijani in Latin (az_az) to present usage (bug #20173)
+
+    Removed Cyrillic that is no longer in use. Removed "A WITH DIAERESIS"
+    too, since it was only temporarily used in 1991-1992.
+
+ fc-lang/az_az.orth |	41 ++++++++++++++---------------------------
+ 1 files changed, 14 insertions(+), 27 deletions(-)
+
+commit 1c7bacc214f6e6e507f932230ec52744337cdf47
+Author: Roozbeh Pournader <roozbeh@gmail.com>
+Date:	Tue Feb 17 21:37:45 2009 -0800
+
+    Switch Uzbek (uz) orthography to Latin (bug #19851)
+
+ fc-lang/uz.orth |   94
+ +++++++++---------------------------------------------
+ 1 files changed, 16 insertions(+), 78 deletions(-)
+
+commit dfd5d0937ce44b4a60b5ee7e2e82650a5e31a456
+Author: Roozbeh Pournader <roozbeh@gmail.com>
+Date:	Tue Feb 17 20:02:39 2009 -0800
+
+    Add Crimean Tatar (crh) orthography (bug #19891)
+
+ fc-lang/crh.orth |   45 +++++++++++++++++++++++++++++++++++++++++++++
+ 1 files changed, 45 insertions(+), 0 deletions(-)
+
+commit 502c46c23d3e36dbfff29484486091f140756535
+Author: Roozbeh Pournader <roozbeh@gmail.com>
+Date:	Tue Feb 17 19:41:30 2009 -0800
+
+    Add Papiamento (pap_aw, pap_an) orthographies (bug #19891)
+
+ fc-lang/pap_an.orth |	 46 ++++++++++++++++++++++++++++++++++++++++++++++
+ fc-lang/pap_aw.orth |	 31 +++++++++++++++++++++++++++++++
+ 2 files changed, 77 insertions(+), 0 deletions(-)
+
+commit b4cd4cb6cc2cfd6432bfd4a5b2ec9c63cf653f6d
+Author: Roozbeh Pournader <roozbeh@gmail.com>
+Date:	Tue Feb 17 17:30:15 2009 -0800
+
+    Add Blin (byn) orthography (bug #19891)
+
+ fc-lang/byn.orth |   27 +++++++++++++++++++++++++++
+ 1 files changed, 27 insertions(+), 0 deletions(-)
+
+commit 4d7412a28b834830d0d1749852115846b3554932
+Author: Roozbeh Pournader <roozbeh@gmail.com>
+Date:	Tue Feb 17 17:03:54 2009 -0800
+
+    Divide Panjabi (pa) to that of Pakistan and India (bug #19890)
+
+    Previous Panjabi orthography was in the Gurmukhi script only, while in
+    Pakistan, the Arabic script (called Shahmukhi) is used for Panjani.
+
+ fc-lang/pa.orth    |	46 ----------------------------------------------
+ fc-lang/pa_in.orth |	46 ++++++++++++++++++++++++++++++++++++++++++++++
+ fc-lang/pa_pk.orth |	28 ++++++++++++++++++++++++++++
+ 3 files changed, 74 insertions(+), 46 deletions(-)
+
+commit 7a22c9d3471cd4963c529937df823148ab8e1a7d
+Author: Roozbeh Pournader <roozbeh@gmail.com>
+Date:	Fri Feb 13 20:04:42 2009 -0800
+
+    Add Ottoman Turkish (ota) orthography (bug #20114)
+
+ fc-lang/ota.orth |   41 +++++++++++++++++++++++++++++++++++++++++
+ 1 files changed, 41 insertions(+), 0 deletions(-)
+
+commit b5675e4c920dbb146ab76d49b4807693749e8143
+Author: Roozbeh Pournader <roozbeh@gmail.com>
+Date:	Fri Feb 13 17:14:14 2009 -0800
+
+    Remove Euro Sign from all orthographies (bug #19865)
+
+ fc-lang/de.orth |    1 -
+ fc-lang/el.orth |    1 -
+ fc-lang/en.orth |    1 -
+ fc-lang/es.orth |    1 -
+ fc-lang/fi.orth |    1 -
+ fc-lang/fr.orth |    1 -
+ fc-lang/it.orth |    1 -
+ fc-lang/nl.orth |    1 -
+ fc-lang/pt.orth |    1 -
+ 9 files changed, 0 insertions(+), 9 deletions(-)
+
+commit f6993c880345b45abc0f7e7f0bb14dd0ddae0caa
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Mon Mar 2 13:25:37 2009 +0330
+
+    [fc-lang] Continue parsing after an "include" (#20179)
+
+ fc-lang/fc-lang.c |   29 ++++++++++++++++++-----------
+ 1 files changed, 18 insertions(+), 11 deletions(-)
+
+commit abe0e056d5a93dee80d8e964569563dc4d131a90
+Author: Roozbeh Pournader <roozbeh@gmail.com>
+Date:	Fri Feb 13 16:47:11 2009 -0800
+
+    Fix Bengali (bn) and Assamese (as) orthographies (bug #22924)
+
+    Removing digits, symbols, and the letters not used in the languages.
+
+ fc-lang/as.orth |   37 +++++++++++++++++++++++++++----------
+ fc-lang/bn.orth |   21 ++++++++++++---------
+ 2 files changed, 39 insertions(+), 19 deletions(-)
+
+commit 40b2904c8984db90cc35eecbec571552c2e4d120
+Author: Roozbeh Pournader <roozbeh@gmail.com>
+Date:	Fri Feb 13 16:07:14 2009 -0800
+
+    Add Sidamo (sid) and Wolaitta (wal) orthographies (bug #19891)
+
+ fc-lang/sid.orth |   27 +++++++++++++++++++++++++++
+ fc-lang/wal.orth |   27 +++++++++++++++++++++++++++
+ 2 files changed, 54 insertions(+), 0 deletions(-)
+
+commit d333969e0c809b3175193c7dda26703287d57fd4
+Author: Roozbeh Pournader <roozbeh@gmail.com>
+Date:	Fri Feb 13 15:52:23 2009 -0800
+
+    Add Sardinian (sc) orthography (bug #19891)
+
+ fc-lang/sc.orth |   42 ++++++++++++++++++++++++++++++++++++++++++
+ 1 files changed, 42 insertions(+), 0 deletions(-)
+
+commit 1ae2e9b479818835ba3ddddb3c613cdb5acf46d4
+Author: Roozbeh Pournader <roozbeh@gmail.com>
+Date:	Fri Feb 13 13:31:10 2009 -0800
+
+    Add Limburgan (li) orthography (bug #19891)
+
+ fc-lang/li.orth |   43 +++++++++++++++++++++++++++++++++++++++++++
+ 1 files changed, 43 insertions(+), 0 deletions(-)
+
+commit d8a4ee921a3bf0e78dffcea8f27d457cc1bc378e
+Author: Roozbeh Pournader <roozbeh@gmail.com>
+Date:	Wed Feb 11 01:59:56 2009 -0800
+
+    Ad Ganda (lg) orthography (bug #19891)
+
+ fc-lang/lg.orth |   33 +++++++++++++++++++++++++++++++++
+ 1 files changed, 33 insertions(+), 0 deletions(-)
+
+commit f4159adaa88d55118fe1c2c62b05600d0a8fbc0a
+Author: Roozbeh Pournader <roozbeh@gmail.com>
+Date:	Wed Feb 11 01:44:45 2009 -0800
+
+    Add Haitian Creole (ht) orthography (bug #19891)
+
+ fc-lang/ht.orth |   35 +++++++++++++++++++++++++++++++++++
+ 1 files changed, 35 insertions(+), 0 deletions(-)
+
+commit 190b4b5b2bd9a4822660b134639a759a5949c862
+Author: Roozbeh Pournader <roozbeh@gmail.com>
+Date:	Wed Feb 11 01:11:30 2009 -0800
+
+    Add Aragonese (an) orthography (bug #19891)
+
+ fc-lang/an.orth |   45 +++++++++++++++++++++++++++++++++++++++++++++
+ 1 files changed, 45 insertions(+), 0 deletions(-)
+
+commit 3541f01828be06e2a414fa5bcd9543dbb2c9e0fd
+Author: Roozbeh Pournader <roozbeh@gmail.com>
+Date:	Wed Feb 11 00:34:10 2009 -0800
+
+    Add Kurdish in Turkey (ku_tr) orthography (bug #19891)
+
+ fc-lang/ku_tr.orth |	42 ++++++++++++++++++++++++++++++++++++++++++
+ 1 files changed, 42 insertions(+), 0 deletions(-)
+
+commit 3792f0199065cdf808d723eacf3fa86910453f70
+Author: Roozbeh Pournader <roozbeh@gmail.com>
+Date:	Wed Feb 11 00:22:53 2009 -0800
+
+    Use newly added Cyrillic letters for Kurdish (bug #20049)
+
+ fc-lang/ku_am.orth |	 5 +----
+ 1 files changed, 1 insertions(+), 4 deletions(-)
+
+commit 0d8b15f00f11a5150d842a3bd10e8dd05413fb9c
+Author: Roozbeh Pournader <roozbeh@gmail.com>
+Date:	Wed Feb 11 00:05:16 2009 -0800
+
+    Add Chhattisgarhi (hne) orthography (bug #19891)
+
+ fc-lang/hne.orth |   28 ++++++++++++++++++++++++++++
+ 1 files changed, 28 insertions(+), 0 deletions(-)
+
+commit 04ac14fc14131a66f0c391d8bb3894a01e556a05
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Fri Feb 13 17:18:11 2009 -0800
+
+    [fcformat] Add list of undocumented language features
+
+ src/fcformat.c |   35 +++++++++++++++++++++++++++++++++++
+ 1 files changed, 35 insertions(+), 0 deletions(-)
+
+commit 384542fa915b27285ec22d899c4aa19be8c275f1
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Fri Feb 13 16:41:37 2009 -0800
+
+    [fcformat] Add a 'pkgkit' builtin that prints tags for font packages
+
+    For DejaVu Sans Condensed it generates:
+
+    font(dejavusans)
+    font(dejavusanscondensed)
+    font(:lang=aa)
+    font(:lang=ab)
+    ...
+    font(:lang=yo)
+    font(:lang=zu)
+
+ src/fcformat.c |    2 ++
+ 1 files changed, 2 insertions(+), 0 deletions(-)
+
+commit 9d58d01c5c061c1fcfb3cca3a3a4622f9bbec727
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Fri Feb 13 16:33:58 2009 -0800
+
+    [fcformat] Enumerate langsets like we do arrays of values
+
+    If one asks for a format like '%{[]elt{expr}}' and the first value
+    for elt is a langset, we enumerate the langset languages in expr.
+
+ src/fcformat.c |   59
+ ++++++++++++++++++++++++++++++++++++++++++++-----------
+ 1 files changed, 47 insertions(+), 12 deletions(-)
+
+commit d62b85af21777582ad720efd9c319fde97b67d82
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Fri Feb 13 16:30:43 2009 -0800
+
+    [fclang] Implement FcLangSetGetLangs() (#18846)
+
+ doc/fclangset.fncs	 |    8 ++++++++
+ fontconfig/fontconfig.h |    3 +++
+ src/fclang.c		 |   32 ++++++++++++++++++++++++++++++++
+ 3 files changed, 43 insertions(+), 0 deletions(-)
+
+commit cdfb76585e7afbe739d00ed83a029ce1f909142f
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Thu Feb 12 21:48:22 2009 -0600
+
+    [fcformat] Implement array enumeration
+
+    The format '%{[]family,familylang{expr}}' expands expr once for
+    the first
+    value of family and familylang, then for the second, etc, until
+    both lists
+    are exhausted.
+
+ src/fcformat.c |   90
+ ++++++++++++++++++++++++++++++++++++++++++++++++++++---
+ 1 files changed, 85 insertions(+), 5 deletions(-)
+
+commit 0673ef3881d24820e627b9a8cd3a4b3e3889c545
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Wed Feb 11 23:55:11 2009 -0500
+
+    [fcformat] Support 'default value' for simple tags
+
+    The format '%{family:-XXX} prints XٓٓٓٓXX if the element family
+    is not defined.
+    Also works for things like '%{family[1]:-XXX}'.
+
+ src/fcformat.c |   30 +++++++++++++++++++++++++-----
+ 1 files changed, 25 insertions(+), 5 deletions(-)
+
+commit 9c83a8376f7db19421fb42d311fba81b398c67b0
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Wed Feb 11 23:44:36 2009 -0500
+
+    [fcformat] Support indexing simple tags
+
+    The format '%{family[0]}' will only output the first value for
+    element family.
+
+ src/fcformat.c |   43 +++++++++++++++++++++++++++++++++++++++----
+ src/fcint.h	|    5 +++++
+ src/fcname.c	|    2 +-
+ 3 files changed, 45 insertions(+), 5 deletions(-)
+
+commit d04a750764d89a7048f49d655fb7e4aabbcd10b3
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Tue Feb 10 20:56:39 2009 -0500
+
+    [fcformat] Add support for builtin formats
+
+    The '%{=unparse}' format expands to the FcNameUnparse() result on the
+    pattern.  Need to add '%{=verbose}' for FcPatternPrint() output but
+    need to change that function to output to a string first.
+
+    Also added the '%{=fclist}' and '%{=fcmatch}' which format like the
+    default format of fc-list and fc-match respectively.
+
+ src/fcformat.c |  137
+ +++++++++++++++++++++++++++++++++++++++-----------------
+ 1 files changed, 95 insertions(+), 42 deletions(-)
+
+commit 85c7fb67ce9f77574f71de7d9b69867bb974cd48
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Tue Feb 10 18:57:34 2009 -0500
+
+    [fcformat] Refactor code to avoid malloc
+
+ src/fcformat.c |  246
+ +++++++++++++++++++++++++++++++++-----------------------
+ 1 files changed, 144 insertions(+), 102 deletions(-)
+
+commit d4f7a4c6af5420afbbcf2217f9fe396623671294
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Tue Feb 10 06:22:55 2009 -0500
+
+    [fcformat] Start adding builtins
+
+ src/fcformat.c |   27 ++++++++++++++++++++++++++-
+ 1 files changed, 26 insertions(+), 1 deletions(-)
+
+commit c8f5933d13efa6705854d8f89b22d40cf720e68d
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Tue Feb 10 05:57:10 2009 -0500
+
+    [fcformat] Implement 'delete', 'escape', and 'translate' filter
+    functions
+
+    The format '%{family|delete( )}' expands to family values with
+    space removed.
+    The format '%{family|translate( ,-)}' expands to family values
+    with space
+    replaced by dash.  Multiple chars are supported, like tr(1).
+    The format '%{family|escape(\\ )}' expands to family values with space
+    escaped using backslash.
+
+ src/fcformat.c |  219
+ +++++++++++++++++++++++++++++++++++++++++++++++++-------
+ 1 files changed, 194 insertions(+), 25 deletions(-)
+
+commit b6a23028beb3b99022599344ebd8511c12dc7fd0
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Tue Feb 10 05:05:53 2009 -0500
+
+    [fcformat] Add value-count syntax
+
+    The format '%{#family}' expands to the number of values for the
+    element
+    'family', or '0' if no such element exists in the pattern.
+
+ src/fcformat.c |  116
+ ++++++++++++++++++++++++++++++++++++--------------------
+ 1 files changed, 75 insertions(+), 41 deletions(-)
+
+commit dccbbe83eff54097c55fdc560810cdc56b679a60
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Tue Feb 10 04:47:24 2009 -0500
+
+    [FcStrBuf] better handle malloc failure
+
+    If buffer has failed allocation, return NULL when done.
+
+ src/fcstr.c |	  8 +++++++-
+ 1 files changed, 7 insertions(+), 1 deletions(-)
+
+commit ced38254b49ab616df79930bbb798a93e5ce51fa
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Tue Feb 10 04:44:54 2009 -0500
+
+    [fcformat] Implement 'cescape', 'shescape', and 'xmlescape' converters
+
+ src/fcformat.c |   87
+ ++++++++++++++++++++++++++++++++++++++++++++++++-------
+ 1 files changed, 76 insertions(+), 11 deletions(-)
+
+commit 2017a5eb79a0774cc5bace8c76304e1a9ef157b9
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Tue Feb 10 03:38:22 2009 -0500
+
+    [fcformat] Add simple converters
+
+    The format '%{family|downcase}' for example prints the lowercase of
+    the family element.  Three converters are defined right now:
+    'downcase', 'basename', and 'dirname'.
+
+ src/fcformat.c |  224
+ +++++++++++++++++++++++++++++++++-----------------------
+ 1 files changed, 131 insertions(+), 93 deletions(-)
+
+commit 7717b25ffdd9507b0d73ef60b70b692f7286c0a2
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Tue Feb 10 00:15:08 2009 -0500
+
+    [fcformat] Add conditionals
+
+    The conditional '%{?elt1,elt2,!elt3{expr1}{expr2}}' will evaluate
+    expr1 if elt1 and elt2 exist in pattern and elt3 doesn't exist, and
+    expr2 otherwise.  The '{expr2}' part is optional.
+
+ src/fcformat.c |  158
+ ++++++++++++++++++++++++++++++++++++++++++++++++++++----
+ 1 files changed, 147 insertions(+), 11 deletions(-)
+
+commit 8c31a2434d5dfa475ef710ad52c992111caac424
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Mon Feb 9 23:08:08 2009 -0500
+
+    [fcformat] Add element filtering and deletion
+
+    The filtering, '%{+elt1,elt2,elt3{subexpr}}' will evaluate subexpr
+    with a pattern only having the listed elements from the surrounding
+    pattern.
+
+    The deletion, '%{-elt1,elt2,elt3{subexpr}}' will evaluate subexpr
+    with a the surrounding pattern sans the listed elements.
+
+ doc/fcpattern.fncs  |	  2 +-
+ fc-list/fc-list.c   |	  7 +-
+ fc-match/fc-match.c |	  6 +-
+ fc-query/fc-query.c |	  7 +-
+ fc-scan/fc-scan.c   |	  7 +-
+ src/fcformat.c      |	214
+ ++++++++++++++++++++++++++++++++++++++------------
+ 6 files changed, 183 insertions(+), 60 deletions(-)
+
+commit d6506ff6eeb4a4cb0bfe827174e474c7b91ff045
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Mon Feb 9 20:49:45 2009 -0500
+
+    [fcformat] Add support for subexpressions
+
+    The syntax is '{{expr}}'.  Can be used for aligning/justifying
+    an entire
+    subexpr for example.
+
+ src/fcformat.c |  149
+ ++++++++++++++++++++++++++++++++++++++++++++++---------
+ 1 files changed, 124 insertions(+), 25 deletions(-)
+
+commit 27b3e2dddf6a89c66e8d79f4a28b1a0653e8e100
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Mon Feb 9 19:13:07 2009 -0500
+
+    [fcformat] Refactor and restructure code for upcoming changes
+
+    Also makes it thread-safe.
+
+ src/fcformat.c |  165
+ ++++++++++++++++++++++++++++++++-----------------------
+ 1 files changed, 96 insertions(+), 69 deletions(-)
+
+commit c493c3b770ab12ab1c61a4fb10419c490d2b5ba6
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Mon Feb 9 18:18:59 2009 -0500
+
+    [fcformat] Add support for width modifiers
+
+    One can do '%30{family}' for example.  Or '%-30{family}' for the
+    left-aligned version.
+
+ doc/fcpattern.fncs |	 6 ++++--
+ src/fcformat.c     |	46 +++++++++++++++++++++++++++++++++++++++++++---
+ 2 files changed, 47 insertions(+), 5 deletions(-)
+
+commit 967267556c762d2746f819eca85f3c59fbb95875
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Thu Feb 5 23:37:16 2009 -0500
+
+    Further update Sinhala orthography (#19288)
+
+ fc-lang/si.orth |    7 +++++--
+ 1 files changed, 5 insertions(+), 2 deletions(-)
+
+commit b697fa2523a6d3fe091e14710d14720a9e051bf1
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Thu Feb 5 02:46:16 2009 -0500
+
+    [cache] After writing cache to file, update the internal copy to
+    reflect this
+
+    Only do it for small caches though.  For large cache we'd better
+    off loading
+    the cache file again, mmap()ing it.
+
+    Based on patch from Diego Santa Cruz.
+
+ src/fccache.c |   16 ++++++++++++++++
+ 1 files changed, 16 insertions(+), 0 deletions(-)
+
+commit ecce22d40cfbc50bbe19891035c06bbbeef5232f
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Wed Feb 4 15:58:36 2009 -0500
+
+    Update Sinhala orthography (#19288)
+
+    Patch from Harshula Jayasuriya.
+
+ fc-lang/si.orth |   45 ++++++++++++++++++++++++++++++++++-----------
+ 1 files changed, 34 insertions(+), 11 deletions(-)
+
+commit 6bb5d72fe788f897e30ab39ac7585c624282303f
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Tue Feb 3 21:06:15 2009 -0500
+
+    [fccache] Make sure the cache is current when reusing from open caches
+
+    Reported by Diego Santa Cruz.
+
+ src/fccache.c |    8 +++++++-
+ 1 files changed, 7 insertions(+), 1 deletions(-)
+
+commit f9feb587faa5a3df0f03e5ba945d228b8b49ec51
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Tue Feb 3 20:50:29 2009 -0500
+
+    [win32] Do not remove leading '\\' such that network paths work
+
+    Raised by Diego Santa Cruz.
+
+ src/fcstr.c |	  8 +++++++-
+ 1 files changed, 7 insertions(+), 1 deletions(-)
+
+commit 1cdf7efb224867c41b2dea48884d87c5fb67bdaf
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Tue Feb 3 20:35:10 2009 -0500
+
+    [win32] Expand "APPSHAREFONTDIR" to ../share/fonts relative to
+    binary location
+
+    Proposed by Diego Santa Cruz.
+
+ src/fcxml.c |	 21 +++++++++++++++++++++
+ 1 files changed, 21 insertions(+), 0 deletions(-)
+
+commit e62058abb9cf04b3f2270a45f3c0760287f12033
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Tue Feb 3 20:31:30 2009 -0500
+
+    [win32] Fix usage of GetFullPathName()
+
+    Diego Santa Cruz pointed out that we are using that API wrongly.
+    The forth argument is a pointer to a pointer.  Turns out we don't
+    need that arugment and it accepts NULL, so just pass that.
+
+ src/fcstr.c |	  4 +---
+ 1 files changed, 1 insertions(+), 3 deletions(-)
+
+commit c4d557ab90c7ef6eccb998550190ccccde80670d
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Tue Feb 3 17:15:52 2009 -0500
+
+    Add ICONV_LIBS to fontconfig.pc.in (#19606)
+
+ fontconfig.pc.in |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
+
+commit 10609af4aa4030a15c19573198462fa002d2ef13
+Author: Mike FABIAN <mfabian@suse.de>
+Date:	Tue Feb 3 16:57:01 2009 -0500
+
+    [conf] Disable hinting when emboldening (#19904)
+
+    Hinting will be done before Embolden in freetype2,
+    but in such case, Embolden will get wrong result
+    on some glyph contours after applying hinting.
+    Actually, hinting should be done after embolden, but we can't
+    fix it in current freetype2. So as a workaround, just turn off
+    hinting if we want to do embolden.
+
+ conf.d/90-synthetic.conf |   11 +++++++++++
+ 1 files changed, 11 insertions(+), 0 deletions(-)
+
+commit fe00689cddb42df141d891c2cd5b4a8ea3a42816
+Author: Roozbeh Pournader <roozbeh@gmail.com>
+Date:	Mon Feb 2 00:27:58 2009 -0800
+
+    Remove punctuation symbols from Asturian orthography (bug #19893)
+
+    Also fix the URL for orthography.
+
+ fc-lang/ast.orth |   12 ++++--------
+ 1 files changed, 4 insertions(+), 8 deletions(-)
+
+commit a4f651241e2db62bd058e773b4e5931d205af0f6
+Author: Roozbeh Pournader <roozbeh@gmail.com>
+Date:	Sun Feb 1 23:52:10 2009 -0800
+
+    Rename Igbo from "ibo" to "ig" (bug #19892)
+
+ fc-lang/ibo.orth |   35 -----------------------------------
+ fc-lang/ig.orth  |   35 +++++++++++++++++++++++++++++++++++
+ 2 files changed, 35 insertions(+), 35 deletions(-)
+
+commit ff71a83c207891323b487d9cbec0658e16ca11c3
+Author: Roozbeh Pournader <roozbeh@gmail.com>
+Date:	Sun Feb 1 22:14:53 2009 -0800
+
+    Renamed az to az_az (bug #19889)
+
+ fc-lang/az.orth    |	66
+ ----------------------------------------------------
+ fc-lang/az_az.orth |	66
+ ++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 66 insertions(+), 66 deletions(-)
+
+commit e53956ee5e6340c5c8a78bf65e9c9df0757af439
+Author: Roozbeh Pournader <roozbeh@gmail.com>
+Date:	Sun Feb 1 20:46:23 2009 -0800
+
+    Add Berber orthographies in Latin and Tifinagh scripts (bug #19881)
+
+ fc-lang/ber_dz.orth |	 27 +++++++++++++++++++++++++++
+ fc-lang/ber_ma.orth |	 46 ++++++++++++++++++++++++++++++++++++++++++++++
+ fc-lang/kab.orth    |	 42 ++++++++++++++++++++++++++++++++++++++++++
+ 3 files changed, 115 insertions(+), 0 deletions(-)
+
+commit 3765a7483e1d313c6d0ced8a20cd5a258165f8e0
+Author: Roozbeh Pournader <roozbeh@gmail.com>
+Date:	Sun Feb 1 20:42:54 2009 -0800
+
+    Add Upper Sorbian (hsb) orthography (bug #19870)
+
+ fc-lang/hsb.orth |   42 ++++++++++++++++++++++++++++++++++++++++++
+ 1 files changed, 42 insertions(+), 0 deletions(-)
+
+commit 9f54d9db2912287358c1c01771a1bc8263e9539a
+Author: Roozbeh Pournader <roozbeh@gmail.com>
+Date:	Sun Feb 1 20:41:14 2009 -0800
+
+    Add Kinyarwanda (rw) orthography (bug #19868)
+
+ fc-lang/rw.orth |   31 +++++++++++++++++++++++++++++++
+ 1 files changed, 31 insertions(+), 0 deletions(-)
+
+commit 3889de9e3c0a0b6aacd0558ce41953d9aa35878b
+Author: Roozbeh Pournader <roozbeh@gmail.com>
+Date:	Sun Feb 1 20:39:03 2009 -0800
+
+    Add Malay (ms) orthography (bug #19867)
+
+ fc-lang/ms.orth |   32 ++++++++++++++++++++++++++++++++
+ 1 files changed, 32 insertions(+), 0 deletions(-)
+
+commit 0896d14ab7fe5a7233102f5ff7c59199f893c734
+Author: Roozbeh Pournader <roozbeh@gmail.com>
+Date:	Sun Feb 1 20:36:55 2009 -0800
+
+    Add Kashubian (csb) orth file (bug #19866)
+
+ fc-lang/csb.orth |   46 ++++++++++++++++++++++++++++++++++++++++++++++
+ 1 files changed, 46 insertions(+), 0 deletions(-)
+
+commit a32870457eb8f35a19193bc3e9e66db9948186fb
+Author: Roozbeh Pournader <roozbeh@gmail.com>
+Date:	Sun Feb 1 20:29:12 2009 -0800
+
+    Rename "ku" to "ku_am", add "ku_iq" (bug #19853).
+
+    For Iraq, we are assuming its the same Arabic orthography used
+    in Iran.
+
+    According to Ethnologue, Kurdish is written in Cyrillic in Armenia:
+    http://www.ethnologue.com/show_language.asp?code=kmr
+
+    Turkey and Syria need more research.
+
+ fc-lang/ku.orth    |	94
+ ----------------------------------------------------
+ fc-lang/ku_am.orth |	94
+ ++++++++++++++++++++++++++++++++++++++++++++++++++++
+ fc-lang/ku_iq.orth |	27 +++++++++++++++
+ 3 files changed, 121 insertions(+), 94 deletions(-)
+
+commit 2199c6e321c92cf42711180b483e3f1b0091d980
+Author: Roozbeh Pournader <roozbeh@gmail.com>
+Date:	Sun Feb 1 20:21:45 2009 -0800
+
+    Rename Venda from "ven" to "ve" (bug #19852)
+
+    Since ISO 639-1 code exists, we should use it.
+
+ fc-lang/ve.orth  |   34 ++++++++++++++++++++++++++++++++++
+ fc-lang/ven.orth |   34 ----------------------------------
+ 2 files changed, 34 insertions(+), 34 deletions(-)
+
+commit d7dd87649c07b7b73cf4ecfe7273cb0fcedc5be0
+Author: Roozbeh Pournader <roozbeh@gmail.com>
+Date:	Sun Feb 1 20:00:15 2009 -0800
+
+    Change Turkmen orth from Cyrillic to Latin (bug #19849)
+
+ fc-lang/tk.orth |  114
+ ++++++++++++------------------------------------------
+ 1 files changed, 26 insertions(+), 88 deletions(-)
+
+commit b25a42963d70f9ead6bc026f57ae2433b4ac5e85
+Author: Roozbeh Pournader <roozbeh@gmail.com>
+Date:	Sun Feb 1 19:35:37 2009 -0800
+
+    Fix doubly encoded UTF-8 in comments (bug #19848)
+
+ fc-lang/nb.orth |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
+
+commit f3c214a1cd799dc1eb965ced8107f52cc9dd065e
+Author: Roozbeh Pournader <roozbeh@gmail.com>
+Date:	Sun Feb 1 19:29:21 2009 -0800
+
+    Split Mongolian orth to Mongolia and China (bug #19847)
+
+    The orth file for Mongolia uses Cyrillic, while that of
+    China uses the classical Mongolian script.
+
+ fc-lang/mn.orth    |	37 -------------------------------------
+ fc-lang/mn_cn.orth |	37 +++++++++++++++++++++++++++++++++++++
+ fc-lang/mn_mn.orth |	35 +++++++++++++++++++++++++++++++++++
+ 3 files changed, 72 insertions(+), 37 deletions(-)
+
+commit 0d5f9a2592634e6f9c74f48bbad9f6b443d1b574
+Author: Roozbeh Pournader <roozbeh@gmail.com>
+Date:	Sun Feb 1 18:55:31 2009 -0800
+
+    Add Filipino orth, alias Tagalog to Filipino (bug #19846)
+
+    The previous Tagalog orthography used the Tagalog script, which is
+    not in
+    modern use.
+
+ fc-lang/fil.orth |   45 +++++++++++++++++++++++++++++++++++++++++++++
+ fc-lang/tl.orth  |   23 ++++++++---------------
+ 2 files changed, 53 insertions(+), 15 deletions(-)
+
+commit 2bf7d799bf8c9e116f08864f4f62575a6a25b380
+Author: Roozbeh Pournader <roozbeh@gmail.com>
+Date:	Sun Feb 1 18:52:41 2009 -0800
+
+    Remove Sinhala characters not in modern use (bug #19288)
+
+ fc-lang/si.orth |   30 ++++++++++++++++++++----------
+ 1 files changed, 20 insertions(+), 10 deletions(-)
+
+commit 2f3b07fe80415873ef3e0e0a7e753a55e766986b
+Author: Roozbeh Pournader <roozbeh@gmail.com>
+Date:	Sun Feb 1 18:32:21 2009 -0800
+
+    Correct Sindhi orthography to use Arabic script (bug #17140)
+
+    The previous version used the Devanagari script. But in both
+    Pakistan and
+    India, Sindhi is generally written in Arabic. The Devanagari data
+    could
+    prove to be useful, if we decide on how we should name such files (see
+    bug #17208 and bug #19869).
+
+ fc-lang/sd.orth |   48 +++++++++++++++++++++++++++++++++++++++---------
+ 1 files changed, 39 insertions(+), 9 deletions(-)
+
+commit 574805478c19cdb487aea96922ff7177dd0844d7
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Sat Jan 31 03:38:19 2009 -0500
+
+    [fcfreetype] Fix typo in GB2312 encoding name string (#19845)
+
+    This was causing failure when opening iconv converter, hence rendering
+    GB2312-encoded fonts with no other usable encoding unusable.
+
+ src/fcfreetype.c |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
+
+commit 575ee6cddd391857339f57331d2677fcc868369e
+Author: Karl Tomlinson <bugs.freedesktop@karlt.net>
+Date:	Tue Jan 27 03:35:51 2009 -0500
+
+    Change FcCharSetMerge API
+
+    To only work on writable charsets.	Also, return a bool indicating
+    whether
+    the merge changed the charset.
+
+    Also changes the implementation of FcCharSetMerge and
+    FcCharSetIsSubset
+
+ doc/fccharset.fncs	 |   16 +++---
+ fontconfig/fontconfig.h |    4 +-
+ src/fccharset.c	 |  129
+ +++++++++++++++++++---------------------------
+ src/fcmatch.c		 |   64 +++++++++++++-----------
+ 4 files changed, 99 insertions(+), 114 deletions(-)
+
+commit b8860e2faffa8b3f62b3c7aafd2d3b6962566f41
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Fri Jan 23 14:17:08 2009 -0500
+
+    [fcmatch] Fix crash when no fonts are available.
+
+ src/fcmatch.c |   10 ++++++++--
+ 1 files changed, 8 insertions(+), 2 deletions(-)
+
+commit c08216c6f468ce22cb7c0c1959019a7caad3484a
+Author: Dan Nicholson <dbn.lists@gmail.com>
+Date:	Mon Jan 19 17:02:55 2009 -0500
+
+    Let make expand fc_cachedir/FC_CACHEDIR (bug #18675)
+
+    configure replaces a NONE prefix with the default prefix too late.
+    So we move fonts.conf creation to Makefile, such that prefix is
+    correctly
+    expanded. Ugly, but works.
+
+ Makefile.am  |   13 ++++++++++++-
+ configure.in |    3 +--
+ 2 files changed, 13 insertions(+), 3 deletions(-)
+
+commit 98d765a53ba33d28283e499ebd1098d27cbe6d02
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Thu Jan 15 19:27:53 2009 -0500
+
+    Cleanup all manpage.* files
+
+    Recent doc2man generates files called manpage.log.	This was
+    breaking build.
+
+ doc/Makefile.am      |    5 ++---
+ fc-cache/Makefile.am |    2 +-
+ fc-cat/Makefile.am   |    2 +-
+ fc-list/Makefile.am  |    2 +-
+ fc-match/Makefile.am |    2 +-
+ fc-query/Makefile.am |    2 +-
+ fc-scan/Makefile.am  |    2 +-
+ 7 files changed, 8 insertions(+), 9 deletions(-)
+
+commit 41af588f543ca5c0efaeb699992376d89cb35763
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Thu Jan 15 19:12:37 2009 -0500
+
+    [fc-match] Accept list of elements like fc-list (bug #13017)
+
+    Also make --verbose not ignore list of elements and only print those.
+    Update docs.
+
+ fc-list/fc-list.c	|   29 ++++++++++++++---------------
+ fc-list/fc-list.sgml	|   12 ++++++------
+ fc-match/fc-match.c	|   48
+ +++++++++++++++++++++++++++++++++++++-----------
+ fc-match/fc-match.sgml |   29 ++++++++++++++++++++---------
+ 4 files changed, 77 insertions(+), 41 deletions(-)
+
+commit 263f16ced279b0c09834bb4ca0df87fd0f76dcaf
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Thu Jan 15 19:12:27 2009 -0500
+
+    Oops, fix FcPatternFilter
+
+ src/fcpat.c |	  2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
+
+commit 6bffe1a95bfd6609358d38590ad638c688232575
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Thu Jan 15 18:39:48 2009 -0500
+
+    Add fc-scan too that runs FcFileScan/FcDirScan
+
+    This is quite similar to fc-query, but calling FcFileScan/FcDirScan
+    instead
+    of FcFreeTypeQuery.
+
+ .gitignore		|    2 +
+ Makefile.am		|    2 +-
+ configure.in		|    1 +
+ doc/fcfile.fncs	|   18 +++---
+ fc-cache/fc-cache.sgml |    1 +
+ fc-cat/fc-cat.sgml	|    1 +
+ fc-list/fc-list.sgml	|    7 +-
+ fc-match/fc-match.sgml |    7 +-
+ fc-query/fc-query.sgml |    5 +-
+ fc-scan/Makefile.am	|   59 ++++++++++++++++
+ fc-scan/fc-scan.c	|  181
+ ++++++++++++++++++++++++++++++++++++++++++++++++
+ fc-scan/fc-scan.sgml	|  176
+ ++++++++++++++++++++++++++++++++++++++++++++++
+ 12 files changed, 442 insertions(+), 18 deletions(-)
+
+commit 4074fd254e5ad707448d3665a034e0fbdf6de033
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Thu Jan 15 18:35:09 2009 -0500
+
+    Revive FcConfigScan() (bug #17121)
+
+    FcConfigScan() with parameters cache=NULL and force=FcTrue can be used
+    to scan font dirs without any caching side effect.
+
+ src/fcdir.c |	155
+ ++++++++++++++++++++++++++++++++++-------------------------
+ 1 files changed, 90 insertions(+), 65 deletions(-)
+
+commit 46e405cb9ab5870bda1947f3afd80f8f54c7ac75
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Thu Jan 15 17:34:26 2009 -0500
+
+    Oops.  Fix usage output.
+
+ fc-query/fc-query.c |	  5 ++---
+ 1 files changed, 2 insertions(+), 3 deletions(-)
+
+commit 25a09eb9bf2d993228a3d98d1dd271f55efb2358
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Thu Jan 8 03:04:34 2009 -0500
+
+    Don't use FcCharSetCopy in FcCharSetMerge
+
+    The Copy function is actually a ref, not real copy.
+
+ doc/fccharset.fncs |	 2 +-
+ src/fccharset.c    |	 7 ++++---
+ 2 files changed, 5 insertions(+), 4 deletions(-)
+
+commit d230cf144f84c8a50b932c8b89daa55c1a3620d8
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Wed Jan 7 20:15:20 2009 -0500
+
+    Make FcCharSetMerge() public
+
+    That's needed for apps to be abled to do pruning themselves without
+    the performance penalty of recreating new charsets all the time.
+
+ doc/fccharset.fncs	 |   13 +++++++++++++
+ fontconfig/fontconfig.h |    3 +++
+ src/fcint.h		 |    3 ---
+ 3 files changed, 16 insertions(+), 3 deletions(-)
+
+commit 3b725d0a318623bba08a9f7c75e4fe71527f5dec
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Thu Jan 1 16:29:01 2009 -0500
+
+    [doc] Note that fontset returned by FcConfigGetFonts should not
+    be modified
+
+ doc/fcconfig.fncs |	2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
+
+commit 6d764a3f9b89f21b5c2cdf48cbd913b9706d42b2
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Wed Dec 31 20:16:40 2008 -0500
+
+    [fcmatch] Move FcFontSetMatch() functionality into
+    FcFontSetMatchInternal()
+
+    Except for the final FcFontRenderPrepare().  This way we have more
+    flexibility to do caching in FcFontMatch() while leaving
+    FcFontSetMatch()
+    intact.
+
+ src/fcmatch.c |   42 +++++++++++++++++++++++++++++-------------
+ 1 files changed, 29 insertions(+), 13 deletions(-)
+
+commit a5a384c5ffb479e095092c2aaedd406f8785280a
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Wed Dec 31 19:44:32 2008 -0500
+
+    [fcmatch] When matching, reserve score 0 for when elements don't exist
+
+    Previously an index j was added to element score to prefer matches
+    earlier
+    in the value list to the later ones.  This index started from 0,
+    meaning
+    that the score zero could be generated for the first element.
+    By starting
+    j from one, scores for when the element exists in both pattern
+    and font
+    can never be zero.	The score zero is reserved for when the element is
+    NOT available in both font and pattern.  We will use this property
+    later.
+
+    This shouldn't change matching much.  The only difference I can
+    think of
+    is that if a font family exists both as a bitmap font and a scalable
+    version, and when requesting it at the size of the bitmap version,
+    previously the font returned was nondeterministic.	Now the scalable
+    version will always be preferred.
+
+ src/fcmatch.c |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
+
+commit c7641f2872329197250db6ffe194df3d33ff42b3
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Wed Dec 31 19:35:27 2008 -0500
+
+    [fcmatch] Use larger multipliers to enforce order
+
+    Previously the matcher multiplied comparison results by 100 and added
+    index value to it.	With long lists of families (lots of aliases),
+    reaching 100 is not that hard.  That could result in a non-match early
+    in the list to be preferred over a match late in the list.	Changing
+    the multiplier from 100 to 1000 should fix that.
+
+    To keep things relatively in order, the lang multiplier is changed
+    from 1000 to 10000.
+
+ src/fcmatch.c |    4 ++--
+ 1 files changed, 2 insertions(+), 2 deletions(-)
+
+commit 1b43ccc805f26a78934267d92275cd19b5648e91
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Wed Dec 31 18:10:31 2008 -0500
+
+    [fcmatch.c] Fix debug formatting
+
+ src/fcmatch.c |    1 +
+ 1 files changed, 1 insertions(+), 0 deletions(-)
+
+commit a291cfc710c5989ba3e787ae20911d3176bea307
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Wed Dec 31 18:06:07 2008 -0500
+
+    Fix comparison of family names to ignore leading space properly
+
+    Previously fc-match "xxx,nazli" matched Nazli, but "xxx, nazli"
+    didn't.
+    This was because of a bug in FcCompareFamily's short-circuit check
+    that forgot to ignore spaces.
+
+ src/fcmatch.c |    3 ++-
+ 1 files changed, 2 insertions(+), 1 deletions(-)
+
+commit 0c93b91db0cdf7c5e901477c266b45c8baeadd00
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Mon Dec 29 20:00:26 2008 -0500
+
+    Implement FcPatternFormat and use it in cmdline tools (bug #17107)
+
+    Still need to add more features, but the API is there, and used
+    by cmdline tools with -f or --format.
+
+ doc/fcpattern.fncs	 |   18 ++++++
+ fc-list/fc-list.c	 |   38 +++++++++---
+ fc-list/fc-list.sgml	 |   22 ++++++-
+ fc-match/fc-match.c	 |   31 +++++++---
+ fc-match/fc-match.sgml  |   47 ++++++++++-----
+ fc-query/fc-query.c	 |   25 +++++++-
+ fc-query/fc-query.sgml  |   36 ++++++++---
+ fontconfig/fontconfig.h |    3 +
+ src/Makefile.am	 |    1 +
+ src/fcformat.c		 |  155
+ +++++++++++++++++++++++++++++++++++++++++++++++
+ src/fcint.h		 |    5 ++
+ src/fcname.c		 |    2 +-
+ 12 files changed, 333 insertions(+), 50 deletions(-)
+
+commit 5cf04b201fb5e9dc989d30cf5c30f7575dda56bc
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Mon Dec 29 19:27:00 2008 -0500
+
+    [.gitignore] Update
+
+ .gitignore |	 2 ++
+ 1 files changed, 2 insertions(+), 0 deletions(-)
+
+commit f9806ab4b9bfa88a782008156511e29f37ce967d
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Mon Dec 29 18:58:29 2008 -0500
+
+    Remove special-casing of FC_FILE in FcPatternPrint()
+
+    I can't understand why the special case is needed.	Indeed,
+    removing it
+    does not make any difference in the "fc-match --verbose" output, and
+    that's the only time fc-match uses FcPatternPrint.
+
+ src/fcdbg.c |	 21 +--------------------
+ 1 files changed, 1 insertions(+), 20 deletions(-)
+
+commit 8ae1e3d5dc323542e7def06a42deea62c7ba7027
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Sun Dec 28 16:54:44 2008 -0500
+
+    Explicitly chmod() directories (bug #18934)
+
+    Two changes:
+
+      - after mkdir(), we immediately chmod(), such that we are not
+      affected
+	by stupid umask's.
+
+      - if a directory we want to use is not writable but exists, we try a
+	chmod on it.  This is to recover from stupid umask's having
+	affected
+	us with older versions.
+
+ src/fccache.c |   14 +++++++++++---
+ 1 files changed, 11 insertions(+), 3 deletions(-)
+
+commit b6cf885a0a71a0e8f03832fe038e57e6f2778974
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Sun Dec 28 09:03:29 2008 -0500
+
+    Don't use identifier named complex
+
+ src/fcfreetype.c |   42 +++++++++++++++++++++---------------------
+ 1 files changed, 21 insertions(+), 21 deletions(-)
+
+commit 627dd913cf1588436936bc8731c7dd9c96baee90
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Sun Dec 28 08:06:07 2008 -0500
+
+    [65-fonts-persian.conf] Set foundry in target=scan instead of
+    target=font
+
+ conf.d/65-fonts-persian.conf |   14 +++++++-------
+ 1 files changed, 7 insertions(+), 7 deletions(-)
+
+commit 030983185bb6f3f3885dc2e4d80fec330455f11c
+Author: Harshula Jayasuriya <harshula@gmail.com>
+Date:	Sun Dec 28 06:13:19 2008 -0500
+
+    Fix Sinhala coverage (bug #19288)
+
+ fc-lang/si.orth |    9 ++++-----
+ 1 files changed, 4 insertions(+), 5 deletions(-)
+
+commit 6ca36812b4ece5368468278a9ff18f5a9c62b39f
+Author: Alexey Khoroshilov <khoroshilov@linuxtesting.org>
+Date:	Sun Dec 28 05:15:45 2008 -0500
+
+    Use human-readable file names in the docs (bug #16278)
+
+ doc/Makefile.am |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
+
+commit f26062b277e1781876a30d3170fca8bbba2409ab
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Sun Dec 28 04:58:14 2008 -0500
+
+    Implement fc-list --quiet ala grep (bug #17141)
+
+    Exits 1 if no fonts matched, 0 otherwise.
+
+ fc-list/fc-list.c |   27 ++++++++++++++++++++-------
+ 1 files changed, 20 insertions(+), 7 deletions(-)
+
+commit 00c0972acae849ca3b18a7c76894c078185d3be4
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Sun Dec 28 04:48:54 2008 -0500
+
+    Fix compile with old FreeType that doesn't have FT_Select_Size()
+    (bug #17498)
+
+ configure.in	  |   10 +---------
+ src/fcfreetype.c |    2 ++
+ 2 files changed, 3 insertions(+), 9 deletions(-)
+
+commit 350dc5f35091e7e5635a6cf239e4cad56e992d01
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Sun Dec 28 04:26:26 2008 -0500
+
+    Use __builtin_popcount() when available (bug #17592)
+
+ src/fccharset.c |    4 ++++
+ 1 files changed, 4 insertions(+), 0 deletions(-)
+
+commit 4c209d5f0c217ff9d8f3b517017212d6362b07a8
+Author: Rahul Bhalerao <b.rahul.pm@gmail.com>
+Date:	Sun Dec 28 04:10:53 2008 -0500
+
+    Add config for new Indic fonts (bug #17856)
+
+ conf.d/65-nonlatin.conf |   35 ++++++++++++++++++++++++++++-------
+ 1 files changed, 28 insertions(+), 7 deletions(-)
+
+commit f69db8d49cbd929b80527719be6c0b1e6d49ccac
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Sun Dec 28 04:06:01 2008 -0500
+
+    Consistently use FcStat() over stat() in all places
+
+ src/fcatomic.c |    2 +-
+ src/fccache.c	|    7 +------
+ src/fccfg.c	|    2 +-
+ src/fcdir.c	|    4 ++--
+ src/fcint.h	|    7 +++++++
+ 5 files changed, 12 insertions(+), 10 deletions(-)
+
+commit 9e2ed2513bb4c2ecc7ee09c48c1dc677ea58a723
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Sun Dec 28 04:00:09 2008 -0500
+
+    [fccache] Consistently use FcStat() over stat() (bug #18195)
+
+ src/fccache.c |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
+
+commit ee2463fbcbe105a413021aa870e8a3f0094a1a24
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Sun Dec 28 03:40:21 2008 -0500
+
+    Cleanup symlinks in "make uninstall" (bug #18885)
+
+ conf.d/Makefile.am |	 7 +++++++
+ 1 files changed, 7 insertions(+), 0 deletions(-)
+
+commit fe8e8a1dd777ab53f57c4d31dc9547b3e4ba0d70
+Author: Harald Fernengel <harry@kdevelop.org>
+Date:	Sun Dec 28 03:23:58 2008 -0500
+
+    Don't use variables named 'bool' (bug #18851)
+
+ src/fcxml.c |	 16 ++++++++--------
+ 1 files changed, 8 insertions(+), 8 deletions(-)
+
+commit a9ac5c52a658920f1054a12435d8c07205953153
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Sun Dec 28 03:08:38 2008 -0500
+
+    [.gitignore] Update
+
+ .gitignore |	 4 ++++
+ 1 files changed, 4 insertions(+), 0 deletions(-)
+
+commit 1c7f4de80cc4819b504707ae143a2d718af42733
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Tue Dec 2 06:07:41 2008 -0500
+
+    Fix two more doc typos
+
+ doc/fcpattern.fncs |	 4 ++--
+ 1 files changed, 2 insertions(+), 2 deletions(-)
+
+commit 355ed50b185b7879a5c95e1f8697824c6dec6f9f
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Mon Sep 22 18:51:11 2008 -0400
+
+    Don't call FcPatternGetCharSet in FcSortWalk unless we need to
+    (#17361)
+
+ src/fcmatch.c |   55
+ +++++++++++++++++++++++++++++++------------------------
+ 1 files changed, 31 insertions(+), 24 deletions(-)
+
+commit 799691c901ea2d8561980c763a7e78383f1cceec
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Mon Sep 22 18:16:30 2008 -0400
+
+    Don't leak FcValues string loaded through fcxml.c (#17661)
+
+    Patch from Caolan McNamara.
+
+ src/fcpat.c |	 10 +++++-----
+ src/fcxml.c |	  2 ++
+ 2 files changed, 7 insertions(+), 5 deletions(-)
+
+commit 311da2316f5d40d9b8c72c9965f7d70330f3c498
+Author: Chris Wilson <chris@chris-wilson.co.uk>
+Date:	Wed Apr 23 09:07:28 2008 +0100
+
+    Reduce number of allocations during FcSortWalk().
+
+    The current behaviour of FcSortWalk() is to create a new FcCharSet on
+    each iteration that is the union of the previous iteration with
+    the next
+    FcCharSet in the font set. This causes the existing FcCharSet to be
+    reproduced in its entirety and then allocates fresh leaves for the new
+    FcCharSet. In essence the number of allocations is quadratic wrt the
+    number of fonts required.
+
+    By introducing a new method for merging a new FcCharSet with an
+    existing
+    one we can change the behaviour to be effectively linear with
+    the number
+    of fonts - allocating no more leaves than necessary to cover all the
+    fonts in the set.
+
+    For example, profiling 'gedit UTF-8-demo.txt'
+	Allocator		    nAllocs	    nBytes
+    Before:
+	FcCharSetFindLeafCreate 62886	    2012352
+	FcCharSetPutLeaf	9361	    11441108
+    After:
+	FcCharSetFindLeafCreate 1940	    62080
+	FcCharSetPutLeaf	281		    190336
+
+    The savings are even more significant for applications like
+    firefox-3.0b5
+    which need to switch between large number of fonts.
+    Before:
+	FcCharSetFindLeafCreate 4461192     142758144
+	FcCharSetPutLeaf	    1124536	    451574172
+    After:
+	FcCharSetFindLeafCreate 80359	    2571488
+	FcCharSetPutLeaf	    18940	    9720522
+
+    Out of interest, the next most frequent allocations are
+	FcPatternObjectAddWithBinding 526029	10520580
+	tt_face_load_eblc	    42103	    2529892
+
+ src/fccharset.c |   62
+ +++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ src/fcint.h	 |    3 ++
+ src/fcmatch.c	 |   13 ++--------
+ 3 files changed, 68 insertions(+), 10 deletions(-)
+
+commit 8072f4b1304efc59fee5e61efc4c4b0fc05bb8fb
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Fri Aug 22 18:25:22 2008 -0400
+
+    Document how to free return value of FcNameUnparse()
+
+ doc/fcpattern.fncs |	 2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
+
+commit 241fbde1ab28d7beb9b861d8804d0416f0d5589c
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Fri Aug 22 18:08:07 2008 -0400
+
+    Add FcConfigReference() (#17124)
+
+ doc/fcconfig.fncs	 |   20 +++++++++++++++++---
+ fontconfig/fontconfig.h |    3 +++
+ src/fccfg.c		 |   20 ++++++++++++++++++++
+ src/fcint.h		 |    2 ++
+ 4 files changed, 42 insertions(+), 3 deletions(-)
+
+commit 03dcaaa08fe324a058c427ab2da993fddaa7b3fd
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Fri Aug 22 17:49:02 2008 -0400
+
+    Document when config can be NULL (#17105)
+
+    Note that this also fixes a bug with FcFontList() where previously
+    it was NOT checking whether the config is up-to-date.  May want to
+    keep the old behavior and document that ScanInterval is essentially
+    unused internally (FcFontSetList uses it, but we can remove that
+    too).
+
+ doc/fcconfig.fncs  |	21 +++++++++++++++++++++
+ doc/fcfontset.fncs |	 3 +++
+ src/fclist.c	    |	 3 +++
+ 3 files changed, 27 insertions(+), 0 deletions(-)
+
+commit 1439c8f21af1533a920b54333f79459f456a402e
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Fri Aug 22 16:51:33 2008 -0400
+
+    Handle -h and --help according to GNU Coding Standards (#17104)
+
+    Added -h instead of -?.  And upon -h and --help, write usave to stdout
+    instead of stdin, and return 0 instead of 1.
+
+    -? still works like before as that's what getopt returns upon unknown
+    arguments.
+
+ fc-cache/fc-cache.c	|   47
+ +++++++++++++++++++++++++----------------------
+ fc-cache/fc-cache.sgml |    4 ++--
+ fc-cat/fc-cat.c	|   45
+ ++++++++++++++++++++++++---------------------
+ fc-cat/fc-cat.sgml	|    4 ++--
+ fc-list/fc-list.c	|   36 ++++++++++++++++++++----------------
+ fc-list/fc-list.sgml	|    4 ++--
+ fc-match/fc-match.c	|   44
+ ++++++++++++++++++++++++--------------------
+ fc-match/fc-match.sgml |    4 ++--
+ fc-query/fc-query.c	|   40 ++++++++++++++++++++++------------------
+ fc-query/fc-query.sgml |    4 ++--
+ 10 files changed, 125 insertions(+), 107 deletions(-)
+
+commit df243f93be4306e788aebf6b2ac4a7c1b97550ae
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Fri Aug 22 13:02:14 2008 -0400
+
+    Add WenQuanYi fonts to default conf (#17262, from Mandriva)
+
+ conf.d/65-nonlatin.conf |    4 ++++
+ 1 files changed, 4 insertions(+), 0 deletions(-)
+
+commit f31d8b1b1a93334611353d7ea846f8006fda855c
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Fri Aug 22 03:51:57 2008 -0400
+
+    Add Sindhi .orth file. (#17140)
+
+ fc-lang/sd.orth |   28 ++++++++++++++++++++++++++++
+ 1 files changed, 28 insertions(+), 0 deletions(-)
+
+commit b9f18922f112f2f551429b692d793dda7d02cd86
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Thu Aug 21 17:17:04 2008 -0400
+
+    Update sr.orth to actul subset of Cyrillic used by Serbian (#17208)
+
+ fc-lang/sr.orth |   24 +++++++-----------------
+ 1 files changed, 7 insertions(+), 17 deletions(-)
+
+commit 74e16ceeeab86f50c4b6bea12800f70110cd4794
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Thu Aug 14 15:27:16 2008 -0400
+
+    Fix docs re 'orig' argument of FcPatternBuild and family
+
+    Now call it 'p' or 'pattern', since it's modified in place.
+    There is no copying.
+
+ doc/fcpattern.fncs	 |    6 +++---
+ fontconfig/fontconfig.h |    4 ++--
+ src/fcpat.c		 |   12 ++++++------
+ 3 files changed, 11 insertions(+), 11 deletions(-)
+
+commit bb65f58f6354b8ad363021457852ad9e841cef89
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Wed Aug 13 16:45:18 2008 -0400
+
+    [doc] Fix signature of FcConfigHome()
+
+    We should write a test to automatically cross-check signatures
+    from public headers to docs.
+
+ doc/fcconfig.fncs |	5 +++--
+ 1 files changed, 3 insertions(+), 2 deletions(-)
+
+commit e690fbb20ec41ef018a32ac01118a41103c01289
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Wed Aug 13 03:30:23 2008 -0400
+
+    Get rid of $Id: ChangeLog,v 1.1.1.2 2010/11/21 06:35:29 mrg Exp $ tags
+
+ COPYING			 |    2 +-
+ Makefile.am			 |    2 +-
+ conf.d/Makefile.am		 |    2 +-
+ configure.in			 |    2 +-
+ doc/Makefile.am		 |    2 +-
+ doc/confdir.sgml.in		 |    2 +-
+ doc/edit-sgml.c		 |    2 +-
+ doc/fcatomic.fncs		 |    2 +-
+ doc/fcblanks.fncs		 |    2 +-
+ doc/fccharset.fncs		 |    2 +-
+ doc/fcconfig.fncs		 |    2 +-
+ doc/fcconstant.fncs		 |    2 +-
+ doc/fcfile.fncs		 |    2 +-
+ doc/fcfontset.fncs		 |    2 +-
+ doc/fcfreetype.fncs		 |    2 +-
+ doc/fcinit.fncs		 |    2 +-
+ doc/fcmatrix.fncs		 |    2 +-
+ doc/fcobjectset.fncs		 |    2 +-
+ doc/fcobjecttype.fncs		 |    2 +-
+ doc/fcpattern.fncs		 |    2 +-
+ doc/fcstring.fncs		 |    2 +-
+ doc/fcstrset.fncs		 |    2 +-
+ doc/fcvalue.fncs		 |    2 +-
+ doc/fontconfig-devel.sgml	 |    2 +-
+ doc/func.sgml			 |    2 +-
+ doc/version.sgml.in		 |    2 +-
+ fc-cache/Makefile.am		 |    2 +-
+ fc-case/fc-case.c		 |    2 +-
+ fc-case/fccase.tmpl.h		 |    2 +-
+ fc-cat/Makefile.am		 |    2 +-
+ fc-glyphname/fc-glyphname.c	 |    2 +-
+ fc-glyphname/fcglyphname.tmpl.h |    2 +-
+ fc-list/Makefile.am		 |    2 +-
+ fc-match/Makefile.am		 |    2 +-
+ fc-query/Makefile.am		 |    2 +-
+ src/Makefile.am		 |    2 +-
+ 36 files changed, 36 insertions(+), 36 deletions(-)
+
+commit 3042050954ddbe205e3166c9910886839829e788
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Wed Aug 13 03:16:39 2008 -0400
+
+    [doc] Document that a zero rescanInterval disables automatic checks
+    (#17103)
+
+ doc/fcconfig.fncs |	2 ++
+ 1 files changed, 2 insertions(+), 0 deletions(-)
+
+commit 41fc0fe68d88c1fdd38469a51a322dab6a30757d
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Wed Aug 13 02:50:35 2008 -0400
+
+    Add FcPatternFilter() (#13016)
+
+ doc/fcpattern.fncs	 |   12 ++++++++++++
+ fontconfig/fontconfig.h |    3 +++
+ src/fcpat.c		 |   37 +++++++++++++++++++++++++++++++++++++
+ 3 files changed, 52 insertions(+), 0 deletions(-)
+
+commit e6f14d3c513a9f2e7d75c389db4f65aa0dc0502f
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Wed Aug 13 02:47:12 2008 -0400
+
+    [doc] Add const decorator for FcPatternDuplicate()
+
+ doc/fcpattern.fncs |	 2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
+
+commit 29874098537e763e8e4cd3fefb1ecc0f36b808a5
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Wed Aug 13 02:24:42 2008 -0400
+
+    Implement fc-list --verbose (#13015)
+
+    A private FcObjectGetSet() is implemented that provides an
+    FcObjectSet of all registered elements.  FcFontSetList() is
+    then modified to use the object set from FcObjectGetSet() if
+    provided object-set is NULL.
+
+    Alternatively FcObjectGetSet() can be made public.	In that
+    case fc-list can use that as a base if --verbose is included,
+    and also add any elements provided by the user (though that has
+    no effect, as all elements from the cache are already registered).
+    Currently fc-list ignores user-provided elements if --verbose
+    is specified.
+
+ fc-list/fc-list.c    |   41 ++++++++++++++++++++++++-----------------
+ fc-list/fc-list.sgml |   10 +++++++---
+ src/fcint.h	      |    3 +++
+ src/fclist.c	      |   10 ++++++++++
+ src/fcname.c	      |   14 ++++++++++++++
+ 5 files changed, 58 insertions(+), 20 deletions(-)
+
+commit 77c0d8bce86ca088782d5631617c0ef681d91312
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Wed Aug 13 01:31:18 2008 -0400
+
+    Add fc-query (#13019)
+
+ .gitignore		  |    2 +
+ Makefile.am		  |    2 +-
+ configure.in		  |    1 +
+ doc/fontconfig-user.sgml |    2 +-
+ fc-cache/fc-cache.sgml   |    1 +
+ fc-cat/fc-cat.sgml	  |    1 +
+ fc-list/fc-list.sgml	  |    1 +
+ fc-match/fc-match.sgml   |    1 +
+ fc-query/Makefile.am	  |   59 ++++++++++++++++
+ fc-query/fc-query.c	  |  166
+ +++++++++++++++++++++++++++++++++++++++++++
+ fc-query/fc-query.sgml   |  174
+ ++++++++++++++++++++++++++++++++++++++++++++++
+ 11 files changed, 408 insertions(+), 2 deletions(-)
+
+commit d5b6085c3e40b4e2605cab7ff6c8a621b961b2d2
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Wed Aug 13 00:42:12 2008 -0400
+
+    Update man pages
+
+ fc-cache/fc-cache.sgml |   16 ++++++++++------
+ fc-cat/fc-cat.sgml	|   15 +++++++++++----
+ fc-list/fc-list.sgml	|   12 ++++++++----
+ fc-match/fc-match.sgml |   30 +++++++++++++++++++++++-------
+ 4 files changed, 52 insertions(+), 21 deletions(-)
+
+commit 88261bafff30ec02b5a2180f1f9b786c8ff44e3d
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Tue Aug 12 23:44:44 2008 -0400
+
+    [fc-match] Fix list of getopt options in --help
+
+ fc-match/fc-match.c |	  4 ++--
+ 1 files changed, 2 insertions(+), 2 deletions(-)
+
+commit 43291847c58002fca99984dcec4f1bbbb0d0f61d
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Tue Aug 12 18:00:35 2008 -0400
+
+    Add ~/.fonts.conf.d to default config (#17100)
+
+ conf.d/50-user.conf |	  1 +
+ 1 files changed, 1 insertions(+), 0 deletions(-)
+
+commit 4f468454d80bf4f1d256f084afd69cabecf1243e
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Tue Aug 12 17:54:45 2008 -0400
+
+    Update Thai default families (#16223)
+
+    Patch from Theppitak Karoonboonyanan
+
+ conf.d/65-nonlatin.conf |   13 +++++++++----
+ 1 files changed, 9 insertions(+), 4 deletions(-)
+
+commit 2e08e0f243633386b6441784926f928359c92453
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Tue Aug 12 17:52:02 2008 -0400
+
+    [doc] Fix signatures of FcPatternGetFTFace and FcPatternGetLangSet
+    (#16272)
+
+ doc/fcpattern.fncs |	 6 ++++--
+ 1 files changed, 4 insertions(+), 2 deletions(-)
+
+commit 317b849215ab16cfcd0dda0e424efc9216a74f28
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Tue Aug 12 16:34:24 2008 -0400
+
+    Replace RCS Id tags with the file name
+
+ config/Makedefs.in	 |    2 +-
+ config/install.sh	 |    2 +-
+ fc-cache/fc-cache.c	 |    2 +-
+ fc-cat/fc-cat.c	 |    2 +-
+ fc-lang/aa.orth	 |    2 +-
+ fc-lang/ab.orth	 |    2 +-
+ fc-lang/af.orth	 |    2 +-
+ fc-lang/am.orth	 |    2 +-
+ fc-lang/ar.orth	 |    2 +-
+ fc-lang/ast.orth	 |    2 +-
+ fc-lang/ava.orth	 |    2 +-
+ fc-lang/ay.orth	 |    2 +-
+ fc-lang/az.orth	 |    2 +-
+ fc-lang/az_ir.orth	 |    2 +-
+ fc-lang/ba.orth	 |    2 +-
+ fc-lang/bam.orth	 |    2 +-
+ fc-lang/be.orth	 |    2 +-
+ fc-lang/bg.orth	 |    2 +-
+ fc-lang/bh.orth	 |    2 +-
+ fc-lang/bho.orth	 |    2 +-
+ fc-lang/bi.orth	 |    2 +-
+ fc-lang/bin.orth	 |    2 +-
+ fc-lang/bn.orth	 |    2 +-
+ fc-lang/bo.orth	 |    2 +-
+ fc-lang/br.orth	 |    2 +-
+ fc-lang/bs.orth	 |    2 +-
+ fc-lang/bua.orth	 |    2 +-
+ fc-lang/ca.orth	 |    2 +-
+ fc-lang/ce.orth	 |    2 +-
+ fc-lang/ch.orth	 |    2 +-
+ fc-lang/chm.orth	 |    2 +-
+ fc-lang/chr.orth	 |    2 +-
+ fc-lang/co.orth	 |    2 +-
+ fc-lang/cs.orth	 |    2 +-
+ fc-lang/cu.orth	 |    2 +-
+ fc-lang/cv.orth	 |    2 +-
+ fc-lang/cy.orth	 |    2 +-
+ fc-lang/da.orth	 |    2 +-
+ fc-lang/de.orth	 |    2 +-
+ fc-lang/dz.orth	 |    2 +-
+ fc-lang/el.orth	 |    2 +-
+ fc-lang/en.orth	 |    2 +-
+ fc-lang/eo.orth	 |    2 +-
+ fc-lang/es.orth	 |    2 +-
+ fc-lang/et.orth	 |    2 +-
+ fc-lang/eu.orth	 |    2 +-
+ fc-lang/fa.orth	 |    2 +-
+ fc-lang/fc-lang.c	 |    2 +-
+ fc-lang/fc-lang.man	 |    2 +-
+ fc-lang/fclang.tmpl.h	 |    2 +-
+ fc-lang/fi.orth	 |    2 +-
+ fc-lang/fj.orth	 |    2 +-
+ fc-lang/fo.orth	 |    2 +-
+ fc-lang/fr.orth	 |    2 +-
+ fc-lang/ful.orth	 |    2 +-
+ fc-lang/fur.orth	 |    2 +-
+ fc-lang/fy.orth	 |    2 +-
+ fc-lang/ga.orth	 |    2 +-
+ fc-lang/gd.orth	 |    2 +-
+ fc-lang/gez.orth	 |    2 +-
+ fc-lang/gl.orth	 |    2 +-
+ fc-lang/gn.orth	 |    2 +-
+ fc-lang/gu.orth	 |    2 +-
+ fc-lang/gv.orth	 |    2 +-
+ fc-lang/ha.orth	 |    2 +-
+ fc-lang/haw.orth	 |    2 +-
+ fc-lang/he.orth	 |    2 +-
+ fc-lang/hi.orth	 |    2 +-
+ fc-lang/ho.orth	 |    2 +-
+ fc-lang/hr.orth	 |    2 +-
+ fc-lang/hu.orth	 |    2 +-
+ fc-lang/hy.orth	 |    2 +-
+ fc-lang/ia.orth	 |    2 +-
+ fc-lang/ibo.orth	 |    2 +-
+ fc-lang/id.orth	 |    2 +-
+ fc-lang/ie.orth	 |    2 +-
+ fc-lang/ik.orth	 |    2 +-
+ fc-lang/io.orth	 |    2 +-
+ fc-lang/is.orth	 |    2 +-
+ fc-lang/it.orth	 |    2 +-
+ fc-lang/iu.orth	 |    2 +-
+ fc-lang/ja.orth	 |    2 +-
+ fc-lang/ka.orth	 |    2 +-
+ fc-lang/kaa.orth	 |    2 +-
+ fc-lang/ki.orth	 |    2 +-
+ fc-lang/kk.orth	 |    2 +-
+ fc-lang/kl.orth	 |    2 +-
+ fc-lang/km.orth	 |    2 +-
+ fc-lang/kn.orth	 |    2 +-
+ fc-lang/ko.orth	 |    2 +-
+ fc-lang/kok.orth	 |    2 +-
+ fc-lang/ks.orth	 |    2 +-
+ fc-lang/ku.orth	 |    2 +-
+ fc-lang/ku_ir.orth	 |    2 +-
+ fc-lang/kum.orth	 |    2 +-
+ fc-lang/kv.orth	 |    2 +-
+ fc-lang/kw.orth	 |    2 +-
+ fc-lang/ky.orth	 |    2 +-
+ fc-lang/la.orth	 |    2 +-
+ fc-lang/lb.orth	 |    2 +-
+ fc-lang/lez.orth	 |    2 +-
+ fc-lang/ln.orth	 |    2 +-
+ fc-lang/lo.orth	 |    2 +-
+ fc-lang/lt.orth	 |    2 +-
+ fc-lang/lv.orth	 |    2 +-
+ fc-lang/mai.orth	 |    2 +-
+ fc-lang/mg.orth	 |    2 +-
+ fc-lang/mh.orth	 |    2 +-
+ fc-lang/mi.orth	 |    2 +-
+ fc-lang/mk.orth	 |    2 +-
+ fc-lang/ml.orth	 |    2 +-
+ fc-lang/mn.orth	 |    2 +-
+ fc-lang/mo.orth	 |    2 +-
+ fc-lang/mr.orth	 |    2 +-
+ fc-lang/mt.orth	 |    2 +-
+ fc-lang/my.orth	 |    2 +-
+ fc-lang/nb.orth	 |    2 +-
+ fc-lang/nds.orth	 |    2 +-
+ fc-lang/ne.orth	 |    2 +-
+ fc-lang/nl.orth	 |    2 +-
+ fc-lang/nn.orth	 |    2 +-
+ fc-lang/no.orth	 |    2 +-
+ fc-lang/nr.orth	 |    2 +-
+ fc-lang/nso.orth	 |    2 +-
+ fc-lang/ny.orth	 |    2 +-
+ fc-lang/oc.orth	 |    2 +-
+ fc-lang/om.orth	 |    2 +-
+ fc-lang/or.orth	 |    2 +-
+ fc-lang/os.orth	 |    2 +-
+ fc-lang/pa.orth	 |    2 +-
+ fc-lang/pl.orth	 |    2 +-
+ fc-lang/ps_af.orth	 |    2 +-
+ fc-lang/ps_pk.orth	 |    2 +-
+ fc-lang/pt.orth	 |    2 +-
+ fc-lang/rm.orth	 |    2 +-
+ fc-lang/ro.orth	 |    2 +-
+ fc-lang/ru.orth	 |    2 +-
+ fc-lang/sa.orth	 |    2 +-
+ fc-lang/sah.orth	 |    2 +-
+ fc-lang/sco.orth	 |    2 +-
+ fc-lang/se.orth	 |    2 +-
+ fc-lang/sel.orth	 |    2 +-
+ fc-lang/sh.orth	 |    2 +-
+ fc-lang/shs.orth	 |    2 +-
+ fc-lang/si.orth	 |    2 +-
+ fc-lang/sk.orth	 |    2 +-
+ fc-lang/sl.orth	 |    2 +-
+ fc-lang/sm.orth	 |    2 +-
+ fc-lang/sma.orth	 |    2 +-
+ fc-lang/smj.orth	 |    2 +-
+ fc-lang/smn.orth	 |    2 +-
+ fc-lang/sms.orth	 |    2 +-
+ fc-lang/so.orth	 |    2 +-
+ fc-lang/sq.orth	 |    2 +-
+ fc-lang/sr.orth	 |    2 +-
+ fc-lang/ss.orth	 |    2 +-
+ fc-lang/st.orth	 |    2 +-
+ fc-lang/sv.orth	 |    2 +-
+ fc-lang/sw.orth	 |    2 +-
+ fc-lang/syr.orth	 |    2 +-
+ fc-lang/ta.orth	 |    2 +-
+ fc-lang/te.orth	 |    2 +-
+ fc-lang/tg.orth	 |    2 +-
+ fc-lang/th.orth	 |    2 +-
+ fc-lang/ti_er.orth	 |    2 +-
+ fc-lang/ti_et.orth	 |    2 +-
+ fc-lang/tig.orth	 |    2 +-
+ fc-lang/tk.orth	 |    2 +-
+ fc-lang/tl.orth	 |    2 +-
+ fc-lang/tn.orth	 |    2 +-
+ fc-lang/to.orth	 |    2 +-
+ fc-lang/tr.orth	 |    2 +-
+ fc-lang/ts.orth	 |    2 +-
+ fc-lang/tt.orth	 |    2 +-
+ fc-lang/tw.orth	 |    2 +-
+ fc-lang/tyv.orth	 |    2 +-
+ fc-lang/ug.orth	 |    2 +-
+ fc-lang/uk.orth	 |    2 +-
+ fc-lang/ur.orth	 |    2 +-
+ fc-lang/uz.orth	 |    2 +-
+ fc-lang/ven.orth	 |    2 +-
+ fc-lang/vi.orth	 |    2 +-
+ fc-lang/vo.orth	 |    2 +-
+ fc-lang/vot.orth	 |    2 +-
+ fc-lang/wa.orth	 |    2 +-
+ fc-lang/wen.orth	 |    2 +-
+ fc-lang/wo.orth	 |    2 +-
+ fc-lang/xh.orth	 |    2 +-
+ fc-lang/yap.orth	 |    2 +-
+ fc-lang/yi.orth	 |    2 +-
+ fc-lang/yo.orth	 |    2 +-
+ fc-lang/zh_cn.orth	 |    2 +-
+ fc-lang/zh_hk.orth	 |    2 +-
+ fc-lang/zh_mo.orth	 |    2 +-
+ fc-lang/zh_sg.orth	 |    2 +-
+ fc-lang/zh_tw.orth	 |    2 +-
+ fc-lang/zu.orth	 |    2 +-
+ fc-list/fc-list.c	 |    2 +-
+ fc-match/fc-match.c	 |    2 +-
+ fontconfig/fcfreetype.h |    2 +-
+ fontconfig/fcprivate.h  |    2 +-
+ fontconfig/fontconfig.h |    2 +-
+ src/fcatomic.c		 |    2 +-
+ src/fcblanks.c		 |    2 +-
+ src/fccfg.c		 |    2 +-
+ src/fccharset.c	 |    2 +-
+ src/fcdbg.c		 |    2 +-
+ src/fcdefault.c	 |    2 +-
+ src/fcdir.c		 |    2 +-
+ src/fcfreetype.c	 |    2 +-
+ src/fcfs.c		 |    2 +-
+ src/fcinit.c		 |    2 +-
+ src/fcint.h		 |    2 +-
+ src/fclang.c		 |    2 +-
+ src/fclist.c		 |    2 +-
+ src/fcmatch.c		 |    2 +-
+ src/fcmatrix.c		 |    2 +-
+ src/fcname.c		 |    2 +-
+ src/fcstr.c		 |    2 +-
+ src/fcxml.c		 |    2 +-
+ 220 files changed, 220 insertions(+), 220 deletions(-)
+
+commit aef608efed2feb867128e528cd9d39ee7e10a0ac
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Tue Aug 12 16:11:29 2008 -0400
+
+    Add orth file for Maithili mai.orth (#15821)
+
+ fc-lang/mai.orth |   25 +++++++++++++++++++++++++
+ 1 files changed, 25 insertions(+), 0 deletions(-)
+
+commit 1bcf4ae5f2348d7956c435d34f2856ebfaccd6c8
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Tue Aug 12 15:10:04 2008 -0400
+
+    When canonizing filenames, squash // and remove final / (#bug 16286)
+
+    The fact that we now drop final slashes from all filenames without
+    checking that the file name represents a directory may surprise some,
+    but it doesn't bother me really.
+
+ src/fcstr.c |	  3 +++
+ 1 files changed, 3 insertions(+), 0 deletions(-)
+
+commit b21bea3731106ef30224f9255c4232d6e2607803
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Tue Aug 12 14:32:40 2008 -0400
+
+    [doc] Fix inaccuracy in FcFontRenderPrepare docs (#16985)
+
+ doc/fcconfig.fncs |	2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
+
+commit e04afe83de409b880be9a854b34fb624bca5c3b0
+Author: Behdad Esfahbod <behdad@behdad.org>
+Date:	Tue Aug 12 14:10:03 2008 -0400
+
+    Avoid C99ism in Win32 code (#16651)
+
+ src/fccfg.c |	  3 ++-
+ src/fcxml.c |	  3 ++-
+ 2 files changed, 4 insertions(+), 2 deletions(-)
+
+commit f7364e6273df6f660e6b01ea5189e88b34ba4602
+Author: Benjamin Close <Benjamin.Close@clearchain.com>
+Date:	Thu Feb 12 10:23:40 2009 +1030
+
+    Remove build manpage logfile if it exists
+
+ doc/Makefile.am |    1 +
+ 1 files changed, 1 insertions(+), 0 deletions(-)
+
+commit 0e21b5a4d5609a5dd0f332b412d878b6f1037d29
+Author: Peter <pva@gentoo.org>
+Date:	Sun Jun 22 09:21:05 2008 -0700
+
+    Make sure alias files are built first (bug 16464)
+
+    Signed-off-by: Keith Packard <keithp@keithp.com>
+
+ fc-case/Makefile.am |	  4 +++-
+ 1 files changed, 3 insertions(+), 1 deletions(-)
+
 commit a93b4c2aab1d79573abd646147596a8a34b19350
 Author: Keith Packard <keithp@keithp.com>
-Date:   Sat May 31 19:24:35 2008 -0700
+Date:	Sat May 31 19:24:35 2008 -0700
 
     Bump version to 2.6.0
 
- README                  |    6 ++++--
- configure.in            |    2 +-
+ README			 |    6 ++++--
+ configure.in		 |    2 +-
  fontconfig/fontconfig.h |    4 ++--
  3 files changed, 7 insertions(+), 5 deletions(-)
 
 commit d0902ee0867bd11e4ff266876a69c258eee8d08d
 Author: Keith Packard <keithp@keithp.com>
-Date:   Sat May 24 17:52:41 2008 -0700
+Date:	Sat May 24 17:52:41 2008 -0700
 
     Bump version to 2.5.93
 
- README                  |   34 ++++++++++++++++++++++++++++++++--
- configure.in            |    2 +-
+ README			 |   34 ++++++++++++++++++++++++++++++++--
+ configure.in		 |    2 +-
  fontconfig/fontconfig.h |    2 +-
  3 files changed, 34 insertions(+), 4 deletions(-)
 
 commit 8ade2369238a0b439192a847f12fcc9748a6d73a
 Author: Keith Packard <keithp@keithp.com>
-Date:   Sat May 24 17:14:24 2008 -0700
+Date:	Sat May 24 17:14:24 2008 -0700
 
     Ignore empty <dir></dir> elements
 
     An empty element would cause every file starting with the current
     directory to be scanned, probably not what the user wanted.
 
- src/fcxml.c |    4 +++-
+ src/fcxml.c |	  4 +++-
  1 files changed, 3 insertions(+), 1 deletions(-)
 
 commit 83c5c357abc8d626680943537b4dbc020d6c378c
 Author: Keith Packard <keithp@keithp.com>
-Date:   Sat May 24 17:01:12 2008 -0700
+Date:	Sat May 24 17:01:12 2008 -0700
 
     Oops. Fix for bug 15928 used wrong path for installed fc-cache.
 
     fc-cache lives in $(bindir)/fc-cache, not $(bindir)/fc-cache/fc-cache.
 
- Makefile.am |    4 ++--
+ Makefile.am |	  4 ++--
  1 files changed, 2 insertions(+), 2 deletions(-)
 
 commit e91e7efd7b0e0ca6f9f2e718541f99331447b40a
 Author: Keith Packard <keithp@keithp.com>
-Date:   Sat May 24 16:32:27 2008 -0700
+Date:	Sat May 24 16:32:27 2008 -0700
 
     Libs.private needs freetype libraries
 
@@ -57,7 +3540,7 @@ Date:   Sat May 24 16:32:27 2008 -0700
 
 commit ad3fc667914d19435ade56adc8afe584d5605d10
 Author: Sayamindu Dasgupta <sayamindu@gmail.com>
-Date:   Sat May 24 16:15:27 2008 -0700
+Date:	Sat May 24 16:15:27 2008 -0700
 
     FcConfigUptoDate breaks if directory mtime is in the future. Bug
     14424.
@@ -74,12 +3557,12 @@ Date:   Sat May 24 16:15:27 2008 -0700
     directories
     are in the future.
 
- src/fccfg.c |   13 ++++++++++++-
+ src/fccfg.c |	 13 ++++++++++++-
  1 files changed, 12 insertions(+), 1 deletions(-)
 
 commit b808204023ab47eb06dc520665eb7a0473320a9b
 Author: Evgeniy Stepanov <eugeni.stepanov@gmail.com>
-Date:   Sat May 24 16:09:17 2008 -0700
+Date:	Sat May 24 16:09:17 2008 -0700
 
     Fix index/offset for 'decorative' matcher. Bug 15890.
 
@@ -94,7 +3577,7 @@ Date:   Sat May 24 16:09:17 2008 -0700
 
 commit c6228a34b0ebaab3df395163b3b9246da2aa7d8c
 Author: Glen Low <glen.low@pixelglow.com>
-Date:   Sat May 24 15:59:35 2008 -0700
+Date:	Sat May 24 15:59:35 2008 -0700
 
     Fix Win32 build error: install tries to run fc-cache locally
     (bug 15928).
@@ -109,12 +3592,12 @@ Date:   Sat May 24 15:59:35 2008 -0700
 
     (the second part of this patch was already in the tree)
 
- Makefile.am |    4 ++--
+ Makefile.am |	  4 ++--
  1 files changed, 2 insertions(+), 2 deletions(-)
 
 commit 557f87f7337df1d78c04d2c993916d1d1748360f
 Author: Neskie Manuel <neskiem@gmail.com>
-Date:   Sat May 24 15:51:41 2008 -0700
+Date:	Sat May 24 15:51:41 2008 -0700
 
     Add Secwepemctsin Orthography. Bug 15996.
 
@@ -123,7 +3606,7 @@ Date:   Sat May 24 15:51:41 2008 -0700
 
 commit a572f547fd46bf169b617108552ab0fa280f4813
 Author: Behdad Esfahbod <freedesktop@behdad.org>
-Date:   Sat May 24 15:48:00 2008 -0700
+Date:	Sat May 24 15:48:00 2008 -0700
 
     Persian conf update. (bug 16066).
 
@@ -133,7 +3616,7 @@ Date:   Sat May 24 15:48:00 2008 -0700
 
 commit 0faca4ff826c214c5c5bb0ff7e64a09802230f9d
 Author: Alexey Khoroshilov <khoroshilov@linuxtesting.org>
-Date:   Sat May 24 15:44:00 2008 -0700
+Date:	Sat May 24 15:44:00 2008 -0700
 
     Fix FcStrDirname documentation. (bug 16068)
 
@@ -146,12 +3629,12 @@ Date:   Sat May 24 15:44:00 2008 -0700
     of the
     previous function is absent.
 
- doc/fcstring.fncs |    1 +
+ doc/fcstring.fncs |	1 +
  1 files changed, 1 insertions(+), 0 deletions(-)
 
 commit 4dfb4aa1d4e1a3195d6f2f6873cb48d1d739a1bd
 Author: Keith Packard <keithp@keithp.com>
-Date:   Mon May 5 08:30:44 2008 -0700
+Date:	Mon May 5 08:30:44 2008 -0700
 
     Add a copy of dolt.m4 to acinclude.m4.
 
@@ -165,7 +3648,7 @@ Date:   Mon May 5 08:30:44 2008 -0700
 
 commit 8d0139b0e68b081c9cdbeaa025fb278105ebf50c
 Author: Keith Packard <keithp@keithp.com>
-Date:   Sun May 4 19:08:31 2008 -0700
+Date:	Sun May 4 19:08:31 2008 -0700
 
     Freetype 2.3.5 (2007-jul-02) fixes indic font hinting. re-enable
     (bug 15822)
@@ -183,7 +3666,7 @@ Date:   Sun May 4 19:08:31 2008 -0700
 
 commit 3a3f687b759ceb76fc1e6407980a4b2717a47219
 Author: Keith Packard <keithp@keithp.com>
-Date:   Sun May 4 01:27:42 2008 -0700
+Date:	Sun May 4 01:27:42 2008 -0700
 
     Add extended, caps, dunhill style mappings.
 
@@ -195,7 +3678,7 @@ Date:   Sun May 4 01:27:42 2008 -0700
 
 commit 13a14cbf56d56c14d53e5f55d7fcc4bdec900994
 Author: Keith Packard <keithp@keithp.com>
-Date:   Sun May 4 01:26:40 2008 -0700
+Date:	Sun May 4 01:26:40 2008 -0700
 
     Fix a few memory tracking mistakes.
 
@@ -205,46 +3688,46 @@ Date:   Sun May 4 01:26:40 2008 -0700
 
  src/fcatomic.c  |    2 +-
  src/fccharset.c |    6 ++++++
- src/fcinit.c    |    2 ++
- src/fcpat.c     |    2 +-
- src/fcstr.c     |    9 +++++++--
+ src/fcinit.c	 |    2 ++
+ src/fcpat.c	 |    2 +-
+ src/fcstr.c	 |    9 +++++++--
  5 files changed, 17 insertions(+), 4 deletions(-)
 
 commit c6c9400d67ffefa95100d03e6650ea901b05116b
 Author: Keith Packard <keithp@keithp.com>
-Date:   Sun May 4 01:25:04 2008 -0700
+Date:	Sun May 4 01:25:04 2008 -0700
 
     Call FcFini to make memory debugging easier
 
     FcFini frees all libary data structures so valgrind should report 0
     allocations in use when the program exits.
 
- fc-cache/fc-cache.c |    1 +
+ fc-cache/fc-cache.c |	  1 +
  1 files changed, 1 insertions(+), 0 deletions(-)
 
 commit d33d23ada05a688046e4cc0a48b149fbf44c9ce3
 Author: Keith Packard <keithp@keithp.com>
-Date:   Sat May 3 20:39:07 2008 -0700
+Date:	Sat May 3 20:39:07 2008 -0700
 
     Bump version to 2.5.92
 
- README                  |   40 ++++++++++++++++++++++++++++++++++++++--
- configure.in            |    2 +-
+ README			 |   40 ++++++++++++++++++++++++++++++++++++++--
+ configure.in		 |    2 +-
  fontconfig/fontconfig.h |    2 +-
  3 files changed, 40 insertions(+), 4 deletions(-)
 
 commit 366887c3845973a6f81dd2e9e7aec60afbc61c32
 Author: Keith Packard <keithp@keithp.com>
-Date:   Sat May 3 20:38:29 2008 -0700
+Date:	Sat May 3 20:38:29 2008 -0700
 
     git ignore doltcompile
 
- .gitignore |    1 +
+ .gitignore |	 1 +
  1 files changed, 1 insertions(+), 0 deletions(-)
 
 commit 0b15b5f38b94ca1eda2b8b25de939776198c017a
 Author: Keith Packard <keithp@keithp.com>
-Date:   Sat May 3 20:37:49 2008 -0700
+Date:	Sat May 3 20:37:49 2008 -0700
 
     Allow for RC versions in README update
 
@@ -253,7 +3736,7 @@ Date:   Sat May 3 20:37:49 2008 -0700
 
 commit 19d124dc4f9a68e1c9ddce58bf79a5e11d2ccbfd
 Author: Keith Packard <keithp@keithp.com>
-Date:   Sat May 3 20:23:37 2008 -0700
+Date:	Sat May 3 20:23:37 2008 -0700
 
     Deal with libtool 2.2 which doesn't let us use LT_ variables. (bug
     15692)
@@ -265,14 +3748,14 @@ Date:   Sat May 3 20:23:37 2008 -0700
 
     Rename the LT_ variables to LIBT_ to work around this restriction.
 
- configure.in      |   18 +++++++++---------
- fontconfig-zip.in |    2 +-
- src/Makefile.am   |    6 +++---
+ configure.in	   |   18 +++++++++---------
+ fontconfig-zip.in |	2 +-
+ src/Makefile.am   |	6 +++---
  3 files changed, 13 insertions(+), 13 deletions(-)
 
 commit 0028f72bc818ca3bc343383fb644765ae12ce769
 Author: Carlo Bramini <carlo.bramix@libero.it>
-Date:   Sat May 3 20:17:16 2008 -0700
+Date:	Sat May 3 20:17:16 2008 -0700
 
     Add FreeType-dependent functions to fontconfig.def file. (bug 15415)
 
@@ -285,16 +3768,16 @@ Date:   Sat May 3 20:17:16 2008 -0700
 
 commit bdbc26f3d970581a3248c245451f7fbfb1609601
 Author: Keith Packard <keithp@keithp.com>
-Date:   Sat May 3 20:14:07 2008 -0700
+Date:	Sat May 3 20:14:07 2008 -0700
 
     Make fc-match behave better when style is unknown (bug 15332)
 
- fc-match/fc-match.c |    2 +-
+ fc-match/fc-match.c |	  2 +-
  1 files changed, 1 insertions(+), 1 deletions(-)
 
 commit 3322ca855330631e0d849e6beca0c2d82390898f
 Author: Keith Packard <keithp@keithp.com>
-Date:   Sat May 3 20:07:35 2008 -0700
+Date:	Sat May 3 20:07:35 2008 -0700
 
     Use of ":=" in src/Makefile.am is unportable (bug 14420)
 
@@ -309,7 +3792,7 @@ Date:   Sat May 3 20:07:35 2008 -0700
 
     This is due to the following line (src/Makefile.am:143):
 
-        CLEANFILES := $(ALIAS_FILES)
+	CLEANFILES := $(ALIAS_FILES)
 
     Changing that to a standard assignment ("=") fixes the problem.
 
@@ -323,16 +3806,16 @@ Date:   Sat May 3 20:07:35 2008 -0700
 
 commit df8ceebdbe735226bef602614921d517321c690f
 Author: Keith Packard <keithp@keithp.com>
-Date:   Sat May 3 20:06:48 2008 -0700
+Date:	Sat May 3 20:06:48 2008 -0700
 
     Remove doltcompile in distclean
 
- Makefile.am |    2 +-
+ Makefile.am |	  2 +-
  1 files changed, 1 insertions(+), 1 deletions(-)
 
 commit 9ffa2fa7efa7815b8808e744c3601631fe1810d7
 Author: Ryan Schmidt <freedesktop-2008@ryandesign.com>
-Date:   Sat May 3 19:49:07 2008 -0700
+Date:	Sat May 3 19:49:07 2008 -0700
 
     fontconfig build fails if "head" is missing or unusable (bug 14304)
 
@@ -347,7 +3830,7 @@ Date:   Sat May 3 19:49:07 2008 -0700
 
 commit 6d65081e35fc1ffae1212f173853b0693645192e
 Author: Dennis Schridde <lindevel@gmx.net>
-Date:   Sat May 3 19:45:31 2008 -0700
+Date:	Sat May 3 19:45:31 2008 -0700
 
     Proper config path for static libraries in win32
 
@@ -365,13 +3848,13 @@ Date:   Sat May 3 19:45:31 2008 -0700
     for a
     fonts/ directory where the exe is located.
 
- src/fccfg.c |   26 +++++++++++++++++++++-----
- src/fcxml.c |   22 +++++++++++++++++++++-
+ src/fccfg.c |	 26 +++++++++++++++++++++-----
+ src/fcxml.c |	 22 +++++++++++++++++++++-
  2 files changed, 42 insertions(+), 6 deletions(-)
 
 commit ae6fac08029bce11487d2d20184b1cabb4e0ec34
 Author: Changwoo Ryu <cwryu@debian.org>
-Date:   Sat May 3 19:39:56 2008 -0700
+Date:	Sat May 3 19:39:56 2008 -0700
 
     Korean font in the default config - replacing baekmuk with un
     (bug 13569)
@@ -390,7 +3873,7 @@ Date:   Sat May 3 19:39:56 2008 -0700
 
 commit 53aec111074cf7b46d15eb84a55791d3c95bc15e
 Author: Sylvain Pasche <sylvain.pasche@gmail.com>
-Date:   Sat May 3 19:33:45 2008 -0700
+Date:	Sat May 3 19:33:45 2008 -0700
 
     Fontconfig options for freetype sub-pixel filter configuration
 
@@ -401,16 +3884,16 @@ Date:   Sat May 3 19:33:45 2008 -0700
     patch
     follows that would correspond to one available for Cairo in bug 10301.
 
- doc/fontconfig-devel.sgml |    1 +
- doc/fontconfig-user.sgml  |    5 +++++
- fontconfig/fontconfig.h   |    9 ++++++++-
- src/fcint.h               |    3 ++-
- src/fcname.c              |    7 ++++++-
+ doc/fontconfig-devel.sgml |	1 +
+ doc/fontconfig-user.sgml  |	5 +++++
+ fontconfig/fontconfig.h   |	9 ++++++++-
+ src/fcint.h		   |	3 ++-
+ src/fcname.c		   |	7 ++++++-
  5 files changed, 22 insertions(+), 3 deletions(-)
 
 commit c26344ecfc1d3b85671f5d948a10d5cc27c21c2f
 Author: Frederic Crozat <fcrozat@mandriva.com>
-Date:   Sat May 3 19:26:09 2008 -0700
+Date:	Sat May 3 19:26:09 2008 -0700
 
     Merge some of Mandriva configuration into upstream configuration. Bug
     13247
@@ -420,24 +3903,24 @@ Date:   Sat May 3 19:26:09 2008 -0700
     documenting fonts to common aliases.
 
  conf.d/25-unhint-nonlatin.conf |   20 ++++++++++
- conf.d/60-latin.conf           |    3 +
- conf.d/65-nonlatin.conf        |   81
+ conf.d/60-latin.conf		|    3 +
+ conf.d/65-nonlatin.conf	|   81
  ++++++++++++++++++++++++++++++++++++---
- conf.d/69-unifont.conf         |    4 ++
+ conf.d/69-unifont.conf		|    4 ++
  4 files changed, 101 insertions(+), 7 deletions(-)
 
 commit c014142a207d6f3ac63580dfb0cacb243776f7c5
 Author: Keith Packard <keithp@keithp.com>
-Date:   Sat May 3 19:09:57 2008 -0700
+Date:	Sat May 3 19:09:57 2008 -0700
 
     Add --all flag to fc-match to show the untrimmed list. Bug 13018.
 
- fc-match/fc-match.c |   18 ++++++++++++------
+ fc-match/fc-match.c |	 18 ++++++++++++------
  1 files changed, 12 insertions(+), 6 deletions(-)
 
 commit 8415442f9bb8ad624c9940adf187390468c70548
 Author: Keith Packard <keithp@keithp.com>
-Date:   Sat May 3 18:04:32 2008 -0700
+Date:	Sat May 3 18:04:32 2008 -0700
 
     Add some sample cursive and fantasy families.
 
@@ -447,7 +3930,7 @@ Date:   Sat May 3 18:04:32 2008 -0700
 
 commit 73e8ae3ac8890af2dd8dd769686e2d34b749e3d0
 Author: Keith Packard <keithp@keithp.com>
-Date:   Sat May 3 17:43:39 2008 -0700
+Date:	Sat May 3 17:43:39 2008 -0700
 
     Remove size and dpi values from bitmap fonts. Bug 8765.
 
@@ -459,7 +3942,7 @@ Date:   Sat May 3 17:43:39 2008 -0700
 
 commit 60421f5d68e81478430c2d9c796eedbf6d43b3cf
 Author: Keith Packard <keithp@keithp.com>
-Date:   Sat May 3 17:19:43 2008 -0700
+Date:	Sat May 3 17:19:43 2008 -0700
 
     Work around for bitmap-only TrueType fonts that are missing the
     glyf table.
@@ -476,7 +3959,7 @@ Date:   Sat May 3 17:19:43 2008 -0700
 
 commit ef9db2e2d286c4c26a2cb06aef14d175c33d0898
 Author: Keith Packard <keithp@keithp.com>
-Date:   Sat May 3 17:18:01 2008 -0700
+Date:	Sat May 3 17:18:01 2008 -0700
 
     Use DOLT if available
 
@@ -485,7 +3968,7 @@ Date:   Sat May 3 17:18:01 2008 -0700
 
 commit ba884599133e444b5f6d0b9b6981079cf8059b9f
 Author: Eric Anholt <eric@anholt.net>
-Date:   Fri Apr 18 11:52:41 2008 -0700
+Date:	Fri Apr 18 11:52:41 2008 -0700
 
     Fix build with !ENABLE_DOCS and no built manpages.
 
@@ -497,18 +3980,18 @@ Date:   Fri Apr 18 11:52:41 2008 -0700
 
 commit 0dffe625d43c1165f8b84f97e8ba098793e2cf7b
 Author: Keith Packard <keithp@keithp.com>
-Date:   Thu Jan 10 10:58:25 2008 -0800
+Date:	Thu Jan 10 10:58:25 2008 -0800
 
     Bump version to 2.5.91
 
- README                  |   26 ++++++++++++++++++++++----
- configure.in            |    2 +-
+ README			 |   26 ++++++++++++++++++++++----
+ configure.in		 |    2 +-
  fontconfig/fontconfig.h |    2 +-
  3 files changed, 24 insertions(+), 6 deletions(-)
 
 commit b2cbf483ab520ff21ca2152f960498d181613608
 Author: Keith Packard <keithp@keithp.com>
-Date:   Thu Jan 10 10:58:22 2008 -0800
+Date:	Thu Jan 10 10:58:22 2008 -0800
 
     git-tag requires space after -m flag
 
@@ -517,7 +4000,7 @@ Date:   Thu Jan 10 10:58:22 2008 -0800
 
 commit 51f1536479064c2d224860c15271a9b14c87fd62
 Author: Keith Packard <keithp@keithp.com>
-Date:   Thu Jan 10 10:56:52 2008 -0800
+Date:	Thu Jan 10 10:56:52 2008 -0800
 
     new-version.sh was mis-editing files
 
@@ -526,16 +4009,16 @@ Date:   Thu Jan 10 10:56:52 2008 -0800
 
 commit 554dc2e7b7e3c1cb6409d0cd786cfbea480fcf69
 Author: Keith Packard <keithp@keithp.com>
-Date:   Thu Jan 10 10:48:00 2008 -0800
+Date:	Thu Jan 10 10:48:00 2008 -0800
 
     Add more files to .gitignore
 
- .gitignore |    7 +++++--
+ .gitignore |	 7 +++++--
  1 files changed, 5 insertions(+), 2 deletions(-)
 
 commit 94d4f51d854f33b158e7eef2df75a5b21e95fb27
 Author: Keith Packard <keithp@keithp.com>
-Date:   Thu Jan 10 10:43:33 2008 -0800
+Date:	Thu Jan 10 10:43:33 2008 -0800
 
     Distribute khmer font aliases
 
@@ -545,19 +4028,19 @@ Date:   Thu Jan 10 10:43:33 2008 -0800
 
 commit fba7c37f98658e3ee94bb454868885b7f3a8ec5e
 Author: Keith Packard <keithp@keithp.com>
-Date:   Thu Jan 10 10:40:41 2008 -0800
+Date:	Thu Jan 10 10:40:41 2008 -0800
 
     Create new-version.sh to help with releases, update INSTALL
     instructions
 
- INSTALL        |   36 +++++------------
+ INSTALL	|   36 +++++------------
  new-version.sh |  121
  ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
  2 files changed, 131 insertions(+), 26 deletions(-)
 
 commit ad43ccaafa4f987b982afa2fff07ee8003c51a81
 Author: Keith Packard <keithp@keithp.com>
-Date:   Thu Jan 10 08:58:57 2008 -0800
+Date:	Thu Jan 10 08:58:57 2008 -0800
 
     Distribute new fcftint.h file
 
@@ -566,7 +4049,7 @@ Date:   Thu Jan 10 08:58:57 2008 -0800
 
 commit 32fed4572754c2d484cd1605ff273c3fbfbd09bb
 Author: Keith Packard <keithp@keithp.com>
-Date:   Tue Jan 8 12:34:19 2008 -0800
+Date:	Tue Jan 8 12:34:19 2008 -0800
 
     Eliminate references to freetype from utility Makefile.am's
 
@@ -581,7 +4064,7 @@ Date:   Tue Jan 8 12:34:19 2008 -0800
 
 commit a0a1da22a4a8e66e47e2ec8ac0515741b8ad7a7f
 Author: Keith Packard <keithp@keithp.com>
-Date:   Mon Jan 7 16:31:06 2008 -0800
+Date:	Mon Jan 7 16:31:06 2008 -0800
 
     Include fcftaliastail.h so that the freetype funcs are exported.
 
@@ -589,36 +4072,36 @@ Date:   Mon Jan 7 16:31:06 2008 -0800
     exports any freetype symbols.
 
  src/fcfreetype.c |    1 +
- src/fclang.c     |    1 +
- src/fcpat.c      |    1 +
+ src/fclang.c	  |    1 +
+ src/fcpat.c	  |    1 +
  3 files changed, 3 insertions(+), 0 deletions(-)
 
 commit dbd065ad312921308add99fc4cb31457d9045e6a
 Author: Keith Packard <keithp@keithp.com>
-Date:   Wed Jan 2 08:47:14 2008 -0800
+Date:	Wed Jan 2 08:47:14 2008 -0800
 
     Remove freetype requirement for build-time applications.
 
     This avoids requiring the freetype development files when cross
     compiling
 
- fc-arch/Makefile.am      |    2 +-
- fc-case/Makefile.am      |    2 +-
+ fc-arch/Makefile.am	  |    2 +-
+ fc-case/Makefile.am	  |    2 +-
  fc-glyphname/Makefile.am |    2 +-
- fc-lang/Makefile.am      |    2 +-
- src/Makefile.am          |   13 ++++++++--
- src/fcfreetype.c         |    1 +
- src/fcftint.h            |   54
+ fc-lang/Makefile.am	  |    2 +-
+ src/Makefile.am	  |   13 ++++++++--
+ src/fcfreetype.c	  |    1 +
+ src/fcftint.h		  |   54
  ++++++++++++++++++++++++++++++++++++++++++++++
- src/fcint.h              |   18 +--------------
- src/fclang.c             |    1 +
- src/fcpat.c              |    1 +
- src/makealias            |    6 +++-
+ src/fcint.h		  |   18 +--------------
+ src/fclang.c		  |    1 +
+ src/fcpat.c		  |    1 +
+ src/makealias		  |    6 +++-
  11 files changed, 76 insertions(+), 26 deletions(-)
 
 commit 0aa5fbaa0df9d6c7bee8e0839dd443de9c48a402
 Author: Keith Packard <keithp@keithp.com>
-Date:   Sun Dec 23 14:06:41 2007 -0800
+Date:	Sun Dec 23 14:06:41 2007 -0800
 
     Fix OOM failure case in FcPStackPush.
 
@@ -626,12 +4109,12 @@ Date:   Sun Dec 23 14:06:41 2007 -0800
     allocation
     and report failure.
 
- src/fcxml.c |    5 +++++
+ src/fcxml.c |	  5 +++++
  1 files changed, 5 insertions(+), 0 deletions(-)
 
 commit 0f7870887adff6db3cffda5485418143f2bfa1f6
 Author: Hongbo Zhao <hongbo.zhao@gmail.com>
-Date:   Wed Dec 12 21:47:33 2007 -0800
+Date:	Wed Dec 12 21:47:33 2007 -0800
 
     Not_contain should use strstr, not strcmp on strings. (bug 13632)
 
@@ -640,10 +4123,10 @@ Date:   Wed Dec 12 21:47:33 2007 -0800
     on line 700,
 
     Original:
-          ret = FcStrCmpIgnoreCase (left.u.s, right.u.s) == 0;
+	  ret = FcStrCmpIgnoreCase (left.u.s, right.u.s) == 0;
 
     Should change to:
-          ret = FcStrStrIgnoreCase (left.u.s, right.u.s) == 0;
+	  ret = FcStrStrIgnoreCase (left.u.s, right.u.s) == 0;
 
     I think this is just a mistake when copy-n-paste similar codes in
     the same
@@ -651,12 +4134,12 @@ Date:   Wed Dec 12 21:47:33 2007 -0800
     inverse of
     "Contain", not the same as "Equal".
 
- src/fccfg.c |    2 +-
+ src/fccfg.c |	  2 +-
  1 files changed, 1 insertions(+), 1 deletions(-)
 
 commit 6e5d2cb931f11f0aba8d187e49ddc7cc92a5be85
 Author: Keith Packard <keithp@keithp.com>
-Date:   Sun Nov 25 16:35:55 2007 -0800
+Date:	Sun Nov 25 16:35:55 2007 -0800
 
     Move conf.avail/README to conf.d/README (bug 13392)
 
@@ -664,23 +4147,23 @@ Date:   Sun Nov 25 16:35:55 2007 -0800
     the top
     of the README file says conf.d/README too.
 
- conf.d/Makefile.am |    7 +++++--
+ conf.d/Makefile.am |	 7 +++++--
  1 files changed, 5 insertions(+), 2 deletions(-)
 
 commit 8a0bd93e8a81b105206c1433e2da55b1acef1070
 Author: Keith Packard <keithp@koto.keithp.com>
-Date:   Tue Nov 13 18:56:44 2007 -0800
+Date:	Tue Nov 13 18:56:44 2007 -0800
 
     Bump version number to 2.5
 
- README                  |   15 +++++++++++++--
- configure.in            |    2 +-
+ README			 |   15 +++++++++++++--
+ configure.in		 |    2 +-
  fontconfig/fontconfig.h |    4 ++--
  3 files changed, 16 insertions(+), 5 deletions(-)
 
 commit 8a3dc4880c1182ea446cdbc0885e956c6517cf83
 Author: Tor Lillqvist <tml@iki.fi>
-Date:   Tue Nov 13 16:41:55 2007 -0800
+Date:	Tue Nov 13 16:41:55 2007 -0800
 
     Workaround for stat() brokenness in Microsoft's C library (bug 8526)
 
@@ -724,16 +4207,16 @@ Date:   Tue Nov 13 16:41:55 2007 -0800
     end-users, most of which who wouldn't know how to edit it anyway. And
     requiring an installer to edit it gets complicated.
 
- configure.in         |    6 +++-
+ configure.in	      |    6 +++-
  fc-cache/Makefile.am |    3 ++
- src/fccache.c        |   93
+ src/fccache.c	      |   93
  +++++++++++++++++++++++++++++++++++++++++++++++++-
- src/fcxml.c          |   24 +++++++++++++
+ src/fcxml.c	      |   24 +++++++++++++
  4 files changed, 124 insertions(+), 2 deletions(-)
 
 commit 1315db01b626aedd27e3e05bde96ce46c253629b
 Author: Keith Packard <keithp@koto.keithp.com>
-Date:   Tue Nov 13 15:48:30 2007 -0800
+Date:	Tue Nov 13 15:48:30 2007 -0800
 
     Revert "Remove fcprivate.h, move the remaining macros to fcint.h."
 
@@ -2521,7 +6004,7 @@ Date:	Sat Sep 9 16:41:58 2006 -0700
  1 files changed, 14 insertions(+), 3 deletions(-)
 
 commit 766a9b2f61458202be0fbf5745ce1e02ecd95c6e
-Merge: 5d2f7a9... 164e267...
+Merge: 5d2f7a9 164e267
 Author: Keith Packard <keithp@neko.keithp.com>
 Date:	Sat Sep 9 15:49:24 2006 -0700
 
@@ -3090,7 +6573,7 @@ Date:	Sun Sep 3 16:27:09 2006 -0700
  13 files changed, 0 insertions(+), 106 deletions(-)
 
 commit 822ec78c54a24a0f1589154ac2d4906b02b111ef
-Merge: e79c648... fb2092c...
+Merge: e79c648 fb2092c
 Author: Keith Packard <keithp@neko.keithp.com>
 Date:	Sun Sep 3 16:07:11 2006 -0700
 
