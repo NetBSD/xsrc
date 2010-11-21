@@ -1,5 +1,3 @@
-/* $Xorg: sm_error.c,v 1.4 2001/02/09 02:03:30 xorgcvs Exp $ */
-
 /*
 
 Copyright 1993, 1998  The Open Group
@@ -25,7 +23,6 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/SM/sm_error.c,v 1.2 2001/10/28 03:32:29 tsi Exp $ */
 
 /*
  * Author: Ralph Mor, X Consortium

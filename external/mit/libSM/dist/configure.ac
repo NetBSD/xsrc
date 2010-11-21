@@ -1,30 +1,35 @@
 #                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 
-AC_PREREQ(2.57)
+AC_PREREQ(2.60)
 AC_INIT([libSM],
-        1.1.1,
+        [1.2.0],
         [https://bugs.freedesktop.org/enter_bug.cgi?product=xorg],
         libSM)
 
 AC_CONFIG_SRCDIR([Makefile.am])
-AM_INIT_AUTOMAKE([dist-bzip2])
+AM_INIT_AUTOMAKE([foreign dist-bzip2])
 
 AM_MAINTAINER_MODE
 
-# Require xorg-macros: XORG_CWARNFLAGS, XORG_CHANGELOG
-m4_ifndef([XORG_MACROS_VERSION], [AC_FATAL([must install xorg-macros 1.2 or later before running autoconf/autogen])])
-XORG_MACROS_VERSION(1.2)
+# Require xorg-macros minimum of 1.10 for DocBook XML documentation
+m4_ifndef([XORG_MACROS_VERSION],
+          [m4_fatal([must install xorg-macros 1.10 or later before running autoconf/autogen])])
+XORG_MACROS_VERSION(1.10)
+XORG_DEFAULT_OPTIONS
+XORG_ENABLE_DOCS
+XORG_WITH_XMLTO(0.0.20)
+XORG_WITH_FOP
+XORG_CHECK_SGML_DOCTOOLS(1.5)
+
 AM_CONFIG_HEADER([config.h])
 
 # Checks for programs.
 AC_PROG_LIBTOOL
 AC_PROG_CC
-XORG_CWARNFLAGS
 
 # Checks for pkg-config packages
-PKG_CHECK_MODULES(SM, ice xproto)
-SM_CFLAGS="$CWARNFLAGS $SM_CFLAGS"
+PKG_CHECK_MODULES(SM, [ice >= 1.0.5] xproto)
 AC_SUBST(SM_CFLAGS)
 AC_SUBST(SM_LIBS)
 
@@ -53,9 +58,7 @@ AC_CHECK_FUNCS([uuid_create], [], [
 
 AM_CONDITIONAL(WITH_LIBUUID, test x"$HAVE_LIBUUID" = xyes)
 
-XORG_RELEASE_VERSION
-XORG_CHANGELOG
-
 AC_OUTPUT([Makefile
+	   doc/Makefile
 	   src/Makefile
 	   sm.pc])
