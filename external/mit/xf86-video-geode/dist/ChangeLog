@@ -1,3 +1,591 @@
+commit 50f9152e2087fd50dfc09e35505c2fbcdd3183b0
+Author: Martin-Éric Racine <q-funk@iki.fi>
+Date:   Tue Nov 9 11:12:44 2010 +0200
+
+    Geode 2.11.10
+
+commit ff091333b506855c17ec8ea5f933026221600be9
+Author: Martin-Éric Racine <q-funk@iki.fi>
+Date:   Thu Oct 28 13:13:09 2010 +0300
+
+    Revert "Simplify the mode_valid function"
+    
+    This reverts commit fab58e111b6655602b4f739260a01247ff478f35.
+
+commit fab58e111b6655602b4f739260a01247ff478f35
+Author: Huang, FrankR <FrankR.Huang@amd.com>
+Date:   Thu Oct 28 15:17:19 2010 +0800
+
+    Simplify the mode_valid function
+    
+    Signed-off-by: Frank Huang<frankr.huang@amd.com>
+
+commit fb72a210d7de61c49fc66aafa057d8c6a028b907
+Author: Huang, FrankR <FrankR.Huang@amd.com>
+Date:   Thu Oct 28 15:16:58 2010 +0800
+
+    Revise the entry for 1024x600
+    
+    *Change the entry of 1024x600 from 3 to 7(That will not affect the entries from
+    3 to 6). And BIOS should set the VG_FP_TYPE bit[5:3] to 7.
+    *Use 1024x600@80 instead of 1024x600@60 parameters to support more 4:3 resolutions
+    
+    Signed-off-by: Frank Huang<frankr.huang@amd.com>
+
+commit 9caaf7f8294ef9700e9e20e394fee10cc2b1c9c0
+Author: Daniel Drake <dsd@laptop.org>
+Date:   Mon Sep 6 18:35:17 2010 -0600
+
+    Don't power down DCON when it is frozen
+    
+    Putting a frozen DCON to sleep (as happens during regular boot of the XO)
+    will cause the frozen image to be corrupted.
+    
+    Change the behaviour to only sleep when the DCON is not frozen.
+    
+    http://dev.laptop.org/ticket/10196
+
+commit 87512b72d64370e062d209724994a72368c21df6
+Author: Daniel Drake <dsd@laptop.org>
+Date:   Mon Sep 6 18:33:48 2010 -0600
+
+    Add get_crtc output function
+    
+    I don't know why X can't do this itself, but when no get_crtc method is
+    provided, X decides that it doesn't know the CRTC of the output and
+    decides to reset the mode completely (causing display powerdown, resulting
+    in an uncomfortable visual interruption to OLPC's boot process).
+
+commit 5e72a00ad26f2052bb48fef041d6fbd14ba18153
+Author: Hunk Cui <Hunk.Cui@amd.com>
+Date:   Wed Oct 13 18:26:52 2010 +0800
+
+    Allocate video memory with exaOffscreenAlloc
+    
+    *Del for deduct the probable size of a video overlay.
+    *Use exaOffscreenAlloc allocate the video overlay.
+    *Use exaOffscreenAlloc allocate the offscreen surface.
+    *XV-video data has to be allocate in offscreen memory range.
+    
+    Signed-off-by: Hunk Cui <Hunk.Cui@amd.com>
+
+commit 334534cde47f1ffe126e4e665988480fc57a7307
+Author: Frank Huang <frankr.huang@amd.com>
+Date:   Wed Sep 29 16:45:56 2010 +0800
+
+    Add resolution 1024x600 support for PANEL
+    
+    *Users can not get 1024x600 by default when using panel without xorg.conf.
+    Add this screen resolution to the panel_modes table to support it by default.
+    *Users who are using VGA will get this resolution by the monitor EDID. No
+    code is needed
+    *Use gtf tool to get the parameters
+    *Ubuntu bugzilla #433142
+    
+    Signed-off-by: Frank Huang <frankr.huang@amd.com>
+
+commit becaa0ae375e996c2f83192bb84a5c89f94933dd
+Author: Frank Huang <frankr.huang@amd.com>
+Date:   Wed Sep 29 16:45:42 2010 +0800
+
+    Fix a typo on resolution parameter
+    
+    *change from 1028 to 1280
+    
+    Signed-off-by: Frank Huang <frankr.huang@amd.com>
+
+commit 89c60efe899f0cda4a52e0574f030c021c4b1ece
+Author: Frank Huang <frankr.huang@amd.com>
+Date:   Wed Sep 29 16:35:46 2010 +0300
+
+    Mode Validation support on modeline in xorg.conf
+    
+    *mode validation(lx_output_mode_valid) in this driver should return MODE_OK for
+    all modes filtered out by previous process in this function. Otherwise, new
+    modelines(conf_modes) will be pruned by Xserver function Xf86PruneInvalidModes.
+    The result is that the user can not set arbitrary resolutions. We comply with
+    the code of ATI&&Intel mode_valid function to do this.
+    *For modes that cannot be supported by the geode driver, it is better to give
+    the specific MODE_XXX(such as MODE_CLOCK_RANGE) instead of MODE_BAD.
+    
+    Signed-off-by: Frank Huang <frankr.huang@amd.com>
+
+commit 74e28b83d5b725a134aad264771a7c9a4d0e38df
+Author: Hunk <hunk.cui@amd.com>
+Date:   Sun Sep 26 18:14:52 2010 +0800
+
+    Modify rotation pitch & reallocate pixmap for bo
+    
+    *Modify rotation pitch value with crtc_mode_set.
+    *Use own wrapper to allocate a pixmap for wrapping a bo.
+    *Ubuntu Bugzilla #377929
+    *Debian Bugzilla #512020
+    
+    Signed-off-by: Hunk Cui <Hunk.Cui@amd.com>
+
+commit 7d7cc26011fde18dcce5c6b95cd73a12a71a7f99
+Author: Otavio Salvador <otavio@ossystems.com.br>
+Date:   Thu Sep 23 16:17:40 2010 -0300
+
+    lx_display: fix typo
+
+commit 90dda28842ac76a05ae75a4fdd457dd8b8988950
+Author: Andres Salomon <dilinger@queued.net>
+Date:   Mon Sep 20 11:31:29 2010 -0700
+
+    fix the DCON verification loop for LX output
+    
+    This is pretty clearly a bug. This should fix it (after all, that
+    check is merely to see if the panel is a DCON; we don't care at
+    all about the panel bit). This also adds an extra parenthesis in
+    the following if() statement for clarity.
+    
+    I'm resisting the temptation to change GeodeRec's Output member to
+    an unsigned long (for now). Bitfields should really be unsigned.
+    
+    Signed-off-by: Andres Salomon <dilinger@queued.net>
+
+commit 5dfe7dbf6ed122fbbb758be7a5b7d78a199583c7
+Author: Frank Huang <frankr.huang@amd.com>
+Date:   Wed Sep 1 10:30:35 2010 +0800
+
+    Replace xalloc/xrealloc/xfree/xcalloc with malloc/realloc/free/calloc
+    
+    * Replace the deprecated functions with new ones
+      Refer to "/xserver/include/os.h"
+    
+    Signed-off-by: Frank Huang <frankr.huang@amd.com>
+
+commit fc342655a3d928759467eac8c917effe8f283031
+Author: Martin-Éric Racine <q-funk@iki.fi>
+Date:   Mon Aug 23 07:46:22 2010 +0300
+
+    Geode 2.11.9
+    
+    We are pleased to announce this maintenance release of xf86-video-geode.
+    It features a plethora of bug fixes, a few documentation updates and one
+    performance enhancement.
+    
+    This release also marks the return of AMD to the development team.
+    
+    Please read the content of NEWS for more details.
+
+commit c77eb79ef24c47ed7431713918a731252ea8153b
+Author: Frank Huang <frankr.huang@amd.com>
+Date:   Wed Aug 18 15:37:18 2010 +0800
+
+    Fix the PictOpIn and PictOpOut
+    
+    *Correct the entry for PictOpIn, PictOpOut, PictOpOverReverse
+    *Some code format adjustment
+    *Delete the maskflag(temp variable)
+    *Change the code to make the black region(More reasonable than change
+    op from PictOpSrc to PictOpClear)
+    
+    Signed-off-by: Frank Huang <frankr.huang@amd.com>
+
+commit 32a927b8e627b3f9759ccfbff231f5fd22445f02
+Author: Frank Huang <frankr.huang@amd.com>
+Date:   Wed Aug 18 15:36:49 2010 +0800
+
+    Fix the PictOpInReverse op
+    
+    *Correct the entry for PictOpOverReverse and PictOpInReverse
+    *Correct the channel reverse use, delete direction use
+    *Add a function lx_composite_all_black to generate a all zero vectors
+    including alpha
+    *Modify some comments
+    
+    Signed-off-by: Frank Huang <frankr.huang@amd.com>
+
+commit f0e24491ca676244b2fd6f2d4476e996847824cd
+Author: Mart Raudsepp <leio@gentoo.org>
+Date:   Mon Aug 16 07:09:43 2010 +0300
+
+    Fix segfault with Option NoAccel
+    
+    Fixes bug #27725
+    
+    Breakage from commit 38e86827
+
+commit b0a13d871d9b72da83380d4564ae947ace733b5d
+Author: Martin-Éric Racine <q-funk@iki.fi>
+Date:   Sun Aug 15 18:19:00 2010 +0300
+
+    Fix a few typos in NEWS.
+
+commit 66a74e1e7ee5abde9a9eebfece126ba2fdafce9d
+Author: Martin-Éric Racine <q-funk@iki.fi>
+Date:   Sun Aug 15 18:13:57 2010 +0300
+
+    Further rephrase the content of NEWS.
+
+commit fc711bc0c3b21fd11ffd1ab590122226799ee904
+Author: Martin-Éric Racine <q-funk@iki.fi>
+Date:   Sun Aug 15 18:11:43 2010 +0300
+
+    Fixes the styling of NEWS for consistency.
+
+commit 2c26c5a4399fcf04d402a973ce3da484215d3202
+Author: Martin-Éric Racine <q-funk@iki.fi>
+Date:   Sun Aug 15 18:00:41 2010 +0300
+
+    Created a NEWS file to document recent changes.
+
+commit 673d71b970a6d02449c9994e67f337d117d7f075
+Author: Frank Huang <frankr.huang@amd.com>
+Date:   Thu Aug 12 15:49:53 2010 +0800
+
+    Fix the PictOpOutReverse op
+    
+    *Correct the entry for PictOutReverse
+    *Outside the source picture, the pixels should be all zero when doing
+    the PictOpOutReverse rendering with Dst
+    *Rename the function name of pict_a8 to add_a8
+    *Rename the function name of opover to two_pass
+    *Fix the bug in KDE dolphin file browser
+    
+    Signed-off-by: Frank Huang <frankr.huang@amd.com>
+
+commit 2d1a07327ef352b5f36cbd93a280485cafeeb4d4
+Author: Frank Huang <frankr.huang@amd.com>
+Date:   Thu Aug 12 15:49:36 2010 +0800
+
+    Improve the glyph rendering performance
+    
+    *Add a PICT_a8 entry in the format we support
+    *Use Mart's workaround patch to give geode PictOpAdd correct pSrc
+    and pDst format
+    *Add a function lx_composite_onepass_pict_a8 to handle the PictOpAdd
+    for glyph rendering
+    *Performance for "x11perf" command under Fedora 12
+                      Past           Now
+    -aa10text         4660/sec       53300/sec
+    -aa24text         2740/sec       16200/sec
+    
+    Signed-off-by: Frank Huang <frankr.huang@amd.com>
+
+commit fe6ad5942bf3d638bee2e6979f60d9d7128ba1e8
+Author: Hunk Cui <Hunk.Cui@amd.com>
+Date:   Mon Aug 9 18:03:23 2010 +0800
+
+    Rectify lx_display.c outstanding compiler warnings
+    
+    *Correct the type of LXAllocShadow from Bool to static Bool.
+    
+    Signed-off-by: Hunk Cui <Hunk.Cui@amd.com>
+
+commit 1f96e74919fe9442062804de785c6e1008d75bf2
+Author: Martin-Éric Racine <q-funk@iki.fi>
+Date:   Mon Aug 9 10:48:16 2010 +0300
+
+    Revert "Improve the glyph rendering performance"
+    
+    This reverts commit ebe43da32226eb7bc3ef758c43eff85ac8b8baef as Frank
+    pointed out that I mistakenly committed an outdated version of this.
+
+commit 7a523acf985771b2bd45f5d2823c217cd9075b1e
+Author: Frank Huang <frankr.huang@amd.com>
+Date:   Mon Aug 9 10:43:27 2010 +0800
+
+    Correct two outstanding compiler warnings
+    
+    *Correct the type from "Q_WORD" to "QQ_WORD" in panel.c
+    *Correct the tyep from "char" to "const char" in z4l.c
+    
+    Signed-off-by: Frank Huang <frankr.huang@amd.com>
+
+commit ebe43da32226eb7bc3ef758c43eff85ac8b8baef
+Author: Frank Huang <frankr.huang@amd.com>
+Date:   Sat Aug 7 16:54:35 2010 +0800
+
+    Improve the glyph rendering performance
+    
+    *Add a PICT_a8 entry in the format we support
+    *Use Mart's workaround patch to give geode PictOpAdd correct pSrc and pDst
+    format
+    *Add a function lx_composite_onepass_pict_a8 to handle the PictOpAdd for
+    glyph rendering
+    *Performance for "x11perf -aa10text" has been improved from 4200/s to 47400/s
+    on Fedora12
+    
+    Signed-off-by: Frank Huang <frankr.huang@amd.com>
+
+commit 8a61ef8f9f6b9dac6804754572250e59d80bdf06
+Author: Hunk Cui <Hunk.Cui@amd.com>
+Date:   Mon Jul 12 13:17:18 2010 +0800
+
+    Fix rotation with newer Xserver versions (exaOffscreenAlloc)
+    
+    *Del for deduct the probable size of a shadow buffer.
+    *Use exaOffscreenAlloc allocate the shadow buffer.
+    *Rotateeddata has to be allocate in offscreen memory range.
+    *Ubuntu Bugzilla #377929
+    
+    Signed-off-by: Hunk Cui <Hunk.Cui@amd.com>
+
+commit 2bcbc0b64091218d348ad9f699370e4bfde3948b
+Author: Hunk Cui <Hunk.Cui@amd.com>
+Date:   Mon Jul 12 12:57:39 2010 +0800
+
+    Gamma Correction for fading operation
+    
+    *Modify integrated palette RAM for gamma-correction of the data stream
+    *Let Graphic data passes through the Gamma Correction RAM
+    *Special for Screensaver Operation
+    *FreeDesktop Bugzilla #27853
+    
+    Signed-off-by: Hunk Cui <Hunk.Cui@amd.com>
+
+commit ecb741f27de4ca66555d312a4699efc22f873d0e
+Author: Huang, FrankR <FrankR.Huang@amd.com>
+Date:   Fri Aug 6 11:16:02 2010 +0800
+
+    Fix the Nautilus file browser misrendering issue
+    
+    This is patch 4 final this week.
+    This one has fixed several bugs below:
+    1)google chrome hang
+    2)Some website using repeat for source picture with PictOpSrc. To sum up, right now this patch has gracefully solved the Nautilus bug and some special rendering under PictOpSrc and PictOpOver I will describe all special conditions I met
+    Websites for test before and after this patch:
+    	1)http://daduke.org (greater srcX and srcY)
+    	2)http://bjdns2.cncmax.cn (negative srcX and srcY)
+    
+    From: Frank Huang <frankr.huang@amd.com>
+    
+    *When the srcX or srcY is greater than source width or source height
+    (or negative),the driver should do the correct region to render. Add a
+    function lx_composite_onepass_special to handle this. The source start
+    point should be calculated by a modulus operation.
+    *If the opeartion is with a shifted position src, then adjust the
+    operation region based on the operations src width and height
+    parameters. The rotation condition should be excluded. This part still
+    need investigation
+    
+    Signed-off-by: Frank Huang <frankr.huang@amd.com>
+
+commit 5b93fdd42d7d8af4535fd62ce0749f2c4434f9fe
+Author: Huang, FrankR <FrankR.Huang@amd.com>
+Date:   Fri Jul 23 17:17:49 2010 +0800
+
+    Fix the PictOpOver operation
+    
+    Fix the PictOpOver operation
+    
+    *Fix the PictOpOver blend_ops struct. The PictOpOver operation is
+    Src + (1-a) * Dest. So change from CIMGP_ALPHA_A_PLUS_BETA_B to
+    CIMGP_A_PLUS_BETA_B. And add one pass operation to do the
+    Src * (alpha of Mask) if there is a mask
+    *Convert the source format in lx_prepare_composite if it is not
+    ARGB32 when doing the first pass
+    *Add a function lx_do_composite_mask_opover to handle the PictOpOver
+    operation, the first pass is to do the Src * (alpha of Mask), the
+    second pass is to do the Src + (1-a) * Dest.
+    *Due to our off-screen buffer is only 256KB, so split big Mask region
+    into several small region(256KB) to do the rendering.
+    *Progressbar, scrollbar and button display well with this patch
+    *See Free Desktop Bugzilla #28352
+    
+    Signed-off-by: Frank Huang <frankr.huang@amd.com>
+
+commit 969844d51967aa79ce2c151fc5f1bd296d74437a
+Author: Huang, FrankR <FrankR.Huang@amd.com>
+Date:   Fri Jul 23 17:17:34 2010 +0800
+
+    Fix the PictOpSrc rendering
+    
+    Fix the PictOpSrc rendering
+    
+    *Add the maskrepeat variabel to record mask picture's repeat attribute
+    *Add the maskflag to record the exaScratch.type when it is COMP_TYPE_MASK
+    *Use the PictOpClear to make other non-blending region(out of src or mask)
+    to be black if the op is PictOpSrc or PictOpClear
+    
+    Signed-off-by: Frank Huang <frankr.huang@amd.com>
+
+commit 2771fb365107976e76e175e7f8953dd41ecb91c1
+Author: Huang, FrankR <FrankR.Huang@amd.com>
+Date:   Fri Jul 23 17:17:15 2010 +0800
+
+    Put the one pixel rendering work back to the server to handle if the pMsk is not zero
+    
+    Put the one pixel rendering work back to the server to handle if the pMsk is not zero
+    
+    *exaScratch.srcWidth and exaScratch.srcHeight are used to reocrd
+    mask's width and mask's height if mask is not zero. So the one pixel
+    source's width and height are missing in lx_do_composite. So we must
+    fallback. Otherwise, bigger region will be wrongly rendered.
+    
+    Signed-off-by: Frank Huang <frankr.huang@amd.com>
+
+commit e9effca821c1d604aeffeb3d3e7a49539485117d
+Author: Daniel Drake <dsd@laptop.org>
+Date:   Thu Aug 5 08:08:06 2010 +0300
+
+    http://lists.x.org/archives/xorg-driver-geode/2010-August/000938.html
+    https://bugs.freedesktop.org/show_bug.cgi?id=29391
+    
+    LXCopyFromSys currently is hardcoded to operate on 16bpp data.
+    And indeed, when working with packed data (e.g. YUY2), this is the case.
+    
+    However, it is also used from LXCopyPlanar to copy the planes of I420
+    images. In this case, it is on an 8bpp input plane.
+    
+    Running at 16bpp causes twice as much data to be copied, and ultimately
+    causes a buffer overflow leading to crashes such as
+    http://dev.laptop.org/ticket/10260
+    
+    Fix this by deriving the BPP from the input image parameters.
+
+commit f0df6821c454d2b174a071fd846b399e8c2f98f5
+Author: Martin-Éric Racine <q-funk@iki.fi>
+Date:   Sun Jul 11 21:28:49 2010 +0300
+
+    Rephrased the FAQ about video rotation to NOT specify a minimum RAM size.
+
+commit f21fb29dbe54e7a237047920a00632752a970da1
+Author: Frank Huang <frankr.huang@amd.com>
+Date:   Mon Jul 5 16:49:05 2010 +0800
+
+    Correctly calculate the rendering region with the mask picture
+    
+    If the opeartion is with a shifted position mask, then adjust the
+    operation region based on the operations mask width and height
+    parameters(instead of clipping based on source width/height)
+    
+    Signed-off-by: Frank Huang <frankr.huang@amd.com>
+    Acked-by: Mart Raudsepp <leio@gentoo.org>
+
+commit d8baf45eb79e473fba68b8335b6aaca27df681cf
+Author: Martin-Éric Racine <q-funk@iki.fi>
+Date:   Wed Jun 23 00:41:53 2010 +0300
+
+    Added square braces to all AC_INIT elements.
+
+commit 2d377782abc64281b5fa44825d541a1541b19a10
+Author: Jamey Sharp <jamey@minilop.net>
+Date:   Tue Jun 22 08:36:40 2010 -0700
+
+    Use new server API to find the root window.
+    
+    Signed-off-by: Jamey Sharp <jamey@minilop.net>
+
+commit 14b1561dac796c6ad05648e6857028a87acde9ef
+Author: Jamey Sharp <jamey@minilop.net>
+Date:   Tue Jun 22 08:30:52 2010 -0700
+
+    Adapt to DevPrivate API changes.
+    
+    This allows the driver to be built against either the old or new
+    DevPrivate API.
+    
+    Signed-off-by: Jamey Sharp <jamey@minilop.net>
+
+commit b47d77360cb428d8892beb93789c83dfa681b26f
+Author: Martin-Éric Racine <q-funk@iki.fi>
+Date:   Mon Jun 21 07:44:31 2010 +0300
+
+    Added FAQ about minimal memory requirements to rotate screen in README.
+
+commit 42481a36f92cf79c76fea229b5143c4fbdea444a
+Author: Mart Raudsepp <leio@gentoo.org>
+Date:   Mon Jun 14 02:34:20 2010 +0300
+
+    lx_exa: fallback in case of server-side gradients and solid fill
+    
+    RENDER extension version 0.10 added support for doing server-side
+    gradients and solid fills, which we were not handling at all.
+    cairo-1.9 started making use of server-side gradients, and we are
+    crashing on those, as the source pixmap (pxSrc in lx_prepare_composite)
+    doesn't have a drawable in this case, and we were not expecting such
+    a possibility.
+    So, as the first measure, fallback (three years late) all server-side
+    gradients and solid fills instead of crashing, until we have no code
+    that tries to accelerate cases of these or aren't sure if we even
+    can accelerate any cases.
+    
+    pSourcePict member was added to xserver in 2005, so no compatibility
+    wrapping needed.
+    
+    Signed-off-by: Mart Raudsepp <leio@gentoo.org>
+    Acked-by: Otavio Salvador <otavio@ossystems.com.br>
+
+commit b46d4ff787bce43409d59837d736af0be2b0dda5
+Author: Frank Huang <frankr.huang@amd.com>
+Date:   Sun Jun 13 18:47:12 2010 +0800
+
+    Prevent the pixmap migration if the geode GP can not do the acceleration.
+    
+    Bring all the "return FALSE" condition forward from lx_prepare_composite
+    to lx_check_composite. The Xserver will handle this condition. See more
+    on Freedesktop Bugzilla #27243
+    
+    Signed-off-by: Frank Huang <frankr.huang@amd.com>
+    Acked-by: Mart Raudsepp <leio@gentoo.org>
+
+commit 8e53a62f196dfc4eb1e8769183b00bf4a3122ddc
+Author: Martin-Éric Racine <q-funk@iki.fi>
+Date:   Sun Jun 13 03:24:20 2010 +0300
+
+    Clean up and indent the content of COPYING for better clarity.
+
+commit 4302f6961571609a2b8a27a2d21281f758f48f0d
+Author: Martin-Éric Racine <q-funk@iki.fi>
+Date:   Sun Jun 13 03:19:18 2010 +0300
+
+    Move the AMD-specific part of the license away from the boilerplate text.
+
+commit 83b8249d91c7bf351f44062b5e42d12b0b8c9a28
+Author: Martin-Éric Racine <q-funk@iki.fi>
+Date:   Sun Jun 13 03:15:09 2010 +0300
+
+    Removed superflous duplicate license from COPYING.
+
+commit 854323a434b8fc7b980387f52dc8c80258ca9b64
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Sat Jun 12 15:48:05 2010 -0400
+
+    COPYING: update Copyright notices from the source code
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit e9447f5335681a78cf87ebf8c9659a6fecfc9746
+Author: Otavio Salvador <otavio@ossystems.com.br>
+Date:   Wed Sep 9 22:13:40 2009 -0300
+
+    LX: validate display modes
+    
+    To avoid using virtual desktop by default we now validate the display
+    modes.
+    
+    Signed-off-by: Otavio Salvador <otavio@ossystems.com.br>
+
+commit 3a0e9730634f6894ef57793ae6e072656cd125f0
+Author: Otavio Salvador <otavio@ossystems.com.br>
+Date:   Sat Oct 10 11:54:53 2009 -0300
+
+    cim: add a new 106.50MHz entry
+
+commit 527e3763343b736e0d9f7a1c7d55a51366bfdc36
+Author: Otavio Salvador <otavio@ossystems.com.br>
+Date:   Sat Oct 10 11:53:46 2009 -0300
+
+    cim: properly indent 341.349MHz entry
+
+commit 2f26fd4cc583aa07e31aa3c8edb975ace9bf31eb
+Author: Adam Jackson <ajax@redhat.com>
+Date:   Tue May 18 13:07:18 2010 -0400
+
+    Remove mibank.h reference
+    
+    Signed-off-by: Adam Jackson <ajax@redhat.com>
+
+commit cf69c8bde21ee383b471ca82d70c179dfaf78722
+Author: Nicolas Boullis <nboullis@debian.org>
+Date:   Mon May 10 07:39:20 2010 +0300
+
+    Correctly set the name for the user-specified panel mode.
+
 commit db01a594ac30c730c580bcf9323220b83eb8ce03
 Author: Martin-Éric Racine <q-funk@iki.fi>
 Date:   Thu Apr 15 16:36:43 2010 +0300
