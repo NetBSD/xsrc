@@ -1,4 +1,3 @@
-/* $Xorg: pmint.h,v 1.4 2001/02/09 02:05:34 xorgcvs Exp $ */
 
 /*
 Copyright 1996, 1998  The Open Group
@@ -25,7 +24,6 @@ not be used in advertising or otherwise to promote the sale, use or
 other dealings in this Software without prior written authorization
 from The Open Group.
 */
-/* $XFree86: xc/programs/proxymngr/pmint.h,v 1.5 2001/12/14 20:01:02 dawes Exp $ */
 
 #ifdef HAVE_CONFIG_H
 # include "xconfig.h"
@@ -58,7 +56,6 @@ typedef struct {
 } PMconn;
 
 
-/* main.c: $TOG: main.c /main/36 1998/03/04 11:30:05 barstow $ */
 
 extern void ForwardRequest ( PMconn *requestor, char *serviceName, char *serverAddress, char *hostAddress, char *startOptions, int authLen, char *authName, char *authData );
 extern int HostBasedAuthProc ( char *hostname );
