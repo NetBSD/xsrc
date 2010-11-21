@@ -1,3 +1,125 @@
+commit f44baa7b690f04a0b4ebbaf0c43284b9798ac7d7
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Wed Oct 6 19:04:40 2010 -0700
+
+    luit 1.1.0
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit ed3908570e961d566ff13d8b38c2fa9efa2047ff
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Sep 26 17:35:31 2010 -0700
+
+    config: Remove unnecessary calls from configure.ac
+    
+    AC_PROG_CC & AC_PROG_INSTALL are provided by XORG_DEFAULT_OPTIONS now
+    PKG_CONFIG_MODULES handles AC_SUBST of the CFLAGS & LIBS variables
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 0d7ea51f819d1e85909a3ec3fb637e3b4d703095
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Tue Jul 20 18:45:18 2010 -0400
+
+    config: update AC_PREREQ statement to 2.60
+    
+    Unrelated to the previous patches, the new value simply reflects
+    the reality that the minimum level for autoconf to configure
+    all x.org modules is 2.60 dated June 2006.
+    
+    ftp://ftp.gnu.org/gnu/autoconf/autoconf-2.60.tar.gz
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit 9a44a8c2310202bc5a62394d15fd70000ebe66bf
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Fri Aug 20 16:22:17 2010 -0400
+
+    make: whitespace management
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit 1fd9d492985277a4bb6c2cc8f6648c736f43bb43
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Fri Aug 20 16:18:33 2010 -0400
+
+    luit.man: remove trailing whitespace
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit 63dcabebc4b1e2cf69d3bc8efdf250925581a159
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Fri Aug 20 13:09:47 2010 -0400
+
+    config: upgrade to util-macros 1.8 for additional man page support
+    
+    Use MAN_SUBST now supplied in XORG_MANPAGE_SECTIONS
+    The value of MAN_SUBST is the same for all X.Org packages.
+    
+    Use AC_PROG_SED now supplied by XORG_DEFAULT_OPTIONS
+    Use the appropriate platform version of sed
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit 04ceef3da7e3cfb62bb946fb13980394bf37dbaf
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Fri Aug 20 13:38:26 2010 -0400
+
+    man: replace hardcoded (7) with __miscmansuffix__
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit 889bd7922faa4aa92769e4a06048bf83b867a52b
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Fri Aug 20 13:32:06 2010 -0400
+
+    man: replacement string should be __appmansuffix__
+    
+    To match XORG_MANPAGE_SECTIONS macro expectations.
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit 1e6ce149a24e453c1e5af2d39721a2a79d078d7d
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Fri Aug 20 13:27:54 2010 -0400
+
+    man: replacement string should be __locale_alias__
+    
+    To match the luit.man expectations.
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit 6b7f25cdbd0f80a0f88d72c66aa51d75cd38b906
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Thu Jul 1 00:24:55 2010 -0700
+
+    Warn if configure does not find Xlib, but don't link against it.
+    
+    luit doesn't #include any Xlib headers or call any Xlib functions,
+    just attempts to read Xlib's locale.aliases files if it can find it.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 466e7769a450550d68b3aea5f4f4edbdc31f8bba
+Author: Jeremy Huddleston <jeremyhu@apple.com>
+Date:   Thu Jul 1 09:36:30 2010 -0700
+
+    Whitespace cleanup from Thomas Dickey's luit-20100601 fork
+    
+    Signed-off-by: Jeremy Huddleston <jeremyhu@apple.com>
+
+commit fddfe30c3ff91c83d0484b136e7673764e555555
+Author: Jeremy Huddleston <jeremyhu@apple.com>
+Date:   Thu Jul 1 09:35:39 2010 -0700
+
+    Integrate changes from Thomas Dickey's luit-20100601 fork
+    
+        * add -alias option to allow override of locale.alias pathname.
+        * improve fix waitForInput as suggested in Freedesktop #26383.
+        * fix warnings from clang --analyze
+    
+    Signed-off-by: Jeremy Huddleston <jeremyhu@apple.com>
+
 commit 3b2bbab48945e9dd8563f4ae047436c138e41789
 Author: Julien Cristau <jcristau@debian.org>
 Date:   Wed Feb 10 01:49:18 2010 +0100
