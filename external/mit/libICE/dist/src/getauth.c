@@ -1,4 +1,3 @@
-/* $Xorg: getauth.c,v 1.4 2001/02/09 02:03:26 xorgcvs Exp $ */
 /******************************************************************************
 
 
@@ -26,7 +25,6 @@ in this Software without prior written authorization from The Open Group.
 
 Author: Ralph Mor, X Consortium
 ******************************************************************************/
-/* $XFree86: xc/lib/ICE/getauth.c,v 1.2 2001/10/28 03:32:28 tsi Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>

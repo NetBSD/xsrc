@@ -1,4 +1,3 @@
-/* $Xorg: listen.c,v 1.5 2001/02/09 02:03:26 xorgcvs Exp $ */
 /******************************************************************************
 
 
@@ -76,6 +75,8 @@ IceListenForConnections (
 
     for (i = 0; i < transCount; i++)
     {
+	_IceTransSetOption(transConns[i], TRANS_CLOSEONEXEC, 1);
+
 	networkId = _IceTransGetMyNetworkId (transConns[i]);
 
 	if (networkId)

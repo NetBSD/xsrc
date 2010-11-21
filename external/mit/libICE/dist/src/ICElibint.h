@@ -1,4 +1,3 @@
-/* $Xorg: ICElibint.h,v 1.4 2001/02/09 02:03:26 xorgcvs Exp $ */
 /******************************************************************************
 
 
@@ -26,7 +25,6 @@ in this Software without prior written authorization from The Open Group.
 
 Author: Ralph Mor, X Consortium
 ******************************************************************************/
-/* $XFree86: xc/lib/ICE/ICElibint.h,v 1.6 2001/12/14 19:53:35 dawes Exp $ */
 
 #ifndef _ICELIBINT_H_
 #define _ICELIBINT_H_
