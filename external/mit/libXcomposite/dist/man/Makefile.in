@@ -130,19 +130,7 @@ LN_S = @LN_S@
 LTLIBOBJS = @LTLIBOBJS@
 MAINT = @MAINT@
 MAKEINFO = @MAKEINFO@
-MAN_SUBSTS = \
-	-e 's|"__vendorversion__"|"$(XORGRELSTRING)" "$(XORGMANNAME)"|' \
-	-e 's|__xorgversion__|"$(XORGRELSTRING)" "$(XORGMANNAME)"|' \
-	-e 's|__xservername__|Xorg|g' \
-	-e 's|__xconfigfile__|xorg.conf|g' \
-	-e 's|__projectroot__|$(prefix)|g' \
-	-e 's|__apploaddir__|$(appdefaultdir)|' \
-	-e 's|__appmansuffix__|$(APP_MAN_SUFFIX)|g' \
-	-e 's|__libmansuffix__|$(LIB_MAN_SUFFIX)|g' \
-	-e 's|__adminmansuffix__|$(ADMIN_MAN_SUFFIX)|g' \
-	-e 's|__miscmansuffix__|$(MISC_MAN_SUFFIX)|g' \
-	-e 's|__filemansuffix__|$(FILE_MAN_SUFFIX)|g'
-
+MAN_SUBSTS = @MAN_SUBSTS@
 MISC_MAN_DIR = @MISC_MAN_DIR@
 MISC_MAN_SUFFIX = @MISC_MAN_SUFFIX@
 MKDIR_P = @MKDIR_P@
@@ -169,6 +157,8 @@ STRIP = @STRIP@
 VERSION = @VERSION@
 XCOMPOSITE_CFLAGS = @XCOMPOSITE_CFLAGS@
 XCOMPOSITE_LIBS = @XCOMPOSITE_LIBS@
+XFIXES_CFLAGS = @XFIXES_CFLAGS@
+XFIXES_LIBS = @XFIXES_LIBS@
 XMLTO = @XMLTO@
 XORG_MAN_PAGE = @XORG_MAN_PAGE@
 abs_builddir = @abs_builddir@
@@ -207,7 +197,6 @@ libdir = @libdir@
 libexecdir = @libexecdir@
 localedir = @localedir@
 localstatedir = @localstatedir@
-lt_ECHO = @lt_ECHO@
 mandir = @mandir@
 mkdir_p = @mkdir_p@
 oldincludedir = @oldincludedir@
@@ -224,10 +213,11 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 libmandir = $(LIB_MAN_DIR)
-LIB_MAN_DIR_SUFFIX = $(LIB_MAN_DIR:@mandir@/man%=%)
 libman_xml = Xcomposite.xml
-libman_PRE = $(libman_xml:xml=man)
-Xcomposite_man_aliases = \
+libman_PRE = $(libman_xml:xml=man)		\
+	     $(Xcomposite_shadows:=.man)
+
+Xcomposite_shadows = \
 	XCompositeQueryExtension		\
 	XCompositeQueryVersion			\
 	XCompositeVersion			\
@@ -240,17 +230,10 @@ Xcomposite_man_aliases = \
 	XCompositeGetOverlayWindow		\
 	XCompositeReleaseOverlayWindow
 
-Xcomposite_shadowmen = $(Xcomposite_man_aliases:=.@LIB_MAN_SUFFIX@)
-@INSTALL_MANPAGES_TRUE@libman_DATA = $(libman_PRE:man=@LIB_MAN_SUFFIX@) \
-@INSTALL_MANPAGES_TRUE@	      $(Xcomposite_shadowmen)
-
+@INSTALL_MANPAGES_TRUE@libman_DATA = $(libman_PRE:man=@LIB_MAN_SUFFIX@)
 EXTRA_DIST = $(libman_PRE) $(libman_xml)
 CLEANFILES = $(libman_DATA)
-MAINTAINERCLEANFILES = $(libman_PRE)
-
-# Substitute system-specific values in man pages
-XORGRELSTRING = @PACKAGE_STRING@
-XORGMANNAME = X Version 11
+MAINTAINERCLEANFILES = $(libman_xml:xml=man)
 SUFFIXES = .$(LIB_MAN_SUFFIX) .man .xml
 all: all-am
 
@@ -468,12 +451,9 @@ uninstall-am: uninstall-libmanDATA
 	uninstall-libmanDATA
 
 
-# Generate man page shadow files (Replaces InstallManPageAliases from Imake)
-$(Xcomposite_shadowmen):
-	$(AM_V_GEN) echo .so man$(LIB_MAN_DIR_SUFFIX)/Xcomposite.$(LIB_MAN_SUFFIX) > $@
-
+# String replacements in MAN_SUBSTS now come from xorg-macros.m4 via configure
 .man.$(LIB_MAN_SUFFIX):
-	$(AM_V_GEN)sed $(MAN_SUBSTS) < $< > $@
+	$(AM_V_GEN)$(SED) $(MAN_SUBSTS) < $< > $@
 
 # Generate nroff sources from DocBook/xml
 
