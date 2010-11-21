@@ -20,13 +20,10 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 Except as contained in this notice, the name of The Open Group shall not be
 used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
- * *
+ *
  * Author:  Keith Packard, MIT X Consortium
  */
 
-#ifdef WIN32
-#define _WILLWINSOCK_
-#endif
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
@@ -34,57 +31,72 @@ in this Software without prior written authorization from The Open Group.
 #include <X11/X.h>
 #include <X11/Xmd.h>
 #include <X11/Xdmcp.h>
+
+static void
+getbits (long data, unsigned char *dst)
+{
+    dst[0] = (data      ) & 0xff;
+    dst[1] = (data >>  8) & 0xff;
+    dst[2] = (data >> 16) & 0xff;
+    dst[3] = (data >> 24) & 0xff;
+}
+
+#define Time_t time_t
+
 #include <stdlib.h>
 
-#ifdef STREAMSCONN
-#include <tiuser.h>
-#else
+#if defined(HAVE_LRAND48) && defined(HAVE_SRAND48)
+#define srandom srand48
+#define random lrand48
+#endif
 #ifdef WIN32
-#include <X11/Xwinsock.h>
-#else
-#include <sys/socket.h>
+#include <process.h>
+#define srandom srand
+#define random rand
+#define getpid(x) _getpid(x)
 #endif
-#endif
+
+void
+XdmcpGenerateKey (XdmAuthKeyPtr key)
+{
+    long    lowbits, highbits;
+
+    srandom ((int)getpid() ^ time((Time_t *)0));
+    lowbits = random ();
+    highbits = random ();
+    getbits (lowbits, key->data);
+    getbits (highbits, key->data + 4);
+}
 
 int
-XdmcpFill (int fd, XdmcpBufferPtr buffer, XdmcpNetaddr from, int *fromlen)
+XdmcpCompareKeys (const XdmAuthKeyPtr a, const XdmAuthKeyPtr b)
 {
-    BYTE    *newBuf;
-#ifdef STREAMSCONN
-    struct t_unitdata dataunit;
-    int gotallflag, result;
-#endif
+    int	i;
 
-    if (buffer->size < XDM_MAX_MSGLEN)
-    {
-	newBuf = (BYTE *) malloc(XDM_MAX_MSGLEN);
-	if (newBuf)
-	{
-	    free(buffer->data);
-	    buffer->data = newBuf;
-	    buffer->size = XDM_MAX_MSGLEN;
-	}
-    }
-    buffer->pointer = 0;
-#ifdef STREAMSCONN
-    dataunit.addr.buf = from;
-    dataunit.addr.maxlen = *fromlen;
-    dataunit.opt.maxlen = 0;	/* don't care to know about options */
-    dataunit.udata.buf = (char *)buffer->data;
-    dataunit.udata.maxlen = buffer->size;
-    result = t_rcvudata (fd, &dataunit, &gotallflag);
-    if (result < 0) {
-	return FALSE;
-    }
-    buffer->count = dataunit.udata.len;
-    *fromlen = dataunit.addr.len;
-#else
-    buffer->count = recvfrom (fd, (char*)buffer->data, buffer->size, 0,
-			      (struct sockaddr *)from, (void *)fromlen);
-#endif
-    if (buffer->count < 6) {
-	buffer->count = 0;
-	return FALSE;
-    }
+    for (i = 0; i < 8; i++)
+	if (a->data[i] != b->data[i])
+	    return FALSE;
     return TRUE;
+}
+
+void
+XdmcpIncrementKey (XdmAuthKeyPtr key)
+{
+    int	i;
+
+    i = 7;
+    while (++key->data[i] == 0)
+	if (--i < 0)
+	    break;
+}
+
+void
+XdmcpDecrementKey (XdmAuthKeyPtr key)
+{
+    int	i;
+
+    i = 7;
+    while (key->data[i]-- == 0)
+	if (--i < 0)
+	    break;
 }
