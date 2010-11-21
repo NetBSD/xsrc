@@ -1,7 +1,5 @@
 /*
- * $Xorg: xclipboard.c,v 1.4 2001/02/09 02:05:38 xorgcvs Exp $
- *
- * 
+
 Copyright 1989, 1998  The Open Group
 
 Permission to use, copy, modify, distribute, and sell this software and its
@@ -29,7 +27,10 @@ in this Software without prior written authorization from The Open Group.
  * Reauthored by: Keith Packard, MIT X Consortium.
  * UTF-8 and CTEXT support: Stanislav Maslovski <stanislav.maslovski@gmail.com>
  */
-/* $XFree86: xc/programs/xclipboard/xclipboard.c,v 1.8tsi Exp $ */
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #include <stdio.h>
 #include <X11/Intrinsic.h>
