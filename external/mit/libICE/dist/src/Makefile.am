@@ -1,6 +1,11 @@
 lib_LTLIBRARIES=libICE.la
 
-AM_CFLAGS= -I${top_srcdir}/include $(ICE_CFLAGS) $(XTRANS_CFLAGS) \
+AM_CPPFLAGS = -I${top_srcdir}/include
+
+AM_CFLAGS = \
+	$(ICE_CFLAGS) \
+	$(XTRANS_CFLAGS) \
+	$(CWARNFLAGS) \
 	-DICE_t -DTRANS_CLIENT -DTRANS_SERVER
 
 libICE_la_LDFLAGS = -version-number 6:3:0 -no-undefined
