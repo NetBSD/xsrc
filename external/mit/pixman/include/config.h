@@ -4,23 +4,41 @@
 /* Define if building universal (internal helper macro) */
 /* #undef AC_APPLE_UNIVERSAL_BUILD */
 
+/* Whether we have alarm() */
+#define HAVE_ALARM 1
+
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #define HAVE_DLFCN_H 1
 
 /* Define to 1 if you have the `getisax' function. */
 /* #undef HAVE_GETISAX */
 
+/* Whether we have getpagesize() */
+#define HAVE_GETPAGESIZE 1
+
+/* Whether we have gettimeofday() */
+#define HAVE_GETTIMEOFDAY 1
+
 /* Define to 1 if you have the <inttypes.h> header file. */
 #define HAVE_INTTYPES_H 1
 
+/* Define to 1 if you have the `pixman-1' library (-lpixman-1). */
+/* #undef HAVE_LIBPIXMAN_1 */
+
 /* Define to 1 if you have the <memory.h> header file. */
 #define HAVE_MEMORY_H 1
+
+/* Whether we have mprotect() */
+#define HAVE_MPROTECT 1
 
 /* Whether we have posix_memalign() */
 #define HAVE_POSIX_MEMALIGN 1
 
 /* Whether pthread_setspecific() is supported */
-#define HAVE_PTHREAD_SETSPECIFIC 1
+/* #undef HAVE_PTHREAD_SETSPECIFIC */
+
+/* Whether we have sigaction() */
+#define HAVE_SIGACTION 1
 
 /* Define to 1 if you have the <stdint.h> header file. */
 #define HAVE_STDINT_H 1
@@ -33,6 +51,9 @@
 
 /* Define to 1 if you have the <string.h> header file. */
 #define HAVE_STRING_H 1
+
+/* Define to 1 if we have <sys/mman.h> */
+#define HAVE_SYS_MMAN_H 1
 
 /* Define to 1 if you have the <sys/stat.h> header file. */
 #define HAVE_SYS_STAT_H 1
@@ -57,7 +78,7 @@
 #define PACKAGE_NAME "pixman"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "pixman 0.18.4"
+#define PACKAGE_STRING "pixman 0.21.2"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "pixman"
@@ -66,7 +87,7 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "0.18.4"
+#define PACKAGE_VERSION "0.21.2"
 
 /* enable TIMER_BEGIN/TIMER_END macros */
 /* #undef PIXMAN_TIMERS */
@@ -77,8 +98,11 @@
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1
 
+/* Whether the tool chain supports __attribute__((constructor)) */
+#define TOOLCHAIN_SUPPORTS_ATTRIBUTE_CONSTRUCTOR /**/
+
 /* Whether the tool chain supports __thread */
-/* #undef TOOLCHAIN_SUPPORTS__THREAD */
+#undef TOOLCHAIN_SUPPORTS__THREAD /**/
 
 /* use ARM NEON assembly optimizations */
 /* #undef USE_ARM_NEON */
@@ -89,27 +113,31 @@
 /* use GNU-style inline assembler */
 #define USE_GCC_INLINE_ASM 1
 
-#if defined(__i386__) || defined(__x86_64__)
 /* use MMX compiler intrinsics */
 #define USE_MMX 1
-#endif
 
-#if defined(__x86_64__)
+/* use OpenMP in the test suite */
+#define USE_OPENMP 1
+
 /* use SSE2 compiler intrinsics */
 #define USE_SSE2 1
-#endif
 
 /* use VMX compiler intrinsics */
 /* #undef USE_VMX */
 
 /* Version number of package */
-#define VERSION "0.18.4"
+#define VERSION "0.21.2"
 
 /* Define WORDS_BIGENDIAN to 1 if your processor stores words with the most
    significant byte first (like Motorola and SPARC, unlike Intel). */
-#include <sys/endian.h>
-#if _BYTE_ORDER == _BIG_ENDIAN
-#define WORDS_BIGENDIAN 1
+#if defined AC_APPLE_UNIVERSAL_BUILD
+# if defined __BIG_ENDIAN__
+#  define WORDS_BIGENDIAN 1
+# endif
+#else
+# ifndef WORDS_BIGENDIAN
+/* #  undef WORDS_BIGENDIAN */
+# endif
 #endif
 
 /* Define to `__inline__' or `__inline' if that's what the C compiler
