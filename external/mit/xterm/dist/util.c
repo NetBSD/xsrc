@@ -1,4 +1,4 @@
-/* $XTermId: util.c,v 1.538 2010/06/15 08:17:36 tom Exp $ */
+/* $XTermId: util.c,v 1.541 2010/10/11 00:32:28 tom Exp $ */
 
 /*
  * Copyright 1999-2009,2010 by Thomas E. Dickey
@@ -1343,6 +1343,9 @@ ClearRight(XtermWidget xw, int n)
 
     /* with the right part cleared, we can't be wrapping */
     LineClrWrapped(ld);
+    if (screen->show_wrap_marks) {
+	ShowWrapMarks(xw, screen->cur_row, ld);
+    }
     screen->do_wrap = False;
 }
 
@@ -1625,6 +1628,15 @@ vertical_copy_area(XtermWidget xw,
 		  (unsigned) Width(screen),
 		  (unsigned) (nlines * FontHeight(screen)),
 		  src_x, src_y - amount * FontHeight(screen));
+	if (screen->show_wrap_marks) {
+	    LineData *ld;
+	    int row;
+	    for (row = firstline; row < firstline + nlines; ++row) {
+		if ((ld = getLineData(screen, row)) != 0) {
+		    ShowWrapMarks(xw, row, ld);
+		}
+	    }
+	}
     }
 }
 
@@ -1816,9 +1828,12 @@ ChangeColors(XtermWidget xw, ScrnColors * pNew)
 	/* no repaint needed */
     } else if ((T_COLOR(screen, TEXT_CURSOR) == T_COLOR(screen, TEXT_FG)) &&
 	       (COLOR_DEFINED(pNew, TEXT_FG))) {
-	T_COLOR(screen, TEXT_CURSOR) = COLOR_VALUE(pNew, TEXT_FG);
-	TRACE(("... TEXT_CURSOR: %#lx\n", T_COLOR(screen, TEXT_CURSOR)));
-	repaint = screen->Vshow;
+	if (T_COLOR(screen, TEXT_CURSOR) != COLOR_VALUE(pNew, TEXT_FG)) {
+	    T_COLOR(screen, TEXT_CURSOR) = COLOR_VALUE(pNew, TEXT_FG);
+	    TRACE(("... TEXT_CURSOR: %#lx\n", T_COLOR(screen, TEXT_CURSOR)));
+	    if (screen->Vshow)
+		repaint = True;
+	}
     }
 
     if (COLOR_DEFINED(pNew, TEXT_FG)) {
@@ -1849,14 +1864,20 @@ ChangeColors(XtermWidget xw, ScrnColors * pNew)
     }
 #if OPT_HIGHLIGHT_COLOR
     if (COLOR_DEFINED(pNew, HIGHLIGHT_BG)) {
-	T_COLOR(screen, HIGHLIGHT_BG) = COLOR_VALUE(pNew, HIGHLIGHT_BG);
-	TRACE(("... HIGHLIGHT_BG: %#lx\n", T_COLOR(screen, HIGHLIGHT_BG)));
-	repaint = screen->Vshow;
+	if (T_COLOR(screen, HIGHLIGHT_BG) != COLOR_VALUE(pNew, HIGHLIGHT_BG)) {
+	    T_COLOR(screen, HIGHLIGHT_BG) = COLOR_VALUE(pNew, HIGHLIGHT_BG);
+	    TRACE(("... HIGHLIGHT_BG: %#lx\n", T_COLOR(screen, HIGHLIGHT_BG)));
+	    if (screen->Vshow)
+		repaint = True;
+	}
     }
     if (COLOR_DEFINED(pNew, HIGHLIGHT_FG)) {
-	T_COLOR(screen, HIGHLIGHT_FG) = COLOR_VALUE(pNew, HIGHLIGHT_FG);
-	TRACE(("... HIGHLIGHT_FG: %#lx\n", T_COLOR(screen, HIGHLIGHT_FG)));
-	repaint = screen->Vshow;
+	if (T_COLOR(screen, HIGHLIGHT_FG) != COLOR_VALUE(pNew, HIGHLIGHT_FG)) {
+	    T_COLOR(screen, HIGHLIGHT_FG) = COLOR_VALUE(pNew, HIGHLIGHT_FG);
+	    TRACE(("... HIGHLIGHT_FG: %#lx\n", T_COLOR(screen, HIGHLIGHT_FG)));
+	    if (screen->Vshow)
+		repaint = True;
+	}
     }
 #endif
 
@@ -1897,7 +1918,9 @@ ChangeColors(XtermWidget xw, ScrnColors * pNew)
     if (COLOR_DEFINED(pNew, TEXT_FG) ||
 	COLOR_DEFINED(pNew, TEXT_BG) ||
 	COLOR_DEFINED(pNew, TEXT_CURSOR)) {
-	set_cursor_gcs(xw);
+	if (set_cursor_gcs(xw) && screen->Vshow) {
+	    repaint = True;
+	}
     }
 #if OPT_TEK4014
     if (COLOR_DEFINED(pNew, TEK_FG) ||

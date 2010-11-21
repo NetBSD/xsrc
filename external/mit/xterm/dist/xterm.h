@@ -1,4 +1,4 @@
-/* $XTermId: xterm.h,v 1.628 2010/06/20 21:34:48 tom Exp $ */
+/* $XTermId: xterm.h,v 1.635 2010/10/12 08:55:47 tom Exp $ */
 
 /************************************************************
 
@@ -479,6 +479,7 @@ extern char **environ;
 #define XtNshiftFonts		"shiftFonts"
 #define XtNshowBlinkAsBold	"showBlinkAsBold"
 #define XtNshowMissingGlyphs	"showMissingGlyphs"
+#define XtNshowWrapMarks	"showWrapMarks"
 #define XtNsignalInhibit	"signalInhibit"
 #define XtNtekGeometry		"tekGeometry"
 #define XtNtekInhibit		"tekInhibit"
@@ -638,6 +639,7 @@ extern char **environ;
 #define XtCShiftFonts		"ShiftFonts"
 #define XtCShowBlinkAsBold	"ShowBlinkAsBold"
 #define XtCShowMissingGlyphs	"ShowMissingGlyphs"
+#define XtCShowWrapMarks	"ShowWrapMarks"
 #define XtCSignalInhibit	"SignalInhibit"
 #define XtCTekInhibit		"TekInhibit"
 #define XtCTekSmall		"TekSmall"
@@ -713,7 +715,7 @@ extern void TekSimulatePageButton (TekWidget /* tw */, Bool /* reset */);
 #endif
 
 /* button.c */
-#define	MotionOff( s, t ) {						\
+#define	MotionOff( s, t ) if (!(screen->hide_pointer)) {		\
 	    (s)->event_mask |= ButtonMotionMask;			\
 	    (s)->event_mask &= ~PointerMotionMask;			\
 	    XSelectInput(XtDisplay((t)), XtWindow((t)), (long) (s)->event_mask); }
@@ -731,11 +733,13 @@ extern void HandleInsertSelection      PROTO_XT_ACTIONS_ARGS;
 extern void HandleKeyboardSelectEnd    PROTO_XT_ACTIONS_ARGS;
 extern void HandleKeyboardSelectExtend PROTO_XT_ACTIONS_ARGS;
 extern void HandleKeyboardSelectStart  PROTO_XT_ACTIONS_ARGS;
+extern void HandleKeyboardSelectStop   PROTO_XT_ACTIONS_ARGS;
 extern void HandleKeyboardStartExtend  PROTO_XT_ACTIONS_ARGS;
 extern void HandleSelectEnd            PROTO_XT_ACTIONS_ARGS;
 extern void HandleSelectExtend         PROTO_XT_ACTIONS_ARGS;
 extern void HandleSelectSet            PROTO_XT_ACTIONS_ARGS;
 extern void HandleSelectStart          PROTO_XT_ACTIONS_ARGS;
+extern void HandleSelectStop           PROTO_XT_ACTIONS_ARGS;
 extern void HandleStartExtend          PROTO_XT_ACTIONS_ARGS;
 extern void ResizeSelection (TScreen * /* screen */, int  /* rows */, int  /* cols */);
 extern void ScrollSelection (TScreen * /* screen */, int  /* amount */,  Bool /* always */);
@@ -796,6 +800,7 @@ extern void noleaks_cachedCgs (XtermWidget /* xw */);
 
 /* charproc.c */
 extern Bool CheckBufPtrs (TScreen * /* screen */);
+extern Bool set_cursor_gcs (XtermWidget /* xw */);
 extern int VTInit (XtermWidget /* xw */);
 extern void FindFontSelection (XtermWidget /* xw */, const char * /* atom_name */, Bool  /* justprobe */);
 extern void HideCursor (void);
@@ -809,7 +814,6 @@ extern void dotext (XtermWidget /* xw */, int  /* charset */, IChar * /* buf */,
 extern void releaseCursorGCs(XtermWidget /*xw*/);
 extern void releaseWindowGCs(XtermWidget /*xw*/, VTwin * /*win*/);
 extern void resetCharsets (TScreen * /* screen */);
-extern void set_cursor_gcs (XtermWidget /* xw */);
 extern void set_max_col(TScreen *  /* screen */, int  /* cols */);
 extern void set_max_row(TScreen *  /* screen */, int  /* rows */);
 extern void set_tb_margins (TScreen * /* screen */, int  /* top */, int  /* bottom */);
@@ -819,7 +823,7 @@ extern void unparseputc1 (XtermWidget /* xw */, int  /* c */);
 extern void unparseputn (XtermWidget /* xw */, unsigned /* n */);
 extern void unparseputs (XtermWidget /* xw */, const char * /* s */);
 extern void unparseseq (XtermWidget /* xw */, ANSI * /* ap */);
-extern void v_write (int  /* f */, Char * /* d */, unsigned  /* len */);
+extern void v_write (int  /* f */, const Char * /* d */, unsigned  /* len */);
 extern void xtermAddInput(Widget  /* w */);
 
 #if OPT_BLINK_CURS
@@ -968,7 +972,9 @@ extern void ReverseOldColors (void);
 extern void SysError (int  /* i */) GCC_NORETURN;
 extern void VisualBell (void);
 extern void do_dcs (XtermWidget /* xw */, Char * /* buf */, size_t  /* len */);
+extern void do_decrpm (XtermWidget /* xw */, int /* nparam */, int *  /* params */);
 extern void do_osc (XtermWidget /* xw */, Char * /* buf */, size_t  /* len */, int  /* final */);
+extern void do_rpm (XtermWidget /* xw */, int /* nparam */, int *  /* params */);
 extern void do_xevents (void);
 extern void end_tek_mode (void);
 extern void end_vt_mode (void);
@@ -1097,6 +1103,7 @@ extern void ScrnInsertLine (XtermWidget /* xw */, ScrnBuf /* sb */, int  /* last
 extern void ScrnRefresh (XtermWidget /* xw */, int  /* toprow */, int  /* leftcol */, int  /* nrows */, int  /* ncols */, Bool  /* force */);
 extern void ScrnUpdate (XtermWidget /* xw */, int  /* toprow */, int  /* leftcol */, int  /* nrows */, int  /* ncols */, Bool  /* force */);
 extern void ScrnWriteText (XtermWidget /* xw */, IChar * /* str */, unsigned  /* flags */, unsigned /* cur_fg_bg */, unsigned  /* length */);
+extern void ShowWrapMarks (XtermWidget /* xw */, int /* row */, LineData * /* ld */);
 extern void setupLineData (TScreen * /* screen */, ScrnBuf /* base */, Char * /* data */, unsigned /* nrow */, unsigned /* ncol */);
 extern void xtermParseRect (XtermWidget /* xw */, int, int *, XTermRect *);
 
