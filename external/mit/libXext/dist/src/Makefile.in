@@ -150,6 +150,7 @@ EXEEXT = @EXEEXT@
 FGREP = @FGREP@
 FILE_MAN_DIR = @FILE_MAN_DIR@
 FILE_MAN_SUFFIX = @FILE_MAN_SUFFIX@
+FOP = @FOP@
 GREP = @GREP@
 INSTALL = @INSTALL@
 INSTALL_CMD = @INSTALL_CMD@
@@ -193,18 +194,20 @@ PACKAGE_VERSION = @PACKAGE_VERSION@
 PATH_SEPARATOR = @PATH_SEPARATOR@
 PKG_CONFIG = @PKG_CONFIG@
 RANLIB = @RANLIB@
-RAWCPP = @RAWCPP@
-RAWCPPFLAGS = @RAWCPPFLAGS@
 SED = @SED@
 SET_MAKE = @SET_MAKE@
 SHELL = @SHELL@
 STRIP = @STRIP@
+STYLESHEET_SRCDIR = @STYLESHEET_SRCDIR@
 VERSION = @VERSION@
 XEXT_CFLAGS = @XEXT_CFLAGS@
 XEXT_LIBS = @XEXT_LIBS@
 XEXT_SOREV = @XEXT_SOREV@
 XMALLOC_ZERO_CFLAGS = @XMALLOC_ZERO_CFLAGS@
+XMLTO = @XMLTO@
 XORG_MAN_PAGE = @XORG_MAN_PAGE@
+XORG_SGML_PATH = @XORG_SGML_PATH@
+XSL_STYLESHEET = @XSL_STYLESHEET@
 XTMALLOC_ZERO_CFLAGS = @XTMALLOC_ZERO_CFLAGS@
 abs_builddir = @abs_builddir@
 abs_srcdir = @abs_srcdir@
@@ -242,7 +245,6 @@ libdir = @libdir@
 libexecdir = @libexecdir@
 localedir = @localedir@
 localstatedir = @localstatedir@
-lt_ECHO = @lt_ECHO@
 mandir = @mandir@
 mkdir_p = @mkdir_p@
 oldincludedir = @oldincludedir@
@@ -288,9 +290,6 @@ libXext_la_SOURCES = \
 libXextincludedir = $(includedir)/X11/extensions
 libXextinclude_HEADERS = $(top_srcdir)/include/X11/extensions/dpms.h \
 			 $(top_srcdir)/include/X11/extensions/extutil.h \
-			 $(top_srcdir)/include/X11/extensions/lbxbuf.h \
-			 $(top_srcdir)/include/X11/extensions/lbxbufstr.h \
-			 $(top_srcdir)/include/X11/extensions/lbximage.h \
 			 $(top_srcdir)/include/X11/extensions/MITMisc.h \
 			 $(top_srcdir)/include/X11/extensions/multibuf.h \
 			 $(top_srcdir)/include/X11/extensions/security.h \
