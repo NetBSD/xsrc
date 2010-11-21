@@ -92,8 +92,10 @@
 /* enable TIMER_BEGIN/TIMER_END macros */
 /* #undef PIXMAN_TIMERS */
 
+#if 0
 /* The size of `long', as computed by sizeof. */
 #define SIZEOF_LONG 8
+#endif
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1
@@ -113,14 +115,18 @@
 /* use GNU-style inline assembler */
 #define USE_GCC_INLINE_ASM 1
 
+#if defined(__i386__) || defined(__x86_64__)
 /* use MMX compiler intrinsics */
 #define USE_MMX 1
+#endif
 
 /* use OpenMP in the test suite */
 #define USE_OPENMP 1
 
+#if defined(__x86_64__)
 /* use SSE2 compiler intrinsics */
 #define USE_SSE2 1
+#endif
 
 /* use VMX compiler intrinsics */
 /* #undef USE_VMX */
@@ -130,14 +136,9 @@
 
 /* Define WORDS_BIGENDIAN to 1 if your processor stores words with the most
    significant byte first (like Motorola and SPARC, unlike Intel). */
-#if defined AC_APPLE_UNIVERSAL_BUILD
-# if defined __BIG_ENDIAN__
-#  define WORDS_BIGENDIAN 1
-# endif
-#else
-# ifndef WORDS_BIGENDIAN
-/* #  undef WORDS_BIGENDIAN */
-# endif
+#include <sys/endian.h>
+#if _BYTE_ORDER == _BIG_ENDIAN
+#define WORDS_BIGENDIAN 1
 #endif
 
 /* Define to `__inline__' or `__inline' if that's what the C compiler
