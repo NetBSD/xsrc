@@ -1,5 +1,3 @@
-/* $Xorg: authutil.c,v 1.5 2001/02/09 02:03:26 xorgcvs Exp $ */
-/* $XdotOrg: xc/lib/ICE/authutil.c,v 1.3 2005/05/17 20:53:55 sandmann Exp $ */
 /******************************************************************************
 
 
@@ -27,7 +25,6 @@ in this Software without prior written authorization from The Open Group.
 
 Author: Ralph Mor, X Consortium
 ******************************************************************************/
-/* $XFree86: authutil.c,v 3.9 2002/05/31 18:45:41 dawes Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>

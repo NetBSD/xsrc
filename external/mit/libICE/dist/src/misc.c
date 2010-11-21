@@ -1,4 +1,3 @@
-/* $Xorg: misc.c,v 1.4 2001/02/09 02:03:26 xorgcvs Exp $ */
 /******************************************************************************
 
 
@@ -26,7 +25,6 @@ in this Software without prior written authorization from The Open Group.
 
 Author: Ralph Mor, X Consortium
 ******************************************************************************/
-/* $XFree86: xc/lib/ICE/misc.c,v 1.3 2001/01/17 19:41:29 dawes Exp $ */
 
 #ifdef WIN32
 #define _WILLWINSOCK_

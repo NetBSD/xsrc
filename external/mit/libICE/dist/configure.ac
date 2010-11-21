@@ -1,33 +1,35 @@
 #                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 
-AC_PREREQ(2.57)
+AC_PREREQ([2.60])
 AC_INIT([libICE],
-        1.0.6,
+        [1.0.7],
         [https://bugs.freedesktop.org/enter_bug.cgi?product=xorg],
-        libICE)
+        [libICE])
 
 AC_CONFIG_SRCDIR([Makefile.am])
-AM_INIT_AUTOMAKE([dist-bzip2])
+AM_INIT_AUTOMAKE([foreign dist-bzip2])
 
 AM_MAINTAINER_MODE
-
-# Require xorg-macros at least 1.2.1
-XORG_MACROS_VERSION([1.2.1])
-m4_ifndef([XORG_MACROS_VERSION],
-	[AC_FATAL([must install xorg-macros 1.2.1 or later before running autoconf/autogen])])
 AM_CONFIG_HEADER([config.h])
+
+# Require xorg-macros minimum of 1.10 for DocBook XML documentation
+m4_ifndef([XORG_MACROS_VERSION],
+          [m4_fatal([must install xorg-macros 1.10 or later before running autoconf/autogen])])
+XORG_MACROS_VERSION(1.10)
+XORG_DEFAULT_OPTIONS
+XORG_ENABLE_DOCS
+XORG_ENABLE_SPECS
+XORG_WITH_XMLTO(0.0.20)
+XORG_WITH_FOP
+XORG_CHECK_SGML_DOCTOOLS(1.5)
 
 # Checks for programs.
 AC_PROG_LIBTOOL
 AC_PROG_CC
-XORG_CWARNFLAGS
 
 # Checks for pkg-config packages
 PKG_CHECK_MODULES(ICE, xproto)
-ICE_CFLAGS="$CWARNFLAGS $ICE_CFLAGS"
-AC_SUBST(ICE_CFLAGS)
-AC_SUBST(ICE_LIBS)
 
 PKG_CHECK_MODULES(XTRANS, xtrans)
 AC_SUBST(XTRANS_CFLAGS)
@@ -47,9 +49,9 @@ XORG_WITH_LINT
 XORG_LINT_LIBRARY([ICE])
 LINT_FLAGS="${LINT_FLAGS} ${ICE_CFLAGS} ${XTRANS_CFLAGS}"
 
-XORG_RELEASE_VERSION
-XORG_CHANGELOG
 
 AC_OUTPUT([Makefile
+	   doc/Makefile
+	   specs/Makefile
 	   src/Makefile
 	   ice.pc])
