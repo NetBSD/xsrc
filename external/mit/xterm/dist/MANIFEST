@@ -1,4 +1,4 @@
-MANIFEST for xterm-260, version xterm-260
+MANIFEST for xterm-266, version xterm-266
 --------------------------------------------------------------------------------
 MANIFEST                        this file
 256colres.h                     resource-definitions for 256-color mode
@@ -36,7 +36,6 @@ config.guess                    configure script: guess the system type
 config.sub                      configure script: validate system type
 configure                       generated
 configure.in                    template for generating configure script
-configure                       Configuration script for UNIX
 ctlseqs.ms                      documentation: Xterm Control Sequences
 ctlseqs.txt                     generated rendition of ctlseqs.ms
 cursor.c                        VT100 low-level cursor movement
@@ -116,6 +115,21 @@ icons/xterm_32x32.xcf           gimp file, for editing 32x32 icon
 icons/xterm_32x32.xpm           32x32 monochrome icon
 icons/xterm_48x48.xcf           gimp file, for editing 48x48 icon
 icons/xterm_48x48.xpm           48x48 monochrome icon
+package/debian                  subdirectory
+package/debian/changelog        build-script
+package/debian/color.sed        build-script
+package/debian/compat           build-script
+package/debian/control          build-script
+package/debian/copyright        build-script
+package/debian/rules            build-script
+package/debian/source           subdirectory
+package/debian/source/format    build-script
+package/debian                  subdirectory
+package/debian/watch            build-script
+package/debian/xterm-dev.docs   build-script
+package/debian/xterm-xres.sed   build-script
+package                         subdirectory
+package/xterm.spec              build-script
 tektests                        subdirectory
 tektests/aitest.tek             tek4014 demo: draw a globe
 tektests/dmerc.tek              tek4014 demo: draws a Mercator projection with orbit
