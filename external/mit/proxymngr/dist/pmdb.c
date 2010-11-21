@@ -1,4 +1,3 @@
-/* $Xorg: pmdb.c,v 1.5 2001/02/09 02:05:34 xorgcvs Exp $ */
 
 /*
 Copyright 1996, 1998  The Open Group
@@ -25,7 +24,6 @@ not be used in advertising or otherwise to promote the sale, use or
 other dealings in this Software without prior written authorization
 from The Open Group.
 */
-/* $XFree86: xc/programs/proxymngr/pmdb.c,v 1.7 2001/12/14 20:01:02 dawes Exp $ */
 
 #include "pmint.h"
 #include "pmdb.h"
