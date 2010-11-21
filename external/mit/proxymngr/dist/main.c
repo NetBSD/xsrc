@@ -1,4 +1,3 @@
-/* $Xorg: main.c,v 1.6 2001/02/09 02:05:34 xorgcvs Exp $ */
 
 /*
 Copyright 1996, 1998  The Open Group
@@ -25,7 +24,6 @@ not be used in advertising or otherwise to promote the sale, use or
 other dealings in this Software without prior written authorization
 from The Open Group.
 */
-/* $XFree86: xc/programs/proxymngr/main.c,v 1.8tsi Exp $ */
 
 #include <stdlib.h>
 #include "pmint.h"
@@ -56,10 +54,10 @@ static void SendGetProxyAddr ( PMconn *pmConn, char *serviceName,
 static int PMAcceptorOpcode;
 static int PMOriginatorOpcode;
 
-int PMversionCount = 1;
-IcePaVersionRec	PMReplyVersions[] = {{PM_MAJOR_VERSION, PM_MINOR_VERSION,
+static int PMversionCount = 1;
+static IcePaVersionRec	PMReplyVersions[] = {{PM_MAJOR_VERSION, PM_MINOR_VERSION,
 				      PMReplyProcessMessages}};
-IcePoVersionRec	PMSetupVersions[] = {{PM_MAJOR_VERSION, PM_MINOR_VERSION,
+static IcePoVersionRec	PMSetupVersions[] = {{PM_MAJOR_VERSION, PM_MINOR_VERSION,
 				      PMSetupProcessMessages}};
 
 char *PM_VENDOR_STRING = XVENDORNAME;
@@ -67,22 +65,21 @@ char *PM_VENDOR_RELEASE = XORG_RELEASE;
 
 int verbose = 0;
 
-XtAppContext	appContext;
+static XtAppContext	appContext;
 
 #define PM_PORT "6500"
 
-char *configFile = NULL;
+static char *configFile = NULL;
 
 void
-Usage ()
+Usage(void)
 {
     fprintf (stderr, "Usage: proxymngr [-config file] [-verbose]\n");
     exit (1);
 }
 
 void 
-SetCloseOnExec (fd)
-    int	fd;
+SetCloseOnExec(int fd)
 {
 #ifdef F_SETFD
 #ifdef FD_CLOEXEC
@@ -216,12 +213,7 @@ main (int argc, char *argv[])
 
 /* ARGSUSED */
 void
-NewConnectionXtProc (client_data, source, id)
-
-XtPointer	client_data;
-int 		*source;
-XtInputId	*id;
-
+NewConnectionXtProc(XtPointer client_data, int *source, XtInputId *id)
 {
     IceConn 	ice_conn;
     char	*connstr;
@@ -271,17 +263,9 @@ XtInputId	*id;
  * See ConnectToProxy() if you change any of the pmConn structure
  */
 static Status
-PMprotocolSetupProc (iceConn,
-    majorVersion, minorVersion, vendor, release,
-    clientDataRet, failureReasonRet)
-
-IceConn    iceConn;
-int	   majorVersion;
-int	   minorVersion;
-char  	   *vendor;
-char 	   *release;
-IcePointer *clientDataRet;
-char	   **failureReasonRet;
+PMprotocolSetupProc(IceConn iceConn, int majorVersion, int minorVersion,
+		    char *vendor, char *release, IcePointer *clientDataRet,
+		    char **failureReasonRet)
 
 {
     /*
@@ -405,13 +389,8 @@ SendGetProxyAddrReply (
 
 
 void
-PMReplyProcessMessages (iceConn, clientData, opcode, length, swap)
-
-IceConn		 iceConn;
-IcePointer       clientData;
-int		 opcode;
-unsigned long	 length;
-Bool		 swap;
+PMReplyProcessMessages(IceConn iceConn, IcePointer clientData, int opcode,
+		       unsigned long length, Bool swap)
 
 {
     PMconn *pmConn = (PMconn *) clientData;
@@ -518,8 +497,6 @@ Bool		 swap;
 			hints.ai_flags = AI_CANONNAME;
 			if (getaddrinfo(hostname, NULL, &hints, &ai) == 0) {
 			    canonname = ai->ai_canonname;
-			} else {
-			    ai = NULL;
 			}
 		    }
 #else
@@ -909,16 +886,9 @@ Bool		 swap;
 }
 
 void
-PMSetupProcessMessages (iceConn, clientData, opcode, length, swap,
-			replyWait, replyReadyRet)
-
-IceConn		 iceConn;
-IcePointer       clientData;
-int		 opcode;
-unsigned long	 length;
-Bool		 swap;
-IceReplyWaitInfo *replyWait;
-Bool		 *replyReadyRet;
+PMSetupProcessMessages(IceConn iceConn, IcePointer clientData, int opcode,
+		       unsigned long length, Bool swap,
+		       IceReplyWaitInfo *replyWait, Bool *replyReadyRet)
 
 {
     assert (replyWait == NULL);
@@ -928,12 +898,9 @@ Bool		 *replyReadyRet;
 
 
 void
-ForwardRequest( requestor, serviceName, serverAddress, hostAddress,
-		startOptions, authLen, authName, authData )
-    PMconn *requestor;
-    char *serviceName, *serverAddress, *hostAddress, *startOptions;
-    int authLen;
-    char *authName, *authData;
+ForwardRequest(PMconn *requestor, char *serviceName, char *serverAddress,
+	       char *hostAddress, char *startOptions, int authLen,
+	       char *authName, char *authData)
 {
     running_proxy_list	*proxyList;
     running_proxy	*runningProxy = NULL;
@@ -1027,12 +994,7 @@ ForwardRequest( requestor, serviceName, serverAddress, hostAddress,
 
 /* ARGSUSED */
 void
-_XtProcessIceMsgProc (client_data, source, id)
-
-XtPointer	client_data;
-int 		*source;
-XtInputId	*id;
-
+_XtProcessIceMsgProc(XtPointer client_data, int *source, XtInputId *id)
 {
     IceConn			ice_conn = (IceConn) client_data;
     IceProcessMessagesStatus	status;
@@ -1051,12 +1013,8 @@ XtInputId	*id;
 
 
 void
-_XtIceWatchProc (ice_conn, client_data, opening, watch_data)
-
-IceConn 	ice_conn;
-IcePointer	client_data;
-Bool		opening;
-IcePointer	*watch_data;
+_XtIceWatchProc(IceConn ice_conn, IcePointer client_data,
+		Bool opening, IcePointer *watch_data)
 
 {
     if (opening)
@@ -1078,9 +1036,7 @@ IcePointer	*watch_data;
 
 
 Status
-InitWatchProcs (appContext)
-
-XtAppContext appContext;
+InitWatchProcs(XtAppContext appContext)
 
 {
     return (IceAddConnectionWatch (_XtIceWatchProc, (IcePointer) appContext));
@@ -1108,18 +1064,14 @@ XtAppContext appContext;
 static IceIOErrorHandler prev_handler;
 
 void
-MyIoErrorHandler (ice_conn)
-
-IceConn ice_conn;
-
+MyIoErrorHandler(IceConn ice_conn)
 {
     if (prev_handler)
 	(*prev_handler) (ice_conn);
 }    
 
 void
-InstallIOErrorHandler ()
-
+InstallIOErrorHandler(void)
 {
     IceIOErrorHandler default_handler;
 
@@ -1136,10 +1088,7 @@ InstallIOErrorHandler ()
  */
 
 Bool
-HostBasedAuthProc (hostname)
-
-char *hostname;
-
+HostBasedAuthProc(char *hostname)
 {
     return (1);
 }

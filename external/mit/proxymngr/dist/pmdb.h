@@ -1,4 +1,3 @@
-/* $Xorg: pmdb.h,v 1.4 2001/02/09 02:05:34 xorgcvs Exp $ */
 
 /*
 Copyright 1996, 1998  The Open Group
