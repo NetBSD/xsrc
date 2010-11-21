@@ -84,16 +84,12 @@ fi
 XCOMM This is the fallback case if nothing else is executed above
 #endif /* !defined(__SCO__)  && !defined(__UNIXWARE__) */
 
-#ifdef __APPLE__
-
 if [ -d XINITDIR/xinitrc.d ] ; then
 	for f in XINITDIR/xinitrc.dXSLASHGLOB.sh ; do
 		[ -x "$f" ] && . "$f"
 	done
 	unset f
 fi
-
-#endif
 
 TWM &
 XCLOCK -geometry 50x50-1+1 &
