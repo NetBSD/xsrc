@@ -85,6 +85,13 @@ else
 	-rm -f $(DESTDIR)$(libdir)/libXaw.@LIBEXT@.6
 	(cd $(DESTDIR)$(libdir) && ln -s libXaw6.@LIBEXT@.6 libXaw.@LIBEXT@.6)
 endif
+
+uninstall-local::
+if PLATFORM_DARWIN
+	-rm -f $(DESTDIR)$(libdir)/libXaw.6.@LIBEXT@
+else
+	-rm -f $(DESTDIR)$(libdir)/libXaw.@LIBEXT@.6
+endif
 endif
 
 endif
@@ -113,6 +120,13 @@ if PLATFORM_DARWIN
 else
 	-rm -f $(DESTDIR)$(libdir)/libXaw.@LIBEXT@.7
 	(cd $(DESTDIR)$(libdir) && ln -s libXaw7.@LIBEXT@.7 libXaw.@LIBEXT@.7)
+endif
+
+uninstall-local::
+if PLATFORM_DARWIN
+	-rm -f $(DESTDIR)$(libdir)/libXaw.7.@LIBEXT@
+else
+	-rm -f $(DESTDIR)$(libdir)/libXaw.@LIBEXT@.7
 endif
 endif
 
