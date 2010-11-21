@@ -20,12 +20,17 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
+#ifndef LUIT_LUIT_H
+#define LUIT_LUIT_H 1
+
+extern const char *locale_alias;
 extern int iso2022;
 extern int verbose;
 extern int sevenbit;
 extern int ilog;
 extern int olog;
 
-void child(char*, char*, char**);
+void child(char *, char *, char *const *);
 void parent(int, int);
 
+#endif /* LUIT_LUIT_H */
