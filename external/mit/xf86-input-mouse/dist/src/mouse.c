@@ -47,24 +47,20 @@
 #include "config.h"
 #endif
 
+#include <xorg-server.h>
 #include <math.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-#define NEED_EVENTS
 #include <X11/X.h>
 #include <X11/Xproto.h>
 
 #include "xf86.h"
 
-#ifdef XINPUT
 #include <X11/extensions/XI.h>
 #include <X11/extensions/XIproto.h>
 #include "extnsionst.h"
 #include "extinit.h"
-#else
-#include "inputstr.h"
-#endif
 
 #include "xf86Xinput.h"
 #include "xf86_OSproc.h"
@@ -1550,26 +1546,14 @@ post_event:
 
 /*
  * MouseCtrl --
- *      Alter the control parameters for the mouse. Note that all special
- *      protocol values are handled by dix.
+ *      Alter the control parameters for the mouse. Note that all
+ *      settings are now handled by dix.
  */
 
 static void
 MouseCtrl(DeviceIntPtr device, PtrCtrl *ctrl)
 {
-    InputInfoPtr pInfo;
-    MouseDevPtr pMse;
-
-    pInfo = device->public.devicePrivate;
-    pMse = pInfo->private;
-
-#ifdef EXTMOUSEDEBUG
-    ErrorF("MouseCtrl pMse=%p\n", pMse);
-#endif
-    
-    pMse->num       = ctrl->num;
-    pMse->den       = ctrl->den;
-    pMse->threshold = ctrl->threshold;
+    /* This function intentionally left blank */
 }
 
 /*
@@ -1709,7 +1693,6 @@ MouseProc(DeviceIntPtr device, int what)
 	break;
 	    
     case DEVICE_OFF:
-    case DEVICE_CLOSE:
 	if (pInfo->fd != -1) {
 	    xf86RemoveEnabledDevice(pInfo);
 	    if (pMse->buffer) {
@@ -1726,6 +1709,10 @@ MouseProc(DeviceIntPtr device, int what)
 	    }
 	}
 	device->public.on = FALSE;
+	break;
+    case DEVICE_CLOSE:
+	xfree(pMse->mousePriv);
+	pMse->mousePriv = NULL;
 	break;
     }
     return Success;
