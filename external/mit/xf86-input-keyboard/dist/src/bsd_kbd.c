@@ -8,12 +8,11 @@
  * Copyright 1993 by David Dawes <dawes@xfree86.org>
  */
 
-#define NEED_EVENTS
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
+#include <xorg-server.h>
 #include <X11/X.h>
 #include <termios.h>
 
@@ -87,8 +86,10 @@ SetKbdLeds(InputInfoPtr pInfo, int leds)
 
     switch (pKbd->consType) {
 
+#ifdef PCCONS_SUPPORT
 	case PCCONS:
 		break;
+#endif
 #if defined (SYSCONS_SUPPORT) || defined (PCVT_SUPPORT)
 	case SYSCONS:
 	case PCVT:
@@ -110,8 +111,11 @@ GetKbdLeds(InputInfoPtr pInfo)
     int leds = 0, real_leds = 0;
 
     switch (pKbd->consType) {
+
+#ifdef PCCONS_SUPPORT
 	case PCCONS:
 	     break;
+#endif
 #if defined (SYSCONS_SUPPORT) || defined (PCVT_SUPPORT)
 	case SYSCONS:
 	case PCVT:
@@ -144,8 +148,10 @@ SetKbdRepeat(InputInfoPtr pInfo, char rad)
     KbdDevPtr pKbd = (KbdDevPtr) pInfo->private;
     switch (pKbd->consType) {
 
+#ifdef PCCONS_SUPPORT
 	case PCCONS:
 		break;
+#endif
 #if defined (SYSCONS_SUPPORT) || defined (PCVT_SUPPORT)
 	case SYSCONS:
 	case PCVT:
