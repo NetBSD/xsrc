@@ -1,8 +1,6 @@
 /* config.h.  Generated from config.h.in by configure.  */
 /* config.h.in.  Generated from configure.ac by autoheader.  */
 
-#include "xorg-server.h"
-
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #define HAVE_DLFCN_H 1
 
@@ -33,8 +31,11 @@
 /* Define to 1 if you have the <unistd.h> header file. */
 #define HAVE_UNISTD_H 1
 
+/* Define to the sub-directory in which libtool stores uninstalled libraries.
+   */
+#define LT_OBJDIR ".libs/"
+
 /* Name of package */
-#undef PACKAGE
 #define PACKAGE "xf86-input-mouse"
 
 /* Define to the address where bug reports for this package should be sent. */
@@ -44,19 +45,22 @@
 #define PACKAGE_NAME "xf86-input-mouse"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "xf86-input-mouse 1.5.0"
+#define PACKAGE_STRING "xf86-input-mouse 1.6.0"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "xf86-input-mouse"
 
+/* Define to the home page for this package. */
+#define PACKAGE_URL ""
+
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "1.5.0"
+#define PACKAGE_VERSION "1.6.0"
 
 /* Major version of this package */
 #define PACKAGE_VERSION_MAJOR 1
 
 /* Minor version of this package */
-#define PACKAGE_VERSION_MINOR 5
+#define PACKAGE_VERSION_MINOR 6
 
 /* Patch version of this package */
 #define PACKAGE_VERSION_PATCHLEVEL 0
@@ -65,4 +69,4 @@
 #define STDC_HEADERS 1
 
 /* Version number of package */
-#define VERSION "1.5.0"
+#define VERSION "1.6.0"
