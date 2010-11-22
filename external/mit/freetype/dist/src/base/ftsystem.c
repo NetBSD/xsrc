@@ -4,7 +4,7 @@
 /*                                                                         */
 /*    ANSI-specific FreeType low-level system interface (body).            */
 /*                                                                         */
-/*  Copyright 1996-2001, 2002, 2006, 2008 by                               */
+/*  Copyright 1996-2001, 2002, 2006, 2008, 2009, 2010 by                   */
 /*  David Turner, Robert Wilhelm, and Werner Lemberg.                      */
 /*                                                                         */
 /*  This file is part of the FreeType project, and may only be used,       */
@@ -192,7 +192,9 @@
   /*    count  :: The number of bytes to read from the stream.             */
   /*                                                                       */
   /* <Return>                                                              */
-  /*    The number of bytes actually read.                                 */
+  /*    The number of bytes actually read.  If `count' is zero (this is,   */
+  /*    the function is used for seeking), a non-zero return value         */
+  /*    indicates an error.                                                */
   /*                                                                       */
   FT_CALLBACK_DEF( unsigned long )
   ft_ansi_stream_io( FT_Stream       stream,
@@ -203,9 +205,13 @@
     FT_FILE*  file;
 
 
+    if ( !count && offset > stream->size )
+      return 1;
+
     file = STREAM_FILE( stream );
 
-    ft_fseek( file, offset, SEEK_SET );
+    if ( stream->pos != offset )
+      ft_fseek( file, offset, SEEK_SET );
 
     return (unsigned long)ft_fread( buffer, 1, count, file );
   }
@@ -226,8 +232,8 @@
     file = ft_fopen( filepathname, "rb" );
     if ( !file )
     {
-      FT_ERROR(( "FT_Stream_Open:" ));
-      FT_ERROR(( " could not open `%s'\n", filepathname ));
+      FT_ERROR(( "FT_Stream_Open:"
+                 " could not open `%s'\n", filepathname ));
 
       return FT_Err_Cannot_Open_Resource;
     }
