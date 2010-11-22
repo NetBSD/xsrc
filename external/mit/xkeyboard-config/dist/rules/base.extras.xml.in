@@ -14,6 +14,23 @@
     </layout>
     <layout>
       <configItem>
+        <name>ir</name>
+        <_shortDescription>Iran</_shortDescription>
+        <_description>Iran</_description>
+        <languageList><iso639Id>per</iso639Id></languageList>
+      </configItem>
+      <variantList>
+        <variant>
+          <configItem>
+            <name>ave</name>
+            <_description>Avestan</_description>
+            <languageList><iso639Id>ave</iso639Id></languageList>
+          </configItem>
+        </variant>
+      </variantList>
+    </layout>
+    <layout>
+      <configItem>
         <name>us</name>
         <_shortDescription>USA</_shortDescription>
         <_description>USA</_description>
@@ -60,6 +77,22 @@
           <configItem>
             <name>combiningkeys</name>
             <_description>Combining accents instead of dead keys</_description>
+          </configItem>
+        </variant>
+      </variantList>
+    </layout>
+    <layout>
+      <configItem>
+        <name>ru</name>
+        <shortDescription>Rus</shortDescription>
+        <description>Russia</description>
+      </configItem>
+      <variantList>
+        <variant>
+          <configItem>
+            <name>chu</name>
+            <description>Church Slavonic</description>
+            <languageList><iso639Id>chu</iso639Id></languageList>
           </configItem>
         </variant>
       </variantList>
