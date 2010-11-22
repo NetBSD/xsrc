@@ -4,7 +4,8 @@
 /*                                                                         */
 /*    Objects manager (body).                                              */
 /*                                                                         */
-/*  Copyright 1996-2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009 by */
+/*  Copyright 1996-2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009,   */
+/*            2010 by                                                      */
 /*  David Turner, Robert Wilhelm, and Werner Lemberg.                      */
 /*                                                                         */
 /*  This file is part of the FreeType project, and may only be used,       */
@@ -18,9 +19,7 @@
 
 #include <ft2build.h>
 #include FT_INTERNAL_DEBUG_H
-#include FT_INTERNAL_CALC_H
 #include FT_INTERNAL_STREAM_H
-#include FT_TRUETYPE_IDS_H
 #include FT_TRUETYPE_TAGS_H
 #include FT_INTERNAL_SFNT_H
 
@@ -150,26 +149,28 @@
   static FT_Bool
   tt_check_trickyness( FT_String*  name )
   {
-    static const char* const  trick_names[] =
+#define TRICK_NAMES_MAX_CHARACTERS  16
+#define TRICK_NAMES_COUNT 8
+    static const char trick_names[TRICK_NAMES_COUNT][TRICK_NAMES_MAX_CHARACTERS+1] =
     {
       "DFKaiSho-SB",     /* dfkaisb.ttf */
       "DFKaiShu",
       "DFKai-SB",        /* kaiu.ttf */
+      "HuaTianKaiTi?",   /* htkt2.ttf */
       "HuaTianSongTi?",  /* htst3.ttf */
       "MingLiU",         /* mingliu.ttf & mingliu.ttc */
       "PMingLiU",        /* mingliu.ttc */
       "MingLi43",        /* mingli.ttf */
-      NULL
     };
     int  nn;
 
 
     if ( !name )
-      return FALSE;
+      return TRUE;
 
     /* Note that we only check the face name at the moment; it might */
     /* be worth to do more checks for a few special cases.           */
-    for ( nn = 0; trick_names[nn] != NULL; nn++ )
+    for ( nn = 0; nn < TRICK_NAMES_COUNT; nn++ )
       if ( ft_strstr( name, trick_names[nn] ) )
         return TRUE;
 
@@ -459,7 +460,11 @@
       error = TT_Goto_CodeRange( exec, tt_coderange_font, 0 );
 
       if ( !error )
+      {
+        FT_TRACE4(( "Executing `fpgm' table.\n" ));
+
         error = face->interpreter( exec );
+      }
     }
     else
       error = TT_Err_Ok;
@@ -521,7 +526,11 @@
       error = TT_Goto_CodeRange( exec, tt_coderange_cvt, 0 );
 
       if ( !error && !size->debug )
+      {
+        FT_TRACE4(( "Executing `prep' table.\n" ));
+
         error = face->interpreter( exec );
+      }
     }
     else
       error = TT_Err_Ok;
@@ -612,18 +621,15 @@
 
     /* Set default metrics */
     {
-      FT_Size_Metrics*  metrics  = &size->metrics;
-      TT_Size_Metrics*  metrics2 = &size->ttmetrics;
+      TT_Size_Metrics*  metrics = &size->ttmetrics;
 
-      metrics->x_ppem = 0;
-      metrics->y_ppem = 0;
 
-      metrics2->rotated   = FALSE;
-      metrics2->stretched = FALSE;
+      metrics->rotated   = FALSE;
+      metrics->stretched = FALSE;
 
       /* set default compensation (all 0) */
       for ( i = 0; i < 4; i++ )
-        metrics2->compensations[i] = 0;
+        metrics->compensations[i] = 0;
     }
 
     /* allocate function defs, instruction defs, cvt, and storage area */
