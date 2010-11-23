@@ -33,10 +33,9 @@
 #ifndef _QUARTZ_H
 #define _QUARTZ_H
 
-#include "quartzPasteboard.h"
-
 #include "screenint.h"
 #include "window.h"
+#include "pixmap.h"
 
 /*------------------------------------------
    Quartz display mode function types
@@ -59,12 +58,13 @@ typedef Bool (*InitCursorProc)(ScreenPtr pScreen);
  * Suspend and resume X11 activity
  */
 typedef void (*SuspendScreenProc)(ScreenPtr pScreen);
-typedef void (*ResumeScreenProc)(ScreenPtr pScreen, int x, int y);
+typedef void (*ResumeScreenProc)(ScreenPtr pScreen);
 
 /*
  * Screen state change support
  */
-typedef void (*AddPseudoramiXScreensProc)(int *x, int *y, int *width, int *height);
+typedef void (*AddPseudoramiXScreensProc)
+    (int *x, int *y, int *width, int *height, ScreenPtr pScreen);
 typedef void (*UpdateScreenProc)(ScreenPtr pScreen);
 
 /*
@@ -114,7 +114,16 @@ typedef struct _QuartzModeProcs {
 } QuartzModeProcsRec, *QuartzModeProcsPtr;
 
 extern QuartzModeProcsPtr quartzProcs;
-extern int quartzHasRoot, quartzEnableRootless;
+
+extern Bool XQuartzFullscreenVisible; /* Are the windows visible (predicated on !rootless) */
+extern Bool XQuartzServerVisible;     /* Is the server visible ... TODO: Refactor to "active" */
+extern Bool XQuartzEnableKeyEquivalents;
+extern Bool XQuartzRootlessDefault;  /* Is our default mode rootless? */
+extern Bool XQuartzIsRootless;       /* Is our current mode rootless (or FS)? */
+extern Bool XQuartzFullscreenMenu;   /* Show the menu bar (autohide) while in FS */
+extern Bool XQuartzFullscreenDisableHotkeys;
+extern Bool XQuartzOptionSendsAlt;   /* Alt or Mode_switch? */
+extern Bool XQuartzUseSysBeep;       /* Sys beep or our own? */
 
 Bool QuartzAddScreen(int index, ScreenPtr pScreen);
 Bool QuartzSetupScreen(int index, ScreenPtr pScreen);
@@ -123,13 +132,15 @@ void QuartzInitInput(int argc, char **argv);
 void QuartzInitServer(int argc, char **argv, char **envp);
 void QuartzGiveUp(void);
 void QuartzProcessEvent(xEvent *xe);
-void QuartzDisplayChangedHandler(int screenNum, xEventPtr xe, DeviceIntPtr dev, int nevents);
+void QuartzUpdateScreens(void);
 
-void QuartzShow(int x, int y); // (x, y) = cursor loc
+void QuartzShow(void);
 void QuartzHide(void);
 void QuartzSetRootClip(BOOL enable);
 void QuartzSpaceChanged(uint32_t space_id);
 
-void QuartzSetFullscreen(Bool state);
 void QuartzSetRootless(Bool state);
+void QuartzShowFullscreen(Bool state);
+
+int server_main(int argc, char **argv, char **envp);
 #endif

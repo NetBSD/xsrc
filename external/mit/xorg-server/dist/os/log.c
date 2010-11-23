@@ -98,6 +98,9 @@ OR PERFORMANCE OF THIS SOFTWARE.
 #define getpid(x) _getpid(x)
 #endif
 
+#ifdef XF86BIGFONT
+#include "xf86bigfontsrv.h"
+#endif
 
 #ifdef DDXOSVERRORF
 void (*OsVendorVErrorFProc)(const char *, va_list args) = NULL;
@@ -113,6 +116,19 @@ static int logFileVerbosity = DEFAULT_LOG_FILE_VERBOSITY;
 static char *saveBuffer = NULL;
 static int bufferSize = 0, bufferUnused = 0, bufferPos = 0;
 static Bool needBuffer = TRUE;
+
+#ifdef __APPLE__
+#include <AvailabilityMacros.h>
+
+static char __crashreporter_info_buff__[4096] = {0};
+static const char *__crashreporter_info__ = &__crashreporter_info_buff__[0];
+#if MAC_OS_X_VERSION_MIN_REQUIRED >= 1050
+// This is actually a toolchain requirement, but I'm not sure the correct check,        
+// but it should be fine to just only include it for Leopard and later.  This line
+// just tells the linker to never strip this symbol (such as for space optimization)
+asm (".desc ___crashreporter_info__, 0x10");
+#endif
+#endif
 
 /* Prefix strings for log messages. */
 #ifndef X_UNKNOWN_STRING
@@ -161,7 +177,7 @@ LogInit(const char *fname, const char *backup)
     char *logFileName = NULL;
 
     if (fname && *fname) {
-	/* xalloc() can't be used yet. */
+	/* malloc() can't be used yet. */
 	logFileName = malloc(strlen(fname) + strlen(display) + 1);
 	if (!logFileName)
 	    FatalError("Cannot allocate space for the log file name\n");
@@ -183,7 +199,7 @@ LogInit(const char *fname, const char *backup)
 		sprintf(oldLog, "%s%s", logFileName, suffix);
 		free(suffix);
 		if (rename(logFileName, oldLog) == -1) {
-		    FatalError("Cannot move old log file (\"%s\" to \"%s\"\n",
+		    FatalError("Cannot move old log file \"%s\" to \"%s\"\n",
 			       logFileName, oldLog);
 		}
 		free(oldLog);
@@ -208,7 +224,7 @@ LogInit(const char *fname, const char *backup)
      * needed.
      */
     if (saveBuffer && bufferSize > 0) {
-	free(saveBuffer);	/* Must be free(), not xfree() */
+	free(saveBuffer);	/* Must be free(), not free() */
 	saveBuffer = NULL;
 	bufferSize = 0;
     }
@@ -249,11 +265,19 @@ LogSetParameter(LogParameter param, int value)
 
 /* This function does the actual log message writes. */
 
-_X_EXPORT void
+void
 LogVWrite(int verb, const char *f, va_list args)
 {
     static char tmpBuffer[1024];
     int len = 0;
+    static Bool newline = TRUE;
+
+    if (newline) {
+	sprintf(tmpBuffer, "[%10.3f] ", GetTimeInMillis() / 1000.0);
+	len = strlen(tmpBuffer);
+	if (logFile)
+	    fwrite(tmpBuffer, len, 1, logFile);
+    }
 
     /*
      * Since a va_list can only be processed once, write the string to a
@@ -264,6 +288,7 @@ LogVWrite(int verb, const char *f, va_list args)
 	vsnprintf(tmpBuffer, sizeof(tmpBuffer), f, args);
 	len = strlen(tmpBuffer);
     }
+    newline = (tmpBuffer[len-1] == '\n');
     if ((verb < 0 || logVerbosity >= verb) && len > 0)
 	fwrite(tmpBuffer, len, 1, stderr);
     if ((verb < 0 || logFileVerbosity >= verb) && len > 0) {
@@ -279,7 +304,7 @@ LogVWrite(int verb, const char *f, va_list args)
 	} else if (needBuffer) {
 	    /*
 	     * Note, this code is used before OsInit() has been called, so
-	     * xalloc() and friends can't be used.
+	     * malloc() and friends can't be used.
 	     */
 	    if (len > bufferUnused) {
 		bufferSize += 1024;
@@ -298,7 +323,7 @@ LogVWrite(int verb, const char *f, va_list args)
     }
 }
 
-_X_EXPORT void
+void
 LogWrite(int verb, const char *f, ...)
 {
     va_list args;
@@ -308,7 +333,7 @@ LogWrite(int verb, const char *f, ...)
     va_end(args);
 }
 
-_X_EXPORT void
+void
 LogVMessageVerb(MessageType type, int verb, const char *format, va_list args)
 {
     const char *s  = X_UNKNOWN_STRING;
@@ -363,7 +388,7 @@ LogVMessageVerb(MessageType type, int verb, const char *format, va_list args)
 }
 
 /* Log message with verbosity level specified. */
-_X_EXPORT void
+void
 LogMessageVerb(MessageType type, int verb, const char *format, ...)
 {
     va_list ap;
@@ -374,7 +399,7 @@ LogMessageVerb(MessageType type, int verb, const char *format, ...)
 }
 
 /* Log a message with the standard verbosity level of 1. */
-_X_EXPORT void
+void
 LogMessage(MessageType type, const char *format, ...)
 {
     va_list ap;
@@ -384,20 +409,22 @@ LogMessage(MessageType type, const char *format, ...)
     va_end(ap);
 }
 
-#ifdef __GNUC__
-void AbortServer(void) __attribute__((noreturn));
-#endif
+void
+AbortServer(void) _X_NORETURN;
 
 void
 AbortServer(void)
 {
+#ifdef XF86BIGFONT
+    XF86BigfontCleanup();
+#endif
     CloseWellKnownConnections();
     OsCleanup(TRUE);
     CloseDownDevices();
     AbortDDX();
     fflush(stderr);
     if (CoreDump)
-	abort();
+	OsAbort();
     exit (1);
 }
 
@@ -410,7 +437,7 @@ static int nrepeat = 0;
 static int oldlen = -1;
 static OsTimerPtr auditTimer = NULL;
 
-void 
+void
 FreeAuditTimer(void)
 {
     if (auditTimer != NULL) {
@@ -500,7 +527,7 @@ VAuditF(const char *f, va_list args)
 	free(prefix);
 }
 
-_X_EXPORT void
+void
 FatalError(const char *f, ...)
 {
     va_list args;
@@ -512,6 +539,9 @@ FatalError(const char *f, ...)
 	ErrorF("\nFatal server error:\n");
 
     va_start(args, f);
+#ifdef __APPLE__
+    (void)vsnprintf(__crashreporter_info_buff__, sizeof(__crashreporter_info_buff__), f, args);
+#endif
     VErrorF(f, args);
     va_end(args);
     ErrorF("\n");
@@ -521,11 +551,11 @@ FatalError(const char *f, ...)
 	beenhere = TRUE;
 	AbortServer();
     } else
-	abort();
+	OsAbort();
     /*NOTREACHED*/
 }
 
-_X_EXPORT void
+void
 VErrorF(const char *f, va_list args)
 {
 #ifdef DDXOSVERRORF
@@ -538,7 +568,7 @@ VErrorF(const char *f, va_list args)
 #endif
 }
 
-_X_EXPORT void
+void
 ErrorF(const char * f, ...)
 {
     va_list args;
@@ -550,7 +580,7 @@ ErrorF(const char * f, ...)
 
 /* A perror() workalike. */
 
-_X_EXPORT void
+void
 Error(char *str)
 {
     char *err = NULL;
@@ -572,16 +602,16 @@ void
 LogPrintMarkers(void)
 {
     /* Show what the message marker symbols mean. */
-    ErrorF("Markers: ");
-    LogMessageVerb(X_PROBED, -1, "probed, ");
-    LogMessageVerb(X_CONFIG, -1, "from config file, ");
-    LogMessageVerb(X_DEFAULT, -1, "default setting,\n\t");
-    LogMessageVerb(X_CMDLINE, -1, "from command line, ");
-    LogMessageVerb(X_NOTICE, -1, "notice, ");
-    LogMessageVerb(X_INFO, -1, "informational,\n\t");
-    LogMessageVerb(X_WARNING, -1, "warning, ");
-    LogMessageVerb(X_ERROR, -1, "error, ");
-    LogMessageVerb(X_NOT_IMPLEMENTED, -1, "not implemented, ");
-    LogMessageVerb(X_UNKNOWN, -1, "unknown.\n");
+    LogWrite(0, "Markers: ");
+    LogMessageVerb(X_PROBED, 0, "probed, ");
+    LogMessageVerb(X_CONFIG, 0, "from config file, ");
+    LogMessageVerb(X_DEFAULT, 0, "default setting,\n\t");
+    LogMessageVerb(X_CMDLINE, 0, "from command line, ");
+    LogMessageVerb(X_NOTICE, 0, "notice, ");
+    LogMessageVerb(X_INFO, 0, "informational,\n\t");
+    LogMessageVerb(X_WARNING, 0, "warning, ");
+    LogMessageVerb(X_ERROR, 0, "error, ");
+    LogMessageVerb(X_NOT_IMPLEMENTED, 0, "not implemented, ");
+    LogMessageVerb(X_UNKNOWN, 0, "unknown.\n");
 }
 

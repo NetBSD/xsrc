@@ -3,6 +3,7 @@ sdk_HEADERS =		\
 	XIstubs.h	\
 	bstore.h	\
 	bstorestr.h	\
+	callback.h	\
 	closestr.h	\
 	closure.h	\
 	colormap.h	\
@@ -17,6 +18,7 @@ sdk_HEADERS =		\
 	dixfontstr.h	\
 	dixgrabs.h	\
 	dixstruct.h	\
+	events.h	\
 	exevents.h	\
 	extension.h	\
 	extinit.h	\
@@ -26,6 +28,7 @@ sdk_HEADERS =		\
 	globals.h	\
 	input.h		\
 	inputstr.h	\
+	list.h		\
 	misc.h		\
 	miscstruct.h	\
 	opaque.h	\
@@ -63,4 +66,7 @@ endif
 AM_CFLAGS = $(DIX_CFLAGS)
 
 EXTRA_DIST = 	\
-	dix-config-apple-verbatim.h
+	dix-config-apple-verbatim.h \
+	eventconvert.h eventstr.h \
+	protocol-versions.h \
+	xsha1.h

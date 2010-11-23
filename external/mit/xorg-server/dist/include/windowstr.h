@@ -59,7 +59,6 @@ SOFTWARE.
 #include "miscstruct.h"
 #include <X11/Xprotostr.h>
 #include "opaque.h"
-#include "inputstr.h"
 
 #define GuaranteeNothing	0
 #define GuaranteeVisBack	1
@@ -79,24 +78,6 @@ typedef struct _DevCursorNode {
     struct _DevCursorNode*      next;
 } DevCursNodeRec, *DevCursNodePtr, *DevCursorList;
 
-/* Mask structure for GE extension as stored on the window.
- * Allows one mask per extension.
- *   .eventMask - Summary mask for all clients, used for quick checking.
- *   .geClients - list of clients with their specific mask.
- */
-typedef struct _GenericClientMasks {
-    Mask                eventMasks[MAXEXTENSIONS];
-    GenericMaskPtr      geClients;
-} GenericClientMasksRec, *GenericClientMasksPtr;
-
-typedef struct _WindowAccessRec {
-    int                  defaultRule;      /* WindowAccessDenyAll */
-    DeviceIntPtr*        perm;
-    int                  nperm;
-    DeviceIntPtr*        deny;
-    int                  ndeny;
-} WindowAccessRec, *WindowAccessPtr;
-
 typedef struct _WindowOpt {
     VisualID		visual;		   /* default: same as parent */
     CursorPtr		cursor;		   /* default: window.cursorNone */
@@ -113,8 +94,6 @@ typedef struct _WindowOpt {
     RegionPtr		inputShape;	   /* default: NULL */
     struct _OtherInputMasks *inputMasks;   /* default: NULL */
     DevCursorList       deviceCursors;     /* default: NULL */
-    struct _GenericClientMasks *geMasks;   /* default: NULL */
-    WindowAccessRec     access;
 } WindowOptRec, *WindowOptPtr;
 
 #define BackgroundPixel	    2L
@@ -162,8 +141,8 @@ typedef struct _Window {
     RegionRec		borderSize;
     DDXPointRec		origin;		/* position relative to parent */
     unsigned short	borderWidth;
-    unsigned short	deliverableEvents;
-    Mask		eventMask;
+    unsigned short	deliverableEvents; /* all masks from all clients */
+    Mask		eventMask;      /* mask from the creating client */
     PixUnion		background;
     PixUnion		border;
     pointer		backStorage;	/* null when BS disabled */
@@ -195,7 +174,7 @@ typedef struct _Window {
  * fields (or filling the appropriate default value)
  */
 
-extern Mask	    DontPropagateMasks[];
+extern _X_EXPORT Mask	DontPropagateMasks[];
 
 #define wTrackParent(w,field)	((w)->optional ? \
 				    (w)->optional->field \
@@ -225,24 +204,15 @@ extern Mask	    DontPropagateMasks[];
 
 #define HasBorder(w)	((w)->borderWidth || wClipShape(w))
 
-typedef struct _ScreenSaverStuff {
-    WindowPtr pWindow;
-    XID       wid;
-    char      blanked;
-    Bool      (*ExternalScreenSaver)(
-	ScreenPtr	/*pScreen*/,
-	int		/*xstate*/,
-	Bool		/*force*/);
-} ScreenSaverStuffRec, *ScreenSaverStuffPtr;
+typedef struct _ScreenSaverStuff *ScreenSaverStuffPtr;
 
 #define SCREEN_IS_BLANKED   0
 #define SCREEN_ISNT_SAVED   1
 #define SCREEN_IS_TILED     2
 #define SCREEN_IS_BLACK	    3
 
-#define HasSaverWindow(i)   (savedScreenInfo[i].pWindow != NullWindow)
+#define HasSaverWindow(pScreen)   (pScreen->screensaver.pWindow != NullWindow)
 
-extern int screenIsSaved;
-extern ScreenSaverStuffRec savedScreenInfo[MAXSCREENS];
+extern _X_EXPORT int screenIsSaved;
 
 #endif /* WINDOWSTRUCT_H */

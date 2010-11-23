@@ -92,7 +92,7 @@ XAAWritePixmap32To24(
    int trans
 ){
     XAAInfoRecPtr infoRec = GET_XAAINFORECPTR_FROM_SCRNINFOPTR(pScrn);
-    int count, dwords = ((w * 3) + 3) >> 2;
+    int count, dwords = bytes_to_int32(w * 3);
     CARD32 *src, *dst;
     Bool PlusOne = FALSE;
 
@@ -172,7 +172,7 @@ XAAWritePixmap32To24(
 
 }
 
-void 
+void
 XAAWritePixmap (
    ScrnInfoPtr pScrn,
    int x, int y, int w, int h,
@@ -227,7 +227,7 @@ XAAWritePixmap (
 
 BAD_ALIGNMENT:
 
-    dwords = ((w * Bpp) + 3) >> 2;
+    dwords = bytes_to_int32(w * Bpp);
 
     if((infoRec->ImageWriteFlags & CPU_TRANSFER_PAD_QWORD) && 
 						((dwords * h) & 0x01)) {
@@ -305,7 +305,7 @@ BAD_ALIGNMENT:
 }
 
 
-void 
+void
 XAAWritePixmapScanline (
    ScrnInfoPtr pScrn,
    int x, int y, int w, int h,
@@ -351,7 +351,7 @@ XAAWritePixmapScanline (
 
 BAD_ALIGNMENT:
 
-    dwords = ((w * Bpp) + 3) >> 2;
+    dwords = bytes_to_int32(w * Bpp);
 
     (*infoRec->SetupForScanlineImageWrite)(
 				pScrn, rop, planemask, trans, bpp, depth);
@@ -406,7 +406,7 @@ XAAPutImage(
     Bool depthBug = FALSE;
     if(!w || !h) return;
 
-    if(!REGION_NUM_RECTS(pGC->pCompositeClip))
+    if(!RegionNumRects(pGC->pCompositeClip))
 	return;
 
     depthBug = XAA_DEPTH_BUG(pGC);
@@ -431,7 +431,7 @@ XAAPutImage(
 	     !(infoRec->WriteBitmapFlags & NO_PLANEMASK) &&
 	     !(infoRec->WriteBitmapFlags & TRANSPARENCY_ONLY))){
 
-	int MaxBoxes = REGION_NUM_RECTS(pGC->pCompositeClip);
+	int MaxBoxes = RegionNumRects(pGC->pCompositeClip);
 	BoxPtr pbox, pClipBoxes;
 	int nboxes, srcx, srcy, srcwidth;
 	xRectangle TheRect;
@@ -442,7 +442,7 @@ XAAPutImage(
 	TheRect.height = h; 
 
 	if(MaxBoxes > (infoRec->PreAllocSize/sizeof(BoxRec))) {
-	    pClipBoxes = xalloc(MaxBoxes * sizeof(BoxRec));
+	    pClipBoxes = malloc(MaxBoxes * sizeof(BoxRec));
 	    if(!pClipBoxes) return;	
 	} else pClipBoxes = (BoxPtr)infoRec->PreAllocMem;
 
@@ -514,7 +514,7 @@ XAAPutImage(
 	}
 
 	if(pClipBoxes != (BoxPtr)infoRec->PreAllocMem)
-	    xfree(pClipBoxes);
+	    free(pClipBoxes);
     } else 
 	XAAFallbackOps.PutImage(pDraw, pGC, depth, x, y, w, h, leftPad, 
 				format, pImage);

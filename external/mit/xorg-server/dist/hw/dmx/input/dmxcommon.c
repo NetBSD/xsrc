@@ -258,14 +258,12 @@ void dmxCommonKbdGetMap(DevicePtr pDev, KeySymsPtr pKeySyms, CARD8 *pModMap)
  * specified \a pDev. */
 void dmxCommonKbdGetInfo(DevicePtr pDev, DMXLocalInitInfoPtr info)
 {
-#ifdef XKB
     GETPRIVFROMPDEV;
     GETDMXINPUTFROMPRIV;
     char *pt;
 
     dmxCommonSaveState(priv);
     if (priv->xkb) {
-        info->names.keymap   = NULL;
 #define NAME(x) \
  priv->xkb->names->x ? XGetAtomName(priv->display,priv->xkb->names->x) : NULL
         info->names.keycodes = NAME(keycodes);
@@ -284,7 +282,6 @@ void dmxCommonKbdGetInfo(DevicePtr pDev, DMXLocalInitInfoPtr info)
         if ((pt = strchr(info->names.keycodes, '+'))) *pt = '\0';
     }
     dmxCommonRestoreState(priv);
-#endif
 }
 
 /** Turn \a pDev on (i.e., take input from \a pDev). */
@@ -373,7 +370,7 @@ void dmxCommonOthGetInfo(DevicePtr pDev, DMXLocalInitInfoPtr info)
     Display              *display = priv->display;
     int                  num;
     int                  i, j, k;
-    int                  (*handler)(Display *, char *, char *);
+    XextErrorHandler     handler;
 
     if (!display && !(display = XOpenDisplay(dmxInput->name)))
         return;
@@ -522,17 +519,16 @@ void dmxCommonMouOff(DevicePtr pDev)
 /** Given the global coordinates \a x and \a y, determine the screen
  * with the lowest number on which those coordinates lie.  If they are
  * not on any screen, return -1.  The number returned is an index into
- * #dmxScreenInfo and is between -1 and #dmxNumScreens - 1,
+ * \a dmxScreenInfo and is between -1 and \a dmxNumScreens - 1,
  * inclusive. */
 int dmxFindPointerScreen(int x, int y)
 {
     int i;
 
     for (i = 0; i < dmxNumScreens; i++) {
-	if (x >= dixScreenOrigins[i].x
-            && x < dixScreenOrigins[i].x + screenInfo.screens[i]->width
-            && y >= dixScreenOrigins[i].y
-            && y < dixScreenOrigins[i].y + screenInfo.screens[i]->height)
+	ScreenPtr pScreen = screenInfo.screens[i];
+	if (x >= pScreen->x && x < pScreen->x + pScreen->width &&
+	    y >= pScreen->y && y < pScreen->y + pScreen->height)
 	    return i;
     }
     return -1;
@@ -577,7 +573,6 @@ void dmxCommonSaveState(pointer private)
     if (dmxInput->console) priv = dmxInput->devs[0]->private;
     if (!priv->display || priv->stateSaved) return;
     DMXDBG0("dmxCommonSaveState\n");
-#ifdef XKB
     if (dmxUseXKB && (priv->xkb = XkbAllocKeyboard())) {
         if (XkbGetIndicatorMap(priv->display, XkbAllIndicatorsMask, priv->xkb)
             || XkbGetNames(priv->display, XkbAllNamesMask, priv->xkb)) {
@@ -596,7 +591,6 @@ void dmxCommonSaveState(pointer private)
             }
         }
     }
-#endif
 
     XGetKeyboardControl(priv->display, &ks);
     priv->savedKctrl.click              = ks.key_click_percent;
@@ -636,14 +630,12 @@ void dmxCommonRestoreState(pointer private)
     priv->stateSaved = 0;
     
     DMXDBG0("dmxCommonRestoreState\n");
-#ifdef XKB
     if (priv->xkb) {
         *priv->xkb->indicators = priv->savedIndicators;
         XkbSetIndicatorMap(priv->display, ~0, priv->xkb);
         XkbFreeKeyboard(priv->xkb, 0, True);
         priv->xkb = 0;
     }
-#endif
 
     for (start = GetTimeInMillis(); GetTimeInMillis() - start < 5000;) {
         CARD32 tmp;

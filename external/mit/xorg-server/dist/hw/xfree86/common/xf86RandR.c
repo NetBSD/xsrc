@@ -27,9 +27,9 @@
 
 #include <X11/X.h>
 #include "os.h"
-#include "mibank.h"
 #include "globals.h"
 #include "xf86.h"
+#include "xf86str.h"
 #include "xf86Priv.h"
 #include "xf86DDC.h"
 #include "mipointer.h"
@@ -46,7 +46,7 @@ typedef struct _xf86RandRInfo {
     Rotation			    rotation;
 } XF86RandRInfoRec, *XF86RandRInfoPtr;
 
-static int xf86RandRKeyIndex;
+static DevPrivateKeyRec xf86RandRKeyRec;
 static DevPrivateKey xf86RandRKey;
 
 #define XF86RANDRINFO(p) ((XF86RandRInfoPtr)dixLookupPrivate(&(p)->devPrivates, xf86RandRKey))
@@ -159,10 +159,10 @@ xf86RandRSetMode (ScreenPtr	    pScreen,
     int			oldmmHeight = pScreen->mmHeight;
     int			oldVirtualX = scrp->virtualX;
     int			oldVirtualY = scrp->virtualY;
-    WindowPtr		pRoot = WindowTable[pScreen->myNum];
+    WindowPtr		pRoot = pScreen->root;
     Bool		ret = TRUE;
 
-    if (pRoot)
+    if (pRoot && scrp->vtSema)
 	(*scrp->EnableDisableFBAccess) (pScreen->myNum, FALSE);
     if (useVirtual)
     {
@@ -228,7 +228,7 @@ xf86RandRSetMode (ScreenPtr	    pScreen,
      */
     xf86SetViewport (pScreen, pScreen->width, pScreen->height);
     xf86SetViewport (pScreen, 0, 0);
-    if (pRoot)
+    if (pRoot && scrp->vtSema)
 	(*scrp->EnableDisableFBAccess) (pScreen->myNum, TRUE);
     return ret;
 }
@@ -359,12 +359,12 @@ xf86RandRCloseScreen (int index, ScreenPtr pScreen)
     scrp->virtualY = pScreen->height = randrp->virtualY;
     scrp->currentMode = scrp->modes;
     pScreen->CloseScreen = randrp->CloseScreen;
-    xfree (randrp);
+    free(randrp);
     dixSetPrivate(&pScreen->devPrivates, xf86RandRKey, NULL);
     return (*pScreen->CloseScreen) (index, pScreen);
 }
 
-_X_EXPORT Rotation
+Rotation
 xf86GetRotation(ScreenPtr pScreen)
 {
     if (xf86RandRKey == NULL)
@@ -374,7 +374,7 @@ xf86GetRotation(ScreenPtr pScreen)
 }
 
 /* Function to change RandR's idea of the virtual screen size */
-_X_EXPORT Bool
+Bool
 xf86RandRSetNewVirtualAndDimensions(ScreenPtr pScreen,
 	int newvirtX, int newvirtY, int newmmWidth, int newmmHeight,
 	Bool resetMode)
@@ -424,15 +424,18 @@ xf86RandRInit (ScreenPtr    pScreen)
 	return TRUE;
 #endif
 
-    xf86RandRKey = &xf86RandRKeyIndex;
+    xf86RandRKey = &xf86RandRKeyRec;
 
-    randrp = xalloc (sizeof (XF86RandRInfoRec));
+    if (!dixRegisterPrivateKey(&xf86RandRKeyRec, PRIVATE_SCREEN, 0))
+	return FALSE;
+
+    randrp = malloc(sizeof (XF86RandRInfoRec));
     if (!randrp)
 	return FALSE;
 
     if (!RRScreenInit (pScreen))
     {
-	xfree (randrp);
+	free(randrp);
 	return FALSE;
     }
     rp = rrGetScrPriv(pScreen);

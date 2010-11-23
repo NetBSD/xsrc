@@ -104,7 +104,7 @@ miCopyArea(DrawablePtr  pSrcDrawable,
     /* If the destination isn't realized, this is easy */
     if (pDstDrawable->type == DRAWABLE_WINDOW &&
 	!((WindowPtr)pDstDrawable)->realized)
-	return (RegionPtr)NULL;
+	return NULL;
 
     /* clip the source */
     if (pSrcDrawable->type == DRAWABLE_PIXMAP)
@@ -116,7 +116,7 @@ miCopyArea(DrawablePtr  pSrcDrawable,
 	box.x2 = pSrcDrawable->x + (int) pSrcDrawable->width;
 	box.y2 = pSrcDrawable->y + (int) pSrcDrawable->height;
 
-	prgnSrcClip = REGION_CREATE(pGC->pScreen, &box, 1);
+	prgnSrcClip = RegionCreate(&box, 1);
 	realSrcClip = 1;
     }
     else
@@ -143,23 +143,17 @@ miCopyArea(DrawablePtr  pSrcDrawable,
 	dsty += pDstDrawable->y;
     }
 
-    pptFirst = ppt = (DDXPointPtr)
-        xalloc(heightSrc * sizeof(DDXPointRec));
-    pwidthFirst = pwidth = (unsigned int *)
-        xalloc(heightSrc * sizeof(unsigned int));
-    numRects = REGION_NUM_RECTS(prgnSrcClip);
-    boxes = REGION_RECTS(prgnSrcClip);
-    ordering = (unsigned int *)
-        xalloc(numRects * sizeof(unsigned int));
+    pptFirst = ppt = malloc(heightSrc * sizeof(DDXPointRec));
+    pwidthFirst = pwidth = malloc(heightSrc * sizeof(unsigned int));
+    numRects = RegionNumRects(prgnSrcClip);
+    boxes = RegionRects(prgnSrcClip);
+    ordering = malloc(numRects * sizeof(unsigned int));
     if(!pptFirst || !pwidthFirst || !ordering)
     {
-       if (ordering)
-	   xfree(ordering);
-       if (pwidthFirst)
-           xfree(pwidthFirst);
-       if (pptFirst)
-           xfree(pptFirst);
-       return (RegionPtr)NULL;
+       free(ordering);
+       free(pwidthFirst);
+       free(pptFirst);
+       return NULL;
     }
 
     /* If not the same drawable then order of move doesn't matter.
@@ -238,8 +232,7 @@ miCopyArea(DrawablePtr  pSrcDrawable,
 	    ppt++->y = y++;
 	    *pwidth++ = width;
 	}
-	pbits = (unsigned int *)xalloc(height * PixmapBytePad(width,
-					     pSrcDrawable->depth));
+	pbits = malloc(height * PixmapBytePad(width, pSrcDrawable->depth));
 	if (pbits)
 	{
 	    (*pSrcDrawable->pScreen->GetSpans)(pSrcDrawable, width, pptFirst,
@@ -257,17 +250,17 @@ miCopyArea(DrawablePtr  pSrcDrawable,
 
 	    (*pGC->ops->SetSpans)(pDstDrawable, pGC, (char *)pbits, pptFirst,
 				  (int *)pwidthFirst, height, TRUE);
-	    xfree(pbits);
+	    free(pbits);
 	}
     }
     prgnExposed = miHandleExposures(pSrcDrawable, pDstDrawable, pGC, xIn, yIn,
 		      widthSrc, heightSrc, xOut, yOut, (unsigned long)0);
     if(realSrcClip)
-	REGION_DESTROY(pGC->pScreen, prgnSrcClip);
+	RegionDestroy(prgnSrcClip);
 		
-    xfree(ordering);
-    xfree(pwidthFirst);
-    xfree(pptFirst);
+    free(ordering);
+    free(pwidthFirst);
+    free(pptFirst);
     return prgnExposed;
 }
 
@@ -317,9 +310,9 @@ miGetPlane(
     sy += pDraw->y;
     widthInBytes = BitmapBytePad(w);
     if(!result)
-        result = xcalloc(h, widthInBytes);
+        result = calloc(h, widthInBytes);
     if (!result)
-	return (MiBits *)NULL;
+	return NULL;
     bitsPerPixel = pDraw->bitsPerPixel;
     pOut = (OUT_TYPE *) result;
     if(bitsPerPixel == 1)
@@ -386,7 +379,7 @@ miGetPlane(
 	    pOut += delta;
 	}
     }
-    return(result);    
+    return result;
 
 }
 
@@ -430,15 +423,15 @@ miOpqStipDrawable(DrawablePtr pDraw, GCPtr pGC, RegionPtr prgnSrc,
     }
     /* First set the whole pixmap to 0 */
     gcv[0].val = 0;
-    dixChangeGC(NullClient, pGCT, GCBackground, NULL, gcv);
+    ChangeGC(NullClient, pGCT, GCBackground, gcv);
     ValidateGC((DrawablePtr)pPixmap, pGCT);
     miClearDrawable((DrawablePtr)pPixmap, pGCT);
-    ppt = pptFirst = (DDXPointPtr)xalloc(h * sizeof(DDXPointRec));
-    pwidth = pwidthFirst = (int *)xalloc(h * sizeof(int));
+    ppt = pptFirst = malloc(h * sizeof(DDXPointRec));
+    pwidth = pwidthFirst = malloc(h * sizeof(int));
     if(!pptFirst || !pwidthFirst)
     {
-	if (pwidthFirst) xfree(pwidthFirst);
-	if (pptFirst) xfree(pptFirst);
+	free(pwidthFirst);
+	free(pptFirst);
 	FreeScratchGC(pGCT);
 	return;
     }
@@ -447,9 +440,9 @@ miOpqStipDrawable(DrawablePtr pDraw, GCPtr pGC, RegionPtr prgnSrc,
        to destroy what it's sent.  note that this means we don't
        have to free prgnSrcClip ourselves.
     */
-    prgnSrcClip = REGION_CREATE(pGCT->pScreen, NULL, 0);
-    REGION_COPY(pGCT->pScreen, prgnSrcClip, prgnSrc);
-    REGION_TRANSLATE(pGCT->pScreen, prgnSrcClip, srcx, 0);
+    prgnSrcClip = RegionCreate(NULL, 0);
+    RegionCopy(prgnSrcClip, prgnSrc);
+    RegionTranslate(prgnSrcClip, srcx, 0);
     (*pGCT->funcs->ChangeClip)(pGCT, CT_REGION, prgnSrcClip, 0);
     ValidateGC((DrawablePtr)pPixmap, pGCT);
 
@@ -464,8 +457,8 @@ miOpqStipDrawable(DrawablePtr pDraw, GCPtr pGC, RegionPtr prgnSrc,
 
     (*pGCT->ops->SetSpans)((DrawablePtr)pPixmap, pGCT, (char *)pbits,
 			   pptFirst, pwidthFirst, h, TRUE);
-    xfree(pwidthFirst);
-    xfree(pptFirst);
+    free(pwidthFirst);
+    free(pptFirst);
 
 
     /* Save current values from the client GC */
@@ -481,9 +474,9 @@ miOpqStipDrawable(DrawablePtr pDraw, GCPtr pGC, RegionPtr prgnSrc,
     gcv[2].val = dstx - srcx;
     gcv[3].val = dsty;
 
-    dixChangeGC(NullClient, pGC,
+    ChangeGC(NullClient, pGC,
              GCFillStyle | GCStipple | GCTileStipXOrigin | GCTileStipYOrigin,
-	     NULL, gcv);
+	     gcv);
     ValidateGC(pDraw, pGC);
 
     /* Fill the drawable with the stipple.  This will draw the
@@ -499,7 +492,7 @@ miOpqStipDrawable(DrawablePtr pDraw, GCPtr pGC, RegionPtr prgnSrc,
     /* Invert the tiling pixmap. This sets 0s for 1s and 1s for 0s, only
      * within the clipping region, the part outside is still all 0s */
     gcv[0].val = GXinvert;
-    dixChangeGC(NullClient, pGCT, GCFunction, NULL, gcv);
+    ChangeGC(NullClient, pGCT, GCFunction, gcv);
     ValidateGC((DrawablePtr)pPixmap, pGCT);
     (*pGCT->ops->CopyArea)((DrawablePtr)pPixmap, (DrawablePtr)pPixmap,
 			   pGCT, 0, 0, w + srcx, h, 0, 0);
@@ -511,8 +504,7 @@ miOpqStipDrawable(DrawablePtr pDraw, GCPtr pGC, RegionPtr prgnSrc,
     gcv[0].val = pGC->bgPixel;
     gcv[1].val = oldfg;
     gcv[2].ptr = pPixmap;
-    dixChangeGC(NullClient, pGC, GCForeground | GCBackground | GCStipple,
-		NULL, gcv);
+    ChangeGC(NullClient, pGC, GCForeground | GCBackground | GCStipple, gcv);
     ValidateGC(pDraw, pGC);
     /* PolyFillRect might have bashed the rectangle */
     rect.x = dstx;
@@ -530,9 +522,9 @@ miOpqStipDrawable(DrawablePtr pDraw, GCPtr pGC, RegionPtr prgnSrc,
     gcv[3].ptr = pStipple;
     gcv[4].val = oldOrg.x;
     gcv[5].val = oldOrg.y;
-    dixChangeGC(NullClient, pGC, 
+    ChangeGC(NullClient, pGC,
         GCForeground | GCBackground | GCFillStyle | GCStipple | 
-	GCTileStipXOrigin | GCTileStipYOrigin, NULL, gcv);
+	GCTileStipXOrigin | GCTileStipYOrigin, gcv);
 
     ValidateGC(pDraw, pGC);
     /* put what we hope is a smaller clip region back in the scratch gc */
@@ -583,7 +575,7 @@ miCopyPlane( DrawablePtr pSrcDrawable,
 	box.x2 = box.x1;
     if (box.y1 > box.y2)
 	box.y2 = box.y1;
-    prgnSrc = REGION_CREATE(pGC->pScreen, &box, 1);
+    prgnSrc = RegionCreate(&box, 1);
 
     if (pSrcDrawable->type != DRAWABLE_PIXMAP) {
 	/* clip to visible drawable */
@@ -591,15 +583,15 @@ miCopyPlane( DrawablePtr pSrcDrawable,
 	if (pGC->subWindowMode == IncludeInferiors)
 	{
 	    RegionPtr	clipList = NotClippedByChildren ((WindowPtr) pSrcDrawable);
-	    REGION_INTERSECT(pGC->pScreen, prgnSrc, prgnSrc, clipList);
-	    REGION_DESTROY(pGC->pScreen, clipList);
+	    RegionIntersect(prgnSrc, prgnSrc, clipList);
+	    RegionDestroy(clipList);
 	} else
-	    REGION_INTERSECT(pGC->pScreen, prgnSrc, prgnSrc,
+	    RegionIntersect(prgnSrc, prgnSrc,
 				       &((WindowPtr)pSrcDrawable)->clipList);
     }
 
-    box = *REGION_EXTENTS(pGC->pScreen, prgnSrc);
-    REGION_TRANSLATE(pGC->pScreen, prgnSrc, -box.x1, -box.y1);
+    box = *RegionExtents(prgnSrc);
+    RegionTranslate(prgnSrc, -box.x1, -box.y1);
 
     if ((box.x2 > box.x1) && (box.y2 > box.y1))
     {
@@ -618,12 +610,12 @@ miCopyPlane( DrawablePtr pSrcDrawable,
 	    miOpqStipDrawable(pDstDrawable, pGC, prgnSrc, ptile, 0,
 			      box.x2 - box.x1, box.y2 - box.y1,
 			      dstx + box.x1 - srcx, dsty + box.y1 - srcy);
-	    xfree(ptile);
+	    free(ptile);
 	}
     }
     prgnExposed = miHandleExposures(pSrcDrawable, pDstDrawable, pGC, srcx, srcy,
 		      width, height, dstx, dsty, bitPlane);
-    REGION_DESTROY(pGC->pScreen, prgnSrc);
+    RegionDestroy(prgnSrc);
     return prgnExposed;
 }
 
@@ -643,15 +635,14 @@ miCopyPlane( DrawablePtr pSrcDrawable,
  * XY format:
  * get the single plane specified in planemask
  */
-_X_EXPORT void
+void
 miGetImage( DrawablePtr pDraw, int sx, int sy, int w, int h,
             unsigned int format, unsigned long planeMask, char *pDst)
 {
     unsigned char	depth;
     int			i, linelength, width, srcx, srcy;
     DDXPointRec		pt = {0, 0};
-    XID			gcv[2];
-    PixmapPtr		pPixmap = (PixmapPtr)NULL;
+    PixmapPtr		pPixmap = NULL;
     GCPtr		pGC = NULL;
 
     depth = pDraw->depth;
@@ -659,6 +650,7 @@ miGetImage( DrawablePtr pDraw, int sx, int sy, int w, int h,
     {
 	if ( (((1<<depth)-1)&planeMask) != (1<<depth)-1 )
 	{
+	    ChangeGCVal gcv;
 	    xPoint pt;
 
 	    pGC = GetScratchGC(depth, pDraw->pScreen);
@@ -682,8 +674,8 @@ miGetImage( DrawablePtr pDraw, int sx, int sy, int w, int h,
 				   TRUE);
  
 	    /* alu is already GXCopy */
-	    gcv[0] = (XID)planeMask;
-	    DoChangeGC(pGC, GCPlaneMask, gcv, 0);
+	    gcv.val = (XID)planeMask;
+	    ChangeGC(NullClient, pGC, GCPlaneMask, &gcv);
 	    ValidateGC((DrawablePtr)pPixmap, pGC);
 	}
 
@@ -741,7 +733,7 @@ miGetImage( DrawablePtr pDraw, int sx, int sy, int w, int h,
  * ZPixmap format:
  *	This part is simple, just call SetSpans
  */
-_X_EXPORT void
+void
 miPutImage( DrawablePtr pDraw, GCPtr pGC, int depth,
             int x, int y, int w, int h,
             int leftPad, int format, char *pImage)
@@ -751,7 +743,7 @@ miPutImage( DrawablePtr pDraw, GCPtr pGC, int depth,
     RegionPtr		prgnSrc;
     BoxRec		box;
     unsigned long	oldFg, oldBg;
-    XID			gcv[3];
+    ChangeGCVal		gcv[3];
     unsigned long	oldPlanemask;
     unsigned long	i;
     long		bytesPer;
@@ -766,11 +758,11 @@ miPutImage( DrawablePtr pDraw, GCPtr pGC, int depth,
 	box.y1 = 0;
 	box.x2 = w;
 	box.y2 = h;
-	prgnSrc = REGION_CREATE(pGC->pScreen, &box, 1);
+	prgnSrc = RegionCreate(&box, 1);
 
         miOpqStipDrawable(pDraw, pGC, prgnSrc, (MiBits *) pImage,
 			  leftPad, w, h, x, y);
-	REGION_DESTROY(pGC->pScreen, prgnSrc);
+	RegionDestroy(prgnSrc);
 	break;
 
       case XYPixmap:
@@ -778,38 +770,36 @@ miPutImage( DrawablePtr pDraw, GCPtr pGC, int depth,
 	oldPlanemask = pGC->planemask;
 	oldFg = pGC->fgPixel;
 	oldBg = pGC->bgPixel;
-	gcv[0] = (XID)~0;
-	gcv[1] = (XID)0;
-	DoChangeGC(pGC, GCForeground | GCBackground, gcv, 0);
+	gcv[0].val = (XID)~0;
+	gcv[1].val = (XID)0;
+	ChangeGC(NullClient, pGC, GCForeground | GCBackground, gcv);
 	bytesPer = (long)h * BitmapBytePad(w + leftPad);
 
 	for (i = 1 << (depth-1); i != 0; i >>= 1, pImage += bytesPer)
 	{
 	    if (i & oldPlanemask)
 	    {
-	        gcv[0] = (XID)i;
-	        DoChangeGC(pGC, GCPlaneMask, gcv, 0);
+	        gcv[0].val = (XID)i;
+	        ChangeGC(NullClient, pGC, GCPlaneMask, gcv);
 	        ValidateGC(pDraw, pGC);
 	        (*pGC->ops->PutImage)(pDraw, pGC, 1, x, y, w, h, leftPad,
 			         XYBitmap, (char *)pImage);
 	    }
 	}
-	gcv[0] = (XID)oldPlanemask;
-	gcv[1] = (XID)oldFg;
-	gcv[2] = (XID)oldBg;
-	DoChangeGC(pGC, GCPlaneMask | GCForeground | GCBackground, gcv, 0);
+	gcv[0].val = (XID)oldPlanemask;
+	gcv[1].val = (XID)oldFg;
+	gcv[2].val = (XID)oldBg;
+	ChangeGC(NullClient, pGC, GCPlaneMask | GCForeground | GCBackground, gcv);
 	ValidateGC(pDraw, pGC);
 	break;
 
       case ZPixmap:
-    	ppt = pptFirst = (DDXPointPtr)xalloc(h * sizeof(DDXPointRec));
-    	pwidth = pwidthFirst = (int *)xalloc(h * sizeof(int));
+        ppt = pptFirst = malloc(h * sizeof(DDXPointRec));
+        pwidth = pwidthFirst = malloc(h * sizeof(int));
 	if(!pptFirst || !pwidthFirst)
         {
-	   if (pwidthFirst)
-               xfree(pwidthFirst);
-           if (pptFirst)
-               xfree(pptFirst);
+	   free(pwidthFirst);
+           free(pptFirst);
            return;
         }
 	if (pGC->miTranslate)
@@ -828,8 +818,8 @@ miPutImage( DrawablePtr pDraw, GCPtr pGC, int depth,
 
 	(*pGC->ops->SetSpans)(pDraw, pGC, (char *)pImage, pptFirst,
 			      pwidthFirst, h, TRUE);
-	xfree(pwidthFirst);
-	xfree(pptFirst);
+	free(pwidthFirst);
+	free(pptFirst);
 	break;
     }
 }

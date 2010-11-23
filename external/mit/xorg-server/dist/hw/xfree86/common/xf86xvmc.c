@@ -45,8 +45,7 @@
 #include "xf86xvpriv.h"
 #include "xf86xvmc.h"
 
-typedef int (*XvMCScreenInitProcPtr)(ScreenPtr, int, XvMCAdaptorPtr);
-_X_EXPORT XvMCScreenInitProcPtr XvMCScreenInitProc = NULL;
+XvMCScreenInitProcPtr XvMCScreenInitProc = NULL;
 
 
 typedef struct {
@@ -56,8 +55,8 @@ typedef struct {
   XvMCAdaptorPtr dixinfo;
 } xf86XvMCScreenRec, *xf86XvMCScreenPtr;
 
-static int XF86XvMCScreenKeyIndex;
-static DevPrivateKey XF86XvMCScreenKey = &XF86XvMCScreenKeyIndex;
+static DevPrivateKeyRec XF86XvMCScreenKeyRec;
+#define XF86XvMCScreenKey (&XF86XvMCScreenKeyRec)
 
 #define XF86XVMC_GET_PRIVATE(pScreen) (xf86XvMCScreenPtr) \
     dixLookupPrivate(&(pScreen)->devPrivates, XF86XvMCScreenKey)
@@ -150,13 +149,13 @@ xf86XvMCCloseScreen (int i, ScreenPtr pScreen)
 
     pScreen->CloseScreen = pScreenPriv->CloseScreen;
 
-    xfree(pScreenPriv->dixinfo);
-    xfree(pScreenPriv);
+    free(pScreenPriv->dixinfo);
+    free(pScreenPriv);
 
     return (*pScreen->CloseScreen)(i, pScreen);
 }
 
-_X_EXPORT Bool xf86XvMCScreenInit(
+Bool xf86XvMCScreenInit(
    ScreenPtr pScreen, 
    int num_adaptors,
    XF86MCAdaptorPtr *adaptors
@@ -170,11 +169,14 @@ _X_EXPORT Bool xf86XvMCScreenInit(
 
    if(!XvMCScreenInitProc) return FALSE;
 
-   if(!(pAdapt = xalloc(sizeof(XvMCAdaptorRec) * num_adaptors)))
+   if(!(pAdapt = malloc(sizeof(XvMCAdaptorRec) * num_adaptors)))
 	return FALSE;
 
-   if(!(pScreenPriv = xalloc(sizeof(xf86XvMCScreenRec)))) {
-	xfree(pAdapt);
+   if (!dixRegisterPrivateKey(&XF86XvMCScreenKeyRec, PRIVATE_SCREEN, 0))
+       return FALSE;
+
+   if(!(pScreenPriv = malloc(sizeof(xf86XvMCScreenRec)))) {
+	free(pAdapt);
 	return FALSE;
    }
 
@@ -197,7 +199,7 @@ _X_EXPORT Bool xf86XvMCScreenInit(
 	}
 	if(!pAdapt[i].xv_adaptor) {
 	    /* no adaptor by that name */
-	    xfree(pAdapt);
+	    free(pAdapt);
 	    return FALSE;
 	}
 	pAdapt[i].num_surfaces = (*adaptors)->num_surfaces;
@@ -219,12 +221,12 @@ _X_EXPORT Bool xf86XvMCScreenInit(
    return TRUE;
 }
 
-_X_EXPORT XF86MCAdaptorPtr xf86XvMCCreateAdaptorRec (void)
+XF86MCAdaptorPtr xf86XvMCCreateAdaptorRec (void)
 {
-   return xcalloc(1, sizeof(XF86MCAdaptorRec));
+   return calloc(1, sizeof(XF86MCAdaptorRec));
 }
 
-_X_EXPORT void xf86XvMCDestroyAdaptorRec(XF86MCAdaptorPtr adaptor)
+void xf86XvMCDestroyAdaptorRec(XF86MCAdaptorPtr adaptor)
 {
-   xfree(adaptor);
+   free(adaptor);
 }

@@ -36,12 +36,7 @@
 #include "winmsg.h"
 #include "globals.h"
 
-#ifdef XKB
-#ifndef XKB_IN_SERVER
-#define XKB_IN_SERVER
-#endif
-#include <xkbsrv.h>
-#endif
+#include "xkbsrv.h"
 
 #ifdef XWIN_XF86CONFIG
 #ifndef CONFIGPATH
@@ -55,6 +50,13 @@
                     "%P/lib/X11/%X.%H," "%P/lib/X11/%X-%M," \
                     "%P/lib/X11/%X"
 #endif
+#ifndef CONFIGDIRPATH
+#define CONFIGDIRPATH  "/etc/X11/%X-%M," "/etc/X11/%X," "/etc/%X," \
+                       "%P/etc/X11/%X.%H," "%P/etc/X11/%X-%M," \
+                       "%P/etc/X11/%X," \
+                       "%P/lib/X11/%X.%H," "%P/lib/X11/%X-%M," \
+                       "%P/lib/X11/%X"
+#endif
 
 XF86ConfigPtr g_xf86configptr = NULL;
 #endif
@@ -62,20 +64,17 @@ XF86ConfigPtr g_xf86configptr = NULL;
 WinCmdlineRec g_cmdline = {
 #ifdef XWIN_XF86CONFIG
   NULL,				/* configFile */
+  NULL,				/* configDir */
 #endif
   NULL,				/* fontPath */
 #ifdef XWIN_XF86CONFIG
   NULL,				/* keyboard */
 #endif
-#ifdef XKB
-  FALSE,			/* noXkbExtension */
-  NULL,				/* xkbMap */
   NULL,             /* xkbRules */
   NULL,             /* xkbModel */
   NULL,             /* xkbLayout */
   NULL,             /* xkbVariant */
   NULL,             /* xkbOptions */
-#endif
   NULL,				/* screenname */
   NULL,				/* mousename */
   FALSE,			/* emulate3Buttons */
@@ -87,24 +86,14 @@ winInfoRec g_winInfo = {
    0,				/* leds */
    500,				/* delay */
    30				/* rate */
-#ifdef XKB
    }
   ,
   {				/* xkb */
-   FALSE,			/* disable */
    NULL,			/* rules */
    NULL,			/* model */
    NULL,			/* layout */
    NULL,			/* variant */
    NULL,			/* options */
-   NULL,			/* initialMap */
-   NULL,			/* keymap */
-   NULL,			/* types */
-   NULL,			/* compat */
-   NULL,			/* keycodes */
-   NULL,			/* symbols */
-   NULL				/* geometry */
-#endif
    }
   ,
   {
@@ -128,20 +117,28 @@ Bool
 winReadConfigfile ()
 {
   Bool		retval = TRUE;
-  const char	*filename;
-  MessageType	from = X_DEFAULT;
+  const char	*filename, *dirname;
+  MessageType	filefrom = X_DEFAULT;
+  MessageType	dirfrom = X_DEFAULT;
   char		*xf86ConfigFile = NULL;
+  char		*xf86ConfigDir = NULL;
 
   if (g_cmdline.configFile)
     {
-      from = X_CMDLINE;
+      filefrom = X_CMDLINE;
       xf86ConfigFile = g_cmdline.configFile;
+    }
+  if (g_cmdline.configDir)
+    {
+      dirfrom = X_CMDLINE;
+      xf86ConfigDir = g_cmdline.configDir;
     }
 
   /* Parse config file into data structure */
-
+  xf86initConfigFiles();
+  dirname = xf86openConfigDirFiles (CONFIGDIRPATH, xf86ConfigDir, PROJECTROOT);
   filename = xf86openConfigFile (CONFIGPATH, xf86ConfigFile, PROJECTROOT);
-    
+
   /* Hack for backward compatibility */
   if (!filename && from == X_DEFAULT)
     filename = xf86openConfigFile (CONFIGPATH, "XF86Config", PROJECTROOT);
@@ -156,6 +153,20 @@ winReadConfigfile ()
       if (xf86ConfigFile)
 	ErrorF (": \"%s\"", xf86ConfigFile);
       ErrorF ("\n");
+    }
+  if (dirname)
+    {
+      winMsg (from, "Using config directory: \"%s\"\n", dirname);
+    }
+  else
+    {
+      winMsg (X_ERROR, "Unable to locate/open config directory");
+      if (xf86ConfigDir)
+	ErrorF (": \"%s\"", xf86ConfigDir);
+      ErrorF ("\n");
+    }
+  if (!filename && !dirname)
+    {
       return FALSE;
     }
   if ((g_xf86configptr = xf86readConfigFile ()) == NULL)
@@ -228,11 +239,9 @@ winReadConfigfile ()
 Bool
 winConfigKeyboard (DeviceIntPtr pDevice)
 {
-#ifdef XKB
   char                          layoutName[KL_NAMELENGTH];
   static unsigned int           layoutNum = 0;
   int                           keyboardType;
-#endif
 #ifdef XWIN_XF86CONFIG
   XF86ConfInputPtr		kbd = NULL;
   XF86ConfInputPtr		input_list = NULL;
@@ -242,26 +251,10 @@ winConfigKeyboard (DeviceIntPtr pDevice)
   char				*s = NULL;
 
   /* Setup defaults */
-#ifdef XKB
-  g_winInfo.xkb.disable = FALSE;
-# ifdef PC98 /* japanese */	/* not implemented */
-  g_winInfo.xkb.rules = "xfree98";
-  g_winInfo.xkb.model = "pc98";
-  g_winInfo.xkb.layout = "nex/jp";
-  g_winInfo.xkb.variant = NULL;
-  g_winInfo.xkb.options = NULL;
-# else
-  g_winInfo.xkb.rules = "xorg";
-  g_winInfo.xkb.model = "pc101";
-  g_winInfo.xkb.layout = "us";
-  g_winInfo.xkb.variant = NULL;
-  g_winInfo.xkb.options = NULL;
-# endif	/* PC98 */
+  XkbGetRulesDflts(&g_winInfo.xkb);
 
   /*
    * Query the windows autorepeat settings and change the xserver defaults.   
-   * If XKB is disabled then windows handles the autorepeat and the special 
-   * treatment is not needed
    */
   {
     int kbd_delay;
@@ -337,7 +330,7 @@ winConfigKeyboard (DeviceIntPtr pDevice)
         const char          regtempl[] = 
           "SYSTEM\\CurrentControlSet\\Control\\Keyboard Layouts\\";
         char                *regpath;
-        char                lname[256];
+        unsigned char       lname[256];
         DWORD               namesize = sizeof(lname);
 
         regpath = malloc(sizeof(regtempl) + KL_NAMELENGTH + 1);
@@ -358,15 +351,6 @@ winConfigKeyboard (DeviceIntPtr pDevice)
       }
   }  
   
-  g_winInfo.xkb.initialMap = NULL;
-  g_winInfo.xkb.keymap = NULL;
-  g_winInfo.xkb.types = NULL;
-  g_winInfo.xkb.compat = NULL;
-  g_winInfo.xkb.keycodes = NULL;
-  g_winInfo.xkb.symbols = NULL;
-  g_winInfo.xkb.geometry = NULL;
-#endif /* XKB */
-
   /* parse the configuration */
 #ifdef XWIN_XF86CONFIG
   if (g_cmdline.keyboard)
@@ -409,178 +393,110 @@ winConfigKeyboard (DeviceIntPtr pDevice)
                   (1000 / g_winInfo.keyboard.rate) < 1) 
             {
               winErrorFVerb (2, "\"%s\" is not a valid AutoRepeat value", s);
-              xfree(s);
+              free(s);
               return FALSE;
             }
-          xfree(s);
+          free(s);
           winMsg (X_CONFIG, "AutoRepeat: %ld %ld\n", 
                   g_winInfo.keyboard.delay, g_winInfo.keyboard.rate);
         }
 #endif
       
-#ifdef XKB
-      from = X_DEFAULT;
-      if (g_cmdline.noXkbExtension)
-	{
-	  from = X_CMDLINE;
-	  g_winInfo.xkb.disable = TRUE;
-	}
+        s = NULL;
+        if (g_cmdline.xkbRules)
+          {
+            s = g_cmdline.xkbRules;
+            from = X_CMDLINE;
+          }
 #ifdef XWIN_XF86CONFIG
-      else if (kbd->inp_option_lst)
-	{
-	  int b = winSetBoolOption (kbd->inp_option_lst, "XkbDisable", FALSE);
-	  if (b)
-	    {
-	      from = X_CONFIG;
-	      g_winInfo.xkb.disable = TRUE;
-	    }
-	}
+        else
+          {
+            s = winSetStrOption (kbd->inp_option_lst, "XkbRules", NULL);
+            from = X_CONFIG;
+          }
 #endif
-      if (g_winInfo.xkb.disable)
-	{
-	  winMsg (from, "XkbExtension disabled\n");
-	}
-      else
-	{
-          s = NULL;  
-          if (g_cmdline.xkbRules)
-            {
-              s = g_cmdline.xkbRules;
-              from = X_CMDLINE;  
-            }
-#ifdef XWIN_XF86CONFIG
-          else 
-            {
-              s = winSetStrOption (kbd->inp_option_lst, "XkbRules", NULL);
-              from = X_CONFIG;  
-            }
-#endif
-          if (s)
-	    {
-	      g_winInfo.xkb.rules = NULL_IF_EMPTY (s);
-	      winMsg (from, "XKB: rules: \"%s\"\n", s);
-	    }
+        if (s)
+          {
+            g_winInfo.xkb.rules = NULL_IF_EMPTY (s);
+            winMsg (from, "XKB: rules: \"%s\"\n", s);
+	  }
           
-          s = NULL;
-          if (g_cmdline.xkbModel)
-            {
-              s = g_cmdline.xkbModel;
-              from = X_CMDLINE;
-            }
+        s = NULL;
+        if (g_cmdline.xkbModel)
+          {
+            s = g_cmdline.xkbModel;
+            from = X_CMDLINE;
+          }
 #ifdef XWIN_XF86CONFIG
-          else
-            {
-              s = winSetStrOption (kbd->inp_option_lst, "XkbModel", NULL);
-              from = X_CONFIG;
-            }  
+        else
+          {
+            s = winSetStrOption (kbd->inp_option_lst, "XkbModel", NULL);
+            from = X_CONFIG;
+          }
 #endif
-	  if (s)
-	    {
-	      g_winInfo.xkb.model = NULL_IF_EMPTY (s);
-	      winMsg (from, "XKB: model: \"%s\"\n", s);
-	    }
+        if (s)
+	  {
+	    g_winInfo.xkb.model = NULL_IF_EMPTY (s);
+	    winMsg (from, "XKB: model: \"%s\"\n", s);
+	  }
 
-          s = NULL;
-          if (g_cmdline.xkbLayout)
-            {
-              s = g_cmdline.xkbLayout;
-              from = X_CMDLINE;
-            }
+        s = NULL;
+        if (g_cmdline.xkbLayout)
+          {
+            s = g_cmdline.xkbLayout;
+            from = X_CMDLINE;
+          }
 #ifdef XWIN_XF86CONFIG
-          else
-            {
-              s = winSetStrOption (kbd->inp_option_lst, "XkbLayout", NULL);
-              from = X_CONFIG;
-            }
+        else
+          {
+            s = winSetStrOption (kbd->inp_option_lst, "XkbLayout", NULL);
+            from = X_CONFIG;
+          }
 #endif
-          if (s)  
-	    {
-	      g_winInfo.xkb.layout = NULL_IF_EMPTY (s);
-	      winMsg (from, "XKB: layout: \"%s\"\n", s);
-	    }
+        if (s)
+          {
+	    g_winInfo.xkb.layout = NULL_IF_EMPTY (s);
+	    winMsg (from, "XKB: layout: \"%s\"\n", s);
+	  }
 
-          s = NULL;
-          if (g_cmdline.xkbVariant)
-            {
-              s = g_cmdline.xkbVariant;
-              from = X_CMDLINE;
-            }
+        s = NULL;
+        if (g_cmdline.xkbVariant)
+          {
+            s = g_cmdline.xkbVariant;
+            from = X_CMDLINE;
+          }
 #ifdef XWIN_XF86CONFIG
-          else
-            { 
-              s = winSetStrOption (kbd->inp_option_lst, "XkbVariant", NULL);
-              from = X_CONFIG;
-            }
+        else
+          {
+            s = winSetStrOption (kbd->inp_option_lst, "XkbVariant", NULL);
+            from = X_CONFIG;
+          }
 #endif
-	  if (s)
-	    {
-	      g_winInfo.xkb.variant = NULL_IF_EMPTY (s);
-	      winMsg (from, "XKB: variant: \"%s\"\n", s);
-	    }
+	if (s)
+	  {
+	    g_winInfo.xkb.variant = NULL_IF_EMPTY (s);
+	    winMsg (from, "XKB: variant: \"%s\"\n", s);
+	  }
 
-          s = NULL;
-          if (g_cmdline.xkbOptions)
-            {
-              s = g_cmdline.xkbOptions;
-              from = X_CMDLINE;
-            }
+        s = NULL;
+        if (g_cmdline.xkbOptions)
+          {
+            s = g_cmdline.xkbOptions;
+            from = X_CMDLINE;
+          }
 #ifdef XWIN_XF86CONFIG
-          else
-            { 
-              s = winSetStrOption (kbd->inp_option_lst, "XkbOptions", NULL);
-              from = X_CONFIG;
-            }
+        else
+          {
+            s = winSetStrOption (kbd->inp_option_lst, "XkbOptions", NULL);
+            from = X_CONFIG;
+          }
 #endif
-          if (s)
-	    {
-	      g_winInfo.xkb.options = NULL_IF_EMPTY (s);
-	      winMsg (from, "XKB: options: \"%s\"\n", s);
-	    }
+        if (s)
+	  {
+	    g_winInfo.xkb.options = NULL_IF_EMPTY (s);
+	    winMsg (from, "XKB: options: \"%s\"\n", s);
+	  }
 
-#ifdef XWIN_XF86CONFIG
-	  from = X_CMDLINE;
-
-	  if ((s = winSetStrOption (kbd->inp_option_lst, "XkbKeymap", NULL)))
-	    {
-	      g_winInfo.xkb.keymap = NULL_IF_EMPTY (s);
-	      winMsg (X_CONFIG, "XKB: keymap: \"%s\" "
-		      " (overrides other XKB settings)\n", s);
-	    }
-
-	  if ((s = winSetStrOption (kbd->inp_option_lst, "XkbCompat", NULL)))
-	    {
-	      g_winInfo.xkb.compat = NULL_IF_EMPTY (s);
-	      winMsg (X_CONFIG, "XKB: compat: \"%s\"\n", s);
-	    }
-
-	  if ((s = winSetStrOption (kbd->inp_option_lst, "XkbTypes", NULL)))
-	    {
-	      g_winInfo.xkb.types = NULL_IF_EMPTY (s);
-	      winMsg (X_CONFIG, "XKB: types: \"%s\"\n", s);
-	    }
-
-	  if ((s =
-	       winSetStrOption (kbd->inp_option_lst, "XkbKeycodes", NULL)))
-	    {
-	      g_winInfo.xkb.keycodes = NULL_IF_EMPTY (s);
-	      winMsg (X_CONFIG, "XKB: keycodes: \"%s\"\n", s);
-	    }
-
-	  if ((s =
-	       winSetStrOption (kbd->inp_option_lst, "XkbGeometry", NULL)))
-	    {
-	      g_winInfo.xkb.geometry = NULL_IF_EMPTY (s);
-	      winMsg (X_CONFIG, "XKB: geometry: \"%s\"\n", s);
-	    }
-
-	  if ((s = winSetStrOption (kbd->inp_option_lst, "XkbSymbols", NULL)))
-	    {
-	      g_winInfo.xkb.symbols = NULL_IF_EMPTY (s);
-	      winMsg (X_CONFIG, "XKB: symbols: \"%s\"\n", s);
-	    }
-#endif
-#endif
-	}
 #ifdef XWIN_XF86CONFIG
     }
 #endif
@@ -667,7 +583,7 @@ winConfigFiles ()
   else if (filesptr != NULL && filesptr->file_fontpath)
     {
       from = X_CONFIG;
-      defaultFontPath = xstrdup (filesptr->file_fontpath);
+      defaultFontPath = strdup (filesptr->file_fontpath);
     }
   winMsg (from, "FontPath set to \"%s\"\n", defaultFontPath);
 
@@ -675,10 +591,8 @@ winConfigFiles ()
 }
 #else
 Bool
-winConfigFiles ()
+winConfigFiles (void)
 {
-  MessageType from;
-
   /* Fontpath */
   if (g_cmdline.fontPath)
     {
@@ -692,14 +606,14 @@ winConfigFiles ()
 
 
 Bool
-winConfigOptions ()
+winConfigOptions (void)
 {
   return TRUE;
 }
 
 
 Bool
-winConfigScreens ()
+winConfigScreens (void)
 {
   return TRUE;
 }
@@ -716,7 +630,7 @@ winSetStrOption (pointer optlist, const char *name, char *deflt)
   if (ParseOptionValue (-1, optlist, &o))
     deflt = o.value.str;
   if (deflt)
-    return xstrdup (deflt);
+    return strdup (deflt);
   else
     return NULL;
 }
@@ -755,6 +669,18 @@ winSetRealOption (pointer optlist, const char *name, double deflt)
 
   o.name = name;
   o.type = OPTV_REAL;
+  if (ParseOptionValue (-1, optlist, &o))
+    deflt = o.value.realnum;
+  return deflt;
+}
+
+double
+winSetPercentOption (pointer optlist, const char *name, double deflt)
+{
+  OptionInfoRec o;
+
+  o.name = name;
+  o.type = OPTV_PERCENT;
   if (ParseOptionValue (-1, optlist, &o))
     deflt = o.value.realnum;
   return deflt;
@@ -804,7 +730,7 @@ winNameCompare (const char *s1, const char *s2)
       c1 = (isupper (*s1) ? tolower (*s1) : *s1);
       c2 = (isupper (*s2) ? tolower (*s2) : *s2);
     }
-  return (c1 - c2);
+  return c1 - c2;
 }
 
 
@@ -839,11 +765,11 @@ winFindOptionValue (XF86OptionPtr list, const char *name)
   if (list)
     {
       if (list->opt_val)
-	return (list->opt_val);
+	return list->opt_val;
       else
 	return "";
     }
-  return (NULL);
+  return NULL;
 }
 
 
@@ -937,6 +863,31 @@ ParseOptionValue (int scrnIndex, pointer options, OptionInfoPtr p)
 	      p->found = FALSE;
 	    }
 	  break;
+	case OPTV_PERCENT:
+	  if (*s == '\0')
+	    {
+	      winDrvMsg (scrnIndex, X_WARNING,
+			 "Option \"%s\" requires a percent value\n",
+			 p->name);
+	      p->found = FALSE;
+	    }
+	  else
+	    {
+	       double percent = strtod (s, &end);
+
+	       if (end != s && winNameCompare (end, "%"))
+		 {
+		   p->found = TRUE;
+		   p->value.realnum = percent;
+		 }
+	       else
+		 {
+		   winDrvMsg (scrnIndex, X_WARNING,
+			      "Option \"%s\" requires a frequency value\n",
+			       p->name);
+		   p->found = FALSE;
+		 }
+	    }
 	case OPTV_FREQ:
 	  if (*s == '\0')
 	    {

@@ -50,8 +50,6 @@ SOFTWARE.
  *
  */
 
-#define	 NEED_EVENTS
-#define	 NEED_REPLIES
 #ifdef HAVE_DIX_CONFIG_H
 #include <dix-config.h>
 #endif
@@ -158,7 +156,7 @@ ProcXCloseDevice(ClientPtr client)
      * Delete passive grabs from all windows for this device.      */
 
     for (i = 0; i < screenInfo.numScreens; i++) {
-	pWin = WindowTable[i];
+	pWin = screenInfo.screens[i]->root;
 	DeleteDeviceEvents(d, pWin, client);
 	p1 = pWin->firstChild;
 	DeleteEventsFromChildren(d, p1, client);

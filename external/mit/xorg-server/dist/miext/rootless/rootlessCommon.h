@@ -36,14 +36,13 @@
 #ifndef _ROOTLESSCOMMON_H
 #define _ROOTLESSCOMMON_H
 
+#include "misc.h"
 #include "rootless.h"
 #include "fb.h"
 
 #include "scrnintstr.h"
 
-#ifdef RENDER
 #include "picturestr.h"
-#endif
 
 
 // Debug output, or not.
@@ -55,10 +54,17 @@
 
 
 // Global variables
-extern DevPrivateKey rootlessGCPrivateKey;
-extern DevPrivateKey rootlessScreenPrivateKey;
-extern DevPrivateKey rootlessWindowPrivateKey;
-extern DevPrivateKey rootlessWindowOldPixmapPrivateKey;
+extern DevPrivateKeyRec rootlessGCPrivateKeyRec;
+#define rootlessGCPrivateKey (&rootlessGCPrivateKeyRec)
+
+extern DevPrivateKeyRec rootlessScreenPrivateKeyRec;
+#define rootlessScreenPrivateKey (&rootlessScreenPrivateKeyRec)
+
+extern DevPrivateKeyRec rootlessWindowPrivateKeyRec;
+#define rootlessWindowPrivateKey (&rootlessWindowPrivateKeyRec)
+
+extern DevPrivateKeyRec rootlessWindowOldPixmapPrivateKeyRec;
+#define rootlessWindowOldPixmapPrivateKey (&rootlessWindowOldPixmapPrivateKeyRec)
 
 
 // RootlessGCRec: private per-gc data
@@ -99,10 +105,8 @@ typedef struct _RootlessScreenRec {
 
     SetShapeProcPtr SetShape;
 
-#ifdef RENDER
     CompositeProcPtr Composite;
     GlyphsProcPtr Glyphs;
-#endif
 
     InstallColormapProcPtr InstallColormap;
     UninstallColormapProcPtr UninstallColormap;
@@ -119,12 +123,6 @@ typedef struct _RootlessScreenRec {
     unsigned int redisplay_expired :1;
     unsigned int colormap_changed :1;
 } RootlessScreenRec, *RootlessScreenPtr;
-
-
-#undef MIN
-#define MIN(x,y) ((x) < (y) ? (x) : (y))
-#undef MAX
-#define MAX(x,y) ((x) > (y) ? (x) : (y))
 
 // "Definition of the Porting Layer for the X11 Sample Server" says
 // unwrap and rewrap of screen functions is unnecessary, but
@@ -222,7 +220,7 @@ extern RegionRec rootlessHugeRoot;
 
 // Returns TRUE if this window is a root window
 #define IsRoot(pWin) \
-    ((pWin) == WindowTable[(pWin)->drawable.pScreen->myNum])
+    ((pWin) == (pWin)->drawable.pScreen->root)
 
 
 /*
@@ -273,9 +271,6 @@ Bool RootlessResolveColormap (ScreenPtr pScreen, int first_color,
 void RootlessFlushWindowColormap (WindowPtr pWin);
 void RootlessFlushScreenColormaps (ScreenPtr pScreen);
 
-// xp_error
-int RootlessColormapCallback(void *data, int first_color, int n_colors, uint32_t *colors);
-
 // Move a window to its proper location on the screen.
 void RootlessRepositionWindow(WindowPtr pWin);
 
@@ -290,5 +285,6 @@ void RootlessUpdateRooted (Bool state);
 void RootlessEnableRoot (ScreenPtr pScreen);
 void RootlessDisableRoot (ScreenPtr pScreen);
 
+void RootlessSetPixmapOfAncestors(WindowPtr pWin);
 
 #endif /* _ROOTLESSCOMMON_H */

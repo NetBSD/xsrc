@@ -1,6 +1,6 @@
 /************************************************************
 
-Author: Eamon Walsh <ewalsh@epoch.ncsc.mil>
+Author: Eamon Walsh <ewalsh@tycho.nsa.gov>
 
 Permission to use, copy, modify, distribute, and sell this software and its
 documentation for any purpose is hereby granted without fee, provided that
@@ -61,7 +61,7 @@ static int double_size(void *p, unsigned n, unsigned size)
 	n = f = BASE_SIZE * size;
     }
 
-    *ptr = xrealloc(*ptr, n);
+    *ptr = realloc(*ptr, n);
     if (!*ptr) {
 	dixResetRegistry();
 	return FALSE;
@@ -285,20 +285,20 @@ dixResetRegistry(void)
     while (nmajor--) {
 	while (nminor[nmajor])
 	    free(requests[nmajor][--nminor[nmajor]]);
-	xfree(requests[nmajor]);
+	free(requests[nmajor]);
     }
-    xfree(requests);
-    xfree(nminor);
+    free(requests);
+    free(nminor);
 
     while (nevent--)
 	free(events[nevent]);
-    xfree(events);
+    free(events);
 
     while (nerror--)
 	free(errors[nerror]);
-    xfree(errors);
+    free(errors);
 
-    xfree(resources);
+    free(resources);
 
     requests = NULL;
     nminor = NULL;
@@ -313,7 +313,7 @@ dixResetRegistry(void)
 	fclose(fh);
     fh = fopen(FILENAME, "r");
     if (!fh)
-	LogMessage(X_WARNING, "Failed to open protocol names file " FILENAME);
+	LogMessage(X_WARNING, "Failed to open protocol names file " FILENAME "\n");
 
     /* Add built-in resources */
     RegisterResourceName(RT_NONE, "NONE");

@@ -37,35 +37,35 @@ int RamDacHWPrivateIndex = -1;
 int RamDacScreenPrivateIndex = -1;
 
 RamDacRecPtr
-RamDacCreateInfoRec()
+RamDacCreateInfoRec(void)
 {
     RamDacRecPtr infoRec;
 
-    infoRec = xcalloc(1, sizeof(RamDacRec));
+    infoRec = calloc(1, sizeof(RamDacRec));
 
     return infoRec;
 }
 
 RamDacHelperRecPtr
-RamDacHelperCreateInfoRec()
+RamDacHelperCreateInfoRec(void)
 {
     RamDacHelperRecPtr infoRec;
 
-    infoRec = xcalloc(1, sizeof(RamDacHelperRec));
+    infoRec = calloc(1, sizeof(RamDacHelperRec));
 
     return infoRec;
 }
 
-void 
+void
 RamDacDestroyInfoRec(RamDacRecPtr infoRec)
 {
-    xfree(infoRec);
+    free(infoRec);
 }
 
-void 
+void
 RamDacHelperDestroyInfoRec(RamDacHelperRecPtr infoRec)
 {
-    xfree(infoRec);
+    free(infoRec);
 }
 
 Bool
@@ -82,11 +82,11 @@ RamDacInit(ScrnInfoPtr pScrn, RamDacRecPtr ramdacPriv)
 	((RamDacScreenRecPtr) (pScrn)->privates[RamDacGetScreenIndex()].ptr);
     ramdacScrPtr->RamDacRec = ramdacPriv;
 
-    return(TRUE);
+    return TRUE;
 }
 
 void
-RamDacGetRecPrivate()
+RamDacGetRecPrivate(void)
 {
     if (RamDacHWPrivateIndex < 0)
 	RamDacHWPrivateIndex = xf86AllocateScrnInfoPrivateIndex();
@@ -132,23 +132,21 @@ RamDacFreeRec(ScrnInfoPtr pScrn)
     ramdacScrPtr = ((RamDacScreenRecPtr)
 				(pScrn)->privates[RamDacGetScreenIndex()].ptr);
     
-    if (ramdacHWPtr)
-	xfree(ramdacHWPtr);
+    free(ramdacHWPtr);
     ramdacHWPtr = NULL;
 
-    if (ramdacScrPtr)
-	xfree(ramdacScrPtr);
+    free(ramdacScrPtr);
     ramdacScrPtr = NULL;
 }
 
 int
-RamDacGetHWIndex()
+RamDacGetHWIndex(void)
 {
     return RamDacHWPrivateIndex;
 }
 
 int
-RamDacGetScreenIndex()
+RamDacGetScreenIndex(void)
 {
     return RamDacScreenPrivateIndex;
 }

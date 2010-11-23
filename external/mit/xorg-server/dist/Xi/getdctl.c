@@ -50,8 +50,6 @@ SOFTWARE.
  *
  */
 
-#define	 NEED_EVENTS	/* for inputstr.h    */
-#define	 NEED_REPLIES
 #ifdef HAVE_DIX_CONFIG_H
 #include <dix-config.h>
 #endif
@@ -283,7 +281,7 @@ ProcXGetDeviceControl(ClientPtr client)
 	return BadValue;
     }
 
-    buf = (char *)xalloc(total_length);
+    buf = (char *)malloc(total_length);
     if (!buf)
 	return BadAlloc;
     savbuf = buf;
@@ -308,9 +306,9 @@ ProcXGetDeviceControl(ClientPtr client)
 	break;
     }
 
-    rep.length = (total_length + 3) >> 2;
+    rep.length = bytes_to_int32(total_length);
     WriteReplyToClient(client, sizeof(xGetDeviceControlReply), &rep);
     WriteToClient(client, total_length, savbuf);
-    xfree(savbuf);
+    free(savbuf);
     return Success;
 }

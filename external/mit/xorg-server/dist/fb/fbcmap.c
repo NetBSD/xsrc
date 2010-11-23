@@ -1,32 +1,25 @@
-/************************************************************
-Copyright 1987 by Sun Microsystems, Inc. Mountain View, CA.
-
-                    All Rights Reserved
-
-Permission  to  use,  copy,  modify,  and  distribute   this
-software  and  its documentation for any purpose and without
-fee is hereby granted, provided that the above copyright no-
-tice  appear  in all copies and that both that copyright no-
-tice and this permission notice appear in  supporting  docu-
-mentation,  and  that the names of Sun or X Consortium
-not be used in advertising or publicity pertaining to 
-distribution  of  the software  without specific prior 
-written permission. Sun and X Consortium make no 
-representations about the suitability of this software for 
-any purpose. It is provided "as is" without any express or 
-implied warranty.
-
-SUN DISCLAIMS ALL WARRANTIES WITH REGARD TO  THIS  SOFTWARE,
-INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FIT-
-NESS FOR A PARTICULAR PURPOSE. IN NO EVENT SHALL SUN BE  LI-
-ABLE  FOR  ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR
-ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE,  DATA  OR
-PROFITS,  WHETHER  IN  AN  ACTION OF CONTRACT, NEGLIGENCE OR
-OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
-THE USE OR PERFORMANCE OF THIS SOFTWARE.
-
-********************************************************/
-
+/*
+ * Copyright © 1987 Sun Microsystems, Inc.  All rights reserved.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice (including the next
+ * paragraph) shall be included in all copies or substantial portions of the
+ * Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
+ */
 
 #ifdef HAVE_DIX_CONFIG_H
 #include <dix-config.h>
@@ -43,25 +36,26 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #error "You should be compiling fbcmap_mi.c instead of fbcmap.c!"
 #endif
 
+static DevPrivateKeyRec cmapScrPrivateKeyRec;
+#define cmapScrPrivateKey (&cmapScrPrivateKeyRec)
 
-
-ColormapPtr FbInstalledMaps[MAXSCREENS];
+#define GetInstalledColormap(s) ((ColormapPtr) dixLookupPrivate(&(s)->devPrivates, cmapScrPrivateKey))
+#define SetInstalledColormap(s,c) (dixSetPrivate(&(s)->devPrivates, cmapScrPrivateKey, c))
 
 int
 fbListInstalledColormaps(ScreenPtr pScreen, Colormap *pmaps)
 {
     /* By the time we are processing requests, we can guarantee that there
      * is always a colormap installed */
-    *pmaps = FbInstalledMaps[pScreen->myNum]->mid;
-    return (1);
+    *pmaps = GetInstalledColormap(pScreen)->mid;
+    return 1;
 }
 
 
 void
 fbInstallColormap(ColormapPtr pmap)
 {
-    int index = pmap->pScreen->myNum;
-    ColormapPtr oldpmap = FbInstalledMaps[index];
+    ColormapPtr oldpmap = GetInstalledColormap(pmap->pScreen);
 
     if(pmap != oldpmap)
     {
@@ -70,7 +64,7 @@ fbInstallColormap(ColormapPtr pmap)
 	if(oldpmap != (ColormapPtr)None)
 	    WalkTree(pmap->pScreen, TellLostMap, (char *)&oldpmap->mid);
 	/* Install pmap */
-	FbInstalledMaps[index] = pmap;
+	SetInstalledColormap(pmap->pScreen, pmap);
 	WalkTree(pmap->pScreen, TellGainedMap, (char *)&pmap->mid);
     }
 }
@@ -78,15 +72,16 @@ fbInstallColormap(ColormapPtr pmap)
 void
 fbUninstallColormap(ColormapPtr pmap)
 {
-    int index = pmap->pScreen->myNum;
-    ColormapPtr curpmap = FbInstalledMaps[index];
+    ColormapPtr curpmap = GetInstalledColormap(pmap->pScreen);
 
     if(pmap == curpmap)
     {
 	if (pmap->mid != pmap->pScreen->defColormap)
 	{
-	    curpmap = (ColormapPtr) LookupIDByType(pmap->pScreen->defColormap,
-						   RT_COLORMAP);
+	    dixLookupResourceByType((pointer *)&curpmap,
+				    pmap->pScreen->defColormap,
+				    RT_COLORMAP,
+				    serverClient, DixInstallAccess);
 	    (*pmap->pScreen->InstallColormap)(curpmap);
 	}
     }
@@ -393,7 +388,7 @@ fbSetVisualTypesAndMasks (int depth, int visuals, int bitsPerRGB,
 {
     fbVisualsPtr   new, *prev, v;
 
-    new = (fbVisualsPtr) xalloc (sizeof *new);
+    new = (fbVisualsPtr) malloc(sizeof *new);
     if (!new)
 	return FALSE;
     if (!redMask || !greenMask || !blueMask)
@@ -490,12 +485,12 @@ fbInitVisuals (VisualPtr    *visualp,
 	ndepth++;
 	nvisual += visuals->count;
     }
-    depth = (DepthPtr) xalloc (ndepth * sizeof (DepthRec));
-    visual = (VisualPtr) xalloc (nvisual * sizeof (VisualRec));
+    depth = (DepthPtr) malloc(ndepth * sizeof (DepthRec));
+    visual = (VisualPtr) malloc(nvisual * sizeof (VisualRec));
     if (!depth || !visual)
     {
-	xfree (depth);
-	xfree (visual);
+	free(depth);
+	free(visual);
 	return FALSE;
     }
     *depthp = depth;
@@ -511,7 +506,7 @@ fbInitVisuals (VisualPtr    *visualp,
 	vid = NULL;
 	if (nvtype)
 	{
-	    vid = (VisualID *) xalloc (nvtype * sizeof (VisualID));
+	    vid = (VisualID *) malloc(nvtype * sizeof (VisualID));
 	    if (!vid)
 		return FALSE;
 	}
@@ -552,7 +547,7 @@ fbInitVisuals (VisualPtr    *visualp,
 	    vid++;
 	    visual++;
 	}
-	xfree (visuals);
+	free(visuals);
     }
     fbVisuals = NULL;
     visual = *visualp;

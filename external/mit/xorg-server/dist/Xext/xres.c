@@ -2,8 +2,6 @@
    Copyright (c) 2002  XFree86 Inc
 */
 
-#define NEED_EVENTS
-#define NEED_REPLIES
 #ifdef HAVE_DIX_CONFIG_H
 #include <dix-config.h>
 #endif
@@ -23,6 +21,7 @@
 #include "windowstr.h"
 #include "gcstruct.h"
 #include "modinit.h"
+#include "protocol-versions.h"
 
 static int
 ProcXResQueryVersion (ClientPtr client)
@@ -41,8 +40,8 @@ ProcXResQueryVersion (ClientPtr client)
     rep.type = X_Reply;
     rep.length = 0;
     rep.sequenceNumber = client->sequence;
-    rep.server_major = XRES_MAJOR_VERSION;
-    rep.server_minor = XRES_MINOR_VERSION;   
+    rep.server_major = SERVER_XRES_MAJOR_VERSION;
+    rep.server_minor = SERVER_XRES_MINOR_VERSION;
     if (client->swapped) { 
         int n;
         swaps(&rep.sequenceNumber, n);
@@ -51,7 +50,7 @@ ProcXResQueryVersion (ClientPtr client)
         swaps(&rep.server_minor, n);
     }
     WriteToClient(client, sizeof (xXResQueryVersionReply), (char *)&rep);
-    return (client->noClientException);
+    return Success;
 }
 
 static int
@@ -64,7 +63,7 @@ ProcXResQueryClients (ClientPtr client)
 
     REQUEST_SIZE_MATCH(xXResQueryClientsReq);
 
-    current_clients = xalloc(currentMaxClients * sizeof(int));
+    current_clients = malloc(currentMaxClients * sizeof(int));
 
     num_clients = 0;
     for(i = 0; i < currentMaxClients; i++) {
@@ -77,7 +76,7 @@ ProcXResQueryClients (ClientPtr client)
     rep.type = X_Reply;
     rep.sequenceNumber = client->sequence;
     rep.num_clients = num_clients;
-    rep.length = rep.num_clients * sz_xXResClient >> 2;
+    rep.length = bytes_to_int32(rep.num_clients * sz_xXResClient);
     if (client->swapped) {
         int n;
         swaps (&rep.sequenceNumber, n);
@@ -102,9 +101,9 @@ ProcXResQueryClients (ClientPtr client)
         }
     }
 
-    xfree(current_clients);
+    free(current_clients);
 
-    return (client->noClientException);
+    return Success;
 }
 
 
@@ -133,7 +132,7 @@ ProcXResQueryClientResources (ClientPtr client)
         return BadValue;
     }
 
-    counts = xcalloc(lastResourceType + 1, sizeof(int));
+    counts = calloc(lastResourceType + 1, sizeof(int));
 
     FindAllClientResources(clients[clientID], ResFindAllRes, counts);
 
@@ -146,7 +145,7 @@ ProcXResQueryClientResources (ClientPtr client)
     rep.type = X_Reply;
     rep.sequenceNumber = client->sequence;
     rep.num_types = num_types;
-    rep.length = rep.num_types * sz_xXResType >> 2;
+    rep.length = bytes_to_int32(rep.num_types * sz_xXResType);
     if (client->swapped) {
         int n;
         swaps (&rep.sequenceNumber, n);
@@ -183,9 +182,9 @@ ProcXResQueryClientResources (ClientPtr client)
         }
     }
 
-    xfree(counts);
+    free(counts);
     
-    return (client->noClientException);
+    return Success;
 }
 
 static unsigned long
@@ -296,7 +295,7 @@ ProcXResQueryClientPixmapBytes (ClientPtr client)
     }
     WriteToClient (client,sizeof(xXResQueryClientPixmapBytesReply),(char*)&rep);
 
-    return (client->noClientException);
+    return Success;
 }
 
 static int

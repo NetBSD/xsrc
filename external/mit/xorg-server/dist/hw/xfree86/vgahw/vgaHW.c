@@ -658,7 +658,7 @@ vgaHWSaveScreen(ScreenPtr pScreen, int mode)
    if ((pScrn != NULL) && pScrn->vtSema) {
      vgaHWBlankScreen(pScrn, on);
    }
-   return (TRUE);
+   return TRUE;
 }
 
 
@@ -968,21 +968,21 @@ vgaHWSaveFonts(ScrnInfoPtr scrninfp, vgaRegPtr save)
     hwp->writeGr(hwp, 0x06, 0x05);	/* set graphics */
 
 #if SAVE_FONT1
-    if (hwp->FontInfo1 || (hwp->FontInfo1 = xalloc(FONT_AMOUNT))) {
+    if (hwp->FontInfo1 || (hwp->FontInfo1 = malloc(FONT_AMOUNT))) {
 	hwp->writeSeq(hwp, 0x02, 0x04);	/* write to plane 2 */
 	hwp->writeGr(hwp, 0x04, 0x02);	/* read plane 2 */
 	slowbcopy_frombus(hwp->Base, hwp->FontInfo1, FONT_AMOUNT);
     }
 #endif /* SAVE_FONT1 */
 #if SAVE_FONT2
-    if (hwp->FontInfo2 || (hwp->FontInfo2 = xalloc(FONT_AMOUNT))) {
+    if (hwp->FontInfo2 || (hwp->FontInfo2 = malloc(FONT_AMOUNT))) {
 	hwp->writeSeq(hwp, 0x02, 0x08);	/* write to plane 3 */
 	hwp->writeGr(hwp, 0x04, 0x03);	/* read plane 3 */
 	slowbcopy_frombus(hwp->Base, hwp->FontInfo2, FONT_AMOUNT);
     }
 #endif /* SAVE_FONT2 */
 #if SAVE_TEXT
-    if (hwp->TextInfo || (hwp->TextInfo = xalloc(2 * TEXT_AMOUNT))) {
+    if (hwp->TextInfo || (hwp->TextInfo = malloc(2 * TEXT_AMOUNT))) {
 	hwp->writeSeq(hwp, 0x02, 0x01);	/* write to plane 0 */
 	hwp->writeGr(hwp, 0x04, 0x00);	/* read plane 0 */
 	slowbcopy_frombus(hwp->Base, hwp->TextInfo, TEXT_AMOUNT);
@@ -1025,32 +1025,24 @@ vgaHWSaveMode(ScrnInfoPtr scrninfp, vgaRegPtr save)
 
     for (i = 0; i < save->numCRTC; i++) {
 	save->CRTC[i] = hwp->readCrtc(hwp, i);
-#ifdef DEBUG
-	ErrorF("CRTC[0x%02x] = 0x%02x\n", i, save->CRTC[i]);
-#endif
+	DebugF("CRTC[0x%02x] = 0x%02x\n", i, save->CRTC[i]);
     }
 
     hwp->enablePalette(hwp);
     for (i = 0; i < save->numAttribute; i++) {
 	save->Attribute[i] = hwp->readAttr(hwp, i);
-#ifdef DEBUG
-	ErrorF("Attribute[0x%02x] = 0x%02x\n", i, save->Attribute[i]);
-#endif
+	DebugF("Attribute[0x%02x] = 0x%02x\n", i, save->Attribute[i]);
     }
     hwp->disablePalette(hwp);
 
     for (i = 0; i < save->numGraphics; i++) {
 	save->Graphics[i] = hwp->readGr(hwp, i);
-#ifdef DEBUG
-	ErrorF("Graphics[0x%02x] = 0x%02x\n", i, save->Graphics[i]);
-#endif
+	DebugF("Graphics[0x%02x] = 0x%02x\n", i, save->Graphics[i]);
     }
 
     for (i = 1; i < save->numSequencer; i++) {
 	save->Sequencer[i] = hwp->readSeq(hwp, i);
-#ifdef DEBUG
-	ErrorF("Sequencer[0x%02x] = 0x%02x\n", i, save->Sequencer[i]);
-#endif
+	DebugF("Sequencer[0x%02x] = 0x%02x\n", i, save->Sequencer[i]);
     }
 }
 
@@ -1088,18 +1080,16 @@ vgaHWSaveColormap(ScrnInfoPtr scrninfp, vgaRegPtr save)
     hwp->writeDacReadAddr(hwp, 0x00);
     for (i = 0; i < 6; i++) {
 	save->DAC[i] = hwp->readDacData(hwp);
-#ifdef DEBUG
 	switch (i % 3) {
 	case 0:
-	    ErrorF("DAC[0x%02x] = 0x%02x, ", i / 3, save->DAC[i]);
+	    DebugF("DAC[0x%02x] = 0x%02x, ", i / 3, save->DAC[i]);
 	    break;
 	case 1:
-	    ErrorF("0x%02x, ", save->DAC[i]);
+	    DebugF("0x%02x, ", save->DAC[i]);
 	    break;
 	case 2:
-	    ErrorF("0x%02x\n", save->DAC[i]);
+	    DebugF("0x%02x\n", save->DAC[i]);
 	}
-#endif
     }
 
     /*
@@ -1131,18 +1121,16 @@ vgaHWSaveColormap(ScrnInfoPtr scrninfp, vgaRegPtr save)
 	for (i = 6; i < 768; i++) {
 	    save->DAC[i] = hwp->readDacData(hwp);
 	    DACDelay(hwp);
-#ifdef DEBUG
 	    switch (i % 3) {
 	    case 0:
-		ErrorF("DAC[0x%02x] = 0x%02x, ", i / 3, save->DAC[i]);
+		DebugF("DAC[0x%02x] = 0x%02x, ", i / 3, save->DAC[i]);
 		break;
 	    case 1:
-		ErrorF("0x%02x, ", save->DAC[i]);
+		DebugF("0x%02x, ", save->DAC[i]);
 		break;
 	    case 2:
-		ErrorF("0x%02x\n", save->DAC[i]);
+		DebugF("0x%02x\n", save->DAC[i]);
 	    }
-#endif
 	}
     }
 
@@ -1363,7 +1351,7 @@ vgaHWInit(ScrnInfoPtr scrninfp, DisplayModePtr mode)
     regp->Attribute[19] = 0x00;
     regp->Attribute[20] = 0x00;
 
-    return(TRUE);
+    return TRUE;
 }
 
     /*
@@ -1491,8 +1479,7 @@ vgaHWGetHWRecPrivate(void)
 static void
 vgaHWFreeRegs(vgaRegPtr regp)
 {
-    if (regp->CRTC)
-    	xfree (regp->CRTC);
+    free(regp->CRTC);
 
     regp->CRTC =
     regp->Sequencer =
@@ -1516,7 +1503,7 @@ vgaHWAllocRegs(vgaRegPtr regp)
          regp->numAttribute) == 0)
         return FALSE;
 
-    buf = xcalloc(regp->numCRTC +
+    buf = calloc(regp->numCRTC +
     		  regp->numSequencer +
 		  regp->numGraphics +
 		  regp->numAttribute, 1);
@@ -1655,7 +1642,7 @@ vgaHWGetHWRec(ScrnInfoPtr scrp)
 
     if ((!vgaHWAllocDefaultRegs(&VGAHWPTR(scrp)->SavedReg)) ||
     	(!vgaHWAllocDefaultRegs(&VGAHWPTR(scrp)->ModeReg))) {
-        xfree(hwp);
+        free(hwp);
 	return FALSE;
     }
 
@@ -1738,14 +1725,14 @@ vgaHWFreeHWRec(ScrnInfoPtr scrp)
 	if (!hwp)
 	    return;
 
-	xfree(hwp->FontInfo1);
-	xfree(hwp->FontInfo2);
-	xfree(hwp->TextInfo);
+	free(hwp->FontInfo1);
+	free(hwp->FontInfo2);
+	free(hwp->TextInfo);
 
 	vgaHWFreeRegs (&hwp->ModeReg);
 	vgaHWFreeRegs (&hwp->SavedReg);
 
-	xfree(hwp);
+	free(hwp);
 	VGAHWPTRLVAL(scrp) = NULL;
     }
 }
@@ -1772,9 +1759,7 @@ vgaHWMapMem(ScrnInfoPtr scrp)
      * XXX This is not correct but we do it
      * for now.
      */
-#ifdef DEBUG
-    ErrorF("Mapping VGAMem\n");
-#endif
+    DebugF("Mapping VGAMem\n");
     hwp->Base = xf86MapDomainMemory(scr_index, VIDMEM_MMIO_32BIT, hwp->dev,
 				    hwp->MapPhys, hwp->MapSize);
     return hwp->Base != NULL;
@@ -1790,15 +1775,13 @@ vgaHWUnmapMem(ScrnInfoPtr scrp)
     if (hwp->Base == NULL)
 	return;
     
-#ifdef DEBUG
-    ErrorF("Unmapping VGAMem\n");
-#endif
+    DebugF("Unmapping VGAMem\n");
     xf86UnMapVidMem(scr_index, hwp->Base, hwp->MapSize);
     hwp->Base = NULL;
 }
 
 int
-vgaHWGetIndex()
+vgaHWGetIndex(void)
 {
     return vgaHWPrivateIndex;
 }
@@ -1991,7 +1974,7 @@ vgaHWddc1SetSpeed(ScrnInfoPtr pScrn, xf86ddcSpeed speed)
 	hwp->writeCrtc(hwp,0x15,save->cr15);
 	hwp->writeCrtc(hwp,0x12,save->cr12);
 	hwp->writeCrtc(hwp,0x03,save->cr03);
-	xfree(save);
+	free(save);
 	hwp->ddc = NULL;
 	break;
     default:
@@ -1999,6 +1982,13 @@ vgaHWddc1SetSpeed(ScrnInfoPtr pScrn, xf86ddcSpeed speed)
     }
 }
 
-DDC1SetSpeedProc  vgaHWddc1SetSpeedWeak(void) { return vgaHWddc1SetSpeed; }
+DDC1SetSpeedProc
+vgaHWddc1SetSpeedWeak(void)
+{
+    return vgaHWddc1SetSpeed;
+}
 
-SaveScreenProcPtr vgaHWSaveScreenWeak(void) { return vgaHWSaveScreen; }
+SaveScreenProcPtr vgaHWSaveScreenWeak(void)
+{
+    return vgaHWSaveScreen;
+}

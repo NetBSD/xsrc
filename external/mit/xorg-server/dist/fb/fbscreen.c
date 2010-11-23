@@ -33,26 +33,23 @@ fbCloseScreen (int index, ScreenPtr pScreen)
     DepthPtr	depths = pScreen->allowedDepths;
 
     for (d = 0; d < pScreen->numDepths; d++)
-	xfree (depths[d].vids);
-    xfree (depths);
-    xfree (pScreen->visuals);
-    xfree (pScreen->devPrivate);
-#ifdef FB_SCREEN_PRIVATE
-    xfree (dixLookupPrivate(&pScreen->devPrivates, fbGetScreenPrivateKey()));
-#endif
+	free(depths[d].vids);
+    free(depths);
+    free(pScreen->visuals);
+    free(pScreen->devPrivate);
     return TRUE;
 }
 
 Bool
 fbRealizeFont(ScreenPtr pScreen, FontPtr pFont)
 {
-    return (TRUE);
+    return TRUE;
 }
 
 Bool
 fbUnrealizeFont(ScreenPtr pScreen, FontPtr pFont)
 {
-    return (TRUE);
+    return TRUE;
 }
 
 void
@@ -228,7 +225,11 @@ fbFinishScreenInit(ScreenPtr	pScreen,
     rootdepth = 0;
     if (!fbInitVisuals (&visuals, &depths, &nvisuals, &ndepths, &rootdepth,
 			&defaultVisual,((unsigned long)1<<(imagebpp-1)), 8))
+    {
+	free(visuals);
+	free(depths);
 	return FALSE;
+    }
     if (! miScreenInit(pScreen, pbits, xsize, ysize, dpix, dpiy, width,
 			rootdepth, ndepths, depths,
 			defaultVisual, nvisuals, visuals))
@@ -241,14 +242,6 @@ fbFinishScreenInit(ScreenPtr	pScreen,
 	pScreen->ModifyPixmapHeader = fb24_32ModifyPixmapHeader;
 	pScreen->CreateScreenResources = fb24_32CreateScreenResources;
     }
-#endif
-#if 0
-    /* leave backing store initialization to the enclosing code so
-     * it can choose the correct order of wrappers
-     */
-    /* init backing store here so we can overwrite CloseScreen without stepping
-     * on the backing store wrapped version */
-    fbInitializeBackingStore (pScreen);
 #endif
     return TRUE;
 }

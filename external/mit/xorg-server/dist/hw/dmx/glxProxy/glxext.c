@@ -34,7 +34,6 @@
 
 #include "dmx.h"
 
-#define NEED_REPLIES
 #include "glxserver.h"
 #include <windowstr.h>
 #include <propertyst.h>
@@ -192,7 +191,7 @@ void __glXFreeGLXWindow(__glXWindow *pGlxWindow)
             (*pGlxWindow->pScreen->DestroyWindow)(pWindow);
         }
 
-	xfree(pGlxWindow);
+	free(pGlxWindow);
     }
 }
 
@@ -205,8 +204,8 @@ static void WindowGone(__glXWindow *pGlxWindow, XID id)
 void __glXFreeGLXPbuffer(__glXPbuffer *pGlxPbuffer)
 {
     if (!pGlxPbuffer->idExists && !pGlxPbuffer->refcnt) {
-        xfree(pGlxPbuffer->be_xids);
-        xfree(pGlxPbuffer);
+        free(pGlxPbuffer->be_xids);
+        free(pGlxPbuffer);
     }
 }
 
@@ -294,11 +293,20 @@ void GlxExtensionInit(void)
        return;
     }
     
-    __glXContextRes = CreateNewResourceType((DeleteType)ContextGone);
-    __glXClientRes = CreateNewResourceType((DeleteType)ClientGone);
-    __glXPixmapRes = CreateNewResourceType((DeleteType)PixmapGone);
-    __glXWindowRes = CreateNewResourceType((DeleteType)WindowGone);
-    __glXPbufferRes = CreateNewResourceType((DeleteType)PbufferGone);
+    __glXContextRes = CreateNewResourceType((DeleteType)ContextGone,
+					    "GLXContext");
+    __glXClientRes = CreateNewResourceType((DeleteType)ClientGone,
+					   "GLXClient");
+    __glXPixmapRes = CreateNewResourceType((DeleteType)PixmapGone,
+					   "GLXPixmap");
+    __glXWindowRes = CreateNewResourceType((DeleteType)WindowGone,
+					   "GLXWindow");
+    __glXPbufferRes = CreateNewResourceType((DeleteType)PbufferGone,
+					    "GLXPbuffer");
+
+    if (!__glXContextRes || !__glXClientRes || !__glXPixmapRes ||
+	!__glXWindowRes || !__glXPbufferRes)
+	return;
 
     /*
     ** Add extension to server extensions.

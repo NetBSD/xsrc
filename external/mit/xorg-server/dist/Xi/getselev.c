@@ -50,8 +50,6 @@ SOFTWARE.
  *
  */
 
-#define	 NEED_EVENTS
-#define	 NEED_REPLIES
 #ifdef HAVE_DIX_CONFIG_H
 #include <dix-config.h>
 #endif
@@ -133,8 +131,8 @@ ProcXGetSelectedExtensionEvents(ClientPtr client)
 
 	total_length = (rep.all_clients_count + rep.this_client_count) *
 	    sizeof(XEventClass);
-	rep.length = (total_length + 3) >> 2;
-	buf = (XEventClass *) xalloc(total_length);
+	rep.length = bytes_to_int32(total_length);
+	buf = (XEventClass *) malloc(total_length);
 
 	tclient = buf;
 	aclient = buf + rep.this_client_count;
@@ -154,7 +152,7 @@ ProcXGetSelectedExtensionEvents(ClientPtr client)
     if (total_length) {
 	client->pSwapReplyFunc = (ReplySwapPtr) Swap32Write;
 	WriteSwappedDataToClient(client, total_length, buf);
-	xfree(buf);
+	free(buf);
     }
     return Success;
 }

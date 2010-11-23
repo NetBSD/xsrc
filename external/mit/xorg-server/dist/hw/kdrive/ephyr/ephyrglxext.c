@@ -243,10 +243,9 @@ ephyrGLXGetVisualConfigsReal (__GLXclientState *a_cl,
 
 out:
     EPHYR_LOG ("leave\n") ;
-    if (props_buf) {
-        xfree (props_buf) ;
-        props_buf = NULL ;
-    }
+    free(props_buf) ;
+    props_buf = NULL ;
+
     return res ;
 }
 
@@ -301,10 +300,9 @@ ephyrGLXGetFBConfigsSGIXReal (__GLXclientState *a_cl,
 
 out:
     EPHYR_LOG ("leave\n") ;
-    if (props_buf) {
-        xfree (props_buf) ;
-        props_buf = NULL ;
-    }
+    free(props_buf) ;
+    props_buf = NULL ;
+
     return res ;
 }
 
@@ -377,7 +375,7 @@ ephyrGLXQueryServerString(__GLXclientState *a_cl, GLbyte *a_pc)
     reply.sequenceNumber = client->sequence ;
     reply.length = __GLX_PAD (length) >> 2 ;
     reply.n = length ;
-    buf = xcalloc (reply.length << 2, 1);
+    buf = calloc(reply.length << 2, 1);
     if (!buf) {
         EPHYR_LOG_ERROR ("failed to allocate string\n;");
         return BadAlloc;
@@ -391,14 +389,12 @@ ephyrGLXQueryServerString(__GLXclientState *a_cl, GLbyte *a_pc)
 
 out:
     EPHYR_LOG ("leave\n") ;
-    if (server_string) {
-        xfree (server_string) ;
-        server_string = NULL;
-    }
-    if (buf) {
-        xfree (buf);
-        buf = NULL;
-    }
+    free(server_string) ;
+    server_string = NULL;
+
+    free(buf);
+    buf = NULL;
+
     return res ;
 }
 

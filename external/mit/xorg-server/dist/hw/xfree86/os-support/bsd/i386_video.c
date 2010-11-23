@@ -246,7 +246,7 @@ mapVidMem(int ScreenNum, unsigned long Base, unsigned long Size, int flags)
 			   "xf86MapVidMem", DEV_MEM, Size, Base, 
 			   strerror(errno));
 	    }
-	    return(base);
+	    return base;
 	}
 		
 	/* else, mmap /dev/vga */
@@ -266,7 +266,7 @@ mapVidMem(int ScreenNum, unsigned long Base, unsigned long Size, int flags)
 	    FatalError("xf86MapVidMem: Could not mmap /dev/vga (%s)",
 		       strerror(errno));
 	}
-	return(base);
+	return base;
 }
 
 static void
@@ -279,7 +279,7 @@ unmapVidMem(int ScreenNum, pointer Base, unsigned long Size)
  * Read BIOS via mmap()ing DEV_MEM
  */
 
-_X_EXPORT int
+int
 xf86ReadBIOS(unsigned long Base, unsigned long Offset, unsigned char *Buf,
 	     int Len)
 {
@@ -289,7 +289,7 @@ xf86ReadBIOS(unsigned long Base, unsigned long Offset, unsigned char *Buf,
 
 	checkDevMem(TRUE);
 	if (devMemFd == -1) {
-	    return(-1);
+	    return -1;
 	}
 
 	psize = getpagesize();
@@ -308,7 +308,7 @@ xf86ReadBIOS(unsigned long Base, unsigned long Offset, unsigned char *Buf,
 		    xf86Msg(X_WARNING, SYSCTL_MSG2);
 		} 
 #endif
-		return(-1);
+		return -1;
 	}
 #ifdef DEBUG
 	ErrorF("xf86ReadBIOS: BIOS at 0x%08x has signature 0x%04x\n",
@@ -321,7 +321,7 @@ xf86ReadBIOS(unsigned long Base, unsigned long Offset, unsigned char *Buf,
 		"-> %02x %02x %02x %02x...\n",
 		Base, Offset, Len, Buf[0], Buf[1], Buf[2], Buf[3]);
 #endif
-	return(Len);
+	return Len;
 }
 
 #ifdef USE_I386_IOPL
@@ -331,7 +331,7 @@ xf86ReadBIOS(unsigned long Base, unsigned long Offset, unsigned char *Buf,
 
 static Bool ExtendedEnabled = FALSE;
 
-_X_EXPORT Bool
+Bool
 xf86EnableIO()
 {
 	if (ExtendedEnabled)
@@ -353,7 +353,7 @@ xf86EnableIO()
 	return TRUE;
 }
 	
-_X_EXPORT void
+void
 xf86DisableIO()
 {
 	if (!ExtendedEnabled)
@@ -529,7 +529,7 @@ getAllRanges(int *nmr)
 	mro.mo_arg[0] = *nmr;
 	mro.mo_desc = mrd;
 	if (ioctl(devMemFd, MEMRANGE_GET, &mro)) {
-		xfree(mrd);
+		free(mrd);
 		return NULL;
 	}
 	return mrd;
@@ -576,7 +576,7 @@ cleanMTRR()
 #ifdef DEBUG
 	sleep(10);
 #endif
-	xfree(mrd);
+	free(mrd);
 	return TRUE;
 }
 
@@ -594,7 +594,7 @@ freeRangeList(RangePtr range)
 	while (range) {
 		rp = range;
 		range = rp->next;
-		xfree(rp);
+		free(rp);
 	}
 }
 
@@ -679,7 +679,7 @@ findRanges(unsigned long base, unsigned long size, RangePtr *ucp, RangePtr *wcp)
 			*p = rp;
 		}
 	}
-	xfree(mrd);
+	free(mrd);
 }
 
 /*
@@ -886,7 +886,7 @@ NetBSDsetWC(int screenNum, unsigned long base, unsigned long size, Bool enable,
 	n = 1;
 
 	if (i386_set_mtrr(mtrrp, &n) < 0) {
-		xfree(mtrrp);
+		free(mtrrp);
 		return NULL;
 	}
 	return mtrrp;
@@ -903,6 +903,6 @@ NetBSDundoWC(int screenNum, pointer list)
 	n = 1;
 	mtrrp->flags &= ~MTRR_VALID;
 	i386_set_mtrr(mtrrp, &n);
-	xfree(mtrrp);
+	free(mtrrp);
 }
 #endif

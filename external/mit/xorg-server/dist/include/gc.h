@@ -84,34 +84,28 @@ typedef struct _GCInterest *GCInterestPtr;
 typedef struct _GC    *GCPtr;
 typedef struct _GCOps *GCOpsPtr;
 
-extern void ValidateGC(
+extern _X_EXPORT void ValidateGC(
     DrawablePtr /*pDraw*/,
     GCPtr /*pGC*/);
-
-extern int ChangeGC(
-    GCPtr/*pGC*/,
-    BITS32 /*mask*/,
-    XID* /*pval*/);
-
-extern int DoChangeGC(
-    GCPtr/*pGC*/,
-    BITS32 /*mask*/,
-    XID* /*pval*/,
-    int /*fPointer*/);
 
 typedef union {
     CARD32 val;
     pointer ptr;
 } ChangeGCVal, *ChangeGCValPtr;
 
-extern int dixChangeGC(
+extern int ChangeGCXIDs(
     ClientPtr /*client*/,
     GCPtr /*pGC*/,
     BITS32 /*mask*/,
-    CARD32 * /*pval*/,
+    CARD32 * /*pval*/);
+
+extern _X_EXPORT int ChangeGC(
+    ClientPtr /*client*/,
+    GCPtr /*pGC*/,
+    BITS32 /*mask*/,
     ChangeGCValPtr /*pCGCV*/);
 
-extern GCPtr CreateGC(
+extern _X_EXPORT GCPtr CreateGC(
     DrawablePtr /*pDrawable*/,
     BITS32 /*mask*/,
     XID* /*pval*/,
@@ -119,43 +113,43 @@ extern GCPtr CreateGC(
     XID /*gcid*/,
     ClientPtr /*client*/);
 
-extern int CopyGC(
+extern _X_EXPORT int CopyGC(
     GCPtr/*pgcSrc*/,
     GCPtr/*pgcDst*/,
     BITS32 /*mask*/);
 
-extern int FreeGC(
+extern _X_EXPORT int FreeGC(
     pointer /*pGC*/,
     XID /*gid*/);
 
-extern GCPtr CreateScratchGC(
+extern _X_EXPORT GCPtr CreateScratchGC(
     ScreenPtr /*pScreen*/,
     unsigned /*depth*/);
 
-extern void FreeGCperDepth(
+extern _X_EXPORT void FreeGCperDepth(
     int /*screenNum*/);
 
-extern Bool CreateGCperDepth(
+extern _X_EXPORT Bool CreateGCperDepth(
     int /*screenNum*/);
 
-extern Bool CreateDefaultStipple(
+extern _X_EXPORT Bool CreateDefaultStipple(
     int /*screenNum*/);
 
-extern void FreeDefaultStipple(
+extern _X_EXPORT void FreeDefaultStipple(
     int /*screenNum*/);
 
-extern int SetDashes(
+extern _X_EXPORT int SetDashes(
     GCPtr /*pGC*/,
     unsigned /*offset*/,
     unsigned /*ndash*/,
     unsigned char* /*pdash*/);
 
-extern int VerifyRectOrder(
+extern _X_EXPORT int VerifyRectOrder(
     int /*nrects*/,
     xRectangle* /*prects*/,
     int /*ordering*/);
 
-extern int SetClipRects(
+extern _X_EXPORT int SetClipRects(
     GCPtr /*pGC*/,
     int /*xOrigin*/,
     int /*yOrigin*/,
@@ -163,11 +157,11 @@ extern int SetClipRects(
     xRectangle* /*prects*/,
     int /*ordering*/);
 
-extern GCPtr GetScratchGC(
+extern _X_EXPORT GCPtr GetScratchGC(
     unsigned /*depth*/,
     ScreenPtr /*pScreen*/);
 
-extern void FreeScratchGC(
+extern _X_EXPORT void FreeScratchGC(
     GCPtr /*pGC*/);
 
 #endif /* GC_H */
