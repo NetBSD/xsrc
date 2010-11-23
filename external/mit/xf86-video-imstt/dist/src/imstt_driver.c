@@ -55,6 +55,11 @@
 #include "imstt.h"
 #include "imstt_reg.h"
 
+#if HAVE_XORG_SERVER_1_7_0
+#define xf86LoaderReqSymLists(...) do {} while (0)
+#define LoaderRefSymLists(...) do {} while (0)
+#endif
+
 
 /* To get it to build on non-PPC */
 #ifndef __powerpc__

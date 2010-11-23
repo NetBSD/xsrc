@@ -65,6 +65,11 @@
 #include <string.h>
 #include <stdio.h>
 
+#if HAVE_XORG_SERVER_1_7_0
+#define xf86LoaderReqSymLists(...) do {} while (0)
+#define LoaderRefSymLists(...) do {} while (0)
+#endif
+
 #define NEWPORT_VERSION		4000
 #define NEWPORT_NAME		"NEWPORT"
 #define NEWPORT_DRIVER_NAME	"newport"

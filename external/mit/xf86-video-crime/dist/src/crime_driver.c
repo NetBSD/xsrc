@@ -1,4 +1,4 @@
-/* $NetBSD: crime_driver.c,v 1.6 2009/10/06 06:51:21 macallan Exp $ */
+/* $NetBSD: crime_driver.c,v 1.7 2010/11/23 22:21:15 mrg Exp $ */
 /*
  * Copyright (c) 2008 Michael Lorenz
  * All rights reserved.
@@ -68,6 +68,11 @@
 
 #ifndef XFree86LOADER
 #include <sys/mman.h>
+#endif
+
+#if HAVE_XORG_SERVER_1_7_0
+#define xf86LoaderReqSymLists(...) do {} while (0)
+#define LoaderRefSymLists(...) do {} while (0)
 #endif
 
 #define CRIME_DEFAULT_DEV "/dev/ttyE0"

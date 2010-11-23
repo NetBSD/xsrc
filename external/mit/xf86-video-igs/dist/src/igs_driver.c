@@ -1,5 +1,5 @@
 /* $OpenBSD: wsfb_driver.c,v 1.19 2003/04/27 16:42:32 matthieu Exp $ */
-/* $NetBSD: igs_driver.c,v 1.2 2010/05/20 07:55:20 macallan Exp $ */
+/* $NetBSD: igs_driver.c,v 1.3 2010/11/23 22:21:15 mrg Exp $ */
 /*
  * Copyright (c) 2001 Matthieu Herrb
  *		 2009 Michael Lorenz
@@ -81,6 +81,11 @@
 #include "igs.h"
 
 #include <sys/mman.h>
+
+#if HAVE_XORG_SERVER_1_7_0
+#define xf86LoaderReqSymLists(...) do {} while (0)
+#define LoaderRefSymLists(...) do {} while (0)
+#endif
 
 #define DEBUG 0
 
