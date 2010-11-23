@@ -96,6 +96,11 @@ extern int priv_open_device(const char *);
 #define WSFB_DEFAULT_DEV "/dev/ttyC0"
 #endif
 
+#if HAVE_XORG_SERVER_1_7_0
+#define xf86LoaderReqSymLists(...) do {} while (0)
+#define LoaderRefSymLists(...) do {} while (0)
+#endif
+
 #define DEBUG 0
 
 #if DEBUG

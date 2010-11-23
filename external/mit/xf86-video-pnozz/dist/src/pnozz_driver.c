@@ -20,7 +20,7 @@
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-/* $NetBSD: pnozz_driver.c,v 1.1 2009/08/26 22:28:26 macallan Exp $ */
+/* $NetBSD: pnozz_driver.c,v 1.2 2010/11/23 22:21:16 mrg Exp $ */
 
 /*
  * this driver has been tested on SPARCbook 3GX and 3TX, it supports full 
@@ -48,6 +48,11 @@
 #include "fb.h"
 #include "xf86cmap.h"
 #include "pnozz.h"
+
+#if HAVE_XORG_SERVER_1_7_0
+#define xf86LoaderReqSymLists(...) do {} while (0)
+#define LoaderRefSymLists(...) do {} while (0)
+#endif
 
 static const OptionInfoRec * PnozzAvailableOptions(int chipid, int busid);
 static void	PnozzIdentify(int flags);

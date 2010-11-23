@@ -46,6 +46,11 @@
 #include "ag10e.h"
 #include "xf86sbusBus.h"
 
+#if HAVE_XORG_SERVER_1_7_0
+#define xf86LoaderReqSymLists(...) do {} while (0)
+#define LoaderRefSymLists(...) do {} while (0)
+#endif
+
 static const OptionInfoRec * AG10EAvailableOptions(int chipid, int busid);
 static void	AG10EIdentify(int flags);
 static Bool	AG10EProbe(DriverPtr drv, int flags);

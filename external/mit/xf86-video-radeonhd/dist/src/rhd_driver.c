@@ -135,6 +135,11 @@
 /* ??? */
 #include "servermd.h"
 
+#if HAVE_XORG_SERVER_1_7_0
+#define xf86LoaderReqSymLists(...) do {} while (0)
+#define LoaderRefSymLists(...) do {} while (0)
+#endif
+
 /* Mandatory functions */
 static const OptionInfoRec *	RHDAvailableOptions(int chipid, int busid);
 #ifdef XSERVER_LIBPCIACCESS
