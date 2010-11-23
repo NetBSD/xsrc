@@ -347,6 +347,7 @@ typedef enum {
     BUS_NONE,
     BUS_PCI,
     BUS_SBUS,
+    BUS_ISA,
     BUS_last    /* Keep last */
 } BusType;
 
