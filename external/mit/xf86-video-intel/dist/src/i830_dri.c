@@ -1531,6 +1531,7 @@ typedef struct {
     PixmapPtr pPixmap;
 } I830DRI2BufferPrivateRec, *I830DRI2BufferPrivatePtr;
 
+#if 0
 static DRI2BufferPtr
 I830DRI2CreateBuffers(DrawablePtr pDraw, unsigned int *attachments, int count)
 {
@@ -1632,6 +1633,7 @@ I830DRI2DestroyBuffers(DrawablePtr pDraw, DRI2BufferPtr buffers, int count)
 	xfree(buffers);
     }
 }
+#endif
 
 static void
 I830DRI2CopyRegion(DrawablePtr pDraw, RegionPtr pRegion,
@@ -1732,8 +1734,10 @@ Bool I830DRI2ScreenInit(ScreenPtr pScreen)
     info.deviceName = p;
     info.version = 1;
 
+#if 0
     info.CreateBuffers = I830DRI2CreateBuffers;
     info.DestroyBuffers = I830DRI2DestroyBuffers;
+#endif
     info.CopyRegion = I830DRI2CopyRegion;
 
     pI830->drmSubFD = info.fd;

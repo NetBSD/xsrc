@@ -2161,6 +2161,7 @@ i830_clip_video_helper (ScrnInfoPtr pScrn,
     return ret;
 }
 
+#if 0
 static void
 i830_fill_colorkey (ScreenPtr pScreen, uint32_t key, RegionPtr clipboxes)
 {
@@ -2194,6 +2195,7 @@ i830_fill_colorkey (ScreenPtr pScreen, uint32_t key, RegionPtr clipboxes)
    xfree (rects);
    FreeScratchGC (gc);
 }
+#endif
 
 /*
  * The source rectangle of the video is defined by (src_x, src_y, src_w, src_h).
@@ -2505,7 +2507,13 @@ I830PutImage(ScrnInfoPtr pScrn,
 	/* update cliplist */
 	if (!REGION_EQUAL(pScrn->pScreen, &pPriv->clip, clipBoxes)) {
 	    REGION_COPY(pScrn->pScreen, &pPriv->clip, clipBoxes);
+#if 0
 	    i830_fill_colorkey (pScreen, pPriv->colorKey, clipBoxes);
+#else
+            xf86XVFillKeyHelperDrawable(pDraw,
+					pPriv->colorKey,
+					clipBoxes);
+#endif
 	}
     } else {
         Bool sync = TRUE;
@@ -2864,7 +2872,15 @@ I830DisplaySurface(XF86SurfacePtr surface,
 		     surface->pitches[0], x1, y1, x2, y2, &dstBox,
 		     src_w, src_h, drw_w, drw_h);
 
+#if 0
+#if 0
     i830_fill_colorkey (pScreen, pI830Priv->colorKey, clipBoxes);
+#else
+    xf86XVFillKeyHelperDrawable(drawable,
+				pI830Priv->colorKey,
+				clipBoxes);
+#endif
+#endif
 
     pPriv->isOn = TRUE;
     /* we've prempted the XvImage stream so set its free timer */
