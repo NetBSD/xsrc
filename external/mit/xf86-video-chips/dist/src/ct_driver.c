@@ -103,7 +103,11 @@
 #include "mibstore.h"
 
 /* All drivers using the mi banking wrapper need this */
-#ifdef HAVE_ISA
+#if GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) < 6
+#define USE_MIBANK
+#endif
+
+#ifdef USE_MIBANK
 #include "mibank.h"
 #endif
 
@@ -4065,7 +4069,7 @@ CHIPSScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 
     cPtr->HWCursorShown = FALSE;
 
-#ifdef HAVE_ISA
+#ifdef USE_MIBANK
     if (!(cPtr->Flags & ChipsLinearSupport)) {
 	miBankInfoPtr pBankInfo;
 
