@@ -1852,12 +1852,14 @@ I830PreInit(ScrnInfoPtr pScrn, int flags)
 			  pI830->PciInfo->func);
 #endif
 
+#if 0
    if (xf86RegisterResources(pI830->pEnt->index, NULL, ResNone)) {
       PreInitCleanup(pScrn);
       return FALSE;
    }
 
    pScrn->racMemFlags = RAC_FB | RAC_COLORMAP;
+#endif
    pScrn->monitor = pScrn->confScreen->monitor;
    pScrn->progClock = TRUE;
    pScrn->rgbBits = 8;
@@ -1986,8 +1988,10 @@ I830PreInit(ScrnInfoPtr pScrn, int flags)
 
        /*  We won't be using the VGA access after the probe. */
        I830SetMMIOAccess(pI830);
+#if 0
        xf86SetOperatingState(resVgaIo, pI830->pEnt->index, ResUnusedOpr);
        xf86SetOperatingState(resVgaMem, pI830->pEnt->index, ResDisableOpr);
+#endif
    }
 
 #if defined(XF86DRI)
