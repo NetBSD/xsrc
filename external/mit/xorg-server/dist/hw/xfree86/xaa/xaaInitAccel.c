@@ -528,7 +528,9 @@ XAAInitAccel(ScreenPtr pScreen, XAAInfoRecPtr infoRec)
 #define XAAMSG(s) do { if (serverGeneration == 1) xf86ErrorF(s); } while (0)
 
     if((infoRec->Flags & OFFSCREEN_PIXMAPS) && HaveScreenToScreenCopy &&
-		xf86IsOptionSet(options, XAAOPT_HAS_DUMB_INVERTED_OPTION_SENSE))
+		xf86ReturnOptValBool(options,
+				     XAAOPT_HAS_DUMB_INVERTED_OPTION_SENSE,
+				     FALSE))
     {
 	XAAMSG("\tOffscreen Pixmaps\n");
     } else {
@@ -1262,7 +1264,6 @@ XAAInitAccel(ScreenPtr pScreen, XAAInfoRecPtr infoRec)
 	   infoRec->ComputeDash = XAAComputeDash;
     }
 
-#ifdef RENDER
     {
 	Bool haveTexture = infoRec->CPUToScreenTextureFormats &&
 			   infoRec->CPUToScreenTextureDstFormats &&
@@ -1282,7 +1283,6 @@ XAAInitAccel(ScreenPtr pScreen, XAAInfoRecPtr infoRec)
             infoRec->Glyphs = XAADoGlyphs;
         }	
     }
-#endif
 
     /************  Validation Functions **************/
 
@@ -1489,7 +1489,7 @@ XAAInitAccel(ScreenPtr pScreen, XAAInfoRecPtr infoRec)
 	    infoRec->CachePixelGranularity *= 2;
     }
 
-    xfree(options);
+    free(options);
 
     if(!infoRec->CacheTile && infoRec->WritePixmapToCache)
 	infoRec->CacheTile = XAACacheTile;

@@ -27,33 +27,17 @@
 #include <xorg-config.h>
 #endif
 
-#include <ctype.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <X11/X.h>
-#include <X11/Xmd.h>
-#include <pciaccess.h>
-#include "Pci.h"
-#include "os.h"
-#include "loaderProcs.h"
 #include "xf86.h"
 #include "xf86Config.h"
 #include "xf86_OSlib.h"
 #include "xf86Priv.h"
 #define IN_XSERVER
-#include "xf86Parser.h"
-#include "xf86tokens.h"
 #include "Configint.h"
-#include "vbe.h"
 #include "xf86DDC.h"
 #if (defined(__sparc__) || defined(__sparc)) && !defined(__OpenBSD__)
 #include "xf86Bus.h"
 #include "xf86Sbus.h"
 #endif
-#include "globals.h"
 
 typedef struct _DevToConfig {
     GDevRec GDev;
@@ -67,7 +51,7 @@ typedef struct _DevToConfig {
 static DevToConfigPtr DevToConfig = NULL;
 static int nDevToConfig = 0, CurrentDriver;
 
-_X_EXPORT xf86MonPtr ConfiguredMonitor;
+xf86MonPtr ConfiguredMonitor;
 Bool xf86DoConfigurePass1 = TRUE;
 static Bool foundMouse = FALSE;
 
@@ -87,6 +71,90 @@ static char *DFLT_MOUSE_DEV = "/dev/mouse";
 static char *DFLT_MOUSE_PROTO = "auto";
 #endif
 
+static Bool
+bus_pci_configure(void *busData)
+{
+    int i;
+    struct pci_device * pVideo = NULL;
+
+	pVideo = (struct pci_device *) busData;
+	for (i = 0;  i < nDevToConfig;  i++)
+	    if (DevToConfig[i].pVideo &&
+		(DevToConfig[i].pVideo->domain == pVideo->domain) &&
+		(DevToConfig[i].pVideo->bus == pVideo->bus) &&
+		(DevToConfig[i].pVideo->dev == pVideo->dev) &&
+		(DevToConfig[i].pVideo->func == pVideo->func))
+		return 0;
+
+	return 1;
+}
+
+static Bool
+bus_sbus_configure(void *busData)
+{
+#if (defined(__sparc__) || defined(__sparc)) && !defined(__OpenBSD__)
+    int i;
+
+    for (i = 0;  i < nDevToConfig;  i++)
+        if (DevToConfig[i].sVideo &&
+        DevToConfig[i].sVideo->fbNum == ((sbusDevicePtr) busData)->fbNum)
+            return 0;
+
+#endif
+    return 1;
+}
+
+static void
+bus_pci_newdev_configure(void *busData, int i, int *chipset)
+{
+	char busnum[8];
+    struct pci_device * pVideo = NULL;
+
+    pVideo = (struct pci_device *) busData;
+
+	DevToConfig[i].pVideo = pVideo;
+
+	DevToConfig[i].GDev.busID = xnfalloc(16);
+	xf86FormatPciBusNumber(pVideo->bus, busnum);
+	if (pVideo->domain == 0) {
+		sprintf(DevToConfig[i].GDev.busID, "PCI:%s:%d:%d",
+		    busnum, pVideo->dev, pVideo->func);
+	} else {
+		sprintf(DevToConfig[i].GDev.busID, "PCI:%s@%d:%d:%d",
+		    busnum, pVideo->domain, pVideo->dev, pVideo->func);
+	}
+
+	DevToConfig[i].GDev.chipID = pVideo->device_id;
+	DevToConfig[i].GDev.chipRev = pVideo->revision;
+
+	if (*chipset < 0) {
+	    *chipset = (pVideo->vendor_id << 16) | pVideo->device_id;
+	}
+}
+
+static void
+bus_sbus_newdev_configure(void *busData, int i)
+{
+#if (defined(__sparc__) || defined(__sparc)) && !defined(__OpenBSD__)
+	char *promPath = NULL;
+	DevToConfig[i].sVideo = (sbusDevicePtr) busData;
+	DevToConfig[i].GDev.identifier = DevToConfig[i].sVideo->descr;
+	if (sparcPromInit() >= 0) {
+	    promPath = sparcPromNode2Pathname(&DevToConfig[i].sVideo->node);
+	    sparcPromClose();
+	}
+	if (promPath) {
+	    DevToConfig[i].GDev.busID = xnfalloc(strlen(promPath) + 6);
+	    sprintf(DevToConfig[i].GDev.busID, "SBUS:%s", promPath);
+	    free(promPath);
+	} else {
+	    DevToConfig[i].GDev.busID = xnfalloc(12);
+	    sprintf(DevToConfig[i].GDev.busID, "SBUS:fb%d",
+                                DevToConfig[i].sVideo->fbNum);
+	}
+#endif
+}
+
 /*
  * This is called by the driver, either through xf86Match???Instances() or
  * directly.  We allocate a GDevRec and fill it in as much as we can, letting
@@ -95,147 +163,62 @@ static char *DFLT_MOUSE_PROTO = "auto";
 GDevPtr
 xf86AddBusDeviceToConfigure(const char *driver, BusType bus, void *busData, int chipset)
 {
-    int i, j;
-    struct pci_device * pVideo = NULL;
-    Bool isPrimary = FALSE;
+    int ret, i, j;
 
-    if (xf86DoProbe || !xf86DoConfigure || !xf86DoConfigurePass1)
+    if (!xf86DoConfigure || !xf86DoConfigurePass1)
 	return NULL;
 
     /* Check for duplicates */
     switch (bus) {
-    case BUS_PCI:
-	pVideo = (struct pci_device *) busData;
-	for (i = 0;  i < nDevToConfig;  i++)
-	    if (DevToConfig[i].pVideo &&
-		(DevToConfig[i].pVideo->domain == pVideo->domain) &&
-		(DevToConfig[i].pVideo->bus == pVideo->bus) &&
-		(DevToConfig[i].pVideo->dev == pVideo->dev) &&
-		(DevToConfig[i].pVideo->func == pVideo->func))
-		return NULL;
-	isPrimary = xf86IsPrimaryPci(pVideo);
-	break;
-#if (defined(__sparc__) || defined(__sparc)) && !defined(__OpenBSD__)
-    case BUS_SBUS:
-	for (i = 0;  i < nDevToConfig;  i++)
-	    if (DevToConfig[i].sVideo &&
-		DevToConfig[i].sVideo->fbNum == ((sbusDevicePtr) busData)->fbNum)
-		return NULL;
-	break;
-#endif
-    case BUS_NONE:
-    case BUS_ISA:
-    	break;
-    default:
-	return NULL;
+        case BUS_PCI:
+            ret = bus_pci_configure(busData);
+	        break;
+        case BUS_SBUS:
+            ret = bus_sbus_configure(busData);
+	        break;
+        default:
+	        return NULL;
     }
+
+    if (ret == 0)
+        goto out;
 
     /* Allocate new structure occurrence */
     i = nDevToConfig++;
     DevToConfig =
 	xnfrealloc(DevToConfig, nDevToConfig * sizeof(DevToConfigRec));
-#if 1   /* Doesn't work when a driver detects more than one adapter */
-    if ((i > 0) && isPrimary) {
-        memmove(DevToConfig + 1,DevToConfig,
-		(nDevToConfig - 1) * sizeof(DevToConfigRec));
-	i = 0;
-    } 
-#endif
     memset(DevToConfig + i, 0, sizeof(DevToConfigRec));
 
-#   define NewDevice DevToConfig[i]
+    DevToConfig[i].GDev.chipID =
+            DevToConfig[i].GDev.chipRev = DevToConfig[i].GDev.irq = -1;
 
-    NewDevice.GDev.chipID = NewDevice.GDev.chipRev = NewDevice.GDev.irq = -1;
-
-    NewDevice.iDriver = CurrentDriver;
+    DevToConfig[i].iDriver = CurrentDriver;
 
     /* Fill in what we know, converting the driver name to lower case */
-    NewDevice.GDev.driver = xnfalloc(strlen(driver) + 1);
-    for (j = 0;  (NewDevice.GDev.driver[j] = tolower(driver[j]));  j++);
+    DevToConfig[i].GDev.driver = xnfalloc(strlen(driver) + 1);
+    for (j = 0;  (DevToConfig[i].GDev.driver[j] = tolower(driver[j]));  j++);
 
     switch (bus) {
-    case BUS_PCI: {
-	const char *VendorName;
-	const char *CardName;
-	char busnum[8];
-
-	NewDevice.pVideo = pVideo;
-
-	VendorName = pci_device_get_vendor_name( pVideo );
-	CardName = pci_device_get_device_name( pVideo );
-
-	if (!VendorName) {
-	    VendorName = xnfalloc(15);
-	    sprintf((char*)VendorName, "Unknown Vendor");
-	}
-
-	if (!CardName) {
-	    CardName = xnfalloc(14);
-	    sprintf((char*)CardName, "Unknown Board");
-	}
-
-	NewDevice.GDev.identifier =
-	    xnfalloc(strlen(VendorName) + strlen(CardName) + 2);
-	sprintf(NewDevice.GDev.identifier, "%s %s", VendorName, CardName);
-
-	NewDevice.GDev.vendor = (char *)VendorName;
-	NewDevice.GDev.board = (char *)CardName;
-
-	NewDevice.GDev.busID = xnfalloc(16);
-	xf86FormatPciBusNumber(pVideo->bus, busnum);
-	if (pVideo->domain == 0) {
-		snprintf(NewDevice.GDev.busID, 16, "PCI:%s:%d:%d",
-		    busnum, pVideo->dev, pVideo->func);
-	} else {
-		snprintf(NewDevice.GDev.busID, 16, "PCI:%s@%d:%d:%d",
-		    busnum, pVideo->domain, pVideo->dev, pVideo->func);
-	}
-	
-	NewDevice.GDev.chipID = pVideo->device_id;
-	NewDevice.GDev.chipRev = pVideo->revision;
-
-	if (chipset < 0)
-	    chipset = (pVideo->vendor_id << 16) | pVideo->device_id;
-	}
-	break;
-#if (defined(__sparc__) || defined(__sparc)) && !defined(__OpenBSD__)
-    case BUS_SBUS: {
-	char *promPath = NULL;
-	NewDevice.sVideo = (sbusDevicePtr) busData;
-	NewDevice.GDev.identifier = NewDevice.sVideo->descr;
-	if (sparcPromInit() >= 0) {
-	    promPath = sparcPromNode2Pathname(&NewDevice.sVideo->node);
-	    sparcPromClose();
-	}
-	if (promPath) {
-	    NewDevice.GDev.busID = xnfalloc(strlen(promPath) + 6);
-	    sprintf(NewDevice.GDev.busID, "SBUS:%s", promPath);
-	    xfree(promPath);
-	} else {
-	    NewDevice.GDev.busID = xnfalloc(12);
-	    sprintf(NewDevice.GDev.busID, "SBUS:fb%d", NewDevice.sVideo->fbNum);
-	}
-	}
-	break;
-#endif
-    case BUS_ISA: {
-        NewDevice.GDev.busID = xnfalloc(6);
-        strcpy(NewDevice.GDev.busID, "ISA");
-    }
-    break;
-    default:
-	break;
+        case BUS_PCI:
+            bus_pci_newdev_configure(busData, i, &chipset);
+	        break;
+        case BUS_SBUS:
+            bus_sbus_newdev_configure(busData, i);
+	        break;
+        default:
+	        break;
     }
 
     /* Get driver's available options */
     if (xf86DriverList[CurrentDriver]->AvailableOptions)
-	NewDevice.GDev.options = (OptionInfoPtr)
+	DevToConfig[i].GDev.options = (OptionInfoPtr)
 	    (*xf86DriverList[CurrentDriver]->AvailableOptions)(chipset,
 							       bus);
 
-    return &NewDevice.GDev;
+    return &DevToConfig[i].GDev;
 
-#   undef NewDevice
+out:
+    return NULL;
 }
 
 static XF86ConfInputPtr
@@ -259,7 +242,7 @@ configureInputSection (void)
 	int fd;
 #ifdef WSCONS_SUPPORT
 	fd = open("/dev/wsmouse", 0);
-	if (fd > 0) {
+	if (fd >= 0) {
 	    DFLT_MOUSE_DEV = "/dev/wsmouse";
 	    DFLT_MOUSE_PROTO = "wsmouse";
 	    close(fd);
@@ -279,20 +262,20 @@ configureInputSection (void)
 #endif
     }
 
-    mouse = xf86confcalloc(1, sizeof(XF86ConfInputRec));
+    mouse = calloc(1, sizeof(XF86ConfInputRec));
     mouse->inp_identifier = "Mouse0";
     mouse->inp_driver = "mouse";
     mouse->inp_option_lst = 
-		xf86addNewOption(mouse->inp_option_lst, xstrdup("Protocol"),
-				xstrdup(DFLT_MOUSE_PROTO));
+		xf86addNewOption(mouse->inp_option_lst, strdup("Protocol"),
+				strdup(DFLT_MOUSE_PROTO));
 #ifndef __SCO__
     mouse->inp_option_lst = 
-		xf86addNewOption(mouse->inp_option_lst, xstrdup("Device"),
-				xstrdup(DFLT_MOUSE_DEV));
+		xf86addNewOption(mouse->inp_option_lst, strdup("Device"),
+				strdup(DFLT_MOUSE_DEV));
 #endif
     mouse->inp_option_lst = 
-		xf86addNewOption(mouse->inp_option_lst, xstrdup("ZAxisMapping"),
-				xstrdup("4 5 6 7"));
+		xf86addNewOption(mouse->inp_option_lst, strdup("ZAxisMapping"),
+				strdup("4 5 6 7"));
     ptr = (XF86ConfInputPtr)xf86addListItem((glp)ptr, (glp)mouse);
     return ptr;
 }
@@ -304,18 +287,18 @@ configureScreenSection (int screennum)
     int depths[] = { 1, 4, 8, 15, 16, 24/*, 32*/ };
     parsePrologue (XF86ConfScreenPtr, XF86ConfScreenRec)
 
-    ptr->scrn_identifier = xf86confmalloc(18);
+    ptr->scrn_identifier = malloc(18);
     sprintf(ptr->scrn_identifier, "Screen%d", screennum);
-    ptr->scrn_monitor_str = xf86confmalloc(19);
+    ptr->scrn_monitor_str = malloc(19);
     sprintf(ptr->scrn_monitor_str, "Monitor%d", screennum);
-    ptr->scrn_device_str = xf86confmalloc(16);
+    ptr->scrn_device_str = malloc(16);
     sprintf(ptr->scrn_device_str, "Card%d", screennum);
 
     for (i=0; i<sizeof(depths)/sizeof(depths[0]); i++)
     {
 	XF86ConfDisplayPtr display;
 
-	display = xf86confcalloc(1, sizeof(XF86ConfDisplayRec));
+	display = calloc(1, sizeof(XF86ConfDisplayRec));
 	display->disp_depth = depths[i];
 	display->disp_black.red = display->disp_white.red = -1;
 	display->disp_black.green = display->disp_white.green = -1;
@@ -328,7 +311,7 @@ configureScreenSection (int screennum)
 }
 
 static const char* 
-optionTypeToSting(OptionValueType type)
+optionTypeToString(OptionValueType type)
 {
     switch (type) {
     case OPTV_NONE:
@@ -345,6 +328,8 @@ optionTypeToSting(OptionValueType type)
         return "[<bool>]";
     case OPTV_FREQ:
         return "<freq>";
+    case OPTV_PERCENT:
+        return "<percent>";
     default:
         return "";
     }
@@ -361,9 +346,6 @@ configureDeviceSection (int screennum)
     /* Move device info to parser structure */
     sprintf(identifier, "Card%d", screennum);
     ptr->dev_identifier = strdup(identifier);
-/*    ptr->dev_identifier = DevToConfig[screennum].GDev.identifier;*/
-    ptr->dev_vendor = DevToConfig[screennum].GDev.vendor;
-    ptr->dev_board = DevToConfig[screennum].GDev.board;
     ptr->dev_chipset = DevToConfig[screennum].GDev.chipset;
     ptr->dev_busid = DevToConfig[screennum].GDev.busID;
     ptr->dev_driver = DevToConfig[screennum].GDev.driver;
@@ -390,9 +372,10 @@ configureDeviceSection (int screennum)
 	    "        ### Available Driver options are:-\n"
 	    "        ### Values: <i>: integer, <f>: float, "
 			"<bool>: \"True\"/\"False\",\n"
-	    "        ### <string>: \"String\", <freq>: \"<f> Hz/kHz/MHz\"\n"
+	    "        ### <string>: \"String\", <freq>: \"<f> Hz/kHz/MHz\",\n"
+	    "        ### <percent>: \"<f>%\"\n"
 	    "        ### [arg]: arg optional\n";
-	ptr->dev_comment = xstrdup(descrip);
+	ptr->dev_comment = strdup(descrip);
 	if (ptr->dev_comment) {
     	    for (p = DevToConfig[screennum].GDev.options;
 		 p->name != NULL; p++) {
@@ -400,12 +383,12 @@ configureDeviceSection (int screennum)
 		const char *prefix = "        #Option     ";
 		const char *middle = " \t# ";
 		const char *suffix = "\n";
-		const char *opttype = optionTypeToSting(p->type);
+		const char *opttype = optionTypeToString(p->type);
 		char *optname;
 		int len = strlen(ptr->dev_comment) + strlen(prefix) +
 			  strlen(middle) + strlen(suffix) + 1;
 		
-		optname = xalloc(strlen(p->name) + 2 + 1);
+		optname = malloc(strlen(p->name) + 2 + 1);
 		if (!optname)
 		    break;
 		sprintf(optname, "\"%s\"", p->name);
@@ -413,13 +396,13 @@ configureDeviceSection (int screennum)
 		len += max(20, strlen(optname));
 		len += strlen(opttype);
 
-		ptr->dev_comment = xrealloc(ptr->dev_comment, len);
+		ptr->dev_comment = realloc(ptr->dev_comment, len);
 		if (!ptr->dev_comment)
 		    break;
 		p_e = ptr->dev_comment + strlen(ptr->dev_comment);
 		sprintf(p_e, "%s%-20s%s%s%s", prefix, optname, middle,
 			opttype, suffix);
-		xfree(optname);
+		free(optname);
 	    }
     	}
     }
@@ -438,12 +421,12 @@ configureLayoutSection (void)
     {
 	XF86ConfInputrefPtr iptr;
 
-	iptr = xf86confmalloc (sizeof (XF86ConfInputrefRec));
+	iptr = malloc (sizeof (XF86ConfInputrefRec));
 	iptr->list.next = NULL;
 	iptr->iref_option_lst = NULL;
 	iptr->iref_inputdev_str = "Mouse0";
 	iptr->iref_option_lst =
-		xf86addNewOption (iptr->iref_option_lst, xstrdup("CorePointer"), NULL);
+		xf86addNewOption (iptr->iref_option_lst, strdup("CorePointer"), NULL);
 	ptr->lay_input_lst = (XF86ConfInputrefPtr)
 		xf86addListItem ((glp) ptr->lay_input_lst, (glp) iptr);
     }
@@ -451,12 +434,12 @@ configureLayoutSection (void)
     {
 	XF86ConfInputrefPtr iptr;
 
-	iptr = xf86confmalloc (sizeof (XF86ConfInputrefRec));
+	iptr = malloc (sizeof (XF86ConfInputrefRec));
 	iptr->list.next = NULL;
 	iptr->iref_option_lst = NULL;
 	iptr->iref_inputdev_str = "Keyboard0";
 	iptr->iref_option_lst =
-		xf86addNewOption (iptr->iref_option_lst, xstrdup("CoreKeyboard"), NULL);
+		xf86addNewOption (iptr->iref_option_lst, strdup("CoreKeyboard"), NULL);
 	ptr->lay_input_lst = (XF86ConfInputrefPtr)
 		xf86addListItem ((glp) ptr->lay_input_lst, (glp) iptr);
     }
@@ -464,7 +447,7 @@ configureLayoutSection (void)
     for (scrnum = 0;  scrnum < nDevToConfig;  scrnum++) {
 	XF86ConfAdjacencyPtr aptr;
 
-	aptr = xf86confmalloc (sizeof (XF86ConfAdjacencyRec));
+	aptr = malloc (sizeof (XF86ConfAdjacencyRec));
 	aptr->list.next = NULL;
 	aptr->adj_x = 0;
 	aptr->adj_y = 0;
@@ -500,12 +483,9 @@ static XF86ConfModulePtr
 configureModuleSection (void)
 {
     char **elist, **el;
-    /* Find the list of extension modules. */
+    /* Find the list of extension & font modules. */
     const char *esubdirs[] = {
 	"extensions",
-	NULL
-    };
-    const char *fsubdirs[] = {
 	"fonts",
 	NULL
     };
@@ -516,34 +496,12 @@ configureModuleSection (void)
 	for (el = elist; *el; el++) {
 	    XF86LoadPtr module;
 
-    	    module = xf86confcalloc(1, sizeof(XF86LoadRec));
+    	    module = calloc(1, sizeof(XF86LoadRec));
     	    module->load_name = *el;
             ptr->mod_load_lst = (XF86LoadPtr)xf86addListItem(
                                 (glp)ptr->mod_load_lst, (glp)module);
     	}
-	xfree(elist);
-    }
-
-    /* Process list of font backends separately to include only required ones */
-    elist = LoaderListDirs(fsubdirs, NULL);
-    if (elist) {
-	for (el = elist; *el; el++) {
-	    XF86LoadPtr module;
-
-    	    module = xf86confcalloc(1, sizeof(XF86LoadRec));
-    	    module->load_name = *el;
-
-            /* Add only those font backends which are referenced by fontpath */
-            /* 'strstr(dFP,"/dir")' is meant as 'dFP =~ m(/dir\W)' */
-    	    if (defaultFontPath && (
-		(strcmp(*el, "freetype")  == 0 &&
-		 strstr(defaultFontPath, "/TTF")) ||
-    	        (strcmp(*el, "type1")  == 0 &&
-		 strstr(defaultFontPath, "/Type1")))) 
-	    	ptr->mod_load_lst = (XF86LoadPtr)xf86addListItem(
-					(glp)ptr->mod_load_lst, (glp)module);
-    	}
-	xfree(elist);
+	free(elist);
     }
 
     return ptr;
@@ -567,7 +525,7 @@ configureMonitorSection (int screennum)
 {
     parsePrologue (XF86ConfMonitorPtr, XF86ConfMonitorRec)
 
-    ptr->mon_identifier = xf86confmalloc(19);
+    ptr->mon_identifier = malloc(19);
     sprintf(ptr->mon_identifier, "Monitor%d", screennum);
     ptr->mon_vendor = strdup("Monitor Vendor");
     ptr->mon_modelname = strdup("Monitor Model");
@@ -575,10 +533,39 @@ configureMonitorSection (int screennum)
     return ptr;
 }
 
+/* Initialize Configure Monitor from Detailed Timing Block */
+static void handle_detailed_input(struct detailed_monitor_section *det_mon,
+                                  void *data)
+{
+    XF86ConfMonitorPtr ptr = (XF86ConfMonitorPtr) data;
+
+    switch (det_mon->type) {
+    case DS_NAME:
+        ptr->mon_modelname = realloc(ptr->mon_modelname,
+                                     strlen((char*)(det_mon->section.name)) +
+                                     1);
+        strcpy(ptr->mon_modelname,
+	      (char*)(det_mon->section.name));
+        break;
+    case DS_RANGES:
+        ptr->mon_hsync[ptr->mon_n_hsync].lo =
+            det_mon->section.ranges.min_h;
+        ptr->mon_hsync[ptr->mon_n_hsync].hi =
+            det_mon->section.ranges.max_h;
+        ptr->mon_n_vrefresh = 1;
+        ptr->mon_vrefresh[ptr->mon_n_hsync].lo =
+            det_mon->section.ranges.min_v;
+        ptr->mon_vrefresh[ptr->mon_n_hsync].hi =
+            det_mon->section.ranges.max_v;
+        ptr->mon_n_hsync++;
+    default:
+        break;
+    }
+}
+
 static XF86ConfMonitorPtr
 configureDDCMonitorSection (int screennum)
 {
-    int i = 0;
     int len, mon_width, mon_height;
 #define displaySizeMaxLen 80
     char displaySize_string[displaySizeMaxLen];
@@ -586,10 +573,10 @@ configureDDCMonitorSection (int screennum)
 
     parsePrologue (XF86ConfMonitorPtr, XF86ConfMonitorRec)
 
-    ptr->mon_identifier = xf86confmalloc(19);
+    ptr->mon_identifier = malloc(19);
     sprintf(ptr->mon_identifier, "Monitor%d", screennum);
     ptr->mon_vendor = strdup(ConfiguredMonitor->vendor.name);
-    ptr->mon_modelname = xf86confmalloc(12);
+    ptr->mon_modelname = malloc(12);
     sprintf(ptr->mon_modelname, "%x", ConfiguredMonitor->vendor.prod_id);
 
     /* features in centimetres, we want millimetres */
@@ -614,41 +601,18 @@ configureDDCMonitorSection (int screennum)
 	  len = 0;
 	}
 	if ((ptr->mon_comment =
-	     xf86confrealloc(ptr->mon_comment, 
-			     len+strlen(displaySize_string)))) {
+	     realloc(ptr->mon_comment, len + strlen(displaySize_string) + 1))) {
 	  strcpy(ptr->mon_comment + len, displaySize_string);
 	}
       }
     }
 #endif /* def CONFIGURE_DISPLAYSIZE */
 
-    for (i=0;i<4;i++) {
-	switch (ConfiguredMonitor->det_mon[i].type) {
-	    case DS_NAME:
-		ptr->mon_modelname  = xf86confrealloc(ptr->mon_modelname, 
-		  strlen((char*)(ConfiguredMonitor->det_mon[i].section.name))
-		    + 1);
-		strcpy(ptr->mon_modelname,
-		       (char*)(ConfiguredMonitor->det_mon[i].section.name));
-		break;
-	    case DS_RANGES:
-		ptr->mon_hsync[ptr->mon_n_hsync].lo =
-		    ConfiguredMonitor->det_mon[i].section.ranges.min_h;
-		ptr->mon_hsync[ptr->mon_n_hsync].hi =
-		    ConfiguredMonitor->det_mon[i].section.ranges.max_h;
-		ptr->mon_n_vrefresh = 1;
-		ptr->mon_vrefresh[ptr->mon_n_hsync].lo =
-		    ConfiguredMonitor->det_mon[i].section.ranges.min_v;
-		ptr->mon_vrefresh[ptr->mon_n_hsync].hi =
-		    ConfiguredMonitor->det_mon[i].section.ranges.max_v;
-		ptr->mon_n_hsync++;
-	    default:
-		break;
-	}
-    }
+    xf86ForEachDetailedBlock(ConfiguredMonitor, handle_detailed_input,
+                             ptr);
 
     if (ConfiguredMonitor->features.dpms) {
-      ptr->mon_option_lst = xf86addNewOption(ptr->mon_option_lst, xstrdup("DPMS"), NULL);
+      ptr->mon_option_lst = xf86addNewOption(ptr->mon_option_lst, strdup("DPMS"), NULL);
     }
 
     return ptr;
@@ -683,7 +647,7 @@ DoConfigure(void)
     /* Load all the drivers that were found. */
     xf86LoadModules(vlist, NULL);
 
-    xfree(vlist);
+    free(vlist);
 
     for (i = 0; i < xf86NumDrivers; i++) {
 	xorgHWFlags flags;
@@ -703,11 +667,6 @@ DoConfigure(void)
 	    xorgHWAccess = FALSE;
     }
 
-    /* Disable PCI devices */
-    xf86ResourceBrokerInit();
-    xf86AccessInit();
-    xf86FindPrimaryDevice();
- 
     /* Create XF86Config file structure */
     xf86config = calloc(1, sizeof(XF86ConfigRec));
 
@@ -835,7 +794,7 @@ DoConfigure(void)
 		}
 	    }
 	}
-	xfree(driverProbed);
+	free(driverProbed);
     }
     
 
@@ -846,7 +805,6 @@ DoConfigure(void)
     }
 
     xf86PostProbe();
-    xf86EntityInit();
 
     for (j = 0; j < xf86NumScreens; j++) {
 	xf86Screens[j]->scrnIndex = j;
@@ -862,7 +820,6 @@ DoConfigure(void)
 
 	ConfiguredMonitor = NULL;
 
-	xf86EnableAccess(xf86Screens[dev2screen[j]]);
 	if ((*xf86Screens[dev2screen[j]]->PreInit)(xf86Screens[dev2screen[j]], 
 						   PROBE_DETECT) &&
 	    ConfiguredMonitor) {

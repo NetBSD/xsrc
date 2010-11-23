@@ -55,6 +55,17 @@ SOFTWARE.
 
 #ifdef HAVE_DMX_CONFIG_H
 #include <dmx-config.h>
+#undef XV
+#undef DBE
+#undef XF86VIDMODE
+#undef XFreeXDGA
+#undef XF86DRI
+#undef SCREENSAVER
+#undef RANDR
+#undef XFIXES
+#undef DAMAGE
+#undef COMPOSITE
+#undef MITSHM
 #endif
 
 #ifdef HAVE_XNEST_CONFIG_H
@@ -104,15 +115,10 @@ extern Bool noScreenSaverExtension;
 #ifdef MITSHM
 extern Bool noMITShmExtension;
 #endif
-#ifdef MULTIBUFFER
-extern Bool noMultibufferExtension;
-#endif
 #ifdef RANDR
 extern Bool noRRExtension;
 #endif
-#ifdef RENDER
 extern Bool noRenderExtension;
-#endif
 #ifdef XCSECURITY
 extern Bool noSecurityExtension;
 #endif
@@ -133,10 +139,6 @@ extern Bool noXFree86VidModeExtension;
 #endif
 #ifdef XFIXES
 extern Bool noXFixesExtension;
-#endif
-#ifdef XKB
-/* |noXkbExtension| is defined in xc/programs/Xserver/xkb/xkbInit.c */
-extern Bool noXkbExtension;
 #endif
 #ifdef PANORAMIX
 extern Bool noPanoramiXExtension;
@@ -160,20 +162,15 @@ typedef void (*InitExtension)(INITARGS);
 #endif
 
 #ifdef MITSHM
-#define _XSHM_SERVER_
-#include <X11/extensions/shmstr.h>
-#include <X11/extensions/shmproto.h>
+#include <X11/extensions/shm.h>
 #endif
 #ifdef XTEST
-#define _XTEST_SERVER_
 #include <X11/extensions/xtestconst.h>
 #endif
-#ifdef XKB
 #include <X11/extensions/XKB.h>
-#endif
 #ifdef XCSECURITY
 #include "securitysrv.h"
-#include <X11/extensions/securproto.h>
+#include <X11/extensions/secur.h>
 #endif
 #ifdef XSELINUX
 #include "xselinux.h"
@@ -182,7 +179,7 @@ typedef void (*InitExtension)(INITARGS);
 #include <X11/extensions/panoramiXproto.h>
 #endif
 #ifdef XF86BIGFONT
-#include <X11/extensions/xf86bigfstr.h>
+#include <X11/extensions/xf86bigfproto.h>
 #endif
 #ifdef RES
 #include <X11/extensions/XResproto.h>
@@ -191,9 +188,6 @@ typedef void (*InitExtension)(INITARGS);
 /* FIXME: this whole block of externs should be from the appropriate headers */
 #ifdef MITSHM
 extern void ShmExtensionInit(INITARGS);
-#endif
-#ifdef MULTIBUFFER
-extern void MultibufferExtensionInit(INITARGS);
 #endif
 #ifdef PANORAMIX
 extern void PanoramiXExtensionInit(INITARGS);
@@ -214,9 +208,7 @@ extern void XvExtensionInit(INITARGS);
 extern void XvMCExtensionInit(INITARGS);
 #endif
 extern void SyncExtensionInit(INITARGS);
-#ifdef XKB
 extern void XkbExtensionInit(INITARGS);
-#endif
 extern void XCMiscExtensionInit(INITARGS);
 #ifdef XRECORD
 extern void RecordExtensionInit(INITARGS);
@@ -251,9 +243,7 @@ extern void XFree86DRIExtensionInit(INITARGS);
 #ifdef DPMSExtension
 extern void DPMSExtensionInit(INITARGS);
 #endif
-#ifdef RENDER
 extern void RenderExtensionInit(INITARGS);
-#endif
 #ifdef RANDR
 extern void RRExtensionInit(INITARGS);
 #endif
@@ -307,15 +297,10 @@ static ExtensionToggle ExtensionToggleList[] =
 #ifdef MITSHM
     { SHMNAME, &noMITShmExtension },
 #endif
-#ifdef MULTIBUFFER
-    { "Multi-Buffering", &noMultibufferExtension },
-#endif
 #ifdef RANDR
     { "RANDR", &noRRExtension },
 #endif
-#ifdef RENDER
     { "RENDER", &noRenderExtension },
-#endif
 #ifdef XCSECURITY
     { "SECURITY", &noSecurityExtension },
 #endif
@@ -341,9 +326,7 @@ static ExtensionToggle ExtensionToggleList[] =
     { "XINERAMA", &noPanoramiXExtension },
 #endif
     { "XInputExtension", NULL },
-#ifdef XKB
-    { "XKEYBOARD", &noXkbExtension },
-#endif
+    { "XKEYBOARD", NULL },
 #ifdef XSELINUX
     { "SELinux", &noSELinuxExtension },
 #endif
@@ -360,8 +343,14 @@ Bool EnableDisableExtension(char *name, Bool enable)
 
     for (ext = &ExtensionToggleList[0]; ext->name != NULL; ext++) {
 	if (strcmp(name, ext->name) == 0) {
-	    *ext->disablePtr = !enable;
-	    return TRUE;
+	    if (ext->disablePtr != NULL) {
+		*ext->disablePtr = !enable;
+		return TRUE;
+	    } else {
+		/* Extension is always on, impossible to disable */
+		return enable; /* okay if they wanted to enable,
+				  fail if they tried to disable */
+	    }
 	}
     }
 
@@ -371,12 +360,24 @@ Bool EnableDisableExtension(char *name, Bool enable)
 void EnableDisableExtensionError(char *name, Bool enable)
 {
     ExtensionToggle *ext = &ExtensionToggleList[0];
+    Bool found = FALSE;
 
-    ErrorF("[mi] Extension \"%s\" is not recognized\n", name);
+    for (ext = &ExtensionToggleList[0]; ext->name != NULL; ext++) {
+	if ((strcmp(name, ext->name) == 0) && (ext->disablePtr == NULL)) {
+	    ErrorF("[mi] Extension \"%s\" can not be disabled\n", name);
+	    found = TRUE;
+	    break;
+	}
+    }
+    if (found == FALSE)
+	ErrorF("[mi] Extension \"%s\" is not recognized\n", name);
     ErrorF("[mi] Only the following extensions can be run-time %s:\n",
 	   enable ? "enabled" : "disabled");
-    for (ext = &ExtensionToggleList[0]; ext->name != NULL; ext++)
-	ErrorF("[mi]    %s\n", ext->name);
+    for (ext = &ExtensionToggleList[0]; ext->name != NULL; ext++) {
+	if (ext->disablePtr != NULL) {
+	    ErrorF("[mi]    %s\n", ext->name);
+	}
+    }
 }
 
 #ifndef XFree86LOADER
@@ -399,9 +400,6 @@ InitExtensions(int argc, char *argv[])
 #ifdef MITSHM
     if (!noMITShmExtension) ShmExtensionInit();
 #endif
-#ifdef MULTIBUFFER
-    if (!noMultibufferExtension) MultibufferExtensionInit();
-#endif
     XInputExtensionInit();
 #ifdef XTEST
     if (!noTestExtensions) XTestExtensionInit();
@@ -417,9 +415,7 @@ InitExtensions(int argc, char *argv[])
     }
 #endif
     SyncExtensionInit();
-#if defined(XKB)
-    if (!noXkbExtension) XkbExtensionInit();
-#endif
+    XkbExtensionInit();
     XCMiscExtensionInit();
 #ifdef XRECORD
     if (!noTestExtensions) RecordExtensionInit(); 
@@ -454,9 +450,7 @@ InitExtensions(int argc, char *argv[])
     /* must be before Render to layer DisplayCursor correctly */
     if (!noXFixesExtension) XFixesExtensionInit();
 #endif
-#ifdef RENDER
     if (!noRenderExtension) RenderExtensionInit();
-#endif
 #ifdef RANDR
     if (!noRRExtension) RRExtensionInit();
 #endif
@@ -494,9 +488,7 @@ static ExtensionModule staticExtensions[] = {
 #endif
     { BigReqExtensionInit, "BIG-REQUESTS", NULL, NULL, NULL },
     { SyncExtensionInit, "SYNC", NULL, NULL, NULL },
-#ifdef XKB
-    { XkbExtensionInit, XkbName, &noXkbExtension, NULL, NULL },
-#endif
+    { XkbExtensionInit, XkbName, NULL, NULL, NULL },
     { XCMiscExtensionInit, "XC-MISC", NULL, NULL, NULL },
 #ifdef XCSECURITY
     { SecurityExtensionInit, SECURITY_EXTENSION_NAME, &noSecurityExtension, NULL, NULL },
@@ -511,9 +503,7 @@ static ExtensionModule staticExtensions[] = {
 #ifdef XF86BIGFONT
     { XFree86BigfontExtensionInit, XF86BIGFONTNAME, &noXFree86BigfontExtension, NULL, NULL },
 #endif
-#ifdef RENDER
     { RenderExtensionInit, "RENDER", &noRenderExtension, NULL, NULL },
-#endif
 #ifdef RANDR
     { RRExtensionInit, "RANDR", &noRRExtension, NULL, NULL },
 #endif
@@ -547,8 +537,7 @@ InitExtensions(int argc, char *argv[])
     for (i = 0; ExtensionModuleList[i].name != NULL; i++) {
 	ext = &ExtensionModuleList[i];
 	if (ext->initFunc != NULL && 
-	    (ext->disablePtr == NULL || 
-	     (ext->disablePtr != NULL && !*ext->disablePtr))) {
+	    (ext->disablePtr == NULL || !*ext->disablePtr)) {
 	    (ext->initFunc)();
 	}
     }

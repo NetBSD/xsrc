@@ -34,10 +34,6 @@ from Kaleb S. KEITHLEY
 #include <xorg-config.h>
 #endif
 
-#include <string.h>
-
-#define NEED_REPLIES
-#define NEED_EVENTS
 #include <X11/X.h>
 #include <X11/Xproto.h>
 #include "misc.h"
@@ -45,18 +41,18 @@ from Kaleb S. KEITHLEY
 #include "extnsionst.h"
 #include "scrnintstr.h"
 #include "servermd.h"
-#define _XF86VIDMODE_SERVER_
-#include <X11/extensions/xf86vmstr.h>
+#include <X11/extensions/xf86vmproto.h>
 #include "swaprep.h"
 #include "xf86.h"
 #include "vidmodeproc.h"
 #include "globals.h"
+#include "protocol-versions.h"
 
 #define DEFAULT_XF86VIDMODE_VERBOSITY	3
 
 static int VidModeErrorBase;
-static int VidModeClientPrivateKeyIndex;
-static DevPrivateKey VidModeClientPrivateKey = &VidModeClientPrivateKeyIndex;
+static DevPrivateKeyRec VidModeClientPrivateKeyRec;
+#define VidModeClientPrivateKey (&VidModeClientPrivateKeyRec)
 
 /* This holds the client's version information */
 typedef struct {
@@ -145,8 +141,8 @@ typedef struct _XF86VidModeScreenPrivate {
     Bool		hasWindow;
 } XF86VidModeScreenPrivateRec, *XF86VidModeScreenPrivatePtr;
 
-static int ScreenPrivateKeyIndex;
-static DevPrivateKey ScreenPrivateKey = &ScreenPrivateKeyIndex;
+static DevPrivateKeyRec ScreenPrivateKeyRec;
+#define ScreenPrivateKey (&ScreenPrivateKeyRec)
 
 #define GetScreenPrivate(s) ((ScreenSaverScreenPrivatePtr) \
     dixLookupPrivate(&(s)->devPrivates, ScreenPrivateKey))
@@ -154,7 +150,7 @@ static DevPrivateKey ScreenPrivateKey = &ScreenPrivateKeyIndex;
     dixSetPrivate(&(s)->devPrivates, ScreenPrivateKey, v)
 #define SetupScreen(s)  ScreenSaverScreenPrivatePtr pPriv = GetScreenPrivate(s)
 
-#define New(t)  (xalloc (sizeof (t)))
+#define New(t)  (malloc(sizeof (t)))
 #endif
 
 #ifdef DEBUG
@@ -173,17 +169,21 @@ XFree86VidModeExtensionInit(void)
 
     DEBUG_P("XFree86VidModeExtensionInit");
 
+    if (!dixRegisterPrivateKey(&VidModeClientPrivateKeyRec, PRIVATE_CLIENT, 0))
+	return;
 #ifdef XF86VIDMODE_EVENTS
-    EventType = CreateNewResourceType(XF86VidModeFreeEvents);
+    if (!dixRegisterPrivateKey(&ScreenPrivateKeyRec, PRIVATE_SCREEN, 0))
+	return;
+#endif
+
+#ifdef XF86VIDMODE_EVENTS
+    EventType = CreateNewResourceType(XF86VidModeFreeEvents, "VidModeEvent");
 #endif
 
     for(i = 0; i < screenInfo.numScreens; i++) {
         pScreen = screenInfo.screens[i];
 	if (VidModeExtensionInit(pScreen))
 	    enabled = TRUE;
-#ifdef XF86VIDMODE_EVENTS
-	SetScreenPrivate (pScreen, NULL);
-#endif
     }
     /* This means that the DDX doesn't want the vidmode extension enabled */
     if (!enabled)
@@ -233,7 +233,7 @@ CheckScreenPrivate (pScreen)
     if (!pPriv)
 	return;
     if (!pPriv->events && !pPriv->hasWindow) {
-	xfree (pPriv);
+	free(pPriv);
 	SetScreenPrivate (pScreen, NULL);
     }
 }
@@ -287,7 +287,7 @@ setEventMask (ScreenPtr pScreen, ClientPtr client, unsigned long mask)
 	    break;
     if (mask == 0) {
 	*pPrev = pEv->next;
-	xfree (pEv);
+	free(pEv);
 	CheckScreenPrivate (pScreen);
     } else {
 	if (!pEv) {
@@ -323,7 +323,7 @@ XF86VidModeFreeEvents(pointer value, XID id)
     if (!pEv)
 	return TRUE;
     *pPrev = pEv->next;
-    xfree (pEv);
+    free(pEv);
     CheckScreenPrivate (pScreen);
     return TRUE;
 }
@@ -335,7 +335,6 @@ SendXF86VidModeNotify(ScreenPtr pScreen, int state, Bool forced)
     XF86VidModeEventPtr		pEv;
     unsigned long		mask;
     xXF86VidModeNotifyEvent	ev;
-    ClientPtr			client;
     int				kind;
 
     UpdateCurrentTimeIf ();
@@ -347,19 +346,15 @@ SendXF86VidModeNotify(ScreenPtr pScreen, int state, Bool forced)
     kind = XF86VidModeModeChange;
     for (pEv = pPriv->events; pEv; pEv = pEv->next)
     {
-	client = pEv->client;
-	if (client->clientGone)
-	    continue;
 	if (!(pEv->mask & mask))
 	    continue;
 	ev.type = XF86VidModeNotify + XF86VidModeEventBase;
 	ev.state = state;
-	ev.sequenceNumber = client->sequence;
 	ev.timestamp = currentTime.milliseconds;
-	ev.root = WindowTable[pScreen->myNum]->drawable.id;
+	ev.root = pScreen->root->drawable.id;
 	ev.kind = kind;
 	ev.forced = forced;
-	WriteEventsToClient (client, 1, (xEvent *) &ev);
+	WriteEventsToClient (pEv->client, 1, (xEvent *) &ev);
     }
 }
 
@@ -389,8 +384,8 @@ ProcXF86VidModeQueryVersion(ClientPtr client)
     rep.type = X_Reply;
     rep.length = 0;
     rep.sequenceNumber = client->sequence;
-    rep.majorVersion = XF86VIDMODE_MAJOR_VERSION;
-    rep.minorVersion = XF86VIDMODE_MINOR_VERSION;
+    rep.majorVersion = SERVER_XF86VIDMODE_MAJOR_VERSION;
+    rep.minorVersion = SERVER_XF86VIDMODE_MINOR_VERSION;
     if (client->swapped) {
     	swaps(&rep.sequenceNumber, n);
     	swapl(&rep.length, n);
@@ -398,7 +393,7 @@ ProcXF86VidModeQueryVersion(ClientPtr client)
     	swaps(&rep.minorVersion, n);
     }
     WriteToClient(client, sizeof(xXF86VidModeQueryVersionReply), (char *)&rep);
-    return (client->noClientException);
+    return Success;
 }
 
 static int
@@ -418,11 +413,11 @@ ProcXF86VidModeGetModeLine(ClientPtr client)
     REQUEST_SIZE_MATCH(xXF86VidModeGetModeLineReq);
     rep.type = X_Reply;
     if (ver < 2) {
-	rep.length = (SIZEOF(xXF86OldVidModeGetModeLineReply) -
-			SIZEOF(xGenericReply)) >> 2;
+	rep.length = bytes_to_int32(SIZEOF(xXF86OldVidModeGetModeLineReply) -
+			SIZEOF(xGenericReply));
     } else {
-	rep.length = (SIZEOF(xXF86VidModeGetModeLineReply) -
-			SIZEOF(xGenericReply)) >> 2;
+	rep.length = bytes_to_int32(SIZEOF(xXF86VidModeGetModeLineReply) -
+			SIZEOF(xGenericReply));
     }
     rep.sequenceNumber = client->sequence;
 
@@ -499,7 +494,7 @@ ProcXF86VidModeGetModeLine(ClientPtr client)
 	WriteToClient(client, sizeof(xXF86VidModeGetModeLineReply),
 			(char *)&rep);
     }
-    return (client->noClientException);
+    return Success;
 }
 
 static int
@@ -525,7 +520,7 @@ ProcXF86VidModeGetAllModeLines(ClientPtr client)
 
     modecount = VidModeGetNumOfModes(stuff->screen);
     if (modecount < 1)
-      return (VidModeErrorBase + XF86VidModeExtensionDisabled);
+      return VidModeErrorBase + XF86VidModeExtensionDisabled;
 
     if (!VidModeGetFirstModeline(stuff->screen, &mode, &dotClock))
 	return BadValue;
@@ -594,7 +589,7 @@ ProcXF86VidModeGetAllModeLines(ClientPtr client)
 
    } while (VidModeGetNextModeline(stuff->screen, &mode, &dotClock));
 
-    return (client->noClientException);
+    return Success;
 }
 
 #define MODEMATCH(mode,stuff)	  \
@@ -674,10 +669,10 @@ ProcXF86VidModeAddModeLine(ClientPtr client)
 
     if (ver < 2) {
 	REQUEST_AT_LEAST_SIZE(xXF86OldVidModeAddModeLineReq);
-	len = client->req_len - (sizeof(xXF86OldVidModeAddModeLineReq) >> 2);
+	len = client->req_len - bytes_to_int32(sizeof(xXF86OldVidModeAddModeLineReq));
     } else {
 	REQUEST_AT_LEAST_SIZE(xXF86VidModeAddModeLineReq);
-	len = client->req_len - (sizeof(xXF86VidModeAddModeLineReq) >> 2);
+	len = client->req_len - bytes_to_int32(sizeof(xXF86VidModeAddModeLineReq));
     }
     if (len != stuff->privsize)
 	return BadLength;
@@ -742,20 +737,20 @@ ProcXF86VidModeAddModeLine(ClientPtr client)
 	    break;
 	case MODE_HSYNC:
 	case MODE_H_ILLEGAL:
-	    xfree(mode);
+	    free(mode);
 	    return VidModeErrorBase + XF86VidModeBadHTimings;
 	case MODE_VSYNC:
 	case MODE_V_ILLEGAL:
-	    xfree(mode);
+	    free(mode);
 	    return VidModeErrorBase + XF86VidModeBadVTimings;
 	default:
-	    xfree(mode);
+	    free(mode);
 	    return VidModeErrorBase + XF86VidModeModeUnsuitable;
     }
 
     /* Check that the driver is happy with the mode */
     if (VidModeCheckModeForDriver(stuff->screen, mode) != MODE_OK) {
-	xfree(mode);
+	free(mode);
 	return VidModeErrorBase + XF86VidModeModeUnsuitable;
     }
 
@@ -765,7 +760,7 @@ ProcXF86VidModeAddModeLine(ClientPtr client)
     
     if (xf86GetVerbosity() > DEFAULT_XF86VIDMODE_VERBOSITY)
 	ErrorF("AddModeLine - Succeeded\n");
-    return client->noClientException;
+    return Success;
 }
 
 static int
@@ -813,10 +808,10 @@ ProcXF86VidModeDeleteModeLine(ClientPtr client)
 
     if (ver < 2) {
 	REQUEST_AT_LEAST_SIZE(xXF86OldVidModeDeleteModeLineReq);
-	len = client->req_len - (sizeof(xXF86OldVidModeDeleteModeLineReq) >> 2);
+	len = client->req_len - bytes_to_int32(sizeof(xXF86OldVidModeDeleteModeLineReq));
     } else {
 	REQUEST_AT_LEAST_SIZE(xXF86VidModeDeleteModeLineReq);
-	len = client->req_len - (sizeof(xXF86VidModeDeleteModeLineReq) >> 2);
+	len = client->req_len - bytes_to_int32(sizeof(xXF86VidModeDeleteModeLineReq));
     }
     if (len != stuff->privsize) {
 	if (xf86GetVerbosity() > DEFAULT_XF86VIDMODE_VERBOSITY) {
@@ -878,7 +873,7 @@ ProcXF86VidModeDeleteModeLine(ClientPtr client)
 	    VidModeDeleteModeline(stuff->screen, mode);
 	    if (xf86GetVerbosity() > DEFAULT_XF86VIDMODE_VERBOSITY)
 		ErrorF("DeleteModeLine - Succeeded\n");
-	    return(client->noClientException);
+	    return Success;
 	}
     } while (VidModeGetNextModeline(stuff->screen, &mode, &dotClock));
 
@@ -927,10 +922,10 @@ ProcXF86VidModeModModeLine(ClientPtr client)
 
     if (ver < 2) {
 	REQUEST_AT_LEAST_SIZE(xXF86OldVidModeModModeLineReq);
-	len = client->req_len - (sizeof(xXF86OldVidModeModModeLineReq) >> 2);
+	len = client->req_len - bytes_to_int32(sizeof(xXF86OldVidModeModModeLineReq));
     } else {
 	REQUEST_AT_LEAST_SIZE(xXF86VidModeModModeLineReq);
-	len = client->req_len - (sizeof(xXF86VidModeModModeLineReq) >> 2);
+	len = client->req_len - bytes_to_int32(sizeof(xXF86VidModeModModeLineReq));
     }
     if (len != stuff->privsize)
 	return BadLength;
@@ -972,23 +967,23 @@ ProcXF86VidModeModModeLine(ClientPtr client)
 	    break;
 	case MODE_HSYNC:
 	case MODE_H_ILLEGAL:
-	    xfree(modetmp);
+	    free(modetmp);
 	    return VidModeErrorBase + XF86VidModeBadHTimings;
 	case MODE_VSYNC:
 	case MODE_V_ILLEGAL:
-	    xfree(modetmp);
+	    free(modetmp);
 	    return VidModeErrorBase + XF86VidModeBadVTimings;
 	default:
-	    xfree(modetmp);
+	    free(modetmp);
 	    return VidModeErrorBase + XF86VidModeModeUnsuitable;
     }
 
     /* Check that the driver is happy with the mode */
     if (VidModeCheckModeForDriver(stuff->screen, modetmp) != MODE_OK) {
-	xfree(modetmp);
+	free(modetmp);
 	return VidModeErrorBase + XF86VidModeModeUnsuitable;
     }
-    xfree(modetmp);
+    free(modetmp);
 
     VidModeSetModeValue(mode, VIDMODE_H_DISPLAY, stuff->hdisplay);
     VidModeSetModeValue(mode, VIDMODE_H_SYNCSTART, stuff->hsyncstart); 
@@ -1006,7 +1001,7 @@ ProcXF86VidModeModModeLine(ClientPtr client)
 
     if (xf86GetVerbosity() > DEFAULT_XF86VIDMODE_VERBOSITY)
 	ErrorF("ModModeLine - Succeeded\n");
-    return(client->noClientException);
+    return Success;
 }
 
 static int
@@ -1056,10 +1051,10 @@ ProcXF86VidModeValidateModeLine(ClientPtr client)
     if (ver < 2) {
 	REQUEST_AT_LEAST_SIZE(xXF86OldVidModeValidateModeLineReq);
 	len = client->req_len -
-			(sizeof(xXF86OldVidModeValidateModeLineReq) >> 2);
+			bytes_to_int32(sizeof(xXF86OldVidModeValidateModeLineReq));
     } else {
 	REQUEST_AT_LEAST_SIZE(xXF86VidModeValidateModeLineReq);
-	len = client->req_len - (sizeof(xXF86VidModeValidateModeLineReq) >> 2);
+	len = client->req_len - bytes_to_int32(sizeof(xXF86VidModeValidateModeLineReq));
     }
     if (len != stuff->privsize)
 	return BadLength;
@@ -1107,12 +1102,11 @@ ProcXF86VidModeValidateModeLine(ClientPtr client)
     status = VidModeCheckModeForDriver(stuff->screen, modetmp);
 
 status_reply:
-    if(modetmp)
-      xfree(modetmp);
+    free(modetmp);
 
     rep.type = X_Reply;
-    rep.length = (SIZEOF(xXF86VidModeValidateModeLineReply)
-   			 - SIZEOF(xGenericReply)) >> 2;
+    rep.length = bytes_to_int32(SIZEOF(xXF86VidModeValidateModeLineReply)
+			 - SIZEOF(xGenericReply));
     rep.sequenceNumber = client->sequence;
     rep.status = status;
     if (client->swapped) {
@@ -1124,7 +1118,7 @@ status_reply:
     WriteToClient(client, sizeof(xXF86VidModeValidateModeLineReply), (char *)&rep);
     if (xf86GetVerbosity() > DEFAULT_XF86VIDMODE_VERBOSITY)
 	ErrorF("ValidateModeLine - Succeeded (status = %d)\n", status);
-    return(client->noClientException);
+    return Success;
 }
 
 static int
@@ -1141,7 +1135,7 @@ ProcXF86VidModeSwitchMode(ClientPtr client)
 
     VidModeZoomViewport(stuff->screen, (short)stuff->zoom);
 
-    return (client->noClientException);
+    return Success;
 }
 
 static int
@@ -1189,10 +1183,10 @@ ProcXF86VidModeSwitchToMode(ClientPtr client)
 
     if (ver < 2) {
 	REQUEST_AT_LEAST_SIZE(xXF86OldVidModeSwitchToModeReq);
-	len = client->req_len - (sizeof(xXF86OldVidModeSwitchToModeReq) >> 2);
+	len = client->req_len - bytes_to_int32(sizeof(xXF86OldVidModeSwitchToModeReq));
     } else {
 	REQUEST_AT_LEAST_SIZE(xXF86VidModeSwitchToModeReq);
-	len = client->req_len - (sizeof(xXF86VidModeSwitchToModeReq) >> 2);
+	len = client->req_len - bytes_to_int32(sizeof(xXF86VidModeSwitchToModeReq));
     }
     if (len != stuff->privsize)
 	return BadLength;
@@ -1205,7 +1199,7 @@ ProcXF86VidModeSwitchToMode(ClientPtr client)
 
     if ((VidModeGetDotClock(stuff->screen, stuff->dotclock) == dotClock)
 	    && MODEMATCH(mode, stuff))
-	return (client->noClientException);
+	return Success;
 
     if (!VidModeGetFirstModeline(stuff->screen, &mode, &dotClock))
 	return BadValue;
@@ -1234,7 +1228,7 @@ ProcXF86VidModeSwitchToMode(ClientPtr client)
 
 	    if (xf86GetVerbosity() > DEFAULT_XF86VIDMODE_VERBOSITY)
 		ErrorF("SwitchToMode - Succeeded\n");
-	    return(client->noClientException);
+	    return Success;
 	}
     } while (VidModeGetNextModeline(stuff->screen, &mode, &dotClock));
 
@@ -1256,7 +1250,7 @@ ProcXF86VidModeLockModeSwitch(ClientPtr client)
     if (!VidModeLockZoom(stuff->screen, (short)stuff->lock))
 	return VidModeErrorBase + XF86VidModeZoomLocked;
 
-    return (client->noClientException);
+    return Success;
 }
 
 static int
@@ -1293,21 +1287,21 @@ ProcXF86VidModeGetMonitor(ClientPtr client)
 				  VIDMODE_MON_MODEL, 0)).ptr);
     else
 	rep.modelLength = 0;
-    rep.length = (SIZEOF(xXF86VidModeGetMonitorReply) - SIZEOF(xGenericReply) +
+    rep.length = bytes_to_int32(SIZEOF(xXF86VidModeGetMonitorReply) - SIZEOF(xGenericReply) +
 		  (nHsync + nVrefresh) * sizeof(CARD32) +
-	          ((rep.vendorLength + 3) & ~3) +
-		  ((rep.modelLength + 3) & ~3)) >> 2;
+	          pad_to_int32(rep.vendorLength) +
+		  pad_to_int32(rep.modelLength));
     rep.sequenceNumber = client->sequence;
     rep.nhsync = nHsync;
     rep.nvsync = nVrefresh;
-    hsyncdata = xalloc(nHsync * sizeof(CARD32));
+    hsyncdata = malloc(nHsync * sizeof(CARD32));
     if (!hsyncdata) {
 	return BadAlloc;
     }
 
-    vsyncdata = xalloc(nVrefresh * sizeof(CARD32));
+    vsyncdata = malloc(nVrefresh * sizeof(CARD32));
     if (!vsyncdata) {
-	xfree(hsyncdata);
+	free(hsyncdata);
 	return BadAlloc;
     }
 
@@ -1340,10 +1334,10 @@ ProcXF86VidModeGetMonitor(ClientPtr client)
     if (rep.modelLength)
 	WriteToClient(client, rep.modelLength, (char *)(VidModeGetMonitorValue(monitor, VIDMODE_MON_MODEL, 0)).ptr);
 
-    xfree(hsyncdata);
-    xfree(vsyncdata);
+    free(hsyncdata);
+    free(vsyncdata);
 
-    return (client->noClientException);
+    return Success;
 }
 
 static int
@@ -1375,7 +1369,7 @@ ProcXF86VidModeGetViewPort(ClientPtr client)
 	swapl(&rep.y, n);
     }
     WriteToClient(client, SIZEOF(xXF86VidModeGetViewPortReply), (char *)&rep);
-    return (client->noClientException);
+    return Success;
 }
 
 static int
@@ -1393,7 +1387,7 @@ ProcXF86VidModeSetViewPort(ClientPtr client)
     if (!VidModeSetViewPort(stuff->screen, stuff->x, stuff->y))
 	return BadValue;
 
-    return (client->noClientException);
+    return Success;
 }
 
 static int
@@ -1417,19 +1411,19 @@ ProcXF86VidModeGetDotClocks(ClientPtr client)
     numClocks = VidModeGetNumOfClocks(stuff->screen, &ClockProg);
 
     rep.type = X_Reply;
-    rep.length = (SIZEOF(xXF86VidModeGetDotClocksReply)
-		    - SIZEOF(xGenericReply) + numClocks) >> 2;
+    rep.length = bytes_to_int32(SIZEOF(xXF86VidModeGetDotClocksReply)
+		    - SIZEOF(xGenericReply) + numClocks);
     rep.sequenceNumber = client->sequence;
     rep.clocks = numClocks;
     rep.maxclocks = MAXCLOCKS;
     rep.flags = 0;
 
     if (!ClockProg) {
-	Clocks = xalloc(numClocks * sizeof(int));
+	Clocks = malloc(numClocks * sizeof(int));
 	if (!Clocks)
 	    return BadValue;
 	if (!VidModeGetClocks(stuff->screen, Clocks)) {
-	    xfree(Clocks);
+	    free(Clocks);
 	    return BadValue;
 	}
     }
@@ -1456,8 +1450,8 @@ ProcXF86VidModeGetDotClocks(ClientPtr client)
 	}
     }
 
-    xfree(Clocks);
-    return (client->noClientException);
+    free(Clocks);
+    return Success;
 }
 
 static int
@@ -1476,7 +1470,7 @@ ProcXF86VidModeSetGamma(ClientPtr client)
 		((float)stuff->green)/10000., ((float)stuff->blue)/10000.))
 	return BadValue;
 
-    return (client->noClientException);
+    return Success;
 }
 
 static int
@@ -1510,7 +1504,7 @@ ProcXF86VidModeGetGamma(ClientPtr client)
     	swapl(&rep.blue, n);
     }
     WriteToClient(client, sizeof(xXF86VidModeGetGammaReply), (char *)&rep);
-    return (client->noClientException);
+    return Success;
 }
 
 static int
@@ -1537,15 +1531,15 @@ ProcXF86VidModeSetGammaRamp(ClientPtr client)
     if (!VidModeSetGammaRamp(stuff->screen, stuff->size, r, g, b))
         return BadValue;
 
-    return (client->noClientException);
+    return Success;
 }
 
 static int
 ProcXF86VidModeGetGammaRamp(ClientPtr client)
 {
     CARD16 *ramp = NULL;
-    int n, length, i;
-    size_t ramplen;
+    int n, length;
+    size_t ramplen = 0;
     xXF86VidModeGetGammaRampReply rep;
     REQUEST(xXF86VidModeGetGammaRampReq);
 
@@ -1561,12 +1555,12 @@ ProcXF86VidModeGetGammaRamp(ClientPtr client)
 
     if(stuff->size) {
 	ramplen = length * 3 * sizeof(CARD16);
-	if (!(ramp = xalloc(ramplen)))
+	if (!(ramp = malloc(ramplen)))
 	    return BadAlloc;
    
         if (!VidModeGetGammaRamp(stuff->screen, stuff->size, 
 		ramp, ramp + length, ramp + (length * 2))) {
-	    xfree(ramp);
+	    free(ramp);
             return BadValue;
 	}
     }
@@ -1579,16 +1573,16 @@ ProcXF86VidModeGetGammaRamp(ClientPtr client)
 	swaps(&rep.sequenceNumber, n);
 	swapl(&rep.length, n);
 	swaps(&rep.size, n);
-	SwapShorts(ramp, length * 3);
+	SwapShorts((short*)ramp, length * 3);
     }
     WriteToClient(client, sizeof(xXF86VidModeGetGammaRampReply), (char *)&rep);
 
     if(stuff->size) {
 	WriteToClient(client, ramplen, (char*)ramp);
-        xfree(ramp);
+        free(ramp);
     }
 
-    return (client->noClientException);
+    return Success;
 }
 
 
@@ -1615,7 +1609,7 @@ ProcXF86VidModeGetGammaRampSize(ClientPtr client)
     }
     WriteToClient(client,sizeof(xXF86VidModeGetGammaRampSizeReply),(char*)&rep);
 
-    return (client->noClientException);
+    return Success;
 }
 
 static int
@@ -1645,7 +1639,7 @@ ProcXF86VidModeGetPermissions(ClientPtr client)
     }
     WriteToClient(client,sizeof(xXF86VidModeGetPermissionsReply),(char*)&rep);
 
-    return (client->noClientException);
+    return Success;
 }
 
 
@@ -1661,7 +1655,7 @@ ProcXF86VidModeSetClientVersion(ClientPtr client)
     REQUEST_SIZE_MATCH(xXF86VidModeSetClientVersionReq);
 
     if ((pPriv = VM_GETPRIV(client)) == NULL) {
-	pPriv = xalloc(sizeof(VidModePrivRec));
+	pPriv = malloc(sizeof(VidModePrivRec));
 	if (!pPriv)
 	    return BadAlloc;
 	VM_SETPRIV(client, pPriv);
@@ -1669,7 +1663,7 @@ ProcXF86VidModeSetClientVersion(ClientPtr client)
     pPriv->major = stuff->major;
     pPriv->minor = stuff->minor;
     
-    return (client->noClientException);
+    return Success;
 }
 
 static int

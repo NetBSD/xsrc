@@ -7,18 +7,10 @@
 #define INITARGS void
 #endif
 
-#define _SHAPE_SERVER_  /* don't want Xlib structures */
 #include <X11/extensions/shapeproto.h>
-
-#ifdef MULTIBUFFER
-extern void MultibufferExtensionInit(INITARGS);
-#define _MULTIBUF_SERVER_	/* don't want Xlib structures */
-#include <X11/extensions/multibufproto.h>
-#endif
 
 #ifdef XTEST
 extern void XTestExtensionInit(INITARGS);
-#define _XTEST_SERVER_
 #include <X11/extensions/xtestproto.h>
 #endif
 
@@ -33,20 +25,18 @@ extern void ScreenSaverExtensionInit (INITARGS);
 
 #ifdef XF86VIDMODE
 extern void	XFree86VidModeExtensionInit(INITARGS);
-#define _XF86VIDMODE_SERVER_
 #include <X11/extensions/xf86vmproto.h>
 #endif
 
 #ifdef XFreeXDGA
 extern void XFree86DGAExtensionInit(INITARGS);
 extern void XFree86DGARegister(INITARGS);
-#define _XF86DGA_SERVER_
 #include <X11/extensions/xf86dgaproto.h>
 #endif
 
 #ifdef DPMSExtension
 extern void DPMSExtensionInit(INITARGS);
-#include <X11/extensions/dpmsproto.h>
+#include <X11/extensions/dpmsconst.h>
 #endif
 
 #ifdef XV
@@ -64,7 +54,6 @@ extern void ResExtensionInit(INITARGS);
 
 #ifdef SHM
 extern void ShmExtensionInit(INITARGS);
-#include <X11/extensions/shmstr.h>
 #include <X11/extensions/shmproto.h>
 extern void ShmRegisterFuncs(
     ScreenPtr pScreen,

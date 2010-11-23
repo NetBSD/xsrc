@@ -10,9 +10,7 @@
 #include "xf86fbman.h"
 #include "xaa.h"
 #include "mi.h"
-#ifdef RENDER
 #include "picturestr.h"
-#endif
 
 #define GCWhenForced		(GCArcMode << 1)
 
@@ -55,10 +53,8 @@ typedef struct _XAAScreen {
    void                		(*LeaveVT)(int, int);
    int				(*SetDGAMode)(int, int, DGADevicePtr);
    void				(*EnableDisableFBAccess)(int, Bool);
-#ifdef RENDER
     CompositeProcPtr            Composite;
     GlyphsProcPtr               Glyphs;
-#endif
 } XAAScreenRec, *XAAScreenPtr;
 
 #define	OPS_ARE_PIXMAP		0x00000001
@@ -97,18 +93,18 @@ typedef struct _XAAPixmap {
 } XAAPixmapRec, *XAAPixmapPtr;
 
 
-Bool 
+extern _X_EXPORT Bool
 XAACreateGC(
     GCPtr pGC
 );
 
-Bool
+extern _X_EXPORT Bool
 XAAInitAccel(
     ScreenPtr pScreen, 
     XAAInfoRecPtr infoRec
 );
 
-RegionPtr
+extern _X_EXPORT RegionPtr
 XAABitBlt(
     DrawablePtr pSrcDrawable,
     DrawablePtr pDstDrawable,
@@ -123,7 +119,7 @@ XAABitBlt(
     unsigned long bitPlane
 );
 
-void 
+extern _X_EXPORT void
 XAAScreenToScreenBitBlt(
     ScrnInfoPtr pScrn,
     int nbox,
@@ -135,7 +131,7 @@ XAAScreenToScreenBitBlt(
     unsigned int planemask
 );
 
-void
+extern _X_EXPORT void
 XAADoBitBlt(
     DrawablePtr	    pSrc, 
     DrawablePtr     pDst,
@@ -144,7 +140,7 @@ XAADoBitBlt(
     DDXPointPtr	    pptSrc
 );
 
-void
+extern _X_EXPORT void
 XAADoImageWrite(
     DrawablePtr	    pSrc, 
     DrawablePtr     pDst,
@@ -153,7 +149,7 @@ XAADoImageWrite(
     DDXPointPtr	    pptSrc
 );
 
-void
+extern _X_EXPORT void
 XAADoImageRead(
     DrawablePtr     pSrc,
     DrawablePtr     pDst,
@@ -162,7 +158,7 @@ XAADoImageRead(
     DDXPointPtr     pptSrc
 );
 
-void 
+extern _X_EXPORT void
 XAACopyWindow(
     WindowPtr pWin,
     DDXPointRec ptOldOrg,
@@ -170,7 +166,7 @@ XAACopyWindow(
 );
 
 
-RegionPtr 
+extern _X_EXPORT RegionPtr
 XAACopyArea(
     DrawablePtr pSrcDrawable,
     DrawablePtr pDstDrawable,
@@ -183,56 +179,56 @@ XAACopyArea(
     int dsty
 );
 
-void
+extern _X_EXPORT void
 XAAValidateCopyArea(
    GCPtr         pGC,
    unsigned long changes,
    DrawablePtr   pDraw
 );
 
-void
+extern _X_EXPORT void
 XAAValidatePutImage(
    GCPtr         pGC,
    unsigned long changes,
    DrawablePtr   pDraw 
 );
 
-void
+extern _X_EXPORT void
 XAAValidateCopyPlane(
    GCPtr         pGC,
    unsigned long changes,
    DrawablePtr   pDraw
 );
 
-void
+extern _X_EXPORT void
 XAAValidatePushPixels(
    GCPtr         pGC,
    unsigned long changes,
    DrawablePtr   pDraw
 );
 
-void
+extern _X_EXPORT void
 XAAValidateFillSpans(
    GCPtr         pGC,
    unsigned long changes,
    DrawablePtr   pDraw
 );
 
-void
+extern _X_EXPORT void
 XAAValidatePolyGlyphBlt(
    GCPtr         pGC,
    unsigned long changes,
    DrawablePtr   pDraw
 );
 
-void
+extern _X_EXPORT void
 XAAValidateImageGlyphBlt(
    GCPtr         pGC,
    unsigned long changes,
    DrawablePtr   pDraw
 );
 
-void
+extern _X_EXPORT void
 XAAValidatePolylines(
    GCPtr         pGC,
    unsigned long changes,
@@ -240,7 +236,7 @@ XAAValidatePolylines(
 );
 
 
-RegionPtr
+extern _X_EXPORT RegionPtr
 XAACopyPlaneColorExpansion(
     DrawablePtr		pSrc,
     DrawablePtr		pDst,
@@ -255,7 +251,7 @@ XAACopyPlaneColorExpansion(
 );
 
 
-void
+extern _X_EXPORT void
 XAAPushPixelsSolidColorExpansion(
     GCPtr	pGC,
     PixmapPtr	pBitMap,
@@ -266,7 +262,7 @@ XAAPushPixelsSolidColorExpansion(
     int		yOrg
 );
 
-void
+extern _X_EXPORT void
 XAAWriteBitmapColorExpandMSBFirstFixedBase (
     ScrnInfoPtr pScrn,
     int x, int y, int w, int h,
@@ -278,7 +274,7 @@ XAAWriteBitmapColorExpandMSBFirstFixedBase (
     unsigned int planemask 
 );
 
-void
+extern _X_EXPORT void
 XAAWriteBitmapColorExpand3MSBFirstFixedBase (
     ScrnInfoPtr pScrn,
     int x, int y, int w, int h,
@@ -290,7 +286,7 @@ XAAWriteBitmapColorExpand3MSBFirstFixedBase (
     unsigned int planemask 
 );
 
-void
+extern _X_EXPORT void
 XAAWriteBitmapColorExpandMSBFirst (
     ScrnInfoPtr pScrn,
     int x, int y, int w, int h,
@@ -302,7 +298,7 @@ XAAWriteBitmapColorExpandMSBFirst (
     unsigned int planemask 
 );
 
-void
+extern _X_EXPORT void
 XAAWriteBitmapColorExpand3MSBFirst (
     ScrnInfoPtr pScrn,
     int x, int y, int w, int h,
@@ -314,7 +310,7 @@ XAAWriteBitmapColorExpand3MSBFirst (
     unsigned int planemask 
 );
 
-void
+extern _X_EXPORT void
 XAAWriteBitmapColorExpandLSBFirstFixedBase (
     ScrnInfoPtr pScrn,
     int x, int y, int w, int h,
@@ -326,7 +322,7 @@ XAAWriteBitmapColorExpandLSBFirstFixedBase (
     unsigned int planemask 
 );
 
-void
+extern _X_EXPORT void
 XAAWriteBitmapColorExpand3LSBFirstFixedBase (
     ScrnInfoPtr pScrn,
     int x, int y, int w, int h,
@@ -338,7 +334,7 @@ XAAWriteBitmapColorExpand3LSBFirstFixedBase (
     unsigned int planemask 
 );
 
-void
+extern _X_EXPORT void
 XAAWriteBitmapColorExpandLSBFirst (
     ScrnInfoPtr pScrn,
     int x, int y, int w, int h,
@@ -350,7 +346,7 @@ XAAWriteBitmapColorExpandLSBFirst (
     unsigned int planemask 
 );
 
-void
+extern _X_EXPORT void
 XAAWriteBitmapColorExpand3LSBFirst (
     ScrnInfoPtr pScrn,
     int x, int y, int w, int h,
@@ -363,7 +359,7 @@ XAAWriteBitmapColorExpand3LSBFirst (
 );
 
 
-void
+extern _X_EXPORT void
 XAAWriteBitmapScanlineColorExpandMSBFirst (
     ScrnInfoPtr pScrn,
     int x, int y, int w, int h,
@@ -375,7 +371,7 @@ XAAWriteBitmapScanlineColorExpandMSBFirst (
     unsigned int planemask 
 );
 
-void
+extern _X_EXPORT void
 XAAWriteBitmapScanlineColorExpand3MSBFirst (
     ScrnInfoPtr pScrn,
     int x, int y, int w, int h,
@@ -387,7 +383,7 @@ XAAWriteBitmapScanlineColorExpand3MSBFirst (
     unsigned int planemask 
 );
 
-void
+extern _X_EXPORT void
 XAAWriteBitmapScanlineColorExpandMSBFirstFixedBase (
     ScrnInfoPtr pScrn,
     int x, int y, int w, int h,
@@ -399,7 +395,7 @@ XAAWriteBitmapScanlineColorExpandMSBFirstFixedBase (
     unsigned int planemask 
 );
 
-void
+extern _X_EXPORT void
 XAAWriteBitmapScanlineColorExpand3MSBFirstFixedBase (
     ScrnInfoPtr pScrn,
     int x, int y, int w, int h,
@@ -411,7 +407,7 @@ XAAWriteBitmapScanlineColorExpand3MSBFirstFixedBase (
     unsigned int planemask 
 );
 
-void
+extern _X_EXPORT void
 XAAWriteBitmapScanlineColorExpandLSBFirst (
     ScrnInfoPtr pScrn,
     int x, int y, int w, int h,
@@ -423,7 +419,7 @@ XAAWriteBitmapScanlineColorExpandLSBFirst (
     unsigned int planemask 
 );
 
-void
+extern _X_EXPORT void
 XAAWriteBitmapScanlineColorExpand3LSBFirst (
     ScrnInfoPtr pScrn,
     int x, int y, int w, int h,
@@ -435,7 +431,7 @@ XAAWriteBitmapScanlineColorExpand3LSBFirst (
     unsigned int planemask 
 );
 
-void
+extern _X_EXPORT void
 XAAWriteBitmapScanlineColorExpandLSBFirstFixedBase (
     ScrnInfoPtr pScrn,
     int x, int y, int w, int h,
@@ -447,7 +443,7 @@ XAAWriteBitmapScanlineColorExpandLSBFirstFixedBase (
     unsigned int planemask 
 );
 
-void
+extern _X_EXPORT void
 XAAWriteBitmapScanlineColorExpand3LSBFirstFixedBase (
     ScrnInfoPtr pScrn,
     int x, int y, int w, int h,
@@ -459,7 +455,7 @@ XAAWriteBitmapScanlineColorExpand3LSBFirstFixedBase (
     unsigned int planemask 
 );
 
-void 
+extern _X_EXPORT void
 XAAWritePixmap (
    ScrnInfoPtr pScrn,
    int x, int y, int w, int h,
@@ -471,7 +467,7 @@ XAAWritePixmap (
    int bpp, int depth
 );
 
-void 
+extern _X_EXPORT void
 XAAWritePixmapScanline (
    ScrnInfoPtr pScrn,
    int x, int y, int w, int h,
@@ -486,7 +482,7 @@ XAAWritePixmapScanline (
 typedef void (*ClipAndRenderRectsFunc)(GCPtr, int, BoxPtr, int, int); 
 
 
-void
+extern _X_EXPORT void
 XAAClipAndRenderRects(
    GCPtr pGC, 
    ClipAndRenderRectsFunc func, 
@@ -499,7 +495,7 @@ XAAClipAndRenderRects(
 typedef void (*ClipAndRenderSpansFunc)(GCPtr, int, DDXPointPtr, int*, 
 							int, int, int);
 
-void
+extern _X_EXPORT void
 XAAClipAndRenderSpans(
     GCPtr pGC, 
     DDXPointPtr	ppt,
@@ -512,7 +508,7 @@ XAAClipAndRenderSpans(
 );
 
 
-void
+extern _X_EXPORT void
 XAAFillSolidRects(
     ScrnInfoPtr pScrn,
     int fg, int rop,
@@ -521,7 +517,7 @@ XAAFillSolidRects(
     BoxPtr	pBox 
 );
 
-void
+extern _X_EXPORT void
 XAAFillMono8x8PatternRects(
     ScrnInfoPtr pScrn,
     int	fg, int bg, int rop,
@@ -532,7 +528,7 @@ XAAFillMono8x8PatternRects(
     int xorg, int yorg
 );
 
-void
+extern _X_EXPORT void
 XAAFillMono8x8PatternRectsScreenOrigin(
     ScrnInfoPtr pScrn,
     int	fg, int bg, int rop,
@@ -544,7 +540,7 @@ XAAFillMono8x8PatternRectsScreenOrigin(
 );
 
 
-void
+extern _X_EXPORT void
 XAAFillColor8x8PatternRectsScreenOrigin(
    ScrnInfoPtr pScrn,
    int rop,
@@ -555,7 +551,7 @@ XAAFillColor8x8PatternRectsScreenOrigin(
    XAACacheInfoPtr pCache
 );
 
-void
+extern _X_EXPORT void
 XAAFillColor8x8PatternRects(
    ScrnInfoPtr pScrn,
    int rop,
@@ -566,7 +562,7 @@ XAAFillColor8x8PatternRects(
    XAACacheInfoPtr pCache
 );
 
-void 
+extern _X_EXPORT void
 XAAFillCacheBltRects(
    ScrnInfoPtr pScrn,
    int rop,
@@ -577,7 +573,7 @@ XAAFillCacheBltRects(
    XAACacheInfoPtr pCache
 );
 
-void 
+extern _X_EXPORT void
 XAAFillCacheExpandRects(
    ScrnInfoPtr pScrn,
    int fg, int bg, int rop,
@@ -588,7 +584,7 @@ XAAFillCacheExpandRects(
    PixmapPtr pPix
 );
 
-void 
+extern _X_EXPORT void
 XAAFillImageWriteRects(
     ScrnInfoPtr pScrn,
     int rop,
@@ -599,18 +595,7 @@ XAAFillImageWriteRects(
     PixmapPtr pPix
 );
 
-void 
-XAAFillScanlineImageWriteRects(
-    ScrnInfoPtr pScrn,
-    int rop,
-    unsigned int planemask,
-    int nBox,
-    BoxPtr pBox,
-    int xorg, int yorg,
-    PixmapPtr pPix
-);
-
-void
+extern _X_EXPORT void
 XAAPolyFillRect(
     DrawablePtr pDraw,
     GCPtr pGC,
@@ -619,7 +604,7 @@ XAAPolyFillRect(
 );
 
 
-void
+extern _X_EXPORT void
 XAATEGlyphRendererMSBFirstFixedBase (
     ScrnInfoPtr pScrn,
     int x, int y, int w, int h, int skipleft, int startline, 
@@ -627,7 +612,7 @@ XAATEGlyphRendererMSBFirstFixedBase (
     int fg, int bg, int rop, unsigned planemask
 );
 
-void
+extern _X_EXPORT void
 XAATEGlyphRenderer3MSBFirstFixedBase (
     ScrnInfoPtr pScrn,
     int x, int y, int w, int h, int skipleft, int startline, 
@@ -635,7 +620,7 @@ XAATEGlyphRenderer3MSBFirstFixedBase (
     int fg, int bg, int rop, unsigned planemask
 );
 
-void
+extern _X_EXPORT void
 XAATEGlyphRendererMSBFirst (
     ScrnInfoPtr pScrn,
     int x, int y, int w, int h, int skipleft, int startline, 
@@ -643,7 +628,7 @@ XAATEGlyphRendererMSBFirst (
     int fg, int bg, int rop, unsigned planemask
 );
 
-void
+extern _X_EXPORT void
 XAATEGlyphRenderer3MSBFirst (
     ScrnInfoPtr pScrn,
     int x, int y, int w, int h, int skipleft, int startline, 
@@ -651,7 +636,7 @@ XAATEGlyphRenderer3MSBFirst (
     int fg, int bg, int rop, unsigned planemask
 );
 
-void
+extern _X_EXPORT void
 XAATEGlyphRendererLSBFirstFixedBase (
     ScrnInfoPtr pScrn,
     int x, int y, int w, int h, int skipleft, int startline, 
@@ -660,7 +645,7 @@ XAATEGlyphRendererLSBFirstFixedBase (
 );
 
 
-void
+extern _X_EXPORT void
 XAATEGlyphRenderer3LSBFirstFixedBase (
     ScrnInfoPtr pScrn,
     int x, int y, int w, int h, int skipleft, int startline, 
@@ -668,7 +653,7 @@ XAATEGlyphRenderer3LSBFirstFixedBase (
     int fg, int bg, int rop, unsigned planemask
 );
 
-void
+extern _X_EXPORT void
 XAATEGlyphRendererLSBFirst (
     ScrnInfoPtr pScrn,
     int x, int y, int w, int h, int skipleft, int startline, 
@@ -676,7 +661,7 @@ XAATEGlyphRendererLSBFirst (
     int fg, int bg, int rop, unsigned planemask
 );
 
-void
+extern _X_EXPORT void
 XAATEGlyphRenderer3LSBFirst (
     ScrnInfoPtr pScrn,
     int x, int y, int w, int h, int skipleft, int startline, 
@@ -685,7 +670,7 @@ XAATEGlyphRenderer3LSBFirst (
 );
 
 
-void
+extern _X_EXPORT void
 XAATEGlyphRendererScanlineMSBFirst (
     ScrnInfoPtr pScrn,
     int x, int y, int w, int h, int skipleft, int startline, 
@@ -693,7 +678,7 @@ XAATEGlyphRendererScanlineMSBFirst (
     int fg, int bg, int rop, unsigned planemask
 );
 
-void
+extern _X_EXPORT void
 XAATEGlyphRendererScanline3MSBFirst (
     ScrnInfoPtr pScrn,
     int x, int y, int w, int h, int skipleft, int startline, 
@@ -701,7 +686,7 @@ XAATEGlyphRendererScanline3MSBFirst (
     int fg, int bg, int rop, unsigned planemask
 );
 
-void
+extern _X_EXPORT void
 XAATEGlyphRendererScanlineLSBFirst (
     ScrnInfoPtr pScrn,
     int x, int y, int w, int h, int skipleft, int startline, 
@@ -709,7 +694,7 @@ XAATEGlyphRendererScanlineLSBFirst (
     int fg, int bg, int rop, unsigned planemask
 );
 
-void
+extern _X_EXPORT void
 XAATEGlyphRendererScanline3LSBFirst (
     ScrnInfoPtr pScrn,
     int x, int y, int w, int h, int skipleft, int startline, 
@@ -718,28 +703,28 @@ XAATEGlyphRendererScanline3LSBFirst (
 );
 
 
-extern CARD32 *(*XAAGlyphScanlineFuncMSBFirstFixedBase[32])(
+extern _X_EXPORT CARD32 *(*XAAGlyphScanlineFuncMSBFirstFixedBase[32])(
    CARD32 *base, unsigned int **glyphp, int line, int nglyph, int width
 );
 
-extern CARD32 *(*XAAGlyphScanlineFuncMSBFirst[32])(
+extern _X_EXPORT CARD32 *(*XAAGlyphScanlineFuncMSBFirst[32])(
    CARD32 *base, unsigned int **glyphp, int line, int nglyph, int width
 );
 
-extern CARD32 *(*XAAGlyphScanlineFuncLSBFirstFixedBase[32])(
+extern _X_EXPORT CARD32 *(*XAAGlyphScanlineFuncLSBFirstFixedBase[32])(
    CARD32 *base, unsigned int **glyphp, int line, int nglyph, int width
 );
 
-extern CARD32 *(*XAAGlyphScanlineFuncLSBFirst[32])(
+extern _X_EXPORT CARD32 *(*XAAGlyphScanlineFuncLSBFirst[32])(
    CARD32 *base, unsigned int **glyphp, int line, int nglyph, int width
 );
 
-GlyphScanlineFuncPtr *XAAGetGlyphScanlineFuncMSBFirstFixedBase(void);
-GlyphScanlineFuncPtr *XAAGetGlyphScanlineFuncMSBFirst(void);
-GlyphScanlineFuncPtr *XAAGetGlyphScanlineFuncLSBFirstFixedBase(void);
-GlyphScanlineFuncPtr *XAAGetGlyphScanlineFuncLSBFirst(void);
+extern _X_EXPORT GlyphScanlineFuncPtr *XAAGetGlyphScanlineFuncMSBFirstFixedBase(void);
+extern _X_EXPORT GlyphScanlineFuncPtr *XAAGetGlyphScanlineFuncMSBFirst(void);
+extern _X_EXPORT GlyphScanlineFuncPtr *XAAGetGlyphScanlineFuncLSBFirstFixedBase(void);
+extern _X_EXPORT GlyphScanlineFuncPtr *XAAGetGlyphScanlineFuncLSBFirst(void);
 
-void
+extern _X_EXPORT void
 XAAFillColorExpandRectsLSBFirst(
    ScrnInfoPtr pScrn,
    int fg, int bg, int rop,
@@ -750,7 +735,7 @@ XAAFillColorExpandRectsLSBFirst(
    PixmapPtr pPix
 );
 
-void
+extern _X_EXPORT void
 XAAFillColorExpandRects3LSBFirst(
    ScrnInfoPtr pScrn,
    int fg, int bg, int rop,
@@ -761,7 +746,7 @@ XAAFillColorExpandRects3LSBFirst(
    PixmapPtr pPix
 );
 
-void
+extern _X_EXPORT void
 XAAFillColorExpandRectsLSBFirstFixedBase(
    ScrnInfoPtr pScrn,
    int fg, int bg, int rop,
@@ -772,7 +757,7 @@ XAAFillColorExpandRectsLSBFirstFixedBase(
    PixmapPtr pPix
 );
 
-void
+extern _X_EXPORT void
 XAAFillColorExpandRects3LSBFirstFixedBase(
    ScrnInfoPtr pScrn,
    int fg, int bg, int rop,
@@ -783,7 +768,7 @@ XAAFillColorExpandRects3LSBFirstFixedBase(
    PixmapPtr pPix
 );
 
-void
+extern _X_EXPORT void
 XAAFillColorExpandRectsMSBFirst(
    ScrnInfoPtr pScrn,
    int fg, int bg, int rop,
@@ -794,7 +779,7 @@ XAAFillColorExpandRectsMSBFirst(
    PixmapPtr pPix
 );
 
-void
+extern _X_EXPORT void
 XAAFillColorExpandRects3MSBFirst(
    ScrnInfoPtr pScrn,
    int fg, int bg, int rop,
@@ -805,7 +790,7 @@ XAAFillColorExpandRects3MSBFirst(
    PixmapPtr pPix
 );
 
-void
+extern _X_EXPORT void
 XAAFillColorExpandRectsMSBFirstFixedBase(
    ScrnInfoPtr pScrn,
    int fg, int bg, int rop,
@@ -816,7 +801,7 @@ XAAFillColorExpandRectsMSBFirstFixedBase(
    PixmapPtr pPix
 );
 
-void
+extern _X_EXPORT void
 XAAFillColorExpandRects3MSBFirstFixedBase(
    ScrnInfoPtr pScrn,
    int fg, int bg, int rop,
@@ -827,7 +812,7 @@ XAAFillColorExpandRects3MSBFirstFixedBase(
    PixmapPtr pPix
 );
 
-void
+extern _X_EXPORT void
 XAAFillScanlineColorExpandRectsLSBFirst(
    ScrnInfoPtr pScrn,
    int fg, int bg, int rop,
@@ -838,7 +823,7 @@ XAAFillScanlineColorExpandRectsLSBFirst(
    PixmapPtr pPix
 );
 
-void
+extern _X_EXPORT void
 XAAFillScanlineColorExpandRects3LSBFirst(
    ScrnInfoPtr pScrn,
    int fg, int bg, int rop,
@@ -849,7 +834,7 @@ XAAFillScanlineColorExpandRects3LSBFirst(
    PixmapPtr pPix
 );
 
-void
+extern _X_EXPORT void
 XAAFillScanlineColorExpandRectsMSBFirst(
    ScrnInfoPtr pScrn,
    int fg, int bg, int rop,
@@ -860,7 +845,7 @@ XAAFillScanlineColorExpandRectsMSBFirst(
    PixmapPtr pPix
 );
 
-void
+extern _X_EXPORT void
 XAAFillScanlineColorExpandRects3MSBFirst(
    ScrnInfoPtr pScrn,
    int fg, int bg, int rop,
@@ -871,7 +856,7 @@ XAAFillScanlineColorExpandRects3MSBFirst(
    PixmapPtr pPix
 );
 
-void
+extern _X_EXPORT void
 XAAFillColorExpandSpansLSBFirst(
    ScrnInfoPtr pScrn,
    int fg, int bg, int rop,
@@ -884,7 +869,7 @@ XAAFillColorExpandSpansLSBFirst(
    PixmapPtr pPix
 );
 
-void
+extern _X_EXPORT void
 XAAFillColorExpandSpans3LSBFirst(
    ScrnInfoPtr pScrn,
    int fg, int bg, int rop,
@@ -897,7 +882,7 @@ XAAFillColorExpandSpans3LSBFirst(
    PixmapPtr pPix
 );
 
-void
+extern _X_EXPORT void
 XAAFillColorExpandSpansLSBFirstFixedBase(
    ScrnInfoPtr pScrn,
    int fg, int bg, int rop,
@@ -910,7 +895,7 @@ XAAFillColorExpandSpansLSBFirstFixedBase(
    PixmapPtr pPix
 );
 
-void
+extern _X_EXPORT void
 XAAFillColorExpandSpans3LSBFirstFixedBase(
    ScrnInfoPtr pScrn,
    int fg, int bg, int rop,
@@ -923,7 +908,7 @@ XAAFillColorExpandSpans3LSBFirstFixedBase(
    PixmapPtr pPix
 );
 
-void
+extern _X_EXPORT void
 XAAFillColorExpandSpansMSBFirst(
    ScrnInfoPtr pScrn,
    int fg, int bg, int rop,
@@ -936,7 +921,7 @@ XAAFillColorExpandSpansMSBFirst(
    PixmapPtr pPix
 );
 
-void
+extern _X_EXPORT void
 XAAFillColorExpandSpans3MSBFirst(
    ScrnInfoPtr pScrn,
    int fg, int bg, int rop,
@@ -949,7 +934,7 @@ XAAFillColorExpandSpans3MSBFirst(
    PixmapPtr pPix
 );
 
-void
+extern _X_EXPORT void
 XAAFillColorExpandSpansMSBFirstFixedBase(
    ScrnInfoPtr pScrn,
    int fg, int bg, int rop,
@@ -962,7 +947,7 @@ XAAFillColorExpandSpansMSBFirstFixedBase(
    PixmapPtr pPix
 );
 
-void
+extern _X_EXPORT void
 XAAFillColorExpandSpans3MSBFirstFixedBase(
    ScrnInfoPtr pScrn,
    int fg, int bg, int rop,
@@ -975,7 +960,7 @@ XAAFillColorExpandSpans3MSBFirstFixedBase(
    PixmapPtr pPix
 );
 
-void
+extern _X_EXPORT void
 XAAFillScanlineColorExpandSpansLSBFirst(
    ScrnInfoPtr pScrn,
    int fg, int bg, int rop,
@@ -988,7 +973,7 @@ XAAFillScanlineColorExpandSpansLSBFirst(
    PixmapPtr pPix
 );
 
-void
+extern _X_EXPORT void
 XAAFillScanlineColorExpandSpans3LSBFirst(
    ScrnInfoPtr pScrn,
    int fg, int bg, int rop,
@@ -1001,7 +986,7 @@ XAAFillScanlineColorExpandSpans3LSBFirst(
    PixmapPtr pPix
 );
 
-void
+extern _X_EXPORT void
 XAAPutImage(
     DrawablePtr pDraw,
     GCPtr       pGC,
@@ -1015,7 +1000,7 @@ XAAPutImage(
     char        *pImage
 );
 
-void
+extern _X_EXPORT void
 XAAFillScanlineColorExpandSpansMSBFirst(
    ScrnInfoPtr pScrn,
    int fg, int bg, int rop,
@@ -1028,7 +1013,7 @@ XAAFillScanlineColorExpandSpansMSBFirst(
    PixmapPtr pPix
 );
 
-void
+extern _X_EXPORT void
 XAAFillScanlineColorExpandSpans3MSBFirst(
    ScrnInfoPtr pScrn,
    int fg, int bg, int rop,
@@ -1042,32 +1027,32 @@ XAAFillScanlineColorExpandSpans3MSBFirst(
 );
 
 
-extern CARD32 *(*XAAStippleScanlineFuncMSBFirstFixedBase[6])(
+extern _X_EXPORT CARD32 *(*XAAStippleScanlineFuncMSBFirstFixedBase[6])(
    CARD32* base, CARD32* src, int offset, int width, int dwords
 );
 
-extern CARD32 *(*XAAStippleScanlineFuncMSBFirst[6])(
+extern _X_EXPORT CARD32 *(*XAAStippleScanlineFuncMSBFirst[6])(
    CARD32* base, CARD32* src, int offset, int width, int dwords
 );
 
-extern CARD32 *(*XAAStippleScanlineFuncLSBFirstFixedBase[6])(
+extern _X_EXPORT CARD32 *(*XAAStippleScanlineFuncLSBFirstFixedBase[6])(
    CARD32* base, CARD32* src, int offset, int width, int dwords
 );
 
-extern CARD32 *(*XAAStippleScanlineFuncLSBFirst[6])(
+extern _X_EXPORT CARD32 *(*XAAStippleScanlineFuncLSBFirst[6])(
    CARD32* base, CARD32* src, int offset, int width, int dwords
 );
 
-StippleScanlineProcPtr *XAAGetStippleScanlineFuncMSBFirstFixedBase(void);
-StippleScanlineProcPtr *XAAGetStippleScanlineFuncMSBFirst(void);
-StippleScanlineProcPtr *XAAGetStippleScanlineFuncLSBFirstFixedBase(void);
-StippleScanlineProcPtr *XAAGetStippleScanlineFuncLSBFirst(void);
-StippleScanlineProcPtr *XAAGetStippleScanlineFunc3MSBFirstFixedBase(void);
-StippleScanlineProcPtr *XAAGetStippleScanlineFunc3MSBFirst(void);
-StippleScanlineProcPtr *XAAGetStippleScanlineFunc3LSBFirstFixedBase(void);
-StippleScanlineProcPtr *XAAGetStippleScanlineFunc3LSBFirst(void);
+extern _X_EXPORT StippleScanlineProcPtr *XAAGetStippleScanlineFuncMSBFirstFixedBase(void);
+extern _X_EXPORT StippleScanlineProcPtr *XAAGetStippleScanlineFuncMSBFirst(void);
+extern _X_EXPORT StippleScanlineProcPtr *XAAGetStippleScanlineFuncLSBFirstFixedBase(void);
+extern _X_EXPORT StippleScanlineProcPtr *XAAGetStippleScanlineFuncLSBFirst(void);
+extern _X_EXPORT StippleScanlineProcPtr *XAAGetStippleScanlineFunc3MSBFirstFixedBase(void);
+extern _X_EXPORT StippleScanlineProcPtr *XAAGetStippleScanlineFunc3MSBFirst(void);
+extern _X_EXPORT StippleScanlineProcPtr *XAAGetStippleScanlineFunc3LSBFirstFixedBase(void);
+extern _X_EXPORT StippleScanlineProcPtr *XAAGetStippleScanlineFunc3LSBFirst(void);
 
-int
+extern _X_EXPORT int
 XAAPolyText8TEColorExpansion(
     DrawablePtr pDraw,
     GCPtr pGC,
@@ -1076,7 +1061,7 @@ XAAPolyText8TEColorExpansion(
     char *chars
 );
 
-int
+extern _X_EXPORT int
 XAAPolyText16TEColorExpansion(
     DrawablePtr pDraw,
     GCPtr pGC,
@@ -1085,7 +1070,7 @@ XAAPolyText16TEColorExpansion(
     unsigned short *chars
 );
 
-void
+extern _X_EXPORT void
 XAAImageText8TEColorExpansion(
     DrawablePtr pDraw,
     GCPtr pGC,
@@ -1094,7 +1079,7 @@ XAAImageText8TEColorExpansion(
     char *chars
 );
 
-void
+extern _X_EXPORT void
 XAAImageText16TEColorExpansion(
     DrawablePtr pDraw,
     GCPtr pGC,
@@ -1103,7 +1088,7 @@ XAAImageText16TEColorExpansion(
     unsigned short *chars
 );
 
-void
+extern _X_EXPORT void
 XAAImageGlyphBltTEColorExpansion(
     DrawablePtr pDrawable,
     GCPtr pGC,
@@ -1113,7 +1098,7 @@ XAAImageGlyphBltTEColorExpansion(
     pointer pglyphBase
 );
 
-void
+extern _X_EXPORT void
 XAAPolyGlyphBltTEColorExpansion(
     DrawablePtr pDrawable,
     GCPtr pGC,
@@ -1124,7 +1109,7 @@ XAAPolyGlyphBltTEColorExpansion(
 );
 
 
-int
+extern _X_EXPORT int
 XAAPolyText8NonTEColorExpansion(
     DrawablePtr pDraw,
     GCPtr pGC,
@@ -1133,7 +1118,7 @@ XAAPolyText8NonTEColorExpansion(
     char *chars
 );
 
-int
+extern _X_EXPORT int
 XAAPolyText16NonTEColorExpansion(
     DrawablePtr pDraw,
     GCPtr pGC,
@@ -1142,7 +1127,7 @@ XAAPolyText16NonTEColorExpansion(
     unsigned short *chars
 );
 
-void
+extern _X_EXPORT void
 XAAImageText8NonTEColorExpansion(
     DrawablePtr pDraw,
     GCPtr pGC,
@@ -1151,7 +1136,7 @@ XAAImageText8NonTEColorExpansion(
     char *chars
 );
 
-void
+extern _X_EXPORT void
 XAAImageText16NonTEColorExpansion(
     DrawablePtr pDraw,
     GCPtr pGC,
@@ -1160,7 +1145,7 @@ XAAImageText16NonTEColorExpansion(
     unsigned short *chars
 );
 
-void
+extern _X_EXPORT void
 XAAImageGlyphBltNonTEColorExpansion(
     DrawablePtr pDrawable,
     GCPtr pGC,
@@ -1170,7 +1155,7 @@ XAAImageGlyphBltNonTEColorExpansion(
     pointer pglyphBase
 );
 
-void
+extern _X_EXPORT void
 XAAPolyGlyphBltNonTEColorExpansion(
     DrawablePtr pDrawable,
     GCPtr pGC,
@@ -1181,7 +1166,7 @@ XAAPolyGlyphBltNonTEColorExpansion(
 );
 
 
-void XAANonTEGlyphRenderer(
+extern _X_EXPORT void XAANonTEGlyphRenderer(
    ScrnInfoPtr pScrn,
    int x, int y, int n,
    NonTEGlyphPtr glyphs,
@@ -1190,7 +1175,7 @@ void XAANonTEGlyphRenderer(
    unsigned int planemask
 );
 
-void 
+extern _X_EXPORT void
 XAAFillSolidSpans(
    ScrnInfoPtr pScrn,
    int fg, int rop,
@@ -1200,7 +1185,7 @@ XAAFillSolidSpans(
    int *pwidth, int fSorted 
 );
 
-void 
+extern _X_EXPORT void
 XAAFillMono8x8PatternSpans(
    ScrnInfoPtr pScrn,
    int fg, int bg, int rop,
@@ -1212,7 +1197,7 @@ XAAFillMono8x8PatternSpans(
    int xorg, int yorg 
 );
 
-void 
+extern _X_EXPORT void
 XAAFillMono8x8PatternSpansScreenOrigin(
    ScrnInfoPtr pScrn,
    int fg, int bg, int rop,
@@ -1224,7 +1209,7 @@ XAAFillMono8x8PatternSpansScreenOrigin(
    int xorg, int yorg 
 );
 
-void 
+extern _X_EXPORT void
 XAAFillColor8x8PatternSpansScreenOrigin(
    ScrnInfoPtr pScrn,
    int rop,
@@ -1236,7 +1221,7 @@ XAAFillColor8x8PatternSpansScreenOrigin(
    int xorigin, int yorigin 
 );
 
-void 
+extern _X_EXPORT void
 XAAFillColor8x8PatternSpans(
    ScrnInfoPtr pScrn,
    int rop,
@@ -1248,7 +1233,7 @@ XAAFillColor8x8PatternSpans(
    int xorigin, int yorigin 
 );
 
-void
+extern _X_EXPORT void
 XAAFillCacheBltSpans(
    ScrnInfoPtr pScrn,
    int rop,
@@ -1261,7 +1246,7 @@ XAAFillCacheBltSpans(
    int xorg, int yorg
 );
 
-void 
+extern _X_EXPORT void
 XAAFillCacheExpandSpans(
    ScrnInfoPtr pScrn,
    int fg, int bg, int rop,
@@ -1274,7 +1259,7 @@ XAAFillCacheExpandSpans(
    PixmapPtr pPix
 );
 
-void
+extern _X_EXPORT void
 XAAFillSpans(
     DrawablePtr pDrawable,
     GC		*pGC,
@@ -1285,14 +1270,14 @@ XAAFillSpans(
 );
 
 
-void 
+extern _X_EXPORT void
 XAAInitPixmapCache(
     ScreenPtr pScreen, 
     RegionPtr areas,
     pointer data
 );
 
-void 
+extern _X_EXPORT void
 XAAWriteBitmapToCache(
    ScrnInfoPtr pScrn,
    int x, int y, int w, int h,
@@ -1301,7 +1286,7 @@ XAAWriteBitmapToCache(
    int fg, int bg
 );
  
-void 
+extern _X_EXPORT void
 XAAWriteBitmapToCacheLinear(
    ScrnInfoPtr pScrn,
    int x, int y, int w, int h,
@@ -1310,7 +1295,7 @@ XAAWriteBitmapToCacheLinear(
    int fg, int bg
 );
 
-void 
+extern _X_EXPORT void
 XAAWritePixmapToCache(
    ScrnInfoPtr pScrn,
    int x, int y, int w, int h,
@@ -1319,7 +1304,7 @@ XAAWritePixmapToCache(
    int bpp, int depth
 );
 
-void 
+extern _X_EXPORT void
 XAAWritePixmapToCacheLinear(
    ScrnInfoPtr pScrn,
    int x, int y, int w, int h,
@@ -1328,26 +1313,26 @@ XAAWritePixmapToCacheLinear(
    int bpp, int depth
 );
 
-void 
+extern _X_EXPORT void
 XAASolidHorVertLineAsRects(
    ScrnInfoPtr pScrn,
    int x, int y, int len, int dir
 );
 
-void 
+extern _X_EXPORT void
 XAASolidHorVertLineAsTwoPoint(
    ScrnInfoPtr pScrn,
    int x, int y, int len, int dir
 );
 
-void 
+extern _X_EXPORT void
 XAASolidHorVertLineAsBresenham(
    ScrnInfoPtr pScrn,
    int x, int y, int len, int dir
 );
 
 
-void
+extern _X_EXPORT void
 XAAPolyRectangleThinSolid(
     DrawablePtr  pDrawable,
     GCPtr        pGC,    
@@ -1356,7 +1341,7 @@ XAAPolyRectangleThinSolid(
 );
 
 
-void
+extern _X_EXPORT void
 XAAPolylinesWideSolid (
    DrawablePtr	pDrawable,
    GCPtr	pGC,
@@ -1365,7 +1350,7 @@ XAAPolylinesWideSolid (
    DDXPointPtr	pPts
 );
 
-void
+extern _X_EXPORT void
 XAAFillPolygonSolid(
     DrawablePtr	pDrawable,
     GCPtr	pGC,
@@ -1375,7 +1360,7 @@ XAAFillPolygonSolid(
     DDXPointPtr	ptsIn 
 );
 
-void
+extern _X_EXPORT void
 XAAFillPolygonStippled(
     DrawablePtr	pDrawable,
     GCPtr	pGC,
@@ -1386,7 +1371,7 @@ XAAFillPolygonStippled(
 );
 
 
-void
+extern _X_EXPORT void
 XAAFillPolygonTiled(
     DrawablePtr	pDrawable,
     GCPtr	pGC,
@@ -1397,7 +1382,7 @@ XAAFillPolygonTiled(
 );
 
 
-int
+extern _X_EXPORT int
 XAAIsEasyPolygon(
    DDXPointPtr ptsIn,
    int count, 
@@ -1408,7 +1393,7 @@ XAAIsEasyPolygon(
    int shape
 );
 
-void
+extern _X_EXPORT void
 XAAFillPolygonHelper(
     ScrnInfoPtr pScrn,
     DDXPointPtr	ptsIn,
@@ -1424,7 +1409,7 @@ XAAFillPolygonHelper(
     XAACacheInfoPtr pCache
 );
 
-void
+extern _X_EXPORT void
 XAAPolySegment(
     DrawablePtr	pDrawable,
     GCPtr	pGC,
@@ -1432,7 +1417,7 @@ XAAPolySegment(
     xSegment	*pSeg
 );
 
-void
+extern _X_EXPORT void
 XAAPolyLines(
     DrawablePtr pDrawable,
     GCPtr	pGC,
@@ -1441,7 +1426,7 @@ XAAPolyLines(
     DDXPointPtr pptInit
 );
 
-void
+extern _X_EXPORT void
 XAAPolySegmentDashed(
     DrawablePtr	pDrawable,
     GCPtr	pGC,
@@ -1449,7 +1434,7 @@ XAAPolySegmentDashed(
     xSegment	*pSeg
 );
 
-void
+extern _X_EXPORT void
 XAAPolyLinesDashed(
     DrawablePtr pDrawable,
     GCPtr	pGC,
@@ -1459,44 +1444,44 @@ XAAPolyLinesDashed(
 );
 
 
-void 
+extern _X_EXPORT void
 XAAWriteMono8x8PatternToCache(ScrnInfoPtr pScrn, XAACacheInfoPtr pCache);
 
-void 
+extern _X_EXPORT void
 XAAWriteColor8x8PatternToCache(
    ScrnInfoPtr pScrn, 
    PixmapPtr pPix, 
    XAACacheInfoPtr pCache
 );
 
-void 
+extern _X_EXPORT void
 XAARotateMonoPattern(
     int *pat0, int *pat1,
     int xoffset, int yoffset,
     Bool msbfirst
 );
 
-void XAAComputeDash(GCPtr pGC);
+extern _X_EXPORT void XAAComputeDash(GCPtr pGC);
 
-void XAAMoveDWORDS_FixedBase(
+extern _X_EXPORT void XAAMoveDWORDS_FixedBase(
    register CARD32* dest,
    register CARD32* src,
    register int dwords 
 );
 
-void XAAMoveDWORDS_FixedSrc(
+extern _X_EXPORT void XAAMoveDWORDS_FixedSrc(
    register CARD32* dest,
    register CARD32* src,
    register int dwords 
 );
 
-void XAAMoveDWORDS(
+extern _X_EXPORT void XAAMoveDWORDS(
    register CARD32* dest,
    register CARD32* src,
    register int dwords 
 );
 
-int
+extern _X_EXPORT int
 XAAGetRectClipBoxes(
     GCPtr pGC,
     BoxPtr pboxClippedBase,
@@ -1504,54 +1489,53 @@ XAAGetRectClipBoxes(
     xRectangle *prectInit
 );
 
-void
+extern _X_EXPORT void
 XAASetupOverlay8_32Planar(ScreenPtr);
 
-void
+extern _X_EXPORT void
 XAAPolyFillArcSolid(DrawablePtr pDraw, GCPtr pGC, int narcs, xArc *parcs);
  
-XAACacheInfoPtr
+extern _X_EXPORT XAACacheInfoPtr
 XAACacheTile(ScrnInfoPtr Scrn, PixmapPtr pPix);
 
-XAACacheInfoPtr
+extern _X_EXPORT XAACacheInfoPtr
 XAACacheMonoStipple(ScrnInfoPtr Scrn, PixmapPtr pPix);
 
-XAACacheInfoPtr
+extern _X_EXPORT XAACacheInfoPtr
 XAACachePlanarMonoStipple(ScrnInfoPtr Scrn, PixmapPtr pPix);
 
 typedef XAACacheInfoPtr (*XAACachePlanarMonoStippleProc)(ScrnInfoPtr, PixmapPtr);
-XAACachePlanarMonoStippleProc XAAGetCachePlanarMonoStipple(void);
+extern _X_EXPORT XAACachePlanarMonoStippleProc XAAGetCachePlanarMonoStipple(void);
 
-XAACacheInfoPtr
+extern _X_EXPORT XAACacheInfoPtr
 XAACacheStipple(ScrnInfoPtr Scrn, PixmapPtr pPix, int fg, int bg);
 
-XAACacheInfoPtr
+extern _X_EXPORT XAACacheInfoPtr
 XAACacheMono8x8Pattern(ScrnInfoPtr Scrn, int pat0, int pat1);
 
-XAACacheInfoPtr
+extern _X_EXPORT XAACacheInfoPtr
 XAACacheColor8x8Pattern(ScrnInfoPtr Scrn, PixmapPtr pPix, int fg, int bg);
 
-void 
+extern _X_EXPORT void
 XAATileCache(ScrnInfoPtr pScrn, XAACacheInfoPtr pCache, int w, int h);
  
-void XAAClosePixmapCache(ScreenPtr pScreen);
+extern _X_EXPORT void XAAClosePixmapCache(ScreenPtr pScreen);
 void XAAInvalidatePixmapCache(ScreenPtr pScreen);
 
-Bool XAACheckStippleReducibility(PixmapPtr pPixmap);
-Bool XAACheckTileReducibility(PixmapPtr pPixmap, Bool checkMono);
+extern _X_EXPORT Bool XAACheckStippleReducibility(PixmapPtr pPixmap);
+extern _X_EXPORT Bool XAACheckTileReducibility(PixmapPtr pPixmap, Bool checkMono);
 
-int XAAStippledFillChooser(GCPtr pGC);
-int XAAOpaqueStippledFillChooser(GCPtr pGC);
-int XAATiledFillChooser(GCPtr pGC);
+extern _X_EXPORT int XAAStippledFillChooser(GCPtr pGC);
+extern _X_EXPORT int XAAOpaqueStippledFillChooser(GCPtr pGC);
+extern _X_EXPORT int XAATiledFillChooser(GCPtr pGC);
 
-void XAAMoveInOffscreenPixmaps(ScreenPtr pScreen);
-void XAAMoveOutOffscreenPixmaps(ScreenPtr pScreen);
-void XAARemoveAreaCallback(FBAreaPtr area);
-void XAAMoveOutOffscreenPixmap(PixmapPtr pPix); 
-Bool XAAInitStateWrap(ScreenPtr pScreen, XAAInfoRecPtr infoRec);
+extern _X_EXPORT void XAAMoveInOffscreenPixmaps(ScreenPtr pScreen);
+extern _X_EXPORT void XAAMoveOutOffscreenPixmaps(ScreenPtr pScreen);
+extern _X_EXPORT void XAARemoveAreaCallback(FBAreaPtr area);
+extern _X_EXPORT void XAAMoveOutOffscreenPixmap(PixmapPtr pPix);
+extern _X_EXPORT Bool XAAInitStateWrap(ScreenPtr pScreen, XAAInfoRecPtr infoRec);
 
-#ifdef RENDER
-void
+extern _X_EXPORT void
 XAAComposite (CARD8      op,
 	      PicturePtr pSrc,
 	      PicturePtr pMask,
@@ -1566,7 +1550,7 @@ XAAComposite (CARD8      op,
 	      CARD16     height);
 
 
-Bool
+extern _X_EXPORT Bool
 XAADoComposite (CARD8      op,
               PicturePtr pSrc,
               PicturePtr pMask,
@@ -1581,7 +1565,7 @@ XAADoComposite (CARD8      op,
               CARD16     height);
 
 
-void
+extern _X_EXPORT void
 XAAGlyphs (CARD8         op,
 	   PicturePtr    pSrc,
 	   PicturePtr    pDst,
@@ -1592,7 +1576,7 @@ XAAGlyphs (CARD8         op,
 	   GlyphListPtr  list,
 	   GlyphPtr      *glyphs);
 
-Bool
+extern _X_EXPORT Bool
 XAADoGlyphs (CARD8         op,
            PicturePtr    pSrc,
            PicturePtr    pDst,
@@ -1606,7 +1590,7 @@ XAADoGlyphs (CARD8         op,
 
 
 /* helpers */
-void
+extern _X_EXPORT void
 XAA_888_plus_PICT_a8_to_8888 (
     CARD32 color,
     CARD8  *alphaPtr,   /* in bytes */
@@ -1617,7 +1601,7 @@ XAA_888_plus_PICT_a8_to_8888 (
     int    height
 );
 
-Bool
+extern _X_EXPORT Bool
 XAAGetRGBAFromPixel(
     CARD32 pixel,
     CARD16 *red,
@@ -1628,7 +1612,7 @@ XAAGetRGBAFromPixel(
 );
 
 
-Bool
+extern _X_EXPORT Bool
 XAAGetPixelFromRGBA (
     CARD32 *pixel,
     CARD16 red,
@@ -1638,21 +1622,19 @@ XAAGetPixelFromRGBA (
     CARD32 format
 );
 
-#endif
-
 /* XXX should be static */
-extern GCOps XAAFallbackOps;
-extern GCOps *XAAGetFallbackOps(void);
-extern GCFuncs XAAGCFuncs;
-extern DevPrivateKey XAAGetScreenKey(void);
-extern DevPrivateKey XAAGetGCKey(void);
-extern DevPrivateKey XAAGetPixmapKey(void);
+extern _X_EXPORT GCOps XAAFallbackOps;
+extern _X_EXPORT GCOps *XAAGetFallbackOps(void);
+extern _X_EXPORT GCFuncs XAAGCFuncs;
+extern _X_EXPORT DevPrivateKey XAAGetScreenKey(void);
+extern _X_EXPORT DevPrivateKey XAAGetGCKey(void);
+extern _X_EXPORT DevPrivateKey XAAGetPixmapKey(void);
 
-extern unsigned int XAAShiftMasks[32];
+extern _X_EXPORT unsigned int XAAShiftMasks[32];
 
-extern unsigned int byte_expand3[256], byte_reversed_expand3[256];
+extern _X_EXPORT unsigned int byte_expand3[256], byte_reversed_expand3[256];
 
-CARD32 XAAReverseBitOrder(CARD32 data);
+extern _X_EXPORT CARD32 XAAReverseBitOrder(CARD32 data);
 
 #define GET_XAASCREENPTR_FROM_SCREEN(pScreen)\
     dixLookupPrivate(&(pScreen)->devPrivates, XAAGetScreenKey())
@@ -1730,7 +1712,7 @@ CARD32 XAAReverseBitOrder(CARD32 data);
 	    if(_pLink->pPix == pPix) { \
 		if(_prev) _prev->next = _pLink->next; \
 		else infoRec->OffscreenPixmaps = _pLink->next; \
-		xfree(_pLink); \
+		free(_pLink); \
 		break; \
 	    } \
 	    _prev = _pLink; \
