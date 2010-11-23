@@ -92,24 +92,20 @@ LexRec, *LexPtr;
 
 #include "configProcs.h"
 #include <stdlib.h>
-#define xf86confmalloc malloc
-#define xf86confrealloc realloc
-#define xf86confcalloc calloc
-#define xf86conffree free
 
-#define TestFree(a) if (a) { xf86conffree (a); a = NULL; }
+#define TestFree(a) if (a) { free (a); a = NULL; }
 
 #define parsePrologue(typeptr,typerec) typeptr ptr; \
-if( (ptr=(typeptr)xf86confcalloc(1,sizeof(typerec))) == NULL ) { return NULL; }
+if( (ptr=calloc(1,sizeof(typerec))) == NULL ) { return NULL; }
 
 #define parsePrologueVoid(typeptr,typerec) int token; typeptr ptr; \
-if( (ptr=(typeptr)xf86confcalloc(1,sizeof(typerec))) == NULL ) { return; }
+if( (ptr=calloc(1,sizeof(typerec))) == NULL ) { return; }
 
 #define HANDLE_RETURN(f,func)\
 if ((ptr->f=func) == NULL)\
 {\
 	CLEANUP (ptr);\
-	return (NULL);\
+	return NULL;\
 }
 
 #define HANDLE_LIST(field,func,type)\
@@ -118,7 +114,7 @@ type p = func ();\
 if (p == NULL)\
 {\
 	CLEANUP (ptr);\
-	return (NULL);\
+	return NULL;\
 }\
 else\
 {\
@@ -152,6 +148,8 @@ else\
 "The %s keyword requires a number to follow it."
 #define POSITIVE_INT_MSG \
 "The %s keyword requires a positive integer to follow it."
+#define BOOL_MSG \
+"The %s keyword requires a boolean to follow it."
 #define ZAXISMAPPING_MSG \
 "The ZAxisMapping keyword requires 2 positive numbers or X or Y to follow it."
 #define AUTOREPEAT_MSG \

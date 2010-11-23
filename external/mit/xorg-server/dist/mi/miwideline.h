@@ -31,30 +31,6 @@ from The Open Group.
 #include "mispans.h"
 #include "mifpoly.h" /* for ICEIL */
 
-/* 
- * interface data to span-merging polygon filler
- */
-
-typedef struct _SpanData {
-    SpanGroup	fgGroup, bgGroup;
-} SpanDataRec, *SpanDataPtr;
-
-#define AppendSpanGroup(pGC, pixel, spanPtr, spanData) { \
-	SpanGroup   *group, *othergroup = NULL; \
-	if (pixel == pGC->fgPixel) \
-	{ \
-	    group = &spanData->fgGroup; \
-	    if (pGC->lineStyle == LineDoubleDash) \
-		othergroup = &spanData->bgGroup; \
-	} \
-	else \
-	{ \
-	    group = &spanData->bgGroup; \
-	    othergroup = &spanData->fgGroup; \
-	} \
-	miAppendSpans (group, othergroup, spanPtr); \
-}
-
 /*
  * Polygon edge description for integer wide-line routines
  */
@@ -99,61 +75,25 @@ typedef struct _LineFace {
  * macros for polygon fillers
  */
 
-#define MIPOLYRELOADLEFT    if (!left_height && left_count) { \
-	    	    	    	left_height = left->height; \
-	    	    	    	left_x = left->x; \
-	    	    	    	left_stepx = left->stepx; \
-	    	    	    	left_signdx = left->signdx; \
-	    	    	    	left_e = left->e; \
-	    	    	    	left_dy = left->dy; \
-	    	    	    	left_dx = left->dx; \
-	    	    	    	--left_count; \
-	    	    	    	++left; \
-			    }
-
-#define MIPOLYRELOADRIGHT   if (!right_height && right_count) { \
-	    	    	    	right_height = right->height; \
-	    	    	    	right_x = right->x; \
-	    	    	    	right_stepx = right->stepx; \
-	    	    	    	right_signdx = right->signdx; \
-	    	    	    	right_e = right->e; \
-	    	    	    	right_dy = right->dy; \
-	    	    	    	right_dx = right->dx; \
-	    	    	    	--right_count; \
-	    	    	    	++right; \
-			}
-
-#define MIPOLYSTEPLEFT  left_x += left_stepx; \
-    	    	    	left_e += left_dx; \
-    	    	    	if (left_e > 0) \
-    	    	    	{ \
-	    	    	    left_x += left_signdx; \
-	    	    	    left_e -= left_dy; \
-    	    	    	}
-
-#define MIPOLYSTEPRIGHT right_x += right_stepx; \
-    	    	    	right_e += right_dx; \
-    	    	    	if (right_e > 0) \
-    	    	    	{ \
-	    	    	    right_x += right_signdx; \
-	    	    	    right_e -= right_dy; \
-    	    	    	}
-
 #define MILINESETPIXEL(pDrawable, pGC, pixel, oldPixel) { \
     oldPixel = pGC->fgPixel; \
     if (pixel != oldPixel) { \
-	DoChangeGC (pGC, GCForeground, (XID *) &pixel, FALSE); \
+	ChangeGCVal gcval; \
+	gcval.val = pixel; \
+	ChangeGC (NullClient, pGC, GCForeground, &gcval); \
 	ValidateGC (pDrawable, pGC); \
     } \
 }
 #define MILINERESETPIXEL(pDrawable, pGC, pixel, oldPixel) { \
     if (pixel != oldPixel) { \
-	DoChangeGC (pGC, GCForeground, (XID *) &oldPixel, FALSE); \
+	ChangeGCVal gcval; \
+	gcval.val = oldPixel; \
+	ChangeGC (NullClient, pGC, GCForeground, &gcval); \
 	ValidateGC (pDrawable, pGC); \
     } \
 }
 
-extern void miRoundJoinClip(
+extern _X_EXPORT void miRoundJoinClip(
     LineFacePtr /*pLeft*/,
     LineFacePtr /*pRight*/,
     PolyEdgePtr /*edge1*/,
@@ -164,16 +104,16 @@ extern void miRoundJoinClip(
     Bool * /*left2*/
 );
 
-extern int miRoundCapClip(
+extern _X_EXPORT int miRoundCapClip(
     LineFacePtr /*face*/,
     Bool /*isInt*/,
     PolyEdgePtr /*edge*/,
     Bool * /*leftEdge*/
 );
 
-extern int miPolyBuildEdge(double x0, double y0, double k, int dx, int dy,
+extern _X_EXPORT int miPolyBuildEdge(double x0, double y0, double k, int dx, int dy,
 				int xi, int yi, int left, PolyEdgePtr edge);
-extern int miPolyBuildPoly(PolyVertexPtr vertices, PolySlopePtr slopes,
+extern _X_EXPORT int miPolyBuildPoly(PolyVertexPtr vertices, PolySlopePtr slopes,
 				int count, int xi, int yi, PolyEdgePtr left,
 				PolyEdgePtr right, int *pnleft, int *pnright,
 				int *h);

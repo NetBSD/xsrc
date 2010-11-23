@@ -37,10 +37,24 @@
 /* INCLUDES */
 
 #define NEED_DBE_PROTOCOL
-#include <X11/extensions/Xdbeproto.h>
+#include <X11/extensions/dbeproto.h>
 #include "windowstr.h"
 #include "privates.h"
 
+typedef struct
+{
+    VisualID    visual;    /* one visual ID that supports double-buffering */
+    int         depth;     /* depth of visual in bits                      */
+    int         perflevel; /* performance level of visual                  */
+}
+XdbeVisualInfo;
+
+typedef struct
+{
+    int                 count;          /* number of items in visual_depth   */
+    XdbeVisualInfo      *visinfo;       /* list of visuals & depths for scrn */
+}
+XdbeScreenVisualInfo;
 
 /* DEFINES */
 
@@ -74,7 +88,7 @@
 /* Marker for free elements in the buffer ID array. */
 #define DBE_FREE_ID_ELEMENT	0
 
-extern void DbeExtensionInit (void);
+extern _X_EXPORT void DbeExtensionInit (void);
 
 /* TYPEDEFS */
 
@@ -153,14 +167,6 @@ typedef struct _DbeWindowPrivRec
 
 typedef struct _DbeScreenPrivRec
 {
-    /* Resources created by DIX to be used by DDX */
-    RESTYPE	dbeDrawableResType;
-    RESTYPE	dbeWindowPrivResType;
-
-    /* Private indices created by DIX to be used by DDX */
-    DevPrivateKey dbeScreenPrivKey;
-    DevPrivateKey dbeWindowPrivKey;
-
     /* Wrapped functions
      * It is the responsibilty of the DDX layer to wrap PositionWindow().
      * DbeExtensionInit wraps DestroyWindow().
@@ -202,10 +208,6 @@ typedef struct _DbeScreenPrivRec
     void	(*ResetProc)(
 		ScreenPtr /*pScreen*/
 );
-
-    /* Device-specific private information.
-     */
-    PrivateRec	*devPrivates;
 
 } DbeScreenPrivRec, *DbeScreenPrivPtr;
 

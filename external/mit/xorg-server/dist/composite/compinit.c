@@ -1,23 +1,24 @@
 /*
- * Copyright © 2006 Sun Microsystems
+ * Copyright © 2006 Sun Microsystems, Inc.  All rights reserved.
  *
- * Permission to use, copy, modify, distribute, and sell this software and its
- * documentation for any purpose is hereby granted without fee, provided that
- * the above copyright notice appear in all copies and that both that
- * copyright notice and this permission notice appear in supporting
- * documentation, and that the name of Sun Microsystems not be used in
- * advertising or publicity pertaining to distribution of the software without
- * specific, written prior permission.  Sun Microsystems makes no
- * representations about the suitability of this software for any purpose.  It
- * is provided "as is" without express or implied warranty.
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
  *
- * SUN MICROSYSTEMS DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE,
- * INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO
- * EVENT SHALL SUN MICROSYSTEMS BE LIABLE FOR ANY SPECIAL, INDIRECT OR
- * CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE,
- * DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
- * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
- * PERFORMANCE OF THIS SOFTWARE.
+ * The above copyright notice and this permission notice (including the next
+ * paragraph) shall be included in all copies or substantial portions of the
+ * Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
  *
  * Copyright © 2003 Keith Packard
  *
@@ -45,14 +46,11 @@
 #endif
 
 #include "compint.h"
+#include "compositeext.h"
 
-static int CompScreenPrivateKeyIndex;
-DevPrivateKey CompScreenPrivateKey = &CompScreenPrivateKeyIndex;
-static int CompWindowPrivateKeyIndex;
-DevPrivateKey CompWindowPrivateKey = &CompWindowPrivateKeyIndex;
-static int CompSubwindowsPrivateKeyIndex;
-DevPrivateKey CompSubwindowsPrivateKey = &CompSubwindowsPrivateKeyIndex;
-
+DevPrivateKeyRec CompScreenPrivateKeyRec;
+DevPrivateKeyRec CompWindowPrivateKeyRec;
+DevPrivateKeyRec CompSubwindowsPrivateKeyRec;
 
 static Bool
 compCloseScreen (int index, ScreenPtr pScreen)
@@ -60,13 +58,14 @@ compCloseScreen (int index, ScreenPtr pScreen)
     CompScreenPtr   cs = GetCompScreen (pScreen);
     Bool	    ret;
 
-    xfree (cs->alternateVisuals);
+    free(cs->alternateVisuals);
 
     pScreen->CloseScreen = cs->CloseScreen;
     pScreen->BlockHandler = cs->BlockHandler;
     pScreen->InstallColormap = cs->InstallColormap;
     pScreen->ChangeWindowAttributes = cs->ChangeWindowAttributes;
     pScreen->ReparentWindow = cs->ReparentWindow;
+    pScreen->ConfigNotify = cs->ConfigNotify;
     pScreen->MoveWindow = cs->MoveWindow;
     pScreen->ResizeWindow = cs->ResizeWindow;
     pScreen->ChangeBorderWidth = cs->ChangeBorderWidth;
@@ -79,7 +78,7 @@ compCloseScreen (int index, ScreenPtr pScreen)
     pScreen->CopyWindow = cs->CopyWindow;
     pScreen->PositionWindow = cs->PositionWindow;
 
-    xfree (cs);
+    free(cs);
     dixSetPrivate(&pScreen->devPrivates, CompScreenPrivateKey, NULL);
     ret = (*pScreen->CloseScreen) (index, pScreen);
 
@@ -139,7 +138,7 @@ compScreenUpdate (ScreenPtr pScreen)
     compCheckTree (pScreen);
     if (cs->damaged)
     {
-	compWindowUpdate (WindowTable[pScreen->myNum]);
+	compWindowUpdate (pScreen->root);
 	cs->damaged = FALSE;
     }
 }
@@ -200,7 +199,7 @@ compRegisterAlternateVisuals (CompScreenPtr cs, VisualID *vids, int nVisuals)
 {
     VisualID *p;
 
-    p = xrealloc(cs->alternateVisuals,
+    p = realloc(cs->alternateVisuals,
 		 sizeof(VisualID) * (cs->numAlternateVisuals + nVisuals));
     if(p == NULL)
 	return FALSE;
@@ -213,7 +212,6 @@ compRegisterAlternateVisuals (CompScreenPtr cs, VisualID *vids, int nVisuals)
     return TRUE;
 }
 
-_X_EXPORT
 Bool CompositeRegisterAlternateVisuals (ScreenPtr pScreen, VisualID *vids,
 					int nVisuals)
 {
@@ -240,15 +238,9 @@ static Bool
 compAddAlternateVisual(ScreenPtr pScreen, CompScreenPtr cs,
 		       CompAlternateVisual *alt)
 {
-    VisualPtr	    visual, visuals;
-    int		    i;
-    int		    numVisuals;
-    XID		    *installedCmaps;
-    ColormapPtr	    installedCmap;
-    int		    numInstalledCmaps;
+    VisualPtr	    visual;
     DepthPtr	    depth;
     PictFormatPtr   pPictFormat;
-    VisualID	    *vid;
     unsigned long   alphaMask;
 
     /*
@@ -268,52 +260,13 @@ compAddAlternateVisual(ScreenPtr pScreen, CompScreenPtr cs,
     if (!pPictFormat)
 	return FALSE;
 
-    vid = xalloc(sizeof(VisualID));
-    if (!vid)
-	return FALSE;
-
-    /* Find the installed colormaps */
-    installedCmaps = xalloc (pScreen->maxInstalledCmaps * sizeof (XID));
-    if (!installedCmaps) {
-	xfree(vid);
-	return FALSE;
-    }
-    numInstalledCmaps = pScreen->ListInstalledColormaps(pScreen, 
-	    installedCmaps);
-
-    /* realloc the visual array to fit the new one in place */
-    numVisuals = pScreen->numVisuals;
-    visuals = xrealloc(pScreen->visuals, (numVisuals + 1) * sizeof(VisualRec));
-    if (!visuals) {
-	xfree(vid);
-	xfree(installedCmaps);
-	return FALSE;
+    if (ResizeVisualArray(pScreen, 1, depth) == FALSE) {
+        return FALSE;
     }
 
-    /*
-     * Fix up any existing installed colormaps -- we'll assume that
-     * the only ones created so far have been installed.  If this
-     * isn't true, we'll have to walk the resource database looking
-     * for all colormaps.
-     */
-    for (i = 0; i < numInstalledCmaps; i++) {
-	int j;
-
-	installedCmap = LookupIDByType (installedCmaps[i], RT_COLORMAP);
-	if (!installedCmap)
-	    continue;
-	j = installedCmap->pVisual - pScreen->visuals;
-	installedCmap->pVisual = &visuals[j];
-    }
-
-    xfree(installedCmaps);
-
-    pScreen->visuals = visuals;
-    visual = visuals + pScreen->numVisuals; /* the new one */
-    pScreen->numVisuals++;
+    visual = pScreen->visuals + (pScreen->numVisuals - 1); /* the new one */
 
     /* Initialize the visual */
-    visual->vid = FakeClientID (0);
     visual->bitsPerRGBValue = 8;
     if (PICT_FORMAT_TYPE(alt->format) == PICT_TYPE_COLOR) {
 	visual->class = PseudoColor;
@@ -346,10 +299,6 @@ compAddAlternateVisual(ScreenPtr pScreen, CompScreenPtr cs,
     /* remember the visual ID to detect auto-update windows */
     compRegisterAlternateVisuals(cs, &visual->vid, 1);
 
-    /* Fix up the depth */
-    *vid = visual->vid;
-    depth->numVids = 1;
-    depth->vids = vid;
     return TRUE;
 }
 
@@ -369,9 +318,16 @@ compScreenInit (ScreenPtr pScreen)
 {
     CompScreenPtr   cs;
 
+    if (!dixRegisterPrivateKey(&CompScreenPrivateKeyRec, PRIVATE_SCREEN, 0))
+	return FALSE;
+    if (!dixRegisterPrivateKey(&CompWindowPrivateKeyRec, PRIVATE_WINDOW, 0))
+	return FALSE;
+    if (!dixRegisterPrivateKey(&CompSubwindowsPrivateKeyRec, PRIVATE_WINDOW, 0))
+	return FALSE;
+
     if (GetCompScreen (pScreen))
 	return TRUE;
-    cs = (CompScreenPtr) xalloc (sizeof (CompScreenRec));
+    cs = (CompScreenPtr) malloc(sizeof (CompScreenRec));
     if (!cs)
 	return FALSE;
 
@@ -385,7 +341,7 @@ compScreenInit (ScreenPtr pScreen)
 
     if (!compAddAlternateVisuals (pScreen, cs))
     {
-	xfree (cs);
+	free(cs);
 	return FALSE;
     }
 
@@ -409,6 +365,9 @@ compScreenInit (ScreenPtr pScreen)
 
     cs->ClipNotify = pScreen->ClipNotify;
     pScreen->ClipNotify = compClipNotify;
+
+    cs->ConfigNotify = pScreen->ConfigNotify;
+    pScreen->ConfigNotify = compConfigNotify;
 
     cs->MoveWindow = pScreen->MoveWindow;
     pScreen->MoveWindow = compMoveWindow;

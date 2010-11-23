@@ -353,7 +353,7 @@ xf86freeDeviceList (XF86ConfDevicePtr ptr)
 
 		prev = ptr;
 		ptr = ptr->list.next;
-		xf86conffree (prev);
+		free (prev);
 	}
 }
 
@@ -363,20 +363,9 @@ xf86findDevice (const char *ident, XF86ConfDevicePtr p)
 	while (p)
 	{
 		if (xf86nameCompare (ident, p->dev_identifier) == 0)
-			return (p);
+			return p;
 
 		p = p->list.next;
 	}
-	return (NULL);
-}
-
-char *
-xf86configStrdup (const char *s)
-{
-	char *tmp;
-	if (!s) return NULL;
-	tmp = xf86confmalloc (sizeof (char) * (strlen (s) + 1));
-	if (tmp)
-		strcpy (tmp, s);
-	return (tmp);
+	return NULL;
 }

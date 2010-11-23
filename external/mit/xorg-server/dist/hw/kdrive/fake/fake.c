@@ -40,13 +40,13 @@ fakeCardInit (KdCardInfo *card)
 {
     FakePriv	*priv;
 
-    priv = (FakePriv *) xalloc (sizeof (FakePriv));
+    priv = (FakePriv *) malloc(sizeof (FakePriv));
     if (!priv)
 	return FALSE;
     
     if (!fakeInitialize (card, priv))
     {
-	xfree (priv);
+	free(priv);
 	return FALSE;
     }
     card->driver = priv;
@@ -69,45 +69,45 @@ fakeScreenInitialize (KdScreenInfo *screen, FakeScrPriv *scrpriv)
     if (screen->height <= 0)
 	screen->height = 1;
     
-    if (!screen->fb[0].depth)
-	screen->fb[0].depth = 16;
+    if (!screen->fb.depth)
+	screen->fb.depth = 16;
 
-    if (screen->fb[0].depth <= 8)
+    if (screen->fb.depth <= 8)
     {
-	screen->fb[0].visuals = ((1 << StaticGray) |
-				 (1 << GrayScale) |
-				 (1 << StaticColor) |
-				 (1 << PseudoColor) |
-				 (1 << TrueColor) |
-				 (1 << DirectColor));
+	screen->fb.visuals = ((1 << StaticGray) |
+			      (1 << GrayScale) |
+			      (1 << StaticColor) |
+			      (1 << PseudoColor) |
+			      (1 << TrueColor) |
+			      (1 << DirectColor));
     }
     else 
     {
-	screen->fb[0].visuals = (1 << TrueColor);
+	screen->fb.visuals = (1 << TrueColor);
 #define Mask(o,l)   (((1 << l) - 1) << o)
-	if (screen->fb[0].depth <= 15)
+	if (screen->fb.depth <= 15)
 	{
-	    screen->fb[0].depth = 15;
-	    screen->fb[0].bitsPerPixel = 16;
-	    screen->fb[0].redMask = Mask (10, 5);
-	    screen->fb[0].greenMask = Mask (5, 5);
-	    screen->fb[0].blueMask = Mask (0, 5);
+	    screen->fb.depth = 15;
+	    screen->fb.bitsPerPixel = 16;
+	    screen->fb.redMask = Mask (10, 5);
+	    screen->fb.greenMask = Mask (5, 5);
+	    screen->fb.blueMask = Mask (0, 5);
 	}
-	else if (screen->fb[0].depth <= 16)
+	else if (screen->fb.depth <= 16)
 	{
-	    screen->fb[0].depth = 16;
-	    screen->fb[0].bitsPerPixel = 16;
-	    screen->fb[0].redMask = Mask (11, 5);
-	    screen->fb[0].greenMask = Mask (5, 6);
-	    screen->fb[0].blueMask = Mask (0, 5);
+	    screen->fb.depth = 16;
+	    screen->fb.bitsPerPixel = 16;
+	    screen->fb.redMask = Mask (11, 5);
+	    screen->fb.greenMask = Mask (5, 6);
+	    screen->fb.blueMask = Mask (0, 5);
 	}
 	else
 	{
-	    screen->fb[0].depth = 24;
-	    screen->fb[0].bitsPerPixel = 32;
-	    screen->fb[0].redMask = Mask (16, 8);
-	    screen->fb[0].greenMask = Mask (8, 8);
-	    screen->fb[0].blueMask = Mask (0, 8);
+	    screen->fb.depth = 24;
+	    screen->fb.bitsPerPixel = 32;
+	    screen->fb.redMask = Mask (16, 8);
+	    screen->fb.greenMask = Mask (8, 8);
+	    screen->fb.blueMask = Mask (0, 8);
 	}
     }
 
@@ -121,14 +121,14 @@ fakeScreenInit (KdScreenInfo *screen)
 {
     FakeScrPriv *scrpriv;
 
-    scrpriv = xcalloc (1, sizeof (FakeScrPriv));
+    scrpriv = calloc(1, sizeof (FakeScrPriv));
     if (!scrpriv)
 	return FALSE;
     screen->driver = scrpriv;
     if (!fakeScreenInitialize (screen, scrpriv))
     {
 	screen->driver = 0;
-	xfree (scrpriv);
+	free(scrpriv);
 	return FALSE;
     }
     return TRUE;
@@ -167,26 +167,21 @@ fakeMapFramebuffer (KdScreenInfo *screen)
     
     KdSetPointerMatrix (&m);
     
-    priv->bytes_per_line = ((screen->width * screen->fb[0].bitsPerPixel + 31) >> 5) << 2;
-    if (priv->base)
-	free (priv->base);
+    priv->bytes_per_line = ((screen->width * screen->fb.bitsPerPixel + 31) >> 5) << 2;
+    free(priv->base);
     priv->base = malloc (priv->bytes_per_line * screen->height);
-    screen->memory_base = (CARD8 *) (priv->base);
-    screen->memory_size = 0;
-    screen->off_screen_base = 0;
     
     if (scrpriv->shadow)
     {
-	if (!KdShadowFbAlloc (screen, 0, 
-			      scrpriv->randr & (RR_Rotate_90|RR_Rotate_270)))
+	if (!KdShadowFbAlloc (screen, scrpriv->randr & (RR_Rotate_90|RR_Rotate_270)))
 	    return FALSE;
     }
     else
     {
-        screen->fb[0].byteStride = priv->bytes_per_line;
-        screen->fb[0].pixelStride = (priv->bytes_per_line * 8/
-				     screen->fb[0].bitsPerPixel);
-        screen->fb[0].frameBuffer = (CARD8 *) (priv->base);
+        screen->fb.byteStride = priv->bytes_per_line;
+        screen->fb.pixelStride = (priv->bytes_per_line * 8/
+				     screen->fb.bitsPerPixel);
+        screen->fb.frameBuffer = (CARD8 *) (priv->base);
     }
     
     return TRUE;
@@ -219,7 +214,7 @@ Bool
 fakeUnmapFramebuffer (KdScreenInfo *screen)
 {
     FakePriv		*priv = screen->card->driver;
-    KdShadowFbFree (screen, 0);
+    KdShadowFbFree (screen);
     if (priv->base)
     {
 	free (priv->base);
@@ -341,10 +336,10 @@ fakeRandRSetConfig (ScreenPtr		pScreen,
     (*pScreen->ModifyPixmapHeader) (fbGetScreenPixmap (pScreen),
 				    pScreen->width,
 				    pScreen->height,
-				    screen->fb[0].depth,
-				    screen->fb[0].bitsPerPixel,
-				    screen->fb[0].byteStride,
-				    screen->fb[0].frameBuffer);
+				    screen->fb.depth,
+				    screen->fb.bitsPerPixel,
+				    screen->fb.byteStride,
+				    screen->fb.frameBuffer);
     
     /* set the subpixel order */
     
@@ -457,14 +452,13 @@ void
 fakeCardFini (KdCardInfo *card)
 {
     FakePriv	*priv = card->driver;
-    
-    if (priv->base)
-	free (priv->base);
-    xfree (priv);
+
+    free (priv->base);
+    free(priv);
 }
 
 void
-fakeGetColors (ScreenPtr pScreen, int fb, int n, xColorItem *pdefs)
+fakeGetColors (ScreenPtr pScreen, int n, xColorItem *pdefs)
 {
     while (n--)
     {
@@ -476,6 +470,6 @@ fakeGetColors (ScreenPtr pScreen, int fb, int n, xColorItem *pdefs)
 }
 
 void
-fakePutColors (ScreenPtr pScreen, int fb, int n, xColorItem *pdefs)
+fakePutColors (ScreenPtr pScreen, int n, xColorItem *pdefs)
 {
 }

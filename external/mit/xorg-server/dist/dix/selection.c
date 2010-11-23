@@ -65,10 +65,10 @@ SOFTWARE.
  *
  *****************************************************************/
 
-_X_EXPORT Selection *CurrentSelections;
+Selection *CurrentSelections;
 CallbackListPtr SelectionCallback;
 
-_X_EXPORT int
+int
 dixLookupSelection(Selection **result, Atom selectionName,
 		   ClientPtr client, Mask access_mode)
 {
@@ -94,8 +94,7 @@ InitSelections(void)
     pSel = CurrentSelections;
     while (pSel) {
 	pNextSel = pSel->next;
-	dixFreePrivates(pSel->devPrivates);
-	xfree(pSel);
+	dixFreeObjectWithPrivates(pSel, PRIVATE_SELECTION);
 	pSel = pNextSel;
     }
 
@@ -189,8 +188,7 @@ ProcSetSelectionOwner(ClientPtr client)
 	    event.u.selectionClear.time = time.milliseconds;
 	    event.u.selectionClear.window = pSel->window;
 	    event.u.selectionClear.atom = pSel->selection;
-	    TryClientEvents(pSel->client, NULL, &event, 1, NoEventMask,
-			    NoEventMask /* CantBeFiltered */, NullGrab);
+	    WriteEventsToClient(pSel->client, 1, &event);
 	}
     }
     else if (rc == BadMatch)
@@ -198,18 +196,17 @@ ProcSetSelectionOwner(ClientPtr client)
 	/*
 	 * It doesn't exist, so add it...
 	 */
-	pSel = xalloc(sizeof(Selection));
+	pSel = dixAllocateObjectWithPrivates(Selection, PRIVATE_SELECTION);
 	if (!pSel)
 	    return BadAlloc;
 
 	pSel->selection = stuff->selection;
-	pSel->devPrivates = NULL;
 
 	/* security creation/labeling check */
 	rc = XaceHookSelectionAccess(client, &pSel,
 				     DixCreateAccess|DixSetAttrAccess);
 	if (rc != Success) {
-	    xfree(pSel);
+	    free(pSel);
 	    return rc;
 	}
 
@@ -225,7 +222,7 @@ ProcSetSelectionOwner(ClientPtr client)
     pSel->client = (pWin ? client : NullClient);
 
     CallSelectionCallback(pSel, client, SelectionSetOwner);
-    return client->noClientException;
+    return Success;
 }
 
 int
@@ -243,6 +240,7 @@ ProcGetSelectionOwner(ClientPtr client)
         return BadAtom;
     }
 
+    memset(&reply, 0, sizeof(xGetSelectionOwnerReply));
     reply.type = X_Reply;
     reply.length = 0;
     reply.sequenceNumber = client->sequence;
@@ -256,7 +254,7 @@ ProcGetSelectionOwner(ClientPtr client)
 	return rc;
 
     WriteReplyToClient(client, sizeof(xGetSelectionOwnerReply), &reply);
-    return client->noClientException;
+    return Success;
 }
 
 int
@@ -284,6 +282,7 @@ ProcConvertSelection(ClientPtr client)
 
     rc = dixLookupSelection(&pSel, stuff->selection, client, DixReadAccess);
 
+    memset(&event, 0, sizeof(xEvent));
     if (rc != Success && rc != BadMatch)
 	return rc;
     else if (rc == Success && pSel->window != None) {
@@ -294,9 +293,11 @@ ProcConvertSelection(ClientPtr client)
 	event.u.selectionRequest.selection = stuff->selection;
 	event.u.selectionRequest.target = stuff->target;
 	event.u.selectionRequest.property = stuff->property;
-	if (TryClientEvents(pSel->client, NULL, &event, 1, NoEventMask,
-			    NoEventMask /* CantBeFiltered */, NullGrab))
-	    return client->noClientException;
+	if (pSel->client && pSel->client != serverClient && !pSel->client->clientGone)
+	{
+	    WriteEventsToClient(pSel->client, 1, &event);
+	    return Success;
+	}
     }
 
     event.u.u.type = SelectionNotify;
@@ -305,7 +306,6 @@ ProcConvertSelection(ClientPtr client)
     event.u.selectionNotify.selection = stuff->selection;
     event.u.selectionNotify.target = stuff->target;
     event.u.selectionNotify.property = None;
-    TryClientEvents(client, NULL, &event, 1, NoEventMask,
-		    NoEventMask /* CantBeFiltered */, NullGrab);
-    return client->noClientException;
+    WriteEventsToClient(client, 1, &event);
+    return Success;
 }

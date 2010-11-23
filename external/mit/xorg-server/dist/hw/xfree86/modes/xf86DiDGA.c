@@ -61,7 +61,7 @@ xf86_dga_get_modes (ScreenPtr pScreen)
     if (!num)
 	return FALSE;
     
-    modes = xalloc(num * sizeof(DGAModeRec));
+    modes = malloc(num * sizeof(DGAModeRec));
     if (!modes)
 	return FALSE;
     
@@ -103,8 +103,7 @@ xf86_dga_get_modes (ScreenPtr pScreen)
 	if (display_mode == scrn->modes)
 	    break;
     }
-    if (xf86_config->dga_modes)
-	xfree (xf86_config->dga_modes);
+    free(xf86_config->dga_modes);
     xf86_config->dga_nmode = num;
     xf86_config->dga_modes = modes;
     return TRUE;
@@ -172,7 +171,7 @@ static DGAFunctionRec xf86_dga_funcs = {
    NULL
 };
 
-_X_EXPORT Bool
+Bool
 xf86DiDGAReInit (ScreenPtr pScreen)
 {
     return TRUE;
@@ -193,7 +192,7 @@ _xf86_di_dga_reinit_internal (ScreenPtr pScreen)
     return DGAReInitModes (pScreen, xf86_config->dga_modes, xf86_config->dga_nmode);
 }
 
-_X_EXPORT Bool
+Bool
 xf86DiDGAInit (ScreenPtr pScreen, unsigned long dga_address)
 {
     return TRUE;

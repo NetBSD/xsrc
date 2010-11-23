@@ -46,7 +46,7 @@ FI1236Ptr Detect_FI1236(I2CBusPtr b, I2CSlaveAddr addr)
    FI1236Ptr f;
    I2CByte a;
 
-   f = xcalloc(1,sizeof(FI1236Rec));
+   f = calloc(1,sizeof(FI1236Rec));
    if(f == NULL) return NULL;
    f->d.DevName = strdup("FI12xx Tuner");
    f->d.SlaveAddr = addr;
@@ -225,7 +225,7 @@ m->f_ifbw=f_ifbw;
 m->f_step=f_step;
 
 m->f_lo1=f_rf+f_if1;
-m->LO1I=(int)floor((m->f_lo1/f_ref)+0.5);
+m->LO1I=lrint(m->f_lo1/f_ref);
 m->f_lo1=f_ref*m->LO1I;
 
 m->f_lo2=m->f_lo1-f_rf-f_if2;
@@ -258,10 +258,10 @@ if(m->f_lo1<1890.0)m->SEL=1;
 	m->SEL=0;
 
 /* calculate the rest of the registers */
-m->LO2I=(int)floor(m->f_lo2/f_ref);
-m->STEP=(int)floor(3780.0*f_step/f_ref);
-m->NUM=(int)floor(3780.0*(m->f_lo2/f_ref-m->LO2I));
-m->NUM=m->STEP*(int)floor((1.0*m->NUM)/(1.0*m->STEP)+0.5);
+m->LO2I=floor(m->f_lo2/f_ref);
+m->STEP=floor(3780.0*f_step/f_ref);
+m->NUM=floor(3780.0*(m->f_lo2/f_ref-m->LO2I));
+m->NUM=m->STEP*lrint((1.0*m->NUM)/(1.0*m->STEP));
 }
 
 static int MT2032_wait_for_lock(FI1236Ptr f)
@@ -398,10 +398,6 @@ int TUNER_get_afc_hint(FI1236Ptr f)
 {
 if(f->afc_timer_installed)return TUNER_STILL_TUNING;
 return f->last_afc_hint;
-if(f->type==TUNER_TYPE_MT2032)
-	return MT2032_get_afc_hint(f);
-	else
-	return FI1236_get_afc_hint(f);
 }
 
 static void MT2032_dump_status(FI1236Ptr f)

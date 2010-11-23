@@ -45,7 +45,6 @@
 #include "xf86Parser.h"
 #include "xf86tokens.h"
 #include "Configint.h"
-#include "vbe.h"
 #include "xf86DDC.h"
 #if defined(__sparc__) && !defined(__OpenBSD__)
 #include "xf86Bus.h"
@@ -71,6 +70,8 @@ optionTypeToSting(OptionValueType type)
         return "<bool>";
     case OPTV_FREQ:
         return "<freq>";
+    case OPTV_PERCENT:
+        return "<percent>";
     default:
         return "<undef>";
     }
@@ -86,7 +87,7 @@ void DoShowOptions (void) {
 		goto bail;
 	}
 	xf86LoadModules (vlist,0);
-	xfree (vlist);
+	free(vlist);
 	for (i = 0; i < xf86NumDrivers; i++) {
 		if (xf86DriverList[i]->AvailableOptions) {
 			OptionInfoPtr pOption = (OptionInfoPtr)(*xf86DriverList[i]->AvailableOptions)(0,0);
@@ -96,7 +97,7 @@ void DoShowOptions (void) {
 				);
 				continue;                                                       
 			}
-			pSymbol = xalloc (
+			pSymbol = malloc(
 				strlen(xf86DriverList[i]->driverName) + strlen("ModuleData") + 1
 			);
 			strcpy (pSymbol, xf86DriverList[i]->driverName);
@@ -104,13 +105,13 @@ void DoShowOptions (void) {
 			initData = LoaderSymbol (pSymbol);
 			if (initData) {
 				XF86ModuleVersionInfo *vers = initData->vers;
+				OptionInfoPtr p;
 				ErrorF ("Driver[%d]:%s[%s] {\n",
 					i,xf86DriverList[i]->driverName,vers->vendor
 				);
-				OptionInfoPtr p;
 				for (p = pOption; p->name != NULL; p++) {
 					const char *opttype = optionTypeToSting(p->type);
-					char *optname = xalloc(strlen(p->name) + 2 + 1);
+					char *optname = malloc(strlen(p->name) + 2 + 1);
 					if (!optname) {
 						continue;                      
 					}

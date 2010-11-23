@@ -39,8 +39,8 @@ from The Open Group.
 #include "dix.h"
 #include "miline.h"
 #ifdef MITSHM
-#define _XSHM_SERVER_
-#include <X11/extensions/XShm.h>
+#include <X11/extensions/shm.h>
+#include "shmint.h"
 #endif
 
 /* We use this structure to propogate some information from miScreenInit to
@@ -60,7 +60,7 @@ typedef struct
 
 
 /* this plugs into pScreen->ModifyPixmapHeader */
-_X_EXPORT Bool
+Bool
 miModifyPixmapHeader(PixmapPtr pPixmap, int width, int height, int depth,
                      int bitsPerPixel, int devKind, pointer pPixData)
 {
@@ -76,7 +76,6 @@ miModifyPixmapHeader(PixmapPtr pPixmap, int width, int height, int depth,
 	pPixmap->drawable.depth = depth;
 	pPixmap->drawable.bitsPerPixel = bitsPerPixel;
 	pPixmap->drawable.id = 0;
-	pPixmap->drawable.serialNumber = NEXT_SERIAL_NUMBER;
 	pPixmap->drawable.x = 0;
 	pPixmap->drawable.y = 0;
 	pPixmap->drawable.width = width;
@@ -116,6 +115,7 @@ miModifyPixmapHeader(PixmapPtr pPixmap, int width, int height, int depth,
 	if (pPixData)
 	    pPixmap->devPrivate.ptr = pPixData;
     }
+    pPixmap->drawable.serialNumber = NEXT_SERIAL_NUMBER;
     return TRUE;
 }
 
@@ -132,7 +132,7 @@ miCloseScreen (int iScreen, ScreenPtr pScreen)
  * possible private-requesting modules have been inited; we create the
  * screen pixmap here.
  */
-_X_EXPORT Bool
+Bool
 miCreateScreenResources(ScreenPtr pScreen)
 {
     miScreenInitParmsPtr pScrInitParms;
@@ -166,7 +166,7 @@ miCreateScreenResources(ScreenPtr pScreen)
     {
 	value = pScrInitParms->pbits;
     }
-    xfree(pScreen->devPrivate); /* freeing miScreenInitParmsRec */
+    free(pScreen->devPrivate); /* freeing miScreenInitParmsRec */
     pScreen->devPrivate = value; /* pPixmap or pbits */
     return TRUE;
 }
@@ -180,7 +180,7 @@ miScreenDevPrivateInit(ScreenPtr pScreen, int width, pointer pbits)
      * to the screen, until CreateScreenResources can put them in the
      * screen pixmap.
      */
-    pScrInitParms = (miScreenInitParmsPtr)xalloc(sizeof(miScreenInitParmsRec));
+    pScrInitParms = malloc(sizeof(miScreenInitParmsRec));
     if (!pScrInitParms)
 	return FALSE;
     pScrInitParms->pbits = pbits;
@@ -202,7 +202,7 @@ miSetScreenPixmap(PixmapPtr pPix)
 	pPix->drawable.pScreen->devPrivate = (pointer)pPix;
 }
 
-_X_EXPORT Bool
+Bool
 miScreenInit(
     ScreenPtr pScreen,
     pointer pbits,		/* pointer to screen bits */
@@ -246,7 +246,6 @@ miScreenInit(
     }
     /* else CloseScreen */
     /* QueryBestSize, SaveScreen, GetImage, GetSpans */
-    pScreen->PointerNonInterestBox = (PointerNonInterestBoxProcPtr) 0;
     pScreen->SourceValidate = (SourceValidateProcPtr) 0;
     /* CreateWindow, DestroyWindow, PositionWindow, ChangeWindowAttributes */
     /* RealizeWindow, UnrealizeWindow */
@@ -293,20 +292,25 @@ miScreenInit(
     return miScreenDevPrivateInit(pScreen, width, pbits);
 }
 
-static int privateKeyIndex;
-static DevPrivateKey privateKey = &privateKeyIndex;
+static DevPrivateKeyRec privateKeyRec;
+#define privateKey (&privateKeyRec)
 
 DevPrivateKey
-miAllocateGCPrivateIndex()
+miAllocateGCPrivateIndex(void)
 {
+    if (!dixRegisterPrivateKey(&privateKeyRec, PRIVATE_GC, 0))
+	return NULL;
     return privateKey;
 }
 
-static int miZeroLineScreenKeyIndex;
-_X_EXPORT DevPrivateKey miZeroLineScreenKey = &miZeroLineScreenKeyIndex;
+DevPrivateKeyRec miZeroLineScreenKeyRec;
 
-_X_EXPORT void
+void
 miSetZeroLineBias(ScreenPtr pScreen, unsigned int bias)
 {
-    dixSetPrivate(&pScreen->devPrivates, miZeroLineScreenKey, (pointer)bias);
+    if (!dixRegisterPrivateKey(&miZeroLineScreenKeyRec, PRIVATE_SCREEN, 0))
+	return;
+
+    dixSetPrivate(&pScreen->devPrivates, miZeroLineScreenKey, 
+					(unsigned long *)(unsigned long)bias);
 }

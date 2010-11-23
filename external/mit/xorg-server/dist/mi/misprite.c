@@ -33,29 +33,105 @@ in this Software without prior written authorization from The Open Group.
 #include <dix-config.h>
 #endif
 
-# include   <X11/X.h>
-# include   <X11/Xproto.h>
-# include   "misc.h"
-# include   "pixmapstr.h"
-# include   "input.h"
-# include   "mi.h"
-# include   "cursorstr.h"
-# include   <X11/fonts/font.h>
-# include   "scrnintstr.h"
-# include   "colormapst.h"
-# include   "windowstr.h"
-# include   "gcstruct.h"
-# include   "mipointer.h"
-# include   "mispritest.h"
-# include   "dixfontstr.h"
-# include   <X11/fonts/fontstruct.h>
-# include   "inputstr.h"
+#include   <X11/X.h>
+#include   <X11/Xproto.h>
+#include   "misc.h"
+#include   "pixmapstr.h"
+#include   "input.h"
+#include   "mi.h"
+#include   "cursorstr.h"
+#include   <X11/fonts/font.h>
+#include   "scrnintstr.h"
+#include   "colormapst.h"
+#include   "windowstr.h"
+#include   "gcstruct.h"
+#include   "mipointer.h"
+#include   "misprite.h"
+#include   "dixfontstr.h"
+#include   <X11/fonts/fontstruct.h>
+#include   "inputstr.h"
+#include   "damage.h"
 
-#ifdef RENDER
-# include   "mipict.h"
-#endif
-# include   "damage.h"
+typedef struct {
+    CursorPtr	    pCursor;
+    int		    x;			/* cursor hotspot */
+    int		    y;
+    BoxRec	    saved;		/* saved area from the screen */
+    Bool	    isUp;		/* cursor in frame buffer */
+    Bool	    shouldBeUp;		/* cursor should be displayed */
+    WindowPtr	    pCacheWin;		/* window the cursor last seen in */
+    Bool	    isInCacheWin;
+    Bool	    checkPixels;	/* check colormap collision */
+    ScreenPtr       pScreen;
+} miCursorInfoRec, *miCursorInfoPtr;
 
+/*
+ * per screen information
+ */
+
+typedef struct {
+    /* screen procedures */
+    CloseScreenProcPtr			CloseScreen;
+    GetImageProcPtr			GetImage;
+    GetSpansProcPtr			GetSpans;
+    SourceValidateProcPtr		SourceValidate;
+    
+    /* window procedures */
+    CopyWindowProcPtr			CopyWindow;
+    
+    /* colormap procedures */
+    InstallColormapProcPtr		InstallColormap;
+    StoreColorsProcPtr			StoreColors;
+    
+    /* os layer procedures */
+    ScreenBlockHandlerProcPtr		BlockHandler;
+    
+    /* device cursor procedures */
+    DeviceCursorInitializeProcPtr       DeviceCursorInitialize;
+    DeviceCursorCleanupProcPtr          DeviceCursorCleanup;
+
+    xColorItem	    colors[2];
+    ColormapPtr     pInstalledMap;
+    ColormapPtr     pColormap;
+    VisualPtr	    pVisual;
+    DamagePtr	    pDamage;		/* damage tracking structure */
+    Bool            damageRegistered;
+} miSpriteScreenRec, *miSpriteScreenPtr;
+
+#define SOURCE_COLOR	0
+#define MASK_COLOR	1
+
+/*
+ * Overlap BoxPtr and Box elements
+ */
+#define BOX_OVERLAP(pCbox,X1,Y1,X2,Y2) \
+ 	(((pCbox)->x1 <= (X2)) && ((X1) <= (pCbox)->x2) && \
+	 ((pCbox)->y1 <= (Y2)) && ((Y1) <= (pCbox)->y2))
+
+/*
+ * Overlap BoxPtr, origins, and rectangle
+ */
+#define ORG_OVERLAP(pCbox,xorg,yorg,x,y,w,h) \
+    BOX_OVERLAP((pCbox),(x)+(xorg),(y)+(yorg),(x)+(xorg)+(w),(y)+(yorg)+(h))
+
+/*
+ * Overlap BoxPtr, origins and RectPtr
+ */
+#define ORGRECT_OVERLAP(pCbox,xorg,yorg,pRect) \
+    ORG_OVERLAP((pCbox),(xorg),(yorg),(pRect)->x,(pRect)->y, \
+		(int)((pRect)->width), (int)((pRect)->height))
+/*
+ * Overlap BoxPtr and horizontal span
+ */
+#define SPN_OVERLAP(pCbox,y,x,w) BOX_OVERLAP((pCbox),(x),(y),(x)+(w),(y))
+
+#define LINE_SORT(x1,y1,x2,y2) \
+{ int _t; \
+  if (x1 > x2) { _t = x1; x1 = x2; x2 = _t; } \
+  if (y1 > y2) { _t = y1; y1 = y2; y2 = _t; } }
+
+#define LINE_OVERLAP(pCbox,x1,y1,x2,y2,lw2) \
+    BOX_OVERLAP((pCbox), (x1)-(lw2), (y1)-(lw2), (x2)+(lw2), (y2)+(lw2))
 
 
 #define SPRITE_DEBUG_ENABLE 0
@@ -65,29 +141,26 @@ in this Software without prior written authorization from The Open Group.
 #define SPRITE_DEBUG(x)
 #endif
 
-
 #define MISPRITE(dev) \
-    ((DevHasCursor(dev)) ? \
+    ((!IsMaster(dev) && !dev->u.master) ? \
        (miCursorInfoPtr)dixLookupPrivate(&dev->devPrivates, miSpriteDevPrivatesKey) : \
-       (miCursorInfoPtr)dixLookupPrivate(&dev->u.master->devPrivates, miSpriteDevPrivatesKey))
-
-static int damageRegister = 0;
+       (miCursorInfoPtr)dixLookupPrivate(&(GetMaster(dev, MASTER_POINTER))->devPrivates, miSpriteDevPrivatesKey))
 
 static void
 miSpriteDisableDamage(ScreenPtr pScreen, miSpriteScreenPtr pScreenPriv)
 {
-    if (damageRegister) {
+    if (pScreenPriv->damageRegistered) {
 	DamageUnregister (&(pScreen->GetScreenPixmap(pScreen)->drawable),
 			  pScreenPriv->pDamage);
-	damageRegister = 0;
+	pScreenPriv->damageRegistered = 0;
     }
 }
 
 static void
 miSpriteEnableDamage(ScreenPtr pScreen, miSpriteScreenPtr pScreenPriv)
 {
-    if (!damageRegister) {
-	damageRegister = 1;
+    if (!pScreenPriv->damageRegistered) {
+	pScreenPriv->damageRegistered = 1;
 	DamageRegister (&(pScreen->GetScreenPixmap(pScreen)->drawable),
 			pScreenPriv->pDamage);
     }
@@ -109,10 +182,10 @@ miSpriteIsDown(miCursorInfoPtr pDevCursor)
  * screen wrappers
  */
 
-static int miSpriteScreenKeyIndex;
-static DevPrivateKey miSpriteScreenKey = &miSpriteScreenKeyIndex;
-static int mmiSpriteDevPrivatesKeyIndex;
-static DevPrivateKey miSpriteDevPrivatesKey = &mmiSpriteDevPrivatesKeyIndex;
+static DevPrivateKeyRec miSpriteScreenKeyRec;
+#define miSpriteScreenKey (&miSpriteScreenKeyRec)
+static DevPrivateKeyRec miSpriteDevPrivatesKeyRec;
+#define miSpriteDevPrivatesKey (&miSpriteDevPrivatesKeyRec)
 
 static Bool	    miSpriteCloseScreen(int i, ScreenPtr pScreen);
 static void	    miSpriteGetImage(DrawablePtr pDrawable, int sx, int sy,
@@ -160,7 +233,7 @@ static void miSpriteSetCursor(DeviceIntPtr pDev, ScreenPtr pScreen,
 static void miSpriteMoveCursor(DeviceIntPtr pDev, ScreenPtr pScreen,
                                int x, int y);
 
-_X_EXPORT miPointerSpriteFuncRec miSpritePointerFuncs = {
+miPointerSpriteFuncRec miSpritePointerFuncs = {
     miSpriteRealizeCursor,
     miSpriteUnrealizeCursor,
     miSpriteSetCursor,
@@ -184,12 +257,8 @@ static void
 miSpriteReportDamage (DamagePtr pDamage, RegionPtr pRegion, void *closure)
 {
     ScreenPtr		    pScreen = closure;
-    miSpriteScreenPtr	    pScreenPriv;
     miCursorInfoPtr         pCursorInfo;
     DeviceIntPtr            pDev;
-
-    pScreenPriv = (miSpriteScreenPtr)dixLookupPrivate(&pScreen->devPrivates,
-						      miSpriteScreenKey);
 
     for (pDev = inputInfo.devices; pDev; pDev = pDev->next)
     {
@@ -199,8 +268,7 @@ miSpriteReportDamage (DamagePtr pDamage, RegionPtr pRegion, void *closure)
 
             if (pCursorInfo->isUp &&
                 pCursorInfo->pScreen == pScreen &&
-                RECT_IN_REGION (pScreen, pRegion, &pCursorInfo->saved)
-                         != rgnOUT)
+                RegionContainsRect(pRegion, &pCursorInfo->saved) != rgnOUT)
             {
                 SPRITE_DEBUG(("Damage remove\n"));
                 miSpriteRemoveCursor (pDev, pScreen);
@@ -217,7 +285,6 @@ miSpriteReportDamage (DamagePtr pDamage, RegionPtr pRegion, void *closure)
 
 Bool
 miSpriteInitialize (ScreenPtr               pScreen,
-                    miSpriteCursorFuncPtr   cursorFuncs,
                     miPointerScreenFuncPtr  screenFuncs)
 {
     miSpriteScreenPtr	pScreenPriv;
@@ -226,20 +293,26 @@ miSpriteInitialize (ScreenPtr               pScreen,
     if (!DamageSetup (pScreen))
 	return FALSE;
 
-    pScreenPriv = (miSpriteScreenPtr) xalloc (sizeof (miSpriteScreenRec));
+    if (!dixRegisterPrivateKey(&miSpriteScreenKeyRec, PRIVATE_SCREEN, 0))
+	return FALSE;
+
+    if (!dixRegisterPrivateKey(&miSpriteDevPrivatesKeyRec, PRIVATE_DEVICE, 0))
+	return FALSE;
+
+    pScreenPriv = malloc(sizeof (miSpriteScreenRec));
     if (!pScreenPriv)
 	return FALSE;
 
     pScreenPriv->pDamage = DamageCreate (miSpriteReportDamage,
-					 (DamageDestroyFunc) 0,
+					 NULL,
 					 DamageReportRawRegion,
 					 TRUE,
 					 pScreen,
-					 (void *) pScreen);
+					 pScreen);
 
     if (!miPointerInitialize (pScreen, &miSpritePointerFuncs, screenFuncs,TRUE))
     {
-	xfree ((pointer) pScreenPriv);
+	free(pScreenPriv);
 	return FALSE;
     }
     for (pVisual = pScreen->visuals;
@@ -264,13 +337,14 @@ miSpriteInitialize (ScreenPtr               pScreen,
 
     pScreenPriv->pInstalledMap = NULL;
     pScreenPriv->pColormap = NULL;
-    pScreenPriv->funcs = cursorFuncs;
     pScreenPriv->colors[SOURCE_COLOR].red = 0;
     pScreenPriv->colors[SOURCE_COLOR].green = 0;
     pScreenPriv->colors[SOURCE_COLOR].blue = 0;
     pScreenPriv->colors[MASK_COLOR].red = 0;
     pScreenPriv->colors[MASK_COLOR].green = 0;
     pScreenPriv->colors[MASK_COLOR].blue = 0;
+    pScreenPriv->damageRegistered = 0;
+
     dixSetPrivate(&pScreen->devPrivates, miSpriteScreenKey, pScreenPriv);
 
     pScreen->CloseScreen = miSpriteCloseScreen;
@@ -283,8 +357,6 @@ miSpriteInitialize (ScreenPtr               pScreen,
     pScreen->StoreColors = miSpriteStoreColors;
 
     pScreen->BlockHandler = miSpriteBlockHandler;
-
-    damageRegister = 0;
 
     return TRUE;
 }
@@ -303,8 +375,7 @@ miSpriteCloseScreen (int i, ScreenPtr pScreen)
 {
     miSpriteScreenPtr   pScreenPriv;
 
-    pScreenPriv = (miSpriteScreenPtr)dixLookupPrivate(&pScreen->devPrivates,
-						      miSpriteScreenKey);
+    pScreenPriv = dixLookupPrivate(&pScreen->devPrivates, miSpriteScreenKey);
     pScreen->CloseScreen = pScreenPriv->CloseScreen;
     pScreen->GetImage = pScreenPriv->GetImage;
     pScreen->GetSpans = pScreenPriv->GetSpans;
@@ -315,7 +386,7 @@ miSpriteCloseScreen (int i, ScreenPtr pScreen)
 
     DamageDestroy (pScreenPriv->pDamage);
 
-    xfree ((pointer) pScreenPriv);
+    free(pScreenPriv);
 
     return (*pScreen->CloseScreen) (i, pScreen);
 }
@@ -326,28 +397,26 @@ miSpriteGetImage (DrawablePtr pDrawable, int sx, int sy, int w, int h,
                   char *pdstLine)
 {
     ScreenPtr	    pScreen = pDrawable->pScreen;
-    miSpriteScreenPtr    pScreenPriv;
-    DeviceIntPtr    pDev = inputInfo.pointer;
+    DeviceIntPtr    pDev;
     miCursorInfoPtr pCursorInfo;
 
     SCREEN_PROLOGUE (pScreen, GetImage);
 
-    pScreenPriv = (miSpriteScreenPtr)dixLookupPrivate(&pScreen->devPrivates,
-						      miSpriteScreenKey);
-    for(pDev = inputInfo.devices; pDev; pDev = pDev->next)
+    if (pDrawable->type == DRAWABLE_WINDOW)
     {
-        if (DevHasCursor(pDev))
+        for(pDev = inputInfo.devices; pDev; pDev = pDev->next)
         {
-             pCursorInfo = MISPRITE(pDev);
-             if (pDrawable->type == DRAWABLE_WINDOW &&
-                     pCursorInfo->isUp &&
-                     pCursorInfo->pScreen == pScreen &&
-                     ORG_OVERLAP(&pCursorInfo->saved,pDrawable->x,pDrawable->y,
-                         sx, sy, w, h))
-             {
-                 SPRITE_DEBUG (("GetImage remove\n"));
-                 miSpriteRemoveCursor (pDev, pScreen);
-             }
+            if (DevHasCursor(pDev))
+            {
+                 pCursorInfo = MISPRITE(pDev);
+                 if (pCursorInfo->isUp && pCursorInfo->pScreen == pScreen &&
+                      ORG_OVERLAP(&pCursorInfo->saved,pDrawable->x,pDrawable->y,
+                                  sx, sy, w, h))
+                 {
+                     SPRITE_DEBUG (("GetImage remove\n"));
+                     miSpriteRemoveCursor (pDev, pScreen);
+                 }
+            }
         }
     }
 
@@ -362,44 +431,41 @@ miSpriteGetSpans (DrawablePtr pDrawable, int wMax, DDXPointPtr ppt,
                   int *pwidth, int nspans, char *pdstStart)
 {
     ScreenPtr		    pScreen = pDrawable->pScreen;
-    miSpriteScreenPtr	    pScreenPriv;
-    DeviceIntPtr            pDev = inputInfo.pointer;
+    DeviceIntPtr            pDev;
     miCursorInfoPtr         pCursorInfo;
 
     SCREEN_PROLOGUE (pScreen, GetSpans);
 
-    pScreenPriv = (miSpriteScreenPtr)dixLookupPrivate(&pScreen->devPrivates,
-						      miSpriteScreenKey);
-
-    for(pDev = inputInfo.devices; pDev; pDev = pDev->next)
+    if (pDrawable->type == DRAWABLE_WINDOW)
     {
-        if (DevHasCursor(pDev))
+        for(pDev = inputInfo.devices; pDev; pDev = pDev->next)
         {
-            pCursorInfo = MISPRITE(pDev);
-
-            if (pDrawable->type == DRAWABLE_WINDOW &&
-                    pCursorInfo->isUp &&
-                    pCursorInfo->pScreen == pScreen)
+            if (DevHasCursor(pDev))
             {
-                DDXPointPtr    pts;
-                int    	       *widths;
-                int    	       nPts;
-                int    	       xorg,
-                               yorg;
+                pCursorInfo = MISPRITE(pDev);
 
-                xorg = pDrawable->x;
-                yorg = pDrawable->y;
-
-                for (pts = ppt, widths = pwidth, nPts = nspans;
-                        nPts--;
-                        pts++, widths++)
+                if (pCursorInfo->isUp && pCursorInfo->pScreen == pScreen)
                 {
-                    if (SPN_OVERLAP(&pCursorInfo->saved,pts->y+yorg,
-                                pts->x+xorg,*widths))
+                    DDXPointPtr    pts;
+                    int    	       *widths;
+                    int    	       nPts;
+                    int    	       xorg,
+                                   yorg;
+
+                    xorg = pDrawable->x;
+                    yorg = pDrawable->y;
+
+                    for (pts = ppt, widths = pwidth, nPts = nspans;
+                            nPts--;
+                            pts++, widths++)
                     {
-                        SPRITE_DEBUG (("GetSpans remove\n"));
-                        miSpriteRemoveCursor (pDev, pScreen);
-                        break;
+                        if (SPN_OVERLAP(&pCursorInfo->saved,pts->y+yorg,
+                                    pts->x+xorg,*widths))
+                        {
+                            SPRITE_DEBUG (("GetSpans remove\n"));
+                            miSpriteRemoveCursor (pDev, pScreen);
+                            break;
+                        }
                     }
                 }
             }
@@ -416,29 +482,27 @@ miSpriteSourceValidate (DrawablePtr pDrawable, int x, int y, int width,
                         int height)
 {
     ScreenPtr		    pScreen = pDrawable->pScreen;
-    miSpriteScreenPtr	    pScreenPriv;
-    DeviceIntPtr            pDev = inputInfo.pointer;
+    DeviceIntPtr            pDev;
     miCursorInfoPtr         pCursorInfo;
 
     SCREEN_PROLOGUE (pScreen, SourceValidate);
 
-    pScreenPriv = (miSpriteScreenPtr)dixLookupPrivate(&pScreen->devPrivates,
-						      miSpriteScreenKey);
-
-    for(pDev = inputInfo.devices; pDev; pDev = pDev->next)
+    if (pDrawable->type == DRAWABLE_WINDOW)
     {
-        if (DevHasCursor(pDev))
-        {
-            pCursorInfo = MISPRITE(pDev);
-            if (pDrawable->type == DRAWABLE_WINDOW && pCursorInfo->isUp &&
-                    pCursorInfo->pScreen == pScreen &&
-                    ORG_OVERLAP(&pCursorInfo->saved, pDrawable->x, pDrawable->y,
-                        x, y, width, height))
-            {
-                SPRITE_DEBUG (("SourceValidate remove\n"));
-                miSpriteRemoveCursor (pDev, pScreen);
-            }
-        }
+	for(pDev = inputInfo.devices; pDev; pDev = pDev->next)
+	{
+	    if (DevHasCursor(pDev))
+	    {
+		pCursorInfo = MISPRITE(pDev);
+		if (pCursorInfo->isUp && pCursorInfo->pScreen == pScreen &&
+		    ORG_OVERLAP(&pCursorInfo->saved, pDrawable->x, pDrawable->y,
+				x, y, width, height))
+		{
+		    SPRITE_DEBUG (("SourceValidate remove\n"));
+		    miSpriteRemoveCursor (pDev, pScreen);
+		}
+	    }
+	}
     }
 
     if (pScreen->SourceValidate)
@@ -451,14 +515,10 @@ static void
 miSpriteCopyWindow (WindowPtr pWindow, DDXPointRec ptOldOrg, RegionPtr prgnSrc)
 {
     ScreenPtr	pScreen = pWindow->drawable.pScreen;
-    miSpriteScreenPtr	    pScreenPriv;
-    DeviceIntPtr            pDev = inputInfo.pointer;
+    DeviceIntPtr            pDev;
     miCursorInfoPtr         pCursorInfo;
 
     SCREEN_PROLOGUE (pScreen, CopyWindow);
-
-    pScreenPriv = (miSpriteScreenPtr)dixLookupPrivate(&pScreen->devPrivates,
-						      miSpriteScreenKey);
 
     for(pDev = inputInfo.devices; pDev; pDev = pDev->next)
     {
@@ -469,7 +529,7 @@ miSpriteCopyWindow (WindowPtr pWindow, DDXPointRec ptOldOrg, RegionPtr prgnSrc)
              * Damage will take care of destination check
              */
             if (pCursorInfo->isUp && pCursorInfo->pScreen == pScreen &&
-                    RECT_IN_REGION (pScreen, prgnSrc, &pCursorInfo->saved) != rgnOUT)
+                    RegionContainsRect(prgnSrc, &pCursorInfo->saved) != rgnOUT)
             {
                 SPRITE_DEBUG (("CopyWindow remove\n"));
                 miSpriteRemoveCursor (pDev, pScreen);
@@ -487,11 +547,10 @@ miSpriteBlockHandler (int i, pointer blockData, pointer pTimeout,
 {
     ScreenPtr		pScreen = screenInfo.screens[i];
     miSpriteScreenPtr	pPriv;
-    DeviceIntPtr            pDev = inputInfo.pointer;
+    DeviceIntPtr            pDev;
     miCursorInfoPtr         pCursorInfo;
 
-    pPriv = (miSpriteScreenPtr)dixLookupPrivate(&pScreen->devPrivates,
-						miSpriteScreenKey);
+    pPriv = dixLookupPrivate(&pScreen->devPrivates, miSpriteScreenKey);
     SCREEN_PROLOGUE(pScreen, BlockHandler);
 
     (*pScreen->BlockHandler) (i, blockData, pTimeout, pReadmask);
@@ -534,8 +593,7 @@ miSpriteInstallColormap (ColormapPtr pMap)
     ScreenPtr		pScreen = pMap->pScreen;
     miSpriteScreenPtr	pPriv;
 
-    pPriv = (miSpriteScreenPtr)dixLookupPrivate(&pScreen->devPrivates,
-						miSpriteScreenKey);
+    pPriv = dixLookupPrivate(&pScreen->devPrivates, miSpriteScreenKey);
     SCREEN_PROLOGUE(pScreen, InstallColormap);
 
     (*pScreen->InstallColormap) (pMap);
@@ -570,11 +628,10 @@ miSpriteStoreColors (ColormapPtr pMap, int ndef, xColorItem *pdef)
     int			i;
     int			updated;
     VisualPtr		pVisual;
-    DeviceIntPtr        pDev = inputInfo.pointer;
+    DeviceIntPtr        pDev;
     miCursorInfoPtr     pCursorInfo;
 
-    pPriv = (miSpriteScreenPtr)dixLookupPrivate(&pScreen->devPrivates,
-						miSpriteScreenKey);
+    pPriv = dixLookupPrivate(&pScreen->devPrivates, miSpriteScreenKey);
     SCREEN_PROLOGUE(pScreen, StoreColors);
 
     (*pScreen->StoreColors) (pMap, ndef, pdef);
@@ -649,7 +706,7 @@ miSpriteStoreColors (ColormapPtr pMap, int ndef, xColorItem *pdef)
 static void
 miSpriteFindColors (miCursorInfoPtr pDevCursor, ScreenPtr pScreen)
 {
-    miSpriteScreenPtr   pScreenPriv = (miSpriteScreenPtr)
+    miSpriteScreenPtr   pScreenPriv =
 	dixLookupPrivate(&pScreen->devPrivates, miSpriteScreenKey);
     CursorPtr		pCursor;
     xColorItem		*sourceColor, *maskColor;
@@ -692,49 +749,34 @@ miSpriteFindColors (miCursorInfoPtr pDevCursor, ScreenPtr pScreen)
 static Bool
 miSpriteRealizeCursor (DeviceIntPtr pDev, ScreenPtr pScreen, CursorPtr pCursor)
 {
-    miSpriteScreenPtr	pScreenPriv;
     miCursorInfoPtr pCursorInfo;
 
-    pScreenPriv = (miSpriteScreenPtr)dixLookupPrivate(&pScreen->devPrivates,
-						      miSpriteScreenKey);
-    if (!pDev->isMaster && !pDev->u.master)
-    {
-        ErrorF("[mi] miSpriteRealizeCursor called for floating device.\n");
+    if (!IsMaster(pDev) && !pDev->u.master)
         return FALSE;
-    }
+
     pCursorInfo = MISPRITE(pDev);
 
     if (pCursor == pCursorInfo->pCursor)
 	pCursorInfo->checkPixels = TRUE;
 
-    return (*pScreenPriv->funcs->RealizeCursor) (pScreen, pCursor);
+    return miDCRealizeCursor(pScreen, pCursor);
 }
 
 static Bool
 miSpriteUnrealizeCursor(DeviceIntPtr pDev, ScreenPtr pScreen, CursorPtr pCursor)
 {
-    miSpriteScreenPtr	pScreenPriv;
-
-    pScreenPriv = (miSpriteScreenPtr)dixLookupPrivate(&pScreen->devPrivates,
-						      miSpriteScreenKey);
-    return (*pScreenPriv->funcs->UnrealizeCursor) (pScreen, pCursor);
+    return miDCUnrealizeCursor(pScreen, pCursor);
 }
 
 static void
 miSpriteSetCursor (DeviceIntPtr pDev, ScreenPtr pScreen,
                    CursorPtr pCursor, int x, int y)
 {
-    miSpriteScreenPtr	pScreenPriv;
-
-    pScreenPriv = (miSpriteScreenPtr)dixLookupPrivate(&pScreen->devPrivates,
-						      miSpriteScreenKey);
     miCursorInfoPtr pPointer;
 
-    if (!pDev->isMaster && !pDev->u.master)
-    {
-        ErrorF("[mi] miSpriteSetCursor called for floating device.\n");
+    if (!IsMaster(pDev) && !pDev->u.master)
         return;
-    }
+
     pPointer = MISPRITE(pDev);
 
     if (!pCursor)
@@ -762,73 +804,9 @@ miSpriteSetCursor (DeviceIntPtr pDev, ScreenPtr pScreen,
 	miSpriteFindColors (pPointer, pScreen);
     }
     if (pPointer->isUp) {
-#if 0
-        /* FIXME: Disabled for MPX, should be rewritten */
-	int	sx, sy;
-	/*
-	 * check to see if the old saved region
-	 * encloses the new sprite, in which case we use
-	 * the flicker-free MoveCursor primitive.
-	 */
-	sx = pointer->x - (int)pCursor->bits->xhot;
-	sy = pointer->y - (int)pCursor->bits->yhot;
-	if (sx + (int) pCursor->bits->width >= pointer->saved.x1 &&
-	    sx < pointer->saved.x2 &&
-	    sy + (int) pCursor->bits->height >= pointer->saved.y1 &&
-	    sy < pointer->saved.y2 &&
-	    (int) pCursor->bits->width + (2 * SPRITE_PAD) ==
-		pointer->saved.x2 - pointer->saved.x1 &&
-	    (int) pCursor->bits->height + (2 * SPRITE_PAD) ==
-		pointer->saved.y2 - pointer->saved.y1
-	    )
-	{
-	    DamageDrawInternal (pScreen, TRUE);
-	    miSpriteIsDown(pCursorInfo);
-	    if (!(sx >= pointer->saved.x1 &&
-                  sx + (int)pCursor->bits->width < pointer->saved.x2
-                  && sy >= pointer->saved.y1 &&
-                  sy + (int)pCursor->bits->height <
-                                pointer->saved.y2))
-            {
-		int oldx1, oldy1, dx, dy;
-
-		oldx1 = pointer->saved.x1;
-		oldy1 = pointer->saved.y1;
-		dx = oldx1 - (sx - SPRITE_PAD);
-		dy = oldy1 - (sy - SPRITE_PAD);
-		pointer->saved.x1 -= dx;
-		pointer->saved.y1 -= dy;
-		pointer->saved.x2 -= dx;
-		pointer->saved.y2 -= dy;
-		(void) (*pScreenPriv->funcs->ChangeSave) (pScreen,
-				pointer->saved.x1,
- 				pointer->saved.y1,
-                                pointer->saved.x2 -
-                                pointer->saved.x1,
-                                pointer->saved.y2 -
-                                pointer->saved.y1,
-				dx, dy);
-	    }
-	    (void) (*pScreenPriv->funcs->MoveCursor) (pScreen, pCursor,
-				  pointer->saved.x1,
- 				  pointer->saved.y1,
-                                  pointer->saved.x2 -
-                                  pointer->saved.x1,
-                                  pointer->saved.y2 -
-                                  pointer->saved.y1,
-				  sx - pointer->saved.x1,
-				  sy - pointer->saved.y1,
-				  pointer->colors[SOURCE_COLOR].pixel,
-				  pointer->colors[MASK_COLOR].pixel);
-	    miSpriteIsUp(pCursorInfo);
-	    DamageDrawInternal (pScreen, FALSE);
-	}
-	else
-#endif
-	{
-	    SPRITE_DEBUG (("SetCursor remove %d\n", pDev->id));
-	    miSpriteRemoveCursor (pDev, pScreen);
-	}
+	/* TODO: reimplement flicker-free MoveCursor */
+	SPRITE_DEBUG (("SetCursor remove %d\n", pDev->id));
+	miSpriteRemoveCursor (pDev, pScreen);
     }
 
     if (!pPointer->isUp && pPointer->pCursor)
@@ -843,16 +821,11 @@ miSpriteSetCursor (DeviceIntPtr pDev, ScreenPtr pScreen,
 static void
 miSpriteMoveCursor (DeviceIntPtr pDev, ScreenPtr pScreen, int x, int y)
 {
-    miSpriteScreenPtr	pScreenPriv;
     CursorPtr pCursor;
 
-    pScreenPriv = (miSpriteScreenPtr)dixLookupPrivate(&pScreen->devPrivates,
-						      miSpriteScreenKey);
-    if (!pDev->isMaster && !pDev->u.master)
-    {
-        ErrorF("[mi] miSpriteMoveCursor called for floating device.\n");
+    if (!IsMaster(pDev) && !pDev->u.master)
         return;
-    }
+
     pCursor = MISPRITE(pDev)->pCursor;
 
     miSpriteSetCursor (pDev, pScreen, pCursor, x, y);
@@ -862,14 +835,10 @@ miSpriteMoveCursor (DeviceIntPtr pDev, ScreenPtr pScreen, int x, int y)
 static Bool
 miSpriteDeviceCursorInitialize(DeviceIntPtr pDev, ScreenPtr pScreen)
 {
-    miSpriteScreenPtr pScreenPriv;
     miCursorInfoPtr pCursorInfo;
     int ret = FALSE;
 
-    pScreenPriv = (miSpriteScreenPtr)dixLookupPrivate(&pScreen->devPrivates,
-						      miSpriteScreenKey);
-
-    pCursorInfo = xalloc(sizeof(miCursorInfoRec));
+    pCursorInfo = malloc(sizeof(miCursorInfoRec));
     if (!pCursorInfo)
         return FALSE;
 
@@ -883,10 +852,10 @@ miSpriteDeviceCursorInitialize(DeviceIntPtr pDev, ScreenPtr pScreen)
     pCursorInfo->checkPixels = TRUE;
     pCursorInfo->pScreen = FALSE;
 
-    ret = (*pScreenPriv->funcs->DeviceCursorInitialize)(pDev, pScreen);
+    ret = miDCDeviceInitialize(pDev, pScreen);
     if (!ret)
     {
-        xfree(pCursorInfo);
+        free(pCursorInfo);
         pCursorInfo = NULL;
     }
     dixSetPrivate(&pDev->devPrivates, miSpriteDevPrivatesKey, pCursorInfo);
@@ -897,13 +866,7 @@ static void
 miSpriteDeviceCursorCleanup(DeviceIntPtr pDev, ScreenPtr pScreen)
 {
     if (DevHasCursor(pDev))
-    {
-        miSpriteScreenPtr pScreenPriv;
-        pScreenPriv = (miSpriteScreenPtr)
-                dixLookupPrivate(&pScreen->devPrivates, miSpriteScreenKey);
-
-        (*pScreenPriv->funcs->DeviceCursorCleanup)(pDev, pScreen);
-    }
+        miDCDeviceCleanup(pDev, pScreen);
 }
 
 /*
@@ -917,29 +880,26 @@ miSpriteRemoveCursor (DeviceIntPtr pDev, ScreenPtr pScreen)
     miCursorInfoPtr     pCursorInfo;
 
 
-    if (!pDev->isMaster && !pDev->u.master)
-    {
-        ErrorF("[mi] miSpriteRemoveCursor called for floating device.\n");
+    if (!IsMaster(pDev) && !pDev->u.master)
         return;
-    }
+
     DamageDrawInternal (pScreen, TRUE);
-    pScreenPriv = (miSpriteScreenPtr)dixLookupPrivate(&pScreen->devPrivates,
-						      miSpriteScreenKey);
+    pScreenPriv = dixLookupPrivate(&pScreen->devPrivates, miSpriteScreenKey);
     pCursorInfo = MISPRITE(pDev);
 
     miSpriteIsDown(pCursorInfo);
     pCursorInfo->pCacheWin = NullWindow;
     miSpriteDisableDamage(pScreen, pScreenPriv);
-    if (!(*pScreenPriv->funcs->RestoreUnderCursor) (pDev,
-                                         pScreen,
-					 pCursorInfo->saved.x1,
-                                         pCursorInfo->saved.y1,
-                                         pCursorInfo->saved.x2 -
-                                         pCursorInfo->saved.x1,
-                                         pCursorInfo->saved.y2 -
-                                         pCursorInfo->saved.y1))
+    if (!miDCRestoreUnderCursor(pDev,
+                                pScreen,
+                                pCursorInfo->saved.x1,
+                                pCursorInfo->saved.y1,
+                                pCursorInfo->saved.x2 -
+                                pCursorInfo->saved.x1,
+                                pCursorInfo->saved.y2 -
+                                pCursorInfo->saved.y1))
     {
-	miSpriteIsUp(pCursorInfo);
+        miSpriteIsUp(pCursorInfo);
     }
     miSpriteEnableDamage(pScreen, pScreenPriv);
     DamageDrawInternal (pScreen, FALSE);
@@ -958,14 +918,11 @@ miSpriteSaveUnderCursor(DeviceIntPtr pDev, ScreenPtr pScreen)
     CursorPtr		pCursor;
     miCursorInfoPtr     pCursorInfo;
 
-    if (!pDev->isMaster && !pDev->u.master)
-    {
-        ErrorF("[mi] miSpriteSaveUnderCursor called for floating device.\n");
+    if (!IsMaster(pDev) && !pDev->u.master)
         return;
-    }
+
     DamageDrawInternal (pScreen, TRUE);
-    pScreenPriv = (miSpriteScreenPtr)dixLookupPrivate(&pScreen->devPrivates,
-						      miSpriteScreenKey);
+    pScreenPriv = dixLookupPrivate(&pScreen->devPrivates, miSpriteScreenKey);
     pCursorInfo = MISPRITE(pDev);
 
     miSpriteComputeSaved (pDev, pScreen);
@@ -975,14 +932,14 @@ miSpriteSaveUnderCursor(DeviceIntPtr pDev, ScreenPtr pScreen)
     y = pCursorInfo->y - (int)pCursor->bits->yhot;
     miSpriteDisableDamage(pScreen, pScreenPriv);
 
-    (*pScreenPriv->funcs->SaveUnderCursor) (pDev,
-                                      pScreen,
-				      pCursorInfo->saved.x1,
-				      pCursorInfo->saved.y1,
-                                      pCursorInfo->saved.x2 -
-                                      pCursorInfo->saved.x1,
-                                      pCursorInfo->saved.y2 -
-                                      pCursorInfo->saved.y1);
+    miDCSaveUnderCursor(pDev,
+                        pScreen,
+                        pCursorInfo->saved.x1,
+                        pCursorInfo->saved.y1,
+                        pCursorInfo->saved.x2 -
+                        pCursorInfo->saved.x1,
+                        pCursorInfo->saved.y2 -
+                        pCursorInfo->saved.y1);
     SPRITE_DEBUG(("SaveUnderCursor %d\n", pDev->id));
     miSpriteEnableDamage(pScreen, pScreenPriv);
     DamageDrawInternal (pScreen, FALSE);
@@ -1002,15 +959,11 @@ miSpriteRestoreCursor (DeviceIntPtr pDev, ScreenPtr pScreen)
     CursorPtr		pCursor;
     miCursorInfoPtr     pCursorInfo;
 
-    if (!pDev->isMaster && !pDev->u.master)
-    {
-        ErrorF("[mi] miSpriteRestoreCursor called for floating device.\n");
+    if (!IsMaster(pDev) && !pDev->u.master)
         return;
-    }
 
     DamageDrawInternal (pScreen, TRUE);
-    pScreenPriv = (miSpriteScreenPtr)dixLookupPrivate(&pScreen->devPrivates,
-						      miSpriteScreenKey);
+    pScreenPriv = dixLookupPrivate(&pScreen->devPrivates, miSpriteScreenKey);
     pCursorInfo = MISPRITE(pDev);
 
     miSpriteComputeSaved (pDev, pScreen);
@@ -1022,7 +975,7 @@ miSpriteRestoreCursor (DeviceIntPtr pDev, ScreenPtr pScreen)
     SPRITE_DEBUG(("RestoreCursor %d\n", pDev->id));
     if (pCursorInfo->checkPixels)
         miSpriteFindColors (pCursorInfo, pScreen);
-    if ((*pScreenPriv->funcs->PutUpCursor) (pDev, pScreen,
+    if (miDCPutUpCursor(pDev, pScreen,
                 pCursor, x, y,
                 pScreenPriv->colors[SOURCE_COLOR].pixel,
                 pScreenPriv->colors[MASK_COLOR].pixel))
@@ -1041,19 +994,14 @@ miSpriteRestoreCursor (DeviceIntPtr pDev, ScreenPtr pScreen)
 static void
 miSpriteComputeSaved (DeviceIntPtr pDev, ScreenPtr pScreen)
 {
-    miSpriteScreenPtr   pScreenPriv;
     int		    x, y, w, h;
     int		    wpad, hpad;
     CursorPtr	    pCursor;
     miCursorInfoPtr pCursorInfo;
 
-    if (!pDev->isMaster && !pDev->u.master)
-    {
-        ErrorF("[mi] miSpriteComputeSaved called for floating device.\n");
+    if (!IsMaster(pDev) && !pDev->u.master)
         return;
-    }
-    pScreenPriv = (miSpriteScreenPtr)dixLookupPrivate(&pScreen->devPrivates,
-						      miSpriteScreenKey);
+
     pCursorInfo = MISPRITE(pDev);
 
     pCursor = pCursorInfo->pCursor;

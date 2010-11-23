@@ -107,8 +107,6 @@
 #ifndef _PCI_H
 #define _PCI_H 1
 
-#include <X11/Xarch.h>
-#include <X11/Xfuncproto.h>
 #include "xf86Pci.h"
 #include "xf86PciInfo.h"
 
@@ -120,9 +118,6 @@
 #else
 #define PCI_DOM_MASK 0x0ffu
 #endif
-
-#define DEVID(vendor, device) \
-    ((CARD32)((PCI_##device << 16) | PCI_##vendor))
 
 #ifndef PCI_DOM_MASK
 # define PCI_DOM_MASK 0x0ffu
@@ -143,33 +138,13 @@
 #define PCI_DEV_FROM_TAG(tag)  (((tag) & 0x0000f800u) >> 11)
 #define PCI_FUNC_FROM_TAG(tag) (((tag) & 0x00000700u) >> 8)
 
-#define PCI_DFN_FROM_TAG(tag)  (((tag) & 0x0000ff00u) >> 8)
-#define PCI_BDEV_FROM_TAG(tag) ((tag) & 0x00fff800u)
-
 #define PCI_DOM_FROM_BUS(bus)  (((bus) >> 8) & (PCI_DOM_MASK))
 #define PCI_BUS_NO_DOMAIN(bus) ((bus) & 0xffu)
 #define PCI_TAG_NO_DOMAIN(tag) ((tag) & 0x00ffff00u)
 
-/*
- * Debug Macros/Definitions
- */
-/* #define DEBUGPCI  2 */    /* Disable/enable trace in PCI code */
-
-#if defined(DEBUGPCI)
-
-# define PCITRACE(lvl,printfargs) \
-	if (lvl > xf86Verbose) { \
-		ErrorF printfargs; \
-	}
-
-#else /* !defined(DEBUGPCI) */
-
-# define PCITRACE(lvl,printfargs)
-
-#endif /* !defined(DEBUGPCI) */
-
-#if defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__NetBSD__) || \
-	defined(__DragonFly__) || defined(__sun)
+#if defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || \
+	defined(__OpenBSD__) || defined(__NetBSD__) || \
+	defined(__DragonFly__) || defined(__sun) || defined(__GNU__)
 #define ARCH_PCI_INIT bsdPciInit
 #endif
 
@@ -182,18 +157,5 @@
 #endif
 
 extern void ARCH_PCI_INIT(void);
-
-/*
- * Table of functions used to access a specific PCI bus domain
- * (e.g. a primary PCI bus and all of its secondaries)
- */
-typedef struct pci_bus_funcs {
-	ADDRESS (*pciAddrBusToHost)(PCITAG, PciAddrType, ADDRESS);
-} pciBusFuncs_t, *pciBusFuncs_p;
-
-/* Generic PCI service functions and helpers */
-ADDRESS       pciAddrNOOP(PCITAG tag, PciAddrType type, ADDRESS);
-
-extern pciBusFuncs_t  *pciBusFuncs;
 
 #endif /* _PCI_H */

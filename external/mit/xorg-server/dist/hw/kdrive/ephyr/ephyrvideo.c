@@ -236,7 +236,7 @@ DoSimpleClip (BoxPtr a_dst_box,
 static Bool
 ephyrLocalAtomToHost (int a_local_atom, int *a_host_atom)
 {
-    char *atom_name=NULL;
+    const char *atom_name=NULL;
     int host_atom=None ;
 
     EPHYR_RETURN_VAL_IF_FAIL (a_host_atom, FALSE) ;
@@ -302,7 +302,7 @@ ephyrInitVideo (ScreenPtr pScreen)
 
     EPHYR_LOG ("enter\n") ;
 
-    if (screen->fb[0].bitsPerPixel == 8) {
+    if (screen->fb.bitsPerPixel == 8) {
         EPHYR_LOG_ERROR ("8 bits depth not supported\n") ;
         return FALSE ;
     }
@@ -332,7 +332,7 @@ ephyrXVPrivNew (void)
 
     EPHYR_LOG ("enter\n") ;
 
-    xv_priv = xcalloc (1, sizeof (EphyrXVPriv)) ;
+    xv_priv = calloc(1, sizeof (EphyrXVPriv)) ;
     if (!xv_priv) {
         EPHYR_LOG_ERROR ("failed to create EphyrXVPriv\n") ;
         goto error ;
@@ -371,11 +371,9 @@ ephyrXVPrivDelete (EphyrXVPriv *a_this)
         ephyrHostXVAdaptorArrayDelete (a_this->host_adaptors) ;
         a_this->host_adaptors = NULL ;
     }
-    if (a_this->adaptors) {
-        xfree (a_this->adaptors) ;
-        a_this->adaptors = NULL ;
-    }
-    xfree (a_this) ;
+    free(a_this->adaptors) ;
+    a_this->adaptors = NULL ;
+    free(a_this) ;
     EPHYR_LOG ("leave\n") ;
 }
 
@@ -388,7 +386,7 @@ videoEncodingDup (EphyrHostEncoding *a_encodings,
 
     EPHYR_RETURN_VAL_IF_FAIL (a_encodings && a_num_encodings, NULL) ;
 
-    result = xcalloc (a_num_encodings, sizeof (KdVideoEncodingRec)) ;
+    result = calloc(a_num_encodings, sizeof (KdVideoEncodingRec)) ;
     for (i=0 ; i < a_num_encodings; i++) {
         result[i].id = a_encodings[i].id ;
         result[i].name = strdup (a_encodings[i].name) ;
@@ -409,7 +407,7 @@ portAttributesDup (EphyrHostAttribute *a_encodings,
 
     EPHYR_RETURN_VAL_IF_FAIL (a_encodings && a_num_encodings, NULL) ;
 
-    result = xcalloc (a_num_encodings, sizeof (KdAttributeRec)) ;
+    result = calloc(a_num_encodings, sizeof (KdAttributeRec)) ;
     if (!result) {
         EPHYR_LOG_ERROR ("failed to allocate attributes\n") ;
         return NULL ;
@@ -457,7 +455,7 @@ ephyrXVPrivQueryHostAdaptors (EphyrXVPriv *a_this)
      * copy what we can from adaptors into a_this->adaptors
      */
     if (a_this->num_adaptors) {
-        a_this->adaptors = xcalloc (a_this->num_adaptors,
+        a_this->adaptors = calloc(a_this->num_adaptors,
                                     sizeof (KdVideoAdaptorRec)) ;
         if (!a_this->adaptors) {
             EPHYR_LOG_ERROR ("failed to create internal adaptors\n") ;
@@ -515,7 +513,7 @@ ephyrXVPrivQueryHostAdaptors (EphyrXVPriv *a_this)
                             ephyrHostXVAdaptorGetNbPorts (cur_host_adaptor) ;
         */
         a_this->adaptors[i].pPortPrivates =
-                xcalloc (a_this->adaptors[i].nPorts,
+                calloc(a_this->adaptors[i].nPorts,
                          sizeof (DevUnion) + sizeof (EphyrPortPriv)) ;
         port_priv_offset = a_this->adaptors[i].nPorts;
         for (j=0; j < a_this->adaptors[i].nPorts; j++) {
@@ -658,7 +656,7 @@ ephyrXVPrivRegisterAdaptors (EphyrXVPriv *a_this,
                 KdXVListGenericAdaptors (screen, &registered_adaptors);
 
     num_adaptors = num_registered_adaptors + a_this->num_adaptors ;
-    adaptors = xcalloc (num_adaptors, sizeof (KdVideoAdaptorPtr)) ;
+    adaptors = calloc(num_adaptors, sizeof (KdVideoAdaptorPtr)) ;
     if (!adaptors) {
         EPHYR_LOG_ERROR ("failed to allocate adaptors tab\n") ;
         goto out ;
@@ -675,14 +673,11 @@ ephyrXVPrivRegisterAdaptors (EphyrXVPriv *a_this,
     is_ok = TRUE ;
 
 out:
-    if (registered_adaptors) {
-        xfree (registered_adaptors) ;
-        registered_adaptors = NULL ;
-    }
-    if (adaptors) {
-        xfree (adaptors) ;
-        adaptors=NULL ;
-    }
+    free(registered_adaptors) ;
+    registered_adaptors = NULL ;
+    free(adaptors) ;
+    adaptors = NULL ;
+
     EPHYR_LOG ("leave\n") ;
     return is_ok ;
 }
@@ -951,8 +946,8 @@ ephyrPutImage (KdScreenInfo *a_info,
                               a_drw_x, a_drw_y, a_drw_w, a_drw_h,
                               a_src_x, a_src_y, a_src_w, a_src_h,
                               a_width, a_height, a_buf,
-                              (EphyrHostBox*)REGION_RECTS (a_clipping_region),
-                              REGION_NUM_RECTS (a_clipping_region))) {
+                              (EphyrHostBox*)RegionRects (a_clipping_region),
+                              RegionNumRects (a_clipping_region))) {
         EPHYR_LOG_ERROR ("EphyrHostXVPutImage() failed\n") ;
         goto out ;
     }
@@ -1030,8 +1025,8 @@ ephyrReputImage (KdScreenInfo *a_info,
                               port_priv->src_w, port_priv->src_h,
                               port_priv->image_width, port_priv->image_height,
                               port_priv->image_buf,
-                              (EphyrHostBox*)REGION_RECTS (a_clipping_region),
-                              REGION_NUM_RECTS (a_clipping_region))) {
+                              (EphyrHostBox*)RegionRects (a_clipping_region),
+                              RegionNumRects (a_clipping_region))) {
         EPHYR_LOG_ERROR ("ephyrHostXVPutImage() failed\n") ;
         goto out ;
     }
@@ -1069,7 +1064,7 @@ ephyrPutVideo (KdScreenInfo *a_info,
     dst_box.y2 = a_drw_y + a_drw_h;
 
     if (!DoSimpleClip (&dst_box,
-                       REGION_EXTENTS (pScreen->pScreen, a_clipping_region),
+                       RegionExtents(a_clipping_region),
                        &clipped_area)) {
         EPHYR_LOG_ERROR ("failed to simple clip\n") ;
         goto out ;
@@ -1120,7 +1115,7 @@ ephyrGetVideo (KdScreenInfo *a_info,
     dst_box.y2 = a_drw_y + a_drw_h;
 
     if (!DoSimpleClip (&dst_box,
-                       REGION_EXTENTS (pScreen->pScreen, a_clipping_region),
+                       RegionExtents(a_clipping_region),
                        &clipped_area)) {
         EPHYR_LOG_ERROR ("failed to simple clip\n") ;
         goto out ;
@@ -1171,7 +1166,7 @@ ephyrPutStill (KdScreenInfo *a_info,
     dst_box.y2 = a_drw_y + a_drw_h;
 
     if (!DoSimpleClip (&dst_box,
-                       REGION_EXTENTS (pScreen->pScreen, a_clipping_region),
+                       RegionExtents(a_clipping_region),
                        &clipped_area)) {
         EPHYR_LOG_ERROR ("failed to simple clip\n") ;
         goto out ;
@@ -1222,7 +1217,7 @@ ephyrGetStill (KdScreenInfo *a_info,
     dst_box.y2 = a_drw_y + a_drw_h;
 
     if (!DoSimpleClip (&dst_box,
-                       REGION_EXTENTS (pScreen->pScreen, a_clipping_region),
+                       RegionExtents(a_clipping_region),
                        &clipped_area)) {
         EPHYR_LOG_ERROR ("failed to simple clip\n") ;
         goto out ;

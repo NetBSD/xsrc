@@ -1,9 +1,9 @@
 noinst_LTLIBRARIES = libmi.la
 
 if XORG
-sdk_HEADERS = mibank.h micmap.h miline.h mipointer.h mi.h mibstore.h \
+sdk_HEADERS = micmap.h miline.h mipointer.h mi.h mibstore.h \
               migc.h mipointrst.h mizerarc.h micoord.h mifillarc.h \
-              mispans.h miwideline.h mistruct.h mifpoly.h
+              mispans.h miwideline.h mistruct.h mifpoly.h mioverlay.h
 endif
 
 AM_CFLAGS = $(DIX_CFLAGS)
@@ -11,8 +11,6 @@ AM_CFLAGS = $(DIX_CFLAGS)
 libmi_la_SOURCES = 	\
 	mi.h		\
 	miarc.c		\
-	mibank.c	\
-	mibank.h	\
 	mibitblt.c	\
 	mibstore.c	\
 	mibstore.h	\
@@ -20,6 +18,7 @@ libmi_la_SOURCES = 	\
 	micmap.c	\
 	micmap.h	\
 	micoord.h	\
+	micopy.c	\
 	micursor.c	\
 	midash.c	\
 	midispcur.c	\
@@ -49,14 +48,12 @@ libmi_la_SOURCES = 	\
 	mipolytext.c	\
 	mipolyutil.c	\
 	mipushpxl.c	\
-	miregion.c	\
 	miscanfill.h	\
 	miscrinit.c	\
 	mispans.c	\
 	mispans.h	\
 	misprite.c	\
 	misprite.h	\
-	mispritest.h	\
 	mistruct.h	\
 	mivaltree.c	\
 	mivalidate.h	\

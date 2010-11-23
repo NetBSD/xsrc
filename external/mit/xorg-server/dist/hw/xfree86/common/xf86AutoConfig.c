@@ -39,10 +39,10 @@
 #include "xf86Config.h"
 #include "xf86Priv.h"
 #include "xf86_OSlib.h"
+#include "xf86pciBus.h"
 #ifdef __sparc__
 # include "xf86sbusBus.h"
 #endif
-#include "dirent.h"
 
 #ifdef sun
 # include <sys/visual_io.h>
@@ -111,7 +111,7 @@ AppendToList(const char *s, const char ***list, int *lines)
 	(*list)[*lines - 1] = newstr;
 	(*list)[*lines] = NULL;
     }
-    xfree(str);
+    free(str);
 }
 
 static void
@@ -120,10 +120,9 @@ FreeList(const char ***list, int *lines)
     int i;
 
     for (i = 0; i < *lines; i++) {
-	if ((*list)[i])
-	    xfree((*list)[i]);
+	free((*list)[i]);
     }
-    xfree(*list);
+    free(*list);
     *list = NULL;
     *lines = 0;
 }
@@ -138,87 +137,6 @@ static void
 AppendToConfig(const char *s)
 {
     AppendToList(s, &builtinConfig, &builtinLines);
-}
-
-static int
-videoPtrToDriverList(struct pci_device *dev,
-		     char *returnList[], int returnListMax)
-{
-    /*
-     * things not handled yet:
-     * cyrix/nsc.  should be merged into geode anyway.
-     * xgi.
-     */
-    int i;
-    /* Add more entries here if we ever return more than 4 drivers for
-       any device */
-    char *driverList[5] = { NULL, NULL, NULL, NULL, NULL };
-
-    switch (dev->vendor_id)
-    {
-	case 0x1022:
-	    if (dev->device_id == 0x2081) {
-		driverList[0] = "geode";
-		driverList[1] = "amd";
-	    }
-	    break;
-	case 0x1142:		    driverList[0] = "apm"; break;
-	case 0xedd8:		    driverList[0] = "ark"; break;
-	case 0x1a03:		    driverList[0] = "ast"; break;
-	case 0x1002:		    driverList[0] = "ati"; break;
-	case 0x102c:		    driverList[0] = "chips"; break;
-	case 0x1013:		    driverList[0] = "cirrus"; break;
-	case 0x8086:
-	    if ((dev->device_id == 0x00d1) || (dev->device_id == 0x7800)) {
-		driverList[0] = "i740";
-	    } else {
-		driverList[0] = "intel";
-		driverList[1] = "i810";
-	    }
-	    break;
-	case 0x102b:		    driverList[0] = "mga";	break;
-	case 0x10c8:		    driverList[0] = "neomagic"; break;
-	case 0x105d:		    driverList[0] = "i128";	break;
-	case 0x10de: case 0x12d2:   driverList[0] = "nv";	break;
-	case 0x1163:		    driverList[0] = "rendition"; break;
-	case 0x5333:
-	    switch (dev->device_id)
-	    {
-		case 0x88d0: case 0x88d1: case 0x88f0: case 0x8811:
-		case 0x8812: case 0x8814: case 0x8901:
-		    driverList[0] = "s3"; break;
-		case 0x5631: case 0x883d: case 0x8a01: case 0x8a10:
-		case 0x8c01: case 0x8c03: case 0x8904: case 0x8a13:
-		    driverList[0] = "s3virge"; break;
-		default:
-		    driverList[0] = "savage"; break;
-	    }
-	    break;
-	case 0x1039:		    driverList[0] = "sis";	break;
-	case 0x126f:		    driverList[0] = "siliconmotion"; break;
-	case 0x121a:
-	    if (dev->device_id < 0x0003)
-	        driverList[0] = "voodoo";
-	    else
-	        driverList[0] = "tdfx";
-	    break;
-	case 0x3d3d:		    driverList[0] = "glint";	break;
-	case 0x1023:		    driverList[0] = "trident"; break;
-	case 0x100c:		    driverList[0] = "tseng";	break;
-	case 0x1106:		    driverList[0] = "openchrome"; break;
-	case 0x15ad:		    driverList[0] = "vmware";	break;
-	case 0x18ca:
-	    if (dev->device_id == 0x47)
-		driverList[0] = "xgixp";
-	    else
-		driverList[0] = "xgi";
-	    break;
-	default: break;
-    }
-    for (i = 0; (i < returnListMax) && (driverList[i] != NULL); i++) {
-	returnList[i] = xnfstrdup(driverList[i]);
-    }
-    return i;	/* Number of entries added */
 }
 
 Bool
@@ -247,7 +165,7 @@ xf86AutoConfig(void)
     AppendToConfig(BUILTIN_LAYOUT_SECTION_POST);
 
     for (p = deviceList; *p; p++) {
-	xfree(*p);
+	free(*p);
     }
 
     xf86MsgVerb(X_DEFAULT, 0,
@@ -258,7 +176,8 @@ xf86AutoConfig(void)
     for (cp = builtinConfig; *cp; cp++)
 	xf86ErrorFVerb(3, "\t%s", *cp);
     xf86MsgVerb(X_DEFAULT, 3, "--- End of built-in configuration ---\n");
-    
+
+    xf86initConfigFiles();
     xf86setBuiltinConfig(builtinConfig);
     ret = xf86HandleConfigFile(TRUE);
     FreeConfig();
@@ -266,175 +185,12 @@ xf86AutoConfig(void)
     if (ret != CONFIG_OK)
 	xf86Msg(X_ERROR, "Error parsing the built-in default configuration.\n");
 
-    return (ret == CONFIG_OK);
+    return ret == CONFIG_OK;
 }
-
-int 
-xchomp(char *line)
-{
-    size_t len = 0;
-
-    if (!line) {
-        return 1;
-    }
-
-    len = strlen(line);
-    if (line[len - 1] == '\n' && len > 0) {
-        line[len - 1] = '\0';
-    }
-    return 0;
-}
-
-GDevPtr
-autoConfigDevice(GDevPtr preconf_device)
-{
-    GDevPtr ptr = NULL;
-
-    if (!xf86configptr) {
-        return NULL;
-    }
-
-    /* If there's a configured section with no driver chosen, use it */
-    if (preconf_device) {
-        ptr = preconf_device;
-    } else {
-        ptr = xcalloc(1, sizeof(GDevRec));
-        if (!ptr) {
-            return NULL;
-        }
-        ptr->chipID = -1;
-        ptr->chipRev = -1;
-        ptr->irq = -1;
-
-        ptr->active = TRUE;
-        ptr->claimed = FALSE;
-        ptr->identifier = "Autoconfigured Video Device";
-        ptr->driver = NULL;
-    }
-    if (!ptr->driver) {
-        ptr->driver = chooseVideoDriver();
-    }
-
-    /* TODO Handle multiple screen sections */
-    if (xf86ConfigLayout.screens && !xf86ConfigLayout.screens->screen->device) {   
-        xf86ConfigLayout.screens->screen->device = ptr;
-        ptr->myScreenSection = xf86ConfigLayout.screens->screen;
-    }
-    xf86Msg(X_DEFAULT, "Assigned the driver to the xf86ConfigLayout\n");
-
-    return ptr;
-}
-
-#ifdef __linux__
-/* This function is used to provide a workaround for binary drivers that
- * don't export their PCI ID's properly. If distros don't end up using this
- * feature it can and should be removed because the symbol-based resolution
- * scheme should be the primary one */
-static void
-matchDriverFromFiles (char** matches, uint16_t match_vendor, uint16_t match_chip)
-{
-    DIR *idsdir;
-    FILE *fp;
-    struct dirent *direntry;
-    char *line = NULL;
-    size_t len;
-    ssize_t read;
-    char path_name[256], vendor_str[5], chip_str[5];
-    uint16_t vendor, chip;
-    int i, j;
-
-    idsdir = opendir(PCI_TXT_IDS_PATH);
-    if (!idsdir)
-        return;
-
-    xf86Msg(X_INFO, "Scanning %s directory for additional PCI ID's supported by the drivers\n", PCI_TXT_IDS_PATH);
-    direntry = readdir(idsdir);
-    /* Read the directory */
-    while (direntry) {
-        if (direntry->d_name[0] == '.') {
-            direntry = readdir(idsdir);
-            continue;
-        }
-        len = strlen(direntry->d_name);
-        /* A tiny bit of sanity checking. We should probably do better */
-        if (strncmp(&(direntry->d_name[len-4]), ".ids", 4) == 0) {
-            /* We need the full path name to open the file */
-            strncpy(path_name, PCI_TXT_IDS_PATH, 256);
-            strncat(path_name, "/", 1);
-            strncat(path_name, direntry->d_name, (256 - strlen(path_name) - 1));
-            fp = fopen(path_name, "r");
-            if (fp == NULL) {
-                xf86Msg(X_ERROR, "Could not open %s for reading. Exiting.\n", path_name);
-                goto end;
-            }
-            /* Read the file */
-#ifdef __GLIBC__
-            while ((read = getline(&line, &len, fp)) != -1) {
-#else
-            while ((line = fgetln(fp, &len)) != (char *)NULL) {
-#endif /* __GLIBC __ */
-                xchomp(line);
-                if (isdigit(line[0])) {
-                    strncpy(vendor_str, line, 4);
-                    vendor_str[4] = '\0';
-                    vendor = (int)strtol(vendor_str, NULL, 16);
-                    if ((strlen(&line[4])) == 0) {
-                        chip_str[0] = '\0';
-                        chip = -1;
-                    } else {
-                        /* Handle trailing whitespace */
-                        if (isspace(line[4])) {
-                            chip_str[0] = '\0';
-                            chip = -1;
-                        } else {
-                            /* Ok, it's a real ID */
-                            strncpy(chip_str, &line[4], 4);
-                            chip_str[4] = '\0';
-                            chip = (int)strtol(chip_str, NULL, 16);
-                        }
-                    }
-                    if (vendor == match_vendor && chip == match_chip ) {
-                        i = 0;
-                        while (matches[i]) {
-                            i++;
-                        }
-                        matches[i] = (char*)xalloc(sizeof(char) * strlen(direntry->d_name) -  3);
-                        if (!matches[i]) {
-                            xf86Msg(X_ERROR, "Could not allocate space for the module name. Exiting.\n");
-                            goto end;
-                        }
-                        /* hack off the .ids suffix. This should guard
-                         * against other problems, but it will end up
-                         * taking off anything after the first '.' */
-                        for (j = 0; j < (strlen(direntry->d_name) - 3) ; j++) {
-                            if (direntry->d_name[j] == '.') {
-                                matches[i][j] = '\0';
-                                break;
-                            } else {
-                                matches[i][j] = direntry->d_name[j];
-                            }
-                        }
-                        xf86Msg(X_INFO, "Matched %s from file name %s\n", matches[i], direntry->d_name);
-                    }
-                } else {
-                    /* TODO Handle driver overrides here */
-                }
-            }
-            fclose(fp);
-        }
-        direntry = readdir(idsdir);
-    }
- end:
-    xfree(line);
-    closedir(idsdir);
-}
-#endif /* __linux__ */
 
 static void
 listPossibleVideoDrivers(char *matches[], int nmatches)
 {
-    struct pci_device * info = NULL;
-    struct pci_device_iterator *iter;
     int i;
     
     for (i = 0 ; i < nmatches ; i++) {
@@ -448,8 +204,25 @@ listPossibleVideoDrivers(char *matches[], int nmatches)
     if (xf86Info.consoleFd >= 0) {
 	struct vis_identifier   visid;
 	const char *cp;
+	extern char xf86SolarisFbDev[PATH_MAX];
+	int iret;
 
-	if (ioctl(xf86Info.consoleFd, VIS_GETIDENTIFIER, &visid) >= 0) {
+	SYSCALL(iret = ioctl(xf86Info.consoleFd, VIS_GETIDENTIFIER, &visid));
+	if (iret < 0) {
+	    int fbfd;
+
+	    fbfd = open(xf86SolarisFbDev, O_RDONLY);
+	    if (fbfd >= 0) {
+		SYSCALL(iret = ioctl(fbfd, VIS_GETIDENTIFIER, &visid));
+		close(fbfd);
+	    }
+	}
+
+	if (iret < 0) {
+	    xf86Msg(X_WARNING,
+		    "could not get frame buffer identifier from %s\n",
+		    xf86SolarisFbDev);
+	} else {
 	    xf86Msg(X_PROBED, "console driver: %s\n", visid.name);
 
 	    /* Special case from before the general case was set */
@@ -483,32 +256,7 @@ listPossibleVideoDrivers(char *matches[], int nmatches)
     }
 #endif
 
-    /* Find the primary device, and get some information about it. */
-    iter = pci_slot_match_iterator_create(NULL);
-    while ((info = pci_device_next(iter)) != NULL) {
-	if (xf86IsPrimaryPci(info)) {
-	    break;
-	}
-    }
-
-    pci_iterator_destroy(iter);
-
-    if (!info) {
-	ErrorF("Primary device is not PCI\n");
-    }
-#ifdef __linux__
-    else {
-	matchDriverFromFiles(matches, info->vendor_id, info->device_id);
-    }
-#endif /* __linux__ */
-
-    for (i = 0; (i < nmatches) && (matches[i]); i++) {
-	/* find end of matches list */
-    }
-
-    if ((info != NULL) && (i < nmatches)) {
-	i += videoPtrToDriverList(info, &(matches[i]), nmatches - i);
-    }
+    i = xf86PciMatchDriver(matches, nmatches);
 
     /* Fallback to platform default hardware */
     if (i < (nmatches - 1)) {
@@ -529,26 +277,117 @@ listPossibleVideoDrivers(char *matches[], int nmatches)
     }
 }
 
-char*
-chooseVideoDriver(void)
+/* copy a screen section and enter the desired driver
+ * and insert it at i in the list of screens */
+static Bool
+copyScreen(confScreenPtr oscreen, GDevPtr odev, int i, char *driver)
 {
-    char *chosen_driver = NULL;
-    int i;
+    GDevPtr cptr = NULL;
+
+    xf86ConfigLayout.screens[i].screen = xnfcalloc(1, sizeof(confScreenRec));
+    if(!xf86ConfigLayout.screens[i].screen)
+        return FALSE;
+    memcpy(xf86ConfigLayout.screens[i].screen, oscreen, sizeof(confScreenRec));
+
+    cptr = calloc(1, sizeof(GDevRec));
+    if (!cptr)
+        return FALSE;
+    memcpy(cptr, odev, sizeof(GDevRec));
+
+    cptr->identifier = Xprintf("Autoconfigured Video Device %s", driver);
+    cptr->driver = driver;
+
+    /* now associate the new driver entry with the new screen entry */
+    xf86ConfigLayout.screens[i].screen->device = cptr;
+    cptr->myScreenSection = xf86ConfigLayout.screens[i].screen;
+
+    return TRUE;
+}
+
+GDevPtr
+autoConfigDevice(GDevPtr preconf_device)
+{
+    GDevPtr ptr = NULL;
     char *matches[20]; /* If we have more than 20 drivers we're in trouble */
+    int num_matches = 0, num_screens = 0, i;
+    screenLayoutPtr slp;
 
-    listPossibleVideoDrivers(matches, 20);
+    if (!xf86configptr) {
+        return NULL;
+    }
 
-    /* TODO Handle multiple drivers claiming to support the same PCI ID */
-    chosen_driver = matches[0];
+    /* If there's a configured section with no driver chosen, use it */
+    if (preconf_device) {
+        ptr = preconf_device;
+    } else {
+        ptr = calloc(1, sizeof(GDevRec));
+        if (!ptr) {
+            return NULL;
+        }
+        ptr->chipID = -1;
+        ptr->chipRev = -1;
+        ptr->irq = -1;
 
-    xf86Msg(X_DEFAULT, "Matched %s for the autoconfigured driver\n",
-	    chosen_driver);
+        ptr->active = TRUE;
+        ptr->claimed = FALSE;
+        ptr->identifier = "Autoconfigured Video Device";
+        ptr->driver = NULL;
+    }
+    if (!ptr->driver) {
+        /* get all possible video drivers and count them */
+        listPossibleVideoDrivers(matches, 20);
+        for (; matches[num_matches]; num_matches++) {
+            xf86Msg(X_DEFAULT, "Matched %s as autoconfigured driver %d\n",
+                    matches[num_matches], num_matches);
+        }
 
-    for (i = 0; matches[i] ; i++) {
-        if (matches[i] != chosen_driver) {
-            xfree(matches[i]);
+        slp = xf86ConfigLayout.screens;
+        if (slp) {
+            /* count the number of screens and make space for
+             * a new screen for each additional possible driver
+             * minus one for the already existing first one
+             * plus one for the terminating NULL */
+            for (; slp[num_screens].screen; num_screens++);
+            xf86ConfigLayout.screens = xnfcalloc(num_screens + num_matches,
+                                                sizeof(screenLayoutRec));
+            xf86ConfigLayout.screens[0] = slp[0];
+
+            /* do the first match and set that for the original first screen */
+            ptr->driver = matches[0];
+            if (!xf86ConfigLayout.screens[0].screen->device) {
+                xf86ConfigLayout.screens[0].screen->device = ptr;
+                ptr->myScreenSection = xf86ConfigLayout.screens[0].screen;
+            }
+
+            /* for each other driver found, copy the first screen, insert it
+             * into the list of screens and set the driver */
+            i = 0;
+            while (i++ < num_matches) {
+                if (!copyScreen(slp[0].screen, ptr, i, matches[i]))
+                    return NULL;
+            }
+
+            /* shift the rest of the original screen list
+             * to the end of the current screen list
+             *
+             * TODO Handle rest of multiple screen sections */
+            for (i = 1; i < num_screens; i++) {
+                xf86ConfigLayout.screens[i+num_matches] = slp[i];
+            }
+            xf86ConfigLayout.screens[num_screens+num_matches-1].screen = NULL;
+            free(slp);
+        } else {
+            /* layout does not have any screens, not much to do */
+            ptr->driver = matches[0];
+            for (i = 1; matches[i] ; i++) {
+                if (matches[i] != matches[0]) {
+                    free(matches[i]);
+                }
+            }
         }
     }
 
-    return chosen_driver;
+    xf86Msg(X_DEFAULT, "Assigned the driver to the xf86ConfigLayout\n");
+
+    return ptr;
 }

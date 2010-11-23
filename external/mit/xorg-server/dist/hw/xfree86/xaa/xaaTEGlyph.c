@@ -143,7 +143,7 @@ GlyphScanlineFuncPtr *glyph_get_scanline_func(void) {
 /* This gets built for MSBFIRST or LSBFIRST with FIXEDBASE or not.
 	A total of 4 versions */
 
-void 
+void
 EXPNAME(XAATEGlyphRenderer)(
     ScrnInfoPtr pScrn,
     int x, int y, int w, int h, int skipleft, int startline, 
@@ -239,7 +239,7 @@ THE_END:
 
 ********************************************************************/
 
-void 
+void
 EXPNAME(XAATEGlyphRenderer3)(
     ScrnInfoPtr pScrn,
     int x, int y, int w, int h, int skipleft, int startline, 
@@ -301,7 +301,7 @@ EXPNAME(XAATEGlyphRenderer3)(
     } 
 
     dwords = ((3 * w + 31) >> 5) * h;
-    mem = (CARD32*)xalloc(((w + 31) >> 3) * sizeof(char));
+    mem = (CARD32*)malloc(((w + 31) >> 3) * sizeof(char));
     if (!mem) return;
 
     (*infoRec->SubsequentCPUToScreenColorExpandFill)(pScrn, x, y, w, h, 0);
@@ -321,7 +321,7 @@ EXPNAME(XAATEGlyphRenderer3)(
 	    DrawTextScanline3(base, mem, w);
 	}
 
-    xfree(mem);
+    free(mem);
 
     if((infoRec->TEGlyphRendererFlags & CPU_TRANSFER_PAD_QWORD) &&
 			(dwords & 1)) {
@@ -340,7 +340,7 @@ THE_END:
 #ifndef FIXEDBASE
 /*  Scanline version of above gets built for LSBFIRST and MSBFIRST */
 
-void 
+void
 EXPNAME(XAATEGlyphRendererScanline)(
     ScrnInfoPtr pScrn,
     int x, int y, int w, int h, int skipleft, int startline, 
@@ -415,7 +415,7 @@ THE_END:
     SET_SYNC_FLAG(infoRec);
 }
 
-void 
+void
 EXPNAME(XAATEGlyphRendererScanline3)(
     ScrnInfoPtr pScrn,
     int x, int y, int w, int h, int skipleft, int startline, 
@@ -478,7 +478,7 @@ EXPNAME(XAATEGlyphRendererScanline3)(
 
     w += skipleft;
     x -= skipleft;
-    mem = (CARD32*)xalloc(((w + 31) >> 3) * sizeof(char));
+    mem = (CARD32*)malloc(((w + 31) >> 3) * sizeof(char));
     if (!mem) return;
 
    (*infoRec->SubsequentScanlineCPUToScreenColorExpandFill)(	
@@ -495,7 +495,7 @@ EXPNAME(XAATEGlyphRendererScanline3)(
 	    bufferNo = 0;
     }
 
-    xfree(mem);
+    free(mem);
     
 THE_END:
 

@@ -180,7 +180,7 @@ promIsP1275(void)
 #endif
 }
 
-_X_EXPORT void
+void
 sparcPromClose(void)
 {
     if (promOpenCount > 1) {
@@ -191,14 +191,12 @@ sparcPromClose(void)
 	close(promFd);
 	promFd = -1;
     }
-    if (promOpio) {
-	xfree(promOpio);
-	promOpio = NULL;
-    }
+    free(promOpio);
+    promOpio = NULL;
     promOpenCount = 0;
 }
 
-_X_EXPORT int
+int
 sparcPromInit(void)
 {
     if (promOpenCount) {
@@ -208,7 +206,7 @@ sparcPromInit(void)
     promFd = open("/dev/openprom", O_RDONLY, 0);
     if (promFd == -1)
 	return -1;
-    promOpio = (struct openpromio *)xalloc(4096);
+    promOpio = (struct openpromio *)malloc(4096);
     if (!promOpio) {
 	sparcPromClose();
 	return -1;
@@ -224,7 +222,7 @@ sparcPromInit(void)
     return 0;
 }
 
-_X_EXPORT char *
+char *
 sparcPromGetProperty(sbusPromNodePtr pnode, const char *prop, int *lenp)
 {
     if (promSetNode(pnode))
@@ -232,7 +230,7 @@ sparcPromGetProperty(sbusPromNodePtr pnode, const char *prop, int *lenp)
     return promGetProperty(prop, lenp);
 }
 
-_X_EXPORT int
+int
 sparcPromGetBool(sbusPromNodePtr pnode, const char *prop)
 {
     if (promSetNode(pnode))
@@ -515,11 +513,11 @@ sparcPromNode2Pathname(sbusPromNodePtr pnode)
     char *ret;
 
     if (!pnode->node) return NULL;
-    ret = xalloc(4096);
+    ret = malloc(4096);
     if (!ret) return NULL;
     if (promWalkNode2Pathname(ret, promRootNode, promGetChild(promRootNode), pnode->node, 0))
 	return ret;
-    xfree(ret);
+    free(ret);
     return NULL;
 }
 
@@ -585,7 +583,7 @@ sparcPromPathname2Node(const char *pathName)
     char *name, *regstr, *p;
 
     i = strlen(pathName);
-    name = xalloc(i + 2);
+    name = malloc(i + 2);
     if (! name) return 0;
     strcpy (name, pathName);
     name [i + 1] = 0;
@@ -605,11 +603,11 @@ sparcPromPathname2Node(const char *pathName)
 	return 0;
     promGetSibling(0);
     i = promWalkPathname2Node(name + 1, regstr, promRootNode, 0);
-    xfree(name);
+    free(name);
     return i;
 }
 
-_X_EXPORT pointer
+pointer
 xf86MapSbusMem(sbusDevicePtr psdp, unsigned long offset, unsigned long size)
 {
     pointer ret;
@@ -636,7 +634,7 @@ xf86MapSbusMem(sbusDevicePtr psdp, unsigned long offset, unsigned long size)
     return (char *)ret + (offset - off);
 }
 
-_X_EXPORT void
+void
 xf86UnmapSbusMem(sbusDevicePtr psdp, pointer addr, unsigned long size)
 {
     unsigned long mask = getpagesize() - 1;
@@ -647,7 +645,7 @@ xf86UnmapSbusMem(sbusDevicePtr psdp, pointer addr, unsigned long size)
 }
 
 /* Tell OS that we are driving the HW cursor ourselves. */
-_X_EXPORT void
+void
 xf86SbusHideOsHwCursor(sbusDevicePtr psdp)
 {
     struct fbcursor fbcursor;
@@ -668,7 +666,7 @@ xf86SbusHideOsHwCursor(sbusDevicePtr psdp)
 }
 
 /* Set HW cursor colormap. */
-_X_EXPORT void
+void
 xf86SbusSetOsHwCursorCmap(sbusDevicePtr psdp, int bg, int fg)
 {
     struct fbcursor fbcursor;

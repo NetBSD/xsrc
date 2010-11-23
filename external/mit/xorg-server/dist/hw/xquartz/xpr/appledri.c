@@ -2,7 +2,7 @@
 
 Copyright 1998-1999 Precision Insight, Inc., Cedar Park, Texas.
 Copyright 2000 VA Linux Systems, Inc.
-Copyright (c) 2002 Apple Computer, Inc.
+Copyright (c) 2002, 2009 Apple Computer, Inc.
 All Rights Reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a
@@ -39,8 +39,6 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include <dix-config.h>
 #endif
 
-#define NEED_REPLIES
-#define NEED_EVENTS
 #include <X11/X.h>
 #include <X11/Xproto.h>
 #include "misc.h"
@@ -57,6 +55,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "dristruct.h"
 #include "xpr.h"
 #include "x-hash.h"
+#include "protocol-versions.h"
 
 static int DRIErrorBase = 0;
 
@@ -64,6 +63,7 @@ static DISPATCH_PROC(ProcAppleDRIDispatch);
 static DISPATCH_PROC(SProcAppleDRIDispatch);
 
 static void AppleDRIResetProc(ExtensionEntry* extEntry);
+static int ProcAppleDRICreatePixmap(ClientPtr client);
 
 static unsigned char DRIReqCode = 0;
 static int DRIEventBase = 0;
@@ -120,15 +120,15 @@ ProcAppleDRIQueryVersion(
     rep.type = X_Reply;
     rep.length = 0;
     rep.sequenceNumber = client->sequence;
-    rep.majorVersion = APPLE_DRI_MAJOR_VERSION;
-    rep.minorVersion = APPLE_DRI_MINOR_VERSION;
-    rep.patchVersion = APPLE_DRI_PATCH_VERSION;
+    rep.majorVersion = SERVER_APPLEDRI_MAJOR_VERSION;
+    rep.minorVersion = SERVER_APPLEDRI_MINOR_VERSION;
+    rep.patchVersion = SERVER_APPLEDRI_PATCH_VERSION;
     if (client->swapped) {
         swaps(&rep.sequenceNumber, n);
         swapl(&rep.length, n);
     }
     WriteToClient(client, sizeof(xAppleDRIQueryVersionReply), (char *)&rep);
-    return (client->noClientException);
+    return Success;
 }
 
 
@@ -159,7 +159,7 @@ ProcAppleDRIQueryDirectRenderingCapable(
 
     WriteToClient(client, 
         sizeof(xAppleDRIQueryDirectRenderingCapableReply), (char *)&rep);
-    return (client->noClientException);
+    return Success;
 }
 
 static int
@@ -182,7 +182,7 @@ ProcAppleDRIAuthConnection(
         rep.authenticated = 0;
     }
     WriteToClient(client, sizeof(xAppleDRIAuthConnectionReply), (char *)&rep);
-    return (client->noClientException);
+    return Success;
 }
 
 static void surface_notify(
@@ -192,22 +192,16 @@ static void surface_notify(
 {
     DRISurfaceNotifyArg *arg = _arg;
     int client_index = (int) x_cvt_vptr_to_uint(data);
-    ClientPtr client;
     xAppleDRINotifyEvent se;
 
     if (client_index < 0 || client_index >= currentMaxClients)
         return;
 
-    client = clients[client_index];
-    if (client == NULL || client == serverClient || client->clientGone)
-        return;
-
     se.type = DRIEventBase + AppleDRISurfaceNotify;
     se.kind = arg->kind;
     se.arg = arg->id;
-    se.sequenceNumber = client->sequence;
     se.time = currentTime.milliseconds;
-    WriteEventsToClient (client, 1, (xEvent *) &se);
+    WriteEventsToClient (clients[client_index], 1, (xEvent *) &se);
 }
 
 static int
@@ -247,7 +241,7 @@ ProcAppleDRICreateSurface(
     rep.uid = sid;
 
     WriteToClient(client, sizeof(xAppleDRICreateSurfaceReply), (char *)&rep);
-    return (client->noClientException);
+    return Success;
 }
 
 static int
@@ -255,10 +249,10 @@ ProcAppleDRIDestroySurface(
     register ClientPtr client
 )
 {
+    int rc;
     REQUEST(xAppleDRIDestroySurfaceReq);
     DrawablePtr pDrawable;
     REQUEST_SIZE_MATCH(xAppleDRIDestroySurfaceReq);
-    int rc;
 
     rc = dixLookupDrawable(&pDrawable, stuff->drawable, client, 0,
 			   DixReadAccess);
@@ -271,9 +265,79 @@ ProcAppleDRIDestroySurface(
         return BadValue;
     }
 
-    return (client->noClientException);
+    return Success;
 }
 
+static int
+ProcAppleDRICreatePixmap(ClientPtr client)
+{
+    REQUEST(xAppleDRICreatePixmapReq);
+    DrawablePtr pDrawable;
+    int rc;
+    char path[PATH_MAX];
+    xAppleDRICreatePixmapReply rep;
+    int width, height, pitch, bpp;
+    void *ptr;
+
+    REQUEST_SIZE_MATCH(xAppleDRICreatePixmapReq);
+
+    rc = dixLookupDrawable(&pDrawable, stuff->drawable, client, 0,
+                           DixReadAccess);
+
+    if(rc != Success)
+        return rc;
+    
+    if(!DRICreatePixmap(screenInfo.screens[stuff->screen],
+                              (Drawable)stuff->drawable,
+                              pDrawable,
+			      path, PATH_MAX)) {
+        return BadValue;
+    }
+
+    if(!DRIGetPixmapData(pDrawable, &width, &height,
+			 &pitch, &bpp, &ptr)) {
+	return BadValue;
+    } 
+	
+    rep.stringLength = strlen(path) + 1;
+		
+    /* No need for swapping, because this only runs if LocalClient is true. */
+    rep.type = X_Reply;
+    rep.length = sizeof(rep) + rep.stringLength;
+    rep.sequenceNumber = client->sequence;
+    rep.width = width;
+    rep.height = height;
+    rep.pitch = pitch;
+    rep.bpp = bpp;
+    rep.size = pitch * height;
+
+    if(sizeof(rep) != sz_xAppleDRICreatePixmapReply)
+	ErrorF("error sizeof(rep) is %zu\n", sizeof(rep)); 
+    
+    WriteReplyToClient(client, sizeof(rep), &rep);
+    (void)WriteToClient(client, rep.stringLength, path);
+
+    return Success;
+}
+
+static int
+ProcAppleDRIDestroyPixmap(ClientPtr client)
+{
+    DrawablePtr pDrawable;
+    int rc;
+    REQUEST(xAppleDRIDestroyPixmapReq);
+    REQUEST_SIZE_MATCH(xAppleDRIDestroyPixmapReq);
+
+    rc = dixLookupDrawable(&pDrawable, stuff->drawable, client, 0,
+			    DixReadAccess);
+
+    if(rc != Success)
+	return rc;
+    
+    DRIDestroyPixmap(pDrawable);
+
+    return Success;
+}
 
 /* dispatch */
 
@@ -303,6 +367,11 @@ ProcAppleDRIDispatch (
         return ProcAppleDRICreateSurface(client);
     case X_AppleDRIDestroySurface:
         return ProcAppleDRIDestroySurface(client);
+    case X_AppleDRICreatePixmap:
+	return ProcAppleDRICreatePixmap(client);
+    case X_AppleDRIDestroyPixmap:
+	return ProcAppleDRIDestroyPixmap(client);
+
     default:
         return BadRequest;
     }

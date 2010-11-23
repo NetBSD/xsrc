@@ -5,6 +5,7 @@ sdk_HEADERS = xf86int10.h
 EXTRA_CFLAGS =
 
 libint10_la_LDFLAGS = -avoid-version
+libint10_la_LIBADD = $(PCIACCESS_LIBS)
 
 COMMON_SOURCES = \
 	helper_exec.c \
@@ -38,6 +39,7 @@ endif
 
 if INT10_STUB
 AM_CFLAGS = $(I386_VIDEO_CFLAGS) -D_VM86_LINUX $(DIX_CFLAGS) $(XORG_CFLAGS) $(EXTRA_CFLAGS)
+INCLUDES = $(XORG_INCS)
 libint10_la_SOURCES = stub.c xf86int10module.c
 endif
 

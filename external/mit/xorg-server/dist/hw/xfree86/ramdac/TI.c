@@ -115,12 +115,10 @@ TIramdacCalculateMNPForClock(
     VCO = 8.0 * IntRef * best_m / best_n;
     ActualClock = VCO / ( 1 << p );
 
-#ifdef DEBUG
-    ErrorF( "f_out=%ld f_vco=%.1f n=%d m=%d p=%d\n",
+    DebugF( "f_out=%ld f_vco=%.1f n=%d m=%d p=%d\n",
 	    ActualClock, VCO, *rN, *rM, *rP);
-#endif
 
-    return (ActualClock);
+    return ActualClock;
 }
 
 void

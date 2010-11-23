@@ -55,6 +55,13 @@
 #include "dispatch.h"
 #include "extension_string.h"
 
+/* RTLD_LOCAL is not defined on Cygwin */
+#ifdef __CYGWIN__
+#ifndef RTLD_LOCAL
+#define RTLD_LOCAL 0
+#endif
+#endif
+
 typedef struct __GLXDRIscreen   __GLXDRIscreen;
 typedef struct __GLXDRIcontext  __GLXDRIcontext;
 typedef struct __GLXDRIdrawable __GLXDRIdrawable;
@@ -97,11 +104,11 @@ __glXDRIdrawableDestroy(__GLXdrawable *drawable)
 
     __glXDrawableRelease(drawable);
 
-    xfree(private);
+    free(private);
 }
 
 static GLboolean
-__glXDRIdrawableSwapBuffers(__GLXdrawable *drawable)
+__glXDRIdrawableSwapBuffers(ClientPtr client, __GLXdrawable *drawable)
 {
     __GLXDRIdrawable *private = (__GLXDRIdrawable *) drawable;
     const __DRIcoreExtension *core = private->screen->core;
@@ -131,7 +138,7 @@ __glXDRIcontextDestroy(__GLXcontext *baseContext)
 
     (*screen->core->destroyContext)(context->driContext);
     __glXContextDestroy(&context->base);
-    xfree(context);
+    free(context);
 }
 
 static int
@@ -247,7 +254,7 @@ __glXDRIscreenDestroy(__GLXscreen *baseScreen)
 
     __glXScreenDestroy(baseScreen);
 
-    xfree(screen);
+    free(screen);
 }
 
 static __GLXcontext *
@@ -267,7 +274,7 @@ __glXDRIscreenCreateContext(__GLXscreen *baseScreen,
     else
 	driShare = NULL;
 
-    context = xcalloc(1, sizeof *context);
+    context = calloc(1, sizeof *context);
     if (context == NULL)
 	return NULL;
 
@@ -285,35 +292,30 @@ __glXDRIscreenCreateContext(__GLXscreen *baseScreen,
     return &context->base;
 }
 
-static void
-glxChangeGC(GCPtr gc, BITS32 mask, CARD32 val)
-{
-    CARD32 v[1];
-    v[0] = val;
-    dixChangeGC(NullClient, gc, mask, v, NULL);
-}
-
 static __GLXdrawable *
-__glXDRIscreenCreateDrawable(__GLXscreen *screen,
+__glXDRIscreenCreateDrawable(ClientPtr client,
+			     __GLXscreen *screen,
 			     DrawablePtr pDraw,
-			     int type,
 			     XID drawId,
+			     int type,
+			     XID glxDrawId,
 			     __GLXconfig *glxConfig)
 {
+    ChangeGCVal gcvals[2];
     __GLXDRIscreen *driScreen = (__GLXDRIscreen *) screen;
     __GLXDRIconfig *config = (__GLXDRIconfig *) glxConfig;
     __GLXDRIdrawable *private;
 
     ScreenPtr pScreen = driScreen->base.pScreen;
 
-    private = xcalloc(1, sizeof *private);
+    private = calloc(1, sizeof *private);
     if (private == NULL)
 	return NULL;
 
     private->screen = driScreen;
     if (!__glXDrawableInit(&private->base, screen,
-			   pDraw, type, drawId, glxConfig)) {
-        xfree(private);
+			   pDraw, type, glxDrawId, glxConfig)) {
+        free(private);
 	return NULL;
     }
 
@@ -324,9 +326,10 @@ __glXDRIscreenCreateDrawable(__GLXscreen *screen,
     private->gc = CreateScratchGC(pScreen, pDraw->depth);
     private->swapgc = CreateScratchGC(pScreen, pDraw->depth);
 
-    glxChangeGC(private->gc, GCFunction, GXcopy);
-    glxChangeGC(private->swapgc, GCFunction, GXcopy);
-    glxChangeGC(private->swapgc, GCGraphicsExposures, FALSE);
+    gcvals[0].val = GXcopy;
+    ChangeGC(NullClient, private->gc, GCFunction, gcvals);
+    gcvals[1].val = FALSE;
+    ChangeGC(NullClient, private->swapgc, GCFunction | GCGraphicsExposures, gcvals);
 
     private->driDrawable =
 	(*driScreen->swrast->createNewDrawable)(driScreen->driScreen,
@@ -441,7 +444,7 @@ __glXDRIscreenProbe(ScreenPtr pScreen)
     const __DRIconfig **driConfigs;
     int i;
 
-    screen = xcalloc(1, sizeof *screen);
+    screen = calloc(1, sizeof *screen);
     if (screen == NULL)
 	return NULL;
 
@@ -492,15 +495,22 @@ __glXDRIscreenProbe(ScreenPtr pScreen)
 					   screen);
 
     if (screen->driScreen == NULL) {
-	LogMessage(X_ERROR, "AIGLX error: Calling driver entry point failed");
+	LogMessage(X_ERROR,
+		   "AIGLX error: Calling driver entry point failed\n");
 	goto handle_error;
     }
 
     initializeExtensions(screen);
 
-    screen->base.fbconfigs = glxConvertConfigs(screen->core, driConfigs);
+    screen->base.fbconfigs = glxConvertConfigs(screen->core, driConfigs,
+					       GLX_WINDOW_BIT |
+					       GLX_PIXMAP_BIT |
+					       GLX_PBUFFER_BIT);
 
     __glXScreenInit(&screen->base, pScreen);
+
+    screen->base.GLXmajor = 1;
+    screen->base.GLXminor = 4;
 
     LogMessage(X_INFO,
 	       "AIGLX: Loaded and initialized %s\n", filename);
@@ -511,14 +521,14 @@ __glXDRIscreenProbe(ScreenPtr pScreen)
     if (screen->driver)
         dlclose(screen->driver);
 
-    xfree(screen);
+    free(screen);
 
     LogMessage(X_ERROR, "GLX: could not load software renderer\n");
 
     return NULL;
 }
 
-__GLXprovider __glXDRISWRastProvider = {
+_X_EXPORT __GLXprovider __glXDRISWRastProvider = {
     __glXDRIscreenProbe,
     "DRISWRAST",
     NULL

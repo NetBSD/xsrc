@@ -35,7 +35,7 @@
 #include <dix-config.h>
 #endif
 
-#include "quartzCommon.h"
+#include "quartz.h"
 #include "xpr.h"
 #include "darwin.h"
 #include "darwinEvents.h"
@@ -57,17 +57,17 @@ typedef struct {
     miPointerSpriteFuncPtr  spriteFuncs;
 } QuartzCursorScreenRec, *QuartzCursorScreenPtr;
 
-static int darwinCursorScreenKeyIndex;
-static DevPrivateKey darwinCursorScreenKey = &darwinCursorScreenKeyIndex;
+static DevPrivateKeyRec darwinCursorScreenKeyRec;
+#define darwinCursorScreenKey (&darwinCursorScreenKeyRec)
 
 #define CURSOR_PRIV(pScreen) ((QuartzCursorScreenPtr) \
     dixLookupPrivate(&pScreen->devPrivates, darwinCursorScreenKey))
-
 
 static Bool
 load_cursor(CursorPtr src, int screen)
 {
     uint32_t *data;
+    Bool free_data = FALSE;
     uint32_t rowbytes;
     int width, height;
     int hot_x, hot_y;
@@ -95,7 +95,11 @@ load_cursor(CursorPtr src, int screen)
         const uint32_t *be_data=(uint32_t *) src->bits->argb;
         unsigned i;
         rowbytes = src->bits->width * sizeof (CARD32);
-        data=alloca (rowbytes * src->bits->height);
+        data = malloc(rowbytes * src->bits->height);
+        free_data = TRUE;
+        if(!data) {
+            FatalError("Failed to allocate memory in %s\n", __func__);
+        }
         for(i=0;i<(src->bits->width*src->bits->height);i++)
             data[i]=ntohl(be_data[i]);
 #endif
@@ -118,8 +122,12 @@ load_cursor(CursorPtr src, int screen)
 
         /* round up to 8 pixel boundary so we can convert whole bytes */
         rowbytes = ((src->bits->width * 4) + 31) & ~31;
-        data = alloca(rowbytes * src->bits->height);
-
+        data = malloc(rowbytes * src->bits->height);
+        free_data = TRUE;
+        if(!data) {
+            FatalError("Failed to allocate memory in %s\n", __func__);
+        }
+        
         if (!src->bits->emptyMask)
         {
             ycount = src->bits->height;
@@ -128,7 +136,7 @@ load_cursor(CursorPtr src, int screen)
 
             while (ycount-- > 0)
             {
-                xcount = (src->bits->width + 7) / 8;
+                xcount = bits_to_bytes(src->bits->width);
                 sptr = srow; mptr = mrow;
                 dptr = drow;
 
@@ -168,6 +176,8 @@ load_cursor(CursorPtr src, int screen)
     }
 
     err = xp_set_cursor(width, height, hot_x, hot_y, data, rowbytes);
+    if(free_data)
+        free(data);
     return err == Success;
 }
 
@@ -216,7 +226,7 @@ QuartzSetCursor(DeviceIntPtr pDev, ScreenPtr pScreen, CursorPtr pCursor, int x, 
 {
     QuartzCursorScreenPtr ScreenPriv = CURSOR_PRIV(pScreen);
 
-    if (!quartzServerVisible)
+    if (!XQuartzServerVisible)
         return;
 
     if (pCursor == NULL)
@@ -285,12 +295,12 @@ QuartzCrossScreen(ScreenPtr pScreen, Bool entering)
 static void
 QuartzWarpCursor(DeviceIntPtr pDev, ScreenPtr pScreen, int x, int y)
 {
-    if (quartzServerVisible)
+    if (XQuartzServerVisible)
     {
         int sx, sy;
 
-        sx = dixScreenOrigins[pScreen->myNum].x + darwinMainScreenX;
-        sy = dixScreenOrigins[pScreen->myNum].y + darwinMainScreenY;
+        sx = pScreen->x + darwinMainScreenX;
+        sy = pScreen->y + darwinMainScreenY;
 
         CGWarpMouseCursorPosition(CGPointMake(sx + x, sy + y));
     }
@@ -353,7 +363,10 @@ QuartzInitCursor(ScreenPtr pScreen)
     if (!miDCInitialize(pScreen, &quartzScreenFuncsRec))
         return FALSE;
 
-    ScreenPriv = xcalloc(1, sizeof(QuartzCursorScreenRec));
+    if (!dixRegisterPrivateKey(&darwinCursorScreenKeyRec, PRIVATE_SCREEN, 0))
+	return FALSE;
+
+    ScreenPriv = calloc(1, sizeof(QuartzCursorScreenRec));
     if (ScreenPriv == NULL)
         return FALSE;
 
@@ -392,7 +405,7 @@ QuartzSuspendXCursor(ScreenPtr pScreen)
  *  X server is showing. Restore the X cursor.
  */
 void
-QuartzResumeXCursor(ScreenPtr pScreen, int x, int y)
+QuartzResumeXCursor(ScreenPtr pScreen)
 {
     WindowPtr pWin;
     CursorPtr pCursor;
@@ -407,5 +420,5 @@ QuartzResumeXCursor(ScreenPtr pScreen, int x, int y)
     if (pCursor == NULL)
         return;
 
-    QuartzSetCursor(darwinPointer, pScreen, pCursor, x, y);
+    QuartzSetCursor(darwinPointer, pScreen, pCursor, /* x */ 0, /* y */ 0);
 }

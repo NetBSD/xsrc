@@ -53,38 +53,49 @@ xf86VTRequest(int sig)
 }
 
 Bool
-xf86VTSwitchPending()
+xf86VTSwitchPending(void)
 {
-    return(xf86Info.vtRequestsPending ? TRUE : FALSE);
+    return xf86Info.vtRequestsPending ? TRUE : FALSE;
 }
 
 Bool
-xf86VTSwitchAway()
+xf86VTSwitchAway(void)
 {
 	xf86Info.vtRequestsPending = FALSE;
 	if (ioctl(xf86Info.consoleFd, VT_RELDISP, 1) < 0)
 	{
-		return(FALSE);
+		return FALSE;
 	}
 	else
 	{
 #ifdef OSSWITCHAWAY
 	        OSSWITCHAWAY;
 #endif
-		return(TRUE);
+		return TRUE;
 	}
 }
 
 Bool
-xf86VTSwitchTo()
+xf86VTSwitchTo(void)
 {
 	xf86Info.vtRequestsPending = FALSE;
 	if (ioctl(xf86Info.consoleFd, VT_RELDISP, VT_ACKACQ) < 0)
 	{
-		return(FALSE);
+		return FALSE;
 	}
 	else
 	{
-		return(TRUE);
+		return TRUE;
 	}
+}
+
+Bool
+xf86VTActivate(int vtno)
+{
+#ifdef VT_ACTIVATE
+	if (ioctl(xf86Info.consoleFd, VT_ACTIVATE, vtno) < 0) {
+		return FALSE;
+	}
+#endif
+	return TRUE;
 }

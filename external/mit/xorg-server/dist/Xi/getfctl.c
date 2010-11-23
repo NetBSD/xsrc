@@ -50,8 +50,6 @@ SOFTWARE.
  *
  */
 
-#define	 NEED_EVENTS	/* for inputstr.h    */
-#define	 NEED_REPLIES
 #ifdef HAVE_DIX_CONFIG_H
 #include <dix-config.h>
 #endif
@@ -342,7 +340,7 @@ ProcXGetFeedbackControl(ClientPtr client)
     if (total_length == 0)
 	return BadMatch;
 
-    buf = (char *)xalloc(total_length);
+    buf = (char *)malloc(total_length);
     if (!buf)
 	return BadAlloc;
     savbuf = buf;
@@ -360,9 +358,9 @@ ProcXGetFeedbackControl(ClientPtr client)
     for (b = dev->bell; b; b = b->next)
 	CopySwapBellFeedback(client, b, &buf);
 
-    rep.length = (total_length + 3) >> 2;
+    rep.length = bytes_to_int32(total_length);
     WriteReplyToClient(client, sizeof(xGetFeedbackControlReply), &rep);
     WriteToClient(client, total_length, savbuf);
-    xfree(savbuf);
+    free(savbuf);
     return Success;
 }

@@ -88,7 +88,7 @@ __glXGetAnswerBuffer( __GLXclientState * cl, size_t required_size,
         intptr_t  temp_buf;
 
         if ( cl->returnBufSize < worst_case_size ) {
-	    void * temp = xrealloc( cl->returnBuf, worst_case_size );
+	    void * temp = realloc( cl->returnBuf, worst_case_size );
 	    
 	    if ( temp == NULL ) {
 	        return NULL;
@@ -126,7 +126,7 @@ __glXSendReply( ClientPtr client, const void * data, size_t elements,
         elements = 0;
     }
     else if ( (elements > 1) || always_array ) {
-        reply_ints = ((elements * element_size) + 3) >> 2;
+        reply_ints = bytes_to_int32(elements * element_size);
     }
 
     __glXReply.length =         reply_ints;
@@ -174,7 +174,7 @@ __glXSendReplySwap( ClientPtr client, const void * data, size_t elements,
         elements = 0;
     }
     else if ( (elements > 1) || always_array ) {
-        reply_ints = ((elements * element_size) + 3) >> 2;
+        reply_ints = bytes_to_int32(elements * element_size);
     }
 
     __glXReply.length =         bswap_32( reply_ints );

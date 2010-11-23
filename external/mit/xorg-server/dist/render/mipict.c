@@ -47,7 +47,7 @@ void
 miDestroyPicture (PicturePtr pPicture)
 {
     if (pPicture->freeCompClip)
-	REGION_DESTROY(pPicture->pDrawable->pScreen, pPicture->pCompositeClip);
+	RegionDestroy(pPicture->pCompositeClip);
 }
 
 void
@@ -64,7 +64,7 @@ miDestroyPictureClip (PicturePtr pPicture)
 	 * we know we'll never have a list of rectangles, since ChangeClip
 	 * immediately turns them into a region
 	 */
-	REGION_DESTROY(pPicture->pDrawable->pScreen, pPicture->clientClip);
+	RegionDestroy(pPicture->clientClip);
 	break;
     }
     pPicture->clientClip = NULL;
@@ -85,7 +85,7 @@ miChangePictureClip (PicturePtr    pPicture,
     switch (type) {
     case CT_PIXMAP:
 	/* convert the pixmap to a region */
-	clientClip = (pointer) BITMAP_TO_REGION(pScreen, (PixmapPtr) value);
+	clientClip = (pointer) BitmapToRegion(pScreen, (PixmapPtr) value);
 	if (!clientClip)
 	    return BadAlloc;
 	clientClipType = CT_REGION;
@@ -100,13 +100,13 @@ miChangePictureClip (PicturePtr    pPicture,
 	clientClipType = CT_NONE;
 	break;
     default:
-	clientClip = (pointer) RECTS_TO_REGION(pScreen, n,
+	clientClip = (pointer) RegionFromRects(n,
 					       (xRectangle *) value,
 					       type);
 	if (!clientClip)
 	    return BadAlloc;
 	clientClipType = CT_REGION;
-	xfree(value);
+	free(value);
 	break;
     }
     (*ps->DestroyPictureClip) (pPicture);
@@ -160,7 +160,7 @@ miValidatePicture (PicturePtr pPicture,
 	    if (pPicture->clientClipType == CT_NONE)
 	    {
 		if (freeCompClip)
-		    REGION_DESTROY(pScreen, pPicture->pCompositeClip);
+		    RegionDestroy(pPicture->pCompositeClip);
 		pPicture->pCompositeClip = pregWin;
 		pPicture->freeCompClip = freeTmpClip;
 	    }
@@ -175,30 +175,30 @@ miValidatePicture (PicturePtr pPicture,
 		 * clip. if neither is real, create a new region.
 		 */
 
-		REGION_TRANSLATE(pScreen, pPicture->clientClip,
+		RegionTranslate(pPicture->clientClip,
 				 pDrawable->x + pPicture->clipOrigin.x,
 				 pDrawable->y + pPicture->clipOrigin.y);
 
 		if (freeCompClip)
 		{
-		    REGION_INTERSECT(pScreen, pPicture->pCompositeClip,
+		    RegionIntersect(pPicture->pCompositeClip,
 				     pregWin, pPicture->clientClip);
 		    if (freeTmpClip)
-			REGION_DESTROY(pScreen, pregWin);
+			RegionDestroy(pregWin);
 		}
 		else if (freeTmpClip)
 		{
-		    REGION_INTERSECT(pScreen, pregWin, pregWin, pPicture->clientClip);
+		    RegionIntersect(pregWin, pregWin, pPicture->clientClip);
 		    pPicture->pCompositeClip = pregWin;
 		}
 		else
 		{
-		    pPicture->pCompositeClip = REGION_CREATE(pScreen, NullBox, 0);
-		    REGION_INTERSECT(pScreen, pPicture->pCompositeClip,
+		    pPicture->pCompositeClip = RegionCreate(NullBox, 0);
+		    RegionIntersect(pPicture->pCompositeClip,
 				     pregWin, pPicture->clientClip);
 		}
 		pPicture->freeCompClip = TRUE;
-		REGION_TRANSLATE(pScreen, pPicture->clientClip,
+		RegionTranslate(pPicture->clientClip,
 				 -(pDrawable->x + pPicture->clipOrigin.x),
 				 -(pDrawable->y + pPicture->clipOrigin.y));
 	    }
@@ -216,31 +216,31 @@ miValidatePicture (PicturePtr pPicture,
 
 	    if (pPicture->freeCompClip)
 	    {
-		REGION_RESET(pScreen, pPicture->pCompositeClip, &pixbounds);
+		RegionReset(pPicture->pCompositeClip, &pixbounds);
 	    }
 	    else
 	    {
 		pPicture->freeCompClip = TRUE;
-		pPicture->pCompositeClip = REGION_CREATE(pScreen, &pixbounds, 1);
+		pPicture->pCompositeClip = RegionCreate(&pixbounds, 1);
 	    }
 
 	    if (pPicture->clientClipType == CT_REGION)
 	    {
 		if(pDrawable->x || pDrawable->y) {
-		    REGION_TRANSLATE(pScreen, pPicture->clientClip,
+		    RegionTranslate(pPicture->clientClip,
 				     pDrawable->x + pPicture->clipOrigin.x, 
 				     pDrawable->y + pPicture->clipOrigin.y);
-		    REGION_INTERSECT(pScreen, pPicture->pCompositeClip,
+		    RegionIntersect(pPicture->pCompositeClip,
 				     pPicture->pCompositeClip, pPicture->clientClip);
-		    REGION_TRANSLATE(pScreen, pPicture->clientClip,
+		    RegionTranslate(pPicture->clientClip,
 				     -(pDrawable->x + pPicture->clipOrigin.x), 
 				     -(pDrawable->y + pPicture->clipOrigin.y));
 		} else {
-		    REGION_TRANSLATE(pScreen, pPicture->pCompositeClip,
+		    RegionTranslate(pPicture->pCompositeClip,
 				     -pPicture->clipOrigin.x, -pPicture->clipOrigin.y);
-		    REGION_INTERSECT(pScreen, pPicture->pCompositeClip,
+		    RegionIntersect(pPicture->pCompositeClip,
 				     pPicture->pCompositeClip, pPicture->clientClip);
-		    REGION_TRANSLATE(pScreen, pPicture->pCompositeClip,
+		    RegionTranslate(pPicture->pCompositeClip,
 				     pPicture->clipOrigin.x, pPicture->clipOrigin.y);
 		}
 	    }
@@ -313,32 +313,24 @@ miClipPictureSrc (RegionPtr	pRegion,
 		  int		dx,
 		  int		dy)
 {
-    /* XXX what to do with clipping from transformed pictures? */
-    if (pPicture->transform || !pPicture->pDrawable)
-	return TRUE;
-    if (pPicture->repeat)
+    if (pPicture->clientClipType != CT_NONE)
     {
-	if (pPicture->clientClipType != CT_NONE)
-	{
-	    pixman_region_translate ( pRegion, 
-			     dx - pPicture->clipOrigin.x,
-			     dy - pPicture->clipOrigin.y);
-	    if (!REGION_INTERSECT (pScreen, pRegion, pRegion, 
-				   (RegionPtr) pPicture->pCompositeClip)) // clientClip))
-		return FALSE;
-	    pixman_region_translate ( pRegion, 
-			     - (dx - pPicture->clipOrigin.x),
-			     - (dy - pPicture->clipOrigin.y));
-	}
-	return TRUE;
+	Bool result;
+	
+	pixman_region_translate ( pPicture->clientClip,
+				  pPicture->clipOrigin.x + dx,
+				  pPicture->clipOrigin.y + dy);
+
+	result = RegionIntersect(pRegion, pRegion, pPicture->clientClip);
+	
+	pixman_region_translate ( pPicture->clientClip,
+				  - (pPicture->clipOrigin.x + dx),
+				  - (pPicture->clipOrigin.y + dy));
+
+	if (!result)
+	    return FALSE;
     }
-    else
-    {
-	return miClipPictureReg (pRegion,
-				 pPicture->pCompositeClip,
-				 dx,
-				 dy);
-    }
+    return TRUE;
 }
 
 void
@@ -358,8 +350,6 @@ miCompositeSourceValidate (PicturePtr	pPicture,
     
     if (pScreen->SourceValidate)
     {
-        x -= pPicture->pDrawable->x;
-        y -= pPicture->pDrawable->y;
 	if (pPicture->transform)
 	{
 	    xPoint	    points[4];
@@ -394,6 +384,8 @@ miCompositeSourceValidate (PicturePtr	pPicture,
 	    width = xmax - xmin;
 	    height = ymax - ymin;
 	}
+        x += pPicture->pDrawable->x;
+        y += pPicture->pDrawable->y;
 	(*pScreen->SourceValidate) (pDrawable, x, y, width, height);
     }
 }
@@ -403,7 +395,7 @@ miCompositeSourceValidate (PicturePtr	pPicture,
  * an allocation failure, but rendering ignores those anyways.
  */
 
-_X_EXPORT Bool
+Bool
 miComputeCompositeRegion (RegionPtr	pRegion,
 			  PicturePtr	pSrc,
 			  PicturePtr	pMask,
@@ -459,8 +451,8 @@ miComputeCompositeRegion (RegionPtr	pRegion,
     if (pSrc->alphaMap)
     {
 	if (!miClipPictureSrc (pRegion, pSrc->alphaMap,
-			       xDst - (xSrc + pSrc->alphaOrigin.x),
-			       yDst - (ySrc + pSrc->alphaOrigin.y)))
+			       xDst - (xSrc - pSrc->alphaOrigin.x),
+			       yDst - (ySrc - pSrc->alphaOrigin.y)))
 	{
 	    pixman_region_fini (pRegion);
 	    return FALSE;
@@ -477,8 +469,8 @@ miComputeCompositeRegion (RegionPtr	pRegion,
 	if (pMask->alphaMap)
 	{
 	    if (!miClipPictureSrc (pRegion, pMask->alphaMap,
-				   xDst - (xMask + pMask->alphaOrigin.x),
-				   yDst - (yMask + pMask->alphaOrigin.y)))
+				   xDst - (xMask - pMask->alphaOrigin.x),
+				   yDst - (yMask - pMask->alphaOrigin.y)))
 	    {
 		pixman_region_fini (pRegion);
 		return FALSE;
@@ -612,7 +604,7 @@ miRenderPixelToColor (PictFormatPtr format,
     }
 }
 
-_X_EXPORT Bool
+Bool
 miPictureInit (ScreenPtr pScreen, PictFormatPtr formats, int nformats)
 {
     PictureScreenPtr    ps;
