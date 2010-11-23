@@ -62,19 +62,19 @@
  *	Function Definitions
  ****************************************************************************/
 
-_X_EXPORT XISBuffer *
+XISBuffer *
 XisbNew (int fd, ssize_t size)
 {
 	XISBuffer *b;
 
-	b = xalloc (sizeof (XISBuffer));
+	b = malloc(sizeof (XISBuffer));
 	if (!b)
-		return (NULL);
-	b->buf = xalloc ((sizeof (unsigned char) * size));
+		return NULL;
+	b->buf = malloc((sizeof (unsigned char) * size));
 	if (!b->buf)
 	{
-		xfree (b);
-		return (NULL);
+		free(b);
+		return NULL;
 	}
 
 	b->fd = fd;
@@ -83,17 +83,17 @@ XisbNew (int fd, ssize_t size)
 	b->current = 1;	/* force it to be past the end to trigger initial read */
 	b->end = 0;
 	b->buffer_size = size;
-	return (b);
+	return b;
 }
 
-_X_EXPORT void
+void
 XisbFree (XISBuffer *b)
 {
-	xfree (b->buf);
-	xfree (b);
+	free(b->buf);
+	free(b);
 }
 
-_X_EXPORT int
+int
 XisbRead (XISBuffer *b)
 {
 	int ret;
@@ -103,7 +103,7 @@ XisbRead (XISBuffer *b)
 		if (b->block_duration >= 0)
 		{
 			if (xf86WaitForInput (b->fd, b->block_duration) < 1)
-				return (-1);
+				return -1;
 		}
 		else
 		{
@@ -119,9 +119,9 @@ XisbRead (XISBuffer *b)
 		switch (ret)
 		{
 			case 0:
-				return (-1); /* timeout */
+				return -1; /* timeout */
 			case -1:
-				return (-2); /* error */
+				return -2; /* error */
 			default:
 				b->end = ret;
 				b->current = 0;
@@ -132,11 +132,11 @@ XisbRead (XISBuffer *b)
 		ErrorF ("read 0x%02x (%c)\n", b->buf[b->current], 
 			isprint(b->buf[b->current])?b->buf[b->current]:'.');
 
-	return (b->buf[b->current++]);
+	return b->buf[b->current++];
 }
 
 /* the only purpose of this function is to provide output tracing */
-_X_EXPORT ssize_t
+ssize_t
 XisbWrite (XISBuffer *b, unsigned char *msg, ssize_t len)
 {
     if (b->trace)
@@ -149,7 +149,7 @@ XisbWrite (XISBuffer *b, unsigned char *msg, ssize_t len)
 }
 
 /* turn tracing of this buffer on (1) or off (0) */
-_X_EXPORT void
+void
 XisbTrace (XISBuffer *b, int trace)
 {
 	b->trace = trace;
@@ -167,7 +167,7 @@ XisbTrace (XISBuffer *b, int trace)
  * give duration in usecs.
  */
 
-_X_EXPORT void
+void
 XisbBlockDuration (XISBuffer *b, int block_duration)
 {
 	b->block_duration = block_duration;

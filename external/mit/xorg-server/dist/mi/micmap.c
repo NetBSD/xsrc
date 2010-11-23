@@ -1,31 +1,25 @@
-/************************************************************
-Copyright 1987 by Sun Microsystems, Inc. Mountain View, CA.
-
-                    All Rights Reserved
-
-Permission  to  use,  copy,  modify,  and  distribute   this
-software  and  its documentation for any purpose and without
-fee is hereby granted, provided that the above copyright no-
-tice  appear  in all copies and that both that copyright no-
-tice and this permission notice appear in  supporting  docu-
-mentation,  and  that the names of Sun or X Consortium
-not be used in advertising or publicity pertaining to 
-distribution  of  the software  without specific prior 
-written permission. Sun and X Consortium make no 
-representations about the suitability of this software for 
-any purpose. It is provided "as is" without any express or 
-implied warranty.
-
-SUN DISCLAIMS ALL WARRANTIES WITH REGARD TO  THIS  SOFTWARE,
-INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FIT-
-NESS FOR A PARTICULAR PURPOSE. IN NO EVENT SHALL SUN BE  LI-
-ABLE  FOR  ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR
-ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE,  DATA  OR
-PROFITS,  WHETHER  IN  AN  ACTION OF CONTRACT, NEGLIGENCE OR
-OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
-THE USE OR PERFORMANCE OF THIS SOFTWARE.
-
-********************************************************/
+/*
+ * Copyright © 1987 Sun Microsystems, Inc.  All rights reserved.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice (including the next
+ * paragraph) shall be included in all copies or substantial portions of the
+ * Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
+ */
 
 /*
  * This is based on cfbcmap.c.  The functions here are useful independently
@@ -46,23 +40,22 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include "globals.h"
 #include "micmap.h"
 
-_X_EXPORT ColormapPtr miInstalledMaps[MAXSCREENS];
+DevPrivateKeyRec micmapScrPrivateKeyRec;
 
-_X_EXPORT int
+int
 miListInstalledColormaps(ScreenPtr pScreen, Colormap *pmaps)
 {
-    if (miInstalledMaps[pScreen->myNum]) {
-	*pmaps = miInstalledMaps[pScreen->myNum]->mid;
-	return (1);
+    if (GetInstalledmiColormap(pScreen)) {
+	*pmaps = GetInstalledmiColormap(pScreen)->mid;
+	return 1;
     }
     return 0;
 }
 
-_X_EXPORT void
+void
 miInstallColormap(ColormapPtr pmap)
 {
-    int index = pmap->pScreen->myNum;
-    ColormapPtr oldpmap = miInstalledMaps[index];
+    ColormapPtr oldpmap = GetInstalledmiColormap(pmap->pScreen);
 
     if(pmap != oldpmap)
     {
@@ -71,30 +64,31 @@ miInstallColormap(ColormapPtr pmap)
 	if(oldpmap != (ColormapPtr)None)
 	    WalkTree(pmap->pScreen, TellLostMap, (char *)&oldpmap->mid);
 	/* Install pmap */
-	miInstalledMaps[index] = pmap;
+	SetInstalledmiColormap(pmap->pScreen, pmap);
 	WalkTree(pmap->pScreen, TellGainedMap, (char *)&pmap->mid);
 
     }
 }
 
-_X_EXPORT void
+void
 miUninstallColormap(ColormapPtr pmap)
 {
-    int index = pmap->pScreen->myNum;
-    ColormapPtr curpmap = miInstalledMaps[index];
+    ColormapPtr curpmap = GetInstalledmiColormap(pmap->pScreen);
 
     if(pmap == curpmap)
     {
 	if (pmap->mid != pmap->pScreen->defColormap)
 	{
-	    curpmap = (ColormapPtr) LookupIDByType(pmap->pScreen->defColormap,
-						   RT_COLORMAP);
+	    dixLookupResourceByType((pointer *)&curpmap,
+				    pmap->pScreen->defColormap,
+				    RT_COLORMAP, serverClient,
+				    DixUseAccess);
 	    (*pmap->pScreen->InstallColormap)(curpmap);
 	}
     }
 }
 
-_X_EXPORT void
+void
 miResolveColor(unsigned short *pred, unsigned short *pgreen,
 		unsigned short *pblue, VisualPtr pVisual)
 {
@@ -116,7 +110,7 @@ miResolveColor(unsigned short *pred, unsigned short *pgreen,
     }
 }
 
-_X_EXPORT Bool
+Bool
 miInitializeColormap(ColormapPtr pmap)
 {
     unsigned i;
@@ -201,7 +195,7 @@ miInitializeColormap(ColormapPtr pmap)
     outdefs[i].blue = pmap->blue[blue >> pVisual->offsetBlue].co.local.blue; \
 }
 
-_X_EXPORT int
+int
 miExpandDirectColors(ColormapPtr pmap, int ndef, xColorItem *indefs,
 			xColorItem *outdefs)
 {
@@ -261,7 +255,7 @@ miExpandDirectColors(ColormapPtr pmap, int ndef, xColorItem *indefs,
     return nresult;
 }
 
-_X_EXPORT Bool
+Bool
 miCreateDefColormap(ScreenPtr pScreen)
 {
 /* 
@@ -305,6 +299,9 @@ miCreateDefColormap(ScreenPtr pScreen)
     ColormapPtr	cmap;
     int alloctype;
     
+    if (!dixRegisterPrivateKey(&micmapScrPrivateKeyRec, PRIVATE_SCREEN, 0))
+	return FALSE;
+
     for (pVisual = pScreen->visuals;
 	 pVisual->vid != pScreen->rootVisual;
 	 pVisual++)
@@ -378,19 +375,19 @@ static int  miVisualPriority[] = {
 
 static miVisualsPtr	miVisuals;
 
-_X_EXPORT void
+void
 miClearVisualTypes(void)
 {
     miVisualsPtr v;
 
     while ((v = miVisuals)) {
 	miVisuals = v->next;
-	xfree(v);
+	free(v);
     }
 }
 
 
-_X_EXPORT Bool
+Bool
 miSetVisualTypesAndMasks(int depth, int visuals, int bitsPerRGB, 
 			 int preferredCVC,
 			 Pixel redMask, Pixel greenMask, Pixel blueMask)
@@ -398,7 +395,7 @@ miSetVisualTypesAndMasks(int depth, int visuals, int bitsPerRGB,
     miVisualsPtr   new, *prev, v;
     int		    count;
 
-    new = (miVisualsPtr) xalloc (sizeof *new);
+    new = malloc(sizeof *new);
     if (!new)
 	return FALSE;
     if (!redMask || !greenMask || !blueMask)
@@ -424,14 +421,14 @@ miSetVisualTypesAndMasks(int depth, int visuals, int bitsPerRGB,
     return TRUE;
 }
 
-_X_EXPORT Bool
+Bool
 miSetVisualTypes(int depth, int visuals, int bitsPerRGB, int preferredCVC)
 {
     return miSetVisualTypesAndMasks (depth, visuals, bitsPerRGB,
 				     preferredCVC, 0, 0, 0);
 }
 
-_X_EXPORT int
+int
 miGetDefaultVisualMask(int depth)
 {
     if (depth > MAX_PSEUDO_DEPTH)
@@ -455,7 +452,7 @@ miVisualTypesSet (int depth)
     return FALSE;
 }
 
-_X_EXPORT Bool
+Bool
 miSetPixmapDepths (void)
 {
     int	d, f;
@@ -497,7 +494,7 @@ maskShift (Pixel p)
  * the set which can be used with this version of cfb.
  */
 
-_X_EXPORT Bool
+Bool
 miInitVisuals(VisualPtr *visualp, DepthPtr *depthp, int *nvisualp,
 		int *ndepthp, int *rootDepthp, VisualID *defaultVisp,
 		unsigned long sizes, int bitsPerRGB, int preferredVis)
@@ -539,14 +536,14 @@ miInitVisuals(VisualPtr *visualp, DepthPtr *depthp, int *nvisualp,
 	ndepth++;
 	nvisual += visuals->count;
     }
-    depth = (DepthPtr) xalloc (ndepth * sizeof (DepthRec));
-    visual = (VisualPtr) xalloc (nvisual * sizeof (VisualRec));
-    preferredCVCs = (int *)xalloc(ndepth * sizeof(int));
+    depth = malloc(ndepth * sizeof (DepthRec));
+    visual = malloc(nvisual * sizeof (VisualRec));
+    preferredCVCs = malloc(ndepth * sizeof(int));
     if (!depth || !visual || !preferredCVCs)
     {
-	xfree (depth);
-	xfree (visual);
-	xfree (preferredCVCs);
+	free(depth);
+	free(visual);
+	free(preferredCVCs);
 	return FALSE;
     }
     *depthp = depth;
@@ -565,9 +562,9 @@ miInitVisuals(VisualPtr *visualp, DepthPtr *depthp, int *nvisualp,
 	vid = NULL;
 	if (nvtype)
 	{
-	    vid = (VisualID *) xalloc (nvtype * sizeof (VisualID));
+	    vid = malloc(nvtype * sizeof (VisualID));
 	    if (!vid) {
-		xfree(preferredCVCs);
+		free(preferredCVCs);
 		return FALSE;
 	    }
 	}
@@ -609,7 +606,7 @@ miInitVisuals(VisualPtr *visualp, DepthPtr *depthp, int *nvisualp,
 	    vid++;
 	    visual++;
 	}
-	xfree (visuals);
+	free(visuals);
     }
     miVisuals = NULL;
     visual = *visualp;
@@ -665,7 +662,7 @@ miInitVisuals(VisualPtr *visualp, DepthPtr *depthp, int *nvisualp,
     }
     *rootDepthp = depth[i].depth;
     *defaultVisp = depth[i].vids[j];
-    xfree(preferredCVCs);
+    free(preferredCVCs);
 
     return TRUE;
 }

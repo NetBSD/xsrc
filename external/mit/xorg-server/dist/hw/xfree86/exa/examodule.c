@@ -42,8 +42,8 @@ typedef struct _ExaXorgScreenPrivRec {
     OptionInfoPtr		 options;
 } ExaXorgScreenPrivRec, *ExaXorgScreenPrivPtr;
 
-static int exaXorgScreenPrivateKeyIndex;
-static DevPrivateKey exaXorgScreenPrivateKey = &exaXorgScreenPrivateKeyIndex;
+static DevPrivateKeyRec exaXorgScreenPrivateKeyRec;
+#define exaXorgScreenPrivateKey (&exaXorgScreenPrivateKeyRec)
 
 typedef enum {
     EXAOPT_MIGRATION_HEURISTIC,
@@ -79,8 +79,8 @@ exaXorgCloseScreen (int i, ScreenPtr pScreen)
 
     pScrn->EnableDisableFBAccess = pScreenPriv->SavedEnableDisableFBAccess;
 
-    xfree (pScreenPriv->options);
-    xfree (pScreenPriv);
+    free(pScreenPriv->options);
+    free(pScreenPriv);
 
     return pScreen->CloseScreen (i, pScreen);
 }
@@ -114,7 +114,10 @@ exaDDXDriverInit(ScreenPtr pScreen)
     ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
     ExaXorgScreenPrivPtr pScreenPriv;
 
-    pScreenPriv = xcalloc (1, sizeof(ExaXorgScreenPrivRec));
+    if (!dixRegisterPrivateKey(&exaXorgScreenPrivateKeyRec, PRIVATE_SCREEN, 0))
+	return;
+
+    pScreenPriv = calloc(1, sizeof(ExaXorgScreenPrivRec));
     if (pScreenPriv == NULL)
 	return;
 
@@ -122,31 +125,32 @@ exaDDXDriverInit(ScreenPtr pScreen)
     memcpy(pScreenPriv->options, EXAOptions, sizeof(EXAOptions));
     xf86ProcessOptions (pScrn->scrnIndex, pScrn->options, pScreenPriv->options);
 
-    if ((pExaScr->info->flags & EXA_OFFSCREEN_PIXMAPS) &&
-  	pExaScr->info->offScreenBase < pExaScr->info->memorySize)
-    {
-	char *heuristicName;
+    if (pExaScr->info->flags & EXA_OFFSCREEN_PIXMAPS) {
+	if (!(pExaScr->info->flags & EXA_HANDLES_PIXMAPS) &&
+	    pExaScr->info->offScreenBase < pExaScr->info->memorySize) {
+	    char *heuristicName;
 
-	heuristicName = xf86GetOptValString (pScreenPriv->options,
-					     EXAOPT_MIGRATION_HEURISTIC);
-	if (heuristicName != NULL) {
-	    if (strcmp(heuristicName, "greedy") == 0)
-		pExaScr->migration = ExaMigrationGreedy;
-	    else if (strcmp(heuristicName, "always") == 0)
-		pExaScr->migration = ExaMigrationAlways;
-	    else if (strcmp(heuristicName, "smart") == 0)
-		pExaScr->migration = ExaMigrationSmart;
-	    else {
-		xf86DrvMsg (pScreen->myNum, X_WARNING, 
-			    "EXA: unknown migration heuristic %s\n",
-			    heuristicName);
+	    heuristicName = xf86GetOptValString (pScreenPriv->options,
+						 EXAOPT_MIGRATION_HEURISTIC);
+	    if (heuristicName != NULL) {
+		if (strcmp(heuristicName, "greedy") == 0)
+		    pExaScr->migration = ExaMigrationGreedy;
+		else if (strcmp(heuristicName, "always") == 0)
+		    pExaScr->migration = ExaMigrationAlways;
+		else if (strcmp(heuristicName, "smart") == 0)
+		    pExaScr->migration = ExaMigrationSmart;
+		else {
+		    xf86DrvMsg (pScreen->myNum, X_WARNING, 
+				"EXA: unknown migration heuristic %s\n",
+				heuristicName);
+		}
 	    }
 	}
 
 	pExaScr->optimize_migration =
 	    xf86ReturnOptValBool(pScreenPriv->options,
 				 EXAOPT_OPTIMIZE_MIGRATION,
-				 FALSE);
+				 TRUE);
     }
 
     if (xf86ReturnOptValBool(pScreenPriv->options,

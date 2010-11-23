@@ -62,15 +62,10 @@ extern int RootlessMiValidateTree(WindowPtr pRoot, WindowPtr pChild,
 extern Bool RootlessCreateGC(GCPtr pGC);
 
 // Initialize globals
-static int rootlessGCPrivateKeyIndex;
-DevPrivateKey rootlessGCPrivateKey = &rootlessGCPrivateKeyIndex;
-static int rootlessScreenPrivateKeyIndex;
-DevPrivateKey rootlessScreenPrivateKey = &rootlessScreenPrivateKeyIndex;
-static int rootlessWindowPrivateKeyIndex;
-DevPrivateKey rootlessWindowPrivateKey = &rootlessWindowPrivateKeyIndex;
-static int rootlessWindowOldPixmapPrivateKeyIndex;
-DevPrivateKey rootlessWindowOldPixmapPrivateKey = &rootlessWindowOldPixmapPrivateKeyIndex;
-
+DevPrivateKeyRec rootlessGCPrivateKeyRec;
+DevPrivateKeyRec rootlessScreenPrivateKeyRec;
+DevPrivateKeyRec rootlessWindowPrivateKeyRec;
+DevPrivateKeyRec rootlessWindowOldPixmapPrivateKeyRec;
 
 /*
  * RootlessUpdateScreenPixmap
@@ -98,10 +93,10 @@ RootlessUpdateScreenPixmap(ScreenPtr pScreen)
 
     if (s->pixmap_data_size < rowbytes) {
         if (s->pixmap_data != NULL)
-            xfree(s->pixmap_data);
+            free(s->pixmap_data);
 
         s->pixmap_data_size = rowbytes;
-        s->pixmap_data = xalloc(s->pixmap_data_size);
+        s->pixmap_data = malloc(s->pixmap_data_size);
         if (s->pixmap_data == NULL)
             return;
 
@@ -157,12 +152,12 @@ RootlessCloseScreen(int i, ScreenPtr pScreen)
     pScreen->CloseScreen = s->CloseScreen;
 
     if (s->pixmap_data != NULL) {
-        xfree (s->pixmap_data);
+        free(s->pixmap_data);
         s->pixmap_data = NULL;
         s->pixmap_data_size = 0;
     }
 
-    xfree(s);
+    free(s);
     return pScreen->CloseScreen(i, pScreen);
 }
 
@@ -200,10 +195,10 @@ RootlessGetImage(DrawablePtr pDrawable, int sx, int sy, int w, int h,
         x1 = x0 + w;
         y1 = y0 + h;
 
-        x0 = MAX (x0, winRec->x);
-        y0 = MAX (y0, winRec->y);
-        x1 = MIN (x1, winRec->x + winRec->width);
-        y1 = MIN (y1, winRec->y + winRec->height);
+        x0 = max (x0, winRec->x);
+        y0 = max (y0, winRec->y);
+        x1 = min (x1, winRec->x + winRec->width);
+        y1 = min (y1, winRec->y + winRec->height);
 
         sx = x0 - pDrawable->x;
         sy = y0 - pDrawable->y;
@@ -242,8 +237,6 @@ RootlessSourceValidate(DrawablePtr pDrawable, int x, int y, int w, int h)
     SCREEN_WRAP(pDrawable->pScreen, SourceValidate);
 }
 
-#ifdef RENDER
-
 static void
 RootlessComposite(CARD8 op, PicturePtr pSrc, PicturePtr pMask, PicturePtr pDst,
                   INT16 xSrc, INT16 ySrc, INT16  xMask, INT16  yMask,
@@ -257,7 +250,7 @@ RootlessComposite(CARD8 op, PicturePtr pSrc, PicturePtr pMask, PicturePtr pDst,
         maskWin = (pMask->pDrawable->type == DRAWABLE_WINDOW) ?
                   (WindowPtr)pMask->pDrawable :  NULL;
     }
-    srcWin  = (pSrc->pDrawable->type  == DRAWABLE_WINDOW) ?
+    srcWin  = (pSrc->pDrawable && pSrc->pDrawable->type  == DRAWABLE_WINDOW) ?
               (WindowPtr)pSrc->pDrawable  :  NULL;
     dstWin  = (pDst->pDrawable->type == DRAWABLE_WINDOW) ?
               (WindowPtr)pDst->pDrawable  :  NULL;
@@ -297,7 +290,7 @@ RootlessGlyphs(CARD8 op, PicturePtr pSrc, PicturePtr pDst,
     GlyphPtr glyph;
     WindowPtr srcWin, dstWin;
 
-    srcWin = (pSrc->pDrawable->type == DRAWABLE_WINDOW) ?
+    srcWin = (pSrc->pDrawable && pSrc->pDrawable->type == DRAWABLE_WINDOW) ?
              (WindowPtr)pSrc->pDrawable  :  NULL;
     dstWin = (pDst->pDrawable->type == DRAWABLE_WINDOW) ?
              (WindowPtr)pDst->pDrawable  :  NULL;
@@ -347,10 +340,10 @@ RootlessGlyphs(CARD8 op, PicturePtr pSrc, PicturePtr pDst,
                     x2 = x1 + glyph->info.width;
                     y2 = y1 + glyph->info.height;
 
-                    box.x1 = MAX (box.x1, x1);
-                    box.y1 = MAX (box.y1, y1);
-                    box.x2 = MAX (box.x2, x2);
-                    box.y2 = MAX (box.y2, y2);
+                    box.x1 = max (box.x1, x1);
+                    box.y1 = max (box.y1, y1);
+                    box.x2 = max (box.x2, x2);
+                    box.y2 = max (box.y2, y2);
 
                     x += glyph->info.xOff;
                     y += glyph->info.yOff;
@@ -362,8 +355,6 @@ RootlessGlyphs(CARD8 op, PicturePtr pSrc, PicturePtr pDst,
         }
     }
 }
-
-#endif // RENDER
 
 
 /*
@@ -431,7 +422,7 @@ RootlessMarkOverlappedWindows(WindowPtr pWin, WindowPtr pFirst,
 
         register WindowPtr pChild;
         Bool anyMarked = FALSE;
-        void (* MarkWindow)() = pScreen->MarkWindow;
+        MarkWindowProcPtr MarkWindow = pScreen->MarkWindow;
 
         RL_DEBUG_MSG("is top level! ");
         /* single layered systems are easy */
@@ -445,9 +436,9 @@ RootlessMarkOverlappedWindows(WindowPtr pWin, WindowPtr pFirst,
             pChild = pWin;
             while (1) {
                 if (pChild->viewable) {
-                    if (REGION_BROKEN (pScreen, &pChild->winSize))
+                    if (RegionBroken(&pChild->winSize))
                         SetWinSize (pChild);
-                    if (REGION_BROKEN (pScreen, &pChild->borderSize))
+                    if (RegionBroken(&pChild->borderSize))
                         SetBorderSize (pChild);
                     (* MarkWindow)(pChild);
                     if (pChild->firstChild) {
@@ -475,14 +466,13 @@ RootlessMarkOverlappedWindows(WindowPtr pWin, WindowPtr pFirst,
     return result;
 }
 
-void expose_1 (WindowPtr pWin) {
+static void expose_1 (WindowPtr pWin) {
     WindowPtr pChild;
     
     if (!pWin->realized)
         return;
     
-    (*pWin->drawable.pScreen->PaintWindowBackground) (pWin, &pWin->borderClip,
-                                                      PW_BACKGROUND);
+    miPaintWindow(pWin, &pWin->borderClip, PW_BACKGROUND);
     
     /* FIXME: comments in windowstr.h indicate that borderClip doesn't
      include subwindow visibility. But I'm not so sure.. so we may
@@ -498,7 +488,7 @@ void expose_1 (WindowPtr pWin) {
 void
 RootlessScreenExpose (ScreenPtr pScreen)
 {
-    expose_1 (WindowTable[pScreen->myNum]);
+    expose_1 (pScreen->root);
 }
 
 
@@ -642,11 +632,16 @@ RootlessAllocatePrivates(ScreenPtr pScreen)
 {
     RootlessScreenRec *s;
 
-    // no allocation needed for screen privates
-    if (!dixRequestPrivate(rootlessGCPrivateKey, sizeof(RootlessGCRec)))
+    if (!dixRegisterPrivateKey(&rootlessGCPrivateKeyRec, PRIVATE_GC, sizeof(RootlessGCRec)))
+        return FALSE;
+    if (!dixRegisterPrivateKey(&rootlessScreenPrivateKeyRec, PRIVATE_SCREEN, 0))
+        return FALSE;
+    if (!dixRegisterPrivateKey(&rootlessWindowPrivateKeyRec, PRIVATE_WINDOW, 0))
+        return FALSE;
+    if (!dixRegisterPrivateKey(&rootlessWindowOldPixmapPrivateKeyRec, PRIVATE_WINDOW, 0))
         return FALSE;
 
-    s = xalloc(sizeof(RootlessScreenRec));
+    s = malloc(sizeof(RootlessScreenRec));
     if (! s) return FALSE;
     SETSCREENREC(pScreen, s);
 
@@ -699,7 +694,6 @@ RootlessWrap(ScreenPtr pScreen)
 
     WRAP(SetShape);
 
-#ifdef RENDER
     {
         // Composite and Glyphs don't use normal screen wrapping
         PictureScreenPtr ps = GetPictureScreen(pScreen);
@@ -708,7 +702,6 @@ RootlessWrap(ScreenPtr pScreen)
         s->Glyphs = ps->Glyphs;
         ps->Glyphs = RootlessGlyphs;
     }
-#endif
 
     // WRAP(ClearToBackground); fixme put this back? useful for shaped wins?
 

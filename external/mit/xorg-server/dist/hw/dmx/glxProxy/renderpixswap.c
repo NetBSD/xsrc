@@ -28,7 +28,6 @@
  * Silicon Graphics, Inc.
  */
 
-#define NEED_REPLIES
 #include "glxserver.h"
 #include "unpack.h"
 #include "g_disptab.h"
@@ -359,7 +358,7 @@ void __glXDispSwap_SeparableFilter2D(GLbyte *pc)
 {
     __GLXdispatchConvolutionFilterHeader *hdr =
 				(__GLXdispatchConvolutionFilterHeader *) pc;
-    GLint hdrlen, image1len;
+    GLint hdrlen;
     __GLX_DECLARE_SWAP_VARIABLES;
 
     hdrlen = __GLX_PAD(__GLX_CONV_FILT_CMD_HDR_SIZE);

@@ -26,6 +26,52 @@
  */
 
 /*
+ * LCM() and scanLineWidth() are:
+ *
+ * Copyright 1997 through 2004 by Marc Aurele La France (TSI @ UQV), tsi@xfree86.org
+ *
+ * Permission to use, copy, modify, distribute, and sell this software and its
+ * documentation for any purpose is hereby granted without fee, provided that
+ * the above copyright notice appear in all copies and that both that copyright
+ * notice and this permission notice appear in supporting documentation, and
+ * that the name of Marc Aurele La France not be used in advertising or
+ * publicity pertaining to distribution of the software without specific,
+ * written prior permission.  Marc Aurele La France makes no representations
+ * about the suitability of this software for any purpose.  It is provided
+ * "as-is" without express or implied warranty.
+ *
+ * MARC AURELE LA FRANCE DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE,
+ * INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS.  IN NO
+ * EVENT SHALL MARC AURELE LA FRANCE BE LIABLE FOR ANY SPECIAL, INDIRECT OR
+ * CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE,
+ * DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
+ * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
+ *
+ * Copyright 1990,91,92,93 by Thomas Roell, Germany.
+ * Copyright 1991,92,93    by SGCS (Snitily Graphics Consulting Services), USA.
+ *
+ * Permission to use, copy, modify, distribute, and sell this software
+ * and its documentation for any purpose is hereby granted without fee,
+ * provided that the above copyright notice appear in all copies and
+ * that both that copyright notice and this  permission notice appear
+ * in supporting documentation, and that the name of Thomas Roell nor
+ * SGCS be used in advertising or publicity pertaining to distribution
+ * of the software without specific, written prior permission.
+ * Thomas Roell nor SGCS makes no representations about the suitability
+ * of this software for any purpose. It is provided "as is" without
+ * express or implied warranty.
+ *
+ * THOMAS ROELL AND SGCS DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS
+ * SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND
+ * FITNESS, IN NO EVENT SHALL THOMAS ROELL OR SGCS BE LIABLE FOR ANY
+ * SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER
+ * RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF
+ * CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
+ * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
+
+/*
  * Authors: Dirk Hohndel <hohndel@XFree86.Org>
  *          David Dawes <dawes@XFree86.Org>
  *          Marc La France <tsi@XFree86.Org>
@@ -42,7 +88,6 @@
 #include "xf86Modes.h"
 #include "os.h"
 #include "servermd.h"
-#include "mibank.h"
 #include "globals.h"
 #include "xf86.h"
 #include "xf86Priv.h"
@@ -71,7 +116,7 @@ printModeRejectMessage(int index, DisplayModePtr p, int status)
  *	Find closest clock to given frequency (in kHz).  This assumes the
  *	number of clocks is greater than zero.
  */
-_X_EXPORT int
+int
 xf86GetNearestClock(ScrnInfoPtr scrp, int freq, Bool allowDiv2,
     int DivFactor, int MulFactor, int *divider)
 {
@@ -110,7 +155,7 @@ xf86GetNearestClock(ScrnInfoPtr scrp, int freq, Bool allowDiv2,
  * Convert a ModeStatus value to a printable message
  */
 
-_X_EXPORT const char *
+const char *
 xf86ModeStatusToString(ModeStatus status)
 {
     switch (status) {
@@ -199,7 +244,7 @@ xf86ModeStatusToString(ModeStatus status)
  * xf86ShowClockRanges() -- Print the clock ranges allowed
  * and the clock values scaled by ClockMulFactor and ClockDivFactor
  */
-_X_EXPORT void
+void
 xf86ShowClockRanges(ScrnInfoPtr scrp, ClockRangePtr clockRanges)
 {
     ClockRangePtr cp;
@@ -249,6 +294,15 @@ xf86ShowClockRanges(ScrnInfoPtr scrp, ClockRangePtr clockRanges)
     }
 }
 
+static Bool
+modeInClockRange(ClockRangePtr cp, DisplayModePtr p)
+{
+    return ((p->Clock >= cp->minClock) &&
+	    (p->Clock <= cp->maxClock) &&
+	    (cp->interlaceAllowed || !(p->Flags & V_INTERLACE)) &&
+	    (cp->doubleScanAllowed ||
+	     ((p->VScan <= 1) && !(p->Flags & V_DBLSCAN))));
+}
 
 /*
  * xf86FindClockRangeForMode()    [... like the name says ...]
@@ -259,12 +313,7 @@ xf86FindClockRangeForMode(ClockRangePtr clockRanges, DisplayModePtr p)
     ClockRangePtr cp;
 
     for (cp = clockRanges; ; cp = cp->next)
-	if (!cp ||
-	    ((p->Clock >= cp->minClock) &&
-	     (p->Clock <= cp->maxClock) &&
-	     (cp->interlaceAllowed || !(p->Flags & V_INTERLACE)) &&
-	     (cp->doubleScanAllowed ||
-	      ((p->VScan <= 1) && !(p->Flags & V_DBLSCAN)))))
+	if (!cp || modeInClockRange(cp, p))
 	    return cp;
 }
 
@@ -399,7 +448,7 @@ xf86HandleBuiltinMode(ScrnInfoPtr scrp,
  * reason.
  */
 
-_X_EXPORT ModeStatus
+ModeStatus
 xf86LookupMode(ScrnInfoPtr scrp, DisplayModePtr modep,
 	       ClockRangePtr clockRanges, LookupModeFlags strategy)
 {
@@ -643,7 +692,7 @@ xf86LookupMode(ScrnInfoPtr scrp, DisplayModePtr modep,
  * This function takes a mode and monitor description, and determines
  * if the mode is valid for the monitor.
  */
-_X_EXPORT ModeStatus
+ModeStatus
 xf86CheckModeForMonitor(DisplayModePtr mode, MonPtr monitor)
 {
     int i;
@@ -654,10 +703,8 @@ xf86CheckModeForMonitor(DisplayModePtr mode, MonPtr monitor)
 	return MODE_ERROR;
     }
 
-#ifdef DEBUG
-    ErrorF("xf86CheckModeForMonitor(%p %s, %p %s)\n",
+    DebugF("xf86CheckModeForMonitor(%p %s, %p %s)\n",
 	   mode, mode->name, monitor, monitor->id);
-#endif
 
     /* Some basic mode validity checks */
     if (0 >= mode->HDisplay || mode->HDisplay > mode->HSyncStart ||
@@ -790,7 +837,7 @@ xf86CheckModeSize(ScrnInfoPtr scrp, int w, int x, int y)
  *    maxVValue    maximum vertical timing value
  */
 
-_X_EXPORT ModeStatus
+ModeStatus
 xf86InitialCheckModeForDriver(ScrnInfoPtr scrp, DisplayModePtr mode,
 			      ClockRangePtr clockRanges,
 			      LookupModeFlags strategy,
@@ -808,10 +855,8 @@ xf86InitialCheckModeForDriver(ScrnInfoPtr scrp, DisplayModePtr mode,
 	return MODE_ERROR;
     }
 
-#ifdef DEBUG
-    ErrorF("xf86InitialCheckModeForDriver(%p, %p %s, %p, 0x%x, %d, %d, %d)\n",
+    DebugF("xf86InitialCheckModeForDriver(%p, %p %s, %p, 0x%x, %d, %d, %d)\n",
 	   scrp, mode, mode->name , clockRanges, strategy, maxPitch,  virtualX, virtualY);
-#endif
 
     /* Some basic mode validity checks */
     if (0 >= mode->HDisplay || mode->HDisplay > mode->HSyncStart ||
@@ -938,17 +983,16 @@ xf86InitialCheckModeForDriver(ScrnInfoPtr scrp, DisplayModePtr mode,
  *    clockRanges  allowable clock ranges
  */
 
-_X_EXPORT ModeStatus
+ModeStatus
 xf86CheckModeForDriver(ScrnInfoPtr scrp, DisplayModePtr mode, int flags)
 {
-    ClockRangesPtr cp;
+    ClockRangePtr cp;
     int i, k, gap, minimumGap = CLOCK_TOLERANCE + 1;
     int extraFlags = 0;
     int clockIndex = -1;
     int MulFactor = 1;
     int DivFactor = 1;
     int ModePrivFlags = 0;
-    Bool allowDiv2;
     ModeStatus status = MODE_NOMODE;
 
     /* Some sanity checking */
@@ -983,11 +1027,7 @@ xf86CheckModeForDriver(ScrnInfoPtr scrp, DisplayModePtr mode, int flags)
     if (scrp->progClock) {
 	/* Check clock is in range */
 	for (cp = scrp->clockRanges; cp != NULL; cp = cp->next) {
-	    if ((cp->minClock <= mode->Clock) &&
-		(cp->maxClock >= mode->Clock) &&
-		(cp->interlaceAllowed || !(mode->Flags & V_INTERLACE)) &&
-		(cp->doubleScanAllowed ||
-		 ((!(mode->Flags & V_DBLSCAN)) && (mode->VScan <= 1))))
+	    if (modeInClockRange(cp, mode))
 	        break;
 	}
 	if (cp == NULL) {
@@ -1003,19 +1043,13 @@ xf86CheckModeForDriver(ScrnInfoPtr scrp, DisplayModePtr mode, int flags)
 	 status = MODE_CLOCK_RANGE;
 	/* Check clock is in range */
 	for (cp = scrp->clockRanges; cp != NULL; cp = cp->next) {
-	    if ((cp->minClock <= mode->Clock) &&
-		(cp->maxClock >= mode->Clock) &&
-		(cp->interlaceAllowed || !(mode->Flags & V_INTERLACE)) &&
-		(cp->doubleScanAllowed ||
-		 ((!(mode->Flags & V_DBLSCAN)) && (mode->VScan <= 1)))) {
-
+	    if (modeInClockRange(cp, mode)) {
 		/*
 	 	 * Clock is in range, so if it is not a programmable clock,
 		 * find a matching clock.
 		 */
     
-		allowDiv2 = (cp->strategy & LOOKUP_CLKDIV2) != 0;
-		i = xf86GetNearestClock(scrp, mode->Clock, allowDiv2,
+		i = xf86GetNearestClock(scrp, mode->Clock, 0,
 			   cp->ClockDivFactor, cp->ClockMulFactor, &k);
 		/*
 		 * If the clock is too far from the requested clock, this
@@ -1137,6 +1171,131 @@ found:
     return 1;
 }
 
+/* Least common multiple */
+static unsigned int
+LCM(unsigned int x, unsigned int y)
+{
+    unsigned int m = x, n = y, o;
+
+    while ((o = m % n))
+    {
+        m = n;
+        n = o;
+    }
+
+    return (x / n) * y;
+}
+
+/*
+ * Given various screen attributes, determine the minimum scanline width such
+ * that each scanline is server and DDX padded and any pixels with imbedded
+ * bank boundaries are off-screen.  This function returns -1 if such a width
+ * cannot exist.
+ */
+static int
+scanLineWidth(
+    unsigned int     xsize,         /* pixels */
+    unsigned int     ysize,         /* pixels */
+    unsigned int     width,         /* pixels */
+    unsigned long    BankSize,      /* char's */
+    PixmapFormatRec *pBankFormat,
+    unsigned int     nWidthUnit     /* bits */
+)
+{
+    unsigned long nBitsPerBank, nBitsPerScanline, nBitsPerScanlinePadUnit;
+    unsigned long minBitsPerScanline, maxBitsPerScanline;
+
+    /* Sanity checks */
+
+    if (!nWidthUnit || !pBankFormat)
+        return -1;
+
+    nBitsPerBank = BankSize * 8;
+    if (nBitsPerBank % pBankFormat->scanlinePad)
+        return -1;
+
+    if (xsize > width)
+        width = xsize;
+    nBitsPerScanlinePadUnit = LCM(pBankFormat->scanlinePad, nWidthUnit);
+    nBitsPerScanline =
+        (((width * pBankFormat->bitsPerPixel) + nBitsPerScanlinePadUnit - 1) /
+         nBitsPerScanlinePadUnit) * nBitsPerScanlinePadUnit;
+    width = nBitsPerScanline / pBankFormat->bitsPerPixel;
+
+    if (!xsize || !(nBitsPerBank % pBankFormat->bitsPerPixel))
+        return (int)width;
+
+    /*
+     * Scanlines will be server-pad aligned at this point.  They will also be
+     * a multiple of nWidthUnit bits long.  Ensure that pixels with imbedded
+     * bank boundaries are off-screen.
+     *
+     * It seems reasonable to limit total frame buffer size to 1/16 of the
+     * theoretical maximum address space size.  On a machine with 32-bit
+     * addresses (to 8-bit quantities) this turns out to be 256MB.  Not only
+     * does this provide a simple limiting condition for the loops below, but
+     * it also prevents unsigned long wraparounds.
+     */
+    if (!ysize)
+        return -1;
+
+    minBitsPerScanline = xsize * pBankFormat->bitsPerPixel;
+    if (minBitsPerScanline > nBitsPerBank)
+        return -1;
+
+    if (ysize == 1)
+        return (int)width;
+
+    maxBitsPerScanline =
+        (((unsigned long)(-1) >> 1) - minBitsPerScanline) / (ysize - 1);
+    while (nBitsPerScanline <= maxBitsPerScanline)
+    {
+        unsigned long BankBase, BankUnit;
+
+        BankUnit = ((nBitsPerBank + nBitsPerScanline - 1) / nBitsPerBank) *
+            nBitsPerBank;
+        if (!(BankUnit % nBitsPerScanline))
+            return (int)width;
+
+        for (BankBase = BankUnit;  ;  BankBase += nBitsPerBank)
+        {
+            unsigned long x, y;
+
+            y = BankBase / nBitsPerScanline;
+            if (y >= ysize)
+                return (int)width;
+
+            x = BankBase % nBitsPerScanline;
+            if (!(x % pBankFormat->bitsPerPixel))
+                continue;
+
+            if (x < minBitsPerScanline)
+            {
+                /*
+                 * Skip ahead certain widths by dividing the excess scanline
+                 * amongst the y's.
+                 */
+                y *= nBitsPerScanlinePadUnit;
+                nBitsPerScanline +=
+                    ((x + y - 1) / y) * nBitsPerScanlinePadUnit;
+                width = nBitsPerScanline / pBankFormat->bitsPerPixel;
+                break;
+            }
+
+            if (BankBase != BankUnit)
+                continue;
+
+            if (!(nBitsPerScanline % x))
+                return (int)width;
+
+            BankBase = ((nBitsPerScanline - minBitsPerScanline) /
+                (nBitsPerScanline - x)) * BankUnit;
+        }
+    }
+
+    return -1;
+}
+
 /*
  * xf86ValidateModes
  *
@@ -1185,7 +1344,7 @@ found:
  * if an unrecoverable error was encountered.
  */
 
-_X_EXPORT int
+int
 xf86ValidateModes(ScrnInfoPtr scrp, DisplayModePtr availModes,
 		  char **modeNames, ClockRangePtr clockRanges,
 		  int *linePitches, int minPitch, int maxPitch, int pitchInc,
@@ -1203,21 +1362,18 @@ xf86ValidateModes(ScrnInfoPtr scrp, DisplayModePtr availModes,
     int saveType;
     PixmapFormatRec *BankFormat;
     ClockRangePtr cp;
-    ClockRangesPtr storeClockRanges;
-    double targetRefresh = 0.0;
+    ClockRangePtr storeClockRanges;
     int numTimings = 0;
     range hsync[MAX_HSYNC];
     range vrefresh[MAX_VREFRESH];
     Bool inferred_virtual = FALSE;
 
-#ifdef DEBUG
-    ErrorF("xf86ValidateModes(%p, %p, %p, %p,\n\t\t  %p, %d, %d, %d, %d, %d, %d, %d, %d, 0x%x)\n",
+    DebugF("xf86ValidateModes(%p, %p, %p, %p,\n\t\t  %p, %d, %d, %d, %d, %d, %d, %d, %d, 0x%x)\n",
 	   scrp, availModes, modeNames, clockRanges,
 	   linePitches, minPitch, maxPitch, pitchInc,
 	   minHeight, maxHeight, virtualX, virtualY,
 	   apertureSize, strategy
 	   );
-#endif
 
     /* Some sanity checking */
     if (scrp == NULL || scrp->name == NULL || !scrp->monitor ||
@@ -1312,8 +1468,7 @@ xf86ValidateModes(ScrnInfoPtr scrp, DisplayModePtr availModes,
     }
 
     /*
-     * Store the clockRanges for later use by the VidMode extension. Must
-     * also store the strategy, since ClockDiv2 flag is stored there.
+     * Store the clockRanges for later use by the VidMode extension.
      */
     storeClockRanges = scrp->clockRanges;
     while (storeClockRanges != NULL) {
@@ -1321,14 +1476,13 @@ xf86ValidateModes(ScrnInfoPtr scrp, DisplayModePtr availModes,
     }
     for (cp = clockRanges; cp != NULL; cp = cp->next,
 	   	storeClockRanges = storeClockRanges->next) {
-	storeClockRanges = xnfalloc(sizeof(ClockRanges));
+	storeClockRanges = xnfalloc(sizeof(ClockRange));
 	if (scrp->clockRanges == NULL)
 	    scrp->clockRanges = storeClockRanges;
 	memcpy(storeClockRanges, cp, sizeof(ClockRange));
-	storeClockRanges->strategy = strategy;
     }
 
-    /* Determine which pixmap format to pass to miScanLineWidth() */
+    /* Determine which pixmap format to pass to scanLineWidth() */
     if (scrp->depth > 4)
 	BankFormat = &scrp->fbFormat;
     else
@@ -1379,15 +1533,15 @@ xf86ValidateModes(ScrnInfoPtr scrp, DisplayModePtr availModes,
 	    for (i = 0; linePitches[i] != 0; i++) {
 		if ((linePitches[i] >= virtualX) &&
 		    (linePitches[i] ==
-		     miScanLineWidth(virtualX, virtualY, linePitches[i],
-				     apertureSize, BankFormat, pitchInc))) {
+		     scanLineWidth(virtualX, virtualY, linePitches[i],
+				   apertureSize, BankFormat, pitchInc))) {
 		    linePitch = linePitches[i];
 		    break;
 		}
 	    }
 	} else {
-	    linePitch = miScanLineWidth(virtualX, virtualY, minPitch,
-					apertureSize, BankFormat, pitchInc);
+	    linePitch = scanLineWidth(virtualX, virtualY, minPitch,
+				      apertureSize, BankFormat, pitchInc);
 	}
 
 	if ((linePitch < minPitch) || (linePitch > maxPitch)) {
@@ -1412,8 +1566,8 @@ xf86ValidateModes(ScrnInfoPtr scrp, DisplayModePtr availModes,
 	/* XXX this doesn't take m{in,ax}Pitch into account; oh well */
 	inferred_virtual = inferVirtualSize(scrp, availModes, &virtX, &virtY);
 	if (inferred_virtual)
-	    linePitch = miScanLineWidth(virtX, virtY, minPitch, apertureSize,
-					BankFormat, pitchInc);
+	    linePitch = scanLineWidth(virtX, virtY, minPitch, apertureSize,
+				      BankFormat, pitchInc);
     }
 
     /* Print clock ranges and scaled clocks */
@@ -1463,26 +1617,6 @@ xf86ValidateModes(ScrnInfoPtr scrp, DisplayModePtr availModes,
 	    p->prev = NULL;
 	    p->status = MODE_OK;
 	}
-    }
-
-    /*
-     * Go through the mode pool and see if any modes match the target
-     * refresh rate, (if specified).  If no modes match, abandon the target.
-     */
-    targetRefresh = xf86SetRealOption(scrp->options,
-				      "TargetRefresh", 0.0);
-    if (targetRefresh > 0.0) {
-	for (p = scrp->modePool; p != NULL; p = p->next) {
-	    if (xf86ModeVRefresh(p) > targetRefresh * (1.0 - SYNC_TOLERANCE))
-		break;
-	}
-	if (!p)
-	    targetRefresh = 0.0;
-    }
-
-    if (targetRefresh > 0.0) {
-	xf86DrvMsg(scrp->scrnIndex, X_CONFIG,
-		   "Target refresh rate is %.1f Hz\n", targetRefresh);
     }
 
     /*
@@ -1556,14 +1690,6 @@ xf86ValidateModes(ScrnInfoPtr scrp, DisplayModePtr availModes,
 			if (!scrp->monitor->reducedblanking &&
 			    (q->type & M_T_DEFAULT) &&
 			    ((double)q->HTotal / (double)q->HDisplay) < 1.15)
-			    continue;
-
-			/*
-			 * If there is a target refresh rate, skip modes that
-			 * don't match up.
-			 */
-			if (xf86ModeVRefresh(q) <
-			    (1.0 - SYNC_TOLERANCE) * targetRefresh)
 			    continue;
 
 			if (modeSize < (q->HDisplay * q->VDisplay)) {
@@ -1653,8 +1779,8 @@ xf86ValidateModes(ScrnInfoPtr scrp, DisplayModePtr availModes,
 		    if ((linePitches[i] >= newVirtX) &&
 			(linePitches[i] >= linePitch) &&
 			(linePitches[i] ==
-			 miScanLineWidth(newVirtX, newVirtY, linePitches[i],
-					 apertureSize, BankFormat, pitchInc))) {
+			 scanLineWidth(newVirtX, newVirtY, linePitches[i],
+				       apertureSize, BankFormat, pitchInc))) {
 			newLinePitch = linePitches[i];
 			break;
 		    }
@@ -1662,9 +1788,9 @@ xf86ValidateModes(ScrnInfoPtr scrp, DisplayModePtr availModes,
 	    } else {
 		if (linePitch < minPitch)
 		    linePitch = minPitch;
-		newLinePitch = miScanLineWidth(newVirtX, newVirtY, linePitch,
-					       apertureSize, BankFormat,
-					       pitchInc);
+		newLinePitch = scanLineWidth(newVirtX, newVirtY, linePitch,
+					     apertureSize, BankFormat,
+					     pitchInc);
 	    }
 	    if ((newLinePitch < minPitch) || (newLinePitch > maxPitch)) {
 		p->status = MODE_BAD_WIDTH;
@@ -1726,8 +1852,8 @@ xf86ValidateModes(ScrnInfoPtr scrp, DisplayModePtr availModes,
 		       virtX, virtY, vx, vy);
 	    virtX = vx;
 	    virtY = vy;
-	    linePitch = miScanLineWidth(vx, vy, minPitch, apertureSize,
-					BankFormat, pitchInc);
+	    linePitch = scanLineWidth(vx, vy, minPitch, apertureSize,
+				      BankFormat, pitchInc);
 	}
     }
 
@@ -1771,7 +1897,7 @@ xf86ValidateModes(ScrnInfoPtr scrp, DisplayModePtr availModes,
  *
  */
  
-_X_EXPORT void
+void
 xf86DeleteMode(DisplayModePtr *modeList, DisplayModePtr mode)
 {
     /* Catch the easy/insane cases */
@@ -1792,8 +1918,8 @@ xf86DeleteMode(DisplayModePtr *modeList, DisplayModePtr mode)
 	    mode->next->prev = mode->prev;
     }
 
-    xfree(mode->name);
-    xfree(mode);
+    free(mode->name);
+    free(mode);
 }
 
 /*
@@ -1803,7 +1929,7 @@ xf86DeleteMode(DisplayModePtr *modeList, DisplayModePtr mode)
  * invalid.
  */
 
-_X_EXPORT void
+void
 xf86PruneDriverModes(ScrnInfoPtr scrp)
 {
     DisplayModePtr first, p, n;
@@ -1843,7 +1969,7 @@ xf86PruneDriverModes(ScrnInfoPtr scrp)
  * parameters for each mode.  The initialisation includes adjustments
  * for interlaced and double scan modes.
  */
-_X_EXPORT void
+void
 xf86SetCrtcForModes(ScrnInfoPtr scrp, int adjustFlags)
 {
     DisplayModePtr p;
@@ -1860,67 +1986,18 @@ xf86SetCrtcForModes(ScrnInfoPtr scrp, int adjustFlags)
 
     do {
 	xf86SetModeCrtc(p, adjustFlags);
-#ifdef DEBUG
-	ErrorF("%sMode %s: %d (%d) %d %d (%d) %d %d (%d) %d %d (%d) %d\n",
+	DebugF("%sMode %s: %d (%d) %d %d (%d) %d %d (%d) %d %d (%d) %d\n",
 	       (p->type & M_T_DEFAULT) ? "Default " : "",
 	       p->name, p->CrtcHDisplay, p->CrtcHBlankStart,
 	       p->CrtcHSyncStart, p->CrtcHSyncEnd, p->CrtcHBlankEnd,
 	       p->CrtcHTotal, p->CrtcVDisplay, p->CrtcVBlankStart,
 	       p->CrtcVSyncStart, p->CrtcVSyncEnd, p->CrtcVBlankEnd,
 	       p->CrtcVTotal);
-#endif
 	p = p->next;
     } while (p != NULL && p != scrp->modes);
 }
 
-
-#if 0
-static void
-add(char **p, char *new)
-{
-    *p = xnfrealloc(*p, strlen(*p) + strlen(new) + 2);
-    strcat(*p, " ");
-    strcat(*p, new);
-}
-
-_X_EXPORT void
-xf86PrintModeline(int scrnIndex,DisplayModePtr mode)
-{
-    char tmp[256];
-    char *flags = xnfcalloc(1, 1);
-
-    if (mode->HSkew) { 
-	snprintf(tmp, 256, "hskew %i", mode->HSkew); 
-	add(&flags, tmp);
-    }
-    if (mode->VScan) { 
-	snprintf(tmp, 256, "vscan %i", mode->VScan); 
-	add(&flags, tmp);
-    }
-    if (mode->Flags & V_INTERLACE) add(&flags, "interlace");
-    if (mode->Flags & V_CSYNC) add(&flags, "composite");
-    if (mode->Flags & V_DBLSCAN) add(&flags, "doublescan");
-    if (mode->Flags & V_BCAST) add(&flags, "bcast");
-    if (mode->Flags & V_PHSYNC) add(&flags, "+hsync");
-    if (mode->Flags & V_NHSYNC) add(&flags, "-hsync");
-    if (mode->Flags & V_PVSYNC) add(&flags, "+vsync");
-    if (mode->Flags & V_NVSYNC) add(&flags, "-vsync");
-    if (mode->Flags & V_PCSYNC) add(&flags, "+csync");
-    if (mode->Flags & V_NCSYNC) add(&flags, "-csync");
-#if 0
-    if (mode->Flags & V_CLKDIV2) add(&flags, "vclk/2");
-#endif
-    xf86DrvMsgVerb(scrnIndex, X_INFO, 3,
-		   "Modeline \"%s\"  %6.2f  %i %i %i %i  %i %i %i %i%s\n",
-		   mode->name, mode->Clock/1000., mode->HDisplay,
-		   mode->HSyncStart, mode->HSyncEnd, mode->HTotal,
-		   mode->VDisplay, mode->VSyncStart, mode->VSyncEnd,
-		   mode->VTotal, flags);
-    xfree(flags);
-}
-#endif
-
-_X_EXPORT void
+void
 xf86PrintModes(ScrnInfoPtr scrp)
 {
     DisplayModePtr p;
@@ -1988,29 +2065,3 @@ xf86PrintModes(ScrnInfoPtr scrp)
 	p = p->next;
     } while (p != NULL && p != scrp->modes);
 }
-
-#if 0
-/**
- * Adds the new mode into the mode list, and returns the new list
- *
- * \param modes doubly-linked mode list.
- */
-_X_EXPORT DisplayModePtr
-xf86ModesAdd(DisplayModePtr modes, DisplayModePtr new)
-{
-    if (modes == NULL)
-	return new;
-
-    if (new) {
-        DisplayModePtr mode = modes;
-
-        while (mode->next)
-            mode = mode->next;
-
-        mode->next = new;
-        new->prev = mode;
-    }
-
-    return modes;
-}
-#endif

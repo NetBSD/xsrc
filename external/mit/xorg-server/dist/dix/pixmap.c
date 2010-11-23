@@ -49,7 +49,7 @@ from The Open Group.
 
 
 /* callable by ddx */
-_X_EXPORT PixmapPtr
+PixmapPtr
 GetScratchPixmapHeader(ScreenPtr pScreen, int width, int height, int depth, 
                        int bitsPerPixel, int devKind, pointer pPixData)
 {
@@ -72,7 +72,7 @@ GetScratchPixmapHeader(ScreenPtr pScreen, int width, int height, int depth,
 
 
 /* callable by ddx */
-_X_EXPORT void
+void
 FreeScratchPixmapHeader(PixmapPtr pPixmap)
 {
     if (pPixmap)
@@ -91,6 +91,11 @@ FreeScratchPixmapHeader(PixmapPtr pPixmap)
 Bool
 CreateScratchPixmapsForScreen(int scrnum)
 {
+    unsigned int	pixmap_size;
+
+    pixmap_size = sizeof(PixmapRec) + dixPrivatesSize(PRIVATE_PIXMAP);
+    screenInfo.screens[scrnum]->totalPixmapSize = BitmapBytePad(pixmap_size * 8);
+
     /* let it be created on first use */
     screenInfo.screens[scrnum]->pScratchPixmap = NULL;
     return TRUE;
@@ -105,18 +110,28 @@ FreeScratchPixmapsForScreen(int scrnum)
 
 
 /* callable by ddx */
-_X_EXPORT PixmapPtr
+PixmapPtr
 AllocatePixmap(ScreenPtr pScreen, int pixDataSize)
 {
     PixmapPtr pPixmap;
 
+    assert(pScreen->totalPixmapSize > 0);
+
     if (pScreen->totalPixmapSize > ((size_t)-1) - pixDataSize)
 	return NullPixmap;
     
-    pPixmap = (PixmapPtr)xalloc(pScreen->totalPixmapSize + pixDataSize);
+    pPixmap = malloc(pScreen->totalPixmapSize + pixDataSize);
     if (!pPixmap)
 	return NullPixmap;
 
-    pPixmap->devPrivates = NULL;
+    dixInitPrivates(pPixmap, pPixmap + 1, PRIVATE_PIXMAP);
     return pPixmap;
+}
+
+/* callable by ddx */
+void
+FreePixmap(PixmapPtr pPixmap)
+{
+    dixFiniPrivates(pPixmap, PRIVATE_PIXMAP);
+    free(pPixmap);
 }

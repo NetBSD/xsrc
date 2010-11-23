@@ -24,8 +24,6 @@
 #include <kdrive-config.h>
 #endif
 
-#define NEED_EVENTS
-#define NEED_REPLIES
 
 #include <X11/X.h>
 #include <X11/Xproto.h>
@@ -34,6 +32,7 @@
 #include "dixstruct.h"
 #include "extnsionst.h"
 #include "swaprep.h"
+#include "protocol-versions.h"
 
 #include <X11/extensions/xcalibrateproto.h>
 #include <X11/extensions/xcalibratewire.h>
@@ -55,13 +54,11 @@ xcalibrate_event_hook (int x, int y, int pressure, void *closure)
   xXCalibrateRawTouchscreenEvent	ev;
 
   ev.type = XCalibrateEventBase + X_XCalibrateRawTouchscreen;
-  ev.sequenceNumber = pClient->sequence;
   ev.x = x;
   ev.y = y;
   ev.pressure = pressure;
 
-  if (!pClient->clientGone)
-    WriteEventsToClient (pClient, 1, (xEvent *) &ev);
+  WriteEventsToClient (pClient, 1, (xEvent *) &ev);
 }
 
 static int
@@ -81,8 +78,8 @@ ProcXCalibrateQueryVersion (ClientPtr client)
   rep.type = X_Reply;
   rep.length = 0;
   rep.sequenceNumber = client->sequence;
-  rep.majorVersion = XCALIBRATE_MAJOR_VERSION;
-  rep.minorVersion = XCALIBRATE_MINOR_VERSION;   
+  rep.majorVersion = SERVER_XCALIBRATE_MAJOR_VERSION;
+  rep.minorVersion = SERVER_XCALIBRATE_MINOR_VERSION;
   if (client->swapped) { 
     int n;
     swaps(&rep.sequenceNumber, n);
@@ -91,7 +88,7 @@ ProcXCalibrateQueryVersion (ClientPtr client)
     swaps(&rep.minorVersion, n);
   }
   WriteToClient(client, sizeof (xXCalibrateQueryVersionReply), (char *)&rep);
-  return (client->noClientException);
+  return Success;
 }
 
 static int
@@ -161,7 +158,7 @@ ProcXCalibrateSetRawMode (ClientPtr client)
       swaps (&rep.status, n);
     }
   WriteToClient(client, sizeof (rep), (char *) &rep);
-  return (client->noClientException);
+  return Success;
 }
 
 static int
@@ -201,7 +198,7 @@ ProcXCalibrateScreenToCoord (ClientPtr client)
       swaps (&rep.y, n);
     }
   WriteToClient(client, sizeof (rep), (char *) &rep);
-  return (client->noClientException);
+  return Success;
 }
 
 static int

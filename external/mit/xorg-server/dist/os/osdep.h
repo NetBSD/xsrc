@@ -56,7 +56,9 @@ SOFTWARE.
 #define BUFSIZE 4096
 #define BUFWATERMARK 8192
 
+#if defined(XDMCP) || defined(HASXDMAUTH)
 #include <X11/Xdmcp.h>
+#endif
 
 #ifdef _POSIX_SOURCE
 #include <limits.h>
@@ -109,9 +111,12 @@ SOFTWARE.
 
 #include <stddef.h>
 
+#if defined(XDMCP) || defined(HASXDMAUTH)
 typedef Bool (*ValidatorFunc)(ARRAY8Ptr Auth, ARRAY8Ptr Data, int packet_type);
 typedef Bool (*GeneratorFunc)(ARRAY8Ptr Auth, ARRAY8Ptr Data, int packet_type);
-typedef Bool (*AddAuthorFunc)(unsigned name_length, char *name, unsigned data_length, char *data);
+typedef Bool (*AddAuthorFunc)(unsigned name_length, const char *name,
+			      unsigned data_length, char *data);
+#endif
 
 typedef struct _connectionInput {
     struct _connectionInput *next;
@@ -120,6 +125,7 @@ typedef struct _connectionInput {
     int  bufcnt;                /* count of bytes in buffer */
     int lenLastReq;
     int size;
+    unsigned int ignoreBytes;   /* bytes to ignore before the next request */
 } ConnectionInput, *ConnectionInputPtr;
 
 typedef struct _connectionOutput {
@@ -134,19 +140,19 @@ struct _osComm;
 #define AuthInitArgs void
 typedef void (*AuthInitFunc) (AuthInitArgs);
 
-#define AuthAddCArgs unsigned short data_length, char *data, XID id
+#define AuthAddCArgs unsigned short data_length, const char *data, XID id
 typedef int (*AuthAddCFunc) (AuthAddCArgs);
 
-#define AuthCheckArgs unsigned short data_length, char *data, ClientPtr client, char **reason
+#define AuthCheckArgs unsigned short data_length, const char *data, ClientPtr client, char **reason
 typedef XID (*AuthCheckFunc) (AuthCheckArgs);
 
 #define AuthFromIDArgs XID id, unsigned short *data_lenp, char **datap
 typedef int (*AuthFromIDFunc) (AuthFromIDArgs);
 
-#define AuthGenCArgs unsigned data_length, char *data, XID id, unsigned *data_length_return, char **data_return
+#define AuthGenCArgs unsigned data_length, const char *data, XID id, unsigned *data_length_return, char **data_return
 typedef XID (*AuthGenCFunc) (AuthGenCArgs);
 
-#define AuthRemCArgs unsigned short data_length, char *data
+#define AuthRemCArgs unsigned short data_length, const char *data
 typedef int (*AuthRemCFunc) (AuthRemCArgs);
 
 #define AuthRstCArgs void
@@ -196,7 +202,7 @@ extern int *ConnectionTranslation;
 #else
 extern int GetConnectionTranslation(int conn);
 extern void SetConnectionTranslation(int conn, int client);
-extern void ClearConnectionTranslation();
+extern void ClearConnectionTranslation(void);
 #endif
  
 extern Bool NewOutputPending;
@@ -204,7 +210,7 @@ extern Bool AnyClientsWriteBlocked;
 
 extern WorkQueuePtr workQueue;
 
-/* added by raphael */
+/* in WaitFor.c */
 #ifdef WIN32
 typedef long int fd_mask;
 #endif
@@ -244,33 +250,35 @@ extern int  SecureRPCRemove   (AuthRemCArgs);
 extern int  SecureRPCReset    (AuthRstCArgs);
 #endif
 
+#ifdef XDMCP
 /* in xdmcp.c */
 extern void XdmcpUseMsg (void);
 extern int XdmcpOptions(int argc, char **argv, int i);
 extern void XdmcpRegisterConnection (
     int	    type,
-    char    *address,
+    const char    *address,
     int	    addrlen);
 extern void XdmcpRegisterAuthorizations (void);
-extern void XdmcpRegisterAuthorization (char *name, int namelen);
+extern void XdmcpRegisterAuthorization (const char *name, int namelen);
 extern void XdmcpInit (void);
 extern void XdmcpReset (void);
 extern void XdmcpOpenDisplay(int sock);
 extern void XdmcpCloseDisplay(int sock);
 extern void XdmcpRegisterAuthentication (
-    char    *name,
+    const char    *name,
     int	    namelen,
-    char    *data,
+    const char    *data,
     int	    datalen,
     ValidatorFunc Validator,
     GeneratorFunc Generator,
     AddAuthorFunc AddAuth);
 
 struct sockaddr_in;
-extern void XdmcpRegisterBroadcastAddress (struct sockaddr_in *addr);
+extern void XdmcpRegisterBroadcastAddress (const struct sockaddr_in *addr);
+#endif
 
 #ifdef HASXDMAUTH
-extern void XdmAuthenticationInit (char *cookie, int cookie_length);
+extern void XdmAuthenticationInit (const char *cookie, int cookie_length);
 #endif
 
 #endif /* _OSDEP_H_ */

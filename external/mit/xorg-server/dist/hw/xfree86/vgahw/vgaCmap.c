@@ -36,8 +36,7 @@
 #include "xf86.h"
 #include "vgaHW.h"
 
-#define _XF86DGA_SERVER_
-#include <X11/extensions/xf86dgastr.h>
+#include <X11/extensions/xf86dgaproto.h>
 #include "dgaproc.h"
 
 
@@ -51,8 +50,8 @@ vgaListInstalledColormaps(pScreen, pmaps)
   /* By the time we are processing requests, we can guarantee that there
    * is always a colormap installed */
   
-  *pmaps = miInstalledMaps[pScreen->myNum]->mid;
-  return(1);
+  *pmaps = GetInstalledmiColormap(pScreen)->mid;
+  return 1;
 }
 
 int
@@ -63,13 +62,13 @@ vgaGetInstalledColormaps(pScreen, pmaps)
   /* By the time we are processing requests, we can guarantee that there
    * is always a colormap installed */
   
-  *pmaps = miInstalledMaps[pScreen->myNum];
-  return(1);
+  *pmaps = GetInstalledmiColormap(pScreen);
+  return 1;
 }
 
 int vgaCheckColorMap(ColormapPtr pmap)
 {
-  return (pmap != miInstalledMaps[pmap->pScreen->myNum]);
+  return (pmap != GetInstalledmiColormap(pmap->pScreen));
 }
 
 
@@ -218,7 +217,7 @@ void
 vgaInstallColormap(pmap)
      ColormapPtr	pmap;
 {
-  ColormapPtr oldmap = miInstalledMaps[pmap->pScreen->myNum];
+  ColormapPtr oldmap = GetInstalledmiColormap(pmap->pScreen);
   int         entries;
   Pixel *     ppix;
   xrgb *      prgb;
@@ -236,18 +235,18 @@ vgaInstallColormap(pmap)
   else
     entries = pmap->pVisual->ColormapEntries;
 
-  ppix = (Pixel *)xalloc( entries * sizeof(Pixel));
-  prgb = (xrgb *)xalloc( entries * sizeof(xrgb));
-  defs = (xColorItem *)xalloc(entries * sizeof(xColorItem));
+  ppix = (Pixel *)malloc( entries * sizeof(Pixel));
+  prgb = (xrgb *)malloc( entries * sizeof(xrgb));
+  defs = (xColorItem *)malloc(entries * sizeof(xColorItem));
 
   if ( oldmap != NOMAPYET)
     WalkTree( pmap->pScreen, TellLostMap, &oldmap->mid);
 
-  miInstalledMaps[pmap->pScreen->myNum] = pmap;
+  SetInstalledmiColormap(pmap->pScreen, pmap);
 
   for ( i=0; i<entries; i++) ppix[i] = i;
 
-  QueryColors( pmap, entries, ppix, prgb);
+  QueryColors(pmap, entries, ppix, prgb, serverClient);
 
   for ( i=0; i<entries; i++) /* convert xrgbs to xColorItems */
     {
@@ -261,9 +260,9 @@ vgaInstallColormap(pmap)
 
   WalkTree(pmap->pScreen, TellGainedMap, &pmap->mid);
   
-  xfree(ppix);
-  xfree(prgb);
-  xfree(defs);
+  free(ppix);
+  free(prgb);
+  free(defs);
 }
 
 
@@ -274,13 +273,13 @@ vgaUninstallColormap(pmap)
 
   ColormapPtr defColormap;
   
-  if ( pmap != miInstalledMaps[pmap->pScreen->myNum] )
+  if ( pmap != GetInstalledmiColormap(pmap->pScreen))
     return;
 
-  defColormap = (ColormapPtr) LookupIDByType( pmap->pScreen->defColormap,
-					      RT_COLORMAP);
+  dixLookupResourceByType((pointer *)&defColormap, pmap->pScreen->defColormap,
+			  RT_COLORMAP, serverClient, DixInstallAccess);
 
-  if (defColormap == miInstalledMaps[pmap->pScreen->myNum])
+  if (defColormap == GetInstalledmiColormap(pmap->pScreen))
     return;
 
   (*pmap->pScreen->InstallColormap) (defColormap);

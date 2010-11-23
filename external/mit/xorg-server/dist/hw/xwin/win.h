@@ -58,7 +58,6 @@
 # define WM_XBUTTONDBLCLK 525
 #endif
 
-#define NEED_EVENTS
 
 #define WIN_DEFAULT_BPP				0
 #define WIN_DEFAULT_WHITEPIXEL			255
@@ -103,6 +102,7 @@
 #define WIN_E3B_TIMER_ID		1
 #define WIN_POLLING_MOUSE_TIMER_ID	2
 
+#define MOUSE_POLLING_INTERVAL		50
 
 #define WIN_E3B_OFF		-1
 #define WIN_FD_INVALID		-1
@@ -183,10 +183,8 @@
 #include "fb.h"
 #include "rootless.h"
 
-#ifdef RENDER
 #include "mipict.h"
 #include "picturestr.h"
-#endif
 
 #ifdef RANDR
 #include "randrstr.h"
@@ -196,7 +194,7 @@
  * Windows headers
  */
 #include "winms.h"
-#include "./winresource.h"
+#include "winresource.h"
 
 
 /*
@@ -225,7 +223,7 @@ if (fDebugProcMsg) \
   int iLength; \
   pszTemp = Xprintf (str, ##__VA_ARGS__); \
   MessageBox (NULL, pszTemp, szFunctionName, MB_OK); \
-  xfree (pszTemp); \
+  free(pszTemp); \
 }
 #else
 #define DEBUG_MSG(str,...)
@@ -314,6 +312,7 @@ typedef Bool (*winReleasePrimarySurfaceProcPtr)(ScreenPtr);
 
 typedef Bool (*winFinishCreateWindowsWindowProcPtr)(WindowPtr pWin);
 
+typedef Bool (*winCreateScreenResourcesProc)(ScreenPtr);
 
 /* Typedef for DIX wrapper functions */
 typedef int (*winDispatchProcPtr) (ClientPtr);
@@ -564,6 +563,8 @@ typedef struct _winPrivScreenRec
   winCreatePrimarySurfaceProcPtr	pwinCreatePrimarySurface;
   winReleasePrimarySurfaceProcPtr	pwinReleasePrimarySurface;
 
+  winCreateScreenResourcesProc       pwinCreateScreenResources;
+
 #ifdef XWIN_MULTIWINDOW
   /* Window Procedures for MultiWindow mode */
   winFinishCreateWindowsWindowProcPtr	pwinFinishCreateWindowsWindow;
@@ -621,24 +622,31 @@ typedef struct {
  * Extern declares for general global variables
  */
 
-extern winScreenInfo		g_ScreenInfo[];
+extern winScreenInfo *		g_ScreenInfo;
 extern miPointerScreenFuncRec	g_winPointerCursorFuncs;
 extern DWORD			g_dwEvents;
 #ifdef HAS_DEVWINDOWS
 extern int			g_fdMessageQueue;
 #endif
-extern DevPrivateKey		g_iScreenPrivateKey;
-extern DevPrivateKey		g_iCmapPrivateKey;
-extern DevPrivateKey		g_iGCPrivateKey;
-extern DevPrivateKey		g_iPixmapPrivateKey;
-extern DevPrivateKey		g_iWindowPrivateKey;
+extern DevPrivateKeyRec		g_iScreenPrivateKeyRec;
+#define g_iScreenPrivateKey  	(&g_iScreenPrivateKeyRec)
+extern DevPrivateKeyRec		g_iCmapPrivateKeyRec;
+#define g_iCmapPrivateKey 	(&g_iCmapPrivateKeyRec)
+extern DevPrivateKeyRec		g_iGCPrivateKeyRec;
+#define g_iGCPrivateKey 	(&g_iGCPrivateKeyRec)
+extern DevPrivateKeyRec		g_iPixmapPrivateKeyRec;
+#define g_iPixmapPrivateKey 	(&g_iPixmapPrivateKeyRec)
+extern DevPrivateKeyRec		g_iWindowPrivateKeyRec;
+#define g_iWindowPrivateKey 	(&g_iWindowPrivateKeyRec)
+
 extern unsigned long		g_ulServerGeneration;
-extern CARD32			g_c32LastInputEventTime;
 extern DWORD			g_dwEnginesSupported;
 extern HINSTANCE		g_hInstance;
 extern int                      g_copyROP[];
 extern int                      g_patternROP[];
 extern const char *		g_pszQueryHost;
+extern DeviceIntPtr             g_pwinPointer;
+extern DeviceIntPtr             g_pwinKeyboard;
 
 
 /*
@@ -762,10 +770,9 @@ winAllocateCmapPrivates (ColormapPtr pCmap);
  */
 
 #if defined(XWIN_CLIPBOARD) || defined(XWIN_MULTIWINDOW)
-# if defined(XCSECURITY)  
 Bool
 winGenerateAuthorization (void);
-# endif
+void winSetAuthorization(void);
 #endif
 
 
@@ -952,6 +959,11 @@ winKeybdReleaseKeys (void);
 void
 winSendKeyEvent (DWORD dwKey, Bool fDown);
 
+BOOL
+winCheckKeyPressed(WPARAM wParam, LPARAM lParam);
+
+void
+winFixShiftKeys (int iScanCode);
 
 /*
  * winkeyhook.c
@@ -1003,6 +1015,9 @@ int
 winMouseButtonsHandle (ScreenPtr pScreen,
 		       int iEventType, int iButton,
 		       WPARAM wParam);
+
+void
+winEnqueueMotion(int x, int y);
 
 #ifdef XWIN_NATIVEGDI
 /*
@@ -1195,7 +1210,7 @@ Bool
 winMapWindowRootless (WindowPtr pWindow);
 
 void
-winSetShapeRootless (WindowPtr pWindow);
+winSetShapeRootless (WindowPtr pWindow, int kind);
 
 
 /*
@@ -1205,6 +1220,8 @@ winSetShapeRootless (WindowPtr pWindow);
 HICON
 winXIconToHICON (WindowPtr pWin, int iconSize);
 
+void
+winSelectIcons(WindowPtr pWin, HICON *pIcon, HICON *pSmallIcon);
 
 #ifdef XWIN_MULTIWINDOW
 /*
@@ -1215,7 +1232,7 @@ void
 winReshapeMultiWindow (WindowPtr pWin);
 
 void
-winSetShapeMultiWindow (WindowPtr pWindow);
+winSetShapeMultiWindow (WindowPtr pWindow, int kind);
 
 void
 winUpdateRgnMultiWindow (WindowPtr pWindow);
@@ -1438,6 +1455,12 @@ winWindowsWMExtensionInit (void);
 
 Bool
 winInitCursor (ScreenPtr pScreen);
+
+/*
+ * winprocarg.c
+ */
+void
+winInitializeScreens(int maxscreens);
 
 /*
  * END DDX and DIX Function Prototypes

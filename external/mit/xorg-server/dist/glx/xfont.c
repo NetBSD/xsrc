@@ -28,7 +28,6 @@
  * Silicon Graphics, Inc.
  */
 
-#define NEED_REPLIES
 #ifdef HAVE_DIX_CONFIG_H
 #include <dix-config.h>
 #endif
@@ -46,8 +45,6 @@
 #include <pixmapstr.h>
 #include <windowstr.h>
 #include <dixfontstr.h>
-
-extern XID clientErrorValue;	/* imported kludge from dix layer */
 
 /*
 ** Make a single GL bitmap from a single X glyph
@@ -77,7 +74,7 @@ static int __glXMakeBitmapFromGlyph(FontPtr font, CharInfoPtr pci)
 	p = buf;
 	allocbuf = 0;
     } else {
-	p = (unsigned char *) xalloc(allocBytes);
+	p = (unsigned char *) malloc(allocBytes);
 	if (!p)
 	    return BadAlloc;
 	allocbuf = p;
@@ -100,9 +97,7 @@ static int __glXMakeBitmapFromGlyph(FontPtr font, CharInfoPtr pci)
 				  pci->metrics.characterWidth, 0, 
 				  allocbuf ? allocbuf : buf) );
 
-    if (allocbuf) {
-	xfree(allocbuf);
-    }
+    free(allocbuf);
     return Success;
 #undef __GL_CHAR_BUF_SIZE
 }
@@ -156,7 +151,6 @@ int __glXDisp_UseXFont(__GLXclientState *cl, GLbyte *pc)
     ClientPtr client = cl->client;
     xGLXUseXFontReq *req;
     FontPtr pFont;
-    GC *pGC;
     GLuint currentListIndex;
     __GLXcontext *cx;
     int error;
@@ -181,15 +175,10 @@ int __glXDisp_UseXFont(__GLXclientState *cl, GLbyte *pc)
     ** Font can actually be either the ID of a font or the ID of a GC
     ** containing a font.
     */
-    pFont = (FontPtr)LookupIDByType(req->font, RT_FONT);
-    if (!pFont) {
-        pGC = (GC *)LookupIDByType(req->font, RT_GC);
-        if (!pGC) {
-	    client->errorValue = req->font;
-            return BadFont;
-	}
-	pFont = pGC->font;
-    }
+
+    error = dixLookupFontable(&pFont, req->font, client, DixReadAccess);
+    if (error != Success)
+	return error;
 
     return MakeBitmapsFromFont(pFont, req->first, req->count,
 				    req->listBase);

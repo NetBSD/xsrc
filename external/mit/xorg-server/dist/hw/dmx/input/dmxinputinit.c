@@ -51,7 +51,6 @@
 #include "dmxcommon.h"
 #include "dmxevents.h"
 #include "dmxmotion.h"
-#include "dmxeq.h"
 #include "dmxprop.h"
 #include "config/dmxconfig.h"
 #include "dmxcursor.h"
@@ -72,20 +71,12 @@
 #include "mipointer.h"
 #include "windowstr.h"
 #include "mi.h"
+#include "xkbsrv.h"
 
 #include <X11/extensions/XI.h>
 #include <X11/extensions/XIproto.h>
 #include "exevents.h"
-#define EXTENSION_PROC_ARGS void *
 #include "extinit.h"
-
-/* From XI.h */
-#ifndef Relative
-#define Relative 0
-#endif
-#ifndef Absolute
-#define Absolute 1
-#endif
 
 DMXLocalInputInfoPtr dmxLocalCorePointer, dmxLocalCoreKeyboard;
 
@@ -306,15 +297,13 @@ static void _dmxKeyboardKbdCtrlProc(DMXLocalInputInfoPtr dmxLocal,
     dmxLocal->kctrl = *ctrl;
     if (dmxLocal->kCtrl) {
         dmxLocal->kCtrl(&dmxLocal->pDevice->public, ctrl);
-#ifdef XKB
-        if (!noXkbExtension && dmxLocal->pDevice->kbdfeed) {
+        if (dmxLocal->pDevice->kbdfeed) {
             XkbEventCauseRec cause;
             XkbSetCauseUnknown(&cause);
             /* Generate XKB events, as necessary */
             XkbUpdateIndicators(dmxLocal->pDevice, XkbAllIndicatorsMask, False,
                                 NULL, &cause);
         }
-#endif
     }
 }
 
@@ -370,86 +359,69 @@ void dmxKeyboardBellProc(int percent, DeviceIntPtr pDevice,
     }
 }
 
-#ifdef XKB
 static void dmxKeyboardFreeNames(XkbComponentNamesPtr names)
 {
-    if (names->keymap)   XFree(names->keymap);
     if (names->keycodes) XFree(names->keycodes);
     if (names->types)    XFree(names->types);
     if (names->compat)   XFree(names->compat);
     if (names->symbols)  XFree(names->symbols);
     if (names->geometry) XFree(names->geometry);
 }
-#endif
 
 
 static int dmxKeyboardOn(DeviceIntPtr pDevice, DMXLocalInitInfo *info)
 {
-#ifdef XKB
     GETDMXINPUTFROMPDEVICE;
-#else
-    DevicePtr pDev = &pDevice->public;
-#endif
+    XkbRMLVOSet rmlvo;
 
-#ifdef XKB
-    if (noXkbExtension) {
-#endif
-        if (!InitKeyboardDeviceStruct(pDev, &info->keySyms, info->modMap,
-                                      dmxKeyboardBellProc,
-                                      dmxKeyboardKbdCtrlProc))
-            return BadImplementation;
-#ifdef XKB
+    rmlvo.rules = dmxConfigGetXkbRules();
+    rmlvo.model = dmxConfigGetXkbModel();
+    rmlvo.layout = dmxConfigGetXkbLayout();
+    rmlvo.variant = dmxConfigGetXkbVariant();
+    rmlvo.options = dmxConfigGetXkbOptions();
+
+    XkbSetRulesDflts(&rmlvo);
+    if (!info->force && (dmxInput->keycodes
+                         || dmxInput->symbols
+                         || dmxInput->geometry)) {
+        if (info->freenames) dmxKeyboardFreeNames(&info->names);
+        info->freenames      = 0;
+        info->names.keycodes = dmxInput->keycodes;
+        info->names.types    = NULL;
+        info->names.compat   = NULL;
+        info->names.symbols  = dmxInput->symbols;
+        info->names.geometry = dmxInput->geometry;
+
+        dmxLogInput(dmxInput, "XKEYBOARD: From command line: %s",
+                    info->names.keycodes);
+        if (info->names.symbols && *info->names.symbols)
+            dmxLogInputCont(dmxInput, " %s", info->names.symbols);
+        if (info->names.geometry && *info->names.geometry)
+            dmxLogInputCont(dmxInput, " %s", info->names.geometry);
+        dmxLogInputCont(dmxInput, "\n");
+    } else if (info->names.keycodes) {
+        dmxLogInput(dmxInput, "XKEYBOARD: From device: %s",
+                    info->names.keycodes);
+        if (info->names.symbols && *info->names.symbols)
+            dmxLogInputCont(dmxInput, " %s", info->names.symbols);
+        if (info->names.geometry && *info->names.geometry)
+            dmxLogInputCont(dmxInput, " %s", info->names.geometry);
+        dmxLogInputCont(dmxInput, "\n");
     } else {
-        XkbSetRulesDflts(dmxConfigGetXkbRules(),
-                         dmxConfigGetXkbModel(),
-                         dmxConfigGetXkbLayout(),
-                         dmxConfigGetXkbVariant(),
-                         dmxConfigGetXkbOptions());
-        if (!info->force && (dmxInput->keycodes
-                             || dmxInput->symbols
-                             || dmxInput->geometry)) {
-            if (info->freenames) dmxKeyboardFreeNames(&info->names);
-            info->freenames      = 0;
-            info->names.keycodes = dmxInput->keycodes;
-            info->names.types    = NULL;
-            info->names.compat   = NULL;
-            info->names.symbols  = dmxInput->symbols;
-            info->names.geometry = dmxInput->geometry;
-            
-            dmxLogInput(dmxInput, "XKEYBOARD: From command line: %s",
-                        info->names.keycodes);
-            if (info->names.symbols && *info->names.symbols)
-                dmxLogInputCont(dmxInput, " %s", info->names.symbols);
-            if (info->names.geometry && *info->names.geometry)
-                dmxLogInputCont(dmxInput, " %s", info->names.geometry);
-            dmxLogInputCont(dmxInput, "\n");
-        } else if (info->names.keycodes) {
-            dmxLogInput(dmxInput, "XKEYBOARD: From device: %s",
-                        info->names.keycodes);
-            if (info->names.symbols && *info->names.symbols)
-                dmxLogInputCont(dmxInput, " %s", info->names.symbols);
-            if (info->names.geometry && *info->names.geometry)
-                dmxLogInputCont(dmxInput, " %s", info->names.geometry);
-            dmxLogInputCont(dmxInput, "\n");
-        } else {
-            dmxLogInput(dmxInput, "XKEYBOARD: Defaults: %s %s %s %s %s\n",
-                        dmxConfigGetXkbRules(),
-                        dmxConfigGetXkbLayout(),
-                        dmxConfigGetXkbModel(),
-                        dmxConfigGetXkbVariant()
-                        ? dmxConfigGetXkbVariant() : "",
-                        dmxConfigGetXkbOptions()
-                        ? dmxConfigGetXkbOptions() : "");
-        }
-        XkbInitKeyboardDeviceStruct(pDevice,
-                                    &info->names,
-                                    &info->keySyms,
-                                    info->modMap,
-                                    dmxKeyboardBellProc,
-                                    dmxKeyboardKbdCtrlProc);
+        dmxLogInput(dmxInput, "XKEYBOARD: Defaults: %s %s %s %s %s\n",
+                    dmxConfigGetXkbRules(),
+                    dmxConfigGetXkbLayout(),
+                    dmxConfigGetXkbModel(),
+                    dmxConfigGetXkbVariant()
+                    ? dmxConfigGetXkbVariant() : "",
+                    dmxConfigGetXkbOptions()
+                    ? dmxConfigGetXkbOptions() : "");
     }
+    InitKeyboardDeviceStruct(pDevice, &rmlvo,
+                                dmxKeyboardBellProc,
+                                dmxKeyboardKbdCtrlProc);
+
     if (info->freenames) dmxKeyboardFreeNames(&info->names);
-#endif
 
     return Success;
 }
@@ -461,7 +433,9 @@ static int dmxDeviceOnOff(DeviceIntPtr pDevice, int what)
     int              fd;
     DMXLocalInitInfo info;
     int              i;
-    
+    Atom             btn_labels[MAX_BUTTONS] = {0}; /* FIXME */
+    Atom             axis_labels[MAX_VALUATORS] = {0}; /* FIXME */
+
     if (dmxInput->detached) return Success;
 
     memset(&info, 0, sizeof(info));
@@ -476,50 +450,60 @@ static int dmxDeviceOnOff(DeviceIntPtr pDevice, int what)
             break;
         }
         if (info.keyClass) {
-            DevicePtr pDev = (DevicePtr) pDevice;
-            InitKeyboardDeviceStruct(pDev,
-                                     &info.keySyms,
-                                     info.modMap,
+            XkbRMLVOSet rmlvo;
+
+            rmlvo.rules = dmxConfigGetXkbRules();
+            rmlvo.model = dmxConfigGetXkbModel();
+            rmlvo.layout = dmxConfigGetXkbLayout();
+            rmlvo.variant = dmxConfigGetXkbVariant();
+            rmlvo.options = dmxConfigGetXkbOptions();
+
+            InitKeyboardDeviceStruct(pDevice,
+                                     &rmlvo,
                                      dmxBell, dmxKbdCtrl);
         }
         if (info.buttonClass) {
-            InitButtonClassDeviceStruct(pDevice, info.numButtons, info.map);
+            InitButtonClassDeviceStruct(pDevice, info.numButtons,
+                                        btn_labels, info.map);
         }
         if (info.valuatorClass) {
             if (info.numRelAxes && dmxLocal->sendsCore) {
                 InitValuatorClassDeviceStruct(pDevice, info.numRelAxes,
+                                              axis_labels,
                                               GetMaximumEventsNum(),
                                               Relative);
                 for (i = 0; i < info.numRelAxes; i++)
-                    InitValuatorAxisStruct(pDevice, i, info.minval[0],
-                                           info.maxval[0], info.res[0],
-                                           info.minres[0], info.maxres[0]);
+                    InitValuatorAxisStruct(pDevice, i, axis_labels[i],
+                                           info.minval[i], info.maxval[i],
+                                           info.res[i],
+                                           info.minres[i], info.maxres[i]);
             } else if (info.numRelAxes) {
                 InitValuatorClassDeviceStruct(pDevice, info.numRelAxes,
+                                              axis_labels,
                                               dmxPointerGetMotionBufferSize(),
                                               Relative);
                 for (i = 0; i < info.numRelAxes; i++)
-                    InitValuatorAxisStruct(pDevice, i, info.minval[0],
-                                           info.maxval[0], info.res[0],
-                                           info.minres[0], info.maxres[0]);
+                    InitValuatorAxisStruct(pDevice, i, axis_labels[i],
+                                           info.minval[i],
+                                           info.maxval[i], info.res[i],
+                                           info.minres[i], info.maxres[i]);
             } else if (info.numAbsAxes) {
                 InitValuatorClassDeviceStruct(pDevice, info.numAbsAxes,
+                                              axis_labels,
                                               dmxPointerGetMotionBufferSize(),
                                               Absolute);
                 for (i = 0; i < info.numAbsAxes; i++)
-                    InitValuatorAxisStruct(pDevice, i+info.numRelAxes,
-                                           info.minval[i+1], info.maxval[i+1],
-                                           info.res[i+1], info.minres[i+1],
-                                           info.maxres[i+1]);
+                    InitValuatorAxisStruct(pDevice, i,
+                                           axis_labels[i],
+                                           info.minval[i], info.maxval[i],
+                                           info.res[i], info.minres[i],
+                                           info.maxres[i]);
             }
         }
         if (info.focusClass)       InitFocusClassDeviceStruct(pDevice);
         if (info.proximityClass)   InitProximityClassDeviceStruct(pDevice);
         if (info.ptrFeedbackClass)
             InitPtrFeedbackClassDeviceStruct(pDevice, dmxChangePointerControl);
-        if (info.kbdFeedbackClass)
-            InitKbdFeedbackClassDeviceStruct(pDevice, dmxKeyboardBellProc,
-                                             dmxKeyboardKbdCtrlProc);
         if (info.intFeedbackClass || info.strFeedbackClass)
             dmxLog(dmxWarning,
                    "Integer and string feedback not supported for %s\n",
@@ -552,9 +536,7 @@ static int dmxDeviceOnOff(DeviceIntPtr pDevice, int what)
         XFree(info.keySyms.map);
         info.keySyms.map = NULL;
     }
-#ifdef XKB
     if (info.xkb) XkbFreeKeyboard(info.xkb, 0, True);
-#endif
     return Success;
 }
 
@@ -562,7 +544,7 @@ static void dmxProcessInputEvents(DMXInputInfo *dmxInput)
 {
     int i;
 
-    dmxeqProcessInputEvents();
+    mieqProcessInputEvents();
 #if 00 /*BP*/
     miPointerUpdate();
 #endif
@@ -588,7 +570,7 @@ static void dmxUpdateWindowInformation(DMXInputInfo *dmxInput,
     int i;
 
 #ifdef PANORAMIX
-    if (!noPanoramiXExtension && pWindow && pWindow->parent != WindowTable[0])
+    if (!noPanoramiXExtension && pWindow && pWindow->parent != screenInfo.screens[0]->root)
         return;
 #endif
 #if DMX_WINDOW_DEBUG
@@ -622,8 +604,7 @@ static void dmxCollectAll(DMXInputInfo *dmxInput)
         return;
     for (i = 0; i < dmxInput->numDevs; i += dmxInput->devs[i]->binding)
         if (dmxInput->devs[i]->collect_events)
-            dmxInput->devs[i]->collect_events(&dmxInput->devs[i]
-                                              ->pDevice->public,
+            dmxInput->devs[i]->collect_events(&dmxInput->devs[i]->pDevice->public,
                                               dmxMotion,
                                               dmxEnqueue,
                                               dmxCheckSpecialKeys, DMX_BLOCK);
@@ -691,7 +672,7 @@ static char *dmxMakeUniqueDeviceName(DMXLocalInputInfoPtr dmxLocal)
     static int           o = 0;
     static unsigned long dmxGeneration = 0;
 #define LEN  32
-    char *               buf = xalloc(LEN);
+    char *               buf = malloc(LEN);
 
     if (dmxGeneration != serverGeneration) {
         k = m = o     = 0;
@@ -795,7 +776,7 @@ static DMXLocalInputInfoPtr dmxLookupLocal(const char *name)
 DMXLocalInputInfoPtr dmxInputCopyLocal(DMXInputInfo *dmxInput,
                                        DMXLocalInputInfoPtr s)
 {
-    DMXLocalInputInfoPtr dmxLocal = xalloc(sizeof(*dmxLocal));
+    DMXLocalInputInfoPtr dmxLocal = malloc(sizeof(*dmxLocal));
     
     if (!dmxLocal)
         dmxLog(dmxFatal, "DMXLocalInputInfoPtr: out of memory\n");
@@ -807,7 +788,7 @@ DMXLocalInputInfoPtr dmxInputCopyLocal(DMXInputInfo *dmxInput,
     dmxLocal->deviceId       = -1;
 
     ++dmxInput->numDevs;
-    dmxInput->devs = xrealloc(dmxInput->devs,
+    dmxInput->devs = realloc(dmxInput->devs,
                               dmxInput->numDevs * sizeof(*dmxInput->devs));
     dmxInput->devs[dmxInput->numDevs-1] = dmxLocal;
     
@@ -846,7 +827,7 @@ static void dmxPopulateLocal(DMXInputInfo *dmxInput, dmxArg a)
     }
 }
 
-int dmxInputExtensionErrorHandler(Display *dsp, char *name, char *reason)
+int dmxInputExtensionErrorHandler(Display *dsp, _Xconst char *name, _Xconst char *reason)
 {
     return 0;
 }
@@ -858,8 +839,7 @@ static void dmxInputScanForExtensions(DMXInputInfo *dmxInput, int doXI)
     Display              *display;
     int                  num;
     int                  i, j;
-    DMXLocalInputInfoPtr dmxLocal;
-    int                  (*handler)(Display *, char *, char *);
+    XextErrorHandler     handler;
 
     if (!(display = XOpenDisplay(dmxInput->name))) return;
     
@@ -905,7 +885,7 @@ static void dmxInputScanForExtensions(DMXInputInfo *dmxInput, int doXI)
                         && dmxL->deviceId < 0) {
                         dmxL->deviceId   = devices[i].id;
                         dmxL->deviceName = (devices[i].name
-                                            ? xstrdup(devices[i].name)
+                                            ? strdup(devices[i].name)
                                             : NULL);
                     }
                 }
@@ -938,7 +918,7 @@ static void dmxInputScanForExtensions(DMXInputInfo *dmxInput, int doXI)
                         dmxLocal->sendsCore  = FALSE;
                         dmxLocal->deviceId   = devices[i].id;
                         dmxLocal->deviceName = (devices[i].name
-                                                ? xstrdup(devices[i].name)
+                                                ? strdup(devices[i].name)
                                                 : NULL);
                     }
                 }
@@ -952,7 +932,7 @@ static void dmxInputScanForExtensions(DMXInputInfo *dmxInput, int doXI)
 }
 
 /** Re-initialize all the devices described in \a dmxInput.  Called from
-    #dmxReconfig before the cursor is redisplayed. */ 
+    #dmxAdjustCursorBoundaries before the cursor is redisplayed. */
 void dmxInputReInit(DMXInputInfo *dmxInput)
 {
     int i;
@@ -965,7 +945,7 @@ void dmxInputReInit(DMXInputInfo *dmxInput)
 }
 
 /** Re-initialize all the devices described in \a dmxInput.  Called from
-    #dmxReconfig after the cursor is redisplayed. */ 
+    #dmxAdjustCursorBoundaries after the cursor is redisplayed. */
 void dmxInputLateReInit(DMXInputInfo *dmxInput)
 {
     int i;
@@ -1088,12 +1068,6 @@ void dmxInputInit(DMXInputInfo *dmxInput)
         }
     }
     
-    if (pPointer && pKeyboard) {
-        if (dmxeqInit(&pKeyboard->public, &pPointer->public))
-            dmxLogInput(dmxInput, "Using %s and %s as true core devices\n",
-                        pKeyboard->name, pPointer->name);
-    }
-
     dmxInput->processInputEvents    = dmxProcessInputEvents;
     dmxInput->detached              = False;
     
@@ -1110,13 +1084,13 @@ static void dmxInputFreeLocal(DMXLocalInputInfoRec *local)
     if (local->isCore && local->type == DMX_LOCAL_KEYBOARD)
         dmxLocalCoreKeyboard = NULL;
     if (local->destroy_private) local->destroy_private(local->private);
-    if (local->history)         xfree(local->history);
-    if (local->valuators)       xfree(local->valuators);
-    if (local->deviceName)      xfree(local->deviceName);
+    free(local->history);
+    free(local->valuators);
+    free(local->deviceName);
     local->private    = NULL;
     local->history    = NULL;
     local->deviceName = NULL;
-    xfree(local);
+    free(local);
 }
 
 /** Free all of the memory associated with \a dmxInput */
@@ -1126,18 +1100,18 @@ void dmxInputFree(DMXInputInfo *dmxInput)
     
     if (!dmxInput) return;
 
-    if (dmxInput->keycodes) xfree(dmxInput->keycodes);
-    if (dmxInput->symbols)  xfree(dmxInput->symbols);
-    if (dmxInput->geometry) xfree(dmxInput->geometry);
+    free(dmxInput->keycodes);
+    free(dmxInput->symbols);
+    free(dmxInput->geometry);
 
     for (i = 0; i < dmxInput->numDevs; i++) {
         dmxInputFreeLocal(dmxInput->devs[i]);
         dmxInput->devs[i] = NULL;
     }
-    xfree(dmxInput->devs);
+    free(dmxInput->devs);
     dmxInput->devs    = NULL;
     dmxInput->numDevs = 0;
-    if (dmxInput->freename) xfree(dmxInput->name);
+    if (dmxInput->freename) free(dmxInput->name);
     dmxInput->name    = NULL;
 }
 
@@ -1212,7 +1186,7 @@ int dmxInputDetach(DMXInputInfo *dmxInput)
                     : (dmxLocal->sendsCore
                        ? " [sends core events]"
                        : ""));
-        DisableDevice(dmxLocal->pDevice);
+        DisableDevice(dmxLocal->pDevice, TRUE);
     }
     dmxInput->detached = True;
     dmxInputLogDevices();
@@ -1280,7 +1254,7 @@ static int dmxInputAttachOld(DMXInputInfo *dmxInput, int *id)
                     : (dmxLocal->sendsCore
                        ? " [sends core events]"
                        : ""));
-        EnableDevice(dmxLocal->pDevice);
+        EnableDevice(dmxLocal->pDevice, TRUE);
     }
     dmxInputLogDevices();
     return 0;

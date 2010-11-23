@@ -54,7 +54,6 @@ SOFTWARE.
  * Xnest could do the same thing.
  */
 
-#define	 NEED_EVENTS
 #ifdef HAVE_DIX_CONFIG_H
 #include <dix-config.h>
 #endif
@@ -154,7 +153,7 @@ AddOtherInputDevices(void)
 void
 OpenInputDevice(DeviceIntPtr dev, ClientPtr client, int *status)
 {
-    *status = XaceHook(XACE_DEVICE_ACCESS, client, dev, DixReadAccess);
+    *status = XaceHook(XACE_DEVICE_ACCESS, client, dev, DixUseAccess);
 }
 
 /****************************************************************************
@@ -208,14 +207,14 @@ ChangeDeviceControl(ClientPtr client, DeviceIntPtr dev,
 {
     switch (control->control) {
     case DEVICE_RESOLUTION:
-	return (BadMatch);
+	return BadMatch;
     case DEVICE_ABS_CALIB:
     case DEVICE_ABS_AREA:
-        return (BadMatch);
+        return BadMatch;
     case DEVICE_CORE:
-        return (BadMatch);
+        return BadMatch;
     default:
-	return (BadMatch);
+	return BadMatch;
     }
 }
 
@@ -228,7 +227,8 @@ ChangeDeviceControl(ClientPtr client, DeviceIntPtr dev,
  *
  */
 int
-NewInputDeviceRequest(InputOption *options, DeviceIntPtr *pdev)
+NewInputDeviceRequest(InputOption *options, InputAttributes *attrs,
+                      DeviceIntPtr *pdev)
 {
     return BadValue;
 }

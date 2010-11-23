@@ -50,8 +50,6 @@ SOFTWARE.
 #endif
 
 #include <X11/X.h>
-#define NEED_EVENTS
-#define NEED_REPLIES
 #include <X11/Xproto.h>
 #include "misc.h"
 #include "dixstruct.h"
@@ -72,7 +70,7 @@ int lastEvent = EXTENSION_EVENT_BASE;
 static int lastError = FirstExtensionError;
 static unsigned int NumExtensions = 0;
 
-_X_EXPORT ExtensionEntry *
+ExtensionEntry *
 AddExtension(char *name, int NumEvents, int NumErrors, 
 	     int (*MainProc)(ClientPtr c1), 
 	     int (*SwappedMainProc)(ClientPtr c2), 
@@ -85,29 +83,37 @@ AddExtension(char *name, int NumEvents, int NumErrors,
     if (!MainProc || !SwappedMainProc || !MinorOpcodeProc)
         return((ExtensionEntry *) NULL);
     if ((lastEvent + NumEvents > LAST_EVENT) || 
-	        (unsigned)(lastError + NumErrors > LAST_ERROR))
+	        (unsigned)(lastError + NumErrors > LAST_ERROR)) {
+        LogMessage(X_ERROR, "Not enabling extension %s: maximum number of "
+                   "events or errors exceeded.\n", name);
         return((ExtensionEntry *) NULL);
+    }
 
-    ext = (ExtensionEntry *) xalloc(sizeof(ExtensionEntry));
+    ext = calloc(sizeof (ExtensionEntry), 1);
     if (!ext)
-	return((ExtensionEntry *) NULL);
-    ext->name = (char *)xalloc(strlen(name) + 1);
+	return NULL;
+    if (!dixAllocatePrivates(&ext->devPrivates, PRIVATE_EXTENSION)) {
+	free(ext);
+	return NULL;
+    }
+    ext->name = malloc(strlen(name) + 1);
     ext->num_aliases = 0;
     ext->aliases = (char **)NULL;
-    ext->devPrivates = NULL;
     if (!ext->name)
     {
-	xfree(ext);
+	dixFreePrivates(ext->devPrivates, PRIVATE_EXTENSION);
+	free(ext);
 	return((ExtensionEntry *) NULL);
     }
     strcpy(ext->name,  name);
     i = NumExtensions;
-    newexts = (ExtensionEntry **) xrealloc(extensions,
+    newexts = (ExtensionEntry **) realloc(extensions,
 					   (i + 1) * sizeof(ExtensionEntry *));
     if (!newexts)
     {
-	xfree(ext->name);
-	xfree(ext);
+	free(ext->name);
+	dixFreePrivates(ext->devPrivates, PRIVATE_EXTENSION);
+	free(ext);
 	return((ExtensionEntry *) NULL);
     }
     NumExtensions++;
@@ -143,22 +149,22 @@ AddExtension(char *name, int NumEvents, int NumErrors,
     }
 
     RegisterExtensionNames(ext);
-    return(ext);
+    return ext;
 }
 
-_X_EXPORT Bool AddExtensionAlias(char *alias, ExtensionEntry *ext)
+Bool AddExtensionAlias(char *alias, ExtensionEntry *ext)
 {
     char *name;
     char **aliases;
 
     if (!ext)
         return FALSE ;
-    aliases = (char **)xrealloc(ext->aliases,
+    aliases = (char **)realloc(ext->aliases,
 				(ext->num_aliases + 1) * sizeof(char *));
     if (!aliases)
 	return FALSE;
     ext->aliases = aliases;
-    name = (char *)xalloc(strlen(alias) + 1);
+    name = malloc(strlen(alias) + 1);
     if (!name)
 	return FALSE;
     strcpy(name,  alias);
@@ -192,7 +198,7 @@ FindExtension(char *extname, int len)
  * CheckExtension returns the extensions[] entry for the requested
  * extension name.  Maybe this could just return a Bool instead?
  */
-_X_EXPORT ExtensionEntry *
+ExtensionEntry *
 CheckExtension(const char *extname)
 {
     int n;
@@ -218,13 +224,13 @@ GetExtensionEntry(int major)
     return extensions[major];
 }
 
-_X_EXPORT unsigned short
+unsigned short
 StandardMinorOpcode(ClientPtr client)
 {
     return ((xReq *)client->requestBuffer)->data;
 }
 
-_X_EXPORT unsigned short
+unsigned short
 MinorOpcodeOfRequest(ClientPtr client)
 {
     unsigned char major;
@@ -248,14 +254,14 @@ CloseDownExtensions(void)
 	if (extensions[i]->CloseDown)
 	    extensions[i]->CloseDown(extensions[i]);
 	NumExtensions = i;
-	xfree(extensions[i]->name);
+	free(extensions[i]->name);
 	for (j = extensions[i]->num_aliases; --j >= 0;)
-	    xfree(extensions[i]->aliases[j]);
-	xfree(extensions[i]->aliases);
-	dixFreePrivates(extensions[i]->devPrivates);
-	xfree(extensions[i]);
+	    free(extensions[i]->aliases[j]);
+	free(extensions[i]->aliases);
+	dixFreePrivates(extensions[i]->devPrivates, PRIVATE_EXTENSION);
+	free(extensions[i]);
     }
-    xfree(extensions);
+    free(extensions);
     extensions = (ExtensionEntry **)NULL;
     lastEvent = EXTENSION_EVENT_BASE;
     lastError = FirstExtensionError;
@@ -269,7 +275,8 @@ ProcQueryExtension(ClientPtr client)
     REQUEST(xQueryExtensionReq);
 
     REQUEST_FIXED_SIZE(xQueryExtensionReq, stuff->nbytes);
-    
+
+    memset(&reply, 0, sizeof(xQueryExtensionReply));
     reply.type = X_Reply;
     reply.length = 0;
     reply.major_opcode = 0;
@@ -291,7 +298,7 @@ ProcQueryExtension(ClientPtr client)
 	}
     }
     WriteReplyToClient(client, sizeof(xQueryExtensionReply), &reply);
-    return(client->noClientException);
+    return Success;
 }
 
 int
@@ -303,6 +310,7 @@ ProcListExtensions(ClientPtr client)
 
     REQUEST_SIZE_MATCH(xReq);
 
+    memset(&reply, 0, sizeof(xListExtensionsReply));
     reply.type = X_Reply;
     reply.nExtensions = 0;
     reply.length = 0;
@@ -324,10 +332,10 @@ ProcListExtensions(ClientPtr client)
 	    for (j = extensions[i]->num_aliases; --j >= 0;)
 		total_length += strlen(extensions[i]->aliases[j]) + 1;
 	}
-        reply.length = (total_length + 3) >> 2;
-	buffer = bufptr = (char *)xalloc(total_length);
+        reply.length = bytes_to_int32(total_length);
+	buffer = bufptr = malloc(total_length);
 	if (!buffer)
-	    return(BadAlloc);
+	    return BadAlloc;
         for (i=0;  i<NumExtensions; i++)
         {
 	    int len;
@@ -349,7 +357,7 @@ ProcListExtensions(ClientPtr client)
     if (reply.length)
     {
         WriteToClient(client, total_length, buffer);
-    	xfree(buffer);
+        free(buffer);
     }
-    return(client->noClientException);
+    return Success;
 }

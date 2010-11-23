@@ -76,29 +76,23 @@ Equipment Corporation.
  * Copyright 2005-2006 Sun Microsystems, Inc.  All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the
- * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modify, merge, publish,
- * distribute, and/or sell copies of the Software, and to permit persons
- * to whom the Software is furnished to do so, provided that the above
- * copyright notice(s) and this permission notice appear in all copies of
- * the Software and that both the above copyright notice(s) and this
- * permission notice appear in supporting documentation.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT
- * OF THIRD PARTY RIGHTS. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR
- * HOLDERS INCLUDED IN THIS NOTICE BE LIABLE FOR ANY CLAIM, OR ANY SPECIAL
- * INDIRECT OR CONSEQUENTIAL DAMAGES, OR ANY DAMAGES WHATSOEVER RESULTING
- * FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
- * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
- * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
- * 
- * Except as contained in this notice, the name of a copyright holder
- * shall not be used in advertising or otherwise to promote the sale, use
- * or other dealings in this Software without prior written authorization
- * of the copyright holder.
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice (including the next
+ * paragraph) shall be included in all copies or substantial portions of the
+ * Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
  */
 
 /*	Routines to manage various kinds of resources:
@@ -124,7 +118,6 @@ Equipment Corporation.
  *      resource "owned" by the client.
  */
 
-#define NEED_EVENTS
 #ifdef HAVE_DIX_CONFIG_H
 #include <dix-config.h>
 #endif
@@ -148,10 +141,10 @@ Equipment Corporation.
 #endif
 #include "xace.h"
 #include <assert.h>
+#include "registry.h"
 
 #ifdef XSERVER_DTRACE
 #include <sys/types.h>
-#include "registry.h"
 typedef const char *string;
 #include "Xserver-dtrace.h"
 
@@ -186,13 +179,60 @@ typedef struct _ClientResource {
     XID		expectID;
 } ClientResourceRec;
 
-_X_EXPORT RESTYPE lastResourceType;
+RESTYPE lastResourceType;
 static RESTYPE lastResourceClass;
-_X_EXPORT RESTYPE TypeMask;
+RESTYPE TypeMask;
 
-static DeleteType *DeleteFuncs = (DeleteType *)NULL;
+struct ResourceType {
+    DeleteType deleteFunc;
+    int errorValue;
+};
 
-_X_EXPORT CallbackListPtr ResourceStateCallback;
+static struct ResourceType *resourceTypes;
+static const struct ResourceType predefTypes[] = {
+    [RT_NONE & (RC_LASTPREDEF - 1)] = {
+	.deleteFunc = (DeleteType)NoopDDA,
+	.errorValue = BadValue,
+    },
+    [RT_WINDOW & (RC_LASTPREDEF - 1)] = {
+	.deleteFunc = DeleteWindow,
+	.errorValue = BadWindow,
+    },
+    [RT_PIXMAP & (RC_LASTPREDEF - 1)] = {
+	.deleteFunc = dixDestroyPixmap,
+	.errorValue = BadPixmap,
+    },
+    [RT_GC & (RC_LASTPREDEF - 1)] = {
+	.deleteFunc = FreeGC,
+	.errorValue = BadGC,
+    },
+    [RT_FONT & (RC_LASTPREDEF - 1)] = {
+	.deleteFunc = CloseFont,
+	.errorValue = BadFont,
+    },
+    [RT_CURSOR & (RC_LASTPREDEF - 1)] = {
+	.deleteFunc = FreeCursor,
+	.errorValue = BadCursor,
+    },
+    [RT_COLORMAP & (RC_LASTPREDEF - 1)] = {
+	.deleteFunc = FreeColormap,
+	.errorValue = BadColor,
+    },
+    [RT_CMAPENTRY & (RC_LASTPREDEF - 1)] = {
+	.deleteFunc = FreeClientPixels,
+	.errorValue = BadColor,
+    },
+    [RT_OTHERCLIENT & (RC_LASTPREDEF - 1)] = {
+	.deleteFunc = OtherClientGone,
+	.errorValue = BadValue,
+    },
+    [RT_PASSIVEGRAB & (RC_LASTPREDEF - 1)] = {
+	.deleteFunc = DeletePassiveGrab,
+	.errorValue = BadValue,
+    },
+};
+
+CallbackListPtr ResourceStateCallback;
 
 static _X_INLINE void
 CallResourceStateCallback(ResourceState state, ResourceRec *res)
@@ -203,28 +243,36 @@ CallResourceStateCallback(ResourceState state, ResourceRec *res)
     }
 }
 
-_X_EXPORT RESTYPE
-CreateNewResourceType(DeleteType deleteFunc)
+RESTYPE
+CreateNewResourceType(DeleteType deleteFunc, char *name)
 {
     RESTYPE next = lastResourceType + 1;
-    DeleteType *funcs;
+    struct ResourceType *types;
 
     if (next & lastResourceClass)
 	return 0;
-    funcs = (DeleteType *)xrealloc(DeleteFuncs,
-				   (next + 1) * sizeof(DeleteType));
-    if (!funcs)
-	return 0;
-    if (!dixRegisterPrivateOffset(next, -1))
+    types = realloc(resourceTypes, (next + 1) * sizeof(*resourceTypes));
+    if (!types)
 	return 0;
 
     lastResourceType = next;
-    DeleteFuncs = funcs;
-    DeleteFuncs[next] = deleteFunc;
+    resourceTypes = types;
+    resourceTypes[next].deleteFunc = deleteFunc;
+    resourceTypes[next].errorValue = BadValue;
+
+    /* Called even if name is NULL, to remove any previous entry */
+    RegisterResourceName(next, name);
+
     return next;
 }
 
-_X_EXPORT RESTYPE
+void
+SetResourceTypeErrorValue(RESTYPE type, int errorValue)
+{
+    resourceTypes[type & TypeMask].errorValue = errorValue;
+}
+
+RESTYPE
 CreateNewResourceClass(void)
 {
     RESTYPE next = lastResourceClass >> 1;
@@ -254,25 +302,14 @@ InitClientResources(ClientPtr client)
 	lastResourceType = RT_LASTPREDEF;
 	lastResourceClass = RC_LASTPREDEF;
 	TypeMask = RC_LASTPREDEF - 1;
-	if (DeleteFuncs)
-	    xfree(DeleteFuncs);
-	DeleteFuncs = (DeleteType *)xalloc((lastResourceType + 1) *
-					   sizeof(DeleteType));
-	if (!DeleteFuncs)
+	free(resourceTypes);
+	resourceTypes = malloc(sizeof(predefTypes));
+	if (!resourceTypes)
 	    return FALSE;
-	DeleteFuncs[RT_NONE & TypeMask] = (DeleteType)NoopDDA;
-	DeleteFuncs[RT_WINDOW & TypeMask] = DeleteWindow;
-	DeleteFuncs[RT_PIXMAP & TypeMask] = dixDestroyPixmap;
-	DeleteFuncs[RT_GC & TypeMask] = FreeGC;
-	DeleteFuncs[RT_FONT & TypeMask] = CloseFont;
-	DeleteFuncs[RT_CURSOR & TypeMask] = FreeCursor;
-	DeleteFuncs[RT_COLORMAP & TypeMask] = FreeColormap;
-	DeleteFuncs[RT_CMAPENTRY & TypeMask] = FreeClientPixels;
-	DeleteFuncs[RT_OTHERCLIENT & TypeMask] = OtherClientGone;
-	DeleteFuncs[RT_PASSIVEGRAB & TypeMask] = DeletePassiveGrab;
+	memcpy(resourceTypes, predefTypes, sizeof(predefTypes));
     }
     clientTable[i = client->index].resources =
-	(ResourcePtr *)xalloc(INITBUCKETS*sizeof(ResourcePtr));
+	malloc(INITBUCKETS*sizeof(ResourcePtr));
     if (!clientTable[i].resources)
 	return FALSE;
     clientTable[i].buckets = INITBUCKETS;
@@ -394,13 +431,16 @@ unsigned int
 GetXIDList(ClientPtr pClient, unsigned count, XID *pids)
 {
     unsigned int found = 0;
-    XID id = pClient->clientAsMask;
+    XID rc, id = pClient->clientAsMask;
     XID maxid;
+    pointer val;
 
     maxid = id | RESOURCE_ID_MASK;
     while ( (found < count) && (id <= maxid) )
     {
-	if (!LookupIDByClass(id, RC_ANY))
+	rc = dixLookupResourceByClass(&val, id, RC_ANY, serverClient,
+				      DixGetAttrAccess);
+	if (rc == BadValue)
 	{
 	    pids[found++] = id;
 	}
@@ -417,7 +457,7 @@ GetXIDList(ClientPtr pClient, unsigned count, XID *pids)
  * over-running another client.
  */
 
-_X_EXPORT XID
+XID
 FakeClientID(int client)
 {
     XID id, maxid;
@@ -438,7 +478,7 @@ FakeClientID(int client)
     return id;
 }
 
-_X_EXPORT Bool
+Bool
 AddResource(XID id, RESTYPE type, pointer value)
 {
     int client;
@@ -460,10 +500,10 @@ AddResource(XID id, RESTYPE type, pointer value)
 	(rrec->hashsize < MAXHASHSIZE))
 	RebuildTable(client);
     head = &rrec->resources[Hash(client, id)];
-    res = (ResourcePtr)xalloc(sizeof(ResourceRec));
+    res = malloc(sizeof(ResourceRec));
     if (!res)
     {
-	(*DeleteFuncs[type & TypeMask])(value, id);
+	(*resourceTypes[type & TypeMask].deleteFunc)(value, id);
 	return FALSE;
     }
     res->next = *head;
@@ -492,13 +532,13 @@ RebuildTable(int client)
      */
 
     j = 2 * clientTable[client].buckets;
-    tails = (ResourcePtr **)xalloc(j * sizeof(ResourcePtr *));
+    tails = malloc(j * sizeof(ResourcePtr *));
     if (!tails)
 	return;
-    resources = (ResourcePtr *)xalloc(j * sizeof(ResourcePtr));
+    resources = malloc(j * sizeof(ResourcePtr));
     if (!resources)
     {
-	xfree(tails);
+	free(tails);
 	return;
     }
     for (rptr = resources, tptr = tails; --j >= 0; rptr++, tptr++)
@@ -521,13 +561,13 @@ RebuildTable(int client)
 	    *tptr = &res->next;
 	}
     }
-    xfree(tails);
+    free(tails);
     clientTable[client].buckets *= 2;
-    xfree(clientTable[client].resources);
+    free(clientTable[client].resources);
     clientTable[client].resources = resources;
 }
 
-_X_EXPORT void
+void
 FreeResource(XID id, RESTYPE skipDeleteFuncType)
 {
     int		cid;
@@ -558,8 +598,8 @@ FreeResource(XID id, RESTYPE skipDeleteFuncType)
 		CallResourceStateCallback(ResourceStateFreeing, res);
 
 		if (rtype != skipDeleteFuncType)
-		    (*DeleteFuncs[rtype & TypeMask])(res->value, res->id);
-		xfree(res);
+		    (*resourceTypes[rtype & TypeMask].deleteFunc)(res->value, res->id);
+		free(res);
 		if (*eltptr != elements)
 		    prev = head; /* prev may no longer be valid */
 	    }
@@ -570,7 +610,7 @@ FreeResource(XID id, RESTYPE skipDeleteFuncType)
 }
 
 
-_X_EXPORT void
+void
 FreeResourceByType(XID id, RESTYPE type, Bool skipFree)
 {
     int		cid;
@@ -590,12 +630,13 @@ FreeResourceByType(XID id, RESTYPE type, Bool skipFree)
 			      res->value, TypeNameString(res->type));
 #endif		    		    
 		*prev = res->next;
+		clientTable[cid].elements--;
 
 		CallResourceStateCallback(ResourceStateFreeing, res);
 
 		if (!skipFree)
-		    (*DeleteFuncs[type & TypeMask])(res->value, res->id);
-		xfree(res);
+		    (*resourceTypes[type & TypeMask].deleteFunc)(res->value, res->id);
+		free(res);
 		break;
 	    }
 	    else
@@ -610,7 +651,7 @@ FreeResourceByType(XID id, RESTYPE type, Bool skipFree)
  * data
  */
 
-_X_EXPORT Bool
+Bool
 ChangeResourceValue (XID id, RESTYPE rtype, pointer value)
 {
     int    cid;
@@ -636,7 +677,7 @@ ChangeResourceValue (XID id, RESTYPE rtype, pointer value)
  * add and delete an equal number of resources!
  */
 
-_X_EXPORT void
+void
 FindClientResourcesByType(
     ClientPtr client,
     RESTYPE type,
@@ -668,7 +709,7 @@ FindClientResourcesByType(
     }
 }
 
-_X_EXPORT void
+void
 FindAllClientResources(
     ClientPtr client,
     FindAllRes func,
@@ -706,7 +747,8 @@ LookupClientResourceComplex(
     pointer cdata
 ){
     ResourcePtr *resources;
-    ResourcePtr this;
+    ResourcePtr this, next;
+    pointer value;
     int i;
 
     if (!client)
@@ -714,10 +756,13 @@ LookupClientResourceComplex(
 
     resources = clientTable[client->index].resources;
     for (i = 0; i < clientTable[client->index].buckets; i++) {
-        for (this = resources[i]; this; this = this->next) {
+        for (this = resources[i]; this; this = next) {
+	    next = this->next;
 	    if (!type || this->type == type) {
-		if((*func)(this->value, this->id, cdata))
-		    return this->value;
+		/* workaround func freeing the type as DRI1 does */
+		value = this->value;
+		if((*func)(value, this->id, cdata))
+		    return value;
 	    }
 	}
     }
@@ -731,12 +776,14 @@ FreeClientNeverRetainResources(ClientPtr client)
     ResourcePtr *resources;
     ResourcePtr this;
     ResourcePtr *prev;
-    int j;
+    int j, elements;
+    int *eltptr;
 
     if (!client)
 	return;
 
     resources = clientTable[client->index].resources;
+    eltptr = &clientTable[client->index].elements;
     for (j=0; j < clientTable[client->index].buckets; j++) 
     {
 	prev = &resources[j];
@@ -750,11 +797,15 @@ FreeClientNeverRetainResources(ClientPtr client)
 			      this->value, TypeNameString(this->type));
 #endif		    
 		*prev = this->next;
+		clientTable[client->index].elements--;
 
 		CallResourceStateCallback(ResourceStateFreeing, this);
 
-		(*DeleteFuncs[rtype & TypeMask])(this->value, this->id);
-		xfree(this);
+		elements = *eltptr;
+		(*resourceTypes[rtype & TypeMask].deleteFunc)(this->value, this->id);
+		free(this);
+		if (*eltptr != elements)
+		    prev = &resources[j]; /* prev may no longer be valid */
 	    }
 	    else
 		prev = &this->next;
@@ -801,14 +852,15 @@ FreeClientResources(ClientPtr client)
 			  this->value, TypeNameString(this->type));
 #endif		    
 	    *head = this->next;
+	    clientTable[client->index].elements--;
 
 	    CallResourceStateCallback(ResourceStateFreeing, this);
 
-	    (*DeleteFuncs[rtype & TypeMask])(this->value, this->id);
-	    xfree(this);
+	    (*resourceTypes[rtype & TypeMask].deleteFunc)(this->value, this->id);
+	    free(this);
 	}
     }
-    xfree(clientTable[client->index].resources);
+    free(clientTable[client->index].resources);
     clientTable[client->index].resources = NULL;
     clientTable[client->index].buckets = 0;
 }
@@ -825,9 +877,11 @@ FreeAllResources(void)
     }
 }
 
-_X_EXPORT Bool
+Bool
 LegalNewID(XID id, ClientPtr client)
 {
+    pointer val;
+    int rc;
 
 #ifdef PANORAMIX
     XID 	minid, maxid;
@@ -840,12 +894,19 @@ LegalNewID(XID id, ClientPtr client)
 	        return TRUE;
 	}
 #endif /* PANORAMIX */
-	return ((client->clientAsMask == (id & ~RESOURCE_ID_MASK)) &&
-	    ((clientTable[client->index].expectID <= id) ||
-	     !LookupIDByClass(id, RC_ANY)));
+	if (client->clientAsMask == (id & ~RESOURCE_ID_MASK))
+	{
+	    if (clientTable[client->index].expectID <= id)
+		return TRUE;
+
+	    rc = dixLookupResourceByClass(&val, id, RC_ANY, serverClient,
+					  DixGetAttrAccess);
+	    return rc == BadValue;
+	}
+	return FALSE;
 }
 
-_X_EXPORT int
+int
 dixLookupResourceByType(pointer *result, XID id, RESTYPE rtype,
 			ClientPtr client, Mask mode)
 {
@@ -853,6 +914,8 @@ dixLookupResourceByType(pointer *result, XID id, RESTYPE rtype,
     ResourcePtr res = NULL;
 
     *result = NULL;
+    if ((rtype & TypeMask) > lastResourceType)
+	return BadImplementation;
 
     if ((cid < MAXCLIENTS) && clientTable[cid].buckets) {
 	res = clientTable[cid].resources[Hash(cid, id)];
@@ -862,12 +925,14 @@ dixLookupResourceByType(pointer *result, XID id, RESTYPE rtype,
 		break;
     }
     if (!res)
-	return BadValue;
+	return resourceTypes[rtype & TypeMask].errorValue;
 
     if (client) {
 	client->errorValue = id;
 	cid = XaceHook(XACE_RESOURCE_ACCESS, client, id, res->type,
 		       res->value, RT_NONE, NULL, mode);
+	if (cid == BadValue)
+	    return resourceTypes[rtype & TypeMask].errorValue;
 	if (cid != Success)
 	    return cid;
     }
@@ -876,7 +941,7 @@ dixLookupResourceByType(pointer *result, XID id, RESTYPE rtype,
     return Success;
 }
 
-_X_EXPORT int
+int
 dixLookupResourceByClass(pointer *result, XID id, RESTYPE rclass,
 			 ClientPtr client, Mask mode)
 {

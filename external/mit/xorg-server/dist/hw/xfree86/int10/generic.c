@@ -75,6 +75,7 @@ static void *sysMem = NULL;
  * etc.).  How do we know that \c pci_device_read_rom will return the
  * legacy VGA BIOS image?
  */
+#ifndef _PC
 static int
 read_legacy_video_BIOS(struct pci_device *dev, unsigned char *Buf)
 {
@@ -114,6 +115,7 @@ read_legacy_video_BIOS(struct pci_device *dev, unsigned char *Buf)
 
     return Len;
 }
+#endif /* _PC */
 
 
 xf86Int10InfoPtr
@@ -126,8 +128,7 @@ xf86ExtendedInitInt10(int entityIndex, int Flags)
     int screen;
     legacyVGARec vga;
  
-#ifdef _PC
-    int size;
+#if 0
     CARD32 cs;
 #endif
 
@@ -136,7 +137,7 @@ xf86ExtendedInitInt10(int entityIndex, int Flags)
     options = xf86HandleInt10Options(xf86Screens[screen],entityIndex);
     
     if (int10skip(options)) {
-	xfree(options);
+	free(options);
 	return NULL;
     }
     
@@ -284,17 +285,17 @@ xf86ExtendedInitInt10(int entityIndex, int Flags)
     xf86ExecX86int10(pInt);
     UnlockLegacyVGA(pInt, &vga);
 #endif
-    xfree(options);
+    free(options);
     return pInt;
 
  error1:
-    xfree(base);
+    free(base);
     UnmapVRam(pInt);
-    xfree(INTPriv(pInt)->alloc);
-    xfree(pInt->private);
+    free(INTPriv(pInt)->alloc);
+    free(pInt->private);
  error0:
-    xfree(pInt);
-    xfree(options);
+    free(pInt);
+    free(options);
     
     return NULL;
 }
@@ -338,11 +339,11 @@ xf86FreeInt10(xf86Int10InfoPtr pInt)
 #endif
     if (Int10Current == pInt)
 	Int10Current = NULL;
-    xfree(INTPriv(pInt)->base);
+    free(INTPriv(pInt)->base);
     UnmapVRam(pInt);
-    xfree(INTPriv(pInt)->alloc);
-    xfree(pInt->private);
-    xfree(pInt);
+    free(INTPriv(pInt)->alloc);
+    free(pInt->private);
+    free(pInt);
 }
 
 void *

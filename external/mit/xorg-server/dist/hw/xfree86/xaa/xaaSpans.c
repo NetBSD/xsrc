@@ -49,7 +49,7 @@ XAAFillSpans(
     if((nInit <= 0) || !pGC->planemask)
         return;
 
-    if(!REGION_NUM_RECTS(pGC->pCompositeClip))
+    if(!RegionNumRects(pGC->pCompositeClip))
 	return;
 
     switch(pGC->fillStyle) {
@@ -117,7 +117,7 @@ XAAFillSpans(
     }
 
 
-    if((nInit < 10) || (REGION_NUM_RECTS(pGC->pCompositeClip) != 1))
+    if((nInit < 10) || (RegionNumRects(pGC->pCompositeClip) != 1))
 	fastClip = FALSE;
 
     if(fastClip) {
@@ -396,7 +396,7 @@ XAARenderPixmapCopySpans(
 	\****************/
 
 
-void 
+void
 XAAFillSolidSpans(
    ScrnInfoPtr pScrn,
    int fg, int rop,
@@ -432,7 +432,7 @@ XAAFillSolidSpans(
 	\***************/
 
 
-void 
+void
 XAAFillMono8x8PatternSpansScreenOrigin(
    ScrnInfoPtr pScrn,
    int fg, int bg, int rop,
@@ -491,7 +491,7 @@ XAAFillMono8x8PatternSpansScreenOrigin(
 }
 
 
-void 
+void
 XAAFillMono8x8PatternSpans(
    ScrnInfoPtr pScrn,
    int fg, int bg, int rop,
@@ -559,7 +559,7 @@ XAAFillMono8x8PatternSpans(
 	\****************/
 
 
-void 
+void
 XAAFillColor8x8PatternSpansScreenOrigin(
    ScrnInfoPtr pScrn,
    int rop,
@@ -605,7 +605,7 @@ XAAFillColor8x8PatternSpansScreenOrigin(
 }
 
 
-void 
+void
 XAAFillColor8x8PatternSpans(
    ScrnInfoPtr pScrn,
    int rop,
@@ -654,7 +654,7 @@ XAAFillColor8x8PatternSpans(
 	\*****************/
 
 
-void 
+void
 XAAFillCacheBltSpans(
    ScrnInfoPtr pScrn,
    int rop,
@@ -713,7 +713,7 @@ XAAFillCacheBltSpans(
 	\****************/
 
 
-void 
+void
 XAAFillCacheExpandSpans(
    ScrnInfoPtr pScrn,
    int fg, int bg, int rop,
@@ -797,10 +797,10 @@ XAAClipAndRenderSpans(
     pptNew = pptBase;
     pwidthNew = pwidthBase;
 
-    numRects = REGION_NUM_RECTS(pGC->pCompositeClip);
+    numRects = RegionNumRects(pGC->pCompositeClip);
 
     if(numRects == 1) {
-        BoxPtr pextent = REGION_RECTS(pGC->pCompositeClip);
+        BoxPtr pextent = RegionRects(pGC->pCompositeClip);
 	    
 	while(nspans--) {
 	    if ((pextent->y1 <= ppt->y) && (ppt->y < pextent->y2)) {
@@ -830,7 +830,7 @@ XAAClipAndRenderSpans(
 
 	while(nspans--) {
 	    nbox = numRects;
-	    pbox = REGION_RECTS(pGC->pCompositeClip);
+	    pbox = RegionRects(pGC->pCompositeClip);
 
 	    /* find the first band */
 	    while(nbox && (pbox->y2 <= ppt->y)) {

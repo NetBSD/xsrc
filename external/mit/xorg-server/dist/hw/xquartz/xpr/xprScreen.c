@@ -36,6 +36,7 @@
 #include "quartzCommon.h"
 #include "inputstr.h"
 #include "quartz.h"
+#include "quartzRandR.h"
 #include "xpr.h"
 #include "xprEvent.h"
 #include "pseudoramiX.h"
@@ -47,6 +48,8 @@
 #include <Xplugin.h>
 #include "applewmExt.h"
 #include "micmap.h"
+
+#include "rootlessCommon.h"
 
 #ifdef DAMAGE
 # include "damage.h"
@@ -155,7 +158,7 @@ displayScreenBounds(CGDirectDisplayID id)
               (int)frame.origin.x, (int)frame.origin.y);
     
     /* Remove menubar to help standard X11 window managers. */
-    if (quartzEnableRootless && 
+    if (XQuartzIsRootless && 
         frame.origin.x == 0 && frame.origin.y == 0) {
         frame.origin.y += aquaMenuBarHeight;
         frame.size.height -= aquaMenuBarHeight;
@@ -174,7 +177,7 @@ displayScreenBounds(CGDirectDisplayID id)
  *  with PseudoramiX.
  */
 static void
-xprAddPseudoramiXScreens(int *x, int *y, int *width, int *height)
+xprAddPseudoramiXScreens(int *x, int *y, int *width, int *height, ScreenPtr pScreen)
 {
     CGDisplayCount i, displayCount;
     CGDirectDisplayID *displayList = NULL;
@@ -182,8 +185,22 @@ xprAddPseudoramiXScreens(int *x, int *y, int *width, int *height)
 
     // Find all the CoreGraphics displays
     CGGetActiveDisplayList(0, NULL, &displayCount);
-    displayList = xalloc(displayCount * sizeof(CGDirectDisplayID));
+    DEBUG_LOG("displayCount: %d\n", (int)displayCount);
+
+    if(!displayCount) {
+        ErrorF("CoreGraphics has reported no connected displays.  Creating a stub 800x600 display.\n");
+        *x = *y = 0;
+        *width = 800;
+        *height = 600;
+        PseudoramiXAddScreen(*x, *y, *width, *height);
+        return;
+    }
+
+    displayList = malloc(displayCount * sizeof(CGDirectDisplayID));
+    if(!displayList)
+        FatalError("Unable to allocate memory for list of displays.\n");
     CGGetActiveDisplayList(displayCount, displayList, &displayCount);
+    QuartzCopyDisplayIDs(pScreen, displayCount, displayList);
 
     /* Get the union of all screens */
     for (i = 0; i < displayCount; i++) {
@@ -217,7 +234,7 @@ xprAddPseudoramiXScreens(int *x, int *y, int *width, int *height)
                              frame.size.width, frame.size.height);
     }
 
-    xfree(displayList);
+    free(displayList);
 }
 
 /*
@@ -256,6 +273,10 @@ xprDisplayInit(void)
 
     AppleDRIExtensionInit();
     xprAppleWMInit();
+
+    XQuartzIsRootless = XQuartzRootlessDefault;
+    if (!XQuartzIsRootless)
+        RootlessHideAllWindows();
 }
 
 /*
@@ -272,22 +293,9 @@ xprAddScreen(int index, ScreenPtr pScreen)
     
     if(depth == -1) {
         depth = CGDisplaySamplesPerPixel(kCGDirectMainDisplay) * CGDisplayBitsPerSample(kCGDirectMainDisplay);
-        //dfb->depth = CGDisplaySamplesPerPixel(kCGDirectMainDisplay) * CGDisplayBitsPerSample(kCGDirectMainDisplay);
-        //dfb->bitsPerRGB = CGDisplayBitsPerSample(kCGDirectMainDisplay);
-        //dfb->bitsPerPixel = CGDisplayBitsPerPixel(kCGDirectMainDisplay);
     }
     
     switch(depth) {
-//        case -8: // broken
-//            dfb->visuals = (1 << StaticGray) | (1 << GrayScale);
-//            dfb->preferredCVC = GrayScale;
-//            dfb->depth = 8;
-//            dfb->bitsPerRGB = 8;
-//            dfb->bitsPerPixel = 8;
-//            dfb->redMask = 0;
-//            dfb->greenMask = 0;
-//            dfb->blueMask = 0;
-//            break;
         case 8: // pseudo-working
             dfb->visuals = PseudoColorMask;
             dfb->preferredCVC = PseudoColor;
@@ -299,38 +307,39 @@ xprAddScreen(int index, ScreenPtr pScreen)
             dfb->blueMask = 0;
             break;
         case 15:
-            dfb->visuals = LARGE_VISUALS;
+            dfb->visuals = TrueColorMask; //LARGE_VISUALS;
             dfb->preferredCVC = TrueColor;
             dfb->depth = 15;
             dfb->bitsPerRGB = 5;
             dfb->bitsPerPixel = 16;
-            dfb->redMask   = 0x7c00;
-            dfb->greenMask = 0x03e0;
-            dfb->blueMask  = 0x001f;
+            dfb->redMask   = RM_ARGB(0,5,5,5);
+            dfb->greenMask = GM_ARGB(0,5,5,5);
+            dfb->blueMask  = BM_ARGB(0,5,5,5);
             break;
 //        case 24:
         default:
             if(depth != 24)
                 ErrorF("Unsupported color depth requested.  Defaulting to 24bit. (depth=%d darwinDesiredDepth=%d CGDisplaySamplesPerPixel=%d CGDisplayBitsPerSample=%d)\n",  darwinDesiredDepth, depth, (int)CGDisplaySamplesPerPixel(kCGDirectMainDisplay), (int)CGDisplayBitsPerSample(kCGDirectMainDisplay));
-            dfb->visuals = LARGE_VISUALS;
+            dfb->visuals = TrueColorMask; //LARGE_VISUALS;
             dfb->preferredCVC = TrueColor;
             dfb->depth = 24;
             dfb->bitsPerRGB = 8;
             dfb->bitsPerPixel = 32;
-            dfb->redMask   = 0x00ff0000;
-            dfb->greenMask = 0x0000ff00;
-            dfb->blueMask  = 0x000000ff;
+            dfb->redMask   = RM_ARGB(0,8,8,8);
+            dfb->greenMask = GM_ARGB(0,8,8,8);
+            dfb->blueMask  = BM_ARGB(0,8,8,8);
             break;
     }
 
     if (noPseudoramiXExtension)
     {
-        ErrorF("Warning: noPseudoramiXExtension!\n");
-        
         CGDirectDisplayID dpy;
         CGRect frame;
 
+        ErrorF("Warning: noPseudoramiXExtension!\n");
+        
         dpy = displayAtIndex(index);
+        QuartzCopyDisplayIDs(pScreen, 1, &dpy);
 
         frame = displayScreenBounds(dpy);
 
@@ -341,7 +350,7 @@ xprAddScreen(int index, ScreenPtr pScreen)
     }
     else
     {
-        xprAddPseudoramiXScreens(&dfb->x, &dfb->y, &dfb->width, &dfb->height);
+        xprAddPseudoramiXScreens(&dfb->x, &dfb->y, &dfb->width, &dfb->height, pScreen);
     }
 
     /* Passing zero width (pitch) makes miCreateScreenResources set the
@@ -392,7 +401,7 @@ xprUpdateScreen(ScreenPtr pScreen)
     rootlessGlobalOffsetX = darwinMainScreenX;
     rootlessGlobalOffsetY = darwinMainScreenY;
 
-    AppleWMSetScreenOrigin(WindowTable[pScreen->myNum]);
+    AppleWMSetScreenOrigin(pScreen->root);
 
     RootlessRepositionWindows(pScreen);
     RootlessUpdateScreenPixmap(pScreen);
@@ -411,7 +420,7 @@ xprInitInput(int argc, char **argv)
     rootlessGlobalOffsetY = darwinMainScreenY;
 
     for (i = 0; i < screenInfo.numScreens; i++)
-        AppleWMSetScreenOrigin(WindowTable[i]);
+        AppleWMSetScreenOrigin(screenInfo.screens[i]->root);
 }
 
 /*

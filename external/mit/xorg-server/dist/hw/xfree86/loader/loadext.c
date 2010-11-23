@@ -54,7 +54,7 @@ NewExtensionModule(void)
 	numExtensionModules = 0;
 
     n = numExtensionModules + 1;
-    ExtensionModuleList = xrealloc(ExtensionModuleList,
+    ExtensionModuleList = realloc(ExtensionModuleList,
 				   (n + 1) * sizeof(ExtensionModule));
     if (ExtensionModuleList == NULL) {
 	ExtensionModuleList = save;
@@ -66,7 +66,7 @@ NewExtensionModule(void)
     }
 }
 
-_X_EXPORT void
+void
 LoadExtension(ExtensionModule * e, Bool builtin)
 {
     ExtensionModule *newext;
@@ -163,7 +163,7 @@ get_node(const char *name)
     for (n = graph; n && n->n_name && strcmp(n->n_name, name);
 	 n = n->n_next) ;
     if (n)
-	return (n);
+	return n;
 
     n = xnfalloc(sizeof(NODE));
 
@@ -180,7 +180,7 @@ get_node(const char *name)
     n->n_prevp = &graph;
     graph = n;
 
-    return (n);
+    return n;
 }
 
 /*
@@ -268,7 +268,7 @@ free_nodes(NODE * nodelist)
 
     for (n = nodelist; n;) {
 	nextnode = n->n_next;
-	xfree(n);
+	free(n);
 	n = nextnode;
     }
 }
@@ -285,7 +285,7 @@ find_cycle(NODE * from, NODE * to, int longest_len, int depth)
      * to be acyclic
      */
     if (from->n_flags & (NF_NODEST | NF_MARK | NF_ACYCLIC))
-	return (0);
+	return 0;
     from->n_flags |= NF_MARK;
 
     for (np = from->n_arcs, i = from->n_narcs; --i >= 0; np++) {
@@ -317,7 +317,7 @@ find_cycle(NODE * from, NODE * to, int longest_len, int depth)
 	}
     }
     from->n_flags &= ~NF_MARK;
-    return (longest_len);
+    return longest_len;
 }
 
 /* do topological sort on graph */
@@ -378,16 +378,14 @@ tsort(void)
 	if (n == NULL)
 	    ErrorF("tsort: internal error -- could not find cycle");
     }
-    if (cycle_buf)
-	xfree(cycle_buf);
-    if (longest_cycle)
-	xfree(longest_cycle);
+    free(cycle_buf);
+    free(longest_cycle);
     if (graph)
 	free_nodes(graph);
 }
 
 void
-LoaderSortExtensions()
+LoaderSortExtensions(void)
 {
     int i, j;
     ExtensionModule *ext, *newList;
@@ -430,8 +428,10 @@ LoaderSortExtensions()
     }
     if (sorted)
 	free_nodes(sorted);
+    if (graph)
+	free_nodes(graph);
     newList[i].name = NULL;
-    xfree(ExtensionModuleList);
+    free(ExtensionModuleList);
     ExtensionModuleList = newList;
 #ifdef DEBUG
     for (i = 0; ExtensionModuleList[i].name; i++)

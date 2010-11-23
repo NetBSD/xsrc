@@ -58,60 +58,19 @@ struct xkb_options {
     char* options;
 };
 
-
-static void
-remove_device(DeviceIntPtr dev)
-{
-    /* this only gets called for devices that have already been added */
-    LogMessage(X_INFO, "config/hal: removing device %s\n", dev->name);
-
-    /* Call PIE here so we don't try to dereference a device that's
-     * already been removed. */
-    OsBlockSignals();
-    ProcessInputEvents();
-    DeleteInputDeviceRequest(dev);
-    OsReleaseSignals();
-}
-
 static void
 device_removed(LibHalContext *ctx, const char *udi)
 {
-    DeviceIntPtr dev, next;
     char *value;
 
-    value = xalloc(strlen(udi) + 5); /* "hal:" + NULL */
+    value = malloc(strlen(udi) + 5); /* "hal:" + NULL */
     if (!value)
         return;
     sprintf(value, "hal:%s", udi);
 
-    for (dev = inputInfo.devices; dev; dev = next) {
-	next = dev->next;
-        if (dev->config_info && strcmp(dev->config_info, value) == 0)
-            remove_device(dev);
-    }
-    for (dev = inputInfo.off_devices; dev; dev = next) {
-	next = dev->next;
-        if (dev->config_info && strcmp(dev->config_info, value) == 0)
-            remove_device(dev);
-    }
+    remove_devices("hal", value);
 
-    xfree(value);
-}
-
-static void
-add_option(InputOption **options, const char *key, const char *value)
-{
-    if (!value || *value == '\0')
-        return;
-
-    for (; *options; options = &(*options)->next)
-        ;
-    *options = xcalloc(sizeof(**options), 1);
-    if (!*options) /* Yeesh. */
-        return;
-    (*options)->key = xstrdup(key);
-    (*options)->value = xstrdup(value);
-    (*options)->next = NULL;
+    free(value);
 }
 
 static char *
@@ -122,7 +81,7 @@ get_prop_string(LibHalContext *hal_ctx, const char *udi, const char *name)
     prop = libhal_device_get_property_string(hal_ctx, udi, name, NULL);
     LogMessageVerb(X_INFO, 10, "config/hal: getting %s on %s returned %s\n", name, udi, prop ? prop : "(null)");
     if (prop) {
-        ret = xstrdup(prop);
+        ret = strdup(prop);
         libhal_free_string(prop);
     }
     else {
@@ -143,7 +102,7 @@ get_prop_string_array(LibHalContext *hal_ctx, const char *udi, const char *prop)
         for (i = 0; props[i]; i++)
             len += strlen(props[i]);
 
-        ret = xcalloc(sizeof(char), len + i); /* i - 1 commas, 1 NULL */
+        ret = calloc(sizeof(char), len + i); /* i - 1 commas, 1 NULL */
         if (!ret) {
             libhal_free_string_array(props);
             return NULL;
@@ -166,31 +125,13 @@ get_prop_string_array(LibHalContext *hal_ctx, const char *udi, const char *prop)
     return ret;
 }
 
-static BOOL
-device_is_duplicate(char *config_info)
-{
-    DeviceIntPtr dev;
-
-    for (dev = inputInfo.devices; dev; dev = dev->next)
-    {
-        if (dev->config_info && (strcmp(dev->config_info, config_info) == 0))
-            return TRUE;
-    }
-
-    for (dev = inputInfo.off_devices; dev; dev = dev->next)
-    {
-        if (dev->config_info && (strcmp(dev->config_info, config_info) == 0))
-            return TRUE;
-    }
-
-    return FALSE;
-}
-
 static void
 device_added(LibHalContext *hal_ctx, const char *udi)
 {
     char *path = NULL, *driver = NULL, *name = NULL, *config_info = NULL;
+    char *hal_tags, *parent;
     InputOption *options = NULL, *tmpo = NULL;
+    InputAttributes attrs = {0};
     DeviceIntPtr dev = NULL;
     DBusError error;
     struct xkb_options xkb_opts = {0};
@@ -215,19 +156,63 @@ device_added(LibHalContext *hal_ctx, const char *udi)
         LogMessage(X_WARNING,"config/hal: no driver or path specified for %s\n", udi);
         goto unwind;
     }
+    attrs.device = strdup(path);
 
     name = get_prop_string(hal_ctx, udi, "info.product");
     if (!name)
-        name = xstrdup("(unnamed)");
+        name = strdup("(unnamed)");
+    else
+        attrs.product = strdup(name);
 
-    options = xcalloc(sizeof(*options), 1);
+    attrs.vendor = get_prop_string(hal_ctx, udi, "info.vendor");
+    hal_tags = get_prop_string(hal_ctx, udi, "input.tags");
+    attrs.tags = xstrtokenize(hal_tags, ",");
+    free(hal_tags);
+
+    if (libhal_device_query_capability(hal_ctx, udi, "input.keys", NULL))
+        attrs.flags |= ATTR_KEYBOARD;
+    if (libhal_device_query_capability(hal_ctx, udi, "input.mouse", NULL))
+        attrs.flags |= ATTR_POINTER;
+    if (libhal_device_query_capability(hal_ctx, udi, "input.joystick", NULL))
+        attrs.flags |= ATTR_JOYSTICK;
+    if (libhal_device_query_capability(hal_ctx, udi, "input.tablet", NULL))
+        attrs.flags |= ATTR_TABLET;
+    if (libhal_device_query_capability(hal_ctx, udi, "input.touchpad", NULL))
+        attrs.flags |= ATTR_TOUCHPAD;
+    if (libhal_device_query_capability(hal_ctx, udi, "input.touchscreen", NULL))
+        attrs.flags |= ATTR_TOUCHSCREEN;
+
+    parent = get_prop_string(hal_ctx, udi, "info.parent");
+    if (parent) {
+        int usb_vendor, usb_product;
+
+        attrs.pnp_id = get_prop_string(hal_ctx, parent, "pnp.id");
+
+        /* construct USB ID in lowercase - "0000:ffff" */
+        usb_vendor = libhal_device_get_property_int(hal_ctx, parent,
+                                                    "usb.vendor_id", NULL);
+        LogMessageVerb(X_INFO, 10,
+                       "config/hal: getting usb.vendor_id on %s "
+                       "returned %04x\n", parent, usb_vendor);
+        usb_product = libhal_device_get_property_int(hal_ctx, parent,
+                                                     "usb.product_id", NULL);
+        LogMessageVerb(X_INFO, 10,
+                       "config/hal: getting usb.product_id on %s "
+                       "returned %04x\n", parent, usb_product);
+        if (usb_vendor && usb_product)
+            attrs.usb_id = Xprintf("%04x:%04x", usb_vendor, usb_product);
+
+        free(parent);
+    }
+
+    options = calloc(sizeof(*options), 1);
     if (!options){
         LogMessage(X_ERROR, "config/hal: couldn't allocate space for input options!\n");
         goto unwind;
     }
 
-    options->key = xstrdup("_source");
-    options->value = xstrdup("server/hal");
+    options->key = strdup("_source");
+    options->value = strdup("server/hal");
     if (!options->key || !options->value) {
         LogMessage(X_ERROR, "config/hal: couldn't allocate first key/value pair\n");
         goto unwind;
@@ -241,7 +226,7 @@ device_added(LibHalContext *hal_ctx, const char *udi)
     add_option(&options, "driver", driver);
     add_option(&options, "name", name);
 
-    config_info = xalloc(strlen(udi) + 5); /* "hal:" and NULL */
+    config_info = malloc(strlen(udi) + 5); /* "hal:" and NULL */
     if (!config_info) {
         LogMessage(X_ERROR, "config/hal: couldn't allocate name\n");
         goto unwind;
@@ -292,35 +277,30 @@ device_added(LibHalContext *hal_ctx, const char *udi)
                     {
                         if (!strcasecmp(&tmp[3], "layout"))
                         {
-                            if (xkb_opts.layout)
-                                xfree(xkb_opts.layout);
+                            free(xkb_opts.layout);
                             xkb_opts.layout = strdup(tmp_val);
                         } else if (!strcasecmp(&tmp[3], "model"))
                         {
-                            if (xkb_opts.model)
-                                xfree(xkb_opts.model);
+                            free(xkb_opts.model);
                             xkb_opts.model = strdup(tmp_val);
                         } else if (!strcasecmp(&tmp[3], "rules"))
                         {
-                            if (xkb_opts.rules)
-                                xfree(xkb_opts.rules);
+                            free(xkb_opts.rules);
                             xkb_opts.rules = strdup(tmp_val);
                         } else if (!strcasecmp(&tmp[3], "variant"))
                         {
-                            if (xkb_opts.variant)
-                                xfree(xkb_opts.variant);
+                            free(xkb_opts.variant);
                             xkb_opts.variant = strdup(tmp_val);
                         } else if (!strcasecmp(&tmp[3], "options"))
                         {
-                            if (xkb_opts.options)
-                                xfree(xkb_opts.options);
+                            free(xkb_opts.options);
                             xkb_opts.options = strdup(tmp_val);
                         }
                     } else
                     {
                         /* all others */
                         add_option(&options, psi_key + sizeof(LIBHAL_PROP_KEY)-1, tmp_val);
-                        xfree(tmp_val);
+                        free(tmp_val);
                     }
                 } else
                 {
@@ -330,8 +310,7 @@ device_added(LibHalContext *hal_ctx, const char *udi)
                         (!strcasecmp(&tmp[3], "options")) &&
                         (tmp_val = get_prop_string_array(hal_ctx, udi, psi_key)))
                     {
-                        if (xkb_opts.options)
-                            xfree(xkb_opts.options);
+                        free(xkb_opts.options);
                         xkb_opts.options = strdup(tmp_val);
                     }
                 }
@@ -366,7 +345,7 @@ device_added(LibHalContext *hal_ctx, const char *udi)
                         if (!xkb_opts.options)
                             xkb_opts.options = strdup(tmp_val);
                     }
-                    xfree(tmp_val);
+                    free(tmp_val);
                 } else
                 {
                     /* server 1.4 had xkb options as strlist */
@@ -400,46 +379,50 @@ device_added(LibHalContext *hal_ctx, const char *udi)
 
     /* this isn't an error, but how else do you output something that the user can see? */
     LogMessage(X_INFO, "config/hal: Adding input device %s\n", name);
-    if ((rc = NewInputDeviceRequest(options, &dev)) != Success) {
+    if ((rc = NewInputDeviceRequest(options, &attrs, &dev)) != Success) {
         LogMessage(X_ERROR, "config/hal: NewInputDeviceRequest failed (%d)\n", rc);
         dev = NULL;
         goto unwind;
     }
 
     for (; dev; dev = dev->next){
-        if (dev->config_info)
-            xfree(dev->config_info);
-        dev->config_info = xstrdup(config_info);
+        free(dev->config_info);
+        dev->config_info = strdup(config_info);
     }
 
 unwind:
     if (set)
         libhal_free_property_set(set);
-    if (path)
-        xfree(path);
-    if (driver)
-        xfree(driver);
-    if (name)
-        xfree(name);
-    if (config_info)
-        xfree(config_info);
+    free(path);
+    free(driver);
+    free(name);
+    free(config_info);
     while (!dev && (tmpo = options)) {
         options = tmpo->next;
-        xfree(tmpo->key);
-        xfree(tmpo->value);
-        xfree(tmpo);
+        free(tmpo->key);
+        free(tmpo->value);
+        free(tmpo);
     }
 
-    if (xkb_opts.layout)
-        xfree(xkb_opts.layout);
-    if (xkb_opts.rules)
-        xfree(xkb_opts.rules);
-    if (xkb_opts.model)
-        xfree(xkb_opts.model);
-    if (xkb_opts.variant)
-        xfree(xkb_opts.variant);
-    if (xkb_opts.options)
-        xfree(xkb_opts.options);
+    free(attrs.product);
+    free(attrs.vendor);
+    free(attrs.device);
+    free(attrs.pnp_id);
+    free(attrs.usb_id);
+    if (attrs.tags) {
+        char **tag = attrs.tags;
+        while (*tag) {
+            free(*tag);
+            tag++;
+        }
+        free(attrs.tags);
+    }
+
+    free(xkb_opts.layout);
+    free(xkb_opts.rules);
+    free(xkb_opts.model);
+    free(xkb_opts.variant);
+    free(xkb_opts.options);
 
     dbus_error_free(&error);
 
@@ -664,7 +647,7 @@ config_hal_init(void)
     }
 
     /* verbose message */
-    LogMessageVerb(X_INFO,7,"config/hal: initialized");
+    LogMessageVerb(X_INFO,7,"config/hal: initialized\n");
 
     return 1;
 }

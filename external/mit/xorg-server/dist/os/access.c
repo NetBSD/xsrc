@@ -1,7 +1,6 @@
 /***********************************************************
 
 Copyright 1987, 1998  The Open Group
-Copyright 2004 Sun Microsystems, Inc.
 
 All rights reserved.
 
@@ -53,6 +52,29 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
+
+/*
+ * Copyright © 2004 Sun Microsystems, Inc.  All rights reserved.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice (including the next
+ * paragraph) shall be included in all copies or substantial portions of the
+ * Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
+ */
 
 #ifdef HAVE_DIX_CONFIG_H
 #include <dix-config.h>
@@ -193,11 +215,11 @@ static int ConvertAddr(struct sockaddr * /*saddr*/,
 		       pointer * /*addr*/);
 
 static int CheckAddr(int /*family*/,
-		     pointer /*pAddr*/,
+		     const void * /*pAddr*/,
 		     unsigned /*length*/);
 
 static Bool NewHost(int /*family*/,
-		    pointer /*addr*/,
+		    const void  * /*addr*/,
 		    int /*len*/,
 		    int /* addingLocalHosts */);
 
@@ -216,12 +238,12 @@ typedef struct _host {
 	int		requested;
 } HOST;
 
-#define MakeHost(h,l)	(h)=(HOST *) xalloc(sizeof *(h)+(l));\
+#define MakeHost(h,l)	(h)=malloc(sizeof *(h)+(l));\
 			if (h) { \
 			   (h)->addr=(unsigned char *) ((h) + 1);\
 			   (h)->requested = FALSE; \
 			}
-#define FreeHost(h)	xfree(h)
+#define FreeHost(h)	free(h)
 static HOST *selfhosts = NULL;
 static HOST *validhosts = NULL;
 static int AccessEnabled = DEFAULT_ACCESS_CONTROL;
@@ -289,7 +311,7 @@ ifioctl (int fd, int cmd, char *arg)
     struct strioctl ioc;
     int ret;
 
-    bzero((char *) &ioc, sizeof(ioc));
+    memset((char *) &ioc, 0, sizeof(ioc));
     ioc.ic_cmd = cmd;
     ioc.ic_timout = 0;
     if (cmd == SIOCGIFCONF)
@@ -307,7 +329,7 @@ ifioctl (int fd, int cmd, char *arg)
 #ifdef SVR4
 	((struct ifconf *) arg)->ifc_len = ioc.ic_len;
 #endif
-    return(ret);
+    return ret;
 }
 #else /* Case sun, SCO325 and others  */
 #define ifioctl ioctl
@@ -415,8 +437,7 @@ DefineSelf (int fd)
 		 */
 		if (family == FamilyInternet &&
 		    !(len == 4 &&
-		      ((addr[0] == 127 && addr[1] == 0 &&
-			addr[2] == 0 && addr[3] == 1) ||
+		      ((addr[0] == 127) ||
 		       (addr[0] == 0 && addr[1] == 0 &&
 			addr[2] == 0 && addr[3] == 0)))
 		      )
@@ -566,7 +587,7 @@ DefineSelf (int fd)
         Error ("Getting interface count");    
     if (len < (ifn.lifn_count * sizeof(struct lifreq))) {
 	len = ifn.lifn_count * sizeof(struct lifreq);
-	bufptr = xalloc(len);
+	bufptr = malloc(len);
     }
 #endif
     
@@ -744,7 +765,8 @@ DefineSelf (int fd)
 	    continue;
 #endif /* DNETCONN */
 	len = sizeof(*(ifr->ifa_addr));
-	family = ConvertAddr(ifr->ifa_addr, &len, (pointer *)&addr);
+	family = ConvertAddr((struct sockaddr *) ifr->ifa_addr, &len,
+			     (pointer *)&addr);
 	if (family == -1 || family == FamilyLocal) 
 	    continue;
 #if defined(IPv6) && defined(AF_INET6)
@@ -768,7 +790,6 @@ DefineSelf (int fd)
 	}
 #ifdef XDMCP
 	{
-	    struct sockaddr broad_addr;
 	    /*
 	     * If this isn't an Internet Address, don't register it.
 	     */
@@ -812,12 +833,12 @@ DefineSelf (int fd)
 		continue;
 #endif
 	    if ((ifr->ifa_flags & IFF_BROADCAST) &&
-		(ifr->ifa_flags & IFF_UP))
-		broad_addr = *ifr->ifa_broadaddr;
+		(ifr->ifa_flags & IFF_UP) &&
+                ifr->ifa_broadaddr)
+		XdmcpRegisterBroadcastAddress(
+		    (struct sockaddr_in *) ifr->ifa_broadaddr);
 	    else
 		continue;
-	    XdmcpRegisterBroadcastAddress((struct sockaddr_in *)
-					  &broad_addr);
 	}
 #endif /* XDMCP */
 		
@@ -1017,7 +1038,7 @@ ResetHosts (char *display)
 		len = sizeof(saddr.sa);
 		if (ConvertAddr (&saddr.sa, &len, (pointer *)&addr) == FamilyDECnet)
 		{
-		    bzero ((char *) &dnaddr, sizeof (dnaddr));
+		    memset((char *) &dnaddr, 0, sizeof (dnaddr));
 		    dnaddr.a_len = np->n_length;
 		    acopy (np->n_addr, dnaddr.a_addr, np->n_length);
 		    dnaddrp = &dnaddr;
@@ -1095,12 +1116,17 @@ ResetHosts (char *display)
 }
 
 /* Is client on the local host */
-_X_EXPORT Bool LocalClient(ClientPtr client)
+Bool LocalClient(ClientPtr client)
 {
     int    		alen, family, notused;
     Xtransaddr		*from = NULL;
     pointer		addr;
     register HOST	*host;
+
+    if (!client->osPrivate)
+        return FALSE;
+    if (!((OsCommPtr)client->osPrivate)->trans_conn)
+        return FALSE;
 
     if (!_XSERVTransGetPeerAddr (((OsCommPtr)client->osPrivate)->trans_conn,
 	&notused, &alen, &from))
@@ -1109,12 +1135,12 @@ _X_EXPORT Bool LocalClient(ClientPtr client)
 	    &alen, (pointer *)&addr);
 	if (family == -1)
 	{
-	    xfree ((char *) from);
+	    free(from);
 	    return FALSE;
 	}
 	if (family == FamilyLocal)
 	{
-	    xfree ((char *) from);
+	    free(from);
 	    return TRUE;
 	}
 	for (host = selfhosts; host; host = host->next)
@@ -1122,7 +1148,7 @@ _X_EXPORT Bool LocalClient(ClientPtr client)
 	    if (addrEqual (family, addr, alen, host))
 		return TRUE;
 	}
-	xfree ((char *) from);
+	free(from);
     }
     return FALSE;
 }
@@ -1192,7 +1218,7 @@ GetLocalClientCreds(ClientPtr client, LocalClientCredRec **lccp)
     }
 #endif
 
-    *lccp = Xcalloc(sizeof(LocalClientCredRec));
+    *lccp = calloc(1, sizeof(LocalClientCredRec));
     if (*lccp == NULL)
 	return -1;
     lcc = *lccp;
@@ -1228,7 +1254,7 @@ GetLocalClientCreds(ClientPtr client, LocalClientCredRec **lccp)
 #endif
     lcc->nSuppGids = ucred_getgroups(peercred, &gids);
     if (lcc->nSuppGids > 0) {
-	lcc->pSuppGids = Xcalloc((lcc->nSuppGids) * sizeof(int));
+	lcc->pSuppGids = calloc(lcc->nSuppGids, sizeof(int));
 	if (lcc->pSuppGids == NULL) {
 	    lcc->nSuppGids = 0;
 	} else {
@@ -1265,9 +1291,9 @@ FreeLocalClientCreds(LocalClientCredRec *lcc)
 {
     if (lcc != NULL) {
 	if (lcc->nSuppGids > 0) {
-	    Xfree(lcc->pSuppGids);
+	    free(lcc->pSuppGids);
 	}
-	Xfree(lcc);
+	free(lcc);
     }
 }
 
@@ -1294,7 +1320,7 @@ int
 AddHost (ClientPtr	client,
 	 int            family,
 	 unsigned       length,        /* of bytes in pAddr */
-	 pointer        pAddr)
+	 const void *   pAddr)
 {
     int rc, len;
 
@@ -1322,13 +1348,13 @@ AddHost (ClientPtr	client,
 	if ((len = CheckAddr (family, pAddr, length)) < 0)
 	{
 	    client->errorValue = length;
-	    return (BadValue);
+	    return BadValue;
 	}
 	break;
     case FamilyLocal:
     default:
 	client->errorValue = family;
-	return (BadValue);
+	return BadValue;
     }
     if (NewHost (family, pAddr, len, FALSE))
 	return Success;
@@ -1355,7 +1381,7 @@ ForEachHostInFamily (int	    family,
  * called when starting or resetting the server */
 static Bool
 NewHost (int		family,
-	 pointer	addr,
+	 const void *	addr,
 	 int		len,
 	 int		addingLocalHosts)
 {
@@ -1420,13 +1446,13 @@ RemoveHost (
     	if ((len = CheckAddr (family, pAddr, length)) < 0)
     	{
 	    client->errorValue = length;
-            return(BadValue);
+            return BadValue;
     	}
 	break;
     case FamilyLocal:
     default:
 	client->errorValue = family;
-        return(BadValue);
+        return BadValue;
     }
     for (prev = &validhosts;
          (host = *prev) && (!addrEqual (family, pAddr, len, host));
@@ -1437,7 +1463,7 @@ RemoveHost (
         *prev = host->next;
         FreeHost (host);
     }
-    return (Success);
+    return Success;
 }
 
 /* Get all hosts in the access control list */
@@ -1458,14 +1484,14 @@ GetHosts (
     for (host = validhosts; host; host = host->next)
     {
 	nHosts++;
-	n += (((host->len + 3) >> 2) << 2) + sizeof(xHostEntry);
+	n += pad_to_int32(host->len) + sizeof(xHostEntry);
     }
     if (n)
     {
-        *data = ptr = (pointer) xalloc (n);
+        *data = ptr = malloc(n);
 	if (!ptr)
 	{
-	    return(BadAlloc);
+	    return BadAlloc;
 	}
         for (host = validhosts; host; host = host->next)
 	{
@@ -1474,14 +1500,14 @@ GetHosts (
 	    ((xHostEntry *)ptr)->length = len;
 	    ptr += sizeof(xHostEntry);
 	    acopy (host->addr, ptr, len);
-	    ptr += ((len + 3) >> 2) << 2;
+	    ptr += pad_to_int32(len);
         }
     } else {
 	*data = NULL;
     }
     *pnHosts = nHosts;
     *pLen = n;
-    return(Success);
+    return Success;
 }
 
 /* Check for valid address family and length, and return address length. */
@@ -1490,7 +1516,7 @@ GetHosts (
 static int
 CheckAddr (
     int			family,
-    pointer		pAddr,
+    const void *	pAddr,
     unsigned		length)
 {
     int	len;
@@ -1534,7 +1560,7 @@ CheckAddr (
       default:
         len = -1;
     }
-    return (len);
+    return len;
 }
 
 /* Check if a host is not in the access control list. 
@@ -1551,7 +1577,7 @@ InvalidHost (
     register HOST 		*selfhost, *host;
 
     if (!AccessEnabled)   /* just let them in */
-        return(0);    
+        return 0;
     family = ConvertAddr (saddr, &len, (pointer *)&addr);
     if (family == -1)
         return 1;
@@ -1579,15 +1605,15 @@ InvalidHost (
     {
 	if ((host->family == FamilyServerInterpreted)) {
 	    if (siAddrMatch (family, addr, len, host, client)) {
-		return (0);
+		return 0;
 	    }
 	} else {
 	    if (addrEqual (family, addr, len, host))
-		return (0);
+		return 0;
 	}
 
     }
-    return (1);
+    return 1;
 }
 
 static int
@@ -1597,7 +1623,7 @@ ConvertAddr (
     pointer			*addr)
 {
     if (*len == 0)
-        return (FamilyLocal);
+        return FamilyLocal;
     switch (saddr->sa_family)
     {
     case AF_UNSPEC:
@@ -1721,7 +1747,7 @@ siTypeAdd(const char *typeName, siAddrMatchFunc addrMatch,
 	}
     }
 
-    s = (struct siType *) xalloc(sizeof(struct siType));
+    s = malloc(sizeof(struct siType));
     if (s == NULL)
 	return BadAlloc;
 
@@ -2063,7 +2089,7 @@ static Bool
 siLocalCredGetId(const char *addr, int len, siLocalCredPrivPtr lcPriv, int *id)
 {
     Bool parsedOK = FALSE;
-    char *addrbuf = xalloc(len + 1);
+    char *addrbuf = malloc(len + 1);
 
     if (addrbuf == NULL) {
 	return FALSE;
@@ -2097,7 +2123,7 @@ siLocalCredGetId(const char *addr, int len, siLocalCredPrivPtr lcPriv, int *id)
 	}
     }
 
-    xfree(addrbuf);
+    free(addrbuf);
     return parsedOK;
 }
 

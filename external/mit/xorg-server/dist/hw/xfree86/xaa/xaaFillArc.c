@@ -161,11 +161,7 @@ XAAFillArcSliceSolid(DrawablePtr pDraw, GCPtr pGC, xArc *arc)
 
 
 void
-XAAPolyFillArcSolid(pDraw, pGC, narcs, parcs)
-    DrawablePtr	pDraw;
-    GCPtr	pGC;
-    int		narcs;
-    xArc	*parcs;
+XAAPolyFillArcSolid(DrawablePtr pDraw, GCPtr pGC, int narcs, xArc *parcs)
 {
     register xArc *arc;
     register int i;
@@ -175,7 +171,7 @@ XAAPolyFillArcSolid(pDraw, pGC, narcs, parcs)
 
     cclip = pGC->pCompositeClip;
 
-    if(!REGION_NUM_RECTS(cclip))
+    if(!RegionNumRects(cclip))
 	return;
 
     for (arc = parcs, i = narcs; --i >= 0; arc++)
@@ -202,7 +198,7 @@ XAAPolyFillArcSolid(pDraw, pGC, narcs, parcs)
  	    y2 = box.y1 + (int)arc->height + 1;
  	    box.y2 = y2;
  	    if ( (x2 <= SHRT_MAX) && (y2 <= SHRT_MAX) &&
- 		    (RECT_IN_REGION(pDraw->pScreen, cclip, &box) == rgnIN) )
+		    (RegionContainsRect(cclip, &box) == rgnIN) )
 	    {
 		if ((arc->angle2 >= FULLCIRCLE) ||
 		    (arc->angle2 <= -FULLCIRCLE))

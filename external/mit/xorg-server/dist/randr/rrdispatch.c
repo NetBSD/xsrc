@@ -21,9 +21,7 @@
  */
 
 #include "randrstr.h"
-
-#define SERVER_RANDR_MAJOR	1
-#define SERVER_RANDR_MINOR	3
+#include "protocol-versions.h"
 
 Bool
 RRClientKnowsRates (ClientPtr	pClient)
@@ -48,12 +46,18 @@ ProcRRQueryVersion (ClientPtr client)
     rep.type = X_Reply;
     rep.length = 0;
     rep.sequenceNumber = client->sequence;
-    /*
-     * Report the current version; the current
-     * spec says they're all compatible after 1.0
-     */
-    rep.majorVersion = SERVER_RANDR_MAJOR;
-    rep.minorVersion = SERVER_RANDR_MINOR;
+
+    if ((stuff->majorVersion * 1000 + stuff->minorVersion) <
+        (SERVER_RANDR_MAJOR_VERSION * 1000 + SERVER_RANDR_MINOR_VERSION))
+    {
+	rep.majorVersion = stuff->majorVersion;
+	rep.minorVersion = stuff->minorVersion;
+    } else
+    {
+        rep.majorVersion = SERVER_RANDR_MAJOR_VERSION;
+        rep.minorVersion = SERVER_RANDR_MINOR_VERSION;
+    }
+
     if (client->swapped) {
     	swaps(&rep.sequenceNumber, n);
     	swapl(&rep.length, n);
@@ -61,7 +65,7 @@ ProcRRQueryVersion (ClientPtr client)
 	swapl(&rep.minorVersion, n);
     }
     WriteToClient(client, sizeof(xRRQueryVersionReply), (char *)&rep);
-    return (client->noClientException);
+    return Success;
 }
 
 static int
@@ -79,9 +83,10 @@ ProcRRSelectInput (ClientPtr client)
     rc = dixLookupWindow(&pWin, stuff->window, client, DixReceiveAccess);
     if (rc != Success)
 	return rc;
-    pHead = (RREventPtr *)SecurityLookupIDByType(client,
-						 pWin->drawable.id, RREventType,
-						 DixWriteAccess);
+    rc = dixLookupResourceByType((pointer *)&pHead, pWin->drawable.id,
+				 RREventType, client, DixWriteAccess);
+    if (rc != Success && rc != BadValue)
+	return rc;
 
     if (stuff->enable & (RRScreenChangeNotifyMask|
 			 RRCrtcChangeNotifyMask|
@@ -103,7 +108,7 @@ ProcRRSelectInput (ClientPtr client)
 	if (!pRREvent)
 	{
 	    /* build the entry */
-	    pRREvent = (RREventPtr) xalloc (sizeof (RREventRec));
+	    pRREvent = (RREventPtr) malloc(sizeof (RREventRec));
 	    if (!pRREvent)
 		return BadAlloc;
 	    pRREvent->next = 0;
@@ -126,7 +131,7 @@ ProcRRSelectInput (ClientPtr client)
 	     */
 	    if (!pHead)
 	    {
-		pHead = (RREventPtr *) xalloc (sizeof (RREventPtr));
+		pHead = (RREventPtr *) malloc(sizeof (RREventPtr));
 		if (!pHead ||
 		    !AddResource (pWin->drawable.id, RREventType, (pointer)pHead))
 		{
@@ -169,7 +174,7 @@ ProcRRSelectInput (ClientPtr client)
 		    pNewRREvent->next = pRREvent->next;
 		else
 		    *pHead = pRREvent->next;
-		xfree (pRREvent);
+		free(pRREvent);
 	    }
 	}
     }
