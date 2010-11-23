@@ -11,7 +11,7 @@
 /* #define BUILDERADDR "xorg@lists.freedesktop.org" */
 
 /* Operating System Name */
-/* #define OSNAME "NetBSD 5.0_STABLE amd64" */
+/* #define OSNAME "NetBSD 5.99.40 amd64" */
 
 /* Operating System Vendor */
 /* #define OSVENDOR "" */
@@ -19,10 +19,8 @@
 /* Builder string */
 #define BUILDERSTRING ""
 
-#ifndef COMPILEDDEFAULTFONTPATH
 /* Default font path */
-#define COMPILEDDEFAULTFONTPATH "/usr/local/lib/X11/fonts/misc/,/usr/local/lib/X11/fonts/TTF/,/usr/local/lib/X11/fonts/OTF,/usr/local/lib/X11/fonts/Type1/,/usr/local/lib/X11/fonts/100dpi/,/usr/local/lib/X11/fonts/75dpi/"
-#endif
+/* #define COMPILEDDEFAULTFONTPATH "/usr/local/lib/X11/fonts/misc/,/usr/local/lib/X11/fonts/TTF/,/usr/local/lib/X11/fonts/OTF,/usr/local/lib/X11/fonts/Type1/,/usr/local/lib/X11/fonts/100dpi/,/usr/local/lib/X11/fonts/75dpi/" */
 
 /* Miscellaneous server configuration files path */
 #define SERVER_MISC_CONFIG_PATH "/usr/X11R7/lib/xorg"
@@ -127,6 +125,12 @@
 /* Have Quartz */
 /* #undef XQUARTZ */
 
+/* Support application updating through sparkle. */
+/* #undef XQUARTZ_SPARKLE */
+
+/* Prefix to use for launchd identifiers */
+#define LAUNCHD_ID_PREFIX "org.x"
+
 /* Build a standalone xpbproxy */
 /* #undef STANDALONE_XPBPROXY */
 
@@ -157,8 +161,20 @@
 /* Define to 1 if you have the <rpcsvc/dbm.h> header file. */
 /* #undef HAVE_RPCSVC_DBM_H */
 
-/* Define to use libmd SHA1 functions instead of OpenSSL libcrypto */
+/* Define to use libc SHA1 functions */
+#define HAVE_SHA1_IN_LIBC 1
+
+/* Define to use CommonCrypto SHA1 functions */
+/* #undef HAVE_SHA1_IN_COMMONCRYPTO */
+
+/* Define to use libmd SHA1 functions */
 /* #undef HAVE_SHA1_IN_LIBMD */
+
+/* Define to use libgcrypt SHA1 functions */
+/* #undef HAVE_SHA1_IN_LIBGCRYPT */
+
+/* Define to use libsha1 for SHA1 */
+/* #undef HAVE_SHA1_IN_LIBSHA1 */
 
 /* Define to 1 if you have the `shmctl64' function. */
 /* #undef HAVE_SHMCTL64 */
@@ -207,6 +223,9 @@
 /* Define to 1 if you have the <sys/types.h> header file. */
 #define HAVE_SYS_TYPES_H 1
 
+/* Define to 1 if you have the <sys/utsname.h> header file. */
+#define HAVE_SYS_UTSNAME_H 1
+
 /* Define to 1 if you have the <sys/vm86.h> header file. */
 /* #undef HAVE_SYS_VM86_H */
 
@@ -215,6 +234,9 @@
 
 /* Define to 1 if you have the <unistd.h> header file. */
 #define HAVE_UNISTD_H 1
+
+/* Define to 1 if you have the <fnmatch.h> header file. */
+#define HAVE_FNMATCH_H 1
 
 /* Have /dev/urandom */
 /* #undef HAVE_URANDOM */
@@ -232,10 +254,10 @@
 #define MITSHM 1
 
 /* Enable some debugging code */
-/* #undef DEBUG */
+#define DEBUG 1
 
-#ifndef PACKAGE
 /* Name of package */
+#ifndef PACKAGE
 #define PACKAGE "xorg-server"
 #endif
 
@@ -249,7 +271,7 @@
 #define RANDR 1
 
 /* Support Record extension */
-/* #undef XRECORD */
+#define XRECORD 1
 
 /* Support RENDER extension */
 #define RENDER 1
@@ -320,23 +342,14 @@
 /* Support Xinerama extension */
 #define XINERAMA 1
 
-/* Build XKB */
-#define XKB 1
-
-/* Enable XKB per default */
-#define XKB_DFLT_DISABLED 0
-
-/* Build XKB server */
-#define XKB_IN_SERVER 1
-
 /* Vendor release */
 /* #undef XORG_RELEASE */
 
 /* Current Xorg version */
-#define XORG_VERSION_CURRENT (((1) * 10000000) + ((6) * 100000) + ((5) * 1000) + 0)
+#define XORG_VERSION_CURRENT (((1) * 10000000) + ((9) * 100000) + ((2) * 1000) + 0)
 
 /* Xorg release date */
-#define XORG_DATE "2009-10-12"
+#define XORG_DATE "2010-10-30"
 
 /* Build Xv Extension */
 #define XvExtension 1
@@ -352,9 +365,6 @@
 
 /* Support Xv extension */
 #define XV 1
-
-/* Build Multibuffer extension */
-/* #undef MULTIBUFFER */
 
 /* Support DRI extension */
 #define XF86DRI 1
@@ -380,10 +390,8 @@
 /* Build Rootless code */
 /* #undef ROOTLESS */
 
-#if defined(_LP64)
 /* Define to 1 if unsigned long is 64 bits. */
 #define _XSERVER64 1
-#endif
 
 /* System is BSD-like */
 #define CSRG_BASED 1
@@ -392,22 +400,19 @@
 #define BSD44SOCKETS 1
 
 /* Support D-Bus */
-/* #define HAVE_DBUS 1 */
+/* #undef HAVE_DBUS */
+
+/* Use libudev for input hotplug */
+/* #undef CONFIG_UDEV */
 
 /* Use D-Bus for input hotplug */
-/* #define CONFIG_NEED_DBUS 1 */
+/* #undef CONFIG_NEED_DBUS */
 
 /* Support the D-Bus hotplug API */
 /* #undef CONFIG_DBUS_API */
 
 /* Support HAL for hotplug */
-/* #define CONFIG_HAL 1 */
-
-/* Use only built-in fonts */
-/* #undef BUILTIN_FONTS */
-
-/* Use an empty root cursor */
-/* #undef NULL_ROOT_CURSOR */
+/* #undef CONFIG_HAL */
 
 /* Have a monotonic clock from clock_gettime() */
 #define MONOTONIC_CLOCK 1
@@ -440,7 +445,5 @@
 #ifdef __APPLE__
 #include "dix-config-apple-verbatim.h"
 #endif
-
-/* #undef HAVE_AVC_NETLINK_ACQUIRE_FD */
 
 #endif /* _DIX_CONFIG_H_ */
