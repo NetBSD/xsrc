@@ -7,12 +7,19 @@
 #define _XKB_CONFIG_H_
 
 /* Default set of XKB rules. */
-#define __XKBDEFRULES__ "xorg"
+#define XKB_DFLT_RULES "base"
 
-/*
- * the following definitions are provided by a combination of
- * bsd.x11.mk and external/mit/xorg/server/xorg-server/xkb/Makefile
- */
+/* Default XKB model. */
+#define XKB_DFLT_MODEL "pc105"
+
+/* Default XKB layout. */
+#define XKB_DFLT_LAYOUT "us"
+
+/* Default XKB variant. */
+#define XKB_DFLT_VARIANT ""
+
+/* Default XKB options. */
+#define XKB_DFLT_OPTIONS ""
 
 /* Path to XKB definitions. */
 /* #define XKB_BASE_DIRECTORY "/usr/local/share/X11/xkb" */
