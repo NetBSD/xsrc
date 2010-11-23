@@ -799,7 +799,7 @@ inw(unsigned PORT_SIZE port)
 {
 	return *(volatile unsigned short*)(((unsigned PORT_SIZE)(port))+IOPortBase);
 }
-#enif
+#endif
 
 static __inline__ unsigned int
 inl(unsigned PORT_SIZE port)
