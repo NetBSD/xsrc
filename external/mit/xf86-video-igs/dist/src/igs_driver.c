@@ -1,5 +1,5 @@
 /* $OpenBSD: wsfb_driver.c,v 1.19 2003/04/27 16:42:32 matthieu Exp $ */
-/* $NetBSD: igs_driver.c,v 1.3 2010/11/23 22:21:15 mrg Exp $ */
+/* $NetBSD: igs_driver.c,v 1.4 2010/11/23 23:21:28 mrg Exp $ */
 /*
  * Copyright (c) 2001 Matthieu Herrb
  *		 2009 Michael Lorenz
@@ -71,8 +71,10 @@
 /* for visuals */
 #include "fb.h"
 
+#if GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) < 6
 #include "xf86Resources.h"
 #include "xf86RAC.h"
+#endif
 
 #ifdef XvExtension
 #include "xf86xv.h"
@@ -442,8 +444,10 @@ IgsPreInit(ScrnInfoPtr pScrn, int flags)
 
 	fPtr->pEnt = xf86GetEntityInfo(pScrn->entityList[0]);
 
+#if GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) < 6
 	pScrn->racMemFlags = RAC_FB | RAC_COLORMAP | RAC_CURSOR | RAC_VIEWPORT;
 	pScrn->racIoFlags = pScrn->racMemFlags;
+#endif
 
 	dev = xf86FindOptionValue(fPtr->pEnt->device->options, "device");
 	fPtr->fd = igs_open(dev);
