@@ -59,7 +59,7 @@
 #include "xf86Resources.h"
 #include "xf86int10.h"
 
-#if HAVE_XORG_SERVER_1_7_0
+#if GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) > 6
 #define xf86LoaderReqSymLists(...) do {} while (0)
 #define LoaderRefSymLists(...) do {} while (0)
 #endif

@@ -20,7 +20,7 @@
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-/* $NetBSD: pnozz_driver.c,v 1.2 2010/11/23 22:21:16 mrg Exp $ */
+/* $NetBSD: pnozz_driver.c,v 1.3 2010/11/24 02:54:09 mrg Exp $ */
 
 /*
  * this driver has been tested on SPARCbook 3GX and 3TX, it supports full 
@@ -49,7 +49,7 @@
 #include "xf86cmap.h"
 #include "pnozz.h"
 
-#if HAVE_XORG_SERVER_1_7_0
+#if GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) > 6
 #define xf86LoaderReqSymLists(...) do {} while (0)
 #define LoaderRefSymLists(...) do {} while (0)
 #endif

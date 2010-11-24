@@ -1,5 +1,5 @@
 /* $OpenBSD: wsfb_driver.c,v 1.19 2003/04/27 16:42:32 matthieu Exp $ */
-/* $NetBSD: igs_driver.c,v 1.4 2010/11/23 23:21:28 mrg Exp $ */
+/* $NetBSD: igs_driver.c,v 1.5 2010/11/24 02:54:08 mrg Exp $ */
 /*
  * Copyright (c) 2001 Matthieu Herrb
  *		 2009 Michael Lorenz
@@ -71,7 +71,7 @@
 /* for visuals */
 #include "fb.h"
 
-#if GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) < 6
+#if GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) < 7
 #include "xf86Resources.h"
 #include "xf86RAC.h"
 #endif
@@ -84,7 +84,7 @@
 
 #include <sys/mman.h>
 
-#if HAVE_XORG_SERVER_1_7_0
+#if GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) > 6
 #define xf86LoaderReqSymLists(...) do {} while (0)
 #define LoaderRefSymLists(...) do {} while (0)
 #endif
