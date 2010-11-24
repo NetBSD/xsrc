@@ -1,4 +1,4 @@
-/* $NetBSD: crime_driver.c,v 1.7 2010/11/23 22:21:15 mrg Exp $ */
+/* $NetBSD: crime_driver.c,v 1.8 2010/11/24 02:54:07 mrg Exp $ */
 /*
  * Copyright (c) 2008 Michael Lorenz
  * All rights reserved.
@@ -70,7 +70,7 @@
 #include <sys/mman.h>
 #endif
 
-#if HAVE_XORG_SERVER_1_7_0
+#if GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) > 6
 #define xf86LoaderReqSymLists(...) do {} while (0)
 #define LoaderRefSymLists(...) do {} while (0)
 #endif
