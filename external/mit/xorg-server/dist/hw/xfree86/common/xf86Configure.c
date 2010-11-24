@@ -176,6 +176,10 @@ xf86AddBusDeviceToConfigure(const char *driver, BusType bus, void *busData, int 
         case BUS_SBUS:
             ret = bus_sbus_configure(busData);
 	        break;
+#if defined(__arm32__)
+	case BUS_ISA:
+	        break;
+#endif
         default:
 	        return NULL;
     }
@@ -205,6 +209,12 @@ xf86AddBusDeviceToConfigure(const char *driver, BusType bus, void *busData, int 
         case BUS_SBUS:
             bus_sbus_newdev_configure(busData, i);
 	        break;
+#if defined(__arm32__)
+	case BUS_ISA:
+	    DevToConfig[i].GDev.busID = xnfalloc(6);
+	    strcpy(DevToConfig[i].GDev.busID, "ISA");
+	    break;
+#endif
         default:
 	        break;
     }
