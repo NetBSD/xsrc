@@ -86,12 +86,13 @@ typedef struct {
 
 #define GET_LEO_FROM_SCRN(p)    ((LeoPtr)((p)->driverPrivate))
 
-extern int LeoGCPrivateIndex;
 
 #define LEO_OLDPRIV (GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) < 4)
 #if LEO_OLDPRIV
+extern int LeoGCPrivateIndex;
 #define LeoGetGCPrivate(g) (g)->devPrivates[LeoGCPrivateIndex].ptr
 #else
+extern DevPrivateKeyRec LeoGCPrivateIndex;
 #define LeoGetGCPrivate(g) dixLookupPrivate(&(g)->devPrivates, &LeoGCPrivateIndex)
 #endif
 
