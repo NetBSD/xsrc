@@ -186,6 +186,7 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #ifndef __cplusplus
 /* #undef GCC_PRINTF */
+/* #undef GCC_PRINTFLIKE */
 /* #undef GCC_UNUSED */
 #endif
 
