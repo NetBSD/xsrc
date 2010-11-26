@@ -20,7 +20,7 @@
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-/* $NetBSD: pnozz_driver.c,v 1.3 2010/11/24 02:54:09 mrg Exp $ */
+/* $NetBSD: pnozz_driver.c,v 1.4 2010/11/26 21:18:10 mrg Exp $ */
 
 /*
  * this driver has been tested on SPARCbook 3GX and 3TX, it supports full 
@@ -36,7 +36,9 @@
 #include "xf86.h"
 #include "xf86_OSproc.h"
 
+#if GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) < 6
 #include "xf86Resources.h"
+#endif
 #include "xf86sbusBus.h"
 
 #include "mipointer.h"
