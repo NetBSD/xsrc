@@ -42,7 +42,11 @@
 
 #include	"leo.h"
 
+#if LEO_OLDPRIV
 int LeoGCPrivateIndex;
+#else
+DevPrivateKeyRec LeoGCPrivateIndex;
+#endif
 
 int	leoRopTable[16] = {
 	LEO_ATTR_RGBE_ENABLE|LEO_ROP_ZERO,		/* GXclear */
