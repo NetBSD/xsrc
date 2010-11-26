@@ -49,7 +49,7 @@
 #define HAVE_XORG_SERVER_1_5_0 1
 
 /* Has version 1.7.0 or greater of the Xserver */
-#undef HAVE_XORG_SERVER_1_7_0
+#define HAVE_XORG_SERVER_1_7_0 1
 
 /* Define to the sub-directory in which libtool stores uninstalled libraries.
    */
