@@ -183,7 +183,8 @@ xkb_base = @xkb_base@
 xkb_rules_symlink = @xkb_rules_symlink@
 symbolsdir = $(xkb_base)/symbols/extras
 dist_symbols_DATA = apl \
-		    rs \
+		    ir \
+		    rs ru \
 		    us
 
 all: all-am
