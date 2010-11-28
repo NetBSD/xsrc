@@ -124,6 +124,7 @@ xkb_symbols "evdev" {
 
 //  key <I120>   {      [ ]       }; // KEY_MACRO 
     key <I126>   {      [ plusminus             ]       };
+    key <I129>   {      [ KP_Decimal            ]       };
     key <I147>   {      [ XF86MenuKB            ]       };
     key <I148>   {      [ XF86Calculator        ]       };
 //  key <I149>   {      [ ]       }; // KEY_SETUP
@@ -216,10 +217,7 @@ xkb_symbols "evdev" {
  
     key <FK13>   {      [ XF86Tools         ]       };
     key <FK14>   {      [ XF86Launch5       ]       };
-    key <FK15>   {      [ XF86Launch6       ]       };
-    key <FK16>   {      [ XF86Launch7       ]       };
-    key <FK17>   {      [ XF86Launch8       ]       };
-    key <FK18>   {      [ XF86Launch9       ]       };
+    key <FK15>   {      [ XF86MenuKB        ]       };
 };
 
 
