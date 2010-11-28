@@ -44,7 +44,7 @@ xkb_symbols "abnt2" {
 
     key <AB11>	{ [     slash,   question,       degree, questiondown ]	};
 
-    modifier_map Mod3   { Scroll_Lock };
+    key <KPPT>	{ [ KP_Decimal ]	};
 
     include "kpdl(comma)"
 
@@ -187,7 +187,8 @@ xkb_symbols "dvorak" {
 
     key <SPCE> { [        space,           space,         nobreakspace,     nobreakspace ] };
 
-// Configures the "," for the numeric keypad
+// Configures the "." and the "," for the numeric keypad
+    key <KPPT> { [ KP_Decimal              ] };
     include "kpdl(comma)"
 
 // Configures the use of the AltGr key
@@ -267,7 +268,8 @@ xkb_symbols "nativo" {
 
     key <SPCE> { [        space,           space,         nobreakspace,     nobreakspace ] };
 
-// Configures the "," for the numeric keypad
+// Configures the "." and the "," for the numeric keypad
+    key <KPPT> { [ KP_Decimal              ] };
     include "kpdl(comma)"
 
 // Configures the use of the AltGr key
