@@ -707,7 +707,7 @@ xf86WriteMmio32LeNB(__volatile__ void *base, const unsigned long offset,
 			     : "r" (val), "r" (addr), "i" (ASI_PL));
 }
 
-#   elif defined(__mips__) || (defined(__arm32__) && !defined(__linux__))
+#   elif defined(__mips__) || ((defined(__arm32__) || defined(__arm__)) && !defined(__linux__))
 #    ifdef __arm32__
 #     define PORT_SIZE long
 #    else
@@ -746,61 +746,6 @@ inw(unsigned PORT_SIZE port)
 	return *(volatile unsigned short*)(((unsigned PORT_SIZE)(port))+IOPortBase);
 }
 
-#if 0
-static __inline__ void stw_u(unsigned long val, unsigned short *p)
-{
-#    if defined(__GNUC__)
-	struct __una_u16 *ptr = (struct __una_u16 *) p;
-	ptr->x = val;
-#    else
-	unsigned short tmp = val;
-	memmove(p, &tmp, sizeof(*p));
-#    endif
-}
-
-#    define mem_barrier()         /* XXX: nop for now */
-#    define write_mem_barrier()   /* XXX: nop for now */
-
-#   elif defined(__mips__) || ((defined(__arm32__) || defined(__arm__)) && !defined(__linux__))
-#    if defined(__arm32__) || defined(__arm__)
-#     define PORT_SIZE long
-#    else
-#     define PORT_SIZE short
-#    endif
-
-unsigned int IOPortBase;  /* Memory mapped I/O port area */
-
-static __inline__ void
-outb(unsigned PORT_SIZE port, unsigned char val)
-{
-	*(volatile unsigned char*)(((unsigned PORT_SIZE)(port))+IOPortBase) = val;
-}
-
-static __inline__ void
-outw(unsigned PORT_SIZE port, unsigned short val)
-{
-	*(volatile unsigned short*)(((unsigned PORT_SIZE)(port))+IOPortBase) = val;
-}
-
-static __inline__ void
-outl(unsigned PORT_SIZE port, unsigned int val)
-{
-	*(volatile unsigned int*)(((unsigned PORT_SIZE)(port))+IOPortBase) = val;
-}
-
-static __inline__ unsigned int
-inb(unsigned PORT_SIZE port)
-{
-	return *(volatile unsigned char*)(((unsigned PORT_SIZE)(port))+IOPortBase);
-}
-
-static __inline__ unsigned int
-inw(unsigned PORT_SIZE port)
-{
-	return *(volatile unsigned short*)(((unsigned PORT_SIZE)(port))+IOPortBase);
-}
-#endif
-
 static __inline__ unsigned int
 inl(unsigned PORT_SIZE port)
 {
@@ -836,19 +781,6 @@ xf86WriteMmio32Be(__volatile__ void *base, const unsigned long offset,
 #      endif
 #     endif /* !linux */
 #    endif /* __mips__ */
-
-#if 0
-#    if defined(__arm32__) || defined(__arm__)
-#     define ldq_u(p)	(*((unsigned long  *)(p)))
-#     define ldl_u(p)	(*((unsigned int   *)(p)))
-#     define ldw_u(p)	(*((unsigned short *)(p)))
-#     define stq_u(v,p)	(*(unsigned long  *)(p)) = (v)
-#     define stl_u(v,p)	(*(unsigned int   *)(p)) = (v)
-#     define stw_u(v,p)	(*(unsigned short *)(p)) = (v)
-#     define mem_barrier()	/* NOP */
-#     define write_mem_barrier()	/* NOP */
-#    endif /* __arm32__ || __arm__ */
-#endif
 
 #   elif (defined(linux) || defined(__OpenBSD__) || defined(__NetBSD__) || defined(__FreeBSD__)) && defined(__powerpc__)
 
