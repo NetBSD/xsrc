@@ -317,7 +317,7 @@ s3virgeSetup(pointer module, pointer opts, int *errmaj, int *errmin)
 
 static unsigned char *find_bios_string(S3VPtr ps3v, int BIOSbase, char *match1, char *match2)
 {
-#define BIOS_BSIZE 1024
+#define BIOS_BSIZE 0x10000
 #define BIOS_BASE  0xc0000
 
    static unsigned char bios[BIOS_BSIZE];
