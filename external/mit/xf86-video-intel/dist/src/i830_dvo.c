@@ -38,6 +38,11 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "ch7xxx/ch7xxx.h"
 #include "tfp410/tfp410.h"
 
+#if GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) > 6
+#define xf86LoaderReqSymLists(...) do {} while (0)
+#define LoaderRefSymLists(...) do {} while (0)
+#endif
+
 static const char *SIL164Symbols[] = {
     "Sil164VidOutput",
     NULL
