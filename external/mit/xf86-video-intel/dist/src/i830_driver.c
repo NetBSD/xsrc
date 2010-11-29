@@ -214,6 +214,11 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include <xf86drmMode.h>
 #endif
 
+#if GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) > 6
+#define xf86LoaderReqSymLists(...) do {} while (0)
+#define LoaderRefSymLists(...) do {} while (0)
+#else
+
 #ifdef I830_USE_EXA
 const char *I830exaSymbols[] = {
     "exaGetVersion",
@@ -224,6 +229,7 @@ const char *I830exaSymbols[] = {
     "exaWaitSync",
     NULL
 };
+#endif
 #endif
 
 #define BIT(x) (1 << (x))
