@@ -1188,6 +1188,22 @@ XAACheckStippleReducibility(PixmapPtr pPixmap)
     return TRUE;
 }
 
+static inline CARD32
+load_24bits(void *where)
+{
+    unsigned char *bytes = where;
+
+    if (__predict_true(((uintptr_t)where & 0x3) == 0)) {
+        return (*(CARD32 *)where) & 0x00ffffff;
+    }
+
+#if X_BYTE_ORDER == X_LITTLE_ENDIAN
+    return bytes[2] << 16 + bytes[1] << 8 + bytes[0];
+#endif
+#if X_BYTE_ORDER == X_BIG_ENDIAN
+    return bytes[0] << 16 + bytes[1] << 8 + bytes[2];
+#endif
+}
 
 Bool
 XAACheckTileReducibility(PixmapPtr pPixmap, Bool checkMono)
@@ -1323,13 +1339,13 @@ XAACheckTileReducibility(PixmapPtr pPixmap, Bool checkMono)
 	} else if(pPixmap->drawable.bitsPerPixel == 24) {
 	    CARD32 val;
 	    unsigned char *srcp = pPixmap->devPrivate.ptr;
-	    fg = *((CARD32*)srcp) & 0x00FFFFFF;
+	    fg = load_24bits(srcp);
 	    pitch = pPixmap->devKind;
 	    j *= 3;
 	    for(y = 0; y < i; y++) {
 		bits[y] = 0;
 		for(x = 0; x < j; x+=3) {
-		   val = *((CARD32*)(srcp+x)) & 0x00FFFFFF;
+		   val = load_24bits(srcp+x);
 		   if(val != fg) {
 			if(bg == -1) bg = val;
 			else if(bg != val) 
