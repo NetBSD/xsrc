@@ -123,7 +123,7 @@
 /* use OpenMP in the test suite */
 #define USE_OPENMP 1
 
-#if defined(__x86_64__)
+#if defined(__x86_64__) && 0 /* GCC generates unaligned accesses; see PR 44159 */
 /* use SSE2 compiler intrinsics */
 #define USE_SSE2 1
 #endif
