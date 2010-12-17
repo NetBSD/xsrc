@@ -262,7 +262,9 @@ NewportProbe(DriverPtr drv, int flags)
 	Bool foundScreen = FALSE;
 	GDevPtr *devSections;
 	GDevPtr dev = NULL;
+#if GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) < 6
 	resRange range[] = { {ResExcMemBlock ,0,0}, _END };
+#endif
 	unsigned probedIDs[NEWPORT_MAX_BOARDS];
 	memType base;
 	if ((numDevSections = xf86MatchDevice(NEWPORT_DRIVER_NAME, &devSections)) <= 0) 
@@ -306,9 +308,11 @@ NewportProbe(DriverPtr drv, int flags)
 					    TRUE);
 					base = (NEWPORT_BASE_ADDR0
 						+ busID * NEWPORT_BASE_OFFSET);
+#if GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) < 6
 					RANGE(range[0], base, base +
 					    sizeof(NewportRegs), 
 					    ResExcMemBlock);
+#endif
 					pScrn = (void *)xf86ConfigFbEntity(NULL,
 					    0, entity, NULL, NULL, NULL, NULL);
 					/* Allocate a ScrnInfoRec */

@@ -1,4 +1,4 @@
-/* $NetBSD: crime_driver.c,v 1.8 2010/11/24 02:54:07 mrg Exp $ */
+/* $NetBSD: crime_driver.c,v 1.9 2010/12/17 04:19:50 mrg Exp $ */
 /*
  * Copyright (c) 2008 Michael Lorenz
  * All rights reserved.
@@ -55,8 +55,10 @@
 /* for visuals */
 #include "fb.h"
 
+#if GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) < 6
 #include "xf86Resources.h"
 #include "xf86RAC.h"
+#endif
 
 #ifdef XvExtension
 #include "xf86xv.h"
@@ -396,8 +398,10 @@ CrimePreInit(ScrnInfoPtr pScrn, int flags)
 
 	fPtr->pEnt = xf86GetEntityInfo(pScrn->entityList[0]);
 
+#if GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) < 6
 	pScrn->racMemFlags = RAC_FB | RAC_COLORMAP | RAC_CURSOR | RAC_VIEWPORT;
 	pScrn->racIoFlags = pScrn->racMemFlags;
+#endif
 
 	dev = xf86FindOptionValue(fPtr->pEnt->device->options, "device");
 	fPtr->fd = crime_open(dev);
