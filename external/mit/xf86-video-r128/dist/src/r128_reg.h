@@ -905,6 +905,8 @@
 #       define R128_PPLL_ATOMIC_UPDATE_EN     (1 << 16)
 #       define R128_PPLL_VGA_ATOMIC_UPDATE_EN (1 << 17)
 #define R128_PPLL_DIV_0                   0x0004 /* PLL */
+#       define R128_PPLL_FB0_DIV_MASK     0x07ff
+#       define R128_PPLL_POST0_DIV_MASK   0x00070000
 #define R128_PPLL_DIV_1                   0x0005 /* PLL */
 #define R128_PPLL_DIV_2                   0x0006 /* PLL */
 #define R128_PPLL_DIV_3                   0x0007 /* PLL */
