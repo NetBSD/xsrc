@@ -2871,6 +2871,15 @@ static void R128RestorePLLRegisters(ScrnInfoPtr pScrn, R128SavePtr restore)
     R128PLLWriteUpdate(pScrn);
     R128PLLWaitForReadUpdateComplete(pScrn);
 
+    OUTPLLP(pScrn, R128_PPLL_DIV_0,
+	    restore->ppll_div_0, ~R128_PPLL_FB0_DIV_MASK);
+/*    R128PLLWriteUpdate(pScrn);*/
+    OUTPLLP(pScrn, R128_PPLL_DIV_0,
+	    restore->ppll_div_0, ~R128_PPLL_POST0_DIV_MASK);
+
+    R128PLLWriteUpdate(pScrn);
+    R128PLLWaitForReadUpdateComplete(pScrn);
+
     OUTPLL(R128_HTOTAL_CNTL, restore->htotal_cntl);
 /*    R128PLLWriteUpdate(pScrn);*/
 
@@ -2952,11 +2961,7 @@ static void R128RestorePLL2Registers(ScrnInfoPtr pScrn, R128SavePtr restore)
 	       restore->p2pll_ref_div,
 	       restore->p2pll_div_0,
 	       restore->htotal_cntl2,
-	       INPLL(pScrn, RADEON_P2PLL_CNTL)));
-    R128TRACE(("Wrote: rd=%d, fd=%d, pd=%d\n",
-	       restore->p2pll_ref_div & RADEON_P2PLL_REF_DIV_MASK,
-	       restore->p2pll_div_0 & RADEON_P2PLL_FB3_DIV_MASK,
-	       (restore->p2pll_div_0 & RADEON_P2PLL_POST3_DIV_MASK) >>16));
+	       INPLL(pScrn, R128_P2PLL_CNTL)));
 
     usleep(5000); /* Let the clock to lock */
 
@@ -3188,6 +3193,7 @@ static void R128SavePLLRegisters(ScrnInfoPtr pScrn, R128SavePtr save)
 {
     save->ppll_ref_div         = INPLL(pScrn, R128_PPLL_REF_DIV);
     save->ppll_div_3           = INPLL(pScrn, R128_PPLL_DIV_3);
+    save->ppll_div_0           = INPLL(pScrn, R128_PPLL_DIV_0);
     save->htotal_cntl          = INPLL(pScrn, R128_HTOTAL_CNTL);
 
     R128TRACE(("Read: 0x%08x 0x%08x 0x%08x\n",
@@ -3318,7 +3324,6 @@ static void R128Save(ScrnInfoPtr pScrn)
             vgaHWLock(hwp);
         }
 #endif
-
         save->dp_datatype      = INREG(R128_DP_DATATYPE);
         save->gen_reset_cntl   = INREG(R128_GEN_RESET_CNTL);
         save->clock_cntl_index = INREG(R128_CLOCK_CNTL_INDEX);
@@ -3355,6 +3360,15 @@ static void R128Restore(ScrnInfoPtr pScrn)
     }
 
     R128RestoreMode(pScrn, restore);
+
+    if (!info->IsSecondary) {
+        OUTREG(R128_AMCGPIO_MASK,     restore->amcgpio_mask);
+        OUTREG(R128_AMCGPIO_EN_REG,   restore->amcgpio_en_reg);
+        OUTREG(R128_CLOCK_CNTL_INDEX, restore->clock_cntl_index);
+        OUTREG(R128_GEN_RESET_CNTL,   restore->gen_reset_cntl);
+        OUTREG(R128_DP_DATATYPE,      restore->dp_datatype);
+    }
+
 #ifdef WITH_VGAHW
     if (info->VGAAccess) {
         vgaHWPtr hwp = VGAHWPTR(pScrn);
