@@ -183,6 +183,8 @@ static Bool i965_get_dest_format(PicturePtr pDstPicture, uint32_t *dst_format)
 
 static Bool i965_check_composite_texture(PicturePtr pPict, int unit)
 {
+    if (pPict->pDrawable == NULL)
+	return FALSE;
     ScrnInfoPtr pScrn = xf86Screens[pPict->pDrawable->pScreen->myNum];
     int w = pPict->pDrawable->width;
     int h = pPict->pDrawable->height;
