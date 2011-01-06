@@ -94,6 +94,7 @@
 #include "xf86cmap.h"
 #include "xf86xv.h"
 #include "vbe.h"
+#include "xf86Priv.h"
 
 				/* fbdevhw & vgahw */
 #ifdef WITH_VGAHW
@@ -114,6 +115,10 @@
 #include <X11/extensions/dpms.h>
 #endif
 
+#ifdef __NetBSD__
+#include <sys/time.h>
+#include <dev/wscons/wsconsio.h>
+#endif
 
 #ifndef MAX
 #define MAX(a,b) ((a)>(b)?(a):(b))
@@ -667,8 +672,6 @@ static Bool R128GetBIOSParameters(ScrnInfoPtr pScrn, xf86Int10InfoPtr pInt10)
 	    info->PanelXRes = R128_BIOS16(info->FPBIOSstart+25);
 	if (!info->PanelYRes)
 	    info->PanelYRes = R128_BIOS16(info->FPBIOSstart+27);
-	xf86DrvMsg(pScrn->scrnIndex, X_INFO, "Panel size: %dx%d\n",
-		   info->PanelXRes, info->PanelYRes);
 
 	info->PanelPwrDly = R128_BIOS8(info->FPBIOSstart+56);
 
@@ -702,11 +705,33 @@ static Bool R128GetBIOSParameters(ScrnInfoPtr pScrn, xf86Int10InfoPtr pInt10)
 	}
     }
 
+#ifdef __NetBSD__
+    if (!info->PanelXRes || !info->PanelYRes) {
+	/*
+	 * we may not be on x86 so check wsdisplay for panel dimensions
+	 * XXX this assumes that the r128 is the console, although that should
+	 * be the case in the vast majority of cases where an LCD is hooked up
+	 * directly
+	 * We should probably just check the relevant registers but I'm not
+	 * sure they're available at this point.
+	 */
+	struct wsdisplay_fbinfo fbinfo;
+	
+	if (ioctl(xf86Info.screenFd, WSDISPLAYIO_GINFO, &fbinfo) == 0) {
+	    info->PanelXRes = fbinfo.width;
+	    info->PanelYRes = fbinfo.height;
+	}
+    }
+#endif
+
     if (!info->PanelXRes || !info->PanelYRes) {
         info->HasPanelRegs = FALSE;
         xf86DrvMsg(pScrn->scrnIndex, X_WARNING,
 		   "Can't determine panel dimensions, and none specified.\n"
 		   "\tDisabling programming of FP registers.\n");
+    } else {
+	xf86DrvMsg(pScrn->scrnIndex, X_INFO, "Panel size: %dx%d\n",
+		   info->PanelXRes, info->PanelYRes);
     }
 
     return TRUE;
