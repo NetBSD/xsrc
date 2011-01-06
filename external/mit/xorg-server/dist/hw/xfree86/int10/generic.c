@@ -91,7 +91,7 @@ read_legacy_video_BIOS(struct pci_device *dev, unsigned char *Buf)
     /* Try to use the civilized PCI interface first.
      */
     if (pci_device_read_rom(dev, Buf) == 0) {
-	return dev->rom_size;
+	return (unsigned long)dev->rom_size;
     }
 
     ptr = xf86MapDomainMemory(-1, VIDMEM_READONLY, dev, offset, size);
@@ -145,6 +145,7 @@ xf86ExtendedInitInt10(int entityIndex, int Flags)
     pInt->entityIndex = entityIndex;
     if (!xf86Int10ExecSetup(pInt))
 	goto error0;
+
     pInt->mem = &genericMem;
     pInt->private = (pointer)xnfcalloc(1, sizeof(genericInt10Priv));
     INTPriv(pInt)->alloc = (pointer)xnfcalloc(1, ALLOC_ENTRIES(getpagesize()));
@@ -154,7 +155,8 @@ xf86ExtendedInitInt10(int entityIndex, int Flags)
     /* FIXME: Shouldn't this be a failure case?  Leaving dev as NULL seems like
      * FIXME: an error
      */
-    pInt->dev = xf86GetPciInfoForEntity(entityIndex);
+
+   pInt->dev = xf86GetPciInfoForEntity(entityIndex);
 
     /*
      * we need to map video RAM MMIO as some chipsets map mmio
@@ -265,15 +267,21 @@ xf86ExtendedInitInt10(int entityIndex, int Flags)
 		xf86DrvMsg(screen,X_INFO,
 			"No legacy BIOS found -- trying PCI\n");
 	} 
+
 	if (!done) {
 	    int err;
 	    struct pci_device *rom_device =
 		xf86GetPciInfoForEntity(pInt->entityIndex);
 
 	    err = pci_device_read_rom(rom_device, vbiosMem);
+
 	    if (err) {
 		xf86DrvMsg(screen,X_ERROR,"Cannot read V_BIOS (5) %s\n",
 			   strerror(err));
+		goto error1;
+	    }
+	    if (!int10_check_bios(screen, bios_location >> 4, vbiosMem)) {
+	        xf86Msg(X_INFO, "No BIOS found\n");
 		goto error1;
 	    }
 	} 
