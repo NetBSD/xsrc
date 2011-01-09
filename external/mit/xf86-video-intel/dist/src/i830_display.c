@@ -1170,10 +1170,10 @@ i830_crtc_enable(xf86CrtcPtr crtc)
 	OUTREG(dspbase_reg, INREG(dspbase_reg));
     }
 
-    i830_crtc_load_lut(crtc);
-
     /* Give the overlay scaler a chance to enable if it's on this pipe */
     i830_crtc_dpms_video(crtc, TRUE);
+
+    i830_crtc_load_lut(crtc);
 
     /* Reenable compression if needed */
     if (i830_use_fb_compression(crtc))
@@ -1936,16 +1936,15 @@ i830_crtc_load_lut(xf86CrtcPtr crtc)
     int i;
 
     /* The clocks have to be on to load the palette. */
-    if (!crtc->enabled)
+    if (!crtc->enabled || intel_crtc->dpms_mode != DPMSModeOn)
 	return;
-#if 0
+
     for (i = 0; i < 256; i++) {
 	OUTREG(palreg + 4 * i,
 	       (intel_crtc->lut_r[i] << 16) |
 	       (intel_crtc->lut_g[i] << 8) |
 	       intel_crtc->lut_b[i]);
     }
-#endif
 }
 
 /** Sets the color ramps on behalf of RandR */
