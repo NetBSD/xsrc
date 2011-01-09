@@ -1938,13 +1938,14 @@ i830_crtc_load_lut(xf86CrtcPtr crtc)
     /* The clocks have to be on to load the palette. */
     if (!crtc->enabled)
 	return;
-
+#if 0
     for (i = 0; i < 256; i++) {
 	OUTREG(palreg + 4 * i,
 	       (intel_crtc->lut_r[i] << 16) |
 	       (intel_crtc->lut_g[i] << 8) |
 	       intel_crtc->lut_b[i]);
     }
+#endif
 }
 
 /** Sets the color ramps on behalf of RandR */
