@@ -983,7 +983,7 @@ Xmh xmh
 							Command
 							Command
 						
-.fi				
+.fi
 .SH APPLICATION-SPECIFIC RESOURCES
 .PP
 The application class name is \fBXmh\fP.
