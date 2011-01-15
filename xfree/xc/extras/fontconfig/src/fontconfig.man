@@ -305,7 +305,7 @@ interface doesn't demand that.
 		int sfont;
 		FcPattern **fonts;
 	} FcFontSet;
-.fi	
+.fi
 An FcFontSet contains a list of FcPatterns.  Internally fontconfig uses this
 data structure to hold sets of fonts.  Externally, fontconfig returns the
 results of listing fonts in this format.  'nfont' holds the number of
