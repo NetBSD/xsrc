@@ -52,7 +52,7 @@
 
 extern DriverRec RADEON;
 
-#define RADEON_MAX_CRTC 2
+#define RADEON_MAX_CRTC 6
 #define RADEON_MAX_BIOS_CONNECTOR 16
 
 typedef enum
@@ -87,6 +87,7 @@ typedef enum
     CONNECTOR_0XD,
     CONNECTOR_DIN,
     CONNECTOR_DISPLAY_PORT,
+    CONNECTOR_EDP,
     CONNECTOR_UNSUPPORTED
 } RADEONConnectorType;
 
@@ -146,6 +147,11 @@ typedef struct
     Bool hw_capable;
 } RADEONI2CBusRec, *RADEONI2CBusPtr;
 
+enum radeon_pll_algo {
+    RADEON_PLL_OLD,
+    RADEON_PLL_NEW
+};
+
 typedef struct _RADEONCrtcPrivateRec {
     void *crtc_rotate_mem;
     void *cursor_mem;
@@ -159,6 +165,11 @@ typedef struct _RADEONCrtcPrivateRec {
     int can_tile;
     Bool enabled;
     Bool initialized;
+    Bool scaler_enabled;
+    float vsc;
+    float hsc;
+    int pll_id;
+    enum radeon_pll_algo     pll_algo;
 } RADEONCrtcPrivateRec, *RADEONCrtcPrivatePtr;
 
 typedef struct _radeon_encoder {
@@ -216,6 +227,7 @@ typedef struct _radeon_lvds {
 
 typedef struct _radeon_dvo {
     /* dvo */
+    I2CBusPtr         pI2CBus;
     I2CDevPtr         DVOChip;
     RADEONI2CBusRec   dvo_i2c;
     int               dvo_i2c_slave_addr;
@@ -235,6 +247,9 @@ typedef struct {
     Bool load_detection;
     Bool linkb;
     uint16_t connector_object;
+    uint16_t connector_object_id;
+    uint8_t ucI2cId;
+    uint8_t hpd_id;
 } RADEONBIOSConnector;
 
 typedef struct _RADEONOutputPrivateRec {
@@ -250,6 +265,7 @@ typedef struct _RADEONOutputPrivateRec {
     Bool linkb;
 
     RADEONConnectorType ConnectorType;
+    uint16_t connector_object_id;
     RADEONDviType DVIType;
     RADEONMonitorType MonType;
 
@@ -257,6 +273,9 @@ typedef struct _RADEONOutputPrivateRec {
     I2CBusPtr         pI2CBus;
     RADEONI2CBusRec   ddc_i2c;
     Bool shared_ddc;
+
+    Bool custom_edid;
+    xf86MonPtr custom_mon;
     // router info
     // HDP info
 
@@ -272,9 +291,22 @@ typedef struct _RADEONOutputPrivateRec {
 
     /* dce 3.x dig block */
     int igp_lane_info;
-    int dig_block;
+    int dig_encoder;
 
     int pixel_clock;
+
+    /* DP - aux bus*/
+    I2CBusPtr dp_pI2CBus;
+    uint8_t ucI2cId;
+    char dp_bus_name[20];
+    uint32_t dp_i2c_addr;
+    Bool dp_i2c_running;
+    /* DP - general config */
+    uint8_t dpcd[8];
+    int dp_lane_count;
+    int dp_clock;
+    uint8_t hpd_id;
+    int pll_id;
 } RADEONOutputPrivateRec, *RADEONOutputPrivatePtr;
 
 struct avivo_pll_state {
@@ -337,6 +369,7 @@ struct avivo_state
 
     uint32_t vga1_cntl;
     uint32_t vga2_cntl;
+    uint32_t vga_render_control;
 
     uint32_t crtc_master_en;
     uint32_t crtc_tv_control;
@@ -611,6 +644,10 @@ typedef struct
     RADEONSaveRec     SavedReg;         /* Original (text) mode              */
 
     void              *MMIO;            /* Map of MMIO region                */
+    int               MMIO_cnt;         /* Map of FB region refcount         */
+    void              *FB;              /* Map of FB region                  */
+    int               FB_cnt;           /* Map of FB region refcount         */
+    int fd;                             /* for sharing across zaphod heads   */
 } RADEONEntRec, *RADEONEntPtr;
 
 /* radeon_probe.c */
@@ -631,5 +668,15 @@ extern void                 RADEONFreeScreen(int, int);
 extern ModeStatus           RADEONValidMode(int, DisplayModePtr, Bool, int);
 
 extern const OptionInfoRec *RADEONOptionsWeak(void);
+
+#ifdef XF86DRM_MODE
+extern Bool                 RADEONPreInit_KMS(ScrnInfoPtr, int);
+extern Bool                 RADEONScreenInit_KMS(int, ScreenPtr, int, char **);
+extern Bool                 RADEONSwitchMode_KMS(int, DisplayModePtr, int);
+extern void                 RADEONAdjustFrame_KMS(int, int, int, int);
+extern Bool                 RADEONEnterVT_KMS(int, int);
+extern void                 RADEONLeaveVT_KMS(int, int);
+extern void RADEONFreeScreen_KMS(int scrnIndex, int flags);
+#endif
 
 #endif /* _RADEON_PROBE_H_ */

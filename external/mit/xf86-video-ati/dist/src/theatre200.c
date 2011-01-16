@@ -22,8 +22,138 @@
  * authorization from the author.
  *
  * $Log: theatre200.c,v $
- * Revision 1.1.1.1  2008/08/02 05:10:35  mrg
- * initial import of xf86-video-ati-6.9.0
+ * Revision 1.1.1.1.2.1  2011/01/16 14:17:40  bouyer
+ * Apply patch, requested by mrg in ticket #1524:
+ * external/mit/xorg/server/drivers/xf86-video-radeon/Makefile		patch
+ * xsrc/external/mit/xf86-video-ati/dist/COPYING				patch
+ * xsrc/external/mit/xf86-video-ati/dist/ChangeLog				patch
+ * xsrc/external/mit/xf86-video-ati/dist/Makefile.am			patch
+ * xsrc/external/mit/xf86-video-ati/dist/Makefile.in			patch
+ * xsrc/external/mit/xf86-video-ati/dist/README				patch
+ * xsrc/external/mit/xf86-video-ati/dist/aclocal.m4			patch
+ * xsrc/external/mit/xf86-video-ati/dist/compile				patch
+ * xsrc/external/mit/xf86-video-ati/dist/config.guess			patch
+ * xsrc/external/mit/xf86-video-ati/dist/config.h.in			patch
+ * xsrc/external/mit/xf86-video-ati/dist/config.sub			patch
+ * xsrc/external/mit/xf86-video-ati/dist/configure				patch
+ * xsrc/external/mit/xf86-video-ati/dist/configure.ac			patch
+ * xsrc/external/mit/xf86-video-ati/dist/depcomp				patch
+ * xsrc/external/mit/xf86-video-ati/dist/install-sh			patch
+ * xsrc/external/mit/xf86-video-ati/dist/ltmain.sh				patch
+ * xsrc/external/mit/xf86-video-ati/dist/missing				patch
+ * xsrc/external/mit/xf86-video-ati/dist/man/Makefile.am			patch
+ * xsrc/external/mit/xf86-video-ati/dist/man/Makefile.in			patch
+ * xsrc/external/mit/xf86-video-ati/dist/man/radeon.man			patch
+ * xsrc/external/mit/xf86-video-ati/dist/src/Makefile.am			patch
+ * xsrc/external/mit/xf86-video-ati/dist/src/Makefile.in			patch
+ * xsrc/external/mit/xf86-video-ati/dist/src/ati.c				patch
+ * xsrc/external/mit/xf86-video-ati/dist/src/ati_pciids_gen.h		patch
+ * xsrc/external/mit/xf86-video-ati/dist/src/atipciids.h			patch
+ * xsrc/external/mit/xf86-video-ati/dist/src/atombios_crtc.c		patch
+ * xsrc/external/mit/xf86-video-ati/dist/src/atombios_output.c		patch
+ * xsrc/external/mit/xf86-video-ati/dist/src/drmmode_display.c		patch
+ * xsrc/external/mit/xf86-video-ati/dist/src/drmmode_display.h		patch
+ * xsrc/external/mit/xf86-video-ati/dist/src/legacy_crtc.c			patch
+ * xsrc/external/mit/xf86-video-ati/dist/src/legacy_output.c		patch
+ * xsrc/external/mit/xf86-video-ati/dist/src/local_xf86Rename.h		patch
+ * xsrc/external/mit/xf86-video-ati/dist/src/r600_exa.c			patch
+ * xsrc/external/mit/xf86-video-ati/dist/src/r600_reg_r6xx.h		patch
+ * xsrc/external/mit/xf86-video-ati/dist/src/r600_shader.c			patch
+ * xsrc/external/mit/xf86-video-ati/dist/src/r600_shader.h			patch
+ * xsrc/external/mit/xf86-video-ati/dist/src/r600_state.h			patch
+ * xsrc/external/mit/xf86-video-ati/dist/src/r600_textured_videofuncs.c	patch
+ * xsrc/external/mit/xf86-video-ati/dist/src/r6xx_accel.c			patch
+ * xsrc/external/mit/xf86-video-ati/dist/src/radeon.h			patch
+ * xsrc/external/mit/xf86-video-ati/dist/src/radeon_accel.c		patch
+ * xsrc/external/mit/xf86-video-ati/dist/src/radeon_accelfuncs.c		patch
+ * xsrc/external/mit/xf86-video-ati/dist/src/radeon_atombios.c		patch
+ * xsrc/external/mit/xf86-video-ati/dist/src/radeon_atombios.h		patch
+ * xsrc/external/mit/xf86-video-ati/dist/src/radeon_bios.c			patch
+ * xsrc/external/mit/xf86-video-ati/dist/src/radeon_chipinfo_gen.h		patch
+ * xsrc/external/mit/xf86-video-ati/dist/src/radeon_chipset_gen.h		patch
+ * xsrc/external/mit/xf86-video-ati/dist/src/radeon_commonfuncs.c		patch
+ * xsrc/external/mit/xf86-video-ati/dist/src/radeon_crtc.c			patch
+ * xsrc/external/mit/xf86-video-ati/dist/src/radeon_cursor.c		patch
+ * xsrc/external/mit/xf86-video-ati/dist/src/radeon_dga.c			patch
+ * xsrc/external/mit/xf86-video-ati/dist/src/radeon_dri.c			patch
+ * xsrc/external/mit/xf86-video-ati/dist/src/radeon_dri.h			patch
+ * xsrc/external/mit/xf86-video-ati/dist/src/radeon_dri2.c			patch
+ * xsrc/external/mit/xf86-video-ati/dist/src/radeon_dri2.h			patch
+ * xsrc/external/mit/xf86-video-ati/dist/src/radeon_driver.c		patch
+ * xsrc/external/mit/xf86-video-ati/dist/src/radeon_drm.h			patch
+ * xsrc/external/mit/xf86-video-ati/dist/src/radeon_dummy_bufmgr.h		patch
+ * xsrc/external/mit/xf86-video-ati/dist/src/radeon_exa.c			patch
+ * xsrc/external/mit/xf86-video-ati/dist/src/radeon_exa_funcs.c		patch
+ * xsrc/external/mit/xf86-video-ati/dist/src/radeon_exa_render.c		patch
+ * xsrc/external/mit/xf86-video-ati/dist/src/radeon_exa_shared.c		patch
+ * xsrc/external/mit/xf86-video-ati/dist/src/radeon_exa_shared.h		patch
+ * xsrc/external/mit/xf86-video-ati/dist/src/radeon_kms.c			patch
+ * xsrc/external/mit/xf86-video-ati/dist/src/radeon_legacy_memory.c	patch
+ * xsrc/external/mit/xf86-video-ati/dist/src/radeon_macros.h		patch
+ * xsrc/external/mit/xf86-video-ati/dist/src/radeon_modes.c		patch
+ * xsrc/external/mit/xf86-video-ati/dist/src/radeon_output.c		patch
+ * xsrc/external/mit/xf86-video-ati/dist/src/radeon_pci_chipset_gen.h	patch
+ * xsrc/external/mit/xf86-video-ati/dist/src/radeon_pci_device_match_gen.h	patch
+ * xsrc/external/mit/xf86-video-ati/dist/src/radeon_pm.c			patch
+ * xsrc/external/mit/xf86-video-ati/dist/src/radeon_probe.c		patch
+ * xsrc/external/mit/xf86-video-ati/dist/src/radeon_probe.h		patch
+ * xsrc/external/mit/xf86-video-ati/dist/src/radeon_reg.h			patch
+ * xsrc/external/mit/xf86-video-ati/dist/src/radeon_render.c		patch
+ * xsrc/external/mit/xf86-video-ati/dist/src/radeon_textured_video.c	patch
+ * xsrc/external/mit/xf86-video-ati/dist/src/radeon_textured_videofuncs.c	patch
+ * xsrc/external/mit/xf86-video-ati/dist/src/radeon_tv.c			patch
+ * xsrc/external/mit/xf86-video-ati/dist/src/radeon_tv.h			patch
+ * xsrc/external/mit/xf86-video-ati/dist/src/radeon_vbo.c			patch
+ * xsrc/external/mit/xf86-video-ati/dist/src/radeon_vbo.h			patch
+ * xsrc/external/mit/xf86-video-ati/dist/src/radeon_version.h		patch
+ * xsrc/external/mit/xf86-video-ati/dist/src/radeon_video.c		patch
+ * xsrc/external/mit/xf86-video-ati/dist/src/radeon_video.h		patch
+ * xsrc/external/mit/xf86-video-ati/dist/src/radeon_vip.c			patch
+ * xsrc/external/mit/xf86-video-ati/dist/src/simple_list.h			patch
+ * xsrc/external/mit/xf86-video-ati/dist/src/theatre200.c			patch
+ * xsrc/external/mit/xf86-video-ati/dist/src/theatre_detect.c		patch
+ * xsrc/external/mit/xf86-video-ati/dist/src/AtomBios/CD_Operations.c	patch
+ * xsrc/external/mit/xf86-video-ati/dist/src/AtomBios/includes/Decoder.h	patch
+ * xsrc/external/mit/xf86-video-ati/dist/src/AtomBios/includes/ObjectID.h	patch
+ * xsrc/external/mit/xf86-video-ati/dist/src/AtomBios/includes/atombios.h	patch
+ * xsrc/external/mit/xf86-video-ati/dist/src/modes/xf86Crtc.c		patch
+ * xsrc/external/mit/xf86-video-ati/dist/src/modes/xf86Crtc.h		patch
+ * xsrc/external/mit/xf86-video-ati/dist/src/modes/xf86Cursors.c		patch
+ * xsrc/external/mit/xf86-video-ati/dist/src/modes/xf86DiDGA.c		patch
+ * xsrc/external/mit/xf86-video-ati/dist/src/modes/xf86EdidModes.c		patch
+ * xsrc/external/mit/xf86-video-ati/dist/src/modes/xf86Modes.c		patch
+ * xsrc/external/mit/xf86-video-ati/dist/src/modes/xf86Modes.h		patch
+ * xsrc/external/mit/xf86-video-ati/dist/src/modes/xf86RandR12.c		patch
+ * xsrc/external/mit/xf86-video-ati/dist/src/modes/xf86RandR12.h		patch
+ * xsrc/external/mit/xf86-video-ati/dist/src/modes/xf86Rename.h		patch
+ * xsrc/external/mit/xf86-video-ati/dist/src/modes/xf86Rotate.c		patch
+ * xsrc/external/mit/xf86-video-ati/dist/src/modes/xf86cvt.c		patch
+ * xsrc/external/mit/xf86-video-ati/dist/src/parser/xf86Optrec.h		patch
+ * xsrc/external/mit/xf86-video-ati/dist/src/parser/xf86Parser.h		patch
+ * xsrc/external/mit/xf86-video-ati/dist/src/pcidb/ati_pciids.csv		patch
+ * xsrc/external/mit/xf86-video-ati/dist/src/pcidb/parse_pci_ids.pl	patch
+ * xsrc/external/mit/xf86-video-ati/include/config.h			patch
+ * xsrc/external/mit/xf86-video-ati/dist/src/local_xf86Rename.h		remove
+ * xsrc/external/mit/xf86-video-ati/dist/src/radeon_dga.c			remove
+ * xsrc/external/mit/xf86-video-ati/dist/src/modes/xf86Crtc.c		remove
+ * xsrc/external/mit/xf86-video-ati/dist/src/modes/xf86Crtc.h		remove
+ * xsrc/external/mit/xf86-video-ati/dist/src/modes/xf86Cursors.c		remove
+ * xsrc/external/mit/xf86-video-ati/dist/src/modes/xf86DiDGA.c		remove
+ * xsrc/external/mit/xf86-video-ati/dist/src/modes/xf86EdidModes.c		remove
+ * xsrc/external/mit/xf86-video-ati/dist/src/modes/xf86Modes.c		remove
+ * xsrc/external/mit/xf86-video-ati/dist/src/modes/xf86Modes.h		remove
+ * xsrc/external/mit/xf86-video-ati/dist/src/modes/xf86RandR12.c		remove
+ * xsrc/external/mit/xf86-video-ati/dist/src/modes/xf86RandR12.h		remove
+ * xsrc/external/mit/xf86-video-ati/dist/src/modes/xf86Rename.h		remove
+ * xsrc/external/mit/xf86-video-ati/dist/src/modes/xf86Rotate.c		remove
+ * xsrc/external/mit/xf86-video-ati/dist/src/modes/xf86cvt.c		remove
+ * xsrc/external/mit/xf86-video-ati/dist/src/parser/xf86Optrec.h		remove
+ * xsrc/external/mit/xf86-video-ati/dist/src/parser/xf86Parser.h		remove
+ *
+ * add more support for hd3000/4000 and some for hd5000
+ *
+ * Revision 1.1.1.3  2010/11/20 10:00:26  mrg
+ * initial import of xf86-video-ati-6.13.2
  *
  * Revision 1.6  2006/03/22 22:30:14  krh
  * 2006-03-22  Kristian Høgsberg  <krh@redhat.com>
@@ -165,7 +295,7 @@ static int microc_load (char* micro_path, char* micro_type, struct rt200_microc_
 		{
 			int ret;
 			
-			curr_seg = (struct rt200_microc_seg*)Xalloc(sizeof(struct rt200_microc_seg));
+			curr_seg = (struct rt200_microc_seg*)malloc(sizeof(struct rt200_microc_seg));
 			if (curr_seg == NULL)
 			{
 				ERROR_0("Cannot allocate memory\n");
@@ -181,7 +311,7 @@ static int microc_load (char* micro_path, char* micro_type, struct rt200_microc_
 				goto fail_exit;
 			}
 
-			curr_seg->data = (unsigned char*)Xalloc(curr_seg->num_bytes);
+			curr_seg->data = (unsigned char*)malloc(curr_seg->num_bytes);
 			if (curr_seg->data == NULL)
 			{
 				ERROR_0("cannot allocate memory\n");
@@ -244,7 +374,7 @@ static int microc_load (char* micro_path, char* micro_type, struct rt200_microc_
 
 		for (i = 0; i < microc_headp->num_seg; i++)
 		{
-			curr_seg = (struct rt200_microc_seg*)Xalloc(sizeof(struct rt200_microc_seg));
+			curr_seg = (struct rt200_microc_seg*)malloc(sizeof(struct rt200_microc_seg));
 			if (curr_seg == NULL)
 			{
 				ERROR_0("Cannot allocate memory\n");
@@ -265,7 +395,7 @@ static int microc_load (char* micro_path, char* micro_type, struct rt200_microc_
 				goto fail_exit;
 			}
 								
-			curr_seg->data = (unsigned char*)Xalloc(curr_seg->num_bytes);
+			curr_seg->data = (unsigned char*)malloc(curr_seg->num_bytes);
 			if (curr_seg->data == NULL)
 			{
 				ERROR_0("cannot allocate memory\n");
@@ -321,10 +451,10 @@ fail_exit:
 	curr_seg = seg_list;
 	while(curr_seg)
 	{
-		Xfree(curr_seg->data);
+		free(curr_seg->data);
 		prev_seg = curr_seg;
 		curr_seg = curr_seg->next;
-		Xfree(prev_seg);
+		free(prev_seg);
 	}
 	fclose(file);
 
@@ -338,10 +468,10 @@ static void microc_clean(struct rt200_microc_data* microc_datap, int screen)
 
 	while(seg_list)
 	{
-		Xfree(seg_list->data);
+		free(seg_list->data);
 		prev_seg = seg_list;
 		seg_list = seg_list->next;
-		Xfree(prev_seg);
+		free(prev_seg);
 	}
 }
 

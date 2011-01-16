@@ -40,14 +40,14 @@ R/RV/RS2xx and RS3xx);
 .TP
 \(bu
 Textured XVideo acceleration including anti-tearing support (Bicubic filtering
-only available on R/RV3xx, R/RV/RS4xx, R/RV5xx, and RS6xx);
+only available on R/RV3xx, R/RV/RS4xx, R/RV5xx, and RS6xx/RS740);
 .TP
 \(bu
 Overlay XVideo acceleration (only on R/RV/RS1xx, R/RV/RS2xx,
 R/RV/RS3xx, R/RV/RS4xx);
 .TP
 \(bu
-3D acceleration (not supported on R/RV6xx and R/RV/RS7xx);
+3D acceleration;
 .PD
 .SH SUPPORTED HARDWARE
 The
@@ -302,6 +302,37 @@ for monitor detection. This is different from NoDDC option.
 The default value is
 .B off.
 .TP 
+.BI "Option \*qCustomEDID\*q \*q" string \*q
+Forces the X driver to use the EDID data specified in a file rather
+than the display's EDID. Also overrides DDC monitor detection.
+.br
+You may specify a semicolon separated list of output name and filename pairs
+with an optional flag, "digital" or "analog", to override the digital bit in
+the edid which is used by the driver to determine whether to use the
+analog or digital encoder associated with a DVI-I port.
+The output name is the randr output name, e.g., "VGA-0" or "DVI-0";
+consult the Xorg log for the supported output names of any given system.
+.br
+The file must contain a raw 128-byte EDID block, as captured by
+.B
+get-edid.
+.br
+For example:
+.B
+Option \*qCustomEDID\*q \*qVGA-0:/tmp/edid1.bin; DVI-0:/tmp/edid2.bin:digital\*q
+will assign the EDID from the file /tmp/edid1.bin to the output device
+VGA-0, and the EDID from the file /tmp/edid2.bin to the output device
+DVI-0 and force the DVI port to use the digital encoder.
+.br
+Note that a output name must always be specified,
+even if only one EDID is specified.
+.br
+.B
+Caution:
+Specifying an EDID that doesn't exactly match your display may
+damage your hardware, as it allows the driver to specify timings beyond
+the capabilities of your display. Use with care.
+.TP 
 .BI "Option \*qPanelSize\*q \*q" "string" \*q
 Should only be used when driver cannot detect the correct panel size.
 Apply to both desktop (TMDS) and laptop (LVDS) digital panels.
@@ -346,9 +377,8 @@ and
 .B EXA.
 XAA is the traditional acceleration architecture and support for it is very
 stable.  EXA is a newer acceleration architecture with better performance for
-the Render and Composite extensions, but the rendering code for it is newer and
-possibly unstable.  The default is
-.B XAA.
+the Render and Composite extensions.  The default is
+.B EXA.
 .TP
 .BI "Option \*qAccelDFS\*q \*q" boolean \*q
 Use or don't use accelerated EXA DownloadFromScreen hook when possible (only
@@ -413,11 +443,20 @@ for CRT,
 .B RGB 
 for digital panels
 .TP
-.BI "Option \*qDynamicClocks\*q \*q" boolean \*q
-Enable dynamic clock scaling.  The on-chip clocks will scale dynamically
-based on usage. This can help reduce heat and increase battery
+.BI "Option \*qClockGating\*q \*q" boolean \*q
+Enable dynamic clock gating.  This can help reduce heat and increase battery
 life by reducing power usage.  Some users report reduced 3D performance
 with this enabled.  The default is
+.B off.
+.TP
+.BI "Option \*qForceLowPowerMode\*q \*q" boolean \*q
+Enable a static low power mode.  This can help reduce heat and increase battery
+life by reducing power usage at the expense of performance. The default is
+.B off.
+.TP
+.BI "Option \*qDynamicPM\*q \*q" boolean \*q
+Enable dynamic power mode switching.  This can help reduce heat and increase battery
+life by reducing power usage when the system is idle (DPMS active). The default is
 .B off.
 .TP
 .BI "Option \*qVGAAccess\*q \*q" boolean \*q
@@ -567,6 +606,24 @@ The default is
 This option enables modesetting on R/RV4xx chips using atombios.
 The default is
 .B off.
+.TP 
+.BI "Option \*qEXAPixmaps\*q \*q" boolean \*q
+(KMS Only) Under kernel modesetting to avoid thrashing pixmaps in/out
+of VRAM on low memory cards, we use a heuristic based on VRAM amount,
+to determine whether to allow EXA to use VRAM for non-essential pixmaps.
+This option allows us to override the heurisitc.
+The default is
+.B on with > 32MB VRAM, off with < 32MB.
+.TP
+.BI "Option \*qZaphodHeads\*q \*q" string \*q
+Specify the randr output(s) to use with zaphod mode for a particular driver
+instance.  If you use this option you most use this option for all instances
+of the driver.
+.br
+For example:
+.B
+Option \*qZaphodHeads\*q \*qLVDS,VGA-0\*q
+will assign xrandr outputs LVDS and VGA-0 to this instance of the driver.
 
 .SH TEXTURED VIDEO ATTRIBUTES
 The driver supports the following X11 Xv attributes for Textured Video.
@@ -580,14 +637,26 @@ It has two values: 'off'(0) and 'on'(1). The default is
 .B 'on'(1).
 
 .TP
+.BI "XV_CRTC"
+XV_CRTC is used to control which display controller (crtc) the textured
+adapter synchronizes the screen update with when XV_VSYNC is enabled.
+The default, 'auto'(-1), will sync to the display controller that more
+of the video is on.  This attribute is useful for things like clone mode
+where the user can best decide which display should be synced.
+The default is
+.B 'auto'(-1).
+
+.TP
 .BI "XV_BICUBIC"
 XV_BICUBIC is used to control whether textured adapter should apply
 a bicubic filter to smooth the output. It has three values: 'off'(0), 'on'(1)
 and 'auto'(2). 'off' means never apply the filter, 'on' means always apply
 the filter and 'auto' means apply the filter only if the X and Y
-sizes are scaled to more than double, this to avoid blurred output.
+sizes are scaled to more than double to avoid blurred output.  Bicubic
+filtering is not currently compatible with other Xv attributes like hue,
+contrast, and brightness, and must be disabled to use those attributes.
 The default is
-.B 'auto'(2).
+.B 'off'(0).
 
 .SH SEE ALSO
 __xservername__(__appmansuffix__), __xconfigfile__(__filemansuffix__), Xserver(__appmansuffix__), X(__miscmansuffix__)
