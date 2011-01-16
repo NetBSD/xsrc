@@ -106,6 +106,12 @@ avivo_setup_cursor(xf86CrtcPtr crtc, Bool enable)
     OUTREG(AVIVO_D1CUR_CONTROL + radeon_crtc->crtc_offset, (AVIVO_D1CURSOR_MODE_24BPP << AVIVO_D1CURSOR_MODE_SHIFT));
 
     if (enable) {
+	if (info->ChipFamily >= CHIP_FAMILY_RV770) {
+	    if (radeon_crtc->crtc_id)
+		OUTREG(R700_D2CUR_SURFACE_ADDRESS_HIGH, 0);
+	    else
+		OUTREG(R700_D1CUR_SURFACE_ADDRESS_HIGH, 0);
+	}
 	OUTREG(AVIVO_D1CUR_SURFACE_ADDRESS + radeon_crtc->crtc_offset,
 	       info->fbLocation + radeon_crtc->cursor_offset + pScrn->fbOffset);
 	OUTREG(AVIVO_D1CUR_CONTROL + radeon_crtc->crtc_offset,
@@ -131,6 +137,48 @@ avivo_lock_cursor(xf86CrtcPtr crtc, Bool lock)
     OUTREG(AVIVO_D1CUR_UPDATE + radeon_crtc->crtc_offset, tmp);
 }
 
+static void
+evergreen_setup_cursor(xf86CrtcPtr crtc, Bool enable)
+{
+    ScrnInfoPtr pScrn = crtc->scrn;
+    RADEONCrtcPrivatePtr radeon_crtc = crtc->driver_private;
+    RADEONInfoPtr  info = RADEONPTR(crtc->scrn);
+    unsigned char     *RADEONMMIO = info->MMIO;
+
+    /* always use the same cursor mode even if the cursor is disabled,
+     * otherwise you may end up with cursor curruption bands
+     */
+    OUTREG(EVERGREEN_CUR_CONTROL + radeon_crtc->crtc_offset,
+	   EVERGREEN_CURSOR_MODE(EVERGREEN_CURSOR_24_8_PRE_MULT));
+
+    if (enable) {
+	OUTREG(EVERGREEN_CUR_SURFACE_ADDRESS_HIGH + radeon_crtc->crtc_offset, 0);
+	OUTREG(EVERGREEN_CUR_SURFACE_ADDRESS + radeon_crtc->crtc_offset,
+	       (info->fbLocation + radeon_crtc->cursor_offset + pScrn->fbOffset)
+	       & EVERGREEN_CUR_SURFACE_ADDRESS_MASK);
+	OUTREG(EVERGREEN_CUR_CONTROL + radeon_crtc->crtc_offset,
+	       EVERGREEN_CURSOR_EN | EVERGREEN_CURSOR_MODE(EVERGREEN_CURSOR_24_8_PRE_MULT));
+    }
+}
+
+static void
+evergreen_lock_cursor(xf86CrtcPtr crtc, Bool lock)
+{
+    RADEONCrtcPrivatePtr radeon_crtc = crtc->driver_private;
+    RADEONInfoPtr  info = RADEONPTR(crtc->scrn);
+    unsigned char     *RADEONMMIO = info->MMIO;
+    uint32_t tmp;
+
+    tmp = INREG(EVERGREEN_CUR_UPDATE + radeon_crtc->crtc_offset);
+
+    if (lock)
+	tmp |= EVERGREEN_CURSOR_UPDATE_LOCK;
+    else
+	tmp &= ~EVERGREEN_CURSOR_UPDATE_LOCK;
+
+    OUTREG(EVERGREEN_CUR_UPDATE + radeon_crtc->crtc_offset, tmp);
+}
+
 void
 radeon_crtc_show_cursor (xf86CrtcPtr crtc)
 {
@@ -140,7 +188,11 @@ radeon_crtc_show_cursor (xf86CrtcPtr crtc)
     RADEONInfoPtr      info       = RADEONPTR(pScrn);
     unsigned char     *RADEONMMIO = info->MMIO;
 
-    if (IS_AVIVO_VARIANT) {
+    if (IS_DCE4_VARIANT) {
+	evergreen_lock_cursor(crtc, TRUE);
+	evergreen_setup_cursor(crtc, TRUE);
+	evergreen_lock_cursor(crtc, FALSE);
+    } else if (IS_AVIVO_VARIANT) {
 	avivo_lock_cursor(crtc, TRUE);
 	avivo_setup_cursor(crtc, TRUE);
 	avivo_lock_cursor(crtc, FALSE);
@@ -156,7 +208,7 @@ radeon_crtc_show_cursor (xf86CrtcPtr crtc)
             return;
         }
 
-        OUTREGP(RADEON_MM_DATA, RADEON_CRTC_CUR_EN | 2 << 20, 
+        OUTREGP(RADEON_MM_DATA, RADEON_CRTC_CUR_EN | 2 << 20,
                 ~(RADEON_CRTC_CUR_EN | RADEON_CRTC_CUR_MODE_MASK));
     }
 }
@@ -170,7 +222,11 @@ radeon_crtc_hide_cursor (xf86CrtcPtr crtc)
     RADEONInfoPtr      info       = RADEONPTR(pScrn);
     unsigned char     *RADEONMMIO = info->MMIO;
 
-    if (IS_AVIVO_VARIANT) {
+    if (IS_DCE4_VARIANT) {
+	evergreen_lock_cursor(crtc, TRUE);
+	evergreen_setup_cursor(crtc, FALSE);
+	evergreen_lock_cursor(crtc, FALSE);
+    } else if (IS_AVIVO_VARIANT) {
 	avivo_lock_cursor(crtc, TRUE);
 	avivo_setup_cursor(crtc, FALSE);
 	avivo_lock_cursor(crtc, FALSE);
@@ -208,7 +264,21 @@ radeon_crtc_set_cursor_position (xf86CrtcPtr crtc, int x, int y)
     if (xorigin >= CURSOR_WIDTH)  xorigin = CURSOR_WIDTH - 1;
     if (yorigin >= CURSOR_HEIGHT) yorigin = CURSOR_HEIGHT - 1;
 
-    if (IS_AVIVO_VARIANT) {
+    if (IS_DCE4_VARIANT) {
+	/* avivo cursor spans the full fb width */
+	if (crtc->rotatedData == NULL) {
+	    x += crtc->x;
+	    y += crtc->y;
+	}
+
+	evergreen_lock_cursor(crtc, TRUE);
+	OUTREG(EVERGREEN_CUR_POSITION + radeon_crtc->crtc_offset, ((xorigin ? 0 : x) << 16)
+	       | (yorigin ? 0 : y));
+	OUTREG(EVERGREEN_CUR_HOT_SPOT + radeon_crtc->crtc_offset, (xorigin << 16) | yorigin);
+	OUTREG(EVERGREEN_CUR_SIZE + radeon_crtc->crtc_offset,
+	       ((CURSOR_WIDTH - 1) << 16) | (CURSOR_HEIGHT - 1));
+	evergreen_lock_cursor(crtc, FALSE);
+    } else if (IS_AVIVO_VARIANT) {
 	int w = CURSOR_WIDTH;
 
 	/* avivo cursor spans the full fb width */
@@ -278,7 +348,7 @@ radeon_crtc_set_cursor_colors (xf86CrtcPtr crtc, int bg, int fg)
     ScrnInfoPtr pScrn = crtc->scrn;
     RADEONCrtcPrivatePtr radeon_crtc = crtc->driver_private;
     RADEONInfoPtr info = RADEONPTR(pScrn);
-    uint32_t *pixels = (uint32_t *)(pointer)(info->FB + radeon_crtc->cursor_offset);
+    uint32_t *pixels = (uint32_t *)(pointer)(info->FB + pScrn->fbOffset + radeon_crtc->cursor_offset);
     int            pixel, i;
     CURSOR_SWAPPING_DECL_MMIO
 
@@ -321,7 +391,7 @@ radeon_crtc_load_cursor_argb (xf86CrtcPtr crtc, CARD32 *image)
     RADEONCrtcPrivatePtr radeon_crtc = crtc->driver_private;
     RADEONInfoPtr  info = RADEONPTR(pScrn);
     CURSOR_SWAPPING_DECL_MMIO
-    uint32_t *d = (uint32_t *)(pointer)(info->FB + radeon_crtc->cursor_offset);
+    uint32_t *d = (uint32_t *)(pointer)(info->FB + pScrn->fbOffset + radeon_crtc->cursor_offset);
 
     RADEONCTRACE(("RADEONLoadCursorARGB\n"));
 
@@ -355,7 +425,8 @@ Bool RADEONCursorInit(ScreenPtr pScreen)
 	    int align = IS_AVIVO_VARIANT ? 4096 : 256;
 
 	    radeon_crtc->cursor_offset =
-		radeon_legacy_allocate_memory(pScrn, &radeon_crtc->cursor_mem, size_bytes, align);
+		radeon_legacy_allocate_memory(pScrn, &radeon_crtc->cursor_mem,
+				size_bytes, align, RADEON_GEM_DOMAIN_VRAM);
 
 	    if (radeon_crtc->cursor_offset == 0)
 		return FALSE;
@@ -367,6 +438,7 @@ Bool RADEONCursorInit(ScreenPtr pScreen)
 		       (unsigned int)radeon_crtc->cursor_offset);
 	}
 	/* set the cursor mode the same on both crtcs to avoid corruption */
+	/* XXX check if this is needed on evergreen */
 	if (IS_AVIVO_VARIANT)
 	    OUTREG(AVIVO_D1CUR_CONTROL + radeon_crtc->crtc_offset,
 		   (AVIVO_D1CURSOR_MODE_24BPP << AVIVO_D1CURSOR_MODE_SHIFT));
