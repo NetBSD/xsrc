@@ -254,7 +254,7 @@
 #define MITSHM 1
 
 /* Enable some debugging code */
-#define DEBUG 1
+/* #undef DEBUG */
 
 /* Name of package */
 #ifndef PACKAGE
