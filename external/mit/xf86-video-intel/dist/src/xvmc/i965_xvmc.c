@@ -191,9 +191,9 @@ static void clear_sf_state()
 /* urb fence must be aligned to cacheline */
 static void align_urb_fence()
 {
-    BATCH_LOCALS;
     int i, offset_to_next_cacheline;
     unsigned long batch_offset;
+    BATCH_LOCALS;
     BEGIN_BATCH(3);
     batch_offset = (void *)batch_ptr - xvmc_driver->alloc.ptr;
     offset_to_next_cacheline = ALIGN(batch_offset, 64) - batch_offset; 
