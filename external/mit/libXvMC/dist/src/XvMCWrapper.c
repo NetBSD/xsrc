@@ -305,6 +305,10 @@ static void initW(Display *dpy, XvPortID port)
 	strncpy(nameBuffer + nameLen, ".so", BUFLEN-nameLen-1);
 	nameBuffer[BUFLEN-1] = 0;
 	XFree(clientName);
+#ifdef XVMC_CLIENTSOVERSION
+	handle = dlopenversion(nameBuffer, XVMC_CLIENTSOVERSION, RTLD_LAZY);
+	if (NULL == handle)
+#endif
 	handle = dlopenversion(nameBuffer, XVMC_SOVERSION,RTLD_LAZY);
     } else {
 	/*
