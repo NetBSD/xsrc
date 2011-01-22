@@ -57,7 +57,7 @@
 
 #include "intel_batchbuffer.h"
 
-extern int DEBUG;
+extern int debug;
 
 #define XVMC_ERR(s, arg...)					\
     do {							\
@@ -71,7 +71,7 @@ extern int DEBUG;
 
 #define XVMC_DBG(s, arg...)						\
     do {								\
-	if (DEBUG)							\
+	if (debug)							\
 	    fprintf(stderr, "[intel_xvmc] debug: " s "\n", ##arg);	\
     } while (0)
 
