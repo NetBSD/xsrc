@@ -40,6 +40,7 @@
 
 
 #include <pci.h>
+#include <dev/wscons/wsconsio.h>
 
 #include "pciaccess.h"
 #include "pciaccess_private.h"
@@ -245,6 +246,43 @@ pci_device_netbsd_write(struct pci_device *dev, const void *data,
 	}
 
 	return 0;
+}
+
+static int
+pci_device_netbsd_boot_vga(struct pci_device *dev)
+{
+	int ret;
+	struct wsdisplayio_bus_id busid;
+	int fd;
+
+	fd = open("/dev/ttyE0", O_RDONLY);
+	if (fd == -1) {
+		fprintf(stderr, "failed to open /dev/ttyE0: %s\n",
+		    strerror(errno));
+		return 0;
+	}
+
+	ret = ioctl(fd, WSDISPLAYIO_GET_BUSID, &busid);
+	close(fd);
+	if (ret == -1) {
+		fprintf(stderr, "ioctl WSDISPLAYIO_GET_BUSID failed: %s\n",
+		    strerror(errno));
+		return 0;
+	}
+
+	if (busid.bus_type != WSDISPLAYIO_BUS_PCI)
+		return 0;
+
+	if (busid.ubus.pci.domain != dev->domain)
+		return 0;
+	if (busid.ubus.pci.bus != dev->bus)
+		return 0;
+	if (busid.ubus.pci.device != dev->dev)
+		return 0;
+	if (busid.ubus.pci.function != dev->func)
+		return 0;
+
+	return 1;
 }
 
 static void
@@ -479,7 +517,8 @@ static const struct pci_system_methods netbsd_pci_methods = {
 	.unmap_range = pci_device_netbsd_unmap_range,
 	.read = pci_device_netbsd_read,
 	.write = pci_device_netbsd_write,
-	.fill_capabilities = pci_fill_capabilities_generic
+	.fill_capabilities = pci_fill_capabilities_generic,
+	.boot_vga = pci_device_netbsd_boot_vga,
 };
 
 int
