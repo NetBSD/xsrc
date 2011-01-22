@@ -98,7 +98,7 @@ unsigned int mb_bytes_420[] = {
     768  /* 111111 */
 };
 
-int DEBUG;
+int debug;
 
 static int error_base;
 static int event_base;
@@ -106,7 +106,7 @@ static int event_base;
 static void intel_xvmc_debug_init(void)
 {
     if (getenv("INTEL_XVMC_DEBUG"))
-	DEBUG = 1;
+	debug = 1;
 }
 
 /* locking */
