@@ -238,7 +238,12 @@ i830_bios_init(ScrnInfoPtr pScrn)
     if (ret != 0) {
 	xf86DrvMsg(pScrn->scrnIndex, X_WARNING,
                   "libpciaccess failed to read %dkB video BIOS: %s\n",
-                  size / 1024, strerror(ret));
+                  size / 1024,
+#ifndef __linux__
+	          strerror(ret));
+#else
+                  strerror(-ret));
+#endif
 	xfree (bios);
 	return -1;
     }
