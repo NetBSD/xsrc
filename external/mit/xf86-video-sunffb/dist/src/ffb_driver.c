@@ -65,6 +65,9 @@ extern void FFB_InitDGA(ScreenPtr pScreen);
 
 void FFBSync(ScrnInfoPtr pScrn);
 
+static Bool FFBDriverFunc(ScrnInfoPtr pScrn, xorgDriverFuncOp op,
+				pointer ptr);
+
 #define FFB_VERSION 4000
 #define FFB_NAME "SUNFFB"
 #define FFB_DRIVER_NAME "sunffb"
@@ -87,7 +90,8 @@ _X_EXPORT DriverRec SUNFFB = {
     FFBProbe,
     FFBAvailableOptions,
     NULL,
-    0
+    0,
+    FFBDriverFunc
 };
 
 typedef enum {
@@ -130,7 +134,7 @@ ffbSetup(pointer module, pointer opts, int *errmaj, int *errmin)
 
     if (!setupDone) {
 	setupDone = TRUE;
-	xf86AddDriver(&SUNFFB, module, 0);
+	xf86AddDriver(&SUNFFB, module, HaveDriverFuncs);
 
 	/*
 	 * Modules that this driver always requires can be loaded here
@@ -990,3 +994,20 @@ FFBDPMSMode(ScrnInfoPtr pScrn, int DPMSMode, int flags)
 {
   FFBDacDPMSMode(GET_FFB_FROM_SCRN(pScrn), DPMSMode, flags);
 }
+
+static Bool
+FFBDriverFunc(ScrnInfoPtr pScrn, xorgDriverFuncOp op,
+    pointer ptr)
+{
+	xorgHWFlags *flag;
+	
+	switch (op) {
+	case GET_REQUIRED_HW_INTERFACES:
+		flag = (CARD32*)ptr;
+		(*flag) = HW_MMIO;
+		return TRUE;
+	default:
+		return FALSE;
+	}
+}
+
