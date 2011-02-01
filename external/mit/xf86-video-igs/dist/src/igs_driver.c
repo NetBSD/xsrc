@@ -1,5 +1,5 @@
 /* $OpenBSD: wsfb_driver.c,v 1.19 2003/04/27 16:42:32 matthieu Exp $ */
-/* $NetBSD: igs_driver.c,v 1.5 2010/11/24 02:54:08 mrg Exp $ */
+/* $NetBSD: igs_driver.c,v 1.6 2011/02/01 22:53:03 macallan Exp $ */
 /*
  * Copyright (c) 2001 Matthieu Herrb
  *		 2009 Michael Lorenz
@@ -1162,7 +1162,7 @@ IgsDriverFunc(ScrnInfoPtr pScrn, xorgDriverFuncOp op,
 	switch (op) {
 	case GET_REQUIRED_HW_INTERFACES:
 		flag = (CARD32*)ptr;
-		(*flag) = 0;
+		(*flag) = HW_IO | HW_MMIO;
 		return TRUE;
 	default:
 		return FALSE;
