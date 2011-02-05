@@ -591,10 +591,17 @@ FFBDacSaveScreen(ScreenPtr pScreen, int mode) {
 
     05.xii.01, FEM
     08.xii.01, FEM
+
+    Note, that the rule for "On" is not always correct.  Some modes use
+    -VSYNC normally (see FFB3 VESA modes and some EDID modes).  So, we
+    take the hsync and vsync values from the saved timing generator state
+    for "DPMSModeOn".
 */
 void
 FFBDacDPMSMode(FFBPtr pFfb, int DPMSMode, int flags) {
   int tmp;
+  ffb_dac_info_t *p = &pFfb->dac_info;
+  ffb_dac_hwstate_t *state = &p->x_dac_state;
   ffb_dacPtr dac = pFfb -> dac;
 
   tmp = DACCFG_READ(dac, FFBDAC_CFG_TGEN);  /* Get timing control */
@@ -602,8 +609,7 @@ FFBDacDPMSMode(FFBPtr pFfb, int DPMSMode, int flags) {
   switch(DPMSMode) {
 
     case DPMSModeOn:
-      tmp &= ~(FFBDAC_CFG_TGEN_VSD | FFBDAC_CFG_TGEN_HSD); /* Turn off VSYNC, HSYNC
-							      disable bits */
+      tmp = state -> tgen;
       tmp |= FFBDAC_CFG_TGEN_VIDE;  /* Turn the video on */
        break;
 
