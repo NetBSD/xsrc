@@ -43,7 +43,36 @@
 #include <X11/Xproto.h>
 #ifdef MITSHM
 #define _XSHM_SERVER_
-#include <X11/extensions/shmstr.h>
+/* X11/extensions/shmstr.h */
+/* #warning this file is deprecated and provided only for source compatibility */
+#include <X11/extensions/shmproto.h>
+ 
+#define XSHM_PUT_IMAGE_ARGS \
+    DrawablePtr		/* dst */, \
+    GCPtr		/* pGC */, \
+    int			/* depth */, \
+    unsigned int	/* format */, \
+    int			/* w */, \
+    int			/* h */, \
+    int			/* sx */, \
+    int			/* sy */, \
+    int			/* sw */, \
+    int			/* sh */, \
+    int			/* dx */, \
+    int			/* dy */, \
+    char *		/* data */
+
+#define XSHM_CREATE_PIXMAP_ARGS \
+    ScreenPtr	/* pScreen */, \
+    int		/* width */, \
+    int		/* height */, \
+    int		/* depth */, \
+    char *	/* addr */
+
+typedef struct _ShmFuncs {
+    PixmapPtr	(* CreatePixmap)(XSHM_CREATE_PIXMAP_ARGS);
+    void	(* PutImage)(XSHM_PUT_IMAGE_ARGS);
+} ShmFuncs, *ShmFuncsPtr;
 #endif
 #include "scrnintstr.h"
 #include "pixmapstr.h"
@@ -167,7 +196,7 @@ typedef struct {
     (PixmapWidthPaddingInfo[d].padRoundUp+1)))
 #endif
 
-extern int uxa_screen_index;
+extern DevPrivateKeyRec uxa_screen_index;
 static inline uxa_screen_t *
 uxa_get_screen(ScreenPtr screen)
 {

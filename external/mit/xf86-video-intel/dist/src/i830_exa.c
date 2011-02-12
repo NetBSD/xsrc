@@ -83,7 +83,7 @@ const int I830PatternROP[16] =
 };
 
 #ifdef I830_USE_UXA
-static int uxa_pixmap_index;
+static DevPrivateKeyRec uxa_pixmap_index;
 #endif
 
 #ifndef SERVER_1_5
@@ -1035,7 +1035,7 @@ i830_uxa_init (ScreenPtr pScreen)
     I830Ptr i830 = I830PTR(scrn);
 
 #ifdef SERVER_1_5
-    if (!dixRequestPrivate(&uxa_pixmap_index, 0))
+    if (!dixRegisterPrivateKey(&uxa_pixmap_index, PRIVATE_PIXMAP, 0))
 	return FALSE;
 #else
     if (!AllocatePixmapPrivate(pScreen, uxa_pixmap_index, 0))

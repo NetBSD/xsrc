@@ -39,7 +39,7 @@
 #include "dixfontstr.h"
 #include "uxa.h"
 
-int uxa_screen_index;
+DevPrivateKeyRec uxa_screen_index;
 #ifndef SERVER_1_5
 static int uxa_generation;
 #endif
@@ -479,6 +479,7 @@ uxa_driver_init(ScreenPtr screen, uxa_driver_t *uxa_driver)
     uxa_screen->info = uxa_driver;
 
 #ifdef SERVER_1_5
+    dixRegisterPrivateKey(&uxa_screen_index, PRIVATE_SCREEN, 0);
     dixSetPrivate(&screen->devPrivates, &uxa_screen_index, uxa_screen);
 #else
     if (uxa_generation != serverGeneration) {
