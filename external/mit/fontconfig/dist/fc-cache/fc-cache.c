@@ -68,6 +68,7 @@
 #include <getopt.h>
 const struct option longopts[] = {
     {"force", 0, 0, 'f'},
+    {"quick", 0, 0, 'q'},
     {"really-force", 0, 0, 'r'},
     {"system-only", 0, 0, 's'},
     {"version", 0, 0, 'V'},
@@ -87,10 +88,10 @@ usage (char *program, int error)
 {
     FILE *file = error ? stderr : stdout;
 #if HAVE_GETOPT_LONG
-    fprintf (file, "usage: %s [-frsvVh] [--force|--really-force] [--system-only] [--verbose] [--version] [--help] [dirs]\n",
+    fprintf (file, "usage: %s [-fqrsvVh] [--quick] [--force|--really-force] [--system-only] [--verbose] [--version] [--help] [dirs]\n",
 	     program);
 #else
-    fprintf (file, "usage: %s [-frsvVh] [dirs]\n",
+    fprintf (file, "usage: %s [-fqrsvVh] [dirs]\n",
 	     program);
 #endif
     fprintf (file, "Build font information caches in [dirs]\n"
@@ -98,6 +99,7 @@ usage (char *program, int error)
     fprintf (file, "\n");
 #if HAVE_GETOPT_LONG
     fprintf (file, "  -f, --force          scan directories with apparently valid caches\n");
+    fprintf (file, "  -q, --quick          don't sleep before exiting\n");
     fprintf (file, "  -r, --really-force   erase all existing caches, then rescan\n");
     fprintf (file, "  -s, --system-only    scan system-wide directories only\n");
     fprintf (file, "  -v, --verbose        display status information while busy\n");
@@ -105,6 +107,7 @@ usage (char *program, int error)
     fprintf (file, "  -h, --help           display this help and exit\n");
 #else
     fprintf (file, "  -f         (force)   scan directories with apparently valid caches\n");
+    fprintf (file, "  -q         (quick)   don't sleep before exiting\n");
     fprintf (file, "  -r,   (really force) erase all existing caches, then rescan\n");
     fprintf (file, "  -s         (system)  scan system-wide directories only\n");
     fprintf (file, "  -v         (verbose) display status information while busy\n");
@@ -364,6 +367,7 @@ main (int argc, char **argv)
     FcStrSet	*dirs;
     FcStrList	*list;
     FcBool    	verbose = FcFalse;
+    FcBool      quick = FcFalse;
     FcBool	force = FcFalse;
     FcBool	really_force = FcFalse;
     FcBool	systemOnly = FcFalse;
@@ -374,9 +378,9 @@ main (int argc, char **argv)
     int		c;
 
 #if HAVE_GETOPT_LONG
-    while ((c = getopt_long (argc, argv, "frsVvh", longopts, NULL)) != -1)
+    while ((c = getopt_long (argc, argv, "fqrsVvh", longopts, NULL)) != -1)
 #else
-    while ((c = getopt (argc, argv, "frsVvh")) != -1)
+    while ((c = getopt (argc, argv, "fqrsVvh")) != -1)
 #endif
     {
 	switch (c) {
@@ -385,6 +389,9 @@ main (int argc, char **argv)
 	    /* fall through */
 	case 'f':
 	    force = FcTrue;
+	    break;
+	case 'q':
+	    quick = FcTrue;
 	    break;
 	case 's':
 	    systemOnly = FcTrue;
@@ -461,7 +468,8 @@ main (int argc, char **argv)
      */
     FcConfigDestroy (config);
     FcFini ();
-    sleep (2);
+    if (!quick)
+        sleep (2);
     if (verbose)
 	printf ("%s: %s\n", argv[0], ret ? "failed" : "succeeded");
     return ret;
