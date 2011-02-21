@@ -152,6 +152,48 @@ static void Process ( int scrno, Bool doScreen, Bool execute );
 static void ShuffleEntries ( Entries *db, Entries *dbs, int num );
 static void ReProcess ( int scrno, Bool doScreen );
 
+#ifndef HAVE_ASPRINTF
+/* sprintf variant found in newer libc's which allocates string to print to */
+static int _X_ATTRIBUTE_PRINTF(2,3)
+asprintf(char ** ret, const char *format, ...)
+{
+    char buf[256];
+    int len;
+    va_list ap;
+
+    va_start(ap, format);
+    len = vsnprintf(buf, sizeof(buf), format, ap);
+    va_end(ap);
+
+    if (len < 0)
+	return -1;
+
+    if (len < sizeof(buf))
+    {
+	*ret = strdup(buf);
+    }
+    else
+    {
+	*ret = malloc(len + 1); /* snprintf doesn't count trailing '\0' */
+	if (*ret != NULL)
+	{
+	    va_start(ap, format);
+	    len = vsnprintf(*ret, len + 1, format, ap);
+	    va_end(ap);
+	    if (len < 0) {
+		free(*ret);
+		*ret = NULL;
+	    }
+	}
+    }
+
+    if (*ret == NULL)
+	return -1;
+
+    return len;
+}
+#endif /* HAVE_ASPRINTF */
+
 static void 
 InitBuffer(Buffer *b)
 {
@@ -669,55 +711,30 @@ static void
 Syntax (void)
 {
     fprintf (stderr, 
-	     "usage:  %s [-options ...] [filename]\n\n",
-	     ProgramName);
-    fprintf (stderr, 
-	     "where options include:\n");
-    fprintf (stderr, 
-	     " -display host:dpy   display to use\n");
-    fprintf (stderr, 
-	     " -all                do all resources [default]\n");
-    fprintf (stderr, 
-	     " -global             do screen-independent resources\n");
-    fprintf (stderr, 
-	     " -screen             do screen-specific resources for one screen\n");
-    fprintf (stderr, 
-	     " -screens            do screen-specific resources for all screens\n");
-    fprintf (stderr,
-	     " -n                  show but don't do changes\n");
-    fprintf (stderr, 
-	     " -cpp filename       preprocessor to use [%s]\n",
-	     CPP);
-    fprintf (stderr, 
-	     " -nocpp              do not use a preprocessor\n");
-    fprintf (stderr, 
-	     " -query              query resources\n");
-    fprintf (stderr,
-	     " -load               load resources from file [default]\n");
-    fprintf (stderr,
-	     " -override           add in resources from file\n");
-    fprintf (stderr, 
-	     " -merge              merge resources from file & sort\n");
-    fprintf (stderr, 
-	     " -edit filename      edit resources into file\n");
-    fprintf (stderr, 
-	     " -backup string      backup suffix for -edit [%s]\n",
-	     BACKUP_SUFFIX);
-    fprintf (stderr, 
-	     " -symbols            show preprocessor symbols\n");
-    fprintf (stderr, 
-	     " -remove             remove resources\n");
-    fprintf (stderr, 
-	     " -retain             avoid server reset (avoid using this)\n");
-    fprintf (stderr,
-	     " -quiet              don't warn about duplicates\n");
-    fprintf (stderr, 
-	     " -Dname[=value], -Uname, -Idirectory    %s\n",
-	     "passed to preprocessor");
-    fprintf (stderr, 
-	     "\n");
-    fprintf (stderr,
-	     "A - or no input filename represents stdin.\n");  
+	     "usage:  %s [-options ...] [filename]\n\n"
+	     "where options include:\n"
+	     " -display host:dpy   display to use\n"
+	     " -all                do all resources [default]\n"
+	     " -global             do screen-independent resources\n"
+	     " -screen             do screen-specific resources for one screen\n"
+	     " -screens            do screen-specific resources for all screens\n"
+	     " -n                  show but don't do changes\n"
+	     " -cpp filename       preprocessor to use [%s]\n"
+	     " -nocpp              do not use a preprocessor\n"
+	     " -query              query resources\n"
+	     " -load               load resources from file [default]\n"
+	     " -override           add in resources from file\n"
+	     " -merge              merge resources from file & sort\n"
+	     " -edit filename      edit resources into file\n"
+	     " -backup string      backup suffix for -edit [%s]\n"
+	     " -symbols            show preprocessor symbols\n"
+	     " -remove             remove resources\n"
+	     " -retain             avoid server reset (avoid using this)\n"
+	     " -quiet              don't warn about duplicates\n"
+	     " -Dname[=value], -Uname, -Idirectory    passed to preprocessor\n"
+	     "\n"
+	     "A - or no input filename represents stdin.\n",
+	     ProgramName, CPP, BACKUP_SUFFIX);
     exit (1);
 }
 
@@ -784,6 +801,23 @@ main(int argc, char *argv[])
 
     /* initialize the includes String struct */
     addstring(&includes, "");
+
+    /* Pick the default cpp to use.  This needs to be done before
+     * we parse the command line in order to honor -nocpp which sets
+     * it back to NULL.
+     */
+    if (cpp_program == NULL) {
+	int number_of_elements
+	    = (sizeof cpp_locations) / (sizeof cpp_locations[0]);
+	int j;
+
+	for (j = 0; j < number_of_elements; j++) {
+	    if (access(cpp_locations[j], X_OK) == 0) {
+		cpp_program = cpp_locations[j];
+		break;
+	    }
+	} 
+    }
 
     /* needs to be replaced with XrmParseCommand */
 
@@ -883,19 +917,6 @@ main(int argc, char *argv[])
 	    filename = arg;
     }							/* end for */
 
-    /* If cpp to use was not specified, check for ones in default locations */
-    if (cpp_program == NULL) {
-	int number_of_elements
-	    = (sizeof cpp_locations) / (sizeof cpp_locations[0]);
-	int j;
-
-	for (j = 0; j < number_of_elements; j++) {
-	    if (access(cpp_locations[j], X_OK) == 0) {
-		cpp_program = cpp_locations[j];
-		break;
-	    }
-	} 
-    }
 #ifndef WIN32
     while ((i = open("/dev/null", O_RDONLY)) < 3)
 	; /* make sure later freopen won't clobber things */
@@ -951,7 +972,7 @@ main(int argc, char *argv[])
 	strcpy(tmpname, "/tmp/xrdb_XXXXXX");
 #endif
 #endif
-#ifndef HAS_MKSTEMP
+#ifndef HAVE_MKSTEMP
 	(void) mktemp(tmpname);
 	filename = tmpname;
 	fp = fopen(filename, "w");
@@ -1123,7 +1144,7 @@ Process(int scrno, Bool doScreen, Bool execute)
 
 	input = fopen(editFile, "r");
 	snprintf(template, sizeof(template), "%sXXXXXX", editFile);
-#ifndef HAS_MKSTEMP
+#ifndef HAVE_MKSTEMP
 	(void) mktemp(template);
 	output = fopen(template, "w");
 #else
@@ -1170,15 +1191,12 @@ Process(int scrno, Bool doScreen, Bool execute)
 	    fprintf(input, "\n#include \"%s\"\n", filename);
 	    fclose(input);
 	    (void) mktemp(tmpname3);
-	    if((cmd = (char *)
-		malloc(strlen(cpp_program) + strlen(includes.val) +
-		       1 + strlen(tmpname2) + 3 + strlen(tmpname3) + 1)) ==
-	       NULL)
+	    if (asprintf(&cmd, "%s%s%s -P%s %s > %s", cpp_program,
+		         cpp_args ? " " : "",
+		         cpp_args ? cpp_args : "",
+			 includes.val,
+			 tmpname2, tmpname3) == -1)
 		fatal("%s: Out of memory\n", ProgramName);
-	    sprintf(cmd, "%s%s%s%s %s > %s", cpp_program,
-		    cpp_args ? " " : "",
-		    cpp_args ? cpp_args : "",
-		    includes.val, tmpname2, tmpname3);
 	    if (system(cmd) < 0)
 		fatal("%s: cannot run '%s'\n", ProgramName, cmd);
 	    free(cmd);
@@ -1191,14 +1209,11 @@ Process(int scrno, Bool doScreen, Bool execute)
 	    fprintf(stdin, "\n#include \"%s\"\n", filename);
 	    fflush(stdin);
 	    fseek(stdin, 0, 0);
-	    if((cmd = (char *)
-		malloc(strlen(cpp_program) + strlen(includes.val) + 1)) ==
-	       NULL)
+	    if (asprintf(&cmd, "%s%s%s -P%s", cpp_program,
+		         cpp_args ? " " : "",
+		         cpp_args ? cpp_args : "",
+			 includes.val) == -1)
 		fatal("%s: Out of memory\n", ProgramName);
-	    sprintf(cmd, "%s%s%s%s", cpp_program,
-		    cpp_args ? " " : "",
-		    cpp_args ? cpp_args : "",
-		    includes.val);
 	    if (!(input = popen(cmd, "r")))
 		fatal("%s: cannot run '%s'\n", ProgramName, cmd);
 	    free(cmd);
@@ -1212,35 +1227,24 @@ Process(int scrno, Bool doScreen, Bool execute)
 	if (cpp_program) {
 #ifdef WIN32
 	    (void) mktemp(tmpname3);
-	    if((cmd = (char *)
-		malloc(strlen(cpp_program) + strlen(includes.val) +
-		       1 + strlen(defines.val) + 1 +
-		       strlen(filename ? filename : "") + 3 +
-		       strlen(tmpname3) + 1)) ==
-	       NULL)
+	    if (asprintf(&cmd, "%s%s%s -P%s %s %s > %s", cpp_program,
+		         cpp_args ? " " : "",
+		         cpp_args ? cpp_args : "",
+			 includes.val, defines.val,
+			 filename ? filename : "", tmpname3) == -1)
 		fatal("%s: Out of memory\n", ProgramName);
-	    sprintf(cmd, "%s%s%s%s %s %s > %s", cpp_program,
-		    cpp_args ? " " : "",
-		    cpp_args ? cpp_args : "",
-		    includes.val, defines.val,
-		    filename ? filename : "", tmpname3);
 	    if (system(cmd) < 0)
 		fatal("%s: cannot run '%s'\n", ProgramName, cmd);
 	    free(cmd);
 	    if (!(input = fopen(tmpname3, "r")))
 		fatal("%s: can't open file '%s'\n", ProgramName, tmpname3);
 #else
-	    if((cmd = (char *)
-		malloc(strlen(cpp_program) + strlen(includes.val) + 1 +
-		       strlen(defines.val) + 1 +
-		       strlen(filename ? filename : "") + 1)) ==
-	       NULL)
+	    if (asprintf(&cmd, "%s%s%s -P%s %s %s", cpp_program,
+		         cpp_args ? " " : "",
+		         cpp_args ? cpp_args : "",
+			 includes.val, defines.val,
+			 filename ? filename : "") == -1)
 		fatal("%s: Out of memory\n", ProgramName);
-	    sprintf(cmd, "%s%s%s%s %s %s", cpp_program,
-		    cpp_args ? " " : "",
-		    cpp_args ? cpp_args : "",
-		    includes.val, defines.val,
-		    filename ? filename : "");
 	    if (!(input = popen(cmd, "r")))
 		fatal("%s: cannot run '%s'\n", ProgramName, cmd);
 	    free(cmd);
