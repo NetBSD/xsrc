@@ -45,7 +45,7 @@ XCOMM $XFree86: xc/config/cf/X11.tmpl,v 1.248 2004/02/16 04:07:37 dawes Exp $
 # if defined XorgVersionString
 #   define XOrgReleaseString	Release XorgVersionString
 # else
-#   define XOrgReleaseString	Release 6.8
+#   define XOrgReleaseString	Release 7
 # endif
 #endif
 
@@ -1675,6 +1675,7 @@ XCOMM X Window System make variables; these need to be coordinated with rules
          DOCPSDIR = DocPsDir
         DOCPDFDIR = DocPdfDir
           FONTDIR = FontDir		/* font directories */
+      FONTROOTDIR = FontDir		/* font directories */
      ENCODINGSDIR = FontEncDir          /* font encodings directory */
          XINITDIR = XinitDir		/* xinit config files */
            XDMDIR = XdmDir		/* xdm config files */
@@ -3928,21 +3929,13 @@ ProjectUnsharedLibReferences(XKBUI,xkbui,$(XKBUILIBSRC),XBuildLibDir)
 #endif
 
 #ifndef ExtraXawReqs
-# if BuildXaw
-#  define ExtraXawReqs $(XPLIB)
-# else
-#  define ExtraXawReqs /**/
-# endif
+# define ExtraXawReqs /**/
 #endif
 
 EXTRAXAWREQS = ExtraXawReqs
 
 #ifndef ExtraXawClientDepLibs
-# if BuildXaw
-#  define ExtraXawClientDepLibs $(DEPXPLIB)
-# else
-#  define ExtraXawClientDepLibs /**/
-# endif
+# define ExtraXawClientDepLibs /**/
 #endif
 
 EXTRAXAWCLIENTDEPLIBS = ExtraXawClientDepLibs
@@ -3952,11 +3945,7 @@ EXTRAXAWCLIENTDEPLIBS = ExtraXawClientDepLibs
 #endif
 
 #ifndef ExtraXawClientLibs
-# if BuildXaw
-#  define ExtraXawClientLibs $(XPLIB)
-# else
-#  define ExtraXawClientLibs /**/
-# endif
+# define ExtraXawClientLibs /**/
 #endif
 
 EXTRAXAWCLIENTLIBS = ExtraXawClientLibs
