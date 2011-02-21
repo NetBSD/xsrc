@@ -9,6 +9,12 @@
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #undef HAVE_DLFCN_H
 
+/* Whether we have feenableexcept() */
+#undef HAVE_FEENABLEEXCEPT
+
+/* Define to 1 if we have <fenv.h> */
+#undef HAVE_FENV_H
+
 /* Define to 1 if you have the `getisax' function. */
 #undef HAVE_GETISAX
 

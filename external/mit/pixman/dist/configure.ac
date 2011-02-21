@@ -54,11 +54,11 @@ AC_PREREQ([2.57])
 
 m4_define([pixman_major], 0)
 m4_define([pixman_minor], 21)
-m4_define([pixman_micro], 2)
+m4_define([pixman_micro], 4)
 
 m4_define([pixman_version],[pixman_major.pixman_minor.pixman_micro])
 
-AC_INIT(pixman, pixman_version, "pixman@lists.freedesktop.org", pixman)
+AC_INIT(pixman, pixman_version, [pixman@lists.freedesktop.org], pixman)
 AM_INIT_AUTOMAKE([foreign dist-bzip2])
 
 # Suppress verbose compile lines
@@ -566,6 +566,20 @@ fi
 AM_CONDITIONAL(USE_GCC_INLINE_ASM, test $have_gcc_inline_asm = yes)
 
 dnl ==============================================
+dnl Static test programs
+
+AC_ARG_ENABLE(static-testprogs,
+   [AC_HELP_STRING([--enable-static-testprogs],
+		   [build test programs as static binaries [default=no]])],
+   [enable_static_testprogs=$enableval], [enable_static_testprogs=no])
+
+TESTPROGS_EXTRA_LDFLAGS=
+if test "x$enable_static_testprogs" = "xyes" ; then
+   TESTPROGS_EXTRA_LDFLAGS="-all-static"
+fi
+AC_SUBST(TESTPROGS_EXTRA_LDFLAGS)
+
+dnl ==============================================
 dnl Timers
 
 AC_ARG_ENABLE(timers,
@@ -637,6 +651,14 @@ fi
 AC_CHECK_FUNC(getpagesize, have_getpagesize=yes, have_getpagesize=no)
 if test x$have_getpagesize = xyes; then
    AC_DEFINE(HAVE_GETPAGESIZE, 1, [Whether we have getpagesize()])
+fi
+
+AC_CHECK_HEADER([fenv.h],
+   [AC_DEFINE(HAVE_FENV_H, [1], [Define to 1 if we have <fenv.h>])])
+
+AC_CHECK_LIB(m, feenableexcept, have_feenableexcept=yes, have_feenableexcept=no)
+if test x$have_feenableexcept = xyes; then
+   AC_DEFINE(HAVE_FEENABLEEXCEPT, 1, [Whether we have feenableexcept()])
 fi
 
 AC_CHECK_FUNC(gettimeofday, have_gettimeofday=yes, have_gettimeofday=no)
