@@ -2598,7 +2598,7 @@ sse2_composite_over_n_8888 (pixman_implementation_t *imp,
     __m128i xmm_src, xmm_alpha;
     __m128i xmm_dst, xmm_dst_lo, xmm_dst_hi;
 
-    src = _pixman_image_get_solid (src_image, dst_image->bits.format);
+    src = _pixman_image_get_solid (imp, src_image, dst_image->bits.format);
 
     if (src == 0)
 	return;
@@ -2681,7 +2681,7 @@ sse2_composite_over_n_0565 (pixman_implementation_t *imp,
     __m128i xmm_src, xmm_alpha;
     __m128i xmm_dst, xmm_dst0, xmm_dst1, xmm_dst2, xmm_dst3;
 
-    src = _pixman_image_get_solid (src_image, dst_image->bits.format);
+    src = _pixman_image_get_solid (imp, src_image, dst_image->bits.format);
 
     if (src == 0)
 	return;
@@ -2776,7 +2776,7 @@ sse2_composite_add_n_8888_8888_ca (pixman_implementation_t *imp,
 
     __m64 mmx_src, mmx_alpha, mmx_mask, mmx_dest;
 
-    src = _pixman_image_get_solid (src_image, dst_image->bits.format);
+    src = _pixman_image_get_solid (imp, src_image, dst_image->bits.format);
     srca = src >> 24;
 
     if (src == 0)
@@ -2904,7 +2904,7 @@ sse2_composite_over_n_8888_8888_ca (pixman_implementation_t *imp,
 
     __m64 mmx_src, mmx_alpha, mmx_mask, mmx_dest;
 
-    src = _pixman_image_get_solid (src_image, dst_image->bits.format);
+    src = _pixman_image_get_solid (imp, src_image, dst_image->bits.format);
 
     if (src == 0)
 	return;
@@ -3036,7 +3036,7 @@ sse2_composite_over_8888_n_8888 (pixman_implementation_t *imp,
     PIXMAN_IMAGE_GET_LINE (
 	src_image, src_x, src_y, uint32_t, src_stride, src_line, 1);
 
-    mask = _pixman_image_get_solid (mask_image, PIXMAN_a8r8g8b8);
+    mask = _pixman_image_get_solid (imp, mask_image, PIXMAN_a8r8g8b8);
 
     xmm_mask = create_mask_16_128 (mask >> 24);
 
@@ -3051,37 +3051,45 @@ sse2_composite_over_8888_n_8888 (pixman_implementation_t *imp,
 	while (w && (unsigned long)dst & 15)
 	{
 	    uint32_t s = *src++;
-	    uint32_t d = *dst;
 
-	    __m64 ms = unpack_32_1x64 (s);
-	    __m64 alpha    = expand_alpha_1x64 (ms);
-	    __m64 dest     = _mm_movepi64_pi64 (xmm_mask);
-	    __m64 alpha_dst = unpack_32_1x64 (d);
-
-	    *dst++ = pack_1x64_32 (
-		in_over_1x64 (&ms, &alpha, &dest, &alpha_dst));
-
+	    if (s)
+	    {
+		uint32_t d = *dst;
+		
+		__m64 ms = unpack_32_1x64 (s);
+		__m64 alpha    = expand_alpha_1x64 (ms);
+		__m64 dest     = _mm_movepi64_pi64 (xmm_mask);
+		__m64 alpha_dst = unpack_32_1x64 (d);
+		
+		*dst = pack_1x64_32 (
+		    in_over_1x64 (&ms, &alpha, &dest, &alpha_dst));
+	    }
+	    dst++;
 	    w--;
 	}
 
 	while (w >= 4)
 	{
 	    xmm_src = load_128_unaligned ((__m128i*)src);
-	    xmm_dst = load_128_aligned ((__m128i*)dst);
 
-	    unpack_128_2x128 (xmm_src, &xmm_src_lo, &xmm_src_hi);
-	    unpack_128_2x128 (xmm_dst, &xmm_dst_lo, &xmm_dst_hi);
-	    expand_alpha_2x128 (xmm_src_lo, xmm_src_hi,
-				&xmm_alpha_lo, &xmm_alpha_hi);
-
-	    in_over_2x128 (&xmm_src_lo, &xmm_src_hi,
-			   &xmm_alpha_lo, &xmm_alpha_hi,
-			   &xmm_mask, &xmm_mask,
-			   &xmm_dst_lo, &xmm_dst_hi);
-
-	    save_128_aligned (
-		(__m128i*)dst, pack_2x128_128 (xmm_dst_lo, xmm_dst_hi));
-
+	    if (!is_zero (xmm_src))
+	    {
+		xmm_dst = load_128_aligned ((__m128i*)dst);
+		
+		unpack_128_2x128 (xmm_src, &xmm_src_lo, &xmm_src_hi);
+		unpack_128_2x128 (xmm_dst, &xmm_dst_lo, &xmm_dst_hi);
+		expand_alpha_2x128 (xmm_src_lo, xmm_src_hi,
+				    &xmm_alpha_lo, &xmm_alpha_hi);
+		
+		in_over_2x128 (&xmm_src_lo, &xmm_src_hi,
+			       &xmm_alpha_lo, &xmm_alpha_hi,
+			       &xmm_mask, &xmm_mask,
+			       &xmm_dst_lo, &xmm_dst_hi);
+		
+		save_128_aligned (
+		    (__m128i*)dst, pack_2x128_128 (xmm_dst_lo, xmm_dst_hi));
+	    }
+		
 	    dst += 4;
 	    src += 4;
 	    w -= 4;
@@ -3090,16 +3098,21 @@ sse2_composite_over_8888_n_8888 (pixman_implementation_t *imp,
 	while (w)
 	{
 	    uint32_t s = *src++;
-	    uint32_t d = *dst;
 
-	    __m64 ms = unpack_32_1x64 (s);
-	    __m64 alpha = expand_alpha_1x64 (ms);
-	    __m64 mask  = _mm_movepi64_pi64 (xmm_mask);
-	    __m64 dest  = unpack_32_1x64 (d);
+	    if (s)
+	    {
+		uint32_t d = *dst;
+		
+		__m64 ms = unpack_32_1x64 (s);
+		__m64 alpha = expand_alpha_1x64 (ms);
+		__m64 mask  = _mm_movepi64_pi64 (xmm_mask);
+		__m64 dest  = unpack_32_1x64 (d);
+		
+		*dst = pack_1x64_32 (
+		    in_over_1x64 (&ms, &alpha, &mask, &dest));
+	    }
 
-	    *dst++ = pack_1x64_32 (
-		in_over_1x64 (&ms, &alpha, &mask, &dest));
-
+	    dst++;
 	    w--;
 	}
     }
@@ -3213,7 +3226,7 @@ sse2_composite_over_x888_n_8888 (pixman_implementation_t *imp,
     PIXMAN_IMAGE_GET_LINE (
 	src_image, src_x, src_y, uint32_t, src_stride, src_line, 1);
 
-    mask = _pixman_image_get_solid (mask_image, PIXMAN_a8r8g8b8);
+    mask = _pixman_image_get_solid (imp, mask_image, PIXMAN_a8r8g8b8);
 
     xmm_mask = create_mask_16_128 (mask >> 24);
     xmm_alpha = mask_00ff;
@@ -3485,7 +3498,7 @@ sse2_composite_over_n_8_8888 (pixman_implementation_t *imp,
 
     __m64 mmx_src, mmx_alpha, mmx_mask, mmx_dest;
 
-    src = _pixman_image_get_solid (src_image, dst_image->bits.format);
+    src = _pixman_image_get_solid (imp, src_image, dst_image->bits.format);
 
     srca = src >> 24;
     if (src == 0)
@@ -3769,7 +3782,7 @@ sse2_composite_src_n_8_8888 (pixman_implementation_t *imp,
     __m128i xmm_src, xmm_def;
     __m128i xmm_mask, xmm_mask_lo, xmm_mask_hi;
 
-    src = _pixman_image_get_solid (src_image, dst_image->bits.format);
+    src = _pixman_image_get_solid (imp, src_image, dst_image->bits.format);
 
     srca = src >> 24;
     if (src == 0)
@@ -3905,7 +3918,7 @@ sse2_composite_over_n_8_0565 (pixman_implementation_t *imp,
     __m128i xmm_mask, xmm_mask_lo, xmm_mask_hi;
     __m128i xmm_dst, xmm_dst0, xmm_dst1, xmm_dst2, xmm_dst3;
 
-    src = _pixman_image_get_solid (src_image, dst_image->bits.format);
+    src = _pixman_image_get_solid (imp, src_image, dst_image->bits.format);
 
     srca = src >> 24;
     if (src == 0)
@@ -4305,7 +4318,7 @@ sse2_composite_over_n_8888_0565_ca (pixman_implementation_t *imp,
 
     __m64 mmx_src, mmx_alpha, mmx_mask, mmx_dest;
 
-    src = _pixman_image_get_solid (src_image, dst_image->bits.format);
+    src = _pixman_image_get_solid (imp, src_image, dst_image->bits.format);
 
     if (src == 0)
 	return;
@@ -4458,7 +4471,7 @@ sse2_composite_in_n_8_8 (pixman_implementation_t *imp,
     PIXMAN_IMAGE_GET_LINE (
 	mask_image, mask_x, mask_y, uint8_t, mask_stride, mask_line, 1);
 
-    src = _pixman_image_get_solid (src_image, dst_image->bits.format);
+    src = _pixman_image_get_solid (imp, src_image, dst_image->bits.format);
 
     sa = src >> 24;
 
@@ -4557,7 +4570,7 @@ sse2_composite_in_n_8 (pixman_implementation_t *imp,
     PIXMAN_IMAGE_GET_LINE (
 	dst_image, dest_x, dest_y, uint8_t, dst_stride, dst_line, 1);
 
-    src = _pixman_image_get_solid (src_image, dst_image->bits.format);
+    src = _pixman_image_get_solid (imp, src_image, dst_image->bits.format);
 
     xmm_alpha = expand_alpha_1x128 (expand_pixel_32_1x128 (src));
 
@@ -4745,7 +4758,7 @@ sse2_composite_add_n_8_8 (pixman_implementation_t *imp,
     PIXMAN_IMAGE_GET_LINE (
 	mask_image, mask_x, mask_y, uint8_t, mask_stride, mask_line, 1);
 
-    src = _pixman_image_get_solid (src_image, dst_image->bits.format);
+    src = _pixman_image_get_solid (imp, src_image, dst_image->bits.format);
 
     sa = src >> 24;
 
@@ -4842,7 +4855,7 @@ sse2_composite_add_n_8 (pixman_implementation_t *imp,
     PIXMAN_IMAGE_GET_LINE (
 	dst_image, dest_x, dest_y, uint8_t, dst_stride, dst_line, 1);
 
-    src = _pixman_image_get_solid (src_image, dst_image->bits.format);
+    src = _pixman_image_get_solid (imp, src_image, dst_image->bits.format);
 
     src >>= 24;
 
@@ -5467,7 +5480,7 @@ sse2_composite_over_reverse_n_8888 (pixman_implementation_t *imp,
     int dst_stride;
     int32_t w;
 
-    src = _pixman_image_get_solid (src_image, dst_image->bits.format);
+    src = _pixman_image_get_solid (imp, src_image, dst_image->bits.format);
 
     if (src == 0)
 	return;
@@ -5781,13 +5794,13 @@ scaled_nearest_scanline_sse2_8888_8888_OVER (uint32_t*       pd,
 
 FAST_NEAREST_MAINLOOP (sse2_8888_8888_cover_OVER,
 		       scaled_nearest_scanline_sse2_8888_8888_OVER,
-		       uint32_t, uint32_t, COVER);
+		       uint32_t, uint32_t, COVER)
 FAST_NEAREST_MAINLOOP (sse2_8888_8888_none_OVER,
 		       scaled_nearest_scanline_sse2_8888_8888_OVER,
-		       uint32_t, uint32_t, NONE);
+		       uint32_t, uint32_t, NONE)
 FAST_NEAREST_MAINLOOP (sse2_8888_8888_pad_OVER,
 		       scaled_nearest_scanline_sse2_8888_8888_OVER,
-		       uint32_t, uint32_t, PAD);
+		       uint32_t, uint32_t, PAD)
 
 static const pixman_fast_path_t sse2_fast_paths[] =
 {

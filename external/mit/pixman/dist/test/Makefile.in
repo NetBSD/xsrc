@@ -47,114 +47,180 @@ mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = $(top_builddir)/config.h
 CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
-am__EXEEXT_1 = a1-trap-test$(EXEEXT) region-test$(EXEEXT) \
-	region-translate-test$(EXEEXT) fetch-test$(EXEEXT) \
-	oob-test$(EXEEXT) gradient-crash-test$(EXEEXT) \
-	trap-crasher$(EXEEXT) alpha-loop$(EXEEXT) \
-	scaling-crash-test$(EXEEXT) alphamap$(EXEEXT) \
-	blitters-test$(EXEEXT) scaling-test$(EXEEXT) \
-	affine-test$(EXEEXT) composite$(EXEEXT)
+am__EXEEXT_1 = a1-trap-test$(EXEEXT) pdf-op-test$(EXEEXT) \
+	region-test$(EXEEXT) region-translate-test$(EXEEXT) \
+	fetch-test$(EXEEXT) oob-test$(EXEEXT) trap-crasher$(EXEEXT) \
+	alpha-loop$(EXEEXT) scaling-crash-test$(EXEEXT) \
+	gradient-crash-test$(EXEEXT) alphamap$(EXEEXT) \
+	stress-test$(EXEEXT) blitters-test$(EXEEXT) \
+	scaling-test$(EXEEXT) affine-test$(EXEEXT) composite$(EXEEXT)
 @HAVE_GTK_TRUE@am__EXEEXT_2 = clip-test$(EXEEXT) clip-in$(EXEEXT) \
 @HAVE_GTK_TRUE@	composite-test$(EXEEXT) gradient-test$(EXEEXT) \
-@HAVE_GTK_TRUE@	alpha-test$(EXEEXT) screen-test$(EXEEXT) \
-@HAVE_GTK_TRUE@	convolution-test$(EXEEXT) trap-test$(EXEEXT)
+@HAVE_GTK_TRUE@	radial-test$(EXEEXT) alpha-test$(EXEEXT) \
+@HAVE_GTK_TRUE@	screen-test$(EXEEXT) convolution-test$(EXEEXT) \
+@HAVE_GTK_TRUE@	trap-test$(EXEEXT)
 am__EXEEXT_3 = lowlevel-blt-bench$(EXEEXT)
 PROGRAMS = $(noinst_PROGRAMS)
 a1_trap_test_SOURCES = a1-trap-test.c
 a1_trap_test_OBJECTS = a1-trap-test.$(OBJEXT)
-a1_trap_test_DEPENDENCIES = $(TEST_LDADD)
+am__DEPENDENCIES_1 = $(top_builddir)/pixman/libpixman-1.la
+a1_trap_test_DEPENDENCIES = $(am__DEPENDENCIES_1)
 AM_V_lt = $(am__v_lt_$(V))
 am__v_lt_ = $(am__v_lt_$(AM_DEFAULT_VERBOSITY))
 am__v_lt_0 = --silent
+a1_trap_test_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
+	$(a1_trap_test_LDFLAGS) $(LDFLAGS) -o $@
 am_affine_test_OBJECTS = affine-test.$(OBJEXT) utils.$(OBJEXT)
 affine_test_OBJECTS = $(am_affine_test_OBJECTS)
-affine_test_DEPENDENCIES = $(TEST_LDADD)
+affine_test_DEPENDENCIES = $(am__DEPENDENCIES_1)
+affine_test_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
+	$(affine_test_LDFLAGS) $(LDFLAGS) -o $@
 am_alpha_loop_OBJECTS = alpha-loop.$(OBJEXT) utils.$(OBJEXT)
 alpha_loop_OBJECTS = $(am_alpha_loop_OBJECTS)
-alpha_loop_DEPENDENCIES = $(TEST_LDADD)
+alpha_loop_DEPENDENCIES = $(am__DEPENDENCIES_1)
+alpha_loop_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
+	$(alpha_loop_LDFLAGS) $(LDFLAGS) -o $@
 am__alpha_test_SOURCES_DIST = alpha-test.c gtk-utils.c gtk-utils.h
 @HAVE_GTK_TRUE@am__objects_1 = gtk-utils.$(OBJEXT)
 @HAVE_GTK_TRUE@am_alpha_test_OBJECTS = alpha-test.$(OBJEXT) \
 @HAVE_GTK_TRUE@	$(am__objects_1)
 alpha_test_OBJECTS = $(am_alpha_test_OBJECTS)
-am__DEPENDENCIES_1 =
-@HAVE_GTK_TRUE@am__DEPENDENCIES_2 = $(TEST_LDADD) \
-@HAVE_GTK_TRUE@	$(am__DEPENDENCIES_1)
-@HAVE_GTK_TRUE@alpha_test_DEPENDENCIES = $(am__DEPENDENCIES_2)
+am__DEPENDENCIES_2 =
+@HAVE_GTK_TRUE@am__DEPENDENCIES_3 = $(am__DEPENDENCIES_1) \
+@HAVE_GTK_TRUE@	$(am__DEPENDENCIES_2)
+@HAVE_GTK_TRUE@alpha_test_DEPENDENCIES = $(am__DEPENDENCIES_3)
 am_alphamap_OBJECTS = alphamap.$(OBJEXT) utils.$(OBJEXT)
 alphamap_OBJECTS = $(am_alphamap_OBJECTS)
-alphamap_DEPENDENCIES = $(TEST_LDADD)
+alphamap_DEPENDENCIES = $(am__DEPENDENCIES_1)
+alphamap_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
+	$(alphamap_LDFLAGS) $(LDFLAGS) -o $@
 am_blitters_test_OBJECTS = blitters-test.$(OBJEXT) utils.$(OBJEXT)
 blitters_test_OBJECTS = $(am_blitters_test_OBJECTS)
-blitters_test_DEPENDENCIES = $(TEST_LDADD)
+blitters_test_DEPENDENCIES = $(am__DEPENDENCIES_1)
+blitters_test_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
+	$(blitters_test_LDFLAGS) $(LDFLAGS) -o $@
 am__clip_in_SOURCES_DIST = clip-in.c gtk-utils.c gtk-utils.h
 @HAVE_GTK_TRUE@am_clip_in_OBJECTS = clip-in.$(OBJEXT) $(am__objects_1)
 clip_in_OBJECTS = $(am_clip_in_OBJECTS)
-@HAVE_GTK_TRUE@clip_in_DEPENDENCIES = $(am__DEPENDENCIES_2)
+@HAVE_GTK_TRUE@clip_in_DEPENDENCIES = $(am__DEPENDENCIES_3)
 am__clip_test_SOURCES_DIST = clip-test.c gtk-utils.c gtk-utils.h
 @HAVE_GTK_TRUE@am_clip_test_OBJECTS = clip-test.$(OBJEXT) \
 @HAVE_GTK_TRUE@	$(am__objects_1)
 clip_test_OBJECTS = $(am_clip_test_OBJECTS)
-@HAVE_GTK_TRUE@clip_test_DEPENDENCIES = $(am__DEPENDENCIES_2)
+@HAVE_GTK_TRUE@clip_test_DEPENDENCIES = $(am__DEPENDENCIES_3)
 am_composite_OBJECTS = composite.$(OBJEXT) utils.$(OBJEXT)
 composite_OBJECTS = $(am_composite_OBJECTS)
-composite_DEPENDENCIES = $(TEST_LDADD)
+composite_DEPENDENCIES = $(am__DEPENDENCIES_1)
+composite_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
+	$(composite_LDFLAGS) $(LDFLAGS) -o $@
 am__composite_test_SOURCES_DIST = composite-test.c gtk-utils.c \
 	gtk-utils.h
 @HAVE_GTK_TRUE@am_composite_test_OBJECTS = composite-test.$(OBJEXT) \
 @HAVE_GTK_TRUE@	$(am__objects_1)
 composite_test_OBJECTS = $(am_composite_test_OBJECTS)
-@HAVE_GTK_TRUE@composite_test_DEPENDENCIES = $(am__DEPENDENCIES_2)
+@HAVE_GTK_TRUE@composite_test_DEPENDENCIES = $(am__DEPENDENCIES_3)
 am__convolution_test_SOURCES_DIST = convolution-test.c gtk-utils.c \
 	gtk-utils.h
 @HAVE_GTK_TRUE@am_convolution_test_OBJECTS =  \
 @HAVE_GTK_TRUE@	convolution-test.$(OBJEXT) $(am__objects_1)
 convolution_test_OBJECTS = $(am_convolution_test_OBJECTS)
-@HAVE_GTK_TRUE@convolution_test_DEPENDENCIES = $(am__DEPENDENCIES_2)
+@HAVE_GTK_TRUE@convolution_test_DEPENDENCIES = $(am__DEPENDENCIES_3)
 fetch_test_SOURCES = fetch-test.c
 fetch_test_OBJECTS = fetch-test.$(OBJEXT)
-fetch_test_DEPENDENCIES = $(TEST_LDADD)
-gradient_crash_test_SOURCES = gradient-crash-test.c
-gradient_crash_test_OBJECTS = gradient-crash-test.$(OBJEXT)
-gradient_crash_test_DEPENDENCIES = $(TEST_LDADD)
+fetch_test_DEPENDENCIES = $(am__DEPENDENCIES_1)
+fetch_test_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
+	$(fetch_test_LDFLAGS) $(LDFLAGS) -o $@
+am_gradient_crash_test_OBJECTS = gradient-crash-test.$(OBJEXT) \
+	utils.$(OBJEXT)
+gradient_crash_test_OBJECTS = $(am_gradient_crash_test_OBJECTS)
+gradient_crash_test_DEPENDENCIES = $(am__DEPENDENCIES_1)
+gradient_crash_test_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
+	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CCLD) \
+	$(AM_CFLAGS) $(CFLAGS) $(gradient_crash_test_LDFLAGS) \
+	$(LDFLAGS) -o $@
 am__gradient_test_SOURCES_DIST = gradient-test.c gtk-utils.c \
 	gtk-utils.h
 @HAVE_GTK_TRUE@am_gradient_test_OBJECTS = gradient-test.$(OBJEXT) \
 @HAVE_GTK_TRUE@	$(am__objects_1)
 gradient_test_OBJECTS = $(am_gradient_test_OBJECTS)
-@HAVE_GTK_TRUE@gradient_test_DEPENDENCIES = $(am__DEPENDENCIES_2)
+@HAVE_GTK_TRUE@gradient_test_DEPENDENCIES = $(am__DEPENDENCIES_3)
 am_lowlevel_blt_bench_OBJECTS = lowlevel-blt-bench.$(OBJEXT) \
 	utils.$(OBJEXT)
 lowlevel_blt_bench_OBJECTS = $(am_lowlevel_blt_bench_OBJECTS)
-lowlevel_blt_bench_DEPENDENCIES = $(TEST_LDADD)
+lowlevel_blt_bench_DEPENDENCIES = $(am__DEPENDENCIES_1)
 oob_test_SOURCES = oob-test.c
 oob_test_OBJECTS = oob-test.$(OBJEXT)
-oob_test_DEPENDENCIES = $(TEST_LDADD)
+oob_test_DEPENDENCIES = $(am__DEPENDENCIES_1)
+oob_test_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
+	$(oob_test_LDFLAGS) $(LDFLAGS) -o $@
+am_pdf_op_test_OBJECTS = pdf-op-test.$(OBJEXT) utils.$(OBJEXT)
+pdf_op_test_OBJECTS = $(am_pdf_op_test_OBJECTS)
+pdf_op_test_DEPENDENCIES = $(am__DEPENDENCIES_1)
+pdf_op_test_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
+	$(pdf_op_test_LDFLAGS) $(LDFLAGS) -o $@
+am__radial_test_SOURCES_DIST = radial-test.c utils.c utils.h \
+	gtk-utils.c gtk-utils.h
+@HAVE_GTK_TRUE@am_radial_test_OBJECTS = radial-test.$(OBJEXT) \
+@HAVE_GTK_TRUE@	utils.$(OBJEXT) $(am__objects_1)
+radial_test_OBJECTS = $(am_radial_test_OBJECTS)
+@HAVE_GTK_TRUE@radial_test_DEPENDENCIES = $(am__DEPENDENCIES_3)
 am_region_test_OBJECTS = region-test.$(OBJEXT) utils.$(OBJEXT)
 region_test_OBJECTS = $(am_region_test_OBJECTS)
-region_test_DEPENDENCIES = $(TEST_LDADD)
+region_test_DEPENDENCIES = $(am__DEPENDENCIES_1)
+region_test_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
+	$(region_test_LDFLAGS) $(LDFLAGS) -o $@
 region_translate_test_SOURCES = region-translate-test.c
 region_translate_test_OBJECTS = region-translate-test.$(OBJEXT)
-region_translate_test_DEPENDENCIES = $(TEST_LDADD)
+region_translate_test_DEPENDENCIES = $(am__DEPENDENCIES_1)
+region_translate_test_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
+	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CCLD) \
+	$(AM_CFLAGS) $(CFLAGS) $(region_translate_test_LDFLAGS) \
+	$(LDFLAGS) -o $@
 scaling_crash_test_SOURCES = scaling-crash-test.c
 scaling_crash_test_OBJECTS = scaling-crash-test.$(OBJEXT)
-scaling_crash_test_DEPENDENCIES = $(TEST_LDADD)
+scaling_crash_test_DEPENDENCIES = $(am__DEPENDENCIES_1)
+scaling_crash_test_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
+	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CCLD) \
+	$(AM_CFLAGS) $(CFLAGS) $(scaling_crash_test_LDFLAGS) \
+	$(LDFLAGS) -o $@
 am_scaling_test_OBJECTS = scaling-test.$(OBJEXT) utils.$(OBJEXT)
 scaling_test_OBJECTS = $(am_scaling_test_OBJECTS)
-scaling_test_DEPENDENCIES = $(TEST_LDADD)
+scaling_test_DEPENDENCIES = $(am__DEPENDENCIES_1)
+scaling_test_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
+	$(scaling_test_LDFLAGS) $(LDFLAGS) -o $@
 am__screen_test_SOURCES_DIST = screen-test.c gtk-utils.c gtk-utils.h
 @HAVE_GTK_TRUE@am_screen_test_OBJECTS = screen-test.$(OBJEXT) \
 @HAVE_GTK_TRUE@	$(am__objects_1)
 screen_test_OBJECTS = $(am_screen_test_OBJECTS)
-@HAVE_GTK_TRUE@screen_test_DEPENDENCIES = $(am__DEPENDENCIES_2)
+@HAVE_GTK_TRUE@screen_test_DEPENDENCIES = $(am__DEPENDENCIES_3)
+am_stress_test_OBJECTS = stress-test.$(OBJEXT) utils.$(OBJEXT)
+stress_test_OBJECTS = $(am_stress_test_OBJECTS)
+stress_test_DEPENDENCIES = $(am__DEPENDENCIES_1)
+stress_test_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
+	$(stress_test_LDFLAGS) $(LDFLAGS) -o $@
 trap_crasher_SOURCES = trap-crasher.c
 trap_crasher_OBJECTS = trap-crasher.$(OBJEXT)
-trap_crasher_DEPENDENCIES = $(TEST_LDADD)
+trap_crasher_DEPENDENCIES = $(am__DEPENDENCIES_1)
+trap_crasher_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
+	$(trap_crasher_LDFLAGS) $(LDFLAGS) -o $@
 am__trap_test_SOURCES_DIST = trap-test.c gtk-utils.c gtk-utils.h
 @HAVE_GTK_TRUE@am_trap_test_OBJECTS = trap-test.$(OBJEXT) \
 @HAVE_GTK_TRUE@	$(am__objects_1)
 trap_test_OBJECTS = $(am_trap_test_OBJECTS)
-@HAVE_GTK_TRUE@trap_test_DEPENDENCIES = $(am__DEPENDENCIES_2)
+@HAVE_GTK_TRUE@trap_test_DEPENDENCIES = $(am__DEPENDENCIES_3)
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
@@ -186,23 +252,27 @@ SOURCES = a1-trap-test.c $(affine_test_SOURCES) $(alpha_loop_SOURCES) \
 	$(blitters_test_SOURCES) $(clip_in_SOURCES) \
 	$(clip_test_SOURCES) $(composite_SOURCES) \
 	$(composite_test_SOURCES) $(convolution_test_SOURCES) \
-	fetch-test.c gradient-crash-test.c $(gradient_test_SOURCES) \
-	$(lowlevel_blt_bench_SOURCES) oob-test.c \
+	fetch-test.c $(gradient_crash_test_SOURCES) \
+	$(gradient_test_SOURCES) $(lowlevel_blt_bench_SOURCES) \
+	oob-test.c $(pdf_op_test_SOURCES) $(radial_test_SOURCES) \
 	$(region_test_SOURCES) region-translate-test.c \
 	scaling-crash-test.c $(scaling_test_SOURCES) \
-	$(screen_test_SOURCES) trap-crasher.c $(trap_test_SOURCES)
+	$(screen_test_SOURCES) $(stress_test_SOURCES) trap-crasher.c \
+	$(trap_test_SOURCES)
 DIST_SOURCES = a1-trap-test.c $(affine_test_SOURCES) \
 	$(alpha_loop_SOURCES) $(am__alpha_test_SOURCES_DIST) \
 	$(alphamap_SOURCES) $(blitters_test_SOURCES) \
 	$(am__clip_in_SOURCES_DIST) $(am__clip_test_SOURCES_DIST) \
 	$(composite_SOURCES) $(am__composite_test_SOURCES_DIST) \
 	$(am__convolution_test_SOURCES_DIST) fetch-test.c \
-	gradient-crash-test.c $(am__gradient_test_SOURCES_DIST) \
+	$(gradient_crash_test_SOURCES) \
+	$(am__gradient_test_SOURCES_DIST) \
 	$(lowlevel_blt_bench_SOURCES) oob-test.c \
+	$(pdf_op_test_SOURCES) $(am__radial_test_SOURCES_DIST) \
 	$(region_test_SOURCES) region-translate-test.c \
 	scaling-crash-test.c $(scaling_test_SOURCES) \
-	$(am__screen_test_SOURCES_DIST) trap-crasher.c \
-	$(am__trap_test_SOURCES_DIST)
+	$(am__screen_test_SOURCES_DIST) $(stress_test_SOURCES) \
+	trap-crasher.c $(am__trap_test_SOURCES_DIST)
 ETAGS = etags
 CTAGS = ctags
 am__tty_colors = \
@@ -291,6 +361,7 @@ SHELL = @SHELL@
 SSE2_CFLAGS = @SSE2_CFLAGS@
 SSE2_LDFLAGS = @SSE2_LDFLAGS@
 STRIP = @STRIP@
+TESTPROGS_EXTRA_LDFLAGS = @TESTPROGS_EXTRA_LDFLAGS@
 TOOLCHAIN_SUPPORTS_ATTRIBUTE_CONSTRUCTOR = @TOOLCHAIN_SUPPORTS_ATTRIBUTE_CONSTRUCTOR@
 TOOLCHAIN_SUPPORTS__THREAD = @TOOLCHAIN_SUPPORTS__THREAD@
 VERSION = @VERSION@
@@ -348,46 +419,69 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 AM_CFLAGS = @OPENMP_CFLAGS@
 AM_LDFLAGS = @OPENMP_CFLAGS@
-TEST_LDADD = $(top_builddir)/pixman/libpixman-1.la
+TEST_LDADD = $(top_builddir)/pixman/libpixman-1.la -lm
 INCLUDES = -I$(top_srcdir)/pixman -I$(top_builddir)/pixman \
 	$(am__append_1)
 TESTPROGRAMS = \
 	a1-trap-test		\
+	pdf-op-test		\
 	region-test		\
 	region-translate-test	\
 	fetch-test		\
 	oob-test		\
-	gradient-crash-test	\
 	trap-crasher		\
 	alpha-loop		\
 	scaling-crash-test	\
+	gradient-crash-test	\
 	alphamap		\
+	stress-test		\
 	blitters-test		\
 	scaling-test		\
 	affine-test		\
 	composite
 
 a1_trap_test_LDADD = $(TEST_LDADD)
+a1_trap_test_LDFLAGS = @TESTPROGS_EXTRA_LDFLAGS@
 fetch_test_LDADD = $(TEST_LDADD)
-gradient_crash_test_LDADD = $(TEST_LDADD)
+fetch_test_LDFLAGS = @TESTPROGS_EXTRA_LDFLAGS@
 trap_crasher_LDADD = $(TEST_LDADD)
+trap_crasher_LDFLAGS = @TESTPROGS_EXTRA_LDFLAGS@
 oob_test_LDADD = $(TEST_LDADD)
+oob_test_LDFLAGS = @TESTPROGS_EXTRA_LDFLAGS@
 scaling_crash_test_LDADD = $(TEST_LDADD)
+scaling_crash_test_LDFLAGS = @TESTPROGS_EXTRA_LDFLAGS@
 region_translate_test_LDADD = $(TEST_LDADD)
+region_translate_test_LDFLAGS = @TESTPROGS_EXTRA_LDFLAGS@
+pdf_op_test_LDADD = $(TEST_LDADD)
+pdf_op_test_LDFLAGS = @TESTPROGS_EXTRA_LDFLAGS@
+pdf_op_test_SOURCES = pdf-op-test.c utils.c utils.h
 region_test_LDADD = $(TEST_LDADD)
+region_test_LDFLAGS = @TESTPROGS_EXTRA_LDFLAGS@
 region_test_SOURCES = region-test.c utils.c utils.h
 blitters_test_LDADD = $(TEST_LDADD)
+blitters_test_LDFLAGS = @TESTPROGS_EXTRA_LDFLAGS@
 blitters_test_SOURCES = blitters-test.c utils.c utils.h
 scaling_test_LDADD = $(TEST_LDADD)
+scaling_test_LDFLAGS = @TESTPROGS_EXTRA_LDFLAGS@
 scaling_test_SOURCES = scaling-test.c utils.c utils.h
 affine_test_LDADD = $(TEST_LDADD)
+affine_test_LDFLAGS = @TESTPROGS_EXTRA_LDFLAGS@
 affine_test_SOURCES = affine-test.c utils.c utils.h
 alphamap_LDADD = $(TEST_LDADD)
+alphamap_LDFLAGS = @TESTPROGS_EXTRA_LDFLAGS@
 alphamap_SOURCES = alphamap.c utils.c utils.h
 alpha_loop_LDADD = $(TEST_LDADD)
+alpha_loop_LDFLAGS = @TESTPROGS_EXTRA_LDFLAGS@
 alpha_loop_SOURCES = alpha-loop.c utils.c utils.h
 composite_LDADD = $(TEST_LDADD)
+composite_LDFLAGS = @TESTPROGS_EXTRA_LDFLAGS@
 composite_SOURCES = composite.c utils.c utils.h
+gradient_crash_test_LDADD = $(TEST_LDADD)
+gradient_crash_test_LDFLAGS = @TESTPROGS_EXTRA_LDFLAGS@
+gradient_crash_test_SOURCES = gradient-crash-test.c utils.c utils.h
+stress_test_LDADD = $(TEST_LDADD)
+stress_test_LDFLAGS = @TESTPROGS_EXTRA_LDFLAGS@
+stress_test_SOURCES = stress-test.c utils.c utils.h
 
 # GTK using test programs
 @HAVE_GTK_TRUE@GTK_LDADD = $(TEST_LDADD) $(GTK_LIBS)
@@ -397,6 +491,7 @@ composite_SOURCES = composite.c utils.c utils.h
 @HAVE_GTK_TRUE@	clip-in			\
 @HAVE_GTK_TRUE@	composite-test		\
 @HAVE_GTK_TRUE@	gradient-test		\
+@HAVE_GTK_TRUE@	radial-test		\
 @HAVE_GTK_TRUE@	alpha-test		\
 @HAVE_GTK_TRUE@	screen-test		\
 @HAVE_GTK_TRUE@	convolution-test	\
@@ -404,6 +499,8 @@ composite_SOURCES = composite.c utils.c utils.h
 
 @HAVE_GTK_TRUE@gradient_test_LDADD = $(GTK_LDADD)
 @HAVE_GTK_TRUE@gradient_test_SOURCES = gradient-test.c $(GTK_UTILS)
+@HAVE_GTK_TRUE@radial_test_LDADD = $(GTK_LDADD)
+@HAVE_GTK_TRUE@radial_test_SOURCES = radial-test.c utils.c utils.h $(GTK_UTILS)
 @HAVE_GTK_TRUE@alpha_test_LDADD = $(GTK_LDADD)
 @HAVE_GTK_TRUE@alpha_test_SOURCES = alpha-test.c $(GTK_UTILS)
 @HAVE_GTK_TRUE@composite_test_LDADD = $(GTK_LDADD)
@@ -470,22 +567,22 @@ clean-noinstPROGRAMS:
 	rm -f $$list
 a1-trap-test$(EXEEXT): $(a1_trap_test_OBJECTS) $(a1_trap_test_DEPENDENCIES) 
 	@rm -f a1-trap-test$(EXEEXT)
-	$(AM_V_CCLD)$(LINK) $(a1_trap_test_OBJECTS) $(a1_trap_test_LDADD) $(LIBS)
+	$(AM_V_CCLD)$(a1_trap_test_LINK) $(a1_trap_test_OBJECTS) $(a1_trap_test_LDADD) $(LIBS)
 affine-test$(EXEEXT): $(affine_test_OBJECTS) $(affine_test_DEPENDENCIES) 
 	@rm -f affine-test$(EXEEXT)
-	$(AM_V_CCLD)$(LINK) $(affine_test_OBJECTS) $(affine_test_LDADD) $(LIBS)
+	$(AM_V_CCLD)$(affine_test_LINK) $(affine_test_OBJECTS) $(affine_test_LDADD) $(LIBS)
 alpha-loop$(EXEEXT): $(alpha_loop_OBJECTS) $(alpha_loop_DEPENDENCIES) 
 	@rm -f alpha-loop$(EXEEXT)
-	$(AM_V_CCLD)$(LINK) $(alpha_loop_OBJECTS) $(alpha_loop_LDADD) $(LIBS)
+	$(AM_V_CCLD)$(alpha_loop_LINK) $(alpha_loop_OBJECTS) $(alpha_loop_LDADD) $(LIBS)
 alpha-test$(EXEEXT): $(alpha_test_OBJECTS) $(alpha_test_DEPENDENCIES) 
 	@rm -f alpha-test$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(alpha_test_OBJECTS) $(alpha_test_LDADD) $(LIBS)
 alphamap$(EXEEXT): $(alphamap_OBJECTS) $(alphamap_DEPENDENCIES) 
 	@rm -f alphamap$(EXEEXT)
-	$(AM_V_CCLD)$(LINK) $(alphamap_OBJECTS) $(alphamap_LDADD) $(LIBS)
+	$(AM_V_CCLD)$(alphamap_LINK) $(alphamap_OBJECTS) $(alphamap_LDADD) $(LIBS)
 blitters-test$(EXEEXT): $(blitters_test_OBJECTS) $(blitters_test_DEPENDENCIES) 
 	@rm -f blitters-test$(EXEEXT)
-	$(AM_V_CCLD)$(LINK) $(blitters_test_OBJECTS) $(blitters_test_LDADD) $(LIBS)
+	$(AM_V_CCLD)$(blitters_test_LINK) $(blitters_test_OBJECTS) $(blitters_test_LDADD) $(LIBS)
 clip-in$(EXEEXT): $(clip_in_OBJECTS) $(clip_in_DEPENDENCIES) 
 	@rm -f clip-in$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(clip_in_OBJECTS) $(clip_in_LDADD) $(LIBS)
@@ -494,7 +591,7 @@ clip-test$(EXEEXT): $(clip_test_OBJECTS) $(clip_test_DEPENDENCIES)
 	$(AM_V_CCLD)$(LINK) $(clip_test_OBJECTS) $(clip_test_LDADD) $(LIBS)
 composite$(EXEEXT): $(composite_OBJECTS) $(composite_DEPENDENCIES) 
 	@rm -f composite$(EXEEXT)
-	$(AM_V_CCLD)$(LINK) $(composite_OBJECTS) $(composite_LDADD) $(LIBS)
+	$(AM_V_CCLD)$(composite_LINK) $(composite_OBJECTS) $(composite_LDADD) $(LIBS)
 composite-test$(EXEEXT): $(composite_test_OBJECTS) $(composite_test_DEPENDENCIES) 
 	@rm -f composite-test$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(composite_test_OBJECTS) $(composite_test_LDADD) $(LIBS)
@@ -503,10 +600,10 @@ convolution-test$(EXEEXT): $(convolution_test_OBJECTS) $(convolution_test_DEPEND
 	$(AM_V_CCLD)$(LINK) $(convolution_test_OBJECTS) $(convolution_test_LDADD) $(LIBS)
 fetch-test$(EXEEXT): $(fetch_test_OBJECTS) $(fetch_test_DEPENDENCIES) 
 	@rm -f fetch-test$(EXEEXT)
-	$(AM_V_CCLD)$(LINK) $(fetch_test_OBJECTS) $(fetch_test_LDADD) $(LIBS)
+	$(AM_V_CCLD)$(fetch_test_LINK) $(fetch_test_OBJECTS) $(fetch_test_LDADD) $(LIBS)
 gradient-crash-test$(EXEEXT): $(gradient_crash_test_OBJECTS) $(gradient_crash_test_DEPENDENCIES) 
 	@rm -f gradient-crash-test$(EXEEXT)
-	$(AM_V_CCLD)$(LINK) $(gradient_crash_test_OBJECTS) $(gradient_crash_test_LDADD) $(LIBS)
+	$(AM_V_CCLD)$(gradient_crash_test_LINK) $(gradient_crash_test_OBJECTS) $(gradient_crash_test_LDADD) $(LIBS)
 gradient-test$(EXEEXT): $(gradient_test_OBJECTS) $(gradient_test_DEPENDENCIES) 
 	@rm -f gradient-test$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(gradient_test_OBJECTS) $(gradient_test_LDADD) $(LIBS)
@@ -515,25 +612,34 @@ lowlevel-blt-bench$(EXEEXT): $(lowlevel_blt_bench_OBJECTS) $(lowlevel_blt_bench_
 	$(AM_V_CCLD)$(LINK) $(lowlevel_blt_bench_OBJECTS) $(lowlevel_blt_bench_LDADD) $(LIBS)
 oob-test$(EXEEXT): $(oob_test_OBJECTS) $(oob_test_DEPENDENCIES) 
 	@rm -f oob-test$(EXEEXT)
-	$(AM_V_CCLD)$(LINK) $(oob_test_OBJECTS) $(oob_test_LDADD) $(LIBS)
+	$(AM_V_CCLD)$(oob_test_LINK) $(oob_test_OBJECTS) $(oob_test_LDADD) $(LIBS)
+pdf-op-test$(EXEEXT): $(pdf_op_test_OBJECTS) $(pdf_op_test_DEPENDENCIES) 
+	@rm -f pdf-op-test$(EXEEXT)
+	$(AM_V_CCLD)$(pdf_op_test_LINK) $(pdf_op_test_OBJECTS) $(pdf_op_test_LDADD) $(LIBS)
+radial-test$(EXEEXT): $(radial_test_OBJECTS) $(radial_test_DEPENDENCIES) 
+	@rm -f radial-test$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(radial_test_OBJECTS) $(radial_test_LDADD) $(LIBS)
 region-test$(EXEEXT): $(region_test_OBJECTS) $(region_test_DEPENDENCIES) 
 	@rm -f region-test$(EXEEXT)
-	$(AM_V_CCLD)$(LINK) $(region_test_OBJECTS) $(region_test_LDADD) $(LIBS)
+	$(AM_V_CCLD)$(region_test_LINK) $(region_test_OBJECTS) $(region_test_LDADD) $(LIBS)
 region-translate-test$(EXEEXT): $(region_translate_test_OBJECTS) $(region_translate_test_DEPENDENCIES) 
 	@rm -f region-translate-test$(EXEEXT)
-	$(AM_V_CCLD)$(LINK) $(region_translate_test_OBJECTS) $(region_translate_test_LDADD) $(LIBS)
+	$(AM_V_CCLD)$(region_translate_test_LINK) $(region_translate_test_OBJECTS) $(region_translate_test_LDADD) $(LIBS)
 scaling-crash-test$(EXEEXT): $(scaling_crash_test_OBJECTS) $(scaling_crash_test_DEPENDENCIES) 
 	@rm -f scaling-crash-test$(EXEEXT)
-	$(AM_V_CCLD)$(LINK) $(scaling_crash_test_OBJECTS) $(scaling_crash_test_LDADD) $(LIBS)
+	$(AM_V_CCLD)$(scaling_crash_test_LINK) $(scaling_crash_test_OBJECTS) $(scaling_crash_test_LDADD) $(LIBS)
 scaling-test$(EXEEXT): $(scaling_test_OBJECTS) $(scaling_test_DEPENDENCIES) 
 	@rm -f scaling-test$(EXEEXT)
-	$(AM_V_CCLD)$(LINK) $(scaling_test_OBJECTS) $(scaling_test_LDADD) $(LIBS)
+	$(AM_V_CCLD)$(scaling_test_LINK) $(scaling_test_OBJECTS) $(scaling_test_LDADD) $(LIBS)
 screen-test$(EXEEXT): $(screen_test_OBJECTS) $(screen_test_DEPENDENCIES) 
 	@rm -f screen-test$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(screen_test_OBJECTS) $(screen_test_LDADD) $(LIBS)
+stress-test$(EXEEXT): $(stress_test_OBJECTS) $(stress_test_DEPENDENCIES) 
+	@rm -f stress-test$(EXEEXT)
+	$(AM_V_CCLD)$(stress_test_LINK) $(stress_test_OBJECTS) $(stress_test_LDADD) $(LIBS)
 trap-crasher$(EXEEXT): $(trap_crasher_OBJECTS) $(trap_crasher_DEPENDENCIES) 
 	@rm -f trap-crasher$(EXEEXT)
-	$(AM_V_CCLD)$(LINK) $(trap_crasher_OBJECTS) $(trap_crasher_LDADD) $(LIBS)
+	$(AM_V_CCLD)$(trap_crasher_LINK) $(trap_crasher_OBJECTS) $(trap_crasher_LDADD) $(LIBS)
 trap-test$(EXEEXT): $(trap_test_OBJECTS) $(trap_test_DEPENDENCIES) 
 	@rm -f trap-test$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(trap_test_OBJECTS) $(trap_test_LDADD) $(LIBS)
@@ -561,11 +667,14 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gtk-utils.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/lowlevel-blt-bench.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/oob-test.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pdf-op-test.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/radial-test.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/region-test.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/region-translate-test.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/scaling-crash-test.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/scaling-test.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/screen-test.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/stress-test.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/trap-crasher.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/trap-test.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/utils.Po@am__quote@
