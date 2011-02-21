@@ -36,7 +36,6 @@
 
 #include "radeon.h"
 #include "radeon_reg.h"
-#include "r600_reg.h"
 #include "radeon_macros.h"
 #include "radeon_probe.h"
 #include "radeon_video.h"
@@ -46,6 +45,11 @@
 
 extern void
 R600DisplayTexturedVideo(ScrnInfoPtr pScrn, RADEONPortPrivPtr pPriv);
+
+#ifdef XF86DRM_MODE
+extern void
+EVERGREENDisplayTexturedVideo(ScrnInfoPtr pScrn, RADEONPortPrivPtr pPriv);
+#endif
 
 extern Bool
 R600CopyToVRAM(ScrnInfoPtr pScrn,
@@ -310,9 +314,8 @@ RADEONPutImageTextured(ScrnInfoPtr pScrn,
     size = dstPitch * dst_height + 2 * dstPitch2 * ((dst_height + 1) >> 1);
     size = RADEON_ALIGN(size, hw_align);
 
-    if (pPriv->video_memory != NULL && size != pPriv->size) {
-	radeon_legacy_free_memory(pScrn, pPriv->video_memory);
-	pPriv->video_memory = NULL;
+    if (size != pPriv->size) {
+	RADEONFreeVideoMemory(pScrn, pPriv);
     }
 
     if (pPriv->video_memory == NULL) {
@@ -473,7 +476,12 @@ RADEONPutImageTextured(ScrnInfoPtr pScrn,
 #endif
 #ifdef XF86DRI
     if (info->directRenderingEnabled) {
-	if (IS_R600_3D)
+#ifdef XF86DRM_MODE
+	if (IS_EVERGREEN_3D)
+	    EVERGREENDisplayTexturedVideo(pScrn, pPriv);
+	else
+#endif
+	  if (IS_R600_3D)
 	    R600DisplayTexturedVideo(pScrn, pPriv);
 	else if (IS_R500_3D)
 	    R500DisplayTexturedVideoCP(pScrn, pPriv);
@@ -602,6 +610,18 @@ static XF86AttributeRec Attributes_r600[NUM_ATTRIBUTES_R600+1] =
     {XvSettable | XvGettable, -1000, 1000, "XV_HUE"},
     {XvSettable | XvGettable, 0, 1, "XV_COLORSPACE"},
     {XvSettable | XvGettable, -1, 1, "XV_CRTC"},
+    {0, 0, 0, NULL}
+};
+
+static XF86AttributeRec Attributes_eg[NUM_ATTRIBUTES_R600+1] =
+{
+    {XvSettable | XvGettable, 0, 1, "XV_VSYNC"},
+    {XvSettable | XvGettable, -1000, 1000, "XV_BRIGHTNESS"},
+    {XvSettable | XvGettable, -1000, 1000, "XV_CONTRAST"},
+    {XvSettable | XvGettable, -1000, 1000, "XV_SATURATION"},
+    {XvSettable | XvGettable, -1000, 1000, "XV_HUE"},
+    {XvSettable | XvGettable, 0, 1, "XV_COLORSPACE"},
+    {XvSettable | XvGettable, -1, 5, "XV_CRTC"},
     {0, 0, 0, NULL}
 };
 
@@ -802,7 +822,11 @@ RADEONSetupImageTexturedVideo(ScreenPtr pScreen)
     pPortPriv =
 	(RADEONPortPrivPtr)(&adapt->pPortPrivates[num_texture_ports]);
 
-    if (IS_R600_3D) {
+    if (IS_EVERGREEN_3D) {
+	adapt->pAttributes = Attributes_eg;
+	adapt->nAttributes = NUM_ATTRIBUTES_R600;
+    }
+    else if (IS_R600_3D) {
 	adapt->pAttributes = Attributes_r600;
 	adapt->nAttributes = NUM_ATTRIBUTES_R600;
     }

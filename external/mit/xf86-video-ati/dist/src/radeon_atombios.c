@@ -1533,8 +1533,7 @@ RADEONLookupGPIOLineForDDC(ScrnInfoPtr pScrn, uint8_t id)
 	return i2c;
     }
 
-    num_indices = (size - sizeof(ATOM_COMMON_TABLE_HEADER)) /
-	    sizeof(ATOM_GPIO_I2C_ASSIGMENT);
+    num_indices = size / sizeof(ATOM_GPIO_I2C_ASSIGMENT);
 
     for (i = 0; i < num_indices; i++) {
 	    gpio = &atomDataPtr->GPIO_I2C_Info->asGPIO_Info[i];
@@ -1635,7 +1634,7 @@ radeon_lookup_hpd_id(ScrnInfoPtr pScrn, ATOM_HPD_INT_RECORD *record)
 	return hpd;
     }
 
-    num_indices = (size - sizeof(ATOM_COMMON_TABLE_HEADER)) / sizeof(ATOM_GPIO_PIN_ASSIGNMENT);
+    num_indices = size / sizeof(ATOM_GPIO_PIN_ASSIGNMENT);
 
     if (IS_DCE4_VARIANT)
 	reg = EVERGREEN_DC_GPIO_HPD_A;

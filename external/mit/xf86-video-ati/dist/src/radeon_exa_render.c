@@ -379,6 +379,9 @@ static Bool R100CheckCompositeTexture(PicturePtr pPict,
 	    RADEON_FALLBACK(("REPEAT_NONE unsupported for transformed xRGB source\n"));
     }
 
+    if (!radeon_transform_is_affine(pPict->transform))
+	RADEON_FALLBACK(("non-affine transforms not supported\n"));
+
     return TRUE;
 }
 
@@ -778,6 +781,9 @@ static Bool R200CheckCompositeTexture(PicturePtr pPict,
 	    RADEON_FALLBACK(("REPEAT_NONE unsupported for transformed xRGB source\n"));
     }
 
+    if (!radeon_transform_is_affine(pPict->transform))
+	RADEON_FALLBACK(("non-affine transforms not supported\n"));
+
     return TRUE;
 }
 
@@ -1161,6 +1167,9 @@ static Bool R300CheckCompositeTexture(PicturePtr pPict,
 	if (!(((op == PictOpSrc) || (op == PictOpClear)) && (PICT_FORMAT_A(pDstPict->format) == 0)))
 	    RADEON_FALLBACK(("REPEAT_NONE unsupported for transformed xRGB source\n"));
     }
+
+    if (!radeon_transform_is_affine(pPict->transform))
+	RADEON_FALLBACK(("non-affine transforms not supported\n"));
 
     return TRUE;
 }

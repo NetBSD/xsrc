@@ -39,6 +39,7 @@
 typedef struct {
   int fd;
   unsigned fb_id;
+  unsigned old_fb_id;
   drmModeResPtr mode_res;
   drmModeFBPtr mode_fb;
   int cpp;
@@ -50,7 +51,16 @@ typedef struct {
 #endif
   drmEventContext event_context;
   int flip_count;
+  void *event_data;
+  unsigned int fe_frame;
+  unsigned int fe_tv_sec;
+  unsigned int fe_tv_usec;
 } drmmode_rec, *drmmode_ptr;
+
+typedef struct {
+  drmmode_ptr drmmode;
+  Bool dispatch_me;
+} drmmode_flipevtcarrier_rec, *drmmode_flipevtcarrier_ptr;
 
 typedef struct {
     drmmode_ptr drmmode;
@@ -94,6 +104,12 @@ extern Bool drmmode_setup_colormap(ScreenPtr pScreen, ScrnInfoPtr pScrn);
 
 extern void drmmode_uevent_init(ScrnInfoPtr scrn, drmmode_ptr drmmode);
 extern void drmmode_uevent_fini(ScrnInfoPtr scrn, drmmode_ptr drmmode);
+
+extern int drmmode_get_height_align(ScrnInfoPtr scrn, uint32_t tiling);
+extern int drmmode_get_pitch_align(ScrnInfoPtr scrn, int bpe, uint32_t tiling);
+extern int drmmode_get_base_align(ScrnInfoPtr scrn, int bpe, uint32_t tiling);
+
+Bool radeon_do_pageflip(ScrnInfoPtr scrn, struct radeon_bo *new_front, void *data, int ref_crtc_hw_id);
 
 #endif
 

@@ -44,5 +44,7 @@ xf86CrtcPtr radeon_covering_crtc(ScrnInfoPtr pScrn, BoxPtr box,
                                  xf86CrtcPtr desired, BoxPtr crtc_box_ret);
 void radeon_dri2_frame_event_handler(unsigned int frame, unsigned int tv_sec,
                                      unsigned int tv_usec, void *event_data);
+void radeon_dri2_flip_event_handler(unsigned int frame, unsigned int tv_sec,
+				    unsigned int tv_usec, void *event_data);
 
 #endif

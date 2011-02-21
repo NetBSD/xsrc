@@ -224,7 +224,8 @@ typedef enum {
     OPTION_FORCE_LOW_POWER,
     OPTION_DYNAMIC_PM,
     OPTION_NEW_PLL,
-    OPTION_ZAPHOD_HEADS
+    OPTION_ZAPHOD_HEADS,
+    OPTION_SWAPBUFFERS_WAIT
 } RADEONOpts;
 
 
@@ -358,6 +359,10 @@ typedef enum {
     CHIP_FAMILY_JUNIPER,
     CHIP_FAMILY_CYPRESS,
     CHIP_FAMILY_HEMLOCK,
+    CHIP_FAMILY_PALM,
+    CHIP_FAMILY_BARTS,
+    CHIP_FAMILY_TURKS,
+    CHIP_FAMILY_CAICOS,
     CHIP_FAMILY_LAST
 } RADEONChipFamily;
 
@@ -386,6 +391,12 @@ typedef enum {
 #define IS_DCE32_VARIANT ((info->ChipFamily >= CHIP_FAMILY_RV730))
 
 #define IS_DCE4_VARIANT ((info->ChipFamily >= CHIP_FAMILY_CEDAR))
+
+#define IS_DCE41_VARIANT ((info->ChipFamily >= CHIP_FAMILY_PALM))
+
+#define IS_DCE5_VARIANT ((info->ChipFamily >= CHIP_FAMILY_BARTS))
+
+#define IS_EVERGREEN_3D (info->ChipFamily >= CHIP_FAMILY_CEDAR)
 
 #define IS_R600_3D (info->ChipFamily >= CHIP_FAMILY_R600)
 
@@ -674,6 +685,18 @@ struct r600_accel_object {
     struct radeon_bo *bo;
 };
 
+struct radeon_vbo_object {
+    int               vb_offset;
+    uint64_t          vb_mc_addr;
+    int               vb_total;
+    void              *vb_ptr;
+    uint32_t          vb_size;
+    uint32_t          vb_op_vert_size;
+    int32_t           vb_start_op;
+    struct radeon_bo *vb_bo;
+    unsigned          verts_per_op;
+};
+
 struct radeon_accel_state {
     /* common accel data */
     int               fifo_slots;       /* Free slots in the FIFO (64 max)   */
@@ -721,20 +744,15 @@ struct radeon_accel_state {
     uint32_t          *draw_header;
     unsigned          vtx_count;
     unsigned          num_vtx;
-    unsigned          verts_per_op;
     Bool              vsync;
 
     drmBufPtr         ib;
-    int               vb_offset;
-    uint64_t          vb_mc_addr;
-    int               vb_total;
-    void              *vb_ptr;
-    uint32_t          vb_size;
-    uint32_t          vb_op_vert_size;
-    int32_t           vb_start_op;
+
+    struct radeon_vbo_object vbo;
+    struct radeon_vbo_object cbuf;
+
     /* where to discard IB from if we cancel operation */
     uint32_t          ib_reset_op;
-    struct radeon_bo *vb_bo;
 #ifdef XF86DRM_MODE
     struct radeon_dma_bo bo_free;
     struct radeon_dma_bo bo_wait;
@@ -753,6 +771,16 @@ struct radeon_accel_state {
     uint32_t          comp_ps_offset;
     uint32_t          xv_vs_offset;
     uint32_t          xv_ps_offset;
+    // shader consts
+    uint32_t          solid_vs_const_offset;
+    uint32_t          solid_ps_const_offset;
+    uint32_t          copy_vs_const_offset;
+    uint32_t          copy_ps_const_offset;
+    uint32_t          comp_vs_const_offset;
+    uint32_t          comp_ps_const_offset;
+    uint32_t          comp_mask_ps_const_offset;
+    uint32_t          xv_vs_const_offset;
+    uint32_t          xv_ps_const_offset;
 
     //size/addr stuff
     struct r600_accel_object src_obj[2];
@@ -832,7 +860,7 @@ typedef struct {
     unsigned long long     LinearAddr;       /* Frame buffer physical address     */
     unsigned long long     MMIOAddr;         /* MMIO region physical address      */
     unsigned long long     BIOSAddr;         /* BIOS physical address             */
-    uint32_t          fbLocation;
+    uint64_t          fbLocation;
     uint32_t          gartLocation;
     uint32_t          mc_fb_location;
     uint32_t          mc_agp_location;
@@ -1052,6 +1080,11 @@ typedef struct {
     struct radeon_bo *bicubic_bo;
     void             *bicubic_memory;
     int               bicubic_offset;
+    /* kms pageflipping */
+    Bool allowPageFlip;
+
+    /* Perform vsync'ed SwapBuffers? */
+    Bool swapBuffersWait;
 } RADEONInfoRec, *RADEONInfoPtr;
 
 #define RADEONWaitForFifo(pScrn, entries)				\
@@ -1254,6 +1287,7 @@ extern void RADEONPMFini(ScrnInfoPtr pScrn);
 #ifdef USE_EXA
 /* radeon_exa.c */
 extern Bool RADEONSetupMemEXA(ScreenPtr pScreen);
+extern Bool radeon_transform_is_affine(PictTransformPtr t);
 
 /* radeon_exa_funcs.c */
 extern void RADEONCopyCP(PixmapPtr pDst, int srcX, int srcY, int dstX,
@@ -1274,6 +1308,10 @@ extern void RADEONDoPrepareCopyMMIO(ScrnInfoPtr pScrn,
 				    Pixel planemask);
 extern Bool R600DrawInit(ScreenPtr pScreen);
 extern Bool R600LoadShaders(ScrnInfoPtr pScrn);
+#ifdef XF86DRM_MODE
+extern Bool EVERGREENDrawInit(ScreenPtr pScreen);
+extern Bool EVERGREENLoadShaders(ScrnInfoPtr pScrn);
+#endif
 #endif
 
 #if defined(XF86DRI) && defined(USE_EXA)
