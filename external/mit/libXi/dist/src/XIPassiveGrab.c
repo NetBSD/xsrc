@@ -73,7 +73,7 @@ _XIPassiveGrabDevice(Display* dpy, int deviceid, int grabtype, int detail,
 
     free(buff);
 
-    if (_XReply(dpy, (xReply *)&reply, 0, xTrue))
+    if (!_XReply(dpy, (xReply *)&reply, 0, xTrue))
     {
 	UnlockDisplay(dpy);
 	SyncHandle();
