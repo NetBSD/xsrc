@@ -40,7 +40,7 @@
 #include <X11/extensions/dpms.h>
 #endif
 
-
+#include <math.h>
 #include "radeon.h"
 #include "radeon_reg.h"
 #include "radeon_macros.h"
@@ -727,7 +727,7 @@ static void evergreen_set_base_format(xf86CrtcPtr crtc,
     RADEONCrtcPrivatePtr radeon_crtc = crtc->driver_private;
     RADEONInfoPtr  info = RADEONPTR(pScrn);
     unsigned char *RADEONMMIO = info->MMIO;
-    unsigned long fb_location = crtc->scrn->fbOffset + info->fbLocation;
+    uint64_t fb_location = crtc->scrn->fbOffset + info->fbLocation;
     uint32_t fb_format;
     uint32_t fb_swap = EVERGREEN_GRPH_ENDIAN_SWAP(EVERGREEN_GRPH_ENDIAN_NONE);
 
@@ -787,8 +787,10 @@ static void evergreen_set_base_format(xf86CrtcPtr crtc,
     }
 
 
-    OUTREG(EVERGREEN_GRPH_PRIMARY_SURFACE_ADDRESS_HIGH + radeon_crtc->crtc_offset, 0);
-    OUTREG(EVERGREEN_GRPH_SECONDARY_SURFACE_ADDRESS_HIGH + radeon_crtc->crtc_offset, 0);
+    OUTREG(EVERGREEN_GRPH_PRIMARY_SURFACE_ADDRESS_HIGH + radeon_crtc->crtc_offset,
+	   (fb_location >> 32) & 0xf);
+    OUTREG(EVERGREEN_GRPH_SECONDARY_SURFACE_ADDRESS_HIGH + radeon_crtc->crtc_offset,
+	   (fb_location >> 32) & 0xf);
     OUTREG(EVERGREEN_GRPH_PRIMARY_SURFACE_ADDRESS + radeon_crtc->crtc_offset,
 	   fb_location & EVERGREEN_GRPH_SURFACE_ADDRESS_MASK);
     OUTREG(EVERGREEN_GRPH_SECONDARY_SURFACE_ADDRESS + radeon_crtc->crtc_offset,
@@ -828,7 +830,7 @@ static void avivo_set_base_format(xf86CrtcPtr crtc,
     RADEONCrtcPrivatePtr radeon_crtc = crtc->driver_private;
     RADEONInfoPtr  info = RADEONPTR(pScrn);
     unsigned char *RADEONMMIO = info->MMIO;
-    unsigned long fb_location = crtc->scrn->fbOffset + info->fbLocation;
+    uint64_t fb_location = crtc->scrn->fbOffset + info->fbLocation;
     uint32_t fb_format;
 #if X_BYTE_ORDER == X_BIG_ENDIAN
     uint32_t fb_swap = R600_D1GRPH_SWAP_ENDIAN_NONE;
@@ -875,15 +877,17 @@ static void avivo_set_base_format(xf86CrtcPtr crtc,
 
     if (info->ChipFamily >= CHIP_FAMILY_RV770) {
 	if (radeon_crtc->crtc_id) {
-	    OUTREG(R700_D2GRPH_PRIMARY_SURFACE_ADDRESS_HIGH, 0);
-	    OUTREG(R700_D2GRPH_SECONDARY_SURFACE_ADDRESS_HIGH, 0);
+	    OUTREG(R700_D2GRPH_PRIMARY_SURFACE_ADDRESS_HIGH, (fb_location >> 32) & 0xf);
+	    OUTREG(R700_D2GRPH_SECONDARY_SURFACE_ADDRESS_HIGH, (fb_location >> 32) & 0xf);
 	} else {
-	    OUTREG(R700_D1GRPH_PRIMARY_SURFACE_ADDRESS_HIGH, 0);
-	    OUTREG(R700_D1GRPH_SECONDARY_SURFACE_ADDRESS_HIGH, 0);
+	    OUTREG(R700_D1GRPH_PRIMARY_SURFACE_ADDRESS_HIGH, (fb_location >> 32) & 0xf);
+	    OUTREG(R700_D1GRPH_SECONDARY_SURFACE_ADDRESS_HIGH, (fb_location >> 32) & 0xf);
 	}
     }
-    OUTREG(AVIVO_D1GRPH_PRIMARY_SURFACE_ADDRESS + radeon_crtc->crtc_offset, fb_location);
-    OUTREG(AVIVO_D1GRPH_SECONDARY_SURFACE_ADDRESS + radeon_crtc->crtc_offset, fb_location);
+    OUTREG(AVIVO_D1GRPH_PRIMARY_SURFACE_ADDRESS + radeon_crtc->crtc_offset,
+	   fb_location & 0xffffffff);
+    OUTREG(AVIVO_D1GRPH_SECONDARY_SURFACE_ADDRESS + radeon_crtc->crtc_offset,
+	   fb_location & 0xffffffff);
     OUTREG(AVIVO_D1GRPH_CONTROL + radeon_crtc->crtc_offset, fb_format);
 
 #if X_BYTE_ORDER == X_BIG_ENDIAN

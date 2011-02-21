@@ -344,9 +344,12 @@ struct avivo_crtc_state {
 struct avivo_grph_state {
     uint32_t enable;
     uint32_t control;
+    uint32_t swap_control;
     uint32_t prim_surf_addr;
     uint32_t sec_surf_addr;
     uint32_t pitch;
+    uint32_t prim_surf_addr_hi;
+    uint32_t sec_surf_addr_hi;
     uint32_t x_offset;
     uint32_t y_offset;
     uint32_t x_start;
@@ -360,6 +363,37 @@ struct avivo_grph_state {
     uint32_t mode_data_format;
 };
 
+struct dce4_main_block_state {
+    struct avivo_grph_state grph;
+    uint32_t scl[6];
+    uint32_t crtc[15];
+    uint32_t fmt[10];
+    uint32_t dig[20];
+};
+
+struct dce4_state
+{
+
+    uint32_t vga1_cntl;
+    uint32_t vga2_cntl;
+    uint32_t vga3_cntl;
+    uint32_t vga4_cntl;
+    uint32_t vga5_cntl;
+    uint32_t vga6_cntl;
+    uint32_t vga_render_control;
+
+    struct dce4_main_block_state block[6];
+
+    uint32_t vga_pll[3][3];
+    uint32_t pll[2][15];
+    uint32_t pll_route[6];
+
+    uint32_t dac[2][26];
+    uint32_t uniphy[6][10];
+
+    uint32_t dig[20];
+};
+
 struct avivo_state
 {
     uint32_t hdp_fb_location;
@@ -369,24 +403,25 @@ struct avivo_state
 
     uint32_t vga1_cntl;
     uint32_t vga2_cntl;
+    uint32_t vga3_cntl;
+    uint32_t vga4_cntl;
+    uint32_t vga5_cntl;
+    uint32_t vga6_cntl;
     uint32_t vga_render_control;
 
     uint32_t crtc_master_en;
     uint32_t crtc_tv_control;
     uint32_t dc_lb_memory_split;
 
-    struct avivo_pll_state pll1;
-    struct avivo_pll_state pll2;
+    struct avivo_pll_state pll[2];
 
     struct avivo_pll_state vga25_ppll;
     struct avivo_pll_state vga28_ppll;
     struct avivo_pll_state vga41_ppll;
 
-    struct avivo_crtc_state crtc1;
-    struct avivo_crtc_state crtc2;
+    struct avivo_crtc_state crtc[2];
 
-    struct avivo_grph_state grph1;
-    struct avivo_grph_state grph2;
+    struct avivo_grph_state grph[2];
 
     /* DDIA block on RS6xx chips */
     uint32_t ddia[37];
@@ -440,6 +475,7 @@ struct avivo_state
 
 typedef struct {
     struct avivo_state avivo;
+    struct dce4_state dce4;
 
 				/* Common registers */
     uint32_t          ovr_clr;
@@ -648,6 +684,8 @@ typedef struct
     void              *FB;              /* Map of FB region                  */
     int               FB_cnt;           /* Map of FB region refcount         */
     int fd;                             /* for sharing across zaphod heads   */
+    Bool              fd_wakeup_registered; /* fd has already been registered for wakeup handling */
+    int dri2_info_cnt;
 } RADEONEntRec, *RADEONEntPtr;
 
 /* radeon_probe.c */

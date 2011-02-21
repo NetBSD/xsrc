@@ -2181,7 +2181,7 @@ FUNC_NAME(R300PrepareTexturedVideo)(ScrnInfoPtr pScrn, RADEONPortPrivPtr pPriv)
 							  R300_ALU_ALPHA_SEL_C(R300_ALU_ALPHA_0_0)));
 	    }
 	} else {
-	    BEGIN_ACCEL(needgamma ? 28 + 33 : 33);
+	    BEGIN_ACCEL(needgamma ? 28 + 31 : 31);
 	    /* 2 components */
 	    OUT_ACCEL_REG(R300_RS_COUNT,
 			  ((2 << R300_RS_COUNT_IT_COUNT_SHIFT) |

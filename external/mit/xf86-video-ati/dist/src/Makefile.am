@@ -53,7 +53,8 @@ RADEON_KMS_SRCS=radeon_dri2.c radeon_kms.c drmmode_display.c radeon_vbo.c
 endif
 
 if USE_EXA
-RADEON_EXA_SOURCES = radeon_exa.c r600_exa.c r6xx_accel.c r600_textured_videofuncs.c r600_shader.c radeon_exa_shared.c
+RADEON_EXA_SOURCES = radeon_exa.c r600_exa.c r6xx_accel.c r600_textured_videofuncs.c r600_shader.c radeon_exa_shared.c \
+	evergreen_exa.c evergreen_accel.c evergreen_shader.c evergreen_textured_videofuncs.c
 endif
 
 AM_CFLAGS = \
@@ -129,6 +130,10 @@ EXTRA_DIST = \
 	r600_reg_r7xx.h \
 	r600_shader.h \
 	r600_state.h \
+	evergreen_reg.h \
+	evergreen_reg_auto.h \
+	evergreen_shader.h \
+	evergreen_state.h \
 	ati.h \
 	ativersion.h \
 	bicubic_table.h \

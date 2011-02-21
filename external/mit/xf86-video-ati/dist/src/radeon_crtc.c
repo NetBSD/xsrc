@@ -32,6 +32,8 @@
 
 #include <string.h>
 #include <stdio.h>
+#include <assert.h>
+#include <math.h>
 
 /* X and server generic header files */
 #include "xf86.h"
@@ -885,7 +887,7 @@ Bool RADEONAllocateControllers(ScrnInfoPtr pScrn, int mask)
     }
 
     /* 6 crtcs on DCE4 chips */
-    if (IS_DCE4_VARIANT && ((mask & 3) == 3)) {
+    if (IS_DCE4_VARIANT && ((mask & 3) == 3) && !IS_DCE41_VARIANT) {
 	for (i = 2; i < RADEON_MAX_CRTC; i++) {
 	    pRADEONEnt->pCrtc[i] = xf86CrtcCreate(pScrn, &radeon_crtc_funcs);
 	    if (!pRADEONEnt->pCrtc[i])

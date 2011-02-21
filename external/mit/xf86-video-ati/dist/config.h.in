@@ -23,6 +23,9 @@
 /* libudev support */
 #undef HAVE_LIBUDEV
 
+/* Define to 1 if you have the <list.h> header file. */
+#undef HAVE_LIST_H
+
 /* Define to 1 if you have the <memory.h> header file. */
 #undef HAVE_MEMORY_H
 

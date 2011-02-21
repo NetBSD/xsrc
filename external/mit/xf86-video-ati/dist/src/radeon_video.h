@@ -150,6 +150,7 @@ void RADEONVIP_reset(ScrnInfoPtr pScrn, RADEONPortPrivPtr pPriv);
 
 int  RADEONSetPortAttribute(ScrnInfoPtr, Atom, INT32, pointer);
 int  RADEONGetPortAttribute(ScrnInfoPtr, Atom ,INT32 *, pointer);
+void RADEONFreeVideoMemory(ScrnInfoPtr pScrn, RADEONPortPrivPtr pPriv);
 void RADEONStopVideo(ScrnInfoPtr, pointer, Bool);
 void RADEONQueryBestSize(ScrnInfoPtr, Bool, short, short, short, short,
 			 unsigned int *, unsigned int *, pointer);
