@@ -1,0 +1,30 @@
+xfindproxy is used to locate available X11 proxy services.
+
+It utilizes the Proxy Management Protocol to communicate with a proxy
+manager.  The proxy manager keeps track of all available proxy
+services, starts new proxies when necessary, and makes sure that
+proxies are shared whenever possible.
+
+All questions regarding this software should be directed at the
+Xorg mailing list:
+
+        http://lists.freedesktop.org/mailman/listinfo/xorg
+
+Please submit bug reports to the Xorg bugzilla:
+
+        https://bugs.freedesktop.org/enter_bug.cgi?product=xorg
+
+The master development code repository can be found at:
+
+        git://anongit.freedesktop.org/git/xorg/app/xfindproxy
+
+        http://cgit.freedesktop.org/xorg/app/xfindproxy
+
+For patch submission instructions, see:
+
+	http://www.x.org/wiki/Development/Documentation/SubmittingPatches
+
+For more information on the git code manager, see:
+
+        http://wiki.x.org/wiki/GitPage
+
