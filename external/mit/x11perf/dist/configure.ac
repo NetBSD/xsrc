@@ -20,39 +20,32 @@ dnl  PERFORMANCE OF THIS SOFTWARE.
 dnl
 dnl Process this file with autoconf to create configure.
 
-AC_PREREQ([2.57])
-AC_INIT(x11perf,[1.5.1], [https://bugs.freedesktop.org/enter_bug.cgi?product=xorg],x11perf)
-AM_INIT_AUTOMAKE([dist-bzip2])
+# Initialize Autoconf
+AC_PREREQ([2.60])
+AC_INIT([x11perf],
+	[1.5.3],
+	[https://bugs.freedesktop.org/enter_bug.cgi?product=xorg],
+	[x11perf])
+AC_CONFIG_SRCDIR([Makefile.am])
+AC_CONFIG_HEADERS([config.h])
+
+# Initialize Automake
+AM_INIT_AUTOMAKE([foreign dist-bzip2])
 AM_MAINTAINER_MODE
 
-# Require xorg-macros 1.3 or later: XORG_DEFAULT_OPTIONS
+# Require X.Org macros 1.8 or later for MAN_SUBSTS set by XORG_MANPAGE_SECTIONS
 m4_ifndef([XORG_MACROS_VERSION],
-	  [m4_fatal([must install xorg-macros 1.3 or later before running autoconf/autogen])])
-XORG_MACROS_VERSION(1.3)
-
-AM_CONFIG_HEADER(config.h)
-
-AC_PROG_CC
-AC_PROG_INSTALL
-
+	  [m4_fatal([must install xorg-macros 1.8 or later before running autoconf/autogen])])
+XORG_MACROS_VERSION(1.8)
 XORG_DEFAULT_OPTIONS
-
-AC_PATH_PROG(SED,sed)
-if [[ -z $SED ]] ; then
-   AC_MSG_ERROR([sed is needed to build x11perf])
-fi
 
 AC_TYPE_SIGNAL
 
 # Checks for pkg-config packages
 PKG_CHECK_MODULES(X11PERF, x11 xmuu)
-AC_SUBST(X11PERF_CFLAGS)
-AC_SUBST(X11PERF_LIBS)
 
 # Check for Xrender library
 PKG_CHECK_MODULES(XRENDER, xrender, [xrender_found=yes], [xrender_found=no])
-AC_SUBST(XRENDER_CFLAGS)
-AC_SUBST(XRENDER_LIBS)
 case "$xrender_found" in
 yes)
 	AC_DEFINE(XRENDER,1,[Xrender library available])
@@ -61,8 +54,6 @@ esac
 
 # Check for Xft library
 PKG_CHECK_MODULES(XFT, xft, [xft_found=yes], [xft_found=no])
-AC_SUBST(XFT_CFLAGS)
-AC_SUBST(XFT_LIBS)
 case "$xft_found" in
 yes)
 	AC_DEFINE(XFT,1,[Xft library available])
@@ -71,8 +62,6 @@ esac
 
 # Check for MIT-SHM extension
 PKG_CHECK_MODULES(XEXT, xext, [xext_found=yes], [xext_found=no])
-AC_SUBST(XEXT_CFLAGS)
-AC_SUBST(XEXT_LIBS)
 case "$xext_found" in
 yes)
 	save_LIBS="$LIBS"

@@ -1,5 +1,3 @@
-/* $Xorg: x11perf.c,v 1.4 2000/08/17 19:54:10 cpqbld Exp $ */
-/* $XdotOrg: app/x11perf/x11perf.c,v 1.3 2005/07/26 18:55:42 alanc Exp $ */
 /****************************************************************************
 Copyright 1988, 1989 by Digital Equipment Corporation, Maynard, Massachusetts.
 
@@ -22,7 +20,6 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ****************************************************************************/
-/* $XFree86: xc/programs/x11perf/x11perf.c,v 3.6 2001/11/03 21:59:20 dawes Exp $ */
 
 #include <stdio.h>
 #include <ctype.h>
@@ -43,6 +40,7 @@ SOFTWARE.
 
 /* Only for working on ``fake'' servers, for hardware that doesn't exist */
 static Bool     drawToFakeServer = False;
+static Bool     falsePrecision  = False;
 static Pixmap   tileToQuery     = None;
 static char *displayName;
 int	abortTest;
@@ -252,8 +250,10 @@ RoundTo3Digits(double d)
 {
     /* It's kind of silly to print out things like ``193658.4/sec'' so just
        junk all but 3 most significant digits. */
-
     double exponent, sign;
+
+    if (falsePrecision)
+        return d;
 
     exponent = 1.0;
     /* the code below won't work if d should happen to be non-positive. */
@@ -282,7 +282,7 @@ RoundTo3Digits(double d)
 
 
 static void 
-ReportTimes(double usecs, int n, char *str, int average)
+ReportTimes(double usecs, long long n, char *str, int average)
 {
     double msecsperobj, objspersec;
 
@@ -296,14 +296,14 @@ ReportTimes(double usecs, int n, char *str, int average)
         objspersec =  RoundTo3Digits(objspersec);
 
         if (average) {
-	    printf("%7d trep @ %8.4f msec (%8.1f/sec): %s\n", 
+	    printf("%7lld trep @ %8.4f msec (%8.1f/sec): %s\n",
 		    n, msecsperobj, objspersec, str);
 	} else {
-	    printf("%7d reps @ %8.4f msec (%8.1f/sec): %s\n", 
+	    printf("%7lld reps @ %8.4f msec (%8.1f/sec): %s\n",
 	        n, msecsperobj, objspersec, str);
 	}
     } else {
-	printf("%6d %sreps @ 0.0 msec (unmeasurably fast): %s\n",
+	printf("%6lld %sreps @ 0.0 msec (unmeasurably fast): %s\n",
 	    n, average ? "t" : "", str);
     }
 
@@ -647,6 +647,7 @@ DoTest(XParms xp, Test *test, int reps)
     HardwareSync(xp);
 
     time = ElapsedTime(syncTime);
+    if (time < 0.0) time = 0.0;
     CheckAbort ();
     if (drawToFakeServer)
         XQueryBestSize(xp->d, TileShape, tileToQuery,
@@ -838,7 +839,7 @@ static void
 ProcessTest(XParms xp, Test *test, int func, unsigned long pm, char *label)
 {
     double  time, totalTime;
-    int     reps;
+    long long reps;
     int     j;
 
     xp->planemask = pm;
@@ -977,10 +978,12 @@ main(int argc, char *argv[])
 	    foundOne = True;
 	} else if (strcmp (argv[i], "-sync") == 0) {
 	    synchronous = True;
-	} else if (strcmp(argv[i], "-pack") == 0) {
+	} else if (strcmp (argv[i], "-pack") == 0) {
 	    xparms.pack = True;
 	} else if (strcmp (argv[i], "-draw") == 0) {
 	    drawToFakeServer = True;
+        } else if (strcmp (argv[i], "-falseprecision") == 0) {
+            falsePrecision = True;
 	} else if (strcmp (argv[i], "-repeat") == 0) {
 	    i++;
 	    if (argc <= i)
