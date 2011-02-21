@@ -1,3 +1,70 @@
+commit be2a1b33c9394dcab52622bde53c83f1dd840ea0
+Author: Peter Hutterer <peter.hutterer@who-t.net>
+Date:   Wed Jan 26 07:42:53 2011 +1000
+
+    libXi 1.4.1
+    
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+
+commit e0c95ce2348a9c9afaa4862368c7a5ae6913457c
+Author: Carlos Garnacho <carlosg@gnome.org>
+Date:   Mon Jan 24 12:35:04 2011 +0100
+
+    Fill in mods/group->effective in XIQueryPointer()
+    
+    the other XIModifierState/XIGroupState fields are being set correctly,
+    but the "effective" field was being left as undefined memory.
+    
+    Signed-off-by: Carlos Garnacho <carlosg@gnome.org>
+    Signed-off-by: Peter Hutterer <peter.hutterer@who-t.net>
+
+commit a5961a8459614fcaa801a47cda07d3ee8246b16f
+Author: Philipp Reh <sefi@s-e-f-i.de>
+Date:   Mon Jan 10 17:35:57 2011 +0100
+
+    Fix passive grabs.
+    
+    _XIPassiveGrabDevice, which is called by alle the passive grab functions,
+    wrongly returns an error when it shouldn't.
+    The attached patch adds the missing "not" to properly test the error
+    condition of _XReply.
+    
+    Signed-off-by: Philipp Reh <sefi@s-e-f-i.de>
+    Reviewed-by: Daniel Stone <daniel@fooishbar.org>
+    Reviewed-by: Peter Hutterer <peter.hutterer@who-t.net>
+
+commit 408db9e86a92c897390129ef27a804d7cf6ba6fb
+Author: Paulo Zanoni <pzanoni@mandriva.com>
+Date:   Thu Dec 16 14:10:05 2010 -0200
+
+    Use docbookx.dtd version 4.3 for all docs
+    
+    Signed-off-by: Paulo Zanoni <pzanoni@mandriva.com>
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 9419fe9f0b21232d342885a693fbf9222b5844e4
+Author: Daniel Stone <daniel@fooishbar.org>
+Date:   Mon Dec 13 19:49:58 2010 +0000
+
+    WireToEvent: Set display member of all events as well
+    
+    All events were getting random uninitialised garbage for display; fix
+    that.
+    
+    Signed-off-by: Daniel Stone <daniel@fooishbar.org>
+
+commit 549dd5f470148df74e65ce7bb1af316a2848a71d
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Tue Nov 9 13:04:55 2010 -0500
+
+    config: HTML file generation: use the installed copy of xorg.css
+    
+    Currenlty the xorg.css file is copied in each location
+    where a DocBook/XML file resides. This produces about
+    70 copies in the $(docdir) install tree.
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
 commit ea7e12eaf84ada28f4933e85ecf51a47c9db0b93
 Author: Peter Hutterer <peter.hutterer@who-t.net>
 Date:   Tue Nov 2 14:26:34 2010 +1000
