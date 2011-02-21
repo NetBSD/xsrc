@@ -41,5 +41,7 @@
   ws007sh	*			=	pc+sharp_vndr/ws007sh(basic)
   ws011sh	*			=	pc+sharp_vndr/ws011sh(basic)
   ws020sh	*			=	pc+sharp_vndr/ws020sh(basic)
+  htcdream	$htcdreamlayouts	=	%l(htcdream)
   *	   	$nonlatin		=	pc+us+%l%(v):2
   *		*			=	pc+%l%(v)
+  htcdream	us de it		=	%l(htcdream)
