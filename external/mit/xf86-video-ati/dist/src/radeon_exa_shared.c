@@ -131,21 +131,14 @@ static Bool radeon_vb_get(ScrnInfoPtr pScrn)
     RADEONInfoPtr info = RADEONPTR(pScrn);
     struct radeon_accel_state *accel_state = info->accel_state;
 
-    accel_state->vb_mc_addr = info->gartLocation + info->dri->bufStart +
+    accel_state->vbo.vb_mc_addr = info->gartLocation + info->dri->bufStart +
 	(accel_state->ib->idx*accel_state->ib->total)+
 	(accel_state->ib->total / 2);
-    accel_state->vb_total = (accel_state->ib->total / 2);
-    accel_state->vb_ptr = (pointer)((char*)accel_state->ib->address +
+    accel_state->vbo.vb_total = (accel_state->ib->total / 2);
+    accel_state->vbo.vb_ptr = (pointer)((char*)accel_state->ib->address +
 				    (accel_state->ib->total / 2));
-    accel_state->vb_offset = 0;
+    accel_state->vbo.vb_offset = 0;
     return TRUE;
-}
-
-void radeon_vb_discard(ScrnInfoPtr pScrn)
-{
-    RADEONInfoPtr info = RADEONPTR(pScrn);
-
-    info->accel_state->vb_start_op = -1;
 }
 
 int radeon_cp_start(ScrnInfoPtr pScrn)
@@ -159,7 +152,6 @@ int radeon_cp_start(ScrnInfoPtr pScrn)
 	    radeon_cs_flush_indirect(pScrn);
 	}
 	accel_state->ib_reset_op = info->cs->cdw;
-	accel_state->vb_start_op = accel_state->vb_offset;
     } else
 #endif
     {
@@ -167,33 +159,36 @@ int radeon_cp_start(ScrnInfoPtr pScrn)
 	if (!radeon_vb_get(pScrn)) {
 	    return -1;
 	}
-	accel_state->vb_start_op = accel_state->vb_offset;
     }
+    accel_state->vbo.vb_start_op = accel_state->vbo.vb_offset;
+    accel_state->cbuf.vb_start_op = accel_state->cbuf.vb_offset;
     return 0;
 }
 
-void radeon_vb_no_space(ScrnInfoPtr pScrn, int vert_size)
+void radeon_vb_no_space(ScrnInfoPtr pScrn,
+			struct radeon_vbo_object *vbo,
+			int vert_size)
 {
     RADEONInfoPtr info = RADEONPTR(pScrn);
-    struct radeon_accel_state *accel_state = info->accel_state; 
+    struct radeon_accel_state *accel_state = info->accel_state;
 
 #if defined(XF86DRM_MODE)
     if (info->cs) {
-	if (accel_state->vb_bo) {
-	    if (accel_state->vb_start_op != accel_state->vb_offset) { 
+	if (vbo->vb_bo) {
+	    if (vbo->vb_start_op != vbo->vb_offset) {
 		accel_state->finish_op(pScrn, vert_size);
 		accel_state->ib_reset_op = info->cs->cdw;
 	    }
 
 	    /* release the current VBO */
-	    radeon_vbo_put(pScrn);
+	    radeon_vbo_put(pScrn, vbo);
 	}
 	/* get a new one */
-	radeon_vbo_get(pScrn);
+	radeon_vbo_get(pScrn, vbo);
 	return;
     }
 #endif
-    if (accel_state->vb_start_op != -1) {
+    if (vbo->vb_start_op != -1) {
         accel_state->finish_op(pScrn, vert_size);
         radeon_cp_start(pScrn);
     }
@@ -213,8 +208,10 @@ void radeon_ib_discard(ScrnInfoPtr pScrn)
 	goto out;
     }
 
-    info->accel_state->vb_offset = 0;
-    info->accel_state->vb_start_op = -1;
+    info->accel_state->vbo.vb_offset = 0;
+    info->accel_state->vbo.vb_start_op = -1;
+    info->accel_state->cbuf.vb_offset = 0;
+    info->accel_state->cbuf.vb_start_op = -1;
 
     if (CS_FULL(info->cs)) {
 	radeon_cs_flush_indirect(pScrn);
@@ -222,10 +219,18 @@ void radeon_ib_discard(ScrnInfoPtr pScrn)
     }
     radeon_cs_erase(info->cs);
     ret = radeon_cs_space_check_with_bo(info->cs,
-					info->accel_state->vb_bo,
+					info->accel_state->vbo.vb_bo,
 					RADEON_GEM_DOMAIN_GTT, 0);
     if (ret)
 	ErrorF("space check failed in flush\n");
+
+    if (info->accel_state->cbuf.vb_bo) {
+	ret = radeon_cs_space_check_with_bo(info->cs,
+					    info->accel_state->cbuf.vb_bo,
+					    RADEON_GEM_DOMAIN_GTT, 0);
+	if (ret)
+	    ErrorF("space check failed in flush\n");
+    }
 
  out:
     if (info->dri2.enabled) {

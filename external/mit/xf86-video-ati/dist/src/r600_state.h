@@ -274,48 +274,46 @@ do {								        \
 void R600CPFlushIndirect(ScrnInfoPtr pScrn, drmBufPtr ib);
 void R600IBDiscard(ScrnInfoPtr pScrn, drmBufPtr ib);
 
-uint64_t
-upload (ScrnInfoPtr pScrn, void *shader, int size, int offset);
 void
-wait_3d_idle_clean(ScrnInfoPtr pScrn, drmBufPtr ib);
+r600_wait_3d_idle_clean(ScrnInfoPtr pScrn, drmBufPtr ib);
 void
-wait_3d_idle(ScrnInfoPtr pScrn, drmBufPtr ib);
+r600_wait_3d_idle(ScrnInfoPtr pScrn, drmBufPtr ib);
 void
-start_3d(ScrnInfoPtr pScrn, drmBufPtr ib);
+r600_start_3d(ScrnInfoPtr pScrn, drmBufPtr ib);
 void
-set_render_target(ScrnInfoPtr pScrn, drmBufPtr ib, cb_config_t *cb_conf, uint32_t domain);
+r600_set_render_target(ScrnInfoPtr pScrn, drmBufPtr ib, cb_config_t *cb_conf, uint32_t domain);
 void
-cp_wait_vline_sync(ScrnInfoPtr pScrn, drmBufPtr ib, PixmapPtr pPix, xf86CrtcPtr crtc, int start, int stop);
+r600_cp_wait_vline_sync(ScrnInfoPtr pScrn, drmBufPtr ib, PixmapPtr pPix, xf86CrtcPtr crtc, int start, int stop);
 void
-fs_setup(ScrnInfoPtr pScrn, drmBufPtr ib, shader_config_t *fs_conf, uint32_t domain);
+r600_fs_setup(ScrnInfoPtr pScrn, drmBufPtr ib, shader_config_t *fs_conf, uint32_t domain);
 void
-vs_setup(ScrnInfoPtr pScrn, drmBufPtr ib, shader_config_t *vs_conf, uint32_t domain);
+r600_vs_setup(ScrnInfoPtr pScrn, drmBufPtr ib, shader_config_t *vs_conf, uint32_t domain);
 void
-ps_setup(ScrnInfoPtr pScrn, drmBufPtr ib, shader_config_t *ps_conf, uint32_t domain);
+r600_ps_setup(ScrnInfoPtr pScrn, drmBufPtr ib, shader_config_t *ps_conf, uint32_t domain);
 void
-set_alu_consts(ScrnInfoPtr pScrn, drmBufPtr ib, int offset, int count, float *const_buf);
+r600_set_alu_consts(ScrnInfoPtr pScrn, drmBufPtr ib, int offset, int count, float *const_buf);
 void
-set_bool_consts(ScrnInfoPtr pScrn, drmBufPtr ib, int offset, uint32_t val);
+r600_set_bool_consts(ScrnInfoPtr pScrn, drmBufPtr ib, int offset, uint32_t val);
 void
-set_tex_resource(ScrnInfoPtr pScrn, drmBufPtr ib, tex_resource_t *tex_res, uint32_t domain);
+r600_set_tex_resource(ScrnInfoPtr pScrn, drmBufPtr ib, tex_resource_t *tex_res, uint32_t domain);
 void
-set_tex_sampler (ScrnInfoPtr pScrn, drmBufPtr ib, tex_sampler_t *s);
+r600_set_tex_sampler (ScrnInfoPtr pScrn, drmBufPtr ib, tex_sampler_t *s);
 void
-set_screen_scissor(ScrnInfoPtr pScrn, drmBufPtr ib, int x1, int y1, int x2, int y2);
+r600_set_screen_scissor(ScrnInfoPtr pScrn, drmBufPtr ib, int x1, int y1, int x2, int y2);
 void
-set_vport_scissor(ScrnInfoPtr pScrn, drmBufPtr ib, int id, int x1, int y1, int x2, int y2);
+r600_set_vport_scissor(ScrnInfoPtr pScrn, drmBufPtr ib, int id, int x1, int y1, int x2, int y2);
 void
-set_generic_scissor(ScrnInfoPtr pScrn, drmBufPtr ib, int x1, int y1, int x2, int y2);
+r600_set_generic_scissor(ScrnInfoPtr pScrn, drmBufPtr ib, int x1, int y1, int x2, int y2);
 void
-set_window_scissor(ScrnInfoPtr pScrn, drmBufPtr ib, int x1, int y1, int x2, int y2);
+r600_set_window_scissor(ScrnInfoPtr pScrn, drmBufPtr ib, int x1, int y1, int x2, int y2);
 void
-set_clip_rect(ScrnInfoPtr pScrn, drmBufPtr ib, int id, int x1, int y1, int x2, int y2);
+r600_set_clip_rect(ScrnInfoPtr pScrn, drmBufPtr ib, int id, int x1, int y1, int x2, int y2);
 void
-set_default_state(ScrnInfoPtr pScrn, drmBufPtr ib);
+r600_set_default_state(ScrnInfoPtr pScrn, drmBufPtr ib);
 void
-draw_immd(ScrnInfoPtr pScrn, drmBufPtr ib, draw_config_t *draw_conf, uint32_t *indices);
+r600_draw_immd(ScrnInfoPtr pScrn, drmBufPtr ib, draw_config_t *draw_conf, uint32_t *indices);
 void
-draw_auto(ScrnInfoPtr pScrn, drmBufPtr ib, draw_config_t *draw_conf);
+r600_draw_auto(ScrnInfoPtr pScrn, drmBufPtr ib, draw_config_t *draw_conf);
 
 void r600_finish_op(ScrnInfoPtr pScrn, int vtx_size);
 

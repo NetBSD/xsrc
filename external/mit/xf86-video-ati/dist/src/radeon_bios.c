@@ -40,7 +40,6 @@
 #include "radeon_macros.h"
 #include "radeon_probe.h"
 #include "radeon_atombios.h"
-#include "vbe.h"
 
 typedef enum
 {

@@ -75,6 +75,7 @@
 
 #include <errno.h>
 #include <string.h>
+#include <assert.h>
 				/* Driver data structures */
 #include "radeon.h"
 #include "radeon_reg.h"
@@ -1072,7 +1073,13 @@ Bool RADEONAccelInit(ScreenPtr pScreen)
     if (info->useEXA) {
 # ifdef XF86DRI
 	if (info->directRenderingEnabled) {
-	    if (info->ChipFamily >= CHIP_FAMILY_R600) {
+#ifdef XF86DRM_MODE
+	    if (info->ChipFamily >= CHIP_FAMILY_CEDAR) {
+		if (!EVERGREENDrawInit(pScreen))
+		    return FALSE;
+	    } else
+#endif
+	      if (info->ChipFamily >= CHIP_FAMILY_R600) {
 		if (!R600DrawInit(pScreen))
 		    return FALSE;
 	    } else {

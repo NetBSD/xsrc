@@ -23,7 +23,7 @@
 # Initialize Autoconf
 AC_PREREQ([2.60])
 AC_INIT([xf86-video-ati],
-        [6.13.2],
+        [6.14.0],
         [https://bugs.freedesktop.org/enter_bug.cgi?product=xorg],
         [xf86-video-ati])
 
@@ -232,6 +232,11 @@ AC_CHECK_DECL(pci_device_enable,
 AC_CHECK_DECL(XSERVER_LIBPCIACCESS,
 	      [XSERVER_LIBPCIACCESS=yes],[XSERVER_LIBPCIACCESS=no],
 	      [#include "xorg-server.h"])
+
+AC_CHECK_HEADERS([list.h],
+		 [], [],
+		 [#include <X11/Xdefs.h>
+		  #include "xorg-server.h"])
 
 CPPFLAGS="$SAVE_CPPFLAGS"
 

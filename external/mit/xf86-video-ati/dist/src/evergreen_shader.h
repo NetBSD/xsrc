@@ -1,8 +1,7 @@
 /*
- * RadeonHD R6xx, R7xx DRI driver
+ * Evergreen shaders
  *
- * Copyright (C) 2008-2009  Alexander Deucher
- * Copyright (C) 2008-2009  Matthias Hopf
+ * Copyright (C) 2010  Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -31,39 +30,14 @@
 
 #include "radeon.h"
 
-/* Restrictions of ALU instructions
- * order of scalar ops is always x,y,z,w,t(rans), last to be indicated by last==1.
- * max of 3 different src GPRs per instr.
- * max of 4 different cfile constant components per instr.
- * max of 2 (different) constants (any type) for t.
- * bank swizzle (see below).
- * GPR write stalls read of same register. Auto-replaced by PV/PS, NOP needed if registers are relative to
- * different indices (gpr,loop,nothing).
- * may use constant registers or constant cache, but not both.
- */
-
-/* Bank_swizzle: (pp. 297ff)
- * Only one of each x,y,z,w GPR component can be loaded per cycle (3 cycles per instr, called 0-2).
- * per scalar instruction bank_swizzle can select which cycle each operand comes from. e.g.:
- *   SRC0 SRC1 SRC2  SWIZZLE  cycle0 cycle1 cycle2
- *   1.x  2.x          012     1.x    2.x     -
- *   3.x  1.y          201     1.y     -     3.x
- *   2.x  1.y          102    (1.y)  (2.x)    -
- * If data is read in a cycle, multiple scalar instructions can reference it.
- * Special case: square() - i.e. same component in src0+src1 doesn't need read port -> ignores swizzle for src1.
- * No restrictions for constants or PV/PS.
- * t can load multiple components in a single cycle slot, but has to share cycles with xyzw.
- * t with single constant may not load GPRs or PV/PS in cycle 0 (carefull with ALU_TRANS_210).
- * t with two constants may only load GPRs or PV/PS in cycle 2.
- */
-
-
 /* Oder of instructions: All CF, All ALU, All Tex/Vtx fetches */
 
 
 // CF insts
 // addr
 #define ADDR(x)  (x)
+// jumptable
+#define JUMPTABLE_SEL(x) (x)
 // pc
 #define POP_COUNT(x)      (x)
 // const
@@ -72,17 +46,12 @@
 #define COND(x)        (x)		// SQ_COND_*
 // count
 #define I_COUNT(x)        ((x) ? ((x) - 1) : 0)
-//r7xx
-#define COUNT_3(x)        (x)
-// call count
-#define CALL_COUNT(x)     (x)
-// eop
-#define END_OF_PROGRAM(x)   (x)
 // vpm
 #define VALID_PIXEL_MODE(x) (x)
+// eop
+#define END_OF_PROGRAM(x)   (x)
 // cf inst
 #define CF_INST(x)        (x)		// SQ_CF_INST_*
-
 // wqm
 #define WHOLE_QUAD_MODE(x)  (x)
 // barrier
@@ -97,8 +66,8 @@
 //
 #define KCACHE_ADDR0(x)          (x)
 #define KCACHE_ADDR1(x)          (x)
-// uw
-#define USES_WATERFALL(x)        (x)
+
+#define ALT_CONST(x)            (x)
 
 #define ARRAY_BASE(x)        (x)
 // export pixel
@@ -110,16 +79,8 @@
 #define CF_PIXEL_MRT5         5
 #define CF_PIXEL_MRT6         6
 #define CF_PIXEL_MRT7         7
-// *_FOG: r6xx only
-#define CF_PIXEL_MRT0_FOG     16
-#define CF_PIXEL_MRT1_FOG     17
-#define CF_PIXEL_MRT2_FOG     18
-#define CF_PIXEL_MRT3_FOG     19
-#define CF_PIXEL_MRT4_FOG     20
-#define CF_PIXEL_MRT5_FOG     21
-#define CF_PIXEL_MRT6_FOG     22
-#define CF_PIXEL_MRT7_FOG     23
-#define CF_PIXEL_Z            61
+// computed Z
+#define CF_COMPUTED_Z         61
 // export pos
 #define CF_POS0               60
 #define CF_POS1               61
@@ -128,28 +89,14 @@
 // export param
 // 0...31
 #define TYPE(x)              (x)	// SQ_EXPORT_*
-#if 0
-// type export
-#define SQ_EXPORT_PIXEL              0
-#define SQ_EXPORT_POS                1
-#define SQ_EXPORT_PARAM              2
-// reserved 3
-// type mem
-#define SQ_EXPORT_WRITE              0
-#define SQ_EXPORT_WRITE_IND          1
-#define SQ_EXPORT_WRITE_ACK          2
-#define SQ_EXPORT_WRITE_IND_ACK      3
-#endif
-
 #define RW_GPR(x)            (x)
 #define RW_REL(x)            (x)
 #define ABSOLUTE                  0
 #define RELATIVE                  1
 #define INDEX_GPR(x)            (x)
 #define ELEM_SIZE(x)            (x ? (x - 1) : 0)
-#define COMP_MASK(x)            (x)
-#define R6xx_ELEM_LOOP(x)            (x)
 #define BURST_COUNT(x)          (x ? (x - 1) : 0)
+#define MARK(x)         (x)
 
 // swiz
 #define SRC_SEL_X(x)    (x)		// SQ_SEL_* each
@@ -157,32 +104,23 @@
 #define SRC_SEL_Z(x)    (x)
 #define SRC_SEL_W(x)    (x)
 
-#define CF_DWORD0(addr) (addr)
-// R7xx has another entry (COUNT3), but that is only used for adding a bit to count.
-// We allow one more bit for count in the argument of the macro on R7xx instead.
-// R6xx: [0,7]  R7xx: [1,16]
-#define CF_DWORD1(pc, cf_const, cond, count, call_count, eop, vpm, cf_inst, wqm, b) \
-        (((pc) << 0) | ((cf_const) << 3) | ((cond) << 8) | (((count) & 7) << 10) | (((count) >> 3) << 19) | \
-         ((call_count) << 13) | ((eop) << 21) | ((vpm) << 22) | ((cf_inst) << 23) | ((wqm) << 30) | ((b) << 31))
+#define CF_DWORD0(addr, jmptbl) ((addr) | ((jmptbl) << 24))
+#define CF_DWORD1(pc, cf_const, cond, count, vpm, eop, cf_inst, wqm, b) \
+        (((pc) << 0) | ((cf_const) << 3) | ((cond) << 8) | ((count) << 10) | \
+         ((vpm) << 20) | ((eop) << 21) | ((cf_inst) << 22) | ((wqm) << 30) | ((b) << 31))
 
 #define CF_ALU_DWORD0(addr, kb0, kb1, km0) (((addr) << 0) | ((kb0) << 22) | ((kb1) << 26) | ((km0) << 30))
-#define CF_ALU_DWORD1(km1, kcache_addr0, kcache_addr1, count, uw, cf_inst, wqm, b) \
+#define CF_ALU_DWORD1(km1, kcache_addr0, kcache_addr1, count, alt_const, cf_inst, wqm, b) \
         (((km1) << 0) | ((kcache_addr0) << 2) | ((kcache_addr1) << 10) | \
-	 ((count) << 18) | ((uw) << 25) | ((cf_inst) << 26) | ((wqm) << 30) | ((b) << 31))
+	 ((count) << 18) | ((alt_const) << 25) | ((cf_inst) << 26) | ((wqm) << 30) | ((b) << 31))
 
 #define CF_ALLOC_IMP_EXP_DWORD0(array_base, type, rw_gpr, rr, index_gpr, es) \
-	 (((array_base) << 0) | ((type) << 13) | ((rw_gpr) << 15) | ((rr) << 22) | ((index_gpr) << 23) | \
-          ((es) << 30))
-// R7xx apparently doesn't have the ELEM_LOOP entry any more
-// We still expose it, but ELEM_LOOP is explicitely R6xx now.
-// TODO: is this just forgotten in the docs, or really not available any more?
-#define CF_ALLOC_IMP_EXP_DWORD1_BUF(array_size, comp_mask, el, bc, eop, vpm, cf_inst, wqm, b) \
-        (((array_size) << 0) | ((comp_mask) << 12) | ((el) << 16) | ((bc) << 17) | \
-	 ((eop) << 21) | ((vpm) << 22) | ((cf_inst) << 23) | ((wqm) << 30) | ((b) << 31))
-#define CF_ALLOC_IMP_EXP_DWORD1_SWIZ(sel_x, sel_y, sel_z, sel_w, el, bc, eop, vpm, cf_inst, wqm, b) \
-        (((sel_x) << 0) | ((sel_y) << 3) | ((sel_z) << 6) | ((sel_w) << 9) | ((el) << 16) | \
-	 ((bc) << 17) | ((eop) << 21) | ((vpm) << 22) | ((cf_inst) << 23) | \
-	 ((wqm) << 30) | ((b) << 31))
+	 (((array_base) << 0) | ((type) << 13) | ((rw_gpr) << 15) | ((rr) << 22) | \
+	  ((index_gpr) << 23) | ((es) << 30))
+#define CF_ALLOC_IMP_EXP_DWORD1_SWIZ(sel_x, sel_y, sel_z, sel_w, bc, vpm, eop, cf_inst, m, b) \
+        (((sel_x) << 0) | ((sel_y) << 3) | ((sel_z) << 6) | ((sel_w) << 9) | \
+	 ((bc) << 16) | ((vpm) << 20) | ((eop) << 21) | ((cf_inst) << 22) | \
+	 ((m) << 30) | ((b) << 31))
 
 // ALU clause insts
 #define SRC0_SEL(x)        (x)
@@ -192,11 +130,18 @@
 //   0-127 GPR
 // 128-159 kcache constants bank 0
 // 160-191 kcache constants bank 1
-// 248-255 special SQ_ALU_SRC_* (0, 1, etc.)
+// 192-255 inline const values
+// 256-287 kcache constants bank 2
+// 288-319 kcache constants bank 3
+// 219-255 special SQ_ALU_SRC_* (0, 1, etc.)
+// 488-520 src param space
 #define ALU_SRC_GPR_BASE        0
 #define ALU_SRC_KCACHE0_BASE  128
 #define ALU_SRC_KCACHE1_BASE  160
-#define ALU_SRC_CFILE_BASE    256
+#define ALU_SRC_INLINE_K_BASE 192
+#define ALU_SRC_KCACHE2_BASE  256
+#define ALU_SRC_KCACHE3_BASE  288
+#define ALU_SRC_PARAM_BASE    448
 
 #define SRC0_REL(x)        (x)
 #define SRC1_REL(x)        (x)
@@ -228,8 +173,6 @@
 #define UPDATE_PRED(x)      (x)
 // wm
 #define WRITE_MASK(x)   (x)
-// fm
-#define FOG_MERGE(x)    (x)
 // omod
 #define OMOD(x)        (x)		// SQ_ALU_OMOD_*
 // alu inst
@@ -245,21 +188,12 @@
         (((src0_sel) << 0) | ((s0r) << 9) | ((s0e) << 10) | ((s0n) << 12) | \
          ((src1_sel) << 13) | ((s1r) << 22) | ((s1e) << 23) | ((s1n) << 25) | \
 	 ((im) << 26) | ((ps) << 29) | ((last) << 31))
-// R7xx has alu_inst at a different slot, and no fog merge any more (no fix function fog any more)
-#define R6xx_ALU_DWORD1_OP2(s0a, s1a, uem, up, wm, fm, omod, alu_inst, bs, dst_gpr, dr, de, clamp) \
-        (((s0a) << 0) | ((s1a) << 1) | ((uem) << 2) | ((up) << 3) | ((wm) << 4) | \
-         ((fm) << 5) | ((omod) << 6) | ((alu_inst) << 8) | ((bs) << 18) | ((dst_gpr) << 21) | \
-	 ((dr) << 28) | ((de) << 29) | ((clamp) << 31))
-#define R7xx_ALU_DWORD1_OP2(s0a, s1a, uem, up, wm, omod, alu_inst, bs, dst_gpr, dr, de, clamp) \
+
+#define ALU_DWORD1_OP2(s0a, s1a, uem, up, wm, omod, alu_inst, bs, dst_gpr, dr, de, clamp) \
         (((s0a) << 0) | ((s1a) << 1) | ((uem) << 2) | ((up) << 3) | ((wm) << 4) | \
          ((omod) << 5) | ((alu_inst) << 7) | ((bs) << 18) | ((dst_gpr) << 21) | \
 	 ((dr) << 28) | ((de) << 29) | ((clamp) << 31))
-// This is a general chipset macro, but due to selection by chipid typically not usable in static arrays
-// Fog is NOT USED on R7xx, even if specified.
-#define ALU_DWORD1_OP2(chipfamily, s0a, s1a, uem, up, wm, fm, omod, alu_inst, bs, dst_gpr, dr, de, clamp) \
-    ((chipfamily) < CHIP_FAMILY_RV770 ? \
-     R6xx_ALU_DWORD1_OP2(s0a, s1a, uem, up, wm, fm, omod, alu_inst, bs, dst_gpr, dr, de, clamp) : \
-     R7xx_ALU_DWORD1_OP2(s0a, s1a, uem, up, wm, omod, alu_inst, bs, dst_gpr, dr, de, clamp))
+
 #define ALU_DWORD1_OP3(src2_sel, s2r, s2e, s2n, alu_inst, bs, dst_gpr, dr, de, clamp) \
         (((src2_sel) << 0) | ((s2r) << 9) | ((s2e) << 10) | ((s2n) << 12) | \
          ((alu_inst) << 13) | ((bs) << 18) | ((dst_gpr) << 21) | ((dr) << 28) | \
@@ -278,7 +212,6 @@
 #define SRC_REL(x)          (x)
 #define MEGA_FETCH_COUNT(x)        ((x) ? ((x) - 1) : 0)
 
-#define SEMANTIC_ID(x)        (x)
 #define DST_SEL_X(x)          (x)
 #define DST_SEL_Y(x)          (x)
 #define DST_SEL_Z(x)          (x)
@@ -299,28 +232,26 @@
 #define CONST_BUF_NO_STRIDE(x)     (x)
 // mf
 #define MEGA_FETCH(x)     (x)
+#define BUFFER_INDEX_MODE(x) (x)
 
 #define VTX_DWORD0(vtx_inst, ft, fwq, buffer_id, src_gpr, sr, ssx, mfc) \
         (((vtx_inst) << 0) | ((ft) << 5) | ((fwq) << 7) | ((buffer_id) << 8) | \
 	 ((src_gpr) << 16) | ((sr) << 23) | ((ssx) << 24) | ((mfc) << 26))
-#define VTX_DWORD1_SEM(semantic_id, dsx, dsy, dsz, dsw, ucf, data_format, nfa, fca, sma) \
-        (((semantic_id) << 0) | ((dsx) << 9) | ((dsy) << 12) | ((dsz) << 15) | ((dsw) << 18) | \
-	 ((ucf) << 21) | ((data_format) << 22) | ((nfa) << 28) | ((fca) << 30) | ((sma) << 31))
 #define VTX_DWORD1_GPR(dst_gpr, dr, dsx, dsy, dsz, dsw, ucf, data_format, nfa, fca, sma) \
         (((dst_gpr) << 0) | ((dr) << 7) | ((dsx) << 9) | ((dsy) << 12) | ((dsz) << 15) | ((dsw) << 18) | \
 	 ((ucf) << 21) | ((data_format) << 22) | ((nfa) << 28) | ((fca) << 30) | ((sma) << 31))
-#define VTX_DWORD2(offset, es, cbns, mf) \
-	 (((offset) << 0) | ((es) << 16) | ((cbns) << 18) | ((mf) << 19))
+#define VTX_DWORD2(offset, es, cbns, mf, alt_const, bim)			\
+	(((offset) << 0) | ((es) << 16) | ((cbns) << 18) | ((mf) << 19) | ((alt_const) << 20) | ((bim) << 21))
 #define VTX_DWORD_PAD 0x00000000
 
 // TEX clause insts
 // tex insts
 #define TEX_INST(x)     (x)		// SQ_TEX_INST_*
-
-#define BC_FRAC_MODE(x)         (x)
+#define INST_MOD(x)     (x)
 #define FETCH_WHOLE_QUAD(x)     (x)
 #define RESOURCE_ID(x)          (x)
-#define R7xx_ALT_CONST(x)            (x)
+#define RESOURCE_INDEX_MODE(x)          (x)
+#define SAMPLER_INDEX_MODE(x)          (x)
 
 #define LOD_BIAS(x)     (x)
 //ct
@@ -335,10 +266,9 @@
 #define OFFSET_Z(x) (((int)(x) * 2) & 0x1f)
 #define SAMPLER_ID(x)     (x)
 
-// R7xx has an additional parameter ALT_CONST. We always expose it, but ALT_CONST is R7xx only
-#define TEX_DWORD0(tex_inst, bfm, fwq, resource_id, src_gpr, sr, ac) \
-	 (((tex_inst) << 0) | ((bfm) << 5) | ((fwq) << 7) | ((resource_id) << 8) | \
-          ((src_gpr) << 16) | ((sr) << 23) | ((ac) << 24))
+#define TEX_DWORD0(tex_inst, im, fwq, resource_id, src_gpr, sr, ac, rim, sim) \
+	 (((tex_inst) << 0) | ((im) << 5) | ((fwq) << 7) | ((resource_id) << 8) | \
+	  ((src_gpr) << 16) | ((sr) << 23) | ((ac) << 24) | ((rim) << 25) | ((sim) << 27))
 #define TEX_DWORD1(dst_gpr, dr, dsx, dsy, dsz, dsw, lod_bias, ctx, cty, ctz, ctw) \
         (((dst_gpr) << 0) | ((dr) << 7) | ((dsx) << 9) | ((dsy) << 12) | ((dsz) << 15) | ((dsw) << 18) | \
 	 ((lod_bias) << 21) | ((ctx) << 28) | ((cty) << 29) | ((ctz) << 30) | ((ctw) << 31))
@@ -347,16 +277,16 @@
 	 ((ssx) << 20) | ((ssy) << 23) | ((ssz) << 26) | ((ssw) << 29))
 #define TEX_DWORD_PAD 0x00000000
 
-extern int R600_solid_vs(RADEONChipFamily ChipSet, uint32_t* vs);
-extern int R600_solid_ps(RADEONChipFamily ChipSet, uint32_t* ps);
+extern int evergreen_solid_vs(RADEONChipFamily ChipSet, uint32_t* vs);
+extern int evergreen_solid_ps(RADEONChipFamily ChipSet, uint32_t* ps);
 
-extern int R600_copy_vs(RADEONChipFamily ChipSet, uint32_t* vs);
-extern int R600_copy_ps(RADEONChipFamily ChipSet, uint32_t* ps);
+extern int evergreen_copy_vs(RADEONChipFamily ChipSet, uint32_t* vs);
+extern int evergreen_copy_ps(RADEONChipFamily ChipSet, uint32_t* ps);
 
-extern int R600_xv_vs(RADEONChipFamily ChipSet, uint32_t* shader);
-extern int R600_xv_ps(RADEONChipFamily ChipSet, uint32_t* shader);
+extern int evergreen_xv_vs(RADEONChipFamily ChipSet, uint32_t* shader);
+extern int evergreen_xv_ps(RADEONChipFamily ChipSet, uint32_t* shader);
 
-extern int R600_comp_vs(RADEONChipFamily ChipSet, uint32_t* vs);
-extern int R600_comp_ps(RADEONChipFamily ChipSet, uint32_t* ps);
+extern int evergreen_comp_vs(RADEONChipFamily ChipSet, uint32_t* vs);
+extern int evergreen_comp_ps(RADEONChipFamily ChipSet, uint32_t* ps);
 
 #endif

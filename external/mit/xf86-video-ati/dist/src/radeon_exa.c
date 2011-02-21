@@ -174,6 +174,18 @@ Bool RADEONGetPixmapOffsetPitch(PixmapPtr pPix, uint32_t *pitch_offset)
 	return RADEONGetOffsetPitch(pPix, bpp, pitch_offset, offset, pitch);
 }
 
+/**
+ * Returns whether the provided transform is affine.
+ *
+ * transform may be null.
+ */
+Bool radeon_transform_is_affine(PictTransformPtr t)
+{
+	if (t == NULL)
+		return TRUE;
+	return t->matrix[2][0] == 0 && t->matrix[2][1] == 0;
+}
+
 #if X_BYTE_ORDER == X_BIG_ENDIAN
 
 static unsigned long swapper_surfaces[6];
@@ -295,6 +307,7 @@ Bool RADEONPrepareAccess_CS(PixmapPtr pPix, int index)
 #endif
     Bool flush = FALSE;
     int ret;
+    uint32_t tiling_flags = 0, pitch = 0;
 
 #if X_BYTE_ORDER == X_BIG_ENDIAN
     /* May need to handle byte swapping in DownloadFrom/UploadToScreen */
@@ -305,6 +318,14 @@ Bool RADEONPrepareAccess_CS(PixmapPtr pPix, int index)
     driver_priv = exaGetPixmapDriverPrivate(pPix);
     if (!driver_priv)
       return FALSE;
+
+    /* check if we are tiled */
+    ret = radeon_bo_get_tiling(driver_priv->bo, &tiling_flags, &pitch);
+    if (ret)
+	return FALSE;
+    /* untile in DFS/UTS */
+    if (tiling_flags & (RADEON_TILING_MACRO | RADEON_TILING_MICRO))
+	return FALSE;
 
     /* if we have more refs than just the BO then flush */
     if (radeon_bo_is_referenced_by_cs(driver_priv->bo, info->cs)) {
@@ -429,10 +450,10 @@ void *RADEONEXACreatePixmap2(ScreenPtr pScreen, int width, int height,
     ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
     RADEONInfoPtr info = RADEONPTR(pScrn);
     struct radeon_exa_pixmap_priv *new_priv;
-    int padded_width;
+    int pitch, base_align;
     uint32_t size;
     uint32_t tiling = 0;
-    int pixmap_align;
+    int cpp = bitsPerPixel / 8;
 
 #ifdef EXA_MIXED_PIXMAPS
     if (info->accel_state->exa->flags & EXA_MIXED_PIXMAPS) {
@@ -461,31 +482,10 @@ void *RADEONEXACreatePixmap2(ScreenPtr pScreen, int width, int height,
         tiling &= ~RADEON_TILING_MACRO;
     }
 
-    if (info->ChipFamily >= CHIP_FAMILY_R600) {
-	int bpe = bitsPerPixel / 8;
-
-	if (tiling & RADEON_TILING_MACRO) {
-	    height = RADEON_ALIGN(height, info->num_banks * 8);
-	    pixmap_align = MAX(info->num_banks,
-			       (((info->group_bytes / 8) / bpe) * info->num_banks)) * 8 * bpe;
-	} else if (tiling & RADEON_TILING_MICRO) {
-	    height = RADEON_ALIGN(height, 8);
-	    pixmap_align = MAX(8, (info->group_bytes / (8 * bpe))) * bpe;
-	} else {
-	    height = RADEON_ALIGN(height, 8);
-	    pixmap_align = 256; /* 8 * bpe */
-	}
-    } else {
-	if (tiling) {
-	    height = RADEON_ALIGN(height, 16);
-	    pixmap_align = 256;
-	} else
-	    pixmap_align = 64;
-    }
-
-    padded_width = ((width * bitsPerPixel + FB_MASK) >> FB_SHIFT) * sizeof(FbBits);
-    padded_width = RADEON_ALIGN(padded_width, pixmap_align);
-    size = height * padded_width;
+    height = RADEON_ALIGN(height, drmmode_get_height_align(pScrn, tiling));
+    pitch = RADEON_ALIGN(width, drmmode_get_pitch_align(pScrn, cpp, tiling)) * cpp;
+    base_align = drmmode_get_base_align(pScrn, cpp, tiling);
+    size = RADEON_ALIGN(height * pitch, RADEON_GPU_PAGE_SIZE);
 
     new_priv = calloc(1, sizeof(struct radeon_exa_pixmap_priv));
     if (!new_priv)
@@ -494,9 +494,9 @@ void *RADEONEXACreatePixmap2(ScreenPtr pScreen, int width, int height,
     if (size == 0)
 	return new_priv;
 
-    *new_pitch = padded_width;
+    *new_pitch = pitch;
 
-    new_priv->bo = radeon_bo_open(info->bufmgr, 0, size, 0,
+    new_priv->bo = radeon_bo_open(info->bufmgr, 0, size, base_align,
 				  RADEON_GEM_DOMAIN_VRAM, 0);
     if (!new_priv->bo) {
 	free(new_priv);

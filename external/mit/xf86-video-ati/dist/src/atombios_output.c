@@ -65,7 +65,114 @@ const char *device_name[12] = {
     "DFP5",
 };
 
+#define AUX_NATIVE_WRITE                    0x8
+#define AUX_NATIVE_READ                     0x9
+
+#define AUX_I2C_WRITE                       0x0
+#define AUX_I2C_READ                        0x1
+#define AUX_I2C_STATUS                      0x2
+#define AUX_I2C_MOT                         0x4
+
+#define DP_DPCD_REV                         0x0
+#define DP_MAX_LINK_RATE                    0x1
+#define DP_MAX_LANE_COUNT                   0x2
+#define DP_MAX_DOWNSPREAD                   0x3
+#define DP_NORP                             0x4
+#define DP_DOWNSTREAMPORT_PRESENT           0x5
+#define DP_MAIN_LINK_CHANNEL_CONFIG         0x6
+#define DP_DP11_DOWNSTREAM_PORT_COUNT       0x7
+
+/* from intel i830_dp.h */
+#define DP_LINK_BW_SET                      0x100
+//# define DP_LINK_BW_1_62                    0x06
+//# define DP_LINK_BW_2_7                     0x0a
+#define DP_LANE_COUNT_SET                   0x101
+# define DP_LANE_COUNT_MASK                 0x0f
+# define DP_LANE_COUNT_ENHANCED_FRAME_EN    (1 << 7)
+
+#define DP_TRAINING_PATTERN_SET             0x102
+
+# define DP_TRAINING_PATTERN_DISABLE        0
+# define DP_TRAINING_PATTERN_1              1
+# define DP_TRAINING_PATTERN_2              2
+# define DP_TRAINING_PATTERN_MASK           0x3
+
+# define DP_LINK_QUAL_PATTERN_DISABLE       (0 << 2)
+# define DP_LINK_QUAL_PATTERN_D10_2         (1 << 2)
+# define DP_LINK_QUAL_PATTERN_ERROR_RATE    (2 << 2)
+# define DP_LINK_QUAL_PATTERN_PRBS7         (3 << 2)
+# define DP_LINK_QUAL_PATTERN_MASK          (3 << 2)
+# define DP_RECOVERED_CLOCK_OUT_EN          (1 << 4)
+# define DP_LINK_SCRAMBLING_DISABLE         (1 << 5)
+
+# define DP_SYMBOL_ERROR_COUNT_BOTH         (0 << 6)
+# define DP_SYMBOL_ERROR_COUNT_DISPARITY    (1 << 6)
+# define DP_SYMBOL_ERROR_COUNT_SYMBOL       (2 << 6)
+# define DP_SYMBOL_ERROR_COUNT_MASK         (3 << 6)
+
+#define DP_TRAINING_LANE0_SET               0x103
+#define DP_TRAINING_LANE1_SET               0x104
+#define DP_TRAINING_LANE2_SET               0x105
+#define DP_TRAINING_LANE3_SET               0x106
+# define DP_TRAIN_VOLTAGE_SWING_MASK        0x3
+# define DP_TRAIN_VOLTAGE_SWING_SHIFT       0
+# define DP_TRAIN_MAX_SWING_REACHED         (1 << 2)
+# define DP_TRAIN_VOLTAGE_SWING_400         (0 << 0)
+# define DP_TRAIN_VOLTAGE_SWING_600         (1 << 0)
+# define DP_TRAIN_VOLTAGE_SWING_800         (2 << 0)
+# define DP_TRAIN_VOLTAGE_SWING_1200        (3 << 0)
+
+# define DP_TRAIN_PRE_EMPHASIS_MASK         (3 << 3)
+# define DP_TRAIN_PRE_EMPHASIS_0            (0 << 3)
+# define DP_TRAIN_PRE_EMPHASIS_3_5          (1 << 3)
+# define DP_TRAIN_PRE_EMPHASIS_6            (2 << 3)
+# define DP_TRAIN_PRE_EMPHASIS_9_5          (3 << 3)
+
+# define DP_TRAIN_PRE_EMPHASIS_SHIFT        3
+# define DP_TRAIN_MAX_PRE_EMPHASIS_REACHED  (1 << 5)
+#define DP_DOWNSPREAD_CTRL                  0x107
+# define DP_SPREAD_AMP_0_5                  (1 << 4)
+
+#define DP_MAIN_LINK_CHANNEL_CODING_SET     0x108
+# define DP_SET_ANSI_8B10B                  (1 << 0)
+
+#define DP_LANE0_1_STATUS                   0x202
+#define DP_LANE2_3_STATUS                   0x203
+
+# define DP_LANE_CR_DONE                    (1 << 0)
+# define DP_LANE_CHANNEL_EQ_DONE            (1 << 1)
+# define DP_LANE_SYMBOL_LOCKED              (1 << 2)
+
+#define DP_LANE_ALIGN_STATUS_UPDATED        0x204
+#define DP_INTERLANE_ALIGN_DONE             (1 << 0)
+#define DP_DOWNSTREAM_PORT_STATUS_CHANGED   (1 << 6)
+#define DP_LINK_STATUS_UPDATED              (1 << 7)
+
+#define DP_SINK_STATUS                      0x205
+
+#define DP_RECEIVE_PORT_0_STATUS            (1 << 0)
+#define DP_RECEIVE_PORT_1_STATUS            (1 << 1)
+
+#define DP_ADJUST_REQUEST_LANE0_1           0x206
+#define DP_ADJUST_REQUEST_LANE2_3           0x207
+
+#define DP_ADJUST_VOLTAGE_SWING_LANE0_MASK  0x03
+#define DP_ADJUST_VOLTAGE_SWING_LANE0_SHIFT 0
+#define DP_ADJUST_PRE_EMPHASIS_LANE0_MASK   0x0c
+#define DP_ADJUST_PRE_EMPHASIS_LANE0_SHIFT  2
+#define DP_ADJUST_VOLTAGE_SWING_LANE1_MASK  0x30
+#define DP_ADJUST_VOLTAGE_SWING_LANE1_SHIFT 4
+#define DP_ADJUST_PRE_EMPHASIS_LANE1_MASK   0xc0
+#define DP_ADJUST_PRE_EMPHASIS_LANE1_SHIFT  6
+
+#define DP_LINK_STATUS_SIZE                 6
+#define DP_LINK_CONFIGURATION_SIZE          9
+
+#define DP_SET_POWER_D0  0x1
+#define DP_SET_POWER_D3  0x2
+
 static void do_displayport_link_train(xf86OutputPtr output);
+static void atombios_pick_dig_encoder(xf86OutputPtr output);
 
 static int
 atombios_output_dac_setup(xf86OutputPtr output, int action)
@@ -410,7 +517,7 @@ atombios_maybe_hdmi_mode(xf86OutputPtr output)
 {
 #ifndef EDID_COMPLETE_RAWDATA
     /* there's no getting this right unless we have complete EDID */
-    return ATOM_ENCODER_MODE_HDMI;
+    return ATOM_ENCODER_MODE_DVI;
 #else
     if (output && xf86MonitorIsHDMI(output->MonInfo))
 	return ATOM_ENCODER_MODE_HDMI;
@@ -487,40 +594,68 @@ static const int num_dp_clocks = sizeof(dp_clocks) / sizeof(int);
 
 # define DP_LINK_BW_1_62                    0x06
 # define DP_LINK_BW_2_7                     0x0a
+static int radeon_dp_max_lane_count(xf86OutputPtr output);
 
 static int
-dp_lanes_for_mode_clock(RADEONOutputPrivatePtr radeon_output,
-			int mode_clock)
+dp_lanes_for_mode_clock(xf86OutputPtr output, int mode_clock)
 {
+    RADEONOutputPrivatePtr radeon_output = output->driver_private;
     int i;
     int max_link_bw = radeon_output->dpcd[1];
+    int max_lane_count = radeon_dp_max_lane_count(output);
 
     switch (max_link_bw) {
     case DP_LINK_BW_1_62:
     default:
 	for (i = 0; i < num_dp_clocks; i++) {
-	    if (i % 2)
-		continue;
-	    if (dp_clocks[i] > (mode_clock / 10)) {
-		if (i < 2)
-		    return 1;
-		else if (i < 4)
-		    return 2;
-		else
-		    return 4;
-	    }
+		if (i % 2)
+			continue;
+		switch (max_lane_count) {
+		case 1:
+			if (i > 1)
+				return 0;
+			break;
+		case 2:
+			if (i > 3)
+				return 0;
+			break;
+		case 4:
+		default:
+			break;
+		}
+		if (dp_clocks[i] > (mode_clock/10)) {
+			if (i < 2)
+				return 1;
+			else if (i < 4)
+				return 2;
+			else
+				return 4;
+		}
 	}
 	break;
     case DP_LINK_BW_2_7:
 	for (i = 0; i < num_dp_clocks; i++) {
-	    if (dp_clocks[i] > (mode_clock / 10)) {
-		if (i < 2)
-		    return 1;
-		else if (i < 4)
-		    return 2;
-		else
-		    return 4;
-	    }
+		switch (max_lane_count) {
+		case 1:
+			if (i > 1)
+				return 0;
+			break;
+		case 2:
+			if (i > 3)
+				return 0;
+			break;
+		case 4:
+		default:
+			break;
+		}
+		if (dp_clocks[i] > (mode_clock/10)) {
+			if (i < 2)
+				return 1;
+			else if (i < 4)
+				return 2;
+			else
+				return 4;
+		}
 	}
         break;
     }
@@ -529,21 +664,54 @@ dp_lanes_for_mode_clock(RADEONOutputPrivatePtr radeon_output,
 }
 
 static int
-dp_link_clock_for_mode_clock(RADEONOutputPrivatePtr radeon_output,
-			     int mode_clock)
+dp_link_clock_for_mode_clock(xf86OutputPtr output, int mode_clock)
 {
+    RADEONOutputPrivatePtr radeon_output = output->driver_private;
     int i;
     int max_link_bw = radeon_output->dpcd[1];
+    int max_lane_count = radeon_dp_max_lane_count(output);
 
     switch (max_link_bw) {
     case DP_LINK_BW_1_62:
     default:
-	return 16200;
+	for (i = 0; i < num_dp_clocks; i++) {
+		if (i % 2)
+			continue;
+		switch (max_lane_count) {
+		case 1:
+			if (i > 1)
+				return 0;
+			break;
+		case 2:
+			if (i > 3)
+				return 0;
+			break;
+		case 4:
+		default:
+			break;
+		}
+		if (dp_clocks[i] > (mode_clock/10))
+			return 16200;
+	}
 	break;
     case DP_LINK_BW_2_7:
-	for (i = 0; i < num_dp_clocks; i++)
-	    if (dp_clocks[i] > (mode_clock / 10))
-		return (i % 2) ? 27000 : 16200;
+	for (i = 0; i < num_dp_clocks; i++) {
+		switch (max_lane_count) {
+		case 1:
+			if (i > 1)
+				return 0;
+			break;
+		case 2:
+			if (i > 3)
+				return 0;
+			break;
+		case 4:
+		default:
+			break;
+		}
+		if (dp_clocks[i] > (mode_clock/10))
+			return (i % 2) ? 27000 : 16200;
+	}
         break;
     }
 
@@ -624,9 +792,9 @@ atombios_output_dig_encoder_setup(xf86OutputPtr output, int action)
     disp_data.v1.ucEncoderMode = atombios_get_encoder_mode(output);
 
     if (disp_data.v1.ucEncoderMode == ATOM_ENCODER_MODE_DP) {
-	if (dp_link_clock_for_mode_clock(radeon_output, clock) == 27000)
+	if (dp_link_clock_for_mode_clock(output, clock) == 27000)
 	    disp_data.v1.ucConfig |= ATOM_ENCODER_CONFIG_DPLINKRATE_2_70GHZ;
-	disp_data.v1.ucLaneNum = dp_lanes_for_mode_clock(radeon_output, clock);
+	disp_data.v1.ucLaneNum = dp_lanes_for_mode_clock(output, clock);
     } else if (clock > 165000)
 	disp_data.v1.ucLaneNum = 8;
     else
@@ -641,6 +809,7 @@ atombios_output_dig_encoder_setup(xf86OutputPtr output, int action)
 	    disp_data.v1.ucConfig = ATOM_ENCODER_CONFIG_V2_TRANSMITTER1;
 	    break;
 	case ENCODER_OBJECT_ID_INTERNAL_UNIPHY1:
+	case ENCODER_OBJECT_ID_INTERNAL_KLDSCP_LVTMA:
 	    disp_data.v1.ucConfig = ATOM_ENCODER_CONFIG_V2_TRANSMITTER2;
 	    break;
 	case ENCODER_OBJECT_ID_INTERNAL_UNIPHY2:
@@ -715,7 +884,7 @@ atombios_output_dig_transmitter_setup(xf86OutputPtr output, int action, uint8_t 
     } else {
 	if (radeon_output->MonType == MT_DP) 
 	    disp_data.v1.usPixelClock =
-		cpu_to_le16(dp_link_clock_for_mode_clock(radeon_output, clock));
+		cpu_to_le16(dp_link_clock_for_mode_clock(output, clock));
 	else if (clock > 165000)
 	    disp_data.v1.usPixelClock = cpu_to_le16((clock / 2) / 10);
 	else
@@ -724,7 +893,7 @@ atombios_output_dig_transmitter_setup(xf86OutputPtr output, int action, uint8_t 
 
     if (IS_DCE4_VARIANT) {
 	if (radeon_output->MonType == MT_DP)
-	    disp_data.v3.ucLaneNum = dp_lanes_for_mode_clock(radeon_output, clock);
+	    disp_data.v3.ucLaneNum = dp_lanes_for_mode_clock(output, clock);
 	else if (clock > 165000)
 	    disp_data.v3.ucLaneNum = 8;
 	else
@@ -791,6 +960,8 @@ atombios_output_dig_transmitter_setup(xf86OutputPtr output, int action, uint8_t 
 	else if (radeon_output->active_device & (ATOM_DEVICE_DFP_SUPPORT)) {
 	    if (radeon_output->coherent_mode)
 		disp_data.v2.acConfig.fCoherentMode = 1;
+	    if (clock > 165000)
+		disp_data.v2.acConfig.fDualLinkConnector = 1;
 	}
     } else {
 	disp_data.v1.ucConfig = ATOM_TRANSMITTER_CONFIG_CLKSRC_PPLL;
@@ -1298,6 +1469,7 @@ atombios_output_dpms(xf86OutputPtr output, int mode)
 
     if (radeon_encoder == NULL)
         return;
+    atombios_pick_dig_encoder(output);
 
     switch (radeon_encoder->encoder_id) {
     case ENCODER_OBJECT_ID_INTERNAL_TMDS1:
@@ -1356,8 +1528,7 @@ atombios_output_dpms(xf86OutputPtr output, int mode)
     case DPMSModeOn:
 	radeon_encoder->devices |= radeon_output->active_device;
 	if (is_dig) {
-	    if (!IS_DCE4_VARIANT)
-		atombios_output_dig_transmitter_setup(output, ATOM_TRANSMITTER_ACTION_ENABLE_OUTPUT, 0, 0);
+	    atombios_output_dig_transmitter_setup(output, ATOM_TRANSMITTER_ACTION_ENABLE_OUTPUT, 0, 0);
 	    if (((radeon_output->ConnectorType == CONNECTOR_DISPLAY_PORT) ||
 		 (radeon_output->ConnectorType == CONNECTOR_EDP)) &&
 		(radeon_output->MonType == MT_DP)) {
@@ -1389,8 +1560,7 @@ atombios_output_dpms(xf86OutputPtr output, int mode)
 	radeon_encoder->devices &= ~(radeon_output->active_device);
 	if (!radeon_encoder->devices) {
 	    if (is_dig) {
-		if (!IS_DCE4_VARIANT)
-		    atombios_output_dig_transmitter_setup(output, ATOM_TRANSMITTER_ACTION_DISABLE_OUTPUT, 0, 0);
+		atombios_output_dig_transmitter_setup(output, ATOM_TRANSMITTER_ACTION_DISABLE_OUTPUT, 0, 0);
 		if (((radeon_output->ConnectorType == CONNECTOR_DISPLAY_PORT) ||
 		     (radeon_output->ConnectorType == CONNECTOR_EDP)) &&
 		    (radeon_output->MonType == MT_DP)) {
@@ -1632,28 +1802,35 @@ atombios_pick_dig_encoder(xf86OutputPtr output)
     if (IS_DCE4_VARIANT) {
         radeon_encoder = radeon_get_encoder(output);
 
-	switch (radeon_encoder->encoder_id) {
-	case ENCODER_OBJECT_ID_INTERNAL_UNIPHY:
+	if (IS_DCE41_VARIANT) {
 	    if (radeon_output->linkb)
 		radeon_output->dig_encoder = 1;
 	    else
 		radeon_output->dig_encoder = 0;
-	    break;
-	case ENCODER_OBJECT_ID_INTERNAL_UNIPHY1:
-	    if (radeon_output->linkb)
-		radeon_output->dig_encoder = 3;
-	    else
-		radeon_output->dig_encoder = 2;
-	    break;
-	case ENCODER_OBJECT_ID_INTERNAL_UNIPHY2:
-	    if (radeon_output->linkb)
-		radeon_output->dig_encoder = 5;
-	    else
-		radeon_output->dig_encoder = 4;
-	    break;
-	default:
-	    ErrorF("Unknown encoder\n");
-	    break;
+	} else {
+	    switch (radeon_encoder->encoder_id) {
+	    case ENCODER_OBJECT_ID_INTERNAL_UNIPHY:
+		if (radeon_output->linkb)
+		    radeon_output->dig_encoder = 1;
+		else
+		    radeon_output->dig_encoder = 0;
+		break;
+	    case ENCODER_OBJECT_ID_INTERNAL_UNIPHY1:
+		if (radeon_output->linkb)
+		    radeon_output->dig_encoder = 3;
+		else
+		    radeon_output->dig_encoder = 2;
+		break;
+	    case ENCODER_OBJECT_ID_INTERNAL_UNIPHY2:
+		if (radeon_output->linkb)
+		    radeon_output->dig_encoder = 5;
+		else
+		    radeon_output->dig_encoder = 4;
+		break;
+	    default:
+		ErrorF("Unknown encoder\n");
+		break;
+	    }
 	}
 	return;
     }
@@ -1879,111 +2056,6 @@ atombios_dac_detect(xf86OutputPtr output)
     return MonType;
 }
 
-#define AUX_NATIVE_WRITE                    0x8
-#define AUX_NATIVE_READ                     0x9
-
-#define AUX_I2C_WRITE                       0x0
-#define AUX_I2C_READ                        0x1
-#define AUX_I2C_STATUS                      0x2
-#define AUX_I2C_MOT                         0x4
-
-#define DP_DPCD_REV                         0x0
-#define DP_MAX_LINK_RATE                    0x1
-#define DP_MAX_LANE_COUNT                   0x2
-#define DP_MAX_DOWNSPREAD                   0x3
-#define DP_NORP                             0x4
-#define DP_DOWNSTREAMPORT_PRESENT           0x5
-#define DP_MAIN_LINK_CHANNEL_CONFIG         0x6
-#define DP_DP11_DOWNSTREAM_PORT_COUNT       0x7
-
-/* from intel i830_dp.h */
-#define DP_LINK_BW_SET                      0x100
-//# define DP_LINK_BW_1_62                    0x06
-//# define DP_LINK_BW_2_7                     0x0a
-#define DP_LANE_COUNT_SET                   0x101
-# define DP_LANE_COUNT_MASK                 0x0f
-# define DP_LANE_COUNT_ENHANCED_FRAME_EN    (1 << 7)
-
-#define DP_TRAINING_PATTERN_SET             0x102
-
-# define DP_TRAINING_PATTERN_DISABLE        0
-# define DP_TRAINING_PATTERN_1              1
-# define DP_TRAINING_PATTERN_2              2
-# define DP_TRAINING_PATTERN_MASK           0x3
-
-# define DP_LINK_QUAL_PATTERN_DISABLE       (0 << 2)
-# define DP_LINK_QUAL_PATTERN_D10_2         (1 << 2)
-# define DP_LINK_QUAL_PATTERN_ERROR_RATE    (2 << 2)
-# define DP_LINK_QUAL_PATTERN_PRBS7         (3 << 2)
-# define DP_LINK_QUAL_PATTERN_MASK          (3 << 2)
-# define DP_RECOVERED_CLOCK_OUT_EN          (1 << 4)
-# define DP_LINK_SCRAMBLING_DISABLE         (1 << 5)
-
-# define DP_SYMBOL_ERROR_COUNT_BOTH         (0 << 6)
-# define DP_SYMBOL_ERROR_COUNT_DISPARITY    (1 << 6)
-# define DP_SYMBOL_ERROR_COUNT_SYMBOL       (2 << 6)
-# define DP_SYMBOL_ERROR_COUNT_MASK         (3 << 6)
-
-#define DP_TRAINING_LANE0_SET               0x103
-#define DP_TRAINING_LANE1_SET               0x104
-#define DP_TRAINING_LANE2_SET               0x105
-#define DP_TRAINING_LANE3_SET               0x106
-# define DP_TRAIN_VOLTAGE_SWING_MASK        0x3
-# define DP_TRAIN_VOLTAGE_SWING_SHIFT       0
-# define DP_TRAIN_MAX_SWING_REACHED         (1 << 2)
-# define DP_TRAIN_VOLTAGE_SWING_400         (0 << 0)
-# define DP_TRAIN_VOLTAGE_SWING_600         (1 << 0)
-# define DP_TRAIN_VOLTAGE_SWING_800         (2 << 0)
-# define DP_TRAIN_VOLTAGE_SWING_1200        (3 << 0)
-
-# define DP_TRAIN_PRE_EMPHASIS_MASK         (3 << 3)
-# define DP_TRAIN_PRE_EMPHASIS_0            (0 << 3)
-# define DP_TRAIN_PRE_EMPHASIS_3_5          (1 << 3)
-# define DP_TRAIN_PRE_EMPHASIS_6            (2 << 3)
-# define DP_TRAIN_PRE_EMPHASIS_9_5          (3 << 3)
-
-# define DP_TRAIN_PRE_EMPHASIS_SHIFT        3
-# define DP_TRAIN_MAX_PRE_EMPHASIS_REACHED  (1 << 5)
-#define DP_DOWNSPREAD_CTRL                  0x107
-# define DP_SPREAD_AMP_0_5                  (1 << 4)
-
-#define DP_MAIN_LINK_CHANNEL_CODING_SET     0x108
-# define DP_SET_ANSI_8B10B                  (1 << 0)
-
-#define DP_LANE0_1_STATUS                   0x202
-#define DP_LANE2_3_STATUS                   0x203
-
-# define DP_LANE_CR_DONE                    (1 << 0)
-# define DP_LANE_CHANNEL_EQ_DONE            (1 << 1)
-# define DP_LANE_SYMBOL_LOCKED              (1 << 2)
-
-#define DP_LANE_ALIGN_STATUS_UPDATED        0x204
-#define DP_INTERLANE_ALIGN_DONE             (1 << 0)
-#define DP_DOWNSTREAM_PORT_STATUS_CHANGED   (1 << 6)
-#define DP_LINK_STATUS_UPDATED              (1 << 7)
-
-#define DP_SINK_STATUS                      0x205
-
-#define DP_RECEIVE_PORT_0_STATUS            (1 << 0)
-#define DP_RECEIVE_PORT_1_STATUS            (1 << 1)
-
-#define DP_ADJUST_REQUEST_LANE0_1           0x206
-#define DP_ADJUST_REQUEST_LANE2_3           0x207
-
-#define DP_ADJUST_VOLTAGE_SWING_LANE0_MASK  0x03
-#define DP_ADJUST_VOLTAGE_SWING_LANE0_SHIFT 0
-#define DP_ADJUST_PRE_EMPHASIS_LANE0_MASK   0x0c
-#define DP_ADJUST_PRE_EMPHASIS_LANE0_SHIFT  2
-#define DP_ADJUST_VOLTAGE_SWING_LANE1_MASK  0x30
-#define DP_ADJUST_VOLTAGE_SWING_LANE1_SHIFT 4
-#define DP_ADJUST_PRE_EMPHASIS_LANE1_MASK   0xc0
-#define DP_ADJUST_PRE_EMPHASIS_LANE1_SHIFT  6
-
-#define DP_LINK_STATUS_SIZE                 6
-#define DP_LINK_CONFIGURATION_SIZE          9
-
-#define DP_SET_POWER_D0  0x1
-#define DP_SET_POWER_D3  0x2
 
 static inline int atom_dp_get_encoder_id(xf86OutputPtr output)
 {
@@ -2526,66 +2598,16 @@ static int radeon_dp_max_lane_count(xf86OutputPtr output)
     return max_lane_count;
 }
 
-static int radeon_dp_max_link_bw(xf86OutputPtr output)
-{
-    RADEONOutputPrivatePtr radeon_output = output->driver_private;
-    int max_link_bw = radeon_output->dpcd[1];
-    switch(max_link_bw) {
-    case DP_LINK_BW_1_62:
-    case DP_LINK_BW_2_7:
-	break;
-    default:
-	max_link_bw = DP_LINK_BW_1_62;
-	break;
-    }
-    return max_link_bw;
-}
-
-static int radeon_dp_link_clock(uint8_t link_bw)
-{
-    if (link_bw == DP_LINK_BW_2_7)
-	return 270000;
-    else
-	return 162000;
-}
-
-
-/* I think this is a fiction */
-static int radeon_dp_link_required(int pixel_clock)
-{
-    return pixel_clock * 3;
-}
-
-static int link_bw_avail(int max_link_clock, int max_lanes)
-{
-    return (max_link_clock * max_lanes * 8) / 10;
-}
-
 Bool radeon_dp_mode_fixup(xf86OutputPtr output, DisplayModePtr mode, DisplayModePtr adjusted_mode)
 {
-    RADEONOutputPrivatePtr radeon_output = output->driver_private;
-    int lane_count, clock;
-    int max_lane_count = radeon_dp_max_lane_count(output);
-    int max_clock = radeon_dp_max_link_bw(output) == DP_LINK_BW_2_7 ? 1 : 0;
-    static int bws[2] = { DP_LINK_BW_1_62, DP_LINK_BW_2_7 };
+	RADEONOutputPrivatePtr radeon_output = output->driver_private;
+	int clock = adjusted_mode->Clock;
 
-    for (lane_count = 1; lane_count <= max_lane_count; lane_count <<= 1) {
-	for (clock = 0; clock <= max_clock; clock++) {
-	    int link_avail = link_bw_avail(radeon_dp_link_clock(bws[clock]), lane_count);
-
-	    if (radeon_dp_link_required(mode->Clock) <= link_avail) {
-		radeon_output->dp_lane_count = lane_count;
-		radeon_output->dp_clock = radeon_dp_link_clock(bws[clock]);
-		if (0)
-			xf86DrvMsg(0, X_INFO,
-				   "lane_count %d clock %d\n",
-				   radeon_output->dp_lane_count,
-				   radeon_output->dp_clock);
-		return TRUE;
-	    }
-	}
-    }
-    return FALSE;
+	radeon_output->dp_lane_count = dp_lanes_for_mode_clock(output, clock);
+	radeon_output->dp_clock = dp_link_clock_for_mode_clock(output, clock);
+	if (!radeon_output->dp_lane_count || !radeon_output->dp_clock)
+		return FALSE;
+	return TRUE;
 }
 
 static void dp_update_dpvs_emph(xf86OutputPtr output, uint8_t train_set[4])
@@ -2617,7 +2639,7 @@ static void do_displayport_link_train(xf86OutputPtr output)
     /* set up link configuration */
     memset(dp_link_configuration, 0, DP_LINK_CONFIGURATION_SIZE);
 
-    if (radeon_output->dp_clock == 270000)
+    if (radeon_output->dp_clock == 27000)
 	dp_link_configuration[0] = DP_LINK_BW_2_7;
     else
 	dp_link_configuration[0] = DP_LINK_BW_1_62;
