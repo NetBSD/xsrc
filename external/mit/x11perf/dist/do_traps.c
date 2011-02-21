@@ -1,4 +1,3 @@
-/* $Xorg: do_traps.c,v 1.3 2000/08/17 19:54:10 cpqbld Exp $ */
 /*****************************************************************************
 Copyright 1988, 1989 by Digital Equipment Corporation, Maynard, Massachusetts.
 
@@ -21,7 +20,6 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************************/
-/* $XFree86: xc/programs/x11perf/do_traps.c,v 1.9tsi Exp $ */
 
 #include "x11perf.h"
 #include "bitmaps.h"
@@ -106,7 +104,7 @@ EndTrapezoids(XParms xp, Parms p)
     free(points);
 }
 
-#ifdef XRENDER
+#if defined(XRENDER) && defined(XFT)
 #include <X11/extensions/Xrender.h>
 #include <X11/Xft/Xft.h>
 

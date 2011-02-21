@@ -1,4 +1,3 @@
-/* $Xorg: do_tests.c,v 1.3 2000/08/17 19:54:10 cpqbld Exp $ */
 /*****************************************************************************
 Copyright 1988, 1989 by Digital Equipment Corporation, Maynard, Massachusetts.
 
@@ -21,7 +20,6 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************************/
-/* $XFree86: xc/programs/x11perf/do_tests.c,v 1.9 2002/05/13 05:27:37 keithp Exp $ */
 
 #include "x11perf.h"
 
@@ -790,7 +788,7 @@ Test test[] = {
 		InitTrapezoids, DoTrapezoids, NullProc, EndTrapezoids,
 		V1_4FEATURE, ROP, 0,
 		{2, 300, "escherknot", NULL, FillTiled}},
-#ifdef XRENDER
+#if defined(XRENDER) && defined(XFT)
   {"-aatrap1", "Fill 1x1 aa trap", NULL,
 		InitFixedTraps, DoFixedTraps, NullProc, EndFixedTraps,
 		V1_5FEATURE, NONROP, 0,

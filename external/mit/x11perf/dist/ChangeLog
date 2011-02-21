@@ -1,3 +1,233 @@
+commit c39d831d409537fce2f36c8672f908a7cc810519
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Wed Jan 5 16:33:36 2011 -0800
+
+    x11perf 1.5.3
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit e7917bbec06e5c8e17f07b0eb833602b33111f08
+Merge: 5072fb4 cc84118
+Author: Peter Harris <pharris@opentext.com>
+Date:   Tue Nov 23 14:41:33 2010 -0500
+
+    Merge fixes from git://anongit.freedesktop.org/~peterh/x11perf
+
+commit cc84118bd700745f02c65b2d6900e512e4c333af
+Author: Peter Harris <peter.harris@hummingbird.com>
+Date:   Mon Oct 29 11:35:22 2007 -0400
+
+    Avoid "rep" calculation overflow.
+    
+    On today's fast machines, "treps" can easily overflow a 32-bit number.
+    Use "long long" to calculate reps.
+    
+    Signed-off-by: Peter Harris <pharris@opentext.com>
+    Reviewed-by: Adam Jackson <ajax@redhat.com>
+
+commit 17a30e7c65c0b03b71b5b1ac54ae3ba33ae3b42a
+Author: Peter Harris <peter.harris@hummingbird.com>
+Date:   Mon Oct 29 11:29:32 2007 -0400
+
+    Clamp test time to positive values.
+    
+    If there is some jitter in the sync time, operations can complete in a
+    negative amount of time (confusing both humans and x11perfcomp).
+    
+    Signed-off-by: Peter Harris <pharris@opentext.com>
+    Reviewed-by: Adam Jackson <ajax@redhat.com>
+
+commit 5072fb464ffebcd97ec3a33cbff7095c3ec16225
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Nov 19 22:34:02 2010 -0800
+
+    Remove unneccessary AC_SUBST of CFLAGS & LIBS vars from PKG_CHECK_MODULES
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 2f6fa453f485739575296da9317243ddda25c4f6
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Nov 19 22:32:12 2010 -0800
+
+    config: replace deprecated AM_CONFIG_HEADER with AC_CONFIG_HEADERS
+    
+    Regroup AC statements under the Autoconf initialization section.
+    Regroup AM statements under the Automake initialization section.
+    Add missing AC_CONFIG_SRCDIR
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit d970d9de1c98bc828365f15fb08aaa8dda214dd6
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Nov 19 22:28:22 2010 -0800
+
+    Bug 31640 - x11perf: Doesn't build without libXft
+    
+    https://bugs.freedesktop.org/show_bug.cgi?id=31640
+    
+    Fix trapezoid checks to look for both render & xft
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 3147d783925bb42c7af78c9f5508c0dc245b942b
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Tue Sep 21 20:48:33 2010 -0700
+
+    x11perf 1.5.2
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 172260eee2180448594def3fcf719ce501528e56
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Tue Sep 21 20:46:39 2010 -0700
+
+    config: update AC_PREREQ statement to 2.60
+    
+    Unrelated to the previous patches, the new value simply reflects
+    the reality that the minimum level for autoconf to configure
+    all x.org modules is 2.60 dated June 2006.
+    
+    ftp://ftp.gnu.org/gnu/autoconf/autoconf-2.60.tar.gz
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit c4b59fd280aa0f647f7f889122adf8b92b9e5cf8
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Tue Sep 21 20:43:58 2010 -0700
+
+    config: use AC_PROG_CC & AC_PROG_INSTALL now supplied by XORG_DEFAULT_OPTIONS
+    
+    The existing statements can now be removed from the configuration file.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 4ed4ff8d692293995910da29e4d05ad9191105ea
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Tue Sep 21 20:42:54 2010 -0700
+
+    config: upgrade to util-macros 1.8 for additional man page support
+    
+    Use MAN_SUBST now supplied in XORG_MANPAGE_SECTIONS
+    The value of MAN_SUBST is the same for all X.Org packages.
+    
+    Use AC_PROG_SED now supplied by XORG_DEFAULT_OPTIONS
+    The existing statement can now be removed from the configuration file.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 1f990bc605d520f58e0c321a1338da76d76529fa
+Author: Timo Myyra <Timo.Myyra@gmail.com>
+Date:   Sun Sep 19 10:54:40 2010 -0700
+
+    Remove reference to xbench in x11perf.man (#29830)
+    
+    xbench isn't supported by fd.o, and searching for it shows the latest version released in 1995.
+    
+    Signed-off-by: Jesse Adkins <jesserayadkins@gmail.com>
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 05759c8550bf994f4ae4e87a658aa7ffdd9dd517
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Aug 6 08:34:31 2010 -0700
+
+    Add HP notice to COPYING for Xmark script
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 3b427a6c4cc1551ce445abd975f5a128ea53d9be
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Thu Jan 7 21:25:09 2010 -0500
+
+    COPYING: replace stub with actual copyright notice
+    
+    Refer to x11perf.c
+    Copyright 1988, 1989 by Digital Equipment Corporation
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit 374bee27ef4d45044f7562ffed162a5b6f095e40
+Author: Adam Jackson <ajax@redhat.com>
+Date:   Sat Jan 2 17:36:17 2010 -0500
+
+    Add -falseprecision flag for ludicrously precise stats
+    
+    The normal round-to-three-significant-figures behaviour, while morally
+    correct from a benchmarking perspective, makes it impossible to measure
+    variances between runs of less than 1%.  Occasionally you really do need
+    to measure that finely - for example, if tweaking the server's main
+    dispatch loop.
+    
+    Signed-off-by: Adam Jackson <ajax@redhat.com>
+
+commit af29c01b5d41f08053263dfe251d0a2a26c7eb1f
+Author: Adam Jackson <ajax@redhat.com>
+Date:   Sat Jan 2 17:23:50 2010 -0500
+
+    Death to RCS tags.
+    
+    Signed-off-by: Adam Jackson <ajax@redhat.com>
+
+commit f8193c3f472fb0b7357552d10a6033e8ac08b9fa
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Thu Nov 26 09:19:52 2009 -0500
+
+    Makefile.am: add ChangeLog and INSTALL on MAINTAINERCLEANFILES
+    
+    Now that the INSTALL file is generated.
+    Allows running make maintainer-clean.
+
+commit e6d0de5d8f13ca73753cb70b12b2f9b98f82b39f
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Wed Oct 28 14:09:08 2009 -0400
+
+    INSTALL, NEWS, README or AUTHORS files are missing/incorrect #24206
+    
+    Add missing INSTALL file. Use standard GNU file on building tarball
+    README may have been updated
+    Remove AUTHORS file as it is empty and no content available yet.
+    Remove NEWS file as it is empty and no content available yet.
+
+commit 5d3fb3c68c681cce10d3625bab85bb39c18e5e3b
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Mon Oct 26 22:08:38 2009 -0400
+
+    Makefile.am: ChangeLog not required: EXTRA_DIST or *CLEANFILES #24432
+    
+    ChangeLog filename is known to Automake and requires no further
+    coding in the makefile.
+
+commit 6b8182c54689c67fa35ac471fcfc4e7ee73b7b91
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Thu Oct 22 12:34:15 2009 -0400
+
+    .gitignore: use common defaults with custom section # 24239
+    
+    Using common defaults will reduce errors and maintenance.
+    Only the very small or inexistent custom section need periodic maintenance
+    when the structure of the component changes. Do not edit defaults.
+
+commit 1b811f2bf9c3cdef966b18ea802f1f79b5f34ef2
+Author: Jeremy Huddleston <jeremyhu@freedesktop.org>
+Date:   Wed Oct 21 12:47:20 2009 -0700
+
+    This is not a GNU project, so declare it foreign.
+    
+    On Wed, 2009-10-21 at 13:36 +1000, Peter Hutterer wrote:
+    > On Tue, Oct 20, 2009 at 08:23:55PM -0700, Jeremy Huddleston wrote:
+    > > I noticed an INSTALL file in xlsclients and libXvMC today, and it
+    > > was quite annoying to work around since 'autoreconf -fvi' replaces
+    > > it and git wants to commit it.  Should these files even be in git?
+    > > Can I nuke them for the betterment of humanity and since they get
+    > > created by autoreconf anyways?
+    >
+    > See https://bugs.freedesktop.org/show_bug.cgi?id=24206
+    
+    As an interim measure, replace AM_INIT_AUTOMAKE([dist-bzip2]) with
+    AM_INIT_AUTOMAKE([foreign dist-bzip2]). This will prevent the generation
+    of the INSTALL file. It is also part of the 24206 solution.
+    
+    Signed-off-by: Jeremy Huddleston <jeremyhu@freedesktop.org>
+
 commit 98ca2c35b05a2d248063047c50770a018e35e810
 Author: Alan Coopersmith <alan.coopersmith@sun.com>
 Date:   Fri Oct 16 17:19:36 2009 -0700
@@ -50,7 +280,7 @@ Date:   Thu Nov 1 09:13:43 2007 +0100
     Fix typos in descriptions of -compwinwin{1,5}00.
 
 commit 569a5eaaef9a5c8bf50f1323fe39e81347976875
-Merge: 55aa9c2... e906fe5...
+Merge: 55aa9c2 e906fe5
 Author: Keith Packard <keithp@koto.keithp.com>
 Date:   Mon Sep 10 16:56:06 2007 +0100
 
