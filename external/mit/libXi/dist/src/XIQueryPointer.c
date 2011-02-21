@@ -86,9 +86,12 @@ XIQueryPointer(Display     *dpy,
     mods->base          = rep.mods.base_mods;
     mods->latched       = rep.mods.latched_mods;
     mods->locked        = rep.mods.locked_mods;
+    mods->effective     = mods->base | mods->latched | mods->locked;
+
     group->base         = rep.group.base_group;
     group->latched      = rep.group.latched_group;
     group->locked       = rep.group.locked_group;
+    group->effective    = group->base | group->latched | group->locked;
 
     buttons->mask_len   = rep.buttons_len * 4;
     buttons->mask       = malloc(buttons->mask_len);
