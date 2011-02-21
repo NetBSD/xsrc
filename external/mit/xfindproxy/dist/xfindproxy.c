@@ -54,13 +54,13 @@ static void _XtIceWatchProc(IceConn ice_conn, IcePointer client_data,
 			    Bool opening, IcePointer *watch_data);
 static Status InitWatchProcs(XtAppContext appContext);
 
-int PMopcode;
+static int PMopcode;
 
-int PMversionCount = 1;
-IcePoVersionRec	PMversions[] =
+static int PMversionCount = 1;
+static IcePoVersionRec PMversions[] =
                 {{PM_MAJOR_VERSION, PM_MINOR_VERSION, PMprocessMessages}};
 
-XtAppContext	appContext;
+static XtAppContext appContext;
 
 typedef struct {
     int		status;
