@@ -62,7 +62,7 @@
 #define PACKAGE_NAME "xf86-video-geode"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "xf86-video-geode 2.11.10"
+#define PACKAGE_STRING "xf86-video-geode 2.11.12"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "xf86-video-geode"
@@ -71,7 +71,7 @@
 #define PACKAGE_URL "http://www.x.org/wiki/GeodeDriver"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "2.11.10"
+#define PACKAGE_VERSION "2.11.12"
 
 /* Major version of this package */
 #define PACKAGE_VERSION_MAJOR 2
@@ -80,10 +80,10 @@
 #define PACKAGE_VERSION_MINOR 11
 
 /* Patch version of this package */
-#define PACKAGE_VERSION_PATCHLEVEL 10
+#define PACKAGE_VERSION_PATCHLEVEL 12
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1
 
 /* Version number of package */
-#define VERSION "2.11.10"
+#define VERSION "2.11.12"
