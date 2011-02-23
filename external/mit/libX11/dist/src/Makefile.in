@@ -42,25 +42,12 @@ host_triplet = @host@
 @OS2_TRUE@am__append_1 = os2Stubs.c
 @UDC_TRUE@am__append_2 = udcInf.c
 @THRSTUBS_TRUE@am__append_3 = UIThrStubs.c
-@XCB_TRUE@am__append_4 = \
-@XCB_TRUE@                  xcb_disp.c \
-@XCB_TRUE@                  xcb_io.c \
-@XCB_TRUE@                  Xxcbint.h
-
-@XCB_TRUE@am__append_5 = libX11-xcb.la
-@XCB_FALSE@am__append_6 = \
-@XCB_FALSE@                  ConnDis.c \
-@XCB_FALSE@                  x11_trans.c
-
-@MAKE_LINT_LIB_TRUE@am__append_7 = $(lintlib_DATA)
+@MAKE_LINT_LIB_TRUE@am__append_4 = $(lintlib_DATA)
 subdir = src
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in \
 	$(srcdir)/config.h.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/ax_define_dir.m4 \
-	$(top_srcdir)/m4/dolt.m4 $(top_srcdir)/m4/libtool.m4 \
-	$(top_srcdir)/m4/ltoptions.m4 $(top_srcdir)/m4/ltsugar.m4 \
-	$(top_srcdir)/m4/ltversion.m4 $(top_srcdir)/m4/lt~obsolete.m4 \
 	$(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
@@ -92,9 +79,8 @@ am__base_list = \
 am__installdirs = "$(DESTDIR)$(libdir)" "$(DESTDIR)$(lintlibdir)" \
 	"$(DESTDIR)$(x11datadir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
-@XCB_TRUE@libX11_xcb_la_DEPENDENCIES = libX11.la
-am__libX11_xcb_la_SOURCES_DIST = x11_xcb.c Xxcbint.h
-@XCB_TRUE@am_libX11_xcb_la_OBJECTS = x11_xcb.lo
+libX11_xcb_la_DEPENDENCIES = libX11.la
+am_libX11_xcb_la_OBJECTS = x11_xcb.lo
 libX11_xcb_la_OBJECTS = $(am_libX11_xcb_la_OBJECTS)
 AM_V_lt = $(am__v_lt_$(V))
 am__v_lt_ = $(am__v_lt_$(AM_DEFAULT_VERBOSITY))
@@ -102,10 +88,9 @@ am__v_lt_0 = --silent
 libX11_xcb_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
 	$(libX11_xcb_la_LDFLAGS) $(LDFLAGS) -o $@
-@XCB_TRUE@am_libX11_xcb_la_rpath = -rpath $(libdir)
 am__DEPENDENCIES_1 =
 libX11_la_DEPENDENCIES = $(USE_I18N_LIBS) $(USE_XCMS_LIBS) \
-	$(USE_XKB_LIBS) $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
+	$(USE_XKB_LIBS) $(am__DEPENDENCIES_1)
 am__libX11_la_SOURCES_DIST = AllCells.c AllowEv.c AllPlanes.c \
 	AutoRep.c Backgnd.c BdrWidth.c Bell.c Border.c ChAccCon.c \
 	ChActPGb.c ChClMode.c ChCmap.c ChGC.c ChKeyCon.c ChkIfEv.c \
@@ -153,15 +138,13 @@ am__libX11_la_SOURCES_DIST = AllCells.c AllowEv.c AllPlanes.c \
 	TrCoords.c UndefCurs.c UngrabBut.c UngrabKbd.c UngrabKey.c \
 	UngrabPtr.c UngrabSvr.c UninsCmap.c UnldFont.c UnmapSubs.c \
 	UnmapWin.c utlist.h VisUtil.c WarpPtr.c Window.c WinEvent.c \
-	Withdraw.c WMGeom.c WMProps.c WrBitF.c Xatomtype.h Xintatom.h \
-	Xintconn.h XlibAsync.c XlibInt.c Xprivate.h XomGeneric.h \
-	Xresinternal.h Xrm.c XrmI.h os2Stubs.c udcInf.c UIThrStubs.c \
-	xcb_disp.c xcb_io.c Xxcbint.h ConnDis.c x11_trans.c
+	Withdraw.c WMGeom.c WMProps.c WrBitF.c Xatomtype.h xcb_disp.c \
+	xcb_io.c Xintatom.h Xintconn.h XlibAsync.c XlibInt.c \
+	Xprivate.h XomGeneric.h Xresinternal.h Xrm.c XrmI.h Xxcbint.h \
+	os2Stubs.c udcInf.c UIThrStubs.c
 @OS2_TRUE@am__objects_1 = os2Stubs.lo
 @UDC_TRUE@am__objects_2 = udcInf.lo
 @THRSTUBS_TRUE@am__objects_3 = UIThrStubs.lo
-@XCB_TRUE@am__objects_4 = xcb_disp.lo xcb_io.lo
-@XCB_FALSE@am__objects_5 = ConnDis.lo x11_trans.lo
 am_libX11_la_OBJECTS = AllCells.lo AllowEv.lo AllPlanes.lo AutoRep.lo \
 	Backgnd.lo BdrWidth.lo Bell.lo Border.lo ChAccCon.lo \
 	ChActPGb.lo ChClMode.lo ChCmap.lo ChGC.lo ChKeyCon.lo \
@@ -214,9 +197,8 @@ am_libX11_la_OBJECTS = AllCells.lo AllowEv.lo AllPlanes.lo AutoRep.lo \
 	UngrabKey.lo UngrabPtr.lo UngrabSvr.lo UninsCmap.lo \
 	UnldFont.lo UnmapSubs.lo UnmapWin.lo VisUtil.lo WarpPtr.lo \
 	Window.lo WinEvent.lo Withdraw.lo WMGeom.lo WMProps.lo \
-	WrBitF.lo XlibAsync.lo XlibInt.lo Xrm.lo $(am__objects_1) \
-	$(am__objects_2) $(am__objects_3) $(am__objects_4) \
-	$(am__objects_5)
+	WrBitF.lo xcb_disp.lo xcb_io.lo XlibAsync.lo XlibInt.lo Xrm.lo \
+	$(am__objects_1) $(am__objects_2) $(am__objects_3)
 libX11_la_OBJECTS = $(am_libX11_la_OBJECTS)
 libX11_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
@@ -227,6 +209,10 @@ am__depfiles_maybe = depfiles
 am__mv = mv -f
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
+LTCOMPILE = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) \
+	$(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) \
+	$(AM_CFLAGS) $(CFLAGS)
 AM_V_CC = $(am__v_CC_$(V))
 am__v_CC_ = $(am__v_CC_$(AM_DEFAULT_VERBOSITY))
 am__v_CC_0 = @echo "  CC    " $@;
@@ -244,8 +230,7 @@ AM_V_GEN = $(am__v_GEN_$(V))
 am__v_GEN_ = $(am__v_GEN_$(AM_DEFAULT_VERBOSITY))
 am__v_GEN_0 = @echo "  GEN   " $@;
 SOURCES = $(libX11_xcb_la_SOURCES) $(libX11_la_SOURCES)
-DIST_SOURCES = $(am__libX11_xcb_la_SOURCES_DIST) \
-	$(am__libX11_la_SOURCES_DIST)
+DIST_SOURCES = $(libX11_xcb_la_SOURCES) $(am__libX11_la_SOURCES_DIST)
 RECURSIVE_TARGETS = all-recursive check-recursive dvi-recursive \
 	html-recursive info-recursive install-data-recursive \
 	install-dvi-recursive install-exec-recursive \
@@ -315,7 +300,7 @@ CWARNFLAGS = @CWARNFLAGS@
 CYGPATH_W = @CYGPATH_W@
 DEFS = @DEFS@
 DEPDIR = @DEPDIR@
-DOLT_BASH = @DOLT_BASH@
+DLLTOOL = @DLLTOOL@
 DRIVER_MAN_DIR = @DRIVER_MAN_DIR@
 DRIVER_MAN_SUFFIX = @DRIVER_MAN_SUFFIX@
 DSYMUTIL = @DSYMUTIL@
@@ -328,9 +313,8 @@ EXEEXT = @EXEEXT@
 FGREP = @FGREP@
 FILE_MAN_DIR = @FILE_MAN_DIR@
 FILE_MAN_SUFFIX = @FILE_MAN_SUFFIX@
+FOP = @FOP@
 GREP = @GREP@
-GROFF = @GROFF@
-GS_PATH = @GS_PATH@
 I18N_MODULE_LIBS = @I18N_MODULE_LIBS@
 INSTALL = @INSTALL@
 INSTALL_CMD = @INSTALL_CMD@
@@ -357,12 +341,11 @@ LINTLIB = @LINTLIB@
 LINT_FLAGS = @LINT_FLAGS@
 LIPO = @LIPO@
 LN_S = @LN_S@
-LTCOMPILE = @LTCOMPILE@
-LTCXXCOMPILE = @LTCXXCOMPILE@
 LTLIBOBJS = @LTLIBOBJS@
 MAINT = @MAINT@
 MAKEINFO = @MAKEINFO@
 MALLOC_ZERO_CFLAGS = @MALLOC_ZERO_CFLAGS@
+MANIFEST_TOOL = @MANIFEST_TOOL@
 MAN_SUBSTS = @MAN_SUBSTS@
 MISC_MAN_DIR = @MISC_MAN_DIR@
 MISC_MAN_SUFFIX = @MISC_MAN_SUFFIX@
@@ -383,11 +366,6 @@ PACKAGE_VERSION = @PACKAGE_VERSION@
 PATH_SEPARATOR = @PATH_SEPARATOR@
 PERL = @PERL@
 PKG_CONFIG = @PKG_CONFIG@
-PKG_CONFIG_LIBDIR = @PKG_CONFIG_LIBDIR@
-PKG_CONFIG_PATH = @PKG_CONFIG_PATH@
-PNMTOPNG_PATH = @PNMTOPNG_PATH@
-PS2PDF = @PS2PDF@
-PSSELECT_PATH = @PSSELECT_PATH@
 RANLIB = @RANLIB@
 RAWCPP = @RAWCPP@
 RAWCPPFLAGS = @RAWCPPFLAGS@
@@ -395,6 +373,7 @@ SED = @SED@
 SET_MAKE = @SET_MAKE@
 SHELL = @SHELL@
 STRIP = @STRIP@
+STYLESHEET_SRCDIR = @STYLESHEET_SRCDIR@
 VERSION = @VERSION@
 WCHAR32 = @WCHAR32@
 X11_CFLAGS = @X11_CFLAGS@
@@ -405,8 +384,6 @@ X11_LIBS = @X11_LIBS@
 X11_LOCALEDATADIR = @X11_LOCALEDATADIR@
 X11_LOCALEDIR = @X11_LOCALEDIR@
 X11_LOCALELIBDIR = @X11_LOCALELIBDIR@
-XDMCP_CFLAGS = @XDMCP_CFLAGS@
-XDMCP_LIBS = @XDMCP_LIBS@
 XERRORDB = @XERRORDB@
 XKBPROTO_REQUIRES = @XKBPROTO_REQUIRES@
 XKEYSYMDB = @XKEYSYMDB@
@@ -414,7 +391,10 @@ XLOCALEDATADIR = @XLOCALEDATADIR@
 XLOCALEDIR = @XLOCALEDIR@
 XLOCALELIBDIR = @XLOCALELIBDIR@
 XMALLOC_ZERO_CFLAGS = @XMALLOC_ZERO_CFLAGS@
+XMLTO = @XMLTO@
 XORG_MAN_PAGE = @XORG_MAN_PAGE@
+XORG_SGML_PATH = @XORG_SGML_PATH@
+XSL_STYLESHEET = @XSL_STYLESHEET@
 XTHREADLIB = @XTHREADLIB@
 XTHREAD_CFLAGS = @XTHREAD_CFLAGS@
 XTMALLOC_ZERO_CFLAGS = @XTMALLOC_ZERO_CFLAGS@
@@ -422,6 +402,7 @@ abs_builddir = @abs_builddir@
 abs_srcdir = @abs_srcdir@
 abs_top_builddir = @abs_top_builddir@
 abs_top_srcdir = @abs_top_srcdir@
+ac_ct_AR = @ac_ct_AR@
 ac_ct_CC = @ac_ct_CC@
 ac_ct_DUMPBIN = @ac_ct_DUMPBIN@
 am__include = @am__include@
@@ -454,7 +435,6 @@ libdir = @libdir@
 libexecdir = @libexecdir@
 localedir = @localedir@
 localstatedir = @localstatedir@
-lt_ECHO = @lt_ECHO@
 mandir = @mandir@
 mkdir_p = @mkdir_p@
 oldincludedir = @oldincludedir@
@@ -472,9 +452,9 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 @XKB_TRUE@XKB_SUBDIRS = xkb
 SUBDIRS = util xcms xlibi18n $(XKB_SUBDIRS)
-lib_LTLIBRARIES = libX11.la $(am__append_5)
+lib_LTLIBRARIES = libX11.la libX11-xcb.la
 BUILT_SOURCES = ks_tables.h
-CLEANFILES = ks_tables.h ks_tables_h $(am__append_7)
+CLEANFILES = ks_tables.h ks_tables_h $(am__append_4)
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/include \
 	-I$(top_srcdir)/include/X11 \
@@ -488,7 +468,6 @@ AM_CPPFLAGS = \
 AM_CFLAGS = \
 	$(X11_CFLAGS) \
 	$(BIGFONT_CFLAGS) \
-	$(XDMCP_CFLAGS) \
 	$(XMALLOC_ZERO_CFLAGS) \
 	$(CWARNFLAGS)
 
@@ -564,10 +543,10 @@ libX11_la_SOURCES = AllCells.c AllowEv.c AllPlanes.c AutoRep.c \
 	TrCoords.c UndefCurs.c UngrabBut.c UngrabKbd.c UngrabKey.c \
 	UngrabPtr.c UngrabSvr.c UninsCmap.c UnldFont.c UnmapSubs.c \
 	UnmapWin.c utlist.h VisUtil.c WarpPtr.c Window.c WinEvent.c \
-	Withdraw.c WMGeom.c WMProps.c WrBitF.c Xatomtype.h Xintatom.h \
-	Xintconn.h XlibAsync.c XlibInt.c Xprivate.h XomGeneric.h \
-	Xresinternal.h Xrm.c XrmI.h $(am__append_1) $(am__append_2) \
-	$(am__append_3) $(am__append_4) $(am__append_6)
+	Withdraw.c WMGeom.c WMProps.c WrBitF.c Xatomtype.h xcb_disp.c \
+	xcb_io.c Xintatom.h Xintconn.h XlibAsync.c XlibInt.c \
+	Xprivate.h XomGeneric.h Xresinternal.h Xrm.c XrmI.h Xxcbint.h \
+	$(am__append_1) $(am__append_2) $(am__append_3)
 x11datadir = @X11_DATADIR@
 x11data_DATA = XErrorDB
 EXTRA_DIST = \
@@ -576,9 +555,9 @@ EXTRA_DIST = \
 	udcInf.c \
 	UIThrStubs.c 
 
-@XCB_TRUE@libX11_xcb_la_SOURCES = x11_xcb.c Xxcbint.h
-@XCB_TRUE@libX11_xcb_la_LDFLAGS = -version-info 1:0:0 -no-undefined
-@XCB_TRUE@libX11_xcb_la_LIBADD = libX11.la
+libX11_xcb_la_SOURCES = x11_xcb.c Xxcbint.h
+libX11_xcb_la_LDFLAGS = -version-number 1:0:0 -no-undefined
+libX11_xcb_la_LIBADD = libX11.la
 
 #
 # Figure out which sub-libraries to link into Xlib
@@ -591,8 +570,7 @@ libX11_la_LIBADD = \
 	$(USE_I18N_LIBS) \
 	$(USE_XCMS_LIBS) \
 	$(USE_XKB_LIBS) \
-	$(X11_LIBS) \
-	$(XDMCP_LIBS)
+	$(X11_LIBS)
 
 
 # Check source code with tools like lint & sparse
@@ -686,7 +664,7 @@ clean-libLTLIBRARIES:
 	  rm -f "$${dir}/so_locations"; \
 	done
 libX11-xcb.la: $(libX11_xcb_la_OBJECTS) $(libX11_xcb_la_DEPENDENCIES) 
-	$(AM_V_CCLD)$(libX11_xcb_la_LINK) $(am_libX11_xcb_la_rpath) $(libX11_xcb_la_OBJECTS) $(libX11_xcb_la_LIBADD) $(LIBS)
+	$(AM_V_CCLD)$(libX11_xcb_la_LINK) -rpath $(libdir) $(libX11_xcb_la_OBJECTS) $(libX11_xcb_la_LIBADD) $(LIBS)
 libX11.la: $(libX11_la_OBJECTS) $(libX11_la_DEPENDENCIES) 
 	$(AM_V_CCLD)$(libX11_la_LINK) -rpath $(libdir) $(libX11_la_OBJECTS) $(libX11_la_LIBADD) $(LIBS)
 
@@ -727,7 +705,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/Clear.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ClearArea.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ConfWind.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ConnDis.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/Context.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ConvSel.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/CopyArea.Plo@am__quote@
@@ -957,7 +934,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/locking.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/os2Stubs.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/udcInf.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/x11_trans.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/x11_xcb.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xcb_disp.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xcb_io.Plo@am__quote@

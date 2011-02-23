@@ -1,12 +1,357 @@
-commit 7f5a8fac9ca8b4e90b1feea43cd562265837ed4c
-Author: Daniel Stone <daniel@fooishbar.org>
-Date:   Mon Sep 20 16:04:42 2010 +1000
+commit a9228fcc676aacf9a760dd94891c89f9bc82b20d
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Tue Jan 11 17:55:22 2011 -0800
 
-    libX11 1.3.6
+    libX11 1.4.1
     
-    Signed-off-by: Daniel Stone <daniel@fooishbar.org>
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
 
-commit 6838a5beeb6c6c614e371fe7df5fa7804065e55e
+commit 92fa96451af37a7a0f2592de07643fdaed7a9efd
+Author: Pauli Nieminen <ext-pauli.nieminen@nokia.com>
+Date:   Mon Jan 3 12:25:28 2011 -0500
+
+    Initialize event type
+    
+    If we receive unsupported event closing connection triggers valgrind
+    error.
+    
+    ==12017== Conditional jump or move depends on uninitialised value(s)
+    ==12017==    at 0x487D454: _XFreeDisplayStructure (OpenDis.c:607)
+    ==12017==    by 0x486857B: XCloseDisplay (ClDisplay.c:72)
+    *snip*
+    ==12017==  Uninitialised value was created by a heap allocation
+    ==12017==    at 0x4834C48: malloc (vg_replace_malloc.c:236)
+    ==12017==    by 0x4894147: _XEnq (XlibInt.c:877)
+    ==12017==    by 0x4891BF3: handle_response (xcb_io.c:335)
+    ==12017==    by 0x4892263: _XReply (xcb_io.c:626)
+    *snip*
+    
+    Problem is that XFreeDisplaySturture is checking for qelt->event.type ==
+    GenericEvent while _XUnknownWireEvent doesn't store the type.
+    
+    Reviewed-by: Adam Jackson <ajax@redhat.com>
+    Reviewed-by: Peter Hutterer <peter.hutterer@who-t.net>
+    Signed-off-by: Pauli Nieminen <ext-pauli.nieminen@nokia.com>
+
+commit fa9747b9d4443eef9b1687b8b1208801f5c585da
+Author: Fernando Carrijo <fcarrijo.lists@gmail.com>
+Date:   Tue Dec 28 16:18:57 2010 -0500
+
+    specs: convert images from gif to svg format.
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit 0012e2a4eaddc0840617b4758931ad976ca2eb7c
+Author: Philipp Reh <sefi@s-e-f-i.de>
+Date:   Wed Dec 22 15:14:05 2010 +0000
+
+    Events: Store event cookie when dequeuing event
+    
+    When we dequeue an event in XCheckTypedEvent or XCheckTypedWindowEvent,
+    make sure to store the corresponding cookie too.
+    
+    Signed-off-by: Philipp Reh <sefi@s-e-f-i.de>
+    Reviewed-by: Daniel Stone <daniel@fooishbar.org>
+
+commit d2714d65e85b44abedf5f82e1a31506dba397ef2
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Tue Dec 21 18:47:16 2010 -0800
+
+    Revert "Mark atom names argument to XInternAtoms as const"
+    
+    This reverts commit c8701115462b482d99ecff24d9de0f2806084ba5.
+    
+    The constification of a pointer to a pointer caused unexpected issues,
+    and xorg-devel was unable to come up with a clean, safe, reasonable way
+    to handle them, so we're chalking this up for now as yet another mistake
+    in the Xlib API definition we'll be living with.
+    
+    See https://bugs.freedesktop.org/show_bug.cgi?id=32098 for details.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 6459f9a48a82de3bc0235bd36acab2df11e436d5
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Mon Dec 20 20:54:07 2010 -0800
+
+    specs/XKB: make acknowlegement section <preface> instead of <chapter>
+    
+    Fixes numbering of actual chapters to match their filenames and to
+    make the table/figure numbering match the references in the text.
+    
+    Reported-by: jelmd on freenode irc
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 42c653d5413fc5870486a9cf51dd28d1e88f7c69
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Dec 19 23:53:02 2010 -0800
+
+    Add XKBlib spec images to dist_spec_DATA for distribution & installation
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Reviewed-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit 8f8a3c8c42af82976d261ac2447cfbb0f90fa77d
+Author: Matt Dew <matt@osource.org>
+Date:   Tue Nov 30 10:52:07 2010 -0500
+
+    specs: convert XKBlib spec from Framemaker to DocBook.xml
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit c8701115462b482d99ecff24d9de0f2806084ba5
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Nov 21 20:49:05 2010 -0800
+
+    Mark atom names argument to XInternAtoms as const
+    
+    Updates code & docs for XInternAtoms.
+    
+    The single atom name argument to XInternAtom was already const char *
+    in the code, but not the docs, so updated it in the docs too.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Reviewed-by: Peter Hutterer <peter.hutterer@who-t.net>
+
+commit 24db5b5ff0d51b0ed9d9701a792c5f14f23b638d
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Nov 21 14:04:32 2010 -0800
+
+    libX11 1.4.0
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 18d3c3e9de19e936281b111d5a82acfb3a3f552e
+Author: Dan Nicholson <dbn.lists@gmail.com>
+Date:   Sat Nov 6 21:58:10 2010 +0000
+
+    config: Check host string when deciding architecture to build for
+    
+    When checking for the OS/2 platform, $target_os is used. However, unless
+    building a cross compiler, the $host* strings contain the platform
+    details for the build system. See:
+    
+    http://www.gnu.org/software/automake/manual/automake.html#Cross_002dCompilation
+    
+    $host_os is already being used to determine the transport and threading
+    options.
+    
+    Signed-off-by: Dan Nicholson <dbn.lists@gmail.com>
+    Reviewed-by: Julien Cristau <jcristau@debian.org>
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit affc2488a7f2660a74dc8354fc3e0bff2c4f879c
+Author: Dan Nicholson <dbn.lists@gmail.com>
+Date:   Sat Nov 6 21:58:09 2010 +0000
+
+    config: Fix architecture check for OS/2 to skip nios2 cpu
+    
+    The OS/2 platform requires some utility functions as well as having a
+    non-32 bit wchar_t. Fix the configure check so that it doesn't also
+    affect the nios2 cpu, which wouldn't influence these operating system
+    issues.
+    
+    Signed-off-by: Dan Nicholson <dbn.lists@gmail.com>
+    Tested-by: Frans Meulenbroeks <fransmeulenbroeks@gmail.com>
+    Reviewed-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Reviewed-by: Julien Cristau <jcristau@debian.org>
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 8cbca8a10761d1ea75a75bafa647632d6c0dac71
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Tue Nov 9 13:04:44 2010 -0500
+
+    config: HTML file generation: use the installed copy of xorg.css
+    
+    Currenlty the xorg.css file is copied in each location
+    where a DocBook/XML file resides. This produces about
+    70 copies in the $(docdir) install tree.
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit 3e8907305e1818369aef5a5c0da61f09e20de4f8
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Oct 29 22:02:10 2010 -0700
+
+    libX11 1.3.99.903 (1.4.0 RC3)
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 5d245d8013289b13e0c42100951b26166c7fada4
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Oct 29 22:01:39 2010 -0700
+
+    Require xorg-macros 1.11 now that it is released
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 1ec89689fc771f116a6165226b9e076f54254a40
+Author: Dan Nicholson <dbn.lists@gmail.com>
+Date:   Fri Oct 22 19:09:07 2010 -0700
+
+    docs: Disable fop documentation by default
+    
+    fop is used to generate the pdf and ps formats of the documentation.
+    This can significantly slow down the build, especially when creating all
+    the compose key charts. Since few people probably want the full set of
+    doc formats, set the default to 'no'.
+    
+    The default parameter for XORG_WITH_FOP is only available in recent
+    macros. Users generating configure from older macros will just get
+    'auto' as the default.
+    
+    Signed-off-by: Dan Nicholson <dbn.lists@gmail.com>
+    Reviewed-by: Gaetan Nadon <memsize@videotron.ca>
+    Reviewed-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 03877bda911b72ac60a7144d6eced7d5be4b4d72
+Author: Jon TURNEY <jon.turney@dronecode.org.uk>
+Date:   Wed Apr 14 13:38:18 2010 +0100
+
+    Add C.UTF-8 and C.ASCII locale aliases
+    
+    Add C.UTF-8 locale as an alias for en_US.UTF-8
+    Add C.ASCII locale as an alias for C
+    
+    (C.UTF-8 is the default locale for cygwin.  It also exists in debian,
+    although I don't think it's intended for use by humans.)
+    
+    Signed-off-by: Jon TURNEY <jon.turney@dronecode.org.uk>
+    Acked-by: Julien Cristau <jcristau@debian.org>
+    Reviewed-by: James Cloos <cloos@jhcloos.com>
+
+commit 81d1d9a6bdca779a44f931730b866eea75777c00
+Author: Dan Nicholson <dbn.lists@gmail.com>
+Date:   Sat Oct 9 16:00:47 2010 -0700
+
+    docs: Remove directory prerequisites from make rules
+    
+    Make expects prerequisites to be files with valid timestamps, and
+    directories are treated as always being out of date. Thus, any targets
+    depending on directories will always be rebuilt.
+    
+    Instead, the doc rules are changed to always create the target's leading
+    directory. This should prevent the documentation from being rebuilt when
+    "make install" is run.
+    
+    Signed-off-by: Dan Nicholson <dbn.lists@gmail.com>
+    Reviewed-by: Jeremy Huddleston <jeremyhu@apple.com>
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit d0cbf388919364fe6b5b9127f36426eb744090a0
+Author: Jeremy Huddleston <jeremyhu@apple.com>
+Date:   Sun Sep 26 21:21:16 2010 -0700
+
+    Add an "X11_" string to header guards to avoid possible collision
+    
+    This addresses a build failure which can result from <X11/Xlocale.h> and
+    <xlocale.h> being included in the same code since they both used the same
+    _XLOCALE_H_ protection.
+    
+    Signed-off-by: Jeremy Huddleston <jeremyhu@apple.com>
+
+commit b51ac675f44f5ce1a28c5734bf3c26983f8b4192
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Tue Sep 21 19:53:03 2010 -0700
+
+    libX11 1.3.99.902 (1.4.0 RC2)
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 986bb6d1d54368fe91e3ea24f518d43ce6179782
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Tue Sep 14 00:10:31 2010 -0700
+
+    Bug 19379 - Provide docs with overview of all compose key combinations
+    
+    Adds compose-chart.pl to generate DocBook/XML documents listing compose
+    keys, and Makefile rules to generate HTML & PDF output from them if xmlto
+    is present.
+    
+    https://bugs.freedesktop.org/show_bug.cgi?id=19379
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Reviewed-by: Mikhail Gusarov <dottedmag@dottedmag.net>
+    Reviewed-by: James Cloos <cloos@jhcloos.com>
+    Tested-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit 3eb064071695ebf0f371163ed818a428dfeba8e6
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Sep 11 00:49:21 2010 -0700
+
+    Make locale data build non-recursive / parallelizable
+    
+    On a 4 core CPU with gmake -j 16 the nls subdir builds in half the time,
+    plus this simplifies the next set of changes.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Reviewed-by: Mikhail Gusarov <dottedmag@dottedmag.net>
+    Reviewed-by: James Cloos <cloos@jhcloos.com>
+    Tested-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit a3fc78ac352e5a70a958996ef6aec50f653974d1
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Fri Sep 17 17:38:11 2010 -0400
+
+    config: remove man page suffix from bottom summary
+    
+    The man page suffix is the same for all libraries on a given
+    platform and is not configurable. It should have been removed
+    in commit 09edc6de6.
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit a52b0068f36c739eb7e426214cd72a8d9bb776ca
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Fri Sep 17 17:29:30 2010 -0400
+
+    config: remove unhelpful comment in .gitignore
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit 10dd881e7818be9074da4ab3a68577adcdaf71d2
+Author: Adam Jackson <ajax@redhat.com>
+Date:   Wed Sep 8 10:44:23 2010 -0400
+
+    Zero buffer data in BufAlloc()
+    
+    Inspired by a pattern in NoMachine's NX.  Consistently zeroed buffers
+    compress better with ssh and friends.  Note that you'll need to rebuild
+    all your protocol libraries to take advantage of this.
+    
+    Signed-off-by: Adam Jackson <ajax@redhat.com>
+    Reviewed-by: Jeremy Huddleston <jeremyhu@apple.com>
+    Reviewed-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit da099f0d2015831ea5f4a5d0740ed962aa4d5d8b
+Author: James Cloos <cloos@jhcloos.com>
+Date:   Sun Sep 12 17:00:54 2010 -0400
+
+    Revert “Dolt-ify"
+    
+    Libtool’s is now sufficiently fast that DOLT is no longer
+    worth the bother, even on those few systems where is works.
+    
+    This reverts commit 3e9afd501e40d76040635bd9a3045bcaf5a03b60
+    and part of commit d31e644c65c52828ea3e7abd94a8cf9aee12265c.
+    
+    It conflicted with commit f6a4fd0c7615684d08e848245849dea4017a5214
+    which moved dolt from configure.ac to m4/dolt.m4.
+    
+    And it addresses: http://bugs.freedesktop.org/show_bug.cgi?id=28188
+    
+    Signed-off-by: James Cloos <cloos@jhcloos.com>
+
+commit 2661fbe6b809c937a60c2c1ca5ddb8280e399bd8
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Thu Sep 9 19:24:29 2010 -0700
+
+    XIM spec title page minor formatting cleanup
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit f99f1380bbf7bb2a0c491acad4a3d8db44bfd752
 Author: Jens Petersen <petersen@redhat.com>
 Date:   Mon Aug 23 18:08:10 2010 -0700
 
@@ -16,75 +361,164 @@ Date:   Mon Aug 23 18:08:10 2010 -0700
     
     Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
 
-commit e90ec71b870ac15f52e41162e61974d16b63d3a2
-Author: Daniel Stone <daniel@fooishbar.org>
-Date:   Fri Jul 9 18:13:13 2010 +0100
-
-    XStringToKeysym: Cope with 0x1234cafe-style input
-    
-    If we get input in the style of 0xdeadbeef, just return that exact
-    keysym.  Introduces a dependency on strtoul, which I'm told is OK on all
-    the systems we care about.
-    
-    Signed-off-by: Daniel Stone <daniel@fooishbar.org>
-
-commit b3ff091678e900128f209b9d64bfac36228a355b
-Author: Daniel Stone <daniel@fooishbar.org>
-Date:   Thu Jul 8 16:49:51 2010 +0100
-
-    XStringToKeysym: Check strdup() return value
-    
-    Signed-off-by: Daniel Stone <daniel@fooishbar.org>
-    Reviewed-by: Keith Packard <keithp@keithp.com>
-
-commit 50b4b07073bd46cbef3627c160a240bd2a2b99d5
-Author: Daniel Stone <daniel@fooishbar.org>
-Date:   Tue Jun 15 18:49:43 2010 +0100
-
-    Delete now-redundant XKeysymDB
-    
-    Since XStringToKeysym now supports all the vendor keysyms, just delete
-    our XKeysymDB, which was incomplete at best, misleading at worst, and
-    always an annoyance.
-    
-    Signed-off-by: Daniel Stone <daniel@fooishbar.org>
-    Reviewed-by: Alan Coopersmith <alan.coopersmith@oracle.com>
-
-commit a32370c0854c8ad6f526dd997f14dbe3f466d4db
-Author: Daniel Stone <daniel@fooishbar.org>
-Date:   Tue Jun 15 18:48:48 2010 +0100
-
-    makekeys: Scan vendor keysyms as well as core
-    
-    Since we can't really live without vendor keysyms, scan them all in to
-    generate ks_tables.h, rather than only doing the core ones, and leaving
-    the vendor syms to be manually synchronised with XKeysymDB.
-    
-    Signed-off-by: Daniel Stone <daniel@fooishbar.org>
-    Reviewed-by: Alan Coopersmith <alan.coopersmith@oracle.com>
-
-commit 77cb2bda308b39dc0a8267f18d92e7b4bf178aa1
-Author: Daniel Stone <daniel@fooishbar.org>
-Date:   Tue Jun 15 18:47:37 2010 +0100
-
-    XStringToKeysym: Special case for XF86 keysyms
-    
-    Some XFree86 keysyms were in XKeysymDB as XF86_foo, despite really being
-    XF86foo.  So, if we get to the bottom of XStringToKeysym and haven't
-    found our XF86_foo, try it again as XF86foo.
-    
-    Signed-off-by: Daniel Stone <daniel@fooishbar.org>
-    Reviewed-by: Alan Coopersmith <alan.coopersmith@oracle.com>
-
-commit 8e3877aa50f3092c8fdfd916b072720439bc818b
+commit b15b8a558ec64c834cc8f6a52d7f3c4f530c8c4b
 Author: Alan Coopersmith <alan.coopersmith@oracle.com>
-Date:   Wed Aug 11 16:24:28 2010 -0700
+Date:   Fri Sep 3 23:11:53 2010 -0700
 
-    libX11 1.3.5
+    Sun's copyrights are now owned by Oracle
     
     Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
 
-commit 4b17b61421e81dd8acc0e410c37b76e674c2ddf7
+commit 7742bf62b1fa652da4270587e280249945367cae
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Sep 3 18:31:44 2010 -0700
+
+    libX11 1.3.99.901 (1.4.0 RC1)
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 5a02d6d74b5451d48d8f55709dfd4ecd3c068586
+Author: Jeroen Hoek <mail@jeroenhoek.nl>
+Date:   Sun Aug 29 09:47:06 2010 -0400
+
+    libX11/nls compose tables, add LATIN CAPITAL LETTER SHARP S
+    
+    Add LATIN CAPITAL LETTER SHARP S
+    (See https://bugs.freedesktop.org/show_bug.cgi?id=29448 for rationale)
+    
+    Signed-off-by: James Cloos <cloos@jhcloos.com>
+
+commit 09edc6de6619a2eabda3b808ebff4165550664f1
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Fri Aug 13 14:21:08 2010 -0400
+
+    config: remove man-pages configuration option
+    
+    This option was added in commit 6e752ea120 with no explanation.
+    The section number is provoded by XORG_MANPAGE_SECTIONS
+    There is no case where libX11 should be different than other libs
+    The option was also used to disable building of the man pages,
+    which build in 14 secs. No indication this is required.
+    
+    If there is a requirement from system builders to disable building
+    of man pages, it could be done consistently for all modules.
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit f92e754297ec5fdb81068b56a4435026666224fa
+Author: Aaron Plattner <aplattner@nvidia.com>
+Date:   Sun Aug 15 21:51:38 2010 -0700
+
+    XOpenDisplay: save the correct display_name value
+    
+    The X Test Suite's XDisplayString test checks the invariant
+    XDisplayString(XOpenDisplay(str)) == str.  The Xlib XOpenDisplay violates this
+    invariant by expanding str to the canonical form "host:display.scrn" (unless
+    HAVE_LAUNCHD is set and it starts with "/tmp/launch").  E.g., this expands ":1"
+    to ":1.0":
+    
+      400|26 1 1 19:26:41|IC Start
+      200|26 1 19:26:41|TP Start
+      520|26 1 00032625 1 1|VSW5TESTSUITE PURPOSE 1
+      520|26 1 00032625 1 2|Assertion XDisplayString-1.(A)
+      520|26 1 00032625 1 3|A call to XDisplayString returns the string that was used
+      520|26 1 00032625 1 4|as the argument to the XOpenDisplay call that returned the
+      520|26 1 00032625 1 5|value used as the display argument.
+      520|26 1 00032625 1 6|METH: Open a connection using XOpenDisplay.
+      520|26 1 00032625 1 7|METH: Obtain the display string using XDisplayString.
+      520|26 1 00032625 1 8|METH: Verify that the value of the string is the parameter used in XOpenDisplay.
+      520|26 1 00032625 1 9|METH: Close the display using XCloseDisplay.
+      520|26 1 00032625 1 10|REPORT: XDisplayString() returned ":1.0" instead of ":1".
+      220|26 1 1 19:26:41|FAIL
+      410|26 1 1 19:26:41|IC End
+    
+    Fix this by deleting all of the code to construct the canonical path and just
+    stashing a copy of the original display_name in dpy->display_name.
+    
+    Signed-off-by: Aaron Plattner <aplattner@nvidia.com>
+    Reviewed-by: Jeremy Huddleston <jeremyhu@apple.com>
+
+commit 1dc401f678469d0235e6d0b28eb4356f03327c9f
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Fri Aug 13 13:06:51 2010 -0400
+
+    man: xkb: remove unused variable LIB_MAN_DIR_SUFFIX
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit cbe9eebd11e5ebab4280d25b57b4cd4001241619
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Fri Aug 13 11:42:29 2010 -0400
+
+    man: simplify building of shadow man pages
+    
+    Store the shadow files in git as any other man page.
+    Move man pages to man dir and use the common makefile
+    
+    Local fix in CVS for bug 5628 is not required
+    as the problem has been fixed in
+    util-macros d9062e4077ebfd0985baf8418f3d0f111b9ddbba
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit bfd899c9af2318ecbe84cb69007dba4223fdb502
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Mon Aug 9 09:39:26 2010 -0400
+
+    config: reinstate XORG_PROG_RAWCPP erroneoulsy removed
+    
+    in commit 76e07ef6911734eac418e399b114f1b544512736.
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit 76e07ef6911734eac418e399b114f1b544512736
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Fri Aug 6 14:01:51 2010 -0400
+
+     man: using the C preprocessor is not required for man pages.
+    
+    There were no special symbols needing cpp.
+    Everything can be handled by the default MAN_SUBSTS in util-macros.
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit 4b8ff7db39f2fe7ef12968d462aaf3f9054b6c18
+Author: Jamey Sharp <jamey@minilop.net>
+Date:   Fri Aug 6 15:51:56 2010 -0700
+
+    Fix use-after-free in _XReply on X errors.
+    
+    _XReply would always call dequeue_pending_request on errors.  When it
+    got an error for the current request, it would call dequeue, then break
+    out of the loop; then, if it had an error in the event queue, it would
+    compare it with the sequence number of the now-freed pending request.
+    _XReply already stored that sequence number in dpy->last_request_read
+    before freeing it, so look at that instead.
+    
+    Fixes: https://bugs.freedesktop.org/show_bug.cgi?id=29412
+    
+    Signed-off-by: Jamey Sharp <jamey@minilop.net>
+    Signed-off-by: Josh Triplett <josh@joshtriplett.org>
+
+commit 9fa146b30046396b70d64986e50d6617b3a8ac48
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Sat Jul 31 16:15:35 2010 -0400
+
+    specs: xsl stylesheet requires abs path to images
+    
+    Using abs_builddir requires automake 1.10 or later.
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit a8727d4bc39015e303b4128d0ad8aaf6d5fc9f0a
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Sun Aug 1 14:13:07 2010 -0400
+
+    specs: update .gitignore now that all groff generated files are gone
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit f70527f05677aaf6a493ba42d2d95f738aaebafa
 Author: Adam Jackson <ajax@redhat.com>
 Date:   Thu Jul 29 11:11:21 2010 -0400
 
@@ -104,9 +538,45 @@ Date:   Thu Jul 29 11:11:21 2010 -0400
     
     Reviewed-by: James Cloos <cloos@jhcloos.com>
     Signed-off-by: Adam Jackson <ajax@redhat.com>
-    (cherry picked from commit f70527f05677aaf6a493ba42d2d95f738aaebafa)
 
-commit 0f70c845ad336a235e2f2f5d966b421d9a9d653d
+commit 511c4f6d29b2da4f71093feabcbb3913cb5d12a7
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Wed Jul 28 10:27:39 2010 -0400
+
+    specs: move indexterm from glossdef to glossterm
+    
+    This move fixes a Java class cast exception in the glossary.
+    The problem was introduced in commit
+    26f4f0d50840fe5ba4c46aae0a8e68db0059434b
+    
+    It may not happen on all versions of the doc toolchain.
+    There is no reason why indexterm cannot appear in glossdef,
+    this is a workaround to an implementation problem found by
+    trial and error.
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+    Reviewed-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 87a108f3aa565aa803dacb3a53b811f45025b609
+Author: Matt Dew <matt@osource.org>
+Date:   Sat Jul 24 14:46:57 2010 -0400
+
+    specs: replace troff source with docbook-xml source
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit 8e603413586ff42b1351688f6f99318cbe243bca
+Author: Julien Cristau <jcristau@debian.org>
+Date:   Sat Jul 24 22:13:07 2010 +0200
+
+    Compose.man: default user compose file is .XCompose, not .Xcompose
+    
+    The path was correct in the DESCRIPTION section, but not in FILES.
+    
+    Signed-off-by: Julien Cristau <jcristau@debian.org>
+
+commit 554da76ece85d0fc0cada45a86860e69c2107e9a
 Author: Daniel Stone <daniel@fooishbar.org>
 Date:   Tue Jul 20 12:34:48 2010 +0100
 
@@ -116,60 +586,167 @@ Date:   Tue Jul 20 12:34:48 2010 +0100
     to U+1F64C PERSON RAISING BOTH HANDS IN CELEBRATION.
     
     Signed-off-by: Daniel Stone <daniel@fooishbar.org>
-    (cherry picked from commit 554da76ece85d0fc0cada45a86860e69c2107e9a)
 
-commit 5c99e5b7f26e209de3430397784db443051d6eff
-Author: Juliusz Chroboczek <jch@pps.jussieu.fr>
-Date:   Tue Jun 29 18:32:42 2010 +0200
+commit 2e7a18b6a617b9b4bfcea2d36f2bd2d7e0c4a3dd
+Author: Daniel Stone <daniel@fooishbar.org>
+Date:   Fri Jul 9 18:13:13 2010 +0100
 
-    Make Compose-comma map to ogonek for I and U in UTF-8 locales.
+    XStringToKeysym: Cope with 0x1234cafe-style input
     
-    With the preceding patch, it makes the UTF-8 compose map consistent with
-    the ISO 8859-4 and -13 maps.
-    (cherry picked from commit 241a990afcf9c967c587ad6fd245df21b68b1ad9)
-
-commit ce7e5309bd227c14f6569fbccd8523e992c2bf07
-Author: Juliusz Chroboczek <jch@pps.jussieu.fr>
-Date:   Tue Jun 29 18:20:18 2010 +0200
-
-    Make Compose-comma map to Ogonek for A and E in UTF-8 locales.
+    If we get input in the style of 0xdeadbeef, just return that exact
+    keysym.  Introduces a dependency on strtoul, which I'm told is OK on all
+    the systems we care about.
     
-    This makes the UTF-8 compose file consistent with the ISO 8859-2 compose file
-    as far as Polish is concerned.  We only sacrifice one pair of characters,
-    e-cedilla, which is not used in any language.
-    (cherry picked from commit af55e582f485a668c2bf43129be972bc65f03c60)
+    Signed-off-by: Daniel Stone <daniel@fooishbar.org>
 
-commit 54a963608d23d35cd9233b2223f880ac3671f10b
-Author: Jamey Sharp <jamey@minilop.net>
-Date:   Fri Aug 6 15:51:56 2010 -0700
+commit 3df45ed0c29b98ff468a0ff0ba24830bb664fd5a
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Mon Jul 19 17:58:27 2010 -0700
 
-    Fix use-after-free in _XReply on X errors.
+    specs/libX11: Fix column count of Gravity Attributes table
     
-    _XReply would always call dequeue_pending_request on errors.  When it
-    got an error for the current request, it would call dequeue, then break
-    out of the loop; then, if it had an error in the event queue, it would
-    compare it with the sequence number of the now-freed pending request.
-    _XReply already stored that sequence number in dpy->last_request_read
-    before freeing it, so look at that instead.
-    
-    Fixes: https://bugs.freedesktop.org/show_bug.cgi?id=29412
-    
-    Signed-off-by: Jamey Sharp <jamey@minilop.net>
-    Signed-off-by: Josh Triplett <josh@joshtriplett.org>
-    (cherry picked from commit 4b8ff7db39f2fe7ef12968d462aaf3f9054b6c18)
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
 
-commit 8da90e33865340fe954bcb6b99dfcb1b7617ab10
-Author: Julien Cristau <jcristau@debian.org>
-Date:   Sat Jul 24 22:13:07 2010 +0200
+commit 53bcba0d1d2dc3fd5e0de4bae3da30a1aa31a0c4
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Mon Jul 19 14:43:38 2010 -0700
 
-    Compose.man: default user compose file is .XCompose, not .Xcompose
+    specs/libX11: Convert \- to &minus; and \^ to either &hairsp; or removed
     
-    The path was correct in the DESCRIPTION section, but not in FILES.
-    
-    Signed-off-by: Julien Cristau <jcristau@debian.org>
-    (cherry picked from commit 8e603413586ff42b1351688f6f99318cbe243bca)
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
 
-commit 2cce273a4ac89662e9f00a6a8317c84b0c8c391d
+commit 5a0b45275638281e1bb2ae7d3e16b98e6470dae9
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Mon Jul 19 11:28:50 2010 -0700
+
+    specs/libX11: Manual cleanup pass over Ch. 1
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 21567992958a6f12b3d0186f2f27a5b2a41b8448
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Mon Jul 19 14:51:10 2010 -0700
+
+    specs/libX11: make sure all files have DOCTYPEs so standard entities work
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit c944a8521f5760b485192658b921145159cdb439
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Jul 18 13:12:20 2010 -0700
+
+    specs/libX11: Fix up list of header files in Ch.1 & add index entries
+    
+    Combination of manual editing and automatic substitution via:
+    
+    perl -i -p -00 -e 's{<varlistentry>(\s+)<term>&lt;X11/([^&]+)&gt;</term>(\s+)<listitem>(\s+)<para>}{<varlistentry id="Standard_Header_Files:$2">$1<term><filename class="headerfile">&lt;X11/$2&gt;</filename></term>$3<listitem>$4<indexterm type="file"><primary><filename class="headerfile">X11/$2</filename></primary></indexterm>$4<indexterm><primary>Files</primary><secondary>&lt;X11/$2&gt;</secondary></indexterm>$4<indexterm><primary>Headers</primary><secondary>&lt;X11/$2&gt;</secondary></indexterm>$4<para>}g' CH01.xml
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit bb66e8f1ce330043278d3e8cbc7d5d3bc56ee030
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sun Jul 18 12:47:27 2010 -0700
+
+    specs/libX11: Add indexterms for headerfiles that .hN used to provide
+    
+    Automatic substitution performed via:
+    perl -i -p -e 's{^&lt;<filename class="headerfile">([^<]+)</filename>&gt;(.*)$}{<filename class="headerfile">&lt;$1&gt;</filename>$2\n<indexterm type="file"><primary><filename class="headerfile">$1</filename></primary></indexterm>\n<indexterm><primary>Files</primary><secondary><filename class="headerfile">&lt;$1&gt;</filename></secondary></indexterm>\n<indexterm><primary>Headers</primary><secondary><filename class="headerfile">&lt;$1&gt;</filename></secondary></indexterm>}' *.xml
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit d0b0d215cb85da48b323b1392149ce181e7ef5ec
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Jul 16 21:15:13 2010 -0700
+
+    specs/libX11: convert multicolumn lists from tables to <simplelist>
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit e679f80c6210c0aefe3669f8f536353619097a4b
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Jul 16 20:51:52 2010 -0700
+
+    specs/libX11: Tag WM_* as <property>
+    
+    Mass substitution done by:
+     perl -i -p -e 'if ($_ !~ m{^\<}) { $_ =~ s{(WM_\w+)}{<property>$1</property>}g; }' *.xml
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit c7b7e59b3b22221d0be6286c540001c360308f69
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Jul 16 20:41:33 2010 -0700
+
+    specs/libX11: Convert simpler eqn markup to docbook tags
+    
+    Mostly "sup" to <superscript>
+    
+    There's several more complicated equations that will probably need
+    MathML or SVG to solve.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 897486c54c6a54771867d667441aaf9a4b9c35ca
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Jul 16 00:50:39 2010 -0700
+
+    specs/libX11: App. D: convert literallayouts to synopsis or programlisting
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 692906c3b3d8aa8b8927fbc230c3050d633785d2
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Jul 16 00:36:43 2010 -0700
+
+    specs/libX11: Fix section headers in Appendix D
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit bcc41baa02e137884d847aec0f3ff8ca5c85c32f
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Wed Jul 14 07:22:26 2010 -0700
+
+    specs/libX11: Explicitly tag document as English
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 6783544706ff370e900c137f951e90230586d6dc
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Mon Jul 12 22:03:18 2010 -0700
+
+    specs/libX11: Appendix C: convert literallayouts to synopsis or programlisting
+    
+    Fixes display of a bunch of function prototypes and sample code
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 8834cd9285e6aaf437aee56292c508d99a090fa9
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Mon Jul 12 18:37:16 2010 -0700
+
+    xmlrules.in: Add chunked-html rule to manually generate smaller files
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 53f78680c34ebc94ce26b5e14c2a0003435cf10d
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Mon Jul 12 18:35:59 2010 -0700
+
+    specs/libX11: Convert Appendix A tables to real tables
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 705a1257a8a47f4a1f94979aee09a837500ede7d
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Mon Jul 12 18:38:09 2010 -0700
+
+    specs/libX11: Fix out-of-place text in Chapter 1
+    
+    DTD violation error introduced in 89cc2e02e7c29ef9a02f0cfdf2090a2934f539e4
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit a151346a2b7810e988f1de4b1e00b37672dc587a
 Author: Jeremy Huddleston <jeremyhu@apple.com>
 Date:   Mon Jul 12 16:52:12 2010 -0700
 
@@ -179,18 +756,374 @@ Date:   Mon Jul 12 16:52:12 2010 -0700
     https://bugs.freedesktop.org/show_bug.cgi?id=29028
     
     Signed-off-by: Jeremy Huddleston <jeremyhu@apple.com>
-    (cherry picked from commit a151346a2b7810e988f1de4b1e00b37672dc587a)
 
-commit 2b82daa88538022cfb49d8ceab22650e8062cacc
+commit 89cc2e02e7c29ef9a02f0cfdf2090a2934f539e4
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Mon Jul 12 13:38:04 2010 -0700
+
+    Replace untranslated .hN macros with <filename> tags to show header names
+    
+    Translation performed by:
+     perl -i -p -e 's{\<\!-- .hN (\S+) (\S+)?\s*-->}
+    	         {&lt;<filename class="headerfile">$1</filename>&gt;$2}' *.xml
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 75480440946603b8efdbbf78b88d59c641b6d2c8
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Sat Jul 10 00:06:13 2010 -0700
+
+    specs/libX11: Mass substitution of <function> tags with more specific tags
+    
+    Matched names from X headers & "nm libX11.so" output to names in spec to
+    map to more specific tags.   Tags used:
+    
+                        <code>   code fragments
+                    <constant>   enum values
+                   <errorname>   X protocol errors
+                    <filename>   filenames
+                    <function>   functions
+                    <function>   function-like macros (#define foo(a,b)...)
+                 <returnvalue>   function return codes
+                 <structfield>   struct members
+                  <structname>   struct names (even when typedefed)
+                      <symbol>   simple value #defines (#define NAME value)
+                  <systemitem>   X protocol requests
+    <systemitem class="event">   X protocol events
+                        <type>   non-struct typedefs
+                     <varname>   global variables
+    
+    (Also fixed a couple typos detected by failures of this matching, such as
+     XESSetPrintErrorValues -> XESetPrintErrorValues.)
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 26f4f0d50840fe5ba4c46aae0a8e68db0059434b
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Jul 9 00:37:23 2010 -0700
+
+    specs/libX11: Glossary cross-reference links
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 930b52d84031de0e15e0a11cf4ecfd3b2f59e073
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Thu Jul 8 21:19:08 2010 -0700
+
+    specs/libX11: Make whitespace around <function> tags more uniform
+    
+    Simplifies regular expressions for further mass substitutions.
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 730ce6b8aca77b77385aa894d234cbde5fcbce37
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Fri Jul 9 20:10:37 2010 -0400
+
+    specs: use pattern rules rather than suffix rules
+    
+    This allows target to rebuild when included .xml files are changed.
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit 5527b4bc8ce7de60123eb28789ddef54aa48a378
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Thu Jul 8 20:56:41 2010 -0700
+
+    specs/libX11: Move punctuation outside of the <function> tags
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit d66d2134dfc38cd866c7c2d9ea45ed4b4dad23f0
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Thu Jul 8 20:42:50 2010 -0700
+
+    specs/libX11: Mark a number of <acronym>s
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit d5bbb12f55ac9f691eab6242cedc53207275131b
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Thu Jul 8 19:31:36 2010 -0700
+
+    specs/libX11: Glossary terms should not be marked as functions
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 5decf7bc5dae0ae0c45c47eaaa9c4fdf9515ca1c
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Thu Jul 8 19:28:18 2010 -0700
+
+    specs/libX11: Clean up author list & acknowledgements a little
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 0cd29bdb332c333e5123dce65b25ad1d97fbdae3
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Thu Jul 8 17:30:34 2010 -0700
+
+    specs/libX11: Convert troff .IN macros to docbook <indexterm> tags
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit a67d99ccbe22c8ce5f7a12f13b8991d9e0cf4491
+Author: Gaetan Nadon <memsize@videotron.ca>
+Date:   Thu Jul 8 17:29:21 2010 -0400
+
+    specs: specdir is required to install xml files
+    
+    The source is installed as well as the targets.
+    This failed when configuring with --without-xmlto
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit e14273f44c1501ab51db4adcb83b18a1073787d8
+Author: Matt Dew <matt@osource.org>
+Date:   Thu Jul 8 14:42:32 2010 -0400
+
+    specs: replace troff source with docbook-xml source
+    
+    Signed-off-by: Gaetan Nadon <memsize@videotron.ca>
+
+commit bea0873caf50e9ed1b89255775d9ab912cbecd45
+Author: Daniel Stone <daniel@fooishbar.org>
+Date:   Thu Jul 8 16:49:51 2010 +0100
+
+    XStringToKeysym: Check strdup() return value
+    
+    Signed-off-by: Daniel Stone <daniel@fooishbar.org>
+    Reviewed-by: Keith Packard <keithp@keithp.com>
+
+commit cffa71b4a5743e2b6675b9a917d15aef4177d513
+Author: Marko Myllynen <myllynen@redhat.com>
+Date:   Mon Jun 28 15:08:05 2010 +0300
+
+    Fix two typos in SFS 5966 Annex 3
+    
+    X.Org bug#28792 <https://bugs.freedesktop.org/show_bug.cgi?id=28792>
+    
+    Signed-off-by: Julien Cristau <jcristau@debian.org>
+
+commit eb023c0f8919e809b8b609e1467b14d20a290aa7
+Author: Daniel Stone <daniel@fooishbar.org>
+Date:   Tue Jun 15 18:49:43 2010 +0100
+
+    Delete now-redundant XKeysymDB
+    
+    Since XStringToKeysym now supports all the vendor keysyms, just delete
+    our XKeysymDB, which was incomplete at best, misleading at worst, and
+    always an annoyance.
+    
+    Signed-off-by: Daniel Stone <daniel@fooishbar.org>
+    Reviewed-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 00175397480b76d32bf82b0c7c94c91a2a95954e
+Author: Daniel Stone <daniel@fooishbar.org>
+Date:   Tue Jun 15 18:48:48 2010 +0100
+
+    makekeys: Scan vendor keysyms as well as core
+    
+    Since we can't really live without vendor keysyms, scan them all in to
+    generate ks_tables.h, rather than only doing the core ones, and leaving
+    the vendor syms to be manually synchronised with XKeysymDB.
+    
+    Signed-off-by: Daniel Stone <daniel@fooishbar.org>
+    Reviewed-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit ebd6ef0a4db0ddef0ae17ad14571518ccdeea5ba
+Author: Daniel Stone <daniel@fooishbar.org>
+Date:   Tue Jun 15 18:47:37 2010 +0100
+
+    XStringToKeysym: Special case for XF86 keysyms
+    
+    Some XFree86 keysyms were in XKeysymDB as XF86_foo, despite really being
+    XF86foo.  So, if we get to the bottom of XStringToKeysym and haven't
+    found our XF86_foo, try it again as XF86foo.
+    
+    Signed-off-by: Daniel Stone <daniel@fooishbar.org>
+    Reviewed-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 8c2ffce9e5c6eef8a04f7e2732db46b3b62e13bb
+Author: Daniel Stone <daniel@fooishbar.org>
+Date:   Tue Jun 15 17:20:48 2010 +0100
+
+    configure.ac: Change from deprecated AC_DEFINE_DIR to AX_
+    
+    AC_DEFINE_DIR is deprecated as it's squatting on the autoconf-builtin
+    namespace, so start using the more proper AX_DEFINE_DIR instead.
+    
+    Signed-off-by: Daniel Stone <daniel@fooishbar.org>
+    Reviewed-by: Gaetan Nadon <memsize@videotron.ca>
+    Reviewed-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 6de368c9aa7ccd2fcd62fca5a2b278913db4d03d
+Author: Fernando Carrijo <fcarrijo@yahoo.com.br>
+Date:   Thu Jul 1 06:50:47 2010 -0300
+
+    Purge macros NEED_EVENTS and NEED_REPLIES
+    
+    Signed-off-by: Fernando Carrijo <fcarrijo@yahoo.com.br>
+    Acked-by: Tiago Vignatti <tiago.vignatti@nokia.com>
+    Reviewed-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit 0b724231be17f19538ee115a03b82b221b1f83c0
+Author: Adam Jackson <ajax@redhat.com>
+Date:   Wed Jun 30 16:30:49 2010 -0400
+
+    Use -version-number consistently instead of -version-info
+    
+    The latter is libtool braindamage.
+    
+    Signed-off-by: Adam Jackson <ajax@redhat.com>
+
+commit 241a990afcf9c967c587ad6fd245df21b68b1ad9
+Author: Juliusz Chroboczek <jch@pps.jussieu.fr>
+Date:   Tue Jun 29 18:32:42 2010 +0200
+
+    Make Compose-comma map to ogonek for I and U in UTF-8 locales.
+    
+    With the preceding patch, it makes the UTF-8 compose map consistent with
+    the ISO 8859-4 and -13 maps.
+
+commit af55e582f485a668c2bf43129be972bc65f03c60
+Author: Juliusz Chroboczek <jch@pps.jussieu.fr>
+Date:   Tue Jun 29 18:20:18 2010 +0200
+
+    Make Compose-comma map to Ogonek for A and E in UTF-8 locales.
+    
+    This makes the UTF-8 compose file consistent with the ISO 8859-2 compose file
+    as far as Polish is concerned.  We only sacrifice one pair of characters,
+    e-cedilla, which is not used in any language.
+
+commit d6ba13009fc9ef876a104b907ffef73c6e405d4b
 Author: Alan Coopersmith <alan.coopersmith@oracle.com>
 Date:   Thu Jun 24 13:13:11 2010 -0700
 
     Define FILE_MAN_DIR_SUFFIX so XCompose shadow page has correct path
     
     Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
-    (cherry picked from commit d6ba13009fc9ef876a104b907ffef73c6e405d4b)
 
-commit c1e35695d9d3b22b63db762ad0a1f040a72e958a
+commit 978c7238789037de917b9423ea9adfb006da1260
+Author: Jamey Sharp <jamey@minilop.net>
+Date:   Sat Jun 19 10:44:55 2010 -0700
+
+    poll_for_response: Really handle xcb_poll_for_reply getting a reply.
+    
+    Don't lose async replies. That's bad.
+    
+    `xlsfonts -l`, which uses XListFontsWithInfo, worked fine, because the
+    _XReply path worked; that path waited for replies, rather than polling.
+    
+    However, XRecordProcessReplies, which does nothing but call XPending,
+    relied on the event-handling path to process async replies, and that was
+    busted.
+    
+    Fixes: https://bugs.freedesktop.org/show_bug.cgi?id=28595
+    
+    Signed-off-by: Jamey Sharp <jamey@minilop.net>
+
+commit ef67486c5a8aada24fd95b2991a3c4979f53805f
+Author: Jamey Sharp <jamey@minilop.net>
+Date:   Mon Jun 21 13:34:15 2010 -0700
+
+    Revert "xcb_io.c: poll_for_response doesn't guarantee there's a pending request."
+    
+    This reverts commit 4a8b6528ff69f6feb8c0e119939b4ce6c088f29e, because as
+    a matter of fact, if poll_for_response returns NULL when we know
+    dpy->xcb->next_event is non-NULL, there *is* guaranteed to be a pending
+    request.
+
+commit 301ec5b41e9d253a446db656e1789ac7345dc433
+Author: Jamey Sharp <jamey@minilop.net>
+Date:   Mon Jun 21 13:24:24 2010 -0700
+
+    Revert "poll_for_response: Really handle xcb_poll_for_reply getting a reply."
+    
+    This reverts commit c115095d7f2bc4f5a4fb26380e3698fefdad7611. We *do*
+    need to check poll_for_event every time through the loop in
+    poll_for_response, so the commit did too much.
+
+commit 4a8b6528ff69f6feb8c0e119939b4ce6c088f29e
+Author: Jamey Sharp <jamey@minilop.net>
+Date:   Mon Jun 21 10:54:02 2010 -0700
+
+    xcb_io.c: poll_for_response doesn't guarantee there's a pending request.
+    
+    Fixes the second bug reported in:
+    https://bugs.freedesktop.org/show_bug.cgi?id=28595
+    
+    Signed-off-by: Jamey Sharp <jamey@minilop.net>
+
+commit c115095d7f2bc4f5a4fb26380e3698fefdad7611
+Author: Jamey Sharp <jamey@minilop.net>
+Date:   Sat Jun 19 10:44:55 2010 -0700
+
+    poll_for_response: Really handle xcb_poll_for_reply getting a reply.
+    
+    Don't lose async replies. That's bad.
+    
+    `xlsfonts -l`, which uses XListFontsWithInfo, worked fine, because the
+    _XReply path worked; that path waited for replies, rather than polling.
+    
+    However, XRecordProcessReplies, which does nothing but call XPending,
+    relied on the event-handling path to process async replies, and that was
+    busted.
+    
+    Fixes: https://bugs.freedesktop.org/show_bug.cgi?id=28595
+    
+    Signed-off-by: Jamey Sharp <jamey@minilop.net>
+    Signed-off-by: Josh Triplett <josh@joshtriplett.org>
+
+commit a25ae169862ab9b76daf259613b37c6b07bc2ef2
+Author: Marko Myllynen <myllynen@redhat.com>
+Date:   Sun Jun 13 19:23:05 2010 +0300
+
+    Implement SFS 5966 Annex 4 for Finland
+    
+    This patch adds Annex 4 of SFS 5966 for Finland and fixes two typos in
+    Annex 3 (which were actually copied verbatim from the standard text).
+    
+    The implementation of the standard is now complete.
+    
+    X.Org bug#28498 <https://bugs.freedesktop.org/show_bug.cgi?id=28498>
+    
+    Signed-off-by: Julien Cristau <jcristau@debian.org>
+
+commit 47b04195d8a31c8f9e6dd804196162c6cfca3ac6
+Author: Alan Coopersmith <alan.coopersmith@oracle.com>
+Date:   Fri Jun 4 13:20:17 2010 -0700
+
+    LINEAR_RGB_InitSCCData: When malloc fails, don't try to free unallocated bits
+    
+    One of the malloc failure checks had a goto to the wrong spot in the
+    list of cleanup free() calls to unwind at the end, and was freeing
+    bits that hadn't been initialized/allocated yet, since they would be
+    stored in the struct that just failed to be allocated.
+    
+    Error: Null pointer dereference (CWE 476)
+       Read from pointer that could be constant 'NULL'
+            at line 805 of /export/alanc/X.Org/sx86/lib/libX11/src/xcms/LRGB.c in function 'LINEAR_RGB_InitSCCData'.
+              Pointer checked against constant 'NULL' at line 754 but does not protect the dereference.
+    
+    [ This bug was found by the Parfait bug checking tool.
+      For more information see http://research.sun.com/projects/parfait ]
+    
+    Signed-off-by: Alan Coopersmith <alan.coopersmith@oracle.com>
+
+commit aebbf3623888119b43893b253195d93b613a6e1e
+Author: Josh Triplett <josh@joshtriplett.org>
+Date:   Sun Jun 6 19:11:55 2010 -0700
+
+    Mark the rest of Xprivate.h as _X_HIDDEN.
+    
+    None of the functions in Xprivate.h should have any callers outside of
+    Xlib, by definition.
+    
+    Signed-off-by: Josh Triplett <josh@joshtriplett.org>
+    Suggested-by: Jamey Sharp <jamey@minilop.net>
+    Reviewed-by: Jamey Sharp <jamey@minilop.net>
+
+commit abcd1b67c8135ad652833e5a60d818837c39fce1
 Author: Julien Cristau <jcristau@debian.org>
 Date:   Fri Jun 4 13:57:45 2010 +0200
 
@@ -202,7 +1135,21 @@ Date:   Fri Jun 4 13:57:45 2010 +0200
     Signed-off-by: Julien Cristau <jcristau@debian.org>
     Reviewed-by: Adam Jackson <ajax@redhat.com>
     Reviewed-by: Jamey Sharp <jamey@minilop.net>
-    (cherry picked from commit abcd1b67c8135ad652833e5a60d818837c39fce1)
+
+commit 15e5eaf62897b3179d1fbe457cb19f886f0449f8
+Author: Josh Triplett <josh@joshtriplett.org>
+Date:   Thu Jun 3 09:41:01 2010 -0700
+
+    Remove support for building without XCB
+    
+    And there was much rejoicing.
+    
+    Signed-off-by: Josh Triplett <josh@joshtriplett.org>
+    Reviewed-by: Jamey Sharp <jamey@minilop.net>
+    
+    Consensus on #xorg-devel agrees with removing --without-xcb; in
+    particular, acks from Adam Jackson, Daniel Stone, Kristian Høgsberg,
+    Julien Cristau, and Rémi Cardona.
 
 commit fb19eb767a32fd4ff74021c51bc6f60eb8bdff74
 Author: Alan Coopersmith <alan.coopersmith@oracle.com>
