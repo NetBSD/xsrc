@@ -34,7 +34,6 @@
 #define XDBE_H
 
 #include <X11/Xfuncproto.h>
-#include <X11/extensions/dpms.h>	/* XXXMRG makes Display available */
 #include <X11/extensions/dbe.h>
 
 typedef struct
