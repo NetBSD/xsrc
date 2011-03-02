@@ -73,7 +73,7 @@ static void make_wizard(Widget);
 XtInputId inputId;
 
 static void
-dprintf(char *format, ...)
+debugprintf(char *format, ...)
 {
 	va_list ap;
 
@@ -95,7 +95,7 @@ freadline(char *line, size_t size, int fd)
 			return NULL;
 
 		if ((n = read(fd, p, 1)) <= 0) {
-			dprintf("got null line n=%zd state %d\n", n, state);
+			debugprintf("got null line n=%zd state %d\n", n, state);
 			XtRemoveInput(inputId);
 			return NULL;
 		}
@@ -108,7 +108,7 @@ freadline(char *line, size_t size, int fd)
 
 	*p = '\0';
 
-	dprintf("state %d got line: %s\n", state, line);
+	debugprintf("state %d got line: %s\n", state, line);
 	return (line);
 }
 
@@ -245,7 +245,7 @@ on_error_entry_changed(Widget w, XEvent *event, String *params,
 
 	XtSetArg(args[0], XtNstring, &errorcode);
 	XtGetValues(w, args, 1);
-	dprintf("new error code %s\n", errorcode);
+	debugprintf("new error code %s\n", errorcode);
 }
 
 void
@@ -256,7 +256,7 @@ on_denyone_clicked(Widget w, XtPointer closure, XtPointer clientData)
 	XtSetArg(args[0], XtNstring, &errorcode);
 	XtGetValues(w, args, 1);
 
-	dprintf("deny-now[%s]\n", errorcode);
+	debugprintf("deny-now[%s]\n", errorcode);
 	printf("deny-now[%s]\n", errorcode);
 }
 
@@ -274,7 +274,7 @@ on_deny_clicked(Widget w, XtPointer closure, XtPointer clientData)
 	XtSetArg(args[0], XtNstring, &errorcode);
 	XtGetValues(w, args, 1);
 	
-	dprintf("deny[%s]\n", errorcode);
+	debugprintf("deny[%s]\n", errorcode);
 	printf("deny[%s]\n", errorcode);
 }
 
