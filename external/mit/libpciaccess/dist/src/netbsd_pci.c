@@ -135,7 +135,7 @@ pci_device_netbsd_map_range(struct pci_device *dev,
 
 	if (map->flags & PCI_DEV_MAP_FLAG_WRITABLE)
 		prot |= PROT_WRITE;
-	map->memory = mmap(NULL, map->size, prot, MAP_SHARED,
+	map->memory = mmap(NULL, (size_t)map->size, prot, MAP_SHARED,
 	    buses[dev->domain].fd, (off_t)map->base);
 	if (map->memory == MAP_FAILED)
 		return errno;
@@ -146,17 +146,19 @@ pci_device_netbsd_map_range(struct pci_device *dev,
 	/* No need to set an MTRR if it's the default mode. */
 	if ((map->flags & PCI_DEV_MAP_FLAG_CACHABLE) ||
 	    (map->flags & PCI_DEV_MAP_FLAG_WRITE_COMBINE)) {
-		m.base = base;
+		m.base = map->base;
 		m.flags = MTRR_VALID | MTRR_PRIVATE;
-		m.len = size;
+		m.len = map->size;
 		m.owner = getpid();
-		if (map->flags & PCI_DEV_MAP_FLAG_CACHEABLE)
+		if (map->flags & PCI_DEV_MAP_FLAG_CACHABLE)
 			m.type = MTRR_TYPE_WB;
 		if (map->flags & PCI_DEV_MAP_FLAG_WRITE_COMBINE)
 			m.type = MTRR_TYPE_WC;
 
-		if ((netbsd_set_mtrr(&m, &n)) == -1)
-			ret = errno;
+		if ((netbsd_set_mtrr(&m, &n)) == -1) {
+			fprintf(stderr, "mtrr set failed: %s\n",
+			    strerror(errno));
+		}
 	}
 #endif
 
@@ -177,7 +179,7 @@ pci_device_netbsd_unmap_range(struct pci_device *dev,
 	    (map->flags & PCI_DEV_MAP_FLAG_WRITE_COMBINE)) {
 		m.base = map->base;
 		m.flags = 0;
-		m.len = size;
+		m.len = map->size;
 		m.type = MTRR_TYPE_UC;
 		(void)netbsd_set_mtrr(&m, &n);
 	}
