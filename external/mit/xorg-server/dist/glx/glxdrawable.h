@@ -51,8 +51,11 @@ struct __GLXdrawable {
     void      (*waitX)(__GLXdrawable *);
     void      (*waitGL)(__GLXdrawable *);
 
+    int refcnt; /* number of resources handles referencing this */
+
     DrawablePtr pDraw;
     XID drawId;
+    XID otherId; /* for glx1.3 we need to track the original Drawable as well */
 
     /*
     ** Either GLX_DRAWABLE_PIXMAP, GLX_DRAWABLE_WINDOW or
