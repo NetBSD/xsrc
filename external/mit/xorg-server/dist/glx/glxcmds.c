@@ -530,6 +530,7 @@ __glXGetDrawable(__GLXcontext *glxc, GLXDrawable drawId, ClientPtr client,
 	*error = BadAlloc;
 	return NULL;
     }
+    pGlxDraw->refcnt++;
 
     return pGlxDraw;
 }
@@ -1100,8 +1101,10 @@ __glXDrawableInit(__GLXdrawable *drawable,
     drawable->pDraw = pDraw;
     drawable->type = type;
     drawable->drawId = drawId;
+    drawable->otherId = 0;
     drawable->config = config;
     drawable->eventMask = 0;
+    drawable->refcnt = 0;
 
     return GL_TRUE;
 }
@@ -1131,14 +1134,18 @@ DoCreateGLXDrawable(ClientPtr client, __GLXscreen *pGlxScreen,
 	pGlxDraw->destroy (pGlxDraw);
 	return BadAlloc;
     }
+    pGlxDraw->refcnt++;
 
-    /* Add the glx drawable under the XID of the underlying X drawable
-     * too.  That way we'll get a callback in DrawableGone and can
-     * clean up properly when the drawable is destroyed. */
-    if (drawableId != glxDrawableId &&
-	!AddResource(pDraw->id, __glXDrawableRes, pGlxDraw)) {
-	pGlxDraw->destroy (pGlxDraw);
-	return BadAlloc;
+    if (drawableId != glxDrawableId) {
+	/* Add the glx drawable under the XID of the underlying X drawable
+	 * too.  That way we'll get a callback in DrawableGone and can
+	 * clean up properly when the drawable is destroyed. */
+	if (!AddResource(drawableId, __glXDrawableRes, pGlxDraw)) {
+	    pGlxDraw->destroy (pGlxDraw);
+	    return BadAlloc;
+	}
+	pGlxDraw->refcnt++;
+	pGlxDraw->otherId = drawableId;
     }
 
     return Success;
