@@ -248,7 +248,11 @@ RADEONPutImageTextured(ScrnInfoPtr pScrn,
     BoxRec dstBox;
     int dst_width = width, dst_height = height;
     int aligned_height;
+#ifdef XF86DRM_MODE
     int h_align = drmmode_get_height_align(pScrn, 0);
+#else
+    int h_align = 1;
+#endif
     /* make the compiler happy */
     s2offset = s3offset = srcPitch2 = 0;
 
