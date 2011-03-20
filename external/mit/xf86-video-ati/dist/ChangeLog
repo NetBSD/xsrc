@@ -1,3 +1,496 @@
+commit 38d9368e59b2990bf32a028ece2132451b402350
+Author: Alex Deucher <alexdeucher@gmail.com>
+Date:   Thu Mar 17 18:59:55 2011 -0400
+
+    bump for release
+    
+    Signed-off-by: Alex Deucher <alexdeucher@gmail.com>
+
+commit cdfc007eccc9b130fc08012deef304488eb6e469
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Wed Mar 16 10:40:42 2011 +1000
+
+    radeon/exa: correct function name
+    
+    this corrects the function name so it matches the contents.
+    
+    Signed-off-by: Dave Airlie <airlied@redhat.com>
+
+commit b93d7658f669f6dc1cfacebcfe955a1e113a537c
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Wed Mar 16 10:37:22 2011 +1000
+
+    radeon/exa: fix scaling check
+    
+    This caused a regression in firefox, as these numbers are xFixed
+    values hence 1 is actually 65536.
+    
+    Should fix: https://bugzilla.redhat.com/show_bug.cgi?id=685084
+    
+    Signed-off-by: Dave Airlie <airlied@redhat.com>
+
+commit 8567b8cd9e136ef69906e02286b3752db2404741
+Author: Alex Deucher <alexdeucher@gmail.com>
+Date:   Tue Mar 15 13:13:06 2011 -0400
+
+    APU: no tiling yet
+    
+    Signed-off-by: Alex Deucher <alexdeucher@gmail.com>
+
+commit 4d350497012fa31a417ada662006e2d64db2a4b5
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Tue Mar 15 10:32:19 2011 +1000
+
+    radeon: exa shaders don't handle scaling either.
+    
+    rendercheck tsrccoords test fails.
+    
+    Signed-off-by: Dave Airlie <airlied@redhat.com>
+
+commit 6319a33cb7bd8dba1eaf47bee1e2608cee5d7600
+Author: Alex Deucher <alexdeucher@gmail.com>
+Date:   Wed Mar 2 19:38:04 2011 -0500
+
+    kms: add cayman pci ids
+    
+    Signed-off-by: Alex Deucher <alexdeucher@gmail.com>
+
+commit fd65def45a57e3242596274d270791df8abc8e29
+Author: Alex Deucher <alexdeucher@gmail.com>
+Date:   Thu Jan 13 17:02:31 2011 -0500
+
+    kms: no accel yet for cayman
+    
+    Signed-off-by: Alex Deucher <alexdeucher@gmail.com>
+
+commit 585e2a3b803b6d3e070f2427e9cb49bab0949239
+Author: Alex Deucher <alexdeucher@gmail.com>
+Date:   Thu Jan 13 16:58:01 2011 -0500
+
+    kms: add cayman chip family
+    
+    KMS only.  No UMS support for cayman.
+    
+    Signed-off-by: Alex Deucher <alexdeucher@gmail.com>
+
+commit 6835e22256ba7a74c02504383f63baaba7e87156
+Author: Alex Deucher <alexdeucher@gmail.com>
+Date:   Wed Mar 2 12:20:45 2011 -0500
+
+    r6xx+: truncate point sampled coordinates
+    
+    By default the hardware rounds texcoords. However,
+    for point sampled textures, the expected behavior is
+    to truncate. When we have point sampled textures,
+    set the truncate bit in the sampler.
+    
+    Signed-off-by: Alex Deucher <alexdeucher@gmail.com>
+
+commit 8a8862e4165dc5be779bce5e327a31da4826db3b
+Author: Sedat Dilek <sedat.dilek@googlemail.com>
+Date:   Sat Feb 26 21:04:22 2011 +0100
+
+    kms: Fix warning XNFprintf is deprecated (v2)
+    
+    The first take of my patch missed the breakage against pre-1.10
+    xservers and now I know XNFasprintf() is not a 1:1 replacement
+    for XNFprintf().
+    The idea for the fix seemed to be so obvious, but as usual "really"
+    test the patch you are sending to any ML.
+    I am awfully sorry for the overhasty bad hack.
+    Thanks to Alan and Alex for the help to fix it correctly, now.
+    
+    Tested-By: Sedat Dilek <sedat.dilek@gmail.com>
+    Signed-off-by: Sedat Dilek <sedat.dilek@gmail.com>
+
+commit 88304fe9c0ce69012d44a77a5368c35236511dac
+Author: Alex Deucher <alexdeucher@gmail.com>
+Date:   Mon Feb 28 11:29:19 2011 -0500
+
+    kms: don't rotate if acceleration is not enabled
+    
+    Signed-off-by: Alex Deucher <alexdeucher@gmail.com>
+
+commit 99141761e947e2153ed1a3bc485dc5716a22acb1
+Author: Alex Deucher <alexdeucher@gmail.com>
+Date:   Mon Feb 28 11:20:44 2011 -0500
+
+    kms: don't enable tiling if accel is off
+    
+    Signed-off-by: Alex Deucher <alexdeucher@gmail.com>
+
+commit 7928c120fb629a782846bcd5734d9fa14cbb099d
+Author: Dave Airlie <airlied@redhat.com>
+Date:   Mon Feb 28 14:11:57 2011 +1000
+
+    xv: fix height alignments for U/V planes
+    
+    The kernel CS checks showed we were incorrectly aligning the
+    U/V allocations for when we used them as texture sources.
+    
+    This should fix
+    https://bugs.freedesktop.org/show_bug.cgi?id=34567
+    
+    Signed-off-by: Dave Airlie <airlied@redhat.com>
+
+commit e55520c0e582f2a500b3b01c2cb78750e15256ca
+Author: Michel Dänzer <daenzer@vmware.com>
+Date:   Sat Feb 26 15:27:59 2011 +0100
+
+    Revert "kms: Fix warning XNFprintf is deprecated"
+    
+    This reverts commit cb4dc7ab66016d0c980800f8dbf71bbe993889d3.
+    
+    Looks like this caused https://bugs.freedesktop.org/attachment.cgi?id=43852 ,
+    but even if it didn't, the following needs to be addressed first:
+    
+    cc1: warnings being treated as errors
+    ../../src/radeon_kms.c: In function ‘radeon_open_drm_master’:
+    ../../src/radeon_kms.c:413: error: passing argument 1 of ‘XNFasprintf’ from incompatible pointer type
+    /usr/local/include/xorg/Xprintf.h:57: note: expected ‘char **’ but argument is of type ‘char *’
+    ../../src/radeon_kms.c:413: error: passing argument 2 of ‘XNFasprintf’ makes pointer from integer without a cast
+    /usr/local/include/xorg/Xprintf.h:57: note: expected ‘const char * restrict’ but argument is of type ‘uint16_t’
+    ../../src/radeon_kms.c:413: error: assignment makes pointer from integer without a cast
+    make[2]: *** [radeon_kms.lo] Error 1
+
+commit cb4dc7ab66016d0c980800f8dbf71bbe993889d3
+Author: Sedat Dilek <sedat.dilek@gmail.com>
+Date:   Fri Feb 25 17:21:52 2011 -0500
+
+    kms: Fix warning XNFprintf is deprecated
+    
+    Noticed when building ati/radeon ddx against xserver 1.10-rc3.
+    
+    [ build.log ]
+    ../../src/radeon_kms.c:412:5: warning: 'XNFprintf' is deprecated (declared at /usr/include/xorg/os.h:273)
+    
+    agd5f: don't break the build against pre-1.10 xservers.
+    
+    Signed-off-by: Sedat Dilek <sedat.dilek@gmail.com>
+    Signed-off-by: Alex Deucher <alexdeucher@gmail.com>
+
+commit ecfdb209afe2aafc378baab8c511f5df7b000270
+Author: Sedat Dilek <sedat.dilek@googlemail.com>
+Date:   Fri Feb 25 21:48:14 2011 +0100
+
+    UMS: Fix build against xserver 1.10-rc3
+    
+    This issue was introduced due to last minute backout of RandR-1.4
+    in xserver 1.10-rc3.
+    
+    Switch to "#ifdef RANDR_14_INTERFACE" as suggested by Keith Packard.
+    See also <http://lists.x.org/archives/xorg-devel/2011-February/019643.html>.
+    
+    Note:
+    The ddx needs a rebuild as the X video driver ABI changed to version 10.0.
+    
+    Reported-by: Alex Deucher <alexdeucher@gmail.com>
+    CC: Keith Packard <keithp@keithp.com>
+    Signed-off-by: Sedat Dilek <sedat.dilek@gmail.com>
+
+commit 04293a3a84acd96ccdf8e5e865cf973325ca43a1
+Author: Alex Deucher <alexdeucher@gmail.com>
+Date:   Thu Feb 24 02:33:41 2011 -0500
+
+    dri2: disable pageflipping for transformed displays
+    
+    Based on Ben's nouveau patch.
+    
+    Signed-off-by: Alex Deucher <alexdeucher@gmail.com>
+
+commit 91070cfd75d5607c4a72ace780f830f0ddb40e84
+Author: Alex Deucher <alexdeucher@gmail.com>
+Date:   Wed Feb 23 00:55:28 2011 -0500
+
+    Xv: use aligned height to calculate Xv buffer size
+    
+    Make sure it's large enough for the tiling mode so the
+    CS checker doesn't complain.  Should fix:
+    https://bugs.freedesktop.org/show_bug.cgi?id=34567
+    
+    Signed-off-by: Alex Deucher <alexdeucher@gmail.com>
+
+commit acd54a48a6680956ed903fc890204c0c910b6712
+Author: Mark Kettenis <kettenis@openbsd.org>
+Date:   Sun Feb 20 22:51:04 2011 +0100
+
+    Properly restore CLOCK_CNTL_INDEX register
+    
+    RADEONRestore() restores the CLOCK_CNTL_INDEX register before calling
+    RADEONRestorePLLRegisters(), which modifies the CLOCK_CNTL_INDEX register
+    to access the PLL registers.  As a result we may end up with the wrong clock
+    being selected when exiting X.  This happens on platforms where the driver
+    doesn't save and restore the VGA state.
+    
+    Signed-off-by: Mark Kettenis <kettenis@openbsd.org>
+
+commit d7c2ba4286ea32401c0026cb92ec167f7b5753d8
+Author: Alex Deucher <alexdeucher@gmail.com>
+Date:   Wed Feb 16 18:30:34 2011 -0500
+
+    man: add btc chips to the list
+    
+    Signed-off-by: Alex Deucher <alexdeucher@gmail.com>
+
+commit d0f8bffbbc26818eccdd305ef142387dc4975bba
+Author: Alex Deucher <alexdeucher@gmail.com>
+Date:   Wed Feb 16 15:09:20 2011 -0500
+
+    kms: add tiling support for evergreen/NI
+    
+    - requires 2.6.37 or newer
+    - 1D only at the moment
+    - disabled by default
+    
+    Signed-off-by: Alex Deucher <alexdeucher@gmail.com>
+
+commit 0471d8412acd82e281a35fc4c6bb2d53b1ff5802
+Author: Alex Deucher <alexdeucher@gmail.com>
+Date:   Wed Feb 16 15:07:35 2011 -0500
+
+    kms: EXA/Xv tiling fixes
+    
+    - properly set tiling flags for temp surfaces
+    - fix CB non_disp_tiling bits on evergreen
+    
+    Signed-off-by: Alex Deucher <alexdeucher@gmail.com>
+
+commit 4d7e1498f7d9eb50e2eddabca193fc27bde24f0e
+Author: Alex Deucher <alexdeucher@gmail.com>
+Date:   Tue Feb 15 11:24:23 2011 -0500
+
+    fix Xv on pre-r6xx asics
+    
+    broken by:
+    a9c1358099:"Xv: fix textured video alignment"
+    
+    Reported by:
+    Artur Skawina <art.08.09@gmail.com>
+    
+    Signed-off-by: Alex Deucher <alexdeucher@gmail.com>
+
+commit a9a59717d11af37a2dda5555f6a83c5b65449527
+Author: Alex Deucher <alexdeucher@gmail.com>
+Date:   Sat Feb 12 05:34:50 2011 -0500
+
+    kms: use worst case base/pitch align if we don't have drm tiling info
+    
+    To avoid CS rejection.
+    
+    Signed-off-by: Alex Deucher <alexdeucher@gmail.com>
+
+commit 5f9b7fdb4ce27f8c6a64134bb4d5ebeb1c958cca
+Author: Alex Deucher <alexdeucher@gmail.com>
+Date:   Sat Feb 12 05:19:12 2011 -0500
+
+    kms: always get the tiling info even if we aren't tiling
+    
+    We need the proper group size to calculate alignment so the
+    ddx and drm agree.
+    
+    Signed-off-by: Alex Deucher <alexdeucher@gmail.com>
+
+commit 355f0f7a67ce239b7fd2f2e81bcaaa88b2a09f03
+Author: Alex Deucher <alexdeucher@gmail.com>
+Date:   Sat Feb 12 04:52:52 2011 -0500
+
+    kms: fix rotate pitch align
+    
+    Signed-off-by: Alex Deucher <alexdeucher@gmail.com>
+
+commit f1dc419c989addc4737aed06ec8b8acdb4d40063
+Author: Alex Deucher <alexdeucher@gmail.com>
+Date:   Fri Feb 11 17:21:10 2011 -0500
+
+    kms: evergreen/ni big endian accel support
+    
+    Based on 6xx/7xx patches from Cédric Cano.
+    
+    Signed-off-by: Alex Deucher <alexdeucher@gmail.com>
+
+commit e8dc728a549323f1babe337b9d42ad504af1ca39
+Author: Cédric Cano <ccano@interfaceconcept.com>
+Date:   Fri Feb 11 17:06:47 2011 -0500
+
+    ums: atombios endian fixes
+    
+    agd5f: fix a few more cases.
+    
+    Signed-off-by: Alex Deucher <alexdeucher@gmail.com>
+
+commit 48ffad957f1dbca909515ffa00629f4caa68706b
+Author: Cédric Cano <ccano@interfaceconcept.com>
+Date:   Fri Feb 11 17:00:31 2011 -0500
+
+    kms: 6xx/7xx big endian accel support
+    
+    agd5f: minor cleanups
+    
+    Signed-off-by: Alex Deucher <alexdeucher@gmail.com>
+
+commit 151b22bd7c3b1002a7261538611fb2b468815c86
+Author: Cédric Cano <ccano@interfaceconcept.com>
+Date:   Fri Feb 11 16:33:16 2011 -0500
+
+    kms/6xx+: endian swap cursor uploads
+    
+    agd5f: remove kms surface for cursor since
+    we now do the swap in the cursor load to avoid
+    breaking pre-6xx cards with BE.
+    
+    Signed-off-by: Alex Deucher <alexdeucher@gmail.com>
+
+commit 309fac041f998e20338d320aabaeda5cc1bb6348
+Author: Alex Deucher <alexdeucher@gmail.com>
+Date:   Fri Feb 11 14:32:45 2011 -0500
+
+    kms/exa/xv: fix alignment checking in accel state setup
+    
+    Signed-off-by: Alex Deucher <alexdeucher@gmail.com>
+
+commit 25fe3ec4c6dfcdf6ba72a032bc9cb2c84d84029a
+Author: Alex Deucher <alexdeucher@gmail.com>
+Date:   Fri Feb 11 14:03:56 2011 -0500
+
+    kms/exa: UTS/DFS base alignment fixes
+    
+    Signed-off-by: Alex Deucher <alexdeucher@gmail.com>
+
+commit 3d10278ce511f5dabb68ed86ee43eaaf43585983
+Author: Alex Deucher <alexdeucher@gmail.com>
+Date:   Fri Feb 11 13:51:11 2011 -0500
+
+    Xv: fix textured video alignment harder
+    
+    Signed-off-by: Alex Deucher <alexdeucher@gmail.com>
+
+commit a9c135809945fb372ce390f06918b9fd8e455b3f
+Author: Alex Deucher <alexdeucher@gmail.com>
+Date:   Fri Feb 11 13:21:43 2011 -0500
+
+    Xv: fix textured video alignment
+    
+    Signed-off-by: Alex Deucher <alexdeucher@gmail.com>
+
+commit e5bd99faa3b6629a55168386d5dfa936ee4e97ae
+Author: Alex Deucher <alexdeucher@gmail.com>
+Date:   Fri Feb 11 12:14:55 2011 -0500
+
+    kms: remove RADEON_TILING_SURFACE flag on front bo
+    
+    Should have been removed in:
+    ef9bfb262db7004bef3704e5d914687e50d3fca4
+    
+    Signed-off-by: Alex Deucher <alexdeucher@gmail.com>
+
+commit 92ffce1892d24a98d789aad57a4230cadb0c812a
+Author: Alex Deucher <alexdeucher@gmail.com>
+Date:   Fri Feb 11 03:12:43 2011 -0500
+
+    EXA/r6xx+: properly account for height alignment in copy temp buffer
+    
+    Signed-off-by: Alex Deucher <alexdeucher@gmail.com>
+
+commit 39104c6e8461cf49c1bb03a18858ad75a9d98b46
+Author: Alex Deucher <alexdeucher@gmail.com>
+Date:   Thu Feb 10 14:31:43 2011 -0500
+
+    remove EVERGREENSetAccelState()
+    
+    It was a duplicate of the R600 variant.
+    
+    Signed-off-by: Alex Deucher <alexdeucher@gmail.com>
+
+commit 7ac3a2e0bcdadff7c7172a9f833f526b526da16b
+Author: Alex Deucher <alexdeucher@gmail.com>
+Date:   Thu Feb 10 14:24:50 2011 -0500
+
+    6xx+: switch to linear aligned rather than linear general
+    
+    linear aligned is supposedly more performant, but more
+    importantly, linear general only works on the CB without
+    slices.  The texture blocks technically don't support
+    linear general although, I think linear general gets
+    upgraded to linear aligned in the hw which is why it
+    currently works.
+    
+    Signed-off-by: Alex Deucher <alexdeucher@gmail.com>
+
+commit e3145801b80fd4be4cf770128876e86e89bda66f
+Author: Alex Deucher <alexdeucher@gmail.com>
+Date:   Thu Feb 10 14:14:55 2011 -0500
+
+    evergreen/NI: consolidate spi setup
+    
+    Signed-off-by: Alex Deucher <alexdeucher@gmail.com>
+
+commit be67ded05621aff9c85525372fd119071d3278ec
+Author: Alex Deucher <alexdeucher@gmail.com>
+Date:   Thu Feb 10 14:06:38 2011 -0500
+
+    6xx/7xx: consolidate spi setup
+    
+    Signed-off-by: Alex Deucher <alexdeucher@gmail.com>
+
+commit 2c5ae1724307e0dba5d0306fe27c1e15a7390a2f
+Author: Alex Deucher <alexdeucher@gmail.com>
+Date:   Thu Feb 10 13:47:53 2011 -0500
+
+    evergreen/ni: consolidate CB state handling
+    
+    Signed-off-by: Alex Deucher <alexdeucher@gmail.com>
+
+commit c52d817b51e13447802fe338be2d247ffba2a669
+Author: Alex Deucher <alexdeucher@gmail.com>
+Date:   Thu Feb 10 13:35:02 2011 -0500
+
+    6xx/7xx: consolidate remaining CB state
+    
+    Signed-off-by: Alex Deucher <alexdeucher@gmail.com>
+
+commit 5f9bc127d302404432b631e3e774192950f57b42
+Author: Alex Deucher <alexdeucher@gmail.com>
+Date:   Thu Feb 10 03:28:01 2011 -0500
+
+    kms/r6xx+: clean up pitch/height alignment in EXA UTS/DFS
+
+commit a4899db96029acde6cd400fc0541693a487898e7
+Author: Alex Deucher <alexdeucher@gmail.com>
+Date:   Sat Feb 5 14:11:42 2011 -0500
+
+    UMS: fix spelling in error message
+    
+    Noticed by: Warren Block <wblock@wonkity.com>
+    
+    Signed-off-by: Alex Deucher <alexdeucher@gmail.com>
+
+commit 84450ea9221f32296c1f786a6aa126a08bb9756f
+Author: Alex Deucher <alexdeucher@gmail.com>
+Date:   Sat Feb 5 14:05:48 2011 -0500
+
+    UMS/DCE3.2: fix segfault
+    
+    atombios_pick_dig_encoder() needs to be called
+    with a valid crtc assigned.
+    
+    Signed-off-by: Alex Deucher <alexdeucher@gmail.com>
+
+commit a27b5dbd9fba689f1814c0888d1b7459b6c6b1a1
+Author: Alex Deucher <alexdeucher@gmail.com>
+Date:   Thu Feb 3 19:06:22 2011 -0500
+
+    Bump version post release
+    
+    Signed-off-by: Alex Deucher <alexdeucher@gmail.com>
+
+commit 0a1a0513a61f392580bde39cca4880f2c19abc8d
+Author: Alex Deucher <alexdeucher@gmail.com>
+Date:   Thu Feb 3 18:09:17 2011 -0500
+
+    bump version for release
+    
+    Signed-off-by: Alex Deucher <alexdeucher@gmail.com>
+
 commit ef9bfb262db7004bef3704e5d914687e50d3fca4
 Author: Alex Deucher <alexdeucher@gmail.com>
 Date:   Tue Feb 1 19:24:44 2011 -0500

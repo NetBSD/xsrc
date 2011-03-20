@@ -179,11 +179,12 @@ Bool RADEONGetPixmapOffsetPitch(PixmapPtr pPix, uint32_t *pitch_offset)
  *
  * transform may be null.
  */
-Bool radeon_transform_is_affine(PictTransformPtr t)
+Bool radeon_transform_is_affine_or_scaled(PictTransformPtr t)
 {
 	if (t == NULL)
 		return TRUE;
-	return t->matrix[2][0] == 0 && t->matrix[2][1] == 0;
+	/* the shaders don't handle scaling either */
+	return t->matrix[2][0] == 0 && t->matrix[2][1] == 0 && t->matrix[2][2] == IntToxFixed(1);
 }
 
 #if X_BYTE_ORDER == X_BIG_ENDIAN

@@ -363,6 +363,7 @@ typedef enum {
     CHIP_FAMILY_BARTS,
     CHIP_FAMILY_TURKS,
     CHIP_FAMILY_CAICOS,
+    CHIP_FAMILY_CAYMAN,
     CHIP_FAMILY_LAST
 } RADEONChipFamily;
 
@@ -683,6 +684,7 @@ struct r600_accel_object {
     int bpp;
     uint32_t domain;
     struct radeon_bo *bo;
+    uint32_t tiling_flags;
 };
 
 struct radeon_vbo_object {
@@ -1066,6 +1068,7 @@ typedef struct {
     uint64_t gart_size;
     drmmode_rec drmmode;
     /* r6xx+ tile config */
+    Bool have_tiling_info;
     uint32_t tile_config;
     int group_bytes;
     int num_channels;
@@ -1287,7 +1290,7 @@ extern void RADEONPMFini(ScrnInfoPtr pScrn);
 #ifdef USE_EXA
 /* radeon_exa.c */
 extern Bool RADEONSetupMemEXA(ScreenPtr pScreen);
-extern Bool radeon_transform_is_affine(PictTransformPtr t);
+extern Bool radeon_transform_is_affine_or_scaled(PictTransformPtr t);
 
 /* radeon_exa_funcs.c */
 extern void RADEONCopyCP(PixmapPtr pDst, int srcX, int srcY, int dstX,

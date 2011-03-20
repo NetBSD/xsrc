@@ -71,6 +71,7 @@ typedef struct {
     int format;
     int endian;
     int array_mode;						// tiling
+    int non_disp_tiling;
     int number_type;
     int read_size;
     int comp_swap;
@@ -86,6 +87,11 @@ typedef struct {
     int fast_clear;
     int compression;
     int rat;
+    /* 2D related CB state */
+    uint32_t pmask;
+    int rop;
+    int blend_enable;
+    uint32_t blendcntl;
     struct radeon_bo *bo;
 } cb_config_t;
 
@@ -290,6 +296,8 @@ evergreen_set_render_target(ScrnInfoPtr pScrn, cb_config_t *cb_conf, uint32_t do
 void
 evergreen_cp_wait_vline_sync(ScrnInfoPtr pScrn, PixmapPtr pPix, xf86CrtcPtr crtc, int start, int stop);
 void
+evergreen_set_spi(ScrnInfoPtr pScrn, int vs_export_count, int num_interp);
+void
 evergreen_fs_setup(ScrnInfoPtr pScrn, shader_config_t *fs_conf, uint32_t domain);
 void
 evergreen_vs_setup(ScrnInfoPtr pScrn, shader_config_t *vs_conf, uint32_t domain);
@@ -320,13 +328,13 @@ evergreen_draw_auto(ScrnInfoPtr pScrn, draw_config_t *draw_conf);
 
 void evergreen_finish_op(ScrnInfoPtr pScrn, int vtx_size);
 
-Bool
-EVERGREENSetAccelState(ScrnInfoPtr pScrn,
-		       struct r600_accel_object *src0,
-		       struct r600_accel_object *src1,
-		       struct r600_accel_object *dst,
-		       uint32_t vs_offset, uint32_t ps_offset,
-		       int rop, Pixel planemask);
+extern Bool
+R600SetAccelState(ScrnInfoPtr pScrn,
+		  struct r600_accel_object *src0,
+		  struct r600_accel_object *src1,
+		  struct r600_accel_object *dst,
+		  uint32_t vs_offset, uint32_t ps_offset,
+		  int rop, Pixel planemask);
 
 extern Bool RADEONPrepareAccess_CS(PixmapPtr pPix, int index);
 extern void RADEONFinishAccess_CS(PixmapPtr pPix, int index);
