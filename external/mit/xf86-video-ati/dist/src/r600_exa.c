@@ -621,8 +621,12 @@ R600PrepareCopy(PixmapPtr pSrc,   PixmapPtr pDst,
 	return FALSE;
 
     if (accel_state->same_surface == TRUE) {
+#if defined(XF86DRM_MODE)
 	unsigned height = RADEON_ALIGN(pDst->drawable.height,
 				       drmmode_get_height_align(pScrn, accel_state->dst_obj.tiling_flags));
+#else
+	unsigned height = pDst->drawable.height;
+#endif
 	unsigned long size = height * accel_state->dst_obj.pitch * pDst->drawable.bitsPerPixel/8;
 
 #if defined(XF86DRM_MODE)
