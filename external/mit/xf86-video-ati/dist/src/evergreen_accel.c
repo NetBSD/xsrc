@@ -43,6 +43,25 @@
 #include "radeon_vbo.h"
 #include "radeon_exa_shared.h"
 
+static const uint32_t EVERGREEN_ROP[16] = {
+    RADEON_ROP3_ZERO, /* GXclear        */
+    RADEON_ROP3_DSa,  /* Gxand          */
+    RADEON_ROP3_SDna, /* GXandReverse   */
+    RADEON_ROP3_S,    /* GXcopy         */
+    RADEON_ROP3_DSna, /* GXandInverted  */
+    RADEON_ROP3_D,    /* GXnoop         */
+    RADEON_ROP3_DSx,  /* GXxor          */
+    RADEON_ROP3_DSo,  /* GXor           */
+    RADEON_ROP3_DSon, /* GXnor          */
+    RADEON_ROP3_DSxn, /* GXequiv        */
+    RADEON_ROP3_Dn,   /* GXinvert       */
+    RADEON_ROP3_SDno, /* GXorReverse    */
+    RADEON_ROP3_Sn,   /* GXcopyInverted */
+    RADEON_ROP3_DSno, /* GXorInverted   */
+    RADEON_ROP3_DSan, /* GXnand         */
+    RADEON_ROP3_ONE,  /* GXset          */
+};
+
 void
 evergreen_start_3d(ScrnInfoPtr pScrn)
 {
@@ -129,7 +148,7 @@ evergreen_sq_setup(ScrnInfoPtr pScrn, sq_config_t *sq_conf)
 void
 evergreen_set_render_target(ScrnInfoPtr pScrn, cb_config_t *cb_conf, uint32_t domain)
 {
-    uint32_t cb_color_info, cb_color_attrib, cb_color_dim;
+    uint32_t cb_color_info, cb_color_attrib = 0, cb_color_dim;
     int pitch, slice, h;
     RADEONInfoPtr info = RADEONPTR(pScrn);
 
@@ -158,7 +177,8 @@ evergreen_set_render_target(ScrnInfoPtr pScrn, cb_config_t *cb_conf, uint32_t do
 	cb_color_info |= RAT_bit;
 
     /* bit 4 needs to be set for linear and depth/stencil surfaces */
-    cb_color_attrib = CB_COLOR0_ATTRIB__NON_DISP_TILING_ORDER_bit;
+    if (cb_conf->non_disp_tiling)
+	cb_color_attrib |= CB_COLOR0_ATTRIB__NON_DISP_TILING_ORDER_bit;
 
     pitch = (cb_conf->w / 8) - 1;
     h = RADEON_ALIGN(cb_conf->h, 8);
@@ -204,7 +224,7 @@ evergreen_set_render_target(ScrnInfoPtr pScrn, cb_config_t *cb_conf, uint32_t do
     RELOC_BATCH(cb_conf->bo, 0, domain);
     END_BATCH();
 
-    BEGIN_BATCH(24);
+    BEGIN_BATCH(33);
     EREG(CB_COLOR0_PITCH + (0x3c * cb_conf->id), pitch);
     EREG(CB_COLOR0_SLICE + (0x3c * cb_conf->id), slice);
     EREG(CB_COLOR0_VIEW + (0x3c * cb_conf->id), 0);
@@ -216,7 +236,12 @@ evergreen_set_render_target(ScrnInfoPtr pScrn, cb_config_t *cb_conf, uint32_t do
     E32(0);
     E32(0);
     E32(0);
+    EREG(CB_TARGET_MASK,                      (cb_conf->pmask << TARGET0_ENABLE_shift));
+    EREG(CB_COLOR_CONTROL,                    (EVERGREEN_ROP[cb_conf->rop] |
+					       (CB_NORMAL << CB_COLOR_CONTROL__MODE_shift)));
+    EREG(CB_BLEND0_CONTROL,                   cb_conf->blendcntl);
     END_BATCH();
+
 }
 
 static void
@@ -299,6 +324,22 @@ void evergreen_cp_wait_vline_sync(ScrnInfoPtr pScrn, PixmapPtr pPix,
     /* add crtc reloc */
     PACK3(IT_NOP, 1);
     E32(drmmode_crtc->mode_crtc->crtc_id);
+    END_BATCH();
+}
+
+void
+evergreen_set_spi(ScrnInfoPtr pScrn, int vs_export_count, int num_interp)
+{
+    RADEONInfoPtr info = RADEONPTR(pScrn);
+
+    BEGIN_BATCH(8);
+    /* Interpolator setup */
+    EREG(SPI_VS_OUT_CONFIG, (vs_export_count << VS_EXPORT_COUNT_shift));
+    PACK0(SPI_PS_IN_CONTROL_0, 3);
+    E32(((num_interp << NUM_INTERP_shift) |
+	 LINEAR_GRADIENT_ENA_bit)); // SPI_PS_IN_CONTROL_0
+    E32(0); // SPI_PS_IN_CONTROL_1
+    E32(0); // SPI_INTERP_CONTROL_0
     END_BATCH();
 }
 
@@ -1019,7 +1060,7 @@ evergreen_set_default_state(ScrnInfoPtr pScrn)
     for (i = 0; i < PA_SC_VPORT_SCISSOR_0_TL_num; i++)
 	evergreen_set_vport_scissor (pScrn, i, 0, 0, 8192, 8192);
 
-    BEGIN_BATCH(50);
+    BEGIN_BATCH(57);
     PACK0(PA_SC_MODE_CNTL_0, 2);
     E32(0); // PA_SC_MODE_CNTL_0
     E32(0); // PA_SC_MODE_CNTL_1
@@ -1062,6 +1103,17 @@ evergreen_set_default_state(ScrnInfoPtr pScrn)
     E32(0);
     E32(0);
     E32(0);
+
+    /* src = semantic id 0; mask = semantic id 1 */
+    EREG(SPI_VS_OUT_ID_0, ((0 << SEMANTIC_0_shift) |
+			   (1 << SEMANTIC_1_shift)));
+    PACK0(SPI_PS_INPUT_CNTL_0 + (0 << 2), 2);
+    /* SPI_PS_INPUT_CNTL_0 maps to GPR[0] - load with semantic id 0 */
+    E32(((0    << SEMANTIC_shift)	|
+	 (0x01 << DEFAULT_VAL_shift)));
+    /* SPI_PS_INPUT_CNTL_1 maps to GPR[1] - load with semantic id 1 */
+    E32(((1    << SEMANTIC_shift)	|
+	 (0x01 << DEFAULT_VAL_shift)));
 
     PACK0(SPI_INPUT_Z, 8);
     E32(0); // SPI_INPUT_Z
@@ -1137,7 +1189,11 @@ evergreen_draw_auto(ScrnInfoPtr pScrn, draw_config_t *draw_conf)
     BEGIN_BATCH(10);
     EREG(VGT_PRIMITIVE_TYPE, draw_conf->prim_type);
     PACK3(IT_INDEX_TYPE, 1);
+#if X_BYTE_ORDER == X_BIG_ENDIAN
+    E32(IT_INDEX_TYPE_SWAP_MODE(ENDIAN_8IN32) | draw_conf->index_type);
+#else
     E32(draw_conf->index_type);
+#endif
     PACK3(IT_NUM_INSTANCES, 1);
     E32(draw_conf->num_instances);
     PACK3(IT_DRAW_INDEX_AUTO, 2);
@@ -1176,6 +1232,9 @@ void evergreen_finish_op(ScrnInfoPtr pScrn, int vtx_size)
     vtx_res.dst_sel_y       = SQ_SEL_Y;
     vtx_res.dst_sel_z       = SQ_SEL_Z;
     vtx_res.dst_sel_w       = SQ_SEL_W;
+#if X_BYTE_ORDER == X_BIG_ENDIAN
+    vtx_res.endian          = SQ_ENDIAN_8IN32;
+#endif
     evergreen_set_vtx_resource(pScrn, &vtx_res, RADEON_GEM_DOMAIN_GTT);
 
     /* Draw */

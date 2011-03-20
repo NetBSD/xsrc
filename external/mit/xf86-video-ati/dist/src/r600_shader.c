@@ -111,7 +111,11 @@ int R600_solid_vs(RADEONChipFamily ChipSet, uint32_t* shader)
 				 FORMAT_COMP_ALL(SQ_FORMAT_COMP_SIGNED),
 				 SRF_MODE_ALL(SRF_MODE_ZERO_CLAMP_MINUS_ONE));
     shader[i++] = VTX_DWORD2(OFFSET(0),
-			     ENDIAN_SWAP(ENDIAN_NONE),
+#if X_BYTE_ORDER == X_BIG_ENDIAN
+			     ENDIAN_SWAP(SQ_ENDIAN_8IN32),
+#else
+			     ENDIAN_SWAP(SQ_ENDIAN_NONE),
+#endif
 			     CONST_BUF_NO_STRIDE(0),
 			     MEGA_FETCH(1));
     shader[i++] = VTX_DWORD_PAD;
@@ -341,7 +345,11 @@ int R600_copy_vs(RADEONChipFamily ChipSet, uint32_t* shader)
 				 FORMAT_COMP_ALL(SQ_FORMAT_COMP_SIGNED),
 				 SRF_MODE_ALL(SRF_MODE_ZERO_CLAMP_MINUS_ONE));
     shader[i++] = VTX_DWORD2(OFFSET(0),
-			     ENDIAN_SWAP(ENDIAN_NONE),
+#if X_BYTE_ORDER == X_BIG_ENDIAN
+			     ENDIAN_SWAP(SQ_ENDIAN_8IN32),
+#else
+			     ENDIAN_SWAP(SQ_ENDIAN_NONE),
+#endif
 			     CONST_BUF_NO_STRIDE(0),
 			     MEGA_FETCH(1));
     shader[i++] = VTX_DWORD_PAD;
@@ -366,7 +374,11 @@ int R600_copy_vs(RADEONChipFamily ChipSet, uint32_t* shader)
 				 FORMAT_COMP_ALL(SQ_FORMAT_COMP_SIGNED),
 				 SRF_MODE_ALL(SRF_MODE_ZERO_CLAMP_MINUS_ONE));
     shader[i++] = VTX_DWORD2(OFFSET(8),
-			     ENDIAN_SWAP(ENDIAN_NONE),
+#if X_BYTE_ORDER == X_BIG_ENDIAN
+                             ENDIAN_SWAP(SQ_ENDIAN_8IN32),
+#else
+                             ENDIAN_SWAP(SQ_ENDIAN_NONE),
+#endif
 			     CONST_BUF_NO_STRIDE(0),
 			     MEGA_FETCH(0));
     shader[i++] = VTX_DWORD_PAD;
@@ -596,7 +608,11 @@ int R600_xv_vs(RADEONChipFamily ChipSet, uint32_t* shader)
                                  FORMAT_COMP_ALL(SQ_FORMAT_COMP_SIGNED),
                                  SRF_MODE_ALL(SRF_MODE_ZERO_CLAMP_MINUS_ONE));
     shader[i++] = VTX_DWORD2(OFFSET(0),
-                             ENDIAN_SWAP(ENDIAN_NONE),
+#if X_BYTE_ORDER == X_BIG_ENDIAN
+                             ENDIAN_SWAP(SQ_ENDIAN_8IN32),
+#else
+                             ENDIAN_SWAP(SQ_ENDIAN_NONE),
+#endif
                              CONST_BUF_NO_STRIDE(0),
                              MEGA_FETCH(1));
     shader[i++] = VTX_DWORD_PAD;
@@ -621,7 +637,11 @@ int R600_xv_vs(RADEONChipFamily ChipSet, uint32_t* shader)
                                  FORMAT_COMP_ALL(SQ_FORMAT_COMP_SIGNED),
                                  SRF_MODE_ALL(SRF_MODE_ZERO_CLAMP_MINUS_ONE));
     shader[i++] = VTX_DWORD2(OFFSET(8),
-                             ENDIAN_SWAP(ENDIAN_NONE),
+#if X_BYTE_ORDER == X_BIG_ENDIAN
+                             ENDIAN_SWAP(SQ_ENDIAN_8IN32),
+#else
+                             ENDIAN_SWAP(SQ_ENDIAN_NONE),
+#endif
                              CONST_BUF_NO_STRIDE(0),
                              MEGA_FETCH(0));
     shader[i++] = VTX_DWORD_PAD;
@@ -2191,7 +2211,11 @@ int R600_comp_vs(RADEONChipFamily ChipSet, uint32_t* shader)
 				 FORMAT_COMP_ALL(SQ_FORMAT_COMP_SIGNED),
 				 SRF_MODE_ALL(SRF_MODE_ZERO_CLAMP_MINUS_ONE));
     shader[i++] = VTX_DWORD2(OFFSET(0),
-			     ENDIAN_SWAP(ENDIAN_NONE),
+#if X_BYTE_ORDER == X_BIG_ENDIAN
+                             ENDIAN_SWAP(SQ_ENDIAN_8IN32),
+#else
+                             ENDIAN_SWAP(SQ_ENDIAN_NONE),
+#endif
 			     CONST_BUF_NO_STRIDE(0),
 			     MEGA_FETCH(1));
     shader[i++] = VTX_DWORD_PAD;
@@ -2216,7 +2240,11 @@ int R600_comp_vs(RADEONChipFamily ChipSet, uint32_t* shader)
 				 FORMAT_COMP_ALL(SQ_FORMAT_COMP_SIGNED),
 				 SRF_MODE_ALL(SRF_MODE_ZERO_CLAMP_MINUS_ONE));
     shader[i++] = VTX_DWORD2(OFFSET(8),
-			     ENDIAN_SWAP(ENDIAN_NONE),
+#if X_BYTE_ORDER == X_BIG_ENDIAN
+                             ENDIAN_SWAP(SQ_ENDIAN_8IN32),
+#else
+                             ENDIAN_SWAP(SQ_ENDIAN_NONE),
+#endif
 			     CONST_BUF_NO_STRIDE(0),
 			     MEGA_FETCH(0));
     shader[i++] = VTX_DWORD_PAD;
@@ -2241,7 +2269,11 @@ int R600_comp_vs(RADEONChipFamily ChipSet, uint32_t* shader)
 				 FORMAT_COMP_ALL(SQ_FORMAT_COMP_SIGNED),
 				 SRF_MODE_ALL(SRF_MODE_ZERO_CLAMP_MINUS_ONE));
     shader[i++] = VTX_DWORD2(OFFSET(16),
-			     ENDIAN_SWAP(ENDIAN_NONE),
+#if X_BYTE_ORDER == X_BIG_ENDIAN
+                             ENDIAN_SWAP(SQ_ENDIAN_8IN32),
+#else
+                             ENDIAN_SWAP(SQ_ENDIAN_NONE),
+#endif
 			     CONST_BUF_NO_STRIDE(0),
 			     MEGA_FETCH(0));
     shader[i++] = VTX_DWORD_PAD;
@@ -2267,7 +2299,11 @@ int R600_comp_vs(RADEONChipFamily ChipSet, uint32_t* shader)
 				 FORMAT_COMP_ALL(SQ_FORMAT_COMP_SIGNED),
 				 SRF_MODE_ALL(SRF_MODE_ZERO_CLAMP_MINUS_ONE));
     shader[i++] = VTX_DWORD2(OFFSET(0),
-			     ENDIAN_SWAP(ENDIAN_NONE),
+#if X_BYTE_ORDER == X_BIG_ENDIAN
+                             ENDIAN_SWAP(SQ_ENDIAN_8IN32),
+#else
+                             ENDIAN_SWAP(SQ_ENDIAN_NONE),
+#endif
 			     CONST_BUF_NO_STRIDE(0),
 			     MEGA_FETCH(1));
     shader[i++] = VTX_DWORD_PAD;
@@ -2292,7 +2328,11 @@ int R600_comp_vs(RADEONChipFamily ChipSet, uint32_t* shader)
 				 FORMAT_COMP_ALL(SQ_FORMAT_COMP_SIGNED),
 				 SRF_MODE_ALL(SRF_MODE_ZERO_CLAMP_MINUS_ONE));
     shader[i++] = VTX_DWORD2(OFFSET(8),
-			     ENDIAN_SWAP(ENDIAN_NONE),
+#if X_BYTE_ORDER == X_BIG_ENDIAN
+                             ENDIAN_SWAP(SQ_ENDIAN_8IN32),
+#else
+                             ENDIAN_SWAP(SQ_ENDIAN_NONE),
+#endif
 			     CONST_BUF_NO_STRIDE(0),
 			     MEGA_FETCH(0));
     shader[i++] = VTX_DWORD_PAD;

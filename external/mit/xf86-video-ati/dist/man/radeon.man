@@ -184,6 +184,15 @@ Radeon HD 5970
 .TP 12
 .B PALM
 Radeon HD 6310/6250
+.TP 12
+.B BARTS
+Radeon HD 6850/6870
+.TP 12
+.B TURKS
+Radeon HD 6570/6670
+.TP 12
+.B CAICOS
+Radeon HD 6450
 .PD
 .SH CONFIGURATION DETAILS
 Please refer to __xconfigfile__(__filemansuffix__) for general configuration

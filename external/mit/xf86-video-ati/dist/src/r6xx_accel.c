@@ -41,6 +41,25 @@
 #include "radeon_vbo.h"
 #include "radeon_exa_shared.h"
 
+static const uint32_t R600_ROP[16] = {
+    RADEON_ROP3_ZERO, /* GXclear        */
+    RADEON_ROP3_DSa,  /* Gxand          */
+    RADEON_ROP3_SDna, /* GXandReverse   */
+    RADEON_ROP3_S,    /* GXcopy         */
+    RADEON_ROP3_DSna, /* GXandInverted  */
+    RADEON_ROP3_D,    /* GXnoop         */
+    RADEON_ROP3_DSx,  /* GXxor          */
+    RADEON_ROP3_DSo,  /* GXor           */
+    RADEON_ROP3_DSon, /* GXnor          */
+    RADEON_ROP3_DSxn, /* GXequiv        */
+    RADEON_ROP3_Dn,   /* GXinvert       */
+    RADEON_ROP3_SDno, /* GXorReverse    */
+    RADEON_ROP3_Sn,   /* GXcopyInverted */
+    RADEON_ROP3_DSno, /* GXorInverted   */
+    RADEON_ROP3_DSan, /* GXnand         */
+    RADEON_ROP3_ONE,  /* GXset          */
+};
+
 /* we try and batch operations together under KMS -
    but it doesn't work yet without misrendering */
 #define KMS_MULTI_OP 1
@@ -203,7 +222,7 @@ r600_sq_setup(ScrnInfoPtr pScrn, drmBufPtr ib, sq_config_t *sq_conf)
 void
 r600_set_render_target(ScrnInfoPtr pScrn, drmBufPtr ib, cb_config_t *cb_conf, uint32_t domain)
 {
-    uint32_t cb_color_info;
+    uint32_t cb_color_info, cb_color_control;
     int pitch, slice, h;
     RADEONInfoPtr info = RADEONPTR(pScrn);
 
@@ -276,6 +295,21 @@ r600_set_render_target(ScrnInfoPtr pScrn, drmBufPtr ib, cb_config_t *cb_conf, ui
     RELOC_BATCH(cb_conf->bo, 0, domain);
     END_BATCH();
 
+    BEGIN_BATCH(9);
+    EREG(ib, CB_TARGET_MASK,          (cb_conf->pmask << TARGET0_ENABLE_shift));
+    cb_color_control = R600_ROP[cb_conf->rop] |
+	(cb_conf->blend_enable << TARGET_BLEND_ENABLE_shift);
+    if (info->ChipFamily == CHIP_FAMILY_R600) {
+	/* no per-MRT blend on R600 */
+	EREG(ib, CB_COLOR_CONTROL,    cb_color_control);
+	EREG(ib, CB_BLEND_CONTROL,    cb_conf->blendcntl);
+    } else {
+	if (cb_conf->blend_enable)
+	    cb_color_control |= PER_MRT_BLEND_bit;
+	EREG(ib, CB_COLOR_CONTROL,    cb_color_control);
+	EREG(ib, CB_BLEND0_CONTROL,   cb_conf->blendcntl);
+    }
+    END_BATCH();
 }
 
 static void
@@ -382,6 +416,21 @@ r600_cp_wait_vline_sync(ScrnInfoPtr pScrn, drmBufPtr ib, PixmapPtr pPix,
 	E32(ib, 10);                         // Wait interval
 	END_BATCH();
     }
+}
+
+void
+r600_set_spi(ScrnInfoPtr pScrn, drmBufPtr ib, int vs_export_count, int num_interp)
+{
+    RADEONInfoPtr info = RADEONPTR(pScrn);
+
+    BEGIN_BATCH(8);
+    /* Interpolator setup */
+    EREG(ib, SPI_VS_OUT_CONFIG, (vs_export_count << VS_EXPORT_COUNT_shift));
+    PACK0(ib, SPI_PS_IN_CONTROL_0, 3);
+    E32(ib, (num_interp << NUM_INTERP_shift));
+    E32(ib, 0);
+    E32(ib, 0);
+    END_BATCH();
 }
 
 void
@@ -1002,7 +1051,7 @@ r600_set_default_state(ScrnInfoPtr pScrn, drmBufPtr ib)
     for (i = 0; i < PA_SC_VPORT_SCISSOR_0_TL_num; i++)
 	r600_set_vport_scissor(pScrn, ib, i, 0, 0, 8192, 8192);
 
-    BEGIN_BATCH(42);
+    BEGIN_BATCH(49);
     PACK0(ib, PA_SC_MPASS_PS_CNTL, 2);
     E32(ib, 0);
     if (info->ChipFamily < CHIP_FAMILY_RV770)
@@ -1045,6 +1094,19 @@ r600_set_default_state(ScrnInfoPtr pScrn, drmBufPtr ib)
 	EREG(ib, R7xx_SPI_THREAD_GROUPING,        0);
     else
 	EREG(ib, R7xx_SPI_THREAD_GROUPING,        (1 << PS_GROUPING_shift));
+
+    /* default Interpolator setup */
+    EREG(ib, SPI_VS_OUT_ID_0, ((0 << SEMANTIC_0_shift) |
+			       (1 << SEMANTIC_1_shift)));
+    PACK0(ib, SPI_PS_INPUT_CNTL_0 + (0 << 2), 2);
+    /* SPI_PS_INPUT_CNTL_0 maps to GPR[0] - load with semantic id 0 */
+    E32(ib, ((0    << SEMANTIC_shift)	|
+	     (0x01 << DEFAULT_VAL_shift)	|
+	     SEL_CENTROID_bit));
+    /* SPI_PS_INPUT_CNTL_1 maps to GPR[1] - load with semantic id 1 */
+    E32(ib, ((1    << SEMANTIC_shift)	|
+	     (0x01 << DEFAULT_VAL_shift)	|
+	     SEL_CENTROID_bit));
 
     PACK0(ib, SPI_INPUT_Z, 4);
     E32(ib, 0); // SPI_INPUT_Z
@@ -1122,7 +1184,11 @@ r600_draw_immd(ScrnInfoPtr pScrn, drmBufPtr ib, draw_config_t *draw_conf, uint32
     BEGIN_BATCH(8 + count);
     EREG(ib, VGT_PRIMITIVE_TYPE, draw_conf->prim_type);
     PACK3(ib, IT_INDEX_TYPE, 1);
+#if X_BYTE_ORDER == X_BIG_ENDIAN
+    E32(ib, IT_INDEX_TYPE_SWAP_MODE(ENDIAN_8IN32) | draw_conf->index_type);
+#else
     E32(ib, draw_conf->index_type);
+#endif
     PACK3(ib, IT_NUM_INSTANCES, 1);
     E32(ib, draw_conf->num_instances);
 
@@ -1152,7 +1218,11 @@ r600_draw_auto(ScrnInfoPtr pScrn, drmBufPtr ib, draw_config_t *draw_conf)
     BEGIN_BATCH(10);
     EREG(ib, VGT_PRIMITIVE_TYPE, draw_conf->prim_type);
     PACK3(ib, IT_INDEX_TYPE, 1);
+#if X_BYTE_ORDER == X_BIG_ENDIAN
+    E32(ib, IT_INDEX_TYPE_SWAP_MODE(ENDIAN_8IN32) | draw_conf->index_type);
+#else
     E32(ib, draw_conf->index_type);
+#endif
     PACK3(ib, IT_NUM_INSTANCES, 1);
     E32(ib, draw_conf->num_instances);
     PACK3(ib, IT_DRAW_INDEX_AUTO, 2);
@@ -1187,6 +1257,9 @@ void r600_finish_op(ScrnInfoPtr pScrn, int vtx_size)
     vtx_res.mem_req_size    = 1;
     vtx_res.vb_addr         = accel_state->vbo.vb_mc_addr + accel_state->vbo.vb_start_op;
     vtx_res.bo              = accel_state->vbo.vb_bo;
+#if X_BYTE_ORDER == X_BIG_ENDIAN
+    vtx_res.endian          = SQ_ENDIAN_8IN32;
+#endif
     r600_set_vtx_resource(pScrn, accel_state->ib, &vtx_res, RADEON_GEM_DOMAIN_GTT);
 
     /* Draw */

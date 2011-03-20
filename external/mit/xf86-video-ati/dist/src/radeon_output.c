@@ -120,6 +120,8 @@ static void
 radeon_bios_output_crtc(xf86OutputPtr output);
 static void
 radeon_bios_output_lock(xf86OutputPtr output, Bool lock);
+extern void
+atombios_pick_dig_encoder(xf86OutputPtr output);
 
 void RADEONPrintPortMap(ScrnInfoPtr pScrn)
 {
@@ -731,6 +733,8 @@ radeon_mode_prepare(xf86OutputPtr output)
     }
 
     radeon_bios_output_lock(output, TRUE);
+    if (IS_AVIVO_VARIANT)
+	atombios_pick_dig_encoder(output);
     radeon_dpms(output, DPMSModeOff);
     radeon_crtc_dpms(output->crtc, DPMSModeOff);
 
@@ -1618,7 +1622,7 @@ radeon_set_mode_for_property(xf86OutputPtr output)
 	xf86CrtcPtr crtc = output->crtc;
 
 	if (crtc->enabled) {
-#if XORG_VERSION_CURRENT >= XORG_VERSION_NUMERIC(1,9,99,901,0)
+#ifdef RANDR_14_INTERFACE
 	    xf86CrtcSetRec crtc_set_rec;
 
 	    crtc_set_rec.flags = (XF86CrtcSetMode |
@@ -1636,7 +1640,7 @@ radeon_set_mode_for_property(xf86OutputPtr output)
 				 crtc->desiredX, crtc->desiredY)) {
 #endif
 		xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
-			   "Failed to set mode after propery change!\n");
+			   "Failed to set mode after property change!\n");
 		return FALSE;
 	    }
 	}

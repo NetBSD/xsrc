@@ -104,23 +104,23 @@
 #define SRC_SEL_Z(x)    (x)
 #define SRC_SEL_W(x)    (x)
 
-#define CF_DWORD0(addr, jmptbl) ((addr) | ((jmptbl) << 24))
+#define CF_DWORD0(addr, jmptbl) cpu_to_le32(((addr) | ((jmptbl) << 24)))
 #define CF_DWORD1(pc, cf_const, cond, count, vpm, eop, cf_inst, wqm, b) \
-        (((pc) << 0) | ((cf_const) << 3) | ((cond) << 8) | ((count) << 10) | \
-         ((vpm) << 20) | ((eop) << 21) | ((cf_inst) << 22) | ((wqm) << 30) | ((b) << 31))
+    cpu_to_le32((((pc) << 0) | ((cf_const) << 3) | ((cond) << 8) | ((count) << 10) | \
+		 ((vpm) << 20) | ((eop) << 21) | ((cf_inst) << 22) | ((wqm) << 30) | ((b) << 31)))
 
-#define CF_ALU_DWORD0(addr, kb0, kb1, km0) (((addr) << 0) | ((kb0) << 22) | ((kb1) << 26) | ((km0) << 30))
+#define CF_ALU_DWORD0(addr, kb0, kb1, km0) cpu_to_le32((((addr) << 0) | ((kb0) << 22) | ((kb1) << 26) | ((km0) << 30)))
 #define CF_ALU_DWORD1(km1, kcache_addr0, kcache_addr1, count, alt_const, cf_inst, wqm, b) \
-        (((km1) << 0) | ((kcache_addr0) << 2) | ((kcache_addr1) << 10) | \
-	 ((count) << 18) | ((alt_const) << 25) | ((cf_inst) << 26) | ((wqm) << 30) | ((b) << 31))
+    cpu_to_le32((((km1) << 0) | ((kcache_addr0) << 2) | ((kcache_addr1) << 10) | \
+		 ((count) << 18) | ((alt_const) << 25) | ((cf_inst) << 26) | ((wqm) << 30) | ((b) << 31)))
 
 #define CF_ALLOC_IMP_EXP_DWORD0(array_base, type, rw_gpr, rr, index_gpr, es) \
-	 (((array_base) << 0) | ((type) << 13) | ((rw_gpr) << 15) | ((rr) << 22) | \
-	  ((index_gpr) << 23) | ((es) << 30))
+    cpu_to_le32((((array_base) << 0) | ((type) << 13) | ((rw_gpr) << 15) | ((rr) << 22) | \
+		 ((index_gpr) << 23) | ((es) << 30)))
 #define CF_ALLOC_IMP_EXP_DWORD1_SWIZ(sel_x, sel_y, sel_z, sel_w, bc, vpm, eop, cf_inst, m, b) \
-        (((sel_x) << 0) | ((sel_y) << 3) | ((sel_z) << 6) | ((sel_w) << 9) | \
-	 ((bc) << 16) | ((vpm) << 20) | ((eop) << 21) | ((cf_inst) << 22) | \
-	 ((m) << 30) | ((b) << 31))
+    cpu_to_le32((((sel_x) << 0) | ((sel_y) << 3) | ((sel_z) << 6) | ((sel_w) << 9) | \
+		 ((bc) << 16) | ((vpm) << 20) | ((eop) << 21) | ((cf_inst) << 22) | \
+		 ((m) << 30) | ((b) << 31)))
 
 // ALU clause insts
 #define SRC0_SEL(x)        (x)
@@ -185,19 +185,19 @@
 #define CLAMP(x)          (x)
 
 #define ALU_DWORD0(src0_sel, s0r, s0e, s0n, src1_sel, s1r, s1e, s1n, im, ps, last) \
-        (((src0_sel) << 0) | ((s0r) << 9) | ((s0e) << 10) | ((s0n) << 12) | \
-         ((src1_sel) << 13) | ((s1r) << 22) | ((s1e) << 23) | ((s1n) << 25) | \
-	 ((im) << 26) | ((ps) << 29) | ((last) << 31))
+    cpu_to_le32((((src0_sel) << 0) | ((s0r) << 9) | ((s0e) << 10) | ((s0n) << 12) | \
+		 ((src1_sel) << 13) | ((s1r) << 22) | ((s1e) << 23) | ((s1n) << 25) | \
+		 ((im) << 26) | ((ps) << 29) | ((last) << 31)))
 
 #define ALU_DWORD1_OP2(s0a, s1a, uem, up, wm, omod, alu_inst, bs, dst_gpr, dr, de, clamp) \
-        (((s0a) << 0) | ((s1a) << 1) | ((uem) << 2) | ((up) << 3) | ((wm) << 4) | \
-         ((omod) << 5) | ((alu_inst) << 7) | ((bs) << 18) | ((dst_gpr) << 21) | \
-	 ((dr) << 28) | ((de) << 29) | ((clamp) << 31))
+    cpu_to_le32((((s0a) << 0) | ((s1a) << 1) | ((uem) << 2) | ((up) << 3) | ((wm) << 4) | \
+		 ((omod) << 5) | ((alu_inst) << 7) | ((bs) << 18) | ((dst_gpr) << 21) | \
+		 ((dr) << 28) | ((de) << 29) | ((clamp) << 31)))
 
 #define ALU_DWORD1_OP3(src2_sel, s2r, s2e, s2n, alu_inst, bs, dst_gpr, dr, de, clamp) \
-        (((src2_sel) << 0) | ((s2r) << 9) | ((s2e) << 10) | ((s2n) << 12) | \
-         ((alu_inst) << 13) | ((bs) << 18) | ((dst_gpr) << 21) | ((dr) << 28) | \
-	 ((de) << 29) | ((clamp) << 31))
+    cpu_to_le32((((src2_sel) << 0) | ((s2r) << 9) | ((s2e) << 10) | ((s2n) << 12) | \
+		 ((alu_inst) << 13) | ((bs) << 18) | ((dst_gpr) << 21) | ((dr) << 28) | \
+		 ((de) << 29) | ((clamp) << 31)))
 
 // VTX clause insts
 // vxt insts
@@ -235,14 +235,14 @@
 #define BUFFER_INDEX_MODE(x) (x)
 
 #define VTX_DWORD0(vtx_inst, ft, fwq, buffer_id, src_gpr, sr, ssx, mfc) \
-        (((vtx_inst) << 0) | ((ft) << 5) | ((fwq) << 7) | ((buffer_id) << 8) | \
-	 ((src_gpr) << 16) | ((sr) << 23) | ((ssx) << 24) | ((mfc) << 26))
+    cpu_to_le32((((vtx_inst) << 0) | ((ft) << 5) | ((fwq) << 7) | ((buffer_id) << 8) | \
+		 ((src_gpr) << 16) | ((sr) << 23) | ((ssx) << 24) | ((mfc) << 26)))
 #define VTX_DWORD1_GPR(dst_gpr, dr, dsx, dsy, dsz, dsw, ucf, data_format, nfa, fca, sma) \
-        (((dst_gpr) << 0) | ((dr) << 7) | ((dsx) << 9) | ((dsy) << 12) | ((dsz) << 15) | ((dsw) << 18) | \
-	 ((ucf) << 21) | ((data_format) << 22) | ((nfa) << 28) | ((fca) << 30) | ((sma) << 31))
+    cpu_to_le32((((dst_gpr) << 0) | ((dr) << 7) | ((dsx) << 9) | ((dsy) << 12) | ((dsz) << 15) | ((dsw) << 18) | \
+		 ((ucf) << 21) | ((data_format) << 22) | ((nfa) << 28) | ((fca) << 30) | ((sma) << 31)))
 #define VTX_DWORD2(offset, es, cbns, mf, alt_const, bim)			\
-	(((offset) << 0) | ((es) << 16) | ((cbns) << 18) | ((mf) << 19) | ((alt_const) << 20) | ((bim) << 21))
-#define VTX_DWORD_PAD 0x00000000
+    cpu_to_le32((((offset) << 0) | ((es) << 16) | ((cbns) << 18) | ((mf) << 19) | ((alt_const) << 20) | ((bim) << 21)))
+#define VTX_DWORD_PAD cpu_to_le32(0x00000000)
 
 // TEX clause insts
 // tex insts
@@ -267,15 +267,15 @@
 #define SAMPLER_ID(x)     (x)
 
 #define TEX_DWORD0(tex_inst, im, fwq, resource_id, src_gpr, sr, ac, rim, sim) \
-	 (((tex_inst) << 0) | ((im) << 5) | ((fwq) << 7) | ((resource_id) << 8) | \
-	  ((src_gpr) << 16) | ((sr) << 23) | ((ac) << 24) | ((rim) << 25) | ((sim) << 27))
+    cpu_to_le32((((tex_inst) << 0) | ((im) << 5) | ((fwq) << 7) | ((resource_id) << 8) | \
+		 ((src_gpr) << 16) | ((sr) << 23) | ((ac) << 24) | ((rim) << 25) | ((sim) << 27)))
 #define TEX_DWORD1(dst_gpr, dr, dsx, dsy, dsz, dsw, lod_bias, ctx, cty, ctz, ctw) \
-        (((dst_gpr) << 0) | ((dr) << 7) | ((dsx) << 9) | ((dsy) << 12) | ((dsz) << 15) | ((dsw) << 18) | \
-	 ((lod_bias) << 21) | ((ctx) << 28) | ((cty) << 29) | ((ctz) << 30) | ((ctw) << 31))
+    cpu_to_le32((((dst_gpr) << 0) | ((dr) << 7) | ((dsx) << 9) | ((dsy) << 12) | ((dsz) << 15) | ((dsw) << 18) | \
+		 ((lod_bias) << 21) | ((ctx) << 28) | ((cty) << 29) | ((ctz) << 30) | ((ctw) << 31)))
 #define TEX_DWORD2(offset_x, offset_y, offset_z, sampler_id, ssx, ssy, ssz, ssw) \
-        (((offset_x) << 0) | ((offset_y) << 5) | ((offset_z) << 10) | ((sampler_id) << 15) | \
-	 ((ssx) << 20) | ((ssy) << 23) | ((ssz) << 26) | ((ssw) << 29))
-#define TEX_DWORD_PAD 0x00000000
+    cpu_to_le32((((offset_x) << 0) | ((offset_y) << 5) | ((offset_z) << 10) | ((sampler_id) << 15) | \
+		 ((ssx) << 20) | ((ssy) << 23) | ((ssz) << 26) | ((ssw) << 29)))
+#define TEX_DWORD_PAD cpu_to_le32(0x00000000)
 
 extern int evergreen_solid_vs(RADEONChipFamily ChipSet, uint32_t* vs);
 extern int evergreen_solid_ps(RADEONChipFamily ChipSet, uint32_t* ps);

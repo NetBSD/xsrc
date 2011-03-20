@@ -110,6 +110,9 @@ enum {
 
 #define IT_WAIT_ADDR(x)         ((x) >> 2)
 
+/* IT_INDEX_TYPE */
+#define IT_INDEX_TYPE_SWAP_MODE(x) ((x) << 2)
+
 enum {
 
     SQ_LDS_ALLOC_PS                                       = 0x288ec,

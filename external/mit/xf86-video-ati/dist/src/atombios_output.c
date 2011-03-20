@@ -172,7 +172,6 @@ const char *device_name[12] = {
 #define DP_SET_POWER_D3  0x2
 
 static void do_displayport_link_train(xf86OutputPtr output);
-static void atombios_pick_dig_encoder(xf86OutputPtr output);
 
 static int
 atombios_output_dac_setup(xf86OutputPtr output, int action)
@@ -1469,7 +1468,6 @@ atombios_output_dpms(xf86OutputPtr output, int mode)
 
     if (radeon_encoder == NULL)
         return;
-    atombios_pick_dig_encoder(output);
 
     switch (radeon_encoder->encoder_id) {
     case ENCODER_OBJECT_ID_INTERNAL_TMDS1:
@@ -1781,7 +1779,7 @@ atombios_apply_output_quirks(xf86OutputPtr output, DisplayModePtr mode)
     }
 }
 
-static void
+void
 atombios_pick_dig_encoder(xf86OutputPtr output)
 {
     xf86CrtcConfigPtr   xf86_config = XF86_CRTC_CONFIG_PTR(output->scrn);
@@ -1878,7 +1876,6 @@ atombios_output_mode_set(xf86OutputPtr output,
 	return;
 
     radeon_output->pixel_clock = adjusted_mode->Clock;
-    atombios_pick_dig_encoder(output);
     atombios_output_overscan_setup(output, mode, adjusted_mode);
     atombios_output_scaler_setup(output);
     atombios_set_output_crtc_source(output);
