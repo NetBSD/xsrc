@@ -411,14 +411,14 @@ static void
 drmmode_load_cursor_argb (xf86CrtcPtr crtc, CARD32 *image)
 {
 	drmmode_crtc_private_ptr drmmode_crtc = crtc->driver_private;
-	void *ptr;
+	int i;
+	uint32_t *ptr;
 
 	/* cursor should be mapped already */
-	ptr = drmmode_crtc->cursor_bo->ptr;
+	ptr = (uint32_t *)(drmmode_crtc->cursor_bo->ptr);
 
-	memcpy (ptr, image, 64 * 64 * 4);
-
-	return;
+	for (i = 0; i < 64 * 64; i++)
+		ptr[i] = cpu_to_le32(image[i]);
 }
 
 
@@ -445,6 +445,8 @@ drmmode_show_cursor (xf86CrtcPtr crtc)
 static void *
 drmmode_crtc_shadow_allocate(xf86CrtcPtr crtc, int width, int height)
 {
+	ScrnInfoPtr pScrn = crtc->scrn;
+	RADEONInfoPtr info = RADEONPTR(pScrn);
 	drmmode_crtc_private_ptr drmmode_crtc = crtc->driver_private;
 	drmmode_ptr drmmode = drmmode_crtc->drmmode;
 	int size;
@@ -452,6 +454,13 @@ drmmode_crtc_shadow_allocate(xf86CrtcPtr crtc, int width, int height)
 	int ret;
 	unsigned long rotate_pitch;
 	int base_align;
+
+	/* rotation requires acceleration */
+	if (info->r600_shadow_fb) {
+		xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
+			   "Rotation requires acceleration!\n");
+		return NULL;
+	}
 
 	rotate_pitch =
 		RADEON_ALIGN(width, drmmode_get_pitch_align(crtc->scrn, drmmode->cpp, 0)) * drmmode->cpp;
@@ -489,7 +498,7 @@ drmmode_crtc_shadow_create(xf86CrtcPtr crtc, void *data, int width, int height)
 	if (!data)
 		data = drmmode_crtc_shadow_allocate (crtc, width, height);
 
-	rotate_pitch = RADEON_ALIGN(width, 64) * drmmode->cpp;
+	rotate_pitch = RADEON_ALIGN(width, drmmode_get_pitch_align(pScrn, drmmode->cpp, 0)) * drmmode->cpp;
 
 	rotate_pixmap = drmmode_create_bo_pixmap(pScrn->pScreen,
 						 width, height,
@@ -1130,10 +1139,16 @@ int drmmode_get_pitch_align(ScrnInfoPtr scrn, int bpe, uint32_t tiling)
 			/* further restrictions for scanout */
 			pitch_align = MAX(info->group_bytes / bpe, pitch_align);
 		} else {
-			/* general surface requirements */
-			pitch_align = info->group_bytes / bpe;
-			/* further restrictions for scanout */
-			pitch_align = MAX(32, pitch_align);
+			if (info->have_tiling_info)
+				/* linear aligned requirements */
+				pitch_align = MAX(64, info->group_bytes / bpe);
+			else
+				/* default to 512 elements if we don't know the real
+				 * group size otherwise the kernel may reject the CS
+				 * if the group sizes don't match as the pitch won't
+				 * be aligned properly.
+				 */
+				pitch_align = 512;
 		}
 	} else {
 		/* general surface requirements */
@@ -1157,8 +1172,17 @@ int drmmode_get_base_align(ScrnInfoPtr scrn, int bpe, uint32_t tiling)
 		if (tiling & RADEON_TILING_MACRO)
 			base_align = MAX(info->num_banks * info->num_channels * 8 * 8 * bpe,
 					 pixel_align * bpe * height_align);
-		else
-			base_align = info->group_bytes;
+		else {
+			if (info->have_tiling_info)
+				base_align = info->group_bytes;
+			else
+				/* default to 512 if we don't know the real
+				 * group size otherwise the kernel may reject the CS
+				 * if the group sizes don't match as the base won't
+				 * be aligned properly.
+				 */
+				base_align = 512;
+		}
 	}
 	return base_align;
 }

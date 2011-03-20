@@ -117,16 +117,19 @@ enum {
 
 /* IT_WAIT_REG_MEM operation encoding */
 
-#define IT_WAIT_ALWAYS          (0<<0)
-#define IT_WAIT_LT              (1<<0)
-#define IT_WAIT_LE              (2<<0)
-#define IT_WAIT_EQ              (3<<0)
-#define IT_WAIT_NE              (4<<0)
-#define IT_WAIT_GE              (5<<0)
-#define IT_WAIT_GT              (6<<0)
-#define IT_WAIT_REG             (0<<4)
-#define IT_WAIT_MEM             (1<<4)
+#define IT_WAIT_ALWAYS          (0 << 0)
+#define IT_WAIT_LT              (1 << 0)
+#define IT_WAIT_LE              (2 << 0)
+#define IT_WAIT_EQ              (3 << 0)
+#define IT_WAIT_NE              (4 << 0)
+#define IT_WAIT_GE              (5 << 0)
+#define IT_WAIT_GT              (6 << 0)
+#define IT_WAIT_REG             (0 << 4)
+#define IT_WAIT_MEM             (1 << 4)
 
 #define IT_WAIT_ADDR(x)         ((x) >> 2)
+
+/* IT_INDEX_TYPE */
+#define IT_INDEX_TYPE_SWAP_MODE(x) ((x) << 2)
 
 #endif

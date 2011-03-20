@@ -626,12 +626,21 @@ radeon_dri2_schedule_flip(ScrnInfoPtr scrn, ClientPtr client,
 }
 
 static Bool
-can_exchange(DRI2BufferPtr front, DRI2BufferPtr back)
+can_exchange(ScrnInfoPtr pScrn,
+	     DRI2BufferPtr front, DRI2BufferPtr back)
 {
     struct dri2_buffer_priv *front_priv = front->driverPrivate;
     struct dri2_buffer_priv *back_priv = back->driverPrivate;
     PixmapPtr front_pixmap = front_priv->pixmap;
     PixmapPtr back_pixmap = back_priv->pixmap;
+    xf86CrtcConfigPtr xf86_config = XF86_CRTC_CONFIG_PTR(pScrn);
+    int i;
+
+    for (i = 0; i < xf86_config->num_crtc; i++) {
+	xf86CrtcPtr crtc = xf86_config->crtc[i];
+	if (crtc->enabled && crtc->rotatedData)
+	    return FALSE;
+    }
 
     if (front_pixmap->drawable.width != back_pixmap->drawable.width)
 	return FALSE;
@@ -712,7 +721,7 @@ void radeon_dri2_frame_event_handler(unsigned int frame, unsigned int tv_sec,
     case DRI2_FLIP:
 	if (info->allowPageFlip &&
 	    DRI2CanFlip(drawable) &&
-	    can_exchange(event->front, event->back) &&
+	    can_exchange(scrn, event->front, event->back) &&
 	    radeon_dri2_schedule_flip(scrn,
 				      event->client,
 				      drawable,
@@ -727,7 +736,7 @@ void radeon_dri2_frame_event_handler(unsigned int frame, unsigned int tv_sec,
 	/* else fall through to exchange/blit */
     case DRI2_SWAP:
 	if (DRI2CanExchange(drawable) &&
-	    can_exchange(event->front, event->back)) {
+	    can_exchange(scrn, event->front, event->back)) {
 	    radeon_dri2_exchange_buffers(drawable, event->front, event->back);
 	    swap_type = DRI2_EXCHANGE_COMPLETE;
 	} else {
@@ -1075,7 +1084,7 @@ static int radeon_dri2_schedule_swap(ClientPtr client, DrawablePtr draw,
     /* Flips need to be submitted one frame before */
     if (info->allowPageFlip &&
 	DRI2CanFlip(draw) &&
-	can_exchange(front, back)) {
+	can_exchange(scrn, front, back)) {
 	swap_type = DRI2_FLIP;
 	flip = 1;
     }

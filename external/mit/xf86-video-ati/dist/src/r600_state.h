@@ -50,6 +50,11 @@ typedef struct {
     int round_mode;
     int tile_compact;
     int source_format;
+    /* 2D related CB state */
+    uint32_t pmask;
+    int rop;
+    int blend_enable;
+    uint32_t blendcntl;
     struct radeon_bo *bo;
 } cb_config_t;
 
@@ -284,6 +289,8 @@ void
 r600_set_render_target(ScrnInfoPtr pScrn, drmBufPtr ib, cb_config_t *cb_conf, uint32_t domain);
 void
 r600_cp_wait_vline_sync(ScrnInfoPtr pScrn, drmBufPtr ib, PixmapPtr pPix, xf86CrtcPtr crtc, int start, int stop);
+void
+r600_set_spi(ScrnInfoPtr pScrn, drmBufPtr ib, int vs_export_count, int num_interp);
 void
 r600_fs_setup(ScrnInfoPtr pScrn, drmBufPtr ib, shader_config_t *fs_conf, uint32_t domain);
 void

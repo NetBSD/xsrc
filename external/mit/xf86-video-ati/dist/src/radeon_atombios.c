@@ -782,15 +782,15 @@ rhdAtomDTDTimings(atomBiosHandlePtr handle, ATOM_DTD_FORMAT *dtd)
 
     mode->CrtcHDisplay = mode->HDisplay = le16_to_cpu(dtd->usHActive);
     mode->CrtcVDisplay = mode->VDisplay = le16_to_cpu(dtd->usVActive);
-    mode->CrtcHBlankStart = dtd->usHActive + dtd->ucHBorder;
+    mode->CrtcHBlankStart = le16_to_cpu(dtd->usHActive) + dtd->ucHBorder;
     mode->CrtcHBlankEnd = mode->CrtcHBlankStart + le16_to_cpu(dtd->usHBlanking_Time);
     mode->CrtcHTotal = mode->HTotal = mode->CrtcHBlankEnd + dtd->ucHBorder;
-    mode->CrtcVBlankStart = dtd->usVActive + dtd->ucVBorder;
+    mode->CrtcVBlankStart = le16_to_cpu(dtd->usVActive) + dtd->ucVBorder;
     mode->CrtcVBlankEnd = mode->CrtcVBlankStart + le16_to_cpu(dtd->usVBlanking_Time);
     mode->CrtcVTotal = mode->VTotal = mode->CrtcVBlankEnd + dtd->ucVBorder;
-    mode->CrtcHSyncStart = mode->HSyncStart = dtd->usHActive + le16_to_cpu(dtd->usHSyncOffset);
+    mode->CrtcHSyncStart = mode->HSyncStart = le16_to_cpu(dtd->usHActive) + le16_to_cpu(dtd->usHSyncOffset);
     mode->CrtcHSyncEnd = mode->HSyncEnd = mode->HSyncStart + le16_to_cpu(dtd->usHSyncWidth);
-    mode->CrtcVSyncStart = mode->VSyncStart = dtd->usVActive + le16_to_cpu(dtd->usVSyncOffset);
+    mode->CrtcVSyncStart = mode->VSyncStart = le16_to_cpu(dtd->usVActive) + le16_to_cpu(dtd->usVSyncOffset);
     mode->CrtcVSyncEnd = mode->VSyncEnd = mode->VSyncStart + le16_to_cpu(dtd->usVSyncWidth);
 
     mode->SynthClock = mode->Clock = le16_to_cpu(dtd->usPixClk) * 10;
@@ -1540,7 +1540,7 @@ RADEONLookupGPIOLineForDDC(ScrnInfoPtr pScrn, uint8_t id)
 
 	    if (IS_DCE4_VARIANT) {
 	        if ((i == 7) &&
-		    (gpio->usClkMaskRegisterIndex == 0x1936) &&
+		    (le16_to_cpu(gpio->usClkMaskRegisterIndex) == 0x1936) &&
 		    (gpio->sucI2cId.ucAccess == 0)) {
 		    gpio->sucI2cId.ucAccess = 0x97;
 		    gpio->ucDataMaskShift = 8;
@@ -1579,14 +1579,14 @@ RADEONLookupGPIOLineForDDC(ScrnInfoPtr pScrn, uint8_t id)
     ErrorF("hw capable: %d\n", gpio->sucI2cId.sbfAccess.bfHW_Capable);
     ErrorF("hw engine id: %d\n", gpio->sucI2cId.sbfAccess.bfHW_EngineID);
     ErrorF("line mux %d\n", gpio->sucI2cId.sbfAccess.bfI2C_LineMux);
-    ErrorF("mask_clk_reg: 0x%x\n", gpio->usClkMaskRegisterIndex * 4);
-    ErrorF("mask_data_reg: 0x%x\n", gpio->usDataMaskRegisterIndex * 4);
-    ErrorF("put_clk_reg: 0x%x\n", gpio->usClkEnRegisterIndex * 4);
-    ErrorF("put_data_reg: 0x%x\n", gpio->usDataEnRegisterIndex * 4);
-    ErrorF("get_clk_reg: 0x%x\n", gpio->usClkY_RegisterIndex * 4);
-    ErrorF("get_data_reg: 0x%x\n", gpio->usDataY_RegisterIndex * 4);
-    ErrorF("a_clk_reg: 0x%x\n", gpio->usClkA_RegisterIndex * 4);
-    ErrorF("a_data_reg: 0x%x\n", gpio->usDataA_RegisterIndex * 4);
+    ErrorF("mask_clk_reg: 0x%x\n", le16_to_cpu(gpio->usClkMaskRegisterIndex) * 4);
+    ErrorF("mask_data_reg: 0x%x\n", le16_to_cpu(gpio->usDataMaskRegisterIndex) * 4);
+    ErrorF("put_clk_reg: 0x%x\n", le16_to_cpu(gpio->usClkEnRegisterIndex) * 4);
+    ErrorF("put_data_reg: 0x%x\n", le16_to_cpu(gpio->usDataEnRegisterIndex) * 4);
+    ErrorF("get_clk_reg: 0x%x\n", le16_to_cpu(gpio->usClkY_RegisterIndex) * 4);
+    ErrorF("get_data_reg: 0x%x\n", le16_to_cpu(gpio->usDataY_RegisterIndex) * 4);
+    ErrorF("a_clk_reg: 0x%x\n", le16_to_cpu(gpio->usClkA_RegisterIndex) * 4);
+    ErrorF("a_data_reg: 0x%x\n", le16_to_cpu(gpio->usDataA_RegisterIndex) * 4);
     ErrorF("mask_clk_mask: %d\n", gpio->ucClkMaskShift);
     ErrorF("mask_data_mask: %d\n", gpio->ucDataMaskShift);
     ErrorF("put_clk_mask: %d\n", gpio->ucClkEnShift);
@@ -1645,7 +1645,7 @@ radeon_lookup_hpd_id(ScrnInfoPtr pScrn, ATOM_HPD_INT_RECORD *record)
     for (i = 0; i < num_indices; i++) {
 	pin = &gpio_info->asGPIO_Pin[i];
 	if (record->ucHPDIntGPIOID == pin->ucGPIO_ID) {
-	    if ((pin->usGpioPin_AIndex * 4) == reg) {
+	    if ((le16_to_cpu(pin->usGpioPin_AIndex) * 4) == reg) {
 		switch (pin->ucGpioPinBitShift) {
 		case 0:
 		default:
