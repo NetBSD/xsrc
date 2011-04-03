@@ -1,9 +1,9 @@
 /* dynlist.c: Dynamic lists and buffers in C.
  * created 1999-Jan-06 15:34 jmk
- * autodate: 1999-Dec-24 00:12
+ * autodate: 2000-Aug-28 01:29
  * 
- * by Jim Knoble <jmknoble@pobox.com>
- * Copyright © 1999 Jim Knoble
+ * by Jim Knoble <jmknoble@jmknoble.cx>
+ * Copyright (C) 1999,2000 Jim Knoble
  * 
  * Disclaimer:
  * 
@@ -41,7 +41,11 @@ int append_to_list(char ***list_ptr, int *list_len, int *i, char *item)
        tmp_ptr = realloc(*list_ptr, (sizeof(**list_ptr) * *list_len));
        if (NULL == tmp_ptr)
 	{
+	   free(*list_ptr);
+	   *list_ptr = NULL;
 	   return(APPEND_FAILURE);
+	} else {
+	   *list_ptr = tmp_ptr;
 	}
        *list_ptr = tmp_ptr;
     }
@@ -61,7 +65,11 @@ int append_to_buf(char **buf, int *buflen, int *i, int c)
        tmp_buf = realloc(*buf, (sizeof(**buf) * *buflen));
        if (NULL == tmp_buf)
 	{
+	   free(*buf);
+	   *buf = NULL;
 	   return(APPEND_FAILURE);
+	} else {
+	   *buf = tmp_buf;
 	}
        *buf = tmp_buf;
 #ifdef DEBUG
@@ -72,4 +80,3 @@ int append_to_buf(char **buf, int *buflen, int *i, int c)
    (*i)++;
    return(APPEND_SUCCESS);
 }
-
