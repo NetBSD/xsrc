@@ -1,9 +1,9 @@
 ! SshAskpass.ad:  Default resources for the X11-based ssh-askpass for OpenSSH
-! created 1999-Nov-17 03:40 Jim Knoble <jmknoble@pobox.com>
-! autodate: 1999-Nov-22 07:49
+! created 1999-Nov-17 03:40 Jim Knoble <jmknoble@jmknoble.cx>
+! autodate: 2000-Nov-07 05:50
 ! 
-! by Jim Knoble <jmknoble@pobox.com>
-! Copyright © 1999 Jim Knoble
+! by Jim Knoble <jmknoble@jmknoble.cx>
+! Copyright (C) 1999,2000 Jim Knoble
 ! 
 ! Disclaimer:
 ! 
@@ -27,11 +27,11 @@
 ! +--------------------+
 
 *Dialog.font:			-adobe-helvetica-medium-r-normal-*-*-120-*-*-*-*-iso8859-1
-*?.foreground:			#000000
-*?.background:			#a8a8a8
-*topShadowColor:		#ffffff
-*bottomShadowColor:		#545454
-*borderColor:			#202020
+*?.foreground:			rgb:00/00/00
+*?.background:			rgb:a8/a8/a8
+*topShadowColor:		rgb:ff/ff/ff
+*bottomShadowColor:		rgb:54/54/54
+*borderColor:			rgb:20/20/20
 *shadowThickness:		0
 *borderWidth:			1
 *horizontalSpacing:		8
@@ -43,10 +43,10 @@
 *Button.horizontalSpacing:	8
 *Button.verticalSpacing:	3
 
-*Indicator.foreground:		#9bcd9b
-*Indicator.background:		#545454
-*Indicator.topShadowColor:	#ffffff
-*Indicator.bottomShadowColor:	#202020
+*Indicator.foreground:		rgb:9b/cd/9b
+*Indicator.background:		rgb:54/54/54
+*Indicator.topShadowColor:	rgb:ff/ff/ff
+*Indicator.bottomShadowColor:	rgb:20/20/20
 *Indicator.shadowThickness:	1
 *Indicator.borderWidth:		0
 *Indicator.height:		7
@@ -55,6 +55,35 @@
 *Indicator.verticalSpacing:	6
 *Indicator.minimumCount:	8
 *Indicator.maximumCount:	24
+
+! X11 does a miserable job of providing resolution-independent drawing
+! facilities---it expects everything to be done in pixels.  So if you
+! happen to run your X server at a resolution of 100 pixels per inch
+! (or some other strange value) instead of the widely used default of
+! 75, x11-ssh-askpass looks might tiny.  [Sigh].
+! 
+! To get around this, umm, limitation, we declare the resolution that
+! the spacing and width/height pixels values are "valid" for, along
+! with a fuzz factor.  If the current actual resolution is outside of
+! the range of <DEFAULT - FUZZ>..<DEFAULT + FUZZ>, then we scale pixel
+! measurements to fit the actual resolution.
+! 
+! (And if you think *this* is a horrid hack, then take a look at the
+! actual code, which has to deal with conversion to [cheesy fanfare]
+! that's right---millimeters!!!  The right hand managed to slip that
+! one in while the left hand was adding a '-dpi' switch to the sample
+! server implementation.  I think both left feet were adding the
+! RESOLUTION_X and RESOLUTION_Y fields [in dots per inch, naturally]
+! to the X Logical Font Description.  The irony is underwhelming.)
+
+*defaultXResolution:		75/in
+*defaultYResolution:		75/in
+*xResolutionFuzz:		20/in
+*yResolutionFuzz:		20/in
+
+! Number of seconds to wait for a key- or button-press
+! before giving up.  '0' means wait forever.
+*inputTimeout:			0
 
 ! Ssh-askpass grabs the keyboard by default.
 ! To stop it from grabbing the keyboard, use:
@@ -68,7 +97,7 @@
 ! To make it grab the server, use:
 !*grabServer:			true
 
-*Dialog.title:			SSH Authentication Passphrase Request
+*Dialog.title:			OpenSSH Authentication Passphrase Request
 *Dialog.label:			Please enter your authentication passphrase:
 *okButton.label:		OK
 *cancelButton.label:		Cancel
