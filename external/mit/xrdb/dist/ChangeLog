@@ -1,3 +1,20 @@
+commit 4b8990ea599aee08284481b258cccdc25dd5d8d8
+Author: Matthias Hopf <mhopf@suse.de>
+Date:   Tue Apr 5 17:50:00 2011 +0200
+
+    Bump to 1.0.9
+
+commit 1027d5df07398c1507fb1fe3a9981aa6b4bc3a56
+Author: Matthias Hopf <mhopf@suse.de>
+Date:   Tue Mar 1 19:37:34 2011 +0100
+
+    Create shell-escape-safe cpp options in the non-pathetic-cpp case.
+    
+    Fixes CVE-2011-0465.
+    
+    Signed-off-by: Matthias Hopf <mhopf@suse.de>
+    Reviewed-by: Adam Jackson <ajax@redhat.com>
+
 commit ce9709b2811eb06bc7e03d26599c40b60effd0f8
 Author: Jeremy Huddleston <jeremyhu@apple.com>
 Date:   Wed Feb 2 15:30:45 2011 -0800
