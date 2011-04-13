@@ -54,22 +54,22 @@ static int promP1275 = -1;
 sbusDevicePtr *xf86SbusInfo = NULL;
 
 struct sbus_devtable sbusDeviceTable[] = {
-    { SBUS_DEVICE_BW2, FBTYPE_SUN2BW, "bwtwo", "Sun Monochrome (bwtwo)" },
-    { SBUS_DEVICE_CG2, FBTYPE_SUN2COLOR, "cgtwo", "Sun Color2 (cgtwo)" },
-    { SBUS_DEVICE_CG3, FBTYPE_SUN3COLOR, "cgthree", "Sun Color3 (cgthree)" },
-    { SBUS_DEVICE_CG4, FBTYPE_SUN4COLOR, "cgfour", "Sun Color4 (cgfour)" },
-    { SBUS_DEVICE_CG6, FBTYPE_SUNFAST_COLOR, "cgsix", "Sun GX" },
-    { SBUS_DEVICE_CG8, FBTYPE_MEMCOLOR, "cgeight", "Sun CG8/RasterOps" },
-    { SBUS_DEVICE_CG12, FBTYPE_SUNGP3, "cgtwelve", "Sun GS (cgtwelve)" },
-    { SBUS_DEVICE_CG14, FBTYPE_MDICOLOR, "cgfourteen", "Sun SX" },
-    { SBUS_DEVICE_GT, FBTYPE_SUNGT, "gt", "Sun Graphics Tower" },
-    { SBUS_DEVICE_MGX, -1, "mgx", "Quantum 3D MGXplus" },
-    { SBUS_DEVICE_LEO, FBTYPE_SUNLEO, "leo", "Sun ZX or Turbo ZX" },
-    { SBUS_DEVICE_TCX, FBTYPE_TCXCOLOR, "tcx", "Sun TCX" },
-    { SBUS_DEVICE_FFB, FBTYPE_CREATOR, "ffb", "Sun FFB" },
-    { SBUS_DEVICE_FFB, FBTYPE_CREATOR, "afb", "Sun Elite3D" },
-    { SBUS_DEVICE_P9100, FBTYPE_P9100, "pnozz", "Weitek P9100" },
-    { SBUS_DEVICE_AG10E, FBTYPE_AG10E, "ag10e", "Fujitsu AG-10e" },
+    { SBUS_DEVICE_BW2, FBTYPE_SUN2BW, "bwtwo", "sunbw2", "Sun Monochrome (bwtwo)" },
+    { SBUS_DEVICE_CG2, FBTYPE_SUN2COLOR, "cgtwo", NULL, "Sun Color2 (cgtwo)" },
+    { SBUS_DEVICE_CG3, FBTYPE_SUN3COLOR, "cgthree", "suncg3", "Sun Color3 (cgthree)" },
+    { SBUS_DEVICE_CG4, FBTYPE_SUN4COLOR, "cgfour", NULL,  "Sun Color4 (cgfour)" },
+    { SBUS_DEVICE_CG6, FBTYPE_SUNFAST_COLOR, "cgsix", "suncg6", "Sun GX" },
+    { SBUS_DEVICE_CG8, FBTYPE_MEMCOLOR, "cgeight", NULL, "Sun CG8/RasterOps" },
+    { SBUS_DEVICE_CG12, FBTYPE_SUNGP3, "cgtwelve", NULL, "Sun GS (cgtwelve)" },
+    { SBUS_DEVICE_CG14, FBTYPE_MDICOLOR, "cgfourteen", "suncg14", "Sun SX" },
+    { SBUS_DEVICE_GT, FBTYPE_SUNGT, "gt", NULL, "Sun Graphics Tower" },
+    { SBUS_DEVICE_MGX, -1, "mgx", NULL, "Quantum 3D MGXplus" },
+    { SBUS_DEVICE_LEO, FBTYPE_SUNLEO, "leo", "sunleo", "Sun ZX or Turbo ZX" },
+    { SBUS_DEVICE_TCX, FBTYPE_TCXCOLOR, "tcx", "suntcx", "Sun TCX or S24" },
+    { SBUS_DEVICE_FFB, FBTYPE_CREATOR, "ffb", "sunffb", "Sun FFB" },
+    { SBUS_DEVICE_FFB, FBTYPE_CREATOR, "afb", "sunffb", "Sun Elite3D" },
+    { SBUS_DEVICE_P9100, FBTYPE_P9100, "pnozz", "pnozz", "Weitek P9100" },
+    { SBUS_DEVICE_AG10E, FBTYPE_AG10E, "ag10e", "ag10e", "Fujitsu AG-10e" },
     { 0, 0, NULL }
 };
 
@@ -139,6 +139,7 @@ promGetBool(const char *prop)
 
     if (ioctl(promFd, OFIOCNEXTPROP, &ofio) < 0)
 	return 0;
+
     if (!ofio.of_buflen)
 	return 0;
 
@@ -557,9 +558,10 @@ promWalkGetDriverName(int node, int oldnode)
 		break;
 	    while ((*prop >= 'A' && *prop <= 'Z') || *prop == ',')
 		prop++;
-	    for (i = 0; sbusDeviceTable[i].devId; i++)
+	    for (i = 0; sbusDeviceTable[i].devId; i++) {
 		if (!strcmp(prop, sbusDeviceTable[i].promName))
 		    break;
+	    }
 	    devId = sbusDeviceTable[i].devId;
 	    if (!devId)
 		break;
