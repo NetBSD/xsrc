@@ -417,7 +417,6 @@ CG6PreInit(ScrnInfoPtr pScrn, int flags)
         CG6FreeRec(pScrn);
         return FALSE;
     }
-    xf86LoaderReqSymLists(xaaSymbols, NULL);
 
     /*********************
     set up clock and mode stuff
