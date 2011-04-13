@@ -49,6 +49,13 @@
 # include <ctype.h>
 #endif
 
+#ifdef __NetBSD__
+#if defined(__sparc__) || defined(__sparc64__)
+#include <dev/sun/fbio.h>
+extern struct sbus_devtable sbusDeviceTable[];
+#endif /* sparc / sparc64 */
+#endif /* NetBSD */
+
 /* Sections for the default built-in configuration. */
 
 #define BUILTIN_DEVICE_NAME \
@@ -198,6 +205,45 @@ listPossibleVideoDrivers(char *matches[], int nmatches)
     }
     i = 0;
 
+#ifdef __NetBSD__
+#if defined(__shark)
+    matches[i++] = xnfstrdup("chips");
+    matches[i++] = xnfstrdup("igs");
+#elif defined(__sgimips)
+    matches[i++] = xnfstrdup("crime");
+    matches[i++] = xnfstrdup("newport");
+#elif defined(__sparc) || defined(__sparc64)
+    /* dig through /dev/fb* */
+    {
+    	struct fbtype fbt;
+	int j = 0, fd = 0, dev;
+	char fbpath[32];
+
+	for (j = 0; j < 10; j++) {
+	    snprintf(fbpath, 31, "/dev/fb%d", j);
+	    xf86Msg(X_ERROR,"%s: trying %s\n", __func__, fbpath);
+	    fd = open(fbpath, O_RDONLY, 0);
+	    if (fd == -1) continue;
+	    memset(&fbt, 0, sizeof(fbt));
+	    if (ioctl(fd, FBIOGTYPE, &fbt) == -1) {
+	    	close(fd);
+		continue;
+	    }
+	    close(fd);
+	    dev = 0;
+	    while ((sbusDeviceTable[dev].fbType != 0) &&
+	           (sbusDeviceTable[dev].fbType != fbt.fb_type))
+		dev++;
+	    if (sbusDeviceTable[dev].fbType == fbt.fb_type) {
+		xf86Msg(X_ERROR,"%s: found %s\n", __func__,
+		    sbusDeviceTable[dev].driverName);
+		matches[i++] = xnfstrdup(sbusDeviceTable[dev].driverName);
+	    }
+	}
+    }
+#endif
+
+#else /* !NetBSD */
 #ifdef sun
     /* Check for driver type based on /dev/fb type and if valid, use
        it instead of PCI bus probe results */
@@ -255,25 +301,33 @@ listPossibleVideoDrivers(char *matches[], int nmatches)
 	    matches[i++] = xnfstrdup(sbusDriver);
     }
 #endif
+#endif /* NetBSD */
 
     i = xf86PciMatchDriver(matches, nmatches);
 
-    /* Fallback to platform default hardware */
-    if (i < (nmatches - 1)) {
-#if defined(__i386__) || defined(__amd64__) || defined(__hurd__)
+    /*
+     * Fallback to platform default frame buffer driver  if we didn't probe
+     * anything useful
+     */
+    if (i == 0) {
+#ifdef __NetBSD__
+#if defined(__i386__) || defined(__amd64__)
 	matches[i++] = xnfstrdup("vesa");
-#elif defined(__sparc__) && !defined(sun)
-	matches[i++] = xnfstrdup("sunffb");
+#else
+	matches[i++] = xnfstrdup("wsfb");
 #endif
-    }
-
-    /* Fallback to platform default frame buffer driver */
-    if (i < (nmatches - 1)) {
+#else /* !NetBSD */	
 #if !defined(__linux__) && defined(__sparc__)
 	matches[i++] = xnfstrdup("wsfb");
 #else
 	matches[i++] = xnfstrdup("fbdev");
 #endif
+#if defined(__i386__) || defined(__amd64__) || defined(__hurd__)
+	matches[i++] = xnfstrdup("vesa");
+#elif defined(__sparc__) && !defined(sun)
+	matches[i++] = xnfstrdup("sunffb");
+#endif
+#endif /* NetBSD */
     }
 }
 
