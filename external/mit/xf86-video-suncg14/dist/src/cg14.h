@@ -51,16 +51,42 @@
 #define CG14_G32_VOFF		0xb0000000
 #define CG14_R32_VOFF		0xc0000000
 
+/* Hardware cursor map */
+#define CG14_CURS_SIZE		32
+struct cg14curs {
+	volatile uint32_t	curs_plane0[CG14_CURS_SIZE];	/* plane 0 */
+	volatile uint32_t	curs_plane1[CG14_CURS_SIZE];
+	volatile uint8_t	curs_ctl;	/* control register */
+#define CG14_CURS_ENABLE	0x4
+#define CG14_CURS_DOUBLEBUFFER	0x2 		/* use X-channel for curs */
+	volatile uint8_t	pad0[3];
+	volatile uint16_t	curs_x;		/* x position */
+	volatile uint16_t	curs_y;		/* y position */
+	volatile uint32_t	curs_color1;	/* color register 1 */
+	volatile uint32_t	curs_color2;	/* color register 2 */
+	volatile uint32_t	pad[444];	/* pad to 2KB boundary */
+	volatile uint32_t	curs_plane0incr[CG14_CURS_SIZE]; /* autoincr */
+	volatile uint32_t	curs_plane1incr[CG14_CURS_SIZE]; /* autoincr */
+};
+
 typedef struct {
-	unsigned int	*fb;
+	unsigned char	*fb;
 	unsigned char	*x32;
 	unsigned char	*xlut;
+	struct cg14curs	*curs;
 	int		width;
 	int		height;
+	int		use_shadow;
+	int		HWCursor;
+	void *		shadow;
 	sbusDevicePtr	psdp;
 	CloseScreenProcPtr CloseScreen;
+	CreateScreenResourcesProcPtr CreateScreenResources;
 	OptionInfoPtr	Options;
+	xf86CursorInfoPtr	CursorInfoRec;
 } Cg14Rec, *Cg14Ptr;
+
+Bool CG14SetupCursor(ScreenPtr);
 
 #define GET_CG14_FROM_SCRN(p)    ((Cg14Ptr)((p)->driverPrivate))
 
