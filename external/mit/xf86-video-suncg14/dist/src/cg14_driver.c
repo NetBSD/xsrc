@@ -643,10 +643,24 @@ CG14ValidMode(int scrnIndex, DisplayModePtr mode, Bool verbose, int flags)
 /* Mandatory */
 static Bool
 CG14SaveScreen(ScreenPtr pScreen, int mode)
-    /* this function should blank the screen when unblank is FALSE and
-       unblank it when unblank is TRUE -- it doesn't actually seem to be
-       used for much though */
 {
+    ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
+    Cg14Ptr pCg14 = GET_CG14_FROM_SCRN(pScrn);
+    int state;
+    switch(mode) {
+	case SCREEN_SAVER_ON:
+	case SCREEN_SAVER_CYCLE:
+		state = FBVIDEO_OFF;
+		ioctl(pCg14->psdp->fd, FBIOSVIDEO, &state);
+		break;
+	case SCREEN_SAVER_OFF:
+	case SCREEN_SAVER_FORCER:
+		state = FBVIDEO_ON;
+		ioctl(pCg14->psdp->fd, FBIOSVIDEO, &state);
+		break;
+	default:
+		return FALSE;
+    }
     return TRUE;
 }
 
@@ -686,4 +700,4 @@ CG14ExitCplane24(ScrnInfoPtr pScrn)
   int bpp = 8;
               
   ioctl (pCg14->psdp->fd, CG14_SET_PIXELMODE, &bpp);
-}                                                  
+}
