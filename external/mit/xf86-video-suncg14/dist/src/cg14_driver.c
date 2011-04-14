@@ -35,7 +35,10 @@
 
 #include "fb.h"
 #include "xf86cmap.h"
+#include "shadow.h"
 #include "cg14.h"
+
+#define static
 
 static const OptionInfoRec * CG14AvailableOptions(int chipid, int busid);
 static void	CG14Identify(int flags);
@@ -49,6 +52,8 @@ static Bool	CG14CloseScreen(int scrnIndex, ScreenPtr pScreen);
 static Bool	CG14SaveScreen(ScreenPtr pScreen, int mode);
 static void	CG14InitCplane24(ScrnInfoPtr pScrn);
 static void	CG14ExitCplane24(ScrnInfoPtr pScrn);
+static void    *CG14WindowLinear(ScreenPtr, CARD32, CARD32, int, CARD32 *,
+			      void *);
 
 /* Required if the driver supports mode switching */
 static Bool	CG14SwitchMode(int scrnIndex, DisplayModePtr mode, int flags);
@@ -87,7 +92,14 @@ _X_EXPORT DriverRec SUNCG14 = {
     0
 };
 
+typedef enum {
+	OPTION_SHADOW_FB,
+	OPTION_HW_CURSOR,
+	OPTION_SW_CURSOR
+} CG14Opts;
+
 static const OptionInfoRec CG14Options[] = {
+    { OPTION_SHADOW_FB, "ShadowFB", OPTV_BOOLEAN, {0}, TRUE},
     { -1,			NULL,		OPTV_NONE,	{0}, FALSE }
 };
 
@@ -283,7 +295,7 @@ CG14PreInit(ScrnInfoPtr pScrn, int flags)
 {
     Cg14Ptr pCg14;
     sbusDevicePtr psdp = NULL;
-    int i;
+    int i, from;
 
     if (flags & PROBE_DETECT) return FALSE;
 
@@ -352,6 +364,8 @@ CG14PreInit(ScrnInfoPtr pScrn, int flags)
 	return FALSE;
     memcpy(pCg14->Options, CG14Options, sizeof(CG14Options));
     xf86ProcessOptions(pScrn->scrnIndex, pScrn->options, pCg14->Options);
+    pCg14->use_shadow = xf86ReturnOptValBool(pCg14->Options, OPTION_SHADOW_FB,
+        TRUE);
 
     /*
      * This must happen after pScrn->display has been set because
@@ -395,6 +409,25 @@ CG14PreInit(ScrnInfoPtr pScrn, int flags)
 	return FALSE;
     }
 
+    if (pCg14->use_shadow) {
+	xf86DrvMsg(pScrn->scrnIndex, X_CONFIG, "Using shadow framebuffer\n");
+	if (xf86LoadSubModule(pScrn, "shadow") == NULL) {
+	    CG14FreeRec(pScrn);
+	    return FALSE;
+	}
+    }
+
+    from = X_DEFAULT;
+    pCg14->HWCursor = TRUE;
+    if (xf86GetOptValBool(pCg14->Options, OPTION_HW_CURSOR, &pCg14->HWCursor))
+	from = X_CONFIG;
+    if (xf86ReturnOptValBool(pCg14->Options, OPTION_SW_CURSOR, FALSE)) {
+	from = X_CONFIG;
+	pCg14->HWCursor = FALSE;
+    }
+    xf86DrvMsg(pScrn->scrnIndex, from, "Using %s cursor\n",
+		pCg14->HWCursor ? "HW" : "SW");
+
     /*********************
     set up clock and mode stuff
     *********************/
@@ -418,6 +451,46 @@ CG14PreInit(ScrnInfoPtr pScrn, int flags)
     return TRUE;
 }
 
+static Bool
+CG14CreateScreenResources(ScreenPtr pScreen)
+{
+    ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
+    Cg14Ptr pCg14 = GET_CG14_FROM_SCRN(pScrn);
+    PixmapPtr pPixmap;
+    Bool ret;
+
+    pScreen->CreateScreenResources = pCg14->CreateScreenResources;
+    ret = pScreen->CreateScreenResources(pScreen);
+    pScreen->CreateScreenResources = CG14CreateScreenResources;
+
+    if (!ret)
+	return FALSE;
+
+    pPixmap = pScreen->GetScreenPixmap(pScreen);
+
+    if (!shadowAdd(pScreen, pPixmap, shadowUpdatePackedWeak(),
+	CG14WindowLinear, 0, NULL)) {
+	return FALSE;
+    }
+    return TRUE;
+}
+
+
+static Bool
+CG14ShadowInit(ScreenPtr pScreen)
+{
+    ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
+    Cg14Ptr pCg14 = GET_CG14_FROM_SCRN(pScrn);
+
+    if (!shadowSetup(pScreen)) {
+	return FALSE;
+    }
+
+    pCg14->CreateScreenResources = pScreen->CreateScreenResources;
+    pScreen->CreateScreenResources = CG14CreateScreenResources;
+
+    return TRUE;
+}
 /* Mandatory */
 
 /* This gets called at the start of each server generation */
@@ -425,17 +498,10 @@ CG14PreInit(ScrnInfoPtr pScrn, int flags)
 static Bool
 CG14ScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 {
-    ScrnInfoPtr pScrn;
-    Cg14Ptr pCg14;
+    ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
+    Cg14Ptr pCg14 = GET_CG14_FROM_SCRN(pScrn);
     VisualPtr visual;
     int ret;
-
-    /* 
-     * First get the ScrnInfoRec
-     */
-    pScrn = xf86Screens[pScreen->myNum];
-
-    pCg14 = GET_CG14_FROM_SCRN(pScrn);
 
     /* Map the CG14 memory */
     pCg14->fb = xf86MapSbusMem (pCg14->psdp, CG14_BGR_VOFF, 4 *
@@ -443,10 +509,16 @@ CG14ScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
     pCg14->x32 = xf86MapSbusMem (pCg14->psdp, CG14_X32_VOFF,
 				 (pCg14->psdp->width * pCg14->psdp->height));
     pCg14->xlut = xf86MapSbusMem (pCg14->psdp, CG14_XLUT_VOFF, 4096);
+    pCg14->curs = xf86MapSbusMem (pCg14->psdp, CG14_CURSOR_VOFF, 4096);
 
-    if (! pCg14->fb || !pCg14->x32 || !pCg14->xlut) {
-    	xf86Msg(X_ERROR, "can't mmap something: fd %08x  x32 %08x xlut %08x\n",
-	    (uint32_t)pCg14->fb, (uint32_t)pCg14->x32, (uint32_t)pCg14->xlut);
+    pCg14->width = pCg14->psdp->width;
+    pCg14->height = pCg14->psdp->height;
+
+    if (! pCg14->fb || !pCg14->x32 || !pCg14->xlut || !pCg14->curs) {
+    	xf86Msg(X_ERROR,
+	    "can't mmap something: fd %08x  x32 %08x xlut %08x cursor %08x\n",
+	    (uint32_t)pCg14->fb, (uint32_t)pCg14->x32, (uint32_t)pCg14->xlut,
+	    (uint32_t)pCg14->curs);
 	return FALSE;
     }
 
@@ -475,18 +547,39 @@ CG14ScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 
     miSetPixmapDepths ();
 
+    if (pCg14->use_shadow) {
+	pCg14->shadow = xcalloc(1, pScrn->virtualX * pScrn->virtualY * 4);
+		
+	if (!pCg14->shadow) {
+	    xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
+	        "Failed to allocate shadow framebuffer\n");
+	    return FALSE;
+	}
+    }
+
     /*
      * Call the framebuffer layer's ScreenInit function, and fill in other
      * pScreen fields.
      */
 
     CG14InitCplane24(pScrn);
-    ret = fbScreenInit(pScreen, pCg14->fb, pScrn->virtualX,
+    ret = fbScreenInit(pScreen, pCg14->use_shadow ? pCg14->shadow : pCg14->fb,
+    		       pScrn->virtualX,
 		       pScrn->virtualY, pScrn->xDpi, pScrn->yDpi,
 		       pScrn->virtualX, pScrn->bitsPerPixel);
 
     if (!ret)
 	return FALSE;
+
+    /* must be after RGB ordering fixed */
+    fbPictureInit (pScreen, 0, 0);
+
+xf86DrvMsg(scrnIndex, X_ERROR, "calling CG14ShadowInit\n");
+    if (pCg14->use_shadow && !CG14ShadowInit(pScreen)) {
+	xf86DrvMsg(scrnIndex, X_ERROR,
+		    "shadow framebuffer initialization failed\n");
+	return FALSE;
+    }
 
     miInitializeBackingStore(pScreen);
     xf86SetBackingStore(pScreen);
@@ -509,13 +602,12 @@ CG14ScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 	}
     }
 
-#ifdef RENDER
-    /* must be after RGB ordering fixed */
-    fbPictureInit (pScreen, 0, 0);
-#endif
-
     /* Initialise cursor functions */
     miDCInitialize (pScreen, xf86GetPointerScreenFuncs());
+
+    /* check for hardware cursor support */
+    if (pCg14->HWCursor)
+	CG14SetupCursor(pScreen);
 
     /* Initialise default colourmap */
     if (!miCreateDefColormap(pScreen))
@@ -601,6 +693,14 @@ CG14CloseScreen(int scrnIndex, ScreenPtr pScreen)
 {
     ScrnInfoPtr pScrn = xf86Screens[scrnIndex];
     Cg14Ptr pCg14 = GET_CG14_FROM_SCRN(pScrn);
+    PixmapPtr pPixmap;
+
+    if (pCg14->use_shadow) {
+
+	pPixmap = pScreen->GetScreenPixmap(pScreen);
+	shadowRemove(pScreen, pPixmap);
+	pCg14->use_shadow = FALSE;
+    }
 
     pScrn->vtSema = FALSE;
     CG14ExitCplane24 (pScrn);
@@ -609,12 +709,22 @@ CG14CloseScreen(int scrnIndex, ScreenPtr pScreen)
     xf86UnmapSbusMem(pCg14->psdp, pCg14->x32,
 		     (pCg14->psdp->width * pCg14->psdp->height));
     xf86UnmapSbusMem(pCg14->psdp, pCg14->xlut, 4096);
+    xf86UnmapSbusMem(pCg14->psdp, pCg14->curs, 4096);
     
     pScreen->CloseScreen = pCg14->CloseScreen;
     return (*pScreen->CloseScreen)(scrnIndex, pScreen);
-    return FALSE;
 }
 
+static void *
+CG14WindowLinear(ScreenPtr pScreen, CARD32 row, CARD32 offset, int mode,
+		CARD32 *size, void *closure)
+{
+    ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
+    Cg14Ptr pCg14 = GET_CG14_FROM_SCRN(pScrn);
+
+    *size = pCg14->width << 2;
+    return (CARD8 *)pCg14->fb + row * (pCg14->width << 2) + offset;
+}
 
 /* Free up any per-generation data structures */
 
