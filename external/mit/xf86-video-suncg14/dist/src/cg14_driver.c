@@ -574,7 +574,6 @@ CG14ScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
     /* must be after RGB ordering fixed */
     fbPictureInit (pScreen, 0, 0);
 
-xf86DrvMsg(scrnIndex, X_ERROR, "calling CG14ShadowInit\n");
     if (pCg14->use_shadow && !CG14ShadowInit(pScreen)) {
 	xf86DrvMsg(scrnIndex, X_ERROR,
 		    "shadow framebuffer initialization failed\n");
