@@ -383,20 +383,18 @@ OpenKeyboard(InputInfoPtr pInfo)
     xf86Msg(X_CONFIG, "%s: Protocol: %s\n", pInfo->name, s);
     xfree(s);
 
-    s = xf86SetStrOption(pInfo->options, "Device", NULL);
+    if (prot == PROT_WSCONS) {
+	s = xf86SetStrOption(pInfo->options, "Device", "/dev/wskbd");
+    } else
+	s = xf86SetStrOption(pInfo->options, "Device", NULL);
+
     if (s == NULL) {
-       if (prot == PROT_WSCONS) {
-           xf86Msg(X_ERROR,"A \"device\" option is required with"
-                                  " the \"wskbd\" keyboard protocol\n");
-           return FALSE;
-       } else {
-           pInfo->fd = xf86Info.consoleFd;
-           pKbd->isConsole = TRUE;
-           pKbd->consType = xf86Info.consType;
-       }
+	pInfo->fd = xf86Info.consoleFd;
+	pKbd->isConsole = TRUE;
+	pKbd->consType = xf86Info.consType;
     } else {
 	pInfo->fd = open(s, O_RDONLY | O_NONBLOCK | O_EXCL);
-       if (pInfo->fd == -1) {
+	if (pInfo->fd == -1) {
            xf86Msg(X_ERROR, "%s: cannot open \"%s\"\n", pInfo->name, s);
            xfree(s);
            return FALSE;
