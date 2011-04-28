@@ -79,7 +79,11 @@ _X_EXPORT InputDriverRec KEYBOARD = {
 
 static const char *kbdDefaults[] = {
 #ifdef __NetBSD__
+#ifdef DEFAULT_TO_WSKBD
     "Protocol",		"wskbd",
+#else
+    "Protocol",		"standard",
+#endif
 #else /* NetBSD */
 #ifdef XQUEUE 
     "Protocol",		"Xqueue",
