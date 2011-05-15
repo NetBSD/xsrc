@@ -87,9 +87,9 @@ unsigned long long I830TexOffsetStart(PixmapPtr pPix);
 Bool i830_uxa_init(ScreenPtr pScreen);
 void i830_uxa_create_screen_resources(ScreenPtr pScreen);
 void i830_uxa_block_handler (ScreenPtr pScreen);
+#endif
 Bool i830_get_aperture_space(ScrnInfoPtr pScrn, drm_intel_bo **bo_table,
 			     int num_bos);
-#endif
 
 #if defined(I830_USE_UXA) || defined(I830_USE_EXA)
 dri_bo *i830_get_pixmap_bo (PixmapPtr pixmap);
