@@ -125,6 +125,8 @@
 #include "xf4bpp.h"
 #endif
 
+#include "hw/xfree86/xf8_16bpp/cfb8_16.h"
+
 /* int10 */
 #include "xf86int10.h"
 #include "vbe.h"
@@ -807,7 +809,7 @@ CHIPSPciProbe(DriverPtr drv, int entity_num, struct pci_device * dev,
 	pScrn->ValidMode	= CHIPSValidMode;
 
 	if (!CHIPSGetRec(pScrn)) {
-		return;
+		return 0;
 	}
 	cPtr = CHIPSPTR(pScrn);
 	cPtr->Chipset = match_data;
