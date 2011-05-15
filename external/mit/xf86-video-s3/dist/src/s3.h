@@ -247,6 +247,8 @@ void S3RefreshArea16(ScrnInfoPtr pScrn, int num, BoxPtr pbox);
 void S3RefreshArea24(ScrnInfoPtr pScrn, int num, BoxPtr pbox);
 void S3RefreshArea32(ScrnInfoPtr pScrn, int num, BoxPtr pbox);
 
+Bool S3GENDACProbe(ScrnInfoPtr pScrn);
+
 
 #define TRIO64_RAMDAC	0x8811
 #define	TI3025_RAMDAC	0x3025
