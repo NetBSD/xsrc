@@ -39,8 +39,6 @@
 #include "via_id.h"
 #include "cursorstr.h"
 
-void viaShowCursor(ScrnInfoPtr pScrn);
-void viaHideCursor(ScrnInfoPtr pScrn);
 static void viaSetCursorPosition(ScrnInfoPtr pScrn, int x, int y);
 static Bool viaUseHWCursor(ScreenPtr pScreen, CursorPtr pCurs);
 static Bool viaUseHWCursorARGB(ScreenPtr pScreen, CursorPtr pCurs);
