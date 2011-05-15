@@ -91,6 +91,7 @@
 #include "xf86RAC.h"
 #include "xf86Resources.h"
 #endif
+#include "xf86_OSlib.h"
 #include "xf86cmap.h"
 #include "xf86xv.h"
 #include "vbe.h"
