@@ -100,6 +100,7 @@ extern int priv_open_device(const char *);
 #if GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) > 6
 #define xf86LoaderReqSymLists(...) do {} while (0)
 #define LoaderRefSymLists(...) do {} while (0)
+#define xf86LoaderReqSymbols(...) do {} while (0)
 #endif
 
 #define DEBUG 0
