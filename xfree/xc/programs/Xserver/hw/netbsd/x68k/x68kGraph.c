@@ -1,4 +1,4 @@
-/* $NetBSD: x68kGraph.c,v 1.2 2004/01/07 12:55:00 minoura Exp $ */
+/* $NetBSD: x68kGraph.c,v 1.3 2011/05/18 21:51:04 tsutsui Exp $ */
 /*-------------------------------------------------------------------------
  * Copyright (c) 1996 Yasushi Yamasaki
  * All rights reserved.
@@ -118,6 +118,7 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 /* cfb */
 #define PSZ 16
 #include "cfb.h"
+#include <mi/mi.h>
 
 /* in x68kConfig.c */
 X68kScreenRec *x68kGetScreenRecByType(int type);
@@ -343,8 +344,7 @@ static Bool x68kCfbFinishScreenInit(
     oldDevPrivate = pScreen->devPrivate;
     if (!miScreenInit(pScreen, pbits, xsize, ysize, dpix, dpiy, width,
                       rootdepth, ndepths, depths,
-                      defaultVisual, nvisuals, visuals,
-                      (VisualPtr) 0))
+                      defaultVisual, nvisuals, visuals))
 	return FALSE;
     
     pScreen->CloseScreen = cfb16CloseScreen;

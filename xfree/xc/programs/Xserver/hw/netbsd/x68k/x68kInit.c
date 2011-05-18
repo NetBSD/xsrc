@@ -1,4 +1,4 @@
-/* $NetBSD: x68kInit.c,v 1.4 2005/03/28 13:04:06 minoura Exp $ */
+/* $NetBSD: x68kInit.c,v 1.5 2011/05/18 21:51:04 tsutsui Exp $ */
 /*-------------------------------------------------------------------------
  * Copyright (c) 1996 Yasushi Yamasaki
  * All rights reserved.
@@ -75,6 +75,7 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 #include "Xos.h"
 #include "x68k.h"
+#include <mi/mi.h>
 
 static int nscreens;
 
@@ -164,7 +165,7 @@ void InitInput(int argc, char *argv[])
     RegisterPointerDevice(p);
     RegisterKeyboardDevice(k);
     miRegisterPointerDevice(screenInfo.screens[0], p);
-    if ( !mieqInit(k, p) )
+    if ( !mieqInit((DevicePtr)k, (DevicePtr)p) )
         FatalError("mieqInit failed\n");
 
     /* setup SIGIO handler for asynchronous event handling */
