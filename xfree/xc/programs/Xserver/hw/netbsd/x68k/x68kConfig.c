@@ -1,4 +1,4 @@
-/* $NetBSD: x68kConfig.c,v 1.2 2006/08/03 20:16:39 mhitch Exp $ */
+/* $NetBSD: x68kConfig.c,v 1.3 2011/05/18 21:51:04 tsutsui Exp $ */
 /*-------------------------------------------------------------------------
  * Copyright (c) 1996 Yasushi Yamasaki
  * All rights reserved.
@@ -171,7 +171,7 @@ typedef struct {
 static Token *getToken(void)
 {
     int c;
-    static line = 1;
+    static int line = 1;
     Token *ret;
     
     ret = (Token *)xalloc(sizeof(Token));
@@ -507,15 +507,6 @@ static void parseMode(int argc, Token **argv)
     enum TokenType argtype[]= { TOKEN_SYMBOL };
     Mode *mode;
 
-    /* in x68kText.c */
-    Bool x68kTextOpen(X68kScreenRec *fb);
-    Bool x68kTextInit(int screen, ScreenPtr pScreen, int arg, char *argv[]);
-    void x68kTextClose(X68kScreenRec *fb);
-    /* in x68kGraph.c */
-    Bool x68kGraphOpen(X68kScreenRec *fb);
-    Bool x68kGraphInit(int screen, ScreenPtr pScreen, int arg, char *argv[]);
-    void x68kGraphClose(X68kScreenRec *fb);
-    
     checkArguments(1, argtype, argc-1, argv);
 
     /* search mode to set from mode list */

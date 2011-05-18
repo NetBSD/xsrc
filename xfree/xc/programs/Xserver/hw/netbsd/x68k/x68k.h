@@ -1,4 +1,4 @@
-/* $NetBSD: x68k.h,v 1.1.1.1 2004/01/07 12:51:46 minoura Exp $ */
+/* $NetBSD: x68k.h,v 1.2 2011/05/18 21:51:04 tsutsui Exp $ */
 /*-------------------------------------------------------------------------
  * Copyright (c) 1996 Yasushi Yamasaki
  * All rights reserved.
@@ -131,4 +131,18 @@ int x68kGeneration;
                             ((s)->devPrivates[x68kScreenIndex].ptr))
 #define SetupScreen(s) X68kScreenRec *pPriv = GetScreenPrivate(s)
 
+/* x68kFB.c */
+Bool x68kFbCommonOpen(X68kScreenRec *, char *);
+void x68kFbCommonClose(X68kScreenRec *);
+
+/* x68kText.c */
+Bool x68kTextOpen(X68kScreenRec *fb);
+Bool x68kTextInit(int screen, ScreenPtr pScreen, int arg, char *argv[]);
+void x68kTextClose(X68kScreenRec *fb);
+
+/* x68kGraph.c */
+Bool x68kGraphOpen(X68kScreenRec *fb);
+Bool x68kGraphInit(int screen, ScreenPtr pScreen, int arg, char *argv[]);
+void x68kGraphClose(X68kScreenRec *fb);
+    
 /* EOF x68k.h */
