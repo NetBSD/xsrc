@@ -7,6 +7,8 @@
 #include "os.h"
 #include "geode.h"
 
+#define lseek64 lseek
+
 static int
 _msr_open(void)
 {
