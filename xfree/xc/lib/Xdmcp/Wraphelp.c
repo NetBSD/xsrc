@@ -1,4 +1,4 @@
-/* $NetBSD: Wraphelp.c,v 1.2 2005/03/18 15:51:29 tron Exp $ */
+/* $NetBSD: Wraphelp.c,v 1.3 2011/05/18 21:00:27 tsutsui Exp $ */
 
 /* Export of this software from the United States of America is assumed
  * to require a specific license from the United States Government.
@@ -118,7 +118,7 @@ static	char	e[] = {
  * Set up the key schedule from the key.
  */
 
-static
+static void
 setkey(key)
 char *key;
 {
@@ -257,12 +257,13 @@ static	char	preS[48];
  * The payoff: encrypt a block.
  */
 
-static
+static void
 encrypt (block, edflag)
 char *block;
+int edflag;
 {
 	int i, ii;
-	register t, j, k;
+	register int t, j, k;
 
 	/*
 	 * First, permute the bits in the input
@@ -347,7 +348,7 @@ char *block;
 		block[j] = L[FP[j]-1];
 }
 
-static
+static void
 bytes_to_bits (bytes, bits)
     unsigned char   *bytes;
     char	    *bits;
@@ -362,7 +363,7 @@ bytes_to_bits (bytes, bits)
     }
 }
 
-static
+static void
 bits_to_bytes (bits, bytes)
     char	    *bits;
     unsigned char   *bytes;
