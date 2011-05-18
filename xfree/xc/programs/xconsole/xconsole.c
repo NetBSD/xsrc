@@ -172,6 +172,9 @@ static char ttydev[64], ptydev[64];
 #endif
 
 #ifdef USE_PTY
+#if defined(__NetBSD__) || defined(__OpenBSD__) || defined(__FreeBSD__)
+#include <util.h>
+#endif
 static int get_pty(int *pty, int *tty, char *ttydev, char *ptydev);
 #endif
 #ifdef USE_OSM

@@ -376,7 +376,7 @@ extern struct utmp *getutid __((struct utmp * _Id));
 #include <local/openpty.h>
 #endif /* PUCC_PTYD */
 
-#ifdef __OpenBSD__
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 #include <util.h>
 #endif
 
