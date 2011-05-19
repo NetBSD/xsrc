@@ -1,105 +1,36 @@
-NAME		= ssh-askpass
-CLASS		= SshAskpass
 
-CAT		= cat
-CHMOD		= chmod -c
-CP		= cp -df
-GREP		= grep
-GZIP		= gzip
-LN		= ln -sf
-MKDIR		= mkdir -p
-MV		= mv -f
-RM		= rm -f
-SED		= sed
-TAR		= tar
+           SRCS = drawing.c dynlist.c resources.c x11-ssh-askpass.c
+           OBJS = drawing.o dynlist.o resources.o x11-ssh-askpass.o
+        DEPLIBS = $(DEPXTOOLLIB) $(DEPXLIB) $(DEPXINERAMALIB)
+LOCAL_LIBRARIES = $(XTOOLLIB) $(XLIB) $(XINERAMALIB)
 
-MAKE_CHANGELOG	= cvs2cl
+           NAME = ssh-askpass
+          CLASS = SshAskpass
+        VERSION = 1.2.0
+           DATE = February 14, 2001
+   APP_DEFAULTS = $(CLASS)-default.ad
 
-VERSION		= 1.0
-PROJECT		= $(NAME)-$(VERSION)
-TARBALL_DIR	= $(PROJECT)
-TARBALL		= $(PROJECT).tar.gz
-
-HDRS = \@@\
- drawing.h \@@\
- dynlist.h \@@\
- resources.h \@@\
- x11-ssh-askpass.h
-
-SRCS = \@@\
- drawing.c \@@\
- dynlist.c \@@\
- resources.c \@@\
- x11-ssh-askpass.c
-
-OBJS = \@@\
- drawing.o \@@\
- dynlist.o \@@\
- resources.o \@@\
- x11-ssh-askpass.o
-
-APP_DEFAULT_EXAMPLES = \@@\
- $(CLASS)-1337.ad \@@\
- $(CLASS)-NeXTish.ad \@@\
- $(CLASS)-green.ad \@@\
- $(CLASS)-motif.ad \@@\
- $(CLASS)-default.ad
-
-EXTRAS = \@@\
- ChangeLog \@@\
- Imakefile \@@\
- README \@@\
- $(APP_DEFAULT_EXAMPLES)
- 
-APP_DEFAULTS	= $(CLASS)-default.ad
-
-DEPLIBS        	= $(DEPXTOOLLIB) $(DEPXLIB)
-LOCAL_LIBRARIES	= $(XTOOLLIB) $(XLIB)
-
-#ifndef ComplexProgramTargetNoMan
-#define ComplexProgramTargetNoMan(x) ComplexProgramTarget(x)
-#endif
-
-#ifndef InstallAppDefaults
-#define InstallAppDefaults(x) InstallNamedNonExec(x.ad,x,$(XAPPLOADDIR))
-#endif
-
-ComplexProgramTargetNoMan($(NAME))
-InstallAppDefaults($(CLASS))
-
-.PHONY: depends changelog realclean tar
-
-depends: depend
-
-includes:: $(CLASS)_ad.h
+$(CLASS)_ad.h: $(CLASS).ad
+	cat $(CLASS).ad | grep -v '^[ 	]*$$' |\
+	  awk '/^[ 	]*!/ { sub("^[ 	]*![ ]?","", $$0); printf("/* %s */\n", $$0); next } ! /^[ 	]*!/ { printf("\"%s\",\n", $$0) }' \
+	  >$@
 
 $(CLASS).ad:
 	$(LN) $(APP_DEFAULTS) $(CLASS).ad
 
-$(CLASS)_ad.h: $(CLASS).ad
-	$(SED) -n '/^[^!]/s/.*/"&",/p' <$(CLASS).ad >$@
+$(NAME).man: x11-ssh-askpass.man.in Imakefile
+	sed \@@\
+	  -e 's#@NAME@#$(NAME)#g' \@@\
+	  -e 's#@VERSION@#$(VERSION)#g' \@@\
+	  -e 's#@DATE@#$(DATE)#g' \@@\
+	  <x11-ssh-askpass.man.in >$@.tmp
+	$(MV) $@.tmp $@
 
-changelog:
-	$(MAKE_CHANGELOG)
+includes:: $(CLASS)_ad.h $(NAME).man
 
 clean::
-	-$(RM) $(CLASS)_ad.h $(CLASS).ad
+	$(RM) -f $(CLASS)_ad.h $(CLASS).ad
+	$(RM) -f $(NAME).man
 
-realclean: clean
-	-$(RM) Makefile Makefile.bak
-
-tar: changelog
-	-$(RM) -r $(TARBALL_DIR)
-	$(MKDIR) $(TARBALL_DIR)
-	$(CP) $(EXTRAS) $(SRCS) $(HDRS) $(TARBALL_DIR)/
-	$(CHMOD) -R u+rwX,go+rX,go-w $(TARBALL_DIR)
-	-$(RM) $(TARBALL).bak
-	-$(MV) $(TARBALL) $(TARBALL).bak
-	$(TAR) -cvf - $(TARBALL_DIR) |$(GZIP) -9 -c >$(TARBALL)
-	-$(RM) -r $(TARBALL_DIR)
-
-install::
-	# XXX Should use X variables of some sort!
-	mkdir -p $(DESTDIR)/usr/X11R6/share/examples/ssh-askpass
-	$(INSTALL) $(INSTALLFLAGS) $(INSTAPPFLAGS) $(APP_DEFAULT_EXAMPLES) $(DESTDIR)/usr/X11R6/share/examples/ssh-askpass
-
+ComplexProgramTarget($(NAME))
+InstallAppDefaults($(CLASS))
