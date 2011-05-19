@@ -1,4 +1,4 @@
-/* $NetBSD: crime_driver.c,v 1.9 2010/12/17 04:19:50 mrg Exp $ */
+/* $NetBSD: crime_driver.c,v 1.10 2011/05/19 03:05:19 christos Exp $ */
 /*
  * Copyright (c) 2008 Michael Lorenz
  * All rights reserved.
@@ -40,6 +40,7 @@
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/mman.h>
+#include <sys/ioctl.h>
 #include <dev/wscons/wsconsio.h>
 
 /* all driver need this */
@@ -520,7 +521,7 @@ CrimePreInit(ScrnInfoPtr pScrn, int flags)
 	xf86LoaderReqSymLists(fbSymbols, NULL);
 
 	if (xf86LoadSubModule(pScrn, "xaa") == NULL) {
-		PnozzFreeRec(pScrn);
+		CrimeFreeRec(pScrn);
 		return FALSE;
 	}
 	xf86LoaderReqSymLists(xaaSymbols, NULL);
