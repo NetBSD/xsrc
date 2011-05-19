@@ -47,6 +47,7 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 ********************************************************/
 
 #include <stdio.h>
+#include <mi/mi.h>
 
 #define	NEED_EVENTS
 #include "ews4800mips.h"
@@ -75,7 +76,7 @@ ews4800mipsCleanupFd(int fd)
  *	Events are passed to the DIX layer.
  */
 void
-ProcessInputEvents ()
+ProcessInputEvents(void)
 {
 	(void) mieqProcessInputEvents ();
 	miPointerUpdate ();
@@ -87,7 +88,7 @@ ProcessInputEvents ()
  *	enqueue them using the mi event queue
  */
 void
-ews4800mipsEnqueueEvents ()
+ews4800mipsEnqueueEvents(void)
 {
 	ews4800mipsEvent *ptrEvents;    /* Current pointer event */
 	ews4800mipsEvent *kbdEvents;    /* Current keyboard event */
@@ -167,7 +168,7 @@ ews4800mipsEnqueueEvents ()
  * DDX - specific abort routine.  Called by AbortServer().
  */
 void
-AbortDDX()
+AbortDDX(void)
 {
 	int i;
 	ScreenPtr pScreen;
@@ -187,7 +188,7 @@ AbortDDX()
 
 /* Called by GiveUp(). */
 void
-ddxGiveUp()
+ddxGiveUp(void)
 {
 
 	AbortDDX ();
@@ -210,7 +211,7 @@ ddxProcessArgument(int argc, char *argv[], int i)
 }
 
 void
-ddxUseMsg()
+ddxUseMsg(void)
 {
 
 	ews4800mipsErrorF(("-debug              disable non-blocking"

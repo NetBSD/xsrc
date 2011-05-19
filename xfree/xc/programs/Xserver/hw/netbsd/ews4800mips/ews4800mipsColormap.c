@@ -89,10 +89,8 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <stdio.h>
 
 static void
-ews4800mipsUpdateColormap(pScreen, dex, count, rmap, gmap, bmap)
-	ScreenPtr	pScreen;
-	int		dex, count;
-	u_char	*rmap, *gmap, *bmap;
+ews4800mipsUpdateColormap(ScreenPtr pScreen, int dex, int count, u_char *rmap,
+    u_char *gmap, u_char *bmap)
 {
 	struct wsdisplay_cmap cmap;
 	ews4800mipsFbPtr pFb = ews4800mipsGetScreenFb(pScreen);
@@ -110,8 +108,7 @@ ews4800mipsUpdateColormap(pScreen, dex, count, rmap, gmap, bmap)
 }
 
 static void
-ews4800mipsInstallColormap(cmap)
-	ColormapPtr	cmap;
+ews4800mipsInstallColormap(ColormapPtr cmap)
 {
 	ews4800mipsScreenPtr pPrivate = ews4800mipsGetScreenPrivate(cmap->pScreen);
 	ews4800mipsFbPtr pFb = ews4800mipsGetScreenFb(cmap->pScreen);
@@ -165,8 +162,7 @@ ews4800mipsInstallColormap(cmap)
 }
 
 static void
-ews4800mipsUninstallColormap(cmap)
-	ColormapPtr	cmap;
+ews4800mipsUninstallColormap(ColormapPtr cmap)
 {
 	ews4800mipsScreenPtr pPrivate = ews4800mipsGetScreenPrivate(cmap->pScreen);
 
@@ -185,9 +181,7 @@ ews4800mipsUninstallColormap(cmap)
 }
 
 static int
-ews4800mipsListInstalledColormaps(pScreen, pCmapList)
-	ScreenPtr	pScreen;
-	Colormap	*pCmapList;
+ews4800mipsListInstalledColormaps(ScreenPtr pScreen, Colormap *pCmapList)
 {
 	ews4800mipsScreenPtr pPrivate = ews4800mipsGetScreenPrivate(pScreen);
 
@@ -196,10 +190,7 @@ ews4800mipsListInstalledColormaps(pScreen, pCmapList)
 }
 
 static void
-ews4800mipsStoreColors(pmap, ndef, pdefs)
-	ColormapPtr	pmap;
-	int		ndef;
-	xColorItem	*pdefs;
+ews4800mipsStoreColors(ColormapPtr pmap, int ndef, xColorItem *pdefs)
 {
 	ews4800mipsScreenPtr pPrivate = ews4800mipsGetScreenPrivate(pmap->pScreen);
 	u_char	rmap[256], gmap[256], bmap[256];
@@ -223,8 +214,7 @@ ews4800mipsStoreColors(pmap, ndef, pdefs)
 }
 
 Bool
-ews4800mipsInitializeColormap(pmap)
-	register ColormapPtr	pmap;
+ews4800mipsInitializeColormap(register ColormapPtr pmap)
 {
 	int i;
 	VisualPtr pVisual;
@@ -270,8 +260,7 @@ ews4800mipsInitializeColormap(pmap)
 }
 
 void
-ews4800mipsColormapInit (pScreen)
-	ScreenPtr pScreen;
+ews4800mipsColormapInit(ScreenPtr pScreen)
 {
 	ews4800mipsScreenPtr pPrivate = ews4800mipsGetScreenPrivate(pScreen);
 	ews4800mipsFbPtr pFb = ews4800mipsGetScreenFb(pScreen);
