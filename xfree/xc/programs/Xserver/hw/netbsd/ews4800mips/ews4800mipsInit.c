@@ -1,4 +1,4 @@
-/*	$NetBSD: ews4800mipsInit.c,v 1.1 2005/12/29 15:43:40 tsutsui Exp $	*/
+/*	$NetBSD: ews4800mipsInit.c,v 1.2 2011/05/19 21:29:12 tsutsui Exp $	*/
 
 #include "ews4800mips.h"
 #include "gcstruct.h"
@@ -173,12 +173,12 @@ GetDeviceList(int argc, char **argv)
 }
 
 void
-OsVendorPreInit()
+OsVendorPreInit(void)
 {
 }
 
 void
-OsVendorInit()
+OsVendorInit(void)
 {
 }
 
@@ -394,7 +394,7 @@ DPMSGet(int *level)
 }
 
 Bool
-DPMSSupported ()
+DPMSSupported(void)
 {
 
 	return FALSE;

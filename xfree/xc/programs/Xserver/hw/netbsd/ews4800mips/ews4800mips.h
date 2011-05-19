@@ -152,6 +152,11 @@ extern Bool noXkbExtension;
 }
 
 /*
+ * ews4800mipsColormap.c
+ */
+void ews4800mipsColormapInit(ScreenPtr);
+
+/*
  * ews4800mipsInit.c
  */
 ews4800mipsFbPtr ews4800mipsGetScreenFb(ScreenPtr);
@@ -183,6 +188,7 @@ void ews4800mipsMouseEnqueueEvent(DeviceIntPtr, ews4800mipsEvent *);
 pointer ews4800mipsMemoryMap(size_t, off_t, int);
 Bool ews4800mipsScreenInit(ScreenPtr);
 ews4800mipsScreenPtr ews4800mipsGetScreenPrivate(ScreenPtr);
+Bool ews4800mipsAllocateScreenPrivate(ScreenPtr);
 
 /*
  * ews4800mipsFB.c
