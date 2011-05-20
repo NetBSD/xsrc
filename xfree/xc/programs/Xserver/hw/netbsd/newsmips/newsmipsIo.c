@@ -50,6 +50,7 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 #define	NEED_EVENTS
 #include "newsmips.h"
+#include "mi.h"
 
 void
 newsmipsCleanupFd(int fd)
