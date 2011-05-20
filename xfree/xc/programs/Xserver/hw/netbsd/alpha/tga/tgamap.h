@@ -18,6 +18,9 @@
 #define alphaTgaTEOps		alphaTga32TEOps
 #define alphaTgaNonTEOps	alphaTga32NonTEOps
 
+void alphaTgaDoBitbltSimple(unsigned int *, unsigned int *, unsigned int,
+    unsigned int, tga_reg_t **, int, int, int, int, int, int, int, int, int);
+
 #else
 #error Unsupported PSZ
 #endif
