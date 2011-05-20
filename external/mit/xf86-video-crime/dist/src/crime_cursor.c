@@ -1,4 +1,4 @@
-/* $NetBSD: crime_cursor.c,v 1.2 2009/06/25 00:58:46 macallan Exp $ */
+/* $NetBSD: crime_cursor.c,v 1.3 2011/05/20 01:49:48 christos Exp $ */
 /*
  * Copyright (c) 2008 Michael Lorenz
  * All rights reserved.
@@ -40,6 +40,7 @@
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/endian.h>
+#include <sys/ioctl.h>
 #include <dev/wscons/wsconsio.h>
 #include <errno.h>
 
