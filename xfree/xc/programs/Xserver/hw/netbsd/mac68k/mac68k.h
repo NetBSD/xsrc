@@ -91,3 +91,7 @@ extern fbinfo_t mac_fbs[MAXSCREENS];
 extern int mac_scrs;
 
 extern miPointerScreenFuncRec mac_mousefuncs;
+
+
+void mac68k_processkbd(DeviceIntPtr, adb_event_t *);
+void mac68k_processmouse(DeviceIntPtr, adb_event_t *);
