@@ -31,6 +31,7 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 #define	FORCE_SEPARATE_PRIVATE
 #include "cfb.h"
+#include "mi.h"
 #include <stdio.h>
 
 extern BSFuncRec cfbBSFuncRec;

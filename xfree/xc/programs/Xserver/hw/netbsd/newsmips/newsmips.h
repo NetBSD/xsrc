@@ -151,6 +151,11 @@ extern Bool noXkbExtension;
 	FatalError a;							\
 }
 
+void newsmipsColormapInit(ScreenPtr);
+
+/*
+ * newsmipsColormap.c
+ */
 /*
  * newsmipsInit.c
  */
@@ -183,6 +188,7 @@ void newsmipsMouseEnqueueEvent(DeviceIntPtr, newsmipsEvent *);
 pointer newsmipsMemoryMap(size_t, off_t, int);
 Bool newsmipsScreenInit(ScreenPtr);
 newsmipsScreenPtr newsmipsGetScreenPrivate(ScreenPtr);
+Bool newsmipsAllocateScreenPrivate(ScreenPtr);
 
 /*
  * newsmipsFB.c
