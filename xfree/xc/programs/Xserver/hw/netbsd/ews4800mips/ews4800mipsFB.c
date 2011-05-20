@@ -31,8 +31,8 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 #define	FORCE_SEPARATE_PRIVATE
 #include "cfb.h"
+#include "mi.h"
 #include <stdio.h>
-#include <mi/mi.h>
 
 extern BSFuncRec cfbBSFuncRec;
 Bool ews4800mips8ScreenInit(ScreenPtr, pointer,	int, int, int, int, int);

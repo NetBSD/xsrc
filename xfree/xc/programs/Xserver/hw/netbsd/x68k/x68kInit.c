@@ -1,4 +1,4 @@
-/* $NetBSD: x68kInit.c,v 1.5 2011/05/18 21:51:04 tsutsui Exp $ */
+/* $NetBSD: x68kInit.c,v 1.6 2011/05/20 04:30:00 tsutsui Exp $ */
 /*-------------------------------------------------------------------------
  * Copyright (c) 1996 Yasushi Yamasaki
  * All rights reserved.
@@ -75,7 +75,7 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 #include "Xos.h"
 #include "x68k.h"
-#include <mi/mi.h>
+#include "mi.h"
 
 static int nscreens;
 

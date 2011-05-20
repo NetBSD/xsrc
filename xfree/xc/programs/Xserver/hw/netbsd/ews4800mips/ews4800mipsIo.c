@@ -47,10 +47,10 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 ********************************************************/
 
 #include <stdio.h>
-#include <mi/mi.h>
 
 #define	NEED_EVENTS
 #include "ews4800mips.h"
+#include "mi.h"
 
 void
 ews4800mipsCleanupFd(int fd)

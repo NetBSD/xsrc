@@ -1,4 +1,4 @@
-/* $NetBSD: x68kKbd.c,v 1.3 2011/05/18 21:51:04 tsutsui Exp $ */
+/* $NetBSD: x68kKbd.c,v 1.4 2011/05/20 04:30:00 tsutsui Exp $ */
 /*-------------------------------------------------------------------------
  * Copyright (c) 1996 Yasushi Yamasaki
  * All rights reserved.
@@ -71,7 +71,7 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 ********************************************************/
 
 #include "x68k.h"
-#include <mi/mi.h>
+#include "mi.h"
 
 #ifdef XKB
 #include <X11/extensions/XKB.h>
