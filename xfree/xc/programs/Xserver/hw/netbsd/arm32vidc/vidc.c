@@ -1,4 +1,4 @@
-/*	$NetBSD: vidc.c,v 1.6 2006/08/14 22:12:59 bjh21 Exp $	*/
+/*	$NetBSD: vidc.c,v 1.7 2011/05/20 01:22:37 christos Exp $	*/
 
 /*
  * Copyright (c) 1999 Neil A. Carson & Mark Brinicombe
@@ -65,6 +65,9 @@
 #include "colormap.h"
 #include "colormapst.h"
 #include "resource.h"
+#include "wscons.h"
+#include "mi.h"
+#include "cfb/cfb.h"
 
 /* #define DEBUG */
 

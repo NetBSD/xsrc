@@ -1,4 +1,4 @@
-/*	$NetBSD: wscons.c,v 1.4 2004/03/14 13:36:48 bjh21 Exp $	*/
+/*	$NetBSD: wscons.c,v 1.5 2011/05/20 01:22:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -53,6 +53,7 @@
 #include "colormap.h"
 #include "colormapst.h"
 #include "resource.h"
+#include "wscons.h"
 
 /* NetBSD headers wscons specific */
 #include <dev/wscons/wsconsio.h>
