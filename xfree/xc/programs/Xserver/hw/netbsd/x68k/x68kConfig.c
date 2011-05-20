@@ -1,4 +1,4 @@
-/* $NetBSD: x68kConfig.c,v 1.3 2011/05/18 21:51:04 tsutsui Exp $ */
+/* $NetBSD: x68kConfig.c,v 1.4 2011/05/20 05:12:42 tsutsui Exp $ */
 /*-------------------------------------------------------------------------
  * Copyright (c) 1996 Yasushi Yamasaki
  * All rights reserved.
@@ -31,6 +31,7 @@
 
 #include <stdarg.h>
 #include "x68k.h"
+#include "opaque.h"
 
 static PixmapFormatRec *x68kFormat = NULL;
 static PixmapFormatRec defaultFormat = {
@@ -45,12 +46,12 @@ static X68kFbProcRec x68kFbProc[X68K_FB_TYPES];
  * function "x68kGetScreenRec"
  *
  *  purpose:  get corresponding screen record
- *  argument: (int)index        : screen index
+ *  argument: (int)sindex       : screen index
  *  returns:  (X68kScreenRec *) : X68k dependent screen record
  *-----------------------------------------------------------------------*/
-X68kScreenRec *x68kGetScreenRec(int index)
+X68kScreenRec *x68kGetScreenRec(int sindex)
 {
-    return &x68kScreen[index];
+    return &x68kScreen[sindex];
 }
 
 /*-------------------------------------------------------------------------
@@ -75,12 +76,12 @@ X68kScreenRec *x68kGetScreenRecByType(int type)
  * function "x68kGetFbProcRec"
  *
  *  purpose:  get corresponding frame buffer procedure record
- *  argument: (int)index        : screen index
+ *  argument: (int)sindex       : screen index
  *  returns:  (X68kFbProcRec *) : frame buffer procedure record
  *-----------------------------------------------------------------------*/
-X68kFbProcRec *x68kGetFbProcRec(int index)
+X68kFbProcRec *x68kGetFbProcRec(int sindex)
 {
-    return &x68kFbProc[index];
+    return &x68kFbProc[sindex];
 }
 
 /*-------------------------------------------------------------------------
@@ -591,8 +592,6 @@ static void parseMouse(int argc, Token **argv)
 static void parseKeyboard(int argc, Token **argv)
 {
     enum TokenType argtype[] = { TOKEN_SYMBOL };
-    extern KeySymsRec jisKeySyms, asciiKeySyms, *x68kKeySyms;
-    extern X68kKbdPriv x68kKbdPriv;
     
     checkArguments(1, argtype, argc-1, argv);
     if (strcasecmp("standard", argv[1]->content.symbol) == 0) {
@@ -618,9 +617,6 @@ static void parseKeyboard(int argc, Token **argv)
 void parseError(int line, char *str, ...)
 {
     va_list arglist;
-    int n;
-    extern void AbortDDX();
-    extern Bool CoreDump;
     
     fprintf(stderr, "%s:%d: ", configFilename, line);
     if (str != NULL) {

@@ -1,4 +1,4 @@
-/* $NetBSD: x68k.h,v 1.2 2011/05/18 21:51:04 tsutsui Exp $ */
+/* $NetBSD: x68k.h,v 1.3 2011/05/20 05:12:42 tsutsui Exp $ */
 /*-------------------------------------------------------------------------
  * Copyright (c) 1996 Yasushi Yamasaki
  * All rights reserved.
@@ -94,17 +94,18 @@ typedef struct _X68kScreenRec {
  * frame buffer procedures
  */
 typedef struct _X68kFbProcRec {
-    Bool (*open)( X68kScreenRec *fb );            /* open procedure       */
-    Bool (*init)( int screen, ScreenPtr pScreen,  /* initialize procedure */
-                  int argc, char *argv[] );
-    void (*close)( X68kScreenRec *fb );           /* close procedure      */
+    Bool (*open)(X68kScreenRec *);		 /* open procedure       */
+    Bool (*init)(int, ScreenPtr, int, char *[]); /* initialize procedure */
+    void (*close)(X68kScreenRec *);		 /* close procedure      */
 } X68kFbProcRec;
 
 /* frame buffer types */
 #define X68K_FB_NULL    0
 #define X68K_FB_TEXT    1       /* text VRAM frame buffer */
 #define X68K_FB_GRAPHIC 2       /* graphic VRAM frame buffer */
-/* #define X68K_FB_CIRRUS  3       /* not yet */
+#if 0
+#define X68K_FB_CIRRUS  3       /* not yet */
+#endif
 #define X68K_FB_TYPES   2
 
 typedef struct _X68kMousePriv {
@@ -125,24 +126,51 @@ typedef struct _X68kKbdPriv {
 #define MAXEVENTS 32
 #define TVTOMILLI(tv) (((tv).tv_usec/1000)+((tv).tv_sec*1000))
 
-int x68kScreenIndex;
-int x68kGeneration;
 #define GetScreenPrivate(s) ((X68kScreenRec *) \
                             ((s)->devPrivates[x68kScreenIndex].ptr))
 #define SetupScreen(s) X68kScreenRec *pPriv = GetScreenPrivate(s)
 
+/* in x68kConfig.c */
+X68kScreenRec *x68kGetScreenRec(int);
+X68kScreenRec *x68kGetScreenRecByType(int);
+X68kFbProcRec *x68kGetFbProcRec(int index);
+void x68kRegisterPixmapFormats(ScreenInfo *);
+int x68kConfig(void);
+extern char *configFilename;
+
 /* x68kFB.c */
 Bool x68kFbCommonOpen(X68kScreenRec *, char *);
 void x68kFbCommonClose(X68kScreenRec *);
-
-/* x68kText.c */
-Bool x68kTextOpen(X68kScreenRec *fb);
-Bool x68kTextInit(int screen, ScreenPtr pScreen, int arg, char *argv[]);
-void x68kTextClose(X68kScreenRec *fb);
+Bool x68kSaveScreen(ScreenPtr, Bool);
+extern int x68kScreenIndex;
+extern int x68kGeneration;
 
 /* x68kGraph.c */
-Bool x68kGraphOpen(X68kScreenRec *fb);
-Bool x68kGraphInit(int screen, ScreenPtr pScreen, int arg, char *argv[]);
-void x68kGraphClose(X68kScreenRec *fb);
-    
+Bool x68kGraphOpen(X68kScreenRec *);
+Bool x68kGraphInit(int, ScreenPtr, int, char *[]);
+void x68kGraphClose(X68kScreenRec *);
+
+/* in x68kIo.c */
+void x68kSigIOHandler(int);
+
+/* in x68kMouse.c */
+int x68kMouseProc(DeviceIntPtr, int);
+Firm_event *x68kMouseGetEvents(int, int *, Bool *);
+void x68kMouseEnqueueEvent(DeviceIntPtr, Firm_event *);
+extern miPointerScreenFuncRec x68kPointerScreenFuncs;
+
+/* in x68kKbd.c */
+int x68kKbdProc(DeviceIntPtr, int);
+Firm_event *x68kKbdGetEvents(int, int *, Bool *);
+void x68kKbdEnqueueEvent(DeviceIntPtr, Firm_event *);
+extern X68kKbdPriv x68kKbdPriv;
+
+/* in x68kKeyMap.c */
+extern KeySymsRec jisKeySyms, asciiKeySyms, *x68kKeySyms;
+
+/* x68kText.c */
+Bool x68kTextOpen(X68kScreenRec *);
+Bool x68kTextInit(int, ScreenPtr, int, char *[]);
+void x68kTextClose(X68kScreenRec *);
+
 /* EOF x68k.h */

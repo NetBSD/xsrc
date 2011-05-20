@@ -1,4 +1,4 @@
-/* $NetBSD: x68kInit.c,v 1.6 2011/05/20 04:30:00 tsutsui Exp $ */
+/* $NetBSD: x68kInit.c,v 1.7 2011/05/20 05:12:42 tsutsui Exp $ */
 /*-------------------------------------------------------------------------
  * Copyright (c) 1996 Yasushi Yamasaki
  * All rights reserved.
@@ -78,20 +78,6 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include "mi.h"
 
 static int nscreens;
-
-/* in x68kConfig.c */
-X68kScreenRec *x68kGetScreenRec(int index);
-X68kFbProcRec *x68kGetFbProcRec(int index);
-void x68kRegisterPixmapFormats(ScreenInfo *pScreenInfo);
-int x68kConfig(void);
-
-/* in x68kIo.c */
-void x68kSigIOHandler(int sig);
-
-/* in x68kMouse.c */
-int x68kMouseProc(DeviceIntPtr device, int what);
-/* in x68kKbd.c */
-int x68kKbdProc(DeviceIntPtr device, int what);
 
 void OsVendorInit (
 #if NeedFunctionPrototypes
@@ -219,9 +205,7 @@ void ddxGiveUp(void)
  *-----------------------------------------------------------------------*/
 int ddxProcessArgument(int argc, char *argv[], int i)
 {
-    extern char *configFilename;
-    extern void UseMsg();
-    
+
     if (strcmp(argv[i], "-x68kconfig") == 0) {
         if (++i >= argc)
             UseMsg();
@@ -255,6 +239,7 @@ void OsVendorFatalError(void)
  * stubs
  *
  ***************************************************************/
+#include <Xext/dpmsproc.h>
 
 void DPMSSet (level)
     int level;
