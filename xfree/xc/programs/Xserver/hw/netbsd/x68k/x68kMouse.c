@@ -1,4 +1,4 @@
-/* $NetBSD: x68kMouse.c,v 1.2 2011/05/18 21:51:04 tsutsui Exp $ */
+/* $NetBSD: x68kMouse.c,v 1.3 2011/05/20 04:30:00 tsutsui Exp $ */
 /*-------------------------------------------------------------------------
  * Copyright (c) 1996 Yasushi Yamasaki
  * All rights reserved.
@@ -81,8 +81,8 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
  * implied warranty.
  */
 
-#include    "x68k.h"
-#include <mi/mi.h>
+#include "x68k.h"
+#include "mi.h"
 
 static Bool x68kCursorOffScreen();
 static void x68kCrossScreen();

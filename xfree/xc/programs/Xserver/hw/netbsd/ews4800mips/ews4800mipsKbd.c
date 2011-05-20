@@ -43,10 +43,10 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #define	NEED_EVENTS
 #include "ews4800mips.h"
 #include "keysym.h"
+#include "mi.h"
 #include <stdio.h>
 #include <sys/time.h>
 #include <X11/extensions/XKB.h>
-#include <mi/mi.h>
 
 extern KeySymsRec ews4800mipsKeySyms[];
 extern ews4800mipsModmapRec *ews4800mipsModMaps[];

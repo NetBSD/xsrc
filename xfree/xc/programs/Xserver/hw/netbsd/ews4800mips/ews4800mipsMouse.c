@@ -53,8 +53,8 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 #define	NEED_EVENTS
 #include "ews4800mips.h"
+#include "mi.h"
 #include <stdio.h>
-#include <mi/mi.h>
 
 static Bool ews4800mipsCursorOffScreen();
 static void ews4800mipsCrossScreen();

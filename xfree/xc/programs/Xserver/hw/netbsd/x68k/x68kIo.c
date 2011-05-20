@@ -1,4 +1,4 @@
-/* $NetBSD: x68kIo.c,v 1.2 2011/05/18 21:51:04 tsutsui Exp $ */
+/* $NetBSD: x68kIo.c,v 1.3 2011/05/20 04:30:00 tsutsui Exp $ */
 /*-------------------------------------------------------------------------
  * Copyright (c) 1996 Yasushi Yamasaki
  * All rights reserved.
@@ -73,8 +73,8 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ********************************************************/
 
-#include    "x68k.h"
-#include <mi/mi.h>
+#include "x68k.h"
+#include "mi.h"
 
 static void x68kEnqueueEvents();
 extern Firm_event* x68kMouseGetEvents( int fd, int *pNumEvents, Bool *pAgain );
