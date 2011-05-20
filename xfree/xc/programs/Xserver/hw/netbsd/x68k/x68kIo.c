@@ -1,4 +1,4 @@
-/* $NetBSD: x68kIo.c,v 1.3 2011/05/20 04:30:00 tsutsui Exp $ */
+/* $NetBSD: x68kIo.c,v 1.4 2011/05/20 05:12:42 tsutsui Exp $ */
 /*-------------------------------------------------------------------------
  * Copyright (c) 1996 Yasushi Yamasaki
  * All rights reserved.
@@ -76,11 +76,7 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include "x68k.h"
 #include "mi.h"
 
-static void x68kEnqueueEvents();
-extern Firm_event* x68kMouseGetEvents( int fd, int *pNumEvents, Bool *pAgain );
-extern void x68kMouseEnqueueEvent( DeviceIntPtr device, Firm_event *fe );
-extern Firm_event* x68kKbdGetEvents( int fd, int *pNumEvents, Bool *pAgain );
-extern void x68kKbdEnqueueEvent( DeviceIntPtr device, Firm_event *fe );
+static void x68kEnqueueEvents(void);
 
 /*--------------------------------------------------------------------
  * function "x68kSigIOHandler"
@@ -112,7 +108,7 @@ int sig;
  *	Events are passed to the DIX layer.
  *
  *-----------------------------------------------------------------*/
-void ProcessInputEvents()
+void ProcessInputEvents(void)
 {
     (void) mieqProcessInputEvents ();
     miPointerUpdate ();
@@ -124,7 +120,7 @@ void ProcessInputEvents()
  *	enqueue them using the mi event queue
  */
 
-static void x68kEnqueueEvents()
+static void x68kEnqueueEvents(void)
 {
     Firm_event	*ptrEvents,    	/* Current pointer event */
 		*kbdEvents;    	/* Current keyboard event */
@@ -150,6 +146,8 @@ static void x68kEnqueueEvents()
     PtrAgain = TRUE;
     numKbdEvents = 0;
     KbdAgain = TRUE;
+    ptrEvents = NULL;	/* XXX gcc */
+    kbdEvents = NULL;	/* XXX gcc */
 
     /*
      * So long as one event from either device remains unprocess, we loop:

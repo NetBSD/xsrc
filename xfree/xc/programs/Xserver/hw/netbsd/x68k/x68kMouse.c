@@ -1,4 +1,4 @@
-/* $NetBSD: x68kMouse.c,v 1.3 2011/05/20 04:30:00 tsutsui Exp $ */
+/* $NetBSD: x68kMouse.c,v 1.4 2011/05/20 05:12:42 tsutsui Exp $ */
 /*-------------------------------------------------------------------------
  * Copyright (c) 1996 Yasushi Yamasaki
  * All rights reserved.
@@ -84,10 +84,10 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include "x68k.h"
 #include "mi.h"
 
-static Bool x68kCursorOffScreen();
-static void x68kCrossScreen();
-static void x68kWarpCursor();
-static void x68kMouseCtrl(DeviceIntPtr device, PtrCtrl* ctrl);
+static Bool x68kCursorOffScreen(ScreenPtr *, int *, int *);
+static void x68kCrossScreen(ScreenPtr, Bool);
+static void x68kWarpCursor(ScreenPtr, int, int);
+static void x68kMouseCtrl(DeviceIntPtr, PtrCtrl*);
 
 miPointerScreenFuncRec x68kPointerScreenFuncs = {
     x68kCursorOffScreen,
@@ -114,7 +114,6 @@ int x68kMouseProc(DeviceIntPtr device, int what)
     int	    	format;
     static int	oformat;
     BYTE    	map[4];
-    char	*dev;
 
     switch (what) {
 	case DEVICE_INIT:
@@ -274,12 +273,12 @@ void x68kMouseEnqueueEvent(DeviceIntPtr device, Firm_event *fe)
     xEvent		xE;
     X68kMousePrivPtr	pPriv;	/* Private data for pointer */
     int			bmask;	/* Temporary button mask */
-    unsigned long	time;
+    time_t		etime;
     int			x, y;
 
     pPriv = (X68kMousePrivPtr)device->public.devicePrivate;
 
-    time = xE.u.keyButtonPointer.time = TVTOMILLI(fe->time);
+    etime = xE.u.keyButtonPointer.time = TVTOMILLI(fe->time);
     
     switch (fe->id) {
     case MS_LEFT:
@@ -312,7 +311,7 @@ void x68kMouseEnqueueEvent(DeviceIntPtr device, Firm_event *fe)
 	mieqEnqueue (&xE);
 	break;
     case LOC_X_DELTA:
-	miPointerDeltaCursor (MouseAccelerate(device,fe->value),0,time);
+	miPointerDeltaCursor (MouseAccelerate(device,fe->value),0,etime);
 	break;
     case LOC_Y_DELTA:
 	/*
@@ -320,15 +319,15 @@ void x68kMouseEnqueueEvent(DeviceIntPtr device, Firm_event *fe)
 	 * and motion down a negative delta, so we must subtract
 	 * here instead of add...
 	 */
-	miPointerDeltaCursor (0,-MouseAccelerate(device,fe->value),time);
+	miPointerDeltaCursor (0,-MouseAccelerate(device,fe->value),etime);
 	break;
     case LOC_X_ABSOLUTE:
 	miPointerPosition (&x, &y);
-	miPointerAbsoluteCursor (fe->value, y, time);
+	miPointerAbsoluteCursor (fe->value, y, etime);
 	break;
     case LOC_Y_ABSOLUTE:
 	miPointerPosition (&x, &y);
-	miPointerAbsoluteCursor (x, fe->value, time);
+	miPointerAbsoluteCursor (x, fe->value, etime);
 	break;
     default:
 	FatalError ("sunMouseEnqueueEvent: unrecognized id\n");

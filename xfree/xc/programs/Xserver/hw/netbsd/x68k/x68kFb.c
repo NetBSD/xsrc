@@ -1,4 +1,4 @@
-/* $NetBSD: x68kFb.c,v 1.2 2005/12/09 05:44:51 mhitch Exp $ */
+/* $NetBSD: x68kFb.c,v 1.3 2011/05/20 05:12:42 tsutsui Exp $ */
 /*-------------------------------------------------------------------------
  * Copyright (c) 1996 Yasushi Yamasaki
  * All rights reserved.
@@ -32,6 +32,9 @@
 #include "x68k.h"
 
 static void x68kRegSetup(X68kScreenRec *pPriv);
+
+int x68kScreenIndex;
+int x68kGeneration;
 
 /*-------------------------------------------------------------------------
  * function "x68kFbCommonOpen"
@@ -158,19 +161,19 @@ static void x68kRegSetup(X68kScreenRec *pPriv)
 Bool x68kSaveScreen(ScreenPtr pScreen, Bool on)
 {
     SetupScreen(pScreen);
-    static int stat = FALSE;
+    static int status = FALSE;
     static u_short r2;
 
     if (on == SCREEN_SAVER_ON || on == SCREEN_SAVER_CYCLE) {
-        if (!stat) {
+        if (!status) {
             r2 = pPriv->reg->videoc.r2;
             pPriv->reg->videoc.r2 = 0x0000;
-            stat = TRUE;
+            status = TRUE;
         }
     } else {
-        if (stat) {
+        if (status) {
             pPriv->reg->videoc.r2 = r2;
-            stat = FALSE;
+            status = FALSE;
         }
     }
     return TRUE;

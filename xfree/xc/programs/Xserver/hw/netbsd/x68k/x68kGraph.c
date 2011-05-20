@@ -1,4 +1,4 @@
-/* $NetBSD: x68kGraph.c,v 1.4 2011/05/20 04:30:00 tsutsui Exp $ */
+/* $NetBSD: x68kGraph.c,v 1.5 2011/05/20 05:12:42 tsutsui Exp $ */
 /*-------------------------------------------------------------------------
  * Copyright (c) 1996 Yasushi Yamasaki
  * All rights reserved.
@@ -197,7 +197,6 @@ void x68kGraphClose(X68kScreenRec *pPriv)
  *-----------------------------------------------------------------------*/
 Bool x68kGraphInit(int screen, ScreenPtr pScreen, int argc, char *argv[])
 {
-    extern miPointerScreenFuncRec x68kPointerScreenFuncs;
     X68kScreenRec *pPriv;
 
     /* get private screen record set by X68KConfig */
@@ -269,8 +268,6 @@ static Bool x68kCfbFinishScreenInit(
     int		ndepths;
     VisualID	defaultVisual;
     int		rootdepth = 0;
-    extern BSFuncRec cfb16BSFuncRec;
-    extern Bool cfb16CreateScreenResources(ScreenPtr pScreen);
 
     /* for 15/16bit TrueColor visual mode */
     if (pPriv->depth == 15 && pPriv->class == TrueColor) {

@@ -1,4 +1,4 @@
-/* $NetBSD: x68kKbd.c,v 1.4 2011/05/20 04:30:00 tsutsui Exp $ */
+/* $NetBSD: x68kKbd.c,v 1.5 2011/05/20 05:12:42 tsutsui Exp $ */
 /*-------------------------------------------------------------------------
  * Copyright (c) 1996 Yasushi Yamasaki
  * All rights reserved.
@@ -77,24 +77,20 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <X11/extensions/XKB.h>
 #include <X11/extensions/XKBstr.h>
 #include <X11/extensions/XKBsrv.h>
-extern Bool noXkbExtension;
 #endif
 
 #define MIN_KEYCODE     7       /* necessary to avoid the mouse buttons */
 #define MAX_KEYCODE     255     /* limited by the protocol */
 
-extern KeySymsRec *x68kKeySyms;
-
 X68kKbdPriv x68kKbdPriv;
 
-static void x68kInitModMap(KeySymsRec *x68kKeySyms, CARD8 *x68kModMap);
+static void x68kInitModMap(KeySymsRec *, CARD8 *);
 #ifdef XKB
-static void x68kInitKbdNames(XkbComponentNamesRec* names, X68kKbdPrivPtr pKbd);
+static void x68kInitKbdNames(XkbComponentNamesRec *, X68kKbdPrivPtr);
 #endif
-static void x68kKbdBell(int percent, DeviceIntPtr device,
-                     pointer ctrl, int unused);
-static void x68kKbdCtrl(DeviceIntPtr device, KeybdCtrl *ctrl);
-static void x68kSetLeds(X68kKbdPrivPtr pPriv, u_char data);
+static void x68kKbdBell(int, DeviceIntPtr, pointer, int);
+static void x68kKbdCtrl(DeviceIntPtr, KeybdCtrl *);
+static void x68kSetLeds(X68kKbdPrivPtr, u_char);
 
 /*------------------------------------------------------------------------
  * x68kKbdProc --
@@ -168,23 +164,23 @@ int x68kKbdProc(DeviceIntPtr device, 	/* Keyboard to manipulate */
  *            (CARD8 *)x68kModMap       : result
  *  returns:  nothing
  *-----------------------------------------------------------------------*/
-static void x68kInitModMap(KeySymsRec *x68kKeySyms, CARD8 *x68kModMap)
+static void x68kInitModMap(KeySymsRec *KeySyms, CARD8 *x68kModMap)
 {
     int i;
     
     for (i = 0; i < MAP_LENGTH; i++)
         x68kModMap[i] = NoSymbol;
-    if (x68kKeySyms->minKeyCode < MIN_KEYCODE) {
-        x68kKeySyms->minKeyCode += MIN_KEYCODE;
-        x68kKeySyms->maxKeyCode += MIN_KEYCODE;
+    if (KeySyms->minKeyCode < MIN_KEYCODE) {
+        KeySyms->minKeyCode += MIN_KEYCODE;
+        KeySyms->maxKeyCode += MIN_KEYCODE;
     }
 #if 0
-    if (x68kKeySyms->maxKeyCode > MAX_KEYCODE)
-        x68kKeySyms->maxKeyCode += MAX_KEYCODE;
+    if (KeySyms->maxKeyCode > MAX_KEYCODE)
+        KeySyms->maxKeyCode += MAX_KEYCODE;
 #endif
-    for (i = x68kKeySyms->minKeyCode;
-         i < x68kKeySyms->maxKeyCode; i++) {
-        switch (x68kKeySyms->map[(i-x68kKeySyms->minKeyCode)*4]) {
+    for (i = KeySyms->minKeyCode;
+         i < KeySyms->maxKeyCode; i++) {
+        switch (KeySyms->map[(i-KeySyms->minKeyCode)*4]) {
             case XK_Shift_L:
             case XK_Shift_R:
                 x68kModMap[i] = ShiftMask;

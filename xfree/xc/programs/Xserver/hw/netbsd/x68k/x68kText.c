@@ -1,4 +1,4 @@
-/* $NetBSD: x68kText.c,v 1.2 2011/05/18 21:51:04 tsutsui Exp $ */
+/* $NetBSD: x68kText.c,v 1.3 2011/05/20 05:12:42 tsutsui Exp $ */
 /*-------------------------------------------------------------------------
  * Copyright (c) 1996 Yasushi Yamasaki
  * All rights reserved.
@@ -99,7 +99,6 @@ void x68kTextClose(X68kScreenRec *pPriv)
  *-----------------------------------------------------------------------*/
 Bool x68kTextInit(int screen, ScreenPtr pScreen, int argc, char *argv[])
 {
-    extern miPointerScreenFuncRec x68kPointerScreenFuncs;
     X68kScreenRec *pPriv;
 
     /* get private screen record set by X68KConfig */
