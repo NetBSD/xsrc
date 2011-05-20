@@ -53,6 +53,7 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 #define	NEED_EVENTS
 #include "newsmips.h"
+#include "mi.h"
 #include <stdio.h>
 
 static Bool newsmipsCursorOffScreen();
