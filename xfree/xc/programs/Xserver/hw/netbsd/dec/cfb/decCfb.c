@@ -1,4 +1,4 @@
-/* $NetBSD: decCfb.c,v 1.1 2004/01/18 05:21:41 rtr Exp $ */
+/* $NetBSD: decCfb.c,v 1.2 2011/05/20 01:48:17 christos Exp $ */
 
 /* XConsortium: sunCfb.c,v 1.15.1.2 95/01/12 18:54:42 kaleb Exp */
 /* XFree86: xc/programs/Xserver/hw/sun/sunCfb.c,v 3.2 1995/02/12 02:36:22 dawes Exp */
@@ -89,11 +89,11 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include "dec.h"
 #include "cfb.h"
 
-Bool decCFBInit (screen, pScreen, argc, argv)
-    int	    	  screen;    	/* what screen am I going to be */
-    ScreenPtr	  pScreen;  	/* The Screen to initialize */
-    int	    	  argc;	    	/* The number of the Server's arguments. */
-    char    	  **argv;   	/* The arguments themselves. Don't change! */
+Bool decCFBInit (
+    int	    	  screen,    	/* what screen am I going to be */
+    ScreenPtr	  pScreen,  	/* The Screen to initialize */
+    int	    	  argc,	    	/* The number of the Server's arguments. */
+    char    	  **argv)   	/* The arguments themselves. Don't change! */
 {
 	unsigned char *fb;
 	size_t sz;
@@ -144,13 +144,13 @@ Bool decCFBInit (screen, pScreen, argc, argv)
 }
 
 Bool
-decCfbSetupScreen(pScreen, pbits, xsize, ysize, dpix, dpiy, width, bpp)
-    register ScreenPtr pScreen;
-    pointer pbits;		/* pointer to screen bitmap */
-    int xsize, ysize;		/* in pixels */
-    int dpix, dpiy;		/* dots per inch */
-    int width;			/* pixel width of frame buffer */
-    int	bpp;			/* bits per pixel of root */
+decCfbSetupScreen(
+    ScreenPtr pScreen,
+    pointer pbits,		/* pointer to screen bitmap */
+    int xsize, int ysize,	/* in pixels */
+    int dpix, int dpiy,		/* dots per inch */
+    int width,			/* pixel width of frame buffer */
+    int	bpp)			/* bits per pixel of root */
 {
     switch (bpp) {
     case 32:
@@ -172,13 +172,13 @@ decCfbSetupScreen(pScreen, pbits, xsize, ysize, dpix, dpiy, width, bpp)
 }
 
 Bool
-decCfbFinishScreenInit(pScreen, pbits, xsize, ysize, dpix, dpiy, width, bpp)
-    register ScreenPtr pScreen;
-    pointer pbits;		/* pointer to screen bitmap */
-    int xsize, ysize;		/* in pixels */
-    int dpix, dpiy;		/* dots per inch */
-    int width;			/* pixel width of frame buffer */
-    int bpp;			/* bits per pixel of root */
+decCfbFinishScreenInit(
+    ScreenPtr pScreen,
+    pointer pbits,		/* pointer to screen bitmap */
+    int xsize, int ysize,	/* in pixels */
+    int dpix, int dpiy,		/* dots per inch */
+    int width,			/* pixel width of frame buffer */
+    int bpp)			/* bits per pixel of root */
 {
     Bool retval;
 
@@ -209,13 +209,13 @@ decCfbFinishScreenInit(pScreen, pbits, xsize, ysize, dpix, dpiy, width, bpp)
 }
 
 Bool
-decCfbScreenInit(pScreen, pbits, xsize, ysize, dpix, dpiy, width, bpp)
-    register ScreenPtr pScreen;
-    pointer pbits;		/* pointer to screen bitmap */
-    int xsize, ysize;		/* in pixels */
-    int dpix, dpiy;		/* dots per inch */
-    int width;			/* pixel width of frame buffer */
-    int bpp;			/* bits per pixel of root */
+decCfbScreenInit(
+    ScreenPtr pScreen,
+    pointer pbits,		/* pointer to screen bitmap */
+    int xsize, int ysize,	/* in pixels */
+    int dpix, int dpiy,		/* dots per inch */
+    int width,			/* pixel width of frame buffer */
+    int bpp)			/* bits per pixel of root */
 {
     if (!decCfbSetupScreen(pScreen, pbits, xsize, ysize, dpix,
 	dpiy, width, bpp))
