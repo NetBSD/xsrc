@@ -1,4 +1,4 @@
-/* $NetBSD: decCfb.c,v 1.2 2011/05/20 01:48:17 christos Exp $ */
+/* $NetBSD: decCfb.c,v 1.3 2011/05/21 14:59:34 christos Exp $ */
 
 /* XConsortium: sunCfb.c,v 1.15.1.2 95/01/12 18:54:42 kaleb Exp */
 /* XFree86: xc/programs/Xserver/hw/sun/sunCfb.c,v 3.2 1995/02/12 02:36:22 dawes Exp */
@@ -88,6 +88,9 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 #include "dec.h"
 #include "cfb.h"
+#include "cfb32.h"
+
+static Bool decCfbScreenInit(ScreenPtr, pointer, int, int, int, int, int, int);
 
 Bool decCFBInit (
     int	    	  screen,    	/* what screen am I going to be */
@@ -208,7 +211,7 @@ decCfbFinishScreenInit(
     return retval;
 }
 
-Bool
+static Bool
 decCfbScreenInit(
     ScreenPtr pScreen,
     pointer pbits,		/* pointer to screen bitmap */
