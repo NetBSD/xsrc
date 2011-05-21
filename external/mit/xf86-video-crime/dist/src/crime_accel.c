@@ -1,4 +1,4 @@
-/* $NetBSD: crime_accel.c,v 1.13 2009/10/21 03:28:40 macallan Exp $ */
+/* $NetBSD: crime_accel.c,v 1.14 2011/05/21 15:03:24 christos Exp $ */
 /*
  * Copyright (c) 2008 Michael Lorenz
  * All rights reserved.
@@ -35,6 +35,8 @@
 #include "picturestr.h"
 #include "xaalocal.h"
 #include "xaa.h"
+#include "fb.h"
+#include "mi.h"
 #include "mipict.h"
 
 uint32_t regcache[0x1000];
