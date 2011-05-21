@@ -73,6 +73,7 @@
 #ifdef __NetBSD__
 #include <time.h>
 #include <dev/wscons/wsconsio.h>
+#include <sys/ioctl.h>
 #endif
 
 #include "compiler.h"
