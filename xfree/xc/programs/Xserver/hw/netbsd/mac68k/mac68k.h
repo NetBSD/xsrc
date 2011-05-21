@@ -95,3 +95,5 @@ extern miPointerScreenFuncRec mac_mousefuncs;
 
 void mac68k_processkbd(DeviceIntPtr, adb_event_t *);
 void mac68k_processmouse(DeviceIntPtr, adb_event_t *);
+void mac68k_getmouse(void);
+void mac68k_getkbd(void);

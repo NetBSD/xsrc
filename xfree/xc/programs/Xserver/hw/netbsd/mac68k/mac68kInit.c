@@ -127,7 +127,8 @@ void OsVendorInit(
 	signal(SIGIO, handle_sigio);
 }
 
-choose_best_depths()
+void
+choose_best_depths(void)
 {
 #if 0
 	int scr, mode, best;
@@ -175,6 +176,7 @@ Bool mac68k_screeninit(
 
 
 
+void
 parse_args(
 	int argc,
 	char **argv)
@@ -185,6 +187,7 @@ parse_args(
 }
 
 
+void
 setup_screens(
 	ScreenInfo *xsi,
 	int argc,
