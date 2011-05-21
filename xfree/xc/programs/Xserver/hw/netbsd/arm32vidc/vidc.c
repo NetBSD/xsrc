@@ -1,4 +1,4 @@
-/*	$NetBSD: vidc.c,v 1.7 2011/05/20 01:22:37 christos Exp $	*/
+/*	$NetBSD: vidc.c,v 1.8 2011/05/21 14:30:33 christos Exp $	*/
 
 /*
  * Copyright (c) 1999 Neil A. Carson & Mark Brinicombe
@@ -67,7 +67,7 @@
 #include "resource.h"
 #include "wscons.h"
 #include "mi.h"
-#include "cfb/cfb.h"
+#include "cfb.h"
 
 /* #define DEBUG */
 
