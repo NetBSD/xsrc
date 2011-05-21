@@ -902,7 +902,7 @@ CHIPSProbe(DriverPtr drv, int flags)
 		pScrn->FreeScreen    = CHIPSFreeScreen;
 		pScrn->ValidMode     = CHIPSValidMode;
 		if (!CHIPSGetRec(pScrn)) {
-		    return;
+		    return FALSE;
 		}
 		cPtr = CHIPSPTR(pScrn);
 		cPtr->Chipset = chipset;
