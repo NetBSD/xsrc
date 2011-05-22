@@ -251,6 +251,18 @@ extern RegionPtr afbPixmapToRegion(
 
 /* afbcmap.c */
 
+extern Bool afbCreateDefColormap(
+	ScreenPtr /*pScreen*/
+);
+
+extern int
+afbExpandDirectColors(
+	ColormapPtr /* pmap */,  
+	int /* ndef */,
+	xColorItem * /* indefs */,
+	xColorItem * /* outdefs */
+);
+
 extern int afbListInstalledColormaps(
 	ScreenPtr /*pScreen*/,
 	Colormap * /*pmaps*/
