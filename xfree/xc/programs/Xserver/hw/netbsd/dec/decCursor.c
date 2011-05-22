@@ -1,4 +1,4 @@
-/*	$NetBSD: decCursor.c,v 1.1 2004/01/18 05:21:41 rtr Exp $	*/
+/*	$NetBSD: decCursor.c,v 1.2 2011/05/22 15:51:07 christos Exp $	*/
 
 /* XConsortium: sunCursor.c,v 5.19 94/04/17 20:29:35 gildea Exp */
 /*
@@ -40,6 +40,7 @@ from the X Consortium.
 
 #define NEED_EVENTS
 #include    "dec.h"
+#include    "mfb.h"
 
 #define GetCursorPrivate(s) (&(GetScreenPrivate(s)->hardwareCursor))
 #define SetupCursor(s)	    decCursorPtr pCurPriv = GetCursorPrivate(s)
