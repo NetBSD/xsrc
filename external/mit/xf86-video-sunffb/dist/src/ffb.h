@@ -236,6 +236,8 @@ extern void FFBWidFree(FFBPtr, unsigned int);
 extern unsigned int FFBWidUnshare(FFBPtr, unsigned int);
 extern unsigned int FFBWidReshare(FFBPtr, unsigned int);
 extern void FFBWidChangeBuffer(FFBPtr, unsigned int, int);
+extern void VISmoveImageLR(unsigned char *, unsigned char *, long, long, long, long);
+extern void VISmoveImageRL(unsigned char *, unsigned char *, long, long, long, long);
 
 /* Accelerated double-buffering. */
 extern Bool FFBDbePreInit(ScreenPtr);
