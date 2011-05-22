@@ -20,6 +20,7 @@ OBJS =	 $(OBJS1) afbseg.o afbbltC.o afbbltX.o afbbltCI.o afbbltO.o afbbltG.o \
 	 afbtileC.o afbtileG.o
 
 INCLUDES = -I. -I../../../../mi -I../../../../mfb -I../../../../include \
+		-I../../../../afb \
 		-I$(XINCLUDESRC) -I$(FONTINCSRC)
 LINTDEFS = -DMFBPOLYGLYPHBLT=afbPolyGlyphBltWhite \
 		-DMFBIMAGEGLYPHBLT=afbImageGlyphBltWhite \
