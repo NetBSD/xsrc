@@ -48,6 +48,7 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 #define NEED_EVENTS
 #include    "alpha.h"
+#include    "mi.h"
 
 /*-
  *-----------------------------------------------------------------------
@@ -65,10 +66,10 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *-----------------------------------------------------------------------
  */
 void
-ProcessInputEvents ()
+ProcessInputEvents(void)
 {
-    (void) mieqProcessInputEvents ();
-    miPointerUpdate ();
+    (void) mieqProcessInputEvents();
+    miPointerUpdate();
 }
 
 /*
@@ -78,10 +79,7 @@ ProcessInputEvents ()
  *	enqueue them using the mi event queue
  */
 
-void alphaEnqueueEvents (
-#if NeedFunctionPrototypes
-    void
-#endif
+void alphaEnqueueEvents(void)
 )
 {
     struct wscons_event *ptrEvents,
@@ -122,31 +120,31 @@ void alphaEnqueueEvents (
 	 * in pE and kE
 	 */
 	if ((numPtrEvents == 0) && PtrAgain) {
-	    ptrEvents = alphaMouseGetEvents (ptrPriv->fd, &nPE, &PtrAgain);
+	    ptrEvents = alphaMouseGetEvents(ptrPriv->fd, &nPE, &PtrAgain);
 	    numPtrEvents = nPE;
 	}
 	if ((numKbdEvents == 0) && KbdAgain) {
-	    kbdEvents = alphaKbdGetEvents (kbdPriv->fd, &nKE, &KbdAgain);
+	    kbdEvents = alphaKbdGetEvents(kbdPriv->fd, &nKE, &KbdAgain);
 	    numKbdEvents = nKE;
 	}
 	if ((numPtrEvents == 0) && (numKbdEvents == 0))
 	    break;
 	if (numPtrEvents && numKbdEvents) {
-	    if (timespeccmp (&kbdEvents->time, &ptrEvents->time, <)) {
-		alphaKbdEnqueueEvent (pKeyboard, kbdEvents);
+	    if (timespeccmp(&kbdEvents->time, &ptrEvents->time, <)) {
+		alphaKbdEnqueueEvent(pKeyboard, kbdEvents);
 		numKbdEvents--;
 		kbdEvents++;
 	    } else {
-		alphaMouseEnqueueEvent (pPointer, ptrEvents);
+		alphaMouseEnqueueEvent(pPointer, ptrEvents);
 		numPtrEvents--;
 		ptrEvents++;
 	    }
 	} else if (numKbdEvents) {
-	    alphaKbdEnqueueEvent (pKeyboard, kbdEvents);
+	    alphaKbdEnqueueEvent(pKeyboard, kbdEvents);
 	    numKbdEvents--;
 	    kbdEvents++;
 	} else {
-	    alphaMouseEnqueueEvent (pPointer, ptrEvents);
+	    alphaMouseEnqueueEvent(pPointer, ptrEvents);
 	    numPtrEvents--;
 	    ptrEvents++;
 	}
@@ -156,39 +154,36 @@ void alphaEnqueueEvents (
 /*
  * DDX - specific abort routine.  Called by AbortServer().
  */
-void AbortDDX()
+void AbortDDX(void)
 {
     int		i;
     ScreenPtr	pScreen;
     DevicePtr	devPtr;
 
-    (void) OsSignal (SIGIO, SIG_IGN);
+    (void) OsSignal(SIGIO, SIG_IGN);
 #if 0 /* XXX */
     devPtr = LookupKeyboardDevice();
     if (devPtr)
-	(void) sunChangeKbdTranslation (((sunKbdPrivPtr)(devPtr->devicePrivate))->fd, FALSE);
-    sunNonBlockConsoleOff ();
+	(void) sunChangeKbdTranslation(((sunKbdPrivPtr)(devPtr->devicePrivate))->fd, FALSE);
+    sunNonBlockConsoleOff();
 #endif
     for (i = 0; i < screenInfo.numScreens; i++)
     {
 	pScreen = screenInfo.screens[i];
-	(*pScreen->SaveScreen) (pScreen, SCREEN_SAVER_OFF);
-	alphaDisableCursor (pScreen);
+	(*pScreen->SaveScreen)(pScreen, SCREEN_SAVER_OFF);
+	alphaDisableCursor(pScreen);
     }
 }
 
 /* Called by GiveUp(). */
 void
-ddxGiveUp()
+ddxGiveUp(void)
 {
-    AbortDDX ();
+    AbortDDX();
 }
 
 int
-ddxProcessArgument (argc, argv, i)
-    int	argc;
-    char *argv[];
-    int	i;
+ddxProcessArgument(int argc, char *argv[], int i)
 {
     extern void UseMsg();
 
@@ -198,64 +193,64 @@ ddxProcessArgument (argc, argv, i)
     }
 #if 0 /* XXX */
 #ifndef XKB
-    if (strcmp (argv[i], "-ar1") == 0) {	/* -ar1 int */
-	if (++i >= argc) UseMsg ();
+    if (strcmp(argv[i], "-ar1") == 0) {	/* -ar1 int */
+	if (++i >= argc) UseMsg();
 	sunAutoRepeatInitiate = 1000 * (long)atoi(argv[i]);
 	if (sunAutoRepeatInitiate > 1000000)
 	    sunAutoRepeatInitiate =  999000;
 	return 2;
     }
-    if (strcmp (argv[i], "-ar2") == 0) {	/* -ar2 int */
-	if (++i >= argc) UseMsg ();
+    if (strcmp(argv[i], "-ar2") == 0) {	/* -ar2 int */
+	if (++i >= argc) UseMsg();
 	sunAutoRepeatDelay = 1000 * (long)atoi(argv[i]);
 	if (sunAutoRepeatDelay > 1000000)
 	    sunAutoRepeatDelay =  999000;
 	return 2;
     }
 #endif
-    if (strcmp (argv[i], "-swapLkeys") == 0) {	/* -swapLkeys */
+    if (strcmp(argv[i], "-swapLkeys") == 0) {	/* -swapLkeys */
 	sunSwapLkeys = TRUE;
 	return 1;
     }
 #endif /* 0 XXX */
-    if (strcmp (argv[i], "-debug") == 0) {	/* -debug */
+    if (strcmp(argv[i], "-debug") == 0) {	/* -debug */
 	return 1;
     }
-    if (strcmp (argv[i], "-dev") == 0) {	/* -dev /dev/mumble */
-	if (++i >= argc) UseMsg ();
+    if (strcmp(argv[i], "-dev") == 0) {	/* -dev /dev/mumble */
+	if (++i >= argc) UseMsg();
 	return 2;
     }
 #if 0 /* XXX */
-    if (strcmp (argv[i], "-mono") == 0) {	/* -mono */
+    if (strcmp(argv[i], "-mono") == 0) {	/* -mono */
 	return 1;
     }
 #endif
-    if (strcmp (argv[i], "-zaphod") == 0) {	/* -zaphod */
+    if (strcmp(argv[i], "-zaphod") == 0) {	/* -zaphod */
 	alphaActiveZaphod = FALSE;
 	return 1;
     }
 #if 0 /* XXX */
-    if (strcmp (argv[i], "-flipPixels") == 0) {	/* -flipPixels */
+    if (strcmp(argv[i], "-flipPixels") == 0) {	/* -flipPixels */
 	sunFlipPixels = TRUE;
 	return 1;
     }
-    if (strcmp (argv[i], "-fbinfo") == 0) {	/* -fbinfo */
+    if (strcmp(argv[i], "-fbinfo") == 0) {	/* -fbinfo */
 	sunFbInfo = TRUE;
 	return 1;
     }
-    if (strcmp (argv[i], "-kbd") == 0) {	/* -kbd */
+    if (strcmp(argv[i], "-kbd") == 0) {	/* -kbd */
 	if (++i >= argc) UseMsg();
 	return 2;
     }
-    if (strcmp (argv[i], "-protect") == 0) {	/* -protect */
+    if (strcmp(argv[i], "-protect") == 0) {	/* -protect */
 	if (++i >= argc) UseMsg();
 	return 2;
     }
-    if (strcmp (argv[i], "-cg4frob") == 0) {
+    if (strcmp(argv[i], "-cg4frob") == 0) {
 	sunCG4Frob = TRUE;
 	return 1;
     }
-    if (strcmp (argv[i], "-noGX") == 0) {
+    if (strcmp(argv[i], "-noGX") == 0) {
 	sunNoGX = TRUE;
 	return 1;
     }
@@ -264,7 +259,7 @@ ddxProcessArgument (argc, argv, i)
 }
 
 void
-ddxUseMsg()
+ddxUseMsg(void)
 {
 #if 0 /* XXX */
 #ifndef XKB
