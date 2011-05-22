@@ -30,6 +30,7 @@
 
 #include "ag10e.h"
 #include "dgaproc.h"
+#include "fb.h"
 #include "miline.h"
 #include "xaalocal.h"	/* For replacements */
 
