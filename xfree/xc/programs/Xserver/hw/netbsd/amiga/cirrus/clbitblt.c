@@ -46,20 +46,18 @@ Author: Keith Packard
 #include	"fastblt.h"
 #define MFB_CONSTS_ONLY
 #include	"maskbits.h"
-
-void clDoBitbltCopy(DrawablePtr, DrawablePtr, int, RegionPtr,  
-                    DDXPointPtr, unsigned long);
-
+#include	"amigaCL.h"
 
 void
-clDoBitblt (pSrc, pDst, alu, prgnDst, pptSrc, planemask)
-    DrawablePtr	    pSrc, pDst;
-    int		    alu;
-    RegionPtr	    prgnDst;
-    DDXPointPtr	    pptSrc;
-    unsigned long   planemask;
+clDoBitblt(
+    DrawablePtr	    pSrc, DrawablePtr pDst,
+    int		    alu,
+    RegionPtr	    prgnDst,
+    DDXPointPtr	    pptSrc,
+    unsigned long   planemask)
 {
-    void (*blt)() = cfbDoBitbltGeneral;
+    void (*blt)(DrawablePtr, DrawablePtr, int, RegionPtr, DDXPointPtr,
+	unsigned long) = cfbDoBitbltGeneral;
     if ((planemask & PMSK) == PMSK) {
 	switch (alu) {
 	case GXcopy:
@@ -77,16 +75,16 @@ clDoBitblt (pSrc, pDst, alu, prgnDst, pptSrc, planemask)
 }
 
 RegionPtr
-clCopyArea(pSrcDrawable, pDstDrawable,
-            pGC, srcx, srcy, width, height, dstx, dsty)
-    register DrawablePtr pSrcDrawable;
-    register DrawablePtr pDstDrawable;
-    GC *pGC;
-    int srcx, srcy;
-    int width, height;
-    int dstx, dsty;
+clCopyArea(
+    DrawablePtr pSrcDrawable,
+    DrawablePtr pDstDrawable,
+    GC *pGC,
+    int srcx, int srcy,
+    int width, int height,
+    int dstx, int dsty)
 {
-    void (*doBitBlt) ();
+    void (*doBitBlt)(DrawablePtr, DrawablePtr, int, RegionPtr, DDXPointPtr,
+	unsigned long) = cfbDoBitbltGeneral;
     
     doBitBlt = clDoBitbltCopy;
     if (pGC->alu != GXcopy || (pGC->planemask & PMSK) != PMSK)

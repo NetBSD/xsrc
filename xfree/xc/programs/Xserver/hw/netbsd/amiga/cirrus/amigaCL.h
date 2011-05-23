@@ -253,3 +253,22 @@ typedef struct _amigaCLPrivGC {
 
 
 #define amigaInfo(s) (&amigaFbs[(s)->myNum])
+
+/* amigaCL.c */
+Bool amigaCLGXInit(ScreenPtr, fbFd *);
+/* clgc.c */
+void clValidateGC(GCPtr, unsigned long, DrawablePtr);
+Bool clCreateGC(GCPtr);
+GCOps *clMatchCommon(GCPtr, cfbPrivGCPtr);
+/* clbitblt.c */
+void clDoBitblt(DrawablePtr, DrawablePtr, int, RegionPtr, DDXPointPtr,
+    unsigned long);
+RegionPtr clCopyArea(DrawablePtr, DrawablePtr, GC *, int, int, int, int, int,
+    int);
+/* clfillrct.c */
+void clPolyFillRect(DrawablePtr, GCPtr, int, xRectangle	*);
+/* clwindow.c */
+void clCopyWindow(WindowPtr, DDXPointRec, RegionPtr);
+
+void clDoBitbltCopy(DrawablePtr, DrawablePtr, int, RegionPtr,
+    DDXPointPtr, unsigned long);

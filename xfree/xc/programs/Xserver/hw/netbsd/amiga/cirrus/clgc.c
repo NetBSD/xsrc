@@ -97,10 +97,8 @@ SOFTWARE.
 # define ZeroPolyArc	miZeroPolyArc
 #endif
 
+#include "amigaCL.h"
 
-void clPolyFillRect();
-RegionPtr clCopyArea();
-void clValidateGC();
 
 GCFuncs clGCFuncs = {
     clValidateGC,
@@ -231,9 +229,7 @@ GCOps	clNonTEOps = {
 };
 
 GCOps *
-clMatchCommon (pGC, devPriv)
-    GCPtr	    pGC;
-    cfbPrivGCPtr    devPriv;
+clMatchCommon(GCPtr pGC, cfbPrivGCPtr devPriv)
 {
     if (pGC->lineWidth != 0)
 	return 0;
@@ -275,8 +271,7 @@ clMatchCommon (pGC, devPriv)
 }
 
 Bool
-clCreateGC(pGC)
-    register GCPtr pGC;
+clCreateGC(GCPtr pGC)
 {
     cfbPrivGC  *pPriv;
 
@@ -318,10 +313,7 @@ clCreateGC(pGC)
 */
 
 void
-clValidateGC(pGC, changes, pDrawable)
-    register GCPtr  pGC;
-    unsigned long   changes;
-    DrawablePtr	    pDrawable;
+clValidateGC(GCPtr pGC, unsigned long changes, DrawablePtr pDrawable)
 {
     int         mask;		/* stateChanges */
     int         index;		/* used for stepping through bitfields */

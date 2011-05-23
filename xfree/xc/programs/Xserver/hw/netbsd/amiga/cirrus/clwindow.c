@@ -54,11 +54,10 @@ SOFTWARE.
 #include "mistruct.h"
 #include "regionstr.h"
 #include "cfbmskbits.h"
+#include "amigaCL.h"
 
 extern WindowPtr *WindowTable;
 
-extern void clDoBitbltCopy(DrawablePtr, DrawablePtr, int, RegionPtr,
-                    DDXPointPtr, unsigned long);
 
 /* UNCLEAN!
    this code calls the bitblt helper code directly.
@@ -69,10 +68,10 @@ visible in the source.
 
 
 void 
-clCopyWindow(pWin, ptOldOrg, prgnSrc)
-    WindowPtr pWin;
-    DDXPointRec ptOldOrg;
-    RegionPtr prgnSrc;
+clCopyWindow(
+    WindowPtr pWin,
+    DDXPointRec ptOldOrg,
+    RegionPtr prgnSrc)
 {
     DDXPointPtr pptSrc;
     register DDXPointPtr ppt;
