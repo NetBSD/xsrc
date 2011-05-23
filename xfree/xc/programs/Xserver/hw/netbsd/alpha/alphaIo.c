@@ -80,7 +80,6 @@ ProcessInputEvents(void)
  */
 
 void alphaEnqueueEvents(void)
-)
 {
     struct wscons_event *ptrEvents,
 			*kbdEvents;
