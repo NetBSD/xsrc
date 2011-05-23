@@ -48,6 +48,7 @@ Author: Keith Packard
 
 #include	<stdio.h>
 #include	"clstuff.h"	/* defines for blitting */
+#include 	"amigaCL.h"
 /*static unsigned char *clregs,*clfb;*/
 
 #ifdef notdef /* XXX fails right now, walks off end of pixmaps */
@@ -61,12 +62,13 @@ Author: Keith Packard
 #endif
 
 void
-MROP_NAME(clDoBitblt)(pSrc, pDst, alu, prgnDst, pptSrc, planemask)
-    DrawablePtr	    pSrc, pDst;
-    int		    alu;
-    RegionPtr	    prgnDst;
-    DDXPointPtr	    pptSrc;
-    unsigned long   planemask;
+MROP_NAME(clDoBitblt)(
+    DrawablePtr	    pSrc,
+    DrawablePtr     pDst,
+    int		    alu,
+    RegionPtr	    prgnDst,
+    DDXPointPtr	    pptSrc,
+    unsigned long   planemask)
 {
     unsigned long *psrcBase, *pdstBase;	
 				/* start of src and dst bitmaps */

@@ -42,18 +42,17 @@ in this Software without prior written authorization from the X Consortium.
 #include "cfb.h"
 #include "cfbmskbits.h"
 #include "mergerop.h"
+#include "amigaCL.h"
 
-
-void clFillRectSolidCopy();
 
 #define NUM_STACK_RECTS	1024
 
 void
-clPolyFillRect(pDrawable, pGC, nrectFill, prectInit)
-    DrawablePtr pDrawable;
-    register GCPtr pGC;
-    int		nrectFill; 	/* number of rectangles to fill */
-    xRectangle	*prectInit;  	/* Pointer to first rectangle to fill */
+clPolyFillRect(
+    DrawablePtr pDrawable,
+    GCPtr	pGC,
+    int		nrectFill, 	/* number of rectangles to fill */
+    xRectangle	*prectInit)  	/* Pointer to first rectangle to fill */
 {
     xRectangle	    *prect;
     RegionPtr	    prgnClip;

@@ -111,12 +111,14 @@ in this Software without prior written authorization from the X Consortium.
 # endif
 #endif
 
+#include "amigaCL.h"
+
 void
-RROP_NAME(clFillRectSolid) (pDrawable, pGC, nBox, pBox)
-    DrawablePtr	    pDrawable;
-    GCPtr	    pGC;
-    int		    nBox;
-    BoxPtr	    pBox;
+RROP_NAME(clFillRectSolid)(
+    DrawablePtr	    pDrawable,
+    GCPtr	    pGC,
+    int		    nBox,
+    BoxPtr	    pBox)
 {
     register int    m;
     register unsigned long   *pdst;
@@ -227,4 +229,3 @@ RROP_NAME(clFillRectSolid) (pDrawable, pGC, nBox, pBox)
 #endif
     }
 }
-

@@ -49,19 +49,8 @@ in this Software without prior written authorization from the X Consortium.
 #include        "migc.h"
 
 
-Bool clCreateGC();
-void clCopyWindow();
-
-
-#if NeedFunctionPrototypes
-amigaCLGXInit (
-    ScreenPtr   pScreen,
-    fbFd        *fb)
-#else
-amigaCLGXInit (pScreen, fb)
-    ScreenPtr   pScreen;
-    fbFd        *fb;
-#endif
+Bool
+amigaCLGXInit(ScreenPtr pScreen, fbFd *fb)
 {
 #if 0
     if (serverGeneration != amigaCLGeneration)
