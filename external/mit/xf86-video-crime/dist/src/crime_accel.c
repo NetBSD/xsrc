@@ -1,4 +1,4 @@
-/* $NetBSD: crime_accel.c,v 1.15 2011/05/22 15:54:37 christos Exp $ */
+/* $NetBSD: crime_accel.c,v 1.16 2011/05/23 19:49:27 christos Exp $ */
 /*
  * Copyright (c) 2008 Michael Lorenz
  * All rights reserved.
@@ -1769,8 +1769,9 @@ CrimeComposite(
 #if 0
 			return FALSE;
 #else
-			return fbComposite(op, pSrc, pMask, pDst, xSrc, ySrc, 
+			fbComposite(op, pSrc, pMask, pDst, xSrc, ySrc, 
 			    xMask, yMask, xDst, yDst, width, height);
+			return TRUE;
 #endif
 		}
 	}
