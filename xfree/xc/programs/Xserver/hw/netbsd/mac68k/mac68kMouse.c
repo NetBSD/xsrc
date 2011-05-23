@@ -143,14 +143,14 @@ int mac68k_mouseproc(
 
 
 static int accel_mouse (
-	DevicePtr mouse,
+	DeviceIntPtr mouse,
 	int delta)
 {
     register int sgn = sign(delta);
     register PtrCtrl *ctrlptr;
 
     delta = abs(delta);
-    ctrlptr = &((DeviceIntPtr) mouse)->ptrfeed->ctrl;
+    ctrlptr = &mouse->ptrfeed->ctrl;
 
     if (delta > ctrlptr->threshold)
 	return (sgn * (ctrlptr->threshold + ((delta - ctrlptr->threshold) *
@@ -161,7 +161,7 @@ static int accel_mouse (
 
 
 void mac68k_processmouse(
-	DevicePtr	mouse,
+	DeviceIntPtr	mouse,
 	adb_event_t	*event)
 {
 	xEvent	xev;
