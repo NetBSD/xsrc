@@ -112,4 +112,7 @@ extern int  AG10EWindowPrivateIndex;
 int AG10EAccelInit(ScreenPtr);
 Bool AG10EDGAInit(ScreenPtr);
 
+/* ag10e_cursor.c */
+Bool AG10EHWCursorInit(ScreenPtr);
+
 #endif /* AG10E_H */
