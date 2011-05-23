@@ -1,4 +1,4 @@
-/* $NetBSD: alphaInit.c,v 1.2 2005/03/28 00:08:16 tron Exp $ */
+/* $NetBSD: alphaInit.c,v 1.3 2011/05/23 18:48:44 christos Exp $ */
 
 #include    "alpha.h"
 #include    "gcstruct.h"
@@ -7,6 +7,7 @@
 #include    "cfb.h"
 
 #include <stdio.h>
+#include <err.h>
 
 #define TGASUPPORT
 #define SFBSUPPORT
