@@ -1,4 +1,4 @@
-/*	$NetBSD: decCursor.c,v 1.2 2011/05/22 15:51:07 christos Exp $	*/
+/*	$NetBSD: decCursor.c,v 1.3 2011/05/23 02:40:56 christos Exp $	*/
 
 /* XConsortium: sunCursor.c,v 5.19 94/04/17 20:29:35 gildea Exp */
 /*
@@ -96,7 +96,6 @@ decCursorRepad (pScreen, bits, src_bits, dst_bits, ptSrc, w, h, nw, nh)
     PixmapPtr	src, dst;
     BoxRec	box;
     RegionRec	rgnDst;
-    extern int mfbDoBitblt();
 
     if (!(src = GetScratchPixmapHeader(pScreen, bits->width, bits->height,
 				       /*bpp*/ 1, /*depth*/ 1,
