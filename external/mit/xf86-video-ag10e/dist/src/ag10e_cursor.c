@@ -28,6 +28,7 @@
 #include <fcntl.h>
 #include <sys/time.h>
 #include <sys/types.h>
+#include <sys/ioctl.h>
 #include <dev/sun/fbio.h>
 #include <dev/wscons/wsconsio.h>
 

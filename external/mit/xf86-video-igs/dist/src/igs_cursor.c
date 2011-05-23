@@ -1,4 +1,4 @@
-/* $NetBSD: igs_cursor.c,v 1.1 2009/11/10 21:39:45 macallan Exp $ */
+/* $NetBSD: igs_cursor.c,v 1.2 2011/05/23 02:50:05 christos Exp $ */
 /*
  * Copyright (c) 2005 Michael Lorenz
  * All rights reserved.
@@ -34,6 +34,7 @@
 #include <sys/time.h>
 #include <sys/endian.h>
 #include <dev/wscons/wsconsio.h>
+#include <sys/ioctl.h>
 #include <errno.h>
 
 /* all driver need this */
