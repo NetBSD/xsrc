@@ -1,5 +1,5 @@
 /* $OpenBSD: wsfb_driver.c,v 1.18 2003/04/02 16:42:13 jason Exp $ */
-/* $NetBSD: igs.h,v 1.4 2011/05/22 16:04:15 christos Exp $ */
+/* $NetBSD: igs.h,v 1.5 2011/05/23 19:51:27 christos Exp $ */
 /*
  * Copyright (c) 2001 Matthieu Herrb
  *		 2009 Michael Lorenz
@@ -324,13 +324,6 @@ Bool IgsSetupCursor(ScreenPtr);
 #define IGS_MAX_CLOCK	260000
 
 #define IGS_MIN_VCO	115000
-
-#ifdef __NetBSD__
-/* XXX: We don't have a usable pio.h so we just declare here.
- * This needs a proper implementation */
-uint8_t	inb(unsigned);
-void	outb(unsigned, uint8_t);
-#endif
 
 static __inline uint8_t
 igs_idx_read(u_int idxport, uint8_t idx)
