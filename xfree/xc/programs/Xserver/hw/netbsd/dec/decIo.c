@@ -1,4 +1,4 @@
-/*	$NetBSD: decIo.c,v 1.1 2004/01/18 05:21:41 rtr Exp $	*/
+/*	$NetBSD: decIo.c,v 1.2 2011/05/24 21:22:28 jakllsch Exp $	*/
 
 /* XConsortium: sunIo.c,v 5.26.1.3 95/01/25 23:02:33 kaleb Exp */
 /* XFree86: xc/programs/Xserver/hw/sun/sunIo.c,v 3.1 1995/01/28 15:46:06 dawes Exp */
@@ -49,6 +49,7 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 ********************************************************/
 
 #define NEED_EVENTS
+#include    "mi.h"
 #include    "dec.h"
 
 /*-

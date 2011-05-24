@@ -1,4 +1,4 @@
-/*	$NetBSD: decMouse.c,v 1.3 2010/10/10 05:28:49 tsutsui Exp $	*/
+/*	$NetBSD: decMouse.c,v 1.4 2011/05/24 21:23:52 jakllsch Exp $	*/
 
 /* XConsortium: sunMouse.c,v 5.21 94/04/17 20:29:47 kaleb Exp */
 /*-
@@ -54,6 +54,7 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #define NEED_EVENTS
+#include    "mi.h"
 #include    "dec.h"
 #include <stdio.h>
 
