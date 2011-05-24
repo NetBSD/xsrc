@@ -1,4 +1,4 @@
-/* $NetBSD: sfbsimpleblt.c,v 1.2 2009/10/27 23:17:13 elric Exp $ */
+/* $NetBSD: sfbsimpleblt.c,v 1.3 2011/05/24 23:10:03 jakllsch Exp $ */
 
 /*
  * sfb simple rops
@@ -53,6 +53,7 @@
 
 #include "dec.h"
 #include "sfb.h"
+#include "sfbmap.h"
 
 void
 decSfbDoBitbltSimple(

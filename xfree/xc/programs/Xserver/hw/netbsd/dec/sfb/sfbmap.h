@@ -21,3 +21,8 @@
 #else
 #error Unsupported PSZ
 #endif
+
+#include <dev/tc/sfbreg.h>
+
+void decSfbDoBitbltSimple(unsigned int *, unsigned int *, unsigned int,
+    unsigned int, sfb_reg_t **, int, int, int, int, int, int, int, int, int);
