@@ -1,4 +1,4 @@
-/* $NetBSD: decTGA.c,v 1.1 2004/01/18 05:21:41 rtr Exp $ */
+/* $NetBSD: decTGA.c,v 1.2 2011/05/24 23:08:43 jakllsch Exp $ */
 
 /* $XConsortium: sunCfb.c,v 1.15.1.2 95/01/12 18:54:42 kaleb Exp $ */
 /* $XFree86: xc/programs/Xserver/hw/sun/sunCfb.c,v 3.2 1995/02/12 02:36:22 dawes Exp $ */
@@ -88,7 +88,13 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 #include "dec.h"
 #include "cfb.h"
+#include "cfb32.h"
 #include "tga.h"
+
+static Bool decTgaScreenInit(
+    register ScreenPtr, pointer, int, int, int, int, int, int);
+static Bool decTgaScreenInit(
+    register ScreenPtr, pointer, int, int, int, int, int, int);
 
 Bool decTGAInit (screen, pScreen, argc, argv)
     int	    	  screen;    	/* what screen am I going to be */
