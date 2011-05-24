@@ -1,4 +1,4 @@
-/*	$NetBSD: decKbd.c,v 1.2 2010/10/10 05:35:33 tsutsui Exp $	*/
+/*	$NetBSD: decKbd.c,v 1.3 2011/05/24 21:23:52 jakllsch Exp $	*/
 
 /* XConsortium: sunKbd.c,v 5.47 94/08/16 13:45:30 dpw Exp */
 /*-
@@ -43,6 +43,7 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 ********************************************************/
 
 #define NEED_EVENTS
+#include "mi.h"
 #include "dec.h"
 #include "keysym.h"
 #include <stdio.h>
