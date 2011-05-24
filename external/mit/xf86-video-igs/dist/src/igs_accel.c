@@ -21,9 +21,13 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-/* $NetBSD: igs_accel.c,v 1.5 2010/05/20 20:05:34 macallan Exp $ */
+/* $NetBSD: igs_accel.c,v 1.6 2011/05/24 19:33:55 christos Exp $ */
 
 #include <sys/types.h>
+
+/* all driver need this */
+#include "xf86.h"
+#include "xf86_OSproc.h"
 
 #include "igs.h"
 
