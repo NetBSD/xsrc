@@ -1,4 +1,4 @@
-/*	$NetBSD: decCursor.c,v 1.5 2011/05/24 19:37:25 christos Exp $	*/
+/*	$NetBSD: decCursor.c,v 1.6 2011/05/24 21:27:00 jakllsch Exp $	*/
 
 /* XConsortium: sunCursor.c,v 5.19 94/04/17 20:29:35 gildea Exp */
 /*
@@ -112,7 +112,7 @@ decCursorRepad (pScreen, bits, src_bits, dst_bits, ptSrc, w, h, nw, nh)
     box.x2 = w;
     box.y2 = h;
     REGION_INIT(pScreen, &rgnDst, &box, 1);
-    mfbDoBitblt((DrawablePtr)src, (DrawablePtr)dst, GXcopy, &rgnDst, ptSrc);
+    mfbDoBitblt(&src->drawable, &dst->drawable, GXcopy, &rgnDst, ptSrc);
     REGION_UNINIT(pScreen, &rgnDst);
     FreeScratchPixmapHeader(src);
     FreeScratchPixmapHeader(dst);
