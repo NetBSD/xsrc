@@ -1,4 +1,4 @@
-/* $NetBSD: sfbsimpleblt.c,v 1.2 2009/10/27 23:17:12 elric Exp $ */
+/* $NetBSD: sfbsimpleblt.c,v 1.3 2011/05/24 23:10:03 jakllsch Exp $ */
 
 /*
  * sfb simple rops
@@ -52,6 +52,7 @@
 #include	<stdio.h>
 
 #include "alpha.h"
+#include "sfbmap.h"
 #include <dev/tc/sfbreg.h>
 
 void

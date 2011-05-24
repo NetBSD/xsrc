@@ -1,4 +1,4 @@
-/* $NetBSD: alphaSFB.c,v 1.1 2004/01/18 04:13:22 rtr Exp $ */
+/* $NetBSD: alphaSFB.c,v 1.2 2011/05/24 23:10:03 jakllsch Exp $ */
 
 /* $XConsortium: sunCfb.c,v 1.15.1.2 95/01/12 18:54:42 kaleb Exp $ */
 /* $XFree86: xc/programs/Xserver/hw/sun/sunCfb.c,v 3.2 1995/02/12 02:36:22 dawes Exp $ */
@@ -88,10 +88,14 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 #include "alpha.h"
 #include "cfb.h"
+#include "cfb32.h"
 #include <dev/tc/sfbreg.h>
 
 /* XXX */
 #include <stdio.h>
+
+static Bool alphaSfbScreenInit(
+    register ScreenPtr, pointer, int, int, int, int, int, int);
 
 static void CGUpdateColormap(pScreen, dex, count, rmap, gmap, bmap)
     ScreenPtr	pScreen;
