@@ -52,7 +52,8 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #define NEED_EVENTS
-#include    "alpha.h"
+#include "mi.h"
+#include "alpha.h"
 #include <stdio.h>
 
 Bool alphaActiveZaphod = TRUE;
