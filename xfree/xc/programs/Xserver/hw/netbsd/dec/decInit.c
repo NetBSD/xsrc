@@ -1,4 +1,4 @@
-/* $NetBSD: decInit.c,v 1.2 2005/03/28 00:07:41 tron Exp $ */
+/* $NetBSD: decInit.c,v 1.3 2011/05/24 21:21:55 jakllsch Exp $ */
 
 #include    "dec.h"
 #include    "gcstruct.h"
@@ -7,6 +7,7 @@
 #include    "cfb.h"
 
 #include <stdio.h>
+#include <err.h>
 
 Bool decTGAInit(int, ScreenPtr, int, char **);
 Bool decSFBInit(int, ScreenPtr, int, char **);
