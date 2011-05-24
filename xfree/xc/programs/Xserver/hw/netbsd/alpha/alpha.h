@@ -268,6 +268,13 @@ extern Bool alphaScreenInit(
 #endif
 );
 
+extern Bool alphaCloseScreen(
+#if NeedFunctionPrototypes
+    int /* i */,
+    ScreenPtr /* pScreen */
+#endif
+);
+
 extern pointer alphaMemoryMap(
 #if NeedFunctionPrototypes
     size_t /* len */,
