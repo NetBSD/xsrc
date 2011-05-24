@@ -18,11 +18,11 @@
 #define alphaTgaTEOps		alphaTga32TEOps
 #define alphaTgaNonTEOps	alphaTga32NonTEOps
 
+#else
+#error Unsupported PSZ
+#endif
+
 #include <dev/pci/tgareg.h>
 
 void alphaTgaDoBitbltSimple(unsigned int *, unsigned int *, unsigned int,
     unsigned int, tga_reg_t **, int, int, int, int, int, int, int, int, int);
-
-#else
-#error Unsupported PSZ
-#endif

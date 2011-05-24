@@ -21,3 +21,8 @@
 #else
 #error Unsupported PSZ
 #endif
+
+#include <dev/pci/tgareg.h>
+
+void decTgaDoBitbltSimple(unsigned int *, unsigned int *, unsigned int,
+    unsigned int, tga_reg_t **, int, int, int, int, int, int, int, int, int);

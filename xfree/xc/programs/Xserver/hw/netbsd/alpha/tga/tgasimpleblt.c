@@ -1,4 +1,4 @@
-/* $NetBSD: tgasimpleblt.c,v 1.2 2009/10/27 23:17:12 elric Exp $ */
+/* $NetBSD: tgasimpleblt.c,v 1.3 2011/05/24 23:08:42 jakllsch Exp $ */
 
 /*
  * tga simple rops
@@ -52,6 +52,7 @@
 #include	<stdio.h>
 
 #include "alpha.h"
+#include "tgamap.h"
 #include <dev/pci/tgareg.h>
 
 void

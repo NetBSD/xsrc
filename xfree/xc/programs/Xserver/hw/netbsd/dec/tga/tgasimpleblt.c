@@ -1,4 +1,4 @@
-/* $NetBSD: tgasimpleblt.c,v 1.2 2009/10/27 23:17:13 elric Exp $ */
+/* $NetBSD: tgasimpleblt.c,v 1.3 2011/05/24 23:08:43 jakllsch Exp $ */
 
 /*
  * tga simple rops
@@ -53,6 +53,7 @@
 
 #include "dec.h"
 #include "tga.h"
+#include "tgamap.h"
 
 void
 decTgaDoBitbltSimple(
