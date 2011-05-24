@@ -64,6 +64,7 @@
 
 #include <string.h>
 #include <stdio.h>
+#include <unistd.h>
 
 #if GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) > 6
 #define xf86LoaderReqSymLists(...) do {} while (0)
