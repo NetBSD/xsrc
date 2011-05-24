@@ -1,4 +1,4 @@
-/*	$NetBSD: decPX.c,v 1.3 2008/04/28 20:57:37 martin Exp $	*/
+/*	$NetBSD: decPX.c,v 1.4 2011/05/24 23:12:36 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -81,6 +81,7 @@ SOFTWARE.
 #include "px.h"
 
 #include "cfb.h"
+#include "cfb32.h"
 #include "mi.h"
 
 #include <sys/mman.h>
@@ -110,6 +111,21 @@ extern Bool cfbSetupScreen(
     int /*dpix*/,
     int /*dpiy*/,
     int /*width*/
+#endif
+);
+
+/*
+ * XXX
+ */
+extern Bool cfbFinishScreenInit(
+#if NeedFunctionPrototypes
+		ScreenPtr /*pScreen*/,
+		pointer /*pbits*/,
+		int /*xsize*/,
+		int /*ysize*/,
+		int /*dpix*/,
+		int /*dpiy*/,
+		int /*width*/
 #endif
 );
 
