@@ -1,4 +1,4 @@
-/*	$NetBSD: pxgc.c,v 1.2 2008/04/28 20:57:37 martin Exp $	*/
+/*	$NetBSD: pxgc.c,v 1.3 2011/05/24 23:12:36 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -34,6 +34,7 @@
 #include "Xmd.h"
 #include "Xproto.h"
 #include "cfb.h"
+#include "cfbmap.h"
 #include "cfbmskbits.h"
 #include "fontstruct.h"
 #include "dixfontstr.h"
@@ -45,10 +46,12 @@
 #include "mibstore.h"
 #include "migc.h"
 
+#if 0
 /* XXX */
 #undef cfbNonTEOps
 #undef cfbCreateGC
 #undef cfbValidateGC
+#endif
 
 void	pxValidateGC(GCPtr, u_long, DrawablePtr);
 

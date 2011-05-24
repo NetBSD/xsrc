@@ -1,4 +1,4 @@
-/*	$NetBSD: pxgetsp.c,v 1.2 2008/04/28 20:57:37 martin Exp $	*/
+/*	$NetBSD: pxgetsp.c,v 1.3 2011/05/24 23:12:36 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,9 @@
 #include "scrnintstr.h"
 #include "cfb.h"
 
+#if 0
 #undef cfbGetSpans
+#endif
 
 #define myBitsPerPixel(d) (\
     (1 << PixmapWidthPaddingInfo[d].padBytesLog2) * 8 / \
