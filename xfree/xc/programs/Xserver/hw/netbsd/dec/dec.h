@@ -1,4 +1,4 @@
-/*	$NetBSD: dec.h,v 1.1 2004/01/18 05:21:41 rtr Exp $	*/
+/*	$NetBSD: dec.h,v 1.2 2011/05/24 22:16:45 jakllsch Exp $	*/
 
 /* XConsortium: sun.h,v 5.39.1.1 95/01/05 19:58:43 kaleb Exp */
 /* XFree86: xc/programs/Xserver/hw/sun/sun.h,v 3.2 1995/02/12 02:36:21 dawes Exp */
@@ -267,6 +267,13 @@ extern Bool decSaveScreen(
 
 extern Bool decScreenInit(
 #if NeedFunctionPrototypes
+    ScreenPtr /* pScreen */
+#endif
+);
+
+extern Bool decCloseScreen(
+#if NeedFunctionPrototypes
+    int /* i */,
     ScreenPtr /* pScreen */
 #endif
 );
