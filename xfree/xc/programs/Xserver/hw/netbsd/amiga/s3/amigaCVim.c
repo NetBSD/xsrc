@@ -113,43 +113,6 @@ while (n-- > 0)
 
 
 
-void amigaCVImageWriteNoMem ( 
-#if NeedFunctionPrototypes
-    int   x,
-     int   y,
-     int   w,
-     int   h,
-     char *psrc,
-     int   pwidth,
-     int   px,
-     int   py,
-     short alu,
-     unsigned long planemask, fbFd *inf
-#endif
-);
-
-void
-amigaCVImageFillNoMem (
-#if NeedFunctionPrototypes
-     int   x,
-     int   y,
-     int   w,
-     int   h,
-     char *psrc,
-     int   pwidth,
-     int   pw,
-     int   ph,
-     int   pox,
-     int   poy,
-     short alu,
-     unsigned long planemask,
-     fbFd *inf
-#endif
-);
-
-
-extern void amigaCVInitFrect( int, int, int);
-
 #define ALIGNMENT 8
 #define MAX_PIXMAP_WIDTH 64
 #define MIN_PIXMAP_WIDTH 8            
@@ -159,14 +122,6 @@ extern void amigaCVInitFrect( int, int, int);
  CachePool FontPool;
 
 unsigned short s3SwapBits[256];
-
-extern void s3FontStipple();
-extern void s3GlyphWrite
-  (int, int, int, unsigned char *,CacheFont8Ptr, GCPtr, BoxPtr, int);
-
-extern int  s3NoCPolyText(DrawablePtr, GCPtr, int, int, int, char*, Bool);
-extern int s3NoCImageText(DrawablePtr, GCPtr, int, int, int, char *, Bool);
-extern void s3CacheMoveBlock();
 
 void amigaCVImageInit (fbFd *inf)
 {
@@ -242,7 +197,6 @@ void amigaCVImageInit (fbFd *inf)
 
 
  void
-#if NeedFunctionPrototypes
 amigaCVImageWrite (
      int   x,
      int   y,
@@ -254,20 +208,6 @@ amigaCVImageWrite (
      int   py,
      short alu,
      unsigned long planemask, fbFd *inf)
-#else
-amigCVImageWrite (x, y, w, h, psrc, pwidth, px, py, alu, planemask, inf)
-     int   x;
-     int   y;
-     int   w;
-     int   h;
-     char *psrc;
-     int   pwidth;
-     int   px;
-     int   py;
-     short alu;
-     unsigned long planemask;
-     fbFd *inf;
-#endif
 {
    int   j, offset;
    int depth = inf->info.gd_planes;
@@ -338,7 +278,6 @@ amigCVImageWrite (x, y, w, h, psrc, pwidth, px, py, alu, planemask, inf)
 }
 
  void
-#if NeedFunctionPrototypes
 amigaCVImageRead (
      int   x,
      int   y,
@@ -350,19 +289,6 @@ amigaCVImageRead (
      int   py,
      unsigned long planemask,
      fbFd *inf)
-#else
-amigaCVImageRead (x, y, w, h, psrc, pwidth, px, py, planemask, inf)
-     int   x;
-     int   y;
-     int   w;
-     int   h;
-     char *psrc;
-     int   pwidth;
-     int   px;
-     int   py;
-     unsigned long planemask;
-     fbFd *inf;
-#endif
 {
    int   j, offset;
    int depth = inf->info.gd_planes;
@@ -453,7 +379,6 @@ amigaCVImageRead (x, y, w, h, psrc, pwidth, px, py, planemask, inf)
 
 
 void
-#if NeedFunctionPrototypes
 amigaCVImageFill (
      int   x,
      int   y,
@@ -468,22 +393,6 @@ amigaCVImageFill (
      short alu,
      unsigned long planemask,
      fbFd *inf)
-#else
-amigaCVImageFill (x, y, w, h, psrc, pwidth, pw, ph, pox, poy, alu, planemask)
-     int   x;
-     int   y;
-     int   w;
-     int   h;
-     char *psrc;
-     int   pwidth;
-     int   pw; 
-     int   ph; 
-     int   pox;
-     int   poy;
-     short alu;
-     unsigned long planemask;
-     fbFd *inf;
-#endif
 {
    int   j;
    char *pline;
@@ -567,7 +476,6 @@ amigaCVImageFill (x, y, w, h, psrc, pwidth, pw, ph, pox, poy, alu, planemask)
 
 
 void
-#if NeedFunctionPrototypes
 amigaCVImageWriteNoMem (
      int   x,
      int   y,
@@ -580,20 +488,6 @@ amigaCVImageWriteNoMem (
      short alu,
      unsigned long planemask,
      fbFd *inf)
-#else
-amigaCVImageWriteNoMem (x, y, w, h, psrc, pwidth, px, py, alu, planemask, inf)
-     int   x;
-     int   y;
-     int   w;
-     int   h;
-     char *psrc;
-     int   pwidth;
-     int   px;
-     int   py;
-     short alu;
-     unsigned long planemask;
-     fbFd *inf;
-#endif
 {
    int   i, j;
    int depth = inf->info.gd_planes;
@@ -650,7 +544,6 @@ amigaCVImageWriteNoMem (x, y, w, h, psrc, pwidth, px, py, alu, planemask, inf)
 
 
 void
-#if NeedFunctionPrototypes
 amigaCVImageReadNoMem (
      int   x,
      int   y,
@@ -662,19 +555,6 @@ amigaCVImageReadNoMem (
      int   py,
      unsigned long planemask,
      fbFd* inf)
-#else
-amigaCVImageReadNoMem (x, y, w, h, psrc, pwidth, px, py, planemask, inf)
-     int   x;
-     int   y;
-     int   w;
-     int   h;
-     char *psrc;
-     int   pwidth;
-     int   px;
-     int   py;
-     unsigned long planemask;
-     fbFd* inf;
-#endif
 {
    int   i, j;
    int depth = inf->info.gd_planes;
@@ -742,7 +622,6 @@ __dolog("ImageRead3");
 
 
  void
-#if NeedFunctionPrototypes
 amigaCVImageFillNoMem (
      int   x,
      int   y,
@@ -757,22 +636,6 @@ amigaCVImageFillNoMem (
      short alu,
      unsigned long planemask,
      fbFd *inf)
-#else
-amigaCVImageFillNoMem (x, y, w, h, psrc, pwidth, pw, ph, pox, poy, alu, planemask, inf)
-     int   x;
-     int   y;
-     int   w;
-     int   h;
-     char *psrc;
-     int   pwidth;
-     int   pw; 
-     int   ph; 
-     int   pox;
-     int   poy;
-     short alu;
-     unsigned long planemask;
-     fbFd *inf;
-#endif
 {
    int   i, j;
    char *pline;
@@ -862,21 +725,23 @@ static int _internal_s3_mskbits[17] =
 #define MSKBIT(n) (_internal_s3_mskbits[(n)])
 
 static void
-amigaCVRealImageStipple(x, y, w, h, psrc, pwidth, pw, ph, pox, poy,
-		   fgPixel, bgPixel, alu, planemask, opaque, inf)
-    int			x;
-    int			y;
-    int			w;
-    int			h;
-    unsigned char	*psrc;
-    int			pw, ph, pox, poy;
-    int			pwidth;
-    Pixel		fgPixel;
-    Pixel		bgPixel;
-    short		alu;
-    Pixel		planemask;
-    int			opaque;
-     fbFd               *inf;
+amigaCVRealImageStipple(
+    int			x,
+    int			y,
+    int			w,
+    int			h,
+    unsigned char	*psrc,
+    int			pw,
+    int			ph,
+    int			pox,
+    int			poy,
+    int			pwidth,
+    Pixel		fgPixel,
+    Pixel		bgPixel,
+    short		alu,
+    Pixel		planemask,
+    int			opaque,
+    fbFd               *inf)
 {
     int			srcx, srch, dstw;
     unsigned char 	*ptmp;
@@ -1024,7 +889,6 @@ amigaCVRealImageStipple(x, y, w, h, psrc, pwidth, pw, ph, pox, poy,
 }
 
 void
-#if NeedFunctionPrototypes
 amigaCVImageStipple (
      int   x,
      int   y,
@@ -1040,30 +904,12 @@ amigaCVImageStipple (
      short alu,
      unsigned long planemask,
      fbFd *inf)
-#else
-amigaCVImageStipple (x, y, w, h, psrc, pwidth, pw, ph, pox, poy, fgPixel, alu, planemask, inf)
-     int   x;
-     int   y;
-     int   w;
-     int   h;
-     char *psrc;
-     int   pwidth;
-     int   pw;
-     int   ph;
-     int   pox;
-     int   poy;
-     Pixel fgPixel;
-     short alu;
-     unsigned long planemask;
-     fbFd *inf;
-#endif
 {
 
     amigaCVRealImageStipple(x, y, w, h, psrc, pwidth, pw, ph, pox, poy,
 		       fgPixel, 0, alu, planemask, 0, inf);
 }
 
-#if NeedFunctionPrototypes
 void
 amigaCVImageOpStipple (
      int   x,
@@ -1081,33 +927,8 @@ amigaCVImageOpStipple (
      short alu,
      unsigned long planemask,
      fbFd *inf)
-#else
-void
-amigaCVImageOpStipple (x, y, w, h, psrc, pwidth, pw,
-		  ph, pox, poy, fgPixel, bgPixel, alu, planemask, inf)
-     int   x;
-     int   y;
-     int   w;
-     int   h;
-     char *psrc;
-     int   pwidth;
-     int   pw, ph, pox, poy;
-     Pixel fgPixel;
-     Pixel bgPixel;
-     short alu;
-     unsigned long planemask;
-     fbFd *inf;
-#endif
 {
 
     amigaCVRealImageStipple(x, y, w, h, psrc, pwidth, pw, ph, pox, poy,
 		       fgPixel, bgPixel, alu, planemask, 1, inf);
 }
-
-
-
-
-
-
-
-

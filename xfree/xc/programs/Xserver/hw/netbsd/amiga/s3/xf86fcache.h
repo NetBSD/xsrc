@@ -30,38 +30,32 @@ typedef struct _CacheFont8 *CacheFont8Ptr;
  * Entrypoints into cache code.
  */
 
-void xf86ReleaseFontCache();
-
 void xf86InitFontCache(
-#if NeedFunctionPrototypes
     CachePool /*FontCache*/,
     int /*RowWidth*/,
     int /*RowHeight*/,
     void (* /*FontOpStippleFunc*/)(
-#if NeedNestedPrototypes
 	int, int, int, int, unsigned char *, int, Pixel
-#endif
     )
-#endif
 );
 
+void xf86ReleaseFontCache(void);
+
 void xf86UnCacheFont8(
-#if NeedFunctionPrototypes
     FontPtr /*font*/
-#endif
 );
      
 CacheFont8Ptr xf86CacheFont8(
-#if NeedFunctionPrototypes
     FontPtr /*font*/
-#endif
 );
 
 void xf86loadFontBlock(
-#if NeedFunctionPrototypes
     CacheFont8Ptr /*fentry*/,
     int /*block*/
-#endif
 );
+
+/* s3fcach.c */
+void s3GlyphWrite(int, int , int , unsigned char *, CacheFont8Ptr, GCPtr, BoxPtr, int );
+
 
 #endif /* _XF86_FCACHE_H */

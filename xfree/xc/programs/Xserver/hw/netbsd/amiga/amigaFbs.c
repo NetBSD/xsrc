@@ -79,17 +79,10 @@ int amigaScreenIndex;
 
 static unsigned long generation = 0;
 
-#if NeedFunctionPrototypes
 pointer amigaMemoryMap (
     size_t	len,
     off_t	off,
     int		fd)
-#else
-pointer amigaMemoryMap (len, off, fd)
-    size_t	len;
-    off_t	off;
-    int		fd;
-#endif
 {
     int		pagemask, mapsize;
     caddr_t	addr;
@@ -110,13 +103,8 @@ pointer amigaMemoryMap (len, off, fd)
     return mapaddr;
 }
 
-#if NeedFunctionPrototypes
 Bool amigaScreenAllocate (
     ScreenPtr	pScreen)
-#else
-Bool amigaScreenAllocate (pScreen)
-    ScreenPtr	pScreen;
-#endif
 {
     amigaScreenPtr    pPrivate;
     extern int AllocateScreenPrivateIndex();
@@ -136,15 +124,9 @@ Bool amigaScreenAllocate (pScreen)
     return TRUE;
 }
 
-#if NeedFunctionPrototypes
 Bool amigaSaveScreen (
     ScreenPtr	pScreen,
     int		on)
-#else
-Bool amigaSaveScreen (pScreen, on)
-    ScreenPtr	pScreen;
-    int		on;
-#endif
 {
     int		state;
 
@@ -176,13 +158,8 @@ static Bool closeScreen (i, pScreen)
     return ret;
 }
 
-#if NeedFunctionPrototypes
 Bool amigaScreenInit (
     ScreenPtr	pScreen)
-#else
-Bool amigaScreenInit (pScreen)
-    ScreenPtr	pScreen;
-#endif
 {
     SetupScreen(pScreen);
     extern void   amigaBlockHandler();
@@ -230,7 +207,6 @@ Bool amigaScreenInit (pScreen)
     return TRUE;
 }
 
-#if NeedFunctionPrototypes
 Bool amigaInitCommon (
     int		scrn,
     ScreenPtr	pScrn,
@@ -239,16 +215,6 @@ Bool amigaInitCommon (
     Bool	(*cr_cm)(),
     Bool	(*save)(),
     int		fb_off)
-#else
-Bool amigaInitCommon (scrn, pScrn, init1, init2, cr_cm, save, fb_off)
-    int		scrn;
-    ScreenPtr	pScrn;
-    Bool	(*init1)();
-    void	(*init2)();
-    Bool	(*cr_cm)();
-    Bool	(*save)();
-    int		fb_off;
-#endif
 {
     unsigned char*	fb = amigaFbs[scrn].fb;
 

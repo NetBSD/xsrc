@@ -87,41 +87,31 @@ typedef struct CachePoolRec *CachePool;
 
 
 void xf86InitCache(
-#if NeedFunctionPrototypes
     void (*/*CacheShiftBlockFunc*/)(int, int, int, int, int, int, unsigned int)
-#endif
 );
 
 CachePool xf86CreateCachePool(
-#if NeedFunctionPrototypes
     unsigned int /*Alignment*/
-#endif
 );
 
 void xf86AddToCachePool(
-#if NeedFunctionPrototypes
     CachePool /*Pool*/,
     short /*x*/,
     short /*y*/,
     short /*Width*/,
     short /*Heigth*/,
     unsigned int /*Id*/
-#endif
 );
 
 CacheBlock xf86AllocFromCachePool(
-#if NeedFunctionPrototypes
     CachePool /*Pool*/,
     short /*Width*/,
     short /*Height*/
-#endif
 );
 
 void xf86ReleaseToCachePool(
-#if NeedFunctionPrototypes
     CachePool /*Pool*/,
     CacheBlock /*Block*/
-#endif
 );
 
 #endif /* _XF86_BCACHE_H */
