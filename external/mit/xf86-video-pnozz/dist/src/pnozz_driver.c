@@ -20,7 +20,7 @@
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-/* $NetBSD: pnozz_driver.c,v 1.4 2010/11/26 21:18:10 mrg Exp $ */
+/* $NetBSD: pnozz_driver.c,v 1.5 2011/05/25 23:36:39 macallan Exp $ */
 
 /*
  * this driver has been tested on SPARCbook 3GX and 3TX, it supports full 
@@ -30,6 +30,7 @@
 #include <fcntl.h>
 #include <sys/time.h>
 #include <sys/types.h>
+#include <sys/ioctl.h>
 #include <dev/sun/fbio.h>
 #include <dev/wscons/wsconsio.h>
 
