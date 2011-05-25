@@ -67,6 +67,8 @@ LeoFillSpansStippled (DrawablePtr pDrawable, GCPtr pGC,
 		cy1 = clip->extents.y1;
 		cy2 = clip->extents.y2;
 	} else {
+#if 0
+		/* These functions are gone from the x server */
 		int nTmp = n * miFindMaxBand(clip);
 
 		pwidthFree = (int *)xalloc(nTmp * sizeof(int));
@@ -81,6 +83,9 @@ LeoFillSpansStippled (DrawablePtr pDrawable, GCPtr pGC,
 				pptFree, pwidthFree, fSorted);
 		pwidth = pwidthFree;
 		ppt = pptFree;
+#else
+		abort();
+#endif
 	}
 	
 	if (pGC->alu != GXcopy)
