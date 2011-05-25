@@ -1,4 +1,4 @@
-/*	$NetBSD: vidc.c,v 1.8 2011/05/21 14:30:33 christos Exp $	*/
+/*	$NetBSD: vidc.c,v 1.9 2011/05/25 16:55:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1999 Neil A. Carson & Mark Brinicombe
@@ -54,6 +54,8 @@
  */
 #include "X.h"
 #include "Xproto.h"
+#include "mi.h"
+#include "cfb.h"
 #include "screenint.h"
 #include "input.h"
 #include "inputstr.h"
@@ -66,8 +68,6 @@
 #include "colormapst.h"
 #include "resource.h"
 #include "wscons.h"
-#include "mi.h"
-#include "cfb.h"
 
 /* #define DEBUG */
 
