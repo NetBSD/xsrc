@@ -20,7 +20,7 @@
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-/* $NetBSD: pnozz_accel.c,v 1.1 2009/08/26 22:28:26 macallan Exp $ */
+/* $NetBSD: pnozz_accel.c,v 1.2 2011/05/25 14:15:26 christos Exp $ */
 
 #include <fcntl.h>
 #include <sys/time.h>
@@ -422,7 +422,7 @@ PnozzSetupForImageWrite(ScrnInfoPtr pScrn, int rop, unsigned int planemask,
     pnozz_write_4(pPnozz, PLANE_MASK, planemask);
     pnozz_write_4(pPnozz, COORD_INDEX, 0);
     
-    Xf86Msg(X_ERROR, "setup for image write\n");
+    xf86Msg(X_ERROR, "setup for image write\n");
 }
 
 static void
