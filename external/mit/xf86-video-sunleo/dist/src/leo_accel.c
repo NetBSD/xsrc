@@ -111,7 +111,7 @@ Bool LeoAccelInit (ScreenPtr pScreen, LeoPtr pLeo)
 		return FALSE;
 #else
 	if (!dixRegisterPrivateKey(&LeoGCPrivateIndex, PRIVATE_GC,
-	    sizeof(LeoPrivGCRec))
+	    sizeof(LeoPrivGCRec)))
 		return FALSE;
 #endif
 	
