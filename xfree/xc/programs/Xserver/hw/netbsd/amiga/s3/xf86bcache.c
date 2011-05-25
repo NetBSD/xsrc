@@ -130,16 +130,8 @@ unsigned int Alignment;
  * that is linked to the CachePool structure.
  */
 
-#ifdef __STDC__
 void xf86AddToCachePool( CachePool Pool, short x, short y, 
 			 short Width, short Height, unsigned int Id )
-#else
-void xf86AddToCachePool( Pool, x, y, Width, Height, Id )
-CachePool Pool;
-short x, y, Width, Height;
-unsigned int Id;
-#endif
-
 {
   bitMapRowPtr bptr;
   CacheRecPtr CrPtr;

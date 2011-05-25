@@ -264,6 +264,42 @@
 
 #define amigaInfo(s) (&amigaFbs[(s)->myNum]) 
 
+static __inline unsigned char RAttr(volatile void * ba, short idx) {
+	abort();
+#if 0
+	vgaw (ba, ACT_ADDRESS, idx);
+	return vgar (ba, ACT_ADDRESS_R);
+#endif
+}
+
+static __inline unsigned char RSeq(volatile void * ba, short idx) {
+	abort();
+#if 0
+	vgaw (ba, SEQ_ADDRESS, idx);
+	return vgar (ba, SEQ_ADDRESS_R);
+#endif
+}
+
+static __inline unsigned char RCrt(volatile void * ba, short idx) {
+	abort();
+#if 0
+	vgaw (ba, CRT_ADDRESS, idx);
+	return vgar (ba, CRT_ADDRESS_R);
+#endif
+}
+
+static __inline unsigned char RGfx(volatile void * ba, short idx) {
+	abort();
+#if 0
+	vgaw(ba, GCT_ADDRESS, idx);
+	return vgar (ba, GCT_ADDRESS_R);
+#endif
+}
+
+static __inline void amiga_membarrier() {
+	abort();
+}
+
 /* don't forget to init vgaBase and inf before using these macros! */
 
 #if 0
@@ -441,8 +477,91 @@ typedef struct _amigaCVPrivGC {
 #define amigaCVSetWindowPrivate(w,p) (\
 	    (w)->devPrivates[amigaCVWindowPrivateIndex].ptr = (pointer) p)
 
+/* amiga16CVgc.c */
+Bool s3CreateGC16(GCPtr);
+void amiga16CVValidateGC(GCPtr, Mask, DrawablePtr);
 
+/* amiga32CVgc.c */
+Bool s3CreateGC32(GCPtr);
+void amiga32CVValidateGC(GCPtr, Mask, DrawablePtr);
 
+/* amiga8CVgc.c */
+Bool s3CreateGC(GCPtr);
+void amiga8CVValidateGC(GCPtr, Mask, DrawablePtr);
 
+/* amigaCV.c */
+GCOps *amigaCVMatchCommon(GCPtr, cfbPrivGCPtr, int);
+void amigaCVDestroyGC(GCPtr);
+Bool amigaCVCreateGC(GCPtr);
+void amigaCVCopyWindow(WindowPtr, DDXPointRec, RegionPtr);
+void amigaCVadjustVirtual(volatile caddr_t);
+Bool amigaCVGXInit(ScreenPtr, fbFd *);
+
+/* amigaCVCursor.c */
+short swap16(unsigned short);
+Bool amigaCVCursorInit(ScreenPtr);
+void amigaCVRestoreCursor(ScreenPtr);
+void amigaCVRepositionCursor(ScreenPtr);
+void amigaCVSetPanning2(fbFd *, unsigned int, unsigned int);
+void amigaCVRenewCursorColor(ScreenPtr);
+void s3WarpCursor(ScreenPtr, int, int );
+
+/* amigaCVblt.c */
+void amigaCVFindOrdering(DrawablePtr, DrawablePtr, GC *, int, BoxPtr, int, int, int, int, unsigned int *);
+
+/* amigaCVbstor.c */
+void amigaCVSaveAreas(PixmapPtr, RegionPtr, int, int, WindowPtr);
+void amigaCVRestoreAreas(PixmapPtr, RegionPtr, int, int, WindowPtr);
+
+/* amigaCVfrect.c */
+void amigaCVInitFrect(int, int, int);
+void amigaCVPolyFillRect(DrawablePtr, GCPtr, int, xRectangle *);
+void amigaCVFillSpans(DrawablePtr, GCPtr, int, DDXPointPtr, int *, int);
+
+/* amigaCVim.c */
+void amigaCVImageInit(fbFd *);
+void amigaCVImageWrite(int, int, int, int, char *, int, int, int, int, unsigned long, fbFd *);
+void amigaCVImageRead(int, int, int, int, char *, int, int, int, unsigned long, fbFd *);
+void amigaCVImageFill(int, int, int, int, char *, int, int, int, int, int, int, unsigned long, fbFd *);
+void amigaCVImageWriteNoMem(int, int, int, int, char *, int, int, int, int, unsigned long, fbFd *);
+void amigaCVImageReadNoMem(int, int, int, int, char *, int, int, int, unsigned long, fbFd *);
+void amigaCVImageFillNoMem(int, int, int, int, char *, int, int, int, int, int, int, unsigned long, fbFd *);
+void amigaCVImageStipple(int, int, int, int, char *, int, int, int, int, int, Pixel, int, unsigned long, fbFd *);
+void amigaCVImageOpStipple(int, int, int, int, char *, int, int, int , int , int , Pixel, Pixel, int, unsigned long, fbFd *);
+
+/* amigaCVline.c */
+void amigaCVLine(DrawablePtr, GCPtr, int, int, DDXPointPtr);
+
+/* amigaCVplypt.c */
+void amigaCVPolyPoint(DrawablePtr, GCPtr, int, int, xPoint *);
+
+/* amigaCVscrin.c */
+Bool amigaCVInit(int, ScreenPtr, int, char **);
+
+/* amigaCVseg.c */
+void amigaCVSegment(DrawablePtr, GCPtr, int, xSegment *);
+
+/* s3bcach.c */
+void s3CacheMoveBlock(int, int , int , int , int , int , unsigned int);
+
+/* s3font.c */
+Bool s3RealizeFont(ScreenPtr, FontPtr);
+Bool s3UnrealizeFont(ScreenPtr, FontPtr);
+
+/* s3ss.c */
+void s3SetSpans(DrawablePtr, GCPtr, char *, DDXPointPtr, int *, int, int);
+
+/* s3text.c */
+void s3SimpleStipple(int, int , int, int , unsigned char *, int , fbFd *);
+void s3FontStipple(int, int , int, int , unsigned char *, int , Pixel);
+int s3NoCPolyText(DrawablePtr, GCPtr, int, int, int, char *, Bool);
+int s3NoCImageText(DrawablePtr, GCPtr, int, int, int, char *, Bool);
+
+/* xf86text.c */
+void xf86InitText(void (*GlyphWriteFunc )(), int (*NoCPolyTextFunc )(), int (*NoCImageTextFunc )());
+int xf86PolyText8(DrawablePtr, GCPtr, int, int , int, char *);
+int xf86PolyText16(DrawablePtr, GCPtr, int, int , int, unsigned short *);
+void xf86ImageText8(DrawablePtr, GCPtr, int, int , int, char *);
+void xf86ImageText16(DrawablePtr, GCPtr, int, int , int, unsigned short *);
 
 #endif /* _REGS3_H */

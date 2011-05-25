@@ -55,16 +55,6 @@ in this Software without prior written authorization from the X Consortium.
 
 extern int cfb16ScreenPrivateIndex, cfb32ScreenPrivateIndex;
 
-
-
-
-extern void
-amigaCVFindOrdering ();
-
-
-
-
-
 short s3alu[16] =
 {
    MIX_0,
@@ -86,12 +76,6 @@ short s3alu[16] =
 };           
 
 
-extern RegionPtr cfb8CopyArea(), cfb16CopyArea(), cfb32CopyArea();
-extern RegionPtr cfb8CopyPlane(), cfb16CopyPlane(), cfb32CopyPlane();
-
-extern RegionPtr cfb8BitBlt(), cfb16BitBlt(), cfb32BitBlt();
-
-
 
 static unsigned long	copyPlaneFG, copyPlaneBG;
 
@@ -101,25 +85,6 @@ int	amigaCVScreenPrivateIndex;
 int	amigaCVGCPrivateIndex;
 int	amigaCVWindowPrivateIndex;
 int	amigaCVGeneration;
-
-
-/* externs from amigaCVblt.c */
-extern void amigaCVFindOrdering ();
-extern RegionPtr amigaCVCopyArea();
-extern RegionPtr amigaCVCopyPlane();
-
-/* externs from amigaCVfrect.c */
-extern void amigaCVFillSpans();
-extern void amigaCVPolyFillRect();
-
-/* externs from amigaCVim.c */
-extern void amigaCVImageInit (fbFd *);
-
-
-
-void	amigaCVValidateGC ();
-void	amigaCVDestroyGC ();
-void	amiga8CVValidateGC (), amiga16CVValidateGC (), amiga32CVValidateGC ();
 
 
 extern GCFuncs	amiga8CVGCFuncs;
@@ -152,10 +117,7 @@ extern GCOps	amiga32CVNonTEOps,  amiga32CVTEOps,
 			 FONTMINBOUNDS(font,leftSideBearing))
 
 GCOps *
-amigaCVMatchCommon (pGC, devPriv, bpp)
-    GCPtr	    pGC;
-    cfbPrivGCPtr    devPriv;
-    int		    bpp;
+amigaCVMatchCommon(GCPtr pGC, cfbPrivGCPtr devPriv, int bpp)
 {
     if (pGC->lineWidth != 0)
 	return 0;
@@ -166,7 +128,7 @@ amigaCVMatchCommon (pGC, devPriv, bpp)
     if (devPriv->rop != GXcopy)
 	return 0;
     if (pGC->font &&
-        FONTWIDTH (pGC->font) <= 32 &&
+        FONTWIDTH(pGC->font) <= 32 &&
 	FONTMINBOUNDS(pGC->font,characterWidth) >= 0)
     {
         if (bpp == 8)
@@ -216,35 +178,30 @@ amigaCVMatchCommon (pGC, devPriv, bpp)
     return 0;
 }
 
-extern void amiga8CVValidateGC();
-extern void amiga16CVValidateGC();
-extern void amiga32CVValidateGC();
-
-
 void
-amigaCVDestroyGC (pGC)
-    GCPtr   pGC;
+amigaCVDestroyGC(GCPtr   pGC)
 {
 
-    amigaCVPrivGCPtr	    gxPriv = amigaCVGetGCPrivate (pGC);
+    amigaCVPrivGCPtr	    gxPriv = amigaCVGetGCPrivate(pGC);
 
 #if 0
     if (gxPriv->stipple)
-	xfree (gxPriv->stipple);
+	xfree(gxPriv->stipple);
 #endif
-    miDestroyGC (pGC);
+    miDestroyGC(pGC);
 }
 
-amigaCVCreateGC (pGC)
-    GCPtr   pGC;
+
+Bool
+amigaCVCreateGC(GCPtr   pGC)
 {
     amigaCVPrivGCPtr  gxPriv;
     if (pGC->depth == 1)
-	return mfbCreateGC (pGC);
+	return mfbCreateGC(pGC);
 #if AMIGAMAXDEPTH == 32
     if (!amigaCfbCreateGC(pGC))
 #else
-    if (!cfbCreateGC (pGC))
+    if (!cfbCreateGC(pGC))
 #endif
 	return FALSE;
     if (pGC->depth == 8)
@@ -273,10 +230,7 @@ amigaCVCreateGC (pGC)
 
 
 void
-amigaCVCopyWindow(pWin, ptOldOrg, prgnSrc)
-     WindowPtr pWin;
-     DDXPointRec ptOldOrg;
-     RegionPtr prgnSrc;
+amigaCVCopyWindow(WindowPtr pWin, DDXPointRec ptOldOrg, RegionPtr prgnSrc)
 {
    RegionPtr prgnDst;
    register BoxPtr pbox, pboxOrig;
@@ -286,7 +240,7 @@ amigaCVCopyWindow(pWin, ptOldOrg, prgnSrc)
    unsigned int *ordering;
    GC    dummyGC;
    fbFd *inf = amigaInfo(pWin->drawable.pScreen);
-   volatile caddr_t vgaBase = (volatile caddr_t) (inf->regs);
+   volatile caddr_t vgaBase = (volatile caddr_t)(inf->regs);
 
    dummyGC.subWindowMode = ClipByChildren;	/* ~IncludeInferiors */
 
@@ -386,7 +340,8 @@ amigaCVCopyWindow(pWin, ptOldOrg, prgnSrc)
 }
 
 
-void amigaCVadjustVirtual (volatile caddr_t ba)
+void
+amigaCVadjustVirtual(volatile caddr_t ba)
 {
         unsigned char cr50, test;
 	fbFd *inf = amigaInfo(amigaCVsavepScreen);
@@ -437,10 +392,10 @@ void amigaCVadjustVirtual (volatile caddr_t ba)
                         HDE = amigaVirtualWidth / 2;
                         break;
 		default: /* ??? */
-			__dolog ("wrong depth %d\n", depth);
+			__dolog("wrong depth %d\n", depth);
 	}
 
-	WCrt (ba, CRT_ID_SCREEN_OFFSET, (HDE & 0xff));
+	WCrt(ba, CRT_ID_SCREEN_OFFSET, (HDE & 0xff));
 
 	__dolog("VW %d, HDE %x\n", (int)amigaVirtualWidth, (int)HDE);
 
@@ -456,15 +411,8 @@ void amigaCVadjustVirtual (volatile caddr_t ba)
 
 
 
-#if NeedFunctionPrototypes
-amigaCVGXInit (
-    ScreenPtr	pScreen,
-    fbFd	*fb)
-#else
-amigaCVGXInit (pScreen, fb)
-    ScreenPtr	pScreen;
-    fbFd	*fb;
-#endif
+Bool
+amigaCVGXInit(ScreenPtr	pScreen, fbFd	*fb)
 {
     unsigned int	    mode;
     register long   r;
@@ -477,11 +425,11 @@ amigaCVGXInit (pScreen, fb)
 	amigaCVScreenPrivateIndex = AllocateScreenPrivateIndex();
 	if (amigaCVScreenPrivateIndex == -1)
 	    return FALSE;
-	amigaCVGCPrivateIndex = AllocateGCPrivateIndex ();
-	amigaCVWindowPrivateIndex = AllocateWindowPrivateIndex ();
+	amigaCVGCPrivateIndex = AllocateGCPrivateIndex();
+	amigaCVWindowPrivateIndex = AllocateWindowPrivateIndex();
 	amigaCVGeneration = serverGeneration;
     }
-    if (!AllocateGCPrivate(pScreen, amigaCVGCPrivateIndex, sizeof (amigaCVPrivGCRec)))
+    if (!AllocateGCPrivate(pScreen, amigaCVGCPrivateIndex, sizeof(amigaCVPrivGCRec)))
 	return FALSE;
     if (!AllocateWindowPrivate(pScreen, amigaCVWindowPrivateIndex, 0))
 	return FALSE;
@@ -524,6 +472,3 @@ amigaCVGXInit (pScreen, fb)
 
     return TRUE;
 }
-
-
-

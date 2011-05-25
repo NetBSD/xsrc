@@ -194,144 +194,6 @@ extern int 		amigaCCYOffset;
 
 extern int 		amigaXdebug;  /* Flag for debugging output to /tmp/xlog */
 
-extern Bool amigaCursorInitialize(
-#if NeedFunctionPrototypes
-    ScreenPtr /* pScreen */
-#endif
-);
-
-extern void amigaDisableCursor(
-#if NeedFunctionPrototypes
-    ScreenPtr /* pScreen */
-#endif
-);
-
-extern int amigaChangeKbdTranslation(
-#if NeedFunctionPrototypes
-    int /* fd */,
-    Bool /* makeTranslated */
-#endif
-);
-
-extern void amigaNonBlockConsoleOff(
-#if NeedFunctionPrototypes
-    void /* no args */
-#endif
-);
-
-extern void amigaEnqueueEvents(
-#if NeedFunctionPrototypes
-    void
-#endif
-);
-
-extern int amigaGXInit(
-#if NeedFunctionPrototypes
-    ScreenPtr /* pScreen */,
-    fbFd* /* fb */
-#endif
-);
-
-extern Bool amigaSaveScreen(
-#if NeedFunctionPrototypes
-    ScreenPtr /* pScreen */,
-    int /* on */
-#endif
-);
-
-extern Bool amigaScreenInit(
-#if NeedFunctionPrototypes
-    ScreenPtr /* pScreen */
-#endif
-);
-
-extern pointer amigaMemoryMap(
-#if NeedFunctionPrototypes
-    size_t /* len */,
-    off_t /* off */,
-    int /* fd */
-#endif
-);
-
-extern Bool amigaScreenAllocate(
-#if NeedFunctionPrototypes
-    ScreenPtr /* pScreen */
-#endif
-);
-
-extern Bool amigaInitCommon(
-#if NeedFunctionPrototypes
-    int /* scrn */,
-    ScreenPtr /* pScrn */,
-    Bool (* /* init1 */)(),
-    void (* /* init2 */)(),
-    Bool (* /* cr_cm */)(),
-    Bool (* /* save */)(),
-    int /* fb_off */
-#endif
-);
-
-extern Firm_event* amigaKbdGetEvents(
-#if NeedFunctionPrototypes
-    int /* fd */,
-    Bool /* on */,
-    int* /* pNumEvents */,
-    Bool* /* pAgain */
-#endif
-);
-
-extern Firm_event* amigaMouseGetEvents(
-#if NeedFunctionPrototypes
-    int /* fd */,
-    Bool /* on */,
-    int* /* pNumEvents */,
-    Bool* /* pAgain */
-#endif
-);
-
-extern Firm_event* amigaSerGetEvents(
-#if NeedFunctionPrototypes
-    int /* fd */,
-    Bool /* on */,
-    int* /* pNumEvents */,
-    Bool* /* pAgain */
-#endif
-);
-
-extern void amigaKbdEnqueueEvent(
-#if NeedFunctionPrototypes
-    DeviceIntPtr /* device */,
-    Firm_event* /* fe */
-#endif
-);
-
-extern void amigaMouseEnqueueEvent(
-#if NeedFunctionPrototypes
-    DeviceIntPtr /* device */,
-    Firm_event* /* fe */,
-    Firm_event* /* fe_next */
-#endif
-);
-
-extern int amigaKbdProc(
-#if NeedFunctionPrototypes
-    DeviceIntPtr /* pKeyboard */,
-    int /* what */
-#endif
-);
-
-extern int amigaMouseProc(
-#if NeedFunctionPrototypes
-    DeviceIntPtr /* pMouse */,
-    int /* what */
-#endif
-);
-
-extern void amigaKbdWait(
-#if NeedFunctionPrototypes
-    void
-#endif
-);
 
 /*-
  * TVTOMILLI(tv)
@@ -340,62 +202,314 @@ extern void amigaKbdWait(
 #define TVTOMILLI(tv)	(((tv).tv_usec/1000)+((tv).tv_sec*1000))
 #define TRACE(f)	do { ErrorF("[%s #%d] ",__FILE__,__LINE__); ErrorF f; } while(0)
 
-extern Bool amigaCfbSetupScreen(
-#if NeedFunctionPrototypes
-    ScreenPtr /* pScreen */,
-    pointer /* pbits */,	/* pointer to screen bitmap */
-    int /* xsize */,		/* in pixels */
-    int /* ysize */,
-    int /* dpix */,		/* dots per inch */
-    int /* dpiy */,		/* dots per inch */
-    int /* width */,		/* pixel width of frame buffer */
-    int	/* bpp */		/* bits per pixel of root */
-#endif
+/* amigaC.c */
+extern Bool amigaCInit(
+    int,
+    ScreenPtr,
+    int,
+    char **
 );
 
-extern Bool amigaCfbFinishScreenInit(
-#if NeedFunctionPrototypes
-    ScreenPtr /* pScreen */,
-    pointer /* pbits */,	/* pointer to screen bitmap */
-    int /* xsize */,		/* in pixels */
-    int /* ysize */,
-    int /* dpix */,		/* dots per inch */
-    int /* dpiy */,		/* dots per inch */
-    int /* width */,		/* pixel width of frame buffer */
-    int	/* bpp */		/* bits per pixel of root */
-#endif
+extern int xopen_view(
+    void
 );
 
-extern Bool amigaCfbScreenInit(
-#if NeedFunctionPrototypes
-    ScreenPtr /* pScreen */,
-    pointer /* pbits */,	/* pointer to screen bitmap */
-    int /* xsize */,		/* in pixels */
-    int /* ysize */,
-    int /* dpix */,		/* dots per inch */
-    int /* dpiy */,		/* dots per inch */
-    int /* width */,		/* pixel width of frame buffer */
-    int	/* bpp */		/* bits per pixel of root */
-#endif
+extern Bool amigaCProbe(
+    ScreenInfo *,
+    int,
+    int,
+    int,
+    char **
 );
 
+extern Bool amigaCCreate(
+    ScreenInfo *,
+    int,
+    char **
+);
+
+/* amigaCfb.c */
 extern void amigaInstallColormap(
-#if NeedFunctionPrototypes
     ColormapPtr /* cmap */
-#endif
 );
 
 extern void amigaUninstallColormap(
-#if NeedFunctionPrototypes
     ColormapPtr /* cmap */
-#endif
 );
 
 extern int amigaListInstalledColormaps(
-#if NeedFunctionPrototypes
     ScreenPtr /* pScreen */,
     Colormap* /* pCmapList */
-#endif
 );
+
+extern void CGScreenInit(
+    ScreenPtr
+);
+
+extern Bool amigaGRFInit(
+    int,
+    ScreenPtr,
+    int,
+    char **
+);
+
+extern Bool amigaRZ3Init(
+    int,
+    ScreenPtr,
+    int,
+    char **
+);
+
+extern Bool amigaCLInit(
+    int,
+    ScreenPtr,
+    int,
+    char **
+);
+
+extern int amigaGXInit(
+    ScreenPtr /* pScreen */,
+    fbFd* /* fb */
+);
+
+/* amigaCursor.c */
+extern void amigaCVSetPanning(
+    fbFd *,
+    unsigned short,
+    unsigned short
+);
+
+extern Bool amigaCursorInitialize(
+    ScreenPtr /* pScreen */
+);
+
+extern void amigaDisableCursor(
+    ScreenPtr /* pScreen */
+);
+
+/* amigaFbs.c */
+extern pointer amigaMemoryMap(
+    size_t /* len */,
+    off_t /* off */,
+    int /* fd */
+);
+
+extern Bool amigaScreenAllocate(
+    ScreenPtr /* pScreen */
+);
+
+extern Bool amigaSaveScreen(
+    ScreenPtr /* pScreen */,
+    int /* on */
+);
+
+extern Bool amigaScreenInit(
+    ScreenPtr /* pScreen */
+);
+
+extern Bool amigaInitCommon(
+    int /* scrn */,
+    ScreenPtr /* pScrn */,
+    Bool (* /* init1 */)(),
+    void (* /* init2 */)(),
+    Bool (* /* cr_cm */)(),
+    Bool (* /* save */)(),
+    int /* fb_off */
+);
+
+/* amigaInit.c */
+extern void amigaNonBlockConsoleOff(
+    void /* no args */
+);
+
+extern void OsVendorPreInit(
+    void
+);
+
+extern void OsVendorInit(
+    void
+);
+
+extern void InitOutput(
+    ScreenInfo *,
+    int,
+    char **
+);
+
+extern void InitInput(
+    int,
+    char **
+);
+
+extern Bool amigaCfbSetupScreen(
+    ScreenPtr /* pScreen */,
+    pointer /* pbits */,	/* pointer to screen bitmap */
+    int /* xsize */,		/* in pixels */
+    int /* ysize */,
+    int /* dpix */,		/* dots per inch */
+    int /* dpiy */,		/* dots per inch */
+    int /* width */,		/* pixel width of frame buffer */
+    int	/* bpp */		/* bits per pixel of root */
+);
+
+extern Bool amigaCfbFinishScreenInit(
+    ScreenPtr /* pScreen */,
+    pointer /* pbits */,	/* pointer to screen bitmap */
+    int /* xsize */,		/* in pixels */
+    int /* ysize */,
+    int /* dpix */,		/* dots per inch */
+    int /* dpiy */,		/* dots per inch */
+    int /* width */,		/* pixel width of frame buffer */
+    int	/* bpp */		/* bits per pixel of root */
+);
+
+extern Bool amigaCfbScreenInit(
+    ScreenPtr /* pScreen */,
+    pointer /* pbits */,	/* pointer to screen bitmap */
+    int /* xsize */,		/* in pixels */
+    int /* ysize */,
+    int /* dpix */,		/* dots per inch */
+    int /* dpiy */,		/* dots per inch */
+    int /* width */,		/* pixel width of frame buffer */
+    int	/* bpp */		/* bits per pixel of root */
+);
+
+extern Bool amigaCfbCreateGC(
+    GCPtr
+);
+
+extern void OsVendorFatalError(
+    void
+);
+
+extern void DPMSSet(
+    int
+);
+
+extern int DPMSGet(
+    int *
+);
+
+extern Bool DPMSSupported(
+    void
+);
+
+/* amigaIo.c */
+extern void ProcessInputEvents(
+    void
+);
+
+extern void amigaEnqueueEvents(
+    void
+);
+
+extern void AbortDDX(
+    void
+);
+
+extern void ddxGiveUp(
+    void
+);
+
+extern int ddxProcessArgument(
+    int,
+    char *[],
+    int
+);
+
+extern void ddxUseMsg(
+    void
+);
+
+
+/* amigaKbd.c */
+extern int amigaCVChangeMode(
+    int
+);
+
+extern void amigaKbdWait(
+    void
+);
+
+extern int amigaKbdProc(
+    DeviceIntPtr /* pKeyboard */,
+    int /* what */
+);
+
+extern Firm_event* amigaKbdGetEvents(
+    int /* fd */,
+    Bool /* on */,
+    int* /* pNumEvents */,
+    Bool* /* pAgain */
+);
+
+extern void amigaKbdEnqueueEvent(
+    DeviceIntPtr /* device */,
+    Firm_event* /* fe */
+);
+
+extern void amigaEnqueueAutoRepeat(
+    void
+);
+
+extern int amigaChangeKbdTranslation(
+    int /* fd */,
+    Bool /* makeTranslated */
+);
+
+extern Bool LegalModifier(
+    unsigned int,
+    DevicePtr
+);
+
+extern void amigaBlockHandler(
+    int,
+    pointer,
+    struct timeval **,
+    pointer
+);
+
+extern void amigaWakeupHandler(
+    int,
+    pointer,
+    unsigned long,
+    pointer
+);
+
+
+/* amigaMfb.c */
+extern Bool amigaCCInit(
+    int,
+    ScreenPtr,
+    int,
+    char **
+);
+
+/* amigaMouse.c */
+extern int amigaMouseProc(
+    DeviceIntPtr /* pMouse */,
+    int /* what */
+);
+
+extern Firm_event* amigaMouseGetEvents(
+    int /* fd */,
+    Bool /* on */,
+    int* /* pNumEvents */,
+    Bool* /* pAgain */
+);
+
+extern Firm_event* amigaSerGetEvents(
+    int /* fd */,
+    Bool /* on */,
+    int* /* pNumEvents */,
+    Bool* /* pAgain */
+);
+
+extern void amigaMouseEnqueueEvent(
+    DeviceIntPtr /* device */,
+    Firm_event* /* fe */,
+    Firm_event* /* fe_next */
+);
+
 
 #endif

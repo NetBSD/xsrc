@@ -92,9 +92,7 @@ static int CursX, CursY; /* cursor save position */
 
 
 /* fuck the optimizer! */
-#undef vgar
-
-int vgar(volatile caddr_t ba, int idx)
+static int xvgar(volatile caddr_t ba, int idx)
 {
 register int erg;
 asm volatile ("movel %1, %%a0;\
@@ -112,9 +110,9 @@ return erg;
 
 #define VerticalRetraceWait(ba) \
 { \
-        while ((vgar(ba, GREG_INPUT_STATUS1_R) & 0x08) == 0x00) ; \
-        while ((vgar(ba, GREG_INPUT_STATUS1_R) & 0x08) == 0x08) ; \
-        while ((vgar(ba, GREG_INPUT_STATUS1_R) & 0x08) == 0x00) ; \
+        while ((xvgar(ba, GREG_INPUT_STATUS1_R) & 0x08) == 0x00) ; \
+        while ((xvgar(ba, GREG_INPUT_STATUS1_R) & 0x08) == 0x08) ; \
+        while ((xvgar(ba, GREG_INPUT_STATUS1_R) & 0x08) == 0x00) ; \
 }
 
 
@@ -437,7 +435,7 @@ amigaCVSetPanning2 (inf, xoff, yoff)
         if (depth > 8 && depth <= 16) xoff *= 2;
         else if (depth > 16) xoff *= 4;
 
-        vgar(ba, ACT_ADDRESS_RESET);
+        xvgar(ba, ACT_ADDRESS_RESET);
 #if 0
         WAttr(ba, ACT_ID_HOR_PEL_PANNING, (unsigned char)((xoff << 1) & 0x07));
 
@@ -568,7 +566,7 @@ amigaCVRecolorCursor(pScr, pCurs, displayed)
                 /* reset colour stack */
                 /*test = RCrt(vgaBase, CRT_ID_HWGC_MODE);*/
 		vgaw(vgaBase, CRT_ADDRESS, CRT_ID_HWGC_MODE);
-		test = vgar(vgaBase, CRT_ADDRESS_R);
+		test = xvgar(vgaBase, CRT_ADDRESS_R);
 
                 /*asm volatile("nop");*/
                 switch (depth) {
@@ -604,7 +602,7 @@ amigaCVRecolorCursor(pScr, pCurs, displayed)
                 /*test = RCrt(vgaBase, CRT_ID_HWGC_MODE);*/
                 /*asm volatile("nop");*/
 		vgaw(vgaBase, CRT_ADDRESS, CRT_ID_HWGC_MODE);
-		test = vgar(vgaBase, CRT_ADDRESS_R);
+		test = xvgar(vgaBase, CRT_ADDRESS_R);
 
 
                 switch (depth) {

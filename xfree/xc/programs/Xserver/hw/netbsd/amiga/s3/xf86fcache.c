@@ -62,24 +62,14 @@ int, int, int, int, unsigned char *, int, Pixel
  */
 
 void 
-#if NeedFunctionPrototypes
 xf86InitFontCache(
     CachePool FontCache,
     int MaxWidth, 
     int MaxHeight,
     void (*FontOpStippleFunc)(
-#if NeedNestedPrototypes
 	int, int, int, int, unsigned char *, int, Pixel
-#endif
     )
 )
-#else
-xf86InitFontCache( FontCache, MaxWidth, MaxHeight, FontOpStippleFunc )
-    CachePool FontCache;
-    int MaxWidth, MaxHeight;
-    void (*FontOpStippleFunc)();
-#endif
-
 {
     xf86FontPool = FontCache;
     xf86MaxWidth = MaxWidth / 32;
@@ -91,7 +81,7 @@ xf86InitFontCache( FontCache, MaxWidth, MaxHeight, FontOpStippleFunc )
 /*
  * Release all cache blocks to the block allocator.
  */
-void xf86ReleaseFontCache()
+void xf86ReleaseFontCache(void)
 {
   CacheFont8Ptr CFptr;
   int i;
@@ -117,8 +107,7 @@ void xf86ReleaseFontCache()
  * Remove a font from the font cache.
  */
 void
-xf86UnCacheFont8(font)
-     FontPtr font;
+xf86UnCacheFont8(FontPtr font)
 {
    int   i;
    CacheFont8Ptr ptr, last;
@@ -156,8 +145,7 @@ xf86UnCacheFont8(font)
  * Add a new font to the font cache.
  */
 CacheFont8Ptr
-xf86CacheFont8(font)
-     FontPtr font;
+xf86CacheFont8(FontPtr font)
 {
    int   c;
    unsigned long n;
@@ -231,9 +219,7 @@ xf86CacheFont8(font)
  * from the block allocator.
  */
 void
-xf86loadFontBlock(fentry, block)
-     CacheFont8Ptr fentry;
-     int   block;
+xf86loadFontBlock(CacheFont8Ptr fentry, int   block)
 {
    int   i, j, c;
    unsigned char chr;

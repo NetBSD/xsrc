@@ -285,13 +285,8 @@ amigaQueryBestSize (class, pwidth, pheight, pScreen)
 
 extern miPointerScreenFuncRec	amigaPointerScreenFuncs;
 
-#if NeedFunctionPrototypes
 Bool amigaCursorInitialize (
     ScreenPtr	pScreen)
-#else
-Bool amigaCursorInitialize (pScreen)
-    ScreenPtr	pScreen;
-#endif
 {
     SetupCursor (pScreen);
     struct grf_position maxsize;
@@ -311,13 +306,8 @@ Bool amigaCursorInitialize (pScreen)
     return TRUE;
 }
 
-#if NeedFunctionPrototypes
 void amigaDisableCursor (
     ScreenPtr	pScreen)
-#else
-void amigaDisableCursor (pScreen)
-    ScreenPtr	pScreen;
-#endif
 {
     SetupCursor (pScreen);
     struct grf_spriteinfo spriteinfo;
