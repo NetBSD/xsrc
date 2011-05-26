@@ -26,6 +26,7 @@
 #endif
 
 #include <string.h>
+#include <sys/ioctl.h>
 
 #include "xf86.h"
 #include "xf86_OSproc.h"
