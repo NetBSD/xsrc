@@ -152,7 +152,7 @@ Mask DontPropagateMasks[DNPMCOUNT];
 static int DontPropagateRefCnts[DNPMCOUNT];
 
 #ifdef DEBUG
-static debug_events = 0;
+static int debug_events = 0;
 #endif
 InputInfo inputInfo;
 
