@@ -91,6 +91,7 @@ SOFTWARE.
 #endif
 #include "dixevents.h"
 #include "globals.h"
+#include "mi.h"
 
 #ifdef XAPPGROUP
 #include "Xagsrv.h"
@@ -179,7 +180,8 @@ PrintChildren(p1, indent)
     }
 }
 
-PrintWindowTree()
+void
+PrintWindowTree(void)
 {
     int i;
     WindowPtr pWin, p1;
