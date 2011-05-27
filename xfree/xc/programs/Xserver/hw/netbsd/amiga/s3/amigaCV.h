@@ -296,9 +296,11 @@ static __inline unsigned char RGfx(volatile void * ba, short idx) {
 #endif
 }
 
-static __inline void amiga_membarrier() {
+#ifndef amiga_membarrier
+static __inline void amiga_membarrier(void) {
 	abort();
 }
+#endif
 
 /* don't forget to init vgaBase and inf before using these macros! */
 
