@@ -2197,6 +2197,7 @@ remove_fs_handlers(fpe, block_handler, all)
 #define GLYPH_SIZE(ch, nbytes)          \
 	GLWIDTHBYTESPADDED((ch)->metrics.rightSideBearing - \
 			(ch)->metrics.leftSideBearing, (nbytes))
+void
 dump_char_ascii(cip)
     CharInfoPtr cip;
 {
