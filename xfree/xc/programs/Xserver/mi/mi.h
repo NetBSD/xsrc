@@ -632,4 +632,10 @@ extern void miPolyFillArc(
     xArc * /*parcs*/
 );
 
+#ifdef DEBUG
+extern int miPrintRegion(
+    RegionPtr /* rgn */
+);
+#endif
+
 #endif /* MI_H */
