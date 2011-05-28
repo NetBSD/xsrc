@@ -1,4 +1,4 @@
-/*	$NetBSD: vidc.c,v 1.9 2011/05/25 16:55:44 christos Exp $	*/
+/*	$NetBSD: vidc.c,v 1.10 2011/05/28 13:24:04 christos Exp $	*/
 
 /*
  * Copyright (c) 1999 Neil A. Carson & Mark Brinicombe
@@ -52,6 +52,7 @@
 
 /* X11 headers
  */
+#include "Xos.h"
 #include "X.h"
 #include "Xproto.h"
 #include "mi.h"
