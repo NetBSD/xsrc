@@ -38,15 +38,16 @@
 #define NEED_EVENTS
 #include <X.h>
 #include "Xproto.h"
-#include <misc.h>
-#include <input.h>
-#include <cursorstr.h>
-#include <regionstr.h>
-#include <scrnintstr.h>
-#include <servermd.h>
-#include <windowstr.h>
+#include "misc.h"
+#include "input.h"
+#include "cursorstr.h"
+#include "regionstr.h"
+#include "scrnintstr.h"
+#include "servermd.h"
+#include "windowstr.h"
 #include "inputstr.h"
 #include "mfb.h"
+#include "migc.h"
 #include "amiga.h"
 #include "amigaCV.h"
 
@@ -56,7 +57,7 @@ static Bool amigaCVUnrealizeCursor();
 static void amigaCVSetCursor();
 static void amigaCVMoveCursor();
 static void amigaCVRecolorCursor();
-static void amigaQueryBestSize ();
+static void amigaQueryBestSize();
 void amigaCVRestoreCursor();
 
 extern miPointerScreenFuncRec   amigaPointerScreenFuncs;
@@ -117,7 +118,7 @@ return erg;
 
 
 
-__inline short swap16 (unsigned short x)
+__inline short swap16(unsigned short x)
 {
 	unsigned short r;
 
@@ -129,10 +130,9 @@ __inline short swap16 (unsigned short x)
 
 
 Bool
-amigaCVCursorInit(pScr)
-     ScreenPtr pScr;
+amigaCVCursorInit(ScreenPtr pScr)
 {
-   SetupCursor (pScr);
+   SetupCursor(pScr);
 
    s3hotX = 0;
    s3hotY = 0;
@@ -156,12 +156,10 @@ amigaCVCursorInit(pScr)
 }
 
 static void
-amigaQueryBestSize (class, pwidth, pheight, pScreen)
-    int class;
-    unsigned short   *pwidth, *pheight;
-    ScreenPtr   pScreen;
+amigaQueryBestSize(int class, unsigned short *pwidth, unsigned short *pheight,
+    ScreenPtr pScreen)
 {
-    SetupCursor (pScreen);
+    SetupCursor(pScreen);
 
     switch (class)
     {
@@ -176,16 +174,13 @@ amigaQueryBestSize (class, pwidth, pheight, pScreen)
             *pheight = pScreen->height;
         break;
     default:
-        mfbQueryBestSize (class, pwidth, pheight, pScreen);
+        mfbQueryBestSize(class, pwidth, pheight, pScreen);
         break;
     }
 }
 
 static Bool
-amigaCVRealizeCursor(pScr, pCurs)
-     ScreenPtr pScr;
-     CursorPtr pCurs;
-
+amigaCVRealizeCursor(ScreenPtr pScr, CursorPtr pCurs)
 {
    register int i, j;
    unsigned short *pServMsk;
@@ -251,9 +246,7 @@ amigaCVRealizeCursor(pScr, pCurs)
 }
 
 static Bool
-amigaCVUnrealizeCursor(pScr, pCurs)
-     ScreenPtr pScr;
-     CursorPtr pCurs;
+amigaCVUnrealizeCursor(ScreenPtr pScr, CursorPtr pCurs)
 {
    pointer priv;
 
@@ -264,10 +257,7 @@ amigaCVUnrealizeCursor(pScr, pCurs)
 }
 
 static void 
-amigaCVLoadCursor(pScr, pCurs, x, y)
-     ScreenPtr pScr;
-     CursorPtr pCurs;
-     int x, y;
+amigaCVLoadCursor(ScreenPtr pScr, CursorPtr pCurs, int x, int y)
 {
    int   index = pScr->myNum;
    int   i, j;
@@ -290,24 +280,24 @@ amigaCVLoadCursor(pScr, pCurs, x, y)
 
    /* turn cursor off */
 
-   WCrt (vgaBase, CRT_ID_HWGC_MODE, 0x00);
+   WCrt(vgaBase, CRT_ID_HWGC_MODE, 0x00);
 
    /* move cursor off-screen */
 
-   WCrt (vgaBase, CRT_ID_HWGC_ORIGIN_X_HI, 0x7);
-   WCrt (vgaBase, CRT_ID_HWGC_ORIGIN_X_LO,  0xff);
-   WCrt (vgaBase, CRT_ID_HWGC_ORIGIN_Y_LO, 0xff);
-   WCrt (vgaBase, CRT_ID_HWGC_DSTART_X, 0x3f);
-   WCrt (vgaBase, CRT_ID_HWGC_DSTART_Y, 0x3f);
-   WCrt (vgaBase, CRT_ID_HWGC_ORIGIN_Y_HI, 0x7);
+   WCrt(vgaBase, CRT_ID_HWGC_ORIGIN_X_HI, 0x7);
+   WCrt(vgaBase, CRT_ID_HWGC_ORIGIN_X_LO,  0xff);
+   WCrt(vgaBase, CRT_ID_HWGC_ORIGIN_Y_LO, 0xff);
+   WCrt(vgaBase, CRT_ID_HWGC_DSTART_X, 0x3f);
+   WCrt(vgaBase, CRT_ID_HWGC_DSTART_Y, 0x3f);
+   WCrt(vgaBase, CRT_ID_HWGC_ORIGIN_Y_HI, 0x7);
 
 
    /* Load storage location.  */
    cpos = (inf->info.gd_fbsize - 2*1024)/1024;
 
 
-   WCrt (vgaBase, CRT_ID_HWGC_START_AD_LO, (cpos & 0xff));
-   WCrt (vgaBase, CRT_ID_HWGC_START_AD_HI, (cpos >> 8));
+   WCrt(vgaBase, CRT_ID_HWGC_START_AD_LO, (cpos & 0xff));
+   WCrt(vgaBase, CRT_ID_HWGC_START_AD_HI, (cpos >> 8));
 
    ram = (unsigned short *)pCurs->bits->devPriv[index];
 
@@ -361,17 +351,13 @@ amigaCVLoadCursor(pScr, pCurs, x, y)
    amigaCVRecolorCursor(pScr, pCurs); 
 
    /* turn cursor on */
-   WCrt (vgaBase, CRT_ID_HWGC_MODE, 0x01);
+   WCrt(vgaBase, CRT_ID_HWGC_MODE, 0x01);
 
 }
 
 static void
-amigaCVSetCursor(pScr, pCurs, x, y, generateEvent)
-     ScreenPtr pScr;
-     CursorPtr pCurs;
-     int   x, y;
-     Bool  generateEvent;
-
+amigaCVSetCursor(ScreenPtr pScr, CursorPtr pCurs, int x, int y,
+    Bool generateEvent)
 {
    int index = pScr->myNum;
 
@@ -390,8 +376,7 @@ amigaCVSetCursor(pScr, pCurs, x, y, generateEvent)
 }
 
 void
-amigaCVRestoreCursor(pScr)
-     ScreenPtr pScr;
+amigaCVRestoreCursor(ScreenPtr pScr)
 {
    int index = pScr->myNum;
    
@@ -405,8 +390,7 @@ amigaCVRestoreCursor(pScr)
 
 #if 0
 void
-amigaCVRepositionCursor(pScr)
-     ScreenPtr pScr;
+amigaCVRepositionCursor(ScreenPtr pScr)
 {
    int x, y;
 
@@ -421,9 +405,7 @@ amigaCVRepositionCursor(pScr)
 
 
 void
-amigaCVSetPanning2 (inf, xoff, yoff)
-        fbFd *inf;
-        unsigned short xoff, yoff;
+amigaCVSetPanning2(fbFd *inf, unsigned short xoff, unsigned short yoff)
 {
         volatile caddr_t ba = inf->regs;
         int depth = inf->info.gd_planes;
@@ -453,7 +435,7 @@ amigaCVSetPanning2 (inf, xoff, yoff)
         off >>= 8;
         WCrt(ba, CRT_ID_START_ADDR_HIGH, ((unsigned char)off));
         off >>= 8;
-        WCrt(ba, CRT_ID_EXT_SYS_CNTL_3 , (off & 0x0f));
+        WCrt(ba, CRT_ID_EXT_SYS_CNTL_3, (off & 0x0f));
 
 }        
 
@@ -462,9 +444,7 @@ amigaCVSetPanning2 (inf, xoff, yoff)
 
 
 static void
-amigaCVMoveCursor(pScr, x, y)
-     ScreenPtr pScr;
-     int   x, y;
+amigaCVMoveCursor(ScreenPtr pScr, int x, int y)
 {
    unsigned char xoff, yoff;
    fbFd *inf = amigaInfo(pScr);
@@ -479,9 +459,9 @@ amigaCVMoveCursor(pScr, x, y)
 
 
   if (x < xpan)
-       amigaCVSetPanning2 (inf, x, ypan);
+       amigaCVSetPanning2(inf, x, ypan);
   if (x >= (xpan + amigaRealWidth))
-           amigaCVSetPanning2 (inf, (1 + x - amigaRealWidth), ypan);
+           amigaCVSetPanning2(inf, (1 + x - amigaRealWidth), ypan);
   if (y < ypan)
            amigaCVSetPanning2(inf,  xpan, y);
   if (y >= (ypan + amigaRealHeight))
@@ -525,20 +505,19 @@ amigaCVMoveCursor(pScr, x, y)
 
    /* This is the recomended order to move the cursor */
 
-        WCrt (vgaBase, CRT_ID_HWGC_ORIGIN_X_HI, (x >> 8));
-        WCrt (vgaBase, CRT_ID_HWGC_ORIGIN_X_LO, (x & 0xff));
+        WCrt(vgaBase, CRT_ID_HWGC_ORIGIN_X_HI, (x >> 8));
+        WCrt(vgaBase, CRT_ID_HWGC_ORIGIN_X_LO, (x & 0xff));
 
                 
-        WCrt (vgaBase, CRT_ID_HWGC_ORIGIN_Y_LO, (y & 0xff));
-        WCrt (vgaBase, CRT_ID_HWGC_DSTART_X, xoff);
-        WCrt (vgaBase, CRT_ID_HWGC_DSTART_Y, yoff);
-        WCrt (vgaBase, CRT_ID_HWGC_ORIGIN_Y_HI, (y >> 8));
+        WCrt(vgaBase, CRT_ID_HWGC_ORIGIN_Y_LO, (y & 0xff));
+        WCrt(vgaBase, CRT_ID_HWGC_DSTART_X, xoff);
+        WCrt(vgaBase, CRT_ID_HWGC_DSTART_Y, yoff);
+        WCrt(vgaBase, CRT_ID_HWGC_ORIGIN_Y_HI, (y >> 8));
 
 }
 
 void
-amigaCVRenewCursorColor(pScr)
-   ScreenPtr pScr;
+amigaCVRenewCursorColor(ScreenPtr pScr)
 {
 
    if (s3SaveCursors[pScr->myNum])
@@ -546,10 +525,7 @@ amigaCVRenewCursorColor(pScr)
 }
 
 static void
-amigaCVRecolorCursor(pScr, pCurs, displayed)
-     ScreenPtr pScr;
-     CursorPtr pCurs;
-     Bool displayed;
+amigaCVRecolorCursor(ScreenPtr pScr, CursorPtr pCurs, Bool displayed)
 {
    ColormapPtr pmap;
    unsigned short packedcolfg, packedcolbg;
@@ -574,12 +550,12 @@ amigaCVRecolorCursor(pScr, pCurs, displayed)
                         case 8: 
 				if (amigaFlipPixels) {
 	                                /* info->cmap.green[1] */
-        	                        WCrt (vgaBase, CRT_ID_HWGC_FG_STACK, 0);
+        	                        WCrt(vgaBase, CRT_ID_HWGC_FG_STACK, 0);
                 	                hwc = vgaBase + CRT_ADDRESS_W;
 					*hwc = 0;
 				} else {
 	                                /* info->cmap.green[1] */
-        	                        WCrt (vgaBase, CRT_ID_HWGC_FG_STACK, 1);
+        	                        WCrt(vgaBase, CRT_ID_HWGC_FG_STACK, 1);
                 	                hwc = vgaBase + CRT_ADDRESS_W;
 					*hwc = 1;
 				}
@@ -587,12 +563,12 @@ amigaCVRecolorCursor(pScr, pCurs, displayed)
 			case 15:			
 			case 16:
                                 /* info->cmap.green[1] */
-                                WCrt (vgaBase, CRT_ID_HWGC_FG_STACK, 0);
+                                WCrt(vgaBase, CRT_ID_HWGC_FG_STACK, 0);
                                 hwc = vgaBase + CRT_ADDRESS_W;
 				*hwc = 0;
 				break; 
 			case 32: case 24:
-				WCrt (vgaBase, CRT_ID_HWGC_FG_STACK, 0);
+				WCrt(vgaBase, CRT_ID_HWGC_FG_STACK, 0);
                                 hwc = vgaBase + CRT_ADDRESS_W;
 				*hwc = 0;
 				*hwc = 0;
@@ -608,22 +584,22 @@ amigaCVRecolorCursor(pScr, pCurs, displayed)
                 switch (depth) {
                         case 8:
 				if (amigaFlipPixels) {
-	                                WCrt (vgaBase, CRT_ID_HWGC_BG_STACK, 1);
+	                                WCrt(vgaBase, CRT_ID_HWGC_BG_STACK, 1);
 					hwc = vgaBase + CRT_ADDRESS_W; 
 					*hwc = 1;
 				} else {
-	                                WCrt (vgaBase, CRT_ID_HWGC_BG_STACK, 0);
+	                                WCrt(vgaBase, CRT_ID_HWGC_BG_STACK, 0);
 					hwc = vgaBase + CRT_ADDRESS_W; 
 					*hwc = 0;
 				}
                                 break;
                         case 15: case 16:
-                                WCrt (vgaBase, CRT_ID_HWGC_BG_STACK, 0xff);
+                                WCrt(vgaBase, CRT_ID_HWGC_BG_STACK, 0xff);
                                 hwc = vgaBase + CRT_ADDRESS_W;
 				*hwc = 0xff;
 				break;
                         case 32: case 24:
-				WCrt (vgaBase, CRT_ID_HWGC_BG_STACK, 0xff);
+				WCrt(vgaBase, CRT_ID_HWGC_BG_STACK, 0xff);
                                 hwc = vgaBase + CRT_ADDRESS_W;
 				*hwc = 0xff;
 				*hwc = 0xff;
@@ -648,12 +624,12 @@ amigaCVRecolorCursor(pScr, pCurs, displayed)
 
         test = RCrt(vgaBase, CRT_ID_HWGC_MODE);
         asm volatile("nop");
-	WCrt (vgaBase, CRT_ID_HWGC_FG_STACK, sourceColor.pixel);
-	WCrt (vgaBase, CRT_ID_HWGC_FG_STACK, sourceColor.pixel);
+	WCrt(vgaBase, CRT_ID_HWGC_FG_STACK, sourceColor.pixel);
+	WCrt(vgaBase, CRT_ID_HWGC_FG_STACK, sourceColor.pixel);
         test = RCrt(vgaBase, CRT_ID_HWGC_MODE);
 	asm volatile("nop");
-	WCrt (vgaBase, CRT_ID_HWGC_BG_STACK,maskColor.pixel);
-	WCrt (vgaBase, CRT_ID_HWGC_BG_STACK,maskColor.pixel);
+	WCrt(vgaBase, CRT_ID_HWGC_BG_STACK,maskColor.pixel);
+	WCrt(vgaBase, CRT_ID_HWGC_BG_STACK,maskColor.pixel);
 
 	break;
      case 16:
@@ -679,27 +655,27 @@ amigaCVRecolorCursor(pScr, pCurs, displayed)
 
         test = RCrt(vgaBase, CRT_ID_HWGC_MODE);
         asm volatile("nop");
-        WCrt (vgaBase, CRT_ID_HWGC_FG_STACK, packedcolfg);
-        WCrt (vgaBase, CRT_ID_HWGC_FG_STACK, packedcolfg>>8);
+        WCrt(vgaBase, CRT_ID_HWGC_FG_STACK, packedcolfg);
+        WCrt(vgaBase, CRT_ID_HWGC_FG_STACK, packedcolfg>>8);
         test = RCrt(vgaBase, CRT_ID_HWGC_MODE);
         asm volatile("nop");
-        WCrt (vgaBase, CRT_ID_HWGC_BG_STACK,packedcolbg);
-        WCrt (vgaBase, CRT_ID_HWGC_BG_STACK,packedcolbg>>8);
+        WCrt(vgaBase, CRT_ID_HWGC_BG_STACK,packedcolbg);
+        WCrt(vgaBase, CRT_ID_HWGC_BG_STACK,packedcolbg>>8);
 
      break;
      case 32:
 
         test = RCrt(vgaBase, CRT_ID_HWGC_MODE);
         asm volatile("nop");
-        WCrt (vgaBase, CRT_ID_HWGC_FG_STACK, pCurs->foreBlue >>8);
-        WCrt (vgaBase, CRT_ID_HWGC_FG_STACK, pCurs->foreGreen>>8);
-        WCrt (vgaBase, CRT_ID_HWGC_FG_STACK, pCurs->foreRed  >>8);
+        WCrt(vgaBase, CRT_ID_HWGC_FG_STACK, pCurs->foreBlue >>8);
+        WCrt(vgaBase, CRT_ID_HWGC_FG_STACK, pCurs->foreGreen>>8);
+        WCrt(vgaBase, CRT_ID_HWGC_FG_STACK, pCurs->foreRed  >>8);
 
         test = RCrt(vgaBase, CRT_ID_HWGC_MODE);
         asm volatile("nop");
-	WCrt (vgaBase, CRT_ID_HWGC_BG_STACK,  pCurs->backBlue >>8);
-	WCrt (vgaBase, CRT_ID_HWGC_BG_STACK, pCurs->backGreen>>8);
-	WCrt (vgaBase, CRT_ID_HWGC_BG_STACK, pCurs->backRed>>8);
+	WCrt(vgaBase, CRT_ID_HWGC_BG_STACK,  pCurs->backBlue >>8);
+	WCrt(vgaBase, CRT_ID_HWGC_BG_STACK, pCurs->backGreen>>8);
+	WCrt(vgaBase, CRT_ID_HWGC_BG_STACK, pCurs->backRed>>8);
 
      break;
    }
@@ -710,9 +686,7 @@ amigaCVRecolorCursor(pScr, pCurs, displayed)
 
 #if 0
 void
-s3WarpCursor(pScr, x, y)
-     ScreenPtr pScr;
-     int   x, y;
+s3WarpCursor(ScreenPtr pScr, int x, int y)
 {
    if (xf86VTSema) {
       /* Wait for vertical retrace */
