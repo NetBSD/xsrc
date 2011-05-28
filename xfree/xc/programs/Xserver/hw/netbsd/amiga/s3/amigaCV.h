@@ -504,7 +504,7 @@ short swap16(unsigned short);
 Bool amigaCVCursorInit(ScreenPtr);
 void amigaCVRestoreCursor(ScreenPtr);
 void amigaCVRepositionCursor(ScreenPtr);
-void amigaCVSetPanning2(fbFd *, unsigned int, unsigned int);
+void amigaCVSetPanning2(fbFd *, unsigned short, unsigned short);
 void amigaCVRenewCursorColor(ScreenPtr);
 void s3WarpCursor(ScreenPtr, int, int );
 
