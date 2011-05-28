@@ -1,4 +1,4 @@
-/* $NetBSD: igs_cursor.c,v 1.2 2011/05/23 02:50:05 christos Exp $ */
+/* $NetBSD: igs_cursor.c,v 1.3 2011/05/28 13:26:54 christos Exp $ */
 /*
  * Copyright (c) 2005 Michael Lorenz
  * All rights reserved.
@@ -40,6 +40,7 @@
 /* all driver need this */
 #include "xf86.h"
 #include "xf86_OSproc.h"
+#include "compiler.h"
 
 #include "igs.h"
 
