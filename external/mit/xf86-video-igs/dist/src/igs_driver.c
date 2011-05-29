@@ -1,5 +1,5 @@
 /* $OpenBSD: wsfb_driver.c,v 1.19 2003/04/27 16:42:32 matthieu Exp $ */
-/* $NetBSD: igs_driver.c,v 1.6 2011/02/01 22:53:03 macallan Exp $ */
+/* $NetBSD: igs_driver.c,v 1.7 2011/05/29 12:42:59 christos Exp $ */
 /*
  * Copyright (c) 2001 Matthieu Herrb
  *		 2009 Michael Lorenz
@@ -50,6 +50,8 @@
 #include <fcntl.h>
 #include <sys/types.h>
 #include <sys/time.h>
+#include <sys/ioctl.h>
+#include <unistd.h>
 #include <errno.h>
 #include <dev/wscons/wsconsio.h>
 
@@ -87,6 +89,7 @@
 #if GET_ABI_MAJOR(ABI_VIDEODRV_VERSION) > 6
 #define xf86LoaderReqSymLists(...) do {} while (0)
 #define LoaderRefSymLists(...) do {} while (0)
+#define xf86LoaderReqSymbols(...) do {} while (0)
 #endif
 
 #define DEBUG 0
