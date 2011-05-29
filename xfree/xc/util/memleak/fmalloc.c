@@ -39,6 +39,7 @@ in this Software without prior written authorization from The Open Group.
  */
 
 #include    <stdio.h>
+#include    "memleak.h"
 
 extern char **environ;
 extern xf86DriverList;
