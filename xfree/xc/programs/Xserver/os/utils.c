@@ -204,6 +204,7 @@ extern int SelectWaitTime;
 #define MEM_FAIL_SCALE 100000
 long Memory_fail = 0;
 #include <stdlib.h>  /* for random() */
+#include        <util/memleak/memleak.h>
 #endif
 
 #ifdef sgi
