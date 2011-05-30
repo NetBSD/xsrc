@@ -89,24 +89,18 @@ int	amigaCVWindowPrivateIndex;
 int	amigaCVGeneration;
 
 
-extern void amigaCVImageWriteNoMem();
-extern void amigaCVImageRead();
-extern void amigaCVImageWrite();
-extern void amigaCVImageFill();
-extern void amigaCVImageFillNoMem ();
-
 void
-amigaCVFindOrdering(pSrcDrawable, pDstDrawable, pGC, numRects, boxes, srcx, srcy, dstx, dsty, ordering)
-     DrawablePtr pSrcDrawable;
-     DrawablePtr pDstDrawable;
-     GC   *pGC;
-     int   numRects;
-     BoxPtr boxes;
-     int   srcx;
-     int   srcy;
-     int   dstx;
-     int   dsty;
-     unsigned int *ordering;
+amigaCVFindOrdering(
+     DrawablePtr pSrcDrawable,
+     DrawablePtr pDstDrawable,
+     GC   *pGC,
+     int   numRects,
+     BoxPtr boxes,
+     int   srcx,
+     int   srcy,
+     int   dstx,
+     int   dsty,
+     unsigned int *ordering)
 {
    int   i, j, y;
    int   xMax, yMin, yMax;
@@ -173,14 +167,13 @@ amigaCVFindOrdering(pSrcDrawable, pDstDrawable, pGC, numRects, boxes, srcx, srcy
 
 
 RegionPtr
-amigaCVCopyArea(pSrcDrawable, pDstDrawable,
-	   pGC, srcx, srcy, width, height, dstx, dsty)
-     register DrawablePtr pSrcDrawable;
-     register DrawablePtr pDstDrawable;
-     GC   *pGC;
-     int   srcx, srcy;
-     int   width, height;
-     int   dstx, dsty;
+amigaCVCopyArea( 
+     DrawablePtr pSrcDrawable,
+     DrawablePtr pDstDrawable,
+     GC   *pGC,
+     int   srcx, int srcy,
+     int   width, int height,
+     int   dstx, int dsty)
 {
    RegionPtr prgnSrcClip;	/* may be a new region, or just a copy */
    Bool  freeSrcClip = FALSE;
@@ -532,15 +525,14 @@ amigaCVCopyArea(pSrcDrawable, pDstDrawable,
 
 
 RegionPtr
-amigaCVCopyPlane(pSrcDrawable, pDstDrawable,
-            pGC, srcx, srcy, width, height, dstx, dsty, bitPlane)
-    DrawablePtr              pSrcDrawable;
-    DrawablePtr              pDstDrawable;
-    GCPtr            pGC;
-    int                      srcx, srcy;
-    int                      width, height;
-    int                      dstx, dsty;
-    unsigned long    bitPlane;
+amigaCVCopyPlane(
+    DrawablePtr      pSrcDrawable,
+    DrawablePtr      pDstDrawable,
+    GCPtr            pGC,
+    int              srcx, int srcy,
+    int              width, int height,
+    int              dstx, int dsty,
+    unsigned long    bitPlane)
 {
    PixmapPtr pBitmap = NULL;
    RegionPtr prgnSrcClip;	/* may be a new region, or just a copy */

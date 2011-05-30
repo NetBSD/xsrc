@@ -522,14 +522,16 @@ void amigaCVFillSpans(DrawablePtr, GCPtr, int, DDXPointPtr, int *, int);
 
 /* amigaCVim.c */
 void amigaCVImageInit(fbFd *);
-void amigaCVImageWrite(int, int, int, int, char *, int, int, int, int, unsigned long, fbFd *);
+void amigaCVImageWrite(int, int, int, int, char *, int, int, int, short,
+    unsigned long, fbFd *);
 void amigaCVImageRead(int, int, int, int, char *, int, int, int, unsigned long, fbFd *);
-void amigaCVImageFill(int, int, int, int, char *, int, int, int, int, int, int, unsigned long, fbFd *);
-void amigaCVImageWriteNoMem(int, int, int, int, char *, int, int, int, int, unsigned long, fbFd *);
+void amigaCVImageFill(int, int, int, int, char *, int, int, int, int, int,
+    short, unsigned long, fbFd *);
+void amigaCVImageWriteNoMem(int, int, int, int, char *, int, int, int, short, unsigned long, fbFd *);
 void amigaCVImageReadNoMem(int, int, int, int, char *, int, int, int, unsigned long, fbFd *);
-void amigaCVImageFillNoMem(int, int, int, int, char *, int, int, int, int, int, int, unsigned long, fbFd *);
-void amigaCVImageStipple(int, int, int, int, char *, int, int, int, int, int, Pixel, int, unsigned long, fbFd *);
-void amigaCVImageOpStipple(int, int, int, int, char *, int, int, int , int , int , Pixel, Pixel, int, unsigned long, fbFd *);
+void amigaCVImageFillNoMem(int, int, int, int, char *, int, int, int, int, int, short, unsigned long, fbFd *);
+void amigaCVImageStipple(int, int, int, int, char *, int, int, int, int, int, Pixel, short, unsigned long, fbFd *);
+void amigaCVImageOpStipple(int, int, int, int, char *, int, int, int , int , int , Pixel, Pixel, short, unsigned long, fbFd *);
 
 /* amigaCVline.c */
 void amigaCVLine(DrawablePtr, GCPtr, int, int, DDXPointPtr);

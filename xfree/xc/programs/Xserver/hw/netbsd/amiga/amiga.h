@@ -465,7 +465,7 @@ extern Bool LegalModifier(
 extern void amigaBlockHandler(
     int,
     pointer,
-    struct timeval **,
+    pointer,
     pointer
 );
 

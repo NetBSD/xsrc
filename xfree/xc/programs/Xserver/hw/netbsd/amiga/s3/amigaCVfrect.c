@@ -70,6 +70,7 @@ PERFORMANCE OF THIS SOFTWARE.
 #include	"fastblt.h"
 #include	"mergerop.h"
 #include	"amigaCV.h"
+#include	"mispans.h"
 #include	"migc.h"
 
 extern int cfb16ScreenPrivateIndex, cfb32ScreenPrivateIndex;
@@ -78,27 +79,6 @@ extern RegionPtr cfb8CopyArea(), cfb16CopyArea(), cfb32CopyArea();
 extern RegionPtr cfb8CopyPlane(), cfb16CopyPlane(), cfb32CopyPlane();
 
 extern RegionPtr cfb8BitBlt(), cfb16BitBlt(), cfb32BitBlt();
-
-
-
-extern void
-amigaCVImageOpStipple (
-     int, int, int, int,char *, int, int, int, int, int, Pixel, Pixel, 
-     short, unsigned long, fbFd *);
-
-extern void
-amigaCVImageStipple (
-     int, int, int, int,char *, int, int, int, int, int, Pixel,
-     short, unsigned long, fbFd *);
-
-
-extern void
-amigaCVImageFill (int,int,int,int,char *,int,int,int,int,int,
-		  short, unsigned long,fbFd *);
-
-extern void
-amigaCVImageWrite (int,int,int,int,char *,int,int,int,short, 
-		   unsigned long, fbFd *);
 
 
 /* Externs from amigaCV.c */
