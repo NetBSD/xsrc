@@ -795,14 +795,15 @@ Bool LegalModifier(key, pDev)
 }
 
 /*ARGSUSED*/
-void amigaBlockHandler(nscreen, pbdata, pptv, pReadmask)
-    int nscreen;
-    pointer pbdata;
-    struct timeval **pptv;
-    pointer pReadmask;
+void amigaBlockHandler(
+    int nscreen,
+    pointer pbdata,
+    pointer pv,
+    pointer pReadmask)
 {
     KeybdCtrl* ctrl = &((DeviceIntPtr)LookupKeyboardDevice())->kbdfeed->ctrl;
     static struct timeval artv = { 0, 0 };	/* autorepeat timeval */
+    struct timeval **pptv = pv;
 
     if (!autoRepeatKeyDown)
 	return;

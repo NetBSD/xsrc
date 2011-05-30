@@ -162,8 +162,6 @@ Bool amigaScreenInit (
     ScreenPtr	pScreen)
 {
     SetupScreen(pScreen);
-    extern void   amigaBlockHandler();
-    extern void   amigaWakeupHandler();
     static ScreenPtr autoRepeatScreen;
     extern miPointerScreenFuncRec   amigaPointerScreenFuncs;
 

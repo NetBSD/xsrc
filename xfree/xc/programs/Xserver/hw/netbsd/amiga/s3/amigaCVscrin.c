@@ -88,9 +88,27 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
  * Modified for the CyberVision 64 by Michael Teske
  */
 
-#include "amiga.h"
-#include "cfb.h"
 #include <stdio.h>
+#include	"amiga.h"
+
+#include	"Xmd.h"
+#include	"gcstruct.h"
+#include	"scrnintstr.h"
+#include	"pixmapstr.h"
+#include	"regionstr.h"
+#include	"mistruct.h"
+#include	"mifillarc.h"
+#include	"fontstruct.h"
+#include	"dixfontstr.h"
+#include	"cfb.h"
+#include	"cfbmskbits.h"
+#include	"cfb8bit.h"
+#include	"fastblt.h"
+#include	"mergerop.h"
+#include	"amigaCV.h"
+#include	"migc.h"
+#include	"mi.h"
+#include	<stdio.h>
 
 Bool UseCVHardwareCursor = FALSE;
 int amigaVirtualWidth = 0;

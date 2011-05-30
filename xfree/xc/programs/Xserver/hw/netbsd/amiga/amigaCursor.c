@@ -41,7 +41,22 @@ from the X Consortium.
 #define NEED_EVENTS
 #include "amiga.h"
 #ifdef CV64_SUPPORT
-#include "s3/amigaCV.h"
+#include	"Xmd.h"
+#include	"gcstruct.h"
+#include	"scrnintstr.h"
+#include	"pixmapstr.h"
+#include	"regionstr.h"
+#include	"mistruct.h"
+#include	"mifillarc.h"
+#include	"fontstruct.h"
+#include	"dixfontstr.h"
+#include	"cfb.h"
+#include	"cfbmskbits.h"
+#include	"cfb8bit.h"
+#include	"fastblt.h"
+#include	"mergerop.h"
+#include	"s3/amigaCV.h"
+#include	"migc.h"
 #endif
 
 #define GetCursorPrivate(s) (&(GetScreenPrivate(s)->hardwareCursor))
@@ -86,7 +101,6 @@ amigaCursorRepad (pScreen, bits, src_bits, dst_bits, ptSrc, w, h)
     PixmapPtr	src, dst;
     BoxRec	box;
     RegionRec	rgnDst;
-    extern int mfbDoBitblt();
 
     if (!(src = GetScratchPixmapHeader(pScreen, bits->width, bits->height,
 				       /*bpp*/ 1, /*depth*/ 1,
@@ -103,7 +117,7 @@ amigaCursorRepad (pScreen, bits, src_bits, dst_bits, ptSrc, w, h)
     box.x2 = w;
     box.y2 = h;
     REGION_INIT(pScreen, &rgnDst, &box, 1);
-    mfbDoBitblt(src, dst, GXcopy, &rgnDst, ptSrc);
+    mfbDoBitblt(&src->drawable, &dst->drawable, GXcopy, &rgnDst, ptSrc);
     REGION_UNINIT(pScreen, &rgnDst);
     FreeScratchPixmapHeader(src);
     FreeScratchPixmapHeader(dst);

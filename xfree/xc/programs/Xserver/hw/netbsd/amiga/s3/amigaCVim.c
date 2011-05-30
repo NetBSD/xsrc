@@ -34,8 +34,24 @@
  */
 
 
-#include "amiga.h"
-#include "amigaCV.h"
+#include	"amiga.h"
+
+#include	"Xmd.h"
+#include	"gcstruct.h"
+#include	"scrnintstr.h"
+#include	"pixmapstr.h"
+#include	"regionstr.h"
+#include	"mistruct.h"
+#include	"mifillarc.h"
+#include	"fontstruct.h"
+#include	"dixfontstr.h"
+#include	"cfb.h"
+#include	"cfbmskbits.h"
+#include	"cfb8bit.h"
+#include	"fastblt.h"
+#include	"mergerop.h"
+#include	"amigaCV.h"
+#include	"migc.h"
 
 #include        "xf86bcache.h"
 #include        "xf86fcache.h"
