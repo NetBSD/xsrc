@@ -12,3 +12,5 @@ void wsdisplay_shutdown(void);
 
 void wsdisplay_closedown(void);
 void wskbd_closedown(void);
+
+int mouse_accel(DeviceIntPtr, int);
