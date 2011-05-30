@@ -1,4 +1,4 @@
-/*	$NetBSD: wscons.c,v 1.5 2011/05/20 01:22:37 christos Exp $	*/
+/*	$NetBSD: wscons.c,v 1.6 2011/05/30 15:31:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -47,6 +47,7 @@
 #include "input.h"
 #include "cursor.h"
 #include "misc.h"
+#include "mi.h"
 #include "scrnintstr.h"
 #include "servermd.h"
 #include "mipointer.h"

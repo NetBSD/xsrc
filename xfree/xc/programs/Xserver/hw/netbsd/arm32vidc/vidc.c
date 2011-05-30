@@ -1,4 +1,4 @@
-/*	$NetBSD: vidc.c,v 1.10 2011/05/28 13:24:04 christos Exp $	*/
+/*	$NetBSD: vidc.c,v 1.11 2011/05/30 15:31:56 christos Exp $	*/
 
 /*
  * Copyright (c) 1999 Neil A. Carson & Mark Brinicombe
@@ -50,24 +50,38 @@
 #include <unistd.h>
 #include <errno.h>
 
+
 /* X11 headers
  */
 #include "Xos.h"
 #include "X.h"
 #include "Xproto.h"
-#include "mi.h"
+#include "Xmd.h"
+#ifndef PSZ
+#define PSZ 8
+#endif
 #include "cfb.h"
-#include "screenint.h"
-#include "input.h"
-#include "inputstr.h"
-#include "cursor.h"
-#include "misc.h"
-#include "scrnintstr.h"
-#include "servermd.h"
-#include "mipointer.h"
+#undef PSZ
+#include "cfb16.h"
+#include "cfb32.h"
 #include "colormap.h"
 #include "colormapst.h"
+#include "cursor.h"
+#include "dixfontstr.h"
+#include "fontstruct.h"
+#include "gcstruct.h"
+#include "input.h"
+#include "inputstr.h"
+#include "mi.h"
+#include "mifillarc.h" 
+#include "mipointer.h"
+#include "misc.h"
+#include "mistruct.h"
+#include "pixmapstr.h"
+#include "regionstr.h"
 #include "resource.h"
+#include "scrnintstr.h"
+#include "servermd.h"
 #include "wscons.h"
 
 /* #define DEBUG */
@@ -482,7 +496,7 @@ void InitInput(int argc, char *argv[])
 	RegisterPointerDevice(mouse);
 	RegisterKeyboardDevice(keyboard);
 	miRegisterPointerDevice(screenInfo.screens[0], mouse);
-	if (!mieqInit(keyboard, mouse))
+	if (!mieqInit((DevicePtr)keyboard, (DevicePtr)mouse))
 		FatalError("mieqInit failed!!\n");
 
 	/* Start taking some SIGIOs on input device file descriptors. */
